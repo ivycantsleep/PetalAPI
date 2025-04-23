@@ -29,7 +29,7 @@ Revision History:
 #include <ntddstor.h>
 #include <hdlsblk.h>
 #include <hdlsterm.h>
-
+
 
 //
 // Define the default number of IRP that can be in progress and allocated
@@ -47,66 +47,47 @@ PVOID IopErrorLogObject = NULL;
 // Define a macro for initializing drivers.
 //
 
-#define InitializeDriverObject( Object ) {                                 \
-    ULONG i;                                                               \
-    RtlZeroMemory( Object,                                                 \
-                   sizeof( DRIVER_OBJECT ) + sizeof ( DRIVER_EXTENSION )); \
-    Object->DriverExtension = (PDRIVER_EXTENSION) (Object + 1);            \
-    Object->DriverExtension->DriverObject = Object;                        \
-    for (i = 0; i <= IRP_MJ_MAXIMUM_FUNCTION; i++)                         \
-        Object->MajorFunction[i] = IopInvalidDeviceRequest;                \
-    Object->Type = IO_TYPE_DRIVER;                                         \
-    Object->Size = sizeof( DRIVER_OBJECT );                                \
+#define InitializeDriverObject(Object)                                           \
+    {                                                                            \
+        ULONG i;                                                                 \
+        RtlZeroMemory(Object, sizeof(DRIVER_OBJECT) + sizeof(DRIVER_EXTENSION)); \
+        Object->DriverExtension = (PDRIVER_EXTENSION)(Object + 1);               \
+        Object->DriverExtension->DriverObject = Object;                          \
+        for (i = 0; i <= IRP_MJ_MAXIMUM_FUNCTION; i++)                           \
+            Object->MajorFunction[i] = IopInvalidDeviceRequest;                  \
+        Object->Type = IO_TYPE_DRIVER;                                           \
+        Object->Size = sizeof(DRIVER_OBJECT);                                    \
     }
 
-ULONG   IopInitFailCode;    // Debugging aid for IoInitSystem 
+ULONG IopInitFailCode; // Debugging aid for IoInitSystem
 
 //
 // Define external procedures not in common header files
 //
 
-VOID
-IopInitializeData(
-    VOID
-    );
+VOID IopInitializeData(VOID);
 
 //
 // Define the local procedures
 //
 
 BOOLEAN
-IopCreateObjectTypes(
-    VOID
-    );
+IopCreateObjectTypes(VOID);
 
 BOOLEAN
-IopCreateRootDirectories(
-    VOID
-    );
+IopCreateRootDirectories(VOID);
 
 NTSTATUS
-IopInitializeAttributesAndCreateObject(
-    IN PUNICODE_STRING ObjectName,
-    IN OUT POBJECT_ATTRIBUTES ObjectAttributes,
-    OUT PDRIVER_OBJECT *DriverObject
-    );
+IopInitializeAttributesAndCreateObject(IN PUNICODE_STRING ObjectName, IN OUT POBJECT_ATTRIBUTES ObjectAttributes,
+                                       OUT PDRIVER_OBJECT *DriverObject);
 
 BOOLEAN
-IopReassignSystemRoot(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock,
-    OUT PSTRING NtDeviceName
-    );
+IopReassignSystemRoot(IN PLOADER_PARAMETER_BLOCK LoaderBlock, OUT PSTRING NtDeviceName);
 
-VOID
-IopSetIoRoutines(
-    IN VOID
-    );
+VOID IopSetIoRoutines(IN VOID);
 
-VOID
-IopStoreSystemPartitionInformation(
-    IN     PUNICODE_STRING NtSystemPartitionDeviceName,
-    IN OUT PUNICODE_STRING OsLoaderPathName
-    );
+VOID IopStoreSystemPartitionInformation(IN PUNICODE_STRING NtSystemPartitionDeviceName,
+                                        IN OUT PUNICODE_STRING OsLoaderPathName);
 
 //
 // The following allows the I/O system's initialization routines to be
@@ -114,24 +95,22 @@ IopStoreSystemPartitionInformation(
 //
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,IoInitSystem)
-#pragma alloc_text(INIT,IopCreateArcNames)
-#pragma alloc_text(INIT,IopCreateObjectTypes)
-#pragma alloc_text(INIT,IopCreateRootDirectories)
-#pragma alloc_text(INIT,IopInitializeAttributesAndCreateObject)
-#pragma alloc_text(INIT,IopInitializeBuiltinDriver)
-#pragma alloc_text(INIT,IopMarkBootPartition)
-#pragma alloc_text(INIT,IopReassignSystemRoot)
-#pragma alloc_text(INIT,IopSetIoRoutines)
-#pragma alloc_text(INIT,IopStoreSystemPartitionInformation)
-#pragma alloc_text(INIT,IopInitializeReserveIrp)
+#pragma alloc_text(INIT, IoInitSystem)
+#pragma alloc_text(INIT, IopCreateArcNames)
+#pragma alloc_text(INIT, IopCreateObjectTypes)
+#pragma alloc_text(INIT, IopCreateRootDirectories)
+#pragma alloc_text(INIT, IopInitializeAttributesAndCreateObject)
+#pragma alloc_text(INIT, IopInitializeBuiltinDriver)
+#pragma alloc_text(INIT, IopMarkBootPartition)
+#pragma alloc_text(INIT, IopReassignSystemRoot)
+#pragma alloc_text(INIT, IopSetIoRoutines)
+#pragma alloc_text(INIT, IopStoreSystemPartitionInformation)
+#pragma alloc_text(INIT, IopInitializeReserveIrp)
 #endif
 
-
+
 BOOLEAN
-IoInitSystem(
-    PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+IoInitSystem(PLOADER_PARAMETER_BLOCK LoaderBlock)
 
 /*++
 
@@ -180,17 +159,17 @@ Return Value:
     PKPRCB prcb;
     ULONG len;
     PKEY_VALUE_PARTIAL_INFORMATION value;
-    UCHAR   valueBuffer[32];
+    UCHAR valueBuffer[32];
 
-    ASSERT( IopQueryOperationLength[FileMaximumInformation] == 0xff );
-    ASSERT( IopSetOperationLength[FileMaximumInformation] == 0xff );
-    ASSERT( IopQueryOperationAccess[FileMaximumInformation] == 0xffffffff );
-    ASSERT( IopSetOperationAccess[FileMaximumInformation] == 0xffffffff );
+    ASSERT(IopQueryOperationLength[FileMaximumInformation] == 0xff);
+    ASSERT(IopSetOperationLength[FileMaximumInformation] == 0xff);
+    ASSERT(IopQueryOperationAccess[FileMaximumInformation] == 0xffffffff);
+    ASSERT(IopSetOperationAccess[FileMaximumInformation] == 0xffffffff);
 
-    ASSERT( IopQueryFsOperationLength[FileFsMaximumInformation] == 0xff );
-    ASSERT( IopSetFsOperationLength[FileFsMaximumInformation] == 0xff );
-    ASSERT( IopQueryFsOperationAccess[FileFsMaximumInformation] == 0xffffffff );
-    ASSERT( IopSetFsOperationAccess[FileFsMaximumInformation] == 0xffffffff );
+    ASSERT(IopQueryFsOperationLength[FileFsMaximumInformation] == 0xff);
+    ASSERT(IopSetFsOperationLength[FileFsMaximumInformation] == 0xff);
+    ASSERT(IopQueryFsOperationAccess[FileFsMaximumInformation] == 0xffffffff);
+    ASSERT(IopSetFsOperationAccess[FileFsMaximumInformation] == 0xffffffff);
 
     //
     // Initialize the I/O database resource, lock, and the file system and
@@ -202,19 +181,19 @@ Return Value:
     ntDeviceName.MaximumLength = sizeof(deviceNameBuffer);
     ntDeviceName.Length = 0;
 
-    ExInitializeResourceLite( &IopDatabaseResource );
-    ExInitializeResourceLite( &IopSecurityResource );
-    ExInitializeResourceLite( &IopCrashDumpLock );
-    InitializeListHead( &IopDiskFileSystemQueueHead );
-    InitializeListHead( &IopCdRomFileSystemQueueHead );
-    InitializeListHead( &IopTapeFileSystemQueueHead );
-    InitializeListHead( &IopNetworkFileSystemQueueHead );
-    InitializeListHead( &IopBootDriverReinitializeQueueHead );
-    InitializeListHead( &IopDriverReinitializeQueueHead );
-    InitializeListHead( &IopNotifyShutdownQueueHead );
-    InitializeListHead( &IopNotifyLastChanceShutdownQueueHead );
-    InitializeListHead( &IopFsNotifyChangeQueueHead );
-    KeInitializeSpinLock( &IoStatisticsLock );
+    ExInitializeResourceLite(&IopDatabaseResource);
+    ExInitializeResourceLite(&IopSecurityResource);
+    ExInitializeResourceLite(&IopCrashDumpLock);
+    InitializeListHead(&IopDiskFileSystemQueueHead);
+    InitializeListHead(&IopCdRomFileSystemQueueHead);
+    InitializeListHead(&IopTapeFileSystemQueueHead);
+    InitializeListHead(&IopNetworkFileSystemQueueHead);
+    InitializeListHead(&IopBootDriverReinitializeQueueHead);
+    InitializeListHead(&IopDriverReinitializeQueueHead);
+    InitializeListHead(&IopNotifyShutdownQueueHead);
+    InitializeListHead(&IopNotifyLastChanceShutdownQueueHead);
+    InitializeListHead(&IopFsNotifyChangeQueueHead);
+    KeInitializeSpinLock(&IoStatisticsLock);
 
     IopSetIoRoutines();
     //
@@ -229,16 +208,18 @@ Return Value:
     //
 
 
-    if (!IopLargeIrpStackLocations) {
+    if (!IopLargeIrpStackLocations)
+    {
         IopLargeIrpStackLocations = DEFAULT_LARGE_IRP_LOCATIONS;
         IopIrpStackProfiler.Flags |= IOP_ENABLE_AUTO_SIZING;
     }
 
     systemSize = MmQuerySystemSize();
 
-    switch ( systemSize ) {
+    switch (systemSize)
+    {
 
-    case MmSmallSystem :
+    case MmSmallSystem:
         completionZoneSize = 6;
         smallIrpZoneSize = 6;
         largeIrpZoneSize = 8;
@@ -246,7 +227,7 @@ Return Value:
         lookasideIrpLimit = DEFAULT_LOOKASIDE_IRP_LIMIT;
         break;
 
-    case MmMediumSystem :
+    case MmMediumSystem:
         completionZoneSize = 24;
         smallIrpZoneSize = 24;
         largeIrpZoneSize = 32;
@@ -254,15 +235,17 @@ Return Value:
         lookasideIrpLimit = DEFAULT_LOOKASIDE_IRP_LIMIT * 2;
         break;
 
-    case MmLargeSystem :
-        if (MmIsThisAnNtAsSystem()) {
+    case MmLargeSystem:
+        if (MmIsThisAnNtAsSystem())
+        {
             completionZoneSize = 96;
             smallIrpZoneSize = 96;
             largeIrpZoneSize = 128;
             mdlZoneSize = 256;
             lookasideIrpLimit = DEFAULT_LOOKASIDE_IRP_LIMIT * 128; // 64k
-
-        } else {
+        }
+        else
+        {
             completionZoneSize = 32;
             smallIrpZoneSize = 32;
             largeIrpZoneSize = 64;
@@ -277,50 +260,34 @@ Return Value:
     // Initialize the system I/O completion lookaside list.
     //
 
-    ExInitializeSystemLookasideList( &IopCompletionLookasideList,
-                                     NonPagedPool,
-                                     sizeof(IOP_MINI_COMPLETION_PACKET),
-                                     ' pcI',
-                                     completionZoneSize,
-                                     &ExSystemLookasideListHead );
+    ExInitializeSystemLookasideList(&IopCompletionLookasideList, NonPagedPool, sizeof(IOP_MINI_COMPLETION_PACKET),
+                                    ' pcI', completionZoneSize, &ExSystemLookasideListHead);
 
 
     //
     // Initialize the system large IRP lookaside list.
     //
 
-    largePacketSize = (ULONG) (sizeof( IRP ) + (IopLargeIrpStackLocations * sizeof( IO_STACK_LOCATION )));
-    ExInitializeSystemLookasideList( &IopLargeIrpLookasideList,
-                                     NonPagedPool,
-                                     largePacketSize,
-                                     'lprI',
-                                     largeIrpZoneSize,
-                                     &ExSystemLookasideListHead );
+    largePacketSize = (ULONG)(sizeof(IRP) + (IopLargeIrpStackLocations * sizeof(IO_STACK_LOCATION)));
+    ExInitializeSystemLookasideList(&IopLargeIrpLookasideList, NonPagedPool, largePacketSize, 'lprI', largeIrpZoneSize,
+                                    &ExSystemLookasideListHead);
 
     //
     // Initialize the system small IRP lookaside list.
     //
 
 
-    smallPacketSize = (ULONG) (sizeof( IRP ) + sizeof( IO_STACK_LOCATION ));
-    ExInitializeSystemLookasideList( &IopSmallIrpLookasideList,
-                                     NonPagedPool,
-                                     smallPacketSize,
-                                     'sprI',
-                                     smallIrpZoneSize,
-                                     &ExSystemLookasideListHead );
+    smallPacketSize = (ULONG)(sizeof(IRP) + sizeof(IO_STACK_LOCATION));
+    ExInitializeSystemLookasideList(&IopSmallIrpLookasideList, NonPagedPool, smallPacketSize, 'sprI', smallIrpZoneSize,
+                                    &ExSystemLookasideListHead);
 
     //
     // Initialize the system MDL lookaside list.
     //
 
-    mdlPacketSize = (ULONG) (sizeof( MDL ) + (IOP_FIXED_SIZE_MDL_PFNS * sizeof( PFN_NUMBER )));
-    ExInitializeSystemLookasideList( &IopMdlLookasideList,
-                                     NonPagedPool,
-                                     mdlPacketSize,
-                                     ' ldM',
-                                     mdlZoneSize,
-                                     &ExSystemLookasideListHead );
+    mdlPacketSize = (ULONG)(sizeof(MDL) + (IOP_FIXED_SIZE_MDL_PFNS * sizeof(PFN_NUMBER)));
+    ExInitializeSystemLookasideList(&IopMdlLookasideList, NonPagedPool, mdlPacketSize, ' ldM', mdlZoneSize,
+                                    &ExSystemLookasideListHead);
 
     //
     // Compute the lookaside IRP float credits per processor.
@@ -337,8 +304,9 @@ Return Value:
     //
 
     lookasideSize = 4 * KeNumberProcessors * sizeof(GENERAL_LOOKASIDE);
-    lookaside = ExAllocatePoolWithTag( NonPagedPool, lookasideSize, 'oI');
-    for (Index = 0; Index < (ULONG)KeNumberProcessors; Index += 1) {
+    lookaside = ExAllocatePoolWithTag(NonPagedPool, lookasideSize, 'oI');
+    for (Index = 0; Index < (ULONG)KeNumberProcessors; Index += 1)
+    {
         prcb = KiProcessorBlock[Index];
 
         //
@@ -352,18 +320,16 @@ Return Value:
         //
 
         prcb->PPLookasideList[LookasideCompletionList].L = &IopCompletionLookasideList;
-        if (lookaside != NULL) {
-            ExInitializeSystemLookasideList( lookaside,
-                                             NonPagedPool,
-                                             sizeof(IOP_MINI_COMPLETION_PACKET),
-                                             'PpcI',
-                                             completionZoneSize,
-                                             &ExSystemLookasideListHead );
+        if (lookaside != NULL)
+        {
+            ExInitializeSystemLookasideList(lookaside, NonPagedPool, sizeof(IOP_MINI_COMPLETION_PACKET), 'PpcI',
+                                            completionZoneSize, &ExSystemLookasideListHead);
 
             prcb->PPLookasideList[LookasideCompletionList].P = lookaside;
             lookaside += 1;
-
-        } else {
+        }
+        else
+        {
             prcb->PPLookasideList[LookasideCompletionList].P = &IopCompletionLookasideList;
         }
 
@@ -372,18 +338,16 @@ Return Value:
         //
 
         prcb->PPLookasideList[LookasideLargeIrpList].L = &IopLargeIrpLookasideList;
-        if (lookaside != NULL) {
-            ExInitializeSystemLookasideList( lookaside,
-                                             NonPagedPool,
-                                             largePacketSize,
-                                             'LprI',
-                                             largeIrpZoneSize,
-                                             &ExSystemLookasideListHead );
+        if (lookaside != NULL)
+        {
+            ExInitializeSystemLookasideList(lookaside, NonPagedPool, largePacketSize, 'LprI', largeIrpZoneSize,
+                                            &ExSystemLookasideListHead);
 
             prcb->PPLookasideList[LookasideLargeIrpList].P = lookaside;
             lookaside += 1;
-
-        } else {
+        }
+        else
+        {
             prcb->PPLookasideList[LookasideLargeIrpList].P = &IopLargeIrpLookasideList;
         }
 
@@ -392,18 +356,16 @@ Return Value:
         //
 
         prcb->PPLookasideList[LookasideSmallIrpList].L = &IopSmallIrpLookasideList;
-        if (lookaside != NULL) {
-            ExInitializeSystemLookasideList( lookaside,
-                                             NonPagedPool,
-                                             smallPacketSize,
-                                             'SprI',
-                                             smallIrpZoneSize,
-                                             &ExSystemLookasideListHead );
+        if (lookaside != NULL)
+        {
+            ExInitializeSystemLookasideList(lookaside, NonPagedPool, smallPacketSize, 'SprI', smallIrpZoneSize,
+                                            &ExSystemLookasideListHead);
 
             prcb->PPLookasideList[LookasideSmallIrpList].P = lookaside;
             lookaside += 1;
-
-        } else {
+        }
+        else
+        {
             prcb->PPLookasideList[LookasideSmallIrpList].P = &IopSmallIrpLookasideList;
         }
 
@@ -412,18 +374,16 @@ Return Value:
         //
 
         prcb->PPLookasideList[LookasideMdlList].L = &IopMdlLookasideList;
-        if (lookaside != NULL) {
-            ExInitializeSystemLookasideList( lookaside,
-                                             NonPagedPool,
-                                             mdlPacketSize,
-                                             'PldM',
-                                             mdlZoneSize,
-                                             &ExSystemLookasideListHead );
+        if (lookaside != NULL)
+        {
+            ExInitializeSystemLookasideList(lookaside, NonPagedPool, mdlPacketSize, 'PldM', mdlZoneSize,
+                                            &ExSystemLookasideListHead);
 
             prcb->PPLookasideList[LookasideMdlList].P = lookaside;
             lookaside += 1;
-
-        } else {
+        }
+        else
+        {
             prcb->PPLookasideList[LookasideMdlList].P = &IopMdlLookasideList;
         }
     }
@@ -432,15 +392,17 @@ Return Value:
     // Initalize the error log spin locks and log list.
     //
 
-    KeInitializeSpinLock( &IopErrorLogLock );
-    InitializeListHead( &IopErrorLogListHead );
+    KeInitializeSpinLock(&IopErrorLogLock);
+    InitializeListHead(&IopErrorLogListHead);
 
-    if (IopInitializeReserveIrp(&IopReserveIrpAllocator) == FALSE) {
+    if (IopInitializeReserveIrp(&IopReserveIrpAllocator) == FALSE)
+    {
         IopInitFailCode = 1;
         return FALSE;
     }
-        
-    if (IopIrpAutoSizingEnabled() && !NT_SUCCESS(IopInitializeIrpStackProfiler())) {
+
+    if (IopIrpAutoSizingEnabled() && !NT_SUCCESS(IopInitializeIrpStackProfiler()))
+    {
         IopInitFailCode = 13;
         return FALSE;
     }
@@ -448,43 +410,42 @@ Return Value:
     //
     // Determine if the Error Log service will ever run this boot.
     //
-    InitializeObjectAttributes (&objectAttributes,
-                                &CmRegistryMachineSystemCurrentControlSetServicesEventLog,
-                                OBJ_CASE_INSENSITIVE,
-                                (HANDLE) NULL,
-                                (PSECURITY_DESCRIPTOR) NULL );
+    InitializeObjectAttributes(&objectAttributes, &CmRegistryMachineSystemCurrentControlSetServicesEventLog,
+                               OBJ_CASE_INSENSITIVE, (HANDLE)NULL, (PSECURITY_DESCRIPTOR)NULL);
 
-    status = ZwOpenKey(&handle,
-                       KEY_READ,
-                       &objectAttributes
-                       );
+    status = ZwOpenKey(&handle, KEY_READ, &objectAttributes);
 
-    if (NT_SUCCESS (status)) {
-        RtlInitUnicodeString (&startTypeName, L"Start");
-        value = (PKEY_VALUE_PARTIAL_INFORMATION) valueBuffer;
-        status = NtQueryValueKey (handle,
-                                  &startTypeName,
-                                  KeyValuePartialInformation,
-                                  valueBuffer,
-                                  sizeof (valueBuffer),
-                                  &len);
+    if (NT_SUCCESS(status))
+    {
+        RtlInitUnicodeString(&startTypeName, L"Start");
+        value = (PKEY_VALUE_PARTIAL_INFORMATION)valueBuffer;
+        status =
+            NtQueryValueKey(handle, &startTypeName, KeyValuePartialInformation, valueBuffer, sizeof(valueBuffer), &len);
 
-        if (NT_SUCCESS (status) && (value->Type == REG_DWORD)) {
-            if (SERVICE_DISABLED == (*(PULONG) (value->Data))) {
+        if (NT_SUCCESS(status) && (value->Type == REG_DWORD))
+        {
+            if (SERVICE_DISABLED == (*(PULONG)(value->Data)))
+            {
                 //
                 // We are disabled for this boot.
                 //
                 IopErrorLogDisabledThisBoot = TRUE;
-            } else {
+            }
+            else
+            {
                 IopErrorLogDisabledThisBoot = FALSE;
             }
-        } else {
+        }
+        else
+        {
             //
             // Didn't find the value so we are not enabled.
             //
             IopErrorLogDisabledThisBoot = TRUE;
         }
-    } else {
+    }
+    else
+    {
         //
         // Didn't find the key so we are not enabled
         //
@@ -496,29 +457,25 @@ Return Value:
     // so that drivers can use it during initialization.
     //
 
-    deltaTime.QuadPart = - 10 * 1000 * 1000;
+    deltaTime.QuadPart = -10 * 1000 * 1000;
 
-    KeInitializeSpinLock( &IopTimerLock );
-    InitializeListHead( &IopTimerQueueHead );
-    KeInitializeDpc( &IopTimerDpc, IopTimerDispatch, NULL );
-    KeInitializeTimerEx( &IopTimer, SynchronizationTimer );
-    (VOID) KeSetTimerEx( &IopTimer, deltaTime, 1000, &IopTimerDpc );
+    KeInitializeSpinLock(&IopTimerLock);
+    InitializeListHead(&IopTimerQueueHead);
+    KeInitializeDpc(&IopTimerDpc, IopTimerDispatch, NULL);
+    KeInitializeTimerEx(&IopTimer, SynchronizationTimer);
+    (VOID) KeSetTimerEx(&IopTimer, deltaTime, 1000, &IopTimerDpc);
 
     //
     // Initialize the IopHardError structure used for informational pop-ups.
     //
 
-    ExInitializeWorkItem( &IopHardError.ExWorkItem,
-                          IopHardErrorThread,
-                          NULL );
+    ExInitializeWorkItem(&IopHardError.ExWorkItem, IopHardErrorThread, NULL);
 
-    InitializeListHead( &IopHardError.WorkQueue );
+    InitializeListHead(&IopHardError.WorkQueue);
 
-    KeInitializeSpinLock( &IopHardError.WorkQueueSpinLock );
+    KeInitializeSpinLock(&IopHardError.WorkQueueSpinLock);
 
-    KeInitializeSemaphore( &IopHardError.WorkQueueSemaphore,
-                           0,
-                           MAXLONG );
+    KeInitializeSemaphore(&IopHardError.WorkQueueSemaphore, 0, MAXLONG);
 
     IopHardError.ThreadStarted = FALSE;
 
@@ -528,45 +485,35 @@ Return Value:
     // Create the link tracking named event.
     //
 
-    RtlInitUnicodeString( &eventName, L"\\Security\\TRKWKS_EVENT" );
-    InitializeObjectAttributes( &objectAttributes,
-                                &eventName,
-                                OBJ_PERMANENT,
-                                (HANDLE) NULL,
-                                (PSECURITY_DESCRIPTOR) NULL );
-    status = NtCreateEvent( &handle,
-                            EVENT_ALL_ACCESS,
-                            &objectAttributes,
-                            NotificationEvent,
-                            FALSE );
+    RtlInitUnicodeString(&eventName, L"\\Security\\TRKWKS_EVENT");
+    InitializeObjectAttributes(&objectAttributes, &eventName, OBJ_PERMANENT, (HANDLE)NULL, (PSECURITY_DESCRIPTOR)NULL);
+    status = NtCreateEvent(&handle, EVENT_ALL_ACCESS, &objectAttributes, NotificationEvent, FALSE);
 
-    if (!NT_SUCCESS( status )) {
+    if (!NT_SUCCESS(status))
+    {
 
 #if DBG
-        DbgPrint( "IOINIT: NtCreateEvent failed\n" );
+        DbgPrint("IOINIT: NtCreateEvent failed\n");
 #endif
         HeadlessKernelAddLogEntry(HEADLESS_LOG_EVENT_CREATE_FAILED, NULL);
         return FALSE;
     }
 
-    (VOID) ObReferenceObjectByHandle( handle,
-                                      0,
-                                      ExEventObjectType,
-                                      KernelMode,
-                                      (PVOID *) &IopLinkTrackingServiceEvent,
-                                      NULL );
+    (VOID) ObReferenceObjectByHandle(handle, 0, ExEventObjectType, KernelMode, (PVOID *)&IopLinkTrackingServiceEvent,
+                                     NULL);
 
-    KeInitializeEvent( &IopLinkTrackingPacket.Event, NotificationEvent, FALSE );
-    KeInitializeEvent(&IopLinkTrackingPortObject, SynchronizationEvent, TRUE );
+    KeInitializeEvent(&IopLinkTrackingPacket.Event, NotificationEvent, FALSE);
+    KeInitializeEvent(&IopLinkTrackingPortObject, SynchronizationEvent, TRUE);
 
     //
     // Create all of the objects for the I/O system.
     //
 
-    if (!IopCreateObjectTypes()) {
+    if (!IopCreateObjectTypes())
+    {
 
 #if DBG
-        DbgPrint( "IOINIT: IopCreateObjectTypes failed\n" );
+        DbgPrint("IOINIT: IopCreateObjectTypes failed\n");
 #endif
 
         HeadlessKernelAddLogEntry(HEADLESS_LOG_OBJECT_TYPE_CREATE_FAILED, NULL);
@@ -578,10 +525,11 @@ Return Value:
     // Create the root directories for the I/O system.
     //
 
-    if (!IopCreateRootDirectories()) {
+    if (!IopCreateRootDirectories())
+    {
 
 #if DBG
-        DbgPrint( "IOINIT: IopCreateRootDirectories failed\n" );
+        DbgPrint("IOINIT: IopCreateRootDirectories failed\n");
 #endif
 
         HeadlessKernelAddLogEntry(HEADLESS_LOG_ROOT_DIR_CREATE_FAILED, NULL);
@@ -594,7 +542,8 @@ Return Value:
     //
 
     status = IopInitializePlugPlayServices(LoaderBlock, 0);
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         HeadlessKernelAddLogEntry(HEADLESS_LOG_PNP_PHASE0_INIT_FAILED, NULL);
         IopInitFailCode = 4;
         return FALSE;
@@ -632,14 +581,12 @@ Return Value:
     // If this is a remote boot, we need to add a few values to the registry.
     //
 
-    if (IoRemoteBootClient) {
+    if (IoRemoteBootClient)
+    {
         status = IopAddRemoteBootValuesToRegistry(LoaderBlock);
-        if (!NT_SUCCESS(status)) {
-            KeBugCheckEx( NETWORK_BOOT_INITIALIZATION_FAILED,
-                          1,
-                          status,
-                          0,
-                          0 );
+        if (!NT_SUCCESS(status))
+        {
+            KeBugCheckEx(NETWORK_BOOT_INITIALIZATION_FAILED, 1, status, 0, 0);
         }
     }
 
@@ -648,7 +595,8 @@ Return Value:
     //
 
     status = IopInitializePlugPlayServices(LoaderBlock, 1);
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         HeadlessKernelAddLogEntry(HEADLESS_LOG_PNP_PHASE1_INIT_FAILED, NULL);
         IopInitFailCode = 5;
         return FALSE;
@@ -659,11 +607,11 @@ Return Value:
     //
 
     nextDriverObject = &driverObject;
-    if (!IopInitializeBootDrivers( LoaderBlock,
-                                   nextDriverObject )) {
+    if (!IopInitializeBootDrivers(LoaderBlock, nextDriverObject))
+    {
 
 #if DBG
-        DbgPrint( "IOINIT: Initializing boot drivers failed\n" );
+        DbgPrint("IOINIT: Initializing boot drivers failed\n");
 #endif // DBG
 
         HeadlessKernelAddLogEntry(HEADLESS_LOG_BOOT_DRIVERS_INIT_FAILED, NULL);
@@ -683,14 +631,12 @@ Return Value:
     // C: to \Device\LanmanRedirector.
     //
 
-    if (IoRemoteBootClient) {
+    if (IoRemoteBootClient)
+    {
         status = IopStartNetworkForRemoteBoot(LoaderBlock);
-        if (!NT_SUCCESS( status )) {
-            KeBugCheckEx( NETWORK_BOOT_INITIALIZATION_FAILED,
-                          2,
-                          status,
-                          0,
-                          0 );
+        if (!NT_SUCCESS(status))
+        {
+            KeBugCheckEx(NETWORK_BOOT_INITIALIZATION_FAILED, 2, status, 0, 0);
         }
     }
 
@@ -712,12 +658,14 @@ Return Value:
 
     oldNtGlobalFlag = NtGlobalFlag;
 
-    if (!(NtGlobalFlag & FLG_ENABLE_KDEBUG_SYMBOL_LOAD)) {
+    if (!(NtGlobalFlag & FLG_ENABLE_KDEBUG_SYMBOL_LOAD))
+    {
         NtGlobalFlag |= FLG_ENABLE_KDEBUG_SYMBOL_LOAD;
     }
 
     status = PsLocateSystemDll();
-    if (!NT_SUCCESS( status )) {
+    if (!NT_SUCCESS(status))
+    {
         HeadlessKernelAddLogEntry(HEADLESS_LOG_LOCATE_SYSTEM_DLL_FAILED, NULL);
         IopInitFailCode = 7;
         return FALSE;
@@ -733,9 +681,10 @@ Return Value:
     // Initialize the device drivers for the system.
     //
 
-    if (!IopInitializeSystemDrivers()) {
+    if (!IopInitializeSystemDrivers())
+    {
 #if DBG
-        DbgPrint( "IOINIT: Initializing system drivers failed\n" );
+        DbgPrint("IOINIT: Initializing system drivers failed\n");
 #endif // DBG
 
         HeadlessKernelAddLogEntry(HEADLESS_LOG_SYSTEM_DRIVERS_INIT_FAILED, NULL);
@@ -749,7 +698,8 @@ Return Value:
     // Reassign \SystemRoot to NT device name path.
     //
 
-    if (!IopReassignSystemRoot( LoaderBlock, &ntDeviceName )) {
+    if (!IopReassignSystemRoot(LoaderBlock, &ntDeviceName))
+    {
         HeadlessKernelAddLogEntry(HEADLESS_LOG_ASSIGN_SYSTEM_ROOT_FAILED, NULL);
         IopInitFailCode = 9;
         return FALSE;
@@ -759,7 +709,8 @@ Return Value:
     // Protect the system partition of an ARC system if necessary
     //
 
-    if (!IopProtectSystemPartition( LoaderBlock )) {
+    if (!IopProtectSystemPartition(LoaderBlock))
+    {
         HeadlessKernelAddLogEntry(HEADLESS_LOG_PROTECT_SYSTEM_ROOT_FAILED, NULL);
         IopInitFailCode = 10;
         return FALSE;
@@ -769,34 +720,27 @@ Return Value:
     // Assign DOS drive letters to disks and cdroms and define \SystemRoot.
     //
 
-    ansiString.MaximumLength = NtSystemRoot.MaximumLength / sizeof( WCHAR );
+    ansiString.MaximumLength = NtSystemRoot.MaximumLength / sizeof(WCHAR);
     ansiString.Length = 0;
-    ansiString.Buffer = (RtlAllocateStringRoutine)( ansiString.MaximumLength );
-    status = RtlUnicodeStringToAnsiString( &ansiString,
-                                           &NtSystemRoot,
-                                           FALSE
-                                         );
-    if (!NT_SUCCESS( status )) {
+    ansiString.Buffer = (RtlAllocateStringRoutine)(ansiString.MaximumLength);
+    status = RtlUnicodeStringToAnsiString(&ansiString, &NtSystemRoot, FALSE);
+    if (!NT_SUCCESS(status))
+    {
 
-        DbgPrint( "IOINIT: UnicodeToAnsi( %wZ ) failed - %x\n", &NtSystemRoot, status );
+        DbgPrint("IOINIT: UnicodeToAnsi( %wZ ) failed - %x\n", &NtSystemRoot, status);
 
         HeadlessKernelAddLogEntry(HEADLESS_LOG_UNICODE_TO_ANSI_FAILED, NULL);
         IopInitFailCode = 11;
         return FALSE;
     }
 
-    IoAssignDriveLetters( LoaderBlock,
-                          &ntDeviceName,
-                          ansiString.Buffer,
-                          &ansiString );
+    IoAssignDriveLetters(LoaderBlock, &ntDeviceName, ansiString.Buffer, &ansiString);
 
-    status = RtlAnsiStringToUnicodeString( &NtSystemRoot,
-                                           &ansiString,
-                                           FALSE
-                                         );
-    if (!NT_SUCCESS( status )) {
+    status = RtlAnsiStringToUnicodeString(&NtSystemRoot, &ansiString, FALSE);
+    if (!NT_SUCCESS(status))
+    {
 
-        DbgPrint( "IOINIT: AnsiToUnicode( %Z ) failed - %x\n", &ansiString, status );
+        DbgPrint("IOINIT: AnsiToUnicode( %Z ) failed - %x\n", &ansiString, status);
 
         HeadlessKernelAddLogEntry(HEADLESS_LOG_ANSI_TO_UNICODE_FAILED, NULL);
         IopInitFailCode = 12;
@@ -825,38 +769,37 @@ Return Value:
     //
 
     return TRUE;
-
 }
 
-VOID
-IopSetIoRoutines()
+VOID IopSetIoRoutines()
 {
-    if (pIofCallDriver == NULL) {
+    if (pIofCallDriver == NULL)
+    {
 
         pIofCallDriver = IopfCallDriver;
     }
 
-    if (pIofCompleteRequest == NULL) {
+    if (pIofCompleteRequest == NULL)
+    {
 
         pIofCompleteRequest = IopfCompleteRequest;
     }
 
-    if (pIoAllocateIrp == NULL) {
+    if (pIoAllocateIrp == NULL)
+    {
 
         pIoAllocateIrp = IopAllocateIrpPrivate;
     }
 
-    if (pIoFreeIrp == NULL) {
+    if (pIoFreeIrp == NULL)
+    {
 
         pIoFreeIrp = IopFreeIrp;
     }
 }
 
-
-VOID
-IopCreateArcNames(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+
+VOID IopCreateArcNames(IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 
 /*++
 
@@ -923,8 +866,8 @@ Return Value:
     UNICODE_STRING osLoaderPathUnicodeString;
     PWSTR diskList = NULL;
     wchar_t *pDiskNameList;
-    STORAGE_DEVICE_NUMBER   pnpDiskDeviceNumber;
-    ULONG  diskSignature;
+    STORAGE_DEVICE_NUMBER pnpDiskDeviceNumber;
+    ULONG diskSignature;
 
 
     //
@@ -935,25 +878,28 @@ Return Value:
     pnpDiskDeviceNumber.DeviceNumber = 0xFFFFFFFF;
     status = IoGetDeviceInterfaces(&DiskClassGuid, NULL, 0, &diskList);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         useLegacyEnumeration = TRUE;
-        if (pDiskNameList) {
+        if (pDiskNameList)
+        {
             *pDiskNameList = L'\0';
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // count the number of disks returned
         //
 
         pDiskNameList = diskList;
-        while (*pDiskNameList != L'\0') {
+        while (*pDiskNameList != L'\0')
+        {
 
             totalPnpDisksFound++;
             pDiskNameList = pDiskNameList + (wcslen(pDiskNameList) + 1);
-
         }
 
         pDiskNameList = diskList;
@@ -965,10 +911,10 @@ Return Value:
         // for-loop also enumerate the non-pnp disks
         //
 
-        if (totalPnpDisksFound < totalDriverDisksFound) {
+        if (totalPnpDisksFound < totalDriverDisksFound)
+        {
             useLegacyEnumeration = TRUE;
         }
-
     }
 
     //
@@ -976,32 +922,34 @@ Return Value:
     // single entry on the disk signature list.
     //
 
-    singleBiosDiskFound = (arcInformation->DiskSignatures.Flink->Flink ==
-                           &arcInformation->DiskSignatures) ? (TRUE) : (FALSE);
+    singleBiosDiskFound =
+        (arcInformation->DiskSignatures.Flink->Flink == &arcInformation->DiskSignatures) ? (TRUE) : (FALSE);
 
 
     //
     // Create hal/loader partition name
     //
 
-    sprintf( arcNameBuffer, "\\ArcName\\%s", LoaderBlock->ArcHalDeviceName );
-    RtlInitAnsiString( &arcNameString, arcNameBuffer );
-    RtlAnsiStringToUnicodeString (&IoArcHalDeviceName, &arcNameString, TRUE);
+    sprintf(arcNameBuffer, "\\ArcName\\%s", LoaderBlock->ArcHalDeviceName);
+    RtlInitAnsiString(&arcNameString, arcNameBuffer);
+    RtlAnsiStringToUnicodeString(&IoArcHalDeviceName, &arcNameString, TRUE);
 
     //
     // Create boot partition name
     //
 
-    sprintf( arcNameBuffer, "\\ArcName\\%s", LoaderBlock->ArcBootDeviceName );
-    RtlInitAnsiString( &arcNameString, arcNameBuffer );
-    RtlAnsiStringToUnicodeString (&IoArcBootDeviceName, &arcNameString, TRUE);
-    i = strlen (LoaderBlock->ArcBootDeviceName) + 1;
-    IoLoaderArcBootDeviceName = ExAllocatePool (PagedPool, i);
-    if (IoLoaderArcBootDeviceName) {
-        memcpy (IoLoaderArcBootDeviceName, LoaderBlock->ArcBootDeviceName, i);
+    sprintf(arcNameBuffer, "\\ArcName\\%s", LoaderBlock->ArcBootDeviceName);
+    RtlInitAnsiString(&arcNameString, arcNameBuffer);
+    RtlAnsiStringToUnicodeString(&IoArcBootDeviceName, &arcNameString, TRUE);
+    i = strlen(LoaderBlock->ArcBootDeviceName) + 1;
+    IoLoaderArcBootDeviceName = ExAllocatePool(PagedPool, i);
+    if (IoLoaderArcBootDeviceName)
+    {
+        memcpy(IoLoaderArcBootDeviceName, LoaderBlock->ArcBootDeviceName, i);
     }
 
-    if (singleBiosDiskFound && strstr(LoaderBlock->ArcBootDeviceName, "cdrom")) {
+    if (singleBiosDiskFound && strstr(LoaderBlock->ArcBootDeviceName, "cdrom"))
+    {
         singleBiosDiskFound = FALSE;
     }
 
@@ -1009,72 +957,65 @@ Return Value:
     // Get ARC boot device name from loader block.
     //
 
-    RtlInitAnsiString( &arcBootDeviceString,
-                       LoaderBlock->ArcBootDeviceName );
+    RtlInitAnsiString(&arcBootDeviceString, LoaderBlock->ArcBootDeviceName);
 
     //
     // Get ARC system device name from loader block.
     //
 
-    RtlInitAnsiString( &arcSystemDeviceString,
-                       LoaderBlock->ArcHalDeviceName );
+    RtlInitAnsiString(&arcSystemDeviceString, LoaderBlock->ArcHalDeviceName);
 
     //
     // If this is a remote boot, create an ArcName for the redirector path.
     //
 
-    if (IoRemoteBootClient) {
+    if (IoRemoteBootClient)
+    {
 
         bootDiskFound = TRUE;
 
-        RtlInitAnsiString( &deviceNameString, "\\Device\\LanmanRedirector" );
-        status = RtlAnsiStringToUnicodeString( &deviceNameUnicodeString,
-                                               &deviceNameString,
-                                               TRUE );
+        RtlInitAnsiString(&deviceNameString, "\\Device\\LanmanRedirector");
+        status = RtlAnsiStringToUnicodeString(&deviceNameUnicodeString, &deviceNameString, TRUE);
 
-        if (NT_SUCCESS( status )) {
+        if (NT_SUCCESS(status))
+        {
 
-            sprintf( arcNameBuffer,
-                     "\\ArcName\\%s",
-                     LoaderBlock->ArcBootDeviceName );
-            RtlInitAnsiString( &arcNameString, arcNameBuffer );
-            status = RtlAnsiStringToUnicodeString( &arcNameUnicodeString,
-                                                   &arcNameString,
-                                                   TRUE );
-            if (NT_SUCCESS( status )) {
+            sprintf(arcNameBuffer, "\\ArcName\\%s", LoaderBlock->ArcBootDeviceName);
+            RtlInitAnsiString(&arcNameString, arcNameBuffer);
+            status = RtlAnsiStringToUnicodeString(&arcNameUnicodeString, &arcNameString, TRUE);
+            if (NT_SUCCESS(status))
+            {
 
                 //
                 // Create symbolic link between NT device name and ARC name.
                 //
 
-                IoCreateSymbolicLink( &arcNameUnicodeString,
-                                      &deviceNameUnicodeString );
-                RtlFreeUnicodeString( &arcNameUnicodeString );
+                IoCreateSymbolicLink(&arcNameUnicodeString, &deviceNameUnicodeString);
+                RtlFreeUnicodeString(&arcNameUnicodeString);
 
                 //
                 // We've found the system partition--store it away in the registry
                 // to later be transferred to a application-friendly location.
                 //
-                RtlInitAnsiString( &osLoaderPathString, LoaderBlock->NtHalPathName );
-                status = RtlAnsiStringToUnicodeString( &osLoaderPathUnicodeString,
-                                                       &osLoaderPathString,
-                                                       TRUE );
+                RtlInitAnsiString(&osLoaderPathString, LoaderBlock->NtHalPathName);
+                status = RtlAnsiStringToUnicodeString(&osLoaderPathUnicodeString, &osLoaderPathString, TRUE);
 
 #if DBG
-                if (!NT_SUCCESS( status )) {
+                if (!NT_SUCCESS(status))
+                {
                     DbgPrint("IopCreateArcNames: couldn't allocate unicode string for OsLoader path - %x\n", status);
                 }
 #endif // DBG
-                if (NT_SUCCESS( status )) {
+                if (NT_SUCCESS(status))
+                {
 
-                    IopStoreSystemPartitionInformation( &deviceNameUnicodeString,
-                                                        &osLoaderPathUnicodeString );
+                    IopStoreSystemPartitionInformation(&deviceNameUnicodeString, &osLoaderPathUnicodeString);
 
-                    RtlFreeUnicodeString( &osLoaderPathUnicodeString );
+                    RtlFreeUnicodeString(&osLoaderPathUnicodeString);
                 }
             }
 
-            RtlFreeUnicodeString( &deviceNameUnicodeString );
+            RtlFreeUnicodeString(&deviceNameUnicodeString);
         }
     }
 
@@ -1095,26 +1036,27 @@ Return Value:
     // Additional note: Legacy disks get assigned symbolic links AFTER all pnp enumeration is complete
     //
 
-    totalDriverDisksFound = max(totalPnpDisksFound,totalDriverDisksFound);
+    totalDriverDisksFound = max(totalPnpDisksFound, totalDriverDisksFound);
 
-    if (useLegacyEnumeration && (totalPnpDisksFound == 0)) {
+    if (useLegacyEnumeration && (totalPnpDisksFound == 0))
+    {
 
         //
         // search up to a maximum arbitrary number of legacy disks
         //
 
-        totalDriverDisksFound +=20;
+        totalDriverDisksFound += 20;
     }
 
-    for (diskNumber = 0;
-         diskNumber < totalDriverDisksFound;
-         diskNumber++) {
+    for (diskNumber = 0; diskNumber < totalDriverDisksFound; diskNumber++)
+    {
 
         //
         // Construct the NT name for a disk and obtain a reference.
         //
 
-        if (pDiskNameList && (*pDiskNameList != L'\0')) {
+        if (pDiskNameList && (*pDiskNameList != L'\0'))
+        {
 
             //
             // retrieve the first symbolic linkname from the PNP disk list
@@ -1123,12 +1065,11 @@ Return Value:
             RtlInitUnicodeString(&deviceNameUnicodeString, pDiskNameList);
             pDiskNameList = pDiskNameList + (wcslen(pDiskNameList) + 1);
 
-            status = IoGetDeviceObjectPointer( &deviceNameUnicodeString,
-                                               FILE_READ_ATTRIBUTES,
-                                               &fileObject,
-                                               &deviceObject );
+            status =
+                IoGetDeviceObjectPointer(&deviceNameUnicodeString, FILE_READ_ATTRIBUTES, &fileObject, &deviceObject);
 
-            if (NT_SUCCESS(status)) {
+            if (NT_SUCCESS(status))
+            {
 
                 //
                 // since PNP gave s just asym link we have to retrieve the actual
@@ -1136,43 +1077,33 @@ Return Value:
                 // Create IRP for get device number device control.
                 //
 
-                irp = IoBuildDeviceIoControlRequest( IOCTL_STORAGE_GET_DEVICE_NUMBER,
-                                                     deviceObject,
-                                                     NULL,
-                                                     0,
-                                                     &pnpDiskDeviceNumber,
-                                                     sizeof(STORAGE_DEVICE_NUMBER),
-                                                     FALSE,
-                                                     &event,
-                                                     &ioStatusBlock );
-                if (!irp) {
-                    ObDereferenceObject( fileObject );
+                irp = IoBuildDeviceIoControlRequest(IOCTL_STORAGE_GET_DEVICE_NUMBER, deviceObject, NULL, 0,
+                                                    &pnpDiskDeviceNumber, sizeof(STORAGE_DEVICE_NUMBER), FALSE, &event,
+                                                    &ioStatusBlock);
+                if (!irp)
+                {
+                    ObDereferenceObject(fileObject);
                     continue;
                 }
 
-                KeInitializeEvent( &event,
-                                   NotificationEvent,
-                                   FALSE );
-                status = IoCallDriver( deviceObject,
-                                       irp );
+                KeInitializeEvent(&event, NotificationEvent, FALSE);
+                status = IoCallDriver(deviceObject, irp);
 
-                if (status == STATUS_PENDING) {
-                    KeWaitForSingleObject( &event,
-                                           Executive,
-                                           KernelMode,
-                                           FALSE,
-                                           NULL );
+                if (status == STATUS_PENDING)
+                {
+                    KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
                     status = ioStatusBlock.Status;
                 }
 
-                if (!NT_SUCCESS( status )) {
-                    ObDereferenceObject( fileObject );
+                if (!NT_SUCCESS(status))
+                {
+                    ObDereferenceObject(fileObject);
                     continue;
                 }
-
             }
 
-            if (useLegacyEnumeration && (*pDiskNameList == L'\0') ) {
+            if (useLegacyEnumeration && (*pDiskNameList == L'\0'))
+            {
 
                 //
                 // end of pnp disks
@@ -1181,45 +1112,41 @@ Return Value:
                 // a legacy disk could be at. (in a sparse name space)
                 //
 
-                if (pnpDiskDeviceNumber.DeviceNumber == 0xFFFFFFFF) {
+                if (pnpDiskDeviceNumber.DeviceNumber == 0xFFFFFFFF)
+                {
                     pnpDiskDeviceNumber.DeviceNumber = 0;
                 }
 
-                diskNumber = max(diskNumber,pnpDiskDeviceNumber.DeviceNumber);
+                diskNumber = max(diskNumber, pnpDiskDeviceNumber.DeviceNumber);
                 totalDriverDisksFound = diskNumber + 20;
-
             }
+        }
+        else
+        {
 
-        } else {
-
-            sprintf( deviceNameBuffer,
-                     "\\Device\\Harddisk%d\\Partition0",
-                     diskNumber );
-            RtlInitAnsiString( &deviceNameString, deviceNameBuffer );
-            status = RtlAnsiStringToUnicodeString( &deviceNameUnicodeString,
-                                                   &deviceNameString,
-                                                   TRUE );
-            if (!NT_SUCCESS( status )) {
+            sprintf(deviceNameBuffer, "\\Device\\Harddisk%d\\Partition0", diskNumber);
+            RtlInitAnsiString(&deviceNameString, deviceNameBuffer);
+            status = RtlAnsiStringToUnicodeString(&deviceNameUnicodeString, &deviceNameString, TRUE);
+            if (!NT_SUCCESS(status))
+            {
                 continue;
             }
 
-            status = IoGetDeviceObjectPointer( &deviceNameUnicodeString,
-                                               FILE_READ_ATTRIBUTES,
-                                               &fileObject,
-                                               &deviceObject );
+            status =
+                IoGetDeviceObjectPointer(&deviceNameUnicodeString, FILE_READ_ATTRIBUTES, &fileObject, &deviceObject);
 
-            RtlFreeUnicodeString( &deviceNameUnicodeString );
+            RtlFreeUnicodeString(&deviceNameUnicodeString);
 
             //
             // set the pnpDiskNumber value so its not used.
             //
 
             pnpDiskDeviceNumber.DeviceNumber = 0xFFFFFFFF;
-
         }
 
 
-        if (!NT_SUCCESS( status )) {
+        if (!NT_SUCCESS(status))
+        {
 
             continue;
         }
@@ -1228,37 +1155,26 @@ Return Value:
         // Create IRP for get drive geometry device control.
         //
 
-        irp = IoBuildDeviceIoControlRequest( IOCTL_DISK_GET_DRIVE_GEOMETRY,
-                                             deviceObject,
-                                             NULL,
-                                             0,
-                                             &diskGeometry,
-                                             sizeof(DISK_GEOMETRY),
-                                             FALSE,
-                                             &event,
-                                             &ioStatusBlock );
-        if (!irp) {
-            ObDereferenceObject( fileObject );
+        irp = IoBuildDeviceIoControlRequest(IOCTL_DISK_GET_DRIVE_GEOMETRY, deviceObject, NULL, 0, &diskGeometry,
+                                            sizeof(DISK_GEOMETRY), FALSE, &event, &ioStatusBlock);
+        if (!irp)
+        {
+            ObDereferenceObject(fileObject);
             continue;
         }
 
-        KeInitializeEvent( &event,
-                           NotificationEvent,
-                           FALSE );
-        status = IoCallDriver( deviceObject,
-                               irp );
+        KeInitializeEvent(&event, NotificationEvent, FALSE);
+        status = IoCallDriver(deviceObject, irp);
 
-        if (status == STATUS_PENDING) {
-            KeWaitForSingleObject( &event,
-                                   Executive,
-                                   KernelMode,
-                                   FALSE,
-                                   NULL );
+        if (status == STATUS_PENDING)
+        {
+            KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
             status = ioStatusBlock.Status;
         }
 
-        if (!NT_SUCCESS( status )) {
-            ObDereferenceObject( fileObject );
+        if (!NT_SUCCESS(status))
+        {
+            ObDereferenceObject(fileObject);
             continue;
         }
 
@@ -1267,12 +1183,12 @@ Return Value:
         //
 
 
-        status = IoReadPartitionTableEx(deviceObject,
-                                       &driveLayout );
+        status = IoReadPartitionTableEx(deviceObject, &driveLayout);
 
 
-        if (!NT_SUCCESS( status )) {
-            ObDereferenceObject( fileObject );
+        if (!NT_SUCCESS(status))
+        {
+            ObDereferenceObject(fileObject);
             continue;
         }
 
@@ -1281,7 +1197,8 @@ Return Value:
         // Make sure sector size is at least 512 bytes.
         //
 
-        if (diskGeometry.BytesPerSector < 512) {
+        if (diskGeometry.BytesPerSector < 512)
+        {
             diskGeometry.BytesPerSector = 512;
         }
 
@@ -1294,12 +1211,10 @@ Return Value:
         //
 
         offset.QuadPart = 0;
-        HalExamineMBR( deviceObject,
-                       diskGeometry.BytesPerSector,
-                       (ULONG)0x55,
-                       &tmpPtr );
+        HalExamineMBR(deviceObject, diskGeometry.BytesPerSector, (ULONG)0x55, &tmpPtr);
 
-        if (tmpPtr) {
+        if (tmpPtr)
+        {
 
             offset.QuadPart = diskGeometry.BytesPerSector;
             ExFreePool(tmpPtr);
@@ -1309,58 +1224,52 @@ Return Value:
         // Allocate buffer for sector read and construct the read request.
         //
 
-        buffer = ExAllocatePool( NonPagedPoolCacheAlignedMustS,
-                                 diskGeometry.BytesPerSector );
+        buffer = ExAllocatePool(NonPagedPoolCacheAlignedMustS, diskGeometry.BytesPerSector);
 
-        if (buffer) {
-            irp = IoBuildSynchronousFsdRequest( IRP_MJ_READ,
-                                                deviceObject,
-                                                buffer,
-                                                diskGeometry.BytesPerSector,
-                                                &offset,
-                                                &event,
-                                                &ioStatusBlock );
+        if (buffer)
+        {
+            irp = IoBuildSynchronousFsdRequest(IRP_MJ_READ, deviceObject, buffer, diskGeometry.BytesPerSector, &offset,
+                                               &event, &ioStatusBlock);
 
-            if (!irp) {
+            if (!irp)
+            {
                 ExFreePool(driveLayout);
                 ExFreePool(buffer);
-                ObDereferenceObject( fileObject );
+                ObDereferenceObject(fileObject);
                 continue;
             }
-        } else {
+        }
+        else
+        {
             ExFreePool(driveLayout);
-            ObDereferenceObject( fileObject );
+            ObDereferenceObject(fileObject);
             continue;
         }
-        KeInitializeEvent( &event,
-                           NotificationEvent,
-                           FALSE );
-        status = IoCallDriver( deviceObject,
-                               irp );
-        if (status == STATUS_PENDING) {
-            KeWaitForSingleObject( &event,
-                                   Executive,
-                                   KernelMode,
-                                   FALSE,
-                                   NULL );
+        KeInitializeEvent(&event, NotificationEvent, FALSE);
+        status = IoCallDriver(deviceObject, irp);
+        if (status == STATUS_PENDING)
+        {
+            KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
             status = ioStatusBlock.Status;
         }
 
-        if (!NT_SUCCESS( status )) {
+        if (!NT_SUCCESS(status))
+        {
             ExFreePool(driveLayout);
             ExFreePool(buffer);
-            ObDereferenceObject( fileObject );
+            ObDereferenceObject(fileObject);
             continue;
         }
 
-        ObDereferenceObject( fileObject );
+        ObDereferenceObject(fileObject);
 
         //
         // Calculate MBR sector checksum.  Only 512 bytes are used.
         //
 
         checkSum = 0;
-        for (i = 0; i < 128; i++) {
+        for (i = 0; i < 128; i++)
+        {
             checkSum += buffer[i];
         }
 
@@ -1370,17 +1279,15 @@ Return Value:
         // name and construct the NT ARC names symbolic links.
         //
 
-        for (listEntry = arcInformation->DiskSignatures.Flink;
-             listEntry != &arcInformation->DiskSignatures;
-             listEntry = listEntry->Flink) {
+        for (listEntry = arcInformation->DiskSignatures.Flink; listEntry != &arcInformation->DiskSignatures;
+             listEntry = listEntry->Flink)
+        {
 
             //
             // Get next record and compare disk signatures.
             //
 
-            diskBlock = CONTAINING_RECORD( listEntry,
-                                           ARC_DISK_SIGNATURE,
-                                           ListEntry );
+            diskBlock = CONTAINING_RECORD(listEntry, ARC_DISK_SIGNATURE, ListEntry);
 
             //
             // Compare disk signatures.
@@ -1391,37 +1298,31 @@ Return Value:
             //
 
 
-
-            if ((singleBiosDiskFound && 
-                 (totalDriverDisksFound == 1) && 
+            if ((singleBiosDiskFound && (totalDriverDisksFound == 1) &&
                  (driveLayout->PartitionStyle == PARTITION_STYLE_MBR)) ||
 
-                (IopVerifyDiskSignature(driveLayout, diskBlock, &diskSignature) &&
-                 !(diskBlock->CheckSum + checkSum))) {
+                (IopVerifyDiskSignature(driveLayout, diskBlock, &diskSignature) && !(diskBlock->CheckSum + checkSum)))
+            {
 
                 //
                 // Create unicode device name for physical disk.
                 //
 
-                if (pnpDiskDeviceNumber.DeviceNumber == 0xFFFFFFFF) {
+                if (pnpDiskDeviceNumber.DeviceNumber == 0xFFFFFFFF)
+                {
 
-                    sprintf( deviceNameBuffer,
-                             "\\Device\\Harddisk%d\\Partition0",
-                             diskNumber );
+                    sprintf(deviceNameBuffer, "\\Device\\Harddisk%d\\Partition0", diskNumber);
+                }
+                else
+                {
 
-                } else {
-
-                    sprintf( deviceNameBuffer,
-                             "\\Device\\Harddisk%d\\Partition0",
-                             pnpDiskDeviceNumber.DeviceNumber );
-
+                    sprintf(deviceNameBuffer, "\\Device\\Harddisk%d\\Partition0", pnpDiskDeviceNumber.DeviceNumber);
                 }
 
-                RtlInitAnsiString( &deviceNameString, deviceNameBuffer );
-                status = RtlAnsiStringToUnicodeString( &deviceNameUnicodeString,
-                                                       &deviceNameString,
-                                                       TRUE );
-                if (!NT_SUCCESS( status )) {
+                RtlInitAnsiString(&deviceNameString, deviceNameBuffer);
+                status = RtlAnsiStringToUnicodeString(&deviceNameUnicodeString, &deviceNameString, TRUE);
+                if (!NT_SUCCESS(status))
+                {
                     continue;
                 }
 
@@ -1430,14 +1331,11 @@ Return Value:
                 //
 
                 arcName = diskBlock->ArcName;
-                sprintf( arcNameBuffer,
-                         "\\ArcName\\%s",
-                         arcName );
-                RtlInitAnsiString( &arcNameString, arcNameBuffer );
-                status = RtlAnsiStringToUnicodeString( &arcNameUnicodeString,
-                                                       &arcNameString,
-                                                       TRUE );
-                if (!NT_SUCCESS( status )) {
+                sprintf(arcNameBuffer, "\\ArcName\\%s", arcName);
+                RtlInitAnsiString(&arcNameString, arcNameBuffer);
+                status = RtlAnsiStringToUnicodeString(&arcNameUnicodeString, &arcNameString, TRUE);
+                if (!NT_SUCCESS(status))
+                {
                     continue;
                 }
 
@@ -1445,45 +1343,37 @@ Return Value:
                 // Create symbolic link between NT device name and ARC name.
                 //
 
-                IoCreateSymbolicLink( &arcNameUnicodeString,
-                                      &deviceNameUnicodeString );
-                RtlFreeUnicodeString( &arcNameUnicodeString );
-                RtlFreeUnicodeString( &deviceNameUnicodeString );
+                IoCreateSymbolicLink(&arcNameUnicodeString, &deviceNameUnicodeString);
+                RtlFreeUnicodeString(&arcNameUnicodeString);
+                RtlFreeUnicodeString(&deviceNameUnicodeString);
 
                 //
                 // Create an ARC name for every partition on this disk.
                 //
 
-                for (partitionNumber = 0;
-                     partitionNumber < driveLayout->PartitionCount;
-                     partitionNumber++) {
+                for (partitionNumber = 0; partitionNumber < driveLayout->PartitionCount; partitionNumber++)
+                {
 
                     //
                     // Create unicode NT device name.
                     //
 
-                    if (pnpDiskDeviceNumber.DeviceNumber == 0xFFFFFFFF) {
+                    if (pnpDiskDeviceNumber.DeviceNumber == 0xFFFFFFFF)
+                    {
 
-                        sprintf( deviceNameBuffer,
-                                 "\\Device\\Harddisk%d\\Partition%d",
-                                 diskNumber,
-                                 partitionNumber+1 );
+                        sprintf(deviceNameBuffer, "\\Device\\Harddisk%d\\Partition%d", diskNumber, partitionNumber + 1);
+                    }
+                    else
+                    {
 
-
-                    } else {
-
-                        sprintf( deviceNameBuffer,
-                                 "\\Device\\Harddisk%d\\Partition%d",
-                                 pnpDiskDeviceNumber.DeviceNumber,
-                                 partitionNumber+1 );
-
+                        sprintf(deviceNameBuffer, "\\Device\\Harddisk%d\\Partition%d", pnpDiskDeviceNumber.DeviceNumber,
+                                partitionNumber + 1);
                     }
 
-                    RtlInitAnsiString( &deviceNameString, deviceNameBuffer );
-                    status = RtlAnsiStringToUnicodeString( &deviceNameUnicodeString,
-                                                           &deviceNameString,
-                                                           TRUE );
-                    if (!NT_SUCCESS( status )) {
+                    RtlInitAnsiString(&deviceNameString, deviceNameBuffer);
+                    status = RtlAnsiStringToUnicodeString(&deviceNameUnicodeString, &deviceNameString, TRUE);
+                    if (!NT_SUCCESS(status))
+                    {
                         continue;
                     }
 
@@ -1492,43 +1382,38 @@ Return Value:
                     // check to see if this is the boot disk.
                     //
 
-                    sprintf( arcNameBuffer,
-                             "%spartition(%d)",
-                             arcName,
-                             partitionNumber+1 );
-                    RtlInitAnsiString( &arcNameString, arcNameBuffer );
-                    if (RtlEqualString( &arcNameString,
-                                        &arcBootDeviceString,
-                                        TRUE )) {
+                    sprintf(arcNameBuffer, "%spartition(%d)", arcName, partitionNumber + 1);
+                    RtlInitAnsiString(&arcNameString, arcNameBuffer);
+                    if (RtlEqualString(&arcNameString, &arcBootDeviceString, TRUE))
+                    {
                         bootDiskFound = TRUE;
                     }
 
                     //
                     // See if this is the system partition.
                     //
-                    if (RtlEqualString( &arcNameString,
-                                        &arcSystemDeviceString,
-                                        TRUE )) {
+                    if (RtlEqualString(&arcNameString, &arcSystemDeviceString, TRUE))
+                    {
                         //
                         // We've found the system partition--store it away in the registry
                         // to later be transferred to a application-friendly location.
                         //
-                        RtlInitAnsiString( &osLoaderPathString, LoaderBlock->NtHalPathName );
-                        status = RtlAnsiStringToUnicodeString( &osLoaderPathUnicodeString,
-                                                               &osLoaderPathString,
-                                                               TRUE );
+                        RtlInitAnsiString(&osLoaderPathString, LoaderBlock->NtHalPathName);
+                        status = RtlAnsiStringToUnicodeString(&osLoaderPathUnicodeString, &osLoaderPathString, TRUE);
 
 #if DBG
-                        if (!NT_SUCCESS( status )) {
-                            DbgPrint("IopCreateArcNames: couldn't allocate unicode string for OsLoader path - %x\n", status);
+                        if (!NT_SUCCESS(status))
+                        {
+                            DbgPrint("IopCreateArcNames: couldn't allocate unicode string for OsLoader path - %x\n",
+                                     status);
                         }
 #endif // DBG
-                        if (NT_SUCCESS( status )) {
+                        if (NT_SUCCESS(status))
+                        {
 
-                            IopStoreSystemPartitionInformation( &deviceNameUnicodeString,
-                                                                &osLoaderPathUnicodeString );
+                            IopStoreSystemPartitionInformation(&deviceNameUnicodeString, &osLoaderPathUnicodeString);
 
-                            RtlFreeUnicodeString( &osLoaderPathUnicodeString );
+                            RtlFreeUnicodeString(&osLoaderPathUnicodeString);
                         }
                     }
 
@@ -1536,15 +1421,11 @@ Return Value:
                     // Add the NT ARC namespace prefix to the ARC name constructed.
                     //
 
-                    sprintf( arcNameBuffer,
-                             "\\ArcName\\%spartition(%d)",
-                             arcName,
-                             partitionNumber+1 );
-                    RtlInitAnsiString( &arcNameString, arcNameBuffer );
-                    status = RtlAnsiStringToUnicodeString( &arcNameUnicodeString,
-                                                           &arcNameString,
-                                                           TRUE );
-                    if (!NT_SUCCESS( status )) {
+                    sprintf(arcNameBuffer, "\\ArcName\\%spartition(%d)", arcName, partitionNumber + 1);
+                    RtlInitAnsiString(&arcNameString, arcNameBuffer);
+                    status = RtlAnsiStringToUnicodeString(&arcNameUnicodeString, &arcNameString, TRUE);
+                    if (!NT_SUCCESS(status))
+                    {
                         continue;
                     }
 
@@ -1552,13 +1433,13 @@ Return Value:
                     // Create symbolic link between NT device name and ARC name.
                     //
 
-                    IoCreateSymbolicLink( &arcNameUnicodeString,
-                                          &deviceNameUnicodeString );
-                    RtlFreeUnicodeString( &arcNameUnicodeString );
-                    RtlFreeUnicodeString( &deviceNameUnicodeString );
+                    IoCreateSymbolicLink(&arcNameUnicodeString, &deviceNameUnicodeString);
+                    RtlFreeUnicodeString(&arcNameUnicodeString);
+                    RtlFreeUnicodeString(&deviceNameUnicodeString);
                 }
-
-            } else {
+            }
+            else
+            {
 
 #if DBG
                 //
@@ -1566,40 +1447,41 @@ Return Value:
                 // caused by a viral infection.
                 //
 
-                if (diskBlock->Signature == diskSignature &&
-                    (diskBlock->CheckSum + checkSum) != 0 &&
-                    diskBlock->ValidPartitionTable) {
+                if (diskBlock->Signature == diskSignature && (diskBlock->CheckSum + checkSum) != 0 &&
+                    diskBlock->ValidPartitionTable)
+                {
                     DbgPrint("IopCreateArcNames: Virus or duplicate disk signatures\n");
                 }
 #endif
             }
         }
 
-        ExFreePool( driveLayout );
-        ExFreePool( buffer );
+        ExFreePool(driveLayout);
+        ExFreePool(buffer);
     }
 
-    if (!bootDiskFound) {
+    if (!bootDiskFound)
+    {
 
         //
         // Locate the disk block that represents the boot device.
         //
 
         diskBlock = NULL;
-        for (listEntry = arcInformation->DiskSignatures.Flink;
-             listEntry != &arcInformation->DiskSignatures;
-             listEntry = listEntry->Flink) {
+        for (listEntry = arcInformation->DiskSignatures.Flink; listEntry != &arcInformation->DiskSignatures;
+             listEntry = listEntry->Flink)
+        {
 
-            diskBlock = CONTAINING_RECORD( listEntry,
-                                           ARC_DISK_SIGNATURE,
-                                           ListEntry );
-            if (strcmp( diskBlock->ArcName, LoaderBlock->ArcBootDeviceName ) == 0) {
+            diskBlock = CONTAINING_RECORD(listEntry, ARC_DISK_SIGNATURE, ListEntry);
+            if (strcmp(diskBlock->ArcName, LoaderBlock->ArcBootDeviceName) == 0)
+            {
                 break;
             }
             diskBlock = NULL;
         }
 
-        if (diskBlock) {
+        if (diskBlock)
+        {
 
             //
             // This could be a CdRom boot.  Search all of the NT CdRoms
@@ -1608,9 +1490,9 @@ Return Value:
             //
 
             irp = NULL;
-            buffer = ExAllocatePool( NonPagedPoolCacheAlignedMustS,
-                                     2048 );
-            if (buffer) {
+            buffer = ExAllocatePool(NonPagedPoolCacheAlignedMustS, 2048);
+            if (buffer)
+            {
 
                 //
                 // Construct the NT names for CdRoms and search each one
@@ -1618,29 +1500,26 @@ Return Value:
                 // symbolic link.
                 //
 
-                for (diskNumber = 0; TRUE; diskNumber++) {
+                for (diskNumber = 0; TRUE; diskNumber++)
+                {
 
-                    sprintf( deviceNameBuffer,
-                             "\\Device\\CdRom%d",
-                             diskNumber );
+                    sprintf(deviceNameBuffer, "\\Device\\CdRom%d", diskNumber);
 
-                    RtlInitAnsiString( &deviceNameString, deviceNameBuffer );
-                    status = RtlAnsiStringToUnicodeString( &deviceNameUnicodeString,
-                                                           &deviceNameString,
-                                                           TRUE );
-                    if (NT_SUCCESS( status )) {
+                    RtlInitAnsiString(&deviceNameString, deviceNameBuffer);
+                    status = RtlAnsiStringToUnicodeString(&deviceNameUnicodeString, &deviceNameString, TRUE);
+                    if (NT_SUCCESS(status))
+                    {
 
-                        status = IoGetDeviceObjectPointer( &deviceNameUnicodeString,
-                                                           FILE_READ_ATTRIBUTES,
-                                                           &fileObject,
-                                                           &deviceObject );
-                        if (!NT_SUCCESS( status )) {
+                        status = IoGetDeviceObjectPointer(&deviceNameUnicodeString, FILE_READ_ATTRIBUTES, &fileObject,
+                                                          &deviceObject);
+                        if (!NT_SUCCESS(status))
+                        {
 
                             //
                             // All CdRoms have been processed.
                             //
 
-                            RtlFreeUnicodeString( &deviceNameUnicodeString );
+                            RtlFreeUnicodeString(&deviceNameUnicodeString);
                             break;
                         }
 
@@ -1649,67 +1528,56 @@ Return Value:
                         //
 
                         offset.QuadPart = 0x8000;
-                        irp = IoBuildSynchronousFsdRequest( IRP_MJ_READ,
-                                                            deviceObject,
-                                                            buffer,
-                                                            2048,
-                                                            &offset,
-                                                            &event,
-                                                            &ioStatusBlock );
+                        irp = IoBuildSynchronousFsdRequest(IRP_MJ_READ, deviceObject, buffer, 2048, &offset, &event,
+                                                           &ioStatusBlock);
                         checkSum = 0;
-                        if (irp) {
-                            KeInitializeEvent( &event,
-                                               NotificationEvent,
-                                               FALSE );
-                            status = IoCallDriver( deviceObject,
-                                                   irp );
-                            if (status == STATUS_PENDING) {
-                                KeWaitForSingleObject( &event,
-                                                       Executive,
-                                                       KernelMode,
-                                                       FALSE,
-                                                       NULL );
+                        if (irp)
+                        {
+                            KeInitializeEvent(&event, NotificationEvent, FALSE);
+                            status = IoCallDriver(deviceObject, irp);
+                            if (status == STATUS_PENDING)
+                            {
+                                KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
                                 status = ioStatusBlock.Status;
                             }
 
-                            if (NT_SUCCESS( status )) {
+                            if (NT_SUCCESS(status))
+                            {
 
                                 //
                                 // Calculate MBR sector checksum.
                                 // 2048 bytes are used.
                                 //
 
-                                for (i = 0; i < 2048 / sizeof(ULONG) ; i++) {
+                                for (i = 0; i < 2048 / sizeof(ULONG); i++)
+                                {
                                     checkSum += buffer[i];
                                 }
                             }
                         }
-                        ObDereferenceObject( fileObject );
+                        ObDereferenceObject(fileObject);
 
-                        if (!(diskBlock->CheckSum + checkSum)) {
+                        if (!(diskBlock->CheckSum + checkSum))
+                        {
 
                             //
                             // This is the boot CdRom.  Create the symlink for
                             // the ARC name from the loader block.
                             //
 
-                            sprintf( arcNameBuffer,
-                                     "\\ArcName\\%s",
-                                     LoaderBlock->ArcBootDeviceName );
-                            RtlInitAnsiString( &arcNameString, arcNameBuffer );
-                            status = RtlAnsiStringToUnicodeString( &arcNameUnicodeString,
-                                                                   &arcNameString,
-                                                                   TRUE );
-                            if (NT_SUCCESS( status )) {
+                            sprintf(arcNameBuffer, "\\ArcName\\%s", LoaderBlock->ArcBootDeviceName);
+                            RtlInitAnsiString(&arcNameString, arcNameBuffer);
+                            status = RtlAnsiStringToUnicodeString(&arcNameUnicodeString, &arcNameString, TRUE);
+                            if (NT_SUCCESS(status))
+                            {
 
-                                IoCreateSymbolicLink( &arcNameUnicodeString,
-                                                      &deviceNameUnicodeString );
-                                RtlFreeUnicodeString( &arcNameUnicodeString );
+                                IoCreateSymbolicLink(&arcNameUnicodeString, &deviceNameUnicodeString);
+                                RtlFreeUnicodeString(&arcNameUnicodeString);
                             }
-                            RtlFreeUnicodeString( &deviceNameUnicodeString );
+                            RtlFreeUnicodeString(&deviceNameUnicodeString);
                             break;
                         }
-                        RtlFreeUnicodeString( &deviceNameUnicodeString );
+                        RtlFreeUnicodeString(&deviceNameUnicodeString);
                     }
                 }
                 ExFreePool(buffer);
@@ -1717,41 +1585,30 @@ Return Value:
         }
     }
 
-    if (diskList) {
+    if (diskList)
+    {
         ExFreePool(diskList);
     }
 }
-
+
 #ifdef ALLOC_DATA_PRAGMA
 #pragma const_seg("PAGECONST")
 #endif // ALLOC_DATA_PRAGMA
 const GENERIC_MAPPING IopFileMapping = {
-    STANDARD_RIGHTS_READ |
-        FILE_READ_DATA | FILE_READ_ATTRIBUTES | FILE_READ_EA | SYNCHRONIZE,
-    STANDARD_RIGHTS_WRITE |
-        FILE_WRITE_DATA | FILE_WRITE_ATTRIBUTES | FILE_WRITE_EA | FILE_APPEND_DATA | SYNCHRONIZE,
-    STANDARD_RIGHTS_EXECUTE |
-        SYNCHRONIZE | FILE_READ_ATTRIBUTES | FILE_EXECUTE,
-    FILE_ALL_ACCESS
+    STANDARD_RIGHTS_READ | FILE_READ_DATA | FILE_READ_ATTRIBUTES | FILE_READ_EA | SYNCHRONIZE,
+    STANDARD_RIGHTS_WRITE | FILE_WRITE_DATA | FILE_WRITE_ATTRIBUTES | FILE_WRITE_EA | FILE_APPEND_DATA | SYNCHRONIZE,
+    STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE | FILE_READ_ATTRIBUTES | FILE_EXECUTE, FILE_ALL_ACCESS
 };
 
 #ifdef ALLOC_DATA_PRAGMA
 #pragma const_seg("INITCONST")
 #endif // ALLOC_DATA_PRAGMA
-const GENERIC_MAPPING IopCompletionMapping = {
-    STANDARD_RIGHTS_READ |
-        IO_COMPLETION_QUERY_STATE,
-    STANDARD_RIGHTS_WRITE |
-        IO_COMPLETION_MODIFY_STATE,
-    STANDARD_RIGHTS_EXECUTE |
-        SYNCHRONIZE,
-    IO_COMPLETION_ALL_ACCESS
-};
+const GENERIC_MAPPING IopCompletionMapping = { STANDARD_RIGHTS_READ | IO_COMPLETION_QUERY_STATE,
+                                               STANDARD_RIGHTS_WRITE | IO_COMPLETION_MODIFY_STATE,
+                                               STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE, IO_COMPLETION_ALL_ACCESS };
 
 BOOLEAN
-IopCreateObjectTypes(
-    VOID
-    )
+IopCreateObjectTypes(VOID)
 
 /*++
 
@@ -1787,8 +1644,8 @@ Return Value:
     // Initialize the common fields of the Object Type Initializer record
     //
 
-    RtlZeroMemory( &objectTypeInitializer, sizeof( objectTypeInitializer ) );
-    objectTypeInitializer.Length = sizeof( objectTypeInitializer );
+    RtlZeroMemory(&objectTypeInitializer, sizeof(objectTypeInitializer));
+    objectTypeInitializer.Length = sizeof(objectTypeInitializer);
     objectTypeInitializer.InvalidAttributes = OBJ_OPENLINK;
     objectTypeInitializer.GenericMapping = IopFileMapping;
     objectTypeInitializer.PoolType = NonPagedPool;
@@ -1800,12 +1657,11 @@ Return Value:
     // Create the object type for adapter objects.
     //
 
-    RtlInitUnicodeString( &nameString, L"Adapter" );
+    RtlInitUnicodeString(&nameString, L"Adapter");
     // objectTypeInitializer.DefaultNonPagedPoolCharge = sizeof( struct _ADAPTER_OBJECT );
-    if (!NT_SUCCESS( ObCreateObjectType( &nameString,
-                                      &objectTypeInitializer,
-                                      (PSECURITY_DESCRIPTOR) NULL,
-                                      &IoAdapterObjectType ))) {
+    if (!NT_SUCCESS(
+            ObCreateObjectType(&nameString, &objectTypeInitializer, (PSECURITY_DESCRIPTOR)NULL, &IoAdapterObjectType)))
+    {
         return FALSE;
     }
 
@@ -1815,11 +1671,10 @@ Return Value:
     // Create the object type for device helper objects.
     //
 
-    RtlInitUnicodeString( &nameString, L"DeviceHandler" );
-    if (!NT_SUCCESS( ObCreateObjectType( &nameString,
-                                      &objectTypeInitializer,
-                                      (PSECURITY_DESCRIPTOR) NULL,
-                                      &IoDeviceHandlerObjectType ))) {
+    RtlInitUnicodeString(&nameString, L"DeviceHandler");
+    if (!NT_SUCCESS(ObCreateObjectType(&nameString, &objectTypeInitializer, (PSECURITY_DESCRIPTOR)NULL,
+                                       &IoDeviceHandlerObjectType)))
+    {
         return FALSE;
     }
     IoDeviceHandlerObjectSize = sizeof(DEVICE_HANDLER_OBJECT);
@@ -1830,12 +1685,11 @@ Return Value:
     // Create the object type for controller objects.
     //
 
-    RtlInitUnicodeString( &nameString, L"Controller" );
-    objectTypeInitializer.DefaultNonPagedPoolCharge = sizeof( CONTROLLER_OBJECT );
-    if (!NT_SUCCESS( ObCreateObjectType( &nameString,
-                                      &objectTypeInitializer,
-                                      (PSECURITY_DESCRIPTOR) NULL,
-                                      &IoControllerObjectType ))) {
+    RtlInitUnicodeString(&nameString, L"Controller");
+    objectTypeInitializer.DefaultNonPagedPoolCharge = sizeof(CONTROLLER_OBJECT);
+    if (!NT_SUCCESS(ObCreateObjectType(&nameString, &objectTypeInitializer, (PSECURITY_DESCRIPTOR)NULL,
+                                       &IoControllerObjectType)))
+    {
         return FALSE;
     }
 
@@ -1843,17 +1697,16 @@ Return Value:
     // Create the object type for device objects.
     //
 
-    RtlInitUnicodeString( &nameString, L"Device" );
-    objectTypeInitializer.DefaultNonPagedPoolCharge = sizeof( DEVICE_OBJECT );
+    RtlInitUnicodeString(&nameString, L"Device");
+    objectTypeInitializer.DefaultNonPagedPoolCharge = sizeof(DEVICE_OBJECT);
     objectTypeInitializer.ParseProcedure = IopParseDevice;
     objectTypeInitializer.CaseInsensitive = TRUE;
     objectTypeInitializer.DeleteProcedure = IopDeleteDevice;
     objectTypeInitializer.SecurityProcedure = IopGetSetSecurityObject;
     objectTypeInitializer.QueryNameProcedure = (OB_QUERYNAME_METHOD)NULL;
-    if (!NT_SUCCESS( ObCreateObjectType( &nameString,
-                                      &objectTypeInitializer,
-                                      (PSECURITY_DESCRIPTOR) NULL,
-                                      &IoDeviceObjectType ))) {
+    if (!NT_SUCCESS(
+            ObCreateObjectType(&nameString, &objectTypeInitializer, (PSECURITY_DESCRIPTOR)NULL, &IoDeviceObjectType)))
+    {
         return FALSE;
     }
 
@@ -1861,25 +1714,25 @@ Return Value:
     // Create the object type for driver objects.
     //
 
-    RtlInitUnicodeString( &nameString, L"Driver" );
-    objectTypeInitializer.DefaultNonPagedPoolCharge = sizeof( DRIVER_OBJECT );
-    objectTypeInitializer.ParseProcedure = (OB_PARSE_METHOD) NULL;
+    RtlInitUnicodeString(&nameString, L"Driver");
+    objectTypeInitializer.DefaultNonPagedPoolCharge = sizeof(DRIVER_OBJECT);
+    objectTypeInitializer.ParseProcedure = (OB_PARSE_METHOD)NULL;
     objectTypeInitializer.DeleteProcedure = IopDeleteDriver;
-    objectTypeInitializer.SecurityProcedure = (OB_SECURITY_METHOD) NULL;
+    objectTypeInitializer.SecurityProcedure = (OB_SECURITY_METHOD)NULL;
     objectTypeInitializer.QueryNameProcedure = (OB_QUERYNAME_METHOD)NULL;
 
 
     //
     // This allows us to get a list of Driver objects.
     //
-    if (IopVerifierOn) {
+    if (IopVerifierOn)
+    {
         objectTypeInitializer.MaintainTypeList = TRUE;
     }
 
-    if (!NT_SUCCESS( ObCreateObjectType( &nameString,
-                                      &objectTypeInitializer,
-                                      (PSECURITY_DESCRIPTOR) NULL,
-                                      &IoDriverObjectType ))) {
+    if (!NT_SUCCESS(
+            ObCreateObjectType(&nameString, &objectTypeInitializer, (PSECURITY_DESCRIPTOR)NULL, &IoDriverObjectType)))
+    {
         return FALSE;
     }
 
@@ -1887,16 +1740,15 @@ Return Value:
     // Create the object type for I/O completion objects.
     //
 
-    RtlInitUnicodeString( &nameString, L"IoCompletion" );
-    objectTypeInitializer.DefaultNonPagedPoolCharge = sizeof( KQUEUE );
+    RtlInitUnicodeString(&nameString, L"IoCompletion");
+    objectTypeInitializer.DefaultNonPagedPoolCharge = sizeof(KQUEUE);
     objectTypeInitializer.InvalidAttributes = OBJ_PERMANENT | OBJ_OPENLINK;
     objectTypeInitializer.GenericMapping = IopCompletionMapping;
     objectTypeInitializer.ValidAccessMask = IO_COMPLETION_ALL_ACCESS;
     objectTypeInitializer.DeleteProcedure = IopDeleteIoCompletion;
-    if (!NT_SUCCESS( ObCreateObjectType( &nameString,
-                                      &objectTypeInitializer,
-                                      (PSECURITY_DESCRIPTOR) NULL,
-                                      &IoCompletionObjectType ))) {
+    if (!NT_SUCCESS(ObCreateObjectType(&nameString, &objectTypeInitializer, (PSECURITY_DESCRIPTOR)NULL,
+                                       &IoCompletionObjectType)))
+    {
         return FALSE;
     }
 
@@ -1904,10 +1756,9 @@ Return Value:
     // Create the object type for file objects.
     //
 
-    RtlInitUnicodeString( &nameString, L"File" );
+    RtlInitUnicodeString(&nameString, L"File");
     objectTypeInitializer.DefaultPagedPoolCharge = IO_FILE_OBJECT_PAGED_POOL_CHARGE;
-    objectTypeInitializer.DefaultNonPagedPoolCharge = IO_FILE_OBJECT_NON_PAGED_POOL_CHARGE +
-                                                      sizeof( FILE_OBJECT );
+    objectTypeInitializer.DefaultNonPagedPoolCharge = IO_FILE_OBJECT_NON_PAGED_POOL_CHARGE + sizeof(FILE_OBJECT);
     objectTypeInitializer.InvalidAttributes = OBJ_PERMANENT | OBJ_EXCLUSIVE | OBJ_OPENLINK;
     objectTypeInitializer.GenericMapping = IopFileMapping;
     objectTypeInitializer.ValidAccessMask = FILE_ALL_ACCESS;
@@ -1921,10 +1772,9 @@ Return Value:
 
     PERFINFO_MUNG_FILE_OBJECT_TYPE_INITIALIZER(objectTypeInitializer);
 
-    if (!NT_SUCCESS( ObCreateObjectType( &nameString,
-                                      &objectTypeInitializer,
-                                      (PSECURITY_DESCRIPTOR) NULL,
-                                      &IoFileObjectType ))) {
+    if (!NT_SUCCESS(
+            ObCreateObjectType(&nameString, &objectTypeInitializer, (PSECURITY_DESCRIPTOR)NULL, &IoFileObjectType)))
+    {
         return FALSE;
     }
 
@@ -1932,11 +1782,9 @@ Return Value:
 
     return TRUE;
 }
-
+
 BOOLEAN
-IopCreateRootDirectories(
-    VOID
-    )
+IopCreateRootDirectories(VOID)
 
 /*++
 
@@ -1967,61 +1815,57 @@ Return Value:
     // Create the root directory object for the \Driver directory.
     //
 
-    RtlInitUnicodeString( &nameString, L"\\Driver" );
-    InitializeObjectAttributes( &objectAttributes,
-                                &nameString,
-                                OBJ_PERMANENT,
-                                (HANDLE) NULL,
-                                (PSECURITY_DESCRIPTOR) NULL );
+    RtlInitUnicodeString(&nameString, L"\\Driver");
+    InitializeObjectAttributes(&objectAttributes, &nameString, OBJ_PERMANENT, (HANDLE)NULL, (PSECURITY_DESCRIPTOR)NULL);
 
-    status = NtCreateDirectoryObject( &handle,
-                                      DIRECTORY_ALL_ACCESS,
-                                      &objectAttributes );
-    if (!NT_SUCCESS( status )) {
+    status = NtCreateDirectoryObject(&handle, DIRECTORY_ALL_ACCESS, &objectAttributes);
+    if (!NT_SUCCESS(status))
+    {
         return FALSE;
-    } else {
-        (VOID) NtClose( handle );
+    }
+    else
+    {
+        (VOID) NtClose(handle);
     }
 
     //
     // Create the root directory object for the \FileSystem directory.
     //
 
-    RtlInitUnicodeString( &nameString, L"\\FileSystem" );
+    RtlInitUnicodeString(&nameString, L"\\FileSystem");
 
-    status = NtCreateDirectoryObject( &handle,
-                                      DIRECTORY_ALL_ACCESS,
-                                      &objectAttributes );
-    if (!NT_SUCCESS( status )) {
+    status = NtCreateDirectoryObject(&handle, DIRECTORY_ALL_ACCESS, &objectAttributes);
+    if (!NT_SUCCESS(status))
+    {
         return FALSE;
-    } else {
-        (VOID) NtClose( handle );
+    }
+    else
+    {
+        (VOID) NtClose(handle);
     }
 
     //
     // Create the root directory object for the \FileSystem\Filters directory.
     //
 
-    RtlInitUnicodeString( &nameString, L"\\FileSystem\\Filters" );
+    RtlInitUnicodeString(&nameString, L"\\FileSystem\\Filters");
 
-    status = NtCreateDirectoryObject( &handle,
-                                      DIRECTORY_ALL_ACCESS,
-                                      &objectAttributes );
-    if (!NT_SUCCESS( status )) {
+    status = NtCreateDirectoryObject(&handle, DIRECTORY_ALL_ACCESS, &objectAttributes);
+    if (!NT_SUCCESS(status))
+    {
         return FALSE;
-    } else {
-        (VOID) NtClose( handle );
+    }
+    else
+    {
+        (VOID) NtClose(handle);
     }
 
     return TRUE;
 }
-
+
 NTSTATUS
-IopInitializeAttributesAndCreateObject(
-    IN PUNICODE_STRING ObjectName,
-    IN OUT POBJECT_ATTRIBUTES ObjectAttributes,
-    OUT PDRIVER_OBJECT *DriverObject
-    )
+IopInitializeAttributesAndCreateObject(IN PUNICODE_STRING ObjectName, IN OUT POBJECT_ATTRIBUTES ObjectAttributes,
+                                       OUT PDRIVER_OBJECT *DriverObject)
 
 /*++
 
@@ -2053,33 +1897,18 @@ Return Value:
     // Simply initialize the object attributes and create the driver object.
     //
 
-    InitializeObjectAttributes( ObjectAttributes,
-                                ObjectName,
-                                OBJ_PERMANENT | OBJ_CASE_INSENSITIVE,
-                                (HANDLE) NULL,
-                                (PSECURITY_DESCRIPTOR) NULL );
+    InitializeObjectAttributes(ObjectAttributes, ObjectName, OBJ_PERMANENT | OBJ_CASE_INSENSITIVE, (HANDLE)NULL,
+                               (PSECURITY_DESCRIPTOR)NULL);
 
-    status = ObCreateObject( KeGetPreviousMode(),
-                             IoDriverObjectType,
-                             ObjectAttributes,
-                             KernelMode,
-                             (PVOID) NULL,
-                             (ULONG) (sizeof( DRIVER_OBJECT ) + sizeof ( DRIVER_EXTENSION )),
-                             0,
-                             0,
-                             (PVOID *)DriverObject );
+    status = ObCreateObject(KeGetPreviousMode(), IoDriverObjectType, ObjectAttributes, KernelMode, (PVOID)NULL,
+                            (ULONG)(sizeof(DRIVER_OBJECT) + sizeof(DRIVER_EXTENSION)), 0, 0, (PVOID *)DriverObject);
     return status;
 }
-
+
 NTSTATUS
-IopInitializeBuiltinDriver(
-    IN PUNICODE_STRING DriverName,
-    IN PUNICODE_STRING RegistryPath,
-    IN PDRIVER_INITIALIZE DriverInitializeRoutine,
-    IN PKLDR_DATA_TABLE_ENTRY DriverEntry,
-    IN BOOLEAN IsFilter,
-    IN PDRIVER_OBJECT *Result
-    )
+IopInitializeBuiltinDriver(IN PUNICODE_STRING DriverName, IN PUNICODE_STRING RegistryPath,
+                           IN PDRIVER_INITIALIZE DriverInitializeRoutine, IN PKLDR_DATA_TABLE_ENTRY DriverEntry,
+                           IN BOOLEAN IsFilter, IN PDRIVER_OBJECT *Result)
 
 /*++
 
@@ -2137,10 +1966,9 @@ Return Value:
     // Begin by creating the driver object.
     //
 
-    status = IopInitializeAttributesAndCreateObject( DriverName,
-                                                     &objectAttributes,
-                                                     &driverObject );
-    if (!NT_SUCCESS( status )) {
+    status = IopInitializeAttributesAndCreateObject(DriverName, &objectAttributes, &driverObject);
+    if (!NT_SUCCESS(status))
+    {
         HeadlessKernelAddLogEntry(HEADLESS_LOG_LOAD_FAILED, NULL);
         return status;
     }
@@ -2149,21 +1977,17 @@ Return Value:
     // Initialize the driver object.
     //
 
-    InitializeDriverObject( driverObject );
+    InitializeDriverObject(driverObject);
     driverObject->DriverInit = DriverInitializeRoutine;
 
     //
     // Insert the driver object into the object table.
     //
 
-    status = ObInsertObject( driverObject,
-                             NULL,
-                             FILE_READ_DATA,
-                             0,
-                             (PVOID *) NULL,
-                             &handle );
+    status = ObInsertObject(driverObject, NULL, FILE_READ_DATA, 0, (PVOID *)NULL, &handle);
 
-    if (!NT_SUCCESS( status )) {
+    if (!NT_SUCCESS(status))
+    {
         HeadlessKernelAddLogEntry(HEADLESS_LOG_LOAD_FAILED, NULL);
         return status;
     }
@@ -2173,12 +1997,8 @@ Return Value:
     // the handle can be deleted without the object going away.
     //
 
-    status = ObReferenceObjectByHandle( handle,
-                                        0,
-                                        IoDriverObjectType,
-                                        KernelMode,
-                                        (PVOID *) &tmpDriverObject,
-                                        (POBJECT_HANDLE_INFORMATION) NULL );
+    status = ObReferenceObjectByHandle(handle, 0, IoDriverObjectType, KernelMode, (PVOID *)&tmpDriverObject,
+                                       (POBJECT_HANDLE_INFORMATION)NULL);
     ASSERT(status == STATUS_SUCCESS);
     //
     // Fill in the DriverSection so the image will be automatically unloaded on
@@ -2186,14 +2006,11 @@ Return Value:
     //
 
     entry = PsLoadedModuleList.Flink;
-    while (entry != &PsLoadedModuleList && DriverEntry) {
-        DataTableEntry = CONTAINING_RECORD(entry,
-                                           KLDR_DATA_TABLE_ENTRY,
-                                           InLoadOrderLinks);
-        if (RtlEqualString((PSTRING)&DriverEntry->BaseDllName,
-                    (PSTRING)&DataTableEntry->BaseDllName,
-                    TRUE
-                    )) {
+    while (entry != &PsLoadedModuleList && DriverEntry)
+    {
+        DataTableEntry = CONTAINING_RECORD(entry, KLDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
+        if (RtlEqualString((PSTRING)&DriverEntry->BaseDllName, (PSTRING)&DataTableEntry->BaseDllName, TRUE))
+        {
             driverObject->DriverSection = DataTableEntry;
             break;
         }
@@ -2211,15 +2028,19 @@ Return Value:
     // Get start and sice for the DriverObject.
     //
 
-    if (DriverEntry) {
+    if (DriverEntry)
+    {
         imageBase = DriverEntry->DllBase;
         ntHeaders = RtlImageNtHeader(imageBase);
         driverObject->DriverStart = imageBase;
         driverObject->DriverSize = ntHeaders->OptionalHeader.SizeOfImage;
-        if (!(ntHeaders->OptionalHeader.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_WDM_DRIVER)) {
+        if (!(ntHeaders->OptionalHeader.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_WDM_DRIVER))
+        {
             driverObject->Flags |= DRVO_LEGACY_DRIVER;
         }
-    } else {
+    }
+    else
+    {
         ntHeaders = NULL;
         driverObject->Flags |= DRVO_LEGACY_DRIVER;
     }
@@ -2229,17 +2050,16 @@ Return Value:
     // such as error logging.
     //
 
-    buffer = ExAllocatePool( PagedPool, DriverName->MaximumLength + 2 );
+    buffer = ExAllocatePool(PagedPool, DriverName->MaximumLength + 2);
 
-    if (buffer) {
+    if (buffer)
+    {
         driverObject->DriverName.Buffer = buffer;
         driverObject->DriverName.MaximumLength = DriverName->MaximumLength;
         driverObject->DriverName.Length = DriverName->Length;
 
-        RtlCopyMemory( driverObject->DriverName.Buffer,
-                       DriverName->Buffer,
-                       DriverName->MaximumLength );
-        buffer[DriverName->Length >> 1] = (WCHAR) '\0';
+        RtlCopyMemory(driverObject->DriverName.Buffer, DriverName->Buffer, DriverName->MaximumLength);
+        buffer[DriverName->Length >> 1] = (WCHAR)'\0';
     }
 
     //
@@ -2248,36 +2068,44 @@ Return Value:
     //
 
     driverExtension = driverObject->DriverExtension;
-    if (RegistryPath && RegistryPath->Length != 0) {
-        pserviceName = RegistryPath->Buffer + RegistryPath->Length / sizeof (WCHAR) - 1;
-        if (*pserviceName == OBJ_NAME_PATH_SEPARATOR) {
+    if (RegistryPath && RegistryPath->Length != 0)
+    {
+        pserviceName = RegistryPath->Buffer + RegistryPath->Length / sizeof(WCHAR) - 1;
+        if (*pserviceName == OBJ_NAME_PATH_SEPARATOR)
+        {
             pserviceName--;
         }
         serviceNameLength = 0;
-        while (pserviceName != RegistryPath->Buffer) {
-            if (*pserviceName == OBJ_NAME_PATH_SEPARATOR) {
+        while (pserviceName != RegistryPath->Buffer)
+        {
+            if (*pserviceName == OBJ_NAME_PATH_SEPARATOR)
+            {
                 pserviceName++;
                 break;
-            } else {
+            }
+            else
+            {
                 serviceNameLength += sizeof(WCHAR);
                 pserviceName--;
             }
         }
-        if (pserviceName == RegistryPath->Buffer) {
+        if (pserviceName == RegistryPath->Buffer)
+        {
             serviceNameLength += sizeof(WCHAR);
         }
-        buffer = ExAllocatePool( NonPagedPool, serviceNameLength + sizeof(UNICODE_NULL) );
+        buffer = ExAllocatePool(NonPagedPool, serviceNameLength + sizeof(UNICODE_NULL));
 
-        if (buffer) {
+        if (buffer)
+        {
             driverExtension->ServiceKeyName.Buffer = buffer;
             driverExtension->ServiceKeyName.MaximumLength = serviceNameLength + sizeof(UNICODE_NULL);
             driverExtension->ServiceKeyName.Length = serviceNameLength;
 
-            RtlCopyMemory( driverExtension->ServiceKeyName.Buffer,
-                           pserviceName,
-                           serviceNameLength );
+            RtlCopyMemory(driverExtension->ServiceKeyName.Buffer, pserviceName, serviceNameLength);
             buffer[driverExtension->ServiceKeyName.Length >> 1] = UNICODE_NULL;
-        } else {
+        }
+        else
+        {
             status = STATUS_INSUFFICIENT_RESOURCES;
             driverExtension->ServiceKeyName.Buffer = NULL;
             driverExtension->ServiceKeyName.Length = 0;
@@ -2288,24 +2116,23 @@ Return Value:
         // Prepare driver initialization
         //
 
-        status = IopOpenRegistryKeyEx( &serviceHandle,
-                                       NULL,
-                                       RegistryPath,
-                                       KEY_ALL_ACCESS
-                                       );
-        if (NT_SUCCESS(status)) {
-            status = IopPrepareDriverLoading(&driverExtension->ServiceKeyName,
-                                             serviceHandle,
-                                             imageBase,
-                                             IsFilter);
+        status = IopOpenRegistryKeyEx(&serviceHandle, NULL, RegistryPath, KEY_ALL_ACCESS);
+        if (NT_SUCCESS(status))
+        {
+            status = IopPrepareDriverLoading(&driverExtension->ServiceKeyName, serviceHandle, imageBase, IsFilter);
             NtClose(serviceHandle);
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 goto exit;
             }
-        } else {
+        }
+        else
+        {
             goto exit;
         }
-    } else {
+    }
+    else
+    {
         driverExtension->ServiceKeyName.Buffer = NULL;
         driverExtension->ServiceKeyName.MaximumLength = 0;
         driverExtension->ServiceKeyName.Length = 0;
@@ -2319,7 +2146,7 @@ Return Value:
     driverObject->HardwareDatabase = &CmRegistryMachineHardwareDescriptionSystemName;
 
 #if DBG
-    KeQuerySystemTime (&stime);
+    KeQuerySystemTime(&stime);
 #endif
 
     //
@@ -2327,7 +2154,7 @@ Return Value:
     //
 
 
-    status = driverObject->DriverInit( driverObject, RegistryPath );
+    status = driverObject->DriverInit(driverObject, RegistryPath);
 
 
 #if DBG
@@ -2337,37 +2164,45 @@ Return Value:
     // print a message.
     //
 
-    KeQuerySystemTime (&etime);
-    dtime  = (ULONG) ((etime.QuadPart - stime.QuadPart) / 1000000);
+    KeQuerySystemTime(&etime);
+    dtime = (ULONG)((etime.QuadPart - stime.QuadPart) / 1000000);
 
-    if (dtime > 50  ||  !NT_SUCCESS( status )) {
-        if (dtime < 10) {
-            DbgPrint( "IOINIT: Built-in driver %wZ failed to initialize - %lX\n",
-                DriverName, status );
+    if (dtime > 50 || !NT_SUCCESS(status))
+    {
+        if (dtime < 10)
+        {
+            DbgPrint("IOINIT: Built-in driver %wZ failed to initialize - %lX\n", DriverName, status);
+        }
+        else
+        {
+            DbgPrint("IOINIT: Built-in driver %wZ took %d.%ds to ", DriverName, dtime / 10, dtime % 10);
 
-        } else {
-            DbgPrint( "IOINIT: Built-in driver %wZ took %d.%ds to ",
-                DriverName, dtime/10, dtime%10 );
-
-            if (NT_SUCCESS( status )) {
-                DbgPrint ("initialize\n");
-            } else {
-                DbgPrint ("fail initialization - %lX\n", status);
+            if (NT_SUCCESS(status))
+            {
+                DbgPrint("initialize\n");
+            }
+            else
+            {
+                DbgPrint("fail initialization - %lX\n", status);
             }
         }
     }
 #endif
 exit:
 
-    NtClose( handle );
+    NtClose(handle);
 
-    if (NT_SUCCESS( status )) {
-        IopReadyDeviceObjects( driverObject );
+    if (NT_SUCCESS(status))
+    {
+        IopReadyDeviceObjects(driverObject);
         HeadlessKernelAddLogEntry(HEADLESS_LOG_LOAD_SUCCESSFUL, NULL);
         *Result = driverObject;
         return status;
-    } else {
-        if (status != STATUS_PLUGPLAY_NO_DEVICE) {
+    }
+    else
+    {
+        if (status != STATUS_PLUGPLAY_NO_DEVICE)
+        {
 
             //
             // if STATUS_PLUGPLAY_NO_DEVICE, the driver was disable by hardware profile.
@@ -2377,15 +2212,13 @@ exit:
         }
         HeadlessKernelAddLogEntry(HEADLESS_LOG_LOAD_FAILED, NULL);
         ObMakeTemporaryObject(driverObject);
-        ObDereferenceObject (driverObject);
+        ObDereferenceObject(driverObject);
         return status;
     }
 }
-
+
 BOOLEAN
-IopMarkBootPartition(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+IopMarkBootPartition(IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 
 /*++
 
@@ -2440,52 +2273,33 @@ Notes:
     // created the object.
     //
 
-    sprintf( deviceNameBuffer,
-             ArcNameFmt,
-             LoaderBlock->ArcBootDeviceName );
+    sprintf(deviceNameBuffer, ArcNameFmt, LoaderBlock->ArcBootDeviceName);
 
-    RtlInitAnsiString( &deviceNameString, deviceNameBuffer );
+    RtlInitAnsiString(&deviceNameString, deviceNameBuffer);
 
-    status = RtlAnsiStringToUnicodeString( &deviceNameUnicodeString,
-                                           &deviceNameString,
-                                           TRUE );
+    status = RtlAnsiStringToUnicodeString(&deviceNameUnicodeString, &deviceNameString, TRUE);
 
-    if (!NT_SUCCESS( status )) {
+    if (!NT_SUCCESS(status))
+    {
         return FALSE;
     }
 
-    InitializeObjectAttributes( &objectAttributes,
-                                &deviceNameUnicodeString,
-                                OBJ_CASE_INSENSITIVE,
-                                NULL,
-                                NULL );
+    InitializeObjectAttributes(&objectAttributes, &deviceNameUnicodeString, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    status = ZwOpenFile( &fileHandle,
-                         FILE_READ_ATTRIBUTES,
-                         &objectAttributes,
-                         &ioStatus,
-                         0,
-                         FILE_NON_DIRECTORY_FILE );
-    if (!NT_SUCCESS( status )) {
-        KeBugCheckEx( INACCESSIBLE_BOOT_DEVICE,
-                      (ULONG_PTR) &deviceNameUnicodeString,
-                      status,
-                      0,
-                      0 );
+    status = ZwOpenFile(&fileHandle, FILE_READ_ATTRIBUTES, &objectAttributes, &ioStatus, 0, FILE_NON_DIRECTORY_FILE);
+    if (!NT_SUCCESS(status))
+    {
+        KeBugCheckEx(INACCESSIBLE_BOOT_DEVICE, (ULONG_PTR)&deviceNameUnicodeString, status, 0, 0);
     }
 
     //
     // Convert the file handle into a pointer to the device object itself.
     //
 
-    status = ObReferenceObjectByHandle( fileHandle,
-                                        0,
-                                        IoFileObjectType,
-                                        KernelMode,
-                                        (PVOID *) &fileObject,
-                                        NULL );
-    if (!NT_SUCCESS( status )) {
-        RtlFreeUnicodeString( &deviceNameUnicodeString );
+    status = ObReferenceObjectByHandle(fileHandle, 0, IoFileObjectType, KernelMode, (PVOID *)&fileObject, NULL);
+    if (!NT_SUCCESS(status))
+    {
+        RtlFreeUnicodeString(&deviceNameUnicodeString);
         return FALSE;
     }
 
@@ -2499,14 +2313,17 @@ Notes:
     // Save away the characteristics of boot device object for later
     // use in WinPE mode
     //
-    if (InitIsWinPEMode) {
-        if (fileObject->DeviceObject->Characteristics & FILE_REMOVABLE_MEDIA) {
+    if (InitIsWinPEMode)
+    {
+        if (fileObject->DeviceObject->Characteristics & FILE_REMOVABLE_MEDIA)
+        {
             InitWinPEModeType |= INIT_WINPEMODE_REMOVABLE_MEDIA;
-        }            
+        }
 
-        if (fileObject->DeviceObject->Characteristics & FILE_READ_ONLY_DEVICE) {
+        if (fileObject->DeviceObject->Characteristics & FILE_READ_ONLY_DEVICE)
+        {
             InitWinPEModeType |= INIT_WINPEMODE_READONLY_MEDIA;
-        }            
+        }
     }
 
     //
@@ -2514,25 +2331,22 @@ Notes:
     //
     ObReferenceObject(fileObject->DeviceObject);
 
-    IopErrorLogObject =  fileObject->DeviceObject;
+    IopErrorLogObject = fileObject->DeviceObject;
 
-    RtlFreeUnicodeString( &deviceNameUnicodeString );
+    RtlFreeUnicodeString(&deviceNameUnicodeString);
 
     //
     // Finally, close the handle and dereference the file object.
     //
 
-    NtClose( fileHandle );
-    ObDereferenceObject( fileObject );
+    NtClose(fileHandle);
+    ObDereferenceObject(fileObject);
 
     return TRUE;
 }
-
+
 BOOLEAN
-IopReassignSystemRoot(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock,
-    OUT PSTRING NtDeviceName
-    )
+IopReassignSystemRoot(IN PLOADER_PARAMETER_BLOCK LoaderBlock, OUT PSTRING NtDeviceName)
 
 /*++
 
@@ -2600,52 +2414,41 @@ Return Value:
     // driver should have created the object.
     //
 
-    sprintf( deviceNameBuffer,
-             ArcNameFmt,
-             LoaderBlock->ArcBootDeviceName );
+    sprintf(deviceNameBuffer, ArcNameFmt, LoaderBlock->ArcBootDeviceName);
 
-    RtlInitAnsiString( &deviceNameString, deviceNameBuffer );
+    RtlInitAnsiString(&deviceNameString, deviceNameBuffer);
 
-    status = RtlAnsiStringToUnicodeString( &deviceNameUnicodeString,
-                                           &deviceNameString,
-                                           TRUE );
+    status = RtlAnsiStringToUnicodeString(&deviceNameUnicodeString, &deviceNameString, TRUE);
 
-    if (!NT_SUCCESS( status )) {
+    if (!NT_SUCCESS(status))
+    {
         return FALSE;
     }
 
-    InitializeObjectAttributes( &objectAttributes,
-                                &deviceNameUnicodeString,
-                                OBJ_CASE_INSENSITIVE,
-                                NULL,
-                                NULL );
+    InitializeObjectAttributes(&objectAttributes, &deviceNameUnicodeString, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    status = NtOpenSymbolicLinkObject( &linkHandle,
-                                       SYMBOLIC_LINK_ALL_ACCESS,
-                                       &objectAttributes );
+    status = NtOpenSymbolicLinkObject(&linkHandle, SYMBOLIC_LINK_ALL_ACCESS, &objectAttributes);
 
-    if (!NT_SUCCESS( status )) {
+    if (!NT_SUCCESS(status))
+    {
 
 #if DBG
 
-        sprintf( debugBuffer, "IOINIT: unable to resolve %s, Status == %X\n",
-                 deviceNameBuffer,
-                 status );
+        sprintf(debugBuffer, "IOINIT: unable to resolve %s, Status == %X\n", deviceNameBuffer, status);
 
-        RtlInitAnsiString( &debugString, debugBuffer );
+        RtlInitAnsiString(&debugString, debugBuffer);
 
-        status = RtlAnsiStringToUnicodeString( &debugUnicodeString,
-                                               &debugString,
-                                               TRUE );
+        status = RtlAnsiStringToUnicodeString(&debugUnicodeString, &debugString, TRUE);
 
-        if (NT_SUCCESS( status )) {
-            ZwDisplayString( &debugUnicodeString );
-            RtlFreeUnicodeString( &debugUnicodeString );
+        if (NT_SUCCESS(status))
+        {
+            ZwDisplayString(&debugUnicodeString);
+            RtlFreeUnicodeString(&debugUnicodeString);
         }
 
 #endif // DBG
 
-        RtlFreeUnicodeString( &deviceNameUnicodeString );
+        RtlFreeUnicodeString(&deviceNameUnicodeString);
         return FALSE;
     }
 
@@ -2655,134 +2458,107 @@ Return Value:
 
     arcNameUnicodeString.Buffer = arcNameUnicodeBuffer;
     arcNameUnicodeString.Length = 0;
-    arcNameUnicodeString.MaximumLength = sizeof( arcNameUnicodeBuffer );
+    arcNameUnicodeString.MaximumLength = sizeof(arcNameUnicodeBuffer);
 
-    status = NtQuerySymbolicLinkObject( linkHandle,
-                                        &arcNameUnicodeString,
-                                        NULL );
+    status = NtQuerySymbolicLinkObject(linkHandle, &arcNameUnicodeString, NULL);
 
-    if (!NT_SUCCESS( status )) {
+    if (!NT_SUCCESS(status))
+    {
         return FALSE;
     }
 
     arcNameString.Buffer = arcNameStringBuffer;
     arcNameString.Length = 0;
-    arcNameString.MaximumLength = sizeof( arcNameStringBuffer );
+    arcNameString.MaximumLength = sizeof(arcNameStringBuffer);
 
-    status = RtlUnicodeStringToAnsiString( &arcNameString,
-                                           &arcNameUnicodeString,
-                                           FALSE );
+    status = RtlUnicodeStringToAnsiString(&arcNameString, &arcNameUnicodeString, FALSE);
 
     arcNameStringBuffer[arcNameString.Length] = '\0';
 
-    NtClose( linkHandle );
-    RtlFreeUnicodeString( &deviceNameUnicodeString );
+    NtClose(linkHandle);
+    RtlFreeUnicodeString(&deviceNameUnicodeString);
 
-    RtlInitAnsiString( &linkString, INIT_SYSTEMROOT_LINKNAME );
+    RtlInitAnsiString(&linkString, INIT_SYSTEMROOT_LINKNAME);
 
-    status = RtlAnsiStringToUnicodeString( &linkUnicodeString,
-                                           &linkString,
-                                           TRUE);
+    status = RtlAnsiStringToUnicodeString(&linkUnicodeString, &linkString, TRUE);
 
-    if (!NT_SUCCESS( status )) {
+    if (!NT_SUCCESS(status))
+    {
         return FALSE;
     }
 
-    InitializeObjectAttributes( &objectAttributes,
-                                &linkUnicodeString,
-                                OBJ_CASE_INSENSITIVE,
-                                NULL,
-                                NULL );
+    InitializeObjectAttributes(&objectAttributes, &linkUnicodeString, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    status = NtOpenSymbolicLinkObject( &linkHandle,
-                                       SYMBOLIC_LINK_ALL_ACCESS,
-                                       &objectAttributes );
+    status = NtOpenSymbolicLinkObject(&linkHandle, SYMBOLIC_LINK_ALL_ACCESS, &objectAttributes);
 
-    if (!NT_SUCCESS( status )) {
+    if (!NT_SUCCESS(status))
+    {
         return FALSE;
     }
 
-    NtMakeTemporaryObject( linkHandle );
-    NtClose( linkHandle );
+    NtMakeTemporaryObject(linkHandle);
+    NtClose(linkHandle);
 
-    sprintf( deviceNameBuffer,
-             "%Z%s",
-             &arcNameString,
-             LoaderBlock->NtBootPathName );
+    sprintf(deviceNameBuffer, "%Z%s", &arcNameString, LoaderBlock->NtBootPathName);
 
     //
     // Get NT device name for \SystemRoot assignment.
     //
 
-    RtlCopyString( NtDeviceName, &arcNameString );
+    RtlCopyString(NtDeviceName, &arcNameString);
 
-    deviceNameBuffer[strlen(deviceNameBuffer)-1] = '\0';
+    deviceNameBuffer[strlen(deviceNameBuffer) - 1] = '\0';
 
     RtlInitAnsiString(&deviceNameString, deviceNameBuffer);
 
-    InitializeObjectAttributes( &objectAttributes,
-                                &linkUnicodeString,
-                                OBJ_CASE_INSENSITIVE | OBJ_PERMANENT,
-                                NULL,
-                                NULL );
+    InitializeObjectAttributes(&objectAttributes, &linkUnicodeString, OBJ_CASE_INSENSITIVE | OBJ_PERMANENT, NULL, NULL);
 
-    status = RtlAnsiStringToUnicodeString( &arcNameUnicodeString,
-                                           &deviceNameString,
-                                           TRUE);
+    status = RtlAnsiStringToUnicodeString(&arcNameUnicodeString, &deviceNameString, TRUE);
 
-    if (!NT_SUCCESS( status )) {
+    if (!NT_SUCCESS(status))
+    {
         return FALSE;
     }
 
-    status = NtCreateSymbolicLinkObject( &linkHandle,
-                                         SYMBOLIC_LINK_ALL_ACCESS,
-                                         &objectAttributes,
-                                         &arcNameUnicodeString );
+    status =
+        NtCreateSymbolicLinkObject(&linkHandle, SYMBOLIC_LINK_ALL_ACCESS, &objectAttributes, &arcNameUnicodeString);
 
-    RtlFreeUnicodeString( &arcNameUnicodeString );
-    RtlFreeUnicodeString( &linkUnicodeString );
-    NtClose( linkHandle );
+    RtlFreeUnicodeString(&arcNameUnicodeString);
+    RtlFreeUnicodeString(&linkUnicodeString);
+    NtClose(linkHandle);
 
 #if DBG
 
-    if (NT_SUCCESS( status )) {
+    if (NT_SUCCESS(status))
+    {
 
-        sprintf( debugBuffer,
-                 "INIT: Reassigned %s => %s\n",
-                 INIT_SYSTEMROOT_LINKNAME,
-                 deviceNameBuffer );
+        sprintf(debugBuffer, "INIT: Reassigned %s => %s\n", INIT_SYSTEMROOT_LINKNAME, deviceNameBuffer);
+    }
+    else
+    {
 
-    } else {
-
-        sprintf( debugBuffer,
-                 "INIT: unable to create %s => %s, Status == %X\n",
-                 INIT_SYSTEMROOT_LINKNAME,
-                 deviceNameBuffer,
-                 status );
+        sprintf(debugBuffer, "INIT: unable to create %s => %s, Status == %X\n", INIT_SYSTEMROOT_LINKNAME,
+                deviceNameBuffer, status);
     }
 
-    RtlInitAnsiString( &debugString, debugBuffer );
+    RtlInitAnsiString(&debugString, debugBuffer);
 
-    status = RtlAnsiStringToUnicodeString( &debugUnicodeString,
-                                           &debugString,
-                                           TRUE );
+    status = RtlAnsiStringToUnicodeString(&debugUnicodeString, &debugString, TRUE);
 
-    if (NT_SUCCESS( status )) {
+    if (NT_SUCCESS(status))
+    {
 
-        ZwDisplayString( &debugUnicodeString );
-        RtlFreeUnicodeString( &debugUnicodeString );
+        ZwDisplayString(&debugUnicodeString);
+        RtlFreeUnicodeString(&debugUnicodeString);
     }
 
 #endif // DBG
 
     return TRUE;
 }
-
-VOID
-IopStoreSystemPartitionInformation(
-    IN     PUNICODE_STRING NtSystemPartitionDeviceName,
-    IN OUT PUNICODE_STRING OsLoaderPathName
-    )
+
+VOID IopStoreSystemPartitionInformation(IN PUNICODE_STRING NtSystemPartitionDeviceName,
+                                        IN OUT PUNICODE_STRING OsLoaderPathName)
 
 /*++
 
@@ -2832,35 +2608,26 @@ Return Value:
     // Both UNICODE_STRING buffers should be NULL-terminated.
     //
 
-    ASSERT( NtSystemPartitionDeviceName->MaximumLength >= NtSystemPartitionDeviceName->Length + sizeof(WCHAR) );
-    ASSERT( NtSystemPartitionDeviceName->Buffer[NtSystemPartitionDeviceName->Length / sizeof(WCHAR)] == L'\0' );
+    ASSERT(NtSystemPartitionDeviceName->MaximumLength >= NtSystemPartitionDeviceName->Length + sizeof(WCHAR));
+    ASSERT(NtSystemPartitionDeviceName->Buffer[NtSystemPartitionDeviceName->Length / sizeof(WCHAR)] == L'\0');
 
-    ASSERT( OsLoaderPathName->MaximumLength >= OsLoaderPathName->Length + sizeof(WCHAR) );
-    ASSERT( OsLoaderPathName->Buffer[OsLoaderPathName->Length / sizeof(WCHAR)] == L'\0' );
+    ASSERT(OsLoaderPathName->MaximumLength >= OsLoaderPathName->Length + sizeof(WCHAR));
+    ASSERT(OsLoaderPathName->Buffer[OsLoaderPathName->Length / sizeof(WCHAR)] == L'\0');
 
     //
     // Open the NtSystemPartitionDeviceName symbolic link, and find out the volume device
     // it points to.
     //
 
-    InitializeObjectAttributes(&objectAttributes,
-                               NtSystemPartitionDeviceName,
-                               OBJ_CASE_INSENSITIVE,
-                               NULL,
-                               NULL
-                              );
+    InitializeObjectAttributes(&objectAttributes, NtSystemPartitionDeviceName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    status = NtOpenSymbolicLinkObject(&linkHandle,
-                                      SYMBOLIC_LINK_QUERY,
-                                      &objectAttributes
-                                     );
+    status = NtOpenSymbolicLinkObject(&linkHandle, SYMBOLIC_LINK_QUERY, &objectAttributes);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 #if DBG
         DbgPrint("IopStoreSystemPartitionInformation: couldn't open symbolic link %wZ - %x\n",
-                 NtSystemPartitionDeviceName,
-                 status
-                );
+                 NtSystemPartitionDeviceName, status);
 #endif // DBG
         return;
     }
@@ -2872,10 +2639,7 @@ Return Value:
     //
     volumeNameString.MaximumLength = sizeof(voumeNameStringBuffer) - sizeof(WCHAR);
 
-    status = NtQuerySymbolicLinkObject(linkHandle,
-                                       &volumeNameString,
-                                       NULL
-                                      );
+    status = NtQuerySymbolicLinkObject(linkHandle, &volumeNameString, NULL);
 
     //
     // We don't need the handle to the symbolic link any longer.
@@ -2883,12 +2647,11 @@ Return Value:
 
     NtClose(linkHandle);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 #if DBG
         DbgPrint("IopStoreSystemPartitionInformation: couldn't query symbolic link %wZ - %x\n",
-                 NtSystemPartitionDeviceName,
-                 status
-                );
+                 NtSystemPartitionDeviceName, status);
 #endif // DBG
         return;
     }
@@ -2903,13 +2666,10 @@ Return Value:
     // Open HKLM\SYSTEM key.
     //
 
-    status = IopOpenRegistryKeyEx( &systemHandle,
-                                   NULL,
-                                   &CmRegistryMachineSystemName,
-                                   KEY_ALL_ACCESS
-                                   );
+    status = IopOpenRegistryKeyEx(&systemHandle, NULL, &CmRegistryMachineSystemName, KEY_ALL_ACCESS);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 #if DBG
         DbgPrint("IopStoreSystemPartitionInformation: couldn't open \\REGISTRY\\MACHINE\\SYSTEM - %x\n", status);
 #endif // DBG
@@ -2920,7 +2680,7 @@ Return Value:
     // Now open/create the setup subkey.
     //
 
-    ASSERT( sizeof(L"Setup") <= sizeof(nameBuffer) );
+    ASSERT(sizeof(L"Setup") <= sizeof(nameBuffer));
 
     nameBuffer[0] = L'S';
     nameBuffer[1] = L'e';
@@ -2930,38 +2690,34 @@ Return Value:
     nameBuffer[5] = L'\0';
 
     nameString.MaximumLength = sizeof(L"Setup");
-    nameString.Length        = sizeof(L"Setup") - sizeof(WCHAR);
-    nameString.Buffer        = nameBuffer;
+    nameString.Length = sizeof(L"Setup") - sizeof(WCHAR);
+    nameString.Buffer = nameBuffer;
 
-    status = IopCreateRegistryKeyEx( &setupHandle,
-                                     systemHandle,
-                                     &nameString,
-                                     KEY_ALL_ACCESS,
-                                     REG_OPTION_NON_VOLATILE,
-                                     NULL
-                                     );
+    status =
+        IopCreateRegistryKeyEx(&setupHandle, systemHandle, &nameString, KEY_ALL_ACCESS, REG_OPTION_NON_VOLATILE, NULL);
 
-    NtClose(systemHandle);  // Don't need the handle to the HKLM\System key anymore.
+    NtClose(systemHandle); // Don't need the handle to the HKLM\System key anymore.
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 #if DBG
         DbgPrint("IopStoreSystemPartitionInformation: couldn't open Setup subkey - %x\n", status);
 #endif // DBG
         return;
     }
 
-    ASSERT( sizeof(L"SystemPartition") <= sizeof(nameBuffer) );
+    ASSERT(sizeof(L"SystemPartition") <= sizeof(nameBuffer));
 
-    nameBuffer[0]  = L'S';
-    nameBuffer[1]  = L'y';
-    nameBuffer[2]  = L's';
-    nameBuffer[3]  = L't';
-    nameBuffer[4]  = L'e';
-    nameBuffer[5]  = L'm';
-    nameBuffer[6]  = L'P';
-    nameBuffer[7]  = L'a';
-    nameBuffer[8]  = L'r';
-    nameBuffer[9]  = L't';
+    nameBuffer[0] = L'S';
+    nameBuffer[1] = L'y';
+    nameBuffer[2] = L's';
+    nameBuffer[3] = L't';
+    nameBuffer[4] = L'e';
+    nameBuffer[5] = L'm';
+    nameBuffer[6] = L'P';
+    nameBuffer[7] = L'a';
+    nameBuffer[8] = L'r';
+    nameBuffer[9] = L't';
     nameBuffer[10] = L'i';
     nameBuffer[11] = L't';
     nameBuffer[12] = L'i';
@@ -2970,43 +2726,38 @@ Return Value:
     nameBuffer[15] = L'\0';
 
     nameString.MaximumLength = sizeof(L"SystemPartition");
-    nameString.Length        = sizeof(L"SystemPartition") - sizeof(WCHAR);
+    nameString.Length = sizeof(L"SystemPartition") - sizeof(WCHAR);
 
 
-
-    status = NtSetValueKey(setupHandle,
-                            &nameString,
-                            TITLE_INDEX_VALUE,
-                            REG_SZ,
-                            volumeNameString.Buffer,
-                            volumeNameString.Length + sizeof(WCHAR)
-                           );
+    status = NtSetValueKey(setupHandle, &nameString, TITLE_INDEX_VALUE, REG_SZ, volumeNameString.Buffer,
+                           volumeNameString.Length + sizeof(WCHAR));
 
 
 #if DBG
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         DbgPrint("IopStoreSystemPartitionInformation: couldn't write SystemPartition value - %x\n", status);
     }
 #endif // DBG
 
-    ASSERT( sizeof(L"OsLoaderPath") <= sizeof(nameBuffer) );
+    ASSERT(sizeof(L"OsLoaderPath") <= sizeof(nameBuffer));
 
-    nameBuffer[0]  = L'O';
-    nameBuffer[1]  = L's';
-    nameBuffer[2]  = L'L';
-    nameBuffer[3]  = L'o';
-    nameBuffer[4]  = L'a';
-    nameBuffer[5]  = L'd';
-    nameBuffer[6]  = L'e';
-    nameBuffer[7]  = L'r';
-    nameBuffer[8]  = L'P';
-    nameBuffer[9]  = L'a';
+    nameBuffer[0] = L'O';
+    nameBuffer[1] = L's';
+    nameBuffer[2] = L'L';
+    nameBuffer[3] = L'o';
+    nameBuffer[4] = L'a';
+    nameBuffer[5] = L'd';
+    nameBuffer[6] = L'e';
+    nameBuffer[7] = L'r';
+    nameBuffer[8] = L'P';
+    nameBuffer[9] = L'a';
     nameBuffer[10] = L't';
     nameBuffer[11] = L'h';
     nameBuffer[12] = L'\0';
 
     nameString.MaximumLength = sizeof(L"OsLoaderPath");
-    nameString.Length        = sizeof(L"OsLoaderPath") - sizeof(WCHAR);
+    nameString.Length = sizeof(L"OsLoaderPath") - sizeof(WCHAR);
 
     //
     // Strip off the trailing backslash from the path (unless, of course, the path is a
@@ -3014,39 +2765,29 @@ Return Value:
     //
 
     if ((OsLoaderPathName->Length > sizeof(WCHAR)) &&
-        (*(PWCHAR)((PCHAR)OsLoaderPathName->Buffer + OsLoaderPathName->Length - sizeof(WCHAR)) == L'\\')) {
+        (*(PWCHAR)((PCHAR)OsLoaderPathName->Buffer + OsLoaderPathName->Length - sizeof(WCHAR)) == L'\\'))
+    {
 
         OsLoaderPathName->Length -= sizeof(WCHAR);
         *(PWCHAR)((PCHAR)OsLoaderPathName->Buffer + OsLoaderPathName->Length) = L'\0';
     }
 
-    status = NtSetValueKey(setupHandle,
-                           &nameString,
-                           TITLE_INDEX_VALUE,
-                           REG_SZ,
-                           OsLoaderPathName->Buffer,
-                           OsLoaderPathName->Length + sizeof(WCHAR)
-                           );
+    status = NtSetValueKey(setupHandle, &nameString, TITLE_INDEX_VALUE, REG_SZ, OsLoaderPathName->Buffer,
+                           OsLoaderPathName->Length + sizeof(WCHAR));
 #if DBG
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         DbgPrint("IopStoreSystemPartitionInformation: couldn't write OsLoaderPath value - %x\n", status);
     }
 #endif // DBG
 
     NtClose(setupHandle);
 }
-
+
 NTSTATUS
-IopLogErrorEvent(
-    IN ULONG            SequenceNumber,
-    IN ULONG            UniqueErrorValue,
-    IN NTSTATUS         FinalStatus,
-    IN NTSTATUS         SpecificIOStatus,
-    IN ULONG            LengthOfInsert1,
-    IN PWCHAR           Insert1,
-    IN ULONG            LengthOfInsert2,
-    IN PWCHAR           Insert2
-    )
+IopLogErrorEvent(IN ULONG SequenceNumber, IN ULONG UniqueErrorValue, IN NTSTATUS FinalStatus,
+                 IN NTSTATUS SpecificIOStatus, IN ULONG LengthOfInsert1, IN PWCHAR Insert1, IN ULONG LengthOfInsert2,
+                 IN PWCHAR Insert2)
 
 /*++
 
@@ -3093,68 +2834,58 @@ Return Value:
     PUCHAR ptrToFirstInsert;
     PUCHAR ptrToSecondInsert;
 
-    if (!IopErrorLogObject) {
-        return(STATUS_INVALID_HANDLE);
+    if (!IopErrorLogObject)
+    {
+        return (STATUS_INVALID_HANDLE);
     }
 
 
-    errorLogEntry = IoAllocateErrorLogEntry(
-                        IopErrorLogObject,
-                        (UCHAR)( sizeof(IO_ERROR_LOG_PACKET) +
-                                LengthOfInsert1 +
-                                LengthOfInsert2) );
+    errorLogEntry = IoAllocateErrorLogEntry(IopErrorLogObject,
+                                            (UCHAR)(sizeof(IO_ERROR_LOG_PACKET) + LengthOfInsert1 + LengthOfInsert2));
 
-   if ( errorLogEntry != NULL ) {
+    if (errorLogEntry != NULL)
+    {
 
-      errorLogEntry->ErrorCode = SpecificIOStatus;
-      errorLogEntry->SequenceNumber = SequenceNumber;
-      errorLogEntry->MajorFunctionCode = 0;
-      errorLogEntry->RetryCount = 0;
-      errorLogEntry->UniqueErrorValue = UniqueErrorValue;
-      errorLogEntry->FinalStatus = FinalStatus;
-      errorLogEntry->DumpDataSize = 0;
+        errorLogEntry->ErrorCode = SpecificIOStatus;
+        errorLogEntry->SequenceNumber = SequenceNumber;
+        errorLogEntry->MajorFunctionCode = 0;
+        errorLogEntry->RetryCount = 0;
+        errorLogEntry->UniqueErrorValue = UniqueErrorValue;
+        errorLogEntry->FinalStatus = FinalStatus;
+        errorLogEntry->DumpDataSize = 0;
 
-      ptrToFirstInsert = (PUCHAR)&errorLogEntry->DumpData[0];
+        ptrToFirstInsert = (PUCHAR)&errorLogEntry->DumpData[0];
 
-      ptrToSecondInsert = ptrToFirstInsert + LengthOfInsert1;
+        ptrToSecondInsert = ptrToFirstInsert + LengthOfInsert1;
 
-      if (LengthOfInsert1) {
+        if (LengthOfInsert1)
+        {
 
-         errorLogEntry->NumberOfStrings = 1;
-         errorLogEntry->StringOffset = (USHORT)(ptrToFirstInsert -
-                                                (PUCHAR)errorLogEntry);
-         RtlCopyMemory(
-                      ptrToFirstInsert,
-                      Insert1,
-                      LengthOfInsert1
-                      );
+            errorLogEntry->NumberOfStrings = 1;
+            errorLogEntry->StringOffset = (USHORT)(ptrToFirstInsert - (PUCHAR)errorLogEntry);
+            RtlCopyMemory(ptrToFirstInsert, Insert1, LengthOfInsert1);
 
-         if (LengthOfInsert2) {
+            if (LengthOfInsert2)
+            {
 
-            errorLogEntry->NumberOfStrings = 2;
-            RtlCopyMemory(
-                         ptrToSecondInsert,
-                         Insert2,
-                         LengthOfInsert2
-                         );
+                errorLogEntry->NumberOfStrings = 2;
+                RtlCopyMemory(ptrToSecondInsert, Insert2, LengthOfInsert2);
 
-         } //LenghtOfInsert2
+            } //LenghtOfInsert2
 
-      } // LenghtOfInsert1
+        } // LenghtOfInsert1
 
-      IoWriteErrorLogEntry(errorLogEntry);
-      return(STATUS_SUCCESS);
+        IoWriteErrorLogEntry(errorLogEntry);
+        return (STATUS_SUCCESS);
 
-   }  // errorLogEntry != NULL
+    } // errorLogEntry != NULL
 
-    return(STATUS_NO_DATA_DETECTED);
+    return (STATUS_NO_DATA_DETECTED);
 
 } //IopLogErrorEvent
 
 BOOLEAN
-IopInitializeReserveIrp(
-    PIOP_RESERVE_IRP_ALLOCATOR  Allocator
-    )
+IopInitializeReserveIrp(PIOP_RESERVE_IRP_ALLOCATOR Allocator)
 /*++
 
 Routine Description:
@@ -3175,10 +2906,11 @@ Return Value:
 {
     Allocator->ReserveIrpStackSize = MAX_RESERVE_IRP_STACK_SIZE;
     Allocator->ReserveIrp = IoAllocateIrp(MAX_RESERVE_IRP_STACK_SIZE, FALSE);
-    if (Allocator->ReserveIrp == NULL) {
+    if (Allocator->ReserveIrp == NULL)
+    {
         return FALSE;
     }
-        
+
     Allocator->IrpAllocated = FALSE;
     KeInitializeEvent(&Allocator->Event, SynchronizationEvent, FALSE);
 

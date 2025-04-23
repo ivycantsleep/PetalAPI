@@ -20,4 +20,3 @@
 #endif
 
 #include "cltxt.h"
-

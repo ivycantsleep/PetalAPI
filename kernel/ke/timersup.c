@@ -31,18 +31,11 @@ Revision History:
 
 LOGICAL
 FASTCALL
-KiInsertTimerTable (
-    LARGE_INTEGER Interval,
-    LARGE_INTEGER CurrentTime,
-    IN PKTIMER Timer
-    );
+KiInsertTimerTable(LARGE_INTEGER Interval, LARGE_INTEGER CurrentTime, IN PKTIMER Timer);
 
 LOGICAL
 FASTCALL
-KiInsertTreeTimer (
-    IN PKTIMER Timer,
-    IN LARGE_INTEGER Interval
-    )
+KiInsertTreeTimer(IN PKTIMER Timer, IN LARGE_INTEGER Interval)
 
 /*++
 
@@ -79,7 +72,8 @@ Return Value:
 
     Timer->Header.Inserted = TRUE;
     Timer->Header.Absolute = FALSE;
-    if (Timer->Period == 0) {
+    if (Timer->Period == 0)
+    {
         Timer->Header.SignalState = FALSE;
     }
 
@@ -88,7 +82,8 @@ Return Value:
     // time), then convert it to relative time.
     //
 
-    if (Interval.HighPart >= 0) {
+    if (Interval.HighPart >= 0)
+    {
         KiQuerySystemTime(&SystemTime);
         TimeDifference.QuadPart = SystemTime.QuadPart - Interval.QuadPart;
 
@@ -97,7 +92,8 @@ Return Value:
         // then the timer has already expired.
         //
 
-        if (TimeDifference.HighPart >= 0) {
+        if (TimeDifference.HighPart >= 0)
+        {
             Timer->Header.SignalState = TRUE;
             Timer->Header.Inserted = FALSE;
             return FALSE;
@@ -118,10 +114,7 @@ Return Value:
 
 LOGICAL
 FASTCALL
-KiReinsertTreeTimer (
-    IN PKTIMER Timer,
-    IN ULARGE_INTEGER DueTime
-    )
+KiReinsertTreeTimer(IN PKTIMER Timer, IN ULARGE_INTEGER DueTime)
 
 /*++
 
@@ -155,7 +148,8 @@ Return Value:
     //
 
     Timer->Header.Inserted = TRUE;
-    if (Timer->Period == 0) {
+    if (Timer->Period == 0)
+    {
         Timer->Header.SignalState = FALSE;
     }
 
@@ -167,7 +161,8 @@ Return Value:
 
     KiQueryInterruptTime(&CurrentTime);
     Interval.QuadPart = CurrentTime.QuadPart - DueTime.QuadPart;
-    if (Interval.QuadPart >= 0) {
+    if (Interval.QuadPart >= 0)
+    {
         Timer->Header.SignalState = TRUE;
         Timer->Header.Inserted = FALSE;
         return FALSE;
@@ -182,11 +177,7 @@ Return Value:
 
 LOGICAL
 FASTCALL
-KiInsertTimerTable (
-    LARGE_INTEGER Interval,
-    LARGE_INTEGER CurrentTime,
-    IN PKTIMER Timer
-    )
+KiInsertTimerTable(LARGE_INTEGER Interval, LARGE_INTEGER CurrentTime, IN PKTIMER Timer)
 
 /*++
 
@@ -247,7 +238,8 @@ Return Value:
 
 #endif
 
-    while (NextEntry != ListHead) {
+    while (NextEntry != ListHead)
+    {
 
         //
         // Compute the maximum search count.
@@ -256,14 +248,16 @@ Return Value:
 #if DBG
 
         SearchCount += 1;
-        if (SearchCount > KiMaximumSearchCount) {
+        if (SearchCount > KiMaximumSearchCount)
+        {
             KiMaximumSearchCount = SearchCount;
         }
 
 #endif
 
         NextTimer = CONTAINING_RECORD(NextEntry, KTIMER, TimerListEntry);
-        if (Timer->DueTime.QuadPart >= NextTimer->DueTime.QuadPart) {
+        if (Timer->DueTime.QuadPart >= NextTimer->DueTime.QuadPart)
+        {
             break;
         }
 
@@ -271,7 +265,8 @@ Return Value:
     }
 
     InsertHeadList(NextEntry, &Timer->TimerListEntry);
-    if (NextEntry == ListHead) {
+    if (NextEntry == ListHead)
+    {
 
         //
         // The computed list is empty or the timer is due to expire before
@@ -279,7 +274,8 @@ Return Value:
         //
 
         KiQueryInterruptTime(&CurrentTime);
-        if (Timer->DueTime.QuadPart <= (ULONG64)CurrentTime.QuadPart) {
+        if (Timer->DueTime.QuadPart <= (ULONG64)CurrentTime.QuadPart)
+        {
 
             //
             // The timer is due to expire before the current time. Remove the

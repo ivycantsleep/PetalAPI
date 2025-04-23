@@ -23,38 +23,20 @@ Environment:
 #ifndef _IDEVICE_H_
 #define _IDEVICE_H_
 
-    NTSTATUS
-    ACPIInternalDeviceClockIrpStartDevice(
-        IN  PDEVICE_OBJECT      DeviceObject,
-        IN  PIRP                Irp
-        );
+NTSTATUS
+ACPIInternalDeviceClockIrpStartDevice(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
-    VOID
-    ACPIInternalDeviceClockIrpStartDeviceCompletion(
-        IN  PDEVICE_EXTENSION   DeviceExtension,
-        IN  PVOID               Context,
-        IN  NTSTATUS            Status
-        );
+VOID ACPIInternalDeviceClockIrpStartDeviceCompletion(IN PDEVICE_EXTENSION DeviceExtension, IN PVOID Context,
+                                                     IN NTSTATUS Status);
 
-    NTSTATUS
-    ACPIInternalDeviceQueryCapabilities(
-        IN  PDEVICE_OBJECT      DeviceObject,
-        IN  PIRP                Irp
-        );
+NTSTATUS
+ACPIInternalDeviceQueryCapabilities(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
-    NTSTATUS
-    ACPIInternalDeviceQueryDeviceRelations(
-        IN  PDEVICE_OBJECT      DeviceObject,
-        IN  PIRP                Irp
-        );
+NTSTATUS
+ACPIInternalDeviceQueryDeviceRelations(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
-    NTSTATUS
-    ACPIInternalWaitWakeLoop(
-        IN  PDEVICE_OBJECT      DeviceObject,
-        IN  UCHAR               MinorFunction,
-        IN  POWER_STATE         PowerState,
-        IN  PVOID               Context,
-        IN  PIO_STATUS_BLOCK    IoStatus
-        );
+NTSTATUS
+ACPIInternalWaitWakeLoop(IN PDEVICE_OBJECT DeviceObject, IN UCHAR MinorFunction, IN POWER_STATE PowerState,
+                         IN PVOID Context, IN PIO_STATUS_BLOCK IoStatus);
 
 #endif

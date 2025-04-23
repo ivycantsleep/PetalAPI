@@ -25,12 +25,8 @@ Revision History:
 ULONG MmFrontOfList;
 ULONG MiFlushForNonCached;
 
-
-VOID
-FASTCALL
-MiDecrementShareCount (
-    IN PFN_NUMBER PageFrameIndex
-    )
+
+VOID FASTCALL MiDecrementShareCount(IN PFN_NUMBER PageFrameIndex)
 
 /*++
 
@@ -65,29 +61,26 @@ Environment:
     LOGICAL HyperMapped;
     PEPROCESS Process;
 
-    ASSERT ((PageFrameIndex <= MmHighestPhysicalPage) &&
-            (PageFrameIndex > 0));
+    ASSERT((PageFrameIndex <= MmHighestPhysicalPage) && (PageFrameIndex > 0));
 
-    Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+    Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
 
-    if (Pfn1->u3.e1.PageLocation != ActiveAndValid &&
-        Pfn1->u3.e1.PageLocation != StandbyPageList) {
-            KeBugCheckEx (PFN_LIST_CORRUPT,
-                      0x99,
-                      PageFrameIndex,
-                      Pfn1->u3.e1.PageLocation,
-                      0);
+    if (Pfn1->u3.e1.PageLocation != ActiveAndValid && Pfn1->u3.e1.PageLocation != StandbyPageList)
+    {
+        KeBugCheckEx(PFN_LIST_CORRUPT, 0x99, PageFrameIndex, Pfn1->u3.e1.PageLocation, 0);
     }
 
     Pfn1->u2.ShareCount -= 1;
 
     PERFINFO_DECREFCNT(Pfn1, PERF_SOFT_TRIM, PERFINFO_LOG_TYPE_DECSHARCNT);
 
-    ASSERT (Pfn1->u2.ShareCount < 0xF000000);
+    ASSERT(Pfn1->u2.ShareCount < 0xF000000);
 
-    if (Pfn1->u2.ShareCount == 0) {
+    if (Pfn1->u2.ShareCount == 0)
+    {
 
-        if (PERFINFO_IS_GROUP_ON(PERF_MEMORY)) {
+        if (PERFINFO_IS_GROUP_ON(PERF_MEMORY))
+        {
             PERFINFO_PFN_INFORMATION PerfInfoPfn;
 
             PerfInfoPfn.PageFrameIndex = PageFrameIndex;
@@ -109,14 +102,17 @@ Environment:
         // then operated on.
         //
 
-        if (Pfn1->u3.e1.PrototypePte == 1) {
+        if (Pfn1->u3.e1.PrototypePte == 1)
+        {
 
-            if (MmIsAddressValid (Pfn1->PteAddress)) {
+            if (MmIsAddressValid(Pfn1->PteAddress))
+            {
                 Process = NULL;
                 PointerPte = Pfn1->PteAddress;
                 HyperMapped = FALSE;
             }
-            else {
+            else
+            {
 
                 //
                 // The address is not valid in this process, map it into
@@ -124,26 +120,24 @@ Environment:
                 //
 
                 HyperMapped = TRUE;
-                Process = PsGetCurrentProcess ();
+                Process = PsGetCurrentProcess();
                 PointerPte = (PMMPTE)MiMapPageInHyperSpaceAtDpc(Process, Pfn1->u4.PteFrame);
-                PointerPte = (PMMPTE)((PCHAR)PointerPte +
-                                        MiGetByteOffset(Pfn1->PteAddress));
+                PointerPte = (PMMPTE)((PCHAR)PointerPte + MiGetByteOffset(Pfn1->PteAddress));
             }
 
             TempPte = *PointerPte;
-            MI_MAKE_VALID_PTE_TRANSITION (TempPte,
-                                          Pfn1->OriginalPte.u.Soft.Protection);
-            MI_WRITE_INVALID_PTE (PointerPte, TempPte);
+            MI_MAKE_VALID_PTE_TRANSITION(TempPte, Pfn1->OriginalPte.u.Soft.Protection);
+            MI_WRITE_INVALID_PTE(PointerPte, TempPte);
 
-            if (HyperMapped == TRUE) {
-                MiUnmapPageInHyperSpaceFromDpc (Process, PointerPte);
+            if (HyperMapped == TRUE)
+            {
+                MiUnmapPageInHyperSpaceFromDpc(Process, PointerPte);
             }
 
             //
             // There is no need to flush the translation buffer at this
             // time as we only invalidated a prototype PTE.
             //
-
         }
 
         //
@@ -158,11 +152,13 @@ Environment:
 
         MM_PFN_LOCK_ASSERT();
 
-        ASSERT (Pfn1->u3.e2.ReferenceCount != 0);
+        ASSERT(Pfn1->u3.e2.ReferenceCount != 0);
 
-        if (Pfn1->u3.e2.ReferenceCount == 1) {
+        if (Pfn1->u3.e2.ReferenceCount == 1)
+        {
 
-            if (MI_IS_PFN_DELETED (Pfn1)) {
+            if (MI_IS_PFN_DELETED(Pfn1))
+            {
 
                 Pfn1->u3.e2.ReferenceCount = 0;
 
@@ -171,8 +167,8 @@ Environment:
                 // file space (if any), and place the page on the free list.
                 //
 
-                if ((Pfn1->u3.e1.CacheAttribute != MiCached) &&
-                    (Pfn1->u3.e1.CacheAttribute != MiNotMapped)) {
+                if ((Pfn1->u3.e1.CacheAttribute != MiCached) && (Pfn1->u3.e1.CacheAttribute != MiNotMapped))
+                {
 
                     //
                     // This page was mapped as noncached or writecombined, and
@@ -198,15 +194,16 @@ Environment:
                     //
 
                     MiFlushForNonCached += 1;
-                    KeFlushEntireTb (TRUE, TRUE);
+                    KeFlushEntireTb(TRUE, TRUE);
                 }
 
-                ASSERT (Pfn1->OriginalPte.u.Soft.Prototype == 0);
+                ASSERT(Pfn1->OriginalPte.u.Soft.Prototype == 0);
 
-                FreeBit = GET_PAGING_FILE_OFFSET (Pfn1->OriginalPte);
+                FreeBit = GET_PAGING_FILE_OFFSET(Pfn1->OriginalPte);
 
-                if ((FreeBit != 0) && (FreeBit != MI_PTE_LOOKUP_NEEDED)) {
-                    MiReleaseConfirmedPageFileSpace (Pfn1->OriginalPte);
+                if ((FreeBit != 0) && (FreeBit != MI_PTE_LOOKUP_NEEDED))
+                {
+                    MiReleaseConfirmedPageFileSpace(Pfn1->OriginalPte);
                 }
 
                 //
@@ -219,25 +216,23 @@ Environment:
 
                 Pfn1->u3.e1.PageLocation = ActiveAndValid;
 
-                MiInsertPageInFreeList (PageFrameIndex);
+                MiInsertPageInFreeList(PageFrameIndex);
             }
-            else {
-                MiDecrementReferenceCount (PageFrameIndex);
+            else
+            {
+                MiDecrementReferenceCount(PageFrameIndex);
             }
         }
-        else {
+        else
+        {
             Pfn1->u3.e2.ReferenceCount -= 1;
         }
     }
 
     return;
 }
-
-VOID
-FASTCALL
-MiDecrementReferenceCount (
-    IN PFN_NUMBER PageFrameIndex
-    )
+
+VOID FASTCALL MiDecrementReferenceCount(IN PFN_NUMBER PageFrameIndex)
 
 /*++
 
@@ -271,13 +266,14 @@ Environment:
 
     MM_PFN_LOCK_ASSERT();
 
-    ASSERT (PageFrameIndex <= MmHighestPhysicalPage);
+    ASSERT(PageFrameIndex <= MmHighestPhysicalPage);
 
-    Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
-    ASSERT (Pfn1->u3.e2.ReferenceCount != 0);
+    Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
+    ASSERT(Pfn1->u3.e2.ReferenceCount != 0);
     Pfn1->u3.e2.ReferenceCount -= 1;
 
-    if (Pfn1->u3.e2.ReferenceCount != 0) {
+    if (Pfn1->u3.e2.ReferenceCount != 0)
+    {
 
         //
         // The reference count is not zero, return.
@@ -290,27 +286,25 @@ Environment:
     // The reference count is now zero, put the page on some list.
     //
 
-    if (Pfn1->u2.ShareCount != 0) {
+    if (Pfn1->u2.ShareCount != 0)
+    {
 
-        KeBugCheckEx (PFN_LIST_CORRUPT,
-                      7,
-                      PageFrameIndex,
-                      Pfn1->u2.ShareCount,
-                      0);
+        KeBugCheckEx(PFN_LIST_CORRUPT, 7, PageFrameIndex, Pfn1->u2.ShareCount, 0);
         return;
     }
 
-    ASSERT (Pfn1->u3.e1.PageLocation != ActiveAndValid);
+    ASSERT(Pfn1->u3.e1.PageLocation != ActiveAndValid);
 
-    if (MI_IS_PFN_DELETED (Pfn1)) {
+    if (MI_IS_PFN_DELETED(Pfn1))
+    {
 
         //
         // There is no referenced PTE for this page, delete the page file
         // space (if any), and place the page on the free list.
         //
 
-        if ((Pfn1->u3.e1.CacheAttribute != MiCached) &&
-            (Pfn1->u3.e1.CacheAttribute != MiNotMapped)) {
+        if ((Pfn1->u3.e1.CacheAttribute != MiCached) && (Pfn1->u3.e1.CacheAttribute != MiNotMapped))
+        {
 
             //
             // This page was mapped as noncached or writecombined, and is now
@@ -333,30 +327,32 @@ Environment:
             //
 
             MiFlushForNonCached += 1;
-            KeFlushEntireTb (TRUE, TRUE);
+            KeFlushEntireTb(TRUE, TRUE);
         }
 
-        MiReleasePageFileSpace (Pfn1->OriginalPte);
+        MiReleasePageFileSpace(Pfn1->OriginalPte);
 
-        MiInsertPageInFreeList (PageFrameIndex);
+        MiInsertPageInFreeList(PageFrameIndex);
 
         return;
     }
 
-    ASSERT ((Pfn1->u3.e1.CacheAttribute != MiNonCached) &&
-            (Pfn1->u3.e1.CacheAttribute != MiWriteCombined));
+    ASSERT((Pfn1->u3.e1.CacheAttribute != MiNonCached) && (Pfn1->u3.e1.CacheAttribute != MiWriteCombined));
 
     //
     // Place the page on the modified or standby list depending
     // on the state of the modify bit in the PFN element.
     //
 
-    if (Pfn1->u3.e1.Modified == 1) {
-        MiInsertPageInList (&MmModifiedPageListHead, PageFrameIndex);
+    if (Pfn1->u3.e1.Modified == 1)
+    {
+        MiInsertPageInList(&MmModifiedPageListHead, PageFrameIndex);
     }
-    else {
+    else
+    {
 
-        if (Pfn1->u3.e1.RemovalRequested == 1) {
+        if (Pfn1->u3.e1.RemovalRequested == 1)
+        {
 
             //
             // The page may still be marked as on the modified list if the
@@ -367,16 +363,18 @@ Environment:
 
             Pfn1->u3.e1.PageLocation = StandbyPageList;
 
-            MiRestoreTransitionPte (PageFrameIndex);
-            MiInsertPageInList (&MmBadPageListHead, PageFrameIndex);
+            MiRestoreTransitionPte(PageFrameIndex);
+            MiInsertPageInList(&MmBadPageListHead, PageFrameIndex);
             return;
         }
 
-        if (!MmFrontOfList) {
-            MiInsertPageInList (&MmStandbyPageListHead, PageFrameIndex);
+        if (!MmFrontOfList)
+        {
+            MiInsertPageInList(&MmStandbyPageListHead, PageFrameIndex);
         }
-        else {
-            MiInsertStandbyListAtFront (PageFrameIndex);
+        else
+        {
+            MiInsertStandbyListAtFront(PageFrameIndex);
         }
     }
 

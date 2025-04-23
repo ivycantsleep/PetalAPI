@@ -31,13 +31,11 @@ Revision History:
 //
 
 NTSTATUS
-IopApplySystemPartitionProt(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    );
+IopApplySystemPartitionProt(IN PLOADER_PARAMETER_BLOCK LoaderBlock);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,IopProtectSystemPartition)
-#pragma alloc_text(INIT,IopApplySystemPartitionProt)
+#pragma alloc_text(INIT, IopProtectSystemPartition)
+#pragma alloc_text(INIT, IopApplySystemPartitionProt)
 #endif
 
 //
@@ -46,13 +44,11 @@ IopApplySystemPartitionProt(
 // key.  We only look at it.
 //
 
-#define IOP_SYSTEM_PART_PROT_KEY    L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Lsa"
-#define IOP_SYSTEM_PART_PROT_VALUE  L"Protect System Partition"
-
+#define IOP_SYSTEM_PART_PROT_KEY L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Lsa"
+#define IOP_SYSTEM_PART_PROT_VALUE L"Protect System Partition"
+
 BOOLEAN
-IopProtectSystemPartition(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+IopProtectSystemPartition(IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 
 /*++
 
@@ -91,14 +87,14 @@ Return Value:
     // that does a run-time determination.
     //
 
-#ifdef i386  // if (!ARC-Compliant system)
+#ifdef i386 // if (!ARC-Compliant system)
 
 
     //
     // Nothing to do for non-ARC systems
     //
 
-    return(TRUE);
+    return (TRUE);
 
 
 #else // ARC-COMPLIANT system
@@ -110,7 +106,7 @@ Return Value:
     UNICODE_STRING keyName;
     UNICODE_STRING valueName;
     ULONG resultLength;
-    ULONG keyBuffer[sizeof( KEY_VALUE_PARTIAL_INFORMATION ) + sizeof( ULONG )];
+    ULONG keyBuffer[sizeof(KEY_VALUE_PARTIAL_INFORMATION) + sizeof(ULONG)];
     PKEY_VALUE_PARTIAL_INFORMATION keyValue;
 
     //
@@ -118,26 +114,20 @@ Return Value:
     // indicating whether or not we should protect the system partition.
     //
 
-    RtlInitUnicodeString( &keyName, IOP_SYSTEM_PART_PROT_KEY );
-    InitializeObjectAttributes( &objectAttributes,
-                                &keyName,
-                                OBJ_CASE_INSENSITIVE,
-                                NULL,
-                                NULL );
-    status = NtOpenKey( &keyHandle, KEY_READ, &objectAttributes);
+    RtlInitUnicodeString(&keyName, IOP_SYSTEM_PART_PROT_KEY);
+    InitializeObjectAttributes(&objectAttributes, &keyName, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    status = NtOpenKey(&keyHandle, KEY_READ, &objectAttributes);
 
-    if (NT_SUCCESS( status )) {
+    if (NT_SUCCESS(status))
+    {
 
-        keyValue = (PKEY_VALUE_PARTIAL_INFORMATION) &keyBuffer[0];
-        RtlInitUnicodeString( &valueName, IOP_SYSTEM_PART_PROT_VALUE );
-        status = NtQueryValueKey( keyHandle,
-                                  &valueName,
-                                  KeyValuePartialInformation,
-                                  keyValue,
-                                  sizeof( KEY_VALUE_PARTIAL_INFORMATION ) + sizeof( ULONG ),
-                                  &resultLength );
+        keyValue = (PKEY_VALUE_PARTIAL_INFORMATION)&keyBuffer[0];
+        RtlInitUnicodeString(&valueName, IOP_SYSTEM_PART_PROT_VALUE);
+        status = NtQueryValueKey(keyHandle, &valueName, KeyValuePartialInformation, keyValue,
+                                 sizeof(KEY_VALUE_PARTIAL_INFORMATION) + sizeof(ULONG), &resultLength);
 
-        if (NT_SUCCESS( status )) {
+        if (NT_SUCCESS(status))
+        {
 
             PBOOLEAN applyIt;
 
@@ -149,13 +139,14 @@ Return Value:
 
             applyIt = &(keyValue->Data[0]);
 
-            if (*applyIt) {
-                status = IopApplySystemPartitionProt( LoaderBlock );
+            if (*applyIt)
+            {
+                status = IopApplySystemPartitionProt(LoaderBlock);
             }
         }
 
-        tmpStatus = NtClose( keyHandle );
-        ASSERT(NT_SUCCESS( tmpStatus ));
+        tmpStatus = NtClose(keyHandle);
+        ASSERT(NT_SUCCESS(tmpStatus));
     }
 
 
@@ -163,11 +154,9 @@ Return Value:
 
 #endif // ARC-COMPLIANT system
 }
-
+
 NTSTATUS
-IopApplySystemPartitionProt(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+IopApplySystemPartitionProt(IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 
 /*++
 
@@ -217,59 +206,53 @@ Return Value:
     ArcNameFmt[10] = 's';
     ArcNameFmt[11] = '\0';
 
-    ASSERT( ARGUMENT_PRESENT( LoaderBlock ) );
-    ASSERT( ARGUMENT_PRESENT( LoaderBlock->ArcHalDeviceName ) );
+    ASSERT(ARGUMENT_PRESENT(LoaderBlock));
+    ASSERT(ARGUMENT_PRESENT(LoaderBlock->ArcHalDeviceName));
 
     //
     // Build an appropriate discretionary ACL.
     //
 
-    length = (ULONG) sizeof( ACL ) +
-             ( 2 * ((ULONG) sizeof( ACCESS_ALLOWED_ACE ))) +
-             SeLengthSid( SeLocalSystemSid ) +
-             SeLengthSid( SeAliasAdminsSid ) +
-             8; // The 8 is just for good measure
+    length = (ULONG)sizeof(ACL) + (2 * ((ULONG)sizeof(ACCESS_ALLOWED_ACE))) + SeLengthSid(SeLocalSystemSid) +
+             SeLengthSid(SeAliasAdminsSid) + 8; // The 8 is just for good measure
 
-    dacl = (PACL) ExAllocatePool( PagedPool, length );
-    if (!dacl) {
+    dacl = (PACL)ExAllocatePool(PagedPool, length);
+    if (!dacl)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    status = RtlCreateAcl( dacl, length, ACL_REVISION2 );
-    if (NT_SUCCESS( status )) {
+    status = RtlCreateAcl(dacl, length, ACL_REVISION2);
+    if (NT_SUCCESS(status))
+    {
 
-        status = RtlAddAccessAllowedAce( dacl,
-                                         ACL_REVISION2,
-                                         GENERIC_ALL,
-                                         SeLocalSystemSid );
-        if (NT_SUCCESS( status )) {
+        status = RtlAddAccessAllowedAce(dacl, ACL_REVISION2, GENERIC_ALL, SeLocalSystemSid);
+        if (NT_SUCCESS(status))
+        {
 
-            status = RtlAddAccessAllowedAce( dacl,
-                                             ACL_REVISION2,
-                                             GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | READ_CONTROL,
-                                             SeAliasAdminsSid );
-            if (NT_SUCCESS( status )) {
+            status = RtlAddAccessAllowedAce(
+                dacl, ACL_REVISION2, GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | READ_CONTROL, SeAliasAdminsSid);
+            if (NT_SUCCESS(status))
+            {
 
                 //
                 // Put it in a security descriptor so that it may be applied to
                 // the system partition device.
                 //
 
-                status = RtlCreateSecurityDescriptor( &securityDescriptor,
-                                                      SECURITY_DESCRIPTOR_REVISION );
-                if (NT_SUCCESS( status )) {
+                status = RtlCreateSecurityDescriptor(&securityDescriptor, SECURITY_DESCRIPTOR_REVISION);
+                if (NT_SUCCESS(status))
+                {
 
-                    status = RtlSetDaclSecurityDescriptor( &securityDescriptor,
-                                                           TRUE,
-                                                           dacl,
-                                                           FALSE );
+                    status = RtlSetDaclSecurityDescriptor(&securityDescriptor, TRUE, dacl, FALSE);
                 }
             }
         }
     }
 
-    if (!NT_SUCCESS( status )) {
-        ExFreePool( dacl );
+    if (!NT_SUCCESS(status))
+    {
+        ExFreePool(dacl);
         return status;
     }
 
@@ -290,34 +273,23 @@ Return Value:
         // name space.
         //
 
-        sprintf( deviceNameBuffer,
-                 ArcNameFmt,
-                 LoaderBlock->ArcHalDeviceName );
+        sprintf(deviceNameBuffer, ArcNameFmt, LoaderBlock->ArcHalDeviceName);
 
-        RtlInitAnsiString( &deviceNameString, deviceNameBuffer );
+        RtlInitAnsiString(&deviceNameString, deviceNameBuffer);
 
-        status = RtlAnsiStringToUnicodeString( &deviceNameUnicodeString,
-                                               &deviceNameString,
-                                               TRUE );
+        status = RtlAnsiStringToUnicodeString(&deviceNameUnicodeString, &deviceNameString, TRUE);
 
-        if (NT_SUCCESS( status )) {
+        if (NT_SUCCESS(status))
+        {
 
-            InitializeObjectAttributes( &objectAttributes,
-                                        &deviceNameUnicodeString,
-                                        OBJ_CASE_INSENSITIVE,
-                                        NULL,
-                                        NULL );
+            InitializeObjectAttributes(&objectAttributes, &deviceNameUnicodeString, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-            status = ZwOpenFile( &deviceHandle,
-                                 WRITE_DAC,
-                                 &objectAttributes,
-                                 &ioStatusBlock,
-                                 TRUE,
-                                 0 );
+            status = ZwOpenFile(&deviceHandle, WRITE_DAC, &objectAttributes, &ioStatusBlock, TRUE, 0);
 
-            RtlFreeUnicodeString( &deviceNameUnicodeString );
+            RtlFreeUnicodeString(&deviceNameUnicodeString);
 
-            if (NT_SUCCESS( status )) {
+            if (NT_SUCCESS(status))
+            {
 
 
                 //
@@ -325,11 +297,9 @@ Return Value:
                 // object.
                 //
 
-                status = ZwSetSecurityObject( deviceHandle,
-                                              DACL_SECURITY_INFORMATION,
-                                              &securityDescriptor );
+                status = ZwSetSecurityObject(deviceHandle, DACL_SECURITY_INFORMATION, &securityDescriptor);
 
-                tmpStatus = NtClose( deviceHandle );
+                tmpStatus = NtClose(deviceHandle);
             }
         }
     }
@@ -338,7 +308,7 @@ Return Value:
     // Free the memory used to hold the ACL.
     //
 
-    ExFreePool( dacl );
+    ExFreePool(dacl);
 
     return status;
 }

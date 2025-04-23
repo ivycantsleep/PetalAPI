@@ -27,407 +27,434 @@ Revision History:
 
 PFNWOWGLOBALFREEHOOK pfnWowGlobalFreeHook = NULL;
 
-VOID
-WINAPI
-RegisterWowBaseHandlers(
-PFNWOWGLOBALFREEHOOK pfn)
+VOID WINAPI RegisterWowBaseHandlers(PFNWOWGLOBALFREEHOOK pfn)
 {
     pfnWowGlobalFreeHook = pfn;
 }
 
 
 #if i386
-#pragma optimize("y",off)
+#pragma optimize("y", off)
 #endif
 
 HGLOBAL
 WINAPI
-GlobalAlloc(
-    UINT uFlags,
-    SIZE_T dwBytes
-    )
+GlobalAlloc(UINT uFlags, SIZE_T dwBytes)
 {
     PBASE_HANDLE_TABLE_ENTRY HandleEntry;
     HANDLE hMem;
     LPSTR p;
     ULONG Flags;
 
-    if (uFlags & ~GMEM_VALID_FLAGS) {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return( NULL );
-        }
+    if (uFlags & ~GMEM_VALID_FLAGS)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return (NULL);
+    }
 
     Flags = 0;
-    if (uFlags & GMEM_ZEROINIT) {
+    if (uFlags & GMEM_ZEROINIT)
+    {
         Flags |= HEAP_ZERO_MEMORY;
+    }
+
+    if (!(uFlags & GMEM_MOVEABLE))
+    {
+        if (uFlags & GMEM_DDESHARE)
+        {
+            Flags |= BASE_HEAP_FLAG_DDESHARE;
         }
 
-    if (!(uFlags & GMEM_MOVEABLE)) {
-        if (uFlags & GMEM_DDESHARE) {
-            Flags |= BASE_HEAP_FLAG_DDESHARE;
-            }
+        p = RtlAllocateHeap(BaseHeap, MAKE_TAG(GMEM_TAG) | Flags, dwBytes ? dwBytes : 1);
 
-        p = RtlAllocateHeap( BaseHeap,
-                             MAKE_TAG( GMEM_TAG ) | Flags,
-                             dwBytes ? dwBytes : 1
-                           );
-
-        if (p == NULL) {
-            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-            }
+        if (p == NULL)
+        {
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        }
 
         return p;
-        }
+    }
 
     p = NULL;
-    RtlLockHeap( BaseHeap );
+    RtlLockHeap(BaseHeap);
     Flags |= HEAP_NO_SERIALIZE | HEAP_SETTABLE_USER_VALUE | BASE_HEAP_FLAG_MOVEABLE;
-    try {
-        HandleEntry = (PBASE_HANDLE_TABLE_ENTRY)RtlAllocateHandle( &BaseHeapHandleTable, NULL );
-        if (HandleEntry == NULL) {
-            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+    try
+    {
+        HandleEntry = (PBASE_HANDLE_TABLE_ENTRY)RtlAllocateHandle(&BaseHeapHandleTable, NULL);
+        if (HandleEntry == NULL)
+        {
+            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
             goto Fail;
-            }
+        }
 
         hMem = (HANDLE)&HandleEntry->Object;
-        if (dwBytes != 0) {
-            p = (LPSTR)RtlAllocateHeap( BaseHeap, MAKE_TAG( GMEM_TAG ) | Flags, dwBytes );
-            if (p == NULL) {
+        if (dwBytes != 0)
+        {
+            p = (LPSTR)RtlAllocateHeap(BaseHeap, MAKE_TAG(GMEM_TAG) | Flags, dwBytes);
+            if (p == NULL)
+            {
                 HandleEntry->Flags = RTL_HANDLE_ALLOCATED;
-                RtlFreeHandle( &BaseHeapHandleTable, (PRTL_HANDLE_TABLE_ENTRY)HandleEntry );
+                RtlFreeHandle(&BaseHeapHandleTable, (PRTL_HANDLE_TABLE_ENTRY)HandleEntry);
                 HandleEntry = NULL;
-                SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-                }
-            else {
-                RtlSetUserValueHeap( BaseHeap, HEAP_NO_SERIALIZE, p, hMem );
-                }
+                SetLastError(ERROR_NOT_ENOUGH_MEMORY);
             }
-Fail:   ;
+            else
+            {
+                RtlSetUserValueHeap(BaseHeap, HEAP_NO_SERIALIZE, p, hMem);
+            }
         }
-    except (EXCEPTION_EXECUTE_HANDLER) {
-        BaseSetLastNTError( GetExceptionCode() );
-        }
+    Fail:;
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        BaseSetLastNTError(GetExceptionCode());
+    }
 
-    RtlUnlockHeap( BaseHeap );
+    RtlUnlockHeap(BaseHeap);
 
-    if (HandleEntry != NULL) {
+    if (HandleEntry != NULL)
+    {
         HandleEntry->Object = p;
-        if (p != NULL) {
+        if (p != NULL)
+        {
             HandleEntry->Flags = RTL_HANDLE_ALLOCATED;
-            }
-        else {
+        }
+        else
+        {
             HandleEntry->Flags = RTL_HANDLE_ALLOCATED | BASE_HANDLE_DISCARDED;
-            }
+        }
 
-        if (uFlags & GMEM_DISCARDABLE) {
+        if (uFlags & GMEM_DISCARDABLE)
+        {
             HandleEntry->Flags |= BASE_HANDLE_DISCARDABLE;
-            }
+        }
 
-        if (uFlags & GMEM_MOVEABLE) {
+        if (uFlags & GMEM_MOVEABLE)
+        {
             HandleEntry->Flags |= BASE_HANDLE_MOVEABLE;
-            }
+        }
 
-        if (uFlags & GMEM_DDESHARE) {
+        if (uFlags & GMEM_DDESHARE)
+        {
             HandleEntry->Flags |= BASE_HANDLE_SHARED;
-            }
+        }
 
         p = (LPSTR)hMem;
-        }
+    }
 
-    return( (HANDLE)p );
+    return ((HANDLE)p);
 }
 
 
 HGLOBAL
 WINAPI
-GlobalReAlloc(
-    HANDLE hMem,
-    SIZE_T dwBytes,
-    UINT uFlags
-    )
+GlobalReAlloc(HANDLE hMem, SIZE_T dwBytes, UINT uFlags)
 {
     PBASE_HANDLE_TABLE_ENTRY HandleEntry;
     HANDLE Handle;
     LPSTR p;
     ULONG Flags;
 
-    if ((uFlags & ~(GMEM_VALID_FLAGS | GMEM_MODIFY)) ||
-        ((uFlags & GMEM_DISCARDABLE) && !(uFlags & GMEM_MODIFY))
-       ) {
+    if ((uFlags & ~(GMEM_VALID_FLAGS | GMEM_MODIFY)) || ((uFlags & GMEM_DISCARDABLE) && !(uFlags & GMEM_MODIFY)))
+    {
 #if DBG
-        DbgPrint( "*** GlobalReAlloc( %lx ) - invalid flags\n", uFlags );
+        DbgPrint("*** GlobalReAlloc( %lx ) - invalid flags\n", uFlags);
         BaseHeapBreakPoint();
 #endif
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return( NULL );
-        }
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return (NULL);
+    }
 
     Flags = 0;
-    if (uFlags & GMEM_ZEROINIT) {
+    if (uFlags & GMEM_ZEROINIT)
+    {
         Flags |= HEAP_ZERO_MEMORY;
-        }
-    if (!(uFlags & GMEM_MOVEABLE)) {
+    }
+    if (!(uFlags & GMEM_MOVEABLE))
+    {
         Flags |= HEAP_REALLOC_IN_PLACE_ONLY;
-        }
+    }
 
-    RtlLockHeap( BaseHeap );
+    RtlLockHeap(BaseHeap);
     Flags |= HEAP_NO_SERIALIZE;
-    try {
-        if ((ULONG_PTR)hMem & BASE_HANDLE_MARK_BIT) {
-            HandleEntry = (PBASE_HANDLE_TABLE_ENTRY)
-                CONTAINING_RECORD( hMem, BASE_HANDLE_TABLE_ENTRY, Object );
+    try
+    {
+        if ((ULONG_PTR)hMem & BASE_HANDLE_MARK_BIT)
+        {
+            HandleEntry = (PBASE_HANDLE_TABLE_ENTRY)CONTAINING_RECORD(hMem, BASE_HANDLE_TABLE_ENTRY, Object);
 
-            if (!RtlIsValidHandle( &BaseHeapHandleTable, (PRTL_HANDLE_TABLE_ENTRY)HandleEntry )) {
+            if (!RtlIsValidHandle(&BaseHeapHandleTable, (PRTL_HANDLE_TABLE_ENTRY)HandleEntry))
+            {
 #if DBG
-                DbgPrint( "*** GlobalReAlloc( %lx ) - invalid handle\n", hMem );
+                DbgPrint("*** GlobalReAlloc( %lx ) - invalid handle\n", hMem);
                 BaseHeapBreakPoint();
 #endif
-                SetLastError( ERROR_INVALID_HANDLE );
+                SetLastError(ERROR_INVALID_HANDLE);
                 hMem = NULL;
-                }
-            else
-            if (uFlags & GMEM_MODIFY) {
-                if (uFlags & GMEM_DISCARDABLE) {
+            }
+            else if (uFlags & GMEM_MODIFY)
+            {
+                if (uFlags & GMEM_DISCARDABLE)
+                {
                     HandleEntry->Flags |= BASE_HANDLE_DISCARDABLE;
-                    }
-                else {
-                    HandleEntry->Flags &= ~BASE_HANDLE_DISCARDABLE;
-                    }
                 }
-            else {
+                else
+                {
+                    HandleEntry->Flags &= ~BASE_HANDLE_DISCARDABLE;
+                }
+            }
+            else
+            {
                 p = HandleEntry->Object;
-                if (dwBytes == 0) {
+                if (dwBytes == 0)
+                {
                     hMem = NULL;
-                    if (p != NULL) {
-                        if ((uFlags & GMEM_MOVEABLE) && HandleEntry->LockCount == 0) {
-                            if (RtlFreeHeap( BaseHeap, Flags, p )) {
+                    if (p != NULL)
+                    {
+                        if ((uFlags & GMEM_MOVEABLE) && HandleEntry->LockCount == 0)
+                        {
+                            if (RtlFreeHeap(BaseHeap, Flags, p))
+                            {
                                 HandleEntry->Object = NULL;
                                 HandleEntry->Flags |= BASE_HANDLE_DISCARDED;
                                 hMem = (HANDLE)&HandleEntry->Object;
-                                }
                             }
-                        else {
+                        }
+                        else
+                        {
 #if DBG
-                            DbgPrint( "*** GlobalReAlloc( %lx ) - failing with locked handle\n", &HandleEntry->Object );
+                            DbgPrint("*** GlobalReAlloc( %lx ) - failing with locked handle\n", &HandleEntry->Object);
                             BaseHeapBreakPoint();
 #endif
-                            }
-                        }
-                    else {
-                        hMem = (HANDLE)&HandleEntry->Object;
                         }
                     }
-                else {
+                    else
+                    {
+                        hMem = (HANDLE)&HandleEntry->Object;
+                    }
+                }
+                else
+                {
                     Flags |= HEAP_SETTABLE_USER_VALUE | BASE_HEAP_FLAG_MOVEABLE;
-                    if (p == NULL) {
-                        p = RtlAllocateHeap( BaseHeap, MAKE_TAG( GMEM_TAG ) | Flags, dwBytes );
-                        if (p != NULL) {
-                            RtlSetUserValueHeap( BaseHeap, HEAP_NO_SERIALIZE, p, hMem );
-                            }
+                    if (p == NULL)
+                    {
+                        p = RtlAllocateHeap(BaseHeap, MAKE_TAG(GMEM_TAG) | Flags, dwBytes);
+                        if (p != NULL)
+                        {
+                            RtlSetUserValueHeap(BaseHeap, HEAP_NO_SERIALIZE, p, hMem);
                         }
-                    else {
-                        if (!(uFlags & GMEM_MOVEABLE) &&
-                            HandleEntry->LockCount != 0
-                           ) {
+                    }
+                    else
+                    {
+                        if (!(uFlags & GMEM_MOVEABLE) && HandleEntry->LockCount != 0)
+                        {
                             Flags |= HEAP_REALLOC_IN_PLACE_ONLY;
-                            }
-                        else {
+                        }
+                        else
+                        {
                             Flags &= ~HEAP_REALLOC_IN_PLACE_ONLY;
-                            }
-
-                        p = RtlReAllocateHeap( BaseHeap, MAKE_TAG( GMEM_TAG ) | Flags, p, dwBytes );
                         }
 
-                    if (p != NULL) {
+                        p = RtlReAllocateHeap(BaseHeap, MAKE_TAG(GMEM_TAG) | Flags, p, dwBytes);
+                    }
+
+                    if (p != NULL)
+                    {
                         HandleEntry->Object = p;
                         HandleEntry->Flags &= ~BASE_HANDLE_DISCARDED;
-                        }
-                    else {
+                    }
+                    else
+                    {
                         hMem = NULL;
-                        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-                        }
+                        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
                     }
                 }
             }
-        else
-        if (uFlags & GMEM_MODIFY) {
-            if (uFlags & GMEM_MOVEABLE) {
+        }
+        else if (uFlags & GMEM_MODIFY)
+        {
+            if (uFlags & GMEM_MOVEABLE)
+            {
                 Handle = hMem;
-                if (RtlGetUserInfoHeap( BaseHeap, HEAP_NO_SERIALIZE, (PVOID)hMem, &Handle, NULL )) {
-                    if (Handle == hMem || !(Flags & BASE_HEAP_FLAG_MOVEABLE)) {
-                        HandleEntry = (PBASE_HANDLE_TABLE_ENTRY)RtlAllocateHandle( &BaseHeapHandleTable,
-                                                                                   NULL
-                                                                                 );
-                        if (HandleEntry == NULL) {
+                if (RtlGetUserInfoHeap(BaseHeap, HEAP_NO_SERIALIZE, (PVOID)hMem, &Handle, NULL))
+                {
+                    if (Handle == hMem || !(Flags & BASE_HEAP_FLAG_MOVEABLE))
+                    {
+                        HandleEntry = (PBASE_HANDLE_TABLE_ENTRY)RtlAllocateHandle(&BaseHeapHandleTable, NULL);
+                        if (HandleEntry == NULL)
+                        {
                             hMem = NULL;
-                            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-                            }
-                        else {
-                            dwBytes = RtlSizeHeap( BaseHeap, HEAP_NO_SERIALIZE, hMem );
+                            SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+                        }
+                        else
+                        {
+                            dwBytes = RtlSizeHeap(BaseHeap, HEAP_NO_SERIALIZE, hMem);
                             Flags |= HEAP_SETTABLE_USER_VALUE | BASE_HEAP_FLAG_MOVEABLE;
-                            HandleEntry->Object = (PVOID)RtlAllocateHeap( BaseHeap,
-                                                                            MAKE_TAG( GMEM_TAG ) | Flags,
-                                                                            dwBytes
-                                                                          );
-                            if (HandleEntry->Object == NULL) {
+                            HandleEntry->Object = (PVOID)RtlAllocateHeap(BaseHeap, MAKE_TAG(GMEM_TAG) | Flags, dwBytes);
+                            if (HandleEntry->Object == NULL)
+                            {
                                 HandleEntry->Flags = RTL_HANDLE_ALLOCATED;
-                                RtlFreeHandle( &BaseHeapHandleTable, (PRTL_HANDLE_TABLE_ENTRY)HandleEntry );
+                                RtlFreeHandle(&BaseHeapHandleTable, (PRTL_HANDLE_TABLE_ENTRY)HandleEntry);
                                 hMem = NULL;
-                                SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-                                }
-                            else {
-                                RtlMoveMemory( HandleEntry->Object, hMem, dwBytes );
-                                RtlFreeHeap( BaseHeap, HEAP_NO_SERIALIZE, hMem );
+                                SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+                            }
+                            else
+                            {
+                                RtlMoveMemory(HandleEntry->Object, hMem, dwBytes);
+                                RtlFreeHeap(BaseHeap, HEAP_NO_SERIALIZE, hMem);
                                 hMem = (HANDLE)&HandleEntry->Object;
                                 HandleEntry->LockCount = 0;
                                 HandleEntry->Flags = RTL_HANDLE_ALLOCATED | BASE_HANDLE_MOVEABLE;
-                                if (uFlags & GMEM_DISCARDABLE) {
+                                if (uFlags & GMEM_DISCARDABLE)
+                                {
                                     HandleEntry->Flags |= BASE_HANDLE_DISCARDABLE;
-                                    }
-
-                                if ((ULONG_PTR)Handle & GMEM_DDESHARE) {
-                                    HandleEntry->Flags |= BASE_HANDLE_SHARED;
-                                    }
-
-                                RtlSetUserValueHeap( BaseHeap,
-                                                     HEAP_NO_SERIALIZE,
-                                                     HandleEntry->Object,
-                                                     hMem
-                                                   );
                                 }
+
+                                if ((ULONG_PTR)Handle & GMEM_DDESHARE)
+                                {
+                                    HandleEntry->Flags |= BASE_HANDLE_SHARED;
+                                }
+
+                                RtlSetUserValueHeap(BaseHeap, HEAP_NO_SERIALIZE, HandleEntry->Object, hMem);
                             }
                         }
                     }
                 }
             }
-        else {
-            hMem = RtlReAllocateHeap( BaseHeap,
-                                      MAKE_TAG( GMEM_TAG ) | Flags | HEAP_NO_SERIALIZE,
-                                      (PVOID)hMem,
-                                      dwBytes
-                                    );
-            if (hMem == NULL) {
-                SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-                }
+        }
+        else
+        {
+            hMem = RtlReAllocateHeap(BaseHeap, MAKE_TAG(GMEM_TAG) | Flags | HEAP_NO_SERIALIZE, (PVOID)hMem, dwBytes);
+            if (hMem == NULL)
+            {
+                SetLastError(ERROR_NOT_ENOUGH_MEMORY);
             }
         }
-    except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         hMem = NULL;
-        BaseSetLastNTError( GetExceptionCode() );
-        }
+        BaseSetLastNTError(GetExceptionCode());
+    }
 
-    RtlUnlockHeap( BaseHeap );
+    RtlUnlockHeap(BaseHeap);
 
-    return( (LPSTR)hMem );
+    return ((LPSTR)hMem);
 }
 
 LPVOID
 WINAPI
-GlobalLock(
-    HGLOBAL hMem
-    )
+GlobalLock(HGLOBAL hMem)
 {
     PBASE_HANDLE_TABLE_ENTRY HandleEntry;
     LPSTR p;
 
-    if ((ULONG_PTR)hMem & BASE_HANDLE_MARK_BIT) {
-        RtlLockHeap( BaseHeap );
-        try {
-            HandleEntry = (PBASE_HANDLE_TABLE_ENTRY)
-                CONTAINING_RECORD( hMem, BASE_HANDLE_TABLE_ENTRY, Object );
+    if ((ULONG_PTR)hMem & BASE_HANDLE_MARK_BIT)
+    {
+        RtlLockHeap(BaseHeap);
+        try
+        {
+            HandleEntry = (PBASE_HANDLE_TABLE_ENTRY)CONTAINING_RECORD(hMem, BASE_HANDLE_TABLE_ENTRY, Object);
 
-            if (!RtlIsValidHandle( &BaseHeapHandleTable, (PRTL_HANDLE_TABLE_ENTRY)HandleEntry )) {
+            if (!RtlIsValidHandle(&BaseHeapHandleTable, (PRTL_HANDLE_TABLE_ENTRY)HandleEntry))
+            {
 #if DBG
-                DbgPrint( "*** GlobalLock( %lx ) - invalid handle\n", hMem );
+                DbgPrint("*** GlobalLock( %lx ) - invalid handle\n", hMem);
                 BaseHeapBreakPoint();
 #endif
-                SetLastError( ERROR_INVALID_HANDLE );
+                SetLastError(ERROR_INVALID_HANDLE);
                 p = NULL;
-                }
-            else {
+            }
+            else
+            {
                 p = HandleEntry->Object;
-                if (p != NULL) {
-                    if (HandleEntry->LockCount++ == GMEM_LOCKCOUNT) {
+                if (p != NULL)
+                {
+                    if (HandleEntry->LockCount++ == GMEM_LOCKCOUNT)
+                    {
                         HandleEntry->LockCount--;
-                        }
-                    }
-                else {
-                    SetLastError( ERROR_DISCARDED );
                     }
                 }
-
+                else
+                {
+                    SetLastError(ERROR_DISCARDED);
+                }
             }
-        except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             p = NULL;
-            BaseSetLastNTError( GetExceptionCode() );
-            }
-
-        RtlUnlockHeap( BaseHeap );
-
-        return( p );
+            BaseSetLastNTError(GetExceptionCode());
         }
-    else {
-        if ( (ULONG_PTR)hMem >= SystemRangeStart ) {
-            SetLastError( ERROR_INVALID_HANDLE );
-            return NULL;
-            }
-        if (IsBadReadPtr( hMem, 1 )) {
-            SetLastError( ERROR_INVALID_HANDLE );
-            return NULL;
-            }
 
-        return( (LPSTR)hMem );
+        RtlUnlockHeap(BaseHeap);
+
+        return (p);
+    }
+    else
+    {
+        if ((ULONG_PTR)hMem >= SystemRangeStart)
+        {
+            SetLastError(ERROR_INVALID_HANDLE);
+            return NULL;
         }
+        if (IsBadReadPtr(hMem, 1))
+        {
+            SetLastError(ERROR_INVALID_HANDLE);
+            return NULL;
+        }
+
+        return ((LPSTR)hMem);
+    }
 }
 
 
 HANDLE
 WINAPI
-GlobalHandle(
-    LPCVOID pMem
-    )
+GlobalHandle(LPCVOID pMem)
 {
     HANDLE Handle;
     ULONG Flags;
 
-    RtlLockHeap( BaseHeap );
-    try {
+    RtlLockHeap(BaseHeap);
+    try
+    {
         Handle = NULL;
-        if (!RtlGetUserInfoHeap( BaseHeap, HEAP_NO_SERIALIZE, (LPVOID)pMem, &Handle, &Flags )) {
-            SetLastError( ERROR_INVALID_HANDLE );
-            }
-        else
-        if (Handle == NULL || !(Flags & BASE_HEAP_FLAG_MOVEABLE)) {
+        if (!RtlGetUserInfoHeap(BaseHeap, HEAP_NO_SERIALIZE, (LPVOID)pMem, &Handle, &Flags))
+        {
+            SetLastError(ERROR_INVALID_HANDLE);
+        }
+        else if (Handle == NULL || !(Flags & BASE_HEAP_FLAG_MOVEABLE))
+        {
             Handle = (HANDLE)pMem;
-            }
         }
-    except (EXCEPTION_EXECUTE_HANDLER) {
-        BaseSetLastNTError( GetExceptionCode() );
-        }
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        BaseSetLastNTError(GetExceptionCode());
+    }
 
-    RtlUnlockHeap( BaseHeap );
+    RtlUnlockHeap(BaseHeap);
 
-    return( Handle );
+    return (Handle);
 }
 
 
-BOOL
-WINAPI
-GlobalUnlock(
-    HANDLE hMem
-    )
+BOOL WINAPI GlobalUnlock(HANDLE hMem)
 {
     PBASE_HANDLE_TABLE_ENTRY HandleEntry;
     BOOL Result;
 
     Result = TRUE;
-    if ((ULONG_PTR)hMem & BASE_HANDLE_MARK_BIT) {
-        RtlLockHeap( BaseHeap );
-        try {
-            HandleEntry = (PBASE_HANDLE_TABLE_ENTRY)
-                CONTAINING_RECORD( hMem, BASE_HANDLE_TABLE_ENTRY, Object );
+    if ((ULONG_PTR)hMem & BASE_HANDLE_MARK_BIT)
+    {
+        RtlLockHeap(BaseHeap);
+        try
+        {
+            HandleEntry = (PBASE_HANDLE_TABLE_ENTRY)CONTAINING_RECORD(hMem, BASE_HANDLE_TABLE_ENTRY, Object);
 
-            if (!RtlIsValidHandle( &BaseHeapHandleTable, (PRTL_HANDLE_TABLE_ENTRY)HandleEntry )) {
+            if (!RtlIsValidHandle(&BaseHeapHandleTable, (PRTL_HANDLE_TABLE_ENTRY)HandleEntry))
+            {
 #if DBG
                 PVOID ImageBase;
 
@@ -438,42 +465,42 @@ GlobalUnlock(
                 // message.
                 //
 
-                if (!RtlPcToFileHeader( (PVOID)hMem, &ImageBase)) {
-                    DbgPrint( "*** GlobalUnlock( %lx ) - invalid handle\n", hMem );
+                if (!RtlPcToFileHeader((PVOID)hMem, &ImageBase))
+                {
+                    DbgPrint("*** GlobalUnlock( %lx ) - invalid handle\n", hMem);
                     BaseHeapBreakPoint();
-                    }
+                }
 #endif
 
-                SetLastError( ERROR_INVALID_HANDLE );
-                }
-            else
-            if (HandleEntry->LockCount-- == 0) {
+                SetLastError(ERROR_INVALID_HANDLE);
+            }
+            else if (HandleEntry->LockCount-- == 0)
+            {
                 HandleEntry->LockCount++;
-                SetLastError( ERROR_NOT_LOCKED );
+                SetLastError(ERROR_NOT_LOCKED);
                 Result = FALSE;
-                }
-            else
-            if (HandleEntry->LockCount == 0) {
-                SetLastError( NO_ERROR );
+            }
+            else if (HandleEntry->LockCount == 0)
+            {
+                SetLastError(NO_ERROR);
                 Result = FALSE;
-                }
             }
-        except (EXCEPTION_EXECUTE_HANDLER) {
-            BaseSetLastNTError( GetExceptionCode() );
-            }
-
-        RtlUnlockHeap( BaseHeap );
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            BaseSetLastNTError(GetExceptionCode());
         }
 
-    return( Result );
+        RtlUnlockHeap(BaseHeap);
+    }
+
+    return (Result);
 }
 
 
 SIZE_T
 WINAPI
-GlobalSize(
-    HANDLE hMem
-    )
+GlobalSize(HANDLE hMem)
 {
     PBASE_HANDLE_TABLE_ENTRY HandleEntry;
     PVOID Handle;
@@ -482,61 +509,66 @@ GlobalSize(
 
     dwSize = MAXULONG_PTR;
     Flags = 0;
-    RtlLockHeap( BaseHeap );
-    try {
-        if (!((ULONG_PTR)hMem & BASE_HANDLE_MARK_BIT)) {
+    RtlLockHeap(BaseHeap);
+    try
+    {
+        if (!((ULONG_PTR)hMem & BASE_HANDLE_MARK_BIT))
+        {
             Handle = NULL;
-            if (!RtlGetUserInfoHeap( BaseHeap, Flags, hMem, &Handle, &Flags )) {
-                }
-            else
-            if (Handle == NULL || !(Flags & BASE_HEAP_FLAG_MOVEABLE)) {
-                dwSize = RtlSizeHeap( BaseHeap, HEAP_NO_SERIALIZE, (PVOID)hMem );
-                }
-            else {
-                hMem = Handle;
-                }
+            if (!RtlGetUserInfoHeap(BaseHeap, Flags, hMem, &Handle, &Flags))
+            {
             }
+            else if (Handle == NULL || !(Flags & BASE_HEAP_FLAG_MOVEABLE))
+            {
+                dwSize = RtlSizeHeap(BaseHeap, HEAP_NO_SERIALIZE, (PVOID)hMem);
+            }
+            else
+            {
+                hMem = Handle;
+            }
+        }
 
-        if ((ULONG_PTR)hMem & BASE_HANDLE_MARK_BIT) {
-            HandleEntry = (PBASE_HANDLE_TABLE_ENTRY)
-                CONTAINING_RECORD( hMem, BASE_HANDLE_TABLE_ENTRY, Object );
+        if ((ULONG_PTR)hMem & BASE_HANDLE_MARK_BIT)
+        {
+            HandleEntry = (PBASE_HANDLE_TABLE_ENTRY)CONTAINING_RECORD(hMem, BASE_HANDLE_TABLE_ENTRY, Object);
 
-            if (!RtlIsValidHandle( &BaseHeapHandleTable, (PRTL_HANDLE_TABLE_ENTRY)HandleEntry )) {
+            if (!RtlIsValidHandle(&BaseHeapHandleTable, (PRTL_HANDLE_TABLE_ENTRY)HandleEntry))
+            {
 #if DBG
-                DbgPrint( "*** GlobalSize( %lx ) - invalid handle\n", hMem );
+                DbgPrint("*** GlobalSize( %lx ) - invalid handle\n", hMem);
                 BaseHeapBreakPoint();
 #endif
-                SetLastError( ERROR_INVALID_HANDLE );
-                }
-            else
-            if (HandleEntry->Flags & BASE_HANDLE_DISCARDED) {
+                SetLastError(ERROR_INVALID_HANDLE);
+            }
+            else if (HandleEntry->Flags & BASE_HANDLE_DISCARDED)
+            {
                 dwSize = HandleEntry->Size;
-                }
-            else {
-                dwSize = RtlSizeHeap( BaseHeap, HEAP_NO_SERIALIZE, HandleEntry->Object );
-                }
+            }
+            else
+            {
+                dwSize = RtlSizeHeap(BaseHeap, HEAP_NO_SERIALIZE, HandleEntry->Object);
             }
         }
-    except (EXCEPTION_EXECUTE_HANDLER) {
-        BaseSetLastNTError( GetExceptionCode() );
-        }
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        BaseSetLastNTError(GetExceptionCode());
+    }
 
-    RtlUnlockHeap( BaseHeap );
+    RtlUnlockHeap(BaseHeap);
 
-    if (dwSize == MAXULONG_PTR) {
-        SetLastError( ERROR_INVALID_HANDLE );
+    if (dwSize == MAXULONG_PTR)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
         return 0;
-        }
-    else {
+    }
+    else
+    {
         return dwSize;
-        }
+    }
 }
 
-UINT
-WINAPI
-GlobalFlags(
-    HANDLE hMem
-    )
+UINT WINAPI GlobalFlags(HANDLE hMem)
 {
     PBASE_HANDLE_TABLE_ENTRY HandleEntry;
     HANDLE Handle;
@@ -544,199 +576,206 @@ GlobalFlags(
     UINT uFlags;
 
     uFlags = GMEM_INVALID_HANDLE;
-    RtlLockHeap( BaseHeap );
-    try {
-        if (!((ULONG_PTR)hMem & BASE_HANDLE_MARK_BIT)) {
+    RtlLockHeap(BaseHeap);
+    try
+    {
+        if (!((ULONG_PTR)hMem & BASE_HANDLE_MARK_BIT))
+        {
             Handle = NULL;
             Flags = 0;
-            if (!RtlGetUserInfoHeap( BaseHeap, Flags, hMem, &Handle, &Flags )) {
-                }
-            else
-            if (Handle == NULL || !(Flags & BASE_HEAP_FLAG_MOVEABLE)) {
+            if (!RtlGetUserInfoHeap(BaseHeap, Flags, hMem, &Handle, &Flags))
+            {
+            }
+            else if (Handle == NULL || !(Flags & BASE_HEAP_FLAG_MOVEABLE))
+            {
                 uFlags = 0;
-                }
-            else {
+            }
+            else
+            {
                 hMem = Handle;
-                }
             }
+        }
 
-        if ((ULONG_PTR)hMem & BASE_HANDLE_MARK_BIT) {
-            HandleEntry = (PBASE_HANDLE_TABLE_ENTRY)
-                CONTAINING_RECORD( hMem, BASE_HANDLE_TABLE_ENTRY, Object );
+        if ((ULONG_PTR)hMem & BASE_HANDLE_MARK_BIT)
+        {
+            HandleEntry = (PBASE_HANDLE_TABLE_ENTRY)CONTAINING_RECORD(hMem, BASE_HANDLE_TABLE_ENTRY, Object);
 
-            if (RtlIsValidHandle( &BaseHeapHandleTable, (PRTL_HANDLE_TABLE_ENTRY)HandleEntry )) {
+            if (RtlIsValidHandle(&BaseHeapHandleTable, (PRTL_HANDLE_TABLE_ENTRY)HandleEntry))
+            {
                 uFlags = HandleEntry->LockCount & GMEM_LOCKCOUNT;
-                if (HandleEntry->Flags & BASE_HANDLE_DISCARDED) {
+                if (HandleEntry->Flags & BASE_HANDLE_DISCARDED)
+                {
                     uFlags |= GMEM_DISCARDED;
-                    }
+                }
 
-                if (HandleEntry->Flags & BASE_HANDLE_DISCARDABLE) {
+                if (HandleEntry->Flags & BASE_HANDLE_DISCARDABLE)
+                {
                     uFlags |= GMEM_DISCARDABLE;
-                    }
+                }
 
-                if (HandleEntry->Flags & BASE_HANDLE_SHARED) {
+                if (HandleEntry->Flags & BASE_HANDLE_SHARED)
+                {
                     uFlags |= GMEM_DDESHARE;
-                    }
                 }
             }
+        }
 
-        if (uFlags == GMEM_INVALID_HANDLE) {
+        if (uFlags == GMEM_INVALID_HANDLE)
+        {
 #if DBG
-            DbgPrint( "*** GlobalFlags( %lx ) - invalid handle\n", hMem );
+            DbgPrint("*** GlobalFlags( %lx ) - invalid handle\n", hMem);
             BaseHeapBreakPoint();
 #endif
-            SetLastError( ERROR_INVALID_HANDLE );
-            }
+            SetLastError(ERROR_INVALID_HANDLE);
         }
-    except (EXCEPTION_EXECUTE_HANDLER) {
-        BaseSetLastNTError( GetExceptionCode() );
-        }
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        BaseSetLastNTError(GetExceptionCode());
+    }
 
-    RtlUnlockHeap( BaseHeap );
+    RtlUnlockHeap(BaseHeap);
 
-    return( uFlags );
+    return (uFlags);
 }
 
 
 HGLOBAL
 WINAPI
-GlobalFree(
-    HGLOBAL hMem
-    )
+GlobalFree(HGLOBAL hMem)
 {
     PBASE_HANDLE_TABLE_ENTRY HandleEntry;
     LPSTR p;
 
-    try {
-        if (pfnWowGlobalFreeHook != NULL) {
-            if (!(*pfnWowGlobalFreeHook)(hMem)) {
+    try
+    {
+        if (pfnWowGlobalFreeHook != NULL)
+        {
+            if (!(*pfnWowGlobalFreeHook)(hMem))
+            {
                 return NULL;
-                }
             }
+        }
 
-        if (!((ULONG_PTR)hMem & BASE_HANDLE_MARK_BIT)) {
-            if (RtlFreeHeap( BaseHeap, 0, (PVOID)hMem )) {
+        if (!((ULONG_PTR)hMem & BASE_HANDLE_MARK_BIT))
+        {
+            if (RtlFreeHeap(BaseHeap, 0, (PVOID)hMem))
+            {
                 return NULL;
-                }
-            else {
-                SetLastError( ERROR_INVALID_HANDLE );
+            }
+            else
+            {
+                SetLastError(ERROR_INVALID_HANDLE);
                 return hMem;
-                }
             }
         }
-    except (EXCEPTION_EXECUTE_HANDLER) {
-        BaseSetLastNTError( GetExceptionCode() );
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        BaseSetLastNTError(GetExceptionCode());
         return hMem;
-        }
+    }
 
-    RtlLockHeap( BaseHeap );
-    try {
-        if ((ULONG_PTR)hMem & BASE_HANDLE_MARK_BIT) {
-            HandleEntry = (PBASE_HANDLE_TABLE_ENTRY)
-                CONTAINING_RECORD( hMem, BASE_HANDLE_TABLE_ENTRY, Object );
+    RtlLockHeap(BaseHeap);
+    try
+    {
+        if ((ULONG_PTR)hMem & BASE_HANDLE_MARK_BIT)
+        {
+            HandleEntry = (PBASE_HANDLE_TABLE_ENTRY)CONTAINING_RECORD(hMem, BASE_HANDLE_TABLE_ENTRY, Object);
 
-            if (!RtlIsValidHandle( &BaseHeapHandleTable, (PRTL_HANDLE_TABLE_ENTRY)HandleEntry )) {
+            if (!RtlIsValidHandle(&BaseHeapHandleTable, (PRTL_HANDLE_TABLE_ENTRY)HandleEntry))
+            {
 #if DBG
-                DbgPrint( "*** GlobalFree( %lx ) - invalid handle\n", hMem );
+                DbgPrint("*** GlobalFree( %lx ) - invalid handle\n", hMem);
                 BaseHeapBreakPoint();
 #endif
-                SetLastError( ERROR_INVALID_HANDLE );
+                SetLastError(ERROR_INVALID_HANDLE);
                 p = NULL;
-                }
-            else {
+            }
+            else
+            {
 #if DBG
-                if (HandleEntry->LockCount != 0) {
-                    DbgPrint( "BASE: GlobalFree called with a locked object.\n" );
+                if (HandleEntry->LockCount != 0)
+                {
+                    DbgPrint("BASE: GlobalFree called with a locked object.\n");
                     BaseHeapBreakPoint();
-                    }
+                }
 #endif
                 p = HandleEntry->Object;
-                RtlFreeHandle( &BaseHeapHandleTable, (PRTL_HANDLE_TABLE_ENTRY)HandleEntry );
-                if (p == NULL) {
+                RtlFreeHandle(&BaseHeapHandleTable, (PRTL_HANDLE_TABLE_ENTRY)HandleEntry);
+                if (p == NULL)
+                {
                     hMem = NULL;
-                    }
                 }
             }
-        else {
+        }
+        else
+        {
             p = (LPSTR)hMem;
-            }
+        }
 
-        if (p != NULL) {
-            if (RtlFreeHeap( BaseHeap, HEAP_NO_SERIALIZE, p )) {
+        if (p != NULL)
+        {
+            if (RtlFreeHeap(BaseHeap, HEAP_NO_SERIALIZE, p))
+            {
                 hMem = NULL;
-                }
-            else {
-                SetLastError( ERROR_INVALID_HANDLE );
-                }
+            }
+            else
+            {
+                SetLastError(ERROR_INVALID_HANDLE);
             }
         }
-    except (EXCEPTION_EXECUTE_HANDLER) {
-        BaseSetLastNTError( GetExceptionCode() );
-        }
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        BaseSetLastNTError(GetExceptionCode());
+    }
 
-    RtlUnlockHeap( BaseHeap );
+    RtlUnlockHeap(BaseHeap);
 
-    return( hMem );
+    return (hMem);
 }
 
 
 SIZE_T
 WINAPI
-GlobalCompact(
-    DWORD dwMinFree
-    )
+GlobalCompact(DWORD dwMinFree)
 {
-    return RtlCompactHeap( BaseHeap, 0 );
+    return RtlCompactHeap(BaseHeap, 0);
 }
 
-VOID
-WINAPI
-GlobalFix(
-    HGLOBAL hMem
-    )
+VOID WINAPI GlobalFix(HGLOBAL hMem)
 {
-    if (hMem != (HGLOBAL)-1) {
-        GlobalLock( hMem );
-        }
+    if (hMem != (HGLOBAL)-1)
+    {
+        GlobalLock(hMem);
+    }
     return;
 }
 
 
-VOID
-WINAPI
-GlobalUnfix(
-    HGLOBAL hMem
-    )
+VOID WINAPI GlobalUnfix(HGLOBAL hMem)
 {
-    if (hMem != (HGLOBAL)-1) {
-        GlobalUnlock( hMem );
-        }
+    if (hMem != (HGLOBAL)-1)
+    {
+        GlobalUnlock(hMem);
+    }
     return;
 }
 
 LPVOID
 WINAPI
-GlobalWire(
-    HGLOBAL hMem
-    )
+GlobalWire(HGLOBAL hMem)
 {
-    return GlobalLock( hMem );
+    return GlobalLock(hMem);
 }
 
-BOOL
-WINAPI
-GlobalUnWire(
-    HGLOBAL hMem
-    )
+BOOL WINAPI GlobalUnWire(HGLOBAL hMem)
 {
-    return GlobalUnlock( hMem );
+    return GlobalUnlock(hMem);
 }
 
-VOID
-WINAPI
-GlobalMemoryStatus(
-    LPMEMORYSTATUS lpBuffer
-    )
+VOID WINAPI GlobalMemoryStatus(LPMEMORYSTATUS lpBuffer)
 {
     DWORD NumberOfPhysicalPages;
     SYSTEM_PERFORMANCE_INFORMATION PerfInfo;
@@ -747,15 +786,10 @@ GlobalMemoryStatus(
     PIMAGE_NT_HEADERS NtHeaders;
     DWORDLONG Memory64;
 
-    Status = NtQuerySystemInformation(
-                SystemPerformanceInformation,
-                &PerfInfo,
-                sizeof(PerfInfo),
-                NULL
-                );
+    Status = NtQuerySystemInformation(SystemPerformanceInformation, &PerfInfo, sizeof(PerfInfo), NULL);
     ASSERT(NT_SUCCESS(Status));
 
-    lpBuffer->dwLength = sizeof( *lpBuffer );
+    lpBuffer->dwLength = sizeof(*lpBuffer);
 
     //
     // Capture the number of physical pages as it can change dynamically.
@@ -772,7 +806,7 @@ GlobalMemoryStatus(
     // Convert the number of physical pages from the native system to
     // the emulation system.
     //
-    
+
     NumberOfPhysicalPages = NumberOfPhysicalPages * (Wow64GetSystemNativePageSize() / BASE_SYSINFO.PageSize);
 
 #endif
@@ -782,51 +816,44 @@ GlobalMemoryStatus(
     // Otherwise load is ((TotalPhys - AvailPhys) * 100) / TotalPhys
     //
 
-    if (PerfInfo.AvailablePages < 100) {
+    if (PerfInfo.AvailablePages < 100)
+    {
         lpBuffer->dwMemoryLoad = 100;
     }
-    else {
+    else
+    {
         lpBuffer->dwMemoryLoad =
-            ((DWORD)(NumberOfPhysicalPages - PerfInfo.AvailablePages) * 100) /
-                NumberOfPhysicalPages;
+            ((DWORD)(NumberOfPhysicalPages - PerfInfo.AvailablePages) * 100) / NumberOfPhysicalPages;
     }
 
     //
-    // Determine the physical memory sizes. 
+    // Determine the physical memory sizes.
     //
 
-    Memory64 =  (DWORDLONG)NumberOfPhysicalPages * BASE_SYSINFO.PageSize;
+    Memory64 = (DWORDLONG)NumberOfPhysicalPages * BASE_SYSINFO.PageSize;
 
-    lpBuffer->dwTotalPhys = (SIZE_T) __min(Memory64, MAXULONG_PTR);
+    lpBuffer->dwTotalPhys = (SIZE_T)__min(Memory64, MAXULONG_PTR);
 
     Memory64 = ((DWORDLONG)PerfInfo.AvailablePages * (DWORDLONG)BASE_SYSINFO.PageSize);
 
-    lpBuffer->dwAvailPhys = (SIZE_T) __min(Memory64, MAXULONG_PTR);
+    lpBuffer->dwAvailPhys = (SIZE_T)__min(Memory64, MAXULONG_PTR);
 
-    if (gpTermsrvAdjustPhyMemLimits) {
-        gpTermsrvAdjustPhyMemLimits(&(lpBuffer->dwTotalPhys),
-                                    &(lpBuffer->dwAvailPhys),
-                                    BASE_SYSINFO.PageSize);
+    if (gpTermsrvAdjustPhyMemLimits)
+    {
+        gpTermsrvAdjustPhyMemLimits(&(lpBuffer->dwTotalPhys), &(lpBuffer->dwAvailPhys), BASE_SYSINFO.PageSize);
     }
-    
+
     //
     // Zero returned values in case the query process fails.
     //
 
-    RtlZeroMemory (&QuotaLimits, sizeof (QUOTA_LIMITS));
-    RtlZeroMemory (&VmCounters, sizeof (VM_COUNTERS));
+    RtlZeroMemory(&QuotaLimits, sizeof(QUOTA_LIMITS));
+    RtlZeroMemory(&VmCounters, sizeof(VM_COUNTERS));
 
-    Status = NtQueryInformationProcess (NtCurrentProcess(),
-                                        ProcessQuotaLimits,
-                                        &QuotaLimits,
-                                        sizeof(QUOTA_LIMITS),
-                                        NULL );
+    Status =
+        NtQueryInformationProcess(NtCurrentProcess(), ProcessQuotaLimits, &QuotaLimits, sizeof(QUOTA_LIMITS), NULL);
 
-    Status = NtQueryInformationProcess (NtCurrentProcess(),
-                                        ProcessVmCounters,
-                                        &VmCounters,
-                                        sizeof(VM_COUNTERS),
-                                        NULL );
+    Status = NtQueryInformationProcess(NtCurrentProcess(), ProcessVmCounters, &VmCounters, sizeof(VM_COUNTERS), NULL);
     //
     // Determine the total page file space with respect to this process.
     //
@@ -841,15 +868,14 @@ GlobalMemoryStatus(
     // Determine remaining page file space with respect to this process.
     //
 
-    Memory64 = __min(PerfInfo.CommitLimit - PerfInfo.CommittedPages,
-                     QuotaLimits.PagefileLimit - VmCounters.PagefileUsage);
+    Memory64 =
+        __min(PerfInfo.CommitLimit - PerfInfo.CommittedPages, QuotaLimits.PagefileLimit - VmCounters.PagefileUsage);
 
     Memory64 *= BASE_SYSINFO.PageSize;
 
-    lpBuffer->dwAvailPageFile = (SIZE_T) __min(Memory64, MAXULONG_PTR);
+    lpBuffer->dwAvailPageFile = (SIZE_T)__min(Memory64, MAXULONG_PTR);
 
-    lpBuffer->dwTotalVirtual = (BASE_SYSINFO.MaximumUserModeAddress -
-                                BASE_SYSINFO.MinimumUserModeAddress) + 1;
+    lpBuffer->dwTotalVirtual = (BASE_SYSINFO.MaximumUserModeAddress - BASE_SYSINFO.MinimumUserModeAddress) + 1;
 
     lpBuffer->dwAvailVirtual = lpBuffer->dwTotalVirtual - VmCounters.VirtualSize;
 
@@ -860,23 +886,28 @@ GlobalMemoryStatus(
     //
 
     Peb = NtCurrentPeb();
-    NtHeaders = RtlImageNtHeader( Peb->ImageBaseAddress );
+    NtHeaders = RtlImageNtHeader(Peb->ImageBaseAddress);
 
-    if (NtHeaders && !(NtHeaders->FileHeader.Characteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE)) {
+    if (NtHeaders && !(NtHeaders->FileHeader.Characteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE))
+    {
 
-        if (lpBuffer->dwTotalPhys > 0x7FFFFFFF) {
+        if (lpBuffer->dwTotalPhys > 0x7FFFFFFF)
+        {
             lpBuffer->dwTotalPhys = 0x7FFFFFFF;
-            }
-        if (lpBuffer->dwAvailPhys > 0x7FFFFFFF) {
-            lpBuffer->dwAvailPhys = 0x7FFFFFFF;
-            }
-        if (lpBuffer->dwTotalVirtual > 0x7FFFFFFF) {
-            lpBuffer->dwTotalVirtual = 0x7FFFFFFF;
-            }
-        if (lpBuffer->dwAvailVirtual > 0x7FFFFFFF) {
-            lpBuffer->dwAvailVirtual = 0x7FFFFFFF;
-            }
         }
+        if (lpBuffer->dwAvailPhys > 0x7FFFFFFF)
+        {
+            lpBuffer->dwAvailPhys = 0x7FFFFFFF;
+        }
+        if (lpBuffer->dwTotalVirtual > 0x7FFFFFFF)
+        {
+            lpBuffer->dwTotalVirtual = 0x7FFFFFFF;
+        }
+        if (lpBuffer->dwAvailVirtual > 0x7FFFFFFF)
+        {
+            lpBuffer->dwAvailVirtual = 0x7FFFFFFF;
+        }
+    }
 #endif
 
     return;
@@ -885,248 +916,170 @@ GlobalMemoryStatus(
 
 PVOID
 WINAPI
-VirtualAlloc(
-    PVOID lpAddress,
-    SIZE_T dwSize,
-    DWORD flAllocationType,
-    DWORD flProtect
-    )
+VirtualAlloc(PVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect)
 {
 
-    return VirtualAllocEx(
-                NtCurrentProcess(),
-                lpAddress,
-                dwSize,
-                flAllocationType,
-                flProtect
-                );
-
+    return VirtualAllocEx(NtCurrentProcess(), lpAddress, dwSize, flAllocationType, flProtect);
 }
 
-BOOL
-WINAPI
-VirtualFree(
-    LPVOID lpAddress,
-    SIZE_T dwSize,
-    DWORD dwFreeType
-    )
+BOOL WINAPI VirtualFree(LPVOID lpAddress, SIZE_T dwSize, DWORD dwFreeType)
 {
-    return VirtualFreeEx(NtCurrentProcess(),lpAddress,dwSize,dwFreeType);
+    return VirtualFreeEx(NtCurrentProcess(), lpAddress, dwSize, dwFreeType);
 }
 
 PVOID
 WINAPI
-VirtualAllocEx(
-    HANDLE hProcess,
-    PVOID lpAddress,
-    SIZE_T dwSize,
-    DWORD flAllocationType,
-    DWORD flProtect
-    )
+VirtualAllocEx(HANDLE hProcess, PVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect)
 {
     NTSTATUS Status;
 
-    if (lpAddress != NULL && (ULONG_PTR)lpAddress < BASE_SYSINFO.AllocationGranularity) {
+    if (lpAddress != NULL && (ULONG_PTR)lpAddress < BASE_SYSINFO.AllocationGranularity)
+    {
 
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return( NULL );
-        }
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return (NULL);
+    }
 
-    try {
-        Status = NtAllocateVirtualMemory( hProcess,
-                                          &lpAddress,
-                                          0,
-                                          &dwSize,
-                                          flAllocationType,
-                                          flProtect
-                                        );
-        }
-    except( EXCEPTION_EXECUTE_HANDLER ) {
+    try
+    {
+        Status = NtAllocateVirtualMemory(hProcess, &lpAddress, 0, &dwSize, flAllocationType, flProtect);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
-        }
+    }
 
-    if (NT_SUCCESS( Status )) {
-        return( lpAddress );
-        }
-    else {
-        BaseSetLastNTError( Status );
-        return( NULL );
-        }
+    if (NT_SUCCESS(Status))
+    {
+        return (lpAddress);
+    }
+    else
+    {
+        BaseSetLastNTError(Status);
+        return (NULL);
+    }
 }
 
-BOOL
-WINAPI
-VirtualFreeEx(
-    HANDLE hProcess,
-    LPVOID lpAddress,
-    SIZE_T dwSize,
-    DWORD dwFreeType
-    )
+BOOL WINAPI VirtualFreeEx(HANDLE hProcess, LPVOID lpAddress, SIZE_T dwSize, DWORD dwFreeType)
 {
     NTSTATUS Status;
 
 
-    if ( (dwFreeType & MEM_RELEASE ) && dwSize != 0 ) {
-        BaseSetLastNTError( STATUS_INVALID_PARAMETER );
+    if ((dwFreeType & MEM_RELEASE) && dwSize != 0)
+    {
+        BaseSetLastNTError(STATUS_INVALID_PARAMETER);
         return FALSE;
-        }
+    }
 
-    Status = NtFreeVirtualMemory( hProcess,
-                                  &lpAddress,
-                                  &dwSize,
-                                  dwFreeType
-                                );
+    Status = NtFreeVirtualMemory(hProcess, &lpAddress, &dwSize, dwFreeType);
 
-    if (NT_SUCCESS( Status )) {
-        return( TRUE );
-        }
-    else {
-        if (Status == STATUS_INVALID_PAGE_PROTECTION) {
-            if (hProcess == NtCurrentProcess()) {
+    if (NT_SUCCESS(Status))
+    {
+        return (TRUE);
+    }
+    else
+    {
+        if (Status == STATUS_INVALID_PAGE_PROTECTION)
+        {
+            if (hProcess == NtCurrentProcess())
+            {
 
                 //
                 // Unlock any pages that were locked with MmSecureVirtualMemory.
                 // This is useful for SANs.
                 //
 
-                if (RtlFlushSecureMemoryCache(lpAddress, dwSize)) {
-                    Status = NtFreeVirtualMemory( hProcess,
-                                                  &lpAddress,
-                                                  &dwSize,
-                                                  dwFreeType
-                                                );
+                if (RtlFlushSecureMemoryCache(lpAddress, dwSize))
+                {
+                    Status = NtFreeVirtualMemory(hProcess, &lpAddress, &dwSize, dwFreeType);
 
-                    if (NT_SUCCESS( Status )) {
-                        return( TRUE );
-                        }
+                    if (NT_SUCCESS(Status))
+                    {
+                        return (TRUE);
                     }
                 }
             }
-
-        BaseSetLastNTError( Status );
-        return( FALSE );
         }
+
+        BaseSetLastNTError(Status);
+        return (FALSE);
+    }
 }
 
 
-BOOL
-WINAPI
-VirtualProtect(
-    PVOID lpAddress,
-    SIZE_T dwSize,
-    DWORD flNewProtect,
-    PDWORD lpflOldProtect
-    )
+BOOL WINAPI VirtualProtect(PVOID lpAddress, SIZE_T dwSize, DWORD flNewProtect, PDWORD lpflOldProtect)
 {
 
-    return VirtualProtectEx( NtCurrentProcess(),
-                             lpAddress,
-                             dwSize,
-                             flNewProtect,
-                             lpflOldProtect
-                           );
+    return VirtualProtectEx(NtCurrentProcess(), lpAddress, dwSize, flNewProtect, lpflOldProtect);
 }
 
-BOOL
-WINAPI
-VirtualProtectEx(
-    HANDLE hProcess,
-    PVOID lpAddress,
-    SIZE_T dwSize,
-    DWORD flNewProtect,
-    PDWORD lpflOldProtect
-    )
+BOOL WINAPI VirtualProtectEx(HANDLE hProcess, PVOID lpAddress, SIZE_T dwSize, DWORD flNewProtect, PDWORD lpflOldProtect)
 {
     NTSTATUS Status;
 
-    Status = NtProtectVirtualMemory( hProcess,
-                                     &lpAddress,
-                                     &dwSize,
-                                     flNewProtect,
-                                     lpflOldProtect
-                                   );
+    Status = NtProtectVirtualMemory(hProcess, &lpAddress, &dwSize, flNewProtect, lpflOldProtect);
 
-    if (NT_SUCCESS( Status )) {
-        return( TRUE );
-        }
-    else {
-        if (Status == STATUS_INVALID_PAGE_PROTECTION) {
-            if (hProcess == NtCurrentProcess()) {
+    if (NT_SUCCESS(Status))
+    {
+        return (TRUE);
+    }
+    else
+    {
+        if (Status == STATUS_INVALID_PAGE_PROTECTION)
+        {
+            if (hProcess == NtCurrentProcess())
+            {
 
                 //
                 // Unlock any pages that were locked with MmSecureVirtualMemory.
                 // This is useful for SANs.
                 //
 
-                if (RtlFlushSecureMemoryCache(lpAddress, dwSize)) {
-                    Status = NtProtectVirtualMemory( hProcess,
-                                                  &lpAddress,
-                                                  &dwSize,
-                                                  flNewProtect,
-                                                  lpflOldProtect
-                                                );
+                if (RtlFlushSecureMemoryCache(lpAddress, dwSize))
+                {
+                    Status = NtProtectVirtualMemory(hProcess, &lpAddress, &dwSize, flNewProtect, lpflOldProtect);
 
-                    if (NT_SUCCESS( Status )) {
-                        return( TRUE );
-                        }
+                    if (NT_SUCCESS(Status))
+                    {
+                        return (TRUE);
                     }
                 }
             }
-        BaseSetLastNTError( Status );
-        return( FALSE );
         }
+        BaseSetLastNTError(Status);
+        return (FALSE);
+    }
 }
 
 SIZE_T
 WINAPI
-VirtualQuery(
-    LPCVOID lpAddress,
-    PMEMORY_BASIC_INFORMATION lpBuffer,
-    SIZE_T dwLength
-    )
+VirtualQuery(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer, SIZE_T dwLength)
 {
 
-    return VirtualQueryEx( NtCurrentProcess(),
-                           lpAddress,
-                           (PMEMORY_BASIC_INFORMATION)lpBuffer,
-                           dwLength
-                         );
+    return VirtualQueryEx(NtCurrentProcess(), lpAddress, (PMEMORY_BASIC_INFORMATION)lpBuffer, dwLength);
 }
 
 SIZE_T
 WINAPI
-VirtualQueryEx(
-    HANDLE hProcess,
-    LPCVOID lpAddress,
-    PMEMORY_BASIC_INFORMATION lpBuffer,
-    SIZE_T dwLength
-    )
+VirtualQueryEx(HANDLE hProcess, LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer, SIZE_T dwLength)
 {
     NTSTATUS Status;
     SIZE_T ReturnLength;
 
-    Status = NtQueryVirtualMemory( hProcess,
-                                   (LPVOID)lpAddress,
-                                   MemoryBasicInformation,
-                                   (PMEMORY_BASIC_INFORMATION)lpBuffer,
-                                   dwLength,
-                                   &ReturnLength
-                                 );
-    if (NT_SUCCESS( Status )) {
-        return( ReturnLength );
-        }
-    else {
-        BaseSetLastNTError( Status );
-        return( 0 );
-        }
+    Status = NtQueryVirtualMemory(hProcess, (LPVOID)lpAddress, MemoryBasicInformation,
+                                  (PMEMORY_BASIC_INFORMATION)lpBuffer, dwLength, &ReturnLength);
+    if (NT_SUCCESS(Status))
+    {
+        return (ReturnLength);
+    }
+    else
+    {
+        BaseSetLastNTError(Status);
+        return (0);
+    }
 }
 
-BOOL
-WINAPI
-VirtualLock(
-    LPVOID lpAddress,
-    SIZE_T dwSize
-    )
+BOOL WINAPI VirtualLock(LPVOID lpAddress, SIZE_T dwSize)
 
 /*++
 
@@ -1171,26 +1124,17 @@ Return Value:
     BaseAddress = lpAddress;
     RegionSize = dwSize;
 
-    Status = NtLockVirtualMemory(
-                NtCurrentProcess(),
-                &lpAddress,
-                &RegionSize,
-                MAP_PROCESS
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = NtLockVirtualMemory(NtCurrentProcess(), &lpAddress, &RegionSize, MAP_PROCESS);
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         ReturnValue = FALSE;
-        }
+    }
 
     return ReturnValue;
 }
 
-BOOL
-WINAPI
-VirtualUnlock(
-    LPVOID lpAddress,
-    SIZE_T dwSize
-    )
+BOOL WINAPI VirtualUnlock(LPVOID lpAddress, SIZE_T dwSize)
 
 /*++
 
@@ -1232,27 +1176,17 @@ Return Value:
     BaseAddress = lpAddress;
     RegionSize = dwSize;
 
-    Status = NtUnlockVirtualMemory(
-                NtCurrentProcess(),
-                &lpAddress,
-                &RegionSize,
-                MAP_PROCESS
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = NtUnlockVirtualMemory(NtCurrentProcess(), &lpAddress, &RegionSize, MAP_PROCESS);
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         ReturnValue = FALSE;
-        }
+    }
 
     return ReturnValue;
 }
 
-BOOL
-WINAPI
-FlushInstructionCache(
-    HANDLE hProcess,
-    LPCVOID lpBaseAddress,
-    SIZE_T dwSize
-    )
+BOOL WINAPI FlushInstructionCache(HANDLE hProcess, LPCVOID lpBaseAddress, SIZE_T dwSize)
 
 /*++
 
@@ -1285,117 +1219,86 @@ Return Value:
     NTSTATUS Status;
     BOOL ReturnValue = TRUE;
 
-    Status = NtFlushInstructionCache(
-                hProcess,
-                (LPVOID)lpBaseAddress,
-                dwSize
-                );
+    Status = NtFlushInstructionCache(hProcess, (LPVOID)lpBaseAddress, dwSize);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         ReturnValue = FALSE;
-        }
+    }
 
     return ReturnValue;
 }
 
-BOOL
-WINAPI
-AllocateUserPhysicalPages(
-    HANDLE hProcess,
-    PULONG_PTR NumberOfPages,
-    PULONG_PTR PageArray
-    )
+BOOL WINAPI AllocateUserPhysicalPages(HANDLE hProcess, PULONG_PTR NumberOfPages, PULONG_PTR PageArray)
 {
     NTSTATUS Status;
 
-    Status = NtAllocateUserPhysicalPages( hProcess,
-                                          NumberOfPages,
-                                          PageArray);
+    Status = NtAllocateUserPhysicalPages(hProcess, NumberOfPages, PageArray);
 
-    if (NT_SUCCESS( Status )) {
-        return( TRUE );
-        }
-    else {
-        BaseSetLastNTError( Status );
-        return( FALSE );
-        }
+    if (NT_SUCCESS(Status))
+    {
+        return (TRUE);
+    }
+    else
+    {
+        BaseSetLastNTError(Status);
+        return (FALSE);
+    }
 }
 
-BOOL
-WINAPI
-FreeUserPhysicalPages(
-    HANDLE hProcess,
-    PULONG_PTR NumberOfPages,
-    PULONG_PTR PageArray
-    )
+BOOL WINAPI FreeUserPhysicalPages(HANDLE hProcess, PULONG_PTR NumberOfPages, PULONG_PTR PageArray)
 {
     NTSTATUS Status;
 
-    Status = NtFreeUserPhysicalPages( hProcess,
-                                      NumberOfPages,
-                                      PageArray);
+    Status = NtFreeUserPhysicalPages(hProcess, NumberOfPages, PageArray);
 
-    if (NT_SUCCESS( Status )) {
-        return( TRUE );
-        }
-    else {
-        BaseSetLastNTError( Status );
-        return( FALSE );
-        }
+    if (NT_SUCCESS(Status))
+    {
+        return (TRUE);
+    }
+    else
+    {
+        BaseSetLastNTError(Status);
+        return (FALSE);
+    }
 }
 
-BOOL
-WINAPI
-MapUserPhysicalPages(
-    PVOID VirtualAddress,
-    ULONG_PTR NumberOfPages,
-    PULONG_PTR PageArray
-    )
+BOOL WINAPI MapUserPhysicalPages(PVOID VirtualAddress, ULONG_PTR NumberOfPages, PULONG_PTR PageArray)
 {
     NTSTATUS Status;
 
-    Status = NtMapUserPhysicalPages( VirtualAddress,
-                                     NumberOfPages,
-                                     PageArray);
+    Status = NtMapUserPhysicalPages(VirtualAddress, NumberOfPages, PageArray);
 
-    if (NT_SUCCESS( Status )) {
-        return( TRUE );
-        }
-    else {
-        BaseSetLastNTError( Status );
-        return( FALSE );
-        }
+    if (NT_SUCCESS(Status))
+    {
+        return (TRUE);
+    }
+    else
+    {
+        BaseSetLastNTError(Status);
+        return (FALSE);
+    }
 }
 
-BOOL
-WINAPI
-MapUserPhysicalPagesScatter(
-    PVOID *VirtualAddresses,
-    ULONG_PTR NumberOfPages,
-    PULONG_PTR PageArray
-    )
+BOOL WINAPI MapUserPhysicalPagesScatter(PVOID *VirtualAddresses, ULONG_PTR NumberOfPages, PULONG_PTR PageArray)
 {
     NTSTATUS Status;
 
-    Status = NtMapUserPhysicalPagesScatter( VirtualAddresses,
-                                            NumberOfPages,
-                                            PageArray);
+    Status = NtMapUserPhysicalPagesScatter(VirtualAddresses, NumberOfPages, PageArray);
 
-    if (NT_SUCCESS( Status )) {
-        return( TRUE );
-        }
-    else {
-        BaseSetLastNTError( Status );
-        return( FALSE );
-        }
+    if (NT_SUCCESS(Status))
+    {
+        return (TRUE);
+    }
+    else
+    {
+        BaseSetLastNTError(Status);
+        return (FALSE);
+    }
 }
 
-BOOL
-WINAPI
-GlobalMemoryStatusEx(
-    LPMEMORYSTATUSEX lpBuffer
-    )
+BOOL WINAPI GlobalMemoryStatusEx(LPMEMORYSTATUSEX lpBuffer)
 {
     DWORD NumberOfPhysicalPages;
     SYSTEM_PERFORMANCE_INFORMATION PerfInfo;
@@ -1407,17 +1310,13 @@ GlobalMemoryStatusEx(
     DWORD Success;
     DWORDLONG address64;
 
-    if (lpBuffer->dwLength != sizeof(*lpBuffer)) {
-        SetLastError( ERROR_INVALID_PARAMETER );
+    if (lpBuffer->dwLength != sizeof(*lpBuffer))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
-    Status = NtQuerySystemInformation(
-                SystemPerformanceInformation,
-                &PerfInfo,
-                sizeof(PerfInfo),
-                NULL
-                );
+    Status = NtQuerySystemInformation(SystemPerformanceInformation, &PerfInfo, sizeof(PerfInfo), NULL);
     ASSERT(NT_SUCCESS(Status));
 
     //
@@ -1435,26 +1334,27 @@ GlobalMemoryStatusEx(
     // Convert the number of physical pages from the native system to
     // the emulation system.
     //
-    
+
     NumberOfPhysicalPages = NumberOfPhysicalPages * (Wow64GetSystemNativePageSize() / BASE_SYSINFO.PageSize);
 
 #endif
 
-    PhysicalMemory =  (DWORDLONG)NumberOfPhysicalPages * BASE_SYSINFO.PageSize;
+    PhysicalMemory = (DWORDLONG)NumberOfPhysicalPages * BASE_SYSINFO.PageSize;
 
     //
     // Determine the memory load.  < 100 available pages is 100
     // Otherwise load is ((TotalPhys - AvailPhys) * 100) / TotalPhys
     //
 
-    if (PerfInfo.AvailablePages < 100) {
+    if (PerfInfo.AvailablePages < 100)
+    {
         lpBuffer->dwMemoryLoad = 100;
-        }
-    else {
+    }
+    else
+    {
         lpBuffer->dwMemoryLoad =
-            ((DWORD)(NumberOfPhysicalPages - PerfInfo.AvailablePages) * 100) /
-                NumberOfPhysicalPages;
-        }
+            ((DWORD)(NumberOfPhysicalPages - PerfInfo.AvailablePages) * 100) / NumberOfPhysicalPages;
+    }
 
     lpBuffer->ullTotalPhys = PhysicalMemory;
 
@@ -1468,26 +1368,20 @@ GlobalMemoryStatusEx(
     // Zero returned values in case the query process fails.
     //
 
-    RtlZeroMemory (&QuotaLimits, sizeof (QUOTA_LIMITS));
-    RtlZeroMemory (&VmCounters, sizeof (VM_COUNTERS));
+    RtlZeroMemory(&QuotaLimits, sizeof(QUOTA_LIMITS));
+    RtlZeroMemory(&VmCounters, sizeof(VM_COUNTERS));
 
-    Status = NtQueryInformationProcess (NtCurrentProcess(),
-                                        ProcessQuotaLimits,
-                                        &QuotaLimits,
-                                        sizeof(QUOTA_LIMITS),
-                                        NULL );
+    Status =
+        NtQueryInformationProcess(NtCurrentProcess(), ProcessQuotaLimits, &QuotaLimits, sizeof(QUOTA_LIMITS), NULL);
 
-    Status = NtQueryInformationProcess (NtCurrentProcess(),
-                                        ProcessVmCounters,
-                                        &VmCounters,
-                                        sizeof(VM_COUNTERS),
-                                        NULL );
+    Status = NtQueryInformationProcess(NtCurrentProcess(), ProcessVmCounters, &VmCounters, sizeof(VM_COUNTERS), NULL);
     //
     // Determine the total page file space with respect to this process.
     //
 
     lpBuffer->ullTotalPageFile = PerfInfo.CommitLimit;
-    if (QuotaLimits.PagefileLimit < PerfInfo.CommitLimit) {
+    if (QuotaLimits.PagefileLimit < PerfInfo.CommitLimit)
+    {
         lpBuffer->ullTotalPageFile = QuotaLimits.PagefileLimit;
     }
 
@@ -1499,17 +1393,16 @@ GlobalMemoryStatusEx(
 
     AvailPageFile = PerfInfo.CommitLimit - PerfInfo.CommittedPages;
 
-    lpBuffer->ullAvailPageFile =
-                    QuotaLimits.PagefileLimit - VmCounters.PagefileUsage;
+    lpBuffer->ullAvailPageFile = QuotaLimits.PagefileLimit - VmCounters.PagefileUsage;
 
-    if ((ULONG)lpBuffer->ullAvailPageFile > (ULONG)AvailPageFile) {
+    if ((ULONG)lpBuffer->ullAvailPageFile > (ULONG)AvailPageFile)
+    {
         lpBuffer->ullAvailPageFile = AvailPageFile;
     }
 
     lpBuffer->ullAvailPageFile *= BASE_SYSINFO.PageSize;
 
-    lpBuffer->ullTotalVirtual = (BASE_SYSINFO.MaximumUserModeAddress -
-                               BASE_SYSINFO.MinimumUserModeAddress) + 1;
+    lpBuffer->ullTotalVirtual = (BASE_SYSINFO.MaximumUserModeAddress - BASE_SYSINFO.MinimumUserModeAddress) + 1;
 
     lpBuffer->ullAvailVirtual = lpBuffer->ullTotalVirtual - VmCounters.VirtualSize;
 
@@ -1519,65 +1412,46 @@ GlobalMemoryStatusEx(
 }
 
 WINBASEAPI
-UINT
-WINAPI
-GetWriteWatch(
-    DWORD dwFlags,	
-    PVOID lpBaseAddress,
-    SIZE_T dwRegionSize,
-    PVOID *addresses,
-    ULONG_PTR *count,
-    LPDWORD granularity
-    )
+UINT WINAPI GetWriteWatch(DWORD dwFlags, PVOID lpBaseAddress, SIZE_T dwRegionSize, PVOID *addresses, ULONG_PTR *count,
+                          LPDWORD granularity)
 {
     NTSTATUS Status;
 
-    Status = NtGetWriteWatch ( NtCurrentProcess(),
-                               dwFlags,
-                               lpBaseAddress,
-                               dwRegionSize,
-                               addresses,
-                               count,
-                               granularity
-                               );
+    Status = NtGetWriteWatch(NtCurrentProcess(), dwFlags, lpBaseAddress, dwRegionSize, addresses, count, granularity);
 
     //
     // Note these return codes are taken straight from Win9x.
     //
 
-    if (NT_SUCCESS( Status )) {
-        return( 0 );
-        }
-    else {
-        BaseSetLastNTError( Status );
+    if (NT_SUCCESS(Status))
+    {
+        return (0);
+    }
+    else
+    {
+        BaseSetLastNTError(Status);
         return (UINT)-1;
-        }
+    }
 }
 
 WINBASEAPI
-UINT
-WINAPI
-ResetWriteWatch(
-    LPVOID lpBaseAddress,
-    SIZE_T dwRegionSize
-    )
+UINT WINAPI ResetWriteWatch(LPVOID lpBaseAddress, SIZE_T dwRegionSize)
 {
     NTSTATUS Status;
 
-    Status = NtResetWriteWatch ( NtCurrentProcess(),
-                                 lpBaseAddress,
-                                 dwRegionSize
-                                 );
+    Status = NtResetWriteWatch(NtCurrentProcess(), lpBaseAddress, dwRegionSize);
 
     //
     // Note these return codes are taken straight from Win9x.
     //
 
-    if (NT_SUCCESS( Status )) {
-        return( 0 );
-        }
-    else {
-        BaseSetLastNTError( Status );
+    if (NT_SUCCESS(Status))
+    {
+        return (0);
+    }
+    else
+    {
+        BaseSetLastNTError(Status);
         return (UINT)-1;
-        }
+    }
 }

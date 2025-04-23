@@ -18,11 +18,11 @@ Revision History:
 
 --*/
 
-#include    "psp.h"
+#include "psp.h"
 
 
 NTSTATUS
-PspLookupKernelUserEntryPoints( VOID)
+PspLookupKernelUserEntryPoints(VOID)
 
 /*++
 

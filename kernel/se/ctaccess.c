@@ -31,9 +31,8 @@ Revision History:
 
 --*/
 
-#include "tsecomm.c"    // Mode dependent macros and routines.
+#include "tsecomm.c" // Mode dependent macros and routines.
 
-
 
 //
 //  Define the local macros and procedure for this module
@@ -62,10 +61,7 @@ Revision History:
 
 #define NextAce(Ace) ((PVOID)((PUCHAR)(Ace) + ((PACE_HEADER)(Ace))->AceSize))
 
-VOID
-DumpAcl (
-    IN PACL Acl
-    );
+VOID DumpAcl(IN PACL Acl);
 
 ////////////////////////////////////////////////////////////////
 //                                                            //
@@ -83,89 +79,86 @@ DumpAcl (
 // definitions related to TokenWithGroups
 //
 
-#define FLINTSTONE_INDEX  (0L)
-#define CHILD_INDEX       (1L)
+#define FLINTSTONE_INDEX (0L)
+#define CHILD_INDEX (1L)
 #define NEANDERTHOL_INDEX (2L)
-#define WORLD_INDEX       (3L)
-#define GROUP_COUNT       (4L)
+#define WORLD_INDEX (3L)
+#define GROUP_COUNT (4L)
 
 
 //
 // Definitions related to TokenWithPrivileges
 //
 
-#define UNSOLICITED_INDEX  (0L)
-#define SECURITY_INDEX     (1L)
-#define PRIVILEGE_COUNT    (2L)
+#define UNSOLICITED_INDEX (0L)
+#define SECURITY_INDEX (1L)
+#define PRIVILEGE_COUNT (2L)
 
 //
 //    Access types
 //
 
-#define SET_WIDGET_COLOR        0x00000001
-#define SET_WIDGET_SIZE         0x00000002
-#define GET_WIDGET_COLOR        0x00000004
-#define GET_WIDGET_SIZE         0x00000008
-#define START_WIDGET            0x00000010
-#define STOP_WIDGET             0x00000020
-#define GIVE_WIDGET             0x00000040
-#define TAKE_WIDGET             0x00000080
+#define SET_WIDGET_COLOR 0x00000001
+#define SET_WIDGET_SIZE 0x00000002
+#define GET_WIDGET_COLOR 0x00000004
+#define GET_WIDGET_SIZE 0x00000008
+#define START_WIDGET 0x00000010
+#define STOP_WIDGET 0x00000020
+#define GIVE_WIDGET 0x00000040
+#define TAKE_WIDGET 0x00000080
 
 
-    NTSTATUS Status;
+NTSTATUS Status;
 
-    HANDLE SimpleToken;
-    HANDLE TokenWithGroups;
-    HANDLE TokenWithDefaultOwner;
-    HANDLE TokenWithPrivileges;
-    HANDLE TokenWithDefaultDacl;
+HANDLE SimpleToken;
+HANDLE TokenWithGroups;
+HANDLE TokenWithDefaultOwner;
+HANDLE TokenWithPrivileges;
+HANDLE TokenWithDefaultDacl;
 
-    HANDLE Token;
-    HANDLE ImpersonationToken;
+HANDLE Token;
+HANDLE ImpersonationToken;
 
-    HANDLE PrimaryToken;
+HANDLE PrimaryToken;
 
-    HANDLE AnonymousToken;
+HANDLE AnonymousToken;
 
-    OBJECT_ATTRIBUTES PrimaryTokenAttributes;
-    PSECURITY_DESCRIPTOR PrimarySecurityDescriptor;
-    SECURITY_QUALITY_OF_SERVICE PrimarySecurityQos;
+OBJECT_ATTRIBUTES PrimaryTokenAttributes;
+PSECURITY_DESCRIPTOR PrimarySecurityDescriptor;
+SECURITY_QUALITY_OF_SERVICE PrimarySecurityQos;
 
-    OBJECT_ATTRIBUTES ImpersonationTokenAttributes;
-    PSECURITY_DESCRIPTOR ImpersonationSecurityDescriptor;
-    SECURITY_QUALITY_OF_SERVICE ImpersonationSecurityQos;
+OBJECT_ATTRIBUTES ImpersonationTokenAttributes;
+PSECURITY_DESCRIPTOR ImpersonationSecurityDescriptor;
+SECURITY_QUALITY_OF_SERVICE ImpersonationSecurityQos;
 
-    OBJECT_ATTRIBUTES AnonymousTokenAttributes;
-    PSECURITY_DESCRIPTOR AnonymousSecurityDescriptor;
-    SECURITY_QUALITY_OF_SERVICE AnonymousSecurityQos;
+OBJECT_ATTRIBUTES AnonymousTokenAttributes;
+PSECURITY_DESCRIPTOR AnonymousSecurityDescriptor;
+SECURITY_QUALITY_OF_SERVICE AnonymousSecurityQos;
 
-    ULONG DisabledGroupAttributes;
-    ULONG OptionalGroupAttributes;
-    ULONG NormalGroupAttributes;
-    ULONG OwnerGroupAttributes;
+ULONG DisabledGroupAttributes;
+ULONG OptionalGroupAttributes;
+ULONG NormalGroupAttributes;
+ULONG OwnerGroupAttributes;
 
-    ULONG LengthAvailable;
-    ULONG CurrentLength;
-
-
-    TIME_FIELDS TempTimeFields = {3000, 1, 1, 1, 1, 1, 1, 1};
-    LARGE_INTEGER NoExpiration;
-
-    LUID DummyAuthenticationId;
-    LUID SystemAuthenticationId = SYSTEM_LUID;
-
-    TOKEN_SOURCE TestSource = {"SE: TEST", 0};
-
-    PSID Owner;
-    PSID Group;
-    PACL Dacl;
-
-    PSID TempOwner;
-    PSID TempGroup;
-    PACL TempDacl;
+ULONG LengthAvailable;
+ULONG CurrentLength;
 
 
+TIME_FIELDS TempTimeFields = { 3000, 1, 1, 1, 1, 1, 1, 1 };
+LARGE_INTEGER NoExpiration;
 
+LUID DummyAuthenticationId;
+LUID SystemAuthenticationId = SYSTEM_LUID;
+
+TOKEN_SOURCE TestSource = { "SE: TEST", 0 };
+
+PSID Owner;
+PSID Group;
+PACL Dacl;
+
+PSID TempOwner;
+PSID TempGroup;
+PACL TempDacl;
 
 
 ////////////////////////////////////////////////////////////////
@@ -178,86 +171,54 @@ BOOLEAN
 TestTokenInitialize()
 {
 
-    TSeVariableInitialization();    // Initialize global variables
+    TSeVariableInitialization(); // Initialize global variables
 
 
-    DisabledGroupAttributes =  (SE_GROUP_ENABLED_BY_DEFAULT);
+    DisabledGroupAttributes = (SE_GROUP_ENABLED_BY_DEFAULT);
 
-    OptionalGroupAttributes =  (SE_GROUP_ENABLED_BY_DEFAULT |
-                                SE_GROUP_ENABLED
-                                );
-    NormalGroupAttributes =    (SE_GROUP_MANDATORY          |
-                                SE_GROUP_ENABLED_BY_DEFAULT |
-                                SE_GROUP_ENABLED
-                                );
-    OwnerGroupAttributes  =    (SE_GROUP_MANDATORY          |
-                                SE_GROUP_ENABLED_BY_DEFAULT |
-                                SE_GROUP_ENABLED            |
-                                SE_GROUP_OWNER
-                                );
+    OptionalGroupAttributes = (SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_ENABLED);
+    NormalGroupAttributes = (SE_GROUP_MANDATORY | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_ENABLED);
+    OwnerGroupAttributes = (SE_GROUP_MANDATORY | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_ENABLED | SE_GROUP_OWNER);
 
 
-    PrimarySecurityDescriptor =
-        (PSECURITY_DESCRIPTOR)TstAllocatePool( PagedPool, 1024 );
+    PrimarySecurityDescriptor = (PSECURITY_DESCRIPTOR)TstAllocatePool(PagedPool, 1024);
 
-    InitializeObjectAttributes(
-        &PrimaryTokenAttributes,
-        NULL,
-        OBJ_INHERIT,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&PrimaryTokenAttributes, NULL, OBJ_INHERIT, NULL, NULL);
 
 
-    ImpersonationSecurityDescriptor =
-        (PSECURITY_DESCRIPTOR)TstAllocatePool( PagedPool, 1024 );
+    ImpersonationSecurityDescriptor = (PSECURITY_DESCRIPTOR)TstAllocatePool(PagedPool, 1024);
 
     ImpersonationSecurityQos.Length = (ULONG)sizeof(SECURITY_QUALITY_OF_SERVICE);
     ImpersonationSecurityQos.ImpersonationLevel = SecurityImpersonation;
     ImpersonationSecurityQos.ContextTrackingMode = SECURITY_DYNAMIC_TRACKING;
     ImpersonationSecurityQos.EffectiveOnly = FALSE;
 
-    InitializeObjectAttributes(
-        &ImpersonationTokenAttributes,
-        NULL,
-        OBJ_INHERIT,
-        NULL,
-        NULL
-        );
-    ImpersonationTokenAttributes.SecurityQualityOfService =
-        &ImpersonationSecurityQos;
+    InitializeObjectAttributes(&ImpersonationTokenAttributes, NULL, OBJ_INHERIT, NULL, NULL);
+    ImpersonationTokenAttributes.SecurityQualityOfService = &ImpersonationSecurityQos;
 
 
-    AnonymousSecurityDescriptor =
-        (PSECURITY_DESCRIPTOR)TstAllocatePool( PagedPool, 1024 );
+    AnonymousSecurityDescriptor = (PSECURITY_DESCRIPTOR)TstAllocatePool(PagedPool, 1024);
 
     AnonymousSecurityQos.Length = (ULONG)sizeof(SECURITY_QUALITY_OF_SERVICE);
     AnonymousSecurityQos.ImpersonationLevel = SecurityAnonymous;
     AnonymousSecurityQos.ContextTrackingMode = SECURITY_DYNAMIC_TRACKING;
     AnonymousSecurityQos.EffectiveOnly = FALSE;
 
-    InitializeObjectAttributes(
-        &AnonymousTokenAttributes,
-        NULL,
-        OBJ_INHERIT,
-        NULL,
-        NULL
-        );
-    AnonymousTokenAttributes.SecurityQualityOfService =
-        &AnonymousSecurityQos;
+    InitializeObjectAttributes(&AnonymousTokenAttributes, NULL, OBJ_INHERIT, NULL, NULL);
+    AnonymousTokenAttributes.SecurityQualityOfService = &AnonymousSecurityQos;
 
 
     //
     // Build an ACL for use.
     //
 
-    Dacl        = (PACL)TstAllocatePool( PagedPool, 256 );
+    Dacl = (PACL)TstAllocatePool(PagedPool, 256);
 
-    Dacl->AclRevision=ACL_REVISION;
-    Dacl->Sbz1=0;
-    Dacl->Sbz2=0;
-    Dacl->AclSize=256;
-    Dacl->AceCount=0;
+    Dacl->AclRevision = ACL_REVISION;
+    Dacl->Sbz1 = 0;
+    Dacl->Sbz2 = 0;
+    Dacl->AclSize = 256;
+    Dacl->AceCount = 0;
 
 
     //
@@ -273,7 +234,7 @@ TestTokenInitialize()
     TempTimeFields.Milliseconds = 1;
     TempTimeFields.Weekday = 1;
 
-    RtlTimeFieldsToTime( &TempTimeFields, &NoExpiration );
+    RtlTimeFieldsToTime(&TempTimeFields, &NoExpiration);
 
 
     //
@@ -287,7 +248,7 @@ TestTokenInitialize()
     // Use a token source specific to security test
     //
 
-    NtAllocateLocallyUniqueId( &(TestSource.SourceIdentifier) );
+    NtAllocateLocallyUniqueId(&(TestSource.SourceIdentifier));
 
     DbgPrint("Done.\n");
 
@@ -317,10 +278,10 @@ CreateDAclToken()
     PACCESS_ALLOWED_ACE AllowBarneySetColor;
     PACCESS_ALLOWED_ACE AllowFredSetColor;
 
-    PACCESS_DENIED_ACE  DenyPebblesSetColor;
+    PACCESS_DENIED_ACE DenyPebblesSetColor;
 
     PACCESS_ALLOWED_ACE AllowPebblesSetColor;
-    PACCESS_DENIED_ACE  DenyFredSetColor;
+    PACCESS_DENIED_ACE DenyFredSetColor;
     PACCESS_ALLOWED_ACE AllowBarneySetSize;
     PACCESS_ALLOWED_ACE AllowPebblesSetSize;
 
@@ -342,17 +303,11 @@ CreateDAclToken()
 
     DbgPrint("\n");
 
-    GroupIds = (PTOKEN_GROUPS)TstAllocatePool( PagedPool,
-                                               GROUP_IDS_LENGTH
-                                               );
+    GroupIds = (PTOKEN_GROUPS)TstAllocatePool(PagedPool, GROUP_IDS_LENGTH);
 
-    Privileges = (PTOKEN_PRIVILEGES)TstAllocatePool( PagedPool,
-                                                     PRIVILEGES_LENGTH
-                                                     );
+    Privileges = (PTOKEN_PRIVILEGES)TstAllocatePool(PagedPool, PRIVILEGES_LENGTH);
 
-    DefaultDacl.DefaultDacl = (PACL)TstAllocatePool( PagedPool,
-                                                     DEFAULT_DACL_LENGTH
-                                                     );
+    DefaultDacl.DefaultDacl = (PACL)TstAllocatePool(PagedPool, DEFAULT_DACL_LENGTH);
 
 
     //
@@ -363,15 +318,15 @@ CreateDAclToken()
 
     GroupIds->GroupCount = GROUP_COUNT;
 
-    GroupIds->Groups[FLINTSTONE_INDEX].Sid  = FlintstoneSid;
-    GroupIds->Groups[CHILD_INDEX].Sid       = ChildSid;
+    GroupIds->Groups[FLINTSTONE_INDEX].Sid = FlintstoneSid;
+    GroupIds->Groups[CHILD_INDEX].Sid = ChildSid;
     GroupIds->Groups[NEANDERTHOL_INDEX].Sid = NeandertholSid;
-    GroupIds->Groups[WORLD_INDEX].Sid       = WorldSid;
+    GroupIds->Groups[WORLD_INDEX].Sid = WorldSid;
 
-    GroupIds->Groups[FLINTSTONE_INDEX].Attributes  = OwnerGroupAttributes;
-    GroupIds->Groups[CHILD_INDEX].Attributes       = OptionalGroupAttributes;
+    GroupIds->Groups[FLINTSTONE_INDEX].Attributes = OwnerGroupAttributes;
+    GroupIds->Groups[CHILD_INDEX].Attributes = OptionalGroupAttributes;
     GroupIds->Groups[NEANDERTHOL_INDEX].Attributes = OptionalGroupAttributes;
-    GroupIds->Groups[WORLD_INDEX].Attributes       = NormalGroupAttributes;
+    GroupIds->Groups[WORLD_INDEX].Attributes = NormalGroupAttributes;
 
     UserId.User.Sid = PebblesSid;
     UserId.User.Attributes = 0;
@@ -387,29 +342,31 @@ CreateDAclToken()
 
     PrimaryGroup.PrimaryGroup = FlintstoneSid;
 
-    Status = RtlCreateAcl( DefaultDacl.DefaultDacl, DEFAULT_DACL_LENGTH, ACL_REVISION);
+    Status = RtlCreateAcl(DefaultDacl.DefaultDacl, DEFAULT_DACL_LENGTH, ACL_REVISION);
 
-    ASSERT(NT_SUCCESS(Status) );
+    ASSERT(NT_SUCCESS(Status));
 
-    Status = NtCreateToken(
-                 &PrimaryToken,            // Handle
-                 (TOKEN_ALL_ACCESS),       // DesiredAccess
-                 &PrimaryTokenAttributes,  // ObjectAttributes
-                 TokenPrimary,             // TokenType
-                 &DummyAuthenticationId,   // Authentication LUID
-                 &NoExpiration,            // Expiration Time
-                 &UserId,                  // Owner ID
-                 GroupIds,                 // Group IDs
-                 Privileges,               // Privileges
-                 &Owner,                   // Owner
-                 &PrimaryGroup,            // Primary Group
-                 &DefaultDacl,             // Default Dacl
-                 &TestSource               // TokenSource
-                 );
+    Status = NtCreateToken(&PrimaryToken,           // Handle
+                           (TOKEN_ALL_ACCESS),      // DesiredAccess
+                           &PrimaryTokenAttributes, // ObjectAttributes
+                           TokenPrimary,            // TokenType
+                           &DummyAuthenticationId,  // Authentication LUID
+                           &NoExpiration,           // Expiration Time
+                           &UserId,                 // Owner ID
+                           GroupIds,                // Group IDs
+                           Privileges,              // Privileges
+                           &Owner,                  // Owner
+                           &PrimaryGroup,           // Primary Group
+                           &DefaultDacl,            // Default Dacl
+                           &TestSource              // TokenSource
+    );
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
@@ -418,7 +375,6 @@ CreateDAclToken()
     ASSERT(NT_SUCCESS(Status));
 
 
-
     //
     // Create an impersonation token, Impersonation level = Impersonation
     //
@@ -427,15 +383,15 @@ CreateDAclToken()
 
     GroupIds->GroupCount = GROUP_COUNT;
 
-    GroupIds->Groups[FLINTSTONE_INDEX].Sid  = FlintstoneSid;
-    GroupIds->Groups[CHILD_INDEX].Sid       = ChildSid;
+    GroupIds->Groups[FLINTSTONE_INDEX].Sid = FlintstoneSid;
+    GroupIds->Groups[CHILD_INDEX].Sid = ChildSid;
     GroupIds->Groups[NEANDERTHOL_INDEX].Sid = NeandertholSid;
-    GroupIds->Groups[WORLD_INDEX].Sid       = WorldSid;
+    GroupIds->Groups[WORLD_INDEX].Sid = WorldSid;
 
-    GroupIds->Groups[FLINTSTONE_INDEX].Attributes  = OwnerGroupAttributes;
-    GroupIds->Groups[CHILD_INDEX].Attributes       = OptionalGroupAttributes;
+    GroupIds->Groups[FLINTSTONE_INDEX].Attributes = OwnerGroupAttributes;
+    GroupIds->Groups[CHILD_INDEX].Attributes = OptionalGroupAttributes;
     GroupIds->Groups[NEANDERTHOL_INDEX].Attributes = OptionalGroupAttributes;
-    GroupIds->Groups[WORLD_INDEX].Attributes       = NormalGroupAttributes;
+    GroupIds->Groups[WORLD_INDEX].Attributes = NormalGroupAttributes;
 
     UserId.User.Sid = PebblesSid;
     UserId.User.Attributes = 0;
@@ -451,29 +407,31 @@ CreateDAclToken()
 
     PrimaryGroup.PrimaryGroup = FlintstoneSid;
 
-    Status = RtlCreateAcl( DefaultDacl.DefaultDacl, DEFAULT_DACL_LENGTH, ACL_REVISION);
+    Status = RtlCreateAcl(DefaultDacl.DefaultDacl, DEFAULT_DACL_LENGTH, ACL_REVISION);
 
-    ASSERT(NT_SUCCESS(Status) );
+    ASSERT(NT_SUCCESS(Status));
 
-    Status = NtCreateToken(
-                 &ImpersonationToken,      // Handle
-                 (TOKEN_ALL_ACCESS),       // DesiredAccess
-                 &ImpersonationTokenAttributes,  // ObjectAttributes
-                 TokenImpersonation,       // TokenType
-                 &DummyAuthenticationId,   // Authentication LUID
-                 &NoExpiration,            // Expiration Time
-                 &UserId,                  // Owner ID
-                 GroupIds,                 // Group IDs
-                 Privileges,               // Privileges
-                 &Owner,                   // Owner
-                 &PrimaryGroup,            // Primary Group
-                 &DefaultDacl,             // Default Dacl
-                 &TestSource               // TokenSource
-                 );
+    Status = NtCreateToken(&ImpersonationToken,           // Handle
+                           (TOKEN_ALL_ACCESS),            // DesiredAccess
+                           &ImpersonationTokenAttributes, // ObjectAttributes
+                           TokenImpersonation,            // TokenType
+                           &DummyAuthenticationId,        // Authentication LUID
+                           &NoExpiration,                 // Expiration Time
+                           &UserId,                       // Owner ID
+                           GroupIds,                      // Group IDs
+                           Privileges,                    // Privileges
+                           &Owner,                        // Owner
+                           &PrimaryGroup,                 // Primary Group
+                           &DefaultDacl,                  // Default Dacl
+                           &TestSource                    // TokenSource
+    );
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
@@ -481,33 +439,23 @@ CreateDAclToken()
 
     ASSERT(NT_SUCCESS(Status));
 
-//
-//    Attach tokens to process
-//
+    //
+    //    Attach tokens to process
+    //
 
-    NtSetInformationProcess(
-        NtCurrentProcess(),
-        ProcessAccessToken,
-        &PrimaryToken,
-        sizeof( PHANDLE ));
+    NtSetInformationProcess(NtCurrentProcess(), ProcessAccessToken, &PrimaryToken, sizeof(PHANDLE));
 
 
-    NtSetInformationThread(
-        NtCurrentThread(),
-        ThreadImpersonationToken,
-        &ImpersonationToken,
-        sizeof( PHANDLE ));
+    NtSetInformationThread(NtCurrentThread(), ThreadImpersonationToken, &ImpersonationToken, sizeof(PHANDLE));
 
-
 
-//  Create some ACEs
+    //  Create some ACEs
 
-//    AllowBarneySetColor
+    //    AllowBarneySetColor
 
-    AllowBarneySetColorLength = (USHORT)(sizeof( ACCESS_ALLOWED_ACE ) - sizeof( ULONG ) +
-                                SeLengthSid( BarneySid ));
+    AllowBarneySetColorLength = (USHORT)(sizeof(ACCESS_ALLOWED_ACE) - sizeof(ULONG) + SeLengthSid(BarneySid));
 
-    AllowBarneySetColor = (PVOID) TstAllocatePool ( PagedPool, AllowBarneySetColorLength );
+    AllowBarneySetColor = (PVOID)TstAllocatePool(PagedPool, AllowBarneySetColorLength);
 
     AllowBarneySetColor->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
     AllowBarneySetColor->Header.AceSize = AllowBarneySetColorLength;
@@ -515,18 +463,14 @@ CreateDAclToken()
 
     AllowBarneySetColor->Mask = SET_WIDGET_COLOR;
 
-    RtlCopySid(
-            SeLengthSid( BarneySid ),
-            &(AllowBarneySetColor->SidStart),
-            BarneySid );
+    RtlCopySid(SeLengthSid(BarneySid), &(AllowBarneySetColor->SidStart), BarneySid);
 
 
-//    DenyPebblesSetColor
+    //    DenyPebblesSetColor
 
-    DenyPebblesSetColorLength = (USHORT)(sizeof( ACCESS_DENIED_ACE ) - sizeof( ULONG ) +
-                                SeLengthSid( BarneySid ));
+    DenyPebblesSetColorLength = (USHORT)(sizeof(ACCESS_DENIED_ACE) - sizeof(ULONG) + SeLengthSid(BarneySid));
 
-    DenyPebblesSetColor = (PVOID) TstAllocatePool ( PagedPool, DenyPebblesSetColorLength );
+    DenyPebblesSetColor = (PVOID)TstAllocatePool(PagedPool, DenyPebblesSetColorLength);
 
     DenyPebblesSetColor->Header.AceType = ACCESS_DENIED_ACE_TYPE;
     DenyPebblesSetColor->Header.AceSize = DenyPebblesSetColorLength;
@@ -534,18 +478,14 @@ CreateDAclToken()
 
     DenyPebblesSetColor->Mask = SET_WIDGET_COLOR;
 
-    RtlCopySid(
-            SeLengthSid( PebblesSid ),
-            &(DenyPebblesSetColor->SidStart),
-            PebblesSid );
+    RtlCopySid(SeLengthSid(PebblesSid), &(DenyPebblesSetColor->SidStart), PebblesSid);
 
 
-//    AllowFredSetColor
+    //    AllowFredSetColor
 
-    AllowFredSetColorLength = (USHORT)(sizeof( ACCESS_ALLOWED_ACE ) - sizeof( ULONG ) +
-                                SeLengthSid( FredSid ));
+    AllowFredSetColorLength = (USHORT)(sizeof(ACCESS_ALLOWED_ACE) - sizeof(ULONG) + SeLengthSid(FredSid));
 
-    AllowFredSetColor = (PVOID) TstAllocatePool ( PagedPool, AllowFredSetColorLength );
+    AllowFredSetColor = (PVOID)TstAllocatePool(PagedPool, AllowFredSetColorLength);
 
     AllowFredSetColor->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
     AllowFredSetColor->Header.AceSize = AllowFredSetColorLength;
@@ -553,21 +493,15 @@ CreateDAclToken()
 
     AllowFredSetColor->Mask = SET_WIDGET_COLOR;
 
-    RtlCopySid(
-            SeLengthSid( FredSid ),
-            &(AllowFredSetColor->SidStart),
-            FredSid );
+    RtlCopySid(SeLengthSid(FredSid), &(AllowFredSetColor->SidStart), FredSid);
 
 
+    //    AllowPebblesSetColor
 
 
-//    AllowPebblesSetColor
+    AllowPebblesSetColorLength = (USHORT)(sizeof(ACCESS_ALLOWED_ACE) - sizeof(ULONG) + SeLengthSid(PebblesSid));
 
-
-    AllowPebblesSetColorLength = (USHORT)(sizeof( ACCESS_ALLOWED_ACE ) - sizeof( ULONG ) +
-                                SeLengthSid( PebblesSid ));
-
-    AllowPebblesSetColor = (PVOID) TstAllocatePool ( PagedPool, AllowPebblesSetColorLength );
+    AllowPebblesSetColor = (PVOID)TstAllocatePool(PagedPool, AllowPebblesSetColorLength);
 
     AllowPebblesSetColor->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
     AllowPebblesSetColor->Header.AceSize = AllowPebblesSetColorLength;
@@ -575,18 +509,14 @@ CreateDAclToken()
 
     AllowPebblesSetColor->Mask = SET_WIDGET_COLOR;
 
-    RtlCopySid(
-            SeLengthSid( PebblesSid ),
-            &(AllowPebblesSetColor->SidStart),
-            PebblesSid );
+    RtlCopySid(SeLengthSid(PebblesSid), &(AllowPebblesSetColor->SidStart), PebblesSid);
 
 
-//    DenyFredSetColor
+    //    DenyFredSetColor
 
-    DenyFredSetColorLength = (USHORT)(sizeof( ACCESS_DENIED_ACE ) - sizeof( ULONG ) +
-                                SeLengthSid( FredSid ));
+    DenyFredSetColorLength = (USHORT)(sizeof(ACCESS_DENIED_ACE) - sizeof(ULONG) + SeLengthSid(FredSid));
 
-    DenyFredSetColor = (PVOID) TstAllocatePool ( PagedPool, DenyFredSetColorLength );
+    DenyFredSetColor = (PVOID)TstAllocatePool(PagedPool, DenyFredSetColorLength);
 
     DenyFredSetColor->Header.AceType = ACCESS_DENIED_ACE_TYPE;
     DenyFredSetColor->Header.AceSize = DenyFredSetColorLength;
@@ -594,17 +524,13 @@ CreateDAclToken()
 
     DenyFredSetColor->Mask = SET_WIDGET_COLOR;
 
-    RtlCopySid(
-            SeLengthSid( FredSid ),
-            &(DenyFredSetColor->SidStart),
-            FredSid );
+    RtlCopySid(SeLengthSid(FredSid), &(DenyFredSetColor->SidStart), FredSid);
 
-//    AllowBarneySetSize
+    //    AllowBarneySetSize
 
-    AllowBarneySetSizeLength = (USHORT)(sizeof( ACCESS_ALLOWED_ACE ) - sizeof( ULONG ) +
-                                SeLengthSid( BarneySid ));
+    AllowBarneySetSizeLength = (USHORT)(sizeof(ACCESS_ALLOWED_ACE) - sizeof(ULONG) + SeLengthSid(BarneySid));
 
-    AllowBarneySetSize = (PVOID) TstAllocatePool ( PagedPool, AllowBarneySetSizeLength );
+    AllowBarneySetSize = (PVOID)TstAllocatePool(PagedPool, AllowBarneySetSizeLength);
 
     AllowBarneySetSize->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
     AllowBarneySetSize->Header.AceSize = AllowBarneySetSizeLength;
@@ -612,17 +538,13 @@ CreateDAclToken()
 
     AllowBarneySetSize->Mask = SET_WIDGET_SIZE;
 
-    RtlCopySid(
-            SeLengthSid( BarneySid ),
-            &(AllowBarneySetSize->SidStart),
-            BarneySid );
+    RtlCopySid(SeLengthSid(BarneySid), &(AllowBarneySetSize->SidStart), BarneySid);
 
-//    AllowPebblesSetSize
+    //    AllowPebblesSetSize
 
-    AllowPebblesSetSizeLength = (USHORT)(sizeof( ACCESS_ALLOWED_ACE ) - sizeof( ULONG ) +
-                                SeLengthSid( PebblesSid ));
+    AllowPebblesSetSizeLength = (USHORT)(sizeof(ACCESS_ALLOWED_ACE) - sizeof(ULONG) + SeLengthSid(PebblesSid));
 
-    AllowPebblesSetSize = (PVOID) TstAllocatePool ( PagedPool, AllowPebblesSetSizeLength );
+    AllowPebblesSetSize = (PVOID)TstAllocatePool(PagedPool, AllowPebblesSetSizeLength);
 
     AllowPebblesSetSize->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
     AllowPebblesSetSize->Header.AceSize = AllowPebblesSetSizeLength;
@@ -630,18 +552,14 @@ CreateDAclToken()
 
     AllowPebblesSetSize->Mask = SET_WIDGET_SIZE;
 
-    RtlCopySid(
-            SeLengthSid( PebblesSid ),
-            &(AllowPebblesSetSize->SidStart),
-            PebblesSid );
+    RtlCopySid(SeLengthSid(PebblesSid), &(AllowPebblesSetSize->SidStart), PebblesSid);
 
 
-//    AllowPebblesGetSize
+    //    AllowPebblesGetSize
 
-    AllowPebblesGetSizeLength = (USHORT)(sizeof( ACCESS_ALLOWED_ACE ) - sizeof( ULONG ) +
-                                SeLengthSid( PebblesSid ));
+    AllowPebblesGetSizeLength = (USHORT)(sizeof(ACCESS_ALLOWED_ACE) - sizeof(ULONG) + SeLengthSid(PebblesSid));
 
-    AllowPebblesGetSize = (PVOID) TstAllocatePool ( PagedPool, AllowPebblesGetSizeLength );
+    AllowPebblesGetSize = (PVOID)TstAllocatePool(PagedPool, AllowPebblesGetSizeLength);
 
     AllowPebblesGetSize->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
     AllowPebblesGetSize->Header.AceSize = AllowPebblesGetSizeLength;
@@ -649,18 +567,14 @@ CreateDAclToken()
 
     AllowPebblesGetSize->Mask = SET_WIDGET_SIZE;
 
-    RtlCopySid(
-            SeLengthSid( PebblesSid ),
-            &(AllowPebblesGetSize->SidStart),
-            PebblesSid );
+    RtlCopySid(SeLengthSid(PebblesSid), &(AllowPebblesGetSize->SidStart), PebblesSid);
 
 
-//    AllowPebblesGetColor
+    //    AllowPebblesGetColor
 
-    AllowPebblesGetColorLength = (USHORT)(sizeof( ACCESS_ALLOWED_ACE ) - sizeof( ULONG ) +
-                                SeLengthSid( PebblesSid ));
+    AllowPebblesGetColorLength = (USHORT)(sizeof(ACCESS_ALLOWED_ACE) - sizeof(ULONG) + SeLengthSid(PebblesSid));
 
-    AllowPebblesGetColor = (PVOID) TstAllocatePool ( PagedPool, AllowPebblesGetColorLength );
+    AllowPebblesGetColor = (PVOID)TstAllocatePool(PagedPool, AllowPebblesGetColorLength);
 
     AllowPebblesGetColor->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
     AllowPebblesGetColor->Header.AceSize = AllowPebblesGetColorLength;
@@ -668,101 +582,68 @@ CreateDAclToken()
 
     AllowPebblesGetColor->Mask = SET_WIDGET_COLOR;
 
-    RtlCopySid(
-            SeLengthSid( PebblesSid ),
-            &(AllowPebblesGetColor->SidStart),
-            PebblesSid );
+    RtlCopySid(SeLengthSid(PebblesSid), &(AllowPebblesGetColor->SidStart), PebblesSid);
 
-//
-//    Create some ACLs that we can put into a Security Descriptor
-//
+    //
+    //    Create some ACLs that we can put into a Security Descriptor
+    //
     DbgBreakPoint();
 
-//
-//    Dacl
-//
-//  +----------------+    +----------------+   +----------------+
-//  |  1st ACE       |    |  2nd ACE       |   |  3rd ACE       |
-//  +----------------+    +----------------+   +----------------+
-//  |  AccessAllowed |    |  AccessDenied  |   |  AccessAllowed |
-//  +----------------+    +----------------+   +----------------+
-//  |  BARNEY        |    |  PEBBLES       |   |  FRED          |
-//  +----------------+    +----------------+   +----------------+
-//  |  SetWidgeColor |    |  SetWidgeColor |   |  SetWidgeColor |
-//  +----------------+    +----------------+   +----------------+
-//
+    //
+    //    Dacl
+    //
+    //  +----------------+    +----------------+   +----------------+
+    //  |  1st ACE       |    |  2nd ACE       |   |  3rd ACE       |
+    //  +----------------+    +----------------+   +----------------+
+    //  |  AccessAllowed |    |  AccessDenied  |   |  AccessAllowed |
+    //  +----------------+    +----------------+   +----------------+
+    //  |  BARNEY        |    |  PEBBLES       |   |  FRED          |
+    //  +----------------+    +----------------+   +----------------+
+    //  |  SetWidgeColor |    |  SetWidgeColor |   |  SetWidgeColor |
+    //  +----------------+    +----------------+   +----------------+
+    //
 
-    Dacl = (PACL) TstAllocatePool ( PagedPool,  2048 );
+    Dacl = (PACL)TstAllocatePool(PagedPool, 2048);
 
-    RtlCreateAcl( Dacl, 2048, ACL_REVISION);
-
-
-    RtlAddAce ( Dacl,
-                ACL_REVISION,
-                0,
-                AllowBarneySetColor,
-                AllowBarneySetColorLength );
-
-    RtlAddAce ( Dacl,
-                ACL_REVISION,
-                1,
-                DenyPebblesSetColor,
-                DenyPebblesSetColorLength );
-
-    RtlAddAce ( Dacl,
-                ACL_REVISION,
-                2,
-                DenyFredSetColor,
-                AllowFredSetColorLength );
-
-    DumpAcl (Dacl);
+    RtlCreateAcl(Dacl, 2048, ACL_REVISION);
 
 
+    RtlAddAce(Dacl, ACL_REVISION, 0, AllowBarneySetColor, AllowBarneySetColorLength);
+
+    RtlAddAce(Dacl, ACL_REVISION, 1, DenyPebblesSetColor, DenyPebblesSetColorLength);
+
+    RtlAddAce(Dacl, ACL_REVISION, 2, DenyFredSetColor, AllowFredSetColorLength);
+
+    DumpAcl(Dacl);
 
 
+    //  Create a security descriptor
+    //
+    //  Owner = Pebbles
+    //  Group = Flintstone
+    //  Dacl  = Dacl
+    //  Sacl  = NULL
+    //
 
-//  Create a security descriptor
-//
-//  Owner = Pebbles
-//  Group = Flintstone
-//  Dacl  = Dacl
-//  Sacl  = NULL
-//
+    Widget1SecurityDescriptor = (PSECURITY_DESCRIPTOR)TstAllocatePool(PagedPool, 1024);
 
-    Widget1SecurityDescriptor =
-        (PSECURITY_DESCRIPTOR)TstAllocatePool( PagedPool, 1024 );
-
-    RtlCreateSecurityDescriptor( Widget1SecurityDescriptor,
-                                 1 );
+    RtlCreateSecurityDescriptor(Widget1SecurityDescriptor, 1);
 
 
-    RtlSetOwnerSecurityDescriptor( Widget1SecurityDescriptor,
-                                   PebblesSid,
-                                   FALSE );
+    RtlSetOwnerSecurityDescriptor(Widget1SecurityDescriptor, PebblesSid, FALSE);
 
-    RtlSetGroupSecurityDescriptor( Widget1SecurityDescriptor,
-                                   FlintstoneSid,
-                                   FALSE );
+    RtlSetGroupSecurityDescriptor(Widget1SecurityDescriptor, FlintstoneSid, FALSE);
 
-    RtlSetDaclSecurityDescriptor( Widget1SecurityDescriptor,
-                                  TRUE,
-                                  Dacl,
-                                  FALSE );
+    RtlSetDaclSecurityDescriptor(Widget1SecurityDescriptor, TRUE, Dacl, FALSE);
 
-    RtlSetSaclSecurityDescriptor( Widget1SecurityDescriptor,
-                                  FALSE,
-                                  NULL,
-                                  NULL );
+    RtlSetSaclSecurityDescriptor(Widget1SecurityDescriptor, FALSE, NULL, NULL);
 
-//  See if Pebbles is allowed SET_WIDGET_COLOR (should be denied)
+    //  See if Pebbles is allowed SET_WIDGET_COLOR (should be denied)
 
-    Status = NtAccessCheck( Widget1SecurityDescriptor,
-                   PrimaryToken,
-                   (ACCESS_MASK) SET_WIDGET_COLOR,
-                   &GrantedAccess,
-                   &AccessStatus );
+    Status = NtAccessCheck(Widget1SecurityDescriptor, PrimaryToken, (ACCESS_MASK)SET_WIDGET_COLOR, &GrantedAccess,
+                           &AccessStatus);
 
-//    DbgBreakPoint();
+    //    DbgBreakPoint();
 
     ASSERT(NT_SUCCESS(Status));
 
@@ -771,62 +652,46 @@ CreateDAclToken()
     ASSERT(GrantedAccess == NULL);
 
 
-//  Update Dacl to be the following:
-//
-//    Dacl2
-//
-//  +----------------+    +----------------+   +----------------+
-//  |  1st ACE       |    |  2nd ACE       |   |  3rd ACE       |
-//  +----------------+    +----------------+   +----------------+
-//  |  AccessAllowed |    |  AccessAllowed |   |  AccessDenied  |
-//  +----------------+    +----------------+   +----------------+
-//  |  BARNEY        |    |  PEBBLES       |   |  FRED          |
-//  +----------------+    +----------------+   +----------------+
-//  |  SetWidgeColor |    |  SetWidgeColor |   |  SetWidgeColor |
-//  +----------------+    +----------------+   +----------------+
-//
+    //  Update Dacl to be the following:
+    //
+    //    Dacl2
+    //
+    //  +----------------+    +----------------+   +----------------+
+    //  |  1st ACE       |    |  2nd ACE       |   |  3rd ACE       |
+    //  +----------------+    +----------------+   +----------------+
+    //  |  AccessAllowed |    |  AccessAllowed |   |  AccessDenied  |
+    //  +----------------+    +----------------+   +----------------+
+    //  |  BARNEY        |    |  PEBBLES       |   |  FRED          |
+    //  +----------------+    +----------------+   +----------------+
+    //  |  SetWidgeColor |    |  SetWidgeColor |   |  SetWidgeColor |
+    //  +----------------+    +----------------+   +----------------+
+    //
 
-//  Delete 2nd Ace
+    //  Delete 2nd Ace
 
-    RtlDeleteAce (Dacl, 1);
+    RtlDeleteAce(Dacl, 1);
 
-    RtlAddAce ( Dacl,
-                ACL_REVISION,
-                1,
-                AllowPebblesSetColor,
-                AllowPebblesSetColorLength );
+    RtlAddAce(Dacl, ACL_REVISION, 1, AllowPebblesSetColor, AllowPebblesSetColorLength);
 
-    RtlDeleteAce ( Dacl, 2 );
+    RtlDeleteAce(Dacl, 2);
 
-    RtlAddAce ( Dacl,
-                ACL_REVISION,
-                1,
-                DenyFredSetColor,
-                DenyFredSetColorLength );
+    RtlAddAce(Dacl, ACL_REVISION, 1, DenyFredSetColor, DenyFredSetColorLength);
 
 
+    //  Change the security descriptor to use updated Dacl
+    //
+    //  Owner = Pebbles
+    //  Group = Flintstone
+    //  Dacl  = Dacl2
+    //  Sacl  = NULL
+    //
 
+    RtlSetDaclSecurityDescriptor(Widget1SecurityDescriptor, TRUE, Dacl, FALSE);
 
-//  Change the security descriptor to use updated Dacl
-//
-//  Owner = Pebbles
-//  Group = Flintstone
-//  Dacl  = Dacl2
-//  Sacl  = NULL
-//
+    //  See if Pebbles is allowed SET_WIDGET_COLOR (should be permitted)
 
-    RtlSetDaclSecurityDescriptor( Widget1SecurityDescriptor,
-                                  TRUE,
-                                  Dacl,
-                                  FALSE );
-
-//  See if Pebbles is allowed SET_WIDGET_COLOR (should be permitted)
-
-    Status = NtAccessCheck( Widget1SecurityDescriptor,
-                            PrimaryToken,
-                            (ACCESS_MASK) SET_WIDGET_COLOR,
-                            &GrantedAccess,
-                            &AccessStatus );
+    Status = NtAccessCheck(Widget1SecurityDescriptor, PrimaryToken, (ACCESS_MASK)SET_WIDGET_COLOR, &GrantedAccess,
+                           &AccessStatus);
 
 
     ASSERT(NT_SUCCESS(Status));
@@ -835,262 +700,207 @@ CreateDAclToken()
 
     ASSERT(GrantedAccess == (ACCESS_MASK)SET_WIDGET_COLOR);
 
-//
-//    Dacl3
-//
-//  +----------------+    +----------------+   +----------------+
-//  |  1st ACE       |    |  2nd ACE       |   |  3rd ACE       |
-//  +----------------+    +----------------+   +----------------+
-//  |  AccessAllowed |    |  AccessAllowed |   |  AccessDenied  |
-//  +----------------+    +----------------+   +----------------+
-//  |  BARNEY        |    |  PEBBLES       |   |  FRED          |
-//  +----------------+    +----------------+   +----------------+
-//  |  SetWidgeColor |    |  SetWidgeColor |   |  SetWidgeColor |
-//  +----------------+    +----------------+   +----------------+
-//
-//  +----------------+    +----------------+
-//  |  4th ACE       |    |  5th ACE       |
-//  +----------------+    +----------------+
-//  |  AccessAllowed |    |  AccessAllowed |
-//  +----------------+    +----------------+
-//  |  BARNEY        |    |  PEBBLES       |
-//  +----------------+    +----------------+
-//  |  SetWidgeSize  |    |  SetWidgeSize  |
-//  +----------------+    +----------------+
-//
+    //
+    //    Dacl3
+    //
+    //  +----------------+    +----------------+   +----------------+
+    //  |  1st ACE       |    |  2nd ACE       |   |  3rd ACE       |
+    //  +----------------+    +----------------+   +----------------+
+    //  |  AccessAllowed |    |  AccessAllowed |   |  AccessDenied  |
+    //  +----------------+    +----------------+   +----------------+
+    //  |  BARNEY        |    |  PEBBLES       |   |  FRED          |
+    //  +----------------+    +----------------+   +----------------+
+    //  |  SetWidgeColor |    |  SetWidgeColor |   |  SetWidgeColor |
+    //  +----------------+    +----------------+   +----------------+
+    //
+    //  +----------------+    +----------------+
+    //  |  4th ACE       |    |  5th ACE       |
+    //  +----------------+    +----------------+
+    //  |  AccessAllowed |    |  AccessAllowed |
+    //  +----------------+    +----------------+
+    //  |  BARNEY        |    |  PEBBLES       |
+    //  +----------------+    +----------------+
+    //  |  SetWidgeSize  |    |  SetWidgeSize  |
+    //  +----------------+    +----------------+
+    //
 
 
-    RtlAddAce ( Dacl,
-                ACL_REVISION,
-                MAXULONG,
-                AllowBarneySetSize,
-                AllowBarneySetSizeLength );
+    RtlAddAce(Dacl, ACL_REVISION, MAXULONG, AllowBarneySetSize, AllowBarneySetSizeLength);
 
-    RtlAddAce ( Dacl,
-                ACL_REVISION,
-                MAXULONG,
-                AllowPebblesSetSize,
-                AllowPebblesSetSizeLength );
+    RtlAddAce(Dacl, ACL_REVISION, MAXULONG, AllowPebblesSetSize, AllowPebblesSetSizeLength);
 
-//  Change the security descriptor to use Dacl3
-//
-//  Owner = Pebbles
-//  Group = Flintstone
-//  Dacl  = Dacl3
-//  Sacl  = NULL
-//
+    //  Change the security descriptor to use Dacl3
+    //
+    //  Owner = Pebbles
+    //  Group = Flintstone
+    //  Dacl  = Dacl3
+    //  Sacl  = NULL
+    //
 
-    RtlSetDaclSecurityDescriptor( Widget1SecurityDescriptor,
-                                  TRUE,
-                                  Dacl,
-                                  FALSE );
+    RtlSetDaclSecurityDescriptor(Widget1SecurityDescriptor, TRUE, Dacl, FALSE);
 
-//  Request MAXIMUM_ACCESS for Pebbles.  Should get back SetWidgetSize
-//  and SetWidgetColor
+    //  Request MAXIMUM_ACCESS for Pebbles.  Should get back SetWidgetSize
+    //  and SetWidgetColor
 
-    Status = NtAccessCheck( Widget1SecurityDescriptor,
-                            PrimaryToken,
-                            (ACCESS_MASK) MAXIMUM_ALLOWED,
-                            &GrantedAccess,
-                            &AccessStatus );
+    Status = NtAccessCheck(Widget1SecurityDescriptor, PrimaryToken, (ACCESS_MASK)MAXIMUM_ALLOWED, &GrantedAccess,
+                           &AccessStatus);
 
 
     ASSERT(NT_SUCCESS(Status));
 
     ASSERT(NT_SUCCESS(AccessStatus));
 
-    ASSERT(GrantedAccess == (ACCESS_MASK) (SET_WIDGET_COLOR | SET_WIDGET_SIZE));
+    ASSERT(GrantedAccess == (ACCESS_MASK)(SET_WIDGET_COLOR | SET_WIDGET_SIZE));
 
 
-//
-//    Dacl4
-//
-//  +----------------+    +----------------+   +----------------+
-//  |  1st ACE       |    |  2nd ACE       |   |  3rd ACE       |
-//  +----------------+    +----------------+   +----------------+
-//  |  AccessAllowed |    |  AccessAllowed |   |  AccessDenied  |
-//  +----------------+    +----------------+   +----------------+
-//  |  BARNEY        |    |  PEBBLES       |   |  FRED          |
-//  +----------------+    +----------------+   +----------------+
-//  |  SetWidgeColor |    |  SetWidgeColor |   |  SetWidgeColor |
-//  +----------------+    +----------------+   +----------------+
-//
-//  +----------------+    +----------------+   +----------------+
-//  |  4th ACE       |    |  5th ACE       |   |  6th ACE       |
-//  +----------------+    +----------------+   +----------------+
-//  |  AccessAllowed |    |  AccessAllowed |   |  AccessDenied  |
-//  +----------------+    +----------------+   +----------------+
-//  |  BARNEY        |    |  PEBBLES       |   |  PEBBLES       |
-//  +----------------+    +----------------+   +----------------+
-//  |  SetWidgeSize  |    |  SetWidgeSize  |   |  SetWidgeColor |
-//  +----------------+    +----------------+   +----------------+
-//
+    //
+    //    Dacl4
+    //
+    //  +----------------+    +----------------+   +----------------+
+    //  |  1st ACE       |    |  2nd ACE       |   |  3rd ACE       |
+    //  +----------------+    +----------------+   +----------------+
+    //  |  AccessAllowed |    |  AccessAllowed |   |  AccessDenied  |
+    //  +----------------+    +----------------+   +----------------+
+    //  |  BARNEY        |    |  PEBBLES       |   |  FRED          |
+    //  +----------------+    +----------------+   +----------------+
+    //  |  SetWidgeColor |    |  SetWidgeColor |   |  SetWidgeColor |
+    //  +----------------+    +----------------+   +----------------+
+    //
+    //  +----------------+    +----------------+   +----------------+
+    //  |  4th ACE       |    |  5th ACE       |   |  6th ACE       |
+    //  +----------------+    +----------------+   +----------------+
+    //  |  AccessAllowed |    |  AccessAllowed |   |  AccessDenied  |
+    //  +----------------+    +----------------+   +----------------+
+    //  |  BARNEY        |    |  PEBBLES       |   |  PEBBLES       |
+    //  +----------------+    +----------------+   +----------------+
+    //  |  SetWidgeSize  |    |  SetWidgeSize  |   |  SetWidgeColor |
+    //  +----------------+    +----------------+   +----------------+
+    //
 
-    RtlAddAce ( Dacl,
-                ACL_REVISION,
-                MAXULONG,
-                DenyPebblesSetColor,
-                DenyPebblesSetColorLength );
+    RtlAddAce(Dacl, ACL_REVISION, MAXULONG, DenyPebblesSetColor, DenyPebblesSetColorLength);
 
-    RtlSetDaclSecurityDescriptor( Widget1SecurityDescriptor,
-                                  TRUE,
-                                  Dacl,
-                                  FALSE );
+    RtlSetDaclSecurityDescriptor(Widget1SecurityDescriptor, TRUE, Dacl, FALSE);
 
-//  Request MAXIMUM_ACCESS for Pebbles.  Should get back SetWidgetSize
-//  and SetWidgetColor
+    //  Request MAXIMUM_ACCESS for Pebbles.  Should get back SetWidgetSize
+    //  and SetWidgetColor
 
-    Status = NtAccessCheck( Widget1SecurityDescriptor,
-                            PrimaryToken,
-                            (ACCESS_MASK) MAXIMUM_ALLOWED,
-                            &GrantedAccess,
-                            &AccessStatus );
+    Status = NtAccessCheck(Widget1SecurityDescriptor, PrimaryToken, (ACCESS_MASK)MAXIMUM_ALLOWED, &GrantedAccess,
+                           &AccessStatus);
 
 
     ASSERT(NT_SUCCESS(Status));
 
     ASSERT(NT_SUCCESS(AccessStatus));
 
-    ASSERT(GrantedAccess == (ACCESS_MASK) (SET_WIDGET_COLOR | SET_WIDGET_SIZE));
+    ASSERT(GrantedAccess == (ACCESS_MASK)(SET_WIDGET_COLOR | SET_WIDGET_SIZE));
 
 
-//
-//    Dacl5
-//
-//  +----------------+    +----------------+   +----------------+
-//  |  1st ACE       |    |  2nd ACE       |   |  3rd ACE       |
-//  +----------------+    +----------------+   +----------------+
-//  |  AccessAllowed |    |  AccessDenied  |   |  AccessDenied  |
-//  +----------------+    +----------------+   +----------------+
-//  |  BARNEY        |    |  PEBBLES       |   |  FRED          |
-//  +----------------+    +----------------+   +----------------+
-//  |  SetWidgeColor |    |  SetWidgeColor |   |  SetWidgeColor |
-//  +----------------+    +----------------+   +----------------+
-//
-//  +----------------+    +----------------+   +----------------+
-//  |  4th ACE       |    |  5th ACE       |   |  6th ACE       |
-//  +----------------+    +----------------+   +----------------+
-//  |  AccessAllowed |    |  AccessAllowed |   |  AccessAllowed |
-//  +----------------+    +----------------+   +----------------+
-//  |  BARNEY        |    |  PEBBLES       |   |  PEBBLES       |
-//  +----------------+    +----------------+   +----------------+
-//  |  SetWidgeSize  |    |  SetWidgeSize  |   |  SetWidgeColor |
-//  +----------------+    +----------------+   +----------------+
-//
+    //
+    //    Dacl5
+    //
+    //  +----------------+    +----------------+   +----------------+
+    //  |  1st ACE       |    |  2nd ACE       |   |  3rd ACE       |
+    //  +----------------+    +----------------+   +----------------+
+    //  |  AccessAllowed |    |  AccessDenied  |   |  AccessDenied  |
+    //  +----------------+    +----------------+   +----------------+
+    //  |  BARNEY        |    |  PEBBLES       |   |  FRED          |
+    //  +----------------+    +----------------+   +----------------+
+    //  |  SetWidgeColor |    |  SetWidgeColor |   |  SetWidgeColor |
+    //  +----------------+    +----------------+   +----------------+
+    //
+    //  +----------------+    +----------------+   +----------------+
+    //  |  4th ACE       |    |  5th ACE       |   |  6th ACE       |
+    //  +----------------+    +----------------+   +----------------+
+    //  |  AccessAllowed |    |  AccessAllowed |   |  AccessAllowed |
+    //  +----------------+    +----------------+   +----------------+
+    //  |  BARNEY        |    |  PEBBLES       |   |  PEBBLES       |
+    //  +----------------+    +----------------+   +----------------+
+    //  |  SetWidgeSize  |    |  SetWidgeSize  |   |  SetWidgeColor |
+    //  +----------------+    +----------------+   +----------------+
+    //
 
-    RtlDeleteAce (Dacl, 1);
+    RtlDeleteAce(Dacl, 1);
 
-    RtlAddAce ( Dacl,
-                ACL_REVISION,
-                1,
-                DenyPebblesSetColor,
-                DenyPebblesSetColorLength );
+    RtlAddAce(Dacl, ACL_REVISION, 1, DenyPebblesSetColor, DenyPebblesSetColorLength);
 
-    RtlDeleteAce (Dacl, 5);
+    RtlDeleteAce(Dacl, 5);
 
-    RtlAddAce ( Dacl,
-                ACL_REVISION,
-                MAXULONG,
-                AllowPebblesSetColor,
-                AllowPebblesSetColorLength );
+    RtlAddAce(Dacl, ACL_REVISION, MAXULONG, AllowPebblesSetColor, AllowPebblesSetColorLength);
 
 
-    DumpAcl ( Dacl );
+    DumpAcl(Dacl);
 
-    RtlSetDaclSecurityDescriptor( Widget1SecurityDescriptor,
-                                  TRUE,
-                                  Dacl,
-                                  FALSE );
+    RtlSetDaclSecurityDescriptor(Widget1SecurityDescriptor, TRUE, Dacl, FALSE);
 
-//  Request MAXIMUM_ACCESS for Pebbles.  Should get back SetWidgetSize
+    //  Request MAXIMUM_ACCESS for Pebbles.  Should get back SetWidgetSize
 
-    Status = NtAccessCheck( Widget1SecurityDescriptor,
-                            PrimaryToken,
-                            (ACCESS_MASK) MAXIMUM_ALLOWED,
-                            &GrantedAccess,
-                            &AccessStatus );
+    Status = NtAccessCheck(Widget1SecurityDescriptor, PrimaryToken, (ACCESS_MASK)MAXIMUM_ALLOWED, &GrantedAccess,
+                           &AccessStatus);
 
 
     ASSERT(NT_SUCCESS(Status));
 
     ASSERT(NT_SUCCESS(AccessStatus));
 
-    ASSERT(GrantedAccess == (ACCESS_MASK) SET_WIDGET_SIZE);
+    ASSERT(GrantedAccess == (ACCESS_MASK)SET_WIDGET_SIZE);
 
 
-//
-//    Dacl6
-//
-//  +----------------+    +----------------+   +----------------+
-//  |  1st ACE       |    |  2nd ACE       |   |  3rd ACE       |
-//  +----------------+    +----------------+   +----------------+
-//  |  AccessAllowed |    |  AccessDenied  |   |  AccessDenied  |
-//  +----------------+    +----------------+   +----------------+
-//  |  BARNEY        |    |  PEBBLES       |   |  FRED          |
-//  +----------------+    +----------------+   +----------------+
-//  |  SetWidgeColor |    |  SetWidgeColor |   |  SetWidgeColor |
-//  +----------------+    +----------------+   +----------------+
-//
-//  +----------------+    +----------------+   +----------------+
-//  |  4th ACE       |    |  5th ACE       |   |  6th ACE       |
-//  +----------------+    +----------------+   +----------------+
-//  |  AccessAllowed |    |  AccessAllowed |   |  AccessAllowed |
-//  +----------------+    +----------------+   +----------------+
-//  |  BARNEY        |    |  PEBBLES       |   |  PEBBLES       |
-//  +----------------+    +----------------+   +----------------+
-//  |  SetWidgeSize  |    |  SetWidgeSize  |   |  SetWidgeColor |
-//  +----------------+    +----------------+   +----------------+
-//
-//  +----------------+    +----------------+
-//  |  7th ACE       |    |  8th ACE       |
-//  +----------------+    +----------------+
-//  |  AccessAllowed |    |  AccessAllowed |
-//  +----------------+    +----------------+
-//  |  PEBBLES       |    |  PEBBLES       |
-//  +----------------+    +----------------+
-//  |  GetWidgeSize  |    |  GetWidgeColor |
-//  +----------------+    +----------------+
-//
+    //
+    //    Dacl6
+    //
+    //  +----------------+    +----------------+   +----------------+
+    //  |  1st ACE       |    |  2nd ACE       |   |  3rd ACE       |
+    //  +----------------+    +----------------+   +----------------+
+    //  |  AccessAllowed |    |  AccessDenied  |   |  AccessDenied  |
+    //  +----------------+    +----------------+   +----------------+
+    //  |  BARNEY        |    |  PEBBLES       |   |  FRED          |
+    //  +----------------+    +----------------+   +----------------+
+    //  |  SetWidgeColor |    |  SetWidgeColor |   |  SetWidgeColor |
+    //  +----------------+    +----------------+   +----------------+
+    //
+    //  +----------------+    +----------------+   +----------------+
+    //  |  4th ACE       |    |  5th ACE       |   |  6th ACE       |
+    //  +----------------+    +----------------+   +----------------+
+    //  |  AccessAllowed |    |  AccessAllowed |   |  AccessAllowed |
+    //  +----------------+    +----------------+   +----------------+
+    //  |  BARNEY        |    |  PEBBLES       |   |  PEBBLES       |
+    //  +----------------+    +----------------+   +----------------+
+    //  |  SetWidgeSize  |    |  SetWidgeSize  |   |  SetWidgeColor |
+    //  +----------------+    +----------------+   +----------------+
+    //
+    //  +----------------+    +----------------+
+    //  |  7th ACE       |    |  8th ACE       |
+    //  +----------------+    +----------------+
+    //  |  AccessAllowed |    |  AccessAllowed |
+    //  +----------------+    +----------------+
+    //  |  PEBBLES       |    |  PEBBLES       |
+    //  +----------------+    +----------------+
+    //  |  GetWidgeSize  |    |  GetWidgeColor |
+    //  +----------------+    +----------------+
+    //
 
-    RtlAddAce ( Dacl,
-                ACL_REVISION,
-                MAXULONG,
-                AllowPebblesGetSize,
-                AllowPebblesGetSizeLength );
+    RtlAddAce(Dacl, ACL_REVISION, MAXULONG, AllowPebblesGetSize, AllowPebblesGetSizeLength);
 
-    RtlAddAce ( Dacl,
-                ACL_REVISION,
-                MAXULONG,
-                AllowPebblesGetColor,
-                AllowPebblesGetColorLength );
+    RtlAddAce(Dacl, ACL_REVISION, MAXULONG, AllowPebblesGetColor, AllowPebblesGetColorLength);
 
-    DumpAcl ( Dacl );
+    DumpAcl(Dacl);
 
-    RtlSetDaclSecurityDescriptor( Widget1SecurityDescriptor,
-                                  TRUE,
-                                  Dacl,
-                                  FALSE );
+    RtlSetDaclSecurityDescriptor(Widget1SecurityDescriptor, TRUE, Dacl, FALSE);
 
-//  Request MAXIMUM_ACCESS for Pebbles.  Should get back SetWidgetSize
+    //  Request MAXIMUM_ACCESS for Pebbles.  Should get back SetWidgetSize
 
-    Status = NtAccessCheck( Widget1SecurityDescriptor,
-                            PrimaryToken,
-                            (ACCESS_MASK) MAXIMUM_ALLOWED,
-                            &GrantedAccess,
-                            &AccessStatus );
+    Status = NtAccessCheck(Widget1SecurityDescriptor, PrimaryToken, (ACCESS_MASK)MAXIMUM_ALLOWED, &GrantedAccess,
+                           &AccessStatus);
 
 
     ASSERT(NT_SUCCESS(Status));
 
     ASSERT(NT_SUCCESS(AccessStatus));
 
-    ASSERT(GrantedAccess == (ACCESS_MASK) SET_WIDGET_SIZE);
+    ASSERT(GrantedAccess == (ACCESS_MASK)SET_WIDGET_SIZE);
 
 
-
-    return(TRUE);
-
-
+    return (TRUE);
 }
 
 
@@ -1109,7 +919,8 @@ CTAccess()
 
     BOOLEAN Result = TRUE;
 
-    if (!TSeVariableInitialization()) {
+    if (!TSeVariableInitialization())
+    {
         DbgPrint("Se:    Failed to initialize global test variables.\n");
         return FALSE;
     }
@@ -1117,7 +928,6 @@ CTAccess()
     DbgPrint("Se:   Initialization...");
     TestTokenInitialize();
     CreateDAclToken();
-
 }
 
 
@@ -1126,7 +936,8 @@ CTAccess()
 //
 
 
-typedef struct _STANDARD_ACE {
+typedef struct _STANDARD_ACE
+{
     ACE_HEADER Header;
     ACCESS_MASK Mask;
     PSID Sid;
@@ -1134,11 +945,7 @@ typedef struct _STANDARD_ACE {
 typedef STANDARD_ACE *PSTANDARD_ACE;
 
 
-
-VOID
-DumpAcl (
-    IN PACL Acl
-    )
+VOID DumpAcl(IN PACL Acl)
 
 /*++
 
@@ -1168,10 +975,10 @@ Return Value:
     //  Check if the Acl is null
     //
 
-    if (Acl == NULL) {
+    if (Acl == NULL)
+    {
 
         return;
-
     }
 
     //
@@ -1186,9 +993,8 @@ Return Value:
     //  Now for each Ace we want do dump it
     //
 
-    for (i = 0, Ace = FirstAce(Acl);
-         i < Acl->AceCount;
-         i++, Ace = NextAce(Ace) ) {
+    for (i = 0, Ace = FirstAce(Acl); i < Acl->AceCount; i++, Ace = NextAce(Ace))
+    {
 
         //
         //  print out the ace header
@@ -1200,69 +1006,67 @@ Return Value:
         //  special case on the standard ace types
         //
 
-        if ((Ace->Header.AceType == ACCESS_ALLOWED_ACE_TYPE) ||
-            (Ace->Header.AceType == ACCESS_DENIED_ACE_TYPE) ||
-            (Ace->Header.AceType == SYSTEM_AUDIT_ACE_TYPE) ||
-            (Ace->Header.AceType == SYSTEM_ALARM_ACE_TYPE)) {
+        if ((Ace->Header.AceType == ACCESS_ALLOWED_ACE_TYPE) || (Ace->Header.AceType == ACCESS_DENIED_ACE_TYPE) ||
+            (Ace->Header.AceType == SYSTEM_AUDIT_ACE_TYPE) || (Ace->Header.AceType == SYSTEM_ALARM_ACE_TYPE))
+        {
 
             //
             //  The following array is indexed by ace types and must
             //  follow the allowed, denied, audit, alarm seqeuence
             //
 
-            static PCHAR AceTypes[] = { "Access Allowed",
-                                        "Access Denied ",
-                                        "System Audit  ",
-                                        "System Alarm  "
-                                      };
+            static PCHAR AceTypes[] = { "Access Allowed", "Access Denied ", "System Audit  ", "System Alarm  " };
 
             DbgPrint(AceTypes[Ace->Header.AceType]);
             DbgPrint("\nAccess Mask: %08lx ", Ace->Mask);
-
-        } else {
+        }
+        else
+        {
 
             DbgPrint("Unknown Ace Type\n");
-
         }
 
         DbgPrint("\n");
 
-        DbgPrint("AceSize = %d\n",Ace->Header.AceSize);
+        DbgPrint("AceSize = %d\n", Ace->Header.AceSize);
         DbgPrint("Ace Flags = ");
-        if (Ace->Header.AceFlags & OBJECT_INHERIT_ACE) {
+        if (Ace->Header.AceFlags & OBJECT_INHERIT_ACE)
+        {
             DbgPrint("OBJECT_INHERIT_ACE\n");
             DbgPrint("                   ");
         }
-        if (Ace->Header.AceFlags & CONTAINER_INHERIT_ACE) {
+        if (Ace->Header.AceFlags & CONTAINER_INHERIT_ACE)
+        {
             DbgPrint("CONTAINER_INHERIT_ACE\n");
             DbgPrint("                   ");
         }
 
-        if (Ace->Header.AceFlags & NO_PROPAGATE_INHERIT_ACE) {
+        if (Ace->Header.AceFlags & NO_PROPAGATE_INHERIT_ACE)
+        {
             DbgPrint("NO_PROPAGATE_INHERIT_ACE\n");
             DbgPrint("                   ");
         }
 
-        if (Ace->Header.AceFlags & INHERIT_ONLY_ACE) {
+        if (Ace->Header.AceFlags & INHERIT_ONLY_ACE)
+        {
             DbgPrint("INHERIT_ONLY_ACE\n");
             DbgPrint("                   ");
         }
 
 
-        if (Ace->Header.AceFlags & SUCCESSFUL_ACCESS_ACE_FLAG) {
+        if (Ace->Header.AceFlags & SUCCESSFUL_ACCESS_ACE_FLAG)
+        {
             DbgPrint("SUCCESSFUL_ACCESS_ACE_FLAG\n");
             DbgPrint("            ");
         }
 
-        if (Ace->Header.AceFlags & FAILED_ACCESS_ACE_FLAG) {
+        if (Ace->Header.AceFlags & FAILED_ACCESS_ACE_FLAG)
+        {
             DbgPrint("FAILED_ACCESS_ACE_FLAG\n");
             DbgPrint("            ");
         }
 
         DbgPrint("\n");
-
-
     }
-
 }
 

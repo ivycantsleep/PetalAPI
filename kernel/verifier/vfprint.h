@@ -25,14 +25,6 @@ Revision History:
 
 --*/
 
-VOID
-VfPrintDumpIrpStack(
-    IN PIO_STACK_LOCATION IrpSp
-    );
+VOID VfPrintDumpIrpStack(IN PIO_STACK_LOCATION IrpSp);
 
-VOID
-VfPrintDumpIrp(
-    IN PIRP IrpToFlag
-    );
-
-
+VOID VfPrintDumpIrp(IN PIRP IrpToFlag);

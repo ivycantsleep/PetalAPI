@@ -24,24 +24,18 @@ Revision History:
 //  Debug Trace Level
 //
 
-#define me                               (0x00000010)
+#define me (0x00000010)
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,CcMdlRead)
-#pragma alloc_text(PAGE,CcMdlReadComplete)
-#pragma alloc_text(PAGE,CcMdlReadComplete2)
-#pragma alloc_text(PAGE,CcMdlWriteComplete)
+#pragma alloc_text(PAGE, CcMdlRead)
+#pragma alloc_text(PAGE, CcMdlReadComplete)
+#pragma alloc_text(PAGE, CcMdlReadComplete2)
+#pragma alloc_text(PAGE, CcMdlWriteComplete)
 #endif
 
-
-VOID
-CcMdlRead (
-    IN PFILE_OBJECT FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    OUT PMDL *MdlChain,
-    OUT PIO_STATUS_BLOCK IoStatus
-    )
+
+VOID CcMdlRead(IN PFILE_OBJECT FileObject, IN PLARGE_INTEGER FileOffset, IN ULONG Length, OUT PMDL *MdlChain,
+               OUT PIO_STATUS_BLOCK IoStatus)
 
 /*++
 
@@ -111,17 +105,16 @@ Raises:
     ULONG PageIsDirty;
     PVACB ActiveVacb = NULL;
 
-    DebugTrace(+1, me, "CcMdlRead\n", 0 );
-    DebugTrace( 0, me, "    FileObject = %08lx\n", FileObject );
-    DebugTrace2(0, me, "    FileOffset = %08lx, %08lx\n", FileOffset->LowPart,
-                                                          FileOffset->HighPart );
-    DebugTrace( 0, me, "    Length = %08lx\n", Length );
+    DebugTrace(+1, me, "CcMdlRead\n", 0);
+    DebugTrace(0, me, "    FileObject = %08lx\n", FileObject);
+    DebugTrace2(0, me, "    FileOffset = %08lx, %08lx\n", FileOffset->LowPart, FileOffset->HighPart);
+    DebugTrace(0, me, "    Length = %08lx\n", Length);
 
     //
     //  Save the current readahead hints.
     //
 
-    MmSavePageFaultReadAhead( Thread, &SavedState );
+    MmSavePageFaultReadAhead(Thread, &SavedState);
 
     //
     //  Get pointer to SharedCacheMap.
@@ -134,16 +127,17 @@ Raises:
     //  See if we have an active Vacb, that we need to free.
     //
 
-    GetActiveVacb( SharedCacheMap, OldIrql, ActiveVacb, ActivePage, PageIsDirty );
+    GetActiveVacb(SharedCacheMap, OldIrql, ActiveVacb, ActivePage, PageIsDirty);
 
     //
     //  If there is an end of a page to be zeroed, then free that page now,
     //  so we don't send Greg the uninitialized data...
     //
 
-    if ((ActiveVacb != NULL) || (SharedCacheMap->NeedToZero != NULL)) {
+    if ((ActiveVacb != NULL) || (SharedCacheMap->NeedToZero != NULL))
+    {
 
-        CcFreeActiveVacb( SharedCacheMap, ActiveVacb, ActivePage, PageIsDirty );
+        CcFreeActiveVacb(SharedCacheMap, ActiveVacb, ActivePage, PageIsDirty);
     }
 
     //
@@ -154,8 +148,9 @@ Raises:
     //  already be in memory or else underway.
     //
 
-    if (PrivateCacheMap->Flags.ReadAheadEnabled && (PrivateCacheMap->ReadAheadLength[1] == 0)) {
-        CcScheduleReadAhead( FileObject, FileOffset, Length );
+    if (PrivateCacheMap->Flags.ReadAheadEnabled && (PrivateCacheMap->ReadAheadLength[1] == 0))
+    {
+        CcScheduleReadAhead(FileObject, FileOffset, Length);
     }
 
     //
@@ -180,20 +175,22 @@ Raises:
     //  Check for read past file size, the caller must filter this case out.
     //
 
-    ASSERT( ( FOffset.QuadPart + (LONGLONG)Length ) <= SharedCacheMap->FileSize.QuadPart );
+    ASSERT((FOffset.QuadPart + (LONGLONG)Length) <= SharedCacheMap->FileSize.QuadPart);
 
     //
     //  Put try-finally around the loop to deal with any exceptions
     //
 
-    try {
+    try
+    {
 
         //
         //  Not all of the transfer will come back at once, so we have to loop
         //  until the entire transfer is complete.
         //
 
-        while (Length != 0) {
+        while (Length != 0)
+        {
 
             ULONG ReceivedLength;
             LARGE_INTEGER BeyondLastByte;
@@ -203,12 +200,10 @@ Raises:
             //  MmProbeAndLockPages call below.
             //
 
-            CacheBuffer = CcGetVirtualAddress( SharedCacheMap,
-                                               FOffset,
-                                               &Vacb,
-                                               &ReceivedLength );
+            CacheBuffer = CcGetVirtualAddress(SharedCacheMap, FOffset, &Vacb, &ReceivedLength);
 
-            if (ReceivedLength > Length) {
+            if (ReceivedLength > Length)
+            {
                 ReceivedLength = Length;
             }
 
@@ -218,26 +213,23 @@ Raises:
             //  Now attempt to allocate an Mdl to describe the mapped data.
             //
 
-            DebugTrace( 0, mm, "IoAllocateMdl:\n", 0 );
-            DebugTrace( 0, mm, "    BaseAddress = %08lx\n", CacheBuffer );
-            DebugTrace( 0, mm, "    Length = %08lx\n", ReceivedLength );
+            DebugTrace(0, mm, "IoAllocateMdl:\n", 0);
+            DebugTrace(0, mm, "    BaseAddress = %08lx\n", CacheBuffer);
+            DebugTrace(0, mm, "    Length = %08lx\n", ReceivedLength);
 
-            Mdl = IoAllocateMdl( CacheBuffer,
-                                 ReceivedLength,
-                                 FALSE,
-                                 FALSE,
-                                 NULL );
+            Mdl = IoAllocateMdl(CacheBuffer, ReceivedLength, FALSE, FALSE, NULL);
 
-            DebugTrace( 0, mm, "    <Mdl = %08lx\n", Mdl );
+            DebugTrace(0, mm, "    <Mdl = %08lx\n", Mdl);
 
-            if (Mdl == NULL) {
-                DebugTrace( 0, 0, "Failed to allocate Mdl\n", 0 );
+            if (Mdl == NULL)
+            {
+                DebugTrace(0, 0, "Failed to allocate Mdl\n", 0);
 
-                ExRaiseStatus( STATUS_INSUFFICIENT_RESOURCES );
+                ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
             }
 
-            DebugTrace( 0, mm, "MmProbeAndLockPages:\n", 0 );
-            DebugTrace( 0, mm, "    Mdl = %08lx\n", Mdl );
+            DebugTrace(0, mm, "MmProbeAndLockPages:\n", 0);
+            DebugTrace(0, mm, "    Mdl = %08lx\n", Mdl);
 
             //
             //  Set to see if the miss counter changes in order to
@@ -246,8 +238,8 @@ Raises:
 
             SavedMissCounter += CcMdlReadWaitMiss;
 
-            MmSetPageFaultReadAhead( Thread, ADDRESS_AND_SIZE_TO_SPAN_PAGES( CacheBuffer, ReceivedLength ) - 1);
-            MmProbeAndLockPages( Mdl, KernelMode, IoReadAccess );
+            MmSetPageFaultReadAhead(Thread, ADDRESS_AND_SIZE_TO_SPAN_PAGES(CacheBuffer, ReceivedLength) - 1);
+            MmProbeAndLockPages(Mdl, KernelMode, IoReadAccess);
 
             SavedMissCounter -= CcMdlReadWaitMiss;
 
@@ -255,18 +247,22 @@ Raises:
             //  Unmap the data now, now that the pages are locked down.
             //
 
-            CcFreeVirtualAddress( Vacb );
+            CcFreeVirtualAddress(Vacb);
             Vacb = NULL;
 
             //
             //  Now link the Mdl into the caller's chain
             //
 
-            if ( *MdlChain == NULL ) {
+            if (*MdlChain == NULL)
+            {
                 *MdlChain = Mdl;
-            } else {
-                MdlTemp = CONTAINING_RECORD( *MdlChain, MDL, Next );
-                while (MdlTemp->Next != NULL) {
+            }
+            else
+            {
+                MdlTemp = CONTAINING_RECORD(*MdlChain, MDL, Next);
+                while (MdlTemp->Next != NULL)
+                {
                     MdlTemp = MdlTemp->Next;
                 }
                 MdlTemp->Next = Mdl;
@@ -293,7 +289,8 @@ Raises:
             Length -= ReceivedLength;
         }
     }
-    finally {
+    finally
+    {
 
         CcMissCounter = &CcThrowAway;
 
@@ -301,55 +298,59 @@ Raises:
         //  Restore the readahead hints.
         //
 
-        MmResetPageFaultReadAhead( Thread, SavedState );
+        MmResetPageFaultReadAhead(Thread, SavedState);
 
-        if (AbnormalTermination()) {
+        if (AbnormalTermination())
+        {
 
             //
             //  We may have failed to allocate an Mdl while still having
             //  data mapped.
             //
 
-            if (Vacb != NULL) {
-                CcFreeVirtualAddress( Vacb );
+            if (Vacb != NULL)
+            {
+                CcFreeVirtualAddress(Vacb);
             }
 
-            if (Mdl != NULL) {
-                IoFreeMdl( Mdl );
+            if (Mdl != NULL)
+            {
+                IoFreeMdl(Mdl);
             }
 
             //
             //  Otherwise loop to deallocate the Mdls
             //
 
-            while (*MdlChain != NULL) {
+            while (*MdlChain != NULL)
+            {
                 MdlTemp = (*MdlChain)->Next;
 
-                DebugTrace( 0, mm, "MmUnlockPages/IoFreeMdl:\n", 0 );
-                DebugTrace( 0, mm, "    Mdl = %08lx\n", *MdlChain );
+                DebugTrace(0, mm, "MmUnlockPages/IoFreeMdl:\n", 0);
+                DebugTrace(0, mm, "    Mdl = %08lx\n", *MdlChain);
 
-                MmUnlockPages( *MdlChain );
-                IoFreeMdl( *MdlChain );
+                MmUnlockPages(*MdlChain);
+                IoFreeMdl(*MdlChain);
 
                 *MdlChain = MdlTemp;
             }
 
-            DebugTrace(-1, me, "CcMdlRead -> Unwinding\n", 0 );
-
+            DebugTrace(-1, me, "CcMdlRead -> Unwinding\n", 0);
         }
-        else {
+        else
+        {
 
             //
             //  Now enable read ahead if it looks like we got any misses, and do
             //  the first one.
             //
 
-            if (!FlagOn( FileObject->Flags, FO_RANDOM_ACCESS ) &&
-                !PrivateCacheMap->Flags.ReadAheadEnabled &&
-                (SavedMissCounter != 0)) {
+            if (!FlagOn(FileObject->Flags, FO_RANDOM_ACCESS) && !PrivateCacheMap->Flags.ReadAheadEnabled &&
+                (SavedMissCounter != 0))
+            {
 
-                CC_CLEAR_PRIVATE_CACHE_MAP (PrivateCacheMap, PRIVATE_CACHE_MAP_READ_AHEAD_ENABLED);
-                CcScheduleReadAhead( FileObject, FileOffset, OriginalLength );
+                CC_CLEAR_PRIVATE_CACHE_MAP(PrivateCacheMap, PRIVATE_CACHE_MAP_READ_AHEAD_ENABLED);
+                CcScheduleReadAhead(FileObject, FileOffset, OriginalLength);
             }
 
             //
@@ -360,8 +361,7 @@ Raises:
             PrivateCacheMap->FileOffset1 = PrivateCacheMap->FileOffset2;
             PrivateCacheMap->BeyondLastByte1 = PrivateCacheMap->BeyondLastByte2;
             PrivateCacheMap->FileOffset2 = *FileOffset;
-            PrivateCacheMap->BeyondLastByte2.QuadPart =
-                                FileOffset->QuadPart + (LONGLONG)OriginalLength;
+            PrivateCacheMap->BeyondLastByte2.QuadPart = FileOffset->QuadPart + (LONGLONG)OriginalLength;
 
             IoStatus->Status = STATUS_SUCCESS;
             IoStatus->Information = Information;
@@ -369,51 +369,44 @@ Raises:
     }
 
 
-    DebugTrace( 0, me, "    <MdlChain = %08lx\n", *MdlChain );
-    DebugTrace2(0, me, "    <IoStatus = %08lx, %08lx\n", IoStatus->Status,
-                                                         IoStatus->Information );
-    DebugTrace(-1, me, "CcMdlRead -> VOID\n", 0 );
+    DebugTrace(0, me, "    <MdlChain = %08lx\n", *MdlChain);
+    DebugTrace2(0, me, "    <IoStatus = %08lx, %08lx\n", IoStatus->Status, IoStatus->Information);
+    DebugTrace(-1, me, "CcMdlRead -> VOID\n", 0);
 
     return;
 }
 
-
+
 //
 //  First we have the old routine which checks for an entry in the FastIo vector.
 //  This routine becomes obsolete for every component that compiles with the new
 //  definition of FsRtlMdlReadComplete in fsrtl.h.
 //
 
-VOID
-CcMdlReadComplete (
-    IN PFILE_OBJECT FileObject,
-    IN PMDL MdlChain
-    )
+VOID CcMdlReadComplete(IN PFILE_OBJECT FileObject, IN PMDL MdlChain)
 
 {
     PDEVICE_OBJECT DeviceObject;
     PFAST_IO_DISPATCH FastIoDispatch;
 
-    DeviceObject = IoGetRelatedDeviceObject( FileObject );
+    DeviceObject = IoGetRelatedDeviceObject(FileObject);
     FastIoDispatch = DeviceObject->DriverObject->FastIoDispatch;
 
     if ((FastIoDispatch != NULL) &&
         (FastIoDispatch->SizeOfFastIoDispatch > FIELD_OFFSET(FAST_IO_DISPATCH, MdlWriteComplete)) &&
         (FastIoDispatch->MdlReadComplete != NULL) &&
-        FastIoDispatch->MdlReadComplete( FileObject, MdlChain, DeviceObject )) {
+        FastIoDispatch->MdlReadComplete(FileObject, MdlChain, DeviceObject))
+    {
 
         NOTHING;
-
-    } else {
-        CcMdlReadComplete2( FileObject, MdlChain );
+    }
+    else
+    {
+        CcMdlReadComplete2(FileObject, MdlChain);
     }
 }
 
-VOID
-CcMdlReadComplete2 (
-    IN PFILE_OBJECT FileObject,
-    IN PMDL MdlChain
-    )
+VOID CcMdlReadComplete2(IN PFILE_OBJECT FileObject, IN PMDL MdlChain)
 
 /*++
 
@@ -443,42 +436,37 @@ Return Value:
 {
     PMDL MdlNext;
 
-    UNREFERENCED_PARAMETER (FileObject);
+    UNREFERENCED_PARAMETER(FileObject);
 
-    DebugTrace(+1, me, "CcMdlReadComplete\n", 0 );
-    DebugTrace( 0, me, "    FileObject = %08lx\n", FileObject );
-    DebugTrace( 0, me, "    MdlChain = %08lx\n", MdlChain );
+    DebugTrace(+1, me, "CcMdlReadComplete\n", 0);
+    DebugTrace(0, me, "    FileObject = %08lx\n", FileObject);
+    DebugTrace(0, me, "    MdlChain = %08lx\n", MdlChain);
 
     //
     //  Deallocate the Mdls
     //
 
-    while (MdlChain != NULL) {
+    while (MdlChain != NULL)
+    {
 
         MdlNext = MdlChain->Next;
 
-        DebugTrace( 0, mm, "MmUnlockPages/IoFreeMdl:\n", 0 );
-        DebugTrace( 0, mm, "    Mdl = %08lx\n", MdlChain );
+        DebugTrace(0, mm, "MmUnlockPages/IoFreeMdl:\n", 0);
+        DebugTrace(0, mm, "    Mdl = %08lx\n", MdlChain);
 
-        MmUnlockPages( MdlChain );
+        MmUnlockPages(MdlChain);
 
-        IoFreeMdl( MdlChain );
+        IoFreeMdl(MdlChain);
 
         MdlChain = MdlNext;
     }
 
-    DebugTrace(-1, me, "CcMdlReadComplete -> VOID\n", 0 );
+    DebugTrace(-1, me, "CcMdlReadComplete -> VOID\n", 0);
 }
 
-
-VOID
-CcPrepareMdlWrite (
-    IN PFILE_OBJECT FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    OUT PMDL *MdlChain,
-    OUT PIO_STATUS_BLOCK IoStatus
-    )
+
+VOID CcPrepareMdlWrite(IN PFILE_OBJECT FileObject, IN PLARGE_INTEGER FileOffset, IN ULONG Length, OUT PMDL *MdlChain,
+                       OUT PIO_STATUS_BLOCK IoStatus)
 
 /*++
 
@@ -544,11 +532,10 @@ Return Value:
     ULONG PageIsDirty;
     PVACB Vacb = NULL;
 
-    DebugTrace(+1, me, "CcPrepareMdlWrite\n", 0 );
-    DebugTrace( 0, me, "    FileObject = %08lx\n", FileObject );
-    DebugTrace2(0, me, "    FileOffset = %08lx, %08lx\n", FileOffset->LowPart,
-                                                          FileOffset->HighPart );
-    DebugTrace( 0, me, "    Length = %08lx\n", Length );
+    DebugTrace(+1, me, "CcPrepareMdlWrite\n", 0);
+    DebugTrace(0, me, "    FileObject = %08lx\n", FileObject);
+    DebugTrace2(0, me, "    FileOffset = %08lx, %08lx\n", FileOffset->LowPart, FileOffset->HighPart);
+    DebugTrace(0, me, "    Length = %08lx\n", Length);
 
     //
     //  Get pointer to SharedCacheMap.
@@ -560,7 +547,7 @@ Return Value:
     //  See if we have an active Vacb, that we need to free.
     //
 
-    GetActiveVacb( SharedCacheMap, LockHandle.OldIrql, Vacb, ActivePage, PageIsDirty );
+    GetActiveVacb(SharedCacheMap, LockHandle.OldIrql, Vacb, ActivePage, PageIsDirty);
 
     //
     //  If there is an end of a page to be zeroed, then free that page now,
@@ -568,9 +555,10 @@ Return Value:
     //  page, free it so we have the correct ValidDataGoal.
     //
 
-    if ((Vacb != NULL) || (SharedCacheMap->NeedToZero != NULL)) {
+    if ((Vacb != NULL) || (SharedCacheMap->NeedToZero != NULL))
+    {
 
-        CcFreeActiveVacb( SharedCacheMap, Vacb, ActivePage, PageIsDirty );
+        CcFreeActiveVacb(SharedCacheMap, Vacb, ActivePage, PageIsDirty);
         Vacb = NULL;
     }
 
@@ -580,14 +568,16 @@ Return Value:
     //  Put try-finally around the loop to deal with exceptions
     //
 
-    try {
+    try
+    {
 
         //
         //  Not all of the transfer will come back at once, so we have to loop
         //  until the entire transfer is complete.
         //
 
-        while (Length != 0) {
+        while (Length != 0)
+        {
 
             ULONG ReceivedLength;
             LARGE_INTEGER BeyondLastByte;
@@ -597,12 +587,10 @@ Return Value:
             //  FileOffset, then cut it down if it is more than we need.
             //
 
-            CacheBuffer = CcGetVirtualAddress( SharedCacheMap,
-                                               FOffset,
-                                               &Vacb,
-                                               &ReceivedLength );
+            CacheBuffer = CcGetVirtualAddress(SharedCacheMap, FOffset, &Vacb, &ReceivedLength);
 
-            if (ReceivedLength > Length) {
+            if (ReceivedLength > Length)
+            {
                 ReceivedLength = Length;
             }
 
@@ -622,12 +610,13 @@ Return Value:
             //  See if we are completely overwriting the first or last page.
             //
 
-            if (((FOffset.LowPart & (PAGE_SIZE - 1)) == 0) &&
-                (ReceivedLength >= PAGE_SIZE)) {
+            if (((FOffset.LowPart & (PAGE_SIZE - 1)) == 0) && (ReceivedLength >= PAGE_SIZE))
+            {
                 ZeroFlags |= ZERO_FIRST_PAGE;
             }
 
-            if ((BeyondLastByte.LowPart & (PAGE_SIZE - 1)) == 0) {
+            if ((BeyondLastByte.LowPart & (PAGE_SIZE - 1)) == 0)
+            {
                 ZeroFlags |= ZERO_LAST_PAGE;
             }
 
@@ -637,51 +626,46 @@ Return Value:
             //
 
             Temp = FOffset;
-            Temp.LowPart &= ~(PAGE_SIZE -1);
-            KeAcquireInStackQueuedSpinLock( &SharedCacheMap->BcbSpinLock, &LockHandle );
+            Temp.LowPart &= ~(PAGE_SIZE - 1);
+            KeAcquireInStackQueuedSpinLock(&SharedCacheMap->BcbSpinLock, &LockHandle);
             Temp.QuadPart = SharedCacheMap->ValidDataGoal.QuadPart - Temp.QuadPart;
-            KeReleaseInStackQueuedSpinLock( &LockHandle );
+            KeReleaseInStackQueuedSpinLock(&LockHandle);
 
-            if (Temp.QuadPart <= 0) {
+            if (Temp.QuadPart <= 0)
+            {
                 ZeroFlags |= ZERO_FIRST_PAGE | ZERO_MIDDLE_PAGES | ZERO_LAST_PAGE;
-            } else if ((Temp.HighPart == 0) && (Temp.LowPart <= PAGE_SIZE)) {
+            }
+            else if ((Temp.HighPart == 0) && (Temp.LowPart <= PAGE_SIZE))
+            {
                 ZeroFlags |= ZERO_MIDDLE_PAGES | ZERO_LAST_PAGE;
             }
 
-            (VOID)CcMapAndRead( SharedCacheMap,
-                                &FOffset,
-                                ReceivedLength,
-                                ZeroFlags,
-                                TRUE,
-                                CacheBuffer );
+            (VOID) CcMapAndRead(SharedCacheMap, &FOffset, ReceivedLength, ZeroFlags, TRUE, CacheBuffer);
 
             //
             //  Now attempt to allocate an Mdl to describe the mapped data.
             //
 
-            DebugTrace( 0, mm, "IoAllocateMdl:\n", 0 );
-            DebugTrace( 0, mm, "    BaseAddress = %08lx\n", CacheBuffer );
-            DebugTrace( 0, mm, "    Length = %08lx\n", ReceivedLength );
+            DebugTrace(0, mm, "IoAllocateMdl:\n", 0);
+            DebugTrace(0, mm, "    BaseAddress = %08lx\n", CacheBuffer);
+            DebugTrace(0, mm, "    Length = %08lx\n", ReceivedLength);
 
-            Mdl = IoAllocateMdl( CacheBuffer,
-                                 ReceivedLength,
-                                 FALSE,
-                                 FALSE,
-                                 NULL );
+            Mdl = IoAllocateMdl(CacheBuffer, ReceivedLength, FALSE, FALSE, NULL);
 
-            DebugTrace( 0, mm, "    <Mdl = %08lx\n", Mdl );
+            DebugTrace(0, mm, "    <Mdl = %08lx\n", Mdl);
 
-            if (Mdl == NULL) {
-                DebugTrace( 0, 0, "Failed to allocate Mdl\n", 0 );
+            if (Mdl == NULL)
+            {
+                DebugTrace(0, 0, "Failed to allocate Mdl\n", 0);
 
-                ExRaiseStatus( STATUS_INSUFFICIENT_RESOURCES );
+                ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
             }
 
-            DebugTrace( 0, mm, "MmProbeAndLockPages:\n", 0 );
-            DebugTrace( 0, mm, "    Mdl = %08lx\n", Mdl );
+            DebugTrace(0, mm, "MmProbeAndLockPages:\n", 0);
+            DebugTrace(0, mm, "    Mdl = %08lx\n", Mdl);
 
             MmDisablePageFaultClustering(&SavedState);
-            MmProbeAndLockPages( Mdl, KernelMode, IoWriteAccess );
+            MmProbeAndLockPages(Mdl, KernelMode, IoWriteAccess);
             MmEnablePageFaultClustering(SavedState);
             SavedState = 0;
 
@@ -693,28 +677,33 @@ Return Value:
             //  our caller has the file exclusive.
             //
 
-            KeAcquireInStackQueuedSpinLock( &SharedCacheMap->BcbSpinLock, &LockHandle );
-            if (BeyondLastByte.QuadPart > SharedCacheMap->ValidDataGoal.QuadPart) {
+            KeAcquireInStackQueuedSpinLock(&SharedCacheMap->BcbSpinLock, &LockHandle);
+            if (BeyondLastByte.QuadPart > SharedCacheMap->ValidDataGoal.QuadPart)
+            {
                 SharedCacheMap->ValidDataGoal = BeyondLastByte;
             }
-            KeReleaseInStackQueuedSpinLock( &LockHandle );
+            KeReleaseInStackQueuedSpinLock(&LockHandle);
 
             //
             //  Unmap the data now, now that the pages are locked down.
             //
 
-            CcFreeVirtualAddress( Vacb );
+            CcFreeVirtualAddress(Vacb);
             Vacb = NULL;
 
             //
             //  Now link the Mdl into the caller's chain
             //
 
-            if ( *MdlChain == NULL ) {
+            if (*MdlChain == NULL)
+            {
                 *MdlChain = Mdl;
-            } else {
-                MdlTemp = CONTAINING_RECORD( *MdlChain, MDL, Next );
-                while (MdlTemp->Next != NULL) {
+            }
+            else
+            {
+                MdlTemp = CONTAINING_RECORD(*MdlChain, MDL, Next);
+                while (MdlTemp->Next != NULL)
+                {
                     MdlTemp = MdlTemp->Next;
                 }
                 MdlTemp->Next = Mdl;
@@ -741,20 +730,25 @@ Return Value:
             Length -= ReceivedLength;
         }
     }
-    finally {
+    finally
+    {
 
-        if (AbnormalTermination()) {
+        if (AbnormalTermination())
+        {
 
-            if (SavedState != 0) {
+            if (SavedState != 0)
+            {
                 MmEnablePageFaultClustering(SavedState);
             }
 
-            if (Vacb != NULL) {
-                CcFreeVirtualAddress( Vacb );
+            if (Vacb != NULL)
+            {
+                CcFreeVirtualAddress(Vacb);
             }
 
-            if (Mdl != NULL) {
-                IoFreeMdl( Mdl );
+            if (Mdl != NULL)
+            {
+                IoFreeMdl(Mdl);
             }
 
             //
@@ -762,13 +756,14 @@ Return Value:
             //
 
             FOffset = *FileOffset;
-            while (*MdlChain != NULL) {
+            while (*MdlChain != NULL)
+            {
                 MdlTemp = (*MdlChain)->Next;
 
-                DebugTrace( 0, mm, "MmUnlockPages/IoFreeMdl:\n", 0 );
-                DebugTrace( 0, mm, "    Mdl = %08lx\n", *MdlChain );
+                DebugTrace(0, mm, "MmUnlockPages/IoFreeMdl:\n", 0);
+                DebugTrace(0, mm, "    Mdl = %08lx\n", *MdlChain);
 
-                MmUnlockPages( *MdlChain );
+                MmUnlockPages(*MdlChain);
 
                 //
                 //  Extract the File Offset for this part of the transfer, and
@@ -777,18 +772,19 @@ Return Value:
                 //  error), and console ourselves for having tried.
                 //
 
-                CcSetDirtyInMask( SharedCacheMap, &FOffset, (*MdlChain)->ByteCount );
+                CcSetDirtyInMask(SharedCacheMap, &FOffset, (*MdlChain)->ByteCount);
 
                 FOffset.QuadPart = FOffset.QuadPart + (LONGLONG)((*MdlChain)->ByteCount);
 
-                IoFreeMdl( *MdlChain );
+                IoFreeMdl(*MdlChain);
 
                 *MdlChain = MdlTemp;
             }
 
-            DebugTrace(-1, me, "CcPrepareMdlWrite -> Unwinding\n", 0 );
+            DebugTrace(-1, me, "CcPrepareMdlWrite -> Unwinding\n", 0);
         }
-        else {
+        else
+        {
 
             IoStatus->Status = STATUS_SUCCESS;
             IoStatus->Information = Information;
@@ -798,57 +794,49 @@ Return Value:
             //  the Mdl write is in progress.  We decrment below.
             //
 
-            CcAcquireMasterLock( &LockHandle.OldIrql );
-            CcIncrementOpenCount( SharedCacheMap, 'ldmP' );
-            CcReleaseMasterLock( LockHandle.OldIrql );
+            CcAcquireMasterLock(&LockHandle.OldIrql);
+            CcIncrementOpenCount(SharedCacheMap, 'ldmP');
+            CcReleaseMasterLock(LockHandle.OldIrql);
         }
     }
 
-    DebugTrace( 0, me, "    <MdlChain = %08lx\n", *MdlChain );
-    DebugTrace(-1, me, "CcPrepareMdlWrite -> VOID\n", 0 );
+    DebugTrace(0, me, "    <MdlChain = %08lx\n", *MdlChain);
+    DebugTrace(-1, me, "CcPrepareMdlWrite -> VOID\n", 0);
 
     return;
 }
 
-
+
 //
 //  First we have the old routine which checks for an entry in the FastIo vector.
 //  This routine becomes obsolete for every component that compiles with the new
 //  definition of FsRtlMdlWriteComplete in fsrtl.h.
 //
 
-VOID
-CcMdlWriteComplete (
-    IN PFILE_OBJECT FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN PMDL MdlChain
-    )
+VOID CcMdlWriteComplete(IN PFILE_OBJECT FileObject, IN PLARGE_INTEGER FileOffset, IN PMDL MdlChain)
 
 {
     PDEVICE_OBJECT DeviceObject;
     PFAST_IO_DISPATCH FastIoDispatch;
 
-    DeviceObject = IoGetRelatedDeviceObject( FileObject );
+    DeviceObject = IoGetRelatedDeviceObject(FileObject);
     FastIoDispatch = DeviceObject->DriverObject->FastIoDispatch;
 
     if ((FastIoDispatch != NULL) &&
         (FastIoDispatch->SizeOfFastIoDispatch > FIELD_OFFSET(FAST_IO_DISPATCH, MdlWriteComplete)) &&
         (FastIoDispatch->MdlWriteComplete != NULL) &&
-        FastIoDispatch->MdlWriteComplete( FileObject, FileOffset, MdlChain, DeviceObject )) {
+        FastIoDispatch->MdlWriteComplete(FileObject, FileOffset, MdlChain, DeviceObject))
+    {
 
         NOTHING;
-
-    } else {
-        CcMdlWriteComplete2( FileObject, FileOffset, MdlChain );
+    }
+    else
+    {
+        CcMdlWriteComplete2(FileObject, FileOffset, MdlChain);
     }
 }
 
-VOID
-CcMdlWriteComplete2 (
-    IN PFILE_OBJECT FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN PMDL MdlChain
-    )
+VOID CcMdlWriteComplete2(IN PFILE_OBJECT FileObject, IN PLARGE_INTEGER FileOffset, IN PMDL MdlChain)
 
 /*++
 
@@ -893,9 +881,9 @@ Return Value:
     NTSTATUS StatusToRaise = STATUS_SUCCESS;
     BOOLEAN First = FALSE;
 
-    DebugTrace(+1, me, "CcMdlWriteComplete\n", 0 );
-    DebugTrace( 0, me, "    FileObject = %08lx\n", FileObject );
-    DebugTrace( 0, me, "    MdlChain = %08lx\n", MdlChain );
+    DebugTrace(+1, me, "CcMdlWriteComplete\n", 0);
+    DebugTrace(0, me, "    FileObject = %08lx\n", FileObject);
+    DebugTrace(0, me, "    MdlChain = %08lx\n", MdlChain);
 
     SharedCacheMap = FileObject->SectionObjectPointer->SharedCacheMap;
 
@@ -909,17 +897,19 @@ Return Value:
     //
     //  If the MDL is unlocked, this is a retry.
     //
-    
-    if (FlagOn( MdlChain->MdlFlags, MDL_PAGES_LOCKED )) {
+
+    if (FlagOn(MdlChain->MdlFlags, MDL_PAGES_LOCKED))
+    {
         First = TRUE;
     }
-    
-    while (Mdl != NULL) {
+
+    while (Mdl != NULL)
+    {
 
         MdlNext = Mdl->Next;
 
-        DebugTrace( 0, mm, "MmUnlockPages/IoFreeMdl:\n", 0 );
-        DebugTrace( 0, mm, "    Mdl = %08lx\n", Mdl );
+        DebugTrace(0, mm, "MmUnlockPages/IoFreeMdl:\n", 0);
+        DebugTrace(0, mm, "    Mdl = %08lx\n", Mdl);
 
         //
         //  Now clear the dirty bits in the Pte and set them in the
@@ -927,38 +917,38 @@ Return Value:
         //  attempts.
         //
 
-        if (First) {
-            MmUnlockPages( Mdl );
+        if (First)
+        {
+            MmUnlockPages(Mdl);
         }
 
         //
         //  Extract the File Offset for this part of the transfer.
         //
 
-        if (FlagOn(FileObject->Flags, FO_WRITE_THROUGH)) {
+        if (FlagOn(FileObject->Flags, FO_WRITE_THROUGH))
+        {
 
-            MmFlushSection ( FileObject->SectionObjectPointer,
-                             &FOffset,
-                             Mdl->ByteCount,
-                             &IoStatus,
-                             TRUE );
+            MmFlushSection(FileObject->SectionObjectPointer, &FOffset, Mdl->ByteCount, &IoStatus, TRUE);
 
             //
             //  If we got an I/O error, remember it.
             //
 
-            if (!NT_SUCCESS(IoStatus.Status)) {
+            if (!NT_SUCCESS(IoStatus.Status))
+            {
                 StatusToRaise = IoStatus.Status;
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             //  Ignore the only exception (allocation error), and console
             //  ourselves for having tried.
             //
 
-            CcSetDirtyInMask( SharedCacheMap, &FOffset, Mdl->ByteCount );
+            CcSetDirtyInMask(SharedCacheMap, &FOffset, Mdl->ByteCount);
         }
 
         FOffset.QuadPart = FOffset.QuadPart + (LONGLONG)(Mdl->ByteCount);
@@ -978,24 +968,24 @@ Return Value:
     //  and it'll always work.  Removing the open count for writethrough
     //  could be a minor win.
     //
-    
-    if (First) {
-        
-        CcAcquireMasterLock( &OldIrql );
 
-        CcDecrementOpenCount( SharedCacheMap, 'ldmC' );
+    if (First)
+    {
 
-        if ((SharedCacheMap->OpenCount == 0) &&
-            !FlagOn(SharedCacheMap->Flags, WRITE_QUEUED) &&
-            (SharedCacheMap->DirtyPages == 0)) {
+        CcAcquireMasterLock(&OldIrql);
+
+        CcDecrementOpenCount(SharedCacheMap, 'ldmC');
+
+        if ((SharedCacheMap->OpenCount == 0) && !FlagOn(SharedCacheMap->Flags, WRITE_QUEUED) &&
+            (SharedCacheMap->DirtyPages == 0))
+        {
 
             //
             //  Move to the dirty list.
             //
 
-            RemoveEntryList( &SharedCacheMap->SharedCacheMapLinks );
-            InsertTailList( &CcDirtySharedCacheMapList.SharedCacheMapLinks,
-                            &SharedCacheMap->SharedCacheMapLinks );
+            RemoveEntryList(&SharedCacheMap->SharedCacheMapLinks);
+            InsertTailList(&CcDirtySharedCacheMapList.SharedCacheMapLinks, &SharedCacheMap->SharedCacheMapLinks);
 
             //
             //  Make sure the Lazy Writer will wake up, because we
@@ -1003,46 +993,44 @@ Return Value:
             //
 
             LazyWriter.OtherWork = TRUE;
-            if (!LazyWriter.ScanActive) {
-                CcScheduleLazyWriteScan( FALSE );
+            if (!LazyWriter.ScanActive)
+            {
+                CcScheduleLazyWriteScan(FALSE);
             }
         }
 
-        CcReleaseMasterLock( OldIrql );
+        CcReleaseMasterLock(OldIrql);
     }
-    
+
     //
     //  If we got an I/O error, raise it now.  Note that we have not free'd the Mdl
     //  yet so the owning filesystem can retry the completion.
     //
 
-    if (!NT_SUCCESS(StatusToRaise)) {
-        ExRaiseStatus( FsRtlNormalizeNtstatus( StatusToRaise,
-                                               STATUS_UNEXPECTED_IO_ERROR ));
+    if (!NT_SUCCESS(StatusToRaise))
+    {
+        ExRaiseStatus(FsRtlNormalizeNtstatus(StatusToRaise, STATUS_UNEXPECTED_IO_ERROR));
     }
 
     //
     //  Otherwise, free the Mdl chain and clean everything up.
     //
-    
+
     Mdl = MdlChain;
-    while (Mdl != NULL) {
+    while (Mdl != NULL)
+    {
 
         MdlNext = Mdl->Next;
-        IoFreeMdl( Mdl );
+        IoFreeMdl(Mdl);
         Mdl = MdlNext;
     }
 
-    DebugTrace(-1, me, "CcMdlWriteComplete -> TRUE\n", 0 );
+    DebugTrace(-1, me, "CcMdlWriteComplete -> TRUE\n", 0);
 
     return;
 }
 
-VOID
-CcMdlWriteAbort (
-    IN PFILE_OBJECT FileObject,
-    IN PMDL MdlChain
-    )
+VOID CcMdlWriteAbort(IN PFILE_OBJECT FileObject, IN PMDL MdlChain)
 
 /*++
 
@@ -1076,35 +1064,38 @@ Return Value:
     KIRQL OldIrql;
     BOOLEAN First = FALSE;
 
-    DebugTrace(+1, me, "CcMdlWriteAbort\n", 0 );
-    DebugTrace( 0, me, "    FileObject = %08lx\n", FileObject );
-    DebugTrace( 0, me, "    MdlChain = %08lx\n", MdlChain );
+    DebugTrace(+1, me, "CcMdlWriteAbort\n", 0);
+    DebugTrace(0, me, "    FileObject = %08lx\n", FileObject);
+    DebugTrace(0, me, "    MdlChain = %08lx\n", MdlChain);
 
     SharedCacheMap = FileObject->SectionObjectPointer->SharedCacheMap;
 
     //
     //  If the MDL is unlocked, we went through completion.
     //
-    
-    if (FlagOn( MdlChain->MdlFlags, MDL_PAGES_LOCKED )) {
+
+    if (FlagOn(MdlChain->MdlFlags, MDL_PAGES_LOCKED))
+    {
         First = TRUE;
     }
-    
+
     //
     //  Deallocate the Mdls
     //
 
-    while (MdlChain != NULL) {
+    while (MdlChain != NULL)
+    {
 
         MdlNext = MdlChain->Next;
 
-        DebugTrace( 0, mm, "MmUnlockPages/IoFreeMdl:\n", 0 );
-        DebugTrace( 0, mm, "    Mdl = %08lx\n", MdlChain );
+        DebugTrace(0, mm, "MmUnlockPages/IoFreeMdl:\n", 0);
+        DebugTrace(0, mm, "    Mdl = %08lx\n", MdlChain);
 
-        if (First) {
-            MmUnlockPages( MdlChain );
+        if (First)
+        {
+            MmUnlockPages(MdlChain);
         }
-        IoFreeMdl( MdlChain );
+        IoFreeMdl(MdlChain);
         MdlChain = MdlNext;
     }
 
@@ -1113,28 +1104,28 @@ Return Value:
     //  the opencount is already dropped.
     //
 
-    if (First) {
-        
-        CcAcquireMasterLock( &OldIrql );
+    if (First)
+    {
 
-        CcDecrementOpenCount( SharedCacheMap, 'AdmC' );
+        CcAcquireMasterLock(&OldIrql);
+
+        CcDecrementOpenCount(SharedCacheMap, 'AdmC');
 
         //
         //  Check for a possible deletion, this Mdl write may have been the last
         //  reference.
         //
 
-        if ((SharedCacheMap->OpenCount == 0) &&
-            !FlagOn(SharedCacheMap->Flags, WRITE_QUEUED) &&
-            (SharedCacheMap->DirtyPages == 0)) {
+        if ((SharedCacheMap->OpenCount == 0) && !FlagOn(SharedCacheMap->Flags, WRITE_QUEUED) &&
+            (SharedCacheMap->DirtyPages == 0))
+        {
 
             //
             //  Move to the dirty list.
             //
 
-            RemoveEntryList( &SharedCacheMap->SharedCacheMapLinks );
-            InsertTailList( &CcDirtySharedCacheMapList.SharedCacheMapLinks,
-                            &SharedCacheMap->SharedCacheMapLinks );
+            RemoveEntryList(&SharedCacheMap->SharedCacheMapLinks);
+            InsertTailList(&CcDirtySharedCacheMapList.SharedCacheMapLinks, &SharedCacheMap->SharedCacheMapLinks);
 
             //
             //  Make sure the Lazy Writer will wake up, because we
@@ -1142,14 +1133,14 @@ Return Value:
             //
 
             LazyWriter.OtherWork = TRUE;
-            if (!LazyWriter.ScanActive) {
-                CcScheduleLazyWriteScan( FALSE );
+            if (!LazyWriter.ScanActive)
+            {
+                CcScheduleLazyWriteScan(FALSE);
             }
         }
 
-        CcReleaseMasterLock( OldIrql );
+        CcReleaseMasterLock(OldIrql);
     }
 
     return;
 }
-

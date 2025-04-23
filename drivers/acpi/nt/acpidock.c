@@ -37,26 +37,24 @@ Revision History:
 #include <stdio.h>
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,ACPIDockIrpStartDevice)
-#pragma alloc_text(PAGE,ACPIDockIrpQueryCapabilities)
-#pragma alloc_text(PAGE,ACPIDockIrpQueryDeviceRelations)
-#pragma alloc_text(PAGE,ACPIDockIrpEject)
-#pragma alloc_text(PAGE,ACPIDockIrpQueryID)
-#pragma alloc_text(PAGE,ACPIDockIrpSetLock)
-#pragma alloc_text(PAGE,ACPIDockIrpQueryEjectRelations)
-#pragma alloc_text(PAGE,ACPIDockIrpQueryInterface)
-#pragma alloc_text(PAGE,ACPIDockIrpQueryPnpDeviceState)
-#pragma alloc_text(PAGE,ACPIDockIntfReference)
-#pragma alloc_text(PAGE,ACPIDockIntfDereference)
-#pragma alloc_text(PAGE,ACPIDockIntfSetMode)
-#pragma alloc_text(PAGE,ACPIDockIntfUpdateDeparture)
+#pragma alloc_text(PAGE, ACPIDockIrpStartDevice)
+#pragma alloc_text(PAGE, ACPIDockIrpQueryCapabilities)
+#pragma alloc_text(PAGE, ACPIDockIrpQueryDeviceRelations)
+#pragma alloc_text(PAGE, ACPIDockIrpEject)
+#pragma alloc_text(PAGE, ACPIDockIrpQueryID)
+#pragma alloc_text(PAGE, ACPIDockIrpSetLock)
+#pragma alloc_text(PAGE, ACPIDockIrpQueryEjectRelations)
+#pragma alloc_text(PAGE, ACPIDockIrpQueryInterface)
+#pragma alloc_text(PAGE, ACPIDockIrpQueryPnpDeviceState)
+#pragma alloc_text(PAGE, ACPIDockIntfReference)
+#pragma alloc_text(PAGE, ACPIDockIntfDereference)
+#pragma alloc_text(PAGE, ACPIDockIntfSetMode)
+#pragma alloc_text(PAGE, ACPIDockIntfUpdateDeparture)
 #endif
 
-
+
 PDEVICE_EXTENSION
-ACPIDockFindCorrespondingDock(
-    IN  PDEVICE_EXTENSION   DeviceExtension
-    )
+ACPIDockFindCorrespondingDock(IN PDEVICE_EXTENSION DeviceExtension)
 /*++
 
 Routine Description:
@@ -74,42 +72,35 @@ Return Value:
 
 --*/
 {
-    PDEVICE_EXTENSION      rootChildExtension = NULL ;
-    EXTENSIONLIST_ENUMDATA eled ;
+    PDEVICE_EXTENSION rootChildExtension = NULL;
+    EXTENSIONLIST_ENUMDATA eled;
 
-    ACPIExtListSetupEnum(
-        &eled,
-        &(RootDeviceExtension->ChildDeviceList),
-        &AcpiDeviceTreeLock,
-        SiblingDeviceList,
-        WALKSCHEME_HOLD_SPINLOCK
-        ) ;
+    ACPIExtListSetupEnum(&eled, &(RootDeviceExtension->ChildDeviceList), &AcpiDeviceTreeLock, SiblingDeviceList,
+                         WALKSCHEME_HOLD_SPINLOCK);
 
-    for(rootChildExtension = ACPIExtListStartEnum(&eled);
-                             ACPIExtListTestElement(&eled, TRUE) ;
-        rootChildExtension = ACPIExtListEnumNext(&eled)) {
+    for (rootChildExtension = ACPIExtListStartEnum(&eled); ACPIExtListTestElement(&eled, TRUE);
+         rootChildExtension = ACPIExtListEnumNext(&eled))
+    {
 
-        if (!rootChildExtension) {
+        if (!rootChildExtension)
+        {
 
             ACPIExtListExitEnumEarly(&eled);
             break;
-
         }
 
-        if (!(rootChildExtension->Flags & DEV_PROP_DOCK)) {
+        if (!(rootChildExtension->Flags & DEV_PROP_DOCK))
+        {
 
             continue;
-
         }
 
-        if (rootChildExtension->Dock.CorrospondingAcpiDevice ==
-            DeviceExtension) {
+        if (rootChildExtension->Dock.CorrospondingAcpiDevice == DeviceExtension)
+        {
 
-            ACPIExtListExitEnumEarly(&eled) ;
+            ACPIExtListExitEnumEarly(&eled);
             break;
-
         }
-
     }
 
     //
@@ -117,12 +108,9 @@ Return Value:
     //
     return rootChildExtension;
 }
-
+
 NTSTATUS
-ACPIDockGetDockObject(
-    IN  PNSOBJ AcpiObject,
-    OUT PNSOBJ *dckObject
-    )
+ACPIDockGetDockObject(IN PNSOBJ AcpiObject, OUT PNSOBJ *dckObject)
 /*++
 
 Routine Description:
@@ -139,19 +127,11 @@ Return Value:
 
 --*/
 {
-    return AMLIGetNameSpaceObject(
-        "_DCK",
-        AcpiObject,
-        dckObject,
-        NSF_LOCAL_SCOPE
-        );
+    return AMLIGetNameSpaceObject("_DCK", AcpiObject, dckObject, NSF_LOCAL_SCOPE);
 }
-
+
 NTSTATUS
-ACPIDockIrpEject(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIDockIrpEject(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -167,13 +147,13 @@ Return Value:
 
 --*/
 {
-    PIO_STACK_LOCATION  irpStack            = IoGetCurrentIrpStackLocation( Irp );
-    UCHAR               minorFunction       = irpStack->MinorFunction;
-    PDEVICE_EXTENSION   deviceExtension     = ACPIInternalGetDeviceExtension(DeviceObject);
-    PDEVICE_EXTENSION   dockDeviceExtension;
-    PNSOBJ              ej0Object;
-    NTSTATUS            status;
-    ULONG               i, ignoredPerSpec ;
+    PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
+    UCHAR minorFunction = irpStack->MinorFunction;
+    PDEVICE_EXTENSION deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
+    PDEVICE_EXTENSION dockDeviceExtension;
+    PNSOBJ ej0Object;
+    NTSTATUS status;
+    ULONG i, ignoredPerSpec;
 
     PAGED_CODE();
 
@@ -182,40 +162,33 @@ Return Value:
     // it around for the explicit purpose of ejecting it. Now we make the dock
     // go away.
     //
-    ACPIInternalUpdateFlags(
-        &(deviceExtension->Flags),
-        DEV_CAP_UNATTACHED_DOCK,
-        TRUE
-        );
+    ACPIInternalUpdateFlags(&(deviceExtension->Flags), DEV_CAP_UNATTACHED_DOCK, TRUE);
 
     //
     // lets get the corrosponding dock node for this device
     //
-    dockDeviceExtension = deviceExtension->Dock.CorrospondingAcpiDevice ;
+    dockDeviceExtension = deviceExtension->Dock.CorrospondingAcpiDevice;
 
-    if (!dockDeviceExtension) {
+    if (!dockDeviceExtension)
+    {
 
         //
         // Invalid name space object <bad>
         //
-        ACPIDevPrint( (
-            ACPI_PRINT_FAILURE,
-            deviceExtension,
-            "(0x%08lx): ACPIDockIrpEject: no corresponding extension!!\n",
-            Irp
-            ) );
+        ACPIDevPrint(
+            (ACPI_PRINT_FAILURE, deviceExtension, "(0x%08lx): ACPIDockIrpEject: no corresponding extension!!\n", Irp));
         ASSERT(0);
 
         //
         // Mark the irp as very bad...
         //
-        Irp->IoStatus.Status = STATUS_UNSUCCESSFUL ;
-        IoCompleteRequest( Irp, IO_NO_INCREMENT );
+        Irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
+        IoCompleteRequest(Irp, IO_NO_INCREMENT);
         return STATUS_UNSUCCESSFUL;
-
     }
 
-    if (deviceExtension->Dock.ProfileDepartureStyle == PDS_UPDATE_ON_EJECT) {
+    if (deviceExtension->Dock.ProfileDepartureStyle == PDS_UPDATE_ON_EJECT)
+    {
 
         //
         // On the Compaq Armada 7800, we switch UARTs during an undock, thus we
@@ -223,50 +196,42 @@ Return Value:
         //
         KdDisableDebugger();
 
-        if (deviceExtension->Dock.IsolationState != IS_ISOLATED) {
+        if (deviceExtension->Dock.IsolationState != IS_ISOLATED)
+        {
 
-            status = ACPIGetIntegerEvalIntegerSync(
-               dockDeviceExtension,
-               PACKED_DCK,
-               0,
-               &ignoredPerSpec
-               );
+            status = ACPIGetIntegerEvalIntegerSync(dockDeviceExtension, PACKED_DCK, 0, &ignoredPerSpec);
 
             deviceExtension->Dock.IsolationState = IS_ISOLATED;
         }
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 
-           KdEnableDebugger();
+            KdEnableDebugger();
 
-           Irp->IoStatus.Status = status ;
-           IoCompleteRequest( Irp, IO_NO_INCREMENT );
-           return status ;
+            Irp->IoStatus.Status = status;
+            IoCompleteRequest(Irp, IO_NO_INCREMENT);
+            return status;
         }
     }
 
-    ej0Object = ACPIAmliGetNamedChild(
-        dockDeviceExtension->AcpiObject,
-        PACKED_EJ0
-        );
+    ej0Object = ACPIAmliGetNamedChild(dockDeviceExtension->AcpiObject, PACKED_EJ0);
 
-    if (ej0Object != NULL) {
+    if (ej0Object != NULL)
+    {
 
-        status = ACPIGetNothingEvalIntegerSync(
-          dockDeviceExtension,
-          PACKED_EJ0,
-          1
-          );
-
-    } else {
+        status = ACPIGetNothingEvalIntegerSync(dockDeviceExtension, PACKED_EJ0, 1);
+    }
+    else
+    {
 
         status = STATUS_OBJECT_NAME_NOT_FOUND;
-
     }
 
-    if (deviceExtension->Dock.ProfileDepartureStyle == PDS_UPDATE_ON_EJECT) {
+    if (deviceExtension->Dock.ProfileDepartureStyle == PDS_UPDATE_ON_EJECT)
+    {
 
-        KdEnableDebugger() ;
+        KdEnableDebugger();
     }
 
     //
@@ -274,52 +239,38 @@ Return Value:
     // it around for the explicit purpose of ejecting it. Now we make the dock
     // go away.
     //
-    ACPIInternalUpdateFlags(
-        &(deviceExtension->Flags),
-        DEV_CAP_UNATTACHED_DOCK,
-        TRUE
-        );
+    ACPIInternalUpdateFlags(&(deviceExtension->Flags), DEV_CAP_UNATTACHED_DOCK, TRUE);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         //
         // Get the currrent device status
         //
-        status = ACPIGetDevicePresenceSync(
-            deviceExtension,
-            (PVOID *) &i,
-            NULL
-            );
-        if (NT_SUCCESS(status) &&
-            !(deviceExtension->Flags & DEV_TYPE_NOT_PRESENT)) {
+        status = ACPIGetDevicePresenceSync(deviceExtension, (PVOID *)&i, NULL);
+        if (NT_SUCCESS(status) && !(deviceExtension->Flags & DEV_TYPE_NOT_PRESENT))
+        {
 
-            ACPIDevPrint( (
-                ACPI_PRINT_FAILURE,
-                deviceExtension,
-                "(0x%08lx): ACPIDockIrpEjectDevice: "
-                "dock is still listed as present after _DCK/_EJx!\n",
-                Irp
-                ) );
+            ACPIDevPrint((ACPI_PRINT_FAILURE, deviceExtension,
+                          "(0x%08lx): ACPIDockIrpEjectDevice: "
+                          "dock is still listed as present after _DCK/_EJx!\n",
+                          Irp));
 
             //
             // The device did not go away. Let us fail this
             //
-            status = STATUS_UNSUCCESSFUL ;
-
+            status = STATUS_UNSUCCESSFUL;
         }
     }
 
     Irp->IoStatus.Status = status;
-    IoCompleteRequest( Irp, IO_NO_INCREMENT );
+    IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
-    return status ;
+    return status;
 }
-
+
 NTSTATUS
-ACPIDockIrpQueryCapabilities(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIDockIrpQueryCapabilities(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -337,13 +288,13 @@ Return Value:
 
 --*/
 {
-    NTSTATUS             status ;
-    PDEVICE_EXTENSION    deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
-    PDEVICE_EXTENSION    dockDeviceExtension;
-    PIO_STACK_LOCATION   irpStack        = IoGetCurrentIrpStackLocation( Irp );
-    UCHAR                minorFunction   = irpStack->MinorFunction;
+    NTSTATUS status;
+    PDEVICE_EXTENSION deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
+    PDEVICE_EXTENSION dockDeviceExtension;
+    PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
+    UCHAR minorFunction = irpStack->MinorFunction;
     PDEVICE_CAPABILITIES capabilities;
-    PNSOBJ               acpiObject ;
+    PNSOBJ acpiObject;
 
     PAGED_CODE();
 
@@ -352,44 +303,41 @@ Return Value:
     //
     capabilities = irpStack->Parameters.DeviceCapabilities.Capabilities;
 
-    dockDeviceExtension = deviceExtension->Dock.CorrospondingAcpiDevice ;
+    dockDeviceExtension = deviceExtension->Dock.CorrospondingAcpiDevice;
 
-    if (!dockDeviceExtension) {
+    if (!dockDeviceExtension)
+    {
 
-        ACPIDevPrint( (
-            ACPI_PRINT_FAILURE,
-            deviceExtension,
-            "(0x%08lx): ACPIDockIrpQueryCapabilities: "
-            "no corresponding extension!!\n",
-            Irp
-            ) );
-        ASSERT(0) ;
-        Irp->IoStatus.Status = STATUS_UNSUCCESSFUL ;
-        IoCompleteRequest( Irp, IO_NO_INCREMENT );
+        ACPIDevPrint((ACPI_PRINT_FAILURE, deviceExtension,
+                      "(0x%08lx): ACPIDockIrpQueryCapabilities: "
+                      "no corresponding extension!!\n",
+                      Irp));
+        ASSERT(0);
+        Irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
+        IoCompleteRequest(Irp, IO_NO_INCREMENT);
         return STATUS_UNSUCCESSFUL;
-
     }
 
-    acpiObject = dockDeviceExtension->AcpiObject ;
+    acpiObject = dockDeviceExtension->AcpiObject;
 
     //
     // Set the current flags for the capabilities
     //
-    capabilities->SilentInstall  = TRUE;
-    capabilities->RawDeviceOK    = TRUE;
-    capabilities->DockDevice     = TRUE;
-    capabilities->Removable      = TRUE;
-    capabilities->UniqueID       = TRUE;
+    capabilities->SilentInstall = TRUE;
+    capabilities->RawDeviceOK = TRUE;
+    capabilities->DockDevice = TRUE;
+    capabilities->Removable = TRUE;
+    capabilities->UniqueID = TRUE;
 
-    if (ACPIAmliGetNamedChild( acpiObject, PACKED_EJ0)) {
+    if (ACPIAmliGetNamedChild(acpiObject, PACKED_EJ0))
+    {
 
         capabilities->EjectSupported = TRUE;
     }
 
-    if (ACPIAmliGetNamedChild( acpiObject, PACKED_EJ1) ||
-        ACPIAmliGetNamedChild( acpiObject, PACKED_EJ2) ||
-        ACPIAmliGetNamedChild( acpiObject, PACKED_EJ3) ||
-        ACPIAmliGetNamedChild( acpiObject, PACKED_EJ4)) {
+    if (ACPIAmliGetNamedChild(acpiObject, PACKED_EJ1) || ACPIAmliGetNamedChild(acpiObject, PACKED_EJ2) ||
+        ACPIAmliGetNamedChild(acpiObject, PACKED_EJ3) || ACPIAmliGetNamedChild(acpiObject, PACKED_EJ4))
+    {
 
         capabilities->WarmEjectSupported = TRUE;
     }
@@ -398,20 +346,17 @@ Return Value:
     // An object of this name signifies the node is lockable
     //
 #if !defined(ACPI_INTERNAL_LOCKING)
-    if (ACPIAmliGetNamedChild( acpiObject, PACKED_LCK) != NULL) {
+    if (ACPIAmliGetNamedChild(acpiObject, PACKED_LCK) != NULL)
+    {
 
         capabilities->LockSupported = TRUE;
-
     }
 #endif
 
     //
     // Internally record the power capabilities
     //
-    status = ACPISystemPowerQueryDeviceCapabilities(
-        deviceExtension,
-        capabilities
-        );
+    status = ACPISystemPowerQueryDeviceCapabilities(deviceExtension, capabilities);
 
     //
     // Round down S1-S3 to D3. This will ensure we reexamine the _STA after
@@ -426,45 +371,29 @@ Return Value:
     // We can do this slimy-like because we don't have any Wake bits or
     // anything else fancy.
     //
-    IoCopyDeviceCapabilitiesMapping(
-        capabilities,
-        deviceExtension->PowerInfo.DevicePowerMatrix
-        );
+    IoCopyDeviceCapabilitiesMapping(capabilities, deviceExtension->PowerInfo.DevicePowerMatrix);
 
     //
     // Now update our power matrix.
     //
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
-        ACPIDevPrint( (
-            ACPI_PRINT_CRITICAL,
-            deviceExtension,
-            " - Could query device capabilities - %08lx",
-            status
-            ) );
+        ACPIDevPrint((ACPI_PRINT_CRITICAL, deviceExtension, " - Could query device capabilities - %08lx", status));
     }
 
-    ACPIDevPrint( (
-        ACPI_PRINT_IRP,
-        deviceExtension,
-        "(0x%08lx): %s = 0x%08lx\n",
-        Irp,
-        ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction),
-        status
-        ) );
+    ACPIDevPrint((ACPI_PRINT_IRP, deviceExtension, "(0x%08lx): %s = 0x%08lx\n", Irp,
+                  ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction), status));
 
     Irp->IoStatus.Status = status;
-    IoCompleteRequest( Irp, IO_NO_INCREMENT );
+    IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
     return status;
 }
-
+
 NTSTATUS
-ACPIDockIrpQueryDeviceRelations(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIDockIrpQueryDeviceRelations(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -484,68 +413,58 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status          = STATUS_NOT_SUPPORTED;
-    PDEVICE_EXTENSION   deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
-    PDEVICE_RELATIONS   deviceRelations = (PDEVICE_RELATIONS) Irp->IoStatus.Information;
-    PIO_STACK_LOCATION  irpStack        = IoGetCurrentIrpStackLocation( Irp );
-    UCHAR               minorFunction   = irpStack->MinorFunction;
+    NTSTATUS status = STATUS_NOT_SUPPORTED;
+    PDEVICE_EXTENSION deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
+    PDEVICE_RELATIONS deviceRelations = (PDEVICE_RELATIONS)Irp->IoStatus.Information;
+    PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
+    UCHAR minorFunction = irpStack->MinorFunction;
 
     PAGED_CODE();
 
-    switch(irpStack->Parameters.QueryDeviceRelations.Type) {
+    switch (irpStack->Parameters.QueryDeviceRelations.Type)
+    {
 
-       case BusRelations:
-           break ;
+    case BusRelations:
+        break;
 
-       case TargetDeviceRelation:
+    case TargetDeviceRelation:
 
-           status = ACPIBusIrpQueryTargetRelation(
-               DeviceObject,
-               Irp,
-               &deviceRelations
-               );
-           break ;
+        status = ACPIBusIrpQueryTargetRelation(DeviceObject, Irp, &deviceRelations);
+        break;
 
-       case EjectionRelations:
+    case EjectionRelations:
 
-           status = ACPIDockIrpQueryEjectRelations(
-               DeviceObject,
-               Irp,
-               &deviceRelations
-               );
-           break ;
+        status = ACPIDockIrpQueryEjectRelations(DeviceObject, Irp, &deviceRelations);
+        break;
 
-       default:
+    default:
 
-           ACPIDevPrint( (
-               ACPI_PRINT_IRP,
-               deviceExtension,
-               "(0x%08lx): %s - Unhandled Type %d\n",
-               Irp,
-               ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction),
-               irpStack->Parameters.QueryDeviceRelations.Type
-               ) );
-           break ;
-      }
+        ACPIDevPrint((ACPI_PRINT_IRP, deviceExtension, "(0x%08lx): %s - Unhandled Type %d\n", Irp,
+                      ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction), irpStack->Parameters.QueryDeviceRelations.Type));
+        break;
+    }
 
     //
     // If we succeeds, then we can always write to the irp
     //
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         Irp->IoStatus.Status = status;
-        Irp->IoStatus.Information = (ULONG_PTR) deviceRelations;
-
-    } else if ((status != STATUS_NOT_SUPPORTED) && (deviceRelations == NULL)) {
+        Irp->IoStatus.Information = (ULONG_PTR)deviceRelations;
+    }
+    else if ((status != STATUS_NOT_SUPPORTED) && (deviceRelations == NULL))
+    {
 
         //
         // If we haven't succeed the irp, then we can also fail it, but only
         // if nothing else has been added.
         //
         Irp->IoStatus.Status = status;
-        Irp->IoStatus.Information = (ULONG_PTR) NULL;
-
-    } else {
+        Irp->IoStatus.Information = (ULONG_PTR)NULL;
+    }
+    else
+    {
 
         //
         // Grab our status from what is already present
@@ -556,108 +475,80 @@ Return Value:
     //
     // Done with the irp
     //
-    IoCompleteRequest( Irp, IO_NO_INCREMENT );
+    IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
     //
     // Done
     //
-    ACPIDevPrint( (
-        ACPI_PRINT_IRP,
-        deviceExtension,
-        "(0x%08lx): %s = 0x%08lx\n",
-        Irp,
-        ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction),
-        status
-        ) );
+    ACPIDevPrint((ACPI_PRINT_IRP, deviceExtension, "(0x%08lx): %s = 0x%08lx\n", Irp,
+                  ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction), status));
     return status;
 }
-
+
 NTSTATUS
-ACPIDockIrpQueryEjectRelations(
-    IN     PDEVICE_OBJECT    DeviceObject,
-    IN     PIRP              Irp,
-    IN OUT PDEVICE_RELATIONS *PdeviceRelations
-    )
+ACPIDockIrpQueryEjectRelations(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN OUT PDEVICE_RELATIONS *PdeviceRelations)
 {
-    PDEVICE_EXTENSION  deviceExtension     = ACPIInternalGetDeviceExtension(DeviceObject);
-    PDEVICE_EXTENSION  dockDeviceExtension ;
-    PNSOBJ             acpiObject          = NULL;
-    NTSTATUS           status ;
+    PDEVICE_EXTENSION deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
+    PDEVICE_EXTENSION dockDeviceExtension;
+    PNSOBJ acpiObject = NULL;
+    NTSTATUS status;
 
     PAGED_CODE();
 
     //
     // lets get the corrosponding dock node for this device
     //
-    dockDeviceExtension = deviceExtension->Dock.CorrospondingAcpiDevice ;
-    if (!dockDeviceExtension) {
+    dockDeviceExtension = deviceExtension->Dock.CorrospondingAcpiDevice;
+    if (!dockDeviceExtension)
+    {
 
         //
         // Invalid name space object <bad>
         //
-        ACPIDevPrint( (
-            ACPI_PRINT_FAILURE,
-            deviceExtension,
-            "(0x%08lx): ACPIDockIrpQueryEjectRelations: "
-            "no corresponding extension!!\n",
-            Irp
-            ) );
-        ASSERT(0) ;
+        ACPIDevPrint((ACPI_PRINT_FAILURE, deviceExtension,
+                      "(0x%08lx): ACPIDockIrpQueryEjectRelations: "
+                      "no corresponding extension!!\n",
+                      Irp));
+        ASSERT(0);
         return STATUS_UNSUCCESSFUL;
-
     }
 
     //
     // lets look at the ACPIObject that we have so can see if it is valid...
     //
     acpiObject = dockDeviceExtension->AcpiObject;
-    if (acpiObject == NULL) {
+    if (acpiObject == NULL)
+    {
 
         //
         // Invalid name space object <bad>
         //
-        ACPIDevPrint( (
-            ACPI_PRINT_CRITICAL,
-            deviceExtension,
-            "(0x%08lx): ACPIDockIrpQueryEjectRelations: "
-            "invalid ACPIObject (0x%08lx)\n",
-            acpiObject
-            ) );
+        ACPIDevPrint((ACPI_PRINT_CRITICAL, deviceExtension,
+                      "(0x%08lx): ACPIDockIrpQueryEjectRelations: "
+                      "invalid ACPIObject (0x%08lx)\n",
+                      acpiObject));
         return STATUS_INVALID_PARAMETER;
-
     }
 
-    status = ACPIDetectEjectDevices(
-        dockDeviceExtension,
-        PdeviceRelations,
-        dockDeviceExtension
-        );
+    status = ACPIDetectEjectDevices(dockDeviceExtension, PdeviceRelations, dockDeviceExtension);
 
     //
     // If something went wrong...
     //
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // That's not nice..
         //
-        ACPIDevPrint( (
-            ACPI_PRINT_CRITICAL,
-            deviceExtension,
-            "(0x%08lx): ACPIDockIrpQueryEjectRelations: enum 0x%08lx\n",
-            Irp,
-            status
-            ) );
-
+        ACPIDevPrint((ACPI_PRINT_CRITICAL, deviceExtension, "(0x%08lx): ACPIDockIrpQueryEjectRelations: enum 0x%08lx\n",
+                      Irp, status));
     }
-    return status ;
+    return status;
 }
-
+
 NTSTATUS
-ACPIDockIrpQueryID(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIDockIrpQueryID(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -683,181 +574,151 @@ Return Value:
 
 --*/
 {
-    BUS_QUERY_ID_TYPE   type;
-    NTSTATUS            status;
-    PDEVICE_EXTENSION   deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
-    PDEVICE_EXTENSION   dockDeviceExtension;
-    PIO_STACK_LOCATION  irpStack        = IoGetCurrentIrpStackLocation( Irp );
-    PNSOBJ              acpiObject      = deviceExtension->AcpiObject;
-    PUCHAR              buffer;
-    UCHAR               minorFunction   = irpStack->MinorFunction;
-    UNICODE_STRING      unicodeIdString;
-    PWCHAR              serialID;
-    ULONG               firstHardwareIDLength;
+    BUS_QUERY_ID_TYPE type;
+    NTSTATUS status;
+    PDEVICE_EXTENSION deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
+    PDEVICE_EXTENSION dockDeviceExtension;
+    PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
+    PNSOBJ acpiObject = deviceExtension->AcpiObject;
+    PUCHAR buffer;
+    UCHAR minorFunction = irpStack->MinorFunction;
+    UNICODE_STRING unicodeIdString;
+    PWCHAR serialID;
+    ULONG firstHardwareIDLength;
 
     PAGED_CODE();
 
     //
     // Initilize the Unicode Structure
     //
-    RtlZeroMemory( &unicodeIdString, sizeof(UNICODE_STRING) );
+    RtlZeroMemory(&unicodeIdString, sizeof(UNICODE_STRING));
 
     //
     // What we do is based on the IdType of the Request...
     //
     type = irpStack->Parameters.QueryId.IdType;
-    switch (type) {
-        case BusQueryDeviceID:
+    switch (type)
+    {
+    case BusQueryDeviceID:
+
+        //
+        // We pre-calculate this since it is so useful for debugging
+        //
+        status = ACPIInitUnicodeString(&unicodeIdString, deviceExtension->DeviceID);
+        break;
+
+    case BusQueryDeviceSerialNumber:
+
+        //
+        // lets get the corrosponding dock node for this device
+        //
+        dockDeviceExtension = deviceExtension->Dock.CorrospondingAcpiDevice;
+
+        if (!dockDeviceExtension)
+        {
 
             //
-            // We pre-calculate this since it is so useful for debugging
+            // Invalid name space object <bad>
             //
-            status = ACPIInitUnicodeString(
-                &unicodeIdString,
-                deviceExtension->DeviceID
-                );
-            break;
-
-        case BusQueryDeviceSerialNumber:
+            ACPIDevPrint((ACPI_PRINT_FAILURE, deviceExtension,
+                          "(0x%08lx): ACPIDockIrpQueryID: no corresponding extension!!\n", Irp));
+            ASSERT(0);
 
             //
-            // lets get the corrosponding dock node for this device
+            // Mark the irp as very bad...
             //
-            dockDeviceExtension = deviceExtension->Dock.CorrospondingAcpiDevice;
+            Irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
+            IoCompleteRequest(Irp, IO_NO_INCREMENT);
+            return STATUS_UNSUCCESSFUL;
+        }
 
-            if (!dockDeviceExtension) {
+        status = ACPIGetSerialIDWide(dockDeviceExtension, &serialID, NULL);
 
-                //
-                // Invalid name space object <bad>
-                //
-                ACPIDevPrint( (
-                    ACPI_PRINT_FAILURE,
-                    deviceExtension,
-                    "(0x%08lx): ACPIDockIrpQueryID: no corresponding extension!!\n",
-                    Irp
-                    ) );
-                ASSERT(0);
-
-                //
-                // Mark the irp as very bad...
-                //
-                Irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
-                IoCompleteRequest( Irp, IO_NO_INCREMENT );
-                return STATUS_UNSUCCESSFUL;
-            }
-
-            status = ACPIGetSerialIDWide(
-                dockDeviceExtension,
-                &serialID,
-                NULL
-                );
-
-            if (!NT_SUCCESS(status)) {
-
-                break;
-            }
-
-            //
-            // Return the Serial Number for the DockDevice
-            //
-            unicodeIdString.Buffer = serialID;
-            break;
-
-        case BusQueryInstanceID:
-
-            //
-            // We pre-calculate this since it is so useful for debugging
-            //
-            status = ACPIInitUnicodeString(
-                &unicodeIdString,
-                deviceExtension->InstanceID
-                );
+        if (!NT_SUCCESS(status))
+        {
 
             break;
+        }
 
-        case BusQueryCompatibleIDs:
+        //
+        // Return the Serial Number for the DockDevice
+        //
+        unicodeIdString.Buffer = serialID;
+        break;
 
-            status = STATUS_NOT_SUPPORTED;
-            break;
+    case BusQueryInstanceID:
 
-        case BusQueryHardwareIDs:
+        //
+        // We pre-calculate this since it is so useful for debugging
+        //
+        status = ACPIInitUnicodeString(&unicodeIdString, deviceExtension->InstanceID);
+
+        break;
+
+    case BusQueryCompatibleIDs:
+
+        status = STATUS_NOT_SUPPORTED;
+        break;
+
+    case BusQueryHardwareIDs:
+
+        //
+        // Now set our identifier. In theory, the OS could use this
+        // string in any scenario, although in reality it will key off
+        // of the dock ID.
+        //
+        // Construct the MultiSz hardware ID list:
+        //     ACPI\DockDevice&_SB.PCI0.DOCK
+        //     ACPI\DockDevice
+        //
+        status = ACPIInitMultiString(&unicodeIdString, "ACPI\\DockDevice", deviceExtension->InstanceID,
+                                     "ACPI\\DockDevice", NULL);
+
+        if (NT_SUCCESS(status))
+        {
 
             //
-            // Now set our identifier. In theory, the OS could use this
-            // string in any scenario, although in reality it will key off
-            // of the dock ID.
+            // Replace first '\0' with '&'
             //
-            // Construct the MultiSz hardware ID list:
-            //     ACPI\DockDevice&_SB.PCI0.DOCK
-            //     ACPI\DockDevice
-            //
-            status = ACPIInitMultiString(
-                &unicodeIdString,
-                "ACPI\\DockDevice",
-                deviceExtension->InstanceID,
-                "ACPI\\DockDevice",
-                NULL
-                );
+            firstHardwareIDLength = wcslen(unicodeIdString.Buffer);
+            unicodeIdString.Buffer[firstHardwareIDLength] = L'&';
+        }
 
-            if (NT_SUCCESS(status)) {
+        break;
 
-                //
-                // Replace first '\0' with '&'
-                //
-                firstHardwareIDLength = wcslen(unicodeIdString.Buffer);
-                unicodeIdString.Buffer[firstHardwareIDLength] = L'&';
-            }
+    default:
 
-            break;
-
-        default:
-
-            ACPIDevPrint( (
-                ACPI_PRINT_IRP,
-                deviceExtension,
-                "(0x%08lx): %s - Unhandled Id %d\n",
-                Irp,
-                ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction),
-                type
-                ) );
-            status = STATUS_NOT_SUPPORTED;
-            break;
+        ACPIDevPrint((ACPI_PRINT_IRP, deviceExtension, "(0x%08lx): %s - Unhandled Id %d\n", Irp,
+                      ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction), type));
+        status = STATUS_NOT_SUPPORTED;
+        break;
 
     } // switch
 
     //
     // Did we pass or did we fail?
     //
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
-        Irp->IoStatus.Information = (ULONG_PTR) unicodeIdString.Buffer;
+        Irp->IoStatus.Information = (ULONG_PTR)unicodeIdString.Buffer;
+    }
+    else
+    {
 
-    } else {
-
-        Irp->IoStatus.Information = (ULONG_PTR) NULL;
-
+        Irp->IoStatus.Information = (ULONG_PTR)NULL;
     }
 
     Irp->IoStatus.Status = status;
-    IoCompleteRequest( Irp, IO_NO_INCREMENT );
+    IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
-    ACPIDevPrint( (
-        ACPI_PRINT_IRP,
-        deviceExtension,
-        "(0x%08lx): %s(%d) = 0x%08lx\n",
-        Irp,
-        ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction),
-        type,
-        status
-        ) );
+    ACPIDevPrint((ACPI_PRINT_IRP, deviceExtension, "(0x%08lx): %s(%d) = 0x%08lx\n", Irp,
+                  ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction), type, status));
     return status;
 }
-
+
 NTSTATUS
-ACPIDockIrpQueryInterface(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIDockIrpQueryInterface(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -878,33 +739,35 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status;
-    PDEVICE_EXTENSION   deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
-    PIO_STACK_LOCATION  irpStack        = IoGetCurrentIrpStackLocation( Irp );
-    UCHAR               minorFunction   = irpStack->MinorFunction;
-    LPGUID              interfaceType;
+    NTSTATUS status;
+    PDEVICE_EXTENSION deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
+    PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
+    UCHAR minorFunction = irpStack->MinorFunction;
+    LPGUID interfaceType;
 
     PAGED_CODE();
 
     status = Irp->IoStatus.Status;
-    interfaceType = (LPGUID) irpStack->Parameters.QueryInterface.InterfaceType;
+    interfaceType = (LPGUID)irpStack->Parameters.QueryInterface.InterfaceType;
 
-    if (CompareGuid(interfaceType, (PVOID) &GUID_DOCK_INTERFACE)) {
+    if (CompareGuid(interfaceType, (PVOID)&GUID_DOCK_INTERFACE))
+    {
 
         DOCK_INTERFACE dockInterface;
-        USHORT         count;
+        USHORT count;
 
         //
         // Only copy up to current size of the ACPI_INTERFACE structure
         //
-        if (irpStack->Parameters.QueryInterface.Size > sizeof(DOCK_INTERFACE)) {
+        if (irpStack->Parameters.QueryInterface.Size > sizeof(DOCK_INTERFACE))
+        {
 
             count = sizeof(DOCK_INTERFACE);
-
-        } else {
+        }
+        else
+        {
 
             count = irpStack->Parameters.QueryInterface.Size;
-
         }
 
         //
@@ -926,11 +789,7 @@ Return Value:
         //
         // Hand back the interface
         //
-        RtlCopyMemory(
-            (PDOCK_INTERFACE) irpStack->Parameters.QueryInterface.Interface,
-            &dockInterface,
-            count
-            );
+        RtlCopyMemory((PDOCK_INTERFACE)irpStack->Parameters.QueryInterface.Interface, &dockInterface, count);
 
         //
         // We're done with this irp
@@ -938,24 +797,15 @@ Return Value:
         Irp->IoStatus.Status = status = STATUS_SUCCESS;
     }
 
-    IoCompleteRequest( Irp, IO_NO_INCREMENT );
+    IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
-    ACPIDevPrint( (
-        ACPI_PRINT_IRP,
-        deviceExtension,
-        "(0x%08lx): %s = 0x%08lx\n",
-        Irp,
-        ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction),
-        status
-        ) );
+    ACPIDevPrint((ACPI_PRINT_IRP, deviceExtension, "(0x%08lx): %s = 0x%08lx\n", Irp,
+                  ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction), status));
     return status;
 }
-
+
 NTSTATUS
-ACPIDockIrpQueryPnpDeviceState(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIDockIrpQueryPnpDeviceState(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -976,34 +826,25 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status          = STATUS_SUCCESS;
-    PDEVICE_EXTENSION   deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
-    PIO_STACK_LOCATION  irpStack        = IoGetCurrentIrpStackLocation( Irp );
-    UCHAR               minorFunction   = irpStack->MinorFunction;
+    NTSTATUS status = STATUS_SUCCESS;
+    PDEVICE_EXTENSION deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
+    PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
+    UCHAR minorFunction = irpStack->MinorFunction;
 
     PAGED_CODE();
 
-    Irp->IoStatus.Information |= PNP_DEVICE_DONT_DISPLAY_IN_UI ;
+    Irp->IoStatus.Information |= PNP_DEVICE_DONT_DISPLAY_IN_UI;
 
     Irp->IoStatus.Status = status;
-    IoCompleteRequest( Irp, IO_NO_INCREMENT );
+    IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
-    ACPIDevPrint( (
-        ACPI_PRINT_IRP,
-        deviceExtension,
-        "(0x%08lx): %s = 0x%08lx\n",
-        Irp,
-        ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction),
-        status
-        ) );
+    ACPIDevPrint((ACPI_PRINT_IRP, deviceExtension, "(0x%08lx): %s = 0x%08lx\n", Irp,
+                  ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction), status));
     return status;
 }
-
+
 NTSTATUS
-ACPIDockIrpQueryPower(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIDockIrpQueryPower(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -1021,27 +862,25 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status;
-    PDEVICE_EXTENSION   deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
-    PDEVICE_EXTENSION   dockDeviceExtension ;
-    PIO_STACK_LOCATION  irpSp;
-    PNSOBJ              acpiObject, ejectObject ;
-    SYSTEM_POWER_STATE  systemState;
-    ULONG               packedEJx ;
+    NTSTATUS status;
+    PDEVICE_EXTENSION deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
+    PDEVICE_EXTENSION dockDeviceExtension;
+    PIO_STACK_LOCATION irpSp;
+    PNSOBJ acpiObject, ejectObject;
+    SYSTEM_POWER_STATE systemState;
+    ULONG packedEJx;
 
-    dockDeviceExtension = deviceExtension->Dock.CorrospondingAcpiDevice ;
+    dockDeviceExtension = deviceExtension->Dock.CorrospondingAcpiDevice;
 
-    if (!dockDeviceExtension) {
+    if (!dockDeviceExtension)
+    {
 
-        ACPIDevPrint( (
-            ACPI_PRINT_FAILURE,
-            deviceExtension,
-            "(0x%08lx): ACPIDockIrpQueryPower - "
-            "no corresponding extension!!\n",
-            Irp
-            ) );
-        ASSERT(0) ;
-        return ACPIDispatchPowerIrpSuccess( DeviceObject, Irp );
+        ACPIDevPrint((ACPI_PRINT_FAILURE, deviceExtension,
+                      "(0x%08lx): ACPIDockIrpQueryPower - "
+                      "no corresponding extension!!\n",
+                      Irp));
+        ASSERT(0);
+        return ACPIDispatchPowerIrpSuccess(DeviceObject, Irp);
     }
 
     //
@@ -1049,20 +888,22 @@ Return Value:
     // irp or a device irp. We ignore device irps here.
     //
     irpSp = IoGetCurrentIrpStackLocation(Irp);
-    if (irpSp->Parameters.Power.Type != SystemPowerState) {
+    if (irpSp->Parameters.Power.Type != SystemPowerState)
+    {
 
         //
         // We don't handle this irp
         //
-        return ACPIDispatchPowerIrpSuccess( DeviceObject, Irp );
+        return ACPIDispatchPowerIrpSuccess(DeviceObject, Irp);
     }
 
-    if (irpSp->Parameters.Power.ShutdownType != PowerActionWarmEject) {
+    if (irpSp->Parameters.Power.ShutdownType != PowerActionWarmEject)
+    {
 
         //
         // No eject work - complete the IRP.
         //
-        return ACPIDispatchPowerIrpSuccess( DeviceObject, Irp );
+        return ACPIDispatchPowerIrpSuccess(DeviceObject, Irp);
     }
 
     //
@@ -1075,50 +916,50 @@ Return Value:
     //
     systemState = irpSp->Parameters.Power.State.SystemState;
 
-    switch (irpSp->Parameters.Power.State.SystemState) {
+    switch (irpSp->Parameters.Power.State.SystemState)
+    {
 
-        case PowerSystemSleeping1:
-            packedEJx = PACKED_EJ1;
-            break;
-        case PowerSystemSleeping2:
-            packedEJx = PACKED_EJ2;
-            break;
-        case PowerSystemSleeping3:
-            packedEJx = PACKED_EJ3;
-            break;
-        case PowerSystemHibernate:
-            packedEJx = PACKED_EJ4;
-            break;
-        case PowerSystemWorking:
-        case PowerSystemShutdown:
-        default:
-            packedEJx = 0;
-            break;
+    case PowerSystemSleeping1:
+        packedEJx = PACKED_EJ1;
+        break;
+    case PowerSystemSleeping2:
+        packedEJx = PACKED_EJ2;
+        break;
+    case PowerSystemSleeping3:
+        packedEJx = PACKED_EJ3;
+        break;
+    case PowerSystemHibernate:
+        packedEJx = PACKED_EJ4;
+        break;
+    case PowerSystemWorking:
+    case PowerSystemShutdown:
+    default:
+        packedEJx = 0;
+        break;
     }
 
-    if (packedEJx) {
+    if (packedEJx)
+    {
 
-        ejectObject = ACPIAmliGetNamedChild( acpiObject, packedEJx);
-        if (ejectObject == NULL) {
+        ejectObject = ACPIAmliGetNamedChild(acpiObject, packedEJx);
+        if (ejectObject == NULL)
+        {
 
             //
             // Fail the request, as we cannot eject in this case.
             //
-            PoStartNextPowerIrp( Irp );
+            PoStartNextPowerIrp(Irp);
             Irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
-            IoCompleteRequest( Irp, IO_NO_INCREMENT );
+            IoCompleteRequest(Irp, IO_NO_INCREMENT);
             return STATUS_UNSUCCESSFUL;
         }
     }
 
-    return ACPIDispatchPowerIrpSuccess( DeviceObject, Irp );
+    return ACPIDispatchPowerIrpSuccess(DeviceObject, Irp);
 }
-
+
 NTSTATUS
-ACPIDockIrpRemoveDevice(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIDockIrpRemoveDevice(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -1137,149 +978,137 @@ Return Value:
 
 --*/
 {
-   LONG                oldReferenceCount;
-   KIRQL               oldIrql;
-   NTSTATUS            status          = STATUS_SUCCESS;
-   PDEVICE_EXTENSION   deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
-   PIO_STACK_LOCATION  irpStack        = IoGetCurrentIrpStackLocation( Irp );
-   UCHAR               minorFunction   = irpStack->MinorFunction;
-   ULONG               i, ignoredPerSpec;
+    LONG oldReferenceCount;
+    KIRQL oldIrql;
+    NTSTATUS status = STATUS_SUCCESS;
+    PDEVICE_EXTENSION deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
+    PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
+    UCHAR minorFunction = irpStack->MinorFunction;
+    ULONG i, ignoredPerSpec;
 
-   if (!(deviceExtension->Flags & DEV_MASK_NOT_PRESENT)) {
+    if (!(deviceExtension->Flags & DEV_MASK_NOT_PRESENT))
+    {
 
-       //
-       // If the device is still physically present, so must the PDO be.
-       // This case is essentially a stop. Mark the request as complete...
-       //
-       Irp->IoStatus.Status = status;
-       IoCompleteRequest( Irp, IO_NO_INCREMENT );
-       return status;
-   }
+        //
+        // If the device is still physically present, so must the PDO be.
+        // This case is essentially a stop. Mark the request as complete...
+        //
+        Irp->IoStatus.Status = status;
+        IoCompleteRequest(Irp, IO_NO_INCREMENT);
+        return status;
+    }
 
-   if (deviceExtension->DeviceState == Removed) {
+    if (deviceExtension->DeviceState == Removed)
+    {
 
-       Irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
-       IoCompleteRequest( Irp, IO_NO_INCREMENT );
-       return STATUS_NO_SUCH_DEVICE;
-   }
+        Irp->IoStatus.Status = STATUS_NO_SUCH_DEVICE;
+        IoCompleteRequest(Irp, IO_NO_INCREMENT);
+        return STATUS_NO_SUCH_DEVICE;
+    }
 
-   if (deviceExtension->Dock.ProfileDepartureStyle == PDS_UPDATE_ON_REMOVE) {
+    if (deviceExtension->Dock.ProfileDepartureStyle == PDS_UPDATE_ON_REMOVE)
+    {
 
-       PDEVICE_EXTENSION dockDeviceExtension;
+        PDEVICE_EXTENSION dockDeviceExtension;
 
-       //
-       // lets get the corrosponding dock node for this device
-       //
-       dockDeviceExtension = deviceExtension->Dock.CorrospondingAcpiDevice ;
+        //
+        // lets get the corrosponding dock node for this device
+        //
+        dockDeviceExtension = deviceExtension->Dock.CorrospondingAcpiDevice;
 
-       //
-       // On the Compaq Armada 7800, we switch UARTs during an undock, thus we
-       // lose the debugger com port programming.
-       //
-       if (deviceExtension->Dock.IsolationState != IS_ISOLATED) {
+        //
+        // On the Compaq Armada 7800, we switch UARTs during an undock, thus we
+        // lose the debugger com port programming.
+        //
+        if (deviceExtension->Dock.IsolationState != IS_ISOLATED)
+        {
 
-           KdDisableDebugger();
+            KdDisableDebugger();
 
-           status = ACPIGetIntegerEvalIntegerSync(
-              dockDeviceExtension,
-              PACKED_DCK,
-              0,
-              &ignoredPerSpec
-              );
+            status = ACPIGetIntegerEvalIntegerSync(dockDeviceExtension, PACKED_DCK, 0, &ignoredPerSpec);
 
-           KdEnableDebugger();
-       }
-   }
+            KdEnableDebugger();
+        }
+    }
 
-   //
-   // The device is gone. Let the isolation state reflect that.
-   //
-   deviceExtension->Dock.IsolationState = IS_UNKNOWN;
+    //
+    // The device is gone. Let the isolation state reflect that.
+    //
+    deviceExtension->Dock.IsolationState = IS_UNKNOWN;
 
-   //
-   // Set the device state as removed
-   //
-   deviceExtension->DeviceState = Removed;
+    //
+    // Set the device state as removed
+    //
+    deviceExtension->DeviceState = Removed;
 
-   //
-   // Complete the request
-   //
-   Irp->IoStatus.Status = STATUS_SUCCESS;
-   Irp->IoStatus.Information = (ULONG_PTR) NULL;
-   IoCompleteRequest( Irp, IO_NO_INCREMENT );
+    //
+    // Complete the request
+    //
+    Irp->IoStatus.Status = STATUS_SUCCESS;
+    Irp->IoStatus.Information = (ULONG_PTR)NULL;
+    IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
-   //
-   // Done
-   //
-   ACPIDevPrint( (
-       ACPI_PRINT_IRP,
-       deviceExtension,
-       "(0x%08lx): %s = 0x%08lx\n",
-       Irp,
-       ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction),
-       STATUS_SUCCESS
-       ) );
+    //
+    // Done
+    //
+    ACPIDevPrint((ACPI_PRINT_IRP, deviceExtension, "(0x%08lx): %s = 0x%08lx\n", Irp,
+                  ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction), STATUS_SUCCESS));
 
-   //
-   // Update the device extension
-   //
-   KeAcquireSpinLock( &AcpiDeviceTreeLock, &oldIrql );
+    //
+    // Update the device extension
+    //
+    KeAcquireSpinLock(&AcpiDeviceTreeLock, &oldIrql);
 
-   ASSERT(!(deviceExtension->Flags&DEV_TYPE_FILTER)) ;
+    ASSERT(!(deviceExtension->Flags & DEV_TYPE_FILTER));
 
-   //
-   // Step one is to zero out the things that we no longer care about
-   //
-   deviceExtension->TargetDeviceObject = NULL;
-   deviceExtension->PhysicalDeviceObject = NULL;
-   deviceExtension->DeviceObject = NULL;
+    //
+    // Step one is to zero out the things that we no longer care about
+    //
+    deviceExtension->TargetDeviceObject = NULL;
+    deviceExtension->PhysicalDeviceObject = NULL;
+    deviceExtension->DeviceObject = NULL;
 
-   //
-   // Mark the node as being fresh and untouched
-   //
-   ACPIInternalUpdateFlags( &(deviceExtension->Flags), DEV_MASK_TYPE, TRUE );
-   ACPIInternalUpdateFlags( &(deviceExtension->Flags), DEV_TYPE_NOT_FOUND, FALSE );
-   ACPIInternalUpdateFlags( &(deviceExtension->Flags), DEV_TYPE_REMOVED, FALSE );
+    //
+    // Mark the node as being fresh and untouched
+    //
+    ACPIInternalUpdateFlags(&(deviceExtension->Flags), DEV_MASK_TYPE, TRUE);
+    ACPIInternalUpdateFlags(&(deviceExtension->Flags), DEV_TYPE_NOT_FOUND, FALSE);
+    ACPIInternalUpdateFlags(&(deviceExtension->Flags), DEV_TYPE_REMOVED, FALSE);
 
-   //
-   // The reference count should have value > 0
-   //
-   oldReferenceCount = InterlockedDecrement(
-       &(deviceExtension->ReferenceCount)
-       );
+    //
+    // The reference count should have value > 0
+    //
+    oldReferenceCount = InterlockedDecrement(&(deviceExtension->ReferenceCount));
 
-   ASSERT(oldReferenceCount >= 0) ;
+    ASSERT(oldReferenceCount >= 0);
 
-   if ( oldReferenceCount == 0) {
+    if (oldReferenceCount == 0)
+    {
 
-       //
-       // Delete the extension
-       //
-       ACPIInitDeleteDeviceExtension( deviceExtension );
+        //
+        // Delete the extension
+        //
+        ACPIInitDeleteDeviceExtension(deviceExtension);
+    }
 
-   }
+    //
+    // Done with the lock
+    //
+    KeReleaseSpinLock(&AcpiDeviceTreeLock, oldIrql);
 
-   //
-   // Done with the lock
-   //
-   KeReleaseSpinLock( &AcpiDeviceTreeLock, oldIrql );
+    //
+    // Delete the device
+    //
+    IoDeleteDevice(DeviceObject);
 
-   //
-   // Delete the device
-   //
-   IoDeleteDevice( DeviceObject );
-
-   //
-   // Done
-   //
-   return STATUS_SUCCESS;
+    //
+    // Done
+    //
+    return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-ACPIDockIrpSetLock(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIDockIrpSetLock(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -1295,24 +1124,21 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status;
+    NTSTATUS status;
 
     PAGED_CODE();
 
     //
     // We aren't a real device, so we don't do locking.
     //
-    status = Irp->IoStatus.Status ;
-    IoCompleteRequest( Irp, IO_NO_INCREMENT );
+    status = Irp->IoStatus.Status;
+    IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
-    return status ;
+    return status;
 }
-
+
 NTSTATUS
-ACPIDockIrpStartDevice(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIDockIrpStartDevice(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -1330,35 +1156,33 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status          = STATUS_SUCCESS;
-    PDEVICE_EXTENSION   deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
-    PDEVICE_EXTENSION   dockDeviceExtension;
-    PIO_STACK_LOCATION  irpStack        = IoGetCurrentIrpStackLocation( Irp );
-    UCHAR               minorFunction   = irpStack->MinorFunction;
-    ULONG               dockResult;
-    ULONG               dockStatus;
+    NTSTATUS status = STATUS_SUCCESS;
+    PDEVICE_EXTENSION deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
+    PDEVICE_EXTENSION dockDeviceExtension;
+    PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
+    UCHAR minorFunction = irpStack->MinorFunction;
+    ULONG dockResult;
+    ULONG dockStatus;
 
     PAGED_CODE();
 
-    dockDeviceExtension = deviceExtension->Dock.CorrospondingAcpiDevice ;
+    dockDeviceExtension = deviceExtension->Dock.CorrospondingAcpiDevice;
 
-    if (!dockDeviceExtension) {
+    if (!dockDeviceExtension)
+    {
 
-        ACPIDevPrint( (
-            ACPI_PRINT_FAILURE,
-            deviceExtension,
-            "(0x%08lx): ACPIDockIrpStartDevice - "
-            "no corresponding extension!!\n",
-            Irp
-            ) );
-        ASSERT(0) ;
-        Irp->IoStatus.Status = STATUS_UNSUCCESSFUL ;
-        IoCompleteRequest( Irp, IO_NO_INCREMENT );
+        ACPIDevPrint((ACPI_PRINT_FAILURE, deviceExtension,
+                      "(0x%08lx): ACPIDockIrpStartDevice - "
+                      "no corresponding extension!!\n",
+                      Irp));
+        ASSERT(0);
+        Irp->IoStatus.Status = STATUS_UNSUCCESSFUL;
+        IoCompleteRequest(Irp, IO_NO_INCREMENT);
         return STATUS_UNSUCCESSFUL;
-
     }
 
-    if (deviceExtension->Dock.IsolationState == IS_ISOLATED) {
+    if (deviceExtension->Dock.IsolationState == IS_ISOLATED)
+    {
 
         KdDisableDebugger();
 
@@ -1369,76 +1193,55 @@ Return Value:
         // we try to process the two. If either fail, we don't
         // do any work
         //
-        status = ACPIGetIntegerEvalIntegerSync(
-            dockDeviceExtension,
-            PACKED_DCK,
-            1,
-            &dockResult
-            );
+        status = ACPIGetIntegerEvalIntegerSync(dockDeviceExtension, PACKED_DCK, 1, &dockResult);
 
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
 
             //
             // Get the device presence
             //
-            status = ACPIGetDevicePresenceSync(
-                dockDeviceExtension,
-                (PVOID *) &dockStatus,
-                NULL
-                );
-
+            status = ACPIGetDevicePresenceSync(dockDeviceExtension, (PVOID *)&dockStatus, NULL);
         }
 
         KdEnableDebugger();
 
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
 
-            if (dockDeviceExtension->Flags & DEV_TYPE_NOT_PRESENT) {
+            if (dockDeviceExtension->Flags & DEV_TYPE_NOT_PRESENT)
+            {
 
-                if (dockResult != 0) {
+                if (dockResult != 0)
+                {
 
-                    ACPIDevPrint( (
-                        ACPI_PRINT_FAILURE,
-                        deviceExtension,
-                        "(0x%08lx): ACPIDockIrpStartDevice: "
-                        "Not present, but _DCK = %08lx\n",
-                        Irp,
-                        dockResult
-                        ) );
-
-                } else {
-
-                    ACPIDevPrint( (
-                        ACPI_PRINT_FAILURE,
-                        deviceExtension,
-                        "(0x%08lx): ACPIDockIrpStartDevice: _DCK = 0\n",
-                        Irp
-                        ) );
-
+                    ACPIDevPrint((ACPI_PRINT_FAILURE, deviceExtension,
+                                  "(0x%08lx): ACPIDockIrpStartDevice: "
+                                  "Not present, but _DCK = %08lx\n",
+                                  Irp, dockResult));
                 }
-                status = STATUS_UNSUCCESSFUL ;
+                else
+                {
 
-            } else {
+                    ACPIDevPrint(
+                        (ACPI_PRINT_FAILURE, deviceExtension, "(0x%08lx): ACPIDockIrpStartDevice: _DCK = 0\n", Irp));
+                }
+                status = STATUS_UNSUCCESSFUL;
+            }
+            else
+            {
 
-                if (dockResult != 1) {
+                if (dockResult != 1)
+                {
 
-                    ACPIDevPrint( (
-                        ACPI_PRINT_FAILURE,
-                        deviceExtension,
-                        "(0x%08lx): ACPIDockIrpStartDevice: _DCK = 0\n",
-                        Irp
-                        ) );
+                    ACPIDevPrint(
+                        (ACPI_PRINT_FAILURE, deviceExtension, "(0x%08lx): ACPIDockIrpStartDevice: _DCK = 0\n", Irp));
+                }
+                else
+                {
 
-                } else {
-
-                    ACPIDevPrint( (
-                        ACPI_PRINT_IRP,
-                        deviceExtension,
-                        "(0x%08lx): ACPIDockIrpStartDevice = 0x%08lx\n",
-                        Irp,
-                        status
-                        ) );
-
+                    ACPIDevPrint((ACPI_PRINT_IRP, deviceExtension, "(0x%08lx): ACPIDockIrpStartDevice = 0x%08lx\n", Irp,
+                                  status));
                 }
             }
         }
@@ -1454,10 +1257,7 @@ Return Value:
         // hardware. To maintain this pseudo-behavior we queue an enum here
         // (bletch.)
         //
-        IoInvalidateDeviceRelations(
-            RootDeviceExtension->PhysicalDeviceObject,
-            BusRelations
-            );
+        IoInvalidateDeviceRelations(RootDeviceExtension->PhysicalDeviceObject, BusRelations);
 
         //
         // Now we remove the unattached dock flag, but only if we succeeded
@@ -1466,32 +1266,28 @@ Return Value:
         // *must* try to eject the dock after start failure! The proper code for
         // this is part of the kernel.
         //
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
 
-            ACPIInternalUpdateFlags(
-                &(deviceExtension->Flags),
-                DEV_CAP_UNATTACHED_DOCK,
-                TRUE
-                );
+            ACPIInternalUpdateFlags(&(deviceExtension->Flags), DEV_CAP_UNATTACHED_DOCK, TRUE);
         }
     }
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         deviceExtension->Dock.IsolationState = IS_ISOLATION_DROPPED;
         deviceExtension->DeviceState = Started;
     }
 
     Irp->IoStatus.Status = status;
-    IoCompleteRequest( Irp, IO_NO_INCREMENT );
+    IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
     return status;
 }
-
+
 BOOLEAN
-ACPIDockIsDockDevice(
-    IN PNSOBJ AcpiObject
-    )
+ACPIDockIsDockDevice(IN PNSOBJ AcpiObject)
 /*++
 
 Routine Description:
@@ -1508,19 +1304,16 @@ Return Value:
 
 --*/
 {
-    PNSOBJ dckMethodObject ;
+    PNSOBJ dckMethodObject;
 
     //
     // ACPI dock devices are identified via _DCK methods.
     //
-    return (NT_SUCCESS(ACPIDockGetDockObject(AcpiObject, &dckMethodObject))) ;
+    return (NT_SUCCESS(ACPIDockGetDockObject(AcpiObject, &dckMethodObject)));
 }
-
+
 NTSTATUS
-ACPIDockIrpSetPower(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIDockIrpSetPower(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -1539,25 +1332,24 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status;
-    PIO_STACK_LOCATION  irpSp           = IoGetCurrentIrpStackLocation( Irp );
-    UCHAR               minorFunction   = irpSp->MinorFunction;
+    NTSTATUS status;
+    PIO_STACK_LOCATION irpSp = IoGetCurrentIrpStackLocation(Irp);
+    UCHAR minorFunction = irpSp->MinorFunction;
 
-    if (irpSp->Parameters.Power.Type != SystemPowerState) {
+    if (irpSp->Parameters.Power.Type != SystemPowerState)
+    {
 
         return ACPIDockIrpSetDevicePower(DeviceObject, Irp);
-
-    } else {
+    }
+    else
+    {
 
         return ACPIDockIrpSetSystemPower(DeviceObject, Irp);
     }
 }
-
+
 NTSTATUS
-ACPIDockIrpSetDevicePower(
-    IN  PDEVICE_OBJECT      DeviceObject,
-    IN  PIRP                Irp
-    )
+ACPIDockIrpSetDevicePower(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -1576,13 +1368,13 @@ Return Value:
 
 --*/
 {
-    NTSTATUS    status;
-    PDEVICE_EXTENSION   deviceExtension;
+    NTSTATUS status;
+    PDEVICE_EXTENSION deviceExtension;
 
     //
     // Get the device extension
     //
-    deviceExtension = ACPIInternalGetDeviceExtension( DeviceObject );
+    deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
 
     //
     // We are going to do some work on the irp, so mark it as being
@@ -1593,33 +1385,29 @@ Return Value:
     //
     // Mark the irp as pending
     //
-    IoMarkIrpPending( Irp );
+    IoMarkIrpPending(Irp);
 
     //
     // We might queue up the irp, so this counts as a completion routine.
     // Which means we need to incr the ref count
     //
-    InterlockedIncrement( &deviceExtension->OutstandingIrpCount );
+    InterlockedIncrement(&deviceExtension->OutstandingIrpCount);
 
     //
     // Queue the irp up. Note that we will *always* call the completion
     // routine, so we don't really care what was returned directly by
     // this call --- the callback gets a chance to execute.
     //
-    status = ACPIDeviceIrpDeviceRequest(
-        DeviceObject,
-        Irp,
-        ACPIDeviceIrpCompleteRequest
-        );
+    status = ACPIDeviceIrpDeviceRequest(DeviceObject, Irp, ACPIDeviceIrpCompleteRequest);
 
     //
     // Did we return STATUS_MORE_PROCESSING_REQUIRED (which we used
     // if we overload STATUS_PENDING)
     //
-    if (status == STATUS_MORE_PROCESSING_REQUIRED) {
+    if (status == STATUS_MORE_PROCESSING_REQUIRED)
+    {
 
         status = STATUS_PENDING;
-
     }
 
     //
@@ -1630,12 +1418,9 @@ Return Value:
     //
     return status;
 }
-
+
 NTSTATUS
-ACPIDockIrpSetSystemPower(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIDockIrpSetSystemPower(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -1655,42 +1440,41 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status;
-    PIO_STACK_LOCATION  irpSp           = IoGetCurrentIrpStackLocation( Irp );
-    UCHAR               minorFunction   = irpSp->MinorFunction;
-    PDEVICE_EXTENSION   deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
-    PDEVICE_EXTENSION   dockDeviceExtension;
-    SYSTEM_POWER_STATE  systemState;
-    DEVICE_POWER_STATE  deviceState;
-    POWER_STATE         powerState;
+    NTSTATUS status;
+    PIO_STACK_LOCATION irpSp = IoGetCurrentIrpStackLocation(Irp);
+    UCHAR minorFunction = irpSp->MinorFunction;
+    PDEVICE_EXTENSION deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
+    PDEVICE_EXTENSION dockDeviceExtension;
+    SYSTEM_POWER_STATE systemState;
+    DEVICE_POWER_STATE deviceState;
+    POWER_STATE powerState;
 
     //
     // Get the device extension
     //
-    deviceExtension = ACPIInternalGetDeviceExtension( DeviceObject );
+    deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
 
     //
     // Grab these two values. They are required for further calculations
     //
-    systemState= irpSp->Parameters.Power.State.SystemState;
+    systemState = irpSp->Parameters.Power.State.SystemState;
     deviceState = deviceExtension->PowerInfo.DevicePowerMatrix[systemState];
 
-    dockDeviceExtension = deviceExtension->Dock.CorrospondingAcpiDevice ;
+    dockDeviceExtension = deviceExtension->Dock.CorrospondingAcpiDevice;
 
-    if (!dockDeviceExtension) {
+    if (!dockDeviceExtension)
+    {
 
-        ACPIDevPrint( (
-            ACPI_PRINT_FAILURE,
-            deviceExtension,
-            "(0x%08lx): ACPIDockIrpSetPower - "
-            "no corresponding extension!!\n",
-            Irp
-            ) );
-        ASSERT(0) ;
-        return ACPIDispatchPowerIrpFailure( DeviceObject, Irp );
+        ACPIDevPrint((ACPI_PRINT_FAILURE, deviceExtension,
+                      "(0x%08lx): ACPIDockIrpSetPower - "
+                      "no corresponding extension!!\n",
+                      Irp));
+        ASSERT(0);
+        return ACPIDispatchPowerIrpFailure(DeviceObject, Irp);
     }
 
-    if (irpSp->Parameters.Power.ShutdownType == PowerActionWarmEject) {
+    if (irpSp->Parameters.Power.ShutdownType == PowerActionWarmEject)
+    {
 
         //
         // We are going to do some work on the irp, so mark it as being
@@ -1701,40 +1485,32 @@ Return Value:
         //
         // Mark the irp as pending
         //
-        IoMarkIrpPending( Irp );
+        IoMarkIrpPending(Irp);
 
         //
         // We might queue up the irp, so this counts as a completion routine.
         // Which means we need to incr the ref count
         //
-        InterlockedIncrement( &dockDeviceExtension->OutstandingIrpCount );
+        InterlockedIncrement(&dockDeviceExtension->OutstandingIrpCount);
 
-        ACPIDevPrint( (
-            ACPI_PRINT_REMOVE,
-            deviceExtension,
-            "(0x%08lx) ACPIBusIrpSetSystemPower: Eject from S%d!\n",
-            Irp,
-            systemState - PowerSystemWorking
-            ) );
+        ACPIDevPrint((ACPI_PRINT_REMOVE, deviceExtension, "(0x%08lx) ACPIBusIrpSetSystemPower: Eject from S%d!\n", Irp,
+                      systemState - PowerSystemWorking));
 
         //
         // Request the warm eject
         //
         status = ACPIDeviceIrpWarmEjectRequest(
-            dockDeviceExtension,
-            Irp,
-            ACPIDeviceIrpCompleteRequest,
-            (BOOLEAN) (deviceExtension->Dock.ProfileDepartureStyle == PDS_UPDATE_ON_EJECT)
-            );
+            dockDeviceExtension, Irp, ACPIDeviceIrpCompleteRequest,
+            (BOOLEAN)(deviceExtension->Dock.ProfileDepartureStyle == PDS_UPDATE_ON_EJECT));
 
         //
         // If we got back STATUS_MORE_PROCESSING_REQUIRED, then that is
         // just an alias for STATUS_PENDING, so we make that change now
         //
-        if (status == STATUS_MORE_PROCESSING_REQUIRED) {
+        if (status == STATUS_MORE_PROCESSING_REQUIRED)
+        {
 
             status = STATUS_PENDING;
-
         }
 
         return status;
@@ -1748,19 +1524,15 @@ Return Value:
     //
     ASSERT(deviceExtension->Flags & DEV_CAP_RAW);
 
-    if ( (deviceExtension->PowerInfo.PowerState == deviceState) ) {
+    if ((deviceExtension->PowerInfo.PowerState == deviceState))
+    {
 
-        return ACPIDispatchPowerIrpSuccess( DeviceObject, Irp );
+        return ACPIDispatchPowerIrpSuccess(DeviceObject, Irp);
 
     } // if
 
-    ACPIDevPrint( (
-        ACPI_PRINT_REMOVE,
-        deviceExtension,
-        "(0x%08lx) ACPIDockIrpSetSystemPower: send D%d irp!\n",
-        Irp,
-        deviceState - PowerDeviceD0
-        ) );
+    ACPIDevPrint((ACPI_PRINT_REMOVE, deviceExtension, "(0x%08lx) ACPIDockIrpSetSystemPower: send D%d irp!\n", Irp,
+                  deviceState - PowerDeviceD0));
 
     //
     // We are going to do some work on the irp, so mark it as being
@@ -1771,13 +1543,13 @@ Return Value:
     //
     // Mark the irp as pending
     //
-    IoMarkIrpPending( Irp );
+    IoMarkIrpPending(Irp);
 
     //
     // We might queue up the irp, so this counts as a completion routine.
     // Which means we need to incr the ref count
     //
-    InterlockedIncrement( &deviceExtension->OutstandingIrpCount );
+    InterlockedIncrement(&deviceExtension->OutstandingIrpCount);
 
     //
     // We need to actually use a PowerState to send the request down, not
@@ -1788,29 +1560,17 @@ Return Value:
     //
     // Make the request
     //
-    PoRequestPowerIrp(
-        DeviceObject,
-        IRP_MN_SET_POWER,
-        powerState,
-        ACPIDockIrpSetSystemPowerComplete,
-        Irp,
-        NULL
-        );
+    PoRequestPowerIrp(DeviceObject, IRP_MN_SET_POWER, powerState, ACPIDockIrpSetSystemPowerComplete, Irp, NULL);
 
     //
     // Always return pending
     //
     return STATUS_PENDING;
 }
-
+
 NTSTATUS
-ACPIDockIrpSetSystemPowerComplete(
-    IN  PDEVICE_OBJECT      DeviceObject,
-    IN  UCHAR               MinorFunction,
-    IN  POWER_STATE         PowerState,
-    IN  PVOID               Context,
-    IN  PIO_STATUS_BLOCK    IoStatus
-    )
+ACPIDockIrpSetSystemPowerComplete(IN PDEVICE_OBJECT DeviceObject, IN UCHAR MinorFunction, IN POWER_STATE PowerState,
+                                  IN PVOID Context, IN PIO_STATUS_BLOCK IoStatus)
 /*++
 
 Routine Description:
@@ -1832,13 +1592,13 @@ Return Value:
 
 --*/
 {
-    PIRP                irp = (PIRP) Context;
-    PDEVICE_EXTENSION   deviceExtension;
+    PIRP irp = (PIRP)Context;
+    PDEVICE_EXTENSION deviceExtension;
 
     //
     // Get the device extension
     //
-    deviceExtension = ACPIInternalGetDeviceExtension( DeviceObject );
+    deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
 
     //
     // Make sure that we have cleared the information field
@@ -1848,22 +1608,15 @@ Return Value:
     //
     // Call this wrapper function so that we don't have to duplicated code
     //
-    ACPIDeviceIrpCompleteRequest(
-        deviceExtension,
-        (PVOID) irp,
-        IoStatus->Status
-        );
+    ACPIDeviceIrpCompleteRequest(deviceExtension, (PVOID)irp, IoStatus->Status);
 
     //
     // Done
     //
     return IoStatus->Status;
 }
-
-VOID
-ACPIDockIntfReference(
-    IN  PVOID   Context
-    )
+
+VOID ACPIDockIntfReference(IN PVOID Context)
 /*++
 
 Routine Description:
@@ -1880,24 +1633,22 @@ Return Value:
 
 --*/
 {
-    PDEVICE_OBJECT      deviceObject = (PDEVICE_OBJECT) Context;
-    PDEVICE_EXTENSION   deviceExtension = ACPIInternalGetDeviceExtension(deviceObject);
+    PDEVICE_OBJECT deviceObject = (PDEVICE_OBJECT)Context;
+    PDEVICE_EXTENSION deviceExtension = ACPIInternalGetDeviceExtension(deviceObject);
 
     PAGED_CODE();
 
     ObReferenceObject(deviceObject);
     InterlockedIncrement(&deviceExtension->ReferenceCount);
 
-    if (!(deviceExtension->Flags & DEV_TYPE_SURPRISE_REMOVED)) {
+    if (!(deviceExtension->Flags & DEV_TYPE_SURPRISE_REMOVED))
+    {
 
         InterlockedIncrement(&deviceExtension->Dock.InterfaceReferenceCount);
     }
 }
-
-VOID
-ACPIDockIntfDereference(
-    IN  PVOID   Context
-    )
+
+VOID ACPIDockIntfDereference(IN PVOID Context)
 /*++
 
 Routine Description:
@@ -1914,19 +1665,19 @@ Return Value:
 
 --*/
 {
-    PDEVICE_OBJECT      deviceObject = (PDEVICE_OBJECT) Context;
-    PDEVICE_EXTENSION   deviceExtension = ACPIInternalGetDeviceExtension(deviceObject);
-    ULONG               oldReferenceCount;
+    PDEVICE_OBJECT deviceObject = (PDEVICE_OBJECT)Context;
+    PDEVICE_EXTENSION deviceExtension = ACPIInternalGetDeviceExtension(deviceObject);
+    ULONG oldReferenceCount;
 
     PAGED_CODE();
 
-    if (!(deviceExtension->Flags & DEV_TYPE_SURPRISE_REMOVED)) {
+    if (!(deviceExtension->Flags & DEV_TYPE_SURPRISE_REMOVED))
+    {
 
-        oldReferenceCount = InterlockedDecrement(
-            &deviceExtension->Dock.InterfaceReferenceCount
-            );
+        oldReferenceCount = InterlockedDecrement(&deviceExtension->Dock.InterfaceReferenceCount);
 
-        if (oldReferenceCount == 0) {
+        if (oldReferenceCount == 0)
+        {
 
             //
             // Revert back to the default used in buildsrc.c
@@ -1937,7 +1688,8 @@ Return Value:
 
     oldReferenceCount = InterlockedDecrement(&deviceExtension->ReferenceCount);
 
-    if (oldReferenceCount == 0) {
+    if (oldReferenceCount == 0)
+    {
 
         //
         // Delete the extension
@@ -1947,12 +1699,9 @@ Return Value:
 
     ObDereferenceObject(deviceObject);
 }
-
+
 NTSTATUS
-ACPIDockIntfSetMode(
-    IN  PVOID                   Context,
-    IN  PROFILE_DEPARTURE_STYLE Style
-    )
+ACPIDockIntfSetMode(IN PVOID Context, IN PROFILE_DEPARTURE_STYLE Style)
 /*++
 
 Routine Description:
@@ -1971,27 +1720,25 @@ Return Value:
 
 --*/
 {
-    PDEVICE_OBJECT      deviceObject = (PDEVICE_OBJECT) Context;
-    PDEVICE_EXTENSION   deviceExtension = ACPIInternalGetDeviceExtension(deviceObject);
+    PDEVICE_OBJECT deviceObject = (PDEVICE_OBJECT)Context;
+    PDEVICE_EXTENSION deviceExtension = ACPIInternalGetDeviceExtension(deviceObject);
 
     PAGED_CODE();
 
-    if (deviceExtension->Flags & DEV_TYPE_SURPRISE_REMOVED) {
+    if (deviceExtension->Flags & DEV_TYPE_SURPRISE_REMOVED)
+    {
 
         return STATUS_NO_SUCH_DEVICE;
     }
 
-    deviceExtension->Dock.ProfileDepartureStyle =
-        (Style == PDS_UPDATE_DEFAULT) ? PDS_UPDATE_ON_EJECT : Style;
+    deviceExtension->Dock.ProfileDepartureStyle = (Style == PDS_UPDATE_DEFAULT) ? PDS_UPDATE_ON_EJECT : Style;
 
     ASSERT(deviceExtension->Dock.InterfaceReferenceCount);
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-ACPIDockIntfUpdateDeparture(
-    IN  PVOID   Context
-    )
+ACPIDockIntfUpdateDeparture(IN PVOID Context)
 /*++
 
 Routine Description:
@@ -2008,15 +1755,16 @@ Return Value:
 
 --*/
 {
-    PDEVICE_OBJECT      deviceObject = (PDEVICE_OBJECT) Context;
-    PDEVICE_EXTENSION   deviceExtension = ACPIInternalGetDeviceExtension(deviceObject);
-    NTSTATUS            status;
-    ULONG               ignoredPerSpec;
-    PDEVICE_EXTENSION   dockDeviceExtension;
+    PDEVICE_OBJECT deviceObject = (PDEVICE_OBJECT)Context;
+    PDEVICE_EXTENSION deviceExtension = ACPIInternalGetDeviceExtension(deviceObject);
+    NTSTATUS status;
+    ULONG ignoredPerSpec;
+    PDEVICE_EXTENSION dockDeviceExtension;
 
     PAGED_CODE();
 
-    if (deviceExtension->Flags & DEV_TYPE_SURPRISE_REMOVED) {
+    if (deviceExtension->Flags & DEV_TYPE_SURPRISE_REMOVED)
+    {
 
         return STATUS_NO_SUCH_DEVICE;
     }
@@ -2024,7 +1772,8 @@ Return Value:
     ASSERT(deviceExtension->Dock.InterfaceReferenceCount);
     ASSERT(deviceExtension->Dock.ProfileDepartureStyle == PDS_UPDATE_ON_INTERFACE);
 
-    if (deviceExtension->Dock.ProfileDepartureStyle != PDS_UPDATE_ON_INTERFACE) {
+    if (deviceExtension->Dock.ProfileDepartureStyle != PDS_UPDATE_ON_INTERFACE)
+    {
 
         //
         // Can't do this, we may already have updated our profile!
@@ -2035,32 +1784,28 @@ Return Value:
     //
     // lets get the corrosponding dock node for this device
     //
-    dockDeviceExtension = deviceExtension->Dock.CorrospondingAcpiDevice ;
+    dockDeviceExtension = deviceExtension->Dock.CorrospondingAcpiDevice;
 
     //
     // On the Compaq Armada 7800, we switch UARTs during an undock, thus we
     // lose the debugger com port programming.
     //
-    if (deviceExtension->Dock.IsolationState != IS_ISOLATED) {
+    if (deviceExtension->Dock.IsolationState != IS_ISOLATED)
+    {
 
         KdDisableDebugger();
 
-        status = ACPIGetIntegerEvalIntegerSync(
-           dockDeviceExtension,
-           PACKED_DCK,
-           0,
-           &ignoredPerSpec
-           );
+        status = ACPIGetIntegerEvalIntegerSync(dockDeviceExtension, PACKED_DCK, 0, &ignoredPerSpec);
 
         KdEnableDebugger();
 
         deviceExtension->Dock.IsolationState = IS_ISOLATED;
     }
-    else{
+    else
+    {
 
         status = STATUS_SUCCESS;
     }
 
     return status;
 }
-

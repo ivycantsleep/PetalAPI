@@ -23,20 +23,15 @@ Revision History:
 
 extern ULONG MmSystemShutdown;
 
-VOID
-MiReleaseAllMemory (
-    VOID
-    );
+VOID MiReleaseAllMemory(VOID);
 
 BOOLEAN
-MiShutdownSystem (
-    VOID
-    );
+MiShutdownSystem(VOID);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGELK,MiShutdownSystem)
-#pragma alloc_text(PAGELK,MiReleaseAllMemory)
-#pragma alloc_text(PAGELK,MmShutdownSystem)
+#pragma alloc_text(PAGELK, MiShutdownSystem)
+#pragma alloc_text(PAGELK, MiReleaseAllMemory)
+#pragma alloc_text(PAGELK, MmShutdownSystem)
 #endif
 
 ULONG MmZeroPageFile;
@@ -50,11 +45,9 @@ extern LOGICAL MiZeroingDisabled;
 extern ULONG MmNumberOfMappedMdls;
 extern ULONG MmNumberOfMappedMdlsInUse;
 
-
+
 BOOLEAN
-MiShutdownSystem (
-    VOID
-    )
+MiShutdownSystem(VOID)
 
 /*++
 
@@ -94,7 +87,7 @@ Return Value:
     PPFN_NUMBER Page;
     PFILE_OBJECT FilePointer;
     ULONG ConsecutiveFileLockFailures;
-    PFN_NUMBER MdlHack[(sizeof(MDL)/sizeof(PFN_NUMBER)) + MM_MAXIMUM_WRITE_CLUSTER];
+    PFN_NUMBER MdlHack[(sizeof(MDL) / sizeof(PFN_NUMBER)) + MM_MAXIMUM_WRITE_CLUSTER];
     PMDL Mdl;
     NTSTATUS Status;
     KEVENT IoEvent;
@@ -114,105 +107,103 @@ Return Value:
     // Don't do this more than once.
     //
 
-    if (MmSystemShutdown == 0) {
+    if (MmSystemShutdown == 0)
+    {
 
         PageLk = TRUE;
-        MmLockPagableSectionByHandle (ExPageLockHandle);
+        MmLockPagableSectionByHandle(ExPageLockHandle);
 
         Mdl = (PMDL)&MdlHack;
         Page = (PPFN_NUMBER)(Mdl + 1);
 
-        KeInitializeEvent (&IoEvent, NotificationEvent, FALSE);
+        KeInitializeEvent(&IoEvent, NotificationEvent, FALSE);
 
-        MmInitializeMdl(Mdl,
-                        NULL,
-                        PAGE_SIZE);
+        MmInitializeMdl(Mdl, NULL, PAGE_SIZE);
 
         Mdl->MdlFlags |= MDL_PAGES_LOCKED;
 
-        LOCK_PFN (OldIrql);
+        LOCK_PFN(OldIrql);
 
         ModifiedPage = MmModifiedPageListHead.Flink;
-        while (ModifiedPage != MM_EMPTY_LIST) {
+        while (ModifiedPage != MM_EMPTY_LIST)
+        {
 
             //
             // There are modified pages.
             //
 
-            Pfn1 = MI_PFN_ELEMENT (ModifiedPage);
+            Pfn1 = MI_PFN_ELEMENT(ModifiedPage);
 
-            if (Pfn1->OriginalPte.u.Soft.Prototype == 1) {
+            if (Pfn1->OriginalPte.u.Soft.Prototype == 1)
+            {
 
                 //
                 // This page is destined for a file.
                 //
 
-                Subsection = MiGetSubsectionAddress (&Pfn1->OriginalPte);
+                Subsection = MiGetSubsectionAddress(&Pfn1->OriginalPte);
                 ControlArea = Subsection->ControlArea;
-                if ((!ControlArea->u.Flags.Image) &&
-                   (!ControlArea->u.Flags.NoModifiedWriting)) {
+                if ((!ControlArea->u.Flags.Image) && (!ControlArea->u.Flags.NoModifiedWriting))
+                {
 
-                    MiUnlinkPageFromList (Pfn1);
+                    MiUnlinkPageFromList(Pfn1);
 
                     //
                     // Issue the write.
                     //
 
-                    MI_SET_MODIFIED (Pfn1, 0, 0x28);
+                    MI_SET_MODIFIED(Pfn1, 0, 0x28);
 
                     //
                     // Up the reference count for the physical page as there
                     // is I/O in progress.
                     //
 
-                    MI_ADD_LOCKED_PAGE_CHARGE_FOR_MODIFIED_PAGE (Pfn1, 26);
+                    MI_ADD_LOCKED_PAGE_CHARGE_FOR_MODIFIED_PAGE(Pfn1, 26);
                     Pfn1->u3.e2.ReferenceCount += 1;
 
                     *Page = ModifiedPage;
                     ControlArea->NumberOfMappedViews += 1;
                     ControlArea->NumberOfPfnReferences += 1;
 
-                    UNLOCK_PFN (OldIrql);
+                    UNLOCK_PFN(OldIrql);
 
-                    StartingOffset.QuadPart = MiStartingOffset (Subsection,
-                                                                Pfn1->PteAddress);
+                    StartingOffset.QuadPart = MiStartingOffset(Subsection, Pfn1->PteAddress);
                     Mdl->StartVa = NULL;
 
                     ConsecutiveFileLockFailures = 0;
                     FilePointer = ControlArea->FilePointer;
 
-retry:
-                    KeClearEvent (&IoEvent);
+                retry:
+                    KeClearEvent(&IoEvent);
 
-                    Status = FsRtlAcquireFileForCcFlushEx (FilePointer);
+                    Status = FsRtlAcquireFileForCcFlushEx(FilePointer);
 
-                    if (NT_SUCCESS(Status)) {
-                        Status = IoSynchronousPageWrite (FilePointer,
-                                                         Mdl,
-                                                         &StartingOffset,
-                                                         &IoEvent,
-                                                         &IoStatus);
+                    if (NT_SUCCESS(Status))
+                    {
+                        Status = IoSynchronousPageWrite(FilePointer, Mdl, &StartingOffset, &IoEvent, &IoStatus);
 
                         //
                         // Release the file we acquired.
                         //
 
-                        FsRtlReleaseFileForCcFlush (FilePointer);
+                        FsRtlReleaseFileForCcFlush(FilePointer);
                     }
 
-                    if (!NT_SUCCESS(Status)) {
+                    if (!NT_SUCCESS(Status))
+                    {
 
                         //
                         // Only try the request more than once if the
                         // filesystem said it had a deadlock.
                         //
 
-                        if (Status == STATUS_FILE_LOCK_CONFLICT) {
+                        if (Status == STATUS_FILE_LOCK_CONFLICT)
+                        {
                             ConsecutiveFileLockFailures += 1;
-                            if (ConsecutiveFileLockFailures < 5) {
-                                KeDelayExecutionThread (KernelMode,
-                                                        FALSE,
-                                                        (PLARGE_INTEGER)&MmShortTime);
+                            if (ConsecutiveFileLockFailures < 5)
+                            {
+                                KeDelayExecutionThread(KernelMode, FALSE, (PLARGE_INTEGER)&MmShortTime);
                                 goto retry;
                             }
                             goto wait_complete;
@@ -223,22 +214,21 @@ retry:
                         // can be done at this point.
                         //
 
-                        KeSetEvent (&IoEvent, 0, FALSE);
+                        KeSetEvent(&IoEvent, 0, FALSE);
                     }
 
-                    Status = KeWaitForSingleObject (&IoEvent,
-                                                    WrPageOut,
-                                                    KernelMode,
-                                                    FALSE,
-                                                    (PLARGE_INTEGER)&MmTwentySeconds);
+                    Status =
+                        KeWaitForSingleObject(&IoEvent, WrPageOut, KernelMode, FALSE, (PLARGE_INTEGER)&MmTwentySeconds);
 
-wait_complete:
+                wait_complete:
 
-                    if (Mdl->MdlFlags & MDL_MAPPED_TO_SYSTEM_VA) {
-                        MmUnmapLockedPages (Mdl->MappedSystemVa, Mdl);
+                    if (Mdl->MdlFlags & MDL_MAPPED_TO_SYSTEM_VA)
+                    {
+                        MmUnmapLockedPages(Mdl->MappedSystemVa, Mdl);
                     }
 
-                    if (Status == STATUS_TIMEOUT) {
+                    if (Status == STATUS_TIMEOUT)
+                    {
 
                         //
                         // The write did not complete in 20 seconds, assume
@@ -246,11 +236,11 @@ wait_complete:
                         // error.
                         //
 
-                        LOCK_PFN (OldIrql);
+                        LOCK_PFN(OldIrql);
 
-                        MI_SET_MODIFIED (Pfn1, 1, 0xF);
+                        MI_SET_MODIFIED(Pfn1, 1, 0xF);
 
-                        MI_REMOVE_LOCKED_PAGE_CHARGE_AND_DECREF (Pfn1, 27);
+                        MI_REMOVE_LOCKED_PAGE_CHARGE_AND_DECREF(Pfn1, 27);
                         ControlArea->NumberOfMappedViews -= 1;
                         ControlArea->NumberOfPfnReferences -= 1;
 
@@ -258,15 +248,15 @@ wait_complete:
                         // This routine returns with the PFN lock released!
                         //
 
-                        MiCheckControlArea (ControlArea, NULL, OldIrql);
+                        MiCheckControlArea(ControlArea, NULL, OldIrql);
 
-                        MmUnlockPagableImageSection (ExPageLockHandle);
+                        MmUnlockPagableImageSection(ExPageLockHandle);
 
                         return FALSE;
                     }
 
-                    LOCK_PFN (OldIrql);
-                    MI_REMOVE_LOCKED_PAGE_CHARGE_AND_DECREF (Pfn1, 27);
+                    LOCK_PFN(OldIrql);
+                    MI_REMOVE_LOCKED_PAGE_CHARGE_AND_DECREF(Pfn1, 27);
                     ControlArea->NumberOfMappedViews -= 1;
                     ControlArea->NumberOfPfnReferences -= 1;
 
@@ -274,8 +264,8 @@ wait_complete:
                     // This routine returns with the PFN lock released!
                     //
 
-                    MiCheckControlArea (ControlArea, NULL, OldIrql);
-                    LOCK_PFN (OldIrql);
+                    MiCheckControlArea(ControlArea, NULL, OldIrql);
+                    LOCK_PFN(OldIrql);
 
                     //
                     // Restart scan at the front of the list.
@@ -288,20 +278,19 @@ wait_complete:
             ModifiedPage = Pfn1->u1.Flink;
         }
 
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
 
         //
         // If a high number of modified pages still exist, start the
         // modified page writer and wait for 5 seconds.
         //
 
-        if (MmAvailablePages < (MmFreeGoal * 2)) {
-            LARGE_INTEGER FiveSeconds = {(ULONG)(-5 * 1000 * 1000 * 10), -1};
+        if (MmAvailablePages < (MmFreeGoal * 2))
+        {
+            LARGE_INTEGER FiveSeconds = { (ULONG)(-5 * 1000 * 1000 * 10), -1 };
 
-            KeSetEvent (&MmModifiedPageWriterEvent, 0, FALSE);
-            KeDelayExecutionThread (KernelMode,
-                                    FALSE,
-                                    (PLARGE_INTEGER)&FiveSeconds);
+            KeSetEvent(&MmModifiedPageWriterEvent, 0, FALSE);
+            KeDelayExecutionThread(KernelMode, FALSE, (PLARGE_INTEGER)&FiveSeconds);
         }
 
         //
@@ -316,7 +305,8 @@ wait_complete:
         // Only free blocks are written.
         //
 
-        if (MmZeroPageFile) {
+        if (MmZeroPageFile)
+        {
 
             //
             // Get pages to complete the write request.
@@ -327,25 +317,28 @@ wait_complete:
             k = 0;
             Page = (PPFN_NUMBER)(Mdl + 1);
 
-            LOCK_PFN (OldIrql);
+            LOCK_PFN(OldIrql);
 
-            if (MmAvailablePages < (MmModifiedWriteClusterSize + 20)) {
+            if (MmAvailablePages < (MmModifiedWriteClusterSize + 20))
+            {
                 UNLOCK_PFN(OldIrql);
                 goto freecache;
             }
 
-            do {
-                *Page = MiRemoveZeroPage ((ULONG)j & MmSecondaryColorMask);
-                Pfn1 = MI_PFN_ELEMENT (*Page);
+            do
+            {
+                *Page = MiRemoveZeroPage((ULONG)j & MmSecondaryColorMask);
+                Pfn1 = MI_PFN_ELEMENT(*Page);
                 Pfn1->u3.e2.ReferenceCount = 1;
-                ASSERT (Pfn1->u2.ShareCount == 0);
+                ASSERT(Pfn1->u2.ShareCount == 0);
                 Pfn1->OriginalPte.u.Long = 0;
-                MI_SET_PFN_DELETED (Pfn1);
+                MI_SET_PFN_DELETED(Pfn1);
                 Page += 1;
                 j += 1;
             } while (j < MmModifiedWriteClusterSize);
 
-            while (k < MmNumberOfPagingFiles) {
+            while (k < MmNumberOfPagingFiles)
+            {
 
                 PagingFile = MmPagingFile[k];
 
@@ -360,19 +353,26 @@ wait_complete:
 
                 first = 0;
 
-                for (j = 1; j < PagingFile->Size; j += 1) {
+                for (j = 1; j < PagingFile->Size; j += 1)
+                {
 
-                    if (RtlCheckBit (PagingFile->Bitmap, j) == 0) {
+                    if (RtlCheckBit(PagingFile->Bitmap, j) == 0)
+                    {
 
-                        if (count == 0) {
+                        if (count == 0)
+                        {
                             first = j;
                         }
                         count += 1;
-                        if (count == MmModifiedWriteClusterSize) {
+                        if (count == MmModifiedWriteClusterSize)
+                        {
                             write = TRUE;
                         }
-                    } else {
-                        if (count != 0) {
+                    }
+                    else
+                    {
+                        if (count != 0)
+                        {
 
                             //
                             // Issue a write.
@@ -382,45 +382,42 @@ wait_complete:
                         }
                     }
 
-                    if ((j == (PagingFile->Size - 1)) &&
-                        (count != 0)) {
+                    if ((j == (PagingFile->Size - 1)) && (count != 0))
+                    {
                         write = TRUE;
                     }
 
-                    if (write) {
+                    if (write)
+                    {
 
-                        UNLOCK_PFN (OldIrql);
+                        UNLOCK_PFN(OldIrql);
 
                         StartingOffset.QuadPart = (LONGLONG)first << PAGE_SHIFT;
                         Mdl->ByteCount = count << PAGE_SHIFT;
-                        KeClearEvent (&IoEvent);
+                        KeClearEvent(&IoEvent);
 
-                        Status = IoSynchronousPageWrite (PagingFile->File,
-                                                         Mdl,
-                                                         &StartingOffset,
-                                                         &IoEvent,
-                                                         &IoStatus);
+                        Status = IoSynchronousPageWrite(PagingFile->File, Mdl, &StartingOffset, &IoEvent, &IoStatus);
 
                         //
                         // Ignore all I/O failures - there is nothing that can
                         // be done at this point.
                         //
 
-                        if (!NT_SUCCESS(Status)) {
-                            KeSetEvent (&IoEvent, 0, FALSE);
+                        if (!NT_SUCCESS(Status))
+                        {
+                            KeSetEvent(&IoEvent, 0, FALSE);
                         }
 
-                        Status = KeWaitForSingleObject (&IoEvent,
-                                                        WrPageOut,
-                                                        KernelMode,
-                                                        FALSE,
-                                                        (PLARGE_INTEGER)&MmTwentySeconds);
+                        Status = KeWaitForSingleObject(&IoEvent, WrPageOut, KernelMode, FALSE,
+                                                       (PLARGE_INTEGER)&MmTwentySeconds);
 
-                        if (Mdl->MdlFlags & MDL_MAPPED_TO_SYSTEM_VA) {
-                            MmUnmapLockedPages (Mdl->MappedSystemVa, Mdl);
+                        if (Mdl->MdlFlags & MDL_MAPPED_TO_SYSTEM_VA)
+                        {
+                            MmUnmapLockedPages(Mdl->MappedSystemVa, Mdl);
                         }
 
-                        if (Status == STATUS_TIMEOUT) {
+                        if (Status == STATUS_TIMEOUT)
+                        {
 
                             //
                             // The write did not complete in 20 seconds, assume
@@ -430,79 +427,84 @@ wait_complete:
 
                             j = 0;
                             Page = (PPFN_NUMBER)(Mdl + 1);
-                            LOCK_PFN (OldIrql);
-                            do {
-                                MiDecrementReferenceCount (*Page);
+                            LOCK_PFN(OldIrql);
+                            do
+                            {
+                                MiDecrementReferenceCount(*Page);
                                 Page += 1;
                                 j += 1;
                             } while (j < MmModifiedWriteClusterSize);
-                            UNLOCK_PFN (OldIrql);
+                            UNLOCK_PFN(OldIrql);
 
-                            MmUnlockPagableImageSection (ExPageLockHandle);
+                            MmUnlockPagableImageSection(ExPageLockHandle);
                             return FALSE;
                         }
 
                         count = 0;
                         write = FALSE;
-                        LOCK_PFN (OldIrql);
+                        LOCK_PFN(OldIrql);
                     }
                 }
                 k += 1;
             }
             j = 0;
             Page = (PPFN_NUMBER)(Mdl + 1);
-            do {
-                MiDecrementReferenceCount (*Page);
+            do
+            {
+                MiDecrementReferenceCount(*Page);
                 Page += 1;
                 j += 1;
             } while (j < MmModifiedWriteClusterSize);
-            UNLOCK_PFN (OldIrql);
+            UNLOCK_PFN(OldIrql);
         }
     }
 
 freecache:
 
-    if (PageLk == TRUE) {
-        MmUnlockPagableImageSection (ExPageLockHandle);
+    if (PageLk == TRUE)
+    {
+        MmUnlockPagableImageSection(ExPageLockHandle);
     }
 
-    if (PoCleanShutdownEnabled ()) {
+    if (PoCleanShutdownEnabled())
+    {
 
         //
         // Empty the unused segment list.
         //
 
-        LOCK_PFN (OldIrql);
+        LOCK_PFN(OldIrql);
         MmUnusedSegmentForceFree = (ULONG)-1;
-        KeSetEvent (&MmUnusedSegmentCleanup, 0, FALSE);
+        KeSetEvent(&MmUnusedSegmentCleanup, 0, FALSE);
 
         //
         // Give it 5 seconds to empty otherwise assume the filesystems are
         // hung and march on.
         //
 
-        for (count = 0; count < 500; count += 1) {
+        for (count = 0; count < 500; count += 1)
+        {
 
-            if (IsListEmpty(&MmUnusedSegmentList)) {
+            if (IsListEmpty(&MmUnusedSegmentList))
+            {
                 break;
             }
 
-            UNLOCK_PFN (OldIrql);
+            UNLOCK_PFN(OldIrql);
 
-            KeDelayExecutionThread (KernelMode,
-                                    FALSE,
-                                    (PLARGE_INTEGER)&MmShortTime);
-            LOCK_PFN (OldIrql);
+            KeDelayExecutionThread(KernelMode, FALSE, (PLARGE_INTEGER)&MmShortTime);
+            LOCK_PFN(OldIrql);
 
 #if DBG
-            if (count == 400) {
+            if (count == 400)
+            {
 
                 //
                 // Everything should have been flushed by now.  Give the
                 // filesystem team a chance to debug this on checked builds.
                 //
 
-                ASSERT (FALSE);
+                ASSERT(FALSE);
             }
 #endif
 
@@ -511,13 +513,14 @@ freecache:
             // additional entries.
             //
 
-            if (MmUnusedSegmentForceFree == 0) {
+            if (MmUnusedSegmentForceFree == 0)
+            {
                 MmUnusedSegmentForceFree = (ULONG)-1;
-                KeSetEvent (&MmUnusedSegmentCleanup, 0, FALSE);
+                KeSetEvent(&MmUnusedSegmentCleanup, 0, FALSE);
             }
         }
 
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
 
         //
         // Get rid of any paged pool references as they will be illegal
@@ -525,36 +528,31 @@ freecache:
         // will have shutdown.
         //
 
-        KeWaitForSingleObject (&MmSystemLoadLock,
-                               WrVirtualMemory,
-                               KernelMode,
-                               FALSE,
-                               (PLARGE_INTEGER)NULL);
+        KeWaitForSingleObject(&MmSystemLoadLock, WrVirtualMemory, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
 
         NextEntry = PsLoadedModuleList.Flink;
-        while (NextEntry != &PsLoadedModuleList) {
+        while (NextEntry != &PsLoadedModuleList)
+        {
 
-            DataTableEntry = CONTAINING_RECORD (NextEntry,
-                                                KLDR_DATA_TABLE_ENTRY,
-                                                InLoadOrderLinks);
+            DataTableEntry = CONTAINING_RECORD(NextEntry, KLDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
             ImportList = (PLOAD_IMPORTS)DataTableEntry->LoadedImports;
 
-            if ((ImportList != (PVOID)LOADED_AT_BOOT) &&
-                (ImportList != (PVOID)NO_IMPORTS_USED) &&
-                (!SINGLE_ENTRY(ImportList))) {
+            if ((ImportList != (PVOID)LOADED_AT_BOOT) && (ImportList != (PVOID)NO_IMPORTS_USED) &&
+                (!SINGLE_ENTRY(ImportList)))
+            {
 
                 ImportListSize = ImportList->Count * sizeof(PVOID) + sizeof(SIZE_T);
-                ImportListNonPaged = (PLOAD_IMPORTS) ExAllocatePoolWithTag (NonPagedPool,
-                                                                    ImportListSize,
-                                                                    'TDmM');
+                ImportListNonPaged = (PLOAD_IMPORTS)ExAllocatePoolWithTag(NonPagedPool, ImportListSize, 'TDmM');
 
-                if (ImportListNonPaged != NULL) {
-                    RtlCopyMemory (ImportListNonPaged, ImportList, ImportListSize);
-                    ExFreePool (ImportList);
+                if (ImportListNonPaged != NULL)
+                {
+                    RtlCopyMemory(ImportListNonPaged, ImportList, ImportListSize);
+                    ExFreePool(ImportList);
                     DataTableEntry->LoadedImports = ImportListNonPaged;
                 }
-                else {
+                else
+                {
 
                     //
                     // Don't bother with the clean shutdown at this point.
@@ -569,8 +567,9 @@ freecache:
             // Free the full DLL name as it is pagable.
             //
 
-            if (DataTableEntry->FullDllName.Buffer != NULL) {
-                ExFreePool (DataTableEntry->FullDllName.Buffer);
+            if (DataTableEntry->FullDllName.Buffer != NULL)
+            {
+                ExFreePool(DataTableEntry->FullDllName.Buffer);
                 DataTableEntry->FullDllName.Buffer = NULL;
             }
 
@@ -584,12 +583,13 @@ freecache:
         // so assert here to ensure this.
         //
 
-        if (PoCleanShutdownEnabled()) {
-            ASSERT (IsListEmpty (&MmSessionWideAddressList) != 0);
-            ExFreePool (MiSessionIdBitmap);
+        if (PoCleanShutdownEnabled())
+        {
+            ASSERT(IsListEmpty(&MmSessionWideAddressList) != 0);
+            ExFreePool(MiSessionIdBitmap);
         }
 
-        KeReleaseMutant (&MmSystemLoadLock, 1, FALSE, FALSE);
+        KeReleaseMutant(&MmSystemLoadLock, 1, FALSE, FALSE);
 
         //
         // Close all the pagefile handles, note we still have an object
@@ -599,7 +599,8 @@ freecache:
         // done here however as it will reference pagable structures.
         //
 
-        for (k = 0; k < MmNumberOfPagingFiles; k += 1) {
+        for (k = 0; k < MmNumberOfPagingFiles; k += 1)
+        {
 
             //
             // Free each pagefile name now as it resides in paged pool and
@@ -610,22 +611,20 @@ freecache:
             // try-except-wrapped GetSystemInformation APIs and all the
             // user processes are gone already.
             //
-        
-            ASSERT (MmPagingFile[k]->PageFileName.Buffer != NULL);
-            ExFreePool (MmPagingFile[k]->PageFileName.Buffer);
+
+            ASSERT(MmPagingFile[k]->PageFileName.Buffer != NULL);
+            ExFreePool(MmPagingFile[k]->PageFileName.Buffer);
             MmPagingFile[k]->PageFileName.Buffer = NULL;
 
-            ZwClose (MmPagingFile[k]->FileHandle);
+            ZwClose(MmPagingFile[k]->FileHandle);
         }
     }
 
     return TRUE;
 }
-
+
 BOOLEAN
-MmShutdownSystem (
-    IN ULONG Phase
-    )
+MmShutdownSystem(IN ULONG Phase)
 
 /*++
 
@@ -664,11 +663,13 @@ Return Value:
 {
     ULONG i;
 
-    if (Phase == 0) {
-        return MiShutdownSystem ();
+    if (Phase == 0)
+    {
+        return MiShutdownSystem();
     }
 
-    if (Phase == 1) {
+    if (Phase == 1)
+    {
 
         //
         // The filesystem has shutdown.  References to pagable code or data
@@ -678,18 +679,20 @@ Return Value:
         // dereferenced causing those drivers to unload as well.
         //
 
-        if (MmSystemShutdown < 2) {
+        if (MmSystemShutdown < 2)
+        {
 
             MmSystemShutdown = 2;
 
-            if (PoCleanShutdownEnabled() & PO_CLEAN_SHUTDOWN_PAGING) {
+            if (PoCleanShutdownEnabled() & PO_CLEAN_SHUTDOWN_PAGING)
+            {
 
                 //
                 // Make any IoPageRead at this point illegal.  Detect this by
                 // purging all system pagable memory.
                 //
 
-                MmTrimAllSystemPagableMemory (TRUE);
+                MmTrimAllSystemPagableMemory(TRUE);
 
                 //
                 // There should be no dirty pages destined for the filesystem.
@@ -697,42 +700,42 @@ Return Value:
                 // builds.
                 //
 
-                ASSERT (MmModifiedPageListHead.Total == MmTotalPagesForPagingFile);
+                ASSERT(MmModifiedPageListHead.Total == MmTotalPagesForPagingFile);
                 //
                 // Dereference all the pagefile objects to trigger a cascading
                 // unload of the storage stack as this should be the last
                 // reference to their driver objects.
                 //
 
-                for (i = 0; i < MmNumberOfPagingFiles; i += 1) {
-                    ObDereferenceObject (MmPagingFile[i]->File);
+                for (i = 0; i < MmNumberOfPagingFiles; i += 1)
+                {
+                    ObDereferenceObject(MmPagingFile[i]->File);
                 }
             }
         }
         return TRUE;
     }
 
-    ASSERT (Phase == 2);
+    ASSERT(Phase == 2);
 
     //
     // Check for resource leaks and bugcheck if any are found.
     //
 
-    if (MmSystemShutdown < 3) {
+    if (MmSystemShutdown < 3)
+    {
         MmSystemShutdown = 3;
-        if (PoCleanShutdownEnabled ()) {
-            MiReleaseAllMemory ();
+        if (PoCleanShutdownEnabled())
+        {
+            MiReleaseAllMemory();
         }
     }
 
     return TRUE;
 }
 
-
-VOID
-MiReleaseAllMemory (
-    VOID
-    )
+
+VOID MiReleaseAllMemory(VOID)
 
 /*++
 
@@ -767,7 +770,7 @@ Environment:
     PDRIVER_SPECIFIED_VERIFIER_THUNKS ThunkTableBase;
     PMMMOD_WRITER_MDL_ENTRY ModWriterEntry;
 
-    ASSERT (MmUnusedSegmentList.Flink == &MmUnusedSegmentList);
+    ASSERT(MmUnusedSegmentList.Flink == &MmUnusedSegmentList);
 
     //
     // Don't clear free pages so problems can be debugged.
@@ -775,37 +778,40 @@ Environment:
 
     MiZeroingDisabled = TRUE;
 
-    if (MiMirrorBitMap != NULL) {
-        ExFreePool (MiMirrorBitMap);
-        ASSERT (MiMirrorBitMap2);
-        ExFreePool (MiMirrorBitMap2);
+    if (MiMirrorBitMap != NULL)
+    {
+        ExFreePool(MiMirrorBitMap);
+        ASSERT(MiMirrorBitMap2);
+        ExFreePool(MiMirrorBitMap2);
     }
 
     //
     // Free the unloaded driver list.
     //
 
-    if (MmUnloadedDrivers != NULL) {
+    if (MmUnloadedDrivers != NULL)
+    {
         Entry = &MmUnloadedDrivers[0];
-        for (i = 0; i < MI_UNLOADED_DRIVERS; i += 1) {
-            if (Entry->Name.Buffer != NULL) {
-                RtlFreeUnicodeString (&Entry->Name);
+        for (i = 0; i < MI_UNLOADED_DRIVERS; i += 1)
+        {
+            if (Entry->Name.Buffer != NULL)
+            {
+                RtlFreeUnicodeString(&Entry->Name);
             }
             Entry += 1;
         }
-        ExFreePool (MmUnloadedDrivers);
+        ExFreePool(MmUnloadedDrivers);
     }
 
     NextEntry = MmLoadedUserImageList.Flink;
-    while (NextEntry != &MmLoadedUserImageList) {
+    while (NextEntry != &MmLoadedUserImageList)
+    {
 
-        DataTableEntry = CONTAINING_RECORD (NextEntry,
-                                            KLDR_DATA_TABLE_ENTRY,
-                                            InLoadOrderLinks);
+        DataTableEntry = CONTAINING_RECORD(NextEntry, KLDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
         NextEntry = NextEntry->Flink;
 
-        ExFreePool ((PVOID)DataTableEntry);
+        ExFreePool((PVOID)DataTableEntry);
     }
 
     //
@@ -813,46 +819,48 @@ Environment:
     //
 
     NextEntry = PsLoadedModuleList.Flink;
-    while (NextEntry != &PsLoadedModuleList) {
+    while (NextEntry != &PsLoadedModuleList)
+    {
 
-        DataTableEntry = CONTAINING_RECORD (NextEntry,
-                                            KLDR_DATA_TABLE_ENTRY,
-                                            InLoadOrderLinks);
+        DataTableEntry = CONTAINING_RECORD(NextEntry, KLDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
         ImportList = (PLOAD_IMPORTS)DataTableEntry->LoadedImports;
 
-        if ((ImportList != (PVOID)LOADED_AT_BOOT) &&
-            (ImportList != (PVOID)NO_IMPORTS_USED) &&
-            (!SINGLE_ENTRY(ImportList))) {
+        if ((ImportList != (PVOID)LOADED_AT_BOOT) && (ImportList != (PVOID)NO_IMPORTS_USED) &&
+            (!SINGLE_ENTRY(ImportList)))
+        {
 
-                ExFreePool (ImportList);
+            ExFreePool(ImportList);
         }
 
-        if (DataTableEntry->FullDllName.Buffer != NULL) {
-            ASSERT (DataTableEntry->FullDllName.Buffer == DataTableEntry->BaseDllName.Buffer);
+        if (DataTableEntry->FullDllName.Buffer != NULL)
+        {
+            ASSERT(DataTableEntry->FullDllName.Buffer == DataTableEntry->BaseDllName.Buffer);
         }
 
         NextEntry = NextEntry->Flink;
 
-        ExFreePool ((PVOID)DataTableEntry);
+        ExFreePool((PVOID)DataTableEntry);
     }
 
     //
     // Free the physical memory descriptor block.
     //
 
-    ExFreePool (MmPhysicalMemoryBlock);
+    ExFreePool(MmPhysicalMemoryBlock);
 
     //
     // Free the system views structure.
     //
 
-    if (MmSession.SystemSpaceViewTable != NULL) {
-        ExFreePool (MmSession.SystemSpaceViewTable);
+    if (MmSession.SystemSpaceViewTable != NULL)
+    {
+        ExFreePool(MmSession.SystemSpaceViewTable);
     }
 
-    if (MmSession.SystemSpaceBitMap != NULL) {
-        ExFreePool (MmSession.SystemSpaceBitMap);
+    if (MmSession.SystemSpaceBitMap != NULL)
+    {
+        ExFreePool(MmSession.SystemSpaceBitMap);
     }
 
     //
@@ -861,62 +869,66 @@ Environment:
     // to be freed.
     //
 
-    for (i = 0; i < MmNumberOfPagingFiles; i += 1) {
-        ASSERT (MmPagingFile[i]->PageFileName.Buffer == NULL);
-        ExFreePool (MmPagingFile[i]->Entry[0]);
-        ExFreePool (MmPagingFile[i]->Entry[1]);
-        ExFreePool (MmPagingFile[i]->Bitmap);
-        ExFreePool (MmPagingFile[i]);
+    for (i = 0; i < MmNumberOfPagingFiles; i += 1)
+    {
+        ASSERT(MmPagingFile[i]->PageFileName.Buffer == NULL);
+        ExFreePool(MmPagingFile[i]->Entry[0]);
+        ExFreePool(MmPagingFile[i]->Entry[1]);
+        ExFreePool(MmPagingFile[i]->Bitmap);
+        ExFreePool(MmPagingFile[i]);
     }
 
-    ASSERT (MmNumberOfMappedMdlsInUse == 0);
+    ASSERT(MmNumberOfMappedMdlsInUse == 0);
 
     i = 0;
-    while (IsListEmpty (&MmMappedFileHeader.ListHead) != 0) {
+    while (IsListEmpty(&MmMappedFileHeader.ListHead) != 0)
+    {
 
-        ModWriterEntry = (PMMMOD_WRITER_MDL_ENTRY)RemoveHeadList (
-                                    &MmMappedFileHeader.ListHead);
+        ModWriterEntry = (PMMMOD_WRITER_MDL_ENTRY)RemoveHeadList(&MmMappedFileHeader.ListHead);
 
-        ExFreePool (ModWriterEntry);
+        ExFreePool(ModWriterEntry);
         i += 1;
     }
-    ASSERT (i == MmNumberOfMappedMdls);
+    ASSERT(i == MmNumberOfMappedMdls);
 
     //
     // Free the paged pool bitmaps.
     //
 
-    ExFreePool (MmPagedPoolInfo.PagedPoolAllocationMap);
-    ExFreePool (MmPagedPoolInfo.EndOfPagedPoolBitmap);
+    ExFreePool(MmPagedPoolInfo.PagedPoolAllocationMap);
+    ExFreePool(MmPagedPoolInfo.EndOfPagedPoolBitmap);
 
-    if (VerifierLargePagedPoolMap != NULL) {
-        ExFreePool (VerifierLargePagedPoolMap);
+    if (VerifierLargePagedPoolMap != NULL)
+    {
+        ExFreePool(VerifierLargePagedPoolMap);
     }
 
     //
     // Free the inpage structures.
     //
 
-    while (ExQueryDepthSList (&MmInPageSupportSListHead) != 0) {
+    while (ExQueryDepthSList(&MmInPageSupportSListHead) != 0)
+    {
 
-        SingleListEntry = InterlockedPopEntrySList (&MmInPageSupportSListHead);
+        SingleListEntry = InterlockedPopEntrySList(&MmInPageSupportSListHead);
 
-        if (SingleListEntry != NULL) {
-            Support = CONTAINING_RECORD (SingleListEntry,
-                                         MMINPAGE_SUPPORT,
-                                         ListEntry);
+        if (SingleListEntry != NULL)
+        {
+            Support = CONTAINING_RECORD(SingleListEntry, MMINPAGE_SUPPORT, ListEntry);
 
-            ASSERT (Support->u1.e1.PrefetchMdlHighBits == 0);
-            ExFreePool (Support);
+            ASSERT(Support->u1.e1.PrefetchMdlHighBits == 0);
+            ExFreePool(Support);
         }
     }
 
-    while (ExQueryDepthSList (&MmEventCountSListHead) != 0) {
+    while (ExQueryDepthSList(&MmEventCountSListHead) != 0)
+    {
 
-        EventSupport = (PEVENT_COUNTER) InterlockedPopEntrySList (&MmEventCountSListHead);
+        EventSupport = (PEVENT_COUNTER)InterlockedPopEntrySList(&MmEventCountSListHead);
 
-        if (EventSupport != NULL) {
-            ExFreePool (EventSupport);
+        if (EventSupport != NULL)
+        {
+            ExFreePool(EventSupport);
         }
     }
 
@@ -926,26 +938,25 @@ Environment:
     //
 
     NextEntry = MiVerifierDriverAddedThunkListHead.Flink;
-    if (NextEntry != NULL) {
-        while (NextEntry != &MiVerifierDriverAddedThunkListHead) {
+    if (NextEntry != NULL)
+    {
+        while (NextEntry != &MiVerifierDriverAddedThunkListHead)
+        {
 
-            ThunkTableBase = CONTAINING_RECORD (NextEntry,
-                                                DRIVER_SPECIFIED_VERIFIER_THUNKS,
-                                                ListEntry );
+            ThunkTableBase = CONTAINING_RECORD(NextEntry, DRIVER_SPECIFIED_VERIFIER_THUNKS, ListEntry);
 
             NextEntry = NextEntry->Flink;
-            ExFreePool (ThunkTableBase);
+            ExFreePool(ThunkTableBase);
         }
     }
 
     NextEntry = MiSuspectDriverList.Flink;
-    while (NextEntry != &MiSuspectDriverList) {
+    while (NextEntry != &MiSuspectDriverList)
+    {
 
-        Verifier = CONTAINING_RECORD(NextEntry,
-                                     MI_VERIFIER_DRIVER_ENTRY,
-                                     Links);
+        Verifier = CONTAINING_RECORD(NextEntry, MI_VERIFIER_DRIVER_ENTRY, Links);
 
         NextEntry = NextEntry->Flink;
-        ExFreePool (Verifier);
+        ExFreePool(Verifier);
     }
 }

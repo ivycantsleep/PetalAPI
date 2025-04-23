@@ -28,11 +28,7 @@ Revision History:
 #pragma alloc_text(INIT, VfInitVerifier)
 #endif // ALLOC_PRAGMA
 
-VOID
-FASTCALL
-VfInitVerifier(
-    IN  ULONG   MmFlags
-    )
+VOID FASTCALL VfInitVerifier(IN ULONG MmFlags)
 /*++
 
 Routine Description:
@@ -72,4 +68,3 @@ Return Value:
     IovUtilInit();
     PpvUtilInit();
 }
-

@@ -44,7 +44,7 @@ Revision History:
 //  Trace level for the module
 //
 
-#define Dbg                              (0x10000000)
+#define Dbg (0x10000000)
 
 //
 //  Some special debugging code
@@ -53,7 +53,9 @@ Revision History:
 #if DBG
 
 ULONG DaveDebug = 0;
-#define DavePrint if (DaveDebug) DbgPrint
+#define DavePrint  \
+    if (DaveDebug) \
+    DbgPrint
 
 #else
 
@@ -66,7 +68,7 @@ ULONG DaveDebug = 0;
 //
 
 #undef MODULE_POOL_TAG
-#define MODULE_POOL_TAG                  ('drSF')
+#define MODULE_POOL_TAG ('drSF')
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, FsRtlDissectDbcs)
@@ -76,14 +78,10 @@ ULONG DaveDebug = 0;
 #pragma alloc_text(PAGE, FsRtlIsHpfsDbcsLegal)
 #endif
 
-
+
 BOOLEAN
-FsRtlIsFatDbcsLegal (
-    IN ANSI_STRING DbcsName,
-    IN BOOLEAN WildCardsPermissible,
-    IN BOOLEAN PathNamePermissible,
-    IN BOOLEAN LeadingBackslashPermissible
-    )
+FsRtlIsFatDbcsLegal(IN ANSI_STRING DbcsName, IN BOOLEAN WildCardsPermissible, IN BOOLEAN PathNamePermissible,
+                    IN BOOLEAN LeadingBackslashPermissible)
 
 /*++
 
@@ -144,23 +142,21 @@ Return Value:
     //  Empty names are not valid.
     //
 
-    if ( DbcsName.Length == 0 ) { return FALSE; }
+    if (DbcsName.Length == 0)
+    {
+        return FALSE;
+    }
 
     //
     //  If Wild Cards are OK, then for directory enumeration to work
     //  correctly we have to accept . and ..
     //
 
-    if ( WildCardsPermissible &&
-         ( ( (DbcsName.Length == 1) &&
-             ((DbcsName.Buffer[0] == '.') ||
-              (DbcsName.Buffer[0] == ANSI_DOS_DOT)) )
-           ||
-           ( (DbcsName.Length == 2) &&
-             ( ((DbcsName.Buffer[0] == '.') &&
-                (DbcsName.Buffer[1] == '.')) ||
-               ((DbcsName.Buffer[0] == ANSI_DOS_DOT) &&
-                (DbcsName.Buffer[1] == ANSI_DOS_DOT)) ) ) ) ) {
+    if (WildCardsPermissible &&
+        (((DbcsName.Length == 1) && ((DbcsName.Buffer[0] == '.') || (DbcsName.Buffer[0] == ANSI_DOS_DOT))) ||
+         ((DbcsName.Length == 2) && (((DbcsName.Buffer[0] == '.') && (DbcsName.Buffer[1] == '.')) ||
+                                     ((DbcsName.Buffer[0] == ANSI_DOS_DOT) && (DbcsName.Buffer[1] == ANSI_DOS_DOT))))))
+    {
 
         return TRUE;
     }
@@ -169,45 +165,57 @@ Return Value:
     //  If a leading \ is OK, skip over it (if there's more)
     //
 
-    if ( DbcsName.Buffer[0] == '\\' ) {
+    if (DbcsName.Buffer[0] == '\\')
+    {
 
-        if ( LeadingBackslashPermissible ) {
+        if (LeadingBackslashPermissible)
+        {
 
-            if ( (DbcsName.Length > 1) ) {
+            if ((DbcsName.Length > 1))
+            {
 
                 DbcsName.Buffer += 1;
                 DbcsName.Length -= 1;
-
-            } else { return TRUE; }
-
-        } else { return FALSE; }
+            }
+            else
+            {
+                return TRUE;
+            }
+        }
+        else
+        {
+            return FALSE;
+        }
     }
 
     //
     //  If we got a path name, check each componant.
     //
 
-    if ( PathNamePermissible ) {
+    if (PathNamePermissible)
+    {
 
         ANSI_STRING FirstName;
         ANSI_STRING RemainingName;
 
         RemainingName = DbcsName;
 
-        while ( RemainingName.Length != 0 ) {
+        while (RemainingName.Length != 0)
+        {
 
             //
             //  This will catch the case of an illegal double backslash.
             //
 
-            if ( RemainingName.Buffer[0] == '\\' ) { return FALSE; }
+            if (RemainingName.Buffer[0] == '\\')
+            {
+                return FALSE;
+            }
 
             FsRtlDissectDbcs(RemainingName, &FirstName, &RemainingName);
 
-            if ( !FsRtlIsFatDbcsLegal( FirstName,
-                                       WildCardsPermissible,
-                                       FALSE,
-                                       FALSE) ) {
+            if (!FsRtlIsFatDbcsLegal(FirstName, WildCardsPermissible, FALSE, FALSE))
+            {
 
                 return FALSE;
             }
@@ -224,19 +232,22 @@ Return Value:
     //  If this name contains wild cards, just check for invalid characters.
     //
 
-    if ( WildCardsPermissible && FsRtlDoesDbcsContainWildCards(&DbcsName) ) {
+    if (WildCardsPermissible && FsRtlDoesDbcsContainWildCards(&DbcsName))
+    {
 
-        for ( Index = 0; Index < DbcsName.Length; Index += 1 ) {
+        for (Index = 0; Index < DbcsName.Length; Index += 1)
+        {
 
-            Char = DbcsName.Buffer[ Index ];
+            Char = DbcsName.Buffer[Index];
 
             //
             //  Skip over any Dbcs chacters
             //
 
-            if ( FsRtlIsLeadDbcsCharacter( Char ) ) {
+            if (FsRtlIsLeadDbcsCharacter(Char))
+            {
 
-                ASSERT( Index != (ULONG)(DbcsName.Length - 1) );
+                ASSERT(Index != (ULONG)(DbcsName.Length - 1));
                 Index += 1;
                 continue;
             }
@@ -246,7 +257,8 @@ Return Value:
             //  wild cards are permissible.
             //
 
-            if ( !FsRtlIsAnsiCharacterLegalFat(Char, WildCardsPermissible) ) {
+            if (!FsRtlIsAnsiCharacterLegalFat(Char, WildCardsPermissible))
+            {
                 return FALSE;
             }
         }
@@ -260,17 +272,22 @@ Return Value:
     //  more than 12 characters (including a single period)
     //
 
-    if ( DbcsName.Length > 12 ) { return FALSE; }
+    if (DbcsName.Length > 12)
+    {
+        return FALSE;
+    }
 
-    for ( Index = 0; Index < DbcsName.Length; Index += 1 ) {
+    for (Index = 0; Index < DbcsName.Length; Index += 1)
+    {
 
-        Char = DbcsName.Buffer[ Index ];
+        Char = DbcsName.Buffer[Index];
 
         //
         //  Skip over and Dbcs chacters
         //
 
-        if ( FsRtlIsLeadDbcsCharacter( Char ) ) {
+        if (FsRtlIsLeadDbcsCharacter(Char))
+        {
 
             //
             //  FsRtlIsFatDbcsLegal(): fat name part and extension part dbcs check
@@ -283,8 +300,8 @@ Return Value:
             //     byte range, it's error
             //
 
-            if ( (!ExtensionPresent && (Index >= 7)) ||
-                 ( Index == (ULONG)(DbcsName.Length - 1) ) ) {
+            if ((!ExtensionPresent && (Index >= 7)) || (Index == (ULONG)(DbcsName.Length - 1)))
+            {
                 return FALSE;
             }
 
@@ -298,12 +315,14 @@ Return Value:
         //  wild cards are permissible.
         //
 
-        if ( !FsRtlIsAnsiCharacterLegalFat(Char, WildCardsPermissible) ) {
+        if (!FsRtlIsAnsiCharacterLegalFat(Char, WildCardsPermissible))
+        {
 
             return FALSE;
         }
 
-        if ( (Char == '.') || (Char == ANSI_DOS_DOT) ) {
+        if ((Char == '.') || (Char == ANSI_DOS_DOT))
+        {
 
             //
             //  We stepped onto a period.  We require the following things:
@@ -314,10 +333,9 @@ Return Value:
             //      - The previous character can't be a space.
             //
 
-            if ( (Index == 0) ||
-                 ExtensionPresent ||
-                 (DbcsName.Length - (Index + 1) > 3) ||
-                 (DbcsName.Buffer[Index - 1] == ' ') ) {
+            if ((Index == 0) || ExtensionPresent || (DbcsName.Length - (Index + 1) > 3) ||
+                (DbcsName.Buffer[Index - 1] == ' '))
+            {
 
                 return FALSE;
             }
@@ -329,25 +347,27 @@ Return Value:
         //  The base part of the name can't be more than 8 characters long.
         //
 
-        if ( (Index >= 8) && !ExtensionPresent ) { return FALSE; }
+        if ((Index >= 8) && !ExtensionPresent)
+        {
+            return FALSE;
+        }
     }
 
     //
     //  The name cannot end in a space or a period.
     //
 
-    if ( (Char == ' ') || (Char == '.') || (Char == ANSI_DOS_DOT)) { return FALSE; }
+    if ((Char == ' ') || (Char == '.') || (Char == ANSI_DOS_DOT))
+    {
+        return FALSE;
+    }
 
     return TRUE;
 }
-
+
 BOOLEAN
-FsRtlIsHpfsDbcsLegal (
-    IN ANSI_STRING DbcsName,
-    IN BOOLEAN WildCardsPermissible,
-    IN BOOLEAN PathNamePermissible,
-    IN BOOLEAN LeadingBackslashPermissible
-    )
+FsRtlIsHpfsDbcsLegal(IN ANSI_STRING DbcsName, IN BOOLEAN WildCardsPermissible, IN BOOLEAN PathNamePermissible,
+                     IN BOOLEAN LeadingBackslashPermissible)
 
 /*++
 
@@ -405,23 +425,21 @@ Return Value:
     //  Empty names are not valid.
     //
 
-    if ( DbcsName.Length == 0 ) { return FALSE; }
+    if (DbcsName.Length == 0)
+    {
+        return FALSE;
+    }
 
     //
     //  If Wild Cards are OK, then for directory enumeration to work
     //  correctly we have to accept . and ..
     //
 
-    if ( WildCardsPermissible &&
-         ( ( (DbcsName.Length == 1) &&
-             ((DbcsName.Buffer[0] == '.') ||
-              (DbcsName.Buffer[0] == ANSI_DOS_DOT)) )
-           ||
-           ( (DbcsName.Length == 2) &&
-             ( ((DbcsName.Buffer[0] == '.') &&
-                (DbcsName.Buffer[1] == '.')) ||
-               ((DbcsName.Buffer[0] == ANSI_DOS_DOT) &&
-                (DbcsName.Buffer[1] == ANSI_DOS_DOT)) ) ) ) ) {
+    if (WildCardsPermissible &&
+        (((DbcsName.Length == 1) && ((DbcsName.Buffer[0] == '.') || (DbcsName.Buffer[0] == ANSI_DOS_DOT))) ||
+         ((DbcsName.Length == 2) && (((DbcsName.Buffer[0] == '.') && (DbcsName.Buffer[1] == '.')) ||
+                                     ((DbcsName.Buffer[0] == ANSI_DOS_DOT) && (DbcsName.Buffer[1] == ANSI_DOS_DOT))))))
+    {
 
         return TRUE;
     }
@@ -430,45 +448,57 @@ Return Value:
     //  If a leading \ is OK, skip over it (if there's more)
     //
 
-    if ( DbcsName.Buffer[0] == '\\' ) {
+    if (DbcsName.Buffer[0] == '\\')
+    {
 
-        if ( LeadingBackslashPermissible ) {
+        if (LeadingBackslashPermissible)
+        {
 
-            if ( (DbcsName.Length > 1) ) {
+            if ((DbcsName.Length > 1))
+            {
 
                 DbcsName.Buffer += 1;
                 DbcsName.Length -= 1;
-
-            } else { return TRUE; }
-
-        } else { return FALSE; }
+            }
+            else
+            {
+                return TRUE;
+            }
+        }
+        else
+        {
+            return FALSE;
+        }
     }
 
     //
     //  If we got a path name, check each componant.
     //
 
-    if ( PathNamePermissible ) {
+    if (PathNamePermissible)
+    {
 
         ANSI_STRING FirstName;
         ANSI_STRING RemainingName;
 
         RemainingName = DbcsName;
 
-        while ( RemainingName.Length != 0 ) {
+        while (RemainingName.Length != 0)
+        {
 
             //
             //  This will catch the case of an illegal double backslash.
             //
 
-            if ( RemainingName.Buffer[0] == '\\' ) { return FALSE; }
+            if (RemainingName.Buffer[0] == '\\')
+            {
+                return FALSE;
+            }
 
             FsRtlDissectDbcs(RemainingName, &FirstName, &RemainingName);
 
-            if ( !FsRtlIsHpfsDbcsLegal( FirstName,
-                                       WildCardsPermissible,
-                                       FALSE,
-                                       FALSE) ) {
+            if (!FsRtlIsHpfsDbcsLegal(FirstName, WildCardsPermissible, FALSE, FALSE))
+            {
 
                 return FALSE;
             }
@@ -486,17 +516,22 @@ Return Value:
     //  more than 255 characters
     //
 
-    if ( DbcsName.Length > 255 ) { return FALSE; }
+    if (DbcsName.Length > 255)
+    {
+        return FALSE;
+    }
 
-    for ( Index = 0; Index < DbcsName.Length; Index += 1 ) {
+    for (Index = 0; Index < DbcsName.Length; Index += 1)
+    {
 
-        Char = DbcsName.Buffer[ Index ];
+        Char = DbcsName.Buffer[Index];
 
         //
         //  Skip over and Dbcs chacters
         //
 
-        if ( FsRtlIsLeadDbcsCharacter( Char ) ) {
+        if (FsRtlIsLeadDbcsCharacter(Char))
+        {
 
             //
             //  FsRtlIsHpfsDbcsLegal () hpfs dbcs check
@@ -505,7 +540,8 @@ Return Value:
             //  dbcs leading byte range, it's error.
             //
 
-            if ( Index == (ULONG)(DbcsName.Length - 1) ) {
+            if (Index == (ULONG)(DbcsName.Length - 1))
+            {
 
                 return FALSE;
             }
@@ -519,7 +555,8 @@ Return Value:
         //  wild cards are permissible.
         //
 
-        if ( !FsRtlIsAnsiCharacterLegalHpfs(Char, WildCardsPermissible) ) {
+        if (!FsRtlIsAnsiCharacterLegalHpfs(Char, WildCardsPermissible))
+        {
 
             return FALSE;
         }
@@ -529,7 +566,8 @@ Return Value:
     //  The name cannot end in a space or a period.
     //
 
-    if ( (Char == ' ') || (Char == '.') || (Char == ANSI_DOS_DOT) ) {
+    if ((Char == ' ') || (Char == '.') || (Char == ANSI_DOS_DOT))
+    {
 
         return FALSE;
     }
@@ -537,13 +575,8 @@ Return Value:
     return TRUE;
 }
 
-
-VOID
-FsRtlDissectDbcs (
-    IN ANSI_STRING Path,
-    OUT PANSI_STRING FirstName,
-    OUT PANSI_STRING RemainingName
-    )
+
+VOID FsRtlDissectDbcs(IN ANSI_STRING Path, OUT PANSI_STRING FirstName, OUT PANSI_STRING RemainingName)
 
 /*++
 
@@ -625,7 +658,8 @@ Return Value:
     //  Check for an empty input string
     //
 
-    if (PathLength == 0) {
+    if (PathLength == 0)
+    {
 
         return;
     }
@@ -634,7 +668,8 @@ Return Value:
     //  Skip over a starting backslash, and make sure there is more.
     //
 
-    if ( Path.Buffer[0] == '\\' ) {
+    if (Path.Buffer[0] == '\\')
+    {
 
         i = 1;
     }
@@ -644,16 +679,16 @@ Return Value:
     //  of the string, remembering where we started;
     //
 
-    for ( FirstNameStart = i;
-          (i < PathLength) && (Path.Buffer[i] != '\\');
-          i += 1 ) {
+    for (FirstNameStart = i; (i < PathLength) && (Path.Buffer[i] != '\\'); i += 1)
+    {
 
         //
         //  If this is the first byte of a Dbcs character, skip over the
         //  next byte as well.
         //
 
-        if ( FsRtlIsLeadDbcsCharacter( Path.Buffer[i] ) ) {
+        if (FsRtlIsLeadDbcsCharacter(Path.Buffer[i]))
+        {
 
             i += 1;
         }
@@ -675,7 +710,8 @@ Return Value:
     //  a trailing backslash, the length will get correctly set to zero.
     //
 
-    if (i < PathLength) {
+    if (i < PathLength)
+    {
 
         RemainingName->Length = (USHORT)(PathLength - (i + 1));
         RemainingName->MaximumLength = RemainingName->Length;
@@ -689,11 +725,9 @@ Return Value:
     return;
 }
 
-
+
 BOOLEAN
-FsRtlDoesDbcsContainWildCards (
-    IN PANSI_STRING Name
-    )
+FsRtlDoesDbcsContainWildCards(IN PANSI_STRING Name)
 
 /*++
 
@@ -723,21 +757,24 @@ Return Value:
     //  character
     //
 
-    for (i = 0; i < Name->Length; i += 1) {
+    for (i = 0; i < Name->Length; i += 1)
+    {
 
         //
         //  check for dbcs character because we'll just skip over those
         //
 
-        if (FsRtlIsLeadDbcsCharacter( Name->Buffer[i] )) {
+        if (FsRtlIsLeadDbcsCharacter(Name->Buffer[i]))
+        {
 
             i += 1;
 
-        //
-        //  else check for a wild card character
-        //
-
-        } else if (FsRtlIsAnsiCharacterWild( Name->Buffer[i] )) {
+            //
+            //  else check for a wild card character
+            //
+        }
+        else if (FsRtlIsAnsiCharacterWild(Name->Buffer[i]))
+        {
 
             //
             //  Tell caller that this name contains wild cards
@@ -753,25 +790,25 @@ Return Value:
 
     return FALSE;
 }
-
-#define GetDbcs(BUF,OFFSET,DBCS_CHAR,LENGTH) {               \
-    if (FsRtlIsLeadDbcsCharacter( (BUF)[(OFFSET)] )) {       \
-        *(DBCS_CHAR) = (WCHAR)((BUF)[(OFFSET)] +             \
-                               0x100 * (BUF)[(OFFSET) + 1]); \
-        *(LENGTH) = 2;                                       \
-    } else {                                                 \
-        *(DBCS_CHAR) = (WCHAR)(BUF)[(OFFSET)];               \
-        *(LENGTH) = 1;                                       \
-    }                                                        \
-}
+
+#define GetDbcs(BUF, OFFSET, DBCS_CHAR, LENGTH)                                    \
+    {                                                                              \
+        if (FsRtlIsLeadDbcsCharacter((BUF)[(OFFSET)]))                             \
+        {                                                                          \
+            *(DBCS_CHAR) = (WCHAR)((BUF)[(OFFSET)] + 0x100 * (BUF)[(OFFSET) + 1]); \
+            *(LENGTH) = 2;                                                         \
+        }                                                                          \
+        else                                                                       \
+        {                                                                          \
+            *(DBCS_CHAR) = (WCHAR)(BUF)[(OFFSET)];                                 \
+            *(LENGTH) = 1;                                                         \
+        }                                                                          \
+    }
 
 #define MATCHES_ARRAY_SIZE 16
-
+
 BOOLEAN
-FsRtlIsDbcsInExpression (
-    IN PANSI_STRING Expression,
-    IN PANSI_STRING Name
-    )
+FsRtlIsDbcsInExpression(IN PANSI_STRING Expression, IN PANSI_STRING Name)
 
 /*++
 
@@ -893,38 +930,41 @@ Return Value:
     PAGED_CODE();
 
     DebugTrace(+1, Dbg, "FsRtlIsDbcsInExpression\n", 0);
-    DebugTrace( 0, Dbg, " Expression      = %Z\n", Expression );
-    DebugTrace( 0, Dbg, " Name            = %Z\n", Name );
+    DebugTrace(0, Dbg, " Expression      = %Z\n", Expression);
+    DebugTrace(0, Dbg, " Name            = %Z\n", Name);
 
-    ASSERT( Name->Length != 0 );
-    ASSERT( Expression->Length != 0 );
+    ASSERT(Name->Length != 0);
+    ASSERT(Expression->Length != 0);
 
     //
     //  If one string is empty return FALSE.  If both are empty return TRUE.
     //
 
-    if ( (Name->Length == 0) || (Expression->Length == 0) ) {
+    if ((Name->Length == 0) || (Expression->Length == 0))
+    {
 
         return (BOOLEAN)(!(Name->Length + Expression->Length));
     }
-
+
     //
     //  Special case by far the most common wild card search of *
     //
 
-    if ((Expression->Length == 1) && (Expression->Buffer[0] == '*')) {
+    if ((Expression->Length == 1) && (Expression->Buffer[0] == '*'))
+    {
 
         return TRUE;
     }
 
-    ASSERT( FsRtlDoesDbcsContainWildCards( Expression ) );
+    ASSERT(FsRtlDoesDbcsContainWildCards(Expression));
 
     //
     //  Also special case expressions of the form *X.  With this and the prior
     //  case we have covered virtually all normal queries.
     //
 
-    if (Expression->Buffer[0] == '*') {
+    if (Expression->Buffer[0] == '*')
+    {
 
         ANSI_STRING LocalExpression;
 
@@ -937,11 +977,13 @@ Return Value:
         //  Only special case an expression with a single *
         //
 
-        if ( !FsRtlDoesDbcsContainWildCards( &LocalExpression ) ) {
+        if (!FsRtlDoesDbcsContainWildCards(&LocalExpression))
+        {
 
             ULONG StartingNameOffset;
 
-            if (Name->Length < (USHORT)(Expression->Length - 1)) {
+            if (Name->Length < (USHORT)(Expression->Length - 1))
+            {
 
                 return FALSE;
             }
@@ -954,16 +996,19 @@ Return Value:
             //  StatingNameOffset must not bisect DBCS characters.
             //
 
-            if (NlsMbOemCodePageTag) {
+            if (NlsMbOemCodePageTag)
+            {
 
                 ULONG i = 0;
 
-                while ( i < StartingNameOffset ) {
+                while (i < StartingNameOffset)
+                {
 
-                    i += FsRtlIsLeadDbcsCharacter( Name->Buffer[i] ) ? 2 : 1;
+                    i += FsRtlIsLeadDbcsCharacter(Name->Buffer[i]) ? 2 : 1;
                 }
 
-                if ( i > StartingNameOffset ) {
+                if (i > StartingNameOffset)
+                {
 
                     return FALSE;
                 }
@@ -974,12 +1019,11 @@ Return Value:
             //  we have got to check this one character at a time.
             //
 
-            return (BOOLEAN) RtlEqualMemory( LocalExpression.Buffer,
-                                             Name->Buffer + StartingNameOffset,
-                                             LocalExpression.Length );
+            return (BOOLEAN)RtlEqualMemory(LocalExpression.Buffer, Name->Buffer + StartingNameOffset,
+                                           LocalExpression.Length);
         }
     }
-
+
     //
     //  Walk through the name string, picking off characters.  We go one
     //  character beyond the end because some wild cards are able to match
@@ -1039,14 +1083,17 @@ Return Value:
 
     MaxState = (USHORT)(Expression->Length * 2);
 
-    while ( !NameFinished ) {
+    while (!NameFinished)
+    {
 
-        if ( NameOffset < Name->Length ) {
+        if (NameOffset < Name->Length)
+        {
 
-            GetDbcs( Name->Buffer, NameOffset, &NameChar, &Length );
+            GetDbcs(Name->Buffer, NameOffset, &NameChar, &Length);
             NameOffset += Length;
-
-        } else {
+        }
+        else
+        {
 
             NameFinished = TRUE;
 
@@ -1055,7 +1102,8 @@ Return Value:
             //  continue.
             //
 
-            if ( PreviousMatches[MatchesCount-1] == MaxState ) {
+            if (PreviousMatches[MatchesCount - 1] == MaxState)
+            {
 
                 break;
             }
@@ -1071,7 +1119,8 @@ Return Value:
         DestCount = 0;
         PreviousDestCount = 0;
 
-        while ( SrcCount < MatchesCount ) {
+        while (SrcCount < MatchesCount)
+        {
 
             //
             //  We have to carry on our expression analysis as far as possible
@@ -1087,9 +1136,11 @@ Return Value:
             Length = 0;
 
 
-            while ( TRUE ) {
+            while (TRUE)
+            {
 
-                if ( ExprOffset == Expression->Length ) {
+                if (ExprOffset == Expression->Length)
+                {
 
                     break;
                 }
@@ -1103,7 +1154,8 @@ Return Value:
 
                 CurrentState = (USHORT)(ExprOffset * 2);
 
-                if ( ExprOffset == Expression->Length ) {
+                if (ExprOffset == Expression->Length)
+                {
 
                     CurrentMatches[DestCount++] = MaxState;
                     break;
@@ -1111,7 +1163,7 @@ Return Value:
 
                 GetDbcs(Expression->Buffer, ExprOffset, &ExprChar, &Length);
 
-                ASSERT( !((ExprChar >= 'a') && (ExprChar <= 'z')) );
+                ASSERT(!((ExprChar >= 'a') && (ExprChar <= 'z')));
 
                 //
                 //  Before we get started, we have to check for something
@@ -1120,32 +1172,27 @@ Return Value:
                 //  some pool if this is the case.  Yuk!
                 //
 
-                if ( (DestCount >= MATCHES_ARRAY_SIZE - 2) &&
-                     (AuxBuffer == NULL) ) {
+                if ((DestCount >= MATCHES_ARRAY_SIZE - 2) && (AuxBuffer == NULL))
+                {
 
-                    AuxBuffer = FsRtlpAllocatePool( PagedPool,
-                                                    (Expression->Length+1) *
-                                                    sizeof(USHORT)*2*2 );
+                    AuxBuffer = FsRtlpAllocatePool(PagedPool, (Expression->Length + 1) * sizeof(USHORT) * 2 * 2);
 
-                    RtlCopyMemory( AuxBuffer,
-                                   CurrentMatches,
-                                   MATCHES_ARRAY_SIZE * sizeof(USHORT) );
+                    RtlCopyMemory(AuxBuffer, CurrentMatches, MATCHES_ARRAY_SIZE * sizeof(USHORT));
 
                     CurrentMatches = AuxBuffer;
 
-                    RtlCopyMemory( AuxBuffer + (Expression->Length+1)*2,
-                                   PreviousMatches,
-                                   MATCHES_ARRAY_SIZE * sizeof(USHORT) );
+                    RtlCopyMemory(AuxBuffer + (Expression->Length + 1) * 2, PreviousMatches,
+                                  MATCHES_ARRAY_SIZE * sizeof(USHORT));
 
-                    PreviousMatches = AuxBuffer + (Expression->Length+1)*2;
-
+                    PreviousMatches = AuxBuffer + (Expression->Length + 1) * 2;
                 }
 
                 //
                 //  * matches any character zero or more times.
                 //
 
-                if (ExprChar == '*') {
+                if (ExprChar == '*')
+                {
 
                     CurrentMatches[DestCount++] = CurrentState;
                     CurrentMatches[DestCount++] = CurrentState + 1;
@@ -1156,7 +1203,8 @@ Return Value:
                 //  DOS_STAR matches any character except . zero or more times.
                 //
 
-                if (ExprChar == ANSI_DOS_STAR) {
+                if (ExprChar == ANSI_DOS_STAR)
+                {
 
                     BOOLEAN ICanEatADot = FALSE;
 
@@ -1165,19 +1213,20 @@ Return Value:
                     //  consume it, ie. make sure it is not the last one.
                     //
 
-                    if ( !NameFinished && (NameChar == '.') ) {
+                    if (!NameFinished && (NameChar == '.'))
+                    {
 
                         WCHAR NameChar;
                         USHORT Offset;
                         USHORT Length;
 
-                        for ( Offset = NameOffset;
-                              Offset < Name->Length;
-                              Offset += Length ) {
+                        for (Offset = NameOffset; Offset < Name->Length; Offset += Length)
+                        {
 
-                            GetDbcs( Name->Buffer, Offset, &NameChar, &Length );
+                            GetDbcs(Name->Buffer, Offset, &NameChar, &Length);
 
-                            if (NameChar == '.') {
+                            if (NameChar == '.')
+                            {
 
                                 ICanEatADot = TRUE;
                                 break;
@@ -1185,13 +1234,15 @@ Return Value:
                         }
                     }
 
-                    if (NameFinished || (NameChar != '.') || ICanEatADot) {
+                    if (NameFinished || (NameChar != '.') || ICanEatADot)
+                    {
 
                         CurrentMatches[DestCount++] = CurrentState;
                         CurrentMatches[DestCount++] = CurrentState + 1;
                         continue;
-
-                    } else {
+                    }
+                    else
+                    {
 
                         //
                         //  We are at a period.  We can only match zero
@@ -1218,9 +1269,11 @@ Return Value:
                 //  we match a single character.
                 //
 
-                if ( ExprChar == ANSI_DOS_QM ) {
+                if (ExprChar == ANSI_DOS_QM)
+                {
 
-                    if ( NameFinished || (NameChar == '.') ) {
+                    if (NameFinished || (NameChar == '.'))
+                    {
 
                         continue;
                     }
@@ -1234,14 +1287,17 @@ Return Value:
                 //  beyond the end of name.
                 //
 
-                if (ExprChar == DOS_DOT) {
+                if (ExprChar == DOS_DOT)
+                {
 
-                    if ( NameFinished ) {
+                    if (NameFinished)
+                    {
 
                         continue;
                     }
 
-                    if (NameChar == '.') {
+                    if (NameChar == '.')
+                    {
 
                         CurrentMatches[DestCount++] = CurrentState;
                         break;
@@ -1253,7 +1309,8 @@ Return Value:
                 //  continue, let alone make a match.
                 //
 
-                if ( NameFinished ) {
+                if (NameFinished)
+                {
 
                     break;
                 }
@@ -1262,7 +1319,8 @@ Return Value:
                 //  If this expression was a '?' we can match it once.
                 //
 
-                if (ExprChar == '?') {
+                if (ExprChar == '?')
+                {
 
                     CurrentMatches[DestCount++] = CurrentState;
                     break;
@@ -1272,7 +1330,8 @@ Return Value:
                 //  Finally, check if the expression char matches the name char
                 //
 
-                if (ExprChar == NameChar) {
+                if (ExprChar == NameChar)
+                {
 
                     CurrentMatches[DestCount++] = CurrentState;
                     break;
@@ -1296,12 +1355,11 @@ Return Value:
             //  array.  This guarentees non-duplication in the dest. array.
             //
 
-            while ((SrcCount < MatchesCount) &&
-                   (PreviousDestCount < DestCount)) {
+            while ((SrcCount < MatchesCount) && (PreviousDestCount < DestCount))
+            {
 
-                while ((SrcCount < MatchesCount) &&
-                       (PreviousMatches[SrcCount] <
-                        CurrentMatches[PreviousDestCount])) {
+                while ((SrcCount < MatchesCount) && (PreviousMatches[SrcCount] < CurrentMatches[PreviousDestCount]))
+                {
 
                     SrcCount += 1;
                 }
@@ -1315,10 +1373,14 @@ Return Value:
         //  to bail.
         //
 
-        if ( DestCount == 0 ) {
+        if (DestCount == 0)
+        {
 
 
-            if (AuxBuffer != NULL) { ExFreePool( AuxBuffer ); }
+            if (AuxBuffer != NULL)
+            {
+                ExFreePool(AuxBuffer);
+            }
 
             return FALSE;
         }
@@ -1341,9 +1403,12 @@ Return Value:
     }
 
 
-    CurrentState = PreviousMatches[MatchesCount-1];
+    CurrentState = PreviousMatches[MatchesCount - 1];
 
-    if (AuxBuffer != NULL) { ExFreePool( AuxBuffer ); }
+    if (AuxBuffer != NULL)
+    {
+        ExFreePool(AuxBuffer);
+    }
 
 
     return (BOOLEAN)(CurrentState == MaxState);

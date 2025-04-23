@@ -19,21 +19,9 @@ Revision History:
 
 --*/
 
-VOID
-PpHotSwapInitRemovalPolicy(
-    OUT PDEVICE_NODE    DeviceNode
-    );
+VOID PpHotSwapInitRemovalPolicy(OUT PDEVICE_NODE DeviceNode);
 
-VOID
-PpHotSwapUpdateRemovalPolicy(
-    IN  PDEVICE_NODE    DeviceNode
-    );
+VOID PpHotSwapUpdateRemovalPolicy(IN PDEVICE_NODE DeviceNode);
 
-VOID
-PpHotSwapGetDevnodeRemovalPolicy(
-    IN  PDEVICE_NODE            DeviceNode,
-    IN  BOOLEAN                 IncludeRegistryOverride,
-    OUT PDEVICE_REMOVAL_POLICY  RemovalPolicy
-    );
-
-
+VOID PpHotSwapGetDevnodeRemovalPolicy(IN PDEVICE_NODE DeviceNode, IN BOOLEAN IncludeRegistryOverride,
+                                      OUT PDEVICE_REMOVAL_POLICY RemovalPolicy);

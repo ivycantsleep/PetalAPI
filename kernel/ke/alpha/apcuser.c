@@ -28,16 +28,10 @@ Revision History:
 --*/
 
 #include "ki.h"
-
-VOID
-KiInitializeUserApc (
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKNORMAL_ROUTINE NormalRoutine,
-    IN PVOID NormalContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    )
+
+VOID KiInitializeUserApc(IN PKEXCEPTION_FRAME ExceptionFrame, IN PKTRAP_FRAME TrapFrame,
+                         IN PKNORMAL_ROUTINE NormalRoutine, IN PVOID NormalContext, IN PVOID SystemArgument1,
+                         IN PVOID SystemArgument2)
 
 /*++
 
@@ -87,7 +81,8 @@ Return Value:
     // continue in user mode at the user mode APC dispatch routine.
     //
 
-    try {
+    try
+    {
 
         //
         // Compute length of context record and new aligned user stack pointer.
@@ -123,13 +118,13 @@ Return Value:
         TrapFrame->IntA3 = (ULONGLONG)(LONG_PTR)NormalRoutine;
         TrapFrame->Fir = (ULONGLONG)(LONG_PTR)KeUserApcDispatcher;
 
-    //
-    // If an exception occurs, then copy the exception information to an
-    // exception record and handle the exception.
-    //
-
-    } except (KiCopyInformation(&ExceptionRecord,
-                                (GetExceptionInformation())->ExceptionRecord)) {
+        //
+        // If an exception occurs, then copy the exception information to an
+        // exception record and handle the exception.
+        //
+    }
+    except(KiCopyInformation(&ExceptionRecord, (GetExceptionInformation())->ExceptionRecord))
+    {
 
         //
         // Set the address of the exception to the current program address
@@ -137,11 +132,7 @@ Return Value:
         //
 
         ExceptionRecord.ExceptionAddress = (PVOID)(TrapFrame->Fir);
-        KiDispatchException(&ExceptionRecord,
-                            ExceptionFrame,
-                            TrapFrame,
-                            UserMode,
-                            TRUE);
+        KiDispatchException(&ExceptionRecord, ExceptionFrame, TrapFrame, UserMode, TRUE);
     }
 
     return;

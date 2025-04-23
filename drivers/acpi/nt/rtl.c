@@ -23,13 +23,9 @@ Revision History:
 
 #include "pch.h"
 
-
+
 PCM_RESOURCE_LIST
-RtlDuplicateCmResourceList(
-    IN  POOL_TYPE           PoolType,
-    IN  PCM_RESOURCE_LIST   ResourceList,
-    IN  ULONG               Tag
-    )
+RtlDuplicateCmResourceList(IN POOL_TYPE PoolType, IN PCM_RESOURCE_LIST ResourceList, IN ULONG Tag)
 /*++
 
 Routine Description:
@@ -68,23 +64,17 @@ Return Value:
     // Allocate the memory and copy the list
     //
     buffer = ExAllocatePoolWithTag(PoolType, size, Tag);
-    if(buffer != NULL) {
+    if (buffer != NULL)
+    {
 
-        RtlCopyMemory(
-            buffer,
-            ResourceList,
-            size
-            );
-
+        RtlCopyMemory(buffer, ResourceList, size);
     }
 
     return buffer;
 }
-
+
 ULONG
-RtlSizeOfCmResourceList(
-    IN  PCM_RESOURCE_LIST   ResourceList
-    )
+RtlSizeOfCmResourceList(IN PCM_RESOURCE_LIST ResourceList)
 /*++
 
 Routine Description:
@@ -108,7 +98,8 @@ Return Value:
 
     PAGED_CODE();
 
-    for(i = 0; i < ResourceList->Count; i++) {
+    for (i = 0; i < ResourceList->Count; i++)
+    {
 
         PCM_FULL_RESOURCE_DESCRIPTOR fullDescriptor = &(ResourceList->List[i]);
         ULONG j;
@@ -116,35 +107,30 @@ Return Value:
         //
         // First descriptor is included in the size of the resource list.
         //
-        if(i != 0) {
+        if (i != 0)
+        {
 
             size += sizeof(CM_FULL_RESOURCE_DESCRIPTOR);
-
         }
 
-        for(j = 0; j < fullDescriptor->PartialResourceList.Count; j++) {
+        for (j = 0; j < fullDescriptor->PartialResourceList.Count; j++)
+        {
 
             //
             // First descriptor is included in the size of the partial list.
             //
-            if(j != 0) {
+            if (j != 0)
+            {
 
                 size += sizeof(CM_PARTIAL_RESOURCE_DESCRIPTOR);
-
             }
-
         }
-
     }
     return size;
 }
-
+
 PCM_PARTIAL_RESOURCE_DESCRIPTOR
-RtlUnpackPartialDesc(
-    IN  UCHAR               Type,
-    IN  PCM_RESOURCE_LIST   ResList,
-    IN  OUT PULONG          Count
-    )
+RtlUnpackPartialDesc(IN UCHAR Type, IN PCM_RESOURCE_LIST ResList, IN OUT PULONG Count)
 /*++
 
 Routine Description:
@@ -169,28 +155,28 @@ Return Value:
     ULONG i;
     ULONG j;
 
-    for (i = 0; i < ResList->Count; i++) {
+    for (i = 0; i < ResList->Count; i++)
+    {
 
-        for (j = 0; j < ResList->List[i].PartialResourceList.Count; j++) {
+        for (j = 0; j < ResList->List[i].PartialResourceList.Count; j++)
+        {
 
-            if (ResList->List[i].PartialResourceList.PartialDescriptors[j].Type == Type) {
+            if (ResList->List[i].PartialResourceList.PartialDescriptors[j].Type == Type)
+            {
 
-                if (hit == *Count) {
+                if (hit == *Count)
+                {
 
                     (*Count)++;
                     return &ResList->List[i].PartialResourceList.PartialDescriptors[j];
-
-                } else {
+                }
+                else
+                {
 
                     hit++;
-
                 }
-
             }
-
         }
-
     }
     return NULL;
 }
-

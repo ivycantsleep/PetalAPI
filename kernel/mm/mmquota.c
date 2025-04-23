@@ -33,35 +33,28 @@ ULONG MiChargeCommitmentFailures[2];
 extern ULONG_PTR MmAllocatedPagedPool;
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,MiInitializeCommitment)
-#pragma alloc_text(PAGE,MiCalculatePageCommitment)
-#pragma alloc_text(PAGE,MiReturnPageTablePageCommitment)
+#pragma alloc_text(INIT, MiInitializeCommitment)
+#pragma alloc_text(PAGE, MiCalculatePageCommitment)
+#pragma alloc_text(PAGE, MiReturnPageTablePageCommitment)
 #endif
 
 SIZE_T MmSystemCommitReserve = (5 * 1024 * 1024) / PAGE_SIZE;
 
-VOID
-MiInitializeCommitment (
-    VOID
-    )
+VOID MiInitializeCommitment(VOID)
 {
-    if (MmNumberOfPhysicalPages < (33 * 1024 * 1024) / PAGE_SIZE) {
+    if (MmNumberOfPhysicalPages < (33 * 1024 * 1024) / PAGE_SIZE)
+    {
         MmSystemCommitReserve = (1 * 1024 * 1024) / PAGE_SIZE;
     }
 
-#if defined (_MI_DEBUG_COMMIT_LEAKS)
-    MiCommitTraces = ExAllocatePoolWithTag (NonPagedPool,
-                           MI_COMMIT_TRACE_MAX * sizeof (MI_COMMIT_TRACES),
-                           'tCmM');
+#if defined(_MI_DEBUG_COMMIT_LEAKS)
+    MiCommitTraces = ExAllocatePoolWithTag(NonPagedPool, MI_COMMIT_TRACE_MAX * sizeof(MI_COMMIT_TRACES), 'tCmM');
 #endif
 }
-
+
 LOGICAL
 FASTCALL
-MiChargeCommitment (
-    IN SIZE_T QuotaCharge,
-    IN PEPROCESS Process OPTIONAL
-    )
+MiChargeCommitment(IN SIZE_T QuotaCharge, IN PEPROCESS Process OPTIONAL)
 
 /*++
 
@@ -103,18 +96,21 @@ Environment:
     MMPAGE_FILE_EXPANSION PageExtend;
     LOGICAL WsHeldSafe;
 
-    ASSERT ((SSIZE_T)QuotaCharge > 0);
+    ASSERT((SSIZE_T)QuotaCharge > 0);
 
 #if DBG
-    if (InitializationPhase > 1) {
+    if (InitializationPhase > 1)
+    {
         ULONG i;
         PKTHREAD Thread;
 
-        Thread = KeGetCurrentThread ();
-        for (i = 0; i < (ULONG)KeNumberProcessors; i += 1) {
-            if (KiProcessorBlock[i]->IdleThread == Thread) {
-                DbgPrint ("MMQUOTA: %x %p\n", i, Thread);
-                DbgBreakPoint ();
+        Thread = KeGetCurrentThread();
+        for (i = 0; i < (ULONG)KeNumberProcessors; i += 1)
+        {
+            if (KiProcessorBlock[i]->IdleThread == Thread)
+            {
+                DbgPrint("MMQUOTA: %x %p\n", i, Thread);
+                DbgBreakPoint();
             }
         }
     }
@@ -128,32 +124,37 @@ Environment:
 
     WsHeldSafe = FALSE;
 
-    do {
+    do
+    {
 
         OldCommitValue = MmTotalCommittedPages;
 
         NewCommitValue = OldCommitValue + QuotaCharge;
 
-        while (NewCommitValue + MmSystemCommitReserve > MmTotalCommitLimit) {
+        while (NewCommitValue + MmSystemCommitReserve > MmTotalCommitLimit)
+        {
 
             //
             // If the pagefiles are already at the maximum, then don't
             // bother trying to extend them, but do trim the cache.
             //
 
-            if (MmTotalCommitLimit + 100 >= MmTotalCommitLimitMaximum) {
+            if (MmTotalCommitLimit + 100 >= MmTotalCommitLimitMaximum)
+            {
 
                 MiChargeCommitmentFailures[1] += 1;
 
-                MiTrimSegmentCache ();
+                MiTrimSegmentCache();
 
-                if (MmTotalCommitLimit >= MmTotalCommitLimitMaximum) {
-                    MiCauseOverCommitPopup ();
+                if (MmTotalCommitLimit >= MmTotalCommitLimitMaximum)
+                {
+                    MiCauseOverCommitPopup();
                     return FALSE;
                 }
             }
 
-            if (Process != NULL) {
+            if (Process != NULL)
+            {
 
                 //
                 // The working set lock may have been acquired safely or
@@ -175,23 +176,25 @@ Environment:
             PageExtend.RequestedExpansionSize = QuotaCharge;
             PageExtend.Segment = NULL;
             PageExtend.PageFileNumber = MI_EXTEND_ANY_PAGEFILE;
-            KeInitializeEvent (&PageExtend.Event, NotificationEvent, FALSE);
+            KeInitializeEvent(&PageExtend.Event, NotificationEvent, FALSE);
 
-            if ((MiIssuePageExtendRequest (&PageExtend) == FALSE) ||
-                (PageExtend.ActualExpansion == 0)) {
+            if ((MiIssuePageExtendRequest(&PageExtend) == FALSE) || (PageExtend.ActualExpansion == 0))
+            {
 
-                MiCauseOverCommitPopup ();
+                MiCauseOverCommitPopup();
 
                 MiChargeCommitmentFailures[0] += 1;
 
-                if (Process != NULL) {
+                if (Process != NULL)
+                {
                     LOCK_WS_REGARDLESS(Process, WsHeldSafe);
                 }
 
                 return FALSE;
             }
 
-            if (Process != NULL) {
+            if (Process != NULL)
+            {
                 LOCK_WS_REGARDLESS(Process, WsHeldSafe);
             }
 
@@ -201,26 +204,23 @@ Environment:
         }
 
 #if defined(_WIN64)
-        NewCommitValue = InterlockedCompareExchange64 (
-                                (PLONGLONG) &MmTotalCommittedPages,
-                                (LONGLONG)  NewCommitValue,
-                                (LONGLONG)  OldCommitValue);
+        NewCommitValue = InterlockedCompareExchange64((PLONGLONG)&MmTotalCommittedPages, (LONGLONG)NewCommitValue,
+                                                      (LONGLONG)OldCommitValue);
 #else
-        NewCommitValue = InterlockedCompareExchange (
-                                (PLONG) &MmTotalCommittedPages,
-                                (LONG)  NewCommitValue,
-                                (LONG)  OldCommitValue);
+        NewCommitValue =
+            InterlockedCompareExchange((PLONG)&MmTotalCommittedPages, (LONG)NewCommitValue, (LONG)OldCommitValue);
 #endif
-                                                             
+
     } while (NewCommitValue != OldCommitValue);
 
     //
     // Success.
     //
 
-    MM_TRACK_COMMIT (MM_DBG_COMMIT_CHARGE_NORMAL, QuotaCharge);
+    MM_TRACK_COMMIT(MM_DBG_COMMIT_CHARGE_NORMAL, QuotaCharge);
 
-    if (MmTotalCommittedPages > MmPeakCommitment) {
+    if (MmTotalCommittedPages > MmPeakCommitment)
+    {
         MmPeakCommitment = MmTotalCommittedPages;
     }
 
@@ -232,41 +232,42 @@ Environment:
     NewCommitValue = MmTotalCommittedPages;
     CommitLimit = MmTotalCommitLimit;
 
-    if (NewCommitValue > ((CommitLimit/10)*9)) {
+    if (NewCommitValue > ((CommitLimit / 10) * 9))
+    {
 
-        if (CommitLimit < MmTotalCommitLimitMaximum) {
+        if (CommitLimit < MmTotalCommitLimitMaximum)
+        {
 
             //
             // Attempt to expand the paging file, but don't wait
             // to see if it succeeds.
             //
 
-            NewCommitValue = NewCommitValue - ((CommitLimit/100)*85);
+            NewCommitValue = NewCommitValue - ((CommitLimit / 100) * 85);
 
-            MiIssuePageExtendRequestNoWait (NewCommitValue);
+            MiIssuePageExtendRequestNoWait(NewCommitValue);
         }
-        else {
+        else
+        {
 
             //
             // If the pagefiles are already at the maximum, then don't
             // bother trying to extend them, but do trim the cache.
             //
 
-            if (MmTotalCommitLimit + 100 >= MmTotalCommitLimitMaximum) {
-                MiTrimSegmentCache ();
+            if (MmTotalCommitLimit + 100 >= MmTotalCommitLimitMaximum)
+            {
+                MiTrimSegmentCache();
             }
         }
     }
 
     return TRUE;
 }
-
+
 LOGICAL
 FASTCALL
-MiChargeCommitmentCantExpand (
-    IN SIZE_T QuotaCharge,
-    IN ULONG MustSucceed
-    )
+MiChargeCommitmentCantExpand(IN SIZE_T QuotaCharge, IN ULONG MustSucceed)
 
 /*++
 
@@ -299,20 +300,22 @@ Environment:
     SIZE_T OldCommitValue;
     SIZE_T NewCommitValue;
 
-    ASSERT ((SSIZE_T)QuotaCharge > 0);
+    ASSERT((SSIZE_T)QuotaCharge > 0);
 
-    ASSERT32 ((QuotaCharge < 0x100000) || (QuotaCharge < MmTotalCommitLimit));
+    ASSERT32((QuotaCharge < 0x100000) || (QuotaCharge < MmTotalCommitLimit));
 
-    do {
+    do
+    {
 
         OldCommitValue = MmTotalCommittedPages;
 
         NewCommitValue = OldCommitValue + QuotaCharge;
 
-        if ((NewCommitValue > MmTotalCommitLimit) && (!MustSucceed)) {
+        if ((NewCommitValue > MmTotalCommitLimit) && (!MustSucceed))
+        {
 
-            if ((NewCommitValue < MmTotalCommittedPages) ||
-                (MmTotalCommitLimit + 100 >= MmTotalCommitLimitMaximum)) {
+            if ((NewCommitValue < MmTotalCommittedPages) || (MmTotalCommitLimit + 100 >= MmTotalCommitLimitMaximum))
+            {
 
                 MiChargeCommitmentFailures[1] += 1;
                 return FALSE;
@@ -324,25 +327,21 @@ Environment:
             //
 
             MiChargeCommitmentFailures[0] += 1;
-            MiIssuePageExtendRequestNoWait (MM_MINIMAL_COMMIT_INCREASE);
+            MiIssuePageExtendRequestNoWait(MM_MINIMAL_COMMIT_INCREASE);
             return FALSE;
         }
 
 #if defined(_WIN64)
-        NewCommitValue = InterlockedCompareExchange64 (
-                                (PLONGLONG) &MmTotalCommittedPages,
-                                (LONGLONG)  NewCommitValue,
-                                (LONGLONG)  OldCommitValue);
+        NewCommitValue = InterlockedCompareExchange64((PLONGLONG)&MmTotalCommittedPages, (LONGLONG)NewCommitValue,
+                                                      (LONGLONG)OldCommitValue);
 #else
-        NewCommitValue = InterlockedCompareExchange (
-                                (PLONG) &MmTotalCommittedPages,
-                                (LONG)  NewCommitValue,
-                                (LONG)  OldCommitValue);
+        NewCommitValue =
+            InterlockedCompareExchange((PLONG)&MmTotalCommittedPages, (LONG)NewCommitValue, (LONG)OldCommitValue);
 #endif
-                                                             
+
     } while (NewCommitValue != OldCommitValue);
 
-    MM_TRACK_COMMIT (MM_DBG_COMMIT_CHARGE_CANT_EXPAND, QuotaCharge);
+    MM_TRACK_COMMIT(MM_DBG_COMMIT_CHARGE_CANT_EXPAND, QuotaCharge);
 
     //
     // Success.  If system commit exceeds 90%, attempt a preemptive pagefile
@@ -352,8 +351,8 @@ Environment:
     NewCommitValue = MmTotalCommittedPages;
     CommitLimit = MmTotalCommitLimit;
 
-    if ((NewCommitValue > ((CommitLimit/10)*9)) &&
-        (CommitLimit < MmTotalCommitLimitMaximum)) {
+    if ((NewCommitValue > ((CommitLimit / 10) * 9)) && (CommitLimit < MmTotalCommitLimitMaximum))
+    {
 
         //
         // Attempt to expand the paging file, but don't wait
@@ -365,24 +364,23 @@ Environment:
         // currently be held.
         //
 
-        ExtendAmount = NewCommitValue - ((CommitLimit/100)*85);
+        ExtendAmount = NewCommitValue - ((CommitLimit / 100) * 85);
 
-        if (QuotaCharge > ExtendAmount) {
+        if (QuotaCharge > ExtendAmount)
+        {
             ExtendAmount = QuotaCharge;
         }
 
-        MiIssuePageExtendRequestNoWait (ExtendAmount);
+        MiIssuePageExtendRequestNoWait(ExtendAmount);
     }
 
     return TRUE;
 }
 
-
+
 LOGICAL
 FASTCALL
-MiChargeTemporaryCommitmentForReduction (
-    IN SIZE_T QuotaCharge
-    )
+MiChargeTemporaryCommitmentForReduction(IN SIZE_T QuotaCharge)
 
 /*++
 
@@ -411,55 +409,49 @@ Environment:
     SIZE_T OldCommitValue;
     SIZE_T NewCommitValue;
 
-    ASSERT ((SSIZE_T)QuotaCharge > 0);
+    ASSERT((SSIZE_T)QuotaCharge > 0);
 
-    ASSERT32 (QuotaCharge < 0x100000);
+    ASSERT32(QuotaCharge < 0x100000);
 
-    do {
+    do
+    {
 
         OldCommitValue = MmTotalCommittedPages;
 
         NewCommitValue = OldCommitValue + QuotaCharge;
 
-        if (NewCommitValue > MmTotalCommitLimit) {
+        if (NewCommitValue > MmTotalCommitLimit)
+        {
             return FALSE;
         }
 
 #if defined(_WIN64)
-        NewCommitValue = InterlockedCompareExchange64 (
-                                (PLONGLONG) &MmTotalCommittedPages,
-                                (LONGLONG)  NewCommitValue,
-                                (LONGLONG)  OldCommitValue);
+        NewCommitValue = InterlockedCompareExchange64((PLONGLONG)&MmTotalCommittedPages, (LONGLONG)NewCommitValue,
+                                                      (LONGLONG)OldCommitValue);
 #else
-        NewCommitValue = InterlockedCompareExchange (
-                                (PLONG) &MmTotalCommittedPages,
-                                (LONG)  NewCommitValue,
-                                (LONG)  OldCommitValue);
+        NewCommitValue =
+            InterlockedCompareExchange((PLONG)&MmTotalCommittedPages, (LONG)NewCommitValue, (LONG)OldCommitValue);
 #endif
-                                                             
+
     } while (NewCommitValue != OldCommitValue);
 
     //
     // Success.
     //
 
-    MM_TRACK_COMMIT (MM_DBG_COMMIT_CHARGE_NORMAL, QuotaCharge);
+    MM_TRACK_COMMIT(MM_DBG_COMMIT_CHARGE_NORMAL, QuotaCharge);
 
-    if (MmTotalCommittedPages > MmPeakCommitment) {
+    if (MmTotalCommittedPages > MmPeakCommitment)
+    {
         MmPeakCommitment = MmTotalCommittedPages;
     }
 
     return TRUE;
 }
 
-
+
 SIZE_T
-MiCalculatePageCommitment (
-    IN PVOID StartingAddress,
-    IN PVOID EndingAddress,
-    IN PMMVAD Vad,
-    IN PEPROCESS Process
-    )
+MiCalculatePageCommitment(IN PVOID StartingAddress, IN PVOID EndingAddress, IN PMMVAD Vad, IN PEPROCESS Process)
 
 /*++
 
@@ -499,47 +491,47 @@ Environment:
     SIZE_T NumberOfCommittedPages;
     ULONG Waited;
 
-    PointerPxe = MiGetPxeAddress (StartingAddress);
-    PointerPpe = MiGetPpeAddress (StartingAddress);
-    PointerPde = MiGetPdeAddress (StartingAddress);
-    PointerPte = MiGetPteAddress (StartingAddress);
+    PointerPxe = MiGetPxeAddress(StartingAddress);
+    PointerPpe = MiGetPpeAddress(StartingAddress);
+    PointerPde = MiGetPdeAddress(StartingAddress);
+    PointerPte = MiGetPteAddress(StartingAddress);
 
-    LastPte = MiGetPteAddress (EndingAddress);
+    LastPte = MiGetPteAddress(EndingAddress);
 
-    if (Vad->u.VadFlags.MemCommit == 1) {
+    if (Vad->u.VadFlags.MemCommit == 1)
+    {
 
         //
         // All the pages are committed within this range.
         //
 
-        NumberOfCommittedPages = BYTES_TO_PAGES ((PCHAR)EndingAddress -
-                                                       (PCHAR)StartingAddress);
+        NumberOfCommittedPages = BYTES_TO_PAGES((PCHAR)EndingAddress - (PCHAR)StartingAddress);
 
         //
         // Examine the PTEs to determine how many pages are committed.
         //
 
-        do {
+        do
+        {
 
 #if (_MI_PAGING_LEVELS >= 4)
-retry:
+        retry:
 #endif
 
-            while (!MiDoesPxeExistAndMakeValid (PointerPxe,
-                                                Process,
-                                                FALSE,
-                                                &Waited)) {
-    
+            while (!MiDoesPxeExistAndMakeValid(PointerPxe, Process, FALSE, &Waited))
+            {
+
                 //
                 // No PXE exists for the starting address, therefore the page
                 // is not committed.
                 //
-    
+
                 PointerPxe += 1;
-                PointerPpe = MiGetVirtualAddressMappedByPte (PointerPxe);
-                PointerPde = MiGetVirtualAddressMappedByPte (PointerPpe);
-                PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-                if (PointerPte > LastPte) {
+                PointerPpe = MiGetVirtualAddressMappedByPte(PointerPxe);
+                PointerPde = MiGetVirtualAddressMappedByPte(PointerPpe);
+                PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+                if (PointerPte > LastPte)
+                {
                     return NumberOfCommittedPages;
                 }
             }
@@ -548,25 +540,25 @@ retry:
             Waited = 0;
 #endif
 
-            while (!MiDoesPpeExistAndMakeValid (PointerPpe,
-                                                Process,
-                                                FALSE,
-                                                &Waited)) {
-    
+            while (!MiDoesPpeExistAndMakeValid(PointerPpe, Process, FALSE, &Waited))
+            {
+
                 //
                 // No PPE exists for the starting address, therefore the page
                 // is not committed.
                 //
-    
+
                 PointerPpe += 1;
-                PointerPde = MiGetVirtualAddressMappedByPte (PointerPpe);
-                PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-                if (PointerPte > LastPte) {
+                PointerPde = MiGetVirtualAddressMappedByPte(PointerPpe);
+                PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+                if (PointerPte > LastPte)
+                {
                     return NumberOfCommittedPages;
                 }
 #if (_MI_PAGING_LEVELS >= 4)
-                if (MiIsPteOnPdeBoundary (PointerPpe)) {
-                    PointerPxe = MiGetPteAddress (PointerPpe);
+                if (MiIsPteOnPdeBoundary(PointerPpe))
+                {
+                    PointerPxe = MiGetPteAddress(PointerPpe);
                     goto retry;
                 }
 #endif
@@ -576,25 +568,25 @@ retry:
             Waited = 0;
 #endif
 
-            while (!MiDoesPdeExistAndMakeValid (PointerPde,
-                                                Process,
-                                                FALSE,
-                                                &Waited)) {
-    
+            while (!MiDoesPdeExistAndMakeValid(PointerPde, Process, FALSE, &Waited))
+            {
+
                 //
                 // No PDE exists for the starting address, therefore the page
                 // is not committed.
                 //
-    
+
                 PointerPde += 1;
-                PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-                if (PointerPte > LastPte) {
+                PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+                if (PointerPte > LastPte)
+                {
                     return NumberOfCommittedPages;
                 }
 #if (_MI_PAGING_LEVELS >= 3)
-                if (MiIsPteOnPdeBoundary (PointerPde)) {
-                    PointerPpe = MiGetPteAddress (PointerPde);
-                    PointerPxe = MiGetPdeAddress (PointerPde);
+                if (MiIsPteOnPdeBoundary(PointerPde))
+                {
+                    PointerPpe = MiGetPteAddress(PointerPde);
+                    PointerPxe = MiGetPdeAddress(PointerPde);
                     Waited = 1;
                     break;
                 }
@@ -603,94 +595,91 @@ retry:
 
         } while (Waited != 0);
 
-restart:
+    restart:
 
-        while (PointerPte <= LastPte) {
+        while (PointerPte <= LastPte)
+        {
 
-            if (MiIsPteOnPdeBoundary (PointerPte)) {
+            if (MiIsPteOnPdeBoundary(PointerPte))
+            {
 
                 //
                 // This is a PDE boundary, check to see if the all the
                 // PXE/PPE/PDE pages exist.
                 //
 
-                PointerPde = MiGetPteAddress (PointerPte);
-                PointerPpe = MiGetPteAddress (PointerPde);
-                PointerPxe = MiGetPteAddress (PointerPpe);
+                PointerPde = MiGetPteAddress(PointerPte);
+                PointerPpe = MiGetPteAddress(PointerPde);
+                PointerPxe = MiGetPteAddress(PointerPpe);
 
-                do {
+                do
+                {
 
-                    if (!MiDoesPxeExistAndMakeValid (PointerPxe,
-                                                     Process,
-                                                     FALSE,
-                                                     &Waited)) {
-    
+                    if (!MiDoesPxeExistAndMakeValid(PointerPxe, Process, FALSE, &Waited))
+                    {
+
                         //
                         // No PDE exists for the starting address, check the VAD
                         // to see if the pages are not committed.
                         //
-    
+
                         PointerPxe += 1;
-                        PointerPpe = MiGetVirtualAddressMappedByPte (PointerPxe);
-                        PointerPde = MiGetVirtualAddressMappedByPte (PointerPpe);
-                        PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-    
+                        PointerPpe = MiGetVirtualAddressMappedByPte(PointerPxe);
+                        PointerPde = MiGetVirtualAddressMappedByPte(PointerPpe);
+                        PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+
                         //
                         // Check next page.
                         //
-    
+
                         goto restart;
                     }
-    
+
 #if (_MI_PAGING_LEVELS >= 4)
                     Waited = 0;
 #endif
-    
-                    if (!MiDoesPpeExistAndMakeValid (PointerPpe,
-                                                     Process,
-                                                     FALSE,
-                                                     &Waited)) {
-    
+
+                    if (!MiDoesPpeExistAndMakeValid(PointerPpe, Process, FALSE, &Waited))
+                    {
+
                         //
                         // No PDE exists for the starting address, check the VAD
                         // to see if the pages are not committed.
                         //
-    
+
                         PointerPpe += 1;
-                        PointerPxe = MiGetPteAddress (PointerPpe);
-                        PointerPde = MiGetVirtualAddressMappedByPte (PointerPpe);
-                        PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-    
+                        PointerPxe = MiGetPteAddress(PointerPpe);
+                        PointerPde = MiGetVirtualAddressMappedByPte(PointerPpe);
+                        PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+
                         //
                         // Check next page.
                         //
-    
+
                         goto restart;
                     }
-    
+
 #if (_MI_PAGING_LEVELS < 4)
                     Waited = 0;
 #endif
-    
-                    if (!MiDoesPdeExistAndMakeValid (PointerPde,
-                                                     Process,
-                                                     FALSE,
-                                                     &Waited)) {
-    
+
+                    if (!MiDoesPdeExistAndMakeValid(PointerPde, Process, FALSE, &Waited))
+                    {
+
                         //
                         // No PDE exists for the starting address, check the VAD
                         // to see if the pages are not committed.
                         //
-    
+
                         PointerPde += 1;
-                        PointerPpe = MiGetPteAddress (PointerPde);
-                        PointerPxe = MiGetPteAddress (PointerPpe);
-                        PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-    
+                        PointerPpe = MiGetPteAddress(PointerPde);
+                        PointerPxe = MiGetPteAddress(PointerPpe);
+                        PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+
                         //
                         // Check next page.
                         //
-    
+
                         goto restart;
                     }
                 } while (Waited != 0);
@@ -700,20 +689,21 @@ restart:
             // The PDE exists, examine the PTE.
             //
 
-            if (PointerPte->u.Long != 0) {
+            if (PointerPte->u.Long != 0)
+            {
 
                 //
                 // Has this page been explicitly decommitted?
                 //
 
-                if (MiIsPteDecommittedPage (PointerPte)) {
+                if (MiIsPteDecommittedPage(PointerPte))
+                {
 
                     //
                     // This page is decommitted, remove it from the count.
                     //
 
                     NumberOfCommittedPages -= 1;
-
                 }
             }
 
@@ -729,28 +719,28 @@ restart:
 
     NumberOfCommittedPages = 0;
 
-    do {
+    do
+    {
 
 #if (_MI_PAGING_LEVELS >= 4)
-retry2:
+    retry2:
 #endif
-        while (!MiDoesPxeExistAndMakeValid (PointerPxe,
-                                            Process,
-                                            FALSE,
-                                            &Waited)) {
-    
-    
+        while (!MiDoesPxeExistAndMakeValid(PointerPxe, Process, FALSE, &Waited))
+        {
+
+
             //
             // No PXE exists for the starting address, therefore the page
             // is not committed.
             //
-    
+
             PointerPxe += 1;
-            PointerPpe = MiGetVirtualAddressMappedByPte (PointerPxe);
-            PointerPde = MiGetVirtualAddressMappedByPte (PointerPpe);
-            PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-            if (PointerPte > LastPte) {
-               return NumberOfCommittedPages;
+            PointerPpe = MiGetVirtualAddressMappedByPte(PointerPxe);
+            PointerPde = MiGetVirtualAddressMappedByPte(PointerPpe);
+            PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+            if (PointerPte > LastPte)
+            {
+                return NumberOfCommittedPages;
             }
         }
 
@@ -758,26 +748,26 @@ retry2:
         Waited = 0;
 #endif
 
-        while (!MiDoesPpeExistAndMakeValid (PointerPpe,
-                                            Process,
-                                            FALSE,
-                                            &Waited)) {
-    
-    
+        while (!MiDoesPpeExistAndMakeValid(PointerPpe, Process, FALSE, &Waited))
+        {
+
+
             //
             // No PPE exists for the starting address, therefore the page
             // is not committed.
             //
-    
+
             PointerPpe += 1;
-            PointerPde = MiGetVirtualAddressMappedByPte (PointerPpe);
-            PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-            if (PointerPte > LastPte) {
-               return NumberOfCommittedPages;
+            PointerPde = MiGetVirtualAddressMappedByPte(PointerPpe);
+            PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+            if (PointerPte > LastPte)
+            {
+                return NumberOfCommittedPages;
             }
 #if (_MI_PAGING_LEVELS >= 4)
-            if (MiIsPteOnPdeBoundary (PointerPpe)) {
-                PointerPxe = MiGetPteAddress (PointerPpe);
+            if (MiIsPteOnPdeBoundary(PointerPpe))
+            {
+                PointerPxe = MiGetPteAddress(PointerPpe);
                 goto retry2;
             }
 #endif
@@ -787,25 +777,25 @@ retry2:
         Waited = 0;
 #endif
 
-        while (!MiDoesPdeExistAndMakeValid (PointerPde,
-                                            Process,
-                                            FALSE,
-                                            &Waited)) {
-    
+        while (!MiDoesPdeExistAndMakeValid(PointerPde, Process, FALSE, &Waited))
+        {
+
             //
             // No PDE exists for the starting address, therefore the page
             // is not committed.
             //
-    
+
             PointerPde += 1;
-            PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-            if (PointerPte > LastPte) {
-               return NumberOfCommittedPages;
+            PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+            if (PointerPte > LastPte)
+            {
+                return NumberOfCommittedPages;
             }
 #if (_MI_PAGING_LEVELS >= 3)
-            if (MiIsPteOnPdeBoundary (PointerPde)) {
-                PointerPpe = MiGetPteAddress (PointerPde);
-                PointerPxe = MiGetPdeAddress (PointerPde);
+            if (MiIsPteOnPdeBoundary(PointerPde))
+            {
+                PointerPpe = MiGetPteAddress(PointerPde);
+                PointerPxe = MiGetPdeAddress(PointerPde);
                 Waited = 1;
                 break;
             }
@@ -816,92 +806,89 @@ retry2:
 
 restart2:
 
-    while (PointerPte <= LastPte) {
+    while (PointerPte <= LastPte)
+    {
 
-        if (MiIsPteOnPdeBoundary (PointerPte)) {
+        if (MiIsPteOnPdeBoundary(PointerPte))
+        {
 
             //
             // This is a PDE boundary, check to see if the entire
             // PXE/PPE/PDE pages exist.
             //
 
-            PointerPde = MiGetPteAddress (PointerPte);
-            PointerPpe = MiGetPteAddress (PointerPde);
-            PointerPxe = MiGetPdeAddress (PointerPde);
+            PointerPde = MiGetPteAddress(PointerPte);
+            PointerPpe = MiGetPteAddress(PointerPde);
+            PointerPxe = MiGetPdeAddress(PointerPde);
 
-            do {
+            do
+            {
 
-                if (!MiDoesPxeExistAndMakeValid (PointerPxe,
-                                                 Process,
-                                                 FALSE,
-                                                 &Waited)) {
-    
+                if (!MiDoesPxeExistAndMakeValid(PointerPxe, Process, FALSE, &Waited))
+                {
+
                     //
                     // No PXE exists for the starting address, check the VAD
                     // to see if the pages are not committed.
                     //
-    
+
                     PointerPxe += 1;
-                    PointerPpe = MiGetVirtualAddressMappedByPte (PointerPxe);
-                    PointerPde = MiGetVirtualAddressMappedByPte (PointerPpe);
-                    PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-    
+                    PointerPpe = MiGetVirtualAddressMappedByPte(PointerPxe);
+                    PointerPde = MiGetVirtualAddressMappedByPte(PointerPpe);
+                    PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+
                     //
                     // Check next page.
                     //
-    
+
                     goto restart2;
                 }
-    
+
 #if (_MI_PAGING_LEVELS >= 4)
                 Waited = 0;
 #endif
 
-                if (!MiDoesPpeExistAndMakeValid (PointerPpe,
-                                                 Process,
-                                                 FALSE,
-                                                 &Waited)) {
-    
+                if (!MiDoesPpeExistAndMakeValid(PointerPpe, Process, FALSE, &Waited))
+                {
+
                     //
                     // No PPE exists for the starting address, check the VAD
                     // to see if the pages are not committed.
                     //
-    
+
                     PointerPpe += 1;
-                    PointerPxe = MiGetPteAddress (PointerPpe);
-                    PointerPde = MiGetVirtualAddressMappedByPte (PointerPpe);
-                    PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-    
+                    PointerPxe = MiGetPteAddress(PointerPpe);
+                    PointerPde = MiGetVirtualAddressMappedByPte(PointerPpe);
+                    PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+
                     //
                     // Check next page.
                     //
-    
+
                     goto restart2;
                 }
-    
+
 #if (_MI_PAGING_LEVELS < 4)
                 Waited = 0;
 #endif
-    
-                if (!MiDoesPdeExistAndMakeValid (PointerPde,
-                                                 Process,
-                                                 FALSE,
-                                                 &Waited)) {
-    
+
+                if (!MiDoesPdeExistAndMakeValid(PointerPde, Process, FALSE, &Waited))
+                {
+
                     //
                     // No PDE exists for the starting address, check the VAD
                     // to see if the pages are not committed.
                     //
-    
+
                     PointerPde += 1;
-                    PointerPpe = MiGetPteAddress (PointerPde);
-                    PointerPxe = MiGetPteAddress (PointerPpe);
-                    PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-    
+                    PointerPpe = MiGetPteAddress(PointerPde);
+                    PointerPxe = MiGetPteAddress(PointerPpe);
+                    PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+
                     //
                     // Check next page.
                     //
-    
+
                     goto restart2;
                 }
 
@@ -912,8 +899,8 @@ restart2:
         // The PDE exists, examine the PTE.
         //
 
-        if ((PointerPte->u.Long != 0) &&
-             (!MiIsPteDecommittedPage (PointerPte))) {
+        if ((PointerPte->u.Long != 0) && (!MiIsPteDecommittedPage(PointerPte)))
+        {
 
             //
             // This page is committed, count it.
@@ -927,15 +914,9 @@ restart2:
 
     return NumberOfCommittedPages;
 }
-
-VOID
-MiReturnPageTablePageCommitment (
-    IN PVOID StartingAddress,
-    IN PVOID EndingAddress,
-    IN PEPROCESS CurrentProcess,
-    IN PMMVAD PreviousVad,
-    IN PMMVAD NextVad
-    )
+
+VOID MiReturnPageTablePageCommitment(IN PVOID StartingAddress, IN PVOID EndingAddress, IN PEPROCESS CurrentProcess,
+                                     IN PMMVAD PreviousVad, IN PMMVAD NextVad)
 
 /*++
 
@@ -997,12 +978,13 @@ Environment:
     // Check to see if any page table pages would be freed.
     //
 
-    ASSERT (StartingAddress != EndingAddress);
+    ASSERT(StartingAddress != EndingAddress);
 
-    StartBit = (ULONG) (((ULONG_PTR) MI_64K_ALIGN (StartingAddress)) / X64K);
-    EndBit = (ULONG) (((ULONG_PTR) MI_64K_ALIGN (EndingAddress)) / X64K);
+    StartBit = (ULONG)(((ULONG_PTR)MI_64K_ALIGN(StartingAddress)) / X64K);
+    EndBit = (ULONG)(((ULONG_PTR)MI_64K_ALIGN(EndingAddress)) / X64K);
 
-    if (PreviousVad == NULL) {
+    if (PreviousVad == NULL)
+    {
         PreviousPage = -1;
 #if (_MI_PAGING_LEVELS >= 3)
         PreviousPdPage = -1;
@@ -1011,54 +993,58 @@ Environment:
         PreviousPpPage = -1;
 #endif
     }
-    else {
-        PreviousPage = MiGetPdeIndex (MI_VPN_TO_VA (PreviousVad->EndingVpn));
+    else
+    {
+        PreviousPage = MiGetPdeIndex(MI_VPN_TO_VA(PreviousVad->EndingVpn));
 #if (_MI_PAGING_LEVELS >= 3)
-        PreviousPdPage = MiGetPpeIndex (MI_VPN_TO_VA (PreviousVad->EndingVpn));
+        PreviousPdPage = MiGetPpeIndex(MI_VPN_TO_VA(PreviousVad->EndingVpn));
 #endif
 #if (_MI_PAGING_LEVELS >= 4)
-        PreviousPpPage = MiGetPxeIndex (MI_VPN_TO_VA (PreviousVad->EndingVpn));
+        PreviousPpPage = MiGetPxeIndex(MI_VPN_TO_VA(PreviousVad->EndingVpn));
 #endif
-        if (MI_64K_ALIGN (MI_VPN_TO_VA (PreviousVad->EndingVpn)) ==
-            MI_64K_ALIGN (StartingAddress)) {
-                StartBit += 1;
+        if (MI_64K_ALIGN(MI_VPN_TO_VA(PreviousVad->EndingVpn)) == MI_64K_ALIGN(StartingAddress))
+        {
+            StartBit += 1;
         }
     }
 
-    if (NextVad == NULL) {
-        NextPage = MiGetPdeIndex (MM_HIGHEST_USER_ADDRESS) + 1;
+    if (NextVad == NULL)
+    {
+        NextPage = MiGetPdeIndex(MM_HIGHEST_USER_ADDRESS) + 1;
 #if (_MI_PAGING_LEVELS >= 3)
-        NextPdPage = MiGetPpeIndex (MM_HIGHEST_USER_ADDRESS) + 1;
+        NextPdPage = MiGetPpeIndex(MM_HIGHEST_USER_ADDRESS) + 1;
 #endif
 #if (_MI_PAGING_LEVELS >= 4)
-        NextPpPage = MiGetPxeIndex (MM_HIGHEST_USER_ADDRESS) + 1;
+        NextPpPage = MiGetPxeIndex(MM_HIGHEST_USER_ADDRESS) + 1;
 #endif
     }
-    else {
-        NextPage = MiGetPdeIndex (MI_VPN_TO_VA (NextVad->StartingVpn));
+    else
+    {
+        NextPage = MiGetPdeIndex(MI_VPN_TO_VA(NextVad->StartingVpn));
 #if (_MI_PAGING_LEVELS >= 3)
-        NextPdPage = MiGetPpeIndex (MI_VPN_TO_VA (NextVad->StartingVpn));
+        NextPdPage = MiGetPpeIndex(MI_VPN_TO_VA(NextVad->StartingVpn));
 #endif
 #if (_MI_PAGING_LEVELS >= 4)
-        NextPpPage = MiGetPxeIndex (MI_VPN_TO_VA (NextVad->StartingVpn));
+        NextPpPage = MiGetPxeIndex(MI_VPN_TO_VA(NextVad->StartingVpn));
 #endif
-        if (MI_64K_ALIGN (MI_VPN_TO_VA (NextVad->StartingVpn)) ==
-            MI_64K_ALIGN (EndingAddress)) {
-                EndBit -= 1;
+        if (MI_64K_ALIGN(MI_VPN_TO_VA(NextVad->StartingVpn)) == MI_64K_ALIGN(EndingAddress))
+        {
+            EndBit -= 1;
         }
     }
 
-    ASSERT (PreviousPage <= NextPage);
-    ASSERT64 (PreviousPdPage <= NextPdPage);
+    ASSERT(PreviousPage <= NextPage);
+    ASSERT64(PreviousPdPage <= NextPdPage);
 #if (_MI_PAGING_LEVELS >= 4)
-    ASSERT64 (PreviousPpPage <= NextPpPage);
+    ASSERT64(PreviousPpPage <= NextPpPage);
 #endif
 
-    FirstPage = MiGetPdeIndex (StartingAddress);
+    FirstPage = MiGetPdeIndex(StartingAddress);
 
-    LastPage = MiGetPdeIndex (EndingAddress);
+    LastPage = MiGetPdeIndex(EndingAddress);
 
-    if (PreviousPage == FirstPage) {
+    if (PreviousPage == FirstPage)
+    {
 
         //
         // A VAD is within the starting page table page.
@@ -1067,7 +1053,8 @@ Environment:
         FirstPage += 1;
     }
 
-    if (NextPage == LastPage) {
+    if (NextPage == LastPage)
+    {
 
         //
         // A VAD is within the ending page table page.
@@ -1076,7 +1063,8 @@ Environment:
         LastPage -= 1;
     }
 
-    if (StartBit <= EndBit) {
+    if (StartBit <= EndBit)
+    {
 
         //
         // Initialize the bitmap inline for speed.
@@ -1085,27 +1073,31 @@ Environment:
         VadBitMap.SizeOfBitMap = MiLastVadBit + 1;
         VadBitMap.Buffer = VAD_BITMAP_SPACE;
 
-#if defined (_WIN64) || defined (_X86PAE_)
+#if defined(_WIN64) || defined(_X86PAE_)
 
         //
         // Only the first (PAGE_SIZE*8*64K) of VA space on NT64 is bitmapped.
         //
 
-        if (EndBit > MiLastVadBit) {
+        if (EndBit > MiLastVadBit)
+        {
             EndBit = MiLastVadBit;
         }
 
-        if (StartBit <= MiLastVadBit) {
-            RtlClearBits (&VadBitMap, StartBit, EndBit - StartBit + 1);
+        if (StartBit <= MiLastVadBit)
+        {
+            RtlClearBits(&VadBitMap, StartBit, EndBit - StartBit + 1);
 
-            if (MmWorkingSetList->VadBitMapHint > StartBit) {
+            if (MmWorkingSetList->VadBitMapHint > StartBit)
+            {
                 MmWorkingSetList->VadBitMapHint = StartBit;
             }
         }
 #else
-        RtlClearBits (&VadBitMap, StartBit, EndBit - StartBit + 1);
+        RtlClearBits(&VadBitMap, StartBit, EndBit - StartBit + 1);
 
-        if (MmWorkingSetList->VadBitMapHint > StartBit) {
+        if (MmWorkingSetList->VadBitMapHint > StartBit)
+        {
             MmWorkingSetList->VadBitMapHint = StartBit;
         }
 #endif
@@ -1115,17 +1107,18 @@ Environment:
     // Indicate that the page table page is not in use.
     //
 
-    if (FirstPage > LastPage) {
+    if (FirstPage > LastPage)
+    {
         return;
     }
 
     NumberToClear = 1 + LastPage - FirstPage;
 
-    while (FirstPage <= LastPage) {
-        ASSERT (MI_CHECK_BIT (MmWorkingSetList->CommittedPageTables,
-                              FirstPage));
+    while (FirstPage <= LastPage)
+    {
+        ASSERT(MI_CHECK_BIT(MmWorkingSetList->CommittedPageTables, FirstPage));
 
-        MI_CLEAR_BIT (MmWorkingSetList->CommittedPageTables, FirstPage);
+        MI_CLEAR_BIT(MmWorkingSetList->CommittedPageTables, FirstPage);
         FirstPage += 1;
     }
 
@@ -1137,11 +1130,12 @@ Environment:
     // Return page directory parent charges here.
     //
 
-    FirstPpPage = MiGetPxeIndex (StartingAddress);
+    FirstPpPage = MiGetPxeIndex(StartingAddress);
 
-    LastPpPage = MiGetPxeIndex (EndingAddress);
+    LastPpPage = MiGetPxeIndex(EndingAddress);
 
-    if (PreviousPpPage == FirstPpPage) {
+    if (PreviousPpPage == FirstPpPage)
+    {
 
         //
         // A VAD is within the starting page directory parent page.
@@ -1150,7 +1144,8 @@ Environment:
         FirstPpPage += 1;
     }
 
-    if (NextPpPage == LastPpPage) {
+    if (NextPpPage == LastPpPage)
+    {
 
         //
         // A VAD is within the ending page directory parent page.
@@ -1163,21 +1158,22 @@ Environment:
     // Indicate that the page directory page parent is not in use.
     //
 
-    if (FirstPpPage <= LastPpPage) {
+    if (FirstPpPage <= LastPpPage)
+    {
 
         MmWorkingSetList->NumberOfCommittedPageDirectoryParents -= (1 + LastPpPage - FirstPpPage);
 
         NumberToClear += (1 + LastPpPage - FirstPpPage);
-    
-        while (FirstPpPage <= LastPpPage) {
-            ASSERT (MI_CHECK_BIT (MmWorkingSetList->CommittedPageDirectoryParents,
-                                  FirstPpPage));
-    
-            MI_CLEAR_BIT (MmWorkingSetList->CommittedPageDirectoryParents, FirstPpPage);
+
+        while (FirstPpPage <= LastPpPage)
+        {
+            ASSERT(MI_CHECK_BIT(MmWorkingSetList->CommittedPageDirectoryParents, FirstPpPage));
+
+            MI_CLEAR_BIT(MmWorkingSetList->CommittedPageDirectoryParents, FirstPpPage);
             FirstPpPage += 1;
         }
     }
-    
+
 #endif
 
 #if (_MI_PAGING_LEVELS >= 3)
@@ -1186,11 +1182,12 @@ Environment:
     // Return page directory charges here.
     //
 
-    FirstPdPage = MiGetPpeIndex (StartingAddress);
+    FirstPdPage = MiGetPpeIndex(StartingAddress);
 
-    LastPdPage = MiGetPpeIndex (EndingAddress);
+    LastPdPage = MiGetPpeIndex(EndingAddress);
 
-    if (PreviousPdPage == FirstPdPage) {
+    if (PreviousPdPage == FirstPdPage)
+    {
 
         //
         // A VAD is within the starting page directory page.
@@ -1199,7 +1196,8 @@ Environment:
         FirstPdPage += 1;
     }
 
-    if (NextPdPage == LastPdPage) {
+    if (NextPdPage == LastPdPage)
+    {
 
         //
         // A VAD is within the ending page directory page.
@@ -1212,42 +1210,41 @@ Environment:
     // Indicate that the page directory page is not in use.
     //
 
-    if (FirstPdPage <= LastPdPage) {
+    if (FirstPdPage <= LastPdPage)
+    {
 
         MmWorkingSetList->NumberOfCommittedPageDirectories -= (1 + LastPdPage - FirstPdPage);
 
         NumberToClear += (1 + LastPdPage - FirstPdPage);
-    
-        while (FirstPdPage <= LastPdPage) {
-            ASSERT (MI_CHECK_BIT (MmWorkingSetList->CommittedPageDirectories,
-                                  FirstPdPage));
-    
-            MI_CLEAR_BIT (MmWorkingSetList->CommittedPageDirectories, FirstPdPage);
+
+        while (FirstPdPage <= LastPdPage)
+        {
+            ASSERT(MI_CHECK_BIT(MmWorkingSetList->CommittedPageDirectories, FirstPdPage));
+
+            MI_CLEAR_BIT(MmWorkingSetList->CommittedPageDirectories, FirstPdPage);
             FirstPdPage += 1;
         }
     }
-    
+
 #endif
 
-    MiReturnCommitment (NumberToClear);
-    MM_TRACK_COMMIT (MM_DBG_COMMIT_RETURN_PAGETABLES, NumberToClear);
-    PsReturnProcessPageFileQuota (CurrentProcess, NumberToClear);
+    MiReturnCommitment(NumberToClear);
+    MM_TRACK_COMMIT(MM_DBG_COMMIT_RETURN_PAGETABLES, NumberToClear);
+    PsReturnProcessPageFileQuota(CurrentProcess, NumberToClear);
 
-    if (CurrentProcess->JobStatus & PS_JOB_STATUS_REPORT_COMMIT_CHANGES) {
+    if (CurrentProcess->JobStatus & PS_JOB_STATUS_REPORT_COMMIT_CHANGES)
+    {
         PsChangeJobMemoryUsage(-(SSIZE_T)NumberToClear);
     }
     CurrentProcess->CommitCharge -= NumberToClear;
 
-    MI_INCREMENT_TOTAL_PROCESS_COMMIT (0 - NumberToClear);
+    MI_INCREMENT_TOTAL_PROCESS_COMMIT(0 - NumberToClear);
 
     return;
 }
 
-
-VOID
-MiCauseOverCommitPopup (
-    VOID
-    )
+
+VOID MiCauseOverCommitPopup(VOID)
 
 /*++
 
@@ -1274,34 +1271,34 @@ Return Value:
     // maximum, or both.
     //
 
-    if (MmTotalCommittedPages > MmTotalCommitLimitMaximum - 100) {
-        if (InterlockedIncrement (&MiCommitPopups[0]) > 1) {
-            InterlockedDecrement (&MiCommitPopups[0]);
+    if (MmTotalCommittedPages > MmTotalCommitLimitMaximum - 100)
+    {
+        if (InterlockedIncrement(&MiCommitPopups[0]) > 1)
+        {
+            InterlockedDecrement(&MiCommitPopups[0]);
             return;
         }
         PopupNumber = STATUS_COMMITMENT_LIMIT;
     }
-    else {
-        if (InterlockedIncrement (&MiCommitPopups[1]) > 1) {
-            InterlockedDecrement (&MiCommitPopups[1]);
+    else
+    {
+        if (InterlockedIncrement(&MiCommitPopups[1]) > 1)
+        {
+            InterlockedDecrement(&MiCommitPopups[1]);
             return;
         }
         PopupNumber = STATUS_COMMITMENT_MINIMUM;
     }
 
-    IoRaiseInformationalHardError (PopupNumber, NULL, NULL);
+    IoRaiseInformationalHardError(PopupNumber, NULL, NULL);
 }
 
-
+
 SIZE_T MmTotalPagedPoolQuota;
 SIZE_T MmTotalNonPagedPoolQuota;
 
 BOOLEAN
-MmRaisePoolQuota(
-    IN POOL_TYPE PoolType,
-    IN SIZE_T OldQuotaLimit,
-    OUT PSIZE_T NewQuotaLimit
-    )
+MmRaisePoolQuota(IN POOL_TYPE PoolType, IN SIZE_T OldQuotaLimit, OUT PSIZE_T NewQuotaLimit)
 
 /*++
 
@@ -1335,7 +1332,8 @@ Environment:
     SIZE_T Limit;
     PMM_PAGED_POOL_INFO PagedPoolInfo;
 
-    if (PoolType == PagedPool) {
+    if (PoolType == PagedPool)
+    {
 
         //
         // Check commit limit and make sure at least 1mb is available.
@@ -1345,7 +1343,8 @@ Environment:
         PagedPoolInfo = &MmPagedPoolInfo;
 
         if ((MmSizeOfPagedPoolInBytes >> PAGE_SHIFT) <
-            (PagedPoolInfo->AllocatedPagedPool + ((MMPAGED_QUOTA_CHECK) >> PAGE_SHIFT))) {
+            (PagedPoolInfo->AllocatedPagedPool + ((MMPAGED_QUOTA_CHECK) >> PAGE_SHIFT)))
+        {
 
             return FALSE;
         }
@@ -1353,48 +1352,50 @@ Environment:
         MmTotalPagedPoolQuota += (MMPAGED_QUOTA_INCREASE);
         *NewQuotaLimit = OldQuotaLimit + (MMPAGED_QUOTA_INCREASE);
         return TRUE;
+    }
+    else
+    {
 
-    } else {
-
-        if ( (ULONG_PTR)(MmAllocatedNonPagedPool + ((1*1024*1024) >> PAGE_SHIFT)) < (MmMaximumNonPagedPoolInBytes >> PAGE_SHIFT)) {
+        if ((ULONG_PTR)(MmAllocatedNonPagedPool + ((1 * 1024 * 1024) >> PAGE_SHIFT)) <
+            (MmMaximumNonPagedPoolInBytes >> PAGE_SHIFT))
+        {
             goto aok;
-            }
+        }
 
         //
         // Make sure 200 pages and 5mb of nonpaged pool expansion
         // available.  Raise quota by 64k.
         //
 
-        if ((MmAvailablePages < 200) ||
-            (MmResidentAvailablePages < ((MMNONPAGED_QUOTA_CHECK) >> PAGE_SHIFT))) {
+        if ((MmAvailablePages < 200) || (MmResidentAvailablePages < ((MMNONPAGED_QUOTA_CHECK) >> PAGE_SHIFT)))
+        {
 
             return FALSE;
         }
 
-        if (MmAvailablePages > ((4*1024*1024) >> PAGE_SHIFT)) {
-            Limit = (1*1024*1024) >> PAGE_SHIFT;
-        } else {
-            Limit = (4*1024*1024) >> PAGE_SHIFT;
+        if (MmAvailablePages > ((4 * 1024 * 1024) >> PAGE_SHIFT))
+        {
+            Limit = (1 * 1024 * 1024) >> PAGE_SHIFT;
+        }
+        else
+        {
+            Limit = (4 * 1024 * 1024) >> PAGE_SHIFT;
         }
 
-        if ((ULONG_PTR)((MmMaximumNonPagedPoolInBytes >> PAGE_SHIFT)) <
-            (MmAllocatedNonPagedPool + Limit)) {
+        if ((ULONG_PTR)((MmMaximumNonPagedPoolInBytes >> PAGE_SHIFT)) < (MmAllocatedNonPagedPool + Limit))
+        {
 
             return FALSE;
         }
-aok:
+    aok:
         MmTotalNonPagedPoolQuota += (MMNONPAGED_QUOTA_INCREASE);
         *NewQuotaLimit = OldQuotaLimit + (MMNONPAGED_QUOTA_INCREASE);
         return TRUE;
     }
 }
 
-
-VOID
-MmReturnPoolQuota(
-    IN POOL_TYPE PoolType,
-    IN SIZE_T ReturnedQuota
-    )
+
+VOID MmReturnPoolQuota(IN POOL_TYPE PoolType, IN SIZE_T ReturnedQuota)
 
 /*++
 
@@ -1420,9 +1421,12 @@ Environment:
 
 {
 
-    if (PoolType == PagedPool) {
+    if (PoolType == PagedPool)
+    {
         MmTotalPagedPoolQuota -= ReturnedQuota;
-    } else {
+    }
+    else
+    {
         MmTotalNonPagedPoolQuota -= ReturnedQuota;
     }
 

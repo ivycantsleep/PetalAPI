@@ -23,13 +23,11 @@
 * 19-Jan-1993 mikeke   Client side version
 \***************************************************************************/
 
-BOOL DrawFocusRect(
-    HDC hDC,
-    CONST RECT *pRect)
+BOOL DrawFocusRect(HDC hDC, CONST RECT *pRect)
 {
     UserAssert(ghdcGray != NULL);
     return ClientFrame(hDC, pRect, KHBRUSH_TO_HBRUSH(gpsi->hbrGray), PATINVERT,
-            max(1, gpsi->aiSysMet[SM_CXFOCUSBORDER]), max(1, gpsi->aiSysMet[SM_CYFOCUSBORDER]));
+                       max(1, gpsi->aiSysMet[SM_CXFOCUSBORDER]), max(1, gpsi->aiSysMet[SM_CYFOCUSBORDER]));
 }
 
 /***************************************************************************\
@@ -39,10 +37,7 @@ BOOL DrawFocusRect(
 *  01-25-91 DavidPe     Created.
 \***************************************************************************/
 
-int APIENTRY FrameRect(
-    HDC hdc,
-    CONST RECT *lprc,
-    HBRUSH hbr)
+int APIENTRY FrameRect(HDC hdc, CONST RECT *lprc, HBRUSH hbr)
 {
     return ClientFrame(hdc, lprc, hbr, PATCOPY, 1, 1);
 }

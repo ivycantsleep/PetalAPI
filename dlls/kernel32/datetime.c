@@ -23,17 +23,11 @@ Revision History:
 #define IsActiveConsoleSession() (USER_SHARED_DATA->ActiveConsoleId == NtCurrentPeb()->SessionId)
 
 
-ULONG 
-CalcClientTimeZoneIdAndBias(
-     IN CONST TIME_ZONE_INFORMATION *ptzi,
-     OUT KSYSTEM_TIME *pBias);
+ULONG
+CalcClientTimeZoneIdAndBias(IN CONST TIME_ZONE_INFORMATION *ptzi, OUT KSYSTEM_TIME *pBias);
 
 
-VOID
-WINAPI
-GetLocalTime(
-    LPSYSTEMTIME lpLocalTime
-    )
+VOID WINAPI GetLocalTime(LPSYSTEMTIME lpLocalTime)
 
 /*++
 
@@ -77,21 +71,24 @@ Return Value:
     LARGE_INTEGER SystemTime;
     LARGE_INTEGER Bias;
     TIME_FIELDS TimeFields;
-    
+
     volatile KSYSTEM_TIME *pRealBias;
-        
-    if(!IsActiveConsoleSession() && 
-        BaseStaticServerData->TermsrvClientTimeZoneId!=TIME_ZONE_ID_INVALID) {
-        pRealBias=&(BaseStaticServerData->ktTermsrvClientBias);
-    } else {
-        pRealBias=&(USER_SHARED_DATA->TimeZoneBias);
+
+    if (!IsActiveConsoleSession() && BaseStaticServerData->TermsrvClientTimeZoneId != TIME_ZONE_ID_INVALID)
+    {
+        pRealBias = &(BaseStaticServerData->ktTermsrvClientBias);
     }
-    
+    else
+    {
+        pRealBias = &(USER_SHARED_DATA->TimeZoneBias);
+    }
+
     //
     // Read system time from shared region.
     //
 
-    do {
+    do
+    {
         SystemTime.HighPart = USER_SHARED_DATA->SystemTime.High1Time;
         SystemTime.LowPart = USER_SHARED_DATA->SystemTime.LowPart;
     } while (SystemTime.HighPart != USER_SHARED_DATA->SystemTime.High2Time);
@@ -100,30 +97,27 @@ Return Value:
     // Read time zone bias from shared region.
     // If it's terminal server session use client bias.
 
-    do {
+    do
+    {
         Bias.HighPart = pRealBias->High1Time;
         Bias.LowPart = pRealBias->LowPart;
     } while (Bias.HighPart != pRealBias->High2Time);
 
     LocalTime.QuadPart = SystemTime.QuadPart - Bias.QuadPart;
 
-    RtlTimeToTimeFields(&LocalTime,&TimeFields);
+    RtlTimeToTimeFields(&LocalTime, &TimeFields);
 
-    lpLocalTime->wYear         = TimeFields.Year        ;
-    lpLocalTime->wMonth        = TimeFields.Month       ;
-    lpLocalTime->wDayOfWeek    = TimeFields.Weekday     ;
-    lpLocalTime->wDay          = TimeFields.Day         ;
-    lpLocalTime->wHour         = TimeFields.Hour        ;
-    lpLocalTime->wMinute       = TimeFields.Minute      ;
-    lpLocalTime->wSecond       = TimeFields.Second      ;
+    lpLocalTime->wYear = TimeFields.Year;
+    lpLocalTime->wMonth = TimeFields.Month;
+    lpLocalTime->wDayOfWeek = TimeFields.Weekday;
+    lpLocalTime->wDay = TimeFields.Day;
+    lpLocalTime->wHour = TimeFields.Hour;
+    lpLocalTime->wMinute = TimeFields.Minute;
+    lpLocalTime->wSecond = TimeFields.Second;
     lpLocalTime->wMilliseconds = TimeFields.Milliseconds;
 }
 
-VOID
-WINAPI
-GetSystemTime(
-    LPSYSTEMTIME lpSystemTime
-    )
+VOID WINAPI GetSystemTime(LPSYSTEMTIME lpSystemTime)
 
 /*++
 
@@ -170,28 +164,25 @@ Return Value:
     // Read system time from shared region.
     //
 
-    do {
+    do
+    {
         SystemTime.HighPart = USER_SHARED_DATA->SystemTime.High1Time;
         SystemTime.LowPart = USER_SHARED_DATA->SystemTime.LowPart;
     } while (SystemTime.HighPart != USER_SHARED_DATA->SystemTime.High2Time);
 
-    RtlTimeToTimeFields(&SystemTime,&TimeFields);
+    RtlTimeToTimeFields(&SystemTime, &TimeFields);
 
-    lpSystemTime->wYear         = TimeFields.Year        ;
-    lpSystemTime->wMonth        = TimeFields.Month       ;
-    lpSystemTime->wDayOfWeek    = TimeFields.Weekday     ;
-    lpSystemTime->wDay          = TimeFields.Day         ;
-    lpSystemTime->wHour         = TimeFields.Hour        ;
-    lpSystemTime->wMinute       = TimeFields.Minute      ;
-    lpSystemTime->wSecond       = TimeFields.Second      ;
+    lpSystemTime->wYear = TimeFields.Year;
+    lpSystemTime->wMonth = TimeFields.Month;
+    lpSystemTime->wDayOfWeek = TimeFields.Weekday;
+    lpSystemTime->wDay = TimeFields.Day;
+    lpSystemTime->wHour = TimeFields.Hour;
+    lpSystemTime->wMinute = TimeFields.Minute;
+    lpSystemTime->wSecond = TimeFields.Second;
     lpSystemTime->wMilliseconds = TimeFields.Milliseconds;
 }
 
-VOID
-WINAPI
-GetSystemTimeAsFileTime(
-    LPFILETIME lpSystemTimeAsFileTime
-    )
+VOID WINAPI GetSystemTimeAsFileTime(LPFILETIME lpSystemTimeAsFileTime)
 
 /*++
 
@@ -218,7 +209,8 @@ Return Value:
     // Read system time from shared region.
     //
 
-    do {
+    do
+    {
         SystemTime.HighPart = USER_SHARED_DATA->SystemTime.High1Time;
         SystemTime.LowPart = USER_SHARED_DATA->SystemTime.LowPart;
     } while (SystemTime.HighPart != USER_SHARED_DATA->SystemTime.High2Time);
@@ -227,11 +219,7 @@ Return Value:
     lpSystemTimeAsFileTime->dwHighDateTime = SystemTime.HighPart;
 }
 
-BOOL
-WINAPI
-SetSystemTime(
-    CONST SYSTEMTIME *lpSystemTime
-    )
+BOOL WINAPI SetSystemTime(CONST SYSTEMTIME *lpSystemTime)
 
 /*++
 
@@ -263,41 +251,42 @@ Return Value:
 
     ReturnValue = TRUE;
 
-    TimeFields.Year         = lpSystemTime->wYear        ;
-    TimeFields.Month        = lpSystemTime->wMonth       ;
-    TimeFields.Day          = lpSystemTime->wDay         ;
-    TimeFields.Hour         = lpSystemTime->wHour        ;
-    TimeFields.Minute       = lpSystemTime->wMinute      ;
-    TimeFields.Second       = lpSystemTime->wSecond      ;
+    TimeFields.Year = lpSystemTime->wYear;
+    TimeFields.Month = lpSystemTime->wMonth;
+    TimeFields.Day = lpSystemTime->wDay;
+    TimeFields.Hour = lpSystemTime->wHour;
+    TimeFields.Minute = lpSystemTime->wMinute;
+    TimeFields.Second = lpSystemTime->wSecond;
     TimeFields.Milliseconds = lpSystemTime->wMilliseconds;
 
-    if ( !RtlTimeFieldsToTime(&TimeFields,&SystemTime) ) {
+    if (!RtlTimeFieldsToTime(&TimeFields, &SystemTime))
+    {
         Status = STATUS_INVALID_PARAMETER;
         ReturnValue = FALSE;
+    }
+    else
+    {
+        Status = BasepAcquirePrivilegeEx(SE_SYSTEMTIME_PRIVILEGE, &State);
+        if (NT_SUCCESS(Status))
+        {
+            Status = NtSetSystemTime(&SystemTime, NULL);
+            BasepReleasePrivilege(State);
         }
-    else {
-        Status = BasepAcquirePrivilegeEx( SE_SYSTEMTIME_PRIVILEGE, &State );
-        if ( NT_SUCCESS(Status) ) {
-            Status = NtSetSystemTime(&SystemTime,NULL);
-            BasepReleasePrivilege( State );
-            }
-        if ( !NT_SUCCESS(Status) ) {
+        if (!NT_SUCCESS(Status))
+        {
             ReturnValue = FALSE;
-            }
         }
+    }
 
-    if ( !ReturnValue ) {
+    if (!ReturnValue)
+    {
         BaseSetLastNTError(Status);
-        }
+    }
 
     return ReturnValue;
 }
 
-BOOL
-WINAPI
-SetLocalTime(
-    CONST SYSTEMTIME *lpLocalTime
-    )
+BOOL WINAPI SetLocalTime(CONST SYSTEMTIME *lpLocalTime)
 
 /*++
 
@@ -333,61 +322,68 @@ Return Value:
     //
     // Read time zone bias from shared region.
     // If it's terminal server session use client bias.
-    
-    if(!IsActiveConsoleSession() && 
-        BaseStaticServerData->TermsrvClientTimeZoneId!=TIME_ZONE_ID_INVALID) {
-        pRealBias=&(BaseStaticServerData->ktTermsrvClientBias);
-    } else {
-        pRealBias=&(USER_SHARED_DATA->TimeZoneBias);
+
+    if (!IsActiveConsoleSession() && BaseStaticServerData->TermsrvClientTimeZoneId != TIME_ZONE_ID_INVALID)
+    {
+        pRealBias = &(BaseStaticServerData->ktTermsrvClientBias);
+    }
+    else
+    {
+        pRealBias = &(USER_SHARED_DATA->TimeZoneBias);
     }
 
-    do {
+    do
+    {
         Bias.HighPart = pRealBias->High1Time;
         Bias.LowPart = pRealBias->LowPart;
     } while (Bias.HighPart != pRealBias->High2Time);
 
     ReturnValue = TRUE;
 
-    TimeFields.Year         = lpLocalTime->wYear        ;
-    TimeFields.Month        = lpLocalTime->wMonth       ;
-    TimeFields.Day          = lpLocalTime->wDay         ;
-    TimeFields.Hour         = lpLocalTime->wHour        ;
-    TimeFields.Minute       = lpLocalTime->wMinute      ;
-    TimeFields.Second       = lpLocalTime->wSecond      ;
+    TimeFields.Year = lpLocalTime->wYear;
+    TimeFields.Month = lpLocalTime->wMonth;
+    TimeFields.Day = lpLocalTime->wDay;
+    TimeFields.Hour = lpLocalTime->wHour;
+    TimeFields.Minute = lpLocalTime->wMinute;
+    TimeFields.Second = lpLocalTime->wSecond;
     TimeFields.Milliseconds = lpLocalTime->wMilliseconds;
 
-    if ( !RtlTimeFieldsToTime(&TimeFields,&LocalTime) ) {
+    if (!RtlTimeFieldsToTime(&TimeFields, &LocalTime))
+    {
         Status = STATUS_INVALID_PARAMETER;
         ReturnValue = FALSE;
-        }
-    else {
+    }
+    else
+    {
 
         SystemTime.QuadPart = LocalTime.QuadPart + Bias.QuadPart;
-        Status = BasepAcquirePrivilegeEx( SE_SYSTEMTIME_PRIVILEGE, &State );
-        if ( NT_SUCCESS(Status) ) {
-            Status = NtSetSystemTime(&SystemTime,NULL);
-            BasepReleasePrivilege( State );
-            if ( !NT_SUCCESS(Status) ) {
+        Status = BasepAcquirePrivilegeEx(SE_SYSTEMTIME_PRIVILEGE, &State);
+        if (NT_SUCCESS(Status))
+        {
+            Status = NtSetSystemTime(&SystemTime, NULL);
+            BasepReleasePrivilege(State);
+            if (!NT_SUCCESS(Status))
+            {
                 ReturnValue = FALSE;
-                }
             }
-        else {
+        }
+        else
+        {
             ReturnValue = FALSE;
-            }
         }
+    }
 
-    if ( !ReturnValue ) {
+    if (!ReturnValue)
+    {
         BaseSetLastNTError(Status);
-        }
+    }
 
     return ReturnValue;
 }
 
 
 DWORD
-GetTickCount(
-    VOID
-    )
+GetTickCount(VOID)
 
 /*++
 
@@ -414,12 +410,7 @@ Return Value:
 }
 
 
-BOOL
-APIENTRY
-FileTimeToSystemTime(
-    CONST FILETIME *lpFileTime,
-    LPSYSTEMTIME lpSystemTime
-    )
+BOOL APIENTRY FileTimeToSystemTime(CONST FILETIME *lpFileTime, LPSYSTEMTIME lpSystemTime)
 
 /*++
 
@@ -451,32 +442,28 @@ Return Value:
     FileTime.LowPart = lpFileTime->dwLowDateTime;
     FileTime.HighPart = lpFileTime->dwHighDateTime;
 
-    if ( FileTime.QuadPart < 0 ) {
+    if (FileTime.QuadPart < 0)
+    {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
-        }
+    }
 
     RtlTimeToTimeFields(&FileTime, &TimeFields);
 
-    lpSystemTime->wYear         = TimeFields.Year        ;
-    lpSystemTime->wMonth        = TimeFields.Month       ;
-    lpSystemTime->wDay          = TimeFields.Day         ;
-    lpSystemTime->wDayOfWeek    = TimeFields.Weekday     ;
-    lpSystemTime->wHour         = TimeFields.Hour        ;
-    lpSystemTime->wMinute       = TimeFields.Minute      ;
-    lpSystemTime->wSecond       = TimeFields.Second      ;
+    lpSystemTime->wYear = TimeFields.Year;
+    lpSystemTime->wMonth = TimeFields.Month;
+    lpSystemTime->wDay = TimeFields.Day;
+    lpSystemTime->wDayOfWeek = TimeFields.Weekday;
+    lpSystemTime->wHour = TimeFields.Hour;
+    lpSystemTime->wMinute = TimeFields.Minute;
+    lpSystemTime->wSecond = TimeFields.Second;
     lpSystemTime->wMilliseconds = TimeFields.Milliseconds;
 
     return TRUE;
 }
 
 
-BOOL
-APIENTRY
-SystemTimeToFileTime(
-    CONST SYSTEMTIME *lpSystemTime,
-    LPFILETIME lpFileTime
-    )
+BOOL APIENTRY SystemTimeToFileTime(CONST SYSTEMTIME *lpSystemTime, LPFILETIME lpFileTime)
 
 /*++
 
@@ -505,31 +492,28 @@ Return Value:
     TIME_FIELDS TimeFields;
     LARGE_INTEGER FileTime;
 
-    TimeFields.Year         = lpSystemTime->wYear        ;
-    TimeFields.Month        = lpSystemTime->wMonth       ;
-    TimeFields.Day          = lpSystemTime->wDay         ;
-    TimeFields.Hour         = lpSystemTime->wHour        ;
-    TimeFields.Minute       = lpSystemTime->wMinute      ;
-    TimeFields.Second       = lpSystemTime->wSecond      ;
+    TimeFields.Year = lpSystemTime->wYear;
+    TimeFields.Month = lpSystemTime->wMonth;
+    TimeFields.Day = lpSystemTime->wDay;
+    TimeFields.Hour = lpSystemTime->wHour;
+    TimeFields.Minute = lpSystemTime->wMinute;
+    TimeFields.Second = lpSystemTime->wSecond;
     TimeFields.Milliseconds = lpSystemTime->wMilliseconds;
 
-    if ( !RtlTimeFieldsToTime(&TimeFields,&FileTime)) {
+    if (!RtlTimeFieldsToTime(&TimeFields, &FileTime))
+    {
         BaseSetLastNTError(STATUS_INVALID_PARAMETER);
         return FALSE;
-        }
-    else {
+    }
+    else
+    {
         lpFileTime->dwLowDateTime = FileTime.LowPart;
         lpFileTime->dwHighDateTime = FileTime.HighPart;
         return TRUE;
-        }
+    }
 }
 
-BOOL
-WINAPI
-FileTimeToLocalFileTime(
-    CONST FILETIME *lpFileTime,
-    LPFILETIME lpLocalFileTime
-    )
+BOOL WINAPI FileTimeToLocalFileTime(CONST FILETIME *lpFileTime, LPFILETIME lpLocalFileTime)
 
 /*++
 
@@ -562,15 +546,18 @@ Return Value:
     //
     // Read time zone bias from shared region.
     // If it's terminal server session use client bias.
-    
-    if(!IsActiveConsoleSession() && 
-        BaseStaticServerData->TermsrvClientTimeZoneId!=TIME_ZONE_ID_INVALID) {
-        pRealBias=&(BaseStaticServerData->ktTermsrvClientBias);
-    } else {
-        pRealBias=&(USER_SHARED_DATA->TimeZoneBias);
+
+    if (!IsActiveConsoleSession() && BaseStaticServerData->TermsrvClientTimeZoneId != TIME_ZONE_ID_INVALID)
+    {
+        pRealBias = &(BaseStaticServerData->ktTermsrvClientBias);
+    }
+    else
+    {
+        pRealBias = &(USER_SHARED_DATA->TimeZoneBias);
     }
 
-    do {
+    do
+    {
         Bias.HighPart = pRealBias->High1Time;
         Bias.LowPart = pRealBias->LowPart;
     } while (Bias.HighPart != pRealBias->High2Time);
@@ -586,12 +573,7 @@ Return Value:
     return TRUE;
 }
 
-BOOL
-WINAPI
-LocalFileTimeToFileTime(
-    CONST FILETIME *lpLocalFileTime,
-    LPFILETIME lpFileTime
-    )
+BOOL WINAPI LocalFileTimeToFileTime(CONST FILETIME *lpLocalFileTime, LPFILETIME lpFileTime)
 
 /*++
 
@@ -624,15 +606,18 @@ Return Value:
     //
     // Read time zone bias from shared region.
     // If it's terminal server session use client bias.
-    
-    if(!IsActiveConsoleSession() && 
-        BaseStaticServerData->TermsrvClientTimeZoneId!=TIME_ZONE_ID_INVALID) {
-        pRealBias=&(BaseStaticServerData->ktTermsrvClientBias);
-    } else {
-        pRealBias=&(USER_SHARED_DATA->TimeZoneBias);
+
+    if (!IsActiveConsoleSession() && BaseStaticServerData->TermsrvClientTimeZoneId != TIME_ZONE_ID_INVALID)
+    {
+        pRealBias = &(BaseStaticServerData->ktTermsrvClientBias);
+    }
+    else
+    {
+        pRealBias = &(USER_SHARED_DATA->TimeZoneBias);
     }
 
-    do {
+    do
+    {
         Bias.HighPart = pRealBias->High1Time;
         Bias.LowPart = pRealBias->LowPart;
     } while (Bias.HighPart != pRealBias->High2Time);
@@ -649,15 +634,9 @@ Return Value:
 }
 
 
-#define AlmostTwoSeconds (2*1000*1000*10 - 1)
+#define AlmostTwoSeconds (2 * 1000 * 1000 * 10 - 1)
 
-BOOL
-APIENTRY
-FileTimeToDosDateTime(
-    CONST FILETIME *lpFileTime,
-    LPWORD lpFatDate,
-    LPWORD lpFatTime
-    )
+BOOL APIENTRY FileTimeToDosDateTime(CONST FILETIME *lpFileTime, LPWORD lpFatDate, LPWORD lpFatTime)
 
 /*++
 
@@ -696,38 +675,30 @@ Return Value:
 
     FileTime.QuadPart = FileTime.QuadPart + (LONGLONG)AlmostTwoSeconds;
 
-    if ( FileTime.QuadPart < 0 ) {
+    if (FileTime.QuadPart < 0)
+    {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
-        }
+    }
     RtlTimeToTimeFields(&FileTime, &TimeFields);
 
-    if (TimeFields.Year < 1980 || TimeFields.Year > 2107) {
+    if (TimeFields.Year < 1980 || TimeFields.Year > 2107)
+    {
         BaseSetLastNTError(STATUS_INVALID_PARAMETER);
         return FALSE;
-        }
+    }
 
-    *lpFatDate = (WORD)( ((USHORT)(TimeFields.Year-(CSHORT)1980) << 9) |
-                         ((USHORT)TimeFields.Month << 5) |
-                         (USHORT)TimeFields.Day
-                       );
+    *lpFatDate = (WORD)(((USHORT)(TimeFields.Year - (CSHORT)1980) << 9) | ((USHORT)TimeFields.Month << 5) |
+                        (USHORT)TimeFields.Day);
 
-    *lpFatTime = (WORD)( ((USHORT)TimeFields.Hour << 11) |
-                         ((USHORT)TimeFields.Minute << 5) |
-                         ((USHORT)TimeFields.Second >> 1)
-                       );
+    *lpFatTime =
+        (WORD)(((USHORT)TimeFields.Hour << 11) | ((USHORT)TimeFields.Minute << 5) | ((USHORT)TimeFields.Second >> 1));
 
     return TRUE;
 }
 
 
-BOOL
-APIENTRY
-DosDateTimeToFileTime(
-    WORD wFatDate,
-    WORD wFatTime,
-    LPFILETIME lpFileTime
-    )
+BOOL APIENTRY DosDateTimeToFileTime(WORD wFatDate, WORD wFatTime, LPFILETIME lpFileTime)
 
 /*++
 
@@ -758,31 +729,28 @@ Return Value:
     TIME_FIELDS TimeFields;
     LARGE_INTEGER FileTime;
 
-    TimeFields.Year         = (CSHORT)((wFatDate & 0xFE00) >> 9)+(CSHORT)1980;
-    TimeFields.Month        = (CSHORT)((wFatDate & 0x01E0) >> 5);
-    TimeFields.Day          = (CSHORT)((wFatDate & 0x001F) >> 0);
-    TimeFields.Hour         = (CSHORT)((wFatTime & 0xF800) >> 11);
-    TimeFields.Minute       = (CSHORT)((wFatTime & 0x07E0) >>  5);
-    TimeFields.Second       = (CSHORT)((wFatTime & 0x001F) << 1);
+    TimeFields.Year = (CSHORT)((wFatDate & 0xFE00) >> 9) + (CSHORT)1980;
+    TimeFields.Month = (CSHORT)((wFatDate & 0x01E0) >> 5);
+    TimeFields.Day = (CSHORT)((wFatDate & 0x001F) >> 0);
+    TimeFields.Hour = (CSHORT)((wFatTime & 0xF800) >> 11);
+    TimeFields.Minute = (CSHORT)((wFatTime & 0x07E0) >> 5);
+    TimeFields.Second = (CSHORT)((wFatTime & 0x001F) << 1);
     TimeFields.Milliseconds = 0;
 
-    if (RtlTimeFieldsToTime(&TimeFields,&FileTime)) {
+    if (RtlTimeFieldsToTime(&TimeFields, &FileTime))
+    {
         lpFileTime->dwLowDateTime = FileTime.LowPart;
         lpFileTime->dwHighDateTime = FileTime.HighPart;
         return TRUE;
-        }
-    else {
+    }
+    else
+    {
         BaseSetLastNTError(STATUS_INVALID_PARAMETER);
         return FALSE;
-        }
+    }
 }
 
-LONG
-APIENTRY
-CompareFileTime(
-    CONST FILETIME *lpFileTime1,
-    CONST FILETIME *lpFileTime2
-    )
+LONG APIENTRY CompareFileTime(CONST FILETIME *lpFileTime1, CONST FILETIME *lpFileTime2)
 
 /*++
 
@@ -814,23 +782,23 @@ Return Value:
     FileTime1.HighPart = lpFileTime1->dwHighDateTime;
     FileTime2.LowPart = lpFileTime2->dwLowDateTime;
     FileTime2.HighPart = lpFileTime2->dwHighDateTime;
-    if (FileTime1.QuadPart < FileTime2.QuadPart) {
-        return( -1 );
-        }
+    if (FileTime1.QuadPart < FileTime2.QuadPart)
+    {
+        return (-1);
+    }
+    else if (FileTime1.QuadPart > FileTime2.QuadPart)
+    {
+        return (1);
+    }
     else
-    if (FileTime1.QuadPart > FileTime2.QuadPart) {
-        return( 1 );
-        }
-    else {
-        return( 0 );
-        }
+    {
+        return (0);
+    }
 }
 
 DWORD
 WINAPI
-GetTimeZoneInformation(
-    LPTIME_ZONE_INFORMATION lpTimeZoneInformation
-    )
+GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 
 /*++
 
@@ -893,60 +861,53 @@ Return Value:
     // get the timezone data from the system
     // If it's terminal server session use client time zone
 
-    if(!IsActiveConsoleSession() && 
-        BaseStaticServerData->TermsrvClientTimeZoneId!=TIME_ZONE_ID_INVALID) {
+    if (!IsActiveConsoleSession() && BaseStaticServerData->TermsrvClientTimeZoneId != TIME_ZONE_ID_INVALID)
+    {
 
         *lpTimeZoneInformation = BaseStaticServerData->tziTermsrvClientTimeZone;
         return BaseStaticServerData->TermsrvClientTimeZoneId;
+    }
+    else
+    {
 
-    } else {
-
-        Status = NtQuerySystemInformation(
-                    SystemCurrentTimeZoneInformation,
-                    &tzi,
-                    sizeof(tzi),
-                    NULL
-                    );
-        if ( !NT_SUCCESS(Status) ) {
+        Status = NtQuerySystemInformation(SystemCurrentTimeZoneInformation, &tzi, sizeof(tzi), NULL);
+        if (!NT_SUCCESS(Status))
+        {
             BaseSetLastNTError(Status);
             return 0xffffffff;
-            }
+        }
 
 
-        lpTimeZoneInformation->Bias         = tzi.Bias;
+        lpTimeZoneInformation->Bias = tzi.Bias;
         lpTimeZoneInformation->StandardBias = tzi.StandardBias;
         lpTimeZoneInformation->DaylightBias = tzi.DaylightBias;
 
-        RtlMoveMemory(&lpTimeZoneInformation->StandardName,&tzi.StandardName,sizeof(tzi.StandardName));
-        RtlMoveMemory(&lpTimeZoneInformation->DaylightName,&tzi.DaylightName,sizeof(tzi.DaylightName));
+        RtlMoveMemory(&lpTimeZoneInformation->StandardName, &tzi.StandardName, sizeof(tzi.StandardName));
+        RtlMoveMemory(&lpTimeZoneInformation->DaylightName, &tzi.DaylightName, sizeof(tzi.DaylightName));
 
-        lpTimeZoneInformation->StandardDate.wYear         = tzi.StandardStart.Year        ;
-        lpTimeZoneInformation->StandardDate.wMonth        = tzi.StandardStart.Month       ;
-        lpTimeZoneInformation->StandardDate.wDayOfWeek    = tzi.StandardStart.Weekday     ;
-        lpTimeZoneInformation->StandardDate.wDay          = tzi.StandardStart.Day         ;
-        lpTimeZoneInformation->StandardDate.wHour         = tzi.StandardStart.Hour        ;
-        lpTimeZoneInformation->StandardDate.wMinute       = tzi.StandardStart.Minute      ;
-        lpTimeZoneInformation->StandardDate.wSecond       = tzi.StandardStart.Second      ;
+        lpTimeZoneInformation->StandardDate.wYear = tzi.StandardStart.Year;
+        lpTimeZoneInformation->StandardDate.wMonth = tzi.StandardStart.Month;
+        lpTimeZoneInformation->StandardDate.wDayOfWeek = tzi.StandardStart.Weekday;
+        lpTimeZoneInformation->StandardDate.wDay = tzi.StandardStart.Day;
+        lpTimeZoneInformation->StandardDate.wHour = tzi.StandardStart.Hour;
+        lpTimeZoneInformation->StandardDate.wMinute = tzi.StandardStart.Minute;
+        lpTimeZoneInformation->StandardDate.wSecond = tzi.StandardStart.Second;
         lpTimeZoneInformation->StandardDate.wMilliseconds = tzi.StandardStart.Milliseconds;
 
-        lpTimeZoneInformation->DaylightDate.wYear         = tzi.DaylightStart.Year        ;
-        lpTimeZoneInformation->DaylightDate.wMonth        = tzi.DaylightStart.Month       ;
-        lpTimeZoneInformation->DaylightDate.wDayOfWeek    = tzi.DaylightStart.Weekday     ;
-        lpTimeZoneInformation->DaylightDate.wDay          = tzi.DaylightStart.Day         ;
-        lpTimeZoneInformation->DaylightDate.wHour         = tzi.DaylightStart.Hour        ;
-        lpTimeZoneInformation->DaylightDate.wMinute       = tzi.DaylightStart.Minute      ;
-        lpTimeZoneInformation->DaylightDate.wSecond       = tzi.DaylightStart.Second      ;
+        lpTimeZoneInformation->DaylightDate.wYear = tzi.DaylightStart.Year;
+        lpTimeZoneInformation->DaylightDate.wMonth = tzi.DaylightStart.Month;
+        lpTimeZoneInformation->DaylightDate.wDayOfWeek = tzi.DaylightStart.Weekday;
+        lpTimeZoneInformation->DaylightDate.wDay = tzi.DaylightStart.Day;
+        lpTimeZoneInformation->DaylightDate.wHour = tzi.DaylightStart.Hour;
+        lpTimeZoneInformation->DaylightDate.wMinute = tzi.DaylightStart.Minute;
+        lpTimeZoneInformation->DaylightDate.wSecond = tzi.DaylightStart.Second;
         lpTimeZoneInformation->DaylightDate.wMilliseconds = tzi.DaylightStart.Milliseconds;
 
         return USER_SHARED_DATA->TimeZoneId;
     }
 }
 
-BOOL
-WINAPI
-SetTimeZoneInformation(
-    CONST TIME_ZONE_INFORMATION *lpTimeZoneInformation
-    )
+BOOL WINAPI SetTimeZoneInformation(CONST TIME_ZONE_INFORMATION *lpTimeZoneInformation)
 
 /*++
 
@@ -1040,61 +1001,58 @@ Return Value:
 {
     RTL_TIME_ZONE_INFORMATION tzi;
     NTSTATUS Status;
-    
-    if(!IsActiveConsoleSession()) {
+
+    if (!IsActiveConsoleSession())
+    {
 
         return SetClientTimeZoneInformation(lpTimeZoneInformation);
+    }
+    else
+    {
 
-    } else {
+        tzi.Bias = lpTimeZoneInformation->Bias;
+        tzi.StandardBias = lpTimeZoneInformation->StandardBias;
+        tzi.DaylightBias = lpTimeZoneInformation->DaylightBias;
 
-        tzi.Bias            = lpTimeZoneInformation->Bias;
-        tzi.StandardBias    = lpTimeZoneInformation->StandardBias;
-        tzi.DaylightBias    = lpTimeZoneInformation->DaylightBias;
+        RtlMoveMemory(&tzi.StandardName, &lpTimeZoneInformation->StandardName, sizeof(tzi.StandardName));
+        RtlMoveMemory(&tzi.DaylightName, &lpTimeZoneInformation->DaylightName, sizeof(tzi.DaylightName));
 
-        RtlMoveMemory(&tzi.StandardName,&lpTimeZoneInformation->StandardName,sizeof(tzi.StandardName));
-        RtlMoveMemory(&tzi.DaylightName,&lpTimeZoneInformation->DaylightName,sizeof(tzi.DaylightName));
-
-        tzi.StandardStart.Year         = lpTimeZoneInformation->StandardDate.wYear        ;
-        tzi.StandardStart.Month        = lpTimeZoneInformation->StandardDate.wMonth       ;
-        tzi.StandardStart.Weekday      = lpTimeZoneInformation->StandardDate.wDayOfWeek   ;
-        tzi.StandardStart.Day          = lpTimeZoneInformation->StandardDate.wDay         ;
-        tzi.StandardStart.Hour         = lpTimeZoneInformation->StandardDate.wHour        ;
-        tzi.StandardStart.Minute       = lpTimeZoneInformation->StandardDate.wMinute      ;
-        tzi.StandardStart.Second       = lpTimeZoneInformation->StandardDate.wSecond      ;
+        tzi.StandardStart.Year = lpTimeZoneInformation->StandardDate.wYear;
+        tzi.StandardStart.Month = lpTimeZoneInformation->StandardDate.wMonth;
+        tzi.StandardStart.Weekday = lpTimeZoneInformation->StandardDate.wDayOfWeek;
+        tzi.StandardStart.Day = lpTimeZoneInformation->StandardDate.wDay;
+        tzi.StandardStart.Hour = lpTimeZoneInformation->StandardDate.wHour;
+        tzi.StandardStart.Minute = lpTimeZoneInformation->StandardDate.wMinute;
+        tzi.StandardStart.Second = lpTimeZoneInformation->StandardDate.wSecond;
         tzi.StandardStart.Milliseconds = lpTimeZoneInformation->StandardDate.wMilliseconds;
 
-        tzi.DaylightStart.Year         = lpTimeZoneInformation->DaylightDate.wYear        ;
-        tzi.DaylightStart.Month        = lpTimeZoneInformation->DaylightDate.wMonth       ;
-        tzi.DaylightStart.Weekday      = lpTimeZoneInformation->DaylightDate.wDayOfWeek   ;
-        tzi.DaylightStart.Day          = lpTimeZoneInformation->DaylightDate.wDay         ;
-        tzi.DaylightStart.Hour         = lpTimeZoneInformation->DaylightDate.wHour        ;
-        tzi.DaylightStart.Minute       = lpTimeZoneInformation->DaylightDate.wMinute      ;
-        tzi.DaylightStart.Second       = lpTimeZoneInformation->DaylightDate.wSecond      ;
+        tzi.DaylightStart.Year = lpTimeZoneInformation->DaylightDate.wYear;
+        tzi.DaylightStart.Month = lpTimeZoneInformation->DaylightDate.wMonth;
+        tzi.DaylightStart.Weekday = lpTimeZoneInformation->DaylightDate.wDayOfWeek;
+        tzi.DaylightStart.Day = lpTimeZoneInformation->DaylightDate.wDay;
+        tzi.DaylightStart.Hour = lpTimeZoneInformation->DaylightDate.wHour;
+        tzi.DaylightStart.Minute = lpTimeZoneInformation->DaylightDate.wMinute;
+        tzi.DaylightStart.Second = lpTimeZoneInformation->DaylightDate.wSecond;
         tzi.DaylightStart.Milliseconds = lpTimeZoneInformation->DaylightDate.wMilliseconds;
 
-        Status = RtlSetTimeZoneInformation( &tzi );
-        if (!NT_SUCCESS( Status )) {
+        Status = RtlSetTimeZoneInformation(&tzi);
+        if (!NT_SUCCESS(Status))
+        {
             BaseSetLastNTError(Status);
             return FALSE;
-            }
+        }
         //
         // Refresh the system's concept of time
         //
 
-        NtSetSystemTime(NULL,NULL);
-    
+        NtSetSystemTime(NULL, NULL);
+
 
         return TRUE;
     }
 }
 
-BOOL
-WINAPI
-GetSystemTimeAdjustment(
-    PDWORD lpTimeAdjustment,
-    PDWORD lpTimeIncrement,
-    PBOOL  lpTimeAdjustmentDisabled
-    )
+BOOL WINAPI GetSystemTimeAdjustment(PDWORD lpTimeAdjustment, PDWORD lpTimeIncrement, PBOOL lpTimeAdjustmentDisabled)
 
 /*++
 
@@ -1148,32 +1106,24 @@ Return Value:
     NTSTATUS Status;
     SYSTEM_QUERY_TIME_ADJUST_INFORMATION TimeAdjust;
     BOOL b;
-    Status = NtQuerySystemInformation(
-                SystemTimeAdjustmentInformation,
-                &TimeAdjust,
-                sizeof(TimeAdjust),
-                NULL
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = NtQuerySystemInformation(SystemTimeAdjustmentInformation, &TimeAdjust, sizeof(TimeAdjust), NULL);
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         b = FALSE;
-        }
-    else {
+    }
+    else
+    {
         *lpTimeAdjustment = TimeAdjust.TimeAdjustment;
         *lpTimeIncrement = TimeAdjust.TimeIncrement;
         *lpTimeAdjustmentDisabled = TimeAdjust.Enable;
         b = TRUE;
-        }
+    }
 
     return b;
 }
 
-BOOL
-WINAPI
-SetSystemTimeAdjustment(
-    DWORD dwTimeAdjustment,
-    BOOL  bTimeAdjustmentDisabled
-    )
+BOOL WINAPI SetSystemTimeAdjustment(DWORD dwTimeAdjustment, BOOL bTimeAdjustmentDisabled)
 
 /*++
 
@@ -1232,26 +1182,18 @@ Return Value:
     b = TRUE;
     TimeAdjust.TimeAdjustment = dwTimeAdjustment;
     TimeAdjust.Enable = (BOOLEAN)bTimeAdjustmentDisabled;
-    Status = NtSetSystemInformation(
-                SystemTimeAdjustmentInformation,
-                &TimeAdjust,
-                sizeof(TimeAdjust)
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = NtSetSystemInformation(SystemTimeAdjustmentInformation, &TimeAdjust, sizeof(TimeAdjust));
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         b = FALSE;
-        }
+    }
 
     return b;
 }
 
-BOOL
-WINAPI
-SystemTimeToTzSpecificLocalTime(
-    LPTIME_ZONE_INFORMATION lpTimeZoneInformation,
-    LPSYSTEMTIME lpUniversalTime,
-    LPSYSTEMTIME lpLocalTime
-    )
+BOOL WINAPI SystemTimeToTzSpecificLocalTime(LPTIME_ZONE_INFORMATION lpTimeZoneInformation, LPSYSTEMTIME lpUniversalTime,
+                                            LPSYSTEMTIME lpLocalTime)
 {
 
     TIME_ZONE_INFORMATION TziData;
@@ -1271,63 +1213,68 @@ SystemTimeToTzSpecificLocalTime(
     //
     // Get the timezone information into a useful format
     //
-    if ( !ARGUMENT_PRESENT(lpTimeZoneInformation) ) {
+    if (!ARGUMENT_PRESENT(lpTimeZoneInformation))
+    {
 
         //
         // Convert universal time to local time using current timezone info
         //
-        if (GetTimeZoneInformation(&TziData) == TIME_ZONE_ID_INVALID) {
+        if (GetTimeZoneInformation(&TziData) == TIME_ZONE_ID_INVALID)
+        {
             return FALSE;
-            }
+        }
         Tzi = &TziData;
-        }
-    else {
+    }
+    else
+    {
         Tzi = lpTimeZoneInformation;
-        }
+    }
 
-    tzi.Bias            = Tzi->Bias;
-    tzi.StandardBias    = Tzi->StandardBias;
-    tzi.DaylightBias    = Tzi->DaylightBias;
+    tzi.Bias = Tzi->Bias;
+    tzi.StandardBias = Tzi->StandardBias;
+    tzi.DaylightBias = Tzi->DaylightBias;
 
-    RtlMoveMemory(&tzi.StandardName,&Tzi->StandardName,sizeof(tzi.StandardName));
-    RtlMoveMemory(&tzi.DaylightName,&Tzi->DaylightName,sizeof(tzi.DaylightName));
+    RtlMoveMemory(&tzi.StandardName, &Tzi->StandardName, sizeof(tzi.StandardName));
+    RtlMoveMemory(&tzi.DaylightName, &Tzi->DaylightName, sizeof(tzi.DaylightName));
 
-    tzi.StandardStart.Year         = Tzi->StandardDate.wYear        ;
-    tzi.StandardStart.Month        = Tzi->StandardDate.wMonth       ;
-    tzi.StandardStart.Weekday      = Tzi->StandardDate.wDayOfWeek   ;
-    tzi.StandardStart.Day          = Tzi->StandardDate.wDay         ;
-    tzi.StandardStart.Hour         = Tzi->StandardDate.wHour        ;
-    tzi.StandardStart.Minute       = Tzi->StandardDate.wMinute      ;
-    tzi.StandardStart.Second       = Tzi->StandardDate.wSecond      ;
+    tzi.StandardStart.Year = Tzi->StandardDate.wYear;
+    tzi.StandardStart.Month = Tzi->StandardDate.wMonth;
+    tzi.StandardStart.Weekday = Tzi->StandardDate.wDayOfWeek;
+    tzi.StandardStart.Day = Tzi->StandardDate.wDay;
+    tzi.StandardStart.Hour = Tzi->StandardDate.wHour;
+    tzi.StandardStart.Minute = Tzi->StandardDate.wMinute;
+    tzi.StandardStart.Second = Tzi->StandardDate.wSecond;
     tzi.StandardStart.Milliseconds = Tzi->StandardDate.wMilliseconds;
 
-    tzi.DaylightStart.Year         = Tzi->DaylightDate.wYear        ;
-    tzi.DaylightStart.Month        = Tzi->DaylightDate.wMonth       ;
-    tzi.DaylightStart.Weekday      = Tzi->DaylightDate.wDayOfWeek   ;
-    tzi.DaylightStart.Day          = Tzi->DaylightDate.wDay         ;
-    tzi.DaylightStart.Hour         = Tzi->DaylightDate.wHour        ;
-    tzi.DaylightStart.Minute       = Tzi->DaylightDate.wMinute      ;
-    tzi.DaylightStart.Second       = Tzi->DaylightDate.wSecond      ;
+    tzi.DaylightStart.Year = Tzi->DaylightDate.wYear;
+    tzi.DaylightStart.Month = Tzi->DaylightDate.wMonth;
+    tzi.DaylightStart.Weekday = Tzi->DaylightDate.wDayOfWeek;
+    tzi.DaylightStart.Day = Tzi->DaylightDate.wDay;
+    tzi.DaylightStart.Hour = Tzi->DaylightDate.wHour;
+    tzi.DaylightStart.Minute = Tzi->DaylightDate.wMinute;
+    tzi.DaylightStart.Second = Tzi->DaylightDate.wSecond;
     tzi.DaylightStart.Milliseconds = Tzi->DaylightDate.wMilliseconds;
 
     //
     // convert the input universal time to NT style time
     //
-    if ( !SystemTimeToFileTime(lpUniversalTime,(LPFILETIME)&CurrentUniversalTime) ) {
+    if (!SystemTimeToFileTime(lpUniversalTime, (LPFILETIME)&CurrentUniversalTime))
+    {
         return FALSE;
-        }
+    }
 
     //
     // Get the new timezone bias
     //
 
-    NewTimeZoneBias.QuadPart = Int32x32To64(tzi.Bias*60, 10000000);
+    NewTimeZoneBias.QuadPart = Int32x32To64(tzi.Bias * 60, 10000000);
 
     //
     // Now see if we have stored cutover times
     //
 
-    if ( tzi.StandardStart.Month && tzi.DaylightStart.Month ) {
+    if (tzi.StandardStart.Month && tzi.DaylightStart.Month)
+    {
 
         //
         // We have timezone cutover information. Compute the
@@ -1335,35 +1282,27 @@ SystemTimeToTzSpecificLocalTime(
         // is
         //
 
-        if ( !RtlCutoverTimeToSystemTime(
-                &tzi.StandardStart,
-                &StandardTime,
-                &CurrentUniversalTime,
-                TRUE
-                ) ) {
+        if (!RtlCutoverTimeToSystemTime(&tzi.StandardStart, &StandardTime, &CurrentUniversalTime, TRUE))
+        {
             BaseSetLastNTError(STATUS_INVALID_PARAMETER);
             return FALSE;
-            }
+        }
 
-        if ( !RtlCutoverTimeToSystemTime(
-                &tzi.DaylightStart,
-                &DaylightTime,
-                &CurrentUniversalTime,
-                TRUE
-                ) ) {
+        if (!RtlCutoverTimeToSystemTime(&tzi.DaylightStart, &DaylightTime, &CurrentUniversalTime, TRUE))
+        {
             BaseSetLastNTError(STATUS_INVALID_PARAMETER);
             return FALSE;
-            }
+        }
 
         //
         // Convert standard time and daylight time to utc
         //
 
-        LocalCustomBias.QuadPart = Int32x32To64(tzi.StandardBias*60, 10000000);
+        LocalCustomBias.QuadPart = Int32x32To64(tzi.StandardBias * 60, 10000000);
         TimeZoneBias.QuadPart = NewTimeZoneBias.QuadPart + LocalCustomBias.QuadPart;
         UtcDaylightTime.QuadPart = DaylightTime.QuadPart + TimeZoneBias.QuadPart;
 
-        LocalCustomBias.QuadPart = Int32x32To64(tzi.DaylightBias*60, 10000000);
+        LocalCustomBias.QuadPart = Int32x32To64(tzi.DaylightBias * 60, 10000000);
         TimeZoneBias.QuadPart = NewTimeZoneBias.QuadPart + LocalCustomBias.QuadPart;
         UtcStandardTime.QuadPart = StandardTime.QuadPart + TimeZoneBias.QuadPart;
 
@@ -1372,74 +1311,74 @@ SystemTimeToTzSpecificLocalTime(
         // less than standard is daylight
         //
 
-        if ( UtcDaylightTime.QuadPart < UtcStandardTime.QuadPart ) {
+        if (UtcDaylightTime.QuadPart < UtcStandardTime.QuadPart)
+        {
 
             //
             // If today is >= DaylightTime and < StandardTime, then
             // We are in daylight savings time
             //
 
-            if ( (CurrentUniversalTime.QuadPart >= UtcDaylightTime.QuadPart) &&
-                 (CurrentUniversalTime.QuadPart < UtcStandardTime.QuadPart) ) {
+            if ((CurrentUniversalTime.QuadPart >= UtcDaylightTime.QuadPart) &&
+                (CurrentUniversalTime.QuadPart < UtcStandardTime.QuadPart))
+            {
 
                 CurrentTimeZoneId = TIME_ZONE_ID_DAYLIGHT;
-                }
-            else {
-                CurrentTimeZoneId = TIME_ZONE_ID_STANDARD;
-                }
             }
-        else {
+            else
+            {
+                CurrentTimeZoneId = TIME_ZONE_ID_STANDARD;
+            }
+        }
+        else
+        {
 
             //
             // If today is >= StandardTime and < DaylightTime, then
             // We are in standard time
             //
 
-            if ( (CurrentUniversalTime.QuadPart >= UtcStandardTime.QuadPart ) &&
-                 (CurrentUniversalTime.QuadPart < UtcDaylightTime.QuadPart ) ) {
+            if ((CurrentUniversalTime.QuadPart >= UtcStandardTime.QuadPart) &&
+                (CurrentUniversalTime.QuadPart < UtcDaylightTime.QuadPart))
+            {
 
                 CurrentTimeZoneId = TIME_ZONE_ID_STANDARD;
-                }
-            else {
-                CurrentTimeZoneId = TIME_ZONE_ID_DAYLIGHT;
-                }
             }
+            else
+            {
+                CurrentTimeZoneId = TIME_ZONE_ID_DAYLIGHT;
+            }
+        }
 
         //
         // At this point, we know our current timezone and the
         // Universal time of the next cutover.
         //
 
-        LocalCustomBias.QuadPart = Int32x32To64(
-                            CurrentTimeZoneId == TIME_ZONE_ID_DAYLIGHT ?
-                                tzi.DaylightBias*60 :
-                                tzi.StandardBias*60,                // Bias in seconds
-                            10000000
-                            );
+        LocalCustomBias.QuadPart =
+            Int32x32To64(CurrentTimeZoneId == TIME_ZONE_ID_DAYLIGHT ? tzi.DaylightBias * 60
+                                                                    : tzi.StandardBias * 60, // Bias in seconds
+                         10000000);
 
         TimeZoneBias.QuadPart = NewTimeZoneBias.QuadPart + LocalCustomBias.QuadPart;
-
-        }
-    else {
+    }
+    else
+    {
         TimeZoneBias = NewTimeZoneBias;
-        }
+    }
 
     ComputedLocalTime.QuadPart = CurrentUniversalTime.QuadPart - TimeZoneBias.QuadPart;
 
-    if ( !FileTimeToSystemTime((LPFILETIME)&ComputedLocalTime,lpLocalTime) ) {
+    if (!FileTimeToSystemTime((LPFILETIME)&ComputedLocalTime, lpLocalTime))
+    {
         return FALSE;
-        }
+    }
 
     return TRUE;
 }
 
-BOOL
-WINAPI
-TzSpecificLocalTimeToSystemTime(
-    LPTIME_ZONE_INFORMATION lpTimeZoneInformation,
-    LPSYSTEMTIME lpLocalTime,
-    LPSYSTEMTIME lpUniversalTime
-    )
+BOOL WINAPI TzSpecificLocalTimeToSystemTime(LPTIME_ZONE_INFORMATION lpTimeZoneInformation, LPSYSTEMTIME lpLocalTime,
+                                            LPSYSTEMTIME lpUniversalTime)
 {
 
     TIME_ZONE_INFORMATION TziData;
@@ -1457,49 +1396,53 @@ TzSpecificLocalTimeToSystemTime(
     //
     // Get the timezone information into a useful format
     //
-    if ( !ARGUMENT_PRESENT(lpTimeZoneInformation) ) {
+    if (!ARGUMENT_PRESENT(lpTimeZoneInformation))
+    {
 
         //
         // Convert universal time to local time using current timezone info
         //
-        if (GetTimeZoneInformation(&TziData) == TIME_ZONE_ID_INVALID) {
+        if (GetTimeZoneInformation(&TziData) == TIME_ZONE_ID_INVALID)
+        {
             return FALSE;
-            }
+        }
         Tzi = &TziData;
     }
-    else {
+    else
+    {
         Tzi = lpTimeZoneInformation;
     }
 
-    tzi.Bias            = Tzi->Bias;
-    tzi.StandardBias    = Tzi->StandardBias;
-    tzi.DaylightBias    = Tzi->DaylightBias;
+    tzi.Bias = Tzi->Bias;
+    tzi.StandardBias = Tzi->StandardBias;
+    tzi.DaylightBias = Tzi->DaylightBias;
 
-    RtlMoveMemory(&tzi.StandardName,&Tzi->StandardName,sizeof(tzi.StandardName));
-    RtlMoveMemory(&tzi.DaylightName,&Tzi->DaylightName,sizeof(tzi.DaylightName));
+    RtlMoveMemory(&tzi.StandardName, &Tzi->StandardName, sizeof(tzi.StandardName));
+    RtlMoveMemory(&tzi.DaylightName, &Tzi->DaylightName, sizeof(tzi.DaylightName));
 
-    tzi.StandardStart.Year         = Tzi->StandardDate.wYear        ;
-    tzi.StandardStart.Month        = Tzi->StandardDate.wMonth       ;
-    tzi.StandardStart.Weekday      = Tzi->StandardDate.wDayOfWeek   ;
-    tzi.StandardStart.Day          = Tzi->StandardDate.wDay         ;
-    tzi.StandardStart.Hour         = Tzi->StandardDate.wHour        ;
-    tzi.StandardStart.Minute       = Tzi->StandardDate.wMinute      ;
-    tzi.StandardStart.Second       = Tzi->StandardDate.wSecond      ;
+    tzi.StandardStart.Year = Tzi->StandardDate.wYear;
+    tzi.StandardStart.Month = Tzi->StandardDate.wMonth;
+    tzi.StandardStart.Weekday = Tzi->StandardDate.wDayOfWeek;
+    tzi.StandardStart.Day = Tzi->StandardDate.wDay;
+    tzi.StandardStart.Hour = Tzi->StandardDate.wHour;
+    tzi.StandardStart.Minute = Tzi->StandardDate.wMinute;
+    tzi.StandardStart.Second = Tzi->StandardDate.wSecond;
     tzi.StandardStart.Milliseconds = Tzi->StandardDate.wMilliseconds;
 
-    tzi.DaylightStart.Year         = Tzi->DaylightDate.wYear        ;
-    tzi.DaylightStart.Month        = Tzi->DaylightDate.wMonth       ;
-    tzi.DaylightStart.Weekday      = Tzi->DaylightDate.wDayOfWeek   ;
-    tzi.DaylightStart.Day          = Tzi->DaylightDate.wDay         ;
-    tzi.DaylightStart.Hour         = Tzi->DaylightDate.wHour        ;
-    tzi.DaylightStart.Minute       = Tzi->DaylightDate.wMinute      ;
-    tzi.DaylightStart.Second       = Tzi->DaylightDate.wSecond      ;
+    tzi.DaylightStart.Year = Tzi->DaylightDate.wYear;
+    tzi.DaylightStart.Month = Tzi->DaylightDate.wMonth;
+    tzi.DaylightStart.Weekday = Tzi->DaylightDate.wDayOfWeek;
+    tzi.DaylightStart.Day = Tzi->DaylightDate.wDay;
+    tzi.DaylightStart.Hour = Tzi->DaylightDate.wHour;
+    tzi.DaylightStart.Minute = Tzi->DaylightDate.wMinute;
+    tzi.DaylightStart.Second = Tzi->DaylightDate.wSecond;
     tzi.DaylightStart.Milliseconds = Tzi->DaylightDate.wMilliseconds;
 
     //
     // convert the input local time to NT style time
     //
-    if ( !SystemTimeToFileTime(lpLocalTime,(LPFILETIME)&CurrentLocalTime) ) {
+    if (!SystemTimeToFileTime(lpLocalTime, (LPFILETIME)&CurrentLocalTime))
+    {
         return FALSE;
     }
 
@@ -1507,13 +1450,14 @@ TzSpecificLocalTimeToSystemTime(
     // Get the new timezone bias
     //
 
-    NewTimeZoneBias.QuadPart = Int32x32To64(tzi.Bias*60, 10000000);
+    NewTimeZoneBias.QuadPart = Int32x32To64(tzi.Bias * 60, 10000000);
 
     //
     // Now see if we have stored cutover times
     //
 
-    if ( tzi.StandardStart.Month && tzi.DaylightStart.Month ) {
+    if (tzi.StandardStart.Month && tzi.DaylightStart.Month)
+    {
 
         //
         // We have timezone cutover information. Compute the
@@ -1521,22 +1465,14 @@ TzSpecificLocalTimeToSystemTime(
         // is
         //
 
-        if ( !RtlCutoverTimeToSystemTime(
-                &tzi.StandardStart,
-                &StandardTime,
-                &CurrentLocalTime,
-                TRUE
-                ) ) {
+        if (!RtlCutoverTimeToSystemTime(&tzi.StandardStart, &StandardTime, &CurrentLocalTime, TRUE))
+        {
             BaseSetLastNTError(STATUS_INVALID_PARAMETER);
             return FALSE;
         }
 
-        if ( !RtlCutoverTimeToSystemTime(
-                &tzi.DaylightStart,
-                &DaylightTime,
-                &CurrentLocalTime,
-                TRUE
-                ) ) {
+        if (!RtlCutoverTimeToSystemTime(&tzi.DaylightStart, &DaylightTime, &CurrentLocalTime, TRUE))
+        {
             BaseSetLastNTError(STATUS_INVALID_PARAMETER);
             return FALSE;
         }
@@ -1547,35 +1483,41 @@ TzSpecificLocalTimeToSystemTime(
         // less than standard is daylight
         //
 
-        if ( DaylightTime.QuadPart < StandardTime.QuadPart ) {
+        if (DaylightTime.QuadPart < StandardTime.QuadPart)
+        {
 
             //
             // If today is >= DaylightTime and < StandardTime, then
             // We are in daylight savings time
             //
 
-            if ( (CurrentLocalTime.QuadPart >= DaylightTime.QuadPart) &&
-                 (CurrentLocalTime.QuadPart <  StandardTime.QuadPart) ) {
+            if ((CurrentLocalTime.QuadPart >= DaylightTime.QuadPart) &&
+                (CurrentLocalTime.QuadPart < StandardTime.QuadPart))
+            {
 
                 CurrentTimeZoneId = TIME_ZONE_ID_DAYLIGHT;
             }
-            else {
+            else
+            {
                 CurrentTimeZoneId = TIME_ZONE_ID_STANDARD;
             }
         }
-        else {
+        else
+        {
 
             //
             // If today is >= StandardTime and < DaylightTime, then
             // We are in standard time
             //
 
-            if ( (CurrentLocalTime.QuadPart >= StandardTime.QuadPart ) &&
-                 (CurrentLocalTime.QuadPart <  DaylightTime.QuadPart ) ) {
+            if ((CurrentLocalTime.QuadPart >= StandardTime.QuadPart) &&
+                (CurrentLocalTime.QuadPart < DaylightTime.QuadPart))
+            {
 
                 CurrentTimeZoneId = TIME_ZONE_ID_STANDARD;
             }
-            else {
+            else
+            {
                 CurrentTimeZoneId = TIME_ZONE_ID_DAYLIGHT;
             }
         }
@@ -1585,34 +1527,29 @@ TzSpecificLocalTimeToSystemTime(
         // local time of the next cutover.
         //
 
-        LocalCustomBias.QuadPart = Int32x32To64(
-                            CurrentTimeZoneId == TIME_ZONE_ID_DAYLIGHT ?
-                                tzi.DaylightBias*60 :
-                                tzi.StandardBias*60,                // Bias in seconds
-                            10000000
-                            );
+        LocalCustomBias.QuadPart =
+            Int32x32To64(CurrentTimeZoneId == TIME_ZONE_ID_DAYLIGHT ? tzi.DaylightBias * 60
+                                                                    : tzi.StandardBias * 60, // Bias in seconds
+                         10000000);
 
         TimeZoneBias.QuadPart = NewTimeZoneBias.QuadPart + LocalCustomBias.QuadPart;
-
     }
-    else {
+    else
+    {
         TimeZoneBias = NewTimeZoneBias;
     }
 
     ComputedUniversalTime.QuadPart = CurrentLocalTime.QuadPart + TimeZoneBias.QuadPart;
 
-    if ( !FileTimeToSystemTime((LPFILETIME)&ComputedUniversalTime,lpUniversalTime) ) {
+    if (!FileTimeToSystemTime((LPFILETIME)&ComputedUniversalTime, lpUniversalTime))
+    {
         return FALSE;
-    } 
+    }
 
     return TRUE;
 }
 
-BOOL 
-WINAPI 
-SetClientTimeZoneInformation(
-     IN CONST TIME_ZONE_INFORMATION *ptzi
-     )
+BOOL WINAPI SetClientTimeZoneInformation(IN CONST TIME_ZONE_INFORMATION *ptzi)
 /*++
 
 Routine Description:
@@ -1637,61 +1574,59 @@ Return Value:
 
 {
     NTSTATUS Status;
-    
+
     BASE_API_MSG m;
     PBASE_SET_TERMSRVCLIENTTIMEZONE c = &m.u.SetTermsrvClientTimeZone;
-    
-    c->fFirstChunk=TRUE; //this meanes that this is only first portion of data
-                         //we have to cut it ito two pieces because of
-                         //message size restrictions (100 bytes)   
-    c->Bias=ptzi->Bias;
-    RtlMoveMemory(&c->Name,&ptzi->StandardName,sizeof(ptzi->StandardName));
-    c->Date=ptzi->StandardDate;
-    c->Bias1=ptzi->StandardBias;
-    
-#if defined(BUILD_WOW6432)
-    Status = CsrBasepSetClientTimeZoneInformation(c);
-#else
-    Status = CsrClientCallServer((PCSR_API_MSG)&m, NULL,
-                                 CSR_MAKE_API_NUMBER(BASESRV_SERVERDLL_INDEX,
-                                                     BasepSetTermsrvClientTimeZone),
-                                 sizeof( *c ));
-#endif
 
-    if ( !NT_SUCCESS( Status ) ) {
-        SetLastError( RtlNtStatusToDosError( Status ) );
-        return( FALSE );
-    }
-    
-    c->fFirstChunk=FALSE; //this is a second and last portion of data
-    RtlMoveMemory(&c->Name,&ptzi->DaylightName,sizeof(ptzi->DaylightName));
-    c->Date=ptzi->DaylightDate;
-    c->Bias1=ptzi->DaylightBias;
-    c->TimeZoneId=CalcClientTimeZoneIdAndBias(ptzi,&c->RealBias);
+    c->fFirstChunk = TRUE; //this meanes that this is only first portion of data
+                           //we have to cut it ito two pieces because of
+                           //message size restrictions (100 bytes)
+    c->Bias = ptzi->Bias;
+    RtlMoveMemory(&c->Name, &ptzi->StandardName, sizeof(ptzi->StandardName));
+    c->Date = ptzi->StandardDate;
+    c->Bias1 = ptzi->StandardBias;
 
 #if defined(BUILD_WOW6432)
     Status = CsrBasepSetClientTimeZoneInformation(c);
 #else
-    Status = CsrClientCallServer((PCSR_API_MSG)&m, NULL,
-                                 CSR_MAKE_API_NUMBER(BASESRV_SERVERDLL_INDEX,
-                                                     BasepSetTermsrvClientTimeZone),
-                                 sizeof( *c ));
+    Status =
+        CsrClientCallServer((PCSR_API_MSG)&m, NULL,
+                            CSR_MAKE_API_NUMBER(BASESRV_SERVERDLL_INDEX, BasepSetTermsrvClientTimeZone), sizeof(*c));
+#endif
+
+    if (!NT_SUCCESS(Status))
+    {
+        SetLastError(RtlNtStatusToDosError(Status));
+        return (FALSE);
+    }
+
+    c->fFirstChunk = FALSE; //this is a second and last portion of data
+    RtlMoveMemory(&c->Name, &ptzi->DaylightName, sizeof(ptzi->DaylightName));
+    c->Date = ptzi->DaylightDate;
+    c->Bias1 = ptzi->DaylightBias;
+    c->TimeZoneId = CalcClientTimeZoneIdAndBias(ptzi, &c->RealBias);
+
+#if defined(BUILD_WOW6432)
+    Status = CsrBasepSetClientTimeZoneInformation(c);
+#else
+    Status =
+        CsrClientCallServer((PCSR_API_MSG)&m, NULL,
+                            CSR_MAKE_API_NUMBER(BASESRV_SERVERDLL_INDEX, BasepSetTermsrvClientTimeZone), sizeof(*c));
 #endif
 
 
-    if ( !NT_SUCCESS( Status ) ) {
-        SetLastError( RtlNtStatusToDosError( Status ) );
-        return( FALSE );
+    if (!NT_SUCCESS(Status))
+    {
+        SetLastError(RtlNtStatusToDosError(Status));
+        return (FALSE);
     }
 
-    return( TRUE );
+    return (TRUE);
 }
 
 
-ULONG 
-CalcClientTimeZoneIdAndBias(
-     IN CONST TIME_ZONE_INFORMATION *ptzi,
-     OUT KSYSTEM_TIME *pBias)
+ULONG
+CalcClientTimeZoneIdAndBias(IN CONST TIME_ZONE_INFORMATION *ptzi, OUT KSYSTEM_TIME *pBias)
 /*++
 
 Routine Description:
@@ -1729,36 +1664,36 @@ Return Value:
     SYSTEMTIME CurrentSystemTime;
     LARGE_INTEGER CurrentUniversalTime;
     ULONG CurrentTimeZoneId = 0xffffffff;
-    TIME_FIELDS StandardStart,DaylightStart;
+    TIME_FIELDS StandardStart, DaylightStart;
 
-    NewTimeZoneBias.QuadPart = Int32x32To64(ptzi->Bias*60, 10000000);
+    NewTimeZoneBias.QuadPart = Int32x32To64(ptzi->Bias * 60, 10000000);
 
-    
-    
+
     //
     // Now see if we have stored cutover times
     //
-    if ( ptzi->StandardDate.wMonth && ptzi->DaylightDate.wMonth ) {
-        
-        GetSystemTime(&CurrentSystemTime);
-        SystemTimeToFileTime(&CurrentSystemTime,(LPFILETIME)&CurrentUniversalTime);
+    if (ptzi->StandardDate.wMonth && ptzi->DaylightDate.wMonth)
+    {
 
-        StandardStart.Year         = ptzi->StandardDate.wYear        ;
-        StandardStart.Month        = ptzi->StandardDate.wMonth       ;
-        StandardStart.Weekday      = ptzi->StandardDate.wDayOfWeek   ;
-        StandardStart.Day          = ptzi->StandardDate.wDay         ;
-        StandardStart.Hour         = ptzi->StandardDate.wHour        ;
-        StandardStart.Minute       = ptzi->StandardDate.wMinute      ;
-        StandardStart.Second       = ptzi->StandardDate.wSecond      ;
+        GetSystemTime(&CurrentSystemTime);
+        SystemTimeToFileTime(&CurrentSystemTime, (LPFILETIME)&CurrentUniversalTime);
+
+        StandardStart.Year = ptzi->StandardDate.wYear;
+        StandardStart.Month = ptzi->StandardDate.wMonth;
+        StandardStart.Weekday = ptzi->StandardDate.wDayOfWeek;
+        StandardStart.Day = ptzi->StandardDate.wDay;
+        StandardStart.Hour = ptzi->StandardDate.wHour;
+        StandardStart.Minute = ptzi->StandardDate.wMinute;
+        StandardStart.Second = ptzi->StandardDate.wSecond;
         StandardStart.Milliseconds = ptzi->StandardDate.wMilliseconds;
 
-        DaylightStart.Year         = ptzi->DaylightDate.wYear        ;
-        DaylightStart.Month        = ptzi->DaylightDate.wMonth       ;
-        DaylightStart.Weekday      = ptzi->DaylightDate.wDayOfWeek   ;
-        DaylightStart.Day          = ptzi->DaylightDate.wDay         ;
-        DaylightStart.Hour         = ptzi->DaylightDate.wHour        ;
-        DaylightStart.Minute       = ptzi->DaylightDate.wMinute      ;
-        DaylightStart.Second       = ptzi->DaylightDate.wSecond      ;
+        DaylightStart.Year = ptzi->DaylightDate.wYear;
+        DaylightStart.Month = ptzi->DaylightDate.wMonth;
+        DaylightStart.Weekday = ptzi->DaylightDate.wDayOfWeek;
+        DaylightStart.Day = ptzi->DaylightDate.wDay;
+        DaylightStart.Hour = ptzi->DaylightDate.wHour;
+        DaylightStart.Minute = ptzi->DaylightDate.wMinute;
+        DaylightStart.Second = ptzi->DaylightDate.wSecond;
         DaylightStart.Milliseconds = ptzi->DaylightDate.wMilliseconds;
 
         //
@@ -1767,25 +1702,23 @@ Return Value:
         // is
         //
 
-        if((!RtlCutoverTimeToSystemTime(&StandardStart,&StandardTime,
-                &CurrentUniversalTime,TRUE)) || 
-                (!RtlCutoverTimeToSystemTime(&DaylightStart,&DaylightTime,
-                &CurrentUniversalTime,TRUE))) {
+        if ((!RtlCutoverTimeToSystemTime(&StandardStart, &StandardTime, &CurrentUniversalTime, TRUE)) ||
+            (!RtlCutoverTimeToSystemTime(&DaylightStart, &DaylightTime, &CurrentUniversalTime, TRUE)))
+        {
 
             BaseSetLastNTError(STATUS_INVALID_PARAMETER);
             return TIME_ZONE_ID_INVALID;
-
         }
 
         //
         // Convert standard time and daylight time to utc
         //
 
-        LocalCustomBias.QuadPart = Int32x32To64(ptzi->StandardBias*60, 10000000);
+        LocalCustomBias.QuadPart = Int32x32To64(ptzi->StandardBias * 60, 10000000);
         TimeZoneBias.QuadPart = NewTimeZoneBias.QuadPart + LocalCustomBias.QuadPart;
         UtcDaylightTime.QuadPart = DaylightTime.QuadPart + TimeZoneBias.QuadPart;
 
-        LocalCustomBias.QuadPart = Int32x32To64(ptzi->DaylightBias*60, 10000000);
+        LocalCustomBias.QuadPart = Int32x32To64(ptzi->DaylightBias * 60, 10000000);
         TimeZoneBias.QuadPart = NewTimeZoneBias.QuadPart + LocalCustomBias.QuadPart;
         UtcStandardTime.QuadPart = StandardTime.QuadPart + TimeZoneBias.QuadPart;
 
@@ -1794,39 +1727,44 @@ Return Value:
         // less than standard is daylight
         //
 
-        if ( UtcDaylightTime.QuadPart < UtcStandardTime.QuadPart ) {
+        if (UtcDaylightTime.QuadPart < UtcStandardTime.QuadPart)
+        {
 
             //
             // If today is >= DaylightTime and < StandardTime, then
             // We are in daylight savings time
             //
 
-            if ( (CurrentUniversalTime.QuadPart >= UtcDaylightTime.QuadPart) &&
-                 (CurrentUniversalTime.QuadPart < UtcStandardTime.QuadPart) ) {
+            if ((CurrentUniversalTime.QuadPart >= UtcDaylightTime.QuadPart) &&
+                (CurrentUniversalTime.QuadPart < UtcStandardTime.QuadPart))
+            {
 
                 CurrentTimeZoneId = TIME_ZONE_ID_DAYLIGHT;
-
-            } else {
+            }
+            else
+            {
 
                 CurrentTimeZoneId = TIME_ZONE_ID_STANDARD;
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // If today is >= StandardTime and < DaylightTime, then
             // We are in standard time
             //
 
-            if ( (CurrentUniversalTime.QuadPart >= UtcStandardTime.QuadPart ) &&
-                 (CurrentUniversalTime.QuadPart < UtcDaylightTime.QuadPart ) ) {
+            if ((CurrentUniversalTime.QuadPart >= UtcStandardTime.QuadPart) &&
+                (CurrentUniversalTime.QuadPart < UtcDaylightTime.QuadPart))
+            {
 
                 CurrentTimeZoneId = TIME_ZONE_ID_STANDARD;
-
-            } else {
+            }
+            else
+            {
 
                 CurrentTimeZoneId = TIME_ZONE_ID_DAYLIGHT;
-
             }
         }
 
@@ -1835,24 +1773,23 @@ Return Value:
         // Universal time of the next cutover.
         //
 
-        LocalCustomBias.QuadPart = Int32x32To64(
-                            CurrentTimeZoneId == TIME_ZONE_ID_DAYLIGHT ?
-                                ptzi->DaylightBias*60 :
-                                ptzi->StandardBias*60,                // Bias in seconds
-                            10000000
-                            );
+        LocalCustomBias.QuadPart =
+            Int32x32To64(CurrentTimeZoneId == TIME_ZONE_ID_DAYLIGHT ? ptzi->DaylightBias * 60
+                                                                    : ptzi->StandardBias * 60, // Bias in seconds
+                         10000000);
 
         TimeZoneBias.QuadPart = NewTimeZoneBias.QuadPart + LocalCustomBias.QuadPart;
-
-    } else {
+    }
+    else
+    {
 
         TimeZoneBias = NewTimeZoneBias;
-        CurrentTimeZoneId=TIME_ZONE_ID_UNKNOWN;
+        CurrentTimeZoneId = TIME_ZONE_ID_UNKNOWN;
     }
 
- 
-    pBias->LowPart=(ULONG)(TimeZoneBias.LowPart);
-    pBias->High1Time=pBias->High2Time=(LONG)(TimeZoneBias.HighPart);
+
+    pBias->LowPart = (ULONG)(TimeZoneBias.LowPart);
+    pBias->High1Time = pBias->High2Time = (LONG)(TimeZoneBias.HighPart);
 
     return CurrentTimeZoneId;
 }

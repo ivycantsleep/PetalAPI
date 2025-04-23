@@ -28,8 +28,8 @@ Revision History:
 //
 // The verifier uses tables of messages and with indexes into the tables.
 //
-typedef ULONG   VFMESSAGE_TABLEID;
-typedef ULONG   VFMESSAGE_ERRORID;
+typedef ULONG VFMESSAGE_TABLEID;
+typedef ULONG VFMESSAGE_ERRORID;
 
 //
 // VFM_ flags control how a verifier message is handled.
@@ -54,22 +54,23 @@ typedef ULONG   VFMESSAGE_ERRORID;
 //                            the offending driver is being verified or not.
 //
 
-#define VFM_FLAG_INITIALIZED        0x00000001
-#define VFM_FLAG_BEEP               0x00000002
-#define VFM_FLAG_ZAPPED             0x00000004
-#define VFM_FLAG_CLEARED            0x00000008
-#define VFM_DEPLOYMENT_FAILURE      0x00000010
-#define VFM_LOGO_FAILURE            0x00000020
-#define VFM_IGNORE_DRIVER_LIST      0x00000040
+#define VFM_FLAG_INITIALIZED 0x00000001
+#define VFM_FLAG_BEEP 0x00000002
+#define VFM_FLAG_ZAPPED 0x00000004
+#define VFM_FLAG_CLEARED 0x00000008
+#define VFM_DEPLOYMENT_FAILURE 0x00000010
+#define VFM_LOGO_FAILURE 0x00000020
+#define VFM_IGNORE_DRIVER_LIST 0x00000040
 
 //
 // A message class contains VFM_ flags and some generic text describing the
 // problem class.
 //
-typedef struct _VFMESSAGE_CLASS {
+typedef struct _VFMESSAGE_CLASS
+{
 
-    ULONG   ClassFlags;
-    PCSTR   MessageClassText;
+    ULONG ClassFlags;
+    PCSTR MessageClassText;
 
 } VFMESSAGE_CLASS, *PVFMESSAGE_CLASS;
 
@@ -81,31 +82,33 @@ typedef VFMESSAGE_CLASS const *PCVFMESSAGE_CLASS;
 // displays. Note the ulong flags field - this should always be preinited to
 // zero!
 //
-typedef struct _VFMESSAGE_TEMPLATE {
+typedef struct _VFMESSAGE_TEMPLATE
+{
 
-    VFMESSAGE_ERRORID   MessageID;
-    PCVFMESSAGE_CLASS   MessageClass;
-    ULONG               Flags;
-    PCSTR               ParamString;
-    PCSTR               MessageText;
+    VFMESSAGE_ERRORID MessageID;
+    PCVFMESSAGE_CLASS MessageClass;
+    ULONG Flags;
+    PCSTR ParamString;
+    PCSTR MessageText;
 
 } VFMESSAGE_TEMPLATE, *PVFMESSAGE_TEMPLATE;
 
 //
 // Message index 0 is reserved for use in the override tables
 //
-#define VIMESSAGE_ALL_IDS   0
+#define VIMESSAGE_ALL_IDS 0
 
 //
 // An override entry allows the verifier to special case generic assertions
 // that occur against specific drivers. This is done by overriding the error
 // class on the fly.
 //
-typedef struct _VFMESSAGE_OVERRIDE {
+typedef struct _VFMESSAGE_OVERRIDE
+{
 
-    VFMESSAGE_ERRORID   MessageID;
-    PCSTR               DriverName;
-    PCVFMESSAGE_CLASS   ReplacementClass;
+    VFMESSAGE_ERRORID MessageID;
+    PCSTR DriverName;
+    PCVFMESSAGE_CLASS ReplacementClass;
 
 } VFMESSAGE_OVERRIDE, *PVFMESSAGE_OVERRIDE;
 
@@ -115,51 +118,42 @@ typedef VFMESSAGE_OVERRIDE const *PCVFMESSAGE_OVERRIDE;
 // The table of errors. Contains the TableID (used for internal lookup),
 // bugcheck major ID, array of messages and array of overrides
 //
-typedef struct _VFMESSAGE_TEMPLATE_TABLE {
+typedef struct _VFMESSAGE_TEMPLATE_TABLE
+{
 
-    VFMESSAGE_TABLEID       TableID;
-    ULONG                   BugCheckMajor;
-    PVFMESSAGE_TEMPLATE     TemplateArray;
-    ULONG                   TemplateCount;
-    PCVFMESSAGE_OVERRIDE    OverrideArray;
-    ULONG                   OverrideCount;
+    VFMESSAGE_TABLEID TableID;
+    ULONG BugCheckMajor;
+    PVFMESSAGE_TEMPLATE TemplateArray;
+    ULONG TemplateCount;
+    PCVFMESSAGE_OVERRIDE OverrideArray;
+    ULONG OverrideCount;
 
 } VFMESSAGE_TEMPLATE_TABLE, *PVFMESSAGE_TEMPLATE_TABLE;
 
 //
 // Retrieves an internal error table based on ID.
 //
-VOID
-VfMessageRetrieveInternalTable(
-    IN  VFMESSAGE_TABLEID           TableID,
-    OUT PVFMESSAGE_TEMPLATE_TABLE  *MessageTable
-    );
+VOID VfMessageRetrieveInternalTable(IN VFMESSAGE_TABLEID TableID, OUT PVFMESSAGE_TEMPLATE_TABLE *MessageTable);
 
 //
 // Retrieves and formats the appropriate error message.
 //
-VOID
-VfMessageRetrieveErrorData(
-    IN  PVFMESSAGE_TEMPLATE_TABLE   MessageTable        OPTIONAL,
-    IN  VFMESSAGE_ERRORID           MessageID,
-    IN  PSTR                        AnsiDriverName,
-    OUT ULONG                      *BugCheckMajor,
-    OUT PCVFMESSAGE_CLASS          *MessageClass,
-    OUT PCSTR                      *MessageTextTemplate,
-    OUT PULONG                     *TemplateFlags
-    );
+VOID VfMessageRetrieveErrorData(IN PVFMESSAGE_TEMPLATE_TABLE MessageTable OPTIONAL, IN VFMESSAGE_ERRORID MessageID,
+                                IN PSTR AnsiDriverName, OUT ULONG *BugCheckMajor, OUT PCVFMESSAGE_CLASS *MessageClass,
+                                OUT PCSTR *MessageTextTemplate, OUT PULONG *TemplateFlags);
 
 //
 // This file contains a set of internal message tables.
 //
 // The IO Verifier Table Index is...
 //
-#define VFMESSAGE_TABLE_IOVERIFIER  1
+#define VFMESSAGE_TABLE_IOVERIFIER 1
 
 //
 // IO Verifier Messages
 //
-typedef enum _DCERROR_ID {
+typedef enum _DCERROR_ID
+{
 
     DCERROR_UNSPECIFIED = 0x200,
     DCERROR_DELETE_WHILE_ATTACHED,
@@ -242,5 +236,3 @@ typedef enum _DCERROR_ID {
     DCERROR_MAXIMUM
 
 } DCERROR_ID;
-
-

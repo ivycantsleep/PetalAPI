@@ -20,29 +20,36 @@ Revision History:
 
 --*/
 
-struct in6_addr {
-    union {
+struct in6_addr
+{
+    union
+    {
         UCHAR Byte[16];
         USHORT Word[8];
     } u;
 };
-#define s6_bytes   u.Byte
-#define s6_words   u.Word
+#define s6_bytes u.Byte
+#define s6_words u.Word
 
-struct in_addr {
-        union {
-                struct { UCHAR s_b1,s_b2,s_b3,s_b4; } S_un_b;
-                struct { USHORT s_w1,s_w2; } S_un_w;
-                ULONG S_addr;
-        } S_un;
+struct in_addr
+{
+    union
+    {
+        struct
+        {
+            UCHAR s_b1, s_b2, s_b3, s_b4;
+        } S_un_b;
+        struct
+        {
+            USHORT s_w1, s_w2;
+        } S_un_w;
+        ULONG S_addr;
+    } S_un;
 };
-#define s_addr  S_un.S_addr
+#define s_addr S_un.S_addr
 
 LPTSTR
-RtlIpv6AddressToStringT(
-    IN const struct in6_addr *Addr,
-    OUT LPTSTR S
-    )
+RtlIpv6AddressToStringT(IN const struct in6_addr *Addr, OUT LPTSTR S)
 
 /*++
 
@@ -88,24 +95,21 @@ Return Value:
 
     // Check for IPv6-compatible, IPv4-mapped, and IPv4-translated
     // addresses
-    if ((Addr->s6_words[0] == 0) && (Addr->s6_words[1] == 0) &&
-        (Addr->s6_words[2] == 0) && (Addr->s6_words[3] == 0) &&
-        (Addr->s6_words[6] != 0)) {
-        if ((Addr->s6_words[4] == 0) &&
-             ((Addr->s6_words[5] == 0) || (Addr->s6_words[5] == 0xffff)))
+    if ((Addr->s6_words[0] == 0) && (Addr->s6_words[1] == 0) && (Addr->s6_words[2] == 0) && (Addr->s6_words[3] == 0) &&
+        (Addr->s6_words[6] != 0))
+    {
+        if ((Addr->s6_words[4] == 0) && ((Addr->s6_words[5] == 0) || (Addr->s6_words[5] == 0xffff)))
         {
             // compatible or mapped
-            S += _stprintf(S, _T("::%hs%u.%u.%u.%u"),
-                           Addr->s6_words[5] == 0 ? "" : "ffff:",
-                           Addr->s6_bytes[12], Addr->s6_bytes[13],
-                           Addr->s6_bytes[14], Addr->s6_bytes[15]);
+            S += _stprintf(S, _T("::%hs%u.%u.%u.%u"), Addr->s6_words[5] == 0 ? "" : "ffff:", Addr->s6_bytes[12],
+                           Addr->s6_bytes[13], Addr->s6_bytes[14], Addr->s6_bytes[15]);
             return S;
         }
-        else if ((Addr->s6_words[4] == 0xffff) && (Addr->s6_words[5] == 0)) {
+        else if ((Addr->s6_words[4] == 0xffff) && (Addr->s6_words[5] == 0))
+        {
             // translated
-            S += _stprintf(S, _T("::ffff:0:%u.%u.%u.%u"),
-                           Addr->s6_bytes[12], Addr->s6_bytes[13],
-                           Addr->s6_bytes[14], Addr->s6_bytes[15]);
+            S += _stprintf(S, _T("::ffff:0:%u.%u.%u.%u"), Addr->s6_bytes[12], Addr->s6_bytes[13], Addr->s6_bytes[14],
+                           Addr->s6_bytes[15]);
             return S;
         }
     }
@@ -118,26 +122,31 @@ Return Value:
     curFirst = curLast = 0;
 
     // ISATAP EUI64 starts with 00005EFE (or 02005EFE)...
-    if (((Addr->s6_words[4] & 0xfffd) == 0) && (Addr->s6_words[5] == 0xfe5e)) {
+    if (((Addr->s6_words[4] & 0xfffd) == 0) && (Addr->s6_words[5] == 0xfe5e))
+    {
         endHex = 6;
     }
 
-    for (i = 0; i < endHex; i++) {
+    for (i = 0; i < endHex; i++)
+    {
 
-        if (Addr->s6_words[i] == 0) {
+        if (Addr->s6_words[i] == 0)
+        {
             // Extend current substring
-            curLast = i+1;
+            curLast = i + 1;
 
             // Check if current is now largest
-            if (curLast - curFirst > maxLast - maxFirst) {
+            if (curLast - curFirst > maxLast - maxFirst)
+            {
 
                 maxFirst = curFirst;
                 maxLast = curLast;
             }
         }
-        else {
+        else
+        {
             // Start a new substring
-            curFirst = curLast = i+1;
+            curFirst = curLast = i + 1;
         }
     }
 
@@ -145,17 +154,19 @@ Return Value:
     if (maxLast - maxFirst <= 1)
         maxFirst = maxLast = 0;
 
-        // Write colon-separated words.
-        // A double-colon takes the place of the longest string of zeroes.
-        // All zeroes is just "::".
+    // Write colon-separated words.
+    // A double-colon takes the place of the longest string of zeroes.
+    // All zeroes is just "::".
 
-    for (i = 0; i < endHex; i++) {
+    for (i = 0; i < endHex; i++)
+    {
 
         // Skip over string of zeroes
-        if ((maxFirst <= i) && (i < maxLast)) {
+        if ((maxFirst <= i) && (i < maxLast))
+        {
 
             S += _stprintf(S, _T("::"));
-            i = maxLast-1;
+            i = maxLast - 1;
             continue;
         }
 
@@ -166,20 +177,17 @@ Return Value:
         S += _stprintf(S, _T("%x"), RtlUshortByteSwap(Addr->s6_words[i]));
     }
 
-    if (endHex < 8) {
-        S += _stprintf(S, _T(":%u.%u.%u.%u"),
-                       Addr->s6_bytes[12], Addr->s6_bytes[13],
-                       Addr->s6_bytes[14], Addr->s6_bytes[15]);
+    if (endHex < 8)
+    {
+        S += _stprintf(S, _T(":%u.%u.%u.%u"), Addr->s6_bytes[12], Addr->s6_bytes[13], Addr->s6_bytes[14],
+                       Addr->s6_bytes[15]);
     }
 
     return S;
 }
 
 LPTSTR
-RtlIpv4AddressToStringT(
-    IN const struct in_addr *Addr,
-    OUT LPTSTR S
-    )
+RtlIpv4AddressToStringT(IN const struct in_addr *Addr, OUT LPTSTR S)
 
 /*++
 
@@ -202,11 +210,8 @@ Return Value:
 --*/
 
 {
-    S += _stprintf(S, _T("%u.%u.%u.%u"),
-                  ( Addr->s_addr >>  0 ) & 0xFF,
-                  ( Addr->s_addr >>  8 ) & 0xFF,
-                  ( Addr->s_addr >> 16 ) & 0xFF,
-                  ( Addr->s_addr >> 24 ) & 0xFF );
+    S += _stprintf(S, _T("%u.%u.%u.%u"), (Addr->s_addr >> 0) & 0xFF, (Addr->s_addr >> 8) & 0xFF,
+                   (Addr->s_addr >> 16) & 0xFF, (Addr->s_addr >> 24) & 0xFF);
 
     return S;
 }

@@ -22,9 +22,7 @@ Revision History:
 #include "basedll.h"
 
 NTSTATUS
-CsrBasepSetTermsrvAppInstallMode(
-    BOOL bState
-    )
+CsrBasepSetTermsrvAppInstallMode(BOOL bState)
 {
 
 #if defined(BUILD_WOW6432)
@@ -35,19 +33,14 @@ CsrBasepSetTermsrvAppInstallMode(
     PBASE_SET_TERMSRVAPPINSTALLMODE c = &m.u.SetTermsrvAppInstallMode;
 
     c->bState = bState;
-    return  CsrClientCallServer((PCSR_API_MSG)&m, NULL,
-                                 CSR_MAKE_API_NUMBER(BASESRV_SERVERDLL_INDEX,
-                                                     BasepSetTermsrvAppInstallMode),
-                                 sizeof( *c ));
+    return CsrClientCallServer((PCSR_API_MSG)&m, NULL,
+                               CSR_MAKE_API_NUMBER(BASESRV_SERVERDLL_INDEX, BasepSetTermsrvAppInstallMode), sizeof(*c));
 #endif
-
 }
 
 
 NTSTATUS
-CsrBasepSetClientTimeZoneInformation(
-    IN PBASE_SET_TERMSRVCLIENTTIMEZONE c
-    )
+CsrBasepSetClientTimeZoneInformation(IN PBASE_SET_TERMSRVCLIENTTIMEZONE c)
 {
 
 #if defined(BUILD_WOW6432)
@@ -55,13 +48,10 @@ CsrBasepSetClientTimeZoneInformation(
 #else
 
     BASE_API_MSG m;
-    
-    RtlCopyMemory(&m.u.SetTermsrvClientTimeZone, c, sizeof(*c));
-    
-    return  CsrClientCallServer((PCSR_API_MSG)&m, NULL,
-                                 CSR_MAKE_API_NUMBER(BASESRV_SERVERDLL_INDEX,
-                                                     BasepSetTermsrvClientTimeZone),
-                                 sizeof( *c ));
-#endif
 
+    RtlCopyMemory(&m.u.SetTermsrvClientTimeZone, c, sizeof(*c));
+
+    return CsrClientCallServer((PCSR_API_MSG)&m, NULL,
+                               CSR_MAKE_API_NUMBER(BASESRV_SERVERDLL_INDEX, BasepSetTermsrvClientTimeZone), sizeof(*c));
+#endif
 }

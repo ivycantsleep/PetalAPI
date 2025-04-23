@@ -6,12 +6,7 @@
 #include "psapi.h"
 
 
-BOOL
-FindModule(
-    IN HANDLE hProcess,
-    IN HMODULE hModule,
-    OUT PLDR_DATA_TABLE_ENTRY LdrEntryData
-    )
+BOOL FindModule(IN HANDLE hProcess, IN HMODULE hModule, OUT PLDR_DATA_TABLE_ENTRY LdrEntryData)
 
 /*++
 
@@ -46,25 +41,22 @@ Return Value:
     PLIST_ENTRY LdrHead;
     PLIST_ENTRY LdrNext;
 
-    Status = NtQueryInformationProcess(
-                hProcess,
-                ProcessBasicInformation,
-                &BasicInfo,
-                sizeof(BasicInfo),
-                NULL
-                );
+    Status = NtQueryInformationProcess(hProcess, ProcessBasicInformation, &BasicInfo, sizeof(BasicInfo), NULL);
 
-    if ( !NT_SUCCESS(Status) ) {
-        SetLastError( RtlNtStatusToDosError( Status ) );
-        return(FALSE);
+    if (!NT_SUCCESS(Status))
+    {
+        SetLastError(RtlNtStatusToDosError(Status));
+        return (FALSE);
     }
 
     Peb = BasicInfo.PebBaseAddress;
 
 
-    if ( !ARGUMENT_PRESENT( hModule )) {
-        if (!ReadProcessMemory(hProcess, &Peb->ImageBaseAddress, &hModule, sizeof(hModule), NULL)) {
-            return(FALSE);
+    if (!ARGUMENT_PRESENT(hModule))
+    {
+        if (!ReadProcessMemory(hProcess, &Peb->ImageBaseAddress, &hModule, sizeof(hModule), NULL))
+        {
+            return (FALSE);
         }
     }
 
@@ -72,11 +64,13 @@ Return Value:
     // Ldr = Peb->Ldr
     //
 
-    if (!ReadProcessMemory(hProcess, &Peb->Ldr, &Ldr, sizeof(Ldr), NULL)) {
+    if (!ReadProcessMemory(hProcess, &Peb->Ldr, &Ldr, sizeof(Ldr), NULL))
+    {
         return (FALSE);
     }
 
-    if (!Ldr) {
+    if (!Ldr)
+    {
         // Ldr might be null (for instance, if the process hasn't started yet).
         SetLastError(ERROR_INVALID_HANDLE);
         return (FALSE);
@@ -89,39 +83,36 @@ Return Value:
     // LdrNext = Head->Flink;
     //
 
-    if (!ReadProcessMemory(hProcess, &LdrHead->Flink, &LdrNext, sizeof(LdrNext), NULL)) {
-        return(FALSE);
+    if (!ReadProcessMemory(hProcess, &LdrHead->Flink, &LdrNext, sizeof(LdrNext), NULL))
+    {
+        return (FALSE);
     }
 
-    while (LdrNext != LdrHead) {
+    while (LdrNext != LdrHead)
+    {
         PLDR_DATA_TABLE_ENTRY LdrEntry;
 
         LdrEntry = CONTAINING_RECORD(LdrNext, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
 
-        if (!ReadProcessMemory(hProcess, LdrEntry, LdrEntryData, sizeof(*LdrEntryData), NULL)) {
-            return(FALSE);
+        if (!ReadProcessMemory(hProcess, LdrEntry, LdrEntryData, sizeof(*LdrEntryData), NULL))
+        {
+            return (FALSE);
         }
 
-        if ((HMODULE) LdrEntryData->DllBase == hModule) {
-            return(TRUE);
+        if ((HMODULE)LdrEntryData->DllBase == hModule)
+        {
+            return (TRUE);
         }
 
         LdrNext = LdrEntryData->InMemoryOrderLinks.Flink;
     }
 
     SetLastError(ERROR_INVALID_HANDLE);
-    return(FALSE);
+    return (FALSE);
 }
 
 
-BOOL
-WINAPI
-EnumProcessModules(
-    HANDLE hProcess,
-    HMODULE *lphModule,
-    DWORD cb,
-    LPDWORD lpcbNeeded
-    )
+BOOL WINAPI EnumProcessModules(HANDLE hProcess, HMODULE *lphModule, DWORD cb, LPDWORD lpcbNeeded)
 {
     PROCESS_BASIC_INFORMATION BasicInfo;
     NTSTATUS Status;
@@ -132,18 +123,13 @@ EnumProcessModules(
     DWORD chMax;
     DWORD ch;
 
-    Status = NtQueryInformationProcess(
-                hProcess,
-                ProcessBasicInformation,
-                &BasicInfo,
-                sizeof(BasicInfo),
-                NULL
-                );
+    Status = NtQueryInformationProcess(hProcess, ProcessBasicInformation, &BasicInfo, sizeof(BasicInfo), NULL);
 
-    if ( !NT_SUCCESS(Status) ) {
-        SetLastError( RtlNtStatusToDosError( Status ) );
-        return(FALSE);
-        }
+    if (!NT_SUCCESS(Status))
+    {
+        SetLastError(RtlNtStatusToDosError(Status));
+        return (FALSE);
+    }
 
     Peb = BasicInfo.PebBaseAddress;
 
@@ -151,9 +137,10 @@ EnumProcessModules(
     // Ldr = Peb->Ldr
     //
 
-    if (!ReadProcessMemory(hProcess, &Peb->Ldr, &Ldr, sizeof(Ldr), NULL)) {
-        return(FALSE);
-        }
+    if (!ReadProcessMemory(hProcess, &Peb->Ldr, &Ldr, sizeof(Ldr), NULL))
+    {
+        return (FALSE);
+    }
 
     LdrHead = &Ldr->InMemoryOrderModuleList;
 
@@ -161,58 +148,61 @@ EnumProcessModules(
     // LdrNext = Head->Flink;
     //
 
-    if (!ReadProcessMemory(hProcess, &LdrHead->Flink, &LdrNext, sizeof(LdrNext), NULL)) {
-        return(FALSE);
-        }
+    if (!ReadProcessMemory(hProcess, &LdrHead->Flink, &LdrNext, sizeof(LdrNext), NULL))
+    {
+        return (FALSE);
+    }
 
     chMax = cb / sizeof(HMODULE);
     ch = 0;
 
-    while (LdrNext != LdrHead) {
+    while (LdrNext != LdrHead)
+    {
         PLDR_DATA_TABLE_ENTRY LdrEntry;
         LDR_DATA_TABLE_ENTRY LdrEntryData;
 
         LdrEntry = CONTAINING_RECORD(LdrNext, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
 
-        if (!ReadProcessMemory(hProcess, LdrEntry, &LdrEntryData, sizeof(LdrEntryData), NULL)) {
-            return(FALSE);
-            }
+        if (!ReadProcessMemory(hProcess, LdrEntry, &LdrEntryData, sizeof(LdrEntryData), NULL))
+        {
+            return (FALSE);
+        }
 
-        if (ch < chMax) {
-            try {
-                   lphModule[ch] = (HMODULE) LdrEntryData.DllBase;
-                }
-            except (EXCEPTION_EXECUTE_HANDLER) {
-                SetLastError( RtlNtStatusToDosError( GetExceptionCode() ) );
-                return(FALSE);
-                }
+        if (ch < chMax)
+        {
+            try
+            {
+                lphModule[ch] = (HMODULE)LdrEntryData.DllBase;
             }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
+                SetLastError(RtlNtStatusToDosError(GetExceptionCode()));
+                return (FALSE);
+            }
+        }
 
         ch++;
 
         LdrNext = LdrEntryData.InMemoryOrderLinks.Flink;
-        }
+    }
 
-    try {
+    try
+    {
         *lpcbNeeded = ch * sizeof(HMODULE);
-        }
-    except (EXCEPTION_EXECUTE_HANDLER) {
-        SetLastError( RtlNtStatusToDosError( GetExceptionCode() ) );
-        return(FALSE);
-        }
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        SetLastError(RtlNtStatusToDosError(GetExceptionCode()));
+        return (FALSE);
+    }
 
-    return(TRUE);
+    return (TRUE);
 }
 
 
 DWORD
 WINAPI
-GetModuleFileNameExW(
-    HANDLE hProcess,
-    HMODULE hModule,
-    LPWSTR lpFilename,
-    DWORD nSize
-    )
+GetModuleFileNameExW(HANDLE hProcess, HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
 
 /*++
 
@@ -250,77 +240,73 @@ Arguments:
     LDR_DATA_TABLE_ENTRY LdrEntryData;
     DWORD cb;
 
-    if (!FindModule(hProcess, hModule, &LdrEntryData)) {
-        return(0);
-        }
+    if (!FindModule(hProcess, hModule, &LdrEntryData))
+    {
+        return (0);
+    }
 
     nSize *= sizeof(WCHAR);
 
-    cb = LdrEntryData.FullDllName.Length + sizeof (WCHAR);
-    if ( nSize < cb ) {
+    cb = LdrEntryData.FullDllName.Length + sizeof(WCHAR);
+    if (nSize < cb)
+    {
         cb = nSize;
-        }
+    }
 
-    if (!ReadProcessMemory(hProcess, LdrEntryData.FullDllName.Buffer, lpFilename, cb, NULL)) {
-        return(0);
-        }
+    if (!ReadProcessMemory(hProcess, LdrEntryData.FullDllName.Buffer, lpFilename, cb, NULL))
+    {
+        return (0);
+    }
 
-    if (cb == LdrEntryData.FullDllName.Length + sizeof (WCHAR)) {
+    if (cb == LdrEntryData.FullDllName.Length + sizeof(WCHAR))
+    {
         cb -= sizeof(WCHAR);
-        }
+    }
 
-    return(cb / sizeof(WCHAR));
+    return (cb / sizeof(WCHAR));
 }
-
 
 
 DWORD
 WINAPI
-GetModuleFileNameExA(
-    HANDLE hProcess,
-    HMODULE hModule,
-    LPSTR lpFilename,
-    DWORD nSize
-    )
+GetModuleFileNameExA(HANDLE hProcess, HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 {
     LPWSTR lpwstr;
     DWORD cwch;
     DWORD cch;
 
-    lpwstr = (LPWSTR) LocalAlloc(LMEM_FIXED, nSize * 2);
+    lpwstr = (LPWSTR)LocalAlloc(LMEM_FIXED, nSize * 2);
 
-    if (lpwstr == NULL) {
-        return(0);
-        }
+    if (lpwstr == NULL)
+    {
+        return (0);
+    }
 
     cwch = cch = GetModuleFileNameExW(hProcess, hModule, lpwstr, nSize);
 
-    if (cwch < nSize) {
+    if (cwch < nSize)
+    {
         //
         // Include NULL terminator
         //
 
         cwch++;
-        }
+    }
 
-    if (!WideCharToMultiByte(CP_ACP, 0, lpwstr, cwch, lpFilename, nSize, NULL, NULL)) {
+    if (!WideCharToMultiByte(CP_ACP, 0, lpwstr, cwch, lpFilename, nSize, NULL, NULL))
+    {
         cch = 0;
-        }
+    }
 
-    LocalFree((HLOCAL) lpwstr);
+    LocalFree((HLOCAL)lpwstr);
 
-    return(cch);
+    return (cch);
 }
 
 
 DWORD
 WINAPI
-GetModuleBaseNameW(
-    HANDLE hProcess,
-    HMODULE hModule,
-    LPWSTR lpFilename,
-    DWORD nSize
-    )
+GetModuleBaseNameW(HANDLE hProcess, HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
 
 /*++
 
@@ -358,101 +344,99 @@ Arguments:
     LDR_DATA_TABLE_ENTRY LdrEntryData;
     DWORD cb;
 
-    if (!FindModule(hProcess, hModule, &LdrEntryData)) {
-        return(0);
-        }
+    if (!FindModule(hProcess, hModule, &LdrEntryData))
+    {
+        return (0);
+    }
 
     nSize *= sizeof(WCHAR);
 
-    cb = LdrEntryData.BaseDllName.Length + sizeof (WCHAR);
-    if ( nSize < cb ) {
+    cb = LdrEntryData.BaseDllName.Length + sizeof(WCHAR);
+    if (nSize < cb)
+    {
         cb = nSize;
-        }
+    }
 
-    if (!ReadProcessMemory(hProcess, LdrEntryData.BaseDllName.Buffer, lpFilename, cb, NULL)) {
-        return(0);
-        }
+    if (!ReadProcessMemory(hProcess, LdrEntryData.BaseDllName.Buffer, lpFilename, cb, NULL))
+    {
+        return (0);
+    }
 
-    if (cb == LdrEntryData.BaseDllName.Length + sizeof (WCHAR)) {
+    if (cb == LdrEntryData.BaseDllName.Length + sizeof(WCHAR))
+    {
         cb -= sizeof(WCHAR);
-        }
+    }
 
-    return(cb / sizeof(WCHAR));
+    return (cb / sizeof(WCHAR));
 }
-
 
 
 DWORD
 WINAPI
-GetModuleBaseNameA(
-    HANDLE hProcess,
-    HMODULE hModule,
-    LPSTR lpFilename,
-    DWORD nSize
-    )
+GetModuleBaseNameA(HANDLE hProcess, HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 {
     LPWSTR lpwstr;
     DWORD cwch;
     DWORD cch;
 
-    lpwstr = (LPWSTR) LocalAlloc(LMEM_FIXED, nSize * 2);
+    lpwstr = (LPWSTR)LocalAlloc(LMEM_FIXED, nSize * 2);
 
-    if (lpwstr == NULL) {
-        return(0);
-        }
+    if (lpwstr == NULL)
+    {
+        return (0);
+    }
 
     cwch = cch = GetModuleBaseNameW(hProcess, hModule, lpwstr, nSize);
 
-    if (cwch < nSize) {
+    if (cwch < nSize)
+    {
         //
         // Include NULL terminator
         //
 
         cwch++;
-        }
+    }
 
-    if (!WideCharToMultiByte(CP_ACP, 0, lpwstr, cwch, lpFilename, nSize, NULL, NULL)) {
+    if (!WideCharToMultiByte(CP_ACP, 0, lpwstr, cwch, lpFilename, nSize, NULL, NULL))
+    {
         cch = 0;
-        }
+    }
 
-    LocalFree((HLOCAL) lpwstr);
+    LocalFree((HLOCAL)lpwstr);
 
-    return(cch);
+    return (cch);
 }
 
 
-BOOL
-WINAPI
-GetModuleInformation(
-    HANDLE hProcess,
-    HMODULE hModule,
-    LPMODULEINFO lpmodinfo,
-    DWORD cb
-    )
+BOOL WINAPI GetModuleInformation(HANDLE hProcess, HMODULE hModule, LPMODULEINFO lpmodinfo, DWORD cb)
 {
     LDR_DATA_TABLE_ENTRY LdrEntryData;
     MODULEINFO modinfo;
 
-    if (cb < sizeof(MODULEINFO)) {
-        SetLastError( ERROR_INSUFFICIENT_BUFFER );
-        return(FALSE);
-        }
+    if (cb < sizeof(MODULEINFO))
+    {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return (FALSE);
+    }
 
-    if (!FindModule(hProcess, hModule, &LdrEntryData)) {
-        return(0);
-        }
+    if (!FindModule(hProcess, hModule, &LdrEntryData))
+    {
+        return (0);
+    }
 
-    modinfo.lpBaseOfDll = (PVOID) hModule;
+    modinfo.lpBaseOfDll = (PVOID)hModule;
     modinfo.SizeOfImage = LdrEntryData.SizeOfImage;
-    modinfo.EntryPoint  = LdrEntryData.EntryPoint;
+    modinfo.EntryPoint = LdrEntryData.EntryPoint;
 
-    try {
+    try
+    {
         *lpmodinfo = modinfo;
-        }
-    except (EXCEPTION_EXECUTE_HANDLER) {
-        SetLastError( RtlNtStatusToDosError( GetExceptionCode() ) );
-        return(FALSE);
-        }
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        SetLastError(RtlNtStatusToDosError(GetExceptionCode()));
+        return (FALSE);
+    }
 
-    return(TRUE);
+    return (TRUE);
 }

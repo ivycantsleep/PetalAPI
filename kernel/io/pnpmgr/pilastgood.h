@@ -20,24 +20,13 @@ Revision History:
 
 --*/
 
-VOID
-PiLastGoodRevertLastKnownDirectory(
-    IN PUNICODE_STRING  LastKnownGoodDirectory,
-    IN PUNICODE_STRING  LastKnownGoodRegPath
-    );
+VOID PiLastGoodRevertLastKnownDirectory(IN PUNICODE_STRING LastKnownGoodDirectory,
+                                        IN PUNICODE_STRING LastKnownGoodRegPath);
 
 NTSTATUS
-PiLastGoodRevertCopyCallback(
-    IN PUNICODE_STRING  FullPathName,
-    IN PUNICODE_STRING  FileName,
-    IN ULONG            FileAttributes,
-    IN PVOID            Context
-    );
+PiLastGoodRevertCopyCallback(IN PUNICODE_STRING FullPathName, IN PUNICODE_STRING FileName, IN ULONG FileAttributes,
+                             IN PVOID Context);
 
 NTSTATUS
-PiLastGoodCopyKeyContents(
-    IN PUNICODE_STRING  SourceRegPath,
-    IN PUNICODE_STRING  DestinationRegPath,
-    IN BOOLEAN          DeleteSourceKey
-    );
-
+PiLastGoodCopyKeyContents(IN PUNICODE_STRING SourceRegPath, IN PUNICODE_STRING DestinationRegPath,
+                          IN BOOLEAN DeleteSourceKey);

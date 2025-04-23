@@ -26,17 +26,9 @@ extern PEPROCESS ExpDefaultErrorPortProcess;
 #ifdef ALLOC_PRAGMA
 
 NTSTATUS
-PspFreezeProcessWorker (
-    PEPROCESS Process,
-    PVOID Context
-    );
+PspFreezeProcessWorker(PEPROCESS Process, PVOID Context);
 
-VOID
-PspCatchCriticalBreak(
-    IN PCHAR Msg,
-    IN PVOID  Object,
-    IN PUCHAR ImageFileName
-    );
+VOID PspCatchCriticalBreak(IN PCHAR Msg, IN PVOID Object, IN PUCHAR ImageFileName);
 
 #pragma alloc_text(PAGE, PsSetLegoNotifyRoutine)
 #pragma alloc_text(PAGE, PspTerminateThreadByPointer)
@@ -68,21 +60,16 @@ PspCatchCriticalBreak(
 PLEGO_NOTIFY_ROUTINE PspLegoNotifyRoutine = NULL;
 
 ULONG
-PsSetLegoNotifyRoutine(
-    PLEGO_NOTIFY_ROUTINE LegoNotifyRoutine
-    )
+PsSetLegoNotifyRoutine(PLEGO_NOTIFY_ROUTINE LegoNotifyRoutine)
 {
     PAGED_CODE();
 
     PspLegoNotifyRoutine = LegoNotifyRoutine;
 
-    return FIELD_OFFSET(KTHREAD,LegoData);
+    return FIELD_OFFSET(KTHREAD, LegoData);
 }
 
-VOID
-PspReaper(
-    IN PVOID Context
-    )
+VOID PspReaper(IN PVOID Context)
 
 /*++
 
@@ -113,7 +100,7 @@ Return Value:
     KIRQL OldIrql;
     PETHREAD Thread, NextThread;
 
-    UNREFERENCED_PARAMETER (Context);
+    UNREFERENCED_PARAMETER(Context);
 
     //
     // Remove the current list of threads from the reaper list, acquire
@@ -127,22 +114,26 @@ Return Value:
     //
     //
 
-    while (1) {
-        KiLockDispatcherDatabase (&OldIrql);
+    while (1)
+    {
+        KiLockDispatcherDatabase(&OldIrql);
 
         Thread = PsReaperList;
         PsReaperList = NULL;
 
-        if (Thread == NULL) {
+        if (Thread == NULL)
+        {
             //
             // Set the reaper not active and return.
             //
             PsReaperActive = FALSE;
-            KiUnlockDispatcherDatabase (OldIrql);
+            KiUnlockDispatcherDatabase(OldIrql);
 
             return;
-        } else {
-            KiUnlockDispatcherDatabase (OldIrql);
+        }
+        else
+        {
+            KiUnlockDispatcherDatabase(OldIrql);
 
             //
             // The context swap lock is acquired and immediately released.
@@ -150,38 +141,34 @@ Return Value:
             // completely passed through the context switch code before it
             // is terminated.
             //
-#if !defined (NT_UP)
-            KiLockContextSwap (&OldIrql);
-            KiUnlockContextSwap (OldIrql);
+#if !defined(NT_UP)
+            KiLockContextSwap(&OldIrql);
+            KiUnlockContextSwap(OldIrql);
 #endif
         }
 
         //
         // Delete the kernel stack and dereference the thread.
         //
-        do {
-            MmDeleteKernelStack (Thread->Tcb.StackBase,
-                                 (BOOLEAN)Thread->Tcb.LargeStack);
+        do
+        {
+            MmDeleteKernelStack(Thread->Tcb.StackBase, (BOOLEAN)Thread->Tcb.LargeStack);
 
             Thread->Tcb.InitialStack = NULL;
 
             NextThread = Thread->ReaperLink;
 
-            ObDereferenceObject (Thread);
+            ObDereferenceObject(Thread);
 
             Thread = NextThread;
 
         } while (Thread != NULL);
-
     }
     return;
 }
 
 NTSTATUS
-PspTerminateThreadByPointer(
-    IN PETHREAD Thread,
-    IN NTSTATUS ExitStatus
-    )
+PspTerminateThreadByPointer(IN PETHREAD Thread, IN NTSTATUS ExitStatus)
 
 /*++
 
@@ -203,44 +190,46 @@ Return Value:
 
 {
     NTSTATUS Status;
-    PKAPC    ExitApc=NULL;
-    ULONG    OldMask;
-    LARGE_INTEGER ShortTime = {(ULONG)(-10 * 1000 * 100), -1}; // 100 milliseconds
+    PKAPC ExitApc = NULL;
+    ULONG OldMask;
+    LARGE_INTEGER ShortTime = { (ULONG)(-10 * 1000 * 100), -1 }; // 100 milliseconds
 
     PAGED_CODE();
 
-    if (Thread->CrossThreadFlags
-    & PS_CROSS_THREAD_FLAGS_BREAK_ON_TERMINATION) {
-      PspCatchCriticalBreak("Terminating critical thread 0x%p (in %s)\n",
-                Thread,
-                THREAD_TO_PROCESS(Thread)->ImageFileName);
+    if (Thread->CrossThreadFlags & PS_CROSS_THREAD_FLAGS_BREAK_ON_TERMINATION)
+    {
+        PspCatchCriticalBreak("Terminating critical thread 0x%p (in %s)\n", Thread,
+                              THREAD_TO_PROCESS(Thread)->ImageFileName);
     }
 
-    if (Thread == PsGetCurrentThread()) {
+    if (Thread == PsGetCurrentThread())
+    {
 
-        PS_SET_BITS (&Thread->CrossThreadFlags, PS_CROSS_THREAD_FLAGS_TERMINATED);
+        PS_SET_BITS(&Thread->CrossThreadFlags, PS_CROSS_THREAD_FLAGS_TERMINATED);
 
-        PspExitThread (ExitStatus);
+        PspExitThread(ExitStatus);
 
         //
         // Never Returns
         //
-
-    } else {
+    }
+    else
+    {
         //
         // Cross thread deletion of system threads won't work.
         //
-        if (IS_SYSTEM_THREAD (Thread)) {
+        if (IS_SYSTEM_THREAD(Thread))
+        {
             return STATUS_ACCESS_DENIED;
         }
 
         Status = STATUS_SUCCESS;
 
-        while (1) {
-            ExitApc = (PKAPC) ExAllocatePoolWithTag (NonPagedPool,
-                                                     sizeof(KAPC),
-                                                     'xEsP');
-            if (ExitApc != NULL) {
+        while (1)
+        {
+            ExitApc = (PKAPC)ExAllocatePoolWithTag(NonPagedPool, sizeof(KAPC), 'xEsP');
+            if (ExitApc != NULL)
+            {
                 break;
             }
             KeDelayExecutionThread(KernelMode, FALSE, &ShortTime);
@@ -249,49 +238,45 @@ Return Value:
         //
         // Mark the thread as terminating and call the exit function.
         //
-        OldMask = PS_TEST_SET_BITS (&Thread->CrossThreadFlags, PS_CROSS_THREAD_FLAGS_TERMINATED);
+        OldMask = PS_TEST_SET_BITS(&Thread->CrossThreadFlags, PS_CROSS_THREAD_FLAGS_TERMINATED);
 
         //
         // If we are the first to set the terminating flag then queue the APC
         //
 
-        if ((OldMask & PS_CROSS_THREAD_FLAGS_TERMINATED) == 0) {
+        if ((OldMask & PS_CROSS_THREAD_FLAGS_TERMINATED) == 0)
+        {
 
-            KeInitializeApc (ExitApc,
-                             PsGetKernelThread (Thread),
-                             OriginalApcEnvironment,
-                             PsExitSpecialApc,
-                             PspExitApcRundown,
-                             PspExitNormalApc,
-                             KernelMode,
-                             ULongToPtr (ExitStatus));
+            KeInitializeApc(ExitApc, PsGetKernelThread(Thread), OriginalApcEnvironment, PsExitSpecialApc,
+                            PspExitApcRundown, PspExitNormalApc, KernelMode, ULongToPtr(ExitStatus));
 
-            if (!KeInsertQueueApc (ExitApc, ExitApc, NULL, 2)) {
+            if (!KeInsertQueueApc(ExitApc, ExitApc, NULL, 2))
+            {
                 // Note that we'll get here if APC queueing has been
                 // disabled -- on the other hand, in that case, the thread
                 // is exiting anyway.
-                ExFreePool (ExitApc);
+                ExFreePool(ExitApc);
                 Status = STATUS_UNSUCCESSFUL;
-            } else {
+            }
+            else
+            {
                 //
                 // We queued the APC to the thread. Wake up the thread if it was suspened.
                 //
-                KeForceResumeThread (&Thread->Tcb);
-
+                KeForceResumeThread(&Thread->Tcb);
             }
-        } else {
-            ExFreePool (ExitApc);
+        }
+        else
+        {
+            ExFreePool(ExitApc);
         }
     }
 
     return Status;
 }
-
+
 NTSTATUS
-NtTerminateProcess(
-    IN HANDLE ProcessHandle OPTIONAL,
-    IN NTSTATUS ExitStatus
-    )
+NtTerminateProcess(IN HANDLE ProcessHandle OPTIONAL, IN NTSTATUS ExitStatus)
 
 /*++
 
@@ -322,76 +307,82 @@ Return Value:
     PAGED_CODE();
 
     Self = PsGetCurrentThread();
-    CurrentProcess = PsGetCurrentProcessByThread (Self);
+    CurrentProcess = PsGetCurrentProcessByThread(Self);
 
-    if (ARGUMENT_PRESENT (ProcessHandle)) {
+    if (ARGUMENT_PRESENT(ProcessHandle))
+    {
         ProcessHandleSpecified = TRUE;
-    } else {
+    }
+    else
+    {
         ProcessHandleSpecified = FALSE;
         ProcessHandle = NtCurrentProcess();
     }
 
-    st = ObReferenceObjectByHandle (ProcessHandle,
-                                    PROCESS_TERMINATE,
-                                    PsProcessType,
-                                    KeGetPreviousModeByThread(&Self->Tcb),
-                                    &Process,
-                                    NULL);
+    st = ObReferenceObjectByHandle(ProcessHandle, PROCESS_TERMINATE, PsProcessType,
+                                   KeGetPreviousModeByThread(&Self->Tcb), &Process, NULL);
 
-    if (!NT_SUCCESS (st)) {
-        return(st);
+    if (!NT_SUCCESS(st))
+    {
+        return (st);
     }
 
-    if (Process->Flags & PS_PROCESS_FLAGS_BREAK_ON_TERMINATION) {
-        PspCatchCriticalBreak ("Terminating critical process 0x%p (%s)\n",
-                               Process,
-                               Process->ImageFileName);
+    if (Process->Flags & PS_PROCESS_FLAGS_BREAK_ON_TERMINATION)
+    {
+        PspCatchCriticalBreak("Terminating critical process 0x%p (%s)\n", Process, Process->ImageFileName);
     }
 
     //
     // Acquire rundown protection just so we can give the right errors
     //
 
-    if (!ExAcquireRundownProtection (&Process->RundownProtect)) {
-        ObDereferenceObject (Process);
+    if (!ExAcquireRundownProtection(&Process->RundownProtect))
+    {
+        ObDereferenceObject(Process);
         return STATUS_PROCESS_IS_TERMINATING;
     }
 
     //
     // Mark process as deleting except for the obscure delete self case.
     //
-    if (ProcessHandleSpecified) {
-        PS_SET_BITS (&Process->Flags, PS_PROCESS_FLAGS_PROCESS_DELETE);
+    if (ProcessHandleSpecified)
+    {
+        PS_SET_BITS(&Process->Flags, PS_PROCESS_FLAGS_PROCESS_DELETE);
     }
 
     st = STATUS_NOTHING_TO_TERMINATE;
 
-    for (Thread = PsGetNextProcessThread (Process, NULL);
-         Thread != NULL;
-         Thread = PsGetNextProcessThread (Process, Thread)) {
+    for (Thread = PsGetNextProcessThread(Process, NULL); Thread != NULL;
+         Thread = PsGetNextProcessThread(Process, Thread))
+    {
 
         st = STATUS_SUCCESS;
-        if (Thread != Self) {
-            PspTerminateThreadByPointer (Thread, ExitStatus);
+        if (Thread != Self)
+        {
+            PspTerminateThreadByPointer(Thread, ExitStatus);
         }
     }
 
-    ExReleaseRundownProtection (&Process->RundownProtect);
+    ExReleaseRundownProtection(&Process->RundownProtect);
 
 
-    if (Process == CurrentProcess) {
-        if (ProcessHandleSpecified) {
+    if (Process == CurrentProcess)
+    {
+        if (ProcessHandleSpecified)
+        {
 
-            ObDereferenceObject (Process);
+            ObDereferenceObject(Process);
 
             //
             // Never Returns
             //
 
-            PspTerminateThreadByPointer (Self, ExitStatus);
+            PspTerminateThreadByPointer(Self, ExitStatus);
         }
-    } else if (ExitStatus == DBG_TERMINATE_PROCESS) {
-        DbgkClearProcessDebugObject (Process, NULL);
+    }
+    else if (ExitStatus == DBG_TERMINATE_PROCESS)
+    {
+        DbgkClearProcessDebugObject(Process, NULL);
     }
 
     //
@@ -399,8 +390,9 @@ Return Value:
     // Do the same for processes being debugged. This is so a process can never lock itself into the system
     // by debugging itself or have a handle open to itself.
     //
-    if (st == STATUS_NOTHING_TO_TERMINATE || (Process->DebugPort != NULL && ProcessHandleSpecified)) {
-        ObClearProcessHandleTable (Process);
+    if (st == STATUS_NOTHING_TO_TERMINATE || (Process->DebugPort != NULL && ProcessHandleSpecified))
+    {
+        ObClearProcessHandleTable(Process);
         st = STATUS_SUCCESS;
     }
 
@@ -410,19 +402,13 @@ Return Value:
 }
 
 NTSTATUS
-PsTerminateProcess(
-    PEPROCESS Process,
-    NTSTATUS Status
-    )
+PsTerminateProcess(PEPROCESS Process, NTSTATUS Status)
 {
-    return PspTerminateProcess (Process, Status);
+    return PspTerminateProcess(Process, Status);
 }
 
 NTSTATUS
-PspTerminateProcess(
-    PEPROCESS Process,
-    NTSTATUS ExitStatus
-    )
+PspTerminateProcess(PEPROCESS Process, NTSTATUS ExitStatus)
 
 /*++
 
@@ -450,32 +436,30 @@ Return Value:
 
     PAGED_CODE();
 
-    if (Process == PsGetCurrentProcess ()) {
+    if (Process == PsGetCurrentProcess())
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
-    if (Process->Flags
-    & PS_PROCESS_FLAGS_BREAK_ON_TERMINATION) {
-      PspCatchCriticalBreak("Terminating critical process 0x%p (%s)\n",
-                Process,
-                Process->ImageFileName);
+    if (Process->Flags & PS_PROCESS_FLAGS_BREAK_ON_TERMINATION)
+    {
+        PspCatchCriticalBreak("Terminating critical process 0x%p (%s)\n", Process, Process->ImageFileName);
     }
 
     //
     // Mark process as deleting
     //
-    PS_SET_BITS (&Process->Flags, PS_PROCESS_FLAGS_PROCESS_DELETE);
+    PS_SET_BITS(&Process->Flags, PS_PROCESS_FLAGS_PROCESS_DELETE);
 
     st = STATUS_NOTHING_TO_TERMINATE;
 
-    for (Thread = PsGetNextProcessThread (Process, NULL);
-         Thread != NULL;
-         Thread = PsGetNextProcessThread (Process, Thread)) {
+    for (Thread = PsGetNextProcessThread(Process, NULL); Thread != NULL;
+         Thread = PsGetNextProcessThread(Process, Thread))
+    {
 
         st = STATUS_SUCCESS;
 
-        PspTerminateThreadByPointer (Thread, ExitStatus);
-
+        PspTerminateThreadByPointer(Thread, ExitStatus);
     }
 
     //
@@ -483,18 +467,17 @@ Return Value:
     // Do the same for processes being debugged. This is so a process can never lock itself into the system
     // by debugging itself or have a handle open to itself.
     //
-    if (st == STATUS_NOTHING_TO_TERMINATE || Process->DebugPort != NULL) {
-        ObClearProcessHandleTable (Process);
+    if (st == STATUS_NOTHING_TO_TERMINATE || Process->DebugPort != NULL)
+    {
+        ObClearProcessHandleTable(Process);
         st = STATUS_SUCCESS;
     }
     return st;
 }
 
-
+
 NTSTATUS
-PspWaitForUsermodeExit(
-    IN PEPROCESS         Process
-    )
+PspWaitForUsermodeExit(IN PEPROCESS Process)
 
 /*++
 
@@ -516,44 +499,40 @@ Return Value:
 
 --*/
 {
-    BOOLEAN     GotAThread;
-    PETHREAD    Thread;
+    BOOLEAN GotAThread;
+    PETHREAD Thread;
 
-    do {
+    do
+    {
         GotAThread = FALSE;
 
-        for (Thread = PsGetNextProcessThread (Process, NULL);
-             Thread != NULL;
-             Thread = PsGetNextProcessThread (Process, Thread)) {
+        for (Thread = PsGetNextProcessThread(Process, NULL); Thread != NULL;
+             Thread = PsGetNextProcessThread(Process, Thread))
+        {
 
-            if (!IS_SYSTEM_THREAD (Thread) && !KeReadStateThread (&Thread->Tcb)) {
-                ObReferenceObject (Thread);
-                PsQuitNextProcessThread (Thread);
+            if (!IS_SYSTEM_THREAD(Thread) && !KeReadStateThread(&Thread->Tcb))
+            {
+                ObReferenceObject(Thread);
+                PsQuitNextProcessThread(Thread);
                 GotAThread = TRUE;
                 break;
             }
         }
 
 
-        if (GotAThread) {
-            KeWaitForSingleObject (Thread,
-                                   Executive,
-                                   KernelMode,
-                                   FALSE,
-                                   NULL);
-            ObDereferenceObject (Thread);
+        if (GotAThread)
+        {
+            KeWaitForSingleObject(Thread, Executive, KernelMode, FALSE, NULL);
+            ObDereferenceObject(Thread);
         }
     } while (GotAThread);
 
     return STATUS_SUCCESS;
 }
 
-
+
 NTSTATUS
-NtTerminateThread(
-    IN HANDLE ThreadHandle OPTIONAL,
-    IN NTSTATUS ExitStatus
-    )
+NtTerminateThread(IN HANDLE ThreadHandle OPTIONAL, IN NTSTATUS ExitStatus)
 
 /*++
 
@@ -575,62 +554,67 @@ Return Value:
 
 {
 
-    PETHREAD Thread=NULL, ThisThread;
+    PETHREAD Thread = NULL, ThisThread;
     PEPROCESS ThisProcess;
     NTSTATUS Status = STATUS_SUCCESS;
     BOOLEAN Self = TRUE;
 
     PAGED_CODE();
 
-    ThisThread = PsGetCurrentThread ();
+    ThisThread = PsGetCurrentThread();
 
-    if (!ARGUMENT_PRESENT (ThreadHandle)) {
+    if (!ARGUMENT_PRESENT(ThreadHandle))
+    {
         //
         // This is part of the strange linkage between base\win32 and the kernel.
         // This routine gets called this way first and if it returns the base
         // code does an exit process call.
         //
-        ThisProcess = PsGetCurrentProcessByThread (ThisThread);
+        ThisProcess = PsGetCurrentProcessByThread(ThisThread);
 
-        if (ThisProcess->ActiveThreads == 1) {
+        if (ThisProcess->ActiveThreads == 1)
+        {
             return STATUS_CANT_TERMINATE_SELF;
         }
         Self = TRUE;
-    } else {
-        if (ThreadHandle != NtCurrentThread ()) {
-            Status = ObReferenceObjectByHandle (ThreadHandle,
-                                                THREAD_TERMINATE,
-                                                PsThreadType,
-                                                KeGetPreviousModeByThread(&ThisThread->Tcb),
-                                                &Thread,
-                                                NULL);
-            if (!NT_SUCCESS (Status)) {
+    }
+    else
+    {
+        if (ThreadHandle != NtCurrentThread())
+        {
+            Status = ObReferenceObjectByHandle(ThreadHandle, THREAD_TERMINATE, PsThreadType,
+                                               KeGetPreviousModeByThread(&ThisThread->Tcb), &Thread, NULL);
+            if (!NT_SUCCESS(Status))
+            {
                 return Status;
             }
 
-            if (Thread == ThisThread) {
-                ObDereferenceObject (Thread);
-            } else {
+            if (Thread == ThisThread)
+            {
+                ObDereferenceObject(Thread);
+            }
+            else
+            {
                 Self = FALSE;
             }
         }
-
     }
 
-    if (Self) {
-        PspTerminateThreadByPointer (ThisThread, ExitStatus);
-    } else {
-        Status = PspTerminateThreadByPointer (Thread, ExitStatus);
-        ObDereferenceObject (Thread);
+    if (Self)
+    {
+        PspTerminateThreadByPointer(ThisThread, ExitStatus);
+    }
+    else
+    {
+        Status = PspTerminateThreadByPointer(Thread, ExitStatus);
+        ObDereferenceObject(Thread);
     }
 
     return Status;
 }
 
 NTSTATUS
-PsTerminateSystemThread(
-    IN NTSTATUS ExitStatus
-    )
+PsTerminateSystemThread(IN NTSTATUS ExitStatus)
 
 /*++
 
@@ -652,22 +636,17 @@ Return Value:
 {
     PETHREAD Thread = PsGetCurrentThread();
 
-    if (!IS_SYSTEM_THREAD (Thread)) {
+    if (!IS_SYSTEM_THREAD(Thread))
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
-    return PspTerminateThreadByPointer (Thread, ExitStatus);
+    return PspTerminateThreadByPointer(Thread, ExitStatus);
 }
 
 
-VOID
-PspNullSpecialApc(
-    IN PKAPC Apc,
-    IN PKNORMAL_ROUTINE *NormalRoutine,
-    IN PVOID *NormalContext,
-    IN PVOID *SystemArgument1,
-    IN PVOID *SystemArgument2
-    )
+VOID PspNullSpecialApc(IN PKAPC Apc, IN PKNORMAL_ROUTINE *NormalRoutine, IN PVOID *NormalContext,
+                       IN PVOID *SystemArgument1, IN PVOID *SystemArgument2)
 
 {
 
@@ -678,17 +657,11 @@ PspNullSpecialApc(
     UNREFERENCED_PARAMETER(SystemArgument1);
     UNREFERENCED_PARAMETER(SystemArgument2);
 
-    ExFreePool (Apc);
+    ExFreePool(Apc);
 }
 
-VOID
-PsExitSpecialApc(
-    IN PKAPC Apc,
-    IN PKNORMAL_ROUTINE *NormalRoutine,
-    IN PVOID *NormalContext,
-    IN PVOID *SystemArgument1,
-    IN PVOID *SystemArgument2
-    )
+VOID PsExitSpecialApc(IN PKAPC Apc, IN PKNORMAL_ROUTINE *NormalRoutine, IN PVOID *NormalContext,
+                      IN PVOID *SystemArgument1, IN PVOID *SystemArgument2)
 
 {
     NTSTATUS ExitStatus;
@@ -703,30 +676,22 @@ PsExitSpecialApc(
 
     Thread = PsGetCurrentThread();
 
-    if (((ULONG_PTR)Apc->SystemArgument2) & 1) {
+    if (((ULONG_PTR)Apc->SystemArgument2) & 1)
+    {
         ExitStatus = (NTSTATUS)((LONG_PTR)Apc->NormalContext);
-        PspExitApcRundown (Apc);
-        PspExitThread (ExitStatus);
+        PspExitApcRundown(Apc);
+        PspExitThread(ExitStatus);
     }
-
 }
 
-VOID
-PspExitApcRundown(
-    IN PKAPC Apc
-    )
+VOID PspExitApcRundown(IN PKAPC Apc)
 {
     PAGED_CODE();
 
     ExFreePool(Apc);
 }
 
-VOID
-PspExitNormalApc(
-    IN PVOID NormalContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    )
+VOID PspExitNormalApc(IN PVOID NormalContext, IN PVOID SystemArgument1, IN PVOID SystemArgument2)
 
 {
     PETHREAD Thread;
@@ -734,28 +699,21 @@ PspExitNormalApc(
 
     PAGED_CODE();
 
-    ASSERT (!(((ULONG_PTR)SystemArgument2) & 1));
+    ASSERT(!(((ULONG_PTR)SystemArgument2) & 1));
 
     Thread = PsGetCurrentThread();
 
-    ExitApc = (PKAPC) SystemArgument1;
+    ExitApc = (PKAPC)SystemArgument1;
 
-    KeInitializeApc (ExitApc,
-                     PsGetKernelThread(Thread),
-                     OriginalApcEnvironment,
-                     PsExitSpecialApc,
-                     PspExitApcRundown,
-                     PspExitNormalApc,
-                     UserMode,
-                     NormalContext);
+    KeInitializeApc(ExitApc, PsGetKernelThread(Thread), OriginalApcEnvironment, PsExitSpecialApc, PspExitApcRundown,
+                    PspExitNormalApc, UserMode, NormalContext);
 
-    if (!KeInsertQueueApc (ExitApc, ExitApc,
-                           (PVOID)((ULONG_PTR)SystemArgument2 | 1),
-                           2)) {
+    if (!KeInsertQueueApc(ExitApc, ExitApc, (PVOID)((ULONG_PTR)SystemArgument2 | 1), 2))
+    {
         // Note that we'll get here if APC queueing has been
         // disabled -- on the other hand, in that case, the thread
         // is exiting anyway.
-        PspExitApcRundown (ExitApc);
+        PspExitApcRundown(ExitApc);
     }
     //
     // We just queued a user APC to this thread. User APC won't fire until we do an
@@ -764,33 +722,26 @@ PspExitNormalApc(
     Thread->Tcb.ApcState.UserApcPending = TRUE;
 }
 
-VOID
-PspCatchCriticalBreak(
-    IN PCHAR Msg,
-    IN PVOID Object,
-    IN PUCHAR ImageFileName
-    )
+VOID PspCatchCriticalBreak(IN PCHAR Msg, IN PVOID Object, IN PUCHAR ImageFileName)
 {
     // The object is critical to the OS -- ask to break in, or bugcheck.
-    char    Response[2];
+    char Response[2];
     BOOLEAN Handled;
 
     PAGED_CODE();
 
     Handled = FALSE;
 
-    if (KdDebuggerEnabled) {
-        DbgPrint(Msg,
-                 Object,
-                 ImageFileName);
+    if (KdDebuggerEnabled)
+    {
+        DbgPrint(Msg, Object, ImageFileName);
 
-        while (! Handled
-               && ! KdDebuggerNotPresent) {
-            DbgPrompt("Break, or Ignore (bi)? ",
-                      Response,
-                      sizeof(Response));
+        while (!Handled && !KdDebuggerNotPresent)
+        {
+            DbgPrompt("Break, or Ignore (bi)? ", Response, sizeof(Response));
 
-            switch (Response[0]) {
+            switch (Response[0])
+            {
             case 'b':
             case 'B':
                 DbgBreakPoint();
@@ -806,23 +757,18 @@ PspCatchCriticalBreak(
         }
     }
 
-    if (! Handled) {
+    if (!Handled)
+    {
         //
         // No debugger -- bugcheck immediately
         //
-        KeBugCheckEx(CRITICAL_OBJECT_TERMINATION,
-                     (ULONG_PTR) ((DISPATCHER_HEADER *)Object)->Type,
-                     (ULONG_PTR) Object,
-                     (ULONG_PTR) ImageFileName,
-                     (ULONG_PTR) Msg);
+        KeBugCheckEx(CRITICAL_OBJECT_TERMINATION, (ULONG_PTR)((DISPATCHER_HEADER *)Object)->Type, (ULONG_PTR)Object,
+                     (ULONG_PTR)ImageFileName, (ULONG_PTR)Msg);
     }
 }
 
 DECLSPEC_NORETURN
-VOID
-PspExitThread(
-    IN NTSTATUS ExitStatus
-    )
+VOID PspExitThread(IN NTSTATUS ExitStatus)
 
 /*++
 
@@ -863,32 +809,28 @@ Return Value:
     Thread = PsGetCurrentThread();
     Process = THREAD_TO_PROCESS(Thread);
 
-    if (Process != PsGetCurrentProcessByThread (Thread)) {
-        KeBugCheckEx (INVALID_PROCESS_ATTACH_ATTEMPT,
-                      (ULONG_PTR)Process,
-                      (ULONG_PTR)Thread->Tcb.ApcState.Process,
-                      (ULONG)Thread->Tcb.ApcStateIndex,
-                      (ULONG_PTR)Thread);
+    if (Process != PsGetCurrentProcessByThread(Thread))
+    {
+        KeBugCheckEx(INVALID_PROCESS_ATTACH_ATTEMPT, (ULONG_PTR)Process, (ULONG_PTR)Thread->Tcb.ApcState.Process,
+                     (ULONG)Thread->Tcb.ApcStateIndex, (ULONG_PTR)Thread);
     }
 
     KeLowerIrql(PASSIVE_LEVEL);
 
-    if (Thread->ActiveExWorker) {
-        KeBugCheckEx (ACTIVE_EX_WORKER_THREAD_TERMINATION,
-                      (ULONG_PTR)Thread,
-                      0,
-                      0,
-                      0);
+    if (Thread->ActiveExWorker)
+    {
+        KeBugCheckEx(ACTIVE_EX_WORKER_THREAD_TERMINATION, (ULONG_PTR)Thread, 0, 0, 0);
     }
 
-    if (Thread->Tcb.Priority < LOW_REALTIME_PRIORITY) {
-        KeSetPriorityThread (&Thread->Tcb, LOW_REALTIME_PRIORITY);
+    if (Thread->Tcb.Priority < LOW_REALTIME_PRIORITY)
+    {
+        KeSetPriorityThread(&Thread->Tcb, LOW_REALTIME_PRIORITY);
     }
     //
     // Its time to start turning off various cross thread references.
     // Mark the thread as rundown and wait for accessors to exit.
     //
-    ExWaitForRundownProtectionRelease (&Thread->RundownProtect);
+    ExWaitForRundownProtectionRelease(&Thread->RundownProtect);
 
     //
     // Clear any execution state associated with the thread
@@ -902,20 +844,20 @@ Return Value:
 
     PERFINFO_THREAD_DELETE(Thread);
 
-    if (PspCreateThreadNotifyRoutineCount != 0) {
+    if (PspCreateThreadNotifyRoutineCount != 0)
+    {
         ULONG i;
         PEX_CALLBACK_ROUTINE_BLOCK CallBack;
         PCREATE_THREAD_NOTIFY_ROUTINE Rtn;
 
-        for (i=0; i < PSP_MAX_CREATE_THREAD_NOTIFY; i++) {
-            CallBack = ExReferenceCallBackBlock (&PspCreateThreadNotifyRoutine[i]);
-            if (CallBack != NULL) {
-                Rtn = (PCREATE_THREAD_NOTIFY_ROUTINE) ExGetCallBackBlockRoutine (CallBack);
-                Rtn (Process->UniqueProcessId,
-                     Thread->Cid.UniqueThread,
-                     FALSE);
-                ExDereferenceCallBackBlock (&PspCreateThreadNotifyRoutine[i],
-                                            CallBack);
+        for (i = 0; i < PSP_MAX_CREATE_THREAD_NOTIFY; i++)
+        {
+            CallBack = ExReferenceCallBackBlock(&PspCreateThreadNotifyRoutine[i]);
+            if (CallBack != NULL)
+            {
+                Rtn = (PCREATE_THREAD_NOTIFY_ROUTINE)ExGetCallBackBlockRoutine(CallBack);
+                Rtn(Process->UniqueProcessId, Thread->Cid.UniqueThread, FALSE);
+                ExDereferenceCallBackBlock(&PspCreateThreadNotifyRoutine[i], CallBack);
             }
         }
     }
@@ -923,61 +865,65 @@ Return Value:
     LastThread = FALSE;
     DerefThread = NULL;
 
-    PspLockProcessExclusive (Process, Thread);
+    PspLockProcessExclusive(Process, Thread);
 
     //
     // Say one less active thread. If we are the last then block creates and wait for the other threads to exit.
     //
     Process->ActiveThreads--;
-    if (Process->ActiveThreads == 0) {
-        PS_SET_BITS (&Process->Flags, PS_PROCESS_FLAGS_PROCESS_DELETE);
+    if (Process->ActiveThreads == 0)
+    {
+        PS_SET_BITS(&Process->Flags, PS_PROCESS_FLAGS_PROCESS_DELETE);
 
         LastThread = TRUE;
-        if (ExitStatus == STATUS_THREAD_IS_TERMINATING) {
-            if (Process->ExitStatus == STATUS_PENDING) {
+        if (ExitStatus == STATUS_THREAD_IS_TERMINATING)
+        {
+            if (Process->ExitStatus == STATUS_PENDING)
+            {
                 Process->ExitStatus = Process->LastThreadExitStatus;
             }
-        } else {
+        }
+        else
+        {
             Process->ExitStatus = ExitStatus;
         }
 
         //
         // We are the last thread to leave the process. We have to wait till all the other threads have exited before we do.
         //
-        for (Entry = Process->ThreadListHead.Flink;
-             Entry != &Process->ThreadListHead;
-             Entry = Entry->Flink) {
+        for (Entry = Process->ThreadListHead.Flink; Entry != &Process->ThreadListHead; Entry = Entry->Flink)
+        {
 
-            WaitThread = CONTAINING_RECORD (Entry, ETHREAD, ThreadListEntry);
-            if (WaitThread != Thread &&
-                !KeReadStateThread (&WaitThread->Tcb) &&
-                ObReferenceObjectSafe (WaitThread)) {
+            WaitThread = CONTAINING_RECORD(Entry, ETHREAD, ThreadListEntry);
+            if (WaitThread != Thread && !KeReadStateThread(&WaitThread->Tcb) && ObReferenceObjectSafe(WaitThread))
+            {
 
-                PspUnlockProcessExclusive (Process, Thread);
+                PspUnlockProcessExclusive(Process, Thread);
 
-                KeWaitForSingleObject (WaitThread,
-                                       Executive,
-                                       KernelMode,
-                                       FALSE,
-                                       NULL);
+                KeWaitForSingleObject(WaitThread, Executive, KernelMode, FALSE, NULL);
 
-                if (DerefThread != NULL) {
-                    ObDereferenceObject (DerefThread);
+                if (DerefThread != NULL)
+                {
+                    ObDereferenceObject(DerefThread);
                 }
                 DerefThread = WaitThread;
-                PspLockProcessExclusive (Process, Thread);
+                PspLockProcessExclusive(Process, Thread);
             }
         }
-    } else {
-        if (ExitStatus != STATUS_THREAD_IS_TERMINATING) {
+    }
+    else
+    {
+        if (ExitStatus != STATUS_THREAD_IS_TERMINATING)
+        {
             Process->LastThreadExitStatus = ExitStatus;
         }
     }
 
-    PspUnlockProcessExclusive (Process, Thread);
+    PspUnlockProcessExclusive(Process, Thread);
 
-    if (DerefThread != NULL) {
-        ObDereferenceObject (DerefThread);
+    if (DerefThread != NULL)
+    {
+        ObDereferenceObject(DerefThread);
     }
 
 
@@ -985,40 +931,42 @@ Return Value:
     // If we need to send debug messages then do so.
     //
 
-    if (Process->DebugPort != NULL) {
+    if (Process->DebugPort != NULL)
+    {
         //
         // Don't report system thread exit to the debugger as we don't report them.
         //
-        if (!IS_SYSTEM_THREAD (Thread)) {
-            if (LastThread) {
-                DbgkExitProcess (ExitStatus);
-            } else {
-                DbgkExitThread (ExitStatus);
+        if (!IS_SYSTEM_THREAD(Thread))
+        {
+            if (LastThread)
+            {
+                DbgkExitProcess(ExitStatus);
+            }
+            else
+            {
+                DbgkExitThread(ExitStatus);
             }
         }
     }
 
-    if (KD_DEBUGGER_ENABLED) {
+    if (KD_DEBUGGER_ENABLED)
+    {
 
-        if (Thread->CrossThreadFlags & PS_CROSS_THREAD_FLAGS_BREAK_ON_TERMINATION) {
-            PspCatchCriticalBreak ("Critical thread 0x%p (in %s) exited\n",
-                                   Thread,
-                                   Process->ImageFileName);
+        if (Thread->CrossThreadFlags & PS_CROSS_THREAD_FLAGS_BREAK_ON_TERMINATION)
+        {
+            PspCatchCriticalBreak("Critical thread 0x%p (in %s) exited\n", Thread, Process->ImageFileName);
         }
     } // End of critical thread/process exit detect
 
-    if (LastThread &&
-        (Process->Flags & PS_PROCESS_FLAGS_BREAK_ON_TERMINATION)) {
-        if (KD_DEBUGGER_ENABLED) {
-            PspCatchCriticalBreak ("Critical process 0x%p (%s) exited\n",
-                                   Process,
-                                   Process->ImageFileName);
-        } else {
-            KeBugCheckEx (CRITICAL_PROCESS_DIED,
-                          (ULONG_PTR)Process,
-                          0,
-                          0,
-                          0);
+    if (LastThread && (Process->Flags & PS_PROCESS_FLAGS_BREAK_ON_TERMINATION))
+    {
+        if (KD_DEBUGGER_ENABLED)
+        {
+            PspCatchCriticalBreak("Critical process 0x%p (%s) exited\n", Process, Process->ImageFileName);
+        }
+        else
+        {
+            KeBugCheckEx(CRITICAL_PROCESS_DIED, (ULONG_PTR)Process, 0, 0, 0);
         }
     }
 
@@ -1029,27 +977,31 @@ Return Value:
     // Process the TerminationPort. This is only accessed from this thread
     //
     TerminationPort = Thread->TerminationPort;
-    if (TerminationPort != NULL) {
+    if (TerminationPort != NULL)
+    {
 
         CdMsg.PortMsg.u1.s1.DataLength = sizeof(LARGE_INTEGER);
         CdMsg.PortMsg.u1.s1.TotalLength = sizeof(LPC_CLIENT_DIED_MSG);
         CdMsg.PortMsg.u2.s2.Type = LPC_CLIENT_DIED;
         CdMsg.PortMsg.u2.s2.DataInfoOffset = 0;
 
-        do {
+        do
+        {
 
-            CdMsg.CreateTime.QuadPart = PS_GET_THREAD_CREATE_TIME (Thread);
-            LpcRequestPort (TerminationPort->Port, (PPORT_MESSAGE)&CdMsg);
-            ObDereferenceObject (TerminationPort->Port);
+            CdMsg.CreateTime.QuadPart = PS_GET_THREAD_CREATE_TIME(Thread);
+            LpcRequestPort(TerminationPort->Port, (PPORT_MESSAGE)&CdMsg);
+            ObDereferenceObject(TerminationPort->Port);
 
             NextPort = TerminationPort->Next;
 
-            ExFreePoolWithTag (TerminationPort, 'pTsP'|PROTECTED_POOL);
+            ExFreePoolWithTag(TerminationPort, 'pTsP' | PROTECTED_POOL);
 
             TerminationPort = NextPort;
 
         } while (TerminationPort != NULL);
-    } else {
+    }
+    else
+    {
 
         //
         // If there are no ports to send notifications to,
@@ -1069,16 +1021,18 @@ Return Value:
         //
 
         if ((ExitStatus == STATUS_THREAD_IS_TERMINATING &&
-            (Thread->CrossThreadFlags&PS_CROSS_THREAD_FLAGS_DEADTHREAD)) ||
-            !(Thread->CrossThreadFlags&PS_CROSS_THREAD_FLAGS_DEADTHREAD)) {
+             (Thread->CrossThreadFlags & PS_CROSS_THREAD_FLAGS_DEADTHREAD)) ||
+            !(Thread->CrossThreadFlags & PS_CROSS_THREAD_FLAGS_DEADTHREAD))
+        {
 
-            CdMsg.PortMsg.u1.s1.DataLength = sizeof (LARGE_INTEGER);
-            CdMsg.PortMsg.u1.s1.TotalLength = sizeof (LPC_CLIENT_DIED_MSG);
+            CdMsg.PortMsg.u1.s1.DataLength = sizeof(LARGE_INTEGER);
+            CdMsg.PortMsg.u1.s1.TotalLength = sizeof(LPC_CLIENT_DIED_MSG);
             CdMsg.PortMsg.u2.s2.Type = LPC_CLIENT_DIED;
             CdMsg.PortMsg.u2.s2.DataInfoOffset = 0;
-            if (Process->ExceptionPort != NULL) {
-                CdMsg.CreateTime.QuadPart = PS_GET_THREAD_CREATE_TIME (Thread);
-                LpcRequestPort (Process->ExceptionPort, (PPORT_MESSAGE)&CdMsg);
+            if (Process->ExceptionPort != NULL)
+            {
+                CdMsg.CreateTime.QuadPart = PS_GET_THREAD_CREATE_TIME(Thread);
+                LpcRequestPort(Process->ExceptionPort, (PPORT_MESSAGE)&CdMsg);
             }
         }
     }
@@ -1087,12 +1041,14 @@ Return Value:
     // rundown the Win32 structures
     //
 
-    if (Thread->Tcb.Win32Thread) {
-        (PspW32ThreadCallout) (Thread, PsW32ThreadCalloutExit);
+    if (Thread->Tcb.Win32Thread)
+    {
+        (PspW32ThreadCallout)(Thread, PsW32ThreadCalloutExit);
     }
 
-    if (LastThread && Process->Win32Process) {
-        (PspW32ProcessCallout) (Process, FALSE);
+    if (LastThread && Process->Win32Process)
+    {
+        (PspW32ProcessCallout)(Process, FALSE);
     }
 
     //
@@ -1101,8 +1057,9 @@ Return Value:
     // this stack, but was being used by another thread
     //
 
-    if (!Thread->Tcb.EnableStackSwap) {
-        KeBugCheckEx (KERNEL_STACK_LOCKED_AT_EXIT, 0, 0, 0, 0);
+    if (!Thread->Tcb.EnableStackSwap)
+    {
+        KeBugCheckEx(KERNEL_STACK_LOCKED_AT_EXIT, 0, 0, 0, 0);
     }
 
     //
@@ -1114,10 +1071,10 @@ Return Value:
     //      - Perform kernel thread rundown
     //
 
-    IoCancelThreadIo (Thread);
-    ExTimerRundown ();
-    CmNotifyRunDown (Thread);
-    KeRundownThread ();
+    IoCancelThreadIo(Thread);
+    ExTimerRundown();
+    CmNotifyRunDown(Thread);
+    KeRundownThread();
 
     //
     // Delete the thread's TEB.  If the address of the TEB is in user
@@ -1128,13 +1085,15 @@ Return Value:
 
 
     Teb = Thread->Tcb.Teb;
-    if (Teb != NULL) {
+    if (Teb != NULL)
+    {
         PRTL_CRITICAL_SECTION Cs;
         int DecrementCount;
 
         Peb = Process->Peb;
 
-        try {
+        try
+        {
 
             //
             // The thread is a user-mode thread. Look to see if the thread
@@ -1147,9 +1106,11 @@ Return Value:
             //
 
             Cs = Peb->LoaderLock;
-            if (Cs != NULL) {
-                ProbeForRead(Cs,sizeof(*Cs),4);
-                if (Cs->OwningThread == Thread->Cid.UniqueThread) {
+            if (Cs != NULL)
+            {
+                ProbeForRead(Cs, sizeof(*Cs), 4);
+                if (Cs->OwningThread == Thread->Cid.UniqueThread)
+                {
 
                     //
                     // x86 uses a 1 based recursion count
@@ -1167,8 +1128,9 @@ Return Value:
                     // undo lock count increments for recursion cases
                     //
 
-                    while(DecrementCount > 1) {
-                        InterlockedDecrement (&Cs->LockCount);
+                    while (DecrementCount > 1)
+                    {
+                        InterlockedDecrement(&Cs->LockCount);
                         DecrementCount--;
                     }
 
@@ -1176,10 +1138,13 @@ Return Value:
                     // undo final lock count
                     //
 
-                    if (InterlockedDecrement (&Cs->LockCount) >= 0) {
-                        NtSetEvent (Cs->LockSemaphore, NULL);
+                    if (InterlockedDecrement(&Cs->LockCount) >= 0)
+                    {
+                        NtSetEvent(Cs->LockSemaphore, NULL);
                     }
-                } else if (Teb->WaitingOnLoaderLock) {
+                }
+                else if (Teb->WaitingOnLoaderLock)
+                {
 
                     //
                     // if the thread exited while waiting on the loader
@@ -1219,20 +1184,23 @@ Return Value:
                     // }
                     //
 
-                    InterlockedDecrement (&Cs->LockCount);
+                    InterlockedDecrement(&Cs->LockCount);
                 }
             }
 #if defined(_WIN64)
-            if (Process->Wow64Process) {
+            if (Process->Wow64Process)
+            {
                 // Do the same thing for the 32-bit PEB->Ldr
                 PRTL_CRITICAL_SECTION32 Cs32;
                 PPEB32 Peb32;
 
                 Peb32 = Process->Wow64Process->Wow64;
-                Cs32 = (PRTL_CRITICAL_SECTION32)ULongToPtr (Peb32->LoaderLock);
-                if (Cs32 != NULL) {
-                    ProbeForRead (Cs32, sizeof(*Cs32), 4);
-                    if (Cs32->OwningThread == PtrToUlong(Thread->Cid.UniqueThread)) {
+                Cs32 = (PRTL_CRITICAL_SECTION32)ULongToPtr(Peb32->LoaderLock);
+                if (Cs32 != NULL)
+                {
+                    ProbeForRead(Cs32, sizeof(*Cs32), 4);
+                    if (Cs32->OwningThread == PtrToUlong(Thread->Cid.UniqueThread))
+                    {
                         //
                         // x86 uses a 1 based recursion count, so the
                         // IA64 kernel needs to do the same, since
@@ -1246,7 +1214,8 @@ Return Value:
                         //
                         // undo lock count increments for recursion cases
                         //
-                        while(DecrementCount > 1) {
+                        while (DecrementCount > 1)
+                        {
                             InterlockedDecrement(&Cs32->LockCount);
                             DecrementCount--;
                         }
@@ -1254,14 +1223,18 @@ Return Value:
                         //
                         // undo final lock count
                         //
-                        if (InterlockedDecrement (&Cs32->LockCount) >= 0){
-                            NtSetEvent (LongToHandle (Cs32->LockSemaphore),NULL);
+                        if (InterlockedDecrement(&Cs32->LockCount) >= 0)
+                        {
+                            NtSetEvent(LongToHandle(Cs32->LockSemaphore), NULL);
                         }
-                    } else {
+                    }
+                    else
+                    {
                         PTEB32 Teb32 = WOW64_GET_TEB32(Teb);
 
-                        ProbeForRead (Teb32,sizeof (*Teb32), 4);
-                        if (Teb32->WaitingOnLoaderLock) {
+                        ProbeForRead(Teb32, sizeof(*Teb32), 4);
+                        if (Teb32->WaitingOnLoaderLock)
+                        {
                             InterlockedDecrement(&Cs32->LockCount);
                         }
                     }
@@ -1274,26 +1247,26 @@ Return Value:
             // Free the user mode stack on termination if we need to.
             //
 
-            if (Teb->FreeStackOnTermination &&
-                (Thread->CrossThreadFlags&PS_CROSS_THREAD_FLAGS_DEADTHREAD) == 0) {
+            if (Teb->FreeStackOnTermination && (Thread->CrossThreadFlags & PS_CROSS_THREAD_FLAGS_DEADTHREAD) == 0)
+            {
                 SIZE_T Zero = 0;
                 PVOID BaseAddress = Teb->DeallocationStack;
-                ZwFreeVirtualMemory (NtCurrentProcess (),
-                                     &BaseAddress,
-                                     &Zero,
-                                     MEM_RELEASE);
+                ZwFreeVirtualMemory(NtCurrentProcess(), &BaseAddress, &Zero, MEM_RELEASE);
             }
 
             //
             // Close the debugger object associated with this thread if there is one.
             //
-            if (Teb->DbgSsReserved[1] != NULL) {
-                ObCloseHandle (Teb->DbgSsReserved[1], UserMode);
+            if (Teb->DbgSsReserved[1] != NULL)
+            {
+                ObCloseHandle(Teb->DbgSsReserved[1], UserMode);
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
         }
 
-        MmDeleteTeb (Process, Teb);
+        MmDeleteTeb(Process, Teb);
         Thread->Tcb.Teb = NULL;
     }
 
@@ -1303,90 +1276,95 @@ Return Value:
     // but do it after the client ID becomes invalid.
     //
 
-    LpcExitThread (Thread);
+    LpcExitThread(Thread);
 
     Thread->ExitStatus = ExitStatus;
-    KeQuerySystemTime (&Thread->ExitTime);
+    KeQuerySystemTime(&Thread->ExitTime);
 
 
-    ASSERT (Thread->Tcb.KernelApcDisable == 0);
+    ASSERT(Thread->Tcb.KernelApcDisable == 0);
 
-    if (LastThread) {
+    if (LastThread)
+    {
 
         Process->ExitTime = Thread->ExitTime;
-        PspExitProcess (TRUE, Process);
+        PspExitProcess(TRUE, Process);
 
-        if (SeDetailedAuditing && !ExFastRefObjectNull (Process->Token)) {
-            SeAuditProcessExit (Process);
+        if (SeDetailedAuditing && !ExFastRefObjectNull(Process->Token))
+        {
+            SeAuditProcessExit(Process);
         }
 
 #if defined(_X86_)
         //
         // Rundown VDM DPCs
         //
-        if (Process->VdmObjects != NULL) {
-            VdmRundownDpcs (Process);
+        if (Process->VdmObjects != NULL)
+        {
+            VdmRundownDpcs(Process);
         }
 #endif
 
         //
         // Rundown the handle table
         //
-        ObKillProcess (Process);
+        ObKillProcess(Process);
 
         //
         // Release the image section
         //
-        if (Process->SectionObject != NULL) {
-            ObDereferenceObject (Process->SectionObject);
+        if (Process->SectionObject != NULL)
+        {
+            ObDereferenceObject(Process->SectionObject);
             Process->SectionObject = NULL;
         }
 
-        if (Process->Job != NULL) {
+        if (Process->Job != NULL)
+        {
 
             //
             // Now we can fold the process accounting into the job. Don't need to wait for
             // the delete routine.
             //
 
-            PspExitProcessFromJob (Process->Job, Process);
-
+            PspExitProcessFromJob(Process->Job, Process);
         }
 
         //
         // Signal the process
         //
-        KeSetProcess (&Process->Pcb, 0, FALSE);
-
+        KeSetProcess(&Process->Pcb, 0, FALSE);
     }
 
 
     //
     // Rundown pending APCs. Protect against being frozen after we raise IRQL but before dispatcher lock is taken.
     //
-    KeEnterCriticalRegionThread (&Thread->Tcb);
+    KeEnterCriticalRegionThread(&Thread->Tcb);
 
-    KeDisableApcQueuingThread (&Thread->Tcb);
+    KeDisableApcQueuingThread(&Thread->Tcb);
 
     //
     // At this point we may have been frozen and the APC is pending. First we remove the suspend/freeze bias that
     // may exist and then drop IRQL. The suspend APC if present will fire and drop through. No futher suspends are
     // allowed as the thread is marked to prevent APC's
     //
-    KeForceResumeThread (&Thread->Tcb);
-    KeLeaveCriticalRegionThread (&Thread->Tcb);
+    KeForceResumeThread(&Thread->Tcb);
+    KeLeaveCriticalRegionThread(&Thread->Tcb);
 
     //
     // flush user-mode APC queue
     //
 
-    FirstEntry = KeFlushQueueApc (&Thread->Tcb, UserMode);
+    FirstEntry = KeFlushQueueApc(&Thread->Tcb, UserMode);
 
-    if (FirstEntry != NULL) {
+    if (FirstEntry != NULL)
+    {
 
         Entry = FirstEntry;
-        do {
-            Apc = CONTAINING_RECORD (Entry, KAPC, ApcListEntry);
+        do
+        {
+            Apc = CONTAINING_RECORD(Entry, KAPC, ApcListEntry);
             Entry = Entry->Flink;
 
             //
@@ -1394,21 +1372,26 @@ Return Value:
             // deallocate the APC
             //
 
-            if (Apc->RundownRoutine) {
-                (Apc->RundownRoutine) (Apc);
-            } else {
-                ExFreePool (Apc);
+            if (Apc->RundownRoutine)
+            {
+                (Apc->RundownRoutine)(Apc);
+            }
+            else
+            {
+                ExFreePool(Apc);
             }
 
         } while (Entry != FirstEntry);
     }
 
-    if (LastThread) {
-        MmCleanProcessAddressSpace (Process);
+    if (LastThread)
+    {
+        MmCleanProcessAddressSpace(Process);
     }
 
-    if (Thread->Tcb.LegoData && PspLegoNotifyRoutine) {
-        (PspLegoNotifyRoutine) (&Thread->Tcb);
+    if (Thread->Tcb.LegoData && PspLegoNotifyRoutine)
+    {
+        (PspLegoNotifyRoutine)(&Thread->Tcb);
     }
 
     //
@@ -1418,14 +1401,12 @@ Return Value:
     // entering exit.
     //
 
-    FirstEntry = KeFlushQueueApc (&Thread->Tcb, KernelMode);
+    FirstEntry = KeFlushQueueApc(&Thread->Tcb, KernelMode);
 
-    if (FirstEntry != NULL) {
-        KeBugCheckEx (KERNEL_APC_PENDING_DURING_EXIT,
-                      (ULONG_PTR)FirstEntry,
-                      (ULONG_PTR)Thread->Tcb.KernelApcDisable,
-                      (ULONG_PTR)KeGetCurrentIrql(),
-                      0);
+    if (FirstEntry != NULL)
+    {
+        KeBugCheckEx(KERNEL_APC_PENDING_DURING_EXIT, (ULONG_PTR)FirstEntry, (ULONG_PTR)Thread->Tcb.KernelApcDisable,
+                     (ULONG_PTR)KeGetCurrentIrql(), 0);
     }
 
 
@@ -1438,14 +1419,10 @@ Return Value:
     //      activates a thread, if necessary, to reap the terminating thread.
     //
 
-    KeTerminateThread (0L);
+    KeTerminateThread(0L);
 }
 
-VOID
-PspExitProcess(
-    IN BOOLEAN LastThreadExit,
-    IN PEPROCESS Process
-    )
+VOID PspExitProcess(IN BOOLEAN LastThreadExit, IN PEPROCESS Process)
 {
     ULONG ActualTime;
     PEJOB Job;
@@ -1453,34 +1430,34 @@ PspExitProcess(
 
     PAGED_CODE();
 
-    PS_SET_BITS (&Process->Flags, PS_PROCESS_FLAGS_PROCESS_EXITING);
+    PS_SET_BITS(&Process->Flags, PS_PROCESS_FLAGS_PROCESS_EXITING);
 
-    if (LastThreadExit) {
+    if (LastThreadExit)
+    {
 
         PERFINFO_PROCESS_DELETE(Process);
 
-        if (PspCreateProcessNotifyRoutineCount != 0) {
+        if (PspCreateProcessNotifyRoutineCount != 0)
+        {
             ULONG i;
             PEX_CALLBACK_ROUTINE_BLOCK CallBack;
             PCREATE_PROCESS_NOTIFY_ROUTINE Rtn;
 
-            for (i = 0; i < PSP_MAX_CREATE_PROCESS_NOTIFY; i++) {
-                CallBack = ExReferenceCallBackBlock (&PspCreateProcessNotifyRoutine[i]);
-                if (CallBack != NULL) {
-                    Rtn = (PCREATE_PROCESS_NOTIFY_ROUTINE) ExGetCallBackBlockRoutine (CallBack);
-                    Rtn (Process->InheritedFromUniqueProcessId,
-                         Process->UniqueProcessId,
-                         FALSE);
-                    ExDereferenceCallBackBlock (&PspCreateProcessNotifyRoutine[i],
-                                                CallBack);
+            for (i = 0; i < PSP_MAX_CREATE_PROCESS_NOTIFY; i++)
+            {
+                CallBack = ExReferenceCallBackBlock(&PspCreateProcessNotifyRoutine[i]);
+                if (CallBack != NULL)
+                {
+                    Rtn = (PCREATE_PROCESS_NOTIFY_ROUTINE)ExGetCallBackBlockRoutine(CallBack);
+                    Rtn(Process->InheritedFromUniqueProcessId, Process->UniqueProcessId, FALSE);
+                    ExDereferenceCallBackBlock(&PspCreateProcessNotifyRoutine[i], CallBack);
                 }
             }
         }
-
     }
 
 
-    PoRundownProcess (Process);
+    PoRundownProcess(Process);
 
     //
     // Dereference (close) the security port.  This will stop any authentication
@@ -1489,18 +1466,20 @@ PspExitProcess(
     // connection during the process shutdown (e.g. when the rdr deletes a handle)
     //
 
-    if (Process->SecurityPort) {
+    if (Process->SecurityPort)
+    {
 
-        if (Process->SecurityPort != ((PVOID) 1)) {
-            ObDereferenceObject (Process->SecurityPort);
+        if (Process->SecurityPort != ((PVOID)1))
+        {
+            ObDereferenceObject(Process->SecurityPort);
 
-            Process->SecurityPort = (PVOID) 1 ;
+            Process->SecurityPort = (PVOID)1;
         }
-
     }
 
 
-    if (LastThreadExit) {
+    if (LastThreadExit)
+    {
 
 
         //
@@ -1508,92 +1487,87 @@ PspExitProcess(
         // then reset it.
         //
 
-        if ((Process->Flags&PS_PROCESS_FLAGS_SET_TIMER_RESOLUTION) != 0) {
-            ZwSetTimerResolution (KeMaximumIncrement, FALSE, &ActualTime);
+        if ((Process->Flags & PS_PROCESS_FLAGS_SET_TIMER_RESOLUTION) != 0)
+        {
+            ZwSetTimerResolution(KeMaximumIncrement, FALSE, &ActualTime);
         }
 
         Job = Process->Job;
-        if (Job != NULL && Job->CompletionPort != NULL &&
-            !(Process->JobStatus & PS_JOB_STATUS_NOT_REALLY_ACTIVE) &&
-            !(Process->JobStatus & PS_JOB_STATUS_EXIT_PROCESS_REPORTED)) {
+        if (Job != NULL && Job->CompletionPort != NULL && !(Process->JobStatus & PS_JOB_STATUS_NOT_REALLY_ACTIVE) &&
+            !(Process->JobStatus & PS_JOB_STATUS_EXIT_PROCESS_REPORTED))
+        {
 
             ULONG_PTR ExitMessageId;
 
-            switch (Process->ExitStatus) {
-                case STATUS_GUARD_PAGE_VIOLATION      :
-                case STATUS_DATATYPE_MISALIGNMENT     :
-                case STATUS_BREAKPOINT                :
-                case STATUS_SINGLE_STEP               :
-                case STATUS_ACCESS_VIOLATION          :
-                case STATUS_IN_PAGE_ERROR             :
-                case STATUS_ILLEGAL_INSTRUCTION       :
-                case STATUS_NONCONTINUABLE_EXCEPTION  :
-                case STATUS_INVALID_DISPOSITION       :
-                case STATUS_ARRAY_BOUNDS_EXCEEDED     :
-                case STATUS_FLOAT_DENORMAL_OPERAND    :
-                case STATUS_FLOAT_DIVIDE_BY_ZERO      :
-                case STATUS_FLOAT_INEXACT_RESULT      :
-                case STATUS_FLOAT_INVALID_OPERATION   :
-                case STATUS_FLOAT_OVERFLOW            :
-                case STATUS_FLOAT_STACK_CHECK         :
-                case STATUS_FLOAT_UNDERFLOW           :
-                case STATUS_INTEGER_DIVIDE_BY_ZERO    :
-                case STATUS_INTEGER_OVERFLOW          :
-                case STATUS_PRIVILEGED_INSTRUCTION    :
-                case STATUS_STACK_OVERFLOW            :
-                case STATUS_CONTROL_C_EXIT            :
-                case STATUS_FLOAT_MULTIPLE_FAULTS     :
-                case STATUS_FLOAT_MULTIPLE_TRAPS      :
-                case STATUS_REG_NAT_CONSUMPTION       :
-                    ExitMessageId = JOB_OBJECT_MSG_ABNORMAL_EXIT_PROCESS;
-                    break;
-                default:
-                    ExitMessageId = JOB_OBJECT_MSG_EXIT_PROCESS;
-                    break;
+            switch (Process->ExitStatus)
+            {
+            case STATUS_GUARD_PAGE_VIOLATION:
+            case STATUS_DATATYPE_MISALIGNMENT:
+            case STATUS_BREAKPOINT:
+            case STATUS_SINGLE_STEP:
+            case STATUS_ACCESS_VIOLATION:
+            case STATUS_IN_PAGE_ERROR:
+            case STATUS_ILLEGAL_INSTRUCTION:
+            case STATUS_NONCONTINUABLE_EXCEPTION:
+            case STATUS_INVALID_DISPOSITION:
+            case STATUS_ARRAY_BOUNDS_EXCEEDED:
+            case STATUS_FLOAT_DENORMAL_OPERAND:
+            case STATUS_FLOAT_DIVIDE_BY_ZERO:
+            case STATUS_FLOAT_INEXACT_RESULT:
+            case STATUS_FLOAT_INVALID_OPERATION:
+            case STATUS_FLOAT_OVERFLOW:
+            case STATUS_FLOAT_STACK_CHECK:
+            case STATUS_FLOAT_UNDERFLOW:
+            case STATUS_INTEGER_DIVIDE_BY_ZERO:
+            case STATUS_INTEGER_OVERFLOW:
+            case STATUS_PRIVILEGED_INSTRUCTION:
+            case STATUS_STACK_OVERFLOW:
+            case STATUS_CONTROL_C_EXIT:
+            case STATUS_FLOAT_MULTIPLE_FAULTS:
+            case STATUS_FLOAT_MULTIPLE_TRAPS:
+            case STATUS_REG_NAT_CONSUMPTION:
+                ExitMessageId = JOB_OBJECT_MSG_ABNORMAL_EXIT_PROCESS;
+                break;
+            default:
+                ExitMessageId = JOB_OBJECT_MSG_EXIT_PROCESS;
+                break;
             }
 
-            PS_SET_CLEAR_BITS (&Process->JobStatus,
-                               PS_JOB_STATUS_EXIT_PROCESS_REPORTED,
-                               PS_JOB_STATUS_LAST_REPORT_MEMORY);
+            PS_SET_CLEAR_BITS(&Process->JobStatus, PS_JOB_STATUS_EXIT_PROCESS_REPORTED,
+                              PS_JOB_STATUS_LAST_REPORT_MEMORY);
 
-            CurrentThread = PsGetCurrentThread ();
+            CurrentThread = PsGetCurrentThread();
 
-            KeEnterCriticalRegionThread (&CurrentThread->Tcb);
-            ExAcquireResourceSharedLite (&Job->JobLock, TRUE);
+            KeEnterCriticalRegionThread(&CurrentThread->Tcb);
+            ExAcquireResourceSharedLite(&Job->JobLock, TRUE);
 
-            if (Job->CompletionPort != NULL) {
-                IoSetIoCompletion (Job->CompletionPort,
-                                   Job->CompletionKey,
-                                   (PVOID)Process->UniqueProcessId,
-                                   STATUS_SUCCESS,
-                                   ExitMessageId,
-                                   FALSE);
+            if (Job->CompletionPort != NULL)
+            {
+                IoSetIoCompletion(Job->CompletionPort, Job->CompletionKey, (PVOID)Process->UniqueProcessId,
+                                  STATUS_SUCCESS, ExitMessageId, FALSE);
             }
 
-            ExReleaseResourceLite (&Job->JobLock);
-            KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
-
+            ExReleaseResourceLite(&Job->JobLock);
+            KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
         }
 
-        if (CCPF_IS_PREFETCHER_ACTIVE ()) {
+        if (CCPF_IS_PREFETCHER_ACTIVE())
+        {
 
             //
             // Let prefetcher know that this process is exiting.
             //
 
-            CcPfProcessExitNotification (Process);
+            CcPfProcessExitNotification(Process);
         }
-
-    } else {
-        MmCleanProcessAddressSpace (Process);
     }
-
+    else
+    {
+        MmCleanProcessAddressSpace(Process);
+    }
 }
 
-VOID
-PspProcessDelete(
-    IN PVOID Object
-    )
+VOID PspProcessDelete(IN PVOID Object)
 {
     PEPROCESS Process;
     PETHREAD CurrentThread;
@@ -1606,83 +1580,94 @@ PspProcessDelete(
     //
     // Remove the process from the global list
     //
-    if (Process->ActiveProcessLinks.Flink != NULL) {
-        CurrentThread = PsGetCurrentThread ();
+    if (Process->ActiveProcessLinks.Flink != NULL)
+    {
+        CurrentThread = PsGetCurrentThread();
 
-        PspLockProcessList (CurrentThread);
-        RemoveEntryList (&Process->ActiveProcessLinks);
-        PspUnlockProcessList (CurrentThread);
+        PspLockProcessList(CurrentThread);
+        RemoveEntryList(&Process->ActiveProcessLinks);
+        PspUnlockProcessList(CurrentThread);
     }
 
-    if (Process->SeAuditProcessCreationInfo.ImageFileName != NULL) {
-        ExFreePool (Process->SeAuditProcessCreationInfo.ImageFileName);
+    if (Process->SeAuditProcessCreationInfo.ImageFileName != NULL)
+    {
+        ExFreePool(Process->SeAuditProcessCreationInfo.ImageFileName);
         Process->SeAuditProcessCreationInfo.ImageFileName = NULL;
     }
 
-    if (Process->Job != NULL) {
-        PspRemoveProcessFromJob (Process->Job, Process);
-        ObDereferenceObjectDeferDelete (Process->Job);
+    if (Process->Job != NULL)
+    {
+        PspRemoveProcessFromJob(Process->Job, Process);
+        ObDereferenceObjectDeferDelete(Process->Job);
         Process->Job = NULL;
     }
 
-    KeTerminateProcess (&Process->Pcb);
+    KeTerminateProcess(&Process->Pcb);
 
 
-    if (Process->DebugPort != NULL) {
-        ObDereferenceObject (Process->DebugPort);
+    if (Process->DebugPort != NULL)
+    {
+        ObDereferenceObject(Process->DebugPort);
         Process->DebugPort = NULL;
     }
-    if (Process->ExceptionPort != NULL) {
-        ObDereferenceObject (Process->ExceptionPort);
+    if (Process->ExceptionPort != NULL)
+    {
+        ObDereferenceObject(Process->ExceptionPort);
         Process->ExceptionPort = NULL;
     }
 
-    if (Process->SectionObject != NULL) {
-        ObDereferenceObject (Process->SectionObject);
+    if (Process->SectionObject != NULL)
+    {
+        ObDereferenceObject(Process->SectionObject);
         Process->SectionObject = NULL;
     }
 
-    PspDeleteLdt (Process );
-    PspDeleteVdmObjects (Process);
+    PspDeleteLdt(Process);
+    PspDeleteVdmObjects(Process);
 
-    if (Process->ObjectTable != NULL) {
-        KeStackAttachProcess (&Process->Pcb, &ApcState);
-        ObKillProcess (Process);
-        KeUnstackDetachProcess (&ApcState);
+    if (Process->ObjectTable != NULL)
+    {
+        KeStackAttachProcess(&Process->Pcb, &ApcState);
+        ObKillProcess(Process);
+        KeUnstackDetachProcess(&ApcState);
     }
 
 
-    if (Process->Flags&PS_PROCESS_FLAGS_HAS_ADDRESS_SPACE) {
+    if (Process->Flags & PS_PROCESS_FLAGS_HAS_ADDRESS_SPACE)
+    {
 
         //
         // Clean address space of the process
         //
 
-        KeStackAttachProcess (&Process->Pcb, &ApcState);
+        KeStackAttachProcess(&Process->Pcb, &ApcState);
 
-        PspExitProcess (FALSE, Process);
+        PspExitProcess(FALSE, Process);
 
-        KeUnstackDetachProcess (&ApcState);
+        KeUnstackDetachProcess(&ApcState);
 
-        MmDeleteProcessAddressSpace (Process);
+        MmDeleteProcessAddressSpace(Process);
     }
 
-    if (Process->UniqueProcessId) {
-        if (!(ExDestroyHandle (PspCidTable, Process->UniqueProcessId, NULL))) {
-            KeBugCheck (CID_HANDLE_DELETION);
+    if (Process->UniqueProcessId)
+    {
+        if (!(ExDestroyHandle(PspCidTable, Process->UniqueProcessId, NULL)))
+        {
+            KeBugCheck(CID_HANDLE_DELETION);
         }
     }
 
-    PspDeleteProcessSecurity (Process);
+    PspDeleteProcessSecurity(Process);
 
 
-    if (Process->WorkingSetWatch != NULL) {
-        ExFreePool (Process->WorkingSetWatch);
-        PsReturnProcessNonPagedPoolQuota (Process, WS_CATCH_SIZE);
+    if (Process->WorkingSetWatch != NULL)
+    {
+        ExFreePool(Process->WorkingSetWatch);
+        PsReturnProcessNonPagedPoolQuota(Process, WS_CATCH_SIZE);
     }
 
-    ObDereferenceDeviceMap (Process);
-    PspDereferenceQuota (Process);
+    ObDereferenceDeviceMap(Process);
+    PspDereferenceQuota(Process);
 
 #if !defined(_X86_)
     {
@@ -1695,21 +1680,18 @@ PspProcessDelete(
         PALIGNMENT_EXCEPTION_TABLE NextExceptionTable;
 
         ExceptionTable = Process->Pcb.AlignmentExceptionTable;
-        while (ExceptionTable != NULL) {
+        while (ExceptionTable != NULL)
+        {
 
             NextExceptionTable = ExceptionTable->Next;
-            ExFreePool( ExceptionTable );
+            ExFreePool(ExceptionTable);
             ExceptionTable = NextExceptionTable;
         }
     }
 #endif
-
 }
 
-VOID
-PspThreadDelete(
-    IN PVOID Object
-    )
+VOID PspThreadDelete(IN PVOID Object)
 {
     PETHREAD Thread;
     PETHREAD CurrentThread;
@@ -1717,37 +1699,41 @@ PspThreadDelete(
 
     PAGED_CODE();
 
-    Thread = (PETHREAD) Object;
+    Thread = (PETHREAD)Object;
 
     ASSERT(Thread->Tcb.Win32Thread == NULL);
 
-    if (Thread->Tcb.InitialStack) {
-        MmDeleteKernelStack(Thread->Tcb.StackBase,
-                            (BOOLEAN)Thread->Tcb.LargeStack);
+    if (Thread->Tcb.InitialStack)
+    {
+        MmDeleteKernelStack(Thread->Tcb.StackBase, (BOOLEAN)Thread->Tcb.LargeStack);
     }
 
-    if (Thread->Cid.UniqueThread != NULL) {
-        if (!ExDestroyHandle (PspCidTable, Thread->Cid.UniqueThread, NULL)) {
+    if (Thread->Cid.UniqueThread != NULL)
+    {
+        if (!ExDestroyHandle(PspCidTable, Thread->Cid.UniqueThread, NULL))
+        {
             KeBugCheck(CID_HANDLE_DELETION);
         }
     }
 
-    PspDeleteThreadSecurity (Thread);
+    PspDeleteThreadSecurity(Thread);
 
     Process = THREAD_TO_PROCESS(Thread);
-    if (Process) {
+    if (Process)
+    {
         //
         // Remove the thread from the process if it was ever inserted.
         //
-        if (Thread->ThreadListEntry.Flink != NULL) {
+        if (Thread->ThreadListEntry.Flink != NULL)
+        {
 
-            CurrentThread = PsGetCurrentThread ();
+            CurrentThread = PsGetCurrentThread();
 
-            PspLockProcessExclusive (Process, CurrentThread);
+            PspLockProcessExclusive(Process, CurrentThread);
 
-            RemoveEntryList (&Thread->ThreadListEntry);
+            RemoveEntryList(&Thread->ThreadListEntry);
 
-            PspUnlockProcessExclusive (Process, CurrentThread);
+            PspUnlockProcessExclusive(Process, CurrentThread);
         }
 
         ObDereferenceObject(Process);
@@ -1755,9 +1741,7 @@ PspThreadDelete(
 }
 
 NTSTATUS
-NtRegisterThreadTerminatePort(
-    IN HANDLE PortHandle
-    )
+NtRegisterThreadTerminatePort(IN HANDLE PortHandle)
 
 /*++
 
@@ -1786,24 +1770,21 @@ Return Value:
 
     PAGED_CODE();
 
-    Thread = PsGetCurrentThread ();
+    Thread = PsGetCurrentThread();
 
-    st = ObReferenceObjectByHandle (PortHandle,
-                                    0,
-                                    LpcPortObjectType,
-                                    KeGetPreviousModeByThread(&Thread->Tcb),
-                                    &Port,
-                                    NULL);
+    st = ObReferenceObjectByHandle(PortHandle, 0, LpcPortObjectType, KeGetPreviousModeByThread(&Thread->Tcb), &Port,
+                                   NULL);
 
-    if (!NT_SUCCESS (st)) {
+    if (!NT_SUCCESS(st))
+    {
         return st;
     }
 
-    TerminationPort = ExAllocatePoolWithQuotaTag (PagedPool|POOL_QUOTA_FAIL_INSTEAD_OF_RAISE,
-                                                  sizeof(TERMINATION_PORT),
-                                                  'pTsP'|PROTECTED_POOL);
-    if (TerminationPort == NULL) {
-        ObDereferenceObject (Port);
+    TerminationPort = ExAllocatePoolWithQuotaTag(PagedPool | POOL_QUOTA_FAIL_INSTEAD_OF_RAISE, sizeof(TERMINATION_PORT),
+                                                 'pTsP' | PROTECTED_POOL);
+    if (TerminationPort == NULL)
+    {
+        ObDereferenceObject(Port);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -1816,9 +1797,7 @@ Return Value:
 }
 
 LARGE_INTEGER
-PsGetProcessExitTime(
-    VOID
-    )
+PsGetProcessExitTime(VOID)
 
 /*++
 
@@ -1855,9 +1834,7 @@ Note:
 #undef PsIsThreadTerminating
 
 BOOLEAN
-PsIsThreadTerminating(
-    IN PETHREAD Thread
-    )
+PsIsThreadTerminating(IN PETHREAD Thread)
 
 /*++
 
@@ -1881,20 +1858,19 @@ Return Value:
     // Simply return whether or not the thread is in the process of terminating.
     //
 
-    if (Thread->CrossThreadFlags&PS_CROSS_THREAD_FLAGS_TERMINATED) {
+    if (Thread->CrossThreadFlags & PS_CROSS_THREAD_FLAGS_TERMINATED)
+    {
         return TRUE;
-    } else {
+    }
+    else
+    {
         return FALSE;
     }
 }
 
 
-
 NTSTATUS
-PspFreezeProcessWorker (
-    PEPROCESS Process,
-    PVOID Context
-    )
+PspFreezeProcessWorker(PEPROCESS Process, PVOID Context)
 /*++
 
 Routine Description:
@@ -1913,17 +1889,18 @@ Return Value:
 --*/
 {
 
-    UNREFERENCED_PARAMETER (Context);
+    UNREFERENCED_PARAMETER(Context);
 
-    if (Process != PsInitialSystemProcess &&
-        Process != PsIdleProcess &&
-        Process != ExpDefaultErrorPortProcess) {
+    if (Process != PsInitialSystemProcess && Process != PsIdleProcess && Process != ExpDefaultErrorPortProcess)
+    {
 
-        if (Process->ExceptionPort != NULL) {
-            LpcDisconnectPort (Process->ExceptionPort);
+        if (Process->ExceptionPort != NULL)
+        {
+            LpcDisconnectPort(Process->ExceptionPort);
         }
-        if ((Process->Flags&PS_PROCESS_FLAGS_PROCESS_EXITING) == 0) {
-            PsSuspendProcess (Process);
+        if ((Process->Flags & PS_PROCESS_FLAGS_PROCESS_EXITING) == 0)
+        {
+            PsSuspendProcess(Process);
         }
     }
 
@@ -1932,11 +1909,9 @@ Return Value:
 
 BOOLEAN PsContinueWaiting = FALSE;
 
-
+
 LOGICAL
-PsShutdownSystem (
-    VOID
-  )
+PsShutdownSystem(VOID)
 /*++
 
 Routine Description:
@@ -1954,18 +1929,18 @@ Return Value:
 --*/
 
 {
-    PEPROCESS     Process;
-    PETHREAD      Thread;
-    ULONG         NumProcs;
-    ULONG         i;
-    ULONG         MaxPasses;
-    NTSTATUS      Status;
-    LARGE_INTEGER Timeout = {(ULONG)(-10 * 1000 * 1000 * 100), -1};
-    LOGICAL       Retval;
+    PEPROCESS Process;
+    PETHREAD Thread;
+    ULONG NumProcs;
+    ULONG i;
+    ULONG MaxPasses;
+    NTSTATUS Status;
+    LARGE_INTEGER Timeout = { (ULONG)(-10 * 1000 * 1000 * 100), -1 };
+    LOGICAL Retval;
 
 #define WAIT_BATCH THREAD_WAIT_OBJECTS
-    PKPROCESS     WaitProcs[WAIT_BATCH];
-    BOOLEAN       First;
+    PKPROCESS WaitProcs[WAIT_BATCH];
+    BOOLEAN First;
 
     PAGED_CODE();
 
@@ -1978,14 +1953,13 @@ Return Value:
 
     Thread = PsGetCurrentThread();
 
-    if (InterlockedCompareExchangePointer(&PspShutdownThread,
-                                          Thread,
-                                          0) != 0) {
+    if (InterlockedCompareExchangePointer(&PspShutdownThread, Thread, 0) != 0)
+    {
         // Some other thread is already in shutdown -- bail
         return FALSE;
     }
 
-    PsEnumProcesses (PspFreezeProcessWorker, NULL);
+    PsEnumProcesses(PspFreezeProcessWorker, NULL);
 
 
     //
@@ -1999,22 +1973,20 @@ Return Value:
 
     MaxPasses = 0;
     First = TRUE;
-    do {
+    do
+    {
         NumProcs = 0;
 
         Status = STATUS_SUCCESS;
-        for (Process = PsGetNextProcess (NULL);
-             Process != NULL;
-             Process = PsGetNextProcess (Process)) {
+        for (Process = PsGetNextProcess(NULL); Process != NULL; Process = PsGetNextProcess(Process))
+        {
 
-            if (Process != PsInitialSystemProcess &&
-                Process != PsIdleProcess &&
-                Process != ExpDefaultErrorPortProcess) {
+            if (Process != PsInitialSystemProcess && Process != PsIdleProcess && Process != ExpDefaultErrorPortProcess)
+            {
 
-                ASSERT (MmGetSessionId (Process) == 0);
+                ASSERT(MmGetSessionId(Process) == 0);
 
-                Status = PsTerminateProcess (Process,
-                                             STATUS_SYSTEM_SHUTDOWN);
+                Status = PsTerminateProcess(Process, STATUS_SYSTEM_SHUTDOWN);
 
                 //
                 // If there is space save the referenced process away so
@@ -2022,11 +1994,11 @@ Return Value:
                 // threads as they will only exit when the last handle goes.
                 //
 
-                if ((Process->Flags&PS_PROCESS_FLAGS_PROCESS_EXITING) == 0 &&
-                    Status != STATUS_NOTHING_TO_TERMINATE &&
-                    NumProcs < WAIT_BATCH) {
+                if ((Process->Flags & PS_PROCESS_FLAGS_PROCESS_EXITING) == 0 && Status != STATUS_NOTHING_TO_TERMINATE &&
+                    NumProcs < WAIT_BATCH)
+                {
 
-                    ObReferenceObject (Process);
+                    ObReferenceObject(Process);
                     WaitProcs[NumProcs++] = &Process->Pcb;
                 }
             }
@@ -2037,23 +2009,17 @@ Return Value:
         // Wait for one of a small set of the processes to exit.
         //
 
-        if (NumProcs != 0) {
-            Status = KeWaitForMultipleObjects (NumProcs,
-                                               WaitProcs,
-                                               WaitAny,
-                                               Executive,
-                                               KernelMode,
-                                               FALSE,
-                                               &Timeout,
-                                               NULL);
+        if (NumProcs != 0)
+        {
+            Status =
+                KeWaitForMultipleObjects(NumProcs, WaitProcs, WaitAny, Executive, KernelMode, FALSE, &Timeout, NULL);
 
-           for (i = 0; i < NumProcs; i++) {
-               Process = CONTAINING_RECORD(WaitProcs[i],
-                                           EPROCESS,
-                                           Pcb);
+            for (i = 0; i < NumProcs; i++)
+            {
+                Process = CONTAINING_RECORD(WaitProcs[i], EPROCESS, Pcb);
 
-               ObDereferenceObject (Process);
-           }
+                ObDereferenceObject(Process);
+            }
         }
 
         //
@@ -2061,22 +2027,28 @@ Return Value:
         // ASSERT on checked builds so the faulty component causing this
         // can be debugged and fixed.
         //
-        if (NumProcs > 0 && Status == STATUS_TIMEOUT) {
+        if (NumProcs > 0 && Status == STATUS_TIMEOUT)
+        {
             MaxPasses += 1;
-            if (MaxPasses > 10) {
-                ASSERT (FALSE);
-                if (!PsContinueWaiting) {
+            if (MaxPasses > 10)
+            {
+                ASSERT(FALSE);
+                if (!PsContinueWaiting)
+                {
                     Retval = FALSE;
                     break;
                 }
             }
-        } else {
+        }
+        else
+        {
             MaxPasses = 0;
         }
 
     } while (NumProcs > 0);
 
-    if (PoCleanShutdownEnabled()  && ExpDefaultErrorPortProcess) {
+    if (PoCleanShutdownEnabled() && ExpDefaultErrorPortProcess)
+    {
         // Explicitly kill csrss -- we don't want to do this in the loop,
         // because we don't want to wait on it, because it has system
         // threads which will exit later.  But we can terminate the user
@@ -2084,8 +2056,7 @@ Return Value:
         // them earlier, because DestroyWindowStation()/TerminateConsole()
         // depends on them being around).
 
-        PsTerminateProcess(ExpDefaultErrorPortProcess,
-                           STATUS_SYSTEM_SHUTDOWN);
+        PsTerminateProcess(ExpDefaultErrorPortProcess, STATUS_SYSTEM_SHUTDOWN);
 
         // Now, make sure that csrss's usermode threads have gotten a
         // chance to terminate.
@@ -2101,22 +2072,21 @@ Return Value:
     PspInitialSystemProcessHandle = NULL;
 
     // Disconnect the system process's LSA security port
-    if (PsInitialSystemProcess->SecurityPort) {
-        if (PsInitialSystemProcess->SecurityPort != ((PVOID) 1 ))
+    if (PsInitialSystemProcess->SecurityPort)
+    {
+        if (PsInitialSystemProcess->SecurityPort != ((PVOID)1))
         {
             ObDereferenceObject(PsInitialSystemProcess->SecurityPort);
 
-            PsInitialSystemProcess->SecurityPort = (PVOID) 1 ;
+            PsInitialSystemProcess->SecurityPort = (PVOID)1;
         }
-
     }
 
     return Retval;
 }
 
 BOOLEAN
-PsWaitForAllProcesses (
-    VOID)
+PsWaitForAllProcesses(VOID)
 /*++
 
 Routine Description:
@@ -2134,52 +2104,54 @@ Return Value:
 --*/
 {
     NTSTATUS Status;
-    LARGE_INTEGER Timeout = {(ULONG)-(100 * 1000), -1};
+    LARGE_INTEGER Timeout = { (ULONG) - (100 * 1000), -1 };
     ULONG MaxPasses;
     BOOLEAN Wait;
     PEPROCESS Process;
-    PEPROCESS WaitProcess=NULL;
+    PEPROCESS WaitProcess = NULL;
 
     MaxPasses = 0;
-    while (1) {
+    while (1)
+    {
         Wait = FALSE;
-        for (Process = PsGetNextProcess (NULL);
-             Process != NULL;
-             Process = PsGetNextProcess (Process)) {
+        for (Process = PsGetNextProcess(NULL); Process != NULL; Process = PsGetNextProcess(Process))
+        {
 
-            if (Process != PsInitialSystemProcess &&
-                Process != PsIdleProcess &&
-                (Process->Flags&PS_PROCESS_FLAGS_PROCESS_EXITING) != 0) {
-                if (Process->ObjectTable != NULL) {
+            if (Process != PsInitialSystemProcess && Process != PsIdleProcess &&
+                (Process->Flags & PS_PROCESS_FLAGS_PROCESS_EXITING) != 0)
+            {
+                if (Process->ObjectTable != NULL)
+                {
                     Wait = TRUE;
                     WaitProcess = Process;
-                    ObReferenceObject (WaitProcess);
-                    PsQuitNextProcess (WaitProcess);
+                    ObReferenceObject(WaitProcess);
+                    PsQuitNextProcess(WaitProcess);
                     break;
                 }
             }
         }
 
-        if (Wait) {
-            Status = KeWaitForSingleObject (WaitProcess,
-                                            Executive,
-                                            KernelMode,
-                                            FALSE,
-                                            &Timeout);
+        if (Wait)
+        {
+            Status = KeWaitForSingleObject(WaitProcess, Executive, KernelMode, FALSE, &Timeout);
 
-            ObDereferenceObject (WaitProcess);
+            ObDereferenceObject(WaitProcess);
 
-            if (Status == STATUS_TIMEOUT) {
+            if (Status == STATUS_TIMEOUT)
+            {
                 MaxPasses += 1;
                 Timeout.QuadPart *= 2;
-                if (MaxPasses > 13) {
-                    KdPrint (("PS: %d process left in the system after termination\n",
-                             PsProcessType->TotalNumberOfObjects));
-//                    ASSERT (PsProcessType->TotalNumberOfObjects == 0);
+                if (MaxPasses > 13)
+                {
+                    KdPrint(
+                        ("PS: %d process left in the system after termination\n", PsProcessType->TotalNumberOfObjects));
+                    //                    ASSERT (PsProcessType->TotalNumberOfObjects == 0);
                     return FALSE;
                 }
             }
-        } else {
+        }
+        else
+        {
             return TRUE;
         }
     }

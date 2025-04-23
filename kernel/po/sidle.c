@@ -22,9 +22,7 @@ Revision History:
 #include "pop.h"
 
 ULONG
-PopSqrt(
-    IN ULONG    value
-    );
+PopSqrt(IN ULONG value);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, PopInitSIdle)
@@ -34,10 +32,7 @@ PopSqrt(
 #endif
 
 
-VOID
-PopInitSIdle (
-    VOID
-    )
+VOID PopInitSIdle(VOID)
 /*++
 
 Routine Description:
@@ -54,12 +49,12 @@ Return Value:
 
 --*/
 {
-    ULONG                   SystemIdleLimit;
-    ULONG                   IdleSensitivity;
-    ULONG                   i;
-    POWER_ACTION            IdleAction;
-    LARGE_INTEGER           li;
-    POP_SYSTEM_IDLE         Idle;
+    ULONG SystemIdleLimit;
+    ULONG IdleSensitivity;
+    ULONG i;
+    POWER_ACTION IdleAction;
+    LARGE_INTEGER li;
+    POP_SYSTEM_IDLE Idle;
 
 
     ASSERT_POLICY_LOCK_OWNED();
@@ -70,7 +65,7 @@ Return Value:
 
     Idle.Action.Action = PowerActionNone;
     Idle.MinState = PowerSystemSleeping1;
-    Idle.Timeout = (ULONG) -1;
+    Idle.Timeout = (ULONG)-1;
     Idle.Sensitivity = 100;
 
     //
@@ -78,23 +73,24 @@ Return Value:
     // re-entering a sleep state in the case of a quite wake
     //
 
-    if (AnyBitsSet (PopFullWake, PO_FULL_WAKE_STATUS | PO_FULL_WAKE_PENDING)) {
+    if (AnyBitsSet(PopFullWake, PO_FULL_WAKE_STATUS | PO_FULL_WAKE_PENDING))
+    {
 
         //
         // Set system idle detection for the current policy
         //
 
-        if (PopPolicy->Idle.Action != PowerActionNone &&
-            PopPolicy->IdleTimeout  &&
-            PopPolicy->IdleSensitivity) {
+        if (PopPolicy->Idle.Action != PowerActionNone && PopPolicy->IdleTimeout && PopPolicy->IdleSensitivity)
+        {
 
             Idle.Action = PopPolicy->Idle;
             Idle.Timeout = (PopPolicy->IdleTimeout + SYS_IDLE_WORKER - 1) / SYS_IDLE_WORKER;
             Idle.MinState = PopPolicy->MinSleep;
             Idle.Sensitivity = 66 + PopPolicy->IdleSensitivity / 3;
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // System is not fully awake, set the system idle detection
@@ -104,17 +100,20 @@ Return Value:
 
         Idle.Action.Action = PopAction.Action;
         Idle.MinState = PopAction.LightestState;
-        if (Idle.MinState == PowerSystemHibernate) {
+        if (Idle.MinState == PowerSystemHibernate)
+        {
             //
             // The timeout is a little longer for hibernate since it takes
             // so much longer to enter & exit this state.
             //
             Idle.Timeout = SYS_IDLE_REENTER_TIMEOUT_S4 / SYS_IDLE_WORKER;
-        } else {
+        }
+        else
+        {
             Idle.Timeout = SYS_IDLE_REENTER_TIMEOUT / SYS_IDLE_WORKER;
         }
         //
-        // Set Idle.Action.Flags to POWER_ACTION_QUERY_ALLOWED to insure 
+        // Set Idle.Action.Flags to POWER_ACTION_QUERY_ALLOWED to insure
         // that all normal power messages are broadcast when we re enter a low power state
         //
         Idle.Action.Flags = POWER_ACTION_QUERY_ALLOWED;
@@ -126,12 +125,11 @@ Return Value:
     // See if idle detection has changed
     //
 
-    if (RtlCompareMemory (&PopSIdle.Action, &Idle.Action, sizeof(POWER_ACTION_POLICY)) !=
-        sizeof(POWER_ACTION_POLICY) ||
-        PopSIdle.Timeout != Idle.Timeout ||
-        PopSIdle.Sensitivity != Idle.Sensitivity) {
+    if (RtlCompareMemory(&PopSIdle.Action, &Idle.Action, sizeof(POWER_ACTION_POLICY)) != sizeof(POWER_ACTION_POLICY) ||
+        PopSIdle.Timeout != Idle.Timeout || PopSIdle.Sensitivity != Idle.Sensitivity)
+    {
 
-        PoPrint (PO_SIDLE, ("PoSIdle: new idle params set\n"));
+        PoPrint(PO_SIDLE, ("PoSIdle: new idle params set\n"));
 
         //
         // Clear current detection
@@ -154,18 +152,17 @@ Return Value:
         // If new action, enable system idle worker
         //
 
-        if (PopSIdle.Action.Action) {
+        if (PopSIdle.Action.Action)
+        {
             li.QuadPart = -1 * SYS_IDLE_WORKER * US2SEC * US2TIME;
-            KeSetTimerEx(&PoSystemIdleTimer, li, SYS_IDLE_WORKER*1000, NULL);
+            KeSetTimerEx(&PoSystemIdleTimer, li, SYS_IDLE_WORKER * 1000, NULL);
         }
     }
 }
 
 
 ULONG
-PopPolicySystemIdle (
-    VOID
-    )
+PopPolicySystemIdle(VOID)
 /*++
 
 Routine Description:
@@ -182,23 +179,24 @@ Return Value:
 
 --*/
 {
-    BOOLEAN                 SystemIdle;
-    POP_ACTION_TRIGGER      Trigger;
+    BOOLEAN SystemIdle;
+    POP_ACTION_TRIGGER Trigger;
 
     //
     // Take out the policy lock and check to see if the system is
     // idle
     //
 
-    PopAcquirePolicyLock ();
+    PopAcquirePolicyLock();
     SystemIdle = PoSystemIdleWorker(FALSE);
 
     //
     // If heuristics are dirty, save a new copy
     //
 
-    if (PopHeuristics.Dirty) {
-        PopSaveHeuristics ();
+    if (PopHeuristics.Dirty)
+    {
+        PopSaveHeuristics();
     }
 
     //
@@ -211,7 +209,8 @@ Return Value:
     // If system idle, trigger system idle action
     //
 
-    if (SystemIdle) {
+    if (SystemIdle)
+    {
 
         //
         // On success or failure, reset the trigger
@@ -224,29 +223,18 @@ Return Value:
         // Invoke system state change
         //
 
-        RtlZeroMemory (&Trigger, sizeof(Trigger));
-        Trigger.Type  = PolicySystemIdle;
+        RtlZeroMemory(&Trigger, sizeof(Trigger));
+        Trigger.Type = PolicySystemIdle;
         Trigger.Flags = PO_TRG_SET;
-        PopSetPowerAction (
-           &Trigger,
-           0,
-           &PopSIdle.Action,
-           PopSIdle.MinState,
-           SubstituteLightestOverallDownwardBounded
-           );
+        PopSetPowerAction(&Trigger, 0, &PopSIdle.Action, PopSIdle.MinState, SubstituteLightestOverallDownwardBounded);
     }
-    PopReleasePolicyLock (FALSE);
+    PopReleasePolicyLock(FALSE);
     return 0;
 }
 
 
-VOID
-PopCaptureCounts (
-    OUT PULONGLONG LastTick,
-    OUT PLARGE_INTEGER CurrentTick,
-    OUT PULONGLONG LastIoTransfer,
-    OUT PULONGLONG CurrentIoTransfer
-    )
+VOID PopCaptureCounts(OUT PULONGLONG LastTick, OUT PLARGE_INTEGER CurrentTick, OUT PULONGLONG LastIoTransfer,
+                      OUT PULONGLONG CurrentIoTransfer)
 {
     KIRQL OldIrql;
 
@@ -255,21 +243,19 @@ PopCaptureCounts (
     // the IO count will be reasonable on track with the tick count.
     //
 
-    KeRaiseIrql (DISPATCH_LEVEL, &OldIrql);
+    KeRaiseIrql(DISPATCH_LEVEL, &OldIrql);
 
     *LastTick = PopSIdle.LastTick;
     *LastIoTransfer = PopSIdle.LastIoTransfer;
 
-    KeQueryTickCount (CurrentTick);
+    KeQueryTickCount(CurrentTick);
     *CurrentIoTransfer = IoReadTransferCount.QuadPart + IoWriteTransferCount.QuadPart + IoOtherTransferCount.QuadPart;
 
-    KeLowerIrql (OldIrql);
+    KeLowerIrql(OldIrql);
 }
 
 BOOLEAN
-PoSystemIdleWorker (
-    IN BOOLEAN IdleWorker
-    )
+PoSystemIdleWorker(IN BOOLEAN IdleWorker)
 /*++
 
 Routine Description:
@@ -290,34 +276,35 @@ Return Value:
 
 --*/
 {
-    LARGE_INTEGER               CurrentTick;
-    ULONGLONG                   LastTick;
-    LONG                        TickDiff;
-    ULONG                       Processor;
-    KAFFINITY                   Mask;
-    ULONG                       NewTime;
-    LONG                        ProcIdleness, ProcBusy;
-    LONG                        percent;
-    BOOLEAN                     GoodSample;
-    BOOLEAN                     SystemIdle;
-    BOOLEAN                     GetWorker;
-    KAFFINITY                   Summary;
-    PPROCESSOR_POWER_STATE      PState;
-    ULONG                       i;
-    LONG                        j;
-    ULONGLONG                   CurrentIoTransfer, LastIoTransfer;
-    LONGLONG                    IoTransferDiff;
-    LONGLONG                    li;
-    PKPRCB                      Prcb;
+    LARGE_INTEGER CurrentTick;
+    ULONGLONG LastTick;
+    LONG TickDiff;
+    ULONG Processor;
+    KAFFINITY Mask;
+    ULONG NewTime;
+    LONG ProcIdleness, ProcBusy;
+    LONG percent;
+    BOOLEAN GoodSample;
+    BOOLEAN SystemIdle;
+    BOOLEAN GetWorker;
+    KAFFINITY Summary;
+    PPROCESSOR_POWER_STATE PState;
+    ULONG i;
+    LONG j;
+    ULONGLONG CurrentIoTransfer, LastIoTransfer;
+    LONGLONG IoTransferDiff;
+    LONGLONG li;
+    PKPRCB Prcb;
 
 
-    if (IdleWorker) {
+    if (IdleWorker)
+    {
 
         //
         // Clear idle worker timer's signalled state
         //
 
-        KeClearTimer (&PoSystemIdleTimer);
+        KeClearTimer(&PoSystemIdleTimer);
     }
 
     //
@@ -325,22 +312,23 @@ Return Value:
     // then don't bother with any checks
     //
 
-    if (PopAttributes[POP_SYSTEM_ATTRIBUTE].Count ||
-        PopAttributes[POP_USER_ATTRIBUTE].Count) {
-            return FALSE;
+    if (PopAttributes[POP_SYSTEM_ATTRIBUTE].Count || PopAttributes[POP_USER_ATTRIBUTE].Count)
+    {
+        return FALSE;
     }
 
     //
     // If this is the wrong worker, don't bother
     //
 
-    if (IdleWorker != PopSIdle.IdleWorker) {
+    if (IdleWorker != PopSIdle.IdleWorker)
+    {
         return FALSE;
     }
 
     GoodSample = FALSE;
     SystemIdle = FALSE;
-    GetWorker  = FALSE;
+    GetWorker = FALSE;
     NewTime = PopSIdle.Time;
 
     PopCaptureCounts(&LastTick, &CurrentTick, &LastIoTransfer, &CurrentIoTransfer);
@@ -349,7 +337,8 @@ Return Value:
     // If this is an initial sample, initialize starting sample
     //
 
-    if (!PopSIdle.Sampling) {
+    if (!PopSIdle.Sampling)
+    {
         GoodSample = TRUE;
         goto Done;
     }
@@ -358,15 +347,16 @@ Return Value:
     // Compute the number of ticks since the last check
     //
 
-    TickDiff = (ULONG) (CurrentTick.QuadPart - LastTick);
+    TickDiff = (ULONG)(CurrentTick.QuadPart - LastTick);
     IoTransferDiff = CurrentIoTransfer - LastIoTransfer;
 
     //
     // if it's a poor sample, skip it
     //
 
-    if ((TickDiff <= 0) || (IoTransferDiff < 0)) {
-        PoPrint (PO_SIDLE, ("PoSIdle: poor sample\n"));
+    if ((TickDiff <= 0) || (IoTransferDiff < 0))
+    {
+        PoPrint(PO_SIDLE, ("PoSIdle: poor sample\n"));
         PopSIdle.Sampling = FALSE;
         goto Done;
     }
@@ -380,23 +370,26 @@ Return Value:
     ProcIdleness = 100;
     Summary = KeActiveProcessors;
     Processor = 0;
-    while (Summary) {
-        if (Summary & 1) {
+    while (Summary)
+    {
+        if (Summary & 1)
+        {
             Prcb = KiProcessorBlock[Processor];
             PState = &Prcb->PowerState;
 
             percent = (Prcb->IdleThread->KernelTime - PState->LastSysTime) * 100 / TickDiff;
-            if (percent < ProcIdleness) {
+            if (percent < ProcIdleness)
+            {
                 ProcIdleness = percent;
             }
-
         }
 
         Summary = Summary >> 1;
         Processor = Processor + 1;
     }
 
-    if (ProcIdleness > 100) {
+    if (ProcIdleness > 100)
+    {
         ProcIdleness = 100;
     }
     ProcBusy = 100 - ProcIdleness;
@@ -413,28 +406,31 @@ Return Value:
     // of being busy
     //
 
-    if (ProcIdleness <= 90  &&  ProcIdleness >= 50) {
+    if (ProcIdleness <= 90 && ProcIdleness >= 50)
+    {
 
-        i = (ULONG) IoTransferDiff / ProcBusy;
+        i = (ULONG)IoTransferDiff / ProcBusy;
 
         //
         // Make running average of the result
         //
 
-        if (PopHeuristics.IoTransferSamples < SYS_IDLE_SAMPLES) {
+        if (PopHeuristics.IoTransferSamples < SYS_IDLE_SAMPLES)
+        {
 
-            if (PopHeuristics.IoTransferSamples == 0) {
+            if (PopHeuristics.IoTransferSamples == 0)
+            {
 
                 PopHeuristics.IoTransferTotal = i;
             }
             PopHeuristics.IoTransferTotal += i;
             PopHeuristics.IoTransferSamples += 1;
+        }
+        else
+        {
 
-        } else {
-
-            PopHeuristics.IoTransferTotal = PopHeuristics.IoTransferTotal + i -
-                (PopHeuristics.IoTransferTotal / PopHeuristics.IoTransferSamples);
-
+            PopHeuristics.IoTransferTotal =
+                PopHeuristics.IoTransferTotal + i - (PopHeuristics.IoTransferTotal / PopHeuristics.IoTransferSamples);
         }
 
         //
@@ -445,12 +441,14 @@ Return Value:
 
         i = PopHeuristics.IoTransferTotal / PopHeuristics.IoTransferSamples;
         j = PopHeuristics.IoTransferWeight - i;
-        if (j < 0) {
+        if (j < 0)
+        {
             j = -j;
         }
 
-        if (i > 0  &&  j > 2  &&  j > (LONG) PopHeuristics.IoTransferWeight/10) {
-            PoPrint (PO_SIDLE, ("PoSIdle: updated weighting = %d\n", i));
+        if (i > 0 && j > 2 && j > (LONG)PopHeuristics.IoTransferWeight / 10)
+        {
+            PoPrint(PO_SIDLE, ("PoSIdle: updated weighting = %d\n", i));
             PopHeuristics.IoTransferWeight = i;
             PopHeuristics.Dirty = TRUE;
             GetWorker = TRUE;
@@ -463,9 +461,10 @@ Return Value:
     // Reduce system idleness by the weighted transfers occuring
     //
 
-    i = (ULONG) ((ULONGLONG) IoTransferDiff / PopHeuristics.IoTransferWeight);
-    j = i - ProcBusy/2;
-    if (j > 0) {
+    i = (ULONG)((ULONGLONG)IoTransferDiff / PopHeuristics.IoTransferWeight);
+    j = i - ProcBusy / 2;
+    if (j > 0)
+    {
         PopSIdle.Idleness = ProcIdleness - PopSqrt(j * i);
     }
 
@@ -473,15 +472,18 @@ Return Value:
     // Count how long the system has been more idle then the sensitivity setting
     //
 
-    if (PopSIdle.Idleness >= (LONG) PopSIdle.Sensitivity) {
+    if (PopSIdle.Idleness >= (LONG)PopSIdle.Sensitivity)
+    {
 
         NewTime = PopSIdle.Time + 1;
-        if (NewTime >= PopSIdle.Timeout) {
+        if (NewTime >= PopSIdle.Timeout)
+        {
             SystemIdle = TRUE;
             GetWorker = TRUE;
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // System is not idle enough, reset the timeout
@@ -492,14 +494,8 @@ Return Value:
     }
 
 
-    PoPrint (PO_SIDLE, ("PoSIdle: Proc %d, IoTran/Tick %d, IoAdjusted %d, Sens %d, count %d %d\n",
-                ProcIdleness,
-                (ULONG)IoTransferDiff,
-                PopSIdle.Idleness,
-                PopSIdle.Sensitivity,
-                NewTime,
-                PopSIdle.Timeout
-                ));
+    PoPrint(PO_SIDLE, ("PoSIdle: Proc %d, IoTran/Tick %d, IoAdjusted %d, Sens %d, count %d %d\n", ProcIdleness,
+                       (ULONG)IoTransferDiff, PopSIdle.Idleness, PopSIdle.Sensitivity, NewTime, PopSIdle.Timeout));
 
 
 Done:
@@ -509,21 +505,25 @@ Done:
     // another sample shortly
     //
 
-    if (GetWorker) {
+    if (GetWorker)
+    {
         PopSIdle.IdleWorker = FALSE;
-        PopGetPolicyWorker (PO_WORKER_SYS_IDLE);
+        PopGetPolicyWorker(PO_WORKER_SYS_IDLE);
 
-        if (IdleWorker) {
-            PopCheckForWork (TRUE);
+        if (IdleWorker)
+        {
+            PopCheckForWork(TRUE);
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // If this was a good sample, update
         //
 
-        if (GoodSample) {
+        if (GoodSample)
+        {
             PopSIdle.Time = NewTime;
             PopSIdle.LastTick = CurrentTick.QuadPart;
             PopSIdle.LastIoTransfer = CurrentIoTransfer;
@@ -532,14 +532,17 @@ Done:
             Summary = KeActiveProcessors;
             Processor = 0;
             Mask = 1;
-            for (; ;) {
-                if (Summary & Mask) {
+            for (;;)
+            {
+                if (Summary & Mask)
+                {
                     Prcb = KiProcessorBlock[Processor];
                     PState = &Prcb->PowerState;
 
                     PState->LastSysTime = Prcb->IdleThread->KernelTime;
                     Summary &= ~Mask;
-                    if (!Summary) {
+                    if (!Summary)
+                    {
                         break;
                     }
                 }
@@ -555,9 +558,7 @@ Done:
 
 
 ULONG
-PopSqrt(
-    IN ULONG    value
-    )
+PopSqrt(IN ULONG value)
 /*++
 
 Routine Description:
@@ -574,17 +575,22 @@ Return Value:
 
 --*/
 {
-    ULONG       h, l, i;
+    ULONG h, l, i;
 
     h = 100;
     l = 0;
 
-    for (; ;) {
-        i = l + (h-l) / 2;
-        if (i*i > value) {
+    for (;;)
+    {
+        i = l + (h - l) / 2;
+        if (i * i > value)
+        {
             h = i;
-        } else {
-            if (l == i) {
+        }
+        else
+        {
+            if (l == i)
+            {
                 break;
             }
             l = i;

@@ -27,8 +27,7 @@ Revision History:
 //
 
 PVOID
-ExpGetGlobalAtomTable (
-    );
+ExpGetGlobalAtomTable();
 
 #if defined(ALLOC_PRAGMA)
 #pragma alloc_text(PAGE, NtAddAtom)
@@ -38,17 +37,13 @@ ExpGetGlobalAtomTable (
 #pragma alloc_text(PAGE, ExpGetGlobalAtomTable)
 #endif
 
-#define COPY_STACK_SIZE         128
+#define COPY_STACK_SIZE 128
 
-
+
 NTSYSAPI
 NTSTATUS
 NTAPI
-NtAddAtom (
-    IN PWSTR AtomName,
-    IN ULONG Length,
-    OUT PRTL_ATOM Atom OPTIONAL
-    )
+NtAddAtom(IN PWSTR AtomName, IN ULONG Length, OUT PRTL_ATOM Atom OPTIONAL)
 
 /*++
 
@@ -71,12 +66,14 @@ Return Value:
 
     PAGED_CODE();
 
-    if (AtomTable == NULL) {
+    if (AtomTable == NULL)
+    {
 
         return STATUS_ACCESS_DENIED;
     }
 
-    if (Length > (RTL_ATOM_MAXIMUM_NAME_LENGTH * sizeof(WCHAR))) {
+    if (Length > (RTL_ATOM_MAXIMUM_NAME_LENGTH * sizeof(WCHAR)))
+    {
 
         return STATUS_INVALID_PARAMETER;
     }
@@ -86,89 +83,107 @@ Return Value:
 
     Status = STATUS_SUCCESS;
 
-    if (PreviousMode != KernelMode) {
+    if (PreviousMode != KernelMode)
+    {
 
-        if (ARGUMENT_PRESENT (Atom)) {
-            try {
-                ProbeForWriteUshort( Atom );
-            } except (EXCEPTION_EXECUTE_HANDLER) {
+        if (ARGUMENT_PRESENT(Atom))
+        {
+            try
+            {
+                ProbeForWriteUshort(Atom);
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
                 return GetExceptionCode();
             }
         }
 
-        if (ARGUMENT_PRESENT (AtomName)) {
+        if (ARGUMENT_PRESENT(AtomName))
+        {
 
-            AllocLength = (Length + sizeof( UNICODE_NULL ))&~(sizeof (WCHAR)-1);
+            AllocLength = (Length + sizeof(UNICODE_NULL)) & ~(sizeof(WCHAR) - 1);
 
-            try {
-                ProbeForRead( AtomName, Length, sizeof( WCHAR ) );
-            } except (EXCEPTION_EXECUTE_HANDLER) {
+            try
+            {
+                ProbeForRead(AtomName, Length, sizeof(WCHAR));
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
                 return GetExceptionCode();
             }
 
-            if (AllocLength <= COPY_STACK_SIZE) {
-                CapturedAtomNameBuffer = (PWSTR) StackArray;
+            if (AllocLength <= COPY_STACK_SIZE)
+            {
+                CapturedAtomNameBuffer = (PWSTR)StackArray;
             }
-            else {
-                CapturedAtomNameBuffer = ExAllocatePoolWithTag (PagedPool, AllocLength, 'motA');
+            else
+            {
+                CapturedAtomNameBuffer = ExAllocatePoolWithTag(PagedPool, AllocLength, 'motA');
 
-                if (CapturedAtomNameBuffer == NULL) {
+                if (CapturedAtomNameBuffer == NULL)
+                {
                     return STATUS_INSUFFICIENT_RESOURCES;
                 }
             }
 
-            try {
-                RtlCopyMemory( CapturedAtomNameBuffer, AtomName, Length );
-            } except (EXCEPTION_EXECUTE_HANDLER) {
-                if (CapturedAtomNameBuffer != (PWSTR) StackArray) {
-                    ExFreePool (CapturedAtomNameBuffer);
+            try
+            {
+                RtlCopyMemory(CapturedAtomNameBuffer, AtomName, Length);
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
+                if (CapturedAtomNameBuffer != (PWSTR)StackArray)
+                {
+                    ExFreePool(CapturedAtomNameBuffer);
                 }
                 return GetExceptionCode();
             }
 
-            CapturedAtomNameBuffer[Length / sizeof (WCHAR)] = '\0';
+            CapturedAtomNameBuffer[Length / sizeof(WCHAR)] = '\0';
         }
     }
 
-    if (NT_SUCCESS (Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
-        Status = RtlAddAtomToAtomTable (AtomTable, CapturedAtomNameBuffer, &ReturnAtom);
+        Status = RtlAddAtomToAtomTable(AtomTable, CapturedAtomNameBuffer, &ReturnAtom);
 
-        if ((ARGUMENT_PRESENT (Atom)) && (NT_SUCCESS (Status))) {
+        if ((ARGUMENT_PRESENT(Atom)) && (NT_SUCCESS(Status)))
+        {
 
-            if (PreviousMode != KernelMode) {
-                try {
+            if (PreviousMode != KernelMode)
+            {
+                try
+                {
 
                     *Atom = ReturnAtom;
-
-                } except (EXCEPTION_EXECUTE_HANDLER) {
+                }
+                except(EXCEPTION_EXECUTE_HANDLER)
+                {
 
                     Status = GetExceptionCode();
                 }
             }
-            else {
+            else
+            {
                 *Atom = ReturnAtom;
             }
         }
     }
 
-    if ((CapturedAtomNameBuffer != AtomName) &&
-        (CapturedAtomNameBuffer != (PWSTR) StackArray)) {
-        ExFreePool (CapturedAtomNameBuffer);
+    if ((CapturedAtomNameBuffer != AtomName) && (CapturedAtomNameBuffer != (PWSTR)StackArray))
+    {
+        ExFreePool(CapturedAtomNameBuffer);
     }
 
     return Status;
 }
 
-
+
 NTSYSAPI
 NTSTATUS
 NTAPI
-NtFindAtom (
-    IN PWSTR AtomName,
-    IN ULONG Length,
-    OUT PRTL_ATOM Atom OPTIONAL
-    )
+NtFindAtom(IN PWSTR AtomName, IN ULONG Length, OUT PRTL_ATOM Atom OPTIONAL)
 
 /*++
 
@@ -191,12 +206,14 @@ Return Value:
 
     PAGED_CODE();
 
-    if (AtomTable == NULL) {
+    if (AtomTable == NULL)
+    {
 
         return STATUS_ACCESS_DENIED;
     }
 
-    if (Length > (RTL_ATOM_MAXIMUM_NAME_LENGTH * sizeof(WCHAR))) {
+    if (Length > (RTL_ATOM_MAXIMUM_NAME_LENGTH * sizeof(WCHAR)))
+    {
 
         return STATUS_INVALID_PARAMETER;
     }
@@ -206,82 +223,100 @@ Return Value:
 
     Status = STATUS_SUCCESS;
 
-    if (PreviousMode != KernelMode) {
+    if (PreviousMode != KernelMode)
+    {
 
-        if (ARGUMENT_PRESENT (Atom)) {
-            try {
-                ProbeForWriteUshort (Atom);
-            } except (EXCEPTION_EXECUTE_HANDLER) {
+        if (ARGUMENT_PRESENT(Atom))
+        {
+            try
+            {
+                ProbeForWriteUshort(Atom);
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
                 return GetExceptionCode();
             }
         }
 
-        if (ARGUMENT_PRESENT (AtomName)) {
+        if (ARGUMENT_PRESENT(AtomName))
+        {
 
-            AllocLength = (Length + sizeof( UNICODE_NULL ))&~(sizeof (WCHAR)-1);
+            AllocLength = (Length + sizeof(UNICODE_NULL)) & ~(sizeof(WCHAR) - 1);
 
-            try {
-                ProbeForRead (AtomName, Length, sizeof (WCHAR));
-            } except (EXCEPTION_EXECUTE_HANDLER) {
+            try
+            {
+                ProbeForRead(AtomName, Length, sizeof(WCHAR));
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
                 return GetExceptionCode();
             }
 
-            if (AllocLength <= COPY_STACK_SIZE) {
-                CapturedAtomNameBuffer = (PWSTR) StackArray;
+            if (AllocLength <= COPY_STACK_SIZE)
+            {
+                CapturedAtomNameBuffer = (PWSTR)StackArray;
             }
-            else {
-                CapturedAtomNameBuffer = ExAllocatePoolWithTag (PagedPool, AllocLength, 'motA');
+            else
+            {
+                CapturedAtomNameBuffer = ExAllocatePoolWithTag(PagedPool, AllocLength, 'motA');
 
-                if (CapturedAtomNameBuffer == NULL) {
+                if (CapturedAtomNameBuffer == NULL)
+                {
                     return STATUS_INSUFFICIENT_RESOURCES;
                 }
             }
 
-            try {
-                RtlCopyMemory (CapturedAtomNameBuffer, AtomName, Length);
-            } except (EXCEPTION_EXECUTE_HANDLER) {
-                if (CapturedAtomNameBuffer != (PWSTR) StackArray) {
-                    ExFreePool (CapturedAtomNameBuffer);
+            try
+            {
+                RtlCopyMemory(CapturedAtomNameBuffer, AtomName, Length);
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
+                if (CapturedAtomNameBuffer != (PWSTR)StackArray)
+                {
+                    ExFreePool(CapturedAtomNameBuffer);
                 }
                 return GetExceptionCode();
             }
 
-            CapturedAtomNameBuffer[Length / sizeof (WCHAR)] = '\0';
+            CapturedAtomNameBuffer[Length / sizeof(WCHAR)] = '\0';
         }
     }
 
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
 
-        Status = RtlLookupAtomInAtomTable (AtomTable, CapturedAtomNameBuffer, &ReturnAtom);
+        Status = RtlLookupAtomInAtomTable(AtomTable, CapturedAtomNameBuffer, &ReturnAtom);
 
-        if (NT_SUCCESS(Status) && ARGUMENT_PRESENT(Atom)) {
+        if (NT_SUCCESS(Status) && ARGUMENT_PRESENT(Atom))
+        {
 
-            try {
+            try
+            {
 
                 *Atom = ReturnAtom;
-
-            } except (EXCEPTION_EXECUTE_HANDLER) {
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
 
                 Status = GetExceptionCode();
             }
         }
     }
 
-    if ((CapturedAtomNameBuffer != AtomName) &&
-        (CapturedAtomNameBuffer != (PWSTR) StackArray)) {
-        ExFreePool (CapturedAtomNameBuffer);
+    if ((CapturedAtomNameBuffer != AtomName) && (CapturedAtomNameBuffer != (PWSTR)StackArray))
+    {
+        ExFreePool(CapturedAtomNameBuffer);
     }
 
     return Status;
 }
 
-
+
 NTSYSAPI
 NTSTATUS
 NTAPI
-NtDeleteAtom (
-    IN RTL_ATOM Atom
-    )
+NtDeleteAtom(IN RTL_ATOM Atom)
 
 /*++
 
@@ -299,27 +334,23 @@ Return Value:
 
     PAGED_CODE();
 
-    if (AtomTable == NULL) {
+    if (AtomTable == NULL)
+    {
 
         return STATUS_ACCESS_DENIED;
     }
 
-    Status = RtlDeleteAtomFromAtomTable( AtomTable, Atom );
+    Status = RtlDeleteAtomFromAtomTable(AtomTable, Atom);
 
     return Status;
 }
 
-
+
 NTSYSAPI
 NTSTATUS
 NTAPI
-NtQueryInformationAtom(
-    IN RTL_ATOM Atom,
-    IN ATOM_INFORMATION_CLASS AtomInformationClass,
-    OUT PVOID AtomInformation,
-    IN ULONG AtomInformationLength,
-    OUT PULONG ReturnLength OPTIONAL
-    )
+NtQueryInformationAtom(IN RTL_ATOM Atom, IN ATOM_INFORMATION_CLASS AtomInformationClass, OUT PVOID AtomInformation,
+                       IN ULONG AtomInformationLength, OUT PULONG ReturnLength OPTIONAL)
 
 /*++
 
@@ -344,7 +375,8 @@ Return Value:
 
     PAGED_CODE();
 
-    if (AtomTable == NULL) {
+    if (AtomTable == NULL)
+    {
         return STATUS_ACCESS_DENIED;
     }
 
@@ -354,7 +386,8 @@ Return Value:
 
     Status = STATUS_SUCCESS;
 
-    try {
+    try
+    {
 
         //
         //  Get previous processor mode and probe output argument if necessary.
@@ -362,27 +395,29 @@ Return Value:
 
         PreviousMode = KeGetPreviousMode();
 
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
 
-            ProbeForWrite( AtomInformation,
-                           AtomInformationLength,
-                           sizeof( ULONG ));
+            ProbeForWrite(AtomInformation, AtomInformationLength, sizeof(ULONG));
 
-            if (ARGUMENT_PRESENT( ReturnLength )) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
 
-                ProbeForWriteUlong( ReturnLength );
+                ProbeForWriteUlong(ReturnLength);
             }
         }
 
         RequiredLength = 0;
 
-        switch (AtomInformationClass) {
+        switch (AtomInformationClass)
+        {
 
         case AtomBasicInformation:
 
-            RequiredLength = FIELD_OFFSET( ATOM_BASIC_INFORMATION, Name );
+            RequiredLength = FIELD_OFFSET(ATOM_BASIC_INFORMATION, Name);
 
-            if (AtomInformationLength < RequiredLength) {
+            if (AtomInformationLength < RequiredLength)
+            {
 
                 return STATUS_INFO_LENGTH_MISMATCH;
             }
@@ -390,44 +425,41 @@ Return Value:
             BasicInfo = (PATOM_BASIC_INFORMATION)AtomInformation;
             UsageCount = 0;
             NameLength = AtomInformationLength - RequiredLength;
-            BasicInfo->Name[ 0 ] = UNICODE_NULL;
+            BasicInfo->Name[0] = UNICODE_NULL;
 
-            Status = RtlQueryAtomInAtomTable( AtomTable,
-                                              Atom,
-                                              &UsageCount,
-                                              &AtomFlags,
-                                              &BasicInfo->Name[0],
-                                              &NameLength );
+            Status =
+                RtlQueryAtomInAtomTable(AtomTable, Atom, &UsageCount, &AtomFlags, &BasicInfo->Name[0], &NameLength);
 
-            if (NT_SUCCESS(Status)) {
+            if (NT_SUCCESS(Status))
+            {
 
                 BasicInfo->UsageCount = (USHORT)UsageCount;
                 BasicInfo->Flags = (USHORT)AtomFlags;
                 BasicInfo->NameLength = (USHORT)NameLength;
-                RequiredLength += NameLength + sizeof( UNICODE_NULL );
+                RequiredLength += NameLength + sizeof(UNICODE_NULL);
             }
 
             break;
 
         case AtomTableInformation:
 
-            RequiredLength = FIELD_OFFSET( ATOM_TABLE_INFORMATION, Atoms );
+            RequiredLength = FIELD_OFFSET(ATOM_TABLE_INFORMATION, Atoms);
 
-            if (AtomInformationLength < RequiredLength) {
+            if (AtomInformationLength < RequiredLength)
+            {
 
                 return STATUS_INFO_LENGTH_MISMATCH;
             }
 
             TableInfo = (PATOM_TABLE_INFORMATION)AtomInformation;
 
-            Status = RtlQueryAtomsInAtomTable( AtomTable,
-                                               (AtomInformationLength - RequiredLength) / sizeof( RTL_ATOM ),
-                                               &TableInfo->NumberOfAtoms,
-                                               &TableInfo->Atoms[0] );
+            Status = RtlQueryAtomsInAtomTable(AtomTable, (AtomInformationLength - RequiredLength) / sizeof(RTL_ATOM),
+                                              &TableInfo->NumberOfAtoms, &TableInfo->Atoms[0]);
 
-            if (NT_SUCCESS(Status)) {
+            if (NT_SUCCESS(Status))
+            {
 
-                RequiredLength += TableInfo->NumberOfAtoms * sizeof( RTL_ATOM );
+                RequiredLength += TableInfo->NumberOfAtoms * sizeof(RTL_ATOM);
             }
 
             break;
@@ -439,12 +471,14 @@ Return Value:
             break;
         }
 
-        if (ARGUMENT_PRESENT( ReturnLength )) {
+        if (ARGUMENT_PRESENT(ReturnLength))
+        {
 
             *ReturnLength = RequiredLength;
         }
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         Status = GetExceptionCode();
     }
@@ -452,7 +486,7 @@ Return Value:
     return Status;
 }
 
-
+
 //
 //  Local support routine
 //
@@ -460,8 +494,7 @@ Return Value:
 PKWIN32_GLOBALATOMTABLE_CALLOUT ExGlobalAtomTableCallout;
 
 PVOID
-ExpGetGlobalAtomTable (
-    )
+ExpGetGlobalAtomTable()
 
 /*++
 
@@ -474,14 +507,14 @@ Return Value:
 --*/
 
 {
-    if (ExGlobalAtomTableCallout != NULL) {
+    if (ExGlobalAtomTableCallout != NULL)
+    {
 
         return ((*ExGlobalAtomTableCallout)());
-
     }
 
 #if DBG
-    DbgPrint( "EX: ExpGetGlobalAtomTable is about to return NULL!\n" );
+    DbgPrint("EX: ExpGetGlobalAtomTable is about to return NULL!\n");
     DbgBreakPoint();
 #endif
     return NULL;

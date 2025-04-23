@@ -45,15 +45,9 @@ POBJECT_TYPE ExSemaphoreObjectType;
 #ifdef ALLOC_DATA_PRAGMA
 #pragma const_seg("INITCONST")
 #endif
-const GENERIC_MAPPING ExpSemaphoreMapping = {
-    STANDARD_RIGHTS_READ |
-        SEMAPHORE_QUERY_STATE,
-    STANDARD_RIGHTS_WRITE |
-        SEMAPHORE_MODIFY_STATE,
-    STANDARD_RIGHTS_EXECUTE |
-        SYNCHRONIZE,
-    SEMAPHORE_ALL_ACCESS
-};
+const GENERIC_MAPPING ExpSemaphoreMapping = { STANDARD_RIGHTS_READ | SEMAPHORE_QUERY_STATE,
+                                              STANDARD_RIGHTS_WRITE | SEMAPHORE_MODIFY_STATE,
+                                              STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE, SEMAPHORE_ALL_ACCESS };
 #ifdef ALLOC_DATA_PRAGMA
 #pragma const_seg()
 #endif
@@ -65,10 +59,9 @@ const GENERIC_MAPPING ExpSemaphoreMapping = {
 #pragma alloc_text(PAGE, NtQuerySemaphore)
 #pragma alloc_text(PAGE, NtReleaseSemaphore)
 #endif
-
+
 BOOLEAN
-ExpSemaphoreInitialization (
-    )
+ExpSemaphoreInitialization()
 
 /*++
 
@@ -112,10 +105,7 @@ Return Value:
     ObjectTypeInitializer.PoolType = NonPagedPool;
     ObjectTypeInitializer.DefaultNonPagedPoolCharge = sizeof(KSEMAPHORE);
     ObjectTypeInitializer.ValidAccessMask = SEMAPHORE_ALL_ACCESS;
-    Status = ObCreateObjectType(&TypeName,
-                                &ObjectTypeInitializer,
-                                (PSECURITY_DESCRIPTOR)NULL,
-                                &ExSemaphoreObjectType);
+    Status = ObCreateObjectType(&TypeName, &ObjectTypeInitializer, (PSECURITY_DESCRIPTOR)NULL, &ExSemaphoreObjectType);
 
     //
     // If the semaphore object type descriptor was successfully created, then
@@ -124,15 +114,10 @@ Return Value:
 
     return (BOOLEAN)(NT_SUCCESS(Status));
 }
-
+
 NTSTATUS
-NtCreateSemaphore (
-    IN PHANDLE SemaphoreHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,
-    IN LONG InitialCount,
-    IN LONG MaximumCount
-    )
+NtCreateSemaphore(IN PHANDLE SemaphoreHandle, IN ACCESS_MASK DesiredAccess,
+                  IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL, IN LONG InitialCount, IN LONG MaximumCount)
 
 /*++
 
@@ -180,10 +165,14 @@ Return Value:
     //
 
     PreviousMode = KeGetPreviousMode();
-    if (PreviousMode != KernelMode) {
-        try {
+    if (PreviousMode != KernelMode)
+    {
+        try
+        {
             ProbeForWriteHandle(SemaphoreHandle);
-        } except(ExSystemExceptionFilter()) {
+        }
+        except(ExSystemExceptionFilter())
+        {
             return GetExceptionCode();
         }
     }
@@ -192,8 +181,8 @@ Return Value:
     // Check argument validity.
     //
 
-    if ((MaximumCount <= 0) || (InitialCount < 0) ||
-       (InitialCount > MaximumCount)) {
+    if ((MaximumCount <= 0) || (InitialCount < 0) || (InitialCount > MaximumCount))
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -201,15 +190,8 @@ Return Value:
     // Allocate semaphore object.
     //
 
-    Status = ObCreateObject(PreviousMode,
-                            ExSemaphoreObjectType,
-                            ObjectAttributes,
-                            PreviousMode,
-                            NULL,
-                            sizeof(KSEMAPHORE),
-                            0,
-                            0,
-                            (PVOID *)&Semaphore);
+    Status = ObCreateObject(PreviousMode, ExSemaphoreObjectType, ObjectAttributes, PreviousMode, NULL,
+                            sizeof(KSEMAPHORE), 0, 0, (PVOID *)&Semaphore);
 
     //
     // If the semaphore object was successfully allocated, then initialize
@@ -217,17 +199,11 @@ Return Value:
     // the current process' handle table.
     //
 
-    if (NT_SUCCESS(Status)) {
-        KeInitializeSemaphore((PKSEMAPHORE)Semaphore,
-                              InitialCount,
-                              MaximumCount);
+    if (NT_SUCCESS(Status))
+    {
+        KeInitializeSemaphore((PKSEMAPHORE)Semaphore, InitialCount, MaximumCount);
 
-        Status = ObInsertObject(Semaphore,
-                                NULL,
-                                DesiredAccess,
-                                0,
-                                (PVOID *)NULL,
-                                &Handle);
+        Status = ObInsertObject(Semaphore, NULL, DesiredAccess, 0, (PVOID *)NULL, &Handle);
 
         //
         // If the semaphore object was successfully inserted in the current
@@ -237,15 +213,21 @@ Return Value:
         // violation will occur.
         //
 
-        if (NT_SUCCESS(Status)) {
-            if (PreviousMode != KernelMode) {
-                try {
+        if (NT_SUCCESS(Status))
+        {
+            if (PreviousMode != KernelMode)
+            {
+                try
+                {
                     *SemaphoreHandle = Handle;
-                } except(ExSystemExceptionFilter()) {
+                }
+                except(ExSystemExceptionFilter())
+                {
                     NOTHING;
                 }
             }
-            else {
+            else
+            {
                 *SemaphoreHandle = Handle;
             }
         }
@@ -257,13 +239,9 @@ Return Value:
 
     return Status;
 }
-
+
 NTSTATUS
-NtOpenSemaphore (
-    OUT PHANDLE SemaphoreHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_ATTRIBUTES ObjectAttributes
-    )
+NtOpenSemaphore(OUT PHANDLE SemaphoreHandle, IN ACCESS_MASK DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes)
 
 /*++
 
@@ -306,10 +284,14 @@ Return Value:
     //
 
     PreviousMode = KeGetPreviousMode();
-    if (PreviousMode != KernelMode) {
-        try {
+    if (PreviousMode != KernelMode)
+    {
+        try
+        {
             ProbeForWriteHandle(SemaphoreHandle);
-        } except(ExSystemExceptionFilter()) {
+        }
+        except(ExSystemExceptionFilter())
+        {
             return GetExceptionCode();
         }
     }
@@ -318,13 +300,8 @@ Return Value:
     // Open handle to the semaphore object with the specified desired access.
     //
 
-    Status = ObOpenObjectByName(ObjectAttributes,
-                                ExSemaphoreObjectType,
-                                PreviousMode,
-                                NULL,
-                                DesiredAccess,
-                                NULL,
-                                &Handle);
+    Status =
+        ObOpenObjectByName(ObjectAttributes, ExSemaphoreObjectType, PreviousMode, NULL, DesiredAccess, NULL, &Handle);
 
     //
     // If the open was successful, then attempt to write the semaphore
@@ -333,15 +310,21 @@ Return Value:
     // access violation will occur.
     //
 
-    if (NT_SUCCESS(Status)) {
-        if (PreviousMode != KernelMode) {
-            try {
+    if (NT_SUCCESS(Status))
+    {
+        if (PreviousMode != KernelMode)
+        {
+            try
+            {
                 *SemaphoreHandle = Handle;
-            } except(ExSystemExceptionFilter()) {
+            }
+            except(ExSystemExceptionFilter())
+            {
                 NOTHING;
             }
         }
-        else {
+        else
+        {
             *SemaphoreHandle = Handle;
         }
     }
@@ -352,15 +335,10 @@ Return Value:
 
     return Status;
 }
-
+
 NTSTATUS
-NtQuerySemaphore (
-    IN HANDLE SemaphoreHandle,
-    IN SEMAPHORE_INFORMATION_CLASS SemaphoreInformationClass,
-    OUT PVOID SemaphoreInformation,
-    IN ULONG SemaphoreInformationLength,
-    OUT PULONG ReturnLength OPTIONAL
-    )
+NtQuerySemaphore(IN HANDLE SemaphoreHandle, IN SEMAPHORE_INFORMATION_CLASS SemaphoreInformationClass,
+                 OUT PVOID SemaphoreInformation, IN ULONG SemaphoreInformationLength, OUT PULONG ReturnLength OPTIONAL)
 
 /*++
 
@@ -410,16 +388,19 @@ Return Value:
     //
 
     PreviousMode = KeGetPreviousMode();
-    if (PreviousMode != KernelMode) {
-        try {
-            ProbeForWriteSmallStructure (SemaphoreInformation,
-                                         sizeof(SEMAPHORE_BASIC_INFORMATION),
-                                         sizeof(ULONG));
+    if (PreviousMode != KernelMode)
+    {
+        try
+        {
+            ProbeForWriteSmallStructure(SemaphoreInformation, sizeof(SEMAPHORE_BASIC_INFORMATION), sizeof(ULONG));
 
-            if (ARGUMENT_PRESENT(ReturnLength)) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 ProbeForWriteUlong(ReturnLength);
             }
-        } except(ExSystemExceptionFilter()) {
+        }
+        except(ExSystemExceptionFilter())
+        {
             return GetExceptionCode();
         }
     }
@@ -428,11 +409,13 @@ Return Value:
     // Check argument validity.
     //
 
-    if (SemaphoreInformationClass != SemaphoreBasicInformation) {
+    if (SemaphoreInformationClass != SemaphoreBasicInformation)
+    {
         return STATUS_INVALID_INFO_CLASS;
     }
 
-    if (SemaphoreInformationLength != sizeof(SEMAPHORE_BASIC_INFORMATION)) {
+    if (SemaphoreInformationLength != sizeof(SEMAPHORE_BASIC_INFORMATION))
+    {
         return STATUS_INFO_LENGTH_MISMATCH;
     }
 
@@ -440,12 +423,8 @@ Return Value:
     // Reference semaphore object by handle.
     //
 
-    Status = ObReferenceObjectByHandle(SemaphoreHandle,
-                                       SEMAPHORE_QUERY_STATE,
-                                       ExSemaphoreObjectType,
-                                       PreviousMode,
-                                       &Semaphore,
-                                       NULL);
+    Status = ObReferenceObjectByHandle(SemaphoreHandle, SEMAPHORE_QUERY_STATE, ExSemaphoreObjectType, PreviousMode,
+                                       &Semaphore, NULL);
 
     //
     // If the reference was successful, then read the current state and
@@ -457,26 +436,34 @@ Return Value:
     // access violation will occur.
     //
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         Count = KeReadStateSemaphore((PKSEMAPHORE)Semaphore);
         Maximum = ((PKSEMAPHORE)Semaphore)->Limit;
         ObDereferenceObject(Semaphore);
 
-        if (PreviousMode != KernelMode) {
-            try {
+        if (PreviousMode != KernelMode)
+        {
+            try
+            {
                 ((PSEMAPHORE_BASIC_INFORMATION)SemaphoreInformation)->CurrentCount = Count;
                 ((PSEMAPHORE_BASIC_INFORMATION)SemaphoreInformation)->MaximumCount = Maximum;
-                if (ARGUMENT_PRESENT(ReturnLength)) {
+                if (ARGUMENT_PRESENT(ReturnLength))
+                {
                     *ReturnLength = sizeof(SEMAPHORE_BASIC_INFORMATION);
                 }
-            } except(ExSystemExceptionFilter()) {
+            }
+            except(ExSystemExceptionFilter())
+            {
                 NOTHING;
             }
         }
-        else {
+        else
+        {
             ((PSEMAPHORE_BASIC_INFORMATION)SemaphoreInformation)->CurrentCount = Count;
             ((PSEMAPHORE_BASIC_INFORMATION)SemaphoreInformation)->MaximumCount = Maximum;
-            if (ARGUMENT_PRESENT(ReturnLength)) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = sizeof(SEMAPHORE_BASIC_INFORMATION);
             }
         }
@@ -488,13 +475,9 @@ Return Value:
 
     return Status;
 }
-
+
 NTSTATUS
-NtReleaseSemaphore (
-    IN HANDLE SemaphoreHandle,
-    IN LONG ReleaseCount,
-    OUT PLONG PreviousCount OPTIONAL
-    )
+NtReleaseSemaphore(IN HANDLE SemaphoreHandle, IN LONG ReleaseCount, OUT PLONG PreviousCount OPTIONAL)
 
 /*++
 
@@ -539,10 +522,14 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    if ((ARGUMENT_PRESENT(PreviousCount)) && (PreviousMode != KernelMode)) {
-        try {
+    if ((ARGUMENT_PRESENT(PreviousCount)) && (PreviousMode != KernelMode))
+    {
+        try
+        {
             ProbeForWriteLong(PreviousCount);
-        } except(ExSystemExceptionFilter()) {
+        }
+        except(ExSystemExceptionFilter())
+        {
             return GetExceptionCode();
         }
     }
@@ -551,7 +538,8 @@ Return Value:
     // Check argument validity.
     //
 
-    if (ReleaseCount <= 0) {
+    if (ReleaseCount <= 0)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -559,12 +547,8 @@ Return Value:
     // Reference semaphore object by handle.
     //
 
-    Status = ObReferenceObjectByHandle(SemaphoreHandle,
-                                       SEMAPHORE_MODIFY_STATE,
-                                       ExSemaphoreObjectType,
-                                       PreviousMode,
-                                       &Semaphore,
-                                       NULL);
+    Status = ObReferenceObjectByHandle(SemaphoreHandle, SEMAPHORE_MODIFY_STATE, ExSemaphoreObjectType, PreviousMode,
+                                       &Semaphore, NULL);
 
     //
     // If the reference was successful, then release the semaphore object.
@@ -576,7 +560,8 @@ Return Value:
     // previous count value, an access violation will occur.
     //
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Initialize Count to keep W4 compiler happy.
@@ -584,29 +569,34 @@ Return Value:
 
         Count = 0;
 
-        try {
+        try
+        {
             PERFINFO_DECLARE_OBJECT(Semaphore);
 
-            Count = KeReleaseSemaphore((PKSEMAPHORE)Semaphore,
-                                       ExpSemaphoreBoost,
-                                       ReleaseCount,
-                                       FALSE);
-
-        } except(ExSystemExceptionFilter()) {
+            Count = KeReleaseSemaphore((PKSEMAPHORE)Semaphore, ExpSemaphoreBoost, ReleaseCount, FALSE);
+        }
+        except(ExSystemExceptionFilter())
+        {
             Status = GetExceptionCode();
         }
 
         ObDereferenceObject(Semaphore);
 
-        if (NT_SUCCESS(Status) && ARGUMENT_PRESENT(PreviousCount)) {
-            if (PreviousMode != KernelMode) {
-                try {
+        if (NT_SUCCESS(Status) && ARGUMENT_PRESENT(PreviousCount))
+        {
+            if (PreviousMode != KernelMode)
+            {
+                try
+                {
                     *PreviousCount = Count;
-                } except(ExSystemExceptionFilter()) {
+                }
+                except(ExSystemExceptionFilter())
+                {
                     NOTHING;
                 }
             }
-            else {
+            else
+            {
                 *PreviousCount = Count;
             }
         }

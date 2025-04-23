@@ -26,36 +26,17 @@ Revision History:
 
 #include "ntrtlp.h"
 
-VOID
-DebugLoadImageSymbols(
-    IN PSTRING FileName,
-    IN PKD_SYMBOLS_INFO SymbolInfo
-    );
+VOID DebugLoadImageSymbols(IN PSTRING FileName, IN PKD_SYMBOLS_INFO SymbolInfo);
 
-VOID
-DebugUnLoadImageSymbols(
-    IN PSTRING FileName,
-    IN PKD_SYMBOLS_INFO SymbolInfo
-    );
+VOID DebugUnLoadImageSymbols(IN PSTRING FileName, IN PKD_SYMBOLS_INFO SymbolInfo);
 
-VOID
-DebugCommandString(
-    IN PSTRING Name,
-    IN PSTRING Command
-    );
+VOID DebugCommandString(IN PSTRING Name, IN PSTRING Command);
 
 
-VOID
-RtlpFlushRSE (
-    OUT PULONGLONG BackingStore,
-    OUT PULONGLONG RNat
-    );
+VOID RtlpFlushRSE(OUT PULONGLONG BackingStore, OUT PULONGLONG RNat);
 
-
-VOID
-RtlpCaptureRnats (
-   IN OUT PCONTEXT ContextRecord
-   )
+
+VOID RtlpCaptureRnats(IN OUT PCONTEXT ContextRecord)
 
 /*++
 
@@ -65,8 +46,8 @@ Routine Description:
     the RSE frame specified in the context record.
 --*/
 {
-    SHORT BsFrameSize;                  // in 8-byte units
-    SHORT TempFrameSize;                // in 8-byte units
+    SHORT BsFrameSize;   // in 8-byte units
+    SHORT TempFrameSize; // in 8-byte units
     SHORT RNatSaveIndex;
     ULONGLONG Rnat;
     ULONGLONG Bsp;
@@ -77,24 +58,24 @@ Routine Description:
     BsFrameSize = (SHORT)ContextRecord->StIFS & PFS_SIZE_MASK;
     RNatSaveIndex = (SHORT)(ContextRecord->RsBSP >> 3) & NAT_BITS_PER_RNAT_REG;
     TempFrameSize = RNatSaveIndex + BsFrameSize - NAT_BITS_PER_RNAT_REG;
-    while (TempFrameSize >= 0) {
+    while (TempFrameSize >= 0)
+    {
         BsFrameSize++;
         TempFrameSize -= NAT_BITS_PER_RNAT_REG;
     }
     TopRnatAddress = (ContextRecord->RsBSP + (BsFrameSize * 8) - sizeof(ULONGLONG)) | RNAT_ALIGNMENT;
-    if (TopRnatAddress < Bsp) {
+    if (TopRnatAddress < Bsp)
+    {
         ContextRecord->RsRNAT = *(PULONGLONG)TopRnatAddress;
-    } else {
+    }
+    else
+    {
         ContextRecord->RsRNAT = Rnat;
     }
 }
 
-
-VOID
-Rtlp64GetBStoreLimits (
-    OUT PULONGLONG LowBStoreLimit,
-    OUT PULONGLONG HighBStoreLimit
-    )
+
+VOID Rtlp64GetBStoreLimits(OUT PULONGLONG LowBStoreLimit, OUT PULONGLONG HighBStoreLimit)
 
 /*++
 
@@ -140,12 +121,8 @@ Return Value:
 
 #endif // defined(NTOS_KERNEL_RUNTIME)
 }
-    
-VOID
-RtlpGetStackLimits (
-    OUT PULONG_PTR LowStackLimit,
-    OUT PULONG_PTR HighStackLimit
-    )
+
+VOID RtlpGetStackLimits(OUT PULONG_PTR LowStackLimit, OUT PULONG_PTR HighStackLimit)
 
 /*++
 
@@ -192,12 +169,8 @@ Return Value:
 
 #endif // defined(NTOS_KERNEL_RUNTIME)
 }
-
-VOID
-Rtlp64GetStackLimits (
-    OUT PULONGLONG LowStackLimit,
-    OUT PULONGLONG HighStackLimit
-    )
+
+VOID Rtlp64GetStackLimits(OUT PULONGLONG LowStackLimit, OUT PULONGLONG HighStackLimit)
 
 /*++
 
@@ -245,12 +218,7 @@ Return Value:
 #endif // defined(NTOS_KERNEL_RUNTIME)
 }
 
-VOID
-DebugService2(
-    PVOID Arg1,
-    PVOID Arg2,
-    ULONG ServiceClass
-    )
+VOID DebugService2(PVOID Arg1, PVOID Arg2, ULONG ServiceClass)
 
 //++
 //

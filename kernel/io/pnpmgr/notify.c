@@ -31,80 +31,63 @@ Revision History:
 
 #define PNP_DEVICE_EVENT_ENTRY_TAG 'EEpP'
 
-typedef struct _ASYNC_TDC_WORK_ITEM {
+typedef struct _ASYNC_TDC_WORK_ITEM
+{
     WORK_QUEUE_ITEM WorkItem;
     PDEVICE_OBJECT DeviceObject;
     PDEVICE_CHANGE_COMPLETE_CALLBACK Callback;
     PVOID Context;
     PTARGET_DEVICE_CUSTOM_NOTIFICATION NotificationStructure;
-}   ASYNC_TDC_WORK_ITEM, *PASYNC_TDC_WORK_ITEM;
+} ASYNC_TDC_WORK_ITEM, *PASYNC_TDC_WORK_ITEM;
 
-typedef struct _DEFERRED_REGISTRATION_ENTRY {
-    LIST_ENTRY            ListEntry;
-    PNOTIFY_ENTRY_HEADER  NotifyEntry;
+typedef struct _DEFERRED_REGISTRATION_ENTRY
+{
+    LIST_ENTRY ListEntry;
+    PNOTIFY_ENTRY_HEADER NotifyEntry;
 } DEFERRED_REGISTRATION_ENTRY, *PDEFERRED_REGISTRATION_ENTRY;
 //
 // Kernel mode notification data
 //
 
 #ifdef ALLOC_DATA_PRAGMA
-#pragma  data_seg("PAGEDATA")
-#pragma  const_seg("PAGECONST")
+#pragma data_seg("PAGEDATA")
+#pragma const_seg("PAGECONST")
 #endif
-LIST_ENTRY IopDeviceClassNotifyList[NOTIFY_DEVICE_CLASS_HASH_BUCKETS] = {NULL};
+LIST_ENTRY IopDeviceClassNotifyList[NOTIFY_DEVICE_CLASS_HASH_BUCKETS] = { NULL };
 PSETUP_NOTIFY_DATA IopSetupNotifyData = NULL;
-LIST_ENTRY IopProfileNotifyList = {NULL};
-LIST_ENTRY IopDeferredRegistrationList = {NULL};
+LIST_ENTRY IopProfileNotifyList = { NULL };
+LIST_ENTRY IopDeferredRegistrationList = { NULL };
 #ifdef ALLOC_DATA_PRAGMA
-#pragma  data_seg()
+#pragma data_seg()
 #endif
 
-FAST_MUTEX  IopDeviceClassNotifyLock;
-FAST_MUTEX  IopTargetDeviceNotifyLock;
-FAST_MUTEX  IopHwProfileNotifyLock;
-FAST_MUTEX  IopDeferredRegistrationLock;
+FAST_MUTEX IopDeviceClassNotifyLock;
+FAST_MUTEX IopTargetDeviceNotifyLock;
+FAST_MUTEX IopHwProfileNotifyLock;
+FAST_MUTEX IopDeferredRegistrationLock;
 
-BOOLEAN     PiNotificationInProgress;
-FAST_MUTEX  PiNotificationInProgressLock;
+BOOLEAN PiNotificationInProgress;
+FAST_MUTEX PiNotificationInProgressLock;
 
 //
 // Prototypes
 //
 
-VOID
-IopDereferenceNotify(
-    PNOTIFY_ENTRY_HEADER Notify
-    );
+VOID IopDereferenceNotify(PNOTIFY_ENTRY_HEADER Notify);
 
-VOID
-IopInitializePlugPlayNotification(
-    VOID
-    );
+VOID IopInitializePlugPlayNotification(VOID);
 
 NTSTATUS
-PiNotifyUserMode(
-    PPNP_DEVICE_EVENT_ENTRY DeviceEvent
-    );
+PiNotifyUserMode(PPNP_DEVICE_EVENT_ENTRY DeviceEvent);
 
 NTSTATUS
-PiNotifyDriverCallback(
-    IN  PDRIVER_NOTIFICATION_CALLBACK_ROUTINE  CallbackRoutine,
-    IN  PVOID   NotificationStructure,
-    IN  PVOID   Context,
-    IN  ULONG   SessionId,
-    IN  PVOID   OpaqueSession,
-    OUT PNTSTATUS  CallbackStatus  OPTIONAL
-    );
+PiNotifyDriverCallback(IN PDRIVER_NOTIFICATION_CALLBACK_ROUTINE CallbackRoutine, IN PVOID NotificationStructure,
+                       IN PVOID Context, IN ULONG SessionId, IN PVOID OpaqueSession,
+                       OUT PNTSTATUS CallbackStatus OPTIONAL);
 
-VOID
-IopReferenceNotify(
-    PNOTIFY_ENTRY_HEADER notify
-    );
+VOID IopReferenceNotify(PNOTIFY_ENTRY_HEADER notify);
 
-VOID
-IopReportTargetDeviceChangeAsyncWorker(
-    PVOID Context
-    );
+VOID IopReportTargetDeviceChangeAsyncWorker(PVOID Context);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, IoGetRelatedTargetDevice)
@@ -129,11 +112,8 @@ IopReportTargetDeviceChangeAsyncWorker(
 #endif // ALLOC_PRAGMA
 
 
-
 NTSTATUS
-IoUnregisterPlugPlayNotification(
-    IN PVOID NotificationEntry
-    )
+IoUnregisterPlugPlayNotification(IN PVOID NotificationEntry)
 
 /*++
 
@@ -168,14 +148,16 @@ Return Value:
     lock = entry->Lock;
 
     ExAcquireFastMutex(&PiNotificationInProgressLock);
-    if (PiNotificationInProgress) {
+    if (PiNotificationInProgress)
+    {
         //
         // Before unregistering the entry, we need to make sure that it's not sitting
         // around in the deferred registration list.
         //
         IopAcquireNotifyLock(&IopDeferredRegistrationLock);
 
-        if (!IsListEmpty(&IopDeferredRegistrationList)) {
+        if (!IsListEmpty(&IopDeferredRegistrationList))
+        {
 
             PLIST_ENTRY link;
             PDEFERRED_REGISTRATION_ENTRY deferredNode;
@@ -183,22 +165,28 @@ Return Value:
             link = IopDeferredRegistrationList.Flink;
             deferredNode = (PDEFERRED_REGISTRATION_ENTRY)link;
 
-            while (link != (PLIST_ENTRY)&IopDeferredRegistrationList) {
+            while (link != (PLIST_ENTRY)&IopDeferredRegistrationList)
+            {
                 ASSERT(deferredNode->NotifyEntry->Unregistered);
-                if (deferredNode->NotifyEntry == entry) {
+                if (deferredNode->NotifyEntry == entry)
+                {
                     wasDeferred = TRUE;
-                    if (lock) {
+                    if (lock)
+                    {
                         IopAcquireNotifyLock(lock);
                     }
                     link = link->Flink;
                     RemoveEntryList((PLIST_ENTRY)deferredNode);
                     IopDereferenceNotify((PNOTIFY_ENTRY_HEADER)deferredNode->NotifyEntry);
-                    if (lock) {
+                    if (lock)
+                    {
                         IopReleaseNotifyLock(lock);
                     }
                     ExFreePool(deferredNode);
                     deferredNode = (PDEFERRED_REGISTRATION_ENTRY)link;
-                } else {
+                }
+                else
+                {
                     link = link->Flink;
                     deferredNode = (PDEFERRED_REGISTRATION_ENTRY)link;
                 }
@@ -206,7 +194,9 @@ Return Value:
         }
 
         IopReleaseNotifyLock(&IopDeferredRegistrationLock);
-    } else {
+    }
+    else
+    {
         //
         // If there is currently no notification in progress, the deferred
         // registration list must be empty.
@@ -218,13 +208,15 @@ Return Value:
     //
     // Acquire lock
     //
-    if (lock) {
+    if (lock)
+    {
         IopAcquireNotifyLock(lock);
     }
 
     ASSERT(wasDeferred == entry->Unregistered);
 
-    if (!entry->Unregistered || wasDeferred) {
+    if (!entry->Unregistered || wasDeferred)
+    {
         //
         // Dereference the entry if it is currently registered, or had its
         // registration pending completion of the notification in progress.
@@ -247,20 +239,16 @@ Return Value:
     // Release the lock
     //
 
-    if (lock) {
+    if (lock)
+    {
         IopReleaseNotifyLock(lock);
     }
 
     return STATUS_SUCCESS;
-
 }
 
 
-
-VOID
-IopProcessDeferredRegistrations(
-    VOID
-    )
+VOID IopProcessDeferredRegistrations(VOID)
 /*++
 
 Routine Description:
@@ -283,7 +271,8 @@ Return Value:
 
     IopAcquireNotifyLock(&IopDeferredRegistrationLock);
 
-    while (!IsListEmpty(&IopDeferredRegistrationList)) {
+    while (!IsListEmpty(&IopDeferredRegistrationList))
+    {
 
         deferredNode = (PDEFERRED_REGISTRATION_ENTRY)RemoveHeadList(&IopDeferredRegistrationList);
 
@@ -291,7 +280,8 @@ Return Value:
         // Acquire this entry's list lock.
         //
         lock = deferredNode->NotifyEntry->Lock;
-        if (lock) {
+        if (lock)
+        {
             IopAcquireNotifyLock(lock);
         }
 
@@ -310,7 +300,8 @@ Return Value:
         //
         // Release this entry's list lock.
         //
-        if (lock) {
+        if (lock)
+        {
             IopReleaseNotifyLock(lock);
             lock = NULL;
         }
@@ -320,12 +311,10 @@ Return Value:
 }
 
 
-
 NTSTATUS
-IoReportTargetDeviceChange(
-    IN PDEVICE_OBJECT PhysicalDeviceObject,
-    IN PVOID NotificationStructure  // always begins with a PLUGPLAY_NOTIFICATION_HEADER
-    )
+IoReportTargetDeviceChange(IN PDEVICE_OBJECT PhysicalDeviceObject,
+                           IN PVOID NotificationStructure // always begins with a PLUGPLAY_NOTIFICATION_HEADER
+)
 
 /*++
 
@@ -363,7 +352,7 @@ Note:
     KEVENT completionEvent;
     NTSTATUS completionStatus;
     PTARGET_DEVICE_CUSTOM_NOTIFICATION notifyStruct;
-    LONG                   dataSize;
+    LONG dataSize;
 
     PAGED_CODE();
 
@@ -378,44 +367,42 @@ Note:
 
     if (IopCompareGuid(&notifyStruct->Event, &GUID_TARGET_DEVICE_QUERY_REMOVE) ||
         IopCompareGuid(&notifyStruct->Event, &GUID_TARGET_DEVICE_REMOVE_CANCELLED) ||
-        IopCompareGuid(&notifyStruct->Event, &GUID_TARGET_DEVICE_REMOVE_COMPLETE)) {
+        IopCompareGuid(&notifyStruct->Event, &GUID_TARGET_DEVICE_REMOVE_COMPLETE))
+    {
 
         //
         //  Passed in an illegal value
         //
 
-        IopDbgPrint((
-            IOP_IOEVENT_ERROR_LEVEL,
-            "IoReportTargetDeviceChange: "
-            "Illegal Event type passed as custom notification\n"));
+        IopDbgPrint((IOP_IOEVENT_ERROR_LEVEL, "IoReportTargetDeviceChange: "
+                                              "Illegal Event type passed as custom notification\n"));
 
         return STATUS_INVALID_DEVICE_REQUEST;
     }
 
-    if (notifyStruct->Size < FIELD_OFFSET(TARGET_DEVICE_CUSTOM_NOTIFICATION, CustomDataBuffer)) {
+    if (notifyStruct->Size < FIELD_OFFSET(TARGET_DEVICE_CUSTOM_NOTIFICATION, CustomDataBuffer))
+    {
 
         return STATUS_INVALID_DEVICE_REQUEST;
     }
 
     dataSize = notifyStruct->Size - FIELD_OFFSET(TARGET_DEVICE_CUSTOM_NOTIFICATION, CustomDataBuffer);
 
-    if (notifyStruct->NameBufferOffset != -1 && notifyStruct->NameBufferOffset > dataSize)  {
+    if (notifyStruct->NameBufferOffset != -1 && notifyStruct->NameBufferOffset > dataSize)
+    {
 
         return STATUS_INVALID_DEVICE_REQUEST;
     }
 
     KeInitializeEvent(&completionEvent, NotificationEvent, FALSE);
 
-    status = PpSetCustomTargetEvent( PhysicalDeviceObject,
-                                     &completionEvent,
-                                     (PULONG)&completionStatus,
-                                     NULL,
-                                     NULL,
-                                     notifyStruct);
+    status = PpSetCustomTargetEvent(PhysicalDeviceObject, &completionEvent, (PULONG)&completionStatus, NULL, NULL,
+                                    notifyStruct);
 
-    if (NT_SUCCESS(status))  {
+    if (NT_SUCCESS(status))
+    {
 
-        KeWaitForSingleObject( &completionEvent, Executive, KernelMode, FALSE, NULL );
+        KeWaitForSingleObject(&completionEvent, Executive, KernelMode, FALSE, NULL);
 
         status = completionStatus;
     }
@@ -424,14 +411,11 @@ Note:
 }
 
 
-
 NTSTATUS
-IoReportTargetDeviceChangeAsynchronous(
-    IN PDEVICE_OBJECT PhysicalDeviceObject,
-    IN PVOID NotificationStructure,  // always begins with a PLUGPLAY_NOTIFICATION_HEADER
-    IN PDEVICE_CHANGE_COMPLETE_CALLBACK Callback        OPTIONAL,
-    IN PVOID Context    OPTIONAL
-    )
+IoReportTargetDeviceChangeAsynchronous(IN PDEVICE_OBJECT PhysicalDeviceObject,
+                                       IN PVOID
+                                           NotificationStructure, // always begins with a PLUGPLAY_NOTIFICATION_HEADER
+                                       IN PDEVICE_CHANGE_COMPLETE_CALLBACK Callback OPTIONAL, IN PVOID Context OPTIONAL)
 
 /*++
 
@@ -464,12 +448,12 @@ Note:
 
 --*/
 {
-    PASYNC_TDC_WORK_ITEM    asyncWorkItem;
-    PWORK_QUEUE_ITEM        workItem;
-    NTSTATUS                status;
-    LONG                    dataSize;
+    PASYNC_TDC_WORK_ITEM asyncWorkItem;
+    PWORK_QUEUE_ITEM workItem;
+    NTSTATUS status;
+    LONG dataSize;
 
-    PTARGET_DEVICE_CUSTOM_NOTIFICATION   notifyStruct;
+    PTARGET_DEVICE_CUSTOM_NOTIFICATION notifyStruct;
 
     notifyStruct = (PTARGET_DEVICE_CUSTOM_NOTIFICATION)NotificationStructure;
 
@@ -481,28 +465,29 @@ Note:
 
     if (IopCompareGuid(&notifyStruct->Event, &GUID_TARGET_DEVICE_QUERY_REMOVE) ||
         IopCompareGuid(&notifyStruct->Event, &GUID_TARGET_DEVICE_REMOVE_CANCELLED) ||
-        IopCompareGuid(&notifyStruct->Event, &GUID_TARGET_DEVICE_REMOVE_COMPLETE)) {
+        IopCompareGuid(&notifyStruct->Event, &GUID_TARGET_DEVICE_REMOVE_COMPLETE))
+    {
 
         //
         //  Passed in an illegal value
         //
 
-        IopDbgPrint((
-            IOP_IOEVENT_ERROR_LEVEL,
-            "IoReportTargetDeviceChangeAsynchronous: "
-            "Illegal Event type passed as custom notification\n"));
+        IopDbgPrint((IOP_IOEVENT_ERROR_LEVEL, "IoReportTargetDeviceChangeAsynchronous: "
+                                              "Illegal Event type passed as custom notification\n"));
 
         return STATUS_INVALID_DEVICE_REQUEST;
     }
 
-    if (notifyStruct->Size < FIELD_OFFSET(TARGET_DEVICE_CUSTOM_NOTIFICATION, CustomDataBuffer)) {
+    if (notifyStruct->Size < FIELD_OFFSET(TARGET_DEVICE_CUSTOM_NOTIFICATION, CustomDataBuffer))
+    {
 
         return STATUS_INVALID_DEVICE_REQUEST;
     }
 
     dataSize = notifyStruct->Size - FIELD_OFFSET(TARGET_DEVICE_CUSTOM_NOTIFICATION, CustomDataBuffer);
 
-    if (notifyStruct->NameBufferOffset != -1 && notifyStruct->NameBufferOffset > dataSize)  {
+    if (notifyStruct->NameBufferOffset != -1 && notifyStruct->NameBufferOffset > dataSize)
+    {
 
         return STATUS_INVALID_DEVICE_REQUEST;
     }
@@ -512,10 +497,10 @@ Note:
     // a work item and process it when the irql drops.
     //
 
-    asyncWorkItem = ExAllocatePool( NonPagedPool,
-                                    sizeof(ASYNC_TDC_WORK_ITEM) + notifyStruct->Size);
+    asyncWorkItem = ExAllocatePool(NonPagedPool, sizeof(ASYNC_TDC_WORK_ITEM) + notifyStruct->Size);
 
-    if (asyncWorkItem != NULL) {
+    if (asyncWorkItem != NULL)
+    {
 
         //
         // ISSUE-ADRIAO-2000/08/24 - We should use an IO work item here.
@@ -526,9 +511,7 @@ Note:
         asyncWorkItem->NotificationStructure =
             (PTARGET_DEVICE_CUSTOM_NOTIFICATION)((PUCHAR)asyncWorkItem + sizeof(ASYNC_TDC_WORK_ITEM));
 
-        RtlCopyMemory( asyncWorkItem->NotificationStructure,
-                       notifyStruct,
-                       notifyStruct->Size);
+        RtlCopyMemory(asyncWorkItem->NotificationStructure, notifyStruct, notifyStruct->Size);
 
         asyncWorkItem->Callback = Callback;
         asyncWorkItem->Context = Context;
@@ -542,7 +525,9 @@ Note:
 
         ExQueueWorkItem(workItem, DelayedWorkQueue);
         status = STATUS_PENDING;
-    } else {
+    }
+    else
+    {
         //
         // Failed to allocate memory for work item.  Nothing we can do ...
         //
@@ -554,11 +539,7 @@ Note:
 }
 
 
-
-VOID
-IopReportTargetDeviceChangeAsyncWorker(
-    PVOID Context
-    )
+VOID IopReportTargetDeviceChangeAsyncWorker(PVOID Context)
 
 /*++
 
@@ -581,23 +562,15 @@ ReturnValue:
 {
     PASYNC_TDC_WORK_ITEM asyncWorkItem = (PASYNC_TDC_WORK_ITEM)Context;
 
-    PpSetCustomTargetEvent( asyncWorkItem->DeviceObject,
-                            NULL,
-                            NULL,
-                            asyncWorkItem->Callback,
-                            asyncWorkItem->Context,
-                            asyncWorkItem->NotificationStructure);
+    PpSetCustomTargetEvent(asyncWorkItem->DeviceObject, NULL, NULL, asyncWorkItem->Callback, asyncWorkItem->Context,
+                           asyncWorkItem->NotificationStructure);
 
     ObDereferenceObject(asyncWorkItem->DeviceObject);
     ExFreePool(asyncWorkItem);
 }
 
 
-
-VOID
-IopInitializePlugPlayNotification(
-    VOID
-    )
+VOID IopInitializePlugPlayNotification(VOID)
 
 /*++
 
@@ -625,10 +598,10 @@ Return Value:
     // Initialize the notification structures
     //
 
-    for (count = 0; count < NOTIFY_DEVICE_CLASS_HASH_BUCKETS; count++) {
+    for (count = 0; count < NOTIFY_DEVICE_CLASS_HASH_BUCKETS; count++)
+    {
 
         InitializeListHead(&IopDeviceClassNotifyList[count]);
-
     }
 
     //
@@ -648,11 +621,7 @@ Return Value:
 }
 
 
-
-VOID
-IopReferenceNotify(
-    PNOTIFY_ENTRY_HEADER Notify
-    )
+VOID IopReferenceNotify(PNOTIFY_ENTRY_HEADER Notify)
 
 /*++
 
@@ -682,15 +651,10 @@ Note:
     ASSERT(Notify->RefCount > 0);
 
     Notify->RefCount++;
-
 }
 
 
-
-VOID
-IopDereferenceNotify(
-    PNOTIFY_ENTRY_HEADER Notify
-    )
+VOID IopDereferenceNotify(PNOTIFY_ENTRY_HEADER Notify)
 
 /*++
 
@@ -723,7 +687,8 @@ Note:
 
     Notify->RefCount--;
 
-    if (Notify->RefCount == 0) {
+    if (Notify->RefCount == 0)
+    {
 
         //
         // If the refcount is zero then the node should have been deregisterd
@@ -755,10 +720,12 @@ Note:
         // the PDO upon which this notification entry was hooked.
         //
 
-        if (Notify->EventCategory == EventCategoryTargetDeviceChange) {
+        if (Notify->EventCategory == EventCategoryTargetDeviceChange)
+        {
             PTARGET_DEVICE_NOTIFY_ENTRY entry = (PTARGET_DEVICE_NOTIFY_ENTRY)Notify;
 
-            if (entry->PhysicalDeviceObject) {
+            if (entry->PhysicalDeviceObject)
+            {
                 ObDereferenceObject(entry->PhysicalDeviceObject);
                 entry->PhysicalDeviceObject = NULL;
             }
@@ -768,7 +735,8 @@ Note:
         // Dereference the opaque session object
         //
 
-        if (Notify->OpaqueSession) {
+        if (Notify->OpaqueSession)
+        {
             MmQuitNextSession(Notify->OpaqueSession);
             Notify->OpaqueSession = NULL;
         }
@@ -778,19 +746,13 @@ Note:
         //
 
         ExFreePool(Notify);
-
     }
 }
 
 
-
 NTSTATUS
-IopRequestHwProfileChangeNotification(
-    IN   LPGUID                         EventGuid,
-    IN   PROFILE_NOTIFICATION_TIME      NotificationTime,
-    OUT  PPNP_VETO_TYPE                 VetoType            OPTIONAL,
-    OUT  PUNICODE_STRING                VetoName            OPTIONAL
-    )
+IopRequestHwProfileChangeNotification(IN LPGUID EventGuid, IN PROFILE_NOTIFICATION_TIME NotificationTime,
+                                      OUT PPNP_VETO_TYPE VetoType OPTIONAL, OUT PUNICODE_STRING VetoName OPTIONAL)
 
 /*++
 
@@ -831,25 +793,24 @@ Note:
 --*/
 
 {
-    NTSTATUS status=STATUS_SUCCESS,completionStatus;
+    NTSTATUS status = STATUS_SUCCESS, completionStatus;
     KEVENT completionEvent;
-    ULONG dataSize,totalSize;
+    ULONG dataSize, totalSize;
     PPNP_DEVICE_EVENT_ENTRY deviceEvent;
 
     PAGED_CODE();
 
     if ((!IopCompareGuid(EventGuid, (LPGUID)&GUID_HWPROFILE_QUERY_CHANGE)) &&
         (!IopCompareGuid(EventGuid, (LPGUID)&GUID_HWPROFILE_CHANGE_CANCELLED)) &&
-        (!IopCompareGuid(EventGuid, (LPGUID)&GUID_HWPROFILE_CHANGE_COMPLETE))) {
+        (!IopCompareGuid(EventGuid, (LPGUID)&GUID_HWPROFILE_CHANGE_COMPLETE)))
+    {
 
         //
         //  Passed in an illegal value
         //
 
-        IopDbgPrint((
-            IOP_IOEVENT_ERROR_LEVEL,
-            "IopRequestHwProfileChangeNotification: "
-            "Illegal Event type passed as profile notification\n"));
+        IopDbgPrint((IOP_IOEVENT_ERROR_LEVEL, "IopRequestHwProfileChangeNotification: "
+                                              "Illegal Event type passed as profile notification\n"));
 
         return STATUS_INVALID_DEVICE_REQUEST;
     }
@@ -859,10 +820,11 @@ Note:
     // Only the query changes are synchronous, and in that case we must
     // know definitely whether we are nested within a Pnp event or not.
     //
-    ASSERT((!IopCompareGuid(EventGuid, (LPGUID)&GUID_HWPROFILE_QUERY_CHANGE))||
-           (NotificationTime != PROFILE_PERHAPS_IN_PNPEVENT)) ;
+    ASSERT((!IopCompareGuid(EventGuid, (LPGUID)&GUID_HWPROFILE_QUERY_CHANGE)) ||
+           (NotificationTime != PROFILE_PERHAPS_IN_PNPEVENT));
 
-    if (!IopCompareGuid(EventGuid, (LPGUID)&GUID_HWPROFILE_QUERY_CHANGE) ) {
+    if (!IopCompareGuid(EventGuid, (LPGUID)&GUID_HWPROFILE_QUERY_CHANGE))
+    {
 
         //
         // Asynchronous case. Very easy.
@@ -870,12 +832,7 @@ Note:
         ASSERT(!ARGUMENT_PRESENT(VetoName));
         ASSERT(!ARGUMENT_PRESENT(VetoType));
 
-        return PpSetHwProfileChangeEvent( EventGuid,
-                                          NULL,
-                                          NULL,
-                                          NULL,
-                                          NULL
-                                          );
+        return PpSetHwProfileChangeEvent(EventGuid, NULL, NULL, NULL, NULL);
     }
 
     //
@@ -883,23 +840,20 @@ Note:
     // within an event, in which case we must do the notify here instead
     // of queueing it up.
     //
-    if (NotificationTime == PROFILE_NOT_IN_PNPEVENT) {
+    if (NotificationTime == PROFILE_NOT_IN_PNPEVENT)
+    {
 
         //
         // Queue up and block on the notification.
         //
         KeInitializeEvent(&completionEvent, NotificationEvent, FALSE);
 
-        status = PpSetHwProfileChangeEvent( EventGuid,
-                                            &completionEvent,
-                                            &completionStatus,
-                                            VetoType,
-                                            VetoName
-                                            );
+        status = PpSetHwProfileChangeEvent(EventGuid, &completionEvent, &completionStatus, VetoType, VetoName);
 
-        if (NT_SUCCESS(status))  {
+        if (NT_SUCCESS(status))
+        {
 
-            KeWaitForSingleObject( &completionEvent, Executive, KernelMode, FALSE, NULL );
+            KeWaitForSingleObject(&completionEvent, Executive, KernelMode, FALSE, NULL);
 
             status = completionStatus;
         }
@@ -918,22 +872,21 @@ Note:
     //
     ASSERT(PiNotificationInProgress == TRUE);
 
-    dataSize =  sizeof(PLUGPLAY_EVENT_BLOCK);
+    dataSize = sizeof(PLUGPLAY_EVENT_BLOCK);
 
-    totalSize = dataSize + FIELD_OFFSET (PNP_DEVICE_EVENT_ENTRY,Data);
+    totalSize = dataSize + FIELD_OFFSET(PNP_DEVICE_EVENT_ENTRY, Data);
 
-    deviceEvent = ExAllocatePoolWithTag (PagedPool,
-                                         totalSize,
-                                         PNP_DEVICE_EVENT_ENTRY_TAG);
+    deviceEvent = ExAllocatePoolWithTag(PagedPool, totalSize, PNP_DEVICE_EVENT_ENTRY_TAG);
 
-    if (NULL == deviceEvent) {
+    if (NULL == deviceEvent)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     //
     //Setup the PLUGPLAY_EVENT_BLOCK
     //
-    RtlZeroMemory ((PVOID)deviceEvent,totalSize);
+    RtlZeroMemory((PVOID)deviceEvent, totalSize);
     deviceEvent->Data.EventCategory = HardwareProfileChangeEvent;
     RtlCopyMemory(&deviceEvent->Data.EventGuid, EventGuid, sizeof(GUID));
     deviceEvent->Data.TotalSize = dataSize;
@@ -945,11 +898,10 @@ Note:
     //
     // Notify K-Mode
     //
-    status = IopNotifyHwProfileChange(&deviceEvent->Data.EventGuid,
-                                      VetoType,
-                                      VetoName);
+    status = IopNotifyHwProfileChange(&deviceEvent->Data.EventGuid, VetoType, VetoName);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
@@ -958,25 +910,20 @@ Note:
     //
     status = PiNotifyUserMode(deviceEvent);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         //
         // Notify K-mode that the query has been cancelled.
         //
-        IopNotifyHwProfileChange((LPGUID)&GUID_HWPROFILE_CHANGE_CANCELLED,
-                                 NULL,
-                                 NULL);
+        IopNotifyHwProfileChange((LPGUID)&GUID_HWPROFILE_CHANGE_CANCELLED, NULL, NULL);
     }
     return status;
 }
 
 
-
 NTSTATUS
-IopNotifyHwProfileChange(
-    IN  LPGUID           EventGuid,
-    OUT PPNP_VETO_TYPE   VetoType    OPTIONAL,
-    OUT PUNICODE_STRING  VetoName    OPTIONAL
-    )
+IopNotifyHwProfileChange(IN LPGUID EventGuid, OUT PPNP_VETO_TYPE VetoType OPTIONAL,
+                         OUT PUNICODE_STRING VetoName OPTIONAL)
 /*++
 
 Routine Description:
@@ -1003,26 +950,28 @@ Note:
 --*/
 {
     NTSTATUS status = STATUS_SUCCESS, dispatchStatus;
-    PHWPROFILE_NOTIFY_ENTRY  pNotifyList, vetoEntry;
+    PHWPROFILE_NOTIFY_ENTRY pNotifyList, vetoEntry;
     PLIST_ENTRY link;
 
 
     PAGED_CODE();
 
     //Lock the Profile Notification List
-    IopAcquireNotifyLock (&IopHwProfileNotifyLock);
+    IopAcquireNotifyLock(&IopHwProfileNotifyLock);
 
     //
     //  Grab the list head (inside the lock)
     //
     link = IopProfileNotifyList.Flink;
-    pNotifyList=(PHWPROFILE_NOTIFY_ENTRY)link;
+    pNotifyList = (PHWPROFILE_NOTIFY_ENTRY)link;
 
     //
     //circular list
     //
-    while (link != (PLIST_ENTRY)&IopProfileNotifyList) {
-        if (!pNotifyList->Unregistered) {
+    while (link != (PLIST_ENTRY)&IopProfileNotifyList)
+    {
+        if (!pNotifyList->Unregistered)
+        {
 
             HWPROFILE_CHANGE_NOTIFICATION notification;
 
@@ -1044,19 +993,16 @@ Note:
             // Dispatch the notification to the callback routine for the
             // appropriate session.
             //
-            dispatchStatus = PiNotifyDriverCallback(pNotifyList->CallbackRoutine,
-                                                    &notification,
-                                                    pNotifyList->Context,
-                                                    pNotifyList->SessionId,
-                                                    pNotifyList->OpaqueSession,
-                                                    &status);
+            dispatchStatus = PiNotifyDriverCallback(pNotifyList->CallbackRoutine, &notification, pNotifyList->Context,
+                                                    pNotifyList->SessionId, pNotifyList->OpaqueSession, &status);
             ASSERT(NT_SUCCESS(dispatchStatus));
 
             //
             // Failure to dispatch the notification to the specified callback
             // should not be considered a veto.
             //
-            if (!NT_SUCCESS(dispatchStatus)) {
+            if (!NT_SUCCESS(dispatchStatus))
+            {
                 status = STATUS_SUCCESS;
             }
 
@@ -1066,13 +1012,15 @@ Note:
             // to all callers that already got the query.
             //
 
-            if ((!NT_SUCCESS(status)) &&
-                (IopCompareGuid(EventGuid, (LPGUID)&GUID_HWPROFILE_QUERY_CHANGE))) {
+            if ((!NT_SUCCESS(status)) && (IopCompareGuid(EventGuid, (LPGUID)&GUID_HWPROFILE_QUERY_CHANGE)))
+            {
 
-                if (VetoType) {
+                if (VetoType)
+                {
                     *VetoType = PNP_VetoDriver;
                 }
-                if (VetoName) {
+                if (VetoName)
+                {
                     VetoName->Length = 0;
                     RtlCopyUnicodeString(VetoName, &pNotifyList->DriverObject->DriverName);
                 }
@@ -1099,29 +1047,30 @@ Note:
                 //
                 ASSERT((PHWPROFILE_NOTIFY_ENTRY)link == vetoEntry);
 
-                do {
+                do
+                {
                     pNotifyList = (PHWPROFILE_NOTIFY_ENTRY)link;
-                    if (!pNotifyList->Unregistered) {
+                    if (!pNotifyList->Unregistered)
+                    {
                         IopReferenceNotify((PNOTIFY_ENTRY_HEADER)pNotifyList);
                         IopReleaseNotifyLock(&IopHwProfileNotifyLock);
 
-                        dispatchStatus = PiNotifyDriverCallback(pNotifyList->CallbackRoutine,
-                                                                &notification,
-                                                                pNotifyList->Context,
-                                                                pNotifyList->SessionId,
-                                                                pNotifyList->OpaqueSession,
-                                                                NULL);
+                        dispatchStatus =
+                            PiNotifyDriverCallback(pNotifyList->CallbackRoutine, &notification, pNotifyList->Context,
+                                                   pNotifyList->SessionId, pNotifyList->OpaqueSession, NULL);
                         ASSERT(NT_SUCCESS(dispatchStatus));
 
                         IopAcquireNotifyLock(&IopHwProfileNotifyLock);
                         link = link->Blink;
                         IopDereferenceNotify((PNOTIFY_ENTRY_HEADER)pNotifyList);
-
-                    } else {
+                    }
+                    else
+                    {
                         link = link->Blink;
                     }
 
-                    if (pNotifyList == vetoEntry) {
+                    if (pNotifyList == vetoEntry)
+                    {
                         //
                         // Dereference the entry which vetoed the query change.
                         //
@@ -1136,42 +1085,40 @@ Note:
             //
             // Reacquire the lock, walk forward, and dereference
             //
-            IopAcquireNotifyLock (&IopHwProfileNotifyLock);
+            IopAcquireNotifyLock(&IopHwProfileNotifyLock);
             link = link->Flink;
             IopDereferenceNotify((PNOTIFY_ENTRY_HEADER)pNotifyList);
-            pNotifyList=(PHWPROFILE_NOTIFY_ENTRY)link;
-
-        } else {
+            pNotifyList = (PHWPROFILE_NOTIFY_ENTRY)link;
+        }
+        else
+        {
             //
             //Walk forward if we hit an unregistered node
             //
-            if (pNotifyList) {
+            if (pNotifyList)
+            {
                 //
                 //walk forward
                 //
                 link = link->Flink;
-                pNotifyList=(PHWPROFILE_NOTIFY_ENTRY)link;
+                pNotifyList = (PHWPROFILE_NOTIFY_ENTRY)link;
             }
         }
     }
 
- Clean0:
+Clean0:
 
     //UnLock the Profile Notification List
-    IopReleaseNotifyLock (&IopHwProfileNotifyLock);
+    IopReleaseNotifyLock(&IopHwProfileNotifyLock);
 
     return status;
 }
 
 
-
 NTSTATUS
-IopNotifyTargetDeviceChange(
-    IN  LPCGUID                             EventGuid,
-    IN  PDEVICE_OBJECT                      DeviceObject,
-    IN  PTARGET_DEVICE_CUSTOM_NOTIFICATION  NotificationStructure   OPTIONAL,
-    OUT PDRIVER_OBJECT                     *VetoingDriver
-    )
+IopNotifyTargetDeviceChange(IN LPCGUID EventGuid, IN PDEVICE_OBJECT DeviceObject,
+                            IN PTARGET_DEVICE_CUSTOM_NOTIFICATION NotificationStructure OPTIONAL,
+                            OUT PDRIVER_OBJECT *VetoingDriver)
 /*++
 
 Routine Description:
@@ -1230,14 +1177,16 @@ Note:
     ASSERT(deviceNode != NULL);
 
 
-    if (ARGUMENT_PRESENT(NotificationStructure)) {
+    if (ARGUMENT_PRESENT(NotificationStructure))
+    {
 
         //
         // We're handling a custom notification
         //
         NotificationStructure->Version = PNP_NOTIFICATION_VERSION;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Fill in the notification structure
@@ -1259,9 +1208,12 @@ Note:
 
     reverse = (BOOLEAN)IopCompareGuid(EventGuid, (LPGUID)&GUID_TARGET_DEVICE_REMOVE_CANCELLED);
 
-    if (reverse) {
+    if (reverse)
+    {
         link = deviceNode->TargetDeviceNotify.Blink;
-    } else {
+    }
+    else
+    {
         link = deviceNode->TargetDeviceNotify.Flink;
     }
 
@@ -1269,7 +1221,8 @@ Note:
     // Iterate through the list
     //
 
-    while (link != &deviceNode->TargetDeviceNotify) {
+    while (link != &deviceNode->TargetDeviceNotify)
+    {
 
         entry = (PTARGET_DEVICE_NOTIFY_ENTRY)link;
 
@@ -1277,7 +1230,8 @@ Note:
         // Only callback on registered nodes
         //
 
-        if (!entry->Unregistered) {
+        if (!entry->Unregistered)
+        {
 
             //
             // Reference the entry so that no one deletes during the callback
@@ -1291,10 +1245,13 @@ Note:
             // object in the notification structure to that for the current
             // entry
             //
-            if (ARGUMENT_PRESENT(NotificationStructure)) {
+            if (ARGUMENT_PRESENT(NotificationStructure))
+            {
                 NotificationStructure->FileObject = entry->FileObject;
                 notification = (PVOID)NotificationStructure;
-            } else {
+            }
+            else
+            {
                 targetNotification.FileObject = entry->FileObject;
                 notification = (PVOID)&targetNotification;
             }
@@ -1303,19 +1260,16 @@ Note:
             // Dispatch the notification to the callback routine for the
             // appropriate session.
             //
-            dispatchStatus = PiNotifyDriverCallback(entry->CallbackRoutine,
-                                                    notification,
-                                                    entry->Context,
-                                                    entry->SessionId,
-                                                    entry->OpaqueSession,
-                                                    &status);
+            dispatchStatus = PiNotifyDriverCallback(entry->CallbackRoutine, notification, entry->Context,
+                                                    entry->SessionId, entry->OpaqueSession, &status);
             ASSERT(NT_SUCCESS(dispatchStatus));
 
             //
             // Failure to dispatch the notification to the specified callback
             // should not be considered a veto.
             //
-            if (!NT_SUCCESS(dispatchStatus)) {
+            if (!NT_SUCCESS(dispatchStatus))
+            {
                 status = STATUS_SUCCESS;
             }
 
@@ -1324,13 +1278,16 @@ Note:
             // a query remove, we veto the query remove and send cancels to
             // all callers that already got the query remove.
             //
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
 
-                if (IopCompareGuid(EventGuid, (LPGUID)&GUID_TARGET_DEVICE_QUERY_REMOVE)) {
+                if (IopCompareGuid(EventGuid, (LPGUID)&GUID_TARGET_DEVICE_QUERY_REMOVE))
+                {
 
                     ASSERT(notification == (PVOID)&targetNotification);
 
-                    if (VetoingDriver != NULL) {
+                    if (VetoingDriver != NULL)
+                    {
                         *VetoingDriver = entry->DriverObject;
                     }
 
@@ -1355,9 +1312,11 @@ Note:
                     //
                     ASSERT((PTARGET_DEVICE_NOTIFY_ENTRY)link == vetoEntry);
 
-                    do {
+                    do
+                    {
                         entry = (PTARGET_DEVICE_NOTIFY_ENTRY)link;
-                        if (!entry->Unregistered) {
+                        if (!entry->Unregistered)
+                        {
 
                             //
                             // Reference the entry so that no one deletes during
@@ -1376,12 +1335,9 @@ Note:
                             // Dispatch the notification to the callback routine
                             // for the appropriate session.
                             //
-                            dispatchStatus = PiNotifyDriverCallback(entry->CallbackRoutine,
-                                                                    &targetNotification,
-                                                                    entry->Context,
-                                                                    entry->SessionId,
-                                                                    entry->OpaqueSession,
-                                                                    NULL);
+                            dispatchStatus =
+                                PiNotifyDriverCallback(entry->CallbackRoutine, &targetNotification, entry->Context,
+                                                       entry->SessionId, entry->OpaqueSession, NULL);
                             ASSERT(NT_SUCCESS(dispatchStatus));
 
                             //
@@ -1389,13 +1345,15 @@ Note:
                             //
                             IopAcquireNotifyLock(&IopTargetDeviceNotifyLock);
                             link = link->Blink;
-                            IopDereferenceNotify( (PNOTIFY_ENTRY_HEADER) entry );
-
-                        } else {
+                            IopDereferenceNotify((PNOTIFY_ENTRY_HEADER)entry);
+                        }
+                        else
+                        {
                             link = link->Blink;
                         }
 
-                        if (entry == vetoEntry) {
+                        if (entry == vetoEntry)
+                        {
                             //
                             // Dereference the entry which vetoed the query remove.
                             //
@@ -1405,19 +1363,17 @@ Note:
                     } while (link != &deviceNode->TargetDeviceNotify);
 
                     goto Clean0;
-
-                } else {
+                }
+                else
+                {
 
                     ASSERT(notification == (PVOID)NotificationStructure);
 
-                    IopDbgPrint((
-                        IOP_IOEVENT_ERROR_LEVEL,
-                        "IopNotifyTargetDeviceChange: "
-                        "Driver %Z, handler @ 0x%p failed non-failable notification 0x%p with return code %x\n",
-                        &entry->DriverObject->DriverName,
-                        entry->CallbackRoutine,
-                        notification,
-                        status));
+                    IopDbgPrint(
+                        (IOP_IOEVENT_ERROR_LEVEL,
+                         "IopNotifyTargetDeviceChange: "
+                         "Driver %Z, handler @ 0x%p failed non-failable notification 0x%p with return code %x\n",
+                         &entry->DriverObject->DriverName, entry->CallbackRoutine, notification, status));
 
                     DbgBreakPoint();
                 }
@@ -1427,21 +1383,28 @@ Note:
             // Reacquire the lock and dereference
             //
             IopAcquireNotifyLock(&IopTargetDeviceNotifyLock);
-            if (reverse) {
+            if (reverse)
+            {
                 link = link->Blink;
-            } else {
+            }
+            else
+            {
                 link = link->Flink;
             }
             IopDereferenceNotify((PNOTIFY_ENTRY_HEADER)entry);
-
-        } else {
+        }
+        else
+        {
 
             //
             // Advance down the list
             //
-            if (reverse) {
+            if (reverse)
+            {
                 link = link->Blink;
-            } else {
+            }
+            else
+            {
                 link = link->Flink;
             }
         }
@@ -1466,13 +1429,8 @@ Clean0:
 }
 
 
-
 NTSTATUS
-IopNotifyDeviceClassChange(
-    LPGUID EventGuid,
-    LPGUID ClassGuid,
-    PUNICODE_STRING SymbolicLinkName
-    )
+IopNotifyDeviceClassChange(LPGUID EventGuid, LPGUID ClassGuid, PUNICODE_STRING SymbolicLinkName)
 
 /*++
 
@@ -1540,21 +1498,23 @@ Note:
     // Iterate through the list
     //
 
-    while (link != &IopDeviceClassNotifyList[hash]) {
+    while (link != &IopDeviceClassNotifyList[hash])
+    {
 
-        entry = (PDEVICE_CLASS_NOTIFY_ENTRY) link;
+        entry = (PDEVICE_CLASS_NOTIFY_ENTRY)link;
 
         //
         // Only callback on registered nodes of the correct device class
         //
 
-        if ( !entry->Unregistered && IopCompareGuid(&(entry->ClassGuid), ClassGuid) ) {
+        if (!entry->Unregistered && IopCompareGuid(&(entry->ClassGuid), ClassGuid))
+        {
 
             //
             // Reference the entry so that no one deletes during the callback
             // and then release the lock
             //
-            IopReferenceNotify( (PNOTIFY_ENTRY_HEADER) entry );
+            IopReferenceNotify((PNOTIFY_ENTRY_HEADER)entry);
             IopReleaseNotifyLock(&IopDeviceClassNotifyLock);
 
             //
@@ -1562,12 +1522,8 @@ Note:
             // appropriate session.  Ignore the returned result for non-query
             // type events.
             //
-            dispatchStatus = PiNotifyDriverCallback(entry->CallbackRoutine,
-                                                    &notification,
-                                                    entry->Context,
-                                                    entry->SessionId,
-                                                    entry->OpaqueSession,
-                                                    &status);
+            dispatchStatus = PiNotifyDriverCallback(entry->CallbackRoutine, &notification, entry->Context,
+                                                    entry->SessionId, entry->OpaqueSession, &status);
 
             ASSERT(NT_SUCCESS(dispatchStatus));
 
@@ -1583,9 +1539,10 @@ Note:
 
             IopAcquireNotifyLock(&IopDeviceClassNotifyLock);
             link = link->Flink;
-            IopDereferenceNotify( (PNOTIFY_ENTRY_HEADER) entry );
-
-        } else {
+            IopDereferenceNotify((PNOTIFY_ENTRY_HEADER)entry);
+        }
+        else
+        {
 
             //
             // Advance down the list
@@ -1605,17 +1562,11 @@ Note:
 }
 
 
-
 NTSTATUS
-IoRegisterPlugPlayNotification(
-    IN IO_NOTIFICATION_EVENT_CATEGORY EventCategory,
-    IN ULONG EventCategoryFlags,
-    IN PVOID EventCategoryData OPTIONAL,
-    IN PDRIVER_OBJECT DriverObject,
-    IN PDRIVER_NOTIFICATION_CALLBACK_ROUTINE CallbackRoutine,
-    IN PVOID Context,
-    OUT PVOID *NotificationEntry
-    )
+IoRegisterPlugPlayNotification(IN IO_NOTIFICATION_EVENT_CATEGORY EventCategory, IN ULONG EventCategoryFlags,
+                               IN PVOID EventCategoryData OPTIONAL, IN PDRIVER_OBJECT DriverObject,
+                               IN PDRIVER_NOTIFICATION_CALLBACK_ROUTINE CallbackRoutine, IN PVOID Context,
+                               OUT PVOID *NotificationEntry)
 /*++
 
 Routine Description:
@@ -1699,487 +1650,505 @@ Arguments:
     // Reference the driver object so it doesn't go away while we still have
     // a pointer outstanding
     //
-    status = ObReferenceObjectByPointer(DriverObject,
-                                        0,
-                                        IoDriverObjectType,
-                                        KernelMode
-                                        );
+    status = ObReferenceObjectByPointer(DriverObject, 0, IoDriverObjectType, KernelMode);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
-    switch (EventCategory) {
+    switch (EventCategory)
+    {
 
     case EventCategoryReserved:
+    {
+
+        PSETUP_NOTIFY_DATA setupData;
+
+        //
+        // Note that the only setup notification callback currently supported
+        // (setupdd.sys) is never in session space.
+        //
+
+        ASSERT(MmIsSessionAddress((PVOID)CallbackRoutine) == FALSE);
+        ASSERT(MmGetSessionId(PsGetCurrentProcess()) == 0);
+
+        //
+        // Allocate space for the setup data
+        //
+
+        setupData = ExAllocatePool(PagedPool, sizeof(SETUP_NOTIFY_DATA));
+        if (!setupData)
         {
-
-            PSETUP_NOTIFY_DATA setupData;
-
-            //
-            // Note that the only setup notification callback currently supported
-            // (setupdd.sys) is never in session space.
-            //
-
-            ASSERT(MmIsSessionAddress((PVOID)CallbackRoutine) == FALSE);
-            ASSERT(MmGetSessionId(PsGetCurrentProcess()) == 0);
-
-            //
-            // Allocate space for the setup data
-            //
-
-            setupData = ExAllocatePool(PagedPool, sizeof(SETUP_NOTIFY_DATA));
-            if (!setupData) {
-                status = STATUS_INSUFFICIENT_RESOURCES;
-                goto clean0;
-            }
-
-            //
-            // Store the required information
-            //
-
-            InitializeListHead(&(setupData->ListEntry));
-            setupData->EventCategory = EventCategory;
-            setupData->SessionId = MmGetSessionId(PsGetCurrentProcess());
-            setupData->CallbackRoutine = CallbackRoutine;
-            setupData->Context = Context;
-            setupData->RefCount = 1;
-            setupData->Unregistered = FALSE;
-            setupData->Lock = NULL;
-            setupData->DriverObject = DriverObject;
-
-            //
-            // Reference the session object only if the callback is in session space
-            //
-
-            if (MmIsSessionAddress((PVOID)CallbackRoutine)) {
-                setupData->OpaqueSession = MmGetSessionById(setupData->SessionId);
-            } else {
-                setupData->OpaqueSession = NULL;
-            }
-
-            //
-            // Activate the notifications
-            //
-
-            IopSetupNotifyData = setupData;
-
-            //
-            // Explicitly NULL out the returned entry as you can *NOT* unregister
-            // for setup notifications
-            //
-
-            *NotificationEntry = NULL;
-
-            break;
-
+            status = STATUS_INSUFFICIENT_RESOURCES;
+            goto clean0;
         }
 
-    case EventCategoryHardwareProfileChange:
+        //
+        // Store the required information
+        //
+
+        InitializeListHead(&(setupData->ListEntry));
+        setupData->EventCategory = EventCategory;
+        setupData->SessionId = MmGetSessionId(PsGetCurrentProcess());
+        setupData->CallbackRoutine = CallbackRoutine;
+        setupData->Context = Context;
+        setupData->RefCount = 1;
+        setupData->Unregistered = FALSE;
+        setupData->Lock = NULL;
+        setupData->DriverObject = DriverObject;
+
+        //
+        // Reference the session object only if the callback is in session space
+        //
+
+        if (MmIsSessionAddress((PVOID)CallbackRoutine))
         {
-            PHWPROFILE_NOTIFY_ENTRY entry;
-
-            //
-            // new entry
-            //
-            entry =ExAllocatePool (PagedPool,sizeof (HWPROFILE_NOTIFY_ENTRY));
-            if (!entry) {
-                status = STATUS_INSUFFICIENT_RESOURCES;
-                goto clean0;
-            }
-
-            //
-            // grab the fields
-            //
-
-            entry->EventCategory = EventCategory;
-            entry->SessionId = MmGetSessionId(PsGetCurrentProcess());
-            entry->CallbackRoutine = CallbackRoutine;
-            entry->Context = Context;
-            entry->RefCount = 1;
-            entry->Unregistered = FALSE;
-            entry->Lock = &IopHwProfileNotifyLock;
-            entry->DriverObject = DriverObject;
-
-            //
-            // Reference the session object only if the callback is in session space
-            //
-
-            if (MmIsSessionAddress((PVOID)CallbackRoutine)) {
-                entry->OpaqueSession = MmGetSessionById(entry->SessionId);
-            } else {
-                entry->OpaqueSession = NULL;
-            }
-
-            ExAcquireFastMutex(&PiNotificationInProgressLock);
-            if (PiNotificationInProgress) {
-                //
-                // If a notification is in progress, mark the entry as
-                // Unregistered until after the current notification is
-                // complete.
-                //
-
-                PDEFERRED_REGISTRATION_ENTRY deferredNode;
-
-                deferredNode = ExAllocatePool(PagedPool, sizeof(DEFERRED_REGISTRATION_ENTRY));
-                if (!deferredNode) {
-                    ExReleaseFastMutex(&PiNotificationInProgressLock);
-                    status = STATUS_INSUFFICIENT_RESOURCES;
-                    goto clean0;
-                }
-
-                deferredNode->NotifyEntry = (PNOTIFY_ENTRY_HEADER)entry;
-
-                //
-                // Consider this entry unregistered during the current
-                // notification
-                //
-                entry->Unregistered = TRUE;
-
-                //
-                // Reference the entry so that it doesn't go away until it has
-                // been removed from the deferred registration list
-                //
-                IopReferenceNotify((PNOTIFY_ENTRY_HEADER)entry);
-
-                //
-                // Add this entry to the deferred registration list
-                //
-                IopAcquireNotifyLock(&IopDeferredRegistrationLock);
-                InsertTailList(&IopDeferredRegistrationList, (PLIST_ENTRY)deferredNode);
-                IopReleaseNotifyLock(&IopDeferredRegistrationLock);
-            } else {
-                //
-                // If there is currently no notification in progress, the deferred
-                // registration list must be empty.
-                //
-                ASSERT(IsListEmpty(&IopDeferredRegistrationList));
-            }
-            ExReleaseFastMutex(&PiNotificationInProgressLock);
-
-            //
-            // Lock the list, insert the new entry, and unlock it.
-            //
-
-            IopAcquireNotifyLock(&IopHwProfileNotifyLock);
-            InsertTailList(&IopProfileNotifyList, (PLIST_ENTRY)entry);
-            IopReleaseNotifyLock(&IopHwProfileNotifyLock);
-
-            *NotificationEntry = entry;
-
-            break;
+            setupData->OpaqueSession = MmGetSessionById(setupData->SessionId);
         }
-    case EventCategoryTargetDeviceChange:
+        else
         {
-            PTARGET_DEVICE_NOTIFY_ENTRY entry;
-            PDEVICE_NODE deviceNode;
-
-            ASSERT(EventCategoryData);
-
-            //
-            // Allocate a new list entry
-            //
-
-            entry = ExAllocatePool(PagedPool, sizeof(TARGET_DEVICE_NOTIFY_ENTRY));
-            if (!entry) {
-                status = STATUS_INSUFFICIENT_RESOURCES;
-                goto clean0;
-            }
-
-            //
-            // Retrieve the device object associated with this file handle.
-            //
-            status = IopGetRelatedTargetDevice((PFILE_OBJECT)EventCategoryData,
-                                               &deviceNode);
-            if (!NT_SUCCESS(status)) {
-                ExFreePool(entry);
-                goto clean0;
-            }
-
-            //
-            // Fill out the entry
-            //
-
-            entry->EventCategory = EventCategory;
-            entry->SessionId = MmGetSessionId(PsGetCurrentProcess());
-            entry->CallbackRoutine = CallbackRoutine;
-            entry->Context = Context;
-            entry->DriverObject = DriverObject;
-            entry->RefCount = 1;
-            entry->Unregistered = FALSE;
-            entry->Lock = &IopTargetDeviceNotifyLock;
-            entry->FileObject = (PFILE_OBJECT)EventCategoryData;
-
-            //
-            // Reference the session object only if the callback is in session space
-            //
-
-            if (MmIsSessionAddress((PVOID)CallbackRoutine)) {
-                entry->OpaqueSession = MmGetSessionById(entry->SessionId);
-            } else {
-                entry->OpaqueSession = NULL;
-            }
-
-            //
-            // The PDO associated with the devnode we got back from
-            // IopGetRelatedTargetDevice has already been referenced by that
-            // routine.  Store this reference away in the notification entry,
-            // so we can deref it later when the notification entry is unregistered.
-            //
-
-            ASSERT(deviceNode->PhysicalDeviceObject);
-            entry->PhysicalDeviceObject = deviceNode->PhysicalDeviceObject;
-
-            ExAcquireFastMutex(&PiNotificationInProgressLock);
-            if (PiNotificationInProgress) {
-                //
-                // If a notification is in progress, mark the entry as
-                // Unregistered until after the current notification is
-                // complete.
-                //
-
-                PDEFERRED_REGISTRATION_ENTRY deferredNode;
-
-                deferredNode = ExAllocatePool(PagedPool, sizeof(DEFERRED_REGISTRATION_ENTRY));
-                if (!deferredNode) {
-                    ExReleaseFastMutex(&PiNotificationInProgressLock);
-                    status = STATUS_INSUFFICIENT_RESOURCES;
-                    goto clean0;
-                }
-
-                deferredNode->NotifyEntry = (PNOTIFY_ENTRY_HEADER)entry;
-
-                //
-                // Consider this entry unregistered during the current
-                // notification
-                //
-                entry->Unregistered = TRUE;
-
-                //
-                // Reference the entry so that it doesn't go away until it has
-                // been removed from the deferred registration list
-                //
-                IopReferenceNotify((PNOTIFY_ENTRY_HEADER)entry);
-
-                //
-                // Add this entry to the deferred registration list
-                //
-                IopAcquireNotifyLock(&IopDeferredRegistrationLock);
-                InsertTailList(&IopDeferredRegistrationList, (PLIST_ENTRY)deferredNode);
-                IopReleaseNotifyLock(&IopDeferredRegistrationLock);
-            } else {
-                //
-                // If there is currently no notification in progress, the deferred
-                // registration list must be empty.
-                //
-                ASSERT(IsListEmpty(&IopDeferredRegistrationList));
-            }
-            ExReleaseFastMutex(&PiNotificationInProgressLock);
-
-            //
-            // Lock the list, insert the new entry, and unlock it.
-            //
-
-            IopAcquireNotifyLock(&IopTargetDeviceNotifyLock);
-            InsertTailList(&deviceNode->TargetDeviceNotify, (PLIST_ENTRY)entry);
-            IopReleaseNotifyLock(&IopTargetDeviceNotifyLock);
-
-            *NotificationEntry = entry;
-            break;
+            setupData->OpaqueSession = NULL;
         }
 
-    case EventCategoryDeviceInterfaceChange:
-        {
-            PDEVICE_CLASS_NOTIFY_ENTRY entry;
+        //
+        // Activate the notifications
+        //
 
-            ASSERT(EventCategoryData);
+        IopSetupNotifyData = setupData;
 
-            //
-            // Allocate a new list entry
-            //
+        //
+        // Explicitly NULL out the returned entry as you can *NOT* unregister
+        // for setup notifications
+        //
 
-            entry = ExAllocatePool(PagedPool, sizeof(DEVICE_CLASS_NOTIFY_ENTRY));
-            if (!entry) {
-                status = STATUS_INSUFFICIENT_RESOURCES;
-                goto clean0;
-            }
-
-            //
-            // Fill out the entry
-            //
-
-            entry->EventCategory = EventCategory;
-            entry->SessionId = MmGetSessionId(PsGetCurrentProcess());
-            entry->CallbackRoutine = CallbackRoutine;
-            entry->Context = Context;
-            entry->ClassGuid = *((LPGUID) EventCategoryData);
-            entry->RefCount = 1;
-            entry->Unregistered = FALSE;
-            entry->Lock = &IopDeviceClassNotifyLock;
-            entry->DriverObject = DriverObject;
-
-            //
-            // Reference the session object only if the callback is in session space
-            //
-
-            if (MmIsSessionAddress((PVOID)CallbackRoutine)) {
-                entry->OpaqueSession = MmGetSessionById(entry->SessionId);
-            } else {
-                entry->OpaqueSession = NULL;
-            }
-
-            ExAcquireFastMutex(&PiNotificationInProgressLock);
-            if (PiNotificationInProgress) {
-                //
-                // If a notification is in progress, mark the entry as
-                // Unregistered until after the current notification is
-                // complete.
-                //
-
-                PDEFERRED_REGISTRATION_ENTRY deferredNode;
-
-                deferredNode = ExAllocatePool(PagedPool, sizeof(DEFERRED_REGISTRATION_ENTRY));
-                if (!deferredNode) {
-                    ExReleaseFastMutex(&PiNotificationInProgressLock);
-                    status = STATUS_INSUFFICIENT_RESOURCES;
-                    goto clean0;
-                }
-
-                deferredNode->NotifyEntry = (PNOTIFY_ENTRY_HEADER)entry;
-
-                //
-                // Consider this entry unregistered during the current
-                // notification
-                //
-                entry->Unregistered = TRUE;
-
-                //
-                // Reference the entry so that it doesn't go away until it has
-                // been removed from the deferred registration list
-                //
-                IopReferenceNotify((PNOTIFY_ENTRY_HEADER)entry);
-
-                //
-                // Add this entry to the deferred registration list
-                //
-                IopAcquireNotifyLock(&IopDeferredRegistrationLock);
-                InsertTailList(&IopDeferredRegistrationList, (PLIST_ENTRY)deferredNode);
-                IopReleaseNotifyLock(&IopDeferredRegistrationLock);
-            } else {
-                //
-                // If there is currently no notification in progress, the deferred
-                // registration list must be empty.
-                //
-                ASSERT(IsListEmpty(&IopDeferredRegistrationList));
-            }
-            ExReleaseFastMutex(&PiNotificationInProgressLock);
-
-            //
-            // Lock the list
-            //
-
-            IopAcquireNotifyLock(&IopDeviceClassNotifyLock);
-
-            //
-            // Insert it at the tail
-            //
-
-            InsertTailList( (PLIST_ENTRY) &(IopDeviceClassNotifyList[ IopHashGuid(&(entry->ClassGuid)) ]),
-                            (PLIST_ENTRY) entry
-                          );
-
-            //
-            // Unlock the list
-            //
-
-            IopReleaseNotifyLock(&IopDeviceClassNotifyLock);
-
-            //
-            // See if we need to notify for all the device classes already present
-            //
-
-            if (EventCategoryFlags & PNPNOTIFY_DEVICE_INTERFACE_INCLUDE_EXISTING_INTERFACES) {
-
-                PWCHAR pSymbolicLinks, pCurrent;
-                DEVICE_INTERFACE_CHANGE_NOTIFICATION notification;
-                UNICODE_STRING unicodeString;
-
-                //
-                // Fill in the notification structure
-                //
-
-                notification.Version = PNP_NOTIFICATION_VERSION;
-                notification.Size = sizeof(DEVICE_INTERFACE_CHANGE_NOTIFICATION);
-                notification.Event = GUID_DEVICE_INTERFACE_ARRIVAL;
-                notification.InterfaceClassGuid = entry->ClassGuid;
-
-                //
-                // Get the list of all the devices of this function class that are
-                // already in the system
-                //
-
-                status = IoGetDeviceInterfaces(&(entry->ClassGuid),
-                                                NULL,
-                                                0,
-                                                &pSymbolicLinks
-                                                );
-                if (!NT_SUCCESS(status)) {
-                    //
-                    // No buffer will have been returned so just return status
-                    //
-                    goto clean0;
-                }
-
-                //
-                // Callback for each device currently in the system
-                //
-
-                pCurrent = pSymbolicLinks;
-                while(*pCurrent != UNICODE_NULL) {
-
-                    NTSTATUS dispatchStatus, tempStatus;
-
-                    RtlInitUnicodeString(&unicodeString, pCurrent);
-                    notification.SymbolicLinkName = &unicodeString;
-
-                    //
-                    // Dispatch the notification to the callback routine for the
-                    // appropriate session.  Ignore the returned result for non-query
-                    // type events.
-                    //
-                    dispatchStatus = PiNotifyDriverCallback(CallbackRoutine,
-                                                            &notification,
-                                                            Context,
-                                                            entry->SessionId,
-                                                            entry->OpaqueSession,
-                                                            &tempStatus);
-
-                    //
-                    // ISSUE -2000/11/27 - JAMESCA: Overactive assert
-                    //     ClusDisk failed here. The code in question is being
-                    // removed, but we don't we want to make sure we flush
-                    // anyone else out before we enable it again.
-                    //
-                    //ASSERT(NT_SUCCESS(dispatchStatus) && NT_SUCCESS(tempStatus));
-                    ASSERT(NT_SUCCESS(dispatchStatus));
-
-                    pCurrent += (unicodeString.Length / sizeof(WCHAR)) + 1;
-
-                }
-
-                ExFreePool(pSymbolicLinks);
-
-            }
-
-            *NotificationEntry = entry;
-        }
+        *NotificationEntry = NULL;
 
         break;
     }
 
+    case EventCategoryHardwareProfileChange:
+    {
+        PHWPROFILE_NOTIFY_ENTRY entry;
+
+        //
+        // new entry
+        //
+        entry = ExAllocatePool(PagedPool, sizeof(HWPROFILE_NOTIFY_ENTRY));
+        if (!entry)
+        {
+            status = STATUS_INSUFFICIENT_RESOURCES;
+            goto clean0;
+        }
+
+        //
+        // grab the fields
+        //
+
+        entry->EventCategory = EventCategory;
+        entry->SessionId = MmGetSessionId(PsGetCurrentProcess());
+        entry->CallbackRoutine = CallbackRoutine;
+        entry->Context = Context;
+        entry->RefCount = 1;
+        entry->Unregistered = FALSE;
+        entry->Lock = &IopHwProfileNotifyLock;
+        entry->DriverObject = DriverObject;
+
+        //
+        // Reference the session object only if the callback is in session space
+        //
+
+        if (MmIsSessionAddress((PVOID)CallbackRoutine))
+        {
+            entry->OpaqueSession = MmGetSessionById(entry->SessionId);
+        }
+        else
+        {
+            entry->OpaqueSession = NULL;
+        }
+
+        ExAcquireFastMutex(&PiNotificationInProgressLock);
+        if (PiNotificationInProgress)
+        {
+            //
+            // If a notification is in progress, mark the entry as
+            // Unregistered until after the current notification is
+            // complete.
+            //
+
+            PDEFERRED_REGISTRATION_ENTRY deferredNode;
+
+            deferredNode = ExAllocatePool(PagedPool, sizeof(DEFERRED_REGISTRATION_ENTRY));
+            if (!deferredNode)
+            {
+                ExReleaseFastMutex(&PiNotificationInProgressLock);
+                status = STATUS_INSUFFICIENT_RESOURCES;
+                goto clean0;
+            }
+
+            deferredNode->NotifyEntry = (PNOTIFY_ENTRY_HEADER)entry;
+
+            //
+            // Consider this entry unregistered during the current
+            // notification
+            //
+            entry->Unregistered = TRUE;
+
+            //
+            // Reference the entry so that it doesn't go away until it has
+            // been removed from the deferred registration list
+            //
+            IopReferenceNotify((PNOTIFY_ENTRY_HEADER)entry);
+
+            //
+            // Add this entry to the deferred registration list
+            //
+            IopAcquireNotifyLock(&IopDeferredRegistrationLock);
+            InsertTailList(&IopDeferredRegistrationList, (PLIST_ENTRY)deferredNode);
+            IopReleaseNotifyLock(&IopDeferredRegistrationLock);
+        }
+        else
+        {
+            //
+            // If there is currently no notification in progress, the deferred
+            // registration list must be empty.
+            //
+            ASSERT(IsListEmpty(&IopDeferredRegistrationList));
+        }
+        ExReleaseFastMutex(&PiNotificationInProgressLock);
+
+        //
+        // Lock the list, insert the new entry, and unlock it.
+        //
+
+        IopAcquireNotifyLock(&IopHwProfileNotifyLock);
+        InsertTailList(&IopProfileNotifyList, (PLIST_ENTRY)entry);
+        IopReleaseNotifyLock(&IopHwProfileNotifyLock);
+
+        *NotificationEntry = entry;
+
+        break;
+    }
+    case EventCategoryTargetDeviceChange:
+    {
+        PTARGET_DEVICE_NOTIFY_ENTRY entry;
+        PDEVICE_NODE deviceNode;
+
+        ASSERT(EventCategoryData);
+
+        //
+        // Allocate a new list entry
+        //
+
+        entry = ExAllocatePool(PagedPool, sizeof(TARGET_DEVICE_NOTIFY_ENTRY));
+        if (!entry)
+        {
+            status = STATUS_INSUFFICIENT_RESOURCES;
+            goto clean0;
+        }
+
+        //
+        // Retrieve the device object associated with this file handle.
+        //
+        status = IopGetRelatedTargetDevice((PFILE_OBJECT)EventCategoryData, &deviceNode);
+        if (!NT_SUCCESS(status))
+        {
+            ExFreePool(entry);
+            goto clean0;
+        }
+
+        //
+        // Fill out the entry
+        //
+
+        entry->EventCategory = EventCategory;
+        entry->SessionId = MmGetSessionId(PsGetCurrentProcess());
+        entry->CallbackRoutine = CallbackRoutine;
+        entry->Context = Context;
+        entry->DriverObject = DriverObject;
+        entry->RefCount = 1;
+        entry->Unregistered = FALSE;
+        entry->Lock = &IopTargetDeviceNotifyLock;
+        entry->FileObject = (PFILE_OBJECT)EventCategoryData;
+
+        //
+        // Reference the session object only if the callback is in session space
+        //
+
+        if (MmIsSessionAddress((PVOID)CallbackRoutine))
+        {
+            entry->OpaqueSession = MmGetSessionById(entry->SessionId);
+        }
+        else
+        {
+            entry->OpaqueSession = NULL;
+        }
+
+        //
+        // The PDO associated with the devnode we got back from
+        // IopGetRelatedTargetDevice has already been referenced by that
+        // routine.  Store this reference away in the notification entry,
+        // so we can deref it later when the notification entry is unregistered.
+        //
+
+        ASSERT(deviceNode->PhysicalDeviceObject);
+        entry->PhysicalDeviceObject = deviceNode->PhysicalDeviceObject;
+
+        ExAcquireFastMutex(&PiNotificationInProgressLock);
+        if (PiNotificationInProgress)
+        {
+            //
+            // If a notification is in progress, mark the entry as
+            // Unregistered until after the current notification is
+            // complete.
+            //
+
+            PDEFERRED_REGISTRATION_ENTRY deferredNode;
+
+            deferredNode = ExAllocatePool(PagedPool, sizeof(DEFERRED_REGISTRATION_ENTRY));
+            if (!deferredNode)
+            {
+                ExReleaseFastMutex(&PiNotificationInProgressLock);
+                status = STATUS_INSUFFICIENT_RESOURCES;
+                goto clean0;
+            }
+
+            deferredNode->NotifyEntry = (PNOTIFY_ENTRY_HEADER)entry;
+
+            //
+            // Consider this entry unregistered during the current
+            // notification
+            //
+            entry->Unregistered = TRUE;
+
+            //
+            // Reference the entry so that it doesn't go away until it has
+            // been removed from the deferred registration list
+            //
+            IopReferenceNotify((PNOTIFY_ENTRY_HEADER)entry);
+
+            //
+            // Add this entry to the deferred registration list
+            //
+            IopAcquireNotifyLock(&IopDeferredRegistrationLock);
+            InsertTailList(&IopDeferredRegistrationList, (PLIST_ENTRY)deferredNode);
+            IopReleaseNotifyLock(&IopDeferredRegistrationLock);
+        }
+        else
+        {
+            //
+            // If there is currently no notification in progress, the deferred
+            // registration list must be empty.
+            //
+            ASSERT(IsListEmpty(&IopDeferredRegistrationList));
+        }
+        ExReleaseFastMutex(&PiNotificationInProgressLock);
+
+        //
+        // Lock the list, insert the new entry, and unlock it.
+        //
+
+        IopAcquireNotifyLock(&IopTargetDeviceNotifyLock);
+        InsertTailList(&deviceNode->TargetDeviceNotify, (PLIST_ENTRY)entry);
+        IopReleaseNotifyLock(&IopTargetDeviceNotifyLock);
+
+        *NotificationEntry = entry;
+        break;
+    }
+
+    case EventCategoryDeviceInterfaceChange:
+    {
+        PDEVICE_CLASS_NOTIFY_ENTRY entry;
+
+        ASSERT(EventCategoryData);
+
+        //
+        // Allocate a new list entry
+        //
+
+        entry = ExAllocatePool(PagedPool, sizeof(DEVICE_CLASS_NOTIFY_ENTRY));
+        if (!entry)
+        {
+            status = STATUS_INSUFFICIENT_RESOURCES;
+            goto clean0;
+        }
+
+        //
+        // Fill out the entry
+        //
+
+        entry->EventCategory = EventCategory;
+        entry->SessionId = MmGetSessionId(PsGetCurrentProcess());
+        entry->CallbackRoutine = CallbackRoutine;
+        entry->Context = Context;
+        entry->ClassGuid = *((LPGUID)EventCategoryData);
+        entry->RefCount = 1;
+        entry->Unregistered = FALSE;
+        entry->Lock = &IopDeviceClassNotifyLock;
+        entry->DriverObject = DriverObject;
+
+        //
+        // Reference the session object only if the callback is in session space
+        //
+
+        if (MmIsSessionAddress((PVOID)CallbackRoutine))
+        {
+            entry->OpaqueSession = MmGetSessionById(entry->SessionId);
+        }
+        else
+        {
+            entry->OpaqueSession = NULL;
+        }
+
+        ExAcquireFastMutex(&PiNotificationInProgressLock);
+        if (PiNotificationInProgress)
+        {
+            //
+            // If a notification is in progress, mark the entry as
+            // Unregistered until after the current notification is
+            // complete.
+            //
+
+            PDEFERRED_REGISTRATION_ENTRY deferredNode;
+
+            deferredNode = ExAllocatePool(PagedPool, sizeof(DEFERRED_REGISTRATION_ENTRY));
+            if (!deferredNode)
+            {
+                ExReleaseFastMutex(&PiNotificationInProgressLock);
+                status = STATUS_INSUFFICIENT_RESOURCES;
+                goto clean0;
+            }
+
+            deferredNode->NotifyEntry = (PNOTIFY_ENTRY_HEADER)entry;
+
+            //
+            // Consider this entry unregistered during the current
+            // notification
+            //
+            entry->Unregistered = TRUE;
+
+            //
+            // Reference the entry so that it doesn't go away until it has
+            // been removed from the deferred registration list
+            //
+            IopReferenceNotify((PNOTIFY_ENTRY_HEADER)entry);
+
+            //
+            // Add this entry to the deferred registration list
+            //
+            IopAcquireNotifyLock(&IopDeferredRegistrationLock);
+            InsertTailList(&IopDeferredRegistrationList, (PLIST_ENTRY)deferredNode);
+            IopReleaseNotifyLock(&IopDeferredRegistrationLock);
+        }
+        else
+        {
+            //
+            // If there is currently no notification in progress, the deferred
+            // registration list must be empty.
+            //
+            ASSERT(IsListEmpty(&IopDeferredRegistrationList));
+        }
+        ExReleaseFastMutex(&PiNotificationInProgressLock);
+
+        //
+        // Lock the list
+        //
+
+        IopAcquireNotifyLock(&IopDeviceClassNotifyLock);
+
+        //
+        // Insert it at the tail
+        //
+
+        InsertTailList((PLIST_ENTRY) & (IopDeviceClassNotifyList[IopHashGuid(&(entry->ClassGuid))]),
+                       (PLIST_ENTRY)entry);
+
+        //
+        // Unlock the list
+        //
+
+        IopReleaseNotifyLock(&IopDeviceClassNotifyLock);
+
+        //
+        // See if we need to notify for all the device classes already present
+        //
+
+        if (EventCategoryFlags & PNPNOTIFY_DEVICE_INTERFACE_INCLUDE_EXISTING_INTERFACES)
+        {
+
+            PWCHAR pSymbolicLinks, pCurrent;
+            DEVICE_INTERFACE_CHANGE_NOTIFICATION notification;
+            UNICODE_STRING unicodeString;
+
+            //
+            // Fill in the notification structure
+            //
+
+            notification.Version = PNP_NOTIFICATION_VERSION;
+            notification.Size = sizeof(DEVICE_INTERFACE_CHANGE_NOTIFICATION);
+            notification.Event = GUID_DEVICE_INTERFACE_ARRIVAL;
+            notification.InterfaceClassGuid = entry->ClassGuid;
+
+            //
+            // Get the list of all the devices of this function class that are
+            // already in the system
+            //
+
+            status = IoGetDeviceInterfaces(&(entry->ClassGuid), NULL, 0, &pSymbolicLinks);
+            if (!NT_SUCCESS(status))
+            {
+                //
+                // No buffer will have been returned so just return status
+                //
+                goto clean0;
+            }
+
+            //
+            // Callback for each device currently in the system
+            //
+
+            pCurrent = pSymbolicLinks;
+            while (*pCurrent != UNICODE_NULL)
+            {
+
+                NTSTATUS dispatchStatus, tempStatus;
+
+                RtlInitUnicodeString(&unicodeString, pCurrent);
+                notification.SymbolicLinkName = &unicodeString;
+
+                //
+                // Dispatch the notification to the callback routine for the
+                // appropriate session.  Ignore the returned result for non-query
+                // type events.
+                //
+                dispatchStatus = PiNotifyDriverCallback(CallbackRoutine, &notification, Context, entry->SessionId,
+                                                        entry->OpaqueSession, &tempStatus);
+
+                //
+                // ISSUE -2000/11/27 - JAMESCA: Overactive assert
+                //     ClusDisk failed here. The code in question is being
+                // removed, but we don't we want to make sure we flush
+                // anyone else out before we enable it again.
+                //
+                //ASSERT(NT_SUCCESS(dispatchStatus) && NT_SUCCESS(tempStatus));
+                ASSERT(NT_SUCCESS(dispatchStatus));
+
+                pCurrent += (unicodeString.Length / sizeof(WCHAR)) + 1;
+            }
+
+            ExFreePool(pSymbolicLinks);
+        }
+
+        *NotificationEntry = entry;
+    }
+
+    break;
+    }
+
 clean0:
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         ObDereferenceObject(DriverObject);
     }
 
@@ -2187,12 +2156,8 @@ clean0:
 }
 
 
-
 NTSTATUS
-IopGetRelatedTargetDevice(
-    IN PFILE_OBJECT FileObject,
-    OUT PDEVICE_NODE *DeviceNode
-    )
+IopGetRelatedTargetDevice(IN PFILE_OBJECT FileObject, OUT PDEVICE_NODE *DeviceNode)
 
 /*++
 
@@ -2232,7 +2197,8 @@ ReturnValue
     //
 
     deviceObject = IoGetRelatedDeviceObject(FileObject);
-    if (!deviceObject) {
+    if (!deviceObject)
+    {
         return STATUS_NO_SUCH_DEVICE;
     }
 
@@ -2251,7 +2217,8 @@ ReturnValue
     irpSp.FileObject = FileObject;
 
     status = IopSynchronousCall(deviceObject, &irpSp, (PULONG_PTR)&deviceRelations);
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 #if 0
         IopDbgPrint((
             IOP_IOEVENT_INFO_LEVEL,
@@ -2266,25 +2233,30 @@ ReturnValue
 
     ASSERT(deviceRelations);
 
-    if (deviceRelations) {
+    if (deviceRelations)
+    {
 
         ASSERT(deviceRelations->Count == 1);
 
-        if (deviceRelations->Count == 1) {
+        if (deviceRelations->Count == 1)
+        {
 
             targetDeviceObject = deviceRelations->Objects[0];
-
-        } else {
+        }
+        else
+        {
 
             targetDeviceObject = NULL;
         }
 
         ExFreePool(deviceRelations);
 
-        if (targetDeviceObject) {
+        if (targetDeviceObject)
+        {
 
-            targetDeviceNode = (PDEVICE_NODE) targetDeviceObject->DeviceObjectExtension->DeviceNode;
-            if (targetDeviceNode) {
+            targetDeviceNode = (PDEVICE_NODE)targetDeviceObject->DeviceObjectExtension->DeviceNode;
+            if (targetDeviceNode)
+            {
 
                 *DeviceNode = targetDeviceNode;
                 return status;
@@ -2297,24 +2269,16 @@ ReturnValue
     // driver. Otherwise, we will ignore this. Note that we would have crashed
     // in Win2K!
     //
-    PpvUtilFailDriver(
-        PPVERROR_MISHANDLED_TARGET_DEVICE_RELATIONS,
-        (PVOID) deviceObject->DriverObject->MajorFunction[IRP_MJ_PNP],
-        deviceObject,
-        NULL
-        );
+    PpvUtilFailDriver(PPVERROR_MISHANDLED_TARGET_DEVICE_RELATIONS,
+                      (PVOID)deviceObject->DriverObject->MajorFunction[IRP_MJ_PNP], deviceObject, NULL);
 
     *DeviceNode = NULL;
     return STATUS_NO_SUCH_DEVICE;
 }
 
 
-
 NTSTATUS
-IoGetRelatedTargetDevice(
-    IN PFILE_OBJECT FileObject,
-    OUT PDEVICE_OBJECT *DeviceObject
-    )
+IoGetRelatedTargetDevice(IN PFILE_OBJECT FileObject, OUT PDEVICE_OBJECT *DeviceObject)
 
 /*++
 
@@ -2344,21 +2308,19 @@ ReturnValue
     NTSTATUS status;
     PDEVICE_NODE deviceNode = NULL;
 
-    status = IopGetRelatedTargetDevice( FileObject, &deviceNode );
-    if (NT_SUCCESS(status) && deviceNode != NULL) {
+    status = IopGetRelatedTargetDevice(FileObject, &deviceNode);
+    if (NT_SUCCESS(status) && deviceNode != NULL)
+    {
         *DeviceObject = deviceNode->PhysicalDeviceObject;
     }
     return status;
 }
 
 
-
 NTSTATUS
-IopNotifySetupDeviceArrival(
-    PDEVICE_OBJECT PhysicalDeviceObject,    // PDO of the device
-    HANDLE EnumEntryKey,                    // Handle into the enum branch of the registry for this device
-    BOOLEAN InstallDriver
-    )
+IopNotifySetupDeviceArrival(PDEVICE_OBJECT PhysicalDeviceObject, // PDO of the device
+                            HANDLE EnumEntryKey, // Handle into the enum branch of the registry for this device
+                            BOOLEAN InstallDriver)
 
 /*++
 
@@ -2407,13 +2369,14 @@ Note:
     // Only perform notifications if someone has registered
     //
 
-    if (IopSetupNotifyData) {
+    if (IopSetupNotifyData)
+    {
 
-        if (!EnumEntryKey) {
-            status = IopDeviceObjectToDeviceInstance(PhysicalDeviceObject,
-                                                     &enumKey,
-                                                     KEY_WRITE);
-            if (!NT_SUCCESS(status)) {
+        if (!EnumEntryKey)
+        {
+            status = IopDeviceObjectToDeviceInstance(PhysicalDeviceObject, &enumKey, KEY_WRITE);
+            if (!NT_SUCCESS(status))
+            {
                 return status;
             }
             EnumEntryKey = enumKey;
@@ -2427,7 +2390,7 @@ Note:
         notification.Event = GUID_SETUP_DEVICE_ARRIVAL;
         notification.PhysicalDeviceObject = PhysicalDeviceObject;
         notification.EnumEntryKey = EnumEntryKey;
-        deviceNode = (PDEVICE_NODE) PhysicalDeviceObject->DeviceObjectExtension->DeviceNode;
+        deviceNode = (PDEVICE_NODE)PhysicalDeviceObject->DeviceObjectExtension->DeviceNode;
         notification.EnumPath = &deviceNode->InstancePath;
         notification.InstallDriver = InstallDriver;
 
@@ -2442,12 +2405,9 @@ Note:
         // Dispatch the notification to the callback routine for the
         // appropriate session.
         //
-        dispatchStatus = PiNotifyDriverCallback(IopSetupNotifyData->CallbackRoutine,
-                                                &notification,
-                                                IopSetupNotifyData->Context,
-                                                IopSetupNotifyData->SessionId,
-                                                IopSetupNotifyData->OpaqueSession,
-                                                &status);
+        dispatchStatus =
+            PiNotifyDriverCallback(IopSetupNotifyData->CallbackRoutine, &notification, IopSetupNotifyData->Context,
+                                   IopSetupNotifyData->SessionId, IopSetupNotifyData->OpaqueSession, &status);
 
         ASSERT(NT_SUCCESS(dispatchStatus));
 
@@ -2455,31 +2415,29 @@ Note:
         // Failure to dispatch setup notification should be reported as if a
         // match was not found, because the device has not been setup.
         //
-        if (!NT_SUCCESS(dispatchStatus)) {
+        if (!NT_SUCCESS(dispatchStatus))
+        {
             status = STATUS_OBJECT_NAME_NOT_FOUND;
         }
 
-        if (enumKey) {
+        if (enumKey)
+        {
             ZwClose(enumKey);
         }
 
         return status;
-
-    } else {
+    }
+    else
+    {
 
         return STATUS_OBJECT_NAME_NOT_FOUND;
-
     }
 }
 
 
-
 NTSTATUS
-IoNotifyPowerOperationVetoed(
-    IN POWER_ACTION             VetoedPowerOperation,
-    IN PDEVICE_OBJECT           TargetedDeviceObject    OPTIONAL,
-    IN PDEVICE_OBJECT           VetoingDeviceObject
-    )
+IoNotifyPowerOperationVetoed(IN POWER_ACTION VetoedPowerOperation, IN PDEVICE_OBJECT TargetedDeviceObject OPTIONAL,
+                             IN PDEVICE_OBJECT VetoingDeviceObject)
 /*++
 
 Routine Description:
@@ -2518,44 +2476,37 @@ Return Value:
     // we just retarget the operation against the root device if none is
     // specified (hey, someone's gotta represent the system, right?).
     //
-    if (TargetedDeviceObject) {
+    if (TargetedDeviceObject)
+    {
 
         deviceObject = TargetedDeviceObject;
-
-    } else {
+    }
+    else
+    {
 
         deviceObject = IopRootDeviceNode->PhysicalDeviceObject;
     }
 
     deviceNode = (PDEVICE_NODE)deviceObject->DeviceObjectExtension->DeviceNode;
-    if (!deviceNode) {
+    if (!deviceNode)
+    {
         return STATUS_INVALID_PARAMETER_2;
     }
 
     vetoingDeviceNode = (PDEVICE_NODE)VetoingDeviceObject->DeviceObjectExtension->DeviceNode;
-    if (!vetoingDeviceNode) {
+    if (!vetoingDeviceNode)
+    {
         return STATUS_INVALID_PARAMETER_3;
     }
 
-    return PpSetPowerVetoEvent(
-        VetoedPowerOperation,
-        NULL,
-        NULL,
-        deviceObject,
-        PNP_VetoDevice,
-        &vetoingDeviceNode->InstancePath
-        );
+    return PpSetPowerVetoEvent(VetoedPowerOperation, NULL, NULL, deviceObject, PNP_VetoDevice,
+                               &vetoingDeviceNode->InstancePath);
 }
 
 
-
 ULONG
-IoPnPDeliverServicePowerNotification(
-    IN   POWER_ACTION           PowerOperation,
-    IN   ULONG                  PowerNotificationCode,
-    IN   ULONG                  PowerNotificationData,
-    IN   BOOLEAN                Synchronous
-    )
+IoPnPDeliverServicePowerNotification(IN POWER_ACTION PowerOperation, IN ULONG PowerNotificationCode,
+                                     IN ULONG PowerNotificationData, IN BOOLEAN Synchronous)
 
 /*++
 
@@ -2602,33 +2553,34 @@ Return Value:
 
     NTSTATUS status = STATUS_SUCCESS;
     KEVENT completionEvent;
-    NTSTATUS completionStatus=STATUS_SUCCESS;
+    NTSTATUS completionStatus = STATUS_SUCCESS;
     PNP_VETO_TYPE vetoType = PNP_VetoTypeUnknown;
     UNICODE_STRING vetoName;
 
     PAGED_CODE();
 
-    if (Synchronous) {
+    if (Synchronous)
+    {
 
-        vetoName.Buffer = ExAllocatePool (PagedPool,MAX_VETO_NAME_LENGTH*sizeof (WCHAR));
+        vetoName.Buffer = ExAllocatePool(PagedPool, MAX_VETO_NAME_LENGTH * sizeof(WCHAR));
 
-        if (vetoName.Buffer) {
+        if (vetoName.Buffer)
+        {
             vetoName.MaximumLength = MAX_VETO_NAME_LENGTH;
-        }else {
+        }
+        else
+        {
             vetoName.MaximumLength = 0;
         }
         vetoName.Length = 0;
 
         KeInitializeEvent(&completionEvent, NotificationEvent, FALSE);
 
-        status = PpSetPowerEvent(PowerNotificationCode,
-                                 PowerNotificationData,
-                                 &completionEvent,
-                                 &completionStatus,
-                                 &vetoType,
-                                 &vetoName);
+        status = PpSetPowerEvent(PowerNotificationCode, PowerNotificationData, &completionEvent, &completionStatus,
+                                 &vetoType, &vetoName);
 
-        if (NT_SUCCESS(status))  {
+        if (NT_SUCCESS(status))
+        {
             //
             // PpSetPowerEvent returns success immediately after the event has
             // been successfully inserted into the event queue.  Queued power
@@ -2636,43 +2588,37 @@ Return Value:
             // for the the result.  PiNotifyUserMode signals the completionEvent
             // below when the user response is received.
             //
-            KeWaitForSingleObject( &completionEvent, Executive, KernelMode, FALSE, NULL );
+            KeWaitForSingleObject(&completionEvent, Executive, KernelMode, FALSE, NULL);
             status = completionStatus;
 
             //
             // We only have power event veto information to report if
             // user-mode responded to the event with failure.
             //
-            if (!NT_SUCCESS(completionStatus)) {
+            if (!NT_SUCCESS(completionStatus))
+            {
                 //
                 // PpSetPowerVetoEvent requires a device object as the target of
                 // the vetoed power operation.  Since this is a system-wide
                 // event, we just target the operation against the root device.
                 //
-                PpSetPowerVetoEvent(PowerOperation,
-                                    NULL,
-                                    NULL,
-                                    IopRootDeviceNode->PhysicalDeviceObject,
-                                    vetoType,
+                PpSetPowerVetoEvent(PowerOperation, NULL, NULL, IopRootDeviceNode->PhysicalDeviceObject, vetoType,
                                     &vetoName);
             }
         }
 
-        if (vetoName.Buffer) {
-            ExFreePool (vetoName.Buffer);
+        if (vetoName.Buffer)
+        {
+            ExFreePool(vetoName.Buffer);
         }
-
-    } else {
+    }
+    else
+    {
         //
         // No response is required for 'asynchronous' (non-query) events.
         // Just set the event and go.
         //
-        status = PpSetPowerEvent(PowerNotificationCode,
-                                 PowerNotificationData,
-                                 NULL,
-                                 NULL,
-                                 NULL,
-                                 NULL);
+        status = PpSetPowerEvent(PowerNotificationCode, PowerNotificationData, NULL, NULL, NULL, NULL);
     }
 
     //
@@ -2680,22 +2626,16 @@ Return Value:
     // success value, PiNotifyUserMode only returns one of the following status
     // values:
     //
-    ASSERT ((completionStatus == STATUS_SUCCESS) ||
-            (completionStatus == STATUS_UNSUCCESSFUL));
+    ASSERT((completionStatus == STATUS_SUCCESS) || (completionStatus == STATUS_UNSUCCESSFUL));
 
     //
     // The private code in Win32k that calls this, assumes that 0 is failure, !0 is success
     //
     return (NT_SUCCESS(completionStatus));
-
 }
 
 
-
-VOID
-IopOrphanNotification(
-    IN PDEVICE_NODE TargetNode
-    )
+VOID IopOrphanNotification(IN PDEVICE_NODE TargetNode)
 
 /*++
 
@@ -2726,14 +2666,14 @@ Notes:
 
     IopAcquireNotifyLock(&IopTargetDeviceNotifyLock);
 
-    while (!IsListEmpty(&TargetNode->TargetDeviceNotify)) {
+    while (!IsListEmpty(&TargetNode->TargetDeviceNotify))
+    {
 
         //
         // Remove all target device change notification entries for this devnode
         //
 
-        entry = (PTARGET_DEVICE_NOTIFY_ENTRY)
-            RemoveHeadList(&TargetNode->TargetDeviceNotify);
+        entry = (PTARGET_DEVICE_NOTIFY_ENTRY)RemoveHeadList(&TargetNode->TargetDeviceNotify);
 
         ASSERT(entry->EventCategory == EventCategoryTargetDeviceChange);
 
@@ -2749,7 +2689,8 @@ Notes:
         // attempt to dereference it when the entry is actually unregistered.
         //
 
-        if (entry->PhysicalDeviceObject) {
+        if (entry->PhysicalDeviceObject)
+        {
             ObDereferenceObject(entry->PhysicalDeviceObject);
             entry->PhysicalDeviceObject = NULL;
         }
@@ -2761,16 +2702,10 @@ Notes:
 }
 
 
-
 NTSTATUS
-PiNotifyDriverCallback(
-    IN  PDRIVER_NOTIFICATION_CALLBACK_ROUTINE  CallbackRoutine,
-    IN  PVOID   NotificationStructure,
-    IN  PVOID   Context,
-    IN  ULONG   SessionId,
-    IN  PVOID   OpaqueSession      OPTIONAL,
-    OUT PNTSTATUS  CallbackStatus  OPTIONAL
-    )
+PiNotifyDriverCallback(IN PDRIVER_NOTIFICATION_CALLBACK_ROUTINE CallbackRoutine, IN PVOID NotificationStructure,
+                       IN PVOID Context, IN ULONG SessionId, IN PVOID OpaqueSession OPTIONAL,
+                       OUT PNTSTATUS CallbackStatus OPTIONAL)
 /*++
 
 Routine Description:
@@ -2825,8 +2760,8 @@ Notes:
     //
     // Make sure we have all the information we need to deliver notification.
     //
-    if (!ARGUMENT_PRESENT(CallbackRoutine) ||
-        !ARGUMENT_PRESENT(NotificationStructure)) {
+    if (!ARGUMENT_PRESENT(CallbackRoutine) || !ARGUMENT_PRESENT(NotificationStructure))
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -2837,32 +2772,32 @@ Notes:
     //
     Irql = KeGetCurrentIrql();
     ApcDisable = KeGetCurrentThread()->KernelApcDisable;
-#endif  // DBG
+#endif // DBG
 
     if ((OpaqueSession == NULL) ||
-        ((PsGetCurrentProcess()->Flags & PS_PROCESS_FLAGS_IN_SESSION) &&
-         (SessionId == PsGetCurrentProcessSessionId()))) {
+        ((PsGetCurrentProcess()->Flags & PS_PROCESS_FLAGS_IN_SESSION) && (SessionId == PsGetCurrentProcessSessionId())))
+    {
         //
         // No session object was specified, or the current process is already in
         // the specified session, so just call the callback routine directly.
         //
         ASSERT(!MmIsSessionAddress((PVOID)CallbackRoutine) || OpaqueSession);
 
-        IopDbgPrint((
-            IOP_IOEVENT_TRACE_LEVEL,
-            "PiNotifyDriverCallback: "
-            "calling notification callback @ 0x%p directly\n",
-            CallbackRoutine));
+        IopDbgPrint((IOP_IOEVENT_TRACE_LEVEL,
+                     "PiNotifyDriverCallback: "
+                     "calling notification callback @ 0x%p directly\n",
+                     CallbackRoutine));
 
-        CallStatus = (CallbackRoutine)(NotificationStructure,
-                                       Context);
+        CallStatus = (CallbackRoutine)(NotificationStructure, Context);
 
-        if (ARGUMENT_PRESENT(CallbackStatus)) {
+        if (ARGUMENT_PRESENT(CallbackStatus))
+        {
             *CallbackStatus = CallStatus;
         }
         Status = STATUS_SUCCESS;
-
-    } else {
+    }
+    else
+    {
         //
         // Otherwise, call the callback routine in session space.
         //
@@ -2874,24 +2809,23 @@ Notes:
         Status = MmAttachSession(OpaqueSession, &ApcState);
         ASSERT(NT_SUCCESS(Status));
 
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
             //
             // Dispatch notification to the callback routine.
             //
-            IopDbgPrint((
-                IOP_IOEVENT_TRACE_LEVEL,
-                "PiNotifyDriverCallback: "
-                "calling notification callback @ 0x%p for SessionId %d\n",
-                CallbackRoutine,
-                SessionId));
+            IopDbgPrint((IOP_IOEVENT_TRACE_LEVEL,
+                         "PiNotifyDriverCallback: "
+                         "calling notification callback @ 0x%p for SessionId %d\n",
+                         CallbackRoutine, SessionId));
 
-            CallStatus = (CallbackRoutine)(NotificationStructure,
-                                           Context);
+            CallStatus = (CallbackRoutine)(NotificationStructure, Context);
 
             //
             // Return the callback status.
             //
-            if (ARGUMENT_PRESENT(CallbackStatus)) {
+            if (ARGUMENT_PRESENT(CallbackStatus))
+            {
                 *CallbackStatus = CallStatus;
             }
 
@@ -2907,28 +2841,23 @@ Notes:
     //
     // Check the IRQL and ApcDisable count.
     //
-    if (Irql != KeGetCurrentIrql()) {
-        IopDbgPrint((
-            IOP_IOEVENT_ERROR_LEVEL,
-            "PiNotifyDriverCallback: "
-            "notification handler @ 0x%p returned at raised IRQL = %d, original = %d\n",
-            CallbackRoutine,
-            KeGetCurrentIrql(),
-            Irql));
+    if (Irql != KeGetCurrentIrql())
+    {
+        IopDbgPrint((IOP_IOEVENT_ERROR_LEVEL,
+                     "PiNotifyDriverCallback: "
+                     "notification handler @ 0x%p returned at raised IRQL = %d, original = %d\n",
+                     CallbackRoutine, KeGetCurrentIrql(), Irql));
         DbgBreakPoint();
     }
-    if (ApcDisable != KeGetCurrentThread()->KernelApcDisable) {
-        IopDbgPrint((
-            IOP_IOEVENT_ERROR_LEVEL,
-            "PiNotifyDriverCallback: "
-            "notification handler @ 0x%p returned with different KernelApcDisable = %d, original = %d\n",
-            CallbackRoutine,
-            KeGetCurrentThread()->KernelApcDisable,
-            ApcDisable));
+    if (ApcDisable != KeGetCurrentThread()->KernelApcDisable)
+    {
+        IopDbgPrint((IOP_IOEVENT_ERROR_LEVEL,
+                     "PiNotifyDriverCallback: "
+                     "notification handler @ 0x%p returned with different KernelApcDisable = %d, original = %d\n",
+                     CallbackRoutine, KeGetCurrentThread()->KernelApcDisable, ApcDisable));
         DbgBreakPoint();
     }
-#endif  // DBG
+#endif // DBG
 
     return Status;
 }
-

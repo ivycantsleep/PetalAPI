@@ -21,85 +21,41 @@ Revision History:
 
 #include "mi.h"
 
-VOID
-MiUpPfnReferenceCount (
-    IN PFN_NUMBER Page,
-    IN USHORT Count
-    );
+VOID MiUpPfnReferenceCount(IN PFN_NUMBER Page, IN USHORT Count);
 
-VOID
-MiDownPfnReferenceCount (
-    IN PFN_NUMBER Page,
-    IN USHORT Count
-    );
+VOID MiDownPfnReferenceCount(IN PFN_NUMBER Page, IN USHORT Count);
 
-VOID
-MiUpControlAreaRefs (
-    IN PMMVAD Vad
-    );
+VOID MiUpControlAreaRefs(IN PMMVAD Vad);
 
 ULONG
-MiDoneWithThisPageGetAnother (
-    IN PPFN_NUMBER PageFrameIndex,
-    IN PMMPTE PointerPde,
-    IN PEPROCESS CurrentProcess
-    );
+MiDoneWithThisPageGetAnother(IN PPFN_NUMBER PageFrameIndex, IN PMMPTE PointerPde, IN PEPROCESS CurrentProcess);
 
 ULONG
-MiLeaveThisPageGetAnother (
-    OUT PPFN_NUMBER PageFrameIndex,
-    IN PMMPTE PointerPde,
-    IN PEPROCESS CurrentProcess
-    );
+MiLeaveThisPageGetAnother(OUT PPFN_NUMBER PageFrameIndex, IN PMMPTE PointerPde, IN PEPROCESS CurrentProcess);
 
-VOID
-MiUpForkPageShareCount (
-    IN PMMPFN PfnForkPtePage
-    );
+VOID MiUpForkPageShareCount(IN PMMPFN PfnForkPtePage);
 
 ULONG
-MiHandleForkTransitionPte (
-    IN PMMPTE PointerPte,
-    IN PMMPTE PointerNewPte,
-    IN PMMCLONE_BLOCK ForkProtoPte
-    );
+MiHandleForkTransitionPte(IN PMMPTE PointerPte, IN PMMPTE PointerNewPte, IN PMMCLONE_BLOCK ForkProtoPte);
 
-VOID
-MiDownShareCountFlushEntireTb (
-    IN PFN_NUMBER PageFrameIndex
-    );
+VOID MiDownShareCountFlushEntireTb(IN PFN_NUMBER PageFrameIndex);
 
-VOID
-MiBuildForkPageTable (
-    IN PFN_NUMBER PageFrameIndex,
-    IN PMMPTE PointerPde,
-    IN PMMPTE PointerNewPde,
-    IN PFN_NUMBER PdePhysicalPage,
-    IN PMMPFN PfnPdPage,
-    IN LOGICAL MakeValid
-    );
+VOID MiBuildForkPageTable(IN PFN_NUMBER PageFrameIndex, IN PMMPTE PointerPde, IN PMMPTE PointerNewPde,
+                          IN PFN_NUMBER PdePhysicalPage, IN PMMPFN PfnPdPage, IN LOGICAL MakeValid);
 
-VOID
-MiRetrievePageDirectoryFrames (
-    IN PFN_NUMBER RootPhysicalPage,
-    OUT PPFN_NUMBER PageDirectoryFrames
-    );
+VOID MiRetrievePageDirectoryFrames(IN PFN_NUMBER RootPhysicalPage, OUT PPFN_NUMBER PageDirectoryFrames);
 
 #define MM_FORK_SUCCEEDED 0
 #define MM_FORK_FAILED 1
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,MiCloneProcessAddressSpace)
+#pragma alloc_text(PAGE, MiCloneProcessAddressSpace)
 #endif
 
-
+
 NTSTATUS
-MiCloneProcessAddressSpace (
-    IN PEPROCESS ProcessToClone,
-    IN PEPROCESS ProcessToInitialize,
-    IN PFN_NUMBER RootPhysicalPage,
-    IN PFN_NUMBER HyperPhysicalPage
-    )
+MiCloneProcessAddressSpace(IN PEPROCESS ProcessToClone, IN PEPROCESS ProcessToInitialize,
+                           IN PFN_NUMBER RootPhysicalPage, IN PFN_NUMBER HyperPhysicalPage)
 
 /*++
 
@@ -169,12 +125,12 @@ Environment:
     MMPTE TempPte;
     MMPTE PteContents;
     KAPC_STATE ApcState;
-#if defined (_X86PAE_)
+#if defined(_X86PAE_)
     ULONG i;
     PMDL MdlPageDirectory;
     PPFN_NUMBER MdlPageFrames;
     PFN_NUMBER PageDirectoryFrames[PD_PER_SYSTEM];
-    PFN_NUMBER MdlHackPageDirectory[(sizeof(MDL)/sizeof(PFN_NUMBER)) + PD_PER_SYSTEM];
+    PFN_NUMBER MdlHackPageDirectory[(sizeof(MDL) / sizeof(PFN_NUMBER)) + PD_PER_SYSTEM];
 #else
     PFN_NUMBER MdlDirPage;
 #endif
@@ -205,7 +161,7 @@ Environment:
     ULONG FirstTime;
     ULONG Waited;
     ULONG PpePdeOffset;
-#if defined (_MIALT4K_)
+#if defined(_MIALT4K_)
     PVOID TempAliasInformation;
 #endif
 #if (_MI_PAGING_LEVELS >= 3)
@@ -226,7 +182,7 @@ Environment:
     PFN_NUMBER MdlDirParentPage;
 #endif
 
-    UNREFERENCED_PARAMETER (HyperPhysicalPage);
+    UNREFERENCED_PARAMETER(HyperPhysicalPage);
 #else
     PMMWSL HyperBase;
     PMMWSL HyperWsl;
@@ -240,19 +196,20 @@ Environment:
     PageFrameIndex = (PFN_NUMBER)-1;
 
 #if DBG
-    if (MmDebug & MM_DBG_FORK) {
-        DbgPrint("beginning clone operation process to clone = %p\n",
-            ProcessToClone);
+    if (MmDebug & MM_DBG_FORK)
+    {
+        DbgPrint("beginning clone operation process to clone = %p\n", ProcessToClone);
     }
 #endif
 
-    if (ProcessToClone != PsGetCurrentProcess()) {
+    if (ProcessToClone != PsGetCurrentProcess())
+    {
         Attached = TRUE;
-        KeStackAttachProcess (&ProcessToClone->Pcb, &ApcState);
+        KeStackAttachProcess(&ProcessToClone->Pcb, &ApcState);
     }
 
-#if defined (_X86PAE_)
-    MiRetrievePageDirectoryFrames (RootPhysicalPage, PageDirectoryFrames);
+#if defined(_X86PAE_)
+    MiRetrievePageDirectoryFrames(RootPhysicalPage, PageDirectoryFrames);
 #endif
 
     CurrentProcess = ProcessToClone;
@@ -264,14 +221,15 @@ Environment:
     // from being created or deleted.
     //
 
-    LOCK_ADDRESS_SPACE (CurrentProcess);
+    LOCK_ADDRESS_SPACE(CurrentProcess);
 
     //
     // Write-watch VAD bitmaps are not currently duplicated
     // so fork is not allowed.
     //
 
-    if (CurrentProcess->Flags & PS_PROCESS_FLAGS_USING_WRITE_WATCH) {
+    if (CurrentProcess->Flags & PS_PROCESS_FLAGS_USING_WRITE_WATCH)
+    {
         status = STATUS_INVALID_PAGE_PROTECTION;
         goto ErrorReturn1;
     }
@@ -283,13 +241,13 @@ Environment:
     //
 
     NextEntry = CurrentProcess->PhysicalVadList.Flink;
-    while (NextEntry != &CurrentProcess->PhysicalVadList) {
+    while (NextEntry != &CurrentProcess->PhysicalVadList)
+    {
 
-        PhysicalView = CONTAINING_RECORD(NextEntry,
-                                         MI_PHYSICAL_VIEW,
-                                         ListEntry);
+        PhysicalView = CONTAINING_RECORD(NextEntry, MI_PHYSICAL_VIEW, ListEntry);
 
-        if (PhysicalView->Vad->u.VadFlags.UserPhysicalPages == 1) {
+        if (PhysicalView->Vad->u.VadFlags.UserPhysicalPages == 1)
+        {
             status = STATUS_INVALID_PAGE_PROTECTION;
             goto ErrorReturn1;
         }
@@ -301,7 +259,8 @@ Environment:
     // Make sure the address space was not deleted, if so, return an error.
     //
 
-    if (CurrentProcess->Flags & PS_PROCESS_FLAGS_VM_DELETED) {
+    if (CurrentProcess->Flags & PS_PROCESS_FLAGS_VM_DELETED)
+    {
         status = STATUS_PROCESS_IS_TERMINATING;
         goto ErrorReturn1;
     }
@@ -314,15 +273,16 @@ Environment:
     // to the NumberOfPrivatePages field in the EPROCESS.
     //
 
-#if defined (_MIALT4K_)
-    if (CurrentProcess->Wow64Process != NULL) {
+#if defined(_MIALT4K_)
+    if (CurrentProcess->Wow64Process != NULL)
+    {
         LOCK_ALTERNATE_TABLE_UNSAFE(CurrentProcess->Wow64Process);
     }
 #endif
 
-    LOCK_WS (CurrentProcess);
+    LOCK_WS(CurrentProcess);
 
-    ASSERT (CurrentProcess->ForkInProgress == NULL);
+    ASSERT(CurrentProcess->ForkInProgress == NULL);
 
     //
     // Indicate to the pager that the current process is being
@@ -330,50 +290,49 @@ Environment:
     // modifying clone block counts and contents as well as alternate PTEs.
     //
 
-    CurrentProcess->ForkInProgress = PsGetCurrentThread ();
+    CurrentProcess->ForkInProgress = PsGetCurrentThread();
 
-#if defined (_MIALT4K_)
-    if (CurrentProcess->Wow64Process != NULL) {
+#if defined(_MIALT4K_)
+    if (CurrentProcess->Wow64Process != NULL)
+    {
         UNLOCK_ALTERNATE_TABLE_UNSAFE(CurrentProcess->Wow64Process);
     }
 #endif
 
     NumberOfPrivatePages = CurrentProcess->NumberOfPrivatePages;
 
-    CloneProtos = ExAllocatePoolWithTag (PagedPool, sizeof(MMCLONE_BLOCK) *
-                                                NumberOfPrivatePages,
-                                                'lCmM');
-    if (CloneProtos == NULL) {
+    CloneProtos = ExAllocatePoolWithTag(PagedPool, sizeof(MMCLONE_BLOCK) * NumberOfPrivatePages, 'lCmM');
+    if (CloneProtos == NULL)
+    {
         CurrentProcess->ForkInProgress = NULL;
-        UNLOCK_WS (CurrentProcess);
+        UNLOCK_WS(CurrentProcess);
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto ErrorReturn1;
     }
 
-    CloneHeader = ExAllocatePoolWithTag (NonPagedPool,
-                                         sizeof(MMCLONE_HEADER),
-                                         'hCmM');
-    if (CloneHeader == NULL) {
+    CloneHeader = ExAllocatePoolWithTag(NonPagedPool, sizeof(MMCLONE_HEADER), 'hCmM');
+    if (CloneHeader == NULL)
+    {
         CurrentProcess->ForkInProgress = NULL;
-        UNLOCK_WS (CurrentProcess);
+        UNLOCK_WS(CurrentProcess);
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto ErrorReturn2;
     }
 
-    CloneDescriptor = ExAllocatePoolWithTag (NonPagedPool,
-                                             sizeof(MMCLONE_DESCRIPTOR),
-                                             'dCmM');
-    if (CloneDescriptor == NULL) {
+    CloneDescriptor = ExAllocatePoolWithTag(NonPagedPool, sizeof(MMCLONE_DESCRIPTOR), 'dCmM');
+    if (CloneDescriptor == NULL)
+    {
         CurrentProcess->ForkInProgress = NULL;
-        UNLOCK_WS (CurrentProcess);
+        UNLOCK_WS(CurrentProcess);
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto ErrorReturn3;
     }
 
-    Vad = MiGetFirstVad (CurrentProcess);
+    Vad = MiGetFirstVad(CurrentProcess);
     VadList = &FirstNewVad;
 
-    while (Vad != NULL) {
+    while (Vad != NULL)
+    {
 
         //
         // If the VAD does not go to the child, ignore it.
@@ -381,12 +340,13 @@ Environment:
 
         if ((Vad->u.VadFlags.UserPhysicalPages == 0) &&
 
-            ((Vad->u.VadFlags.PrivateMemory == 1) ||
-            (Vad->u2.VadFlags2.Inherit == MM_VIEW_SHARE))) {
+            ((Vad->u.VadFlags.PrivateMemory == 1) || (Vad->u2.VadFlags2.Inherit == MM_VIEW_SHARE)))
+        {
 
-            NewVad = ExAllocatePoolWithTag (NonPagedPool, sizeof(MMVAD_LONG), 'ldaV');
+            NewVad = ExAllocatePoolWithTag(NonPagedPool, sizeof(MMVAD_LONG), 'ldaV');
 
-            if (NewVad == NULL) {
+            if (NewVad == NULL)
+            {
 
                 //
                 // Unable to allocate pool for all the VADs.  Deallocate
@@ -394,22 +354,23 @@ Environment:
                 //
 
                 CurrentProcess->ForkInProgress = NULL;
-                UNLOCK_WS (CurrentProcess);
+                UNLOCK_WS(CurrentProcess);
                 *VadList = NULL;
                 status = STATUS_INSUFFICIENT_RESOURCES;
                 goto ErrorReturn4;
             }
 
-            RtlZeroMemory (NewVad, sizeof(MMVAD_LONG));
+            RtlZeroMemory(NewVad, sizeof(MMVAD_LONG));
 
-#if defined (_MIALT4K_)
-            if (((Vad->u.VadFlags.PrivateMemory) && (Vad->u.VadFlags.NoChange == 0)) 
-                ||
-                (Vad->u2.VadFlags2.LongVad == 0)) {
+#if defined(_MIALT4K_)
+            if (((Vad->u.VadFlags.PrivateMemory) && (Vad->u.VadFlags.NoChange == 0)) ||
+                (Vad->u2.VadFlags2.LongVad == 0))
+            {
 
                 NOTHING;
             }
-            else if (((PMMVAD_LONG)Vad)->AliasInformation != NULL) {
+            else if (((PMMVAD_LONG)Vad)->AliasInformation != NULL)
+            {
 
                 //
                 // This VAD has aliased VADs which are going to be duplicated
@@ -417,12 +378,13 @@ Environment:
                 // be explicitly copied.
                 //
 
-                ((PMMVAD_LONG)NewVad)->AliasInformation = MiDuplicateAliasVadList (Vad);
+                ((PMMVAD_LONG)NewVad)->AliasInformation = MiDuplicateAliasVadList(Vad);
 
-                if (((PMMVAD_LONG)NewVad)->AliasInformation == NULL) {
+                if (((PMMVAD_LONG)NewVad)->AliasInformation == NULL)
+                {
                     CurrentProcess->ForkInProgress = NULL;
-                    UNLOCK_WS (CurrentProcess);
-                    ExFreePool (NewVad);
+                    UNLOCK_WS(CurrentProcess);
+                    ExFreePool(NewVad);
                     *VadList = NULL;
                     status = STATUS_INSUFFICIENT_RESOURCES;
                     goto ErrorReturn4;
@@ -433,7 +395,7 @@ Environment:
             *VadList = NewVad;
             VadList = &NewVad->Parent;
         }
-        Vad = MiGetNextVad (Vad);
+        Vad = MiGetNextVad(Vad);
     }
 
     //
@@ -448,32 +410,32 @@ Environment:
     // in paged pool and the clone header in non-paged pool.
     //
 
-    status = PsChargeProcessPagedPoolQuota (CurrentProcess,
-                                            sizeof(MMCLONE_BLOCK) * NumberOfPrivatePages);
+    status = PsChargeProcessPagedPoolQuota(CurrentProcess, sizeof(MMCLONE_BLOCK) * NumberOfPrivatePages);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // Unable to charge quota for the clone blocks.
         //
 
         CurrentProcess->ForkInProgress = NULL;
-        UNLOCK_WS (CurrentProcess);
+        UNLOCK_WS(CurrentProcess);
         goto ErrorReturn4;
     }
 
     PageTablePage = 1;
-    status = PsChargeProcessNonPagedPoolQuota (CurrentProcess,
-                                               sizeof(MMCLONE_HEADER));
+    status = PsChargeProcessNonPagedPoolQuota(CurrentProcess, sizeof(MMCLONE_HEADER));
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // Unable to charge quota for the clone blocks.
         //
 
         CurrentProcess->ForkInProgress = NULL;
-        UNLOCK_WS (CurrentProcess);
+        UNLOCK_WS(CurrentProcess);
         goto ErrorReturn4;
     }
 
@@ -510,7 +472,7 @@ Environment:
     // PDE and PTE initial dummy pages that we initialize below.
     //
 
-    MiUpPfnReferenceCount (RootPhysicalPage, _MI_PAGING_LEVELS);
+    MiUpPfnReferenceCount(RootPhysicalPage, _MI_PAGING_LEVELS);
 
     //
     // Map the (extended) page directory parent page into the system address
@@ -518,45 +480,41 @@ Environment:
     // page directory (extended) parent page.
     //
 
-    PpeBase = (PMMPTE)MiMapSinglePage (NULL,
-                                       RootPhysicalPage,
-                                       MmCached,
-                                       HighPagePriority);
+    PpeBase = (PMMPTE)MiMapSinglePage(NULL, RootPhysicalPage, MmCached, HighPagePriority);
 
-    if (PpeBase == NULL) {
-        MiDownPfnReferenceCount (RootPhysicalPage, _MI_PAGING_LEVELS);
+    if (PpeBase == NULL)
+    {
+        MiDownPfnReferenceCount(RootPhysicalPage, _MI_PAGING_LEVELS);
         CurrentProcess->ForkInProgress = NULL;
-        UNLOCK_WS (CurrentProcess);
+        UNLOCK_WS(CurrentProcess);
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto ErrorReturn4;
     }
 
-    PfnPpPage = MI_PFN_ELEMENT (RootPhysicalPage);
+    PfnPpPage = MI_PFN_ELEMENT(RootPhysicalPage);
 
 #if (_MI_PAGING_LEVELS >= 4)
-    PxeBase = (PMMPTE)MiMapSinglePage (NULL,
-                                       RootPhysicalPage,
-                                       MmCached,
-                                       HighPagePriority);
+    PxeBase = (PMMPTE)MiMapSinglePage(NULL, RootPhysicalPage, MmCached, HighPagePriority);
 
-    if (PxeBase == NULL) {
-        MiDownPfnReferenceCount (RootPhysicalPage, _MI_PAGING_LEVELS);
-        MiUnmapSinglePage (PpeBase);
+    if (PxeBase == NULL)
+    {
+        MiDownPfnReferenceCount(RootPhysicalPage, _MI_PAGING_LEVELS);
+        MiUnmapSinglePage(PpeBase);
         CurrentProcess->ForkInProgress = NULL;
-        UNLOCK_WS (CurrentProcess);
+        UNLOCK_WS(CurrentProcess);
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto ErrorReturn4;
     }
 
-    PfnPxPage = MI_PFN_ELEMENT (RootPhysicalPage);
+    PfnPxPage = MI_PFN_ELEMENT(RootPhysicalPage);
 
     MdlDirParentPage = RootPhysicalPage;
 
 #endif
 
-#elif !defined (_X86PAE_)
+#elif !defined(_X86PAE_)
 
-    MiUpPfnReferenceCount (RootPhysicalPage, 1);
+    MiUpPfnReferenceCount(RootPhysicalPage, 1);
 
 #endif
 
@@ -567,29 +525,27 @@ Environment:
     // Note this is a dummy map for 64-bit systems and a real one for 32-bit.
     //
 
-#if !defined (_X86PAE_)
+#if !defined(_X86PAE_)
 
     MdlDirPage = RootPhysicalPage;
 
     PdePhysicalPage = RootPhysicalPage;
 
-    PdeBase = (PMMPTE)MiMapSinglePage (NULL,
-                                       MdlDirPage,
-                                       MmCached,
-                                       HighPagePriority);
+    PdeBase = (PMMPTE)MiMapSinglePage(NULL, MdlDirPage, MmCached, HighPagePriority);
 
-    if (PdeBase == NULL) {
+    if (PdeBase == NULL)
+    {
 #if (_MI_PAGING_LEVELS >= 3)
-        MiDownPfnReferenceCount (RootPhysicalPage, _MI_PAGING_LEVELS);
-        MiUnmapSinglePage (PpeBase);
+        MiDownPfnReferenceCount(RootPhysicalPage, _MI_PAGING_LEVELS);
+        MiUnmapSinglePage(PpeBase);
 #if (_MI_PAGING_LEVELS >= 4)
-        MiUnmapSinglePage (PxeBase);
+        MiUnmapSinglePage(PxeBase);
 #endif
 #else
-        MiDownPfnReferenceCount (RootPhysicalPage, 1);
+        MiDownPfnReferenceCount(RootPhysicalPage, 1);
 #endif
         CurrentProcess->ForkInProgress = NULL;
-        UNLOCK_WS (CurrentProcess);
+        UNLOCK_WS(CurrentProcess);
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto ErrorReturn4;
     }
@@ -603,41 +559,38 @@ Environment:
 
     MdlPageDirectory = (PMDL)&MdlHackPageDirectory[0];
 
-    MmInitializeMdl (MdlPageDirectory,
-                     (PVOID)PDE_BASE,
-                     PD_PER_SYSTEM * PAGE_SIZE);
+    MmInitializeMdl(MdlPageDirectory, (PVOID)PDE_BASE, PD_PER_SYSTEM * PAGE_SIZE);
 
     MdlPageDirectory->MdlFlags |= MDL_PAGES_LOCKED;
 
     MdlPageFrames = (PPFN_NUMBER)(MdlPageDirectory + 1);
 
-    for (i = 0; i < PD_PER_SYSTEM; i += 1) {
+    for (i = 0; i < PD_PER_SYSTEM; i += 1)
+    {
         *(MdlPageFrames + i) = PageDirectoryFrames[i];
-        MiUpPfnReferenceCount (PageDirectoryFrames[i], 1);
+        MiUpPfnReferenceCount(PageDirectoryFrames[i], 1);
     }
 
     PdePhysicalPage = RootPhysicalPage;
 
-    PdeBase = (PMMPTE)MmMapLockedPagesSpecifyCache (MdlPageDirectory,
-                                                    KernelMode,
-                                                    MmCached,
-                                                    NULL,
-                                                    FALSE,
-                                                    HighPagePriority);
+    PdeBase =
+        (PMMPTE)MmMapLockedPagesSpecifyCache(MdlPageDirectory, KernelMode, MmCached, NULL, FALSE, HighPagePriority);
 
-    if (PdeBase == NULL) {
-        for (i = 0; i < PD_PER_SYSTEM; i += 1) {
-            MiDownPfnReferenceCount (PageDirectoryFrames[i], 1);
+    if (PdeBase == NULL)
+    {
+        for (i = 0; i < PD_PER_SYSTEM; i += 1)
+        {
+            MiDownPfnReferenceCount(PageDirectoryFrames[i], 1);
         }
         CurrentProcess->ForkInProgress = NULL;
-        UNLOCK_WS (CurrentProcess);
+        UNLOCK_WS(CurrentProcess);
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto ErrorReturn4;
     }
 
 #endif
 
-    PfnPdPage = MI_PFN_ELEMENT (RootPhysicalPage);
+    PfnPdPage = MI_PFN_ELEMENT(RootPhysicalPage);
 
 #if (_MI_PAGING_LEVELS < 3)
 
@@ -645,26 +598,25 @@ Environment:
     // Map hyperspace so target UsedPageTable entries can be incremented.
     //
 
-    MiUpPfnReferenceCount (HyperPhysicalPage, 2);
+    MiUpPfnReferenceCount(HyperPhysicalPage, 2);
 
-    HyperBase = (PMMWSL)MiMapSinglePage (NULL,
-                                         HyperPhysicalPage,
-                                         MmCached,
-                                         HighPagePriority);
+    HyperBase = (PMMWSL)MiMapSinglePage(NULL, HyperPhysicalPage, MmCached, HighPagePriority);
 
-    if (HyperBase == NULL) {
-        MiDownPfnReferenceCount (HyperPhysicalPage, 2);
-#if !defined (_X86PAE_)
-        MiDownPfnReferenceCount (RootPhysicalPage, 1);
-        MiUnmapSinglePage (PdeBase);
+    if (HyperBase == NULL)
+    {
+        MiDownPfnReferenceCount(HyperPhysicalPage, 2);
+#if !defined(_X86PAE_)
+        MiDownPfnReferenceCount(RootPhysicalPage, 1);
+        MiUnmapSinglePage(PdeBase);
 #else
-        for (i = 0; i < PD_PER_SYSTEM; i += 1) {
-            MiDownPfnReferenceCount (PageDirectoryFrames[i], 1);
+        for (i = 0; i < PD_PER_SYSTEM; i += 1)
+        {
+            MiDownPfnReferenceCount(PageDirectoryFrames[i], 1);
         }
-        MmUnmapLockedPages (PdeBase, MdlPageDirectory);
+        MmUnmapLockedPages(PdeBase, MdlPageDirectory);
 #endif
         CurrentProcess->ForkInProgress = NULL;
-        UNLOCK_WS (CurrentProcess);
+        UNLOCK_WS(CurrentProcess);
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto ErrorReturn4;
     }
@@ -674,7 +626,7 @@ Environment:
     // for that here when established the used page table entry pointer.
     //
 
-    HyperWsl = (PMMWSL) ((PCHAR)HyperBase + BYTE_OFFSET(MmWorkingSetList));
+    HyperWsl = (PMMWSL)((PCHAR)HyperBase + BYTE_OFFSET(MmWorkingSetList));
 #endif
 
     //
@@ -689,39 +641,38 @@ Environment:
     MdlPage = HyperPhysicalPage;
 #endif
 
-    NewPteMappedAddress = (PMMPTE)MiMapSinglePage (NULL,
-                                                   MdlPage,
-                                                   MmCached,
-                                                   HighPagePriority);
+    NewPteMappedAddress = (PMMPTE)MiMapSinglePage(NULL, MdlPage, MmCached, HighPagePriority);
 
-    if (NewPteMappedAddress == NULL) {
+    if (NewPteMappedAddress == NULL)
+    {
 
 #if (_MI_PAGING_LEVELS >= 3)
 
-        MiDownPfnReferenceCount (RootPhysicalPage, _MI_PAGING_LEVELS);
+        MiDownPfnReferenceCount(RootPhysicalPage, _MI_PAGING_LEVELS);
 #if (_MI_PAGING_LEVELS >= 4)
-        MiUnmapSinglePage (PxeBase);
+        MiUnmapSinglePage(PxeBase);
 #endif
-        MiUnmapSinglePage (PpeBase);
-        MiUnmapSinglePage (PdeBase);
+        MiUnmapSinglePage(PpeBase);
+        MiUnmapSinglePage(PdeBase);
 
 #else
-        MiDownPfnReferenceCount (HyperPhysicalPage, 2);
-        MiUnmapSinglePage (HyperBase);
-#if !defined (_X86PAE_)
-        MiDownPfnReferenceCount (RootPhysicalPage, 1);
-        MiUnmapSinglePage (PdeBase);
+        MiDownPfnReferenceCount(HyperPhysicalPage, 2);
+        MiUnmapSinglePage(HyperBase);
+#if !defined(_X86PAE_)
+        MiDownPfnReferenceCount(RootPhysicalPage, 1);
+        MiUnmapSinglePage(PdeBase);
 #else
-        for (i = 0; i < PD_PER_SYSTEM; i += 1) {
-            MiDownPfnReferenceCount (PageDirectoryFrames[i], 1);
+        for (i = 0; i < PD_PER_SYSTEM; i += 1)
+        {
+            MiDownPfnReferenceCount(PageDirectoryFrames[i], 1);
         }
-        MmUnmapLockedPages (PdeBase, MdlPageDirectory);
+        MmUnmapLockedPages(PdeBase, MdlPageDirectory);
 #endif
 
 #endif
 
         CurrentProcess->ForkInProgress = NULL;
-        UNLOCK_WS (CurrentProcess);
+        UNLOCK_WS(CurrentProcess);
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto ErrorReturn4;
     }
@@ -736,40 +687,38 @@ Environment:
     ForkProtoPte = CloneProtos;
 
     LockedForkPte = ForkProtoPte;
-    MiLockPagedAddress (LockedForkPte, FALSE);
+    MiLockPagedAddress(LockedForkPte, FALSE);
 
     CloneHeader->NumberOfPtes = (ULONG)NumberOfPrivatePages;
     CloneHeader->NumberOfProcessReferences = 1;
     CloneHeader->ClonePtes = CloneProtos;
 
     CloneDescriptor->StartingVpn = (ULONG_PTR)CloneProtos;
-    CloneDescriptor->EndingVpn = (ULONG_PTR)((ULONG_PTR)CloneProtos +
-                            NumberOfPrivatePages *
-                              sizeof(MMCLONE_BLOCK));
+    CloneDescriptor->EndingVpn = (ULONG_PTR)((ULONG_PTR)CloneProtos + NumberOfPrivatePages * sizeof(MMCLONE_BLOCK));
     CloneDescriptor->EndingVpn -= 1;
     CloneDescriptor->NumberOfReferences = 0;
     CloneDescriptor->FinalNumberOfReferences = 0;
     CloneDescriptor->NumberOfPtes = (ULONG)NumberOfPrivatePages;
     CloneDescriptor->CloneHeader = CloneHeader;
-    CloneDescriptor->PagedPoolQuotaCharge = sizeof(MMCLONE_BLOCK) *
-                                NumberOfPrivatePages;
+    CloneDescriptor->PagedPoolQuotaCharge = sizeof(MMCLONE_BLOCK) * NumberOfPrivatePages;
 
     //
     // Insert the clone descriptor for this fork operation into the
     // process which was cloned.
     //
 
-    MiInsertClone (CurrentProcess, CloneDescriptor);
+    MiInsertClone(CurrentProcess, CloneDescriptor);
 
     //
     // Examine each virtual address descriptor and create the
     // proper structures for the new process.
     //
 
-    Vad = MiGetFirstVad (CurrentProcess);
+    Vad = MiGetFirstVad(CurrentProcess);
     NewVad = FirstNewVad;
 
-    while (Vad != NULL) {
+    while (Vad != NULL)
+    {
 
         //
         // Examine the VAD to determine its type and inheritance
@@ -778,8 +727,8 @@ Environment:
 
         if ((Vad->u.VadFlags.UserPhysicalPages == 0) &&
 
-            ((Vad->u.VadFlags.PrivateMemory == 1) ||
-            (Vad->u2.VadFlags2.Inherit == MM_VIEW_SHARE))) {
+            ((Vad->u.VadFlags.PrivateMemory == 1) || (Vad->u2.VadFlags2.Inherit == MM_VIEW_SHARE)))
+        {
 
             //
             // The virtual address descriptor should be shared in the
@@ -792,17 +741,21 @@ Environment:
 
             NextVad = NewVad->Parent;
 
-            if (Vad->u.VadFlags.PrivateMemory == 1) {
+            if (Vad->u.VadFlags.PrivateMemory == 1)
+            {
                 *(PMMVAD_SHORT)NewVad = *(PMMVAD_SHORT)Vad;
                 NewVad->u.VadFlags.NoChange = 0;
             }
-            else {
-                if (Vad->u2.VadFlags2.LongVad == 0) {
+            else
+            {
+                if (Vad->u2.VadFlags2.LongVad == 0)
+                {
                     *NewVad = *Vad;
                 }
-                else {
+                else
+                {
 
-#if defined (_MIALT4K_)
+#if defined(_MIALT4K_)
 
                     //
                     // The VADs duplication earlier in this routine keeps both
@@ -811,11 +764,13 @@ Environment:
                     //
 
 #if DBG
-                    if (((PMMVAD_LONG)Vad)->AliasInformation == NULL) {
-                        ASSERT (((PMMVAD_LONG)NewVad)->AliasInformation == NULL);
+                    if (((PMMVAD_LONG)Vad)->AliasInformation == NULL)
+                    {
+                        ASSERT(((PMMVAD_LONG)NewVad)->AliasInformation == NULL);
                     }
-                    else {
-                        ASSERT (((PMMVAD_LONG)NewVad)->AliasInformation != NULL);
+                    else
+                    {
+                        ASSERT(((PMMVAD_LONG)NewVad)->AliasInformation != NULL);
                     }
 #endif
 
@@ -824,24 +779,26 @@ Environment:
 
                     *(PMMVAD_LONG)NewVad = *(PMMVAD_LONG)Vad;
 
-#if defined (_MIALT4K_)
+#if defined(_MIALT4K_)
                     ((PMMVAD_LONG)NewVad)->AliasInformation = TempAliasInformation;
 #endif
 
-                    if (Vad->u2.VadFlags2.ExtendableFile == 1) {
-                        ExAcquireFastMutexUnsafe (&MmSectionBasedMutex);
-                        ASSERT (Vad->ControlArea->Segment->ExtendInfo != NULL);
+                    if (Vad->u2.VadFlags2.ExtendableFile == 1)
+                    {
+                        ExAcquireFastMutexUnsafe(&MmSectionBasedMutex);
+                        ASSERT(Vad->ControlArea->Segment->ExtendInfo != NULL);
                         Vad->ControlArea->Segment->ExtendInfo->ReferenceCount += 1;
-                        ExReleaseFastMutexUnsafe (&MmSectionBasedMutex);
+                        ExReleaseFastMutexUnsafe(&MmSectionBasedMutex);
                     }
                 }
             }
 
             NewVad->u2.VadFlags2.LongVad = 1;
 
-            if (NewVad->u.VadFlags.NoChange) {
-                if ((NewVad->u2.VadFlags2.OneSecured) ||
-                    (NewVad->u2.VadFlags2.MultipleSecured)) {
+            if (NewVad->u.VadFlags.NoChange)
+            {
+                if ((NewVad->u2.VadFlags2.OneSecured) || (NewVad->u2.VadFlags2.MultipleSecured))
+                {
 
                     //
                     // Eliminate these as the memory was secured
@@ -850,10 +807,11 @@ Environment:
 
                     NewVad->u2.VadFlags2.OneSecured = 0;
                     NewVad->u2.VadFlags2.MultipleSecured = 0;
-                    ((PMMVAD_LONG) NewVad)->u3.List.Flink = NULL;
-                    ((PMMVAD_LONG) NewVad)->u3.List.Blink = NULL;
+                    ((PMMVAD_LONG)NewVad)->u3.List.Flink = NULL;
+                    ((PMMVAD_LONG)NewVad)->u3.List.Blink = NULL;
                 }
-                if (NewVad->u2.VadFlags2.SecNoChange == 0) {
+                if (NewVad->u2.VadFlags2.SecNoChange == 0)
+                {
                     NewVad->u.VadFlags.NoChange = 0;
                 }
             }
@@ -864,14 +822,14 @@ Environment:
             // section.  This requires the PFN lock to be held.
             //
 
-            if ((Vad->u.VadFlags.PrivateMemory == 0) &&
-                (Vad->ControlArea != NULL)) {
+            if ((Vad->u.VadFlags.PrivateMemory == 0) && (Vad->ControlArea != NULL))
+            {
 
-                if ((Vad->u.VadFlags.Protection & MM_READWRITE) &&
-                    (Vad->ControlArea->FilePointer != NULL) &&
-                    (Vad->ControlArea->u.Flags.Image == 0)) {
+                if ((Vad->u.VadFlags.Protection & MM_READWRITE) && (Vad->ControlArea->FilePointer != NULL) &&
+                    (Vad->ControlArea->u.Flags.Image == 0))
+                {
 
-                    InterlockedIncrement ((PLONG)&Vad->ControlArea->Segment->WritableUserReferences);
+                    InterlockedIncrement((PLONG)&Vad->ControlArea->Segment->WritableUserReferences);
                 }
 
                 //
@@ -879,7 +837,7 @@ Environment:
                 // section object.  This requires the PFN lock to be held.
                 //
 
-                MiUpControlAreaRefs (Vad);
+                MiUpControlAreaRefs(Vad);
             }
 
             //
@@ -887,12 +845,13 @@ Environment:
             // new process.
             //
 
-            PointerPde = MiGetPdeAddress (MI_VPN_TO_VA (Vad->StartingVpn));
-            PointerPte = MiGetPteAddress (MI_VPN_TO_VA (Vad->StartingVpn));
-            LastPte = MiGetPteAddress (MI_VPN_TO_VA (Vad->EndingVpn));
+            PointerPde = MiGetPdeAddress(MI_VPN_TO_VA(Vad->StartingVpn));
+            PointerPte = MiGetPteAddress(MI_VPN_TO_VA(Vad->StartingVpn));
+            LastPte = MiGetPteAddress(MI_VPN_TO_VA(Vad->EndingVpn));
             FirstTime = TRUE;
 
-            while ((PMMPTE)PointerPte <= LastPte) {
+            while ((PMMPTE)PointerPte <= LastPte)
+            {
 
                 //
                 // For each PTE contained in the VAD check the page table
@@ -900,104 +859,105 @@ Environment:
                 // to copy the PTE to the new process.
                 //
 
-                if ((FirstTime) || MiIsPteOnPdeBoundary (PointerPte)) {
+                if ((FirstTime) || MiIsPteOnPdeBoundary(PointerPte))
+                {
 
-                    PointerPxe = MiGetPpeAddress (PointerPte);
-                    PointerPpe = MiGetPdeAddress (PointerPte);
-                    PointerPde = MiGetPteAddress (PointerPte);
+                    PointerPxe = MiGetPpeAddress(PointerPte);
+                    PointerPpe = MiGetPdeAddress(PointerPte);
+                    PointerPde = MiGetPteAddress(PointerPte);
 
-                    do {
+                    do
+                    {
 
 #if (_MI_PAGING_LEVELS >= 4)
-                        while (!MiDoesPxeExistAndMakeValid (PointerPxe,
-                                                            CurrentProcess,
-                                                            FALSE,
-                                                            &Waited)) {
-    
+                        while (!MiDoesPxeExistAndMakeValid(PointerPxe, CurrentProcess, FALSE, &Waited))
+                        {
+
                             //
                             // Extended page directory parent is empty,
                             // go to the next one.
                             //
-    
+
                             PointerPxe += 1;
-                            PointerPpe = MiGetVirtualAddressMappedByPte (PointerPxe);
-                            PointerPde = MiGetVirtualAddressMappedByPte (PointerPpe);
-                            PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-    
-                            if ((PMMPTE)PointerPte > LastPte) {
-    
+                            PointerPpe = MiGetVirtualAddressMappedByPte(PointerPxe);
+                            PointerPde = MiGetVirtualAddressMappedByPte(PointerPpe);
+                            PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+
+                            if ((PMMPTE)PointerPte > LastPte)
+                            {
+
                                 //
                                 // All done with this VAD, exit loop.
                                 //
-    
+
                                 goto AllDone;
                             }
                         }
-    
+
                         Waited = 0;
 #endif
-                        while (!MiDoesPpeExistAndMakeValid (PointerPpe,
-                                                            CurrentProcess,
-                                                            FALSE,
-                                                            &Waited)) {
-    
+                        while (!MiDoesPpeExistAndMakeValid(PointerPpe, CurrentProcess, FALSE, &Waited))
+                        {
+
                             //
                             // Page directory parent is empty, go to the next one.
                             //
-    
+
                             PointerPpe += 1;
-                            if (MiIsPteOnPdeBoundary (PointerPpe)) {
-                                PointerPxe = MiGetPteAddress (PointerPpe);
+                            if (MiIsPteOnPdeBoundary(PointerPpe))
+                            {
+                                PointerPxe = MiGetPteAddress(PointerPpe);
                                 Waited = 1;
                                 break;
                             }
-                            PointerPde = MiGetVirtualAddressMappedByPte (PointerPpe);
-                            PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-    
-                            if ((PMMPTE)PointerPte > LastPte) {
-    
+                            PointerPde = MiGetVirtualAddressMappedByPte(PointerPpe);
+                            PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+
+                            if ((PMMPTE)PointerPte > LastPte)
+                            {
+
                                 //
                                 // All done with this VAD, exit loop.
                                 //
-    
+
                                 goto AllDone;
                             }
                         }
-    
+
 #if (_MI_PAGING_LEVELS < 4)
                         Waited = 0;
 #endif
-    
-                        while (!MiDoesPdeExistAndMakeValid (PointerPde,
-                                                            CurrentProcess,
-                                                            FALSE,
-                                                            &Waited)) {
-    
+
+                        while (!MiDoesPdeExistAndMakeValid(PointerPde, CurrentProcess, FALSE, &Waited))
+                        {
+
                             //
                             // This page directory is empty, go to the next one.
                             //
-    
+
                             PointerPde += 1;
-                            PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-    
-                            if ((PMMPTE)PointerPte > LastPte) {
-    
+                            PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+
+                            if ((PMMPTE)PointerPte > LastPte)
+                            {
+
                                 //
                                 // All done with this VAD, exit loop.
                                 //
-    
+
                                 goto AllDone;
                             }
 #if (_MI_PAGING_LEVELS >= 3)
-                            if (MiIsPteOnPdeBoundary (PointerPde)) {
-                                PointerPpe = MiGetPteAddress (PointerPde);
-                                PointerPxe = MiGetPdeAddress (PointerPde);
+                            if (MiIsPteOnPdeBoundary(PointerPde))
+                            {
+                                PointerPpe = MiGetPteAddress(PointerPde);
+                                PointerPxe = MiGetPdeAddress(PointerPde);
                                 Waited = 1;
                                 break;
                             }
 #endif
                         }
-    
+
                     } while (Waited != 0);
 
                     FirstTime = FALSE;
@@ -1010,7 +970,8 @@ Environment:
 
                     PointerNewPxe = &PxeBase[MiGetPpeOffset(PointerPte)];
 
-                    if (PointerNewPxe->u.Long == 0) {
+                    if (PointerNewPxe->u.Long == 0)
+                    {
 
                         //
                         // No physical page has been allocated yet, get a page
@@ -1024,32 +985,23 @@ Environment:
                         //
 
                         ReleasedWorkingSetMutex =
-                                MiLeaveThisPageGetAnother (&PageParentFrameIndex,
-                                                           PointerPxe,
-                                                           CurrentProcess);
+                            MiLeaveThisPageGetAnother(&PageParentFrameIndex, PointerPxe, CurrentProcess);
 
-                        MI_ZERO_USED_PAGETABLE_ENTRIES (MI_PFN_ELEMENT(PageParentFrameIndex));
+                        MI_ZERO_USED_PAGETABLE_ENTRIES(MI_PFN_ELEMENT(PageParentFrameIndex));
 
-                        if (ReleasedWorkingSetMutex) {
+                        if (ReleasedWorkingSetMutex)
+                        {
 
-                            do {
+                            do
+                            {
 
-                                MiDoesPxeExistAndMakeValid (PointerPxe,
-                                                            CurrentProcess,
-                                                            FALSE,
-                                                            &Waited);
-    
+                                MiDoesPxeExistAndMakeValid(PointerPxe, CurrentProcess, FALSE, &Waited);
+
                                 Waited = 0;
-    
-                                MiDoesPpeExistAndMakeValid (PointerPpe,
-                                                            CurrentProcess,
-                                                            FALSE,
-                                                            &Waited);
-    
-                                MiDoesPdeExistAndMakeValid (PointerPde,
-                                                            CurrentProcess,
-                                                            FALSE,
-                                                            &Waited);
+
+                                MiDoesPpeExistAndMakeValid(PointerPpe, CurrentProcess, FALSE, &Waited);
+
+                                MiDoesPdeExistAndMakeValid(PointerPde, CurrentProcess, FALSE, &Waited);
                             } while (Waited != 0);
                         }
 
@@ -1064,12 +1016,8 @@ Environment:
                         // u2 field.
                         //
 
-                        MiBuildForkPageTable (PageParentFrameIndex,
-                                              PointerPxe,
-                                              PointerNewPxe,
-                                              RootPhysicalPage,
-                                              PfnPxPage,
-                                              TRUE);
+                        MiBuildForkPageTable(PageParentFrameIndex, PointerPxe, PointerNewPxe, RootPhysicalPage,
+                                             PfnPxPage, TRUE);
 
                         //
                         // Map the new page directory page into the system
@@ -1079,36 +1027,35 @@ Environment:
                         // hyperspace page being used to be reused.
                         //
 
-                        MiDownPfnReferenceCount (MdlDirParentPage, 1);
+                        MiDownPfnReferenceCount(MdlDirParentPage, 1);
 
                         MdlDirParentPage = PageParentFrameIndex;
 
-                        ASSERT (PpeBase != NULL);
+                        ASSERT(PpeBase != NULL);
 
-                        PpeBase = (PMMPTE)MiMapSinglePage (PpeBase,
-                                                           MdlDirParentPage,
-                                                           MmCached,
-                                                           HighPagePriority);
+                        PpeBase = (PMMPTE)MiMapSinglePage(PpeBase, MdlDirParentPage, MmCached, HighPagePriority);
 
-                        MiUpPfnReferenceCount (MdlDirParentPage, 1);
+                        MiUpPfnReferenceCount(MdlDirParentPage, 1);
 
                         PointerNewPxe = PpeBase;
                         PpePhysicalPage = PageParentFrameIndex;
 
-                        PfnPpPage = MI_PFN_ELEMENT (PpePhysicalPage);
-    
+                        PfnPpPage = MI_PFN_ELEMENT(PpePhysicalPage);
+
                         UsedPageDirectoryParentEntries = (PVOID)PfnPpPage;
                     }
-                    else {
+                    else
+                    {
 
-                        ASSERT (PointerNewPxe->u.Hard.Valid == 1 ||
-                                PointerNewPxe->u.Soft.Transition == 1);
+                        ASSERT(PointerNewPxe->u.Hard.Valid == 1 || PointerNewPxe->u.Soft.Transition == 1);
 
-                        if (PointerNewPxe->u.Hard.Valid == 1) {
-                            PpePhysicalPage = MI_GET_PAGE_FRAME_FROM_PTE (PointerNewPxe);
+                        if (PointerNewPxe->u.Hard.Valid == 1)
+                        {
+                            PpePhysicalPage = MI_GET_PAGE_FRAME_FROM_PTE(PointerNewPxe);
                         }
-                        else {
-                            PpePhysicalPage = MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE (PointerNewPxe);
+                        else
+                        {
+                            PpePhysicalPage = MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE(PointerNewPxe);
                         }
 
                         //
@@ -1121,27 +1068,25 @@ Environment:
                         // initialized for this codepath to execute.
                         //
 
-                        ASSERT (PageParentFrameIndex == MdlDirParentPage);
+                        ASSERT(PageParentFrameIndex == MdlDirParentPage);
 
-                        if (MdlDirParentPage != PpePhysicalPage) {
-                            ASSERT (MdlDirParentPage != (PFN_NUMBER)-1);
-                            MiDownPfnReferenceCount (MdlDirParentPage, 1);
+                        if (MdlDirParentPage != PpePhysicalPage)
+                        {
+                            ASSERT(MdlDirParentPage != (PFN_NUMBER)-1);
+                            MiDownPfnReferenceCount(MdlDirParentPage, 1);
                             PageParentFrameIndex = PpePhysicalPage;
                             MdlDirParentPage = PageParentFrameIndex;
 
-                            ASSERT (PpeBase != NULL);
-    
-                            PpeBase = (PMMPTE)MiMapSinglePage (PpeBase,
-                                                               MdlDirParentPage,
-                                                               MmCached,
-                                                               HighPagePriority);
-    
-                            MiUpPfnReferenceCount (MdlDirParentPage, 1);
-    
+                            ASSERT(PpeBase != NULL);
+
+                            PpeBase = (PMMPTE)MiMapSinglePage(PpeBase, MdlDirParentPage, MmCached, HighPagePriority);
+
+                            MiUpPfnReferenceCount(MdlDirParentPage, 1);
+
                             PointerNewPpe = PpeBase;
 
-                            PfnPpPage = MI_PFN_ELEMENT (PpePhysicalPage);
-        
+                            PfnPpPage = MI_PFN_ELEMENT(PpePhysicalPage);
+
                             UsedPageDirectoryParentEntries = (PVOID)PfnPpPage;
                         }
                     }
@@ -1156,7 +1101,8 @@ Environment:
 
                     PointerNewPpe = &PpeBase[MiGetPdeOffset(PointerPte)];
 
-                    if (PointerNewPpe->u.Long == 0) {
+                    if (PointerNewPpe->u.Long == 0)
+                    {
 
                         //
                         // No physical page has been allocated yet, get a page
@@ -1169,38 +1115,29 @@ Environment:
                         //
 
                         ReleasedWorkingSetMutex =
-                                MiLeaveThisPageGetAnother (&PageDirFrameIndex,
-                                                           PointerPpe,
-                                                           CurrentProcess);
+                            MiLeaveThisPageGetAnother(&PageDirFrameIndex, PointerPpe, CurrentProcess);
 
-                        MI_ZERO_USED_PAGETABLE_ENTRIES (MI_PFN_ELEMENT(PageDirFrameIndex));
+                        MI_ZERO_USED_PAGETABLE_ENTRIES(MI_PFN_ELEMENT(PageDirFrameIndex));
 
-                        if (ReleasedWorkingSetMutex) {
+                        if (ReleasedWorkingSetMutex)
+                        {
 
-                            do {
+                            do
+                            {
 
 #if (_MI_PAGING_LEVELS >= 4)
-                                MiDoesPxeExistAndMakeValid (PointerPxe,
-                                                            CurrentProcess,
-                                                            FALSE,
-                                                            &Waited);
-    
+                                MiDoesPxeExistAndMakeValid(PointerPxe, CurrentProcess, FALSE, &Waited);
+
                                 Waited = 0;
 #endif
 
-                                MiDoesPpeExistAndMakeValid (PointerPpe,
-                                                            CurrentProcess,
-                                                            FALSE,
-                                                            &Waited);
-    
+                                MiDoesPpeExistAndMakeValid(PointerPpe, CurrentProcess, FALSE, &Waited);
+
 #if (_MI_PAGING_LEVELS < 4)
                                 Waited = 0;
 #endif
-    
-                                MiDoesPdeExistAndMakeValid (PointerPde,
-                                                            CurrentProcess,
-                                                            FALSE,
-                                                            &Waited);
+
+                                MiDoesPdeExistAndMakeValid(PointerPde, CurrentProcess, FALSE, &Waited);
                             } while (Waited != 0);
                         }
 
@@ -1215,19 +1152,16 @@ Environment:
                         // u2 field.
                         //
 
-                        MiBuildForkPageTable (PageDirFrameIndex,
-                                              PointerPpe,
-                                              PointerNewPpe,
+                        MiBuildForkPageTable(PageDirFrameIndex, PointerPpe, PointerNewPpe,
 #if (_MI_PAGING_LEVELS >= 4)
-                                              PpePhysicalPage,
+                                             PpePhysicalPage,
 #else
-                                              RootPhysicalPage,
+                                             RootPhysicalPage,
 #endif
-                                              PfnPpPage,
-                                              TRUE);
+                                             PfnPpPage, TRUE);
 
 #if (_MI_PAGING_LEVELS >= 4)
-                        MI_INCREMENT_USED_PTES_BY_HANDLE (UsedPageDirectoryParentEntries);
+                        MI_INCREMENT_USED_PTES_BY_HANDLE(UsedPageDirectoryParentEntries);
 #endif
                         //
                         // Map the new page directory page into the system
@@ -1237,35 +1171,34 @@ Environment:
                         // hyperspace page being used to be reused.
                         //
 
-                        MiDownPfnReferenceCount (MdlDirPage, 1);
+                        MiDownPfnReferenceCount(MdlDirPage, 1);
 
                         MdlDirPage = PageDirFrameIndex;
 
-                        ASSERT (PdeBase != NULL);
+                        ASSERT(PdeBase != NULL);
 
-                        PdeBase = (PMMPTE)MiMapSinglePage (PdeBase,
-                                                           MdlDirPage,
-                                                           MmCached,
-                                                           HighPagePriority);
+                        PdeBase = (PMMPTE)MiMapSinglePage(PdeBase, MdlDirPage, MmCached, HighPagePriority);
 
-                        MiUpPfnReferenceCount (MdlDirPage, 1);
+                        MiUpPfnReferenceCount(MdlDirPage, 1);
 
                         PointerNewPde = PdeBase;
                         PdePhysicalPage = PageDirFrameIndex;
 
-                        PfnPdPage = MI_PFN_ELEMENT (PdePhysicalPage);
-    
+                        PfnPdPage = MI_PFN_ELEMENT(PdePhysicalPage);
+
                         UsedPageDirectoryEntries = (PVOID)PfnPdPage;
                     }
-                    else {
-                        ASSERT (PointerNewPpe->u.Hard.Valid == 1 ||
-                                PointerNewPpe->u.Soft.Transition == 1);
+                    else
+                    {
+                        ASSERT(PointerNewPpe->u.Hard.Valid == 1 || PointerNewPpe->u.Soft.Transition == 1);
 
-                        if (PointerNewPpe->u.Hard.Valid == 1) {
-                            PdePhysicalPage = MI_GET_PAGE_FRAME_FROM_PTE (PointerNewPpe);
+                        if (PointerNewPpe->u.Hard.Valid == 1)
+                        {
+                            PdePhysicalPage = MI_GET_PAGE_FRAME_FROM_PTE(PointerNewPpe);
                         }
-                        else {
-                            PdePhysicalPage = MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE (PointerNewPpe);
+                        else
+                        {
+                            PdePhysicalPage = MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE(PointerNewPpe);
                         }
 
                         //
@@ -1278,27 +1211,25 @@ Environment:
                         // initialized for this codepath to execute.
                         //
 
-                        ASSERT (PageDirFrameIndex == MdlDirPage);
+                        ASSERT(PageDirFrameIndex == MdlDirPage);
 
-                        if (MdlDirPage != PdePhysicalPage) {
-                            ASSERT (MdlDirPage != (PFN_NUMBER)-1);
-                            MiDownPfnReferenceCount (MdlDirPage, 1);
+                        if (MdlDirPage != PdePhysicalPage)
+                        {
+                            ASSERT(MdlDirPage != (PFN_NUMBER)-1);
+                            MiDownPfnReferenceCount(MdlDirPage, 1);
                             PageDirFrameIndex = PdePhysicalPage;
                             MdlDirPage = PageDirFrameIndex;
 
-                            ASSERT (PdeBase != NULL);
-    
-                            PdeBase = (PMMPTE)MiMapSinglePage (PdeBase,
-                                                               MdlDirPage,
-                                                               MmCached,
-                                                               HighPagePriority);
-    
-                            MiUpPfnReferenceCount (MdlDirPage, 1);
-    
+                            ASSERT(PdeBase != NULL);
+
+                            PdeBase = (PMMPTE)MiMapSinglePage(PdeBase, MdlDirPage, MmCached, HighPagePriority);
+
+                            MiUpPfnReferenceCount(MdlDirPage, 1);
+
                             PointerNewPde = PdeBase;
 
-                            PfnPdPage = MI_PFN_ELEMENT (PdePhysicalPage);
-        
+                            PfnPdPage = MI_PFN_ELEMENT(PdePhysicalPage);
+
                             UsedPageDirectoryEntries = (PVOID)PfnPdPage;
                         }
                     }
@@ -1309,7 +1240,7 @@ Environment:
                     // page directory page.
                     //
 
-#if defined (_X86PAE_)
+#if defined(_X86PAE_)
                     //
                     // All four PAE page directory frames are mapped virtually
                     // contiguous and so the PpePdeOffset can (and must) be
@@ -1322,7 +1253,8 @@ Environment:
 
                     PointerNewPde = &PdeBase[PpePdeOffset];
 
-                    if (PointerNewPde->u.Long == 0) {
+                    if (PointerNewPde->u.Long == 0)
+                    {
 
                         //
                         // No physical page has been allocated yet, get a page
@@ -1331,38 +1263,29 @@ Environment:
                         //
 
                         ReleasedWorkingSetMutex =
-                                MiDoneWithThisPageGetAnother (&PageFrameIndex,
-                                                              PointerPde,
-                                                              CurrentProcess);
+                            MiDoneWithThisPageGetAnother(&PageFrameIndex, PointerPde, CurrentProcess);
 
 #if (_MI_PAGING_LEVELS >= 3)
-                        MI_ZERO_USED_PAGETABLE_ENTRIES (MI_PFN_ELEMENT(PageFrameIndex));
+                        MI_ZERO_USED_PAGETABLE_ENTRIES(MI_PFN_ELEMENT(PageFrameIndex));
 #endif
-                        if (ReleasedWorkingSetMutex) {
+                        if (ReleasedWorkingSetMutex)
+                        {
 
-                            do {
+                            do
+                            {
 
 #if (_MI_PAGING_LEVELS >= 4)
-                                MiDoesPxeExistAndMakeValid (PointerPxe,
-                                                            CurrentProcess,
-                                                            FALSE,
-                                                            &Waited);
-    
+                                MiDoesPxeExistAndMakeValid(PointerPxe, CurrentProcess, FALSE, &Waited);
+
                                 Waited = 0;
 #endif
-                                MiDoesPpeExistAndMakeValid (PointerPpe,
-                                                            CurrentProcess,
-                                                            FALSE,
-                                                            &Waited);
-    
+                                MiDoesPpeExistAndMakeValid(PointerPpe, CurrentProcess, FALSE, &Waited);
+
 #if (_MI_PAGING_LEVELS < 4)
                                 Waited = 0;
 #endif
-    
-                                MiDoesPdeExistAndMakeValid (PointerPde,
-                                                            CurrentProcess,
-                                                            FALSE,
-                                                            &Waited);
+
+                                MiDoesPdeExistAndMakeValid(PointerPde, CurrentProcess, FALSE, &Waited);
                             } while (Waited != 0);
                         }
 
@@ -1377,20 +1300,17 @@ Environment:
                         // u2 field.
                         //
 
-#if defined (_X86PAE_)
-                        PdePhysicalPage = PageDirectoryFrames[MiGetPdPteOffset(MiGetVirtualAddressMappedByPte(PointerPte))];
-                        PfnPdPage = MI_PFN_ELEMENT (PdePhysicalPage);
+#if defined(_X86PAE_)
+                        PdePhysicalPage =
+                            PageDirectoryFrames[MiGetPdPteOffset(MiGetVirtualAddressMappedByPte(PointerPte))];
+                        PfnPdPage = MI_PFN_ELEMENT(PdePhysicalPage);
 #endif
 
-                        MiBuildForkPageTable (PageFrameIndex,
-                                              PointerPde,
-                                              PointerNewPde,
-                                              PdePhysicalPage,
-                                              PfnPdPage,
-                                              FALSE);
+                        MiBuildForkPageTable(PageFrameIndex, PointerPde, PointerNewPde, PdePhysicalPage, PfnPdPage,
+                                             FALSE);
 
 #if (_MI_PAGING_LEVELS >= 3)
-                        MI_INCREMENT_USED_PTES_BY_HANDLE (UsedPageDirectoryEntries);
+                        MI_INCREMENT_USED_PTES_BY_HANDLE(UsedPageDirectoryEntries);
 #endif
 
                         //
@@ -1401,20 +1321,18 @@ Environment:
                         // hyperspace page being used to be reused.
                         //
 
-                        ASSERT (NewPteMappedAddress != NULL);
+                        ASSERT(NewPteMappedAddress != NULL);
 
-                        MiDownPfnReferenceCount (MdlPage, 1);
+                        MiDownPfnReferenceCount(MdlPage, 1);
 
                         MdlPage = PageFrameIndex;
 
-                        PointerNewPte = (PMMPTE)MiMapSinglePage (NewPteMappedAddress,
-                                                                 MdlPage,
-                                                                 MmCached,
-                                                                 HighPagePriority);
-                    
-                        ASSERT (PointerNewPte != NULL);
+                        PointerNewPte =
+                            (PMMPTE)MiMapSinglePage(NewPteMappedAddress, MdlPage, MmCached, HighPagePriority);
 
-                        MiUpPfnReferenceCount (MdlPage, 1);
+                        ASSERT(PointerNewPte != NULL);
+
+                        MiUpPfnReferenceCount(MdlPage, 1);
                     }
 
                     //
@@ -1423,34 +1341,33 @@ Environment:
                     // table page already built.
                     //
 
-                    PointerNewPte = (PMMPTE)((ULONG_PTR)PAGE_ALIGN(PointerNewPte) |
-                                            BYTE_OFFSET (PointerPte));
+                    PointerNewPte = (PMMPTE)((ULONG_PTR)PAGE_ALIGN(PointerNewPte) | BYTE_OFFSET(PointerPte));
 
 #if (_MI_PAGING_LEVELS >= 3)
                     UsedPageTableEntries = (PVOID)MI_PFN_ELEMENT((PFN_NUMBER)PointerNewPde->u.Hard.PageFrameNumber);
 #else
-#if !defined (_X86PAE_)
-                    UsedPageTableEntries = (PVOID)&HyperWsl->UsedPageTableEntries
-                                                [MiGetPteOffset( PointerPte )];
+#if !defined(_X86PAE_)
+                    UsedPageTableEntries = (PVOID)&HyperWsl->UsedPageTableEntries[MiGetPteOffset(PointerPte)];
 #else
-                    UsedPageTableEntries = (PVOID)&HyperWsl->UsedPageTableEntries
-                                                [MiGetPdeIndex(MiGetVirtualAddressMappedByPte(PointerPte))];
+                    UsedPageTableEntries =
+                        (PVOID)&HyperWsl
+                            ->UsedPageTableEntries[MiGetPdeIndex(MiGetVirtualAddressMappedByPte(PointerPte))];
 #endif
 #endif
-
                 }
 
                 //
                 // Make the fork prototype PTE location resident.
                 //
 
-                if (PAGE_ALIGN (ForkProtoPte) != PAGE_ALIGN (LockedForkPte)) {
-                    MiUnlockPagedAddress (LockedForkPte, FALSE);
+                if (PAGE_ALIGN(ForkProtoPte) != PAGE_ALIGN(LockedForkPte))
+                {
+                    MiUnlockPagedAddress(LockedForkPte, FALSE);
                     LockedForkPte = ForkProtoPte;
-                    MiLockPagedAddress (LockedForkPte, FALSE);
+                    MiLockPagedAddress(LockedForkPte, FALSE);
                 }
 
-                MiMakeSystemAddressValid (PointerPte, CurrentProcess);
+                MiMakeSystemAddressValid(PointerPte, CurrentProcess);
 
                 PteContents = *PointerPte;
 
@@ -1458,25 +1375,25 @@ Environment:
                 // Check each PTE.
                 //
 
-                if (PteContents.u.Long == 0) {
+                if (PteContents.u.Long == 0)
+                {
                     NOTHING;
-
                 }
-                else if (PteContents.u.Hard.Valid == 1) {
+                else if (PteContents.u.Hard.Valid == 1)
+                {
 
                     //
                     // Valid.
                     //
 
-                    Pfn2 = MI_PFN_ELEMENT (PteContents.u.Hard.PageFrameNumber);
-                    VirtualAddress = MiGetVirtualAddressMappedByPte (PointerPte);
-                    WorkingSetIndex = MiLocateWsle (VirtualAddress,
-                                                    MmWorkingSetList,
-                                                    Pfn2->u1.WsIndex);
+                    Pfn2 = MI_PFN_ELEMENT(PteContents.u.Hard.PageFrameNumber);
+                    VirtualAddress = MiGetVirtualAddressMappedByPte(PointerPte);
+                    WorkingSetIndex = MiLocateWsle(VirtualAddress, MmWorkingSetList, Pfn2->u1.WsIndex);
 
-                    ASSERT (WorkingSetIndex != WSLE_NULL_INDEX);
+                    ASSERT(WorkingSetIndex != WSLE_NULL_INDEX);
 
-                    if (Pfn2->u3.e1.PrototypePte == 1) {
+                    if (Pfn2->u3.e1.PrototypePte == 1)
+                    {
 
                         //
                         // This PTE is already in prototype PTE format.
@@ -1493,8 +1410,8 @@ Environment:
                         // how to reconstruct the PTE.
                         //
 
-                        if (MmWsle[WorkingSetIndex].u1.e1.SameProtectAsProto
-                                                                        == 0) {
+                        if (MmWsle[WorkingSetIndex].u1.e1.SameProtectAsProto == 0)
+                        {
 
                             //
                             // The protection for the prototype PTE is in the
@@ -1502,32 +1419,30 @@ Environment:
                             //
 
                             TempPte.u.Long = 0;
-                            TempPte.u.Soft.Protection =
-                                MI_GET_PROTECTION_FROM_WSLE(&MmWsle[WorkingSetIndex]);
+                            TempPte.u.Soft.Protection = MI_GET_PROTECTION_FROM_WSLE(&MmWsle[WorkingSetIndex]);
                             TempPte.u.Soft.PageFileHigh = MI_PTE_LOOKUP_NEEDED;
-
                         }
-                        else {
+                        else
+                        {
 
                             //
                             // The protection is in the prototype PTE.
                             //
 
-                            TempPte.u.Long = MiProtoAddressForPte (
-                                                            Pfn2->PteAddress);
- //                            TempPte.u.Proto.ForkType =
- //                                        MmWsle[WorkingSetIndex].u1.e1.ForkType;
+                            TempPte.u.Long = MiProtoAddressForPte(Pfn2->PteAddress);
+                            //                            TempPte.u.Proto.ForkType =
+                            //                                        MmWsle[WorkingSetIndex].u1.e1.ForkType;
                         }
 
                         TempPte.u.Proto.Prototype = 1;
-                        MI_WRITE_INVALID_PTE (PointerNewPte, TempPte);
+                        MI_WRITE_INVALID_PTE(PointerNewPte, TempPte);
 
                         //
                         // A PTE is now non-zero, increment the used page
                         // table entries counter.
                         //
 
-                        MI_INCREMENT_USED_PTES_BY_HANDLE (UsedPageTableEntries);
+                        MI_INCREMENT_USED_PTES_BY_HANDLE(UsedPageTableEntries);
 
                         //
                         // Check to see if this is a fork prototype PTE,
@@ -1535,8 +1450,8 @@ Environment:
                         // which is in the longword following the PTE.
                         //
 
-                        if (MiLocateCloneAddress (CurrentProcess, (PVOID)Pfn2->PteAddress) !=
-                                    NULL) {
+                        if (MiLocateCloneAddress(CurrentProcess, (PVOID)Pfn2->PteAddress) != NULL)
+                        {
 
                             //
                             // The reference count field, or the prototype PTE
@@ -1545,22 +1460,21 @@ Environment:
 
                             CloneProto = (PMMCLONE_BLOCK)Pfn2->PteAddress;
 
-                            ASSERT (CloneProto->CloneRefCount >= 1);
-                            InterlockedIncrement (&CloneProto->CloneRefCount);
+                            ASSERT(CloneProto->CloneRefCount >= 1);
+                            InterlockedIncrement(&CloneProto->CloneRefCount);
 
-                            if (PAGE_ALIGN (ForkProtoPte) !=
-                                                    PAGE_ALIGN (LockedForkPte)) {
-                                MiUnlockPagedAddress (LockedForkPte, FALSE);
+                            if (PAGE_ALIGN(ForkProtoPte) != PAGE_ALIGN(LockedForkPte))
+                            {
+                                MiUnlockPagedAddress(LockedForkPte, FALSE);
                                 LockedForkPte = ForkProtoPte;
-                                MiLockPagedAddress (LockedForkPte, FALSE);
+                                MiLockPagedAddress(LockedForkPte, FALSE);
                             }
 
-                            MiMakeSystemAddressValid (PointerPte,
-                                                      CurrentProcess);
+                            MiMakeSystemAddressValid(PointerPte, CurrentProcess);
                         }
-
                     }
-                    else {
+                    else
+                    {
 
                         //
                         // This is a private page, create a fork prototype PTE
@@ -1569,13 +1483,9 @@ Environment:
                         // PTE so the WSLE does not need to be updated.
                         //
 
-                        MI_MAKE_VALID_PTE_WRITE_COPY (PointerPte);
+                        MI_MAKE_VALID_PTE_WRITE_COPY(PointerPte);
 
-                        KeFlushSingleTb (VirtualAddress,
-                                         TRUE,
-                                         FALSE,
-                                         (PHARDWARE_PTE)PointerPte,
-                                         PointerPte->u.Flush);
+                        KeFlushSingleTb(VirtualAddress, TRUE, FALSE, (PHARDWARE_PTE)PointerPte, PointerPte->u.Flush);
 
                         ForkProtoPte->ProtoPte = *PointerPte;
                         ForkProtoPte->CloneRefCount = 2;
@@ -1589,20 +1499,20 @@ Environment:
                         Pfn2->u3.e1.PrototypePte = 1;
 
                         ContainingPte = MiGetPteAddress(&ForkProtoPte->ProtoPte);
-                        if (ContainingPte->u.Hard.Valid == 0) {
+                        if (ContainingPte->u.Hard.Valid == 0)
+                        {
 #if (_MI_PAGING_LEVELS < 3)
-                            if (!NT_SUCCESS(MiCheckPdeForPagedPool (&ForkProtoPte->ProtoPte))) {
+                            if (!NT_SUCCESS(MiCheckPdeForPagedPool(&ForkProtoPte->ProtoPte)))
+                            {
 #endif
-                                KeBugCheckEx (MEMORY_MANAGEMENT,
-                                              0x61940, 
-                                              (ULONG_PTR)&ForkProtoPte->ProtoPte,
-                                              (ULONG_PTR)ContainingPte->u.Long,
-                                              (ULONG_PTR)MiGetVirtualAddressMappedByPte(&ForkProtoPte->ProtoPte));
+                                KeBugCheckEx(MEMORY_MANAGEMENT, 0x61940, (ULONG_PTR)&ForkProtoPte->ProtoPte,
+                                             (ULONG_PTR)ContainingPte->u.Long,
+                                             (ULONG_PTR)MiGetVirtualAddressMappedByPte(&ForkProtoPte->ProtoPte));
 #if (_MI_PAGING_LEVELS < 3)
                             }
 #endif
                         }
-                        Pfn2->u4.PteFrame = MI_GET_PAGE_FRAME_FROM_PTE (ContainingPte);
+                        Pfn2->u4.PteFrame = MI_GET_PAGE_FRAME_FROM_PTE(ContainingPte);
 
 
                         //
@@ -1611,17 +1521,16 @@ Environment:
                         // PTE into the page.
                         //
 
-                        PfnForkPtePage = MI_PFN_ELEMENT (
-                                            ContainingPte->u.Hard.PageFrameNumber );
+                        PfnForkPtePage = MI_PFN_ELEMENT(ContainingPte->u.Hard.PageFrameNumber);
 
-                        MiUpForkPageShareCount (PfnForkPtePage);
+                        MiUpForkPageShareCount(PfnForkPtePage);
 
                         //
                         // Change the protection in the PFN database to COPY
                         // on write, if writable.
                         //
 
-                        MI_MAKE_PROTECT_WRITE_COPY (Pfn2->OriginalPte);
+                        MI_MAKE_PROTECT_WRITE_COPY(Pfn2->OriginalPte);
 
                         //
                         // Put the protection into the WSLE and mark the WSLE
@@ -1629,21 +1538,20 @@ Environment:
                         // is the same as the prototype PTE.
                         //
 
-                        MmWsle[WorkingSetIndex].u1.e1.Protection =
-                            MI_GET_PROTECTION_FROM_SOFT_PTE(&Pfn2->OriginalPte);
+                        MmWsle[WorkingSetIndex].u1.e1.Protection = MI_GET_PROTECTION_FROM_SOFT_PTE(&Pfn2->OriginalPte);
 
                         MmWsle[WorkingSetIndex].u1.e1.SameProtectAsProto = 1;
 
-                        TempPte.u.Long = MiProtoAddressForPte (Pfn2->PteAddress);
+                        TempPte.u.Long = MiProtoAddressForPte(Pfn2->PteAddress);
                         TempPte.u.Proto.Prototype = 1;
-                        MI_WRITE_INVALID_PTE (PointerNewPte, TempPte);
+                        MI_WRITE_INVALID_PTE(PointerNewPte, TempPte);
 
                         //
                         // A PTE is now non-zero, increment the used page
                         // table entries counter.
                         //
 
-                        MI_INCREMENT_USED_PTES_BY_HANDLE (UsedPageTableEntries);
+                        MI_INCREMENT_USED_PTES_BY_HANDLE(UsedPageTableEntries);
 
                         //
                         // One less private page (it's now shared).
@@ -1654,9 +1562,9 @@ Environment:
                         ForkProtoPte += 1;
                         NumberOfForkPtes += 1;
                     }
-
                 }
-                else if (PteContents.u.Soft.Prototype == 1) {
+                else if (PteContents.u.Soft.Prototype == 1)
+                {
 
                     //
                     // Prototype PTE, check to see if this is a fork
@@ -1664,14 +1572,14 @@ Environment:
                     // the PTE can just be copied (fork compatible format).
                     //
 
-                    MI_WRITE_INVALID_PTE (PointerNewPte, PteContents);
+                    MI_WRITE_INVALID_PTE(PointerNewPte, PteContents);
 
                     //
                     // A PTE is now non-zero, increment the used page
                     // table entries counter.
                     //
 
-                    MI_INCREMENT_USED_PTES_BY_HANDLE (UsedPageTableEntries);
+                    MI_INCREMENT_USED_PTES_BY_HANDLE(UsedPageTableEntries);
 
                     //
                     // Check to see if this is a fork prototype PTE,
@@ -1681,36 +1589,36 @@ Environment:
 
                     CloneProto = (PMMCLONE_BLOCK)(ULONG_PTR)MiPteToProto(PointerPte);
 
-                    if (MiLocateCloneAddress (CurrentProcess, (PVOID)CloneProto) != NULL) {
+                    if (MiLocateCloneAddress(CurrentProcess, (PVOID)CloneProto) != NULL)
+                    {
 
                         //
                         // The reference count field, or the prototype PTE
                         // for that matter may not be in the working set.
                         //
 
-                        ASSERT (CloneProto->CloneRefCount >= 1);
-                        InterlockedIncrement (&CloneProto->CloneRefCount);
+                        ASSERT(CloneProto->CloneRefCount >= 1);
+                        InterlockedIncrement(&CloneProto->CloneRefCount);
 
-                        if (PAGE_ALIGN (ForkProtoPte) !=
-                                                PAGE_ALIGN (LockedForkPte)) {
-                            MiUnlockPagedAddress (LockedForkPte, FALSE);
+                        if (PAGE_ALIGN(ForkProtoPte) != PAGE_ALIGN(LockedForkPte))
+                        {
+                            MiUnlockPagedAddress(LockedForkPte, FALSE);
                             LockedForkPte = ForkProtoPte;
-                            MiLockPagedAddress (LockedForkPte, FALSE);
+                            MiLockPagedAddress(LockedForkPte, FALSE);
                         }
 
-                        MiMakeSystemAddressValid (PointerPte, CurrentProcess);
+                        MiMakeSystemAddressValid(PointerPte, CurrentProcess);
                     }
-
                 }
-                else if (PteContents.u.Soft.Transition == 1) {
+                else if (PteContents.u.Soft.Transition == 1)
+                {
 
                     //
                     // Transition.
                     //
 
-                    if (MiHandleForkTransitionPte (PointerPte,
-                                                   PointerNewPte,
-                                                   ForkProtoPte)) {
+                    if (MiHandleForkTransitionPte(PointerPte, PointerNewPte, ForkProtoPte))
+                    {
                         //
                         // PTE is no longer transition, try again.
                         //
@@ -1723,7 +1631,7 @@ Environment:
                     // table entries counter.
                     //
 
-                    MI_INCREMENT_USED_PTES_BY_HANDLE (UsedPageTableEntries);
+                    MI_INCREMENT_USED_PTES_BY_HANDLE(UsedPageTableEntries);
 
                     //
                     // One less private page (it's now shared).
@@ -1733,17 +1641,19 @@ Environment:
 
                     ForkProtoPte += 1;
                     NumberOfForkPtes += 1;
-
                 }
-                else {
+                else
+                {
 
                     //
                     // Page file format (may be demand zero).
                     //
 
-                    if (IS_PTE_NOT_DEMAND_ZERO (PteContents)) {
+                    if (IS_PTE_NOT_DEMAND_ZERO(PteContents))
+                    {
 
-                        if (PteContents.u.Soft.Protection == MM_DECOMMIT) {
+                        if (PteContents.u.Soft.Protection == MM_DECOMMIT)
+                        {
 
                             //
                             // This is a decommitted PTE, just move it
@@ -1751,9 +1661,10 @@ Environment:
                             // the count of private pages.
                             //
 
-                            MI_WRITE_INVALID_PTE (PointerNewPte, PteContents);
+                            MI_WRITE_INVALID_PTE(PointerNewPte, PteContents);
                         }
-                        else {
+                        else
+                        {
 
                             //
                             // The PTE is not demand zero, move the PTE to
@@ -1768,17 +1679,16 @@ Environment:
                             // Make the protection write-copy if writable.
                             //
 
-                            MI_MAKE_PROTECT_WRITE_COPY (ForkProtoPte->ProtoPte);
+                            MI_MAKE_PROTECT_WRITE_COPY(ForkProtoPte->ProtoPte);
 
                             ForkProtoPte->CloneRefCount = 2;
 
-                            TempPte.u.Long =
-                                 MiProtoAddressForPte (&ForkProtoPte->ProtoPte);
+                            TempPte.u.Long = MiProtoAddressForPte(&ForkProtoPte->ProtoPte);
 
                             TempPte.u.Proto.Prototype = 1;
 
-                            MI_WRITE_INVALID_PTE (PointerPte, TempPte);
-                            MI_WRITE_INVALID_PTE (PointerNewPte, TempPte);
+                            MI_WRITE_INVALID_PTE(PointerPte, TempPte);
+                            MI_WRITE_INVALID_PTE(PointerNewPte, TempPte);
 
                             //
                             // One less private page (it's now shared).
@@ -1790,14 +1700,15 @@ Environment:
                             NumberOfForkPtes += 1;
                         }
                     }
-                    else {
+                    else
+                    {
 
                         //
                         // The page is demand zero, make the new process's
                         // page demand zero.
                         //
 
-                        MI_WRITE_INVALID_PTE (PointerNewPte, PteContents);
+                        MI_WRITE_INVALID_PTE(PointerNewPte, PteContents);
                     }
 
                     //
@@ -1805,17 +1716,17 @@ Environment:
                     // table entries counter.
                     //
 
-                    MI_INCREMENT_USED_PTES_BY_HANDLE (UsedPageTableEntries);
+                    MI_INCREMENT_USED_PTES_BY_HANDLE(UsedPageTableEntries);
                 }
 
                 PointerPte += 1;
                 PointerNewPte += 1;
 
-            }  // end while for PTEs
-AllDone:
+            } // end while for PTEs
+        AllDone:
             NewVad = NewVad->Parent;
         }
-        Vad = MiGetNextVad (Vad);
+        Vad = MiGetNextVad(Vad);
 
     } // end while for VADs
 
@@ -1823,66 +1734,67 @@ AllDone:
     // Unlock paged pool page.
     //
 
-    MiUnlockPagedAddress (LockedForkPte, FALSE);
+    MiUnlockPagedAddress(LockedForkPte, FALSE);
 
     //
     // Unmap the PD Page and hyper space page.
     //
 
 #if (_MI_PAGING_LEVELS >= 4)
-    MiUnmapSinglePage (PxeBase);
+    MiUnmapSinglePage(PxeBase);
 #endif
 
 #if (_MI_PAGING_LEVELS >= 3)
-    MiUnmapSinglePage (PpeBase);
+    MiUnmapSinglePage(PpeBase);
 #endif
 
-#if !defined (_X86PAE_)
-    MiUnmapSinglePage (PdeBase);
+#if !defined(_X86PAE_)
+    MiUnmapSinglePage(PdeBase);
 #else
-    MmUnmapLockedPages (PdeBase, MdlPageDirectory);
+    MmUnmapLockedPages(PdeBase, MdlPageDirectory);
 #endif
 
 #if (_MI_PAGING_LEVELS < 3)
-    MiUnmapSinglePage (HyperBase);
+    MiUnmapSinglePage(HyperBase);
 #endif
 
-    MiUnmapSinglePage (NewPteMappedAddress);
+    MiUnmapSinglePage(NewPteMappedAddress);
 
 #if (_MI_PAGING_LEVELS >= 3)
-    MiDownPfnReferenceCount (RootPhysicalPage, 1);
+    MiDownPfnReferenceCount(RootPhysicalPage, 1);
 #endif
 
 #if (_MI_PAGING_LEVELS >= 4)
-    MiDownPfnReferenceCount (MdlDirParentPage, 1);
+    MiDownPfnReferenceCount(MdlDirParentPage, 1);
 #endif
 
-#if defined (_X86PAE_)
-    for (i = 0; i < PD_PER_SYSTEM; i += 1) {
-        MiDownPfnReferenceCount (PageDirectoryFrames[i], 1);
+#if defined(_X86PAE_)
+    for (i = 0; i < PD_PER_SYSTEM; i += 1)
+    {
+        MiDownPfnReferenceCount(PageDirectoryFrames[i], 1);
     }
 #else
-    MiDownPfnReferenceCount (MdlDirPage, 1);
+    MiDownPfnReferenceCount(MdlDirPage, 1);
 #endif
 
 #if (_MI_PAGING_LEVELS < 3)
-    MiDownPfnReferenceCount (HyperPhysicalPage, 1);
+    MiDownPfnReferenceCount(HyperPhysicalPage, 1);
 #endif
 
-    MiDownPfnReferenceCount (MdlPage, 1);
+    MiDownPfnReferenceCount(MdlPage, 1);
 
     //
     // Make the count of private pages match between the two processes.
     //
 
-    ASSERT ((SPFN_NUMBER)CurrentProcess->NumberOfPrivatePages >= 0);
+    ASSERT((SPFN_NUMBER)CurrentProcess->NumberOfPrivatePages >= 0);
 
-    ProcessToInitialize->NumberOfPrivatePages =
-                                          CurrentProcess->NumberOfPrivatePages;
+    ProcessToInitialize->NumberOfPrivatePages = CurrentProcess->NumberOfPrivatePages;
 
-    ASSERT (NumberOfForkPtes <= CloneDescriptor->NumberOfPtes);
+    ASSERT(NumberOfForkPtes <= CloneDescriptor->NumberOfPtes);
 
-    if (NumberOfForkPtes != 0) {
+    if (NumberOfForkPtes != 0)
+    {
 
         //
         // The number of fork PTEs is non-zero, set the values
@@ -1894,33 +1806,33 @@ AllDone:
         CloneDescriptor->FinalNumberOfReferences = NumberOfForkPtes;
         CloneDescriptor->NumberOfPtes = NumberOfForkPtes;
     }
-    else {
+    else
+    {
 
         //
         // There were no fork PTEs created.  Remove the clone descriptor
         // from this process and clean up the related structures.
         //
 
-        MiRemoveClone (CurrentProcess, CloneDescriptor);
+        MiRemoveClone(CurrentProcess, CloneDescriptor);
 
-        UNLOCK_WS (CurrentProcess);
+        UNLOCK_WS(CurrentProcess);
 
-        ExFreePool (CloneDescriptor->CloneHeader->ClonePtes);
+        ExFreePool(CloneDescriptor->CloneHeader->ClonePtes);
 
-        ExFreePool (CloneDescriptor->CloneHeader);
+        ExFreePool(CloneDescriptor->CloneHeader);
 
         //
         // Return the pool for the global structures referenced by the
         // clone descriptor.
         //
 
-        PsReturnProcessPagedPoolQuota (CurrentProcess,
-                                       CloneDescriptor->PagedPoolQuotaCharge);
+        PsReturnProcessPagedPoolQuota(CurrentProcess, CloneDescriptor->PagedPoolQuotaCharge);
 
-        PsReturnProcessNonPagedPoolQuota (CurrentProcess, sizeof(MMCLONE_HEADER));
-        ExFreePool (CloneDescriptor);
+        PsReturnProcessNonPagedPoolQuota(CurrentProcess, sizeof(MMCLONE_HEADER));
+        ExFreePool(CloneDescriptor);
 
-        LOCK_WS (CurrentProcess);
+        LOCK_WS(CurrentProcess);
     }
 
     //
@@ -1934,7 +1846,7 @@ AllDone:
     // not released until after we flush the TB now.
     //
 
-    MiDownShareCountFlushEntireTb (PageFrameIndex);
+    MiDownShareCountFlushEntireTb(PageFrameIndex);
 
     PageFrameIndex = (PFN_NUMBER)-1;
 
@@ -1942,26 +1854,27 @@ AllDone:
     // Copy the clone descriptors from this process to the new process.
     //
 
-    Clone = MiGetFirstClone (CurrentProcess);
+    Clone = MiGetFirstClone(CurrentProcess);
     CloneList = &FirstNewClone;
     CloneFailed = FALSE;
 
-    while (Clone != NULL) {
+    while (Clone != NULL)
+    {
 
         //
         // Increment the count of processes referencing this clone block.
         //
 
-        ASSERT (Clone->CloneHeader->NumberOfProcessReferences >= 1);
+        ASSERT(Clone->CloneHeader->NumberOfProcessReferences >= 1);
 
-        InterlockedIncrement (&Clone->CloneHeader->NumberOfProcessReferences);
+        InterlockedIncrement(&Clone->CloneHeader->NumberOfProcessReferences);
 
-        do {
-            NewClone = ExAllocatePoolWithTag (NonPagedPool,
-                                              sizeof( MMCLONE_DESCRIPTOR),
-                                              'dCmM');
+        do
+        {
+            NewClone = ExAllocatePoolWithTag(NonPagedPool, sizeof(MMCLONE_DESCRIPTOR), 'dCmM');
 
-            if (NewClone != NULL) {
+            if (NewClone != NULL)
+            {
                 break;
             }
 
@@ -1978,16 +1891,14 @@ AllDone:
             // and reacquire after the delay.
             //
 
-            UNLOCK_WS (CurrentProcess);
+            UNLOCK_WS(CurrentProcess);
 
             CloneFailed = TRUE;
             status = STATUS_INSUFFICIENT_RESOURCES;
 
-            KeDelayExecutionThread (KernelMode,
-                                    FALSE,
-                                    (PLARGE_INTEGER)&MmShortTime);
+            KeDelayExecutionThread(KernelMode, FALSE, (PLARGE_INTEGER)&MmShortTime);
 
-            LOCK_WS (CurrentProcess);
+            LOCK_WS(CurrentProcess);
 
         } while (TRUE);
 
@@ -2005,27 +1916,29 @@ AllDone:
         // quota.
         //
 
-        if (NewClone->FinalNumberOfReferences > NewClone->NumberOfReferences) {
+        if (NewClone->FinalNumberOfReferences > NewClone->NumberOfReferences)
+        {
             NewClone->FinalNumberOfReferences = NewClone->NumberOfReferences;
         }
 
         *CloneList = NewClone;
 
         CloneList = &NewClone->Parent;
-        Clone = MiGetNextClone (Clone);
+        Clone = MiGetNextClone(Clone);
     }
 
     *CloneList = NULL;
 
-#if defined (_MIALT4K_)
+#if defined(_MIALT4K_)
 
-    if (CurrentProcess->Wow64Process != NULL) {
+    if (CurrentProcess->Wow64Process != NULL)
+    {
 
         //
         // Copy the alternate table entries now.
         //
 
-        MiDuplicateAlternateTable (CurrentProcess, ProcessToInitialize);
+        MiDuplicateAlternateTable(CurrentProcess, ProcessToInitialize);
     }
 
 #endif
@@ -2036,26 +1949,28 @@ AllDone:
     // captured.
     //
 
-    UNLOCK_WS (CurrentProcess);
+    UNLOCK_WS(CurrentProcess);
 
-    ASSERT (CurrentProcess->ForkInProgress == PsGetCurrentThread ());
+    ASSERT(CurrentProcess->ForkInProgress == PsGetCurrentThread());
     CurrentProcess->ForkInProgress = NULL;
 
-    UNLOCK_ADDRESS_SPACE (CurrentProcess);
+    UNLOCK_ADDRESS_SPACE(CurrentProcess);
 
     //
     // Attach to the process to initialize and insert the vad and clone
     // descriptors into the tree.
     //
 
-    if (Attached) {
-        KeUnstackDetachProcess (&ApcState);
+    if (Attached)
+    {
+        KeUnstackDetachProcess(&ApcState);
         Attached = FALSE;
     }
 
-    if (PsGetCurrentProcess() != ProcessToInitialize) {
+    if (PsGetCurrentProcess() != ProcessToInitialize)
+    {
         Attached = TRUE;
-        KeStackAttachProcess (&ProcessToInitialize->Pcb, &ApcState);
+        KeStackAttachProcess(&ProcessToInitialize->Pcb, &ApcState);
     }
 
     CurrentProcess = ProcessToInitialize;
@@ -2068,7 +1983,7 @@ AllDone:
     Vad = FirstNewVad;
     VadInsertFailed = FALSE;
 
-    LOCK_WS (CurrentProcess);
+    LOCK_WS(CurrentProcess);
 
 #if (_MI_PAGING_LEVELS >= 3)
 
@@ -2076,17 +1991,19 @@ AllDone:
     // Update the WSLEs for the page directories that were added.
     //
 
-    PointerPpe = MiGetPpeAddress (0);
-    PointerPpeLast = MiGetPpeAddress (MM_HIGHEST_USER_ADDRESS);
-    PointerPxe = MiGetPxeAddress (0);
+    PointerPpe = MiGetPpeAddress(0);
+    PointerPpeLast = MiGetPpeAddress(MM_HIGHEST_USER_ADDRESS);
+    PointerPxe = MiGetPxeAddress(0);
     PpeInWsle = NULL;
 
-    while (PointerPpe <= PointerPpeLast) {
+    while (PointerPpe <= PointerPpeLast)
+    {
 
 #if (_MI_PAGING_LEVELS >= 4)
-        while (PointerPxe->u.Long == 0) {
+        while (PointerPxe->u.Long == 0)
+        {
             PointerPxe += 1;
-            PointerPpe = MiGetVirtualAddressMappedByPte (PointerPxe);
+            PointerPpe = MiGetVirtualAddressMappedByPte(PointerPxe);
             continue;
         }
 
@@ -2094,66 +2011,66 @@ AllDone:
         // Update the WSLE for this page directory parent page.
         //
 
-        if (PointerPpe != PpeInWsle) {
+        if (PointerPpe != PpeInWsle)
+        {
 
-            ASSERT (PointerPxe->u.Hard.Valid == 1);
+            ASSERT(PointerPxe->u.Hard.Valid == 1);
 
-            PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE (PointerPxe);
+            PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE(PointerPxe);
 
-            PfnPdPage = MI_PFN_ELEMENT (PageFrameIndex);
-        
-            ASSERT (PfnPdPage->u1.Event == 0);
-        
+            PfnPdPage = MI_PFN_ELEMENT(PageFrameIndex);
+
+            ASSERT(PfnPdPage->u1.Event == 0);
+
             PfnPdPage->u1.Event = (PVOID)PsGetCurrentThread();
-        
-            MiAddValidPageToWorkingSet (PointerPpe,
-                                        PointerPxe,
-                                        PfnPdPage,
-                                        0);
+
+            MiAddValidPageToWorkingSet(PointerPpe, PointerPxe, PfnPdPage, 0);
             PpeInWsle = PointerPpe;
         }
 #endif
 
-        if (PointerPpe->u.Long != 0) {
+        if (PointerPpe->u.Long != 0)
+        {
 
-            ASSERT (PointerPpe->u.Hard.Valid == 1);
+            ASSERT(PointerPpe->u.Hard.Valid == 1);
 
-            PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE (PointerPpe);
+            PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE(PointerPpe);
 
-            PfnPdPage = MI_PFN_ELEMENT (PageFrameIndex);
-        
-            ASSERT (PfnPdPage->u1.Event == 0);
-        
+            PfnPdPage = MI_PFN_ELEMENT(PageFrameIndex);
+
+            ASSERT(PfnPdPage->u1.Event == 0);
+
             PfnPdPage->u1.Event = (PVOID)PsGetCurrentThread();
-        
-            MiAddValidPageToWorkingSet (MiGetVirtualAddressMappedByPte (PointerPpe),
-                                        PointerPpe,
-                                        PfnPdPage,
-                                        0);
+
+            MiAddValidPageToWorkingSet(MiGetVirtualAddressMappedByPte(PointerPpe), PointerPpe, PfnPdPage, 0);
         }
 
         PointerPpe += 1;
 #if (_MI_PAGING_LEVELS >= 4)
-        if (MiIsPteOnPdeBoundary (PointerPpe)) {
+        if (MiIsPteOnPdeBoundary(PointerPpe))
+        {
             PointerPxe += 1;
-            ASSERT (PointerPxe == MiGetPteAddress (PointerPpe));
+            ASSERT(PointerPxe == MiGetPteAddress(PointerPpe));
         }
 #endif
     }
 
 #endif
 
-    while (Vad != NULL) {
+    while (Vad != NULL)
+    {
 
         NextVad = Vad->Parent;
 
-        if (VadInsertFailed) {
+        if (VadInsertFailed)
+        {
             Vad->u.VadFlags.CommitCharge = MM_MAX_COMMIT;
         }
 
-        status = MiInsertVad (Vad);
+        status = MiInsertVad(Vad);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 
             //
             // Charging quota for the VAD failed, set the
@@ -2175,13 +2092,12 @@ AllDone:
         // Update the current virtual size.
         //
 
-        CurrentProcess->VirtualSize += PAGE_SIZE +
-                            ((Vad->EndingVpn - Vad->StartingVpn) >> PAGE_SHIFT);
+        CurrentProcess->VirtualSize += PAGE_SIZE + ((Vad->EndingVpn - Vad->StartingVpn) >> PAGE_SHIFT);
 
         Vad = NextVad;
     }
 
-    UNLOCK_WS (CurrentProcess);
+    UNLOCK_WS(CurrentProcess);
 
     //
     // Update the peak virtual size.
@@ -2193,10 +2109,11 @@ AllDone:
     TotalPagedPoolCharge = 0;
     TotalNonPagedPoolCharge = 0;
 
-    while (Clone != NULL) {
+    while (Clone != NULL)
+    {
 
         NextClone = Clone->Parent;
-        MiInsertClone (CurrentProcess, Clone);
+        MiInsertClone(CurrentProcess, Clone);
 
         //
         // Calculate the paged pool and non-paged pool to charge for these
@@ -2209,56 +2126,61 @@ AllDone:
         Clone = NextClone;
     }
 
-    if (CloneFailed || VadInsertFailed) {
+    if (CloneFailed || VadInsertFailed)
+    {
 
-        PS_SET_BITS (&CurrentProcess->Flags, PS_PROCESS_FLAGS_FORK_FAILED);
+        PS_SET_BITS(&CurrentProcess->Flags, PS_PROCESS_FLAGS_FORK_FAILED);
 
-        if (Attached) {
-            KeUnstackDetachProcess (&ApcState);
+        if (Attached)
+        {
+            KeUnstackDetachProcess(&ApcState);
         }
 
         return status;
     }
 
-    status = PsChargeProcessPagedPoolQuota (CurrentProcess,
-                                            TotalPagedPoolCharge);
+    status = PsChargeProcessPagedPoolQuota(CurrentProcess, TotalPagedPoolCharge);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
-        PS_SET_BITS (&CurrentProcess->Flags, PS_PROCESS_FLAGS_FORK_FAILED);
+        PS_SET_BITS(&CurrentProcess->Flags, PS_PROCESS_FLAGS_FORK_FAILED);
 
-        if (Attached) {
-            KeUnstackDetachProcess (&ApcState);
+        if (Attached)
+        {
+            KeUnstackDetachProcess(&ApcState);
         }
         return status;
     }
 
-    status = PsChargeProcessNonPagedPoolQuota (CurrentProcess,
-                                               TotalNonPagedPoolCharge);
+    status = PsChargeProcessNonPagedPoolQuota(CurrentProcess, TotalNonPagedPoolCharge);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
-        PsReturnProcessPagedPoolQuota (CurrentProcess, TotalPagedPoolCharge);
+        PsReturnProcessPagedPoolQuota(CurrentProcess, TotalPagedPoolCharge);
 
-        PS_SET_BITS (&CurrentProcess->Flags, PS_PROCESS_FLAGS_FORK_FAILED);
+        PS_SET_BITS(&CurrentProcess->Flags, PS_PROCESS_FLAGS_FORK_FAILED);
 
-        if (Attached) {
-            KeUnstackDetachProcess (&ApcState);
+        if (Attached)
+        {
+            KeUnstackDetachProcess(&ApcState);
         }
         return status;
     }
 
-    ASSERT ((ProcessToClone->Flags & PS_PROCESS_FLAGS_FORK_FAILED) == 0);
-    ASSERT ((CurrentProcess->Flags & PS_PROCESS_FLAGS_FORK_FAILED) == 0);
+    ASSERT((ProcessToClone->Flags & PS_PROCESS_FLAGS_FORK_FAILED) == 0);
+    ASSERT((CurrentProcess->Flags & PS_PROCESS_FLAGS_FORK_FAILED) == 0);
 
-    if (Attached) {
-        KeUnstackDetachProcess (&ApcState);
+    if (Attached)
+    {
+        KeUnstackDetachProcess(&ApcState);
     }
 
 #if DBG
-    if (MmDebug & MM_DBG_FORK) {
-        DbgPrint("ending clone operation process to clone = %p\n",
-            ProcessToClone);
+    if (MmDebug & MM_DBG_FORK)
+    {
+        DbgPrint("ending clone operation process to clone = %p\n", ProcessToClone);
     }
 #endif //DBG
 
@@ -2269,47 +2191,47 @@ AllDone:
     //
 
 ErrorReturn4:
-        if (PageTablePage == 2) {
-            NOTHING;
-        }
-        else if (PageTablePage == 1) {
-            PsReturnProcessPagedPoolQuota (CurrentProcess, sizeof(MMCLONE_BLOCK) *
-                                           NumberOfPrivatePages);
-        }
-        else {
-            ASSERT (PageTablePage == 0);
-            PsReturnProcessPagedPoolQuota (CurrentProcess, sizeof(MMCLONE_BLOCK) *
-                                           NumberOfPrivatePages);
-            PsReturnProcessNonPagedPoolQuota (CurrentProcess, sizeof(MMCLONE_HEADER));
-        }
+    if (PageTablePage == 2)
+    {
+        NOTHING;
+    }
+    else if (PageTablePage == 1)
+    {
+        PsReturnProcessPagedPoolQuota(CurrentProcess, sizeof(MMCLONE_BLOCK) * NumberOfPrivatePages);
+    }
+    else
+    {
+        ASSERT(PageTablePage == 0);
+        PsReturnProcessPagedPoolQuota(CurrentProcess, sizeof(MMCLONE_BLOCK) * NumberOfPrivatePages);
+        PsReturnProcessNonPagedPoolQuota(CurrentProcess, sizeof(MMCLONE_HEADER));
+    }
 
-        NewVad = FirstNewVad;
-        while (NewVad != NULL) {
-            Vad = NewVad->Parent;
-            ExFreePool (NewVad);
-            NewVad = Vad;
-        }
+    NewVad = FirstNewVad;
+    while (NewVad != NULL)
+    {
+        Vad = NewVad->Parent;
+        ExFreePool(NewVad);
+        NewVad = Vad;
+    }
 
-        ExFreePool (CloneDescriptor);
+    ExFreePool(CloneDescriptor);
 ErrorReturn3:
-        ExFreePool (CloneHeader);
+    ExFreePool(CloneHeader);
 ErrorReturn2:
-        ExFreePool (CloneProtos);
+    ExFreePool(CloneProtos);
 ErrorReturn1:
-        UNLOCK_ADDRESS_SPACE (CurrentProcess);
-        ASSERT ((CurrentProcess->Flags & PS_PROCESS_FLAGS_FORK_FAILED) == 0);
-        if (Attached) {
-            KeUnstackDetachProcess (&ApcState);
-        }
-        return status;
+    UNLOCK_ADDRESS_SPACE(CurrentProcess);
+    ASSERT((CurrentProcess->Flags & PS_PROCESS_FLAGS_FORK_FAILED) == 0);
+    if (Attached)
+    {
+        KeUnstackDetachProcess(&ApcState);
+    }
+    return status;
 }
-
+
 ULONG
-MiDecrementCloneBlockReference (
-    IN PMMCLONE_DESCRIPTOR CloneDescriptor,
-    IN PMMCLONE_BLOCK CloneBlock,
-    IN PEPROCESS CurrentProcess
-    )
+MiDecrementCloneBlockReference(IN PMMCLONE_DESCRIPTOR CloneDescriptor, IN PMMCLONE_BLOCK CloneBlock,
+                               IN PEPROCESS CurrentProcess)
 
 /*++
 
@@ -2351,7 +2273,7 @@ Environment:
     LONG NewCount;
     LOGICAL WsHeldSafe;
 
-    ASSERT (CurrentProcess == PsGetCurrentProcess ());
+    ASSERT(CurrentProcess == PsGetCurrentProcess());
 
     MutexReleased = FALSE;
     OldIrql = APC_LEVEL;
@@ -2377,9 +2299,10 @@ Environment:
 
     CloneDescriptor->NumberOfReferences -= 1;
 
-    ASSERT (CloneDescriptor->NumberOfReferences >= 0);
+    ASSERT(CloneDescriptor->NumberOfReferences >= 0);
 
-    if (CloneDescriptor->NumberOfReferences == 0) {
+    if (CloneDescriptor->NumberOfReferences == 0)
+    {
 
         //
         // There are no longer any PTEs in this process which refer
@@ -2387,7 +2310,7 @@ Environment:
         // Remove the CloneDescriptor now so a fork won't see it either.
         //
 
-        MiRemoveClone (CurrentProcess, CloneDescriptor);
+        MiRemoveClone(CurrentProcess, CloneDescriptor);
     }
 
     //
@@ -2395,48 +2318,52 @@ Environment:
     // may be needed.
     //
 
-    MutexReleased = MiMakeSystemAddressValidPfnWs (CloneBlock, CurrentProcess);
+    MutexReleased = MiMakeSystemAddressValidPfnWs(CloneBlock, CurrentProcess);
 
-    while (CurrentProcess->ForkInProgress != NULL) {
-        MiWaitForForkToComplete (CurrentProcess, TRUE);
-        MiMakeSystemAddressValidPfnWs (CloneBlock, CurrentProcess);
+    while (CurrentProcess->ForkInProgress != NULL)
+    {
+        MiWaitForForkToComplete(CurrentProcess, TRUE);
+        MiMakeSystemAddressValidPfnWs(CloneBlock, CurrentProcess);
         MutexReleased = TRUE;
     }
 
-    NewCount = InterlockedDecrement (&CloneBlock->CloneRefCount);
+    NewCount = InterlockedDecrement(&CloneBlock->CloneRefCount);
 
-    ASSERT (NewCount >= 0);
+    ASSERT(NewCount >= 0);
 
-    if (NewCount == 0) {
+    if (NewCount == 0)
+    {
 
         CloneContents = CloneBlock->ProtoPte;
 
-        if (CloneContents.u.Long != 0) {
+        if (CloneContents.u.Long != 0)
+        {
 
             //
             // The last reference to a fork prototype PTE has been removed.
             // Deallocate any page file space and the transition page, if any.
             //
 
-            ASSERT (CloneContents.u.Hard.Valid == 0);
+            ASSERT(CloneContents.u.Hard.Valid == 0);
 
             //
             // Assert that the PTE is not in subsection format (doesn't point
             // to a file).
             //
 
-            ASSERT (CloneContents.u.Soft.Prototype == 0);
+            ASSERT(CloneContents.u.Soft.Prototype == 0);
 
-            if (CloneContents.u.Soft.Transition == 1) {
+            if (CloneContents.u.Soft.Transition == 1)
+            {
 
                 //
                 // Prototype PTE in transition, put the page on the free list.
                 //
 
-                Pfn3 = MI_PFN_ELEMENT (CloneContents.u.Trans.PageFrameNumber);
-                MI_SET_PFN_DELETED (Pfn3);
+                Pfn3 = MI_PFN_ELEMENT(CloneContents.u.Trans.PageFrameNumber);
+                MI_SET_PFN_DELETED(Pfn3);
 
-                MiDecrementShareCount (Pfn3->u4.PteFrame);
+                MiDecrementShareCount(Pfn3->u4.PteFrame);
 
                 //
                 // Check the reference count for the page, if the reference
@@ -2447,18 +2374,20 @@ Environment:
                 // on the free list.
                 //
 
-                if ((Pfn3->u3.e2.ReferenceCount == 0) &&
-                    (Pfn3->u3.e1.PageLocation != FreePageList)) {
+                if ((Pfn3->u3.e2.ReferenceCount == 0) && (Pfn3->u3.e1.PageLocation != FreePageList))
+                {
 
-                    MiUnlinkPageFromList (Pfn3);
-                    MiReleasePageFileSpace (Pfn3->OriginalPte);
-                    MiInsertPageInFreeList (MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE(&CloneContents));
+                    MiUnlinkPageFromList(Pfn3);
+                    MiReleasePageFileSpace(Pfn3->OriginalPte);
+                    MiInsertPageInFreeList(MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE(&CloneContents));
                 }
             }
-            else {
+            else
+            {
 
-                if (IS_PTE_NOT_DEMAND_ZERO (CloneContents)) {
-                    MiReleasePageFileSpace (CloneContents);
+                if (IS_PTE_NOT_DEMAND_ZERO(CloneContents))
+                {
+                    MiReleasePageFileSpace(CloneContents);
                 }
             }
         }
@@ -2480,11 +2409,12 @@ Environment:
 
     CloneDescriptor->FinalNumberOfReferences -= 1;
 
-    ASSERT (CloneDescriptor->FinalNumberOfReferences >= 0);
+    ASSERT(CloneDescriptor->FinalNumberOfReferences >= 0);
 
-    if (CloneDescriptor->FinalNumberOfReferences == 0) {
+    if (CloneDescriptor->FinalNumberOfReferences == 0)
+    {
 
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
 
         //
         // There are no longer any PTEs in this process which refer
@@ -2497,37 +2427,40 @@ Environment:
         // by our caller.  Handle both cases here and below.
         //
 
-        UNLOCK_WS_REGARDLESS (CurrentProcess, WsHeldSafe);
+        UNLOCK_WS_REGARDLESS(CurrentProcess, WsHeldSafe);
 
         MutexReleased = TRUE;
 
         CloneHeader = CloneDescriptor->CloneHeader;
 
-        NewCount = InterlockedDecrement (&CloneHeader->NumberOfProcessReferences);
-        ASSERT (NewCount >= 0);
+        NewCount = InterlockedDecrement(&CloneHeader->NumberOfProcessReferences);
+        ASSERT(NewCount >= 0);
 
         //
         // If the count is zero, there are no more processes pointing
         // to this fork header so blow it away.
         //
 
-        if (NewCount == 0) {
+        if (NewCount == 0)
+        {
 
 #if DBG
             ULONG i;
 
             CloneBlock = CloneHeader->ClonePtes;
-            for (i = 0; i < CloneHeader->NumberOfPtes; i += 1) {
-                if (CloneBlock->CloneRefCount != 0) {
-                    DbgBreakPoint ();
+            for (i = 0; i < CloneHeader->NumberOfPtes; i += 1)
+            {
+                if (CloneBlock->CloneRefCount != 0)
+                {
+                    DbgBreakPoint();
                 }
                 CloneBlock += 1;
             }
 #endif
 
-            ExFreePool (CloneHeader->ClonePtes);
+            ExFreePool(CloneHeader->ClonePtes);
 
-            ExFreePool (CloneHeader);
+            ExFreePool(CloneHeader);
         }
 
         //
@@ -2535,39 +2468,35 @@ Environment:
         // clone descriptor.
         //
 
-        if ((CurrentProcess->Flags & PS_PROCESS_FLAGS_FORK_FAILED) == 0) {
+        if ((CurrentProcess->Flags & PS_PROCESS_FLAGS_FORK_FAILED) == 0)
+        {
 
             //
             // Fork succeeded so return quota that was taken out earlier.
             //
 
-            PsReturnProcessPagedPoolQuota (CurrentProcess,
-                                           CloneDescriptor->PagedPoolQuotaCharge);
+            PsReturnProcessPagedPoolQuota(CurrentProcess, CloneDescriptor->PagedPoolQuotaCharge);
 
-            PsReturnProcessNonPagedPoolQuota (CurrentProcess,
-                                              sizeof(MMCLONE_HEADER));
+            PsReturnProcessNonPagedPoolQuota(CurrentProcess, sizeof(MMCLONE_HEADER));
         }
 
-        ExFreePool (CloneDescriptor);
+        ExFreePool(CloneDescriptor);
 
         //
         // The working set lock may have been acquired safely or unsafely
         // by our caller.  Reacquire it in the same manner our caller did.
         //
 
-        LOCK_WS_REGARDLESS (CurrentProcess, WsHeldSafe);
+        LOCK_WS_REGARDLESS(CurrentProcess, WsHeldSafe);
 
-        LOCK_PFN (OldIrql);
+        LOCK_PFN(OldIrql);
     }
 
     return MutexReleased;
 }
-
+
 LOGICAL
-MiWaitForForkToComplete (
-    IN PEPROCESS CurrentProcess,
-    IN LOGICAL PfnHeld
-    )
+MiWaitForForkToComplete(IN PEPROCESS CurrentProcess, IN LOGICAL PfnHeld)
 
 /*++
 
@@ -2602,12 +2531,14 @@ Environment:
     // fork operation.
     //
 
-    if (CurrentProcess->ForkInProgress == PsGetCurrentThread()) {
+    if (CurrentProcess->ForkInProgress == PsGetCurrentThread())
+    {
         return FALSE;
     }
 
-    if (PfnHeld == TRUE) {
-        UNLOCK_PFN (APC_LEVEL);
+    if (PfnHeld == TRUE)
+    {
+        UNLOCK_PFN(APC_LEVEL);
     }
 
     //
@@ -2622,7 +2553,7 @@ Environment:
     // deliberately).
     //
 
-    UNLOCK_WS_REGARDLESS (CurrentProcess, WsHeldSafe);
+    UNLOCK_WS_REGARDLESS(CurrentProcess, WsHeldSafe);
 
     //
     // Acquire the address creation mutex as this can only succeed when the
@@ -2631,73 +2562,64 @@ Environment:
     // it does serve as a way to know the current fork is done (enough).
     //
 
-    LOCK_ADDRESS_SPACE (CurrentProcess);
+    LOCK_ADDRESS_SPACE(CurrentProcess);
 
-    UNLOCK_ADDRESS_SPACE (CurrentProcess);
+    UNLOCK_ADDRESS_SPACE(CurrentProcess);
 
     //
     // The working set lock may have been acquired safely or unsafely
     // by our caller.  Reacquire it in the same manner our caller did.
     //
 
-    LOCK_WS_REGARDLESS (CurrentProcess, WsHeldSafe);
+    LOCK_WS_REGARDLESS(CurrentProcess, WsHeldSafe);
 
     //
     // Get the PFN lock again if our caller held it.
     //
 
-    if (PfnHeld == TRUE) {
-        LOCK_PFN (OldIrql);
+    if (PfnHeld == TRUE)
+    {
+        LOCK_PFN(OldIrql);
     }
 
     return TRUE;
 }
 
-VOID
-MiUpPfnReferenceCount (
-    IN PFN_NUMBER Page,
-    IN USHORT Count
-    )
+VOID MiUpPfnReferenceCount(IN PFN_NUMBER Page, IN USHORT Count)
 
-    // non paged helper routine.
+// non paged helper routine.
 
 {
     KIRQL OldIrql;
     PMMPFN Pfn1;
 
-    Pfn1 = MI_PFN_ELEMENT (Page);
+    Pfn1 = MI_PFN_ELEMENT(Page);
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
     Pfn1->u3.e2.ReferenceCount = (USHORT)(Pfn1->u3.e2.ReferenceCount + Count);
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
     return;
 }
 
-VOID
-MiDownPfnReferenceCount (
-    IN PFN_NUMBER Page,
-    IN USHORT Count
-    )
+VOID MiDownPfnReferenceCount(IN PFN_NUMBER Page, IN USHORT Count)
 
-    // non paged helper routine.
+// non paged helper routine.
 
 {
     KIRQL OldIrql;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    while (Count != 0) {
-        MiDecrementReferenceCount (Page);
+    while (Count != 0)
+    {
+        MiDecrementReferenceCount(Page);
         Count -= 1;
     }
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
     return;
 }
 
-VOID
-MiUpControlAreaRefs (
-    IN PMMVAD Vad
-    )
+VOID MiUpControlAreaRefs(IN PMMVAD Vad)
 {
     KIRQL OldIrql;
     PCONTROL_AREA ControlArea;
@@ -2706,16 +2628,16 @@ MiUpControlAreaRefs (
 
     ControlArea = Vad->ControlArea;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
     ControlArea->NumberOfMappedViews += 1;
     ControlArea->NumberOfUserReferences += 1;
 
-    if ((ControlArea->u.Flags.Image == 0) &&
-        (ControlArea->FilePointer != NULL) &&
-        (ControlArea->u.Flags.PhysicalMemory == 0)) {
+    if ((ControlArea->u.Flags.Image == 0) && (ControlArea->FilePointer != NULL) &&
+        (ControlArea->u.Flags.PhysicalMemory == 0))
+    {
 
-        FirstSubsection = MiLocateSubsection (Vad, Vad->StartingVpn);
+        FirstSubsection = MiLocateSubsection(Vad, Vad->StartingVpn);
 
         //
         // Note LastSubsection may be NULL for extendable VADs when
@@ -2723,94 +2645,81 @@ MiUpControlAreaRefs (
         // case, all the subsections can be safely incremented.
         //
         // Note also that the reference must succeed because each
-        // subsection's prototype PTEs are guaranteed to already 
+        // subsection's prototype PTEs are guaranteed to already
         // exist by virtue of the fact that the creating process
         // already has this VAD currently mapping them.
         //
 
-        LastSubsection = MiLocateSubsection (Vad, Vad->EndingVpn);
+        LastSubsection = MiLocateSubsection(Vad, Vad->EndingVpn);
 
-        while (FirstSubsection != LastSubsection) {
-            MiReferenceSubsection ((PMSUBSECTION) FirstSubsection);
+        while (FirstSubsection != LastSubsection)
+        {
+            MiReferenceSubsection((PMSUBSECTION)FirstSubsection);
             FirstSubsection = FirstSubsection->NextSubsection;
         }
 
-        if (LastSubsection != NULL) {
-            MiReferenceSubsection ((PMSUBSECTION) LastSubsection);
+        if (LastSubsection != NULL)
+        {
+            MiReferenceSubsection((PMSUBSECTION)LastSubsection);
         }
     }
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
     return;
 }
 
 
 ULONG
-MiDoneWithThisPageGetAnother (
-    IN PPFN_NUMBER PageFrameIndex,
-    IN PMMPTE PointerPde,
-    IN PEPROCESS CurrentProcess
-    )
+MiDoneWithThisPageGetAnother(IN PPFN_NUMBER PageFrameIndex, IN PMMPTE PointerPde, IN PEPROCESS CurrentProcess)
 
 {
     KIRQL OldIrql;
     ULONG ReleasedMutex;
 
-    UNREFERENCED_PARAMETER (PointerPde);
+    UNREFERENCED_PARAMETER(PointerPde);
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    if (*PageFrameIndex != (PFN_NUMBER)-1) {
+    if (*PageFrameIndex != (PFN_NUMBER)-1)
+    {
 
         //
         // Decrement the share count of the last page which
         // we operated on.
         //
 
-        MiDecrementShareCountOnly (*PageFrameIndex);
+        MiDecrementShareCountOnly(*PageFrameIndex);
     }
 
-    ReleasedMutex = MiEnsureAvailablePageOrWait (CurrentProcess, NULL);
+    ReleasedMutex = MiEnsureAvailablePageOrWait(CurrentProcess, NULL);
 
-    *PageFrameIndex = MiRemoveZeroPage (
-                   MI_PAGE_COLOR_PTE_PROCESS (PointerPde,
-                                              &CurrentProcess->NextPageColor));
+    *PageFrameIndex = MiRemoveZeroPage(MI_PAGE_COLOR_PTE_PROCESS(PointerPde, &CurrentProcess->NextPageColor));
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
     return ReleasedMutex;
 }
 
 ULONG
-MiLeaveThisPageGetAnother (
-    OUT PPFN_NUMBER PageFrameIndex,
-    IN PMMPTE PointerPde,
-    IN PEPROCESS CurrentProcess
-    )
+MiLeaveThisPageGetAnother(OUT PPFN_NUMBER PageFrameIndex, IN PMMPTE PointerPde, IN PEPROCESS CurrentProcess)
 
 {
     KIRQL OldIrql;
     ULONG ReleasedMutex;
 
-    UNREFERENCED_PARAMETER (PointerPde);
+    UNREFERENCED_PARAMETER(PointerPde);
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    ReleasedMutex = MiEnsureAvailablePageOrWait (CurrentProcess, NULL);
+    ReleasedMutex = MiEnsureAvailablePageOrWait(CurrentProcess, NULL);
 
-    *PageFrameIndex = MiRemoveZeroPage (
-                   MI_PAGE_COLOR_PTE_PROCESS (PointerPde,
-                                              &CurrentProcess->NextPageColor));
+    *PageFrameIndex = MiRemoveZeroPage(MI_PAGE_COLOR_PTE_PROCESS(PointerPde, &CurrentProcess->NextPageColor));
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
     return ReleasedMutex;
 }
 
 ULONG
-MiHandleForkTransitionPte (
-    IN PMMPTE PointerPte,
-    IN PMMPTE PointerNewPte,
-    IN PMMCLONE_BLOCK ForkProtoPte
-    )
+MiHandleForkTransitionPte(IN PMMPTE PointerPte, IN PMMPTE PointerNewPte, IN PMMCLONE_BLOCK ForkProtoPte)
 
 {
     KIRQL OldIrql;
@@ -2821,7 +2730,7 @@ MiHandleForkTransitionPte (
     MMPTE TempPte;
     PMMPFN PfnForkPtePage;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
     //
     // Now that we have the PFN lock which prevents pages from
@@ -2831,14 +2740,14 @@ MiHandleForkTransitionPte (
 
     PteContents = *PointerPte;
 
-    if ((PteContents.u.Soft.Transition == 0) ||
-        (PteContents.u.Soft.Prototype == 1)) {
+    if ((PteContents.u.Soft.Transition == 0) || (PteContents.u.Soft.Prototype == 1))
+    {
 
         //
         // The PTE is no longer in transition... do this loop again.
         //
 
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
         return TRUE;
     }
 
@@ -2847,13 +2756,13 @@ MiHandleForkTransitionPte (
     // valid PTE.
     //
 
-    Pfn2 = MI_PFN_ELEMENT (PteContents.u.Trans.PageFrameNumber);
+    Pfn2 = MI_PFN_ELEMENT(PteContents.u.Trans.PageFrameNumber);
 
     //
     // Assertion that PTE is not in prototype PTE format.
     //
 
-    ASSERT (Pfn2->u3.e1.PrototypePte != 1);
+    ASSERT(Pfn2->u3.e1.PrototypePte != 1);
 
     //
     // This is a private page in transition state,
@@ -2867,7 +2776,7 @@ MiHandleForkTransitionPte (
     // Make the protection write-copy if writable.
     //
 
-    MI_MAKE_PROTECT_WRITE_COPY (ForkProtoPte->ProtoPte);
+    MI_MAKE_PROTECT_WRITE_COPY(ForkProtoPte->ProtoPte);
 
     ForkProtoPte->CloneRefCount = 2;
 
@@ -2889,19 +2798,19 @@ MiHandleForkTransitionPte (
     // Make original PTE copy on write.
     //
 
-    MI_MAKE_PROTECT_WRITE_COPY (Pfn2->OriginalPte);
+    MI_MAKE_PROTECT_WRITE_COPY(Pfn2->OriginalPte);
 
     ContainingPte = MiGetPteAddress(&ForkProtoPte->ProtoPte);
 
-    if (ContainingPte->u.Hard.Valid == 0) {
+    if (ContainingPte->u.Hard.Valid == 0)
+    {
 #if (_MI_PAGING_LEVELS < 3)
-        if (!NT_SUCCESS(MiCheckPdeForPagedPool (&ForkProtoPte->ProtoPte))) {
+        if (!NT_SUCCESS(MiCheckPdeForPagedPool(&ForkProtoPte->ProtoPte)))
+        {
 #endif
-            KeBugCheckEx (MEMORY_MANAGEMENT,
-                          0x61940, 
-                          (ULONG_PTR)&ForkProtoPte->ProtoPte,
-                          (ULONG_PTR)ContainingPte->u.Long,
-                          (ULONG_PTR)MiGetVirtualAddressMappedByPte(&ForkProtoPte->ProtoPte));
+            KeBugCheckEx(MEMORY_MANAGEMENT, 0x61940, (ULONG_PTR)&ForkProtoPte->ProtoPte,
+                         (ULONG_PTR)ContainingPte->u.Long,
+                         (ULONG_PTR)MiGetVirtualAddressMappedByPte(&ForkProtoPte->ProtoPte));
 #if (_MI_PAGING_LEVELS < 3)
         }
 #endif
@@ -2909,7 +2818,7 @@ MiHandleForkTransitionPte (
 
     PageTablePage = Pfn2->u4.PteFrame;
 
-    Pfn2->u4.PteFrame = MI_GET_PAGE_FRAME_FROM_PTE (ContainingPte);
+    Pfn2->u4.PteFrame = MI_GET_PAGE_FRAME_FROM_PTE(ContainingPte);
 
     //
     // Increment the share count for the page containing
@@ -2917,14 +2826,14 @@ MiHandleForkTransitionPte (
     // a transition PTE into the page.
     //
 
-    PfnForkPtePage = MI_PFN_ELEMENT (ContainingPte->u.Hard.PageFrameNumber);
+    PfnForkPtePage = MI_PFN_ELEMENT(ContainingPte->u.Hard.PageFrameNumber);
 
     PfnForkPtePage->u2.ShareCount += 1;
 
-    TempPte.u.Long = MiProtoAddressForPte (Pfn2->PteAddress);
+    TempPte.u.Long = MiProtoAddressForPte(Pfn2->PteAddress);
     TempPte.u.Proto.Prototype = 1;
-    MI_WRITE_INVALID_PTE (PointerPte, TempPte);
-    MI_WRITE_INVALID_PTE (PointerNewPte, TempPte);
+    MI_WRITE_INVALID_PTE(PointerPte, TempPte);
+    MI_WRITE_INVALID_PTE(PointerNewPte, TempPte);
 
     //
     // Decrement the share count for the page table
@@ -2932,61 +2841,49 @@ MiHandleForkTransitionPte (
     // valid or in transition.
     //
 
-    MiDecrementShareCount (PageTablePage);
+    MiDecrementShareCount(PageTablePage);
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
     return FALSE;
 }
 
-VOID
-MiDownShareCountFlushEntireTb (
-    IN PFN_NUMBER PageFrameIndex
-    )
+VOID MiDownShareCountFlushEntireTb(IN PFN_NUMBER PageFrameIndex)
 
 {
     KIRQL OldIrql;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    if (PageFrameIndex != (PFN_NUMBER)-1) {
+    if (PageFrameIndex != (PFN_NUMBER)-1)
+    {
 
         //
         // Decrement the share count of the last page which
         // we operated on.
         //
 
-        MiDecrementShareCountOnly (PageFrameIndex);
+        MiDecrementShareCountOnly(PageFrameIndex);
     }
 
-    KeFlushEntireTb (FALSE, FALSE);
+    KeFlushEntireTb(FALSE, FALSE);
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
     return;
 }
 
-VOID
-MiUpForkPageShareCount (
-    IN PMMPFN PfnForkPtePage
-    )
+VOID MiUpForkPageShareCount(IN PMMPFN PfnForkPtePage)
 {
     KIRQL OldIrql;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
     PfnForkPtePage->u2.ShareCount += 1;
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
     return;
 }
 
-VOID
-MiBuildForkPageTable (
-    IN PFN_NUMBER PageFrameIndex,
-    IN PMMPTE PointerPde,
-    IN PMMPTE PointerNewPde,
-    IN PFN_NUMBER PdePhysicalPage,
-    IN PMMPFN PfnPdPage,
-    IN LOGICAL MakeValid
-    )
+VOID MiBuildForkPageTable(IN PFN_NUMBER PageFrameIndex, IN PMMPTE PointerPde, IN PMMPTE PointerNewPde,
+                          IN PFN_NUMBER PdePhysicalPage, IN PMMPFN PfnPdPage, IN LOGICAL MakeValid)
 {
     KIRQL OldIrql;
     PMMPFN Pfn1;
@@ -2994,7 +2891,7 @@ MiBuildForkPageTable (
     MMPTE TempPpe;
 #endif
 
-    Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+    Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
 
     //
     // The PFN lock must be held while initializing the
@@ -3002,13 +2899,13 @@ MiBuildForkPageTable (
     // frames from taking it after we fill in the u2 field.
     //
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
     Pfn1->OriginalPte = DemandZeroPde;
     Pfn1->u2.ShareCount = 1;
     Pfn1->u3.e2.ReferenceCount = 1;
     Pfn1->PteAddress = PointerPde;
-    MI_SET_MODIFIED (Pfn1, 1, 0x10);
+    MI_SET_MODIFIED(Pfn1, 1, 0x10);
     Pfn1->u3.e1.PageLocation = ActiveAndValid;
     Pfn1->u3.e1.CacheAttribute = MiCached;
     Pfn1->u4.PteFrame = PdePhysicalPage;
@@ -3020,9 +2917,10 @@ MiBuildForkPageTable (
 
     PfnPdPage->u2.ShareCount += 1;
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
-    if (MakeValid == TRUE) {
+    if (MakeValid == TRUE)
+    {
 
 #if (_MI_PAGING_LEVELS >= 3)
 
@@ -3033,67 +2931,62 @@ MiBuildForkPageTable (
         // the page directories cannot be as they contain the PTEs for the
         // page tables.
         //
-    
+
         TempPpe = ValidPdePde;
 
-        MI_MAKE_VALID_PTE (TempPpe,
-                           PageFrameIndex,
-                           MM_READWRITE,
-                           PointerPde);
-    
-        MI_SET_PTE_DIRTY (TempPpe);
+        MI_MAKE_VALID_PTE(TempPpe, PageFrameIndex, MM_READWRITE, PointerPde);
+
+        MI_SET_PTE_DIRTY(TempPpe);
 
         //
         // Make the PTE owned by user mode.
         //
-    
-        MI_SET_OWNER_IN_PTE (PointerNewPde, UserMode);
 
-        MI_WRITE_VALID_PTE (PointerNewPde, TempPpe);
+        MI_SET_OWNER_IN_PTE(PointerNewPde, UserMode);
+
+        MI_WRITE_VALID_PTE(PointerNewPde, TempPpe);
 #endif
     }
-    else {
+    else
+    {
 
         //
         // Put the PDE into the transition state as it is not
         // really mapped and decrement share count does not
         // put private pages into transition, only prototypes.
         //
-    
-        MI_WRITE_INVALID_PTE (PointerNewPde, TransitionPde);
+
+        MI_WRITE_INVALID_PTE(PointerNewPde, TransitionPde);
 
         //
         // Make the PTE owned by user mode.
         //
-    
-        MI_SET_OWNER_IN_PTE (PointerNewPde, UserMode);
+
+        MI_SET_OWNER_IN_PTE(PointerNewPde, UserMode);
 
         PointerNewPde->u.Trans.PageFrameNumber = PageFrameIndex;
     }
 }
 
-#if defined (_X86PAE_)
-VOID
-MiRetrievePageDirectoryFrames (
-    IN PFN_NUMBER RootPhysicalPage,
-    OUT PPFN_NUMBER PageDirectoryFrames
-    )
+#if defined(_X86PAE_)
+VOID MiRetrievePageDirectoryFrames(IN PFN_NUMBER RootPhysicalPage, OUT PPFN_NUMBER PageDirectoryFrames)
 {
     ULONG i;
     KIRQL OldIrql;
     PMMPTE PointerPte;
     PEPROCESS Process;
 
-    Process = PsGetCurrentProcess ();
+    Process = PsGetCurrentProcess();
 
-    PointerPte = (PMMPTE)MiMapPageInHyperSpace (Process, RootPhysicalPage, &OldIrql);
+    PointerPte = (PMMPTE)MiMapPageInHyperSpace(Process, RootPhysicalPage, &OldIrql);
 
-    for (i = 0; i < PD_PER_SYSTEM; i += 1) {
-        PageDirectoryFrames[i] = MI_GET_PAGE_FRAME_FROM_PTE (PointerPte);
+    for (i = 0; i < PD_PER_SYSTEM; i += 1)
+    {
+        PageDirectoryFrames[i] = MI_GET_PAGE_FRAME_FROM_PTE(PointerPte);
         PointerPte += 1;
     }
 
-    MiUnmapPageInHyperSpace (Process, PointerPte, OldIrql);
+    MiUnmapPageInHyperSpace(Process, PointerPte, OldIrql);
 
     return;
 }

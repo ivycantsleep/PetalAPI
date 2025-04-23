@@ -21,15 +21,11 @@ Revision History:
 #include "basedll.h"
 
 NTSTATUS
-CsrBasepCreateThread(
-    HANDLE ThreadHandle,
-    CLIENT_ID ClientId
-    )
+CsrBasepCreateThread(HANDLE ThreadHandle, CLIENT_ID ClientId)
 {
 
 #if defined(BUILD_WOW6432)
-    return NtWow64CsrBasepCreateThread(ThreadHandle,
-                                       ClientId);
+    return NtWow64CsrBasepCreateThread(ThreadHandle, ClientId);
 #else
 
     BASE_API_MSG m;
@@ -37,17 +33,10 @@ CsrBasepCreateThread(
 
     a->ThreadHandle = ThreadHandle;
     a->ClientId = ClientId;
-    CsrClientCallServer( (PCSR_API_MSG)&m,
-                         NULL,
-                         CSR_MAKE_API_NUMBER( BASESRV_SERVERDLL_INDEX,
-                                              BasepCreateThread
-                                            ),
-                         sizeof( *a )
-                       );
+    CsrClientCallServer((PCSR_API_MSG)&m, NULL, CSR_MAKE_API_NUMBER(BASESRV_SERVERDLL_INDEX, BasepCreateThread),
+                        sizeof(*a));
 
     return m.ReturnValue;
 
 #endif
 }
-
-

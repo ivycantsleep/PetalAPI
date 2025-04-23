@@ -26,13 +26,8 @@ Revision History:
 #include "ki.h"
 
 
-
-VOID
-KiMachineCheck (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PKTRAP_FRAME TrapFrame
-    )
+VOID KiMachineCheck(IN PEXCEPTION_RECORD ExceptionRecord, IN PKEXCEPTION_FRAME ExceptionFrame,
+                    IN PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -67,25 +62,26 @@ Return Value:
 
 {
 
-    if( ((ULONG_PTR)PCR->MachineCheckError != 0) &&
-          (PCR->MachineCheckError)(ExceptionRecord,
-                                   ExceptionFrame,
-                                   TrapFrame) ) {
+    if (((ULONG_PTR)PCR->MachineCheckError != 0) &&
+        (PCR->MachineCheckError)(ExceptionRecord, ExceptionFrame, TrapFrame))
+    {
 
         //
         // The HAL has handled the error.
         //
 
         return;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Either there is no HAL handler, or it did not handle the
         // error.
         //
 
-        if( ExceptionRecord->ExceptionInformation[0] != 0 ){
+        if (ExceptionRecord->ExceptionInformation[0] != 0)
+        {
 
             //
             // The error is either correctable or retryable, resume
@@ -94,12 +90,11 @@ Return Value:
 
 #if DBG
 
-            DbgPrint( "MCHK: resuming correctable or retryable error\n" );
+            DbgPrint("MCHK: resuming correctable or retryable error\n");
 
 #endif //DBG
 
             return;
-
         }
     }
 
@@ -110,4 +105,3 @@ Return Value:
 
     KeBugCheck(DATA_BUS_ERROR);
 }
-

@@ -29,20 +29,12 @@ Revision History:
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, NtDeviceIoControlFile)
 #endif
-
+
 NTSTATUS
-NtDeviceIoControlFile(
-    IN HANDLE FileHandle,
-    IN HANDLE Event OPTIONAL,
-    IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
-    IN PVOID ApcContext OPTIONAL,
-    OUT PIO_STATUS_BLOCK IoStatusBlock,
-    IN ULONG IoControlCode,
-    IN PVOID InputBuffer OPTIONAL,
-    IN ULONG InputBufferLength,
-    OUT PVOID OutputBuffer OPTIONAL,
-    IN ULONG OutputBufferLength
-    )
+NtDeviceIoControlFile(IN HANDLE FileHandle, IN HANDLE Event OPTIONAL, IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
+                      IN PVOID ApcContext OPTIONAL, OUT PIO_STATUS_BLOCK IoStatusBlock, IN ULONG IoControlCode,
+                      IN PVOID InputBuffer OPTIONAL, IN ULONG InputBufferLength, OUT PVOID OutputBuffer OPTIONAL,
+                      IN ULONG OutputBufferLength)
 
 /*++
 
@@ -99,15 +91,6 @@ Return Value:
     // system I/O controls.
     //
 
-    return IopXxxControlFile( FileHandle,
-                              Event,
-                              ApcRoutine,
-                              ApcContext,
-                              IoStatusBlock,
-                              IoControlCode,
-                              InputBuffer,
-                              InputBufferLength,
-                              OutputBuffer,
-                              OutputBufferLength,
-                              TRUE );
+    return IopXxxControlFile(FileHandle, Event, ApcRoutine, ApcContext, IoStatusBlock, IoControlCode, InputBuffer,
+                             InputBufferLength, OutputBuffer, OutputBufferLength, TRUE);
 }

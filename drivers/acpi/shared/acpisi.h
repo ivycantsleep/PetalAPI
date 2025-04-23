@@ -7,7 +7,8 @@
  *
  */
 
-typedef enum _SYSTEM_INDICATORS {
+typedef enum _SYSTEM_INDICATORS
+{
 
     SystemStatus,
     MessageWaiting
@@ -15,8 +16,4 @@ typedef enum _SYSTEM_INDICATORS {
 } SYSTEM_INDICATORS;
 
 
-extern BOOLEAN SetSystemIndicator  (SYSTEM_INDICATORS  SystemIndicators, ULONG Value);
-
-
-
-
+extern BOOLEAN SetSystemIndicator(SYSTEM_INDICATORS SystemIndicators, ULONG Value);

@@ -23,7 +23,7 @@ Revision History:
 
 #ifdef POOL_TAGGING
 #undef ExAllocatePool
-#define ExAllocatePool(a,b) ExAllocatePoolWithTag(a,b,'edpP')
+#define ExAllocatePool(a, b) ExAllocatePoolWithTag(a, b, 'edpP')
 #endif
 
 //
@@ -31,61 +31,31 @@ Revision History:
 //
 
 NTSTATUS
-IopCancelPendingEject(
-    IN PPENDING_RELATIONS_LIST_ENTRY EjectEntry
-    );
+IopCancelPendingEject(IN PPENDING_RELATIONS_LIST_ENTRY EjectEntry);
 
-VOID
-IopDelayedRemoveWorker(
-    IN PVOID Context
-    );
+VOID IopDelayedRemoveWorker(IN PVOID Context);
 
 BOOLEAN
-IopDeleteLockedDeviceNode(
-    IN  PDEVICE_NODE                    DeviceNode,
-    IN  PLUGPLAY_DEVICE_DELETE_TYPE     OperationCode,
-    IN  PRELATION_LIST                  RelationsList,
-    IN  ULONG                           Problem,
-    OUT PNP_VETO_TYPE                  *VetoType        OPTIONAL,
-    OUT PUNICODE_STRING                 VetoName        OPTIONAL
-    );
+IopDeleteLockedDeviceNode(IN PDEVICE_NODE DeviceNode, IN PLUGPLAY_DEVICE_DELETE_TYPE OperationCode,
+                          IN PRELATION_LIST RelationsList, IN ULONG Problem, OUT PNP_VETO_TYPE *VetoType OPTIONAL,
+                          OUT PUNICODE_STRING VetoName OPTIONAL);
 
 NTSTATUS
-IopProcessRelation(
-    IN      PDEVICE_NODE                    DeviceNode,
-    IN      PLUGPLAY_DEVICE_DELETE_TYPE     OperationCode,
-    IN      BOOLEAN                         IsDirectDescendant,
-    OUT     PNP_VETO_TYPE                  *VetoType,
-    OUT     PUNICODE_STRING                 VetoName,
-    IN OUT  PRELATION_LIST                  RelationsList
-    );
+IopProcessRelation(IN PDEVICE_NODE DeviceNode, IN PLUGPLAY_DEVICE_DELETE_TYPE OperationCode,
+                   IN BOOLEAN IsDirectDescendant, OUT PNP_VETO_TYPE *VetoType, OUT PUNICODE_STRING VetoName,
+                   IN OUT PRELATION_LIST RelationsList);
 
-VOID
-IopSurpriseRemoveLockedDeviceNode(
-    IN      PDEVICE_NODE     DeviceNode,
-    IN OUT  PRELATION_LIST   RelationsList
-    );
+VOID IopSurpriseRemoveLockedDeviceNode(IN PDEVICE_NODE DeviceNode, IN OUT PRELATION_LIST RelationsList);
 
 BOOLEAN
-IopQueryRemoveLockedDeviceNode(
-    IN  PDEVICE_NODE        DeviceNode,
-    OUT PNP_VETO_TYPE      *VetoType,
-    OUT PUNICODE_STRING     VetoName
-    );
+IopQueryRemoveLockedDeviceNode(IN PDEVICE_NODE DeviceNode, OUT PNP_VETO_TYPE *VetoType, OUT PUNICODE_STRING VetoName);
 
-VOID
-IopCancelRemoveLockedDeviceNode(
-    IN PDEVICE_NODE DeviceNode
-    );
+VOID IopCancelRemoveLockedDeviceNode(IN PDEVICE_NODE DeviceNode);
 
-VOID
-IopRemoveLockedDeviceNode(
-    IN      PDEVICE_NODE    DeviceNode,
-    IN      ULONG           Problem,
-    IN OUT  PRELATION_LIST  RelationsList
-    );
+VOID IopRemoveLockedDeviceNode(IN PDEVICE_NODE DeviceNode, IN ULONG Problem, IN OUT PRELATION_LIST RelationsList);
 
-typedef struct {
+typedef struct
+{
 
     BOOLEAN TreeDeletion;
     BOOLEAN DescendantNode;
@@ -93,20 +63,12 @@ typedef struct {
 } REMOVAL_WALK_CONTEXT, *PREMOVAL_WALK_CONTEXT;
 
 NTSTATUS
-PipRequestDeviceRemovalWorker(
-    IN PDEVICE_NODE DeviceNode,
-    IN PVOID        Context
-    );
+PipRequestDeviceRemovalWorker(IN PDEVICE_NODE DeviceNode, IN PVOID Context);
 
 NTSTATUS
-PiProcessBusRelations(
-    IN      PDEVICE_NODE                    DeviceNode,
-    IN      PLUGPLAY_DEVICE_DELETE_TYPE     OperationCode,
-    IN      BOOLEAN                         IsDirectDescendant,
-    OUT     PNP_VETO_TYPE                  *VetoType,
-    OUT     PUNICODE_STRING                 VetoName,
-    IN OUT  PRELATION_LIST                  RelationsList
-    );
+PiProcessBusRelations(IN PDEVICE_NODE DeviceNode, IN PLUGPLAY_DEVICE_DELETE_TYPE OperationCode,
+                      IN BOOLEAN IsDirectDescendant, OUT PNP_VETO_TYPE *VetoType, OUT PUNICODE_STRING VetoName,
+                      IN OUT PRELATION_LIST RelationsList);
 
 WORK_QUEUE_ITEM IopDeviceRemovalWorkItem;
 
@@ -131,12 +93,8 @@ WORK_QUEUE_ITEM IopDeviceRemovalWorkItem;
 #pragma alloc_text(PAGE, PipIsBeingRemovedSafely)
 #pragma alloc_text(PAGE, PiProcessBusRelations)
 #endif
-
-VOID
-IopChainDereferenceComplete(
-    IN  PDEVICE_OBJECT  PhysicalDeviceObject,
-    IN  BOOLEAN         OnCleanStack
-    )
+
+VOID IopChainDereferenceComplete(IN PDEVICE_OBJECT PhysicalDeviceObject, IN BOOLEAN OnCleanStack)
 
 /*++
 
@@ -162,11 +120,11 @@ Return Value:
 --*/
 
 {
-    PPENDING_RELATIONS_LIST_ENTRY   entry;
-    PLIST_ENTRY                     link;
-    ULONG                           count;
-    ULONG                           taggedCount;
-    NTSTATUS                        status;
+    PPENDING_RELATIONS_LIST_ENTRY entry;
+    PLIST_ENTRY link;
+    ULONG count;
+    ULONG taggedCount;
+    NTSTATUS status;
 
     PAGED_CODE();
 
@@ -176,51 +134,51 @@ Return Value:
     //
     // Find the relation list this devnode is a member of.
     //
-    for (link = IopPendingSurpriseRemovals.Flink;
-         link != &IopPendingSurpriseRemovals;
-         link = link->Flink) {
+    for (link = IopPendingSurpriseRemovals.Flink; link != &IopPendingSurpriseRemovals; link = link->Flink)
+    {
 
         entry = CONTAINING_RECORD(link, PENDING_RELATIONS_LIST_ENTRY, Link);
 
         //
         // Tag the devnode as ready for remove.  If it isn't in this list
         //
-        status = IopSetRelationsTag( entry->RelationsList, PhysicalDeviceObject, TRUE );
+        status = IopSetRelationsTag(entry->RelationsList, PhysicalDeviceObject, TRUE);
 
-        if (NT_SUCCESS(status)) {
-            taggedCount = IopGetRelationsTaggedCount( entry->RelationsList );
-            count = IopGetRelationsCount( entry->RelationsList );
+        if (NT_SUCCESS(status))
+        {
+            taggedCount = IopGetRelationsTaggedCount(entry->RelationsList);
+            count = IopGetRelationsCount(entry->RelationsList);
 
-            if (taggedCount == count) {
+            if (taggedCount == count)
+            {
                 //
                 // Remove relations list from list of pending surprise removals.
                 //
-                RemoveEntryList( link );
+                RemoveEntryList(link);
 
                 ExReleaseResourceLite(&IopSurpriseRemoveListLock);
                 KeLeaveCriticalRegion();
 
-                if ((!OnCleanStack) ||
-                    (PsGetCurrentProcess() != PsInitialSystemProcess)) {
+                if ((!OnCleanStack) || (PsGetCurrentProcess() != PsInitialSystemProcess))
+                {
 
                     //
                     // Queue a work item to do the removal so we call the driver
                     // in the system process context rather than the random one
                     // we're in now.
                     //
-                    ExInitializeWorkItem( &entry->WorkItem,
-                                        IopDelayedRemoveWorker,
-                                        entry);
+                    ExInitializeWorkItem(&entry->WorkItem, IopDelayedRemoveWorker, entry);
 
                     ExQueueWorkItem(&entry->WorkItem, DelayedWorkQueue);
-
-                } else {
+                }
+                else
+                {
 
                     //
                     // We are already in the system process and not in some
                     // random ObDeref call, so call the worker inline.
                     //
-                    IopDelayedRemoveWorker( entry );
+                    IopDelayedRemoveWorker(entry);
                 }
 
                 return;
@@ -235,11 +193,8 @@ Return Value:
     ExReleaseResourceLite(&IopSurpriseRemoveListLock);
     KeLeaveCriticalRegion();
 }
-
-VOID
-IopDelayedRemoveWorker(
-    IN PVOID Context
-    )
+
+VOID IopDelayedRemoveWorker(IN PVOID Context)
 
 /*++
 
@@ -267,34 +222,28 @@ Return Value:
 
     PpDevNodeLockTree(PPL_TREEOP_ALLOW_READS);
 
-    IopDeleteLockedDeviceNodes( entry->DeviceObject,
-                                entry->RelationsList,
-                                RemoveDevice,           // OperationCode
-                                FALSE,                  // ProcessIndirectDescendants
-                                entry->Problem,         // Problem
-                                NULL,                   // VetoType
-                                NULL);                  // VetoName
+    IopDeleteLockedDeviceNodes(entry->DeviceObject, entry->RelationsList,
+                               RemoveDevice,   // OperationCode
+                               FALSE,          // ProcessIndirectDescendants
+                               entry->Problem, // Problem
+                               NULL,           // VetoType
+                               NULL);          // VetoName
 
     //
     // The final reference on DeviceNodes in the DeviceNodeDeletePendingCloses
     // state is dropped here.
     //
-    IopFreeRelationList( entry->RelationsList );
+    IopFreeRelationList(entry->RelationsList);
 
-    ExFreePool( entry );
+    ExFreePool(entry);
     PpDevNodeUnlockTree(PPL_TREEOP_ALLOW_READS);
 }
 
-
+
 BOOLEAN
-IopDeleteLockedDeviceNode(
-    IN  PDEVICE_NODE                    DeviceNode,
-    IN  PLUGPLAY_DEVICE_DELETE_TYPE     OperationCode,
-    IN  PRELATION_LIST                  RelationsList,
-    IN  ULONG                           Problem,
-    OUT PNP_VETO_TYPE                  *VetoType        OPTIONAL,
-    OUT PUNICODE_STRING                 VetoName        OPTIONAL
-    )
+IopDeleteLockedDeviceNode(IN PDEVICE_NODE DeviceNode, IN PLUGPLAY_DEVICE_DELETE_TYPE OperationCode,
+                          IN PRELATION_LIST RelationsList, IN ULONG Problem, OUT PNP_VETO_TYPE *VetoType OPTIONAL,
+                          OUT PUNICODE_STRING VetoName OPTIONAL)
 /*++
 
 Routine Description:
@@ -324,56 +273,47 @@ Return Value:
     PAGED_CODE();
 
     IopDbgPrint((IOP_LOADUNLOAD_INFO_LEVEL,
-              "IopDeleteLockedDeviceNode: Entered\n    DeviceNode = 0x%p\n    OperationCode = 0x%08X\n    RelationsList = 0x%p\n    Problem = %d\n",
-              DeviceNode,
-              OperationCode,
-              RelationsList,
-              Problem));
+                 "IopDeleteLockedDeviceNode: Entered\n    DeviceNode = 0x%p\n    OperationCode = 0x%08X\n    "
+                 "RelationsList = 0x%p\n    Problem = %d\n",
+                 DeviceNode, OperationCode, RelationsList, Problem));
 
     success = TRUE;
-    switch(OperationCode) {
+    switch (OperationCode)
+    {
 
-        case SurpriseRemoveDevice:
+    case SurpriseRemoveDevice:
 
-            IopSurpriseRemoveLockedDeviceNode(DeviceNode, RelationsList);
-            break;
+        IopSurpriseRemoveLockedDeviceNode(DeviceNode, RelationsList);
+        break;
 
-        case RemoveDevice:
+    case RemoveDevice:
 
-            IopRemoveLockedDeviceNode(DeviceNode, Problem, RelationsList);
-            break;
+        IopRemoveLockedDeviceNode(DeviceNode, Problem, RelationsList);
+        break;
 
-        case QueryRemoveDevice:
+    case QueryRemoveDevice:
 
-            ASSERT(VetoType && VetoName);
+        ASSERT(VetoType && VetoName);
 
-            success = IopQueryRemoveLockedDeviceNode(
-                DeviceNode,
-                VetoType,
-                VetoName
-                );
+        success = IopQueryRemoveLockedDeviceNode(DeviceNode, VetoType, VetoName);
 
-            break;
+        break;
 
-        case CancelRemoveDevice:
+    case CancelRemoveDevice:
 
-            IopCancelRemoveLockedDeviceNode(DeviceNode);
-            break;
+        IopCancelRemoveLockedDeviceNode(DeviceNode);
+        break;
 
-        default:
-            ASSERT(0);
-            break;
+    default:
+        ASSERT(0);
+        break;
     }
 
     return success;
 }
 
 
-VOID
-IopSurpriseRemoveLockedDeviceNode(
-    IN      PDEVICE_NODE     DeviceNode,
-    IN OUT  PRELATION_LIST   RelationsList
-    )
+VOID IopSurpriseRemoveLockedDeviceNode(IN PDEVICE_NODE DeviceNode, IN OUT PRELATION_LIST RelationsList)
 /*++
 
 Routine Description:
@@ -400,8 +340,7 @@ Return Value:
 
     schedulerState = DeviceNode->State;
 
-    ASSERT((schedulerState == DeviceNodeAwaitingQueuedDeletion) ||
-           (schedulerState == DeviceNodeAwaitingQueuedRemoval));
+    ASSERT((schedulerState == DeviceNodeAwaitingQueuedDeletion) || (schedulerState == DeviceNodeAwaitingQueuedRemoval));
 
     //
     // Clear the scheduling state (DeviceNodeAwaitingQueuedDeletion) off
@@ -416,7 +355,8 @@ Return Value:
     //
     PpHotSwapInitRemovalPolicy(DeviceNode);
 
-    if (devnodeState == DeviceNodeRemovePendingCloses) {
+    if (devnodeState == DeviceNodeRemovePendingCloses)
+    {
 
         //
         // If the state is DeviceNodeRemovePendingCloses, we should have got
@@ -434,14 +374,16 @@ Return Value:
     // Detach any children from the tree here. If they needed SurpriseRemove
     // IRPs, they already will have received them.
     //
-    for(child = DeviceNode->Child; child; child = nextChild) {
+    for (child = DeviceNode->Child; child; child = nextChild)
+    {
 
         //
         // Grab a copy of the next sibling before we blow away this devnode.
         //
         nextChild = child->Sibling;
 
-        if (child->Flags & DNF_ENUMERATED) {
+        if (child->Flags & DNF_ENUMERATED)
+        {
             child->Flags &= ~DNF_ENUMERATED;
         }
 
@@ -450,11 +392,12 @@ Return Value:
         // to drop the resources (the parent will lose them when his arbiter is
         // nuked with the upcoming SurpriseRemoveDevice.)
         //
-        if (PipDoesDevNodeHaveResources(child)) {
+        if (PipDoesDevNodeHaveResources(child))
+        {
 
             IopDbgPrint((IOP_LOADUNLOAD_INFO_LEVEL,
-                       "IopSurpriseRemoveLockedDeviceNode: Releasing resources for child device = 0x%p\n",
-                       child->PhysicalDeviceObject));
+                         "IopSurpriseRemoveLockedDeviceNode: Releasing resources for child device = 0x%p\n",
+                         child->PhysicalDeviceObject));
 
             //
             // ADRIAO N.B. 2000/08/21 -
@@ -462,7 +405,7 @@ Return Value:
             // IRP could be sent here. The stack would be unable to distinguish
             // this from AddDevice cleanup.
             //
-/*
+            /*
             if ((child->State == DeviceNodeUninitialized) ||
                 (child->State == DeviceNodeInitialized)) {
 
@@ -498,15 +441,15 @@ Return Value:
 
     status = IopRemoveDevice(deviceObject, IRP_MN_SURPRISE_REMOVAL);
 
-    if ((devnodeState == DeviceNodeStarted) ||
-        (devnodeState == DeviceNodeStopped) ||
-        (devnodeState == DeviceNodeRestartCompletion)) {
+    if ((devnodeState == DeviceNodeStarted) || (devnodeState == DeviceNodeStopped) ||
+        (devnodeState == DeviceNodeRestartCompletion))
+    {
 
         //deviceObject = DeviceNode->PhysicalDeviceObject;
 
         IopDbgPrint((IOP_LOADUNLOAD_INFO_LEVEL,
-                   "IopSurpriseRemoveLockedDeviceNode: Sending surprise remove irp to device = 0x%p\n",
-                   deviceObject));
+                     "IopSurpriseRemoveLockedDeviceNode: Sending surprise remove irp to device = 0x%p\n",
+                     deviceObject));
 
         //status = IopRemoveDevice(deviceObject, IRP_MN_SURPRISE_REMOVAL);
 
@@ -516,19 +459,22 @@ Return Value:
         //
         IopDisableDeviceInterfaces(&DeviceNode->InstancePath);
 
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
 
-            IopDbgPrint((IOP_LOADUNLOAD_INFO_LEVEL,
-                       "IopSurpriseRemoveLockedDeviceNode: Releasing devices resources\n"));
+            IopDbgPrint(
+                (IOP_LOADUNLOAD_INFO_LEVEL, "IopSurpriseRemoveLockedDeviceNode: Releasing devices resources\n"));
 
             IopReleaseDeviceResources(DeviceNode, FALSE);
         }
 
-        if (DeviceNode->Flags & DNF_ENUMERATED) {
+        if (DeviceNode->Flags & DNF_ENUMERATED)
+        {
 
             PipSetDevNodeState(DeviceNode, DeviceNodeRemovePendingCloses, NULL);
-
-        } else {
+        }
+        else
+        {
 
             ASSERT(schedulerState == DeviceNodeAwaitingQueuedDeletion);
             PipSetDevNodeState(DeviceNode, DeviceNodeDeletePendingCloses, NULL);
@@ -540,11 +486,7 @@ Return Value:
 
 
 BOOLEAN
-IopQueryRemoveLockedDeviceNode(
-    IN  PDEVICE_NODE        DeviceNode,
-    OUT PNP_VETO_TYPE      *VetoType,
-    OUT PUNICODE_STRING     VetoName
-    )
+IopQueryRemoveLockedDeviceNode(IN PDEVICE_NODE DeviceNode, OUT PNP_VETO_TYPE *VetoType, OUT PUNICODE_STRING VetoName)
 /*++
 
 Routine Description:
@@ -576,57 +518,58 @@ Return Value:
 
     devnodeState = DeviceNode->State;
 
-    switch(devnodeState) {
-        case DeviceNodeUninitialized:
-        case DeviceNodeInitialized:
-        case DeviceNodeRemoved:
-            //
-            // Don't send Queries to devices that haven't been started.
-            //
-            ASSERT(DeviceNode->Child == NULL);
-            return TRUE;
+    switch (devnodeState)
+    {
+    case DeviceNodeUninitialized:
+    case DeviceNodeInitialized:
+    case DeviceNodeRemoved:
+        //
+        // Don't send Queries to devices that haven't been started.
+        //
+        ASSERT(DeviceNode->Child == NULL);
+        return TRUE;
 
-        case DeviceNodeDriversAdded:
-        case DeviceNodeResourcesAssigned:
-        case DeviceNodeStartCompletion:
-        case DeviceNodeStartPostWork:
-            //
-            // ISSUE - 2000/08/24 - ADRIAO: Maintaining noncorrect Win2K behavior
-            //                      Win2K erroneously sent QR's to all nodes.
-            //
-            break;
+    case DeviceNodeDriversAdded:
+    case DeviceNodeResourcesAssigned:
+    case DeviceNodeStartCompletion:
+    case DeviceNodeStartPostWork:
+        //
+        // ISSUE - 2000/08/24 - ADRIAO: Maintaining noncorrect Win2K behavior
+        //                      Win2K erroneously sent QR's to all nodes.
+        //
+        break;
 
-        case DeviceNodeStarted:
-            //
-            // This guy needs to be queried
-            //
-            break;
+    case DeviceNodeStarted:
+        //
+        // This guy needs to be queried
+        //
+        break;
 
-        case DeviceNodeAwaitingQueuedRemoval:
-        case DeviceNodeAwaitingQueuedDeletion:
-        case DeviceNodeRemovePendingCloses:
-        case DeviceNodeStopped:
-        case DeviceNodeRestartCompletion:
-            //
-            // These states should have been culled by IopProcessRelation
-            //
-            ASSERT(0);
-            return TRUE;
+    case DeviceNodeAwaitingQueuedRemoval:
+    case DeviceNodeAwaitingQueuedDeletion:
+    case DeviceNodeRemovePendingCloses:
+    case DeviceNodeStopped:
+    case DeviceNodeRestartCompletion:
+        //
+        // These states should have been culled by IopProcessRelation
+        //
+        ASSERT(0);
+        return TRUE;
 
-        case DeviceNodeQueryStopped:
-        case DeviceNodeEnumeratePending:
-        case DeviceNodeStartPending:
-        case DeviceNodeEnumerateCompletion:
-        case DeviceNodeQueryRemoved:
-        case DeviceNodeDeletePendingCloses:
-        case DeviceNodeDeleted:
-        case DeviceNodeUnspecified:
-        default:
-            //
-            // None of these should be seen here.
-            //
-            ASSERT(0);
-            return TRUE;
+    case DeviceNodeQueryStopped:
+    case DeviceNodeEnumeratePending:
+    case DeviceNodeStartPending:
+    case DeviceNodeEnumerateCompletion:
+    case DeviceNodeQueryRemoved:
+    case DeviceNodeDeletePendingCloses:
+    case DeviceNodeDeleted:
+    case DeviceNodeUnspecified:
+    default:
+        //
+        // None of these should be seen here.
+        //
+        ASSERT(0);
+        return TRUE;
     }
 
     ASSERT(PipAreDriversLoaded(DeviceNode));
@@ -634,16 +577,16 @@ Return Value:
     deviceObject = DeviceNode->PhysicalDeviceObject;
 
     IopDbgPrint((IOP_LOADUNLOAD_INFO_LEVEL,
-               "IopQueryRemoveLockedDeviceNode: Sending QueryRemove irp to device = 0x%p\n",
-               deviceObject));
+                 "IopQueryRemoveLockedDeviceNode: Sending QueryRemove irp to device = 0x%p\n", deviceObject));
 
     status = IopRemoveDevice(deviceObject, IRP_MN_QUERY_REMOVE_DEVICE);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         IopDbgPrint((IOP_LOADUNLOAD_INFO_LEVEL,
-                   "IopQueryRemoveLockedDeviceNode: QueryRemove vetoed by device = 0x%p, sending CancelRemove\n",
-                   deviceObject));
+                     "IopQueryRemoveLockedDeviceNode: QueryRemove vetoed by device = 0x%p, sending CancelRemove\n",
+                     deviceObject));
 
         IopRemoveDevice(deviceObject, IRP_MN_CANCEL_REMOVE_DEVICE);
 
@@ -657,10 +600,7 @@ Return Value:
 }
 
 
-VOID
-IopCancelRemoveLockedDeviceNode(
-    IN PDEVICE_NODE DeviceNode
-    )
+VOID IopCancelRemoveLockedDeviceNode(IN PDEVICE_NODE DeviceNode)
 /*++
 
 Routine Description:
@@ -682,7 +622,8 @@ Return Value:
 
     PAGED_CODE();
 
-    if (DeviceNode->State != DeviceNodeQueryRemoved) {
+    if (DeviceNode->State != DeviceNodeQueryRemoved)
+    {
 
         return;
     }
@@ -696,8 +637,7 @@ Return Value:
     deviceObject = DeviceNode->PhysicalDeviceObject;
 
     IopDbgPrint((IOP_LOADUNLOAD_INFO_LEVEL,
-               "IopCancelRemoveLockedDeviceNode: Sending CancelRemove irp to device = 0x%p\n",
-               deviceObject));
+                 "IopCancelRemoveLockedDeviceNode: Sending CancelRemove irp to device = 0x%p\n", deviceObject));
 
     IopRemoveDevice(deviceObject, IRP_MN_CANCEL_REMOVE_DEVICE);
 
@@ -705,12 +645,7 @@ Return Value:
 }
 
 
-VOID
-IopRemoveLockedDeviceNode(
-    IN      PDEVICE_NODE    DeviceNode,
-    IN      ULONG           Problem,
-    IN OUT  PRELATION_LIST  RelationsList
-    )
+VOID IopRemoveLockedDeviceNode(IN PDEVICE_NODE DeviceNode, IN ULONG Problem, IN OUT PRELATION_LIST RelationsList)
 /*++
 
 Routine Description:
@@ -747,14 +682,16 @@ Return Value:
     //
     // Make sure we WILL drop our references to its children.
     //
-    for(child = DeviceNode->Child; child; child = nextChild) {
+    for (child = DeviceNode->Child; child; child = nextChild)
+    {
 
         //
         // Grab a copy of the next sibling before we blow away this devnode.
         //
         nextChild = child->Sibling;
 
-        if (child->Flags & DNF_ENUMERATED) {
+        if (child->Flags & DNF_ENUMERATED)
+        {
             child->Flags &= ~DNF_ENUMERATED;
         }
 
@@ -766,11 +703,12 @@ Return Value:
         // to drop the resources (the parent will lose them when his arbiter is
         // nuked with the upcoming RemoveDevice.)
         //
-        if (PipDoesDevNodeHaveResources(child)) {
+        if (PipDoesDevNodeHaveResources(child))
+        {
 
             IopDbgPrint((IOP_LOADUNLOAD_INFO_LEVEL,
-                       "IopRemoveLockedDeviceNode: Releasing resources for child device = 0x%p\n",
-                       child->PhysicalDeviceObject));
+                         "IopRemoveLockedDeviceNode: Releasing resources for child device = 0x%p\n",
+                         child->PhysicalDeviceObject));
 
             //
             // ADRIAO N.B. 2000/08/21 -
@@ -793,9 +731,11 @@ Return Value:
     }
 
     if ((DeviceNode->State == DeviceNodeAwaitingQueuedDeletion) ||
-        (DeviceNode->State == DeviceNodeAwaitingQueuedRemoval)) {
+        (DeviceNode->State == DeviceNodeAwaitingQueuedRemoval))
+    {
 
-        if (!(DeviceNode->Flags & DNF_ENUMERATED)) {
+        if (!(DeviceNode->Flags & DNF_ENUMERATED))
+        {
 
             ASSERT(DeviceNode->State == DeviceNodeAwaitingQueuedDeletion);
             //
@@ -807,8 +747,9 @@ Return Value:
             //
             //PipRestoreDevNodeState(DeviceNode);
             PipSetDevNodeState(DeviceNode, DeviceNodeDeletePendingCloses, NULL);
-
-        } else {
+        }
+        else
+        {
 
             ASSERT(DeviceNode->State == DeviceNodeAwaitingQueuedRemoval);
             PipRestoreDevNodeState(DeviceNode);
@@ -818,51 +759,52 @@ Return Value:
     //
     // Do the final remove cleanup on the device...
     //
-    switch(DeviceNode->State) {
+    switch (DeviceNode->State)
+    {
 
-        case DeviceNodeUninitialized:
-        case DeviceNodeInitialized:
-        case DeviceNodeRemoved:
-            //
-            // ISSUE - 2000/08/24 - ADRIAO: Maintaining noncorrect Win2K behavior
-            //                      Win2K erroneously sent SR's and R's to all
-            //                      nodes. Those bugs must be fixed in tandem.
-            //
-            //removeIrpNeeded = FALSE;
-            removeIrpNeeded = TRUE;
-            break;
+    case DeviceNodeUninitialized:
+    case DeviceNodeInitialized:
+    case DeviceNodeRemoved:
+        //
+        // ISSUE - 2000/08/24 - ADRIAO: Maintaining noncorrect Win2K behavior
+        //                      Win2K erroneously sent SR's and R's to all
+        //                      nodes. Those bugs must be fixed in tandem.
+        //
+        //removeIrpNeeded = FALSE;
+        removeIrpNeeded = TRUE;
+        break;
 
-        case DeviceNodeDriversAdded:
-        case DeviceNodeResourcesAssigned:
-        case DeviceNodeStartCompletion:
-        case DeviceNodeStartPostWork:
-        case DeviceNodeQueryRemoved:
-        case DeviceNodeRemovePendingCloses:
-        case DeviceNodeDeletePendingCloses:
-            //
-            // Expected.
-            //
-            removeIrpNeeded = TRUE;
-            break;
+    case DeviceNodeDriversAdded:
+    case DeviceNodeResourcesAssigned:
+    case DeviceNodeStartCompletion:
+    case DeviceNodeStartPostWork:
+    case DeviceNodeQueryRemoved:
+    case DeviceNodeRemovePendingCloses:
+    case DeviceNodeDeletePendingCloses:
+        //
+        // Expected.
+        //
+        removeIrpNeeded = TRUE;
+        break;
 
-        case DeviceNodeStarted:
-        case DeviceNodeStopped:
-        case DeviceNodeRestartCompletion:
-        case DeviceNodeQueryStopped:
-        case DeviceNodeEnumeratePending:
-        case DeviceNodeStartPending:
-        case DeviceNodeEnumerateCompletion:
-        case DeviceNodeAwaitingQueuedRemoval:
-        case DeviceNodeAwaitingQueuedDeletion:
-        case DeviceNodeDeleted:
-        case DeviceNodeUnspecified:
-        default:
-            //
-            // None of these should be seen here.
-            //
-            ASSERT(0);
-            removeIrpNeeded = TRUE;
-            break;
+    case DeviceNodeStarted:
+    case DeviceNodeStopped:
+    case DeviceNodeRestartCompletion:
+    case DeviceNodeQueryStopped:
+    case DeviceNodeEnumeratePending:
+    case DeviceNodeStartPending:
+    case DeviceNodeEnumerateCompletion:
+    case DeviceNodeAwaitingQueuedRemoval:
+    case DeviceNodeAwaitingQueuedDeletion:
+    case DeviceNodeDeleted:
+    case DeviceNodeUnspecified:
+    default:
+        //
+        // None of these should be seen here.
+        //
+        ASSERT(0);
+        removeIrpNeeded = TRUE;
+        break;
     }
 
     //
@@ -877,22 +819,26 @@ Return Value:
     // this is strictly unneccessary.
     //
     device1 = deviceObject->AttachedDevice;
-    while (device1) {
+    while (device1)
+    {
         length++;
         device1 = device1->AttachedDevice;
     }
 
     attachedDevices = NULL;
     attachedDrivers = NULL;
-    if (length != 0) {
+    if (length != 0)
+    {
 
         length = (length + 2) * sizeof(PDEVICE_OBJECT);
 
-        attachedDevices = (PDEVICE_OBJECT *) ExAllocatePool(PagedPool, length);
-        if (attachedDevices) {
+        attachedDevices = (PDEVICE_OBJECT *)ExAllocatePool(PagedPool, length);
+        if (attachedDevices)
+        {
 
-            attachedDrivers = (PDRIVER_OBJECT *) ExAllocatePool(PagedPool, length);
-            if (attachedDrivers) {
+            attachedDrivers = (PDRIVER_OBJECT *)ExAllocatePool(PagedPool, length);
+            if (attachedDrivers)
+            {
 
                 RtlZeroMemory(attachedDevices, length);
                 RtlZeroMemory(attachedDrivers, length);
@@ -900,14 +846,16 @@ Return Value:
                 device2 = attachedDevices;
                 driver = attachedDrivers;
 
-                while (device1) {
+                while (device1)
+                {
                     ObReferenceObject(device1);
                     *device2++ = device1;
                     *driver++ = device1->DriverObject;
                     device1 = device1->AttachedDevice;
                 }
-
-            } else {
+            }
+            else
+            {
 
                 ExFreePool(attachedDevices);
                 attachedDevices = NULL;
@@ -915,15 +863,16 @@ Return Value:
         }
     }
 
-    if (removeIrpNeeded) {
+    if (removeIrpNeeded)
+    {
 
-        IopDbgPrint((IOP_LOADUNLOAD_INFO_LEVEL,
-                   "IopRemoveLockedDeviceNode: Sending remove irp to device = 0x%p\n",
-                   deviceObject));
+        IopDbgPrint((IOP_LOADUNLOAD_INFO_LEVEL, "IopRemoveLockedDeviceNode: Sending remove irp to device = 0x%p\n",
+                     deviceObject));
 
         IopRemoveDevice(deviceObject, IRP_MN_REMOVE_DEVICE);
 
-        if (DeviceNode->State == DeviceNodeQueryRemoved) {
+        if (DeviceNode->State == DeviceNodeQueryRemoved)
+        {
             //
             // Disable any device interfaces that may still be enabled for this
             // device after the removal.
@@ -931,28 +880,26 @@ Return Value:
             IopDisableDeviceInterfaces(&DeviceNode->InstancePath);
         }
 
-        IopDbgPrint((IOP_LOADUNLOAD_INFO_LEVEL,
-                   "IopRemoveLockedDeviceNode: Releasing devices resources\n"));
+        IopDbgPrint((IOP_LOADUNLOAD_INFO_LEVEL, "IopRemoveLockedDeviceNode: Releasing devices resources\n"));
 
         //
         // ISSUE - 2000/3/8 - RobertN - This doesn't take into account the
         // cleanup of surprise removed devices.  We will query for boot configs
         // unnecessarily.  We should probably also check if the parent is NULL.
         //
-        IopReleaseDeviceResources(
-            DeviceNode,
-            (BOOLEAN) ((DeviceNode->Flags & DNF_ENUMERATED) != 0)
-            );
+        IopReleaseDeviceResources(DeviceNode, (BOOLEAN)((DeviceNode->Flags & DNF_ENUMERATED) != 0));
     }
 
-    if (!(DeviceNode->Flags & DNF_ENUMERATED)) {
+    if (!(DeviceNode->Flags & DNF_ENUMERATED))
+    {
         //
         // If the device is a dock, remove it from the list of dock devices
         // and change the current Hardware Profile, if necessary.
         //
-        ASSERT(DeviceNode->DockInfo.DockStatus != DOCK_ARRIVING) ;
-        if ((DeviceNode->DockInfo.DockStatus == DOCK_DEPARTING)||
-            (DeviceNode->DockInfo.DockStatus == DOCK_EJECTIRP_COMPLETED)) {
+        ASSERT(DeviceNode->DockInfo.DockStatus != DOCK_ARRIVING);
+        if ((DeviceNode->DockInfo.DockStatus == DOCK_DEPARTING) ||
+            (DeviceNode->DockInfo.DockStatus == DOCK_EJECTIRP_COMPLETED))
+        {
 
             PpProfileCommitTransitioningDock(DeviceNode, DOCK_DEPARTING);
         }
@@ -963,9 +910,11 @@ Return Value:
     // deleted.
     //
     device2 = attachedDevices;
-    if (device2 != NULL) {
+    if (device2 != NULL)
+    {
         driver = attachedDrivers;
-        while (*device2) {
+        while (*device2)
+        {
             (*device2)->DeviceObjectExtension->ExtensionFlags &= ~(DOE_REMOVE_PENDING | DOE_REMOVE_PROCESSED);
             (*device2)->DeviceObjectExtension->ExtensionFlags |= DOE_START_PENDING;
             IopUnloadAttachedDriver(*driver);
@@ -983,20 +932,23 @@ Return Value:
     //
     // Now mark this one removed if it's still in the tree.
     //
-    if (DeviceNode->Flags & DNF_ENUMERATED) {
+    if (DeviceNode->Flags & DNF_ENUMERATED)
+    {
 
         ASSERT(DeviceNode->Parent);
         PipSetDevNodeState(DeviceNode, DeviceNodeRemoved, NULL);
-
-    } else if (DeviceNode->Parent != NULL) {
+    }
+    else if (DeviceNode->Parent != NULL)
+    {
 
         //
         // The devnode will be removed from the tree in
         // IopUnlinkDeviceRemovalRelations.
         //
         PipSetDevNodeState(DeviceNode, DeviceNodeDeleted, NULL);
-
-    } else {
+    }
+    else
+    {
 
         ASSERT(DeviceNode->State == DeviceNodeDeletePendingCloses);
         PipSetDevNodeState(DeviceNode, DeviceNodeDeleted, NULL);
@@ -1008,9 +960,9 @@ Return Value:
     // a) It disappeared.
     // b) We're disabling it.
     //
-    if ((!PipDoesDevNodeHaveProblem(DeviceNode)) ||
-        (Problem == CM_PROB_DEVICE_NOT_THERE) ||
-        (Problem == CM_PROB_DISABLED)) {
+    if ((!PipDoesDevNodeHaveProblem(DeviceNode)) || (Problem == CM_PROB_DEVICE_NOT_THERE) ||
+        (Problem == CM_PROB_DISABLED))
+    {
 
         PipClearDevNodeProblem(DeviceNode);
         PipSetDevNodeProblem(DeviceNode, Problem);
@@ -1019,15 +971,10 @@ Return Value:
 
 
 NTSTATUS
-IopDeleteLockedDeviceNodes(
-    IN  PDEVICE_OBJECT                  DeviceObject,
-    IN  PRELATION_LIST                  RelationsList,
-    IN  PLUGPLAY_DEVICE_DELETE_TYPE     OperationCode,
-    IN  BOOLEAN                         ProcessIndirectDescendants,
-    IN  ULONG                           Problem,
-    OUT PNP_VETO_TYPE                  *VetoType                    OPTIONAL,
-    OUT PUNICODE_STRING                 VetoName                    OPTIONAL
-    )
+IopDeleteLockedDeviceNodes(IN PDEVICE_OBJECT DeviceObject, IN PRELATION_LIST RelationsList,
+                           IN PLUGPLAY_DEVICE_DELETE_TYPE OperationCode, IN BOOLEAN ProcessIndirectDescendants,
+                           IN ULONG Problem, OUT PNP_VETO_TYPE *VetoType OPTIONAL,
+                           OUT PUNICODE_STRING VetoName OPTIONAL)
 /*++
 
 Routine Description:
@@ -1064,20 +1011,15 @@ Return Value:
     PAGED_CODE();
 
     IopDbgPrint((IOP_LOADUNLOAD_INFO_LEVEL,
-               "IopDeleteLockedDeviceNodes: Entered\n    DeviceObject = 0x%p\n    RelationsList = 0x%p\n    OperationCode = %d\n",
-               DeviceObject,
-               RelationsList,
-               OperationCode));
+                 "IopDeleteLockedDeviceNodes: Entered\n    DeviceObject = 0x%p\n    RelationsList = 0x%p\n    "
+                 "OperationCode = %d\n",
+                 DeviceObject, RelationsList, OperationCode));
 
-    deviceNode = (PDEVICE_NODE) DeviceObject->DeviceObjectExtension->DeviceNode;
+    deviceNode = (PDEVICE_NODE)DeviceObject->DeviceObjectExtension->DeviceNode;
 
     marker = 0;
-    while (IopEnumerateRelations( RelationsList,
-                                  &marker,
-                                  &relatedDeviceObject,
-                                  &directDescendant,
-                                  NULL,
-                                  TRUE)) {
+    while (IopEnumerateRelations(RelationsList, &marker, &relatedDeviceObject, &directDescendant, NULL, TRUE))
+    {
 
         //
         // Depending on the operation we need to do different things.
@@ -1088,34 +1030,23 @@ Return Value:
         //  SurpriseRemoveDevice / RemoveDevice
         //      Ignore indirect descendants
         //
-        if (directDescendant || ProcessIndirectDescendants) {
+        if (directDescendant || ProcessIndirectDescendants)
+        {
 
             deviceNode = (PDEVICE_NODE)relatedDeviceObject->DeviceObjectExtension->DeviceNode;
 
-            if (!IopDeleteLockedDeviceNode( deviceNode,
-                                            OperationCode,
-                                            RelationsList,
-                                            Problem,
-                                            VetoType,
-                                            VetoName)) {
+            if (!IopDeleteLockedDeviceNode(deviceNode, OperationCode, RelationsList, Problem, VetoType, VetoName))
+            {
 
                 ASSERT(OperationCode == QueryRemoveDevice);
 
-                while (IopEnumerateRelations( RelationsList,
-                                              &marker,
-                                              &relatedDeviceObject,
-                                              NULL,
-                                              NULL,
-                                              FALSE)) {
+                while (IopEnumerateRelations(RelationsList, &marker, &relatedDeviceObject, NULL, NULL, FALSE))
+                {
 
                     deviceNode = (PDEVICE_NODE)relatedDeviceObject->DeviceObjectExtension->DeviceNode;
 
-                    IopDeleteLockedDeviceNode( deviceNode,
-                                               CancelRemoveDevice,
-                                               RelationsList,
-                                               Problem,
-                                               VetoType,
-                                               VetoName);
+                    IopDeleteLockedDeviceNode(deviceNode, CancelRemoveDevice, RelationsList, Problem, VetoType,
+                                              VetoName);
                 }
 
                 status = STATUS_UNSUCCESSFUL;
@@ -1127,15 +1058,11 @@ Return Value:
 exit:
     return status;
 }
-
+
 NTSTATUS
-IopBuildRemovalRelationList(
-    IN  PDEVICE_OBJECT                  DeviceObject,
-    IN  PLUGPLAY_DEVICE_DELETE_TYPE     OperationCode,
-    OUT PNP_VETO_TYPE                  *VetoType,
-    OUT PUNICODE_STRING                 VetoName,
-    OUT PRELATION_LIST                 *RelationsList
-    )
+IopBuildRemovalRelationList(IN PDEVICE_OBJECT DeviceObject, IN PLUGPLAY_DEVICE_DELETE_TYPE OperationCode,
+                            OUT PNP_VETO_TYPE *VetoType, OUT PUNICODE_STRING VetoName,
+                            OUT PRELATION_LIST *RelationsList)
 /*++
 
 Routine Description:
@@ -1168,12 +1095,12 @@ Return Value:
 --*/
 
 {
-    NTSTATUS                status;
-    PDEVICE_OBJECT          deviceObject;
-    PDEVICE_NODE            deviceNode, parent;
-    PRELATION_LIST          newRelationsList;
-    ULONG                   marker;
-    BOOLEAN                 tagged;
+    NTSTATUS status;
+    PDEVICE_OBJECT deviceObject;
+    PDEVICE_NODE deviceNode, parent;
+    PRELATION_LIST newRelationsList;
+    ULONG marker;
+    BOOLEAN tagged;
 
     PAGED_CODE();
 
@@ -1186,7 +1113,8 @@ Return Value:
     //
     ASSERT(DeviceObject != IopRootDeviceNode->PhysicalDeviceObject);
 
-    if ((newRelationsList = IopAllocateRelationList(OperationCode)) == NULL) {
+    if ((newRelationsList = IopAllocateRelationList(OperationCode)) == NULL)
+    {
 
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -1194,18 +1122,12 @@ Return Value:
     //
     // First process the object itself
     //
-    status = IopProcessRelation(
-        deviceNode,
-        OperationCode,
-        TRUE,
-        VetoType,
-        VetoName,
-        newRelationsList
-        );
+    status = IopProcessRelation(deviceNode, OperationCode, TRUE, VetoType, VetoName, newRelationsList);
 
     ASSERT(status != STATUS_INVALID_DEVICE_REQUEST);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         IopCompressRelationList(&newRelationsList);
         *RelationsList = newRelationsList;
 
@@ -1226,7 +1148,9 @@ Return Value:
         // There is also a reference on each relation's parent and it's lock
         // count is >= 1.
         //
-    } else {
+    }
+    else
+    {
 
         IopFreeRelationList(newRelationsList);
     }
@@ -1235,14 +1159,9 @@ Return Value:
 }
 
 NTSTATUS
-PiProcessBusRelations(
-    IN      PDEVICE_NODE                    DeviceNode,
-    IN      PLUGPLAY_DEVICE_DELETE_TYPE     OperationCode,
-    IN      BOOLEAN                         IsDirectDescendant,
-    OUT     PNP_VETO_TYPE                  *VetoType,
-    OUT     PUNICODE_STRING                 VetoName,
-    IN OUT  PRELATION_LIST                  RelationsList
-    )
+PiProcessBusRelations(IN PDEVICE_NODE DeviceNode, IN PLUGPLAY_DEVICE_DELETE_TYPE OperationCode,
+                      IN BOOLEAN IsDirectDescendant, OUT PNP_VETO_TYPE *VetoType, OUT PUNICODE_STRING VetoName,
+                      IN OUT PRELATION_LIST RelationsList)
 /*++
 
 Routine Description:
@@ -1280,24 +1199,17 @@ Return Value:
 
     PAGED_CODE();
 
-    for(child = DeviceNode->Child;
-        child != NULL;
-        child = child->Sibling) {
+    for (child = DeviceNode->Child; child != NULL; child = child->Sibling)
+    {
 
         childDeviceObject = child->PhysicalDeviceObject;
 
-        status = IopProcessRelation(
-            child,
-            OperationCode,
-            IsDirectDescendant,
-            VetoType,
-            VetoName,
-            RelationsList
-            );
+        status = IopProcessRelation(child, OperationCode, IsDirectDescendant, VetoType, VetoName, RelationsList);
 
         ASSERT(status == STATUS_SUCCESS || status == STATUS_UNSUCCESSFUL);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 
             return status;
         }
@@ -1305,16 +1217,11 @@ Return Value:
 
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-IopProcessRelation(
-    IN      PDEVICE_NODE                    DeviceNode,
-    IN      PLUGPLAY_DEVICE_DELETE_TYPE     OperationCode,
-    IN      BOOLEAN                         IsDirectDescendant,
-    OUT     PNP_VETO_TYPE                  *VetoType,
-    OUT     PUNICODE_STRING                 VetoName,
-    IN OUT  PRELATION_LIST                  RelationsList
-    )
+IopProcessRelation(IN PDEVICE_NODE DeviceNode, IN PLUGPLAY_DEVICE_DELETE_TYPE OperationCode,
+                   IN BOOLEAN IsDirectDescendant, OUT PNP_VETO_TYPE *VetoType, OUT PUNICODE_STRING VetoName,
+                   IN OUT PRELATION_LIST RelationsList)
 /*++
 
 Routine Description:
@@ -1349,22 +1256,24 @@ Return Value:
 
 --*/
 {
-    PDEVICE_NODE                    relatedDeviceNode;
-    PDEVICE_OBJECT                  relatedDeviceObject;
-    PDEVICE_RELATIONS               deviceRelations;
-    PLIST_ENTRY                     ejectLink;
-    PPENDING_RELATIONS_LIST_ENTRY   ejectEntry;
-    PRELATION_LIST                  pendingRelationList;
-    PIRP                            pendingIrp;
-    NTSTATUS                        status;
-    ULONG                           i;
-    PNP_DEVNODE_STATE               devnodeState;
+    PDEVICE_NODE relatedDeviceNode;
+    PDEVICE_OBJECT relatedDeviceObject;
+    PDEVICE_RELATIONS deviceRelations;
+    PLIST_ENTRY ejectLink;
+    PPENDING_RELATIONS_LIST_ENTRY ejectEntry;
+    PRELATION_LIST pendingRelationList;
+    PIRP pendingIrp;
+    NTSTATUS status;
+    ULONG i;
+    PNP_DEVNODE_STATE devnodeState;
 
     PAGED_CODE();
 
-    if (OperationCode == QueryRemoveDevice || OperationCode == EjectDevice) {
+    if (OperationCode == QueryRemoveDevice || OperationCode == EjectDevice)
+    {
 
-        if (DeviceNode->State == DeviceNodeDeleted) {
+        if (DeviceNode->State == DeviceNodeDeleted)
+        {
 
             //
             // The device has already been removed, fail the attempt.
@@ -1373,7 +1282,8 @@ Return Value:
         }
 
         if ((DeviceNode->State == DeviceNodeAwaitingQueuedRemoval) ||
-            (DeviceNode->State == DeviceNodeAwaitingQueuedDeletion)) {
+            (DeviceNode->State == DeviceNodeAwaitingQueuedDeletion))
+        {
 
             //
             // The device has failed or is going away.  Let the queued
@@ -1383,7 +1293,8 @@ Return Value:
         }
 
         if ((DeviceNode->State == DeviceNodeRemovePendingCloses) ||
-            (DeviceNode->State == DeviceNodeDeletePendingCloses)) {
+            (DeviceNode->State == DeviceNodeDeletePendingCloses))
+        {
 
             //
             // The device is in the process of being surprise removed, let it finish
@@ -1393,8 +1304,8 @@ Return Value:
             return STATUS_UNSUCCESSFUL;
         }
 
-        if ((DeviceNode->State == DeviceNodeStopped) ||
-            (DeviceNode->State == DeviceNodeRestartCompletion)) {
+        if ((DeviceNode->State == DeviceNodeStopped) || (DeviceNode->State == DeviceNodeRestartCompletion))
+        {
 
             //
             // We are recovering from a rebalance. This should never happen and
@@ -1402,8 +1313,9 @@ Return Value:
             //
             return STATUS_INVALID_DEVICE_REQUEST;
         }
-
-    } else if (DeviceNode->State == DeviceNodeDeleted) {
+    }
+    else if (DeviceNode->State == DeviceNodeDeleted)
+    {
 
         //
         // The device has already been removed, ignore it. We should only have
@@ -1414,27 +1326,21 @@ Return Value:
         return STATUS_SUCCESS;
     }
 
-    status = IopAddRelationToList( RelationsList,
-                                   DeviceNode->PhysicalDeviceObject,
-                                   IsDirectDescendant,
-                                   FALSE);
+    status = IopAddRelationToList(RelationsList, DeviceNode->PhysicalDeviceObject, IsDirectDescendant, FALSE);
 
-    if (status == STATUS_SUCCESS) {
+    if (status == STATUS_SUCCESS)
+    {
 
-        if (!(DeviceNode->Flags & DNF_LOCKED_FOR_EJECT)) {
+        if (!(DeviceNode->Flags & DNF_LOCKED_FOR_EJECT))
+        {
 
             //
             // Then process the bus relations
             //
-            status = PiProcessBusRelations(
-                DeviceNode,
-                OperationCode,
-                IsDirectDescendant,
-                VetoType,
-                VetoName,
-                RelationsList
-                );
-            if (!NT_SUCCESS(status)) {
+            status =
+                PiProcessBusRelations(DeviceNode, OperationCode, IsDirectDescendant, VetoType, VetoName, RelationsList);
+            if (!NT_SUCCESS(status))
+            {
 
                 return status;
             }
@@ -1443,8 +1349,8 @@ Return Value:
             // Retrieve the state of the devnode when it failed.
             //
             devnodeState = DeviceNode->State;
-            if ((devnodeState == DeviceNodeAwaitingQueuedRemoval) ||
-                (devnodeState == DeviceNodeAwaitingQueuedDeletion)) {
+            if ((devnodeState == DeviceNodeAwaitingQueuedRemoval) || (devnodeState == DeviceNodeAwaitingQueuedDeletion))
+            {
 
                 devnodeState = DeviceNode->PreviousState;
             }
@@ -1452,18 +1358,18 @@ Return Value:
             //
             // Next the removal relations
             //
-            if ((devnodeState == DeviceNodeStarted) ||
-                (devnodeState == DeviceNodeStopped) ||
-                (devnodeState == DeviceNodeRestartCompletion)) {
+            if ((devnodeState == DeviceNodeStarted) || (devnodeState == DeviceNodeStopped) ||
+                (devnodeState == DeviceNodeRestartCompletion))
+            {
 
-                status = IopQueryDeviceRelations( RemovalRelations,
-                                                  DeviceNode->PhysicalDeviceObject,
-                                                  TRUE,
-                                                  &deviceRelations);
+                status =
+                    IopQueryDeviceRelations(RemovalRelations, DeviceNode->PhysicalDeviceObject, TRUE, &deviceRelations);
 
-                if (NT_SUCCESS(status) && deviceRelations) {
+                if (NT_SUCCESS(status) && deviceRelations)
+                {
 
-                    for (i = 0; i < deviceRelations->Count; i++) {
+                    for (i = 0; i < deviceRelations->Count; i++)
+                    {
 
                         relatedDeviceObject = deviceRelations->Objects[i];
 
@@ -1471,24 +1377,19 @@ Return Value:
 
                         ASSERT(relatedDeviceNode);
 
-                        if (relatedDeviceNode) {
+                        if (relatedDeviceNode)
+                        {
 
-                            status = IopProcessRelation(
-                                relatedDeviceNode,
-                                OperationCode,
-                                FALSE,
-                                VetoType,
-                                VetoName,
-                                RelationsList
-                                );
+                            status = IopProcessRelation(relatedDeviceNode, OperationCode, FALSE, VetoType, VetoName,
+                                                        RelationsList);
                         }
 
-                        ObDereferenceObject( relatedDeviceObject );
+                        ObDereferenceObject(relatedDeviceObject);
 
-                        ASSERT(status == STATUS_SUCCESS ||
-                               status == STATUS_UNSUCCESSFUL);
+                        ASSERT(status == STATUS_SUCCESS || status == STATUS_UNSUCCESSFUL);
 
-                        if (!NT_SUCCESS(status)) {
+                        if (!NT_SUCCESS(status))
+                        {
 
                             ExFreePool(deviceRelations);
 
@@ -1497,11 +1398,15 @@ Return Value:
                     }
 
                     ExFreePool(deviceRelations);
-                } else {
-                    if (status != STATUS_NOT_SUPPORTED) {
+                }
+                else
+                {
+                    if (status != STATUS_NOT_SUPPORTED)
+                    {
                         IopDbgPrint((IOP_LOADUNLOAD_WARNING_LEVEL,
-                                   "IopProcessRelation: IopQueryDeviceRelations failed, DeviceObject = 0x%p, status = 0x%08X\n",
-                                   DeviceNode->PhysicalDeviceObject, status));
+                                     "IopProcessRelation: IopQueryDeviceRelations failed, DeviceObject = 0x%p, status "
+                                     "= 0x%08X\n",
+                                     DeviceNode->PhysicalDeviceObject, status));
                     }
                 }
             }
@@ -1509,17 +1414,17 @@ Return Value:
             //
             // Finally the eject relations if we are doing an eject operation
             //
-            if (OperationCode != QueryRemoveDevice &&
-                OperationCode != RemoveFailedDevice &&
-                OperationCode != RemoveUnstartedFailedDevice) {
-                status = IopQueryDeviceRelations( EjectionRelations,
-                                                  DeviceNode->PhysicalDeviceObject,
-                                                  TRUE,
-                                                  &deviceRelations);
+            if (OperationCode != QueryRemoveDevice && OperationCode != RemoveFailedDevice &&
+                OperationCode != RemoveUnstartedFailedDevice)
+            {
+                status = IopQueryDeviceRelations(EjectionRelations, DeviceNode->PhysicalDeviceObject, TRUE,
+                                                 &deviceRelations);
 
-                if (NT_SUCCESS(status) && deviceRelations) {
+                if (NT_SUCCESS(status) && deviceRelations)
+                {
 
-                    for (i = 0; i < deviceRelations->Count; i++) {
+                    for (i = 0; i < deviceRelations->Count; i++)
+                    {
 
                         relatedDeviceObject = deviceRelations->Objects[i];
 
@@ -1527,24 +1432,19 @@ Return Value:
 
                         ASSERT(relatedDeviceNode);
 
-                        if (relatedDeviceNode) {
+                        if (relatedDeviceNode)
+                        {
 
-                            status = IopProcessRelation(
-                                relatedDeviceNode,
-                                OperationCode,
-                                FALSE,
-                                VetoType,
-                                VetoName,
-                                RelationsList
-                                );
+                            status = IopProcessRelation(relatedDeviceNode, OperationCode, FALSE, VetoType, VetoName,
+                                                        RelationsList);
                         }
 
-                        ObDereferenceObject( relatedDeviceObject );
+                        ObDereferenceObject(relatedDeviceObject);
 
-                        ASSERT(status == STATUS_SUCCESS ||
-                               status == STATUS_UNSUCCESSFUL);
+                        ASSERT(status == STATUS_SUCCESS || status == STATUS_UNSUCCESSFUL);
 
-                        if (!NT_SUCCESS(status)) {
+                        if (!NT_SUCCESS(status))
+                        {
 
                             ExFreePool(deviceRelations);
 
@@ -1553,19 +1453,23 @@ Return Value:
                     }
 
                     ExFreePool(deviceRelations);
-                } else {
-                    if (status != STATUS_NOT_SUPPORTED) {
+                }
+                else
+                {
+                    if (status != STATUS_NOT_SUPPORTED)
+                    {
                         IopDbgPrint((IOP_LOADUNLOAD_WARNING_LEVEL,
-                                   "IopProcessRelation: IopQueryDeviceRelations failed, DeviceObject = 0x%p, status = 0x%08X\n",
-                                   DeviceNode->PhysicalDeviceObject,
-                                   status));
+                                     "IopProcessRelation: IopQueryDeviceRelations failed, DeviceObject = 0x%p, status "
+                                     "= 0x%08X\n",
+                                     DeviceNode->PhysicalDeviceObject, status));
                     }
                 }
             }
 
             status = STATUS_SUCCESS;
-
-        } else {
+        }
+        else
+        {
 
             //
             // Look to see if this device is already part of a pending ejection.
@@ -1573,19 +1477,18 @@ Return Value:
             // within the larger ejection.  If we aren't doing an ejection then
             // we better be processing the removal of one of the ejected devices.
             //
-            for(ejectLink = IopPendingEjects.Flink;
-                ejectLink != &IopPendingEjects;
-                ejectLink = ejectLink->Flink) {
+            for (ejectLink = IopPendingEjects.Flink; ejectLink != &IopPendingEjects; ejectLink = ejectLink->Flink)
+            {
 
-                ejectEntry = CONTAINING_RECORD( ejectLink,
-                                                PENDING_RELATIONS_LIST_ENTRY,
-                                                Link);
+                ejectEntry = CONTAINING_RECORD(ejectLink, PENDING_RELATIONS_LIST_ENTRY, Link);
 
                 if (ejectEntry->RelationsList != NULL &&
-                    IopIsRelationInList(ejectEntry->RelationsList, DeviceNode->PhysicalDeviceObject)) {
+                    IopIsRelationInList(ejectEntry->RelationsList, DeviceNode->PhysicalDeviceObject))
+                {
 
 
-                    if (OperationCode == EjectDevice) {
+                    if (OperationCode == EjectDevice)
+                    {
 
                         status = IopRemoveRelationFromList(RelationsList, DeviceNode->PhysicalDeviceObject);
 
@@ -1595,7 +1498,8 @@ Return Value:
                         pendingRelationList = ejectEntry->RelationsList;
                         ejectEntry->RelationsList = NULL;
 
-                        if (pendingIrp != NULL) {
+                        if (pendingIrp != NULL)
+                        {
                             IoCancelIrp(pendingIrp);
                         }
 
@@ -1611,7 +1515,8 @@ Return Value:
 
                         IopFreeRelationList(pendingRelationList);
 
-                        if (IsDirectDescendant) {
+                        if (IsDirectDescendant)
+                        {
                             //
                             // If IsDirectDescendant is specified then we need to
                             // get that bit set on the relation that caused us to
@@ -1619,12 +1524,11 @@ Return Value:
                             // STATUS_OBJECT_NAME_COLLISION but the bit will still
                             // be set as a side effect.
                             //
-                            IopAddRelationToList( RelationsList,
-                                                  DeviceNode->PhysicalDeviceObject,
-                                                  TRUE,
-                                                  FALSE);
+                            IopAddRelationToList(RelationsList, DeviceNode->PhysicalDeviceObject, TRUE, FALSE);
                         }
-                    } else if (OperationCode != QueryRemoveDevice) {
+                    }
+                    else if (OperationCode != QueryRemoveDevice)
+                    {
 
                         //
                         // Either the device itself disappeared or an ancestor
@@ -1634,14 +1538,14 @@ Return Value:
                         // return it.
                         //
 
-                        status = IopRemoveRelationFromList( ejectEntry->RelationsList,
-                                                            DeviceNode->PhysicalDeviceObject);
+                        status = IopRemoveRelationFromList(ejectEntry->RelationsList, DeviceNode->PhysicalDeviceObject);
 
                         DeviceNode->Flags &= ~DNF_LOCKED_FOR_EJECT;
 
                         ASSERT(NT_SUCCESS(status));
-
-                    } else {
+                    }
+                    else
+                    {
 
                         //
                         // Someone is trying to take offline a supertree of this
@@ -1659,48 +1563,37 @@ Return Value:
 
             ASSERT(ejectLink != &IopPendingEjects);
 
-            if (ejectLink == &IopPendingEjects) {
+            if (ejectLink == &IopPendingEjects)
+            {
 
                 PP_SAVE_DEVICEOBJECT_TO_TRIAGE_DUMP(DeviceNode->PhysicalDeviceObject);
-                KeBugCheckEx( PNP_DETECTED_FATAL_ERROR,
-                              PNP_ERR_DEVICE_MISSING_FROM_EJECT_LIST,
-                              (ULONG_PTR)DeviceNode->PhysicalDeviceObject,
-                              0,
-                              0);
+                KeBugCheckEx(PNP_DETECTED_FATAL_ERROR, PNP_ERR_DEVICE_MISSING_FROM_EJECT_LIST,
+                             (ULONG_PTR)DeviceNode->PhysicalDeviceObject, 0, 0);
             }
         }
-    } else if (status == STATUS_OBJECT_NAME_COLLISION) {
+    }
+    else if (status == STATUS_OBJECT_NAME_COLLISION)
+    {
 
-        IopDbgPrint((IOP_LOADUNLOAD_INFO_LEVEL,
-                   "IopProcessRelation: Duplicate relation, DeviceObject = 0x%p\n",
-                   DeviceNode->PhysicalDeviceObject));
+        IopDbgPrint((IOP_LOADUNLOAD_INFO_LEVEL, "IopProcessRelation: Duplicate relation, DeviceObject = 0x%p\n",
+                     DeviceNode->PhysicalDeviceObject));
 
-        status = PiProcessBusRelations(
-            DeviceNode,
-            OperationCode,
-            IsDirectDescendant,
-            VetoType,
-            VetoName,
-            RelationsList
-            );
-
-    } else if (status != STATUS_INSUFFICIENT_RESOURCES) {
+        status =
+            PiProcessBusRelations(DeviceNode, OperationCode, IsDirectDescendant, VetoType, VetoName, RelationsList);
+    }
+    else if (status != STATUS_INSUFFICIENT_RESOURCES)
+    {
 
         PP_SAVE_DEVICEOBJECT_TO_TRIAGE_DUMP(DeviceNode->PhysicalDeviceObject);
-        KeBugCheckEx( PNP_DETECTED_FATAL_ERROR,
-                      PNP_ERR_UNEXPECTED_ADD_RELATION_ERR,
-                      (ULONG_PTR)DeviceNode->PhysicalDeviceObject,
-                      (ULONG_PTR)RelationsList,
-                      status);
+        KeBugCheckEx(PNP_DETECTED_FATAL_ERROR, PNP_ERR_UNEXPECTED_ADD_RELATION_ERR,
+                     (ULONG_PTR)DeviceNode->PhysicalDeviceObject, (ULONG_PTR)RelationsList, status);
     }
 
     return status;
 }
-
+
 BOOLEAN
-IopQueuePendingEject(
-    PPENDING_RELATIONS_LIST_ENTRY Entry
-    )
+IopQueuePendingEject(PPENDING_RELATIONS_LIST_ENTRY Entry)
 {
     PAGED_CODE();
 
@@ -1714,12 +1607,8 @@ IopQueuePendingEject(
 }
 
 NTSTATUS
-IopInvalidateRelationsInList(
-    IN  PRELATION_LIST              RelationsList,
-    IN  PLUGPLAY_DEVICE_DELETE_TYPE OperationCode,
-    IN  BOOLEAN                     OnlyIndirectDescendants,
-    IN  BOOLEAN                     RestartDevNode
-    )
+IopInvalidateRelationsInList(IN PRELATION_LIST RelationsList, IN PLUGPLAY_DEVICE_DELETE_TYPE OperationCode,
+                             IN BOOLEAN OnlyIndirectDescendants, IN BOOLEAN RestartDevNode)
 /*++
 
 Routine Description:
@@ -1755,21 +1644,22 @@ Return Value:
 
 --*/
 {
-    PRELATION_LIST                  parentsList;
-    PDEVICE_OBJECT                  deviceObject, parentObject;
-    PDEVICE_NODE                    deviceNode;
-    ULONG                           marker;
-    BOOLEAN                         directDescendant, tagged;
+    PRELATION_LIST parentsList;
+    PDEVICE_OBJECT deviceObject, parentObject;
+    PDEVICE_NODE deviceNode;
+    ULONG marker;
+    BOOLEAN directDescendant, tagged;
 
     PAGED_CODE();
 
     parentsList = IopAllocateRelationList(OperationCode);
 
-    if (parentsList == NULL) {
+    if (parentsList == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    IopSetAllRelationsTags( RelationsList, FALSE );
+    IopSetAllRelationsTags(RelationsList, FALSE);
 
     //
     // Traverse the list creating a new list with the topmost parents of
@@ -1778,24 +1668,24 @@ Return Value:
 
     marker = 0;
 
-    while (IopEnumerateRelations( RelationsList,
-                                  &marker,
-                                  &deviceObject,
-                                  &directDescendant,
-                                  &tagged,
-                                  TRUE)) {
+    while (IopEnumerateRelations(RelationsList, &marker, &deviceObject, &directDescendant, &tagged, TRUE))
+    {
 
-        if (!OnlyIndirectDescendants || !directDescendant) {
+        if (!OnlyIndirectDescendants || !directDescendant)
+        {
 
-            if (!tagged) {
+            if (!tagged)
+            {
 
                 parentObject = deviceObject;
 
-                while (IopSetRelationsTag( RelationsList, parentObject, TRUE ) == STATUS_SUCCESS) {
+                while (IopSetRelationsTag(RelationsList, parentObject, TRUE) == STATUS_SUCCESS)
+                {
 
                     deviceNode = parentObject->DeviceObjectExtension->DeviceNode;
 
-                    if (RestartDevNode)  {
+                    if (RestartDevNode)
+                    {
 
                         deviceNode->Flags &= ~DNF_LOCKED_FOR_EJECT;
 
@@ -1805,7 +1695,8 @@ Return Value:
                         // b) It was held for an eject
                         //
                         if ((deviceNode->Flags & DNF_ENUMERATED) &&
-                            PipIsDevNodeProblem(deviceNode, CM_PROB_HELD_FOR_EJECT)) {
+                            PipIsDevNodeProblem(deviceNode, CM_PROB_HELD_FOR_EJECT))
+                        {
 
                             ASSERT(deviceNode->Child == NULL);
                             ASSERT(!PipAreDriversLoaded(deviceNode));
@@ -1815,30 +1706,27 @@ Return Value:
                             // our subsequent enumeration from draining prior
                             // to our problem clearing.
                             //
-                            PipRequestDeviceAction( parentObject,
-                                                    ClearEjectProblem,
-                                                    TRUE,
-                                                    0,
-                                                    NULL,
-                                                    NULL );
+                            PipRequestDeviceAction(parentObject, ClearEjectProblem, TRUE, 0, NULL, NULL);
                         }
                     }
 
-                    if (deviceNode->Parent != NULL) {
+                    if (deviceNode->Parent != NULL)
+                    {
 
                         parentObject = deviceNode->Parent->PhysicalDeviceObject;
-
-                    } else {
+                    }
+                    else
+                    {
                         parentObject = NULL;
                         break;
                     }
                 }
 
-                if (parentObject != NULL)  {
-                    IopAddRelationToList( parentsList, parentObject, FALSE, FALSE );
+                if (parentObject != NULL)
+                {
+                    IopAddRelationToList(parentsList, parentObject, FALSE, FALSE);
                 }
             }
-
         }
     }
 
@@ -1848,34 +1736,22 @@ Return Value:
 
     marker = 0;
 
-    while (IopEnumerateRelations( parentsList,
-                                  &marker,
-                                  &deviceObject,
-                                  NULL,
-                                  NULL,
-                                  FALSE)) {
+    while (IopEnumerateRelations(parentsList, &marker, &deviceObject, NULL, NULL, FALSE))
+    {
 
-        PipRequestDeviceAction( deviceObject,
-                                ReenumerateDeviceTree,
-                                FALSE,
-                                0,
-                                NULL,
-                                NULL );
+        PipRequestDeviceAction(deviceObject, ReenumerateDeviceTree, FALSE, 0, NULL, NULL);
     }
 
     //
     // Free the parents list
     //
 
-    IopFreeRelationList( parentsList );
+    IopFreeRelationList(parentsList);
 
     return STATUS_SUCCESS;
 }
 
-VOID
-IopProcessCompletedEject(
-    IN PVOID Context
-    )
+VOID IopProcessCompletedEject(IN PVOID Context)
 /*++
 
 Routine Description:
@@ -1902,8 +1778,8 @@ Return Value:
 
     PAGED_CODE();
 
-    if ((entry->LightestSleepState != PowerSystemWorking) &&
-        (entry->LightestSleepState != PowerSystemUnspecified)) {
+    if ((entry->LightestSleepState != PowerSystemWorking) && (entry->LightestSleepState != PowerSystemUnspecified))
+    {
 
         //
         // For docks, WinLogon gets to do the honors. For other devices, the
@@ -1922,21 +1798,17 @@ Return Value:
         //
     }
 
-    if (entry->DockInterface) {
+    if (entry->DockInterface)
+    {
 
-        entry->DockInterface->ProfileDepartureSetMode(
-            entry->DockInterface->Context,
-            PDS_UPDATE_DEFAULT
-            );
+        entry->DockInterface->ProfileDepartureSetMode(entry->DockInterface->Context, PDS_UPDATE_DEFAULT);
 
-        entry->DockInterface->InterfaceDereference(
-            entry->DockInterface->Context
-            );
+        entry->DockInterface->InterfaceDereference(entry->DockInterface->Context);
     }
 
     PpDevNodeLockTree(PPL_TREEOP_ALLOW_READS);
 
-    RemoveEntryList( &entry->Link );
+    RemoveEntryList(&entry->Link);
 
     //
     // Check if the RelationsList pointer in the context structure is NULL.  If
@@ -1957,27 +1829,25 @@ Return Value:
     //    what you started...
     //
 
-    if (entry->RelationsList != NULL)  {
+    if (entry->RelationsList != NULL)
+    {
 
-        if (entry->ProfileChangingEject) {
+        if (entry->ProfileChangingEject)
+        {
 
             PpProfileMarkAllTransitioningDocksEjected();
         }
 
-        IopInvalidateRelationsInList(
-            entry->RelationsList,
-            EjectDevice,
-            FALSE,
-            TRUE
-            );
+        IopInvalidateRelationsInList(entry->RelationsList, EjectDevice, FALSE, TRUE);
 
         //
         // Free the relations list
         //
 
-        IopFreeRelationList( entry->RelationsList );
-
-    } else {
+        IopFreeRelationList(entry->RelationsList);
+    }
+    else
+    {
 
         entry->DisplaySafeRemovalDialog = FALSE;
     }
@@ -1987,44 +1857,37 @@ Return Value:
     //
     // Complete the event
     //
-    if (entry->DeviceEvent != NULL ) {
+    if (entry->DeviceEvent != NULL)
+    {
 
-        PpCompleteDeviceEvent( entry->DeviceEvent, status );
+        PpCompleteDeviceEvent(entry->DeviceEvent, status);
     }
 
-    if (entry->DisplaySafeRemovalDialog) {
+    if (entry->DisplaySafeRemovalDialog)
+    {
 
         PpSetDeviceRemovalSafe(entry->DeviceObject, NULL, NULL);
     }
 
     ObDereferenceObject(entry->DeviceObject);
-    ExFreePool( entry );
+    ExFreePool(entry);
 }
 
-VOID
-IopQueuePendingSurpriseRemoval(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PRELATION_LIST List,
-    IN ULONG Problem
-    )
+VOID IopQueuePendingSurpriseRemoval(IN PDEVICE_OBJECT DeviceObject, IN PRELATION_LIST List, IN ULONG Problem)
 {
-    PPENDING_RELATIONS_LIST_ENTRY   entry;
+    PPENDING_RELATIONS_LIST_ENTRY entry;
 
     PAGED_CODE();
 
-    entry = (PPENDING_RELATIONS_LIST_ENTRY) PiAllocateCriticalMemory(
-        SurpriseRemoveDevice,
-        NonPagedPool,
-        sizeof(PENDING_RELATIONS_LIST_ENTRY),
-        0
-        );
+    entry = (PPENDING_RELATIONS_LIST_ENTRY)PiAllocateCriticalMemory(SurpriseRemoveDevice, NonPagedPool,
+                                                                    sizeof(PENDING_RELATIONS_LIST_ENTRY), 0);
 
     ASSERT(entry != NULL);
 
     entry->DeviceObject = DeviceObject;
     entry->RelationsList = List;
     entry->Problem = Problem;
-    entry->ProfileChangingEject = FALSE ;
+    entry->ProfileChangingEject = FALSE;
 
     KeEnterCriticalRegion();
     ExAcquireResourceExclusiveLite(&IopSurpriseRemoveListLock, TRUE);
@@ -2034,13 +1897,9 @@ IopQueuePendingSurpriseRemoval(
     ExReleaseResourceLite(&IopSurpriseRemoveListLock);
     KeLeaveCriticalRegion();
 }
-
-VOID
-IopUnlinkDeviceRemovalRelations(
-    IN      PDEVICE_OBJECT          RemovedDeviceObject,
-    IN OUT  PRELATION_LIST          RelationsList,
-    IN      UNLOCK_UNLINK_ACTION    UnlinkAction
-    )
+
+VOID IopUnlinkDeviceRemovalRelations(IN PDEVICE_OBJECT RemovedDeviceObject, IN OUT PRELATION_LIST RelationsList,
+                                     IN UNLOCK_UNLINK_ACTION UnlinkAction)
 /*++
 
 Routine Description:
@@ -2085,14 +1944,11 @@ Return Value:
 
     PpDevNodeLockTree(PPL_TREEOP_BLOCK_READS_FROM_ALLOW);
 
-    if (ARGUMENT_PRESENT(RelationsList)) {
+    if (ARGUMENT_PRESENT(RelationsList))
+    {
         marker = 0;
-        while (IopEnumerateRelations( RelationsList,
-                                      &marker,
-                                      &deviceObject,
-                                      NULL,
-                                      NULL,
-                                      TRUE)) {
+        while (IopEnumerateRelations(RelationsList, &marker, &deviceObject, NULL, NULL, TRUE))
+        {
 
             deviceNode = (PDEVICE_NODE)deviceObject->DeviceObjectExtension->DeviceNode;
 
@@ -2112,47 +1968,51 @@ Return Value:
             //    failed devnode itself.  UnlinkAction will be
             //    UnlinkOnlyChildDeviceNodesPendingClose.
             //
-            switch(UnlinkAction) {
+            switch (UnlinkAction)
+            {
 
-                case UnlinkRemovedDeviceNodes:
+            case UnlinkRemovedDeviceNodes:
 
-                    //
-                    // Removes have been sent to every devnode in this relation
-                    // list. Deconstruct the tree appropriately.
-                    //
-                    ASSERT(deviceNode->State != DeviceNodeDeletePendingCloses);
-                    break;
+                //
+                // Removes have been sent to every devnode in this relation
+                // list. Deconstruct the tree appropriately.
+                //
+                ASSERT(deviceNode->State != DeviceNodeDeletePendingCloses);
+                break;
 
-                case UnlinkAllDeviceNodesPendingClose:
+            case UnlinkAllDeviceNodesPendingClose:
+
+                ASSERT((deviceNode->State == DeviceNodeDeletePendingCloses) ||
+                       (deviceNode->State == DeviceNodeDeleted));
+                break;
+
+            case UnlinkOnlyChildDeviceNodesPendingClose:
+
+#if DBG
+                if (RemovedDeviceObject != deviceObject)
+                {
 
                     ASSERT((deviceNode->State == DeviceNodeDeletePendingCloses) ||
                            (deviceNode->State == DeviceNodeDeleted));
-                    break;
+                }
+                else
+                {
 
-                case UnlinkOnlyChildDeviceNodesPendingClose:
-
-#if DBG
-                    if (RemovedDeviceObject != deviceObject) {
-
-                        ASSERT((deviceNode->State == DeviceNodeDeletePendingCloses) ||
-                               (deviceNode->State == DeviceNodeDeleted));
-                    } else {
-
-                        ASSERT(deviceNode->State == DeviceNodeRemovePendingCloses);
-                    }
+                    ASSERT(deviceNode->State == DeviceNodeRemovePendingCloses);
+                }
 #endif
-                    break;
+                break;
 
-                default:
-                    ASSERT(0);
-                    break;
+            default:
+                ASSERT(0);
+                break;
             }
 
             //
             // Deconstruct the tree appropriately.
             //
-            if ((deviceNode->State == DeviceNodeDeletePendingCloses) ||
-                (deviceNode->State == DeviceNodeDeleted)) {
+            if ((deviceNode->State == DeviceNodeDeletePendingCloses) || (deviceNode->State == DeviceNodeDeleted))
+            {
 
                 ASSERT(!(deviceNode->Flags & DNF_ENUMERATED));
 
@@ -2160,22 +2020,22 @@ Return Value:
                 // Remove the devnode from the tree.
                 //
                 IopDbgPrint((IOP_LOADUNLOAD_INFO_LEVEL,
-                           "IopUnlinkDeviceRemovalRelations: Cleaning up registry values, instance = %wZ\n",
-                           &deviceNode->InstancePath));
+                             "IopUnlinkDeviceRemovalRelations: Cleaning up registry values, instance = %wZ\n",
+                             &deviceNode->InstancePath));
 
                 PiLockPnpRegistry(TRUE);
 
                 IopCleanupDeviceRegistryValues(&deviceNode->InstancePath);
 
                 IopDbgPrint((IOP_LOADUNLOAD_INFO_LEVEL,
-                           "IopUnlinkDeviceRemovalRelations: Removing DevNode tree, DevNode = 0x%p\n",
-                           deviceNode));
+                             "IopUnlinkDeviceRemovalRelations: Removing DevNode tree, DevNode = 0x%p\n", deviceNode));
 
                 PpDevNodeRemoveFromTree(deviceNode);
 
                 PiUnlockPnpRegistry();
 
-                if (deviceNode->State == DeviceNodeDeleted) {
+                if (deviceNode->State == DeviceNodeDeleted)
+                {
 
                     ASSERT(PipDoesDevNodeHaveProblem(deviceNode));
                     IopRemoveRelationFromList(RelationsList, deviceObject);
@@ -2185,7 +2045,9 @@ Return Value:
                     //     Memory to freelist
                     //
                     ObDereferenceObject(deviceObject); // Added during Enum
-                } else {
+                }
+                else
+                {
 
                     //
                     // There is still one more ref on the device object, one
@@ -2195,8 +2057,9 @@ Return Value:
                     //
                     ObDereferenceObject(deviceObject); // Added during Enum
                 }
-
-            } else {
+            }
+            else
+            {
 
                 ASSERT(deviceNode->Flags & DNF_ENUMERATED);
             }
@@ -2205,14 +2068,12 @@ Return Value:
 
     PpDevNodeUnlockTree(PPL_TREEOP_BLOCK_READS_FROM_ALLOW);
 }
-
+
 //
 // The routines below are specific to kernel mode PnP configMgr.
 //
 NTSTATUS
-IopUnloadAttachedDriver(
-    IN PDRIVER_OBJECT DriverObject
-    )
+IopUnloadAttachedDriver(IN PDRIVER_OBJECT DriverObject)
 
 /*++
 
@@ -2239,59 +2100,47 @@ Return Value:
 
     PAGED_CODE();
 
-    if (DriverObject->DriverSection != NULL) {
-        if (DriverObject->DeviceObject == NULL) {
-            buffer = (PWCHAR) ExAllocatePool(
-                                 PagedPool,
-                                 CmRegistryMachineSystemCurrentControlSetServices.Length +
-                                     serviceName->Length + sizeof(WCHAR) +
-                                     sizeof(L"\\"));
-            if (!buffer) {
+    if (DriverObject->DriverSection != NULL)
+    {
+        if (DriverObject->DeviceObject == NULL)
+        {
+            buffer = (PWCHAR)ExAllocatePool(PagedPool, CmRegistryMachineSystemCurrentControlSetServices.Length +
+                                                           serviceName->Length + sizeof(WCHAR) + sizeof(L"\\"));
+            if (!buffer)
+            {
                 return STATUS_INSUFFICIENT_RESOURCES;
             }
-            swprintf(buffer,
-                     L"%s\\%s",
-                     CmRegistryMachineSystemCurrentControlSetServices.Buffer,
-                     serviceName->Buffer);
+            swprintf(buffer, L"%s\\%s", CmRegistryMachineSystemCurrentControlSetServices.Buffer, serviceName->Buffer);
             RtlInitUnicodeString(&unicodeName, buffer);
             status = IopUnloadDriver(&unicodeName, TRUE);
-            if (NT_SUCCESS(status)) {
-                IopDbgPrint((IOP_LOADUNLOAD_INFO_LEVEL,
-                           "****** Unloaded driver (%wZ)\n",
-                           serviceName));
-
-            } else {
-                IopDbgPrint((IOP_LOADUNLOAD_WARNING_LEVEL,
-                           "****** Error unloading driver (%wZ), status = 0x%08X\n",
-                           serviceName,
-                           status));
-
+            if (NT_SUCCESS(status))
+            {
+                IopDbgPrint((IOP_LOADUNLOAD_INFO_LEVEL, "****** Unloaded driver (%wZ)\n", serviceName));
+            }
+            else
+            {
+                IopDbgPrint((IOP_LOADUNLOAD_WARNING_LEVEL, "****** Error unloading driver (%wZ), status = 0x%08X\n",
+                             serviceName, status));
             }
             ExFreePool(unicodeName.Buffer);
         }
-        else {
+        else
+        {
             IopDbgPrint((IOP_LOADUNLOAD_INFO_LEVEL,
-                       "****** Skipping unload of driver (%wZ), DriverObject->DeviceObject != NULL\n",
-                       serviceName));
+                         "****** Skipping unload of driver (%wZ), DriverObject->DeviceObject != NULL\n", serviceName));
         }
     }
-    else {
+    else
+    {
         //
         // This is a boot driver, can't be unloaded just return SUCCESS
         //
-        IopDbgPrint((IOP_LOADUNLOAD_INFO_LEVEL,
-                   "****** Skipping unload of boot driver (%wZ)\n",
-                   serviceName));
+        IopDbgPrint((IOP_LOADUNLOAD_INFO_LEVEL, "****** Skipping unload of boot driver (%wZ)\n", serviceName));
     }
     return STATUS_SUCCESS;
 }
 
-VOID
-PipRequestDeviceRemoval(
-    IN PDEVICE_NODE DeviceNode,
-    IN BOOLEAN      TreeDeletion,
-    IN ULONG        Problem
-    )
+VOID PipRequestDeviceRemoval(IN PDEVICE_NODE DeviceNode, IN BOOLEAN TreeDeletion, IN ULONG Problem)
 /*++
 
 Routine Description:
@@ -2321,11 +2170,14 @@ Return Value:
 
     ASSERT(DeviceNode != NULL);
 
-    if (DeviceNode) {
+    if (DeviceNode)
+    {
 
-        if (DeviceNode->InstancePath.Length == 0) {
+        if (DeviceNode->InstancePath.Length == 0)
+        {
 
-            IopDbgPrint((IOP_ERROR_LEVEL, "Driver %wZ reported child %p missing right after enumerating it!\n", &DeviceNode->Parent->ServiceName, DeviceNode));
+            IopDbgPrint((IOP_ERROR_LEVEL, "Driver %wZ reported child %p missing right after enumerating it!\n",
+                         &DeviceNode->Parent->ServiceName, DeviceNode));
             ASSERT(DeviceNode->InstancePath.Length != 0);
         }
 
@@ -2334,35 +2186,19 @@ Return Value:
         removalWalkContext.TreeDeletion = TreeDeletion;
         removalWalkContext.DescendantNode = FALSE;
 
-        status = PipRequestDeviceRemovalWorker(
-            DeviceNode,
-            (PVOID) &removalWalkContext
-            );
+        status = PipRequestDeviceRemovalWorker(DeviceNode, (PVOID)&removalWalkContext);
 
         ASSERT(NT_SUCCESS(status));
 
         //
         // Queue the event, we'll return immediately after it's queued.
         //
-        PpSetTargetDeviceRemove(
-            DeviceNode->PhysicalDeviceObject,
-            TRUE,
-            TRUE,
-            FALSE,
-            Problem,
-            NULL,
-            NULL,
-            NULL,
-            NULL
-            );
+        PpSetTargetDeviceRemove(DeviceNode->PhysicalDeviceObject, TRUE, TRUE, FALSE, Problem, NULL, NULL, NULL, NULL);
     }
 }
-
+
 NTSTATUS
-PipRequestDeviceRemovalWorker(
-    IN PDEVICE_NODE DeviceNode,
-    IN PVOID        Context
-    )
+PipRequestDeviceRemovalWorker(IN PDEVICE_NODE DeviceNode, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -2384,137 +2220,137 @@ Return Value:
 --*/
 {
     PREMOVAL_WALK_CONTEXT removalWalkContext;
-    PNP_DEVNODE_STATE     sentinelState;
+    PNP_DEVNODE_STATE sentinelState;
 
     PAGED_CODE();
 
-    removalWalkContext = (PREMOVAL_WALK_CONTEXT) Context;
+    removalWalkContext = (PREMOVAL_WALK_CONTEXT)Context;
 
-    switch(DeviceNode->State) {
+    switch (DeviceNode->State)
+    {
 
-        case DeviceNodeUninitialized:
-            ASSERT(removalWalkContext->TreeDeletion);
-            break;
+    case DeviceNodeUninitialized:
+        ASSERT(removalWalkContext->TreeDeletion);
+        break;
 
-        case DeviceNodeInitialized:
-            //
-            // This can happen on a non-descendant node if it fails AddDevice.
-            //
-            break;
+    case DeviceNodeInitialized:
+        //
+        // This can happen on a non-descendant node if it fails AddDevice.
+        //
+        break;
 
-        case DeviceNodeDriversAdded:
-            //
-            // Happens when a parent stops enumerating a kid who had a
-            // resource conflict. This can also happen if AddDevice fails when
-            // a lower filter is attached but the service fails.
-            //
-            break;
+    case DeviceNodeDriversAdded:
+        //
+        // Happens when a parent stops enumerating a kid who had a
+        // resource conflict. This can also happen if AddDevice fails when
+        // a lower filter is attached but the service fails.
+        //
+        break;
 
-        case DeviceNodeResourcesAssigned:
-            //
-            // Happens when a parent stops enumerating a kid who has been
-            // assigned resources but hadn't yet been started.
-            //
-            ASSERT(removalWalkContext->TreeDeletion);
-            break;
+    case DeviceNodeResourcesAssigned:
+        //
+        // Happens when a parent stops enumerating a kid who has been
+        // assigned resources but hadn't yet been started.
+        //
+        ASSERT(removalWalkContext->TreeDeletion);
+        break;
 
-        case DeviceNodeStartPending:
-            //
-            // Not implemented yet.
-            //
-            ASSERT(0);
-            break;
+    case DeviceNodeStartPending:
+        //
+        // Not implemented yet.
+        //
+        ASSERT(0);
+        break;
 
-        case DeviceNodeStartCompletion:
-        case DeviceNodeStartPostWork:
-            //
-            // These are operational states for taking Added to Started. No
-            // descendant should be in this state as the engine currently
-            // finishes these before progressing to the next node.
-            //
-            // Note that DeviceNodeStartPostWork can occur on a legacy added
-            // root enumerated devnode. Since the root itself cannot disappear
-            // or be removed the below asserts still hold true.
-            //
-            // ISSUE - 2000/08/12 - ADRIAO: IoReportResourceUsage sync problems
-            //
-            ASSERT(!removalWalkContext->DescendantNode);
-            ASSERT(!removalWalkContext->TreeDeletion);
-            break;
+    case DeviceNodeStartCompletion:
+    case DeviceNodeStartPostWork:
+        //
+        // These are operational states for taking Added to Started. No
+        // descendant should be in this state as the engine currently
+        // finishes these before progressing to the next node.
+        //
+        // Note that DeviceNodeStartPostWork can occur on a legacy added
+        // root enumerated devnode. Since the root itself cannot disappear
+        // or be removed the below asserts still hold true.
+        //
+        // ISSUE - 2000/08/12 - ADRIAO: IoReportResourceUsage sync problems
+        //
+        ASSERT(!removalWalkContext->DescendantNode);
+        ASSERT(!removalWalkContext->TreeDeletion);
+        break;
 
-        case DeviceNodeStarted:
-            break;
+    case DeviceNodeStarted:
+        break;
 
-        case DeviceNodeQueryStopped:
-            //
-            // Internal rebalance engine state, should never be seen.
-            //
-            ASSERT(0);
-            break;
+    case DeviceNodeQueryStopped:
+        //
+        // Internal rebalance engine state, should never be seen.
+        //
+        ASSERT(0);
+        break;
 
-        case DeviceNodeStopped:
-            ASSERT(removalWalkContext->DescendantNode);
-            ASSERT(removalWalkContext->TreeDeletion);
-            break;
+    case DeviceNodeStopped:
+        ASSERT(removalWalkContext->DescendantNode);
+        ASSERT(removalWalkContext->TreeDeletion);
+        break;
 
-        case DeviceNodeRestartCompletion:
-            //
-            // This is an operational state for taking Stopped to Started. No
-            // descendant should be in this state as the engine currently
-            // finishes these before progressing to the next node.
-            //
-            ASSERT(!removalWalkContext->DescendantNode);
-            ASSERT(!removalWalkContext->TreeDeletion);
-            break;
+    case DeviceNodeRestartCompletion:
+        //
+        // This is an operational state for taking Stopped to Started. No
+        // descendant should be in this state as the engine currently
+        // finishes these before progressing to the next node.
+        //
+        ASSERT(!removalWalkContext->DescendantNode);
+        ASSERT(!removalWalkContext->TreeDeletion);
+        break;
 
-        case DeviceNodeEnumeratePending:
-            //
-            // Not implemented yet.
-            //
-            ASSERT(0);
-            break;
+    case DeviceNodeEnumeratePending:
+        //
+        // Not implemented yet.
+        //
+        ASSERT(0);
+        break;
 
-        case DeviceNodeAwaitingQueuedRemoval:
-        case DeviceNodeAwaitingQueuedDeletion:
+    case DeviceNodeAwaitingQueuedRemoval:
+    case DeviceNodeAwaitingQueuedDeletion:
 
-            //
-            // ISSUE - 2000/08/30 - ADRIAO: Excessive reenum race
-            //     Here we hit a case where we didn't flush the removes in the
-            // queue due to excessive enumeration. Flushing the last removes
-            // is problematic as they themselves will queue up enums! Until a
-            // better solution is found, we convert the state here. Bleargh!!!
-            //     Note that this can also happen because PipDeviceActionWorker
-            // doesn't flush enums in the case of failed
-            // PipProcessQueryDeviceState or PipCallDriverAddDevice!
-            //
-            ASSERT(removalWalkContext->TreeDeletion);
-            //ASSERT(0);
-            PipRestoreDevNodeState(DeviceNode);
-            PipSetDevNodeState(DeviceNode, DeviceNodeAwaitingQueuedDeletion, NULL);
-            return STATUS_SUCCESS;
+        //
+        // ISSUE - 2000/08/30 - ADRIAO: Excessive reenum race
+        //     Here we hit a case where we didn't flush the removes in the
+        // queue due to excessive enumeration. Flushing the last removes
+        // is problematic as they themselves will queue up enums! Until a
+        // better solution is found, we convert the state here. Bleargh!!!
+        //     Note that this can also happen because PipDeviceActionWorker
+        // doesn't flush enums in the case of failed
+        // PipProcessQueryDeviceState or PipCallDriverAddDevice!
+        //
+        ASSERT(removalWalkContext->TreeDeletion);
+        //ASSERT(0);
+        PipRestoreDevNodeState(DeviceNode);
+        PipSetDevNodeState(DeviceNode, DeviceNodeAwaitingQueuedDeletion, NULL);
+        return STATUS_SUCCESS;
 
-        case DeviceNodeRemovePendingCloses:
-        case DeviceNodeRemoved:
-            ASSERT(removalWalkContext->TreeDeletion);
-            break;
+    case DeviceNodeRemovePendingCloses:
+    case DeviceNodeRemoved:
+        ASSERT(removalWalkContext->TreeDeletion);
+        break;
 
-        case DeviceNodeEnumerateCompletion:
-        case DeviceNodeQueryRemoved:
-        case DeviceNodeDeletePendingCloses:
-        case DeviceNodeDeleted:
-        case DeviceNodeUnspecified:
-        default:
-            ASSERT(0);
-            break;
+    case DeviceNodeEnumerateCompletion:
+    case DeviceNodeQueryRemoved:
+    case DeviceNodeDeletePendingCloses:
+    case DeviceNodeDeleted:
+    case DeviceNodeUnspecified:
+    default:
+        ASSERT(0);
+        break;
     }
 
     //
     // Give the devnode a sentinel state that will keep the start/enum engine
     // at bay until the removal engine processes the tree.
     //
-    sentinelState = (removalWalkContext->TreeDeletion) ?
-        DeviceNodeAwaitingQueuedDeletion :
-        DeviceNodeAwaitingQueuedRemoval;
+    sentinelState =
+        (removalWalkContext->TreeDeletion) ? DeviceNodeAwaitingQueuedDeletion : DeviceNodeAwaitingQueuedRemoval;
 
     PipSetDevNodeState(DeviceNode, sentinelState, NULL);
 
@@ -2525,18 +2361,12 @@ Return Value:
     removalWalkContext->DescendantNode = TRUE;
     removalWalkContext->TreeDeletion = TRUE;
 
-    return PipForAllChildDeviceNodes(
-        DeviceNode,
-        PipRequestDeviceRemovalWorker,
-        (PVOID) removalWalkContext
-        );
+    return PipForAllChildDeviceNodes(DeviceNode, PipRequestDeviceRemovalWorker, (PVOID)removalWalkContext);
 }
 
 
 BOOLEAN
-PipIsBeingRemovedSafely(
-    IN  PDEVICE_NODE    DeviceNode
-    )
+PipIsBeingRemovedSafely(IN PDEVICE_NODE DeviceNode)
 /*++
 
 Routine Description:
@@ -2559,15 +2389,12 @@ Return Value:
 
     ASSERT(DeviceNode->State == DeviceNodeAwaitingQueuedDeletion);
 
-    if (IopDeviceNodeFlagsToCapabilities(DeviceNode)->SurpriseRemovalOK) {
+    if (IopDeviceNodeFlagsToCapabilities(DeviceNode)->SurpriseRemovalOK)
+    {
 
         return TRUE;
     }
 
-    return ((DeviceNode->PreviousState != DeviceNodeStarted) &&
-            (DeviceNode->PreviousState != DeviceNodeStopped) &&
+    return ((DeviceNode->PreviousState != DeviceNodeStarted) && (DeviceNode->PreviousState != DeviceNodeStopped) &&
             (DeviceNode->PreviousState != DeviceNodeRestartCompletion));
 }
-
-
-

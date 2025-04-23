@@ -25,10 +25,7 @@
 * History:
 \***************************************************************************/
 
-int xxxCBDir(
-    PCBOX pcbox,
-    UINT attrib,
-    LPWSTR pFileName)
+int xxxCBDir(PCBOX pcbox, UINT attrib, LPWSTR pFileName)
 {
     PLBIV plb;
     int errorValue;
@@ -43,7 +40,8 @@ int xxxCBDir(
     errorValue = xxxLbDir(plb, attrib, pFileName);
     ThreadUnlock(&tlpwnd);
 
-    switch (errorValue) {
+    switch (errorValue)
+    {
     case LB_ERR:
         return CB_ERR;
         break;
@@ -68,18 +66,16 @@ int xxxCBDir(
 \***************************************************************************/
 
 
-FUNCLOG4(LOG_GENERAL, int, DUMMYCALLINGTYPE, DlgDirSelectComboBoxExA, HWND, hwndDlg, LPSTR, pszOut, int, cchOut, int, idComboBox)
-int DlgDirSelectComboBoxExA(
-    HWND hwndDlg,
-    LPSTR pszOut,
-    int cchOut,
-    int idComboBox)
+FUNCLOG4(LOG_GENERAL, int, DUMMYCALLINGTYPE, DlgDirSelectComboBoxExA, HWND, hwndDlg, LPSTR, pszOut, int, cchOut, int,
+         idComboBox)
+int DlgDirSelectComboBoxExA(HWND hwndDlg, LPSTR pszOut, int cchOut, int idComboBox)
 {
     LPWSTR lpwsz;
     BOOL fRet;
 
     lpwsz = (LPWSTR)UserLocalAlloc(HEAP_ZERO_MEMORY, cchOut * sizeof(WCHAR));
-    if (!lpwsz) {
+    if (!lpwsz)
+    {
         return FALSE;
     }
 
@@ -93,12 +89,9 @@ int DlgDirSelectComboBoxExA(
 }
 
 
-FUNCLOG4(LOG_GENERAL, int, DUMMYCALLINGTYPE, DlgDirSelectComboBoxExW, HWND, hwndDlg, LPWSTR, pwszOut, int, cchOut, int, idComboBox)
-int DlgDirSelectComboBoxExW(
-    HWND hwndDlg,
-    LPWSTR pwszOut,
-    int cchOut,
-    int idComboBox)
+FUNCLOG4(LOG_GENERAL, int, DUMMYCALLINGTYPE, DlgDirSelectComboBoxExW, HWND, hwndDlg, LPWSTR, pwszOut, int, cchOut, int,
+         idComboBox)
+int DlgDirSelectComboBoxExW(HWND hwndDlg, LPWSTR pwszOut, int cchOut, int idComboBox)
 {
     PWND pwndDlg;
     PWND pwndComboBox;
@@ -110,12 +103,14 @@ int DlgDirSelectComboBoxExW(
         return FALSE;
 
     pwndComboBox = _GetDlgItem(pwndDlg, idComboBox);
-    if (pwndComboBox == NULL) {
+    if (pwndComboBox == NULL)
+    {
         RIPERR0(ERROR_CONTROL_ID_NOT_FOUND, RIP_VERBOSE, "");
         return 0;
     }
     pcbox = ((PCOMBOWND)pwndComboBox)->pcbox;
-    if (pcbox == NULL) {
+    if (pcbox == NULL)
+    {
         RIPERR0(ERROR_WINDOW_NOT_COMBOBOX, RIP_VERBOSE, "");
         return 0;
     }
@@ -132,13 +127,9 @@ int DlgDirSelectComboBoxExW(
 \***************************************************************************/
 
 
-FUNCLOG5(LOG_GENERAL, int, DUMMYCALLINGTYPE, DlgDirListComboBoxA, HWND, hwndDlg, LPSTR, lpszPathSpecClient, int, idComboBox, int, idStaticPath, UINT, attrib)
-int DlgDirListComboBoxA(
-    HWND hwndDlg,
-    LPSTR lpszPathSpecClient,
-    int idComboBox,
-    int idStaticPath,
-    UINT attrib)
+FUNCLOG5(LOG_GENERAL, int, DUMMYCALLINGTYPE, DlgDirListComboBoxA, HWND, hwndDlg, LPSTR, lpszPathSpecClient, int,
+         idComboBox, int, idStaticPath, UINT, attrib)
+int DlgDirListComboBoxA(HWND hwndDlg, LPSTR lpszPathSpecClient, int idComboBox, int idStaticPath, UINT attrib)
 {
     LPWSTR lpszPathSpec;
     TL tlpwndDlg;
@@ -151,18 +142,20 @@ int DlgDirListComboBoxA(
         return FALSE;
 
     lpszPathSpec = NULL;
-    if (lpszPathSpecClient) {
+    if (lpszPathSpecClient)
+    {
         if (!MBToWCS(lpszPathSpecClient, -1, &lpszPathSpec, -1, TRUE))
             return FALSE;
     }
 
     ThreadLock(pwndDlg, &tlpwndDlg);
-    fRet = xxxDlgDirListHelper(pwndDlg, lpszPathSpec, lpszPathSpecClient,
-            idComboBox, idStaticPath, attrib, FALSE);
+    fRet = xxxDlgDirListHelper(pwndDlg, lpszPathSpec, lpszPathSpecClient, idComboBox, idStaticPath, attrib, FALSE);
     ThreadUnlock(&tlpwndDlg);
 
-    if (lpszPathSpec) {
-        if (fRet) {
+    if (lpszPathSpec)
+    {
+        if (fRet)
+        {
             /*
              * Non-zero retval means some text to copy out.  Copy out up to
              * the nul terminator (buffer will be big enough).
@@ -176,13 +169,9 @@ int DlgDirListComboBoxA(
 }
 
 
-FUNCLOG5(LOG_GENERAL, int, DUMMYCALLINGTYPE, DlgDirListComboBoxW, HWND, hwndDlg, LPWSTR, lpszPathSpecClient, int, idComboBox, int, idStaticPath, UINT, attrib)
-int DlgDirListComboBoxW(
-    HWND hwndDlg,
-    LPWSTR lpszPathSpecClient,
-    int idComboBox,
-    int idStaticPath,
-    UINT attrib)
+FUNCLOG5(LOG_GENERAL, int, DUMMYCALLINGTYPE, DlgDirListComboBoxW, HWND, hwndDlg, LPWSTR, lpszPathSpecClient, int,
+         idComboBox, int, idStaticPath, UINT, attrib)
+int DlgDirListComboBoxW(HWND hwndDlg, LPWSTR lpszPathSpecClient, int idComboBox, int idStaticPath, UINT attrib)
 {
     LPWSTR lpszPathSpec;
     PWND pwndDlg;
@@ -197,8 +186,8 @@ int DlgDirListComboBoxW(
     lpszPathSpec = lpszPathSpecClient;
 
     ThreadLock(pwndDlg, &tlpwndDlg);
-    fRet = xxxDlgDirListHelper(pwndDlg, lpszPathSpec, (LPBYTE)lpszPathSpecClient,
-            idComboBox, idStaticPath, attrib, FALSE);
+    fRet =
+        xxxDlgDirListHelper(pwndDlg, lpszPathSpec, (LPBYTE)lpszPathSpecClient, idComboBox, idStaticPath, attrib, FALSE);
     ThreadUnlock(&tlpwndDlg);
 
     return fRet;

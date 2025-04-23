@@ -24,7 +24,7 @@ Revision History:
 //  The Bug check file id for this module
 //
 
-#define BugCheckFileId                   (CACHE_BUG_CHECK_CACHESUB)
+#define BugCheckFileId (CACHE_BUG_CHECK_CACHESUB)
 
 //
 //  Define our debug constant
@@ -45,86 +45,41 @@ ULONG CcMaxDirtyWrite = 0x10000;
 //
 
 BOOLEAN
-CcFindBcb (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN PLARGE_INTEGER FileOffset,
-    IN OUT PLARGE_INTEGER BeyondLastByte,
-    OUT PBCB *Bcb
-    );
+CcFindBcb(IN PSHARED_CACHE_MAP SharedCacheMap, IN PLARGE_INTEGER FileOffset, IN OUT PLARGE_INTEGER BeyondLastByte,
+          OUT PBCB *Bcb);
 
-PBCB
-CcAllocateInitializeBcb (
-    IN OUT PSHARED_CACHE_MAP SharedCacheMap OPTIONAL,
-    IN OUT PBCB AfterBcb,
-    IN PLARGE_INTEGER FileOffset,
-    IN PLARGE_INTEGER Length
-    );
+PBCB CcAllocateInitializeBcb(IN OUT PSHARED_CACHE_MAP SharedCacheMap OPTIONAL, IN OUT PBCB AfterBcb,
+                             IN PLARGE_INTEGER FileOffset, IN PLARGE_INTEGER Length);
 
 NTSTATUS
-CcSetValidData (
-    IN PFILE_OBJECT FileObject,
-    IN PLARGE_INTEGER ValidDataLength
-    );
+CcSetValidData(IN PFILE_OBJECT FileObject, IN PLARGE_INTEGER ValidDataLength);
 
 BOOLEAN
-CcAcquireByteRangeForWrite (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN PLARGE_INTEGER TargetOffset OPTIONAL,
-    IN ULONG TargetLength,
-    OUT PLARGE_INTEGER FileOffset,
-    OUT PULONG Length,
-    OUT PBCB *FirstBcb
-    );
+CcAcquireByteRangeForWrite(IN PSHARED_CACHE_MAP SharedCacheMap, IN PLARGE_INTEGER TargetOffset OPTIONAL,
+                           IN ULONG TargetLength, OUT PLARGE_INTEGER FileOffset, OUT PULONG Length, OUT PBCB *FirstBcb);
 
-VOID
-CcReleaseByteRangeFromWrite (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN PBCB FirstBcb,
-    IN BOOLEAN VerifyRequired
-    );
+VOID CcReleaseByteRangeFromWrite(IN PSHARED_CACHE_MAP SharedCacheMap, IN PLARGE_INTEGER FileOffset, IN ULONG Length,
+                                 IN PBCB FirstBcb, IN BOOLEAN VerifyRequired);
 
 PBITMAP_RANGE
-CcFindBitmapRangeToDirty (
-    IN PMBCB Mbcb,
-    IN LONGLONG Page,
-    IN PULONG *FreePageForSetting
-    );
+CcFindBitmapRangeToDirty(IN PMBCB Mbcb, IN LONGLONG Page, IN PULONG *FreePageForSetting);
 
 PBITMAP_RANGE
-CcFindBitmapRangeToClean (
-    IN PMBCB Mbcb,
-    IN LONGLONG Page
-    );
+CcFindBitmapRangeToClean(IN PMBCB Mbcb, IN LONGLONG Page);
 
 BOOLEAN
-CcLogError(
-    IN PFILE_OBJECT FileObject,
-    IN PUNICODE_STRING FileName,
-    IN NTSTATUS Error,
-    IN NTSTATUS DeviceError,
-    IN UCHAR IrpMajorCode
-    );
+CcLogError(IN PFILE_OBJECT FileObject, IN PUNICODE_STRING FileName, IN NTSTATUS Error, IN NTSTATUS DeviceError,
+           IN UCHAR IrpMajorCode);
 
 
-
 //
 //  Internal support routine
 //
 
 BOOLEAN
-CcPinFileData (
-    IN PFILE_OBJECT FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN BOOLEAN ReadOnly,
-    IN BOOLEAN WriteOnly,
-    IN ULONG Flags,
-    OUT PBCB *Bcb,
-    OUT PVOID *BaseAddress,
-    OUT PLARGE_INTEGER BeyondLastByte
-    )
+CcPinFileData(IN PFILE_OBJECT FileObject, IN PLARGE_INTEGER FileOffset, IN ULONG Length, IN BOOLEAN ReadOnly,
+              IN BOOLEAN WriteOnly, IN ULONG Flags, OUT PBCB *Bcb, OUT PVOID *BaseAddress,
+              OUT PLARGE_INTEGER BeyondLastByte)
 
 /*++
 
@@ -233,25 +188,23 @@ Raises:
     ULONG PageIsDirty;
     PVACB Vacb = NULL;
 
-    DebugTrace(+1, me, "CcPinFileData:\n", 0 );
-    DebugTrace( 0, me, "    FileObject = %08lx\n", FileObject );
-    DebugTrace2(0, me, "    FileOffset = %08lx, %08lx\n", FileOffset->LowPart,
-                                                          FileOffset->HighPart );
-    DebugTrace( 0, me, "    Length = %08lx\n", Length );
-    DebugTrace( 0, me, "    Flags = %02lx\n", Flags );
+    DebugTrace(+1, me, "CcPinFileData:\n", 0);
+    DebugTrace(0, me, "    FileObject = %08lx\n", FileObject);
+    DebugTrace2(0, me, "    FileOffset = %08lx, %08lx\n", FileOffset->LowPart, FileOffset->HighPart);
+    DebugTrace(0, me, "    Length = %08lx\n", Length);
+    DebugTrace(0, me, "    Flags = %02lx\n", Flags);
 
     //
     //  Get pointer to SharedCacheMap via File Object.
     //
 
-    SharedCacheMap = *(PSHARED_CACHE_MAP *)((PCHAR)FileObject->SectionObjectPointer
-                                            + sizeof(PVOID));
+    SharedCacheMap = *(PSHARED_CACHE_MAP *)((PCHAR)FileObject->SectionObjectPointer + sizeof(PVOID));
 
     //
     //  See if we have an active Vacb, that we need to free.
     //
 
-    GetActiveVacb( SharedCacheMap, OldIrql, Vacb, ActivePage, PageIsDirty );
+    GetActiveVacb(SharedCacheMap, OldIrql, Vacb, ActivePage, PageIsDirty);
 
     //
     //  If there is an end of a page to be zeroed, then free that page now,
@@ -259,9 +212,10 @@ Raises:
     //  page, free it so we have the correct ValidDataGoal.
     //
 
-    if ((Vacb != NULL) || (SharedCacheMap->NeedToZero != NULL)) {
+    if ((Vacb != NULL) || (SharedCacheMap->NeedToZero != NULL))
+    {
 
-        CcFreeActiveVacb( SharedCacheMap, Vacb, ActivePage, PageIsDirty );
+        CcFreeActiveVacb(SharedCacheMap, Vacb, ActivePage, PageIsDirty);
         Vacb = NULL;
     }
 
@@ -271,8 +225,7 @@ Raises:
     //  CcExtendCacheSection.
     //
 
-    ASSERT( ( FileOffset->QuadPart + (LONGLONG)Length ) <=
-                     SharedCacheMap->SectionSize.QuadPart );
+    ASSERT((FileOffset->QuadPart + (LONGLONG)Length) <= SharedCacheMap->SectionSize.QuadPart);
 
     //
     //  Initially clear output
@@ -281,14 +234,13 @@ Raises:
     *Bcb = NULL;
     *BaseAddress = NULL;
 
-    if (!FlagOn(Flags, PIN_NO_READ)) {
+    if (!FlagOn(Flags, PIN_NO_READ))
+    {
 
-        *BaseAddress = CcGetVirtualAddress( SharedCacheMap,
-                                            *FileOffset,
-                                            &Vacb,
-                                            &ReceivedLength );
-
-    } else {
+        *BaseAddress = CcGetVirtualAddress(SharedCacheMap, *FileOffset, &Vacb, &ReceivedLength);
+    }
+    else
+    {
 
         //
         //  In the PIN_NO_READ case, we simply need to make sure that the
@@ -298,28 +250,28 @@ Raises:
         //  Fake a ReceivedLength that matches the remaining bytes in the view.
         //
 
-        ReceivedLength = VACB_MAPPING_GRANULARITY -
-                         (ULONG)(FileOffset->QuadPart & (VACB_MAPPING_GRANULARITY - 1));
+        ReceivedLength = VACB_MAPPING_GRANULARITY - (ULONG)(FileOffset->QuadPart & (VACB_MAPPING_GRANULARITY - 1));
 
         //
         //  Now simply cause a reference that will expand a multilevel Vacb.
         //
 
-        CcReferenceFileOffset( SharedCacheMap, *FileOffset );
+        CcReferenceFileOffset(SharedCacheMap, *FileOffset);
     }
 
     //
     //  Acquire Bcb List Exclusive to look for Bcb
     //
 
-    KeAcquireInStackQueuedSpinLock( &SharedCacheMap->BcbSpinLock, &LockHandle );
+    KeAcquireInStackQueuedSpinLock(&SharedCacheMap->BcbSpinLock, &LockHandle);
     SpinLockAcquired = TRUE;
 
     //
     //  Use try to guarantee cleanup on the way out.
     //
 
-    try {
+    try
+    {
 
         LOGICAL Found;
         LARGE_INTEGER FOffset;
@@ -331,22 +283,24 @@ Raises:
         //
 
         TrialBound.QuadPart = FileOffset->QuadPart + (LONGLONG)Length;
-        Found = CcFindBcb( SharedCacheMap, FileOffset, &TrialBound, &BcbOut );
+        Found = CcFindBcb(SharedCacheMap, FileOffset, &TrialBound, &BcbOut);
 
-
+
         //
         //  Cases 1 and 2 - Bcb was not found.
         //
         //  First caculate data to pin down.
         //
 
-        if (!Found) {
+        if (!Found)
+        {
 
             //
             //  Get out if the user specified PIN_IF_BCB.
             //
 
-            if (FlagOn(Flags, PIN_IF_BCB)) {
+            if (FlagOn(Flags, PIN_IF_BCB))
+            {
 
                 //
                 //  We need to zap BcbOut since this is a hint to the cleanup code
@@ -354,7 +308,7 @@ Raises:
                 //
 
                 BcbOut = NULL;
-                try_return( Result = FALSE );
+                try_return(Result = FALSE);
             }
 
             //
@@ -377,7 +331,8 @@ Raises:
             //  we can calculate the ZeroFlags.
             //
 
-            if ((!ReadOnly  && !FlagOn(SharedCacheMap->Flags, PIN_ACCESS)) || WriteOnly) {
+            if ((!ReadOnly && !FlagOn(SharedCacheMap->Flags, PIN_ACCESS)) || WriteOnly)
+            {
 
                 //
                 //  We can always zero middle pages, if any.
@@ -385,12 +340,13 @@ Raises:
 
                 ZeroFlags = ZERO_MIDDLE_PAGES;
 
-                if (((FOffset.LowPart & (PAGE_SIZE - 1)) == 0) &&
-                    (Length >= PAGE_SIZE)) {
+                if (((FOffset.LowPart & (PAGE_SIZE - 1)) == 0) && (Length >= PAGE_SIZE))
+                {
                     ZeroFlags |= ZERO_FIRST_PAGE;
                 }
 
-                if ((TLength.LowPart & (PAGE_SIZE - 1)) == 0) {
+                if ((TLength.LowPart & (PAGE_SIZE - 1)) == 0)
+                {
                     ZeroFlags |= ZERO_LAST_PAGE;
                 }
             }
@@ -400,11 +356,12 @@ Raises:
             //  are in sections for which we have not disabled modified writing.
             //
 
-            if (!FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED)) {
+            if (!FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED))
+            {
                 ReadOnly = TRUE;
             }
 
-            TLength.LowPart = (ULONG) ROUND_TO_PAGES( TLength.LowPart );
+            TLength.LowPart = (ULONG)ROUND_TO_PAGES(TLength.LowPart);
 
             //
             //  Round BaseAddress and FOffset down to the bottom of a page.
@@ -418,12 +375,13 @@ Raises:
             //  beyond valid data length.
             //
 
-            if (FOffset.QuadPart >= SharedCacheMap->ValidDataGoal.QuadPart) {
+            if (FOffset.QuadPart >= SharedCacheMap->ValidDataGoal.QuadPart)
+            {
 
                 ZeroFlags |= ZERO_FIRST_PAGE | ZERO_MIDDLE_PAGES | ZERO_LAST_PAGE;
-
-            } else if ((FOffset.QuadPart + (LONGLONG)PAGE_SIZE) >=
-                                SharedCacheMap->ValidDataGoal.QuadPart) {
+            }
+            else if ((FOffset.QuadPart + (LONGLONG)PAGE_SIZE) >= SharedCacheMap->ValidDataGoal.QuadPart)
+            {
 
                 ZeroFlags |= ZERO_MIDDLE_PAGES | ZERO_LAST_PAGE;
             }
@@ -434,11 +392,12 @@ Raises:
             //  within a Vacb.
             //
 
-            if (TLength.LowPart > ReceivedLength) {
+            if (TLength.LowPart > ReceivedLength)
+            {
                 TLength.LowPart = ReceivedLength;
             }
 
-
+
             //
             //  Case 1 - Bcb was not found and Wait is TRUE.
             //
@@ -453,18 +412,17 @@ Raises:
             //  in.
             //
 
-            if (FlagOn(Flags, PIN_WAIT)) {
+            if (FlagOn(Flags, PIN_WAIT))
+            {
 
-                BcbOut = CcAllocateInitializeBcb( SharedCacheMap,
-                                                  BcbOut,
-                                                  &FOffset,
-                                                  &TLength );
+                BcbOut = CcAllocateInitializeBcb(SharedCacheMap, BcbOut, &FOffset, &TLength);
 
-                if (BcbOut == NULL) {
-                    DebugTrace( 0, 0, "Bcb allocation failure\n", 0 );
-                    KeReleaseInStackQueuedSpinLock( &LockHandle );
+                if (BcbOut == NULL)
+                {
+                    DebugTrace(0, 0, "Bcb allocation failure\n", 0);
+                    KeReleaseInStackQueuedSpinLock(&LockHandle);
                     SpinLockAcquired = FALSE;
-                    ExRaiseStatus( STATUS_INSUFFICIENT_RESOURCES );
+                    ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
                 }
 
                 //
@@ -472,28 +430,28 @@ Raises:
                 //  release the spin lock.
                 //
 
-                if (!ReadOnly) {
-                    if (FlagOn(Flags, PIN_EXCLUSIVE)) {
-                        (VOID)ExAcquireResourceExclusiveLite( &BcbOut->Resource, TRUE );
-                    } else {
-                        (VOID)ExAcquireSharedStarveExclusive( &BcbOut->Resource, TRUE );
+                if (!ReadOnly)
+                {
+                    if (FlagOn(Flags, PIN_EXCLUSIVE))
+                    {
+                        (VOID) ExAcquireResourceExclusiveLite(&BcbOut->Resource, TRUE);
+                    }
+                    else
+                    {
+                        (VOID) ExAcquireSharedStarveExclusive(&BcbOut->Resource, TRUE);
                     }
                 }
-                KeReleaseInStackQueuedSpinLock( &LockHandle );
+                KeReleaseInStackQueuedSpinLock(&LockHandle);
                 SpinLockAcquired = FALSE;
 
                 //
                 //  Now read in the data.
                 //
 
-                if (!FlagOn(Flags, PIN_NO_READ)) {
+                if (!FlagOn(Flags, PIN_NO_READ))
+                {
 
-                    (VOID)CcMapAndRead( SharedCacheMap,
-                                        &FOffset,
-                                        TLength.LowPart,
-                                        ZeroFlags,
-                                        TRUE,
-                                        *BaseAddress );
+                    (VOID) CcMapAndRead(SharedCacheMap, &FOffset, TLength.LowPart, ZeroFlags, TRUE, *BaseAddress);
 
                     //
                     //  Now we have to reacquire the Bcb List spinlock to load
@@ -503,33 +461,34 @@ Raises:
                     //  data will be mapped to the same place.
                     //
 
-                    KeAcquireInStackQueuedSpinLock( &SharedCacheMap->BcbSpinLock, &LockHandle );
+                    KeAcquireInStackQueuedSpinLock(&SharedCacheMap->BcbSpinLock, &LockHandle);
 
-                    if (BcbOut->BaseAddress == NULL) {
+                    if (BcbOut->BaseAddress == NULL)
+                    {
 
                         BcbOut->BaseAddress = *BaseAddress;
                         BcbOut->Vacb = Vacb;
                         Vacb = NULL;
                     }
 
-                    KeReleaseInStackQueuedSpinLock( &LockHandle );
+                    KeReleaseInStackQueuedSpinLock(&LockHandle);
 
                     //
                     //  Calculate Base Address of the data we want.
                     //
 
-                    *BaseAddress = (PCHAR)BcbOut->BaseAddress +
-                                   (ULONG)( FileOffset->QuadPart - BcbOut->FileOffset.QuadPart );
+                    *BaseAddress =
+                        (PCHAR)BcbOut->BaseAddress + (ULONG)(FileOffset->QuadPart - BcbOut->FileOffset.QuadPart);
                 }
 
                 //
                 //  Success!
                 //
 
-                try_return( Result = TRUE );
+                try_return(Result = TRUE);
             }
 
-
+
             //
             //  Case 2 - Bcb was not found and Wait is FALSE
             //
@@ -540,7 +499,8 @@ Raises:
             //  will not fault and not block before returning.
             //
 
-            else {
+            else
+            {
 
                 //
                 //  Now try to allocate and initialize the Bcb.  If we
@@ -549,14 +509,12 @@ Raises:
                 //  us back with Wait = TRUE.
                 //
 
-                BcbOut = CcAllocateInitializeBcb( SharedCacheMap,
-                                                  BcbOut,
-                                                  &FOffset,
-                                                  &TLength );
+                BcbOut = CcAllocateInitializeBcb(SharedCacheMap, BcbOut, &FOffset, &TLength);
 
-                if (BcbOut == NULL) {
+                if (BcbOut == NULL)
+                {
 
-                    try_return( Result = FALSE );
+                    try_return(Result = FALSE);
                 }
 
                 //
@@ -564,10 +522,11 @@ Raises:
                 //  resource shared, and then we can free the spin lock.
                 //
 
-                if (!ReadOnly) {
-                    ExAcquireSharedStarveExclusive( &BcbOut->Resource, TRUE );
+                if (!ReadOnly)
+                {
+                    ExAcquireSharedStarveExclusive(&BcbOut->Resource, TRUE);
                 }
-                KeReleaseInStackQueuedSpinLock( &LockHandle );
+                KeReleaseInStackQueuedSpinLock(&LockHandle);
                 SpinLockAcquired = FALSE;
 
                 //
@@ -575,15 +534,11 @@ Raises:
                 //  get an exception (see procedure header).
                 //
 
-                ASSERT( !FlagOn(Flags, PIN_NO_READ) );
-                if (!CcMapAndRead( SharedCacheMap,
-                                   &FOffset,
-                                   TLength.LowPart,
-                                   ZeroFlags,
-                                   FALSE,
-                                   *BaseAddress )) {
+                ASSERT(!FlagOn(Flags, PIN_NO_READ));
+                if (!CcMapAndRead(SharedCacheMap, &FOffset, TLength.LowPart, ZeroFlags, FALSE, *BaseAddress))
+                {
 
-                    try_return( Result = FALSE );
+                    try_return(Result = FALSE);
                 }
 
                 //
@@ -594,49 +549,52 @@ Raises:
                 //  data will be mapped to the same place.
                 //
 
-                KeAcquireInStackQueuedSpinLock( &SharedCacheMap->BcbSpinLock, &LockHandle );
+                KeAcquireInStackQueuedSpinLock(&SharedCacheMap->BcbSpinLock, &LockHandle);
 
-                if (BcbOut->BaseAddress == NULL) {
+                if (BcbOut->BaseAddress == NULL)
+                {
 
                     BcbOut->BaseAddress = *BaseAddress;
                     BcbOut->Vacb = Vacb;
                     Vacb = NULL;
                 }
 
-                KeReleaseInStackQueuedSpinLock( &LockHandle );
+                KeReleaseInStackQueuedSpinLock(&LockHandle);
 
                 //
                 //  Calculate Base Address of the data we want.
                 //
 
-                *BaseAddress = (PCHAR)BcbOut->BaseAddress +
-                               (ULONG)( FileOffset->QuadPart - BcbOut->FileOffset.QuadPart );
+                *BaseAddress = (PCHAR)BcbOut->BaseAddress + (ULONG)(FileOffset->QuadPart - BcbOut->FileOffset.QuadPart);
 
                 //
                 //  Success!
                 //
 
-                try_return( Result = TRUE );
+                try_return(Result = TRUE);
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             //  We treat Bcbs as ReadOnly (do not acquire resource) if they
             //  are in sections for which we have not disabled modified writing.
             //
 
-            if (!FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED)) {
+            if (!FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED))
+            {
                 ReadOnly = TRUE;
             }
         }
 
-
+
         //
         //  Cases 3 and 4 - Bcb is there but not mapped
         //
 
-        if (BcbOut->BaseAddress == NULL) {
+        if (BcbOut->BaseAddress == NULL)
+        {
 
             //
             //  It is too complicated to attempt to calculate any ZeroFlags in this
@@ -665,7 +623,8 @@ Raises:
             //  we had to release the SpinLock above.
             //
 
-            if (FlagOn(Flags, PIN_WAIT)) {
+            if (FlagOn(Flags, PIN_WAIT))
+            {
 
                 BcbOut->PinCount += 1;
 
@@ -674,13 +633,17 @@ Raises:
                 //  acquire the Bcb shared.
                 //
 
-                KeReleaseInStackQueuedSpinLock( &LockHandle );
+                KeReleaseInStackQueuedSpinLock(&LockHandle);
                 SpinLockAcquired = FALSE;
-                if (!ReadOnly) {
-                    if (FlagOn(Flags, PIN_EXCLUSIVE)) {
-                        (VOID)ExAcquireResourceExclusiveLite( &BcbOut->Resource, TRUE );
-                    } else {
-                        (VOID)ExAcquireSharedStarveExclusive( &BcbOut->Resource, TRUE );
+                if (!ReadOnly)
+                {
+                    if (FlagOn(Flags, PIN_EXCLUSIVE))
+                    {
+                        (VOID) ExAcquireResourceExclusiveLite(&BcbOut->Resource, TRUE);
+                    }
+                    else
+                    {
+                        (VOID) ExAcquireSharedStarveExclusive(&BcbOut->Resource, TRUE);
                     }
                 }
 
@@ -690,14 +653,10 @@ Raises:
                 //  Now read in the data.
                 //
 
-                if (!FlagOn(Flags, PIN_NO_READ)) {
+                if (!FlagOn(Flags, PIN_NO_READ))
+                {
 
-                    (VOID)CcMapAndRead( SharedCacheMap,
-                                        &FOffset,
-                                        TLength.LowPart,
-                                        ZeroFlags,
-                                        TRUE,
-                                        *BaseAddress );
+                    (VOID) CcMapAndRead(SharedCacheMap, &FOffset, TLength.LowPart, ZeroFlags, TRUE, *BaseAddress);
 
                     //
                     //  Now we have to reacquire the Bcb List spinlock to load
@@ -707,34 +666,35 @@ Raises:
                     //  data will be mapped to the same place.
                     //
 
-                    KeAcquireInStackQueuedSpinLock( &SharedCacheMap->BcbSpinLock, &LockHandle );
+                    KeAcquireInStackQueuedSpinLock(&SharedCacheMap->BcbSpinLock, &LockHandle);
 
-                    if (BcbOut->BaseAddress == NULL) {
+                    if (BcbOut->BaseAddress == NULL)
+                    {
 
                         BcbOut->BaseAddress = *BaseAddress;
                         BcbOut->Vacb = Vacb;
                         Vacb = NULL;
                     }
 
-                    KeReleaseInStackQueuedSpinLock( &LockHandle );
+                    KeReleaseInStackQueuedSpinLock(&LockHandle);
 
                     //
                     //
                     //  Calculate Base Address of the data we want.
                     //
 
-                    *BaseAddress = (PCHAR)BcbOut->BaseAddress +
-                                   (ULONG)( FileOffset->QuadPart - BcbOut->FileOffset.QuadPart );
+                    *BaseAddress =
+                        (PCHAR)BcbOut->BaseAddress + (ULONG)(FileOffset->QuadPart - BcbOut->FileOffset.QuadPart);
                 }
 
                 //
                 //  Success!
                 //
 
-                try_return( Result = TRUE );
+                try_return(Result = TRUE);
             }
 
-
+
             //
             //  Case 4 - Bcb is there but not mapped, and Wait is FALSE
             //
@@ -745,9 +705,11 @@ Raises:
             //  will not fault and not block before returning.
             //
 
-            else {
+            else
+            {
 
-                if (!ReadOnly && !ExAcquireSharedStarveExclusive( &BcbOut->Resource, FALSE )) {
+                if (!ReadOnly && !ExAcquireSharedStarveExclusive(&BcbOut->Resource, FALSE))
+                {
 
                     //
                     //  If we cannot get the resource and have not incremented PinCount, then
@@ -755,12 +717,12 @@ Raises:
                     //
 
                     BcbOut = NULL;
-                    try_return( Result = FALSE );
+                    try_return(Result = FALSE);
                 }
 
                 BcbOut->PinCount += 1;
 
-                KeReleaseInStackQueuedSpinLock( &LockHandle );
+                KeReleaseInStackQueuedSpinLock(&LockHandle);
                 SpinLockAcquired = FALSE;
 
                 //
@@ -768,15 +730,12 @@ Raises:
                 //  get an exception (see procedure header).
                 //
 
-                ASSERT( !FlagOn(Flags, PIN_NO_READ) );
-                if (!CcMapAndRead( SharedCacheMap,
-                                   &BcbOut->FileOffset,
-                                   BcbOut->ByteLength,
-                                   ZeroFlags,
-                                   FALSE,
-                                   *BaseAddress )) {
+                ASSERT(!FlagOn(Flags, PIN_NO_READ));
+                if (!CcMapAndRead(SharedCacheMap, &BcbOut->FileOffset, BcbOut->ByteLength, ZeroFlags, FALSE,
+                                  *BaseAddress))
+                {
 
-                    try_return( Result = FALSE );
+                    try_return(Result = FALSE);
                 }
 
                 //
@@ -787,38 +746,39 @@ Raises:
                 //  data will be mapped to the same place.
                 //
 
-                KeAcquireInStackQueuedSpinLock( &SharedCacheMap->BcbSpinLock, &LockHandle );
+                KeAcquireInStackQueuedSpinLock(&SharedCacheMap->BcbSpinLock, &LockHandle);
 
-                if (BcbOut->BaseAddress == NULL) {
+                if (BcbOut->BaseAddress == NULL)
+                {
 
                     BcbOut->BaseAddress = *BaseAddress;
                     BcbOut->Vacb = Vacb;
                     Vacb = NULL;
                 }
 
-                KeReleaseInStackQueuedSpinLock( &LockHandle );
+                KeReleaseInStackQueuedSpinLock(&LockHandle);
 
                 //
                 //  Calculate Base Address of the data we want.
                 //
 
-                *BaseAddress = (PCHAR)BcbOut->BaseAddress +
-                               (ULONG)( FileOffset->QuadPart - BcbOut->FileOffset.QuadPart );
+                *BaseAddress = (PCHAR)BcbOut->BaseAddress + (ULONG)(FileOffset->QuadPart - BcbOut->FileOffset.QuadPart);
 
                 //
                 //  Success!
                 //
 
-                try_return( Result = TRUE );
+                try_return(Result = TRUE);
             }
         }
 
-
+
         //
         //  Cases 5 and 6 - Bcb is there and it is mapped
         //
 
-        else {
+        else
+        {
 
             //
             //  Case 5 - Bcb is there and mapped, and Wait is TRUE
@@ -827,21 +787,26 @@ Raises:
             //  and then acquire the Bcb Shared if we are not ReadOnly.
             //
 
-            if (FlagOn(Flags, PIN_WAIT)) {
+            if (FlagOn(Flags, PIN_WAIT))
+            {
 
                 BcbOut->PinCount += 1;
-                KeReleaseInStackQueuedSpinLock( &LockHandle );
+                KeReleaseInStackQueuedSpinLock(&LockHandle);
                 SpinLockAcquired = FALSE;
 
                 //
                 //  Acquire Bcb Resource shared to insure that it is in memory.
                 //
 
-                if (!ReadOnly) {
-                    if (FlagOn(Flags, PIN_EXCLUSIVE)) {
-                        (VOID)ExAcquireResourceExclusiveLite( &BcbOut->Resource, TRUE );
-                    } else {
-                        (VOID)ExAcquireSharedStarveExclusive( &BcbOut->Resource, TRUE );
+                if (!ReadOnly)
+                {
+                    if (FlagOn(Flags, PIN_EXCLUSIVE))
+                    {
+                        (VOID) ExAcquireResourceExclusiveLite(&BcbOut->Resource, TRUE);
+                    }
+                    else
+                    {
+                        (VOID) ExAcquireSharedStarveExclusive(&BcbOut->Resource, TRUE);
                     }
                 }
             }
@@ -855,13 +820,15 @@ Raises:
             //  resource.
             //
 
-            else {
+            else
+            {
 
                 //
                 //  Acquire Bcb Resource shared to insure that it is in memory.
                 //
 
-                if (!ReadOnly && !ExAcquireSharedStarveExclusive( &BcbOut->Resource, FALSE )) {
+                if (!ReadOnly && !ExAcquireSharedStarveExclusive(&BcbOut->Resource, FALSE))
+                {
 
                     //
                     //  If we cannot get the resource and have not incremented PinCount, then
@@ -869,11 +836,11 @@ Raises:
                     //
 
                     BcbOut = NULL;
-                    try_return( Result = FALSE );
+                    try_return(Result = FALSE);
                 }
 
                 BcbOut->PinCount += 1;
-                KeReleaseInStackQueuedSpinLock( &LockHandle );
+                KeReleaseInStackQueuedSpinLock(&LockHandle);
                 SpinLockAcquired = FALSE;
             }
 
@@ -881,23 +848,22 @@ Raises:
             //  Calculate Base Address of the data we want.
             //
 
-            *BaseAddress = (PCHAR)BcbOut->BaseAddress +
-                           (ULONG)( FileOffset->QuadPart - BcbOut->FileOffset.QuadPart );
+            *BaseAddress = (PCHAR)BcbOut->BaseAddress + (ULONG)(FileOffset->QuadPart - BcbOut->FileOffset.QuadPart);
 
             //
             //  Success!
             //
 
-            try_return( Result = TRUE );
+            try_return(Result = TRUE);
         }
 
-
-    try_exit: NOTHING;
 
-        if (FlagOn(Flags, PIN_NO_READ) &&
-            FlagOn(Flags, PIN_EXCLUSIVE) &&
-            (BcbOut != NULL) &&
-            (BcbOut->BaseAddress != NULL)) {
+    try_exit:
+        NOTHING;
+
+        if (FlagOn(Flags, PIN_NO_READ) && FlagOn(Flags, PIN_EXCLUSIVE) && (BcbOut != NULL) &&
+            (BcbOut->BaseAddress != NULL))
+        {
 
             //
             //  Unmap the Vacb and free the resource if the Bcb is still
@@ -906,77 +872,78 @@ Raises:
             //  virtual address is freed.
             //
 
-            CcFreeVirtualAddress( BcbOut->Vacb );
+            CcFreeVirtualAddress(BcbOut->Vacb);
 
             BcbOut->BaseAddress = NULL;
             BcbOut->Vacb = NULL;
         }
-
-    } finally {
+    }
+    finally
+    {
 
         //
         //  Release the spinlock if it is acquired.
         //
 
-        if (SpinLockAcquired) {
-            KeReleaseInStackQueuedSpinLock( &LockHandle );
+        if (SpinLockAcquired)
+        {
+            KeReleaseInStackQueuedSpinLock(&LockHandle);
         }
 
         //
         //  If the Vacb was not used for any reason (error or not needed), then free it here.
         //
 
-        if (Vacb != NULL) {
-            CcFreeVirtualAddress( Vacb );
+        if (Vacb != NULL)
+        {
+            CcFreeVirtualAddress(Vacb);
         }
 
         //
         //  If we referenced a piece of a multilevel structure, release here.
         //
 
-        if (FlagOn(Flags, PIN_NO_READ)) {
+        if (FlagOn(Flags, PIN_NO_READ))
+        {
 
-            CcDereferenceFileOffset( SharedCacheMap, *FileOffset );
+            CcDereferenceFileOffset(SharedCacheMap, *FileOffset);
         }
 
-        if (Result) {
+        if (Result)
+        {
 
             *Bcb = BcbOut;
             *BeyondLastByte = BcbOut->BeyondLastByte;
 
-        //
-        //  An abnormal termination can occur on an allocation failure,
-        //  or on a failure to map and read the buffer.
-        //
-
-        } else {
+            //
+            //  An abnormal termination can occur on an allocation failure,
+            //  or on a failure to map and read the buffer.
+            //
+        }
+        else
+        {
 
             *BaseAddress = NULL;
-            if (BcbOut != NULL) {
-                CcUnpinFileData( BcbOut, ReadOnly, UNPIN );
+            if (BcbOut != NULL)
+            {
+                CcUnpinFileData(BcbOut, ReadOnly, UNPIN);
             }
         }
 
-        DebugTrace( 0, me, "    <Bcb = %08lx\n", *Bcb );
-        DebugTrace( 0, me, "    <BaseAddress = %08lx\n", *BaseAddress );
-        DebugTrace(-1, me, "CcPinFileData -> %02lx\n", Result );
+        DebugTrace(0, me, "    <Bcb = %08lx\n", *Bcb);
+        DebugTrace(0, me, "    <BaseAddress = %08lx\n", *BaseAddress);
+        DebugTrace(-1, me, "CcPinFileData -> %02lx\n", Result);
     }
 
     return Result;
 }
 
-
+
 //
 //  Internal Support Routine
 //
 
-VOID
-FASTCALL
-CcUnpinFileData (
-    IN OUT PBCB Bcb,
-    IN BOOLEAN ReadOnly,
-    IN UNMAP_ACTIONS UnmapAction
-    )
+VOID FASTCALL CcUnpinFileData(IN OUT PBCB Bcb, IN BOOLEAN ReadOnly, IN UNMAP_ACTIONS UnmapAction)
 
 /*++
 
@@ -1004,7 +971,7 @@ Return Value:
     KLOCK_QUEUE_HANDLE LockHandle;
     PSHARED_CACHE_MAP SharedCacheMap;
 
-    DebugTrace(+1, me, "CcUnpinFileData >Bcb = %08lx\n", Bcb );
+    DebugTrace(+1, me, "CcUnpinFileData >Bcb = %08lx\n", Bcb);
 
     //
     //  Note, since we have to allocate so many Vacbs, we do not use
@@ -1013,16 +980,17 @@ Return Value:
     //  some bits set, which a page-aligned Base Address cannot.
     //
 
-    ASSERT( (CACHE_NTC_BCB & 0xFF) != 0 );
+    ASSERT((CACHE_NTC_BCB & 0xFF) != 0);
 
-    if (Bcb->NodeTypeCode != CACHE_NTC_BCB) {
+    if (Bcb->NodeTypeCode != CACHE_NTC_BCB)
+    {
 
         ASSERT(((PVACB)Bcb >= CcVacbs) && ((PVACB)Bcb < CcBeyondVacbs));
         ASSERT(((PVACB)Bcb)->SharedCacheMap->NodeTypeCode == CACHE_NTC_SHARED_CACHE_MAP);
 
-        CcFreeVirtualAddress( (PVACB)Bcb );
+        CcFreeVirtualAddress((PVACB)Bcb);
 
-        DebugTrace(-1, me, "CcUnpinFileData -> VOID (simple release)\n", 0 );
+        DebugTrace(-1, me, "CcUnpinFileData -> VOID (simple release)\n", 0);
 
         return;
     }
@@ -1035,8 +1003,8 @@ Return Value:
     //  in this special case if this action is a dereferencing of the BCB.
     //
 
-    if (!FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED) ||
-        UnmapAction == UNREF) {
+    if (!FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED) || UnmapAction == UNREF)
+    {
         ReadOnly = TRUE;
     }
 
@@ -1044,21 +1012,23 @@ Return Value:
     //  Synchronize
     //
 
-    KeAcquireInStackQueuedSpinLock( &SharedCacheMap->BcbSpinLock, &LockHandle );
+    KeAcquireInStackQueuedSpinLock(&SharedCacheMap->BcbSpinLock, &LockHandle);
 
-    switch (UnmapAction) {
+    switch (UnmapAction)
+    {
 
     case UNPIN:
     case UNREF:
 
-        ASSERT( Bcb->PinCount > 0 );
+        ASSERT(Bcb->PinCount > 0);
 
         Bcb->PinCount -= 1;
         break;
 
     case SET_CLEAN:
 
-        if (Bcb->Dirty) {
+        if (Bcb->Dirty)
+        {
 
             ULONG Pages = Bcb->ByteLength >> PAGE_SHIFT;
 
@@ -1069,15 +1039,18 @@ Return Value:
             Bcb->Dirty = FALSE;
 
             CcAcquireMasterLockAtDpcLevel();
-            CcDeductDirtyPages( SharedCacheMap, Pages );
-            
+            CcDeductDirtyPages(SharedCacheMap, Pages);
+
             //
             //  Normally we need to reduce CcPagesYetToWrite appropriately.
             //
 
-            if (CcPagesYetToWrite > Pages) {
+            if (CcPagesYetToWrite > Pages)
+            {
                 CcPagesYetToWrite -= Pages;
-            } else {
+            }
+            else
+            {
                 CcPagesYetToWrite = 0;
             }
 
@@ -1086,12 +1059,11 @@ Return Value:
             //  and someone still has the cache map opened.
             //
 
-            if ((SharedCacheMap->DirtyPages == 0) &&
-                (SharedCacheMap->OpenCount != 0)) {
+            if ((SharedCacheMap->DirtyPages == 0) && (SharedCacheMap->OpenCount != 0))
+            {
 
-                RemoveEntryList( &SharedCacheMap->SharedCacheMapLinks );
-                InsertTailList( &CcCleanSharedCacheMapList,
-                                &SharedCacheMap->SharedCacheMapLinks );
+                RemoveEntryList(&SharedCacheMap->SharedCacheMapLinks);
+                InsertTailList(&CcCleanSharedCacheMapList, &SharedCacheMap->SharedCacheMapLinks);
             }
 
             CcReleaseMasterLockFromDpcLevel();
@@ -1100,22 +1072,25 @@ Return Value:
         break;
 
     default:
-        CcBugCheck( UnmapAction, 0, 0 );
+        CcBugCheck(UnmapAction, 0, 0);
     }
 
     //
     //  If we brought it to 0, then we have to kill it.
     //
 
-    if (Bcb->PinCount == 0) {
+    if (Bcb->PinCount == 0)
+    {
 
         //
         //  If the Bcb is Dirty, we only release the resource and unmap now.
         //
 
-        if (Bcb->Dirty) {
+        if (Bcb->Dirty)
+        {
 
-            if (Bcb->BaseAddress != NULL) {
+            if (Bcb->BaseAddress != NULL)
+            {
 
                 //
                 //  Unmap the Vacb and free the resource if the Bcb is still
@@ -1124,24 +1099,26 @@ Return Value:
                 //  virtual address is freed.
                 //
 
-                CcFreeVirtualAddress( Bcb->Vacb );
+                CcFreeVirtualAddress(Bcb->Vacb);
 
                 Bcb->BaseAddress = NULL;
                 Bcb->Vacb = NULL;
             }
 
-            if (!ReadOnly) {
-                ExReleaseResourceLite( &Bcb->Resource );
+            if (!ReadOnly)
+            {
+                ExReleaseResourceLite(&Bcb->Resource);
             }
 
-            KeReleaseInStackQueuedSpinLock( &LockHandle );
+            KeReleaseInStackQueuedSpinLock(&LockHandle);
         }
 
         //
         //  Otherwise, we also delete the Bcb.
         //
 
-        else {
+        else
+        {
 
             //
             //  Since CcCalculateVacbLockCount has to be able to walk
@@ -1150,13 +1127,13 @@ Return Value:
             //
 
             CcAcquireVacbLockAtDpcLevel();
-            RemoveEntryList( &Bcb->BcbLinks );
+            RemoveEntryList(&Bcb->BcbLinks);
 
             //
             //  For large metadata streams we unlock the Vacb level.
             //
 
-            CcUnlockVacbLevel( SharedCacheMap, Bcb->FileOffset.QuadPart );
+            CcUnlockVacbLevel(SharedCacheMap, Bcb->FileOffset.QuadPart);
             CcReleaseVacbLockFromDpcLevel();
 
             //
@@ -1165,35 +1142,38 @@ Return Value:
 
 #if LIST_DBG
 
-            KeAcquireQueuedSpinLockAtDpcLevel( KeQueuedSpinLockContext(LockQueueBcbLock) );
+            KeAcquireQueuedSpinLockAtDpcLevel(KeQueuedSpinLockContext(LockQueueBcbLock));
 
-            if (Bcb->CcBcbLinks.Flink != NULL) {
+            if (Bcb->CcBcbLinks.Flink != NULL)
+            {
 
-                RemoveEntryList( &Bcb->CcBcbLinks );
+                RemoveEntryList(&Bcb->CcBcbLinks);
                 CcBcbCount -= 1;
             }
 
-            KeReleaseQueuedSpinLockFromDpcLevel( KeQueuedSpinLockContext(LockQueueBcbLock) );
+            KeReleaseQueuedSpinLockFromDpcLevel(KeQueuedSpinLockContext(LockQueueBcbLock));
 
 #endif
 
-            if (Bcb->BaseAddress != NULL) {
+            if (Bcb->BaseAddress != NULL)
+            {
 
-                CcFreeVirtualAddress( Bcb->Vacb );
+                CcFreeVirtualAddress(Bcb->Vacb);
             }
 #if DBG
-            if (!ReadOnly) {
-                ExReleaseResourceLite( &Bcb->Resource );
+            if (!ReadOnly)
+            {
+                ExReleaseResourceLite(&Bcb->Resource);
             }
 
             //
             //  ASSERT that the resource is unowned.
             //
 
-            ASSERT( Bcb->Resource.ActiveCount == 0 );
+            ASSERT(Bcb->Resource.ActiveCount == 0);
 #endif
-            KeReleaseInStackQueuedSpinLock( &LockHandle );
-            CcDeallocateBcb( Bcb );
+            KeReleaseInStackQueuedSpinLock(&LockHandle);
+            CcDeallocateBcb(Bcb);
         }
     }
 
@@ -1203,26 +1183,24 @@ Return Value:
     //  the entire Bcb there.
     //
 
-    else {
+    else
+    {
 
-        if (!ReadOnly) {
-            ExReleaseResourceLite( &Bcb->Resource );
+        if (!ReadOnly)
+        {
+            ExReleaseResourceLite(&Bcb->Resource);
         }
 
-        KeReleaseInStackQueuedSpinLock( &LockHandle );
+        KeReleaseInStackQueuedSpinLock(&LockHandle);
     }
 
-    DebugTrace(-1, me, "CcUnpinFileData -> VOID\n", 0 );
+    DebugTrace(-1, me, "CcUnpinFileData -> VOID\n", 0);
 
     return;
 }
 
-
-VOID
-CcSetReadAheadGranularity (
-    IN PFILE_OBJECT FileObject,
-    IN ULONG Granularity
-    )
+
+VOID CcSetReadAheadGranularity(IN PFILE_OBJECT FileObject, IN ULONG Granularity)
 
 /*++
 
@@ -1248,13 +1226,8 @@ Return Value:
     ((PPRIVATE_CACHE_MAP)FileObject->PrivateCacheMap)->ReadAheadMask = Granularity - 1;
 }
 
-
-VOID
-CcScheduleReadAhead (
-    IN PFILE_OBJECT FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length
-    )
+
+VOID CcScheduleReadAhead(IN PFILE_OBJECT FileObject, IN PLARGE_INTEGER FileOffset, IN ULONG Length)
 
 /*++
 
@@ -1304,20 +1277,17 @@ Return Value:
     ULONG ReadAheadSize;
     LOGICAL Changed = FALSE;
 
-    DebugTrace(+1, me, "CcScheduleReadAhead:\n", 0 );
-    DebugTrace2(0, me, "    FileOffset = %08lx, %08lx\n", FileOffset->LowPart,
-                                                          FileOffset->HighPart );
-    DebugTrace( 0, me, "    Length = %08lx\n", Length );
+    DebugTrace(+1, me, "CcScheduleReadAhead:\n", 0);
+    DebugTrace2(0, me, "    FileOffset = %08lx, %08lx\n", FileOffset->LowPart, FileOffset->HighPart);
+    DebugTrace(0, me, "    Length = %08lx\n", Length);
 
-    SharedCacheMap = *(PSHARED_CACHE_MAP *)((PCHAR)FileObject->SectionObjectPointer
-                                            + sizeof(PVOID));
+    SharedCacheMap = *(PSHARED_CACHE_MAP *)((PCHAR)FileObject->SectionObjectPointer + sizeof(PVOID));
     PrivateCacheMap = FileObject->PrivateCacheMap;
 
-    if ((PrivateCacheMap == NULL) ||
-        (SharedCacheMap == NULL) ||
-        FlagOn(SharedCacheMap->Flags, DISABLE_READ_AHEAD)) {
+    if ((PrivateCacheMap == NULL) || (SharedCacheMap == NULL) || FlagOn(SharedCacheMap->Flags, DISABLE_READ_AHEAD))
+    {
 
-        DebugTrace(-1, me, "CcScheduleReadAhead -> VOID (Nooped)\n", 0 );
+        DebugTrace(-1, me, "CcScheduleReadAhead -> VOID (Nooped)\n", 0);
 
         return;
     }
@@ -1347,7 +1317,7 @@ Return Value:
     //  Take out the ReadAhead spinlock to synchronize our read ahead decision.
     //
 
-    ExAcquireSpinLock( &PrivateCacheMap->ReadAheadSpinLock, &OldIrql );
+    ExAcquireSpinLock(&PrivateCacheMap->ReadAheadSpinLock, &OldIrql);
 
     //
     //  Read Ahead Case 0.
@@ -1360,14 +1330,16 @@ Return Value:
     //  the PrivateCacheMap as their "high water mark".
     //
 
-    if (FlagOn(FileObject->Flags, FO_SEQUENTIAL_ONLY)) {
+    if (FlagOn(FileObject->Flags, FO_SEQUENTIAL_ONLY))
+    {
 
         //
         //  If the next boundary is greater than or equal to the high-water mark,
         //  then read ahead.
         //
 
-        if (FileOffset2.QuadPart >= PrivateCacheMap->ReadAheadOffset[1].QuadPart) {
+        if (FileOffset2.QuadPart >= PrivateCacheMap->ReadAheadOffset[1].QuadPart)
+        {
 
             //
             //  On the first read if we are using a large read ahead granularity,
@@ -1377,26 +1349,27 @@ Return Value:
 
             if ((FileOffset->QuadPart == 0)
 
-                    &&
+                &&
 
                 (PrivateCacheMap->ReadAheadMask > (PAGE_SIZE - 1))
 
-                    &&
+                &&
 
-                ((Length + PAGE_SIZE - 1) <= PrivateCacheMap->ReadAheadMask)) {
+                ((Length + PAGE_SIZE - 1) <= PrivateCacheMap->ReadAheadMask))
+            {
 
-                FileOffset1.QuadPart = (LONGLONG)( ROUND_TO_PAGES(Length) );
+                FileOffset1.QuadPart = (LONGLONG)(ROUND_TO_PAGES(Length));
                 PrivateCacheMap->ReadAheadLength[0] = ReadAheadSize - FileOffset1.LowPart;
                 FileOffset2.QuadPart = (LONGLONG)ReadAheadSize;
 
-            //
-            //  Calculate the next read ahead boundary.
-            //
+                //
+                //  Calculate the next read ahead boundary.
+                //
+            }
+            else
+            {
 
-            } else {
-
-                FileOffset1.QuadPart = PrivateCacheMap->ReadAheadOffset[1].QuadPart +
-                                       (LONGLONG)ReadAheadSize;
+                FileOffset1.QuadPart = PrivateCacheMap->ReadAheadOffset[1].QuadPart + (LONGLONG)ReadAheadSize;
 
                 //
                 //  If the end of the current read is actually beyond where we would
@@ -1404,7 +1377,8 @@ Return Value:
                 //  advance to that spot.
                 //
 
-                if (FileOffset2.QuadPart > FileOffset1.QuadPart) {
+                if (FileOffset2.QuadPart > FileOffset1.QuadPart)
+                {
                     FileOffset1 = FileOffset2;
                 }
                 PrivateCacheMap->ReadAheadLength[0] = ReadAheadSize;
@@ -1423,30 +1397,29 @@ Return Value:
             Changed = TRUE;
         }
 
-    //
-    //  Read Ahead Case 1.
-    //
-    //  If this is the third of three sequential reads, then we will see if
-    //  we can read ahead.  Note that if the first read to a file is to
-    //  offset 0, it passes this test.
-    //
+        //
+        //  Read Ahead Case 1.
+        //
+        //  If this is the third of three sequential reads, then we will see if
+        //  we can read ahead.  Note that if the first read to a file is to
+        //  offset 0, it passes this test.
+        //
+    }
+    else if ((NewOffset.HighPart == PrivateCacheMap->BeyondLastByte2.HighPart)
 
-    } else if ((NewOffset.HighPart == PrivateCacheMap->BeyondLastByte2.HighPart)
+             &&
 
-            &&
+             ((NewOffset.LowPart & ~NOISE_BITS) == (PrivateCacheMap->BeyondLastByte2.LowPart & ~NOISE_BITS))
 
-        ((NewOffset.LowPart & ~NOISE_BITS)
-           == (PrivateCacheMap->BeyondLastByte2.LowPart & ~NOISE_BITS))
+             &&
 
-            &&
+             (PrivateCacheMap->FileOffset2.HighPart == PrivateCacheMap->BeyondLastByte1.HighPart)
 
-        (PrivateCacheMap->FileOffset2.HighPart
-           == PrivateCacheMap->BeyondLastByte1.HighPart)
+             &&
 
-            &&
-
-        ((PrivateCacheMap->FileOffset2.LowPart & ~NOISE_BITS)
-           == (PrivateCacheMap->BeyondLastByte1.LowPart & ~NOISE_BITS))) {
+             ((PrivateCacheMap->FileOffset2.LowPart & ~NOISE_BITS) ==
+              (PrivateCacheMap->BeyondLastByte1.LowPart & ~NOISE_BITS)))
+    {
 
         //
         //  On the first read if we are using a large read ahead granularity,
@@ -1456,22 +1429,24 @@ Return Value:
 
         if ((FileOffset->QuadPart == 0)
 
-                &&
+            &&
 
             (PrivateCacheMap->ReadAheadMask > (PAGE_SIZE - 1))
 
-                &&
+            &&
 
-            ((Length + PAGE_SIZE - 1) <= PrivateCacheMap->ReadAheadMask)) {
+            ((Length + PAGE_SIZE - 1) <= PrivateCacheMap->ReadAheadMask))
+        {
 
-            FileOffset2.QuadPart = (LONGLONG)( ROUND_TO_PAGES(Length) );
+            FileOffset2.QuadPart = (LONGLONG)(ROUND_TO_PAGES(Length));
         }
 
         //
         //  Round read offset to next read ahead boundary.
         //
 
-        else {
+        else
+        {
             FileOffset2.QuadPart = NewBeyond.QuadPart + (LONGLONG)ReadAheadSize;
 
             FileOffset2.LowPart &= ~PrivateCacheMap->ReadAheadMask;
@@ -1482,9 +1457,10 @@ Return Value:
         //  up to our max.
         //
 
-        if (FileOffset2.QuadPart != PrivateCacheMap->ReadAheadOffset[1].QuadPart) {
+        if (FileOffset2.QuadPart != PrivateCacheMap->ReadAheadOffset[1].QuadPart)
+        {
 
-            ASSERT( FileOffset2.HighPart >= 0 );
+            ASSERT(FileOffset2.HighPart >= 0);
 
             Changed = TRUE;
             PrivateCacheMap->ReadAheadOffset[1] = FileOffset2;
@@ -1501,10 +1477,9 @@ Return Value:
     //  for negative strides.
     //
 
-    else if ( ( NewOffset.QuadPart -
-                PrivateCacheMap->FileOffset2.QuadPart ) ==
-              ( PrivateCacheMap->FileOffset2.QuadPart -
-                PrivateCacheMap->FileOffset1.QuadPart )) {
+    else if ((NewOffset.QuadPart - PrivateCacheMap->FileOffset2.QuadPart) ==
+             (PrivateCacheMap->FileOffset2.QuadPart - PrivateCacheMap->FileOffset1.QuadPart))
+    {
 
         //
         //  According to the current stride, the next offset will be:
@@ -1516,14 +1491,15 @@ Return Value:
         //      (NewOffset * 2) - FileOffset2
         //
 
-        FileOffset2.QuadPart = ( NewOffset.QuadPart << 1 ) - PrivateCacheMap->FileOffset2.QuadPart;
+        FileOffset2.QuadPart = (NewOffset.QuadPart << 1) - PrivateCacheMap->FileOffset2.QuadPart;
 
         //
         //  If our stride is going backwards through the file, we
         //  have to detect the case where the next step would wrap.
         //
 
-        if (FileOffset2.HighPart >= 0) {
+        if (FileOffset2.HighPart >= 0)
+        {
 
             //
             //  The read ahead length must be extended by the same amount that
@@ -1543,7 +1519,7 @@ Return Value:
             //  Round to page boundary.
             //
 
-            PrivateCacheMap->ReadAheadLength[1] = (ULONG) ROUND_TO_PAGES(Length);
+            PrivateCacheMap->ReadAheadLength[1] = (ULONG)ROUND_TO_PAGES(Length);
             Changed = TRUE;
         }
     }
@@ -1552,11 +1528,12 @@ Return Value:
     //  Get out if the ReadAhead requirements did not change.
     //
 
-    if (!Changed || PrivateCacheMap->Flags.ReadAheadActive) {
+    if (!Changed || PrivateCacheMap->Flags.ReadAheadActive)
+    {
 
-        DebugTrace( 0, me, "Read ahead already in progress or no change\n", 0 );
+        DebugTrace(0, me, "Read ahead already in progress or no change\n", 0);
 
-        ExReleaseSpinLock( &PrivateCacheMap->ReadAheadSpinLock, OldIrql );
+        ExReleaseSpinLock(&PrivateCacheMap->ReadAheadSpinLock, OldIrql);
         return;
     }
 
@@ -1565,19 +1542,19 @@ Return Value:
     //  ourselves.
     //
 
-    CC_SET_PRIVATE_CACHE_MAP (PrivateCacheMap, PRIVATE_CACHE_MAP_READ_AHEAD_ACTIVE);
+    CC_SET_PRIVATE_CACHE_MAP(PrivateCacheMap, PRIVATE_CACHE_MAP_READ_AHEAD_ACTIVE);
 
     //
     //  Release spin lock on way out
     //
 
-    ExReleaseSpinLock( &PrivateCacheMap->ReadAheadSpinLock, OldIrql );
+    ExReleaseSpinLock(&PrivateCacheMap->ReadAheadSpinLock, OldIrql);
 
     //
     //  Queue the read ahead request to the Lazy Writer's work queue.
     //
 
-    DebugTrace( 0, me, "Queueing read ahead to worker thread\n", 0 );
+    DebugTrace(0, me, "Queueing read ahead to worker thread\n", 0);
 
     WorkQueueEntry = CcAllocateWorkQueueEntry();
 
@@ -1587,27 +1564,28 @@ Return Value:
     //  no one ever requires that it occur.
     //
 
-    if (WorkQueueEntry != NULL) {
+    if (WorkQueueEntry != NULL)
+    {
 
         //
         //  We must reference this file object so that it cannot go away
         //  until we finish Read Ahead processing in the Worker Thread.
         //
 
-        ObReferenceObject ( FileObject );
+        ObReferenceObject(FileObject);
 
         //
         //  Increment open count to make sure the SharedCacheMap stays around.
         //
 
-        CcAcquireMasterLock( &OldIrql );
-        CcIncrementOpenCount( SharedCacheMap, 'adRQ' );
-        CcReleaseMasterLock( OldIrql );
+        CcAcquireMasterLock(&OldIrql);
+        CcIncrementOpenCount(SharedCacheMap, 'adRQ');
+        CcReleaseMasterLock(OldIrql);
 
         WorkQueueEntry->Function = (UCHAR)ReadAhead;
         WorkQueueEntry->Parameters.Read.FileObject = FileObject;
 
-        CcPostWorkQueue( WorkQueueEntry, &CcExpressWorkQueue );
+        CcPostWorkQueue(WorkQueueEntry, &CcExpressWorkQueue);
     }
 
     //
@@ -1615,24 +1593,21 @@ Return Value:
     //  are resident we must set the active flag false.
     //
 
-    else {
+    else
+    {
 
-        ExAcquireFastLock( &PrivateCacheMap->ReadAheadSpinLock, &OldIrql );
-        CC_CLEAR_PRIVATE_CACHE_MAP (PrivateCacheMap, PRIVATE_CACHE_MAP_READ_AHEAD_ACTIVE);
-        ExReleaseFastLock( &PrivateCacheMap->ReadAheadSpinLock, OldIrql );
+        ExAcquireFastLock(&PrivateCacheMap->ReadAheadSpinLock, &OldIrql);
+        CC_CLEAR_PRIVATE_CACHE_MAP(PrivateCacheMap, PRIVATE_CACHE_MAP_READ_AHEAD_ACTIVE);
+        ExReleaseFastLock(&PrivateCacheMap->ReadAheadSpinLock, OldIrql);
     }
 
-    DebugTrace(-1, me, "CcScheduleReadAhead -> VOID\n", 0 );
+    DebugTrace(-1, me, "CcScheduleReadAhead -> VOID\n", 0);
 
     return;
 }
 
-
-VOID
-FASTCALL
-CcPerformReadAhead (
-    IN PFILE_OBJECT FileObject
-    )
+
+VOID FASTCALL CcPerformReadAhead(IN PFILE_OBJECT FileObject)
 
 /*++
 
@@ -1670,12 +1645,13 @@ Return Value:
 
     LOGICAL ResourceHeld = FALSE;
 
-    DebugTrace(+1, me, "CcPerformReadAhead:\n", 0 );
-    DebugTrace( 0, me, "    FileObject = %08lx\n", FileObject );
+    DebugTrace(+1, me, "CcPerformReadAhead:\n", 0);
+    DebugTrace(0, me, "    FileObject = %08lx\n", FileObject);
 
-    MmSavePageFaultReadAhead( Thread, &SavedState );
+    MmSavePageFaultReadAhead(Thread, &SavedState);
 
-    try {
+    try
+    {
 
         //
         //  Since we have the open count biased, we can safely access the
@@ -1692,14 +1668,15 @@ Return Value:
         //  read ahead requirements.  (We will skip out below.)
         //
 
-        while (TRUE) {
+        while (TRUE)
+        {
 
             //
             //  Get SharedCacheMap and PrivateCacheMap.  If either are now NULL, get
             //  out.
             //
 
-            CcAcquireMasterLock( &OldIrql );
+            CcAcquireMasterLock(&OldIrql);
 
             PrivateCacheMap = FileObject->PrivateCacheMap;
 
@@ -1709,16 +1686,16 @@ Return Value:
             //  the caller must guarantee that the FileObject is referenced.
             //
 
-            if (PrivateCacheMap != NULL) {
+            if (PrivateCacheMap != NULL)
+            {
 
-                ExAcquireSpinLockAtDpcLevel( &PrivateCacheMap->ReadAheadSpinLock );
+                ExAcquireSpinLockAtDpcLevel(&PrivateCacheMap->ReadAheadSpinLock);
 
                 //
                 //  We are done when the lengths are 0
                 //
 
-                Done = ((PrivateCacheMap->ReadAheadLength[0] |
-                         PrivateCacheMap->ReadAheadLength[1]) == 0);
+                Done = ((PrivateCacheMap->ReadAheadLength[0] | PrivateCacheMap->ReadAheadLength[1]) == 0);
 
                 ReadAheadOffset[0] = PrivateCacheMap->ReadAheadOffset[0];
                 ReadAheadOffset[1] = PrivateCacheMap->ReadAheadOffset[1];
@@ -1727,20 +1704,21 @@ Return Value:
                 PrivateCacheMap->ReadAheadLength[0] = 0;
                 PrivateCacheMap->ReadAheadLength[1] = 0;
 
-                ExReleaseSpinLockFromDpcLevel( &PrivateCacheMap->ReadAheadSpinLock );
+                ExReleaseSpinLockFromDpcLevel(&PrivateCacheMap->ReadAheadSpinLock);
             }
 
-            CcReleaseMasterLock( OldIrql );
+            CcReleaseMasterLock(OldIrql);
 
             //
             //  Acquire the file shared.
             //
 
-            ResourceHeld = (*Callbacks->AcquireForReadAhead)( Context, TRUE );
+            ResourceHeld = (*Callbacks->AcquireForReadAhead)(Context, TRUE);
 
-            if ((PrivateCacheMap == NULL) || Done || !ResourceHeld) {
+            if ((PrivateCacheMap == NULL) || Done || !ResourceHeld)
+            {
 
-                try_return( NOTHING );
+                try_return(NOTHING);
             }
 
             //
@@ -1753,7 +1731,8 @@ Return Value:
 
             i = 0;
 
-            do {
+            do
+            {
 
                 LARGE_INTEGER Offset, SavedOffset;
                 ULONG Length, SavedLength;
@@ -1765,9 +1744,10 @@ Return Value:
 
                 if ((Length != 0)
 
-                        &&
+                    &&
 
-                    ( Offset.QuadPart <= SharedCacheMap->FileSize.QuadPart )) {
+                    (Offset.QuadPart <= SharedCacheMap->FileSize.QuadPart))
+                {
 
                     ReadAheadPerformed = TRUE;
 
@@ -1775,13 +1755,14 @@ Return Value:
                     //  Keep length within file and MAX_READ_AHEAD
                     //
 
-                    if ( ( Offset.QuadPart + (LONGLONG)Length ) >= SharedCacheMap->FileSize.QuadPart ) {
+                    if ((Offset.QuadPart + (LONGLONG)Length) >= SharedCacheMap->FileSize.QuadPart)
+                    {
 
-                        Length = (ULONG)( SharedCacheMap->FileSize.QuadPart - Offset.QuadPart );
+                        Length = (ULONG)(SharedCacheMap->FileSize.QuadPart - Offset.QuadPart);
                         HitEof = TRUE;
-
                     }
-                    if (Length > MAX_READ_AHEAD) {
+                    if (Length > MAX_READ_AHEAD)
+                    {
                         Length = MAX_READ_AHEAD;
                     }
 
@@ -1792,7 +1773,8 @@ Return Value:
                     //  unmap as soon as it is in.
                     //
 
-                    while (Length != 0) {
+                    while (Length != 0)
+                    {
 
                         ULONG ReceivedLength;
                         PVOID CacheBuffer;
@@ -1810,17 +1792,15 @@ Return Value:
                         //  will simply get out.
                         //
 
-                        CacheBuffer = CcGetVirtualAddress( SharedCacheMap,
-                                                           Offset,
-                                                           &Vacb,
-                                                           &ReceivedLength );
+                        CacheBuffer = CcGetVirtualAddress(SharedCacheMap, Offset, &Vacb, &ReceivedLength);
 
                         //
                         //  If we got more than we need, make sure to only transfer
                         //  the right amount.
                         //
 
-                        if (ReceivedLength > Length) {
+                        if (ReceivedLength > Length)
+                        {
                             ReceivedLength = Length;
                         }
 
@@ -1830,14 +1810,14 @@ Return Value:
                         //  we need.
                         //
 
-                        PagesToGo = ADDRESS_AND_SIZE_TO_SPAN_PAGES( CacheBuffer,
-                                                           ReceivedLength );
+                        PagesToGo = ADDRESS_AND_SIZE_TO_SPAN_PAGES(CacheBuffer, ReceivedLength);
 
                         CcMissCounter = &CcReadAheadIos;
 
-                        while (PagesToGo) {
+                        while (PagesToGo)
+                        {
 
-                            MmSetPageFaultReadAhead( Thread, (PagesToGo - 1) );
+                            MmSetPageFaultReadAhead(Thread, (PagesToGo - 1));
                             FaultOccurred |= !MmCheckCachedPageState(CacheBuffer, FALSE);
 
                             CacheBuffer = (PCHAR)CacheBuffer + PAGE_SIZE;
@@ -1863,7 +1843,7 @@ Return Value:
                         //  After freeing the address.
                         //
 
-                        CcFreeVirtualAddress( Vacb );
+                        CcFreeVirtualAddress(Vacb);
                         Vacb = NULL;
                     }
                 }
@@ -1874,13 +1854,15 @@ Return Value:
             //  Release the file
             //
 
-            (*Callbacks->ReleaseFromReadAhead)( Context );
+            (*Callbacks->ReleaseFromReadAhead)(Context);
             ResourceHeld = FALSE;
         }
 
-    try_exit: NOTHING;
+    try_exit:
+        NOTHING;
     }
-    finally {
+    finally
+    {
 
         MmResetPageFaultReadAhead(Thread, SavedState);
         CcMissCounter = &CcThrowAway;
@@ -1891,16 +1873,18 @@ Return Value:
         //  resource to prevent purge problems.
         //
 
-        if (Vacb != NULL) {
-            CcFreeVirtualAddress( Vacb );
+        if (Vacb != NULL)
+        {
+            CcFreeVirtualAddress(Vacb);
         }
 
         //
         //  Release the file
         //
 
-        if (ResourceHeld) {
-            (*Callbacks->ReleaseFromReadAhead)( Context );
+        if (ResourceHeld)
+        {
+            (*Callbacks->ReleaseFromReadAhead)(Context);
         }
 
         //
@@ -1908,7 +1892,7 @@ Return Value:
         //  still there.
         //
 
-        CcAcquireMasterLock( &OldIrql );
+        CcAcquireMasterLock(&OldIrql);
 
         PrivateCacheMap = FileObject->PrivateCacheMap;
 
@@ -1916,10 +1900,11 @@ Return Value:
         //  Show readahead is going inactive.
         //
 
-        if (PrivateCacheMap != NULL) {
+        if (PrivateCacheMap != NULL)
+        {
 
-            ExAcquireSpinLockAtDpcLevel( &PrivateCacheMap->ReadAheadSpinLock );
-            CC_CLEAR_PRIVATE_CACHE_MAP (PrivateCacheMap, PRIVATE_CACHE_MAP_READ_AHEAD_ACTIVE);
+            ExAcquireSpinLockAtDpcLevel(&PrivateCacheMap->ReadAheadSpinLock);
+            CC_CLEAR_PRIVATE_CACHE_MAP(PrivateCacheMap, PRIVATE_CACHE_MAP_READ_AHEAD_ACTIVE);
 
             //
             //  If he said sequential only and we smashed into Eof, then
@@ -1927,49 +1912,49 @@ Return Value:
             //  file sequentially again.
             //
 
-            if (HitEof && FlagOn(FileObject->Flags, FO_SEQUENTIAL_ONLY)) {
-                PrivateCacheMap->ReadAheadOffset[1].LowPart =
-                PrivateCacheMap->ReadAheadOffset[1].HighPart = 0;
+            if (HitEof && FlagOn(FileObject->Flags, FO_SEQUENTIAL_ONLY))
+            {
+                PrivateCacheMap->ReadAheadOffset[1].LowPart = PrivateCacheMap->ReadAheadOffset[1].HighPart = 0;
             }
 
             //
             //  If no faults occurred, turn read ahead off.
             //
 
-            if (ReadAheadPerformed && !FaultOccurred) {
-                CC_CLEAR_PRIVATE_CACHE_MAP (PrivateCacheMap, PRIVATE_CACHE_MAP_READ_AHEAD_ENABLED);
+            if (ReadAheadPerformed && !FaultOccurred)
+            {
+                CC_CLEAR_PRIVATE_CACHE_MAP(PrivateCacheMap, PRIVATE_CACHE_MAP_READ_AHEAD_ENABLED);
             }
 
-            ExReleaseSpinLockFromDpcLevel( &PrivateCacheMap->ReadAheadSpinLock );
+            ExReleaseSpinLockFromDpcLevel(&PrivateCacheMap->ReadAheadSpinLock);
         }
 
         //
         //  Free SharedCacheMap list
         //
 
-        CcReleaseMasterLock( OldIrql );
+        CcReleaseMasterLock(OldIrql);
 
-        ObDereferenceObject( FileObject );
+        ObDereferenceObject(FileObject);
 
         //
         //  Serialize again to decrement the open count.
         //
 
-        CcAcquireMasterLock( &OldIrql );
+        CcAcquireMasterLock(&OldIrql);
 
-        CcDecrementOpenCount( SharedCacheMap, 'adRP' );
+        CcDecrementOpenCount(SharedCacheMap, 'adRP');
 
-        if ((SharedCacheMap->OpenCount == 0) &&
-            !FlagOn(SharedCacheMap->Flags, WRITE_QUEUED) &&
-            (SharedCacheMap->DirtyPages == 0)) {
+        if ((SharedCacheMap->OpenCount == 0) && !FlagOn(SharedCacheMap->Flags, WRITE_QUEUED) &&
+            (SharedCacheMap->DirtyPages == 0))
+        {
 
             //
             //  Move to the dirty list.
             //
 
-            RemoveEntryList( &SharedCacheMap->SharedCacheMapLinks );
-            InsertTailList( &CcDirtySharedCacheMapList.SharedCacheMapLinks,
-                            &SharedCacheMap->SharedCacheMapLinks );
+            RemoveEntryList(&SharedCacheMap->SharedCacheMapLinks);
+            InsertTailList(&CcDirtySharedCacheMapList.SharedCacheMapLinks, &SharedCacheMap->SharedCacheMapLinks);
 
             //
             //  Make sure the Lazy Writer will wake up, because we
@@ -1977,26 +1962,23 @@ Return Value:
             //
 
             LazyWriter.OtherWork = TRUE;
-            if (!LazyWriter.ScanActive) {
-                CcScheduleLazyWriteScan( FALSE );
+            if (!LazyWriter.ScanActive)
+            {
+                CcScheduleLazyWriteScan(FALSE);
             }
         }
 
-        CcReleaseMasterLock( OldIrql );
+        CcReleaseMasterLock(OldIrql);
     }
 
-    DebugTrace(-1, me, "CcPerformReadAhead -> VOID\n", 0 );
+    DebugTrace(-1, me, "CcPerformReadAhead -> VOID\n", 0);
 
     return;
 }
 
-
+
 PBITMAP_RANGE
-CcFindBitmapRangeToDirty (
-    IN PMBCB Mbcb,
-    IN LONGLONG Page,
-    IN PULONG *FreePageForSetting
-    )
+CcFindBitmapRangeToDirty(IN PMBCB Mbcb, IN LONGLONG Page, IN PULONG *FreePageForSetting)
 
 /*++
 
@@ -2058,30 +2040,34 @@ Environment:
     //  and correct insertion point.
     //
 
-    do {
+    do
+    {
 
         //
         //  If we get an exact match, then we must have hit a fully-initialized
         //  range which we can return.
         //
 
-        if (BasePage == BitmapRange->BasePage) {
+        if (BasePage == BitmapRange->BasePage)
+        {
             return BitmapRange;
 
-        //
-        //  Otherwise, see if the range is free and we have not captured a
-        //  free range yet.
-        //
-
-        } else if ((BitmapRange->DirtyPages == 0) && (FreeRange == NULL)) {
+            //
+            //  Otherwise, see if the range is free and we have not captured a
+            //  free range yet.
+            //
+        }
+        else if ((BitmapRange->DirtyPages == 0) && (FreeRange == NULL))
+        {
             FreeRange = BitmapRange;
 
-        //
-        //  If we did not capture a free range, see if we need to update our
-        //  insertion point.
-        //
-
-        } else if (BasePage > BitmapRange->BasePage) {
+            //
+            //  If we did not capture a free range, see if we need to update our
+            //  insertion point.
+            //
+        }
+        else if (BasePage > BitmapRange->BasePage)
+        {
             InsertPoint = &BitmapRange->Links;
         }
 
@@ -2091,48 +2077,50 @@ Environment:
 
         BitmapRange = (PBITMAP_RANGE)BitmapRange->Links.Flink;
 
-    //
-    //  Loop until we hit the end, or we know we are done updating both InsertPoint
-    //  and FreeRange.
-    //
+        //
+        //  Loop until we hit the end, or we know we are done updating both InsertPoint
+        //  and FreeRange.
+        //
 
     } while ((BitmapRange != (PBITMAP_RANGE)&Mbcb->BitmapRanges) &&
-             ((BasePage >= BitmapRange->BasePage) ||
-              (FreeRange == NULL)));
+             ((BasePage >= BitmapRange->BasePage) || (FreeRange == NULL)));
 
     //
     //  If we found a FreeRange we can use, then remove it from the list.
     //
 
-    if (FreeRange != NULL) {
-        RemoveEntryList( &FreeRange->Links );
+    if (FreeRange != NULL)
+    {
+        RemoveEntryList(&FreeRange->Links);
 
-    //
-    //  Otherwise we have to allocate the small bitmap range structure.  We usually
-    //  try to avoid calling the pool package while owning a spin lock, but note the
-    //  following things which must be true if we hit this point:
-    //
-    //      The file is larger than 3 bitmap ranges (normally 384MB on Intel).
-    //      Three ranges plus all previously allocated ranges are simultaneously dirty.
-    //
-    //  The second point is fairly unlikely, especially for a sequential writer.  It
-    //  can occur for a random writer in a large file, but eventually we will allocate
-    //  enough ranges to always describe how many ranges he can keep dirty at once!
-    //
-
-    } else {
-        FreeRange = ExAllocatePoolWithTag( NonPagedPool, sizeof(BITMAP_RANGE), 'rBcC' );
-        if (FreeRange == NULL) {
+        //
+        //  Otherwise we have to allocate the small bitmap range structure.  We usually
+        //  try to avoid calling the pool package while owning a spin lock, but note the
+        //  following things which must be true if we hit this point:
+        //
+        //      The file is larger than 3 bitmap ranges (normally 384MB on Intel).
+        //      Three ranges plus all previously allocated ranges are simultaneously dirty.
+        //
+        //  The second point is fairly unlikely, especially for a sequential writer.  It
+        //  can occur for a random writer in a large file, but eventually we will allocate
+        //  enough ranges to always describe how many ranges he can keep dirty at once!
+        //
+    }
+    else
+    {
+        FreeRange = ExAllocatePoolWithTag(NonPagedPool, sizeof(BITMAP_RANGE), 'rBcC');
+        if (FreeRange == NULL)
+        {
             return NULL;
         }
-        RtlZeroMemory( FreeRange, sizeof(BITMAP_RANGE) );
+        RtlZeroMemory(FreeRange, sizeof(BITMAP_RANGE));
     }
 
     //
     //  Insert and initialize.
     //
 
-    InsertHeadList( InsertPoint, &FreeRange->Links );
+    InsertHeadList(InsertPoint, &FreeRange->Links);
     FreeRange->BasePage = BasePage;
     FreeRange->FirstDirtyPage = MAXULONG;
     FreeRange->LastDirtyPage = 0;
@@ -2142,7 +2130,8 @@ Environment:
     //  in.
     //
 
-    if (FreeRange->Bitmap == NULL) {
+    if (FreeRange->Bitmap == NULL)
+    {
         ASSERT(*FreePageForSetting != NULL);
         FreeRange->Bitmap = *FreePageForSetting;
         *FreePageForSetting = NULL;
@@ -2151,12 +2140,9 @@ Environment:
     return FreeRange;
 }
 
-
+
 PBITMAP_RANGE
-CcFindBitmapRangeToClean (
-    IN PMBCB Mbcb,
-    IN LONGLONG Page
-    )
+CcFindBitmapRangeToClean(IN PMBCB Mbcb, IN LONGLONG Page)
 
 /*++
 
@@ -2196,13 +2182,15 @@ Environment:
     //  Loop through the list until we find the range to return.
     //
 
-    do {
+    do
+    {
 
         //
         //  If we hit the listhead, then wrap to find the first dirty range.
         //
 
-        if (BitmapRange == (PBITMAP_RANGE)&Mbcb->BitmapRanges) {
+        if (BitmapRange == (PBITMAP_RANGE)&Mbcb->BitmapRanges)
+        {
 
             //
             //  If Page is already 0, we are in an infinite loop.
@@ -2217,13 +2205,13 @@ Environment:
             Page = 0;
 
 
-        //
-        //  Otherwise, if we are in range, return the first range
-        //  with dirty pages.
-        //
-
-        } else if ((Page <= (BitmapRange->BasePage + BitmapRange->LastDirtyPage)) &&
-            (BitmapRange->DirtyPages != 0)) {
+            //
+            //  Otherwise, if we are in range, return the first range
+            //  with dirty pages.
+            //
+        }
+        else if ((Page <= (BitmapRange->BasePage + BitmapRange->LastDirtyPage)) && (BitmapRange->DirtyPages != 0))
+        {
             return BitmapRange;
         }
 
@@ -2236,13 +2224,8 @@ Environment:
     } while (TRUE);
 }
 
-
-VOID
-CcSetDirtyInMask (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length
-    )
+
+VOID CcSetDirtyInMask(IN PSHARED_CACHE_MAP SharedCacheMap, IN PLARGE_INTEGER FileOffset, IN ULONG Length)
 
 /*++
 
@@ -2292,8 +2275,7 @@ Return Value:
     //  a view boundary!), so we do not want to loop through bitmap ranges.
     //
 
-    ASSERT((FileOffset->QuadPart / MBCB_BITMAP_RANGE) ==
-           ((FileOffset->QuadPart + Length - 1) / MBCB_BITMAP_RANGE));
+    ASSERT((FileOffset->QuadPart / MBCB_BITMAP_RANGE) == ((FileOffset->QuadPart + Length - 1) / MBCB_BITMAP_RANGE));
 
     //
     //  Initialize our locals.
@@ -2311,14 +2293,15 @@ Return Value:
     //  PREfix we're OK.
     //
 
-    ASSERT( (SharedCacheMap->SectionSize.QuadPart / PAGE_SIZE) > LastPage );
+    ASSERT((SharedCacheMap->SectionSize.QuadPart / PAGE_SIZE) > LastPage);
 
     //
     //  If we have to convert to an Mbcb grande, we will loop back here to
     //  preallocate another buffer.
     //
 
-    do {
+    do
+    {
 
         //
         //  For large streams, we need to preallocate a block we use for
@@ -2327,33 +2310,36 @@ Return Value:
         //  don't need one.
         //
 
-        if (SharedCacheMap->SectionSize.QuadPart > (MBCB_BITMAP_INITIAL_SIZE * 8 * PAGE_SIZE)) {
+        if (SharedCacheMap->SectionSize.QuadPart > (MBCB_BITMAP_INITIAL_SIZE * 8 * PAGE_SIZE))
+        {
 
             //
             //  If we could not preallocate, break out into common cleanup code and
             //  return quietly.
             //
 
-            if (!CcPrefillVacbLevelZone( 1, &LockHandle.OldIrql, FALSE )) {
+            if (!CcPrefillVacbLevelZone(1, &LockHandle.OldIrql, FALSE))
+            {
                 return;
             }
 
-            Bitmap = (PULONG)CcAllocateVacbLevel( FALSE );
-            CcReleaseVacbLock( LockHandle.OldIrql );
+            Bitmap = (PULONG)CcAllocateVacbLevel(FALSE);
+            CcReleaseVacbLock(LockHandle.OldIrql);
         }
 
         //
         //  Acquire the Mbcb spinlock.
         //
 
-        KeAcquireInStackQueuedSpinLock( &SharedCacheMap->BcbSpinLock, &LockHandle );
+        KeAcquireInStackQueuedSpinLock(&SharedCacheMap->BcbSpinLock, &LockHandle);
 
         //
         //  If there is no Mbcb, we will have to allocate one.
         //
 
         Mbcb = SharedCacheMap->Mbcb;
-        if (Mbcb == NULL) {
+        if (Mbcb == NULL)
+        {
 
             //
             //  Since we use the Bcb zone, we must assume that Bcbs are big enough.
@@ -2365,13 +2351,14 @@ Return Value:
             //  Allocate the Mbcb from the Bcb zone.
             //
 
-            Mbcb = (PMBCB)CcAllocateInitializeBcb( NULL, NULL, NULL, NULL );
+            Mbcb = (PMBCB)CcAllocateInitializeBcb(NULL, NULL, NULL, NULL);
 
             //
             //  If we could not allocate an Mbcb, break out to clean up and return
             //
 
-            if (Mbcb == NULL) {
+            if (Mbcb == NULL)
+            {
                 break;
             }
 
@@ -2380,13 +2367,13 @@ Return Value:
             //
 
             Mbcb->NodeTypeCode = CACHE_NTC_MBCB;
-            InitializeListHead( &Mbcb->BitmapRanges );
+            InitializeListHead(&Mbcb->BitmapRanges);
 
             //
             //  Insert and initialize the first range.
             //
 
-            InsertTailList( &Mbcb->BitmapRanges, &Mbcb->BitmapRange1.Links );
+            InsertTailList(&Mbcb->BitmapRanges, &Mbcb->BitmapRange1.Links);
             Mbcb->BitmapRange1.FirstDirtyPage = MAXULONG;
 
             //
@@ -2406,19 +2393,20 @@ Return Value:
         //  Now see if we need to switch to the Mbcb grande format.
         //
 
-        if ((LastPage >= (MBCB_BITMAP_INITIAL_SIZE * 8)) &&
-            (Mbcb->NodeTypeCode != CACHE_NTC_MBCB_GRANDE)) {
+        if ((LastPage >= (MBCB_BITMAP_INITIAL_SIZE * 8)) && (Mbcb->NodeTypeCode != CACHE_NTC_MBCB_GRANDE))
+        {
 
-            ASSERT( Bitmap != NULL );
+            ASSERT(Bitmap != NULL);
 
             //
             //  If there are any dirty pages, copy the initial bitmap over, and zero
             //  out the original end of the Mbcb for reuse.
             //
 
-            if (Mbcb->BitmapRange1.DirtyPages != 0) {
-                RtlCopyMemory( Bitmap, Mbcb->BitmapRange1.Bitmap, MBCB_BITMAP_INITIAL_SIZE );
-                RtlZeroMemory( Mbcb->BitmapRange1.Bitmap, MBCB_BITMAP_INITIAL_SIZE );
+            if (Mbcb->BitmapRange1.DirtyPages != 0)
+            {
+                RtlCopyMemory(Bitmap, Mbcb->BitmapRange1.Bitmap, MBCB_BITMAP_INITIAL_SIZE);
+                RtlZeroMemory(Mbcb->BitmapRange1.Bitmap, MBCB_BITMAP_INITIAL_SIZE);
             }
 
             //
@@ -2432,10 +2420,10 @@ Return Value:
             //  Insert and initialize the first range.
             //
 
-            InsertTailList( &Mbcb->BitmapRanges, &Mbcb->BitmapRange2.Links );
+            InsertTailList(&Mbcb->BitmapRanges, &Mbcb->BitmapRange2.Links);
             Mbcb->BitmapRange2.BasePage = MAXLONGLONG;
             Mbcb->BitmapRange2.FirstDirtyPage = MAXULONG;
-            InsertTailList( &Mbcb->BitmapRanges, &Mbcb->BitmapRange3.Links );
+            InsertTailList(&Mbcb->BitmapRanges, &Mbcb->BitmapRange3.Links);
             Mbcb->BitmapRange3.BasePage = MAXLONGLONG;
             Mbcb->BitmapRange3.FirstDirtyPage = MAXULONG;
             Mbcb->NodeTypeCode = CACHE_NTC_MBCB_GRANDE;
@@ -2445,7 +2433,7 @@ Return Value:
             //  to preallocate another buffer for CcFindBitmapRangeToDirty.
             //
 
-            KeReleaseInStackQueuedSpinLock( &LockHandle );
+            KeReleaseInStackQueuedSpinLock(&LockHandle);
             continue;
         }
 
@@ -2453,13 +2441,14 @@ Return Value:
         //  Now find the Bitmap range we are setting bits in.
         //
 
-        BitmapRange = CcFindBitmapRangeToDirty( Mbcb, FirstPage, &Bitmap );
+        BitmapRange = CcFindBitmapRangeToDirty(Mbcb, FirstPage, &Bitmap);
 
         //
         //  If we could not allocate this dinky structure, break out quietly.
         //
 
-        if (BitmapRange == NULL) {
+        if (BitmapRange == NULL)
+        {
             break;
         }
 
@@ -2467,11 +2456,13 @@ Return Value:
         //  Now update the first and last dirty page indices and the bitmap.
         //
 
-        if (FirstPage < (BitmapRange->BasePage + BitmapRange->FirstDirtyPage)) {
+        if (FirstPage < (BitmapRange->BasePage + BitmapRange->FirstDirtyPage))
+        {
             BitmapRange->FirstDirtyPage = (ULONG)(FirstPage - BitmapRange->BasePage);
         }
 
-        if (LastPage > (BitmapRange->BasePage + BitmapRange->LastDirtyPage)) {
+        if (LastPage > (BitmapRange->BasePage + BitmapRange->LastDirtyPage))
+        {
             BitmapRange->LastDirtyPage = (ULONG)(LastPage - BitmapRange->BasePage);
         }
 
@@ -2487,23 +2478,24 @@ Return Value:
         //  to do.
         //
 
-        if (SharedCacheMap->DirtyPages == 0) {
+        if (SharedCacheMap->DirtyPages == 0)
+        {
 
             //
             //  If the lazy write scan is not active, then start it.
             //
 
-            if (!LazyWriter.ScanActive) {
-                CcScheduleLazyWriteScan( FALSE );
+            if (!LazyWriter.ScanActive)
+            {
+                CcScheduleLazyWriteScan(FALSE);
             }
 
             //
             //  Move to the dirty list.
             //
 
-            RemoveEntryList( &SharedCacheMap->SharedCacheMapLinks );
-            InsertTailList( &CcDirtySharedCacheMapList.SharedCacheMapLinks,
-                            &SharedCacheMap->SharedCacheMapLinks );
+            RemoveEntryList(&SharedCacheMap->SharedCacheMapLinks);
+            InsertTailList(&CcDirtySharedCacheMapList.SharedCacheMapLinks, &SharedCacheMap->SharedCacheMapLinks);
 
             Mbcb->ResumeWritePage = FirstPage;
         }
@@ -2515,16 +2507,19 @@ Return Value:
         //  Loop to set all of the bits and adjust the DirtyPage totals.
         //
 
-        for ( ; FirstPage <= LastPage; FirstPage++) {
+        for (; FirstPage <= LastPage; FirstPage++)
+        {
 
-            if ((*MaskPtr & Mask) == 0) {
-                CcChargeMaskDirtyPages( SharedCacheMap, Mbcb, BitmapRange, 1 );
+            if ((*MaskPtr & Mask) == 0)
+            {
+                CcChargeMaskDirtyPages(SharedCacheMap, Mbcb, BitmapRange, 1);
                 *MaskPtr |= Mask;
             }
 
             Mask <<= 1;
 
-            if (Mask == 0) {
+            if (Mask == 0)
+            {
 
                 MaskPtr += 1;
                 Mask = 1;
@@ -2537,16 +2532,17 @@ Return Value:
 
         LastPage = FileOffset->QuadPart + Length;
 
-        if (LastPage > SharedCacheMap->ValidDataGoal.QuadPart) {
+        if (LastPage > SharedCacheMap->ValidDataGoal.QuadPart)
+        {
             SharedCacheMap->ValidDataGoal.QuadPart = (LONGLONG)LastPage;
         }
 
         CcReleaseMasterLockFromDpcLevel();
 
-    //
-    //  Continue until we have actually set the bits (there is a continue
-    //  which just wants to loop back and allocate another buffer).
-    //
+        //
+        //  Continue until we have actually set the bits (there is a continue
+        //  which just wants to loop back and allocate another buffer).
+        //
 
     } while (Mask == 0);
 
@@ -2554,20 +2550,17 @@ Return Value:
     //  Now if we preallocated a bitmap buffer, free it on the way out.
     //
 
-    if (Bitmap != NULL) {
+    if (Bitmap != NULL)
+    {
         CcAcquireVacbLockAtDpcLevel();
-        CcDeallocateVacbLevel( (PVACB *)Bitmap, FALSE );
+        CcDeallocateVacbLevel((PVACB *)Bitmap, FALSE);
         CcReleaseVacbLockFromDpcLevel();
     }
-    KeReleaseInStackQueuedSpinLock( &LockHandle );
+    KeReleaseInStackQueuedSpinLock(&LockHandle);
 }
 
-
-VOID
-CcSetDirtyPinnedData (
-    IN PVOID BcbVoid,
-    IN PLARGE_INTEGER Lsn OPTIONAL
-    )
+
+VOID CcSetDirtyPinnedData(IN PVOID BcbVoid, IN PLARGE_INTEGER Lsn OPTIONAL)
 
 /*++
 
@@ -2597,7 +2590,7 @@ Return Value:
     KLOCK_QUEUE_HANDLE LockHandle;
     PSHARED_CACHE_MAP SharedCacheMap;
 
-    DebugTrace(+1, me, "CcSetDirtyPinnedData: Bcb = %08lx\n", BcbVoid );
+    DebugTrace(+1, me, "CcSetDirtyPinnedData: Bcb = %08lx\n", BcbVoid);
 
     //
     //  Assume this is a normal Bcb, and set up for loop below.
@@ -2612,7 +2605,8 @@ Return Value:
     //  for the loop.
     //
 
-    if (Bcbs[0]->NodeTypeCode == CACHE_NTC_OBCB) {
+    if (Bcbs[0]->NodeTypeCode == CACHE_NTC_OBCB)
+    {
         BcbPtrPtr = &((POBCB)Bcbs[0])->Bcbs[0];
     }
 
@@ -2620,7 +2614,8 @@ Return Value:
     //  Loop to set all Bcbs dirty
     //
 
-    while (*BcbPtrPtr != NULL) {
+    while (*BcbPtrPtr != NULL)
+    {
 
         Bcbs[0] = *(BcbPtrPtr++);
 
@@ -2637,9 +2632,10 @@ Return Value:
         //  may be changing lists.
         //
 
-        KeAcquireInStackQueuedSpinLock( &SharedCacheMap->BcbSpinLock, &LockHandle );
+        KeAcquireInStackQueuedSpinLock(&SharedCacheMap->BcbSpinLock, &LockHandle);
 
-        if (!Bcbs[0]->Dirty) {
+        if (!Bcbs[0]->Dirty)
+        {
 
             ULONG Pages = Bcbs[0]->ByteLength >> PAGE_SHIFT;
 
@@ -2654,7 +2650,8 @@ Return Value:
             //  Initialize the OldestLsn field.
             //
 
-            if (ARGUMENT_PRESENT(Lsn)) {
+            if (ARGUMENT_PRESENT(Lsn))
+            {
                 Bcbs[0]->OldestLsn = *Lsn;
                 Bcbs[0]->NewestLsn = *Lsn;
             }
@@ -2667,23 +2664,23 @@ Return Value:
             //
 
             CcAcquireMasterLockAtDpcLevel();
-            if ((SharedCacheMap->DirtyPages == 0) &&
-                !FlagOn(SharedCacheMap->Flags, DISABLE_WRITE_BEHIND)) {
+            if ((SharedCacheMap->DirtyPages == 0) && !FlagOn(SharedCacheMap->Flags, DISABLE_WRITE_BEHIND))
+            {
 
                 //
                 //  If the lazy write scan is not active, then start it.
                 //
 
-                if (!LazyWriter.ScanActive) {
-                    CcScheduleLazyWriteScan( FALSE );
+                if (!LazyWriter.ScanActive)
+                {
+                    CcScheduleLazyWriteScan(FALSE);
                 }
 
-                RemoveEntryList( &SharedCacheMap->SharedCacheMapLinks );
-                InsertTailList( &CcDirtySharedCacheMapList.SharedCacheMapLinks,
-                                &SharedCacheMap->SharedCacheMapLinks );
+                RemoveEntryList(&SharedCacheMap->SharedCacheMapLinks);
+                InsertTailList(&CcDirtySharedCacheMapList.SharedCacheMapLinks, &SharedCacheMap->SharedCacheMapLinks);
             }
-            
-            CcChargePinDirtyPages( SharedCacheMap, Pages );
+
+            CcChargePinDirtyPages(SharedCacheMap, Pages);
             CcReleaseMasterLockFromDpcLevel();
         }
 
@@ -2692,13 +2689,16 @@ Return Value:
         //  change it.
         //
 
-        if (ARGUMENT_PRESENT(Lsn)) {
+        if (ARGUMENT_PRESENT(Lsn))
+        {
 
-            if ((Bcbs[0]->OldestLsn.QuadPart == 0) || (Lsn->QuadPart < Bcbs[0]->OldestLsn.QuadPart)) {
+            if ((Bcbs[0]->OldestLsn.QuadPart == 0) || (Lsn->QuadPart < Bcbs[0]->OldestLsn.QuadPart))
+            {
                 Bcbs[0]->OldestLsn = *Lsn;
             }
 
-            if (Lsn->QuadPart > Bcbs[0]->NewestLsn.QuadPart) {
+            if (Lsn->QuadPart > Bcbs[0]->NewestLsn.QuadPart)
+            {
                 Bcbs[0]->NewestLsn = *Lsn;
             }
         }
@@ -2707,23 +2707,21 @@ Return Value:
         //  See if we need to advance our goal for ValidDataLength.
         //
 
-        if ( Bcbs[0]->BeyondLastByte.QuadPart > SharedCacheMap->ValidDataGoal.QuadPart ) {
+        if (Bcbs[0]->BeyondLastByte.QuadPart > SharedCacheMap->ValidDataGoal.QuadPart)
+        {
 
             SharedCacheMap->ValidDataGoal = Bcbs[0]->BeyondLastByte;
         }
 
-        KeReleaseInStackQueuedSpinLock( &LockHandle );
+        KeReleaseInStackQueuedSpinLock(&LockHandle);
     }
 
-    DebugTrace(-1, me, "CcSetDirtyPinnedData -> VOID\n", 0 );
+    DebugTrace(-1, me, "CcSetDirtyPinnedData -> VOID\n", 0);
 }
 
-
+
 NTSTATUS
-CcSetValidData (
-    IN PFILE_OBJECT FileObject,
-    IN PLARGE_INTEGER ValidDataLength
-    )
+CcSetValidData(IN PFILE_OBJECT FileObject, IN PLARGE_INTEGER ValidDataLength)
 
 /*++
 
@@ -2754,10 +2752,9 @@ Return Value:
     KEVENT Event;
     PIRP Irp;
 
-    DebugTrace(+1, me, "CcSetValidData:\n", 0 );
-    DebugTrace( 0, me, "    FileObject = %08lx\n", FileObject );
-    DebugTrace2(0, me, "    ValidDataLength = %08lx, %08lx\n",
-                ValidDataLength->LowPart, ValidDataLength->HighPart );
+    DebugTrace(+1, me, "CcSetValidData:\n", 0);
+    DebugTrace(0, me, "    FileObject = %08lx\n", FileObject);
+    DebugTrace2(0, me, "    ValidDataLength = %08lx, %08lx\n", ValidDataLength->LowPart, ValidDataLength->HighPart);
 
     //
     //  Copy ValidDataLength to our buffer.
@@ -2769,23 +2766,24 @@ Return Value:
     //  Initialize the event.
     //
 
-    KeInitializeEvent( &Event, NotificationEvent, FALSE );
+    KeInitializeEvent(&Event, NotificationEvent, FALSE);
 
     //
     //  Begin by getting a pointer to the device object that the file resides
     //  on.
     //
 
-    DeviceObject = IoGetRelatedDeviceObject( FileObject );
+    DeviceObject = IoGetRelatedDeviceObject(FileObject);
 
     //
     //  Allocate an I/O Request Packet (IRP) for this in-page operation.
     //
 
-    Irp = IoAllocateIrp( DeviceObject->StackSize, FALSE );
-    if (Irp == NULL) {
+    Irp = IoAllocateIrp(DeviceObject->StackSize, FALSE);
+    if (Irp == NULL)
+    {
 
-        DebugTrace(-1, me, "CcSetValidData-> STATUS_INSUFFICIENT_RESOURCES\n", 0 );
+        DebugTrace(-1, me, "CcSetValidData-> STATUS_INSUFFICIENT_RESOURCES\n", 0);
 
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -2796,7 +2794,7 @@ Return Value:
     //  driver.
     //
 
-    IrpSp = IoGetNextIrpStackLocation( Irp );
+    IrpSp = IoGetNextIrpStackLocation(Irp);
 
     //
     //  Fill in the IRP according to this request, setting the flags to
@@ -2828,19 +2826,16 @@ Return Value:
     //  is a VPB associated with the device.  This routine should not raise.
     //
 
-    Status = IoCallDriver( DeviceObject, Irp );
+    Status = IoCallDriver(DeviceObject, Irp);
 
     //
     //  If pending is returned (which is a successful status),
     //  we must wait for the request to complete.
     //
 
-    if (Status == STATUS_PENDING) {
-        KeWaitForSingleObject( &Event,
-                               Executive,
-                               KernelMode,
-                               FALSE,
-                               (PLARGE_INTEGER)NULL);
+    if (Status == STATUS_PENDING)
+    {
+        KeWaitForSingleObject(&Event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
     }
 
     //
@@ -2849,29 +2844,24 @@ Return Value:
     //  there, then test the final status after that.
     //
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         IoStatus.Status = Status;
     }
 
-    DebugTrace(-1, me, "CcSetValidData-> %08lx\n", IoStatus.Status );
+    DebugTrace(-1, me, "CcSetValidData-> %08lx\n", IoStatus.Status);
 
     return IoStatus.Status;
 }
 
-
+
 //
 //  Internal Support Routine
 //
 
 BOOLEAN
-CcAcquireByteRangeForWrite (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN PLARGE_INTEGER TargetOffset OPTIONAL,
-    IN ULONG TargetLength,
-    OUT PLARGE_INTEGER FileOffset,
-    OUT PULONG Length,
-    OUT PBCB *FirstBcb
-    )
+CcAcquireByteRangeForWrite(IN PSHARED_CACHE_MAP SharedCacheMap, IN PLARGE_INTEGER TargetOffset OPTIONAL,
+                           IN ULONG TargetLength, OUT PLARGE_INTEGER FileOffset, OUT PULONG Length, OUT PBCB *FirstBcb)
 
 /*++
 
@@ -2917,7 +2907,7 @@ Return Value:
     KLOCK_QUEUE_HANDLE LockHandle;
     PMBCB Mbcb;
     PBCB Bcb;
-    LARGE_INTEGER LsnToFlushTo = {0, 0};
+    LARGE_INTEGER LsnToFlushTo = { 0, 0 };
 
     LOGICAL BcbLookasideCheck = FALSE;
 
@@ -2930,7 +2920,7 @@ Return Value:
     LONGLONG LastDirtyPage = MAXLONGLONG;
 
     DebugTrace(+1, me, "CcAcquireByteRangeForWrite:\n", 0);
-    DebugTrace( 0, me, "    SharedCacheMap = %08lx\n", SharedCacheMap);
+    DebugTrace(0, me, "    SharedCacheMap = %08lx\n", SharedCacheMap);
 
     //
     //  Initially clear outputs.
@@ -2943,7 +2933,7 @@ Return Value:
     //  We must acquire the SharedCacheMap->BcbSpinLock.
     //
 
-    KeAcquireInStackQueuedSpinLock( &SharedCacheMap->BcbSpinLock, &LockHandle );
+    KeAcquireInStackQueuedSpinLock(&SharedCacheMap->BcbSpinLock, &LockHandle);
 
     //
     //  See if there is a simple Mask Bcb, and if there is anything dirty in
@@ -2952,16 +2942,16 @@ Return Value:
 
     Mbcb = SharedCacheMap->Mbcb;
 
-    if ((Mbcb != NULL) &&
-        (Mbcb->DirtyPages != 0) &&
-        ((Mbcb->PagesToWrite != 0) || (TargetLength != 0))) {
+    if ((Mbcb != NULL) && (Mbcb->DirtyPages != 0) && ((Mbcb->PagesToWrite != 0) || (TargetLength != 0)))
+    {
 
         //
         //  If a target range was specified (outside call to CcFlush for a range),
         //  then calculate FirstPage and EndPtr based on these inputs.
         //
 
-        if (ARGUMENT_PRESENT(TargetOffset)) {
+        if (ARGUMENT_PRESENT(TargetOffset))
+        {
 
             FirstDirtyPage = TargetOffset->QuadPart >> PAGE_SHIFT;
             LastDirtyPage = (TargetOffset->QuadPart + TargetLength - 1) >> PAGE_SHIFT;
@@ -2970,7 +2960,7 @@ Return Value:
             //  Find the bitmap range containing the first dirty page.
             //
 
-            BitmapRange = CcFindBitmapRangeToClean( Mbcb, FirstDirtyPage );
+            BitmapRange = CcFindBitmapRangeToClean(Mbcb, FirstDirtyPage);
 
             //
             //  If the target range is not dirty, get out.  We may have even
@@ -2978,23 +2968,28 @@ Return Value:
             //
 
             if ((LastDirtyPage < (BitmapRange->BasePage + BitmapRange->FirstDirtyPage)) ||
-                (FirstDirtyPage > (BitmapRange->BasePage + BitmapRange->LastDirtyPage))) {
+                (FirstDirtyPage > (BitmapRange->BasePage + BitmapRange->LastDirtyPage)))
+            {
 
                 goto Scan_Bcbs;
             }
 
-            if (LastDirtyPage < (BitmapRange->BasePage + BitmapRange->LastDirtyPage)) {
+            if (LastDirtyPage < (BitmapRange->BasePage + BitmapRange->LastDirtyPage))
+            {
                 EndPtr = &BitmapRange->Bitmap[(ULONG)(LastDirtyPage - BitmapRange->BasePage) / 32];
-            } else {
+            }
+            else
+            {
                 EndPtr = &BitmapRange->Bitmap[BitmapRange->LastDirtyPage / 32];
             }
 
 
-        //
-        //  Otherwise, for the Lazy Writer pick up where we left off.
-        //
-
-        } else {
+            //
+            //  Otherwise, for the Lazy Writer pick up where we left off.
+            //
+        }
+        else
+        {
 
             //
             //  If a length was specified, then it is an explicit flush, and
@@ -3003,7 +2998,8 @@ Return Value:
             //
 
             FirstDirtyPage = 0;
-            if (TargetLength == 0) {
+            if (TargetLength == 0)
+            {
                 FirstDirtyPage = Mbcb->ResumeWritePage;
             }
 
@@ -3011,7 +3007,7 @@ Return Value:
             //  Now find the next (cyclic) dirty page from this point.
             //
 
-            BitmapRange = CcFindBitmapRangeToClean( Mbcb, FirstDirtyPage );
+            BitmapRange = CcFindBitmapRangeToClean(Mbcb, FirstDirtyPage);
 
             //
             //  If the page we thought we were looking for is beyond the last dirty page
@@ -3020,7 +3016,8 @@ Return Value:
             //  this range.
             //
 
-            if (FirstDirtyPage > (BitmapRange->BasePage + BitmapRange->LastDirtyPage)) {
+            if (FirstDirtyPage > (BitmapRange->BasePage + BitmapRange->LastDirtyPage))
+            {
                 FirstDirtyPage = BitmapRange->BasePage + BitmapRange->FirstDirtyPage;
             }
 
@@ -3031,7 +3028,8 @@ Return Value:
         //  Now we can skip over any clean pages.
         //
 
-        if (FirstDirtyPage < (BitmapRange->BasePage + BitmapRange->FirstDirtyPage)) {
+        if (FirstDirtyPage < (BitmapRange->BasePage + BitmapRange->FirstDirtyPage))
+        {
             FirstDirtyPage = BitmapRange->BasePage + BitmapRange->FirstDirtyPage;
         }
 
@@ -3051,7 +3049,8 @@ Return Value:
         //  starting at the next longword.
         //
 
-        if ((*MaskPtr & Mask) == 0) {
+        if ((*MaskPtr & Mask) == 0)
+        {
 
             //
             //  Before entering loop, set all mask bits and insure we increment from
@@ -3066,7 +3065,8 @@ Return Value:
             //  nonzero.
             //
 
-            do {
+            do
+            {
 
                 MaskPtr += 1;
                 FirstDirtyPage += 32;
@@ -3077,14 +3077,16 @@ Return Value:
                 //  longword.
                 //
 
-                if (MaskPtr > EndPtr) {
+                if (MaskPtr > EndPtr)
+                {
 
                     //
                     //  We can backup the last dirty page hint to where we
                     //  started scanning, if we are the lazy writer.
                     //
 
-                    if (TargetLength == 0) {
+                    if (TargetLength == 0)
+                    {
                         ASSERT(OriginalFirstDirtyPage >= BitmapRange->FirstDirtyPage);
                         BitmapRange->LastDirtyPage = OriginalFirstDirtyPage - 1;
                     }
@@ -3094,7 +3096,8 @@ Return Value:
                     //  to move on to the next range with dirty pages.
                     //
 
-                    do {
+                    do
+                    {
 
                         //
                         //  Go to the next range.
@@ -3106,14 +3109,16 @@ Return Value:
                         //  Did we hit the listhead?
                         //
 
-                        if (BitmapRange == (PBITMAP_RANGE)&Mbcb->BitmapRanges) {
+                        if (BitmapRange == (PBITMAP_RANGE)&Mbcb->BitmapRanges)
+                        {
 
                             //
                             //  If this is an explicit flush, then it is time to
                             //  get out.
                             //
 
-                            if (TargetLength != 0) {
+                            if (TargetLength != 0)
+                            {
                                 goto Scan_Bcbs;
                             }
 
@@ -3133,7 +3138,8 @@ Return Value:
                     //
 
                     if ((LastDirtyPage < (BitmapRange->BasePage + BitmapRange->FirstDirtyPage)) ||
-                        (FirstDirtyPage > (BitmapRange->BasePage + BitmapRange->LastDirtyPage))) {
+                        (FirstDirtyPage > (BitmapRange->BasePage + BitmapRange->LastDirtyPage)))
+                    {
 
                         goto Scan_Bcbs;
                     }
@@ -3161,7 +3167,8 @@ Return Value:
         //  Now loop to find the first set bit.
         //
 
-        while ((*MaskPtr & Mask) == 0) {
+        while ((*MaskPtr & Mask) == 0)
+        {
 
             Mask <<= 1;
             FirstDirtyPage += 1;
@@ -3172,9 +3179,11 @@ Return Value:
         //  beyond the specified range or a dirty Bcb in the range.
         //
 
-        if (ARGUMENT_PRESENT(TargetOffset)) {
+        if (ARGUMENT_PRESENT(TargetOffset))
+        {
 
-            if (FirstDirtyPage >= ((TargetOffset->QuadPart + TargetLength + PAGE_SIZE - 1) >> PAGE_SHIFT)) {
+            if (FirstDirtyPage >= ((TargetOffset->QuadPart + TargetLength + PAGE_SIZE - 1) >> PAGE_SHIFT))
+            {
 
                 goto Scan_Bcbs;
             }
@@ -3189,14 +3198,15 @@ Return Value:
             //  to happen.
             //
 
-            if (!IsListEmpty(&SharedCacheMap->BcbList)) {
+            if (!IsListEmpty(&SharedCacheMap->BcbList))
+            {
 
                 BcbLookasideCheck = TRUE;
                 goto Scan_Bcbs;
             }
         }
 
-Accept_Page:
+    Accept_Page:
 
         //
         //  Now loop to count the set bits at that point, clearing them as we
@@ -3209,8 +3219,10 @@ Accept_Page:
         //
 
         while (((*MaskPtr & Mask) != 0) && (*Length < (MAX_WRITE_BEHIND / PAGE_SIZE)) &&
-               (!ARGUMENT_PRESENT(TargetOffset) || ((FirstDirtyPage + *Length) <
-                                                    (ULONG)((TargetOffset->QuadPart + TargetLength + PAGE_SIZE - 1) >> PAGE_SHIFT)))) {
+               (!ARGUMENT_PRESENT(TargetOffset) ||
+                ((FirstDirtyPage + *Length) <
+                 (ULONG)((TargetOffset->QuadPart + TargetLength + PAGE_SIZE - 1) >> PAGE_SHIFT))))
+        {
 
             ASSERT(MaskPtr <= (&BitmapRange->Bitmap[BitmapRange->LastDirtyPage / 32]));
 
@@ -3218,12 +3230,14 @@ Accept_Page:
             *Length += 1;
             Mask <<= 1;
 
-            if (Mask == 0) {
+            if (Mask == 0)
+            {
 
                 MaskPtr += 1;
                 Mask = 1;
 
-                if (MaskPtr > EndPtr) {
+                if (MaskPtr > EndPtr)
+                {
                     break;
                 }
             }
@@ -3234,11 +3248,13 @@ Accept_Page:
         //  possibly clearing this count.
         //
 
-        if (*Length < Mbcb->PagesToWrite) {
+        if (*Length < Mbcb->PagesToWrite)
+        {
 
             Mbcb->PagesToWrite -= *Length;
-
-        } else {
+        }
+        else
+        {
 
             Mbcb->PagesToWrite = 0;
         }
@@ -3252,15 +3268,18 @@ Accept_Page:
         BitmapRange->DirtyPages -= *Length;
 
         CcAcquireMasterLockAtDpcLevel();
-        CcDeductDirtyPages( SharedCacheMap, *Length );
+        CcDeductDirtyPages(SharedCacheMap, *Length);
 
         //
         //  Normally we need to reduce CcPagesYetToWrite appropriately.
         //
 
-        if (CcPagesYetToWrite > *Length) {
+        if (CcPagesYetToWrite > *Length)
+        {
             CcPagesYetToWrite -= *Length;
-        } else {
+        }
+        else
+        {
             CcPagesYetToWrite = 0;
         }
 
@@ -3269,11 +3288,11 @@ Accept_Page:
         //  back to the clean list.
         //
 
-        if (SharedCacheMap->DirtyPages == 0) {
+        if (SharedCacheMap->DirtyPages == 0)
+        {
 
-            RemoveEntryList( &SharedCacheMap->SharedCacheMapLinks );
-            InsertTailList( &CcCleanSharedCacheMapList,
-                            &SharedCacheMap->SharedCacheMapLinks );
+            RemoveEntryList(&SharedCacheMap->SharedCacheMapLinks);
+            InsertTailList(&CcCleanSharedCacheMapList, &SharedCacheMap->SharedCacheMapLinks);
         }
         CcReleaseMasterLockFromDpcLevel();
 
@@ -3282,7 +3301,8 @@ Accept_Page:
         //  our hint fields now.
         //
 
-        if (BitmapRange->DirtyPages == 0) {
+        if (BitmapRange->DirtyPages == 0)
+        {
 
             BitmapRange->FirstDirtyPage = MAXULONG;
             BitmapRange->LastDirtyPage = 0;
@@ -3295,17 +3315,19 @@ Accept_Page:
 
             Mbcb->ResumeWritePage = BitmapRange->BasePage + (MBCB_BITMAP_BLOCK_SIZE * 8);
 
-        //
-        //  Otherwise we have to update the hint fields.
-        //
-
-        } else {
+            //
+            //  Otherwise we have to update the hint fields.
+            //
+        }
+        else
+        {
 
             //
             //  Advance the first dirty page hint if we can.
             //
 
-            if (BitmapRange->FirstDirtyPage == OriginalFirstDirtyPage) {
+            if (BitmapRange->FirstDirtyPage == OriginalFirstDirtyPage)
+            {
 
                 BitmapRange->FirstDirtyPage = (ULONG)(FirstDirtyPage - BitmapRange->BasePage) + *Length;
             }
@@ -3315,7 +3337,8 @@ Accept_Page:
             //  the Lazy Writer.
             //
 
-            if (TargetLength == 0) {
+            if (TargetLength == 0)
+            {
 
                 Mbcb->ResumeWritePage = FirstDirtyPage + *Length;
             }
@@ -3326,11 +3349,12 @@ Accept_Page:
         //  we have no more pages to write.
         //
 
-        if (IsListEmpty(&SharedCacheMap->BcbList)) {
+        if (IsListEmpty(&SharedCacheMap->BcbList))
+        {
             SharedCacheMap->PagesToWrite = Mbcb->PagesToWrite;
         }
 
-        KeReleaseInStackQueuedSpinLock( &LockHandle );
+        KeReleaseInStackQueuedSpinLock(&LockHandle);
 
         //
         //  Now form all of our outputs.  We calculated *Length as a page count,
@@ -3341,10 +3365,9 @@ Accept_Page:
         FileOffset->QuadPart = (LONGLONG)FirstDirtyPage << PAGE_SHIFT;
         *FirstBcb = NULL;
 
-        DebugTrace2(0, me, "    <FileOffset = %08lx, %08lx\n", FileOffset->LowPart,
-                                                               FileOffset->HighPart );
-        DebugTrace( 0, me, "    <Length = %08lx\n", *Length );
-        DebugTrace(-1, me, "CcAcquireByteRangeForWrite -> TRUE\n", 0 );
+        DebugTrace2(0, me, "    <FileOffset = %08lx, %08lx\n", FileOffset->LowPart, FileOffset->HighPart);
+        DebugTrace(0, me, "    <Length = %08lx\n", *Length);
+        DebugTrace(-1, me, "CcAcquireByteRangeForWrite -> TRUE\n", 0);
 
         return TRUE;
     }
@@ -3366,9 +3389,10 @@ Scan_Bcbs:
     //  (escape is at the bottom).
     //
 
-    while (TRUE) {
+    while (TRUE)
+    {
 
-        Bcb = CONTAINING_RECORD( SharedCacheMap->BcbList.Blink, BCB, BcbLinks );
+        Bcb = CONTAINING_RECORD(SharedCacheMap->BcbList.Blink, BCB, BcbLinks);
 
         //
         //  If we are to resume from a nonzero FileOffset, call CcFindBcb
@@ -3376,17 +3400,22 @@ Scan_Bcbs:
         //  use of significant pinned access, of course.
         //
 
-        if (FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED)) {
+        if (FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED))
+        {
 
             PLARGE_INTEGER StartingOffset;
 
-            if (ARGUMENT_PRESENT(TargetOffset)) {
+            if (ARGUMENT_PRESENT(TargetOffset))
+            {
                 StartingOffset = TargetOffset;
-            } else {
+            }
+            else
+            {
                 StartingOffset = (PLARGE_INTEGER)&SharedCacheMap->BeyondLastFlush;
             }
 
-            if (StartingOffset->QuadPart != 0) {
+            if (StartingOffset->QuadPart != 0)
+            {
 
                 LARGE_INTEGER StartingOffsetBias;
 
@@ -3397,24 +3426,24 @@ Scan_Bcbs:
                 //  a lower FileOffset was returned, so we want to move forward one.
                 //
 
-                if (!CcFindBcb( SharedCacheMap,
-                                StartingOffset,
-                                &StartingOffsetBias,
-                                &Bcb )) {
-                    Bcb = CONTAINING_RECORD( Bcb->BcbLinks.Blink, BCB, BcbLinks );
+                if (!CcFindBcb(SharedCacheMap, StartingOffset, &StartingOffsetBias, &Bcb))
+                {
+                    Bcb = CONTAINING_RECORD(Bcb->BcbLinks.Blink, BCB, BcbLinks);
                 }
             }
         }
 
-        while (&Bcb->BcbLinks != &SharedCacheMap->BcbList) {
+        while (&Bcb->BcbLinks != &SharedCacheMap->BcbList)
+        {
 
             //
             //  Skip over this item if it is a listhead.
             //
 
-            if (Bcb->NodeTypeCode != CACHE_NTC_BCB) {
+            if (Bcb->NodeTypeCode != CACHE_NTC_BCB)
+            {
 
-                Bcb = CONTAINING_RECORD( Bcb->BcbLinks.Blink, BCB, BcbLinks );
+                Bcb = CONTAINING_RECORD(Bcb->BcbLinks.Blink, BCB, BcbLinks);
                 continue;
             }
 
@@ -3423,8 +3452,8 @@ Scan_Bcbs:
             //  higher Bcb.
             //
 
-            if (ARGUMENT_PRESENT(TargetOffset) &&
-                ((TargetOffset->QuadPart + TargetLength) <= Bcb->FileOffset.QuadPart)) {
+            if (ARGUMENT_PRESENT(TargetOffset) && ((TargetOffset->QuadPart + TargetLength) <= Bcb->FileOffset.QuadPart))
+            {
 
                 break;
             }
@@ -3434,7 +3463,8 @@ Scan_Bcbs:
             //  to start one.
             //
 
-            if (*Length == 0) {
+            if (*Length == 0)
+            {
 
                 //
                 //  Else see if the Bcb is dirty, and is in our specified range, if
@@ -3443,11 +3473,11 @@ Scan_Bcbs:
 
                 if (!Bcb->Dirty ||
                     (ARGUMENT_PRESENT(TargetOffset) && (TargetOffset->QuadPart >= Bcb->BeyondLastByte.QuadPart)) ||
-                    (!ARGUMENT_PRESENT(TargetOffset) && (Bcb->FileOffset.QuadPart < SharedCacheMap->BeyondLastFlush))) {
+                    (!ARGUMENT_PRESENT(TargetOffset) && (Bcb->FileOffset.QuadPart < SharedCacheMap->BeyondLastFlush)))
+                {
 
-                    Bcb = CONTAINING_RECORD( Bcb->BcbLinks.Blink, BCB, BcbLinks );
+                    Bcb = CONTAINING_RECORD(Bcb->BcbLinks.Blink, BCB, BcbLinks);
                     continue;
-
                 }
 
                 //
@@ -3456,7 +3486,8 @@ Scan_Bcbs:
                 //  the first dirty range.
                 //
 
-                if (BcbLookasideCheck && FirstDirtyPage <= (ULONG)(Bcb->FileOffset.QuadPart >> PAGE_SHIFT)) {
+                if (BcbLookasideCheck && FirstDirtyPage <= (ULONG)(Bcb->FileOffset.QuadPart >> PAGE_SHIFT))
+                {
                     goto Accept_Page;
                 }
             }
@@ -3474,11 +3505,12 @@ Scan_Bcbs:
             //  CcReleaseByteRangeFromWrite.
             //
 
-            else {
-                if (!Bcb->Dirty || ( Bcb->FileOffset.QuadPart != ( FileOffset->QuadPart + (LONGLONG)*Length)) ||
-                    (*Length + Bcb->ByteLength > MAX_WRITE_BEHIND) ||
-                    (Bcb->PinCount != 0) ||
-                    ((Bcb->FileOffset.QuadPart & (VACB_SIZE_OF_FIRST_LEVEL - 1)) == 0)) {
+            else
+            {
+                if (!Bcb->Dirty || (Bcb->FileOffset.QuadPart != (FileOffset->QuadPart + (LONGLONG)*Length)) ||
+                    (*Length + Bcb->ByteLength > MAX_WRITE_BEHIND) || (Bcb->PinCount != 0) ||
+                    ((Bcb->FileOffset.QuadPart & (VACB_SIZE_OF_FIRST_LEVEL - 1)) == 0))
+                {
 
                     break;
                 }
@@ -3496,10 +3528,11 @@ Scan_Bcbs:
             //  Release the SpinLock before waiting on the resource.
             //
 
-            KeReleaseInStackQueuedSpinLock( &LockHandle );
+            KeReleaseInStackQueuedSpinLock(&LockHandle);
 
             if (FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED) &&
-                !FlagOn(SharedCacheMap->Flags, DISABLE_WRITE_BEHIND)) {
+                !FlagOn(SharedCacheMap->Flags, DISABLE_WRITE_BEHIND))
+            {
 
                 //
                 //  Now acquire the Bcb exclusive, so that we know that nobody
@@ -3515,10 +3548,10 @@ Scan_Bcbs:
                 //  foreground processing will not be acquiring the Bcb either.
                 //
 
-                if (!ExAcquireResourceExclusiveLite( &Bcb->Resource,
-                                                 (BOOLEAN)(*Length == 0) )) {
+                if (!ExAcquireResourceExclusiveLite(&Bcb->Resource, (BOOLEAN)(*Length == 0)))
+                {
 
-                    DebugTrace( 0, me, "Could not acquire 2nd Bcb\n", 0 );
+                    DebugTrace(0, me, "Could not acquire 2nd Bcb\n", 0);
 
                     //
                     //  Release the Bcb count we took out above.  We say
@@ -3527,17 +3560,17 @@ Scan_Bcbs:
                     //  the count.
                     //
 
-                    CcUnpinFileData( Bcb, TRUE, UNPIN );
+                    CcUnpinFileData(Bcb, TRUE, UNPIN);
 
                     //
                     //  When we leave the loop, we have to have the spin lock
                     //
 
-                    KeAcquireInStackQueuedSpinLock( &SharedCacheMap->BcbSpinLock, &LockHandle );
+                    KeAcquireInStackQueuedSpinLock(&SharedCacheMap->BcbSpinLock, &LockHandle);
                     break;
                 }
 
-                KeAcquireInStackQueuedSpinLock( &SharedCacheMap->BcbSpinLock, &LockHandle );
+                KeAcquireInStackQueuedSpinLock(&SharedCacheMap->BcbSpinLock, &LockHandle);
 
                 //
                 //  If someone has the file open WriteThrough, then the Bcb may no
@@ -3545,17 +3578,18 @@ Scan_Bcbs:
                 //  PinCount we incremented and free the resource.
                 //
 
-                if (!Bcb->Dirty) {
+                if (!Bcb->Dirty)
+                {
 
                     //
                     //  Release the spinlock so that we can call CcUnpinFileData
                     //
 
-                    KeReleaseInStackQueuedSpinLock( &LockHandle );
+                    KeReleaseInStackQueuedSpinLock(&LockHandle);
 
-                    CcUnpinFileData( Bcb, FALSE, UNPIN );
+                    CcUnpinFileData(Bcb, FALSE, UNPIN);
 
-                    KeAcquireInStackQueuedSpinLock( &SharedCacheMap->BcbSpinLock, &LockHandle );
+                    KeAcquireInStackQueuedSpinLock(&SharedCacheMap->BcbSpinLock, &LockHandle);
 
                     //
                     //  Now if we already have some data we can just break to return
@@ -3563,33 +3597,36 @@ Scan_Bcbs:
                     //  may have gone away.
                     //
 
-                    if (*Length != 0) {
+                    if (*Length != 0)
+                    {
                         break;
                     }
-                    else {
+                    else
+                    {
 
-                        Bcb = CONTAINING_RECORD( SharedCacheMap->BcbList.Blink, BCB, BcbLinks );
+                        Bcb = CONTAINING_RECORD(SharedCacheMap->BcbList.Blink, BCB, BcbLinks);
                         continue;
                     }
                 }
 
-            //
-            //  If we are not in the disable modified write mode (normal user data)
-            //  then we must set the buffer clean before doing the write, since we
-            //  are unsynchronized with anyone producing dirty data.  That way if we,
-            //  for example, are writing data out while it is actively being changed,
-            //  at least the changer will mark the buffer dirty afterwards and cause
-            //  us to write it again later.
-            //
+                //
+                //  If we are not in the disable modified write mode (normal user data)
+                //  then we must set the buffer clean before doing the write, since we
+                //  are unsynchronized with anyone producing dirty data.  That way if we,
+                //  for example, are writing data out while it is actively being changed,
+                //  at least the changer will mark the buffer dirty afterwards and cause
+                //  us to write it again later.
+                //
+            }
+            else
+            {
 
-            } else {
+                CcUnpinFileData(Bcb, TRUE, SET_CLEAN);
 
-                CcUnpinFileData( Bcb, TRUE, SET_CLEAN );
-
-               KeAcquireInStackQueuedSpinLock( &SharedCacheMap->BcbSpinLock, &LockHandle );
+                KeAcquireInStackQueuedSpinLock(&SharedCacheMap->BcbSpinLock, &LockHandle);
             }
 
-            DebugTrace( 0, me, "Adding Bcb = %08lx to run\n", Bcb );
+            DebugTrace(0, me, "Adding Bcb = %08lx to run\n", Bcb);
 
             //
             //  No matter what, once we've reached this point we are returning
@@ -3605,7 +3642,8 @@ Scan_Bcbs:
             //  the Bcb with the highest FileOffset.
             //
 
-            if (*Length == 0) {
+            if (*Length == 0)
+            {
                 *FileOffset = Bcb->FileOffset;
             }
             *FirstBcb = Bcb;
@@ -3616,13 +3654,13 @@ Scan_Bcbs:
             //  remember the largest Lsn we are about to flush.
             //
 
-            if ((SharedCacheMap->FlushToLsnRoutine != NULL) &&
-                (Bcb->NewestLsn.QuadPart > LsnToFlushTo.QuadPart)) {
+            if ((SharedCacheMap->FlushToLsnRoutine != NULL) && (Bcb->NewestLsn.QuadPart > LsnToFlushTo.QuadPart))
+            {
 
                 LsnToFlushTo = Bcb->NewestLsn;
             }
 
-            Bcb = CONTAINING_RECORD( Bcb->BcbLinks.Blink, BCB, BcbLinks );
+            Bcb = CONTAINING_RECORD(Bcb->BcbLinks.Blink, BCB, BcbLinks);
         }
 
         //
@@ -3630,9 +3668,10 @@ Scan_Bcbs:
         //  since no Bcb has been found.
         //
 
-        if (BcbLookasideCheck) {
+        if (BcbLookasideCheck)
+        {
 
-            ASSERT( *Length == 0 );
+            ASSERT(*Length == 0);
             goto Accept_Page;
         }
 
@@ -3641,31 +3680,37 @@ Scan_Bcbs:
         //  PagesToWrite.
         //
 
-        if (*Length != 0) {
+        if (*Length != 0)
+        {
 
             //
             //  If this is the Lazy Writer, then update BeyondLastFlush and
             //  the PagesToWrite target.
             //
 
-            if (!ARGUMENT_PRESENT(TargetOffset)) {
+            if (!ARGUMENT_PRESENT(TargetOffset))
+            {
 
                 SharedCacheMap->BeyondLastFlush = FileOffset->QuadPart + *Length;
 
-                if (SharedCacheMap->PagesToWrite > (*Length >> PAGE_SHIFT)) {
+                if (SharedCacheMap->PagesToWrite > (*Length >> PAGE_SHIFT))
+                {
                     SharedCacheMap->PagesToWrite -= (*Length >> PAGE_SHIFT);
-                } else {
+                }
+                else
+                {
                     SharedCacheMap->PagesToWrite = 0;
                 }
             }
 
             break;
 
-        //
-        //  Else, if we scanned the entire file, get out - nothing to write now.
-        //
-
-        } else if ((SharedCacheMap->BeyondLastFlush == 0) || ARGUMENT_PRESENT(TargetOffset)) {
+            //
+            //  Else, if we scanned the entire file, get out - nothing to write now.
+            //
+        }
+        else if ((SharedCacheMap->BeyondLastFlush == 0) || ARGUMENT_PRESENT(TargetOffset))
+        {
             break;
         }
 
@@ -3682,20 +3727,23 @@ Scan_Bcbs:
     //  Now release the spinlock file while we go off and do the I/O
     //
 
-    KeReleaseInStackQueuedSpinLock( &LockHandle );
+    KeReleaseInStackQueuedSpinLock(&LockHandle);
 
     //
     //  If we need to flush to some Lsn, this is the time to do it now
     //  that we have found the largest Lsn and freed the spin lock.
     //
 
-    if (LsnToFlushTo.QuadPart != 0) {
+    if (LsnToFlushTo.QuadPart != 0)
+    {
 
-        try {
+        try
+        {
 
-            (*SharedCacheMap->FlushToLsnRoutine) ( SharedCacheMap->LogHandle,
-                                                   LsnToFlushTo );
-        } except( CcExceptionFilter( GetExceptionCode() )) {
+            (*SharedCacheMap->FlushToLsnRoutine)(SharedCacheMap->LogHandle, LsnToFlushTo);
+        }
+        except(CcExceptionFilter(GetExceptionCode()))
+        {
 
             //
             //  If there was an error, it will be raised.  We cannot
@@ -3713,20 +3761,20 @@ Scan_Bcbs:
             //  flush them again on the next sweep.
             //
 
-            do {
-                NextBcb = CONTAINING_RECORD( (*FirstBcb)->BcbLinks.Flink, BCB, BcbLinks );
+            do
+            {
+                NextBcb = CONTAINING_RECORD((*FirstBcb)->BcbLinks.Flink, BCB, BcbLinks);
 
                 //
                 //  Skip over any listheads.
                 //
 
-                if ((*FirstBcb)->NodeTypeCode == CACHE_NTC_BCB) {
+                if ((*FirstBcb)->NodeTypeCode == CACHE_NTC_BCB)
+                {
 
                     LastOffset = (*FirstBcb)->FileOffset;
 
-                    CcUnpinFileData( *FirstBcb,
-                                     BooleanFlagOn(SharedCacheMap->Flags, DISABLE_WRITE_BEHIND),
-                                     UNPIN );
+                    CcUnpinFileData(*FirstBcb, BooleanFlagOn(SharedCacheMap->Flags, DISABLE_WRITE_BEHIND), UNPIN);
                 }
 
                 *FirstBcb = NextBcb;
@@ -3744,27 +3792,20 @@ Scan_Bcbs:
     //  If we got anything, return TRUE.
     //
 
-    DebugTrace2(0, me, "    <FileOffset = %08lx, %08lx\n", FileOffset->LowPart,
-                                                           FileOffset->HighPart );
-    DebugTrace( 0, me, "    <Length = %08lx\n", *Length );
-    DebugTrace(-1, me, "CcAcquireByteRangeForWrite -> %02lx\n", *Length != 0 );
+    DebugTrace2(0, me, "    <FileOffset = %08lx, %08lx\n", FileOffset->LowPart, FileOffset->HighPart);
+    DebugTrace(0, me, "    <Length = %08lx\n", *Length);
+    DebugTrace(-1, me, "CcAcquireByteRangeForWrite -> %02lx\n", *Length != 0);
 
     return ((BOOLEAN)(*Length != 0));
 }
 
-
+
 //
 //  Internal Support Routine
 //
 
-VOID
-CcReleaseByteRangeFromWrite (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN PBCB FirstBcb,
-    IN BOOLEAN VerifyRequired
-    )
+VOID CcReleaseByteRangeFromWrite(IN PSHARED_CACHE_MAP SharedCacheMap, IN PLARGE_INTEGER FileOffset, IN ULONG Length,
+                                 IN PBCB FirstBcb, IN BOOLEAN VerifyRequired)
 
 /*++
 
@@ -3798,20 +3839,21 @@ Return Value:
     PBCB NextBcb;
 
     DebugTrace(+1, me, "CcReleaseByteRangeFromWrite:\n", 0);
-    DebugTrace2(0, me, "    FileOffset = %08lx, %08lx\n", FileOffset->LowPart,
-                                                          FileOffset->HighPart );
+    DebugTrace2(0, me, "    FileOffset = %08lx, %08lx\n", FileOffset->LowPart, FileOffset->HighPart);
 
     //
     //  If it is a mask Mbcb we are getting, then we only have to check
     //  for VerifyRequired.
     //
 
-    if (FirstBcb == NULL) {
+    if (FirstBcb == NULL)
+    {
 
         ASSERT(Length != 0);
 
-        if (VerifyRequired) {
-            CcSetDirtyInMask( SharedCacheMap, FileOffset, Length );
+        if (VerifyRequired)
+        {
+            CcSetDirtyInMask(SharedCacheMap, FileOffset, Length);
         }
 
         DebugTrace(-1, me, "CcReleaseByteRangeFromWrite -> VOID\n", 0);
@@ -3825,7 +3867,7 @@ Return Value:
     //  For PREfix's benefit (and ours), assert we really are starting with a Bcb.
     //
 
-    ASSERT( FirstBcb->NodeTypeCode == CACHE_NTC_BCB );
+    ASSERT(FirstBcb->NodeTypeCode == CACHE_NTC_BCB);
 
     //
     //  Now loop to free up all of the Bcbs.  If modified writing is disabled
@@ -3834,14 +3876,16 @@ Return Value:
     //  so it will not go away, and we only unpin it here.
     //
 
-    do {
-        NextBcb = CONTAINING_RECORD( FirstBcb->BcbLinks.Flink, BCB, BcbLinks );
+    do
+    {
+        NextBcb = CONTAINING_RECORD(FirstBcb->BcbLinks.Flink, BCB, BcbLinks);
 
         //
         //  Skip over any listheads.
         //
 
-        if (FirstBcb->NodeTypeCode == CACHE_NTC_BCB) {
+        if (FirstBcb->NodeTypeCode == CACHE_NTC_BCB)
+        {
 
             LastOffset = FirstBcb->FileOffset;
 
@@ -3851,11 +3895,10 @@ Return Value:
             //  did not get verify required.
             //
 
-            if (FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED)) {
+            if (FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED))
+            {
 
-                CcUnpinFileData( FirstBcb,
-                                 BooleanFlagOn(SharedCacheMap->Flags, DISABLE_WRITE_BEHIND),
-                                 SET_CLEAN );
+                CcUnpinFileData(FirstBcb, BooleanFlagOn(SharedCacheMap->Flags, DISABLE_WRITE_BEHIND), SET_CLEAN);
             }
 
             //
@@ -3864,15 +3907,16 @@ Return Value:
             //  to make sure the right thing happens with time stamps.
             //
 
-            if (VerifyRequired) {
-                CcSetDirtyPinnedData( FirstBcb, NULL );
+            if (VerifyRequired)
+            {
+                CcSetDirtyPinnedData(FirstBcb, NULL);
             }
 
             //
             //  Finally remove a pin count left over from CcAcquireByteRangeForWrite.
             //
 
-            CcUnpinFileData( FirstBcb, TRUE, UNPIN );
+            CcUnpinFileData(FirstBcb, TRUE, UNPIN);
         }
 
         FirstBcb = NextBcb;
@@ -3881,17 +3925,12 @@ Return Value:
     DebugTrace(-1, me, "CcReleaseByteRangeFromWrite -> VOID\n", 0);
 }
 
-
+
 //
 //  Internal Support Routine
 //
 
-VOID
-FASTCALL
-CcWriteBehind (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN PIO_STATUS_BLOCK IoStatus
-    )
+VOID FASTCALL CcWriteBehind(IN PSHARED_CACHE_MAP SharedCacheMap, IN PIO_STATUS_BLOCK IoStatus)
 
 /*++
 
@@ -3930,8 +3969,8 @@ Return Value:
     NTSTATUS Status;
     PVACB ActiveVacb = NULL;
 
-    DebugTrace(+1, me, "CcWriteBehind\n", 0 );
-    DebugTrace( 0, me, "    SharedCacheMap = %08lx\n", SharedCacheMap );
+    DebugTrace(+1, me, "CcWriteBehind\n", 0);
+    DebugTrace(0, me, "    SharedCacheMap = %08lx\n", SharedCacheMap);
 
     //
     //  First we have to acquire the file for LazyWrite, to avoid
@@ -3939,8 +3978,8 @@ Return Value:
     //  CallBack procedure specified to CcInitializeCacheMap.
     //
 
-    if (!(*SharedCacheMap->Callbacks->AcquireForLazyWrite)
-                            ( SharedCacheMap->LazyWriteContext, TRUE )) {
+    if (!(*SharedCacheMap->Callbacks->AcquireForLazyWrite)(SharedCacheMap->LazyWriteContext, TRUE))
+    {
 
         //
         //  The filesystem is hinting that it doesn't think that it can
@@ -3950,9 +3989,9 @@ Return Value:
         //  up the difference in some other cache map on this pass.
         //
 
-        CcAcquireMasterLock( &LockHandle.OldIrql );
+        CcAcquireMasterLock(&LockHandle.OldIrql);
         ClearFlag(SharedCacheMap->Flags, WRITE_QUEUED);
-        CcReleaseMasterLock( LockHandle.OldIrql );
+        CcReleaseMasterLock(LockHandle.OldIrql);
 
         IoStatus->Status = STATUS_FILE_LOCK_CONFLICT;
         return;
@@ -3964,11 +4003,12 @@ Return Value:
     //  file open.  We will free it below after dropping the spinlock.
     //
 
-    KeAcquireInStackQueuedSpinLock( &SharedCacheMap->BcbSpinLock, &LockHandle );
+    KeAcquireInStackQueuedSpinLock(&SharedCacheMap->BcbSpinLock, &LockHandle);
     CcAcquireMasterLockAtDpcLevel();
 
-    if ((SharedCacheMap->DirtyPages <= 1) || (SharedCacheMap->OpenCount == 0)) {
-        GetActiveVacbAtDpcLevel( SharedCacheMap, ActiveVacb, ActivePage, PageIsDirty );
+    if ((SharedCacheMap->DirtyPages <= 1) || (SharedCacheMap->OpenCount == 0))
+    {
+        GetActiveVacbAtDpcLevel(SharedCacheMap, ActiveVacb, ActivePage, PageIsDirty);
     }
 
     //
@@ -3977,14 +4017,15 @@ Return Value:
     //  still need to write file sizes.
     //
 
-    CcIncrementOpenCount( SharedCacheMap, 'brWS' );
+    CcIncrementOpenCount(SharedCacheMap, 'brWS');
 
     //
     //  If there is a mask bcb, then we need to establish a target for
     //  it to flush.
     //
 
-    if ((Mbcb = SharedCacheMap->Mbcb) != 0) {
+    if ((Mbcb = SharedCacheMap->Mbcb) != 0)
+    {
 
         //
         //  Set a target of pages to write, assuming that any Active
@@ -3993,22 +4034,24 @@ Return Value:
 
         Mbcb->PagesToWrite = Mbcb->DirtyPages + ((ActiveVacb != NULL) ? 1 : 0);
 
-        if (Mbcb->PagesToWrite > CcPagesYetToWrite) {
+        if (Mbcb->PagesToWrite > CcPagesYetToWrite)
+        {
 
             Mbcb->PagesToWrite = CcPagesYetToWrite;
         }
     }
 
     CcReleaseMasterLockFromDpcLevel();
-    KeReleaseInStackQueuedSpinLock( &LockHandle );
+    KeReleaseInStackQueuedSpinLock(&LockHandle);
 
     //
     //  Now free the active Vacb, if we found one.
     //
 
-    if (ActiveVacb != NULL) {
+    if (ActiveVacb != NULL)
+    {
 
-        CcFreeActiveVacb( SharedCacheMap, ActiveVacb, ActivePage, PageIsDirty );
+        CcFreeActiveVacb(SharedCacheMap, ActiveVacb, ActivePage, PageIsDirty);
     }
 
     //
@@ -4018,23 +4061,20 @@ Return Value:
     //  ignored.
     //
 
-    CcFlushCache( SharedCacheMap->FileObject->SectionObjectPointer,
-                  &CcNoDelay,
-                  1,
-                  IoStatus );
+    CcFlushCache(SharedCacheMap->FileObject->SectionObjectPointer, &CcNoDelay, 1, IoStatus);
 
     //
     //  No need for the Lazy Write resource now.
     //
 
-    (*SharedCacheMap->Callbacks->ReleaseFromLazyWrite)
-                        ( SharedCacheMap->LazyWriteContext );
+    (*SharedCacheMap->Callbacks->ReleaseFromLazyWrite)(SharedCacheMap->LazyWriteContext);
 
     //
     //  Check if we need to put up a popup.
     //
 
-    if (!NT_SUCCESS(IoStatus->Status) && !RetryError(IoStatus->Status)) {
+    if (!NT_SUCCESS(IoStatus->Status) && !RetryError(IoStatus->Status))
+    {
 
         //
         //  We lost writebehind data.  Bemoan our fate into the system event
@@ -4051,38 +4091,39 @@ Return Value:
         //
 
         CcLostDelayedWrites += 1;
-        
-        Status = IoQueryFileDosDeviceName( SharedCacheMap->FileObject, &FileNameInfo );
 
-        if ( Status == STATUS_SUCCESS ) {
-            IoRaiseInformationalHardError( STATUS_LOST_WRITEBEHIND_DATA, &FileNameInfo->Name, NULL );
+        Status = IoQueryFileDosDeviceName(SharedCacheMap->FileObject, &FileNameInfo);
 
-        } else {
-            if ( SharedCacheMap->FileObject->FileName.Length &&
-                 SharedCacheMap->FileObject->FileName.MaximumLength &&
-                 SharedCacheMap->FileObject->FileName.Buffer ) {
+        if (Status == STATUS_SUCCESS)
+        {
+            IoRaiseInformationalHardError(STATUS_LOST_WRITEBEHIND_DATA, &FileNameInfo->Name, NULL);
+        }
+        else
+        {
+            if (SharedCacheMap->FileObject->FileName.Length && SharedCacheMap->FileObject->FileName.MaximumLength &&
+                SharedCacheMap->FileObject->FileName.Buffer)
+            {
 
-                IoRaiseInformationalHardError( STATUS_LOST_WRITEBEHIND_DATA, &SharedCacheMap->FileObject->FileName, NULL );
+                IoRaiseInformationalHardError(STATUS_LOST_WRITEBEHIND_DATA, &SharedCacheMap->FileObject->FileName,
+                                              NULL);
             }
         }
 
-        CcLogError( SharedCacheMap->FileObject,
-                    ( Status == STATUS_SUCCESS ?
-                      &FileNameInfo->Name :
-                      &SharedCacheMap->FileObject->FileName ),
-                    IO_LOST_DELAYED_WRITE,
-                    IoStatus->Status,
-                    IRP_MJ_WRITE );
+        CcLogError(SharedCacheMap->FileObject,
+                   (Status == STATUS_SUCCESS ? &FileNameInfo->Name : &SharedCacheMap->FileObject->FileName),
+                   IO_LOST_DELAYED_WRITE, IoStatus->Status, IRP_MJ_WRITE);
 
-        if (FileNameInfo) {
+        if (FileNameInfo)
+        {
             ExFreePool(FileNameInfo);
         }
 
-    //
-    //  See if there is any deferred writes we can post.
-    //
-
-    } else if (!IsListEmpty(&CcDeferredWrites)) {
+        //
+        //  See if there is any deferred writes we can post.
+        //
+    }
+    else if (!IsListEmpty(&CcDeferredWrites))
+    {
         CcPostDeferredWrites();
     }
 
@@ -4090,7 +4131,7 @@ Return Value:
     //  Now acquire BcbSpinLock again to check for ValidData updates.
     //
 
-    KeAcquireInStackQueuedSpinLock( &SharedCacheMap->BcbSpinLock, &LockHandle );
+    KeAcquireInStackQueuedSpinLock(&SharedCacheMap->BcbSpinLock, &LockHandle);
 
     //
     //  If the the current ValidDataGoal is greater (or equal) than ValidDataLength,
@@ -4105,13 +4146,12 @@ Return Value:
     Status = STATUS_SUCCESS;
     if (FlagOn(SharedCacheMap->Flags, LAZY_WRITE_OCCURRED) &&
         (SharedCacheMap->ValidDataGoal.QuadPart >= SharedCacheMap->ValidDataLength.QuadPart) &&
-        (SharedCacheMap->ValidDataLength.QuadPart != MAXLONGLONG) &&
-        (SharedCacheMap->FileSize.QuadPart != 0)) {
+        (SharedCacheMap->ValidDataLength.QuadPart != MAXLONGLONG) && (SharedCacheMap->FileSize.QuadPart != 0))
+    {
 
         LARGE_INTEGER NewValidDataLength;
 
-        NewValidDataLength = CcGetFlushedValidData( SharedCacheMap->FileObject->SectionObjectPointer,
-                                                    TRUE );
+        NewValidDataLength = CcGetFlushedValidData(SharedCacheMap->FileObject->SectionObjectPointer, TRUE);
 
         //
         //  If New ValidDataLength has been written, then we have to
@@ -4126,25 +4166,27 @@ Return Value:
         //  back.
         //
 
-        if ( NewValidDataLength.QuadPart >= SharedCacheMap->ValidDataLength.QuadPart ) {
+        if (NewValidDataLength.QuadPart >= SharedCacheMap->ValidDataLength.QuadPart)
+        {
 
-            KeReleaseInStackQueuedSpinLock( &LockHandle );
+            KeReleaseInStackQueuedSpinLock(&LockHandle);
 
             //
             //  Call file system to set new valid data.  We have no
             //  one to tell if this doesn't work.
             //
 
-            Status = CcSetValidData( SharedCacheMap->FileObject,
-                                     &NewValidDataLength );
+            Status = CcSetValidData(SharedCacheMap->FileObject, &NewValidDataLength);
 
-            KeAcquireInStackQueuedSpinLock( &SharedCacheMap->BcbSpinLock, &LockHandle );
-            if (NT_SUCCESS(Status)) {
+            KeAcquireInStackQueuedSpinLock(&SharedCacheMap->BcbSpinLock, &LockHandle);
+            if (NT_SUCCESS(Status))
+            {
                 SharedCacheMap->ValidDataLength = NewValidDataLength;
 #ifdef TOMM
-            } else if ((Status != STATUS_INSUFFICIENT_RESOURCES) && !RetryError(Status)) {
-                DbgPrint("Unexpected status from CcSetValidData: %08lx, FileObject: %08lx\n",
-                         Status,
+            }
+            else if ((Status != STATUS_INSUFFICIENT_RESOURCES) && !RetryError(Status))
+            {
+                DbgPrint("Unexpected status from CcSetValidData: %08lx, FileObject: %08lx\n", Status,
                          SharedCacheMap->FileObject);
                 DbgBreakPoint();
 #endif TOMM
@@ -4152,14 +4194,14 @@ Return Value:
         }
     }
 
-    KeReleaseInStackQueuedSpinLock( &LockHandle );
+    KeReleaseInStackQueuedSpinLock(&LockHandle);
 
     //
     //  Show we are done.
     //
 
-    CcAcquireMasterLock( &LockHandle.OldIrql );
-    CcDecrementOpenCount( SharedCacheMap, 'brWF' );
+    CcAcquireMasterLock(&LockHandle.OldIrql);
+    CcDecrementOpenCount(SharedCacheMap, 'brWF');
 
     //
     //  Make an approximate guess about whether we will call CcDeleteSharedCacheMap or not
@@ -4173,13 +4215,14 @@ Return Value:
 
     if ((SharedCacheMap->OpenCount == 0)
 
-            &&
+        &&
 
-        (NT_SUCCESS(Status) || ((Status != STATUS_INSUFFICIENT_RESOURCES) && !RetryError(Status)))) {
+        (NT_SUCCESS(Status) || ((Status != STATUS_INSUFFICIENT_RESOURCES) && !RetryError(Status))))
+    {
 
-        CcReleaseMasterLock( LockHandle.OldIrql );
-        FsRtlAcquireFileExclusive( SharedCacheMap->FileObject );
-        CcAcquireMasterLock( &LockHandle.OldIrql );
+        CcReleaseMasterLock(LockHandle.OldIrql);
+        FsRtlAcquireFileExclusive(SharedCacheMap->FileObject);
+        CcAcquireMasterLock(&LockHandle.OldIrql);
 
         //
         //  Now really see if we are to delete this SharedCacheMap. By having released
@@ -4193,25 +4236,27 @@ Return Value:
 
         if ((SharedCacheMap->OpenCount == 0)
 
-                &&
+            &&
 
-            ((SharedCacheMap->DirtyPages == 0) || ((SharedCacheMap->FileSize.QuadPart == 0) &&
-                                                   !FlagOn(SharedCacheMap->Flags, PIN_ACCESS)))) {
+            ((SharedCacheMap->DirtyPages == 0) ||
+             ((SharedCacheMap->FileSize.QuadPart == 0) && !FlagOn(SharedCacheMap->Flags, PIN_ACCESS))))
+        {
 
             //
             //  Make sure to drop the requeue flag in case the write hit the timeout at
             //  the same time it finished everything up.
             //
 
-            CcDeleteSharedCacheMap( SharedCacheMap, LockHandle.OldIrql, TRUE );
+            CcDeleteSharedCacheMap(SharedCacheMap, LockHandle.OldIrql, TRUE);
             IoStatus->Information = 0;
             SharedCacheMap = NULL;
+        }
+        else
+        {
 
-        } else {
-
-            CcReleaseMasterLock( LockHandle.OldIrql );
-            FsRtlReleaseFile( SharedCacheMap->FileObject );
-            CcAcquireMasterLock( &LockHandle.OldIrql );
+            CcReleaseMasterLock(LockHandle.OldIrql);
+            FsRtlReleaseFile(SharedCacheMap->FileObject);
+            CcAcquireMasterLock(&LockHandle.OldIrql);
         }
     }
 
@@ -4220,25 +4265,24 @@ Return Value:
     //  we will not requeue the workitem.
     //
 
-    if (SharedCacheMap != NULL) {
+    if (SharedCacheMap != NULL)
+    {
 
-        if (IoStatus->Information != CC_REQUEUE) {
+        if (IoStatus->Information != CC_REQUEUE)
+        {
             ClearFlag(SharedCacheMap->Flags, WRITE_QUEUED);
         }
-        CcReleaseMasterLock( LockHandle.OldIrql );
+        CcReleaseMasterLock(LockHandle.OldIrql);
     }
 
-    DebugTrace(-1, me, "CcWriteBehind->VOID\n", 0 );
+    DebugTrace(-1, me, "CcWriteBehind->VOID\n", 0);
 
     return;
 }
 
-
+
 LARGE_INTEGER
-CcGetFlushedValidData (
-    IN PSECTION_OBJECT_POINTERS SectionObjectPointer,
-    IN BOOLEAN CcInternalCaller
-    )
+CcGetFlushedValidData(IN PSECTION_OBJECT_POINTERS SectionObjectPointer, IN BOOLEAN CcInternalCaller)
 
 /*++
 
@@ -4281,28 +4325,31 @@ Return Value:
     //  the other.
     //
 
-    if (!CcInternalCaller) {
+    if (!CcInternalCaller)
+    {
 
-        CcAcquireMasterLock( &LockHandle.OldIrql );
+        CcAcquireMasterLock(&LockHandle.OldIrql);
 
         SharedCacheMap = SectionObjectPointer->SharedCacheMap;
 
-        if (SharedCacheMap == NULL) {
-            CcReleaseMasterLock( LockHandle.OldIrql );
+        if (SharedCacheMap == NULL)
+        {
+            CcReleaseMasterLock(LockHandle.OldIrql);
             NewValidDataLength.QuadPart = MAXLONGLONG;
             return NewValidDataLength;
         }
 
-        CcIncrementOpenCount( SharedCacheMap, 'dfGS' );
-        CcReleaseMasterLock( LockHandle.OldIrql );
-        KeAcquireInStackQueuedSpinLock( &SharedCacheMap->BcbSpinLock, &LockHandle );
-
-    } else {
+        CcIncrementOpenCount(SharedCacheMap, 'dfGS');
+        CcReleaseMasterLock(LockHandle.OldIrql);
+        KeAcquireInStackQueuedSpinLock(&SharedCacheMap->BcbSpinLock, &LockHandle);
+    }
+    else
+    {
 
         SharedCacheMap = SectionObjectPointer->SharedCacheMap;
     }
 
-    ASSERT( SharedCacheMap != NULL );
+    ASSERT(SharedCacheMap != NULL);
 
     //
     //  If the file is entirely clean, then we wish to return
@@ -4331,35 +4378,34 @@ Return Value:
     //  compromised.)
     //
 
-    if (SharedCacheMap->DirtyPages) {
+    if (SharedCacheMap->DirtyPages)
+    {
 
         PBITMAP_RANGE BitmapRange;
         PBCB LastBcb;
         PMBCB Mbcb = SharedCacheMap->Mbcb;
 
-        if ((Mbcb != NULL) && (Mbcb->DirtyPages != 0)) {
+        if ((Mbcb != NULL) && (Mbcb->DirtyPages != 0))
+        {
 
-            BitmapRange = CcFindBitmapRangeToClean( Mbcb, 0 );
+            BitmapRange = CcFindBitmapRangeToClean(Mbcb, 0);
 
             ASSERT(BitmapRange->FirstDirtyPage != MAXULONG);
 
-            NewValidDataLength.QuadPart = (BitmapRange->BasePage + BitmapRange->FirstDirtyPage)
-                                            << PAGE_SHIFT;
+            NewValidDataLength.QuadPart = (BitmapRange->BasePage + BitmapRange->FirstDirtyPage) << PAGE_SHIFT;
         }
 
-        LastBcb = CONTAINING_RECORD( SharedCacheMap->BcbList.Flink,
-                                     BCB,
-                                     BcbLinks );
+        LastBcb = CONTAINING_RECORD(SharedCacheMap->BcbList.Flink, BCB, BcbLinks);
 
-        while (&LastBcb->BcbLinks != &SharedCacheMap->BcbList) {
+        while (&LastBcb->BcbLinks != &SharedCacheMap->BcbList)
+        {
 
-            if ((LastBcb->NodeTypeCode == CACHE_NTC_BCB) && LastBcb->Dirty) {
+            if ((LastBcb->NodeTypeCode == CACHE_NTC_BCB) && LastBcb->Dirty)
+            {
                 break;
             }
 
-            LastBcb = CONTAINING_RECORD( LastBcb->BcbLinks.Flink,
-                                         BCB,
-                                         BcbLinks );
+            LastBcb = CONTAINING_RECORD(LastBcb->BcbLinks.Flink, BCB, BcbLinks);
         }
 
         //
@@ -4367,32 +4413,33 @@ Return Value:
         //
 
         if ((&LastBcb->BcbLinks != &SharedCacheMap->BcbList) &&
-            (LastBcb->FileOffset.QuadPart < NewValidDataLength.QuadPart )) {
+            (LastBcb->FileOffset.QuadPart < NewValidDataLength.QuadPart))
+        {
 
             NewValidDataLength = LastBcb->FileOffset;
         }
     }
 
-    if (!CcInternalCaller) {
+    if (!CcInternalCaller)
+    {
 
         //
         //  Remove our reference.
         //
 
         CcAcquireMasterLockAtDpcLevel();
-        CcDecrementOpenCount( SharedCacheMap, 'dfGF' );
+        CcDecrementOpenCount(SharedCacheMap, 'dfGF');
 
-        if ((SharedCacheMap->OpenCount == 0) &&
-            !FlagOn(SharedCacheMap->Flags, WRITE_QUEUED) &&
-            (SharedCacheMap->DirtyPages == 0)) {
+        if ((SharedCacheMap->OpenCount == 0) && !FlagOn(SharedCacheMap->Flags, WRITE_QUEUED) &&
+            (SharedCacheMap->DirtyPages == 0))
+        {
 
             //
             //  Move to the dirty list.
             //
 
-            RemoveEntryList( &SharedCacheMap->SharedCacheMapLinks );
-            InsertTailList( &CcDirtySharedCacheMapList.SharedCacheMapLinks,
-                        &SharedCacheMap->SharedCacheMapLinks );
+            RemoveEntryList(&SharedCacheMap->SharedCacheMapLinks);
+            InsertTailList(&CcDirtySharedCacheMapList.SharedCacheMapLinks, &SharedCacheMap->SharedCacheMapLinks);
 
             //
             //  Make sure the Lazy Writer will wake up, because we
@@ -4400,26 +4447,22 @@ Return Value:
             //
 
             LazyWriter.OtherWork = TRUE;
-            if (!LazyWriter.ScanActive) {
-                CcScheduleLazyWriteScan( FALSE );
+            if (!LazyWriter.ScanActive)
+            {
+                CcScheduleLazyWriteScan(FALSE);
             }
         }
 
-        KeReleaseInStackQueuedSpinLockFromDpcLevel( &LockHandle );
-        CcReleaseMasterLock( LockHandle.OldIrql );
+        KeReleaseInStackQueuedSpinLockFromDpcLevel(&LockHandle);
+        CcReleaseMasterLock(LockHandle.OldIrql);
     }
 
     return NewValidDataLength;
 }
 
-
-VOID
-CcFlushCache (
-    IN PSECTION_OBJECT_POINTERS SectionObjectPointer,
-    IN PLARGE_INTEGER FileOffset OPTIONAL,
-    IN ULONG Length,
-    OUT PIO_STATUS_BLOCK IoStatus OPTIONAL
-    )
+
+VOID CcFlushCache(IN PSECTION_OBJECT_POINTERS SectionObjectPointer, IN PLARGE_INTEGER FileOffset OPTIONAL,
+                  IN ULONG Length, OUT PIO_STATUS_BLOCK IoStatus OPTIONAL)
 
 /*++
 
@@ -4475,20 +4518,18 @@ Return Value:
     NTSTATUS Status = STATUS_SUCCESS;
     LARGE_INTEGER EndTick, CurrentTick;
 
-    DebugTrace(+1, me, "CcFlushCache:\n", 0 );
-    DebugTrace( 0, mm, "    SectionObjectPointer = %08lx\n", SectionObjectPointer );
-    DebugTrace2(0, me, "    FileOffset = %08lx, %08lx\n",
-                            ARGUMENT_PRESENT(FileOffset) ? FileOffset->LowPart
-                                                         : 0,
-                            ARGUMENT_PRESENT(FileOffset) ? FileOffset->HighPart
-                                                         : 0 );
-    DebugTrace( 0, me, "    Length = %08lx\n", Length );
+    DebugTrace(+1, me, "CcFlushCache:\n", 0);
+    DebugTrace(0, mm, "    SectionObjectPointer = %08lx\n", SectionObjectPointer);
+    DebugTrace2(0, me, "    FileOffset = %08lx, %08lx\n", ARGUMENT_PRESENT(FileOffset) ? FileOffset->LowPart : 0,
+                ARGUMENT_PRESENT(FileOffset) ? FileOffset->HighPart : 0);
+    DebugTrace(0, me, "    Length = %08lx\n", Length);
 
     //
     //  If IoStatus passed a Null pointer, set up to through status away.
     //
 
-    if (!ARGUMENT_PRESENT(IoStatus)) {
+    if (!ARGUMENT_PRESENT(IoStatus))
+    {
         IoStatus = &TrashStatus;
     }
     IoStatus->Status = STATUS_SUCCESS;
@@ -4505,13 +4546,14 @@ Return Value:
     //  overwrite this code.
     //
 
-    if (FileOffset == &CcNoDelay) {
+    if (FileOffset == &CcNoDelay)
+    {
         IoStatus->Status = STATUS_VERIFY_REQUIRED;
         IsLazyWriter = TRUE;
         FileOffset = NULL;
     }
 
-    CcAcquireMasterLock( &OldIrql );
+    CcAcquireMasterLock(&OldIrql);
 
     SharedCacheMap = SectionObjectPointer->SharedCacheMap;
 
@@ -4520,27 +4562,28 @@ Return Value:
     //  Non-awareness of a private write stream results in a no-op.
     //
 
-    if ((SharedCacheMap != NULL) && FlagOn( SharedCacheMap->Flags, PRIVATE_WRITE )) {
+    if ((SharedCacheMap != NULL) && FlagOn(SharedCacheMap->Flags, PRIVATE_WRITE))
+    {
 
-        if (((ULONG_PTR)FileOffset & 1) == 0) {
+        if (((ULONG_PTR)FileOffset & 1) == 0)
+        {
 
-            CcReleaseMasterLock( OldIrql );
+            CcReleaseMasterLock(OldIrql);
             return;
-
         }
 
         FileOffset = (PLARGE_INTEGER)((ULONG_PTR)FileOffset ^ 1);
-
     }
 
     //
     //  If there is nothing to do, return here.
     //
 
-    if (ARGUMENT_PRESENT(FileOffset) && (Length == 0)) {
+    if (ARGUMENT_PRESENT(FileOffset) && (Length == 0))
+    {
 
-        CcReleaseMasterLock( OldIrql );
-        DebugTrace(-1, me, "CcFlushCache -> VOID\n", 0 );
+        CcReleaseMasterLock(OldIrql);
+        DebugTrace(-1, me, "CcFlushCache -> VOID\n", 0);
         return;
     }
 
@@ -4548,20 +4591,23 @@ Return Value:
     //  See if the file is cached.
     //
 
-    if (SharedCacheMap != NULL) {
+    if (SharedCacheMap != NULL)
+    {
 
         //
         //  Increment the open count to keep it from going away.
         //
 
-        CcIncrementOpenCount( SharedCacheMap, 'fcCS' );
+        CcIncrementOpenCount(SharedCacheMap, 'fcCS');
 
-        if ((SharedCacheMap->NeedToZero != NULL) || (SharedCacheMap->ActiveVacb != NULL)) {
+        if ((SharedCacheMap->NeedToZero != NULL) || (SharedCacheMap->ActiveVacb != NULL))
+        {
 
             ULONG FirstPage = 0;
             ULONG LastPage = MAXULONG;
 
-            if (ARGUMENT_PRESENT(FileOffset)) {
+            if (ARGUMENT_PRESENT(FileOffset))
+            {
 
                 FirstPage = (ULONG)(FileOffset->QuadPart >> PAGE_SHIFT);
                 LastPage = (ULONG)((FileOffset->QuadPart + Length - 1) >> PAGE_SHIFT);
@@ -4576,24 +4622,24 @@ Return Value:
 
             if (((((LONGLONG)LastPage + 1) << PAGE_SHIFT) > SharedCacheMap->ValidDataGoal.QuadPart) ||
 
-                ((SharedCacheMap->NeedToZero != NULL) &&
-                 (FirstPage <= SharedCacheMap->NeedToZeroPage) &&
+                ((SharedCacheMap->NeedToZero != NULL) && (FirstPage <= SharedCacheMap->NeedToZeroPage) &&
                  (LastPage >= SharedCacheMap->NeedToZeroPage)) ||
 
-                ((SharedCacheMap->ActiveVacb != NULL) &&
-                 (FirstPage <= SharedCacheMap->ActivePage) &&
-                 (LastPage >= SharedCacheMap->ActivePage))) {
+                ((SharedCacheMap->ActiveVacb != NULL) && (FirstPage <= SharedCacheMap->ActivePage) &&
+                 (LastPage >= SharedCacheMap->ActivePage)))
+            {
 
-                GetActiveVacbAtDpcLevel( SharedCacheMap, ActiveVacb, RemainingLength, TempLength );
+                GetActiveVacbAtDpcLevel(SharedCacheMap, ActiveVacb, RemainingLength, TempLength);
                 FreeActiveVacb = TRUE;
             }
         }
     }
 
-    CcReleaseMasterLock( OldIrql );
+    CcReleaseMasterLock(OldIrql);
 
-    if (FreeActiveVacb) {
-        CcFreeActiveVacb( SharedCacheMap, ActiveVacb, RemainingLength, TempLength );
+    if (FreeActiveVacb)
+    {
+        CcFreeActiveVacb(SharedCacheMap, ActiveVacb, RemainingLength, TempLength);
     }
 
     //
@@ -4611,45 +4657,41 @@ Return Value:
 
     if ((SharedCacheMap == NULL)
 
-            ||
+        ||
 
         FlagOn(((PFSRTL_COMMON_FCB_HEADER)(SharedCacheMap->FileObject->FsContext))->Flags,
-               FSRTL_FLAG_USER_MAPPED_FILE) && !IsLazyWriter) {
+               FSRTL_FLAG_USER_MAPPED_FILE) &&
+            !IsLazyWriter)
+    {
 
         //
         //  Call MM to flush the section through our view.
         //
 
-        DebugTrace( 0, mm, "MmFlushSection:\n", 0 );
-        DebugTrace( 0, mm, "    SectionObjectPointer = %08lx\n", SectionObjectPointer );
-        DebugTrace2(0, me, "    FileOffset = %08lx, %08lx\n",
-                                ARGUMENT_PRESENT(FileOffset) ? FileOffset->LowPart
-                                                             : 0,
-                                ARGUMENT_PRESENT(FileOffset) ? FileOffset->HighPart
-                                                             : 0 );
-        DebugTrace( 0, mm, "    RegionSize = %08lx\n", Length );
+        DebugTrace(0, mm, "MmFlushSection:\n", 0);
+        DebugTrace(0, mm, "    SectionObjectPointer = %08lx\n", SectionObjectPointer);
+        DebugTrace2(0, me, "    FileOffset = %08lx, %08lx\n", ARGUMENT_PRESENT(FileOffset) ? FileOffset->LowPart : 0,
+                    ARGUMENT_PRESENT(FileOffset) ? FileOffset->HighPart : 0);
+        DebugTrace(0, mm, "    RegionSize = %08lx\n", Length);
 
-        Status = MmFlushSection( SectionObjectPointer,
-                                 FileOffset,
-                                 Length,
-                                 IoStatus,
-                                 TRUE );
+        Status = MmFlushSection(SectionObjectPointer, FileOffset, Length, IoStatus, TRUE);
 
-        if ((!NT_SUCCESS(IoStatus->Status)) && !RetryError(IoStatus->Status)) {
+        if ((!NT_SUCCESS(IoStatus->Status)) && !RetryError(IoStatus->Status))
+        {
 
             PopupRequired = TRUE;
             PopupStatus = IoStatus->Status;
         }
 
-        DebugTrace2(0, mm, "    <IoStatus = %08lx, %08lx\n",
-                    IoStatus->Status, IoStatus->Information );
+        DebugTrace2(0, mm, "    <IoStatus = %08lx, %08lx\n", IoStatus->Status, IoStatus->Information);
     }
 
     //
     //  Scan for dirty pages if there is a shared cache map.
     //
 
-    if (SharedCacheMap != NULL) {
+    if (SharedCacheMap != NULL)
+    {
 
         //
         //  If FileOffset was not specified then set to flush entire region
@@ -4657,7 +4699,8 @@ Return Value:
         //  any more call backs.
         //
 
-        if (!IsLazyWriter && !ARGUMENT_PRESENT(FileOffset)) {
+        if (!IsLazyWriter && !ARGUMENT_PRESENT(FileOffset))
+        {
 
             SharedCacheMap->ValidDataLength = SharedCacheMap->ValidDataGoal;
         }
@@ -4666,7 +4709,8 @@ Return Value:
         //  If this is an explicit flush, initialize our offset to scan for.
         //
 
-        if (ARGUMENT_PRESENT(FileOffset)) {
+        if (ARGUMENT_PRESENT(FileOffset))
+        {
             TargetOffset = *FileOffset;
         }
 
@@ -4677,7 +4721,8 @@ Return Value:
         //
 
         NextLength = 1;
-        if (Length != 0) {
+        if (Length != 0)
+        {
             NextLength = Length;
         }
 
@@ -4686,9 +4731,10 @@ Return Value:
         //  lazy writer tick interval.
         //
 
-        if (IsLazyWriter) {
+        if (IsLazyWriter)
+        {
 
-            KeQueryTickCount( &EndTick );
+            KeQueryTickCount(&EndTick);
             EndTick.QuadPart += CcIdleDelayTick;
         }
 
@@ -4699,23 +4745,18 @@ Return Value:
 
         while (((SharedCacheMap->PagesToWrite != 0) || !IsLazyWriter)
 
-                    &&
-               ((SharedCacheMap->FileSize.QuadPart != 0) ||
-                FlagOn(SharedCacheMap->Flags, PIN_ACCESS))
+               && ((SharedCacheMap->FileSize.QuadPart != 0) || FlagOn(SharedCacheMap->Flags, PIN_ACCESS))
 
-                    &&
+               &&
 
                !VerifyRequired
 
-                    &&
+               &&
 
-               CcAcquireByteRangeForWrite ( SharedCacheMap,
-                                            IsLazyWriter ? NULL : (ARGUMENT_PRESENT(FileOffset) ?
-                                                                    &TargetOffset : NULL),
-                                            IsLazyWriter ? 0: NextLength,
-                                            &NextFileOffset,
-                                            &NextLength,
-                                            &FirstBcb )) {
+               CcAcquireByteRangeForWrite(SharedCacheMap,
+                                          IsLazyWriter ? NULL : (ARGUMENT_PRESENT(FileOffset) ? &TargetOffset : NULL),
+                                          IsLazyWriter ? 0 : NextLength, &NextFileOffset, &NextLength, &FirstBcb))
+        {
 
             //
             //  Assume this range is not a hot spot.
@@ -4731,24 +4772,26 @@ Return Value:
 
             RemainingLength = NextLength;
 
-            do {
+            do
+            {
 
                 //
                 //  See if the next file offset is mapped.  (If not, the dirty bit
                 //  was propagated on the unmap.)
                 //
 
-                if ((TempVa = CcGetVirtualAddressIfMapped( SharedCacheMap,
-                                                           NextFileOffset.QuadPart + NextLength - RemainingLength,
-                                                           &ActiveVacb,
-                                                           &TempLength)) != NULL) {
+                if ((TempVa = CcGetVirtualAddressIfMapped(SharedCacheMap,
+                                                          NextFileOffset.QuadPart + NextLength - RemainingLength,
+                                                          &ActiveVacb, &TempLength)) != NULL)
+                {
 
                     //
                     //  Reduce TempLength to RemainingLength if necessary, and
                     //  call MM.
                     //
 
-                    if (TempLength > RemainingLength) {
+                    if (TempLength > RemainingLength)
+                    {
                         TempLength = RemainingLength;
                     }
 
@@ -4763,19 +4806,20 @@ Return Value:
                     HotSpot = (BOOLEAN)(((MmSetAddressRangeModified(TempVa, TempLength) || HotSpot) &&
                                          ((NextFileOffset.QuadPart + NextLength) <
                                           (SharedCacheMap->ValidDataLength.QuadPart)) &&
-                                         ((SharedCacheMap->LazyWritePassCount & 0xF) != 0) &&
-                                         IsLazyWriter) &&
+                                         ((SharedCacheMap->LazyWritePassCount & 0xF) != 0) && IsLazyWriter) &&
                                         !FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED));
 
-                    CcFreeVirtualAddress( ActiveVacb );
-
-                } else {
+                    CcFreeVirtualAddress(ActiveVacb);
+                }
+                else
+                {
 
                     //
                     //  Reduce TempLength to RemainingLength if necessary.
                     //
 
-                    if (TempLength > RemainingLength) {
+                    if (TempLength > RemainingLength)
+                    {
                         TempLength = RemainingLength;
                     }
                 }
@@ -4786,9 +4830,9 @@ Return Value:
 
                 RemainingLength -= TempLength;
 
-            //
-            //  Loop until done.
-            //
+                //
+                //  Loop until done.
+                //
 
             } while (RemainingLength != 0);
 
@@ -4798,80 +4842,82 @@ Return Value:
             //  Now flush, now flush if we do not think it is a hot spot.
             //
 
-            if (!HotSpot) {
+            if (!HotSpot)
+            {
 
-                MmFlushSection( SharedCacheMap->FileObject->SectionObjectPointer,
-                                &NextFileOffset,
-                                NextLength,
-                                IoStatus,
-                                !IsLazyWriter );
+                MmFlushSection(SharedCacheMap->FileObject->SectionObjectPointer, &NextFileOffset, NextLength, IoStatus,
+                               !IsLazyWriter);
 
-                if (NT_SUCCESS(IoStatus->Status)) {
+                if (NT_SUCCESS(IoStatus->Status))
+                {
 
-                    if (!FlagOn(SharedCacheMap->Flags, LAZY_WRITE_OCCURRED)) {
+                    if (!FlagOn(SharedCacheMap->Flags, LAZY_WRITE_OCCURRED))
+                    {
 
-                        CcAcquireMasterLock( &OldIrql );
+                        CcAcquireMasterLock(&OldIrql);
                         SetFlag(SharedCacheMap->Flags, LAZY_WRITE_OCCURRED);
-                        CcReleaseMasterLock( OldIrql );
+                        CcReleaseMasterLock(OldIrql);
                     }
 
                     //
                     //  Increment performance counters
                     //
 
-                    if (IsLazyWriter) {
+                    if (IsLazyWriter)
+                    {
 
                         CcLazyWriteIos += 1;
                         CcLazyWritePages += (NextLength + PAGE_SIZE - 1) >> PAGE_SHIFT;
                     }
-
-                } else {
+                }
+                else
+                {
 
                     LARGE_INTEGER Offset = NextFileOffset;
                     ULONG RetryLength = NextLength;
 
-                    DebugTrace2( 0, 0, "I/O Error on Cache Flush: %08lx, %08lx\n",
-                                 IoStatus->Status, IoStatus->Information );
+                    DebugTrace2(0, 0, "I/O Error on Cache Flush: %08lx, %08lx\n", IoStatus->Status,
+                                IoStatus->Information);
 
-                    if (RetryError(IoStatus->Status)) {
+                    if (RetryError(IoStatus->Status))
+                    {
 
                         VerifyRequired = TRUE;
 
-                    //
-                    //  Loop to write each page individually, starting with one
-                    //  more try on the page that got the error, in case that page
-                    //  or any page beyond it can be successfully written
-                    //  individually.  Note that Offset and RetryLength are
-                    //  guaranteed to be in integral pages, but the Information
-                    //  field from the failed request is not.
-                    //
-                    //  We ignore errors now, and give it one last shot, before
-                    //  setting the pages clean (see below).
-                    //
+                        //
+                        //  Loop to write each page individually, starting with one
+                        //  more try on the page that got the error, in case that page
+                        //  or any page beyond it can be successfully written
+                        //  individually.  Note that Offset and RetryLength are
+                        //  guaranteed to be in integral pages, but the Information
+                        //  field from the failed request is not.
+                        //
+                        //  We ignore errors now, and give it one last shot, before
+                        //  setting the pages clean (see below).
+                        //
+                    }
+                    else
+                    {
 
-                    } else {
+                        do
+                        {
 
-                        do {
+                            DebugTrace2(0, 0, "Trying page at offset %08lx, %08lx\n", Offset.LowPart, Offset.HighPart);
 
-                            DebugTrace2( 0, 0, "Trying page at offset %08lx, %08lx\n",
-                                         Offset.LowPart, Offset.HighPart );
+                            MmFlushSection(SharedCacheMap->FileObject->SectionObjectPointer, &Offset, PAGE_SIZE,
+                                           IoStatus, !IsLazyWriter);
 
-                            MmFlushSection ( SharedCacheMap->FileObject->SectionObjectPointer,
-                                             &Offset,
-                                             PAGE_SIZE,
-                                             IoStatus,
-                                             !IsLazyWriter );
+                            DebugTrace2(0, 0, "I/O status = %08lx, %08lx\n", IoStatus->Status, IoStatus->Information);
 
-                            DebugTrace2( 0, 0, "I/O status = %08lx, %08lx\n",
-                                         IoStatus->Status, IoStatus->Information );
-
-                            if (NT_SUCCESS(IoStatus->Status)) {
-                                CcAcquireMasterLock( &OldIrql );
+                            if (NT_SUCCESS(IoStatus->Status))
+                            {
+                                CcAcquireMasterLock(&OldIrql);
                                 SetFlag(SharedCacheMap->Flags, LAZY_WRITE_OCCURRED);
-                                CcReleaseMasterLock( OldIrql );
+                                CcReleaseMasterLock(OldIrql);
                             }
 
-                            if ((!NT_SUCCESS(IoStatus->Status)) && !RetryError(IoStatus->Status)) {
+                            if ((!NT_SUCCESS(IoStatus->Status)) && !RetryError(IoStatus->Status))
+                            {
 
                                 PopupRequired = TRUE;
                                 PopupStatus = IoStatus->Status;
@@ -4882,7 +4928,7 @@ Return Value:
                             Offset.QuadPart = Offset.QuadPart + (LONGLONG)PAGE_SIZE;
                             RetryLength -= PAGE_SIZE;
 
-                        } while(RetryLength > 0);
+                        } while (RetryLength > 0);
                     }
                 }
             }
@@ -4907,18 +4953,16 @@ Return Value:
             //  verify required.
             //
 
-            CcReleaseByteRangeFromWrite ( SharedCacheMap,
-                                          &NextFileOffset,
-                                          NextLength,
-                                          FirstBcb,
-                                          (BOOLEAN)(HotSpot || VerifyRequired) );
+            CcReleaseByteRangeFromWrite(SharedCacheMap, &NextFileOffset, NextLength, FirstBcb,
+                                        (BOOLEAN)(HotSpot || VerifyRequired));
 
             //
             //  See if there is any deferred writes we should post.
             //
 
             BytesWritten += NextLength;
-            if ((BytesWritten >= 0x40000) && !IsListEmpty(&CcDeferredWrites)) {
+            if ((BytesWritten >= 0x40000) && !IsListEmpty(&CcDeferredWrites))
+            {
                 CcPostDeferredWrites();
                 BytesWritten = 0;
             }
@@ -4929,11 +4973,13 @@ Return Value:
             //  file resources.
             //
 
-            if (IsLazyWriter) {
+            if (IsLazyWriter)
+            {
 
-                KeQueryTickCount( &CurrentTick );
+                KeQueryTickCount(&CurrentTick);
 
-                if (CurrentTick.QuadPart > EndTick.QuadPart) {
+                if (CurrentTick.QuadPart > EndTick.QuadPart)
+                {
                     IoStatus->Information = CC_REQUEUE;
                     break;
                 }
@@ -4943,7 +4989,8 @@ Return Value:
             //  Now for explicit flushes, we should advance our range.
             //
 
-            if (ARGUMENT_PRESENT(FileOffset)) {
+            if (ARGUMENT_PRESENT(FileOffset))
+            {
 
                 NextFileOffset.QuadPart += NextLength;
 
@@ -4951,7 +4998,8 @@ Return Value:
                 //  Done yet?
                 //
 
-                if ((FileOffset->QuadPart + Length) <= NextFileOffset.QuadPart) {
+                if ((FileOffset->QuadPart + Length) <= NextFileOffset.QuadPart)
+                {
                     break;
                 }
 
@@ -4971,7 +5019,8 @@ Return Value:
     //  flushes.
     //
 
-    if (BytesWritten != 0 && !IsListEmpty(&CcDeferredWrites)) {
+    if (BytesWritten != 0 && !IsListEmpty(&CcDeferredWrites))
+    {
 
         CcPostDeferredWrites();
     }
@@ -4980,27 +5029,27 @@ Return Value:
     //  Now we can get rid of the open count, and clean up as required.
     //
 
-    if (SharedCacheMap != NULL) {
+    if (SharedCacheMap != NULL)
+    {
 
         //
         //  Serialize again to decrement the open count.
         //
 
-        CcAcquireMasterLock( &OldIrql );
+        CcAcquireMasterLock(&OldIrql);
 
-        CcDecrementOpenCount( SharedCacheMap, 'fcCF' );
+        CcDecrementOpenCount(SharedCacheMap, 'fcCF');
 
-        if ((SharedCacheMap->OpenCount == 0) &&
-            !FlagOn(SharedCacheMap->Flags, WRITE_QUEUED) &&
-            (SharedCacheMap->DirtyPages == 0)) {
+        if ((SharedCacheMap->OpenCount == 0) && !FlagOn(SharedCacheMap->Flags, WRITE_QUEUED) &&
+            (SharedCacheMap->DirtyPages == 0))
+        {
 
             //
             //  Move to the dirty list.
             //
 
-            RemoveEntryList( &SharedCacheMap->SharedCacheMapLinks );
-            InsertTailList( &CcDirtySharedCacheMapList.SharedCacheMapLinks,
-                            &SharedCacheMap->SharedCacheMapLinks );
+            RemoveEntryList(&SharedCacheMap->SharedCacheMapLinks);
+            InsertTailList(&CcDirtySharedCacheMapList.SharedCacheMapLinks, &SharedCacheMap->SharedCacheMapLinks);
 
             //
             //  Make sure the Lazy Writer will wake up, because we
@@ -5008,12 +5057,13 @@ Return Value:
             //
 
             LazyWriter.OtherWork = TRUE;
-            if (!LazyWriter.ScanActive) {
-                CcScheduleLazyWriteScan( FALSE );
+            if (!LazyWriter.ScanActive)
+            {
+                CcScheduleLazyWriteScan(FALSE);
             }
         }
 
-        CcReleaseMasterLock( OldIrql );
+        CcReleaseMasterLock(OldIrql);
     }
 
     //
@@ -5021,20 +5071,19 @@ Return Value:
     //  case of the Lazy Writer, a popup will be issued.
     //
 
-    if (PopupRequired) {
+    if (PopupRequired)
+    {
         IoStatus->Status = PopupStatus;
     }
 
-    DebugTrace(-1, me, "CcFlushCache -> VOID\n", 0 );
+    DebugTrace(-1, me, "CcFlushCache -> VOID\n", 0);
 
     return;
 }
 
-
+
 PVOID
-CcRemapBcb (
-    IN PVOID Bcb
-    )
+CcRemapBcb(IN PVOID Bcb)
 
 /*++
 
@@ -5063,9 +5112,10 @@ Return Value:
     //  Remove read-only bit
     //
 
-    Bcb = (PVOID) ((ULONG_PTR)Bcb & ~1);
+    Bcb = (PVOID)((ULONG_PTR)Bcb & ~1);
 
-    if (((PBCB)Bcb)->NodeTypeCode == CACHE_NTC_OBCB) {
+    if (((PBCB)Bcb)->NodeTypeCode == CACHE_NTC_OBCB)
+    {
 
         //
         //  If this is an overlapped BCB, use the first Vacb in the
@@ -5073,23 +5123,25 @@ Return Value:
         //
 
         Vacb = ((POBCB)Bcb)->Bcbs[0]->Vacb;
-
-    } else if (((PBCB)Bcb)->NodeTypeCode == CACHE_NTC_BCB) {
+    }
+    else if (((PBCB)Bcb)->NodeTypeCode == CACHE_NTC_BCB)
+    {
 
         //
         //  If this is a BCB, extract the Vcb from it
         //
 
         Vacb = ((PBCB)Bcb)->Vacb;
-
-    } else {
+    }
+    else
+    {
 
         //
         //  Otherwise, there is no signature to match. Assume
         //  it is a Vacb.
         //
 
-        Vacb = (PVACB) Bcb;
+        Vacb = (PVACB)Bcb;
     }
 
     ASSERT((Vacb >= CcVacbs) && (Vacb < CcBeyondVacbs));
@@ -5098,20 +5150,17 @@ Return Value:
     //  Safely bump the active count
     //
 
-    CcAcquireVacbLock( &OldIrql );
+    CcAcquireVacbLock(&OldIrql);
 
     Vacb->Overlay.ActiveCount += 1;
 
-    CcReleaseVacbLock( OldIrql );
+    CcReleaseVacbLock(OldIrql);
 
-    return (PVOID) ((ULONG_PTR)Vacb | 1);
+    return (PVOID)((ULONG_PTR)Vacb | 1);
 }
 
-
-VOID
-CcRepinBcb (
-    IN PVOID Bcb
-    )
+
+VOID CcRepinBcb(IN PVOID Bcb)
 
 /*++
 
@@ -5142,20 +5191,15 @@ Return Value:
 {
     KLOCK_QUEUE_HANDLE LockHandle;
 
-    KeAcquireInStackQueuedSpinLock( &((PBCB)Bcb)->SharedCacheMap->BcbSpinLock, &LockHandle );
+    KeAcquireInStackQueuedSpinLock(&((PBCB)Bcb)->SharedCacheMap->BcbSpinLock, &LockHandle);
 
     ((PBCB)Bcb)->PinCount += 1;
 
-    KeReleaseInStackQueuedSpinLock( &LockHandle );
+    KeReleaseInStackQueuedSpinLock(&LockHandle);
 }
 
-
-VOID
-CcUnpinRepinnedBcb (
-    IN PVOID Bcb,
-    IN BOOLEAN WriteThrough,
-    OUT PIO_STATUS_BLOCK IoStatus
-    )
+
+VOID CcUnpinRepinnedBcb(IN PVOID Bcb, IN BOOLEAN WriteThrough, OUT PIO_STATUS_BLOCK IoStatus)
 
 /*++
 
@@ -5189,9 +5233,9 @@ Return Value:
 {
     PSHARED_CACHE_MAP SharedCacheMap = ((PBCB)Bcb)->SharedCacheMap;
 
-    DebugTrace(+1, me, "CcUnpinRepinnedBcb\n", 0 );
-    DebugTrace( 0, me, "    Bcb = %08lx\n", Bcb );
-    DebugTrace( 0, me, "    WriteThrough = %02lx\n", WriteThrough );
+    DebugTrace(+1, me, "CcUnpinRepinnedBcb\n", 0);
+    DebugTrace(0, me, "    Bcb = %08lx\n", Bcb);
+    DebugTrace(0, me, "    WriteThrough = %02lx\n", WriteThrough);
 
     //
     //  Set status to success for non write through case.
@@ -5199,15 +5243,17 @@ Return Value:
 
     IoStatus->Status = STATUS_SUCCESS;
 
-    if (WriteThrough) {
+    if (WriteThrough)
+    {
 
         //
         //  Acquire Bcb exclusive to eliminate possible modifiers of the buffer,
         //  since we are about to write its buffer.
         //
 
-        if (FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED)) {
-            ExAcquireResourceExclusiveLite( &((PBCB)Bcb)->Resource, TRUE );
+        if (FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED))
+        {
+            ExAcquireResourceExclusiveLite(&((PBCB)Bcb)->Resource, TRUE);
         }
 
         //
@@ -5216,15 +5262,15 @@ Return Value:
         //  is still dirty.
         //
 
-        if (((PBCB)Bcb)->Dirty) {
+        if (((PBCB)Bcb)->Dirty)
+        {
 
             //
             //  First we make sure that the dirty bit in the PFN database is set.
             //
 
-            ASSERT( ((PBCB)Bcb)->BaseAddress != NULL );
-            MmSetAddressRangeModified( ((PBCB)Bcb)->BaseAddress,
-                                       ((PBCB)Bcb)->ByteLength );
+            ASSERT(((PBCB)Bcb)->BaseAddress != NULL);
+            MmSetAddressRangeModified(((PBCB)Bcb)->BaseAddress, ((PBCB)Bcb)->ByteLength);
 
             //
             //  Now release the Bcb resource and set it clean.  Note we do not check
@@ -5249,62 +5295,61 @@ Return Value:
             //  resource during the flush.
             //
 
-            CcUnpinFileData( (PBCB)Bcb, TRUE, SET_CLEAN );
+            CcUnpinFileData((PBCB)Bcb, TRUE, SET_CLEAN);
 
             //
             //  Write it out.
             //
 
-            MmFlushSection( ((PBCB)Bcb)->SharedCacheMap->FileObject->SectionObjectPointer,
-                            &((PBCB)Bcb)->FileOffset,
-                            ((PBCB)Bcb)->ByteLength,
-                            IoStatus,
-                            TRUE );
+            MmFlushSection(((PBCB)Bcb)->SharedCacheMap->FileObject->SectionObjectPointer, &((PBCB)Bcb)->FileOffset,
+                           ((PBCB)Bcb)->ByteLength, IoStatus, TRUE);
 
             //
             //  If we got verify required, we have to mark the buffer dirty again
             //  so we will try again later.
             //
 
-            if (RetryError(IoStatus->Status)) {
-                CcSetDirtyPinnedData( (PBCB)Bcb, NULL );
+            if (RetryError(IoStatus->Status))
+            {
+                CcSetDirtyPinnedData((PBCB)Bcb, NULL);
             }
 
             //
             //  Now remove the final pin count now that we have set it clean.
             //
 
-            CcUnpinFileData( (PBCB)Bcb, FALSE, UNPIN );
+            CcUnpinFileData((PBCB)Bcb, FALSE, UNPIN);
 
             //
             //  See if there is any deferred writes we can post.
             //
 
-            if (!IsListEmpty(&CcDeferredWrites)) {
+            if (!IsListEmpty(&CcDeferredWrites))
+            {
                 CcPostDeferredWrites();
             }
         }
-        else {
+        else
+        {
 
             //
             //  Lazy Writer got there first, just free the resource and unpin.
             //
 
-            CcUnpinFileData( (PBCB)Bcb, FALSE, UNPIN );
-
+            CcUnpinFileData((PBCB)Bcb, FALSE, UNPIN);
         }
 
-        DebugTrace2(0, me, "    <IoStatus = %08lx, %08lx\n", IoStatus->Status,
-                                                             IoStatus->Information );
+        DebugTrace2(0, me, "    <IoStatus = %08lx, %08lx\n", IoStatus->Status, IoStatus->Information);
     }
 
     //
     //  Non-WriteThrough case
     //
 
-    else {
+    else
+    {
 
-        CcUnpinFileData( (PBCB)Bcb, TRUE, UNPIN );
+        CcUnpinFileData((PBCB)Bcb, TRUE, UNPIN);
 
         //
         //  Set status to success for non write through case.
@@ -5313,21 +5358,17 @@ Return Value:
         IoStatus->Status = STATUS_SUCCESS;
     }
 
-    DebugTrace(-1, me, "CcUnpinRepinnedBcb -> VOID\n", 0 );
+    DebugTrace(-1, me, "CcUnpinRepinnedBcb -> VOID\n", 0);
 }
 
-
+
 //
 //  Internal Support Routine
 //
 
 BOOLEAN
-CcFindBcb (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN PLARGE_INTEGER FileOffset,
-    IN OUT PLARGE_INTEGER BeyondLastByte,
-    OUT PBCB *Bcb
-    )
+CcFindBcb(IN PSHARED_CACHE_MAP SharedCacheMap, IN PLARGE_INTEGER FileOffset, IN OUT PLARGE_INTEGER BeyondLastByte,
+          OUT PBCB *Bcb)
 
 /*++
 
@@ -5376,12 +5417,10 @@ Return Value:
     PBCB Bcbt;
     BOOLEAN Found = FALSE;
 
-    DebugTrace(+1, me, "CcFindBcb:\n", 0 );
-    DebugTrace( 0, me, "    SharedCacheMap = %08lx\n", SharedCacheMap );
-    DebugTrace2(0, me, "    FileOffset = %08lx, %08lx\n", FileOffset->LowPart,
-                                                          FileOffset->HighPart );
-    DebugTrace2(0, me, "    TrialLength = %08lx, %08lx\n", TrialLength->LowPart,
-                                                           TrialLength->HighPart );
+    DebugTrace(+1, me, "CcFindBcb:\n", 0);
+    DebugTrace(0, me, "    SharedCacheMap = %08lx\n", SharedCacheMap);
+    DebugTrace2(0, me, "    FileOffset = %08lx, %08lx\n", FileOffset->LowPart, FileOffset->HighPart);
+    DebugTrace2(0, me, "    TrialLength = %08lx, %08lx\n", TrialLength->LowPart, TrialLength->HighPart);
 
     //
     //  We want to terminate scans by testing the NodeTypeCode field from the
@@ -5405,7 +5444,7 @@ Return Value:
     //  direction so that we are looking in the right segment of the Bcb list.
     //
 
-    BcbList = GetBcbListHead( SharedCacheMap, FileOffset->QuadPart + SIZE_PER_BCB_LIST, TRUE );
+    BcbList = GetBcbListHead(SharedCacheMap, FileOffset->QuadPart + SIZE_PER_BCB_LIST, TRUE);
 
     //
     //  Search for an entry that overlaps the specified range, or until we hit
@@ -5420,15 +5459,15 @@ Return Value:
     //  the Bcb.
     //
 
-    if (FileOffset->HighPart == 0 &&
-        Bcbt->NodeTypeCode == CACHE_NTC_BCB &&
-        Bcbt->BeyondLastByte.HighPart == 0) {
+    if (FileOffset->HighPart == 0 && Bcbt->NodeTypeCode == CACHE_NTC_BCB && Bcbt->BeyondLastByte.HighPart == 0)
+    {
 
         //
         //  32-bit - loop until we get back to a listhead.
         //
 
-        while (Bcbt->NodeTypeCode == CACHE_NTC_BCB) {
+        while (Bcbt->NodeTypeCode == CACHE_NTC_BCB)
+        {
 
             //
             //  Since the Bcb list is in descending order, we first check
@@ -5436,7 +5475,8 @@ Return Value:
             //  get out.
             //
 
-            if (FileOffset->LowPart >= Bcbt->BeyondLastByte.LowPart) {
+            if (FileOffset->LowPart >= Bcbt->BeyondLastByte.LowPart)
+            {
                 break;
             }
 
@@ -5448,7 +5488,8 @@ Return Value:
             //  either case we break with Found == TRUE.
             //
 
-            if (FileOffset->LowPart >= Bcbt->FileOffset.LowPart) {
+            if (FileOffset->LowPart >= Bcbt->FileOffset.LowPart)
+            {
                 Found = TRUE;
                 break;
             }
@@ -5462,7 +5503,8 @@ Return Value:
             //  from the start of the desired range.
             //
 
-            if (BeyondLastByte->LowPart >= Bcbt->FileOffset.LowPart) {
+            if (BeyondLastByte->LowPart >= Bcbt->FileOffset.LowPart)
+            {
                 BeyondLastByte->LowPart = Bcbt->FileOffset.LowPart;
             }
 
@@ -5471,19 +5513,18 @@ Return Value:
             //  the listhead) and loop back.
             //
 
-            Bcbt = CONTAINING_RECORD( Bcbt->BcbLinks.Flink,
-                                      BCB,
-                                      BcbLinks );
-
+            Bcbt = CONTAINING_RECORD(Bcbt->BcbLinks.Flink, BCB, BcbLinks);
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         //  64-bit - Loop until we get back to a listhead.
         //
 
-        while (Bcbt->NodeTypeCode == CACHE_NTC_BCB) {
+        while (Bcbt->NodeTypeCode == CACHE_NTC_BCB)
+        {
 
             //
             //  Since the Bcb list is in descending order, we first check
@@ -5491,7 +5532,8 @@ Return Value:
             //  get out.
             //
 
-            if (FileOffset->QuadPart >= Bcbt->BeyondLastByte.QuadPart) {
+            if (FileOffset->QuadPart >= Bcbt->BeyondLastByte.QuadPart)
+            {
                 break;
             }
 
@@ -5503,7 +5545,8 @@ Return Value:
             //  either case we break with Found == TRUE.
             //
 
-            if (FileOffset->QuadPart >= Bcbt->FileOffset.QuadPart) {
+            if (FileOffset->QuadPart >= Bcbt->FileOffset.QuadPart)
+            {
                 Found = TRUE;
                 break;
             }
@@ -5517,7 +5560,8 @@ Return Value:
             //  from the start of the desired range.
             //
 
-            if (BeyondLastByte->QuadPart >= Bcbt->FileOffset.QuadPart) {
+            if (BeyondLastByte->QuadPart >= Bcbt->FileOffset.QuadPart)
+            {
                 BeyondLastByte->QuadPart = Bcbt->FileOffset.QuadPart;
             }
 
@@ -5526,35 +5570,26 @@ Return Value:
             //  the listhead) and loop back.
             //
 
-            Bcbt = CONTAINING_RECORD( Bcbt->BcbLinks.Flink,
-                                      BCB,
-                                      BcbLinks );
-
+            Bcbt = CONTAINING_RECORD(Bcbt->BcbLinks.Flink, BCB, BcbLinks);
         }
     }
 
     *Bcb = Bcbt;
 
-    DebugTrace2(0, me, "    <TrialLength = %08lx, %08lx\n", TrialLength->LowPart,
-                                                            TrialLength->HighPart );
-    DebugTrace( 0, me, "    <Bcb = %08lx\n", *Bcb );
-    DebugTrace(-1, me, "CcFindBcb -> %02lx\n", Found );
+    DebugTrace2(0, me, "    <TrialLength = %08lx, %08lx\n", TrialLength->LowPart, TrialLength->HighPart);
+    DebugTrace(0, me, "    <Bcb = %08lx\n", *Bcb);
+    DebugTrace(-1, me, "CcFindBcb -> %02lx\n", Found);
 
     return Found;
 }
 
-
+
 //
 //  Internal Support Routine
 //
 
-PBCB
-CcAllocateInitializeBcb (
-    IN OUT PSHARED_CACHE_MAP SharedCacheMap OPTIONAL,
-    IN OUT PBCB AfterBcb,
-    IN PLARGE_INTEGER FileOffset,
-    IN PLARGE_INTEGER TrialLength
-    )
+PBCB CcAllocateInitializeBcb(IN OUT PSHARED_CACHE_MAP SharedCacheMap OPTIONAL, IN OUT PBCB AfterBcb,
+                             IN PLARGE_INTEGER FileOffset, IN PLARGE_INTEGER TrialLength)
 
 /*++
 
@@ -5588,8 +5623,9 @@ Return Value:
     PBCB Bcb;
     ULONG RoundedBcbSize = (sizeof(BCB) + 7) & ~7;
 
-    if ((Bcb = ExAllocatePoolWithTag( NonPagedPool, sizeof(BCB), 'cBcC')) == NULL) {
-        
+    if ((Bcb = ExAllocatePoolWithTag(NonPagedPool, sizeof(BCB), 'cBcC')) == NULL)
+    {
+
         return NULL;
     }
 
@@ -5598,21 +5634,22 @@ Return Value:
     //  nonzero fields.
     //
 
-    RtlZeroMemory( Bcb, RoundedBcbSize );
+    RtlZeroMemory(Bcb, RoundedBcbSize);
 
     //
     //  For Mbcb's, SharedCacheMap is NULL, and the rest of this initialization
     //  is not desired.
     //
 
-    if (SharedCacheMap != NULL) {
+    if (SharedCacheMap != NULL)
+    {
 
         Bcb->NodeTypeCode = CACHE_NTC_BCB;
         Bcb->FileOffset = *FileOffset;
         Bcb->ByteLength = TrialLength->LowPart;
         Bcb->BeyondLastByte.QuadPart = FileOffset->QuadPart + TrialLength->QuadPart;
         Bcb->PinCount += 1;
-        ExInitializeResourceLite( &Bcb->Resource );
+        ExInitializeResourceLite(&Bcb->Resource);
         Bcb->SharedCacheMap = SharedCacheMap;
 
         //
@@ -5622,17 +5659,16 @@ Return Value:
         //
 
         CcAcquireVacbLockAtDpcLevel();
-        InsertTailList( &AfterBcb->BcbLinks, &Bcb->BcbLinks );
+        InsertTailList(&AfterBcb->BcbLinks, &Bcb->BcbLinks);
 
-        ASSERT( (SharedCacheMap->SectionSize.QuadPart < VACB_SIZE_OF_FIRST_LEVEL) ||
-                (CcFindBcb(SharedCacheMap, FileOffset, &Bcb->BeyondLastByte, &AfterBcb) &&
-                 (Bcb == AfterBcb)) );
+        ASSERT((SharedCacheMap->SectionSize.QuadPart < VACB_SIZE_OF_FIRST_LEVEL) ||
+               (CcFindBcb(SharedCacheMap, FileOffset, &Bcb->BeyondLastByte, &AfterBcb) && (Bcb == AfterBcb)));
 
         //
         //  Now for large metadata streams we lock the Vacb level.
         //
 
-        CcLockVacbLevel( SharedCacheMap, FileOffset->QuadPart );
+        CcLockVacbLevel(SharedCacheMap, FileOffset->QuadPart);
         CcReleaseVacbLockFromDpcLevel();
 
         //
@@ -5641,28 +5677,24 @@ Return Value:
         //  boost (I know this is useless, but KenR said I had to do it).
         //
 
-        if (SharedCacheMap &&
-            FlagOn(SharedCacheMap->Flags, DISABLE_WRITE_BEHIND)) {
+        if (SharedCacheMap && FlagOn(SharedCacheMap->Flags, DISABLE_WRITE_BEHIND))
+        {
 #if DBG
             SetFlag(Bcb->Resource.Flag, ResourceNeverExclusive);
 #endif
-            ExDisableResourceBoost( &Bcb->Resource );
+            ExDisableResourceBoost(&Bcb->Resource);
         }
     }
 
     return Bcb;
 }
 
-
+
 //
 //  Internal support routine
 //
 
-VOID
-FASTCALL
-CcDeallocateBcb (
-    IN PBCB Bcb
-    )
+VOID FASTCALL CcDeallocateBcb(IN PBCB Bcb)
 
 /*++
 
@@ -5686,29 +5718,24 @@ Return Value:
     //  Deallocate Resource structures
     //
 
-    if (Bcb->NodeTypeCode == CACHE_NTC_BCB) {
+    if (Bcb->NodeTypeCode == CACHE_NTC_BCB)
+    {
 
-        ExDeleteResourceLite( &Bcb->Resource );
+        ExDeleteResourceLite(&Bcb->Resource);
     }
 
     ExFreePool(Bcb);
     return;
 }
 
-
+
 //
 //  Internal Support Routine
 //
 
 BOOLEAN
-CcMapAndRead(
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN ULONG ZeroFlags,
-    IN BOOLEAN Wait,
-    IN PVOID BaseAddress
-    )
+CcMapAndRead(IN PSHARED_CACHE_MAP SharedCacheMap, IN PLARGE_INTEGER FileOffset, IN ULONG Length, IN ULONG ZeroFlags,
+             IN BOOLEAN Wait, IN PVOID BaseAddress)
 
 /*++
 
@@ -5755,16 +5782,17 @@ Return Value:
     BOOLEAN Result = FALSE;
     PETHREAD Thread = PsGetCurrentThread();
 
-    UNREFERENCED_PARAMETER (SharedCacheMap);
-    UNREFERENCED_PARAMETER (FileOffset);
+    UNREFERENCED_PARAMETER(SharedCacheMap);
+    UNREFERENCED_PARAMETER(FileOffset);
 
-    MmSavePageFaultReadAhead( Thread, &SavedState );
+    MmSavePageFaultReadAhead(Thread, &SavedState);
 
     //
     //  try around everything for cleanup.
     //
 
-    try {
+    try
+    {
 
         ULONG PagesToGo;
 
@@ -5774,7 +5802,7 @@ Return Value:
         //  we need.
         //
 
-        PagesToGo = ADDRESS_AND_SIZE_TO_SPAN_PAGES( BaseAddress, Length );
+        PagesToGo = ADDRESS_AND_SIZE_TO_SPAN_PAGES(BaseAddress, Length);
 
         //
         //  Loop to touch or zero the pages.
@@ -5782,17 +5810,18 @@ Return Value:
 
         ZeroCase = ZERO_FIRST_PAGE;
 
-        while (PagesToGo) {
+        while (PagesToGo)
+        {
 
             //
             //  If we cannot zero this page, or Mm failed to return
             //  a zeroed page, then just fault it in.
             //
 
-            MmSetPageFaultReadAhead( Thread, (PagesToGo - 1) );
+            MmSetPageFaultReadAhead(Thread, (PagesToGo - 1));
 
-            if (!FlagOn(ZeroFlags, ZeroCase) ||
-                !MmCheckCachedPageState(BaseAddress, TRUE)) {
+            if (!FlagOn(ZeroFlags, ZeroCase) || !MmCheckCachedPageState(BaseAddress, TRUE))
+            {
 
                 //
                 //  If we get here, it is almost certainly due to the fact
@@ -5802,31 +5831,37 @@ Return Value:
                 //  Wait is FALSE, so that we can do the right thing.
                 //
 
-                if (!MmCheckCachedPageState(BaseAddress, FALSE) && !Wait) {
-                    try_return( Result = FALSE );
+                if (!MmCheckCachedPageState(BaseAddress, FALSE) && !Wait)
+                {
+                    try_return(Result = FALSE);
                 }
             }
 
             BaseAddress = (PCHAR)BaseAddress + PAGE_SIZE;
             PagesToGo -= 1;
 
-            if (PagesToGo == 1) {
+            if (PagesToGo == 1)
+            {
                 ZeroCase = ZERO_LAST_PAGE;
-            } else {
+            }
+            else
+            {
                 ZeroCase = ZERO_MIDDLE_PAGES;
             }
         }
 
-        try_return( Result = TRUE );
+        try_return(Result = TRUE);
 
-    try_exit: NOTHING;
+    try_exit:
+        NOTHING;
     }
 
     //
     //  Cleanup on the way out.
     //
 
-    finally {
+    finally
+    {
 
         MmResetPageFaultReadAhead(Thread, SavedState);
     }
@@ -5834,18 +5869,13 @@ Return Value:
     return Result;
 }
 
-
+
 //
 //  Internal Support Routine
 //
 
-VOID
-CcFreeActiveVacb (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN PVACB ActiveVacb OPTIONAL,
-    IN ULONG ActivePage,
-    IN ULONG PageIsDirty
-    )
+VOID CcFreeActiveVacb(IN PSHARED_CACHE_MAP SharedCacheMap, IN PVACB ActiveVacb OPTIONAL, IN ULONG ActivePage,
+                      IN ULONG PageIsDirty)
 
 /*++
 
@@ -5884,7 +5914,8 @@ Return Value:
     //  If the page was locked, then unlock it.
     //
 
-    if (SharedCacheMap->NeedToZero != NULL) {
+    if (SharedCacheMap->NeedToZero != NULL)
+    {
 
         PVACB NeedToZeroVacb;
 
@@ -5896,24 +5927,24 @@ Return Value:
         //  spinlock is not held.
         //
 
-        ExAcquireFastLock( &SharedCacheMap->ActiveVacbSpinLock, &OldIrql );
+        ExAcquireFastLock(&SharedCacheMap->ActiveVacbSpinLock, &OldIrql);
 
         //
         //  The address could already be gone.
         //
 
         ActiveAddress = SharedCacheMap->NeedToZero;
-        if (ActiveAddress != NULL) {
+        if (ActiveAddress != NULL)
+        {
 
             BytesLeftInPage = PAGE_SIZE - ((((ULONG)((ULONG_PTR)ActiveAddress) - 1) & (PAGE_SIZE - 1)) + 1);
 
-            RtlZeroBytes( ActiveAddress, BytesLeftInPage );
+            RtlZeroBytes(ActiveAddress, BytesLeftInPage);
             NeedToZeroVacb = SharedCacheMap->NeedToZeroVacb;
-            ASSERT( NeedToZeroVacb != NULL );
+            ASSERT(NeedToZeroVacb != NULL);
             SharedCacheMap->NeedToZero = NULL;
-
         }
-        ExReleaseFastLock( &SharedCacheMap->ActiveVacbSpinLock, OldIrql );
+        ExReleaseFastLock(&SharedCacheMap->ActiveVacbSpinLock, OldIrql);
 
         //
         //  Now call MM to unlock the address.  Note we will never store the
@@ -5921,9 +5952,10 @@ Return Value:
         //  the start of the next page when we have exactly filled the page.
         //
 
-        if (ActiveAddress != NULL) {
-            MmUnlockCachedPage( (PVOID)((PCHAR)ActiveAddress - 1) );
-            CcFreeVirtualAddress( NeedToZeroVacb );
+        if (ActiveAddress != NULL)
+        {
+            MmUnlockCachedPage((PVOID)((PCHAR)ActiveAddress - 1));
+            CcFreeVirtualAddress(NeedToZeroVacb);
         }
     }
 
@@ -5931,63 +5963,58 @@ Return Value:
     //  See if caller actually has an ActiveVacb
     //
 
-    if (ActiveVacb != NULL) {
+    if (ActiveVacb != NULL)
+    {
 
         //
         //  See if the page is dirty
         //
 
-        if (PageIsDirty) {
+        if (PageIsDirty)
+        {
 
             ActiveOffset.QuadPart = (LONGLONG)ActivePage << PAGE_SHIFT;
-            ActiveAddress = (PVOID)((PCHAR)ActiveVacb->BaseAddress +
-                                    (ActiveOffset.LowPart  & (VACB_MAPPING_GRANULARITY - 1)));
+            ActiveAddress =
+                (PVOID)((PCHAR)ActiveVacb->BaseAddress + (ActiveOffset.LowPart & (VACB_MAPPING_GRANULARITY - 1)));
 
             //
             //  Tell the Lazy Writer to write the page.
             //
 
-            CcSetDirtyInMask( SharedCacheMap, &ActiveOffset, PAGE_SIZE );
+            CcSetDirtyInMask(SharedCacheMap, &ActiveOffset, PAGE_SIZE);
 
             //
             //  Now we need to clear the flag and decrement some counts if there is
             //  no other active Vacb which snuck in.
             //
 
-            CcAcquireMasterLock( &OldIrql );
-            ExAcquireSpinLockAtDpcLevel( &SharedCacheMap->ActiveVacbSpinLock );
-            if ((SharedCacheMap->ActiveVacb == NULL) &&
-                FlagOn(SharedCacheMap->Flags, ACTIVE_PAGE_IS_DIRTY)) {
+            CcAcquireMasterLock(&OldIrql);
+            ExAcquireSpinLockAtDpcLevel(&SharedCacheMap->ActiveVacbSpinLock);
+            if ((SharedCacheMap->ActiveVacb == NULL) && FlagOn(SharedCacheMap->Flags, ACTIVE_PAGE_IS_DIRTY))
+            {
 
                 ClearFlag(SharedCacheMap->Flags, ACTIVE_PAGE_IS_DIRTY);
-                CcDeductDirtyPages( SharedCacheMap, 1);
+                CcDeductDirtyPages(SharedCacheMap, 1);
             }
-            ExReleaseSpinLockFromDpcLevel( &SharedCacheMap->ActiveVacbSpinLock );
-            CcReleaseMasterLock( OldIrql );
+            ExReleaseSpinLockFromDpcLevel(&SharedCacheMap->ActiveVacbSpinLock);
+            CcReleaseMasterLock(OldIrql);
         }
 
         //
         //  Now free the Vacb.
         //
 
-        CcFreeVirtualAddress( ActiveVacb );
+        CcFreeVirtualAddress(ActiveVacb);
     }
 }
 
-
+
 //
 //  Internal Support Routine
 //
 
-VOID
-CcMapAndCopy(
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN PVOID UserBuffer,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN ULONG ZeroFlags,
-    IN PFILE_OBJECT FileObject
-    )
+VOID CcMapAndCopy(IN PSHARED_CACHE_MAP SharedCacheMap, IN PVOID UserBuffer, IN PLARGE_INTEGER FileOffset,
+                  IN ULONG Length, IN ULONG ZeroFlags, IN PFILE_OBJECT FileObject)
 
 /*++
 
@@ -6031,7 +6058,7 @@ Return Value:
     NTSTATUS Status;
     ULONG SavedState;
     LOGICAL MorePages;
-    BOOLEAN WriteThrough = BooleanFlagOn( FileObject->Flags, FO_WRITE_THROUGH );
+    BOOLEAN WriteThrough = BooleanFlagOn(FileObject->Flags, FO_WRITE_THROUGH);
     ULONG SavedTotalLength = Length;
     LARGE_INTEGER LocalOffset;
     ULONG PageOffset = FileOffset->LowPart & (PAGE_SIZE - 1);
@@ -6051,18 +6078,17 @@ Return Value:
 
     LocalOffset.QuadPart = FileOffset->QuadPart;
 
-    DebugTrace(+1, me, "CcMapAndCopy:\n", 0 );
-    DebugTrace( 0, me, "    SharedCacheMap = %08lx\n", SharedCacheMap );
-    DebugTrace2(0, me, "    FileOffset = %08lx, %08lx\n", FileOffset->LowPart,
-                                                          FileOffset->HighPart );
-    DebugTrace( 0, me, "    Length = %08lx\n", Length );
+    DebugTrace(+1, me, "CcMapAndCopy:\n", 0);
+    DebugTrace(0, me, "    SharedCacheMap = %08lx\n", SharedCacheMap);
+    DebugTrace2(0, me, "    FileOffset = %08lx, %08lx\n", FileOffset->LowPart, FileOffset->HighPart);
+    DebugTrace(0, me, "    Length = %08lx\n", Length);
 
-    MmSavePageFaultReadAhead( Thread, &SavedState );
+    MmSavePageFaultReadAhead(Thread, &SavedState);
 
     //
     //  BUGBUG: re-enable this path when we can also generate a ccsetvaliddata call
     //  in all cases to fix corruption issue see 615074)
-    // 
+    //
 
 #if 0
 
@@ -6091,28 +6117,28 @@ Return Value:
     //  try around everything for cleanup.
     //
 
-    try {
+    try
+    {
 
-        while (Length != 0) {
+        while (Length != 0)
+        {
 
-            CacheBuffer = CcGetVirtualAddress( SharedCacheMap,
-                                               LocalOffset,
-                                               &Vacb,
-                                               &ReceivedLength );
+            CacheBuffer = CcGetVirtualAddress(SharedCacheMap, LocalOffset, &Vacb, &ReceivedLength);
 
             //
             //  PREfix wants to know this cannot be NULL, otherwise it
             //  will complain.
             //
 
-            ASSERT( CacheBuffer != NULL );
+            ASSERT(CacheBuffer != NULL);
 
             //
             //  If we got more than we need, make sure to only use
             //  the right amount.
             //
 
-            if (ReceivedLength > Length) {
+            if (ReceivedLength > Length)
+            {
                 ReceivedLength = Length;
             }
             SavedMappedBuffer = CacheBuffer;
@@ -6141,17 +6167,16 @@ Return Value:
             PFileOffset = LocalOffset;
             PFileOffset.LowPart -= PageOffset;
 
-            while (TRUE) {
+            while (TRUE)
+            {
 
                 //
                 //  Calculate whether we wish to save an active page
                 //  or not.
                 //
 
-                SavePage = (BOOLEAN) ((Length == 0) &&
-                            (ReceivedLength < PAGE_SIZE) &&
-                            (SavedTotalLength <= (PAGE_SIZE / 2)) &&
-                            !WriteThrough);
+                SavePage = (BOOLEAN)((Length == 0) && (ReceivedLength < PAGE_SIZE) &&
+                                     (SavedTotalLength <= (PAGE_SIZE / 2)) && !WriteThrough);
 
                 MorePages = (ReceivedLength > PAGE_SIZE);
 
@@ -6159,55 +6184,50 @@ Return Value:
                 //  Copy the data to the user buffer.
                 //
 
-                try {
+                try
+                {
 
                     //
                     //  It is possible that there is a locked page
                     //  hanging around, and so we need to nuke it here.
                     //
 
-                    if (SharedCacheMap->NeedToZero != NULL) {
-                        CcFreeActiveVacb( SharedCacheMap, NULL, 0, 0 );
+                    if (SharedCacheMap->NeedToZero != NULL)
+                    {
+                        CcFreeActiveVacb(SharedCacheMap, NULL, 0, 0);
                     }
 
                     Status = STATUS_SUCCESS;
-                    if (FlagOn(ZeroFlags, ZeroCase)) {
+                    if (FlagOn(ZeroFlags, ZeroCase))
+                    {
 
-                        Status = MmCopyToCachedPage( CacheBuffer,
-                                                     UserBuffer,
-                                                     PageOffset,
-                                                     MorePages ?
-                                                       (PAGE_SIZE - PageOffset) :
-                                                       (ReceivedLength - PageOffset),
-                                                     SavePage );
+                        Status = MmCopyToCachedPage(
+                            CacheBuffer, UserBuffer, PageOffset,
+                            MorePages ? (PAGE_SIZE - PageOffset) : (ReceivedLength - PageOffset), SavePage);
 
-                        if (!NT_SUCCESS(Status)) {
+                        if (!NT_SUCCESS(Status))
+                        {
 
-                            ExRaiseStatus( FsRtlNormalizeNtstatus( Status,
-                                                                   STATUS_INVALID_USER_BUFFER ));
+                            ExRaiseStatus(FsRtlNormalizeNtstatus(Status, STATUS_INVALID_USER_BUFFER));
                         }
 
-                    //
-                    //  Otherwise, we have to actually copy the data ourselves.
-                    //
-
-                    } else {
-
-                        MmSetPageFaultReadAhead( Thread,
-                                                 (MorePages && FlagOn(ZeroFlags, ZERO_LAST_PAGE)) ? 1 : 0);
-
-                        RtlCopyBytes( (PVOID)((PCHAR)CacheBuffer + PageOffset),
-                                      UserBuffer,
-                                      MorePages ?
-                                        (PAGE_SIZE - PageOffset) :
-                                        (ReceivedLength - PageOffset) );
-
-                        MmResetPageFaultReadAhead( Thread, SavedState );
-
+                        //
+                        //  Otherwise, we have to actually copy the data ourselves.
+                        //
                     }
+                    else
+                    {
 
-                } except( CcCopyReadExceptionFilter( GetExceptionInformation(),
-                                                     &Status ) ) {
+                        MmSetPageFaultReadAhead(Thread, (MorePages && FlagOn(ZeroFlags, ZERO_LAST_PAGE)) ? 1 : 0);
+
+                        RtlCopyBytes((PVOID)((PCHAR)CacheBuffer + PageOffset), UserBuffer,
+                                     MorePages ? (PAGE_SIZE - PageOffset) : (ReceivedLength - PageOffset));
+
+                        MmResetPageFaultReadAhead(Thread, SavedState);
+                    }
+                }
+                except(CcCopyReadExceptionFilter(GetExceptionInformation(), &Status))
+                {
 
                     //
                     //  If we got an access violation, then the user buffer went
@@ -6215,12 +6235,13 @@ Return Value:
                     //  to bring the data in.
                     //
 
-                    if (Status == STATUS_ACCESS_VIOLATION) {
-                        ExRaiseStatus( STATUS_INVALID_USER_BUFFER );
+                    if (Status == STATUS_ACCESS_VIOLATION)
+                    {
+                        ExRaiseStatus(STATUS_INVALID_USER_BUFFER);
                     }
-                    else {
-                        ExRaiseStatus( FsRtlNormalizeNtstatus( Status,
-                                                               STATUS_UNEXPECTED_IO_ERROR ));
+                    else
+                    {
+                        ExRaiseStatus(FsRtlNormalizeNtstatus(Status, STATUS_UNEXPECTED_IO_ERROR));
                     }
                 }
 
@@ -6229,11 +6250,11 @@ Return Value:
                 //  to save the page.
                 //
 
-                if (SavePage) {
+                if (SavePage)
+                {
 
-                    ActivePage = (ULONG)( Vacb->Overlay.FileOffset.QuadPart >> PAGE_SHIFT ) +
-                                 (ULONG)(((PCHAR)CacheBuffer - (PCHAR)Vacb->BaseAddress) >>
-                                   PAGE_SHIFT);
+                    ActivePage = (ULONG)(Vacb->Overlay.FileOffset.QuadPart >> PAGE_SHIFT) +
+                                 (ULONG)(((PCHAR)CacheBuffer - (PCHAR)Vacb->BaseAddress) >> PAGE_SHIFT);
 
                     PFileOffset.LowPart += ReceivedLength;
 
@@ -6242,7 +6263,8 @@ Return Value:
                     //  to zero from.
                     //
 
-                    if (Status == STATUS_CACHE_PAGE_LOCKED) {
+                    if (Status == STATUS_CACHE_PAGE_LOCKED)
+                    {
 
                         //
                         //  We need to guarantee this Vacb for zeroing and calling
@@ -6250,30 +6272,25 @@ Return Value:
                         //  and remember it for CcFreeActiveVacb.
                         //
 
-                        CcAcquireVacbLock( &OldIrql );
+                        CcAcquireVacbLock(&OldIrql);
                         Vacb->Overlay.ActiveCount += 1;
 
-                        ExAcquireSpinLockAtDpcLevel( &SharedCacheMap->ActiveVacbSpinLock );
+                        ExAcquireSpinLockAtDpcLevel(&SharedCacheMap->ActiveVacbSpinLock);
 
                         ASSERT(SharedCacheMap->NeedToZero == NULL);
 
-                        SharedCacheMap->NeedToZero = (PVOID)((PCHAR)CacheBuffer +
-                                                             (PFileOffset.LowPart & (PAGE_SIZE - 1)));
+                        SharedCacheMap->NeedToZero =
+                            (PVOID)((PCHAR)CacheBuffer + (PFileOffset.LowPart & (PAGE_SIZE - 1)));
                         SharedCacheMap->NeedToZeroPage = ActivePage;
                         SharedCacheMap->NeedToZeroVacb = Vacb;
 
-                        ExReleaseSpinLockFromDpcLevel( &SharedCacheMap->ActiveVacbSpinLock );
-                        CcReleaseVacbLock( OldIrql );
-
+                        ExReleaseSpinLockFromDpcLevel(&SharedCacheMap->ActiveVacbSpinLock);
+                        CcReleaseVacbLock(OldIrql);
                     }
 
-                    SetActiveVacb( SharedCacheMap,
-                                   OldIrql,
-                                   Vacb,
-                                   ActivePage,
-                                   ACTIVE_PAGE_IS_DIRTY );
+                    SetActiveVacb(SharedCacheMap, OldIrql, Vacb, ActivePage, ACTIVE_PAGE_IS_DIRTY);
 
-                    try_return( NOTHING );
+                    try_return(NOTHING);
                 }
 
                 //
@@ -6284,9 +6301,10 @@ Return Value:
                 //  this case only occurs for a small random write.
                 //
 
-                if ((SavedTotalLength <= (PAGE_SIZE / 2)) && !WriteThrough) {
+                if ((SavedTotalLength <= (PAGE_SIZE / 2)) && !WriteThrough)
+                {
 
-                    CcSetDirtyInMask( SharedCacheMap, &PFileOffset, ReceivedLength );
+                    CcSetDirtyInMask(SharedCacheMap, &PFileOffset, ReceivedLength);
                 }
 
                 UserBuffer = (PVOID)((PCHAR)UserBuffer + (PAGE_SIZE - PageOffset));
@@ -6298,7 +6316,8 @@ Return Value:
                 //  determine if we are to the last page yet.
                 //
 
-                if (MorePages) {
+                if (MorePages)
+                {
 
                     CacheBuffer = (PCHAR)CacheBuffer + PAGE_SIZE;
                     ReceivedLength -= PAGE_SIZE;
@@ -6312,13 +6331,17 @@ Return Value:
 
                     PFileOffset.LowPart += PAGE_SIZE;
 
-                    if (ReceivedLength > PAGE_SIZE) {
+                    if (ReceivedLength > PAGE_SIZE)
+                    {
                         ZeroCase = ZERO_MIDDLE_PAGES;
-                    } else {
+                    }
+                    else
+                    {
                         ZeroCase = ZERO_LAST_PAGE;
                     }
-
-                } else {
+                }
+                else
+                {
 
                     break;
                 }
@@ -6333,41 +6356,41 @@ Return Value:
             //  dirty in the mask in this case.
             //
 
-            if (Length > CcMaxDirtyWrite) {
+            if (Length > CcMaxDirtyWrite)
+            {
 
-                MmSetAddressRangeModified( SavedMappedBuffer, SavedMappedLength );
-                MmFlushSection( SharedCacheMap->FileObject->SectionObjectPointer,
-                                &LocalOffset,
-                                SavedMappedLength,
-                                &IoStatus,
-                                TRUE );
+                MmSetAddressRangeModified(SavedMappedBuffer, SavedMappedLength);
+                MmFlushSection(SharedCacheMap->FileObject->SectionObjectPointer, &LocalOffset, SavedMappedLength,
+                               &IoStatus, TRUE);
 
-                if (!NT_SUCCESS(IoStatus.Status)) {
-                    ExRaiseStatus( FsRtlNormalizeNtstatus( IoStatus.Status,
-                                                           STATUS_UNEXPECTED_IO_ERROR ));
+                if (!NT_SUCCESS(IoStatus.Status))
+                {
+                    ExRaiseStatus(FsRtlNormalizeNtstatus(IoStatus.Status, STATUS_UNEXPECTED_IO_ERROR));
                 }
 
-            //
-            //  For write through files, call Mm to propagate the dirty bits
-            //  here while we have the view mapped, so we know the flush will
-            //  work below.  Again - do not set dirty in the mask.
-            //
+                //
+                //  For write through files, call Mm to propagate the dirty bits
+                //  here while we have the view mapped, so we know the flush will
+                //  work below.  Again - do not set dirty in the mask.
+                //
+            }
+            else if (WriteThrough)
+            {
 
-            } else if (WriteThrough) {
+                MmSetAddressRangeModified(SavedMappedBuffer, SavedMappedLength);
 
-                MmSetAddressRangeModified( SavedMappedBuffer, SavedMappedLength );
+                //
+                //  For the normal case, just set the pages dirty for the Lazy Writer
+                //  now.
+                //
+            }
+            else
+            {
 
-            //
-            //  For the normal case, just set the pages dirty for the Lazy Writer
-            //  now.
-            //
-
-            } else {
-
-                CcSetDirtyInMask( SharedCacheMap, &LocalOffset, SavedMappedLength );
+                CcSetDirtyInMask(SharedCacheMap, &LocalOffset, SavedMappedLength);
             }
 
-            CcFreeVirtualAddress( Vacb );
+            CcFreeVirtualAddress(Vacb);
             Vacb = NULL;
 
             //
@@ -6377,9 +6400,12 @@ Return Value:
             //  page.
             //
 
-            if (Length >= PAGE_SIZE) {
+            if (Length >= PAGE_SIZE)
+            {
                 ZeroFlags |= ZERO_FIRST_PAGE;
-            } else if ((ZeroFlags & ZERO_LAST_PAGE) == 0) {
+            }
+            else if ((ZeroFlags & ZERO_LAST_PAGE) == 0)
+            {
                 ZeroFlags = 0;
             }
 
@@ -6392,31 +6418,35 @@ Return Value:
 
             LocalOffset.QuadPart = LocalOffset.QuadPart + (LONGLONG)SavedMappedLength;
         }
-    try_exit: NOTHING;
+    try_exit:
+        NOTHING;
     }
 
     //
     //  Cleanup on the way out.
     //
 
-    finally {
+    finally
+    {
 
-        MmResetPageFaultReadAhead( Thread, SavedState );
+        MmResetPageFaultReadAhead(Thread, SavedState);
 
         //
         //  We have no work to do if we have squirreled away the Vacb.
         //
 
-        if (!SavePage || AbnormalTermination()) {
+        if (!SavePage || AbnormalTermination())
+        {
 
             //
             //  Make sure we do not leave anything mapped or dirty in the PTE
             //  on the way out.
             //
 
-            if (Vacb != NULL) {
+            if (Vacb != NULL)
+            {
 
-                CcFreeVirtualAddress( Vacb );
+                CcFreeVirtualAddress(Vacb);
             }
 
             //
@@ -6424,17 +6454,15 @@ Return Value:
             //  mark it dirty for the lazy writer.
             //
 
-            if (WriteThrough) {
+            if (WriteThrough)
+            {
 
-                MmFlushSection ( SharedCacheMap->FileObject->SectionObjectPointer,
-                                 FileOffset,
-                                 SavedTotalLength,
-                                 &IoStatus,
-                                 TRUE );
+                MmFlushSection(SharedCacheMap->FileObject->SectionObjectPointer, FileOffset, SavedTotalLength,
+                               &IoStatus, TRUE);
 
-                if (!NT_SUCCESS(IoStatus.Status)) {
-                    ExRaiseStatus( FsRtlNormalizeNtstatus( IoStatus.Status,
-                                                           STATUS_UNEXPECTED_IO_ERROR ));
+                if (!NT_SUCCESS(IoStatus.Status))
+                {
+                    ExRaiseStatus(FsRtlNormalizeNtstatus(IoStatus.Status, STATUS_UNEXPECTED_IO_ERROR));
                 }
 
                 //
@@ -6442,27 +6470,23 @@ Return Value:
                 //
 
                 LocalOffset.QuadPart = FileOffset->QuadPart + (LONGLONG)SavedTotalLength;
-                if (LocalOffset.QuadPart > SharedCacheMap->ValidDataGoal.QuadPart) {
+                if (LocalOffset.QuadPart > SharedCacheMap->ValidDataGoal.QuadPart)
+                {
                     SharedCacheMap->ValidDataGoal = LocalOffset;
                 }
             }
         }
     }
 
-    DebugTrace(-1, me, "CcMapAndCopy -> %02lx\n", Result );
+    DebugTrace(-1, me, "CcMapAndCopy -> %02lx\n", Result);
 
     return;
 }
 
 
 BOOLEAN
-CcLogError(
-    IN PFILE_OBJECT FileObject,
-    IN PUNICODE_STRING FileName,
-    IN NTSTATUS Error,
-    IN NTSTATUS DeviceError,
-    IN UCHAR IrpMajorCode
-    )
+CcLogError(IN PFILE_OBJECT FileObject, IN PUNICODE_STRING FileName, IN NTSTATUS Error, IN NTSTATUS DeviceError,
+           IN UCHAR IrpMajorCode)
 
 /*++
 
@@ -6507,17 +6531,19 @@ Return Value:
     //
 
     BasePacketLength = sizeof(IO_ERROR_LOG_PACKET);
-    if ((BasePacketLength + FileName->Length + sizeof(WCHAR)) <= ERROR_LOG_MAXIMUM_SIZE) {
+    if ((BasePacketLength + FileName->Length + sizeof(WCHAR)) <= ERROR_LOG_MAXIMUM_SIZE)
+    {
         ErrorPacketLength = (UCHAR)(BasePacketLength + FileName->Length + sizeof(WCHAR));
-    } else {
+    }
+    else
+    {
         ErrorPacketLength = ERROR_LOG_MAXIMUM_SIZE;
     }
 
-    ErrorLogEntry = (PIO_ERROR_LOG_PACKET) IoAllocateErrorLogEntry( (FileObject->Vpb ?
-                                                                     FileObject->Vpb->DeviceObject :
-                                                                     FileObject->DeviceObject),
-                                                                    ErrorPacketLength );
-    if (ErrorLogEntry) {
+    ErrorLogEntry = (PIO_ERROR_LOG_PACKET)IoAllocateErrorLogEntry(
+        (FileObject->Vpb ? FileObject->Vpb->DeviceObject : FileObject->DeviceObject), ErrorPacketLength);
+    if (ErrorLogEntry)
+    {
 
         //
         //  Fill in the nonzero members of the packet.
@@ -6528,7 +6554,7 @@ Return Value:
         ErrorLogEntry->FinalStatus = DeviceError;
 
         ErrorLogEntry->DumpDataSize = sizeof(NTSTATUS);
-        RtlCopyMemory( &ErrorLogEntry->DumpData, &DeviceError, sizeof(NTSTATUS) );
+        RtlCopyMemory(&ErrorLogEntry->DumpData, &DeviceError, sizeof(NTSTATUS));
 
         //
         //  The filename string is appended to the end of the error log entry. We may
@@ -6539,7 +6565,7 @@ Return Value:
 
         ASSERT(!(StringLength % sizeof(WCHAR)));
 
-        String = (PWCHAR) ((PUCHAR)ErrorLogEntry + BasePacketLength);
+        String = (PWCHAR)((PUCHAR)ErrorLogEntry + BasePacketLength);
         ErrorLogEntry->NumberOfStrings = 1;
         ErrorLogEntry->StringOffset = BasePacketLength;
 
@@ -6549,42 +6575,36 @@ Return Value:
         //  the loss.
         //
 
-        if (StringLength < FileName->Length) {
+        if (StringLength < FileName->Length)
+        {
 
             //
             //  Remember, prefix + " .. " + suffix is the length.  Calculate by figuring
             //  the prefix and then get the suffix by whacking the ellipsis and prefix off
             //  the total.
             //
-            
-            ULONG NamePrefixSegmentLength = ((StringLength/sizeof(WCHAR))/2 - 2)*sizeof(WCHAR);
-            ULONG NameSuffixSegmentLength = StringLength - 4*sizeof(WCHAR) - NamePrefixSegmentLength;
+
+            ULONG NamePrefixSegmentLength = ((StringLength / sizeof(WCHAR)) / 2 - 2) * sizeof(WCHAR);
+            ULONG NameSuffixSegmentLength = StringLength - 4 * sizeof(WCHAR) - NamePrefixSegmentLength;
 
             ASSERT(!(NamePrefixSegmentLength % sizeof(WCHAR)));
             ASSERT(!(NameSuffixSegmentLength % sizeof(WCHAR)));
 
-            RtlCopyMemory( String,
-                           FileName->Buffer,
-                           NamePrefixSegmentLength );
+            RtlCopyMemory(String, FileName->Buffer, NamePrefixSegmentLength);
             String = (PWCHAR)((PCHAR)String + NamePrefixSegmentLength);
 
-            RtlCopyMemory( String,
-                           L" .. ",
-                           4*sizeof(WCHAR) );
+            RtlCopyMemory(String, L" .. ", 4 * sizeof(WCHAR));
             String += 4;
 
-            RtlCopyMemory( String,
-                           (PUCHAR)FileName->Buffer +
-                           FileName->Length - NameSuffixSegmentLength,
-                           NameSuffixSegmentLength );
+            RtlCopyMemory(String, (PUCHAR)FileName->Buffer + FileName->Length - NameSuffixSegmentLength,
+                          NameSuffixSegmentLength);
             String = (PWCHAR)((PCHAR)String + NameSuffixSegmentLength);
+        }
+        else
+        {
 
-        } else {
-            
-            RtlCopyMemory( String,
-                           FileName->Buffer,
-                           FileName->Length );
-            String += FileName->Length/sizeof(WCHAR);
+            RtlCopyMemory(String, FileName->Buffer, FileName->Length);
+            String += FileName->Length / sizeof(WCHAR);
         }
 
         //
@@ -6593,18 +6613,16 @@ Return Value:
 
         *String = L'\0';
 
-        IoWriteErrorLogEntry( ErrorLogEntry );
+        IoWriteErrorLogEntry(ErrorLogEntry);
         Result = TRUE;
     }
 
     return Result;
 }
 
-
+
 LOGICAL
-CcHasInactiveViews (
-    VOID
-    )
+CcHasInactiveViews(VOID)
 
 /*++
 
@@ -6632,14 +6650,12 @@ Environment:
 --*/
 
 {
-    return FALSE;       // BUGBUG - add code to flesh out.
+    return FALSE; // BUGBUG - add code to flesh out.
 }
 
-
+
 LOGICAL
-CcUnmapInactiveViews (
-    IN ULONG NumberOfViewsToUnmap
-    )
+CcUnmapInactiveViews(IN ULONG NumberOfViewsToUnmap)
 
 /*++
 
@@ -6667,20 +6683,15 @@ Environment:
 --*/
 
 {
-    UNREFERENCED_PARAMETER (NumberOfViewsToUnmap);
+    UNREFERENCED_PARAMETER(NumberOfViewsToUnmap);
 
-    return FALSE;       // BUGBUG - add code to flesh out.
+    return FALSE; // BUGBUG - add code to flesh out.
 }
-
+
 #ifdef CCDBG
-VOID
-CcDump (
-    IN PVOID Ptr
-    )
+VOID CcDump(IN PVOID Ptr)
 
 {
     PVOID Junk = Ptr;
 }
 #endif
-
-

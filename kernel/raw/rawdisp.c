@@ -26,12 +26,9 @@ Revision History:
 #pragma alloc_text(PAGE, RawDispatch)
 #endif
 
-
+
 NTSTATUS
-RawDispatch (
-    IN PVOLUME_DEVICE_OBJECT VolumeDeviceObject,
-    IN PIRP Irp
-    )
+RawDispatch(IN PVOLUME_DEVICE_OBJECT VolumeDeviceObject, IN PIRP Irp)
 
 /*++
 
@@ -64,7 +61,7 @@ Return Value:
     //  the function codes and parameters for this particular request.
     //
 
-    IrpSp = IoGetCurrentIrpStackLocation( Irp );
+    IrpSp = IoGetCurrentIrpStackLocation(Irp);
 
     //
     //  Check for operations associated with our FileSystemDeviceObjects
@@ -73,21 +70,22 @@ Return Value:
     //
 
     if ((((PDEVICE_OBJECT)VolumeDeviceObject)->Size == sizeof(DEVICE_OBJECT)) &&
-        !((IrpSp->MajorFunction == IRP_MJ_FILE_SYSTEM_CONTROL) &&
-          (IrpSp->MinorFunction == IRP_MN_MOUNT_VOLUME))) {
+        !((IrpSp->MajorFunction == IRP_MJ_FILE_SYSTEM_CONTROL) && (IrpSp->MinorFunction == IRP_MN_MOUNT_VOLUME)))
+    {
 
-        if ((IrpSp->MajorFunction == IRP_MJ_CREATE) ||
-            (IrpSp->MajorFunction == IRP_MJ_CLEANUP) ||
-            (IrpSp->MajorFunction == IRP_MJ_CLOSE)) {
+        if ((IrpSp->MajorFunction == IRP_MJ_CREATE) || (IrpSp->MajorFunction == IRP_MJ_CLEANUP) ||
+            (IrpSp->MajorFunction == IRP_MJ_CLOSE))
+        {
 
             Status = STATUS_SUCCESS;
-
-        } else {
+        }
+        else
+        {
 
             Status = STATUS_INVALID_DEVICE_REQUEST;
         }
 
-        RawCompleteRequest( Irp, Status );
+        RawCompleteRequest(Irp, Status);
 
         return Status;
     }
@@ -108,72 +106,75 @@ Return Value:
     //  by hand.
     //
 
-    try {
+    try
+    {
 
-        switch ( IrpSp->MajorFunction ) {
+        switch (IrpSp->MajorFunction)
+        {
 
-            case IRP_MJ_CLEANUP:
+        case IRP_MJ_CLEANUP:
 
-                Status = RawCleanup( Vcb, Irp, IrpSp );
+            Status = RawCleanup(Vcb, Irp, IrpSp);
+            break;
+
+        case IRP_MJ_CLOSE:
+
+            Status = RawClose(Vcb, Irp, IrpSp);
+            break;
+
+        case IRP_MJ_CREATE:
+
+            Status = RawCreate(Vcb, Irp, IrpSp);
+            break;
+
+        case IRP_MJ_FILE_SYSTEM_CONTROL:
+
+            Status = RawFileSystemControl(Vcb, Irp, IrpSp);
+            break;
+
+        case IRP_MJ_PNP:
+
+            if (IrpSp->MinorFunction == IRP_MN_QUERY_REMOVE_DEVICE)
+            {
+                Status = STATUS_DEVICE_BUSY;
+                RawCompleteRequest(Irp, Status);
                 break;
+            }
 
-            case IRP_MJ_CLOSE:
+        case IRP_MJ_READ:
+        case IRP_MJ_WRITE:
+        case IRP_MJ_DEVICE_CONTROL:
 
-                Status = RawClose( Vcb, Irp, IrpSp );
-                break;
+            Status = RawReadWriteDeviceControl(Vcb, Irp, IrpSp);
+            break;
 
-            case IRP_MJ_CREATE:
+        case IRP_MJ_QUERY_INFORMATION:
 
-                Status = RawCreate( Vcb, Irp, IrpSp );
-                break;
+            Status = RawQueryInformation(Vcb, Irp, IrpSp);
+            break;
 
-            case IRP_MJ_FILE_SYSTEM_CONTROL:
+        case IRP_MJ_SET_INFORMATION:
 
-                Status = RawFileSystemControl( Vcb, Irp, IrpSp );
-                break;
+            Status = RawSetInformation(Vcb, Irp, IrpSp);
+            break;
 
-            case IRP_MJ_PNP: 
+        case IRP_MJ_QUERY_VOLUME_INFORMATION:
 
-                if(IrpSp->MinorFunction == IRP_MN_QUERY_REMOVE_DEVICE) {
-                    Status = STATUS_DEVICE_BUSY;
-                    RawCompleteRequest(Irp, Status);
-                    break;
-                } 
+            Status = RawQueryVolumeInformation(Vcb, Irp, IrpSp);
+            break;
 
-            case IRP_MJ_READ:
-            case IRP_MJ_WRITE:
-            case IRP_MJ_DEVICE_CONTROL:
+        default:
 
-                Status = RawReadWriteDeviceControl( Vcb, Irp, IrpSp );
-                break;
+            //
+            //  We should never get a request we don't expect.
+            //
 
-            case IRP_MJ_QUERY_INFORMATION:
-
-                Status = RawQueryInformation( Vcb, Irp, IrpSp );
-                break;
-
-            case IRP_MJ_SET_INFORMATION:
-
-                Status = RawSetInformation( Vcb, Irp, IrpSp );
-                break;
-
-            case IRP_MJ_QUERY_VOLUME_INFORMATION:
-
-                Status = RawQueryVolumeInformation( Vcb, Irp, IrpSp );
-                break;
-
-            default:
-
-                //
-                //  We should never get a request we don't expect.
-                //
-
-                KdPrint(("Raw: Illegal Irp major function code 0x%x.\n", IrpSp->MajorFunction));
-                KeBugCheckEx( FILE_SYSTEM, 0, 0, 0, 0 );
+            KdPrint(("Raw: Illegal Irp major function code 0x%x.\n", IrpSp->MajorFunction));
+            KeBugCheckEx(FILE_SYSTEM, 0, 0, 0, 0);
         }
-
-    } except( FsRtlIsNtstatusExpected(GetExceptionCode()) ?
-              EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH ) {
+    }
+    except(FsRtlIsNtstatusExpected(GetExceptionCode()) ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
+    {
 
         //
         //  No routine we call should ever generate an exception
@@ -199,29 +200,23 @@ Return Value:
 //
 
 NTSTATUS
-RawCompletionRoutine(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN PVOID Context
-    )
+RawCompletionRoutine(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID Context)
 
 {
-    PIO_STACK_LOCATION IrpSp = IoGetCurrentIrpStackLocation( Irp );
+    PIO_STACK_LOCATION IrpSp = IoGetCurrentIrpStackLocation(Irp);
 
     //
     //  Simply update the file pointer context in the file object if we
     //  were successful and this was a synrhonous read or write.
     //
 
-    if (((IrpSp->MajorFunction == IRP_MJ_READ) ||
-         (IrpSp->MajorFunction == IRP_MJ_WRITE)) &&
-        (IrpSp->FileObject != NULL) &&
-        FlagOn(IrpSp->FileObject->Flags, FO_SYNCHRONOUS_IO) &&
-        NT_SUCCESS(Irp->IoStatus.Status)) {
+    if (((IrpSp->MajorFunction == IRP_MJ_READ) || (IrpSp->MajorFunction == IRP_MJ_WRITE)) &&
+        (IrpSp->FileObject != NULL) && FlagOn(IrpSp->FileObject->Flags, FO_SYNCHRONOUS_IO) &&
+        NT_SUCCESS(Irp->IoStatus.Status))
+    {
 
         IrpSp->FileObject->CurrentByteOffset.QuadPart =
-            IrpSp->FileObject->CurrentByteOffset.QuadPart +
-            Irp->IoStatus.Information;
+            IrpSp->FileObject->CurrentByteOffset.QuadPart + Irp->IoStatus.Information;
     }
 
     //
@@ -229,13 +224,14 @@ RawCompletionRoutine(
     //  with pending.
     //
 
-    if ( Irp->PendingReturned ) {
+    if (Irp->PendingReturned)
+    {
 
-        IoMarkIrpPending( Irp );
+        IoMarkIrpPending(Irp);
     }
 
-    UNREFERENCED_PARAMETER( DeviceObject );
-    UNREFERENCED_PARAMETER( Context );
+    UNREFERENCED_PARAMETER(DeviceObject);
+    UNREFERENCED_PARAMETER(Context);
 
     return STATUS_SUCCESS;
 }

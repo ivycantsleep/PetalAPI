@@ -25,14 +25,8 @@ Revision History:
 #pragma alloc_text(PAGEKD, KdIsThisAKdTrap)
 
 BOOLEAN
-KdpTrap (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PCONTEXT ContextRecord,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN BOOLEAN SecondChance
-    )
+KdpTrap(IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame, IN PEXCEPTION_RECORD ExceptionRecord,
+        IN PCONTEXT ContextRecord, IN KPROCESSOR_MODE PreviousMode, IN BOOLEAN SecondChance)
 
 /*++
 
@@ -70,7 +64,7 @@ Return Value:
 
     BOOLEAN Completion = FALSE;
     BOOLEAN UnloadSymbols = FALSE;
-    ULONG   OldEip;
+    ULONG OldEip;
 
     //
     // Print, Prompt, Load symbols, Unload symbols, are all special
@@ -78,14 +72,16 @@ Return Value:
     //
 
     if ((ExceptionRecord->ExceptionCode == STATUS_BREAKPOINT) &&
-        (ExceptionRecord->ExceptionInformation[0] != BREAKPOINT_BREAK)) {
+        (ExceptionRecord->ExceptionInformation[0] != BREAKPOINT_BREAK))
+    {
 
         //
         // Switch on the breakpoint code.
         //
 
         OldEip = ContextRecord->Eip;
-        switch (ExceptionRecord->ExceptionInformation[0]) {
+        switch (ExceptionRecord->ExceptionInformation[0])
+        {
 
             //
             //  ExceptionInformation[1] - Address of the message.
@@ -95,14 +91,9 @@ Return Value:
             //
 
         case BREAKPOINT_PRINT:
-            ContextRecord->Eax = KdpPrint((ULONG)ContextRecord->Ebx,
-                                          (ULONG)ContextRecord->Edi,
-                                          (PCHAR)ExceptionRecord->ExceptionInformation[1],
-                                          (USHORT)ExceptionRecord->ExceptionInformation[2],
-                                          PreviousMode,
-                                          TrapFrame,
-                                          ExceptionFrame,
-                                          &Completion);
+            ContextRecord->Eax = KdpPrint(
+                (ULONG)ContextRecord->Ebx, (ULONG)ContextRecord->Edi, (PCHAR)ExceptionRecord->ExceptionInformation[1],
+                (USHORT)ExceptionRecord->ExceptionInformation[2], PreviousMode, TrapFrame, ExceptionFrame, &Completion);
 
             break;
 
@@ -115,12 +106,8 @@ Return Value:
 
         case BREAKPOINT_PROMPT:
             ContextRecord->Eax = KdpPrompt((PCHAR)ExceptionRecord->ExceptionInformation[1],
-                                           (USHORT)ExceptionRecord->ExceptionInformation[2],
-                                           (PCHAR)ContextRecord->Ebx,
-                                           (USHORT)ContextRecord->Edi,
-                                           PreviousMode,
-                                           TrapFrame,
-                                           ExceptionFrame);
+                                           (USHORT)ExceptionRecord->ExceptionInformation[2], (PCHAR)ContextRecord->Ebx,
+                                           (USHORT)ContextRecord->Edi, PreviousMode, TrapFrame, ExceptionFrame);
 
             Completion = TRUE;
             break;
@@ -140,26 +127,19 @@ Return Value:
 
         case BREAKPOINT_LOAD_SYMBOLS:
             KdpSymbol((PSTRING)ExceptionRecord->ExceptionInformation[1],
-                      (PKD_SYMBOLS_INFO)ExceptionRecord->ExceptionInformation[2],
-                      UnloadSymbols,
-                      PreviousMode,
-                      ContextRecord,
-                      TrapFrame,
-                      ExceptionFrame);
+                      (PKD_SYMBOLS_INFO)ExceptionRecord->ExceptionInformation[2], UnloadSymbols, PreviousMode,
+                      ContextRecord, TrapFrame, ExceptionFrame);
 
             Completion = TRUE;
             break;
 
         case BREAKPOINT_COMMAND_STRING:
             KdpCommandString((PSTRING)ExceptionRecord->ExceptionInformation[1],
-                             (PSTRING)ExceptionRecord->ExceptionInformation[2],
-                             PreviousMode,
-                             ContextRecord,
-                             TrapFrame,
+                             (PSTRING)ExceptionRecord->ExceptionInformation[2], PreviousMode, ContextRecord, TrapFrame,
                              ExceptionFrame);
             Completion = TRUE;
             break;
-            
+
             //
             //  Unknown command
             //
@@ -174,34 +154,26 @@ Return Value:
         // past the breakpoint instruction.
         //
 
-        if (ContextRecord->Eip == OldEip) {
+        if (ContextRecord->Eip == OldEip)
+        {
             ContextRecord->Eip++;
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // Report state change to the kernel debugger.
         //
 
-        Completion = KdpReport(TrapFrame,
-                               ExceptionFrame,
-                               ExceptionRecord,
-                               ContextRecord,
-                               PreviousMode,
-                               SecondChance);
-
+        Completion = KdpReport(TrapFrame, ExceptionFrame, ExceptionRecord, ContextRecord, PreviousMode, SecondChance);
     }
 
     return Completion;
 }
-
+
 BOOLEAN
-KdIsThisAKdTrap (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PCONTEXT ContextRecord,
-    IN KPROCESSOR_MODE PreviousMode
-    )
+KdIsThisAKdTrap(IN PEXCEPTION_RECORD ExceptionRecord, IN PCONTEXT ContextRecord, IN KPROCESSOR_MODE PreviousMode)
 
 /*++
 
@@ -227,25 +199,21 @@ Return Value:
 --*/
 
 {
-    if ((ExceptionRecord->ExceptionCode == STATUS_BREAKPOINT) &&
-        (ExceptionRecord->NumberParameters > 0) &&
-        (ExceptionRecord->ExceptionInformation[0] != BREAKPOINT_BREAK)) {
+    if ((ExceptionRecord->ExceptionCode == STATUS_BREAKPOINT) && (ExceptionRecord->NumberParameters > 0) &&
+        (ExceptionRecord->ExceptionInformation[0] != BREAKPOINT_BREAK))
+    {
 
         return TRUE;
-    } else {
+    }
+    else
+    {
         return FALSE;
     }
 }
 
 BOOLEAN
-KdpStub (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PCONTEXT ContextRecord,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN BOOLEAN SecondChance
-    )
+KdpStub(IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame, IN PEXCEPTION_RECORD ExceptionRecord,
+        IN PCONTEXT ContextRecord, IN KPROCESSOR_MODE PreviousMode, IN BOOLEAN SecondChance)
 
 /*++
 
@@ -286,18 +254,20 @@ Return Value:
     // return FALSE.
     //
 
-    if ((ExceptionRecord->ExceptionCode == STATUS_BREAKPOINT) &&
-        (ExceptionRecord->NumberParameters > 0) &&
+    if ((ExceptionRecord->ExceptionCode == STATUS_BREAKPOINT) && (ExceptionRecord->NumberParameters > 0) &&
         ((ExceptionRecord->ExceptionInformation[0] == BREAKPOINT_LOAD_SYMBOLS) ||
          (ExceptionRecord->ExceptionInformation[0] == BREAKPOINT_UNLOAD_SYMBOLS) ||
-         (ExceptionRecord->ExceptionInformation[0] == BREAKPOINT_PRINT))) {
+         (ExceptionRecord->ExceptionInformation[0] == BREAKPOINT_PRINT)))
+    {
         ContextRecord->Eip++;
         return TRUE;
-
-    } else if (KdPitchDebugger == TRUE) {
+    }
+    else if (KdPitchDebugger == TRUE)
+    {
         return FALSE;
-
-    } else {
+    }
+    else
+    {
         return KdpCheckTracePoint(ExceptionRecord, ContextRecord);
     }
 }

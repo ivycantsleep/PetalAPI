@@ -31,7 +31,7 @@ Revision History:
 #include "exp.h"
 #pragma hdrstop
 
-
+
 //
 //  Local constants and support routines
 //
@@ -47,7 +47,7 @@ ULONG TotalTraceBuffers = 0;
 #if !DBG // Make this a const varible so its optimized away on free
 const
 #endif
-BOOLEAN ExTraceAllTables = FALSE;
+    BOOLEAN ExTraceAllTables = FALSE;
 
 #ifdef ALLOC_PRAGMA
 #pragma data_seg("PAGEDATA")
@@ -65,12 +65,12 @@ LIST_ENTRY HandleTableListHead;
 //  This is the sign low bit used to lock handle table entries
 //
 
-#define EXHANDLE_TABLE_ENTRY_LOCK_BIT    1
+#define EXHANDLE_TABLE_ENTRY_LOCK_BIT 1
 
 #define EX_ADDITIONAL_INFO_SIGNATURE (-2)
 
 #define ExpIsValidObjectEntry(Entry) \
-    ( (Entry != NULL) && (Entry->Object != NULL) && (Entry->NextFreeTableEntry != EX_ADDITIONAL_INFO_SIGNATURE) )
+    ((Entry != NULL) && (Entry->Object != NULL) && (Entry->NextFreeTableEntry != EX_ADDITIONAL_INFO_SIGNATURE))
 
 
 #define TABLE_PAGE_SIZE PAGE_SIZE
@@ -83,7 +83,7 @@ LIST_ENTRY HandleTableListHead;
 #define MIDLEVEL_THRESHOLD (MIDLEVEL_COUNT * LOWLEVEL_COUNT)
 #define HIGHLEVEL_THRESHOLD (MIDLEVEL_COUNT * MIDLEVEL_COUNT * LOWLEVEL_COUNT)
 
-#define HIGHLEVEL_SIZE (HIGHLEVEL_COUNT * sizeof (PHANDLE_TABLE_ENTRY))
+#define HIGHLEVEL_SIZE (HIGHLEVEL_COUNT * sizeof(PHANDLE_TABLE_ENTRY))
 
 #define LEVEL_CODE_MASK 3
 
@@ -92,79 +92,37 @@ LIST_ENTRY HandleTableListHead;
 //
 
 PHANDLE_TABLE
-ExpAllocateHandleTable (
-    IN PEPROCESS Process OPTIONAL
-    );
+ExpAllocateHandleTable(IN PEPROCESS Process OPTIONAL);
 
-VOID
-ExpFreeHandleTable (
-    IN PHANDLE_TABLE HandleTable
-    );
+VOID ExpFreeHandleTable(IN PHANDLE_TABLE HandleTable);
 
 BOOLEAN
-ExpAllocateHandleTableEntrySlow (
-    IN PHANDLE_TABLE HandleTable
-    );
+ExpAllocateHandleTableEntrySlow(IN PHANDLE_TABLE HandleTable);
 
 PHANDLE_TABLE_ENTRY
-ExpAllocateHandleTableEntry (
-    IN PHANDLE_TABLE HandleTable,
-    OUT PEXHANDLE Handle
-    );
+ExpAllocateHandleTableEntry(IN PHANDLE_TABLE HandleTable, OUT PEXHANDLE Handle);
 
-VOID
-ExpFreeHandleTableEntry (
-    IN PHANDLE_TABLE HandleTable,
-    IN EXHANDLE Handle,
-    IN PHANDLE_TABLE_ENTRY HandleTableEntry
-    );
+VOID ExpFreeHandleTableEntry(IN PHANDLE_TABLE HandleTable, IN EXHANDLE Handle, IN PHANDLE_TABLE_ENTRY HandleTableEntry);
 
 PHANDLE_TABLE_ENTRY
-ExpLookupHandleTableEntry (
-    IN PHANDLE_TABLE HandleTable,
-    IN EXHANDLE Handle
-    );
+ExpLookupHandleTableEntry(IN PHANDLE_TABLE HandleTable, IN EXHANDLE Handle);
 
-PHANDLE_TABLE_ENTRY *
-ExpAllocateMidLevelTable (
-    IN PHANDLE_TABLE HandleTable,
-    OUT PHANDLE_TABLE_ENTRY *pNewLowLevel
-    );
+PHANDLE_TABLE_ENTRY *ExpAllocateMidLevelTable(IN PHANDLE_TABLE HandleTable, OUT PHANDLE_TABLE_ENTRY *pNewLowLevel);
 
 PVOID
-ExpAllocateTablePagedPool (
-    IN PEPROCESS QuotaProcess OPTIONAL,
-    IN SIZE_T NumberOfBytes
-    );
+ExpAllocateTablePagedPool(IN PEPROCESS QuotaProcess OPTIONAL, IN SIZE_T NumberOfBytes);
 
-VOID
-ExpFreeTablePagedPool (
-    IN PEPROCESS QuotaProcess OPTIONAL,
-    IN PVOID PoolMemory,
-    IN SIZE_T NumberOfBytes
-    );
+VOID ExpFreeTablePagedPool(IN PEPROCESS QuotaProcess OPTIONAL, IN PVOID PoolMemory, IN SIZE_T NumberOfBytes);
 
 PHANDLE_TABLE_ENTRY
-ExpAllocateLowLevelTable (
-    IN PHANDLE_TABLE HandleTable
-    );
+ExpAllocateLowLevelTable(IN PHANDLE_TABLE HandleTable);
 
-VOID
-ExpFreeLowLevelTable (
-    IN PEPROCESS QuotaProcess,
-    IN PHANDLE_TABLE_ENTRY TableLevel1
-    );
+VOID ExpFreeLowLevelTable(IN PEPROCESS QuotaProcess, IN PHANDLE_TABLE_ENTRY TableLevel1);
 
-VOID
-ExpBlockOnLockedHandleEntry (
-    PHANDLE_TABLE HandleTable,
-    PHANDLE_TABLE_ENTRY HandleTableEntry
-    );
+VOID ExpBlockOnLockedHandleEntry(PHANDLE_TABLE HandleTable, PHANDLE_TABLE_ENTRY HandleTableEntry);
 
 ULONG
-ExpMoveFreeHandles (
-    IN PHANDLE_TABLE HandleTable
-    );
+ExpMoveFreeHandles(IN PHANDLE_TABLE HandleTable);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, ExInitializeHandleTablePackage)
@@ -206,41 +164,41 @@ ExpMoveFreeHandles (
 // Define macros to lock and unlock the handle table.
 // We use this lock only for handle table expansion.
 //
-#define ExpLockHandleTableExclusive(xxHandleTable,xxCurrentThread) { \
-    KeEnterCriticalRegionThread (xxCurrentThread);                   \
-    ExAcquirePushLockExclusive (&HandleTable->HandleTableLock[0]);   \
-}
+#define ExpLockHandleTableExclusive(xxHandleTable, xxCurrentThread)   \
+    {                                                                 \
+        KeEnterCriticalRegionThread(xxCurrentThread);                 \
+        ExAcquirePushLockExclusive(&HandleTable->HandleTableLock[0]); \
+    }
 
 
-#define ExpUnlockHandleTableExclusive(xxHandleTable,xxCurrentThread) { \
-    ExReleasePushLockExclusive (&HandleTable->HandleTableLock[0]);     \
-    KeLeaveCriticalRegionThread (xxCurrentThread);                     \
-}
-    
-#define ExpLockHandleTableShared(xxHandleTable,xxCurrentThread,xxIdx) { \
-    KeEnterCriticalRegionThread (xxCurrentThread);                \
-    ExAcquirePushLockShared (&HandleTable->HandleTableLock[Idx]);      \
-}
+#define ExpUnlockHandleTableExclusive(xxHandleTable, xxCurrentThread) \
+    {                                                                 \
+        ExReleasePushLockExclusive(&HandleTable->HandleTableLock[0]); \
+        KeLeaveCriticalRegionThread(xxCurrentThread);                 \
+    }
+
+#define ExpLockHandleTableShared(xxHandleTable, xxCurrentThread, xxIdx) \
+    {                                                                   \
+        KeEnterCriticalRegionThread(xxCurrentThread);                   \
+        ExAcquirePushLockShared(&HandleTable->HandleTableLock[Idx]);    \
+    }
 
 
-#define ExpUnlockHandleTableShared(xxHandleTable,xxCurrentThread,xxIdx) { \
-    ExReleasePushLockShared (&HandleTable->HandleTableLock[Idx]);        \
-    KeLeaveCriticalRegionThread (xxCurrentThread);                  \
-}
-
+#define ExpUnlockHandleTableShared(xxHandleTable, xxCurrentThread, xxIdx) \
+    {                                                                     \
+        ExReleasePushLockShared(&HandleTable->HandleTableLock[Idx]);      \
+        KeLeaveCriticalRegionThread(xxCurrentThread);                     \
+    }
 
 
 FORCEINLINE
 ULONG
-ExpInterlockedExchange (
-    IN OUT PULONG Index,
-    IN ULONG FirstIndex,
-    IN PHANDLE_TABLE_ENTRY Entry
-    )
+ExpInterlockedExchange(IN OUT PULONG Index, IN ULONG FirstIndex, IN PHANDLE_TABLE_ENTRY Entry)
 {
     ULONG OldIndex, NewIndex;
 
-    while (1) {
+    while (1)
+    {
         OldIndex = *Index;
         //
         // We use this routine for a list push.
@@ -248,18 +206,15 @@ ExpInterlockedExchange (
         NewIndex = FirstIndex;
         Entry->NextFreeTableEntry = OldIndex;
 
-        if (OldIndex == (ULONG) InterlockedCompareExchange ((PLONG)Index,
-                                                            NewIndex,
-                                                            OldIndex)) {
+        if (OldIndex == (ULONG)InterlockedCompareExchange((PLONG)Index, NewIndex, OldIndex))
+        {
             return OldIndex;
         }
     }
 }
 
 ULONG
-ExpMoveFreeHandles (
-    IN PHANDLE_TABLE HandleTable
-    )
+ExpMoveFreeHandles(IN PHANDLE_TABLE HandleTable)
 {
     ULONG OldValue, NewValue;
     ULONG Index, OldIndex, NewIndex, FreeSize;
@@ -273,37 +228,38 @@ ExpMoveFreeHandles (
     // list we use for allocates.
     //
 
-    OldValue = InterlockedExchange ((PLONG)&HandleTable->LastFree,
-                                    0);
+    OldValue = InterlockedExchange((PLONG)&HandleTable->LastFree, 0);
     Index = OldValue;
-    if (Index == 0) {
+    if (Index == 0)
+    {
         return OldValue;
     }
 
-       
+
     //
     // We are pushing old entries onto the free list.
     // We have the A-B-A problem here as these items may have been moved here because
     // another thread was using them in the pop code.
     //
-    for (Idx = 1; Idx < HANDLE_TABLE_LOCKS; Idx++) {
-        ExAcquireReleasePushLockExclusive (&HandleTable->HandleTableLock[Idx]);
+    for (Idx = 1; Idx < HANDLE_TABLE_LOCKS; Idx++)
+    {
+        ExAcquireReleasePushLockExclusive(&HandleTable->HandleTableLock[Idx]);
     }
     StrictFIFO = HandleTable->StrictFIFO;
- 
+
     //
     // If we are strict FIFO then reverse the list to make handle reuse rare.
     //
-    if (!StrictFIFO) {
+    if (!StrictFIFO)
+    {
         //
         // We have a complete chain here. If there is no existing chain we
         // can just push this one without any hassles. If we can't then
         // we can just fall into the reversing code anyway as we need
         // to find the end of the chain to continue it.
         //
-        if (InterlockedCompareExchange ((PLONG)&HandleTable->FirstFree,
-                                        OldValue,
-                                        0) == 0) {
+        if (InterlockedCompareExchange((PLONG)&HandleTable->FirstFree, OldValue, 0) == 0)
+        {
             return OldValue;
         }
     }
@@ -313,31 +269,33 @@ ExpMoveFreeHandles (
     //
     FreeSize = OldIndex = 0;
     FirstEntry = NULL;
-    while (1) {
+    while (1)
+    {
         FreeSize++;
         Handle.Value = Index;
-        Entry = ExpLookupHandleTableEntry (HandleTable, Handle);
+        Entry = ExpLookupHandleTableEntry(HandleTable, Handle);
         NewIndex = Entry->NextFreeTableEntry;
         Entry->NextFreeTableEntry = OldIndex;
-        if (OldIndex == 0) {
+        if (OldIndex == 0)
+        {
             FirstEntry = Entry;
         }
         OldIndex = Index;
-        if (NewIndex == 0) {
+        if (NewIndex == 0)
+        {
             break;
         }
         Index = NewIndex;
     }
 
-    NewValue = ExpInterlockedExchange (&HandleTable->FirstFree,
-                                       OldIndex,
-                                       FirstEntry);
+    NewValue = ExpInterlockedExchange(&HandleTable->FirstFree, OldIndex, FirstEntry);
 
     //
     // If we haven't got a pool of a few handles then force
     // table expansion to keep the free handle size high
     //
-    if (FreeSize < 100 && StrictFIFO) {
+    if (FreeSize < 100 && StrictFIFO)
+    {
         OldValue = 0;
     }
     return OldValue;
@@ -345,10 +303,7 @@ ExpMoveFreeHandles (
 
 
 PHANDLE_TABLE_ENTRY
-ExpAllocateHandleTableEntry (
-    IN PHANDLE_TABLE HandleTable,
-    OUT PEXHANDLE pHandle
-    )
+ExpAllocateHandleTableEntry(IN PHANDLE_TABLE HandleTable, OUT PEXHANDLE pHandle)
 /*++
 
 Routine Description:
@@ -380,18 +335,20 @@ Return Value:
     ULONG Idx;
 
 
-    CurrentThread = KeGetCurrentThread ();
-    while (1) {
+    CurrentThread = KeGetCurrentThread();
+    while (1)
+    {
 
         OldValue = HandleTable->FirstFree;
 
 
-        while (OldValue == 0) {
+        while (OldValue == 0)
+        {
             //
             //  Lock the handle table for exclusive access as we will be
             //  allocating a new table level.
             //
-            ExpLockHandleTableExclusive (HandleTable, CurrentThread);
+            ExpLockHandleTableExclusive(HandleTable, CurrentThread);
 
             //
             // If we have multiple threads trying to expand the table at
@@ -402,8 +359,9 @@ Return Value:
             //
 
             OldValue = HandleTable->FirstFree;
-            if (OldValue != 0) {
-                ExpUnlockHandleTableExclusive (HandleTable, CurrentThread);
+            if (OldValue != 0)
+            {
+                ExpUnlockHandleTableExclusive(HandleTable, CurrentThread);
                 break;
             }
 
@@ -411,9 +369,10 @@ Return Value:
             // See if we have any handles on the alternate free list
             // These handles need some locking to move them over.
             //
-            OldValue = ExpMoveFreeHandles (HandleTable);
-            if (OldValue != 0) {
-                ExpUnlockHandleTableExclusive (HandleTable, CurrentThread);
+            OldValue = ExpMoveFreeHandles(HandleTable);
+            if (OldValue != 0)
+            {
+                ExpUnlockHandleTableExclusive(HandleTable, CurrentThread);
                 break;
             }
 
@@ -422,9 +381,9 @@ Return Value:
             // free handles allocated by another thread got used up in the gap.
             //
 
-            RetVal = ExpAllocateHandleTableEntrySlow (HandleTable);
+            RetVal = ExpAllocateHandleTableEntrySlow(HandleTable);
 
-            ExpUnlockHandleTableExclusive (HandleTable, CurrentThread);
+            ExpUnlockHandleTableExclusive(HandleTable, CurrentThread);
 
 
             OldValue = HandleTable->FirstFree;
@@ -436,54 +395,52 @@ Return Value:
             // somebody else in the gap.
             //
 
-            if (!RetVal) {
-                if (OldValue == 0) {
+            if (!RetVal)
+            {
+                if (OldValue == 0)
+                {
                     pHandle->GenericHandleOverlay = NULL;
                     return NULL;
-                }            
+                }
             }
         }
 
 
         Handle.Value = OldValue;
 
-        Entry = ExpLookupHandleTableEntry (HandleTable, Handle);
+        Entry = ExpLookupHandleTableEntry(HandleTable, Handle);
 
-        Idx = (OldValue>>2) % HANDLE_TABLE_LOCKS;
-        ExpLockHandleTableShared (HandleTable, CurrentThread, Idx);
+        Idx = (OldValue >> 2) % HANDLE_TABLE_LOCKS;
+        ExpLockHandleTableShared(HandleTable, CurrentThread, Idx);
 
-        if (OldValue != *(volatile ULONG *) &HandleTable->FirstFree) {
-            ExpUnlockHandleTableShared (HandleTable, CurrentThread, Idx);
+        if (OldValue != *(volatile ULONG *)&HandleTable->FirstFree)
+        {
+            ExpUnlockHandleTableShared(HandleTable, CurrentThread, Idx);
             continue;
         }
 
-        KeMemoryBarrier ();
+        KeMemoryBarrier();
 
-        NewValue = *(volatile ULONG *) &Entry->NextFreeTableEntry;
+        NewValue = *(volatile ULONG *)&Entry->NextFreeTableEntry;
 
-        NewValue = InterlockedCompareExchange ((PLONG)&HandleTable->FirstFree,
-                                               NewValue,
-                                               OldValue);
+        NewValue = InterlockedCompareExchange((PLONG)&HandleTable->FirstFree, NewValue, OldValue);
 
-        ExpUnlockHandleTableShared (HandleTable, CurrentThread, Idx);
+        ExpUnlockHandleTableShared(HandleTable, CurrentThread, Idx);
 
-        if (NewValue == OldValue) {
+        if (NewValue == OldValue)
+        {
             break;
         }
     }
-    InterlockedIncrement (&HandleTable->HandleCount);
+    InterlockedIncrement(&HandleTable->HandleCount);
 
     *pHandle = Handle;
-    
+
     return Entry;
 }
 
-
-VOID
-ExpBlockOnLockedHandleEntry (
-    PHANDLE_TABLE HandleTable,
-    PHANDLE_TABLE_ENTRY HandleTableEntry
-    )
+
+VOID ExpBlockOnLockedHandleEntry(PHANDLE_TABLE HandleTable, PHANDLE_TABLE_ENTRY HandleTableEntry)
 {
     EX_PUSH_LOCK_WAIT_BLOCK WaitBlock;
     LONG_PTR CurrentValue;
@@ -492,23 +449,23 @@ ExpBlockOnLockedHandleEntry (
     // Queue our wait block to be signaled by a releasing thread.
     //
 
-    ExBlockPushLock (&HandleTable->HandleContentionEvent, &WaitBlock);
+    ExBlockPushLock(&HandleTable->HandleContentionEvent, &WaitBlock);
 
     CurrentValue = HandleTableEntry->Value;
-    if (CurrentValue == 0 || (CurrentValue&EXHANDLE_TABLE_ENTRY_LOCK_BIT) != 0) {
-        ExUnblockPushLock (&HandleTable->HandleContentionEvent, &WaitBlock);
-    } else {
-        ExWaitForUnblockPushLock (&HandleTable->HandleContentionEvent, &WaitBlock);
-   }
+    if (CurrentValue == 0 || (CurrentValue & EXHANDLE_TABLE_ENTRY_LOCK_BIT) != 0)
+    {
+        ExUnblockPushLock(&HandleTable->HandleContentionEvent, &WaitBlock);
+    }
+    else
+    {
+        ExWaitForUnblockPushLock(&HandleTable->HandleContentionEvent, &WaitBlock);
+    }
 }
 
-
+
 BOOLEAN
 FORCEINLINE
-ExpLockHandleTableEntry (
-    PHANDLE_TABLE HandleTable,
-    PHANDLE_TABLE_ENTRY HandleTableEntry
-    )
+ExpLockHandleTableEntry(PHANDLE_TABLE HandleTable, PHANDLE_TABLE_ENTRY HandleTableEntry)
 
 /*++
 
@@ -537,7 +494,7 @@ Return Value:
     //
     // We are about to take a lock. Make sure we are protected.
     //
-    ASSERT ((KeGetCurrentThread()->KernelApcDisable != 0) || (KeGetCurrentIrql() == APC_LEVEL));
+    ASSERT((KeGetCurrentThread()->KernelApcDisable != 0) || (KeGetCurrentIrql() == APC_LEVEL));
 
     //
     //  We'll keep on looping reading in the value, making sure it is not null,
@@ -546,7 +503,8 @@ Return Value:
     //
 
 
-    while (TRUE) {
+    while (TRUE)
+    {
 
         CurrentValue = *((volatile LONG_PTR *)&HandleTableEntry->Object);
 
@@ -556,40 +514,40 @@ Return Value:
         //  doing an interlocked exchange.
         //
 
-        if (CurrentValue & EXHANDLE_TABLE_ENTRY_LOCK_BIT) {
+        if (CurrentValue & EXHANDLE_TABLE_ENTRY_LOCK_BIT)
+        {
 
             //
             // Remove the
             //
             NewValue = CurrentValue - EXHANDLE_TABLE_ENTRY_LOCK_BIT;
 
-            if ((LONG_PTR)(InterlockedCompareExchangePointer (&HandleTableEntry->Object,
-                                                              (PVOID)NewValue,
-                                                              (PVOID)CurrentValue)) == CurrentValue) {
+            if ((LONG_PTR)(InterlockedCompareExchangePointer(&HandleTableEntry->Object, (PVOID)NewValue,
+                                                             (PVOID)CurrentValue)) == CurrentValue)
+            {
 
                 return TRUE;
             }
-        } else {
+        }
+        else
+        {
             //
             //  Make sure the handle table entry is not freed
             //
 
-            if (CurrentValue == 0) {
+            if (CurrentValue == 0)
+            {
 
                 return FALSE;
             }
         }
-        ExpBlockOnLockedHandleEntry (HandleTable, HandleTableEntry);
+        ExpBlockOnLockedHandleEntry(HandleTable, HandleTableEntry);
     }
 }
 
-
+
 NTKERNELAPI
-VOID
-ExUnlockHandleTableEntry (
-    PHANDLE_TABLE HandleTable,
-    PHANDLE_TABLE_ENTRY HandleTableEntry
-    )
+VOID ExUnlockHandleTableEntry(PHANDLE_TABLE HandleTable, PHANDLE_TABLE_ENTRY HandleTableEntry)
 
 /*++
 
@@ -619,7 +577,7 @@ Return Value:
     //
     // We are about to release a lock. Make sure we are protected from suspension.
     //
-    ASSERT ((KeGetCurrentThread()->KernelApcDisable != 0) || (KeGetCurrentIrql() == APC_LEVEL));
+    ASSERT((KeGetCurrentThread()->KernelApcDisable != 0) || (KeGetCurrentIrql() == APC_LEVEL));
 
     //
     //  This routine does not need to loop and attempt the unlock opeation more
@@ -634,29 +592,26 @@ Return Value:
 
     NewValue = CurrentValue | EXHANDLE_TABLE_ENTRY_LOCK_BIT;
 
-    if ( (CurrentValue == 0) ||
-         (CurrentValue == NewValue) ) {
+    if ((CurrentValue == 0) || (CurrentValue == NewValue))
+    {
 
-        KeBugCheckEx( BAD_EXHANDLE, __LINE__, (LONG_PTR)HandleTableEntry, NewValue, CurrentValue );
+        KeBugCheckEx(BAD_EXHANDLE, __LINE__, (LONG_PTR)HandleTableEntry, NewValue, CurrentValue);
     }
 
 
-    InterlockedExchangePointer (&HandleTableEntry->Object, (PVOID)NewValue);
+    InterlockedExchangePointer(&HandleTableEntry->Object, (PVOID)NewValue);
 
     //
     // Unblock any waiters waiting for this table entry.
     //
-    ExUnblockPushLock (&HandleTable->HandleContentionEvent, NULL);
+    ExUnblockPushLock(&HandleTable->HandleContentionEvent, NULL);
 
     return;
 }
 
-
+
 NTKERNELAPI
-VOID
-ExInitializeHandleTablePackage (
-    VOID
-    )
+VOID ExInitializeHandleTablePackage(VOID)
 
 /*++
 
@@ -680,18 +635,16 @@ Return Value:
     //  Initialize the handle table synchronization resource and list head
     //
 
-    InitializeListHead( &HandleTableListHead );
-    ExInitializeResourceLite( &HandleTableListLock );
+    InitializeListHead(&HandleTableListHead);
+    ExInitializeResourceLite(&HandleTableListLock);
 
     return;
 }
 
-
+
 NTKERNELAPI
 PHANDLE_TABLE
-ExCreateHandleTable (
-    IN struct _EPROCESS *Process OPTIONAL
-    )
+ExCreateHandleTable(IN struct _EPROCESS *Process OPTIONAL)
 
 /*++
 
@@ -718,28 +671,29 @@ Return Value:
 
     PAGED_CODE();
 
-    CurrentThread = KeGetCurrentThread ();
+    CurrentThread = KeGetCurrentThread();
 
     //
     //  Allocate and initialize a handle table descriptor
     //
 
-    HandleTable = ExpAllocateHandleTable( Process );
+    HandleTable = ExpAllocateHandleTable(Process);
 
-    if (HandleTable == NULL) {
+    if (HandleTable == NULL)
+    {
         return NULL;
     }
     //
     //  Insert the handle table in the handle table list.
     //
 
-    KeEnterCriticalRegionThread (CurrentThread);
-    ExAcquireResourceExclusiveLite( &HandleTableListLock, TRUE );
+    KeEnterCriticalRegionThread(CurrentThread);
+    ExAcquireResourceExclusiveLite(&HandleTableListLock, TRUE);
 
-    InsertTailList( &HandleTableListHead, &HandleTable->HandleTableList );
+    InsertTailList(&HandleTableListHead, &HandleTable->HandleTableList);
 
-    ExReleaseResourceLite( &HandleTableListLock );
-    KeLeaveCriticalRegionThread (CurrentThread);
+    ExReleaseResourceLite(&HandleTableListLock);
+    KeLeaveCriticalRegionThread(CurrentThread);
 
 
     //
@@ -749,12 +703,9 @@ Return Value:
     return HandleTable;
 }
 
-
+
 NTKERNELAPI
-VOID
-ExRemoveHandleTable (
-    IN PHANDLE_TABLE HandleTable
-    )
+VOID ExRemoveHandleTable(IN PHANDLE_TABLE HandleTable)
 
 /*++
 
@@ -780,14 +731,14 @@ Return Value:
 
     PAGED_CODE();
 
-    CurrentThread = KeGetCurrentThread ();
+    CurrentThread = KeGetCurrentThread();
 
     //
     //  First, acquire the global handle table lock
     //
 
-    KeEnterCriticalRegionThread (CurrentThread);
-    ExAcquireResourceExclusiveLite( &HandleTableListLock, TRUE );
+    KeEnterCriticalRegionThread(CurrentThread);
+    ExAcquireResourceExclusiveLite(&HandleTableListLock, TRUE);
 
     //
     //  Remove the handle table from the handle table list.  This routine is
@@ -795,26 +746,22 @@ Return Value:
     //  corrupt the system.
     //
 
-    RemoveEntryList( &HandleTable->HandleTableList );
-    InitializeListHead( &HandleTable->HandleTableList );
+    RemoveEntryList(&HandleTable->HandleTableList);
+    InitializeListHead(&HandleTable->HandleTableList);
 
     //
     //  Now release the global lock and return to our caller
     //
 
-    ExReleaseResourceLite( &HandleTableListLock );
-    KeLeaveCriticalRegionThread (CurrentThread);
+    ExReleaseResourceLite(&HandleTableListLock);
+    KeLeaveCriticalRegionThread(CurrentThread);
 
     return;
 }
 
-
+
 NTKERNELAPI
-VOID
-ExDestroyHandleTable (
-    IN PHANDLE_TABLE HandleTable,
-    IN EX_DESTROY_HANDLE_ROUTINE DestroyHandleProcedure OPTIONAL
-    )
+VOID ExDestroyHandleTable(IN PHANDLE_TABLE HandleTable, IN EX_DESTROY_HANDLE_ROUTINE DestroyHandleProcedure OPTIONAL)
 
 /*++
 
@@ -845,7 +792,7 @@ Return Value:
     //  Remove the handle table from the handle table list
     //
 
-    ExRemoveHandleTable( HandleTable );
+    ExRemoveHandleTable(HandleTable);
 
     //
     //  Iterate through the handle table and for each handle that is allocated
@@ -856,19 +803,21 @@ Return Value:
     //  call back to use
     //
 
-    if (ARGUMENT_PRESENT((ULONG_PTR)DestroyHandleProcedure)) {
+    if (ARGUMENT_PRESENT((ULONG_PTR)DestroyHandleProcedure))
+    {
 
-        for (Handle.Value = 0;
-             (HandleTableEntry = ExpLookupHandleTableEntry( HandleTable, Handle )) != NULL;
-             Handle.Value += HANDLE_VALUE_INC) {
+        for (Handle.Value = 0; (HandleTableEntry = ExpLookupHandleTableEntry(HandleTable, Handle)) != NULL;
+             Handle.Value += HANDLE_VALUE_INC)
+        {
 
             //
             //  Only do the callback if the entry is not free
             //
 
-            if ( ExpIsValidObjectEntry(HandleTableEntry) ) {
+            if (ExpIsValidObjectEntry(HandleTableEntry))
+            {
 
-                (*DestroyHandleProcedure)( Handle.GenericHandleOverlay );
+                (*DestroyHandleProcedure)(Handle.GenericHandleOverlay);
             }
         }
     }
@@ -877,19 +826,15 @@ Return Value:
     //  Now free up the handle table memory and return to our caller
     //
 
-    ExpFreeHandleTable( HandleTable );
+    ExpFreeHandleTable(HandleTable);
 
     return;
 }
 
-
+
 NTKERNELAPI
-VOID
-ExSweepHandleTable (
-    IN PHANDLE_TABLE HandleTable,
-    IN EX_ENUMERATE_HANDLE_ROUTINE EnumHandleProcedure,
-    IN PVOID EnumParameter
-    )
+VOID ExSweepHandleTable(IN PHANDLE_TABLE HandleTable, IN EX_ENUMERATE_HANDLE_ROUTINE EnumHandleProcedure,
+                        IN PVOID EnumParameter)
 
 /*++
 
@@ -929,19 +874,20 @@ Return Value:
     //
     Handle.Value = HANDLE_VALUE_INC;
 
-    while ((HandleTableEntry = ExpLookupHandleTableEntry( HandleTable, Handle )) != NULL) {
+    while ((HandleTableEntry = ExpLookupHandleTableEntry(HandleTable, Handle)) != NULL)
+    {
 
-        for (i = 1; i < LOWLEVEL_COUNT; i++) {
+        for (i = 1; i < LOWLEVEL_COUNT; i++)
+        {
 
             //
             //  Only do the callback if the entry is not free
             //
 
-            if (ExpLockHandleTableEntry( HandleTable, HandleTableEntry )) {
+            if (ExpLockHandleTableEntry(HandleTable, HandleTableEntry))
+            {
 
-                (*EnumHandleProcedure)( HandleTableEntry,
-                                        Handle.GenericHandleOverlay,
-                                        EnumParameter );
+                (*EnumHandleProcedure)(HandleTableEntry, Handle.GenericHandleOverlay, EnumParameter);
             }
             Handle.Value += HANDLE_VALUE_INC;
             HandleTableEntry++;
@@ -954,15 +900,10 @@ Return Value:
 }
 
 
-
 NTKERNELAPI
 BOOLEAN
-ExEnumHandleTable (
-    IN PHANDLE_TABLE HandleTable,
-    IN EX_ENUMERATE_HANDLE_ROUTINE EnumHandleProcedure,
-    IN PVOID EnumParameter,
-    OUT PHANDLE Handle OPTIONAL
-    )
+ExEnumHandleTable(IN PHANDLE_TABLE HandleTable, IN EX_ENUMERATE_HANDLE_ROUTINE EnumHandleProcedure,
+                  IN PVOID EnumParameter, OUT PHANDLE Handle OPTIONAL)
 
 /*++
 
@@ -1004,7 +945,7 @@ Return Value:
 
     PAGED_CODE();
 
-    CurrentThread = KeGetCurrentThread ();
+    CurrentThread = KeGetCurrentThread();
 
     //
     //  Our initial return value is false until the enumeration callback
@@ -1021,17 +962,19 @@ Return Value:
     //  because we allocate memory for the handles in a dense fashion
     //
 
-    KeEnterCriticalRegionThread (CurrentThread);
+    KeEnterCriticalRegionThread(CurrentThread);
 
     for (LocalHandle.Value = 0; // does essentially the following "LocalHandle.Index = 0, LocalHandle.TagBits = 0;"
-         (HandleTableEntry = ExpLookupHandleTableEntry( HandleTable, LocalHandle )) != NULL;
-         LocalHandle.Value += HANDLE_VALUE_INC) {
+         (HandleTableEntry = ExpLookupHandleTableEntry(HandleTable, LocalHandle)) != NULL;
+         LocalHandle.Value += HANDLE_VALUE_INC)
+    {
 
         //
         //  Only do the callback if the entry is not free
         //
 
-        if ( ExpIsValidObjectEntry( HandleTableEntry ) ) {
+        if (ExpIsValidObjectEntry(HandleTableEntry))
+        {
 
             //
             //  Lock the handle table entry because we're about to give
@@ -1039,21 +982,22 @@ Return Value:
             //  right after the call back.
             //
 
-            if (ExpLockHandleTableEntry( HandleTable, HandleTableEntry )) {
+            if (ExpLockHandleTableEntry(HandleTable, HandleTableEntry))
+            {
 
                 //
                 //  Invoke the callback, and if it returns true then set
                 //  the proper output values and break out of the loop.
                 //
 
-                ResultValue = (*EnumHandleProcedure)( HandleTableEntry,
-                                                      LocalHandle.GenericHandleOverlay,
-                                                      EnumParameter );
+                ResultValue = (*EnumHandleProcedure)(HandleTableEntry, LocalHandle.GenericHandleOverlay, EnumParameter);
 
-                ExUnlockHandleTableEntry( HandleTable, HandleTableEntry );
+                ExUnlockHandleTableEntry(HandleTable, HandleTableEntry);
 
-                if (ResultValue) {
-                    if (ARGUMENT_PRESENT( Handle )) {
+                if (ResultValue)
+                {
+                    if (ARGUMENT_PRESENT(Handle))
+                    {
 
                         *Handle = LocalHandle.GenericHandleOverlay;
                     }
@@ -1062,20 +1006,17 @@ Return Value:
             }
         }
     }
-    KeLeaveCriticalRegionThread (CurrentThread);
+    KeLeaveCriticalRegionThread(CurrentThread);
 
 
     return ResultValue;
 }
 
-
+
 NTKERNELAPI
 PHANDLE_TABLE
-ExDupHandleTable (
-    IN struct _EPROCESS *Process OPTIONAL,
-    IN PHANDLE_TABLE OldHandleTable,
-    IN EX_DUPLICATE_HANDLE_ROUTINE DupHandleProcedure OPTIONAL
-    )
+ExDupHandleTable(IN struct _EPROCESS *Process OPTIONAL, IN PHANDLE_TABLE OldHandleTable,
+                 IN EX_DUPLICATE_HANDLE_ROUTINE DupHandleProcedure OPTIONAL)
 
 /*++
 
@@ -1112,16 +1053,17 @@ Return Value:
 
     PAGED_CODE();
 
-    CurrentThread = KeGetCurrentThread ();
+    CurrentThread = KeGetCurrentThread();
 
     //
     //  First allocate a new handle table.  If this fails then
     //  return immediately to our caller
     //
 
-    NewHandleTable = ExpAllocateHandleTable( Process );
+    NewHandleTable = ExpAllocateHandleTable(Process);
 
-    if (NewHandleTable == NULL) {
+    if (NewHandleTable == NULL)
+    {
 
         return NULL;
     }
@@ -1133,16 +1075,18 @@ Return Value:
     //  routine to allocate keep on allocating until the next free
     //  index needing pool are equal
     //
-    while (NewHandleTable->NextHandleNeedingPool < OldHandleTable->NextHandleNeedingPool) {
+    while (NewHandleTable->NextHandleNeedingPool < OldHandleTable->NextHandleNeedingPool)
+    {
 
         //
         //  Call the worker routine to grow the new handle table.  If
         //  not successful then free the new table as far as we got,
         //  set our output variable and exit out here
         //
-        if (!ExpAllocateHandleTableEntrySlow (NewHandleTable)) {
+        if (!ExpAllocateHandleTableEntrySlow(NewHandleTable))
+        {
 
-            ExpFreeHandleTable (NewHandleTable);
+            ExpFreeHandleTable(NewHandleTable);
             return NULL;
         }
     }
@@ -1165,16 +1109,18 @@ Return Value:
 
     Handle.Value = HANDLE_VALUE_INC;
 
-    KeEnterCriticalRegionThread (CurrentThread);
-    while ((NewHandleTableEntry = ExpLookupHandleTableEntry( NewHandleTable, Handle )) != NULL) {
+    KeEnterCriticalRegionThread(CurrentThread);
+    while ((NewHandleTableEntry = ExpLookupHandleTableEntry(NewHandleTable, Handle)) != NULL)
+    {
 
         //
         // Lookup the old entry. If it was being expanded then the old one
         // might not be there but we expanded the new table this far.
         //
-        OldHandleTableEntry = ExpLookupHandleTableEntry( OldHandleTable, Handle );
+        OldHandleTableEntry = ExpLookupHandleTableEntry(OldHandleTable, Handle);
 
-        for (i = 1; i < LOWLEVEL_COUNT; i++) {
+        for (i = 1; i < LOWLEVEL_COUNT; i++)
+        {
 
             //
             //  If the old entry is free then simply copy over the entire
@@ -1182,12 +1128,15 @@ Return Value:
             //  if the entry is free.
             //
             if (OldHandleTableEntry == NULL || OldHandleTableEntry->Object == NULL ||
-                !ExpLockHandleTableEntry( OldHandleTable, OldHandleTableEntry )) {
+                !ExpLockHandleTableEntry(OldHandleTable, OldHandleTableEntry))
+            {
                 FreeEntry = TRUE;
-            } else {
+            }
+            else
+            {
 
                 PHANDLE_TABLE_ENTRY_INFO EntryInfo;
-                
+
                 //
                 //  Otherwise we have a non empty entry.  So now copy it
                 //  over, and unlock the old entry.  In both cases we bump
@@ -1205,7 +1154,8 @@ Return Value:
                 Status = STATUS_SUCCESS;
                 EntryInfo = ExGetHandleInfo(OldHandleTable, Handle.GenericHandleOverlay, TRUE);
 
-                if (EntryInfo) {
+                if (EntryInfo)
+                {
 
                     Status = ExSetHandleInfo(NewHandleTable, Handle.GenericHandleOverlay, EntryInfo, TRUE);
                 }
@@ -1216,40 +1166,45 @@ Return Value:
                 //  unlock the new entry
                 //
 
-                if (NT_SUCCESS (Status)) {
-                    if  ((*DupHandleProcedure) (Process,
-                                                OldHandleTable,
-                                                OldHandleTableEntry,
-                                                NewHandleTableEntry)) {
+                if (NT_SUCCESS(Status))
+                {
+                    if ((*DupHandleProcedure)(Process, OldHandleTable, OldHandleTableEntry, NewHandleTableEntry))
+                    {
 
-                        ExUnlockHandleTableEntry (NewHandleTable, NewHandleTableEntry);
+                        ExUnlockHandleTableEntry(NewHandleTable, NewHandleTableEntry);
                         NewHandleTable->HandleCount += 1;
                         FreeEntry = FALSE;
-                    } else {
-                        if (EntryInfo) {
+                    }
+                    else
+                    {
+                        if (EntryInfo)
+                        {
                             EntryInfo->AuditMask = 0;
                         }
 
                         FreeEntry = TRUE;
                     }
-                } else {
+                }
+                else
+                {
                     //
                     // Duplicate routine doesn't want this handle duplicated so free it
                     //
-                    ExUnlockHandleTableEntry( OldHandleTable, OldHandleTableEntry );
+                    ExUnlockHandleTableEntry(OldHandleTable, OldHandleTableEntry);
                     FreeEntry = TRUE;
                 }
-
             }
-            if (FreeEntry) {
+            if (FreeEntry)
+            {
                 NewHandleTableEntry->Object = NULL;
-                NewHandleTableEntry->NextFreeTableEntry =
-                    NewHandleTable->FirstFree;
-                NewHandleTable->FirstFree = (ULONG) Handle.Value;
+                NewHandleTableEntry->NextFreeTableEntry = NewHandleTable->FirstFree;
+                NewHandleTable->FirstFree = (ULONG)Handle.Value;
             }
-            Handle.Index++;;
+            Handle.Index++;
+            ;
             NewHandleTableEntry++;
-            if (OldHandleTableEntry != NULL) {
+            if (OldHandleTableEntry != NULL)
+            {
                 OldHandleTableEntry++;
             }
         }
@@ -1260,12 +1215,12 @@ Return Value:
     //  Insert the handle table in the handle table list.
     //
 
-    ExAcquireResourceExclusiveLite( &HandleTableListLock, TRUE );
+    ExAcquireResourceExclusiveLite(&HandleTableListLock, TRUE);
 
-    InsertTailList( &HandleTableListHead, &NewHandleTable->HandleTableList );
+    InsertTailList(&HandleTableListHead, &NewHandleTable->HandleTableList);
 
-    ExReleaseResourceLite( &HandleTableListLock );
-    KeLeaveCriticalRegionThread (CurrentThread);
+    ExReleaseResourceLite(&HandleTableListLock);
+    KeLeaveCriticalRegionThread(CurrentThread);
 
     //
     //  lastly return the new handle table to our caller
@@ -1274,15 +1229,12 @@ Return Value:
     return NewHandleTable;
 }
 
-
+
 NTKERNELAPI
 NTSTATUS
-ExSnapShotHandleTables (
-    IN PEX_SNAPSHOT_HANDLE_ENTRY SnapShotHandleEntry,
-    IN OUT PSYSTEM_HANDLE_INFORMATION HandleInformation,
-    IN ULONG Length,
-    IN OUT PULONG RequiredLength
-    )
+ExSnapShotHandleTables(IN PEX_SNAPSHOT_HANDLE_ENTRY SnapShotHandleEntry,
+                       IN OUT PSYSTEM_HANDLE_INFORMATION HandleInformation, IN ULONG Length,
+                       IN OUT PULONG RequiredLength)
 
 /*++
 
@@ -1325,7 +1277,7 @@ Return Value:
 
     PAGED_CODE();
 
-    CurrentThread = KeGetCurrentThread ();
+    CurrentThread = KeGetCurrentThread();
 
 
     Status = STATUS_SUCCESS;
@@ -1347,25 +1299,22 @@ Return Value:
     //  tables.
     //
 
-    KeEnterCriticalRegionThread (CurrentThread);
-    ExAcquireResourceExclusiveLite( &HandleTableListLock, TRUE );
+    KeEnterCriticalRegionThread(CurrentThread);
+    ExAcquireResourceExclusiveLite(&HandleTableListLock, TRUE);
 
     //
     //  Iterate through all the handle tables in the system.
     //
 
-    for (NextEntry = HandleTableListHead.Flink;
-         NextEntry != &HandleTableListHead;
-         NextEntry = NextEntry->Flink) {
+    for (NextEntry = HandleTableListHead.Flink; NextEntry != &HandleTableListHead; NextEntry = NextEntry->Flink)
+    {
 
         //
         //  Get the address of the next handle table, lock the handle
         //  table exclusive, and scan the list of handle entries.
         //
 
-        HandleTable = CONTAINING_RECORD( NextEntry,
-                                         HANDLE_TABLE,
-                                         HandleTableList );
+        HandleTable = CONTAINING_RECORD(NextEntry, HANDLE_TABLE, HandleTableList);
 
 
         //  Iterate through the handle table and for each handle that
@@ -1376,15 +1325,16 @@ Return Value:
         //  handles in a dense fashion
         //
 
-        for (Handle.Value = 0;
-             (HandleTableEntry = ExpLookupHandleTableEntry( HandleTable, Handle )) != NULL;
-             Handle.Value += HANDLE_VALUE_INC) {
+        for (Handle.Value = 0; (HandleTableEntry = ExpLookupHandleTableEntry(HandleTable, Handle)) != NULL;
+             Handle.Value += HANDLE_VALUE_INC)
+        {
 
             //
             //  Only do the callback if the entry is not free
             //
 
-            if ( ExpIsValidObjectEntry(HandleTableEntry) ) {
+            if (ExpIsValidObjectEntry(HandleTableEntry))
+            {
 
                 //
                 //  Increment the handle count information in the
@@ -1399,36 +1349,30 @@ Return Value:
                 //  entry right after the call back.
                 //
 
-                if (ExpLockHandleTableEntry( HandleTable, HandleTableEntry )) {
+                if (ExpLockHandleTableEntry(HandleTable, HandleTableEntry))
+                {
 
-                    Status = (*SnapShotHandleEntry)( &HandleEntryInfo,
-                                                     HandleTable->UniqueProcessId,
-                                                     HandleTableEntry,
-                                                     Handle.GenericHandleOverlay,
-                                                     Length,
-                                                     RequiredLength );
+                    Status = (*SnapShotHandleEntry)(&HandleEntryInfo, HandleTable->UniqueProcessId, HandleTableEntry,
+                                                    Handle.GenericHandleOverlay, Length, RequiredLength);
 
-                    ExUnlockHandleTableEntry( HandleTable, HandleTableEntry );
+                    ExUnlockHandleTableEntry(HandleTable, HandleTableEntry);
                 }
             }
         }
     }
 
-    ExReleaseResourceLite( &HandleTableListLock );
-    KeLeaveCriticalRegionThread (CurrentThread);
+    ExReleaseResourceLite(&HandleTableListLock);
+    KeLeaveCriticalRegionThread(CurrentThread);
 
     return Status;
 }
 
-
+
 NTKERNELAPI
 NTSTATUS
-ExSnapShotHandleTablesEx (
-    IN PEX_SNAPSHOT_HANDLE_ENTRY_EX SnapShotHandleEntry,
-    IN OUT PSYSTEM_HANDLE_INFORMATION_EX HandleInformation,
-    IN ULONG Length,
-    IN OUT PULONG RequiredLength
-    )
+ExSnapShotHandleTablesEx(IN PEX_SNAPSHOT_HANDLE_ENTRY_EX SnapShotHandleEntry,
+                         IN OUT PSYSTEM_HANDLE_INFORMATION_EX HandleInformation, IN ULONG Length,
+                         IN OUT PULONG RequiredLength)
 
 /*++
 
@@ -1471,7 +1415,7 @@ Return Value:
 
     PAGED_CODE();
 
-    CurrentThread = KeGetCurrentThread ();
+    CurrentThread = KeGetCurrentThread();
 
     Status = STATUS_SUCCESS;
 
@@ -1493,25 +1437,22 @@ Return Value:
     //  tables.
     //
 
-    KeEnterCriticalRegionThread (CurrentThread);
-    ExAcquireResourceExclusiveLite( &HandleTableListLock, TRUE );
+    KeEnterCriticalRegionThread(CurrentThread);
+    ExAcquireResourceExclusiveLite(&HandleTableListLock, TRUE);
 
     //
     //  Iterate through all the handle tables in the system.
     //
 
-    for (NextEntry = HandleTableListHead.Flink;
-         NextEntry != &HandleTableListHead;
-         NextEntry = NextEntry->Flink) {
+    for (NextEntry = HandleTableListHead.Flink; NextEntry != &HandleTableListHead; NextEntry = NextEntry->Flink)
+    {
 
         //
         //  Get the address of the next handle table, lock the handle
         //  table exclusive, and scan the list of handle entries.
         //
 
-        HandleTable = CONTAINING_RECORD( NextEntry,
-                                         HANDLE_TABLE,
-                                         HandleTableList );
+        HandleTable = CONTAINING_RECORD(NextEntry, HANDLE_TABLE, HandleTableList);
 
 
         //  Iterate through the handle table and for each handle that
@@ -1522,15 +1463,16 @@ Return Value:
         //  handles in a dense fashion
         //
 
-        for (Handle.Value = 0;
-             (HandleTableEntry = ExpLookupHandleTableEntry( HandleTable, Handle )) != NULL;
-             Handle.Value += HANDLE_VALUE_INC) {
+        for (Handle.Value = 0; (HandleTableEntry = ExpLookupHandleTableEntry(HandleTable, Handle)) != NULL;
+             Handle.Value += HANDLE_VALUE_INC)
+        {
 
             //
             //  Only do the callback if the entry is not free
             //
 
-            if ( ExpIsValidObjectEntry(HandleTableEntry) ) {
+            if (ExpIsValidObjectEntry(HandleTableEntry))
+            {
 
                 //
                 //  Increment the handle count information in the
@@ -1545,34 +1487,28 @@ Return Value:
                 //  entry right after the call back.
                 //
 
-                if (ExpLockHandleTableEntry( HandleTable, HandleTableEntry )) {
+                if (ExpLockHandleTableEntry(HandleTable, HandleTableEntry))
+                {
 
-                    Status = (*SnapShotHandleEntry)( &HandleEntryInfo,
-                                                     HandleTable->UniqueProcessId,
-                                                     HandleTableEntry,
-                                                     Handle.GenericHandleOverlay,
-                                                     Length,
-                                                     RequiredLength );
+                    Status = (*SnapShotHandleEntry)(&HandleEntryInfo, HandleTable->UniqueProcessId, HandleTableEntry,
+                                                    Handle.GenericHandleOverlay, Length, RequiredLength);
 
-                    ExUnlockHandleTableEntry( HandleTable, HandleTableEntry );
+                    ExUnlockHandleTableEntry(HandleTable, HandleTableEntry);
                 }
             }
         }
     }
 
-    ExReleaseResourceLite( &HandleTableListLock );
-    KeLeaveCriticalRegionThread (CurrentThread);
+    ExReleaseResourceLite(&HandleTableListLock);
+    KeLeaveCriticalRegionThread(CurrentThread);
 
     return Status;
 }
 
-
+
 NTKERNELAPI
 HANDLE
-ExCreateHandle (
-    IN PHANDLE_TABLE HandleTable,
-    IN PHANDLE_TABLE_ENTRY HandleTableEntry
-    )
+ExCreateHandle(IN PHANDLE_TABLE HandleTable, IN PHANDLE_TABLE_ENTRY HandleTableEntry)
 
 /*++
 
@@ -1621,22 +1557,22 @@ Return Value:
     //  Allocate a new handle table entry, and get the handle value
     //
 
-    NewHandleTableEntry = ExpAllocateHandleTableEntry( HandleTable,
-                                                       &Handle );
+    NewHandleTableEntry = ExpAllocateHandleTableEntry(HandleTable, &Handle);
 
     //
     //  If we really got a handle then copy over the template and unlock
     //  the entry
     //
 
-    if (NewHandleTableEntry != NULL) {
+    if (NewHandleTableEntry != NULL)
+    {
 
-        CurrentThread = PsGetCurrentThread ();
+        CurrentThread = PsGetCurrentThread();
 
         //
         // We are about to create a locked entry so protect against suspension
         //
-        KeEnterCriticalRegionThread (&CurrentThread->Tcb);
+        KeEnterCriticalRegionThread(&CurrentThread->Tcb);
 
         *NewHandleTableEntry = *HandleTableEntry;
 
@@ -1644,33 +1580,29 @@ Return Value:
         // If we are debugging handle operations then save away the details
         //
         DebugInfo = HandleTable->DebugInfo;
-        if (DebugInfo != NULL) {
-            Index = ((ULONG) InterlockedIncrement ((PLONG)&DebugInfo->CurrentStackIndex))
-                       % HANDLE_TRACE_DB_MAX_STACKS;
+        if (DebugInfo != NULL)
+        {
+            Index = ((ULONG)InterlockedIncrement((PLONG)&DebugInfo->CurrentStackIndex)) % HANDLE_TRACE_DB_MAX_STACKS;
             DebugEntry = &DebugInfo->TraceDb[Index];
             DebugEntry->ClientId = CurrentThread->Cid;
-            DebugEntry->Handle   = Handle.GenericHandleOverlay;
-            DebugEntry->Type     = HANDLE_TRACE_DB_OPEN;
-            Index = RtlWalkFrameChain (DebugEntry->StackTrace, HANDLE_TRACE_DB_STACK_SIZE, 0);
-            RtlWalkFrameChain (&DebugEntry->StackTrace[Index], HANDLE_TRACE_DB_STACK_SIZE - Index, 1);
+            DebugEntry->Handle = Handle.GenericHandleOverlay;
+            DebugEntry->Type = HANDLE_TRACE_DB_OPEN;
+            Index = RtlWalkFrameChain(DebugEntry->StackTrace, HANDLE_TRACE_DB_STACK_SIZE, 0);
+            RtlWalkFrameChain(&DebugEntry->StackTrace[Index], HANDLE_TRACE_DB_STACK_SIZE - Index, 1);
         }
 
-        ExUnlockHandleTableEntry( HandleTable, NewHandleTableEntry );
+        ExUnlockHandleTableEntry(HandleTable, NewHandleTableEntry);
 
-        KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+        KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
     }
 
     return Handle.GenericHandleOverlay;
 }
 
-
+
 NTKERNELAPI
 BOOLEAN
-ExDestroyHandle (
-    IN PHANDLE_TABLE HandleTable,
-    IN HANDLE Handle,
-    IN PHANDLE_TABLE_ENTRY HandleTableEntry OPTIONAL
-    )
+ExDestroyHandle(IN PHANDLE_TABLE HandleTable, IN HANDLE Handle, IN PHANDLE_TABLE_ENTRY HandleTableEntry OPTIONAL)
 
 /*++
 
@@ -1706,7 +1638,7 @@ Return Value:
 
     LocalHandle.GenericHandleOverlay = Handle;
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
 
     //
     //  If the caller did not supply the optional handle table entry then
@@ -1714,23 +1646,25 @@ Return Value:
     //  then lock the entry.
     //
 
-    KeEnterCriticalRegionThread (&CurrentThread->Tcb);
+    KeEnterCriticalRegionThread(&CurrentThread->Tcb);
 
-    if (HandleTableEntry == NULL) {
+    if (HandleTableEntry == NULL)
+    {
 
-        HandleTableEntry = ExpLookupHandleTableEntry( HandleTable,
-                                                      LocalHandle );
+        HandleTableEntry = ExpLookupHandleTableEntry(HandleTable, LocalHandle);
 
-        if (!ExpIsValidObjectEntry(HandleTableEntry)) {
+        if (!ExpIsValidObjectEntry(HandleTableEntry))
+        {
 
-            KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+            KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
             return FALSE;
         }
 
 
-        if (!ExpLockHandleTableEntry( HandleTable, HandleTableEntry )) {
+        if (!ExpLockHandleTableEntry(HandleTable, HandleTableEntry))
+        {
 
-            KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+            KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
             return FALSE;
         }
     }
@@ -1741,15 +1675,15 @@ Return Value:
     //
 
     DebugInfo = HandleTable->DebugInfo;
-    if (DebugInfo != NULL) {
-        Index = ((ULONG) InterlockedIncrement ((PLONG)&DebugInfo->CurrentStackIndex))
-                   % HANDLE_TRACE_DB_MAX_STACKS;
+    if (DebugInfo != NULL)
+    {
+        Index = ((ULONG)InterlockedIncrement((PLONG)&DebugInfo->CurrentStackIndex)) % HANDLE_TRACE_DB_MAX_STACKS;
         DebugEntry = &DebugInfo->TraceDb[Index];
         DebugEntry->ClientId = CurrentThread->Cid;
-        DebugEntry->Handle   = Handle;
-        DebugEntry->Type     = HANDLE_TRACE_DB_CLOSE;
-        Index = RtlWalkFrameChain (DebugEntry->StackTrace, HANDLE_TRACE_DB_STACK_SIZE, 0);
-        RtlWalkFrameChain (&DebugEntry->StackTrace[Index], HANDLE_TRACE_DB_STACK_SIZE - Index, 1);
+        DebugEntry->Handle = Handle;
+        DebugEntry->Type = HANDLE_TRACE_DB_CLOSE;
+        Index = RtlWalkFrameChain(DebugEntry->StackTrace, HANDLE_TRACE_DB_STACK_SIZE, 0);
+        RtlWalkFrameChain(&DebugEntry->StackTrace[Index], HANDLE_TRACE_DB_STACK_SIZE - Index, 1);
     }
 
     //
@@ -1759,32 +1693,26 @@ Return Value:
     //  we take out the lock
     //
 
-    InterlockedExchangePointer (&HandleTableEntry->Object, NULL);
+    InterlockedExchangePointer(&HandleTableEntry->Object, NULL);
 
     //
     // Unblock any waiters waiting for this table entry.
     //
-    ExUnblockPushLock (&HandleTable->HandleContentionEvent, NULL);
+    ExUnblockPushLock(&HandleTable->HandleContentionEvent, NULL);
 
 
-    ExpFreeHandleTableEntry( HandleTable,
-                             LocalHandle,
-                             HandleTableEntry );
+    ExpFreeHandleTableEntry(HandleTable, LocalHandle, HandleTableEntry);
 
-    KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+    KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
 
     return TRUE;
 }
 
-
+
 NTKERNELAPI
 BOOLEAN
-ExChangeHandle (
-    IN PHANDLE_TABLE HandleTable,
-    IN HANDLE Handle,
-    IN PEX_CHANGE_HANDLE_ROUTINE ChangeRoutine,
-    IN ULONG_PTR Parameter
-    )
+ExChangeHandle(IN PHANDLE_TABLE HandleTable, IN HANDLE Handle, IN PEX_CHANGE_HANDLE_ROUTINE ChangeRoutine,
+               IN ULONG_PTR Parameter)
 
 /*++
 
@@ -1823,22 +1751,20 @@ Return Value:
 
     LocalHandle.GenericHandleOverlay = Handle;
 
-    CurrentThread = KeGetCurrentThread ();
+    CurrentThread = KeGetCurrentThread();
 
     //
     //  Translate the input handle to a handle table entry and make
     //  sure it is a valid handle.
     //
 
-    HandleTableEntry = ExpLookupHandleTableEntry( HandleTable,
-                                                  LocalHandle );
+    HandleTableEntry = ExpLookupHandleTableEntry(HandleTable, LocalHandle);
 
-    if ((HandleTableEntry == NULL) ||
-        !ExpIsValidObjectEntry(HandleTableEntry)) {
+    if ((HandleTableEntry == NULL) || !ExpIsValidObjectEntry(HandleTableEntry))
+    {
 
         return FALSE;
     }
-
 
 
     //
@@ -1850,31 +1776,30 @@ Return Value:
     //  Make sure we can't get suspended and then invoke the callback
     //
 
-    KeEnterCriticalRegionThread (CurrentThread);
+    KeEnterCriticalRegionThread(CurrentThread);
 
-    if (ExpLockHandleTableEntry( HandleTable, HandleTableEntry )) {
+    if (ExpLockHandleTableEntry(HandleTable, HandleTableEntry))
+    {
 
 
-        ReturnValue = (*ChangeRoutine)( HandleTableEntry, Parameter );
-        
-        ExUnlockHandleTableEntry( HandleTable, HandleTableEntry );
+        ReturnValue = (*ChangeRoutine)(HandleTableEntry, Parameter);
 
-    } else {
+        ExUnlockHandleTableEntry(HandleTable, HandleTableEntry);
+    }
+    else
+    {
         ReturnValue = FALSE;
     }
 
-    KeLeaveCriticalRegionThread (CurrentThread);
+    KeLeaveCriticalRegionThread(CurrentThread);
 
     return ReturnValue;
 }
 
-
+
 NTKERNELAPI
 PHANDLE_TABLE_ENTRY
-ExMapHandleToPointer (
-    IN PHANDLE_TABLE HandleTable,
-    IN HANDLE Handle
-    )
+ExMapHandleToPointer(IN PHANDLE_TABLE HandleTable, IN HANDLE Handle)
 
 /*++
 
@@ -1910,7 +1835,8 @@ Return Value:
 
     LocalHandle.GenericHandleOverlay = Handle;
 
-    if ((LocalHandle.Index & (LOWLEVEL_COUNT - 1)) == 0) {
+    if ((LocalHandle.Index & (LOWLEVEL_COUNT - 1)) == 0)
+    {
         return NULL;
     }
 
@@ -1919,26 +1845,25 @@ Return Value:
     //  sure it is a valid handle.
     //
 
-    HandleTableEntry = ExpLookupHandleTableEntry( HandleTable,
-                                                  LocalHandle );
+    HandleTableEntry = ExpLookupHandleTableEntry(HandleTable, LocalHandle);
 
-    if ((HandleTableEntry == NULL) ||
-        !ExpLockHandleTableEntry( HandleTable, HandleTableEntry)) {
+    if ((HandleTableEntry == NULL) || !ExpLockHandleTableEntry(HandleTable, HandleTableEntry))
+    {
         //
         // If we are debugging handle operations then save away the details
         //
 
         DebugInfo = HandleTable->DebugInfo;
-        if (DebugInfo != NULL) {
-            Index = ((ULONG) InterlockedIncrement ((PLONG)&DebugInfo->CurrentStackIndex))
-                       % HANDLE_TRACE_DB_MAX_STACKS;
+        if (DebugInfo != NULL)
+        {
+            Index = ((ULONG)InterlockedIncrement((PLONG)&DebugInfo->CurrentStackIndex)) % HANDLE_TRACE_DB_MAX_STACKS;
             DebugEntry = &DebugInfo->TraceDb[Index];
-            CurrentThread = PsGetCurrentThread ();
+            CurrentThread = PsGetCurrentThread();
             DebugEntry->ClientId = CurrentThread->Cid;
-            DebugEntry->Handle   = Handle;
-            DebugEntry->Type     = HANDLE_TRACE_DB_BADREF;
-            Index = RtlWalkFrameChain (DebugEntry->StackTrace, HANDLE_TRACE_DB_STACK_SIZE, 0);
-            RtlWalkFrameChain (&DebugEntry->StackTrace[Index], HANDLE_TRACE_DB_STACK_SIZE - Index, 1);
+            DebugEntry->Handle = Handle;
+            DebugEntry->Type = HANDLE_TRACE_DB_BADREF;
+            Index = RtlWalkFrameChain(DebugEntry->StackTrace, HANDLE_TRACE_DB_STACK_SIZE, 0);
+            RtlWalkFrameChain(&DebugEntry->StackTrace[Index], HANDLE_TRACE_DB_STACK_SIZE - Index, 1);
         }
         return NULL;
     }
@@ -1953,11 +1878,7 @@ Return Value:
 
 NTKERNELAPI
 PHANDLE_TABLE_ENTRY
-ExMapHandleToPointerEx (
-    IN PHANDLE_TABLE HandleTable,
-    IN HANDLE Handle,
-    IN KPROCESSOR_MODE PreviousMode
-    )
+ExMapHandleToPointerEx(IN PHANDLE_TABLE HandleTable, IN HANDLE Handle, IN KPROCESSOR_MODE PreviousMode)
 
 /*++
 
@@ -1998,58 +1919,62 @@ Return Value:
     //
     //  Translate the input handle to a handle table entry and make
     //  sure it is a valid handle.
-    //    
+    //
 
     if (((LocalHandle.Index & (LOWLEVEL_COUNT - 1)) == 0) ||
         ((HandleTableEntry = ExpLookupHandleTableEntry(HandleTable, LocalHandle)) == NULL) ||
-        !ExpLockHandleTableEntry( HandleTable, HandleTableEntry)) {
+        !ExpLockHandleTableEntry(HandleTable, HandleTableEntry))
+    {
 
         //
         // If we are debugging handle operations then save away the details
         //
 
         DebugInfo = HandleTable->DebugInfo;
-        if (DebugInfo != NULL) {
+        if (DebugInfo != NULL)
+        {
 
-            Index = ((ULONG) InterlockedIncrement ((PLONG)&DebugInfo->CurrentStackIndex))
-                       % HANDLE_TRACE_DB_MAX_STACKS;
-            CurrentThread = PsGetCurrentThread ();
+            Index = ((ULONG)InterlockedIncrement((PLONG)&DebugInfo->CurrentStackIndex)) % HANDLE_TRACE_DB_MAX_STACKS;
+            CurrentThread = PsGetCurrentThread();
             DebugEntry = &DebugInfo->TraceDb[Index];
             DebugEntry->ClientId = CurrentThread->Cid;
-            DebugEntry->Handle   = Handle;
-            DebugEntry->Type     = HANDLE_TRACE_DB_BADREF;
-            Index = RtlWalkFrameChain (DebugEntry->StackTrace, HANDLE_TRACE_DB_STACK_SIZE, 0);
-            RtlWalkFrameChain (&DebugEntry->StackTrace[Index], HANDLE_TRACE_DB_STACK_SIZE - Index, 1);
+            DebugEntry->Handle = Handle;
+            DebugEntry->Type = HANDLE_TRACE_DB_BADREF;
+            Index = RtlWalkFrameChain(DebugEntry->StackTrace, HANDLE_TRACE_DB_STACK_SIZE, 0);
+            RtlWalkFrameChain(&DebugEntry->StackTrace[Index], HANDLE_TRACE_DB_STACK_SIZE - Index, 1);
 
             //
             // Since we have a non-null DebugInfo for the handle table of this
             // process it means application verifier was enabled for this process.
             //
 
-            if (PreviousMode == UserMode) {
+            if (PreviousMode == UserMode)
+            {
 
-                if (!KeIsAttachedProcess() && !PsIsThreadTerminating (CurrentThread) &&
-                    !CurrentThread->Tcb.ApcState.KernelApcInProgress) {
+                if (!KeIsAttachedProcess() && !PsIsThreadTerminating(CurrentThread) &&
+                    !CurrentThread->Tcb.ApcState.KernelApcInProgress)
+                {
 
                     //
                     // If the current process is marked for verification
                     // then we will raise an exception in user mode. In case
-                    // application verifier is enabled system wide we will 
+                    // application verifier is enabled system wide we will
                     // break first.
                     //
-                                                 
-                    if ((NtGlobalFlag & FLG_APPLICATION_VERIFIER)) {
-                        
-                        DbgPrint ("AVRF: Invalid handle %p in process %p \n", 
-                                  Handle,
-                                  PsGetCurrentProcess());
 
-//                        DbgBreakPoint ();
+                    if ((NtGlobalFlag & FLG_APPLICATION_VERIFIER))
+                    {
+
+                        DbgPrint("AVRF: Invalid handle %p in process %p \n", Handle, PsGetCurrentProcess());
+
+                        //                        DbgBreakPoint ();
                     }
 
-                    KeRaiseUserException (STATUS_INVALID_HANDLE);
+                    KeRaiseUserException(STATUS_INVALID_HANDLE);
                 }
-            } else {
+            }
+            else
+            {
 
                 //
                 // We bugcheck for kernel handles only if we have the handle
@@ -2058,17 +1983,15 @@ Return Value:
                 // only user mode errors.
                 //
 
-                if ((NtGlobalFlag & FLG_ENABLE_HANDLE_EXCEPTIONS)) {
+                if ((NtGlobalFlag & FLG_ENABLE_HANDLE_EXCEPTIONS))
+                {
 
-                    KeBugCheckEx(INVALID_KERNEL_HANDLE,
-                                 (ULONG_PTR)Handle,
-                                 (ULONG_PTR)HandleTable,
-                                 (ULONG_PTR)HandleTableEntry,
-                                 0x1);
+                    KeBugCheckEx(INVALID_KERNEL_HANDLE, (ULONG_PTR)Handle, (ULONG_PTR)HandleTable,
+                                 (ULONG_PTR)HandleTableEntry, 0x1);
                 }
             }
         }
-        
+
         return NULL;
     }
 
@@ -2079,69 +2002,56 @@ Return Value:
 
     return HandleTableEntry;
 }
-
+
 //
 //  Local Support Routine
 //
 
 PVOID
-ExpAllocateTablePagedPool (
-    IN PEPROCESS QuotaProcess OPTIONAL,
-    IN SIZE_T NumberOfBytes
-    )
+ExpAllocateTablePagedPool(IN PEPROCESS QuotaProcess OPTIONAL, IN SIZE_T NumberOfBytes)
 {
     PVOID PoolMemory;
 
-    PoolMemory = ExAllocatePoolWithTag( PagedPool,
-                                        NumberOfBytes,
-                                        'btbO' );
-    if (PoolMemory != NULL) {
+    PoolMemory = ExAllocatePoolWithTag(PagedPool, NumberOfBytes, 'btbO');
+    if (PoolMemory != NULL)
+    {
 
-        RtlZeroMemory( PoolMemory,
-                       NumberOfBytes );
+        RtlZeroMemory(PoolMemory, NumberOfBytes);
 
-        if (ARGUMENT_PRESENT(QuotaProcess)) {
+        if (ARGUMENT_PRESENT(QuotaProcess))
+        {
 
-            if (!NT_SUCCESS (PsChargeProcessPagedPoolQuota ( QuotaProcess,
-                                                             NumberOfBytes ))) {
-                ExFreePool( PoolMemory );
+            if (!NT_SUCCESS(PsChargeProcessPagedPoolQuota(QuotaProcess, NumberOfBytes)))
+            {
+                ExFreePool(PoolMemory);
                 PoolMemory = NULL;
             }
-
         }
     }
 
     return PoolMemory;
 }
 
-
+
 //
 //  Local Support Routine
 //
 
-VOID
-ExpFreeTablePagedPool (
-    IN PEPROCESS QuotaProcess OPTIONAL,
-    IN PVOID PoolMemory,
-    IN SIZE_T NumberOfBytes
-    )
+VOID ExpFreeTablePagedPool(IN PEPROCESS QuotaProcess OPTIONAL, IN PVOID PoolMemory, IN SIZE_T NumberOfBytes)
 {
 
-    ExFreePool( PoolMemory );
+    ExFreePool(PoolMemory);
 
-    if ( QuotaProcess ) {
+    if (QuotaProcess)
+    {
 
-        PsReturnProcessPagedPoolQuota( QuotaProcess,
-                                       NumberOfBytes
-                                     );
+        PsReturnProcessPagedPoolQuota(QuotaProcess, NumberOfBytes);
     }
 }
 
 NTKERNELAPI
 NTSTATUS
-ExEnableHandleTracing (
-    IN PHANDLE_TABLE HandleTable
-    )
+ExEnableHandleTracing(IN PHANDLE_TABLE HandleTable)
 {
     PHANDLE_TRACE_DEBUG_INFO DebugInfo;
     PEPROCESS Process;
@@ -2149,23 +2059,25 @@ ExEnableHandleTracing (
     SIZE_T TotalNow;
     extern SIZE_T MmMaximumNonPagedPoolInBytes;
 
-    TotalNow = InterlockedIncrement ((PLONG) &TotalTraceBuffers);
+    TotalNow = InterlockedIncrement((PLONG)&TotalTraceBuffers);
 
     //
     // See if we used more than 30% of nonpaged pool.
     //
-    if (TotalNow * sizeof (HANDLE_TRACE_DEBUG_INFO) > (MmMaximumNonPagedPoolInBytes * 30 / 100)) {
-        InterlockedDecrement ((PLONG) &TotalTraceBuffers);
+    if (TotalNow * sizeof(HANDLE_TRACE_DEBUG_INFO) > (MmMaximumNonPagedPoolInBytes * 30 / 100))
+    {
+        InterlockedDecrement((PLONG)&TotalTraceBuffers);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     Process = HandleTable->QuotaProcess;
 
-    if (Process) {
-        Status = PsChargeProcessNonPagedPoolQuota (Process,
-                                                   sizeof (HANDLE_TRACE_DEBUG_INFO));
-        if (!NT_SUCCESS (Status)) {
-            InterlockedDecrement ((PLONG) &TotalTraceBuffers);
+    if (Process)
+    {
+        Status = PsChargeProcessNonPagedPoolQuota(Process, sizeof(HANDLE_TRACE_DEBUG_INFO));
+        if (!NT_SUCCESS(Status))
+        {
+            InterlockedDecrement((PLONG)&TotalTraceBuffers);
             return Status;
         }
     }
@@ -2173,24 +2085,24 @@ ExEnableHandleTracing (
     //
     // Allocate the handle debug database
     //
-    DebugInfo = ExAllocatePoolWithTag (NonPagedPool,
-                                       sizeof (HANDLE_TRACE_DEBUG_INFO),
-                                       'dtbO');
-    if (DebugInfo == NULL) {
-        if (Process) {
-            PsReturnProcessNonPagedPoolQuota (Process,
-                                              sizeof (HANDLE_TRACE_DEBUG_INFO));
+    DebugInfo = ExAllocatePoolWithTag(NonPagedPool, sizeof(HANDLE_TRACE_DEBUG_INFO), 'dtbO');
+    if (DebugInfo == NULL)
+    {
+        if (Process)
+        {
+            PsReturnProcessNonPagedPoolQuota(Process, sizeof(HANDLE_TRACE_DEBUG_INFO));
         }
-        InterlockedDecrement ((PLONG) &TotalTraceBuffers);
+        InterlockedDecrement((PLONG)&TotalTraceBuffers);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
-    RtlZeroMemory (DebugInfo, sizeof (HANDLE_TRACE_DEBUG_INFO));
+    RtlZeroMemory(DebugInfo, sizeof(HANDLE_TRACE_DEBUG_INFO));
 
     //
     // Since we are tracing then we should enforce strict FIFO
     // Only do this for tables with processes so we leave atom tables alone.
     //
-    if (Process != NULL) {
+    if (Process != NULL)
+    {
         HandleTable->StrictFIFO = TRUE;
     }
 
@@ -2198,29 +2110,26 @@ ExEnableHandleTracing (
     // Try and install the trace buffer. If there is one already there
     // then free the new one. We return success anyway as tracing is enabled.
     //
-    if (InterlockedCompareExchangePointer (&HandleTable->DebugInfo,
-                                           DebugInfo,
-                                           NULL) != NULL) {
-        ExFreePool (DebugInfo);
-        if (Process) {
-            PsReturnProcessNonPagedPoolQuota (Process,
-                                              sizeof (HANDLE_TRACE_DEBUG_INFO));
+    if (InterlockedCompareExchangePointer(&HandleTable->DebugInfo, DebugInfo, NULL) != NULL)
+    {
+        ExFreePool(DebugInfo);
+        if (Process)
+        {
+            PsReturnProcessNonPagedPoolQuota(Process, sizeof(HANDLE_TRACE_DEBUG_INFO));
         }
-        InterlockedDecrement ((PLONG) &TotalTraceBuffers);
+        InterlockedDecrement((PLONG)&TotalTraceBuffers);
     }
 
     return STATUS_SUCCESS;
 }
 
-
+
 //
 //  Local Support Routine
 //
 
 PHANDLE_TABLE
-ExpAllocateHandleTable (
-    IN PEPROCESS Process OPTIONAL
-    )
+ExpAllocateHandleTable(IN PEPROCESS Process OPTIONAL)
 
 /*++
 
@@ -2262,24 +2171,24 @@ Return Value:
     //  for it and then zero it out
     //
 
-    HandleTable = (PHANDLE_TABLE)ExAllocatePoolWithTag (PagedPool,
-                                                        sizeof(HANDLE_TABLE),
-                                                        'btbO');
-    if (HandleTable == NULL) {
+    HandleTable = (PHANDLE_TABLE)ExAllocatePoolWithTag(PagedPool, sizeof(HANDLE_TABLE), 'btbO');
+    if (HandleTable == NULL)
+    {
         return NULL;
     }
 
-    if (ARGUMENT_PRESENT(Process)) {
+    if (ARGUMENT_PRESENT(Process))
+    {
 
-        if (!NT_SUCCESS (PsChargeProcessPagedPoolQuota( Process,
-                                                        sizeof(HANDLE_TABLE)))) {
-            ExFreePool( HandleTable );
+        if (!NT_SUCCESS(PsChargeProcessPagedPoolQuota(Process, sizeof(HANDLE_TABLE))))
+        {
+            ExFreePool(HandleTable);
             return NULL;
         }
     }
 
 
-    RtlZeroMemory( HandleTable, sizeof(HANDLE_TABLE) );
+    RtlZeroMemory(HandleTable, sizeof(HANDLE_TABLE));
 
 
     //
@@ -2287,23 +2196,22 @@ Return Value:
     //  level table structure.  This will all fit on a page, maybe two.
     //
 
-    HandleTableTable = ExpAllocateTablePagedPool( Process,
-                                                  TABLE_PAGE_SIZE
-                                                );
+    HandleTableTable = ExpAllocateTablePagedPool(Process, TABLE_PAGE_SIZE);
 
-    if ( HandleTableTable == NULL ) {
+    if (HandleTableTable == NULL)
+    {
 
-        ExFreePool( HandleTable );
+        ExFreePool(HandleTable);
 
-        if (ARGUMENT_PRESENT(Process)) {
+        if (ARGUMENT_PRESENT(Process))
+        {
 
-            PsReturnProcessPagedPoolQuota (Process,
-                                           sizeof(HANDLE_TABLE));
+            PsReturnProcessPagedPoolQuota(Process, sizeof(HANDLE_TABLE));
         }
-            
+
         return NULL;
     }
-        
+
     HandleTable->TableCode = (ULONG_PTR)HandleTableTable;
 
 
@@ -2315,9 +2223,10 @@ Return Value:
     //  confused with null.
     //
 
-    for (i = 0; i < LOWLEVEL_COUNT; i += 1) {
+    for (i = 0; i < LOWLEVEL_COUNT; i += 1)
+    {
 
-        HandleTableTable[i].NextFreeTableEntry = (i+1)<<2;
+        HandleTableTable[i].NextFreeTableEntry = (i + 1) << 2;
     }
 
     //
@@ -2326,7 +2235,7 @@ Return Value:
     //
 
     HandleTableTable[0].NextFreeTableEntry = EX_ADDITIONAL_INFO_SIGNATURE;
-    
+
     HandleTableTable[LOWLEVEL_COUNT - 1].NextFreeTableEntry = 0;
 
     HandleTable->FirstFree = HANDLE_VALUE_INC;
@@ -2340,7 +2249,8 @@ Return Value:
     HandleTable->UniqueProcessId = PsGetCurrentProcess()->UniqueProcessId;
     HandleTable->Flags = 0;
 #if DBG
-    if (Process != NULL) {
+    if (Process != NULL)
+    {
         HandleTable->StrictFIFO = TRUE;
     }
 #endif
@@ -2349,18 +2259,20 @@ Return Value:
     //  Initialize the handle table lock. This is only used by table expansion.
     //
 
-    for (Idx = 0; Idx < HANDLE_TABLE_LOCKS; Idx++) {
-        ExInitializePushLock (&HandleTable->HandleTableLock[Idx]);
+    for (Idx = 0; Idx < HANDLE_TABLE_LOCKS; Idx++)
+    {
+        ExInitializePushLock(&HandleTable->HandleTableLock[Idx]);
     }
 
     //
     //  Initialize the blocker for handle entry lock contention.
     //
 
-    ExInitializePushLock (&HandleTable->HandleContentionEvent);
+    ExInitializePushLock(&HandleTable->HandleContentionEvent);
 
-    if (ExTraceAllTables) {
-        ExEnableHandleTracing (HandleTable);    
+    if (ExTraceAllTables)
+    {
+        ExEnableHandleTracing(HandleTable);
     }
     //
     //  And return to our caller
@@ -2369,16 +2281,12 @@ Return Value:
     return HandleTable;
 }
 
-
+
 //
 //  Local Support Routine
 //
 
-VOID
-ExpFreeLowLevelTable (
-    IN PEPROCESS QuotaProcess,
-    IN PHANDLE_TABLE_ENTRY TableLevel1
-    )
+VOID ExpFreeLowLevelTable(IN PEPROCESS QuotaProcess, IN PHANDLE_TABLE_ENTRY TableLevel1)
 
 /*++
 
@@ -2402,23 +2310,18 @@ Return Value:
     //  Check whether we have a pool allocated for the additional info
     //
 
-    if (TableLevel1[0].Object) {
+    if (TableLevel1[0].Object)
+    {
 
-        ExpFreeTablePagedPool( QuotaProcess,
-                               TableLevel1[0].Object,
-                               LOWLEVEL_COUNT * sizeof(HANDLE_TABLE_ENTRY_INFO)
-                             );
+        ExpFreeTablePagedPool(QuotaProcess, TableLevel1[0].Object, LOWLEVEL_COUNT * sizeof(HANDLE_TABLE_ENTRY_INFO));
     }
 
     //
     //  Now free the low level table and return the quota for the process
     //
 
-    ExpFreeTablePagedPool( QuotaProcess,
-                           TableLevel1,
-                           TABLE_PAGE_SIZE
-                         );
-    
+    ExpFreeTablePagedPool(QuotaProcess, TableLevel1, TABLE_PAGE_SIZE);
+
     //
     //  And return to our caller
     //
@@ -2426,15 +2329,12 @@ Return Value:
     return;
 }
 
-
+
 //
 //  Local Support Routine
 //
 
-VOID
-ExpFreeHandleTable (
-    IN PHANDLE_TABLE HandleTable
-    )
+VOID ExpFreeHandleTable(IN PHANDLE_TABLE HandleTable)
 
 /*++
 
@@ -2454,7 +2354,7 @@ Return Value:
 
 {
     PEPROCESS Process;
-    ULONG i,j;
+    ULONG i, j;
     ULONG_PTR CapturedTable = HandleTable->TableCode;
     ULONG TableLevel = (ULONG)(CapturedTable & LEVEL_CODE_MASK);
 
@@ -2473,48 +2373,50 @@ Return Value:
     //
 
 
-    if (TableLevel == 0) {
+    if (TableLevel == 0)
+    {
 
         //
         //  There is a single level handle table. We'll simply free the buffer
         //
 
         PHANDLE_TABLE_ENTRY TableLevel1 = (PHANDLE_TABLE_ENTRY)CapturedTable;
-        
-        ExpFreeLowLevelTable( Process, TableLevel1 );
 
-    } else if (TableLevel == 1) {
+        ExpFreeLowLevelTable(Process, TableLevel1);
+    }
+    else if (TableLevel == 1)
+    {
 
         //
         //  We have 2 levels in the handle table
         //
-        
+
         PHANDLE_TABLE_ENTRY *TableLevel2 = (PHANDLE_TABLE_ENTRY *)CapturedTable;
 
-        for (i = 0; i < MIDLEVEL_COUNT; i++) {
+        for (i = 0; i < MIDLEVEL_COUNT; i++)
+        {
 
             //
             //  loop through the pointers to the low-level tables, and free each one
             //
 
-            if (TableLevel2[i] == NULL) {
+            if (TableLevel2[i] == NULL)
+            {
 
                 break;
             }
-            
-            ExpFreeLowLevelTable( Process, TableLevel2[i] );
+
+            ExpFreeLowLevelTable(Process, TableLevel2[i]);
         }
-        
+
         //
         //  Free the top level table
         //
 
-        ExpFreeTablePagedPool( Process,
-                               TableLevel2,
-                               PAGE_SIZE
-                             );
-
-    } else {
+        ExpFreeTablePagedPool(Process, TableLevel2, PAGE_SIZE);
+    }
+    else
+    {
 
         //
         //  Here we handle the case where we have a 3 level handle table
@@ -2526,67 +2428,66 @@ Return Value:
         //  Iterates through the high-level pointers to mid-table
         //
 
-        for (i = 0; i < HIGHLEVEL_COUNT; i++) {
+        for (i = 0; i < HIGHLEVEL_COUNT; i++)
+        {
 
-            if (TableLevel3[i] == NULL) {
+            if (TableLevel3[i] == NULL)
+            {
 
                 break;
             }
-            
+
             //
             //  Iterate through the mid-level table
             //  and free every low-level page
             //
 
-            for (j = 0; j < MIDLEVEL_COUNT; j++) {
+            for (j = 0; j < MIDLEVEL_COUNT; j++)
+            {
 
-                if (TableLevel3[i][j] == NULL) {
+                if (TableLevel3[i][j] == NULL)
+                {
 
                     break;
                 }
-                
-                ExpFreeLowLevelTable( Process, TableLevel3[i][j] );
+
+                ExpFreeLowLevelTable(Process, TableLevel3[i][j]);
             }
 
-            ExpFreeTablePagedPool( Process,
-                                   TableLevel3[i],
-                                   PAGE_SIZE
-                                 );
+            ExpFreeTablePagedPool(Process, TableLevel3[i], PAGE_SIZE);
         }
-        
+
         //
         //  Free the top-level array
         //
 
-        ExpFreeTablePagedPool( Process,
-                               TableLevel3,
-                               HIGHLEVEL_SIZE
-                             );
+        ExpFreeTablePagedPool(Process, TableLevel3, HIGHLEVEL_SIZE);
     }
 
     //
     // Free any debug info if we have any.
     //
 
-    if (HandleTable->DebugInfo != NULL) {
-        ExFreePool (HandleTable->DebugInfo);
-        if (Process != NULL) {
-            PsReturnProcessNonPagedPoolQuota (Process,
-                                              sizeof (HANDLE_TRACE_DEBUG_INFO));
+    if (HandleTable->DebugInfo != NULL)
+    {
+        ExFreePool(HandleTable->DebugInfo);
+        if (Process != NULL)
+        {
+            PsReturnProcessNonPagedPoolQuota(Process, sizeof(HANDLE_TRACE_DEBUG_INFO));
         }
-        InterlockedDecrement ((PLONG) &TotalTraceBuffers);
+        InterlockedDecrement((PLONG)&TotalTraceBuffers);
     }
 
     //
     //  Finally deallocate the handle table itself
     //
 
-    ExFreePool( HandleTable );
+    ExFreePool(HandleTable);
 
-    if (Process != NULL) {
+    if (Process != NULL)
+    {
 
-        PsReturnProcessPagedPoolQuota (Process,
-                                       sizeof(HANDLE_TABLE));
+        PsReturnProcessPagedPoolQuota(Process, sizeof(HANDLE_TABLE));
     }
 
     //
@@ -2596,15 +2497,13 @@ Return Value:
     return;
 }
 
-
+
 //
 //  Local Support Routine
 //
 
 PHANDLE_TABLE_ENTRY
-ExpAllocateLowLevelTable (
-    IN PHANDLE_TABLE HandleTable
-    )
+ExpAllocateLowLevelTable(IN PHANDLE_TABLE HandleTable)
 
 /*++
 
@@ -2629,16 +2528,15 @@ Return Value:
     ULONG k;
     PHANDLE_TABLE_ENTRY NewLowLevel = NULL;
     ULONG BaseHandle;
-    
+
     //
     //  Allocate the pool for lower level
     //
 
-    NewLowLevel = ExpAllocateTablePagedPool( HandleTable->QuotaProcess,
-                                             TABLE_PAGE_SIZE
-                                           );
+    NewLowLevel = ExpAllocateTablePagedPool(HandleTable->QuotaProcess, TABLE_PAGE_SIZE);
 
-    if (NewLowLevel == NULL) {
+    if (NewLowLevel == NULL)
+    {
 
         return NULL;
     }
@@ -2664,21 +2562,18 @@ Return Value:
     //
 
     BaseHandle = HandleTable->NextHandleNeedingPool + 2 * HANDLE_VALUE_INC;
-    for (k = 1; k < LOWLEVEL_COUNT - 1; k++) {
+    for (k = 1; k < LOWLEVEL_COUNT - 1; k++)
+    {
 
         NewLowLevel[k].NextFreeTableEntry = BaseHandle;
         BaseHandle += HANDLE_VALUE_INC;
     }
 
 
-    return NewLowLevel;    
+    return NewLowLevel;
 }
 
-PHANDLE_TABLE_ENTRY *
-ExpAllocateMidLevelTable (
-    IN PHANDLE_TABLE HandleTable,
-    OUT PHANDLE_TABLE_ENTRY *pNewLowLevel
-    )
+PHANDLE_TABLE_ENTRY *ExpAllocateMidLevelTable(IN PHANDLE_TABLE HandleTable, OUT PHANDLE_TABLE_ENTRY *pNewLowLevel)
 
 /*++
 
@@ -2705,12 +2600,11 @@ Return Value:
 {
     PHANDLE_TABLE_ENTRY *NewMidLevel;
     PHANDLE_TABLE_ENTRY NewLowLevel;
-    
-    NewMidLevel = ExpAllocateTablePagedPool( HandleTable->QuotaProcess,
-                                             PAGE_SIZE
-                                           );
 
-    if (NewMidLevel == NULL) {
+    NewMidLevel = ExpAllocateTablePagedPool(HandleTable->QuotaProcess, PAGE_SIZE);
+
+    if (NewMidLevel == NULL)
+    {
 
         return NULL;
     }
@@ -2720,18 +2614,16 @@ Return Value:
     //  We'll create one and if success we'll save it at the first position
     //
 
-    NewLowLevel = ExpAllocateLowLevelTable( HandleTable );
+    NewLowLevel = ExpAllocateLowLevelTable(HandleTable);
 
-    if (NewLowLevel == NULL) {
+    if (NewLowLevel == NULL)
+    {
 
-        ExpFreeTablePagedPool( HandleTable->QuotaProcess,
-                               NewMidLevel,
-                               PAGE_SIZE
-                             );
+        ExpFreeTablePagedPool(HandleTable->QuotaProcess, NewMidLevel, PAGE_SIZE);
 
         return NULL;
     }
-    
+
     //
     //  Set the low-level table at the first index
     //
@@ -2743,11 +2635,8 @@ Return Value:
 }
 
 
-
 BOOLEAN
-ExpAllocateHandleTableEntrySlow (
-    IN PHANDLE_TABLE HandleTable
-    )
+ExpAllocateHandleTableEntrySlow(IN PHANDLE_TABLE HandleTable)
 
 /*++
 
@@ -2773,17 +2662,17 @@ Return Value:
 --*/
 
 {
-    ULONG i,j;
+    ULONG i, j;
 
     PHANDLE_TABLE_ENTRY NewLowLevel;
     PHANDLE_TABLE_ENTRY *NewMidLevel;
     PHANDLE_TABLE_ENTRY **NewHighLevel;
     ULONG NewFree, OldFree;
     ULONG OldIndex;
-    
+
     ULONG_PTR CapturedTable = HandleTable->TableCode;
     ULONG TableLevel = (ULONG)(CapturedTable & LEVEL_CODE_MASK);
-    
+
     PAGED_CODE();
 
     //
@@ -2797,37 +2686,40 @@ Return Value:
     CapturedTable = CapturedTable & ~LEVEL_CODE_MASK;
 
 
-    if ( TableLevel == 0 ) {
+    if (TableLevel == 0)
+    {
 
         //
         //  We have a single level. We need to ad a mid-layer
         //  to the process handle table
         //
 
-        NewMidLevel = ExpAllocateMidLevelTable( HandleTable, &NewLowLevel );
+        NewMidLevel = ExpAllocateMidLevelTable(HandleTable, &NewLowLevel);
 
-        if (NewMidLevel == NULL) {
+        if (NewMidLevel == NULL)
+        {
             return FALSE;
         }
 
         //
-        //  Since ExpAllocateMidLevelTable initialize the 
-        //  first position with a new table, we need to move it in 
+        //  Since ExpAllocateMidLevelTable initialize the
+        //  first position with a new table, we need to move it in
         //  the second position, and store in the first position the current one
         //
 
         NewMidLevel[1] = NewMidLevel[0];
         NewMidLevel[0] = (PHANDLE_TABLE_ENTRY)CapturedTable;
-            
+
         //
         //  Encode the current level and set it to the handle table process
         //
 
         CapturedTable = ((ULONG_PTR)NewMidLevel) | 1;
-            
-        InterlockedExchangePointer( (PVOID *)&HandleTable->TableCode, (PVOID)CapturedTable );
 
-    } else if (TableLevel == 1) {
+        InterlockedExchangePointer((PVOID *)&HandleTable->TableCode, (PVOID)CapturedTable);
+    }
+    else if (TableLevel == 1)
+    {
 
         //
         //  We have a 2 levels handle table
@@ -2836,22 +2728,24 @@ Return Value:
         PHANDLE_TABLE_ENTRY *TableLevel2 = (PHANDLE_TABLE_ENTRY *)CapturedTable;
 
         //
-        //  Test whether the index we need to create is still in the 
+        //  Test whether the index we need to create is still in the
         //  range for a 2 layers table
         //
 
         i = HandleTable->NextHandleNeedingPool / (LOWLEVEL_COUNT * HANDLE_VALUE_INC);
 
-        if (i < MIDLEVEL_COUNT) {
+        if (i < MIDLEVEL_COUNT)
+        {
 
             //
             //  We just need to allocate a new low-level
             //  table
             //
-                
-            NewLowLevel = ExpAllocateLowLevelTable( HandleTable );
 
-            if (NewLowLevel == NULL) {
+            NewLowLevel = ExpAllocateLowLevelTable(HandleTable);
+
+            if (NewLowLevel == NULL)
+            {
                 return FALSE;
             }
 
@@ -2859,31 +2753,29 @@ Return Value:
             //  Set the new one to the table, at appropriate position
             //
 
-            InterlockedExchangePointer( (PVOID *) (&TableLevel2[i]), NewLowLevel );
-
-        } else {
+            InterlockedExchangePointer((PVOID *)(&TableLevel2[i]), NewLowLevel);
+        }
+        else
+        {
 
             //
             //  We exhausted the 2 level domain. We need to insert a new one
             //
 
-            NewHighLevel = ExpAllocateTablePagedPool( HandleTable->QuotaProcess,
-                                                      HIGHLEVEL_SIZE
-                                                    );
+            NewHighLevel = ExpAllocateTablePagedPool(HandleTable->QuotaProcess, HIGHLEVEL_SIZE);
 
-            if (NewHighLevel == NULL) {
+            if (NewHighLevel == NULL)
+            {
 
                 return FALSE;
             }
-                
-            NewMidLevel = ExpAllocateMidLevelTable( HandleTable, &NewLowLevel );
 
-            if (NewMidLevel == NULL) {
-                    
-                ExpFreeTablePagedPool( HandleTable->QuotaProcess,
-                                       NewHighLevel,
-                                       HIGHLEVEL_SIZE
-                                     );
+            NewMidLevel = ExpAllocateMidLevelTable(HandleTable, &NewLowLevel);
+
+            if (NewMidLevel == NULL)
+            {
+
+                ExpFreeTablePagedPool(HandleTable->QuotaProcess, NewHighLevel, HIGHLEVEL_SIZE);
 
                 return FALSE;
             }
@@ -2892,7 +2784,7 @@ Return Value:
             //  Initialize the first index with the previous mid-level layer
             //
 
-            NewHighLevel[0] = (PHANDLE_TABLE_ENTRY*)CapturedTable;
+            NewHighLevel[0] = (PHANDLE_TABLE_ENTRY *)CapturedTable;
             NewHighLevel[1] = NewMidLevel;
 
             //
@@ -2905,10 +2797,11 @@ Return Value:
             //  Change the handle table pointer with this one
             //
 
-            InterlockedExchangePointer( (PVOID *)&HandleTable->TableCode, (PVOID)CapturedTable );
+            InterlockedExchangePointer((PVOID *)&HandleTable->TableCode, (PVOID)CapturedTable);
         }
-
-    } else if (TableLevel == 2) {
+    }
+    else if (TableLevel == 2)
+    {
 
         //
         //  we have already a table with 3 levels
@@ -2923,46 +2816,50 @@ Return Value:
         //  Check whether we exhausted all possible indexes.
         //
 
-        if (i >= HIGHLEVEL_COUNT) {
+        if (i >= HIGHLEVEL_COUNT)
+        {
 
             return FALSE;
         }
 
-        if (TableLevel3[i] == NULL) {
+        if (TableLevel3[i] == NULL)
+        {
 
             //
             //  The new available handle points to a free mid-level entry
             //  We need then to allocate a new one and save it in that position
             //
 
-            NewMidLevel = ExpAllocateMidLevelTable( HandleTable, &NewLowLevel );
-                
-            if (NewMidLevel == NULL) {
-                    
+            NewMidLevel = ExpAllocateMidLevelTable(HandleTable, &NewLowLevel);
+
+            if (NewMidLevel == NULL)
+            {
+
                 return FALSE;
-            }             
+            }
 
-            InterlockedExchangePointer( (PVOID *) &(TableLevel3[i]), NewMidLevel );
-
-        } else {
+            InterlockedExchangePointer((PVOID *)&(TableLevel3[i]), NewMidLevel);
+        }
+        else
+        {
 
             //
             //  We have already a mid-level table. We just need to add a new low-level one
             //  at the end
             //
-                
-            RemainingIndex = (HandleTable->NextHandleNeedingPool / HANDLE_VALUE_INC) -
-                              i * MIDLEVEL_THRESHOLD;
+
+            RemainingIndex = (HandleTable->NextHandleNeedingPool / HANDLE_VALUE_INC) - i * MIDLEVEL_THRESHOLD;
             j = RemainingIndex / LOWLEVEL_COUNT;
 
-            NewLowLevel = ExpAllocateLowLevelTable( HandleTable );
+            NewLowLevel = ExpAllocateLowLevelTable(HandleTable);
 
-            if (NewLowLevel == NULL) {
+            if (NewLowLevel == NULL)
+            {
 
                 return FALSE;
             }
 
-            InterlockedExchangePointer( (PVOID *)(&TableLevel3[i][j]) , NewLowLevel );
+            InterlockedExchangePointer((PVOID *)(&TableLevel3[i][j]), NewLowLevel);
         }
     }
 
@@ -2970,14 +2867,14 @@ Return Value:
     // This must be done after the table pointers so that new created handles
     // are valid before being freed.
     //
-    OldIndex = InterlockedExchangeAdd ((PLONG) &HandleTable->NextHandleNeedingPool,
-                                       LOWLEVEL_COUNT * HANDLE_VALUE_INC);
+    OldIndex = InterlockedExchangeAdd((PLONG)&HandleTable->NextHandleNeedingPool, LOWLEVEL_COUNT * HANDLE_VALUE_INC);
 
     //
     // Now free the handles. These are all ready to be accepted by the lookup logic now.
     //
     NewFree = OldIndex + HANDLE_VALUE_INC;
-    while (1) {
+    while (1)
+    {
         OldFree = HandleTable->FirstFree;
         NewLowLevel[LOWLEVEL_COUNT - 1].NextFreeTableEntry = OldFree;
         //
@@ -2985,21 +2882,17 @@ Return Value:
         // with these so we don't need to take any locks
         //
 
-        NewFree = InterlockedCompareExchange ((PLONG)&HandleTable->FirstFree,
-                                              NewFree,
-                                              OldFree);
-        if (NewFree == OldFree) {
+        NewFree = InterlockedCompareExchange((PLONG)&HandleTable->FirstFree, NewFree, OldFree);
+        if (NewFree == OldFree)
+        {
             break;
         }
     }
     return TRUE;
 }
 
-
-VOID
-ExSetHandleTableStrictFIFO (
-    IN PHANDLE_TABLE HandleTable
-    )
+
+VOID ExSetHandleTableStrictFIFO(IN PHANDLE_TABLE HandleTable)
 
 /*++
 
@@ -3023,7 +2916,7 @@ Return Value:
     HandleTable->StrictFIFO = TRUE;
 }
 
-
+
 //
 //  Local Support Routine
 //
@@ -3037,12 +2930,7 @@ Return Value:
 BOOLEAN ExReuseHandles = 1;
 #endif //DBG
 
-VOID
-ExpFreeHandleTableEntry (
-    IN PHANDLE_TABLE HandleTable,
-    IN EXHANDLE Handle,
-    IN PHANDLE_TABLE_ENTRY HandleTableEntry
-    )
+VOID ExpFreeHandleTableEntry(IN PHANDLE_TABLE HandleTable, IN EXHANDLE Handle, IN PHANDLE_TABLE_ENTRY HandleTableEntry)
 
 /*++
 
@@ -3081,7 +2969,8 @@ Return Value:
 
     EntryInfo = ExGetHandleInfo(HandleTable, Handle.GenericHandleOverlay, TRUE);
 
-    if (EntryInfo) {
+    if (EntryInfo)
+    {
 
         EntryInfo->AuditMask = 0;
     }
@@ -3092,45 +2981,54 @@ Return Value:
     //  reuse a recycled handle value.
     //
 
-    InterlockedDecrement (&HandleTable->HandleCount);
-    CurrentThread = KeGetCurrentThread ();
+    InterlockedDecrement(&HandleTable->HandleCount);
+    CurrentThread = KeGetCurrentThread();
 
 #if DBG
-    if (ExReuseHandles) {
+    if (ExReuseHandles)
+    {
 #endif //DBG
 
-        NewFree = (ULONG) Handle.Value & ~(HANDLE_VALUE_INC - 1);
-        if (!HandleTable->StrictFIFO) {
+        NewFree = (ULONG)Handle.Value & ~(HANDLE_VALUE_INC - 1);
+        if (!HandleTable->StrictFIFO)
+        {
             //
             // We are pushing potentialy old entries onto the free list.
             // Prevent the A-B-A problem by shifting to an alternate list
             // read this element has the list head out of the loop.
             //
-            Idx = (NewFree>>2) % HANDLE_TABLE_LOCKS;
-            if (ExTryAcquireReleasePushLockExclusive (&HandleTable->HandleTableLock[Idx])) {
+            Idx = (NewFree >> 2) % HANDLE_TABLE_LOCKS;
+            if (ExTryAcquireReleasePushLockExclusive(&HandleTable->HandleTableLock[Idx]))
+            {
                 Free = &HandleTable->FirstFree;
-            } else {
+            }
+            else
+            {
                 Free = &HandleTable->LastFree;
             }
-        } else {
+        }
+        else
+        {
             Free = &HandleTable->LastFree;
         }
 
-        while (1) {
+        while (1)
+        {
 
 
             OldFree = *Free;
             HandleTableEntry->NextFreeTableEntry = OldFree;
 
-            if ((ULONG)InterlockedCompareExchange ((PLONG)Free,
-                                                   NewFree,
-                                                   OldFree) == OldFree) {
+            if ((ULONG)InterlockedCompareExchange((PLONG)Free, NewFree, OldFree) == OldFree)
+            {
                 break;
             }
         }
 
 #if DBG
-    } else {
+    }
+    else
+    {
 
         HandleTableEntry->NextFreeTableEntry = 0;
     }
@@ -3140,16 +3038,13 @@ Return Value:
     return;
 }
 
-
+
 //
 //  Local Support Routine
 //
 
 PHANDLE_TABLE_ENTRY
-ExpLookupHandleTableEntry (
-    IN PHANDLE_TABLE HandleTable,
-    IN EXHANDLE Handle
-    )
+ExpLookupHandleTableEntry(IN PHANDLE_TABLE HandleTable, IN EXHANDLE Handle)
 
 /*++
 
@@ -3173,7 +3068,7 @@ Return Value:
 --*/
 
 {
-    ULONG_PTR i,j,k;
+    ULONG_PTR i, j, k;
     ULONG_PTR CapturedTable;
     ULONG TableLevel;
     PHANDLE_TABLE_ENTRY Entry;
@@ -3199,20 +3094,21 @@ Return Value:
     Handle.TagBits = 0;
     Index = Handle.Index;
 
-    MaxHandle = *(volatile ULONG *) &HandleTable->NextHandleNeedingPool;
+    MaxHandle = *(volatile ULONG *)&HandleTable->NextHandleNeedingPool;
 
     //
     // See if this can be a valid handle given the table levels.
     //
-    if (Handle.Value >= MaxHandle) {
-        return NULL;        
+    if (Handle.Value >= MaxHandle)
+    {
+        return NULL;
     }
 
     //
     // Now fetch the table address and level bits. We must preserve the
     // ordering here.
     //
-    CapturedTable = *(volatile ULONG_PTR *) &HandleTable->TableCode;
+    CapturedTable = *(volatile ULONG_PTR *)&HandleTable->TableCode;
 
     //
     //  we need to capture the current table. This routine is lock free
@@ -3226,60 +3122,61 @@ Return Value:
     //  The lookup code depends on number of levels we have
     //
 
-    switch (TableLevel) {
-        
-        case 0:
-            
-            //
-            //  We have a simple index into the array, for a single level
-            //  handle table
-            //
+    switch (TableLevel)
+    {
+
+    case 0:
+
+        //
+        //  We have a simple index into the array, for a single level
+        //  handle table
+        //
 
 
-            TableLevel1 = (L1P) CapturedTable;
+        TableLevel1 = (L1P)CapturedTable;
 
-            Entry = &(TableLevel1[Index]);
+        Entry = &(TableLevel1[Index]);
 
-            break;
-        
-        case 1:
-            
-            //
-            //  we have a 2 level handle table. We need to get the upper index
-            //  and lower index into the array
-            //
+        break;
 
-            TableLevel2 = (L2P) CapturedTable;
-                
-            i = Index / LOWLEVEL_COUNT;
-            j = Index % LOWLEVEL_COUNT;
+    case 1:
 
-            Entry = &(TableLevel2[i][j]);
+        //
+        //  we have a 2 level handle table. We need to get the upper index
+        //  and lower index into the array
+        //
 
-            break;
-        
-        case 2:
-            
-            //
-            //  We have here a three level handle table.
-            //
+        TableLevel2 = (L2P)CapturedTable;
 
-            TableLevel3 = (L3P) CapturedTable;
+        i = Index / LOWLEVEL_COUNT;
+        j = Index % LOWLEVEL_COUNT;
 
-            //
-            //  Calculate the 3 indexes we need
-            //
-                
-            i = Index / (MIDLEVEL_THRESHOLD);
-            RemainingIndex = Index - i * MIDLEVEL_THRESHOLD;
-            j = RemainingIndex / LOWLEVEL_COUNT;
-            k = RemainingIndex % LOWLEVEL_COUNT;
-            Entry = &(TableLevel3[i][j][k]);
+        Entry = &(TableLevel2[i][j]);
 
-            break;
+        break;
 
-        default :
-            _assume (0);
+    case 2:
+
+        //
+        //  We have here a three level handle table.
+        //
+
+        TableLevel3 = (L3P)CapturedTable;
+
+        //
+        //  Calculate the 3 indexes we need
+        //
+
+        i = Index / (MIDLEVEL_THRESHOLD);
+        RemainingIndex = Index - i * MIDLEVEL_THRESHOLD;
+        j = RemainingIndex / LOWLEVEL_COUNT;
+        k = RemainingIndex % LOWLEVEL_COUNT;
+        Entry = &(TableLevel3[i][j][k]);
+
+        break;
+
+    default:
+        _assume(0);
     }
 
     return Entry;
@@ -3287,12 +3184,8 @@ Return Value:
 
 NTKERNELAPI
 NTSTATUS
-ExSetHandleInfo (
-    IN PHANDLE_TABLE HandleTable,
-    IN HANDLE Handle,
-    IN PHANDLE_TABLE_ENTRY_INFO EntryInfo,
-    IN BOOLEAN EntryLocked
-    )
+ExSetHandleInfo(IN PHANDLE_TABLE HandleTable, IN HANDLE Handle, IN PHANDLE_TABLE_ENTRY_INFO EntryInfo,
+                IN BOOLEAN EntryLocked)
 
 /*++
 
@@ -3327,31 +3220,33 @@ Return Value:
     ExHandle.GenericHandleOverlay = Handle;
     ExHandle.Index &= ~(LOWLEVEL_COUNT - 1);
 
-    if (!EntryLocked) {
-        CurrentThread = KeGetCurrentThread ();
-        KeEnterCriticalRegionThread (CurrentThread);
+    if (!EntryLocked)
+    {
+        CurrentThread = KeGetCurrentThread();
+        KeEnterCriticalRegionThread(CurrentThread);
         TableEntry = ExMapHandleToPointer(HandleTable, Handle);
 
-        if (TableEntry == NULL) {
-            KeLeaveCriticalRegionThread (CurrentThread);
-            
+        if (TableEntry == NULL)
+        {
+            KeLeaveCriticalRegionThread(CurrentThread);
+
             return STATUS_UNSUCCESSFUL;
         }
     }
-    
+
     //
     //  The info structure is at the first position in each low-level table
     //
 
-    InfoStructure = ExpLookupHandleTableEntry( HandleTable,
-                                               ExHandle
-                                             );
+    InfoStructure = ExpLookupHandleTableEntry(HandleTable, ExHandle);
 
-    if (InfoStructure == NULL || InfoStructure->NextFreeTableEntry != EX_ADDITIONAL_INFO_SIGNATURE) {
+    if (InfoStructure == NULL || InfoStructure->NextFreeTableEntry != EX_ADDITIONAL_INFO_SIGNATURE)
+    {
 
-        if ( TableEntry ) {
-            ExUnlockHandleTableEntry( HandleTable, TableEntry );
-            KeLeaveCriticalRegionThread (CurrentThread);
+        if (TableEntry)
+        {
+            ExUnlockHandleTableEntry(HandleTable, TableEntry);
+            KeLeaveCriticalRegionThread(CurrentThread);
         }
 
         return STATUS_UNSUCCESSFUL;
@@ -3361,38 +3256,40 @@ Return Value:
     //  Check whether we need to allocate a new table
     //
     InfoTable = InfoStructure->InfoTable;
-    if (InfoTable == NULL) {
+    if (InfoTable == NULL)
+    {
         //
         //  Nobody allocated the Infotable so far.
         //  We'll do it right now
         //
 
-        InfoTable = ExpAllocateTablePagedPool (HandleTable->QuotaProcess,
-                                               LOWLEVEL_COUNT * sizeof(HANDLE_TABLE_ENTRY_INFO));
-            
-        if (InfoTable) {
+        InfoTable =
+            ExpAllocateTablePagedPool(HandleTable->QuotaProcess, LOWLEVEL_COUNT * sizeof(HANDLE_TABLE_ENTRY_INFO));
+
+        if (InfoTable)
+        {
 
             //
             // Update the number of pages for extra info. If somebody beat us to it then free the
             // new table
             //
-            if (InterlockedCompareExchangePointer (&InfoStructure->InfoTable,
-                                                   InfoTable,
-                                                   NULL) == NULL) {
+            if (InterlockedCompareExchangePointer(&InfoStructure->InfoTable, InfoTable, NULL) == NULL)
+            {
 
                 InterlockedIncrement(&HandleTable->ExtraInfoPages);
-
-            } else {
-                ExpFreeTablePagedPool (HandleTable->QuotaProcess,
-                                       InfoTable,
-                                       LOWLEVEL_COUNT * sizeof(HANDLE_TABLE_ENTRY_INFO));
+            }
+            else
+            {
+                ExpFreeTablePagedPool(HandleTable->QuotaProcess, InfoTable,
+                                      LOWLEVEL_COUNT * sizeof(HANDLE_TABLE_ENTRY_INFO));
                 InfoTable = InfoStructure->InfoTable;
             }
         }
     }
 
-    if (InfoTable != NULL) {
-        
+    if (InfoTable != NULL)
+    {
+
         //
         //  Calculate the index and copy the structure
         //
@@ -3404,22 +3301,19 @@ Return Value:
         Status = STATUS_SUCCESS;
     }
 
-    if ( TableEntry ) {
+    if (TableEntry)
+    {
 
-        ExUnlockHandleTableEntry( HandleTable, TableEntry );
-        KeLeaveCriticalRegionThread (CurrentThread);
+        ExUnlockHandleTableEntry(HandleTable, TableEntry);
+        KeLeaveCriticalRegionThread(CurrentThread);
     }
-    
+
     return Status;
 }
 
 NTKERNELAPI
 PHANDLE_TABLE_ENTRY_INFO
-ExpGetHandleInfo (
-    IN PHANDLE_TABLE HandleTable,
-    IN HANDLE Handle,
-    IN BOOLEAN EntryLocked
-    )
+ExpGetHandleInfo(IN PHANDLE_TABLE HandleTable, IN HANDLE Handle, IN BOOLEAN EntryLocked)
 
 /*++
 
@@ -3443,34 +3337,36 @@ Return Value:
     PHANDLE_TABLE_ENTRY InfoStructure;
     EXHANDLE ExHandle;
     PHANDLE_TABLE_ENTRY TableEntry = NULL;
-    
+
     ExHandle.GenericHandleOverlay = Handle;
     ExHandle.Index &= ~(LOWLEVEL_COUNT - 1);
 
-    if (!EntryLocked) {
+    if (!EntryLocked)
+    {
 
         TableEntry = ExMapHandleToPointer(HandleTable, Handle);
 
-        if (TableEntry == NULL) {
-            
+        if (TableEntry == NULL)
+        {
+
             return NULL;
         }
     }
-    
+
     //
     //  The info structure is at the first position in each low-level table
     //
 
-    InfoStructure = ExpLookupHandleTableEntry( HandleTable,
-                                               ExHandle 
-                                             );
+    InfoStructure = ExpLookupHandleTableEntry(HandleTable, ExHandle);
 
     if (InfoStructure == NULL || InfoStructure->NextFreeTableEntry != EX_ADDITIONAL_INFO_SIGNATURE ||
-        InfoStructure->InfoTable == NULL) {
+        InfoStructure->InfoTable == NULL)
+    {
 
-        if ( TableEntry ) {
-            
-            ExUnlockHandleTableEntry( HandleTable, TableEntry );
+        if (TableEntry)
+        {
+
+            ExUnlockHandleTableEntry(HandleTable, TableEntry);
         }
 
         return NULL;
@@ -3485,5 +3381,3 @@ Return Value:
 
     return &(InfoStructure->InfoTable[ExHandle.Index % LOWLEVEL_COUNT]);
 }
-
-

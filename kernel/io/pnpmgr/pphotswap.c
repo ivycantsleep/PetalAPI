@@ -31,10 +31,7 @@ Revision History:
 #endif
 
 
-VOID
-PpHotSwapInitRemovalPolicy(
-    OUT PDEVICE_NODE    DeviceNode
-    )
+VOID PpHotSwapInitRemovalPolicy(OUT PDEVICE_NODE DeviceNode)
 /*++
 
 Routine Description:
@@ -53,15 +50,12 @@ Return Value:
 {
     PAGED_CODE();
 
-    DeviceNode->RemovalPolicy = (UCHAR) RemovalPolicyNotDetermined;
-    DeviceNode->HardwareRemovalPolicy = (UCHAR) RemovalPolicyNotDetermined;
+    DeviceNode->RemovalPolicy = (UCHAR)RemovalPolicyNotDetermined;
+    DeviceNode->HardwareRemovalPolicy = (UCHAR)RemovalPolicyNotDetermined;
 }
 
 
-VOID
-PpHotSwapUpdateRemovalPolicy(
-    IN  PDEVICE_NODE            DeviceNode
-    )
+VOID PpHotSwapUpdateRemovalPolicy(IN PDEVICE_NODE DeviceNode)
 /*++
 
 Routine Description:
@@ -97,10 +91,11 @@ Return Value:
     //
     // We aren't in fact removable. Finish now.
     //
-    if (detachableNode == NULL) {
+    if (detachableNode == NULL)
+    {
 
-        DeviceNode->RemovalPolicy = (UCHAR) RemovalPolicyExpectNoRemoval;
-        DeviceNode->HardwareRemovalPolicy = (UCHAR) RemovalPolicyExpectNoRemoval;
+        DeviceNode->RemovalPolicy = (UCHAR)RemovalPolicyExpectNoRemoval;
+        DeviceNode->HardwareRemovalPolicy = (UCHAR)RemovalPolicyExpectNoRemoval;
         return;
     }
 
@@ -108,25 +103,28 @@ Return Value:
     // Check the stack for an explicit policy...
     //
     policyCharacteristics =
-        ((DeviceNode->PhysicalDeviceObject->Characteristics) &
-         FILE_CHARACTERISTICS_REMOVAL_POLICY_MASK);
+        ((DeviceNode->PhysicalDeviceObject->Characteristics) & FILE_CHARACTERISTICS_REMOVAL_POLICY_MASK);
 
-    if (policyCharacteristics == FILE_CHARACTERISTICS_EXPECT_ORDERLY_REMOVAL) {
+    if (policyCharacteristics == FILE_CHARACTERISTICS_EXPECT_ORDERLY_REMOVAL)
+    {
 
         deviceRemovalPolicy = RemovalPolicyExpectOrderlyRemoval;
-
-    } else if (policyCharacteristics == FILE_CHARACTERISTICS_EXPECT_SURPRISE_REMOVAL) {
+    }
+    else if (policyCharacteristics == FILE_CHARACTERISTICS_EXPECT_SURPRISE_REMOVAL)
+    {
 
         deviceRemovalPolicy = RemovalPolicyExpectSurpriseRemoval;
-
-    } else if (DeviceNode != detachableNode) {
+    }
+    else if (DeviceNode != detachableNode)
+    {
 
         //
         // We didn't get any good guesses. Therefore use the weakest policy.
         //
         deviceRemovalPolicy = RemovalPolicyUnspecified;
-
-    } else {
+    }
+    else
+    {
 
         //
         // If we're the detach point, then we win.
@@ -134,7 +132,8 @@ Return Value:
         PiHotSwapGetDefaultBusRemovalPolicy(DeviceNode, &deviceRemovalPolicy);
     }
 
-    if (DeviceNode != detachableNode) {
+    if (DeviceNode != detachableNode)
+    {
 
         //
         // Do we have a winning policy? There are two possible algorithms for
@@ -149,7 +148,8 @@ Return Value:
         // enabled only on Tuesdays.)
         //
         parentPolicy = DeviceNode->Parent->RemovalPolicy;
-        if (deviceRemovalPolicy > parentPolicy) {
+        if (deviceRemovalPolicy > parentPolicy)
+        {
 
             //
             // Seems dad was right afterall...
@@ -162,8 +162,8 @@ Return Value:
     // Update the policy hardware policy and the overall policy in case there's
     // no registry override.
     //
-    DeviceNode->RemovalPolicy = (UCHAR) deviceRemovalPolicy;
-    DeviceNode->HardwareRemovalPolicy = (UCHAR) deviceRemovalPolicy;
+    DeviceNode->RemovalPolicy = (UCHAR)deviceRemovalPolicy;
+    DeviceNode->HardwareRemovalPolicy = (UCHAR)deviceRemovalPolicy;
 
     //
     // We might not have to ask the stack anything. Check for a registry
@@ -171,33 +171,23 @@ Return Value:
     //
     policyLength = sizeof(DEVICE_REMOVAL_POLICY);
 
-    status = PiGetDeviceRegistryProperty(
-        DeviceNode->PhysicalDeviceObject,
-        REG_DWORD,
-        REGSTR_VALUE_REMOVAL_POLICY,
-        NULL,
-        &deviceRemovalPolicy,
-        &policyLength
-        );
+    status = PiGetDeviceRegistryProperty(DeviceNode->PhysicalDeviceObject, REG_DWORD, REGSTR_VALUE_REMOVAL_POLICY, NULL,
+                                         &deviceRemovalPolicy, &policyLength);
 
     //
     // If we have an override, set that as the policy.
     //
-    if (NT_SUCCESS(status) &&
-        ((deviceRemovalPolicy == RemovalPolicyExpectOrderlyRemoval) ||
-         (deviceRemovalPolicy == RemovalPolicyExpectSurpriseRemoval))) {
+    if (NT_SUCCESS(status) && ((deviceRemovalPolicy == RemovalPolicyExpectOrderlyRemoval) ||
+                               (deviceRemovalPolicy == RemovalPolicyExpectSurpriseRemoval)))
+    {
 
-        DeviceNode->RemovalPolicy = (UCHAR) deviceRemovalPolicy;
+        DeviceNode->RemovalPolicy = (UCHAR)deviceRemovalPolicy;
     }
 }
 
 
-VOID
-PpHotSwapGetDevnodeRemovalPolicy(
-    IN  PDEVICE_NODE            DeviceNode,
-    IN  BOOLEAN                 IncludeRegistryOverride,
-    OUT PDEVICE_REMOVAL_POLICY  RemovalPolicy
-    )
+VOID PpHotSwapGetDevnodeRemovalPolicy(IN PDEVICE_NODE DeviceNode, IN BOOLEAN IncludeRegistryOverride,
+                                      OUT PDEVICE_REMOVAL_POLICY RemovalPolicy)
 /*++
 
 Routine Description:
@@ -230,16 +220,19 @@ Return Value:
     //
     PpDevNodeLockTree(PPL_SIMPLE_READ);
 
-    if (IncludeRegistryOverride) {
+    if (IncludeRegistryOverride)
+    {
 
         reportedPolicy = DeviceNode->RemovalPolicy;
-
-    } else {
+    }
+    else
+    {
 
         reportedPolicy = DeviceNode->HardwareRemovalPolicy;
     }
 
-    if (reportedPolicy == RemovalPolicyNotDetermined) {
+    if (reportedPolicy == RemovalPolicyNotDetermined)
+    {
 
         //
         // We haven't started yet or asked the bus. Our policy is based on
@@ -247,19 +240,22 @@ Return Value:
         //
         PiHotSwapGetDetachableNode(DeviceNode, &detachableNode);
 
-        if (detachableNode == NULL) {
+        if (detachableNode == NULL)
+        {
 
             reportedPolicy = RemovalPolicyExpectNoRemoval;
-
-        } else if (IopDeviceNodeFlagsToCapabilities(detachableNode)->EjectSupported) {
+        }
+        else if (IopDeviceNodeFlagsToCapabilities(detachableNode)->EjectSupported)
+        {
 
             //
             // Ejectable devices require orderly removal. We will assume the
             // user knows this.
             //
             reportedPolicy = RemovalPolicyExpectOrderlyRemoval;
-
-        } else {
+        }
+        else
+        {
 
             ASSERT(IopDeviceNodeFlagsToCapabilities(detachableNode)->Removable);
 
@@ -268,46 +264,48 @@ Return Value:
             //
             reportedPolicy = RemovalPolicyExpectSurpriseRemoval;
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // The devnode has a cached policy. Cut down on the options.
         //
-        switch(reportedPolicy) {
+        switch (reportedPolicy)
+        {
 
-            case RemovalPolicyExpectNoRemoval:
-            case RemovalPolicyExpectOrderlyRemoval:
-            case RemovalPolicyExpectSurpriseRemoval:
-                //
-                // Leave unchanged.
-                //
-                break;
+        case RemovalPolicyExpectNoRemoval:
+        case RemovalPolicyExpectOrderlyRemoval:
+        case RemovalPolicyExpectSurpriseRemoval:
+            //
+            // Leave unchanged.
+            //
+            break;
 
-            case RemovalPolicySuggestSurpriseRemoval:
-                reportedPolicy = RemovalPolicyExpectSurpriseRemoval;
-                break;
+        case RemovalPolicySuggestSurpriseRemoval:
+            reportedPolicy = RemovalPolicyExpectSurpriseRemoval;
+            break;
 
-            default:
-                ASSERT(0);
+        default:
+            ASSERT(0);
 
-                //
-                // Fall through.
-                //
+            //
+            // Fall through.
+            //
 
-            case RemovalPolicyUnspecified:
+        case RemovalPolicyUnspecified:
 
-                //
-                // Unspecified is treated as orderly since the diversity of
-                // busses favor high-speed orderly connections over consumer
-                // connections.
-                //
-                // Fall through
-                //
+            //
+            // Unspecified is treated as orderly since the diversity of
+            // busses favor high-speed orderly connections over consumer
+            // connections.
+            //
+            // Fall through
+            //
 
-            case RemovalPolicySuggestOrderlyRemoval:
-                reportedPolicy = RemovalPolicyExpectOrderlyRemoval;
-                break;
+        case RemovalPolicySuggestOrderlyRemoval:
+            reportedPolicy = RemovalPolicyExpectOrderlyRemoval;
+            break;
         }
     }
 
@@ -316,11 +314,7 @@ Return Value:
 }
 
 
-VOID
-PiHotSwapGetDefaultBusRemovalPolicy(
-    IN  PDEVICE_NODE            DeviceNode,
-    OUT PDEVICE_REMOVAL_POLICY  RemovalPolicy
-    )
+VOID PiHotSwapGetDefaultBusRemovalPolicy(IN PDEVICE_NODE DeviceNode, OUT PDEVICE_REMOVAL_POLICY RemovalPolicy)
 /*++
 
 Routine Description:
@@ -346,34 +340,35 @@ Return Value:
 
     PPDEVNODE_ASSERT_LOCK_HELD(PPL_TREEOP_ALLOW_READS);
 
-    if ((DeviceNode->InstancePath.Length > 8) &&
-        (!_wcsnicmp(DeviceNode->InstancePath.Buffer, L"USB\\", 4))) {
+    if ((DeviceNode->InstancePath.Length > 8) && (!_wcsnicmp(DeviceNode->InstancePath.Buffer, L"USB\\", 4)))
+    {
 
         deviceRemovalPolicy = RemovalPolicySuggestSurpriseRemoval;
-
-    } else if ((DeviceNode->InstancePath.Length > 10) &&
-               (!_wcsnicmp(DeviceNode->InstancePath.Buffer, L"1394\\", 5))) {
-
-        deviceRemovalPolicy = RemovalPolicySuggestSurpriseRemoval;
-
-    } else if ((DeviceNode->InstancePath.Length > 10) &&
-               (!_wcsnicmp(DeviceNode->InstancePath.Buffer, L"SBP2\\", 5))) {
+    }
+    else if ((DeviceNode->InstancePath.Length > 10) && (!_wcsnicmp(DeviceNode->InstancePath.Buffer, L"1394\\", 5)))
+    {
 
         deviceRemovalPolicy = RemovalPolicySuggestSurpriseRemoval;
-
-    } else if ((DeviceNode->InstancePath.Length > 14) &&
-               (!_wcsnicmp(DeviceNode->InstancePath.Buffer, L"PCMCIA\\", 7))) {
-
-        deviceRemovalPolicy = RemovalPolicySuggestSurpriseRemoval;
-
-    } else if ((DeviceNode->InstancePath.Length > 8) &&
-               (!_wcsnicmp(DeviceNode->InstancePath.Buffer, L"PCI\\", 4)) &&
-               (DeviceNode->Parent->ServiceName.Length == 12) &&
-               (!_wcsicmp(DeviceNode->Parent->ServiceName.Buffer, L"PCMCIA"))) {
+    }
+    else if ((DeviceNode->InstancePath.Length > 10) && (!_wcsnicmp(DeviceNode->InstancePath.Buffer, L"SBP2\\", 5)))
+    {
 
         deviceRemovalPolicy = RemovalPolicySuggestSurpriseRemoval;
+    }
+    else if ((DeviceNode->InstancePath.Length > 14) && (!_wcsnicmp(DeviceNode->InstancePath.Buffer, L"PCMCIA\\", 7)))
+    {
 
-    } else {
+        deviceRemovalPolicy = RemovalPolicySuggestSurpriseRemoval;
+    }
+    else if ((DeviceNode->InstancePath.Length > 8) && (!_wcsnicmp(DeviceNode->InstancePath.Buffer, L"PCI\\", 4)) &&
+             (DeviceNode->Parent->ServiceName.Length == 12) &&
+             (!_wcsicmp(DeviceNode->Parent->ServiceName.Buffer, L"PCMCIA")))
+    {
+
+        deviceRemovalPolicy = RemovalPolicySuggestSurpriseRemoval;
+    }
+    else
+    {
 
         deviceRemovalPolicy = RemovalPolicySuggestOrderlyRemoval;
     }
@@ -382,11 +377,7 @@ Return Value:
 }
 
 
-VOID
-PiHotSwapGetDetachableNode(
-    IN  PDEVICE_NODE    DeviceNode,
-    OUT PDEVICE_NODE   *DetachableNode
-    )
+VOID PiHotSwapGetDetachableNode(IN PDEVICE_NODE DeviceNode, OUT PDEVICE_NODE *DetachableNode)
 /*++
 
 Routine Description:
@@ -416,12 +407,12 @@ Return Value:
     // We haven't started yet or asked the bus. Our policy is based on
     // whether the device is removable or ejectable.
     //
-    for(currentNode = DeviceNode;
-        currentNode != NULL;
-        currentNode = currentNode->Parent) {
+    for (currentNode = DeviceNode; currentNode != NULL; currentNode = currentNode->Parent)
+    {
 
         if ((IopDeviceNodeFlagsToCapabilities(currentNode)->Removable) ||
-            (IopDeviceNodeFlagsToCapabilities(currentNode)->EjectSupported)) {
+            (IopDeviceNodeFlagsToCapabilities(currentNode)->EjectSupported))
+        {
 
             break;
         }
@@ -429,7 +420,3 @@ Return Value:
 
     *DetachableNode = currentNode;
 }
-
-
-
-

@@ -22,22 +22,14 @@ Revision History:
 #include "vdmp.h"
 
 BOOLEAN
-VdmDispatchPageFault(
-    PKTRAP_FRAME TrapFrame,
-    ULONG Mode,
-    ULONG FaultAddr
-    );
+VdmDispatchPageFault(PKTRAP_FRAME TrapFrame, ULONG Mode, ULONG FaultAddr);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, VdmDispatchPageFault)
 #endif
 
 BOOLEAN
-VdmDispatchPageFault(
-    PKTRAP_FRAME TrapFrame,
-    ULONG Mode,
-    ULONG FaultAddr
-    )
+VdmDispatchPageFault(PKTRAP_FRAME TrapFrame, ULONG Mode, ULONG FaultAddr)
 
 /*++
 
@@ -61,14 +53,15 @@ Return Value:
 {
     PVDM_TIB VdmTib;
     NTSTATUS Status;
-    KIRQL   OldIrql;
+    KIRQL OldIrql;
 
     PAGED_CODE();
 
-    Status = VdmpGetVdmTib (&VdmTib);
+    Status = VdmpGetVdmTib(&VdmTib);
 
-    if (!NT_SUCCESS(Status)) {
-       return FALSE;
+    if (!NT_SUCCESS(Status))
+    {
+        return FALSE;
     }
 
     KeRaiseIrql(APC_LEVEL, &OldIrql);
@@ -77,33 +70,39 @@ Return Value:
     // VdmTib is in user mode memory
     //
 
-    if ((TrapFrame->EFlags & EFLAGS_V86_MASK) ||
-        (TrapFrame->SegCs != (KGDT_R3_CODE | RPL_MASK))) {
+    if ((TrapFrame->EFlags & EFLAGS_V86_MASK) || (TrapFrame->SegCs != (KGDT_R3_CODE | RPL_MASK)))
+    {
 
         //
         // If the faulting address is above 1MB return failure.
         //
 
-        if (FaultAddr < 0x100000) {
+        if (FaultAddr < 0x100000)
+        {
 
-            try {
+            try
+            {
                 VdmTib->EventInfo.Event = VdmMemAccess;
                 VdmTib->EventInfo.InstructionSize = 0;
                 VdmTib->EventInfo.FaultInfo.FaultAddr = FaultAddr;
                 VdmTib->EventInfo.FaultInfo.RWMode = Mode;
                 VdmEndExecution(TrapFrame, VdmTib);
-            } except(EXCEPTION_EXECUTE_HANDLER) {
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
                 Status = GetExceptionCode();
             }
         }
-        else {
+        else
+        {
             Status = STATUS_ILLEGAL_INSTRUCTION;
         }
     }
 
-    KeLowerIrql (OldIrql);
+    KeLowerIrql(OldIrql);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return FALSE;
     }
 

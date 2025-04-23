@@ -27,50 +27,24 @@ Revision History:
 
 #include "ki.h"
 
-
+
 //
 // Define forward referenced prototypes.
 //
 
-VOID
-KiSweepDcacheTarget (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Count,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    );
+VOID KiSweepDcacheTarget(IN PKIPI_CONTEXT SignalDone, IN PVOID Count, IN PVOID Parameter2, IN PVOID Parameter3);
 
-VOID
-KiSweepIcacheTarget (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Count,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    );
+VOID KiSweepIcacheTarget(IN PKIPI_CONTEXT SignalDone, IN PVOID Count, IN PVOID Parameter2, IN PVOID Parameter3);
 
-VOID
-KiFlushIoBuffersTarget (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Mdl,
-    IN PVOID ReadOperation,
-    IN PVOID DmaOperation
-    );
+VOID KiFlushIoBuffersTarget(IN PKIPI_CONTEXT SignalDone, IN PVOID Mdl, IN PVOID ReadOperation, IN PVOID DmaOperation);
 
-VOID
-KiSynchronizeMemoryAccessTarget (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    );
+VOID KiSynchronizeMemoryAccessTarget(IN PKIPI_CONTEXT SignalDone, IN PVOID Parameter1, IN PVOID Parameter2,
+                                     IN PVOID Parameter3);
 
 ULONG KiSynchronizeMemoryCallCount = 0;
 
-
-VOID
-KeSweepDcache (
-    IN BOOLEAN AllProcessors
-    )
+
+VOID KeSweepDcache(IN BOOLEAN AllProcessors)
 
 /*++
 
@@ -112,12 +86,9 @@ Return Value:
     //
 
     TargetProcessors = KeActiveProcessors & PCR->NotMember;
-    if (TargetProcessors != 0) {
-        KiIpiSendPacket(TargetProcessors,
-                        KiSweepDcacheTarget,
-                        NULL,
-                        NULL,
-                        NULL);
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendPacket(TargetProcessors, KiSweepDcacheTarget, NULL, NULL, NULL);
     }
 
     IPI_INSTRUMENT_COUNT(KeGetCurrentPrcb()->Number, SweepDcache);
@@ -137,7 +108,8 @@ Return Value:
 
 #if !defined(NT_UP)
 
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
         KiIpiStallOnPacketTargets(TargetProcessors);
     }
 
@@ -151,14 +123,8 @@ Return Value:
 
     return;
 }
-
-VOID
-KiSweepDcacheTarget (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    )
+
+VOID KiSweepDcacheTarget(IN PKIPI_CONTEXT SignalDone, IN PVOID Parameter1, IN PVOID Parameter2, IN PVOID Parameter3)
 
 /*++
 
@@ -197,11 +163,8 @@ Return Value:
 
     return;
 }
-
-VOID
-KeSweepIcache (
-    IN BOOLEAN AllProcessors
-    )
+
+VOID KeSweepIcache(IN BOOLEAN AllProcessors)
 
 /*++
 
@@ -243,12 +206,9 @@ Return Value:
     //
 
     TargetProcessors = KeActiveProcessors & PCR->NotMember;
-    if (TargetProcessors != 0) {
-        KiIpiSendPacket(TargetProcessors,
-                        KiSweepIcacheTarget,
-                        NULL,
-                        NULL,
-                        NULL);
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendPacket(TargetProcessors, KiSweepIcacheTarget, NULL, NULL, NULL);
     }
 
     IPI_INSTRUMENT_COUNT(KeGetCurrentPrcb()->Number, SweepIcache);
@@ -268,7 +228,8 @@ Return Value:
 
 #if !defined(NT_UP)
 
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
         KiIpiStallOnPacketTargets(TargetProcessors);
     }
 
@@ -282,14 +243,8 @@ Return Value:
 
     return;
 }
-
-VOID
-KiSweepIcacheTarget (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    )
+
+VOID KiSweepIcacheTarget(IN PKIPI_CONTEXT SignalDone, IN PVOID Parameter1, IN PVOID Parameter2, IN PVOID Parameter3)
 
 /*++
 
@@ -330,13 +285,8 @@ Return Value:
 
     return;
 }
-
-VOID
-KeSweepIcacheRange (
-    IN BOOLEAN AllProcessors,
-    IN PVOID BaseAddress,
-    IN ULONG_PTR Length
-    )
+
+VOID KeSweepIcacheRange(IN BOOLEAN AllProcessors, IN PVOID BaseAddress, IN ULONG_PTR Length)
 
 /*++
 
@@ -369,13 +319,8 @@ Return Value:
     KeSweepIcache(AllProcessors);
     return;
 }
-
-VOID
-KeFlushIoBuffers (
-    IN PMDL Mdl,
-    IN BOOLEAN ReadOperation,
-    IN BOOLEAN DmaOperation
-    )
+
+VOID KeFlushIoBuffers(IN PMDL Mdl, IN BOOLEAN ReadOperation, IN BOOLEAN DmaOperation)
 
 /*++
 
@@ -425,24 +370,30 @@ Return Value:
     // read.
     //
 
-    if (DmaOperation != FALSE) {
-        if (ReadOperation != FALSE) {
-            if ((KiDmaIoCoherency & DMA_READ_ICACHE_INVALIDATE) != 0) {
+    if (DmaOperation != FALSE)
+    {
+        if (ReadOperation != FALSE)
+        {
+            if ((KiDmaIoCoherency & DMA_READ_ICACHE_INVALIDATE) != 0)
+            {
 
                 ASSERT((KiDmaIoCoherency & DMA_READ_DCACHE_INVALIDATE) != 0);
 
                 return;
-
-            } else if (((Mdl->MdlFlags & MDL_IO_PAGE_READ) == 0) &&
-                ((KiDmaIoCoherency & DMA_READ_DCACHE_INVALIDATE) != 0)) {
+            }
+            else if (((Mdl->MdlFlags & MDL_IO_PAGE_READ) == 0) &&
+                     ((KiDmaIoCoherency & DMA_READ_DCACHE_INVALIDATE) != 0))
+            {
                 return;
             }
-
-        } else if ((KiDmaIoCoherency & DMA_WRITE_DCACHE_SNOOP) != 0) {
+        }
+        else if ((KiDmaIoCoherency & DMA_WRITE_DCACHE_SNOOP) != 0)
+        {
             return;
         }
-
-    } else if ((Mdl->MdlFlags & MDL_IO_PAGE_READ) == 0) {
+    }
+    else if ((Mdl->MdlFlags & MDL_IO_PAGE_READ) == 0)
+    {
         return;
     }
 
@@ -464,11 +415,9 @@ Return Value:
 #if !defined(NT_UP)
 
     TargetProcessors = KeActiveProcessors & PCR->NotMember;
-    if (TargetProcessors != 0) {
-        KiIpiSendPacket(TargetProcessors,
-                        KiFlushIoBuffersTarget,
-                        (PVOID)Mdl,
-                        ULongToPtr((ULONG)ReadOperation),
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendPacket(TargetProcessors, KiFlushIoBuffersTarget, (PVOID)Mdl, ULongToPtr((ULONG)ReadOperation),
                         ULongToPtr((ULONG)DmaOperation));
     }
 
@@ -487,7 +436,8 @@ Return Value:
 
 #if !defined(NT_UP)
 
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
         KiIpiStallOnPacketTargets(TargetProcessors);
     }
 
@@ -503,14 +453,8 @@ Return Value:
 }
 
 #if !defined(NT_UP)
-
-VOID
-KiFlushIoBuffersTarget (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Mdl,
-    IN PVOID ReadOperation,
-    IN PVOID DmaOperation
-    )
+
+VOID KiFlushIoBuffersTarget(IN PKIPI_CONTEXT SignalDone, IN PVOID Mdl, IN PVOID ReadOperation, IN PVOID DmaOperation)
 
 /*++
 
@@ -545,9 +489,7 @@ Return Value:
     // Flush the specified I/O buffer on the current processor.
     //
 
-    HalFlushIoBuffers((PMDL)Mdl,
-                      (BOOLEAN)((ULONG_PTR)ReadOperation),
-                      (BOOLEAN)((ULONG_PTR)DmaOperation));
+    HalFlushIoBuffers((PMDL)Mdl, (BOOLEAN)((ULONG_PTR)ReadOperation), (BOOLEAN)((ULONG_PTR)DmaOperation));
 
     KiIpiSignalPacketDone(SignalDone);
     IPI_INSTRUMENT_COUNT(KeGetCurrentPrcb()->Number, FlushIoBuffers);
@@ -556,11 +498,8 @@ Return Value:
 }
 
 #endif
-
-VOID
-KeSynchronizeMemoryAccess (
-    VOID
-    )
+
+VOID KeSynchronizeMemoryAccess(VOID)
 
 /*++
 
@@ -602,12 +541,9 @@ Return Value:
     //
 
     TargetProcessors = KeActiveProcessors & PCR->NotMember;
-    if (TargetProcessors != 0) {
-        KiIpiSendPacket(TargetProcessors,
-                        KiSynchronizeMemoryAccessTarget,
-                        NULL,
-                        NULL,
-                        NULL);
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendPacket(TargetProcessors, KiSynchronizeMemoryAccessTarget, NULL, NULL, NULL);
     }
 
     //
@@ -629,7 +565,8 @@ Return Value:
 
 #if !defined(NT_UP)
 
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
         KiIpiStallOnPacketTargets(TargetProcessors);
     }
 
@@ -646,14 +583,9 @@ Return Value:
 
 #if !defined(NT_UP)
 
-
-VOID
-KiSynchronizeMemoryAccessTarget (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    )
+
+VOID KiSynchronizeMemoryAccessTarget(IN PKIPI_CONTEXT SignalDone, IN PVOID Parameter1, IN PVOID Parameter2,
+                                     IN PVOID Parameter3)
 
 /*++
 

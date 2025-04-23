@@ -44,22 +44,22 @@ Environment:
 // of the nearest firing timer) relative to the Queue before it. One NT Timer
 // is used to service all timers in all queues.
 
-ULONG StartedTimerInitialization ;      // Used by Timer thread startup synchronization
-ULONG CompletedTimerInitialization ;    // Used for to check if Timer thread is initialized
+ULONG StartedTimerInitialization;   // Used by Timer thread startup synchronization
+ULONG CompletedTimerInitialization; // Used for to check if Timer thread is initialized
 
-HANDLE TimerThreadHandle ;              // Holds the timer thread handle
-ULONG TimerThreadId ;                   // Used to check if current thread is a timer thread
+HANDLE TimerThreadHandle; // Holds the timer thread handle
+ULONG TimerThreadId;      // Used to check if current thread is a timer thread
 
-LIST_ENTRY TimerQueues ;                // All timer queues are linked in this list
-HANDLE     TimerHandle ;                // Holds handle of NT Timer used by the Timer Thread
-HANDLE     TimerThreadStartedEvent ;    // Indicates that the timer thread has started
-ULONG      NumTimerQueues ;             // Number of timer queues
+LIST_ENTRY TimerQueues;         // All timer queues are linked in this list
+HANDLE TimerHandle;             // Holds handle of NT Timer used by the Timer Thread
+HANDLE TimerThreadStartedEvent; // Indicates that the timer thread has started
+ULONG NumTimerQueues;           // Number of timer queues
 
-RTL_CRITICAL_SECTION TimerCriticalSection ;     // Exclusion used by timer threads
+RTL_CRITICAL_SECTION TimerCriticalSection; // Exclusion used by timer threads
 
-LARGE_INTEGER   Last64BitTickCount ;
-LARGE_INTEGER   Resync64BitTickCount ;
-LARGE_INTEGER   Firing64BitTickCount ;
+LARGE_INTEGER Last64BitTickCount;
+LARGE_INTEGER Resync64BitTickCount;
+LARGE_INTEGER Firing64BitTickCount;
 
 #if DBG
 ULONG RtlpDueTimeMax = 0;
@@ -69,15 +69,10 @@ ULONG RtlpDueTimeMax = 0;
 ULONG NextTimerDbgId;
 #endif
 
-#define RtlpGetResync64BitTickCount()  Resync64BitTickCount.QuadPart
-#define RtlpSetFiring64BitTickCount(Timeout) \
-            Firing64BitTickCount.QuadPart = (Timeout)
+#define RtlpGetResync64BitTickCount() Resync64BitTickCount.QuadPart
+#define RtlpSetFiring64BitTickCount(Timeout) Firing64BitTickCount.QuadPart = (Timeout)
 
-__inline
-LONGLONG
-RtlpGet64BitTickCount(
-    LARGE_INTEGER *Last64BitTickCount
-    )
+__inline LONGLONG RtlpGet64BitTickCount(LARGE_INTEGER *Last64BitTickCount)
 /*++
 
 Routine Description:
@@ -90,23 +85,21 @@ Return Value: 64bit tick count
 
 --*/
 {
-    LARGE_INTEGER liCurTime ;
+    LARGE_INTEGER liCurTime;
 
-    liCurTime.QuadPart = NtGetTickCount() + Last64BitTickCount->HighPart ;
+    liCurTime.QuadPart = NtGetTickCount() + Last64BitTickCount->HighPart;
 
     // see if timer has wrapped.
 
-    if (liCurTime.LowPart < Last64BitTickCount->LowPart) {
-        liCurTime.HighPart++ ;
+    if (liCurTime.LowPart < Last64BitTickCount->LowPart)
+    {
+        liCurTime.HighPart++;
     }
 
-    return (Last64BitTickCount->QuadPart = liCurTime.QuadPart) ;
+    return (Last64BitTickCount->QuadPart = liCurTime.QuadPart);
 }
 
-__inline
-LONGLONG
-RtlpResync64BitTickCount(
-    )
+__inline LONGLONG RtlpResync64BitTickCount()
 /*++
 
 Routine Description:
@@ -122,14 +115,10 @@ Remarks: This call should be made in the first line of any APC queued
 
 --*/
 {
-    return Resync64BitTickCount.QuadPart =
-                    RtlpGet64BitTickCount(&Last64BitTickCount);
+    return Resync64BitTickCount.QuadPart = RtlpGet64BitTickCount(&Last64BitTickCount);
 }
 
-VOID
-RtlpAsyncTimerCallbackCompletion(
-    PVOID Context
-    )
+VOID RtlpAsyncTimerCallbackCompletion(PVOID Context)
 /*++
 
 Routine Description:
@@ -145,37 +134,28 @@ Return Value:
 
 --*/
 {
-    PRTLP_TIMER Timer = (PRTLP_TIMER) Context;
+    PRTLP_TIMER Timer = (PRTLP_TIMER)Context;
 
 #if DBG
-    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-               RTLP_THREADPOOL_TRACE_MASK,
-               "<%d> Calling WaitOrTimer:Timer: fn:%x  context:%x  bool:%d Thread<%d:%d>\n",
-               Timer->DbgId,
-               (ULONG_PTR)Timer->Function, (ULONG_PTR)Timer->Context,
-               TRUE,
+    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_TRACE_MASK,
+               "<%d> Calling WaitOrTimer:Timer: fn:%x  context:%x  bool:%d Thread<%d:%d>\n", Timer->DbgId,
+               (ULONG_PTR)Timer->Function, (ULONG_PTR)Timer->Context, TRUE,
                HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread),
                HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess));
 #endif
 
-    RtlpWaitOrTimerCallout(Timer->Function,
-                           Timer->Context,
-                           TRUE,
-                           Timer->ActivationContext,
-                           Timer->ImpersonationToken);
+    RtlpWaitOrTimerCallout(Timer->Function, Timer->Context, TRUE, Timer->ActivationContext, Timer->ImpersonationToken);
 
     // decrement RefCount after function is executed so that the context is not deleted
 
-    if ( InterlockedDecrement( &Timer->RefCount ) == 0 ) {
+    if (InterlockedDecrement(&Timer->RefCount) == 0)
+    {
 
-        RtlpDeleteTimer( Timer ) ;
+        RtlpDeleteTimer(Timer);
     }
 }
 
-VOID
-RtlpFireTimers (
-    PLIST_ENTRY TimersToFireList
-    )
+VOID RtlpFireTimers(PLIST_ENTRY TimersToFireList)
 /*++
 
 Routine Description:
@@ -189,106 +169,97 @@ Arguments:
 --*/
 
 {
-    PLIST_ENTRY Node ;
-    PRTLP_TIMER Timer ;
+    PLIST_ENTRY Node;
+    PRTLP_TIMER Timer;
     NTSTATUS Status;
 
 
-    for (Node = TimersToFireList->Flink;  Node != TimersToFireList; Node = TimersToFireList->Flink)
+    for (Node = TimersToFireList->Flink; Node != TimersToFireList; Node = TimersToFireList->Flink)
     {
-        Timer = CONTAINING_RECORD (Node, RTLP_TIMER, TimersToFireList) ;
+        Timer = CONTAINING_RECORD(Node, RTLP_TIMER, TimersToFireList);
 
-        RemoveEntryList( Node ) ;
-        InitializeListHead( Node ) ;
+        RemoveEntryList(Node);
+        InitializeListHead(Node);
 
 
-        if ( (Timer->State & STATE_DONTFIRE)
-            || (Timer->Queue->State & STATE_DONTFIRE) )
+        if ((Timer->State & STATE_DONTFIRE) || (Timer->Queue->State & STATE_DONTFIRE))
         {
             //
             // Wait timers *never* use STATE_DONTFIRE.  Let's just
             // make sure this isn't one:
             //
             ASSERT(Timer->Wait == NULL);
-
-        } else if ( Timer->Flags & (WT_EXECUTEINTIMERTHREAD | WT_EXECUTEINWAITTHREAD ) ) {
+        }
+        else if (Timer->Flags & (WT_EXECUTEINTIMERTHREAD | WT_EXECUTEINWAITTHREAD))
+        {
 
 #if DBG
-            DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-                       RTLP_THREADPOOL_TRACE_MASK,
-                       "<%d> Calling WaitOrTimer(Timer): fn:%x  context:%x  bool:%d Thread<%d:%d>\n",
-                       Timer->DbgId,
-                       (ULONG_PTR)Timer->Function, (ULONG_PTR)Timer->Context,
-                       TRUE,
+            DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_TRACE_MASK,
+                       "<%d> Calling WaitOrTimer(Timer): fn:%x  context:%x  bool:%d Thread<%d:%d>\n", Timer->DbgId,
+                       (ULONG_PTR)Timer->Function, (ULONG_PTR)Timer->Context, TRUE,
                        HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread),
                        HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess));
 #endif
 
-            RtlpWaitOrTimerCallout(Timer->Function,
-                                   Timer->Context,
-                                   TRUE,
-                                   Timer->ActivationContext,
+            RtlpWaitOrTimerCallout(Timer->Function, Timer->Context, TRUE, Timer->ActivationContext,
                                    Timer->ImpersonationToken);
-
-        } else {
+        }
+        else
+        {
 
             // timer associated with WaitEvents should be treated differently
 
-            if ( Timer->Wait != NULL ) {
+            if (Timer->Wait != NULL)
+            {
 
-                InterlockedIncrement( Timer->RefCountPtr ) ;
+                InterlockedIncrement(Timer->RefCountPtr);
 
                 // Set the low bit of the context to indicate to
                 // RtlpAsyncWaitCallbackCompletion that this is a
                 // timer-initiated callback.
 
-                Status = RtlQueueWorkItem(RtlpAsyncWaitCallbackCompletion,
-                                          (PVOID)(((ULONG_PTR) Timer->Wait) | 1),
-                                          Timer->Flags);
-
-            } else {
-
-                InterlockedIncrement( &Timer->RefCount ) ;
-
-                Status = RtlQueueWorkItem(RtlpAsyncTimerCallbackCompletion,
-                                          Timer,
+                Status = RtlQueueWorkItem(RtlpAsyncWaitCallbackCompletion, (PVOID)(((ULONG_PTR)Timer->Wait) | 1),
                                           Timer->Flags);
             }
+            else
+            {
 
-            if (!NT_SUCCESS(Status)) {
+                InterlockedIncrement(&Timer->RefCount);
+
+                Status = RtlQueueWorkItem(RtlpAsyncTimerCallbackCompletion, Timer, Timer->Flags);
+            }
+
+            if (!NT_SUCCESS(Status))
+            {
 
                 // NTRAID#202802-2000/10/12-earhart: we really ought
                 // to deal with this case in a better way, since we
                 // can't guarantee (with our current architecture)
                 // that the enqueue will work.
 
-                if ( Timer->Wait != NULL ) {
-                    InterlockedDecrement( Timer->RefCountPtr ) ;
-                } else {
-                    InterlockedDecrement( &Timer->RefCount ) ;
+                if (Timer->Wait != NULL)
+                {
+                    InterlockedDecrement(Timer->RefCountPtr);
+                }
+                else
+                {
+                    InterlockedDecrement(&Timer->RefCount);
                 }
             }
-
         }
 
         //
         // If it's a singleshot wait timer, we can free it now.
         //
-        if (Timer->Wait != NULL
-            && Timer->Period == 0) {
+        if (Timer->Wait != NULL && Timer->Period == 0)
+        {
 
             RtlpFreeTPHeap(Timer);
         }
-
     }
 }
 
-VOID
-RtlpFireTimersAndReorder (
-    PRTLP_TIMER_QUEUE Queue,
-    ULONG *NewFiringTime,
-    PLIST_ENTRY TimersToFireList
-    )
+VOID RtlpFireTimersAndReorder(PRTLP_TIMER_QUEUE Queue, ULONG *NewFiringTime, PLIST_ENTRY TimersToFireList)
 /*++
 
 Routine Description:
@@ -309,132 +280,131 @@ Return Value:
 
 --*/
 {
-    PLIST_ENTRY TNode ;
-    PRTLP_TIMER Timer ;
-    LIST_ENTRY ReinsertTimerList ;
-    PLIST_ENTRY TimerList = &Queue->TimerList ;
+    PLIST_ENTRY TNode;
+    PRTLP_TIMER Timer;
+    LIST_ENTRY ReinsertTimerList;
+    PLIST_ENTRY TimerList = &Queue->TimerList;
 
-    InitializeListHead (&ReinsertTimerList) ;
-    *NewFiringTime = 0 ;
+    InitializeListHead(&ReinsertTimerList);
+    *NewFiringTime = 0;
 
 
-    for (TNode = TimerList->Flink ; (TNode != TimerList) && (*NewFiringTime == 0);
-            TNode = TimerList->Flink)
+    for (TNode = TimerList->Flink; (TNode != TimerList) && (*NewFiringTime == 0); TNode = TimerList->Flink)
     {
 
-        Timer = CONTAINING_RECORD (TNode, RTLP_TIMER, List) ;
+        Timer = CONTAINING_RECORD(TNode, RTLP_TIMER, List);
 
         // Fire all timers with delta time of 0
 
-        if (Timer->DeltaFiringTime == 0) {
+        if (Timer->DeltaFiringTime == 0)
+        {
 
             // detach this timer from the list
 
-            RemoveEntryList (TNode) ;
+            RemoveEntryList(TNode);
 
             // get next firing time
 
-            if (!IsListEmpty(TimerList)) {
+            if (!IsListEmpty(TimerList))
+            {
 
-                PRTLP_TIMER TmpTimer ;
+                PRTLP_TIMER TmpTimer;
 
-                TmpTimer = CONTAINING_RECORD (TimerList->Flink, RTLP_TIMER, List) ;
+                TmpTimer = CONTAINING_RECORD(TimerList->Flink, RTLP_TIMER, List);
 
-                *NewFiringTime  = TmpTimer->DeltaFiringTime ;
+                *NewFiringTime = TmpTimer->DeltaFiringTime;
 
-                TmpTimer->DeltaFiringTime = 0 ;
+                TmpTimer->DeltaFiringTime = 0;
+            }
+            else
+            {
 
-            } else {
-
-                *NewFiringTime = INFINITE_TIME ;
+                *NewFiringTime = INFINITE_TIME;
             }
 
 
             // if timer is not periodic then remove active state. Timer will be deleted
             // when cancel timer is called.
 
-            if (Timer->Period == 0) {
+            if (Timer->Period == 0)
+            {
 
-                if ( Timer->Wait ) {
+                if (Timer->Wait)
+                {
 
                     // If one shot wait was timed out, then deactivate the
                     // wait.  Make sure that RtlpDeactivateWait knows
                     // we're going to continue using the timer's memory.
 
-                    RtlpDeactivateWait( Timer->Wait, FALSE ) ;
+                    RtlpDeactivateWait(Timer->Wait, FALSE);
 
                     // The timer does *not* go on the uncancelled
                     // timer list.  Initialize its list head to avoid
                     // refering to other timers.
-                    InitializeListHead( &Timer->List );
+                    InitializeListHead(&Timer->List);
                 }
-                else {
+                else
+                {
                     // If a normal non-periodic timer was timed out,
                     // then insert it into the uncancelled timer list.
 
-                    InsertHeadList( &Queue->UncancelledTimerList, &Timer->List ) ;
+                    InsertHeadList(&Queue->UncancelledTimerList, &Timer->List);
 
                     // should be set at the end
 
-                    RtlInterlockedClearBitsDiscardReturn(&Timer->State,
-                                                         STATE_ACTIVE);
+                    RtlInterlockedClearBitsDiscardReturn(&Timer->State, STATE_ACTIVE);
                 }
 
-                RtlInterlockedSetBitsDiscardReturn(&Timer->State,
-                                                   STATE_ONE_SHOT_FIRED);
-
-            } else {
+                RtlInterlockedSetBitsDiscardReturn(&Timer->State, STATE_ONE_SHOT_FIRED);
+            }
+            else
+            {
 
                 // Set the DeltaFiringTime to be the next period
 
-                Timer->DeltaFiringTime = Timer->Period ;
+                Timer->DeltaFiringTime = Timer->Period;
 
                 // reinsert the timer in the list.
 
-                RtlpInsertInDeltaList (TimerList, Timer, *NewFiringTime, NewFiringTime) ;
+                RtlpInsertInDeltaList(TimerList, Timer, *NewFiringTime, NewFiringTime);
             }
 
 
             // Call the function associated with this timer. call it in the end
             // so that RtlTimer calls can be made in the timer function
 
-            if ( (Timer->State & STATE_DONTFIRE)
-                || (Timer->Queue->State & STATE_DONTFIRE) )
+            if ((Timer->State & STATE_DONTFIRE) || (Timer->Queue->State & STATE_DONTFIRE))
             {
                 //
                 // Wait timers *never* use STATE_DONTFIRE.  Let's just
                 // make sure this isn't one:
                 //
                 ASSERT(Timer->Wait == NULL);
-
-            } else {
-
-                InsertTailList( TimersToFireList, &Timer->TimersToFireList ) ;
-
             }
+            else
+            {
 
-        } else {
+                InsertTailList(TimersToFireList, &Timer->TimersToFireList);
+            }
+        }
+        else
+        {
 
             // No more Timers with DeltaFiringTime == 0
 
-            break ;
-
+            break;
         }
     }
 
 
-    if ( *NewFiringTime == 0 ) {
-        *NewFiringTime = INFINITE_TIME ;
+    if (*NewFiringTime == 0)
+    {
+        *NewFiringTime = INFINITE_TIME;
     }
 }
 
-VOID
-RtlpInsertTimersIntoDeltaList (
-    IN PLIST_ENTRY NewTimerList,
-    IN PLIST_ENTRY DeltaTimerList,
-    IN ULONG TimeRemaining,
-    OUT ULONG *NewFiringTime
-    )
+VOID RtlpInsertTimersIntoDeltaList(IN PLIST_ENTRY NewTimerList, IN PLIST_ENTRY DeltaTimerList, IN ULONG TimeRemaining,
+                                   OUT ULONG *NewFiringTime)
 /*++
 
 Routine Description:
@@ -458,36 +428,30 @@ Return Value:
 
 --*/
 {
-    PRTLP_GENERIC_TIMER Timer ;
-    PLIST_ENTRY TNode ;
-    PLIST_ENTRY Temp ;
+    PRTLP_GENERIC_TIMER Timer;
+    PLIST_ENTRY TNode;
+    PLIST_ENTRY Temp;
 
-    for (TNode = NewTimerList->Flink ; TNode != NewTimerList ; TNode = TNode->Flink) {
+    for (TNode = NewTimerList->Flink; TNode != NewTimerList; TNode = TNode->Flink)
+    {
 
-        Temp = TNode->Blink ;
+        Temp = TNode->Blink;
 
-        RemoveEntryList (Temp->Flink) ;
+        RemoveEntryList(Temp->Flink);
 
-        Timer = CONTAINING_RECORD (TNode, RTLP_GENERIC_TIMER, List) ;
+        Timer = CONTAINING_RECORD(TNode, RTLP_GENERIC_TIMER, List);
 
-        if (RtlpInsertInDeltaList (DeltaTimerList, Timer, TimeRemaining, NewFiringTime)) {
+        if (RtlpInsertInDeltaList(DeltaTimerList, Timer, TimeRemaining, NewFiringTime))
+        {
 
-            TimeRemaining = *NewFiringTime ;
-
+            TimeRemaining = *NewFiringTime;
         }
 
-        TNode = Temp ;
-
+        TNode = Temp;
     }
-
 }
 
-VOID
-RtlpServiceTimer (
-    PVOID NotUsedArg,
-    ULONG NotUsedLowTimer,
-    LONG NotUsedHighTimer
-    )
+VOID RtlpServiceTimer(PVOID NotUsedArg, ULONG NotUsedLowTimer, LONG NotUsedHighTimer)
 /*++
 
 Routine Description:
@@ -509,41 +473,40 @@ Remarks:
 
 --*/
 {
-    PRTLP_TIMER Timer ;
-    PRTLP_TIMER_QUEUE Queue ;
-    PLIST_ENTRY TNode ;
-    PLIST_ENTRY QNode ;
-    PLIST_ENTRY Temp ;
-    ULONG NewFiringTime ;
-    LIST_ENTRY ReinsertTimerQueueList ;
-    LIST_ENTRY TimersToFireList ;
+    PRTLP_TIMER Timer;
+    PRTLP_TIMER_QUEUE Queue;
+    PLIST_ENTRY TNode;
+    PLIST_ENTRY QNode;
+    PLIST_ENTRY Temp;
+    ULONG NewFiringTime;
+    LIST_ENTRY ReinsertTimerQueueList;
+    LIST_ENTRY TimersToFireList;
 
-    RtlpResync64BitTickCount() ;
+    RtlpResync64BitTickCount();
 
 #if DBG
-    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-               RTLP_THREADPOOL_VERBOSE_MASK,
-               "Before service timer ThreadId<%x:%x>\n",
+    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_VERBOSE_MASK, "Before service timer ThreadId<%x:%x>\n",
                HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread),
                HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess));
-    RtlDebugPrintTimes ();
+    RtlDebugPrintTimes();
 #endif
 
     ACQUIRE_GLOBAL_TIMER_LOCK();
 
     // fire it if it even 200ms ahead. else reset the timer
 
-    if (Firing64BitTickCount.QuadPart > RtlpGet64BitTickCount(&Last64BitTickCount) + 200) {
+    if (Firing64BitTickCount.QuadPart > RtlpGet64BitTickCount(&Last64BitTickCount) + 200)
+    {
 
-        RtlpResetTimer (TimerHandle, RtlpGetTimeRemaining (TimerHandle), NULL) ;
+        RtlpResetTimer(TimerHandle, RtlpGetTimeRemaining(TimerHandle), NULL);
 
-        RELEASE_GLOBAL_TIMER_LOCK() ;
-        return ;
+        RELEASE_GLOBAL_TIMER_LOCK();
+        return;
     }
 
-    InitializeListHead (&ReinsertTimerQueueList) ;
+    InitializeListHead(&ReinsertTimerQueueList);
 
-    InitializeListHead (&TimersToFireList) ;
+    InitializeListHead(&TimersToFireList);
 
 
     // We run thru all queues with DeltaFiringTime == 0 and fire all timers that
@@ -557,128 +520,121 @@ Remarks:
     // and reprogram the NT timer to be the firing time of the first queue in the list
 
 
-    for (QNode = TimerQueues.Flink ; QNode != &TimerQueues ; QNode = QNode->Flink) {
+    for (QNode = TimerQueues.Flink; QNode != &TimerQueues; QNode = QNode->Flink)
+    {
 
-        Queue = CONTAINING_RECORD (QNode, RTLP_TIMER_QUEUE, List) ;
+        Queue = CONTAINING_RECORD(QNode, RTLP_TIMER_QUEUE, List);
 
         // If the delta time in the timer queue is 0 - then this queue
         // has timers that are ready to fire. Walk the list and fire all timers with
         // Delta time of 0
 
-        if (Queue->DeltaFiringTime == 0) {
+        if (Queue->DeltaFiringTime == 0)
+        {
 
             // Walk all timers with DeltaFiringTime == 0 and fire them. After that
             // reinsert the periodic timers in the appropriate place.
 
-            RtlpFireTimersAndReorder (Queue, &NewFiringTime, &TimersToFireList) ;
+            RtlpFireTimersAndReorder(Queue, &NewFiringTime, &TimersToFireList);
 
             // detach this Queue from the list
 
-            QNode = QNode->Blink ;
+            QNode = QNode->Blink;
 
-            RemoveEntryList (QNode->Flink) ;
+            RemoveEntryList(QNode->Flink);
 
             // If there are timers in the queue then prepare to reinsert the queue in
             // TimerQueues.
 
-            if (NewFiringTime != INFINITE_TIME) {
+            if (NewFiringTime != INFINITE_TIME)
+            {
 
-                Queue->DeltaFiringTime = NewFiringTime ;
+                Queue->DeltaFiringTime = NewFiringTime;
 
                 // put the timer in list that we will process after we have
                 // fired all elements in this queue
 
-                InsertHeadList (&ReinsertTimerQueueList, &Queue->List) ;
-
-            } else {
+                InsertHeadList(&ReinsertTimerQueueList, &Queue->List);
+            }
+            else
+            {
 
                 // Queue has no more timers in it. Let the Queue float.
 
-                InitializeListHead (&Queue->List) ;
-
+                InitializeListHead(&Queue->List);
             }
-
-
-        } else {
+        }
+        else
+        {
 
             // No more Queues with DeltaFiringTime == 0
 
-            break ;
-
+            break;
         }
-
     }
 
     // At this point we have fired all the ready timers. We have two lists that need to be
     // merged - TimerQueues and ReinsertTimerQueueList. The following steps do this - at the
     // end of this we will reprogram the NT Timer.
 
-    if (!IsListEmpty(&TimerQueues)) {
+    if (!IsListEmpty(&TimerQueues))
+    {
 
-        Queue = CONTAINING_RECORD (TimerQueues.Flink, RTLP_TIMER_QUEUE, List) ;
+        Queue = CONTAINING_RECORD(TimerQueues.Flink, RTLP_TIMER_QUEUE, List);
 
-        NewFiringTime = Queue->DeltaFiringTime ;
+        NewFiringTime = Queue->DeltaFiringTime;
 
-        Queue->DeltaFiringTime = 0 ;
+        Queue->DeltaFiringTime = 0;
 
-        if (!IsListEmpty (&ReinsertTimerQueueList)) {
+        if (!IsListEmpty(&ReinsertTimerQueueList))
+        {
 
             // TimerQueues and ReinsertTimerQueueList are both non-empty. Merge them.
 
-            RtlpInsertTimersIntoDeltaList (&ReinsertTimerQueueList, &TimerQueues,
-                                            NewFiringTime, &NewFiringTime) ;
-
+            RtlpInsertTimersIntoDeltaList(&ReinsertTimerQueueList, &TimerQueues, NewFiringTime, &NewFiringTime);
         }
 
         // NewFiringTime contains the time the NT Timer should be programmed to.
+    }
+    else
+    {
 
-    } else {
-
-        if (!IsListEmpty (&ReinsertTimerQueueList)) {
+        if (!IsListEmpty(&ReinsertTimerQueueList))
+        {
 
             // TimerQueues is empty. ReinsertTimerQueueList is not.
 
-            RtlpInsertTimersIntoDeltaList (&ReinsertTimerQueueList, &TimerQueues, 0,
-                                            &NewFiringTime) ;
+            RtlpInsertTimersIntoDeltaList(&ReinsertTimerQueueList, &TimerQueues, 0, &NewFiringTime);
+        }
+        else
+        {
 
-        } else {
-
-            NewFiringTime = INFINITE_TIME ;
-
+            NewFiringTime = INFINITE_TIME;
         }
 
         // NewFiringTime contains the time the NT Timer should be programmed to.
-
     }
 
 
     // Reset the timer to reflect the Delta time associated with the first Queue
 
-    RtlpResetTimer (TimerHandle, NewFiringTime, NULL) ;
+    RtlpResetTimer(TimerHandle, NewFiringTime, NULL);
 
 #if DBG
-    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-               RTLP_THREADPOOL_VERBOSE_MASK,
-               "After service timer:ThreadId<%x:%x>\n",
+    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_VERBOSE_MASK, "After service timer:ThreadId<%x:%x>\n",
                HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread),
                HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess));
-    RtlDebugPrintTimes ();
+    RtlDebugPrintTimes();
 #endif
 
     // finally fire all the timers
 
-    RtlpFireTimers( &TimersToFireList ) ;
+    RtlpFireTimers(&TimersToFireList);
 
     RELEASE_GLOBAL_TIMER_LOCK();
-
 }
 
-VOID
-RtlpResetTimer (
-    HANDLE TimerHandle,
-    ULONG DueTime,
-    PRTLP_WAIT_THREAD_CONTROL_BLOCK ThreadCB
-    )
+VOID RtlpResetTimer(HANDLE TimerHandle, ULONG DueTime, PRTLP_WAIT_THREAD_CONTROL_BLOCK ThreadCB)
 /*++
 
 Routine Description:
@@ -695,89 +651,76 @@ Return Value:
 
 --*/
 {
-    LARGE_INTEGER LongDueTime ;
+    LARGE_INTEGER LongDueTime;
 
-    NtCancelTimer (TimerHandle, NULL) ;
+    NtCancelTimer(TimerHandle, NULL);
 
     // If the DueTime is INFINITE_TIME then set the timer to the largest integer possible
 
-    if (DueTime >= PSEUDO_INFINITE_TIME) {
+    if (DueTime >= PSEUDO_INFINITE_TIME)
+    {
 
-        LongDueTime.LowPart = 0x0 ;
+        LongDueTime.LowPart = 0x0;
 
-        LongDueTime.HighPart = 0x80000000 ;
-
-    } else {
+        LongDueTime.HighPart = 0x80000000;
+    }
+    else
+    {
 
         //
         // set the absolute time when timer is to be fired
         //
 
-        if (ThreadCB) {
+        if (ThreadCB)
+        {
 
-            ThreadCB->Firing64BitTickCount = DueTime
-                                + RtlpGet64BitTickCount(&ThreadCB->Current64BitTickCount) ;
-
-        } else {
+            ThreadCB->Firing64BitTickCount = DueTime + RtlpGet64BitTickCount(&ThreadCB->Current64BitTickCount);
+        }
+        else
+        {
             //
             // adjust for drift only if it is a global timer
             //
 
-            ULONG Drift ;
-            LONGLONG llCurrentTick ;
+            ULONG Drift;
+            LONGLONG llCurrentTick;
 
-            llCurrentTick = RtlpGet64BitTickCount(&Last64BitTickCount) ;
+            llCurrentTick = RtlpGet64BitTickCount(&Last64BitTickCount);
 
-            Drift = (ULONG) (llCurrentTick - RtlpGetResync64BitTickCount()) ;
-            DueTime = (DueTime > Drift) ? DueTime-Drift : 1 ;
-            RtlpSetFiring64BitTickCount(llCurrentTick + DueTime) ;
+            Drift = (ULONG)(llCurrentTick - RtlpGetResync64BitTickCount());
+            DueTime = (DueTime > Drift) ? DueTime - Drift : 1;
+            RtlpSetFiring64BitTickCount(llCurrentTick + DueTime);
         }
 
 
-        LongDueTime.QuadPart = (LONGLONG) UInt32x32To64( DueTime, 10000 );
-        
-        LongDueTime.QuadPart *= -1;
+        LongDueTime.QuadPart = (LONGLONG)UInt32x32To64(DueTime, 10000);
 
+        LongDueTime.QuadPart *= -1;
     }
 
 #if DBG
-    if ((RtlpDueTimeMax != 0) && (DueTime > RtlpDueTimeMax)) {
+    if ((RtlpDueTimeMax != 0) && (DueTime > RtlpDueTimeMax))
+    {
 
-        DbgPrint("\n*** Requested timer due time %d is greater than max allowed (%d)\n",
-                 DueTime,
-                 RtlpDueTimeMax);
+        DbgPrint("\n*** Requested timer due time %d is greater than max allowed (%d)\n", DueTime, RtlpDueTimeMax);
 
         DbgBreakPoint();
     }
 
-    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-               RTLP_THREADPOOL_TRACE_MASK,
-               "RtlpResetTimer: %dms => %p'%p in thread:<%x:%x>\n",
-               DueTime,
-               HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread),
+    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_TRACE_MASK, "RtlpResetTimer: %dms => %p'%p in thread:<%x:%x>\n",
+               DueTime, HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread),
                HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess));
 #endif
 
-    NtSetTimer (
-        TimerHandle,
-        &LongDueTime,
-        ThreadCB ? NULL : RtlpServiceTimer,
-        NULL,
-        FALSE,
-        0,
-        NULL
-        ) ;
+    NtSetTimer(TimerHandle, &LongDueTime, ThreadCB ? NULL : RtlpServiceTimer, NULL, FALSE, 0, NULL);
 }
 
 #if _MSC_FULL_VER >= 13008827
 #pragma warning(push)
-#pragma warning(disable:4715)			// Not all control paths return (due to infinite loop)
+#pragma warning(disable : 4715) // Not all control paths return (due to infinite loop)
 #endif
 
-LONG
-RtlpTimerThread (
-    PVOID Parameter
-    )
+LONG RtlpTimerThread(PVOID Parameter)
 /*++
 
 Routine Description:
@@ -792,7 +735,7 @@ Return Value:
 
 --*/
 {
-    LARGE_INTEGER TimeOut ;
+    LARGE_INTEGER TimeOut;
 
     // no structure initializations should be done here as new timer thread
     // may be created after threadPoolCleanup
@@ -800,15 +743,13 @@ Return Value:
     UNREFERENCED_PARAMETER(Parameter);
 
 #if DBG
-    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-               RTLP_THREADPOOL_TRACE_MASK,
-               "Starting timer thread\n");
+    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_TRACE_MASK, "Starting timer thread\n");
 #endif
 
-    TimerThreadId = HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread) ;
+    TimerThreadId = HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread);
 
     // Reset the NT Timer to never fire initially
-    RtlpResetTimer (TimerHandle, -1, NULL) ;
+    RtlpResetTimer(TimerHandle, -1, NULL);
 
     // Signal the thread creation path that we're ready to go
     NtSetEvent(TimerThreadStartedEvent, NULL);
@@ -816,27 +757,25 @@ Return Value:
     // Sleep alertably so that all the activity can take place
     // in APCs
 
-    for ( ; ; ) {
+    for (;;)
+    {
 
         // Set timeout for the largest timeout possible
 
-        TimeOut.LowPart = 0 ;
-        TimeOut.HighPart = 0x80000000 ;
+        TimeOut.LowPart = 0;
+        TimeOut.HighPart = 0x80000000;
 
-        NtDelayExecution (TRUE, &TimeOut) ;
-
+        NtDelayExecution(TRUE, &TimeOut);
     }
 
-    return 0 ;  // Keep compiler happy
-
+    return 0; // Keep compiler happy
 }
 #if _MSC_FULL_VER >= 13008827
 #pragma warning(pop)
 #endif
 
 NTSTATUS
-RtlpInitializeTimerThreadPool (
-    )
+RtlpInitializeTimerThreadPool()
 /*++
 
 Routine Description:
@@ -851,7 +790,7 @@ Return Value:
 --*/
 {
     NTSTATUS Status = STATUS_SUCCESS;
-    LARGE_INTEGER TimeOut ;
+    LARGE_INTEGER TimeOut;
     PRTLP_EVENT Event;
 
     // In order to avoid an explicit RtlInitialize() function to initialize the wait thread pool
@@ -860,42 +799,42 @@ Return Value:
     // This scheme does not work if RtlInitializeCriticalSection() or NtCreateEvent fails - but in this case the
     // caller has not choices left.
 
-    if (!InterlockedExchange(&StartedTimerInitialization, 1L)) {
+    if (!InterlockedExchange(&StartedTimerInitialization, 1L))
+    {
 
         if (CompletedTimerInitialization)
-            InterlockedExchange(&CompletedTimerInitialization, 0 ) ;
+            InterlockedExchange(&CompletedTimerInitialization, 0);
 
-        do {
+        do
+        {
 
             // Initialize global timer lock
 
-            Status = RtlInitializeCriticalSection( &TimerCriticalSection ) ;
-            if (! NT_SUCCESS( Status )) {
-                break ;
+            Status = RtlInitializeCriticalSection(&TimerCriticalSection);
+            if (!NT_SUCCESS(Status))
+            {
+                break;
             }
 
-            Status = NtCreateTimer(
-                                &TimerHandle,
-                                TIMER_ALL_ACCESS,
-                                NULL,
-                                NotificationTimer
-                                ) ;
+            Status = NtCreateTimer(&TimerHandle, TIMER_ALL_ACCESS, NULL, NotificationTimer);
 
-            if (!NT_SUCCESS(Status) ) {
-                RtlDeleteCriticalSection( &TimerCriticalSection );
-                break ;
+            if (!NT_SUCCESS(Status))
+            {
+                RtlDeleteCriticalSection(&TimerCriticalSection);
+                break;
             }
 
-            InitializeListHead (&TimerQueues) ; // Initialize Timer Queue Structures
+            InitializeListHead(&TimerQueues); // Initialize Timer Queue Structures
 
 
             // initialize tick count
 
-            Resync64BitTickCount.QuadPart = NtGetTickCount()  ;
-            Firing64BitTickCount.QuadPart = 0 ;
+            Resync64BitTickCount.QuadPart = NtGetTickCount();
+            Firing64BitTickCount.QuadPart = 0;
 
             Event = RtlpGetWaitEvent();
-            if (! Event) {
+            if (!Event)
+            {
                 Status = STATUS_NO_MEMORY;
                 RtlDeleteCriticalSection(&TimerCriticalSection);
                 NtClose(TimerHandle);
@@ -905,67 +844,65 @@ Return Value:
 
             TimerThreadStartedEvent = Event->Handle;
 
-            Status = RtlpStartThreadpoolThread (RtlpTimerThread,
-                                                NULL, 
-                                                &TimerThreadHandle);
+            Status = RtlpStartThreadpoolThread(RtlpTimerThread, NULL, &TimerThreadHandle);
 
-            if (!NT_SUCCESS(Status) ) {
+            if (!NT_SUCCESS(Status))
+            {
                 RtlpFreeWaitEvent(Event);
-                RtlDeleteCriticalSection( &TimerCriticalSection );
+                RtlDeleteCriticalSection(&TimerCriticalSection);
                 NtClose(TimerHandle);
                 TimerHandle = NULL;
-                break ;
+                break;
             }
 
-            Status = NtWaitForSingleObject(TimerThreadStartedEvent,
-                                           FALSE,
-                                           NULL);
+            Status = NtWaitForSingleObject(TimerThreadStartedEvent, FALSE, NULL);
 
             RtlpFreeWaitEvent(Event);
             TimerThreadStartedEvent = NULL;
 
-            if (! NT_SUCCESS(Status)) {
-                RtlDeleteCriticalSection( &TimerCriticalSection );
+            if (!NT_SUCCESS(Status))
+            {
+                RtlDeleteCriticalSection(&TimerCriticalSection);
                 NtClose(TimerHandle);
                 TimerHandle = NULL;
-                break ;
+                break;
             }
 
-        } while(FALSE ) ;
+        } while (FALSE);
 
-        if (!NT_SUCCESS(Status) ) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            StartedTimerInitialization = 0 ;
-            InterlockedExchange (&CompletedTimerInitialization, ~0) ;
+            StartedTimerInitialization = 0;
+            InterlockedExchange(&CompletedTimerInitialization, ~0);
 
-            return Status ;
+            return Status;
         }
 
-        InterlockedExchange (&CompletedTimerInitialization, 1L) ;
-
-    } else {
+        InterlockedExchange(&CompletedTimerInitialization, 1L);
+    }
+    else
+    {
 
         // Sleep 1 ms and see if the other thread has completed initialization
 
-        ONE_MILLISECOND_TIMEOUT(TimeOut) ;
+        ONE_MILLISECOND_TIMEOUT(TimeOut);
 
-        while (!*((ULONG volatile *)&CompletedTimerInitialization)) {
+        while (!*((ULONG volatile *)&CompletedTimerInitialization))
+        {
 
-            NtDelayExecution (FALSE, &TimeOut) ;
-
+            NtDelayExecution(FALSE, &TimeOut);
         }
 
         if (CompletedTimerInitialization != 1)
-            Status = STATUS_NO_MEMORY ;
+            Status = STATUS_NO_MEMORY;
     }
 
-    return NT_SUCCESS(Status) ? STATUS_SUCCESS : Status ;
+    return NT_SUCCESS(Status) ? STATUS_SUCCESS : Status;
 }
 
 NTSTATUS
-RtlCreateTimerQueue(
-    OUT PHANDLE TimerQueueHandle
-    )
+RtlCreateTimerQueue(OUT PHANDLE TimerQueueHandle)
 
 /*++
 
@@ -989,77 +926,71 @@ Return Value:
 --*/
 
 {
-    PRTLP_TIMER_QUEUE Queue ;
+    PRTLP_TIMER_QUEUE Queue;
     NTSTATUS Status;
 
-    if (LdrpShutdownInProgress) {
+    if (LdrpShutdownInProgress)
+    {
         return STATUS_UNSUCCESSFUL;
     }
 
     // Initialize the timer component if it hasnt been done already
 
-    if (CompletedTimerInitialization != 1) {
+    if (CompletedTimerInitialization != 1)
+    {
 
-        Status = RtlpInitializeTimerThreadPool () ;
+        Status = RtlpInitializeTimerThreadPool();
 
-        if ( !NT_SUCCESS(Status) )
-            return Status ;
-
+        if (!NT_SUCCESS(Status))
+            return Status;
     }
 
 
-    InterlockedIncrement( &NumTimerQueues ) ;
+    InterlockedIncrement(&NumTimerQueues);
 
 
     // Allocate a Queue structure
 
-    Queue = (PRTLP_TIMER_QUEUE) RtlpAllocateTPHeap (
-                                      sizeof (RTLP_TIMER_QUEUE),
-                                      HEAP_ZERO_MEMORY
-                                      ) ;
+    Queue = (PRTLP_TIMER_QUEUE)RtlpAllocateTPHeap(sizeof(RTLP_TIMER_QUEUE), HEAP_ZERO_MEMORY);
 
-    if (Queue == NULL) {
+    if (Queue == NULL)
+    {
 
-        InterlockedDecrement( &NumTimerQueues ) ;
+        InterlockedDecrement(&NumTimerQueues);
 
-        return STATUS_NO_MEMORY ;
+        return STATUS_NO_MEMORY;
     }
 
-    Queue->RefCount = 1 ;
+    Queue->RefCount = 1;
 
 
     // Initialize the allocated queue
 
-    InitializeListHead (&Queue->List) ;
-    InitializeListHead (&Queue->TimerList) ;
-    InitializeListHead (&Queue->UncancelledTimerList) ;
-    SET_TIMER_QUEUE_SIGNATURE( Queue ) ;
+    InitializeListHead(&Queue->List);
+    InitializeListHead(&Queue->TimerList);
+    InitializeListHead(&Queue->UncancelledTimerList);
+    SET_TIMER_QUEUE_SIGNATURE(Queue);
 
-    Queue->DeltaFiringTime = 0 ;
+    Queue->DeltaFiringTime = 0;
 
 #if DBG1
-    Queue->DbgId = ++NextTimerDbgId ;
-    Queue->ThreadId = HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread) ;
+    Queue->DbgId = ++NextTimerDbgId;
+    Queue->ThreadId = HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread);
 #endif
 
 #if DBG
-    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-               RTLP_THREADPOOL_TRACE_MASK,
-               "<%d:%d> TimerQueue %x created by thread:<%x:%x>\n",
-               Queue->DbgId, 1, (ULONG_PTR)Queue,
-               HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread),
-               HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess)) ;
+    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_TRACE_MASK, "<%d:%d> TimerQueue %x created by thread:<%x:%x>\n",
+               Queue->DbgId, 1, (ULONG_PTR)Queue, HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread),
+               HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess));
 #endif
 
-    *TimerQueueHandle = Queue ;
+    *TimerQueueHandle = Queue;
 
-    return STATUS_SUCCESS ;
+    return STATUS_SUCCESS;
 }
 
 ULONG
-RtlpGetQueueRelativeTime (
-    PRTLP_TIMER_QUEUE Queue
-    )
+RtlpGetQueueRelativeTime(PRTLP_TIMER_QUEUE Queue)
 /*++
 
 Routine Description:
@@ -1077,41 +1008,36 @@ Return Value:
 
 --*/
 {
-    PLIST_ENTRY Node ;
-    ULONG RelativeTime ;
-    PRTLP_TIMER_QUEUE CurrentQueue ;
+    PLIST_ENTRY Node;
+    ULONG RelativeTime;
+    PRTLP_TIMER_QUEUE CurrentQueue;
 
-    RelativeTime = 0 ;
+    RelativeTime = 0;
 
     // It the Queue is not attached to TimerQueues List because it has no timer
     // associated with it simply returns 0 as the relative time. Else run thru
     // all queues before it in the list and compute the relative firing time
 
-    if (!IsListEmpty (&Queue->List)) {
+    if (!IsListEmpty(&Queue->List))
+    {
 
-        for (Node = TimerQueues.Flink; Node != &Queue->List; Node=Node->Flink) {
+        for (Node = TimerQueues.Flink; Node != &Queue->List; Node = Node->Flink)
+        {
 
-            CurrentQueue = CONTAINING_RECORD (Node, RTLP_TIMER_QUEUE, List) ;
+            CurrentQueue = CONTAINING_RECORD(Node, RTLP_TIMER_QUEUE, List);
 
-            RelativeTime += CurrentQueue->DeltaFiringTime ;
-
+            RelativeTime += CurrentQueue->DeltaFiringTime;
         }
 
         // Add the queue's delta firing time as well
 
-        RelativeTime += Queue->DeltaFiringTime ;
-
+        RelativeTime += Queue->DeltaFiringTime;
     }
 
-    return RelativeTime ;
-
+    return RelativeTime;
 }
 
-VOID
-RtlpDeactivateTimer (
-    PRTLP_TIMER_QUEUE Queue,
-    PRTLP_TIMER Timer
-    )
+VOID RtlpDeactivateTimer(PRTLP_TIMER_QUEUE Queue, PRTLP_TIMER Timer)
 /*++
 
 Routine Description:
@@ -1127,70 +1053,66 @@ Return Value:
 
 --*/
 {
-    ULONG TimeRemaining, QueueRelTimeRemaining ;
-    ULONG NewFiringTime ;
+    ULONG TimeRemaining, QueueRelTimeRemaining;
+    ULONG NewFiringTime;
 
 
     // Remove the timer from the appropriate queue
 
-    TimeRemaining = RtlpGetTimeRemaining (TimerHandle) ;
-    QueueRelTimeRemaining = TimeRemaining + RtlpGetQueueRelativeTime (Queue) ;
+    TimeRemaining = RtlpGetTimeRemaining(TimerHandle);
+    QueueRelTimeRemaining = TimeRemaining + RtlpGetQueueRelativeTime(Queue);
 
 #if DBG
-    if ((RtlpDueTimeMax != 0)
-        && (QueueRelTimeRemaining > RtlpDueTimeMax)) {
+    if ((RtlpDueTimeMax != 0) && (QueueRelTimeRemaining > RtlpDueTimeMax))
+    {
         DbgPrint("\n*** Queue due time %d is greater than max allowed (%d) in RtlpDeactivateTimer\n",
-                 QueueRelTimeRemaining,
-                 RtlpDueTimeMax);
+                 QueueRelTimeRemaining, RtlpDueTimeMax);
 
-            DbgBreakPoint();
+        DbgBreakPoint();
     }
 #endif
-        
-    if (RtlpRemoveFromDeltaList (&Queue->TimerList, Timer, QueueRelTimeRemaining, &NewFiringTime)) {
+
+    if (RtlpRemoveFromDeltaList(&Queue->TimerList, Timer, QueueRelTimeRemaining, &NewFiringTime))
+    {
 
         // If we removed the last timer from the queue then we should remove the queue
         // from TimerQueues, else we should readjust its position based on the delta time change
 
-        if (IsListEmpty (&Queue->TimerList)) {
+        if (IsListEmpty(&Queue->TimerList))
+        {
 
             // Remove the queue from TimerQueues
 
-            if (RtlpRemoveFromDeltaList (&TimerQueues, Queue, TimeRemaining, &NewFiringTime)) {
+            if (RtlpRemoveFromDeltaList(&TimerQueues, Queue, TimeRemaining, &NewFiringTime))
+            {
 
                 // There is a new element at the head of the queue we need to reset the NT
                 // timer to fire later
 
-                RtlpResetTimer (TimerHandle, NewFiringTime, NULL) ;
-
+                RtlpResetTimer(TimerHandle, NewFiringTime, NULL);
             }
 
-            InitializeListHead (&Queue->List) ;
-
-        } else {
+            InitializeListHead(&Queue->List);
+        }
+        else
+        {
 
             // If we remove from the head of the timer delta list we will need to
             // make sure the queue delta list is readjusted
 
-            if (RtlpReOrderDeltaList (&TimerQueues, Queue, TimeRemaining, &NewFiringTime, NewFiringTime)) {
+            if (RtlpReOrderDeltaList(&TimerQueues, Queue, TimeRemaining, &NewFiringTime, NewFiringTime))
+            {
 
                 // There is a new element at the head of the queue we need to reset the NT
                 // timer to fire later
 
-                RtlpResetTimer (TimerHandle, NewFiringTime, NULL) ;
-
+                RtlpResetTimer(TimerHandle, NewFiringTime, NULL);
             }
-
         }
-
     }
 }
 
-VOID
-RtlpCancelTimerEx (
-    PRTLP_TIMER Timer,
-    BOOLEAN DeletingQueue
-    )
+VOID RtlpCancelTimerEx(PRTLP_TIMER Timer, BOOLEAN DeletingQueue)
 /*++
 
 Routine Description:
@@ -1208,60 +1130,54 @@ Return Value:
 
 --*/
 {
-    PRTLP_TIMER_QUEUE Queue ;
+    PRTLP_TIMER_QUEUE Queue;
 
-    RtlpResync64BitTickCount() ;
-    CHECK_SIGNATURE( Timer ) ;
+    RtlpResync64BitTickCount();
+    CHECK_SIGNATURE(Timer);
 
 #if DBG
-    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-               RTLP_THREADPOOL_TRACE_MASK,
-               "<%d:%d> RtlpCancelTimerEx: Timer: %p Thread<%d:%d>\n",
-               Timer->Queue->DbgId,
-               Timer->DbgId,
-               Timer,
+    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_TRACE_MASK,
+               "<%d:%d> RtlpCancelTimerEx: Timer: %p Thread<%d:%d>\n", Timer->Queue->DbgId, Timer->DbgId, Timer,
                HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread),
                HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess));
 #endif
 
-    Queue = Timer->Queue ;
+    Queue = Timer->Queue;
 
 
-    if ( Timer->State & STATE_ACTIVE ) {
+    if (Timer->State & STATE_ACTIVE)
+    {
 
         // if queue is being deleted, then the timer should not be reset
 
-        if ( ! DeletingQueue )
-            RtlpDeactivateTimer( Queue, Timer ) ;
-
-    } else {
+        if (!DeletingQueue)
+            RtlpDeactivateTimer(Queue, Timer);
+    }
+    else
+    {
 
         // remove one shot Inactive timer from Queue->UncancelledTimerList
         // called only when the time queue is being deleted
 
-        RemoveEntryList( &Timer->List ) ;
-
+        RemoveEntryList(&Timer->List);
     }
 
 
     // Set the State to deleted
 
-    RtlInterlockedSetBitsDiscardReturn(&Timer->State,
-                                       STATE_DELETE);
+    RtlInterlockedSetBitsDiscardReturn(&Timer->State, STATE_DELETE);
 
 
     // delete timer if refcount == 0
 
-    if ( InterlockedDecrement( &Timer->RefCount ) == 0 ) {
+    if (InterlockedDecrement(&Timer->RefCount) == 0)
+    {
 
-        RtlpDeleteTimer( Timer ) ;
+        RtlpDeleteTimer(Timer);
     }
 }
 
-VOID
-RtlpDeleteTimerQueueComplete (
-    PRTLP_TIMER_QUEUE Queue
-    )
+VOID RtlpDeleteTimerQueueComplete(PRTLP_TIMER_QUEUE Queue)
 /*++
 
 Routine Description:
@@ -1279,26 +1195,22 @@ Return Value:
 --*/
 {
 #if DBG
-    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-               RTLP_THREADPOOL_TRACE_MASK,
-               "<%d> Queue: %x: deleted\n", Queue->DbgId,
-               (ULONG_PTR)Queue) ;
+    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_TRACE_MASK, "<%d> Queue: %x: deleted\n", Queue->DbgId,
+               (ULONG_PTR)Queue);
 #endif
 
-    InterlockedDecrement( &NumTimerQueues ) ;
+    InterlockedDecrement(&NumTimerQueues);
 
     // Notify the thread issuing the cancel that the request is completed
 
-    if ( Queue->CompletionEvent )
-        NtSetEvent (Queue->CompletionEvent, NULL) ;
+    if (Queue->CompletionEvent)
+        NtSetEvent(Queue->CompletionEvent, NULL);
 
-    RtlpFreeTPHeap( Queue ) ;
+    RtlpFreeTPHeap(Queue);
 }
 
 NTSTATUS
-RtlpDeleteTimerQueue (
-    PRTLP_TIMER_QUEUE Queue
-    )
+RtlpDeleteTimerQueue(PRTLP_TIMER_QUEUE Queue)
 /*++
 
 Routine Description:
@@ -1315,14 +1227,14 @@ Return Value:
 
 --*/
 {
-    ULONG TimeRemaining ;
-    ULONG NewFiringTime ;
-    PLIST_ENTRY Node ;
-    PRTLP_TIMER Timer ;
+    ULONG TimeRemaining;
+    ULONG NewFiringTime;
+    PLIST_ENTRY Node;
+    PRTLP_TIMER Timer;
 
-    RtlpResync64BitTickCount() ;
+    RtlpResync64BitTickCount();
 
-    SET_DEL_TIMERQ_SIGNATURE( Queue ) ;
+    SET_DEL_TIMERQ_SIGNATURE(Queue);
 
 
     // If there are no timers in the queue then it is not attached to TimerQueues
@@ -1331,77 +1243,75 @@ Return Value:
     // was the first queue in the list and then walk all the timers and free them
     // before freeing the Timer Queue.
 
-    if (!IsListEmpty (&Queue->List)) {
+    if (!IsListEmpty(&Queue->List))
+    {
 
-        TimeRemaining = RtlpGetTimeRemaining (TimerHandle)
-                        + RtlpGetQueueRelativeTime (Queue) ;
+        TimeRemaining = RtlpGetTimeRemaining(TimerHandle) + RtlpGetQueueRelativeTime(Queue);
 
 #if DBG
-        if ((RtlpDueTimeMax != 0)
-            && (TimeRemaining > RtlpDueTimeMax)) {
+        if ((RtlpDueTimeMax != 0) && (TimeRemaining > RtlpDueTimeMax))
+        {
             DbgPrint("\n*** Queue due time %d is greater than max allowed (%d) in RtlpDeleteTimerQueue\n",
-                     TimeRemaining,
-                     RtlpDueTimeMax);
+                     TimeRemaining, RtlpDueTimeMax);
 
             DbgBreakPoint();
         }
 #endif
-        
-        if (RtlpRemoveFromDeltaList (&TimerQueues, Queue, TimeRemaining,
-                                    &NewFiringTime))
+
+        if (RtlpRemoveFromDeltaList(&TimerQueues, Queue, TimeRemaining, &NewFiringTime))
         {
 
             // If removed from head of queue list, reset the timer
 
-            RtlpResetTimer (TimerHandle, NewFiringTime, NULL) ;
+            RtlpResetTimer(TimerHandle, NewFiringTime, NULL);
         }
 
 
         // Free all the timers associated with this queue
 
-        for (Node = Queue->TimerList.Flink ; Node != &Queue->TimerList ; ) {
+        for (Node = Queue->TimerList.Flink; Node != &Queue->TimerList;)
+        {
 
-            Timer =  CONTAINING_RECORD (Node, RTLP_TIMER, List) ;
+            Timer = CONTAINING_RECORD(Node, RTLP_TIMER, List);
 
-            Node = Node->Flink ;
+            Node = Node->Flink;
 
-            RtlpCancelTimerEx( Timer ,TRUE ) ; // Queue being deleted
+            RtlpCancelTimerEx(Timer, TRUE); // Queue being deleted
         }
     }
 
 
     // Free all the uncancelled one shot timers in this queue
 
-    for (Node = Queue->UncancelledTimerList.Flink ; Node != &Queue->UncancelledTimerList ; ) {
+    for (Node = Queue->UncancelledTimerList.Flink; Node != &Queue->UncancelledTimerList;)
+    {
 
-        Timer =  CONTAINING_RECORD (Node, RTLP_TIMER, List) ;
+        Timer = CONTAINING_RECORD(Node, RTLP_TIMER, List);
 
-        Node = Node->Flink ;
+        Node = Node->Flink;
 
-        RtlpCancelTimerEx( Timer ,TRUE ) ; // Queue being deleted
+        RtlpCancelTimerEx(Timer, TRUE); // Queue being deleted
     }
 
 
     // delete the queue completely if the RefCount is 0
 
-    if ( InterlockedDecrement( &Queue->RefCount ) == 0 ) {
+    if (InterlockedDecrement(&Queue->RefCount) == 0)
+    {
 
-        RtlpDeleteTimerQueueComplete( Queue ) ;
+        RtlpDeleteTimerQueueComplete(Queue);
 
-        return STATUS_SUCCESS ;
-
-    } else {
-
-        return STATUS_PENDING ;
+        return STATUS_SUCCESS;
     }
+    else
+    {
 
+        return STATUS_PENDING;
+    }
 }
 
 NTSTATUS
-RtlDeleteTimerQueueEx (
-    HANDLE QueueHandle,
-    HANDLE Event
-    )
+RtlDeleteTimerQueueEx(HANDLE QueueHandle, HANDLE Event)
 /*++
 
 Routine Description:
@@ -1432,126 +1342,112 @@ Return Value:
 --*/
 {
     NTSTATUS Status;
-    LARGE_INTEGER TimeOut ;
-    PRTLP_EVENT CompletionEvent = NULL ;
-    PRTLP_TIMER_QUEUE Queue = (PRTLP_TIMER_QUEUE)QueueHandle ;
+    LARGE_INTEGER TimeOut;
+    PRTLP_EVENT CompletionEvent = NULL;
+    PRTLP_TIMER_QUEUE Queue = (PRTLP_TIMER_QUEUE)QueueHandle;
 #if DBG
     ULONG QueueDbgId;
 #endif
 
-    if (LdrpShutdownInProgress) {
+    if (LdrpShutdownInProgress)
+    {
         return STATUS_SUCCESS;
     }
 
-    if (!Queue) {
-        return STATUS_INVALID_PARAMETER_1 ;
+    if (!Queue)
+    {
+        return STATUS_INVALID_PARAMETER_1;
     }
 
-    CHECK_DEL_SIGNATURE( Queue ) ;
-    SET_DEL_SIGNATURE( Queue ) ;
+    CHECK_DEL_SIGNATURE(Queue);
+    SET_DEL_SIGNATURE(Queue);
 
 #if DBG1
-    Queue->ThreadId2 = HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread) ;
+    Queue->ThreadId2 = HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread);
 #endif
 
 #if DBG
     QueueDbgId = Queue->DbgId;
-    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-               RTLP_THREADPOOL_TRACE_MASK,
-               "<%d:%d> Queue Delete(Queue:%x Event:%x by Thread:<%x:%x>)\n",
-               QueueDbgId, Queue->RefCount, (ULONG_PTR)Queue, (ULONG_PTR)Event,
-               HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread),
-               HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess)) ;
+    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_TRACE_MASK,
+               "<%d:%d> Queue Delete(Queue:%x Event:%x by Thread:<%x:%x>)\n", QueueDbgId, Queue->RefCount,
+               (ULONG_PTR)Queue, (ULONG_PTR)Event, HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread),
+               HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess));
 #endif
 
 
-    if (Event == (HANDLE)-1 ) {
+    if (Event == (HANDLE)-1)
+    {
 
         // Get an event from the event cache
 
-        CompletionEvent = RtlpGetWaitEvent () ;
+        CompletionEvent = RtlpGetWaitEvent();
 
-        if (!CompletionEvent) {
+        if (!CompletionEvent)
+        {
 
-            return STATUS_NO_MEMORY ;
-
+            return STATUS_NO_MEMORY;
         }
     }
 
-    Queue->CompletionEvent = CompletionEvent
-                             ? CompletionEvent->Handle
-                             : Event ;
+    Queue->CompletionEvent = CompletionEvent ? CompletionEvent->Handle : Event;
 
 
     // once this flag is set, no timer will be fired
 
     ACQUIRE_GLOBAL_TIMER_LOCK();
-    RtlInterlockedSetBitsDiscardReturn(&Queue->State,
-                                       STATE_DONTFIRE);
+    RtlInterlockedSetBitsDiscardReturn(&Queue->State, STATE_DONTFIRE);
     RELEASE_GLOBAL_TIMER_LOCK();
-
 
 
     // queue an APC
 
-    Status = NtQueueApcThread(
-                    TimerThreadHandle,
-                    (PPS_APC_ROUTINE)RtlpDeleteTimerQueue,
-                    (PVOID) QueueHandle,
-                    NULL,
-                    NULL
-                    );
+    Status = NtQueueApcThread(TimerThreadHandle, (PPS_APC_ROUTINE)RtlpDeleteTimerQueue, (PVOID)QueueHandle, NULL, NULL);
 
-    if (! NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        if ( CompletionEvent ) {
-            RtlpFreeWaitEvent( CompletionEvent ) ;
+        if (CompletionEvent)
+        {
+            RtlpFreeWaitEvent(CompletionEvent);
         }
 
-        return Status ;
+        return Status;
     }
 
-    if (CompletionEvent) {
+    if (CompletionEvent)
+    {
 
         // wait for Event to be fired. Return if the thread has been killed.
 
 
 #if DBG
-        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-                   RTLP_THREADPOOL_TRACE_MASK,
-                   "<%d> Queue %p delete waiting Thread<%d:%d>\n",
-                   QueueDbgId,
-                   (ULONG_PTR)Queue,
-                   HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread),
-                   HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess)) ;
+        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_TRACE_MASK, "<%d> Queue %p delete waiting Thread<%d:%d>\n",
+                   QueueDbgId, (ULONG_PTR)Queue, HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread),
+                   HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess));
 #endif
 
 
-        Status = RtlpWaitForEvent( CompletionEvent->Handle, TimerThreadHandle ) ;
+        Status = RtlpWaitForEvent(CompletionEvent->Handle, TimerThreadHandle);
 
 
 #if DBG
-        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-                   RTLP_THREADPOOL_TRACE_MASK,
-                   "<%d> Queue %p delete completed\n",
-                   QueueDbgId,
-                   (ULONG_PTR) Queue) ;
+        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_TRACE_MASK, "<%d> Queue %p delete completed\n", QueueDbgId,
+                   (ULONG_PTR)Queue);
 #endif
 
-        RtlpFreeWaitEvent( CompletionEvent ) ;
+        RtlpFreeWaitEvent(CompletionEvent);
 
-        return NT_SUCCESS( Status ) ? STATUS_SUCCESS : Status ;
+        return NT_SUCCESS(Status) ? STATUS_SUCCESS : Status;
+    }
+    else
+    {
 
-    } else {
-
-        return STATUS_PENDING ;
+        return STATUS_PENDING;
     }
 }
 
 NTSTATUS
-RtlDeleteTimerQueue(
-    IN HANDLE TimerQueueHandle
-    )
+RtlDeleteTimerQueue(IN HANDLE TimerQueueHandle)
 
 /*++
 
@@ -1574,13 +1470,10 @@ Return Value:
 --*/
 
 {
-    return RtlDeleteTimerQueueEx( TimerQueueHandle, NULL ) ;
+    return RtlDeleteTimerQueueEx(TimerQueueHandle, NULL);
 }
 
-VOID
-RtlpAddTimer (
-    PRTLP_TIMER Timer
-    )
+VOID RtlpAddTimer(PRTLP_TIMER Timer)
 /*++
 
 Routine Description:
@@ -1598,36 +1491,33 @@ Return Value:
 --*/
 {
     PRTLP_TIMER_QUEUE Queue = Timer->Queue;
-    ULONG TimeRemaining, QueueRelTimeRemaining ;
-    ULONG NewFiringTime ;
+    ULONG TimeRemaining, QueueRelTimeRemaining;
+    ULONG NewFiringTime;
 
-    RtlpResync64BitTickCount() ;
+    RtlpResync64BitTickCount();
 
 
     // the timer was set to be deleted in a callback function.
 
-    if (Timer->State & STATE_DELETE ) {
+    if (Timer->State & STATE_DELETE)
+    {
 
-        RtlpDeleteTimer( Timer ) ;
-        return ;
+        RtlpDeleteTimer(Timer);
+        return;
     }
 
     // check if timer queue already deleted
 
-    if (IS_DEL_SIGNATURE_SET(Queue)) {
+    if (IS_DEL_SIGNATURE_SET(Queue))
+    {
         RtlpDeleteTimer(Timer);
         return;
     }
 
 #if DBG
-    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-               RTLP_THREADPOOL_TRACE_MASK,
-               "<%d:%d> RtlpAddTimer: Timer: %p Delta: %dms Period: %dms Thread<%d:%d>\n",
-               Timer->Queue->DbgId,
-               Timer->DbgId,
-               Timer,
-               Timer->DeltaFiringTime,
-               Timer->Period,
+    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_TRACE_MASK,
+               "<%d:%d> RtlpAddTimer: Timer: %p Delta: %dms Period: %dms Thread<%d:%d>\n", Timer->Queue->DbgId,
+               Timer->DbgId, Timer, Timer->DeltaFiringTime, Timer->Period,
                HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread),
                HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess));
 #endif
@@ -1635,81 +1525,71 @@ Return Value:
     // TimeRemaining is the time left in the current timer + the relative time of
     // the queue it is being inserted into
 
-    TimeRemaining = RtlpGetTimeRemaining (TimerHandle) ;
-    QueueRelTimeRemaining = TimeRemaining + RtlpGetQueueRelativeTime (Queue) ;
+    TimeRemaining = RtlpGetTimeRemaining(TimerHandle);
+    QueueRelTimeRemaining = TimeRemaining + RtlpGetQueueRelativeTime(Queue);
 
 #if DBG
-    if ((RtlpDueTimeMax != 0)
-        && (QueueRelTimeRemaining > RtlpDueTimeMax)) {
-        DbgPrint("\n*** Queue due time %d is greater than max allowed (%d) in RtlpAddTimer\n",
-                 QueueRelTimeRemaining,
+    if ((RtlpDueTimeMax != 0) && (QueueRelTimeRemaining > RtlpDueTimeMax))
+    {
+        DbgPrint("\n*** Queue due time %d is greater than max allowed (%d) in RtlpAddTimer\n", QueueRelTimeRemaining,
                  RtlpDueTimeMax);
 
-            DbgBreakPoint();
+        DbgBreakPoint();
     }
 #endif
-        
-    if (RtlpInsertInDeltaList (&Queue->TimerList, Timer, QueueRelTimeRemaining,
-                                &NewFiringTime))
+
+    if (RtlpInsertInDeltaList(&Queue->TimerList, Timer, QueueRelTimeRemaining, &NewFiringTime))
     {
 
         // If the Queue is not attached to TimerQueues since it had no timers
         // previously then insert the queue into the TimerQueues list, else just
         // reorder its existing position.
 
-        if (IsListEmpty (&Queue->List)) {
+        if (IsListEmpty(&Queue->List))
+        {
 
-            Queue->DeltaFiringTime = NewFiringTime ;
+            Queue->DeltaFiringTime = NewFiringTime;
 
-            if (RtlpInsertInDeltaList (&TimerQueues, Queue, TimeRemaining,
-                                        &NewFiringTime))
+            if (RtlpInsertInDeltaList(&TimerQueues, Queue, TimeRemaining, &NewFiringTime))
             {
 
                 // There is a new element at the head of the queue we need to reset the NT
                 // timer to fire sooner.
 
-                RtlpResetTimer (TimerHandle, NewFiringTime, NULL) ;
+                RtlpResetTimer(TimerHandle, NewFiringTime, NULL);
             }
-
-        } else {
+        }
+        else
+        {
 
             // If we insert at the head of the timer delta list we will need to
             // make sure the queue delta list is readjusted
 
-            if (RtlpReOrderDeltaList(&TimerQueues, Queue, TimeRemaining, &NewFiringTime, NewFiringTime)){
+            if (RtlpReOrderDeltaList(&TimerQueues, Queue, TimeRemaining, &NewFiringTime, NewFiringTime))
+            {
 
                 // There is a new element at the head of the queue we need to reset the NT
                 // timer to fire sooner.
 
-                RtlpResetTimer (TimerHandle, NewFiringTime, NULL) ;
-
+                RtlpResetTimer(TimerHandle, NewFiringTime, NULL);
             }
         }
-
     }
 
-    RtlInterlockedSetBitsDiscardReturn(&Timer->State,
-                                       STATE_REGISTERED | STATE_ACTIVE);
+    RtlInterlockedSetBitsDiscardReturn(&Timer->State, STATE_REGISTERED | STATE_ACTIVE);
 }
 
-VOID
-RtlpTimerReleaseWorker(ULONG Flags)
+VOID RtlpTimerReleaseWorker(ULONG Flags)
 {
-    if (! (Flags & WT_EXECUTEINTIMERTHREAD)) {
+    if (!(Flags & WT_EXECUTEINTIMERTHREAD))
+    {
         RtlpReleaseWorker(Flags);
     }
 }
 
 NTSTATUS
-RtlCreateTimer(
-    IN  HANDLE TimerQueueHandle,
-    OUT HANDLE *Handle,
-    IN  WAITORTIMERCALLBACKFUNC Function,
-    IN  PVOID Context,
-    IN  ULONG  DueTime,
-    IN  ULONG  Period,
-    IN  ULONG  Flags
-    )
+RtlCreateTimer(IN HANDLE TimerQueueHandle, OUT HANDLE *Handle, IN WAITORTIMERCALLBACKFUNC Function, IN PVOID Context,
+               IN ULONG DueTime, IN ULONG Period, IN ULONG Flags)
 /*++
 
 Routine Description:
@@ -1755,64 +1635,72 @@ Return Value:
 
 {
     NTSTATUS Status;
-    PRTLP_TIMER Timer ;
-    PRTLP_TIMER_QUEUE Queue = (PRTLP_TIMER_QUEUE) TimerQueueHandle;
+    PRTLP_TIMER Timer;
+    PRTLP_TIMER_QUEUE Queue = (PRTLP_TIMER_QUEUE)TimerQueueHandle;
 
-    if (LdrpShutdownInProgress) {
+    if (LdrpShutdownInProgress)
+    {
         return STATUS_UNSUCCESSFUL;
     }
 
-    if (Flags&0xffff0000) {
-        MaxThreads = (Flags & 0xffff0000)>>16;
+    if (Flags & 0xffff0000)
+    {
+        MaxThreads = (Flags & 0xffff0000) >> 16;
     }
 
     // check if timer queue already deleted
 
-    if (IS_DEL_SIGNATURE_SET(Queue)) {
+    if (IS_DEL_SIGNATURE_SET(Queue))
+    {
         return STATUS_INVALID_HANDLE;
     }
 
-    if (! (Flags & WT_EXECUTEINTIMERTHREAD)) {
+    if (!(Flags & WT_EXECUTEINTIMERTHREAD))
+    {
         Status = RtlpAcquireWorker(Flags);
-        if (! NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             return Status;
         }
     }
 
-    Timer = (PRTLP_TIMER) RtlpAllocateTPHeap (
-                                sizeof (RTLP_TIMER),
-                                HEAP_ZERO_MEMORY
-                                ) ;
+    Timer = (PRTLP_TIMER)RtlpAllocateTPHeap(sizeof(RTLP_TIMER), HEAP_ZERO_MEMORY);
 
-    if (Timer == NULL) {
+    if (Timer == NULL)
+    {
         RtlpTimerReleaseWorker(Flags);
-        return STATUS_NO_MEMORY ;
-
+        return STATUS_NO_MEMORY;
     }
 
     // Initialize the allocated timer
 
-    if (NtCurrentTeb()->IsImpersonating) {
-        Status = NtOpenThreadToken(NtCurrentThread(),
-                                   MAXIMUM_ALLOWED,
-                                   TRUE,
-                                   &Timer->ImpersonationToken);
-        if (! NT_SUCCESS(Status)) {
+    if (NtCurrentTeb()->IsImpersonating)
+    {
+        Status = NtOpenThreadToken(NtCurrentThread(), MAXIMUM_ALLOWED, TRUE, &Timer->ImpersonationToken);
+        if (!NT_SUCCESS(Status))
+        {
             RtlpFreeTPHeap(Timer);
             RtlpTimerReleaseWorker(Flags);
             return Status;
         }
-    } else {
+    }
+    else
+    {
         Timer->ImpersonationToken = NULL;
     }
 
     Status = RtlpThreadPoolGetActiveActivationContext(&Timer->ActivationContext);
-    if (!NT_SUCCESS(Status)) {
-        if (Status == STATUS_SXS_THREAD_QUERIES_DISABLED) {
+    if (!NT_SUCCESS(Status))
+    {
+        if (Status == STATUS_SXS_THREAD_QUERIES_DISABLED)
+        {
             Timer->ActivationContext = INVALID_ACTIVATION_CONTEXT;
             Status = STATUS_SUCCESS;
-        } else {
-            if (Timer->ImpersonationToken) {
+        }
+        else
+        {
+            if (Timer->ImpersonationToken)
+            {
                 NtClose(Timer->ImpersonationToken);
             }
             RtlpFreeTPHeap(Timer);
@@ -1821,72 +1709,61 @@ Return Value:
         }
     }
 
-    Timer->DeltaFiringTime = DueTime ;
+    Timer->DeltaFiringTime = DueTime;
     Timer->Queue = Queue;
-    Timer->RefCount = 1 ;
-    Timer->Flags = Flags ;
-    Timer->Function = Function ;
-    Timer->Context = Context ;
+    Timer->RefCount = 1;
+    Timer->Flags = Flags;
+    Timer->Function = Function;
+    Timer->Context = Context;
     //todo:remove below
     Timer->Period = (Period == -1) ? 0 : Period;
-    InitializeListHead( &Timer->TimersToFireList ) ;
-    InitializeListHead( &Timer->List ) ;
-    SET_TIMER_SIGNATURE( Timer ) ;
+    InitializeListHead(&Timer->TimersToFireList);
+    InitializeListHead(&Timer->List);
+    SET_TIMER_SIGNATURE(Timer);
 
 
 #if DBG1
-    Timer->DbgId = ++ Timer->Queue->NextDbgId ;
-    Timer->ThreadId = HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread) ;
+    Timer->DbgId = ++Timer->Queue->NextDbgId;
+    Timer->ThreadId = HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread);
 #endif
 
 #if DBG
-    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-               RTLP_THREADPOOL_TRACE_MASK,
-               "<%d:%d:%d> Timer: created by Thread:<%x:%x>\n",
-               Timer->Queue->DbgId, Timer->DbgId, 1,
-               HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread),
-               HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess)) ;
+    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_TRACE_MASK, "<%d:%d:%d> Timer: created by Thread:<%x:%x>\n",
+               Timer->Queue->DbgId, Timer->DbgId, 1, HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread),
+               HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess));
 #endif
 
     // Increment the total number of timers in the queue
 
-    InterlockedIncrement( &((PRTLP_TIMER_QUEUE)TimerQueueHandle)->RefCount ) ;
+    InterlockedIncrement(&((PRTLP_TIMER_QUEUE)TimerQueueHandle)->RefCount);
 
 
     // Queue APC to timer thread
 
-    Status = NtQueueApcThread(
-                    TimerThreadHandle,
-                    (PPS_APC_ROUTINE)RtlpAddTimer,
-                    (PVOID)Timer,
-                    NULL,
-                    NULL
-                    ) ;
-    if (!NT_SUCCESS (Status)) {
-        InterlockedDecrement( &((PRTLP_TIMER_QUEUE)TimerQueueHandle)->RefCount ) ;
+    Status = NtQueueApcThread(TimerThreadHandle, (PPS_APC_ROUTINE)RtlpAddTimer, (PVOID)Timer, NULL, NULL);
+    if (!NT_SUCCESS(Status))
+    {
+        InterlockedDecrement(&((PRTLP_TIMER_QUEUE)TimerQueueHandle)->RefCount);
         if (Timer->ActivationContext != INVALID_ACTIVATION_CONTEXT)
-            RtlReleaseActivationContext (Timer->ActivationContext);
-        if (Timer->ImpersonationToken) {
+            RtlReleaseActivationContext(Timer->ActivationContext);
+        if (Timer->ImpersonationToken)
+        {
             NtClose(Timer->ImpersonationToken);
         }
         RtlpFreeTPHeap(Timer);
         RtlpTimerReleaseWorker(Flags);
-
-    } else {
+    }
+    else
+    {
 
         // We successfully queued the APC -- the timer is now valid
-        *Handle = Timer ;
-
+        *Handle = Timer;
     }
 
-    return Status ;
+    return Status;
 }
 
-VOID
-RtlpUpdateTimer (
-    PRTLP_TIMER Timer,
-    PRTLP_TIMER UpdatedTimer
-    )
+VOID RtlpUpdateTimer(PRTLP_TIMER Timer, PRTLP_TIMER UpdatedTimer)
 /*++
 
 Routine Description:
@@ -1904,55 +1781,51 @@ Return Value:
 
 --*/
 {
-    PRTLP_TIMER_QUEUE Queue ;
-    ULONG TimeRemaining, QueueRelTimeRemaining ;
-    ULONG NewFiringTime ;
+    PRTLP_TIMER_QUEUE Queue;
+    ULONG TimeRemaining, QueueRelTimeRemaining;
+    ULONG NewFiringTime;
 
 #if DBG
-    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-               RTLP_THREADPOOL_TRACE_MASK,
+    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_TRACE_MASK,
                "<%d:%d> RtlpUpdateTimer: Timer: %p Updated: %p Delta: %dms Period: %dms Thread<%d:%d>\n",
-               Timer->Queue->DbgId,
-               Timer->DbgId,
-               Timer,
-               UpdatedTimer,
-               UpdatedTimer->DeltaFiringTime,
-               UpdatedTimer->Period,
-               HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread),
+               Timer->Queue->DbgId, Timer->DbgId, Timer, UpdatedTimer, UpdatedTimer->DeltaFiringTime,
+               UpdatedTimer->Period, HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread),
                HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess));
 #endif
 
-    try {
-        RtlpResync64BitTickCount( ) ;
+    try
+    {
+        RtlpResync64BitTickCount();
 
-        CHECK_SIGNATURE(Timer) ;
+        CHECK_SIGNATURE(Timer);
 
-        Queue = Timer->Queue ;
+        Queue = Timer->Queue;
 
-        if (IS_DEL_SIGNATURE_SET(Queue)) {
+        if (IS_DEL_SIGNATURE_SET(Queue))
+        {
             leave;
         }
-        
+
         // Update the periodic time on the timer
 
-        Timer->Period = UpdatedTimer->Period ;
+        Timer->Period = UpdatedTimer->Period;
 
         // if timer is not in active state, then dont update it
 
-        if ( ! ( Timer->State & STATE_ACTIVE ) ) {
+        if (!(Timer->State & STATE_ACTIVE))
+        {
             leave;
         }
 
         // Get the time remaining on the NT timer
 
-        TimeRemaining = RtlpGetTimeRemaining (TimerHandle) ;
-        QueueRelTimeRemaining = TimeRemaining + RtlpGetQueueRelativeTime (Queue) ;
+        TimeRemaining = RtlpGetTimeRemaining(TimerHandle);
+        QueueRelTimeRemaining = TimeRemaining + RtlpGetQueueRelativeTime(Queue);
 #if DBG
-        if ((RtlpDueTimeMax != 0)
-            && (QueueRelTimeRemaining > RtlpDueTimeMax)) {
+        if ((RtlpDueTimeMax != 0) && (QueueRelTimeRemaining > RtlpDueTimeMax))
+        {
             DbgPrint("\n*** Queue due time %d is greater than max allowed (%d) in RtlpUpdateTimer\n",
-                     QueueRelTimeRemaining,
-                     RtlpDueTimeMax);
+                     QueueRelTimeRemaining, RtlpDueTimeMax);
 
             DbgBreakPoint();
         }
@@ -1960,36 +1833,31 @@ Return Value:
 
         // Update the timer based on the due time
 
-        if (RtlpReOrderDeltaList (&Queue->TimerList, Timer, QueueRelTimeRemaining,
-                                  &NewFiringTime,
-                                  UpdatedTimer->DeltaFiringTime))
+        if (RtlpReOrderDeltaList(&Queue->TimerList, Timer, QueueRelTimeRemaining, &NewFiringTime,
+                                 UpdatedTimer->DeltaFiringTime))
+        {
+
+            // If this update caused the timer at the head of the queue to change, then reinsert
+            // this queue in the list of queues.
+
+            if (RtlpReOrderDeltaList(&TimerQueues, Queue, TimeRemaining, &NewFiringTime, NewFiringTime))
             {
 
-                // If this update caused the timer at the head of the queue to change, then reinsert
-                // this queue in the list of queues.
+                // NT timer needs to be updated since the change caused the queue at the head of
+                // the TimerQueues to change.
 
-                if (RtlpReOrderDeltaList (&TimerQueues, Queue, TimeRemaining, &NewFiringTime, NewFiringTime)) {
-
-                    // NT timer needs to be updated since the change caused the queue at the head of
-                    // the TimerQueues to change.
-
-                    RtlpResetTimer (TimerHandle, NewFiringTime, NULL) ;
-
-                }
-
+                RtlpResetTimer(TimerHandle, NewFiringTime, NULL);
             }
-    } finally {
-        RtlpFreeTPHeap( UpdatedTimer ) ;
+        }
+    }
+    finally
+    {
+        RtlpFreeTPHeap(UpdatedTimer);
     }
 }
 
 NTSTATUS
-RtlUpdateTimer(
-    IN HANDLE TimerQueueHandle,
-    IN HANDLE Timer,
-    IN ULONG  DueTime,
-    IN ULONG  Period
-    )
+RtlUpdateTimer(IN HANDLE TimerQueueHandle, IN HANDLE Timer, IN ULONG DueTime, IN ULONG Period)
 /*++
 
 Routine Description:
@@ -2016,78 +1884,71 @@ Return Value:
 --*/
 {
     NTSTATUS Status;
-    PRTLP_TIMER TmpTimer, ActualTimer=(PRTLP_TIMER)Timer ;
-    PRTLP_TIMER_QUEUE Queue = (PRTLP_TIMER_QUEUE) TimerQueueHandle;
+    PRTLP_TIMER TmpTimer, ActualTimer = (PRTLP_TIMER)Timer;
+    PRTLP_TIMER_QUEUE Queue = (PRTLP_TIMER_QUEUE)TimerQueueHandle;
 
-    if (LdrpShutdownInProgress) {
+    if (LdrpShutdownInProgress)
+    {
         return STATUS_UNSUCCESSFUL;
     }
 
-    if (!TimerQueueHandle) {
+    if (!TimerQueueHandle)
+    {
         return STATUS_INVALID_PARAMETER_1;
     }
 
-    if (!Timer) {
+    if (!Timer)
+    {
         return STATUS_INVALID_PARAMETER_2;
     }
 
     // check if timer queue already deleted
 
-    if (IS_DEL_SIGNATURE_SET(Queue)) {
+    if (IS_DEL_SIGNATURE_SET(Queue))
+    {
         return STATUS_INVALID_HANDLE;
     }
-    
-    CHECK_DEL_SIGNATURE(ActualTimer) ;
 
-    TmpTimer = (PRTLP_TIMER) RtlpAllocateTPHeap (
-                                        sizeof (RTLP_TIMER),
-                                        0
-                                        ) ;
+    CHECK_DEL_SIGNATURE(ActualTimer);
 
-    if (TmpTimer == NULL) {
-        return STATUS_NO_MEMORY ;
+    TmpTimer = (PRTLP_TIMER)RtlpAllocateTPHeap(sizeof(RTLP_TIMER), 0);
+
+    if (TmpTimer == NULL)
+    {
+        return STATUS_NO_MEMORY;
     }
 
     TmpTimer->DeltaFiringTime = DueTime;
     //todo:remove below
-    if (Period==-1) Period = 0;
-    TmpTimer->Period = Period ;
+    if (Period == -1)
+        Period = 0;
+    TmpTimer->Period = Period;
 
 #if DBG1
-    ActualTimer->ThreadId2 = 
-                    HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread) ;
+    ActualTimer->ThreadId2 = HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread);
 #endif
 
 #if DBG
-    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-               RTLP_THREADPOOL_TRACE_MASK,
-               "<%d:%d:%d> Timer: updated by Thread:<%x:%x>\n",
-               ((PRTLP_TIMER)Timer)->Queue->DbgId,
-               ((PRTLP_TIMER)Timer)->DbgId, ((PRTLP_TIMER)Timer)->RefCount,
+    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_TRACE_MASK, "<%d:%d:%d> Timer: updated by Thread:<%x:%x>\n",
+               ((PRTLP_TIMER)Timer)->Queue->DbgId, ((PRTLP_TIMER)Timer)->DbgId, ((PRTLP_TIMER)Timer)->RefCount,
                HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread),
-               HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess)) ;
+               HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess));
 #endif
 
     // queue APC to update timer
 
-    Status = NtQueueApcThread (
-                    TimerThreadHandle,
-                    (PPS_APC_ROUTINE)RtlpUpdateTimer,
-                    (PVOID)Timer, //Actual timer
-                    (PVOID)TmpTimer,
-                    NULL
-                    );
-    if (!NT_SUCCESS (Status)) {
+    Status = NtQueueApcThread(TimerThreadHandle, (PPS_APC_ROUTINE)RtlpUpdateTimer,
+                              (PVOID)Timer, //Actual timer
+                              (PVOID)TmpTimer, NULL);
+    if (!NT_SUCCESS(Status))
+    {
         RtlpFreeTPHeap(TmpTimer);
     }
 
-    return Status ;
+    return Status;
 }
 
-VOID
-RtlpCancelTimer (
-    PRTLP_TIMER Timer
-    )
+VOID RtlpCancelTimer(PRTLP_TIMER Timer)
 /*++
 
 Routine Description:
@@ -2103,15 +1964,11 @@ Return Value:
 
 --*/
 {
-    RtlpCancelTimerEx( Timer, FALSE ) ; // queue not being deleted
+    RtlpCancelTimerEx(Timer, FALSE); // queue not being deleted
 }
 
 NTSTATUS
-RtlDeleteTimer (
-    IN HANDLE TimerQueueHandle,
-    IN HANDLE TimerToCancel,
-    IN HANDLE Event
-    )
+RtlDeleteTimer(IN HANDLE TimerQueueHandle, IN HANDLE TimerToCancel, IN HANDLE Event)
 /*++
 
 Routine Description:
@@ -2142,126 +1999,115 @@ Return Value:
 --*/
 {
     NTSTATUS Status;
-    PRTLP_EVENT CompletionEvent = NULL ;
-    PRTLP_TIMER Timer = (PRTLP_TIMER) TimerToCancel ;
-    ULONG TimerRefCount ;
+    PRTLP_EVENT CompletionEvent = NULL;
+    PRTLP_TIMER Timer = (PRTLP_TIMER)TimerToCancel;
+    ULONG TimerRefCount;
 #if DBG
-    ULONG QueueDbgId ;
+    ULONG QueueDbgId;
 #endif
 
-    if (LdrpShutdownInProgress) {
+    if (LdrpShutdownInProgress)
+    {
         return STATUS_SUCCESS;
     }
 
-    if (!TimerQueueHandle) {
-        return STATUS_INVALID_PARAMETER_1 ;
+    if (!TimerQueueHandle)
+    {
+        return STATUS_INVALID_PARAMETER_1;
     }
-    if (!TimerToCancel) {
-        return STATUS_INVALID_PARAMETER_2 ;
+    if (!TimerToCancel)
+    {
+        return STATUS_INVALID_PARAMETER_2;
     }
 
 #if DBG
-    QueueDbgId = Timer->Queue->DbgId ;
+    QueueDbgId = Timer->Queue->DbgId;
 #endif
 
 
-    CHECK_DEL_SIGNATURE( Timer ) ;
-    SET_DEL_SIGNATURE( Timer ) ;
-    CHECK_DEL_SIGNATURE( (PRTLP_TIMER_QUEUE)TimerQueueHandle ) ;
+    CHECK_DEL_SIGNATURE(Timer);
+    SET_DEL_SIGNATURE(Timer);
+    CHECK_DEL_SIGNATURE((PRTLP_TIMER_QUEUE)TimerQueueHandle);
 
 
-    if (Event == (HANDLE)-1 ) {
+    if (Event == (HANDLE)-1)
+    {
 
         // Get an event from the event cache
 
-        CompletionEvent = RtlpGetWaitEvent () ;
+        CompletionEvent = RtlpGetWaitEvent();
 
-        if (!CompletionEvent) {
+        if (!CompletionEvent)
+        {
 
-            return STATUS_NO_MEMORY ;
+            return STATUS_NO_MEMORY;
         }
     }
 
 #if DBG1
-    Timer->ThreadId2 = HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread) ;
+    Timer->ThreadId2 = HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread);
 #endif
 
 #if DBG
-    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-               RTLP_THREADPOOL_TRACE_MASK,
-               "<%d:%d:%d> Timer: Cancel:(Timer:%x, Event:%x)\n",
-               Timer->Queue->DbgId, Timer->DbgId, Timer->RefCount,
-               (ULONG_PTR)Timer, (ULONG_PTR)Event) ;
+    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_TRACE_MASK, "<%d:%d:%d> Timer: Cancel:(Timer:%x, Event:%x)\n",
+               Timer->Queue->DbgId, Timer->DbgId, Timer->RefCount, (ULONG_PTR)Timer, (ULONG_PTR)Event);
 #endif
 
-    Timer->CompletionEvent = CompletionEvent
-                            ? CompletionEvent->Handle
-                            : Event ;
+    Timer->CompletionEvent = CompletionEvent ? CompletionEvent->Handle : Event;
 
 
     ACQUIRE_GLOBAL_TIMER_LOCK();
-    RtlInterlockedSetBitsDiscardReturn(&Timer->State,
-                                       STATE_DONTFIRE);
-    TimerRefCount = Timer->RefCount ;
+    RtlInterlockedSetBitsDiscardReturn(&Timer->State, STATE_DONTFIRE);
+    TimerRefCount = Timer->RefCount;
     RELEASE_GLOBAL_TIMER_LOCK();
 
 
-    Status = NtQueueApcThread(
-                TimerThreadHandle,
-                (PPS_APC_ROUTINE)RtlpCancelTimer,
-                (PVOID)TimerToCancel,
-                NULL,
-                NULL
-                );
+    Status = NtQueueApcThread(TimerThreadHandle, (PPS_APC_ROUTINE)RtlpCancelTimer, (PVOID)TimerToCancel, NULL, NULL);
 
-    if (! NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        if ( CompletionEvent ) {
-            RtlpFreeWaitEvent( CompletionEvent ) ;
+        if (CompletionEvent)
+        {
+            RtlpFreeWaitEvent(CompletionEvent);
         }
 
-        return Status ;
+        return Status;
     }
 
 
-
-    if ( CompletionEvent ) {
+    if (CompletionEvent)
+    {
 
         // wait for the event to be signalled
 
 #if DBG
-      DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-                 RTLP_THREADPOOL_TRACE_MASK,
-                 "<%d> Timer: %x: Cancel waiting Thread<%d:%d>\n",
-                 QueueDbgId, (ULONG_PTR)Timer,
-                 HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread),
-                 HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess)) ;
+        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_TRACE_MASK,
+                   "<%d> Timer: %x: Cancel waiting Thread<%d:%d>\n", QueueDbgId, (ULONG_PTR)Timer,
+                   HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread),
+                   HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess));
 #endif
 
-        Status = RtlpWaitForEvent( CompletionEvent->Handle,  TimerThreadHandle ) ;
+        Status = RtlpWaitForEvent(CompletionEvent->Handle, TimerThreadHandle);
 
 
 #if DBG
-        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-                   RTLP_THREADPOOL_TRACE_MASK,
-                   "<%d> Timer: %x: Cancel waiting done\n", QueueDbgId,
-                   (ULONG_PTR)Timer) ;
+        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_TRACE_MASK, "<%d> Timer: %x: Cancel waiting done\n",
+                   QueueDbgId, (ULONG_PTR)Timer);
 #endif
 
-        RtlpFreeWaitEvent( CompletionEvent ) ;
+        RtlpFreeWaitEvent(CompletionEvent);
 
-        return NT_SUCCESS(Status) ? STATUS_SUCCESS : Status ;
-
-    } else {
+        return NT_SUCCESS(Status) ? STATUS_SUCCESS : Status;
+    }
+    else
+    {
 
         return (TimerRefCount > 1) ? STATUS_PENDING : STATUS_SUCCESS;
     }
 }
 
-VOID
-RtlpDeleteTimer (
-    PRTLP_TIMER Timer
-    )
+VOID RtlpDeleteTimer(PRTLP_TIMER Timer)
 /*++
 
 Routine Description:
@@ -2279,52 +2125,50 @@ Return Value:
 
 --*/
 {
-    PRTLP_TIMER_QUEUE Queue = Timer->Queue ;
+    PRTLP_TIMER_QUEUE Queue = Timer->Queue;
     HANDLE Event;
 
-    CHECK_SIGNATURE( Timer ) ;
-    CLEAR_SIGNATURE( Timer ) ;
+    CHECK_SIGNATURE(Timer);
+    CLEAR_SIGNATURE(Timer);
 
 #if DBG
-    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-               RTLP_THREADPOOL_TRACE_MASK,
-               "<%d> Timer: %x: deleted\n", Timer->Queue->DbgId,
-               (ULONG_PTR)Timer) ;
+    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_TRACE_MASK, "<%d> Timer: %x: deleted\n", Timer->Queue->DbgId,
+               (ULONG_PTR)Timer);
 #endif
 
     // safe to call this. Either the timer is in the TimersToFireList and
     // the function is being called in time context or else it is not in the
     // list
 
-    RemoveEntryList( &Timer->TimersToFireList ) ;
+    RemoveEntryList(&Timer->TimersToFireList);
 
     Event = Timer->CompletionEvent;
 
     // decrement the total number of timers in the queue
 
-    if ( InterlockedDecrement( &Queue->RefCount ) == 0 )
+    if (InterlockedDecrement(&Queue->RefCount) == 0)
 
-        RtlpDeleteTimerQueueComplete( Queue ) ;
+        RtlpDeleteTimerQueueComplete(Queue);
 
     RtlpTimerReleaseWorker(Timer->Flags);
     if (Timer->ActivationContext != INVALID_ACTIVATION_CONTEXT)
         RtlReleaseActivationContext(Timer->ActivationContext);
 
-    if (Timer->ImpersonationToken) {
+    if (Timer->ImpersonationToken)
+    {
         NtClose(Timer->ImpersonationToken);
     }
 
-    RtlpFreeTPHeap( Timer ) ;
+    RtlpFreeTPHeap(Timer);
 
-    if ( Event ) {
-        NtSetEvent( Event, NULL ) ;
+    if (Event)
+    {
+        NtSetEvent(Event, NULL);
     }
 }
 
 ULONG
-RtlpGetTimeRemaining (
-    HANDLE TimerHandle
-    )
+RtlpGetTimeRemaining(HANDLE TimerHandle)
 /*++
 
 Routine Description:
@@ -2341,25 +2185,23 @@ Return Value:
 
 --*/
 {
-    ULONG InfoLen ;
-    TIMER_BASIC_INFORMATION Info ;
-    NTSTATUS Status ;
+    ULONG InfoLen;
+    TIMER_BASIC_INFORMATION Info;
+    NTSTATUS Status;
     LARGE_INTEGER RemainingTime;
 
-    Status = NtQueryTimer (TimerHandle, TimerBasicInformation, &Info, sizeof(Info), &InfoLen) ;
+    Status = NtQueryTimer(TimerHandle, TimerBasicInformation, &Info, sizeof(Info), &InfoLen);
 
-    if (! NT_SUCCESS(Status)) {
-        ASSERTMSG ("NtQueryTimer failed", Status == STATUS_SUCCESS) ;
+    if (!NT_SUCCESS(Status))
+    {
+        ASSERTMSG("NtQueryTimer failed", Status == STATUS_SUCCESS);
         return 0;
     }
 
 #if DBG
-    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-               RTLP_THREADPOOL_TRACE_MASK,
-               "RtlpGetTimeRemaining: Read SignalState %d, time %p'%p in thread:<%x:%x>\n",
-               Info.TimerState,
-               Info.RemainingTime.HighPart,
-               Info.RemainingTime.LowPart,
+    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_TRACE_MASK,
+               "RtlpGetTimeRemaining: Read SignalState %d, time %p'%p in thread:<%x:%x>\n", Info.TimerState,
+               Info.RemainingTime.HighPart, Info.RemainingTime.LowPart,
                HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread),
                HandleToUlong(NtCurrentTeb()->ClientId.UniqueProcess));
 #endif
@@ -2374,16 +2216,18 @@ Return Value:
     // our signal state, too, instead of trusting the one from the
     // executive.
 
-    if (Info.RemainingTime.QuadPart < 0) {
+    if (Info.RemainingTime.QuadPart < 0)
+    {
 
         // The timer has fired.
 
         return 0;
-
-    } else {
+    }
+    else
+    {
 
         // Capture the remaining time.
-        
+
         RemainingTime = Info.RemainingTime;
 
         // Translate the remaining time from 100ns units to ms,
@@ -2391,36 +2235,29 @@ Return Value:
 
         RemainingTime.QuadPart /= (10 * 1000); /* 100ns per ms */
 
-        if (RemainingTime.QuadPart > PSEUDO_INFINITE_TIME) {
+        if (RemainingTime.QuadPart > PSEUDO_INFINITE_TIME)
+        {
             RemainingTime.QuadPart = PSEUDO_INFINITE_TIME;
         }
 
         ASSERT(RemainingTime.HighPart == 0);
 
 #if DBG
-        if ((RtlpDueTimeMax != 0)
-            && ((ULONG) RemainingTime.LowPart > RtlpDueTimeMax)) {
-            DbgPrint("\n*** Discovered timer due time %d is greater than max allowed (%d)\n",
-                     RemainingTime.LowPart,
+        if ((RtlpDueTimeMax != 0) && ((ULONG)RemainingTime.LowPart > RtlpDueTimeMax))
+        {
+            DbgPrint("\n*** Discovered timer due time %d is greater than max allowed (%d)\n", RemainingTime.LowPart,
                      RtlpDueTimeMax);
 
             DbgBreakPoint();
         }
 #endif
-        
+
         return RemainingTime.LowPart;
-
     }
-
 }
 
 BOOLEAN
-RtlpInsertInDeltaList (
-    PLIST_ENTRY DeltaList,
-    PRTLP_GENERIC_TIMER NewTimer,
-    ULONG TimeRemaining,
-    ULONG *NewFiringTime
-    )
+RtlpInsertInDeltaList(PLIST_ENTRY DeltaList, PRTLP_GENERIC_TIMER NewTimer, ULONG TimeRemaining, ULONG *NewFiringTime)
 /*++
 
 Routine Description:
@@ -2449,100 +2286,96 @@ Return Value:
 
 --*/
 {
-    PLIST_ENTRY Node ;
-    PRTLP_GENERIC_TIMER Temp ;
-    PRTLP_GENERIC_TIMER Head ;
+    PLIST_ENTRY Node;
+    PRTLP_GENERIC_TIMER Temp;
+    PRTLP_GENERIC_TIMER Head;
 
-    if (IsListEmpty (DeltaList)) {
+    if (IsListEmpty(DeltaList))
+    {
 
-        InsertHeadList (DeltaList, &NewTimer->List) ;
+        InsertHeadList(DeltaList, &NewTimer->List);
 
-        *NewFiringTime = NewTimer->DeltaFiringTime ;
+        *NewFiringTime = NewTimer->DeltaFiringTime;
 
-        NewTimer->DeltaFiringTime = 0 ;
+        NewTimer->DeltaFiringTime = 0;
 
-        return TRUE ;
-
+        return TRUE;
     }
 
     // Adjust the head of the list to reflect the time remaining on the NT timer
 
-    Head = CONTAINING_RECORD (DeltaList->Flink, RTLP_GENERIC_TIMER, List) ;
+    Head = CONTAINING_RECORD(DeltaList->Flink, RTLP_GENERIC_TIMER, List);
 
-    Head->DeltaFiringTime += TimeRemaining ;
+    Head->DeltaFiringTime += TimeRemaining;
 
 
     // Find the appropriate location to insert this element in
 
-    for (Node = DeltaList->Flink ; Node != DeltaList ; Node = Node->Flink) {
+    for (Node = DeltaList->Flink; Node != DeltaList; Node = Node->Flink)
+    {
 
-        Temp = CONTAINING_RECORD (Node, RTLP_GENERIC_TIMER, List) ;
+        Temp = CONTAINING_RECORD(Node, RTLP_GENERIC_TIMER, List);
 
 
-        if (Temp->DeltaFiringTime <= NewTimer->DeltaFiringTime) {
+        if (Temp->DeltaFiringTime <= NewTimer->DeltaFiringTime)
+        {
 
-            NewTimer->DeltaFiringTime -= Temp->DeltaFiringTime ;
-
-        } else {
+            NewTimer->DeltaFiringTime -= Temp->DeltaFiringTime;
+        }
+        else
+        {
 
             // found appropriate place to insert this timer
 
-            break ;
-
+            break;
         }
-
     }
 
     // Either we have found the appopriate node to insert before in terms of deltas.
     // OR we have come to the end of the list. Insert this timer here.
 
-    InsertHeadList (Node->Blink, &NewTimer->List) ;
+    InsertHeadList(Node->Blink, &NewTimer->List);
 
 
     // If this isnt the last element in the list - adjust the delta of the
     // next element
 
-    if (Node != DeltaList) {
+    if (Node != DeltaList)
+    {
 
-        Temp->DeltaFiringTime -= NewTimer->DeltaFiringTime ;
-
+        Temp->DeltaFiringTime -= NewTimer->DeltaFiringTime;
     }
 
 
     // Check if element was inserted at head of list
 
-    if (DeltaList->Flink == &NewTimer->List) {
+    if (DeltaList->Flink == &NewTimer->List)
+    {
 
         // Set NewFiringTime to the time in milliseconds when the new head of list
         // should be serviced.
 
-        *NewFiringTime = NewTimer->DeltaFiringTime ;
+        *NewFiringTime = NewTimer->DeltaFiringTime;
 
         // This means the timer must be programmed to service this request
 
-        NewTimer->DeltaFiringTime = 0 ;
+        NewTimer->DeltaFiringTime = 0;
 
-        return TRUE ;
-
-    } else {
+        return TRUE;
+    }
+    else
+    {
 
         // No change to the head of the list, set the delta time back
 
-        Head->DeltaFiringTime -= TimeRemaining ;
+        Head->DeltaFiringTime -= TimeRemaining;
 
-        return FALSE ;
-
+        return FALSE;
     }
-
 }
 
 BOOLEAN
-RtlpRemoveFromDeltaList (
-    PLIST_ENTRY DeltaList,
-    PRTLP_GENERIC_TIMER Timer,
-    ULONG TimeRemaining,
-    ULONG* NewFiringTime
-    )
+RtlpRemoveFromDeltaList(PLIST_ENTRY DeltaList, PRTLP_GENERIC_TIMER Timer, ULONG TimeRemaining, ULONG *NewFiringTime)
 /*++
 
 Routine Description:
@@ -2567,61 +2400,57 @@ Return Value:
 
 --*/
 {
-    PLIST_ENTRY Next ;
-    PRTLP_GENERIC_TIMER Temp ;
+    PLIST_ENTRY Next;
+    PRTLP_GENERIC_TIMER Temp;
 
-    Next = Timer->List.Flink ;
+    Next = Timer->List.Flink;
 
-    RemoveEntryList (&Timer->List) ;
+    RemoveEntryList(&Timer->List);
 
-    if (IsListEmpty (DeltaList)) {
+    if (IsListEmpty(DeltaList))
+    {
 
-        *NewFiringTime = INFINITE_TIME ;
+        *NewFiringTime = INFINITE_TIME;
 
-        return TRUE ;
-
+        return TRUE;
     }
 
-    if (Next == DeltaList)  {
+    if (Next == DeltaList)
+    {
 
         // If we removed the last element in the list nothing to do either
 
-        return FALSE ;
+        return FALSE;
+    }
+    else
+    {
 
-    } else {
+        Temp = CONTAINING_RECORD(Next, RTLP_GENERIC_TIMER, List);
 
-        Temp = CONTAINING_RECORD ( Next, RTLP_GENERIC_TIMER, List) ;
-
-        Temp->DeltaFiringTime += Timer->DeltaFiringTime ;
+        Temp->DeltaFiringTime += Timer->DeltaFiringTime;
 
         // Check if element was removed from head of list
 
-        if (DeltaList->Flink == Next) {
+        if (DeltaList->Flink == Next)
+        {
 
-            *NewFiringTime = Temp->DeltaFiringTime + TimeRemaining ;
+            *NewFiringTime = Temp->DeltaFiringTime + TimeRemaining;
 
-            Temp->DeltaFiringTime = 0 ;
+            Temp->DeltaFiringTime = 0;
 
-            return TRUE ;
-
-        } else {
-
-            return FALSE ;
-
+            return TRUE;
         }
+        else
+        {
 
+            return FALSE;
+        }
     }
-
 }
 
 BOOLEAN
-RtlpReOrderDeltaList (
-    PLIST_ENTRY DeltaList,
-    PRTLP_GENERIC_TIMER Timer,
-    ULONG TimeRemaining,
-    ULONG *NewFiringTime,
-    ULONG ChangedFiringTime
-    )
+RtlpReOrderDeltaList(PLIST_ENTRY DeltaList, PRTLP_GENERIC_TIMER Timer, ULONG TimeRemaining, ULONG *NewFiringTime,
+                     ULONG ChangedFiringTime)
 /*++
 
 Routine Description:
@@ -2650,56 +2479,53 @@ Return Value:
 
 --*/
 {
-    ULONG NewTimeRemaining ;
-    PRTLP_GENERIC_TIMER Temp ;
+    ULONG NewTimeRemaining;
+    PRTLP_GENERIC_TIMER Temp;
 
     // Remove the timer from the list
 
-    if (RtlpRemoveFromDeltaList (DeltaList, Timer, TimeRemaining, NewFiringTime)) {
+    if (RtlpRemoveFromDeltaList(DeltaList, Timer, TimeRemaining, NewFiringTime))
+    {
 
         // If element was removed from the head of the list we should record that
 
-        NewTimeRemaining = *NewFiringTime ;
-
-
-    } else {
+        NewTimeRemaining = *NewFiringTime;
+    }
+    else
+    {
 
         // Element was not removed from head of delta list, the current TimeRemaining is valid
 
-        NewTimeRemaining = TimeRemaining ;
-
+        NewTimeRemaining = TimeRemaining;
     }
 
     // Before inserting Timer, set its delta time to the ChangedFiringTime
 
-    Timer->DeltaFiringTime = ChangedFiringTime ;
+    Timer->DeltaFiringTime = ChangedFiringTime;
 
     // Reinsert this element back in the list
 
-    if (!RtlpInsertInDeltaList (DeltaList, Timer, NewTimeRemaining, NewFiringTime)) {
+    if (!RtlpInsertInDeltaList(DeltaList, Timer, NewTimeRemaining, NewFiringTime))
+    {
 
         // If we did not add at the head of the list, then we should return TRUE if
         // RtlpRemoveFromDeltaList() had returned TRUE. We also update the NewFiringTime to
         // the reflect the new firing time returned by RtlpRemoveFromDeltaList()
 
-        *NewFiringTime = NewTimeRemaining ;
+        *NewFiringTime = NewTimeRemaining;
 
-        return (NewTimeRemaining != TimeRemaining) ;
-
-    } else {
+        return (NewTimeRemaining != TimeRemaining);
+    }
+    else
+    {
 
         // NewFiringTime contains the time the NT timer must be programmed for
 
-        return TRUE ;
-
+        return TRUE;
     }
-
 }
 
-VOID
-RtlpAddTimerQueue (
-    PVOID Queue
-    )
+VOID RtlpAddTimerQueue(PVOID Queue)
 /*++
 
 Routine Description:
@@ -2719,13 +2545,9 @@ Return Value:
 
     // We do nothing here. The newly created queue is free floating until a timer is
     // queued onto it.
-
 }
 
-VOID
-RtlpProcessTimeouts (
-    PRTLP_WAIT_THREAD_CONTROL_BLOCK ThreadCB
-    )
+VOID RtlpProcessTimeouts(PRTLP_WAIT_THREAD_CONTROL_BLOCK ThreadCB)
 /*++
 
 Routine Description:
@@ -2740,159 +2562,123 @@ Return Value:
 
 --*/
 {
-    ULONG NewFiringTime, TimeRemaining ;
-    LIST_ENTRY TimersToFireList ;
-    
+    ULONG NewFiringTime, TimeRemaining;
+    LIST_ENTRY TimersToFireList;
+
     //
     // check if incorrect timer fired
     //
-    if (ThreadCB->Firing64BitTickCount >
-            RtlpGet64BitTickCount(&ThreadCB->Current64BitTickCount) + 200 )
+    if (ThreadCB->Firing64BitTickCount > RtlpGet64BitTickCount(&ThreadCB->Current64BitTickCount) + 200)
     {
-        RtlpResetTimer (ThreadCB->TimerHandle,
-                    RtlpGetTimeRemaining (ThreadCB->TimerHandle),
-                    ThreadCB) ;
+        RtlpResetTimer(ThreadCB->TimerHandle, RtlpGetTimeRemaining(ThreadCB->TimerHandle), ThreadCB);
 
-        return ;
+        return;
     }
 
-    InitializeListHead( &TimersToFireList ) ;
+    InitializeListHead(&TimersToFireList);
 
 
     // Walk thru the timer list and fire all waits with DeltaFiringTime == 0
 
-    RtlpFireTimersAndReorder (&ThreadCB->TimerQueue, &NewFiringTime, &TimersToFireList) ;
+    RtlpFireTimersAndReorder(&ThreadCB->TimerQueue, &NewFiringTime, &TimersToFireList);
 
     // Reset the NT timer
 
-    RtlpResetTimer (ThreadCB->TimerHandle, NewFiringTime, ThreadCB) ;
+    RtlpResetTimer(ThreadCB->TimerHandle, NewFiringTime, ThreadCB);
 
 
-    RtlpFireTimers( &TimersToFireList ) ;
+    RtlpFireTimers(&TimersToFireList);
 }
 
 NTSTATUS
-RtlpTimerCleanup(
-    VOID
-    )
+RtlpTimerCleanup(VOID)
 {
     BOOLEAN Cleanup;
 
-    IS_COMPONENT_INITIALIZED(StartedTimerInitialization,
-                            CompletedTimerInitialization,
-                            Cleanup ) ;
+    IS_COMPONENT_INITIALIZED(StartedTimerInitialization, CompletedTimerInitialization, Cleanup);
 
-    if ( Cleanup ) {
+    if (Cleanup)
+    {
 
-        ACQUIRE_GLOBAL_TIMER_LOCK() ;
+        ACQUIRE_GLOBAL_TIMER_LOCK();
 
-        if (NumTimerQueues != 0 ) {
+        if (NumTimerQueues != 0)
+        {
 
-            RELEASE_GLOBAL_TIMER_LOCK() ;
+            RELEASE_GLOBAL_TIMER_LOCK();
 
-            return STATUS_UNSUCCESSFUL ;
+            return STATUS_UNSUCCESSFUL;
         }
 
-        NtQueueApcThread(
-                TimerThreadHandle,
-                (PPS_APC_ROUTINE)RtlpThreadCleanup,
-                NULL,
-                NULL,
-                NULL
-                );
+        NtQueueApcThread(TimerThreadHandle, (PPS_APC_ROUTINE)RtlpThreadCleanup, NULL, NULL, NULL);
 
-        NtClose( TimerThreadHandle ) ;
-        TimerThreadHandle = NULL ;
+        NtClose(TimerThreadHandle);
+        TimerThreadHandle = NULL;
 
-        RELEASE_GLOBAL_TIMER_LOCK() ;
-
+        RELEASE_GLOBAL_TIMER_LOCK();
     }
 
     return STATUS_SUCCESS;
 }
 
 #if DBG
-VOID
-PrintTimerQueue(PLIST_ENTRY QNode, ULONG Delta, ULONG Count
-    )
+VOID PrintTimerQueue(PLIST_ENTRY QNode, ULONG Delta, ULONG Count)
 {
-    PLIST_ENTRY Tnode ;
-    PRTLP_TIMER Timer ;
-    PRTLP_TIMER_QUEUE Queue ;
+    PLIST_ENTRY Tnode;
+    PRTLP_TIMER Timer;
+    PRTLP_TIMER_QUEUE Queue;
 
-    Queue = CONTAINING_RECORD (QNode, RTLP_TIMER_QUEUE, List) ;
-    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-               RTLP_THREADPOOL_VERBOSE_MASK,
-               "<%1d> Queue: %x FiringTime:%d\n", Count, (ULONG_PTR)Queue,
-               Queue->DeltaFiringTime);
-    for (Tnode=Queue->TimerList.Flink; Tnode!=&Queue->TimerList;
-            Tnode=Tnode->Flink)
+    Queue = CONTAINING_RECORD(QNode, RTLP_TIMER_QUEUE, List);
+    DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_VERBOSE_MASK, "<%1d> Queue: %x FiringTime:%d\n", Count,
+               (ULONG_PTR)Queue, Queue->DeltaFiringTime);
+    for (Tnode = Queue->TimerList.Flink; Tnode != &Queue->TimerList; Tnode = Tnode->Flink)
     {
-        Timer = CONTAINING_RECORD (Tnode, RTLP_TIMER, List) ;
-        Delta += Timer->DeltaFiringTime ;
-        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-                   RTLP_THREADPOOL_VERBOSE_MASK,
-                   "        Timer: %x Delta:%d Period:%d\n",(ULONG_PTR)Timer,
-                   Delta, Timer->Period);
+        Timer = CONTAINING_RECORD(Tnode, RTLP_TIMER, List);
+        Delta += Timer->DeltaFiringTime;
+        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_VERBOSE_MASK, "        Timer: %x Delta:%d Period:%d\n",
+                   (ULONG_PTR)Timer, Delta, Timer->Period);
     }
-
 }
 #endif
 
-VOID
-RtlDebugPrintTimes (
-    )
+VOID RtlDebugPrintTimes()
 {
 #if DBG
-    PLIST_ENTRY QNode ;
-    ULONG Count = 0 ;
-    ULONG Delta = RtlpGetTimeRemaining (TimerHandle) ;
-    ULONG CurrentThreadId =
-                        HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread) ;
+    PLIST_ENTRY QNode;
+    ULONG Count = 0;
+    ULONG Delta = RtlpGetTimeRemaining(TimerHandle);
+    ULONG CurrentThreadId = HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread);
 
     RtlpResync64BitTickCount();
 
-    if (CompletedTimerInitialization != 1) {
+    if (CompletedTimerInitialization != 1)
+    {
 
-        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-                   RTLP_THREADPOOL_ERROR_MASK,
-                   "RtlTimerThread not yet initialized\n");
-        return ;
+        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_ERROR_MASK, "RtlTimerThread not yet initialized\n");
+        return;
     }
 
     if (CurrentThreadId == TimerThreadId)
     {
-        PRTLP_TIMER_QUEUE Queue ;
+        PRTLP_TIMER_QUEUE Queue;
 
-        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-                   RTLP_THREADPOOL_VERBOSE_MASK,
+        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_VERBOSE_MASK,
                    "================Printing timerqueues====================\n");
-        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-                   RTLP_THREADPOOL_VERBOSE_MASK,
-                   "TimeRemaining: %d\n", Delta);
-        for (QNode = TimerQueues.Flink; QNode != &TimerQueues;
-                QNode = QNode->Flink)
+        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_VERBOSE_MASK, "TimeRemaining: %d\n", Delta);
+        for (QNode = TimerQueues.Flink; QNode != &TimerQueues; QNode = QNode->Flink)
         {
-            Queue = CONTAINING_RECORD (QNode, RTLP_TIMER_QUEUE, List) ;
-            Delta += Queue->DeltaFiringTime ;
+            Queue = CONTAINING_RECORD(QNode, RTLP_TIMER_QUEUE, List);
+            Delta += Queue->DeltaFiringTime;
 
             PrintTimerQueue(QNode, Delta, ++Count);
-
         }
-        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-                   RTLP_THREADPOOL_VERBOSE_MASK,
+        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_VERBOSE_MASK,
                    "================Printed ================================\n");
     }
 
     else
     {
-        NtQueueApcThread(
-                    TimerThreadHandle,
-                    (PPS_APC_ROUTINE)RtlDebugPrintTimes,
-                    NULL,
-                    NULL,
-                    NULL
-                    );
+        NtQueueApcThread(TimerThreadHandle, (PPS_APC_ROUTINE)RtlDebugPrintTimes, NULL, NULL, NULL);
     }
 #endif
     return;
@@ -2901,46 +2687,26 @@ RtlDebugPrintTimes (
 /*DO NOT USE THIS FUNCTION: REPLACED BY RTLCREATETIMER*/
 
 NTSTATUS
-RtlSetTimer(
-    IN  HANDLE TimerQueueHandle,
-    OUT HANDLE *Handle,
-    IN  WAITORTIMERCALLBACKFUNC Function,
-    IN  PVOID Context,
-    IN  ULONG  DueTime,
-    IN  ULONG  Period,
-    IN  ULONG  Flags
-    )
+RtlSetTimer(IN HANDLE TimerQueueHandle, OUT HANDLE *Handle, IN WAITORTIMERCALLBACKFUNC Function, IN PVOID Context,
+            IN ULONG DueTime, IN ULONG Period, IN ULONG Flags)
 {
 #if DBG
     static ULONG Count = 0;
-    if (Count++ ==0 ) {
-        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-                   RTLP_THREADPOOL_ERROR_MASK,
-                   "Using obsolete function call: RtlSetTimer\n");
+    if (Count++ == 0)
+    {
+        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_ERROR_MASK, "Using obsolete function call: RtlSetTimer\n");
         DbgBreakPoint();
-        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-                   RTLP_THREADPOOL_ERROR_MASK,
-                   "Using obsolete function call: RtlSetTimer\n");
+        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_ERROR_MASK, "Using obsolete function call: RtlSetTimer\n");
     }
 #endif
 
-    return RtlCreateTimer(TimerQueueHandle,
-                            Handle,
-                            Function,
-                            Context,
-                            DueTime,
-                            Period,
-                            Flags
-                            ) ;
+    return RtlCreateTimer(TimerQueueHandle, Handle, Function, Context, DueTime, Period, Flags);
 }
 
 /*DO NOT USE THIS FUNCTION: REPLACED BY RTLDeleteTimer*/
 
 NTSTATUS
-RtlCancelTimer(
-    IN HANDLE TimerQueueHandle,
-    IN HANDLE TimerToCancel
-    )
+RtlCancelTimer(IN HANDLE TimerQueueHandle, IN HANDLE TimerToCancel)
 /*++
 
 Routine Description:
@@ -2965,16 +2731,15 @@ Return Value:
 {
 #if DBG
     static ULONG Count = 0;
-    if (Count++ ==0) {
-        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-                   RTLP_THREADPOOL_ERROR_MASK,
+    if (Count++ == 0)
+    {
+        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_ERROR_MASK,
                    "Using obsolete function call: RtlCancelTimer\n");
         DbgBreakPoint();
-        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID,
-                   RTLP_THREADPOOL_ERROR_MASK,
+        DbgPrintEx(DPFLTR_RTLTHREADPOOL_ID, RTLP_THREADPOOL_ERROR_MASK,
                    "Using obsolete function call: RtlCancelTimer\n");
     }
 #endif
-    
-    return RtlDeleteTimer( TimerQueueHandle, TimerToCancel, NULL ) ;
+
+    return RtlDeleteTimer(TimerQueueHandle, TimerToCancel, NULL);
 }

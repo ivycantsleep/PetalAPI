@@ -27,51 +27,31 @@ Revision History:
 //
 
 
-#define MAX_ULONGLONG           ((ULONGLONG) -1)
+#define MAX_ULONGLONG ((ULONGLONG) - 1)
 
 //
 // Prototypes
 //
 
 NTSTATUS
-IopDmaInitialize(
-    VOID
-    );
+IopDmaInitialize(VOID);
 
 NTSTATUS
-IopDmaUnpackRequirement(
-    IN PIO_RESOURCE_DESCRIPTOR Descriptor,
-    OUT PULONGLONG Minimum,
-    OUT PULONGLONG Maximum,
-    OUT PULONG Length,
-    OUT PULONG Alignment
-    );
+IopDmaUnpackRequirement(IN PIO_RESOURCE_DESCRIPTOR Descriptor, OUT PULONGLONG Minimum, OUT PULONGLONG Maximum,
+                        OUT PULONG Length, OUT PULONG Alignment);
 
 NTSTATUS
-IopDmaPackResource(
-    IN PIO_RESOURCE_DESCRIPTOR Requirement,
-    IN ULONGLONG Start,
-    OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor
-    );
+IopDmaPackResource(IN PIO_RESOURCE_DESCRIPTOR Requirement, IN ULONGLONG Start,
+                   OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor);
 
-LONG
-IopDmaScoreRequirement(
-    IN PIO_RESOURCE_DESCRIPTOR Descriptor
-    );
+LONG IopDmaScoreRequirement(IN PIO_RESOURCE_DESCRIPTOR Descriptor);
 
 NTSTATUS
-IopDmaUnpackResource(
-    IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor,
-    OUT PULONGLONG Start,
-    OUT PULONG Length
-    );
+IopDmaUnpackResource(IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor, OUT PULONGLONG Start, OUT PULONG Length);
 
 
 BOOLEAN
-IopDmaOverrideConflict(
-    IN PARBITER_INSTANCE Arbiter,
-    IN PARBITER_ALLOCATION_STATE State
-    );
+IopDmaOverrideConflict(IN PARBITER_INSTANCE Arbiter, IN PARBITER_ALLOCATION_STATE State);
 
 //
 // Make everything pageable
@@ -92,9 +72,7 @@ IopDmaOverrideConflict(
 //
 
 NTSTATUS
-IopDmaInitialize(
-    VOID
-    )
+IopDmaInitialize(VOID)
 
 /*++
 
@@ -120,13 +98,9 @@ Return Value:
     IopRootDmaArbiter.ScoreRequirement = IopDmaScoreRequirement;
     IopRootDmaArbiter.OverrideConflict = IopDmaOverrideConflict;
 
-    return ArbInitializeArbiterInstance(&IopRootDmaArbiter,
-                                        NULL,
-                                        CmResourceTypeDma,
-                                        L"RootDMA",
-                                        L"Root",
-                                        NULL    // no translation of DMA
-                                       );
+    return ArbInitializeArbiterInstance(&IopRootDmaArbiter, NULL, CmResourceTypeDma, L"RootDMA", L"Root",
+                                        NULL // no translation of DMA
+    );
 }
 
 //
@@ -134,13 +108,8 @@ Return Value:
 //
 
 NTSTATUS
-IopDmaUnpackRequirement(
-    IN PIO_RESOURCE_DESCRIPTOR Descriptor,
-    OUT PULONGLONG Minimum,
-    OUT PULONGLONG Maximum,
-    OUT PULONG Length,
-    OUT PULONG Alignment
-    )
+IopDmaUnpackRequirement(IN PIO_RESOURCE_DESCRIPTOR Descriptor, OUT PULONGLONG Minimum, OUT PULONGLONG Maximum,
+                        OUT PULONG Length, OUT PULONG Alignment)
 
 /*++
 
@@ -172,26 +141,18 @@ Return Value:
     ASSERT(Descriptor);
     ASSERT(Descriptor->Type == CmResourceTypeDma);
 
-    ARB_PRINT(2,
-                ("Unpacking DMA requirement %p => 0x%I64x-0x%I64x\n",
-                Descriptor,
-                (ULONGLONG) Descriptor->u.Dma.MinimumChannel,
-                (ULONGLONG) Descriptor->u.Dma.MaximumChannel
-                ));
+    ARB_PRINT(2, ("Unpacking DMA requirement %p => 0x%I64x-0x%I64x\n", Descriptor,
+                  (ULONGLONG)Descriptor->u.Dma.MinimumChannel, (ULONGLONG)Descriptor->u.Dma.MaximumChannel));
 
-    *Minimum = (ULONGLONG) Descriptor->u.Dma.MinimumChannel;
-    *Maximum = (ULONGLONG) Descriptor->u.Dma.MaximumChannel;
+    *Minimum = (ULONGLONG)Descriptor->u.Dma.MinimumChannel;
+    *Maximum = (ULONGLONG)Descriptor->u.Dma.MaximumChannel;
     *Length = 1;
     *Alignment = 1;
 
     return STATUS_SUCCESS;
-
 }
 
-LONG
-IopDmaScoreRequirement(
-    IN PIO_RESOURCE_DESCRIPTOR Descriptor
-    )
+LONG IopDmaScoreRequirement(IN PIO_RESOURCE_DESCRIPTOR Descriptor)
 
 /*++
 
@@ -220,21 +181,14 @@ Return Value:
 
     score = Descriptor->u.Dma.MaximumChannel - Descriptor->u.Dma.MinimumChannel;
 
-    ARB_PRINT(2,
-                ("Scoring DMA resource %p => %i\n",
-                Descriptor,
-                score
-                ));
+    ARB_PRINT(2, ("Scoring DMA resource %p => %i\n", Descriptor, score));
 
     return score;
 }
 
 NTSTATUS
-IopDmaPackResource(
-    IN PIO_RESOURCE_DESCRIPTOR Requirement,
-    IN ULONGLONG Start,
-    OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor
-    )
+IopDmaPackResource(IN PIO_RESOURCE_DESCRIPTOR Requirement, IN ULONGLONG Start,
+                   OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor)
 
 /*++
 
@@ -262,27 +216,19 @@ Return Value:
     ASSERT(Requirement);
     ASSERT(Requirement->Type == CmResourceTypeDma);
 
-    ARB_PRINT(2,
-                ("Packing DMA resource %p => 0x%I64x\n",
-                Descriptor,
-                Start
-                ));
+    ARB_PRINT(2, ("Packing DMA resource %p => 0x%I64x\n", Descriptor, Start));
 
     Descriptor->Type = CmResourceTypeDma;
     Descriptor->ShareDisposition = Requirement->ShareDisposition;
     Descriptor->Flags = Requirement->Flags;
-    Descriptor->u.Dma.Channel = (ULONG) Start;
+    Descriptor->u.Dma.Channel = (ULONG)Start;
     Descriptor->u.Dma.Port = 0;
 
     return STATUS_SUCCESS;
 }
 
 NTSTATUS
-IopDmaUnpackResource(
-    IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor,
-    OUT PULONGLONG Start,
-    OUT PULONG Length
-    )
+IopDmaUnpackResource(IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor, OUT PULONGLONG Start, OUT PULONG Length)
 
 /*++
 
@@ -309,22 +255,14 @@ Return Value:
     *Start = Descriptor->u.Dma.Channel;
     *Length = 1;
 
-    ARB_PRINT(2,
-                ("Unpacking DMA resource %p => 0x%I64x\n",
-                Descriptor,
-                *Start
-                ));
+    ARB_PRINT(2, ("Unpacking DMA resource %p => 0x%I64x\n", Descriptor, *Start));
 
     return STATUS_SUCCESS;
-
 }
 
 
 BOOLEAN
-IopDmaOverrideConflict(
-    IN PARBITER_INSTANCE Arbiter,
-    IN PARBITER_ALLOCATION_STATE State
-    )
+IopDmaOverrideConflict(IN PARBITER_INSTANCE Arbiter, IN PARBITER_ALLOCATION_STATE State)
 
 /*++
 
@@ -345,11 +283,10 @@ Return Value:
 --*/
 
 {
-    UNREFERENCED_PARAMETER( Arbiter );
-    UNREFERENCED_PARAMETER( State );
+    UNREFERENCED_PARAMETER(Arbiter);
+    UNREFERENCED_PARAMETER(State);
 
     PAGED_CODE();
 
     return FALSE;
 }
-

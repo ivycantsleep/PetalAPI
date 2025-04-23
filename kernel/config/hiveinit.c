@@ -22,25 +22,18 @@ Revision History:
         Implementation of bin-size chunk loading of hives.
 --*/
 
-#include    "cmp.h"
+#include "cmp.h"
 
-VOID
-HvpFillFileName(
-    PHBASE_BLOCK            BaseBlock,
-    PUNICODE_STRING         FileName
-    );
+VOID HvpFillFileName(PHBASE_BLOCK BaseBlock, PUNICODE_STRING FileName);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,HvInitializeHive)
-#pragma alloc_text(PAGE,HvpFillFileName)
-#pragma alloc_text(PAGE,HvpFreeAllocatedBins)
+#pragma alloc_text(PAGE, HvInitializeHive)
+#pragma alloc_text(PAGE, HvpFillFileName)
+#pragma alloc_text(PAGE, HvpFreeAllocatedBins)
 #endif
 
 // Dragos: Modified functions
-VOID
-HvpFreeAllocatedBins(
-    PHHIVE Hive
-    )
+VOID HvpFreeAllocatedBins(PHHIVE Hive)
 /*++
 
 Routine Description:
@@ -59,76 +52,73 @@ Return Value:
 
 --*/
 {
-    ULONG           Length;
-    PHBIN           Bin;
-    ULONG           MapSlots;
-    ULONG           Tables;
-    PHMAP_ENTRY     Me;
-    PHMAP_TABLE     Tab;
-    ULONG           i;
-    ULONG           j;
+    ULONG Length;
+    PHBIN Bin;
+    ULONG MapSlots;
+    ULONG Tables;
+    PHMAP_ENTRY Me;
+    PHMAP_TABLE Tab;
+    ULONG i;
+    ULONG j;
 
     //
     // calculate the number of tables in the map
     //
     Length = Hive->Storage[Stable].Length;
     MapSlots = Length / HBLOCK_SIZE;
-    if( MapSlots > 0 ) {
-        Tables = (MapSlots-1) / HTABLE_SLOTS;
-    } else {
+    if (MapSlots > 0)
+    {
+        Tables = (MapSlots - 1) / HTABLE_SLOTS;
+    }
+    else
+    {
         Tables = 0;
     }
 
-    if( Hive->Storage[Stable].Map ) {
+    if (Hive->Storage[Stable].Map)
+    {
         //
-        // iterate through the directory 
+        // iterate through the directory
         //
-        for (i = 0; i <= Tables; i++) {
+        for (i = 0; i <= Tables; i++)
+        {
             Tab = Hive->Storage[Stable].Map->Directory[i];
 
             ASSERT(Tab);
-            
+
             //
             // iterate through the slots in the directory
             //
-            for(j=0;j<HTABLE_SLOTS;j++) {
+            for (j = 0; j < HTABLE_SLOTS; j++)
+            {
                 Me = &(Tab->Table[j]);
                 //
                 // BinAddress non-zero means allocated bin
                 //
-                if( Me->BinAddress ) {
+                if (Me->BinAddress)
+                {
                     //
                     // a bin is freed if it is a new alloc AND it resides in paged pool
                     //
-                    if( (Me->BinAddress & HMAP_NEWALLOC) && (Me->BinAddress & HMAP_INPAGEDPOOL) ) {
+                    if ((Me->BinAddress & HMAP_NEWALLOC) && (Me->BinAddress & HMAP_INPAGEDPOOL))
+                    {
                         Bin = (PHBIN)HBIN_BASE(Me->BinAddress);
-                        (Hive->Free)(Bin, HvpGetBinMemAlloc(Hive,Bin,Stable));
+                        (Hive->Free)(Bin, HvpGetBinMemAlloc(Hive, Bin, Stable));
                     }
-                    
+
                     Me->BinAddress = 0;
                 }
             }
         }
     }
-   
 }
 
 NTSTATUS
-HvInitializeHive(
-    PHHIVE                  Hive,
-    ULONG                   OperationType,
-    ULONG                   HiveFlags,
-    ULONG                   FileType,
-    PVOID                   HiveData OPTIONAL,
-    PALLOCATE_ROUTINE       AllocateRoutine,
-    PFREE_ROUTINE           FreeRoutine,
-    PFILE_SET_SIZE_ROUTINE  FileSetSizeRoutine,
-    PFILE_WRITE_ROUTINE     FileWriteRoutine,
-    PFILE_READ_ROUTINE      FileReadRoutine,
-    PFILE_FLUSH_ROUTINE     FileFlushRoutine,
-    ULONG                   Cluster,
-    PUNICODE_STRING         FileName OPTIONAL
-    )
+HvInitializeHive(PHHIVE Hive, ULONG OperationType, ULONG HiveFlags, ULONG FileType, PVOID HiveData OPTIONAL,
+                 PALLOCATE_ROUTINE AllocateRoutine, PFREE_ROUTINE FreeRoutine,
+                 PFILE_SET_SIZE_ROUTINE FileSetSizeRoutine, PFILE_WRITE_ROUTINE FileWriteRoutine,
+                 PFILE_READ_ROUTINE FileReadRoutine, PFILE_FLUSH_ROUTINE FileFlushRoutine, ULONG Cluster,
+                 PUNICODE_STRING FileName OPTIONAL)
 /*++
 
 Routine Description:
@@ -246,34 +236,27 @@ Return Value:
 
 --*/
 {
-    BOOLEAN         UseForIo;
-    PHBASE_BLOCK    BaseBlock = NULL;
-    NTSTATUS        Status;
-    ULONG           i;
-    ULONG           Alignment;
+    BOOLEAN UseForIo;
+    PHBASE_BLOCK BaseBlock = NULL;
+    NTSTATUS Status;
+    ULONG i;
+    ULONG Alignment;
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_INIT,"HvInitializeHive:\n"));
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_INIT,"\tHive=%p\n", Hive));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_INIT, "HvInitializeHive:\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_INIT, "\tHive=%p\n", Hive));
 
     //
     // reject invalid parameter combinations
     //
-    if ( (! ARGUMENT_PRESENT(HiveData)) &&
-         ((OperationType == HINIT_MEMORY) ||
-          (OperationType == HINIT_FLAT) ||
-          (OperationType == HINIT_MEMORY_INPLACE))
-       )
+    if ((!ARGUMENT_PRESENT(HiveData)) &&
+        ((OperationType == HINIT_MEMORY) || (OperationType == HINIT_FLAT) || (OperationType == HINIT_MEMORY_INPLACE)))
     {
         return STATUS_INVALID_PARAMETER;
     }
 
-    if ( ! ((OperationType == HINIT_CREATE) ||
-            (OperationType == HINIT_MEMORY) ||
-            (OperationType == HINIT_MEMORY_INPLACE) ||
-            (OperationType == HINIT_FLAT) ||
-            (OperationType == HINIT_FILE) ||
-            (OperationType == HINIT_MAPFILE))
-       )
+    if (!((OperationType == HINIT_CREATE) || (OperationType == HINIT_MEMORY) ||
+          (OperationType == HINIT_MEMORY_INPLACE) || (OperationType == HINIT_FLAT) || (OperationType == HINIT_FILE) ||
+          (OperationType == HINIT_MAPFILE)))
     {
         return STATUS_INVALID_PARAMETER;
     }
@@ -293,13 +276,15 @@ Return Value:
 
     Hive->Log = (BOOLEAN)((FileType == HFILE_TYPE_LOG) ? TRUE : FALSE);
 
-    if (Hive->Log  && (HiveFlags & HIVE_VOLATILE)) {
+    if (Hive->Log && (HiveFlags & HIVE_VOLATILE))
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
     Hive->HiveFlags = HiveFlags;
 
-    if ((Cluster == 0) || (Cluster > HSECTOR_COUNT)) {
+    if ((Cluster == 0) || (Cluster > HSECTOR_COUNT))
+    {
         return STATUS_INVALID_PARAMETER;
     }
     Hive->Cluster = Cluster;
@@ -310,28 +295,30 @@ Return Value:
 
 
     Hive->Storage[Volatile].Length = 0;
-#ifdef  HV_TRACK_FREE_SPACE
-	Hive->Storage[Volatile].FreeStorage = 0;
+#ifdef HV_TRACK_FREE_SPACE
+    Hive->Storage[Volatile].FreeStorage = 0;
 #endif
     Hive->Storage[Volatile].Map = NULL;
     Hive->Storage[Volatile].SmallDir = NULL;
     Hive->Storage[Volatile].Guard = (ULONG)-1;
     Hive->Storage[Volatile].FreeSummary = 0;
     InitializeListHead(&Hive->Storage[Volatile].FreeBins);
-    for (i = 0; i < HHIVE_FREE_DISPLAY_SIZE; i++) {
+    for (i = 0; i < HHIVE_FREE_DISPLAY_SIZE; i++)
+    {
         RtlInitializeBitMap(&(Hive->Storage[Volatile].FreeDisplay[i]), NULL, 0);
     }
 
     Hive->Storage[Stable].Length = 0;
-#ifdef  HV_TRACK_FREE_SPACE
-	Hive->Storage[Stable].FreeStorage = 0;
+#ifdef HV_TRACK_FREE_SPACE
+    Hive->Storage[Stable].FreeStorage = 0;
 #endif
     Hive->Storage[Stable].Map = NULL;
     Hive->Storage[Stable].SmallDir = NULL;
     Hive->Storage[Stable].Guard = (ULONG)-1;
     Hive->Storage[Stable].FreeSummary = 0;
     InitializeListHead(&Hive->Storage[Stable].FreeBins);
-    for (i = 0; i < HHIVE_FREE_DISPLAY_SIZE; i++) {
+    for (i = 0; i < HHIVE_FREE_DISPLAY_SIZE; i++)
+    {
         RtlInitializeBitMap(&(Hive->Storage[Stable].FreeDisplay[i]), NULL, 0);
     }
 
@@ -344,15 +331,17 @@ Return Value:
     Hive->ReleaseCellRoutine = NULL;
     Hive->Flat = FALSE;
     Hive->ReadOnly = FALSE;
-    UseForIo = (BOOLEAN)!(Hive->HiveFlags & HIVE_VOLATILE);
+    UseForIo = (BOOLEAN) !(Hive->HiveFlags & HIVE_VOLATILE);
 
     //
     // new create case
     //
-    if (OperationType == HINIT_CREATE) {
+    if (OperationType == HINIT_CREATE)
+    {
 
-        BaseBlock = (PHBASE_BLOCK)((Hive->Allocate)(sizeof(HBASE_BLOCK), UseForIo,CM_FIND_LEAK_TAG11));
-        if (BaseBlock == NULL) {
+        BaseBlock = (PHBASE_BLOCK)((Hive->Allocate)(sizeof(HBASE_BLOCK), UseForIo, CM_FIND_LEAK_TAG11));
+        if (BaseBlock == NULL)
+        {
             return STATUS_INSUFFICIENT_RESOURCES;
         }
         //
@@ -360,10 +349,12 @@ Return Value:
         // harder to get an aligned buffer.
         //
         Alignment = Cluster * HSECTOR_SIZE - 1;
-        if (((ULONG_PTR)BaseBlock & Alignment) != 0) {
+        if (((ULONG_PTR)BaseBlock & Alignment) != 0)
+        {
             (Hive->Free)(BaseBlock, sizeof(HBASE_BLOCK));
-            BaseBlock = (PHBASE_BLOCK)((Hive->Allocate)(PAGE_SIZE, TRUE,CM_FIND_LEAK_TAG12));
-            if (BaseBlock == NULL) {
+            BaseBlock = (PHBASE_BLOCK)((Hive->Allocate)(PAGE_SIZE, TRUE, CM_FIND_LEAK_TAG12));
+            if (BaseBlock == NULL)
+            {
                 return STATUS_INSUFFICIENT_RESOURCES;
             }
 
@@ -398,7 +389,8 @@ Return Value:
     //
     // flat image case
     //
-    if (OperationType == HINIT_FLAT) {
+    if (OperationType == HINIT_FLAT)
+    {
         Hive->BaseBlock = (PHBASE_BLOCK)HiveData;
         Hive->Version = Hive->BaseBlock->Minor;
         Hive->Flat = TRUE;
@@ -416,18 +408,14 @@ Return Value:
     //
     // readonly image case
     //
-    if (OperationType == HINIT_MEMORY_INPLACE) {
+    if (OperationType == HINIT_MEMORY_INPLACE)
+    {
         BaseBlock = (PHBASE_BLOCK)HiveData;
 
-        if ( (BaseBlock->Signature != HBASE_BLOCK_SIGNATURE)    ||
-             (BaseBlock->Type != HFILE_TYPE_PRIMARY)            ||
-             (BaseBlock->Major != HSYS_MAJOR)                   ||
-             (BaseBlock->Minor > HSYS_MINOR_SUPPORTED)          ||
-             (BaseBlock->Format != HBASE_FORMAT_MEMORY)         ||
-             (BaseBlock->Sequence1 != BaseBlock->Sequence2)     ||
-             (HvpHeaderCheckSum(BaseBlock) !=
-              (BaseBlock->CheckSum))
-           )
+        if ((BaseBlock->Signature != HBASE_BLOCK_SIGNATURE) || (BaseBlock->Type != HFILE_TYPE_PRIMARY) ||
+            (BaseBlock->Major != HSYS_MAJOR) || (BaseBlock->Minor > HSYS_MINOR_SUPPORTED) ||
+            (BaseBlock->Format != HBASE_FORMAT_MEMORY) || (BaseBlock->Sequence1 != BaseBlock->Sequence2) ||
+            (HvpHeaderCheckSum(BaseBlock) != (BaseBlock->CheckSum)))
         {
             return STATUS_REGISTRY_CORRUPT;
         }
@@ -437,53 +425,50 @@ Return Value:
         Hive->ReadOnly = TRUE;
         Hive->StorageTypeCount = 1;
         Hive->BaseBlock->BootType = 0;
-        Status = HvpAdjustHiveFreeDisplay(Hive,BaseBlock->Length,Stable);
-        if( !NT_SUCCESS(Status) ) {
+        Status = HvpAdjustHiveFreeDisplay(Hive, BaseBlock->Length, Stable);
+        if (!NT_SUCCESS(Status))
+        {
             return Status;
         }
 
-        if ( !NT_SUCCESS(HvpBuildMap(
-                            Hive,
-                            (PUCHAR)HiveData + HBLOCK_SIZE
-                            )))
+        if (!NT_SUCCESS(HvpBuildMap(Hive, (PUCHAR)HiveData + HBLOCK_SIZE)))
         {
             return STATUS_REGISTRY_CORRUPT;
         }
 
-        return(STATUS_SUCCESS);
+        return (STATUS_SUCCESS);
     }
 
     //
     // memory copy case
     //
-    if (OperationType == HINIT_MEMORY) {
+    if (OperationType == HINIT_MEMORY)
+    {
         BaseBlock = (PHBASE_BLOCK)HiveData;
 
-        if ( (BaseBlock->Signature != HBASE_BLOCK_SIGNATURE)    ||
-             (BaseBlock->Type != HFILE_TYPE_PRIMARY)            ||
-             (BaseBlock->Format != HBASE_FORMAT_MEMORY)         ||
-             (BaseBlock->Major != HSYS_MAJOR)                   ||
-             (BaseBlock->Minor > HSYS_MINOR_SUPPORTED)          ||
-             (HvpHeaderCheckSum(BaseBlock) !=
-              (BaseBlock->CheckSum))
-           )
+        if ((BaseBlock->Signature != HBASE_BLOCK_SIGNATURE) || (BaseBlock->Type != HFILE_TYPE_PRIMARY) ||
+            (BaseBlock->Format != HBASE_FORMAT_MEMORY) || (BaseBlock->Major != HSYS_MAJOR) ||
+            (BaseBlock->Minor > HSYS_MINOR_SUPPORTED) || (HvpHeaderCheckSum(BaseBlock) != (BaseBlock->CheckSum)))
         {
             return STATUS_REGISTRY_CORRUPT;
         }
 
-        Hive->BaseBlock = (PHBASE_BLOCK)((Hive->Allocate)(sizeof(HBASE_BLOCK), UseForIo,CM_FIND_LEAK_TAG13));
-        if (Hive->BaseBlock==NULL) {
-            return(STATUS_INSUFFICIENT_RESOURCES);
+        Hive->BaseBlock = (PHBASE_BLOCK)((Hive->Allocate)(sizeof(HBASE_BLOCK), UseForIo, CM_FIND_LEAK_TAG13));
+        if (Hive->BaseBlock == NULL)
+        {
+            return (STATUS_INSUFFICIENT_RESOURCES);
         }
         //
         // Make sure the buffer we got back is cluster-aligned. If not, try
         // harder to get an aligned buffer.
         //
         Alignment = Cluster * HSECTOR_SIZE - 1;
-        if (((ULONG_PTR)Hive->BaseBlock & Alignment) != 0) {
+        if (((ULONG_PTR)Hive->BaseBlock & Alignment) != 0)
+        {
             (Hive->Free)(Hive->BaseBlock, sizeof(HBASE_BLOCK));
-            Hive->BaseBlock = (PHBASE_BLOCK)((Hive->Allocate)(PAGE_SIZE, TRUE,CM_FIND_LEAK_TAG14));
-            if (Hive->BaseBlock == NULL) {
+            Hive->BaseBlock = (PHBASE_BLOCK)((Hive->Allocate)(PAGE_SIZE, TRUE, CM_FIND_LEAK_TAG14));
+            if (Hive->BaseBlock == NULL)
+            {
                 return (STATUS_INSUFFICIENT_RESOURCES);
             }
         }
@@ -493,15 +478,16 @@ Return Value:
 
         Hive->Version = Hive->BaseBlock->Minor;
 
-        Status = HvpAdjustHiveFreeDisplay(Hive,BaseBlock->Length,Stable);
-        if( !NT_SUCCESS(Status) ) {
+        Status = HvpAdjustHiveFreeDisplay(Hive, BaseBlock->Length, Stable);
+        if (!NT_SUCCESS(Status))
+        {
             (Hive->Free)(Hive->BaseBlock, sizeof(HBASE_BLOCK));
             Hive->BaseBlock = NULL;
             return Status;
         }
 
-        if ( !NT_SUCCESS(HvpBuildMapAndCopy(Hive,
-                                            (PUCHAR)HiveData + HBLOCK_SIZE))) {
+        if (!NT_SUCCESS(HvpBuildMapAndCopy(Hive, (PUCHAR)HiveData + HBLOCK_SIZE)))
+        {
 
             (Hive->Free)(Hive->BaseBlock, sizeof(HBASE_BLOCK));
             Hive->BaseBlock = NULL;
@@ -509,33 +495,37 @@ Return Value:
         }
 
         HvpFillFileName(Hive->BaseBlock, FileName);
-        
-      
-        return(STATUS_SUCCESS);
+
+
+        return (STATUS_SUCCESS);
     }
 
 #ifndef CM_ENABLE_MAPPED_VIEWS
-    if( OperationType == HINIT_MAPFILE ) {
+    if (OperationType == HINIT_MAPFILE)
+    {
         OperationType = HINIT_FILE;
     }
 #endif //CM_ENABLE_MAPPED_VIEWS
     //
     // file read case
     //
-    if (OperationType == HINIT_FILE) {
+    if (OperationType == HINIT_FILE)
+    {
 
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BIN_MAP,"HvInitializeHive(%wZ,HINIT_FILE) :\n", FileName));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BIN_MAP, "HvInitializeHive(%wZ,HINIT_FILE) :\n", FileName));
         //
         // get the file image (possible recovered via log) into memory
         //
         Status = HvLoadHive(Hive);
-        if ((Status != STATUS_SUCCESS) && (Status != STATUS_REGISTRY_RECOVERED)) {
+        if ((Status != STATUS_SUCCESS) && (Status != STATUS_REGISTRY_RECOVERED))
+        {
             return Status;
         }
 
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BIN_MAP,"\n"));
-        
-        if (Status == STATUS_REGISTRY_RECOVERED) {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BIN_MAP, "\n"));
+
+        if (Status == STATUS_REGISTRY_RECOVERED)
+        {
 
             //
             // We have a good hive, with a log, and a dirty map,
@@ -544,12 +534,13 @@ Return Value:
             // posted against the hive.  Since we know we have
             // a good log in hand, we just write the hive image.
             //
-            if ( ! HvpDoWriteHive(Hive, HFILE_TYPE_PRIMARY)) {
+            if (!HvpDoWriteHive(Hive, HFILE_TYPE_PRIMARY))
+            {
                 //
-                // DRAGOS: Here we need cleanup 
-                // Clean up the bins already allocated 
+                // DRAGOS: Here we need cleanup
+                // Clean up the bins already allocated
                 //
-                HvpFreeAllocatedBins( Hive );
+                HvpFreeAllocatedBins(Hive);
 
                 return STATUS_REGISTRY_IO_FAILED;
             }
@@ -561,7 +552,7 @@ Return Value:
             //
             RtlClearAllBits(&(Hive->DirtyVector));
             Hive->DirtyCount = 0;
-            (Hive->FileSetSize)(Hive, HFILE_TYPE_LOG, 0,0);
+            (Hive->FileSetSize)(Hive, HFILE_TYPE_LOG, 0, 0);
             Hive->LogSize = 0;
         }
 
@@ -576,21 +567,24 @@ Return Value:
     //
     // file map case
     //
-    if (OperationType == HINIT_MAPFILE) {
+    if (OperationType == HINIT_MAPFILE)
+    {
 
         Hive->GetCellRoutine = HvpGetCellMapped;
         Hive->ReleaseCellRoutine = HvpReleaseCellMapped;
 
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BIN_MAP,"HvInitializeHive(%wZ,HINIT_MAPFILE) :\n", FileName));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BIN_MAP, "HvInitializeHive(%wZ,HINIT_MAPFILE) :\n", FileName));
 
         Status = HvMapHive(Hive);
-        if ((Status != STATUS_SUCCESS) && (Status != STATUS_REGISTRY_RECOVERED)) {
+        if ((Status != STATUS_SUCCESS) && (Status != STATUS_REGISTRY_RECOVERED))
+        {
             return Status;
         }
 
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BIN_MAP,"\n"));
-        
-        if (Status == STATUS_REGISTRY_RECOVERED) {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BIN_MAP, "\n"));
+
+        if (Status == STATUS_REGISTRY_RECOVERED)
+        {
 
             //
             // We have a good hive, with a log, and a dirty map,
@@ -599,12 +593,13 @@ Return Value:
             // posted against the hive.  Since we know we have
             // a good log in hand, we just write the hive image.
             //
-            if ( ! HvpDoWriteHive(Hive, HFILE_TYPE_PRIMARY)) {
+            if (!HvpDoWriteHive(Hive, HFILE_TYPE_PRIMARY))
+            {
                 //
-                // DRAGOS: Here we need cleanup 
-                // Clean up the bins already allocated 
+                // DRAGOS: Here we need cleanup
+                // Clean up the bins already allocated
                 //
-                HvpFreeAllocatedBins( Hive );
+                HvpFreeAllocatedBins(Hive);
 
                 return STATUS_REGISTRY_IO_FAILED;
             }
@@ -616,7 +611,7 @@ Return Value:
             //
             RtlClearAllBits(&(Hive->DirtyVector));
             Hive->DirtyCount = 0;
-            (Hive->FileSetSize)(Hive, HFILE_TYPE_LOG, 0,0);
+            (Hive->FileSetSize)(Hive, HFILE_TYPE_LOG, 0, 0);
             Hive->LogSize = 0;
         }
 
@@ -631,11 +626,7 @@ Return Value:
     return STATUS_INVALID_PARAMETER;
 }
 
-VOID
-HvpFillFileName(
-    PHBASE_BLOCK            BaseBlock,
-    PUNICODE_STRING         FileName
-    )
+VOID HvpFillFileName(PHBASE_BLOCK BaseBlock, PUNICODE_STRING FileName)
 /*++
 
 Routine Description:
@@ -656,33 +647,33 @@ Return Value:
 
 --*/
 {
-    ULONG   offset;
-    ULONG   length;
-    PUCHAR  sptr;
+    ULONG offset;
+    ULONG length;
+    PUCHAR sptr;
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_HIVE,"HvpFillFileName: %wZ\n", FileName));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_HIVE, "HvpFillFileName: %wZ\n", FileName));
 
-    RtlZeroMemory((PVOID)&(BaseBlock->FileName[0]), HBASE_NAME_ALLOC);
+    RtlZeroMemory((PVOID) & (BaseBlock->FileName[0]), HBASE_NAME_ALLOC);
 
-    if (FileName == NULL) {
+    if (FileName == NULL)
+    {
         return;
     }
 
     //
     // Account for 0 at the end, so we have nice debug spews
     //
-    if (FileName->Length < HBASE_NAME_ALLOC) {
+    if (FileName->Length < HBASE_NAME_ALLOC)
+    {
         offset = 0;
         length = FileName->Length;
-    } else {
+    }
+    else
+    {
         offset = FileName->Length - HBASE_NAME_ALLOC + sizeof(WCHAR);
         length = HBASE_NAME_ALLOC - sizeof(WCHAR);
     }
 
-    sptr = (PUCHAR)&(FileName->Buffer[0]);
-    RtlCopyMemory(
-        (PVOID)&(BaseBlock->FileName[0]),
-        (PVOID)&(sptr[offset]),
-        length
-        );
+    sptr = (PUCHAR) & (FileName->Buffer[0]);
+    RtlCopyMemory((PVOID) & (BaseBlock->FileName[0]), (PVOID) & (sptr[offset]), length);
 }

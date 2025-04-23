@@ -29,8 +29,7 @@ GetHandleContext(HANDLE handle)
     return FALSE;
 }
 
-BOOL
-SetHandleContext(HANDLE handle, DWORD context)
+BOOL SetHandleContext(HANDLE handle, DWORD context)
 {
     KdPrintEx((DPFLTR_SYSTEM_ID, DPFLTR_ERROR_LEVEL, "Unsupported API - kernel32!SetHandleContext() called\n"));
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);

@@ -28,22 +28,23 @@ Revision History:
 #include <pshpack1.h>
 
 
-#define EFI_PARTITION_TABLE_SIGNATURE   (0x5452415020494645)
-#define EFI_PARTITION_TABLE_REVISION    (0x0010000)
+#define EFI_PARTITION_TABLE_SIGNATURE (0x5452415020494645)
+#define EFI_PARTITION_TABLE_REVISION (0x0010000)
 
 //
 // This is the PartitionType in the boot record for an EFI-partitioned disk.
 //
 
-#define EFI_MBR_PARTITION_TYPE          (0xEE)
+#define EFI_MBR_PARTITION_TYPE (0xEE)
 
-typedef struct _EFI_PARTITION_ENTRY {
+typedef struct _EFI_PARTITION_ENTRY
+{
     GUID PartitionType;
     GUID UniquePartition;
     ULONG64 StartingLBA;
     ULONG64 EndingLBA;
     ULONG64 Attributes;
-    WCHAR Name [36];
+    WCHAR Name[36];
 } EFI_PARTITION_ENTRY, *PEFI_PARTITION_ENTRY;
 
 
@@ -52,13 +53,12 @@ typedef struct _EFI_PARTITION_ENTRY {
 // the fields can never move or change size.
 //
 
-C_ASSERT (
-    FIELD_OFFSET (EFI_PARTITION_ENTRY, UniquePartition) == 16 &&
-    FIELD_OFFSET (EFI_PARTITION_ENTRY, Name) == 56 &&
-    sizeof (EFI_PARTITION_ENTRY) == 128);
+C_ASSERT(FIELD_OFFSET(EFI_PARTITION_ENTRY, UniquePartition) == 16 && FIELD_OFFSET(EFI_PARTITION_ENTRY, Name) == 56 &&
+         sizeof(EFI_PARTITION_ENTRY) == 128);
 
 
-typedef struct _EFI_PARTITION_HEADER {
+typedef struct _EFI_PARTITION_HEADER
+{
     ULONG64 Signature;
     ULONG32 Revision;
     ULONG32 HeaderSize;
@@ -82,39 +82,40 @@ typedef struct _EFI_PARTITION_HEADER {
 // the case.
 //
 
-C_ASSERT (
-    FIELD_OFFSET (EFI_PARTITION_HEADER, Revision) == 8 &&
-    FIELD_OFFSET (EFI_PARTITION_HEADER, PartitionEntryCRC32) == 88);
+C_ASSERT(FIELD_OFFSET(EFI_PARTITION_HEADER, Revision) == 8 &&
+         FIELD_OFFSET(EFI_PARTITION_HEADER, PartitionEntryCRC32) == 88);
 
 
-typedef struct _MBR_PARTITION_RECORD {
-    UCHAR       BootIndicator;
-    UCHAR       StartHead;
-    UCHAR       StartSector;
-    UCHAR       StartTrack;
-    UCHAR       OSIndicator;
-    UCHAR       EndHead;
-    UCHAR       EndSector;
-    UCHAR       EndTrack;
-    ULONG32     StartingLBA;
-    ULONG32     SizeInLBA;
+typedef struct _MBR_PARTITION_RECORD
+{
+    UCHAR BootIndicator;
+    UCHAR StartHead;
+    UCHAR StartSector;
+    UCHAR StartTrack;
+    UCHAR OSIndicator;
+    UCHAR EndHead;
+    UCHAR EndSector;
+    UCHAR EndTrack;
+    ULONG32 StartingLBA;
+    ULONG32 SizeInLBA;
 } MBR_PARTITION_RECORD;
 
 
-#define MBR_SIGNATURE           0xaa55
-#define MIN_MBR_DEVICE_SIZE     0x80000
-#define MBR_ERRATA_PAD          0x40000 // 128 MB
+#define MBR_SIGNATURE 0xaa55
+#define MIN_MBR_DEVICE_SIZE 0x80000
+#define MBR_ERRATA_PAD 0x40000 // 128 MB
 
-#define MAX_MBR_PARTITIONS  4
+#define MAX_MBR_PARTITIONS 4
 
-typedef struct _MASTER_BOOT_RECORD {
-    UCHAR                   BootStrapCode[440];
-    ULONG                   DiskSignature;
-    USHORT                  Unused;
-    MBR_PARTITION_RECORD    Partition[MAX_MBR_PARTITIONS];
-    USHORT                  Signature;
+typedef struct _MASTER_BOOT_RECORD
+{
+    UCHAR BootStrapCode[440];
+    ULONG DiskSignature;
+    USHORT Unused;
+    MBR_PARTITION_RECORD Partition[MAX_MBR_PARTITIONS];
+    USHORT Signature;
 } MASTER_BOOT_RECORD, *PMASTER_BOOT_RECORD;
 
-C_ASSERT (sizeof (MASTER_BOOT_RECORD) == 512);
+C_ASSERT(sizeof(MASTER_BOOT_RECORD) == 512);
 
 #include <poppack.h>

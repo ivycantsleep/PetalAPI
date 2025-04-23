@@ -23,7 +23,7 @@ Revision History:
 
 #ifndef _IO_
 #define _IO_
-
+
 // begin_ntddk begin_wdm begin_nthal begin_ntifs begin_ntndis begin_ntosp
 //
 // Define I/O system data structure type codes.  Each major data structure in
@@ -32,18 +32,18 @@ Revision History:
 // data structure a pointer refers to.
 //
 
-#define IO_TYPE_ADAPTER                 0x00000001
-#define IO_TYPE_CONTROLLER              0x00000002
-#define IO_TYPE_DEVICE                  0x00000003
-#define IO_TYPE_DRIVER                  0x00000004
-#define IO_TYPE_FILE                    0x00000005
-#define IO_TYPE_IRP                     0x00000006
-#define IO_TYPE_MASTER_ADAPTER          0x00000007
-#define IO_TYPE_OPEN_PACKET             0x00000008
-#define IO_TYPE_TIMER                   0x00000009
-#define IO_TYPE_VPB                     0x0000000a
-#define IO_TYPE_ERROR_LOG               0x0000000b
-#define IO_TYPE_ERROR_MESSAGE           0x0000000c
+#define IO_TYPE_ADAPTER 0x00000001
+#define IO_TYPE_CONTROLLER 0x00000002
+#define IO_TYPE_DEVICE 0x00000003
+#define IO_TYPE_DRIVER 0x00000004
+#define IO_TYPE_FILE 0x00000005
+#define IO_TYPE_IRP 0x00000006
+#define IO_TYPE_MASTER_ADAPTER 0x00000007
+#define IO_TYPE_OPEN_PACKET 0x00000008
+#define IO_TYPE_TIMER 0x00000009
+#define IO_TYPE_VPB 0x0000000a
+#define IO_TYPE_ERROR_LOG 0x0000000b
+#define IO_TYPE_ERROR_MESSAGE 0x0000000c
 #define IO_TYPE_DEVICE_OBJECT_EXTENSION 0x0000000d
 
 
@@ -52,42 +52,42 @@ Revision History:
 //
 
 
-#define IRP_MJ_CREATE                   0x00
-#define IRP_MJ_CREATE_NAMED_PIPE        0x01
-#define IRP_MJ_CLOSE                    0x02
-#define IRP_MJ_READ                     0x03
-#define IRP_MJ_WRITE                    0x04
-#define IRP_MJ_QUERY_INFORMATION        0x05
-#define IRP_MJ_SET_INFORMATION          0x06
-#define IRP_MJ_QUERY_EA                 0x07
-#define IRP_MJ_SET_EA                   0x08
-#define IRP_MJ_FLUSH_BUFFERS            0x09
+#define IRP_MJ_CREATE 0x00
+#define IRP_MJ_CREATE_NAMED_PIPE 0x01
+#define IRP_MJ_CLOSE 0x02
+#define IRP_MJ_READ 0x03
+#define IRP_MJ_WRITE 0x04
+#define IRP_MJ_QUERY_INFORMATION 0x05
+#define IRP_MJ_SET_INFORMATION 0x06
+#define IRP_MJ_QUERY_EA 0x07
+#define IRP_MJ_SET_EA 0x08
+#define IRP_MJ_FLUSH_BUFFERS 0x09
 #define IRP_MJ_QUERY_VOLUME_INFORMATION 0x0a
-#define IRP_MJ_SET_VOLUME_INFORMATION   0x0b
-#define IRP_MJ_DIRECTORY_CONTROL        0x0c
-#define IRP_MJ_FILE_SYSTEM_CONTROL      0x0d
-#define IRP_MJ_DEVICE_CONTROL           0x0e
-#define IRP_MJ_INTERNAL_DEVICE_CONTROL  0x0f
-#define IRP_MJ_SHUTDOWN                 0x10
-#define IRP_MJ_LOCK_CONTROL             0x11
-#define IRP_MJ_CLEANUP                  0x12
-#define IRP_MJ_CREATE_MAILSLOT          0x13
-#define IRP_MJ_QUERY_SECURITY           0x14
-#define IRP_MJ_SET_SECURITY             0x15
-#define IRP_MJ_POWER                    0x16
-#define IRP_MJ_SYSTEM_CONTROL           0x17
-#define IRP_MJ_DEVICE_CHANGE            0x18
-#define IRP_MJ_QUERY_QUOTA              0x19
-#define IRP_MJ_SET_QUOTA                0x1a
-#define IRP_MJ_PNP                      0x1b
-#define IRP_MJ_PNP_POWER                IRP_MJ_PNP      // Obsolete....
-#define IRP_MJ_MAXIMUM_FUNCTION         0x1b
+#define IRP_MJ_SET_VOLUME_INFORMATION 0x0b
+#define IRP_MJ_DIRECTORY_CONTROL 0x0c
+#define IRP_MJ_FILE_SYSTEM_CONTROL 0x0d
+#define IRP_MJ_DEVICE_CONTROL 0x0e
+#define IRP_MJ_INTERNAL_DEVICE_CONTROL 0x0f
+#define IRP_MJ_SHUTDOWN 0x10
+#define IRP_MJ_LOCK_CONTROL 0x11
+#define IRP_MJ_CLEANUP 0x12
+#define IRP_MJ_CREATE_MAILSLOT 0x13
+#define IRP_MJ_QUERY_SECURITY 0x14
+#define IRP_MJ_SET_SECURITY 0x15
+#define IRP_MJ_POWER 0x16
+#define IRP_MJ_SYSTEM_CONTROL 0x17
+#define IRP_MJ_DEVICE_CHANGE 0x18
+#define IRP_MJ_QUERY_QUOTA 0x19
+#define IRP_MJ_SET_QUOTA 0x1a
+#define IRP_MJ_PNP 0x1b
+#define IRP_MJ_PNP_POWER IRP_MJ_PNP // Obsolete....
+#define IRP_MJ_MAXIMUM_FUNCTION 0x1b
 
 //
 // Make the Scsi major code the same as internal device control.
 //
 
-#define IRP_MJ_SCSI                     IRP_MJ_INTERNAL_DEVICE_CONTROL
+#define IRP_MJ_SCSI IRP_MJ_INTERNAL_DEVICE_CONTROL
 
 //
 // Define the minor function codes for IRPs.  The lower 128 codes, from 0x00 to
@@ -100,8 +100,8 @@ Revision History:
 // Directory control minor function codes
 //
 
-#define IRP_MN_QUERY_DIRECTORY          0x01
-#define IRP_MN_NOTIFY_CHANGE_DIRECTORY  0x02
+#define IRP_MN_QUERY_DIRECTORY 0x01
+#define IRP_MN_NOTIFY_CHANGE_DIRECTORY 0x02
 
 //
 // File system control minor function codes.  Note that "user request" is
@@ -109,21 +109,21 @@ Revision History:
 // this value.
 //
 
-#define IRP_MN_USER_FS_REQUEST          0x00
-#define IRP_MN_MOUNT_VOLUME             0x01
-#define IRP_MN_VERIFY_VOLUME            0x02
-#define IRP_MN_LOAD_FILE_SYSTEM         0x03
-#define IRP_MN_TRACK_LINK               0x04    // To be obsoleted soon
-#define IRP_MN_KERNEL_CALL              0x04
+#define IRP_MN_USER_FS_REQUEST 0x00
+#define IRP_MN_MOUNT_VOLUME 0x01
+#define IRP_MN_VERIFY_VOLUME 0x02
+#define IRP_MN_LOAD_FILE_SYSTEM 0x03
+#define IRP_MN_TRACK_LINK 0x04 // To be obsoleted soon
+#define IRP_MN_KERNEL_CALL 0x04
 
 //
 // Lock control minor function codes
 //
 
-#define IRP_MN_LOCK                     0x01
-#define IRP_MN_UNLOCK_SINGLE            0x02
-#define IRP_MN_UNLOCK_ALL               0x03
-#define IRP_MN_UNLOCK_ALL_BY_KEY        0x04
+#define IRP_MN_LOCK 0x01
+#define IRP_MN_UNLOCK_SINGLE 0x02
+#define IRP_MN_UNLOCK_ALL 0x03
+#define IRP_MN_UNLOCK_ALL_BY_KEY 0x04
 
 //
 // Read and Write minor function codes for file systems supporting Lan Manager
@@ -135,15 +135,15 @@ Revision History:
 // systems.  Do not change this value.
 //
 
-#define IRP_MN_NORMAL                   0x00
-#define IRP_MN_DPC                      0x01
-#define IRP_MN_MDL                      0x02
-#define IRP_MN_COMPLETE                 0x04
-#define IRP_MN_COMPRESSED               0x08
+#define IRP_MN_NORMAL 0x00
+#define IRP_MN_DPC 0x01
+#define IRP_MN_MDL 0x02
+#define IRP_MN_COMPLETE 0x04
+#define IRP_MN_COMPRESSED 0x08
 
-#define IRP_MN_MDL_DPC                  (IRP_MN_MDL | IRP_MN_DPC)
-#define IRP_MN_COMPLETE_MDL             (IRP_MN_COMPLETE | IRP_MN_MDL)
-#define IRP_MN_COMPLETE_MDL_DPC         (IRP_MN_COMPLETE_MDL | IRP_MN_DPC)
+#define IRP_MN_MDL_DPC (IRP_MN_MDL | IRP_MN_DPC)
+#define IRP_MN_COMPLETE_MDL (IRP_MN_COMPLETE | IRP_MN_MDL)
+#define IRP_MN_COMPLETE_MDL_DPC (IRP_MN_COMPLETE_MDL | IRP_MN_DPC)
 
 // begin_wdm
 //
@@ -151,37 +151,37 @@ Revision History:
 // user requests are assumed to be zero.
 //
 
-#define IRP_MN_SCSI_CLASS               0x01
+#define IRP_MN_SCSI_CLASS 0x01
 
 //
 // PNP minor function codes.
 //
 
-#define IRP_MN_START_DEVICE                 0x00
-#define IRP_MN_QUERY_REMOVE_DEVICE          0x01
-#define IRP_MN_REMOVE_DEVICE                0x02
-#define IRP_MN_CANCEL_REMOVE_DEVICE         0x03
-#define IRP_MN_STOP_DEVICE                  0x04
-#define IRP_MN_QUERY_STOP_DEVICE            0x05
-#define IRP_MN_CANCEL_STOP_DEVICE           0x06
+#define IRP_MN_START_DEVICE 0x00
+#define IRP_MN_QUERY_REMOVE_DEVICE 0x01
+#define IRP_MN_REMOVE_DEVICE 0x02
+#define IRP_MN_CANCEL_REMOVE_DEVICE 0x03
+#define IRP_MN_STOP_DEVICE 0x04
+#define IRP_MN_QUERY_STOP_DEVICE 0x05
+#define IRP_MN_CANCEL_STOP_DEVICE 0x06
 
-#define IRP_MN_QUERY_DEVICE_RELATIONS       0x07
-#define IRP_MN_QUERY_INTERFACE              0x08
-#define IRP_MN_QUERY_CAPABILITIES           0x09
-#define IRP_MN_QUERY_RESOURCES              0x0A
-#define IRP_MN_QUERY_RESOURCE_REQUIREMENTS  0x0B
-#define IRP_MN_QUERY_DEVICE_TEXT            0x0C
+#define IRP_MN_QUERY_DEVICE_RELATIONS 0x07
+#define IRP_MN_QUERY_INTERFACE 0x08
+#define IRP_MN_QUERY_CAPABILITIES 0x09
+#define IRP_MN_QUERY_RESOURCES 0x0A
+#define IRP_MN_QUERY_RESOURCE_REQUIREMENTS 0x0B
+#define IRP_MN_QUERY_DEVICE_TEXT 0x0C
 #define IRP_MN_FILTER_RESOURCE_REQUIREMENTS 0x0D
 
-#define IRP_MN_READ_CONFIG                  0x0F
-#define IRP_MN_WRITE_CONFIG                 0x10
-#define IRP_MN_EJECT                        0x11
-#define IRP_MN_SET_LOCK                     0x12
-#define IRP_MN_QUERY_ID                     0x13
-#define IRP_MN_QUERY_PNP_DEVICE_STATE       0x14
-#define IRP_MN_QUERY_BUS_INFORMATION        0x15
-#define IRP_MN_DEVICE_USAGE_NOTIFICATION    0x16
-#define IRP_MN_SURPRISE_REMOVAL             0x17
+#define IRP_MN_READ_CONFIG 0x0F
+#define IRP_MN_WRITE_CONFIG 0x10
+#define IRP_MN_EJECT 0x11
+#define IRP_MN_SET_LOCK 0x12
+#define IRP_MN_QUERY_ID 0x13
+#define IRP_MN_QUERY_PNP_DEVICE_STATE 0x14
+#define IRP_MN_QUERY_BUS_INFORMATION 0x15
+#define IRP_MN_DEVICE_USAGE_NOTIFICATION 0x16
+#define IRP_MN_SURPRISE_REMOVAL 0x17
 // end_wdm
 #define IRP_MN_QUERY_LEGACY_BUS_INFORMATION 0x18
 // begin_wdm
@@ -189,28 +189,28 @@ Revision History:
 //
 // POWER minor function codes
 //
-#define IRP_MN_WAIT_WAKE                    0x00
-#define IRP_MN_POWER_SEQUENCE               0x01
-#define IRP_MN_SET_POWER                    0x02
-#define IRP_MN_QUERY_POWER                  0x03
+#define IRP_MN_WAIT_WAKE 0x00
+#define IRP_MN_POWER_SEQUENCE 0x01
+#define IRP_MN_SET_POWER 0x02
+#define IRP_MN_QUERY_POWER 0x03
 
 // begin_ntminiport
 //
 // WMI minor function codes under IRP_MJ_SYSTEM_CONTROL
 //
 
-#define IRP_MN_QUERY_ALL_DATA               0x00
-#define IRP_MN_QUERY_SINGLE_INSTANCE        0x01
-#define IRP_MN_CHANGE_SINGLE_INSTANCE       0x02
-#define IRP_MN_CHANGE_SINGLE_ITEM           0x03
-#define IRP_MN_ENABLE_EVENTS                0x04
-#define IRP_MN_DISABLE_EVENTS               0x05
-#define IRP_MN_ENABLE_COLLECTION            0x06
-#define IRP_MN_DISABLE_COLLECTION           0x07
-#define IRP_MN_REGINFO                      0x08
-#define IRP_MN_EXECUTE_METHOD               0x09
+#define IRP_MN_QUERY_ALL_DATA 0x00
+#define IRP_MN_QUERY_SINGLE_INSTANCE 0x01
+#define IRP_MN_CHANGE_SINGLE_INSTANCE 0x02
+#define IRP_MN_CHANGE_SINGLE_ITEM 0x03
+#define IRP_MN_ENABLE_EVENTS 0x04
+#define IRP_MN_DISABLE_EVENTS 0x05
+#define IRP_MN_ENABLE_COLLECTION 0x06
+#define IRP_MN_DISABLE_COLLECTION 0x07
+#define IRP_MN_REGINFO 0x08
+#define IRP_MN_EXECUTE_METHOD 0x09
 // Minor code 0x0a is reserved
-#define IRP_MN_REGINFO_EX                   0x0b
+#define IRP_MN_REGINFO_EX 0x0b
 
 // end_ntminiport
 // end_wdm end_ntddk end_nthal end_ntifs end_ntosp
@@ -219,7 +219,7 @@ Revision History:
 // For drivers who cannot include io.h, please see wmikm.h
 //
 // begin_wmikm
-#define IRP_MN_SET_TRACE_NOTIFY             0x0A
+#define IRP_MN_SET_TRACE_NOTIFY 0x0A
 
 // end_wmikm
 // begin_wdm begin_ntddk begin_nthal begin_ntifs begin_ntosp
@@ -232,31 +232,31 @@ Revision History:
 // the next byte.
 //
 
-#define IO_FORCE_ACCESS_CHECK           0x0001
+#define IO_FORCE_ACCESS_CHECK 0x0001
 // end_ntddk end_wdm end_nthal end_ntosp
 
-#define IO_OPEN_PAGING_FILE             0x0002
-#define IO_OPEN_TARGET_DIRECTORY        0x0004
+#define IO_OPEN_PAGING_FILE 0x0002
+#define IO_OPEN_TARGET_DIRECTORY 0x0004
 
 //
 // Flags not passed to driver
 //
 
 // begin_ntddk begin_wdm begin_ntosp
-#define IO_NO_PARAMETER_CHECKING        0x0100
+#define IO_NO_PARAMETER_CHECKING 0x0100
 
 //
 // Define Information fields for whether or not a REPARSE or a REMOUNT has
 // occurred in the file system.
 //
 
-#define IO_REPARSE                      0x0
-#define IO_REMOUNT                      0x1
+#define IO_REPARSE 0x0
+#define IO_REMOUNT 0x1
 
 // end_ntddk end_wdm
 
-#define IO_CHECK_CREATE_PARAMETERS      0x0200
-#define IO_ATTACH_DEVICE                0x0400
+#define IO_CHECK_CREATE_PARAMETERS 0x0200
+#define IO_ATTACH_DEVICE 0x0400
 
 // end_ntosp
 
@@ -268,18 +268,18 @@ Revision History:
 //  flag set will bypass ShareAccess checks on this file.
 //
 
-#define IO_IGNORE_SHARE_ACCESS_CHECK    0x0800  // Ignores share access checks on opens.
+#define IO_IGNORE_SHARE_ACCESS_CHECK 0x0800 // Ignores share access checks on opens.
 
 // end_ntifs end_ntosp
 
 // Define kernel-only, internal option flags
 //
 
-#define IO_ATTACH_DEVICE_API            0x80000000
+#define IO_ATTACH_DEVICE_API 0x80000000
 
 
 // end_ntifs
-
+
 //
 // Define the driver interfaces required to write memory dumps.
 //
@@ -288,58 +288,35 @@ Revision History:
 // Define stall routine type for the dump driver.
 //
 // begin_ntosp
-typedef
-VOID
-(*PSTALL_ROUTINE) (
-    IN ULONG Delay
-    );
+typedef VOID (*PSTALL_ROUTINE)(IN ULONG Delay);
 
 //
 // Define the interfaces for the dump driver's routines.
 //
 
-typedef
-BOOLEAN
-(*PDUMP_DRIVER_OPEN) (
-    IN LARGE_INTEGER PartitionOffset
-    );
+typedef BOOLEAN (*PDUMP_DRIVER_OPEN)(IN LARGE_INTEGER PartitionOffset);
 
-typedef
-NTSTATUS
-(*PDUMP_DRIVER_WRITE) (
-    IN PLARGE_INTEGER DiskByteOffset,
-    IN PMDL Mdl
-    );
+typedef NTSTATUS (*PDUMP_DRIVER_WRITE)(IN PLARGE_INTEGER DiskByteOffset, IN PMDL Mdl);
 
 //
 // Actions accepted by DRIVER_WRITE_PENDING
 //
-#define IO_DUMP_WRITE_FULFILL   0   // fulfill IO request as if DRIVER_WAIT
-#define IO_DUMP_WRITE_START     1   // start new IO
-#define IO_DUMP_WRITE_RESUME    2   // resume pending IO
-#define IO_DUMP_WRITE_FINISH    3   // finish pending IO
-#define IO_DUMP_WRITE_INIT      4   // initialize locals
+#define IO_DUMP_WRITE_FULFILL 0 // fulfill IO request as if DRIVER_WAIT
+#define IO_DUMP_WRITE_START 1   // start new IO
+#define IO_DUMP_WRITE_RESUME 2  // resume pending IO
+#define IO_DUMP_WRITE_FINISH 3  // finish pending IO
+#define IO_DUMP_WRITE_INIT 4    // initialize locals
 
 // size of data used by WRITE_PENDING that should be preserved
 // between the calls
 #define IO_DUMP_WRITE_DATA_PAGES 2
 #define IO_DUMP_WRITE_DATA_SIZE (IO_DUMP_WRITE_DATA_PAGES << PAGE_SHIFT)
 
-typedef
-NTSTATUS
-(*PDUMP_DRIVER_WRITE_PENDING) (
-    IN LONG Action,
-    IN PLARGE_INTEGER DiskByteOffset,
-    IN PMDL Mdl,
-    IN PVOID LocalData
-    );
+typedef NTSTATUS (*PDUMP_DRIVER_WRITE_PENDING)(IN LONG Action, IN PLARGE_INTEGER DiskByteOffset, IN PMDL Mdl,
+                                               IN PVOID LocalData);
 
 
-typedef
-VOID
-(*PDUMP_DRIVER_FINISH) (
-    VOID
-    );
+typedef VOID (*PDUMP_DRIVER_FINISH)(VOID);
 
 struct _ADAPTER_OBJECT;
 
@@ -348,9 +325,10 @@ struct _ADAPTER_OBJECT;
 // during the driver's initialization.
 //
 
-typedef struct _DUMP_INITIALIZATION_CONTEXT {
+typedef struct _DUMP_INITIALIZATION_CONTEXT
+{
     ULONG Length;
-    ULONG Reserved;             // Was MBR Checksum. Should be zero now.
+    ULONG Reserved; // Was MBR Checksum. Should be zero now.
     PVOID MemoryBlock;
     PVOID CommonBuffer[2];
     PHYSICAL_ADDRESS PhysicalAddress[2];
@@ -367,43 +345,40 @@ typedef struct _DUMP_INITIALIZATION_CONTEXT {
     PVOID TargetAddress; //Opaque pointer to target address structure
     PDUMP_DRIVER_WRITE_PENDING WritePendingRoutine;
     ULONG PartitionStyle;
-    union {
-        struct {
+    union
+    {
+        struct
+        {
             ULONG Signature;
             ULONG CheckSum;
         } Mbr;
-        struct {
+        struct
+        {
             GUID DiskId;
         } Gpt;
     } DiskInfo;
 } DUMP_INITIALIZATION_CONTEXT, *PDUMP_INITIALIZATION_CONTEXT;
 
-
+
 // begin_ntddk
 //
 // Define callout routine type for use in IoQueryDeviceDescription().
 //
 
-typedef NTSTATUS (*PIO_QUERY_DEVICE_ROUTINE)(
-    IN PVOID Context,
-    IN PUNICODE_STRING PathName,
-    IN INTERFACE_TYPE BusType,
-    IN ULONG BusNumber,
-    IN PKEY_VALUE_FULL_INFORMATION *BusInformation,
-    IN CONFIGURATION_TYPE ControllerType,
-    IN ULONG ControllerNumber,
-    IN PKEY_VALUE_FULL_INFORMATION *ControllerInformation,
-    IN CONFIGURATION_TYPE PeripheralType,
-    IN ULONG PeripheralNumber,
-    IN PKEY_VALUE_FULL_INFORMATION *PeripheralInformation
-    );
+typedef NTSTATUS (*PIO_QUERY_DEVICE_ROUTINE)(IN PVOID Context, IN PUNICODE_STRING PathName, IN INTERFACE_TYPE BusType,
+                                             IN ULONG BusNumber, IN PKEY_VALUE_FULL_INFORMATION *BusInformation,
+                                             IN CONFIGURATION_TYPE ControllerType, IN ULONG ControllerNumber,
+                                             IN PKEY_VALUE_FULL_INFORMATION *ControllerInformation,
+                                             IN CONFIGURATION_TYPE PeripheralType, IN ULONG PeripheralNumber,
+                                             IN PKEY_VALUE_FULL_INFORMATION *PeripheralInformation);
 
 
 // Defines the order of the information in the array of
 // PKEY_VALUE_FULL_INFORMATION.
 //
 
-typedef enum _IO_QUERY_DEVICE_DATA_FORMAT {
+typedef enum _IO_QUERY_DEVICE_DATA_FORMAT
+{
     IoQueryDeviceIdentifier = 0,
     IoQueryDeviceConfigurationData,
     IoQueryDeviceComponentInformation,
@@ -415,7 +390,8 @@ typedef enum _IO_QUERY_DEVICE_DATA_FORMAT {
 // Define the objects that can be created by IoCreateFile.
 //
 
-typedef enum _CREATE_FILE_TYPE {
+typedef enum _CREATE_FILE_TYPE
+{
     CreateFileTypeNone,
     CreateFileTypeNamedPipe,
     CreateFileTypeMailslot
@@ -430,7 +406,8 @@ typedef enum _CREATE_FILE_TYPE {
 // when creating a named pipe.
 //
 
-typedef struct _NAMED_PIPE_CREATE_PARAMETERS {
+typedef struct _NAMED_PIPE_CREATE_PARAMETERS
+{
     ULONG NamedPipeType;
     ULONG ReadMode;
     ULONG CompletionMode;
@@ -450,7 +427,8 @@ typedef struct _NAMED_PIPE_CREATE_PARAMETERS {
 // when creating a mailslot.
 //
 
-typedef struct _MAILSLOT_CREATE_PARAMETERS {
+typedef struct _MAILSLOT_CREATE_PARAMETERS
+{
     ULONG MailslotQuota;
     ULONG MaximumMessageSize;
     LARGE_INTEGER ReadTimeout;
@@ -461,96 +439,69 @@ typedef struct _MAILSLOT_CREATE_PARAMETERS {
 // Define the dump driver stack context structure
 //
 
-typedef struct DUMP_STACK_IMAGE{
-    LIST_ENTRY                  Link;
-    PLDR_DATA_TABLE_ENTRY       Image;
-    PVOID                       ImageBase;
-    ULONG                       SizeOfImage;
+typedef struct DUMP_STACK_IMAGE
+{
+    LIST_ENTRY Link;
+    PLDR_DATA_TABLE_ENTRY Image;
+    PVOID ImageBase;
+    ULONG SizeOfImage;
 } DUMP_STACK_IMAGE, *PDUMP_STACK_IMAGE;
 
-typedef struct _DUMP_STACK_CONTEXT {
+typedef struct _DUMP_STACK_CONTEXT
+{
     DUMP_INITIALIZATION_CONTEXT Init;
-    LARGE_INTEGER               PartitionOffset;
-    PVOID                       DumpPointers;
-    ULONG                       PointersLength;
-    PWCHAR                      ModulePrefix;
-    LIST_ENTRY                  DriverList;
-    ANSI_STRING                 InitMsg;
-    ANSI_STRING                 ProgMsg;
-    ANSI_STRING                 DoneMsg;
-    PVOID                       FileObject;
-    enum _DEVICE_USAGE_NOTIFICATION_TYPE    UsageType;
+    LARGE_INTEGER PartitionOffset;
+    PVOID DumpPointers;
+    ULONG PointersLength;
+    PWCHAR ModulePrefix;
+    LIST_ENTRY DriverList;
+    ANSI_STRING InitMsg;
+    ANSI_STRING ProgMsg;
+    ANSI_STRING DoneMsg;
+    PVOID FileObject;
+    enum _DEVICE_USAGE_NOTIFICATION_TYPE UsageType;
 } DUMP_STACK_CONTEXT, *PDUMP_STACK_CONTEXT;
 
-#define IO_DUMP_MAX_MDL_PAGES           8
-#define IO_DUMP_MEMORY_BLOCK_PAGES      8
-#define IO_DUMP_COMMON_BUFFER_SIZE      0x2000
+#define IO_DUMP_MAX_MDL_PAGES 8
+#define IO_DUMP_MEMORY_BLOCK_PAGES 8
+#define IO_DUMP_COMMON_BUFFER_SIZE 0x2000
 
 NTSTATUS
-IoGetDumpStack(
-    IN PWCHAR ModulePrefix,
-    OUT PDUMP_STACK_CONTEXT *DumpStack,
-    IN enum _DEVICE_USAGE_NOTIFICATION_TYPE UsageType,
-    IN ULONG IgnoreDeviceUsageFailure
-    );
+IoGetDumpStack(IN PWCHAR ModulePrefix, OUT PDUMP_STACK_CONTEXT *DumpStack,
+               IN enum _DEVICE_USAGE_NOTIFICATION_TYPE UsageType, IN ULONG IgnoreDeviceUsageFailure);
 
 NTSTATUS
-IoInitializeDumpStack(
-    IN PDUMP_STACK_CONTEXT  DumpStack,
-    IN PUCHAR               MessageBuffer OPTIONAL
-    );
+IoInitializeDumpStack(IN PDUMP_STACK_CONTEXT DumpStack, IN PUCHAR MessageBuffer OPTIONAL);
 
-typedef enum _CRASHDUMP_CONFIGURATION {
+typedef enum _CRASHDUMP_CONFIGURATION
+{
     CrashDumpDisable = 0,
     CrashDumpReconfigure
 } CRASHDUMP_CONFIGURATION;
 
 NTSTATUS
-IoConfigureCrashDump(
-    CRASHDUMP_CONFIGURATION Config
-    );
+IoConfigureCrashDump(CRASHDUMP_CONFIGURATION Config);
 
 BOOLEAN
-IoInitializeCrashDump(
-    IN HANDLE Pagefile
-    );
+IoInitializeCrashDump(IN HANDLE Pagefile);
 
-VOID
-IoGetDumpHiberRanges (
-    IN PVOID                    HiberContext,
-    IN PDUMP_STACK_CONTEXT      DumpStack
-    );
+VOID IoGetDumpHiberRanges(IN PVOID HiberContext, IN PDUMP_STACK_CONTEXT DumpStack);
 
 NTKERNELAPI
 BOOLEAN
-IoWriteCrashDump(
-    IN ULONG BugCheckCode,
-    IN ULONG_PTR BugCheckParameter1,
-    IN ULONG_PTR BugCheckParameter2,
-    IN ULONG_PTR BugCheckParameter3,
-    IN ULONG_PTR BugCheckParameter4,
-    IN PVOID ContextSave,
-    IN PKTHREAD Thread,
-    OUT PBOOLEAN Reboot
-    );
+IoWriteCrashDump(IN ULONG BugCheckCode, IN ULONG_PTR BugCheckParameter1, IN ULONG_PTR BugCheckParameter2,
+                 IN ULONG_PTR BugCheckParameter3, IN ULONG_PTR BugCheckParameter4, IN PVOID ContextSave,
+                 IN PKTHREAD Thread, OUT PBOOLEAN Reboot);
 
 BOOLEAN
-IoIsTriageDumpEnabled(
-    VOID
-    );
+IoIsTriageDumpEnabled(VOID);
 
 BOOLEAN
-IoAddTriageDumpDataBlock(
-    IN PVOID Address,
-    IN ULONG Length
-    );
+IoAddTriageDumpDataBlock(IN PVOID Address, IN ULONG Length);
 
 
-VOID
-IoFreeDumpStack(
-    IN PDUMP_STACK_CONTEXT DumpStack
-    );
-
+VOID IoFreeDumpStack(IN PDUMP_STACK_CONTEXT DumpStack);
+
 // begin_ntddk begin_wdm begin_nthal begin_ntifs begin_ntosp
 //
 // Define the structures used by the I/O system
@@ -576,101 +527,56 @@ struct _SCATTER_GATHER_LIST;
 // Define the I/O version of a DPC routine.
 //
 
-typedef
-VOID
-(*PIO_DPC_ROUTINE) (
-    IN PKDPC Dpc,
-    IN struct _DEVICE_OBJECT *DeviceObject,
-    IN struct _IRP *Irp,
-    IN PVOID Context
-    );
+typedef VOID (*PIO_DPC_ROUTINE)(IN PKDPC Dpc, IN struct _DEVICE_OBJECT *DeviceObject, IN struct _IRP *Irp,
+                                IN PVOID Context);
 
 //
 // Define driver timer routine type.
 //
 
-typedef
-VOID
-(*PIO_TIMER_ROUTINE) (
-    IN struct _DEVICE_OBJECT *DeviceObject,
-    IN PVOID Context
-    );
+typedef VOID (*PIO_TIMER_ROUTINE)(IN struct _DEVICE_OBJECT *DeviceObject, IN PVOID Context);
 
 //
 // Define driver initialization routine type.
 //
-typedef
-NTSTATUS
-(*PDRIVER_INITIALIZE) (
-    IN struct _DRIVER_OBJECT *DriverObject,
-    IN PUNICODE_STRING RegistryPath
-    );
+typedef NTSTATUS (*PDRIVER_INITIALIZE)(IN struct _DRIVER_OBJECT *DriverObject, IN PUNICODE_STRING RegistryPath);
 
 // end_wdm
 //
 // Define driver reinitialization routine type.
 //
 
-typedef
-VOID
-(*PDRIVER_REINITIALIZE) (
-    IN struct _DRIVER_OBJECT *DriverObject,
-    IN PVOID Context,
-    IN ULONG Count
-    );
+typedef VOID (*PDRIVER_REINITIALIZE)(IN struct _DRIVER_OBJECT *DriverObject, IN PVOID Context, IN ULONG Count);
 
 // begin_wdm begin_ntndis
 //
 // Define driver cancel routine type.
 //
 
-typedef
-VOID
-(*PDRIVER_CANCEL) (
-    IN struct _DEVICE_OBJECT *DeviceObject,
-    IN struct _IRP *Irp
-    );
+typedef VOID (*PDRIVER_CANCEL)(IN struct _DEVICE_OBJECT *DeviceObject, IN struct _IRP *Irp);
 
 //
 // Define driver dispatch routine type.
 //
 
-typedef
-NTSTATUS
-(*PDRIVER_DISPATCH) (
-    IN struct _DEVICE_OBJECT *DeviceObject,
-    IN struct _IRP *Irp
-    );
+typedef NTSTATUS (*PDRIVER_DISPATCH)(IN struct _DEVICE_OBJECT *DeviceObject, IN struct _IRP *Irp);
 
 //
 // Define driver start I/O routine type.
 //
 
-typedef
-VOID
-(*PDRIVER_STARTIO) (
-    IN struct _DEVICE_OBJECT *DeviceObject,
-    IN struct _IRP *Irp
-    );
+typedef VOID (*PDRIVER_STARTIO)(IN struct _DEVICE_OBJECT *DeviceObject, IN struct _IRP *Irp);
 
 //
 // Define driver unload routine type.
 //
-typedef
-VOID
-(*PDRIVER_UNLOAD) (
-    IN struct _DRIVER_OBJECT *DriverObject
-    );
+typedef VOID (*PDRIVER_UNLOAD)(IN struct _DRIVER_OBJECT *DriverObject);
 //
 // Define driver AddDevice routine type.
 //
 
-typedef
-NTSTATUS
-(*PDRIVER_ADD_DEVICE) (
-    IN struct _DRIVER_OBJECT *DriverObject,
-    IN struct _DEVICE_OBJECT *PhysicalDeviceObject
-    );
+typedef NTSTATUS (*PDRIVER_ADD_DEVICE)(IN struct _DRIVER_OBJECT *DriverObject,
+                                       IN struct _DEVICE_OBJECT *PhysicalDeviceObject);
 
 // end_ntddk end_wdm end_nthal end_ntndis end_ntosp
 
@@ -678,12 +584,7 @@ NTSTATUS
 // Define driver FS notification change routine type.
 //
 
-typedef
-VOID
-(*PDRIVER_FS_NOTIFICATION) (
-    IN struct _DEVICE_OBJECT *DeviceObject,
-    IN BOOLEAN FsActive
-    );
+typedef VOID (*PDRIVER_FS_NOTIFICATION)(IN struct _DEVICE_OBJECT *DeviceObject, IN BOOLEAN FsActive);
 
 // begin_ntddk begin_wdm begin_ntosp
 
@@ -693,135 +594,59 @@ VOID
 // Fast I/O read and write procedures.
 //
 
-typedef
-BOOLEAN
-(*PFAST_IO_CHECK_IF_POSSIBLE) (
-    IN struct _FILE_OBJECT *FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN BOOLEAN Wait,
-    IN ULONG LockKey,
-    IN BOOLEAN CheckForReadOperation,
-    OUT PIO_STATUS_BLOCK IoStatus,
-    IN struct _DEVICE_OBJECT *DeviceObject
-    );
+typedef BOOLEAN (*PFAST_IO_CHECK_IF_POSSIBLE)(IN struct _FILE_OBJECT *FileObject, IN PLARGE_INTEGER FileOffset,
+                                              IN ULONG Length, IN BOOLEAN Wait, IN ULONG LockKey,
+                                              IN BOOLEAN CheckForReadOperation, OUT PIO_STATUS_BLOCK IoStatus,
+                                              IN struct _DEVICE_OBJECT *DeviceObject);
 
-typedef
-BOOLEAN
-(*PFAST_IO_READ) (
-    IN struct _FILE_OBJECT *FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN BOOLEAN Wait,
-    IN ULONG LockKey,
-    OUT PVOID Buffer,
-    OUT PIO_STATUS_BLOCK IoStatus,
-    IN struct _DEVICE_OBJECT *DeviceObject
-    );
+typedef BOOLEAN (*PFAST_IO_READ)(IN struct _FILE_OBJECT *FileObject, IN PLARGE_INTEGER FileOffset, IN ULONG Length,
+                                 IN BOOLEAN Wait, IN ULONG LockKey, OUT PVOID Buffer, OUT PIO_STATUS_BLOCK IoStatus,
+                                 IN struct _DEVICE_OBJECT *DeviceObject);
 
-typedef
-BOOLEAN
-(*PFAST_IO_WRITE) (
-    IN struct _FILE_OBJECT *FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN BOOLEAN Wait,
-    IN ULONG LockKey,
-    IN PVOID Buffer,
-    OUT PIO_STATUS_BLOCK IoStatus,
-    IN struct _DEVICE_OBJECT *DeviceObject
-    );
+typedef BOOLEAN (*PFAST_IO_WRITE)(IN struct _FILE_OBJECT *FileObject, IN PLARGE_INTEGER FileOffset, IN ULONG Length,
+                                  IN BOOLEAN Wait, IN ULONG LockKey, IN PVOID Buffer, OUT PIO_STATUS_BLOCK IoStatus,
+                                  IN struct _DEVICE_OBJECT *DeviceObject);
 
 //
 // Fast I/O query basic and standard information procedures.
 //
 
-typedef
-BOOLEAN
-(*PFAST_IO_QUERY_BASIC_INFO) (
-    IN struct _FILE_OBJECT *FileObject,
-    IN BOOLEAN Wait,
-    OUT PFILE_BASIC_INFORMATION Buffer,
-    OUT PIO_STATUS_BLOCK IoStatus,
-    IN struct _DEVICE_OBJECT *DeviceObject
-    );
+typedef BOOLEAN (*PFAST_IO_QUERY_BASIC_INFO)(IN struct _FILE_OBJECT *FileObject, IN BOOLEAN Wait,
+                                             OUT PFILE_BASIC_INFORMATION Buffer, OUT PIO_STATUS_BLOCK IoStatus,
+                                             IN struct _DEVICE_OBJECT *DeviceObject);
 
-typedef
-BOOLEAN
-(*PFAST_IO_QUERY_STANDARD_INFO) (
-    IN struct _FILE_OBJECT *FileObject,
-    IN BOOLEAN Wait,
-    OUT PFILE_STANDARD_INFORMATION Buffer,
-    OUT PIO_STATUS_BLOCK IoStatus,
-    IN struct _DEVICE_OBJECT *DeviceObject
-    );
+typedef BOOLEAN (*PFAST_IO_QUERY_STANDARD_INFO)(IN struct _FILE_OBJECT *FileObject, IN BOOLEAN Wait,
+                                                OUT PFILE_STANDARD_INFORMATION Buffer, OUT PIO_STATUS_BLOCK IoStatus,
+                                                IN struct _DEVICE_OBJECT *DeviceObject);
 
 //
 // Fast I/O lock and unlock procedures.
 //
 
-typedef
-BOOLEAN
-(*PFAST_IO_LOCK) (
-    IN struct _FILE_OBJECT *FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN PLARGE_INTEGER Length,
-    PEPROCESS ProcessId,
-    ULONG Key,
-    BOOLEAN FailImmediately,
-    BOOLEAN ExclusiveLock,
-    OUT PIO_STATUS_BLOCK IoStatus,
-    IN struct _DEVICE_OBJECT *DeviceObject
-    );
+typedef BOOLEAN (*PFAST_IO_LOCK)(IN struct _FILE_OBJECT *FileObject, IN PLARGE_INTEGER FileOffset,
+                                 IN PLARGE_INTEGER Length, PEPROCESS ProcessId, ULONG Key, BOOLEAN FailImmediately,
+                                 BOOLEAN ExclusiveLock, OUT PIO_STATUS_BLOCK IoStatus,
+                                 IN struct _DEVICE_OBJECT *DeviceObject);
 
-typedef
-BOOLEAN
-(*PFAST_IO_UNLOCK_SINGLE) (
-    IN struct _FILE_OBJECT *FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN PLARGE_INTEGER Length,
-    PEPROCESS ProcessId,
-    ULONG Key,
-    OUT PIO_STATUS_BLOCK IoStatus,
-    IN struct _DEVICE_OBJECT *DeviceObject
-    );
+typedef BOOLEAN (*PFAST_IO_UNLOCK_SINGLE)(IN struct _FILE_OBJECT *FileObject, IN PLARGE_INTEGER FileOffset,
+                                          IN PLARGE_INTEGER Length, PEPROCESS ProcessId, ULONG Key,
+                                          OUT PIO_STATUS_BLOCK IoStatus, IN struct _DEVICE_OBJECT *DeviceObject);
 
-typedef
-BOOLEAN
-(*PFAST_IO_UNLOCK_ALL) (
-    IN struct _FILE_OBJECT *FileObject,
-    PEPROCESS ProcessId,
-    OUT PIO_STATUS_BLOCK IoStatus,
-    IN struct _DEVICE_OBJECT *DeviceObject
-    );
+typedef BOOLEAN (*PFAST_IO_UNLOCK_ALL)(IN struct _FILE_OBJECT *FileObject, PEPROCESS ProcessId,
+                                       OUT PIO_STATUS_BLOCK IoStatus, IN struct _DEVICE_OBJECT *DeviceObject);
 
-typedef
-BOOLEAN
-(*PFAST_IO_UNLOCK_ALL_BY_KEY) (
-    IN struct _FILE_OBJECT *FileObject,
-    PVOID ProcessId,
-    ULONG Key,
-    OUT PIO_STATUS_BLOCK IoStatus,
-    IN struct _DEVICE_OBJECT *DeviceObject
-    );
+typedef BOOLEAN (*PFAST_IO_UNLOCK_ALL_BY_KEY)(IN struct _FILE_OBJECT *FileObject, PVOID ProcessId, ULONG Key,
+                                              OUT PIO_STATUS_BLOCK IoStatus, IN struct _DEVICE_OBJECT *DeviceObject);
 
 //
 // Fast I/O device control procedure.
 //
 
-typedef
-BOOLEAN
-(*PFAST_IO_DEVICE_CONTROL) (
-    IN struct _FILE_OBJECT *FileObject,
-    IN BOOLEAN Wait,
-    IN PVOID InputBuffer OPTIONAL,
-    IN ULONG InputBufferLength,
-    OUT PVOID OutputBuffer OPTIONAL,
-    IN ULONG OutputBufferLength,
-    IN ULONG IoControlCode,
-    OUT PIO_STATUS_BLOCK IoStatus,
-    IN struct _DEVICE_OBJECT *DeviceObject
-    );
+typedef BOOLEAN (*PFAST_IO_DEVICE_CONTROL)(IN struct _FILE_OBJECT *FileObject, IN BOOLEAN Wait,
+                                           IN PVOID InputBuffer OPTIONAL, IN ULONG InputBufferLength,
+                                           OUT PVOID OutputBuffer OPTIONAL, IN ULONG OutputBufferLength,
+                                           IN ULONG IoControlCode, OUT PIO_STATUS_BLOCK IoStatus,
+                                           IN struct _DEVICE_OBJECT *DeviceObject);
 
 //
 // Define callbacks for NtCreateSection to synchronize correctly with
@@ -829,17 +654,9 @@ BOOLEAN
 // when calling to query and set file/allocation size in the file system.
 //
 
-typedef
-VOID
-(*PFAST_IO_ACQUIRE_FILE) (
-    IN struct _FILE_OBJECT *FileObject
-    );
+typedef VOID (*PFAST_IO_ACQUIRE_FILE)(IN struct _FILE_OBJECT *FileObject);
 
-typedef
-VOID
-(*PFAST_IO_RELEASE_FILE) (
-    IN struct _FILE_OBJECT *FileObject
-    );
+typedef VOID (*PFAST_IO_RELEASE_FILE)(IN struct _FILE_OBJECT *FileObject);
 
 //
 // Define callback for drivers that have device objects attached to lower-
@@ -847,12 +664,7 @@ VOID
 // driver is deleting its device object.
 //
 
-typedef
-VOID
-(*PFAST_IO_DETACH_DEVICE) (
-    IN struct _DEVICE_OBJECT *SourceDevice,
-    IN struct _DEVICE_OBJECT *TargetDevice
-    );
+typedef VOID (*PFAST_IO_DETACH_DEVICE)(IN struct _DEVICE_OBJECT *SourceDevice, IN struct _DEVICE_OBJECT *TargetDevice);
 
 //
 // This structure is used by the server to quickly get the information needed
@@ -861,156 +673,74 @@ VOID
 // it into one call.
 //
 
-typedef
-BOOLEAN
-(*PFAST_IO_QUERY_NETWORK_OPEN_INFO) (
-    IN struct _FILE_OBJECT *FileObject,
-    IN BOOLEAN Wait,
-    OUT struct _FILE_NETWORK_OPEN_INFORMATION *Buffer,
-    OUT struct _IO_STATUS_BLOCK *IoStatus,
-    IN struct _DEVICE_OBJECT *DeviceObject
-    );
+typedef BOOLEAN (*PFAST_IO_QUERY_NETWORK_OPEN_INFO)(IN struct _FILE_OBJECT *FileObject, IN BOOLEAN Wait,
+                                                    OUT struct _FILE_NETWORK_OPEN_INFORMATION *Buffer,
+                                                    OUT struct _IO_STATUS_BLOCK *IoStatus,
+                                                    IN struct _DEVICE_OBJECT *DeviceObject);
 
 //
 //  Define Mdl-based routines for the server to call
 //
 
-typedef
-BOOLEAN
-(*PFAST_IO_MDL_READ) (
-    IN struct _FILE_OBJECT *FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN ULONG LockKey,
-    OUT PMDL *MdlChain,
-    OUT PIO_STATUS_BLOCK IoStatus,
-    IN struct _DEVICE_OBJECT *DeviceObject
-    );
+typedef BOOLEAN (*PFAST_IO_MDL_READ)(IN struct _FILE_OBJECT *FileObject, IN PLARGE_INTEGER FileOffset, IN ULONG Length,
+                                     IN ULONG LockKey, OUT PMDL *MdlChain, OUT PIO_STATUS_BLOCK IoStatus,
+                                     IN struct _DEVICE_OBJECT *DeviceObject);
 
-typedef
-BOOLEAN
-(*PFAST_IO_MDL_READ_COMPLETE) (
-    IN struct _FILE_OBJECT *FileObject,
-    IN PMDL MdlChain,
-    IN struct _DEVICE_OBJECT *DeviceObject
-    );
+typedef BOOLEAN (*PFAST_IO_MDL_READ_COMPLETE)(IN struct _FILE_OBJECT *FileObject, IN PMDL MdlChain,
+                                              IN struct _DEVICE_OBJECT *DeviceObject);
 
-typedef
-BOOLEAN
-(*PFAST_IO_PREPARE_MDL_WRITE) (
-    IN struct _FILE_OBJECT *FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN ULONG LockKey,
-    OUT PMDL *MdlChain,
-    OUT PIO_STATUS_BLOCK IoStatus,
-    IN struct _DEVICE_OBJECT *DeviceObject
-    );
+typedef BOOLEAN (*PFAST_IO_PREPARE_MDL_WRITE)(IN struct _FILE_OBJECT *FileObject, IN PLARGE_INTEGER FileOffset,
+                                              IN ULONG Length, IN ULONG LockKey, OUT PMDL *MdlChain,
+                                              OUT PIO_STATUS_BLOCK IoStatus, IN struct _DEVICE_OBJECT *DeviceObject);
 
-typedef
-BOOLEAN
-(*PFAST_IO_MDL_WRITE_COMPLETE) (
-    IN struct _FILE_OBJECT *FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN PMDL MdlChain,
-    IN struct _DEVICE_OBJECT *DeviceObject
-    );
+typedef BOOLEAN (*PFAST_IO_MDL_WRITE_COMPLETE)(IN struct _FILE_OBJECT *FileObject, IN PLARGE_INTEGER FileOffset,
+                                               IN PMDL MdlChain, IN struct _DEVICE_OBJECT *DeviceObject);
 
 //
 //  If this routine is present, it will be called by FsRtl
 //  to acquire the file for the mapped page writer.
 //
 
-typedef
-NTSTATUS
-(*PFAST_IO_ACQUIRE_FOR_MOD_WRITE) (
-    IN struct _FILE_OBJECT *FileObject,
-    IN PLARGE_INTEGER EndingOffset,
-    OUT struct _ERESOURCE **ResourceToRelease,
-    IN struct _DEVICE_OBJECT *DeviceObject
-             );
+typedef NTSTATUS (*PFAST_IO_ACQUIRE_FOR_MOD_WRITE)(IN struct _FILE_OBJECT *FileObject, IN PLARGE_INTEGER EndingOffset,
+                                                   OUT struct _ERESOURCE **ResourceToRelease,
+                                                   IN struct _DEVICE_OBJECT *DeviceObject);
 
-typedef
-NTSTATUS
-(*PFAST_IO_RELEASE_FOR_MOD_WRITE) (
-    IN struct _FILE_OBJECT *FileObject,
-    IN struct _ERESOURCE *ResourceToRelease,
-    IN struct _DEVICE_OBJECT *DeviceObject
-             );
+typedef NTSTATUS (*PFAST_IO_RELEASE_FOR_MOD_WRITE)(IN struct _FILE_OBJECT *FileObject,
+                                                   IN struct _ERESOURCE *ResourceToRelease,
+                                                   IN struct _DEVICE_OBJECT *DeviceObject);
 
 //
 //  If this routine is present, it will be called by FsRtl
 //  to acquire the file for the mapped page writer.
 //
 
-typedef
-NTSTATUS
-(*PFAST_IO_ACQUIRE_FOR_CCFLUSH) (
-    IN struct _FILE_OBJECT *FileObject,
-    IN struct _DEVICE_OBJECT *DeviceObject
-             );
+typedef NTSTATUS (*PFAST_IO_ACQUIRE_FOR_CCFLUSH)(IN struct _FILE_OBJECT *FileObject,
+                                                 IN struct _DEVICE_OBJECT *DeviceObject);
 
-typedef
-NTSTATUS
-(*PFAST_IO_RELEASE_FOR_CCFLUSH) (
-    IN struct _FILE_OBJECT *FileObject,
-    IN struct _DEVICE_OBJECT *DeviceObject
-             );
+typedef NTSTATUS (*PFAST_IO_RELEASE_FOR_CCFLUSH)(IN struct _FILE_OBJECT *FileObject,
+                                                 IN struct _DEVICE_OBJECT *DeviceObject);
 
-typedef
-BOOLEAN
-(*PFAST_IO_READ_COMPRESSED) (
-    IN struct _FILE_OBJECT *FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN ULONG LockKey,
-    OUT PVOID Buffer,
-    OUT PMDL *MdlChain,
-    OUT PIO_STATUS_BLOCK IoStatus,
-    OUT struct _COMPRESSED_DATA_INFO *CompressedDataInfo,
-    IN ULONG CompressedDataInfoLength,
-    IN struct _DEVICE_OBJECT *DeviceObject
-    );
+typedef BOOLEAN (*PFAST_IO_READ_COMPRESSED)(IN struct _FILE_OBJECT *FileObject, IN PLARGE_INTEGER FileOffset,
+                                            IN ULONG Length, IN ULONG LockKey, OUT PVOID Buffer, OUT PMDL *MdlChain,
+                                            OUT PIO_STATUS_BLOCK IoStatus,
+                                            OUT struct _COMPRESSED_DATA_INFO *CompressedDataInfo,
+                                            IN ULONG CompressedDataInfoLength, IN struct _DEVICE_OBJECT *DeviceObject);
 
-typedef
-BOOLEAN
-(*PFAST_IO_WRITE_COMPRESSED) (
-    IN struct _FILE_OBJECT *FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN ULONG LockKey,
-    IN PVOID Buffer,
-    OUT PMDL *MdlChain,
-    OUT PIO_STATUS_BLOCK IoStatus,
-    IN struct _COMPRESSED_DATA_INFO *CompressedDataInfo,
-    IN ULONG CompressedDataInfoLength,
-    IN struct _DEVICE_OBJECT *DeviceObject
-    );
+typedef BOOLEAN (*PFAST_IO_WRITE_COMPRESSED)(IN struct _FILE_OBJECT *FileObject, IN PLARGE_INTEGER FileOffset,
+                                             IN ULONG Length, IN ULONG LockKey, IN PVOID Buffer, OUT PMDL *MdlChain,
+                                             OUT PIO_STATUS_BLOCK IoStatus,
+                                             IN struct _COMPRESSED_DATA_INFO *CompressedDataInfo,
+                                             IN ULONG CompressedDataInfoLength, IN struct _DEVICE_OBJECT *DeviceObject);
 
-typedef
-BOOLEAN
-(*PFAST_IO_MDL_READ_COMPLETE_COMPRESSED) (
-    IN struct _FILE_OBJECT *FileObject,
-    IN PMDL MdlChain,
-    IN struct _DEVICE_OBJECT *DeviceObject
-    );
+typedef BOOLEAN (*PFAST_IO_MDL_READ_COMPLETE_COMPRESSED)(IN struct _FILE_OBJECT *FileObject, IN PMDL MdlChain,
+                                                         IN struct _DEVICE_OBJECT *DeviceObject);
 
-typedef
-BOOLEAN
-(*PFAST_IO_MDL_WRITE_COMPLETE_COMPRESSED) (
-    IN struct _FILE_OBJECT *FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN PMDL MdlChain,
-    IN struct _DEVICE_OBJECT *DeviceObject
-    );
+typedef BOOLEAN (*PFAST_IO_MDL_WRITE_COMPLETE_COMPRESSED)(IN struct _FILE_OBJECT *FileObject,
+                                                          IN PLARGE_INTEGER FileOffset, IN PMDL MdlChain,
+                                                          IN struct _DEVICE_OBJECT *DeviceObject);
 
-typedef
-BOOLEAN
-(*PFAST_IO_QUERY_OPEN) (
-    IN struct _IRP *Irp,
-    OUT PFILE_NETWORK_OPEN_INFORMATION NetworkInformation,
-    IN struct _DEVICE_OBJECT *DeviceObject
-    );
+typedef BOOLEAN (*PFAST_IO_QUERY_OPEN)(IN struct _IRP *Irp, OUT PFILE_NETWORK_OPEN_INFORMATION NetworkInformation,
+                                       IN struct _DEVICE_OBJECT *DeviceObject);
 
 //
 // Define the structure to describe the Fast I/O dispatch routines.  Any
@@ -1018,7 +748,8 @@ BOOLEAN
 // of the structure, and fields CANNOT be removed from the middle.
 //
 
-typedef struct _FAST_IO_DISPATCH {
+typedef struct _FAST_IO_DISPATCH
+{
     ULONG SizeOfFastIoDispatch;
     PFAST_IO_CHECK_IF_POSSIBLE FastIoCheckIfPossible;
     PFAST_IO_READ FastIoRead;
@@ -1055,7 +786,8 @@ typedef struct _FAST_IO_DISPATCH {
 //  Valid values for FS_FILTER_PARAMETERS.AcquireForSectionSynchronization.SyncType
 //
 
-typedef enum _FS_FILTER_SECTION_SYNC_TYPE {
+typedef enum _FS_FILTER_SECTION_SYNC_TYPE
+{
     SyncTypeOther = 0,
     SyncTypeCreateSection
 } FS_FILTER_SECTION_SYNC_TYPE, *PFS_FILTER_SECTION_SYNC_TYPE;
@@ -1066,13 +798,15 @@ typedef enum _FS_FILTER_SECTION_SYNC_TYPE {
 //  FsFilterCallbacks registration mechanism.
 //
 
-typedef union _FS_FILTER_PARAMETERS {
+typedef union _FS_FILTER_PARAMETERS
+{
 
     //
     //  AcquireForModifiedPageWriter
     //
 
-    struct {
+    struct
+    {
         PLARGE_INTEGER EndingOffset;
     } AcquireForModifiedPageWriter;
 
@@ -1080,7 +814,8 @@ typedef union _FS_FILTER_PARAMETERS {
     //  ReleaseForModifiedPageWriter
     //
 
-    struct {
+    struct
+    {
         PERESOURCE ResourceToRelease;
     } ReleaseForModifiedPageWriter;
 
@@ -1088,7 +823,8 @@ typedef union _FS_FILTER_PARAMETERS {
     //  AcquireForSectionSynchronization
     //
 
-    struct {
+    struct
+    {
         FS_FILTER_SECTION_SYNC_TYPE SyncType;
         ULONG PageProtection;
     } AcquireForSectionSynchronization;
@@ -1097,7 +833,8 @@ typedef union _FS_FILTER_PARAMETERS {
     //  Other
     //
 
-    struct {
+    struct
+    {
         PVOID Argument1;
         PVOID Argument2;
         PVOID Argument3;
@@ -1112,14 +849,15 @@ typedef union _FS_FILTER_PARAMETERS {
 //  of the FS_FILTER_CALLBACK_DATA structure.
 //
 
-#define FS_FILTER_ACQUIRE_FOR_SECTION_SYNCHRONIZATION      (UCHAR)-1
-#define FS_FILTER_RELEASE_FOR_SECTION_SYNCHRONIZATION      (UCHAR)-2
-#define FS_FILTER_ACQUIRE_FOR_MOD_WRITE                    (UCHAR)-3
-#define FS_FILTER_RELEASE_FOR_MOD_WRITE                    (UCHAR)-4
-#define FS_FILTER_ACQUIRE_FOR_CC_FLUSH                     (UCHAR)-5
-#define FS_FILTER_RELEASE_FOR_CC_FLUSH                     (UCHAR)-6
+#define FS_FILTER_ACQUIRE_FOR_SECTION_SYNCHRONIZATION (UCHAR) - 1
+#define FS_FILTER_RELEASE_FOR_SECTION_SYNCHRONIZATION (UCHAR) - 2
+#define FS_FILTER_ACQUIRE_FOR_MOD_WRITE (UCHAR) - 3
+#define FS_FILTER_RELEASE_FOR_MOD_WRITE (UCHAR) - 4
+#define FS_FILTER_ACQUIRE_FOR_CC_FLUSH (UCHAR) - 5
+#define FS_FILTER_RELEASE_FOR_CC_FLUSH (UCHAR) - 6
 
-typedef struct _FS_FILTER_CALLBACK_DATA {
+typedef struct _FS_FILTER_CALLBACK_DATA
+{
 
     ULONG SizeOfFsFilterCallbackData;
     UCHAR Operation;
@@ -1140,25 +878,15 @@ typedef struct _FS_FILTER_CALLBACK_DATA {
 //  will halt system progress.
 //
 
-typedef
-NTSTATUS
-(*PFS_FILTER_CALLBACK) (
-    IN PFS_FILTER_CALLBACK_DATA Data,
-    OUT PVOID *CompletionContext
-    );
+typedef NTSTATUS (*PFS_FILTER_CALLBACK)(IN PFS_FILTER_CALLBACK_DATA Data, OUT PVOID *CompletionContext);
 
 //
 //  Prototype for the completion callback received after an
 //  operation is completed.
 //
 
-typedef
-VOID
-(*PFS_FILTER_COMPLETION_CALLBACK) (
-    IN PFS_FILTER_CALLBACK_DATA Data,
-    IN NTSTATUS OperationStatus,
-    IN PVOID CompletionContext
-    );
+typedef VOID (*PFS_FILTER_COMPLETION_CALLBACK)(IN PFS_FILTER_CALLBACK_DATA Data, IN NTSTATUS OperationStatus,
+                                               IN PVOID CompletionContext);
 
 //
 //  This is the structure that the file system filter fills in to
@@ -1168,7 +896,8 @@ VOID
 //  it doesn't wish to receive.
 //
 
-typedef struct _FS_FILTER_CALLBACKS {
+typedef struct _FS_FILTER_CALLBACKS
+{
 
     ULONG SizeOfFsFilterCallbacks;
     ULONG Reserved; //  For alignment
@@ -1190,10 +919,7 @@ typedef struct _FS_FILTER_CALLBACKS {
 
 NTKERNELAPI
 NTSTATUS
-FsRtlRegisterFileSystemFilterCallbacks (
-    IN struct _DRIVER_OBJECT *FilterDriverObject,
-    IN PFS_FILTER_CALLBACKS Callbacks
-    );
+FsRtlRegisterFileSystemFilterCallbacks(IN struct _DRIVER_OBJECT *FilterDriverObject, IN PFS_FILTER_CALLBACKS Callbacks);
 
 // begin_ntddk begin_wdm begin_nthal begin_ntosp
 //
@@ -1201,7 +927,8 @@ FsRtlRegisterFileSystemFilterCallbacks (
 // adapter/controller allocation routines upon return.
 //
 
-typedef enum _IO_ALLOCATION_ACTION {
+typedef enum _IO_ALLOCATION_ACTION
+{
     KeepObject = 1,
     DeallocateObject,
     DeallocateObjectKeepRegisters
@@ -1211,14 +938,8 @@ typedef enum _IO_ALLOCATION_ACTION {
 // Define device driver adapter/controller execution routine.
 //
 
-typedef
-IO_ALLOCATION_ACTION
-(*PDRIVER_CONTROL) (
-    IN struct _DEVICE_OBJECT *DeviceObject,
-    IN struct _IRP *Irp,
-    IN PVOID MapRegisterBase,
-    IN PVOID Context
-    );
+typedef IO_ALLOCATION_ACTION (*PDRIVER_CONTROL)(IN struct _DEVICE_OBJECT *DeviceObject, IN struct _IRP *Irp,
+                                                IN PVOID MapRegisterBase, IN PVOID Context);
 
 // end_ntddk end_wdm end_nthal end_ntifs end_ntosp
 
@@ -1227,7 +948,8 @@ IO_ALLOCATION_ACTION
 // useful for connecting an ISR to several different processors.
 //
 
-typedef struct _IO_INTERRUPT_STRUCTURE {
+typedef struct _IO_INTERRUPT_STRUCTURE
+{
     KINTERRUPT InterruptObject;
     PKINTERRUPT InterruptArray[MAXIMUM_PROCESSORS];
     KSPIN_LOCK SpinLock;
@@ -1239,7 +961,8 @@ typedef struct _IO_INTERRUPT_STRUCTURE {
 // when checking access to volumes, files, and directories.
 //
 
-typedef struct _IO_SECURITY_CONTEXT {
+typedef struct _IO_SECURITY_CONTEXT
+{
     PSECURITY_QUALITY_OF_SERVICE SecurityQos;
     PACCESS_STATE AccessState;
     ACCESS_MASK DesiredAccess;
@@ -1252,7 +975,8 @@ typedef struct _IO_SECURITY_CONTEXT {
 // Define the I/O system's version of a timer.
 //
 
-typedef struct _IO_TIMER {
+typedef struct _IO_TIMER
+{
     CSHORT Type;
     CSHORT TimerFlag;
     LIST_ENTRY TimerList;
@@ -1265,7 +989,8 @@ typedef struct _IO_TIMER {
 // Define the client driver object extension header.
 //
 
-typedef struct _IO_CLIENT_EXTENSION {
+typedef struct _IO_CLIENT_EXTENSION
+{
     struct _IO_CLIENT_EXTENSION *NextExtension;
     PVOID ClientIdentificationAddress;
 } IO_CLIENT_EXTENSION, *PIO_CLIENT_EXTENSION;
@@ -1275,20 +1000,21 @@ typedef struct _IO_CLIENT_EXTENSION {
 // Define Volume Parameter Block (VPB) flags.
 //
 
-#define VPB_MOUNTED                     0x00000001
-#define VPB_LOCKED                      0x00000002
-#define VPB_PERSISTENT                  0x00000004
-#define VPB_REMOVE_PENDING              0x00000008
-#define VPB_RAW_MOUNT                   0x00000010
+#define VPB_MOUNTED 0x00000001
+#define VPB_LOCKED 0x00000002
+#define VPB_PERSISTENT 0x00000004
+#define VPB_REMOVE_PENDING 0x00000008
+#define VPB_RAW_MOUNT 0x00000010
 
 
 //
 // Volume Parameter Block (VPB)
 //
 
-#define MAXIMUM_VOLUME_LABEL_LENGTH  (32 * sizeof(WCHAR)) // 32 characters
+#define MAXIMUM_VOLUME_LABEL_LENGTH (32 * sizeof(WCHAR)) // 32 characters
 
-typedef struct _VPB {
+typedef struct _VPB
+{
     CSHORT Type;
     CSHORT Size;
     USHORT Flags;
@@ -1345,7 +1071,8 @@ typedef struct _ADAPTER_OBJECT *PADAPTER_OBJECT; // ntndis
 // Define Wait Context Block (WCB)
 //
 
-typedef struct _WAIT_CONTEXT_BLOCK {
+typedef struct _WAIT_CONTEXT_BLOCK
+{
     KDEVICE_QUEUE_ENTRY WaitQueueEntry;
     PDRIVER_CONTROL DeviceRoutine;
     PVOID DeviceContext;
@@ -1357,7 +1084,8 @@ typedef struct _WAIT_CONTEXT_BLOCK {
 
 // end_wdm
 
-typedef struct _CONTROLLER_OBJECT {
+typedef struct _CONTROLLER_OBJECT
+{
     CSHORT Type;
     CSHORT Size;
     PVOID ControllerExtension;
@@ -1374,30 +1102,31 @@ typedef struct _CONTROLLER_OBJECT {
 //
 // end_wdm end_ntddk end_nthal end_ntifs
 
-#define DO_VERIFY_VOLUME                0x00000002      // ntddk nthal ntifs
-#define DO_BUFFERED_IO                  0x00000004      // ntddk nthal ntifs wdm
-#define DO_EXCLUSIVE                    0x00000008      // ntddk nthal ntifs wdm
-#define DO_DIRECT_IO                    0x00000010      // ntddk nthal ntifs wdm
-#define DO_MAP_IO_BUFFER                0x00000020      // ntddk nthal ntifs wdm
-#define DO_DEVICE_HAS_NAME              0x00000040      // ntddk nthal ntifs
-#define DO_DEVICE_INITIALIZING          0x00000080      // ntddk nthal ntifs wdm
-#define DO_SYSTEM_BOOT_PARTITION        0x00000100      // ntddk nthal ntifs
-#define DO_LONG_TERM_REQUESTS           0x00000200      // ntddk nthal ntifs
-#define DO_NEVER_LAST_DEVICE            0x00000400      // ntddk nthal ntifs
-#define DO_SHUTDOWN_REGISTERED          0x00000800      // ntddk nthal ntifs wdm
-#define DO_BUS_ENUMERATED_DEVICE        0x00001000      // ntddk nthal ntifs wdm
-#define DO_POWER_PAGABLE                0x00002000      // ntddk nthal ntifs wdm
-#define DO_POWER_INRUSH                 0x00004000      // ntddk nthal ntifs wdm
-#define DO_POWER_NOOP                   0x00008000
-#define DO_LOW_PRIORITY_FILESYSTEM      0x00010000      // ntddk nthal ntifs
-#define DO_XIP                          0x00020000
+#define DO_VERIFY_VOLUME 0x00000002         // ntddk nthal ntifs
+#define DO_BUFFERED_IO 0x00000004           // ntddk nthal ntifs wdm
+#define DO_EXCLUSIVE 0x00000008             // ntddk nthal ntifs wdm
+#define DO_DIRECT_IO 0x00000010             // ntddk nthal ntifs wdm
+#define DO_MAP_IO_BUFFER 0x00000020         // ntddk nthal ntifs wdm
+#define DO_DEVICE_HAS_NAME 0x00000040       // ntddk nthal ntifs
+#define DO_DEVICE_INITIALIZING 0x00000080   // ntddk nthal ntifs wdm
+#define DO_SYSTEM_BOOT_PARTITION 0x00000100 // ntddk nthal ntifs
+#define DO_LONG_TERM_REQUESTS 0x00000200    // ntddk nthal ntifs
+#define DO_NEVER_LAST_DEVICE 0x00000400     // ntddk nthal ntifs
+#define DO_SHUTDOWN_REGISTERED 0x00000800   // ntddk nthal ntifs wdm
+#define DO_BUS_ENUMERATED_DEVICE 0x00001000 // ntddk nthal ntifs wdm
+#define DO_POWER_PAGABLE 0x00002000         // ntddk nthal ntifs wdm
+#define DO_POWER_INRUSH 0x00004000          // ntddk nthal ntifs wdm
+#define DO_POWER_NOOP 0x00008000
+#define DO_LOW_PRIORITY_FILESYSTEM 0x00010000 // ntddk nthal ntifs
+#define DO_XIP 0x00020000
 
 // begin_wdm begin_ntddk begin_nthal begin_ntifs
 //
 // Device Object structure definition
 //
 
-typedef struct DECLSPEC_ALIGN(MEMORY_ALLOCATION_ALIGNMENT) _DEVICE_OBJECT {
+typedef struct DECLSPEC_ALIGN(MEMORY_ALLOCATION_ALIGNMENT) _DEVICE_OBJECT
+{
     CSHORT Type;
     USHORT Size;
     LONG ReferenceCount;
@@ -1406,13 +1135,14 @@ typedef struct DECLSPEC_ALIGN(MEMORY_ALLOCATION_ALIGNMENT) _DEVICE_OBJECT {
     struct _DEVICE_OBJECT *AttachedDevice;
     struct _IRP *CurrentIrp;
     PIO_TIMER Timer;
-    ULONG Flags;                                // See above:  DO_...
-    ULONG Characteristics;                      // See ntioapi:  FILE_...
+    ULONG Flags;           // See above:  DO_...
+    ULONG Characteristics; // See ntioapi:  FILE_...
     PVPB Vpb;
     PVOID DeviceExtension;
     DEVICE_TYPE DeviceType;
     CCHAR StackSize;
-    union {
+    union
+    {
         LIST_ENTRY ListEntry;
         WAIT_CONTEXT_BLOCK Wcb;
     } Queue;
@@ -1432,8 +1162,8 @@ typedef struct DECLSPEC_ALIGN(MEMORY_ALLOCATION_ALIGNMENT) _DEVICE_OBJECT {
     USHORT SectorSize;
     USHORT Spare1;
 
-    struct _DEVOBJ_EXTENSION  *DeviceObjectExtension;
-    PVOID  Reserved;
+    struct _DEVOBJ_EXTENSION *DeviceObjectExtension;
+    PVOID Reserved;
 } DEVICE_OBJECT;
 
 typedef struct _DEVICE_OBJECT *PDEVICE_OBJECT; // ntndis
@@ -1443,41 +1173,42 @@ typedef struct _DEVICE_OBJECT *PDEVICE_OBJECT; // ntndis
 // Define the Device Object Extension Flags
 //
 
-#define DOE_UNLOAD_PENDING              0x00000001
-#define DOE_DELETE_PENDING              0x00000002
-#define DOE_REMOVE_PENDING              0x00000004
-#define DOE_REMOVE_PROCESSED            0x00000008
-#define DOE_START_PENDING               0x00000010
-#define DOE_STARTIO_REQUESTED           0x00000020
-#define DOE_STARTIO_REQUESTED_BYKEY     0x00000040
-#define DOE_STARTIO_CANCELABLE          0x00000080
-#define DOE_STARTIO_DEFERRED            0x00000100  // Use non-recursive startio
-#define DOE_STARTIO_NO_CANCEL           0x00000200  // Pass non-cancelable IRP to startio
+#define DOE_UNLOAD_PENDING 0x00000001
+#define DOE_DELETE_PENDING 0x00000002
+#define DOE_REMOVE_PENDING 0x00000004
+#define DOE_REMOVE_PROCESSED 0x00000008
+#define DOE_START_PENDING 0x00000010
+#define DOE_STARTIO_REQUESTED 0x00000020
+#define DOE_STARTIO_REQUESTED_BYKEY 0x00000040
+#define DOE_STARTIO_CANCELABLE 0x00000080
+#define DOE_STARTIO_DEFERRED 0x00000100  // Use non-recursive startio
+#define DOE_STARTIO_NO_CANCEL 0x00000200 // Pass non-cancelable IRP to startio
 
 // begin_ntddk begin_nthal begin_ntifs begin_wdm begin_ntosp
 
-struct  _DEVICE_OBJECT_POWER_EXTENSION;
+struct _DEVICE_OBJECT_POWER_EXTENSION;
 
-typedef struct _DEVOBJ_EXTENSION {
+typedef struct _DEVOBJ_EXTENSION
+{
 
-    CSHORT          Type;
-    USHORT          Size;
+    CSHORT Type;
+    USHORT Size;
 
     //
     // Public part of the DeviceObjectExtension structure
     //
 
-    PDEVICE_OBJECT  DeviceObject;               // owning device object
+    PDEVICE_OBJECT DeviceObject; // owning device object
 
-// end_ntddk end_nthal end_ntifs end_wdm end_ntosp
+    // end_ntddk end_nthal end_ntifs end_wdm end_ntosp
 
     //
     // Universal Power Data - all device objects must have this
     //
 
-    ULONG           PowerFlags;             // see ntos\po\pop.h
-                                            // WARNING: Access via PO macros
-                                            // and with PO locking rules ONLY.
+    ULONG PowerFlags; // see ntos\po\pop.h
+                      // WARNING: Access via PO macros
+                      // and with PO locking rules ONLY.
 
     //
     // Pointer to the non-universal power data
@@ -1486,7 +1217,7 @@ typedef struct _DEVOBJ_EXTENSION {
     //  see po.h
     //
 
-    struct          _DEVICE_OBJECT_POWER_EXTENSION  *Dope;
+    struct _DEVICE_OBJECT_POWER_EXTENSION *Dope;
 
     //
     // power state information
@@ -1502,7 +1233,7 @@ typedef struct _DEVOBJ_EXTENSION {
     // PnP manager fields
     //
 
-    PVOID           DeviceNode;
+    PVOID DeviceNode;
 
     //
     // AttachedTo is a pointer to the device object that this device
@@ -1511,21 +1242,21 @@ typedef struct _DEVOBJ_EXTENSION {
     // linkage.
     //
 
-    PDEVICE_OBJECT  AttachedTo;
+    PDEVICE_OBJECT AttachedTo;
 
     //
     // The next two fields are used to prevent recursion in IoStartNextPacket
     // interfaces.
     //
 
-    LONG           StartIoCount;       // Used to keep track of number of pending start ios.
-    LONG           StartIoKey;         // Next startio key
-    ULONG          StartIoFlags;       // Start Io Flags. Need a separate flag so that it can be accessed without locks
-    PVPB           Vpb;                // If not NULL contains the VPB of the mounted volume.
-                                       // Set in the filesystem's volume device object.
-                                       // This is a reverse VPB pointer.
+    LONG StartIoCount;  // Used to keep track of number of pending start ios.
+    LONG StartIoKey;    // Next startio key
+    ULONG StartIoFlags; // Start Io Flags. Need a separate flag so that it can be accessed without locks
+    PVPB Vpb;           // If not NULL contains the VPB of the mounted volume.
+                        // Set in the filesystem's volume device object.
+                        // This is a reverse VPB pointer.
 
-// begin_ntddk begin_wdm begin_nthal begin_ntifs begin_ntosp
+    // begin_ntddk begin_wdm begin_nthal begin_ntifs begin_ntosp
 
 } DEVOBJ_EXTENSION, *PDEVOBJ_EXTENSION;
 
@@ -1533,21 +1264,22 @@ typedef struct _DEVOBJ_EXTENSION {
 // Define Driver Object (DRVO) flags
 //
 
-#define DRVO_UNLOAD_INVOKED             0x00000001
-#define DRVO_LEGACY_DRIVER              0x00000002
-#define DRVO_BUILTIN_DRIVER             0x00000004    // Driver objects for Hal, PnP Mgr
+#define DRVO_UNLOAD_INVOKED 0x00000001
+#define DRVO_LEGACY_DRIVER 0x00000002
+#define DRVO_BUILTIN_DRIVER 0x00000004 // Driver objects for Hal, PnP Mgr
 // end_wdm
-#define DRVO_REINIT_REGISTERED          0x00000008
-#define DRVO_INITIALIZED                0x00000010
-#define DRVO_BOOTREINIT_REGISTERED      0x00000020
-#define DRVO_LEGACY_RESOURCES           0x00000040
+#define DRVO_REINIT_REGISTERED 0x00000008
+#define DRVO_INITIALIZED 0x00000010
+#define DRVO_BOOTREINIT_REGISTERED 0x00000020
+#define DRVO_LEGACY_RESOURCES 0x00000040
 // end_ntddk end_nthal end_ntifs end_ntosp
-#define DRVO_BASE_FILESYSTEM_DRIVER     0x00000080   // A driver that is at the bottom of the filesystem stack.
+#define DRVO_BASE_FILESYSTEM_DRIVER 0x00000080 // A driver that is at the bottom of the filesystem stack.
 // begin_ntddk begin_nthal begin_ntifs begin_ntosp
 
 // begin_wdm
 
-typedef struct _DRIVER_EXTENSION {
+typedef struct _DRIVER_EXTENSION
+{
 
     //
     // Back pointer to Driver Object
@@ -1581,7 +1313,7 @@ typedef struct _DRIVER_EXTENSION {
     // Note: any new shared fields get added here.
     //
 
-// end_ntddk end_wdm end_nthal end_ntifs end_ntosp
+    // end_ntddk end_wdm end_nthal end_ntifs end_ntosp
 
     //
     // The client driver object extension field is used by class driver
@@ -1598,12 +1330,13 @@ typedef struct _DRIVER_EXTENSION {
 
     PFS_FILTER_CALLBACKS FsFilterCallbacks;
 
-// begin_ntddk begin_wdm begin_nthal begin_ntifs begin_ntosp
+    // begin_ntddk begin_wdm begin_nthal begin_ntifs begin_ntosp
 
 } DRIVER_EXTENSION, *PDRIVER_EXTENSION;
 
 
-typedef struct _DRIVER_OBJECT {
+typedef struct _DRIVER_OBJECT
+{
     CSHORT Type;
     CSHORT Size;
 
@@ -1675,7 +1408,8 @@ typedef struct _DRIVER_OBJECT *PDRIVER_OBJECT; // ntndis
 // and is used by the driver to refer to a particular device.
 //
 
-typedef struct _DEVICE_HANDLER_OBJECT {
+typedef struct _DEVICE_HANDLER_OBJECT
+{
     CSHORT Type;
     USHORT Size;
 
@@ -1692,7 +1426,7 @@ typedef struct _DEVICE_HANDLER_OBJECT {
 
     ULONG SlotNumber;
 
-// end_nthal
+    // end_nthal
 
     //
     // System internal fields
@@ -1705,7 +1439,7 @@ typedef struct _DEVICE_HANDLER_OBJECT {
     UNICODE_STRING ServiceKeyName;
     ULONG InstanceOrdinal;
 
-// begin_nthal
+    // begin_nthal
 
 
 } DEVICE_HANDLER_OBJECT, *PDEVICE_HANDLER_OBJECT;
@@ -1717,7 +1451,8 @@ typedef struct _DEVICE_HANDLER_OBJECT {
 // of a file object, and is allocated by the various NT file systems.
 //
 
-typedef struct _SECTION_OBJECT_POINTERS {
+typedef struct _SECTION_OBJECT_POINTERS
+{
     PVOID DataSectionObject;
     PVOID SharedCacheMap;
     PVOID ImageSectionObject;
@@ -1728,7 +1463,8 @@ typedef SECTION_OBJECT_POINTERS *PSECTION_OBJECT_POINTERS;
 // Define the format of a completion message.
 //
 
-typedef struct _IO_COMPLETION_CONTEXT {
+typedef struct _IO_COMPLETION_CONTEXT
+{
     PVOID Port;
     PVOID Key;
 } IO_COMPLETION_CONTEXT, *PIO_COMPLETION_CONTEXT;
@@ -1737,33 +1473,34 @@ typedef struct _IO_COMPLETION_CONTEXT {
 // Define File Object (FO) flags
 //
 
-#define FO_FILE_OPEN                    0x00000001
-#define FO_SYNCHRONOUS_IO               0x00000002
-#define FO_ALERTABLE_IO                 0x00000004
-#define FO_NO_INTERMEDIATE_BUFFERING    0x00000008
-#define FO_WRITE_THROUGH                0x00000010
-#define FO_SEQUENTIAL_ONLY              0x00000020
-#define FO_CACHE_SUPPORTED              0x00000040
-#define FO_NAMED_PIPE                   0x00000080
-#define FO_STREAM_FILE                  0x00000100
-#define FO_MAILSLOT                     0x00000200
-#define FO_GENERATE_AUDIT_ON_CLOSE      0x00000400
-#define FO_DIRECT_DEVICE_OPEN           0x00000800
-#define FO_FILE_MODIFIED                0x00001000
-#define FO_FILE_SIZE_CHANGED            0x00002000
-#define FO_CLEANUP_COMPLETE             0x00004000
-#define FO_TEMPORARY_FILE               0x00008000
-#define FO_DELETE_ON_CLOSE              0x00010000
-#define FO_OPENED_CASE_SENSITIVE        0x00020000
-#define FO_HANDLE_CREATED               0x00040000
-#define FO_FILE_FAST_IO_READ            0x00080000
-#define FO_RANDOM_ACCESS                0x00100000
-#define FO_FILE_OPEN_CANCELLED          0x00200000
-#define FO_VOLUME_OPEN                  0x00400000
-#define FO_FILE_OBJECT_HAS_EXTENSION    0x00800000
-#define FO_REMOTE_ORIGIN                0x01000000
+#define FO_FILE_OPEN 0x00000001
+#define FO_SYNCHRONOUS_IO 0x00000002
+#define FO_ALERTABLE_IO 0x00000004
+#define FO_NO_INTERMEDIATE_BUFFERING 0x00000008
+#define FO_WRITE_THROUGH 0x00000010
+#define FO_SEQUENTIAL_ONLY 0x00000020
+#define FO_CACHE_SUPPORTED 0x00000040
+#define FO_NAMED_PIPE 0x00000080
+#define FO_STREAM_FILE 0x00000100
+#define FO_MAILSLOT 0x00000200
+#define FO_GENERATE_AUDIT_ON_CLOSE 0x00000400
+#define FO_DIRECT_DEVICE_OPEN 0x00000800
+#define FO_FILE_MODIFIED 0x00001000
+#define FO_FILE_SIZE_CHANGED 0x00002000
+#define FO_CLEANUP_COMPLETE 0x00004000
+#define FO_TEMPORARY_FILE 0x00008000
+#define FO_DELETE_ON_CLOSE 0x00010000
+#define FO_OPENED_CASE_SENSITIVE 0x00020000
+#define FO_HANDLE_CREATED 0x00040000
+#define FO_FILE_FAST_IO_READ 0x00080000
+#define FO_RANDOM_ACCESS 0x00100000
+#define FO_FILE_OPEN_CANCELLED 0x00200000
+#define FO_VOLUME_OPEN 0x00400000
+#define FO_FILE_OBJECT_HAS_EXTENSION 0x00800000
+#define FO_REMOTE_ORIGIN 0x01000000
 
-typedef struct _FILE_OBJECT {
+typedef struct _FILE_OBJECT
+{
     CSHORT Type;
     CSHORT Size;
     PDEVICE_OBJECT DeviceObject;
@@ -1798,44 +1535,45 @@ typedef struct _FILE_OBJECT *PFILE_OBJECT; // ntndis
 // Define I/O Request Packet (IRP) flags
 //
 
-#define IRP_NOCACHE                     0x00000001
-#define IRP_PAGING_IO                   0x00000002
-#define IRP_MOUNT_COMPLETION            0x00000002
-#define IRP_SYNCHRONOUS_API             0x00000004
-#define IRP_ASSOCIATED_IRP              0x00000008
-#define IRP_BUFFERED_IO                 0x00000010
-#define IRP_DEALLOCATE_BUFFER           0x00000020
-#define IRP_INPUT_OPERATION             0x00000040
-#define IRP_SYNCHRONOUS_PAGING_IO       0x00000040
-#define IRP_CREATE_OPERATION            0x00000080
-#define IRP_READ_OPERATION              0x00000100
-#define IRP_WRITE_OPERATION             0x00000200
-#define IRP_CLOSE_OPERATION             0x00000400
+#define IRP_NOCACHE 0x00000001
+#define IRP_PAGING_IO 0x00000002
+#define IRP_MOUNT_COMPLETION 0x00000002
+#define IRP_SYNCHRONOUS_API 0x00000004
+#define IRP_ASSOCIATED_IRP 0x00000008
+#define IRP_BUFFERED_IO 0x00000010
+#define IRP_DEALLOCATE_BUFFER 0x00000020
+#define IRP_INPUT_OPERATION 0x00000040
+#define IRP_SYNCHRONOUS_PAGING_IO 0x00000040
+#define IRP_CREATE_OPERATION 0x00000080
+#define IRP_READ_OPERATION 0x00000100
+#define IRP_WRITE_OPERATION 0x00000200
+#define IRP_CLOSE_OPERATION 0x00000400
 // end_wdm
 
-#define IRP_DEFER_IO_COMPLETION         0x00000800
-#define IRP_OB_QUERY_NAME               0x00001000
-#define IRP_HOLD_DEVICE_QUEUE           0x00002000
-#define IRP_RETRY_IO_COMPLETION         0x00004000
-#define IRP_CLASS_CACHE_OPERATION       0x00008000
+#define IRP_DEFER_IO_COMPLETION 0x00000800
+#define IRP_OB_QUERY_NAME 0x00001000
+#define IRP_HOLD_DEVICE_QUEUE 0x00002000
+#define IRP_RETRY_IO_COMPLETION 0x00004000
+#define IRP_CLASS_CACHE_OPERATION 0x00008000
 
-#define IRP_SET_USER_EVENT              IRP_CLOSE_OPERATION
+#define IRP_SET_USER_EVENT IRP_CLOSE_OPERATION
 
 // begin_wdm
 //
 // Define I/O request packet (IRP) alternate flags for allocation control.
 //
 
-#define IRP_QUOTA_CHARGED               0x01
-#define IRP_ALLOCATED_MUST_SUCCEED      0x02
-#define IRP_ALLOCATED_FIXED_SIZE        0x04
-#define IRP_LOOKASIDE_ALLOCATION        0x08
+#define IRP_QUOTA_CHARGED 0x01
+#define IRP_ALLOCATED_MUST_SUCCEED 0x02
+#define IRP_ALLOCATED_FIXED_SIZE 0x04
+#define IRP_LOOKASIDE_ALLOCATION 0x08
 
 //
 // I/O Request Packet (IRP) definition
 //
 
-typedef struct _IRP {
+typedef struct _IRP
+{
     CSHORT Type;
     USHORT Size;
 
@@ -1870,7 +1608,8 @@ typedef struct _IRP {
     //       the system space buffer.
     //
 
-    union {
+    union
+    {
         struct _IRP *MasterIrp;
         LONG IrpCount;
         PVOID SystemBuffer;
@@ -1940,8 +1679,10 @@ typedef struct _IRP {
 
     PIO_STATUS_BLOCK UserIosb;
     PKEVENT UserEvent;
-    union {
-        struct {
+    union
+    {
+        struct
+        {
             PIO_APC_ROUTINE UserApcRoutine;
             PVOID UserApcContext;
         } AsynchronousParameters;
@@ -1975,11 +1716,14 @@ typedef struct _IRP {
     // alignment of other fields in the IRP.
     //
 
-    union {
+    union
+    {
 
-        struct {
+        struct
+        {
 
-            union {
+            union
+            {
 
                 //
                 // DeviceQueueEntry - The device queue entry field is used to
@@ -1988,7 +1732,8 @@ typedef struct _IRP {
 
                 KDEVICE_QUEUE_ENTRY DeviceQueueEntry;
 
-                struct {
+                struct
+                {
 
                     //
                     // The following are available to the driver to use in
@@ -1997,10 +1742,8 @@ typedef struct _IRP {
                     //
 
                     PVOID DriverContext[4];
-
-                } ;
-
-            } ;
+                };
+            };
 
             //
             // Thread - pointer to caller's Thread Control Block.
@@ -2022,7 +1765,8 @@ typedef struct _IRP {
             // for completion queue entries.
             //
 
-            struct {
+            struct
+            {
 
                 //
                 // List entry - used to queue the packet to completion queue, among
@@ -2031,7 +1775,8 @@ typedef struct _IRP {
 
                 LIST_ENTRY ListEntry;
 
-                union {
+                union
+                {
 
                     //
                     // Current stack location - contains a pointer to the current
@@ -2085,22 +1830,16 @@ typedef struct _IRP {
 // Define completion routine types for use in stack locations in an IRP
 //
 
-typedef
-NTSTATUS
-(*PIO_COMPLETION_ROUTINE) (
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN PVOID Context
-    );
+typedef NTSTATUS (*PIO_COMPLETION_ROUTINE)(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID Context);
 
 //
 // Define stack location control flags
 //
 
-#define SL_PENDING_RETURNED             0x01
-#define SL_INVOKE_ON_CANCEL             0x20
-#define SL_INVOKE_ON_SUCCESS            0x40
-#define SL_INVOKE_ON_ERROR              0x80
+#define SL_PENDING_RETURNED 0x01
+#define SL_INVOKE_ON_CANCEL 0x20
+#define SL_INVOKE_ON_SUCCESS 0x40
+#define SL_INVOKE_ON_ERROR 0x80
 
 //
 // Define flags for various functions
@@ -2115,20 +1854,20 @@ NTSTATUS
 // manager's attributes structure.
 //
 
-#define SL_FORCE_ACCESS_CHECK           0x01
-#define SL_OPEN_PAGING_FILE             0x02
-#define SL_OPEN_TARGET_DIRECTORY        0x04
+#define SL_FORCE_ACCESS_CHECK 0x01
+#define SL_OPEN_PAGING_FILE 0x02
+#define SL_OPEN_TARGET_DIRECTORY 0x04
 
-#define SL_CASE_SENSITIVE               0x80
+#define SL_CASE_SENSITIVE 0x80
 
 //
 // Read / Write
 //
 
-#define SL_KEY_SPECIFIED                0x01
-#define SL_OVERRIDE_VERIFY_VOLUME       0x02
-#define SL_WRITE_THROUGH                0x04
-#define SL_FT_SEQUENTIAL_WRITE          0x08
+#define SL_KEY_SPECIFIED 0x01
+#define SL_OVERRIDE_VERIFY_VOLUME 0x02
+#define SL_WRITE_THROUGH 0x04
+#define SL_FT_SEQUENTIAL_WRITE 0x08
 
 //
 // Device I/O Control
@@ -2137,29 +1876,29 @@ NTSTATUS
 // Same SL_OVERRIDE_VERIFY_VOLUME as for read/write above.
 //
 
-#define SL_READ_ACCESS_GRANTED          0x01
-#define SL_WRITE_ACCESS_GRANTED         0x04    // Gap for SL_OVERRIDE_VERIFY_VOLUME
+#define SL_READ_ACCESS_GRANTED 0x01
+#define SL_WRITE_ACCESS_GRANTED 0x04 // Gap for SL_OVERRIDE_VERIFY_VOLUME
 
 //
 // Lock
 //
 
-#define SL_FAIL_IMMEDIATELY             0x01
-#define SL_EXCLUSIVE_LOCK               0x02
+#define SL_FAIL_IMMEDIATELY 0x01
+#define SL_EXCLUSIVE_LOCK 0x02
 
 //
 // QueryDirectory / QueryEa / QueryQuota
 //
 
-#define SL_RESTART_SCAN                 0x01
-#define SL_RETURN_SINGLE_ENTRY          0x02
-#define SL_INDEX_SPECIFIED              0x04
+#define SL_RESTART_SCAN 0x01
+#define SL_RETURN_SINGLE_ENTRY 0x02
+#define SL_INDEX_SPECIFIED 0x04
 
 //
 // NotifyDirectory
 //
 
-#define SL_WATCH_TREE                   0x01
+#define SL_WATCH_TREE 0x01
 
 //
 // FileSystemControl
@@ -2167,13 +1906,14 @@ NTSTATUS
 //    minor: mount/verify volume
 //
 
-#define SL_ALLOW_RAW_MOUNT              0x01
+#define SL_ALLOW_RAW_MOUNT 0x01
 
 //
 // Define PNP/POWER types required by IRP_MJ_PNP/IRP_MJ_POWER.
 //
 
-typedef enum _DEVICE_RELATION_TYPE {
+typedef enum _DEVICE_RELATION_TYPE
+{
     BusRelations,
     EjectionRelations,
     PowerRelations,
@@ -2182,12 +1922,14 @@ typedef enum _DEVICE_RELATION_TYPE {
     SingleBusRelations
 } DEVICE_RELATION_TYPE, *PDEVICE_RELATION_TYPE;
 
-typedef struct _DEVICE_RELATIONS {
+typedef struct _DEVICE_RELATIONS
+{
     ULONG Count;
-    PDEVICE_OBJECT Objects[1];  // variable length
+    PDEVICE_OBJECT Objects[1]; // variable length
 } DEVICE_RELATIONS, *PDEVICE_RELATIONS;
 
-typedef enum _DEVICE_USAGE_NOTIFICATION_TYPE {
+typedef enum _DEVICE_USAGE_NOTIFICATION_TYPE
+{
     DeviceUsageTypeUndefined,
     DeviceUsageTypePaging,
     DeviceUsageTypeHibernation,
@@ -2200,7 +1942,8 @@ typedef enum _DEVICE_USAGE_NOTIFICATION_TYPE {
 // to match the class name).
 #undef INTERFACE
 
-typedef struct _INTERFACE {
+typedef struct _INTERFACE
+{
     USHORT Size;
     USHORT Version;
     PVOID Context;
@@ -2211,28 +1954,29 @@ typedef struct _INTERFACE {
 
 // end_ntminiport
 
-typedef struct _DEVICE_CAPABILITIES {
+typedef struct _DEVICE_CAPABILITIES
+{
     USHORT Size;
-    USHORT Version;  // the version documented here is version 1
-    ULONG DeviceD1:1;
-    ULONG DeviceD2:1;
-    ULONG LockSupported:1;
-    ULONG EjectSupported:1; // Ejectable in S0
-    ULONG Removable:1;
-    ULONG DockDevice:1;
-    ULONG UniqueID:1;
-    ULONG SilentInstall:1;
-    ULONG RawDeviceOK:1;
-    ULONG SurpriseRemovalOK:1;
-    ULONG WakeFromD0:1;
-    ULONG WakeFromD1:1;
-    ULONG WakeFromD2:1;
-    ULONG WakeFromD3:1;
-    ULONG HardwareDisabled:1;
-    ULONG NonDynamic:1;
-    ULONG WarmEjectSupported:1;
-    ULONG NoDisplayInUI:1;
-    ULONG Reserved:14;
+    USHORT Version; // the version documented here is version 1
+    ULONG DeviceD1 : 1;
+    ULONG DeviceD2 : 1;
+    ULONG LockSupported : 1;
+    ULONG EjectSupported : 1; // Ejectable in S0
+    ULONG Removable : 1;
+    ULONG DockDevice : 1;
+    ULONG UniqueID : 1;
+    ULONG SilentInstall : 1;
+    ULONG RawDeviceOK : 1;
+    ULONG SurpriseRemovalOK : 1;
+    ULONG WakeFromD0 : 1;
+    ULONG WakeFromD1 : 1;
+    ULONG WakeFromD2 : 1;
+    ULONG WakeFromD3 : 1;
+    ULONG HardwareDisabled : 1;
+    ULONG NonDynamic : 1;
+    ULONG WarmEjectSupported : 1;
+    ULONG NoDisplayInUI : 1;
+    ULONG Reserved : 14;
 
     ULONG Address;
     ULONG UINumber;
@@ -2245,32 +1989,35 @@ typedef struct _DEVICE_CAPABILITIES {
     ULONG D3Latency;
 } DEVICE_CAPABILITIES, *PDEVICE_CAPABILITIES;
 
-typedef struct _POWER_SEQUENCE {
+typedef struct _POWER_SEQUENCE
+{
     ULONG SequenceD1;
     ULONG SequenceD2;
     ULONG SequenceD3;
 } POWER_SEQUENCE, *PPOWER_SEQUENCE;
 
-typedef enum {
-    BusQueryDeviceID = 0,       // <Enumerator>\<Enumerator-specific device id>
-    BusQueryHardwareIDs = 1,    // Hardware ids
-    BusQueryCompatibleIDs = 2,  // compatible device ids
-    BusQueryInstanceID = 3,     // persistent id for this instance of the device
-    BusQueryDeviceSerialNumber = 4    // serial number for this device
+typedef enum
+{
+    BusQueryDeviceID = 0,          // <Enumerator>\<Enumerator-specific device id>
+    BusQueryHardwareIDs = 1,       // Hardware ids
+    BusQueryCompatibleIDs = 2,     // compatible device ids
+    BusQueryInstanceID = 3,        // persistent id for this instance of the device
+    BusQueryDeviceSerialNumber = 4 // serial number for this device
 } BUS_QUERY_ID_TYPE, *PBUS_QUERY_ID_TYPE;
 
 typedef ULONG PNP_DEVICE_STATE, *PPNP_DEVICE_STATE;
 
-#define PNP_DEVICE_DISABLED                      0x00000001
-#define PNP_DEVICE_DONT_DISPLAY_IN_UI            0x00000002
-#define PNP_DEVICE_FAILED                        0x00000004
-#define PNP_DEVICE_REMOVED                       0x00000008
+#define PNP_DEVICE_DISABLED 0x00000001
+#define PNP_DEVICE_DONT_DISPLAY_IN_UI 0x00000002
+#define PNP_DEVICE_FAILED 0x00000004
+#define PNP_DEVICE_REMOVED 0x00000008
 #define PNP_DEVICE_RESOURCE_REQUIREMENTS_CHANGED 0x00000010
-#define PNP_DEVICE_NOT_DISABLEABLE               0x00000020
+#define PNP_DEVICE_NOT_DISABLEABLE 0x00000020
 
-typedef enum {
-    DeviceTextDescription = 0,            // DeviceDesc property
-    DeviceTextLocationInformation = 1     // DeviceLocation property
+typedef enum
+{
+    DeviceTextDescription = 0,        // DeviceDesc property
+    DeviceTextLocationInformation = 1 // DeviceLocation property
 } DEVICE_TEXT_TYPE, *PDEVICE_TEXT_TYPE;
 
 //
@@ -2291,7 +2038,8 @@ typedef enum {
 
 // end_ntndis
 
-typedef struct _IO_STACK_LOCATION {
+typedef struct _IO_STACK_LOCATION
+{
     UCHAR MajorFunction;
     UCHAR MinorFunction;
     UCHAR Flags;
@@ -2303,13 +2051,15 @@ typedef struct _IO_STACK_LOCATION {
     // on the above major and minor function codes.
     //
 
-    union {
+    union
+    {
 
         //
         // System service parameters for:  NtCreateFile
         //
 
-        struct {
+        struct
+        {
             PIO_SECURITY_CONTEXT SecurityContext;
             ULONG Options;
             USHORT POINTER_ALIGNMENT FileAttributes;
@@ -2317,7 +2067,7 @@ typedef struct _IO_STACK_LOCATION {
             ULONG POINTER_ALIGNMENT EaLength;
         } Create;
 
-// end_ntddk end_wdm end_nthal end_ntifs end_ntosp
+        // end_ntddk end_wdm end_nthal end_ntifs end_ntosp
 
         //
         // System service parameters for:  NtCreateNamedPipeFile
@@ -2328,7 +2078,8 @@ typedef struct _IO_STACK_LOCATION {
         // parse routine other than for the last longword.
         //
 
-        struct {
+        struct
+        {
             PIO_SECURITY_CONTEXT SecurityContext;
             ULONG Options;
             USHORT POINTER_ALIGNMENT Reserved;
@@ -2345,7 +2096,8 @@ typedef struct _IO_STACK_LOCATION {
         // parse routine other than for the last longword.
         //
 
-        struct {
+        struct
+        {
             PIO_SECURITY_CONTEXT SecurityContext;
             ULONG Options;
             USHORT POINTER_ALIGNMENT Reserved;
@@ -2353,13 +2105,14 @@ typedef struct _IO_STACK_LOCATION {
             PMAILSLOT_CREATE_PARAMETERS Parameters;
         } CreateMailslot;
 
-// begin_ntddk begin_wdm begin_nthal begin_ntifs begin_ntosp
+        // begin_ntddk begin_wdm begin_nthal begin_ntifs begin_ntosp
 
         //
         // System service parameters for:  NtReadFile
         //
 
-        struct {
+        struct
+        {
             ULONG Length;
             ULONG POINTER_ALIGNMENT Key;
             LARGE_INTEGER ByteOffset;
@@ -2369,19 +2122,21 @@ typedef struct _IO_STACK_LOCATION {
         // System service parameters for:  NtWriteFile
         //
 
-        struct {
+        struct
+        {
             ULONG Length;
             ULONG POINTER_ALIGNMENT Key;
             LARGE_INTEGER ByteOffset;
         } Write;
 
-// end_ntddk end_wdm end_nthal
+        // end_ntddk end_wdm end_nthal
 
         //
         // System service parameters for:  NtQueryDirectoryFile
         //
 
-        struct {
+        struct
+        {
             ULONG Length;
             PSTRING FileName;
             FILE_INFORMATION_CLASS FileInformationClass;
@@ -2392,18 +2147,20 @@ typedef struct _IO_STACK_LOCATION {
         // System service parameters for:  NtNotifyChangeDirectoryFile
         //
 
-        struct {
+        struct
+        {
             ULONG Length;
             ULONG POINTER_ALIGNMENT CompletionFilter;
         } NotifyDirectory;
 
-// begin_ntddk begin_wdm begin_nthal
+        // begin_ntddk begin_wdm begin_nthal
 
         //
         // System service parameters for:  NtQueryInformationFile
         //
 
-        struct {
+        struct
+        {
             ULONG Length;
             FILE_INFORMATION_CLASS POINTER_ALIGNMENT FileInformationClass;
         } QueryFile;
@@ -2412,12 +2169,15 @@ typedef struct _IO_STACK_LOCATION {
         // System service parameters for:  NtSetInformationFile
         //
 
-        struct {
+        struct
+        {
             ULONG Length;
             FILE_INFORMATION_CLASS POINTER_ALIGNMENT FileInformationClass;
             PFILE_OBJECT FileObject;
-            union {
-                struct {
+            union
+            {
+                struct
+                {
                     BOOLEAN ReplaceIfExists;
                     BOOLEAN AdvanceOnly;
                 };
@@ -2426,13 +2186,14 @@ typedef struct _IO_STACK_LOCATION {
             };
         } SetFile;
 
-// end_ntddk end_wdm end_nthal end_ntosp
+        // end_ntddk end_wdm end_nthal end_ntosp
 
         //
         // System service parameters for:  NtQueryEaFile
         //
 
-        struct {
+        struct
+        {
             ULONG Length;
             PVOID EaList;
             ULONG EaListLength;
@@ -2443,32 +2204,35 @@ typedef struct _IO_STACK_LOCATION {
         // System service parameters for:  NtSetEaFile
         //
 
-        struct {
+        struct
+        {
             ULONG Length;
         } SetEa;
 
-// begin_ntddk begin_wdm begin_nthal begin_ntosp
+        // begin_ntddk begin_wdm begin_nthal begin_ntosp
 
         //
         // System service parameters for:  NtQueryVolumeInformationFile
         //
 
-        struct {
+        struct
+        {
             ULONG Length;
             FS_INFORMATION_CLASS POINTER_ALIGNMENT FsInformationClass;
         } QueryVolume;
 
-// end_ntddk end_wdm end_nthal end_ntosp
+        // end_ntddk end_wdm end_nthal end_ntosp
 
         //
         // System service parameters for:  NtSetVolumeInformationFile
         //
 
-        struct {
+        struct
+        {
             ULONG Length;
             FS_INFORMATION_CLASS POINTER_ALIGNMENT FsInformationClass;
         } SetVolume;
-// begin_ntosp
+        // begin_ntosp
         //
         // System service parameters for:  NtFsControlFile
         //
@@ -2476,7 +2240,8 @@ typedef struct _IO_STACK_LOCATION {
         // and the user's input buffer is stored in the SystemBuffer field.
         //
 
-        struct {
+        struct
+        {
             ULONG OutputBufferLength;
             ULONG POINTER_ALIGNMENT InputBufferLength;
             ULONG POINTER_ALIGNMENT FsControlCode;
@@ -2486,13 +2251,14 @@ typedef struct _IO_STACK_LOCATION {
         // System service parameters for:  NtLockFile/NtUnlockFile
         //
 
-        struct {
+        struct
+        {
             PLARGE_INTEGER Length;
             ULONG POINTER_ALIGNMENT Key;
             LARGE_INTEGER ByteOffset;
         } LockControl;
 
-// begin_ntddk begin_wdm begin_nthal
+        // begin_ntddk begin_wdm begin_nthal
 
         //
         // System service parameters for:  NtFlushBuffersFile
@@ -2500,8 +2266,8 @@ typedef struct _IO_STACK_LOCATION {
         // No extra user-supplied parameters.
         //
 
-// end_ntddk end_wdm end_nthal
-// end_ntosp
+        // end_ntddk end_wdm end_nthal
+        // end_ntosp
 
         //
         // System service parameters for:  NtCancelIoFile
@@ -2509,7 +2275,7 @@ typedef struct _IO_STACK_LOCATION {
         // No extra user-supplied parameters.
         //
 
-// begin_ntddk begin_wdm begin_nthal begin_ntosp
+        // begin_ntddk begin_wdm begin_nthal begin_ntosp
 
         //
         // System service parameters for:  NtDeviceIoControlFile
@@ -2518,19 +2284,21 @@ typedef struct _IO_STACK_LOCATION {
         // and the user's input buffer is stored in the SystemBuffer field.
         //
 
-        struct {
+        struct
+        {
             ULONG OutputBufferLength;
             ULONG POINTER_ALIGNMENT InputBufferLength;
             ULONG POINTER_ALIGNMENT IoControlCode;
             PVOID Type3InputBuffer;
         } DeviceIoControl;
 
-// end_wdm
+        // end_wdm
         //
         // System service parameters for:  NtQuerySecurityObject
         //
 
-        struct {
+        struct
+        {
             SECURITY_INFORMATION SecurityInformation;
             ULONG POINTER_ALIGNMENT Length;
         } QuerySecurity;
@@ -2539,19 +2307,21 @@ typedef struct _IO_STACK_LOCATION {
         // System service parameters for:  NtSetSecurityObject
         //
 
-        struct {
+        struct
+        {
             SECURITY_INFORMATION SecurityInformation;
             PSECURITY_DESCRIPTOR SecurityDescriptor;
         } SetSecurity;
 
-// begin_wdm
+        // begin_wdm
         //
         // Non-system service parameters.
         //
         // Parameters for MountVolume
         //
 
-        struct {
+        struct
+        {
             PVPB Vpb;
             PDEVICE_OBJECT DeviceObject;
         } MountVolume;
@@ -2560,7 +2330,8 @@ typedef struct _IO_STACK_LOCATION {
         // Parameters for VerifyVolume
         //
 
-        struct {
+        struct
+        {
             PVPB Vpb;
             PDEVICE_OBJECT DeviceObject;
         } VerifyVolume;
@@ -2569,17 +2340,19 @@ typedef struct _IO_STACK_LOCATION {
         // Parameters for Scsi with internal device contorl.
         //
 
-        struct {
+        struct
+        {
             struct _SCSI_REQUEST_BLOCK *Srb;
         } Scsi;
 
-// end_ntddk end_wdm end_nthal end_ntosp
+        // end_ntddk end_wdm end_nthal end_ntosp
 
         //
         // System service parameters for:  NtQueryQuotaInformationFile
         //
 
-        struct {
+        struct
+        {
             ULONG Length;
             PSID StartSid;
             PFILE_GET_QUOTA_INFORMATION SidList;
@@ -2590,17 +2363,19 @@ typedef struct _IO_STACK_LOCATION {
         // System service parameters for:  NtSetQuotaInformationFile
         //
 
-        struct {
+        struct
+        {
             ULONG Length;
         } SetQuota;
 
-// begin_ntddk begin_wdm begin_nthal begin_ntosp
+        // begin_ntddk begin_wdm begin_nthal begin_ntosp
 
         //
         // Parameters for IRP_MN_QUERY_DEVICE_RELATIONS
         //
 
-        struct {
+        struct
+        {
             DEVICE_RELATION_TYPE Type;
         } QueryDeviceRelations;
 
@@ -2608,7 +2383,8 @@ typedef struct _IO_STACK_LOCATION {
         // Parameters for IRP_MN_QUERY_INTERFACE
         //
 
-        struct {
+        struct
+        {
             CONST GUID *InterfaceType;
             USHORT Size;
             USHORT Version;
@@ -2616,13 +2392,14 @@ typedef struct _IO_STACK_LOCATION {
             PVOID InterfaceSpecificData;
         } QueryInterface;
 
-// end_ntifs
+        // end_ntifs
 
         //
         // Parameters for IRP_MN_QUERY_CAPABILITIES
         //
 
-        struct {
+        struct
+        {
             PDEVICE_CAPABILITIES Capabilities;
         } DeviceCapabilities;
 
@@ -2630,7 +2407,8 @@ typedef struct _IO_STACK_LOCATION {
         // Parameters for IRP_MN_FILTER_RESOURCE_REQUIREMENTS
         //
 
-        struct {
+        struct
+        {
             PIO_RESOURCE_REQUIREMENTS_LIST IoResourceRequirementList;
         } FilterResourceRequirements;
 
@@ -2638,7 +2416,8 @@ typedef struct _IO_STACK_LOCATION {
         // Parameters for IRP_MN_READ_CONFIG and IRP_MN_WRITE_CONFIG
         //
 
-        struct {
+        struct
+        {
             ULONG WhichSpace;
             PVOID Buffer;
             ULONG Offset;
@@ -2649,7 +2428,8 @@ typedef struct _IO_STACK_LOCATION {
         // Parameters for IRP_MN_SET_LOCK
         //
 
-        struct {
+        struct
+        {
             BOOLEAN Lock;
         } SetLock;
 
@@ -2657,7 +2437,8 @@ typedef struct _IO_STACK_LOCATION {
         // Parameters for IRP_MN_QUERY_ID
         //
 
-        struct {
+        struct
+        {
             BUS_QUERY_ID_TYPE IdType;
         } QueryId;
 
@@ -2665,7 +2446,8 @@ typedef struct _IO_STACK_LOCATION {
         // Parameters for IRP_MN_QUERY_DEVICE_TEXT
         //
 
-        struct {
+        struct
+        {
             DEVICE_TEXT_TYPE DeviceTextType;
             LCID POINTER_ALIGNMENT LocaleId;
         } QueryDeviceText;
@@ -2674,7 +2456,8 @@ typedef struct _IO_STACK_LOCATION {
         // Parameters for IRP_MN_DEVICE_USAGE_NOTIFICATION
         //
 
-        struct {
+        struct
+        {
             BOOLEAN InPath;
             BOOLEAN Reserved[3];
             DEVICE_USAGE_NOTIFICATION_TYPE POINTER_ALIGNMENT Type;
@@ -2684,7 +2467,8 @@ typedef struct _IO_STACK_LOCATION {
         // Parameters for IRP_MN_WAIT_WAKE
         //
 
-        struct {
+        struct
+        {
             SYSTEM_POWER_STATE PowerState;
         } WaitWake;
 
@@ -2692,7 +2476,8 @@ typedef struct _IO_STACK_LOCATION {
         // Parameter for IRP_MN_POWER_SEQUENCE
         //
 
-        struct {
+        struct
+        {
             PPOWER_SEQUENCE PowerSequence;
         } PowerSequence;
 
@@ -2700,7 +2485,8 @@ typedef struct _IO_STACK_LOCATION {
         // Parameters for IRP_MN_SET_POWER and IRP_MN_QUERY_POWER
         //
 
-        struct {
+        struct
+        {
             ULONG SystemContext;
             POWER_STATE_TYPE POINTER_ALIGNMENT Type;
             POWER_STATE POINTER_ALIGNMENT State;
@@ -2711,12 +2497,13 @@ typedef struct _IO_STACK_LOCATION {
         // Parameters for StartDevice
         //
 
-        struct {
+        struct
+        {
             PCM_RESOURCE_LIST AllocatedResources;
             PCM_RESOURCE_LIST AllocatedResourcesTranslated;
         } StartDevice;
 
-// begin_ntifs
+        // begin_ntifs
         //
         // Parameters for Cleanup
         //
@@ -2727,7 +2514,8 @@ typedef struct _IO_STACK_LOCATION {
         // WMI Irps
         //
 
-        struct {
+        struct
+        {
             ULONG_PTR ProviderId;
             PVOID DataPath;
             ULONG BufferSize;
@@ -2738,7 +2526,8 @@ typedef struct _IO_STACK_LOCATION {
         // Others - driver-specific
         //
 
-        struct {
+        struct
+        {
             PVOID Argument1;
             PVOID Argument2;
             PVOID Argument3;
@@ -2784,7 +2573,8 @@ typedef struct _IO_STACK_LOCATION {
 // whether or not another accessor may open the file.
 //
 
-typedef struct _SHARE_ACCESS {
+typedef struct _SHARE_ACCESS
+{
     ULONG OpenCount;
     ULONG Readers;
     ULONG Writers;
@@ -2804,7 +2594,8 @@ typedef struct _SHARE_ACCESS {
 // NtQuerySystemInformation system service to return device type counts.
 //
 
-typedef struct _CONFIGURATION_INFORMATION {
+typedef struct _CONFIGURATION_INFORMATION
+{
 
     //
     // This field indicates the total number of disks in the system.  This
@@ -2813,21 +2604,21 @@ typedef struct _CONFIGURATION_INFORMATION {
     // disks.
     //
 
-    ULONG DiskCount;                // Count of hard disks thus far
-    ULONG FloppyCount;              // Count of floppy disks thus far
-    ULONG CdRomCount;               // Count of CD-ROM drives thus far
-    ULONG TapeCount;                // Count of tape drives thus far
-    ULONG ScsiPortCount;            // Count of SCSI port adapters thus far
-    ULONG SerialCount;              // Count of serial devices thus far
-    ULONG ParallelCount;            // Count of parallel devices thus far
+    ULONG DiskCount;     // Count of hard disks thus far
+    ULONG FloppyCount;   // Count of floppy disks thus far
+    ULONG CdRomCount;    // Count of CD-ROM drives thus far
+    ULONG TapeCount;     // Count of tape drives thus far
+    ULONG ScsiPortCount; // Count of SCSI port adapters thus far
+    ULONG SerialCount;   // Count of serial devices thus far
+    ULONG ParallelCount; // Count of parallel devices thus far
 
     //
     // These next two fields indicate ownership of one of the two IO address
     // spaces that are used by WD1003-compatable disk controllers.
     //
 
-    BOOLEAN AtDiskPrimaryAddressClaimed;    // 0x1F0 - 0x1FF
-    BOOLEAN AtDiskSecondaryAddressClaimed;  // 0x170 - 0x17F
+    BOOLEAN AtDiskPrimaryAddressClaimed;   // 0x1F0 - 0x1FF
+    BOOLEAN AtDiskSecondaryAddressClaimed; // 0x170 - 0x17F
 
     //
     // Indicates the structure version, as anything value belong this will have been added.
@@ -2863,7 +2654,7 @@ extern ULONG IoOtherOperationCount;
 extern LARGE_INTEGER IoReadTransferCount;
 extern LARGE_INTEGER IoWriteTransferCount;
 extern LARGE_INTEGER IoOtherTransferCount;
-
+
 //
 // It is difficult for cached file systems to properly charge quota
 // for the storage that they allocate on behalf of user file handles,
@@ -2879,87 +2670,53 @@ extern LARGE_INTEGER IoOtherTransferCount;
 // size of a FILE_OBJECT to get the actual charge amount.
 //
 
-#define IO_FILE_OBJECT_NON_PAGED_POOL_CHARGE    64
-#define IO_FILE_OBJECT_PAGED_POOL_CHARGE        1024
+#define IO_FILE_OBJECT_NON_PAGED_POOL_CHARGE 64
+#define IO_FILE_OBJECT_PAGED_POOL_CHARGE 1024
 
-
+
 // begin_ntddk begin_wdm begin_nthal begin_ntosp
 //
 // Public I/O routine definitions
 //
 
 NTKERNELAPI
-VOID
-IoAcquireCancelSpinLock(
-    OUT PKIRQL Irql
-    );
+VOID IoAcquireCancelSpinLock(OUT PKIRQL Irql);
 
 // end_ntddk end_wdm end_nthal end_ntosp
 
 NTKERNELAPI
-VOID
-IoAcquireVpbSpinLock(
-    OUT PKIRQL Irql
-    );
+VOID IoAcquireVpbSpinLock(OUT PKIRQL Irql);
 
 // begin_ntddk  begin_nthal end_ntifs begin_ntosp
 
-DECLSPEC_DEPRECATED_DDK                 // Use AllocateAdapterChannel
-NTKERNELAPI
-NTSTATUS
-IoAllocateAdapterChannel(
-    IN PADAPTER_OBJECT AdapterObject,
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG NumberOfMapRegisters,
-    IN PDRIVER_CONTROL ExecutionRoutine,
-    IN PVOID Context
-    );
+DECLSPEC_DEPRECATED_DDK // Use AllocateAdapterChannel
+    NTKERNELAPI NTSTATUS
+    IoAllocateAdapterChannel(IN PADAPTER_OBJECT AdapterObject, IN PDEVICE_OBJECT DeviceObject,
+                             IN ULONG NumberOfMapRegisters, IN PDRIVER_CONTROL ExecutionRoutine, IN PVOID Context);
 
 NTKERNELAPI
-VOID
-IoAllocateController(
-    IN PCONTROLLER_OBJECT ControllerObject,
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PDRIVER_CONTROL ExecutionRoutine,
-    IN PVOID Context
-    );
+VOID IoAllocateController(IN PCONTROLLER_OBJECT ControllerObject, IN PDEVICE_OBJECT DeviceObject,
+                          IN PDRIVER_CONTROL ExecutionRoutine, IN PVOID Context);
 
 //  begin_wdm
 
 NTKERNELAPI
 NTSTATUS
-IoAllocateDriverObjectExtension(
-    IN PDRIVER_OBJECT DriverObject,
-    IN PVOID ClientIdentificationAddress,
-    IN ULONG DriverObjectExtensionSize,
-    OUT PVOID *DriverObjectExtension
-    );
+IoAllocateDriverObjectExtension(IN PDRIVER_OBJECT DriverObject, IN PVOID ClientIdentificationAddress,
+                                IN ULONG DriverObjectExtensionSize, OUT PVOID *DriverObjectExtension);
 
 // begin_ntifs
 
 NTKERNELAPI
 PVOID
-IoAllocateErrorLogEntry(
-    IN PVOID IoObject,
-    IN UCHAR EntrySize
-    );
+IoAllocateErrorLogEntry(IN PVOID IoObject, IN UCHAR EntrySize);
 
 NTKERNELAPI
-PIRP
-IoAllocateIrp(
-    IN CCHAR StackSize,
-    IN BOOLEAN ChargeQuota
-    );
+PIRP IoAllocateIrp(IN CCHAR StackSize, IN BOOLEAN ChargeQuota);
 
 NTKERNELAPI
-PMDL
-IoAllocateMdl(
-    IN PVOID VirtualAddress,
-    IN ULONG Length,
-    IN BOOLEAN SecondaryBuffer,
-    IN BOOLEAN ChargeQuota,
-    IN OUT PIRP Irp OPTIONAL
-    );
+PMDL IoAllocateMdl(IN PVOID VirtualAddress, IN ULONG Length, IN BOOLEAN SecondaryBuffer, IN BOOLEAN ChargeQuota,
+                   IN OUT PIRP Irp OPTIONAL);
 
 // end_wdm end_ntifs
 //++
@@ -2990,99 +2747,58 @@ IoAllocateMdl(
 //
 //--
 
-#define IoAssignArcName( ArcName, DeviceName ) (  \
-    IoCreateSymbolicLink( (ArcName), (DeviceName) ) )
+#define IoAssignArcName(ArcName, DeviceName) (IoCreateSymbolicLink((ArcName), (DeviceName)))
 
-DECLSPEC_DEPRECATED_DDK                 // Use Pnp or IoReprtDetectedDevice
-NTKERNELAPI
-NTSTATUS
-IoAssignResources (
-    IN PUNICODE_STRING RegistryPath,
-    IN PUNICODE_STRING DriverClassName OPTIONAL,
-    IN PDRIVER_OBJECT DriverObject,
-    IN PDEVICE_OBJECT DeviceObject OPTIONAL,
-    IN PIO_RESOURCE_REQUIREMENTS_LIST RequestedResources,
-    IN OUT PCM_RESOURCE_LIST *AllocatedResources
-    );
+DECLSPEC_DEPRECATED_DDK // Use Pnp or IoReprtDetectedDevice
+    NTKERNELAPI NTSTATUS
+    IoAssignResources(IN PUNICODE_STRING RegistryPath, IN PUNICODE_STRING DriverClassName OPTIONAL,
+                      IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT DeviceObject OPTIONAL,
+                      IN PIO_RESOURCE_REQUIREMENTS_LIST RequestedResources,
+                      IN OUT PCM_RESOURCE_LIST *AllocatedResources);
 
 // end_ntddk end_nthal end_ntosp
 
 NTKERNELAPI
 NTSTATUS
-IoAsynchronousPageWrite(
-    IN PFILE_OBJECT FileObject,
-    IN PMDL MemoryDescriptorList,
-    IN PLARGE_INTEGER StartingOffset,
-    IN PIO_APC_ROUTINE ApcRoutine,
-    IN PVOID ApcContext,
-    OUT PIO_STATUS_BLOCK IoStatusBlock,
-    OUT PIRP *Irp OPTIONAL
-    );
+IoAsynchronousPageWrite(IN PFILE_OBJECT FileObject, IN PMDL MemoryDescriptorList, IN PLARGE_INTEGER StartingOffset,
+                        IN PIO_APC_ROUTINE ApcRoutine, IN PVOID ApcContext, OUT PIO_STATUS_BLOCK IoStatusBlock,
+                        OUT PIRP *Irp OPTIONAL);
 
 // begin_ntddk begin_wdm begin_nthal begin_ntifs begin_ntosp
 
 NTKERNELAPI
 NTSTATUS
-IoAttachDevice(
-    IN PDEVICE_OBJECT SourceDevice,
-    IN PUNICODE_STRING TargetDevice,
-    OUT PDEVICE_OBJECT *AttachedDevice
-    );
+IoAttachDevice(IN PDEVICE_OBJECT SourceDevice, IN PUNICODE_STRING TargetDevice, OUT PDEVICE_OBJECT *AttachedDevice);
 
 // end_wdm
 
-DECLSPEC_DEPRECATED_DDK                 // Use IoAttachDeviceToDeviceStack
-NTKERNELAPI
-NTSTATUS
-IoAttachDeviceByPointer(
-    IN PDEVICE_OBJECT SourceDevice,
-    IN PDEVICE_OBJECT TargetDevice
-    );
+DECLSPEC_DEPRECATED_DDK // Use IoAttachDeviceToDeviceStack
+    NTKERNELAPI NTSTATUS
+    IoAttachDeviceByPointer(IN PDEVICE_OBJECT SourceDevice, IN PDEVICE_OBJECT TargetDevice);
 
 // begin_wdm
 
 NTKERNELAPI
 PDEVICE_OBJECT
-IoAttachDeviceToDeviceStack(
-    IN PDEVICE_OBJECT SourceDevice,
-    IN PDEVICE_OBJECT TargetDevice
-    );
+IoAttachDeviceToDeviceStack(IN PDEVICE_OBJECT SourceDevice, IN PDEVICE_OBJECT TargetDevice);
 
 NTKERNELAPI
-PIRP
-IoBuildAsynchronousFsdRequest(
-    IN ULONG MajorFunction,
-    IN PDEVICE_OBJECT DeviceObject,
-    IN OUT PVOID Buffer OPTIONAL,
-    IN ULONG Length OPTIONAL,
-    IN PLARGE_INTEGER StartingOffset OPTIONAL,
-    IN PIO_STATUS_BLOCK IoStatusBlock OPTIONAL
-    );
+PIRP IoBuildAsynchronousFsdRequest(IN ULONG MajorFunction, IN PDEVICE_OBJECT DeviceObject, IN OUT PVOID Buffer OPTIONAL,
+                                   IN ULONG Length OPTIONAL, IN PLARGE_INTEGER StartingOffset OPTIONAL,
+                                   IN PIO_STATUS_BLOCK IoStatusBlock OPTIONAL);
 
 NTKERNELAPI
-PIRP
-IoBuildDeviceIoControlRequest(
-    IN ULONG IoControlCode,
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PVOID InputBuffer OPTIONAL,
-    IN ULONG InputBufferLength,
-    OUT PVOID OutputBuffer OPTIONAL,
-    IN ULONG OutputBufferLength,
-    IN BOOLEAN InternalDeviceIoControl,
-    IN PKEVENT Event,
-    OUT PIO_STATUS_BLOCK IoStatusBlock
-    );
+PIRP IoBuildDeviceIoControlRequest(IN ULONG IoControlCode, IN PDEVICE_OBJECT DeviceObject,
+                                   IN PVOID InputBuffer OPTIONAL, IN ULONG InputBufferLength,
+                                   OUT PVOID OutputBuffer OPTIONAL, IN ULONG OutputBufferLength,
+                                   IN BOOLEAN InternalDeviceIoControl, IN PKEVENT Event,
+                                   OUT PIO_STATUS_BLOCK IoStatusBlock);
 
 NTKERNELAPI
-VOID
-IoBuildPartialMdl(
-    IN PMDL SourceMdl,
-    IN OUT PMDL TargetMdl,
-    IN PVOID VirtualAddress,
-    IN ULONG Length
-    );
+VOID IoBuildPartialMdl(IN PMDL SourceMdl, IN OUT PMDL TargetMdl, IN PVOID VirtualAddress, IN ULONG Length);
 
-typedef struct _BOOTDISK_INFORMATION {
+typedef struct _BOOTDISK_INFORMATION
+{
     LONGLONG BootPartitionOffset;
     LONGLONG SystemPartitionOffset;
     ULONG BootDeviceSignature;
@@ -3092,7 +2808,8 @@ typedef struct _BOOTDISK_INFORMATION {
 //
 // This structure should follow the previous structure field for field.
 //
-typedef struct _BOOTDISK_INFORMATION_EX {
+typedef struct _BOOTDISK_INFORMATION_EX
+{
     LONGLONG BootPartitionOffset;
     LONGLONG SystemPartitionOffset;
     ULONG BootDeviceSignature;
@@ -3105,152 +2822,94 @@ typedef struct _BOOTDISK_INFORMATION_EX {
 
 NTKERNELAPI
 NTSTATUS
-IoGetBootDiskInformation(
-    IN OUT PBOOTDISK_INFORMATION BootDiskInformation,
-    IN ULONG Size
-    );
+IoGetBootDiskInformation(IN OUT PBOOTDISK_INFORMATION BootDiskInformation, IN ULONG Size);
 
 // end_ntddk end_nthal end_wdm end_ntifs end_ntosp
 
 NTSTATUS
-IoBuildPoDeviceNotifyList (
-    IN OUT PVOID Order
-    );
+IoBuildPoDeviceNotifyList(IN OUT PVOID Order);
 
-VOID
-IoMovePoNotifyChildren(
-    IN PVOID Notify,
-    IN PVOID Order
-    );
+VOID IoMovePoNotifyChildren(IN PVOID Notify, IN PVOID Order);
 
 PVOID
-IoGetPoNotifyParent(
-    PVOID Notify
-    );
+IoGetPoNotifyParent(PVOID Notify);
 
 NTSTATUS
-IoNotifyPowerOperationVetoed(
-    IN POWER_ACTION             VetoedPowerOperation,
-    IN PDEVICE_OBJECT           TargetedDeviceObject    OPTIONAL,
-    IN PDEVICE_OBJECT           VetoingDeviceObject
-    );
+IoNotifyPowerOperationVetoed(IN POWER_ACTION VetoedPowerOperation, IN PDEVICE_OBJECT TargetedDeviceObject OPTIONAL,
+                             IN PDEVICE_OBJECT VetoingDeviceObject);
 
 // begin_ntddk begin_nthal begin_wdm begin_ntifs begin_ntosp
 
 NTKERNELAPI
-PIRP
-IoBuildSynchronousFsdRequest(
-    IN ULONG MajorFunction,
-    IN PDEVICE_OBJECT DeviceObject,
-    IN OUT PVOID Buffer OPTIONAL,
-    IN ULONG Length OPTIONAL,
-    IN PLARGE_INTEGER StartingOffset OPTIONAL,
-    IN PKEVENT Event,
-    OUT PIO_STATUS_BLOCK IoStatusBlock
-    );
+PIRP IoBuildSynchronousFsdRequest(IN ULONG MajorFunction, IN PDEVICE_OBJECT DeviceObject, IN OUT PVOID Buffer OPTIONAL,
+                                  IN ULONG Length OPTIONAL, IN PLARGE_INTEGER StartingOffset OPTIONAL, IN PKEVENT Event,
+                                  OUT PIO_STATUS_BLOCK IoStatusBlock);
 
 NTKERNELAPI
 NTSTATUS
 FASTCALL
-IofCallDriver(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN OUT PIRP Irp
-    );
+IofCallDriver(IN PDEVICE_OBJECT DeviceObject, IN OUT PIRP Irp);
 
-#define IoCallDriver(a,b)   \
-        IofCallDriver(a,b)
+#define IoCallDriver(a, b) IofCallDriver(a, b)
 
 NTKERNELAPI
 BOOLEAN
-IoCancelIrp(
-    IN PIRP Irp
-    );
+IoCancelIrp(IN PIRP Irp);
 
 // end_ntddk end_wdm end_nthal end_ntifs end_ntosp
 
 NTKERNELAPI
-VOID
-IoCancelThreadIo(
-    IN PETHREAD Thread
-    );
+VOID IoCancelThreadIo(IN PETHREAD Thread);
 
 // begin_ntifs
 
 NTKERNELAPI
 NTSTATUS
-IoCheckDesiredAccess(
-    IN OUT PACCESS_MASK DesiredAccess,
-    IN ACCESS_MASK GrantedAccess
-    );
+IoCheckDesiredAccess(IN OUT PACCESS_MASK DesiredAccess, IN ACCESS_MASK GrantedAccess);
 
 NTKERNELAPI
 NTSTATUS
-IoCheckEaBufferValidity(
-    IN PFILE_FULL_EA_INFORMATION EaBuffer,
-    IN ULONG EaLength,
-    OUT PULONG ErrorOffset
-    );
+IoCheckEaBufferValidity(IN PFILE_FULL_EA_INFORMATION EaBuffer, IN ULONG EaLength, OUT PULONG ErrorOffset);
 
 NTKERNELAPI
 NTSTATUS
-IoCheckFunctionAccess(
-    IN ACCESS_MASK GrantedAccess,
-    IN UCHAR MajorFunction,
-    IN UCHAR MinorFunction,
-    IN ULONG IoControlCode,
-    IN PVOID Arg1 OPTIONAL,
-    IN PVOID Arg2 OPTIONAL
-    );
+IoCheckFunctionAccess(IN ACCESS_MASK GrantedAccess, IN UCHAR MajorFunction, IN UCHAR MinorFunction,
+                      IN ULONG IoControlCode, IN PVOID Arg1 OPTIONAL, IN PVOID Arg2 OPTIONAL);
 
 
 NTKERNELAPI
 NTSTATUS
-IoCheckQuerySetFileInformation(
-    IN FILE_INFORMATION_CLASS FileInformationClass,
-    IN ULONG Length,
-    IN BOOLEAN SetOperation
-    );
+IoCheckQuerySetFileInformation(IN FILE_INFORMATION_CLASS FileInformationClass, IN ULONG Length,
+                               IN BOOLEAN SetOperation);
 
 NTKERNELAPI
 NTSTATUS
-IoCheckQuerySetVolumeInformation(
-    IN FS_INFORMATION_CLASS FsInformationClass,
-    IN ULONG Length,
-    IN BOOLEAN SetOperation
-    );
+IoCheckQuerySetVolumeInformation(IN FS_INFORMATION_CLASS FsInformationClass, IN ULONG Length, IN BOOLEAN SetOperation);
 
 
 NTKERNELAPI
 NTSTATUS
-IoCheckQuotaBufferValidity(
-    IN PFILE_QUOTA_INFORMATION QuotaBuffer,
-    IN ULONG QuotaLength,
-    OUT PULONG ErrorOffset
-    );
+IoCheckQuotaBufferValidity(IN PFILE_QUOTA_INFORMATION QuotaBuffer, IN ULONG QuotaLength, OUT PULONG ErrorOffset);
 
 // begin_ntddk begin_wdm begin_nthal begin_ntosp
 
 NTKERNELAPI
 NTSTATUS
-IoCheckShareAccess(
-    IN ACCESS_MASK DesiredAccess,
-    IN ULONG DesiredShareAccess,
-    IN OUT PFILE_OBJECT FileObject,
-    IN OUT PSHARE_ACCESS ShareAccess,
-    IN BOOLEAN Update
-    );
+IoCheckShareAccess(IN ACCESS_MASK DesiredAccess, IN ULONG DesiredShareAccess, IN OUT PFILE_OBJECT FileObject,
+                   IN OUT PSHARE_ACCESS ShareAccess, IN BOOLEAN Update);
 
 //
 // This value should be returned from completion routines to continue
 // completing the IRP upwards. Otherwise, STATUS_MORE_PROCESSING_REQUIRED
 // should be returned.
 //
-#define STATUS_CONTINUE_COMPLETION      STATUS_SUCCESS
+#define STATUS_CONTINUE_COMPLETION STATUS_SUCCESS
 
 //
 // Completion routines can also use this enumeration in place of status codes.
 //
-typedef enum _IO_COMPLETION_ROUTINE_RESULT {
+typedef enum _IO_COMPLETION_ROUTINE_RESULT
+{
 
     ContinueCompletion = STATUS_CONTINUE_COMPLETION,
     StopCompletion = STATUS_MORE_PROCESSING_REQUIRED
@@ -3258,140 +2917,82 @@ typedef enum _IO_COMPLETION_ROUTINE_RESULT {
 } IO_COMPLETION_ROUTINE_RESULT, *PIO_COMPLETION_ROUTINE_RESULT;
 
 NTKERNELAPI
-VOID
-FASTCALL
-IofCompleteRequest(
-    IN PIRP Irp,
-    IN CCHAR PriorityBoost
-    );
+VOID FASTCALL IofCompleteRequest(IN PIRP Irp, IN CCHAR PriorityBoost);
 
-#define IoCompleteRequest(a,b)  \
-        IofCompleteRequest(a,b)
+#define IoCompleteRequest(a, b) IofCompleteRequest(a, b)
 
 // end_ntifs
 
 NTKERNELAPI
 NTSTATUS
-IoConnectInterrupt(
-    OUT PKINTERRUPT *InterruptObject,
-    IN PKSERVICE_ROUTINE ServiceRoutine,
-    IN PVOID ServiceContext,
-    IN PKSPIN_LOCK SpinLock OPTIONAL,
-    IN ULONG Vector,
-    IN KIRQL Irql,
-    IN KIRQL SynchronizeIrql,
-    IN KINTERRUPT_MODE InterruptMode,
-    IN BOOLEAN ShareVector,
-    IN KAFFINITY ProcessorEnableMask,
-    IN BOOLEAN FloatingSave
-    );
+IoConnectInterrupt(OUT PKINTERRUPT *InterruptObject, IN PKSERVICE_ROUTINE ServiceRoutine, IN PVOID ServiceContext,
+                   IN PKSPIN_LOCK SpinLock OPTIONAL, IN ULONG Vector, IN KIRQL Irql, IN KIRQL SynchronizeIrql,
+                   IN KINTERRUPT_MODE InterruptMode, IN BOOLEAN ShareVector, IN KAFFINITY ProcessorEnableMask,
+                   IN BOOLEAN FloatingSave);
 
 //  end_wdm
 
 NTKERNELAPI
 PCONTROLLER_OBJECT
-IoCreateController(
-    IN ULONG Size
-    );
+IoCreateController(IN ULONG Size);
 
 //  begin_wdm begin_ntifs
 
 NTKERNELAPI
 NTSTATUS
-IoCreateDevice(
-    IN PDRIVER_OBJECT DriverObject,
-    IN ULONG DeviceExtensionSize,
-    IN PUNICODE_STRING DeviceName OPTIONAL,
-    IN DEVICE_TYPE DeviceType,
-    IN ULONG DeviceCharacteristics,
-    IN BOOLEAN Exclusive,
-    OUT PDEVICE_OBJECT *DeviceObject
-    );
+IoCreateDevice(IN PDRIVER_OBJECT DriverObject, IN ULONG DeviceExtensionSize, IN PUNICODE_STRING DeviceName OPTIONAL,
+               IN DEVICE_TYPE DeviceType, IN ULONG DeviceCharacteristics, IN BOOLEAN Exclusive,
+               OUT PDEVICE_OBJECT *DeviceObject);
 
-#define WDM_MAJORVERSION        0x01
-#define WDM_MINORVERSION        0x20
+#define WDM_MAJORVERSION 0x01
+#define WDM_MINORVERSION 0x20
 
 NTKERNELAPI
 BOOLEAN
-IoIsWdmVersionAvailable(
-    IN UCHAR MajorVersion,
-    IN UCHAR MinorVersion
-    );
+IoIsWdmVersionAvailable(IN UCHAR MajorVersion, IN UCHAR MinorVersion);
 
 // end_nthal
 
 NTKERNELAPI
 NTSTATUS
-IoCreateFile(
-    OUT PHANDLE FileHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_ATTRIBUTES ObjectAttributes,
-    OUT PIO_STATUS_BLOCK IoStatusBlock,
-    IN PLARGE_INTEGER AllocationSize OPTIONAL,
-    IN ULONG FileAttributes,
-    IN ULONG ShareAccess,
-    IN ULONG Disposition,
-    IN ULONG CreateOptions,
-    IN PVOID EaBuffer OPTIONAL,
-    IN ULONG EaLength,
-    IN CREATE_FILE_TYPE CreateFileType,
-    IN PVOID ExtraCreateParameters OPTIONAL,
-    IN ULONG Options
-    );
+IoCreateFile(OUT PHANDLE FileHandle, IN ACCESS_MASK DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes,
+             OUT PIO_STATUS_BLOCK IoStatusBlock, IN PLARGE_INTEGER AllocationSize OPTIONAL, IN ULONG FileAttributes,
+             IN ULONG ShareAccess, IN ULONG Disposition, IN ULONG CreateOptions, IN PVOID EaBuffer OPTIONAL,
+             IN ULONG EaLength, IN CREATE_FILE_TYPE CreateFileType, IN PVOID ExtraCreateParameters OPTIONAL,
+             IN ULONG Options);
 
 // end_ntddk end_wdm end_ntosp
 
 NTKERNELAPI
 PFILE_OBJECT
-IoCreateStreamFileObject(
-    IN PFILE_OBJECT FileObject OPTIONAL,
-    IN PDEVICE_OBJECT DeviceObject OPTIONAL
-    );
+IoCreateStreamFileObject(IN PFILE_OBJECT FileObject OPTIONAL, IN PDEVICE_OBJECT DeviceObject OPTIONAL);
 
 NTKERNELAPI
 PFILE_OBJECT
-IoCreateStreamFileObjectEx(
-    IN PFILE_OBJECT FileObject OPTIONAL,
-    IN PDEVICE_OBJECT DeviceObject OPTIONAL,
-    OUT PHANDLE FileObjectHandle OPTIONAL
-    );
+IoCreateStreamFileObjectEx(IN PFILE_OBJECT FileObject OPTIONAL, IN PDEVICE_OBJECT DeviceObject OPTIONAL,
+                           OUT PHANDLE FileObjectHandle OPTIONAL);
 
 NTKERNELAPI
 PFILE_OBJECT
-IoCreateStreamFileObjectLite(
-    IN PFILE_OBJECT FileObject OPTIONAL,
-    IN PDEVICE_OBJECT DeviceObject OPTIONAL
-    );
+IoCreateStreamFileObjectLite(IN PFILE_OBJECT FileObject OPTIONAL, IN PDEVICE_OBJECT DeviceObject OPTIONAL);
 
 // begin_nthal begin_ntddk begin_wdm begin_ntosp
 
 NTKERNELAPI
 PKEVENT
-IoCreateNotificationEvent(
-    IN PUNICODE_STRING EventName,
-    OUT PHANDLE EventHandle
-    );
+IoCreateNotificationEvent(IN PUNICODE_STRING EventName, OUT PHANDLE EventHandle);
 
 NTKERNELAPI
 NTSTATUS
-IoCreateSymbolicLink(
-    IN PUNICODE_STRING SymbolicLinkName,
-    IN PUNICODE_STRING DeviceName
-    );
+IoCreateSymbolicLink(IN PUNICODE_STRING SymbolicLinkName, IN PUNICODE_STRING DeviceName);
 
 NTKERNELAPI
 PKEVENT
-IoCreateSynchronizationEvent(
-    IN PUNICODE_STRING EventName,
-    OUT PHANDLE EventHandle
-    );
+IoCreateSynchronizationEvent(IN PUNICODE_STRING EventName, OUT PHANDLE EventHandle);
 
 NTKERNELAPI
 NTSTATUS
-IoCreateUnprotectedSymbolicLink(
-    IN PUNICODE_STRING SymbolicLinkName,
-    IN PUNICODE_STRING DeviceName
-    );
+IoCreateUnprotectedSymbolicLink(IN PUNICODE_STRING SymbolicLinkName, IN PUNICODE_STRING DeviceName);
 
 //  end_wdm
 
@@ -3419,128 +3020,88 @@ IoCreateUnprotectedSymbolicLink(
 //
 //--
 
-#define IoDeassignArcName( ArcName ) (  \
-    IoDeleteSymbolicLink( (ArcName) ) )
+#define IoDeassignArcName(ArcName) (IoDeleteSymbolicLink((ArcName)))
 
 // end_ntifs
 
 NTKERNELAPI
-VOID
-IoDeleteController(
-    IN PCONTROLLER_OBJECT ControllerObject
-    );
+VOID IoDeleteController(IN PCONTROLLER_OBJECT ControllerObject);
 
 //  begin_wdm begin_ntifs
 
 NTKERNELAPI
-VOID
-IoDeleteDevice(
-    IN PDEVICE_OBJECT DeviceObject
-    );
+VOID IoDeleteDevice(IN PDEVICE_OBJECT DeviceObject);
 
 NTKERNELAPI
 NTSTATUS
-IoDeleteSymbolicLink(
-    IN PUNICODE_STRING SymbolicLinkName
-    );
+IoDeleteSymbolicLink(IN PUNICODE_STRING SymbolicLinkName);
 
 NTKERNELAPI
-VOID
-IoDetachDevice(
-    IN OUT PDEVICE_OBJECT TargetDevice
-    );
+VOID IoDetachDevice(IN OUT PDEVICE_OBJECT TargetDevice);
 
 // end_ntifs
 
 NTKERNELAPI
-VOID
-IoDisconnectInterrupt(
-    IN PKINTERRUPT InterruptObject
-    );
+VOID IoDisconnectInterrupt(IN PKINTERRUPT InterruptObject);
 
 // end_ntddk end_wdm end_nthal
 
 NTKERNELAPI
-VOID
-IoEnqueueIrp(
-    IN PIRP Irp
-    );
+VOID IoEnqueueIrp(IN PIRP Irp);
 // end_ntosp
 
-NTKERNELAPI                                             // ntifs
-BOOLEAN                                                 // ntifs
-IoFastQueryNetworkAttributes(                           // ntifs
-    IN POBJECT_ATTRIBUTES ObjectAttributes,             // ntifs
-    IN ACCESS_MASK DesiredAccess,                       // ntifs
-    IN ULONG OpenOptions,                               // ntifs
-    OUT PIO_STATUS_BLOCK IoStatus,                      // ntifs
-    OUT PFILE_NETWORK_OPEN_INFORMATION Buffer           // ntifs
-    );                                                  // ntifs
+NTKERNELAPI                                       // ntifs
+    BOOLEAN                                       // ntifs
+    IoFastQueryNetworkAttributes(                 // ntifs
+        IN POBJECT_ATTRIBUTES ObjectAttributes,   // ntifs
+        IN ACCESS_MASK DesiredAccess,             // ntifs
+        IN ULONG OpenOptions,                     // ntifs
+        OUT PIO_STATUS_BLOCK IoStatus,            // ntifs
+        OUT PFILE_NETWORK_OPEN_INFORMATION Buffer // ntifs
+    );                                            // ntifs
 
 // begin_ntddk begin_nthal begin_ntosp
 
 NTKERNELAPI
-VOID
-IoFreeController(
-    IN PCONTROLLER_OBJECT ControllerObject
-    );
+VOID IoFreeController(IN PCONTROLLER_OBJECT ControllerObject);
 
 //  begin_wdm begin_ntifs
 
 NTKERNELAPI
-VOID
-IoFreeIrp(
-    IN PIRP Irp
-    );
+VOID IoFreeIrp(IN PIRP Irp);
 
 NTKERNELAPI
-VOID
-IoFreeMdl(
-    IN PMDL Mdl
-    );
+VOID IoFreeMdl(IN PMDL Mdl);
 
 // end_ntddk end_wdm end_nthal end_ntifs end_ntosp
 
-VOID
-IoFreePoDeviceNotifyList (
-    IN OUT PVOID Order
-    );
+VOID IoFreePoDeviceNotifyList(IN OUT PVOID Order);
 
 NTSTATUS
-IoGetDeviceInstanceName(
-    IN PDEVICE_OBJECT PhysicalDeviceObject,
-    OUT PUNICODE_STRING InstanceName
-    );
+IoGetDeviceInstanceName(IN PDEVICE_OBJECT PhysicalDeviceObject, OUT PUNICODE_STRING InstanceName);
 
 NTSTATUS
-IoGetLegacyVetoList(
-    OUT PWSTR *VetoList OPTIONAL,
-    OUT PPNP_VETO_TYPE VetoType
-    );
+IoGetLegacyVetoList(OUT PWSTR *VetoList OPTIONAL, OUT PPNP_VETO_TYPE VetoType);
 
 // begin_ntifs begin_ntosp
 
 NTKERNELAPI
 PDEVICE_OBJECT
-IoGetAttachedDevice(
-    IN PDEVICE_OBJECT DeviceObject
-    );
+IoGetAttachedDevice(IN PDEVICE_OBJECT DeviceObject);
 
-NTKERNELAPI                                 // ntddk wdm nthal
-PDEVICE_OBJECT                              // ntddk wdm nthal
-IoGetAttachedDeviceReference(               // ntddk wdm nthal
-    IN PDEVICE_OBJECT DeviceObject          // ntddk wdm nthal
-    );                                      // ntddk wdm nthal
-                                            // ntddk wdm nthal
+NTKERNELAPI                            // ntddk wdm nthal
+    PDEVICE_OBJECT                     // ntddk wdm nthal
+    IoGetAttachedDeviceReference(      // ntddk wdm nthal
+        IN PDEVICE_OBJECT DeviceObject // ntddk wdm nthal
+    );                                 // ntddk wdm nthal
+                                       // ntddk wdm nthal
 NTKERNELAPI
 PDEVICE_OBJECT
-IoGetBaseFileSystemDeviceObject(
-    IN PFILE_OBJECT FileObject
-    );
+IoGetBaseFileSystemDeviceObject(IN PFILE_OBJECT FileObject);
 
-NTKERNELAPI                                 // ntddk nthal ntosp
-PCONFIGURATION_INFORMATION                  // ntddk nthal ntosp
-IoGetConfigurationInformation( VOID );      // ntddk nthal ntosp
+NTKERNELAPI                                  // ntddk nthal ntosp
+    PCONFIGURATION_INFORMATION               // ntddk nthal ntosp
+        IoGetConfigurationInformation(VOID); // ntddk nthal ntosp
 
 // begin_ntddk begin_wdm begin_nthal
 
@@ -3567,56 +3128,40 @@ IoGetConfigurationInformation( VOID );      // ntddk nthal ntosp
 //
 //--
 
-#define IoGetCurrentIrpStackLocation( Irp ) ( (Irp)->Tail.Overlay.CurrentStackLocation )
+#define IoGetCurrentIrpStackLocation(Irp) ((Irp)->Tail.Overlay.CurrentStackLocation)
 
 // end_nthal end_wdm
 
 NTKERNELAPI
 PDEVICE_OBJECT
-IoGetDeviceToVerify(
-    IN PETHREAD Thread
-    );
+IoGetDeviceToVerify(IN PETHREAD Thread);
 
 //  begin_wdm
 
 NTKERNELAPI
 PVOID
-IoGetDriverObjectExtension(
-    IN PDRIVER_OBJECT DriverObject,
-    IN PVOID ClientIdentificationAddress
-    );
+IoGetDriverObjectExtension(IN PDRIVER_OBJECT DriverObject, IN PVOID ClientIdentificationAddress);
 
 NTKERNELAPI
 PEPROCESS
-IoGetCurrentProcess(
-    VOID
-    );
+IoGetCurrentProcess(VOID);
 
 // begin_nthal
 
 NTKERNELAPI
 NTSTATUS
-IoGetDeviceObjectPointer(
-    IN PUNICODE_STRING ObjectName,
-    IN ACCESS_MASK DesiredAccess,
-    OUT PFILE_OBJECT *FileObject,
-    OUT PDEVICE_OBJECT *DeviceObject
-    );
+IoGetDeviceObjectPointer(IN PUNICODE_STRING ObjectName, IN ACCESS_MASK DesiredAccess, OUT PFILE_OBJECT *FileObject,
+                         OUT PDEVICE_OBJECT *DeviceObject);
 
 NTKERNELAPI
-struct _DMA_ADAPTER *
-IoGetDmaAdapter(
-    IN PDEVICE_OBJECT PhysicalDeviceObject,           OPTIONAL // required for PnP drivers
-    IN struct _DEVICE_DESCRIPTION *DeviceDescription,
-    IN OUT PULONG NumberOfMapRegisters
-    );
+struct _DMA_ADAPTER *IoGetDmaAdapter(IN PDEVICE_OBJECT PhysicalDeviceObject,
+                                     OPTIONAL // required for PnP drivers
+                                         IN struct _DEVICE_DESCRIPTION *DeviceDescription,
+                                     IN OUT PULONG NumberOfMapRegisters);
 
 NTKERNELAPI
 BOOLEAN
-IoForwardIrpSynchronously(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    );
+IoForwardIrpSynchronously(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 #define IoForwardAndCatchIrp IoForwardIrpSynchronously
 
@@ -3624,9 +3169,7 @@ IoForwardIrpSynchronously(
 
 NTKERNELAPI
 PGENERIC_MAPPING
-IoGetFileObjectGenericMapping(
-    VOID
-    );
+IoGetFileObjectGenericMapping(VOID);
 
 // end_nthal
 
@@ -3662,23 +3205,16 @@ IoGetFileObjectGenericMapping(
 //
 //--
 
-#define IoGetFunctionCodeFromCtlCode( ControlCode ) (\
-    ( ControlCode >> 2) & 0x00000FFF )
+#define IoGetFunctionCodeFromCtlCode(ControlCode) ((ControlCode >> 2) & 0x00000FFF)
 
 // begin_nthal
 
 NTKERNELAPI
 PVOID
-IoGetInitialStack(
-    VOID
-    );
+IoGetInitialStack(VOID);
 
 NTKERNELAPI
-VOID
-IoGetStackLimits (
-    OUT PULONG_PTR LowLimit,
-    OUT PULONG_PTR HighLimit
-    );
+VOID IoGetStackLimits(OUT PULONG_PTR LowLimit, OUT PULONG_PTR HighLimit);
 
 //
 //  The following function is used to tell the caller how much stack is available
@@ -3686,15 +3222,13 @@ IoGetStackLimits (
 
 FORCEINLINE
 ULONG_PTR
-IoGetRemainingStackSize (
-    VOID
-    )
+IoGetRemainingStackSize(VOID)
 {
     ULONG_PTR Top;
     ULONG_PTR Bottom;
 
-    IoGetStackLimits( &Bottom, &Top );
-    return((ULONG_PTR)(&Top) - Bottom );
+    IoGetStackLimits(&Bottom, &Top);
+    return ((ULONG_PTR)(&Top) - Bottom);
 }
 
 //++
@@ -3719,36 +3253,26 @@ IoGetRemainingStackSize (
 //
 //--
 
-#define IoGetNextIrpStackLocation( Irp ) (\
-    (Irp)->Tail.Overlay.CurrentStackLocation - 1 )
+#define IoGetNextIrpStackLocation(Irp) ((Irp)->Tail.Overlay.CurrentStackLocation - 1)
 
 NTKERNELAPI
 PDEVICE_OBJECT
-IoGetRelatedDeviceObject(
-    IN PFILE_OBJECT FileObject
-    );
+IoGetRelatedDeviceObject(IN PFILE_OBJECT FileObject);
 
 // end_ntddk end_wdm end_nthal
 
 NTKERNELAPI
 ULONG
-IoGetRequestorProcessId(
-    IN PIRP Irp
-    );
+IoGetRequestorProcessId(IN PIRP Irp);
 
 NTKERNELAPI
 PEPROCESS
-IoGetRequestorProcess(
-    IN PIRP Irp
-    );
+IoGetRequestorProcess(IN PIRP Irp);
 
 // end_ntosp
 
 NTKERNELAPI
-PIRP
-IoGetTopLevelIrp(
-    VOID
-    );
+PIRP IoGetTopLevelIrp(VOID);
 
 // begin_ntddk begin_wdm begin_nthal begin_ntosp
 
@@ -3780,53 +3304,32 @@ IoGetTopLevelIrp(
 //
 //--
 
-#define IoInitializeDpcRequest( DeviceObject, DpcRoutine ) (\
-    KeInitializeDpc( &(DeviceObject)->Dpc,                  \
-                     (PKDEFERRED_ROUTINE) (DpcRoutine),     \
-                     (DeviceObject) ) )
+#define IoInitializeDpcRequest(DeviceObject, DpcRoutine) \
+    (KeInitializeDpc(&(DeviceObject)->Dpc, (PKDEFERRED_ROUTINE)(DpcRoutine), (DeviceObject)))
 
 NTKERNELAPI
-VOID
-IoInitializeIrp(
-    IN OUT PIRP Irp,
-    IN USHORT PacketSize,
-    IN CCHAR StackSize
-    );
+VOID IoInitializeIrp(IN OUT PIRP Irp, IN USHORT PacketSize, IN CCHAR StackSize);
 
 NTKERNELAPI
 NTSTATUS
-IoInitializeTimer(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIO_TIMER_ROUTINE TimerRoutine,
-    IN PVOID Context
-    );
+IoInitializeTimer(IN PDEVICE_OBJECT DeviceObject, IN PIO_TIMER_ROUTINE TimerRoutine, IN PVOID Context);
 
 // end_ntddk end_wdm end_nthal end_ntifs end_ntosp
 
 // begin_ntddk begin_wdm begin_ntifs begin_ntosp
 
 NTKERNELAPI
-VOID
-IoReuseIrp(
-    IN OUT PIRP Irp,
-    IN NTSTATUS Iostatus
-    );
+VOID IoReuseIrp(IN OUT PIRP Irp, IN NTSTATUS Iostatus);
 
 // end_wdm
 
 NTKERNELAPI
-VOID
-IoCancelFileOpen(
-    IN PDEVICE_OBJECT  DeviceObject,
-    IN PFILE_OBJECT    FileObject
-    );
+VOID IoCancelFileOpen(IN PDEVICE_OBJECT DeviceObject, IN PFILE_OBJECT FileObject);
 // end_ntddk end_ntifs end_ntosp
 
 NTKERNELAPI
 BOOLEAN
-IoInitSystem(
-    PLOADER_PARAMETER_BLOCK LoaderBlock
-    );
+IoInitSystem(PLOADER_PARAMETER_BLOCK LoaderBlock);
 
 // begin_ntddk begin_wdm begin_nthal begin_ntifs begin_ntosp
 
@@ -3852,14 +3355,11 @@ IoInitSystem(
 //     otherwise FALSE is returned.
 //
 //--
-#define IoIsErrorUserInduced( Status ) ((BOOLEAN)  \
-    (((Status) == STATUS_DEVICE_NOT_READY) ||      \
-     ((Status) == STATUS_IO_TIMEOUT) ||            \
-     ((Status) == STATUS_MEDIA_WRITE_PROTECTED) || \
-     ((Status) == STATUS_NO_MEDIA_IN_DEVICE) ||    \
-     ((Status) == STATUS_VERIFY_REQUIRED) ||       \
-     ((Status) == STATUS_UNRECOGNIZED_MEDIA) ||    \
-     ((Status) == STATUS_WRONG_VOLUME)))
+#define IoIsErrorUserInduced(Status)                                                                    \
+    ((BOOLEAN)(((Status) == STATUS_DEVICE_NOT_READY) || ((Status) == STATUS_IO_TIMEOUT) ||              \
+               ((Status) == STATUS_MEDIA_WRITE_PROTECTED) || ((Status) == STATUS_NO_MEDIA_IN_DEVICE) || \
+               ((Status) == STATUS_VERIFY_REQUIRED) || ((Status) == STATUS_UNRECOGNIZED_MEDIA) ||       \
+               ((Status) == STATUS_WRONG_VOLUME)))
 
 // end_ntddk end_wdm end_nthal end_ntosp
 
@@ -3887,36 +3387,25 @@ IoInitSystem(
 //
 //--
 
-#define IoIsFileOpenedExclusively( FileObject ) (\
-    (BOOLEAN) !((FileObject)->SharedRead || (FileObject)->SharedWrite || (FileObject)->SharedDelete))
+#define IoIsFileOpenedExclusively(FileObject) \
+    ((BOOLEAN) !((FileObject)->SharedRead || (FileObject)->SharedWrite || (FileObject)->SharedDelete))
 
 NTKERNELAPI
 BOOLEAN
-IoIsOperationSynchronous(
-    IN PIRP Irp
-    );
+IoIsOperationSynchronous(IN PIRP Irp);
 
 NTKERNELAPI
 BOOLEAN
-IoIsSystemThread(
-    IN PETHREAD Thread
-    );
+IoIsSystemThread(IN PETHREAD Thread);
 
 NTKERNELAPI
 BOOLEAN
-IoIsValidNameGraftingBuffer(
-    IN PIRP Irp,
-    IN PREPARSE_DATA_BUFFER ReparseBuffer
-    );
+IoIsValidNameGraftingBuffer(IN PIRP Irp, IN PREPARSE_DATA_BUFFER ReparseBuffer);
 
 // begin_ntddk begin_nthal begin_ntosp
 
 NTKERNELAPI
-PIRP
-IoMakeAssociatedIrp(
-    IN PIRP Irp,
-    IN CCHAR StackSize
-    );
+PIRP IoMakeAssociatedIrp(IN PIRP Irp, IN CCHAR StackSize);
 
 //  begin_wdm
 
@@ -3944,51 +3433,36 @@ IoMakeAssociatedIrp(
 //
 //--
 
-#define IoMarkIrpPending( Irp ) ( \
-    IoGetCurrentIrpStackLocation( (Irp) )->Control |= SL_PENDING_RETURNED )
+#define IoMarkIrpPending(Irp) (IoGetCurrentIrpStackLocation((Irp))->Control |= SL_PENDING_RETURNED)
 
 // end_ntddk end_wdm end_nthal end_ntifs end_ntosp
 
 NTKERNELAPI
 BOOLEAN
-IoPageFileCreated(
-    IN HANDLE FileHandle
-    );
+IoPageFileCreated(IN HANDLE FileHandle);
 
-NTKERNELAPI                                             // ntifs
-NTSTATUS                                                // ntifs
-IoPageRead(                                             // ntifs
-    IN PFILE_OBJECT FileObject,                         // ntifs
-    IN PMDL MemoryDescriptorList,                       // ntifs
-    IN PLARGE_INTEGER StartingOffset,                   // ntifs
-    IN PKEVENT Event,                                   // ntifs
-    OUT PIO_STATUS_BLOCK IoStatusBlock                  // ntifs
-    );                                                  // ntifs
+NTKERNELAPI                                // ntifs
+    NTSTATUS                               // ntifs
+    IoPageRead(                            // ntifs
+        IN PFILE_OBJECT FileObject,        // ntifs
+        IN PMDL MemoryDescriptorList,      // ntifs
+        IN PLARGE_INTEGER StartingOffset,  // ntifs
+        IN PKEVENT Event,                  // ntifs
+        OUT PIO_STATUS_BLOCK IoStatusBlock // ntifs
+    );                                     // ntifs
 
 NTKERNELAPI
 NTSTATUS
-IoAsynchronousPageRead(
-    IN PFILE_OBJECT FileObject,
-    IN PMDL MemoryDescriptorList,
-    IN PLARGE_INTEGER StartingOffset,
-    IN PKEVENT Event,
-    OUT PIO_STATUS_BLOCK IoStatusBlock
-    );
+IoAsynchronousPageRead(IN PFILE_OBJECT FileObject, IN PMDL MemoryDescriptorList, IN PLARGE_INTEGER StartingOffset,
+                       IN PKEVENT Event, OUT PIO_STATUS_BLOCK IoStatusBlock);
 
 // begin_ntddk begin_ntosp
-DECLSPEC_DEPRECATED_DDK                 // Use IoGetDeviceProperty
-NTKERNELAPI
-NTSTATUS
-IoQueryDeviceDescription(
-    IN PINTERFACE_TYPE BusType OPTIONAL,
-    IN PULONG BusNumber OPTIONAL,
-    IN PCONFIGURATION_TYPE ControllerType OPTIONAL,
-    IN PULONG ControllerNumber OPTIONAL,
-    IN PCONFIGURATION_TYPE PeripheralType OPTIONAL,
-    IN PULONG PeripheralNumber OPTIONAL,
-    IN PIO_QUERY_DEVICE_ROUTINE CalloutRoutine,
-    IN PVOID Context
-    );
+DECLSPEC_DEPRECATED_DDK // Use IoGetDeviceProperty
+    NTKERNELAPI NTSTATUS
+    IoQueryDeviceDescription(IN PINTERFACE_TYPE BusType OPTIONAL, IN PULONG BusNumber OPTIONAL,
+                             IN PCONFIGURATION_TYPE ControllerType OPTIONAL, IN PULONG ControllerNumber OPTIONAL,
+                             IN PCONFIGURATION_TYPE PeripheralType OPTIONAL, IN PULONG PeripheralNumber OPTIONAL,
+                             IN PIO_QUERY_DEVICE_ROUTINE CalloutRoutine, IN PVOID Context);
 
 // end_ntddk end_ntosp
 
@@ -3996,160 +3470,93 @@ IoQueryDeviceDescription(
 // begin_ntifs
 
 NTSTATUS
-IoQueryFileDosDeviceName(
-    IN PFILE_OBJECT FileObject,
-    OUT POBJECT_NAME_INFORMATION *ObjectNameInformation
-    );
+IoQueryFileDosDeviceName(IN PFILE_OBJECT FileObject, OUT POBJECT_NAME_INFORMATION *ObjectNameInformation);
 
 NTKERNELAPI
 NTSTATUS
-IoQueryFileInformation(
-    IN PFILE_OBJECT FileObject,
-    IN FILE_INFORMATION_CLASS FileInformationClass,
-    IN ULONG Length,
-    OUT PVOID FileInformation,
-    OUT PULONG ReturnedLength
-    );
+IoQueryFileInformation(IN PFILE_OBJECT FileObject, IN FILE_INFORMATION_CLASS FileInformationClass, IN ULONG Length,
+                       OUT PVOID FileInformation, OUT PULONG ReturnedLength);
 
 NTKERNELAPI
 NTSTATUS
-IoQueryVolumeInformation(
-    IN PFILE_OBJECT FileObject,
-    IN FS_INFORMATION_CLASS FsInformationClass,
-    IN ULONG Length,
-    OUT PVOID FsInformation,
-    OUT PULONG ReturnedLength
-    );
+IoQueryVolumeInformation(IN PFILE_OBJECT FileObject, IN FS_INFORMATION_CLASS FsInformationClass, IN ULONG Length,
+                         OUT PVOID FsInformation, OUT PULONG ReturnedLength);
 
 // begin_ntosp
 NTKERNELAPI
-VOID
-IoQueueThreadIrp(
-    IN PIRP Irp
-    );
+VOID IoQueueThreadIrp(IN PIRP Irp);
 // end_ntosp
 
 // begin_ntddk begin_nthal begin_ntosp
 
 NTKERNELAPI
-VOID
-IoRaiseHardError(
-    IN PIRP Irp,
-    IN PVPB Vpb OPTIONAL,
-    IN PDEVICE_OBJECT RealDeviceObject
-    );
+VOID IoRaiseHardError(IN PIRP Irp, IN PVPB Vpb OPTIONAL, IN PDEVICE_OBJECT RealDeviceObject);
 
 NTKERNELAPI
 BOOLEAN
-IoRaiseInformationalHardError(
-    IN NTSTATUS ErrorStatus,
-    IN PUNICODE_STRING String OPTIONAL,
-    IN PKTHREAD Thread OPTIONAL
-    );
+IoRaiseInformationalHardError(IN NTSTATUS ErrorStatus, IN PUNICODE_STRING String OPTIONAL, IN PKTHREAD Thread OPTIONAL);
 
 NTKERNELAPI
 BOOLEAN
-IoSetThreadHardErrorMode(
-    IN BOOLEAN EnableHardErrors
-    );
+IoSetThreadHardErrorMode(IN BOOLEAN EnableHardErrors);
 
 NTKERNELAPI
-VOID
-IoRegisterBootDriverReinitialization(
-    IN PDRIVER_OBJECT DriverObject,
-    IN PDRIVER_REINITIALIZE DriverReinitializationRoutine,
-    IN PVOID Context
-    );
+VOID IoRegisterBootDriverReinitialization(IN PDRIVER_OBJECT DriverObject,
+                                          IN PDRIVER_REINITIALIZE DriverReinitializationRoutine, IN PVOID Context);
 
 NTKERNELAPI
-VOID
-IoRegisterDriverReinitialization(
-    IN PDRIVER_OBJECT DriverObject,
-    IN PDRIVER_REINITIALIZE DriverReinitializationRoutine,
-    IN PVOID Context
-    );
+VOID IoRegisterDriverReinitialization(IN PDRIVER_OBJECT DriverObject,
+                                      IN PDRIVER_REINITIALIZE DriverReinitializationRoutine, IN PVOID Context);
 
 // end_ntddk end_nthal end_ntosp
 
 NTKERNELAPI
-VOID
-IoRegisterFileSystem(
-    IN OUT PDEVICE_OBJECT DeviceObject
-    );
+VOID IoRegisterFileSystem(IN OUT PDEVICE_OBJECT DeviceObject);
 
 NTKERNELAPI
 NTSTATUS
-IoRegisterFsRegistrationChange(
-    IN PDRIVER_OBJECT DriverObject,
-    IN PDRIVER_FS_NOTIFICATION DriverNotificationRoutine
-    );
+IoRegisterFsRegistrationChange(IN PDRIVER_OBJECT DriverObject, IN PDRIVER_FS_NOTIFICATION DriverNotificationRoutine);
 
 // begin_ntddk begin_nthal begin_ntosp
 
 NTKERNELAPI
 NTSTATUS
-IoRegisterShutdownNotification(
-    IN PDEVICE_OBJECT DeviceObject
-    );
+IoRegisterShutdownNotification(IN PDEVICE_OBJECT DeviceObject);
 
 NTKERNELAPI
 NTSTATUS
-IoRegisterLastChanceShutdownNotification(
-    IN PDEVICE_OBJECT DeviceObject
-    );
+IoRegisterLastChanceShutdownNotification(IN PDEVICE_OBJECT DeviceObject);
 
 // begin_wdm
 
 NTKERNELAPI
-VOID
-IoReleaseCancelSpinLock(
-    IN KIRQL Irql
-    );
+VOID IoReleaseCancelSpinLock(IN KIRQL Irql);
 
 // end_ntddk end_nthal end_wdm end_ntosp
 
 NTKERNELAPI
-VOID
-IoReleaseVpbSpinLock(
-    IN KIRQL Irql
-    );
+VOID IoReleaseVpbSpinLock(IN KIRQL Irql);
 
 // begin_ntddk begin_nthal begin_ntosp
 
 NTKERNELAPI
-VOID
-IoRemoveShareAccess(
-    IN PFILE_OBJECT FileObject,
-    IN OUT PSHARE_ACCESS ShareAccess
-    );
+VOID IoRemoveShareAccess(IN PFILE_OBJECT FileObject, IN OUT PSHARE_ACCESS ShareAccess);
 
 // end_ntddk end_ntifs end_ntosp
 
 NTKERNELAPI
 NTSTATUS
-IoReportHalResourceUsage(
-    IN PUNICODE_STRING HalName,
-    IN PCM_RESOURCE_LIST RawResourceList,
-    IN PCM_RESOURCE_LIST TranslatedResourceList,
-    IN ULONG ResourceListSize
-    );
+IoReportHalResourceUsage(IN PUNICODE_STRING HalName, IN PCM_RESOURCE_LIST RawResourceList,
+                         IN PCM_RESOURCE_LIST TranslatedResourceList, IN ULONG ResourceListSize);
 
 // begin_ntddk begin_ntifs begin_ntosp
 
-DECLSPEC_DEPRECATED_DDK                 // Use IoReportResourceForDetection
-NTKERNELAPI
-NTSTATUS
-IoReportResourceUsage(
-    IN PUNICODE_STRING DriverClassName OPTIONAL,
-    IN PDRIVER_OBJECT DriverObject,
-    IN PCM_RESOURCE_LIST DriverList OPTIONAL,
-    IN ULONG DriverListSize OPTIONAL,
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PCM_RESOURCE_LIST DeviceList OPTIONAL,
-    IN ULONG DeviceListSize OPTIONAL,
-    IN BOOLEAN OverrideConflict,
-    OUT PBOOLEAN ConflictDetected
-    );
+DECLSPEC_DEPRECATED_DDK // Use IoReportResourceForDetection
+    NTKERNELAPI NTSTATUS
+    IoReportResourceUsage(IN PUNICODE_STRING DriverClassName OPTIONAL, IN PDRIVER_OBJECT DriverObject,
+                          IN PCM_RESOURCE_LIST DriverList OPTIONAL, IN ULONG DriverListSize OPTIONAL,
+                          IN PDEVICE_OBJECT DeviceObject, IN PCM_RESOURCE_LIST DeviceList OPTIONAL,
+                          IN ULONG DeviceListSize OPTIONAL, IN BOOLEAN OverrideConflict, OUT PBOOLEAN ConflictDetected);
 
 //  begin_wdm
 
@@ -4184,8 +3591,7 @@ IoReportResourceUsage(
 //
 //--
 
-#define IoRequestDpc( DeviceObject, Irp, Context ) ( \
-    KeInsertQueueDpc( &(DeviceObject)->Dpc, (Irp), (Context) ) )
+#define IoRequestDpc(DeviceObject, Irp, Context) (KeInsertQueueDpc(&(DeviceObject)->Dpc, (Irp), (Context)))
 
 //++
 //
@@ -4213,8 +3619,8 @@ IoReportResourceUsage(
 //
 //--
 
-#define IoSetCancelRoutine( Irp, NewCancelRoutine ) (  \
-    (PDRIVER_CANCEL) InterlockedExchangePointer( (PVOID *) &(Irp)->CancelRoutine, (PVOID) (NewCancelRoutine) ) )
+#define IoSetCancelRoutine(Irp, NewCancelRoutine) \
+    ((PDRIVER_CANCEL)InterlockedExchangePointer((PVOID *)&(Irp)->CancelRoutine, (PVOID)(NewCancelRoutine)))
 
 //++
 //
@@ -4259,57 +3665,50 @@ IoReportResourceUsage(
 //
 //--
 
-#define IoSetCompletionRoutine( Irp, Routine, CompletionContext, Success, Error, Cancel ) { \
-    PIO_STACK_LOCATION __irpSp;                                               \
-    ASSERT( (Success) | (Error) | (Cancel) ? (Routine) != NULL : TRUE );    \
-    __irpSp = IoGetNextIrpStackLocation( (Irp) );                             \
-    __irpSp->CompletionRoutine = (Routine);                                   \
-    __irpSp->Context = (CompletionContext);                                   \
-    __irpSp->Control = 0;                                                     \
-    if ((Success)) { __irpSp->Control = SL_INVOKE_ON_SUCCESS; }               \
-    if ((Error)) { __irpSp->Control |= SL_INVOKE_ON_ERROR; }                  \
-    if ((Cancel)) { __irpSp->Control |= SL_INVOKE_ON_CANCEL; } }
+#define IoSetCompletionRoutine(Irp, Routine, CompletionContext, Success, Error, Cancel) \
+    {                                                                                   \
+        PIO_STACK_LOCATION __irpSp;                                                     \
+        ASSERT((Success) | (Error) | (Cancel) ? (Routine) != NULL : TRUE);              \
+        __irpSp = IoGetNextIrpStackLocation((Irp));                                     \
+        __irpSp->CompletionRoutine = (Routine);                                         \
+        __irpSp->Context = (CompletionContext);                                         \
+        __irpSp->Control = 0;                                                           \
+        if ((Success))                                                                  \
+        {                                                                               \
+            __irpSp->Control = SL_INVOKE_ON_SUCCESS;                                    \
+        }                                                                               \
+        if ((Error))                                                                    \
+        {                                                                               \
+            __irpSp->Control |= SL_INVOKE_ON_ERROR;                                     \
+        }                                                                               \
+        if ((Cancel))                                                                   \
+        {                                                                               \
+            __irpSp->Control |= SL_INVOKE_ON_CANCEL;                                    \
+        }                                                                               \
+    }
 
 NTSTATUS
-IoSetCompletionRoutineEx(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN PIO_COMPLETION_ROUTINE CompletionRoutine,
-    IN PVOID Context,
-    IN BOOLEAN InvokeOnSuccess,
-    IN BOOLEAN InvokeOnError,
-    IN BOOLEAN InvokeOnCancel
-    );
+IoSetCompletionRoutineEx(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PIO_COMPLETION_ROUTINE CompletionRoutine,
+                         IN PVOID Context, IN BOOLEAN InvokeOnSuccess, IN BOOLEAN InvokeOnError,
+                         IN BOOLEAN InvokeOnCancel);
 
 
 // end_ntddk end_wdm end_nthal end_ntosp
 
 NTKERNELAPI
-VOID
-IoSetDeviceToVerify(
-    IN PETHREAD Thread,
-    IN PDEVICE_OBJECT DeviceObject
-    );
+VOID IoSetDeviceToVerify(IN PETHREAD Thread, IN PDEVICE_OBJECT DeviceObject);
 
 // begin_ntddk begin_nthal begin_ntosp
 
 NTKERNELAPI
-VOID
-IoSetHardErrorOrVerifyDevice(
-    IN PIRP Irp,
-    IN PDEVICE_OBJECT DeviceObject
-    );
+VOID IoSetHardErrorOrVerifyDevice(IN PIRP Irp, IN PDEVICE_OBJECT DeviceObject);
 
 // end_ntddk end_nthal
 
 NTKERNELAPI
 NTSTATUS
-IoSetInformation(
-    IN PFILE_OBJECT FileObject,
-    IN FILE_INFORMATION_CLASS FileInformationClass,
-    IN ULONG Length,
-    IN PVOID FileInformation
-    );
+IoSetInformation(IN PFILE_OBJECT FileObject, IN FILE_INFORMATION_CLASS FileInformationClass, IN ULONG Length,
+                 IN PVOID FileInformation);
 
 // end_ntosp
 
@@ -4337,9 +3736,11 @@ IoSetInformation(
 //
 //--
 
-#define IoSetNextIrpStackLocation( Irp ) {      \
-    (Irp)->CurrentLocation--;                   \
-    (Irp)->Tail.Overlay.CurrentStackLocation--; }
+#define IoSetNextIrpStackLocation(Irp)              \
+    {                                               \
+        (Irp)->CurrentLocation--;                   \
+        (Irp)->Tail.Overlay.CurrentStackLocation--; \
+    }
 
 //++
 //
@@ -4369,13 +3770,15 @@ IoSetInformation(
 //
 //--
 
-#define IoCopyCurrentIrpStackLocationToNext( Irp ) { \
-    PIO_STACK_LOCATION __irpSp; \
-    PIO_STACK_LOCATION __nextIrpSp; \
-    __irpSp = IoGetCurrentIrpStackLocation( (Irp) ); \
-    __nextIrpSp = IoGetNextIrpStackLocation( (Irp) ); \
-    RtlCopyMemory( __nextIrpSp, __irpSp, FIELD_OFFSET(IO_STACK_LOCATION, CompletionRoutine)); \
-    __nextIrpSp->Control = 0; }
+#define IoCopyCurrentIrpStackLocationToNext(Irp)                                                 \
+    {                                                                                            \
+        PIO_STACK_LOCATION __irpSp;                                                              \
+        PIO_STACK_LOCATION __nextIrpSp;                                                          \
+        __irpSp = IoGetCurrentIrpStackLocation((Irp));                                           \
+        __nextIrpSp = IoGetNextIrpStackLocation((Irp));                                          \
+        RtlCopyMemory(__nextIrpSp, __irpSp, FIELD_OFFSET(IO_STACK_LOCATION, CompletionRoutine)); \
+        __nextIrpSp->Control = 0;                                                                \
+    }
 
 //++
 //
@@ -4404,57 +3807,54 @@ IoSetInformation(
 //
 //--
 
-#define IoSkipCurrentIrpStackLocation( Irp ) { \
-    (Irp)->CurrentLocation++; \
-    (Irp)->Tail.Overlay.CurrentStackLocation++; }
+#define IoSkipCurrentIrpStackLocation(Irp)          \
+    {                                               \
+        (Irp)->CurrentLocation++;                   \
+        (Irp)->Tail.Overlay.CurrentStackLocation++; \
+    }
 
 
 NTKERNELAPI
-VOID
-IoSetShareAccess(
-    IN ACCESS_MASK DesiredAccess,
-    IN ULONG DesiredShareAccess,
-    IN OUT PFILE_OBJECT FileObject,
-    OUT PSHARE_ACCESS ShareAccess
-    );
+VOID IoSetShareAccess(IN ACCESS_MASK DesiredAccess, IN ULONG DesiredShareAccess, IN OUT PFILE_OBJECT FileObject,
+                      OUT PSHARE_ACCESS ShareAccess);
 
 // end_ntddk end_wdm end_nthal end_ntosp
 
 NTKERNELAPI
-VOID
-IoSetTopLevelIrp(
-    IN PIRP Irp
-    );
+VOID IoSetTopLevelIrp(IN PIRP Irp);
 
 // end_ntifs
 
 // begin_ntddk begin_wdm begin_ntosp
 
 
-typedef struct _IO_REMOVE_LOCK_TRACKING_BLOCK * PIO_REMOVE_LOCK_TRACKING_BLOCK;
+typedef struct _IO_REMOVE_LOCK_TRACKING_BLOCK *PIO_REMOVE_LOCK_TRACKING_BLOCK;
 
-typedef struct _IO_REMOVE_LOCK_COMMON_BLOCK {
-    BOOLEAN     Removed;
-    BOOLEAN     Reserved [3];
-    LONG        IoCount;
-    KEVENT      RemoveEvent;
+typedef struct _IO_REMOVE_LOCK_COMMON_BLOCK
+{
+    BOOLEAN Removed;
+    BOOLEAN Reserved[3];
+    LONG IoCount;
+    KEVENT RemoveEvent;
 
 } IO_REMOVE_LOCK_COMMON_BLOCK;
 
-typedef struct _IO_REMOVE_LOCK_DBG_BLOCK {
-    LONG        Signature;
-    LONG        HighWatermark;
-    LONGLONG    MaxLockedTicks;
-    LONG        AllocateTag;
-    LIST_ENTRY  LockList;
-    KSPIN_LOCK  Spin;
-    LONG        LowMemoryCount;
-    ULONG       Reserved1[4];
-    PVOID       Reserved2;
+typedef struct _IO_REMOVE_LOCK_DBG_BLOCK
+{
+    LONG Signature;
+    LONG HighWatermark;
+    LONGLONG MaxLockedTicks;
+    LONG AllocateTag;
+    LIST_ENTRY LockList;
+    KSPIN_LOCK Spin;
+    LONG LowMemoryCount;
+    ULONG Reserved1[4];
+    PVOID Reserved2;
     PIO_REMOVE_LOCK_TRACKING_BLOCK Blocks;
 } IO_REMOVE_LOCK_DBG_BLOCK;
 
-typedef struct _IO_REMOVE_LOCK {
+typedef struct _IO_REMOVE_LOCK
+{
     IO_REMOVE_LOCK_COMMON_BLOCK Common;
 #if DBG
     IO_REMOVE_LOCK_DBG_BLOCK Dbg;
@@ -4462,18 +3862,15 @@ typedef struct _IO_REMOVE_LOCK {
 } IO_REMOVE_LOCK, *PIO_REMOVE_LOCK;
 
 #define IoInitializeRemoveLock(Lock, Tag, Maxmin, HighWater) \
-        IoInitializeRemoveLockEx (Lock, Tag, Maxmin, HighWater, sizeof (IO_REMOVE_LOCK))
+    IoInitializeRemoveLockEx(Lock, Tag, Maxmin, HighWater, sizeof(IO_REMOVE_LOCK))
 
 NTSYSAPI
-VOID
-NTAPI
-IoInitializeRemoveLockEx(
-    IN  PIO_REMOVE_LOCK Lock,
-    IN  ULONG   AllocateTag, // Used only on checked kernels
-    IN  ULONG   MaxLockedMinutes, // Used only on checked kernels
-    IN  ULONG   HighWatermark, // Used only on checked kernels
-    IN  ULONG   RemlockSize // are we checked or free
-    );
+VOID NTAPI IoInitializeRemoveLockEx(IN PIO_REMOVE_LOCK Lock,
+                                    IN ULONG AllocateTag,      // Used only on checked kernels
+                                    IN ULONG MaxLockedMinutes, // Used only on checked kernels
+                                    IN ULONG HighWatermark,    // Used only on checked kernels
+                                    IN ULONG RemlockSize       // are we checked or free
+);
 //
 //  Initialize a remove lock.
 //
@@ -4483,18 +3880,16 @@ IoInitializeRemoveLockEx(
 //
 
 #define IoAcquireRemoveLock(RemoveLock, Tag) \
-        IoAcquireRemoveLockEx(RemoveLock, Tag, __FILE__, __LINE__, sizeof (IO_REMOVE_LOCK))
+    IoAcquireRemoveLockEx(RemoveLock, Tag, __FILE__, __LINE__, sizeof(IO_REMOVE_LOCK))
 
 NTSYSAPI
 NTSTATUS
 NTAPI
-IoAcquireRemoveLockEx (
-    IN PIO_REMOVE_LOCK RemoveLock,
-    IN OPTIONAL PVOID   Tag, // Optional
-    IN PCSTR            File,
-    IN ULONG            Line,
-    IN ULONG            RemlockSize // are we checked or free
-    );
+IoAcquireRemoveLockEx(IN PIO_REMOVE_LOCK RemoveLock,
+                      IN OPTIONAL PVOID Tag, // Optional
+                      IN PCSTR File, IN ULONG Line,
+                      IN ULONG RemlockSize // are we checked or free
+);
 
 //
 // Routine Description:
@@ -4531,17 +3926,13 @@ IoAcquireRemoveLockEx (
 //    work but not call IoReleaseRemoveLock.
 //
 
-#define IoReleaseRemoveLock(RemoveLock, Tag) \
-        IoReleaseRemoveLockEx(RemoveLock, Tag, sizeof (IO_REMOVE_LOCK))
+#define IoReleaseRemoveLock(RemoveLock, Tag) IoReleaseRemoveLockEx(RemoveLock, Tag, sizeof(IO_REMOVE_LOCK))
 
 NTSYSAPI
-VOID
-NTAPI
-IoReleaseRemoveLockEx(
-    IN PIO_REMOVE_LOCK RemoveLock,
-    IN PVOID            Tag, // Optional
-    IN ULONG            RemlockSize // are we checked or free
-    );
+VOID NTAPI IoReleaseRemoveLockEx(IN PIO_REMOVE_LOCK RemoveLock,
+                                 IN PVOID Tag,        // Optional
+                                 IN ULONG RemlockSize // are we checked or free
+);
 //
 //
 // Routine Description:
@@ -4568,16 +3959,12 @@ IoReleaseRemoveLockEx(
 //
 
 #define IoReleaseRemoveLockAndWait(RemoveLock, Tag) \
-        IoReleaseRemoveLockAndWaitEx(RemoveLock, Tag, sizeof (IO_REMOVE_LOCK))
+    IoReleaseRemoveLockAndWaitEx(RemoveLock, Tag, sizeof(IO_REMOVE_LOCK))
 
 NTSYSAPI
-VOID
-NTAPI
-IoReleaseRemoveLockAndWaitEx(
-    IN PIO_REMOVE_LOCK RemoveLock,
-    IN PVOID            Tag,
-    IN ULONG            RemlockSize // are we checked or free
-    );
+VOID NTAPI IoReleaseRemoveLockAndWaitEx(IN PIO_REMOVE_LOCK RemoveLock, IN PVOID Tag,
+                                        IN ULONG RemlockSize // are we checked or free
+);
 //
 //
 // Routine Description:
@@ -4600,10 +3987,7 @@ IoReleaseRemoveLockAndWaitEx(
 // end_ntddk end_wdm end_ntosp
 
 NTKERNELAPI
-VOID
-IoShutdownSystem(
-    IN ULONG Phase
-    );
+VOID IoShutdownSystem(IN ULONG Phase);
 
 // begin_ntddk begin_wdm begin_nthal begin_ntifs begin_ntosp
 
@@ -4629,167 +4013,99 @@ IoShutdownSystem(
 //
 //--
 
-#define IoSizeOfIrp( StackSize ) \
-    ((USHORT) (sizeof( IRP ) + ((StackSize) * (sizeof( IO_STACK_LOCATION )))))
+#define IoSizeOfIrp(StackSize) ((USHORT)(sizeof(IRP) + ((StackSize) * (sizeof(IO_STACK_LOCATION)))))
 
 // end_ntifs
 
 
 NTKERNELAPI
-VOID
-IoStartNextPacket(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN BOOLEAN Cancelable
-    );
+VOID IoStartNextPacket(IN PDEVICE_OBJECT DeviceObject, IN BOOLEAN Cancelable);
 
 NTKERNELAPI
-VOID
-IoStartNextPacketByKey(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN BOOLEAN Cancelable,
-    IN ULONG Key
-    );
+VOID IoStartNextPacketByKey(IN PDEVICE_OBJECT DeviceObject, IN BOOLEAN Cancelable, IN ULONG Key);
 
 NTKERNELAPI
-VOID
-IoStartPacket(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN PULONG Key OPTIONAL,
-    IN PDRIVER_CANCEL CancelFunction OPTIONAL
-    );
+VOID IoStartPacket(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PULONG Key OPTIONAL,
+                   IN PDRIVER_CANCEL CancelFunction OPTIONAL);
 
-VOID
-IoSetStartIoAttributes(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN BOOLEAN DeferredStartIo,
-    IN BOOLEAN NonCancelable
-    );
+VOID IoSetStartIoAttributes(IN PDEVICE_OBJECT DeviceObject, IN BOOLEAN DeferredStartIo, IN BOOLEAN NonCancelable);
 
 // begin_ntifs
 
 NTKERNELAPI
-VOID
-IoStartTimer(
-    IN PDEVICE_OBJECT DeviceObject
-    );
+VOID IoStartTimer(IN PDEVICE_OBJECT DeviceObject);
 
 NTKERNELAPI
-VOID
-IoStopTimer(
-    IN PDEVICE_OBJECT DeviceObject
-    );
+VOID IoStopTimer(IN PDEVICE_OBJECT DeviceObject);
 
 // end_ntddk end_wdm end_nthal end_ntosp
 
 NTKERNELAPI
 NTSTATUS
-IoSynchronousPageWrite(
-    IN PFILE_OBJECT FileObject,
-    IN PMDL MemoryDescriptorList,
-    IN PLARGE_INTEGER StartingOffset,
-    IN PKEVENT Event,
-    OUT PIO_STATUS_BLOCK IoStatusBlock
-    );
+IoSynchronousPageWrite(IN PFILE_OBJECT FileObject, IN PMDL MemoryDescriptorList, IN PLARGE_INTEGER StartingOffset,
+                       IN PKEVENT Event, OUT PIO_STATUS_BLOCK IoStatusBlock);
 
 // begin_ntosp
 
 NTKERNELAPI
 PEPROCESS
-IoThreadToProcess(
-    IN PETHREAD Thread
-    );
+IoThreadToProcess(IN PETHREAD Thread);
 
 // end_ntosp
 
 NTKERNELAPI
-VOID
-IoUnregisterFileSystem(
-    IN OUT PDEVICE_OBJECT DeviceObject
-    );
+VOID IoUnregisterFileSystem(IN OUT PDEVICE_OBJECT DeviceObject);
 
 NTKERNELAPI
-VOID
-IoUnregisterFsRegistrationChange(
-    IN PDRIVER_OBJECT DriverObject,
-    IN PDRIVER_FS_NOTIFICATION DriverNotificationRoutine
-    );
+VOID IoUnregisterFsRegistrationChange(IN PDRIVER_OBJECT DriverObject,
+                                      IN PDRIVER_FS_NOTIFICATION DriverNotificationRoutine);
 
 // begin_ntddk begin_wdm begin_nthal begin_ntosp
 
 NTKERNELAPI
-VOID
-IoUnregisterShutdownNotification(
-    IN PDEVICE_OBJECT DeviceObject
-    );
+VOID IoUnregisterShutdownNotification(IN PDEVICE_OBJECT DeviceObject);
 
 //  end_wdm
 
 NTKERNELAPI
-VOID
-IoUpdateShareAccess(
-    IN PFILE_OBJECT FileObject,
-    IN OUT PSHARE_ACCESS ShareAccess
-    );
+VOID IoUpdateShareAccess(IN PFILE_OBJECT FileObject, IN OUT PSHARE_ACCESS ShareAccess);
 
 // end_ntddk end_nthal
 
 NTKERNELAPI
 NTSTATUS
-IoVerifyVolume(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN BOOLEAN AllowRawMount
-    );
+IoVerifyVolume(IN PDEVICE_OBJECT DeviceObject, IN BOOLEAN AllowRawMount);
 
 
-NTKERNELAPI                                     // ntddk wdm nthal
-VOID                                            // ntddk wdm nthal
-IoWriteErrorLogEntry(                           // ntddk wdm nthal
-    IN PVOID ElEntry                            // ntddk wdm nthal
-    );                                          // ntddk wdm nthal
+NTKERNELAPI               // ntddk wdm nthal
+    VOID                  // ntddk wdm nthal
+    IoWriteErrorLogEntry( // ntddk wdm nthal
+        IN PVOID ElEntry  // ntddk wdm nthal
+    );                    // ntddk wdm nthal
 
 // end_ntifs end_ntosp
 
 
-typedef BOOLEAN (*PIO_TRAVERSE_WORKER)(
-    IN ULONG                Level,
-    IN PVOID                DeviceNode,
-    IN PDEVICE_OBJECT       DeviceObject,
-    IN PVOID                Context
-    );
+typedef BOOLEAN (*PIO_TRAVERSE_WORKER)(IN ULONG Level, IN PVOID DeviceNode, IN PDEVICE_OBJECT DeviceObject,
+                                       IN PVOID Context);
 
-typedef BOOLEAN (*PIO_LEVEL_END_WORKER)(
-    IN ULONG                Level,
-    IN PVOID                Context
-    );
+typedef BOOLEAN (*PIO_LEVEL_END_WORKER)(IN ULONG Level, IN PVOID Context);
 
 //
 // Used by PO to traverse DevNode tree
 //
 
-VOID
-IoTraverseDeviceTree(
-    IN BOOLEAN                  Inverted,
-    IN LONG                     CurrentLevel,
-    IN PIO_TRAVERSE_WORKER      WorkerFunction,
-    IN PIO_LEVEL_END_WORKER     LevelEndFunction,
-    IN PVOID                    Context
-    );
+VOID IoTraverseDeviceTree(IN BOOLEAN Inverted, IN LONG CurrentLevel, IN PIO_TRAVERSE_WORKER WorkerFunction,
+                          IN PIO_LEVEL_END_WORKER LevelEndFunction, IN PVOID Context);
 
 // begin_nthal begin_ntosp
 
 NTKERNELAPI
 NTSTATUS
-IoCreateDriver (
-    IN PUNICODE_STRING DriverName,   OPTIONAL
-    IN PDRIVER_INITIALIZE InitializationFunction
-    );
+IoCreateDriver(IN PUNICODE_STRING DriverName, OPTIONAL IN PDRIVER_INITIALIZE InitializationFunction);
 
 NTKERNELAPI
-VOID
-IoDeleteDriver (
-    IN PDRIVER_OBJECT DriverObject
-    );
+VOID IoDeleteDriver(IN PDRIVER_OBJECT DriverObject);
 
 // end_nthal end_ntosp
 
@@ -4806,7 +4122,7 @@ typedef enum tagWMIACTIONCODE
     WmiChangeSingleInstance = IRP_MN_CHANGE_SINGLE_INSTANCE,
     WmiChangeSingleItem = IRP_MN_CHANGE_SINGLE_ITEM,
     WmiEnableEvents = IRP_MN_ENABLE_EVENTS,
-    WmiDisableEvents  = IRP_MN_DISABLE_EVENTS,
+    WmiDisableEvents = IRP_MN_DISABLE_EVENTS,
     WmiEnableCollection = IRP_MN_ENABLE_COLLECTION,
     WmiDisableCollection = IRP_MN_DISABLE_COLLECTION,
     WmiRegisterInfo = IRP_MN_REGINFO,
@@ -4818,33 +4134,27 @@ typedef enum tagWMIACTIONCODE
 // This is the prototype for the callback WMI will make to a data provider
 //
 
-typedef NTSTATUS (*WMIENTRY)(
-    IN WMIACTIONCODE ActionCode,
-    IN PVOID DataPath,
-    IN ULONG BufferSize,
-    IN OUT PVOID Buffer,
-    IN PVOID Context,
-    OUT PULONG Size
-    );
+typedef NTSTATUS (*WMIENTRY)(IN WMIACTIONCODE ActionCode, IN PVOID DataPath, IN ULONG BufferSize, IN OUT PVOID Buffer,
+                             IN PVOID Context, OUT PULONG Size);
 
-#define WMIREG_FLAG_CALLBACK        0x80000000
+#define WMIREG_FLAG_CALLBACK 0x80000000
 // begin_wmikm
 //
 // The following is set for a KM provider who is considered private to
 // kernel tracing
 //
-#define WMIREG_FLAG_TRACE_PROVIDER          0x00010000
+#define WMIREG_FLAG_TRACE_PROVIDER 0x00010000
 
 //
 // The following mask is to extract the trace callout class
 //
-#define WMIREG_FLAG_TRACE_NOTIFY_MASK       0x00F00000
+#define WMIREG_FLAG_TRACE_NOTIFY_MASK 0x00F00000
 
 //
 // We use 4 bits for the trace callout classes.
 //
-#define WMIREG_NOTIFY_DISK_IO               1 << 20
-#define WMIREG_NOTIFY_TDI_IO                2 << 20
+#define WMIREG_NOTIFY_DISK_IO 1 << 20
+#define WMIREG_NOTIFY_TDI_IO 2 << 20
 
 // end_wmikm
 
@@ -4852,206 +4162,120 @@ typedef NTSTATUS (*WMIENTRY)(
 
 typedef struct _IO_WORKITEM *PIO_WORKITEM;
 
-typedef
-VOID
-(*PIO_WORKITEM_ROUTINE) (
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PVOID Context
-    );
+typedef VOID (*PIO_WORKITEM_ROUTINE)(IN PDEVICE_OBJECT DeviceObject, IN PVOID Context);
 
 PIO_WORKITEM
-IoAllocateWorkItem(
-    PDEVICE_OBJECT DeviceObject
-    );
+IoAllocateWorkItem(PDEVICE_OBJECT DeviceObject);
 
-VOID
-IoFreeWorkItem(
-    PIO_WORKITEM IoWorkItem
-    );
+VOID IoFreeWorkItem(PIO_WORKITEM IoWorkItem);
 
-VOID
-IoQueueWorkItem(
-    IN PIO_WORKITEM IoWorkItem,
-    IN PIO_WORKITEM_ROUTINE WorkerRoutine,
-    IN WORK_QUEUE_TYPE QueueType,
-    IN PVOID Context
-    );
+VOID IoQueueWorkItem(IN PIO_WORKITEM IoWorkItem, IN PIO_WORKITEM_ROUTINE WorkerRoutine, IN WORK_QUEUE_TYPE QueueType,
+                     IN PVOID Context);
 
 
 NTKERNELAPI
 NTSTATUS
-IoWMIRegistrationControl(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG Action
-);
+IoWMIRegistrationControl(IN PDEVICE_OBJECT DeviceObject, IN ULONG Action);
 
 //
 // Action code for IoWMIRegistrationControl api
 //
 
-#define WMIREG_ACTION_REGISTER      1
-#define WMIREG_ACTION_DEREGISTER    2
-#define WMIREG_ACTION_REREGISTER    3
-#define WMIREG_ACTION_UPDATE_GUIDS  4
-#define WMIREG_ACTION_BLOCK_IRPS    5
+#define WMIREG_ACTION_REGISTER 1
+#define WMIREG_ACTION_DEREGISTER 2
+#define WMIREG_ACTION_REREGISTER 3
+#define WMIREG_ACTION_UPDATE_GUIDS 4
+#define WMIREG_ACTION_BLOCK_IRPS 5
 
 //
 // Code passed in IRP_MN_REGINFO WMI irp
 //
 
-#define WMIREGISTER                 0
-#define WMIUPDATE                   1
+#define WMIREGISTER 0
+#define WMIUPDATE 1
 
 NTKERNELAPI
 NTSTATUS
-IoWMIAllocateInstanceIds(
-    IN GUID *Guid,
-    IN ULONG InstanceCount,
-    OUT ULONG *FirstInstanceId
-    );
+IoWMIAllocateInstanceIds(IN GUID *Guid, IN ULONG InstanceCount, OUT ULONG *FirstInstanceId);
 
 NTKERNELAPI
 NTSTATUS
-IoWMISuggestInstanceName(
-    IN PDEVICE_OBJECT PhysicalDeviceObject OPTIONAL,
-    IN PUNICODE_STRING SymbolicLinkName OPTIONAL,
-    IN BOOLEAN CombineNames,
-    OUT PUNICODE_STRING SuggestedInstanceName
-    );
+IoWMISuggestInstanceName(IN PDEVICE_OBJECT PhysicalDeviceObject OPTIONAL, IN PUNICODE_STRING SymbolicLinkName OPTIONAL,
+                         IN BOOLEAN CombineNames, OUT PUNICODE_STRING SuggestedInstanceName);
 
 NTKERNELAPI
 NTSTATUS
-IoWMIWriteEvent(
-    IN PVOID WnodeEventItem
-    );
+IoWMIWriteEvent(IN PVOID WnodeEventItem);
 
 #if defined(_WIN64)
 NTKERNELAPI
-ULONG IoWMIDeviceObjectToProviderId(
-    PDEVICE_OBJECT DeviceObject
-    );
+ULONG IoWMIDeviceObjectToProviderId(PDEVICE_OBJECT DeviceObject);
 #else
 #define IoWMIDeviceObjectToProviderId(DeviceObject) ((ULONG)(DeviceObject))
 #endif
 
 NTKERNELAPI
-NTSTATUS IoWMIOpenBlock(
-    IN GUID *DataBlockGuid,
-    IN ULONG DesiredAccess,
-    OUT PVOID *DataBlockObject
-    );
+NTSTATUS IoWMIOpenBlock(IN GUID *DataBlockGuid, IN ULONG DesiredAccess, OUT PVOID *DataBlockObject);
 
 
 NTKERNELAPI
-NTSTATUS IoWMIQueryAllData(
-    IN PVOID DataBlockObject,
-    IN OUT ULONG *InOutBufferSize,
-    OUT /* non paged */ PVOID OutBuffer
-);
+NTSTATUS IoWMIQueryAllData(IN PVOID DataBlockObject, IN OUT ULONG *InOutBufferSize,
+                           OUT /* non paged */ PVOID OutBuffer);
 
 
 NTKERNELAPI
 NTSTATUS
-IoWMIQueryAllDataMultiple(
-    IN PVOID *DataBlockObjectList,
-    IN ULONG ObjectCount,
-    IN OUT ULONG *InOutBufferSize,
-    OUT /* non paged */ PVOID OutBuffer
-);
+IoWMIQueryAllDataMultiple(IN PVOID *DataBlockObjectList, IN ULONG ObjectCount, IN OUT ULONG *InOutBufferSize,
+                          OUT /* non paged */ PVOID OutBuffer);
 
 
 NTKERNELAPI
 NTSTATUS
-IoWMIQuerySingleInstance(
-    IN PVOID DataBlockObject,
-    IN PUNICODE_STRING InstanceName,
-    IN OUT ULONG *InOutBufferSize,
-    OUT /* non paged */ PVOID OutBuffer
-);
+IoWMIQuerySingleInstance(IN PVOID DataBlockObject, IN PUNICODE_STRING InstanceName, IN OUT ULONG *InOutBufferSize,
+                         OUT /* non paged */ PVOID OutBuffer);
 
 NTKERNELAPI
 NTSTATUS
-IoWMIQuerySingleInstanceMultiple(
-    IN PVOID *DataBlockObjectList,
-    IN PUNICODE_STRING InstanceNames,
-    IN ULONG ObjectCount,
-    IN OUT ULONG *InOutBufferSize,
-    OUT /* non paged */ PVOID OutBuffer
-);
+IoWMIQuerySingleInstanceMultiple(IN PVOID *DataBlockObjectList, IN PUNICODE_STRING InstanceNames, IN ULONG ObjectCount,
+                                 IN OUT ULONG *InOutBufferSize, OUT /* non paged */ PVOID OutBuffer);
 
 NTKERNELAPI
 NTSTATUS
-IoWMISetSingleInstance(
-    IN PVOID DataBlockObject,
-    IN PUNICODE_STRING InstanceName,
-    IN ULONG Version,
-    IN ULONG ValueBufferSize,
-    IN PVOID ValueBuffer
-    );
+IoWMISetSingleInstance(IN PVOID DataBlockObject, IN PUNICODE_STRING InstanceName, IN ULONG Version,
+                       IN ULONG ValueBufferSize, IN PVOID ValueBuffer);
 
 NTKERNELAPI
 NTSTATUS
-IoWMISetSingleItem(
-    IN PVOID DataBlockObject,
-    IN PUNICODE_STRING InstanceName,
-    IN ULONG DataItemId,
-    IN ULONG Version,
-    IN ULONG ValueBufferSize,
-    IN PVOID ValueBuffer
-    );
+IoWMISetSingleItem(IN PVOID DataBlockObject, IN PUNICODE_STRING InstanceName, IN ULONG DataItemId, IN ULONG Version,
+                   IN ULONG ValueBufferSize, IN PVOID ValueBuffer);
 
 NTKERNELAPI
 NTSTATUS
-IoWMIExecuteMethod(
-    IN PVOID DataBlockObject,
-    IN PUNICODE_STRING InstanceName,
-    IN ULONG MethodId,
-    IN ULONG InBufferSize,
-    IN OUT PULONG OutBufferSize,
-    IN OUT PUCHAR InOutBuffer
-    );
+IoWMIExecuteMethod(IN PVOID DataBlockObject, IN PUNICODE_STRING InstanceName, IN ULONG MethodId, IN ULONG InBufferSize,
+                   IN OUT PULONG OutBufferSize, IN OUT PUCHAR InOutBuffer);
 
 
-
-typedef VOID (*WMI_NOTIFICATION_CALLBACK)(
-    PVOID Wnode,
-    PVOID Context
-    );
+typedef VOID (*WMI_NOTIFICATION_CALLBACK)(PVOID Wnode, PVOID Context);
 
 NTKERNELAPI
 NTSTATUS
-IoWMISetNotificationCallback(
-    IN PVOID Object,
-    IN WMI_NOTIFICATION_CALLBACK Callback,
-    IN PVOID Context
-    );
+IoWMISetNotificationCallback(IN PVOID Object, IN WMI_NOTIFICATION_CALLBACK Callback, IN PVOID Context);
 
 NTKERNELAPI
 NTSTATUS
-IoWMIHandleToInstanceName(
-    IN PVOID DataBlockObject,
-    IN HANDLE FileHandle,
-    OUT PUNICODE_STRING InstanceName
-    );
+IoWMIHandleToInstanceName(IN PVOID DataBlockObject, IN HANDLE FileHandle, OUT PUNICODE_STRING InstanceName);
 
 NTKERNELAPI
 NTSTATUS
-IoWMIDeviceObjectToInstanceName(
-    IN PVOID DataBlockObject,
-    IN PDEVICE_OBJECT DeviceObject,
-    OUT PUNICODE_STRING InstanceName
-    );
+IoWMIDeviceObjectToInstanceName(IN PVOID DataBlockObject, IN PDEVICE_OBJECT DeviceObject,
+                                OUT PUNICODE_STRING InstanceName);
 
 // end_ntddk end_wdm end_ntifs end_ntosp
 
 
-
 NTKERNELAPI
 BOOLEAN
-WMIInitialize(
-    ULONG Phase,
-    PVOID LoaderBlock
-    );
+WMIInitialize(ULONG Phase, PVOID LoaderBlock);
 
 //
 // IoRemoteBootClient indicates whether the system was booted as a remote
@@ -5065,22 +4289,13 @@ extern BOOLEAN IoCscInitializationFailed;
 
 // Used to convert a handle to a device stack.
 NTSTATUS
-IoGetRelatedTargetDevice(
-    IN PFILE_OBJECT FileObject,
-    OUT PDEVICE_OBJECT *DeviceObject
-    );
+IoGetRelatedTargetDevice(IN PFILE_OBJECT FileObject, OUT PDEVICE_OBJECT *DeviceObject);
 
 // begin_ntosp
 NTKERNELAPI
 NTSTATUS
-IoSetIoCompletion (
-    IN PVOID IoCompletion,
-    IN PVOID KeyContext,
-    IN PVOID ApcContext,
-    IN NTSTATUS IoStatus,
-    IN ULONG_PTR IoStatusInformation,
-    IN BOOLEAN Quota
-    );
+IoSetIoCompletion(IN PVOID IoCompletion, IN PVOID KeyContext, IN PVOID ApcContext, IN NTSTATUS IoStatus,
+                  IN ULONG_PTR IoStatusInformation, IN BOOLEAN Quota);
 
 
 // end_ntosp
@@ -5089,7 +4304,8 @@ IoSetIoCompletion (
 // Safeboot definitions - placeholder until a home can be found.
 //
 
-typedef struct _BOOT_LOG_RECORD {
+typedef struct _BOOT_LOG_RECORD
+{
     UNICODE_STRING LoadedString;
     UNICODE_STRING NotLoadedString;
     UNICODE_STRING LogFileName;
@@ -5099,237 +4315,131 @@ typedef struct _BOOT_LOG_RECORD {
     BOOLEAN FileLogging;
 } BOOT_LOG_RECORD, *PBOOT_LOG_RECORD;
 
-VOID
-IopCopyBootLogRegistryToFile(
-    VOID
-    );
+VOID IopCopyBootLogRegistryToFile(VOID);
 
-VOID
-IopInitializeBootLogging(
-    PLOADER_PARAMETER_BLOCK LoaderBlock,
-    PCHAR HeaderString
-    );
+VOID IopInitializeBootLogging(PLOADER_PARAMETER_BLOCK LoaderBlock, PCHAR HeaderString);
 
-VOID
-IopBootLog(
-    PUNICODE_STRING LogEntry,
-    BOOLEAN Loaded
-    );
+VOID IopBootLog(PUNICODE_STRING LogEntry, BOOLEAN Loaded);
 
 NTSTATUS
-IopSetRegistryStringValue(
-    IN HANDLE KeyHandle,
-    IN PUNICODE_STRING ValueName,
-    IN PUNICODE_STRING ValueData
-    );
+IopSetRegistryStringValue(IN HANDLE KeyHandle, IN PUNICODE_STRING ValueName, IN PUNICODE_STRING ValueData);
 
 NTKERNELAPI
 NTSTATUS
-IoGetRequestorSessionId(
-    IN PIRP Irp,
-    OUT PULONG pSessionId
-    );
+IoGetRequestorSessionId(IN PIRP Irp, OUT PULONG pSessionId);
 
 NTSTATUS
-IoShutdownPnpDevices(
-    VOID
-    );
+IoShutdownPnpDevices(VOID);
 
 
-VOID
-IovFreeIrp(
-    IN  PIRP    Irp
-    );
+VOID IovFreeIrp(IN PIRP Irp);
 
-PIRP
-IovAllocateIrp(
-    IN  CCHAR   StackSize,
-    IN  BOOLEAN ChargeQuota
-    );
+PIRP IovAllocateIrp(IN CCHAR StackSize, IN BOOLEAN ChargeQuota);
 
-VOID
-IoVerifierInit(
-    IN ULONG VerifierFlags
-    );
+VOID IoVerifierInit(IN ULONG VerifierFlags);
 
 NTSTATUS
 FASTCALL
-IovCallDriver(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  OUT PIRP    Irp
-    );
+IovCallDriver(IN PDEVICE_OBJECT DeviceObject, IN OUT PIRP Irp);
 
-VOID
-FASTCALL
-IovCompleteRequest(
-    IN PIRP Irp,
-    IN CCHAR PriorityBoost
-    );
+VOID FASTCALL IovCompleteRequest(IN PIRP Irp, IN CCHAR PriorityBoost);
 
-PIRP
-IovBuildAsynchronousFsdRequest(
-    IN ULONG MajorFunction,
-    IN PDEVICE_OBJECT DeviceObject,
-    IN OUT PVOID Buffer OPTIONAL,
-    IN ULONG Length OPTIONAL,
-    IN PLARGE_INTEGER StartingOffset OPTIONAL,
-    IN PIO_STATUS_BLOCK IoStatusBlock OPTIONAL
-    );
+PIRP IovBuildAsynchronousFsdRequest(IN ULONG MajorFunction, IN PDEVICE_OBJECT DeviceObject,
+                                    IN OUT PVOID Buffer OPTIONAL, IN ULONG Length OPTIONAL,
+                                    IN PLARGE_INTEGER StartingOffset OPTIONAL,
+                                    IN PIO_STATUS_BLOCK IoStatusBlock OPTIONAL);
 
 
-PIRP
-IovBuildDeviceIoControlRequest(
-    IN ULONG IoControlCode,
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PVOID InputBuffer OPTIONAL,
-    IN ULONG InputBufferLength,
-    OUT PVOID OutputBuffer OPTIONAL,
-    IN ULONG OutputBufferLength,
-    IN BOOLEAN InternalDeviceIoControl,
-    IN PKEVENT Event,
-    OUT PIO_STATUS_BLOCK IoStatusBlock
-    );
+PIRP IovBuildDeviceIoControlRequest(IN ULONG IoControlCode, IN PDEVICE_OBJECT DeviceObject,
+                                    IN PVOID InputBuffer OPTIONAL, IN ULONG InputBufferLength,
+                                    OUT PVOID OutputBuffer OPTIONAL, IN ULONG OutputBufferLength,
+                                    IN BOOLEAN InternalDeviceIoControl, IN PKEVENT Event,
+                                    OUT PIO_STATUS_BLOCK IoStatusBlock);
 
 NTSTATUS
-IovInitializeTimer(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIO_TIMER_ROUTINE TimerRoutine,
-    IN PVOID Context
-    );
+IovInitializeTimer(IN PDEVICE_OBJECT DeviceObject, IN PIO_TIMER_ROUTINE TimerRoutine, IN PVOID Context);
 
 
 NTKERNELAPI
 PVOID
-IoAllocateGenericErrorLogEntry(
-    IN UCHAR EntrySize
-    );
+IoAllocateGenericErrorLogEntry(IN UCHAR EntrySize);
 
-VOID
-IoRetryIrpCompletions(
-    VOID
-    );
+VOID IoRetryIrpCompletions(VOID);
 
 // begin_ntddk begin_wdm begin_ntifs begin_ntosp
 #if defined(_WIN64)
 BOOLEAN
-IoIs32bitProcess(
-    IN PIRP Irp
-    );
+IoIs32bitProcess(IN PIRP Irp);
 #endif
 // end_ntddk end_wdm end_ntifs end_ntosp
 
 // begin_ntosp
 NTKERNELAPI
-VOID
-FASTCALL
-IoAssignDriveLetters(
-    PLOADER_PARAMETER_BLOCK LoaderBlock,
-    PSTRING NtDeviceName,
-    OUT PUCHAR NtSystemPath,
-    OUT PSTRING NtSystemPathString
-    );
+VOID FASTCALL IoAssignDriveLetters(PLOADER_PARAMETER_BLOCK LoaderBlock, PSTRING NtDeviceName, OUT PUCHAR NtSystemPath,
+                                   OUT PSTRING NtSystemPathString);
 // end_ntosp
 
 
 // begin_ntddk
 NTKERNELAPI
-VOID
-FASTCALL
-HalExamineMBR(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG SectorSize,
-    IN ULONG MBRTypeIdentifier,
-    OUT PVOID *Buffer
-    );
+VOID FASTCALL HalExamineMBR(IN PDEVICE_OBJECT DeviceObject, IN ULONG SectorSize, IN ULONG MBRTypeIdentifier,
+                            OUT PVOID *Buffer);
 
-DECLSPEC_DEPRECATED_DDK                 // Use IoReadPartitionTableEx
-NTKERNELAPI
-NTSTATUS
-FASTCALL
-IoReadPartitionTable(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG SectorSize,
-    IN BOOLEAN ReturnRecognizedPartitions,
-    OUT struct _DRIVE_LAYOUT_INFORMATION **PartitionBuffer
-    );
+DECLSPEC_DEPRECATED_DDK // Use IoReadPartitionTableEx
+    NTKERNELAPI NTSTATUS FASTCALL
+    IoReadPartitionTable(IN PDEVICE_OBJECT DeviceObject, IN ULONG SectorSize, IN BOOLEAN ReturnRecognizedPartitions,
+                         OUT struct _DRIVE_LAYOUT_INFORMATION **PartitionBuffer);
 
-DECLSPEC_DEPRECATED_DDK                 // Use IoSetPartitionInformationEx
-NTKERNELAPI
-NTSTATUS
-FASTCALL
-IoSetPartitionInformation(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG SectorSize,
-    IN ULONG PartitionNumber,
-    IN ULONG PartitionType
-    );
+DECLSPEC_DEPRECATED_DDK // Use IoSetPartitionInformationEx
+    NTKERNELAPI NTSTATUS FASTCALL
+    IoSetPartitionInformation(IN PDEVICE_OBJECT DeviceObject, IN ULONG SectorSize, IN ULONG PartitionNumber,
+                              IN ULONG PartitionType);
 
 // begin_ntosp
-DECLSPEC_DEPRECATED_DDK                 // Use IoWritePartitionTableEx
-NTKERNELAPI
-NTSTATUS
-FASTCALL
-IoWritePartitionTable(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG SectorSize,
-    IN ULONG SectorsPerTrack,
-    IN ULONG NumberOfHeads,
-    IN struct _DRIVE_LAYOUT_INFORMATION *PartitionBuffer
-    );
+DECLSPEC_DEPRECATED_DDK // Use IoWritePartitionTableEx
+    NTKERNELAPI NTSTATUS FASTCALL
+    IoWritePartitionTable(IN PDEVICE_OBJECT DeviceObject, IN ULONG SectorSize, IN ULONG SectorsPerTrack,
+                          IN ULONG NumberOfHeads, IN struct _DRIVE_LAYOUT_INFORMATION *PartitionBuffer);
 
 NTKERNELAPI
 NTSTATUS
-IoCreateDisk(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN struct _CREATE_DISK* Disk
-    );
+IoCreateDisk(IN PDEVICE_OBJECT DeviceObject, IN struct _CREATE_DISK *Disk);
 
 NTKERNELAPI
 NTSTATUS
-IoReadPartitionTableEx(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN struct _DRIVE_LAYOUT_INFORMATION_EX** DriveLayout
-    );
+IoReadPartitionTableEx(IN PDEVICE_OBJECT DeviceObject, IN struct _DRIVE_LAYOUT_INFORMATION_EX **DriveLayout);
 
 NTKERNELAPI
 NTSTATUS
-IoWritePartitionTableEx(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN struct _DRIVE_LAYOUT_INFORMATION_EX* DriveLayout
-    );
+IoWritePartitionTableEx(IN PDEVICE_OBJECT DeviceObject, IN struct _DRIVE_LAYOUT_INFORMATION_EX *DriveLayout);
 
 NTKERNELAPI
 NTSTATUS
-IoSetPartitionInformationEx(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG PartitionNumber,
-    IN struct _SET_PARTITION_INFORMATION_EX* PartitionInfo
-    );
+IoSetPartitionInformationEx(IN PDEVICE_OBJECT DeviceObject, IN ULONG PartitionNumber,
+                            IN struct _SET_PARTITION_INFORMATION_EX *PartitionInfo);
 
 NTKERNELAPI
 NTSTATUS
-IoUpdateDiskGeometry(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN struct _DISK_GEOMETRY_EX* OldDiskGeometry,
-    IN struct _DISK_GEOMETRY_EX* NewDiskGeometry
-    );
+IoUpdateDiskGeometry(IN PDEVICE_OBJECT DeviceObject, IN struct _DISK_GEOMETRY_EX *OldDiskGeometry,
+                     IN struct _DISK_GEOMETRY_EX *NewDiskGeometry);
 
 NTKERNELAPI
 NTSTATUS
-IoVerifyPartitionTable(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN BOOLEAN FixErrors
-    );
+IoVerifyPartitionTable(IN PDEVICE_OBJECT DeviceObject, IN BOOLEAN FixErrors);
 
-typedef struct _DISK_SIGNATURE {
+typedef struct _DISK_SIGNATURE
+{
     ULONG PartitionStyle;
-    union {
-        struct {
+    union
+    {
+        struct
+        {
             ULONG Signature;
             ULONG CheckSum;
         } Mbr;
 
-        struct {
+        struct
+        {
             GUID DiskId;
         } Gpt;
     };
@@ -5337,11 +4447,7 @@ typedef struct _DISK_SIGNATURE {
 
 NTKERNELAPI
 NTSTATUS
-IoReadDiskSignature(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG BytesPerSector,
-    OUT PDISK_SIGNATURE Signature
-    );
+IoReadDiskSignature(IN PDEVICE_OBJECT DeviceObject, IN ULONG BytesPerSector, OUT PDISK_SIGNATURE Signature);
 
 // end_ntosp
 // end_ntddk
@@ -5349,51 +4455,32 @@ IoReadDiskSignature(
 // begin_ntosp begin_ntifs begin_ntddk
 
 NTSTATUS
-IoVolumeDeviceToDosName(
-    IN  PVOID           VolumeDeviceObject,
-    OUT PUNICODE_STRING DosName
-    );
+IoVolumeDeviceToDosName(IN PVOID VolumeDeviceObject, OUT PUNICODE_STRING DosName);
 // end_ntosp end_ntifs end_ntddk
 
 // begin_ntosp begin_ntifs
 NTSTATUS
-IoEnumerateDeviceObjectList(
-    IN  PDRIVER_OBJECT  DriverObject,
-    IN  PDEVICE_OBJECT  *DeviceObjectList,
-    IN  ULONG           DeviceObjectListSize,
-    OUT PULONG          ActualNumberDeviceObjects
-    );
+IoEnumerateDeviceObjectList(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT *DeviceObjectList,
+                            IN ULONG DeviceObjectListSize, OUT PULONG ActualNumberDeviceObjects);
 
 PDEVICE_OBJECT
-IoGetLowerDeviceObject(
-    IN  PDEVICE_OBJECT  DeviceObject
-    );
+IoGetLowerDeviceObject(IN PDEVICE_OBJECT DeviceObject);
 
 PDEVICE_OBJECT
-IoGetDeviceAttachmentBaseRef(
-    IN PDEVICE_OBJECT DeviceObject
-    );
+IoGetDeviceAttachmentBaseRef(IN PDEVICE_OBJECT DeviceObject);
 
 NTSTATUS
-IoGetDiskDeviceObject(
-    IN  PDEVICE_OBJECT  FileSystemDeviceObject,
-    OUT PDEVICE_OBJECT  *DiskDeviceObject
-    );
+IoGetDiskDeviceObject(IN PDEVICE_OBJECT FileSystemDeviceObject, OUT PDEVICE_OBJECT *DiskDeviceObject);
 
 // end_ntosp end_ntifs
 
 // begin_ntosp begin_ntifs begin_ntddk
 
 NTSTATUS
-IoSetSystemPartition(
-    PUNICODE_STRING VolumeNameString
-    );
+IoSetSystemPartition(PUNICODE_STRING VolumeNameString);
 
 // begin_wdm
-VOID
-IoFreeErrorLogEntry(
-    PVOID ElEntry
-    );
+VOID IoFreeErrorLogEntry(PVOID ElEntry);
 
 // Cancel SAFE API set start
 //
@@ -5443,7 +4530,7 @@ IoFreeErrorLogEntry(
 typedef struct _IO_CSQ IO_CSQ, *PIO_CSQ;
 
 #define IO_TYPE_CSQ_IRP_CONTEXT 1
-#define IO_TYPE_CSQ             2
+#define IO_TYPE_CSQ 2
 
 //
 // IRP context structure. This structure is necessary if the driver is using
@@ -5451,9 +4538,10 @@ typedef struct _IO_CSQ IO_CSQ, *PIO_CSQ;
 //
 
 
-typedef struct _IO_CSQ_IRP_CONTEXT {
-    ULONG   Type;
-    PIRP    Irp;
+typedef struct _IO_CSQ_IRP_CONTEXT
+{
+    ULONG Type;
+    PIRP Irp;
     PIO_CSQ Csq;
 } IO_CSQ_IRP_CONTEXT, *PIO_CSQ_IRP_CONTEXT;
 
@@ -5461,17 +4549,9 @@ typedef struct _IO_CSQ_IRP_CONTEXT {
 // Routines that insert/remove IRP
 //
 
-typedef VOID
-(*PIO_CSQ_INSERT_IRP)(
-    IN struct _IO_CSQ    *Csq,
-    IN PIRP              Irp
-    );
+typedef VOID (*PIO_CSQ_INSERT_IRP)(IN struct _IO_CSQ *Csq, IN PIRP Irp);
 
-typedef VOID
-(*PIO_CSQ_REMOVE_IRP)(
-    IN  PIO_CSQ Csq,
-    IN  PIRP    Irp
-    );
+typedef VOID (*PIO_CSQ_REMOVE_IRP)(IN PIO_CSQ Csq, IN PIRP Irp);
 
 //
 // Retrieves next entry after Irp from the queue.
@@ -5481,28 +4561,15 @@ typedef VOID
 //
 
 
-typedef PIRP
-(*PIO_CSQ_PEEK_NEXT_IRP)(
-    IN  PIO_CSQ Csq,
-    IN  PIRP    Irp,
-    IN  PVOID   PeekContext
-    );
+typedef PIRP (*PIO_CSQ_PEEK_NEXT_IRP)(IN PIO_CSQ Csq, IN PIRP Irp, IN PVOID PeekContext);
 
 //
 // Lock routine that protects the cancel safe queue.
 //
 
-typedef VOID
-(*PIO_CSQ_ACQUIRE_LOCK)(
-     IN  PIO_CSQ Csq,
-     OUT PKIRQL  Irql
-     );
+typedef VOID (*PIO_CSQ_ACQUIRE_LOCK)(IN PIO_CSQ Csq, OUT PKIRQL Irql);
 
-typedef VOID
-(*PIO_CSQ_RELEASE_LOCK)(
-     IN PIO_CSQ Csq,
-     IN KIRQL   Irql
-     );
+typedef VOID (*PIO_CSQ_RELEASE_LOCK)(IN PIO_CSQ Csq, IN KIRQL Irql);
 
 
 //
@@ -5510,11 +4577,7 @@ typedef VOID
 // In most cases this routine just calls IoCompleteRequest(Irp, STATUS_CANCELLED);
 //
 
-typedef VOID
-(*PIO_CSQ_COMPLETE_CANCELED_IRP)(
-    IN  PIO_CSQ    Csq,
-    IN  PIRP       Irp
-    );
+typedef VOID (*PIO_CSQ_COMPLETE_CANCELED_IRP)(IN PIO_CSQ Csq, IN PIRP Irp);
 
 //
 // Bookkeeping structure. This should be opaque to drivers.
@@ -5523,15 +4586,16 @@ typedef VOID
 // queue header using CONTAINING_RECORD macro
 //
 
-typedef struct _IO_CSQ {
-    ULONG                            Type;
-    PIO_CSQ_INSERT_IRP               CsqInsertIrp;
-    PIO_CSQ_REMOVE_IRP               CsqRemoveIrp;
-    PIO_CSQ_PEEK_NEXT_IRP            CsqPeekNextIrp;
-    PIO_CSQ_ACQUIRE_LOCK             CsqAcquireLock;
-    PIO_CSQ_RELEASE_LOCK             CsqReleaseLock;
-    PIO_CSQ_COMPLETE_CANCELED_IRP    CsqCompleteCanceledIrp;
-    PVOID                            ReservePointer;    // Future expansion
+typedef struct _IO_CSQ
+{
+    ULONG Type;
+    PIO_CSQ_INSERT_IRP CsqInsertIrp;
+    PIO_CSQ_REMOVE_IRP CsqRemoveIrp;
+    PIO_CSQ_PEEK_NEXT_IRP CsqPeekNextIrp;
+    PIO_CSQ_ACQUIRE_LOCK CsqAcquireLock;
+    PIO_CSQ_RELEASE_LOCK CsqReleaseLock;
+    PIO_CSQ_COMPLETE_CANCELED_IRP CsqCompleteCanceledIrp;
+    PVOID ReservePointer; // Future expansion
 } IO_CSQ, *PIO_CSQ;
 
 //
@@ -5539,37 +4603,22 @@ typedef struct _IO_CSQ {
 //
 
 NTSTATUS
-IoCsqInitialize(
-    IN PIO_CSQ                          Csq,
-    IN PIO_CSQ_INSERT_IRP               CsqInsertIrp,
-    IN PIO_CSQ_REMOVE_IRP               CsqRemoveIrp,
-    IN PIO_CSQ_PEEK_NEXT_IRP            CsqPeekNextIrp,
-    IN PIO_CSQ_ACQUIRE_LOCK             CsqAcquireLock,
-    IN PIO_CSQ_RELEASE_LOCK             CsqReleaseLock,
-    IN PIO_CSQ_COMPLETE_CANCELED_IRP    CsqCompleteCanceledIrp
-    );
+IoCsqInitialize(IN PIO_CSQ Csq, IN PIO_CSQ_INSERT_IRP CsqInsertIrp, IN PIO_CSQ_REMOVE_IRP CsqRemoveIrp,
+                IN PIO_CSQ_PEEK_NEXT_IRP CsqPeekNextIrp, IN PIO_CSQ_ACQUIRE_LOCK CsqAcquireLock,
+                IN PIO_CSQ_RELEASE_LOCK CsqReleaseLock, IN PIO_CSQ_COMPLETE_CANCELED_IRP CsqCompleteCanceledIrp);
 
 
 //
 // The caller calls this routine to insert the IRP and return STATUS_PENDING.
 //
 
-VOID
-IoCsqInsertIrp(
-    IN  PIO_CSQ             Csq,
-    IN  PIRP                Irp,
-    IN  PIO_CSQ_IRP_CONTEXT Context
-    );
+VOID IoCsqInsertIrp(IN PIO_CSQ Csq, IN PIRP Irp, IN PIO_CSQ_IRP_CONTEXT Context);
 
 //
 // Returns an IRP if one can be found. NULL otherwise.
 //
 
-PIRP
-IoCsqRemoveNextIrp(
-    IN  PIO_CSQ   Csq,
-    IN  PVOID     PeekContext
-    );
+PIRP IoCsqRemoveNextIrp(IN PIO_CSQ Csq, IN PVOID PeekContext);
 
 //
 // This routine is called from timeout or DPCs.
@@ -5577,11 +4626,7 @@ IoCsqRemoveNextIrp(
 // If succesfull returns the IRP associated with context.
 //
 
-PIRP
-IoCsqRemoveIrp(
-    IN  PIO_CSQ             Csq,
-    IN  PIO_CSQ_IRP_CONTEXT Context
-    );
+PIRP IoCsqRemoveIrp(IN PIO_CSQ Csq, IN PIO_CSQ_IRP_CONTEXT Context);
 
 // Cancel SAFE API set end
 
@@ -5590,77 +4635,44 @@ IoCsqRemoveIrp(
 // begin_ntosp begin_ntifs
 
 NTSTATUS
-IoCreateFileSpecifyDeviceObjectHint(
-    OUT PHANDLE FileHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_ATTRIBUTES ObjectAttributes,
-    OUT PIO_STATUS_BLOCK IoStatusBlock,
-    IN PLARGE_INTEGER AllocationSize OPTIONAL,
-    IN ULONG FileAttributes,
-    IN ULONG ShareAccess,
-    IN ULONG Disposition,
-    IN ULONG CreateOptions,
-    IN PVOID EaBuffer OPTIONAL,
-    IN ULONG EaLength,
-    IN CREATE_FILE_TYPE CreateFileType,
-    IN PVOID ExtraCreateParameters OPTIONAL,
-    IN ULONG Options,
-    IN PVOID DeviceObject
-    );
+IoCreateFileSpecifyDeviceObjectHint(OUT PHANDLE FileHandle, IN ACCESS_MASK DesiredAccess,
+                                    IN POBJECT_ATTRIBUTES ObjectAttributes, OUT PIO_STATUS_BLOCK IoStatusBlock,
+                                    IN PLARGE_INTEGER AllocationSize OPTIONAL, IN ULONG FileAttributes,
+                                    IN ULONG ShareAccess, IN ULONG Disposition, IN ULONG CreateOptions,
+                                    IN PVOID EaBuffer OPTIONAL, IN ULONG EaLength, IN CREATE_FILE_TYPE CreateFileType,
+                                    IN PVOID ExtraCreateParameters OPTIONAL, IN ULONG Options, IN PVOID DeviceObject);
 
 NTSTATUS
-IoAttachDeviceToDeviceStackSafe(
-    IN PDEVICE_OBJECT SourceDevice,
-    IN PDEVICE_OBJECT TargetDevice,
-    OUT PDEVICE_OBJECT *AttachedToDeviceObject
-    );
+IoAttachDeviceToDeviceStackSafe(IN PDEVICE_OBJECT SourceDevice, IN PDEVICE_OBJECT TargetDevice,
+                                OUT PDEVICE_OBJECT *AttachedToDeviceObject);
 
 // end_ntosp
 
 NTKERNELAPI
 BOOLEAN
-IoIsFileOriginRemote(
-    IN PFILE_OBJECT FileObject
-    );
+IoIsFileOriginRemote(IN PFILE_OBJECT FileObject);
 
 NTKERNELAPI
 NTSTATUS
-IoSetFileOrigin(
-    IN PFILE_OBJECT FileObject,
-    IN BOOLEAN Remote
-    );
+IoSetFileOrigin(IN PFILE_OBJECT FileObject, IN BOOLEAN Remote);
 
 // end_ntifs
 
 PVOID
-IoGetFileObjectFilterContext(
-    IN  PFILE_OBJECT    FileObject
-    );
+IoGetFileObjectFilterContext(IN PFILE_OBJECT FileObject);
 
 NTSTATUS
-IoChangeFileObjectFilterContext(
-    IN  PFILE_OBJECT    FileObject,
-    IN  PVOID           FilterContext,
-    IN  BOOLEAN         Set
-    );
+IoChangeFileObjectFilterContext(IN PFILE_OBJECT FileObject, IN PVOID FilterContext, IN BOOLEAN Set);
 
 BOOLEAN
-IoIsDeviceEjectable(
-    IN  PDEVICE_OBJECT
-    );
+IoIsDeviceEjectable(IN PDEVICE_OBJECT);
 
 NTSTATUS
-IoComputeDesiredAccessFileObject(
-    IN PFILE_OBJECT FileObject,
-    OUT PNTSTATUS DesiredAccess
-    );
+IoComputeDesiredAccessFileObject(IN PFILE_OBJECT FileObject, OUT PNTSTATUS DesiredAccess);
 
 // begin_ntosp begin_ntifs begin_ntddk
 
 NTSTATUS
-IoValidateDeviceIoControlAccess(
-    IN  PIRP    Irp,
-    IN  ULONG   RequiredAccess
-    );
+IoValidateDeviceIoControlAccess(IN PIRP Irp, IN ULONG RequiredAccess);
 // end_ntosp end_ntifs end_ntddk end_wdm
 #endif // _IO_

@@ -126,14 +126,15 @@ Revision History:
 #include "vga.h"
 
 // bitmap-specific data for rotation bar
-ROT_BAR_TYPE RotBarSelection     = RB_UNSPECIFIED;
+ROT_BAR_TYPE RotBarSelection = RB_UNSPECIFIED;
 // LOGO_TYPE    LogoSelection       = LOGO_UNSPECIFIED;
 
 int AnimBarPos = 0;
 LONG PaletteNum;
 BOOLEAN FadingIn = TRUE;
 
-typedef enum {
+typedef enum
+{
     PLT_UNDEFINED,
     PLT_START,
     PLT_CYCLE,
@@ -142,32 +143,33 @@ typedef enum {
 
 PLT_RBAR_STATE PltRotBarStatus = PLT_UNDEFINED;
 
-#define FADE_GRADES   (20)
+#define FADE_GRADES (20)
 #define FULL_PALETTE_SIZE (16)
-#define FULL_PALETTE_SIZE_BYTES (FULL_PALETTE_SIZE*sizeof(RGBQUAD))
+#define FULL_PALETTE_SIZE_BYTES (FULL_PALETTE_SIZE * sizeof(RGBQUAD))
 
-UCHAR PaletteBmp [128]; // small bitmap
+UCHAR PaletteBmp[128]; // small bitmap
 PRGBQUAD PalettePtr = (PRGBQUAD)(PaletteBmp + sizeof(BITMAPINFOHEADER));
 PBITMAPINFOHEADER pbih = (PBITMAPINFOHEADER)PaletteBmp;
 
-RGBQUAD MainPalette [FULL_PALETTE_SIZE] = { {0,0,0,0}, {21,26,32,0}, {70,70,70,0}, {210,62,45,0},
-											{1,101,83,0}, {5,53,178,0}, {126,126,126,0}, {0,146,137,0},
-											{252,127,94,0}, {32,107,247,0}, {255,166,141,0}, {4,220,142,0},
-											{27,188,243,0}, {188,188,188,0}, {252,252,252,0}, {255,255,255,0} };
+RGBQUAD MainPalette[FULL_PALETTE_SIZE] = { { 0, 0, 0, 0 },       { 21, 26, 32, 0 },    { 70, 70, 70, 0 },
+                                           { 210, 62, 45, 0 },   { 1, 101, 83, 0 },    { 5, 53, 178, 0 },
+                                           { 126, 126, 126, 0 }, { 0, 146, 137, 0 },   { 252, 127, 94, 0 },
+                                           { 32, 107, 247, 0 },  { 255, 166, 141, 0 }, { 4, 220, 142, 0 },
+                                           { 27, 188, 243, 0 },  { 188, 188, 188, 0 }, { 252, 252, 252, 0 },
+                                           { 255, 255, 255, 0 } };
 
-#define COLOR_BLACK      0
-#define COLOR_BLUE       2
-#define COLOR_DARKGRAY   4
-#define COLOR_GRAY       9
-#define COLOR_WHITE      15
-#define COLOR_FADE_TEXT  1
+#define COLOR_BLACK 0
+#define COLOR_BLUE 2
+#define COLOR_DARKGRAY 4
+#define COLOR_GRAY 9
+#define COLOR_WHITE 15
+#define COLOR_FADE_TEXT 1
 
 UCHAR Square1[36];
 UCHAR Square2[36];
 UCHAR Square3[36];
 
-VOID
-RotBarInit (VOID)
+VOID RotBarInit(VOID)
 /*++
 
 Routine Description:
@@ -186,7 +188,7 @@ Environment:
 
 --*/
 {
-    pbih->biSize = sizeof (BITMAPINFOHEADER);
+    pbih->biSize = sizeof(BITMAPINFOHEADER);
     pbih->biWidth = 1;
     pbih->biHeight = 1;
     pbih->biPlanes = 1;
@@ -200,19 +202,19 @@ Environment:
 
     PltRotBarStatus = PLT_START;
     PaletteNum = 0;
-	AnimBarPos = 0;
+    AnimBarPos = 0;
 
-	VidScreenToBufferBlt(Square1,0,0,6,9,4);
-	VidScreenToBufferBlt(Square2,2+6,0,6,9,4);
-	VidScreenToBufferBlt(Square3,2*(2+6),0,6,9,4);
-	VidSolidColorFill(0,0,22,9,COLOR_BLACK);
+    VidScreenToBufferBlt(Square1, 0, 0, 6, 9, 4);
+    VidScreenToBufferBlt(Square2, 2 + 6, 0, 6, 9, 4);
+    VidScreenToBufferBlt(Square3, 2 * (2 + 6), 0, 6, 9, 4);
+    VidSolidColorFill(0, 0, 22, 9, COLOR_BLACK);
 }
 
-VOID
-FadePalette (UCHAR factor)
+VOID FadePalette(UCHAR factor)
 {
     int i;
-    for (i=0; i<FULL_PALETTE_SIZE; i++) {
+    for (i = 0; i < FULL_PALETTE_SIZE; i++)
+    {
         PalettePtr[i].rgbBlue = (UCHAR)(factor * MainPalette[i].rgbBlue / FADE_GRADES);
         PalettePtr[i].rgbGreen = (UCHAR)(factor * MainPalette[i].rgbGreen / FADE_GRADES);
         PalettePtr[i].rgbRed = (UCHAR)(factor * MainPalette[i].rgbRed / FADE_GRADES);
@@ -220,31 +222,31 @@ FadePalette (UCHAR factor)
     }
 }
 
-VOID
-FadePaletteColor (UCHAR factor, UCHAR color)
+VOID FadePaletteColor(UCHAR factor, UCHAR color)
 {
-    PalettePtr[color].rgbBlue =	(UCHAR)(factor * MainPalette[color].rgbBlue / FADE_GRADES);
+    PalettePtr[color].rgbBlue = (UCHAR)(factor * MainPalette[color].rgbBlue / FADE_GRADES);
     PalettePtr[color].rgbGreen = (UCHAR)(factor * MainPalette[color].rgbGreen / FADE_GRADES);
     PalettePtr[color].rgbRed = (UCHAR)(factor * MainPalette[color].rgbRed / FADE_GRADES);
     PalettePtr[color].rgbReserved = 0;
 }
 
-#define COLOR_BLACK      0
-#define COLOR_BLUE       2
-#define COLOR_DARKGRAY   4
-#define COLOR_GRAY       9
-#define COLOR_WHITE      15
+#define COLOR_BLACK 0
+#define COLOR_BLUE 2
+#define COLOR_DARKGRAY 4
+#define COLOR_GRAY 9
+#define COLOR_WHITE 15
 
-#define BLACK_4CLR_BAR memset (PalettePtr+12, 0, CYCLE_PALETTE_SIZE_BYTES)
+#define BLACK_4CLR_BAR memset(PalettePtr + 12, 0, CYCLE_PALETTE_SIZE_BYTES)
 
-#define BAR_X (267-(8*3))
+#define BAR_X (267 - (8 * 3))
 #define BAR_Y (354)
-#define CELL_X(num) (BAR_X+8*(AnimBarPos+num-2))
-#define DRAW_CELL(num) VidBufferToScreenBlt(Square##num,CELL_X(num),BAR_Y,6,9,4)
-#define BLK_CELL VidSolidColorFill(BAR_X+8*((AnimBarPos+16)%18),BAR_Y,BAR_X+8*((AnimBarPos+16)%18)+6-1,BAR_Y+9-1,COLOR_BLACK)
+#define CELL_X(num) (BAR_X + 8 * (AnimBarPos + num - 2))
+#define DRAW_CELL(num) VidBufferToScreenBlt(Square##num, CELL_X(num), BAR_Y, 6, 9, 4)
+#define BLK_CELL                                                                                                 \
+    VidSolidColorFill(BAR_X + 8 * ((AnimBarPos + 16) % 18), BAR_Y, BAR_X + 8 * ((AnimBarPos + 16) % 18) + 6 - 1, \
+                      BAR_Y + 9 - 1, COLOR_BLACK)
 
-VOID
-RotBarUpdate (VOID)
+VOID RotBarUpdate(VOID)
 /*++
 
 Routine Description:
@@ -265,51 +267,54 @@ Environment:
 {
     UCHAR color;
 
-    switch (PltRotBarStatus) {
+    switch (PltRotBarStatus)
+    {
 
-        
+
     case PLT_START:
-        FadePalette ((UCHAR)(PaletteNum));
-		FadePaletteColor (0, COLOR_FADE_TEXT); // #1 - color of fading text
-		if ((++PaletteNum)>=FADE_GRADES) {
-			PltRotBarStatus = PLT_CYCLE;
-			FadingIn = TRUE;
-			PaletteNum = 1;
-		}
+        FadePalette((UCHAR)(PaletteNum));
+        FadePaletteColor(0, COLOR_FADE_TEXT); // #1 - color of fading text
+        if ((++PaletteNum) >= FADE_GRADES)
+        {
+            PltRotBarStatus = PLT_CYCLE;
+            FadingIn = TRUE;
+            PaletteNum = 1;
+        }
         break;
-        
-    case PLT_CYCLE:
-		switch (AnimBarPos) {
-		case 0:
-				BLK_CELL;
-				break;
-		case 1:
-				DRAW_CELL(3);
-				break;
-		case 2:
-				DRAW_CELL(2);
-				DRAW_CELL(3);
-				break;
-		case 16:
-				DRAW_CELL(1);
-				DRAW_CELL(2);
-				BLK_CELL;
-				break;
-		case 17:
-				DRAW_CELL(1);
-				BLK_CELL;
-				break;
-		default:
-				DRAW_CELL(1);
-				DRAW_CELL(2);
-				DRAW_CELL(3);
-				if (AnimBarPos>3)
-					BLK_CELL;
-		}
 
-		AnimBarPos++;
-		if ((AnimBarPos) > 17)
-			AnimBarPos = 0;
+    case PLT_CYCLE:
+        switch (AnimBarPos)
+        {
+        case 0:
+            BLK_CELL;
+            break;
+        case 1:
+            DRAW_CELL(3);
+            break;
+        case 2:
+            DRAW_CELL(2);
+            DRAW_CELL(3);
+            break;
+        case 16:
+            DRAW_CELL(1);
+            DRAW_CELL(2);
+            BLK_CELL;
+            break;
+        case 17:
+            DRAW_CELL(1);
+            BLK_CELL;
+            break;
+        default:
+            DRAW_CELL(1);
+            DRAW_CELL(2);
+            DRAW_CELL(3);
+            if (AnimBarPos > 3)
+                BLK_CELL;
+        }
+
+        AnimBarPos++;
+        if ((AnimBarPos) > 17)
+            AnimBarPos = 0;
 
         break;
 
@@ -318,14 +323,14 @@ Environment:
         return;
     }
 
-    if (InbvGetDisplayState() == INBV_DISPLAY_STATE_OWNED) {
+    if (InbvGetDisplayState() == INBV_DISPLAY_STATE_OWNED)
+    {
         VidBitBlt(PaletteBmp, 0, 480);
     }
 }
 
 
-VOID
-InbvRotBarInit ()
+VOID InbvRotBarInit()
 /*++
 
 Routine Description:
@@ -345,7 +350,8 @@ Environment:
 
 --*/
 {
-    switch (RotBarSelection) {
+    switch (RotBarSelection)
+    {
 
     case RB_SQUARE_CELLS:
         RotBarInit();
@@ -354,14 +360,10 @@ Environment:
     case RB_UNSPECIFIED:
     default:
         break;
-
     }
 }
 
-VOID
-InbvRotateGuiBootDisplay(
-    IN PVOID Context
-    )
+VOID InbvRotateGuiBootDisplay(IN PVOID Context)
 
 /*++
 
@@ -383,17 +385,20 @@ Environment:
 {
     LARGE_INTEGER Delay;
 
-    Delay.QuadPart = -10 * 1000 * 80;  // 100 milliseconds
+    Delay.QuadPart = -10 * 1000 * 80; // 100 milliseconds
 
-    do {
+    do
+    {
 
         KeDelayExecutionThread(KernelMode, FALSE, &Delay);
 
         InbvAcquireLock();
 
-        if (InbvGetDisplayState() == INBV_DISPLAY_STATE_OWNED) {
+        if (InbvGetDisplayState() == INBV_DISPLAY_STATE_OWNED)
+        {
 
-            switch(RotBarSelection) {
+            switch (RotBarSelection)
+            {
 
             case RB_SQUARE_CELLS:
                 RotBarUpdate();
@@ -403,7 +408,6 @@ Environment:
             default:
                 break;
             }
-
         }
 
         InbvReleaseLock();
@@ -413,12 +417,11 @@ Environment:
     PsTerminateSystemThread(STATUS_SUCCESS);
 }
 
-VOID
-FinalizeBootLogo(VOID)
+VOID FinalizeBootLogo(VOID)
 {
     InbvAcquireLock();
-	if (InbvGetDisplayState() == INBV_DISPLAY_STATE_OWNED)
-		VidSolidColorFill(0,0,639,479, COLOR_BLACK);
+    if (InbvGetDisplayState() == INBV_DISPLAY_STATE_OWNED)
+        VidSolidColorFill(0, 0, 639, 479, COLOR_BLACK);
     PltRotBarStatus = PLT_COMPLETE;
     InbvReleaseLock();
 }

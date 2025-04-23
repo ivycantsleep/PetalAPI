@@ -43,27 +43,25 @@ Message Types:
 ***********************************************************************/
 
 #define MESSAGE_INFORMATION 0x1
-#define MESSAGE_WARNING     0x2
-#define MESSAGE_ERROR       0x4
+#define MESSAGE_WARNING 0x2
+#define MESSAGE_ERROR 0x4
 
 /***********************************************************************
 Module IDs:
 ***********************************************************************/
 
-#define MODULE_INIT  0x1
-#define MODULE_KE    0x2
-#define MODULE_EX    0x4
-#define MODULE_MM    0x8
-#define MODULE_LPC   0x10
-#define MODULE_SE    0x20
-#define MODULE_TDI   0x40
-#define MODULE_RTL   0x80
-#define MODULE_PO    0x100
-#define MODULE_PNP   0x200
+#define MODULE_INIT 0x1
+#define MODULE_KE 0x2
+#define MODULE_EX 0x4
+#define MODULE_MM 0x8
+#define MODULE_LPC 0x10
+#define MODULE_SE 0x20
+#define MODULE_TDI 0x40
+#define MODULE_RTL 0x80
+#define MODULE_PO 0x100
+#define MODULE_PNP 0x200
 
-#define DRIVER_1    0x10000000
-#define DRIVER_2    0x20000000
-#define DRIVER_3    0x40000000
-#define DRIVER_4    0x80000000
-
-
+#define DRIVER_1 0x10000000
+#define DRIVER_2 0x20000000
+#define DRIVER_3 0x40000000
+#define DRIVER_4 0x80000000

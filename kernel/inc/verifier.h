@@ -30,7 +30,8 @@ Revision History:
 // Resource types handled by deadlock detection package.
 //
 
-typedef enum _VI_DEADLOCK_RESOURCE_TYPE {
+typedef enum _VI_DEADLOCK_RESOURCE_TYPE
+{
     VfDeadlockUnknown = 0,
     VfDeadlockMutex,
     VfDeadlockFastMutex,
@@ -45,244 +46,120 @@ typedef enum _VI_DEADLOCK_RESOURCE_TYPE {
 //
 
 
-struct _DMA_ADAPTER *
-VfGetDmaAdapter(
-    IN PDEVICE_OBJECT  PhysicalDeviceObject,
-    IN struct _DEVICE_DESCRIPTION  *DeviceDescription,
-    IN OUT PULONG  NumberOfMapRegisters
-    );
+struct _DMA_ADAPTER *VfGetDmaAdapter(IN PDEVICE_OBJECT PhysicalDeviceObject,
+                                     IN struct _DEVICE_DESCRIPTION *DeviceDescription,
+                                     IN OUT PULONG NumberOfMapRegisters);
 
 PVOID
-VfAllocateCrashDumpRegisters(
-    IN PADAPTER_OBJECT AdapterObject,
-    IN PULONG NumberOfMapRegisters
-    );
+VfAllocateCrashDumpRegisters(IN PADAPTER_OBJECT AdapterObject, IN PULONG NumberOfMapRegisters);
 
 
 #if !defined(NO_LEGACY_DRIVERS)
-VOID
-VfPutDmaAdapter(
-    struct _DMA_ADAPTER * DmaAdapter
-    );
+VOID VfPutDmaAdapter(struct _DMA_ADAPTER *DmaAdapter);
 
 
 PVOID
-VfAllocateCommonBuffer(
-    IN struct _DMA_ADAPTER * DmaAdapter,
-    IN ULONG Length,
-    OUT PPHYSICAL_ADDRESS LogicalAddress,
-    IN BOOLEAN CacheEnabled
-    );
+VfAllocateCommonBuffer(IN struct _DMA_ADAPTER *DmaAdapter, IN ULONG Length, OUT PPHYSICAL_ADDRESS LogicalAddress,
+                       IN BOOLEAN CacheEnabled);
 
-VOID
-VfFreeCommonBuffer(
-    IN struct _DMA_ADAPTER * DmaAdapter,
-    IN ULONG Length,
-    IN PHYSICAL_ADDRESS LogicalAddress,
-    IN PVOID VirtualAddress,
-    IN BOOLEAN CacheEnabled
-    );
+VOID VfFreeCommonBuffer(IN struct _DMA_ADAPTER *DmaAdapter, IN ULONG Length, IN PHYSICAL_ADDRESS LogicalAddress,
+                        IN PVOID VirtualAddress, IN BOOLEAN CacheEnabled);
 
 NTSTATUS
-VfAllocateAdapterChannel(
-    IN struct _DMA_ADAPTER * DmaAdapter,
-    IN PDEVICE_OBJECT  DeviceObject,
-    IN ULONG  NumberOfMapRegisters,
-    IN PDRIVER_CONTROL  ExecutionRoutine,
-    IN PVOID  Context
-    );
+VfAllocateAdapterChannel(IN struct _DMA_ADAPTER *DmaAdapter, IN PDEVICE_OBJECT DeviceObject,
+                         IN ULONG NumberOfMapRegisters, IN PDRIVER_CONTROL ExecutionRoutine, IN PVOID Context);
 
 PHYSICAL_ADDRESS
-VfMapTransfer(
-    IN struct _DMA_ADAPTER *  DmaAdapter,
-    IN PMDL  Mdl,
-    IN PVOID  MapRegisterBase,
-    IN PVOID  CurrentVa,
-    IN OUT PULONG  Length,
-    IN BOOLEAN  WriteToDevice
-    );
+VfMapTransfer(IN struct _DMA_ADAPTER *DmaAdapter, IN PMDL Mdl, IN PVOID MapRegisterBase, IN PVOID CurrentVa,
+              IN OUT PULONG Length, IN BOOLEAN WriteToDevice);
 
 BOOLEAN
-VfFlushAdapterBuffers(
-    IN struct _DMA_ADAPTER * DmaAdapter,
-    IN PMDL Mdl,
-    IN PVOID MapRegisterBase,
-    IN PVOID CurrentVa,
-    IN ULONG Length,
-    IN BOOLEAN WriteToDevice
-    );
+VfFlushAdapterBuffers(IN struct _DMA_ADAPTER *DmaAdapter, IN PMDL Mdl, IN PVOID MapRegisterBase, IN PVOID CurrentVa,
+                      IN ULONG Length, IN BOOLEAN WriteToDevice);
 
-VOID
-VfFreeAdapterChannel(
-    IN struct _DMA_ADAPTER * DmaAdapter
-    );
+VOID VfFreeAdapterChannel(IN struct _DMA_ADAPTER *DmaAdapter);
 
-VOID
-VfFreeMapRegisters(
-    IN struct _DMA_ADAPTER * DmaAdapter,
-    PVOID MapRegisterBase,
-    ULONG NumberOfMapRegisters
-    );
+VOID VfFreeMapRegisters(IN struct _DMA_ADAPTER *DmaAdapter, PVOID MapRegisterBase, ULONG NumberOfMapRegisters);
 
 ULONG
-VfGetDmaAlignment(
-    IN struct _DMA_ADAPTER * DmaAdapter
-    );
+VfGetDmaAlignment(IN struct _DMA_ADAPTER *DmaAdapter);
 
 ULONG
-VfReadDmaCounter(
-    IN struct _DMA_ADAPTER *  DmaAdapter
-    );
+VfReadDmaCounter(IN struct _DMA_ADAPTER *DmaAdapter);
 
 NTSTATUS
-VfGetScatterGatherList (
-    IN struct _DMA_ADAPTER * DmaAdapter,
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PMDL Mdl,
-    IN PVOID CurrentVa,
-    IN ULONG Length,
-    IN PVOID ExecutionRoutine,
-    IN PVOID Context,
-    IN BOOLEAN WriteToDevice
-    );
+VfGetScatterGatherList(IN struct _DMA_ADAPTER *DmaAdapter, IN PDEVICE_OBJECT DeviceObject, IN PMDL Mdl,
+                       IN PVOID CurrentVa, IN ULONG Length, IN PVOID ExecutionRoutine, IN PVOID Context,
+                       IN BOOLEAN WriteToDevice);
 
-VOID
-VfPutScatterGatherList(
-    IN struct _DMA_ADAPTER * DmaAdapter,
-    IN struct _SCATTER_GATHER_LIST * ScatterGather,
-    IN BOOLEAN WriteToDevice
-    );
+VOID VfPutScatterGatherList(IN struct _DMA_ADAPTER *DmaAdapter, IN struct _SCATTER_GATHER_LIST *ScatterGather,
+                            IN BOOLEAN WriteToDevice);
 
 PADAPTER_OBJECT
-VfLegacyGetAdapter(
-    IN struct _DEVICE_DESCRIPTION  *DeviceDescription,
-    IN OUT PULONG  NumberOfMapRegisters
-    );
+VfLegacyGetAdapter(IN struct _DEVICE_DESCRIPTION *DeviceDescription, IN OUT PULONG NumberOfMapRegisters);
 
 #endif
 
 LARGE_INTEGER
-VfQueryPerformanceCounter(
-    IN PLARGE_INTEGER PerformanceFrequency OPTIONAL
-    );
+VfQueryPerformanceCounter(IN PLARGE_INTEGER PerformanceFrequency OPTIONAL);
 
-VOID
-VfHalDeleteDevice(
-    IN PDEVICE_OBJECT  DeviceObject
-    );
+VOID VfHalDeleteDevice(IN PDEVICE_OBJECT DeviceObject);
 
-VOID
-VfDisableHalVerifier (
-    VOID
-    );
+VOID VfDisableHalVerifier(VOID);
 
 
 //
 // Resource interfaces for deadlock detection package.
 //
 
-VOID
-VfDeadlockDetectionInitialize(
-    IN LOGICAL VerifyAllDrivers,
-    IN LOGICAL VerifyKernel
-    );
+VOID VfDeadlockDetectionInitialize(IN LOGICAL VerifyAllDrivers, IN LOGICAL VerifyKernel);
 
-VOID
-VfDeadlockDetectionCleanup (
-    VOID
-    );
+VOID VfDeadlockDetectionCleanup(VOID);
 
 BOOLEAN
-VfDeadlockInitializeResource(
-    IN PVOID Resource,
-    IN VI_DEADLOCK_RESOURCE_TYPE Type,
-    IN PVOID Caller,
-    IN BOOLEAN DoNotAcquireLock
-    );
+VfDeadlockInitializeResource(IN PVOID Resource, IN VI_DEADLOCK_RESOURCE_TYPE Type, IN PVOID Caller,
+                             IN BOOLEAN DoNotAcquireLock);
 
-VOID
-VfDeadlockAcquireResource(
-    IN PVOID Resource,
-    IN VI_DEADLOCK_RESOURCE_TYPE Type,
-    IN PKTHREAD Thread,
-    IN BOOLEAN TryAcquire,
-    IN PVOID Caller
-    );
+VOID VfDeadlockAcquireResource(IN PVOID Resource, IN VI_DEADLOCK_RESOURCE_TYPE Type, IN PKTHREAD Thread,
+                               IN BOOLEAN TryAcquire, IN PVOID Caller);
 
-VOID
-VfDeadlockReleaseResource(
-    IN PVOID Resource,
-    IN VI_DEADLOCK_RESOURCE_TYPE Type,
-    IN PKTHREAD Thread,
-    IN PVOID Caller
-    );
+VOID VfDeadlockReleaseResource(IN PVOID Resource, IN VI_DEADLOCK_RESOURCE_TYPE Type, IN PKTHREAD Thread,
+                               IN PVOID Caller);
 
 //
 // Used for resource garbage collection.
 //
 
-VOID
-VfDeadlockDeleteMemoryRange(
-    IN PVOID Address,
-    IN SIZE_T Size
-    );
+VOID VfDeadlockDeleteMemoryRange(IN PVOID Address, IN SIZE_T Size);
 
 //
 // Notification from the pool manager so deadlock hierarchies can be terminated.
 //
 
-VOID
-VerifierDeadlockFreePool(
-    IN PVOID Address,
-    IN SIZE_T NumberOfBytes
-    );
+VOID VerifierDeadlockFreePool(IN PVOID Address, IN SIZE_T NumberOfBytes);
 
 //
 // Verifier versions to catch file I/O above PASSIVE_LEVEL
 //
 
 NTSTATUS
-VerifierNtCreateFile(
-    OUT PHANDLE FileHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_ATTRIBUTES ObjectAttributes,
-    OUT PIO_STATUS_BLOCK IoStatusBlock,
-    IN PLARGE_INTEGER AllocationSize OPTIONAL,
-    IN ULONG FileAttributes,
-    IN ULONG ShareAccess,
-    IN ULONG CreateDisposition,
-    IN ULONG CreateOptions,
-    IN PVOID EaBuffer OPTIONAL,
-    IN ULONG EaLength
-    );
+VerifierNtCreateFile(OUT PHANDLE FileHandle, IN ACCESS_MASK DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes,
+                     OUT PIO_STATUS_BLOCK IoStatusBlock, IN PLARGE_INTEGER AllocationSize OPTIONAL,
+                     IN ULONG FileAttributes, IN ULONG ShareAccess, IN ULONG CreateDisposition, IN ULONG CreateOptions,
+                     IN PVOID EaBuffer OPTIONAL, IN ULONG EaLength);
 
 NTSTATUS
-VerifierNtWriteFile(
-    IN HANDLE FileHandle,
-    IN HANDLE Event OPTIONAL,
-    IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
-    IN PVOID ApcContext OPTIONAL,
-    OUT PIO_STATUS_BLOCK IoStatusBlock,
-    IN PVOID Buffer,
-    IN ULONG Length,
-    IN PLARGE_INTEGER ByteOffset OPTIONAL,
-    IN PULONG Key OPTIONAL
-    );
+VerifierNtWriteFile(IN HANDLE FileHandle, IN HANDLE Event OPTIONAL, IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
+                    IN PVOID ApcContext OPTIONAL, OUT PIO_STATUS_BLOCK IoStatusBlock, IN PVOID Buffer, IN ULONG Length,
+                    IN PLARGE_INTEGER ByteOffset OPTIONAL, IN PULONG Key OPTIONAL);
 
 NTSTATUS
-VerifierNtReadFile(
-    IN HANDLE FileHandle,
-    IN HANDLE Event OPTIONAL,
-    IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
-    IN PVOID ApcContext OPTIONAL,
-    OUT PIO_STATUS_BLOCK IoStatusBlock,
-    OUT PVOID Buffer,
-    IN ULONG Length,
-    IN PLARGE_INTEGER ByteOffset OPTIONAL,
-    IN PULONG Key OPTIONAL
-    );
+VerifierNtReadFile(IN HANDLE FileHandle, IN HANDLE Event OPTIONAL, IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
+                   IN PVOID ApcContext OPTIONAL, OUT PIO_STATUS_BLOCK IoStatusBlock, OUT PVOID Buffer, IN ULONG Length,
+                   IN PLARGE_INTEGER ByteOffset OPTIONAL, IN PULONG Key OPTIONAL);
 
-typedef enum {
+typedef enum
+{
 
     //
     // Bugs in this class are severe enough that the hardware should be removed
@@ -305,7 +182,6 @@ typedef enum {
 } VF_FAILURE_CLASS, *PVF_FAILURE_CLASS;
 
 
-
 //
 // Example usage: (note - perMinorFlags statically preinitialized to zero)
 //
@@ -321,17 +197,9 @@ typedef enum {
 //     deviceObject
 //     );
 //
-VOID
-VfFailDeviceNode(
-    IN      PDEVICE_OBJECT      PhysicalDeviceObject,
-    IN      ULONG               BugCheckMajorCode,
-    IN      ULONG               BugCheckMinorCode,
-    IN      VF_FAILURE_CLASS    FailureClass,
-    IN OUT  PULONG              AssertionControl,
-    IN      PSTR                DebuggerMessageText,
-    IN      PSTR                ParameterFormatString,
-    ...
-    );
+VOID VfFailDeviceNode(IN PDEVICE_OBJECT PhysicalDeviceObject, IN ULONG BugCheckMajorCode, IN ULONG BugCheckMinorCode,
+                      IN VF_FAILURE_CLASS FailureClass, IN OUT PULONG AssertionControl, IN PSTR DebuggerMessageText,
+                      IN PSTR ParameterFormatString, ...);
 
 //
 // Example usage: (note - perMinorFlags statically preinitialized to zero)
@@ -347,16 +215,8 @@ VfFailDeviceNode(
 //     routine
 //     );
 //
-VOID
-VfFailDriver(
-    IN      ULONG               BugCheckMajorCode,
-    IN      ULONG               BugCheckMinorCode,
-    IN      VF_FAILURE_CLASS    FailureClass,
-    IN OUT  PULONG              AssertionControl,
-    IN      PSTR                DebuggerMessageText,
-    IN      PSTR                ParameterFormatString,
-    ...
-    );
+VOID VfFailDriver(IN ULONG BugCheckMajorCode, IN ULONG BugCheckMinorCode, IN VF_FAILURE_CLASS FailureClass,
+                  IN OUT PULONG AssertionControl, IN PSTR DebuggerMessageText, IN PSTR ParameterFormatString, ...);
 
 //
 // Example usage: (note - perMinorFlags statically preinitialized to zero)
@@ -372,18 +232,11 @@ VfFailDriver(
 //     routine
 //     );
 //
-VOID
-VfFailSystemBIOS(
-    IN      ULONG               BugCheckMajorCode,
-    IN      ULONG               BugCheckMinorCode,
-    IN      VF_FAILURE_CLASS    FailureClass,
-    IN OUT  PULONG              AssertionControl,
-    IN      PSTR                DebuggerMessageText,
-    IN      PSTR                ParameterFormatString,
-    ...
-    );
+VOID VfFailSystemBIOS(IN ULONG BugCheckMajorCode, IN ULONG BugCheckMinorCode, IN VF_FAILURE_CLASS FailureClass,
+                      IN OUT PULONG AssertionControl, IN PSTR DebuggerMessageText, IN PSTR ParameterFormatString, ...);
 
-typedef enum {
+typedef enum
+{
 
     //
     // Driver object
@@ -403,10 +256,6 @@ typedef enum {
 } VF_OBJECT_TYPE;
 
 BOOLEAN
-VfIsVerificationEnabled(
-    IN  VF_OBJECT_TYPE  VfObjectType,
-    IN  PVOID           Object          OPTIONAL
-    );
+VfIsVerificationEnabled(IN VF_OBJECT_TYPE VfObjectType, IN PVOID Object OPTIONAL);
 
 #endif
-

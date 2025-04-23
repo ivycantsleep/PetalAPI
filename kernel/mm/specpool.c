@@ -23,63 +23,34 @@ Revision History:
 #include "mi.h"
 
 #ifndef NO_POOL_CHECKS
-VOID
-MiInitializeSpecialPoolCriteria (
-    IN VOID
-    );
+VOID MiInitializeSpecialPoolCriteria(IN VOID);
 
-VOID
-MiSpecialPoolTimerDispatch (
-    IN PKDPC Dpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    );
+VOID MiSpecialPoolTimerDispatch(IN PKDPC Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1,
+                                IN PVOID SystemArgument2);
 #endif
 
 LOGICAL
-MmSetSpecialPool (
-    IN LOGICAL Enable
-    );
+MmSetSpecialPool(IN LOGICAL Enable);
 
 PVOID
-MiAllocateSpecialPool (
-    IN SIZE_T NumberOfBytes,
-    IN ULONG Tag,
-    IN POOL_TYPE PoolType,
-    IN ULONG SpecialPoolType
-    );
+MiAllocateSpecialPool(IN SIZE_T NumberOfBytes, IN ULONG Tag, IN POOL_TYPE PoolType, IN ULONG SpecialPoolType);
 
-VOID
-MmFreeSpecialPool (
-    IN PVOID P
-    );
+VOID MmFreeSpecialPool(IN PVOID P);
 
 LOGICAL
-MiProtectSpecialPool (
-    IN PVOID VirtualAddress,
-    IN ULONG NewProtect
-    );
+MiProtectSpecialPool(IN PVOID VirtualAddress, IN ULONG NewProtect);
 
-VOID
-MiMakeSpecialPoolPagable (
-    IN PVOID VirtualAddress,
-    IN PMMPTE PointerPte,
-    IN POOL_TYPE PoolType
-    );
+VOID MiMakeSpecialPoolPagable(IN PVOID VirtualAddress, IN PMMPTE PointerPte, IN POOL_TYPE PoolType);
 
 LOGICAL
-MiExpandSpecialPool (
-    IN POOL_TYPE PoolType,
-    IN KIRQL OldIrql
-    );
+MiExpandSpecialPool(IN POOL_TYPE PoolType, IN KIRQL OldIrql);
 
 #ifdef ALLOC_PRAGMA
 #ifndef NO_POOL_CHECKS
 #pragma alloc_text(INIT, MiInitializeSpecialPoolCriteria)
 #pragma alloc_text(PAGE, MiEnableRandomSpecialPool)
 #endif
-#if defined (_WIN64)
+#if defined(_WIN64)
 #pragma alloc_text(PAGESPEC, MiDeleteSessionSpecialPool)
 #pragma alloc_text(PAGE, MiInitializeSpecialPool)
 #else
@@ -96,7 +67,7 @@ ULONG MmSpecialPoolTag;
 PVOID MmSpecialPoolStart;
 PVOID MmSpecialPoolEnd;
 
-#if defined (_WIN64)
+#if defined(_WIN64)
 PVOID MmSessionSpecialPoolStart;
 PVOID MmSessionSpecialPoolEnd;
 #else
@@ -113,7 +84,7 @@ PMMPTE MiSpecialPoolLastPte;
 
 ULONG MiSpecialPagesNonPaged;
 ULONG MiSpecialPagesPagable;
-ULONG MmSpecialPagesInUse;      // Used by the debugger
+ULONG MmSpecialPagesInUse; // Used by the debugger
 
 ULONG MiSpecialPagesNonPagedPeak;
 ULONG MiSpecialPagesPagablePeak;
@@ -127,16 +98,14 @@ extern LOGICAL MmPagedPoolMaximumDesired;
 
 extern ULONG MmPteFailures[MaximumPtePoolTypes];
 
-#if defined (_X86_)
+#if defined(_X86_)
 extern ULONG MiExtraPtes1;
 KSPIN_LOCK MiSpecialPoolLock;
 #endif
 
-#if !defined (_WIN64)
+#if !defined(_WIN64)
 LOGICAL
-MiInitializeSpecialPool (
-    IN POOL_TYPE PoolType
-    )
+MiInitializeSpecialPool(IN POOL_TYPE PoolType)
 
 /*++
 
@@ -164,11 +133,11 @@ Environment:
     PMMPTE PointerPteBase;
     ULONG SpecialPoolPtes;
 
-    UNREFERENCED_PARAMETER (PoolType);
+    UNREFERENCED_PARAMETER(PoolType);
 
-    if ((MmVerifyDriverBufferLength == (ULONG)-1) &&
-        ((MmSpecialPoolTag == 0) || (MmSpecialPoolTag == (ULONG)-1))) {
-            return FALSE;
+    if ((MmVerifyDriverBufferLength == (ULONG)-1) && ((MmSpecialPoolTag == 0) || (MmSpecialPoolTag == (ULONG)-1)))
+    {
+        return FALSE;
     }
 
     //
@@ -181,10 +150,12 @@ Environment:
     // the system PTE pool and fail to handle thread stacks and I/O.
     //
 
-    if (MmNumberOfSystemPtes < 0x3000) {
+    if (MmNumberOfSystemPtes < 0x3000)
+    {
         SpecialPoolPtes = MmNumberOfSystemPtes / 6;
     }
-    else {
+    else
+    {
         SpecialPoolPtes = MmNumberOfSystemPtes / 3;
     }
 
@@ -193,13 +164,14 @@ Environment:
     // a cap here to prevent overzealousness.
     //
 
-    if (SpecialPoolPtes > MM_SPECIAL_POOL_PTES) {
+    if (SpecialPoolPtes > MM_SPECIAL_POOL_PTES)
+    {
         SpecialPoolPtes = MM_SPECIAL_POOL_PTES;
     }
 
-    SpecialPoolPtes = MI_ROUND_TO_SIZE (SpecialPoolPtes, PTE_PER_PAGE);
+    SpecialPoolPtes = MI_ROUND_TO_SIZE(SpecialPoolPtes, PTE_PER_PAGE);
 
-#if defined (_X86_)
+#if defined(_X86_)
 
     //
     // For x86, we can actually use an additional range of special PTEs to
@@ -207,11 +179,11 @@ Environment:
     // 256000.
     //
 
-    if ((MiExtraPtes1 != 0) &&
-        (ExpMultiUserTS == FALSE) &&
-        (MiRequestedSystemPtes != (ULONG)-1)) {
+    if ((MiExtraPtes1 != 0) && (ExpMultiUserTS == FALSE) && (MiRequestedSystemPtes != (ULONG)-1))
+    {
 
-        if (MmPagedPoolMaximumDesired == TRUE) {
+        if (MmPagedPoolMaximumDesired == TRUE)
+        {
 
             //
             // The low PTEs between 2 and 3GB virtual must be used
@@ -220,7 +192,8 @@ Environment:
 
             SpecialPoolPtes = (MiNumberOfExtraSystemPdes / 2) * PTE_PER_PAGE;
         }
-        else {
+        else
+        {
 
             //
             // The low PTEs between 2 and 3GB virtual can be used
@@ -231,7 +204,7 @@ Environment:
         }
     }
 
-    KeInitializeSpinLock (&MiSpecialPoolLock);
+    KeInitializeSpinLock(&MiSpecialPoolLock);
 #endif
 
     //
@@ -245,19 +218,19 @@ Environment:
     // Always request an even number of PTEs so each one can be guard paged.
     //
 
-    ASSERT ((SpecialPoolPtes & (PTE_PER_PAGE - 1)) == 0);
+    ASSERT((SpecialPoolPtes & (PTE_PER_PAGE - 1)) == 0);
 
-    do {
+    do
+    {
 
-        PointerPte = MiReserveAlignedSystemPtes (SpecialPoolPtes,
-                                                 SystemPteSpace,
-                                                 MM_VA_MAPPED_BY_PDE);
+        PointerPte = MiReserveAlignedSystemPtes(SpecialPoolPtes, SystemPteSpace, MM_VA_MAPPED_BY_PDE);
 
-        if (PointerPte != NULL) {
+        if (PointerPte != NULL)
+        {
             break;
         }
 
-        ASSERT (SpecialPoolPtes >= PTE_PER_PAGE);
+        ASSERT(SpecialPoolPtes >= PTE_PER_PAGE);
 
         SpecialPoolPtes -= PTE_PER_PAGE;
 
@@ -270,11 +243,12 @@ Environment:
 
     MmPteFailures[SystemPteSpace] = 0;
 
-    if (SpecialPoolPtes == 0) {
+    if (SpecialPoolPtes == 0)
+    {
         return FALSE;
     }
 
-    ASSERT (SpecialPoolPtes >= PTE_PER_PAGE);
+    ASSERT(SpecialPoolPtes >= PTE_PER_PAGE);
 
     //
     // Build the list of PTE pairs using only the first page table page for
@@ -284,10 +258,11 @@ Environment:
 
     PointerPteBase = PointerPte;
 
-    MmSpecialPoolStart = MiGetVirtualAddressMappedByPte (PointerPte);
-    ASSERT (MiIsVirtualAddressOnPdeBoundary (MmSpecialPoolStart));
+    MmSpecialPoolStart = MiGetVirtualAddressMappedByPte(PointerPte);
+    ASSERT(MiIsVirtualAddressOnPdeBoundary(MmSpecialPoolStart));
 
-    for (i = 0; i < PTE_PER_PAGE; i += 2) {
+    for (i = 0; i < PTE_PER_PAGE; i += 2)
+    {
         PointerPte->u.List.NextEntry = ((PointerPte + 2) - MmSystemPteBase);
         PointerPte += 2;
     }
@@ -298,7 +273,7 @@ Environment:
     PointerPte -= 2;
     PointerPte->u.List.NextEntry = MM_EMPTY_PTE_LIST;
 
-    MmSpecialPoolEnd = MiGetVirtualAddressMappedByPte (PointerPte + 1);
+    MmSpecialPoolEnd = MiGetVirtualAddressMappedByPte(PointerPte + 1);
 
     MiSpecialPoolLastPte = PointerPte;
     MiSpecialPoolFirstPte = PointerPteBase;
@@ -309,11 +284,12 @@ Environment:
 
     MiSpecialPagesNonPagedMaximum = (ULONG)(MmResidentAvailablePages >> 4);
 
-    if (MmNumberOfPhysicalPages > 0x3FFF) {
+    if (MmNumberOfPhysicalPages > 0x3FFF)
+    {
         MiSpecialPagesNonPagedMaximum = (ULONG)(MmResidentAvailablePages >> 3);
     }
 
-    ExSetPoolFlags (EX_SPECIAL_POOL_ENABLED);
+    ExSetPoolFlags(EX_SPECIAL_POOL_ENABLED);
 
     return TRUE;
 }
@@ -324,9 +300,7 @@ PMMPTE MiSpecialPoolNextPdeForSpecialPoolExpansion;
 PMMPTE MiSpecialPoolLastPdeForSpecialPoolExpansion;
 
 LOGICAL
-MiInitializeSpecialPool (
-    IN POOL_TYPE PoolType
-    )
+MiInitializeSpecialPool(IN POOL_TYPE PoolType)
 
 /*++
 
@@ -364,53 +338,57 @@ Environment:
     SIZE_T AdditionalCommittedPages;
     PFN_NUMBER PageFrameIndex;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    if (PoolType & SESSION_POOL_MASK) {
-        ASSERT (MmSessionSpace->SpecialPoolFirstPte == NULL);
-        if (MmSessionSpecialPoolStart == 0) {
+    if (PoolType & SESSION_POOL_MASK)
+    {
+        ASSERT(MmSessionSpace->SpecialPoolFirstPte == NULL);
+        if (MmSessionSpecialPoolStart == 0)
+        {
             return FALSE;
         }
         BaseAddress = MmSessionSpecialPoolStart;
-        ASSERT (((ULONG_PTR)BaseAddress & (MM_VA_MAPPED_BY_PDE - 1)) == 0);
+        ASSERT(((ULONG_PTR)BaseAddress & (MM_VA_MAPPED_BY_PDE - 1)) == 0);
         EndAddress = (PVOID)((ULONG_PTR)MmSessionSpecialPoolEnd - 1);
     }
-    else {
-        if (MmSpecialPoolStart == 0) {
+    else
+    {
+        if (MmSpecialPoolStart == 0)
+        {
             return FALSE;
         }
         BaseAddress = MmSpecialPoolStart;
-        ASSERT (((ULONG_PTR)BaseAddress & (MM_VA_MAPPED_BY_PDE - 1)) == 0);
+        ASSERT(((ULONG_PTR)BaseAddress & (MM_VA_MAPPED_BY_PDE - 1)) == 0);
         EndAddress = (PVOID)((ULONG_PTR)MmSpecialPoolEnd - 1);
 
         //
         // Construct empty page directory parent mappings as needed.
         //
 
-        PointerPpe = MiGetPpeAddress (BaseAddress);
-        EndPpe = MiGetPpeAddress (EndAddress);
+        PointerPpe = MiGetPpeAddress(BaseAddress);
+        EndPpe = MiGetPpeAddress(EndAddress);
         TempPte = ValidKernelPde;
         AdditionalCommittedPages = 0;
 
-        LOCK_PFN (OldIrql);
+        LOCK_PFN(OldIrql);
 
-        while (PointerPpe <= EndPpe) {
-            if (PointerPpe->u.Long == 0) {
-                PageFrameIndex = MiRemoveZeroPage (
-                                     MI_GET_PAGE_COLOR_FROM_PTE (PointerPpe));
+        while (PointerPpe <= EndPpe)
+        {
+            if (PointerPpe->u.Long == 0)
+            {
+                PageFrameIndex = MiRemoveZeroPage(MI_GET_PAGE_COLOR_FROM_PTE(PointerPpe));
                 TempPte.u.Hard.PageFrameNumber = PageFrameIndex;
-                MI_WRITE_VALID_PTE (PointerPpe, TempPte);
+                MI_WRITE_VALID_PTE(PointerPpe, TempPte);
 
-                MiInitializePfn (PageFrameIndex, PointerPpe, 1);
+                MiInitializePfn(PageFrameIndex, PointerPpe, 1);
 
                 MmResidentAvailablePages -= 1;
                 AdditionalCommittedPages += 1;
             }
             PointerPpe += 1;
         }
-        UNLOCK_PFN (OldIrql);
-        InterlockedExchangeAddSizeT (&MmTotalCommittedPages,
-                                     AdditionalCommittedPages);
+        UNLOCK_PFN(OldIrql);
+        InterlockedExchangeAddSizeT(&MmTotalCommittedPages, AdditionalCommittedPages);
     }
 
     //
@@ -418,11 +396,11 @@ Environment:
     // are built on demand.
     //
 
-    ASSERT (MiGetPpeAddress(BaseAddress)->u.Hard.Valid == 1);
+    ASSERT(MiGetPpeAddress(BaseAddress)->u.Hard.Valid == 1);
 
-    PointerPte = MiGetPteAddress (BaseAddress);
-    PointerPde = MiGetPdeAddress (BaseAddress);
-    EndPde = MiGetPdeAddress (EndAddress);
+    PointerPte = MiGetPteAddress(BaseAddress);
+    PointerPde = MiGetPdeAddress(BaseAddress);
+    EndPde = MiGetPdeAddress(EndAddress);
 
 #if DBG
 
@@ -430,18 +408,21 @@ Environment:
     // The special pool address range better be unused.
     //
 
-    while (PointerPde <= EndPde) {
-        ASSERT (PointerPde->u.Long == 0);
+    while (PointerPde <= EndPde)
+    {
+        ASSERT(PointerPde->u.Long == 0);
         PointerPde += 1;
     }
-    PointerPde = MiGetPdeAddress (BaseAddress);
+    PointerPde = MiGetPdeAddress(BaseAddress);
 #endif
 
-    if (PoolType & SESSION_POOL_MASK) {
+    if (PoolType & SESSION_POOL_MASK)
+    {
         MmSessionSpace->NextPdeForSpecialPoolExpansion = PointerPde;
         MmSessionSpace->LastPdeForSpecialPoolExpansion = EndPde;
     }
-    else {
+    else
+    {
         MiSpecialPoolNextPdeForSpecialPoolExpansion = PointerPde;
         MiSpecialPoolLastPdeForSpecialPoolExpansion = EndPde;
 
@@ -451,24 +432,22 @@ Environment:
 
         MiSpecialPagesNonPagedMaximum = (ULONG)(MmResidentAvailablePages >> 4);
 
-        if (MmNumberOfPhysicalPages > 0x3FFF) {
+        if (MmNumberOfPhysicalPages > 0x3FFF)
+        {
             MiSpecialPagesNonPagedMaximum = (ULONG)(MmResidentAvailablePages >> 3);
         }
     }
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    SpecialPoolCreated = MiExpandSpecialPool (PoolType, OldIrql);
+    SpecialPoolCreated = MiExpandSpecialPool(PoolType, OldIrql);
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
     return SpecialPoolCreated;
 }
 
-VOID
-MiDeleteSessionSpecialPool (
-    VOID
-    )
+VOID MiDeleteSessionSpecialPool(VOID)
 
 /*++
 
@@ -507,23 +486,22 @@ Environment:
     PMMPTE EndPte;
 #endif
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
     //
     // If the initial creation of this session's special pool failed, then
     // there's nothing to delete.
     //
 
-    if (MmSessionSpace->SpecialPoolFirstPte == NULL) {
+    if (MmSessionSpace->SpecialPoolFirstPte == NULL)
+    {
         return;
     }
 
-    if (MmSessionSpace->SpecialPagesInUse != 0) {
-        KeBugCheckEx (SESSION_HAS_VALID_SPECIAL_POOL_ON_EXIT,
-                      (ULONG_PTR)MmSessionSpace->SessionId,
-                      MmSessionSpace->SpecialPagesInUse,
-                      0,
-                      0);
+    if (MmSessionSpace->SpecialPagesInUse != 0)
+    {
+        KeBugCheckEx(SESSION_HAS_VALID_SPECIAL_POOL_ON_EXIT, (ULONG_PTR)MmSessionSpace->SessionId,
+                     MmSessionSpace->SpecialPagesInUse, 0, 0);
     }
 
     //
@@ -534,13 +512,13 @@ Environment:
     BaseAddress = MmSessionSpecialPoolStart;
     EndAddress = (PVOID)((ULONG_PTR)MmSessionSpecialPoolEnd - 1);
 
-    ASSERT (((ULONG_PTR)BaseAddress & (MM_VA_MAPPED_BY_PDE - 1)) == 0);
-    ASSERT (MiGetPpeAddress(BaseAddress)->u.Hard.Valid == 1);
-    ASSERT (MiGetPdeAddress(BaseAddress)->u.Hard.Valid == 1);
+    ASSERT(((ULONG_PTR)BaseAddress & (MM_VA_MAPPED_BY_PDE - 1)) == 0);
+    ASSERT(MiGetPpeAddress(BaseAddress)->u.Hard.Valid == 1);
+    ASSERT(MiGetPdeAddress(BaseAddress)->u.Hard.Valid == 1);
 
-    PointerPte = MiGetPteAddress (BaseAddress);
-    PointerPde = MiGetPdeAddress (BaseAddress);
-    EndPde = MiGetPdeAddress (EndAddress);
+    PointerPte = MiGetPteAddress(BaseAddress);
+    PointerPde = MiGetPdeAddress(BaseAddress);
+    EndPde = MiGetPdeAddress(EndAddress);
     StartPde = PointerPde;
 
     //
@@ -548,24 +526,27 @@ Environment:
     // on return when the rest of the session space is destroyed.
     //
 
-    while (PointerPde <= EndPde) {
-        if (PointerPde->u.Long == 0) {
+    while (PointerPde <= EndPde)
+    {
+        if (PointerPde->u.Long == 0)
+        {
             break;
         }
 
 #if DBG
-        PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
+        PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
         StartPte = PointerPte;
         EndPte = PointerPte + PTE_PER_PAGE;
 
-        while (PointerPte < EndPte) {
-            ASSERT ((PointerPte + 1)->u.Long == 0);
+        while (PointerPte < EndPte)
+        {
+            ASSERT((PointerPte + 1)->u.Long == 0);
             PointerPte += 2;
         }
 #endif
 
-        PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE (PointerPde);
-        MiSessionPageTableRelease (PageFrameIndex);
+        PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE(PointerPde);
+        MiSessionPageTableRelease(PageFrameIndex);
         *PointerPde = ZeroKernelPte;
 
         PointerPde += 1;
@@ -579,39 +560,38 @@ Environment:
     // The remaining session special pool address range better be unused.
     //
 
-    while (PointerPde <= EndPde) {
-        ASSERT (PointerPde->u.Long == 0);
+    while (PointerPde <= EndPde)
+    {
+        ASSERT(PointerPde->u.Long == 0);
         PointerPde += 1;
     }
 #endif
 
-    MiReturnCommitment (PageTablePages);
-    MM_TRACK_COMMIT (MM_DBG_COMMIT_SESSION_POOL_PAGE_TABLES, 0 - PageTablePages);
+    MiReturnCommitment(PageTablePages);
+    MM_TRACK_COMMIT(MM_DBG_COMMIT_SESSION_POOL_PAGE_TABLES, 0 - PageTablePages);
 
     MM_BUMP_COUNTER(42, 0 - PageTablePages);
-    MM_BUMP_SESS_COUNTER(MM_DBG_SESSION_PAGEDPOOL_PAGETABLE_ALLOC,
-                         (ULONG)(0 - PageTablePages));
+    MM_BUMP_SESS_COUNTER(MM_DBG_SESSION_PAGEDPOOL_PAGETABLE_ALLOC, (ULONG)(0 - PageTablePages));
 
-    LOCK_SESSION_SPACE_WS (OldIrql, PsGetCurrentThread ());
+    LOCK_SESSION_SPACE_WS(OldIrql, PsGetCurrentThread());
     MmSessionSpace->NonPagablePages -= PageTablePages;
-    UNLOCK_SESSION_SPACE_WS (OldIrql);
+    UNLOCK_SESSION_SPACE_WS(OldIrql);
 
-    InterlockedExchangeAddSizeT (&MmSessionSpace->CommittedPages, 0 - PageTablePages);
+    InterlockedExchangeAddSizeT(&MmSessionSpace->CommittedPages, 0 - PageTablePages);
 
     MmSessionSpace->SpecialPoolFirstPte = NULL;
 }
 #endif
 
-#if defined (_X86_)
+#if defined(_X86_)
 LOGICAL
-MiRecoverSpecialPtes (
-    IN ULONG NumberOfPtes
-    )
+MiRecoverSpecialPtes(IN ULONG NumberOfPtes)
 {
     KIRQL OldIrql;
     PMMPTE PointerPte;
 
-    if (MiSpecialPoolExtraCount == 0) {
+    if (MiSpecialPoolExtraCount == 0)
+    {
         return FALSE;
     }
 
@@ -619,16 +599,17 @@ MiRecoverSpecialPtes (
     // Round the requested number of PTEs up to a full page table multiple.
     //
 
-    NumberOfPtes = MI_ROUND_TO_SIZE (NumberOfPtes, PTE_PER_PAGE);
+    NumberOfPtes = MI_ROUND_TO_SIZE(NumberOfPtes, PTE_PER_PAGE);
 
     //
     // If the caller needs more than we have, then do nothing and return FALSE.
     //
 
-    ExAcquireSpinLock (&MiSpecialPoolLock, &OldIrql);
+    ExAcquireSpinLock(&MiSpecialPoolLock, &OldIrql);
 
-    if (NumberOfPtes > MiSpecialPoolExtraCount) {
-        ExReleaseSpinLock (&MiSpecialPoolLock, OldIrql);
+    if (NumberOfPtes > MiSpecialPoolExtraCount)
+    {
+        ExReleaseSpinLock(&MiSpecialPoolLock, OldIrql);
         return FALSE;
     }
 
@@ -640,20 +621,17 @@ MiRecoverSpecialPtes (
 
     PointerPte = MiSpecialPoolExtra + MiSpecialPoolExtraCount;
 
-    ExReleaseSpinLock (&MiSpecialPoolLock, OldIrql);
+    ExReleaseSpinLock(&MiSpecialPoolLock, OldIrql);
 
-    MiReleaseSplitSystemPtes (PointerPte, NumberOfPtes, SystemPteSpace);
+    MiReleaseSplitSystemPtes(PointerPte, NumberOfPtes, SystemPteSpace);
 
     return TRUE;
 }
 #endif
 
-
+
 LOGICAL
-MiExpandSpecialPool (
-    IN POOL_TYPE PoolType,
-    IN KIRQL OldIrql
-    )
+MiExpandSpecialPool(IN POOL_TYPE PoolType, IN KIRQL OldIrql)
 
 /*++
 
@@ -679,7 +657,7 @@ Environment:
 --*/
 
 {
-#if defined (_WIN64)
+#if defined(_WIN64)
 
     PMMPTE PointerPte;
     PMMPTE PointerPde;
@@ -695,7 +673,8 @@ Environment:
     PMMPTE *SpecialPoolFirstPteGlobal;
     PMMPTE *SpecialPoolLastPteGlobal;
 
-    if (PoolType & SESSION_POOL_MASK) {
+    if (PoolType & SESSION_POOL_MASK)
+    {
         NextPde = &MmSessionSpace->NextPdeForSpecialPoolExpansion;
         LastPde = &MmSessionSpace->LastPdeForSpecialPoolExpansion;
         PteBase = MI_PTE_BASE_FOR_LOWEST_SESSION_ADDRESS;
@@ -704,7 +683,8 @@ Environment:
         SpecialPoolFirstPteGlobal = &MmSessionSpace->SpecialPoolFirstPte;
         SpecialPoolLastPteGlobal = &MmSessionSpace->SpecialPoolLastPte;
     }
-    else {
+    else
+    {
         NextPde = &MiSpecialPoolNextPdeForSpecialPoolExpansion;
         LastPde = &MiSpecialPoolLastPdeForSpecialPoolExpansion;
         PteBase = MmSystemPteBase;
@@ -716,11 +696,12 @@ Environment:
 
     PointerPde = *NextPde;
 
-    if (PointerPde > *LastPde) {
+    if (PointerPde > *LastPde)
+    {
         return FALSE;
     }
 
-    UNLOCK_PFN2 (OldIrql);
+    UNLOCK_PFN2(OldIrql);
 
     //
     // Acquire a page and initialize it.  If no one else has done this in
@@ -732,26 +713,27 @@ Environment:
     // an event on the local stack which is illegal.
     //
 
-    if (MiChargeCommitmentCantExpand (1, FALSE) == FALSE) {
-        if (PoolType & SESSION_POOL_MASK) {
-            MM_BUMP_SESSION_FAILURES (MM_SESSION_FAILURE_NO_COMMIT);
+    if (MiChargeCommitmentCantExpand(1, FALSE) == FALSE)
+    {
+        if (PoolType & SESSION_POOL_MASK)
+        {
+            MM_BUMP_SESSION_FAILURES(MM_SESSION_FAILURE_NO_COMMIT);
         }
-        LOCK_PFN2 (OldIrql);
+        LOCK_PFN2(OldIrql);
         return FALSE;
     }
 
-    if ((PoolType & SESSION_POOL_MASK) == 0) {
-        ContainingFrame = MI_GET_PAGE_FRAME_FROM_PTE (MiGetPteAddress(PointerPde));
+    if ((PoolType & SESSION_POOL_MASK) == 0)
+    {
+        ContainingFrame = MI_GET_PAGE_FRAME_FROM_PTE(MiGetPteAddress(PointerPde));
     }
 
-    Status = MiInitializeAndChargePfn (&PageFrameIndex,
-                                       PointerPde,
-                                       ContainingFrame,
-                                       SessionAllocation);
+    Status = MiInitializeAndChargePfn(&PageFrameIndex, PointerPde, ContainingFrame, SessionAllocation);
 
-    if (!NT_SUCCESS(Status)) {
-        MiReturnCommitment (1);
-        LOCK_PFN2 (OldIrql);
+    if (!NT_SUCCESS(Status))
+    {
+        MiReturnCommitment(1);
+        LOCK_PFN2(OldIrql);
 
         //
         // Don't retry even if STATUS_RETRY is returned above because if we
@@ -762,25 +744,27 @@ Environment:
         return FALSE;
     }
 
-    PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
+    PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
 
-    KeFillEntryTb ((PHARDWARE_PTE) PointerPde, PointerPte, FALSE);
+    KeFillEntryTb((PHARDWARE_PTE)PointerPde, PointerPte, FALSE);
 
     MM_BUMP_COUNTER(42, 1);
 
-    if (PoolType & SESSION_POOL_MASK) {
-        MM_TRACK_COMMIT (MM_DBG_COMMIT_SESSION_POOL_PAGE_TABLES, 1);
+    if (PoolType & SESSION_POOL_MASK)
+    {
+        MM_TRACK_COMMIT(MM_DBG_COMMIT_SESSION_POOL_PAGE_TABLES, 1);
         MM_BUMP_SESS_COUNTER(MM_DBG_SESSION_PAGEDPOOL_PAGETABLE_ALLOC, 1);
-        MM_BUMP_SESS_COUNTER (MM_DBG_SESSION_NP_POOL_CREATE, 1);
+        MM_BUMP_SESS_COUNTER(MM_DBG_SESSION_NP_POOL_CREATE, 1);
 
-        LOCK_SESSION_SPACE_WS (OldIrql, PsGetCurrentThread ());
+        LOCK_SESSION_SPACE_WS(OldIrql, PsGetCurrentThread());
         MmSessionSpace->NonPagablePages += 1;
-        UNLOCK_SESSION_SPACE_WS (OldIrql);
+        UNLOCK_SESSION_SPACE_WS(OldIrql);
 
-        InterlockedExchangeAddSizeT (&MmSessionSpace->CommittedPages, 1);
+        InterlockedExchangeAddSizeT(&MmSessionSpace->CommittedPages, 1);
     }
-    else {
-        MM_TRACK_COMMIT (MM_DBG_COMMIT_SPECIAL_POOL_MAPPING_PAGES, 1);
+    else
+    {
+        MM_TRACK_COMMIT(MM_DBG_COMMIT_SPECIAL_POOL_MAPPING_PAGES, 1);
     }
 
     //
@@ -791,7 +775,8 @@ Environment:
 
     SpecialPoolLastPte = PointerPte + PTE_PER_PAGE;
 
-    while (PointerPte < SpecialPoolLastPte) {
+    while (PointerPte < SpecialPoolLastPte)
+    {
         PointerPte->u.List.NextEntry = (PointerPte + 2 - PteBase);
         (PointerPte + 1)->u.Long = 0;
         PointerPte += 2;
@@ -799,15 +784,16 @@ Environment:
     PointerPte -= 2;
     PointerPte->u.List.NextEntry = MM_EMPTY_PTE_LIST;
 
-    ASSERT (PointerPde == *NextPde);
-    ASSERT (PointerPde <= *LastPde);
+    ASSERT(PointerPde == *NextPde);
+    ASSERT(PointerPde <= *LastPde);
 
     //
     // Insert the new page table page into the head of the current list (if
     // one exists) so it gets used first.
     //
 
-    if (*SpecialPoolFirstPteGlobal == NULL) {
+    if (*SpecialPoolFirstPteGlobal == NULL)
+    {
 
         //
         // This is the initial creation.
@@ -816,23 +802,24 @@ Environment:
         *SpecialPoolFirstPteGlobal = SpecialPoolFirstPte;
         *SpecialPoolLastPteGlobal = PointerPte;
 
-        ExSetPoolFlags (EX_SPECIAL_POOL_ENABLED);
-        LOCK_PFN2 (OldIrql);
+        ExSetPoolFlags(EX_SPECIAL_POOL_ENABLED);
+        LOCK_PFN2(OldIrql);
     }
-    else {
+    else
+    {
 
         //
         // This is actually an expansion.
         //
 
-        LOCK_PFN2 (OldIrql);
+        LOCK_PFN2(OldIrql);
 
         PointerPte->u.List.NextEntry = *SpecialPoolFirstPteGlobal - PteBase;
 
         *SpecialPoolFirstPteGlobal = SpecialPoolFirstPte;
     }
-            
-    ASSERT ((*SpecialPoolLastPteGlobal)->u.List.NextEntry == MM_EMPTY_PTE_LIST);
+
+    ASSERT((*SpecialPoolLastPteGlobal)->u.List.NextEntry == MM_EMPTY_PTE_LIST);
 
     *NextPde = *NextPde + 1;
 
@@ -841,31 +828,34 @@ Environment:
     ULONG i;
     PMMPTE PointerPte;
 
-    UNREFERENCED_PARAMETER (PoolType);
+    UNREFERENCED_PARAMETER(PoolType);
 
-    if (MiSpecialPoolExtraCount == 0) {
+    if (MiSpecialPoolExtraCount == 0)
+    {
         return FALSE;
     }
 
-    ExAcquireSpinLock (&MiSpecialPoolLock, &OldIrql);
+    ExAcquireSpinLock(&MiSpecialPoolLock, &OldIrql);
 
-    if (MiSpecialPoolExtraCount == 0) {
-        ExReleaseSpinLock (&MiSpecialPoolLock, OldIrql);
+    if (MiSpecialPoolExtraCount == 0)
+    {
+        ExReleaseSpinLock(&MiSpecialPoolLock, OldIrql);
         return FALSE;
     }
 
-    ASSERT (MiSpecialPoolExtraCount >= PTE_PER_PAGE);
+    ASSERT(MiSpecialPoolExtraCount >= PTE_PER_PAGE);
 
     PointerPte = MiSpecialPoolExtra;
 
-    for (i = 0; i < PTE_PER_PAGE - 2; i += 2) {
+    for (i = 0; i < PTE_PER_PAGE - 2; i += 2)
+    {
         PointerPte->u.List.NextEntry = ((PointerPte + 2) - MmSystemPteBase);
         PointerPte += 2;
     }
 
     PointerPte->u.List.NextEntry = MM_EMPTY_PTE_LIST;
 
-    MmSpecialPoolEnd = MiGetVirtualAddressMappedByPte (PointerPte + 1);
+    MmSpecialPoolEnd = MiGetVirtualAddressMappedByPte(PointerPte + 1);
 
     MiSpecialPoolLastPte = PointerPte;
     MiSpecialPoolFirstPte = MiSpecialPoolExtra;
@@ -873,19 +863,14 @@ Environment:
     MiSpecialPoolExtraCount -= PTE_PER_PAGE;
     MiSpecialPoolExtra += PTE_PER_PAGE;
 
-    ExReleaseSpinLock (&MiSpecialPoolLock, OldIrql);
+    ExReleaseSpinLock(&MiSpecialPoolLock, OldIrql);
 
 #endif
 
     return TRUE;
 }
 PVOID
-MmAllocateSpecialPool (
-    IN SIZE_T NumberOfBytes,
-    IN ULONG Tag,
-    IN POOL_TYPE PoolType,
-    IN ULONG SpecialPoolType
-    )
+MmAllocateSpecialPool(IN SIZE_T NumberOfBytes, IN ULONG Tag, IN POOL_TYPE PoolType, IN ULONG SpecialPoolType)
 
 /*++
 
@@ -928,7 +913,8 @@ Environment:
 --*/
 
 {
-    if (MiSpecialPoolFirstPte == NULL) {
+    if (MiSpecialPoolFirstPte == NULL)
+    {
 
         //
         // The special pool allocation code was never initialized.
@@ -937,9 +923,11 @@ Environment:
         return NULL;
     }
 
-#if defined (_WIN64)
-    if (PoolType & SESSION_POOL_MASK) {
-        if (MmSessionSpace->SpecialPoolFirstPte == NULL) {
+#if defined(_WIN64)
+    if (PoolType & SESSION_POOL_MASK)
+    {
+        if (MmSessionSpace->SpecialPoolFirstPte == NULL)
+        {
 
             //
             // The special pool allocation code was never initialized.
@@ -950,19 +938,11 @@ Environment:
     }
 #endif
 
-    return MiAllocateSpecialPool (NumberOfBytes,
-                                  Tag,
-                                  PoolType,
-                                  SpecialPoolType);
+    return MiAllocateSpecialPool(NumberOfBytes, Tag, PoolType, SpecialPoolType);
 }
 
 PVOID
-MiAllocateSpecialPool (
-    IN SIZE_T NumberOfBytes,
-    IN ULONG Tag,
-    IN POOL_TYPE PoolType,
-    IN ULONG SpecialPoolType
-    )
+MiAllocateSpecialPool(IN SIZE_T NumberOfBytes, IN ULONG Tag, IN POOL_TYPE PoolType, IN ULONG SpecialPoolType)
 
 /*++
 
@@ -1011,31 +991,28 @@ Environment:
     LOGICAL CatchOverruns;
     PMMPTE SpecialPoolFirstPte;
 
-    if ((PoolType & BASE_POOL_TYPE_MASK) == PagedPool) {
+    if ((PoolType & BASE_POOL_TYPE_MASK) == PagedPool)
+    {
 
-        if (KeGetCurrentIrql() > APC_LEVEL) {
+        if (KeGetCurrentIrql() > APC_LEVEL)
+        {
 
-            KeBugCheckEx (SPECIAL_POOL_DETECTED_MEMORY_CORRUPTION,
-                          KeGetCurrentIrql(),
-                          PoolType,
-                          NumberOfBytes,
-                          0x30);
+            KeBugCheckEx(SPECIAL_POOL_DETECTED_MEMORY_CORRUPTION, KeGetCurrentIrql(), PoolType, NumberOfBytes, 0x30);
         }
     }
-    else {
-        if (KeGetCurrentIrql() > DISPATCH_LEVEL) {
+    else
+    {
+        if (KeGetCurrentIrql() > DISPATCH_LEVEL)
+        {
 
-            KeBugCheckEx (SPECIAL_POOL_DETECTED_MEMORY_CORRUPTION,
-                          KeGetCurrentIrql(),
-                          PoolType,
-                          NumberOfBytes,
-                          0x30);
+            KeBugCheckEx(SPECIAL_POOL_DETECTED_MEMORY_CORRUPTION, KeGetCurrentIrql(), PoolType, NumberOfBytes, 0x30);
         }
     }
 
-#if !defined (_WIN64) && !defined (_X86PAE_)
+#if !defined(_WIN64) && !defined(_X86PAE_)
 
-    if ((MiExtraPtes1 != 0) || (MiUseMaximumSystemSpace != 0)) {
+    if ((MiExtraPtes1 != 0) || (MiUseMaximumSystemSpace != 0))
+    {
 
         extern const ULONG MMSECT;
 
@@ -1046,12 +1023,14 @@ Environment:
         // prototype PTEs.
         //
 
-        if (Tag == MMSECT || Tag == 'lCmM') {
+        if (Tag == MMSECT || Tag == 'lCmM')
+        {
             return NULL;
         }
     }
 
-    if (Tag == 'bSmM' || Tag == 'iCmM' || Tag == 'aCmM' || Tag == 'dSmM' || Tag == 'cSmM') {
+    if (Tag == 'bSmM' || Tag == 'iCmM' || Tag == 'aCmM' || Tag == 'dSmM' || Tag == 'cSmM')
+    {
 
         //
         // Mm subsections cannot come from this special pool because they
@@ -1063,33 +1042,36 @@ Environment:
 
 #endif
 
-    if (MiChargeCommitmentCantExpand (1, FALSE) == FALSE) {
+    if (MiChargeCommitmentCantExpand(1, FALSE) == FALSE)
+    {
         MmSpecialPoolRejected[5] += 1;
         return NULL;
     }
 
     TempPte = ValidKernelPte;
-    MI_SET_PTE_DIRTY (TempPte);
+    MI_SET_PTE_DIRTY(TempPte);
 
-    LOCK_PFN2 (OldIrql);
+    LOCK_PFN2(OldIrql);
 
 restart:
 
-    if (MiSpecialPoolEnabled == FALSE) {
+    if (MiSpecialPoolEnabled == FALSE)
+    {
 
         //
         // The special pool allocation code is currently disabled.
         //
 
-        UNLOCK_PFN2 (OldIrql);
-        MiReturnCommitment (1);
+        UNLOCK_PFN2(OldIrql);
+        MiReturnCommitment(1);
         return NULL;
     }
 
-    if (MmAvailablePages < 200) {
-        UNLOCK_PFN2 (OldIrql);
+    if (MmAvailablePages < 200)
+    {
+        UNLOCK_PFN2(OldIrql);
         MmSpecialPoolRejected[0] += 1;
-        MiReturnCommitment (1);
+        MiReturnCommitment(1);
         return NULL;
     }
 
@@ -1097,22 +1079,25 @@ restart:
     // Don't get too aggressive until a paging file gets set up.
     //
 
-    if (MmNumberOfPagingFiles == 0 && MmSpecialPagesInUse > MmAvailablePages / 2) {
-        UNLOCK_PFN2 (OldIrql);
+    if (MmNumberOfPagingFiles == 0 && MmSpecialPagesInUse > MmAvailablePages / 2)
+    {
+        UNLOCK_PFN2(OldIrql);
         MmSpecialPoolRejected[3] += 1;
-        MiReturnCommitment (1);
+        MiReturnCommitment(1);
         return NULL;
     }
 
     SpecialPoolFirstPte = MiSpecialPoolFirstPte;
 
-#if defined (_WIN64)
-    if (PoolType & SESSION_POOL_MASK) {
+#if defined(_WIN64)
+    if (PoolType & SESSION_POOL_MASK)
+    {
         SpecialPoolFirstPte = MmSessionSpace->SpecialPoolFirstPte;
     }
 #endif
 
-    if (SpecialPoolFirstPte->u.List.NextEntry == MM_EMPTY_PTE_LIST) {
+    if (SpecialPoolFirstPte->u.List.NextEntry == MM_EMPTY_PTE_LIST)
+    {
 
         //
         // Add another page table page (virtual address space and resources
@@ -1120,20 +1105,22 @@ restart:
         // released and reacquired during this call.
         //
 
-        if (MiExpandSpecialPool (PoolType, OldIrql) == TRUE) {
+        if (MiExpandSpecialPool(PoolType, OldIrql) == TRUE)
+        {
             goto restart;
         }
 
-        UNLOCK_PFN2 (OldIrql);
+        UNLOCK_PFN2(OldIrql);
         MmSpecialPoolRejected[2] += 1;
-        MiReturnCommitment (1);
+        MiReturnCommitment(1);
         return NULL;
     }
 
-    if (MI_NONPAGABLE_MEMORY_AVAILABLE() < 100) {
-        UNLOCK_PFN2 (OldIrql);
+    if (MI_NONPAGABLE_MEMORY_AVAILABLE() < 100)
+    {
+        UNLOCK_PFN2(OldIrql);
         MmSpecialPoolRejected[4] += 1;
-        MiReturnCommitment (1);
+        MiReturnCommitment(1);
         return NULL;
     }
 
@@ -1141,12 +1128,14 @@ restart:
     // Cap nonpaged allocations to prevent runaways.
     //
 
-    if ((PoolType & BASE_POOL_TYPE_MASK) == NonPagedPool) {
+    if ((PoolType & BASE_POOL_TYPE_MASK) == NonPagedPool)
+    {
 
-        if (MiSpecialPagesNonPaged > MiSpecialPagesNonPagedMaximum) {
-            UNLOCK_PFN2 (OldIrql);
+        if (MiSpecialPagesNonPaged > MiSpecialPagesNonPagedMaximum)
+        {
+            UNLOCK_PFN2(OldIrql);
             MmSpecialPoolRejected[1] += 1;
-            MiReturnCommitment (1);
+            MiReturnCommitment(1);
             return NULL;
         }
 
@@ -1154,28 +1143,31 @@ restart:
         MM_BUMP_COUNTER(31, 1);
 
         MiSpecialPagesNonPaged += 1;
-        if (MiSpecialPagesNonPaged > MiSpecialPagesNonPagedPeak) {
+        if (MiSpecialPagesNonPaged > MiSpecialPagesNonPagedPeak)
+        {
             MiSpecialPagesNonPagedPeak = MiSpecialPagesNonPaged;
         }
     }
-    else {
+    else
+    {
         MiSpecialPagesPagable += 1;
-        if (MiSpecialPagesPagable > MiSpecialPagesPagablePeak) {
+        if (MiSpecialPagesPagable > MiSpecialPagesPagablePeak)
+        {
             MiSpecialPagesPagablePeak = MiSpecialPagesPagable;
         }
     }
 
-    MM_TRACK_COMMIT (MM_DBG_COMMIT_SPECIAL_POOL_PAGES, 1);
+    MM_TRACK_COMMIT(MM_DBG_COMMIT_SPECIAL_POOL_PAGES, 1);
 
     PointerPte = SpecialPoolFirstPte;
 
-    ASSERT (PointerPte->u.List.NextEntry != MM_EMPTY_PTE_LIST);
+    ASSERT(PointerPte->u.List.NextEntry != MM_EMPTY_PTE_LIST);
 
-#if defined (_WIN64)
-    if (PoolType & SESSION_POOL_MASK) {
+#if defined(_WIN64)
+    if (PoolType & SESSION_POOL_MASK)
+    {
 
-        MmSessionSpace->SpecialPoolFirstPte = PointerPte->u.List.NextEntry +
-                                    MI_PTE_BASE_FOR_LOWEST_SESSION_ADDRESS;
+        MmSessionSpace->SpecialPoolFirstPte = PointerPte->u.List.NextEntry + MI_PTE_BASE_FOR_LOWEST_SESSION_ADDRESS;
         MmSessionSpace->SpecialPagesInUse += 1;
     }
     else
@@ -1185,18 +1177,19 @@ restart:
         MiSpecialPoolFirstPte = PointerPte->u.List.NextEntry + MmSystemPteBase;
     }
 
-    PageFrameIndex = MiRemoveAnyPage (MI_GET_PAGE_COLOR_FROM_PTE (PointerPte));
+    PageFrameIndex = MiRemoveAnyPage(MI_GET_PAGE_COLOR_FROM_PTE(PointerPte));
 
     MmSpecialPagesInUse += 1;
-    if (MmSpecialPagesInUse > MiSpecialPagesInUsePeak) {
+    if (MmSpecialPagesInUse > MiSpecialPagesInUsePeak)
+    {
         MiSpecialPagesInUsePeak = MmSpecialPagesInUse;
     }
 
     TempPte.u.Hard.PageFrameNumber = PageFrameIndex;
 
-    MI_WRITE_VALID_PTE (PointerPte, TempPte);
-    MiInitializePfn (PageFrameIndex, PointerPte, 1);
-    UNLOCK_PFN2 (OldIrql);
+    MI_WRITE_VALID_PTE(PointerPte, TempPte);
+    MiInitializePfn(PageFrameIndex, PointerPte, 1);
+    UNLOCK_PFN2(OldIrql);
 
     //
     // Fill the page with a random pattern.
@@ -1204,80 +1197,88 @@ restart:
 
     KeQueryTickCount(&CurrentTime);
 
-    Entry = MiGetVirtualAddressMappedByPte (PointerPte);
+    Entry = MiGetVirtualAddressMappedByPte(PointerPte);
 
-    RtlFillMemory (Entry, PAGE_SIZE, (UCHAR) (CurrentTime.LowPart | 0x1));
+    RtlFillMemory(Entry, PAGE_SIZE, (UCHAR)(CurrentTime.LowPart | 0x1));
 
-    if (SpecialPoolType == 0) {
+    if (SpecialPoolType == 0)
+    {
         CatchOverruns = TRUE;
     }
-    else if (SpecialPoolType == 1) {
+    else if (SpecialPoolType == 1)
+    {
         CatchOverruns = FALSE;
     }
-    else if (MmSpecialPoolCatchOverruns == TRUE) {
+    else if (MmSpecialPoolCatchOverruns == TRUE)
+    {
         CatchOverruns = TRUE;
     }
-    else {
+    else
+    {
         CatchOverruns = FALSE;
     }
 
-    if (CatchOverruns == TRUE) {
-        Header = (PPOOL_HEADER) Entry;
+    if (CatchOverruns == TRUE)
+    {
+        Header = (PPOOL_HEADER)Entry;
         Entry = (PVOID)(((LONG_PTR)(((PCHAR)Entry + (PAGE_SIZE - NumberOfBytes)))) & ~((LONG_PTR)POOL_OVERHEAD - 1));
     }
-    else {
-        Header = (PPOOL_HEADER) ((PCHAR)Entry + PAGE_SIZE - POOL_OVERHEAD);
+    else
+    {
+        Header = (PPOOL_HEADER)((PCHAR)Entry + PAGE_SIZE - POOL_OVERHEAD);
     }
 
     //
     // Zero the header and stash any information needed at release time.
     //
 
-    RtlZeroMemory (Header, POOL_OVERHEAD);
+    RtlZeroMemory(Header, POOL_OVERHEAD);
 
     Header->Ulong1 = (ULONG)NumberOfBytes;
 
-    ASSERT (NumberOfBytes <= PAGE_SIZE - POOL_OVERHEAD && PAGE_SIZE <= 32 * 1024);
+    ASSERT(NumberOfBytes <= PAGE_SIZE - POOL_OVERHEAD && PAGE_SIZE <= 32 * 1024);
 
-    if ((PoolType & BASE_POOL_TYPE_MASK) == PagedPool) {
+    if ((PoolType & BASE_POOL_TYPE_MASK) == PagedPool)
+    {
         Header->Ulong1 |= MI_SPECIAL_POOL_PAGABLE;
-        MiMakeSpecialPoolPagable (Entry, PointerPte, PoolType);
+        MiMakeSpecialPoolPagable(Entry, PointerPte, PoolType);
         (PointerPte + 1)->u.Soft.PageFileHigh = MI_SPECIAL_POOL_PTE_PAGABLE;
     }
-    else {
+    else
+    {
         (PointerPte + 1)->u.Soft.PageFileHigh = MI_SPECIAL_POOL_PTE_NONPAGABLE;
     }
 
-#if defined (_WIN64)
-    if (PoolType & SESSION_POOL_MASK) {
+#if defined(_WIN64)
+    if (PoolType & SESSION_POOL_MASK)
+    {
         Header->Ulong1 |= MI_SPECIAL_POOL_IN_SESSION;
     }
 #endif
 
-    if (PoolType & POOL_VERIFIER_MASK) {
+    if (PoolType & POOL_VERIFIER_MASK)
+    {
         Header->Ulong1 |= MI_SPECIAL_POOL_VERIFIER;
     }
 
-    Header->BlockSize = (UCHAR) (CurrentTime.LowPart | 0x1);
+    Header->BlockSize = (UCHAR)(CurrentTime.LowPart | 0x1);
     Header->PoolTag = Tag;
 
-    ASSERT ((Header->PoolType & POOL_QUOTA_MASK) == 0);
+    ASSERT((Header->PoolType & POOL_QUOTA_MASK) == 0);
 
     return Entry;
 }
 
 #define SPECIAL_POOL_FREE_TRACE_LENGTH 16
 
-typedef struct _SPECIAL_POOL_FREE_TRACE {
+typedef struct _SPECIAL_POOL_FREE_TRACE
+{
 
-    PVOID StackTrace [SPECIAL_POOL_FREE_TRACE_LENGTH];
+    PVOID StackTrace[SPECIAL_POOL_FREE_TRACE_LENGTH];
 
 } SPECIAL_POOL_FREE_TRACE, *PSPECIAL_POOL_FREE_TRACE;
 
-VOID
-MmFreeSpecialPool (
-    IN PVOID P
-    )
+VOID MmFreeSpecialPool(IN PVOID P)
 
 /*++
 
@@ -1324,13 +1325,13 @@ Environment:
     LOGICAL BufferAtPageEnd;
     PMI_FREED_SPECIAL_POOL AllocationBase;
     LARGE_INTEGER CurrentTime;
-#if defined (_X86_)
+#if defined(_X86_)
     PULONG_PTR StackPointer;
 #else
     ULONG Hash;
 #endif
 
-    PointerPte = MiGetPteAddress (P);
+    PointerPte = MiGetPteAddress(P);
     PteContents = *PointerPte;
 
     //
@@ -1338,114 +1339,109 @@ Environment:
     // crashing below on a bad reference.
     //
 
-    if (PteContents.u.Hard.Valid == 0) {
-        if ((PteContents.u.Soft.Protection == 0) ||
-            (PteContents.u.Soft.Protection == MM_NOACCESS)) {
-            KeBugCheckEx (SPECIAL_POOL_DETECTED_MEMORY_CORRUPTION,
-                          (ULONG_PTR)P,
-                          (ULONG_PTR)PteContents.u.Long,
-                          0,
-                          0x20);
+    if (PteContents.u.Hard.Valid == 0)
+    {
+        if ((PteContents.u.Soft.Protection == 0) || (PteContents.u.Soft.Protection == MM_NOACCESS))
+        {
+            KeBugCheckEx(SPECIAL_POOL_DETECTED_MEMORY_CORRUPTION, (ULONG_PTR)P, (ULONG_PTR)PteContents.u.Long, 0, 0x20);
         }
     }
 
-    if (((ULONG_PTR)P & (PAGE_SIZE - 1))) {
-        Header = PAGE_ALIGN (P);
+    if (((ULONG_PTR)P & (PAGE_SIZE - 1)))
+    {
+        Header = PAGE_ALIGN(P);
         BufferAtPageEnd = TRUE;
     }
-    else {
-        Header = (PPOOL_HEADER)((PCHAR)PAGE_ALIGN (P) + PAGE_SIZE - POOL_OVERHEAD);
+    else
+    {
+        Header = (PPOOL_HEADER)((PCHAR)PAGE_ALIGN(P) + PAGE_SIZE - POOL_OVERHEAD);
         BufferAtPageEnd = FALSE;
     }
 
-    if (Header->Ulong1 & MI_SPECIAL_POOL_PAGABLE) {
-        ASSERT ((PointerPte + 1)->u.Soft.PageFileHigh == MI_SPECIAL_POOL_PTE_PAGABLE);
-        if (KeGetCurrentIrql() > APC_LEVEL) {
-            KeBugCheckEx (SPECIAL_POOL_DETECTED_MEMORY_CORRUPTION,
-                          KeGetCurrentIrql(),
-                          PagedPool,
-                          (ULONG_PTR)P,
-                          0x31);
+    if (Header->Ulong1 & MI_SPECIAL_POOL_PAGABLE)
+    {
+        ASSERT((PointerPte + 1)->u.Soft.PageFileHigh == MI_SPECIAL_POOL_PTE_PAGABLE);
+        if (KeGetCurrentIrql() > APC_LEVEL)
+        {
+            KeBugCheckEx(SPECIAL_POOL_DETECTED_MEMORY_CORRUPTION, KeGetCurrentIrql(), PagedPool, (ULONG_PTR)P, 0x31);
         }
         PoolType = PagedPool;
     }
-    else {
-        ASSERT ((PointerPte + 1)->u.Soft.PageFileHigh == MI_SPECIAL_POOL_PTE_NONPAGABLE);
-        if (KeGetCurrentIrql() > DISPATCH_LEVEL) {
-            KeBugCheckEx (SPECIAL_POOL_DETECTED_MEMORY_CORRUPTION,
-                          KeGetCurrentIrql(),
-                          NonPagedPool,
-                          (ULONG_PTR)P,
-                          0x31);
+    else
+    {
+        ASSERT((PointerPte + 1)->u.Soft.PageFileHigh == MI_SPECIAL_POOL_PTE_NONPAGABLE);
+        if (KeGetCurrentIrql() > DISPATCH_LEVEL)
+        {
+            KeBugCheckEx(SPECIAL_POOL_DETECTED_MEMORY_CORRUPTION, KeGetCurrentIrql(), NonPagedPool, (ULONG_PTR)P, 0x31);
         }
         PoolType = NonPagedPool;
     }
 
-#if defined (_WIN64)
-    if (Header->Ulong1 & MI_SPECIAL_POOL_IN_SESSION) {
+#if defined(_WIN64)
+    if (Header->Ulong1 & MI_SPECIAL_POOL_IN_SESSION)
+    {
         PoolType |= SESSION_POOL_MASK;
     }
 #endif
 
-    NumberOfBytesRequested = (ULONG)(USHORT)(Header->Ulong1 & ~(MI_SPECIAL_POOL_PAGABLE | MI_SPECIAL_POOL_VERIFIER | MI_SPECIAL_POOL_IN_SESSION));
+    NumberOfBytesRequested = (ULONG)(USHORT)(Header->Ulong1 & ~(MI_SPECIAL_POOL_PAGABLE | MI_SPECIAL_POOL_VERIFIER |
+                                                                MI_SPECIAL_POOL_IN_SESSION));
 
     //
     // We gave the caller pool-header aligned data, so account for
     // that when checking here.
     //
 
-    if (BufferAtPageEnd == TRUE) {
+    if (BufferAtPageEnd == TRUE)
+    {
 
         NumberOfBytesCalculated = PAGE_SIZE - BYTE_OFFSET(P);
-    
-        if (NumberOfBytesRequested > NumberOfBytesCalculated) {
-    
+
+        if (NumberOfBytesRequested > NumberOfBytesCalculated)
+        {
+
             //
             // Seems like we didn't give the caller enough - this is an error.
             //
-    
-            KeBugCheckEx (SPECIAL_POOL_DETECTED_MEMORY_CORRUPTION,
-                          (ULONG_PTR)P,
-                          NumberOfBytesRequested,
-                          NumberOfBytesCalculated,
-                          0x21);
+
+            KeBugCheckEx(SPECIAL_POOL_DETECTED_MEMORY_CORRUPTION, (ULONG_PTR)P, NumberOfBytesRequested,
+                         NumberOfBytesCalculated, 0x21);
         }
-    
-        if (NumberOfBytesRequested + POOL_OVERHEAD < NumberOfBytesCalculated) {
-    
+
+        if (NumberOfBytesRequested + POOL_OVERHEAD < NumberOfBytesCalculated)
+        {
+
             //
             // Seems like we gave the caller too much - also an error.
             //
-    
-            KeBugCheckEx (SPECIAL_POOL_DETECTED_MEMORY_CORRUPTION,
-                          (ULONG_PTR)P,
-                          NumberOfBytesRequested,
-                          NumberOfBytesCalculated,
-                          0x22);
+
+            KeBugCheckEx(SPECIAL_POOL_DETECTED_MEMORY_CORRUPTION, (ULONG_PTR)P, NumberOfBytesRequested,
+                         NumberOfBytesCalculated, 0x22);
         }
 
         //
         // Check the memory before the start of the caller's allocation.
         //
-    
+
         Slop = (PUCHAR)(Header + 1);
-        if (Header->Ulong1 & MI_SPECIAL_POOL_VERIFIER) {
+        if (Header->Ulong1 & MI_SPECIAL_POOL_VERIFIER)
+        {
             Slop += sizeof(MI_VERIFIER_POOL_HEADER);
         }
 
-        for ( ; Slop < (PUCHAR)P; Slop += 1) {
-    
-            if (*Slop != Header->BlockSize) {
-    
-                KeBugCheckEx (SPECIAL_POOL_DETECTED_MEMORY_CORRUPTION,
-                              (ULONG_PTR)P,
-                              (ULONG_PTR)Slop,
-                              Header->Ulong1,
-                              0x23);
+        for (; Slop < (PUCHAR)P; Slop += 1)
+        {
+
+            if (*Slop != Header->BlockSize)
+            {
+
+                KeBugCheckEx(SPECIAL_POOL_DETECTED_MEMORY_CORRUPTION, (ULONG_PTR)P, (ULONG_PTR)Slop, Header->Ulong1,
+                             0x23);
             }
         }
     }
-    else {
+    else
+    {
         NumberOfBytesCalculated = 0;
     }
 
@@ -1457,27 +1453,27 @@ Environment:
 
     SlopBytes = (ULONG)((PUCHAR)(PAGE_ALIGN(P)) + PAGE_SIZE - Slop);
 
-    if (BufferAtPageEnd == FALSE) {
+    if (BufferAtPageEnd == FALSE)
+    {
         SlopBytes -= POOL_OVERHEAD;
-        if (Header->Ulong1 & MI_SPECIAL_POOL_VERIFIER) {
+        if (Header->Ulong1 & MI_SPECIAL_POOL_VERIFIER)
+        {
             SlopBytes -= sizeof(MI_VERIFIER_POOL_HEADER);
         }
     }
 
-    for (i = 0; i < SlopBytes; i += 1) {
+    for (i = 0; i < SlopBytes; i += 1)
+    {
 
-        if (*Slop != Header->BlockSize) {
+        if (*Slop != Header->BlockSize)
+        {
 
             //
             // The caller wrote slop between the free alignment we gave and the
             // end of the page (this is not detectable from page protection).
             //
-    
-            KeBugCheckEx (SPECIAL_POOL_DETECTED_MEMORY_CORRUPTION,
-                          (ULONG_PTR)P,
-                          (ULONG_PTR)Slop,
-                          Header->Ulong1,
-                          0x24);
+
+            KeBugCheckEx(SPECIAL_POOL_DETECTED_MEMORY_CORRUPTION, (ULONG_PTR)P, (ULONG_PTR)Slop, Header->Ulong1, 0x24);
         }
         Slop += 1;
     }
@@ -1487,14 +1483,12 @@ Environment:
     // no need to notify the verifier for session special pool allocations.
     //
 
-    if ((Header->Ulong1 & (MI_SPECIAL_POOL_VERIFIER | MI_SPECIAL_POOL_IN_SESSION)) == MI_SPECIAL_POOL_VERIFIER) {
-        VerifierFreeTrackedPool (P,
-                                 NumberOfBytesRequested,
-                                 PoolType,
-                                 TRUE);
+    if ((Header->Ulong1 & (MI_SPECIAL_POOL_VERIFIER | MI_SPECIAL_POOL_IN_SESSION)) == MI_SPECIAL_POOL_VERIFIER)
+    {
+        VerifierFreeTrackedPool(P, NumberOfBytesRequested, PoolType, TRUE);
     }
 
-    AllocationBase = (PMI_FREED_SPECIAL_POOL)(PAGE_ALIGN (P));
+    AllocationBase = (PMI_FREED_SPECIAL_POOL)(PAGE_ALIGN(P));
 
     AllocationBase->Signature = MI_FREED_SPECIAL_POOL_SIGNATURE;
 
@@ -1504,9 +1498,9 @@ Environment:
     AllocationBase->NumberOfBytesRequested = NumberOfBytesRequested;
     AllocationBase->Pagable = (ULONG)PoolType;
     AllocationBase->VirtualAddress = P;
-    AllocationBase->Thread = PsGetCurrentThread ();
+    AllocationBase->Thread = PsGetCurrentThread();
 
-#if defined (_X86_)
+#if defined(_X86_)
     _asm {
         mov StackPointer, esp
     }
@@ -1521,71 +1515,62 @@ Environment:
 
     AllocationBase->StackBytes = PAGE_SIZE - BYTE_OFFSET(StackPointer);
 
-    if (AllocationBase->StackBytes != 0) {
+    if (AllocationBase->StackBytes != 0)
+    {
 
-        if (AllocationBase->StackBytes > MI_STACK_BYTES) {
+        if (AllocationBase->StackBytes > MI_STACK_BYTES)
+        {
             AllocationBase->StackBytes = MI_STACK_BYTES;
         }
 
-        RtlCopyMemory (AllocationBase->StackData,
-                       StackPointer,
-                       AllocationBase->StackBytes);
+        RtlCopyMemory(AllocationBase->StackData, StackPointer, AllocationBase->StackBytes);
     }
 #else
     AllocationBase->StackPointer = NULL;
     AllocationBase->StackBytes = 0;
 
-    RtlZeroMemory (AllocationBase->StackData, sizeof (SPECIAL_POOL_FREE_TRACE));
+    RtlZeroMemory(AllocationBase->StackData, sizeof(SPECIAL_POOL_FREE_TRACE));
 
-    RtlCaptureStackBackTrace (0,
-                              SPECIAL_POOL_FREE_TRACE_LENGTH,
-                              (PVOID *)AllocationBase->StackData,
-                              &Hash);
+    RtlCaptureStackBackTrace(0, SPECIAL_POOL_FREE_TRACE_LENGTH, (PVOID *)AllocationBase->StackData, &Hash);
 #endif
 
-    if ((PoolType & BASE_POOL_TYPE_MASK) == PagedPool) {
+    if ((PoolType & BASE_POOL_TYPE_MASK) == PagedPool)
+    {
         LocalNoAccessPte.u.Long = MM_KERNEL_NOACCESS_PTE;
-        MiDeleteSystemPagableVm (PointerPte,
-                                 1,
-                                 LocalNoAccessPte,
-                                 (PoolType & SESSION_POOL_MASK) ? TRUE : FALSE,
-                                 NULL);
-        LOCK_PFN (OldIrql);
+        MiDeleteSystemPagableVm(PointerPte, 1, LocalNoAccessPte, (PoolType & SESSION_POOL_MASK) ? TRUE : FALSE, NULL);
+        LOCK_PFN(OldIrql);
         MiSpecialPagesPagable -= 1;
     }
-    else {
+    else
+    {
 
-        PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE (PointerPte);
-        Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+        PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE(PointerPte);
+        Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
         PageTableFrameIndex = Pfn1->u4.PteFrame;
-        Pfn2 = MI_PFN_ELEMENT (PageTableFrameIndex);
+        Pfn2 = MI_PFN_ELEMENT(PageTableFrameIndex);
 
-        LOCK_PFN2 (OldIrql);
+        LOCK_PFN2(OldIrql);
         MiSpecialPagesNonPaged -= 1;
-        MI_SET_PFN_DELETED (Pfn1);
-        MiDecrementShareCount (PageFrameIndex);
-        MiDecrementShareCountInline (Pfn2, PageTableFrameIndex);
-        KeFlushSingleTb (PAGE_ALIGN(P),
-                         TRUE,
-                         TRUE,
-                         (PHARDWARE_PTE)PointerPte,
-                         ZeroKernelPte.u.Flush);
+        MI_SET_PFN_DELETED(Pfn1);
+        MiDecrementShareCount(PageFrameIndex);
+        MiDecrementShareCountInline(Pfn2, PageTableFrameIndex);
+        KeFlushSingleTb(PAGE_ALIGN(P), TRUE, TRUE, (PHARDWARE_PTE)PointerPte, ZeroKernelPte.u.Flush);
         MmResidentAvailablePages += 1;
         MM_BUMP_COUNTER(37, 1);
     }
 
-    // 
+    //
     // Clear the adjacent PTE to support MmIsSpecialPoolAddressFree().
-    // 
+    //
 
     (PointerPte + 1)->u.Long = 0;
     PointerPte->u.List.NextEntry = MM_EMPTY_PTE_LIST;
 
-#if defined (_WIN64)
-    if (PoolType & SESSION_POOL_MASK) {
-        ASSERT (MmSessionSpace->SpecialPoolLastPte->u.List.NextEntry == MM_EMPTY_PTE_LIST);
-        MmSessionSpace->SpecialPoolLastPte->u.List.NextEntry = PointerPte -
-                                        MI_PTE_BASE_FOR_LOWEST_SESSION_ADDRESS;
+#if defined(_WIN64)
+    if (PoolType & SESSION_POOL_MASK)
+    {
+        ASSERT(MmSessionSpace->SpecialPoolLastPte->u.List.NextEntry == MM_EMPTY_PTE_LIST);
+        MmSessionSpace->SpecialPoolLastPte->u.List.NextEntry = PointerPte - MI_PTE_BASE_FOR_LOWEST_SESSION_ADDRESS;
 
         MmSessionSpace->SpecialPoolLastPte = PointerPte;
         MmSessionSpace->SpecialPagesInUse -= 1;
@@ -1593,26 +1578,24 @@ Environment:
     else
 #endif
     {
-        ASSERT (MiSpecialPoolLastPte->u.List.NextEntry == MM_EMPTY_PTE_LIST);
+        ASSERT(MiSpecialPoolLastPte->u.List.NextEntry == MM_EMPTY_PTE_LIST);
         MiSpecialPoolLastPte->u.List.NextEntry = PointerPte - MmSystemPteBase;
         MiSpecialPoolLastPte = PointerPte;
     }
 
     MmSpecialPagesInUse -= 1;
 
-    UNLOCK_PFN2 (OldIrql);
+    UNLOCK_PFN2(OldIrql);
 
-    MiReturnCommitment (1);
+    MiReturnCommitment(1);
 
-    MM_TRACK_COMMIT_REDUCTION (MM_DBG_COMMIT_SPECIAL_POOL_PAGES, 1);
+    MM_TRACK_COMMIT_REDUCTION(MM_DBG_COMMIT_SPECIAL_POOL_PAGES, 1);
 
     return;
 }
-
+
 SIZE_T
-MmQuerySpecialPoolBlockSize (
-    IN PVOID P
-    )
+MmQuerySpecialPoolBlockSize(IN PVOID P)
 
 /*++
 
@@ -1638,30 +1621,28 @@ Environment:
 {
     PPOOL_HEADER Header;
 
-#if defined (_WIN64)
-    ASSERT (((P >= MmSessionSpecialPoolStart) && (P < MmSessionSpecialPoolEnd)) ||
-            ((P >= MmSpecialPoolStart) && (P < MmSpecialPoolEnd)));
+#if defined(_WIN64)
+    ASSERT(((P >= MmSessionSpecialPoolStart) && (P < MmSessionSpecialPoolEnd)) ||
+           ((P >= MmSpecialPoolStart) && (P < MmSpecialPoolEnd)));
 #else
-    ASSERT ((P >= MmSpecialPoolStart) && (P < MmSpecialPoolEnd));
+    ASSERT((P >= MmSpecialPoolStart) && (P < MmSpecialPoolEnd));
 #endif
 
 
-    if (((ULONG_PTR)P & (PAGE_SIZE - 1))) {
-        Header = PAGE_ALIGN (P);
+    if (((ULONG_PTR)P & (PAGE_SIZE - 1)))
+    {
+        Header = PAGE_ALIGN(P);
     }
-    else {
-        Header = (PPOOL_HEADER)((PCHAR)PAGE_ALIGN (P) + PAGE_SIZE - POOL_OVERHEAD);
+    else
+    {
+        Header = (PPOOL_HEADER)((PCHAR)PAGE_ALIGN(P) + PAGE_SIZE - POOL_OVERHEAD);
     }
 
-    return (SIZE_T)(Header->Ulong1 & ~(MI_SPECIAL_POOL_PAGABLE | MI_SPECIAL_POOL_VERIFIER | MI_SPECIAL_POOL_IN_SESSION));
+    return (SIZE_T)(Header->Ulong1 &
+                    ~(MI_SPECIAL_POOL_PAGABLE | MI_SPECIAL_POOL_VERIFIER | MI_SPECIAL_POOL_IN_SESSION));
 }
-
-VOID
-MiMakeSpecialPoolPagable (
-    IN PVOID VirtualAddress,
-    IN PMMPTE PointerPte,
-    IN POOL_TYPE PoolType
-    )
+
+VOID MiMakeSpecialPoolPagable(IN PVOID VirtualAddress, IN PMMPTE PointerPte, IN POOL_TYPE PoolType)
 
 /*++
 
@@ -1695,19 +1676,20 @@ Environment:
     PMMSUPPORT VmSupport;
     PETHREAD CurrentThread;
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
 
-#if defined (_WIN64)
-    if (PoolType & SESSION_POOL_MASK) {
+#if defined(_WIN64)
+    if (PoolType & SESSION_POOL_MASK)
+    {
         VmSupport = &MmSessionSpace->Vm;
-        LOCK_SESSION_SPACE_WS (PreviousIrql, CurrentThread);
+        LOCK_SESSION_SPACE_WS(PreviousIrql, CurrentThread);
     }
     else
 #endif
     {
         VmSupport = &MmSystemCacheWs;
         PoolType = PoolType;
-        LOCK_SYSTEM_WS (PreviousIrql, CurrentThread);
+        LOCK_SYSTEM_WS(PreviousIrql, CurrentThread);
     }
 
     //
@@ -1717,41 +1699,38 @@ Environment:
 
     TempPte = *PointerPte;
 
-    PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE (&TempPte);
+    PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE(&TempPte);
 
-    Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+    Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
 
-    ASSERT (Pfn1->u1.Event == 0);
+    ASSERT(Pfn1->u1.Event == 0);
 
-    Pfn1->u1.Event = (PVOID) CurrentThread;
+    Pfn1->u1.Event = (PVOID)CurrentThread;
 
-    MiAddValidPageToWorkingSet (VirtualAddress,
-                                PointerPte,
-                                Pfn1,
-                                0);
+    MiAddValidPageToWorkingSet(VirtualAddress, PointerPte, Pfn1, 0);
 
-    ASSERT (KeGetCurrentIrql() == APC_LEVEL);
+    ASSERT(KeGetCurrentIrql() == APC_LEVEL);
 
-    if (VmSupport->Flags.AllowWorkingSetAdjustment == MM_GROW_WSLE_HASH) {
-        MiGrowWsleHash (VmSupport);
+    if (VmSupport->Flags.AllowWorkingSetAdjustment == MM_GROW_WSLE_HASH)
+    {
+        MiGrowWsleHash(VmSupport);
         VmSupport->Flags.AllowWorkingSetAdjustment = TRUE;
     }
 
-#if defined (_WIN64)
-    if (PoolType & SESSION_POOL_MASK) {
-        UNLOCK_SESSION_SPACE_WS (PreviousIrql);
+#if defined(_WIN64)
+    if (PoolType & SESSION_POOL_MASK)
+    {
+        UNLOCK_SESSION_SPACE_WS(PreviousIrql);
     }
     else
 #endif
     {
-        UNLOCK_SYSTEM_WS (PreviousIrql);
+        UNLOCK_SYSTEM_WS(PreviousIrql);
     }
 }
 
 LOGICAL
-MmIsSpecialPoolAddress (
-    IN PVOID VirtualAddress
-    )
+MmIsSpecialPoolAddress(IN PVOID VirtualAddress)
 
 /*++
 
@@ -1775,14 +1754,14 @@ Environment:
 --*/
 
 {
-    if ((VirtualAddress >= MmSpecialPoolStart) &&
-        (VirtualAddress < MmSpecialPoolEnd)) {
+    if ((VirtualAddress >= MmSpecialPoolStart) && (VirtualAddress < MmSpecialPoolEnd))
+    {
         return TRUE;
     }
 
-#if defined (_WIN64)
-    if ((VirtualAddress >= MmSessionSpecialPoolStart) &&
-        (VirtualAddress < MmSessionSpecialPoolEnd)) {
+#if defined(_WIN64)
+    if ((VirtualAddress >= MmSessionSpecialPoolStart) && (VirtualAddress < MmSessionSpecialPoolEnd))
+    {
         return TRUE;
     }
 #endif
@@ -1791,9 +1770,7 @@ Environment:
 }
 
 LOGICAL
-MmIsSpecialPoolAddressFree (
-    IN PVOID VirtualAddress
-    )
+MmIsSpecialPoolAddressFree(IN PVOID VirtualAddress)
 
 /*++
 
@@ -1823,9 +1800,9 @@ Environment:
     // Caller must check that the address in in special pool.
     //
 
-    ASSERT (MmIsSpecialPoolAddress (VirtualAddress) == TRUE);
+    ASSERT(MmIsSpecialPoolAddress(VirtualAddress) == TRUE);
 
-    PointerPte = MiGetPteAddress (VirtualAddress);
+    PointerPte = MiGetPteAddress(VirtualAddress);
 
     //
     // Take advantage of the fact that adjacent PTEs have the paged/nonpaged
@@ -1834,17 +1811,16 @@ Environment:
     //
 
     if ((PointerPte->u.Soft.PageFileHigh == MI_SPECIAL_POOL_PTE_PAGABLE) ||
-        (PointerPte->u.Soft.PageFileHigh == MI_SPECIAL_POOL_PTE_NONPAGABLE)) {
-            return FALSE;
+        (PointerPte->u.Soft.PageFileHigh == MI_SPECIAL_POOL_PTE_NONPAGABLE))
+    {
+        return FALSE;
     }
 
     return TRUE;
 }
 
 LOGICAL
-MiIsSpecialPoolAddressNonPaged (
-    IN PVOID VirtualAddress
-    )
+MiIsSpecialPoolAddressNonPaged(IN PVOID VirtualAddress)
 
 /*++
 
@@ -1874,9 +1850,9 @@ Environment:
     // Caller must check that the address in in special pool.
     //
 
-    ASSERT (MmIsSpecialPoolAddress (VirtualAddress) == TRUE);
+    ASSERT(MmIsSpecialPoolAddress(VirtualAddress) == TRUE);
 
-    PointerPte = MiGetPteAddress (VirtualAddress);
+    PointerPte = MiGetPteAddress(VirtualAddress);
 
     //
     // Take advantage of the fact that adjacent PTEs have the paged/nonpaged
@@ -1884,7 +1860,8 @@ Environment:
     // that freed pages get their PTEs chained together through PageFileHigh.
     //
 
-    if ((PointerPte + 1)->u.Soft.PageFileHigh == MI_SPECIAL_POOL_PTE_NONPAGABLE) {
+    if ((PointerPte + 1)->u.Soft.PageFileHigh == MI_SPECIAL_POOL_PTE_NONPAGABLE)
+    {
         return TRUE;
     }
 
@@ -1892,10 +1869,7 @@ Environment:
 }
 
 LOGICAL
-MmProtectSpecialPool (
-    IN PVOID VirtualAddress,
-    IN ULONG NewProtect
-    )
+MmProtectSpecialPool(IN PVOID VirtualAddress, IN ULONG NewProtect)
 
 /*++
 
@@ -1929,7 +1903,8 @@ Environment:
 --*/
 
 {
-    if (MiSpecialPoolFirstPte == NULL) {
+    if (MiSpecialPoolFirstPte == NULL)
+    {
 
         //
         // The special pool allocation code was never initialized.
@@ -1938,14 +1913,11 @@ Environment:
         return (ULONG)-1;
     }
 
-    return MiProtectSpecialPool (VirtualAddress, NewProtect);
+    return MiProtectSpecialPool(VirtualAddress, NewProtect);
 }
 
 LOGICAL
-MiProtectSpecialPool (
-    IN PVOID VirtualAddress,
-    IN ULONG NewProtect
-    )
+MiProtectSpecialPool(IN PVOID VirtualAddress, IN ULONG NewProtect)
 
 /*++
 
@@ -1988,36 +1960,38 @@ Environment:
     LOGICAL SystemWsLocked;
     PMMSUPPORT VmSupport;
 
-#if defined (_WIN64)
-    if ((VirtualAddress >= MmSessionSpecialPoolStart) &&
-        (VirtualAddress < MmSessionSpecialPoolEnd)) {
+#if defined(_WIN64)
+    if ((VirtualAddress >= MmSessionSpecialPoolStart) && (VirtualAddress < MmSessionSpecialPoolEnd))
+    {
         VmSupport = &MmSessionSpace->Vm;
     }
     else
 #endif
-    if (VirtualAddress >= MmSpecialPoolStart && VirtualAddress < MmSpecialPoolEnd)
+        if (VirtualAddress >= MmSpecialPoolStart && VirtualAddress < MmSpecialPoolEnd)
     {
         VmSupport = &MmSystemCacheWs;
     }
-#if defined (_PROTECT_PAGED_POOL)
-    else if ((VirtualAddress >= MmPagedPoolStart) &&
-             (VirtualAddress < PagedPoolEnd)) {
+#if defined(_PROTECT_PAGED_POOL)
+    else if ((VirtualAddress >= MmPagedPoolStart) && (VirtualAddress < PagedPoolEnd))
+    {
 
         VmSupport = &MmSystemCacheWs;
     }
 #endif
-    else {
+    else
+    {
         return (ULONG)-1;
     }
 
-    ProtectionMask = MiMakeProtectionMask (NewProtect);
-    if (ProtectionMask == MM_INVALID_PROTECTION) {
+    ProtectionMask = MiMakeProtectionMask(NewProtect);
+    if (ProtectionMask == MM_INVALID_PROTECTION)
+    {
         return (ULONG)-1;
     }
 
     SystemWsLocked = FALSE;
 
-    PointerPte = MiGetPteAddress (VirtualAddress);
+    PointerPte = MiGetPteAddress(VirtualAddress);
 
     //
     // Initializing OldIrql is not needed for
@@ -2027,82 +2001,94 @@ Environment:
 
     OldIrql = PASSIVE_LEVEL;
 
-#if defined (_PROTECT_PAGED_POOL)
-    if ((VirtualAddress >= MmPagedPoolStart) &&
-        (VirtualAddress < PagedPoolEnd)) {
+#if defined(_PROTECT_PAGED_POOL)
+    if ((VirtualAddress >= MmPagedPoolStart) && (VirtualAddress < PagedPoolEnd))
+    {
         Pagable = TRUE;
     }
     else
 #endif
-    if ((PointerPte + 1)->u.Soft.PageFileHigh == MI_SPECIAL_POOL_PTE_PAGABLE) {
+        if ((PointerPte + 1)->u.Soft.PageFileHigh == MI_SPECIAL_POOL_PTE_PAGABLE)
+    {
         Pagable = TRUE;
     }
-    else {
+    else
+    {
         Pagable = FALSE;
     }
 
-    if (Pagable == TRUE) {
-        if (VmSupport == &MmSystemCacheWs) {
-            LOCK_SYSTEM_WS (OldIrql, PsGetCurrentThread ());
+    if (Pagable == TRUE)
+    {
+        if (VmSupport == &MmSystemCacheWs)
+        {
+            LOCK_SYSTEM_WS(OldIrql, PsGetCurrentThread());
         }
-        else {
-            LOCK_SESSION_SPACE_WS (OldIrql, PsGetCurrentThread ());
+        else
+        {
+            LOCK_SESSION_SPACE_WS(OldIrql, PsGetCurrentThread());
         }
         SystemWsLocked = TRUE;
     }
 
     PteContents = *PointerPte;
 
-    if (ProtectionMask == MM_NOACCESS) {
+    if (ProtectionMask == MM_NOACCESS)
+    {
 
-        if (SystemWsLocked == TRUE) {
-retry1:
-            ASSERT (SystemWsLocked == TRUE);
-            if (PteContents.u.Hard.Valid == 1) {
+        if (SystemWsLocked == TRUE)
+        {
+        retry1:
+            ASSERT(SystemWsLocked == TRUE);
+            if (PteContents.u.Hard.Valid == 1)
+            {
 
-                Pfn1 = MI_PFN_ELEMENT (PteContents.u.Hard.PageFrameNumber);
+                Pfn1 = MI_PFN_ELEMENT(PteContents.u.Hard.PageFrameNumber);
                 WsIndex = Pfn1->u1.WsIndex;
-                ASSERT (WsIndex != 0);
+                ASSERT(WsIndex != 0);
                 Pfn1->OriginalPte.u.Soft.Protection = ProtectionMask;
-                MiRemovePageFromWorkingSet (PointerPte,
-                                            Pfn1,
-                                            VmSupport);
+                MiRemovePageFromWorkingSet(PointerPte, Pfn1, VmSupport);
             }
-            else if (PteContents.u.Soft.Transition == 1) {
+            else if (PteContents.u.Soft.Transition == 1)
+            {
 
-                LOCK_PFN2 (OldIrql2);
+                LOCK_PFN2(OldIrql2);
 
                 PteContents = *(volatile MMPTE *)PointerPte;
 
-                if (PteContents.u.Soft.Transition == 0) {
-                    UNLOCK_PFN2 (OldIrql2);
+                if (PteContents.u.Soft.Transition == 0)
+                {
+                    UNLOCK_PFN2(OldIrql2);
                     goto retry1;
                 }
 
-                Pfn1 = MI_PFN_ELEMENT (PteContents.u.Trans.PageFrameNumber);
+                Pfn1 = MI_PFN_ELEMENT(PteContents.u.Trans.PageFrameNumber);
                 Pfn1->OriginalPte.u.Soft.Protection = ProtectionMask;
                 PointerPte->u.Soft.Protection = ProtectionMask;
                 UNLOCK_PFN2(OldIrql2);
             }
-            else {
-    
+            else
+            {
+
                 //
                 // Must be page file space or demand zero.
                 //
-    
+
                 PointerPte->u.Soft.Protection = ProtectionMask;
             }
-            ASSERT (SystemWsLocked == TRUE);
-            if (VmSupport == &MmSystemCacheWs) {
-                UNLOCK_SYSTEM_WS (OldIrql);
+            ASSERT(SystemWsLocked == TRUE);
+            if (VmSupport == &MmSystemCacheWs)
+            {
+                UNLOCK_SYSTEM_WS(OldIrql);
             }
-            else {
-                UNLOCK_SESSION_SPACE_WS (OldIrql);
+            else
+            {
+                UNLOCK_SESSION_SPACE_WS(OldIrql);
             }
         }
-        else {
+        else
+        {
 
-            ASSERT (SystemWsLocked == FALSE);
+            ASSERT(SystemWsLocked == FALSE);
 
             //
             // Make it no access regardless of its previous protection state.
@@ -2112,20 +2098,17 @@ retry1:
             PteContents.u.Hard.Valid = 0;
             PteContents.u.Soft.Prototype = 0;
             PteContents.u.Soft.Protection = MM_NOACCESS;
-    
-            Pfn1 = MI_PFN_ELEMENT (PteContents.u.Hard.PageFrameNumber);
 
-            LOCK_PFN2 (OldIrql2);
+            Pfn1 = MI_PFN_ELEMENT(PteContents.u.Hard.PageFrameNumber);
+
+            LOCK_PFN2(OldIrql2);
 
             Pfn1->OriginalPte.u.Soft.Protection = ProtectionMask;
 
-            PreviousPte.u.Flush = KeFlushSingleTb (VirtualAddress,
-                                                   TRUE,
-                                                   TRUE,
-                                                   (PHARDWARE_PTE)PointerPte,
-                                                   PteContents.u.Flush);
+            PreviousPte.u.Flush =
+                KeFlushSingleTb(VirtualAddress, TRUE, TRUE, (PHARDWARE_PTE)PointerPte, PteContents.u.Flush);
 
-            MI_CAPTURE_DIRTY_BIT_TO_PFN (&PreviousPte, Pfn1);
+            MI_CAPTURE_DIRTY_BIT_TO_PFN(&PreviousPte, Pfn1);
 
             UNLOCK_PFN2(OldIrql2);
         }
@@ -2137,13 +2120,17 @@ retry1:
     // No guard pages, noncached pages or copy-on-write for special pool.
     //
 
-    if ((ProtectionMask >= MM_NOCACHE) || (ProtectionMask == MM_WRITECOPY) || (ProtectionMask == MM_EXECUTE_WRITECOPY)) {
-        if (SystemWsLocked == TRUE) {
-            if (VmSupport == &MmSystemCacheWs) {
-                UNLOCK_SYSTEM_WS (OldIrql);
+    if ((ProtectionMask >= MM_NOCACHE) || (ProtectionMask == MM_WRITECOPY) || (ProtectionMask == MM_EXECUTE_WRITECOPY))
+    {
+        if (SystemWsLocked == TRUE)
+        {
+            if (VmSupport == &MmSystemCacheWs)
+            {
+                UNLOCK_SYSTEM_WS(OldIrql);
             }
-            else {
-                UNLOCK_SESSION_SPACE_WS (OldIrql);
+            else
+            {
+                UNLOCK_SESSION_SPACE_WS(OldIrql);
             }
         }
         return FALSE;
@@ -2153,71 +2140,63 @@ retry1:
     // Set accessible permissions - the page may already be protected or not.
     //
 
-    if (Pagable == FALSE) {
+    if (Pagable == FALSE)
+    {
 
-        Pfn1 = MI_PFN_ELEMENT (PteContents.u.Hard.PageFrameNumber);
+        Pfn1 = MI_PFN_ELEMENT(PteContents.u.Hard.PageFrameNumber);
         Pfn1->OriginalPte.u.Soft.Protection = ProtectionMask;
 
-        MI_MAKE_VALID_PTE (NewPteContents,
-                           PteContents.u.Hard.PageFrameNumber,
-                           ProtectionMask,
-                           PointerPte);
+        MI_MAKE_VALID_PTE(NewPteContents, PteContents.u.Hard.PageFrameNumber, ProtectionMask, PointerPte);
 
-        KeFlushSingleTb (VirtualAddress,
-                         TRUE,
-                         TRUE,
-                         (PHARDWARE_PTE)PointerPte,
-                         NewPteContents.u.Flush);
+        KeFlushSingleTb(VirtualAddress, TRUE, TRUE, (PHARDWARE_PTE)PointerPte, NewPteContents.u.Flush);
 
-        ASSERT (SystemWsLocked == FALSE);
+        ASSERT(SystemWsLocked == FALSE);
         return TRUE;
     }
 
 retry2:
 
-    ASSERT (SystemWsLocked == TRUE);
+    ASSERT(SystemWsLocked == TRUE);
 
-    if (PteContents.u.Hard.Valid == 1) {
+    if (PteContents.u.Hard.Valid == 1)
+    {
 
-        Pfn1 = MI_PFN_ELEMENT (PteContents.u.Hard.PageFrameNumber);
-        ASSERT (Pfn1->u1.WsIndex != 0);
+        Pfn1 = MI_PFN_ELEMENT(PteContents.u.Hard.PageFrameNumber);
+        ASSERT(Pfn1->u1.WsIndex != 0);
 
-        LOCK_PFN2 (OldIrql2);
+        LOCK_PFN2(OldIrql2);
 
         Pfn1->OriginalPte.u.Soft.Protection = ProtectionMask;
 
-        MI_MAKE_VALID_PTE (PteContents,
-                           PteContents.u.Hard.PageFrameNumber,
-                           ProtectionMask,
-                           PointerPte);
+        MI_MAKE_VALID_PTE(PteContents, PteContents.u.Hard.PageFrameNumber, ProtectionMask, PointerPte);
 
-        PreviousPte.u.Flush = KeFlushSingleTb (VirtualAddress,
-                                               TRUE,
-                                               TRUE,
-                                               (PHARDWARE_PTE)PointerPte,
-                                               PteContents.u.Flush);
+        PreviousPte.u.Flush =
+            KeFlushSingleTb(VirtualAddress, TRUE, TRUE, (PHARDWARE_PTE)PointerPte, PteContents.u.Flush);
 
-        MI_CAPTURE_DIRTY_BIT_TO_PFN (&PreviousPte, Pfn1);
+        MI_CAPTURE_DIRTY_BIT_TO_PFN(&PreviousPte, Pfn1);
 
-        UNLOCK_PFN2 (OldIrql2);
+        UNLOCK_PFN2(OldIrql2);
     }
-    else if (PteContents.u.Soft.Transition == 1) {
+    else if (PteContents.u.Soft.Transition == 1)
+    {
 
-        LOCK_PFN2 (OldIrql2);
+        LOCK_PFN2(OldIrql2);
 
         PteContents = *(volatile MMPTE *)PointerPte;
 
-        if (PteContents.u.Soft.Transition == 0) {
-            UNLOCK_PFN2 (OldIrql2);
+        if (PteContents.u.Soft.Transition == 0)
+        {
+            UNLOCK_PFN2(OldIrql2);
             goto retry2;
         }
 
-        Pfn1 = MI_PFN_ELEMENT (PteContents.u.Trans.PageFrameNumber);
+        Pfn1 = MI_PFN_ELEMENT(PteContents.u.Trans.PageFrameNumber);
         Pfn1->OriginalPte.u.Soft.Protection = ProtectionMask;
         PointerPte->u.Soft.Protection = ProtectionMask;
         UNLOCK_PFN2(OldIrql2);
     }
-    else {
+    else
+    {
 
         //
         // Must be page file space or demand zero.
@@ -2226,19 +2205,19 @@ retry2:
         PointerPte->u.Soft.Protection = ProtectionMask;
     }
 
-    if (VmSupport == &MmSystemCacheWs) {
-        UNLOCK_SYSTEM_WS (OldIrql);
+    if (VmSupport == &MmSystemCacheWs)
+    {
+        UNLOCK_SYSTEM_WS(OldIrql);
     }
-    else {
-        UNLOCK_SESSION_SPACE_WS (OldIrql);
+    else
+    {
+        UNLOCK_SESSION_SPACE_WS(OldIrql);
     }
     return TRUE;
 }
 
 LOGICAL
-MmSetSpecialPool (
-    IN LOGICAL Enable
-    )
+MmSetSpecialPool(IN LOGICAL Enable)
 
 /*++
 
@@ -2266,25 +2245,26 @@ Environment:
     KIRQL OldIrql;
     LOGICAL OldEnable;
 
-    LOCK_PFN2 (OldIrql);
+    LOCK_PFN2(OldIrql);
 
     OldEnable = MiSpecialPoolEnabled;
 
     MiSpecialPoolEnabled = Enable;
 
-    UNLOCK_PFN2 (OldIrql);
+    UNLOCK_PFN2(OldIrql);
 
     return OldEnable;
 }
 
 #ifndef NO_POOL_CHECKS
-typedef struct _MI_BAD_TAGS {
-    USHORT  Enabled;
-    UCHAR   TargetChar;
-    UCHAR   AllOthers;
-    ULONG   Dispatches;
-    ULONG   Allocations;
-    ULONG   RandomizerEnabled;
+typedef struct _MI_BAD_TAGS
+{
+    USHORT Enabled;
+    UCHAR TargetChar;
+    UCHAR AllOthers;
+    ULONG Dispatches;
+    ULONG Allocations;
+    ULONG RandomizerEnabled;
 } MI_BAD_TAGS, *PMI_BAD_TAGS;
 
 MI_BAD_TAGS MiBadTags;
@@ -2292,16 +2272,11 @@ KTIMER MiSpecialPoolTimer;
 KDPC MiSpecialPoolTimerDpc;
 LARGE_INTEGER MiTimerDueTime;
 
-#define MI_THREE_SECONDS     3
+#define MI_THREE_SECONDS 3
 
-
-VOID
-MiSpecialPoolTimerDispatch (
-    IN PKDPC Dpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    )
+
+VOID MiSpecialPoolTimerDispatch(IN PKDPC Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1,
+                                IN PVOID SystemArgument2)
 
 /*++
 
@@ -2333,29 +2308,36 @@ Return Value:
 {
     UCHAR NewChar;
 
-    UNREFERENCED_PARAMETER (Dpc);
-    UNREFERENCED_PARAMETER (DeferredContext);
-    UNREFERENCED_PARAMETER (SystemArgument1);
-    UNREFERENCED_PARAMETER (SystemArgument2);
+    UNREFERENCED_PARAMETER(Dpc);
+    UNREFERENCED_PARAMETER(DeferredContext);
+    UNREFERENCED_PARAMETER(SystemArgument1);
+    UNREFERENCED_PARAMETER(SystemArgument2);
 
     MiBadTags.Dispatches += 1;
 
-    if (MiBadTags.Allocations > 500) {
+    if (MiBadTags.Allocations > 500)
+    {
         MiBadTags.Enabled += 1;
     }
-    else if ((MiBadTags.Allocations == 0) && (MiBadTags.Dispatches > 100)) {
-        if (MiBadTags.AllOthers == 0) {
+    else if ((MiBadTags.Allocations == 0) && (MiBadTags.Dispatches > 100))
+    {
+        if (MiBadTags.AllOthers == 0)
+        {
             NewChar = (UCHAR)(MiBadTags.TargetChar + 1);
-            if (NewChar >= 'a' && NewChar <= 'z') {
+            if (NewChar >= 'a' && NewChar <= 'z')
+            {
                 MiBadTags.TargetChar = NewChar;
             }
-            else if (NewChar == 'z' + 1) {
+            else if (NewChar == 'z' + 1)
+            {
                 MiBadTags.TargetChar = 'a';
             }
-            else if (NewChar >= 'A' && NewChar <= 'Z') {
+            else if (NewChar >= 'A' && NewChar <= 'Z')
+            {
                 MiBadTags.TargetChar = NewChar;
             }
-            else {
+            else
+            {
                 MiBadTags.TargetChar = 'A';
             }
         }
@@ -2364,38 +2346,41 @@ Return Value:
 
 extern ULONG InitializationPhase;
 
-VOID
-MiInitializeSpecialPoolCriteria (
-    VOID
-    )
+VOID MiInitializeSpecialPoolCriteria(VOID)
 {
     LARGE_INTEGER SystemTime;
     TIME_FIELDS TimeFields;
 
-    if (InitializationPhase == 0) {
-#if defined (_MI_SPECIAL_POOL_BY_DEFAULT)
-        if (MmSpecialPoolTag == 0) {
+    if (InitializationPhase == 0)
+    {
+#if defined(_MI_SPECIAL_POOL_BY_DEFAULT)
+        if (MmSpecialPoolTag == 0)
+        {
             MmSpecialPoolTag = (ULONG)-2;
         }
 #endif
         return;
     }
 
-    if (MmSpecialPoolTag != (ULONG)-2) {
+    if (MmSpecialPoolTag != (ULONG)-2)
+    {
         return;
     }
 
-    KeQuerySystemTime (&SystemTime);
+    KeQuerySystemTime(&SystemTime);
 
-    RtlTimeToTimeFields (&SystemTime, &TimeFields);
+    RtlTimeToTimeFields(&SystemTime, &TimeFields);
 
-    if (TimeFields.Second <= 25) {
+    if (TimeFields.Second <= 25)
+    {
         MiBadTags.TargetChar = (UCHAR)('a' + (UCHAR)TimeFields.Second);
     }
-    else if (TimeFields.Second <= 51) {
+    else if (TimeFields.Second <= 51)
+    {
         MiBadTags.TargetChar = (UCHAR)('A' + (UCHAR)(TimeFields.Second - 26));
     }
-    else {
+    else
+    {
         MiBadTags.AllOthers = 1;
     }
 
@@ -2405,24 +2390,19 @@ MiInitializeSpecialPoolCriteria (
     // Initialize a periodic timer to go off every three seconds.
     //
 
-    KeInitializeDpc (&MiSpecialPoolTimerDpc, MiSpecialPoolTimerDispatch, NULL);
+    KeInitializeDpc(&MiSpecialPoolTimerDpc, MiSpecialPoolTimerDispatch, NULL);
 
-    KeInitializeTimer (&MiSpecialPoolTimer);
+    KeInitializeTimer(&MiSpecialPoolTimer);
 
-    MiTimerDueTime.QuadPart = Int32x32To64 (MI_THREE_SECONDS, -10000000);
+    MiTimerDueTime.QuadPart = Int32x32To64(MI_THREE_SECONDS, -10000000);
 
-    KeSetTimerEx (&MiSpecialPoolTimer,
-                  MiTimerDueTime,
-                  MI_THREE_SECONDS * 1000,
-                  &MiSpecialPoolTimerDpc);
+    KeSetTimerEx(&MiSpecialPoolTimer, MiTimerDueTime, MI_THREE_SECONDS * 1000, &MiSpecialPoolTimerDpc);
 
     MiBadTags.Enabled += 1;
 }
 
 LOGICAL
-MmSqueezeBadTags (
-    IN ULONG Tag
-    )
+MmSqueezeBadTags(IN ULONG Tag)
 
 /*++
 
@@ -2449,27 +2429,34 @@ Environment:
 {
     PUCHAR tc;
 
-    if ((MiBadTags.Enabled % 0x10) == 0) {
+    if ((MiBadTags.Enabled % 0x10) == 0)
+    {
         return FALSE;
     }
 
-    if (MiBadTags.RandomizerEnabled == 0) {
+    if (MiBadTags.RandomizerEnabled == 0)
+    {
         return FALSE;
     }
 
     tc = (PUCHAR)&Tag;
-    if (*tc == MiBadTags.TargetChar) {
+    if (*tc == MiBadTags.TargetChar)
+    {
         ;
     }
-    else if (MiBadTags.AllOthers == 1) {
-        if (*tc >= 'a' && *tc <= 'z') {
+    else if (MiBadTags.AllOthers == 1)
+    {
+        if (*tc >= 'a' && *tc <= 'z')
+        {
             return FALSE;
         }
-        if (*tc >= 'A' && *tc <= 'Z') {
+        if (*tc >= 'A' && *tc <= 'Z')
+        {
             return FALSE;
         }
     }
-    else {
+    else
+    {
         return FALSE;
     }
 
@@ -2478,10 +2465,7 @@ Environment:
     return TRUE;
 }
 
-VOID
-MiEnableRandomSpecialPool (
-    IN LOGICAL Enable
-    )
+VOID MiEnableRandomSpecialPool(IN LOGICAL Enable)
 {
     MiBadTags.RandomizerEnabled = Enable;
 }
@@ -2489,10 +2473,7 @@ MiEnableRandomSpecialPool (
 #endif
 
 LOGICAL
-MiCheckSingleFilter (
-    ULONG Tag,
-    ULONG Filter
-    )
+MiCheckSingleFilter(ULONG Tag, ULONG Filter)
 
 /*++
 
@@ -2522,21 +2503,26 @@ Return Value:
     PUCHAR tc;
     PUCHAR fc;
 
-    tc = (PUCHAR) &Tag;
-    fc = (PUCHAR) &Filter;
+    tc = (PUCHAR)&Tag;
+    fc = (PUCHAR)&Filter;
 
-    for (i = 0; i < 4; i += 1, tc += 1, fc += 1) {
+    for (i = 0; i < 4; i += 1, tc += 1, fc += 1)
+    {
 
-        if (*fc == '*') {
+        if (*fc == '*')
+        {
             break;
         }
-        if (*fc == '?') {
+        if (*fc == '?')
+        {
             continue;
         }
-        if (i == 3 && ((*tc) & ~(PROTECTED_POOL >> 24)) == *fc) {
+        if (i == 3 && ((*tc) & ~(PROTECTED_POOL >> 24)) == *fc)
+        {
             continue;
         }
-        if (*tc != *fc) {
+        if (*tc != *fc)
+        {
             return FALSE;
         }
     }
@@ -2544,10 +2530,7 @@ Return Value:
 }
 
 LOGICAL
-MmUseSpecialPool (
-    IN SIZE_T NumberOfBytes,
-    IN ULONG Tag
-    )
+MmUseSpecialPool(IN SIZE_T NumberOfBytes, IN ULONG Tag)
 
 /*++
 
@@ -2574,12 +2557,12 @@ Environment:
 
 --*/
 {
-    if ((NumberOfBytes <= POOL_BUDDY_MAX) &&
-        (MmSpecialPoolTag != 0) &&
-        (NumberOfBytes != 0)) {
+    if ((NumberOfBytes <= POOL_BUDDY_MAX) && (MmSpecialPoolTag != 0) && (NumberOfBytes != 0))
+    {
 
 #ifndef NO_POOL_CHECKS
-        if (MmSqueezeBadTags (Tag) == TRUE) {
+        if (MmSqueezeBadTags(Tag) == TRUE)
+        {
             return TRUE;
         }
 #endif
@@ -2588,9 +2571,10 @@ Environment:
         // Check for a special pool tag match by tag string and size ranges.
         //
 
-        if ((MiCheckSingleFilter (Tag, MmSpecialPoolTag)) ||
+        if ((MiCheckSingleFilter(Tag, MmSpecialPoolTag)) ||
             ((MmSpecialPoolTag >= (NumberOfBytes + POOL_OVERHEAD)) &&
-            (MmSpecialPoolTag < (NumberOfBytes + POOL_OVERHEAD + POOL_SMALLEST_BLOCK)))) {
+             (MmSpecialPoolTag < (NumberOfBytes + POOL_OVERHEAD + POOL_SMALLEST_BLOCK))))
+        {
 
             return TRUE;
         }

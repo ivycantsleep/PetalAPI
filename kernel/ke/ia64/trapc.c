@@ -30,11 +30,9 @@ Revision History:
 extern BOOLEAN PsWatchEnabled;
 extern VOID ExpInterlockedPopEntrySListResume();
 
-
+
 BOOLEAN
-KiMemoryFault (
-    IN PKTRAP_FRAME TrapFrame
-    )
+KiMemoryFault(IN PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -60,10 +58,12 @@ Return Value:
 
     VirtualAddress = (PVOID)TrapFrame->StIFA;
 
-    if (TrapFrame->StISR & (1i64 << ISR_X))  {
+    if (TrapFrame->StISR & (1i64 << ISR_X))
+    {
 
 #if _MERCED_A0_
-        if ((TrapFrame->StIPSR & (1i64 << PSR_IS)) == 0) {
+        if ((TrapFrame->StIPSR & (1i64 << PSR_IS)) == 0)
+        {
             VirtualAddress = (PVOID)TrapFrame->StIIP;
         }
 #endif
@@ -73,14 +73,17 @@ Return Value:
 
         StoreInstruction = 2;
     }
-    else if (TrapFrame->StISR & (1i64 << ISR_W)) {
+    else if (TrapFrame->StISR & (1i64 << ISR_W))
+    {
 
         //
         // Indicate store.
         //
 
         StoreInstruction = 1;
-    } else {
+    }
+    else
+    {
 
         //
         // Indicate read.
@@ -90,28 +93,27 @@ Return Value:
     }
 
 
-    if (((ULONG_PTR)VirtualAddress < MM_MAX_WOW64_ADDRESS) &&
-        (PsGetCurrentProcess()->Wow64Process != NULL)) {
+    if (((ULONG_PTR)VirtualAddress < MM_MAX_WOW64_ADDRESS) && (PsGetCurrentProcess()->Wow64Process != NULL))
+    {
 
-        Status = MmX86Fault(StoreInstruction, VirtualAddress,
-                           (KPROCESSOR_MODE)TrapFrame->PreviousMode, TrapFrame);
+        Status = MmX86Fault(StoreInstruction, VirtualAddress, (KPROCESSOR_MODE)TrapFrame->PreviousMode, TrapFrame);
+    }
+    else
+    {
 
-    } else {
-
-        Status = MmAccessFault(StoreInstruction, VirtualAddress,
-                           (KPROCESSOR_MODE)TrapFrame->PreviousMode, TrapFrame);
+        Status = MmAccessFault(StoreInstruction, VirtualAddress, (KPROCESSOR_MODE)TrapFrame->PreviousMode, TrapFrame);
     }
 
     //
     // Check if working set watch is enabled.
     //
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
-        if (PsWatchEnabled) {
-            PsWatchWorkingSet(Status,
-                              (PVOID)TrapFrame->StIIP,
-                              (PVOID)VirtualAddress);
+        if (PsWatchEnabled)
+        {
+            PsWatchWorkingSet(Status, (PVOID)TrapFrame->StIIP, (PVOID)VirtualAddress);
         }
 
         //
@@ -121,18 +123,18 @@ Return Value:
         KdSetOwedBreakpoints();
 
         return FALSE;
-
     }
 
-    if (KeInvalidAccessAllowed(TrapFrame)) {
+    if (KeInvalidAccessAllowed(TrapFrame))
+    {
 
         TrapFrame->StIIP = ((PPLABEL_DESCRIPTOR)ExpInterlockedPopEntrySListResume)->EntryPoint;
 
         return FALSE;
-
     }
 
-    if (TrapFrame->StISR & (1i64 << ISR_SP)) {
+    if (TrapFrame->StISR & (1i64 << ISR_SP))
+    {
 
         //
         // Set IPSR.ed bit if it was a fault on a speculative load.
@@ -141,7 +143,6 @@ Return Value:
         TrapFrame->StIPSR |= (1i64 << PSR_ED);
 
         return FALSE;
-
     }
 
     //
@@ -152,14 +153,14 @@ Return Value:
     ExceptionRecord = (PEXCEPTION_RECORD)&TrapFrame->ExceptionRecord;
     ExceptionRecord->ExceptionCode = Status;
     ExceptionRecord->ExceptionAddress =
-        (PVOID)RtlIa64InsertIPSlotNumber(TrapFrame->StIIP,
-                   ((TrapFrame->StISR & ISR_EI_MASK) >> ISR_EI));
+        (PVOID)RtlIa64InsertIPSlotNumber(TrapFrame->StIIP, ((TrapFrame->StISR & ISR_EI_MASK) >> ISR_EI));
 
     ExceptionRecord->ExceptionFlags = 0;
     ExceptionRecord->ExceptionRecord = (PEXCEPTION_RECORD)NULL;
 
     ExceptionRecord->NumberParameters = 5;
-    if (StoreInstruction == 2) {
+    if (StoreInstruction == 2)
+    {
         PSR Psr;
         Psr.ull = TrapFrame->StIPSR;
 
@@ -167,8 +168,9 @@ Return Value:
         // instruction access fault
         //
         ExceptionRecord->ExceptionInformation[0] = TrapFrame->StIIPA;
-
-    } else {
+    }
+    else
+    {
         //
         // data access fault
         //
@@ -192,7 +194,8 @@ Return Value:
     //      STATUS_IN_PAGE_ERROR
     //
 
-    switch (Status) {
+    switch (Status)
+    {
 
     case STATUS_ACCESS_VIOLATION:
     case STATUS_GUARD_PAGE_VIOLATION:
@@ -213,11 +216,8 @@ Return Value:
         // we have taken a page fault at Irql > APC_LEVEL.
         //
 
-        KeBugCheckEx(IRQL_NOT_LESS_OR_EQUAL,
-                     (ULONG_PTR)VirtualAddress,
-                     (ULONG_PTR)KeGetCurrentIrql(),
-                     (ULONG_PTR)StoreInstruction,
-                     (ULONG_PTR)TrapFrame->StIIP);
+        KeBugCheckEx(IRQL_NOT_LESS_OR_EQUAL, (ULONG_PTR)VirtualAddress, (ULONG_PTR)KeGetCurrentIrql(),
+                     (ULONG_PTR)StoreInstruction, (ULONG_PTR)TrapFrame->StIIP);
         //
         // should not get here
         //
@@ -227,18 +227,21 @@ Return Value:
 
     return TRUE;
 }
-
-typedef struct _BREAK_INST {
-    union {
-        struct {
-            ULONGLONG qp:    6;
-            ULONGLONG imm20: 20;
-            ULONGLONG x:     1;
-            ULONGLONG x6:    6;
-            ULONGLONG x3:    3;
-            ULONGLONG i:     1;
-            ULONGLONG Op:    4;
-            ULONGLONG Rsv:   23;
+
+typedef struct _BREAK_INST
+{
+    union
+    {
+        struct
+        {
+            ULONGLONG qp : 6;
+            ULONGLONG imm20 : 20;
+            ULONGLONG x : 1;
+            ULONGLONG x6 : 6;
+            ULONGLONG x3 : 3;
+            ULONGLONG i : 1;
+            ULONGLONG Op : 4;
+            ULONGLONG Rsv : 23;
         } i_field;
         ULONGLONG Ulong64;
     } u;
@@ -246,10 +249,7 @@ typedef struct _BREAK_INST {
 
 
 ULONG
-KiExtractImmediate (
-    IN ULONGLONG Iip,
-    IN ULONG SlotNumber
-    )
+KiExtractImmediate(IN ULONGLONG Iip, IN ULONG SlotNumber)
 
 /*++
 
@@ -279,39 +279,38 @@ Return Value:
     BundleAddress = (PULONGLONG)Iip;
 
     BundleLow = *BundleAddress;
-    BundleHigh = *(BundleAddress+1);
+    BundleHigh = *(BundleAddress + 1);
 
     //
     // Align instruction
     //
 
-    switch (SlotNumber) {
-        case 0:
-            BreakInst.u.Ulong64 = BundleLow >> 5;
-            break;
+    switch (SlotNumber)
+    {
+    case 0:
+        BreakInst.u.Ulong64 = BundleLow >> 5;
+        break;
 
-        case 1:
-            BreakInst.u.Ulong64 = (BundleLow >> 46) | (BundleHigh << 18);
-            break;
+    case 1:
+        BreakInst.u.Ulong64 = (BundleLow >> 46) | (BundleHigh << 18);
+        break;
 
-        case 2:
-            BreakInst.u.Ulong64 = (BundleHigh >> 23);
-            break;
+    case 2:
+        BreakInst.u.Ulong64 = (BundleHigh >> 23);
+        break;
     }
 
     //
     // Extract immediate value
     //
 
-    Imm21 = (ULONG)(BreakInst.u.i_field.i<<20) | (ULONG)(BreakInst.u.i_field.imm20);
+    Imm21 = (ULONG)(BreakInst.u.i_field.i << 20) | (ULONG)(BreakInst.u.i_field.imm20);
 
     return Imm21;
 }
-
+
 BOOLEAN
-KiDebugFault (
-    IN PKTRAP_FRAME TrapFrame
-    )
+KiDebugFault(IN PKTRAP_FRAME TrapFrame)
 
 {
     PEXCEPTION_RECORD ExceptionRecord;
@@ -320,16 +319,16 @@ KiDebugFault (
 
     TrapFrame->StIPSR |= (1i64 << PSR_DD);
 
-    if (((TrapFrame->StIPSR >> PSR_CPL) & (PSR_CPL_LEN - 1)) == IA64_KERNEL_PL) {
+    if (((TrapFrame->StIPSR >> PSR_CPL) & (PSR_CPL_LEN - 1)) == IA64_KERNEL_PL)
+    {
 
         //
-        // Disable all hardware breakpoints 
+        // Disable all hardware breakpoints
         //
-        
+
         KeSetLowPsrBit(PSR_DB, 0);
-            
     }
-    
+
     //
     // Initialize exception record
     //
@@ -338,8 +337,7 @@ KiDebugFault (
 
     ExceptionRecord->ExceptionCode = STATUS_SINGLE_STEP;
     ExceptionRecord->ExceptionAddress =
-        (PVOID) RtlIa64InsertIPSlotNumber(TrapFrame->StIIP,
-                                 ((TrapFrame->StISR & ISR_EI_MASK) >> ISR_EI));
+        (PVOID)RtlIa64InsertIPSlotNumber(TrapFrame->StIIP, ((TrapFrame->StISR & ISR_EI_MASK) >> ISR_EI));
 
     ExceptionRecord->ExceptionFlags = 0;
     ExceptionRecord->ExceptionRecord = (PEXCEPTION_RECORD)NULL;
@@ -353,11 +351,9 @@ KiDebugFault (
 
     return TRUE;
 }
-
+
 BOOLEAN
-KiOtherBreakException (
-    IN PKTRAP_FRAME TrapFrame
-    )
+KiOtherBreakException(IN PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -387,16 +383,18 @@ Return Value:
     // Handle break.b case
     //
 
-    try {
+    try
+    {
 
-        if (BreakImmediate == 0) {
+        if (BreakImmediate == 0)
+        {
             Isr.ull = TrapFrame->StISR;
-            BreakImmediate = KiExtractImmediate(TrapFrame->StIIP,
-                                                (ULONG)Isr.sb.isr_ei);
+            BreakImmediate = KiExtractImmediate(TrapFrame->StIIP, (ULONG)Isr.sb.isr_ei);
             TrapFrame->StIIM = BreakImmediate;
         }
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         //
         // if an exception (memory fault) occurs, then let it re-execute break.b.
         //
@@ -409,8 +407,7 @@ Return Value:
 
     ExceptionRecord = (PEXCEPTION_RECORD)&TrapFrame->ExceptionRecord;
     ExceptionRecord->ExceptionAddress =
-        (PVOID) RtlIa64InsertIPSlotNumber(TrapFrame->StIIP,
-                                 ((TrapFrame->StISR & ISR_EI_MASK) >> ISR_EI));
+        (PVOID)RtlIa64InsertIPSlotNumber(TrapFrame->StIIP, ((TrapFrame->StISR & ISR_EI_MASK) >> ISR_EI));
 
     ExceptionRecord->ExceptionFlags = 0;
     ExceptionRecord->ExceptionRecord = (PEXCEPTION_RECORD)NULL;
@@ -422,7 +419,8 @@ Return Value:
     ExceptionRecord->ExceptionInformation[3] = TrapFrame->StIIPA;
     ExceptionRecord->ExceptionInformation[4] = TrapFrame->StISR;
 
-    switch (BreakImmediate) {
+    switch (BreakImmediate)
+    {
 
     case KERNEL_BREAKPOINT:
     case USER_BREAKPOINT:
@@ -459,7 +457,7 @@ Return Value:
 
     default:
 #if DBG
-        InbvDisplayString ("KiOtherBreakException: Unknown break code.\n");
+        InbvDisplayString("KiOtherBreakException: Unknown break code.\n");
 #endif // DBG
         ExceptionRecord->ExceptionCode = STATUS_ILLEGAL_INSTRUCTION;
         break;
@@ -467,11 +465,9 @@ Return Value:
 
     return TRUE;
 }
-
+
 BOOLEAN
-KiGeneralExceptions (
-    IN PKTRAP_FRAME TrapFrame
-    )
+KiGeneralExceptions(IN PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -535,8 +531,7 @@ Notes:
 
     ExceptionRecord = (PEXCEPTION_RECORD)&TrapFrame->ExceptionRecord;
     ExceptionRecord->ExceptionAddress =
-           (PVOID) RtlIa64InsertIPSlotNumber(TrapFrame->StIIP,
-                                 ((TrapFrame->StISR & ISR_EI_MASK) >> ISR_EI));
+        (PVOID)RtlIa64InsertIPSlotNumber(TrapFrame->StIIP, ((TrapFrame->StISR & ISR_EI_MASK) >> ISR_EI));
 
     ExceptionRecord->ExceptionFlags = 0;
     ExceptionRecord->ExceptionRecord = (PEXCEPTION_RECORD)NULL;
@@ -554,7 +549,8 @@ Notes:
     // Look at ISR code bits {7:4}
     //
 
-    switch (IsrCode >> 4) {
+    switch (IsrCode >> 4)
+    {
 
     case ISR_PRIV_OP:
     case ISR_PRIV_REG:
@@ -569,11 +565,13 @@ Notes:
         // Indicate store or not
         //
 
-        if (TrapFrame->StISR & (1i64 << ISR_W)) {
+        if (TrapFrame->StISR & (1i64 << ISR_W))
+        {
 
             StoreInstruction = TRUE;
-
-        } else if (TrapFrame->StISR & (1i64 << ISR_X)) {
+        }
+        else if (TrapFrame->StISR & (1i64 << ISR_X))
+        {
 
             //
             // Indicate execution fault or not
@@ -605,13 +603,9 @@ Notes:
 
     default:
 
-        if (TrapFrame->PreviousMode == KernelMode) {
-            KeBugCheckEx(0xFFFFFFFF,
-                        (ULONG_PTR)TrapFrame->StISR,
-                        (ULONG_PTR)TrapFrame->StIIP,
-                        (ULONG_PTR)TrapFrame,
-                        0
-                        );
+        if (TrapFrame->PreviousMode == KernelMode)
+        {
+            KeBugCheckEx(0xFFFFFFFF, (ULONG_PTR)TrapFrame->StISR, (ULONG_PTR)TrapFrame->StIIP, (ULONG_PTR)TrapFrame, 0);
         }
 
         break;
@@ -620,11 +614,9 @@ Notes:
     return TRUE;
 }
 
-
+
 BOOLEAN
-KiUnimplementedAddressTrap (
-    IN PKTRAP_FRAME TrapFrame
-    )
+KiUnimplementedAddressTrap(IN PKTRAP_FRAME TrapFrame)
 /*++
 
 Routine Description:
@@ -648,8 +640,7 @@ Return Value:
 
     ExceptionRecord = (PEXCEPTION_RECORD)&TrapFrame->ExceptionRecord;
     ExceptionRecord->ExceptionAddress =
-           (PVOID) RtlIa64InsertIPSlotNumber(TrapFrame->StIIP,
-                                 ((TrapFrame->StISR & ISR_EI_MASK) >> ISR_EI));
+        (PVOID)RtlIa64InsertIPSlotNumber(TrapFrame->StIIP, ((TrapFrame->StISR & ISR_EI_MASK) >> ISR_EI));
 
     ExceptionRecord->ExceptionFlags = 0;
     ExceptionRecord->ExceptionRecord = (PEXCEPTION_RECORD)NULL;
@@ -666,11 +657,9 @@ Return Value:
     return TRUE;
 }
 
-
+
 BOOLEAN
-KiNatExceptions (
-    IN PKTRAP_FRAME TrapFrame
-    )
+KiNatExceptions(IN PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -713,8 +702,7 @@ Notes:
 
     ExceptionRecord = (PEXCEPTION_RECORD)&TrapFrame->ExceptionRecord;
     ExceptionRecord->ExceptionAddress =
-           (PVOID) RtlIa64InsertIPSlotNumber(TrapFrame->StIIP,
-                                 ((TrapFrame->StISR & ISR_EI_MASK) >> ISR_EI));
+        (PVOID)RtlIa64InsertIPSlotNumber(TrapFrame->StIIP, ((TrapFrame->StISR & ISR_EI_MASK) >> ISR_EI));
 
     ExceptionRecord->ExceptionFlags = 0;
     ExceptionRecord->ExceptionRecord = (PEXCEPTION_RECORD)NULL;
@@ -732,7 +720,8 @@ Notes:
     // Look at ISR code bits {7:4}
     //
 
-    switch (IsrCode >> 4) {
+    switch (IsrCode >> 4)
+    {
 
     case ISR_NAT_REG:
 
@@ -766,13 +755,9 @@ Notes:
 
     default:
 
-        if (TrapFrame->PreviousMode == KernelMode) {
-            KeBugCheckEx(0xFFFFFFFF,
-                        (ULONG_PTR)TrapFrame->StISR,
-                        (ULONG_PTR)TrapFrame->StIIP,
-                        (ULONG_PTR)TrapFrame,
-                        0
-                        );
+        if (TrapFrame->PreviousMode == KernelMode)
+        {
+            KeBugCheckEx(0xFFFFFFFF, (ULONG_PTR)TrapFrame->StISR, (ULONG_PTR)TrapFrame->StIIP, (ULONG_PTR)TrapFrame, 0);
         }
 
         break;
@@ -781,11 +766,9 @@ Notes:
     return TRUE;
 }
 
-
+
 BOOLEAN
-KiSingleStep (
-    IN PKTRAP_FRAME TrapFrame
-    )
+KiSingleStep(IN PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -825,8 +808,7 @@ Notes:
     //
     IpsrRi = (ULONG)(TrapFrame->StIPSR >> PSR_RI) & 0x3;
 
-    ExceptionRecord->ExceptionAddress =
-           (PVOID) RtlIa64InsertIPSlotNumber(TrapFrame->StIIP, IpsrRi);
+    ExceptionRecord->ExceptionAddress = (PVOID)RtlIa64InsertIPSlotNumber(TrapFrame->StIIP, IpsrRi);
 
     ExceptionRecord->ExceptionFlags = 0;
     ExceptionRecord->ExceptionRecord = (PEXCEPTION_RECORD)NULL;
@@ -842,11 +824,9 @@ Notes:
 
     return TRUE;
 }
-
+
 BOOLEAN
-KiFloatFault (
-    IN PKTRAP_FRAME TrapFrame
-    )
+KiFloatFault(IN PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -890,8 +870,7 @@ Notes:
 
     ExceptionRecord = (PEXCEPTION_RECORD)&TrapFrame->ExceptionRecord;
     ExceptionRecord->ExceptionAddress =
-           (PVOID) RtlIa64InsertIPSlotNumber(TrapFrame->StIIP,
-                                 ((TrapFrame->StISR & ISR_EI_MASK) >> ISR_EI));
+        (PVOID)RtlIa64InsertIPSlotNumber(TrapFrame->StIIP, ((TrapFrame->StISR & ISR_EI_MASK) >> ISR_EI));
 
     ExceptionRecord->ExceptionFlags = 0;
     ExceptionRecord->ExceptionRecord = (PEXCEPTION_RECORD)NULL;
@@ -907,11 +886,9 @@ Notes:
 
     return TRUE;
 }
-
+
 BOOLEAN
-KiFloatTrap (
-    IN PKTRAP_FRAME TrapFrame
-    )
+KiFloatTrap(IN PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -954,8 +931,7 @@ Notes:
 
     ExceptionRecord = (PEXCEPTION_RECORD)&TrapFrame->ExceptionRecord;
     ExceptionRecord->ExceptionAddress =
-           (PVOID) RtlIa64InsertIPSlotNumber(TrapFrame->StIIPA,
-                                 ((TrapFrame->StISR & ISR_EI_MASK) >> ISR_EI));
+        (PVOID)RtlIa64InsertIPSlotNumber(TrapFrame->StIIPA, ((TrapFrame->StISR & ISR_EI_MASK) >> ISR_EI));
 
     ExceptionRecord->ExceptionFlags = 0;
     ExceptionRecord->ExceptionRecord = (PEXCEPTION_RECORD)NULL;
@@ -973,23 +949,20 @@ Notes:
     // check for single-step trap
     //
 
-    if (SavedISR & (1i64 << ISR_SS_TRAP)) {
+    if (SavedISR & (1i64 << ISR_SS_TRAP))
+    {
         return KiSingleStep(TrapFrame);
     }
 
     return TRUE;
 }
-
 
-#pragma warning( disable : 4715 ) // not all control paths return a value
+
+#pragma warning(disable : 4715) // not all control paths return a value
 
 EXCEPTION_DISPOSITION
-KiSystemServiceHandler (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN FRAME_POINTERS EstablisherFrame,
-    IN OUT PCONTEXT ContextRecord,
-    IN OUT PDISPATCHER_CONTEXT DispatcherContext
-    )
+KiSystemServiceHandler(IN PEXCEPTION_RECORD ExceptionRecord, IN FRAME_POINTERS EstablisherFrame,
+                       IN OUT PCONTEXT ContextRecord, IN OUT PDISPATCHER_CONTEXT DispatcherContext)
 
 /*++
 
@@ -1064,7 +1037,8 @@ Return Value:
     extern ULONG KiSystemServiceEndOffset;
     extern ULONG KiSystemServiceExitOffset;
 
-    if (IS_UNWINDING(ExceptionRecord->ExceptionFlags)) {
+    if (IS_UNWINDING(ExceptionRecord->ExceptionFlags))
+    {
 
         //
         // An unwind is in progress.
@@ -1075,12 +1049,16 @@ Return Value:
         // thread.
         //
 
-        if (ExceptionRecord->ExceptionFlags & EXCEPTION_TARGET_UNWIND) {
+        if (ExceptionRecord->ExceptionFlags & EXCEPTION_TARGET_UNWIND)
+        {
             return ExceptionContinueSearch;
-        } else {
+        }
+        else
+        {
 
             Thread = KeGetCurrentThread();
-            if (Thread->PreviousMode == KernelMode) {
+            if (Thread->PreviousMode == KernelMode)
+            {
 
                 //
                 // Previous mode is kernel and no mutex owned.
@@ -1091,11 +1069,12 @@ Return Value:
                 //                         encounters an interrupt region.
                 //
 
-                TrapFrame = (PKTRAP_FRAME) ContextRecord->IntT0;
+                TrapFrame = (PKTRAP_FRAME)ContextRecord->IntT0;
                 Thread->PreviousMode = (KPROCESSOR_MODE)TrapFrame->PreviousMode;
                 return ExceptionContinueSearch;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // Previous mode is user, call bug check.
@@ -1104,7 +1083,9 @@ Return Value:
                 KeBugCheck(SYSTEM_UNWIND_PREVIOUS_USER);
             }
         }
-    } else {
+    }
+    else
+    {
 
         ULONG IsrCode;
 
@@ -1117,18 +1098,20 @@ Return Value:
         //
 
         ExceptionAddress = (ULONG_PTR)ExceptionRecord->ExceptionAddress;
-        if ((ExceptionAddress < MM_EPC_VA+KiSystemServiceStartOffset) ||
-            (ExceptionAddress >= MM_EPC_VA+KiSystemServiceEndOffset))
+        if ((ExceptionAddress < MM_EPC_VA + KiSystemServiceStartOffset) ||
+            (ExceptionAddress >= MM_EPC_VA + KiSystemServiceEndOffset))
         {
-            if (KeGetCurrentThread()->PreviousMode == UserMode) {
+            if (KeGetCurrentThread()->PreviousMode == UserMode)
+            {
 
                 //
                 // Previous mode is user, call bug check.
                 //
 
                 KeBugCheck(SYSTEM_SERVICE_EXCEPTION);
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // Previous mode is kernel, continue to search
@@ -1136,30 +1119,30 @@ Return Value:
 
                 return ExceptionContinueSearch;
             }
-        } else {
+        }
+        else
+        {
             IsrCode = (ULONG)((ExceptionRecord->ExceptionInformation[4] >> ISR_CODE) & ISR_CODE_MASK) >> 4;
-            if ( (IsrCode == ISR_NAT_REG) || (IsrCode == ISR_NAT_PAGE) ) {
+            if ((IsrCode == ISR_NAT_REG) || (IsrCode == ISR_NAT_PAGE))
+            {
                 DbgPrint("WARNING: Kernel hit a Nat Consumpation Fault\n");
                 DbgPrint("WARNING: At %p\n", ExceptionRecord->ExceptionAddress);
             }
-#pragma warning( disable : 4312 ) // disabling warning on PVOID casting for the ExceptionCode
-            RtlUnwind2(EstablisherFrame,
-                       (PVOID)(MM_EPC_VA+KiSystemServiceExitOffset),
-                       NULL, (PVOID)ExceptionRecord->ExceptionCode, &Context);
-#pragma warning ( default: 4312 )
+#pragma warning(disable : 4312) // disabling warning on PVOID casting for the ExceptionCode
+            RtlUnwind2(EstablisherFrame, (PVOID)(MM_EPC_VA + KiSystemServiceExitOffset), NULL,
+                       (PVOID)ExceptionRecord->ExceptionCode, &Context);
+#pragma warning(default : 4312)
         }
     }
 
 
 } // KiSystemServiceHandler( )
 
-#pragma warning( default : 4715 )
+#pragma warning(default : 4715)
 
-
+
 BOOLEAN
-KiUnalignedFault (
-    IN PKTRAP_FRAME TrapFrame
-    )
+KiUnalignedFault(IN PKTRAP_FRAME TrapFrame)
 /*++
 
 Routine Description:
@@ -1188,8 +1171,7 @@ Notes:
 
     ExceptionRecord = (PEXCEPTION_RECORD)&TrapFrame->ExceptionRecord;
     ExceptionRecord->ExceptionAddress =
-        (PVOID)RtlIa64InsertIPSlotNumber(TrapFrame->StIIP,
-                   ((TrapFrame->StISR & ISR_EI_MASK) >> ISR_EI));
+        (PVOID)RtlIa64InsertIPSlotNumber(TrapFrame->StIIP, ((TrapFrame->StISR & ISR_EI_MASK) >> ISR_EI));
 
     ExceptionRecord->ExceptionFlags = 0;
     ExceptionRecord->ExceptionRecord = (PEXCEPTION_RECORD)NULL;
@@ -1206,11 +1188,8 @@ Notes:
     return TRUE;
 }
 
-
-VOID
-KiAdvanceInstPointer(
-    IN PKTRAP_FRAME TrapFrame
-    )
+
+VOID KiAdvanceInstPointer(IN PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -1234,11 +1213,11 @@ Return Value:
 
     PsrRi = ((TrapFrame->StIPSR >> PSR_RI) & 3i64) + 1;
 
-    if (PsrRi == 3) {
+    if (PsrRi == 3)
+    {
 
         PsrRi = 0;
         TrapFrame->StIIP += 16;
-
     }
 
     TrapFrame->StIPSR &= ~(3i64 << PSR_RI);

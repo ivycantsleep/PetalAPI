@@ -22,36 +22,21 @@ Revision History:
 #include "basedll.h"
 
 NTSTATUS
-CsrBaseClientConnectToServer(
-    PWSTR szSessionDir,
-    PHANDLE phMutant,
-    PBOOLEAN pServerProcess
-    )
+CsrBaseClientConnectToServer(PWSTR szSessionDir, PHANDLE phMutant, PBOOLEAN pServerProcess)
 {
 
 #if defined(BUILD_WOW6432)
-   return NtWow64CsrBaseClientConnectToServer(szSessionDir,
-                                              phMutant,
-                                              pServerProcess
-                                              );
+    return NtWow64CsrBaseClientConnectToServer(szSessionDir, phMutant, pServerProcess);
 #else
 
     NTSTATUS Status;
     ULONG SizeMutant;
     SizeMutant = sizeof(HANDLE);
 
-    Status = CsrClientConnectToServer( szSessionDir,
-                                       BASESRV_SERVERDLL_INDEX,
-                                       phMutant,
-                                       &SizeMutant,
-                                       pServerProcess
-                                     );
+    Status = CsrClientConnectToServer(szSessionDir, BASESRV_SERVERDLL_INDEX, phMutant, &SizeMutant, pServerProcess);
 
 
     return Status;
 
 #endif
-
 }
-
-

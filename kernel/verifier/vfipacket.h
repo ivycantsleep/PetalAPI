@@ -25,16 +25,7 @@ Revision History:
 
 --*/
 
-VOID
-FASTCALL
-VfpPacketFree(
-    IN  PIOV_REQUEST_PACKET     IovPacket
-    );
+VOID FASTCALL VfpPacketFree(IN PIOV_REQUEST_PACKET IovPacket);
 
-VOID
-VfpPacketNotificationCallback(
-    IN  PIOV_DATABASE_HEADER    IovHeader,
-    IN  PIRP                    TrackedIrp  OPTIONAL,
-    IN  IRP_DATABASE_EVENT      Event
-    );
-
+VOID VfpPacketNotificationCallback(IN PIOV_DATABASE_HEADER IovHeader, IN PIRP TrackedIrp OPTIONAL,
+                                   IN IRP_DATABASE_EVENT Event);

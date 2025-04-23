@@ -28,38 +28,32 @@ Revision History:
 
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,Ke386CallBios)
+#pragma alloc_text(PAGE, Ke386CallBios)
 #endif
 
-
+
 //
 // Never change these equates without checking biosa.asm
 //
 
-#define V86_CODE_ADDRESS    0x10000
-#define INT_OPCODE          0xcd
-#define V86_BOP_OPCODE      0xfec4c4
-#define V86_STACK_POINTER   0x1ffe
-#define IOPM_OFFSET         FIELD_OFFSET(KTSS, IoMaps[0].IoMap)
-#define VDM_TIB_ADDRESS     0x12000
-#define INT_10_TEB          0x13000
+#define V86_CODE_ADDRESS 0x10000
+#define INT_OPCODE 0xcd
+#define V86_BOP_OPCODE 0xfec4c4
+#define V86_STACK_POINTER 0x1ffe
+#define IOPM_OFFSET FIELD_OFFSET(KTSS, IoMaps[0].IoMap)
+#define VDM_TIB_ADDRESS 0x12000
+#define INT_10_TEB 0x13000
 
 //
 // External References
 //
 
 PVOID Ki386IopmSaveArea;
-VOID
-Ki386SetupAndExitToV86Code (
-   PVOID ExecutionAddress
-   );
+VOID Ki386SetupAndExitToV86Code(PVOID ExecutionAddress);
 
-
+
 NTSTATUS
-Ke386CallBios (
-    IN ULONG BiosCommand,
-    IN OUT PCONTEXT BiosArguments
-    )
+Ke386CallBios(IN ULONG BiosCommand, IN OUT PCONTEXT BiosArguments)
 
 /*++
 
@@ -98,14 +92,15 @@ Return Value:
     PKTHREAD Thread;
     USHORT OldIopmOffset, OldIoMapBase;
     PVDM_PROCESS_OBJECTS VdmObjects;
-    ULONG   ContextLength;
+    ULONG ContextLength;
     BOOLEAN ThreadDebugActive;
 
     //
     // Map in ROM BIOS area to perform the int 10 code
     //
 
-    try {
+    try
+    {
 
         RtlZeroMemory(UserInt10Teb, sizeof(TEB));
 
@@ -153,8 +148,9 @@ Return Value:
         VdmTib->VdmContext.Esp = 2 * PAGE_SIZE - sizeof(ULONG);
         VdmTib->VdmContext.EFlags |= EFLAGS_V86_MASK | EFLAGS_INTERRUPT_MASK;
         VdmTib->VdmContext.ContextFlags = CONTEXT_FULL;
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         return GetExceptionCode();
     }
@@ -174,17 +170,15 @@ Return Value:
 
     ASSERT(PsGetCurrentProcess()->VdmObjects == NULL);
 
-    VdmObjects = ExAllocatePoolWithTag (NonPagedPool,
-                                        sizeof(VDM_PROCESS_OBJECTS),
-                                        '  eK'
-                                        );
+    VdmObjects = ExAllocatePoolWithTag(NonPagedPool, sizeof(VDM_PROCESS_OBJECTS), '  eK');
 
     //
     // Since we are doing this on behalf of CSR not a user process, we aren't
     // charging quota.
     //
 
-    if (VdmObjects == NULL) {
+    if (VdmObjects == NULL)
+    {
         return STATUS_NO_MEMORY;
     }
 
@@ -195,7 +189,7 @@ Return Value:
     // in a conventional vdm
     //
 
-    RtlZeroMemory( VdmObjects, sizeof(VDM_PROCESS_OBJECTS));
+    RtlZeroMemory(VdmObjects, sizeof(VDM_PROCESS_OBJECTS));
 
     VdmObjects->VdmTib = VdmTib;
 
@@ -235,17 +229,14 @@ Return Value:
     //
 
     ASSERT(KeGetPcr()->GDT[KGDT_TSS / 8].LimitLow >= (0x2000 + IOPM_OFFSET - 1));
-    RtlCopyMemory (Ki386IopmSaveArea,
-                   (PVOID)&Tss->IoMaps[0].IoMap,
-                   PAGE_SIZE * 2
-                   );
-    RtlZeroMemory ((PVOID)&Tss->IoMaps[0].IoMap, PAGE_SIZE * 2);
+    RtlCopyMemory(Ki386IopmSaveArea, (PVOID)&Tss->IoMaps[0].IoMap, PAGE_SIZE * 2);
+    RtlZeroMemory((PVOID)&Tss->IoMaps[0].IoMap, PAGE_SIZE * 2);
 
     Process = Thread->ApcState.Process;
     OldIopmOffset = Process->IopmOffset;
     OldIoMapBase = Tss->IoMapBase;
-    Process->IopmOffset = (USHORT)(IOPM_OFFSET);      // Set Process IoPmOffset before
-    Tss->IoMapBase = (USHORT)(IOPM_OFFSET);           // updating Tss IoMapBase
+    Process->IopmOffset = (USHORT)(IOPM_OFFSET); // Set Process IoPmOffset before
+    Tss->IoMapBase = (USHORT)(IOPM_OFFSET);      // updating Tss IoMapBase
 
     //
     // The context setup for the BIOS will not have valid debug registers
@@ -276,10 +267,7 @@ Return Value:
     // Restore old IOPM
     //
 
-    RtlCopyMemory ((PVOID)&Tss->IoMaps[0].IoMap,
-                   Ki386IopmSaveArea,
-                   PAGE_SIZE * 2
-                   );
+    RtlCopyMemory((PVOID)&Tss->IoMaps[0].IoMap, Ki386IopmSaveArea, PAGE_SIZE * 2);
 
     Process->IopmOffset = OldIopmOffset;
     Tss->IoMapBase = OldIoMapBase;

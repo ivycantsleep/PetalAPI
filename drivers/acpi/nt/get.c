@@ -33,19 +33,11 @@ Environment:
 --*/
 
 #include "pch.h"
-
+
 NTSTATUS
-ACPIGet(
-    IN  PVOID   Target,
-    IN  ULONG   ObjectID,
-    IN  ULONG   Flags,
-    IN  PVOID   SimpleArgument,
-    IN  ULONG   SimpleArgumentSize,
-    IN  PFNACB  CallBackRoutine OPTIONAL,
-    IN  PVOID   CallBackContext OPTIONAL,
-    OUT PVOID   *Buffer,
-    OUT ULONG   *BufferSize     OPTIONAL
-    )
+ACPIGet(IN PVOID Target, IN ULONG ObjectID, IN ULONG Flags, IN PVOID SimpleArgument, IN ULONG SimpleArgumentSize,
+        IN PFNACB CallBackRoutine OPTIONAL, IN PVOID CallBackContext OPTIONAL, OUT PVOID *Buffer,
+        OUT ULONG *BufferSize OPTIONAL)
 /*++
 
 Routine Description:
@@ -73,38 +65,40 @@ Return Value:
 
 --*/
 {
-    BOOLEAN             async               = FALSE;
-    KIRQL               oldIrql;
-    NTSTATUS            status;
-    OBJDATA             argument;
-    POBJDATA            argumentPtr         = NULL;
-    PACPI_GET_REQUEST   request             = NULL;
-    PDEVICE_EXTENSION   deviceExtension     = NULL;
-    PFNACB              completionRoutine   = NULL;
-    PNSOBJ              acpiObject;
-    ULONG               argumentCount       = 0;
+    BOOLEAN async = FALSE;
+    KIRQL oldIrql;
+    NTSTATUS status;
+    OBJDATA argument;
+    POBJDATA argumentPtr = NULL;
+    PACPI_GET_REQUEST request = NULL;
+    PDEVICE_EXTENSION deviceExtension = NULL;
+    PFNACB completionRoutine = NULL;
+    PNSOBJ acpiObject;
+    ULONG argumentCount = 0;
 
-    if ( (Flags & GET_PROP_ASYNCHRONOUS) ) {
+    if ((Flags & GET_PROP_ASYNCHRONOUS))
+    {
 
         async = TRUE;
-
     }
 
-    if ( (Flags & GET_PROP_NSOBJ_INTERFACE) ) {
+    if ((Flags & GET_PROP_NSOBJ_INTERFACE))
+    {
 
-        acpiObject = (PNSOBJ) Target;
+        acpiObject = (PNSOBJ)Target;
+    }
+    else
+    {
 
-    } else {
-
-        deviceExtension = (PDEVICE_EXTENSION) Target;
+        deviceExtension = (PDEVICE_EXTENSION)Target;
         acpiObject = deviceExtension->AcpiObject;
-
     }
 
     //
     // Determine the completion routine that we should use
     //
-    switch( (Flags & GET_REQUEST_MASK) ) {
+    switch ((Flags & GET_REQUEST_MASK))
+    {
     case GET_REQUEST_BUFFER:
         completionRoutine = ACPIGetWorkerForBuffer;
         break;
@@ -118,16 +112,15 @@ Return Value:
         // If this is a GET_CONVERT_TO_DEVICE_PRESENCE request, and the target
         // is a dock profile provider, we need to use a different AcpiObject
         //
-        if ( (Flags & GET_CONVERT_TO_DEVICE_PRESENCE) &&
-            !(Flags & GET_PROP_NSOBJ_INTERFACE) ) {
+        if ((Flags & GET_CONVERT_TO_DEVICE_PRESENCE) && !(Flags & GET_PROP_NSOBJ_INTERFACE))
+        {
 
-            if (deviceExtension->Flags & DEV_PROP_DOCK) {
+            if (deviceExtension->Flags & DEV_PROP_DOCK)
+            {
 
-                ASSERT( deviceExtension->Dock.CorrospondingAcpiDevice );
+                ASSERT(deviceExtension->Dock.CorrospondingAcpiDevice);
                 acpiObject = deviceExtension->Dock.CorrospondingAcpiDevice->AcpiObject;
-
             }
-
         }
         break;
     case GET_REQUEST_STRING:
@@ -138,45 +131,48 @@ Return Value:
         break;
     default:
         return STATUS_INVALID_PARAMETER_3;
-
     }
 
     //
     // Lets try to build the input argument (if possible)
     //
-    if ( (Flags & GET_EVAL_MASK) ) {
+    if ((Flags & GET_EVAL_MASK))
+    {
 
-        ASSERT( SimpleArgumentSize != 0 );
+        ASSERT(SimpleArgumentSize != 0);
 
         //
         // Initialize the input argument
         //
-        RtlZeroMemory( &argument, sizeof(OBJDATA) );
+        RtlZeroMemory(&argument, sizeof(OBJDATA));
 
         //
         // Handle the various different cases
         //
-        if ( (Flags & GET_EVAL_SIMPLE_INTEGER) ) {
+        if ((Flags & GET_EVAL_SIMPLE_INTEGER))
+        {
 
             argument.dwDataType = OBJTYPE_INTDATA;
-            argument.uipDataValue = ( (ULONG_PTR) SimpleArgument );
-
-        } else if ( (Flags & GET_EVAL_SIMPLE_STRING) ) {
+            argument.uipDataValue = ((ULONG_PTR)SimpleArgument);
+        }
+        else if ((Flags & GET_EVAL_SIMPLE_STRING))
+        {
 
             argument.dwDataType = OBJTYPE_STRDATA;
             argument.dwDataLen = SimpleArgumentSize;
-            argument.pbDataBuff = ( (PUCHAR) SimpleArgument );
-
-        } else if ( (Flags & GET_EVAL_SIMPLE_BUFFER) ) {
+            argument.pbDataBuff = ((PUCHAR)SimpleArgument);
+        }
+        else if ((Flags & GET_EVAL_SIMPLE_BUFFER))
+        {
 
             argument.dwDataType = OBJTYPE_BUFFDATA;
             argument.dwDataLen = SimpleArgumentSize;
-            argument.pbDataBuff = ( (PUCHAR) SimpleArgument );
+            argument.pbDataBuff = ((PUCHAR)SimpleArgument);
+        }
+        else
+        {
 
-        } else {
-
-            ACPIInternalError( ACPI_GET );
-
+            ACPIInternalError(ACPI_GET);
         }
 
         //
@@ -184,7 +180,6 @@ Return Value:
         //
         argumentCount = 1;
         argumentPtr = &argument;
-
     }
 
     //
@@ -192,116 +187,95 @@ Return Value:
     // We have no choice but to allocate this from NonPagedPool --- the
     // interpreter will be calling us at DPC level
     //
-    request = ExAllocatePoolWithTag(
-        NonPagedPool,
-        sizeof(ACPI_GET_REQUEST),
-        ACPI_MISC_POOLTAG
-        );
-    if (request == NULL) {
+    request = ExAllocatePoolWithTag(NonPagedPool, sizeof(ACPI_GET_REQUEST), ACPI_MISC_POOLTAG);
+    if (request == NULL)
+    {
 
         return STATUS_INSUFFICIENT_RESOURCES;
-
     }
-    RtlZeroMemory( request, sizeof(ACPI_GET_REQUEST) );
+    RtlZeroMemory(request, sizeof(ACPI_GET_REQUEST));
 
     //
     // Propogate the information that the caller provided
     //
-    request->Flags              = Flags;
-    request->ObjectID           = ObjectID;
-    request->DeviceExtension    = deviceExtension;
-    request->AcpiObject         = acpiObject;
-    request->CallBackRoutine    = CallBackRoutine;
-    request->CallBackContext    = CallBackContext;
-    request->Buffer             = Buffer;
-    request->BufferSize         = BufferSize;
+    request->Flags = Flags;
+    request->ObjectID = ObjectID;
+    request->DeviceExtension = deviceExtension;
+    request->AcpiObject = acpiObject;
+    request->CallBackRoutine = CallBackRoutine;
+    request->CallBackContext = CallBackContext;
+    request->Buffer = Buffer;
+    request->BufferSize = BufferSize;
 
     //
     // Make sure that we queue the request onto the list that we use to
     // keep track of the requests
     //
-    KeAcquireSpinLock( &AcpiGetLock, &oldIrql );
-    InsertTailList(
-        &(AcpiGetListEntry),
-        &(request->ListEntry)
-        );
-    KeReleaseSpinLock( &AcpiGetLock, oldIrql );
+    KeAcquireSpinLock(&AcpiGetLock, &oldIrql);
+    InsertTailList(&(AcpiGetListEntry), &(request->ListEntry));
+    KeReleaseSpinLock(&AcpiGetLock, oldIrql);
 
     //
     // Do we have a node with a fake acpi object? This check is required
     // to support those devices that we really can run a control method on
     //
-    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) &&
-         (deviceExtension->Flags & DEV_PROP_NO_OBJECT) &&
-         (!(deviceExtension->Flags & DEV_PROP_DOCK)) ) {
+    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) && (deviceExtension->Flags & DEV_PROP_NO_OBJECT) &&
+        (!(deviceExtension->Flags & DEV_PROP_DOCK)))
+    {
 
         status = STATUS_OBJECT_NAME_NOT_FOUND;
         goto ACPIGetExit;
-
     }
 
     //
     // Go out and see if the requested object is present
     //
-    acpiObject = ACPIAmliGetNamedChild(
-        acpiObject,
-        ObjectID
-        );
-    if (!acpiObject) {
+    acpiObject = ACPIAmliGetNamedChild(acpiObject, ObjectID);
+    if (!acpiObject)
+    {
 
         status = STATUS_OBJECT_NAME_NOT_FOUND;
         goto ACPIGetExit;
-
     }
 
     //
     // What we do now depends on wether or not the user wants us to
     // behave async or sync
     //
-    if (async) {
+    if (async)
+    {
 
         //
         // Evaluate the request
         //
-        status = AMLIAsyncEvalObject(
-            acpiObject,
-            &(request->ResultData),
-            argumentCount,
-            argumentPtr,
-            completionRoutine,
-            request
-            );
-        if (status == STATUS_PENDING) {
+        status = AMLIAsyncEvalObject(acpiObject, &(request->ResultData), argumentCount, argumentPtr, completionRoutine,
+                                     request);
+        if (status == STATUS_PENDING)
+        {
 
             //
             // We cannot do anything else here. Wait for the completion routine
             // to fire
             //
             return status;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // Evaluate the request
         //
-        status = AMLIEvalNameSpaceObject(
-            acpiObject,
-            &(request->ResultData),
-            argumentCount,
-            argumentPtr
-            );
-
+        status = AMLIEvalNameSpaceObject(acpiObject, &(request->ResultData), argumentCount, argumentPtr);
     }
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // We failed for some other reason
         //
         goto ACPIGetExit;
-
     }
 
 ACPIGetExit:
@@ -314,12 +288,7 @@ ACPIGetExit:
     //
     // Call the completion routine to actually do the post-processing
     //
-    (completionRoutine)(
-        acpiObject,
-        status,
-        &(request->ResultData),
-        request
-        );
+    (completionRoutine)(acpiObject, status, &(request->ResultData), request);
 
     //
     // Get the real status value from the completion routine
@@ -329,38 +298,31 @@ ACPIGetExit:
     //
     // Done with the request
     //
-    if (request != NULL) {
+    if (request != NULL)
+    {
 
         //
         // Remove the request from the queue
         //
-        KeAcquireSpinLock( &AcpiGetLock, &oldIrql );
-        RemoveEntryList( &(request->ListEntry) );
-        KeReleaseSpinLock( &AcpiGetLock, oldIrql );
+        KeAcquireSpinLock(&AcpiGetLock, &oldIrql);
+        RemoveEntryList(&(request->ListEntry));
+        KeReleaseSpinLock(&AcpiGetLock, oldIrql);
 
         //
         // Free the storage
         //
-        ExFreePool(  request );
-
+        ExFreePool(request);
     }
 
     //
     // Done
     //
     return status;
-
 }
-
+
 NTSTATUS
-ACPIGetConvertToAddress(
-    IN  PDEVICE_EXTENSION   DeviceExtension,
-    IN  NTSTATUS            Status,
-    IN  POBJDATA            Result,
-    IN  ULONG               Flags,
-    OUT PVOID               *Buffer,
-    OUT ULONG               *BufferSize
-    )
+ACPIGetConvertToAddress(IN PDEVICE_EXTENSION DeviceExtension, IN NTSTATUS Status, IN POBJDATA Result, IN ULONG Flags,
+                        OUT PVOID *Buffer, OUT ULONG *BufferSize)
 /*++
 
 Routine Description:
@@ -383,57 +345,53 @@ Return Value:
 
 --*/
 {
-    ASSERT( Buffer != NULL );
+    ASSERT(Buffer != NULL);
 
     //
     // Did we succeed?
     //
-    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) &&
-        DeviceExtension->Flags & DEV_PROP_FIXED_ADDRESS) {
+    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) && DeviceExtension->Flags & DEV_PROP_FIXED_ADDRESS)
+    {
 
-        *( (PULONG) Buffer) = DeviceExtension->Address;
-
-    } else if (!NT_SUCCESS(Status)) {
+        *((PULONG)Buffer) = DeviceExtension->Address;
+    }
+    else if (!NT_SUCCESS(Status))
+    {
 
         return Status;
-
-    } else if (Result->dwDataType != OBJTYPE_INTDATA) {
+    }
+    else if (Result->dwDataType != OBJTYPE_INTDATA)
+    {
 
         //
         // If we didn't get an integer, that's very bad.
         //
         return STATUS_ACPI_INVALID_DATA;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Set the value for the address
         //
-        *( (PULONG) Buffer) = (ULONG)Result->uipDataValue;
-
+        *((PULONG)Buffer) = (ULONG)Result->uipDataValue;
     }
 
     //
     // Set the size of the buffer (if necessary)
     //
-    if (BufferSize != NULL) {
+    if (BufferSize != NULL)
+    {
 
         *BufferSize = sizeof(ULONG);
-
     }
 
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-ACPIGetConvertToCompatibleID(
-    IN  PDEVICE_EXTENSION   DeviceExtension,
-    IN  NTSTATUS            Status,
-    IN  POBJDATA            Result,
-    IN  ULONG               Flags,
-    OUT PVOID               *Buffer,
-    OUT ULONG               *BufferSize
-    )
+ACPIGetConvertToCompatibleID(IN PDEVICE_EXTENSION DeviceExtension, IN NTSTATUS Status, IN POBJDATA Result,
+                             IN ULONG Flags, OUT PVOID *Buffer, OUT ULONG *BufferSize)
 /*++
 
 Routine Description:
@@ -458,23 +416,23 @@ Return Value:
 
 --*/
 {
-    NTSTATUS    status = Status;
-    POBJDATA    currentObject;
+    NTSTATUS status = Status;
+    POBJDATA currentObject;
     PPACKAGEOBJ packageObject;
-    PUCHAR      buffer;
-    PUCHAR      *localBufferArray;
-    PUCHAR      ptr;
-    ULONG       i                       = 0;
-    ULONG       *localBufferSizeArray;
-    ULONG       numElements;
-    ULONG       newBufferSize           = 0;
-    ULONG       memSize;
+    PUCHAR buffer;
+    PUCHAR *localBufferArray;
+    PUCHAR ptr;
+    ULONG i = 0;
+    ULONG *localBufferSizeArray;
+    ULONG numElements;
+    ULONG newBufferSize = 0;
+    ULONG memSize;
 
     //
     // Does this device have a fake CID?
     //
-    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) &&
-        DeviceExtension->Flags & DEV_PROP_FIXED_CID) {
+    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) && DeviceExtension->Flags & DEV_PROP_FIXED_CID)
+    {
 
         //
         // It does. We can use that string in this one's place
@@ -484,55 +442,52 @@ Return Value:
         //
         // Allocate the memory
         //
-        buffer = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            memSize * sizeof(UCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (buffer == NULL) {
+        buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                       memSize * sizeof(UCHAR), ACPI_STRING_POOLTAG);
+        if (buffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( buffer, memSize * sizeof(UCHAR) );
+        RtlZeroMemory(buffer, memSize * sizeof(UCHAR));
 
         //
         // Copy the memory
         //
-        RtlCopyMemory( buffer, DeviceExtension->Processor.CompatibleID, memSize );
+        RtlCopyMemory(buffer, DeviceExtension->Processor.CompatibleID, memSize);
 
         //
         // Set the result string
         //
         *Buffer = buffer;
-        if (BufferSize != NULL) {
+        if (BufferSize != NULL)
+        {
 
             *BufferSize = newBufferSize;
-
         }
 
         //
         // Done
         //
         return STATUS_SUCCESS;
-
     }
 
     //
     // If we got to this point, and there isn't a successfull status,
     // then there is nothing we can do
     //
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         return Status;
-
     }
 
     //
     // Determine the number of data elements that we have.
     //
     //
-    switch (Result->dwDataType) {
+    switch (Result->dwDataType)
+    {
     case OBJTYPE_STRDATA:
     case OBJTYPE_INTDATA:
 
@@ -541,75 +496,55 @@ Return Value:
 
     case OBJTYPE_PKGDATA:
 
-        packageObject = ((PPACKAGEOBJ) Result->pbDataBuff );
+        packageObject = ((PPACKAGEOBJ)Result->pbDataBuff);
         numElements = packageObject->dwcElements;
         break;
 
     default:
         return STATUS_ACPI_INVALID_DATA;
-
     }
 
     //
     // Now, lets allocate the storage that we will need to process those
     // elements
     //
-    localBufferArray = ExAllocatePoolWithTag(
-        NonPagedPool,
-        sizeof(PUCHAR) * numElements,
-        ACPI_MISC_POOLTAG
-        );
-    if (localBufferArray == NULL) {
+    localBufferArray = ExAllocatePoolWithTag(NonPagedPool, sizeof(PUCHAR) * numElements, ACPI_MISC_POOLTAG);
+    if (localBufferArray == NULL)
+    {
 
         return STATUS_INSUFFICIENT_RESOURCES;
-
     }
-    RtlZeroMemory( localBufferArray, sizeof(PUCHAR) * numElements );
+    RtlZeroMemory(localBufferArray, sizeof(PUCHAR) * numElements);
 
     //
     // Lets allocate storage so that we know how big those elements are
     //
-    localBufferSizeArray = ExAllocatePoolWithTag(
-        NonPagedPool,
-        sizeof(ULONG) * numElements,
-        ACPI_MISC_POOLTAG
-        );
-    if (localBufferSizeArray == NULL) {
+    localBufferSizeArray = ExAllocatePoolWithTag(NonPagedPool, sizeof(ULONG) * numElements, ACPI_MISC_POOLTAG);
+    if (localBufferSizeArray == NULL)
+    {
 
-        ExFreePool( localBufferArray );
+        ExFreePool(localBufferArray);
         return STATUS_INSUFFICIENT_RESOURCES;
-
     }
-    RtlZeroMemory( localBufferSizeArray, sizeof(ULONG) * numElements );
+    RtlZeroMemory(localBufferSizeArray, sizeof(ULONG) * numElements);
 
     //
     // Process the data
     //
-    switch (Result->dwDataType) {
+    switch (Result->dwDataType)
+    {
     case OBJTYPE_STRDATA:
 
-        status = ACPIGetConvertToString(
-            DeviceExtension,
-            Status,
-            Result,
-            Flags,
-            &(localBufferArray[0]),
-            &(localBufferSizeArray[0])
-            );
+        status = ACPIGetConvertToString(DeviceExtension, Status, Result, Flags, &(localBufferArray[0]),
+                                        &(localBufferSizeArray[0]));
         newBufferSize = localBufferSizeArray[0];
 
         break;
 
     case OBJTYPE_INTDATA:
 
-        status = ACPIGetConvertToPnpID(
-            DeviceExtension,
-            Status,
-            Result,
-            Flags,
-            &(localBufferArray[0]),
-            &(localBufferSizeArray[0])
-            );
+        status = ACPIGetConvertToPnpID(DeviceExtension, Status, Result, Flags, &(localBufferArray[0]),
+                                       &(localBufferSizeArray[0]));
         newBufferSize = localBufferSizeArray[0];
 
         break;
@@ -619,54 +554,44 @@ Return Value:
         //
         // Iterate over all the elements in the process
         //
-        for (i = 0; i < numElements; i++) {
+        for (i = 0; i < numElements; i++)
+        {
 
             //
             // Look at the element that we want to process
             //
-            currentObject = &( packageObject->adata[i]);
+            currentObject = &(packageObject->adata[i]);
 
             //
             // What kind of object to do we have?
             //
-            switch (currentObject->dwDataType) {
+            switch (currentObject->dwDataType)
+            {
             case OBJTYPE_STRDATA:
 
-                status = ACPIGetConvertToString(
-                    DeviceExtension,
-                    Status,
-                    currentObject,
-                    Flags,
-                    &(localBufferArray[i]),
-                    &(localBufferSizeArray[i])
-                    );
+                status = ACPIGetConvertToString(DeviceExtension, Status, currentObject, Flags, &(localBufferArray[i]),
+                                                &(localBufferSizeArray[i]));
                 break;
 
             case OBJTYPE_INTDATA:
 
-                status = ACPIGetConvertToPnpID(
-                    DeviceExtension,
-                    Status,
-                    currentObject,
-                    Flags,
-                    &(localBufferArray[i]),
-                    &(localBufferSizeArray[i])
-                    );
+                status = ACPIGetConvertToPnpID(DeviceExtension, Status, currentObject, Flags, &(localBufferArray[i]),
+                                               &(localBufferSizeArray[i]));
                 break;
 
             default:
 
-                ACPIInternalError( ACPI_GET );
+                ACPIInternalError(ACPI_GET);
 
             } // switch
 
             //
             // Did we fail?
             //
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
 
                 break;
-
             }
 
             //
@@ -674,10 +599,10 @@ Return Value:
             // string terminator. Since this would cause us to prematurely
             // terminate the resulting string. We must watch out for it
             //
-            if (localBufferSizeArray[i] == 1) {
+            if (localBufferSizeArray[i] == 1)
+            {
 
                 localBufferSizeArray[i] = 0;
-
             }
 
             //
@@ -695,7 +620,8 @@ Return Value:
     // If we didn't succeed, then we must free all of the memory that
     // we tried to build up
     //
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // This is a little cheat that allows to share the cleanup code.
@@ -704,78 +630,71 @@ Return Value:
         //
         numElements = i;
         goto ACPIGetConvertToCompatibleIDExit;
-
     }
 
     //
     // If we have an empty list, or one that is only a null, then we
     // won't botther to return anything
     //
-    if (newBufferSize <= 1) {
+    if (newBufferSize <= 1)
+    {
 
         status = STATUS_ACPI_INVALID_DATA;
         newBufferSize = 0;
         goto ACPIGetConvertToCompatibleIDExit;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Remember that we need to have an extra null at the end. Allocate
         // space for that null
         //
         newBufferSize++;
-
     }
 
     //
     // Allocate the memory
     //
-    buffer = ExAllocatePoolWithTag(
-        ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-        newBufferSize * sizeof(UCHAR),
-        ACPI_STRING_POOLTAG
-        );
-    if (buffer == NULL) {
+    buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                   newBufferSize * sizeof(UCHAR), ACPI_STRING_POOLTAG);
+    if (buffer == NULL)
+    {
 
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto ACPIGetConvertToCompatibleIDExit;
-
     }
-    RtlZeroMemory( buffer, newBufferSize * sizeof(UCHAR) );
+    RtlZeroMemory(buffer, newBufferSize * sizeof(UCHAR));
 
     //
     // Iterate over all pieces of the string
     //
-    for (ptr = buffer, i = 0; i < numElements; i++) {
+    for (ptr = buffer, i = 0; i < numElements; i++)
+    {
 
-        if (localBufferArray[i] != NULL) {
+        if (localBufferArray[i] != NULL)
+        {
 
             //
             // Copy over the interesting memory
             //
-            RtlCopyMemory(
-                ptr,
-                localBufferArray[i],
-                localBufferSizeArray[i] * sizeof(UCHAR)
-                );
-
+            RtlCopyMemory(ptr, localBufferArray[i], localBufferSizeArray[i] * sizeof(UCHAR));
         }
 
         //
         // Increment the temp pointer to point to the next target location
         //
         ptr += localBufferSizeArray[i];
-
     }
 
     //
     // Set the result string
     //
     *Buffer = buffer;
-    if (BufferSize != NULL) {
+    if (BufferSize != NULL)
+    {
 
         *BufferSize = newBufferSize;
-
     }
 
 ACPIGetConvertToCompatibleIDExit:
@@ -783,33 +702,27 @@ ACPIGetConvertToCompatibleIDExit:
     //
     // Clean up
     //
-    for (i = 0; i < numElements; i ++) {
+    for (i = 0; i < numElements; i++)
+    {
 
-        if (localBufferArray[i] != NULL ) {
+        if (localBufferArray[i] != NULL)
+        {
 
-            ExFreePool( localBufferArray[i] );
-
+            ExFreePool(localBufferArray[i]);
         }
-
     }
-    ExFreePool( localBufferSizeArray );
-    ExFreePool( localBufferArray );
+    ExFreePool(localBufferSizeArray);
+    ExFreePool(localBufferArray);
 
     //
     // Return the appropriate status value
     //
     return status;
 }
-
+
 NTSTATUS
-ACPIGetConvertToCompatibleIDWide(
-    IN  PDEVICE_EXTENSION   DeviceExtension,
-    IN  NTSTATUS            Status,
-    IN  POBJDATA            Result,
-    IN  ULONG               Flags,
-    OUT PVOID               *Buffer,
-    OUT ULONG               *BufferSize
-    )
+ACPIGetConvertToCompatibleIDWide(IN PDEVICE_EXTENSION DeviceExtension, IN NTSTATUS Status, IN POBJDATA Result,
+                                 IN ULONG Flags, OUT PVOID *Buffer, OUT ULONG *BufferSize)
 /*++
 
 Routine Description:
@@ -834,23 +747,23 @@ Return Value:
 
 --*/
 {
-    NTSTATUS    status = Status;
-    POBJDATA    currentObject;
+    NTSTATUS status = Status;
+    POBJDATA currentObject;
     PPACKAGEOBJ packageObject;
-    PWCHAR      buffer;
-    PWCHAR      *localBufferArray;
-    PWCHAR      ptr;
-    ULONG       i                       = 0;
-    ULONG       *localBufferSizeArray;
-    ULONG       numElements             = 0;
-    ULONG       newBufferSize           = 0;
-    ULONG       memSize;
+    PWCHAR buffer;
+    PWCHAR *localBufferArray;
+    PWCHAR ptr;
+    ULONG i = 0;
+    ULONG *localBufferSizeArray;
+    ULONG numElements = 0;
+    ULONG newBufferSize = 0;
+    ULONG memSize;
 
     //
     // Does this device have a fake CID?
     //
-    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) &&
-        DeviceExtension->Flags & DEV_PROP_FIXED_CID) {
+    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) && DeviceExtension->Flags & DEV_PROP_FIXED_CID)
+    {
 
         //
         // It does. We can use that string in this one's place
@@ -860,55 +773,52 @@ Return Value:
         //
         // Allocate the memory
         //
-        buffer = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            memSize * sizeof(WCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (buffer == NULL) {
+        buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                       memSize * sizeof(WCHAR), ACPI_STRING_POOLTAG);
+        if (buffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( buffer, memSize * sizeof(WCHAR) );
+        RtlZeroMemory(buffer, memSize * sizeof(WCHAR));
 
         //
         // Generate the string
         //
-        swprintf( buffer, L"%S", DeviceExtension->Processor.CompatibleID );
+        swprintf(buffer, L"%S", DeviceExtension->Processor.CompatibleID);
 
         //
         // Set the result string
         //
         *Buffer = buffer;
-        if (BufferSize != NULL) {
+        if (BufferSize != NULL)
+        {
 
             *BufferSize = newBufferSize;
-
         }
 
         //
         // Done
         //
         return STATUS_SUCCESS;
-
     }
 
     //
     // If we got to this point, and there isn't a successfull status,
     // then there is nothing we can do
     //
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         return Status;
-
     }
 
     //
     // Determine the number of data elements that we have.
     //
     //
-    switch (Result->dwDataType) {
+    switch (Result->dwDataType)
+    {
     case OBJTYPE_STRDATA:
     case OBJTYPE_INTDATA:
 
@@ -917,75 +827,55 @@ Return Value:
 
     case OBJTYPE_PKGDATA:
 
-        packageObject = ((PPACKAGEOBJ) Result->pbDataBuff );
+        packageObject = ((PPACKAGEOBJ)Result->pbDataBuff);
         numElements = packageObject->dwcElements;
         break;
 
     default:
         return STATUS_ACPI_INVALID_DATA;
-
     }
 
     //
     // Now, lets allocate the storage that we will need to process those
     // elements
     //
-    localBufferArray = ExAllocatePoolWithTag(
-        NonPagedPool,
-        sizeof(PWCHAR) * numElements,
-        ACPI_MISC_POOLTAG
-        );
-    if (localBufferArray == NULL) {
+    localBufferArray = ExAllocatePoolWithTag(NonPagedPool, sizeof(PWCHAR) * numElements, ACPI_MISC_POOLTAG);
+    if (localBufferArray == NULL)
+    {
 
         return STATUS_INSUFFICIENT_RESOURCES;
-
     }
-    RtlZeroMemory( localBufferArray, sizeof(PWCHAR) * numElements );
+    RtlZeroMemory(localBufferArray, sizeof(PWCHAR) * numElements);
 
     //
     // Lets allocate storage so that we know how big those elements are
     //
-    localBufferSizeArray = ExAllocatePoolWithTag(
-        NonPagedPool,
-        sizeof(ULONG) * numElements,
-        ACPI_MISC_POOLTAG
-        );
-    if (localBufferSizeArray == NULL) {
+    localBufferSizeArray = ExAllocatePoolWithTag(NonPagedPool, sizeof(ULONG) * numElements, ACPI_MISC_POOLTAG);
+    if (localBufferSizeArray == NULL)
+    {
 
-        ExFreePool( localBufferArray );
+        ExFreePool(localBufferArray);
         return STATUS_INSUFFICIENT_RESOURCES;
-
     }
-    RtlZeroMemory( localBufferSizeArray, sizeof(ULONG) * numElements );
+    RtlZeroMemory(localBufferSizeArray, sizeof(ULONG) * numElements);
 
     //
     // Process the data
     //
-    switch (Result->dwDataType) {
+    switch (Result->dwDataType)
+    {
     case OBJTYPE_STRDATA:
 
-        status = ACPIGetConvertToStringWide(
-            DeviceExtension,
-            Status,
-            Result,
-            Flags,
-            &(localBufferArray[0]),
-            &(localBufferSizeArray[0])
-            );
+        status = ACPIGetConvertToStringWide(DeviceExtension, Status, Result, Flags, &(localBufferArray[0]),
+                                            &(localBufferSizeArray[0]));
         newBufferSize = localBufferSizeArray[0];
 
         break;
 
     case OBJTYPE_INTDATA:
 
-        status = ACPIGetConvertToPnpIDWide(
-            DeviceExtension,
-            Status,
-            Result,
-            Flags,
-            &(localBufferArray[0]),
-            &(localBufferSizeArray[0])
-            );
+        status = ACPIGetConvertToPnpIDWide(DeviceExtension, Status, Result, Flags, &(localBufferArray[0]),
+                                           &(localBufferSizeArray[0]));
         newBufferSize = localBufferSizeArray[0];
 
         break;
@@ -995,54 +885,44 @@ Return Value:
         //
         // Iterate over all the elements in the process
         //
-        for (i = 0; i < numElements; i++) {
+        for (i = 0; i < numElements; i++)
+        {
 
             //
             // Look at the element that we want to process
             //
-            currentObject = &( packageObject->adata[i]);
+            currentObject = &(packageObject->adata[i]);
 
             //
             // What kind of object to do we have?
             //
-            switch (currentObject->dwDataType) {
+            switch (currentObject->dwDataType)
+            {
             case OBJTYPE_STRDATA:
 
-                status = ACPIGetConvertToStringWide(
-                    DeviceExtension,
-                    Status,
-                    currentObject,
-                    Flags,
-                    &(localBufferArray[i]),
-                    &(localBufferSizeArray[i])
-                    );
+                status = ACPIGetConvertToStringWide(DeviceExtension, Status, currentObject, Flags,
+                                                    &(localBufferArray[i]), &(localBufferSizeArray[i]));
                 break;
 
             case OBJTYPE_INTDATA:
 
-                status = ACPIGetConvertToPnpIDWide(
-                    DeviceExtension,
-                    Status,
-                    currentObject,
-                    Flags,
-                    &(localBufferArray[i]),
-                    &(localBufferSizeArray[i])
-                    );
+                status = ACPIGetConvertToPnpIDWide(DeviceExtension, Status, currentObject, Flags,
+                                                   &(localBufferArray[i]), &(localBufferSizeArray[i]));
                 break;
 
             default:
 
-                ACPIInternalError( ACPI_GET );
+                ACPIInternalError(ACPI_GET);
 
             } // switch
 
             //
             // Did we fail?
             //
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
 
                 break;
-
             }
 
             //
@@ -1050,10 +930,10 @@ Return Value:
             // string terminator. Since this would cause us to prematurely
             // terminate the resulting string. We must watch out for it
             //
-            if (localBufferSizeArray[i] == 1) {
+            if (localBufferSizeArray[i] == 1)
+            {
 
                 localBufferSizeArray[i] = 0;
-
             }
 
             //
@@ -1067,7 +947,8 @@ Return Value:
         // If we didn't succeed, then we must free all of the memory that
         // we tried to build up
         //
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 
             //
             // This is a little cheat that allows to share the cleanup code.
@@ -1075,7 +956,6 @@ Return Value:
             // a correct bound on the elements that must be freed
             //
             numElements = i;
-
         }
 
         break;
@@ -1086,82 +966,76 @@ Return Value:
     // If we didn't succeed, then we must free all of the memory that
     // we tried to build up
     //
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         goto ACPIGetConvertToCompatibleIDWideExit;
-
     }
 
     //
     // If we have an empty list, or one that is only a null, then we
     // won't botther to return anything
     //
-    if (newBufferSize <= 2) {
+    if (newBufferSize <= 2)
+    {
 
         status = STATUS_ACPI_INVALID_DATA;
         newBufferSize = 0;
         goto ACPIGetConvertToCompatibleIDWideExit;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Remember that we need to have an extra null at the end. Allocate
         // space for that null
         //
         newBufferSize += 2;
-
     }
 
     //
     // Allocate the memory. Note --- The memory has already been counted in
     // size of WCHARs.
     //
-    buffer = ExAllocatePoolWithTag(
-        ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-        newBufferSize,
-        ACPI_STRING_POOLTAG
-        );
-    if (buffer == NULL) {
+    buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool), newBufferSize,
+                                   ACPI_STRING_POOLTAG);
+    if (buffer == NULL)
+    {
 
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto ACPIGetConvertToCompatibleIDWideExit;
-
     }
-    RtlZeroMemory( buffer, newBufferSize );
+    RtlZeroMemory(buffer, newBufferSize);
 
     //
     // Iterate over all pieces of the string
     //
-    for (ptr = buffer, i = 0; i < numElements; i++) {
+    for (ptr = buffer, i = 0; i < numElements; i++)
+    {
 
-        if (localBufferArray[i] != NULL) {
+        if (localBufferArray[i] != NULL)
+        {
 
             //
             // Copy over the interesting memory
             //
-            RtlCopyMemory(
-                ptr,
-                localBufferArray[i],
-                localBufferSizeArray[i]
-                );
-
+            RtlCopyMemory(ptr, localBufferArray[i], localBufferSizeArray[i]);
         }
 
         //
         // Increment the temp pointer to point to the next target location
         //
-        ptr += localBufferSizeArray[i] / sizeof(WCHAR) ;
-
+        ptr += localBufferSizeArray[i] / sizeof(WCHAR);
     }
 
     //
     // Set the result string
     //
     *Buffer = buffer;
-    if (BufferSize != NULL) {
+    if (BufferSize != NULL)
+    {
 
         *BufferSize = newBufferSize;
-
     }
 
 ACPIGetConvertToCompatibleIDWideExit:
@@ -1169,33 +1043,27 @@ ACPIGetConvertToCompatibleIDWideExit:
     //
     // Clean up
     //
-    for (i = 0; i < numElements; i ++) {
+    for (i = 0; i < numElements; i++)
+    {
 
-        if (localBufferArray[i] != NULL ) {
+        if (localBufferArray[i] != NULL)
+        {
 
-            ExFreePool( localBufferArray[i] );
-
+            ExFreePool(localBufferArray[i]);
         }
-
     }
-    ExFreePool( localBufferSizeArray );
-    ExFreePool( localBufferArray );
+    ExFreePool(localBufferSizeArray);
+    ExFreePool(localBufferArray);
 
     //
     // Return the appropriate status value
     //
     return status;
 }
-
+
 NTSTATUS
-ACPIGetConvertToDeviceID(
-    IN  PDEVICE_EXTENSION   DeviceExtension,
-    IN  NTSTATUS            Status,
-    IN  POBJDATA            Result,
-    IN  ULONG               Flags,
-    OUT PVOID               *Buffer,
-    OUT ULONG               *BufferSize
-    )
+ACPIGetConvertToDeviceID(IN PDEVICE_EXTENSION DeviceExtension, IN NTSTATUS Status, IN POBJDATA Result, IN ULONG Flags,
+                         OUT PVOID *Buffer, OUT ULONG *BufferSize)
 /*++
 
 Routine Description:
@@ -1220,36 +1088,28 @@ Return Value:
 
 --*/
 {
-    PUCHAR  buffer;
-    PUCHAR  tempString;
-    ULONG   memSize;
+    PUCHAR buffer;
+    PUCHAR tempString;
+    ULONG memSize;
 
     //
     // First, check to see if we are a processor
     //
-    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) &&
-        DeviceExtension->Flags & DEV_CAP_PROCESSOR) {
+    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) && DeviceExtension->Flags & DEV_CAP_PROCESSOR)
+    {
 
         //
         // If we don't have an _HID method, but we are a processor object,
         // then we can actually get the _HID through another mechanism
         //
-        return ACPIGetProcessorID(
-            DeviceExtension,
-            Status,
-            Result,
-            Flags,
-            Buffer,
-            BufferSize
-            );
-
+        return ACPIGetProcessorID(DeviceExtension, Status, Result, Flags, Buffer, BufferSize);
     }
 
     //
     // Does this string have a fake HID?
     //
-    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) &&
-        DeviceExtension->Flags & DEV_PROP_FIXED_HID) {
+    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) && DeviceExtension->Flags & DEV_PROP_FIXED_HID)
+    {
 
         //
         // It does. We can use that string in this one's place
@@ -1259,36 +1119,32 @@ Return Value:
         //
         // Allocate the memory
         //
-        buffer = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            memSize * sizeof(UCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (buffer == NULL) {
+        buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                       memSize * sizeof(UCHAR), ACPI_STRING_POOLTAG);
+        if (buffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( buffer, memSize * sizeof(UCHAR) );
+        RtlZeroMemory(buffer, memSize * sizeof(UCHAR));
 
         //
         // Copy the memory
         //
-        RtlCopyMemory( buffer, DeviceExtension->DeviceID, memSize );
+        RtlCopyMemory(buffer, DeviceExtension->DeviceID, memSize);
 
         //
         // Done
         //
         goto ACPIGetConvertToDeviceIDExit;
-
     }
 
     //
     // Are we a PCI Bar Target device? If so, then we have special handling
     // rules that we must follow
     //
-    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) &&
-        DeviceExtension->Flags & DEV_CAP_PCI_BAR_TARGET) {
+    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) && DeviceExtension->Flags & DEV_CAP_PCI_BAR_TARGET)
+    {
 
         //
         // Right now, lets call the this a "PciBarTarget" device, which
@@ -1300,45 +1156,42 @@ Return Value:
         //
         // Allocate the memory
         //
-        buffer = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            memSize * sizeof(UCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (buffer == NULL) {
+        buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                       memSize * sizeof(UCHAR), ACPI_STRING_POOLTAG);
+        if (buffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( buffer, memSize * sizeof(UCHAR) );
+        RtlZeroMemory(buffer, memSize * sizeof(UCHAR));
 
         //
         // Print the string
         //
-        sprintf( buffer, "%s", "ACPI\\PciBarTarget" );
+        sprintf(buffer, "%s", "ACPI\\PciBarTarget");
 
         //
         // Done
         //
         goto ACPIGetConvertToDeviceIDExit;
-
     }
 
     //
     // If we got to this point, then that means that there probably wasn't
     // an _HID method *or* the method error'ed out.
     //
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         return Status;
-
     }
 
     //
     // We need to handle things differently based on wether we have an
     // EISAID or a String
     //
-    switch (Result->dwDataType) {
+    switch (Result->dwDataType)
+    {
     case OBJTYPE_INTDATA:
 
         //
@@ -1350,27 +1203,24 @@ Return Value:
         //
         // Allocate the memory
         //
-        buffer = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            memSize * sizeof(UCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (buffer == NULL) {
+        buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                       memSize * sizeof(UCHAR), ACPI_STRING_POOLTAG);
+        if (buffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( buffer, memSize * sizeof(UCHAR) );
+        RtlZeroMemory(buffer, memSize * sizeof(UCHAR));
 
         //
         // Put the leading characters in place
         //
-        sprintf( buffer, "ACPI\\" );
+        sprintf(buffer, "ACPI\\");
 
         //
         // Convert the packed string
         //
-        ACPIAmliDoubleToName( buffer+5, (ULONG)Result->uipDataValue, FALSE );
+        ACPIAmliDoubleToName(buffer + 5, (ULONG)Result->uipDataValue, FALSE);
 
         //
         // Done
@@ -1388,10 +1238,10 @@ Return Value:
         // Does it have a leading '*'? If it does, then we must ignore
         // it
         //
-        if (*tempString == '*') {
+        if (*tempString == '*')
+        {
 
             tempString++;
-
         }
 
         //
@@ -1404,22 +1254,19 @@ Return Value:
         //
         // Allocate the memory
         //
-        buffer = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            memSize * sizeof(UCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (buffer == NULL) {
+        buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                       memSize * sizeof(UCHAR), ACPI_STRING_POOLTAG);
+        if (buffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( buffer, memSize * sizeof(UCHAR) );
+        RtlZeroMemory(buffer, memSize * sizeof(UCHAR));
 
         //
         // Put the leading characters in place
         //
-        sprintf( buffer, "ACPI\\%s", tempString );
+        sprintf(buffer, "ACPI\\%s", tempString);
 
         //
         // Done
@@ -1429,7 +1276,6 @@ Return Value:
     default:
 
         return STATUS_ACPI_INVALID_DATA;
-
     }
 
 ACPIGetConvertToDeviceIDExit:
@@ -1439,10 +1285,10 @@ ACPIGetConvertToDeviceIDExit:
     // length, if possible
     //
     *(Buffer) = buffer;
-    if (BufferSize != NULL) {
+    if (BufferSize != NULL)
+    {
 
         *(BufferSize) = memSize;
-
     }
 
     //
@@ -1450,16 +1296,10 @@ ACPIGetConvertToDeviceIDExit:
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-ACPIGetConvertToDeviceIDWide(
-    IN  PDEVICE_EXTENSION   DeviceExtension,
-    IN  NTSTATUS            Status,
-    IN  POBJDATA            Result,
-    IN  ULONG               Flags,
-    OUT PVOID               *Buffer,
-    OUT ULONG               *BufferSize
-    )
+ACPIGetConvertToDeviceIDWide(IN PDEVICE_EXTENSION DeviceExtension, IN NTSTATUS Status, IN POBJDATA Result,
+                             IN ULONG Flags, OUT PVOID *Buffer, OUT ULONG *BufferSize)
 /*++
 
 Routine Description:
@@ -1484,36 +1324,28 @@ Return Value:
 
 --*/
 {
-    PUCHAR  tempString;
-    PWSTR   buffer;
-    ULONG   memSize;
+    PUCHAR tempString;
+    PWSTR buffer;
+    ULONG memSize;
 
     //
     // First, check to see if we are a processor
     //
-    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) &&
-        DeviceExtension->Flags & DEV_CAP_PROCESSOR) {
+    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) && DeviceExtension->Flags & DEV_CAP_PROCESSOR)
+    {
 
         //
         // If we don't have an _HID method, but we are a processor object,
         // then we can actually get the _HID through another mechanism
         //
-        return ACPIGetProcessorIDWide(
-            DeviceExtension,
-            Status,
-            Result,
-            Flags,
-            Buffer,
-            BufferSize
-            );
-
+        return ACPIGetProcessorIDWide(DeviceExtension, Status, Result, Flags, Buffer, BufferSize);
     }
 
     //
     // Does this string have a fake HID?
     //
-    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) &&
-        DeviceExtension->Flags & DEV_PROP_FIXED_HID) {
+    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) && DeviceExtension->Flags & DEV_PROP_FIXED_HID)
+    {
 
         //
         // It does. We can use that string in this one's place
@@ -1523,36 +1355,32 @@ Return Value:
         //
         // Allocate the memory
         //
-        buffer = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            memSize * sizeof(WCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (buffer == NULL) {
+        buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                       memSize * sizeof(WCHAR), ACPI_STRING_POOLTAG);
+        if (buffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( buffer, memSize * sizeof(WCHAR) );
+        RtlZeroMemory(buffer, memSize * sizeof(WCHAR));
 
         //
         // Generate the string
         //
-        swprintf( buffer, L"%S", DeviceExtension->DeviceID );
+        swprintf(buffer, L"%S", DeviceExtension->DeviceID);
 
         //
         // Done
         //
         goto ACPIGetConvertToDeviceIDWideExit;
-
     }
 
     //
     // Are we a PCI Bar Target device? If so, then we have special handling
     // rules that we must follow
     //
-    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) &&
-        DeviceExtension->Flags & DEV_CAP_PCI_BAR_TARGET) {
+    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) && DeviceExtension->Flags & DEV_CAP_PCI_BAR_TARGET)
+    {
 
         //
         // Right now, lets call the this a "PciBarTarget" device, which
@@ -1564,45 +1392,42 @@ Return Value:
         //
         // Allocate the memory
         //
-        buffer = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            memSize * sizeof(WCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (buffer == NULL) {
+        buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                       memSize * sizeof(WCHAR), ACPI_STRING_POOLTAG);
+        if (buffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( buffer, memSize * sizeof(WCHAR) );
+        RtlZeroMemory(buffer, memSize * sizeof(WCHAR));
 
         //
         // Print the string
         //
-        swprintf( buffer, L"%S", "ACPI\\PciBarTarget" );
+        swprintf(buffer, L"%S", "ACPI\\PciBarTarget");
 
         //
         // Done
         //
         goto ACPIGetConvertToDeviceIDWideExit;
-
     }
 
     //
     // If we got to this point, then that means that there probably wasn't
     // an _HID method *or* the method error'ed out.
     //
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         return Status;
-
     }
 
     //
     // We need to handle things differently based on wether we have an
     // EISAID or a String
     //
-    switch (Result->dwDataType) {
+    switch (Result->dwDataType)
+    {
     case OBJTYPE_INTDATA:
 
         //
@@ -1614,27 +1439,24 @@ Return Value:
         //
         // Allocate the memory
         //
-        buffer = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            memSize * sizeof(WCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (buffer == NULL) {
+        buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                       memSize * sizeof(WCHAR), ACPI_STRING_POOLTAG);
+        if (buffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( buffer, memSize * sizeof(WCHAR) );
+        RtlZeroMemory(buffer, memSize * sizeof(WCHAR));
 
         //
         // Put the leading characters in place
         //
-        swprintf( buffer, L"ACPI\\" );
+        swprintf(buffer, L"ACPI\\");
 
         //
         // Convert the packed string
         //
-        ACPIAmliDoubleToNameWide( buffer+5, (ULONG)Result->uipDataValue, FALSE );
+        ACPIAmliDoubleToNameWide(buffer + 5, (ULONG)Result->uipDataValue, FALSE);
 
         //
         // Done
@@ -1652,10 +1474,10 @@ Return Value:
         // Does it have a leading '*'? If it does, then we must ignore
         // it
         //
-        if (*tempString == '*') {
+        if (*tempString == '*')
+        {
 
             tempString++;
-
         }
 
         //
@@ -1668,22 +1490,19 @@ Return Value:
         //
         // Allocate the memory
         //
-        buffer = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            memSize * sizeof(WCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (buffer == NULL) {
+        buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                       memSize * sizeof(WCHAR), ACPI_STRING_POOLTAG);
+        if (buffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( buffer, memSize * sizeof(WCHAR) );
+        RtlZeroMemory(buffer, memSize * sizeof(WCHAR));
 
         //
         // Put the leading characters in place
         //
-        swprintf( buffer, L"ACPI\\%S", tempString );
+        swprintf(buffer, L"ACPI\\%S", tempString);
 
         //
         // Done
@@ -1693,7 +1512,6 @@ Return Value:
     default:
 
         return STATUS_ACPI_INVALID_DATA;
-
     }
 
 ACPIGetConvertToDeviceIDWideExit:
@@ -1703,10 +1521,10 @@ ACPIGetConvertToDeviceIDWideExit:
     // length, if possible
     //
     *(Buffer) = buffer;
-    if (BufferSize != NULL) {
+    if (BufferSize != NULL)
+    {
 
-        *(BufferSize) = (memSize * sizeof(WCHAR) );
-
+        *(BufferSize) = (memSize * sizeof(WCHAR));
     }
 
     //
@@ -1714,16 +1532,10 @@ ACPIGetConvertToDeviceIDWideExit:
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-ACPIGetConvertToDevicePresence(
-    IN  PDEVICE_EXTENSION   DeviceExtension,
-    IN  NTSTATUS            Status,
-    IN  POBJDATA            Result,
-    IN  ULONG               Flags,
-    OUT PVOID               *Buffer,
-    OUT ULONG               *BufferSize
-    )
+ACPIGetConvertToDevicePresence(IN PDEVICE_EXTENSION DeviceExtension, IN NTSTATUS Status, IN POBJDATA Result,
+                               IN ULONG Flags, OUT PVOID *Buffer, OUT ULONG *BufferSize)
 /*++
 
 Routine Description:
@@ -1751,33 +1563,35 @@ Return Value:
 
 --*/
 {
-    ULONG       deviceStatus = STA_STATUS_DEFAULT;
-    NTSTATUS    status;
+    ULONG deviceStatus = STA_STATUS_DEFAULT;
+    NTSTATUS status;
 
     //
     // Profile providers are present if one of the following cases is true:
     // 1) The ACPI object corresponding to the dock is itself present
     // 2) The dock is unattached (ie, requesting attachment)
     //
-    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) ) {
+    if (!(Flags & GET_PROP_NSOBJ_INTERFACE))
+    {
 
-        if (DeviceExtension->Flags & DEV_PROP_DOCK) {
+        if (DeviceExtension->Flags & DEV_PROP_DOCK)
+        {
 
-            if (DeviceExtension->Flags & DEV_CAP_UNATTACHED_DOCK) {
+            if (DeviceExtension->Flags & DEV_CAP_UNATTACHED_DOCK)
+            {
 
                 goto ACPIGetConvertToDevicePresenceExit;
-
             }
 
             //
             // We should have handled the case where we need to run the
             // _STA on the proper target node...
             //
-
-        } else if (DeviceExtension->Flags & DEV_PROP_NO_OBJECT) {
+        }
+        else if (DeviceExtension->Flags & DEV_PROP_NO_OBJECT)
+        {
 
             goto ACPIGetConvertToDevicePresenceExit;
-
         }
 
         //
@@ -1786,7 +1600,8 @@ Return Value:
         // that the control method doesn't exist. In that case, then we have
         // to use the default status for the device
         //
-        if (Status == STATUS_OBJECT_NAME_NOT_FOUND) {
+        if (Status == STATUS_OBJECT_NAME_NOT_FOUND)
+        {
 
             //
             // We do make exceptions in the case that this is a processor object
@@ -1795,93 +1610,77 @@ Return Value:
             // that we do this is that older multi-proc capable systems with only
             // a single processor will errorneously report both processors.
             //
-            if (DeviceExtension->Flags & DEV_CAP_PROCESSOR) {
+            if (DeviceExtension->Flags & DEV_CAP_PROCESSOR)
+            {
 
                 //
                 // Let the processor specific function to do all the
                 // work.
                 //
-                status = ACPIGetProcessorStatus(
-                    DeviceExtension,
-                    Flags,
-                    &deviceStatus
-                    );
-                if (!NT_SUCCESS(status)) {
+                status = ACPIGetProcessorStatus(DeviceExtension, Flags, &deviceStatus);
+                if (!NT_SUCCESS(status))
+                {
 
                     //
                     // Something bad occured, so assume that the processor
                     // isn't present...
                     //
                     deviceStatus = 0;
-
                 }
-
             }
 
             //
             // Skip a couple of useless steps...
             //
             goto ACPIGetConvertToDevicePresenceExit;
-
-        } else if (!NT_SUCCESS(Status)) {
+        }
+        else if (!NT_SUCCESS(Status))
+        {
 
             deviceStatus = 0;
             goto ACPIGetConvertToDevicePresenceExit;
-
         }
 
         //
         // If the data isn't of the correct type, then we *really* should bugcheck
         //
-        if (Result->dwDataType != OBJTYPE_INTDATA) {
+        if (Result->dwDataType != OBJTYPE_INTDATA)
+        {
 
-            PNSOBJ  staObject;
+            PNSOBJ staObject;
 
             //
             // We need the sta Object for the bugcheck
             //
-            staObject= ACPIAmliGetNamedChild(
-                DeviceExtension->AcpiObject,
-                PACKED_STA
-                );
-            KeBugCheckEx(
-                ACPI_BIOS_ERROR,
-                ACPI_EXPECTED_INTEGER,
-                (ULONG_PTR) DeviceExtension,
-                (ULONG_PTR) staObject,
-                Result->dwDataType
-                );
-
+            staObject = ACPIAmliGetNamedChild(DeviceExtension->AcpiObject, PACKED_STA);
+            KeBugCheckEx(ACPI_BIOS_ERROR, ACPI_EXPECTED_INTEGER, (ULONG_PTR)DeviceExtension, (ULONG_PTR)staObject,
+                         Result->dwDataType);
         }
 
         //
         // Get the real result
         //
         deviceStatus = (ULONG)Result->uipDataValue;
+    }
+    else
+    {
 
-    } else {
-
-        if (Status == STATUS_OBJECT_NAME_NOT_FOUND) {
+        if (Status == STATUS_OBJECT_NAME_NOT_FOUND)
+        {
 
             goto ACPIGetConvertToDevicePresenceExit2;
-
         }
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
 
             deviceStatus = 0;
             goto ACPIGetConvertToDevicePresenceExit2;
-
         }
-        if (Result->dwDataType != OBJTYPE_INTDATA) {
+        if (Result->dwDataType != OBJTYPE_INTDATA)
+        {
 
-            KeBugCheckEx(
-                ACPI_BIOS_ERROR,
-                ACPI_EXPECTED_INTEGER,
-                (ULONG_PTR) DeviceExtension,
-                (ULONG_PTR) NULL,
-                Result->dwDataType
-                );
-
+            KeBugCheckEx(ACPI_BIOS_ERROR, ACPI_EXPECTED_INTEGER, (ULONG_PTR)DeviceExtension, (ULONG_PTR)NULL,
+                         Result->dwDataType);
         }
 
         //
@@ -1889,7 +1688,6 @@ Return Value:
         //
         deviceStatus = (ULONG)Result->uipDataValue;
         goto ACPIGetConvertToDevicePresenceExit2;
-
     }
 
 
@@ -1899,53 +1697,45 @@ ACPIGetConvertToDevicePresenceExit:
     // If the device is marked as NEVER_PRESENT, then we will always
     // have a status of NOT_PRESENT
     //
-    if ((DeviceExtension->Flags & DEV_TYPE_NEVER_PRESENT)&&
-        !(Flags & GET_CONVERT_IGNORE_OVERRIDES)) {
+    if ((DeviceExtension->Flags & DEV_TYPE_NEVER_PRESENT) && !(Flags & GET_CONVERT_IGNORE_OVERRIDES))
+    {
 
         deviceStatus &= ~STA_STATUS_PRESENT;
-
     }
 
     //
     // If the device is marked as NEVER_SHOW, then we will have have a
     // a status of !USER_INTERFACE
     //
-    if (DeviceExtension->Flags & DEV_CAP_NEVER_SHOW_IN_UI) {
+    if (DeviceExtension->Flags & DEV_CAP_NEVER_SHOW_IN_UI)
+    {
 
         deviceStatus &= ~STA_STATUS_USER_INTERFACE;
-
     }
 
     //
     // Update the device status
     //
-    ACPIInternalUpdateDeviceStatus( DeviceExtension, deviceStatus );
+    ACPIInternalUpdateDeviceStatus(DeviceExtension, deviceStatus);
 
 ACPIGetConvertToDevicePresenceExit2:
 
     //
     // Set the value for the status
     //
-    *( (PULONG) Buffer) = deviceStatus;
-    if (BufferSize != NULL) {
+    *((PULONG)Buffer) = deviceStatus;
+    if (BufferSize != NULL)
+    {
 
         *BufferSize = sizeof(ULONG);
-
     }
 
     return STATUS_SUCCESS;
-
 }
-
+
 NTSTATUS
-ACPIGetConvertToHardwareID(
-    IN  PDEVICE_EXTENSION   DeviceExtension,
-    IN  NTSTATUS            Status,
-    IN  POBJDATA            Result,
-    IN  ULONG               Flags,
-    OUT PVOID               *Buffer,
-    OUT ULONG               *BufferSize
-    )
+ACPIGetConvertToHardwareID(IN PDEVICE_EXTENSION DeviceExtension, IN NTSTATUS Status, IN POBJDATA Result, IN ULONG Flags,
+                           OUT PVOID *Buffer, OUT ULONG *BufferSize)
 /*++
 
 Routine Description:
@@ -1970,34 +1760,27 @@ Return Value:
 
 --*/
 {
-    BOOLEAN     freeTempString = FALSE;
-    NTSTATUS    status = Status;
-    PUCHAR      buffer;
-    PUCHAR      tempString;
-    ULONG       deviceSize;
-    ULONG       memSize;
+    BOOLEAN freeTempString = FALSE;
+    NTSTATUS status = Status;
+    PUCHAR buffer;
+    PUCHAR tempString;
+    ULONG deviceSize;
+    ULONG memSize;
 
     //
     // First, check to see if we are a processor
     //
-    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) &&
-        DeviceExtension->Flags & DEV_CAP_PROCESSOR) {
+    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) && DeviceExtension->Flags & DEV_CAP_PROCESSOR)
+    {
 
         //
         // Use an alternate means to get the processor ID
         //
-        status = ACPIGetProcessorID(
-            DeviceExtension,
-            Status,
-            Result,
-            Flags,
-            &buffer,
-            &memSize
-            );
+        status = ACPIGetProcessorID(DeviceExtension, Status, Result, Flags, &buffer, &memSize);
         goto ACPIGetConvertToHardwareIDSuccessExit;
-
-    } else if (!(Flags & GET_PROP_NSOBJ_INTERFACE) &&
-               DeviceExtension->Flags & DEV_PROP_FIXED_HID) {
+    }
+    else if (!(Flags & GET_PROP_NSOBJ_INTERFACE) && DeviceExtension->Flags & DEV_PROP_FIXED_HID)
+    {
 
         //
         // Does this string have a fake HID?
@@ -2008,33 +1791,30 @@ Return Value:
         // string that subtracts the leading 'ACPI\\' and adds a '\0' at
         // the end.
         //
-        deviceSize  = strlen(DeviceExtension->DeviceID) - 4;
+        deviceSize = strlen(DeviceExtension->DeviceID) - 4;
 
         //
         // Allocate the memory
         //
-        tempString = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            deviceSize * sizeof(UCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (tempString == NULL) {
+        tempString = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                           deviceSize * sizeof(UCHAR), ACPI_STRING_POOLTAG);
+        if (tempString == NULL)
+        {
 
             status = STATUS_INSUFFICIENT_RESOURCES;
             goto ACPIGetConvertToHardwareIDExit;
-
         }
-        RtlZeroMemory( tempString, deviceSize * sizeof(UCHAR) );
+        RtlZeroMemory(tempString, deviceSize * sizeof(UCHAR));
         freeTempString = TRUE;
 
         //
         // Generate the PNP ID. The offset of +5 will get rid of the
         // leading 'ACPI\\'
         //
-        sprintf( tempString, "%s", DeviceExtension->DeviceID + 5 );
-
-    } else if (!(Flags & GET_PROP_NSOBJ_INTERFACE) &&
-               DeviceExtension->Flags & DEV_CAP_PCI_BAR_TARGET) {
+        sprintf(tempString, "%s", DeviceExtension->DeviceID + 5);
+    }
+    else if (!(Flags & GET_PROP_NSOBJ_INTERFACE) && DeviceExtension->Flags & DEV_CAP_PCI_BAR_TARGET)
+    {
 
         //
         // Are we a PCI Bar Target device? If so, then we have special handling
@@ -2050,39 +1830,39 @@ Return Value:
         //
         // Allocate the memory
         //
-        tempString = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            deviceSize * sizeof(UCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (tempString == NULL) {
+        tempString = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                           deviceSize * sizeof(UCHAR), ACPI_STRING_POOLTAG);
+        if (tempString == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( tempString, deviceSize * sizeof(UCHAR) );
+        RtlZeroMemory(tempString, deviceSize * sizeof(UCHAR));
         freeTempString = TRUE;
 
         //
         // Print the string
         //
-        sprintf( tempString, "%s", "PciBarTarget" );
-
-    } else if (!NT_SUCCESS(Status)) {
+        sprintf(tempString, "%s", "PciBarTarget");
+    }
+    else if (!NT_SUCCESS(Status))
+    {
 
         //
         // If we got to this point, and there isn't a successfull status,
         // then there is nothing we can do
         //
         return Status;
-
-    } else {
+    }
+    else
+    {
 
         //
         // We need to handle things differently based on wether we have an
         // EISAID or a String
         //
-        switch (Result->dwDataType) {
+        switch (Result->dwDataType)
+        {
         case OBJTYPE_INTDATA:
 
             //
@@ -2094,24 +1874,21 @@ Return Value:
             //
             // Allocate the memory
             //
-            tempString = ExAllocatePoolWithTag(
-                ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-                deviceSize * sizeof(UCHAR),
-                ACPI_STRING_POOLTAG
-                );
-            if (tempString == NULL) {
+            tempString = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                               deviceSize * sizeof(UCHAR), ACPI_STRING_POOLTAG);
+            if (tempString == NULL)
+            {
 
                 status = STATUS_INSUFFICIENT_RESOURCES;
                 goto ACPIGetConvertToHardwareIDExit;
-
             }
-            RtlZeroMemory( tempString, deviceSize * sizeof(UCHAR) );
+            RtlZeroMemory(tempString, deviceSize * sizeof(UCHAR));
             freeTempString = TRUE;
 
             //
             // Convert the packed string for the PNP ID
             //
-            ACPIAmliDoubleToName( tempString, (ULONG)Result->uipDataValue, FALSE );
+            ACPIAmliDoubleToName(tempString, (ULONG)Result->uipDataValue, FALSE);
 
             //
             // Done
@@ -2129,10 +1906,10 @@ Return Value:
             // Does it have a leading '*'? If it does, then we must ignore
             // it
             //
-            if (*tempString == '*') {
+            if (*tempString == '*')
+            {
 
                 tempString++;
-
             }
 
             //
@@ -2148,7 +1925,6 @@ Return Value:
         default:
 
             return STATUS_ACPI_INVALID_DATA;
-
         }
     }
 
@@ -2163,23 +1939,20 @@ Return Value:
     //
     // Allocate the memory
     //
-    buffer = ExAllocatePoolWithTag(
-        ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-        memSize * sizeof(UCHAR),
-        ACPI_STRING_POOLTAG
-        );
-    if (buffer == NULL) {
+    buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                   memSize * sizeof(UCHAR), ACPI_STRING_POOLTAG);
+    if (buffer == NULL)
+    {
 
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto ACPIGetConvertToHardwareIDExit;
-
     }
-    RtlZeroMemory( buffer, memSize * sizeof(UCHAR) );
+    RtlZeroMemory(buffer, memSize * sizeof(UCHAR));
 
     //
     // Put the leading characters in place
     //
-    sprintf( buffer, "ACPI\\%s", tempString );
+    sprintf(buffer, "ACPI\\%s", tempString);
 
     //
     // We need to generate the offset in to the second string. To do this
@@ -2190,7 +1963,7 @@ Return Value:
     //
     // Put the 2nd string in its place
     //
-    sprintf( buffer + deviceSize, "*%s", tempString );
+    sprintf(buffer + deviceSize, "*%s", tempString);
 
     //
     // Let the originator see this copy. Make sure to also see the buffer
@@ -2198,10 +1971,10 @@ Return Value:
     //
 ACPIGetConvertToHardwareIDSuccessExit:
     *(Buffer) = buffer;
-    if (BufferSize != NULL) {
+    if (BufferSize != NULL)
+    {
 
         *(BufferSize) = memSize;
-
     }
     status = STATUS_SUCCESS;
 
@@ -2210,10 +1983,10 @@ ACPIGetConvertToHardwareIDExit:
     //
     // Do we need to free the tempString?
     //
-    if (freeTempString == TRUE) {
+    if (freeTempString == TRUE)
+    {
 
-        ExFreePool( tempString );
-
+        ExFreePool(tempString);
     }
 
     //
@@ -2221,16 +1994,10 @@ ACPIGetConvertToHardwareIDExit:
     //
     return status;
 }
-
+
 NTSTATUS
-ACPIGetConvertToHardwareIDWide(
-    IN  PDEVICE_EXTENSION   DeviceExtension,
-    IN  NTSTATUS            Status,
-    IN  POBJDATA            Result,
-    IN  ULONG               Flags,
-    OUT PVOID               *Buffer,
-    OUT ULONG               *BufferSize
-    )
+ACPIGetConvertToHardwareIDWide(IN PDEVICE_EXTENSION DeviceExtension, IN NTSTATUS Status, IN POBJDATA Result,
+                               IN ULONG Flags, OUT PVOID *Buffer, OUT ULONG *BufferSize)
 /*++
 
 Routine Description:
@@ -2254,34 +2021,27 @@ Return Value:
 
 --*/
 {
-    BOOLEAN     freeTempString = FALSE;
-    NTSTATUS    status = Status;
-    PUCHAR      tempString;
-    PWCHAR      buffer;
-    ULONG       deviceSize;
-    ULONG       memSize;
+    BOOLEAN freeTempString = FALSE;
+    NTSTATUS status = Status;
+    PUCHAR tempString;
+    PWCHAR buffer;
+    ULONG deviceSize;
+    ULONG memSize;
 
     //
     // First, check to see if we are a processor
     //
-    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) &&
-        DeviceExtension->Flags & DEV_CAP_PROCESSOR) {
+    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) && DeviceExtension->Flags & DEV_CAP_PROCESSOR)
+    {
 
         //
         // Use an alternate means to get the processor ID
         //
-        status = ACPIGetProcessorIDWide(
-            DeviceExtension,
-            Status,
-            Result,
-            Flags,
-            &buffer,
-            &memSize
-            );
+        status = ACPIGetProcessorIDWide(DeviceExtension, Status, Result, Flags, &buffer, &memSize);
         goto ACPIGetConvertToHardwareIDWideSuccessExit;
-
-    } else if (!(Flags & GET_PROP_NSOBJ_INTERFACE) &&
-               DeviceExtension->Flags & DEV_PROP_FIXED_HID) {
+    }
+    else if (!(Flags & GET_PROP_NSOBJ_INTERFACE) && DeviceExtension->Flags & DEV_PROP_FIXED_HID)
+    {
 
         //
         // Does this string have a fake HID?
@@ -2292,33 +2052,30 @@ Return Value:
         // string that subtracts the leading 'ACPI\\' and adds a '\0' at
         // the end.
         //
-        deviceSize  = strlen(DeviceExtension->DeviceID) - 4;
+        deviceSize = strlen(DeviceExtension->DeviceID) - 4;
 
         //
         // Allocate the memory
         //
-        tempString = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            deviceSize * sizeof(UCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (tempString == NULL) {
+        tempString = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                           deviceSize * sizeof(UCHAR), ACPI_STRING_POOLTAG);
+        if (tempString == NULL)
+        {
 
             status = STATUS_INSUFFICIENT_RESOURCES;
             goto ACPIGetConvertToHardwareIDWideExit;
-
         }
-        RtlZeroMemory( tempString, deviceSize * sizeof(UCHAR) );
+        RtlZeroMemory(tempString, deviceSize * sizeof(UCHAR));
         freeTempString = TRUE;
 
         //
         // Generate the PNP ID. The offset of +5 will get rid of the
         // leading 'ACPI\\'
         //
-        sprintf( tempString, "%s", DeviceExtension->DeviceID + 5 );
-
-    } else if (!(Flags & GET_PROP_NSOBJ_INTERFACE) &&
-               DeviceExtension->Flags & DEV_CAP_PCI_BAR_TARGET) {
+        sprintf(tempString, "%s", DeviceExtension->DeviceID + 5);
+    }
+    else if (!(Flags & GET_PROP_NSOBJ_INTERFACE) && DeviceExtension->Flags & DEV_CAP_PCI_BAR_TARGET)
+    {
 
         //
         // Are we a PCI Bar Target device? If so, then we have special handling
@@ -2334,39 +2091,39 @@ Return Value:
         //
         // Allocate the memory
         //
-        tempString = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            deviceSize * sizeof(UCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (tempString == NULL) {
+        tempString = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                           deviceSize * sizeof(UCHAR), ACPI_STRING_POOLTAG);
+        if (tempString == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( tempString, deviceSize * sizeof(UCHAR) );
+        RtlZeroMemory(tempString, deviceSize * sizeof(UCHAR));
         freeTempString = TRUE;
 
         //
         // Print the string
         //
-        sprintf( tempString, "%s", "PciBarTarget" );
-
-    } else if (!NT_SUCCESS(Status)) {
+        sprintf(tempString, "%s", "PciBarTarget");
+    }
+    else if (!NT_SUCCESS(Status))
+    {
 
         //
         // If we got to this point, and there isn't a successfull status,
         // then there is nothing we can do
         //
         return Status;
-
-    } else {
+    }
+    else
+    {
 
         //
         // We need to handle things differently based on wether we have an
         // EISAID or a String
         //
-        switch (Result->dwDataType) {
+        switch (Result->dwDataType)
+        {
         case OBJTYPE_INTDATA:
 
             //
@@ -2378,24 +2135,21 @@ Return Value:
             //
             // Allocate the memory
             //
-            tempString = ExAllocatePoolWithTag(
-                ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-                deviceSize * sizeof(UCHAR),
-                ACPI_STRING_POOLTAG
-                );
-            if (tempString == NULL) {
+            tempString = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                               deviceSize * sizeof(UCHAR), ACPI_STRING_POOLTAG);
+            if (tempString == NULL)
+            {
 
                 status = STATUS_INSUFFICIENT_RESOURCES;
                 goto ACPIGetConvertToHardwareIDWideExit;
-
             }
-            RtlZeroMemory( tempString, deviceSize * sizeof(UCHAR) );
+            RtlZeroMemory(tempString, deviceSize * sizeof(UCHAR));
             freeTempString = TRUE;
 
             //
             // Convert the packed string for the PNP ID
             //
-            ACPIAmliDoubleToName( tempString, (ULONG)Result->uipDataValue, FALSE );
+            ACPIAmliDoubleToName(tempString, (ULONG)Result->uipDataValue, FALSE);
 
             //
             // Done
@@ -2413,10 +2167,10 @@ Return Value:
             // Does it have a leading '*'? If it does, then we must ignore
             // it
             //
-            if (*tempString == '*') {
+            if (*tempString == '*')
+            {
 
                 tempString++;
-
             }
 
             //
@@ -2432,7 +2186,6 @@ Return Value:
         default:
 
             return STATUS_ACPI_INVALID_DATA;
-
         }
     }
 
@@ -2447,23 +2200,20 @@ Return Value:
     //
     // Allocate the memory
     //
-    buffer = ExAllocatePoolWithTag(
-        ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-        memSize * sizeof(WCHAR),
-        ACPI_STRING_POOLTAG
-        );
-    if (buffer == NULL) {
+    buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                   memSize * sizeof(WCHAR), ACPI_STRING_POOLTAG);
+    if (buffer == NULL)
+    {
 
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto ACPIGetConvertToHardwareIDWideExit;
-
     }
-    RtlZeroMemory( buffer, memSize * sizeof(WCHAR) );
+    RtlZeroMemory(buffer, memSize * sizeof(WCHAR));
 
     //
     // Put the leading characters in place
     //
-    swprintf( buffer, L"ACPI\\%S", tempString );
+    swprintf(buffer, L"ACPI\\%S", tempString);
 
     //
     // We need to generate the offset in to the second string. To do this
@@ -2474,7 +2224,7 @@ Return Value:
     //
     // Put the 2nd string in its place
     //
-    swprintf( buffer + deviceSize, L"*%S", tempString );
+    swprintf(buffer + deviceSize, L"*%S", tempString);
 
     //
     // Let the originator see this copy. Make sure to also see the buffer
@@ -2482,10 +2232,10 @@ Return Value:
     //
 ACPIGetConvertToHardwareIDWideSuccessExit:
     *(Buffer) = buffer;
-    if (BufferSize != NULL) {
+    if (BufferSize != NULL)
+    {
 
-        *(BufferSize) = (memSize * sizeof(WCHAR) );
-
+        *(BufferSize) = (memSize * sizeof(WCHAR));
     }
     status = STATUS_SUCCESS;
 
@@ -2494,10 +2244,10 @@ ACPIGetConvertToHardwareIDWideExit:
     //
     // Do we need to free the tempString?
     //
-    if (freeTempString == TRUE) {
+    if (freeTempString == TRUE)
+    {
 
-        ExFreePool( tempString );
-
+        ExFreePool(tempString);
     }
 
     //
@@ -2505,16 +2255,10 @@ ACPIGetConvertToHardwareIDWideExit:
     //
     return status;
 }
-
+
 NTSTATUS
-ACPIGetConvertToInstanceID(
-    IN  PDEVICE_EXTENSION   DeviceExtension,
-    IN  NTSTATUS            Status,
-    IN  POBJDATA            Result,
-    IN  ULONG               Flags,
-    OUT PVOID               *Buffer,
-    OUT ULONG               *BufferSize
-    )
+ACPIGetConvertToInstanceID(IN PDEVICE_EXTENSION DeviceExtension, IN NTSTATUS Status, IN POBJDATA Result, IN ULONG Flags,
+                           OUT PVOID *Buffer, OUT ULONG *BufferSize)
 /*++
 
 Routine Description:
@@ -2539,14 +2283,14 @@ Return Value:
 
 --*/
 {
-    PUCHAR  buffer;
-    ULONG   memSize;
+    PUCHAR buffer;
+    ULONG memSize;
 
     //
     // Does this string have a fake HID?
     //
-    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) &&
-        DeviceExtension->Flags & DEV_PROP_FIXED_UID) {
+    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) && DeviceExtension->Flags & DEV_PROP_FIXED_UID)
+    {
 
         //
         // It does. We can use that string in this one's place.
@@ -2556,37 +2300,33 @@ Return Value:
         //
         // Allocate the memory
         //
-        buffer = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            memSize * sizeof(UCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (buffer == NULL) {
+        buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                       memSize * sizeof(UCHAR), ACPI_STRING_POOLTAG);
+        if (buffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( buffer, memSize * sizeof(UCHAR) );
+        RtlZeroMemory(buffer, memSize * sizeof(UCHAR));
 
         //
         // Generate the PNP ID. The offset of +5 will get rid of the
         // leading 'ACPI\\'
         //
-        RtlCopyMemory( buffer, DeviceExtension->InstanceID, memSize );
+        RtlCopyMemory(buffer, DeviceExtension->InstanceID, memSize);
 
         //
         // Done
         //
         goto ACPIGetConvertToInstanceIDExit;
-
     }
 
     //
     // Are we a PCI Bar Target device? If so, then we have special handling
     // rules that we must follow
     //
-    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) &&
-        DeviceExtension->Flags & DEV_CAP_PCI_BAR_TARGET) {
+    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) && DeviceExtension->Flags & DEV_CAP_PCI_BAR_TARGET)
+    {
 
         //
         // We are going to use the device's Address (which we should
@@ -2599,45 +2339,42 @@ Return Value:
         //
         // Allocate the memory
         //
-        buffer = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            memSize * sizeof(UCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (buffer == NULL) {
+        buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                       memSize * sizeof(UCHAR), ACPI_STRING_POOLTAG);
+        if (buffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( buffer, memSize * sizeof(UCHAR) );
+        RtlZeroMemory(buffer, memSize * sizeof(UCHAR));
 
         //
         // Print the string
         //
-        sprintf( buffer, "%lx", DeviceExtension->Address );
+        sprintf(buffer, "%lx", DeviceExtension->Address);
 
         //
         // Done
         //
         goto ACPIGetConvertToInstanceIDExit;
-
     }
 
     //
     // If we got to this point, and there isn't a successfull status,
     // then there is nothing we can do
     //
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         return Status;
-
     }
 
     //
     // We need to handle things differently based on wether we have an
     // EISAID or a String
     //
-    switch (Result->dwDataType) {
+    switch (Result->dwDataType)
+    {
     case OBJTYPE_INTDATA:
 
         //
@@ -2648,22 +2385,19 @@ Return Value:
         //
         // Allocate the memory
         //
-        buffer = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            memSize * sizeof(UCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (buffer == NULL) {
+        buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                       memSize * sizeof(UCHAR), ACPI_STRING_POOLTAG);
+        if (buffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( buffer, memSize * sizeof(UCHAR) );
+        RtlZeroMemory(buffer, memSize * sizeof(UCHAR));
 
         //
         // Print the string
         //
-        sprintf( buffer, "%lx", Result->uipDataValue );
+        sprintf(buffer, "%lx", Result->uipDataValue);
 
         //
         // Done
@@ -2680,22 +2414,19 @@ Return Value:
         //
         // Allocate the memory
         //
-        buffer = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            memSize * sizeof(UCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (buffer == NULL) {
+        buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                       memSize * sizeof(UCHAR), ACPI_STRING_POOLTAG);
+        if (buffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( buffer, memSize * sizeof(UCHAR) );
+        RtlZeroMemory(buffer, memSize * sizeof(UCHAR));
 
         //
         // Put the leading characters in place
         //
-        RtlCopyMemory( buffer, Result->pbDataBuff, memSize );
+        RtlCopyMemory(buffer, Result->pbDataBuff, memSize);
 
         //
         // Done
@@ -2705,7 +2436,6 @@ Return Value:
     default:
 
         return STATUS_ACPI_INVALID_DATA;
-
     }
 
 ACPIGetConvertToInstanceIDExit:
@@ -2715,10 +2445,10 @@ ACPIGetConvertToInstanceIDExit:
     // length, if possible
     //
     *(Buffer) = buffer;
-    if (BufferSize != NULL) {
+    if (BufferSize != NULL)
+    {
 
         *(BufferSize) = memSize;
-
     }
 
     //
@@ -2726,16 +2456,10 @@ ACPIGetConvertToInstanceIDExit:
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-ACPIGetConvertToInstanceIDWide(
-    IN  PDEVICE_EXTENSION   DeviceExtension,
-    IN  NTSTATUS            Status,
-    IN  POBJDATA            Result,
-    IN  ULONG               Flags,
-    OUT PVOID               *Buffer,
-    OUT ULONG               *BufferSize
-    )
+ACPIGetConvertToInstanceIDWide(IN PDEVICE_EXTENSION DeviceExtension, IN NTSTATUS Status, IN POBJDATA Result,
+                               IN ULONG Flags, OUT PVOID *Buffer, OUT ULONG *BufferSize)
 /*++
 
 Routine Description:
@@ -2760,14 +2484,14 @@ Return Value:
 
 --*/
 {
-    PWCHAR  buffer;
-    ULONG   memSize;
+    PWCHAR buffer;
+    ULONG memSize;
 
     //
     // Does this string have a fake HID?
     //
-    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) &&
-        DeviceExtension->Flags & DEV_PROP_FIXED_UID) {
+    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) && DeviceExtension->Flags & DEV_PROP_FIXED_UID)
+    {
 
         //
         // It does. We can use that string in this one's place.
@@ -2777,37 +2501,33 @@ Return Value:
         //
         // Allocate the memory
         //
-        buffer = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            memSize * sizeof(WCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (buffer == NULL) {
+        buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                       memSize * sizeof(WCHAR), ACPI_STRING_POOLTAG);
+        if (buffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( buffer, memSize * sizeof(WCHAR) );
+        RtlZeroMemory(buffer, memSize * sizeof(WCHAR));
 
         //
         // Generate the PNP ID. The offset of +5 will get rid of the
         // leading 'ACPI\\'
         //
-        swprintf( buffer, L"%S", DeviceExtension->InstanceID );
+        swprintf(buffer, L"%S", DeviceExtension->InstanceID);
 
         //
         // Done
         //
         goto ACPIGetConvertToInstanceIDWideExit;
-
     }
 
     //
     // Are we a PCI Bar Target device? If so, then we have special handling
     // rules that we must follow
     //
-    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) &&
-        DeviceExtension->Flags & DEV_CAP_PCI_BAR_TARGET) {
+    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) && DeviceExtension->Flags & DEV_CAP_PCI_BAR_TARGET)
+    {
 
         //
         // We are going to use the device's Address (which we should
@@ -2820,45 +2540,42 @@ Return Value:
         //
         // Allocate the memory
         //
-        buffer = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            memSize * sizeof(WCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (buffer == NULL) {
+        buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                       memSize * sizeof(WCHAR), ACPI_STRING_POOLTAG);
+        if (buffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( buffer, memSize * sizeof(WCHAR) );
+        RtlZeroMemory(buffer, memSize * sizeof(WCHAR));
 
         //
         // Print the string
         //
-        swprintf( buffer, L"%lx", Result->uipDataValue );
+        swprintf(buffer, L"%lx", Result->uipDataValue);
 
         //
         // Done
         //
         goto ACPIGetConvertToInstanceIDWideExit;
-
     }
 
     //
     // If we got to this point, and there isn't a successfull status,
     // then there is nothing we can do
     //
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         return Status;
-
     }
 
     //
     // We need to handle things differently based on wether we have an
     // EISAID or a String
     //
-    switch (Result->dwDataType) {
+    switch (Result->dwDataType)
+    {
     case OBJTYPE_INTDATA:
 
         //
@@ -2869,22 +2586,19 @@ Return Value:
         //
         // Allocate the memory
         //
-        buffer = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            memSize * sizeof(WCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (buffer == NULL) {
+        buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                       memSize * sizeof(WCHAR), ACPI_STRING_POOLTAG);
+        if (buffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( buffer, memSize * sizeof(WCHAR) );
+        RtlZeroMemory(buffer, memSize * sizeof(WCHAR));
 
         //
         // Print the string
         //
-        swprintf( buffer, L"%lx", Result->uipDataValue );
+        swprintf(buffer, L"%lx", Result->uipDataValue);
 
         //
         // Done
@@ -2901,22 +2615,19 @@ Return Value:
         //
         // Allocate the memory
         //
-        buffer = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            memSize * sizeof(WCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (buffer == NULL) {
+        buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                       memSize * sizeof(WCHAR), ACPI_STRING_POOLTAG);
+        if (buffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( buffer, memSize * sizeof(WCHAR) );
+        RtlZeroMemory(buffer, memSize * sizeof(WCHAR));
 
         //
         // Put the leading characters in place
         //
-        swprintf( buffer, L"%S", Result->pbDataBuff );
+        swprintf(buffer, L"%S", Result->pbDataBuff);
 
         //
         // Done
@@ -2926,7 +2637,6 @@ Return Value:
     default:
 
         return STATUS_ACPI_INVALID_DATA;
-
     }
 
 ACPIGetConvertToInstanceIDWideExit:
@@ -2936,10 +2646,10 @@ ACPIGetConvertToInstanceIDWideExit:
     // length, if possible
     //
     *(Buffer) = buffer;
-    if (BufferSize != NULL) {
+    if (BufferSize != NULL)
+    {
 
         *(BufferSize) = (memSize * sizeof(WCHAR));
-
     }
 
     //
@@ -2947,16 +2657,10 @@ ACPIGetConvertToInstanceIDWideExit:
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-ACPIGetConvertToPnpID(
-    IN  PDEVICE_EXTENSION   DeviceExtension,
-    IN  NTSTATUS            Status,
-    IN  POBJDATA            Result,
-    IN  ULONG               Flags,
-    OUT PVOID               *Buffer,
-    OUT ULONG               *BufferSize
-    )
+ACPIGetConvertToPnpID(IN PDEVICE_EXTENSION DeviceExtension, IN NTSTATUS Status, IN POBJDATA Result, IN ULONG Flags,
+                      OUT PVOID *Buffer, OUT ULONG *BufferSize)
 /*++
 
 Routine Description:
@@ -2981,15 +2685,15 @@ Return Value:
 
 --*/
 {
-    PUCHAR  buffer;
-    PUCHAR  tempString;
-    ULONG   memSize;
+    PUCHAR buffer;
+    PUCHAR tempString;
+    ULONG memSize;
 
     //
     // Does this string have a fake HID?
     //
-    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) &&
-        DeviceExtension->Flags & DEV_PROP_FIXED_HID) {
+    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) && DeviceExtension->Flags & DEV_PROP_FIXED_HID)
+    {
 
         //
         // It does. We can use that string in this one's place. We need
@@ -3001,37 +2705,33 @@ Return Value:
         //
         // Allocate the memory
         //
-        buffer = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            memSize * sizeof(UCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (buffer == NULL) {
+        buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                       memSize * sizeof(UCHAR), ACPI_STRING_POOLTAG);
+        if (buffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( buffer, memSize * sizeof(UCHAR) );
+        RtlZeroMemory(buffer, memSize * sizeof(UCHAR));
 
         //
         // Generate the PNP ID. The offset of +5 will get rid of the
         // leading 'ACPI\\'
         //
-        sprintf( buffer, "*%s", DeviceExtension->DeviceID + 5 );
+        sprintf(buffer, "*%s", DeviceExtension->DeviceID + 5);
 
         //
         // Done
         //
         goto ACPIGetConvertToPnpIDExit;
-
     }
 
     //
     // Are we a PCI Bar Target device? If so, then we have special handling
     // rules that we must follow
     //
-    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) &&
-        DeviceExtension->Flags & DEV_CAP_PCI_BAR_TARGET) {
+    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) && DeviceExtension->Flags & DEV_CAP_PCI_BAR_TARGET)
+    {
 
         //
         // Right now, lets call the this a "*PciBarTarget" device, which
@@ -3042,45 +2742,42 @@ Return Value:
         //
         // Allocate the memory
         //
-        buffer = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            memSize * sizeof(UCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (buffer == NULL) {
+        buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                       memSize * sizeof(UCHAR), ACPI_STRING_POOLTAG);
+        if (buffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( buffer, memSize * sizeof(UCHAR) );
+        RtlZeroMemory(buffer, memSize * sizeof(UCHAR));
 
         //
         // Print the string
         //
-        sprintf( buffer, "*%s", "PciBarTarget" );
+        sprintf(buffer, "*%s", "PciBarTarget");
 
         //
         // Done
         //
         goto ACPIGetConvertToPnpIDExit;
-
     }
 
     //
     // If we got to this point, and there isn't a successfull status,
     // then there is nothing we can do
     //
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         return Status;
-
     }
 
     //
     // We need to handle things differently based on wether we have an
     // EISAID or a String
     //
-    switch (Result->dwDataType) {
+    switch (Result->dwDataType)
+    {
     case OBJTYPE_INTDATA:
 
         //
@@ -3092,22 +2789,19 @@ Return Value:
         //
         // Allocate the memory
         //
-        buffer = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            memSize * sizeof(UCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (buffer == NULL) {
+        buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                       memSize * sizeof(UCHAR), ACPI_STRING_POOLTAG);
+        if (buffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( buffer, memSize * sizeof(UCHAR) );
+        RtlZeroMemory(buffer, memSize * sizeof(UCHAR));
 
         //
         // Convert the packed string
         //
-        ACPIAmliDoubleToName( buffer, (ULONG)Result->uipDataValue, TRUE );
+        ACPIAmliDoubleToName(buffer, (ULONG)Result->uipDataValue, TRUE);
 
         //
         // Done
@@ -3125,10 +2819,10 @@ Return Value:
         // Does it have a leading '*'? If it does, then we must ignore
         // it
         //
-        if (*tempString == '*') {
+        if (*tempString == '*')
+        {
 
             tempString++;
-
         }
 
         //
@@ -3141,22 +2835,19 @@ Return Value:
         //
         // Allocate the memory
         //
-        buffer = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            memSize * sizeof(UCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (buffer == NULL) {
+        buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                       memSize * sizeof(UCHAR), ACPI_STRING_POOLTAG);
+        if (buffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( buffer, memSize * sizeof(UCHAR) );
+        RtlZeroMemory(buffer, memSize * sizeof(UCHAR));
 
         //
         // Put the leading characters in place
         //
-        sprintf( buffer, "*%s", tempString );
+        sprintf(buffer, "*%s", tempString);
 
         //
         // Done
@@ -3166,7 +2857,6 @@ Return Value:
     default:
 
         return STATUS_ACPI_INVALID_DATA;
-
     }
 
 ACPIGetConvertToPnpIDExit:
@@ -3176,10 +2866,10 @@ ACPIGetConvertToPnpIDExit:
     // length, if possible
     //
     *(Buffer) = buffer;
-    if (BufferSize != NULL) {
+    if (BufferSize != NULL)
+    {
 
         *(BufferSize) = memSize;
-
     }
 
     //
@@ -3187,16 +2877,10 @@ ACPIGetConvertToPnpIDExit:
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-ACPIGetConvertToPnpIDWide(
-    IN  PDEVICE_EXTENSION   DeviceExtension,
-    IN  NTSTATUS            Status,
-    IN  POBJDATA            Result,
-    IN  ULONG               Flags,
-    OUT PVOID               *Buffer,
-    OUT ULONG               *BufferSize
-    )
+ACPIGetConvertToPnpIDWide(IN PDEVICE_EXTENSION DeviceExtension, IN NTSTATUS Status, IN POBJDATA Result, IN ULONG Flags,
+                          OUT PVOID *Buffer, OUT ULONG *BufferSize)
 /*++
 
 Routine Description:
@@ -3221,15 +2905,15 @@ Return Value:
 
 --*/
 {
-    PUCHAR  tempString;
-    PWCHAR  buffer;
-    ULONG   memSize;
+    PUCHAR tempString;
+    PWCHAR buffer;
+    ULONG memSize;
 
     //
     // Does this string have a fake HID?
     //
-    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) &&
-        DeviceExtension->Flags & DEV_PROP_FIXED_HID) {
+    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) && DeviceExtension->Flags & DEV_PROP_FIXED_HID)
+    {
 
         //
         // It does. We can use that string in this one's place. We need
@@ -3241,37 +2925,33 @@ Return Value:
         //
         // Allocate the memory
         //
-        buffer = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            memSize * sizeof(WCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (buffer == NULL) {
+        buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                       memSize * sizeof(WCHAR), ACPI_STRING_POOLTAG);
+        if (buffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( buffer, memSize * sizeof(WCHAR) );
+        RtlZeroMemory(buffer, memSize * sizeof(WCHAR));
 
         //
         // Generate the PNP ID. The offset of +5 will get rid of the
         // leading 'ACPI\\'
         //
-        swprintf( buffer, L"*%S", DeviceExtension->DeviceID + 5 );
+        swprintf(buffer, L"*%S", DeviceExtension->DeviceID + 5);
 
         //
         // Done
         //
         goto ACPIGetConvertToPnpIDWideExit;
-
     }
 
     //
     // Are we a PCI Bar Target device? If so, then we have special handling
     // rules that we must follow
     //
-    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) &&
-        DeviceExtension->Flags & DEV_CAP_PCI_BAR_TARGET) {
+    if (!(Flags & GET_PROP_NSOBJ_INTERFACE) && DeviceExtension->Flags & DEV_CAP_PCI_BAR_TARGET)
+    {
 
         //
         // Right now, lets call the this a "*PciBarTarget" device, which
@@ -3282,44 +2962,41 @@ Return Value:
         //
         // Allocate the memory
         //
-        buffer = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            memSize * sizeof(WCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (buffer == NULL) {
+        buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                       memSize * sizeof(WCHAR), ACPI_STRING_POOLTAG);
+        if (buffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( buffer, memSize * sizeof(WCHAR) );
+        RtlZeroMemory(buffer, memSize * sizeof(WCHAR));
 
         //
         // Print the string
         //
-        swprintf( buffer, L"*%S", "PciBarTarget" );
+        swprintf(buffer, L"*%S", "PciBarTarget");
 
         //
         // Done
         //
         goto ACPIGetConvertToPnpIDWideExit;
-
     }
     //
     // If we got to this point, and there isn't a successfull status,
     // then there is nothing we can do
     //
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         return Status;
-
     }
 
     //
     // We need to handle things differently based on wether we have an
     // EISAID or a String
     //
-    switch (Result->dwDataType) {
+    switch (Result->dwDataType)
+    {
     case OBJTYPE_INTDATA:
 
         //
@@ -3331,22 +3008,19 @@ Return Value:
         //
         // Allocate the memory
         //
-        buffer = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            memSize * sizeof(WCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (buffer == NULL) {
+        buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                       memSize * sizeof(WCHAR), ACPI_STRING_POOLTAG);
+        if (buffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( buffer, memSize * sizeof(WCHAR) );
+        RtlZeroMemory(buffer, memSize * sizeof(WCHAR));
 
         //
         // Convert the packed string
         //
-        ACPIAmliDoubleToNameWide( buffer, (ULONG)Result->uipDataValue, TRUE );
+        ACPIAmliDoubleToNameWide(buffer, (ULONG)Result->uipDataValue, TRUE);
 
         //
         // Done
@@ -3364,10 +3038,10 @@ Return Value:
         // Does it have a leading '*'? If it does, then we must ignore
         // it
         //
-        if (*tempString == '*') {
+        if (*tempString == '*')
+        {
 
             tempString++;
-
         }
 
         //
@@ -3380,22 +3054,19 @@ Return Value:
         //
         // Allocate the memory
         //
-        buffer = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            memSize * sizeof(WCHAR),
-            ACPI_STRING_POOLTAG
-            );
-        if (buffer == NULL) {
+        buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                       memSize * sizeof(WCHAR), ACPI_STRING_POOLTAG);
+        if (buffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
-        RtlZeroMemory( buffer, memSize * sizeof(WCHAR) );
+        RtlZeroMemory(buffer, memSize * sizeof(WCHAR));
 
         //
         // Put the leading characters in place
         //
-        swprintf( buffer, L"*%S", tempString );
+        swprintf(buffer, L"*%S", tempString);
 
         //
         // Done
@@ -3405,7 +3076,6 @@ Return Value:
     default:
 
         return STATUS_ACPI_INVALID_DATA;
-
     }
 
 ACPIGetConvertToPnpIDWideExit:
@@ -3415,10 +3085,10 @@ ACPIGetConvertToPnpIDWideExit:
     // length, if possible
     //
     *(Buffer) = buffer;
-    if (BufferSize != NULL) {
+    if (BufferSize != NULL)
+    {
 
-        *(BufferSize) = (memSize * sizeof(WCHAR) );
-
+        *(BufferSize) = (memSize * sizeof(WCHAR));
     }
 
     //
@@ -3426,16 +3096,10 @@ ACPIGetConvertToPnpIDWideExit:
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-ACPIGetConvertToSerialIDWide(
-    IN  PDEVICE_EXTENSION   DeviceExtension,
-    IN  NTSTATUS            Status,
-    IN  POBJDATA            Result,
-    IN  ULONG               Flags,
-    OUT PVOID               *Buffer,
-    OUT ULONG               *BufferSize OPTIONAL
-    )
+ACPIGetConvertToSerialIDWide(IN PDEVICE_EXTENSION DeviceExtension, IN NTSTATUS Status, IN POBJDATA Result,
+                             IN ULONG Flags, OUT PVOID *Buffer, OUT ULONG *BufferSize OPTIONAL)
 /*++
 
 Routine Description:
@@ -3458,40 +3122,41 @@ Return Value:
 
 --*/
 {
-    PWCHAR buffer ;
+    PWCHAR buffer;
 
     //
     // If we got to this point, and there isn't a successfull status,
     // then there is nothing we can do
     //
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         return Status;
     }
 
-    switch (Result->dwDataType) {
+    switch (Result->dwDataType)
+    {
     case OBJTYPE_INTDATA:
 
-        buffer = ExAllocatePoolWithTag(
-            ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-            9 * sizeof(WCHAR), // 9 WCHARS, or L"nnnnnnnn\0"
-            ACPI_STRING_POOLTAG
-            );
-        if (buffer == NULL) {
+        buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                       9 * sizeof(WCHAR), // 9 WCHARS, or L"nnnnnnnn\0"
+                                       ACPI_STRING_POOLTAG);
+        if (buffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
 
         //
         // Convert to string
         //
-        swprintf( buffer, L"%X", (ULONG)Result->uipDataValue );
+        swprintf(buffer, L"%X", (ULONG)Result->uipDataValue);
 
         *(Buffer) = buffer;
-        if (BufferSize != NULL) {
+        if (BufferSize != NULL)
+        {
 
-            *(BufferSize) = (9 * sizeof(WCHAR) );
+            *(BufferSize) = (9 * sizeof(WCHAR));
         }
 
         //
@@ -3501,30 +3166,17 @@ Return Value:
 
     case OBJTYPE_STRDATA:
 
-        return ACPIGetConvertToStringWide(
-            DeviceExtension,
-            Status,
-            Result,
-            Flags,
-            Buffer,
-            BufferSize
-            ) ;
+        return ACPIGetConvertToStringWide(DeviceExtension, Status, Result, Flags, Buffer, BufferSize);
 
     default:
 
         return STATUS_ACPI_INVALID_DATA;
     }
 }
-
+
 NTSTATUS
-ACPIGetConvertToString(
-    IN  PDEVICE_EXTENSION   DeviceExtension,
-    IN  NTSTATUS            Status,
-    IN  POBJDATA            Result,
-    IN  ULONG               Flags,
-    OUT PVOID               *Buffer,
-    OUT ULONG               *BufferSize
-    )
+ACPIGetConvertToString(IN PDEVICE_EXTENSION DeviceExtension, IN NTSTATUS Status, IN POBJDATA Result, IN ULONG Flags,
+                       OUT PVOID *Buffer, OUT ULONG *BufferSize)
 /*++
 
 Routine Description:
@@ -3547,26 +3199,26 @@ Return Value:
 
 --*/
 {
-    PUCHAR  buffer;
-    ULONG   memSize;
+    PUCHAR buffer;
+    ULONG memSize;
 
     //
     // If we got to this point, and there isn't a successfull status,
     // then there is nothing we can do
     //
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         return Status;
-
     }
 
     //
     // Do we not have a string?
     //
-    if (Result->dwDataType != OBJTYPE_STRDATA) {
+    if (Result->dwDataType != OBJTYPE_STRDATA)
+    {
 
         return STATUS_ACPI_INVALID_DATA;
-
     }
 
     //
@@ -3579,32 +3231,29 @@ Return Value:
     //
     // Allocate the memory
     //
-    buffer = ExAllocatePoolWithTag(
-        ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-        memSize * sizeof(UCHAR),
-        ACPI_STRING_POOLTAG
-        );
-    if (buffer == NULL) {
+    buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                   memSize * sizeof(UCHAR), ACPI_STRING_POOLTAG);
+    if (buffer == NULL)
+    {
 
         return STATUS_INSUFFICIENT_RESOURCES;
-
     }
-    RtlZeroMemory( buffer, memSize * sizeof(UCHAR) );
+    RtlZeroMemory(buffer, memSize * sizeof(UCHAR));
 
     //
     // Copy the string
     //
-    RtlCopyMemory( buffer, Result->pbDataBuff, memSize );
+    RtlCopyMemory(buffer, Result->pbDataBuff, memSize);
 
     //
     // Let the originator see this copy. Make sure to also see the buffer
     // length, if possible
     //
     *(Buffer) = buffer;
-    if (BufferSize != NULL) {
+    if (BufferSize != NULL)
+    {
 
         *(BufferSize) = memSize;
-
     }
 
     //
@@ -3612,16 +3261,10 @@ Return Value:
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-ACPIGetConvertToStringWide(
-    IN  PDEVICE_EXTENSION   DeviceExtension,
-    IN  NTSTATUS            Status,
-    IN  POBJDATA            Result,
-    IN  ULONG               Flags,
-    OUT PVOID               *Buffer,
-    OUT ULONG               *BufferSize OPTIONAL
-    )
+ACPIGetConvertToStringWide(IN PDEVICE_EXTENSION DeviceExtension, IN NTSTATUS Status, IN POBJDATA Result, IN ULONG Flags,
+                           OUT PVOID *Buffer, OUT ULONG *BufferSize OPTIONAL)
 /*++
 
 Routine Description:
@@ -3644,26 +3287,26 @@ Return Value:
 
 --*/
 {
-    PWCHAR  buffer;
-    ULONG   memSize;
+    PWCHAR buffer;
+    ULONG memSize;
 
     //
     // If we got to this point, and there isn't a successfull status,
     // then there is nothing we can do
     //
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         return Status;
-
     }
 
     //
     // Do we not have a string?
     //
-    if (Result->dwDataType != OBJTYPE_STRDATA) {
+    if (Result->dwDataType != OBJTYPE_STRDATA)
+    {
 
         return STATUS_ACPI_INVALID_DATA;
-
     }
 
     //
@@ -3676,32 +3319,29 @@ Return Value:
     //
     // Allocate the memory
     //
-    buffer = ExAllocatePoolWithTag(
-        ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-        memSize * sizeof(WCHAR),
-        ACPI_STRING_POOLTAG
-        );
-    if (buffer == NULL) {
+    buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                   memSize * sizeof(WCHAR), ACPI_STRING_POOLTAG);
+    if (buffer == NULL)
+    {
 
         return STATUS_INSUFFICIENT_RESOURCES;
-
     }
-    RtlZeroMemory( buffer, memSize * sizeof(WCHAR) );
+    RtlZeroMemory(buffer, memSize * sizeof(WCHAR));
 
     //
     // Generate the string
     //
-    swprintf( buffer, L"%S", Result->pbDataBuff );
+    swprintf(buffer, L"%S", Result->pbDataBuff);
 
     //
     // Let the originator see this copy. Make sure to also see the buffer
     // length, if possible
     //
     *(Buffer) = buffer;
-    if (BufferSize != NULL) {
+    if (BufferSize != NULL)
+    {
 
-        *(BufferSize) = (memSize * sizeof(WCHAR) );
-
+        *(BufferSize) = (memSize * sizeof(WCHAR));
     }
 
     //
@@ -3709,16 +3349,10 @@ Return Value:
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-ACPIGetProcessorID(
-    IN  PDEVICE_EXTENSION   DeviceExtension,
-    IN  NTSTATUS            Status,
-    IN  POBJDATA            Result,
-    IN  ULONG               Flags,
-    OUT PVOID               *Buffer,
-    OUT ULONG               *BufferSize
-    )
+ACPIGetProcessorID(IN PDEVICE_EXTENSION DeviceExtension, IN NTSTATUS Status, IN POBJDATA Result, IN ULONG Flags,
+                   OUT PVOID *Buffer, OUT ULONG *BufferSize)
 /*++
 
 Routine Description:
@@ -3743,13 +3377,13 @@ Return Value:
 
 --*/
 {
-    PUCHAR  buffer;
-    PUCHAR  tempPtr;
-    PUCHAR  defaultString;
-    ULONG   i;
-    ULONG   max;
-    ULONG   memSize;
-    ULONG   offset;
+    PUCHAR buffer;
+    PUCHAR tempPtr;
+    PUCHAR defaultString;
+    ULONG i;
+    ULONG max;
+    ULONG memSize;
+    ULONG offset;
 
     //
     // We store the name of the processor string in a global...
@@ -3769,7 +3403,8 @@ Return Value:
     // substrings --- we could use an algorithm that gets us the correct
     // size, but its easier to just overshoot
     //
-    if (Flags & GET_CONVERT_TO_HARDWAREID) {
+    if (Flags & GET_CONVERT_TO_HARDWAREID)
+    {
 
         //
         // Walk the string from the end and try to determine how many subparts
@@ -3777,12 +3412,14 @@ Return Value:
         //
         i = offset;
         max = 0;
-        while (i > 0) {
+        while (i > 0)
+        {
 
             //
             // Is the character a number or not?
             //
-            if (ISDIGIT(defaultString[i-1])) {
+            if (ISDIGIT(defaultString[i - 1]))
+            {
 
                 //
                 // Increment the number of parts that we need and try to
@@ -3790,15 +3427,15 @@ Return Value:
                 //
                 max++;
                 i--;
-                while (i > 0) {
+                while (i > 0)
+                {
 
-                    if (defaultString[i-1] != ' ') {
+                    if (defaultString[i - 1] != ' ')
+                    {
 
                         i--;
-
                     }
                     break;
-
                 }
 
                 //
@@ -3806,49 +3443,43 @@ Return Value:
                 // mean that we also don't decr i again
                 //
                 continue;
-
             }
 
             //
             // Look at the previous character
             //
             i--;
-
         }
 
         memSize *= (max * 2);
-
     }
 
     //
     // Allocate the memory
     //
-    buffer = ExAllocatePoolWithTag(
-        ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-        memSize * sizeof(UCHAR),
-        ACPI_STRING_POOLTAG
-        );
-    if (buffer == NULL) {
+    buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                   memSize * sizeof(UCHAR), ACPI_STRING_POOLTAG);
+    if (buffer == NULL)
+    {
 
         *(Buffer) = NULL;
-        if (BufferSize != NULL) {
+        if (BufferSize != NULL)
+        {
 
             *(BufferSize) = 0;
-
         }
         return STATUS_INSUFFICIENT_RESOURCES;
-
     }
-    RtlZeroMemory( buffer, memSize * sizeof(UCHAR) );
+    RtlZeroMemory(buffer, memSize * sizeof(UCHAR));
 
     //
     // Lets just deal with the simple case of the device id string
     //
-    if (Flags & GET_CONVERT_TO_DEVICEID) {
+    if (Flags & GET_CONVERT_TO_DEVICEID)
+    {
 
-        sprintf( buffer, "ACPI\\%s", defaultString );
+        sprintf(buffer, "ACPI\\%s", defaultString);
         goto ACPIGetProcessorIDExit;
-
     }
 
 
@@ -3859,25 +3490,27 @@ Return Value:
     //
     memSize = 2;
     tempPtr = buffer;
-    for (i = 0; i < max; i++) {
+    for (i = 0; i < max; i++)
+    {
 
         //
         // First step is to find the nearest "number" from the end of the
         // default string
         //
-        while (offset > 0) {
+        while (offset > 0)
+        {
 
-            if (ISDIGIT(defaultString[offset-1])) {
-              break;
+            if (ISDIGIT(defaultString[offset - 1]))
+            {
+                break;
             }
             offset--;
-
         }
 
         //
         // Generate the ACPI\\%s string
         //
-        sprintf(tempPtr,"ACPI\\%*s",offset,defaultString);
+        sprintf(tempPtr, "ACPI\\%*s", offset, defaultString);
         tempPtr += (offset + 5);
         *tempPtr = '\0';
         tempPtr++;
@@ -3886,7 +3519,7 @@ Return Value:
         //
         // Generate the *%s string
         //
-        sprintf(tempPtr,"*%*s",offset,defaultString);
+        sprintf(tempPtr, "*%*s", offset, defaultString);
         tempPtr += (offset + 1);
         *tempPtr = '\0';
         tempPtr++;
@@ -3896,17 +3529,16 @@ Return Value:
         // Now try to find the previous space in the substring so that we
         // don't accidently match on a two digit number
         //
-        while (offset > 0) {
+        while (offset > 0)
+        {
 
-            if (defaultString[offset-1] == ' ') {
+            if (defaultString[offset - 1] == ' ')
+            {
 
                 break;
-
             }
             offset--;
-
         }
-
     }
 
     //
@@ -3920,28 +3552,21 @@ Return Value:
     //
 ACPIGetProcessorIDExit:
     *(Buffer) = buffer;
-    if (BufferSize != NULL) {
+    if (BufferSize != NULL)
+    {
 
         *(BufferSize) = memSize;
-
     }
 
     //
     // Done
     //
     return STATUS_SUCCESS;
-
 }
-
+
 NTSTATUS
-ACPIGetProcessorIDWide(
-    IN  PDEVICE_EXTENSION   DeviceExtension,
-    IN  NTSTATUS            Status,
-    IN  POBJDATA            Result,
-    IN  ULONG               Flags,
-    OUT PVOID               *Buffer,
-    OUT ULONG               *BufferSize
-    )
+ACPIGetProcessorIDWide(IN PDEVICE_EXTENSION DeviceExtension, IN NTSTATUS Status, IN POBJDATA Result, IN ULONG Flags,
+                       OUT PVOID *Buffer, OUT ULONG *BufferSize)
 /*++
 
 Routine Description:
@@ -3966,13 +3591,13 @@ Return Value:
 
 --*/
 {
-    PUCHAR  defaultString;
-    PWCHAR  buffer;
-    PWCHAR  tempPtr;
-    ULONG   i;
-    ULONG   max;
-    ULONG   memSize;
-    ULONG   offset;
+    PUCHAR defaultString;
+    PWCHAR buffer;
+    PWCHAR tempPtr;
+    ULONG i;
+    ULONG max;
+    ULONG memSize;
+    ULONG offset;
 
     //
     // We store the name of the processor string in a global...
@@ -3992,7 +3617,8 @@ Return Value:
     // substrings --- we could use an algorithm that gets us the correct
     // size, but its easier to just overshoot
     //
-    if (Flags & GET_CONVERT_TO_HARDWAREID) {
+    if (Flags & GET_CONVERT_TO_HARDWAREID)
+    {
 
         //
         // Walk the string from the end and try to determine how many subparts
@@ -4000,12 +3626,14 @@ Return Value:
         //
         i = offset;
         max = 0;
-        while (i > 0) {
+        while (i > 0)
+        {
 
             //
             // Is the character a number or not?
             //
-            if (ISDIGIT(defaultString[i-1])) {
+            if (ISDIGIT(defaultString[i - 1]))
+            {
 
                 //
                 // Increment the number of parts that we need and try to
@@ -4013,15 +3641,15 @@ Return Value:
                 //
                 max++;
                 i--;
-                while (i > 0) {
+                while (i > 0)
+                {
 
-                    if (defaultString[i-1] != ' ') {
+                    if (defaultString[i - 1] != ' ')
+                    {
 
                         i--;
-
                     }
                     break;
-
                 }
 
                 //
@@ -4029,49 +3657,43 @@ Return Value:
                 // mean that we also don't decr i again
                 //
                 continue;
-
             }
 
             //
             // Look at the previous character
             //
             i--;
-
         }
 
         memSize *= (max * 2);
-
     }
 
     //
     // Allocate the memory
     //
-    buffer = ExAllocatePoolWithTag(
-        ( (Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-        memSize * sizeof(WCHAR),
-        ACPI_STRING_POOLTAG
-        );
-    if (buffer == NULL) {
+    buffer = ExAllocatePoolWithTag(((Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                   memSize * sizeof(WCHAR), ACPI_STRING_POOLTAG);
+    if (buffer == NULL)
+    {
 
         *(Buffer) = NULL;
-        if (BufferSize != NULL) {
+        if (BufferSize != NULL)
+        {
 
             *(BufferSize) = 0;
-
         }
         return STATUS_INSUFFICIENT_RESOURCES;
-
     }
-    RtlZeroMemory( buffer, memSize * sizeof(WCHAR) );
+    RtlZeroMemory(buffer, memSize * sizeof(WCHAR));
 
     //
     // Lets just deal with the simple case of the device id string
     //
-    if (Flags & GET_CONVERT_TO_DEVICEID) {
+    if (Flags & GET_CONVERT_TO_DEVICEID)
+    {
 
-        swprintf( buffer, L"ACPI\\%S", defaultString );
+        swprintf(buffer, L"ACPI\\%S", defaultString);
         goto ACPIGetProcessorIDWideExit;
-
     }
 
     //
@@ -4081,27 +3703,28 @@ Return Value:
     //
     memSize = 2;
     tempPtr = buffer;
-    for (i = 0; i < max; i++) {
+    for (i = 0; i < max; i++)
+    {
 
         //
         // First step is to find the nearest "number" from the end of the
         // default string
         //
-        while (offset > 0) {
+        while (offset > 0)
+        {
 
-            if (ISDIGIT(defaultString[offset-1])) {
+            if (ISDIGIT(defaultString[offset - 1]))
+            {
 
                 break;
-
             }
             offset--;
-
         }
 
         //
         // Generate the ACPI\\%s string
         //
-        swprintf(tempPtr,L"ACPI\\%*S",offset,defaultString);
+        swprintf(tempPtr, L"ACPI\\%*S", offset, defaultString);
         tempPtr += (offset + 5);
         *tempPtr = L'\0';
         tempPtr++;
@@ -4110,7 +3733,7 @@ Return Value:
         //
         // Generate the *%s string
         //
-        swprintf(tempPtr,L"*%*S",offset,defaultString);
+        swprintf(tempPtr, L"*%*S", offset, defaultString);
         tempPtr += (offset + 1);
         *tempPtr = L'\0';
         tempPtr++;
@@ -4120,17 +3743,16 @@ Return Value:
         // Now try to find the previous space in the substring so that we
         // don't accidently match on a two digit number
         //
-        while (offset > 0) {
+        while (offset > 0)
+        {
 
-            if (defaultString[offset-1] == ' ') {
+            if (defaultString[offset - 1] == ' ')
+            {
 
                 break;
-
             }
             offset--;
-
         }
-
     }
 
     //
@@ -4144,10 +3766,10 @@ Return Value:
     //
 ACPIGetProcessorIDWideExit:
     *(Buffer) = buffer;
-    if (BufferSize != NULL) {
+    if (BufferSize != NULL)
+    {
 
         *(BufferSize) = (memSize * sizeof(WCHAR));
-
     }
 
     //
@@ -4155,13 +3777,9 @@ ACPIGetProcessorIDWideExit:
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-ACPIGetProcessorStatus(
-    IN  PDEVICE_EXTENSION   DeviceExtension,
-    IN  ULONG               Flags,
-    OUT PULONG              DeviceStatus
-    )
+ACPIGetProcessorStatus(IN PDEVICE_EXTENSION DeviceExtension, IN ULONG Flags, OUT PULONG DeviceStatus)
 /*++
 
 Routine Description:
@@ -4182,29 +3800,29 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status = STATUS_SUCCESS;
-    PAPICTABLE          apicEntry;
-    PMAPIC              apicTable;
-    PPROCLOCALAPIC      localApic;
-    PPROCLOCALSAPIC     localSapic;
-    PROCESSOROBJ        *procObj;
-    PUCHAR              traversePtr;
-    ULONG               deviceStatus = STA_STATUS_DEFAULT;
-    ULONG_PTR           tableEnd;
-    USHORT              entryFlags;
-    BOOLEAN             foundMatch = FALSE;
-    static UCHAR        processorCount;
-    static UCHAR        processorId;
+    NTSTATUS status = STATUS_SUCCESS;
+    PAPICTABLE apicEntry;
+    PMAPIC apicTable;
+    PPROCLOCALAPIC localApic;
+    PPROCLOCALSAPIC localSapic;
+    PROCESSOROBJ *procObj;
+    PUCHAR traversePtr;
+    ULONG deviceStatus = STA_STATUS_DEFAULT;
+    ULONG_PTR tableEnd;
+    USHORT entryFlags;
+    BOOLEAN foundMatch = FALSE;
+    static UCHAR processorCount;
+    static UCHAR processorId;
 
     //
     // Look at the device extension's acpi object and make sure that
     // this is a processor...
     //
-    ASSERT( DeviceExtension->AcpiObject != NULL );
-    ASSERT( NSGETOBJTYPE(DeviceExtension->AcpiObject) == OBJTYPE_PROCESSOR );
-    if (!DeviceExtension->AcpiObject ||
-        NSGETOBJTYPE(DeviceExtension->AcpiObject) != OBJTYPE_PROCESSOR ||
-        DeviceExtension->AcpiObject->ObjData.pbDataBuff == NULL) {
+    ASSERT(DeviceExtension->AcpiObject != NULL);
+    ASSERT(NSGETOBJTYPE(DeviceExtension->AcpiObject) == OBJTYPE_PROCESSOR);
+    if (!DeviceExtension->AcpiObject || NSGETOBJTYPE(DeviceExtension->AcpiObject) != OBJTYPE_PROCESSOR ||
+        DeviceExtension->AcpiObject->ObjData.pbDataBuff == NULL)
+    {
 
         //
         // The effect of this code is that the ACPI Namespace's Processor
@@ -4214,7 +3832,6 @@ Return Value:
         //
         status = STATUS_INVALID_DEVICE_REQUEST;
         goto ACPIGetProcessorStatusExit;
-
     }
 
     //
@@ -4226,7 +3843,8 @@ Return Value:
     // Walk the MAPIC table
     //
     apicTable = AcpiInformation->MultipleApicTable;
-    if (!apicTable) {
+    if (!apicTable)
+    {
 
         //
         // If there is no MAPIC, then we assume there is only one processor
@@ -4241,35 +3859,37 @@ Return Value:
         // the one we picked is in a table we later unload.
         //
 
-        if (processorCount == 0) {
-          processorId = procObj->bApicID;
-          processorCount++;
+        if (processorCount == 0)
+        {
+            processorId = procObj->bApicID;
+            processorCount++;
         }
 
 
-        if (processorId != procObj->bApicID) {
-          deviceStatus = 0;
+        if (processorId != procObj->bApicID)
+        {
+            deviceStatus = 0;
         }
 
 
         goto ACPIGetProcessorStatusExit;
-
     }
 
     //
     // Walk all the elements in the MAPIC table
     //
-    traversePtr = (PUCHAR) apicTable->APICTables;
-    tableEnd = (ULONG_PTR) apicTable + apicTable->Header.Length;
-    while ( (ULONG_PTR) traversePtr < tableEnd) {
+    traversePtr = (PUCHAR)apicTable->APICTables;
+    tableEnd = (ULONG_PTR)apicTable + apicTable->Header.Length;
+    while ((ULONG_PTR)traversePtr < tableEnd)
+    {
 
         //
         // Look at the current entry in the table and determine if its
         // a local processor APIC
         //
-        apicEntry = (PAPICTABLE) traversePtr;
-        if (apicEntry->Type == PROCESSOR_LOCAL_APIC &&
-            apicEntry->Length == PROCESSOR_LOCAL_APIC_LENGTH) {
+        apicEntry = (PAPICTABLE)traversePtr;
+        if (apicEntry->Type == PROCESSOR_LOCAL_APIC && apicEntry->Length == PROCESSOR_LOCAL_APIC_LENGTH)
+        {
 
 
             //
@@ -4277,12 +3897,12 @@ Return Value:
             // see if we can match the processor ID with the one in the
             // device extension
             //
-            localApic = (PPROCLOCALAPIC) traversePtr;
-            if (localApic->ACPIProcessorID != procObj->bApicID) {
+            localApic = (PPROCLOCALAPIC)traversePtr;
+            if (localApic->ACPIProcessorID != procObj->bApicID)
+            {
 
                 traversePtr += localApic->Length;
                 continue;
-
             }
 
             //
@@ -4293,13 +3913,13 @@ Return Value:
             //
             // Is the processor enabled or not?
             //
-            if (!(localApic->Flags & PLAF_ENABLED)) {
+            if (!(localApic->Flags & PLAF_ENABLED))
+            {
 
                 //
                 // No, then don't pretend that the device is here...
                 //
                 deviceStatus = 0;
-
             }
 
             //
@@ -4307,23 +3927,22 @@ Return Value:
             // todo, so stop walking the MAPIC table...
             //
             break;
-
         }
 
-        if (apicEntry->Type == LOCAL_SAPIC &&
-            apicEntry->Length == PROCESSOR_LOCAL_SAPIC_LENGTH) {
+        if (apicEntry->Type == LOCAL_SAPIC && apicEntry->Length == PROCESSOR_LOCAL_SAPIC_LENGTH)
+        {
 
             //
             // At this point, we have found a processor local SAPIC, so
             // see if we can match the processor ID with the one in the
             // device extension
             //
-            localSapic = (PPROCLOCALSAPIC) traversePtr;
-            if (localSapic->ACPIProcessorID != procObj->bApicID) {
+            localSapic = (PPROCLOCALSAPIC)traversePtr;
+            if (localSapic->ACPIProcessorID != procObj->bApicID)
+            {
 
                 traversePtr += localSapic->Length;
                 continue;
-
             }
 
             //
@@ -4334,13 +3953,13 @@ Return Value:
             //
             // Is the processor enabled or not?
             //
-            if (!(localSapic->Flags & PLAF_ENABLED)) {
+            if (!(localSapic->Flags & PLAF_ENABLED))
+            {
 
                 //
                 // No, then don't pretend that the device is here...
                 //
                 deviceStatus = 0;
-
             }
 
             //
@@ -4348,28 +3967,27 @@ Return Value:
             // todo, so stop walking the MAPIC table...
             //
             break;
-
         }
 
         //
         // Sanity check to make sure that we abort tables with bogus length
         // entries
         //
-        if (apicEntry->Length == 0) {
+        if (apicEntry->Length == 0)
+        {
 
             break;
-
         }
         traversePtr += apicEntry->Length;
         continue;
-
     }
 
     //
     // if we didn't find a match, then processor must not be present
     //
-    if (!foundMatch) {
-      deviceStatus = 0;
+    if (!foundMatch)
+    {
+        deviceStatus = 0;
     }
 
 
@@ -4385,15 +4003,8 @@ ACPIGetProcessorStatusExit:
     //
     return status;
 }
-
-VOID
-EXPORT
-ACPIGetWorkerForBuffer(
-    IN  PNSOBJ      AcpiObject,
-    IN  NTSTATUS    Status,
-    IN  POBJDATA    Result,
-    IN  PVOID       Context
-    )
+
+VOID EXPORT ACPIGetWorkerForBuffer(IN PNSOBJ AcpiObject, IN NTSTATUS Status, IN POBJDATA Result, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -4414,82 +4025,79 @@ Return Value:
 
 --*/
 {
-    BOOLEAN             freeData = TRUE;
-    KIRQL               oldIrql;
-    NTSTATUS            status = Status;
-    PACPI_GET_REQUEST   request = (PACPI_GET_REQUEST) Context;
-    PUCHAR              buffer;
+    BOOLEAN freeData = TRUE;
+    KIRQL oldIrql;
+    NTSTATUS status = Status;
+    PACPI_GET_REQUEST request = (PACPI_GET_REQUEST)Context;
+    PUCHAR buffer;
 
     //
     // If we didn't succeed, then do nothing here
     //
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         freeData = FALSE;
         goto ACPIGetWorkerForBufferExit;
-
     }
 
     //
     // Check to see that we got the correct data type
     //
-    if ( Result->dwDataType != OBJTYPE_BUFFDATA ) {
+    if (Result->dwDataType != OBJTYPE_BUFFDATA)
+    {
 
         //
         // On this kind of error, we have to determine wether or not
         // to bugcheck
         //
-        if ( (request->Flags & GET_PROP_NO_ERRORS) ) {
+        if ((request->Flags & GET_PROP_NO_ERRORS))
+        {
 
-            ACPIInternalError( ACPI_GET );
-
+            ACPIInternalError(ACPI_GET);
         }
 
         status = STATUS_ACPI_INVALID_DATA;
         goto ACPIGetWorkerForBufferExit;
-
     }
 
-    if ( !(Result->dwDataLen) ) {
+    if (!(Result->dwDataLen))
+    {
 
         status = STATUS_ACPI_INVALID_DATA;
         goto ACPIGetWorkerForBufferExit;
-
     }
 
     //
     // Allocate a buffer
     //
-    buffer = ExAllocatePoolWithTag(
-        ( (request->Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
-        Result->dwDataLen,
-        ACPI_BUFFER_POOLTAG
-        );
-    if (buffer == NULL) {
+    buffer = ExAllocatePoolWithTag(((request->Flags & GET_PROP_ALLOCATE_NON_PAGED) ? NonPagedPool : PagedPool),
+                                   Result->dwDataLen, ACPI_BUFFER_POOLTAG);
+    if (buffer == NULL)
+    {
 
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto ACPIGetWorkerForBufferExit;
-
     }
 
     //
     // Copy the data over to it
     //
-    RtlCopyMemory( buffer, Result->pbDataBuff, Result->dwDataLen );
+    RtlCopyMemory(buffer, Result->pbDataBuff, Result->dwDataLen);
 
     //
     // Let the originator see this copy. Make sure to also see the buffer
     // length, if possible
     //
-    if (request->Buffer != NULL) {
+    if (request->Buffer != NULL)
+    {
 
         *(request->Buffer) = buffer;
-        if (request->BufferSize != NULL) {
+        if (request->BufferSize != NULL)
+        {
 
             *(request->BufferSize) = Result->dwDataLen;
-
         }
-
     }
 
 ACPIGetWorkerForBufferExit:
@@ -4502,10 +4110,10 @@ ACPIGetWorkerForBufferExit:
     //
     // We need to free the AML object
     //
-    if (freeData) {
+    if (freeData)
+    {
 
-        AMLIFreeDataBuffs( Result, 1 );
-
+        AMLIFreeDataBuffs(Result, 1);
     }
 
     //
@@ -4513,46 +4121,33 @@ ACPIGetWorkerForBufferExit:
     // sync case. If we are the sync case, then we have much less cleanup
     // to perform
     //
-    if ( !(request->Flags & GET_PROP_SKIP_CALLBACK) ) {
+    if (!(request->Flags & GET_PROP_SKIP_CALLBACK))
+    {
 
         //
         // Is there a callback routine to call?
         //
-        if (request->CallBackRoutine != NULL) {
+        if (request->CallBackRoutine != NULL)
+        {
 
-            (request->CallBackRoutine)(
-                AcpiObject,
-                status,
-                NULL,
-                request->CallBackContext
-                );
-
+            (request->CallBackRoutine)(AcpiObject, status, NULL, request->CallBackContext);
         }
 
         //
         // Remove the request from the queue
         //
-        KeAcquireSpinLock( &AcpiGetLock, &oldIrql );
-        RemoveEntryList( &(request->ListEntry) );
-        KeReleaseSpinLock( &AcpiGetLock, oldIrql );
+        KeAcquireSpinLock(&AcpiGetLock, &oldIrql);
+        RemoveEntryList(&(request->ListEntry));
+        KeReleaseSpinLock(&AcpiGetLock, oldIrql);
 
         //
         // We can now free the request itself
         //
-        ExFreePool( request );
-
+        ExFreePool(request);
     }
-
 }
-
-VOID
-EXPORT
-ACPIGetWorkerForData(
-    IN  PNSOBJ      AcpiObject,
-    IN  NTSTATUS    Status,
-    IN  POBJDATA    Result,
-    IN  PVOID       Context
-    )
+
+VOID EXPORT ACPIGetWorkerForData(IN PNSOBJ AcpiObject, IN NTSTATUS Status, IN POBJDATA Result, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -4577,25 +4172,26 @@ Return Value:
 
 --*/
 {
-    BOOLEAN             freeData = TRUE;
-    KIRQL               oldIrql;
-    NTSTATUS            status = Status;
-    PACPI_GET_REQUEST   request = (PACPI_GET_REQUEST) Context;
+    BOOLEAN freeData = TRUE;
+    KIRQL oldIrql;
+    NTSTATUS status = Status;
+    PACPI_GET_REQUEST request = (PACPI_GET_REQUEST)Context;
 
     //
     // If we didn't succeed, then remember not to free the data
     //
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         freeData = FALSE;
-
     }
 
     //
     // For this one routine, the caller *must* provide storage on his end
     //
-    ASSERT( request->Buffer != NULL );
-    if (request->Buffer == NULL) {
+    ASSERT(request->Buffer != NULL);
+    if (request->Buffer == NULL)
+    {
 
         status = STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -4603,7 +4199,8 @@ Return Value:
     //
     // If we didn't succeed, then do nothing here
     //
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         goto ACPIGetWorkerForDataExit;
     }
@@ -4612,14 +4209,14 @@ Return Value:
     // Copy over the object --- the caller will call 'AmliFreeDataBuffs'
     // on this object
     //
-    RtlCopyMemory( request->Buffer, Result, sizeof(OBJDATA) );
+    RtlCopyMemory(request->Buffer, Result, sizeof(OBJDATA));
 
     //
     // Play some tricks on the result pointer. This will ensure that we
     // won't accidently free the result before the requestor has a chance
     // to see it
     //
-    RtlZeroMemory( Result, sizeof(OBJDATA) );
+    RtlZeroMemory(Result, sizeof(OBJDATA));
 
     //
     // Remember not to free the data
@@ -4636,10 +4233,10 @@ ACPIGetWorkerForDataExit:
     //
     // We need to free the AML object
     //
-    if (freeData) {
+    if (freeData)
+    {
 
-        AMLIFreeDataBuffs( Result, 1 );
-
+        AMLIFreeDataBuffs(Result, 1);
     }
 
     //
@@ -4647,46 +4244,33 @@ ACPIGetWorkerForDataExit:
     // sync case. If we are the sync case, then we have much less cleanup
     // to perform
     //
-    if ( !(request->Flags & GET_PROP_SKIP_CALLBACK) ) {
+    if (!(request->Flags & GET_PROP_SKIP_CALLBACK))
+    {
 
         //
         // Is there a callback routine to call?
         //
-        if (request->CallBackRoutine != NULL) {
+        if (request->CallBackRoutine != NULL)
+        {
 
-            (request->CallBackRoutine)(
-                AcpiObject,
-                status,
-                NULL,
-                request->CallBackContext
-                );
-
+            (request->CallBackRoutine)(AcpiObject, status, NULL, request->CallBackContext);
         }
 
         //
         // Remove the request from the queue
         //
-        KeAcquireSpinLock( &AcpiGetLock, &oldIrql );
-        RemoveEntryList( &(request->ListEntry) );
-        KeReleaseSpinLock( &AcpiGetLock, oldIrql );
+        KeAcquireSpinLock(&AcpiGetLock, &oldIrql);
+        RemoveEntryList(&(request->ListEntry));
+        KeReleaseSpinLock(&AcpiGetLock, oldIrql);
 
         //
         // We can now free the request itself
         //
-        ExFreePool( request );
-
+        ExFreePool(request);
     }
-
 }
-
-VOID
-EXPORT
-ACPIGetWorkerForInteger(
-    IN  PNSOBJ      AcpiObject,
-    IN  NTSTATUS    Status,
-    IN  POBJDATA    Result,
-    IN  PVOID       Context
-    )
+
+VOID EXPORT ACPIGetWorkerForInteger(IN PNSOBJ AcpiObject, IN NTSTATUS Status, IN POBJDATA Result, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -4706,26 +4290,27 @@ Return Value:
 
 --*/
 {
-    BOOLEAN             freeData = FALSE;
-    KIRQL               oldIrql;
-    NTSTATUS            status = Status;
-    PACPI_GET_REQUEST   request = (PACPI_GET_REQUEST) Context;
-    PULONG              buffer = NULL;
+    BOOLEAN freeData = FALSE;
+    KIRQL oldIrql;
+    NTSTATUS status = Status;
+    PACPI_GET_REQUEST request = (PACPI_GET_REQUEST)Context;
+    PULONG buffer = NULL;
 
     //
     // If the call did succeed, then remember that we *must* free the data
     //
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         freeData = TRUE;
-
     }
 
     //
     // For this one routine, the caller *must* provide storage on his end
     //
-    ASSERT( request->Buffer != NULL );
-    if (request->Buffer == NULL) {
+    ASSERT(request->Buffer != NULL);
+    if (request->Buffer == NULL)
+    {
 
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto ACPIGetWorkerForIntegerExit;
@@ -4735,45 +4320,37 @@ Return Value:
     // Are we doing some kind of type conversion? Note that these routines may
     // choose to override an incoming failure...
     //
-    if (request->Flags & GET_CONVERT_TO_ADDRESS) {
+    if (request->Flags & GET_CONVERT_TO_ADDRESS)
+    {
 
-        status = ACPIGetConvertToAddress(
-            request->DeviceExtension,
-            Status,
-            Result,
-            request->Flags,
-            request->Buffer,
-            request->BufferSize
-            );
+        status = ACPIGetConvertToAddress(request->DeviceExtension, Status, Result, request->Flags, request->Buffer,
+                                         request->BufferSize);
+    }
+    else if (request->Flags & GET_CONVERT_TO_DEVICE_PRESENCE)
+    {
 
-    } else if (request->Flags & GET_CONVERT_TO_DEVICE_PRESENCE) {
+        status = ACPIGetConvertToDevicePresence(request->DeviceExtension, Status, Result, request->Flags,
+                                                request->Buffer, request->BufferSize);
+    }
+    else if (NT_SUCCESS(status))
+    {
 
-        status = ACPIGetConvertToDevicePresence(
-            request->DeviceExtension,
-            Status,
-            Result,
-            request->Flags,
-            request->Buffer,
-            request->BufferSize
-            );
-
-    } else if (NT_SUCCESS(status)) {
-
-        if ((request->Flags & GET_CONVERT_VALIDATE_INTEGER) &&
-            (Result->dwDataType != OBJTYPE_INTDATA)) {
+        if ((request->Flags & GET_CONVERT_VALIDATE_INTEGER) && (Result->dwDataType != OBJTYPE_INTDATA))
+        {
 
             status = STATUS_ACPI_INVALID_DATA;
-
-        } else {
+        }
+        else
+        {
 
             //
             // Set the value to what we should return
             //
-            *( (PULONG) (request->Buffer) ) = (ULONG)Result->uipDataValue;
-            if (request->BufferSize != NULL) {
+            *((PULONG)(request->Buffer)) = (ULONG)Result->uipDataValue;
+            if (request->BufferSize != NULL)
+            {
 
                 *(request->BufferSize) = sizeof(ULONG);
-
             }
             status = STATUS_SUCCESS;
         }
@@ -4789,10 +4366,10 @@ ACPIGetWorkerForIntegerExit:
     //
     // We need to free the AML object
     //
-    if (freeData) {
+    if (freeData)
+    {
 
-        AMLIFreeDataBuffs( Result, 1 );
-
+        AMLIFreeDataBuffs(Result, 1);
     }
 
     //
@@ -4800,46 +4377,33 @@ ACPIGetWorkerForIntegerExit:
     // sync case. If we are the sync case, then we have much less cleanup
     // to perform
     //
-    if ( !(request->Flags & GET_PROP_SKIP_CALLBACK) ) {
+    if (!(request->Flags & GET_PROP_SKIP_CALLBACK))
+    {
 
         //
         // Is there a callback routine to call?
         //
-        if (request->CallBackRoutine != NULL) {
+        if (request->CallBackRoutine != NULL)
+        {
 
-            (request->CallBackRoutine)(
-                AcpiObject,
-                status,
-                NULL,
-                request->CallBackContext
-                );
-
+            (request->CallBackRoutine)(AcpiObject, status, NULL, request->CallBackContext);
         }
 
         //
         // Remove the request from the queue
         //
-        KeAcquireSpinLock( &AcpiGetLock, &oldIrql );
-        RemoveEntryList( &(request->ListEntry) );
-        KeReleaseSpinLock( &AcpiGetLock, oldIrql );
+        KeAcquireSpinLock(&AcpiGetLock, &oldIrql);
+        RemoveEntryList(&(request->ListEntry));
+        KeReleaseSpinLock(&AcpiGetLock, oldIrql);
 
         //
         // We can now free the request itself
         //
-        ExFreePool( request );
-
+        ExFreePool(request);
     }
-
 }
-
-VOID
-EXPORT
-ACPIGetWorkerForNothing(
-    IN  PNSOBJ      AcpiObject,
-    IN  NTSTATUS    Status,
-    IN  POBJDATA    Result,
-    IN  PVOID       Context
-    )
+
+VOID EXPORT ACPIGetWorkerForNothing(IN PNSOBJ AcpiObject, IN NTSTATUS Status, IN POBJDATA Result, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -4860,17 +4424,17 @@ Return Value:
 
 --*/
 {
-    BOOLEAN             freeData = FALSE;
-    KIRQL               oldIrql;
-    PACPI_GET_REQUEST   request = (PACPI_GET_REQUEST) Context;
+    BOOLEAN freeData = FALSE;
+    KIRQL oldIrql;
+    PACPI_GET_REQUEST request = (PACPI_GET_REQUEST)Context;
 
     //
     // If the call did succeed, then remember that we *must* free the data
     //
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         freeData = TRUE;
-
     }
 
     //
@@ -4882,10 +4446,10 @@ Return Value:
     //
     // We need to free the AML object
     //
-    if (freeData) {
+    if (freeData)
+    {
 
-        AMLIFreeDataBuffs( Result, 1 );
-
+        AMLIFreeDataBuffs(Result, 1);
     }
 
     //
@@ -4893,45 +4457,33 @@ Return Value:
     // sync case. If we are the sync case, then we have much less cleanup
     // to perform
     //
-    if ( !(request->Flags & GET_PROP_SKIP_CALLBACK) ) {
+    if (!(request->Flags & GET_PROP_SKIP_CALLBACK))
+    {
 
         //
         // Is there a callback routine to call?
         //
-        if (request->CallBackRoutine != NULL) {
+        if (request->CallBackRoutine != NULL)
+        {
 
-            (request->CallBackRoutine)(
-                AcpiObject,
-                Status,
-                NULL,
-                request->CallBackContext
-                );
-
+            (request->CallBackRoutine)(AcpiObject, Status, NULL, request->CallBackContext);
         }
 
         //
         // Remove the request from the queue
         //
-        KeAcquireSpinLock( &AcpiGetLock, &oldIrql );
-        RemoveEntryList( &(request->ListEntry) );
-        KeReleaseSpinLock( &AcpiGetLock, oldIrql );
+        KeAcquireSpinLock(&AcpiGetLock, &oldIrql);
+        RemoveEntryList(&(request->ListEntry));
+        KeReleaseSpinLock(&AcpiGetLock, oldIrql);
 
         //
         // We can now free the request itself
         //
-        ExFreePool( request );
-
+        ExFreePool(request);
     }
 }
-
-VOID
-EXPORT
-ACPIGetWorkerForString(
-    IN  PNSOBJ      AcpiObject,
-    IN  NTSTATUS    Status,
-    IN  POBJDATA    Result,
-    IN  PVOID       Context
-    )
+
+VOID EXPORT ACPIGetWorkerForString(IN PNSOBJ AcpiObject, IN NTSTATUS Status, IN POBJDATA Result, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -4951,202 +4503,136 @@ Return Value:
 
 --*/
 {
-    BOOLEAN             freeData = FALSE;
-    KIRQL               oldIrql;
-    NTSTATUS            status = Status;
-    PACPI_GET_REQUEST   request = (PACPI_GET_REQUEST) Context;
+    BOOLEAN freeData = FALSE;
+    KIRQL oldIrql;
+    NTSTATUS status = Status;
+    PACPI_GET_REQUEST request = (PACPI_GET_REQUEST)Context;
 
     //
     // If the call did succeed, then remember that we *must* free the data
     //
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         freeData = TRUE;
     }
 
     //
     // For this one routine, the caller *must* provide storage on his end
     //
-    ASSERT( request->Buffer != NULL );
-    if (request->Buffer == NULL) {
+    ASSERT(request->Buffer != NULL);
+    if (request->Buffer == NULL)
+    {
 
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto ACPIGetWorkerForStringExit;
-
     }
 
     //
     // Make sure that we don't allocate empty storage
     //
-    if (Result->dwDataType == OBJTYPE_STRDATA &&
-        (Result->pbDataBuff == NULL || Result->dwDataLen == 0)) {
+    if (Result->dwDataType == OBJTYPE_STRDATA && (Result->pbDataBuff == NULL || Result->dwDataLen == 0))
+    {
 
         status = STATUS_ACPI_INVALID_DATA;
         goto ACPIGetWorkerForStringExit;
-
     }
 
     //
     // Do do we want unicode or ansi output?
     //
-    if (request->Flags & GET_CONVERT_TO_WIDESTRING) {
+    if (request->Flags & GET_CONVERT_TO_WIDESTRING)
+    {
 
         //
         // Are we doing some other kind of conversion? Eg: DeviceID,
         // InstanceIDs, etc, etc?
         //
-        if (request->Flags & GET_CONVERT_TO_DEVICEID) {
+        if (request->Flags & GET_CONVERT_TO_DEVICEID)
+        {
 
-            status = ACPIGetConvertToDeviceIDWide(
-                request->DeviceExtension,
-                Status,
-                Result,
-                request->Flags,
-                request->Buffer,
-                request->BufferSize
-                );
-
-        } else if (request->Flags & GET_CONVERT_TO_HARDWAREID) {
-
-            status = ACPIGetConvertToHardwareIDWide(
-                request->DeviceExtension,
-                Status,
-                Result,
-                request->Flags,
-                request->Buffer,
-                request->BufferSize
-                );
-
-        } else if (request->Flags & GET_CONVERT_TO_INSTANCEID) {
-
-            status = ACPIGetConvertToInstanceIDWide(
-                request->DeviceExtension,
-                Status,
-                Result,
-                request->Flags,
-                request->Buffer,
-                request->BufferSize
-                );
-
-        } else if (request->Flags & GET_CONVERT_TO_PNPID) {
-
-            status = ACPIGetConvertToPnpIDWide(
-                request->DeviceExtension,
-                Status,
-                Result,
-                request->Flags,
-                request->Buffer,
-                request->BufferSize
-                );
-
-        } else if (request->Flags & GET_CONVERT_TO_COMPATIBLEID) {
-
-            status = ACPIGetConvertToCompatibleIDWide(
-                request->DeviceExtension,
-                Status,
-                Result,
-                request->Flags,
-                request->Buffer,
-                request->BufferSize
-                );
-
-        } else if (request->Flags & GET_CONVERT_TO_SERIAL_ID) {
-
-            status = ACPIGetConvertToSerialIDWide(
-                request->DeviceExtension,
-                Status,
-                Result,
-                request->Flags,
-                request->Buffer,
-                request->BufferSize
-                );
-
-        } else {
-
-            status = ACPIGetConvertToStringWide(
-                request->DeviceExtension,
-                Status,
-                Result,
-                request->Flags,
-                request->Buffer,
-                request->BufferSize
-                );
-
+            status = ACPIGetConvertToDeviceIDWide(request->DeviceExtension, Status, Result, request->Flags,
+                                                  request->Buffer, request->BufferSize);
         }
+        else if (request->Flags & GET_CONVERT_TO_HARDWAREID)
+        {
 
-    } else {
+            status = ACPIGetConvertToHardwareIDWide(request->DeviceExtension, Status, Result, request->Flags,
+                                                    request->Buffer, request->BufferSize);
+        }
+        else if (request->Flags & GET_CONVERT_TO_INSTANCEID)
+        {
+
+            status = ACPIGetConvertToInstanceIDWide(request->DeviceExtension, Status, Result, request->Flags,
+                                                    request->Buffer, request->BufferSize);
+        }
+        else if (request->Flags & GET_CONVERT_TO_PNPID)
+        {
+
+            status = ACPIGetConvertToPnpIDWide(request->DeviceExtension, Status, Result, request->Flags,
+                                               request->Buffer, request->BufferSize);
+        }
+        else if (request->Flags & GET_CONVERT_TO_COMPATIBLEID)
+        {
+
+            status = ACPIGetConvertToCompatibleIDWide(request->DeviceExtension, Status, Result, request->Flags,
+                                                      request->Buffer, request->BufferSize);
+        }
+        else if (request->Flags & GET_CONVERT_TO_SERIAL_ID)
+        {
+
+            status = ACPIGetConvertToSerialIDWide(request->DeviceExtension, Status, Result, request->Flags,
+                                                  request->Buffer, request->BufferSize);
+        }
+        else
+        {
+
+            status = ACPIGetConvertToStringWide(request->DeviceExtension, Status, Result, request->Flags,
+                                                request->Buffer, request->BufferSize);
+        }
+    }
+    else
+    {
 
         //
         // Are we doing some other kind of conversion? Eg: DeviceID,
         // InstanceIDs, etc, etc?
         //
-        if (request->Flags & GET_CONVERT_TO_DEVICEID) {
+        if (request->Flags & GET_CONVERT_TO_DEVICEID)
+        {
 
-            status = ACPIGetConvertToDeviceID(
-                request->DeviceExtension,
-                Status,
-                Result,
-                request->Flags,
-                request->Buffer,
-                request->BufferSize
-                );
-
-        } else if (request->Flags & GET_CONVERT_TO_HARDWAREID) {
-
-            status = ACPIGetConvertToHardwareID(
-                request->DeviceExtension,
-                Status,
-                Result,
-                request->Flags,
-                request->Buffer,
-                request->BufferSize
-                );
-
-        } else if (request->Flags & GET_CONVERT_TO_INSTANCEID) {
-
-            status = ACPIGetConvertToInstanceID(
-                request->DeviceExtension,
-                Status,
-                Result,
-                request->Flags,
-                request->Buffer,
-                request->BufferSize
-                );
-
-        } else if (request->Flags & GET_CONVERT_TO_PNPID) {
-
-            status = ACPIGetConvertToPnpID(
-                request->DeviceExtension,
-                Status,
-                Result,
-                request->Flags,
-                request->Buffer,
-                request->BufferSize
-                );
-
-        } else if (request->Flags & GET_CONVERT_TO_COMPATIBLEID) {
-
-            status = ACPIGetConvertToCompatibleID(
-                request->DeviceExtension,
-                Status,
-                Result,
-                request->Flags,
-                request->Buffer,
-                request->BufferSize
-                );
-
-        } else {
-
-            status = ACPIGetConvertToString(
-                request->DeviceExtension,
-                Status,
-                Result,
-                request->Flags,
-                request->Buffer,
-                request->BufferSize
-                );
-
+            status = ACPIGetConvertToDeviceID(request->DeviceExtension, Status, Result, request->Flags, request->Buffer,
+                                              request->BufferSize);
         }
+        else if (request->Flags & GET_CONVERT_TO_HARDWAREID)
+        {
 
+            status = ACPIGetConvertToHardwareID(request->DeviceExtension, Status, Result, request->Flags,
+                                                request->Buffer, request->BufferSize);
+        }
+        else if (request->Flags & GET_CONVERT_TO_INSTANCEID)
+        {
+
+            status = ACPIGetConvertToInstanceID(request->DeviceExtension, Status, Result, request->Flags,
+                                                request->Buffer, request->BufferSize);
+        }
+        else if (request->Flags & GET_CONVERT_TO_PNPID)
+        {
+
+            status = ACPIGetConvertToPnpID(request->DeviceExtension, Status, Result, request->Flags, request->Buffer,
+                                           request->BufferSize);
+        }
+        else if (request->Flags & GET_CONVERT_TO_COMPATIBLEID)
+        {
+
+            status = ACPIGetConvertToCompatibleID(request->DeviceExtension, Status, Result, request->Flags,
+                                                  request->Buffer, request->BufferSize);
+        }
+        else
+        {
+
+            status = ACPIGetConvertToString(request->DeviceExtension, Status, Result, request->Flags, request->Buffer,
+                                            request->BufferSize);
+        }
     }
 
 ACPIGetWorkerForStringExit:
@@ -5159,10 +4645,10 @@ ACPIGetWorkerForStringExit:
     //
     // We need to free the AML object
     //
-    if (freeData) {
+    if (freeData)
+    {
 
-        AMLIFreeDataBuffs( Result, 1 );
-
+        AMLIFreeDataBuffs(Result, 1);
     }
 
     //
@@ -5170,34 +4656,28 @@ ACPIGetWorkerForStringExit:
     // sync case. If we are the sync case, then we have much less cleanup
     // to perform
     //
-    if ( !(request->Flags & GET_PROP_SKIP_CALLBACK) ) {
+    if (!(request->Flags & GET_PROP_SKIP_CALLBACK))
+    {
 
         //
         // Is there a callback routine to call?
         //
-        if (request->CallBackRoutine != NULL) {
+        if (request->CallBackRoutine != NULL)
+        {
 
-            (request->CallBackRoutine)(
-                AcpiObject,
-                status,
-                NULL,
-                request->CallBackContext
-                );
-
+            (request->CallBackRoutine)(AcpiObject, status, NULL, request->CallBackContext);
         }
 
         //
         // Remove the request from the queue
         //
-        KeAcquireSpinLock( &AcpiGetLock, &oldIrql );
-        RemoveEntryList( &(request->ListEntry) );
-        KeReleaseSpinLock( &AcpiGetLock, oldIrql );
+        KeAcquireSpinLock(&AcpiGetLock, &oldIrql);
+        RemoveEntryList(&(request->ListEntry));
+        KeReleaseSpinLock(&AcpiGetLock, oldIrql);
 
         //
         // We can now free the request itself
         //
-        ExFreePool( request );
-
+        ExFreePool(request);
     }
-
 }

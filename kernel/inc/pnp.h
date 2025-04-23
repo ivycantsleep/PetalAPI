@@ -30,7 +30,7 @@ Revision History:
 // The following global variables provide/control access to PnP Manager data.
 //
 
-extern ERESOURCE  PpRegistryDeviceResource;
+extern ERESOURCE PpRegistryDeviceResource;
 extern PDRIVER_OBJECT IoPnpDriverObject;
 
 // begin_ntddk begin_nthal begin_ntifs begin_wdm begin_ntosp
@@ -39,7 +39,8 @@ extern PDRIVER_OBJECT IoPnpDriverObject;
 // Define PnP Device Property for IoGetDeviceProperty
 //
 
-typedef enum {
+typedef enum
+{
     DevicePropertyDeviceDescription,
     DevicePropertyHardwareID,
     DevicePropertyCompatibleIDs,
@@ -62,29 +63,17 @@ typedef enum {
     DevicePropertyRemovalPolicy
 } DEVICE_REGISTRY_PROPERTY;
 
-typedef BOOLEAN (*PTRANSLATE_BUS_ADDRESS)(
-    IN PVOID Context,
-    IN PHYSICAL_ADDRESS BusAddress,
-    IN ULONG Length,
-    IN OUT PULONG AddressSpace,
-    OUT PPHYSICAL_ADDRESS TranslatedAddress
-    );
+typedef BOOLEAN (*PTRANSLATE_BUS_ADDRESS)(IN PVOID Context, IN PHYSICAL_ADDRESS BusAddress, IN ULONG Length,
+                                          IN OUT PULONG AddressSpace, OUT PPHYSICAL_ADDRESS TranslatedAddress);
 
-typedef struct _DMA_ADAPTER *(*PGET_DMA_ADAPTER)(
-    IN PVOID Context,
-    IN struct _DEVICE_DESCRIPTION *DeviceDescriptor,
-    OUT PULONG NumberOfMapRegisters
-    );
+typedef struct _DMA_ADAPTER *(*PGET_DMA_ADAPTER)(IN PVOID Context, IN struct _DEVICE_DESCRIPTION *DeviceDescriptor,
+                                                 OUT PULONG NumberOfMapRegisters);
 
-typedef ULONG (*PGET_SET_DEVICE_DATA)(
-    IN PVOID Context,
-    IN ULONG DataType,
-    IN PVOID Buffer,
-    IN ULONG Offset,
-    IN ULONG Length
-    );
+typedef ULONG (*PGET_SET_DEVICE_DATA)(IN PVOID Context, IN ULONG DataType, IN PVOID Buffer, IN ULONG Offset,
+                                      IN ULONG Length);
 
-typedef enum _DEVICE_INSTALL_STATE {
+typedef enum _DEVICE_INSTALL_STATE
+{
     InstallStateInstalled,
     InstallStateNeedsReinstall,
     InstallStateFailedInstall,
@@ -96,7 +85,8 @@ typedef enum _DEVICE_INSTALL_STATE {
 // PDO indicating the type of bus the device exists on.
 //
 
-typedef struct _PNP_BUS_INFORMATION {
+typedef struct _PNP_BUS_INFORMATION
+{
     GUID BusTypeGuid;
     INTERFACE_TYPE LegacyBusType;
     ULONG BusNumber;
@@ -110,7 +100,8 @@ typedef struct _PNP_BUS_INFORMATION {
 // support both 16-bit (PCMCIABus) and 32-bit (PCIBus) cards.
 //
 
-typedef struct _LEGACY_BUS_INFORMATION {
+typedef struct _LEGACY_BUS_INFORMATION
+{
     GUID BusTypeGuid;
     INTERFACE_TYPE LegacyBusType;
     ULONG BusNumber;
@@ -119,26 +110,27 @@ typedef struct _LEGACY_BUS_INFORMATION {
 //
 // Defines for IoGetDeviceProperty(DevicePropertyRemovalPolicy).
 //
-typedef enum _DEVICE_REMOVAL_POLICY {
+typedef enum _DEVICE_REMOVAL_POLICY
+{
 
-// end_ntddk end_wdm end_nthal end_ntifs end_ntosp
+    // end_ntddk end_wdm end_nthal end_ntifs end_ntosp
     RemovalPolicyNotDetermined = 0,
-// begin_ntddk begin_wdm begin_nthal begin_ntifs begin_ntosp
+    // begin_ntddk begin_wdm begin_nthal begin_ntifs begin_ntosp
     RemovalPolicyExpectNoRemoval = 1,
     RemovalPolicyExpectOrderlyRemoval = 2,
     RemovalPolicyExpectSurpriseRemoval = 3
-// end_ntddk end_wdm end_nthal end_ntifs end_ntosp
-                                          ,
+        // end_ntddk end_wdm end_nthal end_ntifs end_ntosp
+        ,
     RemovalPolicySuggestOrderlyRemoval = 4,
     RemovalPolicySuggestSurpriseRemoval = 5,
     RemovalPolicyUnspecified = 6
-// begin_ntddk begin_wdm begin_nthal begin_ntifs begin_ntosp
+    // begin_ntddk begin_wdm begin_nthal begin_ntifs begin_ntosp
 
 } DEVICE_REMOVAL_POLICY, *PDEVICE_REMOVAL_POLICY;
 
 
-
-typedef struct _BUS_INTERFACE_STANDARD {
+typedef struct _BUS_INTERFACE_STANDARD
+{
     //
     // generic interface header
     //
@@ -160,72 +152,52 @@ typedef struct _BUS_INTERFACE_STANDARD {
 //
 // The following definitions are used in ACPI QueryInterface
 //
-typedef BOOLEAN (* PGPE_SERVICE_ROUTINE) (
-                            PVOID,
-                            PVOID);
+typedef BOOLEAN (*PGPE_SERVICE_ROUTINE)(PVOID, PVOID);
 
-typedef NTSTATUS (* PGPE_CONNECT_VECTOR) (
-                            PDEVICE_OBJECT,
-                            ULONG,
-                            KINTERRUPT_MODE,
-                            BOOLEAN,
-                            PGPE_SERVICE_ROUTINE,
-                            PVOID,
-                            PVOID);
+typedef NTSTATUS (*PGPE_CONNECT_VECTOR)(PDEVICE_OBJECT, ULONG, KINTERRUPT_MODE, BOOLEAN, PGPE_SERVICE_ROUTINE, PVOID,
+                                        PVOID);
 
-typedef NTSTATUS (* PGPE_DISCONNECT_VECTOR) (
-                            PVOID);
+typedef NTSTATUS (*PGPE_DISCONNECT_VECTOR)(PVOID);
 
-typedef NTSTATUS (* PGPE_ENABLE_EVENT) (
-                            PDEVICE_OBJECT,
-                            PVOID);
+typedef NTSTATUS (*PGPE_ENABLE_EVENT)(PDEVICE_OBJECT, PVOID);
 
-typedef NTSTATUS (* PGPE_DISABLE_EVENT) (
-                            PDEVICE_OBJECT,
-                            PVOID);
+typedef NTSTATUS (*PGPE_DISABLE_EVENT)(PDEVICE_OBJECT, PVOID);
 
-typedef NTSTATUS (* PGPE_CLEAR_STATUS) (
-                            PDEVICE_OBJECT,
-                            PVOID);
+typedef NTSTATUS (*PGPE_CLEAR_STATUS)(PDEVICE_OBJECT, PVOID);
 
-typedef VOID (* PDEVICE_NOTIFY_CALLBACK) (
-                            PVOID,
-                            ULONG);
+typedef VOID (*PDEVICE_NOTIFY_CALLBACK)(PVOID, ULONG);
 
-typedef NTSTATUS (* PREGISTER_FOR_DEVICE_NOTIFICATIONS) (
-                            PDEVICE_OBJECT,
-                            PDEVICE_NOTIFY_CALLBACK,
-                            PVOID);
+typedef NTSTATUS (*PREGISTER_FOR_DEVICE_NOTIFICATIONS)(PDEVICE_OBJECT, PDEVICE_NOTIFY_CALLBACK, PVOID);
 
-typedef void (* PUNREGISTER_FOR_DEVICE_NOTIFICATIONS) (
-                            PDEVICE_OBJECT,
-                            PDEVICE_NOTIFY_CALLBACK);
+typedef void (*PUNREGISTER_FOR_DEVICE_NOTIFICATIONS)(PDEVICE_OBJECT, PDEVICE_NOTIFY_CALLBACK);
 
-typedef struct _ACPI_INTERFACE_STANDARD {
+typedef struct _ACPI_INTERFACE_STANDARD
+{
     //
     // Generic interface header
     //
-    USHORT                  Size;
-    USHORT                  Version;
-    PVOID                   Context;
-    PINTERFACE_REFERENCE    InterfaceReference;
-    PINTERFACE_DEREFERENCE  InterfaceDereference;
+    USHORT Size;
+    USHORT Version;
+    PVOID Context;
+    PINTERFACE_REFERENCE InterfaceReference;
+    PINTERFACE_DEREFERENCE InterfaceDereference;
     //
     // ACPI interfaces
     //
-    PGPE_CONNECT_VECTOR                     GpeConnectVector;
-    PGPE_DISCONNECT_VECTOR                  GpeDisconnectVector;
-    PGPE_ENABLE_EVENT                       GpeEnableEvent;
-    PGPE_DISABLE_EVENT                      GpeDisableEvent;
-    PGPE_CLEAR_STATUS                       GpeClearStatus;
-    PREGISTER_FOR_DEVICE_NOTIFICATIONS      RegisterForDeviceNotifications;
-    PUNREGISTER_FOR_DEVICE_NOTIFICATIONS    UnregisterForDeviceNotifications;
+    PGPE_CONNECT_VECTOR GpeConnectVector;
+    PGPE_DISCONNECT_VECTOR GpeDisconnectVector;
+    PGPE_ENABLE_EVENT GpeEnableEvent;
+    PGPE_DISABLE_EVENT GpeDisableEvent;
+    PGPE_CLEAR_STATUS GpeClearStatus;
+    PREGISTER_FOR_DEVICE_NOTIFICATIONS RegisterForDeviceNotifications;
+    PUNREGISTER_FOR_DEVICE_NOTIFICATIONS UnregisterForDeviceNotifications;
 
 } ACPI_INTERFACE_STANDARD, *PACPI_INTERFACE_STANDARD;
 
 // end_wdm end_ntddk
 
-typedef enum _ACPI_REG_TYPE {
+typedef enum _ACPI_REG_TYPE
+{
     PM1a_ENABLE,
     PM1b_ENABLE,
     PM1a_STATUS,
@@ -238,57 +210,48 @@ typedef enum _ACPI_REG_TYPE {
     MaxRegType
 } ACPI_REG_TYPE, *PACPI_REG_TYPE;
 
-typedef USHORT (*PREAD_ACPI_REGISTER) (
-  IN ACPI_REG_TYPE AcpiReg,
-  IN ULONG         Register);
+typedef USHORT (*PREAD_ACPI_REGISTER)(IN ACPI_REG_TYPE AcpiReg, IN ULONG Register);
 
-typedef VOID (*PWRITE_ACPI_REGISTER) (
-  IN ACPI_REG_TYPE AcpiReg,
-  IN ULONG         Register,
-  IN USHORT        Value
-  );
+typedef VOID (*PWRITE_ACPI_REGISTER)(IN ACPI_REG_TYPE AcpiReg, IN ULONG Register, IN USHORT Value);
 
-typedef struct ACPI_REGS_INTERFACE_STANDARD {
+typedef struct ACPI_REGS_INTERFACE_STANDARD
+{
     //
     // generic interface header
     //
     USHORT Size;
     USHORT Version;
-    PVOID  Context;
-    PINTERFACE_REFERENCE   InterfaceReference;
+    PVOID Context;
+    PINTERFACE_REFERENCE InterfaceReference;
     PINTERFACE_DEREFERENCE InterfaceDereference;
 
     //
     // READ/WRITE_ACPI_REGISTER functions
     //
-    PREAD_ACPI_REGISTER  ReadAcpiRegister;
+    PREAD_ACPI_REGISTER ReadAcpiRegister;
     PWRITE_ACPI_REGISTER WriteAcpiRegister;
 
 } ACPI_REGS_INTERFACE_STANDARD, *PACPI_REGS_INTERFACE_STANDARD;
 
 
-typedef NTSTATUS (*PHAL_QUERY_ALLOCATE_PORT_RANGE) (
-  IN BOOLEAN IsSparse,
-  IN BOOLEAN PrimaryIsMmio,
-  IN PVOID VirtBaseAddr OPTIONAL,
-  IN PHYSICAL_ADDRESS PhysBaseAddr,  // Only valid if PrimaryIsMmio = TRUE
-  IN ULONG Length,                   // Only valid if PrimaryIsMmio = TRUE
-  OUT PUSHORT NewRangeId
-  );
+typedef NTSTATUS (*PHAL_QUERY_ALLOCATE_PORT_RANGE)(
+    IN BOOLEAN IsSparse, IN BOOLEAN PrimaryIsMmio, IN PVOID VirtBaseAddr OPTIONAL,
+    IN PHYSICAL_ADDRESS PhysBaseAddr, // Only valid if PrimaryIsMmio = TRUE
+    IN ULONG Length,                  // Only valid if PrimaryIsMmio = TRUE
+    OUT PUSHORT NewRangeId);
 
-typedef VOID (*PHAL_FREE_PORT_RANGE)(
-    IN USHORT RangeId
-    );
+typedef VOID (*PHAL_FREE_PORT_RANGE)(IN USHORT RangeId);
 
 
-typedef struct _HAL_PORT_RANGE_INTERFACE {
+typedef struct _HAL_PORT_RANGE_INTERFACE
+{
     //
     // generic interface header
     //
     USHORT Size;
     USHORT Version;
-    PVOID  Context;
-    PINTERFACE_REFERENCE   InterfaceReference;
+    PVOID Context;
+    PINTERFACE_REFERENCE InterfaceReference;
     PINTERFACE_DEREFERENCE InterfaceDereference;
 
     //
@@ -304,46 +267,36 @@ typedef struct _HAL_PORT_RANGE_INTERFACE {
 // describe the CMOS HAL interface
 //
 
-typedef enum _CMOS_DEVICE_TYPE {
+typedef enum _CMOS_DEVICE_TYPE
+{
     CmosTypeStdPCAT,
     CmosTypeIntelPIIX4,
     CmosTypeDal1501
 } CMOS_DEVICE_TYPE;
 
 
-typedef
-ULONG
-(*PREAD_ACPI_CMOS) (
-    IN CMOS_DEVICE_TYPE     CmosType,
-    IN ULONG                SourceAddress,
-    IN PUCHAR               DataBuffer,
-    IN ULONG                ByteCount
-    );
+typedef ULONG (*PREAD_ACPI_CMOS)(IN CMOS_DEVICE_TYPE CmosType, IN ULONG SourceAddress, IN PUCHAR DataBuffer,
+                                 IN ULONG ByteCount);
 
-typedef
-ULONG
-(*PWRITE_ACPI_CMOS) (
-    IN CMOS_DEVICE_TYPE     CmosType,
-    IN ULONG                SourceAddress,
-    IN PUCHAR               DataBuffer,
-    IN ULONG                ByteCount
-    );
+typedef ULONG (*PWRITE_ACPI_CMOS)(IN CMOS_DEVICE_TYPE CmosType, IN ULONG SourceAddress, IN PUCHAR DataBuffer,
+                                  IN ULONG ByteCount);
 
-typedef struct _ACPI_CMOS_INTERFACE_STANDARD {
+typedef struct _ACPI_CMOS_INTERFACE_STANDARD
+{
     //
     // generic interface header
     //
     USHORT Size;
     USHORT Version;
-    PVOID  Context;
-    PINTERFACE_REFERENCE   InterfaceReference;
+    PVOID Context;
+    PINTERFACE_REFERENCE InterfaceReference;
     PINTERFACE_DEREFERENCE InterfaceDereference;
 
     //
     // READ/WRITE_ACPI_CMOS functions
     //
-    PREAD_ACPI_CMOS     ReadCmos;
-    PWRITE_ACPI_CMOS    WriteCmos;
+    PREAD_ACPI_CMOS ReadCmos;
+    PWRITE_ACPI_CMOS WriteCmos;
 
 } ACPI_CMOS_INTERFACE_STANDARD, *PACPI_CMOS_INTERFACE_STANDARD;
 
@@ -351,10 +304,11 @@ typedef struct _ACPI_CMOS_INTERFACE_STANDARD {
 // These definitions are used for getting PCI Interrupt Routing interfaces
 //
 
-typedef struct {
-    PVOID   LinkNode;
-    ULONG   StaticVector;
-    UCHAR   Flags;
+typedef struct
+{
+    PVOID LinkNode;
+    ULONG StaticVector;
+    UCHAR Flags;
 } ROUTING_TOKEN, *PROUTING_TOKEN;
 
 //
@@ -363,39 +317,20 @@ typedef struct {
 // MSI routing information
 //
 
-#define PCI_MSI_ROUTING         0x1
-#define PCI_STATIC_ROUTING      0x2
+#define PCI_MSI_ROUTING 0x1
+#define PCI_STATIC_ROUTING 0x2
 
-typedef
-NTSTATUS
-(*PGET_INTERRUPT_ROUTING)(
-    IN  PDEVICE_OBJECT  Pdo,
-    OUT ULONG           *Bus,
-    OUT ULONG           *PciSlot,
-    OUT UCHAR           *InterruptLine,
-    OUT UCHAR           *InterruptPin,
-    OUT UCHAR           *ClassCode,
-    OUT UCHAR           *SubClassCode,
-    OUT PDEVICE_OBJECT  *ParentPdo,
-    OUT ROUTING_TOKEN   *RoutingToken,
-    OUT UCHAR           *Flags
-    );
+typedef NTSTATUS (*PGET_INTERRUPT_ROUTING)(IN PDEVICE_OBJECT Pdo, OUT ULONG *Bus, OUT ULONG *PciSlot,
+                                           OUT UCHAR *InterruptLine, OUT UCHAR *InterruptPin, OUT UCHAR *ClassCode,
+                                           OUT UCHAR *SubClassCode, OUT PDEVICE_OBJECT *ParentPdo,
+                                           OUT ROUTING_TOKEN *RoutingToken, OUT UCHAR *Flags);
 
-typedef
-NTSTATUS
-(*PSET_INTERRUPT_ROUTING_TOKEN)(
-    IN  PDEVICE_OBJECT  Pdo,
-    IN  PROUTING_TOKEN  RoutingToken
-    );
+typedef NTSTATUS (*PSET_INTERRUPT_ROUTING_TOKEN)(IN PDEVICE_OBJECT Pdo, IN PROUTING_TOKEN RoutingToken);
 
-typedef
-VOID
-(*PUPDATE_INTERRUPT_LINE)(
-    IN PDEVICE_OBJECT Pdo,
-    IN UCHAR LineRegister
-    );
+typedef VOID (*PUPDATE_INTERRUPT_LINE)(IN PDEVICE_OBJECT Pdo, IN UCHAR LineRegister);
 
-typedef struct _INT_ROUTE_INTERFACE_STANDARD {
+typedef struct _INT_ROUTE_INTERFACE_STANDARD
+{
     //
     // generic interface header
     //
@@ -421,134 +356,87 @@ typedef struct _INT_ROUTE_INTERFACE_STANDARD {
 
 NTKERNELAPI
 BOOLEAN
-PpInitSystem (
-    VOID
-    );
+PpInitSystem(VOID);
 
 NTKERNELAPI
 NTSTATUS
-PpDeviceRegistration(
-    IN PUNICODE_STRING DeviceInstancePath,
-    IN BOOLEAN Add,
-    IN PUNICODE_STRING ServiceKeyName OPTIONAL
-    );
+PpDeviceRegistration(IN PUNICODE_STRING DeviceInstancePath, IN BOOLEAN Add, IN PUNICODE_STRING ServiceKeyName OPTIONAL);
 
 //  begin_ntosp
 NTKERNELAPI
 NTSTATUS
-IoSynchronousInvalidateDeviceRelations(
-    PDEVICE_OBJECT DeviceObject,
-    DEVICE_RELATION_TYPE Type
-    );
+IoSynchronousInvalidateDeviceRelations(PDEVICE_OBJECT DeviceObject, DEVICE_RELATION_TYPE Type);
 
 // begin_ntddk begin_nthal begin_ntifs
 
 NTKERNELAPI
 NTSTATUS
-IoReportDetectedDevice(
-    IN PDRIVER_OBJECT DriverObject,
-    IN INTERFACE_TYPE LegacyBusType,
-    IN ULONG BusNumber,
-    IN ULONG SlotNumber,
-    IN PCM_RESOURCE_LIST ResourceList,
-    IN PIO_RESOURCE_REQUIREMENTS_LIST ResourceRequirements OPTIONAL,
-    IN BOOLEAN ResourceAssigned,
-    IN OUT PDEVICE_OBJECT *DeviceObject
-    );
+IoReportDetectedDevice(IN PDRIVER_OBJECT DriverObject, IN INTERFACE_TYPE LegacyBusType, IN ULONG BusNumber,
+                       IN ULONG SlotNumber, IN PCM_RESOURCE_LIST ResourceList,
+                       IN PIO_RESOURCE_REQUIREMENTS_LIST ResourceRequirements OPTIONAL, IN BOOLEAN ResourceAssigned,
+                       IN OUT PDEVICE_OBJECT *DeviceObject);
 
 // begin_wdm
 
 NTKERNELAPI
-VOID
-IoInvalidateDeviceRelations(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN DEVICE_RELATION_TYPE Type
-    );
+VOID IoInvalidateDeviceRelations(IN PDEVICE_OBJECT DeviceObject, IN DEVICE_RELATION_TYPE Type);
 
 NTKERNELAPI
-VOID
-IoRequestDeviceEject(
-    IN PDEVICE_OBJECT PhysicalDeviceObject
-    );
+VOID IoRequestDeviceEject(IN PDEVICE_OBJECT PhysicalDeviceObject);
 
 NTKERNELAPI
 NTSTATUS
-IoGetDeviceProperty(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN DEVICE_REGISTRY_PROPERTY DeviceProperty,
-    IN ULONG BufferLength,
-    OUT PVOID PropertyBuffer,
-    OUT PULONG ResultLength
-    );
+IoGetDeviceProperty(IN PDEVICE_OBJECT DeviceObject, IN DEVICE_REGISTRY_PROPERTY DeviceProperty, IN ULONG BufferLength,
+                    OUT PVOID PropertyBuffer, OUT PULONG ResultLength);
 
 //
 // The following definitions are used in IoOpenDeviceRegistryKey
 //
 
-#define PLUGPLAY_REGKEY_DEVICE  1
-#define PLUGPLAY_REGKEY_DRIVER  2
+#define PLUGPLAY_REGKEY_DEVICE 1
+#define PLUGPLAY_REGKEY_DRIVER 2
 #define PLUGPLAY_REGKEY_CURRENT_HWPROFILE 4
 
 NTKERNELAPI
 NTSTATUS
-IoOpenDeviceRegistryKey(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG DevInstKeyType,
-    IN ACCESS_MASK DesiredAccess,
-    OUT PHANDLE DevInstRegKey
-    );
+IoOpenDeviceRegistryKey(IN PDEVICE_OBJECT DeviceObject, IN ULONG DevInstKeyType, IN ACCESS_MASK DesiredAccess,
+                        OUT PHANDLE DevInstRegKey);
 
 NTKERNELAPI
 NTSTATUS
 NTAPI
-IoRegisterDeviceInterface(
-    IN PDEVICE_OBJECT PhysicalDeviceObject,
-    IN CONST GUID *InterfaceClassGuid,
-    IN PUNICODE_STRING ReferenceString,     OPTIONAL
-    OUT PUNICODE_STRING SymbolicLinkName
-    );
+IoRegisterDeviceInterface(IN PDEVICE_OBJECT PhysicalDeviceObject, IN CONST GUID *InterfaceClassGuid,
+                          IN PUNICODE_STRING ReferenceString, OPTIONAL OUT PUNICODE_STRING SymbolicLinkName);
 
 NTKERNELAPI
 NTSTATUS
-IoOpenDeviceInterfaceRegistryKey(
-    IN PUNICODE_STRING SymbolicLinkName,
-    IN ACCESS_MASK DesiredAccess,
-    OUT PHANDLE DeviceInterfaceKey
-    );
+IoOpenDeviceInterfaceRegistryKey(IN PUNICODE_STRING SymbolicLinkName, IN ACCESS_MASK DesiredAccess,
+                                 OUT PHANDLE DeviceInterfaceKey);
 
 NTKERNELAPI
 NTSTATUS
-IoSetDeviceInterfaceState(
-    IN PUNICODE_STRING SymbolicLinkName,
-    IN BOOLEAN Enable
-    );
+IoSetDeviceInterfaceState(IN PUNICODE_STRING SymbolicLinkName, IN BOOLEAN Enable);
 
 NTKERNELAPI
 NTSTATUS
 NTAPI
-IoGetDeviceInterfaces(
-    IN CONST GUID *InterfaceClassGuid,
-    IN PDEVICE_OBJECT PhysicalDeviceObject OPTIONAL,
-    IN ULONG Flags,
-    OUT PWSTR *SymbolicLinkList
-    );
+IoGetDeviceInterfaces(IN CONST GUID *InterfaceClassGuid, IN PDEVICE_OBJECT PhysicalDeviceObject OPTIONAL,
+                      IN ULONG Flags, OUT PWSTR *SymbolicLinkList);
 
-#define DEVICE_INTERFACE_INCLUDE_NONACTIVE   0x00000001
+#define DEVICE_INTERFACE_INCLUDE_NONACTIVE 0x00000001
 
 NTKERNELAPI
 NTSTATUS
 NTAPI
-IoGetDeviceInterfaceAlias(
-    IN PUNICODE_STRING SymbolicLinkName,
-    IN CONST GUID *AliasInterfaceClassGuid,
-    OUT PUNICODE_STRING AliasSymbolicLinkName
-    );
+IoGetDeviceInterfaceAlias(IN PUNICODE_STRING SymbolicLinkName, IN CONST GUID *AliasInterfaceClassGuid,
+                          OUT PUNICODE_STRING AliasSymbolicLinkName);
 
 //
 // Define PnP notification event categories
 //
 
-typedef enum _IO_NOTIFICATION_EVENT_CATEGORY {
+typedef enum _IO_NOTIFICATION_EVENT_CATEGORY
+{
     EventCategoryReserved,
     EventCategoryHardwareProfileChange,
     EventCategoryDeviceInterfaceChange,
@@ -560,75 +448,58 @@ typedef enum _IO_NOTIFICATION_EVENT_CATEGORY {
 // for the various event categories...
 //
 
-#define PNPNOTIFY_DEVICE_INTERFACE_INCLUDE_EXISTING_INTERFACES    0x00000001
+#define PNPNOTIFY_DEVICE_INTERFACE_INCLUDE_EXISTING_INTERFACES 0x00000001
 
-typedef
+typedef NTSTATUS (*PDRIVER_NOTIFICATION_CALLBACK_ROUTINE)(IN PVOID NotificationStructure, IN PVOID Context);
+
+
+NTKERNELAPI
 NTSTATUS
-(*PDRIVER_NOTIFICATION_CALLBACK_ROUTINE) (
-    IN PVOID NotificationStructure,
-    IN PVOID Context
+IoRegisterPlugPlayNotification(IN IO_NOTIFICATION_EVENT_CATEGORY EventCategory, IN ULONG EventCategoryFlags,
+                               IN PVOID EventCategoryData OPTIONAL, IN PDRIVER_OBJECT DriverObject,
+                               IN PDRIVER_NOTIFICATION_CALLBACK_ROUTINE CallbackRoutine, IN PVOID Context,
+                               OUT PVOID *NotificationEntry);
+
+NTKERNELAPI
+NTSTATUS
+IoUnregisterPlugPlayNotification(IN PVOID NotificationEntry);
+
+NTKERNELAPI
+NTSTATUS
+IoReportTargetDeviceChange(IN PDEVICE_OBJECT PhysicalDeviceObject,
+                           IN PVOID NotificationStructure // always begins with a PLUGPLAY_NOTIFICATION_HEADER
 );
 
+typedef VOID (*PDEVICE_CHANGE_COMPLETE_CALLBACK)(IN PVOID Context);
 
 NTKERNELAPI
-NTSTATUS
-IoRegisterPlugPlayNotification(
-    IN IO_NOTIFICATION_EVENT_CATEGORY EventCategory,
-    IN ULONG EventCategoryFlags,
-    IN PVOID EventCategoryData OPTIONAL,
-    IN PDRIVER_OBJECT DriverObject,
-    IN PDRIVER_NOTIFICATION_CALLBACK_ROUTINE CallbackRoutine,
-    IN PVOID Context,
-    OUT PVOID *NotificationEntry
-    );
+VOID IoInvalidateDeviceState(IN PDEVICE_OBJECT PhysicalDeviceObject);
 
-NTKERNELAPI
-NTSTATUS
-IoUnregisterPlugPlayNotification(
-    IN PVOID NotificationEntry
-    );
-
-NTKERNELAPI
-NTSTATUS
-IoReportTargetDeviceChange(
-    IN PDEVICE_OBJECT PhysicalDeviceObject,
-    IN PVOID NotificationStructure  // always begins with a PLUGPLAY_NOTIFICATION_HEADER
-    );
-
-typedef
-VOID
-(*PDEVICE_CHANGE_COMPLETE_CALLBACK)(
-    IN PVOID Context
-    );
-
-NTKERNELAPI
-VOID
-IoInvalidateDeviceState(
-    IN PDEVICE_OBJECT PhysicalDeviceObject
-    );
-
-#define IoAdjustPagingPathCount(_count_,_paging_) {     \
-    if (_paging_) {                                     \
-        InterlockedIncrement(_count_);                  \
-    } else {                                            \
-        InterlockedDecrement(_count_);                  \
-    }                                                   \
-}
+#define IoAdjustPagingPathCount(_count_, _paging_) \
+    {                                              \
+        if (_paging_)                              \
+        {                                          \
+            InterlockedIncrement(_count_);         \
+        }                                          \
+        else                                       \
+        {                                          \
+            InterlockedDecrement(_count_);         \
+        }                                          \
+    }
 
 NTKERNELAPI
 NTSTATUS
 IoReportTargetDeviceChangeAsynchronous(
     IN PDEVICE_OBJECT PhysicalDeviceObject,
-    IN PVOID NotificationStructure,  // always begins with a PLUGPLAY_NOTIFICATION_HEADER
-    IN PDEVICE_CHANGE_COMPLETE_CALLBACK Callback,       OPTIONAL
-    IN PVOID Context    OPTIONAL
-    );
+    IN PVOID NotificationStructure, // always begins with a PLUGPLAY_NOTIFICATION_HEADER
+    IN PDEVICE_CHANGE_COMPLETE_CALLBACK Callback, OPTIONAL IN PVOID Context OPTIONAL);
 // end_wdm end_ntosp
 //
 // Resource arbiter declarations
 //
 
-typedef enum _ARBITER_ACTION {
+typedef enum _ARBITER_ACTION
+{
     ArbiterActionTestAllocation,
     ArbiterActionRetestAllocation,
     ArbiterActionCommitAllocation,
@@ -641,7 +512,8 @@ typedef enum _ARBITER_ACTION {
     ArbiterActionBootAllocation
 } ARBITER_ACTION, *PARBITER_ACTION;
 
-typedef struct _ARBITER_CONFLICT_INFO {
+typedef struct _ARBITER_CONFLICT_INFO
+{
     //
     // The device object owning the device that is causing the conflict
     //
@@ -663,11 +535,14 @@ typedef struct _ARBITER_CONFLICT_INFO {
 // The parameters for those actions
 //
 
-typedef struct _ARBITER_PARAMETERS {
+typedef struct _ARBITER_PARAMETERS
+{
 
-    union {
+    union
+    {
 
-        struct {
+        struct
+        {
 
             //
             // Doubly linked list of ARBITER_LIST_ENTRY's
@@ -687,7 +562,8 @@ typedef struct _ARBITER_PARAMETERS {
 
         } TestAllocation;
 
-        struct {
+        struct
+        {
 
             //
             // Doubly linked list of ARBITER_LIST_ENTRY's
@@ -707,7 +583,8 @@ typedef struct _ARBITER_PARAMETERS {
 
         } RetestAllocation;
 
-        struct {
+        struct
+        {
 
             //
             // Doubly linked list of ARBITER_LIST_ENTRY's
@@ -716,7 +593,8 @@ typedef struct _ARBITER_PARAMETERS {
 
         } BootAllocation;
 
-        struct {
+        struct
+        {
 
             //
             // The resources that are currently allocated
@@ -725,7 +603,8 @@ typedef struct _ARBITER_PARAMETERS {
 
         } QueryAllocatedResources;
 
-        struct {
+        struct
+        {
 
             //
             // This is the device we are trying to find a conflict for
@@ -749,7 +628,8 @@ typedef struct _ARBITER_PARAMETERS {
 
         } QueryConflict;
 
-        struct {
+        struct
+        {
 
             //
             // Doubly linked list of ARBITER_LIST_ENTRY's - should have
@@ -759,7 +639,8 @@ typedef struct _ARBITER_PARAMETERS {
 
         } QueryArbitrate;
 
-        struct {
+        struct
+        {
 
             //
             // Indicates the device whose resources are to be marked as reserved
@@ -773,20 +654,21 @@ typedef struct _ARBITER_PARAMETERS {
 } ARBITER_PARAMETERS, *PARBITER_PARAMETERS;
 
 
-
-typedef enum _ARBITER_REQUEST_SOURCE {
+typedef enum _ARBITER_REQUEST_SOURCE
+{
 
     ArbiterRequestUndefined = -1,
-    ArbiterRequestLegacyReported,   // IoReportResourceUsage
-    ArbiterRequestHalReported,      // IoReportHalResourceUsage
-    ArbiterRequestLegacyAssigned,   // IoAssignResources
-    ArbiterRequestPnpDetected,      // IoReportResourceForDetection
-    ArbiterRequestPnpEnumerated     // IRP_MN_QUERY_RESOURCE_REQUIREMENTS
+    ArbiterRequestLegacyReported, // IoReportResourceUsage
+    ArbiterRequestHalReported,    // IoReportHalResourceUsage
+    ArbiterRequestLegacyAssigned, // IoAssignResources
+    ArbiterRequestPnpDetected,    // IoReportResourceForDetection
+    ArbiterRequestPnpEnumerated   // IRP_MN_QUERY_RESOURCE_REQUIREMENTS
 
 } ARBITER_REQUEST_SOURCE;
 
 
-typedef enum _ARBITER_RESULT {
+typedef enum _ARBITER_RESULT
+{
 
     ArbiterResultUndefined = -1,
     ArbiterResultSuccess,
@@ -807,19 +689,15 @@ typedef enum _ARBITER_RESULT {
 
 NTKERNELAPI
 NTSTATUS
-IoReportResourceForDetection(
-    IN PDRIVER_OBJECT DriverObject,
-    IN PCM_RESOURCE_LIST DriverList OPTIONAL,
-    IN ULONG DriverListSize OPTIONAL,
-    IN PDEVICE_OBJECT DeviceObject OPTIONAL,
-    IN PCM_RESOURCE_LIST DeviceList OPTIONAL,
-    IN ULONG DeviceListSize OPTIONAL,
-    OUT PBOOLEAN ConflictDetected
-    );
+IoReportResourceForDetection(IN PDRIVER_OBJECT DriverObject, IN PCM_RESOURCE_LIST DriverList OPTIONAL,
+                             IN ULONG DriverListSize OPTIONAL, IN PDEVICE_OBJECT DeviceObject OPTIONAL,
+                             IN PCM_RESOURCE_LIST DeviceList OPTIONAL, IN ULONG DeviceListSize OPTIONAL,
+                             OUT PBOOLEAN ConflictDetected);
 
 // end_ntosp
 
-typedef struct _ARBITER_LIST_ENTRY {
+typedef struct _ARBITER_LIST_ENTRY
+{
 
     //
     // This is a doubly linked list of entries for easy sorting
@@ -890,22 +768,17 @@ typedef struct _ARBITER_LIST_ENTRY {
 // The arbiter's entry point
 //
 
-typedef
-NTSTATUS
-(*PARBITER_HANDLER) (
-    IN PVOID Context,
-    IN ARBITER_ACTION Action,
-    IN OUT PARBITER_PARAMETERS Parameters
-    );
+typedef NTSTATUS (*PARBITER_HANDLER)(IN PVOID Context, IN ARBITER_ACTION Action, IN OUT PARBITER_PARAMETERS Parameters);
 
 //
 // Arbiter interface
 //
 
-#define ARBITER_PARTIAL   0x00000001
+#define ARBITER_PARTIAL 0x00000001
 
 
-typedef struct _ARBITER_INTERFACE {
+typedef struct _ARBITER_INTERFACE
+{
 
     //
     // Generic interface header
@@ -932,43 +805,34 @@ typedef struct _ARBITER_INTERFACE {
 // The directions translation can take place in
 //
 
-typedef enum _RESOURCE_TRANSLATION_DIRECTION { // ntosp
-    TranslateChildToParent,                    // ntosp
-    TranslateParentToChild                     // ntosp
-} RESOURCE_TRANSLATION_DIRECTION;              // ntosp
+typedef enum _RESOURCE_TRANSLATION_DIRECTION
+{                                 // ntosp
+    TranslateChildToParent,       // ntosp
+    TranslateParentToChild        // ntosp
+} RESOURCE_TRANSLATION_DIRECTION; // ntosp
 
 //
 // Translation functions
 //
 // begin_ntosp
 
-typedef
-NTSTATUS
-(*PTRANSLATE_RESOURCE_HANDLER)(
-    IN PVOID Context,
-    IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Source,
-    IN RESOURCE_TRANSLATION_DIRECTION Direction,
-    IN ULONG AlternativesCount, OPTIONAL
-    IN IO_RESOURCE_DESCRIPTOR Alternatives[], OPTIONAL
-    IN PDEVICE_OBJECT PhysicalDeviceObject,
-    OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR Target
-);
+typedef NTSTATUS (*PTRANSLATE_RESOURCE_HANDLER)(IN PVOID Context, IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Source,
+                                                IN RESOURCE_TRANSLATION_DIRECTION Direction, IN ULONG AlternativesCount,
+                                                OPTIONAL IN IO_RESOURCE_DESCRIPTOR Alternatives[],
+                                                OPTIONAL IN PDEVICE_OBJECT PhysicalDeviceObject,
+                                                OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR Target);
 
-typedef
-NTSTATUS
-(*PTRANSLATE_RESOURCE_REQUIREMENTS_HANDLER)(
-    IN PVOID Context,
-    IN PIO_RESOURCE_DESCRIPTOR Source,
-    IN PDEVICE_OBJECT PhysicalDeviceObject,
-    OUT PULONG TargetCount,
-    OUT PIO_RESOURCE_DESCRIPTOR *Target
-);
+typedef NTSTATUS (*PTRANSLATE_RESOURCE_REQUIREMENTS_HANDLER)(IN PVOID Context, IN PIO_RESOURCE_DESCRIPTOR Source,
+                                                             IN PDEVICE_OBJECT PhysicalDeviceObject,
+                                                             OUT PULONG TargetCount,
+                                                             OUT PIO_RESOURCE_DESCRIPTOR *Target);
 
 //
 // Translator Interface
 //
 
-typedef struct _TRANSLATOR_INTERFACE {
+typedef struct _TRANSLATOR_INTERFACE
+{
     USHORT Size;
     USHORT Version;
     PVOID Context;
@@ -984,21 +848,16 @@ typedef struct _TRANSLATOR_INTERFACE {
 // Legacy Device Detection Handler
 //
 
-typedef
-NTSTATUS
-(*PLEGACY_DEVICE_DETECTION_HANDLER)(
-    IN PVOID Context,
-    IN INTERFACE_TYPE LegacyBusType,
-    IN ULONG BusNumber,
-    IN ULONG SlotNumber,
-    OUT PDEVICE_OBJECT *PhysicalDeviceObject
-);
+typedef NTSTATUS (*PLEGACY_DEVICE_DETECTION_HANDLER)(IN PVOID Context, IN INTERFACE_TYPE LegacyBusType,
+                                                     IN ULONG BusNumber, IN ULONG SlotNumber,
+                                                     OUT PDEVICE_OBJECT *PhysicalDeviceObject);
 
 //
 // Legacy Device Detection Interface
 //
 
-typedef struct _LEGACY_DEVICE_DETECTION_INTERFACE {
+typedef struct _LEGACY_DEVICE_DETECTION_INTERFACE
+{
     USHORT Size;
     USHORT Version;
     PVOID Context;
@@ -1015,7 +874,8 @@ typedef struct _LEGACY_DEVICE_DETECTION_INTERFACE {
 // Header structure for all Plug&Play notification events...
 //
 
-typedef struct _PLUGPLAY_NOTIFICATION_HEADER {
+typedef struct _PLUGPLAY_NOTIFICATION_HEADER
+{
     USHORT Version; // presently at version 1.
     USHORT Size;    // size (in bytes) of header + event-specific data.
     GUID Event;
@@ -1028,7 +888,8 @@ typedef struct _PLUGPLAY_NOTIFICATION_HEADER {
 // Notification structure for all EventCategoryHardwareProfileChange events...
 //
 
-typedef struct _HWPROFILE_CHANGE_NOTIFICATION {
+typedef struct _HWPROFILE_CHANGE_NOTIFICATION
+{
     USHORT Version;
     USHORT Size;
     GUID Event;
@@ -1042,7 +903,8 @@ typedef struct _HWPROFILE_CHANGE_NOTIFICATION {
 // Notification structure for all EventCategoryDeviceInterfaceChange events...
 //
 
-typedef struct _DEVICE_INTERFACE_CHANGE_NOTIFICATION {
+typedef struct _DEVICE_INTERFACE_CHANGE_NOTIFICATION
+{
     USHORT Version;
     USHORT Size;
     GUID Event;
@@ -1062,7 +924,8 @@ typedef struct _DEVICE_INTERFACE_CHANGE_NOTIFICATION {
 // The following structure is used for TargetDeviceQueryRemove,
 // TargetDeviceRemoveCancelled, and TargetDeviceRemoveComplete:
 //
-typedef struct _TARGET_DEVICE_REMOVAL_NOTIFICATION {
+typedef struct _TARGET_DEVICE_REMOVAL_NOTIFICATION
+{
     USHORT Version;
     USHORT Size;
     GUID Event;
@@ -1082,144 +945,89 @@ typedef struct _TARGET_DEVICE_REMOVAL_NOTIFICATION {
 // notification via RegisterDeviceNotification).
 //
 
-typedef struct _TARGET_DEVICE_CUSTOM_NOTIFICATION {
+typedef struct _TARGET_DEVICE_CUSTOM_NOTIFICATION
+{
     USHORT Version;
     USHORT Size;
     GUID Event;
     //
     // Event-specific data
     //
-    PFILE_OBJECT FileObject;    // This field must be set to NULL by callers of
-                                // IoReportTargetDeviceChange.  Clients that
-                                // have registered for target device change
-                                // notification on the affected PDO will be
-                                // called with this field set to the file object
-                                // they specified during registration.
-                                //
-    LONG NameBufferOffset;      // offset (in bytes) from beginning of
-                                // CustomDataBuffer where text begins (-1 if none)
-                                //
-    UCHAR CustomDataBuffer[1];  // variable-length buffer, containing (optionally)
-                                // a binary data at the start of the buffer,
-                                // followed by an optional unicode text buffer
-                                // (word-aligned).
-                                //
+    PFILE_OBJECT FileObject;   // This field must be set to NULL by callers of
+                               // IoReportTargetDeviceChange.  Clients that
+                               // have registered for target device change
+                               // notification on the affected PDO will be
+                               // called with this field set to the file object
+                               // they specified during registration.
+                               //
+    LONG NameBufferOffset;     // offset (in bytes) from beginning of
+                               // CustomDataBuffer where text begins (-1 if none)
+                               //
+    UCHAR CustomDataBuffer[1]; // variable-length buffer, containing (optionally)
+                               // a binary data at the start of the buffer,
+                               // followed by an optional unicode text buffer
+                               // (word-aligned).
+                               //
 } TARGET_DEVICE_CUSTOM_NOTIFICATION, *PTARGET_DEVICE_CUSTOM_NOTIFICATION;
 
 // end_wdm end_ntddk end_ntifs end_nthal  end_ntosp
 
 NTSTATUS
-PpSetCustomTargetEvent(
-    IN  PDEVICE_OBJECT DeviceObject,
-    IN  PKEVENT SyncEvent                           OPTIONAL,
-    OUT PULONG Result                               OPTIONAL,
-    IN  PDEVICE_CHANGE_COMPLETE_CALLBACK Callback   OPTIONAL,
-    IN  PVOID Context                               OPTIONAL,
-    IN  PTARGET_DEVICE_CUSTOM_NOTIFICATION NotificationStructure
-    );
+PpSetCustomTargetEvent(IN PDEVICE_OBJECT DeviceObject, IN PKEVENT SyncEvent OPTIONAL, OUT PULONG Result OPTIONAL,
+                       IN PDEVICE_CHANGE_COMPLETE_CALLBACK Callback OPTIONAL, IN PVOID Context OPTIONAL,
+                       IN PTARGET_DEVICE_CUSTOM_NOTIFICATION NotificationStructure);
 
 NTSTATUS
-PpSetTargetDeviceRemove(
-    IN  PDEVICE_OBJECT DeviceObject,
-    IN  BOOLEAN KernelInitiated,
-    IN  BOOLEAN NoRestart,
-    IN  BOOLEAN DoEject,
-    IN  ULONG Problem,
-    IN  PKEVENT SyncEvent        OPTIONAL,
-    OUT PULONG Result            OPTIONAL,
-    OUT PPNP_VETO_TYPE VetoType  OPTIONAL,
-    OUT PUNICODE_STRING VetoName OPTIONAL
-    );
+PpSetTargetDeviceRemove(IN PDEVICE_OBJECT DeviceObject, IN BOOLEAN KernelInitiated, IN BOOLEAN NoRestart,
+                        IN BOOLEAN DoEject, IN ULONG Problem, IN PKEVENT SyncEvent OPTIONAL, OUT PULONG Result OPTIONAL,
+                        OUT PPNP_VETO_TYPE VetoType OPTIONAL, OUT PUNICODE_STRING VetoName OPTIONAL);
 
 NTSTATUS
-PpSetDeviceRemovalSafe(
-    IN  PDEVICE_OBJECT DeviceObject,
-    IN  PKEVENT SyncEvent           OPTIONAL,
-    OUT PULONG Result               OPTIONAL
-    );
+PpSetDeviceRemovalSafe(IN PDEVICE_OBJECT DeviceObject, IN PKEVENT SyncEvent OPTIONAL, OUT PULONG Result OPTIONAL);
 
 NTSTATUS
-PpNotifyUserModeRemovalSafe(
-    IN  PDEVICE_OBJECT DeviceObject
-    );
+PpNotifyUserModeRemovalSafe(IN PDEVICE_OBJECT DeviceObject);
 
-#define TDF_DEVICEEJECTABLE     0x00000001
-#define TDF_NO_RESTART          0x00000002
-#define TDF_KERNEL_INITIATED    0x00000004
+#define TDF_DEVICEEJECTABLE 0x00000001
+#define TDF_NO_RESTART 0x00000002
+#define TDF_KERNEL_INITIATED 0x00000004
 
 NTSTATUS
-PpSetDeviceClassChange(
-    IN CONST GUID *EventGuid,
-    IN CONST GUID *ClassGuid,
-    IN PUNICODE_STRING SymbolicLinkName
-    );
+PpSetDeviceClassChange(IN CONST GUID *EventGuid, IN CONST GUID *ClassGuid, IN PUNICODE_STRING SymbolicLinkName);
 
-VOID
-PpSetPlugPlayEvent(
-    IN CONST GUID *EventGuid,
-    IN PDEVICE_OBJECT DeviceObject
-    );
+VOID PpSetPlugPlayEvent(IN CONST GUID *EventGuid, IN PDEVICE_OBJECT DeviceObject);
 
 NTSTATUS
-PpInitializeNotification(
-    VOID
-    );
+PpInitializeNotification(VOID);
 
-VOID
-PpShutdownSystem (
-    IN BOOLEAN Reboot,
-    IN ULONG Phase,
-    IN OUT PVOID *Context
-    );
+VOID PpShutdownSystem(IN BOOLEAN Reboot, IN ULONG Phase, IN OUT PVOID *Context);
 
 NTSTATUS
-PpSetPowerEvent(
-    IN   ULONG EventCode,
-    IN   ULONG EventData,
-    IN   PKEVENT CompletionEvent    OPTIONAL,
-    OUT  PNTSTATUS CompletionStatus OPTIONAL,
-    OUT  PPNP_VETO_TYPE VetoType    OPTIONAL,
-    OUT  PUNICODE_STRING VetoName   OPTIONAL
-    );
+PpSetPowerEvent(IN ULONG EventCode, IN ULONG EventData, IN PKEVENT CompletionEvent OPTIONAL,
+                OUT PNTSTATUS CompletionStatus OPTIONAL, OUT PPNP_VETO_TYPE VetoType OPTIONAL,
+                OUT PUNICODE_STRING VetoName OPTIONAL);
 
 NTSTATUS
-PpSetHwProfileChangeEvent(
-    IN   CONST GUID *EventGuid,
-    IN   PKEVENT CompletionEvent    OPTIONAL,
-    OUT  PNTSTATUS CompletionStatus OPTIONAL,
-    OUT  PPNP_VETO_TYPE VetoType    OPTIONAL,
-    OUT  PUNICODE_STRING VetoName   OPTIONAL
-    );
+PpSetHwProfileChangeEvent(IN CONST GUID *EventGuid, IN PKEVENT CompletionEvent OPTIONAL,
+                          OUT PNTSTATUS CompletionStatus OPTIONAL, OUT PPNP_VETO_TYPE VetoType OPTIONAL,
+                          OUT PUNICODE_STRING VetoName OPTIONAL);
 
 NTSTATUS
-PpSetBlockedDriverEvent(
-    IN   GUID CONST *BlockedDriverGuid
-    );
+PpSetBlockedDriverEvent(IN GUID CONST *BlockedDriverGuid);
 
 NTSTATUS
-PpSynchronizeDeviceEventQueue(
-    VOID
-    );
+PpSynchronizeDeviceEventQueue(VOID);
 
 NTSTATUS
-PpSetPowerVetoEvent(
-    IN  POWER_ACTION    VetoedPowerOperation,
-    IN  PKEVENT         CompletionEvent         OPTIONAL,
-    OUT PNTSTATUS       CompletionStatus        OPTIONAL,
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PNP_VETO_TYPE   VetoType,
-    IN  PUNICODE_STRING VetoName                OPTIONAL
-    );
+PpSetPowerVetoEvent(IN POWER_ACTION VetoedPowerOperation, IN PKEVENT CompletionEvent OPTIONAL,
+                    OUT PNTSTATUS CompletionStatus OPTIONAL, IN PDEVICE_OBJECT DeviceObject, IN PNP_VETO_TYPE VetoType,
+                    IN PUNICODE_STRING VetoName OPTIONAL);
 
 NTSTATUS
-PpPagePathAssign(
-    IN PFILE_OBJECT FileObject
-    );
+PpPagePathAssign(IN PFILE_OBJECT FileObject);
 
 NTSTATUS
-PpPagePathRelease(
-    IN PFILE_OBJECT FileObject
-    );
+PpPagePathRelease(IN PFILE_OBJECT FileObject);
 
 //
 // Entry point for USER to deliver notifications (public)
@@ -1227,13 +1035,8 @@ PpPagePathRelease(
 
 //  begin_ntosp
 ULONG
-IoPnPDeliverServicePowerNotification(
-    IN   POWER_ACTION           PowerOperation,
-    IN   ULONG                  PowerNotificationCode,
-    IN   ULONG                  PowerNotificationData,
-    IN   BOOLEAN                Synchronous
-    );
+IoPnPDeliverServicePowerNotification(IN POWER_ACTION PowerOperation, IN ULONG PowerNotificationCode,
+                                     IN ULONG PowerNotificationData, IN BOOLEAN Synchronous);
 //  end_ntosp
 
 #endif // _PNP_
-

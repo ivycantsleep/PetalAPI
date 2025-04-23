@@ -42,14 +42,11 @@ Revision History:
 //  Trace level for the module
 //
 
-#define Dbg                              (0x80000000)
+#define Dbg (0x80000000)
 
-
+
 NTSTATUS
-FsRtlNormalizeNtstatus (
-    IN NTSTATUS Exception,
-    IN NTSTATUS GenericException
-    )
+FsRtlNormalizeNtstatus(IN NTSTATUS Exception, IN NTSTATUS GenericException)
 
 /*++
 
@@ -77,11 +74,9 @@ Return Value:
     return (FsRtlIsNtstatusExpected(Exception) ? Exception : GenericException);
 }
 
-
+
 BOOLEAN
-FsRtlIsNtstatusExpected (
-    IN NTSTATUS Exception
-    )
+FsRtlIsNtstatusExpected(IN NTSTATUS Exception)
 
 /*++
 
@@ -102,7 +97,8 @@ Return Value:
 --*/
 
 {
-    switch (Exception) {
+    switch (Exception)
+    {
 
     case STATUS_DATATYPE_MISALIGNMENT:
     case STATUS_ACCESS_VIOLATION:
@@ -117,14 +113,11 @@ Return Value:
     }
 }
 
-
+
 #undef FsRtlAllocatePool
 
 PVOID
-FsRtlAllocatePool (
-    IN POOL_TYPE PoolType,
-    IN ULONG NumberOfBytes
-    )
+FsRtlAllocatePool(IN POOL_TYPE PoolType, IN ULONG NumberOfBytes)
 
 /*++
 
@@ -154,9 +147,10 @@ Return Value:
     //  a status of insufficient resources
     //
 
-    if ((p = ExAllocatePoolWithTag( PoolType, NumberOfBytes, 'trSF')) == NULL) {
+    if ((p = ExAllocatePoolWithTag(PoolType, NumberOfBytes, 'trSF')) == NULL)
+    {
 
-        ExRaiseStatus( STATUS_INSUFFICIENT_RESOURCES );
+        ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
     }
 
     return p;
@@ -164,12 +158,9 @@ Return Value:
 
 #undef FsRtlAllocatePoolWithQuota
 
-
+
 PVOID
-FsRtlAllocatePoolWithQuota (
-    IN POOL_TYPE PoolType,
-    IN ULONG NumberOfBytes
-    )
+FsRtlAllocatePoolWithQuota(IN POOL_TYPE PoolType, IN ULONG NumberOfBytes)
 
 /*++
 
@@ -199,23 +190,20 @@ Return Value:
     //  a status of insufficient resources
     //
 
-    if ((p = ExAllocatePoolWithQuotaTag ( PoolType, NumberOfBytes, 'trSF')) == NULL) {
+    if ((p = ExAllocatePoolWithQuotaTag(PoolType, NumberOfBytes, 'trSF')) == NULL)
+    {
 
-        ExRaiseStatus( STATUS_INSUFFICIENT_RESOURCES );
+        ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
     }
 
     return p;
 }
 
-
+
 #undef FsRtlAllocatePoolWithTag
 
 PVOID
-FsRtlAllocatePoolWithTag (
-    IN POOL_TYPE PoolType,
-    IN ULONG NumberOfBytes,
-    IN ULONG Tag
-    )
+FsRtlAllocatePoolWithTag(IN POOL_TYPE PoolType, IN ULONG NumberOfBytes, IN ULONG Tag)
 
 /*++
 
@@ -245,23 +233,20 @@ Return Value:
     //  a status of insufficient resources
     //
 
-    if ((p = ExAllocatePoolWithTag( PoolType, NumberOfBytes, Tag)) == NULL) {
+    if ((p = ExAllocatePoolWithTag(PoolType, NumberOfBytes, Tag)) == NULL)
+    {
 
-        ExRaiseStatus( STATUS_INSUFFICIENT_RESOURCES );
+        ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
     }
 
     return p;
 }
 
-
+
 #undef FsRtlAllocatePoolWithQuotaTag
 
 PVOID
-FsRtlAllocatePoolWithQuotaTag (
-    IN POOL_TYPE PoolType,
-    IN ULONG NumberOfBytes,
-    IN ULONG Tag
-    )
+FsRtlAllocatePoolWithQuotaTag(IN POOL_TYPE PoolType, IN ULONG NumberOfBytes, IN ULONG Tag)
 
 /*++
 
@@ -291,19 +276,18 @@ Return Value:
     //  a status of insufficient resources
     //
 
-    if ((p = ExAllocatePoolWithQuotaTag( PoolType, NumberOfBytes, Tag)) == NULL) {
+    if ((p = ExAllocatePoolWithQuotaTag(PoolType, NumberOfBytes, Tag)) == NULL)
+    {
 
-        ExRaiseStatus( STATUS_INSUFFICIENT_RESOURCES );
+        ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
     }
 
     return p;
 }
 
-
+
 BOOLEAN
-FsRtlIsTotalDeviceFailure(
-    IN NTSTATUS Status
-    )
+FsRtlIsTotalDeviceFailure(IN NTSTATUS Status)
 
 /*++
 
@@ -326,7 +310,8 @@ Return Value:
 --*/
 
 {
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // All warning and informational errors will be resolved here.
@@ -335,7 +320,8 @@ Return Value:
         return FALSE;
     }
 
-    switch (Status) {
+    switch (Status)
+    {
     case STATUS_CRC_ERROR:
     case STATUS_DEVICE_DATA_ERROR:
         return FALSE;

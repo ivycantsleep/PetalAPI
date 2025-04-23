@@ -31,14 +31,14 @@ Revision History:
 
 #include "ntos.h"
 
-#pragma warning(error:4100)   // Unreferenced formal parameter
-#pragma warning(error:4101)   // Unreferenced local variable
-#pragma warning(error:4705)   // Statement has no effect
+#pragma warning(error : 4100) // Unreferenced formal parameter
+#pragma warning(error : 4101) // Unreferenced local variable
+#pragma warning(error : 4705) // Statement has no effect
 
 //
 // Profiling structures
 //
-extern KPROFILE PerfInfoProfileObject; 
+extern KPROFILE PerfInfoProfileObject;
 extern PERFINFO_SAMPLED_PROFILE_CACHE PerfProfileCache;
 extern BOOLEAN PerfInfoSampledProfileCaching;
 extern KPROFILE_SOURCE PerfInfoProfileSourceActive;
@@ -51,54 +51,35 @@ extern PERFINFO_GROUPMASK PerfGlobalGroupMask;
 #define PERFPOOLTAG 'freP'
 
 NTSTATUS
-PerfInfoReserveBytesWMI(
-    PPERFINFO_HOOK_HANDLE Hook,
-    USHORT HookId,
-    ULONG BytesToReserve
-    );
+PerfInfoReserveBytesWMI(PPERFINFO_HOOK_HANDLE Hook, USHORT HookId, ULONG BytesToReserve);
 
 NTSTATUS
-PerfInfoFileNameRunDown(
-    );
+PerfInfoFileNameRunDown();
 
 NTSTATUS
-PerfInfoProcessRunDown(
-    );
+PerfInfoProcessRunDown();
 
 NTSTATUS
-PerfInfoSysModuleRunDown(
-    );
+PerfInfoSysModuleRunDown();
 
-VOID
-PerfInfoProfileInit(
-    );
+VOID PerfInfoProfileInit();
 
-VOID
-PerfInfoProfileUninit(
-    );
+VOID PerfInfoProfileUninit();
 
 #ifdef NTPERF
 extern ULONGLONG PerfInfoTickFrequency;
 
 NTSTATUS
-PerfInfoReserveBytesPerfMem(
-    PPERFINFO_HOOK_HANDLE Hook,
-    USHORT HookId,
-    ULONG BytesToReserve
-    );
+PerfInfoReserveBytesPerfMem(PPERFINFO_HOOK_HANDLE Hook, USHORT HookId, ULONG BytesToReserve);
 
 NTSTATUS
-PerfTurnOnBranchTracing(
-    );
+PerfTurnOnBranchTracing();
 
 NTSTATUS
-PerfTurnOffBranchTracing(
-    );
+PerfTurnOffBranchTracing();
 
 BOOLEAN
-PerfInfoFlushBranchCache(
-    BOOLEAN bIntsOff
-    );
+PerfInfoFlushBranchCache(BOOLEAN bIntsOff);
 
 #endif // NTPERF
 

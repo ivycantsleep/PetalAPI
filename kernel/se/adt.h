@@ -54,9 +54,8 @@ Return Value:
         occurrences of the event, else FALSE
 --*/
 
-#define SepAdtEventOnSuccess(AuditEventType)                               \
-            (SepAdtState.EventAuditingOptions[AuditEventType] &            \
-                POLICY_AUDIT_EVENT_SUCCESS)
+#define SepAdtEventOnSuccess(AuditEventType) \
+    (SepAdtState.EventAuditingOptions[AuditEventType] & POLICY_AUDIT_EVENT_SUCCESS)
 
 
 /*++
@@ -82,9 +81,8 @@ Return Value:
         attempts to make the event type occur, else FALSE
 --*/
 
-#define SepAdtEventOnFailure(AuditEventType)                               \
-            (SepAdtState.EventAuditingOptions[AuditEventType] &            \
-            POLICY_AUDIT_EVENT_FAILURE)
+#define SepAdtEventOnFailure(AuditEventType) \
+    (SepAdtState.EventAuditingOptions[AuditEventType] & POLICY_AUDIT_EVENT_FAILURE)
 
 /*++
 
@@ -108,7 +106,7 @@ Return Value:
 
 --*/
 
-#define SepAdtAuditingEvent(AuditEventType)                     \
+#define SepAdtAuditingEvent(AuditEventType)          \
             (SepAdtEventOnSuccess(AuditEventType) ||            \
             (SepAdtEventOnFailure(AuditEventType))
 
@@ -175,15 +173,8 @@ SepAdtInitializePhase1();
 //    IN PVOID AuditInformation
 //    );
 
-VOID
-SepAdtLogAuditRecord(
-    IN PSE_ADT_PARAMETER_ARRAY AuditParameters
-    );
+VOID SepAdtLogAuditRecord(IN PSE_ADT_PARAMETER_ARRAY AuditParameters);
 
 NTSTATUS
-SepAdtCopyToLsaSharedMemory(
-    IN HANDLE LsaProcessHandle,
-    IN PVOID Buffer,
-    IN ULONG BufferLength,
-    OUT PVOID *LsaBufferAddress
-    );
+SepAdtCopyToLsaSharedMemory(IN HANDLE LsaProcessHandle, IN PVOID Buffer, IN ULONG BufferLength,
+                            OUT PVOID *LsaBufferAddress);

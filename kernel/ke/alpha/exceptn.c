@@ -31,30 +31,16 @@ Revision History:
 #include "ki.h"
 
 BOOLEAN
-KiHandleAlignmentFault(
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PKTRAP_FRAME TrapFrame,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN BOOLEAN FirstChance,
-    OUT BOOLEAN *ExceptionForwarded
-    );
+KiHandleAlignmentFault(IN PEXCEPTION_RECORD ExceptionRecord, IN PKEXCEPTION_FRAME ExceptionFrame,
+                       IN PKTRAP_FRAME TrapFrame, IN KPROCESSOR_MODE PreviousMode, IN BOOLEAN FirstChance,
+                       OUT BOOLEAN *ExceptionForwarded);
 
 
-VOID
-KiMachineCheck (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PKTRAP_FRAME TrapFrame
-    );
+VOID KiMachineCheck(IN PEXCEPTION_RECORD ExceptionRecord, IN PKEXCEPTION_FRAME ExceptionFrame,
+                    IN PKTRAP_FRAME TrapFrame);
 
-
-VOID
-KeContextFromKframes (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN OUT PCONTEXT ContextFrame
-    )
+
+VOID KeContextFromKframes(IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame, IN OUT PCONTEXT ContextFrame)
 
 /*++
 
@@ -87,7 +73,8 @@ Return Value:
     // Set control information if specified.
     //
 
-    if ((ContextFrame->ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL) {
+    if ((ContextFrame->ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL)
+    {
 
         //
         // Set integer register gp, ra, sp, FIR, and PSR from trap frame.
@@ -104,7 +91,8 @@ Return Value:
     // Set integer register contents if specified.
     //
 
-    if ((ContextFrame->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER) {
+    if ((ContextFrame->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)
+    {
 
         //
         // Set volatile integer registers v0 and t0 - t7 from trap frame.
@@ -163,7 +151,8 @@ Return Value:
     // Set floating register contents if specified.
     //
 
-    if ((ContextFrame->ContextFlags & CONTEXT_FLOATING_POINT) == CONTEXT_FLOATING_POINT) {
+    if ((ContextFrame->ContextFlags & CONTEXT_FLOATING_POINT) == CONTEXT_FLOATING_POINT)
+    {
 
         //
         // Set volatile floating registers f0 - f1 from trap frame.
@@ -173,8 +162,7 @@ Return Value:
 
         ContextFrame->FltF0 = TrapFrame->FltF0;
         ContextFrame->FltF1 = TrapFrame->FltF1;
-        RtlMoveMemory(&ContextFrame->FltF10, &TrapFrame->FltF10,
-                      sizeof(ULONGLONG) * 21);
+        RtlMoveMemory(&ContextFrame->FltF10, &TrapFrame->FltF10, sizeof(ULONGLONG) * 21);
         ContextFrame->FltF31 = 0;
 
         //
@@ -202,15 +190,9 @@ Return Value:
 
     return;
 }
-
-VOID
-KeContextToKframes (
-    IN OUT PKTRAP_FRAME TrapFrame,
-    IN OUT PKEXCEPTION_FRAME ExceptionFrame,
-    IN PCONTEXT ContextFrame,
-    IN ULONG ContextFlags,
-    IN KPROCESSOR_MODE PreviousMode
-    )
+
+VOID KeContextToKframes(IN OUT PKTRAP_FRAME TrapFrame, IN OUT PKEXCEPTION_FRAME ExceptionFrame,
+                        IN PCONTEXT ContextFrame, IN ULONG ContextFlags, IN KPROCESSOR_MODE PreviousMode)
 
 /*++
 
@@ -249,7 +231,8 @@ Return Value:
     // Set control information if specified.
     //
 
-    if ((ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL) {
+    if ((ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL)
+    {
 
         //
         // Set integer register gp, sp, ra, FIR, and PSR in trap frame.
@@ -266,7 +249,8 @@ Return Value:
     // Set integer register contents if specified.
     //
 
-    if ((ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER) {
+    if ((ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)
+    {
 
         //
         // Set volatile integer registers v0 and t0 - t7 in trap frame.
@@ -322,7 +306,8 @@ Return Value:
     // Set floating register contents if specified.
     //
 
-    if ((ContextFlags & CONTEXT_FLOATING_POINT) == CONTEXT_FLOATING_POINT) {
+    if ((ContextFlags & CONTEXT_FLOATING_POINT) == CONTEXT_FLOATING_POINT)
+    {
 
         //
         // Set volatile floating registers f0 - f1 in trap frame.
@@ -331,8 +316,7 @@ Return Value:
 
         TrapFrame->FltF0 = ContextFrame->FltF0;
         TrapFrame->FltF1 = ContextFrame->FltF1;
-        RtlMoveMemory(&TrapFrame->FltF10, &ContextFrame->FltF10,
-                      sizeof(ULONGLONG) * 21);
+        RtlMoveMemory(&TrapFrame->FltF10, &ContextFrame->FltF10, sizeof(ULONGLONG) * 21);
 
         //
         // Set nonvolatile floating registers f2 - f9 in exception frame.
@@ -356,15 +340,9 @@ Return Value:
 
     return;
 }
-
-VOID
-KiDispatchException (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PKTRAP_FRAME TrapFrame,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN BOOLEAN FirstChance
-    )
+
+VOID KiDispatchException(IN PEXCEPTION_RECORD ExceptionRecord, IN PKEXCEPTION_FRAME ExceptionFrame,
+                         IN PKTRAP_FRAME TrapFrame, IN KPROCESSOR_MODE PreviousMode, IN BOOLEAN FirstChance)
 
 /*++
 
@@ -436,25 +414,23 @@ Return Value:
     //      access.
     //
 
-    if (ExceptionRecord->ExceptionCode == STATUS_ILLEGAL_INSTRUCTION) {
-        if (KiEmulateByteWord(ExceptionRecord,
-                              ExceptionFrame,
-                              TrapFrame) != FALSE) {
+    if (ExceptionRecord->ExceptionCode == STATUS_ILLEGAL_INSTRUCTION)
+    {
+        if (KiEmulateByteWord(ExceptionRecord, ExceptionFrame, TrapFrame) != FALSE)
+        {
             KeGetCurrentPrcb()->KeByteWordEmulationCount += 1;
             goto Handled2;
         }
     }
 
     ExceptionForwarded = FALSE;
-    if (ExceptionRecord->ExceptionCode == STATUS_DATATYPE_MISALIGNMENT) {
+    if (ExceptionRecord->ExceptionCode == STATUS_DATATYPE_MISALIGNMENT)
+    {
 
-        AlignmentFaultHandled = KiHandleAlignmentFault( ExceptionRecord,
-                                                        ExceptionFrame,
-                                                        TrapFrame,
-                                                        PreviousMode,
-                                                        FirstChance,
-                                                        &ExceptionForwarded );
-        if (AlignmentFaultHandled != FALSE) {
+        AlignmentFaultHandled = KiHandleAlignmentFault(ExceptionRecord, ExceptionFrame, TrapFrame, PreviousMode,
+                                                       FirstChance, &ExceptionForwarded);
+        if (AlignmentFaultHandled != FALSE)
+        {
             goto Handled2;
         }
     }
@@ -471,7 +447,8 @@ Return Value:
     //      reserved facility code and the reserved bit set.
     //
 
-    if (ExceptionRecord->ExceptionCode == (DATA_BUS_ERROR | 0xdfff0000)) {
+    if (ExceptionRecord->ExceptionCode == (DATA_BUS_ERROR | 0xdfff0000))
+    {
         KiMachineCheck(ExceptionRecord, ExceptionFrame, TrapFrame);
         goto Handled2;
     }
@@ -483,7 +460,8 @@ Return Value:
     //
 
     SoftFpcr = 0;
-    switch (ExceptionRecord->ExceptionCode) {
+    switch (ExceptionRecord->ExceptionCode)
+    {
 
         //
         // If the exception is a gentrap, then attempt to translate the
@@ -496,33 +474,34 @@ Return Value:
         //      unrecognized.
         //
 
-    case STATUS_ALPHA_GENTRAP :
-        switch (ExceptionRecord->ExceptionInformation[0]) {
-        case GENTRAP_INTEGER_OVERFLOW :
+    case STATUS_ALPHA_GENTRAP:
+        switch (ExceptionRecord->ExceptionInformation[0])
+        {
+        case GENTRAP_INTEGER_OVERFLOW:
             ExceptionRecord->ExceptionCode = STATUS_INTEGER_OVERFLOW;
             break;
 
-        case GENTRAP_INTEGER_DIVIDE_BY_ZERO :
+        case GENTRAP_INTEGER_DIVIDE_BY_ZERO:
             ExceptionRecord->ExceptionCode = STATUS_INTEGER_DIVIDE_BY_ZERO;
             break;
 
-        case GENTRAP_FLOATING_OVERFLOW :
+        case GENTRAP_FLOATING_OVERFLOW:
             ExceptionRecord->ExceptionCode = STATUS_FLOAT_OVERFLOW;
             break;
 
-        case GENTRAP_FLOATING_DIVIDE_BY_ZERO :
+        case GENTRAP_FLOATING_DIVIDE_BY_ZERO:
             ExceptionRecord->ExceptionCode = STATUS_FLOAT_DIVIDE_BY_ZERO;
             break;
 
-        case GENTRAP_FLOATING_UNDERFLOW :
+        case GENTRAP_FLOATING_UNDERFLOW:
             ExceptionRecord->ExceptionCode = STATUS_FLOAT_UNDERFLOW;
             break;
 
-        case GENTRAP_FLOATING_INVALID_OPERAND :
+        case GENTRAP_FLOATING_INVALID_OPERAND:
             ExceptionRecord->ExceptionCode = STATUS_FLOAT_INVALID_OPERATION;
             break;
 
-        case GENTRAP_FLOATING_INEXACT_RESULT :
+        case GENTRAP_FLOATING_INEXACT_RESULT:
             ExceptionRecord->ExceptionCode = STATUS_FLOAT_INEXACT_RESULT;
             break;
         }
@@ -544,18 +523,17 @@ Return Value:
         //      the status code to the proper floating status value.
         //
 
-    case STATUS_ALPHA_FLOATING_NOT_IMPLEMENTED :
-        if (PreviousMode != KernelMode) {
-            if (KiFloatingException(ExceptionRecord,
-                                    ExceptionFrame,
-                                    TrapFrame,
-                                    FALSE,
-                                    &SoftFpcr) != FALSE) {
+    case STATUS_ALPHA_FLOATING_NOT_IMPLEMENTED:
+        if (PreviousMode != KernelMode)
+        {
+            if (KiFloatingException(ExceptionRecord, ExceptionFrame, TrapFrame, FALSE, &SoftFpcr) != FALSE)
+            {
                 TrapFrame->Fir += 4;
                 goto Handled2;
             }
-
-        } else {
+        }
+        else
+        {
             ExceptionRecord->ExceptionCode = STATUS_ILLEGAL_INSTRUCTION;
         }
 
@@ -564,7 +542,7 @@ Return Value:
         //
         // If the exception is an arithmetic exception, then one or more
         // integer overflow or floating point traps has occurred. This
-        // exception is an imprecise (asynchronous) trap. Attempt to locate 
+        // exception is an imprecise (asynchronous) trap. Attempt to locate
         // the original trapping instruction and emulate the instruction.
         //
         // N.B. STATUS_ALPHA_ARITHMETIC_EXCEPTION is a pseudo status code
@@ -573,12 +551,9 @@ Return Value:
         //      the status code to the proper floating status value.
         //
 
-    case STATUS_ALPHA_ARITHMETIC_EXCEPTION :
-        if (KiFloatingException(ExceptionRecord,
-                                ExceptionFrame,
-                                TrapFrame,
-                                TRUE,
-                                &SoftFpcr) != FALSE) {
+    case STATUS_ALPHA_ARITHMETIC_EXCEPTION:
+        if (KiFloatingException(ExceptionRecord, ExceptionFrame, TrapFrame, TRUE, &SoftFpcr) != FALSE)
+        {
             goto Handled2;
         }
         break;
@@ -602,7 +577,8 @@ Return Value:
     // Select the method of handling the exception based on the previous mode.
     //
 
-    if (PreviousMode == KernelMode) {
+    if (PreviousMode == KernelMode)
+    {
 
         //
         // If the kernel debugger is active, the exception is a breakpoint,
@@ -612,17 +588,11 @@ Return Value:
         //
 
         if ((FirstChance != FALSE) && (KiDebugRoutine != NULL) &&
-           (ExceptionRecord->ExceptionCode == STATUS_BREAKPOINT) &&
-           (KdIsThisAKdTrap(ExceptionRecord,
-                            &ContextFrame,
-                            KernelMode) != FALSE) &&
+            (ExceptionRecord->ExceptionCode == STATUS_BREAKPOINT) &&
+            (KdIsThisAKdTrap(ExceptionRecord, &ContextFrame, KernelMode) != FALSE) &&
 
-           (((KiDebugRoutine) (TrapFrame,
-                               ExceptionFrame,
-                               ExceptionRecord,
-                               &ContextFrame,
-                               KernelMode,
-                               FALSE)) != FALSE)) {
+            (((KiDebugRoutine)(TrapFrame, ExceptionFrame, ExceptionRecord, &ContextFrame, KernelMode, FALSE)) != FALSE))
+        {
 
             goto Handled1;
         }
@@ -642,13 +612,15 @@ Return Value:
         // bug check.
         //
 
-        if (FirstChance != FALSE) {
+        if (FirstChance != FALSE)
+        {
 
             //
             // This is the first chance to handle the exception.
             //
 
-            if (RtlDispatchException(ExceptionRecord, &ContextFrame) != FALSE) {
+            if (RtlDispatchException(ExceptionRecord, &ContextFrame) != FALSE)
+            {
                 goto Handled1;
             }
         }
@@ -657,24 +629,19 @@ Return Value:
         // This is the second chance to handle the exception.
         //
 
-        if ((KiDebugRoutine != NULL) &&
-           (((KiDebugRoutine) (TrapFrame,
-                               ExceptionFrame,
-                               ExceptionRecord,
-                               &ContextFrame,
-                               PreviousMode,
-                                   TRUE)) != FALSE)) {
+        if ((KiDebugRoutine != NULL) && (((KiDebugRoutine)(TrapFrame, ExceptionFrame, ExceptionRecord, &ContextFrame,
+                                                           PreviousMode, TRUE)) != FALSE))
+        {
 
             goto Handled1;
         }
 
-        KeBugCheckEx(KMODE_EXCEPTION_NOT_HANDLED,
-                     ExceptionRecord->ExceptionCode,
-                     (ULONG_PTR)ExceptionRecord->ExceptionAddress,
-                     ExceptionRecord->ExceptionInformation[0],
+        KeBugCheckEx(KMODE_EXCEPTION_NOT_HANDLED, ExceptionRecord->ExceptionCode,
+                     (ULONG_PTR)ExceptionRecord->ExceptionAddress, ExceptionRecord->ExceptionInformation[0],
                      ExceptionRecord->ExceptionInformation[1]);
-
-    } else {
+    }
+    else
+    {
 
         //
         // If the kernel debugger is active, the exception is a breakpoint,
@@ -683,27 +650,20 @@ Return Value:
         // the exception.
         //
 
-        if ((FirstChance != FALSE) &&
-            (KiDebugRoutine != NULL) &&
+        if ((FirstChance != FALSE) && (KiDebugRoutine != NULL) &&
             (ExceptionRecord->ExceptionCode == STATUS_BREAKPOINT) &&
-            (KdIsThisAKdTrap(ExceptionRecord,
-                             &ContextFrame,
-                             UserMode) != FALSE) &&
+            (KdIsThisAKdTrap(ExceptionRecord, &ContextFrame, UserMode) != FALSE) &&
 
             ((PsGetCurrentProcess()->DebugPort == NULL) ||
              ((PsGetCurrentProcess()->DebugPort != NULL) &&
-              (ExceptionRecord->ExceptionInformation[0] !=
-                                            DEBUG_STOP_BREAKPOINT)))) {
+              (ExceptionRecord->ExceptionInformation[0] != DEBUG_STOP_BREAKPOINT))))
+        {
 
-              if (((KiDebugRoutine) (TrapFrame,
-                                     ExceptionFrame,
-                                     ExceptionRecord,
-                                     &ContextFrame,
-                                     UserMode,
-                                     FALSE)) != FALSE) {
+            if (((KiDebugRoutine)(TrapFrame, ExceptionFrame, ExceptionRecord, &ContextFrame, UserMode, FALSE)) != FALSE)
+            {
 
-                     goto Handled1;
-              }
+                goto Handled1;
+            }
         }
 
         //
@@ -726,14 +686,15 @@ Return Value:
         // exception, then continue execution. Otherwise terminate the thread.
         //
 
-        if (FirstChance != FALSE) {
+        if (FirstChance != FALSE)
+        {
 
             //
             // This is the first chance to handle the exception.
             //
 
-            if (ExceptionForwarded == FALSE &&
-                DbgkForwardException(ExceptionRecord, TRUE, FALSE)) {
+            if (ExceptionForwarded == FALSE && DbgkForwardException(ExceptionRecord, TRUE, FALSE))
+            {
                 goto Handled2;
             }
 
@@ -744,7 +705,8 @@ Return Value:
             //
 
         repeat:
-            try {
+            try
+            {
 
                 //
                 // Compute length of exception record and new aligned stack
@@ -799,13 +761,13 @@ Return Value:
                 TrapFrame->Fir = (ULONGLONG)(LONG_PTR)KeUserExceptionDispatcher;
                 return;
 
-            //
-            // If an exception occurs, then copy the new exception information
-            // to an exception record and handle the exception.
-            //
-
-            } except (KiCopyInformation(&ExceptionRecord1,
-                               (GetExceptionInformation())->ExceptionRecord)) {
+                //
+                // If an exception occurs, then copy the new exception information
+                // to an exception record and handle the exception.
+                //
+            }
+            except(KiCopyInformation(&ExceptionRecord1, (GetExceptionInformation())->ExceptionRecord))
+            {
 
                 //
                 // If the exception is a stack overflow, then attempt
@@ -814,10 +776,10 @@ Return Value:
                 // and second chance processing is performed.
                 //
 
-                if (ExceptionRecord1.ExceptionCode == STATUS_STACK_OVERFLOW) {
+                if (ExceptionRecord1.ExceptionCode == STATUS_STACK_OVERFLOW)
+                {
                     ExceptionRecord1.ExceptionAddress = ExceptionRecord->ExceptionAddress;
-                    RtlMoveMemory((PVOID)ExceptionRecord,
-                                  &ExceptionRecord1, sizeof(EXCEPTION_RECORD));
+                    RtlMoveMemory((PVOID)ExceptionRecord, &ExceptionRecord1, sizeof(EXCEPTION_RECORD));
                     goto repeat;
                 }
             }
@@ -827,20 +789,20 @@ Return Value:
         // This is the second chance to handle the exception.
         //
 
-        if (DbgkForwardException(ExceptionRecord, TRUE, TRUE)) {
+        if (DbgkForwardException(ExceptionRecord, TRUE, TRUE))
+        {
             goto Handled2;
-
-        } else if (DbgkForwardException(ExceptionRecord, FALSE, TRUE)) {
+        }
+        else if (DbgkForwardException(ExceptionRecord, FALSE, TRUE))
+        {
             goto Handled2;
-
-        } else {
+        }
+        else
+        {
             ZwTerminateProcess(NtCurrentProcess(), ExceptionRecord->ExceptionCode);
-            KeBugCheckEx(KMODE_EXCEPTION_NOT_HANDLED,
-                         ExceptionRecord->ExceptionCode,
-                         (ULONG_PTR)ExceptionRecord->ExceptionAddress,
-                         ExceptionRecord->ExceptionInformation[0],
+            KeBugCheckEx(KMODE_EXCEPTION_NOT_HANDLED, ExceptionRecord->ExceptionCode,
+                         (ULONG_PTR)ExceptionRecord->ExceptionAddress, ExceptionRecord->ExceptionInformation[0],
                          ExceptionRecord->ExceptionInformation[1]);
-
         }
     }
 
@@ -850,8 +812,7 @@ Return Value:
     //
 
 Handled1:
-    KeContextToKframes(TrapFrame, ExceptionFrame, &ContextFrame,
-                       ContextFrame.ContextFlags, PreviousMode);
+    KeContextToKframes(TrapFrame, ExceptionFrame, &ContextFrame, ContextFrame.ContextFlags, PreviousMode);
 
     //
     // Exception was handled by the debugger or the associated subsystem
@@ -863,12 +824,9 @@ Handled1:
 Handled2:
     return;
 }
-
+
 ULONG
-KiCopyInformation (
-    IN OUT PEXCEPTION_RECORD ExceptionRecord1,
-    IN PEXCEPTION_RECORD ExceptionRecord2
-    )
+KiCopyInformation(IN OUT PEXCEPTION_RECORD ExceptionRecord1, IN PEXCEPTION_RECORD ExceptionRecord2)
 
 /*++
 
@@ -896,18 +854,14 @@ Return Value:
     // an exception handler to be executed.
     //
 
-    RtlMoveMemory((PVOID)ExceptionRecord1,
-                  (PVOID)ExceptionRecord2,
-                  sizeof(EXCEPTION_RECORD));
+    RtlMoveMemory((PVOID)ExceptionRecord1, (PVOID)ExceptionRecord2, sizeof(EXCEPTION_RECORD));
 
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
-
+
 NTSTATUS
-KeRaiseUserException(
-    IN NTSTATUS ExceptionCode
-    )
+KeRaiseUserException(IN NTSTATUS ExceptionCode)
 
 /*++
 
@@ -937,7 +891,7 @@ Return Value:
     TrapFrame = KeGetCurrentThread()->TrapFrame;
 
     TrapFrame->Fir = (ULONGLONG)(LONG_PTR)KeRaiseUserExceptionDispatcher;
-    return(ExceptionCode);
+    return (ExceptionCode);
 }
 
 
@@ -1208,5 +1162,3 @@ Return Value:
 }
 
 #endif
-
-

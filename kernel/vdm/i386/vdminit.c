@@ -16,9 +16,7 @@ ULONG VdmBopCount;
 #endif
 
 NTSTATUS
-VdmpInitialize(
-    PVDM_INITIALIZE_DATA VdmInitData
-    )
+VdmpInitialize(PVDM_INITIALIZE_DATA VdmInitData)
 
 /*++
 
@@ -60,7 +58,7 @@ Return Value:
     HANDLE hThread;
     PVDMICAUSERDATA pIcaUserData;
     PVOID TrapcHandler;
-    
+
     PAGED_CODE();
 
     NtCurrentTeb()->Vdm = NULL;
@@ -70,23 +68,20 @@ Return Value:
     // check is made farther down.
     //
 
-    if (Process->VdmObjects) {
+    if (Process->VdmObjects)
+    {
         return STATUS_UNSUCCESSFUL;
     }
 
-    RtlInitUnicodeString (&SectionName, L"\\Device\\PhysicalMemory");
+    RtlInitUnicodeString(&SectionName, L"\\Device\\PhysicalMemory");
 
-    InitializeObjectAttributes (&ObjectAttributes,
-                                &SectionName,
-                                OBJ_CASE_INSENSITIVE|OBJ_KERNEL_HANDLE,
-                                (HANDLE) NULL,
-                                (PSECURITY_DESCRIPTOR) NULL);
+    InitializeObjectAttributes(&ObjectAttributes, &SectionName, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, (HANDLE)NULL,
+                               (PSECURITY_DESCRIPTOR)NULL);
 
-    Status = ZwOpenSection (&SectionHandle,
-                            SECTION_ALL_ACCESS,
-                            &ObjectAttributes);
+    Status = ZwOpenSection(&SectionHandle, SECTION_ALL_ACCESS, &ObjectAttributes);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
@@ -103,35 +98,31 @@ Return Value:
     ViewBase.LowPart = 0;
     ViewBase.HighPart = 0;
 
-    Status = ZwMapViewOfSection (SectionHandle,
-                                 NtCurrentProcess(),
-                                 &BaseAddress,
-                                 0,
-                                 ViewSize,
-                                 &ViewBase,
-                                 &ViewSize,
-                                 ViewUnmap,
-                                 0,
-                                 PAGE_READWRITE);
+    Status = ZwMapViewOfSection(SectionHandle, NtCurrentProcess(), &BaseAddress, 0, ViewSize, &ViewBase, &ViewSize,
+                                ViewUnmap, 0, PAGE_READWRITE);
 
-    if (!NT_SUCCESS(Status)) {
-       ZwClose (SectionHandle);
-       return Status;
+    if (!NT_SUCCESS(Status))
+    {
+        ZwClose(SectionHandle);
+        return Status;
     }
 
     StatusCopy = STATUS_SUCCESS;
 
-    try {
-        RtlCopyMemory (destination, BaseAddress, ViewSize);
+    try
+    {
+        RtlCopyMemory(destination, BaseAddress, ViewSize);
     }
-    except(ExSystemExceptionFilter()) {
-       StatusCopy = GetExceptionCode ();
+    except(ExSystemExceptionFilter())
+    {
+        StatusCopy = GetExceptionCode();
     }
 
-    Status = ZwUnmapViewOfSection (NtCurrentProcess(), BaseAddress);
+    Status = ZwUnmapViewOfSection(NtCurrentProcess(), BaseAddress);
 
-    if (!NT_SUCCESS(Status) || !NT_SUCCESS(StatusCopy)) {
-        ZwClose (SectionHandle);
+    if (!NT_SUCCESS(Status) || !NT_SUCCESS(StatusCopy))
+    {
+        ZwClose(SectionHandle);
         return (NT_SUCCESS(Status) ? StatusCopy : Status);
     }
 
@@ -139,7 +130,7 @@ Return Value:
     // Map Rom into address space
     //
 
-    BaseAddress = (PVOID) 0x000C0000;
+    BaseAddress = (PVOID)0x000C0000;
     ViewSize = 0x40000;
     ViewBase.LowPart = 0x000C0000;
     ViewBase.HighPart = 0;
@@ -150,10 +141,7 @@ Return Value:
     // alloc vm call.
     //
 
-    Status = ZwFreeVirtualMemory (NtCurrentProcess(),
-                                  &BaseAddress,
-                                  &ViewSize,
-                                  MEM_RELEASE);
+    Status = ZwFreeVirtualMemory(NtCurrentProcess(), &BaseAddress, &ViewSize, MEM_RELEASE);
 
     //
     // N.B.  This should probably take into account the fact that there are
@@ -161,8 +149,9 @@ Return Value:
     // release).
     //
 
-    if (!NT_SUCCESS(Status)) {
-        ZwClose (SectionHandle);
+    if (!NT_SUCCESS(Status))
+    {
+        ZwClose(SectionHandle);
         return Status;
     }
 
@@ -170,15 +159,13 @@ Return Value:
     // Set up and open KeyPath
     //
 
-    InitializeObjectAttributes (&ObjectAttributes,
-                                &CmRegistryMachineHardwareDescriptionSystemName,
-                                OBJ_CASE_INSENSITIVE|OBJ_KERNEL_HANDLE,
-                                (HANDLE)NULL,
-                                NULL);
+    InitializeObjectAttributes(&ObjectAttributes, &CmRegistryMachineHardwareDescriptionSystemName,
+                               OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, (HANDLE)NULL, NULL);
 
-    Status = ZwOpenKey (&RegistryHandle, KEY_READ, &ObjectAttributes);
+    Status = ZwOpenKey(&RegistryHandle, KEY_READ, &ObjectAttributes);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         ZwClose(SectionHandle);
         return Status;
     }
@@ -187,11 +174,10 @@ Return Value:
     // Allocate space for the data
     //
 
-    KeyValueBuffer = ExAllocatePoolWithTag (PagedPool,
-                                            KEY_VALUE_BUFFER_SIZE,
-                                            ' MDV');
+    KeyValueBuffer = ExAllocatePoolWithTag(PagedPool, KEY_VALUE_BUFFER_SIZE, ' MDV');
 
-    if (KeyValueBuffer == NULL) {
+    if (KeyValueBuffer == NULL)
+    {
         ZwClose(RegistryHandle);
         ZwClose(SectionHandle);
         return STATUS_NO_MEMORY;
@@ -201,27 +187,24 @@ Return Value:
     // Get the data for the rom information
     //
 
-    RtlInitUnicodeString (&WorkString, L"Configuration Data");
+    RtlInitUnicodeString(&WorkString, L"Configuration Data");
 
-    Status = ZwQueryValueKey (RegistryHandle,
-                              &WorkString,
-                              KeyValueFullInformation,
-                              KeyValueBuffer,
-                              KEY_VALUE_BUFFER_SIZE,
-                              &ResultLength);
+    Status = ZwQueryValueKey(RegistryHandle, &WorkString, KeyValueFullInformation, KeyValueBuffer,
+                             KEY_VALUE_BUFFER_SIZE, &ResultLength);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         ExFreePool(KeyValueBuffer);
         ZwClose(RegistryHandle);
         ZwClose(SectionHandle);
         return Status;
     }
 
-    ResourceDescriptor = (PCM_FULL_RESOURCE_DESCRIPTOR)
-        ((PUCHAR) KeyValueBuffer + KeyValueBuffer->DataOffset);
+    ResourceDescriptor = (PCM_FULL_RESOURCE_DESCRIPTOR)((PUCHAR)KeyValueBuffer + KeyValueBuffer->DataOffset);
 
     if ((KeyValueBuffer->DataLength < sizeof(CM_FULL_RESOURCE_DESCRIPTOR)) ||
-        (ResourceDescriptor->PartialResourceList.Count < 2)) {
+        (ResourceDescriptor->PartialResourceList.Count < 2))
+    {
 
         //
         // No rom blocks.
@@ -233,16 +216,15 @@ Return Value:
         return STATUS_SUCCESS;
     }
 
-    PartialResourceDescriptor = (PCM_PARTIAL_RESOURCE_DESCRIPTOR)
-            ((PUCHAR)ResourceDescriptor +
-            sizeof(CM_FULL_RESOURCE_DESCRIPTOR) +
-            ResourceDescriptor->PartialResourceList.PartialDescriptors[0]
-                .u.DeviceSpecificData.DataSize);
+    PartialResourceDescriptor =
+        (PCM_PARTIAL_RESOURCE_DESCRIPTOR)((PUCHAR)ResourceDescriptor + sizeof(CM_FULL_RESOURCE_DESCRIPTOR) +
+                                          ResourceDescriptor->PartialResourceList.PartialDescriptors[0]
+                                              .u.DeviceSpecificData.DataSize);
 
 
-    if (KeyValueBuffer->DataLength < ((PUCHAR)PartialResourceDescriptor -
-        (PUCHAR)ResourceDescriptor + sizeof(CM_PARTIAL_RESOURCE_DESCRIPTOR)
-        + sizeof(CM_ROM_BLOCK))) {
+    if (KeyValueBuffer->DataLength < ((PUCHAR)PartialResourceDescriptor - (PUCHAR)ResourceDescriptor +
+                                      sizeof(CM_PARTIAL_RESOURCE_DESCRIPTOR) + sizeof(CM_ROM_BLOCK)))
+    {
 
         ExFreePool(KeyValueBuffer);
         ZwClose(RegistryHandle);
@@ -250,11 +232,9 @@ Return Value:
         return STATUS_ILL_FORMED_SERVICE_ENTRY;
     }
 
-    BiosBlock = (PCM_ROM_BLOCK)((PUCHAR)PartialResourceDescriptor +
-                    sizeof(CM_PARTIAL_RESOURCE_DESCRIPTOR));
+    BiosBlock = (PCM_ROM_BLOCK)((PUCHAR)PartialResourceDescriptor + sizeof(CM_PARTIAL_RESOURCE_DESCRIPTOR));
 
-    Index = PartialResourceDescriptor->u.DeviceSpecificData.DataSize /
-                    sizeof(CM_ROM_BLOCK);
+    Index = PartialResourceDescriptor->u.DeviceSpecificData.DataSize / sizeof(CM_ROM_BLOCK);
 
     //
     // N.B.  Rom blocks begin on 2K (not necessarily page) boundaries
@@ -265,7 +245,8 @@ Return Value:
 
     LastMappedAddress = 0xC0000;
 
-    while (Index) {
+    while (Index)
+    {
 
 #if 0
         DbgPrint ("Bios Block, PhysAddr = %lx, size = %lx\n",
@@ -273,8 +254,8 @@ Return Value:
                     BiosBlock->Size);
 #endif
 
-        if ((Index > 1) &&
-            ((BiosBlock->Address + BiosBlock->Size) == BiosBlock[1].Address)) {
+        if ((Index > 1) && ((BiosBlock->Address + BiosBlock->Size) == BiosBlock[1].Address))
+        {
 
             //
             // Coalesce adjacent blocks
@@ -290,31 +271,29 @@ Return Value:
         BaseAddress = (PVOID)(BiosBlock->Address);
         ViewSize = BiosBlock->Size;
 
-        if ((ULONG)BaseAddress < LastMappedAddress) {
-            if (ViewSize > (LastMappedAddress - (ULONG)BaseAddress)) {
+        if ((ULONG)BaseAddress < LastMappedAddress)
+        {
+            if (ViewSize > (LastMappedAddress - (ULONG)BaseAddress))
+            {
                 ViewSize = ViewSize - (LastMappedAddress - (ULONG)BaseAddress);
                 BaseAddress = (PVOID)LastMappedAddress;
-            } else {
+            }
+            else
+            {
                 ViewSize = 0;
             }
         }
 
         ViewBase.LowPart = (ULONG)BaseAddress;
 
-        if (ViewSize > 0) {
+        if (ViewSize > 0)
+        {
 
-            Status = ZwMapViewOfSection (SectionHandle,
-                                         NtCurrentProcess(),
-                                         &BaseAddress,
-                                         0,
-                                         ViewSize,
-                                         &ViewBase,
-                                         &ViewSize,
-                                         ViewUnmap,
-                                         MEM_DOS_LIM,
-                                         PAGE_READWRITE);
+            Status = ZwMapViewOfSection(SectionHandle, NtCurrentProcess(), &BaseAddress, 0, ViewSize, &ViewBase,
+                                        &ViewSize, ViewUnmap, MEM_DOS_LIM, PAGE_READWRITE);
 
-            if (!NT_SUCCESS(Status)) {
+            if (!NT_SUCCESS(Status))
+            {
                 break;
             }
 
@@ -343,51 +322,48 @@ Return Value:
     //       (which will prevent the process from being deleted)
     //
 
-    pVdmObjects = ExAllocatePoolWithTag (NonPagedPool,
-                                         sizeof(VDM_PROCESS_OBJECTS),
-                                         ' MDV');
+    pVdmObjects = ExAllocatePoolWithTag(NonPagedPool, sizeof(VDM_PROCESS_OBJECTS), ' MDV');
 
-    if (pVdmObjects == NULL) {
+    if (pVdmObjects == NULL)
+    {
         return STATUS_NO_MEMORY;
     }
 
-    Status = PsChargeProcessPoolQuota (Process,
-                                       NonPagedPool,
-                                       sizeof(VDM_PROCESS_OBJECTS));
+    Status = PsChargeProcessPoolQuota(Process, NonPagedPool, sizeof(VDM_PROCESS_OBJECTS));
 
-    if (!NT_SUCCESS (Status)) {
-        ExFreePool (pVdmObjects);
+    if (!NT_SUCCESS(Status))
+    {
+        ExFreePool(pVdmObjects);
         return Status;
     }
 
-    RtlZeroMemory (pVdmObjects, sizeof(VDM_PROCESS_OBJECTS));
+    RtlZeroMemory(pVdmObjects, sizeof(VDM_PROCESS_OBJECTS));
 
-    ExInitializeFastMutex (&pVdmObjects->DelayIntFastMutex);
-    KeInitializeSpinLock (&pVdmObjects->DelayIntSpinLock);
-    InitializeListHead (&pVdmObjects->DelayIntListHead);
+    ExInitializeFastMutex(&pVdmObjects->DelayIntFastMutex);
+    KeInitializeSpinLock(&pVdmObjects->DelayIntSpinLock);
+    InitializeListHead(&pVdmObjects->DelayIntListHead);
 
-    pVdmObjects->pIcaUserData = ExAllocatePoolWithTag (PagedPool,
-                                                       sizeof(VDMICAUSERDATA),
-                                                       ' MDV');
+    pVdmObjects->pIcaUserData = ExAllocatePoolWithTag(PagedPool, sizeof(VDMICAUSERDATA), ' MDV');
 
-    if (pVdmObjects->pIcaUserData == NULL) {
-        PsReturnPoolQuota (Process, NonPagedPool, sizeof(VDM_PROCESS_OBJECTS));
-        ExFreePool (pVdmObjects);
+    if (pVdmObjects->pIcaUserData == NULL)
+    {
+        PsReturnPoolQuota(Process, NonPagedPool, sizeof(VDM_PROCESS_OBJECTS));
+        ExFreePool(pVdmObjects);
         return STATUS_NO_MEMORY;
     }
 
-    Status = PsChargeProcessPoolQuota (Process,
-                                       PagedPool,
-                                       sizeof(VDMICAUSERDATA));
+    Status = PsChargeProcessPoolQuota(Process, PagedPool, sizeof(VDMICAUSERDATA));
 
-    if (!NT_SUCCESS (Status)) {
-        PsReturnPoolQuota (Process, NonPagedPool, sizeof(VDM_PROCESS_OBJECTS));
-        ExFreePool (pVdmObjects->pIcaUserData);
-        ExFreePool (pVdmObjects);
+    if (!NT_SUCCESS(Status))
+    {
+        PsReturnPoolQuota(Process, NonPagedPool, sizeof(VDM_PROCESS_OBJECTS));
+        ExFreePool(pVdmObjects->pIcaUserData);
+        ExFreePool(pVdmObjects);
         return Status;
     }
 
-    try {
+    try
+    {
 
         //
         // Copy Ica addresses from service data (in user space) into
@@ -403,31 +379,26 @@ Return Value:
 
         pIcaUserData = pVdmObjects->pIcaUserData;
 
-        ProbeForWriteHandle (pIcaUserData->phWowIdleEvent);
+        ProbeForWriteHandle(pIcaUserData->phWowIdleEvent);
 
-        ProbeForWrite (pIcaUserData->pIcaLock,
-                       sizeof(RTL_CRITICAL_SECTION),
-                       sizeof(UCHAR));
+        ProbeForWrite(pIcaUserData->pIcaLock, sizeof(RTL_CRITICAL_SECTION), sizeof(UCHAR));
 
-        ProbeForWrite (pIcaUserData->pIcaMaster,
-                       sizeof(VDMVIRTUALICA),
-                       sizeof(UCHAR));
+        ProbeForWrite(pIcaUserData->pIcaMaster, sizeof(VDMVIRTUALICA), sizeof(UCHAR));
 
-        ProbeForWrite (pIcaUserData->pIcaSlave,
-                       sizeof(VDMVIRTUALICA),
-                       sizeof(UCHAR));
+        ProbeForWrite(pIcaUserData->pIcaSlave, sizeof(VDMVIRTUALICA), sizeof(UCHAR));
 
         ProbeForWriteUlong(pIcaUserData->pIretHooked);
         ProbeForWriteUlong(pIcaUserData->pDelayIrq);
         ProbeForWriteUlong(pIcaUserData->pUndelayIrq);
         ProbeForWriteUlong(pIcaUserData->pDelayIret);
-
-    } except(ExSystemExceptionFilter()) {
+    }
+    except(ExSystemExceptionFilter())
+    {
         Status = GetExceptionCode();
-        PsReturnPoolQuota (Process, NonPagedPool, sizeof(VDM_PROCESS_OBJECTS));
+        PsReturnPoolQuota(Process, NonPagedPool, sizeof(VDM_PROCESS_OBJECTS));
         PsReturnPoolQuota(Process, PagedPool, sizeof(VDMICAUSERDATA));
-        ExFreePool (pVdmObjects->pIcaUserData);
-        ExFreePool (pVdmObjects);
+        ExFreePool(pVdmObjects->pIcaUserData);
+        ExFreePool(pVdmObjects);
         return Status;
     }
 
@@ -437,31 +408,32 @@ Return Value:
     // and don't dereference it until process exit.
     //
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
 
-    ObReferenceObject (CurrentThread);
+    ObReferenceObject(CurrentThread);
 
     pVdmObjects->MainThread = CurrentThread;
 
-    ASSERT (pVdmObjects->VdmTib == NULL);
+    ASSERT(pVdmObjects->VdmTib == NULL);
 
     //
     // Carefully mark the process as a vdm (as other threads may be racing to
     // do the same marking).
     //
 
-    OriginalVdmObjects = InterlockedCompareExchangePointer (&Process->VdmObjects, pVdmObjects, NULL);
+    OriginalVdmObjects = InterlockedCompareExchangePointer(&Process->VdmObjects, pVdmObjects, NULL);
 
-    if (OriginalVdmObjects != NULL) {
-        PsReturnPoolQuota (Process, NonPagedPool, sizeof(VDM_PROCESS_OBJECTS));
+    if (OriginalVdmObjects != NULL)
+    {
+        PsReturnPoolQuota(Process, NonPagedPool, sizeof(VDM_PROCESS_OBJECTS));
         PsReturnPoolQuota(Process, PagedPool, sizeof(VDMICAUSERDATA));
-        ExFreePool (pVdmObjects->pIcaUserData);
-        ExFreePool (pVdmObjects);
-        ObDereferenceObject (CurrentThread);
+        ExFreePool(pVdmObjects->pIcaUserData);
+        ExFreePool(pVdmObjects);
+        ObDereferenceObject(CurrentThread);
         return STATUS_UNSUCCESSFUL;
     }
 
-    ASSERT (Process->VdmObjects == pVdmObjects);
+    ASSERT(Process->VdmObjects == pVdmObjects);
 
     Process->Pcb.VdmTrapcHandler = TrapcHandler;
 

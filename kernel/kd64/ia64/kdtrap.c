@@ -27,14 +27,8 @@ Revision History:
 
 
 BOOLEAN
-KdpTrap (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PCONTEXT ContextRecord,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN BOOLEAN SecondChance
-    )
+KdpTrap(IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame, IN PEXCEPTION_RECORD ExceptionRecord,
+        IN PCONTEXT ContextRecord, IN KPROCESSOR_MODE PreviousMode, IN BOOLEAN SecondChance)
 
 /*++
 
@@ -75,10 +69,10 @@ Return Value:
     ULONGLONG OldStIIP, OldStIPSR;
 
     //
-    // Disable all hardware breakpoints 
+    // Disable all hardware breakpoints
     //
     KeSetLowPsrBit(PSR_DB, 0);
-    
+
     //
     // Synchronize processor execution, save processor state, enter debugger,
     // and flush the current TB.
@@ -92,13 +86,15 @@ Return Value:
     //
 
     if ((ExceptionRecord->ExceptionCode == STATUS_BREAKPOINT) &&
-        (ExceptionRecord->ExceptionInformation[0] >= BREAKPOINT_PRINT)) {
+        (ExceptionRecord->ExceptionInformation[0] >= BREAKPOINT_PRINT))
+    {
 
         //
         // Switch on the breakpoint code.
         //
 
-        switch (ExceptionRecord->ExceptionInformation[0]) {
+        switch (ExceptionRecord->ExceptionInformation[0])
+        {
 
             //
             // Print a debug string.
@@ -120,22 +116,16 @@ Return Value:
             // does not get re-executed.
             //
 
-            RtlIa64IncrementIP((ULONG_PTR)ExceptionRecord->ExceptionAddress >> 2,
-                               ContextRecord->StIPSR,
+            RtlIa64IncrementIP((ULONG_PTR)ExceptionRecord->ExceptionAddress >> 2, ContextRecord->StIPSR,
                                ContextRecord->StIIP);
 
             //
             // Print the debug message.
             //
 
-            ContextRecord->IntV0 = KdpPrint((ULONG)ContextRecord->IntT2,
-                                            (ULONG)ContextRecord->IntT3,
-                                            (PCHAR)ContextRecord->IntT0,
-                                            (USHORT)ContextRecord->IntT1,
-                                            PreviousMode,
-                                            TrapFrame,
-                                            ExceptionFrame,
-                                            &Completion);
+            ContextRecord->IntV0 =
+                KdpPrint((ULONG)ContextRecord->IntT2, (ULONG)ContextRecord->IntT3, (PCHAR)ContextRecord->IntT0,
+                         (USHORT)ContextRecord->IntT1, PreviousMode, TrapFrame, ExceptionFrame, &Completion);
 
             return Completion;
 
@@ -155,18 +145,13 @@ Return Value:
             // does not get re-executed.
             //
 
-            RtlIa64IncrementIP((ULONG_PTR)ExceptionRecord->ExceptionAddress >> 2,
-                               ContextRecord->StIPSR,
+            RtlIa64IncrementIP((ULONG_PTR)ExceptionRecord->ExceptionAddress >> 2, ContextRecord->StIPSR,
                                ContextRecord->StIIP);
 
 
-            ContextRecord->IntV0 = KdpPrompt((PCHAR)ContextRecord->IntT0,
-                                             (USHORT)ContextRecord->IntT1,
-                                             (PCHAR)ContextRecord->IntT2,
-                                             (USHORT)ContextRecord->IntT3,
-                                             PreviousMode,
-                                             TrapFrame,
-                                             ExceptionFrame);
+            ContextRecord->IntV0 =
+                KdpPrompt((PCHAR)ContextRecord->IntT0, (USHORT)ContextRecord->IntT1, (PCHAR)ContextRecord->IntT2,
+                          (USHORT)ContextRecord->IntT3, PreviousMode, TrapFrame, ExceptionFrame);
 
             return TRUE;
 
@@ -189,13 +174,8 @@ Return Value:
         case BREAKPOINT_LOAD_SYMBOLS:
             OldStIPSR = ContextRecord->StIPSR;
             OldStIIP = ContextRecord->StIIP;
-            KdpSymbol((PSTRING)ContextRecord->IntT0,
-                      (PKD_SYMBOLS_INFO)ContextRecord->IntT1,
-                      UnloadSymbols,
-                      PreviousMode,
-                      ContextRecord,
-                      TrapFrame,
-                      ExceptionFrame);
+            KdpSymbol((PSTRING)ContextRecord->IntT0, (PKD_SYMBOLS_INFO)ContextRecord->IntT1, UnloadSymbols,
+                      PreviousMode, ContextRecord, TrapFrame, ExceptionFrame);
 
             //
             // If the kernel debugger did not update the IP, then increment
@@ -203,10 +183,10 @@ Return Value:
             //
 
             if ((ContextRecord->StIIP == OldStIIP) &&
-                ((ContextRecord->StIPSR & IPSR_RI_MASK) == (OldStIPSR & IPSR_RI_MASK))) {
-            	RtlIa64IncrementIP((ULONG_PTR)ExceptionRecord->ExceptionAddress >> 2,
-                               ContextRecord->StIPSR,
-                               ContextRecord->StIIP);
+                ((ContextRecord->StIPSR & IPSR_RI_MASK) == (OldStIPSR & IPSR_RI_MASK)))
+            {
+                RtlIa64IncrementIP((ULONG_PTR)ExceptionRecord->ExceptionAddress >> 2, ContextRecord->StIPSR,
+                                   ContextRecord->StIIP);
             }
 
             return TRUE;
@@ -214,12 +194,8 @@ Return Value:
         case BREAKPOINT_COMMAND_STRING:
             OldStIPSR = ContextRecord->StIPSR;
             OldStIIP = ContextRecord->StIIP;
-            KdpCommandString((PSTRING)ContextRecord->IntT0,
-                             (PSTRING)ContextRecord->IntT1,
-                             PreviousMode,
-                             ContextRecord,
-                             TrapFrame,
-                             ExceptionFrame);
+            KdpCommandString((PSTRING)ContextRecord->IntT0, (PSTRING)ContextRecord->IntT1, PreviousMode, ContextRecord,
+                             TrapFrame, ExceptionFrame);
 
             //
             // If the kernel debugger did not update the IP, then increment
@@ -227,10 +203,10 @@ Return Value:
             //
 
             if ((ContextRecord->StIIP == OldStIIP) &&
-                ((ContextRecord->StIPSR & IPSR_RI_MASK) == (OldStIPSR & IPSR_RI_MASK))) {
-            	RtlIa64IncrementIP((ULONG_PTR)ExceptionRecord->ExceptionAddress >> 2,
-                               ContextRecord->StIPSR,
-                               ContextRecord->StIIP);
+                ((ContextRecord->StIPSR & IPSR_RI_MASK) == (OldStIPSR & IPSR_RI_MASK)))
+            {
+                RtlIa64IncrementIP((ULONG_PTR)ExceptionRecord->ExceptionAddress >> 2, ContextRecord->StIPSR,
+                                   ContextRecord->StIIP);
             }
 
             return TRUE;
@@ -246,8 +222,7 @@ Return Value:
             // does not get re-executed
             //
 
-            RtlIa64IncrementIP((ULONG_PTR)ExceptionRecord->ExceptionAddress >> 2,
-                               ContextRecord->StIPSR,
+            RtlIa64IncrementIP((ULONG_PTR)ExceptionRecord->ExceptionAddress >> 2, ContextRecord->StIPSR,
                                ContextRecord->StIIP);
 
             break;
@@ -272,21 +247,11 @@ Return Value:
     // Report state change to the kernel debugger.
     //
 
-    return KdpReport(TrapFrame,
-                     ExceptionFrame,
-                     ExceptionRecord,
-                     ContextRecord,
-                     PreviousMode,
-                     SecondChance);
-
+    return KdpReport(TrapFrame, ExceptionFrame, ExceptionRecord, ContextRecord, PreviousMode, SecondChance);
 }
-
+
 BOOLEAN
-KdIsThisAKdTrap (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PCONTEXT ContextRecord,
-    IN KPROCESSOR_MODE PreviousMode
-    )
+KdIsThisAKdTrap(IN PEXCEPTION_RECORD ExceptionRecord, IN PCONTEXT ContextRecord, IN KPROCESSOR_MODE PreviousMode)
 
 /*++
 
@@ -319,17 +284,20 @@ Return Value:
     // Single step is also handled by the kernel debugger
     //
 
-    if (ExceptionRecord->ExceptionCode == STATUS_SINGLE_STEP) {
+    if (ExceptionRecord->ExceptionCode == STATUS_SINGLE_STEP)
+    {
 #if DEVL
 
         return TRUE;
 
 #else
 
-        if (PreviousMode == KernelMode) {
+        if (PreviousMode == KernelMode)
+        {
             return TRUE;
-
-        } else {
+        }
+        else
+        {
             return FALSE;
         }
 
@@ -340,8 +308,9 @@ Return Value:
     //  If is is not status breakpoint then it is not a kernel debugger trap.
     //
 
-    if (ExceptionRecord->ExceptionCode != STATUS_BREAKPOINT) {
-        
+    if (ExceptionRecord->ExceptionCode != STATUS_BREAKPOINT)
+    {
+
         return FALSE;
     }
 
@@ -352,13 +321,14 @@ Return Value:
     // of the exception record.
     //
 
-    BreakpointCode = (ULONG) ExceptionRecord->ExceptionInformation[0];
+    BreakpointCode = (ULONG)ExceptionRecord->ExceptionInformation[0];
 
     //
     // Switch on the breakpoint code.
     //
 
-    switch (BreakpointCode) {
+    switch (BreakpointCode)
+    {
 
         //
         // Kernel breakpoint codes.
@@ -376,10 +346,12 @@ Return Value:
     case BREAKPOINT_LOAD_SYMBOLS:
     case BREAKPOINT_UNLOAD_SYMBOLS:
 
-        if (PreviousMode == KernelMode) {
+        if (PreviousMode == KernelMode)
+        {
             return TRUE;
-
-        } else {
+        }
+        else
+        {
             return FALSE;
         }
 
@@ -391,16 +363,10 @@ Return Value:
         return FALSE;
     }
 }
-
+
 BOOLEAN
-KdpStub (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PCONTEXT ContextRecord,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN BOOLEAN SecondChance
-    )
+KdpStub(IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame, IN PEXCEPTION_RECORD ExceptionRecord,
+        IN PCONTEXT ContextRecord, IN KPROCESSOR_MODE PreviousMode, IN BOOLEAN SecondChance)
 
 /*++
 
@@ -444,7 +410,7 @@ Return Value:
     // of the exception record.
     //
 
-    BreakpointCode = (ULONG) ExceptionRecord->ExceptionInformation[0];
+    BreakpointCode = (ULONG)ExceptionRecord->ExceptionInformation[0];
 
 
     //
@@ -452,23 +418,23 @@ Return Value:
     // unload symbols, then return TRUE. Otherwise, return FALSE;
     //
 
-    if ((BreakpointCode == BREAKPOINT_PRINT) ||
-        (BreakpointCode == BREAKPOINT_LOAD_SYMBOLS) ||
-        (BreakpointCode == BREAKPOINT_UNLOAD_SYMBOLS)) {
+    if ((BreakpointCode == BREAKPOINT_PRINT) || (BreakpointCode == BREAKPOINT_LOAD_SYMBOLS) ||
+        (BreakpointCode == BREAKPOINT_UNLOAD_SYMBOLS))
+    {
 
         //
         // Advance to next instruction slot so that the BREAK instruction
         // does not get re-executed
         //
 
-        RtlIa64IncrementIP((ULONG_PTR)ExceptionRecord->ExceptionAddress >> 2,
-                          ContextRecord->StIPSR,
-                          ContextRecord->StIIP);
+        RtlIa64IncrementIP((ULONG_PTR)ExceptionRecord->ExceptionAddress >> 2, ContextRecord->StIPSR,
+                           ContextRecord->StIIP);
 
 
         return TRUE;
-
-    } else {
+    }
+    else
+    {
         return FALSE;
     }
 }

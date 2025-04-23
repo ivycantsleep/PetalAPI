@@ -27,8 +27,8 @@ Revision History:
 
 
 #ifdef ALLOC_PRAGMA
-        #pragma alloc_text(PAGE, CallNextDriverSync)
-        #pragma alloc_text(PAGE, CallDriverSync)
+#pragma alloc_text(PAGE, CallNextDriverSync)
+#pragma alloc_text(PAGE, CallDriverSync)
 #endif
 
 
@@ -65,7 +65,6 @@ Return Value:
 }
 
 
-
 NTSTATUS CallDriverSync(PDEVICE_OBJECT devObj, PIRP irp)
 /*++
 
@@ -100,18 +99,17 @@ Return Value:
 
     KeInitializeEvent(&event, NotificationEvent, FALSE);
 
-    IoSetCompletionRoutine( irp, 
-                            CallDriverSyncCompletion, 
-                            &event,     // context
-                            TRUE, TRUE, TRUE);
+    IoSetCompletionRoutine(irp, CallDriverSyncCompletion,
+                           &event, // context
+                           TRUE, TRUE, TRUE);
 
     status = IoCallDriver(devObj, irp);
 
-    KeWaitForSingleObject(  &event,
-                            Executive,      // wait reason
-                            KernelMode,
-                            FALSE,          // not alertable
-                            NULL );         // no timeout
+    KeWaitForSingleObject(&event,
+                          Executive, // wait reason
+                          KernelMode,
+                          FALSE, // not alertable
+                          NULL); // no timeout
 
     status = irp->IoStatus.Status;
 
@@ -121,10 +119,7 @@ Return Value:
 }
 
 
-NTSTATUS CallDriverSyncCompletion(
-                                    IN PDEVICE_OBJECT devObjOrNULL, 
-                                    IN PIRP irp, 
-                                    IN PVOID context)
+NTSTATUS CallDriverSyncCompletion(IN PDEVICE_OBJECT devObjOrNULL, IN PIRP irp, IN PVOID context)
 /*++
 
 Routine Description:
@@ -160,7 +155,6 @@ Return Value:
 }
 
 
-
 VOID IncrementPendingActionCount(struct DEVICE_EXTENSION *devExt)
 /*++
 
@@ -181,9 +175,8 @@ Return Value:
 --*/
 {
     ASSERT(devExt->pendingActionCount >= 0);
-    InterlockedIncrement(&devExt->pendingActionCount);    
+    InterlockedIncrement(&devExt->pendingActionCount);
 }
-
 
 
 VOID DecrementPendingActionCount(struct DEVICE_EXTENSION *devExt)
@@ -210,20 +203,19 @@ Return Value:
 --*/
 {
     ASSERT(devExt->pendingActionCount >= 0);
-    InterlockedDecrement(&devExt->pendingActionCount);    
+    InterlockedDecrement(&devExt->pendingActionCount);
 
-    if (devExt->pendingActionCount < 0){
+    if (devExt->pendingActionCount < 0)
+    {
         /*
          *  All pending actions have completed and we've gotten
          *  the REMOVE_DEVICE IRP.
          *  Set the removeEvent so we'll stop waiting on REMOVE_DEVICE.
          */
-        ASSERT((devExt->state == STATE_REMOVING) || 
-               (devExt->state == STATE_REMOVED));
+        ASSERT((devExt->state == STATE_REMOVING) || (devExt->state == STATE_REMOVED));
         KeSetEvent(&devExt->removeEvent, 0, FALSE);
     }
 }
-
 
 
 VOID RegistryAccessSample(PDEVICE_OBJECT devObj)
@@ -253,52 +245,46 @@ Return Value:
     NTSTATUS status;
     HANDLE hRegDevice;
 
-    status = IoOpenDeviceRegistryKey(   devObj, 
-                                        PLUGPLAY_REGKEY_DEVICE, 
-                                        KEY_READ, 
-                                        &hRegDevice);
-    if (NT_SUCCESS(status)){
+    status = IoOpenDeviceRegistryKey(devObj, PLUGPLAY_REGKEY_DEVICE, KEY_READ, &hRegDevice);
+    if (NT_SUCCESS(status))
+    {
         UNICODE_STRING keyName;
         PKEY_VALUE_FULL_INFORMATION keyValueInfo;
         ULONG keyValueTotalSize, actualLength;
 
-        RtlInitUnicodeString(&keyName, L"SampleFilterParam"); 
-        keyValueTotalSize = sizeof(KEY_VALUE_FULL_INFORMATION) +
-                            keyName.Length*sizeof(WCHAR) +
-                            sizeof(ULONG);
-        keyValueInfo = ExAllocatePoolWithTag(   PagedPool,
-                                                keyValueTotalSize,
-                                                FILTER_TAG);
-        if (keyValueInfo){
-            status = ZwQueryValueKey(   hRegDevice,
-                                        &keyName,
-                                        KeyValueFullInformation,
-                                        keyValueInfo,
-                                        keyValueTotalSize,
-                                        &actualLength); 
-            if (NT_SUCCESS(status)){
+        RtlInitUnicodeString(&keyName, L"SampleFilterParam");
+        keyValueTotalSize = sizeof(KEY_VALUE_FULL_INFORMATION) + keyName.Length * sizeof(WCHAR) + sizeof(ULONG);
+        keyValueInfo = ExAllocatePoolWithTag(PagedPool, keyValueTotalSize, FILTER_TAG);
+        if (keyValueInfo)
+        {
+            status = ZwQueryValueKey(hRegDevice, &keyName, KeyValueFullInformation, keyValueInfo, keyValueTotalSize,
+                                     &actualLength);
+            if (NT_SUCCESS(status))
+            {
                 ULONG value;
 
                 ASSERT(keyValueInfo->Type == REG_DWORD);
                 ASSERT(keyValueInfo->DataLength == sizeof(ULONG));
-                                
-                value = *((PULONG)(((PCHAR)keyValueInfo)+keyValueInfo->DataOffset));
+
+                value = *((PULONG)(((PCHAR)keyValueInfo) + keyValueInfo->DataOffset));
                 DBGOUT(("RegistryAccessSample: value is %xh.", value));
             }
-            else {
+            else
+            {
                 DBGOUT(("ZwQueryValueKey failed with %xh.", status));
             }
-	    
-	    ExFreePool(keyValueInfo);
+
+            ExFreePool(keyValueInfo);
         }
-        else {
+        else
+        {
             ASSERT(keyValueInfo);
         }
 
         ZwClose(hRegDevice);
     }
-    else {
+    else
+    {
         DBGOUT(("IoOpenDeviceRegistryKey failed with %xh.", status));
     }
-
 }

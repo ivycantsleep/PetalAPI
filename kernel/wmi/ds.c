@@ -26,170 +26,84 @@ Revision History:
 #include "wmikmp.h"
 
 
-void WmipEnableCollectionForNewGuid(
-    LPGUID Guid,
-    PBINSTANCESET InstanceSet
-    );
+void WmipEnableCollectionForNewGuid(LPGUID Guid, PBINSTANCESET InstanceSet);
 
-void WmipDisableCollectionForRemovedGuid(
-    LPGUID Guid,
-    PBINSTANCESET InstanceSet
-    );
+void WmipDisableCollectionForRemovedGuid(LPGUID Guid, PBINSTANCESET InstanceSet);
 
-VOID
-WmipSaveTraceGuidMap(
-    LPGUID          Guid,
-    PBINSTANCESET   ControlInstanceSet
-    );
+VOID WmipSaveTraceGuidMap(LPGUID Guid, PBINSTANCESET ControlInstanceSet);
 
-ULONG WmipDetermineInstanceBaseIndex(
-    LPGUID Guid,
-    PWCHAR BaseName,
-    ULONG InstanceCount
-    );
+ULONG WmipDetermineInstanceBaseIndex(LPGUID Guid, PWCHAR BaseName, ULONG InstanceCount);
 
-ULONG WmipMangleInstanceName(
-    LPGUID Guid,
-    PWCHAR Name,
-    ULONG MaxMangledNameLen,
-    PWCHAR MangledName
-    );
+ULONG WmipMangleInstanceName(LPGUID Guid, PWCHAR Name, ULONG MaxMangledNameLen, PWCHAR MangledName);
 
-NTSTATUS WmipBuildInstanceSet(
-    PWMIREGGUID RegGuid,
-    PWMIREGINFOW WmiRegInfo,
-    ULONG BufferSize,
-    PBINSTANCESET InstanceSet,
-    ULONG ProviderId,
-    LPCTSTR MofImagePath
-    );
+NTSTATUS WmipBuildInstanceSet(PWMIREGGUID RegGuid, PWMIREGINFOW WmiRegInfo, ULONG BufferSize, PBINSTANCESET InstanceSet,
+                              ULONG ProviderId, LPCTSTR MofImagePath);
 
-NTSTATUS WmipLinkDataSourceToList(
-    PBDATASOURCE DataSource,
-    BOOLEAN AddDSToList
-    );
+NTSTATUS WmipLinkDataSourceToList(PBDATASOURCE DataSource, BOOLEAN AddDSToList);
 
-void WmipSendGuidUpdateNotifications(
-    NOTIFICATIONTYPES NotificationType,
-    ULONG GuidCount,
-    PTRCACHE *GuidList
-    );
+void WmipSendGuidUpdateNotifications(NOTIFICATIONTYPES NotificationType, ULONG GuidCount, PTRCACHE *GuidList);
 
-void WmipGenerateBinaryMofNotification(
-    PBINSTANCESET BinaryMofInstanceSet,
-    LPCGUID Guid        
-    );
+void WmipGenerateBinaryMofNotification(PBINSTANCESET BinaryMofInstanceSet, LPCGUID Guid);
 
-void WmipGenerateRegistrationNotification(
-    PBDATASOURCE DataSource,
-    ULONG NotificationCode
-    );
+void WmipGenerateRegistrationNotification(PBDATASOURCE DataSource, ULONG NotificationCode);
 
-NTSTATUS WmipAddMofResource(
-    PBDATASOURCE DataSource,
-    LPWSTR ImagePath,
-    BOOLEAN IsImagePath,
-    LPWSTR MofResourceName,
-    PBOOLEAN NewMofResource
-    );
+NTSTATUS WmipAddMofResource(PBDATASOURCE DataSource, LPWSTR ImagePath, BOOLEAN IsImagePath, LPWSTR MofResourceName,
+                            PBOOLEAN NewMofResource);
 
-PBINSTANCESET WmipFindISInDSByGuid(
-    PBDATASOURCE DataSource,
-    LPGUID Guid
-    );
+PBINSTANCESET WmipFindISInDSByGuid(PBDATASOURCE DataSource, LPGUID Guid);
 
-ULONG WmipUpdateAddGuid(
-    PBDATASOURCE DataSource,
-    PWMIREGGUID RegGuid,
-    PWMIREGINFO WmiRegInfo,
-    ULONG BufferSize,
-    PBINSTANCESET *AddModInstanceSet
-    );
+ULONG WmipUpdateAddGuid(PBDATASOURCE DataSource, PWMIREGGUID RegGuid, PWMIREGINFO WmiRegInfo, ULONG BufferSize,
+                        PBINSTANCESET *AddModInstanceSet);
 
-PTCHAR GuidToString(
-    PTCHAR s,
-    LPGUID piid
-    );
+PTCHAR GuidToString(PTCHAR s, LPGUID piid);
 
-BOOLEAN WmipUpdateRemoveGuid(
-    PBDATASOURCE DataSource,
-    PWMIREGGUID RegGuid,
-    PBINSTANCESET *AddModInstanceSet
-    );
+BOOLEAN WmipUpdateRemoveGuid(PBDATASOURCE DataSource, PWMIREGGUID RegGuid, PBINSTANCESET *AddModInstanceSet);
 
-BOOLEAN WmipIsEqualInstanceSets(
-    PBINSTANCESET InstanceSet1,
-    PBINSTANCESET InstanceSet2
-    );
+BOOLEAN WmipIsEqualInstanceSets(PBINSTANCESET InstanceSet1, PBINSTANCESET InstanceSet2);
 
-ULONG WmipUpdateModifyGuid(
-    PBDATASOURCE DataSource,
-    PWMIREGGUID RegGuid,
-    PWMIREGINFO WmiRegInfo,
-    ULONG BufferSize,
-    PBINSTANCESET *AddModInstanceSet
-    );
+ULONG WmipUpdateModifyGuid(PBDATASOURCE DataSource, PWMIREGGUID RegGuid, PWMIREGINFO WmiRegInfo, ULONG BufferSize,
+                           PBINSTANCESET *AddModInstanceSet);
 
-void WmipCachePtrs(
-    LPGUID Ptr1,
-    PBINSTANCESET Ptr2,
-    ULONG *PtrCount,
-    ULONG *PtrMax,
-    PTRCACHE **PtrArray
-    );
+void WmipCachePtrs(LPGUID Ptr1, PBINSTANCESET Ptr2, ULONG *PtrCount, ULONG *PtrMax, PTRCACHE **PtrArray);
 
-NTSTATUS WmipUpdateDataSource(
-    PREGENTRY RegEntry,
-    PWMIREGINFOW WmiRegInfo,
-    ULONG RetSize
-    );
+NTSTATUS WmipUpdateDataSource(PREGENTRY RegEntry, PWMIREGINFOW WmiRegInfo, ULONG RetSize);
 
-void WmipRemoveDataSourceByDS(
-    PBDATASOURCE DataSource
-    );
+void WmipRemoveDataSourceByDS(PBDATASOURCE DataSource);
 
-NTSTATUS WmipRemoveDataSource(
-    PREGENTRY RegEntry
-    );
+NTSTATUS WmipRemoveDataSource(PREGENTRY RegEntry);
 
-NTSTATUS WmipInitializeDataStructs(
-    void
-);
+NTSTATUS WmipInitializeDataStructs(void);
 
-NTSTATUS WmipEnumerateMofResources(
-    PWMIMOFLIST MofList,
-    ULONG BufferSize,
-    ULONG *RetSize
-    );
+NTSTATUS WmipEnumerateMofResources(PWMIMOFLIST MofList, ULONG BufferSize, ULONG *RetSize);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,WmipInitializeDataStructs)
-#pragma alloc_text(PAGE,WmipEnableCollectionForNewGuid)
-#pragma alloc_text(PAGE,WmipDisableCollectionForRemovedGuid)
-#pragma alloc_text(PAGE,WmipSaveTraceGuidMap)
-#pragma alloc_text(PAGE,WmipDetermineInstanceBaseIndex)
-#pragma alloc_text(PAGE,WmipMangleInstanceName)
-#pragma alloc_text(PAGE,WmipBuildInstanceSet)
-#pragma alloc_text(PAGE,WmipLinkDataSourceToList)
-#pragma alloc_text(PAGE,WmipSendGuidUpdateNotifications)
-#pragma alloc_text(PAGE,WmipGenerateBinaryMofNotification)
-#pragma alloc_text(PAGE,WmipGenerateMofResourceNotification)
-#pragma alloc_text(PAGE,WmipGenerateRegistrationNotification)
-#pragma alloc_text(PAGE,WmipAddMofResource)
-#pragma alloc_text(PAGE,WmipAddDataSource)
-#pragma alloc_text(PAGE,WmipFindISInDSByGuid)
-#pragma alloc_text(PAGE,WmipUpdateAddGuid)
-#pragma alloc_text(PAGE,WmipUpdateRemoveGuid)
-#pragma alloc_text(PAGE,WmipIsEqualInstanceSets)
-#pragma alloc_text(PAGE,WmipUpdateModifyGuid)
-#pragma alloc_text(PAGE,WmipCachePtrs)
-#pragma alloc_text(PAGE,WmipUpdateDataSource)
-#pragma alloc_text(PAGE,WmipRemoveDataSourceByDS)
-#pragma alloc_text(PAGE,WmipRemoveDataSource)
-#pragma alloc_text(PAGE,WmipEnumerateMofResources)
- 
+#pragma alloc_text(INIT, WmipInitializeDataStructs)
+#pragma alloc_text(PAGE, WmipEnableCollectionForNewGuid)
+#pragma alloc_text(PAGE, WmipDisableCollectionForRemovedGuid)
+#pragma alloc_text(PAGE, WmipSaveTraceGuidMap)
+#pragma alloc_text(PAGE, WmipDetermineInstanceBaseIndex)
+#pragma alloc_text(PAGE, WmipMangleInstanceName)
+#pragma alloc_text(PAGE, WmipBuildInstanceSet)
+#pragma alloc_text(PAGE, WmipLinkDataSourceToList)
+#pragma alloc_text(PAGE, WmipSendGuidUpdateNotifications)
+#pragma alloc_text(PAGE, WmipGenerateBinaryMofNotification)
+#pragma alloc_text(PAGE, WmipGenerateMofResourceNotification)
+#pragma alloc_text(PAGE, WmipGenerateRegistrationNotification)
+#pragma alloc_text(PAGE, WmipAddMofResource)
+#pragma alloc_text(PAGE, WmipAddDataSource)
+#pragma alloc_text(PAGE, WmipFindISInDSByGuid)
+#pragma alloc_text(PAGE, WmipUpdateAddGuid)
+#pragma alloc_text(PAGE, WmipUpdateRemoveGuid)
+#pragma alloc_text(PAGE, WmipIsEqualInstanceSets)
+#pragma alloc_text(PAGE, WmipUpdateModifyGuid)
+#pragma alloc_text(PAGE, WmipCachePtrs)
+#pragma alloc_text(PAGE, WmipUpdateDataSource)
+#pragma alloc_text(PAGE, WmipRemoveDataSourceByDS)
+#pragma alloc_text(PAGE, WmipRemoveDataSource)
+#pragma alloc_text(PAGE, WmipEnumerateMofResources)
+
 #if DBG
-#pragma alloc_text(PAGE,GuidToString)
+#pragma alloc_text(PAGE, GuidToString)
 #endif
 #endif
 
@@ -201,14 +115,10 @@ NTSTATUS WmipEnumerateMofResources(
 const GUID WmipBinaryMofGuid = BINARY_MOF_GUID;
 
 // {4EE0B301-94BC-11d0-A4EC-00A0C9062910}
-const GUID RegChangeNotificationGuid =
-{ 0x4ee0b301, 0x94bc, 0x11d0, { 0xa4, 0xec, 0x0, 0xa0, 0xc9, 0x6, 0x29, 0x10 } };
+const GUID RegChangeNotificationGuid = { 0x4ee0b301, 0x94bc, 0x11d0, { 0xa4, 0xec, 0x0, 0xa0, 0xc9, 0x6, 0x29, 0x10 } };
 
 
-void WmipEnableCollectionForNewGuid(
-    LPGUID Guid,
-    PBINSTANCESET InstanceSet
-    )
+void WmipEnableCollectionForNewGuid(LPGUID Guid, PBINSTANCESET InstanceSet)
 {
     WNODE_HEADER Wnode;
     PBGUIDENTRY GuidEntry;
@@ -216,7 +126,7 @@ void WmipEnableCollectionForNewGuid(
     BOOLEAN IsTraceLog;
 
     PAGED_CODE();
-    
+
     GuidEntry = WmipFindGEByGuid(Guid, FALSE);
 
     if (GuidEntry != NULL)
@@ -226,8 +136,7 @@ void WmipEnableCollectionForNewGuid(
         Wnode.BufferSize = sizeof(WNODE_HEADER);
 
         WmipEnterSMCritSection();
-        if ((GuidEntry->EventRefCount > 0) &&
-            ((InstanceSet->Flags & IS_ENABLE_EVENT) == 0))
+        if ((GuidEntry->EventRefCount > 0) && ((InstanceSet->Flags & IS_ENABLE_EVENT) == 0))
 
         {
             //
@@ -240,12 +149,12 @@ void WmipEnableCollectionForNewGuid(
 
             //
             // If it is Tracelog, NewGuid notifications are piggybacked with
-            // Registration call return. 
+            // Registration call return.
             //
             IsTraceLog = ((InstanceSet->Flags & IS_TRACED) == IS_TRACED);
-            if (IsTraceLog) 
+            if (IsTraceLog)
             {
-                if (!(InstanceSet->DataSource->Flags & DS_KERNEL_MODE) ) 
+                if (!(InstanceSet->DataSource->Flags & DS_KERNEL_MODE))
                 {
                     if (GuidEntry != NULL)
                     {
@@ -254,7 +163,7 @@ void WmipEnableCollectionForNewGuid(
                     WmipLeaveSMCritSection();
                     return;
                 }
-            
+
                 //
                 // For the Kernel Mode Trace Providers pass on the context
                 //
@@ -264,10 +173,7 @@ void WmipEnableCollectionForNewGuid(
             GuidEntry->Flags |= GE_FLAG_NOTIFICATION_IN_PROGRESS;
 
             WmipLeaveSMCritSection();
-            WmipDeliverWnodeToDS(IRP_MN_ENABLE_EVENTS,
-                                 InstanceSet->DataSource,
-                                 &Wnode,
-                                 Wnode.BufferSize);
+            WmipDeliverWnodeToDS(IRP_MN_ENABLE_EVENTS, InstanceSet->DataSource, &Wnode, Wnode.BufferSize);
             WmipEnterSMCritSection();
 
             //
@@ -276,13 +182,11 @@ void WmipEnableCollectionForNewGuid(
             // disable them.
             if (GuidEntry->EventRefCount == 0)
             {
-                Status = WmipDoDisableRequest(GuidEntry,
-                                          TRUE,
-                                             IsTraceLog,
-                                           GuidEntry->LoggerContext,
-                                          GE_FLAG_NOTIFICATION_IN_PROGRESS);
-
-            } else {
+                Status = WmipDoDisableRequest(GuidEntry, TRUE, IsTraceLog, GuidEntry->LoggerContext,
+                                              GE_FLAG_NOTIFICATION_IN_PROGRESS);
+            }
+            else
+            {
                 GuidEntry->Flags &= ~GE_FLAG_NOTIFICATION_IN_PROGRESS;
             }
         }
@@ -290,9 +194,8 @@ void WmipEnableCollectionForNewGuid(
         //
         // Now check to see if collection needs to be enabled for this guid
         //
-        if ((GuidEntry->CollectRefCount > 0) &&
-            ((InstanceSet->Flags & IS_ENABLE_COLLECTION) == 0)  &&
-            (InstanceSet->Flags & IS_EXPENSIVE) )
+        if ((GuidEntry->CollectRefCount > 0) && ((InstanceSet->Flags & IS_ENABLE_COLLECTION) == 0) &&
+            (InstanceSet->Flags & IS_EXPENSIVE))
 
         {
             //
@@ -306,10 +209,7 @@ void WmipEnableCollectionForNewGuid(
             InstanceSet->Flags |= IS_ENABLE_COLLECTION;
 
             WmipLeaveSMCritSection();
-            WmipDeliverWnodeToDS(IRP_MN_ENABLE_COLLECTION,
-                                 InstanceSet->DataSource,
-                                 &Wnode,
-                                 Wnode.BufferSize);
+            WmipDeliverWnodeToDS(IRP_MN_ENABLE_COLLECTION, InstanceSet->DataSource, &Wnode, Wnode.BufferSize);
             WmipEnterSMCritSection();
 
             //
@@ -319,18 +219,15 @@ void WmipEnableCollectionForNewGuid(
             //
             if (GuidEntry->CollectRefCount == 0)
             {
-                Status = WmipDoDisableRequest(GuidEntry,
-                                          FALSE,
-                                             FALSE,
-                                           0,
-                                          GE_FLAG_COLLECTION_IN_PROGRESS);
-
-            } else {
+                Status = WmipDoDisableRequest(GuidEntry, FALSE, FALSE, 0, GE_FLAG_COLLECTION_IN_PROGRESS);
+            }
+            else
+            {
                 GuidEntry->Flags &= ~GE_FLAG_COLLECTION_IN_PROGRESS;
-        
+
                 //
-                   // If there are any other threads that were waiting 
-                // until all of the enable/disable work completed, we 
+                // If there are any other threads that were waiting
+                // until all of the enable/disable work completed, we
                 // close the event handle to release them from their wait.
                 //
                 WmipReleaseCollectionEnabled(GuidEntry);
@@ -338,15 +235,14 @@ void WmipEnableCollectionForNewGuid(
         }
         WmipUnreferenceGE(GuidEntry);
         WmipLeaveSMCritSection();
-    } else {
+    }
+    else
+    {
         WmipAssert(FALSE);
     }
 }
 
-void WmipDisableCollectionForRemovedGuid(
-    LPGUID Guid,
-    PBINSTANCESET InstanceSet
-    )
+void WmipDisableCollectionForRemovedGuid(LPGUID Guid, PBINSTANCESET InstanceSet)
 {
     WNODE_HEADER Wnode;
     PBGUIDENTRY GuidEntry;
@@ -354,7 +250,7 @@ void WmipDisableCollectionForRemovedGuid(
     BOOLEAN IsTraceLog;
 
     PAGED_CODE();
-    
+
     GuidEntry = WmipFindGEByGuid(Guid, FALSE);
 
     if (GuidEntry != NULL)
@@ -365,8 +261,7 @@ void WmipDisableCollectionForRemovedGuid(
 
         WmipEnterSMCritSection();
 
-        if ((GuidEntry->EventRefCount > 0) &&
-               ((InstanceSet->Flags & IS_ENABLE_EVENT) != 0))
+        if ((GuidEntry->EventRefCount > 0) && ((InstanceSet->Flags & IS_ENABLE_EVENT) != 0))
 
         {
             // Events were previously enabled for this guid, but not for this
@@ -378,12 +273,12 @@ void WmipDisableCollectionForRemovedGuid(
 
             //
             // If it is Tracelog, RemoveGuid notifications are handled
-            // through UnregisterGuids call. 
+            // through UnregisterGuids call.
             //
             IsTraceLog = ((InstanceSet->Flags & IS_TRACED) == IS_TRACED);
             if (IsTraceLog)
             {
-                if ( !(InstanceSet->DataSource->Flags & DS_KERNEL_MODE)) 
+                if (!(InstanceSet->DataSource->Flags & DS_KERNEL_MODE))
                 {
                     WmipUnreferenceGE(GuidEntry);
                     WmipLeaveSMCritSection();
@@ -396,10 +291,7 @@ void WmipDisableCollectionForRemovedGuid(
             GuidEntry->Flags |= GE_FLAG_NOTIFICATION_IN_PROGRESS;
 
             WmipLeaveSMCritSection();
-            WmipDeliverWnodeToDS(IRP_MN_DISABLE_EVENTS,
-                                 InstanceSet->DataSource,
-                                 &Wnode,
-                                 Wnode.BufferSize);
+            WmipDeliverWnodeToDS(IRP_MN_DISABLE_EVENTS, InstanceSet->DataSource, &Wnode, Wnode.BufferSize);
             WmipEnterSMCritSection();
 
             //
@@ -408,21 +300,18 @@ void WmipDisableCollectionForRemovedGuid(
             // disable them.
             if (GuidEntry->EventRefCount == 0)
             {
-                Status = WmipDoDisableRequest(GuidEntry,
-                                          TRUE,
-                                             IsTraceLog,
-                                           GuidEntry->LoggerContext,
-                                          GE_FLAG_NOTIFICATION_IN_PROGRESS);
-
-            } else {
+                Status = WmipDoDisableRequest(GuidEntry, TRUE, IsTraceLog, GuidEntry->LoggerContext,
+                                              GE_FLAG_NOTIFICATION_IN_PROGRESS);
+            }
+            else
+            {
                 GuidEntry->Flags &= ~GE_FLAG_NOTIFICATION_IN_PROGRESS;
             }
         }
 
         //
         // Now check to see if collection needs to be enabled for this guid
-        if ((GuidEntry->CollectRefCount > 0) &&
-            ((InstanceSet->Flags & IS_ENABLE_COLLECTION) != 0))
+        if ((GuidEntry->CollectRefCount > 0) && ((InstanceSet->Flags & IS_ENABLE_COLLECTION) != 0))
 
         {
             // Collection was previously enabled for this guid, but not
@@ -434,10 +323,7 @@ void WmipDisableCollectionForRemovedGuid(
             InstanceSet->Flags &= ~IS_ENABLE_COLLECTION;
 
             WmipLeaveSMCritSection();
-            WmipDeliverWnodeToDS(IRP_MN_DISABLE_COLLECTION,
-                                 InstanceSet->DataSource,
-                                 &Wnode,
-                                 Wnode.BufferSize);
+            WmipDeliverWnodeToDS(IRP_MN_DISABLE_COLLECTION, InstanceSet->DataSource, &Wnode, Wnode.BufferSize);
             WmipEnterSMCritSection();
 
             //
@@ -446,18 +332,15 @@ void WmipDisableCollectionForRemovedGuid(
             // disable them.
             if (GuidEntry->CollectRefCount == 0)
             {
-                Status = WmipDoDisableRequest(GuidEntry,
-                                          FALSE,
-                                             FALSE,
-                                           0,
-                                          GE_FLAG_COLLECTION_IN_PROGRESS);
-
-            } else {
+                Status = WmipDoDisableRequest(GuidEntry, FALSE, FALSE, 0, GE_FLAG_COLLECTION_IN_PROGRESS);
+            }
+            else
+            {
                 GuidEntry->Flags &= ~GE_FLAG_COLLECTION_IN_PROGRESS;
-        
+
                 //
-                // If there are any other threads that were waiting 
-                // until all of the enable/disable work completed, we 
+                // If there are any other threads that were waiting
+                // until all of the enable/disable work completed, we
                 // close the event handle to release them from their wait.
                 //
                 WmipReleaseCollectionEnabled(GuidEntry);
@@ -465,16 +348,14 @@ void WmipDisableCollectionForRemovedGuid(
         }
         WmipUnreferenceGE(GuidEntry);
         WmipLeaveSMCritSection();
-    } else {
+    }
+    else
+    {
         WmipAssert(FALSE);
     }
 }
 
-VOID
-WmipSaveTraceGuidMap(
-    LPGUID          Guid,
-    PBINSTANCESET   ControlInstanceSet
-    )
+VOID WmipSaveTraceGuidMap(LPGUID Guid, PBINSTANCESET ControlInstanceSet)
 /*++
 
 Routine Description:
@@ -496,26 +377,26 @@ Return Value:
     PGUIDENTRY GuidEntry;
 
     PAGED_CODE();
-    
+
     GuidEntry = WmipFindGEByGuid(Guid, FALSE);
 
     if (GuidEntry != NULL)
     {
-        PBDATASOURCE  DataSource;
-        PLIST_ENTRY   InstanceSetList;
+        PBDATASOURCE DataSource;
+        PLIST_ENTRY InstanceSetList;
         PBINSTANCESET InstanceSet;
         PGUIDMAPENTRY GuidMap;
-        ULONGLONG     SystemTime;
+        ULONGLONG SystemTime;
         PTRACEGUIDMAP TraceGuidMapPtr;
         ULONG i;
-        PTRACE_ENABLE_CONTEXT pContext = (PTRACE_ENABLE_CONTEXT) &GuidEntry->LoggerContext; 
+        PTRACE_ENABLE_CONTEXT pContext = (PTRACE_ENABLE_CONTEXT)&GuidEntry->LoggerContext;
 
         //
-        // If this Guid is not currently enabled for tracing, return 
+        // If this Guid is not currently enabled for tracing, return
         //
 
-        if  ( ( (GuidEntry->Flags & GE_NOTIFICATION_TRACE_FLAG) != GE_NOTIFICATION_TRACE_FLAG ) ||
-              ( pContext->InternalFlag & EVENT_TRACE_INTERNAL_FLAG_PRIVATE) )
+        if (((GuidEntry->Flags & GE_NOTIFICATION_TRACE_FLAG) != GE_NOTIFICATION_TRACE_FLAG) ||
+            (pContext->InternalFlag & EVENT_TRACE_INTERNAL_FLAG_PRIVATE))
         {
             WmipUnreferenceGE(GuidEntry);
             return;
@@ -525,18 +406,20 @@ Return Value:
 
         WmipEnterSMCritSection();
 
-        for (i=0, TraceGuidMapPtr = ControlInstanceSet->TraceGuidMap; 
-            ((i < ControlInstanceSet->TransGuidCount) && (ControlInstanceSet->TraceGuidMap != NULL));  
-            i++, TraceGuidMapPtr++) {
-            GuidMap = (PGUIDMAPENTRY) WmipAllocWithTag(sizeof(GUIDMAPENTRY), WMI_GM_POOLTAG);
-            if (GuidMap != NULL) {
+        for (i = 0, TraceGuidMapPtr = ControlInstanceSet->TraceGuidMap;
+             ((i < ControlInstanceSet->TransGuidCount) && (ControlInstanceSet->TraceGuidMap != NULL));
+             i++, TraceGuidMapPtr++)
+        {
+            GuidMap = (PGUIDMAPENTRY)WmipAllocWithTag(sizeof(GUIDMAPENTRY), WMI_GM_POOLTAG);
+            if (GuidMap != NULL)
+            {
                 GuidMap->GuidMap.Guid = ControlInstanceSet->TraceGuidMap->Guid;
                 GuidMap->GuidMap.GuidMapHandle = (ULONG_PTR)TraceGuidMapPtr;
                 GuidMap->LoggerContext = GuidEntry->LoggerContext;
                 GuidMap->GuidMap.SystemTime = SystemTime;
                 InsertTailList(WmipGMHeadPtr, &GuidMap->Entry);
-            } 
-        } 
+            }
+        }
 
         WmipLeaveSMCritSection();
 
@@ -545,11 +428,7 @@ Return Value:
 }
 
 
-ULONG WmipDetermineInstanceBaseIndex(
-    LPGUID Guid,
-    PWCHAR BaseName,
-    ULONG InstanceCount
-    )
+ULONG WmipDetermineInstanceBaseIndex(LPGUID Guid, PWCHAR BaseName, ULONG InstanceCount)
 /*++
 
 Routine Description:
@@ -580,16 +459,14 @@ Return Value:
     PAGED_CODE();
 
     WmipEnterSMCritSection();
-    
+
     GuidEntry = WmipFindGEByGuid(Guid, FALSE);
     if (GuidEntry != NULL)
     {
         InstanceSetList = GuidEntry->ISHead.Flink;
         while (InstanceSetList != &GuidEntry->ISHead)
         {
-            InstanceSet = CONTAINING_RECORD(InstanceSetList,
-                                            INSTANCESET,
-                                            GuidISList);
+            InstanceSet = CONTAINING_RECORD(InstanceSetList, INSTANCESET, GuidISList);
             if (InstanceSet->Flags & IS_INSTANCE_BASENAME)
             {
                 if (wcscmp(BaseName, InstanceSet->IsBaseName->BaseName) == 0)
@@ -605,20 +482,15 @@ Return Value:
         }
         WmipUnreferenceGE(GuidEntry);
     }
-    
+
     WmipLeaveSMCritSection();
-    
-    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: Static instance name %ws has base index %x\n",
-                    BaseName, BaseIndex));
-    return(BaseIndex);
+
+    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: Static instance name %ws has base index %x\n",
+                      BaseName, BaseIndex));
+    return (BaseIndex);
 }
 
-ULONG WmipMangleInstanceName(
-    LPGUID Guid,
-    PWCHAR Name,
-    ULONG MaxMangledNameLen,
-    PWCHAR MangledName
-    )
+ULONG WmipMangleInstanceName(LPGUID Guid, PWCHAR Name, ULONG MaxMangledNameLen, PWCHAR MangledName)
 /*++
 
 Routine Description:
@@ -647,7 +519,7 @@ Return Value:
     PBINSTANCESET InstanceSet;
 
     PAGED_CODE();
-    
+
     WmipAssert(MaxMangledNameLen >= wcslen(Name));
 
     wcsncpy(MangledName, Name, MaxMangledNameLen);
@@ -656,51 +528,43 @@ Return Value:
 
     if (GuidEntry != NULL)
     {
-        ManglePos = wcslen(MangledName)-1;
+        ManglePos = wcslen(MangledName) - 1;
         ManglingChar = L'Z';
 
         //
         // Loop until we get a unique name
-        InstanceSet = WmipFindISinGEbyName(GuidEntry,
-                                           MangledName,
-                                           &InstanceIndex);
+        InstanceSet = WmipFindISinGEbyName(GuidEntry, MangledName, &InstanceIndex);
         while (InstanceSet != NULL)
         {
             WmipUnreferenceIS(InstanceSet);
-            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: Need to mangle name %ws\n",
-                                MangledName));
+            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: Need to mangle name %ws\n", MangledName));
             if (ManglingChar == L'Z')
             {
                 ManglingChar = L'A';
                 if (++ManglePos == MaxMangledNameLen)
                 {
-                    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: Instance Name could not be mangled\n"));
+                    WmipDebugPrintEx(
+                        (DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: Instance Name could not be mangled\n"));
                     break;
                 }
-                MangledName[ManglePos+1] = UNICODE_NULL;
-            } else {
+                MangledName[ManglePos + 1] = UNICODE_NULL;
+            }
+            else
+            {
                 ManglingChar++;
             }
             MangledName[ManglePos] = ManglingChar;
-            InstanceSet = WmipFindISinGEbyName(GuidEntry,
-                                               MangledName,
-                                               &InstanceIndex) ;
+            InstanceSet = WmipFindISinGEbyName(GuidEntry, MangledName, &InstanceIndex);
         }
         WmipUnreferenceGE(GuidEntry);
     }
 
-    return(wcslen(MangledName)+1);
+    return (wcslen(MangledName) + 1);
 }
 
 
-NTSTATUS WmipBuildInstanceSet(
-    PWMIREGGUID RegGuid,
-    PWMIREGINFOW WmiRegInfo,
-    ULONG BufferSize,
-    PBINSTANCESET InstanceSet,
-    ULONG ProviderId,
-    LPCTSTR MofImagePath
-    )
+NTSTATUS WmipBuildInstanceSet(PWMIREGGUID RegGuid, PWMIREGINFOW WmiRegInfo, ULONG BufferSize, PBINSTANCESET InstanceSet,
+                              ULONG ProviderId, LPCTSTR MofImagePath)
 {
     PWCHAR InstanceName, InstanceNamePtr;
     PBISBASENAME IsBaseName;
@@ -717,7 +581,7 @@ NTSTATUS WmipBuildInstanceSet(
     NTSTATUS Status;
 
     PAGED_CODE();
-    
+
     //
     // Remember the count of instances for the guid in the DS
     //
@@ -725,15 +589,12 @@ NTSTATUS WmipBuildInstanceSet(
     InstanceSet->Count = InstanceCount;
 
     InstanceSet->ProviderId = ProviderId;
-    
+
     //
     // Reset any flags that might be changed by a new REGGUID
     //
-    InstanceSet->Flags &= ~(IS_EXPENSIVE |
-                            IS_EVENT_ONLY |
-                            IS_PDO_INSTANCENAME |
-                            IS_INSTANCE_STATICNAMES |
-                            IS_INSTANCE_BASENAME);
+    InstanceSet->Flags &=
+        ~(IS_EXPENSIVE | IS_EVENT_ONLY | IS_PDO_INSTANCENAME | IS_INSTANCE_STATICNAMES | IS_INSTANCE_BASENAME);
 
     //
     // Finish initializing the Instance Set flags
@@ -764,8 +625,7 @@ NTSTATUS WmipBuildInstanceSet(
         InstanceSet->Flags |= IS_EVENT_ONLY;
     }
 
-    InstanceName = (LPWSTR)OffsetToPtr(WmiRegInfo,
-                                       RegGuid->BaseNameOffset);
+    InstanceName = (LPWSTR)OffsetToPtr(WmiRegInfo, RegGuid->BaseNameOffset);
 
     InstanceNameOffset = RegGuid->BaseNameOffset;
     if (RegGuid->Flags & WMIREG_FLAG_INSTANCE_LIST)
@@ -782,89 +642,73 @@ NTSTATUS WmipBuildInstanceSet(
         MaxStaticInstanceNameSize = 0;
         for (j = 0; j < InstanceCount; j++)
         {
-            Status = WmipValidateWmiRegInfoString(WmiRegInfo,
-                                                  BufferSize,
-                                                  InstanceNameOffset,
-                                                  &InstanceNamePtr);
-                        
-            if ((! NT_SUCCESS(Status)) || (InstanceNamePtr == NULL))
+            Status = WmipValidateWmiRegInfoString(WmiRegInfo, BufferSize, InstanceNameOffset, &InstanceNamePtr);
+
+            if ((!NT_SUCCESS(Status)) || (InstanceNamePtr == NULL))
             {
-                WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: WmipAddDataSource: bad static instance name %x\n", InstanceNamePtr));
-                WmipReportEventLog(EVENT_WMI_INVALID_REGINFO,
-                                       EVENTLOG_WARNING_TYPE,
-                                       0,
-                                       WmiRegInfo->BufferSize,
-                                       WmiRegInfo,
-                                       1,
-                                       MofImagePath ? MofImagePath : TEXT("Unknown"));
-                return(STATUS_INVALID_PARAMETER);
+                WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
+                                  "WMI: WmipAddDataSource: bad static instance name %x\n", InstanceNamePtr));
+                WmipReportEventLog(EVENT_WMI_INVALID_REGINFO, EVENTLOG_WARNING_TYPE, 0, WmiRegInfo->BufferSize,
+                                   WmiRegInfo, 1, MofImagePath ? MofImagePath : TEXT("Unknown"));
+                return (STATUS_INVALID_PARAMETER);
             }
 
             if (*InstanceNamePtr > MaxStaticInstanceNameSize)
             {
                 MaxStaticInstanceNameSize = *InstanceNamePtr;
             }
-            SizeNeeded += *InstanceNamePtr + 1 + SuffixSize +
-                            (sizeof(PWCHAR) / sizeof(WCHAR));
-                        
+            SizeNeeded += *InstanceNamePtr + 1 + SuffixSize + (sizeof(PWCHAR) / sizeof(WCHAR));
+
             InstanceNameOffset += *InstanceNamePtr + 2;
         }
 
         IsStaticName = (PBISSTATICNAMES)WmipAllocString(SizeNeeded);
         if (IsStaticName == NULL)
         {
-            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: WmipAddDataSource: alloc static instance names\n"));
-            return(STATUS_INSUFFICIENT_RESOURCES);
+            WmipDebugPrintEx(
+                (DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: WmipAddDataSource: alloc static instance names\n"));
+            return (STATUS_INSUFFICIENT_RESOURCES);
         }
 
         InstanceSet->Flags |= IS_INSTANCE_STATICNAMES;
         InstanceSet->IsStaticNames = IsStaticName;
-        StaticNames = (PWCHAR) ((PUCHAR)IsStaticName +
-                                 (InstanceCount * sizeof(PWCHAR)));
+        StaticNames = (PWCHAR)((PUCHAR)IsStaticName + (InstanceCount * sizeof(PWCHAR)));
         InstanceNamePtr = InstanceName;
         StaticInstanceNameBuffer = WmipAlloc(MaxStaticInstanceNameSize + sizeof(WCHAR));
         if (StaticInstanceNameBuffer == NULL)
         {
-            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: WmipAddDataSource: couldn't alloc StaticInstanceNameBuffer\n"));
-            return(STATUS_INSUFFICIENT_RESOURCES);
+            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
+                              "WMI: WmipAddDataSource: couldn't alloc StaticInstanceNameBuffer\n"));
+            return (STATUS_INSUFFICIENT_RESOURCES);
         }
 
         for (j = 0; j < InstanceCount; j++)
         {
             IsStaticName->StaticNamePtr[j] = StaticNames;
-            memcpy(StaticInstanceNameBuffer, InstanceNamePtr+1, *InstanceNamePtr);
-            StaticInstanceNameBuffer[*InstanceNamePtr/sizeof(WCHAR)] = UNICODE_NULL;
-            Len = WmipMangleInstanceName(&RegGuid->Guid,
-                                        StaticInstanceNameBuffer,
-                                       *InstanceNamePtr +
-                                          SuffixSize + 1,
-                                        StaticNames);
+            memcpy(StaticInstanceNameBuffer, InstanceNamePtr + 1, *InstanceNamePtr);
+            StaticInstanceNameBuffer[*InstanceNamePtr / sizeof(WCHAR)] = UNICODE_NULL;
+            Len = WmipMangleInstanceName(&RegGuid->Guid, StaticInstanceNameBuffer, *InstanceNamePtr + SuffixSize + 1,
+                                         StaticNames);
             StaticNames += Len;
-            InstanceNamePtr += (*((USHORT *)InstanceNamePtr) + 2)/sizeof(WCHAR);
+            InstanceNamePtr += (*((USHORT *)InstanceNamePtr) + 2) / sizeof(WCHAR);
         }
 
         WmipFree(StaticInstanceNameBuffer);
-    } else if (RegGuid->Flags & WMIREG_FLAG_INSTANCE_BASENAME) {
+    }
+    else if (RegGuid->Flags & WMIREG_FLAG_INSTANCE_BASENAME)
+    {
         //
         // We have static instance names built from a base name
 
-        Status = WmipValidateWmiRegInfoString(WmiRegInfo,
-                                                  BufferSize,
-                                                  InstanceNameOffset,
-                                                  &InstanceNamePtr);
-                        
-        if (! NT_SUCCESS(Status))
+        Status = WmipValidateWmiRegInfoString(WmiRegInfo, BufferSize, InstanceNameOffset, &InstanceNamePtr);
+
+        if (!NT_SUCCESS(Status))
         {
-            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: WmipAddDataSource: Invalid instance base name %x\n",
-                                    InstanceName));
-            WmipReportEventLog(EVENT_WMI_INVALID_REGINFO,
-                                       EVENTLOG_WARNING_TYPE,
-                                       0,
-                                       WmiRegInfo->BufferSize,
-                                       WmiRegInfo,
-                                       1,
-                                       MofImagePath ? MofImagePath : TEXT("Unknown"));
-            return(STATUS_INVALID_PARAMETER);
+            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
+                              "WMI: WmipAddDataSource: Invalid instance base name %x\n", InstanceName));
+            WmipReportEventLog(EVENT_WMI_INVALID_REGINFO, EVENTLOG_WARNING_TYPE, 0, WmiRegInfo->BufferSize, WmiRegInfo,
+                               1, MofImagePath ? MofImagePath : TEXT("Unknown"));
+            return (STATUS_INVALID_PARAMETER);
         }
 
         InstanceSet->Flags |= IS_INSTANCE_BASENAME;
@@ -874,33 +718,25 @@ NTSTATUS WmipBuildInstanceSet(
             InstanceSet->Flags |= IS_PDO_INSTANCENAME;
         }
 
-        IsBaseName = (PBISBASENAME)WmipAlloc(*InstanceName +
-                                              sizeof(WCHAR) +
-                                              FIELD_OFFSET(ISBASENAME, 
-                                                           BaseName));
+        IsBaseName = (PBISBASENAME)WmipAlloc(*InstanceName + sizeof(WCHAR) + FIELD_OFFSET(ISBASENAME, BaseName));
         if (IsBaseName == NULL)
         {
-            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: WmipAddDataSource: alloc ISBASENAME failed\n"));
-            return(STATUS_INSUFFICIENT_RESOURCES);
+            WmipDebugPrintEx(
+                (DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: WmipAddDataSource: alloc ISBASENAME failed\n"));
+            return (STATUS_INSUFFICIENT_RESOURCES);
         }
 
         InstanceSet->IsBaseName = IsBaseName;
 
-        memcpy(IsBaseName->BaseName, InstanceName+1, *InstanceName);
-        IsBaseName->BaseName[*InstanceName/sizeof(WCHAR)] = UNICODE_NULL;
-        IsBaseName->BaseIndex = WmipDetermineInstanceBaseIndex(
-                                                    &RegGuid->Guid,
-                                                    IsBaseName->BaseName,
-                                                    RegGuid->InstanceCount);
-
+        memcpy(IsBaseName->BaseName, InstanceName + 1, *InstanceName);
+        IsBaseName->BaseName[*InstanceName / sizeof(WCHAR)] = UNICODE_NULL;
+        IsBaseName->BaseIndex =
+            WmipDetermineInstanceBaseIndex(&RegGuid->Guid, IsBaseName->BaseName, RegGuid->InstanceCount);
     }
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }
 
-NTSTATUS WmipLinkDataSourceToList(
-    PBDATASOURCE DataSource,
-    BOOLEAN AddDSToList
-    )
+NTSTATUS WmipLinkDataSourceToList(PBDATASOURCE DataSource, BOOLEAN AddDSToList)
 /*++
 
 Routine Description:
@@ -936,13 +772,11 @@ Return Value:
     PBGUIDENTRY GuidEntry;
 
     PAGED_CODE();
-    
+
     InstanceSetList = DataSource->ISHead.Flink;
     while (InstanceSetList != &DataSource->ISHead)
     {
-        InstanceSet = CONTAINING_RECORD(InstanceSetList,
-                                        INSTANCESET,
-                                        DSISList);
+        InstanceSet = CONTAINING_RECORD(InstanceSetList, INSTANCESET, DSISList);
         //
         // If this instance set has just been registered then we need to
         // get it on a GuidEntry list.
@@ -955,24 +789,22 @@ Return Value:
             // InstanceSet we will assign the ref count that was given by
             // the WmipFindGEByGuid to the DataSource which will unreference
             // the GuidEntry when the DataSource is unregistered.
-            GuidEntry = WmipFindGEByGuid((LPGUID)InstanceSet->GuidEntry, 
-                                          FALSE);
+            GuidEntry = WmipFindGEByGuid((LPGUID)InstanceSet->GuidEntry, FALSE);
             if (GuidEntry == NULL)
             {
                 GuidEntry = WmipAllocGuidEntry();
                 if (GuidEntry == NULL)
                 {
-                    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: WmipLinkDataSourceToList: WmipAllocGuidEntry failed\n"));
-                    return(STATUS_INSUFFICIENT_RESOURCES);
+                    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
+                                      "WMI: WmipLinkDataSourceToList: WmipAllocGuidEntry failed\n"));
+                    return (STATUS_INSUFFICIENT_RESOURCES);
                 }
 
                 //
                 // Initialize the new GuidEntry and place it on the master
                 // GuidEntry list.
-                memcpy(&GuidEntry->Guid,
-                       (LPGUID)InstanceSet->GuidEntry,
-                       sizeof(GUID));
-           
+                memcpy(&GuidEntry->Guid, (LPGUID)InstanceSet->GuidEntry, sizeof(GUID));
+
                 InsertHeadList(WmipGEHeadPtr, &GuidEntry->MainGEList);
             }
             InstanceSet->GuidEntry = GuidEntry;
@@ -987,20 +819,16 @@ Return Value:
 
     if (AddDSToList)
     {
-        WmipAssert(! (DataSource->Flags & FLAG_ENTRY_ON_INUSE_LIST));
+        WmipAssert(!(DataSource->Flags & FLAG_ENTRY_ON_INUSE_LIST));
 
         DataSource->Flags |= FLAG_ENTRY_ON_INUSE_LIST;
         InsertTailList(WmipDSHeadPtr, &DataSource->MainDSList);
     }
 
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }
 
-void WmipSendGuidUpdateNotifications(
-    NOTIFICATIONTYPES NotificationType,
-    ULONG GuidCount,
-    PTRCACHE *GuidList
-    )
+void WmipSendGuidUpdateNotifications(NOTIFICATIONTYPES NotificationType, ULONG GuidCount, PTRCACHE *GuidList)
 {
     PUCHAR WnodeBuffer;
     PWNODE_SINGLE_INSTANCE Wnode;
@@ -1015,12 +843,10 @@ void WmipSendGuidUpdateNotifications(
 
     PAGED_CODE();
 
-    DataBlockSize = sizeof(MSWmi_GuidRegistrationInfo) +
-                    GuidCount*sizeof(GUID) - sizeof(GUID);
+    DataBlockSize = sizeof(MSWmi_GuidRegistrationInfo) + GuidCount * sizeof(GUID) - sizeof(GUID);
 
-    WnodeSize = sizeof(WNODE_SINGLE_INSTANCE) +
-                sizeof(USHORT) + sizeof(REGUPDATENAME) + 8 + DataBlockSize;
-    
+    WnodeSize = sizeof(WNODE_SINGLE_INSTANCE) + sizeof(USHORT) + sizeof(REGUPDATENAME) + 8 + DataBlockSize;
+
     WnodeBuffer = WmipAlloc(WnodeSize);
     if (WnodeBuffer != NULL)
     {
@@ -1033,40 +859,33 @@ void WmipSendGuidUpdateNotifications(
         memset(Wnode, 0, sizeof(WNODE_HEADER));
         Wnode->WnodeHeader.Guid = RegChangeGuid;
         Wnode->WnodeHeader.BufferSize = WnodeSize;
-        Wnode->WnodeHeader.Flags = WNODE_FLAG_SINGLE_INSTANCE |
-                                   WNODE_FLAG_EVENT_ITEM;
+        Wnode->WnodeHeader.Flags = WNODE_FLAG_SINGLE_INSTANCE | WNODE_FLAG_EVENT_ITEM;
         Wnode->OffsetInstanceName = sizeof(WNODE_SINGLE_INSTANCE);
-        Wnode->DataBlockOffset = ((Wnode->OffsetInstanceName +
-                                   sizeof(USHORT) + sizeof(REGUPDATENAME) + 7) & ~7);
+        Wnode->DataBlockOffset = ((Wnode->OffsetInstanceName + sizeof(USHORT) + sizeof(REGUPDATENAME) + 7) & ~7);
         Wnode->SizeDataBlock = DataBlockSize;
 
         InstanceName = (PWCHAR)OffsetToPtr(Wnode, Wnode->OffsetInstanceName);
         *InstanceName++ = sizeof(REGUPDATENAME);
         wcscpy(InstanceName, REGUPDATENAME);
 
-        RegInfo = (PMSWmi_GuidRegistrationInfo)OffsetToPtr(Wnode,
-                                                       Wnode->DataBlockOffset);
-        RegInfo->Operation = NotificationType; 
+        RegInfo = (PMSWmi_GuidRegistrationInfo)OffsetToPtr(Wnode, Wnode->DataBlockOffset);
+        RegInfo->Operation = NotificationType;
         RegInfo->GuidCount = GuidCount;
-        
+
         GuidPtr = (LPGUID)RegInfo->GuidList;
         for (i = 0; i < GuidCount; i++)
         {
-            *GuidPtr++ =  *GuidList[i].Guid;
+            *GuidPtr++ = *GuidList[i].Guid;
         }
 
         WmipProcessEvent((PWNODE_HEADER)Wnode, TRUE, FALSE);
 
         WmipFree(WnodeBuffer);
     }
-
 }
 
 
-void WmipGenerateBinaryMofNotification(
-    PBINSTANCESET BinaryMofInstanceSet,
-    LPCGUID Guid        
-    )
+void WmipGenerateBinaryMofNotification(PBINSTANCESET BinaryMofInstanceSet, LPCGUID Guid)
 {
     PWNODE_SINGLE_INSTANCE Wnode;
     ULONG ImagePathLen, ResourceNameLen, InstanceNameLen, BufferSize;
@@ -1074,7 +893,7 @@ void WmipGenerateBinaryMofNotification(
     ULONG i;
 
     PAGED_CODE();
-    
+
     if (BinaryMofInstanceSet->Count == 0)
     {
         return;
@@ -1087,18 +906,22 @@ void WmipGenerateBinaryMofNotification(
 
         if (BinaryMofInstanceSet->Flags & IS_INSTANCE_STATICNAMES)
         {
-            ResourceNameLen = ((wcslen(BinaryMofInstanceSet->IsStaticNames->StaticNamePtr[i])+1) * sizeof(WCHAR)) + sizeof(USHORT);
-        } else if (BinaryMofInstanceSet->Flags & IS_INSTANCE_BASENAME) {
-            ResourceNameLen = (((wcslen(BinaryMofInstanceSet->IsBaseName->BaseName) +
-                             MAXBASENAMESUFFIXSIZE) * sizeof(WCHAR)) + sizeof(USHORT));
-        } else {
+            ResourceNameLen =
+                ((wcslen(BinaryMofInstanceSet->IsStaticNames->StaticNamePtr[i]) + 1) * sizeof(WCHAR)) + sizeof(USHORT);
+        }
+        else if (BinaryMofInstanceSet->Flags & IS_INSTANCE_BASENAME)
+        {
+            ResourceNameLen =
+                (((wcslen(BinaryMofInstanceSet->IsBaseName->BaseName) + MAXBASENAMESUFFIXSIZE) * sizeof(WCHAR)) +
+                 sizeof(USHORT));
+        }
+        else
+        {
             return;
         }
 
-        BufferSize = FIELD_OFFSET(WNODE_SINGLE_INSTANCE, VariableData) +
-                      InstanceNameLen +
-                      ImagePathLen +
-                      ResourceNameLen;
+        BufferSize =
+            FIELD_OFFSET(WNODE_SINGLE_INSTANCE, VariableData) + InstanceNameLen + ImagePathLen + ResourceNameLen;
 
         Wnode = (PWNODE_SINGLE_INSTANCE)WmipAlloc(BufferSize);
         if (Wnode != NULL)
@@ -1107,34 +930,30 @@ void WmipGenerateBinaryMofNotification(
             Wnode->WnodeHeader.ProviderId = MOFEVENT_ACTION_BINARY_MOF;
             Wnode->WnodeHeader.Version = 1;
             Wnode->WnodeHeader.Linkage = 0;
-            Wnode->WnodeHeader.Flags = (WNODE_FLAG_EVENT_ITEM |
-                                        WNODE_FLAG_SINGLE_INSTANCE);
-            memcpy(&Wnode->WnodeHeader.Guid,
-                   Guid,
-                   sizeof(GUID));
+            Wnode->WnodeHeader.Flags = (WNODE_FLAG_EVENT_ITEM | WNODE_FLAG_SINGLE_INSTANCE);
+            memcpy(&Wnode->WnodeHeader.Guid, Guid, sizeof(GUID));
             WmiInsertTimestamp(&Wnode->WnodeHeader);
-            Wnode->OffsetInstanceName = FIELD_OFFSET(WNODE_SINGLE_INSTANCE,
-                                                 VariableData);
-            Wnode->DataBlockOffset = Wnode->OffsetInstanceName + 
-                                      InstanceNameLen;
+            Wnode->OffsetInstanceName = FIELD_OFFSET(WNODE_SINGLE_INSTANCE, VariableData);
+            Wnode->DataBlockOffset = Wnode->OffsetInstanceName + InstanceNameLen;
             Wnode->SizeDataBlock = ImagePathLen + ResourceNameLen;
             Ptr = (PWCHAR)&Wnode->VariableData;
 
-            *Ptr++ = 0;              // Empty instance name
-            
+            *Ptr++ = 0; // Empty instance name
+
             Ptr = (PWCHAR)OffsetToPtr(Wnode, Wnode->DataBlockOffset);
-            *Ptr++ = 0;              // Empty image path
+            *Ptr++ = 0; // Empty image path
 
             // Instance name for binary mof resource
             if (BinaryMofInstanceSet->Flags & IS_INSTANCE_STATICNAMES)
             {
                 *Ptr++ = (USHORT)(ResourceNameLen - sizeof(USHORT));
                 wcscpy(Ptr, BinaryMofInstanceSet->IsStaticNames->StaticNamePtr[i]);
-            } else if (BinaryMofInstanceSet->Flags & IS_INSTANCE_BASENAME) {
-                *Ptr = (USHORT)swprintf(Ptr+1,
-                                L"%ws%d",
-                                BinaryMofInstanceSet->IsBaseName->BaseName,
-                                BinaryMofInstanceSet->IsBaseName->BaseIndex+i) * sizeof(WCHAR);
+            }
+            else if (BinaryMofInstanceSet->Flags & IS_INSTANCE_BASENAME)
+            {
+                *Ptr = (USHORT)swprintf(Ptr + 1, L"%ws%d", BinaryMofInstanceSet->IsBaseName->BaseName,
+                                        BinaryMofInstanceSet->IsBaseName->BaseIndex + i) *
+                       sizeof(WCHAR);
             }
 
             WmipProcessEvent((PWNODE_HEADER)Wnode, TRUE, FALSE);
@@ -1143,12 +962,7 @@ void WmipGenerateBinaryMofNotification(
     }
 }
 
-void WmipGenerateMofResourceNotification(
-    LPWSTR ImagePath,
-    LPWSTR ResourceName,
-    LPCGUID Guid,
-    ULONG ActionCode
-    )
+void WmipGenerateMofResourceNotification(LPWSTR ImagePath, LPWSTR ResourceName, LPCGUID Guid, ULONG ActionCode)
 {
     PWNODE_SINGLE_INSTANCE Wnode;
     ULONG ImagePathLen, ResourceNameLen, InstanceNameLen, BufferSize;
@@ -1159,11 +973,8 @@ void WmipGenerateMofResourceNotification(
     ImagePathLen = (wcslen(ImagePath) + 2) * sizeof(WCHAR);
 
     ResourceNameLen = (wcslen(ResourceName) + 2) * sizeof(WCHAR);
-    InstanceNameLen = ( sizeof(USHORT)+7 ) & ~7;
-    BufferSize = FIELD_OFFSET(WNODE_SINGLE_INSTANCE, VariableData) +
-                      InstanceNameLen +
-                      ImagePathLen +
-                      ResourceNameLen;
+    InstanceNameLen = (sizeof(USHORT) + 7) & ~7;
+    BufferSize = FIELD_OFFSET(WNODE_SINGLE_INSTANCE, VariableData) + InstanceNameLen + ImagePathLen + ResourceNameLen;
 
     Wnode = (PWNODE_SINGLE_INSTANCE)WmipAlloc(BufferSize);
     if (Wnode != NULL)
@@ -1172,29 +983,24 @@ void WmipGenerateMofResourceNotification(
         Wnode->WnodeHeader.ProviderId = ActionCode;
         Wnode->WnodeHeader.Version = 1;
         Wnode->WnodeHeader.Linkage = 0;
-        Wnode->WnodeHeader.Flags = (WNODE_FLAG_EVENT_ITEM |
-                                    WNODE_FLAG_SINGLE_INSTANCE |
-                                    WNODE_FLAG_INTERNAL);
-        memcpy(&Wnode->WnodeHeader.Guid,
-               Guid,
-               sizeof(GUID));
+        Wnode->WnodeHeader.Flags = (WNODE_FLAG_EVENT_ITEM | WNODE_FLAG_SINGLE_INSTANCE | WNODE_FLAG_INTERNAL);
+        memcpy(&Wnode->WnodeHeader.Guid, Guid, sizeof(GUID));
         WmiInsertTimestamp(&Wnode->WnodeHeader);
-        Wnode->OffsetInstanceName = FIELD_OFFSET(WNODE_SINGLE_INSTANCE,
-                                                 VariableData);
+        Wnode->OffsetInstanceName = FIELD_OFFSET(WNODE_SINGLE_INSTANCE, VariableData);
         Wnode->DataBlockOffset = Wnode->OffsetInstanceName + InstanceNameLen;
         Wnode->SizeDataBlock = ImagePathLen + ResourceNameLen;
         Ptr = (PWCHAR)&Wnode->VariableData;
 
-        *Ptr = 0;              // Empty instance name
+        *Ptr = 0; // Empty instance name
 
-                                 // ImagePath name
+        // ImagePath name
         Ptr = (PWCHAR)OffsetToPtr(Wnode, Wnode->DataBlockOffset);
         ImagePathLen -= sizeof(USHORT);
         *Ptr++ = (USHORT)ImagePathLen;
         memcpy(Ptr, ImagePath, ImagePathLen);
         Ptr += (ImagePathLen / sizeof(WCHAR));
 
-                                 // MofResource Name
+        // MofResource Name
         ResourceNameLen -= sizeof(USHORT);
         *Ptr++ = (USHORT)ResourceNameLen;
         memcpy(Ptr, ResourceName, ResourceNameLen);
@@ -1204,10 +1010,7 @@ void WmipGenerateMofResourceNotification(
     }
 }
 
-void WmipGenerateRegistrationNotification(
-    PBDATASOURCE DataSource,
-    NOTIFICATIONTYPES NotificationType
-    )
+void WmipGenerateRegistrationNotification(PBDATASOURCE DataSource, NOTIFICATIONTYPES NotificationType)
 {
     PTRCACHE *Guids;
     ULONG GuidCount, GuidMax;
@@ -1216,7 +1019,7 @@ void WmipGenerateRegistrationNotification(
     LPGUID Guid;
 
     PAGED_CODE();
-    
+
     WmipReferenceDS(DataSource);
 
     //
@@ -1225,24 +1028,18 @@ void WmipGenerateRegistrationNotification(
     GuidCount = 0;
     GuidMax = 0;
     Guids = NULL;
-    InstanceSetList =  DataSource->ISHead.Flink;
+    InstanceSetList = DataSource->ISHead.Flink;
     while (InstanceSetList != &DataSource->ISHead)
     {
 
-        InstanceSet = CONTAINING_RECORD(InstanceSetList,
-                                        INSTANCESET,
-                                        DSISList);
+        InstanceSet = CONTAINING_RECORD(InstanceSetList, INSTANCESET, DSISList);
 
         //
         // Cache the guid and instance set so we can send registration
         // change notifications
         //
         Guid = &InstanceSet->GuidEntry->Guid;
-        WmipCachePtrs(Guid,
-                      InstanceSet,
-                      &GuidCount,
-                      &GuidMax,
-                      &Guids);
+        WmipCachePtrs(Guid, InstanceSet, &GuidCount, &GuidMax, &Guids);
 
         //
         // If we are adding a guid and it is already enabled then we
@@ -1252,7 +1049,9 @@ void WmipGenerateRegistrationNotification(
         if (NotificationType == RegistrationAdd)
         {
             WmipEnableCollectionForNewGuid(Guid, InstanceSet);
-        } else if (NotificationType == RegistrationDelete) {
+        }
+        else if (NotificationType == RegistrationDelete)
+        {
             WmipDisableCollectionForRemovedGuid(Guid, InstanceSet);
         }
 
@@ -1262,8 +1061,7 @@ void WmipGenerateRegistrationNotification(
         //  If there is a notification entry for this Guid, then we take
         //  it that there is a logger session active.
         //
-        if ( (NotificationType == RegistrationDelete) &&
-             (InstanceSet->Flags & IS_TRACED) )
+        if ((NotificationType == RegistrationDelete) && (InstanceSet->Flags & IS_TRACED))
         {
             WmipSaveTraceGuidMap(Guid, InstanceSet);
         }
@@ -1274,25 +1072,18 @@ void WmipGenerateRegistrationNotification(
     //
     // Send out event that informs about guid registration changes
     //
-    WmipSendGuidUpdateNotifications(NotificationType,
-                                    GuidCount,
-                                    Guids);
+    WmipSendGuidUpdateNotifications(NotificationType, GuidCount, Guids);
 
     if (Guids != NULL)
     {
         WmipFree(Guids);
     }
-    
+
     WmipUnreferenceDS(DataSource);
 }
 
-NTSTATUS WmipAddMofResource(
-    PBDATASOURCE DataSource,
-    LPWSTR ImagePath,
-    BOOLEAN IsImagePath,
-    LPWSTR MofResourceName,
-    PBOOLEAN NewMofResource
-    )
+NTSTATUS WmipAddMofResource(PBDATASOURCE DataSource, LPWSTR ImagePath, BOOLEAN IsImagePath, LPWSTR MofResourceName,
+                            PBOOLEAN NewMofResource)
 /*++
 
 Routine Description:
@@ -1315,7 +1106,7 @@ Arguments:
 Return Value:
 
 
---*/        
+--*/
 {
     PMOFRESOURCE MofResource;
     ULONG NewMofResourceCount;
@@ -1323,37 +1114,35 @@ Return Value:
     BOOLEAN FreeBuffer;
 
     PAGED_CODE();
-    
-    MofResource = WmipFindMRByNames(ImagePath, 
-                                    MofResourceName);
-                     
+
+    MofResource = WmipFindMRByNames(ImagePath, MofResourceName);
+
     if (MofResource == NULL)
     {
         //
         // Mof Resource not previously specified, so allocate a new one
         MofResource = WmipAllocMofResource();
         if (MofResource == NULL)
-        {    
-            return(STATUS_INSUFFICIENT_RESOURCES);
+        {
+            return (STATUS_INSUFFICIENT_RESOURCES);
         }
 
         if (IsImagePath)
         {
             MofResource->Flags |= MR_FLAG_USER_MODE;
         }
-        
-        MofResource->RegistryPath = WmipAlloc((wcslen(ImagePath)+1) * sizeof(WCHAR));
+
+        MofResource->RegistryPath = WmipAlloc((wcslen(ImagePath) + 1) * sizeof(WCHAR));
         MofResource->MofResourceName = WmipAlloc((wcslen(MofResourceName) + 1) * sizeof(WCHAR));
 
-        if ((MofResource->RegistryPath == NULL) || 
-            (MofResource->MofResourceName == NULL))
+        if ((MofResource->RegistryPath == NULL) || (MofResource->MofResourceName == NULL))
         {
             //
             // Allocation cleanup routine will free any memory alloced for MR
             WmipUnreferenceMR(MofResource);
-            return(STATUS_INSUFFICIENT_RESOURCES);
+            return (STATUS_INSUFFICIENT_RESOURCES);
         }
-    
+
         wcscpy(MofResource->RegistryPath, ImagePath);
         wcscpy(MofResource->MofResourceName, MofResourceName);
 
@@ -1361,10 +1150,12 @@ Return Value:
         InsertTailList(WmipMRHeadPtr, &MofResource->MainMRList);
         WmipLeaveSMCritSection();
         *NewMofResource = TRUE;
-    } else {
+    }
+    else
+    {
         *NewMofResource = FALSE;
     }
-    
+
     if (DataSource != NULL)
     {
         WmipEnterSMCritSection();
@@ -1380,30 +1171,28 @@ Return Value:
                 WmipUnreferenceMR(MofResource);
                 break;
             }
-            
+
             if (DataSource->MofResources[i] == NULL)
             {
                 DataSource->MofResources[i] = MofResource;
                 break;
             }
         }
-            
+
         if (i == DataSource->MofResourceCount)
         {
-            NewMofResourceCount = DataSource->MofResourceCount + 
-                                  AVGMOFRESOURCECOUNT;
-            if (DataSource->MofResources != 
-                     DataSource->StaticMofResources)
+            NewMofResourceCount = DataSource->MofResourceCount + AVGMOFRESOURCECOUNT;
+            if (DataSource->MofResources != DataSource->StaticMofResources)
             {
                 FreeBuffer = TRUE;
-            } else {
+            }
+            else
+            {
                 FreeBuffer = FALSE;
             }
-        
-            if (WmipRealloc((PVOID *)&DataSource->MofResources,
-                         DataSource->MofResourceCount * sizeof(PMOFRESOURCE),
-                         NewMofResourceCount * sizeof(PMOFRESOURCE),
-                         FreeBuffer )  )
+
+            if (WmipRealloc((PVOID *)&DataSource->MofResources, DataSource->MofResourceCount * sizeof(PMOFRESOURCE),
+                            NewMofResourceCount * sizeof(PMOFRESOURCE), FreeBuffer))
             {
                 DataSource->MofResourceCount = NewMofResourceCount;
                 DataSource->MofResources[i] = MofResource;
@@ -1412,19 +1201,12 @@ Return Value:
         WmipLeaveSMCritSection();
     }
 
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }
 
 
-NTSTATUS WmipAddDataSource(
-    IN PREGENTRY RegEntry,
-    IN PWMIREGINFOW WmiRegInfo,
-    IN ULONG BufferSize,
-    IN PWCHAR RegPath,
-    IN PWCHAR ResourceName,
-    IN PWMIGUIDOBJECT RequestObject,
-    IN BOOLEAN IsUserMode
-    )
+NTSTATUS WmipAddDataSource(IN PREGENTRY RegEntry, IN PWMIREGINFOW WmiRegInfo, IN ULONG BufferSize, IN PWCHAR RegPath,
+                           IN PWCHAR ResourceName, IN PWMIGUIDOBJECT RequestObject, IN BOOLEAN IsUserMode)
 /*+++
 
 Routine Description:
@@ -1469,55 +1251,58 @@ Return Value:
     UCHAR WnodeBuffer[sizeof(WNODE_HEADER) + AVGGUIDSPERDS * sizeof(GUID)];
     PWNODE_HEADER Wnode;
 
-    PAGED_CODE();    
-    
+    PAGED_CODE();
+
     if (RegEntry->DataSource != NULL)
     {
         DataSource = RegEntry->DataSource;
         WmipAssert(DataSource != NULL);
         AppendToDS = TRUE;
-    } else {
+    }
+    else
+    {
         DataSource = WmipAllocDataSource();
         AppendToDS = FALSE;
     }
-    
+
     if (DataSource != NULL)
     {
         //
         // Loop over each guid being registered and build instance sets and
         // guid entries.
         //
-        if (! AppendToDS)
+        if (!AppendToDS)
         {
             DataSource->ProviderId = RegEntry->ProviderId;
             if (RequestObject != NULL)
             {
                 DataSource->Flags |= DS_USER_MODE;
                 DataSource->RequestObject = RequestObject;
-            } else {
+            }
+            else
+            {
                 DataSource->Flags |= DS_KERNEL_MODE;
             }
-        
         }
-    
+
         RegGuid = WmiRegInfo->WmiRegGuid;
 
 
         for (i = 0; i < WmiRegInfo->GuidCount; i++, RegGuid++)
         {
-            if (! (RegGuid->Flags & WMIREG_FLAG_REMOVE_GUID))
+            if (!(RegGuid->Flags & WMIREG_FLAG_REMOVE_GUID))
             {
 
                 //
                 // Only trace control guids are registered. Trace transaction
                 // guids will not be registered since they can not be enabled or
                 // disabled individually. They will be kept on the ControlGuids'
-                // instance set structure. 
+                // instance set structure.
                 //
 
-                if ( ( (RegGuid->Flags & WMIREG_FLAG_TRACED_GUID) != WMIREG_FLAG_TRACED_GUID ) || 
-                       (RegGuid->Flags & WMIREG_FLAG_TRACE_CONTROL_GUID) )
-                { 
+                if (((RegGuid->Flags & WMIREG_FLAG_TRACED_GUID) != WMIREG_FLAG_TRACED_GUID) ||
+                    (RegGuid->Flags & WMIREG_FLAG_TRACE_CONTROL_GUID))
+                {
 
                     //
                     // Allocate an instance set for this new set of instances
@@ -1526,33 +1311,30 @@ Return Value:
                     if (InstanceSet == NULL)
                     {
                         WmipUnreferenceDS(DataSource);
-                        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: WmipAddDataSource: WmipAllocInstanceSet failed\n"));
-                        return(STATUS_INSUFFICIENT_RESOURCES);
+                        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
+                                          "WMI: WmipAddDataSource: WmipAllocInstanceSet failed\n"));
+                        return (STATUS_INSUFFICIENT_RESOURCES);
                     }
 
                     //
-                    // We will allocate a proper guid entry for the instance 
-                    // set when the data source gets linked into the main data 
+                    // We will allocate a proper guid entry for the instance
+                    // set when the data source gets linked into the main data
                     // source list so we stash a pointer to the guid away now.
                     //
                     InstanceSet->GuidEntry = (PBGUIDENTRY)&RegGuid->Guid;
 
                     //
-                    // Minimally initialize the InstanceSet and add it to 
-                    // the DataSource's list of InstanceSets. We do this 
-                    // first so that if there is any failure below and 
-                    // the DataSource can'e be fully registered the instance 
+                    // Minimally initialize the InstanceSet and add it to
+                    // the DataSource's list of InstanceSets. We do this
+                    // first so that if there is any failure below and
+                    // the DataSource can'e be fully registered the instance
                     // set and guid entry will be free when the DataSource is
                     // freed.
                     //
                     InstanceSet->DataSource = DataSource;
                     InstanceSet->Flags |= IS_NEWLY_REGISTERED;
 
-                    Status = WmipBuildInstanceSet(RegGuid,
-                                                  WmiRegInfo,
-                                                  BufferSize,
-                                                  InstanceSet,
-                                                  RegEntry->ProviderId,
+                    Status = WmipBuildInstanceSet(RegGuid, WmiRegInfo, BufferSize, InstanceSet, RegEntry->ProviderId,
                                                   RegPath);
 
                     //
@@ -1566,32 +1348,32 @@ Return Value:
 
 
                     InsertHeadList(&DataSource->ISHead, &InstanceSet->DSISList);
-  
-                    if (! NT_SUCCESS(Status))
+
+                    if (!NT_SUCCESS(Status))
                     {
                         WmipUnreferenceDS(DataSource);
-                        return(Status);
+                        return (Status);
                     }
                 }
             }
         }
-        
+
         //
-        // Now that the instance sets have been built successfully we 
+        // Now that the instance sets have been built successfully we
         // can link them into the master list.
-        //                        
+        //
         WmipEnterSMCritSection();
-        Status = WmipLinkDataSourceToList(DataSource, (BOOLEAN)(! AppendToDS));
+        Status = WmipLinkDataSourceToList(DataSource, (BOOLEAN)(!AppendToDS));
         WmipLeaveSMCritSection();
 
-        if (! NT_SUCCESS(Status))
+        if (!NT_SUCCESS(Status))
         {
             WmipUnreferenceDS(DataSource);
-            return(Status);
+            return (Status);
         }
-        
+
         RegEntry->DataSource = DataSource;
-        
+
         //
         // We need to send out notification of new guids and mofs.
         //
@@ -1600,9 +1382,7 @@ Return Value:
             //
             // Send binary mof guid arrival notification
             //
-            WmipGenerateBinaryMofNotification(BinaryMofInstanceSet,
-                                      &GUID_MOF_RESOURCE_ADDED_NOTIFICATION);
-
+            WmipGenerateBinaryMofNotification(BinaryMofInstanceSet, &GUID_MOF_RESOURCE_ADDED_NOTIFICATION);
         }
 
         //
@@ -1612,56 +1392,51 @@ Return Value:
         if (RegPath != NULL)
         {
             MofRegistryPath = WmipCountedToSz(RegPath);
-        } else {
+        }
+        else
+        {
             MofRegistryPath = NULL;
         }
-        
+
         if ((AppendToDS == FALSE) && (MofRegistryPath != NULL))
         {
             DataSource->RegistryPath = MofRegistryPath;
         }
-        
+
         if (ResourceName != NULL)
         {
-            MofResourceName = WmipCountedToSz(ResourceName);        
-        } else {
+            MofResourceName = WmipCountedToSz(ResourceName);
+        }
+        else
+        {
             MofResourceName = NULL;
         }
-        
+
         //
         // Finally if we created a new data source we need to register
         // the mof for it. Only register those that have a RegistryPath
         // and a ResourceName
         //
-        if ((MofRegistryPath != NULL) &&
-            (*MofRegistryPath != 0) &&
-            (MofResourceName != NULL) &&
+        if ((MofRegistryPath != NULL) && (*MofRegistryPath != 0) && (MofResourceName != NULL) &&
             (*MofResourceName != 0))
         {
             //
             // If a mof is specified then add it to the list
             //
-            Status2 = WmipAddMofResource(DataSource,
-                                        MofRegistryPath,
-                                        IsUserMode,
-                                        MofResourceName, 
-                                        &NewMofResource);
-                                    
+            Status2 = WmipAddMofResource(DataSource, MofRegistryPath, IsUserMode, MofResourceName, &NewMofResource);
+
             if (NT_SUCCESS(Status2) && NewMofResource)
             {
                 //
                 // We successfully added a brand new MOF resource so
                 // we need to fire an event for wbem.
                 //
-                WmipGenerateMofResourceNotification(MofRegistryPath,
-                                                    MofResourceName,
-                                      &GUID_MOF_RESOURCE_ADDED_NOTIFICATION,
-                                      IsUserMode ?
-                                             MOFEVENT_ACTION_IMAGE_PATH :
-                                             MOFEVENT_ACTION_REGISTRY_PATH);
-            }            
-        }        
-        
+                WmipGenerateMofResourceNotification(
+                    MofRegistryPath, MofResourceName, &GUID_MOF_RESOURCE_ADDED_NOTIFICATION,
+                    IsUserMode ? MOFEVENT_ACTION_IMAGE_PATH : MOFEVENT_ACTION_REGISTRY_PATH);
+            }
+        }
+
         //
         // Clean up registry path and mof resource name strings
         //
@@ -1673,30 +1448,27 @@ Return Value:
             WmipAssert(MofRegistryPath != DataSource->RegistryPath);
             WmipFree(MofRegistryPath);
         }
-        
+
         if (MofResourceName != NULL)
         {
             WmipFree(MofResourceName);
         }
-        
+
         //
         // Send a notification about new/changed guids
         //
-        WmipGenerateRegistrationNotification(DataSource,
-                                             RegistrationAdd);
-        
-    } else {
+        WmipGenerateRegistrationNotification(DataSource, RegistrationAdd);
+    }
+    else
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
     }
-    
-    return(Status);
+
+    return (Status);
 }
 
 
-PBINSTANCESET WmipFindISInDSByGuid(
-    PBDATASOURCE DataSource,
-    LPGUID Guid
-    )
+PBINSTANCESET WmipFindISInDSByGuid(PBDATASOURCE DataSource, LPGUID Guid)
 /*++
 
 Routine Description:
@@ -1721,33 +1493,25 @@ Return Value:
     PBINSTANCESET InstanceSet;
 
     PAGED_CODE();
-    
+
     InstanceSetList = DataSource->ISHead.Flink;
     while (InstanceSetList != &DataSource->ISHead)
     {
-        InstanceSet = CONTAINING_RECORD(InstanceSetList,
-                                        INSTANCESET,
-                                        DSISList);
+        InstanceSet = CONTAINING_RECORD(InstanceSetList, INSTANCESET, DSISList);
 
-        if ((InstanceSet->GuidEntry != NULL) &&
-             (IsEqualGUID(Guid, &InstanceSet->GuidEntry->Guid)))
+        if ((InstanceSet->GuidEntry != NULL) && (IsEqualGUID(Guid, &InstanceSet->GuidEntry->Guid)))
         {
             WmipReferenceIS(InstanceSet);
-            return(InstanceSet);
+            return (InstanceSet);
         }
 
         InstanceSetList = InstanceSetList->Flink;
     }
-    return(NULL);
+    return (NULL);
 }
 
-ULONG WmipUpdateAddGuid(
-    PBDATASOURCE DataSource,
-    PWMIREGGUID RegGuid,
-    PWMIREGINFO WmiRegInfo,
-    ULONG BufferSize,
-    PBINSTANCESET *AddModInstanceSet
-    )
+ULONG WmipUpdateAddGuid(PBDATASOURCE DataSource, PWMIREGGUID RegGuid, PWMIREGINFO WmiRegInfo, ULONG BufferSize,
+                        PBINSTANCESET *AddModInstanceSet)
 /*++
 
 Routine Description:
@@ -1776,14 +1540,15 @@ Return Value:
     NTSTATUS Status;
 
     PAGED_CODE();
-    
+
     //
     // Allocate an instance set for this new set of instances
     InstanceSet = WmipAllocInstanceSet();
     if (InstanceSet == NULL)
     {
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: WmipUpdateAddGuid: WmipAllocInstanceSet failed\n"));
-        return(0);
+        WmipDebugPrintEx(
+            (DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: WmipUpdateAddGuid: WmipAllocInstanceSet failed\n"));
+        return (0);
     }
 
     //
@@ -1803,53 +1568,37 @@ Return Value:
 
     InsertHeadList(&DataSource->ISHead, &InstanceSet->DSISList);
 
-    Status = WmipBuildInstanceSet(RegGuid,
-                                  WmiRegInfo,
-                                  BufferSize,
-                                  InstanceSet,
-                                  DataSource->ProviderId,
+    Status = WmipBuildInstanceSet(RegGuid, WmiRegInfo, BufferSize, InstanceSet, DataSource->ProviderId,
                                   DataSource->RegistryPath);
 
-    if (! NT_SUCCESS(Status))
+    if (!NT_SUCCESS(Status))
     {
         WmipUnreferenceIS(InstanceSet);
-        return(0);
+        return (0);
     }
 
-    Status = WmipLinkDataSourceToList(DataSource,
-                                          FALSE);
+    Status = WmipLinkDataSourceToList(DataSource, FALSE);
 
     *AddModInstanceSet = InstanceSet;
 
-    return( NT_SUCCESS(Status) ? 1 : 0);
+    return (NT_SUCCESS(Status) ? 1 : 0);
 }
 
 #if DBG
-PTCHAR GuidToString(
-    PTCHAR s,
-    LPGUID piid
-    )
+PTCHAR GuidToString(PTCHAR s, LPGUID piid)
 {
     PAGED_CODE();
-    
-    swprintf(s, TEXT("%x-%x-%x-%x%x%x%x%x%x%x%x"),
-               piid->Data1, piid->Data2,
-               piid->Data3,
-               piid->Data4[0], piid->Data4[1],
-               piid->Data4[2], piid->Data4[3],
-               piid->Data4[4], piid->Data4[5],
-               piid->Data4[6], piid->Data4[7]);
 
-    return(s);
+    swprintf(s, TEXT("%x-%x-%x-%x%x%x%x%x%x%x%x"), piid->Data1, piid->Data2, piid->Data3, piid->Data4[0],
+             piid->Data4[1], piid->Data4[2], piid->Data4[3], piid->Data4[4], piid->Data4[5], piid->Data4[6],
+             piid->Data4[7]);
+
+    return (s);
 }
 #endif
 
 
-BOOLEAN WmipUpdateRemoveGuid(
-    PBDATASOURCE DataSource,
-    PWMIREGGUID RegGuid,
-    PBINSTANCESET *AddModInstanceSet
-    )
+BOOLEAN WmipUpdateRemoveGuid(PBDATASOURCE DataSource, PWMIREGGUID RegGuid, PBINSTANCESET *AddModInstanceSet)
 /*++
 
 Routine Description:
@@ -1876,36 +1625,34 @@ Return Value:
     BOOLEAN SendNotification;
 
     PAGED_CODE();
-    
-    InstanceSet = WmipFindISInDSByGuid(DataSource,
-                                       Guid);
+
+    InstanceSet = WmipFindISInDSByGuid(DataSource, Guid);
     if (InstanceSet != NULL)
     {
         WmipUnreferenceIS(InstanceSet);
         *AddModInstanceSet = InstanceSet;
         SendNotification = TRUE;
-    } else {
+    }
+    else
+    {
 #if DBG
         TCHAR s[256];
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: UpdateRemoveGuid %ws not registered by %ws\n",
-                        GuidToString(s, Guid), DataSource->RegistryPath));
+        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: UpdateRemoveGuid %ws not registered by %ws\n",
+                          GuidToString(s, Guid), DataSource->RegistryPath));
 #endif
         SendNotification = FALSE;
     }
-    return(SendNotification);
+    return (SendNotification);
 }
 
 
-BOOLEAN WmipIsEqualInstanceSets(
-    PBINSTANCESET InstanceSet1,
-    PBINSTANCESET InstanceSet2
-    )
+BOOLEAN WmipIsEqualInstanceSets(PBINSTANCESET InstanceSet1, PBINSTANCESET InstanceSet2)
 {
     ULONG i;
     ULONG Flags1, Flags2;
 
     PAGED_CODE();
-    
+
     Flags1 = InstanceSet1->Flags & ~(IS_ENABLE_EVENT | IS_ENABLE_COLLECTION);
     Flags2 = InstanceSet2->Flags & ~(IS_ENABLE_EVENT | IS_ENABLE_COLLECTION);
     if (Flags1 == Flags2)
@@ -1913,40 +1660,37 @@ BOOLEAN WmipIsEqualInstanceSets(
         if (InstanceSet1->Flags & IS_INSTANCE_BASENAME)
         {
             if ((InstanceSet1->Count == InstanceSet2->Count) &&
-                (wcscmp(InstanceSet1->IsBaseName->BaseName,
-                        InstanceSet1->IsBaseName->BaseName) == 0))
+                (wcscmp(InstanceSet1->IsBaseName->BaseName, InstanceSet1->IsBaseName->BaseName) == 0))
             {
-                return(TRUE);
+                return (TRUE);
             }
-        } else if (InstanceSet1->Flags & IS_INSTANCE_BASENAME) {
+        }
+        else if (InstanceSet1->Flags & IS_INSTANCE_BASENAME)
+        {
             if (InstanceSet1->Count == InstanceSet2->Count)
             {
                 for (i = 0; i < InstanceSet1->Count; i++)
                 {
                     if (wcscmp(InstanceSet1->IsStaticNames->StaticNamePtr[i],
                                InstanceSet2->IsStaticNames->StaticNamePtr[i]) != 0)
-                     {
-                        return(FALSE);
+                    {
+                        return (FALSE);
                     }
                 }
-                return(TRUE);
+                return (TRUE);
             }
-        } else {
-            return(TRUE);
+        }
+        else
+        {
+            return (TRUE);
         }
     }
 
-    return(FALSE);
-
+    return (FALSE);
 }
 
-ULONG WmipUpdateModifyGuid(
-    PBDATASOURCE DataSource,
-    PWMIREGGUID RegGuid,
-    PWMIREGINFO WmiRegInfo,
-    ULONG BufferSize,
-    PBINSTANCESET *AddModInstanceSet
-    )
+ULONG WmipUpdateModifyGuid(PBDATASOURCE DataSource, PWMIREGGUID RegGuid, PWMIREGINFO WmiRegInfo, ULONG BufferSize,
+                           PBINSTANCESET *AddModInstanceSet)
 /*++
 
 Routine Description:
@@ -1986,9 +1730,8 @@ Return Value:
     NTSTATUS Status;
 
     PAGED_CODE();
-    
-    InstanceSet = WmipFindISInDSByGuid(DataSource,
-                                       Guid);
+
+    InstanceSet = WmipFindISInDSByGuid(DataSource, Guid);
     if (InstanceSet != NULL)
     {
         //
@@ -1998,40 +1741,34 @@ Return Value:
         InstanceSetNew = WmipAllocInstanceSet();
         if (InstanceSetNew == NULL)
         {
-            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: UpdateModifyGuid Not enough memory to alloc InstanceSet\n"));
+            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
+                              "WMI: UpdateModifyGuid Not enough memory to alloc InstanceSet\n"));
             WmipUnreferenceIS(InstanceSet);
-            return(0);
+            return (0);
         }
-    
-        Status = WmipBuildInstanceSet(RegGuid,
-                             WmiRegInfo,
-                             BufferSize,
-                             InstanceSetNew,
-                             DataSource->ProviderId,
-                             DataSource->RegistryPath);
-                         
+
+        Status = WmipBuildInstanceSet(RegGuid, WmiRegInfo, BufferSize, InstanceSetNew, DataSource->ProviderId,
+                                      DataSource->RegistryPath);
+
         if (NT_SUCCESS(Status))
         {
-            if (! WmipIsEqualInstanceSets(InstanceSet,
-                                          InstanceSetNew))
+            if (!WmipIsEqualInstanceSets(InstanceSet, InstanceSetNew))
             {
                 ToFree = NULL;
-                if (InstanceSet->IsBaseName != NULL) {
+                if (InstanceSet->IsBaseName != NULL)
+                {
                     ToFree = (PVOID)InstanceSet->IsBaseName;
                 }
 
                 RemoveEntryList(&InstanceSet->GuidISList);
-                Status = WmipBuildInstanceSet(RegGuid,
-                             WmiRegInfo,
-                             BufferSize,
-                             InstanceSet,
-                             DataSource->ProviderId,
-                             DataSource->RegistryPath);
+                Status = WmipBuildInstanceSet(RegGuid, WmiRegInfo, BufferSize, InstanceSet, DataSource->ProviderId,
+                                              DataSource->RegistryPath);
                 if (NT_SUCCESS(Status))
                 {
-                    InsertHeadList(&InstanceSet->GuidEntry->ISHead,
-                               &InstanceSet->GuidISList);
-                } else {
+                    InsertHeadList(&InstanceSet->GuidEntry->ISHead, &InstanceSet->GuidISList);
+                }
+                else
+                {
                     //
                     // It is sad, but we weren't able to rebuild the instance
                     // set so the old one is gone. This is an unlikely
@@ -2047,15 +1784,19 @@ Return Value:
 
                 *AddModInstanceSet = InstanceSet;
                 SendNotification = 2;
-            } else {
+            }
+            else
+            {
                 //
                 // The InstanceSets are identical so just delete the new one
                 SendNotification = 0;
             }
-            
+
             WmipUnreferenceIS(InstanceSetNew);
             WmipUnreferenceIS(InstanceSet);
-        } else {
+        }
+        else
+        {
             //
             // We could not parse the new instance set so leave the old
             // one alone
@@ -2064,33 +1805,25 @@ Return Value:
             WmipUnreferenceIS(InstanceSetNew);
             SendNotification = FALSE;
         }
-    } else {
+    }
+    else
+    {
         //
         // Guid not already registered so try to add it
-        SendNotification = WmipUpdateAddGuid(DataSource,
-                          RegGuid,
-                          WmiRegInfo,
-                          BufferSize,
-                          AddModInstanceSet);
+        SendNotification = WmipUpdateAddGuid(DataSource, RegGuid, WmiRegInfo, BufferSize, AddModInstanceSet);
     }
-    return(SendNotification);
+    return (SendNotification);
 }
 
 
-void WmipCachePtrs(
-    LPGUID Ptr1,
-    PBINSTANCESET Ptr2,
-    ULONG *PtrCount,
-    ULONG *PtrMax,
-    PTRCACHE **PtrArray
-    )
+void WmipCachePtrs(LPGUID Ptr1, PBINSTANCESET Ptr2, ULONG *PtrCount, ULONG *PtrMax, PTRCACHE **PtrArray)
 {
     PTRCACHE *NewPtrArray;
     PTRCACHE *OldPtrArray;
     PTRCACHE *ActualPtrArray;
 
     PAGED_CODE();
-    
+
     if (*PtrCount == *PtrMax)
     {
         NewPtrArray = WmipAlloc((*PtrMax + PTRCACHEGROWSIZE) * sizeof(PTRCACHE));
@@ -2104,8 +1837,10 @@ void WmipCachePtrs(
                 WmipFree(*PtrArray);
             }
             *PtrArray = NewPtrArray;
-        } else {
-            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: Couldn't alloc memory for pointer cache\n"));
+        }
+        else
+        {
+            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: Couldn't alloc memory for pointer cache\n"));
             return;
         }
     }
@@ -2116,12 +1851,7 @@ void WmipCachePtrs(
 }
 
 
-
-NTSTATUS WmipUpdateDataSource(
-    PREGENTRY RegEntry,
-    PWMIREGINFOW WmiRegInfo,
-    ULONG RetSize
-    )
+NTSTATUS WmipUpdateDataSource(PREGENTRY RegEntry, PWMIREGINFOW WmiRegInfo, ULONG RetSize)
 /*++
 
 Routine Description:
@@ -2163,13 +1893,13 @@ Return Value:
     ULONG Action;
 
     PAGED_CODE();
-    
+
     DataSource = RegEntry->DataSource;
     if (DataSource == NULL)
     {
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: RegEntry %p requested update but is not registered\n",
-                       RegEntry));
-        return(STATUS_OBJECT_NAME_NOT_FOUND);
+        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
+                          "WMI: RegEntry %p requested update but is not registered\n", RegEntry));
+        return (STATUS_OBJECT_NAME_NOT_FOUND);
     }
 
     WmipReferenceDS(DataSource);
@@ -2192,36 +1922,21 @@ Return Value:
         RegGuid = &WmiRegInfo->WmiRegGuid[i];
         if (RegGuid->Flags & WMIREG_FLAG_REMOVE_GUID)
         {
-            if (WmipUpdateRemoveGuid(DataSource,
-                                         RegGuid,
-                                         &InstanceSet))
+            if (WmipUpdateRemoveGuid(DataSource, RegGuid, &InstanceSet))
             {
-                WmipCachePtrs(&RegGuid->Guid,
-                             InstanceSet,
-                             &RemovedGuidCount,
-                             &RemovedGuidMax,
-                             &RemovedGuids);
+                WmipCachePtrs(&RegGuid->Guid, InstanceSet, &RemovedGuidCount, &RemovedGuidMax, &RemovedGuids);
             }
-        } else  {
-            Action = WmipUpdateModifyGuid(DataSource,
-                                       RegGuid,
-                                       WmiRegInfo,
-                                       RetSize,
-                                       &InstanceSet);
+        }
+        else
+        {
+            Action = WmipUpdateModifyGuid(DataSource, RegGuid, WmiRegInfo, RetSize, &InstanceSet);
             if (Action == 1)
             {
-                WmipCachePtrs(&RegGuid->Guid,
-                                 InstanceSet,
-                                 &AddedGuidCount,
-                                 &AddedGuidMax,
-                                 &AddedGuids);
-
-            } else if (Action == 2) {
-                WmipCachePtrs(&RegGuid->Guid,
-                                 InstanceSet,
-                                 &ModifiedGuidCount,
-                                 &ModifiedGuidMax,
-                                 &ModifiedGuids);
+                WmipCachePtrs(&RegGuid->Guid, InstanceSet, &AddedGuidCount, &AddedGuidMax, &AddedGuids);
+            }
+            else if (Action == 2)
+            {
+                WmipCachePtrs(&RegGuid->Guid, InstanceSet, &ModifiedGuidCount, &ModifiedGuidMax, &ModifiedGuids);
             }
         }
     }
@@ -2233,17 +1948,14 @@ Return Value:
     {
         for (i = 0; i < RemovedGuidCount; i++)
         {
-            if (IsEqualGUID(RemovedGuids[i].Guid,
-                            &WmipBinaryMofGuid))
+            if (IsEqualGUID(RemovedGuids[i].Guid, &WmipBinaryMofGuid))
             {
-                WmipGenerateBinaryMofNotification(RemovedGuids[i].InstanceSet,
-                                     &GUID_MOF_RESOURCE_REMOVED_NOTIFICATION);
+                WmipGenerateBinaryMofNotification(RemovedGuids[i].InstanceSet, &GUID_MOF_RESOURCE_REMOVED_NOTIFICATION);
             }
-                
+
             InstanceSet = RemovedGuids[i].InstanceSet;
 
-            WmipDisableCollectionForRemovedGuid(RemovedGuids[i].Guid,
-                                                InstanceSet);
+            WmipDisableCollectionForRemovedGuid(RemovedGuids[i].Guid, InstanceSet);
 
             WmipEnterSMCritSection();
             //
@@ -2254,7 +1966,7 @@ Return Value:
                 InstanceSet->GuidEntry->ISCount--;
             }
 
-            if (! (InstanceSet->Flags & IS_NEWLY_REGISTERED))
+            if (!(InstanceSet->Flags & IS_NEWLY_REGISTERED))
             {
                 WmipUnreferenceGE(InstanceSet->GuidEntry);
             }
@@ -2268,9 +1980,7 @@ Return Value:
             WmipLeaveSMCritSection();
         }
 
-        WmipSendGuidUpdateNotifications(RegistrationDelete,
-                                    RemovedGuidCount,
-                                    RemovedGuids);
+        WmipSendGuidUpdateNotifications(RegistrationDelete, RemovedGuidCount, RemovedGuids);
         WmipFree(RemovedGuids);
     }
 
@@ -2278,17 +1988,13 @@ Return Value:
     {
         for (i = 0; i < ModifiedGuidCount; i++)
         {
-            if (IsEqualGUID(ModifiedGuids[i].Guid,
-                            &WmipBinaryMofGuid))
+            if (IsEqualGUID(ModifiedGuids[i].Guid, &WmipBinaryMofGuid))
             {
-                WmipGenerateBinaryMofNotification(ModifiedGuids[i].InstanceSet,
-                                      &GUID_MOF_RESOURCE_ADDED_NOTIFICATION);
+                WmipGenerateBinaryMofNotification(ModifiedGuids[i].InstanceSet, &GUID_MOF_RESOURCE_ADDED_NOTIFICATION);
             }
         }
-        
-        WmipSendGuidUpdateNotifications(RegistrationUpdate,
-                                    ModifiedGuidCount,
-                                    ModifiedGuids);
+
+        WmipSendGuidUpdateNotifications(RegistrationUpdate, ModifiedGuidCount, ModifiedGuids);
         WmipFree(ModifiedGuids);
     }
 
@@ -2296,46 +2002,36 @@ Return Value:
     {
         for (i = 0; i < AddedGuidCount; i++)
         {
-            if (IsEqualGUID(AddedGuids[i].Guid,
-                            &WmipBinaryMofGuid))
+            if (IsEqualGUID(AddedGuids[i].Guid, &WmipBinaryMofGuid))
             {
-                WmipGenerateBinaryMofNotification(AddedGuids[i].InstanceSet,
-                                      &GUID_MOF_RESOURCE_ADDED_NOTIFICATION);
+                WmipGenerateBinaryMofNotification(AddedGuids[i].InstanceSet, &GUID_MOF_RESOURCE_ADDED_NOTIFICATION);
             }
-                
-            WmipEnableCollectionForNewGuid(AddedGuids[i].Guid,
-                                           AddedGuids[i].InstanceSet);
+
+            WmipEnableCollectionForNewGuid(AddedGuids[i].Guid, AddedGuids[i].InstanceSet);
         }
-        WmipSendGuidUpdateNotifications(RegistrationAdd,
-                                    AddedGuidCount,
-                                    AddedGuids);
+        WmipSendGuidUpdateNotifications(RegistrationAdd, AddedGuidCount, AddedGuids);
         WmipFree(AddedGuids);
     }
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }
 
-void WmipRemoveDataSourceByDS(
-    PBDATASOURCE DataSource
-    )
-{    
+void WmipRemoveDataSourceByDS(PBDATASOURCE DataSource)
+{
 
     PAGED_CODE();
-    
-    WmipGenerateRegistrationNotification(DataSource,
-                                         RegistrationDelete);
+
+    WmipGenerateRegistrationNotification(DataSource, RegistrationDelete);
 
     WmipUnreferenceDS(DataSource);
 }
 
-NTSTATUS WmipRemoveDataSource(
-    PREGENTRY RegEntry
-    )
+NTSTATUS WmipRemoveDataSource(PREGENTRY RegEntry)
 {
     PBDATASOURCE DataSource;
     NTSTATUS Status;
 
     PAGED_CODE();
-    
+
     DataSource = RegEntry->DataSource;
     if (DataSource != NULL)
     {
@@ -2343,20 +2039,18 @@ NTSTATUS WmipRemoveDataSource(
         WmipRemoveDataSourceByDS(DataSource);
         WmipUnreferenceDS(DataSource);
         Status = STATUS_SUCCESS;
-    } else {
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: Attempt to remove non existant data source %p\n",
-                        RegEntry));
+    }
+    else
+    {
+        WmipDebugPrintEx(
+            (DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: Attempt to remove non existant data source %p\n", RegEntry));
         Status = STATUS_OBJECT_NAME_NOT_FOUND;
     }
-    return(Status);
+    return (Status);
 }
 
 
-NTSTATUS WmipEnumerateMofResources(
-    PWMIMOFLIST MofList,
-    ULONG BufferSize,
-    ULONG *RetSize
-    )
+NTSTATUS WmipEnumerateMofResources(PWMIMOFLIST MofList, ULONG BufferSize, ULONG *RetSize)
 {
     PLIST_ENTRY MofResourceList;
     PMOFRESOURCE MofResource;
@@ -2367,7 +2061,7 @@ NTSTATUS WmipEnumerateMofResources(
     ULONG i;
 
     PAGED_CODE();
-    
+
     WmipEnterSMCritSection();
 
     MRCount = 0;
@@ -2375,23 +2069,19 @@ NTSTATUS WmipEnumerateMofResources(
     MofResourceList = WmipMRHeadPtr->Flink;
     while (MofResourceList != WmipMRHeadPtr)
     {
-        MofResource = CONTAINING_RECORD(MofResourceList,
-                                      MOFRESOURCE,
-                                      MainMRList);
-                                  
+        MofResource = CONTAINING_RECORD(MofResourceList, MOFRESOURCE, MainMRList);
+
         MRCount++;
-        SizeNeeded += (wcslen(MofResource->RegistryPath) + 
-                       wcslen(MofResource->MofResourceName) + 2) * 
-                           sizeof(WCHAR);
-                                  
+        SizeNeeded += (wcslen(MofResource->RegistryPath) + wcslen(MofResource->MofResourceName) + 2) * sizeof(WCHAR);
+
         MofResourceList = MofResourceList->Flink;
     }
-    
+
     if (MRCount != 0)
     {
-        MRSize = sizeof(WMIMOFLIST) + ((MRCount-1) * sizeof(WMIMOFENTRY));
+        MRSize = sizeof(WMIMOFLIST) + ((MRCount - 1) * sizeof(WMIMOFENTRY));
         SizeNeeded += MRSize;
-        
+
         if (BufferSize >= SizeNeeded)
         {
             MofList->MofListCount = MRCount;
@@ -2399,51 +2089,48 @@ NTSTATUS WmipEnumerateMofResources(
             i = 0;
             while (MofResourceList != WmipMRHeadPtr)
             {
-                MofResource = CONTAINING_RECORD(MofResourceList,
-                                      MOFRESOURCE,
-                                      MainMRList);
-                
+                MofResource = CONTAINING_RECORD(MofResourceList, MOFRESOURCE, MainMRList);
+
                 MofEntry = &MofList->MofEntry[i++];
-                MofEntry->Flags = MofResource->Flags & MR_FLAG_USER_MODE ? 
-                                                  WMIMOFENTRY_FLAG_USERMODE : 
-                                                  0;
-                                                  
+                MofEntry->Flags = MofResource->Flags & MR_FLAG_USER_MODE ? WMIMOFENTRY_FLAG_USERMODE : 0;
+
                 MofEntry->RegPathOffset = MRSize;
                 MRBuffer = (PWCHAR)OffsetToPtr(MofList, MRSize);
                 wcscpy(MRBuffer, MofResource->RegistryPath);
                 MRSize += (wcslen(MofResource->RegistryPath) + 1) * sizeof(WCHAR);
-                
+
                 MofEntry->ResourceOffset = MRSize;
                 MRBuffer = (PWCHAR)OffsetToPtr(MofList, MRSize);
                 wcscpy(MRBuffer, MofResource->MofResourceName);
                 MRSize += (wcslen(MofResource->MofResourceName) + 1) * sizeof(WCHAR);
                 MofResourceList = MofResourceList->Flink;
-            }           
-        } else {
+            }
+        }
+        else
+        {
             //
             // Buffer not large enough, return size needed
             //
             MofList->MofListCount = SizeNeeded;
             *RetSize = sizeof(ULONG);
         }
-        
-    } else {
+    }
+    else
+    {
         //
         // No mof resources
         //
         MofList->MofListCount = 0;
         *RetSize = sizeof(WMIMOFLIST);
     }
-    
-    
+
+
     WmipLeaveSMCritSection();
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }
 
 
-NTSTATUS WmipInitializeDataStructs(
-    void
-)
+NTSTATUS WmipInitializeDataStructs(void)
 /*++
 
 Routine Description:
@@ -2470,7 +2157,7 @@ Return Value:
     BOOLEAN NewResource;
 
     PAGED_CODE();
-    
+
     //
     // Initialize the various data structure lists that we maintain
     //
@@ -2491,22 +2178,18 @@ Return Value:
     WmipGMHeadPtr = &WmipGMHead;
     InitializeListHead(WmipGMHeadPtr);
 
-    
-    //      
+
+    //
     // Register any internal data provider guids and mark them as such
     //
     Callback = (PDEVICE_OBJECT)WmipUMProviderCallback;
-    
+
     //
     // Establish a regentry for the data provider
     //
-    RegEntry = WmipAllocRegEntry(Callback,
-                                 WMIREG_FLAG_CALLBACK |
-                                 REGENTRY_FLAG_TRACED |
-                                 REGENTRY_FLAG_NEWREGINFO | 
-                                 REGENTRY_FLAG_INUSE |
-                                 REGENTRY_FLAG_REG_IN_PROGRESS);
-                             
+    RegEntry = WmipAllocRegEntry(Callback, WMIREG_FLAG_CALLBACK | REGENTRY_FLAG_TRACED | REGENTRY_FLAG_NEWREGINFO |
+                                               REGENTRY_FLAG_INUSE | REGENTRY_FLAG_REG_IN_PROGRESS);
+
     if (RegEntry != NULL)
     {
         //
@@ -2514,46 +2197,35 @@ Return Value:
         // yet registered.
         //
         WmipAssert(WmipGEHeadPtr->Flink == WmipGEHeadPtr);
-                
-        RtlZeroMemory(RegInfo, sizeof(RegInfoBuffer));    
+
+        RtlZeroMemory(RegInfo, sizeof(RegInfoBuffer));
         RegInfo->BufferSize = sizeof(RegInfoBuffer);
         RegInfo->GuidCount = 2;
         RegInfo->WmiRegGuid[0].Guid = InstanceInfoGuid;
         RegInfo->WmiRegGuid[1].Guid = EnumerateGuidsGuid;
-        Status = WmipAddDataSource(RegEntry,
-                               RegInfo,
-                               RegInfo->BufferSize,
-                               NULL,
-                               NULL,
-                               NULL,
-                               FALSE);
-                           
+        Status = WmipAddDataSource(RegEntry, RegInfo, RegInfo->BufferSize, NULL, NULL, NULL, FALSE);
+
         if (NT_SUCCESS(Status))
-        {                          
+        {
             GuidEntryList = WmipGEHeadPtr->Flink;
             while (GuidEntryList != WmipGEHeadPtr)
-            {   
-                GuidEntry = CONTAINING_RECORD(GuidEntryList,
-                                              GUIDENTRY,
-                                             MainGEList);
+            {
+                GuidEntry = CONTAINING_RECORD(GuidEntryList, GUIDENTRY, MainGEList);
 
                 GuidEntry->Flags |= GE_FLAG_INTERNAL;
-        
-                GuidEntryList = GuidEntryList->Flink;       
+
+                GuidEntryList = GuidEntryList->Flink;
             }
-        } else {
-            RegEntry->Flags |= (REGENTRY_FLAG_RUNDOWN | 
-                                    REGENTRY_FLAG_NOT_ACCEPTING_IRPS);
+        }
+        else
+        {
+            RegEntry->Flags |= (REGENTRY_FLAG_RUNDOWN | REGENTRY_FLAG_NOT_ACCEPTING_IRPS);
             WmipUnreferenceRegEntry(RegEntry);
         }
     }
-    
-    Status = WmipAddMofResource(RegEntry->DataSource,
-                                WMICOREIMAGEPATH,
-                                TRUE,
-                                WMICORERESOURCENAME,
-                                &NewResource);
+
+    Status = WmipAddMofResource(RegEntry->DataSource, WMICOREIMAGEPATH, TRUE, WMICORERESOURCENAME, &NewResource);
     WmipAssert(NewResource);
-        
-    return(STATUS_SUCCESS);
+
+    return (STATUS_SUCCESS);
 }

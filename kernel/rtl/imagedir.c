@@ -27,28 +27,19 @@ Revision History:
 
 #if defined(NTOS_KERNEL_RUNTIME)
 
-VOID
-RtlpTouchMemory(
-    IN PVOID Address,
-    IN ULONG Length
-    );
+VOID RtlpTouchMemory(IN PVOID Address, IN ULONG Length);
 
-VOID
-RtlpMakeStackTraceDataPresentForImage(
-    IN PVOID ImageBase
-    );
+VOID RtlpMakeStackTraceDataPresentForImage(IN PVOID ImageBase);
 
 #if defined(ALLOC_PRAGMA)
-#pragma alloc_text(PAGE,RtlpTouchMemory)
-#pragma alloc_text(PAGE,RtlMakeStackTraceDataPresent)
-#pragma alloc_text(PAGE,RtlpMakeStackTraceDataPresentForImage)
+#pragma alloc_text(PAGE, RtlpTouchMemory)
+#pragma alloc_text(PAGE, RtlMakeStackTraceDataPresent)
+#pragma alloc_text(PAGE, RtlpMakeStackTraceDataPresentForImage)
 #endif
 #endif
 
 PIMAGE_NT_HEADERS
-RtlImageNtHeader (
-    IN PVOID Base
-    )
+RtlImageNtHeader(IN PVOID Base)
 
 /*++
 
@@ -67,25 +58,31 @@ Return Value:
 --*/
 
 {
-#if defined (BLDR_KERNEL_RUNTIME) || defined(NTOS_KERNEL_RUNTIME)
+#if defined(BLDR_KERNEL_RUNTIME) || defined(NTOS_KERNEL_RUNTIME)
     PIMAGE_NT_HEADERS NtHeaders = NULL;
 
-    if (Base != NULL && Base != (PVOID)-1) {
-        if (((PIMAGE_DOS_HEADER)Base)->e_magic == IMAGE_DOS_SIGNATURE) {
+    if (Base != NULL && Base != (PVOID)-1)
+    {
+        if (((PIMAGE_DOS_HEADER)Base)->e_magic == IMAGE_DOS_SIGNATURE)
+        {
             NtHeaders = (PIMAGE_NT_HEADERS)((PCHAR)Base + ((PIMAGE_DOS_HEADER)Base)->e_lfanew);
 
 #if defined(NTOS_KERNEL_RUNTIME)
-            if (Base < MM_HIGHEST_USER_ADDRESS) {
-                if ((PVOID)NtHeaders >= MM_HIGHEST_USER_ADDRESS) {
+            if (Base < MM_HIGHEST_USER_ADDRESS)
+            {
+                if ((PVOID)NtHeaders >= MM_HIGHEST_USER_ADDRESS)
+                {
                     return NULL;
                 }
-                if ((PVOID)((PCHAR)NtHeaders + sizeof (IMAGE_NT_HEADERS)) >= MM_HIGHEST_USER_ADDRESS) {
+                if ((PVOID)((PCHAR)NtHeaders + sizeof(IMAGE_NT_HEADERS)) >= MM_HIGHEST_USER_ADDRESS)
+                {
                     return NULL;
                 }
             }
 #endif
 
-            if (NtHeaders->Signature != IMAGE_NT_SIGNATURE) {
+            if (NtHeaders->Signature != IMAGE_NT_SIGNATURE)
+            {
                 NtHeaders = NULL;
             }
         }
@@ -93,17 +90,13 @@ Return Value:
 
     return NtHeaders;
 #else
-    return RtlpImageNtHeader( Base );
+    return RtlpImageNtHeader(Base);
 #endif
 }
 
 
 PIMAGE_SECTION_HEADER
-RtlSectionTableFromVirtualAddress (
-    IN PIMAGE_NT_HEADERS NtHeaders,
-    IN PVOID Base,
-    IN ULONG Address
-    )
+RtlSectionTableFromVirtualAddress(IN PIMAGE_NT_HEADERS NtHeaders, IN PVOID Base, IN ULONG Address)
 
 /*++
 
@@ -133,26 +126,23 @@ Return Value:
     ULONG i;
     PIMAGE_SECTION_HEADER NtSection;
 
-    NtSection = IMAGE_FIRST_SECTION( NtHeaders );
-    for (i=0; i<NtHeaders->FileHeader.NumberOfSections; i++) {
+    NtSection = IMAGE_FIRST_SECTION(NtHeaders);
+    for (i = 0; i < NtHeaders->FileHeader.NumberOfSections; i++)
+    {
         if ((ULONG)Address >= NtSection->VirtualAddress &&
-            (ULONG)Address < NtSection->VirtualAddress + NtSection->SizeOfRawData
-           ) {
+            (ULONG)Address < NtSection->VirtualAddress + NtSection->SizeOfRawData)
+        {
             return NtSection;
-            }
-        ++NtSection;
         }
+        ++NtSection;
+    }
 
     return NULL;
 }
 
 
 PVOID
-RtlAddressInSectionTable (
-    IN PIMAGE_NT_HEADERS NtHeaders,
-    IN PVOID Base,
-    IN ULONG Address
-    )
+RtlAddressInSectionTable(IN PIMAGE_NT_HEADERS NtHeaders, IN PVOID Base, IN ULONG Address)
 
 /*++
 
@@ -181,98 +171,92 @@ Return Value:
 {
     PIMAGE_SECTION_HEADER NtSection;
 
-    NtSection = RtlSectionTableFromVirtualAddress( NtHeaders,
-                                                   Base,
-                                                   Address
-                                                 );
-    if (NtSection != NULL) {
-        return( ((PCHAR)Base + ((ULONG_PTR)Address - NtSection->VirtualAddress) + NtSection->PointerToRawData) );
-        }
-    else {
-        return( NULL );
-        }
+    NtSection = RtlSectionTableFromVirtualAddress(NtHeaders, Base, Address);
+    if (NtSection != NULL)
+    {
+        return (((PCHAR)Base + ((ULONG_PTR)Address - NtSection->VirtualAddress) + NtSection->PointerToRawData));
+    }
+    else
+    {
+        return (NULL);
+    }
 }
 
 
 PVOID
-RtlpImageDirectoryEntryToData32 (
-    IN PVOID Base,
-    IN BOOLEAN MappedAsImage,
-    IN USHORT DirectoryEntry,
-    OUT PULONG Size,
-    PIMAGE_NT_HEADERS32 NtHeaders
-    )
+RtlpImageDirectoryEntryToData32(IN PVOID Base, IN BOOLEAN MappedAsImage, IN USHORT DirectoryEntry, OUT PULONG Size,
+                                PIMAGE_NT_HEADERS32 NtHeaders)
 {
     ULONG DirectoryAddress;
 
-    if (DirectoryEntry >= NtHeaders->OptionalHeader.NumberOfRvaAndSizes) {
-        return( NULL );
+    if (DirectoryEntry >= NtHeaders->OptionalHeader.NumberOfRvaAndSizes)
+    {
+        return (NULL);
     }
 
-    if (!(DirectoryAddress = NtHeaders->OptionalHeader.DataDirectory[ DirectoryEntry ].VirtualAddress)) {
-        return( NULL );
+    if (!(DirectoryAddress = NtHeaders->OptionalHeader.DataDirectory[DirectoryEntry].VirtualAddress))
+    {
+        return (NULL);
     }
 
 #if defined(NTOS_KERNEL_RUNTIME)
-    if (Base < MM_HIGHEST_USER_ADDRESS) {
-        if ((PVOID)((PCHAR)Base + DirectoryAddress) >= MM_HIGHEST_USER_ADDRESS) {
-            return( NULL );
+    if (Base < MM_HIGHEST_USER_ADDRESS)
+    {
+        if ((PVOID)((PCHAR)Base + DirectoryAddress) >= MM_HIGHEST_USER_ADDRESS)
+        {
+            return (NULL);
         }
     }
 #endif
 
-    *Size = NtHeaders->OptionalHeader.DataDirectory[ DirectoryEntry ].Size;
-    if (MappedAsImage || DirectoryAddress < NtHeaders->OptionalHeader.SizeOfHeaders) {
-        return( (PVOID)((PCHAR)Base + DirectoryAddress) );
+    *Size = NtHeaders->OptionalHeader.DataDirectory[DirectoryEntry].Size;
+    if (MappedAsImage || DirectoryAddress < NtHeaders->OptionalHeader.SizeOfHeaders)
+    {
+        return ((PVOID)((PCHAR)Base + DirectoryAddress));
     }
 
-    return( RtlAddressInSectionTable((PIMAGE_NT_HEADERS)NtHeaders, Base, DirectoryAddress ));
+    return (RtlAddressInSectionTable((PIMAGE_NT_HEADERS)NtHeaders, Base, DirectoryAddress));
 }
 
 
 PVOID
-RtlpImageDirectoryEntryToData64 (
-    IN PVOID Base,
-    IN BOOLEAN MappedAsImage,
-    IN USHORT DirectoryEntry,
-    OUT PULONG Size,
-    PIMAGE_NT_HEADERS64 NtHeaders
-    )
+RtlpImageDirectoryEntryToData64(IN PVOID Base, IN BOOLEAN MappedAsImage, IN USHORT DirectoryEntry, OUT PULONG Size,
+                                PIMAGE_NT_HEADERS64 NtHeaders)
 {
     ULONG DirectoryAddress;
 
-    if (DirectoryEntry >= NtHeaders->OptionalHeader.NumberOfRvaAndSizes) {
-        return( NULL );
+    if (DirectoryEntry >= NtHeaders->OptionalHeader.NumberOfRvaAndSizes)
+    {
+        return (NULL);
     }
 
-    if (!(DirectoryAddress = NtHeaders->OptionalHeader.DataDirectory[ DirectoryEntry ].VirtualAddress)) {
-        return( NULL );
+    if (!(DirectoryAddress = NtHeaders->OptionalHeader.DataDirectory[DirectoryEntry].VirtualAddress))
+    {
+        return (NULL);
     }
 
 #if defined(NTOS_KERNEL_RUNTIME)
-    if (Base < MM_HIGHEST_USER_ADDRESS) {
-        if ((PVOID)((PCHAR)Base + DirectoryAddress) >= MM_HIGHEST_USER_ADDRESS) {
-            return( NULL );
+    if (Base < MM_HIGHEST_USER_ADDRESS)
+    {
+        if ((PVOID)((PCHAR)Base + DirectoryAddress) >= MM_HIGHEST_USER_ADDRESS)
+        {
+            return (NULL);
         }
     }
 #endif
 
-    *Size = NtHeaders->OptionalHeader.DataDirectory[ DirectoryEntry ].Size;
-    if (MappedAsImage || DirectoryAddress < NtHeaders->OptionalHeader.SizeOfHeaders) {
-        return( (PVOID)((PCHAR)Base + DirectoryAddress) );
+    *Size = NtHeaders->OptionalHeader.DataDirectory[DirectoryEntry].Size;
+    if (MappedAsImage || DirectoryAddress < NtHeaders->OptionalHeader.SizeOfHeaders)
+    {
+        return ((PVOID)((PCHAR)Base + DirectoryAddress));
     }
 
-    return( RtlAddressInSectionTable((PIMAGE_NT_HEADERS)NtHeaders, Base, DirectoryAddress ));
+    return (RtlAddressInSectionTable((PIMAGE_NT_HEADERS)NtHeaders, Base, DirectoryAddress));
 }
 
 
 PVOID
-RtlImageDirectoryEntryToData (
-    IN PVOID Base,
-    IN BOOLEAN MappedAsImage,
-    IN USHORT DirectoryEntry,
-    OUT PULONG Size
-    )
+RtlImageDirectoryEntryToData(IN PVOID Base, IN BOOLEAN MappedAsImage, IN USHORT DirectoryEntry, OUT PULONG Size)
 
 /*++
 
@@ -304,39 +288,36 @@ Return Value:
 {
     PIMAGE_NT_HEADERS NtHeaders;
 
-    if (LDR_IS_DATAFILE(Base)) {
+    if (LDR_IS_DATAFILE(Base))
+    {
         Base = LDR_DATAFILE_TO_VIEW(Base);
         MappedAsImage = FALSE;
-        }
+    }
 
     NtHeaders = RtlImageNtHeader(Base);
 
     if (!NtHeaders)
         return NULL;
 
-    if (NtHeaders->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC) {
-        return (RtlpImageDirectoryEntryToData32(Base,
-                                                MappedAsImage,
-                                                DirectoryEntry,
-                                                Size,
-                                                (PIMAGE_NT_HEADERS32)NtHeaders));
-    } else if (NtHeaders->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC) {
-        return (RtlpImageDirectoryEntryToData64(Base,
-                                                MappedAsImage,
-                                                DirectoryEntry,
-                                                Size,
-                                                (PIMAGE_NT_HEADERS64)NtHeaders));
-    } else {
+    if (NtHeaders->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
+    {
+        return (
+            RtlpImageDirectoryEntryToData32(Base, MappedAsImage, DirectoryEntry, Size, (PIMAGE_NT_HEADERS32)NtHeaders));
+    }
+    else if (NtHeaders->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+    {
+        return (
+            RtlpImageDirectoryEntryToData64(Base, MappedAsImage, DirectoryEntry, Size, (PIMAGE_NT_HEADERS64)NtHeaders));
+    }
+    else
+    {
         return (NULL);
     }
 }
 
 #if defined(NTOS_KERNEL_RUNTIME)
 
-VOID
-RtlMakeStackTraceDataPresent(
-    VOID
-    )
+VOID RtlMakeStackTraceDataPresent(VOID)
 
 /*++
 
@@ -380,20 +361,21 @@ Return value:
     //
 
     imageCount = 0;
-    try {
+    try
+    {
 
         peb = NtCurrentPeb();
         head = &peb->Ldr->InLoadOrderModuleList;
 
-        ProbeForReadSmallStructure( head,
-                                    sizeof(LIST_ENTRY),
-                                    PROBE_ALIGNMENT(LIST_ENTRY) );
+        ProbeForReadSmallStructure(head, sizeof(LIST_ENTRY), PROBE_ALIGNMENT(LIST_ENTRY));
 
         next = head;
-        while (imageCount < 1000) {
+        while (imageCount < 1000)
+        {
 
             next = next->Flink;
-            if (next == head) {
+            if (next == head)
+            {
                 break;
             }
             imageCount += 1;
@@ -402,16 +384,13 @@ Return value:
             // Locate the base address of the image
             //
 
-            ldrDataTableEntry = CONTAINING_RECORD(next,
-                                                  LDR_DATA_TABLE_ENTRY,
-                                                  InLoadOrderLinks);
+            ldrDataTableEntry = CONTAINING_RECORD(next, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
-            ProbeForReadSmallStructure( ldrDataTableEntry,
-                                        sizeof(LDR_DATA_TABLE_ENTRY),
-                                        PROBE_ALIGNMENT(LDR_DATA_TABLE_ENTRY) );
+            ProbeForReadSmallStructure(ldrDataTableEntry, sizeof(LDR_DATA_TABLE_ENTRY),
+                                       PROBE_ALIGNMENT(LDR_DATA_TABLE_ENTRY));
 
             imageBase = ldrDataTableEntry->DllBase;
-            ProbeForReadSmallStructure (imageBase, sizeof (IMAGE_DOS_HEADER), sizeof (UCHAR));
+            ProbeForReadSmallStructure(imageBase, sizeof(IMAGE_DOS_HEADER), sizeof(UCHAR));
 
             //
             // Make the stack trace data present for this image.  Use a
@@ -419,22 +398,23 @@ Return value:
             // will be processed in the event of a failure.
             //
 
-            try {
+            try
+            {
                 RtlpMakeStackTraceDataPresentForImage(imageBase);
-            } except (EXCEPTION_EXECUTE_HANDLER) {
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
                 NOTHING;
             }
         }
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         NOTHING;
     }
 }
 
-VOID
-RtlpMakeStackTraceDataPresentForImage(
-    IN PVOID ImageBase
-    )
+VOID RtlpMakeStackTraceDataPresentForImage(IN PVOID ImageBase)
 
 /*++
 
@@ -470,11 +450,9 @@ Return value:
     // Make present the IMAGE_DIRECTORY_EXCEPTION section.
     //
 
-    directory = RtlImageDirectoryEntryToData(ImageBase,
-                                             TRUE,
-                                             IMAGE_DIRECTORY_ENTRY_EXCEPTION,
-                                             &directorySize);
-    if (directory == NULL) {
+    directory = RtlImageDirectoryEntryToData(ImageBase, TRUE, IMAGE_DIRECTORY_ENTRY_EXCEPTION, &directorySize);
+    if (directory == NULL)
+    {
         return;
     }
 
@@ -492,22 +470,19 @@ Return value:
     //
 
     functionEntry = (PIMAGE_RUNTIME_FUNCTION_ENTRY)directory;
-    lastFunctionEntry = functionEntry +
-        directorySize / sizeof(IMAGE_RUNTIME_FUNCTION_ENTRY);
+    lastFunctionEntry = functionEntry + directorySize / sizeof(IMAGE_RUNTIME_FUNCTION_ENTRY);
 
-    while (functionEntry < lastFunctionEntry) {
+    while (functionEntry < lastFunctionEntry)
+    {
 
-        unwindInfo = (PUNWIND_INFO)((PCHAR)ImageBase +
-                        functionEntry->UnwindInfoAddress);
+        unwindInfo = (PUNWIND_INFO)((PCHAR)ImageBase + functionEntry->UnwindInfoAddress);
 
         //
         // An UNWIND_INFO structure consists of a fixed header plus
         // a variable-length portion.
         //
 
-        RtlpTouchMemory(unwindInfo,
-                        sizeof(UNWIND_INFO) +
-                        unwindInfo->DataLength * sizeof(ULONGLONG));
+        RtlpTouchMemory(unwindInfo, sizeof(UNWIND_INFO) + unwindInfo->DataLength * sizeof(ULONGLONG));
 
         functionEntry += 1;
     }
@@ -516,24 +491,18 @@ Return value:
     // Make present the IMAGE_DIRECTORY_ENTRY_GLOBALPTR section.
     //
 
-    directory = RtlImageDirectoryEntryToData(ImageBase,
-                                             TRUE,
-                                             IMAGE_DIRECTORY_ENTRY_GLOBALPTR,
-                                             &directorySize);
-    if (directory == NULL) {
+    directory = RtlImageDirectoryEntryToData(ImageBase, TRUE, IMAGE_DIRECTORY_ENTRY_GLOBALPTR, &directorySize);
+    if (directory == NULL)
+    {
         return;
     }
 
     RtlpTouchMemory(directory, directorySize);
 
-#endif  // _IA64_
+#endif // _IA64_
 }
 
-VOID
-RtlpTouchMemory(
-    IN PVOID Address,
-    IN ULONG Length
-    )
+VOID RtlpTouchMemory(IN PVOID Address, IN ULONG Length)
 /*++
 
 Routine Description:
@@ -560,7 +529,8 @@ Return value:
     regionStart = Address;
     regionEnd = regionStart + Length;
 
-    while (regionStart < regionEnd) {
+    while (regionStart < regionEnd)
+    {
         *(volatile UCHAR *)regionStart;
         regionStart = PAGE_ALIGN(regionStart + PAGE_SIZE);
     }
@@ -571,11 +541,7 @@ Return value:
 #if !defined(NTOS_KERNEL_RUNTIME) && !defined(BLDR_KERNEL_RUNTIME)
 
 PIMAGE_SECTION_HEADER
-RtlImageRvaToSection(
-    IN PIMAGE_NT_HEADERS NtHeaders,
-    IN PVOID Base,
-    IN ULONG Rva
-    )
+RtlImageRvaToSection(IN PIMAGE_NT_HEADERS NtHeaders, IN PVOID Base, IN ULONG Rva)
 
 /*++
 
@@ -607,28 +573,23 @@ Return Value:
     ULONG i;
     PIMAGE_SECTION_HEADER NtSection;
 
-    NtSection = IMAGE_FIRST_SECTION( NtHeaders );
-    for (i=0; i<NtHeaders->FileHeader.NumberOfSections; i++) {
-        if (Rva >= NtSection->VirtualAddress &&
-            Rva < NtSection->VirtualAddress + NtSection->SizeOfRawData
-           ) {
+    NtSection = IMAGE_FIRST_SECTION(NtHeaders);
+    for (i = 0; i < NtHeaders->FileHeader.NumberOfSections; i++)
+    {
+        if (Rva >= NtSection->VirtualAddress && Rva < NtSection->VirtualAddress + NtSection->SizeOfRawData)
+        {
             return NtSection;
-            }
-        ++NtSection;
         }
+        ++NtSection;
+    }
 
     return NULL;
 }
 
 
-
 PVOID
-RtlImageRvaToVa(
-    IN PIMAGE_NT_HEADERS NtHeaders,
-    IN PVOID Base,
-    IN ULONG Rva,
-    IN OUT PIMAGE_SECTION_HEADER *LastRvaSection OPTIONAL
-    )
+RtlImageRvaToVa(IN PIMAGE_NT_HEADERS NtHeaders, IN PVOID Base, IN ULONG Rva,
+                IN OUT PIMAGE_SECTION_HEADER *LastRvaSection OPTIONAL)
 
 /*++
 
@@ -663,30 +624,25 @@ Return Value:
 {
     PIMAGE_SECTION_HEADER NtSection;
 
-    if (!ARGUMENT_PRESENT( LastRvaSection ) ||
-        (NtSection = *LastRvaSection) == NULL ||
-        Rva < NtSection->VirtualAddress ||
-        Rva >= NtSection->VirtualAddress + NtSection->SizeOfRawData
-       ) {
-        NtSection = RtlImageRvaToSection( NtHeaders,
-                                          Base,
-                                          Rva
-                                        );
-        }
+    if (!ARGUMENT_PRESENT(LastRvaSection) || (NtSection = *LastRvaSection) == NULL || Rva < NtSection->VirtualAddress ||
+        Rva >= NtSection->VirtualAddress + NtSection->SizeOfRawData)
+    {
+        NtSection = RtlImageRvaToSection(NtHeaders, Base, Rva);
+    }
 
-    if (NtSection != NULL) {
-        if (LastRvaSection != NULL) {
+    if (NtSection != NULL)
+    {
+        if (LastRvaSection != NULL)
+        {
             *LastRvaSection = NtSection;
-            }
+        }
 
-        return (PVOID)((PCHAR)Base +
-                       (Rva - NtSection->VirtualAddress) +
-                       NtSection->PointerToRawData
-                      );
-        }
-    else {
+        return (PVOID)((PCHAR)Base + (Rva - NtSection->VirtualAddress) + NtSection->PointerToRawData);
+    }
+    else
+    {
         return NULL;
-        }
+    }
 }
 
 #endif

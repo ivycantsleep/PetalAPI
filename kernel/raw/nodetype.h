@@ -27,9 +27,9 @@ Revision History:
 typedef CSHORT NODE_TYPE_CODE;
 typedef NODE_TYPE_CODE *PNODE_TYPE_CODE;
 
-#define NTC_UNDEFINED                    ((NODE_TYPE_CODE)0x0000)
+#define NTC_UNDEFINED ((NODE_TYPE_CODE)0x0000)
 
-#define RAW_NTC_VCB                      ((NODE_TYPE_CODE)0x0600)
+#define RAW_NTC_VCB ((NODE_TYPE_CODE)0x0600)
 
 typedef CSHORT NODE_BYTE_SIZE;
 
@@ -47,4 +47,3 @@ typedef CSHORT NODE_BYTE_SIZE;
 #define NodeType(Ptr) (*((PNODE_TYPE_CODE)(Ptr)))
 
 #endif // _NODETYPE_
-

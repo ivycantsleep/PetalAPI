@@ -18,9 +18,9 @@
 /*
  * Local Routines.
  */
-VOID   xxxNextAniIconStep(PSTAT);
-HANDLE xxxSetStaticImage(PSTAT,HANDLE,BOOL);
-VOID xxxStaticLoadImage(PSTAT,LPWSTR);
+VOID xxxNextAniIconStep(PSTAT);
+HANDLE xxxSetStaticImage(PSTAT, HANDLE, BOOL);
+VOID xxxStaticLoadImage(PSTAT, LPWSTR);
 
 
 /*
@@ -28,49 +28,49 @@ VOID xxxStaticLoadImage(PSTAT,LPWSTR);
  * image-types.  For the PPC release we won't support
  * the metafile format, but others are OK.
  */
-#define IMAGE_STMMAX    IMAGE_ENHMETAFILE+1
+#define IMAGE_STMMAX IMAGE_ENHMETAFILE + 1
 
 static BYTE rgbType[IMAGE_STMMAX] = {
-    SS_BITMAP,       // IMAGE_BITMAP
-    SS_ICON,         // IMAGE_CURSOR
-    SS_ICON,         // IMAGE_ICON
-    SS_ENHMETAFILE   // IMAGE_ENHMETAFILE
+    SS_BITMAP,     // IMAGE_BITMAP
+    SS_ICON,       // IMAGE_CURSOR
+    SS_ICON,       // IMAGE_ICON
+    SS_ENHMETAFILE // IMAGE_ENHMETAFILE
 };
 
 
 /*
  * LOBYTE of SS_ style is index into this array
  */
-#define STK_OWNER       0x00
-#define STK_IMAGE       0x01
-#define STK_TEXT        0x02
-#define STK_GRAPHIC     0x03
-#define STK_TYPE        0x03
+#define STK_OWNER 0x00
+#define STK_IMAGE 0x01
+#define STK_TEXT 0x02
+#define STK_GRAPHIC 0x03
+#define STK_TYPE 0x03
 
-#define STK_ERASE       0x04
-#define STK_USEFONT     0x08
-#define STK_USETEXT     0x10
+#define STK_ERASE 0x04
+#define STK_USEFONT 0x08
+#define STK_USETEXT 0x10
 
 BYTE rgstk[] = {
-    STK_TEXT | STK_ERASE | STK_USEFONT | STK_USETEXT,       // SS_LEFT
-    STK_TEXT | STK_ERASE | STK_USEFONT | STK_USETEXT,       // SS_CENTER
-    STK_TEXT | STK_ERASE | STK_USEFONT | STK_USETEXT,       // SS_RIGHT
-    STK_IMAGE,                                              // SS_ICON
-    STK_GRAPHIC,                                            // SS_BLACKRECT
-    STK_GRAPHIC,                                            // SS_GRAYRECT
-    STK_GRAPHIC,                                            // SS_WHITERECT
-    STK_GRAPHIC,                                            // SS_BLACKFRAME
-    STK_GRAPHIC,                                            // SS_GRAYFRAME
-    STK_GRAPHIC,                                            // SS_WHITEFRAME
-    STK_OWNER,                                              // SS_USERITEM
-    STK_TEXT | STK_USEFONT | STK_USETEXT,                   // SS_SIMPLE
-    STK_TEXT | STK_ERASE | STK_USEFONT | STK_USETEXT,       // SS_LEFTNOWORDWRAP
-    STK_OWNER | STK_USEFONT | STK_USETEXT,                  // SS_OWNERDRAW
-    STK_IMAGE,                                              // SS_BITMAP
-    STK_IMAGE | STK_ERASE,                                  // SS_ENHMETAFILE
-    STK_GRAPHIC,                                            // SS_ETCHEDHORZ
-    STK_GRAPHIC,                                            // SS_ETCHEDVERT
-    STK_GRAPHIC                                             // SS_ETCHEDFRAME
+    STK_TEXT | STK_ERASE | STK_USEFONT | STK_USETEXT, // SS_LEFT
+    STK_TEXT | STK_ERASE | STK_USEFONT | STK_USETEXT, // SS_CENTER
+    STK_TEXT | STK_ERASE | STK_USEFONT | STK_USETEXT, // SS_RIGHT
+    STK_IMAGE,                                        // SS_ICON
+    STK_GRAPHIC,                                      // SS_BLACKRECT
+    STK_GRAPHIC,                                      // SS_GRAYRECT
+    STK_GRAPHIC,                                      // SS_WHITERECT
+    STK_GRAPHIC,                                      // SS_BLACKFRAME
+    STK_GRAPHIC,                                      // SS_GRAYFRAME
+    STK_GRAPHIC,                                      // SS_WHITEFRAME
+    STK_OWNER,                                        // SS_USERITEM
+    STK_TEXT | STK_USEFONT | STK_USETEXT,             // SS_SIMPLE
+    STK_TEXT | STK_ERASE | STK_USEFONT | STK_USETEXT, // SS_LEFTNOWORDWRAP
+    STK_OWNER | STK_USEFONT | STK_USETEXT,            // SS_OWNERDRAW
+    STK_IMAGE,                                        // SS_BITMAP
+    STK_IMAGE | STK_ERASE,                            // SS_ENHMETAFILE
+    STK_GRAPHIC,                                      // SS_ETCHEDHORZ
+    STK_GRAPHIC,                                      // SS_ETCHEDVERT
+    STK_GRAPHIC                                       // SS_ETCHEDFRAME
 };
 
 LOOKASIDE StaticLookaside;
@@ -78,8 +78,7 @@ LOOKASIDE StaticLookaside;
 /*
  * Common macros for image handling.
  */
-#define IsValidImage(imageType, realType, max) \
-    ((imageType < max) && (rgbType[imageType] == realType))
+#define IsValidImage(imageType, realType, max) ((imageType < max) && (rgbType[imageType] == realType))
 
 
 /***************************************************************************\
@@ -91,20 +90,17 @@ LOOKASIDE StaticLookaside;
 *
 \***************************************************************************/
 
-HANDLE xxxSetStaticImage(
-    PSTAT  pstat,
-    HANDLE hImage,
-    BOOL   fDeleteIt)
+HANDLE xxxSetStaticImage(PSTAT pstat, HANDLE hImage, BOOL fDeleteIt)
 {
-    UINT   bType;
-    RECT   rc;
-    RECT   rcWindow;
+    UINT bType;
+    RECT rc;
+    RECT rcWindow;
     HANDLE hImageOld;
-    DWORD  dwRate;
-    UINT   cicur;
-    BOOL   fAnimated = FALSE;
-    PWND   pwnd = pstat->spwnd;
-    HWND   hwnd = HWq(pwnd);
+    DWORD dwRate;
+    UINT cicur;
+    BOOL fAnimated = FALSE;
+    PWND pwnd = pstat->spwnd;
+    HWND hwnd = HWq(pwnd);
 
     CheckLock(pwnd);
 
@@ -113,7 +109,8 @@ HANDLE xxxSetStaticImage(
     /*
      * If this is an old-ani-icon, then delete its timer.
      */
-    if ((bType == SS_ICON) && pstat->cicur > 1) {
+    if ((bType == SS_ICON) && pstat->cicur > 1)
+    {
         /*
          *  Old cursor was an animated cursor, so kill
          *  the timer that is used to animate it.
@@ -128,46 +125,53 @@ HANDLE xxxSetStaticImage(
 
     rc.right = rc.bottom = 0;
 
-    if (hImage != NULL) {
+    if (hImage != NULL)
+    {
 
-        switch (bType) {
+        switch (bType)
+        {
 
-            case SS_ENHMETAFILE: {
-                /*
+        case SS_ENHMETAFILE:
+        {
+            /*
                  * We do NOT resize the window.
                  */
-                rc.right  = pwnd->rcClient.right  - pwnd->rcClient.left;
-                rc.bottom = pwnd->rcClient.bottom - pwnd->rcClient.top;
-                break;
+            rc.right = pwnd->rcClient.right - pwnd->rcClient.left;
+            rc.bottom = pwnd->rcClient.bottom - pwnd->rcClient.top;
+            break;
+        }
+
+        case SS_BITMAP:
+        {
+
+            BITMAP bmp;
+
+            if (GetObject(hImage, sizeof(BITMAP), &bmp))
+            {
+                rc.right = bmp.bmWidth;
+                rc.bottom = bmp.bmHeight;
             }
+        }
+        break;
 
-            case SS_BITMAP: {
+        case SS_ICON:
+        {
 
-                    BITMAP bmp;
+            NtUserGetIconSize(hImage, 0, &rc.right, &rc.bottom);
+            rc.bottom /= 2;
 
-                    if (GetObject(hImage, sizeof(BITMAP), &bmp)) {
-                        rc.right  = bmp.bmWidth;
-                        rc.bottom = bmp.bmHeight;
-                    }
-                }
-                break;
+            pstat->cicur = 0;
+            pstat->iicur = 0;
 
-            case SS_ICON: {
-
-                    NtUserGetIconSize(hImage, 0, &rc.right, &rc.bottom);
-                    rc.bottom /= 2;
-
-                    pstat->cicur = 0;
-                    pstat->iicur = 0;
-
-                    // Perhaps we can do something like shell\cpl\main\mouseptr.c
-                    // here, and make GetCursorFrameInfo obsolete.
-                    if (GetCursorFrameInfo(hImage, NULL, 0, &dwRate, &cicur)) {
-                        fAnimated = (cicur > 1);
-                        pstat->cicur = cicur;
-                    }
-                }
-                break;
+            // Perhaps we can do something like shell\cpl\main\mouseptr.c
+            // here, and make GetCursorFrameInfo obsolete.
+            if (GetCursorFrameInfo(hImage, NULL, 0, &dwRate, &cicur))
+            {
+                fAnimated = (cicur > 1);
+                pstat->cicur = cicur;
+            }
+        }
+        break;
         }
     }
 
@@ -192,23 +196,18 @@ HANDLE xxxSetStaticImage(
         rc.left = 0;
         rc.top = 0;
 
-        if (rc.right && rc.bottom) {
+        if (rc.right && rc.bottom)
+        {
             _AdjustWindowRectEx(&rc, pwnd->style, FALSE, pwnd->ExStyle);
-            rc.right  -= rc.left;
+            rc.right -= rc.left;
             rc.bottom -= rc.top;
         }
 
-        NtUserSetWindowPos(
-                hwnd,
-                HWND_TOP,
-                0,
-                0,
-                rc.right,
-                rc.bottom,
-                SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER);
+        NtUserSetWindowPos(hwnd, HWND_TOP, 0, 0, rc.right, rc.bottom, SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER);
     }
 
-    if (TestWF(pwnd, WFVISIBLE)) {
+    if (TestWF(pwnd, WFVISIBLE))
+    {
         NtUserInvalidateRect(hwnd, NULL, TRUE);
         UpdateWindow(hwnd);
     }
@@ -218,7 +217,8 @@ HANDLE xxxSetStaticImage(
      * If this is an aimated-icon, then start the timer for
      * the animation sequence.
      */
-    if(fAnimated) {
+    if (fAnimated)
+    {
         // Perhaps we can do something like shell\cpl\main\mouseptr.c
         // here, and make GetCursorFrameInfo obsolete.
         GetCursorFrameInfo(pstat->hImage, NULL, pstat->iicur, &dwRate, &cicur);
@@ -240,16 +240,15 @@ HANDLE xxxSetStaticImage(
 *
 \***************************************************************************/
 
-VOID xxxStaticLoadImage(
-    PSTAT  pstat,
-    LPWSTR lpszName)
+VOID xxxStaticLoadImage(PSTAT pstat, LPWSTR lpszName)
 {
     HANDLE hImage = NULL;
-    PWND   pwnd = pstat->spwnd;
+    PWND pwnd = pstat->spwnd;
 
     CheckLock(pwnd);
 
-    if (lpszName && *lpszName) {
+    if (lpszName && *lpszName)
+    {
 
         /*
          * Only try to load the icon/bitmap if the string is non null.
@@ -261,9 +260,11 @@ VOID xxxStaticLoadImage(
          * Load the image.  If it can't be found in the app, try the
          * display driver.
          */
-        if (lpszName) {
+        if (lpszName)
+        {
 
-            switch (TestWF(pwnd, SFTYPEMASK)) {
+            switch (TestWF(pwnd, SFTYPEMASK))
+            {
             case SS_BITMAP:
 
                 /*
@@ -282,17 +283,22 @@ VOID xxxStaticLoadImage(
                 break;
 
             case SS_ICON:
-                if (TestWF(pwnd, SFREALSIZEIMAGE)) {
-                    if (!gfServerProcess && pwnd->hModule) {
+                if (TestWF(pwnd, SFREALSIZEIMAGE))
+                {
+                    if (!gfServerProcess && pwnd->hModule)
+                    {
                         hImage = LoadImage(KHANDLE_TO_HANDLE(pwnd->hModule), lpszName, IMAGE_ICON, 0, 0, 0);
                     }
-                } else {
+                }
+                else
+                {
                     /*
                      * If the window is not owned by the server, first call
                      * back out to the client.  Try loading both icons/cursor
                      * types.
                      */
-                    if (!gfServerProcess && pwnd->hModule) {
+                    if (!gfServerProcess && pwnd->hModule)
+                    {
 
                         hImage = LoadIcon(KHANDLE_TO_HANDLE(pwnd->hModule), lpszName);
 
@@ -302,7 +308,8 @@ VOID xxxStaticLoadImage(
                          * the same.  We don't do this for 3.x apps for the
                          * usual compatibility reasons.
                          */
-                        if ((hImage == NULL) && TestWF(pwnd, WFWIN40COMPAT)) {
+                        if ((hImage == NULL) && TestWF(pwnd, WFWIN40COMPAT))
+                        {
                             hImage = LoadCursor(KHANDLE_TO_HANDLE(pwnd->hModule), lpszName);
                         }
                     }
@@ -311,7 +318,8 @@ VOID xxxStaticLoadImage(
                      * If the above didn't load it, try loading it from the
                      * display driver (hmod == NULL).
                      */
-                    if (hImage == NULL) {
+                    if (hImage == NULL)
+                    {
                         hImage = LoadIcon(NULL, lpszName);
                     }
                 }
@@ -324,7 +332,6 @@ VOID xxxStaticLoadImage(
              */
             if (hImage)
                 xxxSetStaticImage(pstat, hImage, TRUE);
-
         }
     }
 }
@@ -338,30 +345,27 @@ VOID xxxStaticLoadImage(
 * History:
 \***************************************************************************/
 
-BOOL CALLBACK StaticCallback(
-    HDC  hdc,
-    LPARAM lData,
-    WPARAM wData,
-    int  cx,
-    int  cy)
+BOOL CALLBACK StaticCallback(HDC hdc, LPARAM lData, WPARAM wData, int cx, int cy)
 {
-    PWND   pwnd = (PWND)lData;
-    UINT   style;
+    PWND pwnd = (PWND)lData;
+    UINT style;
     LPWSTR lpszName;
-    RECT   rc;
-    BYTE   bType;
+    RECT rc;
+    BYTE bType;
 
     UNREFERENCED_PARAMETER(wData);
 
     bType = TestWF(pwnd, SFTYPEMASK);
     UserAssert(rgstk[bType] & STK_USETEXT);
 
-    if (pwnd->strName.Length) {
+    if (pwnd->strName.Length)
+    {
         lpszName = REBASE(pwnd, strName.Buffer);
 
         style = DT_NOCLIP | DT_EXPANDTABS;
 
-        if (bType != LOBYTE(SS_LEFTNOWORDWRAP)) {
+        if (bType != LOBYTE(SS_LEFTNOWORDWRAP))
+        {
             style |= DT_WORDBREAK;
             style |= (UINT)(bType - LOBYTE(SS_LEFT));
 
@@ -369,7 +373,8 @@ BOOL CALLBACK StaticCallback(
                 style |= DT_EDITCONTROL;
         }
 
-        switch (TestWF(pwnd, SFELLIPSISMASK)) {
+        switch (TestWF(pwnd, SFELLIPSISMASK))
+        {
         case HIBYTE(LOWORD(SS_ENDELLIPSIS)):
             style |= DT_END_ELLIPSIS | DT_SINGLELINE;
             break;
@@ -389,22 +394,24 @@ BOOL CALLBACK StaticCallback(
         if (TestWF(pwnd, SFCENTERIMAGE))
             style |= DT_VCENTER | DT_SINGLELINE;
 
-        rc.left     = 0;
-        rc.top      = 0;
-        rc.right    = cx;
-        rc.bottom   = cy;
+        rc.left = 0;
+        rc.top = 0;
+        rc.right = cx;
+        rc.bottom = cy;
 
-        if (TestWF(pwnd, WEFPUIACCELHIDDEN)) {
+        if (TestWF(pwnd, WEFPUIACCELHIDDEN))
+        {
             style |= DT_HIDEPREFIX;
-        } else if (((PSTATWND)pwnd)->pstat->fPaintKbdCuesOnly) {
+        }
+        else if (((PSTATWND)pwnd)->pstat->fPaintKbdCuesOnly)
+        {
             style |= DT_PREFIXONLY;
         }
 
         DrawTextExW(hdc, lpszName, -1, &rc, (DWORD)style, NULL);
-
     }
 
-    return(TRUE);
+    return (TRUE);
 }
 
 
@@ -414,19 +421,16 @@ BOOL CALLBACK StaticCallback(
 * History:
 \***************************************************************************/
 
-void xxxStaticPaint(
-    PSTAT pstat,
-    HDC   hdc,
-    BOOL  fClip)
+void xxxStaticPaint(PSTAT pstat, HDC hdc, BOOL fClip)
 {
-    PWND   pwndParent;
-    RECT   rc;
-    UINT   cmd;
-    BYTE   bType;
-    BOOL   fFont;
+    PWND pwndParent;
+    RECT rc;
+    UINT cmd;
+    BYTE bType;
+    BOOL fFont;
     HBRUSH hbrControl;
-    UINT   oldAlign;
-    DWORD  dwOldLayout=0;
+    UINT oldAlign;
+    DWORD dwOldLayout = 0;
 
     HANDLE hfontOld = NULL;
     PWND pwnd = pstat->spwnd;
@@ -443,13 +447,15 @@ void xxxStaticPaint(
     bType = TestWF(pwnd, SFTYPEMASK);
     _GetClientRect(pwnd, &rc);
 
-    if (fClip) {
+    if (fClip)
+    {
         IntersectClipRect(hdc, rc.left, rc.top, rc.right, rc.bottom);
     }
 
     fFont = (rgstk[bType] & STK_USEFONT) && (pstat->hFont != NULL);
 
-    if (fFont) {
+    if (fFont)
+    {
         hfontOld = SelectObject(hdc, pstat->hFont);
     }
 
@@ -467,38 +473,44 @@ void xxxStaticPaint(
      * and STK_GRAPHIC kind of things.
      */
     pwndParent = REBASEPWND(pwnd, spwndParent);
-    if ((rgstk[bType] & STK_ERASE) && !pstat->fPaintKbdCuesOnly) {
+    if ((rgstk[bType] & STK_ERASE) && !pstat->fPaintKbdCuesOnly)
+    {
         PaintRect(HW(pwndParent), hwnd, hdc, hbrControl, &rc);
     }
 
-    switch (LOBYTE(bType)) {
+    switch (LOBYTE(bType))
+    {
     case SS_ICON:
 
-        if (pstat->hImage) {
+        if (pstat->hImage)
+        {
 
-            int     cx;
-            int     cy;
-            POINT   pt;
+            int cx;
+            int cy;
+            POINT pt;
 
-            if (TestWF(pwnd,WEFLAYOUTRTL)) {
+            if (TestWF(pwnd, WEFLAYOUTRTL))
+            {
                 dwOldLayout = SetLayoutWidth(hdc, -1, 0);
             }
             /*
              * Perform the correct rect-setup.
              */
-            if (TestWF(pwnd,SFCENTERIMAGE)) {
+            if (TestWF(pwnd, SFCENTERIMAGE))
+            {
 
                 NtUserGetIconSize(pstat->hImage, pstat->iicur, &cx, &cy);
                 cy >>= 1;
 
-                rc.left   = (rc.right  - cx) / 2;
-                rc.right  = (rc.left   + cx);
-                rc.top    = (rc.bottom - cy) / 2;
-                rc.bottom = (rc.top    + cy);
+                rc.left = (rc.right - cx) / 2;
+                rc.right = (rc.left + cx);
+                rc.top = (rc.bottom - cy) / 2;
+                rc.bottom = (rc.top + cy);
+            }
+            else
+            {
 
-            } else {
-
-                cx = rc.right  - rc.left;
+                cx = rc.right - rc.left;
                 cy = rc.bottom - rc.top;
             }
 
@@ -507,24 +519,26 @@ void xxxStaticPaint(
              * Output the icon.  If it's animated, we indicate
              * the step-frame to output.
              */
-            if (GETFNID(pwndParent) == FNID_DESKTOP) {
+            if (GETFNID(pwndParent) == FNID_DESKTOP)
+            {
                 SetBrushOrgEx(hdc, 0, 0, &pt);
-            } else {
-                SetBrushOrgEx(
-                        hdc,
-                        pwndParent->rcClient.left - pwnd->rcClient.left,
-                        pwndParent->rcClient.top - pwnd->rcClient.top,
-                        &pt);
+            }
+            else
+            {
+                SetBrushOrgEx(hdc, pwndParent->rcClient.left - pwnd->rcClient.left,
+                              pwndParent->rcClient.top - pwnd->rcClient.top, &pt);
             }
 
-            DrawIconEx(hdc, rc.left, rc.top, pstat->hImage, cx, cy,
-                       pstat->iicur, hbrControl, DI_NORMAL);
+            DrawIconEx(hdc, rc.left, rc.top, pstat->hImage, cx, cy, pstat->iicur, hbrControl, DI_NORMAL);
 
             SetBrushOrgEx(hdc, pt.x, pt.y, NULL);
-            if (TestWF(pwnd,WEFLAYOUTRTL)) {
+            if (TestWF(pwnd, WEFLAYOUTRTL))
+            {
                 SetLayoutWidth(hdc, -1, dwOldLayout);
             }
-        } else {
+        }
+        else
+        {
 
             /*
              * Empty!  Need to erase.
@@ -535,12 +549,13 @@ void xxxStaticPaint(
 
     case SS_BITMAP:
 
-        if (pstat->hImage) {
+        if (pstat->hImage)
+        {
 
-            BITMAP  bmp;
+            BITMAP bmp;
             HBITMAP hbmpT;
-            RECT    rcTmp;
-            BOOL    fErase;
+            RECT rcTmp;
+            BOOL fErase;
 
 
             /*
@@ -548,19 +563,21 @@ void xxxStaticPaint(
              * can assume somethings wrong with its format...don't
              * draw in this case.
              */
-            if (GetObject(pstat->hImage, sizeof(BITMAP), &bmp)) {
+            if (GetObject(pstat->hImage, sizeof(BITMAP), &bmp))
+            {
 
-                if (TestWF(pwnd, SFCENTERIMAGE)) {
+                if (TestWF(pwnd, SFCENTERIMAGE))
+                {
 
-                    fErase = ((bmp.bmWidth  < rc.right) ||
-                              (bmp.bmHeight < rc.bottom));
+                    fErase = ((bmp.bmWidth < rc.right) || (bmp.bmHeight < rc.bottom));
 
-                    rc.left   = (rc.right  - bmp.bmWidth)  >> 1;
-                    rc.right  = (rc.left   + bmp.bmWidth);
-                    rc.top    = (rc.bottom - bmp.bmHeight) >> 1;
-                    rc.bottom = (rc.top    + bmp.bmHeight);
-
-                } else {
+                    rc.left = (rc.right - bmp.bmWidth) >> 1;
+                    rc.right = (rc.left + bmp.bmWidth);
+                    rc.top = (rc.bottom - bmp.bmHeight) >> 1;
+                    rc.bottom = (rc.top + bmp.bmHeight);
+                }
+                else
+                {
 
                     fErase = FALSE;
                 }
@@ -570,40 +587,41 @@ void xxxStaticPaint(
                  */
                 RtlEnterCriticalSection(&gcsHdc);
                 hbmpT = SelectObject(ghdcBits2, pstat->hImage);
-                StretchBlt(hdc, rc.left, rc.top, rc.right-rc.left,
-                           rc.bottom-rc.top, ghdcBits2, 0, 0, bmp.bmWidth,
-                           bmp.bmHeight, SRCCOPY|NOMIRRORBITMAP);
+                StretchBlt(hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, ghdcBits2, 0, 0, bmp.bmWidth,
+                           bmp.bmHeight, SRCCOPY | NOMIRRORBITMAP);
 
                 /*
                  * Only need to erase the background if the image is
                  * centered and it's smaller than the client-area.
                  */
-                if (fErase) {
+                if (fErase)
+                {
 
                     HBRUSH hbr;
 
-                    if (hbr = CreateSolidBrush(GetPixel(ghdcBits2, 0, 0))) {
+                    if (hbr = CreateSolidBrush(GetPixel(ghdcBits2, 0, 0)))
+                    {
 
                         POLYPATBLT PolyData;
 
-                        ExcludeClipRect(hdc, rc.left, rc.top,
-                                        rc.right, rc.bottom);
+                        ExcludeClipRect(hdc, rc.left, rc.top, rc.right, rc.bottom);
 
                         _GetClientRect(pwnd, &rcTmp);
 
-                        PolyData.x  = 0;
-                        PolyData.y  = 0;
+                        PolyData.x = 0;
+                        PolyData.y = 0;
                         PolyData.cx = rcTmp.right;
                         PolyData.cy = rcTmp.bottom;
                         PolyData.BrClr.hbr = hbr;
 
-                        PolyPatBlt(hdc,PATCOPY,&PolyData,1,PPB_BRUSH);
+                        PolyPatBlt(hdc, PATCOPY, &PolyData, 1, PPB_BRUSH);
 
                         DeleteObject(hbr);
                     }
                 }
 
-                if (hbmpT) {
+                if (hbmpT)
+                {
                     SelectObject(ghdcBits2, hbmpT);
                 }
                 RtlLeaveCriticalSection(&gcsHdc);
@@ -613,58 +631,63 @@ void xxxStaticPaint(
 
     case SS_ENHMETAFILE:
 
-        if (pstat->hImage) {
+        if (pstat->hImage)
+        {
 
             RECT rcl;
 
-            rcl.left   = rc.left;
-            rcl.top    = rc.top;
-            rcl.right  = rc.right;
+            rcl.left = rc.left;
+            rcl.top = rc.top;
+            rcl.right = rc.right;
             rcl.bottom = rc.bottom;
 
             PlayEnhMetaFile(hdc, pstat->hImage, &rcl);
         }
         break;
 
-    case SS_OWNERDRAW: {
+    case SS_OWNERDRAW:
+    {
 
-            DRAWITEMSTRUCT dis;
+        DRAWITEMSTRUCT dis;
 
-            dis.CtlType    = ODT_STATIC;
-            dis.CtlID      = PtrToUlong(pwnd->spmenu);
-            dis.itemAction = ODA_DRAWENTIRE;
-            dis.itemState  = (TestWF(pwnd, WFDISABLED) ? ODS_DISABLED : 0);
-            dis.hwndItem   = hwnd;
-            dis.hDC        = hdc;
-            dis.itemData   = 0L;
-            dis.rcItem     = rc;
+        dis.CtlType = ODT_STATIC;
+        dis.CtlID = PtrToUlong(pwnd->spmenu);
+        dis.itemAction = ODA_DRAWENTIRE;
+        dis.itemState = (TestWF(pwnd, WFDISABLED) ? ODS_DISABLED : 0);
+        dis.hwndItem = hwnd;
+        dis.hDC = hdc;
+        dis.itemData = 0L;
+        dis.rcItem = rc;
 
-            if (TestWF(pwnd, WEFPUIACCELHIDDEN)) {
-                dis.itemState |= ODS_NOACCEL;
-            }
+        if (TestWF(pwnd, WEFPUIACCELHIDDEN))
+        {
+            dis.itemState |= ODS_NOACCEL;
+        }
 
-            /*
+        /*
              * Send a WM_DRAWITEM message to the parent.
              */
-            SendMessage(HW(pwndParent), WM_DRAWITEM, (WPARAM)dis.CtlID, (LPARAM)&dis);
-        }
-        break;
+        SendMessage(HW(pwndParent), WM_DRAWITEM, (WPARAM)dis.CtlID, (LPARAM)&dis);
+    }
+    break;
 
     case SS_LEFT:
     case SS_CENTER:
     case SS_RIGHT:
     case SS_LEFTNOWORDWRAP:
 
-        if (pwnd->strName.Length) {
+        if (pwnd->strName.Length)
+        {
 
             UINT dstFlags;
 
             dstFlags = DST_COMPLEX;
 
-            if (TestWF(pwnd, WFDISABLED)) {
+            if (TestWF(pwnd, WFDISABLED))
+            {
 #ifdef LATER
-                if (SYSMET(SLOWMACHINE) &&
-                   (GetBkColor(hdc)  != SYSRGB(GRAYTEXT))) {
+                if (SYSMET(SLOWMACHINE) && (GetBkColor(hdc) != SYSRGB(GRAYTEXT)))
+                {
 
                     SetTextColor(hdc, SYSRGB(GRAYTEXT));
                 }
@@ -673,55 +696,63 @@ void xxxStaticPaint(
                     dstFlags |= DSS_DISABLED;
             }
 
-            DrawState(hdc, SYSHBR(WINDOWTEXT),
-                StaticCallback, (LPARAM)pwnd, (WPARAM)TRUE,
-                rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
-                dstFlags);
+            DrawState(hdc, SYSHBR(WINDOWTEXT), StaticCallback, (LPARAM)pwnd, (WPARAM)TRUE, rc.left, rc.top,
+                      rc.right - rc.left, rc.bottom - rc.top, dstFlags);
         }
         break;
 
-    case SS_SIMPLE: {
+    case SS_SIMPLE:
+    {
 
-            LPWSTR lpName;
-            UINT cchName;
+        LPWSTR lpName;
+        UINT cchName;
 
 
-            /*
+        /*
              * The "Simple" bType assumes everything, including the following:
              *  1. The Text exists and fits on one line.
              *  2. The Static item is always enabled.
              *  3. The Static item is never changed to be a shorter string.
              *  4. The Parent never responds to the CTLCOLOR message
              */
-            if (pwnd->strName.Length) {
-                lpName = REBASE(pwnd, strName.Buffer);
-                cchName = pwnd->strName.Length / sizeof(WCHAR);
-            } else {
-                lpName = (LPWSTR)szNull;
-                cchName = 0;
-            }
+        if (pwnd->strName.Length)
+        {
+            lpName = REBASE(pwnd, strName.Buffer);
+            cchName = pwnd->strName.Length / sizeof(WCHAR);
+        }
+        else
+        {
+            lpName = (LPWSTR)szNull;
+            cchName = 0;
+        }
 
-            if (TestWF(pwnd,SFNOPREFIX)) {
-                ExtTextOut(hdc, rc.left, rc.top, ETO_OPAQUE | ETO_CLIPPED,
-                                &rc, lpName, cchName, 0L);
-            } else {
-                /*
+        if (TestWF(pwnd, SFNOPREFIX))
+        {
+            ExtTextOut(hdc, rc.left, rc.top, ETO_OPAQUE | ETO_CLIPPED, &rc, lpName, cchName, 0L);
+        }
+        else
+        {
+            /*
                  * Use OPAQUE for speed.
                  */
-                DWORD dwFlags;
-                if (TestWF(pwnd, WEFPUIACCELHIDDEN)) {
-                    dwFlags = DT_HIDEPREFIX;
-                } else if (pstat->fPaintKbdCuesOnly) {
-                    dwFlags = DT_PREFIXONLY;
-                } else {
-                    dwFlags = 0;
-                }
-
-                PSMTextOut(hdc, rc.left, rc.top,
-                        lpName, cchName, dwFlags);
+            DWORD dwFlags;
+            if (TestWF(pwnd, WEFPUIACCELHIDDEN))
+            {
+                dwFlags = DT_HIDEPREFIX;
             }
+            else if (pstat->fPaintKbdCuesOnly)
+            {
+                dwFlags = DT_PREFIXONLY;
+            }
+            else
+            {
+                dwFlags = 0;
+            }
+
+            PSMTextOut(hdc, rc.left, rc.top, lpName, cchName, dwFlags);
         }
-        break;
+    }
+    break;
 
     case SS_BLACKFRAME:
         cmd = (COLOR_3DDKSHADOW << 3);
@@ -733,7 +764,7 @@ void xxxStaticPaint(
 
     case SS_WHITEFRAME:
         cmd = (COLOR_3DHILIGHT << 3);
-StatFrame:
+    StatFrame:
         DrawFrame(hdc, &rc, 1, cmd);
         break;
 
@@ -747,7 +778,7 @@ StatFrame:
 
     case SS_WHITERECT:
         hbrControl = SYSHBR(3DHILIGHT);
-StatRect:
+    StatRect:
         PaintRect(HW(pwndParent), hwnd, hdc, hbrControl, &rc);
         break;
 
@@ -756,14 +787,15 @@ StatRect:
         break;
     }
 
-    if (hfontOld) {
+    if (hfontOld)
+    {
         SelectObject(hdc, hfontOld);
     }
 
-    if (TestWF(pwnd, WEFRTLREADING)) {
+    if (TestWF(pwnd, WEFRTLREADING))
+    {
         SetTextAlign(hdc, oldAlign);
     }
-
 }
 
 
@@ -773,17 +805,18 @@ StatRect:
 *
 \***************************************************************************/
 
-void StaticRepaint(
-    PSTAT pstat)
+void StaticRepaint(PSTAT pstat)
 {
     PWND pwnd = pstat->spwnd;
 
-    if (IsVisible(pwnd)) {
+    if (IsVisible(pwnd))
+    {
 
         HDC hdc;
         HWND hwnd = HWq(pwnd);
 
-        if (hdc = NtUserGetDC(hwnd)) {
+        if (hdc = NtUserGetDC(hwnd))
+        {
             xxxStaticPaint(pstat, hdc, TRUE);
             NtUserReleaseDC(hwnd, hdc);
         }
@@ -801,23 +834,20 @@ void StaticRepaint(
 
 // LATER mikeke why do we have multiple versions of notifyparent?
 
-LRESULT FAR PASCAL StaticNotifyParent(
-    PWND pwnd,
-    PWND pwndParent,
-    int  nCode)
+LRESULT FAR PASCAL StaticNotifyParent(PWND pwnd, PWND pwndParent, int nCode)
 {
     LRESULT lret;
-    TL   tlpwndParent;
+    TL tlpwndParent;
 
     UserAssert(pwnd);
 
-    if (!pwndParent) {
+    if (!pwndParent)
+    {
         pwndParent = REBASEPWND(pwnd, spwndParent);
     }
 
     ThreadLock(pwndParent, &tlpwndParent);
-    lret = SendMessage(HW(pwndParent), WM_COMMAND,
-                       MAKELONG(PTR_TO_ID(pwnd->spmenu), nCode), (LPARAM)HWq(pwnd));
+    lret = SendMessage(HW(pwndParent), WM_COMMAND, MAKELONG(PTR_TO_ID(pwnd->spmenu), nCode), (LPARAM)HWq(pwnd));
     ThreadUnlock(&tlpwndParent);
 
     return lret;
@@ -829,16 +859,11 @@ LRESULT FAR PASCAL StaticNotifyParent(
 * History:
 \***************************************************************************/
 
-LRESULT APIENTRY StaticWndProcWorker(
-    PWND  pwnd,
-    UINT  message,
-    WPARAM wParam,
-    LPARAM lParam,
-    DWORD fAnsi)
+LRESULT APIENTRY StaticWndProcWorker(PWND pwnd, UINT message, WPARAM wParam, LPARAM lParam, DWORD fAnsi)
 {
-    HWND        hwnd = HWq(pwnd);
-    BYTE        bType;
-    PSTAT       pstat;
+    HWND hwnd = HWq(pwnd);
+    BYTE bType;
+    PSTAT pstat;
     static BOOL fInit = TRUE;
 
     CheckLock(pwnd);
@@ -865,12 +890,14 @@ LRESULT APIENTRY StaticWndProcWorker(
      */
     bType = TestWF(pwnd, SFTYPEMASK);
 
-    switch (message) {
+    switch (message)
+    {
     case STM_GETICON:
         wParam = IMAGE_ICON;
 
     case STM_GETIMAGE:
-        if (IsValidImage(wParam, bType, IMAGE_STMMAX)) {
+        if (IsValidImage(wParam, bType, IMAGE_STMMAX))
+        {
             return (LRESULT)pstat->hImage;
         }
         break;
@@ -880,7 +907,8 @@ LRESULT APIENTRY StaticWndProcWorker(
         wParam = IMAGE_ICON;
 
     case STM_SETIMAGE:
-        if (IsValidImage(wParam, bType, IMAGE_STMMAX)) {
+        if (IsValidImage(wParam, bType, IMAGE_STMMAX))
+        {
             return (LRESULT)xxxSetStaticImage(pstat, (HANDLE)lParam, FALSE);
         }
         break;
@@ -897,48 +925,56 @@ LRESULT APIENTRY StaticWndProcWorker(
         break;
 
     case WM_PAINT:
+    {
+        HDC hdc;
+        PAINTSTRUCT ps;
+
+        if ((hdc = (HDC)wParam) == NULL)
         {
-            HDC         hdc;
-            PAINTSTRUCT ps;
+            hdc = NtUserBeginPaint(hwnd, &ps);
+        }
 
-            if ((hdc = (HDC)wParam) == NULL) {
-                hdc = NtUserBeginPaint(hwnd, &ps);
-            }
+        if (IsVisible(pwnd))
+        {
+            xxxStaticPaint(pstat, hdc, !wParam);
+        }
 
-            if (IsVisible(pwnd)) {
-                xxxStaticPaint(pstat, hdc, !wParam);
-            }
-
-            /*
+        /*
              * If hwnd was destroyed, BeginPaint was automatically undone.
              */
-            if (!wParam) {
-                NtUserEndPaint(hwnd, &ps);
-            }
+        if (!wParam)
+        {
+            NtUserEndPaint(hwnd, &ps);
         }
-        break;
+    }
+    break;
 
     case WM_CREATE:
 
-        if ((rgstk[bType] & STK_TYPE) == STK_IMAGE) {
+        if ((rgstk[bType] & STK_TYPE) == STK_IMAGE)
+        {
             /*
              *  Pull the name from LPCREATESTRUCT like Win95 does
              */
-            LPWSTR  lpszName;
-            LPSTR   lpszAnsiName;
-            struct {
+            LPWSTR lpszName;
+            LPSTR lpszAnsiName;
+            struct
+            {
                 WORD tag;
                 BYTE ordLo;
                 BYTE ordHi;
             } dwUnicodeOrdinal;
 
-            if (fAnsi) {
+            if (fAnsi)
+            {
                 /*
                  *  Convert the ANSI string to unicode if it exists
                  */
                 lpszAnsiName = (LPSTR)((LPCREATESTRUCT)lParam)->lpszName;
-                if (lpszAnsiName) {
-                    if (lpszAnsiName[0] == (CHAR)0xff) {
+                if (lpszAnsiName)
+                {
+                    if (lpszAnsiName[0] == (CHAR)0xff)
+                    {
                         /*
                          * Convert ANSI ordinal to UNICODE ordinal
                          */
@@ -946,13 +982,19 @@ LRESULT APIENTRY StaticWndProcWorker(
                         dwUnicodeOrdinal.ordLo = lpszAnsiName[1];
                         dwUnicodeOrdinal.ordHi = lpszAnsiName[2];
                         lpszName = (LPWSTR)&dwUnicodeOrdinal;
-                    } else {
+                    }
+                    else
+                    {
                         MBToWCSEx(0, lpszAnsiName, -1, &lpszName, -1, TRUE);
                     }
-                } else {
+                }
+                else
+                {
                     lpszName = NULL;
                 }
-            } else {
+            }
+            else
+            {
                 lpszName = (LPWSTR)(((LPCREATESTRUCT)lParam)->lpszName);
             }
 
@@ -961,15 +1003,16 @@ LRESULT APIENTRY StaticWndProcWorker(
              */
             xxxStaticLoadImage(pstat, lpszName);
 
-            if (fAnsi &&
-                    lpszName &&
-                    lpszName != (LPWSTR)&dwUnicodeOrdinal) {
+            if (fAnsi && lpszName && lpszName != (LPWSTR)&dwUnicodeOrdinal)
+            {
                 /*
                  *  Free the converted ANSI string
                  */
                 LocalFree(lpszName);
             }
-        } else if (bType == SS_ETCHEDHORZ || bType == SS_ETCHEDVERT) {
+        }
+        else if (bType == SS_ETCHEDHORZ || bType == SS_ETCHEDVERT)
+        {
 
             /*
              * Resize static window to fit edge.  Horizontal dudes
@@ -977,7 +1020,7 @@ LRESULT APIENTRY StaticWndProcWorker(
              * right edge one edge from left.
              */
 
-            RECT    rcClient;
+            RECT rcClient;
 
             _GetClientRect(pwnd, &rcClient);
             if (bType == SS_ETCHEDHORZ)
@@ -985,20 +1028,23 @@ LRESULT APIENTRY StaticWndProcWorker(
             else
                 rcClient.right = SYSMET(CXEDGE);
 
-            NtUserSetWindowPos(hwnd, HWND_TOP, 0, 0, rcClient.right,
-                rcClient.bottom, SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+            NtUserSetWindowPos(hwnd, HWND_TOP, 0, 0, rcClient.right, rcClient.bottom,
+                               SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
         }
         break;
 
     case WM_DESTROY:
-        if (((rgstk[bType] & STK_TYPE) == STK_IMAGE) &&
-            (pstat->hImage != NULL)                  &&
-            (pstat->fDeleteIt)) {
+        if (((rgstk[bType] & STK_TYPE) == STK_IMAGE) && (pstat->hImage != NULL) && (pstat->fDeleteIt))
+        {
 
-            if (bType == SS_BITMAP) {
+            if (bType == SS_BITMAP)
+            {
                 DeleteObject(pstat->hImage);
-            } else if (bType == SS_ICON) {
-                if (pstat->cicur > 1) {
+            }
+            else if (bType == SS_ICON)
+            {
+                if (pstat->cicur > 1)
+                {
                     /*
                      *  Kill the animated cursor timer
                      */
@@ -1010,19 +1056,21 @@ LRESULT APIENTRY StaticWndProcWorker(
         break;
 
     case WM_NCCREATE:
-        if (TestWF(pwnd,WEFRIGHT)) {
+        if (TestWF(pwnd, WEFRIGHT))
+        {
             NtUserAlterWindowStyle(hwnd, SS_TYPEMASK, SS_RIGHT);
         }
 
-        if (TestWF(pwnd, SFSUNKEN) ||
-            ((bType == LOBYTE(SS_ETCHEDHORZ)) || (bType == LOBYTE(SS_ETCHEDVERT)))) {
+        if (TestWF(pwnd, SFSUNKEN) || ((bType == LOBYTE(SS_ETCHEDHORZ)) || (bType == LOBYTE(SS_ETCHEDVERT))))
+        {
             SetWindowState(pwnd, WEFSTATICEDGE);
         }
         goto CallDWP;
 
     case WM_NCDESTROY:
     case WM_FINALDESTROY:
-        if (pstat) {
+        if (pstat)
+        {
             Unlock(&pstat->spwnd);
             FreeLookasideEntry(&StaticLookaside, pstat);
         }
@@ -1034,7 +1082,8 @@ LRESULT APIENTRY StaticWndProcWorker(
 
     case WM_LBUTTONDOWN:
     case WM_NCLBUTTONDOWN:
-        if (TestWF(pwnd, SFNOTIFY)) {
+        if (TestWF(pwnd, SFNOTIFY))
+        {
 
             /*
              * It is acceptable for an app to destroy a static label
@@ -1046,7 +1095,8 @@ LRESULT APIENTRY StaticWndProcWorker(
 
     case WM_LBUTTONDBLCLK:
     case WM_NCLBUTTONDBLCLK:
-        if (TestWF(pwnd, SFNOTIFY)) {
+        if (TestWF(pwnd, SFNOTIFY))
+        {
 
             /*
              * It is acceptable for an app to destroy a static label in
@@ -1060,8 +1110,10 @@ LRESULT APIENTRY StaticWndProcWorker(
         /*
          *  No more hack to set icon/bitmap via WM_SETTEXT!
          */
-        if (rgstk[bType] & STK_USETEXT) {
-            if (_DefSetText(hwnd, (LPWSTR)lParam, fAnsi)) {
+        if (rgstk[bType] & STK_USETEXT)
+        {
+            if (_DefSetText(hwnd, (LPWSTR)lParam, fAnsi))
+            {
                 StaticRepaint(pstat);
                 return TRUE;
             }
@@ -1070,7 +1122,8 @@ LRESULT APIENTRY StaticWndProcWorker(
 
     case WM_ENABLE:
         StaticRepaint(pstat);
-        if (TestWF(pwnd, SFNOTIFY)) {
+        if (TestWF(pwnd, SFNOTIFY))
+        {
             StaticNotifyParent(pwnd, NULL, (wParam ? STN_ENABLE : STN_DISABLE));
         }
         break;
@@ -1084,11 +1137,13 @@ LRESULT APIENTRY StaticWndProcWorker(
          * wParam - handle to the font
          * lParam - if true, redraw else don't
          */
-        if (rgstk[bType] & STK_USEFONT) {
+        if (rgstk[bType] & STK_USEFONT)
+        {
 
             pstat->hFont = (HANDLE)wParam;
 
-            if (lParam && TestWF(pwnd, WFVISIBLE)) {
+            if (lParam && TestWF(pwnd, WFVISIBLE))
+            {
                 NtUserInvalidateRect(hwnd, NULL, TRUE);
                 UpdateWindow(hwnd);
             }
@@ -1096,36 +1151,42 @@ LRESULT APIENTRY StaticWndProcWorker(
         break;
 
     case WM_GETFONT:
-        if (rgstk[bType] & STK_USEFONT) {
+        if (rgstk[bType] & STK_USEFONT)
+        {
             return (LRESULT)pstat->hFont;
         }
         break;
 
     case WM_TIMER:
-        if (wParam == IDSYS_STANIMATE) {
+        if (wParam == IDSYS_STANIMATE)
+        {
             xxxNextAniIconStep(pstat);
         }
         break;
 
-    /*
+        /*
      *  case WM_GETTEXT:
      *  No more hack to get icon/bitmap via WM_GETTEXT!
      */
 
     case WM_INPUTLANGCHANGEREQUEST:
-        if (IS_IME_ENABLED() || IS_MIDEAST_ENABLED()) {
+        if (IS_IME_ENABLED() || IS_MIDEAST_ENABLED())
+        {
             /*
              * #115190
              * If the window is one of controls on top of dialogbox,
              * let the parent dialog handle it.
              */
-            if (TestwndChild(pwnd) && pwnd->spwndParent) {
+            if (TestwndChild(pwnd) && pwnd->spwndParent)
+            {
                 PWND pwndParent = REBASEALWAYS(pwnd, spwndParent);
-                if (pwndParent) {
+                if (pwndParent)
+                {
                     PCLS pclsParent = REBASEALWAYS(pwndParent, pcls);
 
                     UserAssert(pclsParent != NULL);
-                    if (pclsParent->atomClassName == gpsi->atomSysClass[ICLS_DIALOG]) {
+                    if (pclsParent->atomClassName == gpsi->atomSysClass[ICLS_DIALOG])
+                    {
                         return SendMessageWorker(pwndParent, message, wParam, lParam, FALSE);
                     }
                 }
@@ -1134,27 +1195,29 @@ LRESULT APIENTRY StaticWndProcWorker(
         goto CallDWP;
 
     case WM_UPDATEUISTATE:
-        {
-            /*
+    {
+        /*
              * DWP will change the UIState bits accordingly
              */
-            DefWindowProcWorker(pwnd, message, wParam, lParam, fAnsi);
+        DefWindowProcWorker(pwnd, message, wParam, lParam, fAnsi);
 
-            if (HIWORD(wParam) & UISF_HIDEACCEL) {
-                /*
+        if (HIWORD(wParam) & UISF_HIDEACCEL)
+        {
+            /*
                  * Change in AccelHidden state: need to repaint
                  */
-                if (ISSSTEXTOROD(bType)) {
-                    pstat->fPaintKbdCuesOnly = TRUE;
-                    StaticRepaint(pstat);
-                    pstat->fPaintKbdCuesOnly = FALSE;
-                }
+            if (ISSSTEXTOROD(bType))
+            {
+                pstat->fPaintKbdCuesOnly = TRUE;
+                StaticRepaint(pstat);
+                pstat->fPaintKbdCuesOnly = FALSE;
             }
         }
-        break;
+    }
+    break;
 
     default:
-CallDWP:
+    CallDWP:
         return DefWindowProcWorker(pwnd, message, wParam, lParam, fAnsi);
     }
 
@@ -1162,30 +1225,24 @@ CallDWP:
 }
 
 
-LRESULT WINAPI StaticWndProcA(
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT WINAPI StaticWndProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     PWND pwnd;
 
-    if ((pwnd = ValidateHwnd(hwnd)) == NULL) {
+    if ((pwnd = ValidateHwnd(hwnd)) == NULL)
+    {
         return (0L);
     }
 
     return StaticWndProcWorker(pwnd, message, wParam, lParam, TRUE);
 }
 
-LRESULT WINAPI StaticWndProcW(
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT WINAPI StaticWndProcW(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     PWND pwnd;
 
-    if ((pwnd = ValidateHwnd(hwnd)) == NULL) {
+    if ((pwnd = ValidateHwnd(hwnd)) == NULL)
+    {
         return (0L);
     }
 
@@ -1200,8 +1257,7 @@ LRESULT WINAPI StaticWndProcW(
 *
 \***************************************************************************/
 
-VOID xxxNextAniIconStep(
-    PSTAT pstat)
+VOID xxxNextAniIconStep(PSTAT pstat)
 {
     DWORD dwRate;
     PWND pwnd = pstat->spwnd;
@@ -1212,7 +1268,8 @@ VOID xxxNextAniIconStep(
      */
     NtUserKillTimer(hwnd, IDSYS_STANIMATE);
 
-    if (++(pstat->iicur) >= pstat->cicur) {
+    if (++(pstat->iicur) >= pstat->cicur)
+    {
         pstat->iicur = 0;
     }
 
@@ -1226,4 +1283,3 @@ VOID xxxNextAniIconStep(
 
     NtUserSetTimer(hwnd, IDSYS_STANIMATE, dwRate, NULL);
 }
-

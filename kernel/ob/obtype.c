@@ -20,29 +20,25 @@ Revision History:
 
 #include "obp.h"
 
-
-typedef struct _OBJECT_TYPE_ARRAY {
 
-    ULONG   Size;
+typedef struct _OBJECT_TYPE_ARRAY
+{
+
+    ULONG Size;
     POBJECT_HEADER_CREATOR_INFO CreatorInfoArray[1];
 
 } OBJECT_TYPE_ARRAY, *POBJECT_TYPE_ARRAY;
 
 #ifdef ALLOC_PRAGMA
 POBJECT_TYPE_ARRAY
-ObpCreateTypeArray (
-    IN POBJECT_TYPE ObjectType
-    );
-VOID
-ObpDestroyTypeArray (
-    IN POBJECT_TYPE_ARRAY ObjectArray
-    );
-#pragma alloc_text(PAGE,ObCreateObjectType)
-#pragma alloc_text(PAGE,ObEnumerateObjectsByType)
-#pragma alloc_text(PAGE,ObpCreateTypeArray)
-#pragma alloc_text(PAGE,ObpDestroyTypeArray)
-#pragma alloc_text(PAGE,ObGetObjectInformation)
-#pragma alloc_text(PAGE,ObpDeleteObjectType)
+ObpCreateTypeArray(IN POBJECT_TYPE ObjectType);
+VOID ObpDestroyTypeArray(IN POBJECT_TYPE_ARRAY ObjectArray);
+#pragma alloc_text(PAGE, ObCreateObjectType)
+#pragma alloc_text(PAGE, ObEnumerateObjectsByType)
+#pragma alloc_text(PAGE, ObpCreateTypeArray)
+#pragma alloc_text(PAGE, ObpDestroyTypeArray)
+#pragma alloc_text(PAGE, ObGetObjectInformation)
+#pragma alloc_text(PAGE, ObpDeleteObjectType)
 #endif
 
 /*
@@ -84,14 +80,11 @@ ObpDestroyTypeArray (
 
 */
 
-
+
 NTSTATUS
-ObCreateObjectType (
-    IN PUNICODE_STRING TypeName,
-    IN POBJECT_TYPE_INITIALIZER ObjectTypeInitializer,
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor OPTIONAL, // currently ignored
-    OUT POBJECT_TYPE *ObjectType
-    )
+ObCreateObjectType(IN PUNICODE_STRING TypeName, IN POBJECT_TYPE_INITIALIZER ObjectTypeInitializer,
+                   IN PSECURITY_DESCRIPTOR SecurityDescriptor OPTIONAL, // currently ignored
+                   OUT POBJECT_TYPE *ObjectType)
 
 /*++
 
@@ -130,7 +123,7 @@ Return Value:
     ULONG StandardHeaderCharge;
     OBP_LOOKUP_CONTEXT LookupContext;
 
-    ObpValidateIrql( "ObCreateObjectType" );
+    ObpValidateIrql("ObCreateObjectType");
 
     //
     //  Return an error if invalid type attributes or no type name specified.
@@ -142,38 +135,37 @@ Return Value:
 
     if ((!TypeName)
 
-            ||
+        ||
 
         (!TypeName->Length)
 
-            ||
+        ||
 
-        (TypeName->Length % sizeof( WCHAR ))
+        (TypeName->Length % sizeof(WCHAR))
 
-            ||
+        ||
 
         (ObjectTypeInitializer == NULL)
 
-            ||
+        ||
 
         (ObjectTypeInitializer->InvalidAttributes & ~OBJ_VALID_ATTRIBUTES)
 
-            ||
+        ||
 
-        (ObjectTypeInitializer->Length != sizeof( *ObjectTypeInitializer ))
+        (ObjectTypeInitializer->Length != sizeof(*ObjectTypeInitializer))
 
-            ||
+        ||
 
         (ObjectTypeInitializer->MaintainHandleCount &&
-            (ObjectTypeInitializer->OpenProcedure == NULL &&
-             ObjectTypeInitializer->CloseProcedure == NULL ))
+         (ObjectTypeInitializer->OpenProcedure == NULL && ObjectTypeInitializer->CloseProcedure == NULL))
 
-            ||
+        ||
 
-        ((!ObjectTypeInitializer->UseDefaultObject) &&
-            (PoolType != NonPagedPool))) {
+        ((!ObjectTypeInitializer->UseDefaultObject) && (PoolType != NonPagedPool)))
+    {
 
-        return( STATUS_INVALID_PARAMETER );
+        return (STATUS_INVALID_PARAMETER);
     }
 
     //
@@ -182,13 +174,15 @@ Return Value:
     //
 
     s = TypeName->Buffer;
-    i = TypeName->Length / sizeof( WCHAR );
+    i = TypeName->Length / sizeof(WCHAR);
 
-    while (i--) {
+    while (i--)
+    {
 
-        if (*s++ == OBJ_NAME_PATH_SEPARATOR) {
+        if (*s++ == OBJ_NAME_PATH_SEPARATOR)
+        {
 
-            return( STATUS_OBJECT_NAME_INVALID );
+            return (STATUS_OBJECT_NAME_INVALID);
         }
     }
 
@@ -198,21 +192,19 @@ Return Value:
     //  Note that there may not necessarily be a type directory.
     //
 
-    ObpInitializeLookupContext( &LookupContext );
+    ObpInitializeLookupContext(&LookupContext);
 
-    if (ObpTypeDirectoryObject) {
+    if (ObpTypeDirectoryObject)
+    {
 
-        ObpLockLookupContext( &LookupContext, ObpTypeDirectoryObject);
+        ObpLockLookupContext(&LookupContext, ObpTypeDirectoryObject);
 
-        if (ObpLookupDirectoryEntry( ObpTypeDirectoryObject,
-                                     TypeName,
-                                     OBJ_CASE_INSENSITIVE,
-                                     FALSE,
-                                     &LookupContext )) {
+        if (ObpLookupDirectoryEntry(ObpTypeDirectoryObject, TypeName, OBJ_CASE_INSENSITIVE, FALSE, &LookupContext))
+        {
 
-            ObpReleaseLookupContext( &LookupContext );
+            ObpReleaseLookupContext(&LookupContext);
 
-            return( STATUS_OBJECT_NAME_COLLISION );
+            return (STATUS_OBJECT_NAME_COLLISION);
         }
     }
 
@@ -221,38 +213,34 @@ Return Value:
     //  copy over the name
     //
 
-    ObjectName.Buffer = ExAllocatePoolWithTag( PagedPool,
-                                               (ULONG)TypeName->MaximumLength,
-                                               'mNbO' );
+    ObjectName.Buffer = ExAllocatePoolWithTag(PagedPool, (ULONG)TypeName->MaximumLength, 'mNbO');
 
-    if (ObjectName.Buffer == NULL) {
+    if (ObjectName.Buffer == NULL)
+    {
 
-        ObpReleaseLookupContext( &LookupContext );
+        ObpReleaseLookupContext(&LookupContext);
 
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     ObjectName.MaximumLength = TypeName->MaximumLength;
 
-    RtlCopyUnicodeString( &ObjectName, TypeName );
+    RtlCopyUnicodeString(&ObjectName, TypeName);
 
     //
     //  Allocate memory for the object
     //
 
-    Status = ObpAllocateObject( NULL,
-                                KernelMode,
-                                ObpTypeObjectType,
-                                &ObjectName,
-                                sizeof( OBJECT_TYPE ),
-                                &NewObjectTypeHeader );
+    Status =
+        ObpAllocateObject(NULL, KernelMode, ObpTypeObjectType, &ObjectName, sizeof(OBJECT_TYPE), &NewObjectTypeHeader);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        ObpReleaseLookupContext( &LookupContext );
+        ObpReleaseLookupContext(&LookupContext);
         ExFreePool(ObjectName.Buffer);
 
-        return( Status );
+        return (Status);
     }
 
     //
@@ -262,8 +250,7 @@ Return Value:
     //  N.B. This is required since these fields are not initialized.
     //
 
-    NewObjectTypeHeader->Flags |= OB_FLAG_KERNEL_OBJECT |
-                                  OB_FLAG_PERMANENT_OBJECT;
+    NewObjectTypeHeader->Flags |= OB_FLAG_KERNEL_OBJECT | OB_FLAG_PERMANENT_OBJECT;
 
     NewObjectType = (POBJECT_TYPE)&NewObjectTypeHeader->Body;
     NewObjectType->Name = ObjectName;
@@ -273,9 +260,8 @@ Return Value:
     //  field plus high water marks
     //
 
-    RtlZeroMemory( &NewObjectType->TotalNumberOfObjects,
-                   FIELD_OFFSET( OBJECT_TYPE, TypeInfo ) -
-                   FIELD_OFFSET( OBJECT_TYPE, TotalNumberOfObjects ));
+    RtlZeroMemory(&NewObjectType->TotalNumberOfObjects,
+                  FIELD_OFFSET(OBJECT_TYPE, TypeInfo) - FIELD_OFFSET(OBJECT_TYPE, TotalNumberOfObjects));
 
     //
     //  If there is not a type object type yet then this must be
@@ -284,7 +270,8 @@ Return Value:
     //  referencing pointers.
     //
 
-    if (!ObpTypeObjectType) {
+    if (!ObpTypeObjectType)
+    {
 
         ObpTypeObjectType = NewObjectType;
         NewObjectTypeHeader->Type = ObpTypeObjectType;
@@ -293,8 +280,9 @@ Return Value:
 #ifdef POOL_TAGGING
 
         NewObjectType->Key = 'TjbO';
-
-    } else {
+    }
+    else
+    {
 
         //
         //  Otherwise this is not the type object type so we'll
@@ -304,24 +292,25 @@ Return Value:
 
         ANSI_STRING AnsiName;
 
-        if (NT_SUCCESS( RtlUnicodeStringToAnsiString( &AnsiName, TypeName, TRUE ) )) {
+        if (NT_SUCCESS(RtlUnicodeStringToAnsiString(&AnsiName, TypeName, TRUE)))
+        {
 
-            for (i=3; i>=AnsiName.Length; i--) {
+            for (i = 3; i >= AnsiName.Length; i--)
+            {
 
-                AnsiName.Buffer[ i ] = ' ';
-
+                AnsiName.Buffer[i] = ' ';
             }
 
             NewObjectType->Key = *(PULONG)AnsiName.Buffer;
-            ExFreePool( AnsiName.Buffer );
-
-        } else {
+            ExFreePool(AnsiName.Buffer);
+        }
+        else
+        {
 
             NewObjectType->Key = *(PULONG)TypeName->Buffer;
         }
 
 #endif //POOL_TAGGING
-
     }
 
     //
@@ -331,7 +320,8 @@ Return Value:
     NewObjectType->TypeInfo = *ObjectTypeInitializer;
     NewObjectType->TypeInfo.PoolType = PoolType;
 
-    if (NtGlobalFlag & FLG_MAINTAIN_OBJECT_TYPELIST) {
+    if (NtGlobalFlag & FLG_MAINTAIN_OBJECT_TYPELIST)
+    {
 
         NewObjectType->TypeInfo.MaintainTypeList = TRUE;
     }
@@ -342,17 +332,16 @@ Return Value:
     //  Quota for object name is charged independently
     //
 
-    StandardHeaderCharge = sizeof( OBJECT_HEADER ) +
-                           sizeof( OBJECT_HEADER_NAME_INFO ) +
-                           (ObjectTypeInitializer->MaintainHandleCount ?
-                                sizeof( OBJECT_HEADER_HANDLE_INFO )
-                              : 0 );
+    StandardHeaderCharge = sizeof(OBJECT_HEADER) + sizeof(OBJECT_HEADER_NAME_INFO) +
+                           (ObjectTypeInitializer->MaintainHandleCount ? sizeof(OBJECT_HEADER_HANDLE_INFO) : 0);
 
-    if ( PoolType == NonPagedPool ) {
+    if (PoolType == NonPagedPool)
+    {
 
         NewObjectType->TypeInfo.DefaultNonPagedPoolCharge += StandardHeaderCharge;
-
-    } else {
+    }
+    else
+    {
 
         NewObjectType->TypeInfo.DefaultPagedPoolCharge += StandardHeaderCharge;
     }
@@ -362,7 +351,8 @@ Return Value:
     //  the default one supplied by Se.
     //
 
-    if (ObjectTypeInitializer->SecurityProcedure == NULL) {
+    if (ObjectTypeInitializer->SecurityProcedure == NULL)
+    {
 
         NewObjectType->TypeInfo.SecurityProcedure = SeDefaultObjectMethod;
     }
@@ -372,14 +362,15 @@ Return Value:
     //  of this type
     //
 
-    ExInitializeResourceLite( &NewObjectType->Mutex );
+    ExInitializeResourceLite(&NewObjectType->Mutex);
 
-    for (i = 0; i < OBJECT_LOCK_COUNT; i++) {
+    for (i = 0; i < OBJECT_LOCK_COUNT; i++)
+    {
 
-        ExInitializeResourceLite( &NewObjectType->ObjectLocks[i] );
+        ExInitializeResourceLite(&NewObjectType->ObjectLocks[i]);
     }
 
-    InitializeListHead( &NewObjectType->TypeList );
+    InitializeListHead(&NewObjectType->TypeList);
     PERFINFO_INITIALIZE_OBJECT_ALLOCATED_TYPE_LIST_HEAD(NewObjectType);
 
     //
@@ -388,36 +379,40 @@ Return Value:
     //  synchronize and we'll set the default object
     //
 
-    if (NewObjectType->TypeInfo.UseDefaultObject) {
+    if (NewObjectType->TypeInfo.UseDefaultObject)
+    {
 
         NewObjectType->TypeInfo.ValidAccessMask |= SYNCHRONIZE;
         NewObjectType->DefaultObject = &ObpDefaultObject;
 
-    //
-    //  Otherwise if this is the type file object then we'll put
-    //  in the offset to the event of a file object.
-    //
+        //
+        //  Otherwise if this is the type file object then we'll put
+        //  in the offset to the event of a file object.
+        //
+    }
+    else if (ObjectName.Length == 8 && !wcscmp(ObjectName.Buffer, L"File"))
+    {
 
-    } else if (ObjectName.Length == 8 && !wcscmp( ObjectName.Buffer, L"File" )) {
-
-        NewObjectType->DefaultObject = ULongToPtr( FIELD_OFFSET( FILE_OBJECT, Event ) );
+        NewObjectType->DefaultObject = ULongToPtr(FIELD_OFFSET(FILE_OBJECT, Event));
 
 
-    //
-    // If this is a waitable port, set the offset to the event in the
-    // waitableport object.  Another hack
-    //
+        //
+        // If this is a waitable port, set the offset to the event in the
+        // waitableport object.  Another hack
+        //
+    }
+    else if (ObjectName.Length == 24 && !wcscmp(ObjectName.Buffer, L"WaitablePort"))
+    {
 
-    } else if ( ObjectName.Length == 24 && !wcscmp( ObjectName.Buffer, L"WaitablePort")) {
+        NewObjectType->DefaultObject = ULongToPtr(FIELD_OFFSET(LPCP_PORT_OBJECT, WaitEvent));
 
-        NewObjectType->DefaultObject = ULongToPtr( FIELD_OFFSET( LPCP_PORT_OBJECT, WaitEvent ) );
-
-    //
-    //  Otherwise indicate that there isn't a default object to wait
-    //  on
-    //
-
-    } else {
+        //
+        //  Otherwise indicate that there isn't a default object to wait
+        //  on
+        //
+    }
+    else
+    {
 
         NewObjectType->DefaultObject = NULL;
     }
@@ -427,13 +422,14 @@ Return Value:
     //  record then insert this object on that list
     //
 
-    ObpEnterObjectTypeMutex( ObpTypeObjectType );
+    ObpEnterObjectTypeMutex(ObpTypeObjectType);
 
-    CreatorInfo = OBJECT_HEADER_TO_CREATOR_INFO( NewObjectTypeHeader );
+    CreatorInfo = OBJECT_HEADER_TO_CREATOR_INFO(NewObjectTypeHeader);
 
-    if (CreatorInfo != NULL) {
+    if (CreatorInfo != NULL)
+    {
 
-        InsertTailList( &ObpTypeObjectType->TypeList, &CreatorInfo->TypeList );
+        InsertTailList(&ObpTypeObjectType->TypeList, &CreatorInfo->TypeList);
     }
 
     //
@@ -444,16 +440,17 @@ Return Value:
 
     NewObjectType->Index = ObpTypeObjectType->TotalNumberOfObjects;
 
-    if (NewObjectType->Index < OBP_MAX_DEFINED_OBJECT_TYPES) {
+    if (NewObjectType->Index < OBP_MAX_DEFINED_OBJECT_TYPES)
+    {
 
-        ObpObjectTypes[ NewObjectType->Index - 1 ] = NewObjectType;
+        ObpObjectTypes[NewObjectType->Index - 1] = NewObjectType;
     }
 
     //
     //  Unlock the type object type lock
     //
 
-    ObpLeaveObjectTypeMutex( ObpTypeObjectType );
+    ObpLeaveObjectTypeMutex(ObpTypeObjectType);
 
     //
     //  Lastly if there is not a directory object type yet then the following
@@ -466,21 +463,23 @@ Return Value:
     //  output type and return success
     //
 
-    if (!ObpTypeDirectoryObject ||
-        ObpInsertDirectoryEntry( ObpTypeDirectoryObject, &LookupContext, NewObjectTypeHeader )) {
+    if (!ObpTypeDirectoryObject || ObpInsertDirectoryEntry(ObpTypeDirectoryObject, &LookupContext, NewObjectTypeHeader))
+    {
 
-        if (ObpTypeDirectoryObject) {
+        if (ObpTypeDirectoryObject)
+        {
 
-            ObReferenceObject( ObpTypeDirectoryObject );
+            ObReferenceObject(ObpTypeDirectoryObject);
         }
 
-        ObpReleaseLookupContext( &LookupContext );
+        ObpReleaseLookupContext(&LookupContext);
 
         *ObjectType = NewObjectType;
 
-        return( STATUS_SUCCESS );
-
-    } else {
+        return (STATUS_SUCCESS);
+    }
+    else
+    {
 
         //
         //  Otherwise there is a directory object type and
@@ -488,17 +487,14 @@ Return Value:
         //  and return failure to our caller.
         //
 
-        ObpReleaseLookupContext( &LookupContext );
+        ObpReleaseLookupContext(&LookupContext);
 
-        return( STATUS_INSUFFICIENT_RESOURCES );
+        return (STATUS_INSUFFICIENT_RESOURCES);
     }
 }
 
-
-VOID
-ObpDeleteObjectType (
-    IN  PVOID   Object
-    )
+
+VOID ObpDeleteObjectType(IN PVOID Object)
 
 /*++
 
@@ -524,12 +520,13 @@ Return Value:
     //  The only cleaning up we need to do is to delete the type resource
     //
 
-    for (i = 0; i < OBJECT_LOCK_COUNT; i++) {
+    for (i = 0; i < OBJECT_LOCK_COUNT; i++)
+    {
 
-        ExDeleteResourceLite( &ObjectType->ObjectLocks[i] );
+        ExDeleteResourceLite(&ObjectType->ObjectLocks[i]);
     }
 
-    ExDeleteResourceLite( &ObjectType->Mutex );
+    ExDeleteResourceLite(&ObjectType->Mutex);
 
     //
     //  And return to our caller
@@ -538,13 +535,10 @@ Return Value:
     return;
 }
 
-
+
 NTSTATUS
-ObEnumerateObjectsByType(
-    IN POBJECT_TYPE ObjectType,
-    IN OB_ENUM_OBJECT_TYPE_ROUTINE EnumerationRoutine,
-    IN PVOID Parameter
-    )
+ObEnumerateObjectsByType(IN POBJECT_TYPE ObjectType, IN OB_ENUM_OBJECT_TYPE_ROUTINE EnumerationRoutine,
+                         IN PVOID Parameter)
 
 /*++
 
@@ -587,21 +581,23 @@ Return Value:
     //  Capture the  object type array
     //
 
-    ObjectTypeArray = ObpCreateTypeArray ( ObjectType );
+    ObjectTypeArray = ObpCreateTypeArray(ObjectType);
 
     //
     //  If it is any object in that queue, start
     //  quering information about it
     //
 
-    if (ObjectTypeArray != NULL) {
+    if (ObjectTypeArray != NULL)
+    {
 
         //
         //  The following loop iterates through each object
         //  of the specified type.
         //
 
-        for ( i = 0; i < ObjectTypeArray->Size; i++) {
+        for (i = 0; i < ObjectTypeArray->Size; i++)
+        {
 
             //
             //  For each object we'll grab its creator info record,
@@ -615,12 +611,13 @@ Return Value:
             //  will be NULL in the array. Jump then to the next object
             //
 
-            if (!CreatorInfo) {
+            if (!CreatorInfo)
+            {
 
                 continue;
             }
 
-            ObjectHeader = (POBJECT_HEADER)(CreatorInfo+1);
+            ObjectHeader = (POBJECT_HEADER)(CreatorInfo + 1);
 
             //
             //  From the object header see if there is a name for the
@@ -628,15 +625,17 @@ Return Value:
             //  empty name.
             //
 
-            NameInfo = OBJECT_HEADER_TO_NAME_INFO( ObjectHeader );
+            NameInfo = OBJECT_HEADER_TO_NAME_INFO(ObjectHeader);
 
-            if (NameInfo != NULL) {
+            if (NameInfo != NULL)
+            {
 
                 ObjectName = NameInfo->Name;
+            }
+            else
+            {
 
-            } else {
-
-                RtlZeroMemory( &ObjectName, sizeof( ObjectName ) );
+                RtlZeroMemory(&ObjectName, sizeof(ObjectName));
             }
 
             //
@@ -645,11 +644,9 @@ Return Value:
             //  an alternate ntstatus value
             //
 
-            if (!(EnumerationRoutine)( &ObjectHeader->Body,
-                                       &ObjectName,
-                                       ObjectHeader->HandleCount,
-                                       ObjectHeader->PointerCount,
-                                       Parameter )) {
+            if (!(EnumerationRoutine)(&ObjectHeader->Body, &ObjectName, ObjectHeader->HandleCount,
+                                      ObjectHeader->PointerCount, Parameter))
+            {
 
                 Status = STATUS_NO_MORE_ENTRIES;
 
@@ -665,11 +662,9 @@ Return Value:
 
 PERFINFO_DEFINE_OB_ENUMERATE_ALLOCATED_OBJECTS_BY_TYPE()
 
-
+
 POBJECT_TYPE_ARRAY
-ObpCreateTypeArray (
-    IN POBJECT_TYPE ObjectType
-    )
+ObpCreateTypeArray(IN POBJECT_TYPE ObjectType)
 
 /*++
 
@@ -704,7 +699,7 @@ Return Value:
     //  Acquire the ObjectType mutex
     //
 
-    ObpEnterObjectTypeMutex( ObjectType );
+    ObpEnterObjectTypeMutex(ObjectType);
 
     ObjectArray = NULL;
 
@@ -717,7 +712,8 @@ Return Value:
     Head1 = &ObjectType->TypeList;
     Next1 = Head1->Flink;
 
-    while (Next1 != Head1) {
+    while (Next1 != Head1)
+    {
 
         Next1 = Next1->Flink;
         Count += 1;
@@ -728,16 +724,17 @@ Return Value:
     //  and copy all pointers into that array
     //
 
-    if ( Count > 0 ) {
+    if (Count > 0)
+    {
 
         //
         //  Allocate the memory for array
         //
 
-        ObjectArray = ExAllocatePoolWithTag( PagedPool,
-                                             sizeof(OBJECT_TYPE_ARRAY) + sizeof(POBJECT_HEADER_CREATOR_INFO) * (Count - 1),
-                                             'rAbO' );
-        if ( ObjectArray != NULL ) {
+        ObjectArray = ExAllocatePoolWithTag(
+            PagedPool, sizeof(OBJECT_TYPE_ARRAY) + sizeof(POBJECT_HEADER_CREATOR_INFO) * (Count - 1), 'rAbO');
+        if (ObjectArray != NULL)
+        {
 
             ObjectArray->Size = Count;
 
@@ -750,18 +747,17 @@ Return Value:
             Head1 = &ObjectType->TypeList;
             Next1 = Head1->Flink;
 
-            while (Next1 != Head1) {
+            while (Next1 != Head1)
+            {
 
-                ASSERT( Count < ObjectArray->Size );
+                ASSERT(Count < ObjectArray->Size);
 
                 //
                 //  For each object we'll grab its creator info record,
                 //  its object header, and its object body
                 //
 
-                CreatorInfo = CONTAINING_RECORD( Next1,
-                                                 OBJECT_HEADER_CREATOR_INFO,
-                                                 TypeList );
+                CreatorInfo = CONTAINING_RECORD(Next1, OBJECT_HEADER_CREATOR_INFO, TypeList);
 
                 //
                 //  We'll store the CreatorInfo into the ObjectArray
@@ -774,11 +770,11 @@ Return Value:
                 //  to avoid deleting while are stored copy in this array
                 //
 
-                ObjectHeader = (POBJECT_HEADER)(CreatorInfo+1);
+                ObjectHeader = (POBJECT_HEADER)(CreatorInfo + 1);
 
                 Object = &ObjectHeader->Body;
 
-                if (!ObReferenceObjectSafe( Object))
+                if (!ObReferenceObjectSafe(Object))
                 {
                     //
                     //  We can't reference the object because it is being deleted
@@ -797,16 +793,13 @@ Return Value:
     //  Release the ObjectType mutex
     //
 
-    ObpLeaveObjectTypeMutex( ObjectType );
+    ObpLeaveObjectTypeMutex(ObjectType);
 
     return ObjectArray;
 }
 
-
-VOID
-ObpDestroyTypeArray (
-    IN POBJECT_TYPE_ARRAY ObjectArray
-    )
+
+VOID ObpDestroyTypeArray(IN POBJECT_TYPE_ARRAY ObjectArray)
 
 /*++
 
@@ -831,13 +824,15 @@ Return Value:
     PVOID Object;
     ULONG i;
 
-    if (ObjectArray != NULL) {
+    if (ObjectArray != NULL)
+    {
 
         //
         //  Go through array and dereference all objects.
         //
 
-        for (i = 0; i < ObjectArray->Size; i++) {
+        for (i = 0; i < ObjectArray->Size; i++)
+        {
 
             //
             //  Retrieving the Object from the CreatorInfo
@@ -845,9 +840,10 @@ Return Value:
 
             CreatorInfo = ObjectArray->CreatorInfoArray[i];
 
-            if (CreatorInfo) {
+            if (CreatorInfo)
+            {
 
-                ObjectHeader = (POBJECT_HEADER)(CreatorInfo+1);
+                ObjectHeader = (POBJECT_HEADER)(CreatorInfo + 1);
 
                 Object = &ObjectHeader->Body;
 
@@ -855,7 +851,7 @@ Return Value:
                 //  Dereference the object
                 //
 
-                ObDereferenceObject( Object );
+                ObDereferenceObject(Object);
             }
         }
 
@@ -863,18 +859,14 @@ Return Value:
         //  Free the memory alocated for this array
         //
 
-        ExFreePoolWithTag( ObjectArray, 'rAbO' );
+        ExFreePoolWithTag(ObjectArray, 'rAbO');
     }
 }
 
-
+
 NTSTATUS
-ObGetObjectInformation(
-    IN PCHAR UserModeBufferAddress,
-    OUT PSYSTEM_OBJECTTYPE_INFORMATION ObjectInformation,
-    IN ULONG Length,
-    OUT PULONG ReturnLength OPTIONAL
-    )
+ObGetObjectInformation(IN PCHAR UserModeBufferAddress, OUT PSYSTEM_OBJECTTYPE_INFORMATION ObjectInformation,
+                       IN ULONG Length, OUT PULONG ReturnLength OPTIONAL)
 
 /*++
 
@@ -919,7 +911,7 @@ Return Value:
     PSYSTEM_OBJECT_INFORMATION ObjectInfo;
     ULONG TotalSize, NameSize;
     POBJECT_HEADER ObjectTypeHeader;
-    WCHAR NameBuffer[ 260 + 4 ];
+    WCHAR NameBuffer[260 + 4];
     POBJECT_NAME_INFORMATION NameInformation;
     extern POBJECT_TYPE IoFileObjectType;
     PWSTR TempBuffer;
@@ -943,16 +935,19 @@ Return Value:
     //  Capture the object types into an array
     //
 
-    TypeObjectTypeArray = ObpCreateTypeArray ( ObpTypeObjectType );
+    TypeObjectTypeArray = ObpCreateTypeArray(ObpTypeObjectType);
 
-    if (!TypeObjectTypeArray) {
+    if (!TypeObjectTypeArray)
+    {
 
         return STATUS_UNSUCCESSFUL;
     }
 
-    try {
+    try
+    {
 
-        for ( TypeIndex = 0; TypeIndex < TypeObjectTypeArray->Size; TypeIndex++ ) {
+        for (TypeIndex = 0; TypeIndex < TypeObjectTypeArray->Size; TypeIndex++)
+        {
 
             //
             //  For each object type object we'll grab its creator
@@ -960,19 +955,20 @@ Return Value:
             //  object header followed by the object body
             //
 
-            CreatorInfo = TypeObjectTypeArray->CreatorInfoArray[ TypeIndex ];
+            CreatorInfo = TypeObjectTypeArray->CreatorInfoArray[TypeIndex];
 
             //
             //  If the object type is being deleted, the creator info
             //  will be NULL in the array. Jump then to the next object
             //
 
-            if (!CreatorInfo) {
+            if (!CreatorInfo)
+            {
 
                 continue;
             }
 
-            ObjectTypeHeader = (POBJECT_HEADER)(CreatorInfo+1);
+            ObjectTypeHeader = (POBJECT_HEADER)(CreatorInfo + 1);
             ObjectType = (POBJECT_TYPE)&ObjectTypeHeader->Body;
 
             //
@@ -981,20 +977,22 @@ Return Value:
             //  more loop
             //
 
-            if (ObjectType != ObpTypeObjectType) {
+            if (ObjectType != ObpTypeObjectType)
+            {
 
                 //
                 //  Capture the array with objects queued in the TypeList
                 //
 
-                ObjectTypeArray = ObpCreateTypeArray ( ObjectType );
+                ObjectTypeArray = ObpCreateTypeArray(ObjectType);
 
                 //
                 //  If it is any object in that queue, start
                 //  quering information about it
                 //
 
-                if (ObjectTypeArray != NULL) {
+                if (ObjectTypeArray != NULL)
+                {
 
                     //
                     //  The following loop iterates through each object
@@ -1003,7 +1001,8 @@ Return Value:
 
                     FirstObjectForType = TRUE;
 
-                    for ( i = 0; i < ObjectTypeArray->Size; i++) {
+                    for (i = 0; i < ObjectTypeArray->Size; i++)
+                    {
 
                         //
                         //  For each object we'll grab its creator info record,
@@ -1017,12 +1016,13 @@ Return Value:
                         //  will be NULL in the array. Jump then to the next object
                         //
 
-                        if (!CreatorInfo) {
+                        if (!CreatorInfo)
+                        {
 
                             continue;
                         }
 
-                        ObjectHeader = (POBJECT_HEADER)(CreatorInfo+1);
+                        ObjectHeader = (POBJECT_HEADER)(CreatorInfo + 1);
 
                         Object = &ObjectHeader->Body;
 
@@ -1031,7 +1031,8 @@ Return Value:
                         //  type then we'll fill in the type info buffer
                         //
 
-                        if (FirstObjectForType) {
+                        if (FirstObjectForType)
+                        {
 
                             FirstObjectForType = FALSE;
 
@@ -1043,7 +1044,8 @@ Return Value:
                             //  next type info record
                             //
 
-                            if ((TypeInfo != NULL) && (TotalSize < Length)) {
+                            if ((TypeInfo != NULL) && (TotalSize < Length))
+                            {
 
                                 TypeInfo->NextEntryOffset = TotalSize;
                             }
@@ -1057,28 +1059,30 @@ Return Value:
 
                             TypeInfo = (PSYSTEM_OBJECTTYPE_INFORMATION)((PCHAR)ObjectInformation + TotalSize);
 
-                            TotalSize += FIELD_OFFSET( SYSTEM_OBJECTTYPE_INFORMATION, TypeName );
+                            TotalSize += FIELD_OFFSET(SYSTEM_OBJECTTYPE_INFORMATION, TypeName);
 
                             //
                             //  See if the data will fit into the info buffer, and if
                             //  so then fill in the record
                             //
 
-                            if (TotalSize >= Length) {
+                            if (TotalSize >= Length)
+                            {
 
                                 ReturnStatus = STATUS_INFO_LENGTH_MISMATCH;
+                            }
+                            else
+                            {
 
-                            } else {
-
-                                TypeInfo->NextEntryOffset   = 0;
-                                TypeInfo->NumberOfObjects   = ObjectType->TotalNumberOfObjects;
-                                TypeInfo->NumberOfHandles   = ObjectType->TotalNumberOfHandles;
-                                TypeInfo->TypeIndex         = ObjectType->Index;
+                                TypeInfo->NextEntryOffset = 0;
+                                TypeInfo->NumberOfObjects = ObjectType->TotalNumberOfObjects;
+                                TypeInfo->NumberOfHandles = ObjectType->TotalNumberOfHandles;
+                                TypeInfo->TypeIndex = ObjectType->Index;
                                 TypeInfo->InvalidAttributes = ObjectType->TypeInfo.InvalidAttributes;
-                                TypeInfo->GenericMapping    = ObjectType->TypeInfo.GenericMapping;
-                                TypeInfo->ValidAccessMask   = ObjectType->TypeInfo.ValidAccessMask;
-                                TypeInfo->PoolType          = ObjectType->TypeInfo.PoolType;
-                                TypeInfo->SecurityRequired  = ObjectType->TypeInfo.SecurityRequired;
+                                TypeInfo->GenericMapping = ObjectType->TypeInfo.GenericMapping;
+                                TypeInfo->ValidAccessMask = ObjectType->TypeInfo.ValidAccessMask;
+                                TypeInfo->PoolType = ObjectType->TypeInfo.PoolType;
+                                TypeInfo->SecurityRequired = ObjectType->TypeInfo.SecurityRequired;
                             }
 
                             //
@@ -1095,17 +1099,15 @@ Return Value:
 
                             NameSize = 0;
 
-                            Status = ObQueryTypeName( Object,
-                                                      &TypeInfo->TypeName,
-                                                      TotalSize < Length ? Length - TotalSize : 0,
-                                                      &NameSize );
+                            Status = ObQueryTypeName(Object, &TypeInfo->TypeName,
+                                                     TotalSize < Length ? Length - TotalSize : 0, &NameSize);
 
                             //
                             //  Round the name size up to the next ulong boundary
                             //
 
-                            NameSize = (NameSize + TYPE_ALIGNMENT (SYSTEM_OBJECTTYPE_INFORMATION) - 1) &
-                                                   (~(TYPE_ALIGNMENT (SYSTEM_OBJECTTYPE_INFORMATION) - 1));
+                            NameSize = (NameSize + TYPE_ALIGNMENT(SYSTEM_OBJECTTYPE_INFORMATION) - 1) &
+                                       (~(TYPE_ALIGNMENT(SYSTEM_OBJECTTYPE_INFORMATION) - 1));
 
                             //
                             //  If we were able to successfully get the type name then
@@ -1115,16 +1117,16 @@ Return Value:
                             //  access the string.
                             //
 
-                            if (NT_SUCCESS( Status )) {
+                            if (NT_SUCCESS(Status))
+                            {
 
-                                TypeInfo->TypeName.MaximumLength = (USHORT)
-                                    (NameSize - sizeof( TypeInfo->TypeName ));
-                                TypeInfo->TypeName.Buffer = (PWSTR)
-                                    (UserModeBufferAddress +
-                                     ((PCHAR)TypeInfo->TypeName.Buffer - (PCHAR)ObjectInformation)
-                                    );
-
-                            } else {
+                                TypeInfo->TypeName.MaximumLength = (USHORT)(NameSize - sizeof(TypeInfo->TypeName));
+                                TypeInfo->TypeName.Buffer =
+                                    (PWSTR)(UserModeBufferAddress +
+                                            ((PCHAR)TypeInfo->TypeName.Buffer - (PCHAR)ObjectInformation));
+                            }
+                            else
+                            {
 
                                 ReturnStatus = Status;
                             }
@@ -1135,8 +1137,9 @@ Return Value:
                             //
 
                             TotalSize += NameSize;
-
-                        } else {
+                        }
+                        else
+                        {
 
                             //
                             //  Otherwise this is not the first time through the inner
@@ -1145,7 +1148,8 @@ Return Value:
                             //  relative offset" to the next object info record
                             //
 
-                            if (TotalSize < Length) {
+                            if (TotalSize < Length)
+                            {
 
                                 ObjectInfo->NextEntryOffset = TotalSize;
                             }
@@ -1160,49 +1164,54 @@ Return Value:
 
                         ObjectInfo = (PSYSTEM_OBJECT_INFORMATION)((PCHAR)ObjectInformation + TotalSize);
 
-                        TotalSize += FIELD_OFFSET( SYSTEM_OBJECT_INFORMATION, NameInfo );
+                        TotalSize += FIELD_OFFSET(SYSTEM_OBJECT_INFORMATION, NameInfo);
 
                         //
                         //  If there is room for the object info record then fill
                         //  in the record
                         //
 
-                        if (TotalSize >= Length) {
+                        if (TotalSize >= Length)
+                        {
 
                             ReturnStatus = STATUS_INFO_LENGTH_MISMATCH;
+                        }
+                        else
+                        {
 
-                        } else {
-
-                            ObjectInfo->NextEntryOffset       = 0;
-                            ObjectInfo->Object                = Object;
-                            ObjectInfo->CreatorUniqueProcess  = CreatorInfo->CreatorUniqueProcess;
+                            ObjectInfo->NextEntryOffset = 0;
+                            ObjectInfo->Object = Object;
+                            ObjectInfo->CreatorUniqueProcess = CreatorInfo->CreatorUniqueProcess;
                             ObjectInfo->CreatorBackTraceIndex = CreatorInfo->CreatorBackTraceIndex;
-                            ObjectInfo->PointerCount          = ObjectHeader->PointerCount;
-                            ObjectInfo->HandleCount           = ObjectHeader->HandleCount;
-                            ObjectInfo->Flags                 = (USHORT)ObjectHeader->Flags;
-                            ObjectInfo->SecurityDescriptor    =
-                                ExFastRefGetObject (*(PEX_FAST_REF) &ObjectHeader->SecurityDescriptor);
+                            ObjectInfo->PointerCount = ObjectHeader->PointerCount;
+                            ObjectInfo->HandleCount = ObjectHeader->HandleCount;
+                            ObjectInfo->Flags = (USHORT)ObjectHeader->Flags;
+                            ObjectInfo->SecurityDescriptor =
+                                ExFastRefGetObject(*(PEX_FAST_REF)&ObjectHeader->SecurityDescriptor);
 
                             //
                             //  Fill in the appropriate quota information if there is
                             //  any quota information available
                             //
 
-                            QuotaInfo = OBJECT_HEADER_TO_QUOTA_INFO( ObjectHeader );
+                            QuotaInfo = OBJECT_HEADER_TO_QUOTA_INFO(ObjectHeader);
 
-                            if (QuotaInfo != NULL) {
+                            if (QuotaInfo != NULL)
+                            {
 
-                                ObjectInfo->PagedPoolCharge    = QuotaInfo->PagedPoolCharge;
+                                ObjectInfo->PagedPoolCharge = QuotaInfo->PagedPoolCharge;
                                 ObjectInfo->NonPagedPoolCharge = QuotaInfo->NonPagedPoolCharge;
 
-                                if (QuotaInfo->ExclusiveProcess != NULL) {
+                                if (QuotaInfo->ExclusiveProcess != NULL)
+                                {
 
                                     ObjectInfo->ExclusiveProcessId = QuotaInfo->ExclusiveProcess->UniqueProcessId;
                                 }
+                            }
+                            else
+                            {
 
-                            } else {
-
-                                ObjectInfo->PagedPoolCharge    = ObjectType->TypeInfo.DefaultPagedPoolCharge;
+                                ObjectInfo->PagedPoolCharge = ObjectType->TypeInfo.DefaultPagedPoolCharge;
                                 ObjectInfo->NonPagedPoolCharge = ObjectType->TypeInfo.DefaultNonPagedPoolCharge;
                             }
                         }
@@ -1218,40 +1227,39 @@ Return Value:
                         NameSize = 0;
                         Status = STATUS_SUCCESS;
 
-                        if ((ObjectType->TypeInfo.QueryNameProcedure == NULL) ||
-                            (ObjectType != IoFileObjectType)) {
+                        if ((ObjectType->TypeInfo.QueryNameProcedure == NULL) || (ObjectType != IoFileObjectType))
+                        {
 
-                            Status = ObQueryNameString( Object,
-                                                        NameInformation,
-                                                        sizeof( NameBuffer ),
-                                                        &NameSize );
+                            Status = ObQueryNameString(Object, NameInformation, sizeof(NameBuffer), &NameSize);
 
-                        //
-                        //  If this is a file object then we can get the
-                        //  name directly from the file object.  We start by
-                        //  directly copying the file object unicode string structure
-                        //  into our local memory and then adjust the lengths, copy
-                        //  the buffer and modify the pointers as necessary.
-                        //
-
-                        } else if (ObjectType == IoFileObjectType) {
+                            //
+                            //  If this is a file object then we can get the
+                            //  name directly from the file object.  We start by
+                            //  directly copying the file object unicode string structure
+                            //  into our local memory and then adjust the lengths, copy
+                            //  the buffer and modify the pointers as necessary.
+                            //
+                        }
+                        else if (ObjectType == IoFileObjectType)
+                        {
 
                             NameInformation->Name = ((PFILE_OBJECT)Object)->FileName;
 
-                            if ((NameInformation->Name.Length != 0) &&
-                                (NameInformation->Name.Buffer != NULL)) {
+                            if ((NameInformation->Name.Length != 0) && (NameInformation->Name.Buffer != NULL))
+                            {
 
-                                NameSize = NameInformation->Name.Length + sizeof( UNICODE_NULL );
+                                NameSize = NameInformation->Name.Length + sizeof(UNICODE_NULL);
 
                                 //
                                 //  We will trim down names that are longer than 260 unicode
                                 //  characters in length
                                 //
 
-                                if (NameSize > (260 * sizeof( WCHAR ))) {
+                                if (NameSize > (260 * sizeof(WCHAR)))
+                                {
 
-                                    NameSize = (260 * sizeof( WCHAR ));
-                                    NameInformation->Name.Length = (USHORT)(NameSize - sizeof( UNICODE_NULL ));
+                                    NameSize = (260 * sizeof(WCHAR));
+                                    NameInformation->Name.Length = (USHORT)(NameSize - sizeof(UNICODE_NULL));
                                 }
 
                                 //
@@ -1263,22 +1271,23 @@ Return Value:
                                 //  may not be valid memory
                                 //
 
-                                RtlMoveMemory( (NameInformation+1),
-                                               NameInformation->Name.Buffer,
-                                               NameSize - sizeof( UNICODE_NULL) );
+                                RtlMoveMemory((NameInformation + 1), NameInformation->Name.Buffer,
+                                              NameSize - sizeof(UNICODE_NULL));
 
-                                NameInformation->Name.Buffer = (PWSTR)(NameInformation+1);
+                                NameInformation->Name.Buffer = (PWSTR)(NameInformation + 1);
                                 NameInformation->Name.MaximumLength = (USHORT)NameSize;
-                                NameInformation->Name.Buffer[ NameInformation->Name.Length / sizeof( WCHAR )] = UNICODE_NULL;
+                                NameInformation->Name.Buffer[NameInformation->Name.Length / sizeof(WCHAR)] =
+                                    UNICODE_NULL;
 
                                 //
                                 //  Adjust the name size to account for the unicode
                                 //  string structure
                                 //
 
-                                NameSize += sizeof( *NameInformation );
-
-                            } else {
+                                NameSize += sizeof(*NameInformation);
+                            }
+                            else
+                            {
 
                                 //
                                 //  The file object does not have a name so the name
@@ -1293,15 +1302,16 @@ Return Value:
                         //  information variable
                         //
 
-                        if (NameSize != 0) {
+                        if (NameSize != 0)
+                        {
 
                             //
                             //  Adjust the size of the name up to the next ulong
                             //  boundary and modify the total size required when
                             //  we add in the object name
                             //
-                            NameSize = (NameSize + TYPE_ALIGNMENT (SYSTEM_OBJECTTYPE_INFORMATION) - 1) &
-                                                   (~(TYPE_ALIGNMENT (SYSTEM_OBJECTTYPE_INFORMATION) - 1));
+                            NameSize = (NameSize + TYPE_ALIGNMENT(SYSTEM_OBJECTTYPE_INFORMATION) - 1) &
+                                       (~(TYPE_ALIGNMENT(SYSTEM_OBJECTTYPE_INFORMATION) - 1));
 
                             TotalSize += NameSize;
 
@@ -1314,92 +1324,94 @@ Return Value:
                             //  to use the user's buffer
                             //
 
-                            if ((NT_SUCCESS( Status )) &&
-                                (NameInformation->Name.Length != 0) &&
-                                (TotalSize < Length)) {
+                            if ((NT_SUCCESS(Status)) && (NameInformation->Name.Length != 0) && (TotalSize < Length))
+                            {
 
                                 //
                                 //  Use temporary local variable for RltMoveMemory
                                 //
 
-                                TempBuffer = (PWSTR)((&ObjectInfo->NameInfo)+1);
-                                TempMaximumLength = (USHORT)
-                                    (NameInformation->Name.Length + sizeof( UNICODE_NULL ));
+                                TempBuffer = (PWSTR)((&ObjectInfo->NameInfo) + 1);
+                                TempMaximumLength = (USHORT)(NameInformation->Name.Length + sizeof(UNICODE_NULL));
 
                                 ObjectInfo->NameInfo.Name.Length = NameInformation->Name.Length;
 
-                                RtlMoveMemory( TempBuffer,
-                                               NameInformation->Name.Buffer,
-                                               TempMaximumLength);
+                                RtlMoveMemory(TempBuffer, NameInformation->Name.Buffer, TempMaximumLength);
 
-                                ObjectInfo->NameInfo.Name.Buffer = (PWSTR)
-                                    (UserModeBufferAddress +
-                                     ((PCHAR)TempBuffer - (PCHAR)ObjectInformation));
+                                ObjectInfo->NameInfo.Name.Buffer =
+                                    (PWSTR)(UserModeBufferAddress + ((PCHAR)TempBuffer - (PCHAR)ObjectInformation));
                                 ObjectInfo->NameInfo.Name.MaximumLength = TempMaximumLength;
 
-                            //
-                            //  Otherwise if we've been successful so far but for some
-                            //  reason we weren't able to store the object name then
-                            //  decide if it was because of an not enough space or
-                            //  because the object name is null
-                            //
+                                //
+                                //  Otherwise if we've been successful so far but for some
+                                //  reason we weren't able to store the object name then
+                                //  decide if it was because of an not enough space or
+                                //  because the object name is null
+                                //
+                            }
+                            else if (NT_SUCCESS(Status))
+                            {
 
-                            } else if (NT_SUCCESS( Status )) {
-
-                                if ((NameInformation->Name.Length != 0) ||
-                                    (TotalSize >= Length)) {
+                                if ((NameInformation->Name.Length != 0) || (TotalSize >= Length))
+                                {
 
                                     ReturnStatus = STATUS_INFO_LENGTH_MISMATCH;
+                                }
+                                else
+                                {
 
-                                } else {
-
-                                    RtlInitUnicodeString( &ObjectInfo->NameInfo.Name, NULL );
+                                    RtlInitUnicodeString(&ObjectInfo->NameInfo.Name, NULL);
                                 }
 
-                            //
-                            //  Otherwise we have not been successful so far, we'll
-                            //  adjust the total size to account for a null unicode
-                            //  string, and if it doesn't fit then that's an error
-                            //  otherwise we'll put in the null object name
-                            //
+                                //
+                                //  Otherwise we have not been successful so far, we'll
+                                //  adjust the total size to account for a null unicode
+                                //  string, and if it doesn't fit then that's an error
+                                //  otherwise we'll put in the null object name
+                                //
+                            }
+                            else
+                            {
 
-                            } else {
+                                TotalSize += sizeof(ObjectInfo->NameInfo.Name);
 
-                                TotalSize += sizeof( ObjectInfo->NameInfo.Name );
-
-                                if (TotalSize >= Length) {
+                                if (TotalSize >= Length)
+                                {
 
                                     ReturnStatus = STATUS_INFO_LENGTH_MISMATCH;
+                                }
+                                else
+                                {
 
-                                } else {
-
-                                    RtlInitUnicodeString( &ObjectInfo->NameInfo.Name, NULL );
+                                    RtlInitUnicodeString(&ObjectInfo->NameInfo.Name, NULL);
 
                                     ReturnStatus = Status;
                                 }
                             }
 
-                        //
-                        //  Otherwise the name size is zero meaning we have not found
-                        //  an object name, so we'll adjust total size for the null
-                        //  unicode string, and check that it fits in the output
-                        //  buffer.  If it fits we'll output a null object name
-                        //
+                            //
+                            //  Otherwise the name size is zero meaning we have not found
+                            //  an object name, so we'll adjust total size for the null
+                            //  unicode string, and check that it fits in the output
+                            //  buffer.  If it fits we'll output a null object name
+                            //
+                        }
+                        else
+                        {
 
-                        } else {
+                            TotalSize += sizeof(ObjectInfo->NameInfo.Name);
 
-                            TotalSize += sizeof( ObjectInfo->NameInfo.Name );
-
-                            if (TotalSize >= Length) {
+                            if (TotalSize >= Length)
+                            {
 
                                 ReturnStatus = STATUS_INFO_LENGTH_MISMATCH;
+                            }
+                            else
+                            {
 
-                            } else {
-
-                                RtlInitUnicodeString( &ObjectInfo->NameInfo.Name, NULL );
+                                RtlInitUnicodeString(&ObjectInfo->NameInfo.Name, NULL);
                             }
                         }
-
                     }
 
                     //
@@ -1417,27 +1429,29 @@ Return Value:
         //  that information.  And return to our caller
         //
 
-        if (ARGUMENT_PRESENT( ReturnLength )) {
+        if (ARGUMENT_PRESENT(ReturnLength))
+        {
 
             *ReturnLength = TotalSize;
         }
+    }
+    finally
+    {
 
-
-    } finally {
-
-        if (ObjectTypeArray != NULL) {
+        if (ObjectTypeArray != NULL)
+        {
 
             ObpDestroyTypeArray(ObjectTypeArray);
         }
 
-        ObpDestroyTypeArray( TypeObjectTypeArray );
+        ObpDestroyTypeArray(TypeObjectTypeArray);
     }
 
-    if (TypeInfo == NULL) {
+    if (TypeInfo == NULL)
+    {
 
         return STATUS_UNSUCCESSFUL;
     }
 
-    return( ReturnStatus );
+    return (ReturnStatus);
 }
-

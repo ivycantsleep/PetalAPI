@@ -48,72 +48,39 @@ PKWIN32_OPENMETHOD_CALLOUT ExWindowStationOpenProcedureCallout;
 
 typedef PVOID PKWIN32_CALLOUT_PARAMETERS;
 
-typedef
-NTSTATUS
-(*PKWIN32_CALLOUT) (
-    IN PKWIN32_CALLOUT_PARAMETERS
-    );
+typedef NTSTATUS (*PKWIN32_CALLOUT)(IN PKWIN32_CALLOUT_PARAMETERS);
 
 NTSTATUS
-ExpWin32SessionCallout(
-    IN  PKWIN32_CALLOUT CalloutRoutine,
-    IN  PKWIN32_CALLOUT_PARAMETERS Parameters,
-    IN  ULONG SessionId,
-    OUT PNTSTATUS CalloutStatus  OPTIONAL
-    );
+ExpWin32SessionCallout(IN PKWIN32_CALLOUT CalloutRoutine, IN PKWIN32_CALLOUT_PARAMETERS Parameters, IN ULONG SessionId,
+                       OUT PNTSTATUS CalloutStatus OPTIONAL);
 
-VOID
-ExpWin32CloseProcedure(
-   IN PEPROCESS Process OPTIONAL,
-   IN PVOID Object,
-   IN ACCESS_MASK GrantedAccess,
-   IN ULONG ProcessHandleCount,
-   IN ULONG SystemHandleCount );
+VOID ExpWin32CloseProcedure(IN PEPROCESS Process OPTIONAL, IN PVOID Object, IN ACCESS_MASK GrantedAccess,
+                            IN ULONG ProcessHandleCount, IN ULONG SystemHandleCount);
 
 BOOLEAN
-ExpWin32OkayToCloseProcedure(
-    IN PEPROCESS Process OPTIONAL,
-    IN PVOID Object,
-    IN HANDLE Handle,
-    IN KPROCESSOR_MODE PreviousMode
-    );
+ExpWin32OkayToCloseProcedure(IN PEPROCESS Process OPTIONAL, IN PVOID Object, IN HANDLE Handle,
+                             IN KPROCESSOR_MODE PreviousMode);
 
-VOID
-ExpWin32DeleteProcedure(
-    IN PVOID    Object
-    );
+VOID ExpWin32DeleteProcedure(IN PVOID Object);
 
 NTSTATUS
-ExpWin32ParseProcedure (
-    IN PVOID ParseObject,
-    IN PVOID ObjectType,
-    IN OUT PACCESS_STATE AccessState,
-    IN KPROCESSOR_MODE AccessMode,
-    IN ULONG Attributes,
-    IN OUT PUNICODE_STRING CompleteName,
-    IN OUT PUNICODE_STRING RemainingName,
-    IN OUT PVOID Context OPTIONAL,
-    IN PSECURITY_QUALITY_OF_SERVICE SecurityQos OPTIONAL,
-    OUT PVOID *Object
-    );
+ExpWin32ParseProcedure(IN PVOID ParseObject, IN PVOID ObjectType, IN OUT PACCESS_STATE AccessState,
+                       IN KPROCESSOR_MODE AccessMode, IN ULONG Attributes, IN OUT PUNICODE_STRING CompleteName,
+                       IN OUT PUNICODE_STRING RemainingName, IN OUT PVOID Context OPTIONAL,
+                       IN PSECURITY_QUALITY_OF_SERVICE SecurityQos OPTIONAL, OUT PVOID *Object);
 
 NTSTATUS
-ExpWin32OpenProcedure(
-    IN OB_OPEN_REASON OpenReason,
-    IN PEPROCESS Process OPTIONAL,
-    IN PVOID Object,
-    IN ACCESS_MASK GrantedAccess,
-    IN ULONG HandleCount
-    );
+ExpWin32OpenProcedure(IN OB_OPEN_REASON OpenReason, IN PEPROCESS Process OPTIONAL, IN PVOID Object,
+                      IN ACCESS_MASK GrantedAccess, IN ULONG HandleCount);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text (INIT, ExpWin32Initialization)
-#pragma alloc_text (PAGE, ExpWin32CloseProcedure)
-#pragma alloc_text (PAGE, ExpWin32OkayToCloseProcedure)
-#pragma alloc_text (PAGE, ExpWin32DeleteProcedure)
-#pragma alloc_text (PAGE, ExpWin32OpenProcedure)
-#pragma alloc_text (PAGE, ExpWin32ParseProcedure)
-#pragma alloc_text (PAGE, ExpWin32SessionCallout)
+#pragma alloc_text(INIT, ExpWin32Initialization)
+#pragma alloc_text(PAGE, ExpWin32CloseProcedure)
+#pragma alloc_text(PAGE, ExpWin32OkayToCloseProcedure)
+#pragma alloc_text(PAGE, ExpWin32DeleteProcedure)
+#pragma alloc_text(PAGE, ExpWin32OpenProcedure)
+#pragma alloc_text(PAGE, ExpWin32ParseProcedure)
+#pragma alloc_text(PAGE, ExpWin32SessionCallout)
 #endif
 
 
@@ -123,22 +90,14 @@ ExpWin32OpenProcedure(
 #ifdef ALLOC_DATA_PRAGMA
 #pragma const_seg("INITCONST")
 #endif
-const GENERIC_MAPPING ExpWindowStationMapping = {
-    STANDARD_RIGHTS_READ,
-    STANDARD_RIGHTS_WRITE,
-    STANDARD_RIGHTS_EXECUTE,
-    STANDARD_RIGHTS_REQUIRED
-};
+const GENERIC_MAPPING ExpWindowStationMapping = { STANDARD_RIGHTS_READ, STANDARD_RIGHTS_WRITE, STANDARD_RIGHTS_EXECUTE,
+                                                  STANDARD_RIGHTS_REQUIRED };
 
 /*
  * desktop generic mapping
  */
-const GENERIC_MAPPING ExpDesktopMapping = {
-    STANDARD_RIGHTS_READ,
-    STANDARD_RIGHTS_WRITE,
-    STANDARD_RIGHTS_EXECUTE,
-    STANDARD_RIGHTS_REQUIRED
-};
+const GENERIC_MAPPING ExpDesktopMapping = { STANDARD_RIGHTS_READ, STANDARD_RIGHTS_WRITE, STANDARD_RIGHTS_EXECUTE,
+                                            STANDARD_RIGHTS_REQUIRED };
 #ifdef ALLOC_DATA_PRAGMA
 #pragma const_seg()
 #endif
@@ -156,49 +115,42 @@ Return Value:
 
 
 --*/
-VOID ExpWin32CloseProcedure(
-   IN PEPROCESS Process OPTIONAL,
-   IN PVOID Object,
-   IN ACCESS_MASK GrantedAccess,
-   IN ULONG ProcessHandleCount,
-   IN ULONG SystemHandleCount )
+VOID ExpWin32CloseProcedure(IN PEPROCESS Process OPTIONAL, IN PVOID Object, IN ACCESS_MASK GrantedAccess,
+                            IN ULONG ProcessHandleCount, IN ULONG SystemHandleCount)
 {
 
-   //
-   // SessionId is the first field in the Win32k Object structure
-   //
-   ULONG SessionId = *((PULONG)Object);
-   WIN32_CLOSEMETHOD_PARAMETERS CloseParams;
-   NTSTATUS Status;
+    //
+    // SessionId is the first field in the Win32k Object structure
+    //
+    ULONG SessionId = *((PULONG)Object);
+    WIN32_CLOSEMETHOD_PARAMETERS CloseParams;
+    NTSTATUS Status;
 
-   CloseParams.Process = Process;
-   CloseParams.Object  =  Object;
-   CloseParams.GrantedAccess = GrantedAccess;
-   CloseParams.ProcessHandleCount = ProcessHandleCount;
-   CloseParams.SystemHandleCount =  SystemHandleCount;
+    CloseParams.Process = Process;
+    CloseParams.Object = Object;
+    CloseParams.GrantedAccess = GrantedAccess;
+    CloseParams.ProcessHandleCount = ProcessHandleCount;
+    CloseParams.SystemHandleCount = SystemHandleCount;
 
-   if ((OBJECT_TO_OBJECT_HEADER(Object)->Type) == ExDesktopObjectType) {
+    if ((OBJECT_TO_OBJECT_HEADER(Object)->Type) == ExDesktopObjectType)
+    {
 
-       Status = ExpWin32SessionCallout((PKWIN32_CALLOUT)ExDesktopCloseProcedureCallout,
-                                       (PKWIN32_CALLOUT_PARAMETERS)&CloseParams,
-                                       SessionId,
-                                       NULL);
-       ASSERT(NT_SUCCESS(Status));
+        Status = ExpWin32SessionCallout((PKWIN32_CALLOUT)ExDesktopCloseProcedureCallout,
+                                        (PKWIN32_CALLOUT_PARAMETERS)&CloseParams, SessionId, NULL);
+        ASSERT(NT_SUCCESS(Status));
+    }
+    else if ((OBJECT_TO_OBJECT_HEADER(Object)->Type) == ExWindowStationObjectType)
+    {
 
-   } else if ((OBJECT_TO_OBJECT_HEADER(Object)->Type) == ExWindowStationObjectType) {
-
-       Status = ExpWin32SessionCallout((PKWIN32_CALLOUT)ExWindowStationCloseProcedureCallout,
-                                       (PKWIN32_CALLOUT_PARAMETERS)&CloseParams,
-                                       SessionId,
-                                       NULL);
-       ASSERT(NT_SUCCESS(Status));
-
-   } else {
-      ASSERT((OBJECT_TO_OBJECT_HEADER(Object)->Type) == ExDesktopObjectType || (OBJECT_TO_OBJECT_HEADER(Object)->Type == ExWindowStationObjectType));
-
-   }
-
-
+        Status = ExpWin32SessionCallout((PKWIN32_CALLOUT)ExWindowStationCloseProcedureCallout,
+                                        (PKWIN32_CALLOUT_PARAMETERS)&CloseParams, SessionId, NULL);
+        ASSERT(NT_SUCCESS(Status));
+    }
+    else
+    {
+        ASSERT((OBJECT_TO_OBJECT_HEADER(Object)->Type) == ExDesktopObjectType ||
+               (OBJECT_TO_OBJECT_HEADER(Object)->Type == ExWindowStationObjectType));
+    }
 }
 
 /*++
@@ -215,49 +167,42 @@ Return Value:
 
 
 --*/
-BOOLEAN ExpWin32OkayToCloseProcedure(
-    IN PEPROCESS Process OPTIONAL,
-    IN PVOID Object,
-    IN HANDLE Handle,
-    IN KPROCESSOR_MODE PreviousMode
-    )
+BOOLEAN ExpWin32OkayToCloseProcedure(IN PEPROCESS Process OPTIONAL, IN PVOID Object, IN HANDLE Handle,
+                                     IN KPROCESSOR_MODE PreviousMode)
 {
-   //
-   // SessionId is the first field in the Win32k Object structure
-   //
-   ULONG SessionId = *((PULONG)Object);
-   WIN32_OKAYTOCLOSEMETHOD_PARAMETERS OKToCloseParams;
-   NTSTATUS Status, CallStatus = STATUS_UNSUCCESSFUL;
+    //
+    // SessionId is the first field in the Win32k Object structure
+    //
+    ULONG SessionId = *((PULONG)Object);
+    WIN32_OKAYTOCLOSEMETHOD_PARAMETERS OKToCloseParams;
+    NTSTATUS Status, CallStatus = STATUS_UNSUCCESSFUL;
 
-   OKToCloseParams.Process      = Process;
-   OKToCloseParams.Object       = Object;
-   OKToCloseParams.Handle       = Handle;
-   OKToCloseParams.PreviousMode = PreviousMode;
+    OKToCloseParams.Process = Process;
+    OKToCloseParams.Object = Object;
+    OKToCloseParams.Handle = Handle;
+    OKToCloseParams.PreviousMode = PreviousMode;
 
-   if (OBJECT_TO_OBJECT_HEADER(Object)->Type == ExDesktopObjectType) {
+    if (OBJECT_TO_OBJECT_HEADER(Object)->Type == ExDesktopObjectType)
+    {
 
-       Status = ExpWin32SessionCallout((PKWIN32_CALLOUT)ExDesktopOkToCloseProcedureCallout,
-                                       (PKWIN32_CALLOUT_PARAMETERS)&OKToCloseParams,
-                                       SessionId,
-                                       &CallStatus);
-       ASSERT(NT_SUCCESS(Status));
+        Status = ExpWin32SessionCallout((PKWIN32_CALLOUT)ExDesktopOkToCloseProcedureCallout,
+                                        (PKWIN32_CALLOUT_PARAMETERS)&OKToCloseParams, SessionId, &CallStatus);
+        ASSERT(NT_SUCCESS(Status));
+    }
+    else if (OBJECT_TO_OBJECT_HEADER(Object)->Type == ExWindowStationObjectType)
+    {
 
-   } else if (OBJECT_TO_OBJECT_HEADER(Object)->Type == ExWindowStationObjectType) {
+        Status = ExpWin32SessionCallout((PKWIN32_CALLOUT)ExWindowStationOkToCloseProcedureCallout,
+                                        (PKWIN32_CALLOUT_PARAMETERS)&OKToCloseParams, SessionId, &CallStatus);
+        ASSERT(NT_SUCCESS(Status));
+    }
+    else
+    {
+        ASSERT(OBJECT_TO_OBJECT_HEADER(Object)->Type == ExDesktopObjectType ||
+               OBJECT_TO_OBJECT_HEADER(Object)->Type == ExWindowStationObjectType);
+    }
 
-       Status = ExpWin32SessionCallout((PKWIN32_CALLOUT)ExWindowStationOkToCloseProcedureCallout,
-                                       (PKWIN32_CALLOUT_PARAMETERS)&OKToCloseParams,
-                                       SessionId,
-                                       &CallStatus);
-       ASSERT(NT_SUCCESS(Status));
-
-   } else {
-      ASSERT(OBJECT_TO_OBJECT_HEADER(Object)->Type == ExDesktopObjectType ||
-             OBJECT_TO_OBJECT_HEADER(Object)->Type == ExWindowStationObjectType);
-
-   }
-
-   return (BOOLEAN)(NT_SUCCESS(CallStatus));
-
+    return (BOOLEAN)(NT_SUCCESS(CallStatus));
 }
 
 
@@ -275,43 +220,37 @@ Return Value:
 
 
 --*/
-VOID ExpWin32DeleteProcedure(
-    IN PVOID    Object
-    )
+VOID ExpWin32DeleteProcedure(IN PVOID Object)
 {
-   //
-   // SessionId is the first field in the Win32k Object structure
-   //
-   ULONG SessionId = *((PULONG)Object);
-   WIN32_DELETEMETHOD_PARAMETERS DeleteParams;
-   NTSTATUS Status;
+    //
+    // SessionId is the first field in the Win32k Object structure
+    //
+    ULONG SessionId = *((PULONG)Object);
+    WIN32_DELETEMETHOD_PARAMETERS DeleteParams;
+    NTSTATUS Status;
 
-   DeleteParams.Object  =  Object;
-
-
-   if (OBJECT_TO_OBJECT_HEADER(Object)->Type == ExDesktopObjectType) {
-
-       Status = ExpWin32SessionCallout((PKWIN32_CALLOUT)ExDesktopDeleteProcedureCallout,
-                                       (PKWIN32_CALLOUT_PARAMETERS)&DeleteParams,
-                                       SessionId,
-                                       NULL);
-       ASSERT(NT_SUCCESS(Status));
-
-   } else if (OBJECT_TO_OBJECT_HEADER(Object)->Type == ExWindowStationObjectType) {
-
-       Status = ExpWin32SessionCallout((PKWIN32_CALLOUT)ExWindowStationDeleteProcedureCallout,
-                                       (PKWIN32_CALLOUT_PARAMETERS)&DeleteParams,
-                                       SessionId,
-                                       NULL);
-       ASSERT(NT_SUCCESS(Status));
-
-   } else {
-      ASSERT(OBJECT_TO_OBJECT_HEADER(Object)->Type == ExDesktopObjectType ||
-             OBJECT_TO_OBJECT_HEADER(Object)->Type == ExWindowStationObjectType);
-
-   }
+    DeleteParams.Object = Object;
 
 
+    if (OBJECT_TO_OBJECT_HEADER(Object)->Type == ExDesktopObjectType)
+    {
+
+        Status = ExpWin32SessionCallout((PKWIN32_CALLOUT)ExDesktopDeleteProcedureCallout,
+                                        (PKWIN32_CALLOUT_PARAMETERS)&DeleteParams, SessionId, NULL);
+        ASSERT(NT_SUCCESS(Status));
+    }
+    else if (OBJECT_TO_OBJECT_HEADER(Object)->Type == ExWindowStationObjectType)
+    {
+
+        Status = ExpWin32SessionCallout((PKWIN32_CALLOUT)ExWindowStationDeleteProcedureCallout,
+                                        (PKWIN32_CALLOUT_PARAMETERS)&DeleteParams, SessionId, NULL);
+        ASSERT(NT_SUCCESS(Status));
+    }
+    else
+    {
+        ASSERT(OBJECT_TO_OBJECT_HEADER(Object)->Type == ExDesktopObjectType ||
+               OBJECT_TO_OBJECT_HEADER(Object)->Type == ExWindowStationObjectType);
+    }
 }
 
 /*++
@@ -330,52 +269,46 @@ Return Value:
 
 
 NTSTATUS
-ExpWin32OpenProcedure(
-    IN OB_OPEN_REASON OpenReason,
-    IN PEPROCESS Process OPTIONAL,
-    IN PVOID Object,
-    IN ACCESS_MASK GrantedAccess,
-    IN ULONG HandleCount
-    )
+ExpWin32OpenProcedure(IN OB_OPEN_REASON OpenReason, IN PEPROCESS Process OPTIONAL, IN PVOID Object,
+                      IN ACCESS_MASK GrantedAccess, IN ULONG HandleCount)
 {
 
-   //
-   // SessionId is the first field in the Win32k Object structure
-   //
-   ULONG SessionId = *((PULONG)Object);
-   WIN32_OPENMETHOD_PARAMETERS OpenParams;
-   NTSTATUS Status = STATUS_UNSUCCESSFUL;
+    //
+    // SessionId is the first field in the Win32k Object structure
+    //
+    ULONG SessionId = *((PULONG)Object);
+    WIN32_OPENMETHOD_PARAMETERS OpenParams;
+    NTSTATUS Status = STATUS_UNSUCCESSFUL;
 
-   OpenParams.OpenReason = OpenReason;
-   OpenParams.Process  =  Process;
-   OpenParams.Object = Object;
-   OpenParams.GrantedAccess = GrantedAccess;
-   OpenParams.HandleCount =  HandleCount;
+    OpenParams.OpenReason = OpenReason;
+    OpenParams.Process = Process;
+    OpenParams.Object = Object;
+    OpenParams.GrantedAccess = GrantedAccess;
+    OpenParams.HandleCount = HandleCount;
 
-   
-   if ((OBJECT_TO_OBJECT_HEADER(Object)->Type) == ExDesktopObjectType) {
 
-       Status = ExpWin32SessionCallout((PKWIN32_CALLOUT)ExDesktopOpenProcedureCallout,
-                                       (PKWIN32_CALLOUT_PARAMETERS)&OpenParams,
-                                       SessionId,
-                                       NULL);
+    if ((OBJECT_TO_OBJECT_HEADER(Object)->Type) == ExDesktopObjectType)
+    {
 
-       ASSERT(NT_SUCCESS(Status));
+        Status = ExpWin32SessionCallout((PKWIN32_CALLOUT)ExDesktopOpenProcedureCallout,
+                                        (PKWIN32_CALLOUT_PARAMETERS)&OpenParams, SessionId, NULL);
 
-   } else if ((OBJECT_TO_OBJECT_HEADER(Object)->Type) == ExWindowStationObjectType) {
+        ASSERT(NT_SUCCESS(Status));
+    }
+    else if ((OBJECT_TO_OBJECT_HEADER(Object)->Type) == ExWindowStationObjectType)
+    {
 
-       Status = ExpWin32SessionCallout((PKWIN32_CALLOUT)ExWindowStationOpenProcedureCallout,
-                                       (PKWIN32_CALLOUT_PARAMETERS)&OpenParams,
-                                       SessionId,
-                                       NULL);
-       ASSERT(NT_SUCCESS(Status));
+        Status = ExpWin32SessionCallout((PKWIN32_CALLOUT)ExWindowStationOpenProcedureCallout,
+                                        (PKWIN32_CALLOUT_PARAMETERS)&OpenParams, SessionId, NULL);
+        ASSERT(NT_SUCCESS(Status));
+    }
+    else
+    {
+        ASSERT((OBJECT_TO_OBJECT_HEADER(Object)->Type) == ExDesktopObjectType ||
+               (OBJECT_TO_OBJECT_HEADER(Object)->Type == ExWindowStationObjectType));
+    }
 
-   } else {
-      ASSERT((OBJECT_TO_OBJECT_HEADER(Object)->Type) == ExDesktopObjectType || (OBJECT_TO_OBJECT_HEADER(Object)->Type == ExWindowStationObjectType));
-
-   }
-   
-   return Status;
+    return Status;
 }
 
 /*++
@@ -393,55 +326,43 @@ Return Value:
 
 --*/
 
-NTSTATUS ExpWin32ParseProcedure (
-    IN PVOID ParseObject,
-    IN PVOID ObjectType,
-    IN OUT PACCESS_STATE AccessState,
-    IN KPROCESSOR_MODE AccessMode,
-    IN ULONG Attributes,
-    IN OUT PUNICODE_STRING CompleteName,
-    IN OUT PUNICODE_STRING RemainingName,
-    IN OUT PVOID Context OPTIONAL,
-    IN PSECURITY_QUALITY_OF_SERVICE SecurityQos OPTIONAL,
-    OUT PVOID *Object
-    )
+NTSTATUS ExpWin32ParseProcedure(IN PVOID ParseObject, IN PVOID ObjectType, IN OUT PACCESS_STATE AccessState,
+                                IN KPROCESSOR_MODE AccessMode, IN ULONG Attributes, IN OUT PUNICODE_STRING CompleteName,
+                                IN OUT PUNICODE_STRING RemainingName, IN OUT PVOID Context OPTIONAL,
+                                IN PSECURITY_QUALITY_OF_SERVICE SecurityQos OPTIONAL, OUT PVOID *Object)
 {
 
-   //
-   // SessionId is the first field in the Win32k Object structure
-   //
-   ULONG SessionId = *((PULONG)ParseObject);
-   WIN32_PARSEMETHOD_PARAMETERS ParseParams;
-   NTSTATUS Status, CallStatus = STATUS_UNSUCCESSFUL;
+    //
+    // SessionId is the first field in the Win32k Object structure
+    //
+    ULONG SessionId = *((PULONG)ParseObject);
+    WIN32_PARSEMETHOD_PARAMETERS ParseParams;
+    NTSTATUS Status, CallStatus = STATUS_UNSUCCESSFUL;
 
-   ParseParams.ParseObject = ParseObject;
-   ParseParams.ObjectType  =  ObjectType;
-   ParseParams.AccessState = AccessState;
-   ParseParams.AccessMode = AccessMode;
-   ParseParams.Attributes = Attributes;
-   ParseParams.CompleteName = CompleteName;
-   ParseParams.RemainingName = RemainingName;
-   ParseParams.Context = Context;
-   ParseParams.SecurityQos = SecurityQos;
-   ParseParams.Object = Object;
+    ParseParams.ParseObject = ParseObject;
+    ParseParams.ObjectType = ObjectType;
+    ParseParams.AccessState = AccessState;
+    ParseParams.AccessMode = AccessMode;
+    ParseParams.Attributes = Attributes;
+    ParseParams.CompleteName = CompleteName;
+    ParseParams.RemainingName = RemainingName;
+    ParseParams.Context = Context;
+    ParseParams.SecurityQos = SecurityQos;
+    ParseParams.Object = Object;
 
-   //
-   // Parse Procedure is only provided for WindowStation objects
-   //
-   Status = ExpWin32SessionCallout((PKWIN32_CALLOUT)ExWindowStationParseProcedureCallout,
-                                   (PKWIN32_CALLOUT_PARAMETERS)&ParseParams,
-                                   SessionId,
-                                   &CallStatus);
-   ASSERT(NT_SUCCESS(Status));
+    //
+    // Parse Procedure is only provided for WindowStation objects
+    //
+    Status = ExpWin32SessionCallout((PKWIN32_CALLOUT)ExWindowStationParseProcedureCallout,
+                                    (PKWIN32_CALLOUT_PARAMETERS)&ParseParams, SessionId, &CallStatus);
+    ASSERT(NT_SUCCESS(Status));
 
-   return CallStatus;
-
+    return CallStatus;
 }
 
-
+
 BOOLEAN
-ExpWin32Initialization (
-    )
+ExpWin32Initialization()
 
 /*++
 
@@ -484,21 +405,17 @@ Return Value:
     ObjectTypeInitializer.SecurityRequired = TRUE;
     ObjectTypeInitializer.PoolType = NonPagedPool;
 
-    ObjectTypeInitializer.CloseProcedure  = ExpWin32CloseProcedure;
+    ObjectTypeInitializer.CloseProcedure = ExpWin32CloseProcedure;
     ObjectTypeInitializer.DeleteProcedure = ExpWin32DeleteProcedure;
     ObjectTypeInitializer.OkayToCloseProcedure = ExpWin32OkayToCloseProcedure;
 
-    ObjectTypeInitializer.ParseProcedure  = ExpWin32ParseProcedure;
-    ObjectTypeInitializer.OpenProcedure   = ExpWin32OpenProcedure;
+    ObjectTypeInitializer.ParseProcedure = ExpWin32ParseProcedure;
+    ObjectTypeInitializer.OpenProcedure = ExpWin32OpenProcedure;
 
-    ObjectTypeInitializer.InvalidAttributes = OBJ_OPENLINK |
-                                              OBJ_PERMANENT |
-                                              OBJ_EXCLUSIVE;
+    ObjectTypeInitializer.InvalidAttributes = OBJ_OPENLINK | OBJ_PERMANENT | OBJ_EXCLUSIVE;
     ObjectTypeInitializer.ValidAccessMask = STANDARD_RIGHTS_REQUIRED;
-    Status = ObCreateObjectType(&TypeName,
-                                &ObjectTypeInitializer,
-                                (PSECURITY_DESCRIPTOR)NULL,
-                                &ExWindowStationObjectType);
+    Status =
+        ObCreateObjectType(&TypeName, &ObjectTypeInitializer, (PSECURITY_DESCRIPTOR)NULL, &ExWindowStationObjectType);
 
     //
     // If the windowstation object type descriptor was not successfully
@@ -509,24 +426,20 @@ Return Value:
         return FALSE;
 
 
-
     //
     // Initialize string descriptor.
     //
 
     RtlInitUnicodeString(&TypeName, L"Desktop");
 
-    ObjectTypeInitializer.ParseProcedure       = NULL; //Desktop has no Parse Procedure
+    ObjectTypeInitializer.ParseProcedure = NULL; //Desktop has no Parse Procedure
 
     //
     // Create windowstation object type descriptor.
     //
 
     ObjectTypeInitializer.GenericMapping = ExpDesktopMapping;
-    Status = ObCreateObjectType(&TypeName,
-                                &ObjectTypeInitializer,
-                                (PSECURITY_DESCRIPTOR)NULL,
-                                &ExDesktopObjectType);
+    Status = ObCreateObjectType(&TypeName, &ObjectTypeInitializer, (PSECURITY_DESCRIPTOR)NULL, &ExDesktopObjectType);
 
 
     //
@@ -538,14 +451,9 @@ Return Value:
 }
 
 
-
 NTSTATUS
-ExpWin32SessionCallout(
-    IN  PKWIN32_CALLOUT CalloutRoutine,
-    IN  PKWIN32_CALLOUT_PARAMETERS Parameters,
-    IN  ULONG SessionId,
-    OUT PNTSTATUS CalloutStatus  OPTIONAL
-    )
+ExpWin32SessionCallout(IN PKWIN32_CALLOUT CalloutRoutine, IN PKWIN32_CALLOUT_PARAMETERS Parameters, IN ULONG SessionId,
+                       OUT PNTSTATUS CalloutStatus OPTIONAL)
 /*++
 
 Routine Description:
@@ -584,7 +492,8 @@ Notes:
     //
     // Make sure we have all the information we need to deliver notification.
     //
-    if (CalloutRoutine == NULL) {
+    if (CalloutRoutine == NULL)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -593,8 +502,8 @@ Notes:
     //
     ASSERT(MmIsSessionAddress((PVOID)CalloutRoutine));
 
-    if ((PsGetCurrentProcess()->Flags & PS_PROCESS_FLAGS_IN_SESSION) &&
-        (SessionId == PsGetCurrentProcessSessionId())) {
+    if ((PsGetCurrentProcess()->Flags & PS_PROCESS_FLAGS_IN_SESSION) && (SessionId == PsGetCurrentProcessSessionId()))
+    {
         //
         // If the call is from a user mode process, and we are asked to call the
         // current session, call directly.
@@ -604,18 +513,21 @@ Notes:
         //
         // Return the callout status.
         //
-        if (ARGUMENT_PRESENT(CalloutStatus)) {
+        if (ARGUMENT_PRESENT(CalloutStatus))
+        {
             *CalloutStatus = CallStatus;
         }
 
         Status = STATUS_SUCCESS;
-
-    } else {
+    }
+    else
+    {
         //
         // Reference the session object for the specified session.
         //
         OpaqueSession = MmGetSessionById(SessionId);
-        if (OpaqueSession == NULL) {
+        if (OpaqueSession == NULL)
+        {
             return STATUS_NOT_FOUND;
         }
 
@@ -623,13 +535,12 @@ Notes:
         // Attach to the specified session.
         //
         Status = MmAttachSession(OpaqueSession, &ApcState);
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             KdPrintEx((DPFLTR_SYSTEM_ID, DPFLTR_WARNING_LEVEL,
                        "ExpWin32SessionCallout: "
                        "could not attach to 0x%p, session %d for registered notification callout @ 0x%p\n",
-                       OpaqueSession,
-                       SessionId,
-                       CalloutRoutine));
+                       OpaqueSession, SessionId, CalloutRoutine));
             MmQuitNextSession(OpaqueSession);
             return Status;
         }
@@ -642,7 +553,8 @@ Notes:
         //
         // Return the callout status.
         //
-        if (ARGUMENT_PRESENT(CalloutStatus)) {
+        if (ARGUMENT_PRESENT(CalloutStatus))
+        {
             *CalloutStatus = CallStatus;
         }
 

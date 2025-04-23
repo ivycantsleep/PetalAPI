@@ -22,30 +22,28 @@ Revision History:
 #include "ntos.h"
 #include "haldisp.h"
 
-HAL_DISPATCH HalDispatchTable = {
-    HAL_DISPATCH_VERSION,
-    xHalQuerySystemInformation,
-    xHalSetSystemInformation,
-    xHalQueryBusSlots,
-    0,
-    HalExamineMBR,
-    IoAssignDriveLetters,
-    IoReadPartitionTable,
-    IoSetPartitionInformation,
-    IoWritePartitionTable,
-    xHalHandlerForBus,                  // HalReferenceHandlerByBus
-    xHalReferenceHandler,               // HalReferenceBusHandler
-    xHalReferenceHandler,               // HalDereferenceBusHandler
-    xHalInitPnpDriver,
-    xHalInitPowerManagement,
-    0,
-    xHalGetInterruptTranslator,
-    xHalStartMirroring,
-    xHalEndMirroring,
-    xHalMirrorPhysicalMemory,
-    xHalEndOfBoot,
-    xHalMirrorVerify
-    };
+HAL_DISPATCH HalDispatchTable = { HAL_DISPATCH_VERSION,
+                                  xHalQuerySystemInformation,
+                                  xHalSetSystemInformation,
+                                  xHalQueryBusSlots,
+                                  0,
+                                  HalExamineMBR,
+                                  IoAssignDriveLetters,
+                                  IoReadPartitionTable,
+                                  IoSetPartitionInformation,
+                                  IoWritePartitionTable,
+                                  xHalHandlerForBus,    // HalReferenceHandlerByBus
+                                  xHalReferenceHandler, // HalReferenceBusHandler
+                                  xHalReferenceHandler, // HalDereferenceBusHandler
+                                  xHalInitPnpDriver,
+                                  xHalInitPowerManagement,
+                                  0,
+                                  xHalGetInterruptTranslator,
+                                  xHalStartMirroring,
+                                  xHalEndMirroring,
+                                  xHalMirrorPhysicalMemory,
+                                  xHalEndOfBoot,
+                                  xHalMirrorVerify };
 
 HAL_PRIVATE_DISPATCH HalPrivateDispatchTable = {
     HAL_PRIVATE_DISPATCH_VERSION,
@@ -58,8 +56,8 @@ HAL_PRIVATE_DISPATCH HalPrivateDispatchTable = {
     xHalTranslateBusAddress,
     xHalAssignSlotResources,
     xHalHaltSystem,
-    (NULL),                             // HalFindBusAddressTranslation
-    (NULL),                             // HalResetDisplay
+    (NULL), // HalFindBusAddressTranslation
+    (NULL), // HalResetDisplay
     xKdSetupPciDeviceForDebugging,
     xKdReleasePciDeviceForDebugging,
     xKdGetAcpiTablePhase0,
@@ -67,7 +65,7 @@ HAL_PRIVATE_DISPATCH HalPrivateDispatchTable = {
     xHalVectorToIDTEntry,
     xKdMapPhysicalMemory64,
     xKdUnmapVirtualAddress,
-    };
+};
 
 #if 0
 DMA_OPERATIONS HalPrivateDmaOperations = {
@@ -88,13 +86,13 @@ DMA_OPERATIONS HalPrivateDmaOperations = {
 #endif
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,   xHalLocateHiberRanges)
-#pragma alloc_text(PAGE,   xHalQuerySystemInformation)
-#pragma alloc_text(PAGE,   xHalSetSystemInformation)
-#pragma alloc_text(PAGE,   xHalQueryBusSlots)
-#pragma alloc_text(PAGE,   xHalRegisterBusHandler)
-#pragma alloc_text(PAGE,   xHalStartMirroring)
-#pragma alloc_text(PAGE,   xHalEndOfBoot)
+#pragma alloc_text(PAGE, xHalLocateHiberRanges)
+#pragma alloc_text(PAGE, xHalQuerySystemInformation)
+#pragma alloc_text(PAGE, xHalSetSystemInformation)
+#pragma alloc_text(PAGE, xHalQueryBusSlots)
+#pragma alloc_text(PAGE, xHalRegisterBusHandler)
+#pragma alloc_text(PAGE, xHalStartMirroring)
+#pragma alloc_text(PAGE, xHalEndOfBoot)
 #pragma alloc_text(PAGELK, xHalSetWakeEnable)
 #pragma alloc_text(PAGELK, xHalSetWakeAlarm)
 #endif
@@ -110,148 +108,96 @@ DMA_OPERATIONS HalPrivateDmaOperations = {
 //
 
 NTSTATUS
-xHalQuerySystemInformation(
-    IN HAL_QUERY_INFORMATION_CLASS InformationClass,
-    IN ULONG     BufferSize,
-    OUT PVOID    Buffer,
-    OUT PULONG   ReturnedLength
-    )
+xHalQuerySystemInformation(IN HAL_QUERY_INFORMATION_CLASS InformationClass, IN ULONG BufferSize, OUT PVOID Buffer,
+                           OUT PULONG ReturnedLength)
 {
-    PAGED_CODE ();
+    PAGED_CODE();
     return STATUS_INVALID_LEVEL;
 }
 
 NTSTATUS
-xHalSetSystemInformation(
-    IN HAL_SET_INFORMATION_CLASS InformationClass,
-    IN ULONG     BufferSize,
-    OUT PVOID    Buffer
-    )
+xHalSetSystemInformation(IN HAL_SET_INFORMATION_CLASS InformationClass, IN ULONG BufferSize, OUT PVOID Buffer)
 {
-    PAGED_CODE ();
+    PAGED_CODE();
     return STATUS_INVALID_LEVEL;
 }
 
 NTSTATUS
-xHalQueryBusSlots(
-    IN PBUS_HANDLER         BusHandler,
-    IN ULONG                BufferSize,
-    OUT PULONG              SlotNumbers,
-    OUT PULONG              ReturnedLength
-    )
+xHalQueryBusSlots(IN PBUS_HANDLER BusHandler, IN ULONG BufferSize, OUT PULONG SlotNumbers, OUT PULONG ReturnedLength)
 {
-    PAGED_CODE ();
+    PAGED_CODE();
     return STATUS_NOT_SUPPORTED;
 }
 
 
 NTSTATUS
-xHalRegisterBusHandler(
-    IN INTERFACE_TYPE          InterfaceType,
-    IN BUS_DATA_TYPE           ConfigurationSpace,
-    IN ULONG                   BusNumber,
-    IN INTERFACE_TYPE          ParentBusType,
-    IN ULONG                   ParentBusNumber,
-    IN ULONG                   SizeofBusExtensionData,
-    IN PINSTALL_BUS_HANDLER    InstallBusHandler,
-    OUT PBUS_HANDLER           *BusHandler
-    )
+xHalRegisterBusHandler(IN INTERFACE_TYPE InterfaceType, IN BUS_DATA_TYPE ConfigurationSpace, IN ULONG BusNumber,
+                       IN INTERFACE_TYPE ParentBusType, IN ULONG ParentBusNumber, IN ULONG SizeofBusExtensionData,
+                       IN PINSTALL_BUS_HANDLER InstallBusHandler, OUT PBUS_HANDLER *BusHandler)
 {
-    PAGED_CODE ();
+    PAGED_CODE();
     return STATUS_NOT_SUPPORTED;
 }
 
 
-VOID
-xHalSetWakeEnable(
-    IN BOOLEAN              Enable
-    )
+VOID xHalSetWakeEnable(IN BOOLEAN Enable)
 {
 }
 
 
-VOID
-xHalSetWakeAlarm(
-    IN ULONGLONG        WakeTime,
-    IN PTIME_FIELDS     WakeTimeFields
-    )
+VOID xHalSetWakeAlarm(IN ULONGLONG WakeTime, IN PTIME_FIELDS WakeTimeFields)
 {
 }
 
-VOID
-xHalLocateHiberRanges (
-    IN PVOID MemoryMap
-    )
+VOID xHalLocateHiberRanges(IN PVOID MemoryMap)
 {
 }
 
 PBUS_HANDLER
 FASTCALL
-xHalHandlerForBus (
-    IN INTERFACE_TYPE InterfaceType,
-    IN ULONG          BusNumber
-    )
+xHalHandlerForBus(IN INTERFACE_TYPE InterfaceType, IN ULONG BusNumber)
 {
     return NULL;
 }
 
-VOID
-FASTCALL
-xHalReferenceHandler (
-    IN PBUS_HANDLER     Handler
-    )
+VOID FASTCALL xHalReferenceHandler(IN PBUS_HANDLER Handler)
 {
 }
 NTSTATUS
-xHalInitPnpDriver(
-    VOID
-    )
+xHalInitPnpDriver(VOID)
 {
     return STATUS_NOT_SUPPORTED;
 }
 
 NTSTATUS
-xHalInitPowerManagement(
-    IN PPM_DISPATCH_TABLE  PmDriverDispatchTable,
-    IN OUT PPM_DISPATCH_TABLE *PmHalDispatchTable
-    )
+xHalInitPowerManagement(IN PPM_DISPATCH_TABLE PmDriverDispatchTable, IN OUT PPM_DISPATCH_TABLE *PmHalDispatchTable)
 {
     return STATUS_NOT_SUPPORTED;
 }
 
 NTSTATUS
-xHalStartMirroring(
-    VOID
-    )
+xHalStartMirroring(VOID)
 {
-    PAGED_CODE ();
+    PAGED_CODE();
     return STATUS_NOT_SUPPORTED;
 }
 
 NTSTATUS
-xHalEndMirroring(
-    IN ULONG PassNumber
-    )
+xHalEndMirroring(IN ULONG PassNumber)
 {
-    UNREFERENCED_PARAMETER (PassNumber);
+    UNREFERENCED_PARAMETER(PassNumber);
 
     return STATUS_NOT_SUPPORTED;
 }
 
 NTSTATUS
-xHalMirrorPhysicalMemory(
-    IN PHYSICAL_ADDRESS PhysicalAddress,
-    IN LARGE_INTEGER NumberOfBytes
-    )
+xHalMirrorPhysicalMemory(IN PHYSICAL_ADDRESS PhysicalAddress, IN LARGE_INTEGER NumberOfBytes)
 {
     return STATUS_NOT_SUPPORTED;
 }
 
 NTSTATUS
-xHalMirrorVerify(
-    IN PHYSICAL_ADDRESS PhysicalAddress,
-    IN LARGE_INTEGER NumberOfBytes
-    )
+xHalMirrorVerify(IN PHYSICAL_ADDRESS PhysicalAddress, IN LARGE_INTEGER NumberOfBytes)
 {
     return STATUS_NOT_SUPPORTED;
 }
@@ -913,13 +859,8 @@ Return Value:
 }
 #endif
 BOOLEAN
-xHalTranslateBusAddress(
-    IN INTERFACE_TYPE  InterfaceType,
-    IN ULONG BusNumber,
-    IN PHYSICAL_ADDRESS BusAddress,
-    IN OUT PULONG AddressSpace,
-    OUT PPHYSICAL_ADDRESS TranslatedAddress
-    )
+xHalTranslateBusAddress(IN INTERFACE_TYPE InterfaceType, IN ULONG BusNumber, IN PHYSICAL_ADDRESS BusAddress,
+                        IN OUT PULONG AddressSpace, OUT PPHYSICAL_ADDRESS TranslatedAddress)
 {
     //
     // If the HAL fails to override this function, then
@@ -931,16 +872,10 @@ xHalTranslateBusAddress(
 }
 
 NTSTATUS
-xHalAssignSlotResources (
-    IN PUNICODE_STRING RegistryPath,
-    IN PUNICODE_STRING DriverClassName OPTIONAL,
-    IN PDRIVER_OBJECT DriverObject,
-    IN PDEVICE_OBJECT DeviceObject OPTIONAL,
-    IN INTERFACE_TYPE BusType,
-    IN ULONG BusNumber,
-    IN ULONG SlotNumber,
-    IN OUT PCM_RESOURCE_LIST *AllocatedResources
-    )
+xHalAssignSlotResources(IN PUNICODE_STRING RegistryPath, IN PUNICODE_STRING DriverClassName OPTIONAL,
+                        IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT DeviceObject OPTIONAL,
+                        IN INTERFACE_TYPE BusType, IN ULONG BusNumber, IN ULONG SlotNumber,
+                        IN OUT PCM_RESOURCE_LIST *AllocatedResources)
 {
     //
     // If the HAL fails to override this function, then
@@ -951,80 +886,54 @@ xHalAssignSlotResources (
     return STATUS_NOT_IMPLEMENTED;
 }
 
-VOID
-xHalHaltSystem(
-    VOID
-    )
+VOID xHalHaltSystem(VOID)
 {
-    for (;;) ;
+    for (;;)
+        ;
 }
 
 NTSTATUS
-xKdSetupPciDeviceForDebugging(
-    IN     PVOID                     LoaderBlock,   OPTIONAL    
-    IN OUT PDEBUG_DEVICE_DESCRIPTOR  PciDevice
-    )
+xKdSetupPciDeviceForDebugging(IN PVOID LoaderBlock, OPTIONAL IN OUT PDEBUG_DEVICE_DESCRIPTOR PciDevice)
 {
     return STATUS_NOT_IMPLEMENTED;
 }
 
 NTSTATUS
-xKdReleasePciDeviceForDebugging(
-    IN OUT PDEBUG_DEVICE_DESCRIPTOR  PciDevice
-    )
+xKdReleasePciDeviceForDebugging(IN OUT PDEBUG_DEVICE_DESCRIPTOR PciDevice)
 {
     return STATUS_NOT_IMPLEMENTED;
 }
 
 PVOID
-xKdGetAcpiTablePhase0(
-    IN  PLOADER_PARAMETER_BLOCK LoaderBlock,
-    IN  ULONG   Signature
-    )
+xKdGetAcpiTablePhase0(IN PLOADER_PARAMETER_BLOCK LoaderBlock, IN ULONG Signature)
 {
     return NULL;
 }
 
-VOID
-xKdCheckPowerButton(
-    VOID
-    )
+VOID xKdCheckPowerButton(VOID)
 {
     return;
 }
 
-VOID
-xHalEndOfBoot(
-    VOID
-    )
+VOID xHalEndOfBoot(VOID)
 {
     PAGED_CODE();
     return;
 }
 
 UCHAR
-xHalVectorToIDTEntry(
-    ULONG Vector
-    )
+xHalVectorToIDTEntry(ULONG Vector)
 {
     return (UCHAR)Vector;
 }
 
 PVOID
-xKdMapPhysicalMemory64(
-    IN PHYSICAL_ADDRESS PhysicalAddress,
-    IN ULONG NumberPages
-    )
+xKdMapPhysicalMemory64(IN PHYSICAL_ADDRESS PhysicalAddress, IN ULONG NumberPages)
 {
     return NULL;
 }
 
-VOID
-xKdUnmapVirtualAddress(
-    IN PVOID    VirtualAddress,
-    IN ULONG    NumberPages
-    )
+VOID xKdUnmapVirtualAddress(IN PVOID VirtualAddress, IN ULONG NumberPages)
 {
     return;
 }
-

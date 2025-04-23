@@ -23,15 +23,15 @@ Revision History:
 
 // begin_ntosp
 #define INIT_SYSTEMROOT_LINKNAME "\\SystemRoot"
-#define INIT_SYSTEMROOT_DLLPATH  "\\SystemRoot\\System32"
-#define INIT_SYSTEMROOT_BINPATH  "\\SystemRoot\\System32"
+#define INIT_SYSTEMROOT_DLLPATH "\\SystemRoot\\System32"
+#define INIT_SYSTEMROOT_BINPATH "\\SystemRoot\\System32"
 // end_ntosp
 
-#define INIT_WINPEMODE_NONE                 0x00000000
-#define INIT_WINPEMODE_REGULAR              0x00000001
-#define INIT_WINPEMODE_INRAM                0x80000000
-#define INIT_WINPEMODE_READONLY_MEDIA       0x00000100
-#define INIT_WINPEMODE_REMOVABLE_MEDIA      0x00000200
+#define INIT_WINPEMODE_NONE 0x00000000
+#define INIT_WINPEMODE_REGULAR 0x00000001
+#define INIT_WINPEMODE_INRAM 0x80000000
+#define INIT_WINPEMODE_READONLY_MEDIA 0x00000100
+#define INIT_WINPEMODE_REMOVABLE_MEDIA 0x00000200
 
 
 extern UNICODE_STRING NtSystemRoot;
@@ -62,26 +62,17 @@ extern ULONG InitWinPEModeType;
 
 #if defined(_M_IX86) || defined(_M_AMD64)
 
-VOID
-KiSystemStartup(
-    IN PVOID LoaderBlock
-    );
+VOID KiSystemStartup(IN PVOID LoaderBlock);
 
 #else
 
-VOID
-KiSystemStartup( VOID );
+VOID KiSystemStartup(VOID);
 
 #endif
 
-VOID
-Phase1Initialization(
-    IN PVOID Context
-    );
+VOID Phase1Initialization(IN PVOID Context);
 
-typedef
-BOOLEAN
-(*PTESTFCN)( VOID );
+typedef BOOLEAN (*PTESTFCN)(VOID);
 
 extern PTESTFCN TestFunction;
 extern ULONG InitializationPhase;

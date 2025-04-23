@@ -22,8 +22,4 @@ Revision History:
 
 --*/
 
-VOID
-VfDdiInit(
-    VOID
-    );
-
+VOID VfDdiInit(VOID);

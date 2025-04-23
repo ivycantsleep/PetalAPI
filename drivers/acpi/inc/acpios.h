@@ -20,109 +20,90 @@ Environment:
 --*/
 
 #ifdef WIN95_BUILD
-    #define LOCKABLE_PRAGMA
-    #define ACPI_LOCKABLE_CODE  code_seg("PAGE", "CODE")
-    #define ACPI_LOCKABLE_DATA  data_seg(".edata", "DATA")
+#define LOCKABLE_PRAGMA
+#define ACPI_LOCKABLE_CODE code_seg("PAGE", "CODE")
+#define ACPI_LOCKABLE_DATA data_seg(".edata", "DATA")
 #else
 #endif
 
 //
 // Open mode and other flags
 //
-#define OF_READONLY             0x00000000
-#define OF_WRITEONLY            0x00000001
-#define OF_READWRITE            0x00000002
-#define OF_SHARE_DENYALL        0x00000010
-#define OF_SHARE_DENYWRITE      0x00000020
-#define OF_SHARE_DENYREAD       0x00000030
-#define OF_SHARE_DENYNONE       0x00000040
-#define OF_INHERIT_NONE         0x00000080
-#define OF_DISABLE_INT24        0x00200000
-#define OF_AUTOCOMMITONWRITE    0x00400000
+#define OF_READONLY 0x00000000
+#define OF_WRITEONLY 0x00000001
+#define OF_READWRITE 0x00000002
+#define OF_SHARE_DENYALL 0x00000010
+#define OF_SHARE_DENYWRITE 0x00000020
+#define OF_SHARE_DENYREAD 0x00000030
+#define OF_SHARE_DENYNONE 0x00000040
+#define OF_INHERIT_NONE 0x00000080
+#define OF_DISABLE_INT24 0x00200000
+#define OF_AUTOCOMMITONWRITE 0x00400000
 
 //
 // Create attribute flags
 //
-#define CF_READONLY             0x00000001
-#define CF_HIDDEN               0x00000002
-#define CF_SYSTEM               0x00000004
-#define CF_VOL_LABEL            0x00000008
-#define CF_ARCHIVE              0x00000020
+#define CF_READONLY 0x00000001
+#define CF_HIDDEN 0x00000002
+#define CF_SYSTEM 0x00000004
+#define CF_VOL_LABEL 0x00000008
+#define CF_ARCHIVE 0x00000020
 
 //
 // Action flags
 //
-#define AF_EXIST_FAIL           0x00000000
-#define AF_EXIST_OPEN           0x00000001
-#define AF_EXIST_REPLACE        0x00000002
-#define AF_NOTEXIST_FAIL        0x00000000
-#define AF_NOTEXIST_CREATE      0x00000010
+#define AF_EXIST_FAIL 0x00000000
+#define AF_EXIST_OPEN 0x00000001
+#define AF_EXIST_REPLACE 0x00000002
+#define AF_NOTEXIST_FAIL 0x00000000
+#define AF_NOTEXIST_CREATE 0x00000010
 
 //
 // Registry flags
 //
-#define REGF_HARDWARE   0x00000000
-#define REGF_SOFTWARE   0x00000001
+#define REGF_HARDWARE 0x00000000
+#define REGF_SOFTWARE 0x00000001
 
 //
 // ACPI Registry key.
 //
-#define ACPI_REGISTRY_KEY  \
-    L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\ACPI"
+#define ACPI_REGISTRY_KEY L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\ACPI"
 
 //
 // Where to find the ACPI Registry information
 //
-#define ACPI_PARAMETERS_REGISTRY_KEY  \
-    "\\Registry\\Machine\\System\\CurrentControlSet\\Services\\ACPI\\Parameters"
+#define ACPI_PARAMETERS_REGISTRY_KEY "\\Registry\\Machine\\System\\CurrentControlSet\\Services\\ACPI\\Parameters"
 
 //
 // Where to find the procesor information
 //
-#define ACPI_PROCESSOR_INFORMATION_KEY \
-    "\\Registry\\Machine\\Hardware\\Description\\System\\CentralProcessor\\0"
+#define ACPI_PROCESSOR_INFORMATION_KEY "\\Registry\\Machine\\Hardware\\Description\\System\\CentralProcessor\\0"
 
 //
 // String that identifies processor stepping information
 //
-#define ACPI_PROCESSOR_STEPPING_IDENTIFIER   "Stepping"
+#define ACPI_PROCESSOR_STEPPING_IDENTIFIER "Stepping"
 
 
 NTSTATUS
-ACPIDispatchForwardIrp(
-    PDEVICE_OBJECT  DeviceObject,
-    PIRP            Irp
-    );
+ACPIDispatchForwardIrp(PDEVICE_OBJECT DeviceObject, PIRP Irp);
 
 //
 // These are the functions that the OS-Specific part of the driver *must*
 // export
 //
-VOID
-ACPIAssert(
-    ULONG Condition,
-    ULONG ErrorCode,
-    PCHAR ReplacementText,
-    PCHAR SupplementalText,
-    ULONG Flags
-    );
-#define ACPISimpleHardwareAssert(x,y)                   \
-    ACPIAssert((ULONG)(x),(y),0,0,BS_HARDWAREBIOS)
+VOID ACPIAssert(ULONG Condition, ULONG ErrorCode, PCHAR ReplacementText, PCHAR SupplementalText, ULONG Flags);
+#define ACPISimpleHardwareAssert(x, y) ACPIAssert((ULONG)(x), (y), 0, 0, BS_HARDWAREBIOS)
 
-#define ACPISimpleFatalHardwareAssert(x,y)              \
-    ACPIAssert((x),(y),0,0,BS_HARDWAREBIOS|BS_REAPER)
+#define ACPISimpleFatalHardwareAssert(x, y) ACPIAssert((x), (y), 0, 0, BS_HARDWAREBIOS | BS_REAPER)
 
-#define ACPISimpleSoftwareAssert(x,y)                   \
-    ACPIAssert((x),(y),0,0,BS_SOFTWARE)
+#define ACPISimpleSoftwareAssert(x, y) ACPIAssert((x), (y), 0, 0, BS_SOFTWARE)
 
-#define ACPISimpleFatalSoftwareAssert(x,y)              \
-    ACPIAssert((x),(y),0,0,BS_SOFTWARE|BS_REAPER)
+#define ACPISimpleFatalSoftwareAssert(x, y) ACPIAssert((x), (y), 0, 0, BS_SOFTWARE | BS_REAPER)
 
-#define ACPISimpleUnknownAssert(x,y)                    \
-    ACPIAssert((x),(y),0,0,0)
+#define ACPISimpleUnknownAssert(x, y) ACPIAssert((x), (y), 0, 0, 0)
 
-#define ACPISimpleFatalUnknownAssert(x,y)               \
-    ACPIAssert((x),(y),0,0,BS_REAPER)
+#define ACPISimpleFatalUnknownAssert(x, y) ACPIAssert((x), (y), 0, 0, BS_REAPER)
 
 #if 0
 ULONG
@@ -134,122 +115,56 @@ DbgPrompt(
 #endif
 
 NTSTATUS
-NotifyHalWithMachineStates(
-    VOID
-    );
+NotifyHalWithMachineStates(VOID);
 
 NTSTATUS
-OSCloseHandle(
-    HANDLE  Handle
-    );
+OSCloseHandle(HANDLE Handle);
 
 PNSOBJ
-OSConvertDeviceHandleToPNSOBJ(
-    PVOID DeviceHandle
-    );
+OSConvertDeviceHandleToPNSOBJ(PVOID DeviceHandle);
 
 NTSTATUS
-OSCreateHandle(
-    PSZ     KeyName,
-    HANDLE  ParentHandle,
-    PHANDLE ChildHandle
-    );
+OSCreateHandle(PSZ KeyName, HANDLE ParentHandle, PHANDLE ChildHandle);
 
 NTSTATUS
-OSGetRegistryValue(
-    IN  HANDLE                          ParentHandle,
-    IN  PWSTR                           ValueName,
-    OUT PKEY_VALUE_PARTIAL_INFORMATION_ALIGN64  *Information
-    );
+OSGetRegistryValue(IN HANDLE ParentHandle, IN PWSTR ValueName, OUT PKEY_VALUE_PARTIAL_INFORMATION_ALIGN64 *Information);
 
-VOID
-OSInitialize(
-    PDRIVER_OBJECT DriverObject
-    );
+VOID OSInitialize(PDRIVER_OBJECT DriverObject);
 
 BOOLEAN
-OSInterruptVector(
-    PVOID Context
-    );
+OSInterruptVector(PVOID Context);
 
-VOID
-OSInitializeCallbacks(
-    VOID
-    );
+VOID OSInitializeCallbacks(VOID);
 
-NTSTATUS EXPORT
-OSNotifyDeviceEnum(
-    PNSOBJ  AcpiObject
-    );
+NTSTATUS EXPORT OSNotifyDeviceEnum(PNSOBJ AcpiObject);
 
-NTSTATUS EXPORT
-OSNotifyDeviceCheck(
-    PNSOBJ  AcpiObject
-    );
+NTSTATUS EXPORT OSNotifyDeviceCheck(PNSOBJ AcpiObject);
 
-NTSTATUS EXPORT
-OSNotifyDeviceWake(
-    PNSOBJ  AcpiObject
-    );
+NTSTATUS EXPORT OSNotifyDeviceWake(PNSOBJ AcpiObject);
 
-NTSTATUS EXPORT
-OSNotifyDeviceEject(
-    PNSOBJ  AcpiObject
-    );
+NTSTATUS EXPORT OSNotifyDeviceEject(PNSOBJ AcpiObject);
 
-VOID EXPORT
-OSNotifyDeviceWakeByGPEEvent(
-    IN ULONG                GpeBit,
-    IN ULONG                GpeRegister,
-    IN ULONG                GpeMask
-    );
+VOID EXPORT OSNotifyDeviceWakeByGPEEvent(IN ULONG GpeBit, IN ULONG GpeRegister, IN ULONG GpeMask);
 
 NTSTATUS
-OSOpenHandle(
-    PSZ     KeyName,
-    HANDLE  ParentHandle,
-    PHANDLE ChildHandle
-    );
+OSOpenHandle(PSZ KeyName, HANDLE ParentHandle, PHANDLE ChildHandle);
 
 NTSTATUS
-OSOpenLargestSubkey(
-    HANDLE  ParentHandle,
-    PHANDLE ChildHandle,
-    ULONG   RomVersion
-    );
+OSOpenLargestSubkey(HANDLE ParentHandle, PHANDLE ChildHandle, ULONG RomVersion);
 
 NTSTATUS
-OSOpenUnicodeHandle(
-    PUNICODE_STRING KeyName,
-    HANDLE          ParentHandle,
-    PHANDLE         ChildHandle
-    );
+OSOpenUnicodeHandle(PUNICODE_STRING KeyName, HANDLE ParentHandle, PHANDLE ChildHandle);
 
 NTSTATUS
-OSReadAcpiConfigurationData(
-    PKEY_VALUE_PARTIAL_INFORMATION_ALIGN64  *KeyInfo
-    );
+OSReadAcpiConfigurationData(PKEY_VALUE_PARTIAL_INFORMATION_ALIGN64 *KeyInfo);
 
 NTSTATUS
-OSReadRegValue(
-    PSZ     ValueName,
-    HANDLE  ParentHandle,
-    PVOID   Buffer,
-    PULONG  BufferSize
-    );
+OSReadRegValue(PSZ ValueName, HANDLE ParentHandle, PVOID Buffer, PULONG BufferSize);
 
 NTSTATUS
-OSWriteRegValue(
-    PSZ     ValueName,
-    HANDLE  Handle,
-    PVOID   Data,
-    ULONG   DataSize
-    );
+OSWriteRegValue(PSZ ValueName, HANDLE Handle, PVOID Data, ULONG DataSize);
 
-VOID
-OSQueueWorkItem(
-    IN PWORK_QUEUE_ITEM WorkItem
-    );
+VOID OSQueueWorkItem(IN PWORK_QUEUE_ITEM WorkItem);
 
 //
 // NT only deals with Device Objects so this can be done directly
@@ -262,42 +177,21 @@ OSQueueWorkItem(
 
 extern ULONG gPm1Status;
 
-VOID
-OSDeviceCheck (
-        PVOID DeviceHandle
-    );
+VOID OSDeviceCheck(PVOID DeviceHandle);
 
-VOID
-OSDeviceCheckOnParent (
-        PVOID DeviceHandle
-    );
+VOID OSDeviceCheckOnParent(PVOID DeviceHandle);
 
-VOID
-WakeupFrom (
-    PNSOBJ pnsobj
-    );
+VOID WakeupFrom(PNSOBJ pnsobj);
 
 BOOLEAN
-OSLockRegion (
-        ULONG dwRegionAddr,
-        ULONG dwRegionSize
-    );
+OSLockRegion(ULONG dwRegionAddr, ULONG dwRegionSize);
 
 BOOLEAN
-OSUnlockRegion (
-        ULONG dwRegionAddr,
-        ULONG dwRegionSize
-    );
+OSUnlockRegion(ULONG dwRegionAddr, ULONG dwRegionSize);
 
 BOOLEAN
-OSVerifyBuffer (
-        PVOID pvBuff,
-        ULONG dwLen
-    );
+OSVerifyBuffer(PVOID pvBuff, ULONG dwLen);
 
-VOID
-OSSleep (
-        ULONG dwUSecs
-    );
+VOID OSSleep(ULONG dwUSecs);
 
 #endif

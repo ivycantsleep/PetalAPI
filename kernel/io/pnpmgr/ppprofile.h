@@ -19,61 +19,30 @@ Revision History:
 
 --*/
 
-typedef enum _HARDWARE_PROFILE_BUS_TYPE {
+typedef enum _HARDWARE_PROFILE_BUS_TYPE
+{
 
     HardwareProfileBusTypeACPI
 
 } HARDWARE_PROFILE_BUS_TYPE, *PHARDWARE_PROFILE_BUS_TYPE;
 
-VOID
-PpProfileInit(
-    VOID
-    );
+VOID PpProfileInit(VOID);
 
-VOID
-PpProfileBeginHardwareProfileTransition(
-    IN BOOLEAN SubsumeExistingDeparture
-    );
+VOID PpProfileBeginHardwareProfileTransition(IN BOOLEAN SubsumeExistingDeparture);
 
-VOID
-PpProfileIncludeInHardwareProfileTransition(
-    IN  PDEVICE_NODE    DeviceNode,
-    IN  PROFILE_STATUS  ChangeInPresence
-    );
+VOID PpProfileIncludeInHardwareProfileTransition(IN PDEVICE_NODE DeviceNode, IN PROFILE_STATUS ChangeInPresence);
 
 NTSTATUS
-PpProfileQueryHardwareProfileChange(
-    IN  BOOLEAN                     SubsumeExistingDeparture,
-    IN  PROFILE_NOTIFICATION_TIME   NotificationTime,
-    OUT PPNP_VETO_TYPE              VetoType,
-    OUT PUNICODE_STRING             VetoName OPTIONAL
-    );
+PpProfileQueryHardwareProfileChange(IN BOOLEAN SubsumeExistingDeparture, IN PROFILE_NOTIFICATION_TIME NotificationTime,
+                                    OUT PPNP_VETO_TYPE VetoType, OUT PUNICODE_STRING VetoName OPTIONAL);
 
-VOID
-PpProfileCommitTransitioningDock(
-    IN PDEVICE_NODE     DeviceNode,
-    IN PROFILE_STATUS   ChangeInPresence
-    );
+VOID PpProfileCommitTransitioningDock(IN PDEVICE_NODE DeviceNode, IN PROFILE_STATUS ChangeInPresence);
 
-VOID
-PpProfileCancelTransitioningDock(
-    IN PDEVICE_NODE     DeviceNode,
-    IN PROFILE_STATUS   ChangeInPresence
-    );
+VOID PpProfileCancelTransitioningDock(IN PDEVICE_NODE DeviceNode, IN PROFILE_STATUS ChangeInPresence);
 
-VOID
-PpProfileCancelHardwareProfileTransition(
-    VOID
-    );
+VOID PpProfileCancelHardwareProfileTransition(VOID);
 
-VOID
-PpProfileMarkAllTransitioningDocksEjected(
-    VOID
-    );
+VOID PpProfileMarkAllTransitioningDocksEjected(VOID);
 
 PDEVICE_OBJECT
-PpProfileRetrievePreferredDockToEject(
-    VOID
-    );
-
-
+PpProfileRetrievePreferredDockToEject(VOID);

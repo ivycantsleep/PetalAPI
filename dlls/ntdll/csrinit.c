@@ -27,11 +27,7 @@ Revision History:
 #include "ldrp.h"
 
 BOOLEAN
-CsrDllInitialize(
-    IN PVOID DllHandle,
-    IN ULONG Reason,
-    IN PCONTEXT Context OPTIONAL
-    )
+CsrDllInitialize(IN PVOID DllHandle, IN ULONG Reason, IN PCONTEXT Context OPTIONAL)
 
 /*++
 
@@ -58,9 +54,10 @@ Return Value:
 {
     Context;
 
-    if (Reason != DLL_PROCESS_ATTACH) {
-        return( TRUE );
-        }
+    if (Reason != DLL_PROCESS_ATTACH)
+    {
+        return (TRUE);
+    }
 
     //
     // Remember our DLL handle in a global variable.
@@ -68,12 +65,12 @@ Return Value:
 
     CsrDllHandle = DllHandle;
 
-    return( TRUE );
+    return (TRUE);
 }
 
 
 NTSTATUS
-CsrOneTimeInitialize( VOID )
+CsrOneTimeInitialize(VOID)
 {
     NTSTATUS Status;
 
@@ -81,14 +78,11 @@ CsrOneTimeInitialize( VOID )
     // Save away system information in a global variable
     //
 
-    Status = NtQuerySystemInformation( SystemBasicInformation,
-                                       &CsrNtSysInfo,
-                                       sizeof( CsrNtSysInfo ),
-                                       NULL
-                                     );
-    if (!NT_SUCCESS( Status )) {
-        return( Status );
-        }
+    Status = NtQuerySystemInformation(SystemBasicInformation, &CsrNtSysInfo, sizeof(CsrNtSysInfo), NULL);
+    if (!NT_SUCCESS(Status))
+    {
+        return (Status);
+    }
 
     //
     // Use the process heap for memory allocation.
@@ -98,18 +92,13 @@ CsrOneTimeInitialize( VOID )
 
     CsrInitOnceDone = TRUE;
 
-    return( STATUS_SUCCESS );
+    return (STATUS_SUCCESS);
 }
 
 
 NTSTATUS
-CsrClientConnectToServer(
-    IN PWSTR ObjectDirectory,
-    IN ULONG ServerDllIndex,
-    IN PVOID ConnectionInformation,
-    IN OUT PULONG ConnectionInformationLength OPTIONAL,
-    OUT PBOOLEAN CalledFromServer OPTIONAL
-    )
+CsrClientConnectToServer(IN PWSTR ObjectDirectory, IN ULONG ServerDllIndex, IN PVOID ConnectionInformation,
+                         IN OUT PULONG ConnectionInformationLength OPTIONAL, OUT PBOOLEAN CalledFromServer OPTIONAL)
 
 /*++
 
@@ -166,20 +155,20 @@ Return Value:
     UNICODE_STRING DllName_U;
     PIMAGE_NT_HEADERS NtHeaders;
 
-    if (ARGUMENT_PRESENT( ConnectionInformation ) &&
-        (!ARGUMENT_PRESENT( ConnectionInformationLength ) ||
-          *ConnectionInformationLength == 0
-        )
-       ) {
-        return( STATUS_INVALID_PARAMETER );
-        }
+    if (ARGUMENT_PRESENT(ConnectionInformation) &&
+        (!ARGUMENT_PRESENT(ConnectionInformationLength) || *ConnectionInformationLength == 0))
+    {
+        return (STATUS_INVALID_PARAMETER);
+    }
 
-    if (!CsrInitOnceDone) {
+    if (!CsrInitOnceDone)
+    {
         Status = CsrOneTimeInitialize();
-        if (!NT_SUCCESS( Status )) {
-            return( Status );
-            }
+        if (!NT_SUCCESS(Status))
+        {
+            return (Status);
         }
+    }
 
     //
     // if we are being called by a server process, skip lpc port initialization
@@ -188,10 +177,11 @@ Return Value:
     // stuff only needs to be done for the first connect.
     //
 
-    if ( CsrServerProcess == TRUE ) {
+    if (CsrServerProcess == TRUE)
+    {
         *CalledFromServer = CsrServerProcess;
         return STATUS_SUCCESS;
-        }
+    }
 
     //
     // If the image is an NT Native image, we are running in the
@@ -199,182 +189,145 @@ Return Value:
     //
 
     NtHeaders = RtlImageNtHeader(NtCurrentPeb()->ImageBaseAddress);
-    if (! NtHeaders) {
+    if (!NtHeaders)
+    {
         return STATUS_INVALID_IMAGE_FORMAT;
     }
-    CsrServerProcess =
-        (NtHeaders->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_NATIVE) ? TRUE : FALSE;
+    CsrServerProcess = (NtHeaders->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_NATIVE) ? TRUE : FALSE;
 
-    if ( CsrServerProcess ) {
+    if (CsrServerProcess)
+    {
         extern PVOID NtDllBase;
-        RtlInitAnsiString( &DllName, "csrsrv" );
+        RtlInitAnsiString(&DllName, "csrsrv");
         Status = RtlAnsiStringToUnicodeString(&DllName_U, &DllName, TRUE);
         ASSERT(NT_SUCCESS(Status));
 
         LdrDisableThreadCalloutsForDll(NtDllBase);
 
-        Status = LdrGetDllHandle(
-        		UNICODE_NULL,
-                    NULL,
-        		&DllName_U,
-                    (PVOID *)&CsrServerModuleHandle
-                    );
+        Status = LdrGetDllHandle(UNICODE_NULL, NULL, &DllName_U, (PVOID *)&CsrServerModuleHandle);
 
         RtlFreeUnicodeString(&DllName_U);
 
         CsrServerProcess = TRUE;
 
-        RtlInitString(&ProcedureName,"CsrCallServerFromServer");
-        Status = LdrGetProcedureAddress(
-                        CsrServerModuleHandle,
-                        &ProcedureName,
-                        0L,
-                        (PVOID *)&CsrServerApiRoutine
-                        );
+        RtlInitString(&ProcedureName, "CsrCallServerFromServer");
+        Status = LdrGetProcedureAddress(CsrServerModuleHandle, &ProcedureName, 0L, (PVOID *)&CsrServerApiRoutine);
         ASSERT(NT_SUCCESS(Status));
 
-        ASSERT (CsrPortHeap==NULL);
+        ASSERT(CsrPortHeap == NULL);
         CsrPortHeap = RtlProcessHeap();
 
-        CsrPortBaseTag = RtlCreateTagHeap( CsrPortHeap,
-                                           0,
-                                           L"CSRPORT!",
-                                           L"CAPTURE\0"
-                                         );
+        CsrPortBaseTag = RtlCreateTagHeap(CsrPortHeap, 0, L"CSRPORT!", L"CAPTURE\0");
 
-        if (ARGUMENT_PRESENT(CalledFromServer)) {
+        if (ARGUMENT_PRESENT(CalledFromServer))
+        {
             *CalledFromServer = CsrServerProcess;
-            }
-        return STATUS_SUCCESS;
         }
+        return STATUS_SUCCESS;
+    }
 
-    if ( ARGUMENT_PRESENT(ConnectionInformation) ) {
+    if (ARGUMENT_PRESENT(ConnectionInformation))
+    {
         CsrServerProcess = FALSE;
-        if (CsrPortHandle == NULL) {
-            Status = CsrpConnectToServer( ObjectDirectory );
-            if (!NT_SUCCESS( Status )) {
-                return( Status );
-                }
+        if (CsrPortHandle == NULL)
+        {
+            Status = CsrpConnectToServer(ObjectDirectory);
+            if (!NT_SUCCESS(Status))
+            {
+                return (Status);
             }
+        }
 
         a->ServerDllIndex = ServerDllIndex;
         a->ConnectionInformationLength = *ConnectionInformationLength;
-        if (ARGUMENT_PRESENT( ConnectionInformation )) {
-            CaptureBuffer = CsrAllocateCaptureBuffer( 1,
-                                                      a->ConnectionInformationLength
-                                                    );
-            if (CaptureBuffer == NULL) {
-                return( STATUS_NO_MEMORY );
-                }
+        if (ARGUMENT_PRESENT(ConnectionInformation))
+        {
+            CaptureBuffer = CsrAllocateCaptureBuffer(1, a->ConnectionInformationLength);
+            if (CaptureBuffer == NULL)
+            {
+                return (STATUS_NO_MEMORY);
+            }
 
-            CsrAllocateMessagePointer( CaptureBuffer,
-                                       a->ConnectionInformationLength,
-                                       (PVOID *)&a->ConnectionInformation
-                                     );
-            RtlMoveMemory( a->ConnectionInformation,
-                           ConnectionInformation,
-                           a->ConnectionInformationLength
-                         );
+            CsrAllocateMessagePointer(CaptureBuffer, a->ConnectionInformationLength,
+                                      (PVOID *)&a->ConnectionInformation);
+            RtlMoveMemory(a->ConnectionInformation, ConnectionInformation, a->ConnectionInformationLength);
 
             *ConnectionInformationLength = a->ConnectionInformationLength;
-            }
-        else {
+        }
+        else
+        {
             CaptureBuffer = NULL;
-            }
-
-        Status = CsrClientCallServer( &m,
-                                      CaptureBuffer,
-                                      CSR_MAKE_API_NUMBER( CSRSRV_SERVERDLL_INDEX,
-                                                           CsrpClientConnect
-                                                         ),
-                                      sizeof( *a )
-                                    );
-
-        if (CaptureBuffer != NULL) {
-            if (ARGUMENT_PRESENT( ConnectionInformation )) {
-                RtlMoveMemory( ConnectionInformation,
-                               a->ConnectionInformation,
-                               *ConnectionInformationLength
-                             );
-                }
-
-            CsrFreeCaptureBuffer( CaptureBuffer );
-            }
         }
-    else {
+
+        Status = CsrClientCallServer(&m, CaptureBuffer, CSR_MAKE_API_NUMBER(CSRSRV_SERVERDLL_INDEX, CsrpClientConnect),
+                                     sizeof(*a));
+
+        if (CaptureBuffer != NULL)
+        {
+            if (ARGUMENT_PRESENT(ConnectionInformation))
+            {
+                RtlMoveMemory(ConnectionInformation, a->ConnectionInformation, *ConnectionInformationLength);
+            }
+
+            CsrFreeCaptureBuffer(CaptureBuffer);
+        }
+    }
+    else
+    {
         Status = STATUS_SUCCESS;
-        }
+    }
 
-    if (ARGUMENT_PRESENT(CalledFromServer)) {
+    if (ARGUMENT_PRESENT(CalledFromServer))
+    {
         *CalledFromServer = CsrServerProcess;
-        }
-    return( Status );
+    }
+    return (Status);
 }
 
 BOOLEAN
-xProtectHandle(
-    HANDLE hObject
-    )
+xProtectHandle(HANDLE hObject)
 {
     NTSTATUS Status;
     OBJECT_HANDLE_FLAG_INFORMATION HandleInfo;
 
-    Status = NtQueryObject( hObject,
-                            ObjectHandleFlagInformation,
-                            &HandleInfo,
-                            sizeof( HandleInfo ),
-                            NULL
-                          );
-    if (NT_SUCCESS( Status )) {
+    Status = NtQueryObject(hObject, ObjectHandleFlagInformation, &HandleInfo, sizeof(HandleInfo), NULL);
+    if (NT_SUCCESS(Status))
+    {
         HandleInfo.ProtectFromClose = TRUE;
 
-        Status = NtSetInformationObject( hObject,
-                                         ObjectHandleFlagInformation,
-                                         &HandleInfo,
-                                         sizeof( HandleInfo )
-                                       );
-        if (NT_SUCCESS( Status )) {
+        Status = NtSetInformationObject(hObject, ObjectHandleFlagInformation, &HandleInfo, sizeof(HandleInfo));
+        if (NT_SUCCESS(Status))
+        {
             return TRUE;
-            }
         }
+    }
 
     return FALSE;
 }
 
 BOOLEAN
-xUnProtectHandle(
-    HANDLE hObject
-    )
+xUnProtectHandle(HANDLE hObject)
 {
     NTSTATUS Status;
     OBJECT_HANDLE_FLAG_INFORMATION HandleInfo;
 
-    Status = NtQueryObject( hObject,
-                            ObjectHandleFlagInformation,
-                            &HandleInfo,
-                            sizeof( HandleInfo ),
-                            NULL
-                          );
-    if (NT_SUCCESS( Status )) {
+    Status = NtQueryObject(hObject, ObjectHandleFlagInformation, &HandleInfo, sizeof(HandleInfo), NULL);
+    if (NT_SUCCESS(Status))
+    {
         HandleInfo.ProtectFromClose = FALSE;
 
-        Status = NtSetInformationObject( hObject,
-                                         ObjectHandleFlagInformation,
-                                         &HandleInfo,
-                                         sizeof( HandleInfo )
-                                       );
-        if (NT_SUCCESS( Status )) {
+        Status = NtSetInformationObject(hObject, ObjectHandleFlagInformation, &HandleInfo, sizeof(HandleInfo));
+        if (NT_SUCCESS(Status))
+        {
             return TRUE;
-            }
         }
+    }
 
     return FALSE;
 }
 
 NTSTATUS
-CsrpConnectToServer(
-    IN PWSTR ObjectDirectory
-    )
+CsrpConnectToServer(IN PWSTR ObjectDirectory)
 {
     NTSTATUS Status;
     REMOTE_PORT_VIEW ServerView;
@@ -394,17 +347,17 @@ CsrpConnectToServer(
     // name with the port name.
     //
 
-    n = ((wcslen( ObjectDirectory ) + 1) * sizeof( WCHAR )) +
-        sizeof( CSR_API_PORT_NAME );
+    n = ((wcslen(ObjectDirectory) + 1) * sizeof(WCHAR)) + sizeof(CSR_API_PORT_NAME);
     CsrPortName.Length = 0;
     CsrPortName.MaximumLength = (USHORT)n;
-    CsrPortName.Buffer = RtlAllocateHeap( CsrHeap, MAKE_TAG( CSR_TAG ), n );
-    if (CsrPortName.Buffer == NULL) {
-        return( STATUS_NO_MEMORY );
-        }
-    RtlAppendUnicodeToString( &CsrPortName, ObjectDirectory );
-    RtlAppendUnicodeToString( &CsrPortName, L"\\" );
-    RtlAppendUnicodeToString( &CsrPortName, CSR_API_PORT_NAME );
+    CsrPortName.Buffer = RtlAllocateHeap(CsrHeap, MAKE_TAG(CSR_TAG), n);
+    if (CsrPortName.Buffer == NULL)
+    {
+        return (STATUS_NO_MEMORY);
+    }
+    RtlAppendUnicodeToString(&CsrPortName, ObjectDirectory);
+    RtlAppendUnicodeToString(&CsrPortName, L"\\");
+    RtlAppendUnicodeToString(&CsrPortName, CSR_API_PORT_NAME);
 
     //
     // Set up the security quality of service parameters to use over the
@@ -427,17 +380,11 @@ CsrpConnectToServer(
     SectionSize.LowPart = CSR_PORT_MEMORY_SIZE;
     SectionSize.HighPart = 0;
 
-    Status = NtCreateSection( &PortSection,
-                              SECTION_ALL_ACCESS,
-                              NULL,
-                              &SectionSize,
-                              PAGE_READWRITE,
-                              SEC_RESERVE,
-                              NULL
-                            );
-    if (!NT_SUCCESS( Status )) {
-        return( Status );
-        }
+    Status = NtCreateSection(&PortSection, SECTION_ALL_ACCESS, NULL, &SectionSize, PAGE_READWRITE, SEC_RESERVE, NULL);
+    if (!NT_SUCCESS(Status))
+    {
+        return (Status);
+    }
 
     //
     // Connect to the server.  This includes a description of the Port Memory
@@ -446,52 +393,40 @@ CsrpConnectToServer(
     // server needs in the connection information structure.
     //
 
-    ClientView.Length = sizeof( ClientView );
+    ClientView.Length = sizeof(ClientView);
     ClientView.SectionHandle = PortSection;
     ClientView.SectionOffset = 0;
     ClientView.ViewSize = SectionSize.LowPart;
     ClientView.ViewBase = 0;
     ClientView.ViewRemoteBase = 0;
 
-    ServerView.Length = sizeof( ServerView );
+    ServerView.Length = sizeof(ServerView);
     ServerView.ViewSize = 0;
     ServerView.ViewBase = 0;
 
-    ConnectionInformationLength = sizeof( ConnectionInformation );
+    ConnectionInformationLength = sizeof(ConnectionInformation);
     ConnectionInformation.ExpectedVersion = CSR_VERSION;
 
     SystemSid = NULL;
-    Status = RtlAllocateAndInitializeSid( &NtAuthority,
-                                          1,
-                                          SECURITY_LOCAL_SYSTEM_RID,
-                                          0, 0, 0, 0, 0, 0, 0,
-                                          &SystemSid
-                                        );
-    if (!NT_SUCCESS( Status )) {
-        return( Status );
+    Status = RtlAllocateAndInitializeSid(&NtAuthority, 1, SECURITY_LOCAL_SYSTEM_RID, 0, 0, 0, 0, 0, 0, 0, &SystemSid);
+    if (!NT_SUCCESS(Status))
+    {
+        return (Status);
+    }
+    Status = NtSecureConnectPort(&CsrPortHandle, &CsrPortName, &DynamicQos, &ClientView, SystemSid, &ServerView,
+                                 (PULONG)&MaxMessageLength, (PVOID)&ConnectionInformation,
+                                 (PULONG)&ConnectionInformationLength);
+    RtlFreeSid(SystemSid);
+    NtClose(PortSection);
+    if (!NT_SUCCESS(Status))
+    {
+        IF_DEBUG
+        {
+            DbgPrint("CSRDLL: Unable to connect to %wZ Server - Status == %X\n", &CsrPortName, Status);
         }
-    Status = NtSecureConnectPort( &CsrPortHandle,
-                          &CsrPortName,
-                          &DynamicQos,
-                          &ClientView,
-                          SystemSid,
-                          &ServerView,
-                          (PULONG)&MaxMessageLength,
-                          (PVOID)&ConnectionInformation,
-                          (PULONG)&ConnectionInformationLength
-                        );
-    RtlFreeSid( SystemSid );
-    NtClose( PortSection );
-    if (!NT_SUCCESS( Status )) {
-        IF_DEBUG {
-            DbgPrint( "CSRDLL: Unable to connect to %wZ Server - Status == %X\n",
-                      &CsrPortName,
-                      Status
-                    );
-            }
 
-        return( Status );
-        }
+        return (Status);
+    }
     xProtectHandle(CsrPortHandle);
 
     NtCurrentPeb()->ReadOnlySharedMemoryBase = ConnectionInformation.SharedSectionBase;
@@ -504,45 +439,39 @@ CsrpConnectToServer(
 #endif
     CsrObjectDirectory = ConnectionInformation.ObjectDirectory;
 
-    CsrPortMemoryRemoteDelta = (ULONG_PTR)ClientView.ViewRemoteBase -
-                               (ULONG_PTR)ClientView.ViewBase;
+    CsrPortMemoryRemoteDelta = (ULONG_PTR)ClientView.ViewRemoteBase - (ULONG_PTR)ClientView.ViewBase;
 
-    IF_CSR_DEBUG( LPC ) {
-        DbgPrint( "CSRDLL: ClientView: Base=%p  RemoteBase=%p  Delta: %lX  Size=%lX\n",
-                  ClientView.ViewBase,
-                  ClientView.ViewRemoteBase,
-                  CsrPortMemoryRemoteDelta,
-                  (ULONG)ClientView.ViewSize
-                );
-        }
+    IF_CSR_DEBUG(LPC)
+    {
+        DbgPrint("CSRDLL: ClientView: Base=%p  RemoteBase=%p  Delta: %lX  Size=%lX\n", ClientView.ViewBase,
+                 ClientView.ViewRemoteBase, CsrPortMemoryRemoteDelta, (ULONG)ClientView.ViewSize);
+    }
 
     //
     // Create a sparse heap in the share memory section.  Initially
     // commit just one page.
     //
 
-    CsrPortHeap = RtlCreateHeap( HEAP_CLASS_8,                      // Flags
-                                 ClientView.ViewBase,               // HeapBase
-                                 ClientView.ViewSize,               // ReserveSize
-                                 CsrNtSysInfo.PageSize,             // CommitSize
-                                 0,                                 // Reserved
-                                 0                                  // GrowthThreshold
-                               );
-    if (CsrPortHeap == NULL) {
+    CsrPortHeap = RtlCreateHeap(HEAP_CLASS_8,          // Flags
+                                ClientView.ViewBase,   // HeapBase
+                                ClientView.ViewSize,   // ReserveSize
+                                CsrNtSysInfo.PageSize, // CommitSize
+                                0,                     // Reserved
+                                0                      // GrowthThreshold
+    );
+    if (CsrPortHeap == NULL)
+    {
         xUnProtectHandle(CsrPortHandle);
 
-        NtClose( CsrPortHandle );
+        NtClose(CsrPortHandle);
         CsrPortHandle = NULL;
 
-        return( STATUS_NO_MEMORY );
-        }
+        return (STATUS_NO_MEMORY);
+    }
 
-    CsrPortBaseTag = RtlCreateTagHeap( CsrPortHeap,
-                                       0,
-                                       L"CSRPORT!",
-                                       L"!CSRPORT\0"
-                                       L"CAPTURE\0"
-                                     );
+    CsrPortBaseTag = RtlCreateTagHeap(CsrPortHeap, 0, L"CSRPORT!",
+                                      L"!CSRPORT\0"
+                                      L"CAPTURE\0");
 
-    return( STATUS_SUCCESS );
+    return (STATUS_SUCCESS);
 }

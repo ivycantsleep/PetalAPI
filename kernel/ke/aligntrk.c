@@ -41,7 +41,7 @@ Revision History:
 
 #if defined(_IA64_)
 #define EXINFO_EFFECTIVE_ADDRESS 1
-#else  // !_IA64_
+#else // !_IA64_
 #define EXINFO_EFFECTIVE_ADDRESS 2
 #endif // !_IA64_
 
@@ -89,16 +89,12 @@ ULONG KiUserFixupCount = 0;
 // the following flags.
 //
 
-#define KE_ALIGNMENT_BREAK_USER   0x01
+#define KE_ALIGNMENT_BREAK_USER 0x01
 #define KE_ALIGNMENT_BREAK_KERNEL 0x02
 
 ULONG KiBreakOnAlignmentFault = KE_ALIGNMENT_BREAK_USER;
 
-__inline
-BOOLEAN
-KI_BREAK_ON_ALIGNMENT_FAULT(
-    IN KPROCESSOR_MODE PreviousMode
-    )
+__inline BOOLEAN KI_BREAK_ON_ALIGNMENT_FAULT(IN KPROCESSOR_MODE PreviousMode)
 
 /*++
 
@@ -119,14 +115,14 @@ Return Value:
 --*/
 
 {
-    if ((KiBreakOnAlignmentFault & KE_ALIGNMENT_BREAK_USER) != 0 &&
-        PreviousMode == UserMode) {
+    if ((KiBreakOnAlignmentFault & KE_ALIGNMENT_BREAK_USER) != 0 && PreviousMode == UserMode)
+    {
 
         return TRUE;
     }
 
-    if ((KiBreakOnAlignmentFault & KE_ALIGNMENT_BREAK_KERNEL) != 0 &&
-        PreviousMode == KernelMode) {
+    if ((KiBreakOnAlignmentFault & KE_ALIGNMENT_BREAK_KERNEL) != 0 && PreviousMode == KernelMode)
+    {
 
         return TRUE;
     }
@@ -144,7 +140,8 @@ Return Value:
 typedef struct _ALIGNMENT_FAULT_IMAGE *PALIGNMENT_FAULT_IMAGE;
 typedef struct _ALIGNMENT_FAULT_LOCATION *PALIGNMENT_FAULT_LOCATION;
 
-typedef struct _ALIGNMENT_FAULT_IMAGE {
+typedef struct _ALIGNMENT_FAULT_IMAGE
+{
 
     //
     // Head of singly-linked list of fault locations associated with this image
@@ -156,54 +153,41 @@ typedef struct _ALIGNMENT_FAULT_IMAGE {
     // Total number of alignment faults associated with this image.
     //
 
-    ULONG   Count;
+    ULONG Count;
 
     //
     // Number of unique alignment fault locations found in this image
     //
 
-    ULONG   Instances;
+    ULONG Instances;
 
     //
     // Name of the image
     //
 
-    CHAR    Name[ MAX_IMAGE_NAME_CHARS + 1 ];
+    CHAR Name[MAX_IMAGE_NAME_CHARS + 1];
 
 } ALIGNMENT_FAULT_IMAGE;
 
 BOOLEAN
-KiNewGlobalAlignmentFault(
-    IN  PVOID ProgramCounter,
-    IN  KPROCESSOR_MODE PreviousMode,
-    OUT PALIGNMENT_FAULT_IMAGE *AlignmentFaultImage
-    );
+KiNewGlobalAlignmentFault(IN PVOID ProgramCounter, IN KPROCESSOR_MODE PreviousMode,
+                          OUT PALIGNMENT_FAULT_IMAGE *AlignmentFaultImage);
 
 #endif
 
 NTSTATUS
-KipRecordAlignmentException(
-    IN  PVOID ProgramCounter,
-    OUT PALIGNMENT_EXCEPTION_RECORD *ExceptionRecord
-    );
+KipRecordAlignmentException(IN PVOID ProgramCounter, OUT PALIGNMENT_EXCEPTION_RECORD *ExceptionRecord);
 
 PALIGNMENT_EXCEPTION_RECORD
-KipFindAlignmentException(
-    IN PVOID ProgramCounter
-    );
+KipFindAlignmentException(IN PVOID ProgramCounter);
 
 PALIGNMENT_EXCEPTION_RECORD
-KipAllocateAlignmentExceptionRecord( VOID );
+KipAllocateAlignmentExceptionRecord(VOID);
 
 BOOLEAN
-KiHandleAlignmentFault(
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PKTRAP_FRAME TrapFrame,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN BOOLEAN FirstChance,
-    OUT BOOLEAN *ExceptionForwarded
-    )
+KiHandleAlignmentFault(IN PEXCEPTION_RECORD ExceptionRecord, IN PKEXCEPTION_FRAME ExceptionFrame,
+                       IN PKTRAP_FRAME TrapFrame, IN KPROCESSOR_MODE PreviousMode, IN BOOLEAN FirstChance,
+                       OUT BOOLEAN *ExceptionForwarded)
 
 /*++
 
@@ -256,7 +240,8 @@ Return Value:
     AlignmentFaultHandled = FALSE;
     ExceptionWasForwarded = FALSE;
 
-    if (FirstChance != FALSE) {
+    if (FirstChance != FALSE)
+    {
 
         //
         // This is the first chance for handling an exception... we haven't yet
@@ -274,7 +259,8 @@ Return Value:
         // case.
         //
 
-        if (IsWow64Process() != FALSE) {
+        if (IsWow64Process() != FALSE)
+        {
 
             //
             // For now, autoalignment is on (both user and kernel) for Wow64
@@ -284,14 +270,14 @@ Return Value:
             AutoAlignment = TRUE;
         }
 
-        if (PreviousMode == UserMode &&
-            (KeGetCurrentThread()->AutoAlignment != FALSE ||
-             KeGetCurrentThread()->ApcState.Process->AutoAlignment != FALSE)) {
+        if (PreviousMode == UserMode && (KeGetCurrentThread()->AutoAlignment != FALSE ||
+                                         KeGetCurrentThread()->ApcState.Process->AutoAlignment != FALSE))
+        {
 
             //
             // The fault occured in user mode, and the thread and/or process
             // has autoalignment turned on.
-            // 
+            //
 
 #if defined(_IA64_)
 
@@ -306,9 +292,8 @@ Return Value:
             AutoAlignment = TRUE;
         }
 
-        if (PreviousMode == UserMode &&
-            PsGetCurrentProcess()->DebugPort != NULL &&
-            AutoAlignment == FALSE) {
+        if (PreviousMode == UserMode && PsGetCurrentProcess()->DebugPort != NULL && AutoAlignment == FALSE)
+        {
 
             BOOLEAN DebuggerHandledException;
             PALIGNMENT_EXCEPTION_RECORD AlignmentExceptionRecord;
@@ -321,14 +306,14 @@ Return Value:
             // and, if so, whether we should break into the debugger.
             //
 
-            Status = KipRecordAlignmentException( ProgramCounter,
-                                                  &AlignmentExceptionRecord );
-            if (!NT_SUCCESS(Status)) {
+            Status = KipRecordAlignmentException(ProgramCounter, &AlignmentExceptionRecord);
+            if (!NT_SUCCESS(Status))
+            {
                 AlignmentExceptionRecord = NULL;
             }
 
-            if (AlignmentExceptionRecord != NULL &&
-                AlignmentExceptionRecord->AutoFixup != FALSE) {
+            if (AlignmentExceptionRecord != NULL && AlignmentExceptionRecord->AutoFixup != FALSE)
+            {
 
                 //
                 // The alignment exception record for this location
@@ -339,18 +324,19 @@ Return Value:
                 //
 
                 EmulateAlignmentFault = TRUE;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // Forward the exception to the debugger.
                 //
 
                 ExceptionWasForwarded = TRUE;
-                DebuggerHandledException =
-                    DbgkForwardException( ExceptionRecord, TRUE, FALSE );
+                DebuggerHandledException = DbgkForwardException(ExceptionRecord, TRUE, FALSE);
 
-                if (DebuggerHandledException != FALSE) {
+                if (DebuggerHandledException != FALSE)
+                {
 
                     //
                     // The user continued with "gh", so fix up this and all
@@ -358,18 +344,19 @@ Return Value:
                     //
 
                     EmulateAlignmentFault = TRUE;
-                    if (AlignmentExceptionRecord != NULL) {
+                    if (AlignmentExceptionRecord != NULL)
+                    {
                         AlignmentExceptionRecord->AutoFixup = TRUE;
                     }
                 }
             }
+        }
+        else if ((KiEnableAlignmentFaultExceptions == 0) ||
 
-        } else if ((KiEnableAlignmentFaultExceptions == 0) ||
+                 (AutoAlignment != FALSE) ||
 
-                   (AutoAlignment != FALSE) ||
-
-                   (PreviousMode == UserMode &&
-                    KiEnableAlignmentFaultExceptions == 2)) {
+                 (PreviousMode == UserMode && KiEnableAlignmentFaultExceptions == 2))
+        {
 
             //
             // Emulate the alignment if:
@@ -382,12 +369,13 @@ Return Value:
             //
 
             EmulateAlignmentFault = TRUE;
-
-        } else {
+        }
+        else
+        {
 
             //
             // We are not fixing up the alignment fault.
-            // 
+            //
 
 #if defined(_IA64_)
 
@@ -406,19 +394,20 @@ Return Value:
         // Count alignment faults by mode.
         //
 
-        if (PreviousMode == KernelMode) {
+        if (PreviousMode == KernelMode)
+        {
             KiKernelFixupCount += 1;
-        } else {
+        }
+        else
+        {
             KiUserFixupCount += 1;
         }
 
-        EffectiveAddress =
-            (PVOID)ExceptionRecord->ExceptionInformation[EXINFO_EFFECTIVE_ADDRESS];
+        EffectiveAddress = (PVOID)ExceptionRecord->ExceptionInformation[EXINFO_EFFECTIVE_ADDRESS];
 
-        NewAlignmentFault = KiNewGlobalAlignmentFault( ProgramCounter,
-                                                       PreviousMode,
-                                                       &FaultImage );
-        if (NewAlignmentFault != FALSE) {
+        NewAlignmentFault = KiNewGlobalAlignmentFault(ProgramCounter, PreviousMode, &FaultImage);
+        if (NewAlignmentFault != FALSE)
+        {
 
             //
             // Attempt to determine and display the name of the offending
@@ -426,19 +415,17 @@ Return Value:
             //
 
             DbgPrint("KE: %s Fixup: %.16s [%.16s], Pc=%.16p, Addr=%.16p ... Total=%ld %s\n",
-                     (PreviousMode == KernelMode) ? "Kernel" : "User",
-                     &PsGetCurrentProcess()->ImageFileName[0],
-                     FaultImage->Name,
-                     ProgramCounter,
-                     EffectiveAddress,
+                     (PreviousMode == KernelMode) ? "Kernel" : "User", &PsGetCurrentProcess()->ImageFileName[0],
+                     FaultImage->Name, ProgramCounter, EffectiveAddress,
                      (PreviousMode == KernelMode) ? KiKernelFixupCount : KiUserFixupCount,
                      IsWow64Process() ? "(Wow64)" : "");
 
-            if (AutoAlignment == FALSE &&
-                KI_BREAK_ON_ALIGNMENT_FAULT( PreviousMode ) != FALSE &&
-                ExceptionWasForwarded == FALSE) {
+            if (AutoAlignment == FALSE && KI_BREAK_ON_ALIGNMENT_FAULT(PreviousMode) != FALSE &&
+                ExceptionWasForwarded == FALSE)
+            {
 
-                if (EmulateAlignmentFault == FALSE) {
+                if (EmulateAlignmentFault == FALSE)
+                {
                     DbgPrint("KE: Misaligned access WILL NOT be emulated\n");
                 }
 
@@ -451,7 +438,8 @@ Return Value:
                 // debugger as a result of this fault.
                 //
 
-                if (PreviousMode != KernelMode) {
+                if (PreviousMode != KernelMode)
+                {
                     RtlMakeStackTraceDataPresent();
                 }
 
@@ -465,10 +453,10 @@ Return Value:
         // Emulate the reference according to the decisions made above.
         //
 
-        if (EmulateAlignmentFault != FALSE) {
-            if (KiEmulateReference(ExceptionRecord,
-                                   ExceptionFrame,
-                                   TrapFrame) != FALSE) {
+        if (EmulateAlignmentFault != FALSE)
+        {
+            if (KiEmulateReference(ExceptionRecord, ExceptionFrame, TrapFrame) != FALSE)
+            {
                 KeGetCurrentPrcb()->KeAlignmentFixupCount += 1;
                 AlignmentFaultHandled = TRUE;
             }
@@ -480,10 +468,7 @@ Return Value:
 }
 
 NTSTATUS
-KipRecordAlignmentException(
-    IN  PVOID ProgramCounter,
-    OUT PALIGNMENT_EXCEPTION_RECORD *ExceptionRecord
-    )
+KipRecordAlignmentException(IN PVOID ProgramCounter, OUT PALIGNMENT_EXCEPTION_RECORD *ExceptionRecord)
 /*++
 
 Routine Description:
@@ -514,17 +499,19 @@ Return Value:
     //
 
     KeEnterCriticalRegion();
-    ExAcquireResourceExclusive( &PsLoadedModuleResource, TRUE );
+    ExAcquireResourceExclusive(&PsLoadedModuleResource, TRUE);
 
-    exceptionRecord = KipFindAlignmentException( ProgramCounter );
-    if (exceptionRecord == NULL) {
+    exceptionRecord = KipFindAlignmentException(ProgramCounter);
+    if (exceptionRecord == NULL)
+    {
 
         //
         // New exception.  Allocate a new record.
         //
 
         exceptionRecord = KipAllocateAlignmentExceptionRecord();
-        if (exceptionRecord == NULL) {
+        if (exceptionRecord == NULL)
+        {
 
             status = STATUS_INSUFFICIENT_RESOURCES;
             goto exitUnlock;
@@ -540,16 +527,14 @@ Return Value:
 
 exitUnlock:
 
-    ExReleaseResourceLite( &PsLoadedModuleResource );
+    ExReleaseResourceLite(&PsLoadedModuleResource);
     KeLeaveCriticalRegion();
 
     return status;
 }
 
 PALIGNMENT_EXCEPTION_RECORD
-KipAllocateAlignmentExceptionRecord(
-    VOID
-    )
+KipAllocateAlignmentExceptionRecord(VOID)
 /*++
 
 Routine Description:
@@ -580,8 +565,9 @@ Return Value:
     // Free exception records have a NULL program counter.
     //
 
-    exceptionRecord = KipFindAlignmentException( NULL );
-    if (exceptionRecord == NULL) {
+    exceptionRecord = KipFindAlignmentException(NULL);
+    if (exceptionRecord == NULL)
+    {
 
         thread = KeGetCurrentThread();
         process = thread->ApcState.Process;
@@ -596,12 +582,14 @@ Return Value:
 
         exceptionTableCount = 0;
         exceptionTable = process->AlignmentExceptionTable;
-        while (exceptionTable != NULL) {
+        while (exceptionTable != NULL)
+        {
             exceptionTableCount += 1;
             exceptionTable = exceptionTable->Next;
         }
 
-        if (exceptionTableCount == MAXIMUM_ALIGNMENT_TABLES) {
+        if (exceptionTableCount == MAXIMUM_ALIGNMENT_TABLES)
+        {
             return NULL;
         }
 
@@ -610,14 +598,13 @@ Return Value:
         // head of the per-process list.
         //
 
-        exceptionTable = ExAllocatePoolWithTag( PagedPool,
-                                                sizeof(ALIGNMENT_EXCEPTION_TABLE),
-                                                'tpcX' );
-        if (exceptionTable == NULL) {
+        exceptionTable = ExAllocatePoolWithTag(PagedPool, sizeof(ALIGNMENT_EXCEPTION_TABLE), 'tpcX');
+        if (exceptionTable == NULL)
+        {
             return NULL;
         }
 
-        RtlZeroMemory( exceptionTable, sizeof(ALIGNMENT_EXCEPTION_TABLE) );
+        RtlZeroMemory(exceptionTable, sizeof(ALIGNMENT_EXCEPTION_TABLE));
         exceptionTable->Next = process->AlignmentExceptionTable;
         process->AlignmentExceptionTable = exceptionTable;
 
@@ -632,9 +619,7 @@ Return Value:
 }
 
 PALIGNMENT_EXCEPTION_RECORD
-KipFindAlignmentException(
-    IN PVOID ProgramCounter
-    )
+KipFindAlignmentException(IN PVOID ProgramCounter)
 /*++
 
 Routine Description:
@@ -669,18 +654,20 @@ Return Value:
     //
 
     exceptionTable = process->AlignmentExceptionTable;
-    while (exceptionTable != NULL) {
+    while (exceptionTable != NULL)
+    {
 
         //
         // Scan this table looking for a match.
         //
 
         exceptionRecord = exceptionTable->RecordArray;
-        lastExceptionRecord =
-            &exceptionTable->RecordArray[ ALIGNMENT_RECORDS_PER_TABLE ];
+        lastExceptionRecord = &exceptionTable->RecordArray[ALIGNMENT_RECORDS_PER_TABLE];
 
-        while (exceptionRecord < lastExceptionRecord) {
-            if (exceptionRecord->ProgramCounter == ProgramCounter) {
+        while (exceptionRecord < lastExceptionRecord)
+        {
+            if (exceptionRecord->ProgramCounter == ProgramCounter)
+            {
 
                 //
                 // Found it.
@@ -691,7 +678,8 @@ Return Value:
             exceptionRecord++;
         }
 
-        if (ProgramCounter == NULL) {
+        if (ProgramCounter == NULL)
+        {
 
             //
             // Caller was looking for a free exception record.  If one exists
@@ -720,13 +708,14 @@ Return Value:
 // loaded at a different base address in a new process.
 //
 
-typedef struct _ALIGNMENT_FAULT_LOCATION {
+typedef struct _ALIGNMENT_FAULT_LOCATION
+{
 
     //
     // Pointer to fault image associated with this location
     //
 
-    PALIGNMENT_FAULT_IMAGE    Image;
+    PALIGNMENT_FAULT_IMAGE Image;
 
     //
     // Linkage for singly-linked list of fault locations associated with the
@@ -739,13 +728,13 @@ typedef struct _ALIGNMENT_FAULT_LOCATION {
     // Offset of the PC address within the image.
     //
 
-    ULONG_PTR                 OffsetFromBase;
+    ULONG_PTR OffsetFromBase;
 
     //
     // Number of alignment faults taken at this location.
     //
 
-    ULONG                     Count;
+    ULONG Count;
 
 } ALIGNMENT_FAULT_LOCATION;
 
@@ -754,50 +743,31 @@ typedef struct _ALIGNMENT_FAULT_LOCATION {
 // tracked.
 //
 
-#define    MAX_FAULT_LOCATIONS  2048
-#define    MAX_FAULT_IMAGES     128
+#define MAX_FAULT_LOCATIONS 2048
+#define MAX_FAULT_IMAGES 128
 
-ALIGNMENT_FAULT_LOCATION KiAlignmentFaultLocations[ MAX_FAULT_LOCATIONS ];
+ALIGNMENT_FAULT_LOCATION KiAlignmentFaultLocations[MAX_FAULT_LOCATIONS];
 ULONG KiAlignmentFaultLocationCount = 0;
 
-ALIGNMENT_FAULT_IMAGE KiAlignmentFaultImages[ MAX_FAULT_IMAGES ];
+ALIGNMENT_FAULT_IMAGE KiAlignmentFaultImages[MAX_FAULT_IMAGES];
 ULONG KiAlignmentFaultImageCount = 0;
 
 KSPIN_LOCK KipGlobalAlignmentDatabaseLock;
 
-VOID
-KiCopyLastPathElement(
-    IN      PUNICODE_STRING Source,
-    IN OUT  PULONG StringBufferLen,
-    OUT     PCHAR StringBuffer
-    );
+VOID KiCopyLastPathElement(IN PUNICODE_STRING Source, IN OUT PULONG StringBufferLen, OUT PCHAR StringBuffer);
 
 PALIGNMENT_FAULT_IMAGE
-KiFindAlignmentFaultImage(
-    IN PUCHAR ImageName
-    );
+KiFindAlignmentFaultImage(IN PUCHAR ImageName);
 
 PLDR_DATA_TABLE_ENTRY
-KiFindLoaderDataTableEntry(
-    IN PLIST_ENTRY ListHead,
-    IN PVOID ProgramCounter,
-    IN KPROCESSOR_MODE PreviousMode
-    );
+KiFindLoaderDataTableEntry(IN PLIST_ENTRY ListHead, IN PVOID ProgramCounter, IN KPROCESSOR_MODE PreviousMode);
 
 BOOLEAN
-KiIncrementLocationAlignmentFault(
-    IN PALIGNMENT_FAULT_IMAGE FaultImage,
-    IN ULONG_PTR OffsetFromBase
-    );
+KiIncrementLocationAlignmentFault(IN PALIGNMENT_FAULT_IMAGE FaultImage, IN ULONG_PTR OffsetFromBase);
 
 BOOLEAN
-KiGetLdrDataTableInformation(
-    IN      PVOID ProgramCounter,
-    IN      KPROCESSOR_MODE PreviousMode,
-    IN OUT  PULONG ImageNameBufferLength,
-    OUT     PCHAR ImageNameBuffer,
-    OUT     PVOID *ImageBase
-    )
+KiGetLdrDataTableInformation(IN PVOID ProgramCounter, IN KPROCESSOR_MODE PreviousMode,
+                             IN OUT PULONG ImageNameBufferLength, OUT PCHAR ImageNameBuffer, OUT PVOID *ImageBase)
 /*++
 
 Routine Description:
@@ -840,38 +810,40 @@ Return Value:
     // gracefully from any exceptions thrown.
     //
 
-    try {
+    try
+    {
 
         //
         // Choose the appropriate module list based on whether the fault
         // occured in user- or kernel-space.
         //
 
-        if (PreviousMode == KernelMode) {
+        if (PreviousMode == KernelMode)
+        {
             head = &PsLoadedModuleList;
-        } else {
+        }
+        else
+        {
             peb = PsGetCurrentProcess()->Peb;
             head = &peb->Ldr->InLoadOrderModuleList;
         }
 
-        tableEntry = KiFindLoaderDataTableEntry( head,
-                                                 ProgramCounter,
-                                                 PreviousMode );
-        if (tableEntry != NULL) {
+        tableEntry = KiFindLoaderDataTableEntry(head, ProgramCounter, PreviousMode);
+        if (tableEntry != NULL)
+        {
 
             //
             // The module of interest was located.  Copy its name and
             // base address to the output paramters.
             //
 
-            KiCopyLastPathElement( &tableEntry->BaseDllName,
-                                   ImageNameBufferLength,
-                                   ImageNameBuffer );
+            KiCopyLastPathElement(&tableEntry->BaseDllName, ImageNameBufferLength, ImageNameBuffer);
 
             *ImageBase = tableEntry->DllBase;
             status = TRUE;
-
-        } else {
+        }
+        else
+        {
 
             //
             // A module containing the supplied program counter could not be
@@ -880,8 +852,9 @@ Return Value:
 
             status = FALSE;
         }
-
-    } except(ExSystemExceptionFilter()) {
+    }
+    except(ExSystemExceptionFilter())
+    {
 
         status = FALSE;
     }
@@ -890,11 +863,7 @@ Return Value:
 }
 
 PLDR_DATA_TABLE_ENTRY
-KiFindLoaderDataTableEntry(
-    IN PLIST_ENTRY ListHead,
-    IN PVOID ProgramCounter,
-    IN KPROCESSOR_MODE PreviousMode
-    )
+KiFindLoaderDataTableEntry(IN PLIST_ENTRY ListHead, IN PVOID ProgramCounter, IN KPROCESSOR_MODE PreviousMode)
 /*++
 
 Routine Description:
@@ -931,17 +900,18 @@ Return Value:
     nodeNumber = 0;
     next = ListHead;
 
-    if (PreviousMode != KernelMode) {
-        ProbeForReadSmallStructure( next,
-                                    sizeof(LIST_ENTRY),
-                                    PROBE_ALIGNMENT(LIST_ENTRY) );
+    if (PreviousMode != KernelMode)
+    {
+        ProbeForReadSmallStructure(next, sizeof(LIST_ENTRY), PROBE_ALIGNMENT(LIST_ENTRY));
     }
 
-    while (TRUE) {
+    while (TRUE)
+    {
 
         nodeNumber += 1;
         next = next->Flink;
-        if (next == ListHead || nodeNumber > 10000) {
+        if (next == ListHead || nodeNumber > 10000)
+        {
 
             //
             // The end of the module list has been reached, or the
@@ -953,17 +923,16 @@ Return Value:
             break;
         }
 
-        ldrDataTableEntry = CONTAINING_RECORD( next,
-                                               LDR_DATA_TABLE_ENTRY,
-                                               InLoadOrderLinks );
-        if (PreviousMode != KernelMode) {
-            ProbeForReadSmallStructure( ldrDataTableEntry,
-                                        sizeof(LDR_DATA_TABLE_ENTRY),
-                                        PROBE_ALIGNMENT(LDR_DATA_TABLE_ENTRY) );
+        ldrDataTableEntry = CONTAINING_RECORD(next, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
+        if (PreviousMode != KernelMode)
+        {
+            ProbeForReadSmallStructure(ldrDataTableEntry, sizeof(LDR_DATA_TABLE_ENTRY),
+                                       PROBE_ALIGNMENT(LDR_DATA_TABLE_ENTRY));
         }
 
         imageStart = (ULONG_PTR)ldrDataTableEntry->DllBase;
-        if (imageStart > (ULONG_PTR)ProgramCounter) {
+        if (imageStart > (ULONG_PTR)ProgramCounter)
+        {
 
             //
             // The start of this module is past the program counter,
@@ -974,7 +943,8 @@ Return Value:
         }
 
         imageEnd = imageStart + ldrDataTableEntry->SizeOfImage;
-        if (imageEnd > (ULONG_PTR)ProgramCounter) {
+        if (imageEnd > (ULONG_PTR)ProgramCounter)
+        {
 
             //
             // Found a match.
@@ -986,12 +956,7 @@ Return Value:
     return ldrDataTableEntry;
 }
 
-VOID
-KiCopyLastPathElement(
-    IN      PUNICODE_STRING Source,
-    IN OUT  PULONG StringBufferLen,
-    OUT     PCHAR StringBuffer
-    )
+VOID KiCopyLastPathElement(IN PUNICODE_STRING Source, IN OUT PULONG StringBufferLen, OUT PCHAR StringBuffer)
 /*++
 
 Routine Description:
@@ -1034,20 +999,24 @@ Return Value:
     //
 
     charCount = Source->Length / sizeof(WCHAR);
-    src = &Source->Buffer[ charCount ];
+    src = &Source->Buffer[charCount];
 
     charCount = 0;
-    while (TRUE) {
+    while (TRUE)
+    {
 
-        if (charCount >= *StringBufferLen) {
+        if (charCount >= *StringBufferLen)
+        {
             break;
         }
 
-        if (src == Source->Buffer) {
+        if (src == Source->Buffer)
+        {
             break;
         }
 
-        if (*(src-1) == L'\\') {
+        if (*(src - 1) == L'\\')
+        {
             break;
         }
 
@@ -1063,18 +1032,16 @@ Return Value:
 
     dst = StringBuffer;
     *StringBufferLen = charCount;
-    while (charCount > 0) {
+    while (charCount > 0)
+    {
         *dst++ = (CHAR)(*src++);
         charCount--;
     }
 }
 
 BOOLEAN
-KiNewGlobalAlignmentFault(
-    IN  PVOID ProgramCounter,
-    IN  KPROCESSOR_MODE PreviousMode,
-    OUT PALIGNMENT_FAULT_IMAGE *AlignmentFaultImage
-    )
+KiNewGlobalAlignmentFault(IN PVOID ProgramCounter, IN KPROCESSOR_MODE PreviousMode,
+                          OUT PALIGNMENT_FAULT_IMAGE *AlignmentFaultImage)
 /*++
 
 Routine Description:
@@ -1100,7 +1067,7 @@ Return Value:
 --*/
 {
     ULONG_PTR imageOffset;
-    CHAR imageNameBuffer[ MAX_IMAGE_NAME_CHARS + 1 ];
+    CHAR imageNameBuffer[MAX_IMAGE_NAME_CHARS + 1];
     ULONG imageNameBufferLength;
     PCHAR imageName;
     PALIGNMENT_FAULT_IMAGE alignmentFaultImage;
@@ -1110,12 +1077,10 @@ Return Value:
     KIRQL oldIrql;
 
     imageNameBufferLength = MAX_IMAGE_NAME_CHARS;
-    foundLdrDataInfo = KiGetLdrDataTableInformation( ProgramCounter,
-                                                     PreviousMode,
-                                                     &imageNameBufferLength,
-                                                     imageNameBuffer,
-                                                     &imageBase );
-    if (foundLdrDataInfo == FALSE) {
+    foundLdrDataInfo =
+        KiGetLdrDataTableInformation(ProgramCounter, PreviousMode, &imageNameBufferLength, imageNameBuffer, &imageBase);
+    if (foundLdrDataInfo == FALSE)
+    {
 
         //
         // Couldn't find an image for this program counter.
@@ -1123,10 +1088,11 @@ Return Value:
 
         imageBase = NULL;
         imageName = "Unavailable";
+    }
+    else
+    {
 
-    } else {
-
-        imageNameBuffer[ imageNameBufferLength ] = '\0';
+        imageNameBuffer[imageNameBufferLength] = '\0';
         imageName = imageNameBuffer;
     }
 
@@ -1136,22 +1102,23 @@ Return Value:
     //
 
     imageOffset = (ULONG_PTR)ProgramCounter - (ULONG_PTR)imageBase;
-    oldIrql = KeAcquireSpinLockRaiseToSynch( &KipGlobalAlignmentDatabaseLock );
-    alignmentFaultImage = KiFindAlignmentFaultImage( imageName );
-    if (alignmentFaultImage == NULL) {
+    oldIrql = KeAcquireSpinLockRaiseToSynch(&KipGlobalAlignmentDatabaseLock);
+    alignmentFaultImage = KiFindAlignmentFaultImage(imageName);
+    if (alignmentFaultImage == NULL)
+    {
 
         //
         // Image table must be full
         //
 
         newFault = FALSE;
-
-    } else {
-
-        newFault = KiIncrementLocationAlignmentFault( alignmentFaultImage,
-                                                      imageOffset );
     }
-    KeReleaseSpinLock( &KipGlobalAlignmentDatabaseLock, oldIrql );
+    else
+    {
+
+        newFault = KiIncrementLocationAlignmentFault(alignmentFaultImage, imageOffset);
+    }
+    KeReleaseSpinLock(&KipGlobalAlignmentDatabaseLock, oldIrql);
 
 
     *AlignmentFaultImage = alignmentFaultImage;
@@ -1159,10 +1126,7 @@ Return Value:
 }
 
 BOOLEAN
-KiIncrementLocationAlignmentFault(
-    IN PALIGNMENT_FAULT_IMAGE FaultImage,
-    IN ULONG_PTR OffsetFromBase
-    )
+KiIncrementLocationAlignmentFault(IN PALIGNMENT_FAULT_IMAGE FaultImage, IN ULONG_PTR OffsetFromBase)
 /*++
 
 Routine Description:
@@ -1192,9 +1156,11 @@ Return Value:
     //
 
     faultLocation = FaultImage->LocationHead;
-    while (faultLocation != NULL) {
+    while (faultLocation != NULL)
+    {
 
-        if (faultLocation->OffsetFromBase == OffsetFromBase) {
+        if (faultLocation->OffsetFromBase == OffsetFromBase)
+        {
             faultLocation->Count++;
             return FALSE;
         }
@@ -1206,7 +1172,8 @@ Return Value:
     // Could not find a match.  Build a new alignment fault record.
     //
 
-    if (KiAlignmentFaultLocationCount >= MAX_FAULT_LOCATIONS) {
+    if (KiAlignmentFaultLocationCount >= MAX_FAULT_LOCATIONS)
+    {
 
         //
         // Table is full.  Indicate that this is not a new alignment fault.
@@ -1215,7 +1182,7 @@ Return Value:
         return FALSE;
     }
 
-    faultLocation = &KiAlignmentFaultLocations[ KiAlignmentFaultLocationCount ];
+    faultLocation = &KiAlignmentFaultLocations[KiAlignmentFaultLocationCount];
     faultLocation->Image = FaultImage;
     faultLocation->Next = FaultImage->LocationHead;
     faultLocation->OffsetFromBase = OffsetFromBase;
@@ -1229,9 +1196,7 @@ Return Value:
 }
 
 PALIGNMENT_FAULT_IMAGE
-KiFindAlignmentFaultImage(
-    IN PUCHAR ImageName
-    )
+KiFindAlignmentFaultImage(IN PUCHAR ImageName)
 /*++
 
 Routine Description:
@@ -1254,7 +1219,8 @@ Return Value:
     PALIGNMENT_FAULT_IMAGE faultImage;
     PALIGNMENT_FAULT_IMAGE lastImage;
 
-    if (ImageName == NULL || *ImageName == '\0') {
+    if (ImageName == NULL || *ImageName == '\0')
+    {
 
         //
         // No image name was supplied.
@@ -1267,12 +1233,14 @@ Return Value:
     // Walk the image table, looking for a match.
     //
 
-    faultImage = &KiAlignmentFaultImages[ 0 ];
-    lastImage = &KiAlignmentFaultImages[ KiAlignmentFaultImageCount ];
+    faultImage = &KiAlignmentFaultImages[0];
+    lastImage = &KiAlignmentFaultImages[KiAlignmentFaultImageCount];
 
-    while (faultImage < lastImage) {
+    while (faultImage < lastImage)
+    {
 
-        if (strcmp(ImageName, faultImage->Name) == 0) {
+        if (strcmp(ImageName, faultImage->Name) == 0)
+        {
 
             //
             // Found it.
@@ -1289,7 +1257,8 @@ Return Value:
     // Create a new fault image if there's room
     //
 
-    if (KiAlignmentFaultImageCount >= MAX_FAULT_IMAGES) {
+    if (KiAlignmentFaultImageCount >= MAX_FAULT_IMAGES)
+    {
 
         //
         // Table is full up.
@@ -1305,11 +1274,11 @@ Return Value:
     // the debugger.
     //
 
-    RtlZeroMemory( faultImage, sizeof(ALIGNMENT_FAULT_IMAGE) );
+    RtlZeroMemory(faultImage, sizeof(ALIGNMENT_FAULT_IMAGE));
     faultImage->Count = 1;
-    strcpy( faultImage->Name, ImageName );
+    strcpy(faultImage->Name, ImageName);
 
     return faultImage;
 }
 
-#endif  // DBG
+#endif // DBG

@@ -33,22 +33,24 @@ Revision History:
 #ifndef _TSECOMM_
 #define _TSECOMM_
 
-
+
 ////////////////////////////////////////////////////////////////
 //                                                            //
 // Common Definitions                                         //
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-#define SEASSERT_SUCCESS(s) {                                                 \
-            if (!NT_SUCCESS((s))) {                                              \
-                DbgPrint("** ! Failed ! **\n");                               \
-                DbgPrint("Status is: 0x%lx \n", (s));                         \
-            }                                                                 \
-            ASSERT(NT_SUCCESS(s)); }
+#define SEASSERT_SUCCESS(s)                       \
+    {                                             \
+        if (!NT_SUCCESS((s)))                     \
+        {                                         \
+            DbgPrint("** ! Failed ! **\n");       \
+            DbgPrint("Status is: 0x%lx \n", (s)); \
+        }                                         \
+        ASSERT(NT_SUCCESS(s));                    \
+    }
 
 
-
 ////////////////////////////////////////////////////////////////
 //                                                            //
 // Kernel Mode Definitions                                    //
@@ -57,15 +59,13 @@ Revision History:
 
 #ifdef _TST_KERNEL_
 
-#define TstAllocatePool(PoolType,NumberOfBytes)  \
-    (ExAllocatePool( (PoolType), (NumberOfBytes) ))
+#define TstAllocatePool(PoolType, NumberOfBytes) (ExAllocatePool((PoolType), (NumberOfBytes)))
 
-#define TstDeallocatePool(Pointer, NumberOfBytes) \
-    (ExFreePool( (Pointer) ))
+#define TstDeallocatePool(Pointer, NumberOfBytes) (ExFreePool((Pointer)))
 
 #endif // _TST_KERNEL_
 
-
+
 ////////////////////////////////////////////////////////////////
 //                                                            //
 // User Mode Definitions                                      //
@@ -82,16 +82,12 @@ Revision History:
 
 #include "sep.h"
 
-#define TstAllocatePool(IgnoredPoolType,NumberOfBytes)    \
-    (ITstAllocatePool( (NumberOfBytes) ))
+#define TstAllocatePool(IgnoredPoolType, NumberOfBytes) (ITstAllocatePool((NumberOfBytes)))
 
-#define TstDeallocatePool(Pointer, NumberOfBytes) \
-    (ITstDeallocatePool((Pointer),(NumberOfBytes) ))
+#define TstDeallocatePool(Pointer, NumberOfBytes) (ITstDeallocatePool((Pointer), (NumberOfBytes)))
 
 PVOID
-ITstAllocatePool(
-    IN ULONG NumberOfBytes
-    )
+ITstAllocatePool(IN ULONG NumberOfBytes)
 {
     NTSTATUS Status;
     PVOID PoolAddress = NULL;
@@ -99,22 +95,12 @@ ITstAllocatePool(
 
     RegionSize = NumberOfBytes;
 
-    Status = NtAllocateVirtualMemory( NtCurrentProcess(),
-                                      &PoolAddress,
-                                      0,
-                                      &RegionSize,
-                                      MEM_COMMIT,
-                                      PAGE_READWRITE
-                                    );
+    Status = NtAllocateVirtualMemory(NtCurrentProcess(), &PoolAddress, 0, &RegionSize, MEM_COMMIT, PAGE_READWRITE);
 
     return PoolAddress;
 }
 
-VOID
-ITstDeallocatePool(
-    IN PVOID Pointer,
-    IN ULONG NumberOfBytes
-    )
+VOID ITstDeallocatePool(IN PVOID Pointer, IN ULONG NumberOfBytes)
 {
     NTSTATUS Status;
     PVOID PoolAddress;
@@ -123,11 +109,7 @@ ITstDeallocatePool(
     RegionSize = NumberOfBytes;
     PoolAddress = Pointer;
 
-    Status = NtFreeVirtualMemory( NtCurrentProcess(),
-                                  &PoolAddress,
-                                  &RegionSize,
-                                  MEM_DECOMMIT
-                                  );
+    Status = NtFreeVirtualMemory(NtCurrentProcess(), &PoolAddress, &RegionSize, MEM_DECOMMIT);
 
     return;
 }

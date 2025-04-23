@@ -28,9 +28,7 @@
 *   _NextControl!
 \***************************************************************************/
 
-void xxxRemoveDefaultButton(
-    PWND pwndRoot,
-    PWND pwndStart)
+void xxxRemoveDefaultButton(PWND pwndRoot, PWND pwndStart)
 {
     UINT code;
     PWND pwnd;
@@ -49,14 +47,16 @@ void xxxRemoveDefaultButton(
         return;
 
     pwnd = pwndStart;
-    do {
+    do
+    {
         pwndDup = pwnd;
-        
+
         ThreadLock(pwnd, &tlpwnd);
 
         code = (UINT)SendMessage(HWq(pwnd), WM_GETDLGCODE, 0, 0L);
 
-        if (code & DLGC_DEFPUSHBUTTON) {
+        if (code & DLGC_DEFPUSHBUTTON)
+        {
             SendMessage(HWq(pwnd), BM_SETSTYLE, BS_PUSHBUTTON, (LONG)TRUE);
         }
 
@@ -65,13 +65,13 @@ void xxxRemoveDefaultButton(
         ThreadUnlock(&tlpwnd);
 
     } while (pwnd && (pwnd != pwndStart) && (pwnd != pwndDup));
-    
+
 #if DBG
-    if (pwnd && (pwnd != pwndStart) && (pwnd != pwndDup)) {
+    if (pwnd && (pwnd != pwndStart) && (pwnd != pwndDup))
+    {
         RIPMSG0(RIP_WARNING, "xxxRemoveDefaultButton bailing potential infinite loop!");
     }
 #endif
-    
 }
 
 
@@ -81,10 +81,7 @@ void xxxRemoveDefaultButton(
 * History:
 \***************************************************************************/
 
-void xxxCheckDefPushButton(
-    PWND pwndDlg,
-    HWND hwndOldFocus,
-    HWND hwndNewFocus)
+void xxxCheckDefPushButton(PWND pwndDlg, HWND hwndOldFocus, HWND hwndNewFocus)
 {
     PWND pwndNewFocus;
     PWND pwndOldFocus;
@@ -100,10 +97,10 @@ void xxxCheckDefPushButton(
     else
         pwndNewFocus = NULL;
 
-     if (hwndOldFocus)
-         pwndOldFocus = ValidateHwnd(hwndOldFocus);
-     else
-         pwndOldFocus = NULL;
+    if (hwndOldFocus)
+        pwndOldFocus = ValidateHwnd(hwndOldFocus);
+    else
+        pwndOldFocus = NULL;
 
     CheckLock(pwndDlg);
     CheckLock(pwndNewFocus);
@@ -119,7 +116,8 @@ void xxxCheckDefPushButton(
         codeNewFocus = (UINT)SendMessage(hwndNewFocus, WM_GETDLGCODE, 0, 0L);
     }
 
-    if (SAMEWOWHANDLE(hwndOldFocus, hwndNewFocus)) {
+    if (SAMEWOWHANDLE(hwndOldFocus, hwndNewFocus))
+    {
         //
         // NEW FOR 4.0:
         //
@@ -137,27 +135,27 @@ void xxxCheckDefPushButton(
         //
         if (codeNewFocus & DLGC_UNDEFPUSHBUTTON)
         {
-           if (TestWF(pwndDlg, WFWIN40COMPAT) && hwndOldFocus)
-           {
-               lT = (LONG)SendMessage(HWq(pwndDlg), DM_GETDEFID, 0, 0L);
-               id = (HIWORD(lT) == DC_HASDEFID ? LOWORD(lT) : IDOK);
-               lT = MAKELONG(id, 0);
+            if (TestWF(pwndDlg, WFWIN40COMPAT) && hwndOldFocus)
+            {
+                lT = (LONG)SendMessage(HWq(pwndDlg), DM_GETDEFID, 0, 0L);
+                id = (HIWORD(lT) == DC_HASDEFID ? LOWORD(lT) : IDOK);
+                lT = MAKELONG(id, 0);
 
-               if (lT != PtrToLong(pwndNewFocus->spmenu))
-               {
-                   if (pwndOldFocus = _FindDlgItem(pwndDlg, lT))
-                   {
-                       hwndOldFocus = HW(pwndOldFocus);
-                       if (SendMessage(hwndOldFocus, WM_GETDLGCODE, 0, 0L) & DLGC_DEFPUSHBUTTON)
-                       {
-                           xxxRemoveDefaultButton(pwndDlg, pwndOldFocus);
-                           goto SetNewDefault;
-                       }
-                   }
-               }
-           }
+                if (lT != PtrToLong(pwndNewFocus->spmenu))
+                {
+                    if (pwndOldFocus = _FindDlgItem(pwndDlg, lT))
+                    {
+                        hwndOldFocus = HW(pwndOldFocus);
+                        if (SendMessage(hwndOldFocus, WM_GETDLGCODE, 0, 0L) & DLGC_DEFPUSHBUTTON)
+                        {
+                            xxxRemoveDefaultButton(pwndDlg, pwndOldFocus);
+                            goto SetNewDefault;
+                        }
+                    }
+                }
+            }
 
-           SendMessage(hwndNewFocus, BM_SETSTYLE, BS_DEFPUSHBUTTON, (LONG)TRUE);
+            SendMessage(hwndNewFocus, BM_SETSTYLE, BS_DEFPUSHBUTTON, (LONG)TRUE);
         }
         return;
     }
@@ -166,10 +164,10 @@ void xxxCheckDefPushButton(
      * If the focus is changing to or from a pushbutton, then remove the
      * default style from the current default button
      */
-    if ((hwndOldFocus != NULL && (SendMessage(hwndOldFocus, WM_GETDLGCODE,
-                0, 0) & (DLGC_DEFPUSHBUTTON | DLGC_UNDEFPUSHBUTTON))) ||
-            (hwndNewFocus != NULL &&
-                (codeNewFocus & (DLGC_DEFPUSHBUTTON | DLGC_UNDEFPUSHBUTTON)))) {
+    if ((hwndOldFocus != NULL &&
+         (SendMessage(hwndOldFocus, WM_GETDLGCODE, 0, 0) & (DLGC_DEFPUSHBUTTON | DLGC_UNDEFPUSHBUTTON))) ||
+        (hwndNewFocus != NULL && (codeNewFocus & (DLGC_DEFPUSHBUTTON | DLGC_UNDEFPUSHBUTTON))))
+    {
         xxxRemoveDefaultButton(pwndDlg, pwndNewFocus);
     }
 
@@ -177,9 +175,12 @@ SetNewDefault:
     /*
      * If moving to a button, make that button the default.
      */
-    if (codeNewFocus & DLGC_UNDEFPUSHBUTTON) {
+    if (codeNewFocus & DLGC_UNDEFPUSHBUTTON)
+    {
         SendMessage(hwndNewFocus, BM_SETSTYLE, BS_DEFPUSHBUTTON, (LONG)TRUE);
-    } else {
+    }
+    else
+    {
 
         /*
          * Otherwise, make sure the original default button is default
@@ -200,7 +201,8 @@ SetNewDefault:
         /*
          * If it already has the default button style, do nothing.
          */
-        if ((styleT = (UINT)SendMessage(HWq(pwndT), WM_GETDLGCODE, 0, 0L)) & DLGC_DEFPUSHBUTTON) {
+        if ((styleT = (UINT)SendMessage(HWq(pwndT), WM_GETDLGCODE, 0, 0L)) & DLGC_DEFPUSHBUTTON)
+        {
             ThreadUnlock(&tlpwndT);
             return;
         }
@@ -208,12 +210,14 @@ SetNewDefault:
         /*
          * Also check to make sure it is really a button.
          */
-        if (!(styleT & DLGC_UNDEFPUSHBUTTON)) {
+        if (!(styleT & DLGC_UNDEFPUSHBUTTON))
+        {
             ThreadUnlock(&tlpwndT);
             return;
         }
 
-        if (!TestWF(pwndT, WFDISABLED)) {
+        if (!TestWF(pwndT, WFDISABLED))
+        {
             SendMessage(HWq(pwndT), BM_SETSTYLE, BS_DEFPUSHBUTTON, (LONG)TRUE);
         }
         ThreadUnlock(&tlpwndT);
@@ -229,14 +233,13 @@ SetNewDefault:
 
 
 FUNCLOG2(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, IsDialogMessageA, HWND, hwndDlg, LPMSG, lpmsg)
-BOOL IsDialogMessageA(
-    HWND hwndDlg,
-    LPMSG lpmsg)
+BOOL IsDialogMessageA(HWND hwndDlg, LPMSG lpmsg)
 {
     WPARAM wParamSaved = lpmsg->wParam;
     BOOL bRet;
 
-    switch (lpmsg->message) {
+    switch (lpmsg->message)
+    {
 #ifdef FE_SB // IsDialogMessageA()
     case WM_CHAR:
     case EM_SETPASSWORDCHAR:
@@ -247,16 +250,19 @@ BOOL IsDialogMessageA(
          *
          * These code originally come from IsDialogMessageW().
          */
-         if (IS_DBCS_ENABLED()) {
+        if (IS_DBCS_ENABLED())
+        {
             PWND pwndDlg, pwnd;
             TL tlpwndDlg;
             BOOL fLockDlg = FALSE;
 
-            if ((pwndDlg = ValidateHwndNoRip(hwndDlg)) == NULL) {
+            if ((pwndDlg = ValidateHwndNoRip(hwndDlg)) == NULL)
+            {
                 return FALSE;
             }
 
-            if (lpmsg->hwnd == NULL) {
+            if (lpmsg->hwnd == NULL)
+            {
                 return FALSE;
             }
 
@@ -268,14 +274,16 @@ BOOL IsDialogMessageA(
             // advantage of DS_CONTROL.  MFC blindly passes in child dialogs sometimes
             // to IsDialogMessage, which can mess up tabbing etc.
             //
-            if (TestWF(pwndDlg, WEFCONTROLPARENT) && TestWF(pwndDlg, WFCHILD)) {
+            if (TestWF(pwndDlg, WEFCONTROLPARENT) && TestWF(pwndDlg, WFCHILD))
+            {
                 pwndDlg = GetParentDialog(pwndDlg);
                 ThreadLock(pwndDlg, &tlpwndDlg);
                 fLockDlg = TRUE;
                 hwndDlg = HWq(pwndDlg);
             }
 
-            if (pwnd != pwndDlg && !_IsChild(pwndDlg, pwnd)) {
+            if (pwnd != pwndDlg && !_IsChild(pwndDlg, pwnd))
+            {
                 if (fLockDlg)
                     ThreadUnlock(&tlpwndDlg);
                 return FALSE;
@@ -284,7 +292,7 @@ BOOL IsDialogMessageA(
             /*
              * Build DBCS-aware message.
              */
-            BUILD_DBCS_MESSAGE_TO_CLIENTW_FROM_CLIENTA(lpmsg->message,lpmsg->wParam,TRUE);
+            BUILD_DBCS_MESSAGE_TO_CLIENTW_FROM_CLIENTA(lpmsg->message, lpmsg->wParam, TRUE);
 
             /*
              * Fall through.....
@@ -318,9 +326,7 @@ BOOL IsDialogMessageA(
 
 
 FUNCLOG2(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, IsDialogMessageW, HWND, hwndDlg, LPMSG, lpMsg)
-BOOL IsDialogMessageW(
-    HWND hwndDlg,
-    LPMSG lpMsg)
+BOOL IsDialogMessageW(HWND hwndDlg, LPMSG lpMsg)
 {
     PWND pwndDlg;
     PWND pwnd;
@@ -339,7 +345,8 @@ BOOL IsDialogMessageW(
 
     langID = PRIMARYLANGID(LANGIDFROMLCID(GetUserDefaultLCID()));
 
-    if ((pwndDlg = ValidateHwndNoRip(hwndDlg)) == NULL) {
+    if ((pwndDlg = ValidateHwndNoRip(hwndDlg)) == NULL)
+    {
         return FALSE;
     }
 
@@ -354,11 +361,13 @@ BOOL IsDialogMessageW(
      * (This api is only called in the context of a message loop, and you
      * don't get synchronous-only messages in a message loop).
      */
-    if (TESTSYNCONLYMESSAGE(lpMsg->message, lpMsg->wParam)) {
+    if (TESTSYNCONLYMESSAGE(lpMsg->message, lpMsg->wParam))
+    {
         /*
          * Fail if 32 bit app is calling.
          */
-        if (!(GetClientInfo()->dwTIFlags & TIF_16BIT)) {
+        if (!(GetClientInfo()->dwTIFlags & TIF_16BIT))
+        {
             RIPERR0(ERROR_MESSAGE_SYNC_ONLY, RIP_WARNING, "IsDialogMessage: must be sync only");
             return FALSE;
         }
@@ -375,7 +384,8 @@ BOOL IsDialogMessageW(
     if (CallMsgFilter(lpMsg, MSGF_DIALOGBOX))
         return TRUE;
 
-    if (lpMsg->hwnd == NULL) {
+    if (lpMsg->hwnd == NULL)
+    {
         return FALSE;
     }
 
@@ -387,14 +397,16 @@ BOOL IsDialogMessageW(
     // advantage of DS_CONTROL.  MFC blindly passes in child dialogs sometimes
     // to IsDialogMessage, which can mess up tabbing etc.
     //
-    if (TestWF(pwndDlg, WEFCONTROLPARENT) && TestWF(pwndDlg, WFCHILD)) {
+    if (TestWF(pwndDlg, WEFCONTROLPARENT) && TestWF(pwndDlg, WFCHILD))
+    {
         pwndDlg = GetParentDialog(pwndDlg);
         ThreadLock(pwndDlg, &tlpwndDlg);
         fLockDlg = TRUE;
         hwndDlg = HWq(pwndDlg);
     }
 
-    if (pwnd != pwndDlg && !_IsChild(pwndDlg, pwnd)) {
+    if (pwnd != pwndDlg && !_IsChild(pwndDlg, pwnd))
+    {
         if (fLockDlg)
             ThreadUnlock(&tlpwndDlg);
         return FALSE;
@@ -403,14 +415,16 @@ BOOL IsDialogMessageW(
 
     fBack = FALSE;
     iOK = IDCANCEL;
-    switch (lpMsg->message) {
+    switch (lpMsg->message)
+    {
     case WM_LBUTTONDOWN:
 
         /*
          * Move the default button styles around on button clicks in the
          * same way as TABs.
          */
-        if ((pwnd != pwndDlg) && ((hwndFocus = GetFocus()) != NULL)) {
+        if ((pwnd != pwndDlg) && ((hwndFocus = GetFocus()) != NULL))
+        {
             xxxCheckDefPushButton(pwndDlg, hwndFocus, lpMsg->hwnd);
         }
         break;
@@ -420,8 +434,10 @@ BOOL IsDialogMessageW(
         /*
          * If no control has focus, and Alt not down, then ignore.
          */
-        if ((GetFocus() == NULL) && (GetKeyState(VK_MENU) >= 0)) {
-            if (lpMsg->wParam == VK_RETURN && TestWF(pwnd, WFMINIMIZED)) {
+        if ((GetFocus() == NULL) && (GetKeyState(VK_MENU) >= 0))
+        {
+            if (lpMsg->wParam == VK_RETURN && TestWF(pwnd, WFMINIMIZED))
+            {
 
                 /*
                  * If this is an iconic dialog box window and the user hits
@@ -430,7 +446,9 @@ BOOL IsDialogMessageW(
                  * level window is a dialog box.
                  */
                 goto CallDefWindowProcAndReturnTrue;
-            } else {
+            }
+            else
+            {
                 NtUserMessageBeep(0);
             }
 
@@ -443,16 +461,16 @@ BOOL IsDialogMessageW(
         /*
          * If alt+menuchar, process as menu.
          */
-        if (lpMsg->wParam == MENUSYSMENU) {
-            DefWindowProcWorker(pwndDlg, lpMsg->message, lpMsg->wParam,
-                    lpMsg->lParam, FALSE);
+        if (lpMsg->wParam == MENUSYSMENU)
+        {
+            DefWindowProcWorker(pwndDlg, lpMsg->message, lpMsg->wParam, lpMsg->lParam, FALSE);
             ThreadUnlock(&tlpwnd);
             if (fLockDlg)
                 ThreadUnlock(&tlpwndDlg);
             return TRUE;
         }
 
-    /*
+        /*
      *** FALL THRU **
      */
 
@@ -461,15 +479,15 @@ BOOL IsDialogMessageW(
         /*
          * Ignore chars sent to the dialog box (rather than the control).
          */
-        if (pwnd == pwndDlg) {
+        if (pwnd == pwndDlg)
+        {
             ThreadUnlock(&tlpwnd);
             if (fLockDlg)
                 ThreadUnlock(&tlpwndDlg);
             return TRUE;
         }
 
-        code = (UINT)SendMessage(lpMsg->hwnd, WM_GETDLGCODE, lpMsg->wParam,
-                (LPARAM)lpMsg);
+        code = (UINT)SendMessage(lpMsg->hwnd, WM_GETDLGCODE, lpMsg->wParam, (LPARAM)lpMsg);
 
         /*
          * If the control wants to process the message, then don't check for
@@ -497,14 +515,16 @@ BOOL IsDialogMessageW(
          * button states.  Don't look for it as a mnemonic or we will
          * beep when it is typed....
          */
-        if (lpMsg->wParam == VK_SPACE) {
+        if (lpMsg->wParam == VK_SPACE)
+        {
             ThreadUnlock(&tlpwnd);
             if (fLockDlg)
                 ThreadUnlock(&tlpwndDlg);
             return TRUE;
         }
 
-        if (!(pwnd2 = xxxGotoNextMnem(pwndDlg, pwnd, (WCHAR)lpMsg->wParam))) {
+        if (!(pwnd2 = xxxGotoNextMnem(pwndDlg, pwnd, (WCHAR)lpMsg->wParam)))
+        {
 
             if (code & DLGC_WANTMESSAGE)
                 break;
@@ -514,10 +534,10 @@ BOOL IsDialogMessageW(
              * to xxxDefWindowProc so that any menu bar on the dialog box is
              * handled properly.
              */
-            if (lpMsg->message == WM_SYSCHAR) {
-CallDefWindowProcAndReturnTrue:
-                DefWindowProcWorker(pwndDlg, lpMsg->message, lpMsg->wParam,
-                        lpMsg->lParam, FALSE);
+            if (lpMsg->message == WM_SYSCHAR)
+            {
+            CallDefWindowProcAndReturnTrue:
+                DefWindowProcWorker(pwndDlg, lpMsg->message, lpMsg->wParam, lpMsg->lParam, FALSE);
 
                 ThreadUnlock(&tlpwnd);
                 if (fLockDlg)
@@ -525,14 +545,17 @@ CallDefWindowProcAndReturnTrue:
                 return TRUE;
             }
             NtUserMessageBeep(0);
-        } else {
+        }
+        else
+        {
 
             /*
              * pwnd2 is 1 if the mnemonic took us to a pushbutton.  We
              * don't change the default button status here since doing this
              * doesn't change the focus.
              */
-            if (pwnd2 != (PWND)1) {
+            if (pwnd2 != (PWND)1)
+            {
                 ThreadLockAlways(pwnd2, &tlpwnd2);
                 xxxCheckDefPushButton(pwndDlg, lpMsg->hwnd, HWq(pwnd2));
                 ThreadUnlock(&tlpwnd2);
@@ -548,35 +571,38 @@ CallDefWindowProcAndReturnTrue:
         /*
          * If Alt is down, deal with keyboard cues
          */
-        if ((HIWORD(lpMsg->lParam) & SYS_ALTERNATE) && TEST_KbdCuesPUSIF) {
-            if (TestWF(pwnd, WEFPUIFOCUSHIDDEN) || (TestWF(pwnd, WEFPUIACCELHIDDEN))) {
-                    SendMessageWorker(pwndDlg, WM_CHANGEUISTATE,
-                                      MAKEWPARAM(UIS_CLEAR, UISF_HIDEACCEL | UISF_HIDEFOCUS), 0, FALSE);
-                }
+        if ((HIWORD(lpMsg->lParam) & SYS_ALTERNATE) && TEST_KbdCuesPUSIF)
+        {
+            if (TestWF(pwnd, WEFPUIFOCUSHIDDEN) || (TestWF(pwnd, WEFPUIACCELHIDDEN)))
+            {
+                SendMessageWorker(pwndDlg, WM_CHANGEUISTATE, MAKEWPARAM(UIS_CLEAR, UISF_HIDEACCEL | UISF_HIDEFOCUS), 0,
+                                  FALSE);
+            }
         }
         break;
 
     case WM_KEYDOWN:
-        code = (UINT)SendMessage(lpMsg->hwnd, WM_GETDLGCODE, lpMsg->wParam,
-                (LPARAM)lpMsg);
+        code = (UINT)SendMessage(lpMsg->hwnd, WM_GETDLGCODE, lpMsg->wParam, (LPARAM)lpMsg);
         if (code & (DLGC_WANTALLKEYS | DLGC_WANTMESSAGE))
             break;
 
-        switch (lpMsg->wParam) {
+        switch (lpMsg->wParam)
+        {
         case VK_TAB:
             if (code & DLGC_WANTTAB)
                 break;
-            pwnd2 = _GetNextDlgTabItem(pwndDlg, pwnd,
-                    (GetKeyState(VK_SHIFT) & 0x8000));
+            pwnd2 = _GetNextDlgTabItem(pwndDlg, pwnd, (GetKeyState(VK_SHIFT) & 0x8000));
 
-            if (TEST_KbdCuesPUSIF) {
-                if (TestWF(pwnd, WEFPUIFOCUSHIDDEN)) {
-                    SendMessageWorker(pwndDlg, WM_CHANGEUISTATE,
-                                          MAKEWPARAM(UIS_CLEAR, UISF_HIDEFOCUS), 0, FALSE);
+            if (TEST_KbdCuesPUSIF)
+            {
+                if (TestWF(pwnd, WEFPUIFOCUSHIDDEN))
+                {
+                    SendMessageWorker(pwndDlg, WM_CHANGEUISTATE, MAKEWPARAM(UIS_CLEAR, UISF_HIDEFOCUS), 0, FALSE);
                 }
             }
 
-            if (pwnd2 != NULL) {
+            if (pwnd2 != NULL)
+            {
                 hwnd2 = HWq(pwnd2);
                 ThreadLockAlways(pwnd2, &tlpwnd2);
                 DlgSetFocus(hwnd2);
@@ -593,8 +619,9 @@ CallDefWindowProcAndReturnTrue:
          * the dialog is RTL mirrored.
          */
         case VK_LEFT:
-            if ((((langID == LANG_ARABIC) || (langID == LANG_HEBREW)) && TestWF(pwndDlg,WEFRTLREADING))
-                    ^ (!!TestWF(pwndDlg, WEFLAYOUTRTL))) {
+            if ((((langID == LANG_ARABIC) || (langID == LANG_HEBREW)) && TestWF(pwndDlg, WEFRTLREADING)) ^
+                (!!TestWF(pwndDlg, WEFLAYOUTRTL)))
+            {
 
                 goto DoKeyStuff;
             }
@@ -606,25 +633,28 @@ CallDefWindowProcAndReturnTrue:
          *** FALL THRU **
          */
         case VK_RIGHT:
-            if ((((langID == LANG_ARABIC) || (langID == LANG_HEBREW)) && TestWF(pwndDlg,WEFRTLREADING)) 
-                     ^ (!!TestWF(pwndDlg, WEFLAYOUTRTL))) {
+            if ((((langID == LANG_ARABIC) || (langID == LANG_HEBREW)) && TestWF(pwndDlg, WEFRTLREADING)) ^
+                (!!TestWF(pwndDlg, WEFLAYOUTRTL)))
+            {
 
                 fBack = TRUE;
             }
         case VK_DOWN:
-DoKeyStuff:
+        DoKeyStuff:
             if (code & DLGC_WANTARROWS)
                 break;
 
-            if (TEST_KbdCuesPUSIF) {
-                if (TestWF(pwnd, WEFPUIFOCUSHIDDEN)) {
-                        SendMessageWorker(pwndDlg, WM_CHANGEUISTATE,
-                                          MAKEWPARAM(UIS_CLEAR, UISF_HIDEFOCUS), 0, FALSE);
-                    }
+            if (TEST_KbdCuesPUSIF)
+            {
+                if (TestWF(pwnd, WEFPUIFOCUSHIDDEN))
+                {
+                    SendMessageWorker(pwndDlg, WM_CHANGEUISTATE, MAKEWPARAM(UIS_CLEAR, UISF_HIDEFOCUS), 0, FALSE);
+                }
             }
 
             pwnd2 = _GetNextDlgGroupItem(pwndDlg, pwnd, fBack);
-            if (pwnd2 == NULL) {
+            if (pwnd2 == NULL)
+            {
                 ThreadUnlock(&tlpwnd);
                 if (fLockDlg)
                     ThreadUnlock(&tlpwndDlg);
@@ -633,39 +663,47 @@ DoKeyStuff:
             hwnd2 = HWq(pwnd2);
             ThreadLockAlways(pwnd2, &tlpwnd2);
 
-            code = (UINT)SendMessage(hwnd2, WM_GETDLGCODE, lpMsg->wParam,
-                    (LPARAM)lpMsg);
+            code = (UINT)SendMessage(hwnd2, WM_GETDLGCODE, lpMsg->wParam, (LPARAM)lpMsg);
 
             /*
              * We are just moving the focus rect around! So, do not send
              * BN_CLICK messages, when WM_SETFOCUSing.  Fix for Bug
              * #4358.
              */
-            if (code & (DLGC_UNDEFPUSHBUTTON | DLGC_DEFPUSHBUTTON)) {
+            if (code & (DLGC_UNDEFPUSHBUTTON | DLGC_DEFPUSHBUTTON))
+            {
                 PBUTN pbutn;
                 BOOL fIsNTButton = IS_BUTTON(pwnd2);
-                if (fIsNTButton) {
+                if (fIsNTButton)
+                {
                     pbutn = ((PBUTNWND)pwnd2)->pbutn;
                     BUTTONSTATE(pbutn) |= BST_DONTCLICK;
                 }
                 DlgSetFocus(hwnd2);
-                if (fIsNTButton) {
+                if (fIsNTButton)
+                {
                     BUTTONSTATE(pbutn) &= ~BST_DONTCLICK;
                 }
                 xxxCheckDefPushButton(pwndDlg, lpMsg->hwnd, hwnd2);
-            } else if (code & DLGC_RADIOBUTTON) {
+            }
+            else if (code & DLGC_RADIOBUTTON)
+            {
                 DlgSetFocus(hwnd2);
                 xxxCheckDefPushButton(pwndDlg, lpMsg->hwnd, hwnd2);
-                if (TestWF(pwnd2, BFTYPEMASK) == LOBYTE(BS_AUTORADIOBUTTON)) {
+                if (TestWF(pwnd2, BFTYPEMASK) == LOBYTE(BS_AUTORADIOBUTTON))
+                {
 
                     /*
                      * So that auto radio buttons get clicked on
                      */
-                    if (!SendMessage(hwnd2, BM_GETCHECK, 0, 0L)) {
+                    if (!SendMessage(hwnd2, BM_GETCHECK, 0, 0L))
+                    {
                         SendMessage(hwnd2, BM_CLICK, TRUE, 0L);
                     }
                 }
-            } else if (!(code & DLGC_STATIC)) {
+            }
+            else if (!(code & DLGC_STATIC))
+            {
                 DlgSetFocus(hwnd2);
                 xxxCheckDefPushButton(pwndDlg, lpMsg->hwnd, hwnd2);
             }
@@ -687,8 +725,7 @@ DoKeyStuff:
                 code = 0;
             else
             {
-                code = (WORD)(DWORD)SendMessage(hwndFocus, WM_GETDLGCODE,
-                    0, 0L);
+                code = (WORD)(DWORD)SendMessage(hwndFocus, WM_GETDLGCODE, 0, 0L);
             }
 
             if (code & DLGC_DEFPUSHBUTTON)
@@ -700,9 +737,7 @@ DoKeyStuff:
             else
             {
                 lT = (LONG)SendMessage(hwndDlg, DM_GETDEFID, 0, 0L);
-                iOK = MAKELONG(
-                    (HIWORD(lT)==DC_HASDEFID ? LOWORD(lT) : IDOK),
-                    0);
+                iOK = MAKELONG((HIWORD(lT) == DC_HASDEFID ? LOWORD(lT) : IDOK), 0);
             }
             // FALL THRU
 
@@ -713,12 +748,14 @@ DoKeyStuff:
              * Make sure button is not disabled.
              */
             pwnd2 = _FindDlgItem(pwndDlg, iOK);
-HaveWindow:
-            if (pwnd2 != NULL && TestWF(pwnd2, WFDISABLED)) {
+        HaveWindow:
+            if (pwnd2 != NULL && TestWF(pwnd2, WFDISABLED))
+            {
                 NtUserMessageBeep(0);
-            } else {
-                SendMessage(hwndDlg, WM_COMMAND,
-                        MAKELONG(iOK, BN_CLICKED), (LPARAM)HW(pwnd2));
+            }
+            else
+            {
+                SendMessage(hwndDlg, WM_COMMAND, MAKELONG(iOK, BN_CLICKED), (LPARAM)HW(pwnd2));
             }
 
             ThreadUnlock(&tlpwnd);
@@ -750,30 +787,29 @@ HaveWindow:
 
 PWND _FindDlgItem(PWND pwndParent, DWORD id)
 {
-    PWND    pwndChild;
-    PWND    pwndOrig;
+    PWND pwndChild;
+    PWND pwndOrig;
 
     // QUICK TRY:
     pwndChild = _GetDlgItem(pwndParent, id);
     if (pwndChild || !TestWF(pwndParent, WFWIN40COMPAT))
-        return(pwndChild);
+        return (pwndChild);
 
     pwndOrig = _NextControl(pwndParent, NULL, CWP_SKIPINVISIBLE);
     if (pwndOrig == pwndParent)
-        return(NULL);
+        return (NULL);
 
     pwndChild = pwndOrig;
 
-//    VerifyWindow(pwndChild);
+    //    VerifyWindow(pwndChild);
 
     do
     {
         if (PtrToUlong(pwndChild->spmenu) == id)
-            return(pwndChild);
+            return (pwndChild);
 
         pwndChild = _NextControl(pwndParent, pwndChild, CWP_SKIPINVISIBLE);
-    }
-    while (pwndChild && (pwndChild != pwndOrig));
+    } while (pwndChild && (pwndChild != pwndOrig));
 
-    return(NULL);
+    return (NULL);
 }

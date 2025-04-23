@@ -94,16 +94,14 @@ LONG CcPfNumActiveTraces = 0;
 // this structure is initialized to zeros.
 //
 
-CCPF_PREFETCHER_GLOBALS CcPfGlobals = {0};
+CCPF_PREFETCHER_GLOBALS CcPfGlobals = { 0 };
 
 //
 // Routines exported to other kernel components:
 //
- 
+
 NTSTATUS
-CcPfInitializePrefetcher(
-    VOID
-    )
+CcPfInitializePrefetcher(VOID)
 
 /*++
 
@@ -129,8 +127,8 @@ Notes:
 
 --*/
 
-{   
-    DBGPR((CCPFID,PFTRC,"CCPF: InitializePrefetcher()\n"));
+{
+    DBGPR((CCPFID, PFTRC, "CCPF: InitializePrefetcher()\n"));
 
     //
     // Since CcPfGlobals is zeroed in its global definition e.g. CcPfGlobals = {0};
@@ -159,7 +157,7 @@ Notes:
     //
 
     CcPfParametersInitialize(&CcPfGlobals.Parameters);
-    
+
     //
     // Determine from the global parameters if the prefetcher is
     // enabled and update the global enable status.
@@ -175,10 +173,7 @@ Notes:
 }
 
 NTSTATUS
-CcPfBeginAppLaunch(
-    PEPROCESS Process,
-    PVOID Section
-    )
+CcPfBeginAppLaunch(PEPROCESS Process, PVOID Section)
 
 /*++
 
@@ -225,8 +220,8 @@ Environment:
     BOOLEAN ShouldTraceScenario;
     BOOLEAN IsHostingApplication;
 
-    DBGPR((CCPFID,PFTRC,"CCPF: BeginAppLaunch()\n"));
-    
+    DBGPR((CCPFID, PFTRC, "CCPF: BeginAppLaunch()\n"));
+
     //
     // Initialize locals.
     //
@@ -238,16 +233,18 @@ Environment:
     // Check to see if the prefetcher is enabled.
     //
 
-    if (!CCPF_IS_PREFETCHER_ENABLED()) {
+    if (!CCPF_IS_PREFETCHER_ENABLED())
+    {
         Status = STATUS_NOT_SUPPORTED;
         goto cleanup;
     }
-    
+
     //
     // Check if prefetching is enabled for application launches.
     //
 
-    if (CcPfGlobals.Parameters.Parameters.EnableStatus[PfApplicationLaunchScenarioType] != PfSvEnabled) {
+    if (CcPfGlobals.Parameters.Parameters.EnableStatus[PfApplicationLaunchScenarioType] != PfSvEnabled)
+    {
         Status = STATUS_NOT_SUPPORTED;
         goto cleanup;
     }
@@ -256,7 +253,8 @@ Environment:
     // Don't prefetch or start tracing if there is an active system-wide trace.
     //
 
-    if (CcPfGlobals.SystemWideTrace != NULL) {
+    if (CcPfGlobals.SystemWideTrace != NULL)
+    {
         Status = STATUS_USER_EXISTS;
         goto cleanup;
     }
@@ -270,23 +268,25 @@ Environment:
 
     Status = MmGetFileNameForSection(Section, &AnsiFilePath);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         goto cleanup;
     }
 
     //
     // Convert ANSI path to UNICODE path.
     //
-    
+
     Status = RtlAnsiStringToUnicodeString(&FilePath, &AnsiFilePath, TRUE);
-    
+
     //
     // Don't leak the ANSI buffer...
     //
 
-    ExFreePool (AnsiFilePath.Buffer);
+    ExFreePool(AnsiFilePath.Buffer);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         goto cleanup;
     }
 
@@ -295,9 +295,9 @@ Environment:
     //
     // Scenario Id requires us to be case insensitive.
     //
-       
+
     RtlUpcaseUnicodeString(&FilePath, &FilePath, FALSE);
-    
+
     //
     // We need to copy just the real file name into the scenario
     // name. Make a first pass to calculate the size of real file
@@ -306,12 +306,12 @@ Environment:
 
     NameNumChars = 0;
     PathNumChars = FilePath.Length / sizeof(WCHAR);
-    
-    for (CurCharPtr = &FilePath.Buffer[PathNumChars - 1];
-         CurCharPtr >= FilePath.Buffer;
-         CurCharPtr--) {
 
-        if (*CurCharPtr == L'\\') {
+    for (CurCharPtr = &FilePath.Buffer[PathNumChars - 1]; CurCharPtr >= FilePath.Buffer; CurCharPtr--)
+    {
+
+        if (*CurCharPtr == L'\\')
+        {
             break;
         }
 
@@ -322,7 +322,8 @@ Environment:
     // Check if we got a name.
     //
 
-    if (NameNumChars == 0) {
+    if (NameNumChars == 0)
+    {
         Status = STATUS_INVALID_PARAMETER;
         goto cleanup;
     }
@@ -340,8 +341,9 @@ Environment:
 
     NumCharsToCopy = CCPF_MIN(PF_SCEN_ID_MAX_CHARS, NameNumChars);
 
-    for (CharIdx = 0; CharIdx < NumCharsToCopy; CharIdx++) {
-        
+    for (CharIdx = 0; CharIdx < NumCharsToCopy; CharIdx++)
+    {
+
         ScenarioId.ScenName[CharIdx] = FileNamePtr[CharIdx];
     }
 
@@ -355,21 +357,23 @@ Environment:
     // Calculate scenario hash id from the full path name.
     //
 
-    ScenarioId.HashId = CcPfHashValue(FilePath.Buffer,
-                                      FilePath.Length);
+    ScenarioId.HashId = CcPfHashValue(FilePath.Buffer, FilePath.Length);
 
 
     //
     // If this is a "hosting" application (e.g. dllhost, rundll32, mmc)
-    // we want to have unique scenarios based on the command line, so 
+    // we want to have unique scenarios based on the command line, so
     // we update the hash id.
     //
 
     IsHostingApplication = CcPfIsHostingApplication(ScenarioId.ScenName);
 
-    if (IsHostingApplication) {
+    if (IsHostingApplication)
+    {
         CommandLineHashId = &HashId;
-    } else {
+    }
+    else
+    {
         CommandLineHashId = NULL;
     }
 
@@ -380,7 +384,8 @@ Environment:
 
     Status = CcPfScanCommandLine(&PrefetchHint, CommandLineHashId);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         //
         // If we failed to access the PEB to get the command line,
@@ -390,7 +395,8 @@ Environment:
         goto cleanup;
     }
 
-    if (IsHostingApplication) {
+    if (IsHostingApplication)
+    {
 
         //
         // Update the hash ID calculated from full path name.
@@ -400,10 +406,10 @@ Environment:
     }
 
     //
-    // If there is a specific hint in the command line add it to the 
+    // If there is a specific hint in the command line add it to the
     // hash id to make it a unique scenario.
     //
-        
+
     ScenarioId.HashId += PrefetchHint;
 
     //
@@ -415,11 +421,10 @@ Environment:
 
     ShouldTraceScenario = TRUE;
 
-    Status = CcPfGetPrefetchInstructions(&ScenarioId,
-                                         PfApplicationLaunchScenarioType,
-                                         &Scenario);
+    Status = CcPfGetPrefetchInstructions(&ScenarioId, PfApplicationLaunchScenarioType, &Scenario);
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         CCPF_ASSERT(Scenario);
 
@@ -429,33 +434,36 @@ Environment:
         // checks are done below we will recover after a while if the
         // user changes the system time.
         //
-        
+
         KeQuerySystemTime(&CurrentTime);
         TimeSinceLastLaunch.QuadPart = CurrentTime.QuadPart - Scenario->LastLaunchTime.QuadPart;
 
-        if (TimeSinceLastLaunch.QuadPart >= Scenario->MinRePrefetchTime.QuadPart) {
+        if (TimeSinceLastLaunch.QuadPart >= Scenario->MinRePrefetchTime.QuadPart)
+        {
             Status = CcPfPrefetchScenario(Scenario);
-        } else {
-            DBGPR((CCPFID,PFPREF,"CCPF: BeginAppLaunch-NotRePrefetching\n"));
+        }
+        else
+        {
+            DBGPR((CCPFID, PFPREF, "CCPF: BeginAppLaunch-NotRePrefetching\n"));
         }
 
-        if (TimeSinceLastLaunch.QuadPart < Scenario->MinReTraceTime.QuadPart) {
-            DBGPR((CCPFID,PFPREF,"CCPF: BeginAppLaunch-NotReTracing\n"));
+        if (TimeSinceLastLaunch.QuadPart < Scenario->MinReTraceTime.QuadPart)
+        {
+            DBGPR((CCPFID, PFPREF, "CCPF: BeginAppLaunch-NotReTracing\n"));
             ShouldTraceScenario = FALSE;
         }
     }
 
-    if (ShouldTraceScenario) {
+    if (ShouldTraceScenario)
+    {
 
         //
         // Start tracing the application launch. Fall through with status.
         // The trace will end when we time out or when the process
         // terminates.
         //
-    
-        Status = CcPfBeginTrace(&ScenarioId, 
-                                PfApplicationLaunchScenarioType,
-                                Process);
+
+        Status = CcPfBeginTrace(&ScenarioId, PfApplicationLaunchScenarioType, Process);
     }
 
     //
@@ -464,25 +472,25 @@ Environment:
     // CcPfBeginTrace.
     //
 
- cleanup:
+cleanup:
 
-    if (AllocatedUnicodePath) {
+    if (AllocatedUnicodePath)
+    {
         RtlFreeUnicodeString(&FilePath);
     }
 
-    if (Scenario) {
+    if (Scenario)
+    {
         ExFreePool(Scenario);
     }
 
-    DBGPR((CCPFID,PFTRC,"CCPF: BeginAppLaunch()=%x\n", Status));
+    DBGPR((CCPFID, PFTRC, "CCPF: BeginAppLaunch()=%x\n", Status));
 
     return Status;
 }
 
 NTSTATUS
-CcPfProcessExitNotification(
-    PEPROCESS Process
-    )
+CcPfProcessExitNotification(PEPROCESS Process)
 
 /*++
 
@@ -509,8 +517,8 @@ Environment:
 
 {
     PCCPF_TRACE_HEADER Trace;
-   
-    DBGPR((CCPFID,PFTRC,"CCPF: ProcessExit(%p)\n", Process));
+
+    DBGPR((CCPFID, PFTRC, "CCPF: ProcessExit(%p)\n", Process));
 
     //
     // Validate parameters. We should have been called with a valid
@@ -525,15 +533,17 @@ Environment:
 
     Trace = CcPfReferenceProcessTrace(Process);
 
-    if (Trace) {
+    if (Trace)
+    {
 
-        if (!InterlockedCompareExchange(&Trace->EndTraceCalled, 1, 0)) {
-        
+        if (!InterlockedCompareExchange(&Trace->EndTraceCalled, 1, 0))
+        {
+
             //
             // We set EndTraceCalled from 0 to 1. Queue the
             // workitem to end the trace.
             //
-            
+
             ExQueueWorkItem(&Trace->EndTraceWorkItem, DelayedWorkQueue);
         }
 
@@ -543,16 +553,11 @@ Environment:
     //
     // We are done.
     //
-    
+
     return STATUS_SUCCESS;
 }
 
-VOID
-CcPfLogPageFault(
-    IN PFILE_OBJECT FileObject,
-    IN ULONGLONG FileOffset,
-    IN ULONG Flags
-    )
+VOID CcPfLogPageFault(IN PFILE_OBJECT FileObject, IN ULONGLONG FileOffset, IN ULONG Flags)
 
 /*++
 
@@ -597,11 +602,10 @@ Environment:
     PCCPF_LOG_ENTRIES TraceBuffer;
     PCCPF_LOG_ENTRIES NewTraceBuffer;
     PCCPF_LOG_ENTRY LogEntry;
-    LONG MaxEntries;   
+    LONG MaxEntries;
     PVPB Vpb;
 
-    DBGPR((CCPFID,PFTRAC,"CCPF: LogPageFault(%p,%I64x,%x)\n", 
-           FileObject, FileOffset, Flags));
+    DBGPR((CCPFID, PFTRAC, "CCPF: LogPageFault(%p,%I64x,%x)\n", FileObject, FileOffset, Flags));
 
     //
     // Get the trace associated with this process.
@@ -614,23 +618,28 @@ Environment:
     // a system-wide trace.
     //
 
-    if (Trace == NULL) {
+    if (Trace == NULL)
+    {
 
-        if (CcPfGlobals.SystemWideTrace) {
+        if (CcPfGlobals.SystemWideTrace)
+        {
 
             Trace = CcPfReferenceProcessTrace(PsInitialSystemProcess);
 
-            if (Trace) {
+            if (Trace)
+            {
 
                 CCPF_ASSERT(Trace == CcPfGlobals.SystemWideTrace);
-
-            } else {
+            }
+            else
+            {
 
                 Status = STATUS_NO_SUCH_MEMBER;
                 goto cleanup;
             }
-
-        } else {
+        }
+        else
+        {
 
             Status = STATUS_NO_SUCH_MEMBER;
             goto cleanup;
@@ -647,7 +656,8 @@ Environment:
     // Don't prefetch ROM-backed pages.
     //
 
-    if (Flags & CCPF_TYPE_ROM) {
+    if (Flags & CCPF_TYPE_ROM)
+    {
         Status = STATUS_NOT_SUPPORTED;
         goto cleanup;
     }
@@ -656,14 +666,15 @@ Environment:
     // Check file offset for this page fault. We don't support files >
     // 4GB for the prefetcher.
     //
-       
-    if (((PLARGE_INTEGER) &FileOffset)->HighPart != 0) {
+
+    if (((PLARGE_INTEGER)&FileOffset)->HighPart != 0)
+    {
         Status = STATUS_INVALID_PARAMETER;
         goto cleanup;
     }
 
     //
-    // If the volume this file object is on is not mounted, this is probably 
+    // If the volume this file object is on is not mounted, this is probably
     // an internal file system file object we don't want to reference.
     // Remote file systems may have file objects for which the device object
     // does not have a VPB. We don't support prefetching on remote file
@@ -672,12 +683,14 @@ Environment:
 
     Vpb = FileObject->Vpb;
 
-    if (!Vpb) {
+    if (!Vpb)
+    {
         Status = STATUS_NOT_SUPPORTED;
         goto cleanup;
     }
 
-    if (!(Vpb->Flags & VPB_MOUNTED)) {
+    if (!(Vpb->Flags & VPB_MOUNTED))
+    {
         Status = STATUS_DEVICE_NOT_READY;
         goto cleanup;
     }
@@ -693,23 +706,24 @@ Environment:
     NumHashLookups = 0;
     IncrementedNumSections = FALSE;
 
-    do {
-        
-        FoundIndex = CcPfLookUpSection(Trace->SectionInfoTable,
-                                       Trace->SectionTableSize,
-                                       SectionObjectPointer,
-                                       &AvailIndex);
+    do
+    {
 
-        if (FoundIndex != CCPF_INVALID_TABLE_INDEX) {
-            
+        FoundIndex =
+            CcPfLookUpSection(Trace->SectionInfoTable, Trace->SectionTableSize, SectionObjectPointer, &AvailIndex);
+
+        if (FoundIndex != CCPF_INVALID_TABLE_INDEX)
+        {
+
             //
             // We found the section.
             //
-            
+
             break;
         }
 
-        if (AvailIndex == CCPF_INVALID_TABLE_INDEX) {
+        if (AvailIndex == CCPF_INVALID_TABLE_INDEX)
+        {
 
             //
             // We don't have room in the table for anything else. The
@@ -718,7 +732,7 @@ Environment:
             //
 
             CCPF_ASSERT(FALSE);
-            
+
             Status = STATUS_INSUFFICIENT_RESOURCES;
             goto cleanup;
         }
@@ -729,11 +743,13 @@ Environment:
         // section.
         //
 
-        if (!IncrementedNumSections) {
+        if (!IncrementedNumSections)
+        {
 
             NewNumSections = InterlockedIncrement(&Trace->NumSections);
-            
-            if (NewNumSections > Trace->MaxSections) {
+
+            if (NewNumSections > Trace->MaxSections)
+            {
 
                 //
                 // We cannot add any more sections to this trace. So
@@ -745,18 +761,19 @@ Environment:
                 Status = STATUS_INSUFFICIENT_RESOURCES;
                 goto cleanup;
             }
-            
+
             IncrementedNumSections = TRUE;
         }
 
         //
         // Try to get the available spot for ourselves.
         //
-        
+
         SectionInfo = &Trace->SectionInfoTable[AvailIndex];
 
-        if (!InterlockedCompareExchange(&SectionInfo->EntryValid, 1, 0)) {
-            
+        if (!InterlockedCompareExchange(&SectionInfo->EntryValid, 1, 0))
+        {
+
             //
             // We have to be careful with how we are initializing the
             // new entry here. Don't forget, there are no locks.
@@ -769,7 +786,7 @@ Environment:
             //
             // First save the other fields of SectionObjectPointers. We check the
             // SectionObjectPointer first to find an entry in the hash.
-            // 
+            //
 
             SectionInfo->DataSectionObject = SectionObjectPointer->DataSectionObject;
             SectionInfo->ImageSectionObject = SectionObjectPointer->ImageSectionObject;
@@ -785,50 +802,48 @@ Environment:
 
             Status = CcPfAddRef(&Trace->RefCount);
 
-            if (NT_SUCCESS(Status)) {
+            if (NT_SUCCESS(Status))
+            {
 
                 //
                 // Reference the file object, so it does not go away until
                 // we get a name for it.
                 //
-                
+
                 ObReferenceObject(FileObject);
                 SectionInfo->ReferencedFileObject = FileObject;
-                        
+
                 //
                 // Push this section into the list for which the worker
                 // will get file names. Do this before checking to see if
                 // a worker needs to be queued.
                 //
-                
-                InterlockedPushEntrySList(&Trace->SectionsWithoutNamesList,
-                                          &SectionInfo->GetNameLink);
-                
+
+                InterlockedPushEntrySList(&Trace->SectionsWithoutNamesList, &SectionInfo->GetNameLink);
+
                 //
                 // If there is not already a worker queued to get
                 // names, queue one.
-                // 
-                
-                if (!InterlockedCompareExchange(&Trace->GetFileNameWorkItemQueued, 
-                                                1, 
-                                                0)) {
-                    
+                //
+
+                if (!InterlockedCompareExchange(&Trace->GetFileNameWorkItemQueued, 1, 0))
+                {
+
                     //
                     // Queue the worker.
                     //
-                    
+
                     ExQueueWorkItem(&Trace->GetFileNameWorkItem, DelayedWorkQueue);
-                    
-                } else {
+                }
+                else
+                {
 
                     //
                     // Notify the event that an existing worker may be
                     // waiting on for new sections.
                     //
-                    
-                    KeSetEvent(&Trace->GetFileNameWorkerEvent,
-                               IO_NO_INCREMENT,
-                               FALSE);
+
+                    KeSetEvent(&Trace->GetFileNameWorkerEvent, IO_NO_INCREMENT, FALSE);
 
                     //
                     // We don't need the reference since we did not
@@ -837,8 +852,9 @@ Environment:
 
                     CcPfDecRef(&Trace->RefCount);
                 }
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // We added the section but the trace has already
@@ -847,15 +863,14 @@ Environment:
                 // entry will be ignored though because its section
                 // won't have a file name.
                 //
-
             }
 
             //
             // Break out of the loop.
             //
-            
+
             FoundIndex = AvailIndex;
-            
+
             break;
         }
 
@@ -864,14 +879,14 @@ Environment:
         // bigger than the maximum allowed size [MaxSections]
         //
 
-        CCPF_ASSERT((ULONG) Trace->NumSections < Trace->SectionTableSize);
-        
+        CCPF_ASSERT((ULONG)Trace->NumSections < Trace->SectionTableSize);
+
         //
         // Updated number of times we've looped. We should not have to
         // loop more than SectionTableSize. If there is a free entry,
         // we should have found it after that many lookups.
         //
-            
+
         NumHashLookups++;
 
     } while (NumHashLookups < Trace->SectionTableSize);
@@ -880,19 +895,21 @@ Environment:
     // FoundIndex is set to the index of the section in the table.
     //
 
-    if (FoundIndex == CCPF_INVALID_TABLE_INDEX) {
+    if (FoundIndex == CCPF_INVALID_TABLE_INDEX)
+    {
         CCPF_ASSERT(FoundIndex != CCPF_INVALID_TABLE_INDEX);
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto cleanup;
     }
 
     //
-    // If the section is a metafile (e.g. directory) section, don't need to 
+    // If the section is a metafile (e.g. directory) section, don't need to
     // log more faults for it. We just need to know that we accessed it since
     // we can only prefetch all or nothing from metafile.
     //
 
-    if (Trace->SectionInfoTable[FoundIndex].Metafile) {
+    if (Trace->SectionInfoTable[FoundIndex].Metafile)
+    {
         Status = STATUS_SUCCESS;
         goto cleanup;
     }
@@ -907,17 +924,18 @@ Environment:
     // If we are beyond bounds we cannot log anymore.
     //
 
-    if (NewNumFaults > Trace->MaxFaults) {
+    if (NewNumFaults > Trace->MaxFaults)
+    {
 
         InterlockedDecrement(&Trace->NumFaults);
 
         //
         // Try to queue the end of trace workitem.
         //
-        
-        if (!Trace->EndTraceCalled &&
-            !InterlockedCompareExchange(&Trace->EndTraceCalled, 1, 0)) {
-            
+
+        if (!Trace->EndTraceCalled && !InterlockedCompareExchange(&Trace->EndTraceCalled, 1, 0))
+        {
+
             //
             // We set EndTraceCalled from 0 to 1. We can queue the
             // workitem now.
@@ -934,17 +952,19 @@ Environment:
     // Get space for the entry we are going to log.
     //
 
-    do {
+    do
+    {
 
         TraceBuffer = Trace->CurrentTraceBuffer;
 
         NewNumEntries = InterlockedIncrement(&TraceBuffer->NumEntries);
-    
+
         //
         // If we are beyond bounds, try to allocate a new buffer.
         //
-    
-        if (NewNumEntries > TraceBuffer->MaxEntries) {
+
+        if (NewNumEntries > TraceBuffer->MaxEntries)
+        {
 
             InterlockedDecrement(&TraceBuffer->NumEntries);
 
@@ -953,11 +973,10 @@ Environment:
             //
 
             MaxEntries = CCPF_TRACE_BUFFER_MAX_ENTRIES;
-            NewTraceBuffer = ExAllocatePoolWithTag(NonPagedPool,
-                                                   CCPF_TRACE_BUFFER_SIZE,
-                                                   CCPF_ALLOC_TRCBUF_TAG);
-            
-            if (NewTraceBuffer == NULL) {
+            NewTraceBuffer = ExAllocatePoolWithTag(NonPagedPool, CCPF_TRACE_BUFFER_SIZE, CCPF_ALLOC_TRCBUF_TAG);
+
+            if (NewTraceBuffer == NULL)
+            {
 
                 //
                 // Couldn't allocate a new buffer. Decrement the count
@@ -979,7 +998,8 @@ Environment:
             // If the trace buffer has already been changed, start over.
             //
 
-            if (Trace->CurrentTraceBuffer != TraceBuffer) {
+            if (Trace->CurrentTraceBuffer != TraceBuffer)
+            {
                 KeReleaseSpinLock(&Trace->TraceBufferSpinLock, OrigIrql);
                 ExFreePool(NewTraceBuffer);
                 continue;
@@ -1005,8 +1025,7 @@ Environment:
             // Insert it at the end of buffers list.
             //
 
-            InsertTailList(&Trace->TraceBuffersList,
-                           &NewTraceBuffer->TraceBuffersLink);
+            InsertTailList(&Trace->TraceBuffersList, &NewTraceBuffer->TraceBuffersLink);
 
             Trace->NumTraceBuffers++;
 
@@ -1025,10 +1044,10 @@ Environment:
         }
 
         LogEntry = &TraceBuffer->Entries[NewNumEntries - 1];
-    
-        LogEntry->FileOffset = (ULONG) FileOffset;
-        LogEntry->SectionId = (USHORT) FoundIndex;
-        LogEntry->IsImage = (Flags & CCPF_TYPE_IMAGE)? TRUE : FALSE;
+
+        LogEntry->FileOffset = (ULONG)FileOffset;
+        LogEntry->SectionId = (USHORT)FoundIndex;
+        LogEntry->IsImage = (Flags & CCPF_TYPE_IMAGE) ? TRUE : FALSE;
 
         break;
 
@@ -1038,23 +1057,19 @@ Environment:
 
 cleanup:
 
-    if (Trace != NULL) {
+    if (Trace != NULL)
+    {
         CcPfDecRef(&Trace->RefCount);
     }
 
-    DBGPR((CCPFID,PFTRAC,"CCPF: LogPageFault()=%x\n", Status)); 
+    DBGPR((CCPFID, PFTRAC, "CCPF: LogPageFault()=%x\n", Status));
 
     return;
 }
 
 NTSTATUS
-CcPfQueryPrefetcherInformation (
-    IN SYSTEM_INFORMATION_CLASS SystemInformationClass,
-    IN PVOID SystemInformation,
-    IN ULONG SystemInformationLength,
-    IN KPROCESSOR_MODE PreviousMode,
-    OUT PULONG Length
-    )
+CcPfQueryPrefetcherInformation(IN SYSTEM_INFORMATION_CLASS SystemInformationClass, IN PVOID SystemInformation,
+                               IN ULONG SystemInformationLength, IN KPROCESSOR_MODE PreviousMode, OUT PULONG Length)
 
 /*++
 
@@ -1094,15 +1109,16 @@ Environment:
     PF_SYSTEM_PREFETCH_PARAMETERS Temp;
     PKTHREAD CurrentThread;
 
-    UNREFERENCED_PARAMETER (SystemInformationClass);
+    UNREFERENCED_PARAMETER(SystemInformationClass);
 
-    DBGPR((CCPFID,PFTRC,"CCPF: QueryPrefetcherInformation()\n"));
+    DBGPR((CCPFID, PFTRC, "CCPF: QueryPrefetcherInformation()\n"));
 
     //
     // Check permissions.
     //
 
-    if (!SeSinglePrivilegeCheck(SeProfileSingleProcessPrivilege,PreviousMode)) {
+    if (!SeSinglePrivilegeCheck(SeProfileSingleProcessPrivilege, PreviousMode))
+    {
         Status = STATUS_ACCESS_DENIED;
         goto cleanup;
     }
@@ -1111,7 +1127,8 @@ Environment:
     // Check parameters.
     //
 
-    if (SystemInformationLength != sizeof(PREFETCHER_INFORMATION)) {
+    if (SystemInformationLength != sizeof(PREFETCHER_INFORMATION))
+    {
         Status = STATUS_INFO_LENGTH_MISMATCH;
         goto cleanup;
     }
@@ -1122,8 +1139,8 @@ Environment:
     // Verify version and magic.
     //
 
-    if (PrefetcherInformation->Version != PF_CURRENT_VERSION ||
-        PrefetcherInformation->Magic != PF_SYSINFO_MAGIC_NUMBER) {
+    if (PrefetcherInformation->Version != PF_CURRENT_VERSION || PrefetcherInformation->Magic != PF_SYSINFO_MAGIC_NUMBER)
+    {
         Status = STATUS_INVALID_PARAMETER;
         goto cleanup;
     }
@@ -1131,23 +1148,23 @@ Environment:
     //
     // Process requested information class.
     //
-        
-    switch (PrefetcherInformation->PrefetcherInformationClass) {
-    
+
+    switch (PrefetcherInformation->PrefetcherInformationClass)
+    {
+
     case PrefetcherRetrieveTrace:
         Status = CcPfGetCompletedTrace(PrefetcherInformation->PrefetcherInformation,
-                                       PrefetcherInformation->PrefetcherInformationLength,
-                                       Length);
+                                       PrefetcherInformation->PrefetcherInformationLength, Length);
         break;
 
     case PrefetcherSystemParameters:
-        
+
         //
         // Make sure input buffer is big enough.
         //
 
-        if (PrefetcherInformation->PrefetcherInformationLength != 
-            sizeof(PF_SYSTEM_PREFETCH_PARAMETERS)) {
+        if (PrefetcherInformation->PrefetcherInformationLength != sizeof(PF_SYSTEM_PREFETCH_PARAMETERS))
+        {
             Status = STATUS_BUFFER_TOO_SMALL;
             break;
         }
@@ -1156,38 +1173,37 @@ Environment:
         // Acquire parameters lock and copy current parameters into
         // user's buffer.
         //
-        
+
         Status = STATUS_SUCCESS;
 
-        CurrentThread = KeGetCurrentThread ();
+        CurrentThread = KeGetCurrentThread();
         KeEnterCriticalRegionThread(CurrentThread);
         ExAcquireResourceSharedLite(&CcPfGlobals.Parameters.ParametersLock, TRUE);
 
-        RtlCopyMemory(&Temp,
-                      &CcPfGlobals.Parameters.Parameters,
-                      sizeof(PF_SYSTEM_PREFETCH_PARAMETERS));            
+        RtlCopyMemory(&Temp, &CcPfGlobals.Parameters.Parameters, sizeof(PF_SYSTEM_PREFETCH_PARAMETERS));
 
         ExReleaseResourceLite(&CcPfGlobals.Parameters.ParametersLock);
         KeLeaveCriticalRegionThread(CurrentThread);
 
-        try {
+        try
+        {
 
             //
-            // If called from user-mode, probe whether it is safe to write 
+            // If called from user-mode, probe whether it is safe to write
             // to the pointer passed in.
             //
-            
-            if (PreviousMode != KernelMode) {
-                ProbeForWriteSmallStructure(PrefetcherInformation->PrefetcherInformation, 
-                                            sizeof(PF_SYSTEM_PREFETCH_PARAMETERS), 
+
+            if (PreviousMode != KernelMode)
+            {
+                ProbeForWriteSmallStructure(PrefetcherInformation->PrefetcherInformation,
+                                            sizeof(PF_SYSTEM_PREFETCH_PARAMETERS),
                                             _alignof(PF_SYSTEM_PREFETCH_PARAMETERS));
             }
 
-            RtlCopyMemory(PrefetcherInformation->PrefetcherInformation,
-                          &Temp,
-                          sizeof(PF_SYSTEM_PREFETCH_PARAMETERS));
-            
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+            RtlCopyMemory(PrefetcherInformation->PrefetcherInformation, &Temp, sizeof(PF_SYSTEM_PREFETCH_PARAMETERS));
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             Status = GetExceptionCode();
         }
@@ -1197,8 +1213,10 @@ Environment:
         // Set returned number of bytes.
         //
 
-        if (NT_SUCCESS(Status)) {
-            if (Length) {
+        if (NT_SUCCESS(Status))
+        {
+            if (Length)
+            {
                 *Length = sizeof(PF_SYSTEM_PREFETCH_PARAMETERS);
             }
         }
@@ -1214,20 +1232,16 @@ Environment:
     // Fall through with status from switch statement.
     //
 
- cleanup:
+cleanup:
 
-    DBGPR((CCPFID,PFTRC,"CCPF: QueryPrefetcherInformation()=%x\n", Status));
+    DBGPR((CCPFID, PFTRC, "CCPF: QueryPrefetcherInformation()=%x\n", Status));
 
     return Status;
 }
 
 NTSTATUS
-CcPfSetPrefetcherInformation (
-    IN SYSTEM_INFORMATION_CLASS SystemInformationClass,
-    IN PVOID SystemInformation,
-    IN ULONG SystemInformationLength,
-    IN KPROCESSOR_MODE PreviousMode
-    )
+CcPfSetPrefetcherInformation(IN SYSTEM_INFORMATION_CLASS SystemInformationClass, IN PVOID SystemInformation,
+                             IN ULONG SystemInformationLength, IN KPROCESSOR_MODE PreviousMode)
 
 /*++
 
@@ -1267,15 +1281,16 @@ Environment:
     PF_BOOT_PHASE_ID NewPhaseId;
     PKTHREAD CurrentThread;
 
-    UNREFERENCED_PARAMETER (SystemInformationClass);
+    UNREFERENCED_PARAMETER(SystemInformationClass);
 
-    DBGPR((CCPFID,PFTRC,"CCPF: SetPrefetcherInformation()\n"));
+    DBGPR((CCPFID, PFTRC, "CCPF: SetPrefetcherInformation()\n"));
 
     //
     // Check permissions.
     //
 
-    if (!SeSinglePrivilegeCheck(SeProfileSingleProcessPrivilege,PreviousMode)) {
+    if (!SeSinglePrivilegeCheck(SeProfileSingleProcessPrivilege, PreviousMode))
+    {
         Status = STATUS_ACCESS_DENIED;
         goto cleanup;
     }
@@ -1284,7 +1299,8 @@ Environment:
     // Check parameters.
     //
 
-    if (SystemInformationLength != sizeof(PREFETCHER_INFORMATION)) {
+    if (SystemInformationLength != sizeof(PREFETCHER_INFORMATION))
+    {
         Status = STATUS_INFO_LENGTH_MISMATCH;
         goto cleanup;
     }
@@ -1295,8 +1311,8 @@ Environment:
     // Verify version and magic.
     //
 
-    if (PrefetcherInformation->Version != PF_CURRENT_VERSION ||
-        PrefetcherInformation->Magic != PF_SYSINFO_MAGIC_NUMBER) {
+    if (PrefetcherInformation->Version != PF_CURRENT_VERSION || PrefetcherInformation->Magic != PF_SYSINFO_MAGIC_NUMBER)
+    {
         Status = STATUS_INVALID_PARAMETER;
         goto cleanup;
     }
@@ -1305,20 +1321,21 @@ Environment:
     // Process requested information class.
     //
 
-    switch (PrefetcherInformation->PrefetcherInformationClass) {
-    
+    switch (PrefetcherInformation->PrefetcherInformationClass)
+    {
+
     case PrefetcherRetrieveTrace:
         Status = STATUS_INVALID_INFO_CLASS;
         break;
 
     case PrefetcherSystemParameters:
-        
+
         //
         // Make sure input buffer is the right size.
         //
 
-        if (PrefetcherInformation->PrefetcherInformationLength != 
-            sizeof(PF_SYSTEM_PREFETCH_PARAMETERS)) {
+        if (PrefetcherInformation->PrefetcherInformationLength != sizeof(PF_SYSTEM_PREFETCH_PARAMETERS))
+        {
             Status = STATUS_BUFFER_TOO_SMALL;
             break;
         }
@@ -1330,39 +1347,43 @@ Environment:
 
         Status = STATUS_SUCCESS;
 
-        try {
+        try
+        {
 
             //
             // If called from user-mode, probe whether it is safe to read
             // from the pointer passed in.
             //
 
-            if (PreviousMode != KernelMode) {
+            if (PreviousMode != KernelMode)
+            {
                 ProbeForReadSmallStructure(PrefetcherInformation->PrefetcherInformation,
                                            sizeof(PF_SYSTEM_PREFETCH_PARAMETERS),
                                            _alignof(PF_SYSTEM_PREFETCH_PARAMETERS));
             }
 
-            RtlCopyMemory(&Parameters,
-                          PrefetcherInformation->PrefetcherInformation,
+            RtlCopyMemory(&Parameters, PrefetcherInformation->PrefetcherInformation,
                           sizeof(PF_SYSTEM_PREFETCH_PARAMETERS));
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             Status = GetExceptionCode();
         }
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             break;
         }
 
         //
         // Verify new parameters.
         //
-        
+
         Status = CcPfParametersVerify(&Parameters);
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             break;
         }
 
@@ -1372,14 +1393,14 @@ Environment:
 
         PrefetcherParameters = &CcPfGlobals.Parameters;
 
-        CurrentThread = KeGetCurrentThread ();
+        CurrentThread = KeGetCurrentThread();
         KeEnterCriticalRegionThread(CurrentThread);
         ExAcquireResourceExclusiveLite(&PrefetcherParameters->ParametersLock, TRUE);
-           
+
         //
         // Copy them over to our globals.
         //
-        
+
         PrefetcherParameters->Parameters = Parameters;
 
         //
@@ -1388,7 +1409,7 @@ Environment:
 
         ExReleaseResourceLite(&PrefetcherParameters->ParametersLock);
         KeLeaveCriticalRegionThread(CurrentThread);
-        
+
         //
         // Determine if prefetching is still enabled.
         //
@@ -1399,19 +1420,19 @@ Environment:
         // Set the event so the service queries for the latest
         // parameters.
         //
-        
+
         CcPfParametersSetChangedEvent(PrefetcherParameters);
-        
+
         //
         // If the parameters update was successful, update the registry.
         //
-        
+
         Status = CcPfParametersSave(PrefetcherParameters);
 
         break;
-    
+
     case PrefetcherBootPhase:
-        
+
         //
         // This is called to notify the prefetcher that a new boot
         // phase has started. The new phase id is at PrefetcherInformation.
@@ -1421,7 +1442,8 @@ Environment:
         // Check length of PrefetcherInformation.
         //
 
-        if (PrefetcherInformation->PrefetcherInformationLength != sizeof(PF_BOOT_PHASE_ID)) {
+        if (PrefetcherInformation->PrefetcherInformationLength != sizeof(PF_BOOT_PHASE_ID))
+        {
             Status = STATUS_BUFFER_TOO_SMALL;
             break;
         }
@@ -1429,31 +1451,34 @@ Environment:
         //
         // Get new phase id.
         //
-        
+
         Status = STATUS_SUCCESS;
-        
-        try {
+
+        try
+        {
 
             //
             // If called from user-mode, probe whether it is safe to read
             // from the pointer passed in.
             //
 
-            if (PreviousMode != KernelMode) {
-                ProbeForReadSmallStructure(PrefetcherInformation->PrefetcherInformation,
-                                           sizeof(PF_BOOT_PHASE_ID),
+            if (PreviousMode != KernelMode)
+            {
+                ProbeForReadSmallStructure(PrefetcherInformation->PrefetcherInformation, sizeof(PF_BOOT_PHASE_ID),
                                            _alignof(PF_BOOT_PHASE_ID));
             }
 
             NewPhaseId = *((PPF_BOOT_PHASE_ID)(PrefetcherInformation->PrefetcherInformation));
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             Status = GetExceptionCode();
         }
 
-        if (NT_SUCCESS(Status)) {
-            
+        if (NT_SUCCESS(Status))
+        {
+
             //
             // Call the function to note the new boot phase.
             //
@@ -1472,9 +1497,9 @@ Environment:
     // Fall through with status from the switch statement.
     //
 
- cleanup:
+cleanup:
 
-    DBGPR((CCPFID,PFTRC,"CCPF: SetPrefetcherInformation()=%x\n", Status));
+    DBGPR((CCPFID, PFTRC, "CCPF: SetPrefetcherInformation()=%x\n", Status));
 
     return Status;
 }
@@ -1488,11 +1513,7 @@ Environment:
 //
 
 NTSTATUS
-CcPfBeginTrace(
-    IN PF_SCENARIO_ID *ScenarioId,
-    IN PF_SCENARIO_TYPE ScenarioType,
-    IN PEPROCESS Process
-    )
+CcPfBeginTrace(IN PF_SCENARIO_ID *ScenarioId, IN PF_SCENARIO_TYPE ScenarioType, IN PEPROCESS Process)
 
 /*++
 
@@ -1520,44 +1541,46 @@ Environment:
 
 {
     PCCPF_TRACE_HEADER Trace;
-    PPF_TRACE_LIMITS TraceLimits; 
+    PPF_TRACE_LIMITS TraceLimits;
     NTSTATUS Status;
     ULONG AllocationSize;
     ULONG SectionTableSize;
     LONG MaxEntries;
-    
+
     //
     // Initialize locals.
     //
-    
+
     Trace = NULL;
 
-    DBGPR((CCPFID,PFTRC,"CCPF: BeginTrace()-%d-%d\n", 
-           CcPfNumActiveTraces, CcPfGlobals.NumCompletedTraces));
+    DBGPR((CCPFID, PFTRC, "CCPF: BeginTrace()-%d-%d\n", CcPfNumActiveTraces, CcPfGlobals.NumCompletedTraces));
 
     //
     // Check if prefetching is enabled.
     //
-    
-    if (!CCPF_IS_PREFETCHER_ENABLED()) {
+
+    if (!CCPF_IS_PREFETCHER_ENABLED())
+    {
         Status = STATUS_NOT_SUPPORTED;
         goto cleanup;
     }
 
     //
     // Make sure the scenario type is valid.
-    // 
+    //
 
-    if (ScenarioType >= PfMaxScenarioType) {
+    if (ScenarioType >= PfMaxScenarioType)
+    {
         Status = STATUS_INVALID_PARAMETER;
         goto cleanup;
     }
-    
+
     //
     // Check if prefetching is enabled for the specified scenario type.
     //
 
-    if (CcPfGlobals.Parameters.Parameters.EnableStatus[ScenarioType] != PfSvEnabled) {
+    if (CcPfGlobals.Parameters.Parameters.EnableStatus[ScenarioType] != PfSvEnabled)
+    {
         Status = STATUS_NOT_SUPPORTED;
         goto cleanup;
     }
@@ -1566,50 +1589,53 @@ Environment:
     // Check if a system-wide trace is active. If so only it can be active.
     //
 
-    if (CcPfGlobals.SystemWideTrace) {
+    if (CcPfGlobals.SystemWideTrace)
+    {
         Status = STATUS_USER_EXISTS;
         goto cleanup;
     }
 
     //
-    // Make a quick check to see if we already have too many outstanding 
+    // Make a quick check to see if we already have too many outstanding
     // traces. Since we don't make this check under a lock, the limit is
     // not enforced exactly.
-    //  
-
-    if ((ULONG)CcPfNumActiveTraces >= CcPfGlobals.Parameters.Parameters.MaxNumActiveTraces) {
-        Status = STATUS_TOO_MANY_SESSIONS;
-        goto cleanup;
-    }   
-
     //
-    // Make a quick check to see if we already have too many completed 
-    // traces that the service has not picked up.
-    //   
-    
-    if ((ULONG)CcPfGlobals.NumCompletedTraces >= CcPfGlobals.Parameters.Parameters.MaxNumSavedTraces) {
+
+    if ((ULONG)CcPfNumActiveTraces >= CcPfGlobals.Parameters.Parameters.MaxNumActiveTraces)
+    {
         Status = STATUS_TOO_MANY_SESSIONS;
         goto cleanup;
     }
-    
+
+    //
+    // Make a quick check to see if we already have too many completed
+    // traces that the service has not picked up.
+    //
+
+    if ((ULONG)CcPfGlobals.NumCompletedTraces >= CcPfGlobals.Parameters.Parameters.MaxNumSavedTraces)
+    {
+        Status = STATUS_TOO_MANY_SESSIONS;
+        goto cleanup;
+    }
+
     //
     // If a process was not specified we cannot start a trace.
     //
 
-    if (!Process) {
+    if (!Process)
+    {
         Status = STATUS_NOT_SUPPORTED;
         goto cleanup;
-    } 
+    }
 
     //
     // Allocate and initialize trace structure.
     //
 
-    Trace = ExAllocatePoolWithTag(NonPagedPool,
-                                  sizeof(CCPF_TRACE_HEADER),
-                                  CCPF_ALLOC_TRACE_TAG);
-    
-    if (!Trace) {
+    Trace = ExAllocatePoolWithTag(NonPagedPool, sizeof(CCPF_TRACE_HEADER), CCPF_ALLOC_TRACE_TAG);
+
+    if (!Trace)
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto cleanup;
     }
@@ -1621,7 +1647,7 @@ Environment:
     //
 
     RtlZeroMemory(Trace, sizeof(CCPF_TRACE_HEADER));
-    
+
     //
     // Initialize other trace fields so we know what to cleanup.
     //
@@ -1640,17 +1666,15 @@ Environment:
 
     KeInitializeSpinLock(&Trace->TraceTimerSpinLock);
 
-    KeInitializeDpc(&Trace->TraceTimerDpc, 
-                    CcPfTraceTimerRoutine, 
-                    Trace);
-                                                  
+    KeInitializeDpc(&Trace->TraceTimerDpc, CcPfTraceTimerRoutine, Trace);
+
     //
     // Initialize reference count structure. A reference to a trace
     // can only be acquired while holding the active traces spinlock.
     //
 
     CcPfInitializeRefCount(&Trace->RefCount);
-    
+
     //
     // Get reference to associated process so it does
     // not go away while our timer routines etc. are running.
@@ -1661,13 +1685,11 @@ Environment:
 
     //
     // Initialize the workitem that may be queued to call end trace
-    // function and the field that has to be InterlockedCompareExchange'd 
+    // function and the field that has to be InterlockedCompareExchange'd
     // to 1 before anybody queues the workitem or makes the call.
     //
 
-    ExInitializeWorkItem(&Trace->EndTraceWorkItem,
-                         CcPfEndTraceWorkerThreadRoutine,
-                         Trace);
+    ExInitializeWorkItem(&Trace->EndTraceWorkItem, CcPfEndTraceWorkerThreadRoutine, Trace);
 
     Trace->EndTraceCalled = 0;
 
@@ -1675,15 +1697,11 @@ Environment:
     // Initialize the workitem queued to get names for file objects.
     //
 
-    ExInitializeWorkItem(&Trace->GetFileNameWorkItem,
-                         CcPfGetFileNamesWorkerRoutine,
-                         Trace);
+    ExInitializeWorkItem(&Trace->GetFileNameWorkItem, CcPfGetFileNamesWorkerRoutine, Trace);
 
     Trace->GetFileNameWorkItemQueued = 0;
 
-    KeInitializeEvent(&Trace->GetFileNameWorkerEvent,
-                      SynchronizationEvent,
-                      FALSE);
+    KeInitializeEvent(&Trace->GetFileNameWorkerEvent, SynchronizationEvent, FALSE);
 
     //
     // Initialize the list where we put sections we have to get names
@@ -1703,7 +1721,7 @@ Environment:
     // Determine trace limits and timer period from scenario type.
     // We have already checked that ScenarioType is within limits.
     //
-    
+
     TraceLimits = &CcPfGlobals.Parameters.Parameters.TraceLimits[Trace->ScenarioType];
 
     Trace->MaxFaults = TraceLimits->MaxNumPages;
@@ -1714,16 +1732,19 @@ Environment:
     // Make sure the sizes are within sanity limits.
     //
 
-    if ((Trace->MaxFaults == 0) || (Trace->MaxSections == 0)) {
+    if ((Trace->MaxFaults == 0) || (Trace->MaxSections == 0))
+    {
         Status = STATUS_INVALID_PARAMETER;
         goto cleanup;
     }
 
-    if (Trace->MaxFaults > PF_MAXIMUM_LOG_ENTRIES) {
+    if (Trace->MaxFaults > PF_MAXIMUM_LOG_ENTRIES)
+    {
         Trace->MaxFaults = PF_MAXIMUM_LOG_ENTRIES;
     }
-    
-    if (Trace->MaxSections > PF_MAXIMUM_SECTIONS) {
+
+    if (Trace->MaxSections > PF_MAXIMUM_SECTIONS)
+    {
         Trace->MaxSections = PF_MAXIMUM_SECTIONS;
     }
 
@@ -1732,11 +1753,10 @@ Environment:
     //
 
     MaxEntries = CCPF_TRACE_BUFFER_MAX_ENTRIES;
-    Trace->CurrentTraceBuffer = ExAllocatePoolWithTag(NonPagedPool,
-                                                      CCPF_TRACE_BUFFER_SIZE,
-                                                      CCPF_ALLOC_TRCBUF_TAG);
-    
-    if (Trace->CurrentTraceBuffer == NULL) {
+    Trace->CurrentTraceBuffer = ExAllocatePoolWithTag(NonPagedPool, CCPF_TRACE_BUFFER_SIZE, CCPF_ALLOC_TRCBUF_TAG);
+
+    if (Trace->CurrentTraceBuffer == NULL)
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto cleanup;
     }
@@ -1748,8 +1768,7 @@ Environment:
     // Insert the current trace buffer to the trace buffers list.
     //
 
-    InsertTailList(&Trace->TraceBuffersList, 
-                   &Trace->CurrentTraceBuffer->TraceBuffersLink);
+    InsertTailList(&Trace->TraceBuffersList, &Trace->CurrentTraceBuffer->TraceBuffersLink);
 
     Trace->NumTraceBuffers = 1;
 
@@ -1760,20 +1779,19 @@ Environment:
 
     SectionTableSize = Trace->MaxSections + (Trace->MaxSections / 2);
     AllocationSize = SectionTableSize * sizeof(CCPF_SECTION_INFO);
-    Trace->SectionInfoTable = ExAllocatePoolWithTag(NonPagedPool,
-                                                    AllocationSize,
-                                                    CCPF_ALLOC_SECTTBL_TAG);
-    
-    if (!Trace->SectionInfoTable) {
+    Trace->SectionInfoTable = ExAllocatePoolWithTag(NonPagedPool, AllocationSize, CCPF_ALLOC_SECTTBL_TAG);
+
+    if (!Trace->SectionInfoTable)
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto cleanup;
-    }  
+    }
 
     Trace->SectionTableSize = SectionTableSize;
 
     //
     // Initialize entries in the section table. We want the whole table
-    // to contain zeroes, so just use RtlZeroMemory. 
+    // to contain zeroes, so just use RtlZeroMemory.
     //
     // EntryValid is the crucial field in section info entries allowing
     // us not to have any locks. The first to (interlocked) set it
@@ -1787,9 +1805,9 @@ Environment:
     //
 
     RtlZeroMemory(Trace->SectionInfoTable, AllocationSize);
-  
+
     //
-    // Add this trace to active traces list. 
+    // Add this trace to active traces list.
     // Set the trace on process header.
     // Start the trace timer.
     // We'll start logging page faults, processing process delete notificatios etc.
@@ -1798,30 +1816,30 @@ Environment:
     CcPfActivateTrace(Trace);
 
     //
-    // NOTE: FROM THIS POINT ON WE SHOULD NOT FAIL. 
+    // NOTE: FROM THIS POINT ON WE SHOULD NOT FAIL.
     // CcPfEndTrace has to be called to stop & cleanup the trace.
     //
 
     Status = STATUS_SUCCESS;
 
- cleanup:
+cleanup:
 
-    if (!NT_SUCCESS(Status)) {       
-        if (Trace) {
+    if (!NT_SUCCESS(Status))
+    {
+        if (Trace)
+        {
             CcPfCleanupTrace(Trace);
             ExFreePool(Trace);
         }
     }
 
-    DBGPR((CCPFID,PFTRC,"CCPF: BeginTrace(%p)=%x\n", Trace, Status));
+    DBGPR((CCPFID, PFTRC, "CCPF: BeginTrace(%p)=%x\n", Trace, Status));
 
     return Status;
 }
 
 NTSTATUS
-CcPfActivateTrace(
-    IN PCCPF_TRACE_HEADER Trace
-    )
+CcPfActivateTrace(IN PCCPF_TRACE_HEADER Trace)
 
 /*++
 
@@ -1849,7 +1867,7 @@ Environment:
     NTSTATUS Status;
     BOOLEAN TimerAlreadyQueued;
 
-    DBGPR((CCPFID,PFTRC,"CCPF: ActivateTrace(%p)\n", Trace));
+    DBGPR((CCPFID, PFTRC, "CCPF: ActivateTrace(%p)\n", Trace));
 
     //
     // Get a reference to the trace for the timer.
@@ -1861,9 +1879,9 @@ Environment:
     //
     // Insert to active traces list.
     //
-    
+
     KeAcquireSpinLock(&CcPfGlobals.ActiveTracesLock, &OrigIrql);
-    
+
     //
     // Insert the entry before the found position.
     //
@@ -1875,9 +1893,7 @@ Environment:
     // Start the timer.
     //
 
-    TimerAlreadyQueued = KeSetTimer(&Trace->TraceTimer,
-                                    Trace->TraceTimerPeriod,
-                                    &Trace->TraceTimerDpc);
+    TimerAlreadyQueued = KeSetTimer(&Trace->TraceTimer, Trace->TraceTimerPeriod, &Trace->TraceTimerDpc);
 
     //
     // We just initialized the timer. It could not have been already queued.
@@ -1886,7 +1902,7 @@ Environment:
     CCPF_ASSERT(!TimerAlreadyQueued);
 
     //
-    // Set up the trace pointer on the process with fast ref. Since we are 
+    // Set up the trace pointer on the process with fast ref. Since we are
     // already holding a reference, this operation should not fail.
     //
 
@@ -1897,38 +1913,39 @@ Environment:
     // Do we trace system-wide for this scenario type?
     //
 
-    if (CCPF_IS_SYSTEM_WIDE_SCENARIO_TYPE(Trace->ScenarioType)) {
+    if (CCPF_IS_SYSTEM_WIDE_SCENARIO_TYPE(Trace->ScenarioType))
+    {
 
         CcPfGlobals.SystemWideTrace = Trace;
-
-    } else {
+    }
+    else
+    {
 
         //
         // If we are the only active trace, place ourselves on the system
         // process as well so we can trace ReadFile & metafile access.
         //
 
-        if (CcPfNumActiveTraces == 1) {
+        if (CcPfNumActiveTraces == 1)
+        {
             Status = CcPfAddProcessTrace(PsInitialSystemProcess, Trace);
             CCPF_ASSERT(NT_SUCCESS(Status));
         }
     }
 
     //
-    // NOTE: AddProcessTrace and KeSetTimer(TraceTimer) has to be done 
+    // NOTE: AddProcessTrace and KeSetTimer(TraceTimer) has to be done
     // inside the spinlock so DeactivateTrace can know activation has been
     // fully completed by acquiring and releasing the spinlock.
     //
 
     KeReleaseSpinLock(&CcPfGlobals.ActiveTracesLock, OrigIrql);
-    
+
     return STATUS_SUCCESS;
 }
 
 NTSTATUS
-CcPfDeactivateTrace(
-    IN PCCPF_TRACE_HEADER Trace
-    )
+CcPfDeactivateTrace(IN PCCPF_TRACE_HEADER Trace)
 
 /*++
 
@@ -1956,18 +1973,18 @@ Environment:
     PCCPF_TRACE_HEADER RemovedTrace;
     PCCPF_TRACE_HEADER ReferencedTrace;
     KIRQL OrigIrql;
-    NTSTATUS Status;  
+    NTSTATUS Status;
 
-    DBGPR((CCPFID,PFTRC,"CCPF: DeactivateTrace(%p)\n", Trace));
+    DBGPR((CCPFID, PFTRC, "CCPF: DeactivateTrace(%p)\n", Trace));
 
     //
     // Acquire and release the active traces spinlock. This makes sure we
-    // don't try to deactivate before activation (which also holds this lock) 
+    // don't try to deactivate before activation (which also holds this lock)
     // has fully completed.
     //
 
-#if !defined (NT_UP)
-    KeAcquireSpinLock(&CcPfGlobals.ActiveTracesLock, &OrigIrql);   
+#if !defined(NT_UP)
+    KeAcquireSpinLock(&CcPfGlobals.ActiveTracesLock, &OrigIrql);
     KeReleaseSpinLock(&CcPfGlobals.ActiveTracesLock, OrigIrql);
 #endif // NT_UP
 
@@ -1990,9 +2007,11 @@ Environment:
 
     ReferencedTrace = CcPfReferenceProcessTrace(PsInitialSystemProcess);
 
-    if (ReferencedTrace) {
+    if (ReferencedTrace)
+    {
 
-        if (Trace == ReferencedTrace) {
+        if (Trace == ReferencedTrace)
+        {
 
             //
             // Remove ourselves from the system process header.
@@ -2005,7 +2024,7 @@ Environment:
             // Release the reference associated with the fast ref itself.
             //
 
-            CcPfDecRef(&Trace->RefCount);           
+            CcPfDecRef(&Trace->RefCount);
         }
 
         //
@@ -2014,7 +2033,7 @@ Environment:
 
         CcPfDecRef(&ReferencedTrace->RefCount);
     }
-    
+
     //
     // Cancel the timer.
     //
@@ -2027,18 +2046,16 @@ Environment:
     // so it releases its reference before we begin waiting for it.
     //
 
-    KeSetEvent(&Trace->GetFileNameWorkerEvent,
-               EVENT_INCREMENT,
-               FALSE);
+    KeSetEvent(&Trace->GetFileNameWorkerEvent, EVENT_INCREMENT, FALSE);
 
 
     //
     // Wait for all references to go away.
     //
-    
+
     Status = CcPfAcquireExclusiveRef(&Trace->RefCount);
 
-    DBGPR((CCPFID,PFTRAC,"CCPF: DeactivateTrace-Exclusive=%x\n", Status));
+    DBGPR((CCPFID, PFTRAC, "CCPF: DeactivateTrace-Exclusive=%x\n", Status));
 
     //
     // We should have been able to acquire the trace exclusively.
@@ -2050,21 +2067,22 @@ Environment:
     //
     // Get the active traces lock.
     //
-     
+
     KeAcquireSpinLock(&CcPfGlobals.ActiveTracesLock, &OrigIrql);
 
     //
     // Remove us from the active trace list.
     //
-    
+
     RemoveEntryList(&Trace->ActiveTracesLink);
     CcPfNumActiveTraces--;
-    
+
     //
     // If this was a system-wide trace, it is over now.
     //
 
-    if (CCPF_IS_SYSTEM_WIDE_SCENARIO_TYPE(Trace->ScenarioType)) {
+    if (CCPF_IS_SYSTEM_WIDE_SCENARIO_TYPE(Trace->ScenarioType))
+    {
         CCPF_ASSERT(CcPfGlobals.SystemWideTrace == Trace);
         CcPfGlobals.SystemWideTrace = NULL;
     }
@@ -2079,9 +2097,7 @@ Environment:
 }
 
 NTSTATUS
-CcPfEndTrace(
-    IN PCCPF_TRACE_HEADER Trace
-    )
+CcPfEndTrace(IN PCCPF_TRACE_HEADER Trace)
 
 /*++
 
@@ -2118,7 +2134,7 @@ Environment:
     NTSTATUS Status;
     LONG FaultsLoggedAfterTimeout;
 
-    DBGPR((CCPFID,PFTRC,"CCPF: EndTrace(%p)\n", Trace));
+    DBGPR((CCPFID, PFTRC, "CCPF: EndTrace(%p)\n", Trace));
 
     //
     // Make sure the trace we are called on is valid.
@@ -2135,54 +2151,56 @@ Environment:
     CCPF_ASSERT(Trace->EndTraceCalled == 1);
 
     //
-    // Deactivate the trace, if necessary waiting for all the references to 
+    // Deactivate the trace, if necessary waiting for all the references to
     // it to go away.
     // This function makes sure activation fully finished before deactivating.
     // This needs to be done before we do anything else with the trace.
     //
-                
-    CcPfDeactivateTrace(Trace);   
+
+    CcPfDeactivateTrace(Trace);
 
     //
     // If we did not timeout, save the number of pagefaults logged
     // since the last period into the next period.
     //
 
-    if (Trace->CurPeriod < PF_MAX_NUM_TRACE_PERIODS) {
+    if (Trace->CurPeriod < PF_MAX_NUM_TRACE_PERIODS)
+    {
 
         //
         // Number of log entries could only have increased since the
         // last time we saved them.
         //
-     
-        CCPF_ASSERT(Trace->NumFaults >= Trace->LastNumFaults);
-   
-        Trace->FaultsPerPeriod[Trace->CurPeriod] = 
-            Trace->NumFaults - Trace->LastNumFaults;
-    
-        Trace->LastNumFaults = Trace->NumFaults;
-        
-        Trace->CurPeriod++;
 
-    } else {
+        CCPF_ASSERT(Trace->NumFaults >= Trace->LastNumFaults);
+
+        Trace->FaultsPerPeriod[Trace->CurPeriod] = Trace->NumFaults - Trace->LastNumFaults;
+
+        Trace->LastNumFaults = Trace->NumFaults;
+
+        Trace->CurPeriod++;
+    }
+    else
+    {
 
         //
         // If we did time out, we may have logged more faults since we
         // saved the number of faults, until the end trace function
         // got run. Update the number faults in the last period.
         //
-        
-        if (Trace->LastNumFaults != Trace->NumFaults) {
-            
+
+        if (Trace->LastNumFaults != Trace->NumFaults)
+        {
+
             //
             // What we saved as LastNumFaults in the timer routine
             // cannot be greater than what we really logged.
             //
-            
+
             CCPF_ASSERT(Trace->LastNumFaults < Trace->NumFaults);
-            
+
             FaultsLoggedAfterTimeout = Trace->NumFaults - Trace->LastNumFaults;
-            
+
             Trace->FaultsPerPeriod[Trace->CurPeriod - 1] += FaultsLoggedAfterTimeout;
         }
     }
@@ -2209,7 +2227,8 @@ Environment:
     // are done.
     //
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         goto cleanup;
     }
 
@@ -2219,51 +2238,52 @@ Environment:
     //
 
     ExAcquireFastMutex(&CcPfGlobals.CompletedTracesLock);
-    
+
     InsertTailList(&CcPfGlobals.CompletedTraces, &TraceDump->CompletedTracesLink);
     CcPfGlobals.NumCompletedTraces++;
 
-    while ((ULONG) CcPfGlobals.NumCompletedTraces > 
-           CcPfGlobals.Parameters.Parameters.MaxNumSavedTraces) {
+    while ((ULONG)CcPfGlobals.NumCompletedTraces > CcPfGlobals.Parameters.Parameters.MaxNumSavedTraces)
+    {
 
         //
         // While NumCompletedTraces > MaxNumSavedTraces we should have at
         // least a completed trace in the list.
         //
-        
-        if (IsListEmpty(&CcPfGlobals.CompletedTraces)) {
+
+        if (IsListEmpty(&CcPfGlobals.CompletedTraces))
+        {
             CCPF_ASSERT(FALSE);
             break;
         }
 
         ListHead = RemoveHeadList(&CcPfGlobals.CompletedTraces);
-        
-        RemovedTraceDump = CONTAINING_RECORD(ListHead,
-                                             CCPF_TRACE_DUMP,
-                                             CompletedTracesLink);
-       
+
+        RemovedTraceDump = CONTAINING_RECORD(ListHead, CCPF_TRACE_DUMP, CompletedTracesLink);
+
         //
         // Free the tracedump structure.
         //
-    
+
         CCPF_ASSERT(RemovedTraceDump->Trace.MagicNumber == PF_TRACE_MAGIC_NUMBER);
         ExFreePool(RemovedTraceDump);
 
         CcPfGlobals.NumCompletedTraces--;
     }
-    
-    ExReleaseFastMutex(&CcPfGlobals.CompletedTracesLock);   
+
+    ExReleaseFastMutex(&CcPfGlobals.CompletedTracesLock);
 
     //
     // Signal the event service is waiting on for new traces. If we
     // have not opened it yet, first we have to open it.
     //
 
-    if (CcPfGlobals.CompletedTracesEvent) {
+    if (CcPfGlobals.CompletedTracesEvent)
+    {
 
         ZwSetEvent(CcPfGlobals.CompletedTracesEvent, NULL);
-
-    } else {
+    }
+    else
+    {
 
         //
         // Try to open the event. We don't open this at initialization
@@ -2275,17 +2295,12 @@ Environment:
 
         RtlInitUnicodeString(&EventName, PF_COMPLETED_TRACES_EVENT_NAME);
 
-        InitializeObjectAttributes(&EventObjAttr,
-                                   &EventName,
-                                   OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-                                   NULL,
-                                   NULL);
-        
-        Status = ZwOpenEvent(&EventHandle,
-                             EVENT_ALL_ACCESS,
-                             &EventObjAttr);
-        
-        if (NT_SUCCESS(Status)) {
+        InitializeObjectAttributes(&EventObjAttr, &EventName, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
+
+        Status = ZwOpenEvent(&EventHandle, EVENT_ALL_ACCESS, &EventObjAttr);
+
+        if (NT_SUCCESS(Status))
+        {
 
             //
             // Acquire the lock and set the global handle.
@@ -2293,7 +2308,8 @@ Environment:
 
             ExAcquireFastMutex(&CcPfGlobals.CompletedTracesLock);
 
-            if (!CcPfGlobals.CompletedTracesEvent) {
+            if (!CcPfGlobals.CompletedTracesEvent)
+            {
 
                 //
                 // Set the global handle.
@@ -2301,8 +2317,9 @@ Environment:
 
                 CcPfGlobals.CompletedTracesEvent = EventHandle;
                 CCPF_ASSERT(EventHandle);
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // Somebody already initialized the global handle
@@ -2318,25 +2335,22 @@ Environment:
             //
             // We have an event now. Signal it.
             //
-            
+
             ZwSetEvent(CcPfGlobals.CompletedTracesEvent, NULL);
         }
     }
 
     Status = STATUS_SUCCESS;
 
- cleanup:
+cleanup:
 
-    DBGPR((CCPFID,PFTRC,"CCPF: EndTrace(%p)=%x\n", Trace, Status));
+    DBGPR((CCPFID, PFTRC, "CCPF: EndTrace(%p)=%x\n", Trace, Status));
 
     return Status;
 }
 
 NTSTATUS
-CcPfBuildDumpFromTrace(
-    OUT PCCPF_TRACE_DUMP *TraceDump, 
-    IN PCCPF_TRACE_HEADER RuntimeTrace
-    )
+CcPfBuildDumpFromTrace(OUT PCCPF_TRACE_DUMP *TraceDump, IN PCCPF_TRACE_HEADER RuntimeTrace)
 
 /*++
 
@@ -2415,13 +2429,14 @@ Environment:
     *TraceDump = NULL;
     NumEntriesCopied = 0;
 
-    DBGPR((CCPFID,PFTRC,"CCPF: DumpTrace(%p)\n", RuntimeTrace));
+    DBGPR((CCPFID, PFTRC, "CCPF: DumpTrace(%p)\n", RuntimeTrace));
 
     //
     // If the acquired trace is too small, don't bother.
     //
-      
-    if (RuntimeTrace->NumFaults < PF_MIN_SCENARIO_PAGES) {
+
+    if (RuntimeTrace->NumFaults < PF_MIN_SCENARIO_PAGES)
+    {
         Status = STATUS_BUFFER_TOO_SMALL;
         goto cleanup;
     }
@@ -2431,7 +2446,8 @@ Environment:
     // it is useless.
     //
 
-    if (!RuntimeTrace->NumSections || !RuntimeTrace->NumVolumes) {
+    if (!RuntimeTrace->NumSections || !RuntimeTrace->NumVolumes)
+    {
         Status = STATUS_BUFFER_TOO_SMALL;
         goto cleanup;
     }
@@ -2439,7 +2455,7 @@ Environment:
     //
     // Calculate the maximum size of trace we will build.
     //
-    
+
     TraceSize = sizeof(PF_TRACE_HEADER);
     TraceSize += RuntimeTrace->NumFaults * sizeof(PF_LOG_ENTRY);
     TraceSize += RuntimeTrace->NumSections * sizeof(PF_SECTION_INFO);
@@ -2449,15 +2465,15 @@ Environment:
     //
 
     FileNameDataNumChars = 0;
-    
-    for (SectionIdx = 0; 
-         SectionIdx < RuntimeTrace->SectionTableSize; 
-         SectionIdx++) {
+
+    for (SectionIdx = 0; SectionIdx < RuntimeTrace->SectionTableSize; SectionIdx++)
+    {
 
         SectionInfo = &RuntimeTrace->SectionInfoTable[SectionIdx];
-        
-        if (SectionInfo->EntryValid && SectionInfo->FileName) {
-            
+
+        if (SectionInfo->EntryValid && SectionInfo->FileName)
+        {
+
             //
             // We would add space for terminating NUL but the space
             // for one character in section info accounts for that.
@@ -2475,7 +2491,7 @@ Environment:
     //
 
     TraceSize += _alignof(PF_LOG_ENTRY);
-    
+
     //
     // Add space for the volume info nodes.
     //
@@ -2485,13 +2501,12 @@ Environment:
 
     NumVolumes = 0;
     TotalVolumeInfoSize = 0;
-    
-    while (NextEntry != HeadEntry) {
-        
-        VolumeInfo = CONTAINING_RECORD(NextEntry,
-                                       CCPF_VOLUME_INFO,
-                                       VolumeLink);
-        
+
+    while (NextEntry != HeadEntry)
+    {
+
+        VolumeInfo = CONTAINING_RECORD(NextEntry, CCPF_VOLUME_INFO, VolumeLink);
+
         NextEntry = NextEntry->Flink;
 
         //
@@ -2514,9 +2529,9 @@ Environment:
         // Update size for the volume info block. Add space for
         // aligning a volume info node if necessary.
         //
-        
+
         TotalVolumeInfoSize += VolumeInfoSize;
-        TotalVolumeInfoSize += _alignof(PF_VOLUME_INFO);        
+        TotalVolumeInfoSize += _alignof(PF_VOLUME_INFO);
     }
 
     CCPF_ASSERT(NumVolumes == RuntimeTrace->NumVolumes);
@@ -2532,11 +2547,10 @@ Environment:
     AllocationSize = sizeof(CCPF_TRACE_DUMP);
     AllocationSize += TraceSize - sizeof(PF_TRACE_HEADER);
 
-    *TraceDump = ExAllocatePoolWithTag(PagedPool,
-                                       AllocationSize,
-                                       CCPF_ALLOC_TRCDMP_TAG);
+    *TraceDump = ExAllocatePoolWithTag(PagedPool, AllocationSize, CCPF_ALLOC_TRCDMP_TAG);
 
-    if ((*TraceDump) == NULL) {
+    if ((*TraceDump) == NULL)
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto cleanup;
     }
@@ -2544,9 +2558,9 @@ Environment:
     //
     // Get pointer to the trace structure.
     //
-    
+
     Trace = &(*TraceDump)->Trace;
-    
+
     //
     // Setup trace header.
     //
@@ -2565,7 +2579,7 @@ Environment:
 
     RtlZeroMemory(Trace->FaultsPerPeriod, sizeof(Trace->FaultsPerPeriod));
 
-    DestPtr = (PCHAR) Trace + sizeof(PF_TRACE_HEADER);
+    DestPtr = (PCHAR)Trace + sizeof(PF_TRACE_HEADER);
 
     //
     // Copy over sections for which we have names. Since their indices
@@ -2576,35 +2590,32 @@ Environment:
 
     TranslationTableSize = RuntimeTrace->SectionTableSize * sizeof(USHORT);
 
-    SectIdTranslationTable = ExAllocatePoolWithTag(PagedPool,
-                                                   TranslationTableSize,
-                                                   CCPF_ALLOC_TRCDMP_TAG);
-    
-    if (!SectIdTranslationTable) {
+    SectIdTranslationTable = ExAllocatePoolWithTag(PagedPool, TranslationTableSize, CCPF_ALLOC_TRCDMP_TAG);
+
+    if (!SectIdTranslationTable)
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto cleanup;
     }
-       
+
     //
     // Copy section information to the trace buffer while setting up
     // the translation table.
     //
 
-    Trace->SectionInfoOffset = (ULONG) (DestPtr - (PCHAR) Trace);
-    
+    Trace->SectionInfoOffset = (ULONG)(DestPtr - (PCHAR)Trace);
+
     NumSectionsCopied = 0;
-                                        
-    for (SectionIdx = 0;
-         SectionIdx < RuntimeTrace->SectionTableSize; 
-         SectionIdx++) {
-        
+
+    for (SectionIdx = 0; SectionIdx < RuntimeTrace->SectionTableSize; SectionIdx++)
+    {
+
         SectionInfo = &RuntimeTrace->SectionInfoTable[SectionIdx];
 
-        if (SectionInfo->EntryValid && 
-            SectionInfo->FileName &&
-            (FileNameLength = wcslen(SectionInfo->FileName)) > 0) {
-            
-            TargetSectionInfo = (PPF_SECTION_INFO) DestPtr;
+        if (SectionInfo->EntryValid && SectionInfo->FileName && (FileNameLength = wcslen(SectionInfo->FileName)) > 0)
+        {
+
+            TargetSectionInfo = (PPF_SECTION_INFO)DestPtr;
 
             SectionInfoSize = sizeof(PF_SECTION_INFO);
             SectionInfoSize += FileNameLength * sizeof(WCHAR);
@@ -2612,56 +2623,57 @@ Environment:
             //
             // Make sure we are not going off bounds.
             //
-            
-            if (DestPtr + SectionInfoSize > (PCHAR) Trace + TraceSize) {
+
+            if (DestPtr + SectionInfoSize > (PCHAR)Trace + TraceSize)
+            {
                 SectIdTranslationTable[SectionIdx] = CCPF_INVALID_TABLE_INDEX;
                 CCPF_ASSERT(FALSE);
                 continue;
             }
 
-            TargetSectionInfo->FileNameLength = (USHORT) FileNameLength;
+            TargetSectionInfo->FileNameLength = (USHORT)FileNameLength;
 
-            TargetSectionInfo->Metafile = (USHORT) SectionInfo->Metafile;
-            
+            TargetSectionInfo->Metafile = (USHORT)SectionInfo->Metafile;
+
             //
             // Copy the file name including the terminating NUL.
             //
 
-            RtlCopyMemory(TargetSectionInfo->FileName,
-                          SectionInfo->FileName,
-                          (FileNameLength + 1) * sizeof(WCHAR));
+            RtlCopyMemory(TargetSectionInfo->FileName, SectionInfo->FileName, (FileNameLength + 1) * sizeof(WCHAR));
 
             //
             // Update our position in the destination buffer.
             //
-            
+
             DestPtr += SectionInfoSize;
 
             //
             // Update the translation table:
             //
 
-            SectIdTranslationTable[SectionIdx] = (USHORT) NumSectionsCopied;
+            SectIdTranslationTable[SectionIdx] = (USHORT)NumSectionsCopied;
 
             NumSectionsCopied++;
-
-        } else {
+        }
+        else
+        {
 
             SectIdTranslationTable[SectionIdx] = CCPF_INVALID_TABLE_INDEX;
         }
     }
 
     Trace->NumSections = NumSectionsCopied;
-    CCPF_ASSERT(Trace->NumSections <= (ULONG) RuntimeTrace->NumSections);
+    CCPF_ASSERT(Trace->NumSections <= (ULONG)RuntimeTrace->NumSections);
 
     //
     // Make sure DestPtr is aligned for Log Entries coming next. We
     // had reserved max space we'd need for this adjustment upfront.
     //
 
-    AlignmentOffset = ((ULONG_PTR) DestPtr) % _alignof(PF_LOG_ENTRY);
-    
-    if (AlignmentOffset) {
+    AlignmentOffset = ((ULONG_PTR)DestPtr) % _alignof(PF_LOG_ENTRY);
+
+    if (AlignmentOffset)
+    {
         DestPtr += (_alignof(PF_LOG_ENTRY) - AlignmentOffset);
     }
 
@@ -2669,8 +2681,8 @@ Environment:
     // Copy the log entries.
     //
 
-    Trace->TraceBufferOffset = (ULONG) (DestPtr - (PCHAR) Trace);
-    NewTraceEntries = (PPF_LOG_ENTRY) DestPtr;
+    Trace->TraceBufferOffset = (ULONG)(DestPtr - (PCHAR)Trace);
+    NewTraceEntries = (PPF_LOG_ENTRY)DestPtr;
 
     //
     // Initialize index of the current log entry in the whole runtime
@@ -2690,26 +2702,26 @@ Environment:
     HeadEntry = &RuntimeTrace->TraceBuffersList;
     NextEntry = HeadEntry->Flink;
 
-    while (NextEntry != HeadEntry) {
+    while (NextEntry != HeadEntry)
+    {
 
-        TraceBuffer = CONTAINING_RECORD(NextEntry,
-                                        CCPF_LOG_ENTRIES,
-                                        TraceBuffersLink);
-        
+        TraceBuffer = CONTAINING_RECORD(NextEntry, CCPF_LOG_ENTRIES, TraceBuffersLink);
+
         NumEntries = TraceBuffer->NumEntries;
 
         NextEntry = NextEntry->Flink;
 
-        for (EntryIdx = 0, LogEntry = TraceBuffer->Entries;
-             EntryIdx < NumEntries;
-             EntryIdx++, LogEntry++, CurrentFaultIdx++) {    
+        for (EntryIdx = 0, LogEntry = TraceBuffer->Entries; EntryIdx < NumEntries;
+             EntryIdx++, LogEntry++, CurrentFaultIdx++)
+        {
 
             //
             // Current fault index should not be greater than the
             // total number of faults we logged in the trace.
             //
 
-            if (CurrentFaultIdx >= RuntimeTrace->NumFaults) {
+            if (CurrentFaultIdx >= RuntimeTrace->NumFaults)
+            {
                 CCPF_ASSERT(FALSE);
                 Status = STATUS_INVALID_PARAMETER;
                 goto cleanup;
@@ -2719,15 +2731,17 @@ Environment:
             // Update the period this fault was logged in
             //
 
-            while (CurrentFaultIdx >= CurrentPeriodEndFaultIdx) {
-                
+            while (CurrentFaultIdx >= CurrentPeriodEndFaultIdx)
+            {
+
                 CurrentPeriodIdx++;
 
                 //
                 // Check bounds on period.
                 //
 
-                if (CurrentPeriodIdx >= PF_MAX_NUM_TRACE_PERIODS) {
+                if (CurrentPeriodIdx >= PF_MAX_NUM_TRACE_PERIODS)
+                {
                     CCPF_ASSERT(FALSE);
                     Status = STATUS_INVALID_PARAMETER;
                     goto cleanup;
@@ -2738,7 +2752,7 @@ Environment:
                 // current end by the number of entries logged in the
                 // period.
                 //
-                
+
                 CurrentPeriodEndFaultIdx += RuntimeTrace->FaultsPerPeriod[CurrentPeriodIdx];
 
                 //
@@ -2746,7 +2760,8 @@ Environment:
                 // total number of faults we logged.
                 //
 
-                if (CurrentPeriodEndFaultIdx > RuntimeTrace->NumFaults) {
+                if (CurrentPeriodEndFaultIdx > RuntimeTrace->NumFaults)
+                {
                     CCPF_ASSERT(FALSE);
                     Status = STATUS_INVALID_PARAMETER;
                     goto cleanup;
@@ -2757,7 +2772,8 @@ Environment:
             // Make sure log entry's section id is within bounds.
             //
 
-            if (LogEntry->SectionId >= RuntimeTrace->SectionTableSize) {
+            if (LogEntry->SectionId >= RuntimeTrace->SectionTableSize)
+            {
                 CCPF_ASSERT(FALSE);
                 continue;
             }
@@ -2768,15 +2784,17 @@ Environment:
             // Copy only those entries for which we have a valid file
             // name.
             //
-   
-            if (NewSectionId != CCPF_INVALID_TABLE_INDEX) {
+
+            if (NewSectionId != CCPF_INVALID_TABLE_INDEX)
+            {
 
                 //
                 // New section id should be within the number of sections in
                 // the final trace.
                 //
-            
-                if ((USHORT) NewSectionId >= Trace->NumSections) {
+
+                if ((USHORT)NewSectionId >= Trace->NumSections)
+                {
                     CCPF_ASSERT(FALSE);
                     continue;
                 }
@@ -2787,18 +2805,19 @@ Environment:
                 // Don't ever go beyond the buffer we had allocated.
                 //
 
-                if ((PCHAR) (TargetLogEntry + 1) > (PCHAR) Trace + TraceSize) {
+                if ((PCHAR)(TargetLogEntry + 1) > (PCHAR)Trace + TraceSize)
+                {
                     CCPF_ASSERT(FALSE);
                     continue;
                 }
-            
+
                 TargetLogEntry->FileOffset = LogEntry->FileOffset;
                 TargetLogEntry->SectionId = NewSectionId;
                 TargetLogEntry->IsImage = LogEntry->IsImage;
                 TargetLogEntry->InProcess = LogEntry->InProcess;
 
                 //
-                // Update number of entries copied for this period. 
+                // Update number of entries copied for this period.
                 //
 
                 Trace->FaultsPerPeriod[CurrentPeriodIdx]++;
@@ -2813,12 +2832,12 @@ Environment:
     }
 
     Trace->NumEntries = NumEntriesCopied;
-    CCPF_ASSERT(Trace->NumEntries <= (ULONG) RuntimeTrace->NumFaults);
+    CCPF_ASSERT(Trace->NumEntries <= (ULONG)RuntimeTrace->NumFaults);
 
     //
     // Update destination pointer.
     //
-    
+
     DestPtr += NumEntriesCopied * sizeof(PF_LOG_ENTRY);
 
     //
@@ -2828,17 +2847,16 @@ Environment:
 
     Trace->VolumeInfoOffset = 0;
     Trace->NumVolumes = 0;
-    Trace->VolumeInfoSize = 0;   
+    Trace->VolumeInfoSize = 0;
 
     HeadEntry = &RuntimeTrace->VolumeList;
     NextEntry = HeadEntry->Flink;
-    
-    while (NextEntry != HeadEntry) {
-        
-        VolumeInfo = CONTAINING_RECORD(NextEntry,
-                                       CCPF_VOLUME_INFO,
-                                       VolumeLink);
-        
+
+    while (NextEntry != HeadEntry)
+    {
+
+        VolumeInfo = CONTAINING_RECORD(NextEntry, CCPF_VOLUME_INFO, VolumeLink);
+
         NextEntry = NextEntry->Flink;
 
         //
@@ -2853,8 +2871,9 @@ Environment:
         // trace header.
         //
 
-        if (!Trace->VolumeInfoOffset) {
-            Trace->VolumeInfoOffset = (ULONG) (DestPtr - (PCHAR) Trace);
+        if (!Trace->VolumeInfoOffset)
+        {
+            Trace->VolumeInfoOffset = (ULONG)(DestPtr - (PCHAR)Trace);
         }
 
         //
@@ -2869,8 +2888,9 @@ Environment:
         //
         // Make sure we have space for this entry.
         //
-        
-        if (DestPtr + VolumeInfoSize  > (PCHAR) Trace + TraceSize) {
+
+        if (DestPtr + VolumeInfoSize > (PCHAR)Trace + TraceSize)
+        {
             CCPF_ASSERT(FALSE);
             Status = STATUS_BUFFER_TOO_SMALL;
             goto cleanup;
@@ -2880,15 +2900,14 @@ Environment:
         // Copy the data over.
         //
 
-        TargetVolumeInfo = (PPF_VOLUME_INFO) DestPtr;
-        
+        TargetVolumeInfo = (PPF_VOLUME_INFO)DestPtr;
+
         TargetVolumeInfo->CreationTime = VolumeInfo->CreationTime;
         TargetVolumeInfo->SerialNumber = VolumeInfo->SerialNumber;
-        
-        RtlCopyMemory(TargetVolumeInfo->VolumePath,
-                      VolumeInfo->VolumePath,
+
+        RtlCopyMemory(TargetVolumeInfo->VolumePath, VolumeInfo->VolumePath,
                       (VolumeInfo->VolumePathLength + 1) * sizeof(WCHAR));
-        
+
         TargetVolumeInfo->VolumePathLength = VolumeInfo->VolumePathLength;
 
         //
@@ -2897,57 +2916,58 @@ Environment:
 
         Trace->NumVolumes++;
         DestPtr = DestPtr + VolumeInfoSize;
-    }    
-    
+    }
+
     //
     // Update VolumeInfoSize on the trace header.
     //
 
-    Trace->VolumeInfoSize = (ULONG) (DestPtr - (PCHAR) Trace) - Trace->VolumeInfoOffset;
+    Trace->VolumeInfoSize = (ULONG)(DestPtr - (PCHAR)Trace) - Trace->VolumeInfoOffset;
 
     //
     // Update trace header. We should not have copied more than what
     // we allocated for.
     //
 
-    Trace->Size = (ULONG) (DestPtr - (PCHAR) Trace);
+    Trace->Size = (ULONG)(DestPtr - (PCHAR)Trace);
     CCPF_ASSERT(Trace->Size <= TraceSize);
 
     //
     // Make sure the trace we built passes the tests.
     //
 
-    if (!PfVerifyTraceBuffer(Trace, Trace->Size, &FailedCheck)) {
+    if (!PfVerifyTraceBuffer(Trace, Trace->Size, &FailedCheck))
+    {
         CCPF_ASSERT(FALSE);
         Status = STATUS_UNSUCCESSFUL;
         goto cleanup;
     }
-    
+
     Status = STATUS_SUCCESS;
 
- cleanup:
+cleanup:
 
-    if (SectIdTranslationTable) {
+    if (SectIdTranslationTable)
+    {
         ExFreePool(SectIdTranslationTable);
     }
 
-    if (!NT_SUCCESS(Status)) {
-        
-        if (*TraceDump) {
+    if (!NT_SUCCESS(Status))
+    {
+
+        if (*TraceDump)
+        {
             ExFreePool(*TraceDump);
         }
     }
 
-    DBGPR((CCPFID,PFTRC,"CCPF: DumpTrace(%p)=%x [%d,%d]\n", 
-           RuntimeTrace, Status, NumEntriesCopied, RuntimeTrace->NumFaults));
+    DBGPR((CCPFID, PFTRC, "CCPF: DumpTrace(%p)=%x [%d,%d]\n", RuntimeTrace, Status, NumEntriesCopied,
+           RuntimeTrace->NumFaults));
 
     return Status;
 }
 
-VOID
-CcPfCleanupTrace (
-    IN PCCPF_TRACE_HEADER Trace
-    )
+VOID CcPfCleanupTrace(IN PCCPF_TRACE_HEADER Trace)
 
 /*++
 
@@ -2978,7 +2998,7 @@ Environment:
     PLIST_ENTRY ListHead;
     PCCPF_VOLUME_INFO VolumeInfo;
 
-    DBGPR((CCPFID,PFTRC,"CCPF: CleanupTrace(%p)\n", Trace));
+    DBGPR((CCPFID, PFTRC, "CCPF: CleanupTrace(%p)\n", Trace));
 
     //
     // Validate parameters.
@@ -2995,41 +3015,45 @@ Environment:
     CCPF_ASSERT(ExQueryDepthSList(&Trace->SectionsWithoutNamesList) == 0);
 
     //
-    // Free the trace buffers. 
+    // Free the trace buffers.
     //
 
-    while (!IsListEmpty(&Trace->TraceBuffersList)) {
-        
+    while (!IsListEmpty(&Trace->TraceBuffersList))
+    {
+
         ListHead = RemoveHeadList(&Trace->TraceBuffersList);
-        
+
         CCPF_ASSERT(Trace->NumTraceBuffers);
         Trace->NumTraceBuffers--;
 
-        TraceBufferToFree = CONTAINING_RECORD(ListHead,
-                                              CCPF_LOG_ENTRIES,
-                                              TraceBuffersLink);
-        
+        TraceBufferToFree = CONTAINING_RECORD(ListHead, CCPF_LOG_ENTRIES, TraceBuffersLink);
+
         ExFreePool(TraceBufferToFree);
     }
-    
+
     //
     // Go through the section info hash. Free the file names and make
     // sure we don't have any file objects referenced anymore.
     //
-    
-    if (Trace->SectionInfoTable) {
 
-        for (SectionIdx = 0; SectionIdx < Trace->SectionTableSize; SectionIdx++) {
-            
+    if (Trace->SectionInfoTable)
+    {
+
+        for (SectionIdx = 0; SectionIdx < Trace->SectionTableSize; SectionIdx++)
+        {
+
             SectionInfo = &Trace->SectionInfoTable[SectionIdx];
-            
-            if (SectionInfo->EntryValid) {
-                
-                if (SectionInfo->FileName) {
+
+            if (SectionInfo->EntryValid)
+            {
+
+                if (SectionInfo->FileName)
+                {
                     ExFreePool(SectionInfo->FileName);
                 }
-                
-                if (SectionInfo->ReferencedFileObject) {
+
+                if (SectionInfo->ReferencedFileObject)
+                {
                     ObDereferenceObject(SectionInfo->ReferencedFileObject);
                 }
             }
@@ -3043,7 +3067,8 @@ Environment:
     // reference we got on it.
     //
 
-    if (Trace->Process) {
+    if (Trace->Process)
+    {
         ObDereferenceObject(Trace->Process);
     }
 
@@ -3051,29 +3076,22 @@ Environment:
     // Free the volume info nodes.
     //
 
-    while (!IsListEmpty(&Trace->VolumeList)) {
-        
+    while (!IsListEmpty(&Trace->VolumeList))
+    {
+
         CCPF_ASSERT(Trace->NumVolumes);
-        
+
         Trace->NumVolumes--;
 
         ListHead = RemoveHeadList(&Trace->VolumeList);
-        
-        VolumeInfo = CONTAINING_RECORD(ListHead,
-                                       CCPF_VOLUME_INFO,
-                                       VolumeLink);
-        
+
+        VolumeInfo = CONTAINING_RECORD(ListHead, CCPF_VOLUME_INFO, VolumeLink);
+
         ExFreePool(VolumeInfo);
-    }   
+    }
 }
 
-VOID
-CcPfTraceTimerRoutine(
-    IN PKDPC Dpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    )
+VOID CcPfTraceTimerRoutine(IN PKDPC Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1, IN PVOID SystemArgument2)
 
 /*++
 
@@ -3107,10 +3125,10 @@ Environment:
     PCCPF_TRACE_HEADER Trace;
     NTSTATUS Status;
     LONG NumFaults;
-    
-    UNREFERENCED_PARAMETER (Dpc);
-    UNREFERENCED_PARAMETER (SystemArgument1);
-    UNREFERENCED_PARAMETER (SystemArgument2);
+
+    UNREFERENCED_PARAMETER(Dpc);
+    UNREFERENCED_PARAMETER(SystemArgument1);
+    UNREFERENCED_PARAMETER(SystemArgument2);
 
     //
     // Initialize locals.
@@ -3118,12 +3136,12 @@ Environment:
 
     Trace = DeferredContext;
 
-    DBGPR((CCPFID,PFTMR,"CCPF: TraceTimer(%p)\n", Trace));
+    DBGPR((CCPFID, PFTMR, "CCPF: TraceTimer(%p)\n", Trace));
 
     //
     // We already got a reference to our trace when the timer was queued.
     // The fields we access / update in this routine are only accessed by
-    // the timer routine. There should be a single instance of this 
+    // the timer routine. There should be a single instance of this
     // routine running on this trace.
     //
 
@@ -3133,7 +3151,8 @@ Environment:
     // If the trace is going away don't do anything.
     //
 
-    if (Trace->EndTraceCalled) {
+    if (Trace->EndTraceCalled)
+    {
         Status = STATUS_TOO_LATE;
         goto cleanup;
     }
@@ -3149,18 +3168,19 @@ Environment:
     // then decrement Trace->NumFaults if it goes over MaxFaults.
     //
 
-    if (NumFaults > Trace->MaxFaults) {
+    if (NumFaults > Trace->MaxFaults)
+    {
         NumFaults = Trace->MaxFaults;
     }
-        
+
     Trace->FaultsPerPeriod[Trace->CurPeriod] = NumFaults - Trace->LastNumFaults;
-    
+
     Trace->LastNumFaults = NumFaults;
 
     //
     // Update current period.
     //
-    
+
     Trace->CurPeriod++;
 
     //
@@ -3168,16 +3188,18 @@ Environment:
     // end of trace work item.
     //
 
-    if (Trace->CurPeriod >= PF_MAX_NUM_TRACE_PERIODS) {
-        
+    if (Trace->CurPeriod >= PF_MAX_NUM_TRACE_PERIODS)
+    {
+
         //
         // We should have caught CurPeriod before it goes above max.
         //
 
         CCPF_ASSERT(Trace->CurPeriod == PF_MAX_NUM_TRACE_PERIODS);
 
-        if (!InterlockedCompareExchange(&Trace->EndTraceCalled, 1, 0)) {
-            
+        if (!InterlockedCompareExchange(&Trace->EndTraceCalled, 1, 0))
+        {
+
             //
             // We set EndTraceCalled from 0 to 1. We can queue the
             // workitem now.
@@ -3185,16 +3207,18 @@ Environment:
 
             ExQueueWorkItem(&Trace->EndTraceWorkItem, DelayedWorkQueue);
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // Queue ourselves for the next period.
         //
 
-        KeAcquireSpinLockAtDpcLevel(&Trace->TraceTimerSpinLock);       
+        KeAcquireSpinLockAtDpcLevel(&Trace->TraceTimerSpinLock);
 
-        if (!Trace->EndTraceCalled) {
+        if (!Trace->EndTraceCalled)
+        {
 
             //
             // Requeue the timer only if the trace is not being ended.
@@ -3202,11 +3226,10 @@ Environment:
 
             Status = CcPfAddRef(&Trace->RefCount);
 
-            if (NT_SUCCESS(Status)) {
-        
-                KeSetTimer(&Trace->TraceTimer,
-                           Trace->TraceTimerPeriod,
-                           &Trace->TraceTimerDpc);
+            if (NT_SUCCESS(Status))
+            {
+
+                KeSetTimer(&Trace->TraceTimer, Trace->TraceTimerPeriod, &Trace->TraceTimerDpc);
             }
         }
 
@@ -3220,7 +3243,7 @@ Environment:
 
     Status = STATUS_SUCCESS;
 
- cleanup:
+cleanup:
 
     //
     // Release the trace reference acquired when this timer was queued.
@@ -3228,15 +3251,13 @@ Environment:
 
     CcPfDecRef(&Trace->RefCount);
 
-    DBGPR((CCPFID,PFTMR,"CCPF: TraceTimer(%p)=%x\n", Trace, Status));
+    DBGPR((CCPFID, PFTMR, "CCPF: TraceTimer(%p)=%x\n", Trace, Status));
 
     return;
 }
 
 NTSTATUS
-CcPfCancelTraceTimer(
-    IN PCCPF_TRACE_HEADER Trace
-    )
+CcPfCancelTraceTimer(IN PCCPF_TRACE_HEADER Trace)
 
 /*++
 
@@ -3270,16 +3291,17 @@ Environment:
 
     //
     // We know that no new timers can be queued from here on because EndTraceCalled
-    // has been set and we have acquired the trace's timer lock. Running timer 
-    // routines will release their references as they return. 
+    // has been set and we have acquired the trace's timer lock. Running timer
+    // routines will release their references as they return.
     //
 
-    if (KeCancelTimer(&Trace->TraceTimer)) {
+    if (KeCancelTimer(&Trace->TraceTimer))
+    {
 
         //
-        // If we canceled a timer that was in the queue, then there was a reference 
+        // If we canceled a timer that was in the queue, then there was a reference
         // associated with it. It is our responsibility to release it.
-        // 
+        //
 
         CcPfDecRef(&Trace->RefCount);
     }
@@ -3289,10 +3311,7 @@ Environment:
     return STATUS_SUCCESS;
 }
 
-VOID
-CcPfEndTraceWorkerThreadRoutine(
-    PVOID Parameter
-    )
+VOID CcPfEndTraceWorkerThreadRoutine(PVOID Parameter)
 
 /*++
 
@@ -3324,7 +3343,7 @@ Environment:
 
     Trace = Parameter;
 
-    DBGPR((CCPFID,PFTRC,"CCPF: EndTraceWorker(%p)\n", Trace));
+    DBGPR((CCPFID, PFTRC, "CCPF: EndTraceWorker(%p)\n", Trace));
 
     //
     // Call the real end of trace routine.
@@ -3335,10 +3354,7 @@ Environment:
     return;
 }
 
-VOID
-CcPfGetFileNamesWorkerRoutine(
-    PVOID Parameter
-    )
+VOID CcPfGetFileNamesWorkerRoutine(PVOID Parameter)
 
 /*++
 
@@ -3406,7 +3422,7 @@ Environment:
     MFTFileSuffix = L"\\$Mft";
     MFTFileSuffixLength = wcslen(MFTFileSuffix);
 
-    DBGPR((CCPFID,PFNAME,"CCPF: GetNames(%p)\n", Trace)); 
+    DBGPR((CCPFID, PFNAME, "CCPF: GetNames(%p)\n", Trace));
 
     //
     // Allocate a file name query buffer.
@@ -3415,11 +3431,10 @@ Environment:
     QueryBufferSize = sizeof(OBJECT_NAME_INFORMATION);
     QueryBufferSize += PF_MAXIMUM_SECTION_FILE_NAME_LENGTH * sizeof(WCHAR);
 
-    FileNameInfo = ExAllocatePoolWithTag (PagedPool | POOL_COLD_ALLOCATION, 
-                                          QueryBufferSize, 
-                                          CCPF_ALLOC_QUERY_TAG);
+    FileNameInfo = ExAllocatePoolWithTag(PagedPool | POOL_COLD_ALLOCATION, QueryBufferSize, CCPF_ALLOC_QUERY_TAG);
 
-    if (!FileNameInfo) {
+    if (!FileNameInfo)
+    {
 
         //
         // We could not allocate a file name query buffer. Bummer, we
@@ -3429,13 +3444,14 @@ Environment:
 
         QueryBufferSize = 0;
 
-        DBGPR((CCPFID,PFWARN,"CCPF: GetNames-FailedQueryAlloc\n")); 
-    }   
+        DBGPR((CCPFID, PFWARN, "CCPF: GetNames-FailedQueryAlloc\n"));
+    }
 
     NumPasses = 0;
     NumSleeps = 0;
 
-    do {
+    do
+    {
 
         //
         // We may come back here if after saying that we (the get-name
@@ -3449,13 +3465,12 @@ Environment:
         //
         // While there are sections we have to get names for...
         //
-        
-        while (SectionLink = InterlockedPopEntrySList(&Trace->SectionsWithoutNamesList)) {
 
-            SectionInfo = CONTAINING_RECORD(SectionLink,
-                                            CCPF_SECTION_INFO,
-                                            GetNameLink);
-            
+        while (SectionLink = InterlockedPopEntrySList(&Trace->SectionsWithoutNamesList))
+        {
+
+            SectionInfo = CONTAINING_RECORD(SectionLink, CCPF_SECTION_INFO, GetNameLink);
+
             NumSectionsWithoutNames++;
 
             //
@@ -3481,7 +3496,8 @@ Environment:
             // section. Note that we still had to dequeue it however.
             //
 
-            if (!FileNameInfo) {
+            if (!FileNameInfo)
+            {
                 goto NextQueuedSection;
             }
 
@@ -3490,42 +3506,45 @@ Environment:
             //
 
             DeviceObject = IoGetRelatedDeviceObject(SectionInfo->ReferencedFileObject);
-            
-            if ((DeviceObject == NULL) ||
-                (DeviceObject->DeviceType != FILE_DEVICE_DISK_FILE_SYSTEM) ||
-                (DeviceObject->Characteristics & (FILE_REMOVABLE_MEDIA | FILE_REMOTE_DEVICE))) {
+
+            if ((DeviceObject == NULL) || (DeviceObject->DeviceType != FILE_DEVICE_DISK_FILE_SYSTEM) ||
+                (DeviceObject->Characteristics & (FILE_REMOVABLE_MEDIA | FILE_REMOTE_DEVICE)))
+            {
 
                 //
-                // We will not get a section name for this section. This results 
-                // in this section being ignored when preparing a trace dump.               
+                // We will not get a section name for this section. This results
+                // in this section being ignored when preparing a trace dump.
                 //
 
                 goto NextQueuedSection;
             }
 
             //
-            // If this is a metafile section (e.g. for a directory) see if 
-            // it is on a filesystem that supports metafile prefetching. 
-            // A section is for internal file system metafile if its FsContext2 
-            // is NULL. 
+            // If this is a metafile section (e.g. for a directory) see if
+            // it is on a filesystem that supports metafile prefetching.
+            // A section is for internal file system metafile if its FsContext2
+            // is NULL.
             //
 
-            if (SectionInfo->ReferencedFileObject->FsContext2 == 0) {
+            if (SectionInfo->ReferencedFileObject->FsContext2 == 0)
+            {
 
                 FcbHeader = SectionInfo->ReferencedFileObject->FsContext;
 
-                if (FcbHeader) {
+                if (FcbHeader)
+                {
 
                     //
-                    // Currently only NTFS supports metafile prefetching. FAT hits 
-                    // a race condition  if we ask names for metafile sections. 
-                    // To determine if it is for NTFS, we check the NodeType range  
-                    // on FsContext. 0x07xx is reserved for NTFS and 0x05xx 
+                    // Currently only NTFS supports metafile prefetching. FAT hits
+                    // a race condition  if we ask names for metafile sections.
+                    // To determine if it is for NTFS, we check the NodeType range
+                    // on FsContext. 0x07xx is reserved for NTFS and 0x05xx
                     // is reserved for FAT.
 
                     NodeTypeCode = FcbHeader->NodeTypeCode;
 
-                    if ((NodeTypeCode >> 8) != 0x07) {
+                    if ((NodeTypeCode >> 8) != 0x07)
+                    {
 
                         //
                         // Skip this section.
@@ -3539,11 +3558,12 @@ Environment:
                     //
 
                     SectionInfo->Metafile = 1;
-
-                } else {
+                }
+                else
+                {
 
                     //
-                    // We will not get a section name for this metafile section. This 
+                    // We will not get a section name for this metafile section. This
                     // results in this section being ignored when preparing a trace dump.
                     //
 
@@ -3556,14 +3576,13 @@ Environment:
             // likely fail if we could not allocate a FileNameInfo
             // buffer.
             //
-                
-            Status = ObQueryNameString(SectionInfo->ReferencedFileObject,
-                                       FileNameInfo,
-                                       QueryBufferSize,
-                                       &ReturnedLength);
 
-            
-            if (!NT_SUCCESS(Status)) {
+            Status =
+                ObQueryNameString(SectionInfo->ReferencedFileObject, FileNameInfo, QueryBufferSize, &ReturnedLength);
+
+
+            if (!NT_SUCCESS(Status))
+            {
                 goto NextQueuedSection;
             }
 
@@ -3572,19 +3591,17 @@ Environment:
             // it. The file names will be NUL terminated.
             // Allocate extra for that.
             //
-                
+
             FileNameLength = FileNameInfo->Name.Length / sizeof(WCHAR);
-                
-            SectionInfo->FileName = ExAllocatePoolWithTag(PagedPool | POOL_COLD_ALLOCATION,
-                                                          (FileNameLength + 1) * sizeof(WCHAR),
-                                                          CCPF_ALLOC_FILENAME_TAG);
-                
-            if (SectionInfo->FileName) {
-                    
-                RtlCopyMemory(SectionInfo->FileName,
-                              FileNameInfo->Name.Buffer,
-                              FileNameLength * sizeof(WCHAR));
-                    
+
+            SectionInfo->FileName = ExAllocatePoolWithTag(
+                PagedPool | POOL_COLD_ALLOCATION, (FileNameLength + 1) * sizeof(WCHAR), CCPF_ALLOC_FILENAME_TAG);
+
+            if (SectionInfo->FileName)
+            {
+
+                RtlCopyMemory(SectionInfo->FileName, FileNameInfo->Name.Buffer, FileNameLength * sizeof(WCHAR));
+
                 //
                 // Make sure it is NUL terminated.
                 //
@@ -3592,19 +3609,22 @@ Environment:
                 SectionInfo->FileName[FileNameLength] = 0;
 
                 //
-                // If the section is for a metafile check if it is for Mft. 
+                // If the section is for a metafile check if it is for Mft.
                 // Unlike other metafile, we are interested in faults from
                 // Mft in addition to knowing that we accessed it at all.
                 //
 
-                if (SectionInfo->Metafile) {
+                if (SectionInfo->Metafile)
+                {
 
-                    if (FileNameLength >= MFTFileSuffixLength) {
+                    if (FileNameLength >= MFTFileSuffixLength)
+                    {
 
                         Suffix = SectionInfo->FileName + FileNameLength;
                         Suffix -= MFTFileSuffixLength;
 
-                        if (wcscmp(Suffix, MFTFileSuffix) == 0) {
+                        if (wcscmp(Suffix, MFTFileSuffix) == 0)
+                        {
 
                             //
                             // Clear the "Metafile" bit of MFT so we keep
@@ -3625,40 +3645,39 @@ Environment:
                 // volume.
                 //
 
-                Status = ObQueryNameString(SectionInfo->ReferencedFileObject->DeviceObject,
-                                           FileNameInfo,
-                                           QueryBufferSize,
-                                           &ReturnedLength);
-                
-                if (NT_SUCCESS(Status)) {                 
+                Status = ObQueryNameString(SectionInfo->ReferencedFileObject->DeviceObject, FileNameInfo,
+                                           QueryBufferSize, &ReturnedLength);
+
+                if (NT_SUCCESS(Status))
+                {
 
                     RtlUpcaseUnicodeString(&FileNameInfo->Name, &FileNameInfo->Name, FALSE);
 
-                    Status = CcPfUpdateVolumeList(Trace,
-                                                  FileNameInfo->Name.Buffer,
+                    Status = CcPfUpdateVolumeList(Trace, FileNameInfo->Name.Buffer,
                                                   FileNameInfo->Name.Length / sizeof(WCHAR));
                 }
 
-                if (!NT_SUCCESS(Status)) {
+                if (!NT_SUCCESS(Status))
+                {
 
                     //
                     // If we could not update the volume list as
                     // necessary for this section, we have to
                     // cleanup and ignore this section.
                     //
-                    
+
                     ExFreePool(SectionInfo->FileName);
                     SectionInfo->FileName = NULL;
-                    
-                } else {
-                    
+                }
+                else
+                {
+
                     NumNamesAcquired++;
                 }
-
             }
 
-          NextQueuedSection:
-          
+        NextQueuedSection:
+
             //
             // Dereference the file object, and clear it on the section
             // entry.
@@ -3695,30 +3714,28 @@ Environment:
         // no reason to wait for more misery.
         //
 
-        if (FileNameInfo) {
+        if (FileNameInfo)
+        {
 
-            WaitTimeout.QuadPart = - 200 * 1000 * 10; // 200 ms.
+            WaitTimeout.QuadPart = -200 * 1000 * 10; // 200 ms.
 
-            DBGPR((CCPFID,PFNAMS,"CCPF: GetNames-Sleeping:%p\n", Trace)); 
+            DBGPR((CCPFID, PFNAMS, "CCPF: GetNames-Sleeping:%p\n", Trace));
 
             NumSleeps++;
 
-            Status = KeWaitForSingleObject(&Trace->GetFileNameWorkerEvent,
-                                           Executive,
-                                           KernelMode,
-                                           FALSE,
-                                           &WaitTimeout);
+            Status = KeWaitForSingleObject(&Trace->GetFileNameWorkerEvent, Executive, KernelMode, FALSE, &WaitTimeout);
 
-            DBGPR((CCPFID,PFNAMS,"CCPF: GetNames-WokeUp:%x\n", Status)); 
+            DBGPR((CCPFID, PFNAMS, "CCPF: GetNames-WokeUp:%x\n", Status));
         }
-        
+
         //
         // If there are no new sections to get names for, go ahead and
         // mark ourselves inactive, otherwise we will loop to get more
         // names.
         //
 
-        if (!ExQueryDepthSList(&Trace->SectionsWithoutNamesList)) {
+        if (!ExQueryDepthSList(&Trace->SectionsWithoutNamesList))
+        {
 
             //
             // We went through all the queued section entries. Note that
@@ -3732,8 +3749,9 @@ Environment:
             // names for since we last checked and marked ourselves
             // inactive.
             //
-        
-            if (ExQueryDepthSList(&Trace->SectionsWithoutNamesList)) {
+
+            if (ExQueryDepthSList(&Trace->SectionsWithoutNamesList))
+            {
 
                 //
                 // Somebody may have inserted a section to get name for,
@@ -3744,9 +3762,8 @@ Environment:
                 // again.
                 //
 
-                if (!InterlockedCompareExchange(&Trace->GetFileNameWorkItemQueued, 
-                                                1, 
-                                                0)) {
+                if (!InterlockedCompareExchange(&Trace->GetFileNameWorkItemQueued, 1, 0))
+                {
 
                     //
                     // We marked ourselves active. They really may not
@@ -3761,9 +3778,10 @@ Environment:
                     // ExQueryDepthSList above return != 0, and there
                     // may be max MaxSections.
                     //
+                }
+                else
+                {
 
-                } else {
-                
                     //
                     // It seems another worker was queued. Any items
                     // on the work list are that guy's problem
@@ -3772,8 +3790,9 @@ Environment:
 
                     break;
                 }
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // No more work items on the list. We are really
@@ -3795,18 +3814,20 @@ Environment:
         //
 
         NumPasses++;
-        if (NumPasses > Trace->MaxSections) {    
+        if (NumPasses > Trace->MaxSections)
+        {
             CCPF_ASSERT(FALSE);
             break;
         }
-       
+
     } while (TRUE);
 
     //
     // Clean up:
     //
 
-    if (FileNameInfo) {
+    if (FileNameInfo)
+    {
         ExFreePool(FileNameInfo);
     }
 
@@ -3817,20 +3838,14 @@ Environment:
 
     CcPfDecRef(&Trace->RefCount);
 
-    DBGPR((CCPFID,PFNAME,"CCPF: GetNames(%p)=%d-%d,[%d-%d]\n", 
-           Trace, NumSectionsWithoutNames, NumNamesAcquired,
-           NumPasses, NumSleeps)); 
+    DBGPR((CCPFID, PFNAME, "CCPF: GetNames(%p)=%d-%d,[%d-%d]\n", Trace, NumSectionsWithoutNames, NumNamesAcquired,
+           NumPasses, NumSleeps));
 
     return;
 }
 
-LONG
-CcPfLookUpSection(
-    PCCPF_SECTION_INFO Table,
-    ULONG TableSize,
-    PSECTION_OBJECT_POINTERS SectionObjectPointer,
-    PLONG AvailablePosition
-    )
+LONG CcPfLookUpSection(PCCPF_SECTION_INFO Table, ULONG TableSize, PSECTION_OBJECT_POINTERS SectionObjectPointer,
+                       PLONG AvailablePosition)
 
 /*++
 
@@ -3876,8 +3891,7 @@ Environment:
     // should be at.
     //
 
-    HashIndex = CcPfHashValue((PVOID)&SectionObjectPointer, 
-                              sizeof(SectionObjectPointer)) % TableSize;
+    HashIndex = CcPfHashValue((PVOID)&SectionObjectPointer, sizeof(SectionObjectPointer)) % TableSize;
 
     //
     // We will make two runs through the table looking for the
@@ -3888,27 +3902,34 @@ Environment:
 
     NumPasses = 0;
 
-    do {
+    do
+    {
 
         //
         // Setup start and end indices accordingly.
         //
 
-        if (NumPasses == 0) {
+        if (NumPasses == 0)
+        {
             StartIdx = HashIndex;
             EndIdx = TableSize;
-        } else {
+        }
+        else
+        {
             StartIdx = 0;
             EndIdx = HashIndex;
         }
-    
-        for (EntryIdx = StartIdx; EntryIdx < EndIdx; EntryIdx++) {
-            
+
+        for (EntryIdx = StartIdx; EntryIdx < EndIdx; EntryIdx++)
+        {
+
             Entry = &Table[EntryIdx];
-            
-            if (Entry->EntryValid) {
-                
-                if (Entry->SectionObjectPointer == SectionObjectPointer) {
+
+            if (Entry->EntryValid)
+            {
+
+                if (Entry->SectionObjectPointer == SectionObjectPointer)
+                {
 
                     //
                     // Check if other saved fields match the fields of
@@ -3916,21 +3937,23 @@ Environment:
                     // Please see the comments in CCPF_SECTION_INFO
                     // definition.
                     //
-                    
+
                     if (Entry->DataSectionObject == SectionObjectPointer->DataSectionObject &&
-                        Entry->ImageSectionObject == SectionObjectPointer->ImageSectionObject) {
-                    
+                        Entry->ImageSectionObject == SectionObjectPointer->ImageSectionObject)
+                    {
+
                         //
                         // We found the entry.
                         //
-                        
-                        *AvailablePosition = CCPF_INVALID_TABLE_INDEX;
-                    
-                        return EntryIdx;
 
-                    } else if (Entry->DataSectionObject == SectionObjectPointer->DataSectionObject ||
-                               Entry->ImageSectionObject == SectionObjectPointer->ImageSectionObject) {
-                        
+                        *AvailablePosition = CCPF_INVALID_TABLE_INDEX;
+
+                        return EntryIdx;
+                    }
+                    else if (Entry->DataSectionObject == SectionObjectPointer->DataSectionObject ||
+                             Entry->ImageSectionObject == SectionObjectPointer->ImageSectionObject)
+                    {
+
                         //
                         // If one of them matches, check to see if the
                         // one that does not match is NULL on the
@@ -3943,11 +3966,11 @@ Environment:
                         // only for the case that we think is likely
                         // to happen often.
                         //
-                        
-                        if (Entry->DataSectionObject == NULL &&
-                            SectionObjectPointer->DataSectionObject != NULL) {
 
-                            DBGPR((CCPFID,PFLKUP,"CCPF: LookupSect-DataSectUpt(%p)\n", SectionObjectPointer)); 
+                        if (Entry->DataSectionObject == NULL && SectionObjectPointer->DataSectionObject != NULL)
+                        {
+
+                            DBGPR((CCPFID, PFLKUP, "CCPF: LookupSect-DataSectUpt(%p)\n", SectionObjectPointer));
 
                             //
                             // Try to update the entry. If our update
@@ -3955,32 +3978,32 @@ Environment:
                             //
 
                             InterlockedCompareExchangePointer(&Entry->DataSectionObject,
-                                                              SectionObjectPointer->DataSectionObject,
-                                                              NULL);
+                                                              SectionObjectPointer->DataSectionObject, NULL);
 
-                            if (Entry->DataSectionObject == SectionObjectPointer->DataSectionObject) {
-                                 *AvailablePosition = CCPF_INVALID_TABLE_INDEX;
-                                 return EntryIdx;
+                            if (Entry->DataSectionObject == SectionObjectPointer->DataSectionObject)
+                            {
+                                *AvailablePosition = CCPF_INVALID_TABLE_INDEX;
+                                return EntryIdx;
                             }
                         }
-                        
-                        if (Entry->ImageSectionObject == NULL &&
-                            SectionObjectPointer->ImageSectionObject != NULL) {
 
-                            DBGPR((CCPFID,PFLKUP,"CCPF: LookupSect-ImgSectUpt(%p)\n", SectionObjectPointer)); 
+                        if (Entry->ImageSectionObject == NULL && SectionObjectPointer->ImageSectionObject != NULL)
+                        {
+
+                            DBGPR((CCPFID, PFLKUP, "CCPF: LookupSect-ImgSectUpt(%p)\n", SectionObjectPointer));
 
                             //
                             // Try to update the entry. If our update
                             // was succesful, return found entry.
                             //
-                            
-                            InterlockedCompareExchangePointer(&Entry->ImageSectionObject,
-                                                              SectionObjectPointer->ImageSectionObject,
-                                                              NULL);
 
-                            if (Entry->ImageSectionObject == SectionObjectPointer->ImageSectionObject) {
-                                 *AvailablePosition = CCPF_INVALID_TABLE_INDEX;
-                                 return EntryIdx;
+                            InterlockedCompareExchangePointer(&Entry->ImageSectionObject,
+                                                              SectionObjectPointer->ImageSectionObject, NULL);
+
+                            if (Entry->ImageSectionObject == SectionObjectPointer->ImageSectionObject)
+                            {
+                                *AvailablePosition = CCPF_INVALID_TABLE_INDEX;
+                                return EntryIdx;
                             }
                         }
 
@@ -3998,21 +4021,20 @@ Environment:
                     // ended up with the same SectionObjectPointer.
                     // Continue the lookup.
                     //
-
                 }
-                
-            } else {
-                
+            }
+            else
+            {
+
                 //
                 // This is an available position. The fact that the entry
                 // is not here means the entry is not in the table.
                 //
-                
+
                 *AvailablePosition = EntryIdx;
-                
+
                 return CCPF_INVALID_TABLE_INDEX;
             }
-
         }
 
         NumPasses++;
@@ -4029,11 +4051,7 @@ Environment:
 }
 
 NTSTATUS
-CcPfGetCompletedTrace (
-    PVOID Buffer,
-    ULONG BufferSize,
-    PULONG ReturnSize
-    )
+CcPfGetCompletedTrace(PVOID Buffer, ULONG BufferSize, PULONG ReturnSize)
 
 /*++
 
@@ -4089,10 +4107,10 @@ Environment:
 
     HoldingCompletedTracesLock = FALSE;
 
-    DBGPR((CCPFID,PFTRC,"CCPF: GetCompletedTrace()\n"));
+    DBGPR((CCPFID, PFTRC, "CCPF: GetCompletedTrace()\n"));
 
     //
-    // Get the completed traces lock. 
+    // Get the completed traces lock.
     //
 
     ExAcquireFastMutex(&CcPfGlobals.CompletedTracesLock);
@@ -4102,8 +4120,9 @@ Environment:
     //
     // If the list is empty, there are no more completed trace entries.
     //
-    
-    if (IsListEmpty(&CcPfGlobals.CompletedTraces)) {
+
+    if (IsListEmpty(&CcPfGlobals.CompletedTraces))
+    {
         Status = STATUS_NO_MORE_ENTRIES;
         goto cleanup;
     }
@@ -4113,11 +4132,10 @@ Environment:
     // buffer.
     //
 
-    TraceDump = CONTAINING_RECORD(CcPfGlobals.CompletedTraces.Flink,
-                                  CCPF_TRACE_DUMP,
-                                  CompletedTracesLink);
-    
-    if (TraceDump->Trace.Size > BufferSize) {
+    TraceDump = CONTAINING_RECORD(CcPfGlobals.CompletedTraces.Flink, CCPF_TRACE_DUMP, CompletedTracesLink);
+
+    if (TraceDump->Trace.Size > BufferSize)
+    {
         *ReturnSize = TraceDump->Trace.Size;
         Status = STATUS_BUFFER_TOO_SMALL;
         goto cleanup;
@@ -4127,30 +4145,32 @@ Environment:
     // The trace will fit in the user supplied buffer. Remove it from
     // the list, release the lock and copy it.
     //
-    
+
     RemoveHeadList(&CcPfGlobals.CompletedTraces);
     CcPfGlobals.NumCompletedTraces--;
-    
+
     ExReleaseFastMutex(&CcPfGlobals.CompletedTracesLock);
 
     HoldingCompletedTracesLock = FALSE;
-    
+
     //
     // Copy the completed trace buffer.
     //
 
     Status = STATUS_SUCCESS;
 
-    try {
+    try
+    {
 
         //
-        // If called from user-mode, probe whether it is safe to write 
+        // If called from user-mode, probe whether it is safe to write
         // to the pointer passed in.
         //
 
         PreviousMode = KeGetPreviousMode();
 
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
             ProbeForWrite(Buffer, BufferSize, _alignof(PF_TRACE_HEADER));
         }
 
@@ -4158,16 +4178,16 @@ Environment:
         // Copy into the probed user buffer.
         //
 
-        RtlCopyMemory(Buffer,
-                      &TraceDump->Trace,
-                      TraceDump->Trace.Size);
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+        RtlCopyMemory(Buffer, &TraceDump->Trace, TraceDump->Trace.Size);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         Status = GetExceptionCode();
     }
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         //
         // The copy failed. Requeue the trace for the next query.
@@ -4177,21 +4197,22 @@ Environment:
 
         ExAcquireFastMutex(&CcPfGlobals.CompletedTracesLock);
         HoldingCompletedTracesLock = TRUE;
-        InsertHeadList(&CcPfGlobals.CompletedTraces,&TraceDump->CompletedTracesLink);
+        InsertHeadList(&CcPfGlobals.CompletedTraces, &TraceDump->CompletedTracesLink);
         CcPfGlobals.NumCompletedTraces++;
+    }
+    else
+    {
 
-    } else {
-    
         //
         // Set number of bytes copied.
         //
 
         *ReturnSize = TraceDump->Trace.Size;
-    
+
         //
         // Free the trace dump entry.
         //
-    
+
         ExFreePool(TraceDump);
 
         //
@@ -4201,24 +4222,21 @@ Environment:
         Status = STATUS_SUCCESS;
     }
 
- cleanup:
+cleanup:
 
-    if (HoldingCompletedTracesLock) {
+    if (HoldingCompletedTracesLock)
+    {
         ExReleaseFastMutex(&CcPfGlobals.CompletedTracesLock);
     }
 
-    DBGPR((CCPFID,PFTRC,"CCPF: GetCompletedTrace()=%x\n", Status));
+    DBGPR((CCPFID, PFTRC, "CCPF: GetCompletedTrace()=%x\n", Status));
 
     return Status;
 }
 
 
 NTSTATUS
-CcPfUpdateVolumeList(
-    PCCPF_TRACE_HEADER Trace,
-    WCHAR *VolumePath,
-    ULONG VolumePathLength
-    )
+CcPfUpdateVolumeList(PCCPF_TRACE_HEADER Trace, WCHAR *VolumePath, ULONG VolumePathLength)
 
 /*++
 
@@ -4266,7 +4284,8 @@ Environment:
     // list.
     //
 
-    enum {
+    enum
+    {
         LookingForVolume,
         AddingNewVolume,
         MaxLoopIdx
@@ -4275,44 +4294,49 @@ Environment:
     //
     // Initialize locals.
     //
-    
+
     NewVolumeInfo = NULL;
     InsertedNewVolume = FALSE;
 
     //
     // We should be called with a valid volume name.
     //
-    
-    if (!VolumePathLength) {
+
+    if (!VolumePathLength)
+    {
         CCPF_ASSERT(VolumePathLength != 0);
         Status = STATUS_INVALID_PARAMETER;
         goto cleanup;
     }
 
     //
-    // Walk the volume list. We will make two passes. First we will 
-    // check to see if the volume already exists in the list. If it 
-    // does not, we'll release the lock, build a new volume node and 
+    // Walk the volume list. We will make two passes. First we will
+    // check to see if the volume already exists in the list. If it
+    // does not, we'll release the lock, build a new volume node and
     // make a second pass to insert it.
     //
-    
-    for (LoopIdx = LookingForVolume; LoopIdx < MaxLoopIdx; LoopIdx++) {
+
+    for (LoopIdx = LookingForVolume; LoopIdx < MaxLoopIdx; LoopIdx++)
+    {
 
         //
         // Determine what to do based on which pass we are in.
         //
 
-        if (LoopIdx == LookingForVolume) {
-            
+        if (LoopIdx == LookingForVolume)
+        {
+
             CCPF_ASSERT(!InsertedNewVolume);
             CCPF_ASSERT(!NewVolumeInfo);
+        }
+        else if (LoopIdx == AddingNewVolume)
+        {
 
-        } else if (LoopIdx == AddingNewVolume) {
-            
             CCPF_ASSERT(!InsertedNewVolume);
-            CCPF_ASSERT(NewVolumeInfo);    
-
-        } else {
+            CCPF_ASSERT(NewVolumeInfo);
+        }
+        else
+        {
 
             //
             // We should only loop two times.
@@ -4327,43 +4351,43 @@ Environment:
         HeadEntry = &Trace->VolumeList;
         NextEntry = HeadEntry->Flink;
         FoundPosition = NULL;
-        
-        while (NextEntry != HeadEntry) {
-        
-            CurrentVolumeInfo = CONTAINING_RECORD(NextEntry,
-                                                  CCPF_VOLUME_INFO,
-                                                  VolumeLink);
+
+        while (NextEntry != HeadEntry)
+        {
+
+            CurrentVolumeInfo = CONTAINING_RECORD(NextEntry, CCPF_VOLUME_INFO, VolumeLink);
 
             NextEntry = NextEntry->Flink;
 
-            ComparisonResult = wcsncmp(VolumePath, 
-                                       CurrentVolumeInfo->VolumePath, 
-                                       VolumePathLength);
-        
-            if (ComparisonResult == 0) {
+            ComparisonResult = wcsncmp(VolumePath, CurrentVolumeInfo->VolumePath, VolumePathLength);
+
+            if (ComparisonResult == 0)
+            {
 
                 //
                 // Make sure VolumePathLength's are equal
                 //
-            
-                if (CurrentVolumeInfo->VolumePathLength != VolumePathLength) {
-                
+
+                if (CurrentVolumeInfo->VolumePathLength != VolumePathLength)
+                {
+
                     //
                     // Continue searching.
                     //
-                
+
                     continue;
                 }
-            
+
                 //
                 // The volume already exists in the list.
                 //
-            
+
                 Status = STATUS_SUCCESS;
                 goto cleanup;
+            }
+            else if (ComparisonResult < 0)
+            {
 
-            } else if (ComparisonResult < 0) {
-            
                 //
                 // The volume paths are sorted lexically. The file
                 // path would be less than other volumes too. We'd
@@ -4378,7 +4402,6 @@ Environment:
             //
             // Continue looking...
             //
-        
         }
 
         //
@@ -4386,7 +4409,8 @@ Environment:
         // before, it goes before the list head.
         //
 
-        if (!FoundPosition) {
+        if (!FoundPosition)
+        {
             FoundPosition = HeadEntry;
         }
 
@@ -4400,9 +4424,10 @@ Environment:
         // volume node.
         //
 
-        if (LoopIdx == LookingForVolume) {
+        if (LoopIdx == LookingForVolume)
+        {
 
-            // 
+            //
             // Build a new node. Note that CCPF_VOLUME_INFO already
             // has space for the terminating NUL character.
             //
@@ -4410,11 +4435,11 @@ Environment:
             AllocationSize = sizeof(CCPF_VOLUME_INFO);
             AllocationSize += VolumePathLength * sizeof(WCHAR);
 
-            NewVolumeInfo = ExAllocatePoolWithTag(PagedPool | POOL_COLD_ALLOCATION,
-                                                  AllocationSize,
-                                                  CCPF_ALLOC_VOLUME_TAG);
-    
-            if (!NewVolumeInfo) {
+            NewVolumeInfo =
+                ExAllocatePoolWithTag(PagedPool | POOL_COLD_ALLOCATION, AllocationSize, CCPF_ALLOC_VOLUME_TAG);
+
+            if (!NewVolumeInfo)
+            {
                 Status = STATUS_INSUFFICIENT_RESOURCES;
                 goto cleanup;
             }
@@ -4422,11 +4447,9 @@ Environment:
             //
             // Copy the volume name and terminate it.
             //
-    
-            RtlCopyMemory(NewVolumeInfo->VolumePath,
-                          VolumePath,
-                          VolumePathLength * sizeof(WCHAR));
-    
+
+            RtlCopyMemory(NewVolumeInfo->VolumePath, VolumePath, VolumePathLength * sizeof(WCHAR));
+
             NewVolumeInfo->VolumePath[VolumePathLength] = 0;
             NewVolumeInfo->VolumePathLength = VolumePathLength;
 
@@ -4434,12 +4457,11 @@ Environment:
             // Query the signature and creation time.
             //
 
-            Status = CcPfQueryVolumeInfo(NewVolumeInfo->VolumePath,
-                                         NULL,
-                                         &NewVolumeInfo->CreationTime,
+            Status = CcPfQueryVolumeInfo(NewVolumeInfo->VolumePath, NULL, &NewVolumeInfo->CreationTime,
                                          &NewVolumeInfo->SerialNumber);
 
-            if (!NT_SUCCESS(Status)) {
+            if (!NT_SUCCESS(Status))
+            {
                 goto cleanup;
             }
 
@@ -4448,21 +4470,23 @@ Environment:
             // if somebody has not acted before us. Loop and go
             // through the volume list again.
             //
+        }
+        else if (LoopIdx == AddingNewVolume)
+        {
 
-        } else if (LoopIdx == AddingNewVolume) {
-    
             //
             // Insert the volume node before the found position.
             //
-            
+
             InsertTailList(FoundPosition, &NewVolumeInfo->VolumeLink);
             Trace->NumVolumes++;
             InsertedNewVolume = TRUE;
 
             Status = STATUS_SUCCESS;
             goto cleanup;
-
-        } else {
+        }
+        else
+        {
 
             //
             // We should only loop two times.
@@ -4471,26 +4495,31 @@ Environment:
             CCPF_ASSERT(FALSE);
 
             Status = STATUS_UNSUCCESSFUL;
-            goto cleanup;   
+            goto cleanup;
         }
     }
 
     //
     // We should not come here.
     //
-    
+
     CCPF_ASSERT(FALSE);
 
     Status = STATUS_UNSUCCESSFUL;
 
- cleanup:
+cleanup:
 
-    if (!NT_SUCCESS(Status)) {
-        if (NewVolumeInfo) {
+    if (!NT_SUCCESS(Status))
+    {
+        if (NewVolumeInfo)
+        {
             ExFreePool(NewVolumeInfo);
         }
-    } else {
-        if (!InsertedNewVolume && NewVolumeInfo) {
+    }
+    else
+    {
+        if (!InsertedNewVolume && NewVolumeInfo)
+        {
             ExFreePool(NewVolumeInfo);
         }
     }
@@ -4503,9 +4532,7 @@ Environment:
 //
 
 NTSTATUS
-CcPfPrefetchScenario (
-    PPF_SCENARIO_HEADER Scenario
-    )
+CcPfPrefetchScenario(PPF_SCENARIO_HEADER Scenario)
 
 /*++
 
@@ -4535,16 +4562,17 @@ Environment:
     //
     // Initialize locals & prefetch context.
     //
-    
+
     CcPfInitializePrefetchHeader(&PrefetchHeader);
 
-    DBGPR((CCPFID,PFPREF,"CCPF: PrefetchScenario(%p)\n", Scenario)); 
+    DBGPR((CCPFID, PFPREF, "CCPF: PrefetchScenario(%p)\n", Scenario));
 
     //
     // Scenario instructions should be passed in.
     //
-    
-    if (!Scenario) {
+
+    if (!Scenario)
+    {
         CCPF_ASSERT(Scenario);
         Status = STATUS_INVALID_PARAMETER;
         goto cleanup;
@@ -4553,17 +4581,19 @@ Environment:
     //
     // Check if prefetching is enabled.
     //
-    
-    if (!CCPF_IS_PREFETCHER_ENABLED()) {
+
+    if (!CCPF_IS_PREFETCHER_ENABLED())
+    {
         Status = STATUS_NOT_SUPPORTED;
         goto cleanup;
     }
-    
+
     //
     // Check if prefetching is enabled for the specified scenario type.
     //
 
-    if (CcPfGlobals.Parameters.Parameters.EnableStatus[Scenario->ScenarioType] != PfSvEnabled) {
+    if (CcPfGlobals.Parameters.Parameters.EnableStatus[Scenario->ScenarioType] != PfSvEnabled)
+    {
         Status = STATUS_NOT_SUPPORTED;
         goto cleanup;
     }
@@ -4579,20 +4609,22 @@ Environment:
     // what we want to prefetch.
     //
 
-    if (!MmIsMemoryAvailable(PrefetchHeader.Scenario->NumPages)) {
+    if (!MmIsMemoryAvailable(PrefetchHeader.Scenario->NumPages))
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
-        DBGPR((CCPFID,PFPREF,"CCPF: PrefetchScenario-MemNotAvailable\n")); 
+        DBGPR((CCPFID, PFPREF, "CCPF: PrefetchScenario-MemNotAvailable\n"));
         goto cleanup;
     }
 
     //
-    // Open the volumes we will prefetch on, making sure they are 
+    // Open the volumes we will prefetch on, making sure they are
     // already mounted and the serials match etc.
     //
 
     Status = CcPfOpenVolumesForPrefetch(&PrefetchHeader);
-    
-    if (!NT_SUCCESS(Status)) {
+
+    if (!NT_SUCCESS(Status))
+    {
         goto cleanup;
     }
 
@@ -4609,14 +4641,10 @@ Environment:
     // also bring in the header pages for image mappings.
     //
 
-    Status = CcPfPrefetchSections(&PrefetchHeader, 
-                                  CcPfPrefetchAllDataPages,  
-                                  NULL,
-                                  0,
-                                  NULL,
-                                  NULL);
+    Status = CcPfPrefetchSections(&PrefetchHeader, CcPfPrefetchAllDataPages, NULL, 0, NULL, NULL);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         goto cleanup;
     }
 
@@ -4624,37 +4652,28 @@ Environment:
     // Prefetch the pages accessed through image mappings.
     //
 
-    Status = CcPfPrefetchSections(&PrefetchHeader, 
-                                  CcPfPrefetchAllImagePages,
-                                  NULL,
-                                  0,
-                                  NULL,
-                                  NULL);
+    Status = CcPfPrefetchSections(&PrefetchHeader, CcPfPrefetchAllImagePages, NULL, 0, NULL, NULL);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         goto cleanup;
     }
 
     Status = STATUS_SUCCESS;
 
- cleanup:
+cleanup:
 
     CcPfCleanupPrefetchHeader(&PrefetchHeader);
 
-    DBGPR((CCPFID,PFPREF,"CCPF: PrefetchScenario(%ws)=%x\n", Scenario->ScenarioId.ScenName, Status)); 
+    DBGPR((CCPFID, PFPREF, "CCPF: PrefetchScenario(%ws)=%x\n", Scenario->ScenarioId.ScenName, Status));
 
     return Status;
 }
 
 NTSTATUS
-CcPfPrefetchSections(
-    IN PCCPF_PREFETCH_HEADER PrefetchHeader,
-    IN CCPF_PREFETCH_TYPE PrefetchType,
-    OPTIONAL IN PCCPF_PREFETCH_CURSOR StartCursor,
-    OPTIONAL ULONG TotalPagesToPrefetch,
-    OPTIONAL OUT PULONG NumPagesPrefetched,
-    OPTIONAL OUT PCCPF_PREFETCH_CURSOR EndCursor
-    )
+CcPfPrefetchSections(IN PCCPF_PREFETCH_HEADER PrefetchHeader, IN CCPF_PREFETCH_TYPE PrefetchType,
+                     OPTIONAL IN PCCPF_PREFETCH_CURSOR StartCursor, OPTIONAL ULONG TotalPagesToPrefetch,
+                     OPTIONAL OUT PULONG NumPagesPrefetched, OPTIONAL OUT PCCPF_PREFETCH_CURSOR EndCursor)
 
 /*++
 
@@ -4753,16 +4772,15 @@ Environment:
     NumSectionPages = 0;
     PageIdx = 0;
 
-    DBGPR((CCPFID,PFPREF,"CCPF: PrefetchSections(%p,%d,%d,%d)\n", 
-           PrefetchHeader, PrefetchType,
-           (StartCursor)?StartCursor->SectionIdx:0,
-           (StartCursor)?StartCursor->PageIdx:0)); 
+    DBGPR((CCPFID, PFPREF, "CCPF: PrefetchSections(%p,%d,%d,%d)\n", PrefetchHeader, PrefetchType,
+           (StartCursor) ? StartCursor->SectionIdx : 0, (StartCursor) ? StartCursor->PageIdx : 0));
 
     //
     // Validate parameters.
     //
 
-    if (PrefetchType >= CcPfMaxPrefetchType) {
+    if (PrefetchType >= CcPfMaxPrefetchType)
+    {
         Status = STATUS_INVALID_PARAMETER;
         goto cleanup;
     }
@@ -4772,7 +4790,8 @@ Environment:
     // other parameters based on prefetch type.
     //
 
-    switch (PrefetchType) {
+    switch (PrefetchType)
+    {
 
     case CcPfPrefetchAllDataPages:
         StartSectionNumber = 0;
@@ -4790,7 +4809,8 @@ Environment:
 
     case CcPfPrefetchPartOfDataPages:
 
-        if (!StartCursor) {
+        if (!StartCursor)
+        {
             CCPF_ASSERT(StartCursor);
             Status = STATUS_INVALID_PARAMETER;
             goto cleanup;
@@ -4804,7 +4824,8 @@ Environment:
 
     case CcPfPrefetchPartOfImagePages:
 
-        if (!StartCursor) {
+        if (!StartCursor)
+        {
             CCPF_ASSERT(StartCursor);
             Status = STATUS_INVALID_PARAMETER;
             goto cleanup;
@@ -4817,11 +4838,11 @@ Environment:
         break;
 
     default:
-        
+
         //
         // We should be handling all types above.
         //
-        
+
         CCPF_ASSERT(FALSE);
 
         Status = STATUS_INVALID_PARAMETER;
@@ -4838,11 +4859,10 @@ Environment:
     AllocationSize += sizeof(PFILE_OBJECT) * NumberOfSections;
     AllocationSize += sizeof(PSECTION) * NumberOfSections;
 
-    Tables = ExAllocatePoolWithTag(PagedPool,
-                                   AllocationSize,
-                                   CCPF_ALLOC_INTRTABL_TAG);
+    Tables = ExAllocatePoolWithTag(PagedPool, AllocationSize, CCPF_ALLOC_INTRTABL_TAG);
 
-    if (!Tables) {
+    if (!Tables)
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto cleanup;
     }
@@ -4853,20 +4873,20 @@ Environment:
     //
 
     RtlZeroMemory(Tables, AllocationSize);
-    
+
     //
     // Determine where each table goes in the buffer.
     //
 
     CurrentPosition = Tables;
 
-    ReadLists = (PREAD_LIST *) CurrentPosition;
+    ReadLists = (PREAD_LIST *)CurrentPosition;
     CurrentPosition += sizeof(PREAD_LIST) * NumberOfSections;
-    FileHandleTable = (HANDLE *) CurrentPosition;
+    FileHandleTable = (HANDLE *)CurrentPosition;
     CurrentPosition += sizeof(HANDLE) * NumberOfSections;
-    FileObjectTable = (PFILE_OBJECT *) CurrentPosition;
+    FileObjectTable = (PFILE_OBJECT *)CurrentPosition;
     CurrentPosition += sizeof(PFILE_OBJECT) * NumberOfSections;
-    SectionObjectTable = (PSECTION *) CurrentPosition;
+    SectionObjectTable = (PSECTION *)CurrentPosition;
     CurrentPosition += sizeof(PSECTION) * NumberOfSections;
 
     //
@@ -4881,17 +4901,14 @@ Environment:
     // counter, NumReadLists, to keep our read list array compact.
     //
 
-    SectionRecords = (PPF_SECTION_RECORD) 
-        ((PCHAR) Scenario + Scenario->SectionInfoOffset);
+    SectionRecords = (PPF_SECTION_RECORD)((PCHAR)Scenario + Scenario->SectionInfoOffset);
 
-    PageRecords = (PPF_PAGE_RECORD) 
-        ((PCHAR) Scenario + Scenario->PageInfoOffset);
+    PageRecords = (PPF_PAGE_RECORD)((PCHAR)Scenario + Scenario->PageInfoOffset);
 
-    FileNameData = (PCHAR) Scenario + Scenario->FileNameInfoOffset;
-    
-    for (SectionIdx = StartSectionNumber; 
-         SectionIdx < NumberOfSections; 
-         SectionIdx ++) {
+    FileNameData = (PCHAR)Scenario + Scenario->FileNameInfoOffset;
+
+    for (SectionIdx = StartSectionNumber; SectionIdx < NumberOfSections; SectionIdx++)
+    {
 
         SectionRecord = &SectionRecords[SectionIdx];
 
@@ -4899,7 +4916,8 @@ Environment:
         // Skip this section if it was marked ignore for some reason.
         //
 
-        if (SectionRecord->IsIgnore) {
+        if (SectionRecord->IsIgnore)
+        {
             continue;
         }
 
@@ -4909,12 +4927,12 @@ Environment:
         // volume we had traced), we cannot prefetch this section.
         //
 
-        FilePath = (WCHAR *) (FileNameData + SectionRecord->FileNameOffset);
-        
-        VolumeNode = CcPfFindPrefetchVolumeInfoInList(FilePath,
-                                                      &PrefetchHeader->BadVolumeList);
+        FilePath = (WCHAR *)(FileNameData + SectionRecord->FileNameOffset);
 
-        if (VolumeNode) {
+        VolumeNode = CcPfFindPrefetchVolumeInfoInList(FilePath, &PrefetchHeader->BadVolumeList);
+
+        if (VolumeNode)
+        {
             continue;
         }
 
@@ -4932,7 +4950,8 @@ Environment:
         // prefedata pages so we don't check for that.
         //
 
-        if (PrefetchingImagePages && !SectionRecord->IsImage) {
+        if (PrefetchingImagePages && !SectionRecord->IsImage)
+        {
             continue;
         }
 
@@ -4943,18 +4962,16 @@ Environment:
         // mapping.
         //
 
-        AllocationSize = sizeof(READ_LIST) + 
-            (SectionRecord->NumPages * sizeof(FILE_SEGMENT_ELEMENT));
+        AllocationSize = sizeof(READ_LIST) + (SectionRecord->NumPages * sizeof(FILE_SEGMENT_ELEMENT));
 
-        ReadList = ExAllocatePoolWithTag(NonPagedPool,
-                                         AllocationSize,
-                                         CCPF_ALLOC_READLIST_TAG);
+        ReadList = ExAllocatePoolWithTag(NonPagedPool, AllocationSize, CCPF_ALLOC_READLIST_TAG);
 
-        if (ReadList == NULL) {
+        if (ReadList == NULL)
+        {
             Status = STATUS_INSUFFICIENT_RESOURCES;
             goto cleanup;
         }
-        
+
         //
         // Initialize header fields of the read list.
         //
@@ -4962,7 +4979,7 @@ Environment:
         ReadList->FileObject = 0;
         ReadList->IsImage = PrefetchingImagePages;
         ReadList->NumberOfEntries = 0;
-        
+
         //
         // If we are prefetching data pages and this section was
         // mapped as an image, add the header page to the readlist.
@@ -4972,27 +4989,27 @@ Environment:
 
         AddedHeaderPage = FALSE;
 
-        if((PrefetchingImagePages == FALSE) && SectionRecord->IsImage) {
+        if ((PrefetchingImagePages == FALSE) && SectionRecord->IsImage)
+        {
 
             //
             // Don't add the header page if we are prefetching only
             // part of the section and we are past the first page.
             //
 
-            if (!PrefetchingPartOfScenario ||
-                (StartSectionNumber != SectionIdx) ||
-                StartPageNumber > 0) {
+            if (!PrefetchingPartOfScenario || (StartSectionNumber != SectionIdx) || StartPageNumber > 0)
+            {
 
                 //
                 // Header page starts at offset 0.
                 //
-                
+
                 ReadList->List[ReadList->NumberOfEntries].Alignment = 0;
-                
+
                 ReadList->NumberOfEntries++;
-                
+
                 NumPagesToPrefetch++;
-                
+
                 //
                 // Note that if we are prefetching only part of the
                 // scenario, we do not check to see if we've
@@ -5015,7 +5032,8 @@ Environment:
         NumSectionPages = 0;
         PreviousPageIdx = PF_INVALID_PAGE_IDX;
 
-        while (PageIdx != PF_INVALID_PAGE_IDX) {
+        while (PageIdx != PF_INVALID_PAGE_IDX)
+        {
 
             PageRecord = &PageRecords[PageIdx];
 
@@ -5027,8 +5045,9 @@ Environment:
             //
 
             NumSectionPages++;
-            if (NumSectionPages > SectionRecord->NumPages) {
-                DBGPR((CCPFID,PFWARN,"CCPF: PrefetchSections-Corrupt0\n"));
+            if (NumSectionPages > SectionRecord->NumPages)
+            {
+                DBGPR((CCPFID, PFWARN, "CCPF: PrefetchSections-Corrupt0\n"));
                 Status = STATUS_INVALID_PARAMETER;
                 CCPF_ASSERT(FALSE);
                 goto cleanup;
@@ -5037,7 +5056,7 @@ Environment:
             //
             // Get the index for the next page in the list.
             //
-            
+
             PageIdx = PageRecord->NextPageIdx;
 
             //
@@ -5047,9 +5066,8 @@ Environment:
             // incremented above.
             //
 
-            if (PrefetchingPartOfScenario &&
-                StartSectionNumber == SectionIdx &&
-                NumSectionPages <= StartPageNumber) {
+            if (PrefetchingPartOfScenario && StartSectionNumber == SectionIdx && NumSectionPages <= StartPageNumber)
+            {
                 continue;
             }
 
@@ -5057,7 +5075,8 @@ Environment:
             // Skip pages we have marked "ignore" for some reason.
             //
 
-            if (PageRecord->IsIgnore) {
+            if (PageRecord->IsIgnore)
+            {
                 continue;
             }
 
@@ -5066,21 +5085,23 @@ Environment:
             // more entries into the read list then the number of
             // pages for the section in the scenario file.
             //
-            
-            if (ReadList->NumberOfEntries > SectionRecord->NumPages + 1) {
-                DBGPR((CCPFID,PFWARN,"CCPF: PrefetchSections-Corrupt1\n"));
+
+            if (ReadList->NumberOfEntries > SectionRecord->NumPages + 1)
+            {
+                DBGPR((CCPFID, PFWARN, "CCPF: PrefetchSections-Corrupt1\n"));
                 Status = STATUS_INVALID_PARAMETER;
                 CCPF_ASSERT(FALSE);
                 goto cleanup;
             }
-            
+
             //
             // Add this page to the list only if it's type (image
             // or data) matches the type of pages we are prefetching.
             //
-            
+
             if (((PrefetchingImagePages == FALSE) && !PageRecord->IsData) ||
-                ((PrefetchingImagePages == TRUE) && !PageRecord->IsImage)) {
+                ((PrefetchingImagePages == TRUE) && !PageRecord->IsImage))
+            {
                 continue;
             }
 
@@ -5088,8 +5109,9 @@ Environment:
             // If we already added the header page to the list,
             // don't add another entry for the same offset.
             //
-            
-            if (AddedHeaderPage && (PageRecord->FileOffset == 0)) {
+
+            if (AddedHeaderPage && (PageRecord->FileOffset == 0))
+            {
                 continue;
             }
 
@@ -5100,29 +5122,31 @@ Environment:
             // readlist.
             //
 
-            if (ReadList->NumberOfEntries) {
-                
+            if (ReadList->NumberOfEntries)
+            {
+
                 LastOffset = ReadList->List[ReadList->NumberOfEntries - 1].Alignment;
-                    
-                if (PageRecord->FileOffset <= (ULONG) LastOffset) {
-                    DBGPR((CCPFID,PFWARN,"CCPF: PrefetchSections-Corrupt2\n"));
+
+                if (PageRecord->FileOffset <= (ULONG)LastOffset)
+                {
+                    DBGPR((CCPFID, PFWARN, "CCPF: PrefetchSections-Corrupt2\n"));
                     Status = STATUS_INVALID_PARAMETER;
                     CCPF_ASSERT(FALSE);
                     goto cleanup;
                 }
             }
-      
+
             //
             // Add this page to the readlist for this section.
             //
-            
+
             ReadList->List[ReadList->NumberOfEntries].Alignment = PageRecord->FileOffset;
             ReadList->NumberOfEntries++;
-            
+
             //
             // Update number of pages we are asking mm to bring for us.
             //
-            
+
             NumPagesToPrefetch++;
 
             //
@@ -5130,30 +5154,30 @@ Environment:
             // pages.
             //
 
-            if (PrefetchingPartOfScenario && 
-                NumPagesToPrefetch >= TotalPagesToPrefetch) {
+            if (PrefetchingPartOfScenario && NumPagesToPrefetch >= TotalPagesToPrefetch)
+            {
                 break;
             }
         }
 
-        if (ReadList->NumberOfEntries) {
+        if (ReadList->NumberOfEntries)
+        {
 
             //
             // Get the section object.
             //
-            
+
             RtlInitUnicodeString(&SectionName, FilePath);
-            
-            Status = CcPfGetSectionObject(&SectionName,
-                                          PrefetchingImagePages,
-                                          &SectionObject,
-                                          &FileObject,
-                                          &FileHandle);
-            
-            if (!NT_SUCCESS(Status)) {
-                
-                if (Status == STATUS_SHARING_VIOLATION) {
-                    
+
+            Status =
+                CcPfGetSectionObject(&SectionName, PrefetchingImagePages, &SectionObject, &FileObject, &FileHandle);
+
+            if (!NT_SUCCESS(Status))
+            {
+
+                if (Status == STATUS_SHARING_VIOLATION)
+                {
+
                     //
                     // We cannot open registry files due to sharing
                     // violation. Pass the file name and readlist to
@@ -5177,28 +5201,29 @@ Environment:
             // We should have got a file object and a section object
             // pointer if we created the section successfully.
             //
-            
+
             CCPF_ASSERT(FileObject != NULL && SectionObject != NULL);
-            
+
             ReadList->FileObject = FileObject;
 
             //
             // Put data into the tables, so we know what to cleanup.
             //
-            
+
             ReadLists[NumReadLists] = ReadList;
             FileHandleTable[NumReadLists] = FileHandle;
-            FileObjectTable[NumReadLists] = FileObject;  
+            FileObjectTable[NumReadLists] = FileObject;
             SectionObjectTable[NumReadLists] = SectionObject;
-            
-            NumReadLists++;
 
-        } else {
-            
+            NumReadLists++;
+        }
+        else
+        {
+
             //
             // We won't be prefetching anything for this section.
             //
-            
+
             ExFreePool(ReadList);
         }
 
@@ -5215,9 +5240,9 @@ Environment:
         // Break out if we are prefetching requested number of
         // pages.
         //
-        
-        if (PrefetchingPartOfScenario && 
-            NumPagesToPrefetch == TotalPagesToPrefetch) {
+
+        if (PrefetchingPartOfScenario && NumPagesToPrefetch == TotalPagesToPrefetch)
+        {
             break;
         }
     }
@@ -5227,13 +5252,16 @@ Environment:
     // values.
     //
 
-    if (PrefetchingPartOfScenario) {
+    if (PrefetchingPartOfScenario)
+    {
 
-        if (NumPagesPrefetched) {
+        if (NumPagesPrefetched)
+        {
             *NumPagesPrefetched = NumPagesToPrefetch;
         }
 
-        if (EndCursor) {
+        if (EndCursor)
+        {
 
             //
             // If we did the last page of the current section, then
@@ -5241,25 +5269,31 @@ Environment:
             // next page in this section.
             //
 
-            if (PageIdx == PF_INVALID_PAGE_IDX) {
-                EndCursor->SectionIdx = SectionIdx + 1;  
+            if (PageIdx == PF_INVALID_PAGE_IDX)
+            {
+                EndCursor->SectionIdx = SectionIdx + 1;
                 EndCursor->PageIdx = 0;
-            } else {
-                EndCursor->SectionIdx = SectionIdx;  
+            }
+            else
+            {
+                EndCursor->SectionIdx = SectionIdx;
                 EndCursor->PageIdx = NumSectionPages;
             }
-            
+
             //
             // Make sure the end position is equal to or greater than
             // start position.
             //
-            
-            if (EndCursor->SectionIdx < StartSectionNumber) {
+
+            if (EndCursor->SectionIdx < StartSectionNumber)
+            {
                 EndCursor->SectionIdx = StartSectionNumber;
             }
-            
-            if (EndCursor->SectionIdx == StartSectionNumber) {
-                if (EndCursor->PageIdx < StartPageNumber) {
+
+            if (EndCursor->SectionIdx == StartSectionNumber)
+            {
+                if (EndCursor->PageIdx < StartPageNumber)
+                {
                     EndCursor->PageIdx = StartPageNumber;
                 }
             }
@@ -5271,49 +5305,57 @@ Environment:
     // to ask for.
     //
 
-    if (NumReadLists) {
+    if (NumReadLists)
+    {
 
-        if (NumPagesToPrefetch) {
+        if (NumPagesToPrefetch)
+        {
 
-            DBGPR((CCPFID,PFPRFD,"CCPF: Prefetching %d sections %d pages\n", 
-                   NumReadLists, NumPagesToPrefetch)); 
+            DBGPR((CCPFID, PFPRFD, "CCPF: Prefetching %d sections %d pages\n", NumReadLists, NumPagesToPrefetch));
 
             Status = MmPrefetchPages(NumReadLists, ReadLists);
-
-        } else {
+        }
+        else
+        {
             Status = STATUS_UNSUCCESSFUL;
-            
+
             //
             // We cannot have any read lists if we don't have any
             // pages to prefetch.
             //
         }
-
-    } else {
+    }
+    else
+    {
 
         Status = STATUS_SUCCESS;
-
     }
 
 cleanup:
 
-    if (Tables) {
+    if (Tables)
+    {
 
-        for (ReadListIdx = 0; ReadListIdx < NumReadLists; ReadListIdx++) {
-            
-            if (ReadLists[ReadListIdx]) {
+        for (ReadListIdx = 0; ReadListIdx < NumReadLists; ReadListIdx++)
+        {
+
+            if (ReadLists[ReadListIdx])
+            {
                 ExFreePool(ReadLists[ReadListIdx]);
             }
-            
-            if (FileHandleTable[ReadListIdx]) {
+
+            if (FileHandleTable[ReadListIdx])
+            {
                 ZwClose(FileHandleTable[ReadListIdx]);
             }
-            
-            if (FileObjectTable[ReadListIdx]) {
+
+            if (FileObjectTable[ReadListIdx])
+            {
                 ObDereferenceObject(FileObjectTable[ReadListIdx]);
             }
-            
-            if (SectionObjectTable[ReadListIdx]) {
+
+            if (SectionObjectTable[ReadListIdx])
+            {
                 ObDereferenceObject(SectionObjectTable[ReadListIdx]);
             }
         }
@@ -5321,32 +5363,34 @@ cleanup:
         ExFreePool(Tables);
     }
 
-    if (ReadList) {
+    if (ReadList)
+    {
         ExFreePool(ReadList);
     }
-    
-    if (FileHandle) {
+
+    if (FileHandle)
+    {
         ZwClose(FileHandle);
     }
-    
-    if (FileObject) {
+
+    if (FileObject)
+    {
         ObDereferenceObject(FileObject);
     }
-    
-    if (SectionObject) {
+
+    if (SectionObject)
+    {
         ObDereferenceObject(SectionObject);
     }
 
-    DBGPR((CCPFID,PFPREF,"CCPF: PrefetchSections(%p)=%x,%d,%d\n", 
-           PrefetchHeader, Status, NumReadLists, NumPagesToPrefetch)); 
+    DBGPR((CCPFID, PFPREF, "CCPF: PrefetchSections(%p)=%x,%d,%d\n", PrefetchHeader, Status, NumReadLists,
+           NumPagesToPrefetch));
 
     return Status;
 }
 
 NTSTATUS
-CcPfPrefetchMetadata(
-    IN PCCPF_PREFETCH_HEADER PrefetchHeader
-    )
+CcPfPrefetchMetadata(IN PCCPF_PREFETCH_HEADER PrefetchHeader)
 
 /*++
 
@@ -5393,46 +5437,45 @@ Environment:
 
     Scenario = PrefetchHeader->Scenario;
 
-    if (Scenario == NULL) {
+    if (Scenario == NULL)
+    {
         CCPF_ASSERT(Scenario);
         Status = STATUS_INVALID_PARAMETER;
         goto cleanup;
     }
-    
-    DBGPR((CCPFID,PFPREF,"CCPF: PrefetchMetadata(%p)\n",PrefetchHeader)); 
+
+    DBGPR((CCPFID, PFPREF, "CCPF: PrefetchMetadata(%p)\n", PrefetchHeader));
 
     //
     // Get pointer to metadata prefetch information.
     //
 
     MetadataInfoBase = (PCHAR)Scenario + Scenario->MetadataInfoOffset;
-    MetadataRecordTable = (PPF_METADATA_RECORD) MetadataInfoBase;
+    MetadataRecordTable = (PPF_METADATA_RECORD)MetadataInfoBase;
 
     //
     // Go through and prefetch requested metadata from volumes.
     //
 
-    for (MetadataRecordIdx = 0;
-         MetadataRecordIdx < Scenario->NumMetadataRecords;
-         MetadataRecordIdx++) {
+    for (MetadataRecordIdx = 0; MetadataRecordIdx < Scenario->NumMetadataRecords; MetadataRecordIdx++)
+    {
 
         MetadataRecord = &MetadataRecordTable[MetadataRecordIdx];
 
-        VolumePath = (PWCHAR)
-            (MetadataInfoBase + MetadataRecord->VolumeNameOffset);  
+        VolumePath = (PWCHAR)(MetadataInfoBase + MetadataRecord->VolumeNameOffset);
 
         //
         // Find the volume node for this volume containing opened handle.
         //
 
-        VolumeNode = CcPfFindPrefetchVolumeInfoInList(VolumePath,
-                                                      &PrefetchHeader->OpenedVolumeList);
+        VolumeNode = CcPfFindPrefetchVolumeInfoInList(VolumePath, &PrefetchHeader->OpenedVolumeList);
 
-        if (!VolumeNode) {
+        if (!VolumeNode)
+        {
 
             //
             // If it is not in the opened volume list, it should be in the
-            // bad volume list (because it was not mounted, or its serial 
+            // bad volume list (because it was not mounted, or its serial
             // did not match etc.)
             //
 
@@ -5443,8 +5486,9 @@ Environment:
             //
 
             continue;
-
-        } else {
+        }
+        else
+        {
 
             //
             // We should have already opened a handle to this volume.
@@ -5457,9 +5501,8 @@ Environment:
         // Prefetch MFT entries and such for the files and directories
         // we will access.
         //
-        
-        FilePrefetchInfo = (PFILE_PREFETCH) 
-            (MetadataInfoBase + MetadataRecord->FilePrefetchInfoOffset);       
+
+        FilePrefetchInfo = (PFILE_PREFETCH)(MetadataInfoBase + MetadataRecord->FilePrefetchInfoOffset);
 
         Status = CcPfPrefetchFileMetadata(VolumeNode->VolumeHandle, FilePrefetchInfo);
 
@@ -5470,18 +5513,15 @@ Environment:
         // directories before children.
         //
 
-        DirectoryPath = (PPF_COUNTED_STRING)
-            (MetadataInfoBase + MetadataRecord->DirectoryPathsOffset);
-        
-        for (DirectoryIdx = 0;
-             DirectoryIdx < MetadataRecord->NumDirectories;
-             DirectoryIdx++) {
+        DirectoryPath = (PPF_COUNTED_STRING)(MetadataInfoBase + MetadataRecord->DirectoryPathsOffset);
 
-            Status = CcPfPrefetchDirectoryContents(DirectoryPath->String,
-                                                   DirectoryPath->Length);
+        for (DirectoryIdx = 0; DirectoryIdx < MetadataRecord->NumDirectories; DirectoryIdx++)
+        {
 
-            if (Status == STATUS_UNRECOGNIZED_VOLUME ||
-                Status == STATUS_INVALID_PARAMETER) {
+            Status = CcPfPrefetchDirectoryContents(DirectoryPath->String, DirectoryPath->Length);
+
+            if (Status == STATUS_UNRECOGNIZED_VOLUME || Status == STATUS_INVALID_PARAMETER)
+            {
 
                 //
                 // This volume may not have been mounted or got dismounted.
@@ -5489,30 +5529,26 @@ Environment:
 
                 break;
             }
-            
+
             //
             // Get next directory.
             //
 
-            DirectoryPath = (PPF_COUNTED_STRING) 
-                (&DirectoryPath->String[DirectoryPath->Length + 1]);
+            DirectoryPath = (PPF_COUNTED_STRING)(&DirectoryPath->String[DirectoryPath->Length + 1]);
         }
     }
 
     Status = STATUS_SUCCESS;
 
- cleanup:
+cleanup:
 
-    DBGPR((CCPFID,PFPREF,"CCPF: PrefetchMetadata(%p)=%x\n",PrefetchHeader,Status)); 
+    DBGPR((CCPFID, PFPREF, "CCPF: PrefetchMetadata(%p)=%x\n", PrefetchHeader, Status));
 
     return Status;
 }
 
 NTSTATUS
-CcPfPrefetchFileMetadata(
-    HANDLE VolumeHandle,
-    PFILE_PREFETCH FilePrefetch
-    )
+CcPfPrefetchFileMetadata(HANDLE VolumeHandle, PFILE_PREFETCH FilePrefetch)
 
 /*++
 
@@ -5546,7 +5582,7 @@ Environment:
     ULONG RemainingFileMetadata;
     ULONG CopySize;
     NTSTATUS Status;
-    
+
     //
     // Initialize locals.
     //
@@ -5554,46 +5590,40 @@ Environment:
     SplitFilePrefetch = NULL;
     Status = STATUS_SUCCESS;
 
-    DBGPR((CCPFID,PFPRFD,"CCPF: PrefetchFileMetadata(%p)\n", FilePrefetch)); 
-    
+    DBGPR((CCPFID, PFPRFD, "CCPF: PrefetchFileMetadata(%p)\n", FilePrefetch));
+
     //
     // If the number of file prefetch entries are small, simply pass the
     // buffer in the scenario instructions to the file system.
     //
 
-    if (FilePrefetch->Count < CCPF_MAX_FILE_METADATA_PREFETCH_COUNT) {
+    if (FilePrefetch->Count < CCPF_MAX_FILE_METADATA_PREFETCH_COUNT)
+    {
 
         FilePrefetchSize = sizeof(FILE_PREFETCH);
-        if (FilePrefetch->Count) {
+        if (FilePrefetch->Count)
+        {
             FilePrefetchSize += (FilePrefetch->Count - 1) * sizeof(ULONGLONG);
         }
-        
-        Status = ZwFsControlFile(VolumeHandle,
-                                 NULL,
-                                 NULL,
-                                 NULL,
-                                 &IoStatusBlock,
-                                 FSCTL_FILE_PREFETCH,
-                                 FilePrefetch,
-                                 FilePrefetchSize,
-                                 NULL,
-                                 0);
 
-    } else {
+        Status = ZwFsControlFile(VolumeHandle, NULL, NULL, NULL, &IoStatusBlock, FSCTL_FILE_PREFETCH, FilePrefetch,
+                                 FilePrefetchSize, NULL, 0);
+    }
+    else
+    {
 
         //
-        // We need to allocate an intermediary buffer and split up the 
+        // We need to allocate an intermediary buffer and split up the
         // requests.
         //
 
         FilePrefetchSize = sizeof(FILE_PREFETCH);
         FilePrefetchSize += (CCPF_MAX_FILE_METADATA_PREFETCH_COUNT - 1) * sizeof(ULONGLONG);
 
-        SplitFilePrefetch = ExAllocatePoolWithTag(PagedPool,
-                                                  FilePrefetchSize,
-                                                  CCPF_ALLOC_METADATA_TAG);
-        
-        if (!SplitFilePrefetch) {
+        SplitFilePrefetch = ExAllocatePoolWithTag(PagedPool, FilePrefetchSize, CCPF_ALLOC_METADATA_TAG);
+
+        if (!SplitFilePrefetch)
+        {
             Status = STATUS_INSUFFICIENT_RESOURCES;
             goto cleanup;
         }
@@ -5604,9 +5634,9 @@ Environment:
 
         *SplitFilePrefetch = *FilePrefetch;
 
-        for (CurrentFileMetadataIdx = 0;
-             CurrentFileMetadataIdx < FilePrefetch->Count;
-             CurrentFileMetadataIdx += NumFileMetadataToPrefetch) {
+        for (CurrentFileMetadataIdx = 0; CurrentFileMetadataIdx < FilePrefetch->Count;
+             CurrentFileMetadataIdx += NumFileMetadataToPrefetch)
+        {
 
             //
             // Calculate how many more file metadata entries we have to prefetch.
@@ -5617,7 +5647,8 @@ Environment:
 
             RemainingFileMetadata = FilePrefetch->Count - CurrentFileMetadataIdx;
 
-            if (NumFileMetadataToPrefetch > RemainingFileMetadata) {
+            if (NumFileMetadataToPrefetch > RemainingFileMetadata)
+            {
                 NumFileMetadataToPrefetch = RemainingFileMetadata;
             }
 
@@ -5633,9 +5664,7 @@ Environment:
 
             CopySize = NumFileMetadataToPrefetch * sizeof(ULONGLONG);
 
-            RtlCopyMemory(SplitFilePrefetch->Prefetch, 
-                          &FilePrefetch->Prefetch[CurrentFileMetadataIdx],
-                          CopySize);
+            RtlCopyMemory(SplitFilePrefetch->Prefetch, &FilePrefetch->Prefetch[CurrentFileMetadataIdx], CopySize);
 
             //
             // Calculate the request size.
@@ -5645,49 +5674,40 @@ Environment:
             CCPF_ASSERT(SplitFilePrefetch->Count <= CCPF_MAX_FILE_METADATA_PREFETCH_COUNT);
 
             FilePrefetchSize = sizeof(FILE_PREFETCH);
-            FilePrefetchSize +=  (SplitFilePrefetch->Count - 1) * sizeof(ULONGLONG);
+            FilePrefetchSize += (SplitFilePrefetch->Count - 1) * sizeof(ULONGLONG);
 
             //
             // Issue the request.
             //
 
-            Status = ZwFsControlFile(VolumeHandle,
-                                     NULL,
-                                     NULL,
-                                     NULL,
-                                     &IoStatusBlock,
-                                     FSCTL_FILE_PREFETCH,
-                                     SplitFilePrefetch,
-                                     FilePrefetchSize,
-                                     NULL,
-                                     0);
+            Status = ZwFsControlFile(VolumeHandle, NULL, NULL, NULL, &IoStatusBlock, FSCTL_FILE_PREFETCH,
+                                     SplitFilePrefetch, FilePrefetchSize, NULL, 0);
 
-            if (NT_ERROR(Status)) {
+            if (NT_ERROR(Status))
+            {
                 goto cleanup;
             }
         }
     }
-    
+
     //
     // Fall through with status.
     //
 
- cleanup:
+cleanup:
 
-    if (SplitFilePrefetch) {
+    if (SplitFilePrefetch)
+    {
         ExFreePool(SplitFilePrefetch);
     }
 
-    DBGPR((CCPFID,PFPRFD,"CCPF: PrefetchFileMetadata()=%x\n", Status)); 
+    DBGPR((CCPFID, PFPRFD, "CCPF: PrefetchFileMetadata()=%x\n", Status));
 
     return Status;
 }
 
 NTSTATUS
-CcPfPrefetchDirectoryContents(
-    WCHAR *DirectoryPath,
-    WCHAR DirectoryPathlength
-    )
+CcPfPrefetchDirectoryContents(WCHAR *DirectoryPath, WCHAR DirectoryPathlength)
 
 /*++
 
@@ -5723,7 +5743,7 @@ Environment:
     ULONG QueryIdx;
     BOOLEAN RestartScan;
 
-    UNREFERENCED_PARAMETER (DirectoryPathlength);
+    UNREFERENCED_PARAMETER(DirectoryPathlength);
 
     //
     // Initialize locals.
@@ -5732,37 +5752,23 @@ Environment:
     OpenedDirectory = FALSE;
     QueryBuffer = NULL;
 
-    DBGPR((CCPFID,PFPRFD,"CCPF: PrefetchDirectory(%ws)\n",DirectoryPath)); 
+    DBGPR((CCPFID, PFPRFD, "CCPF: PrefetchDirectory(%ws)\n", DirectoryPath));
 
     //
     // Open the directory.
     //
 
     RtlInitUnicodeString(&DirectoryPathU, DirectoryPath);
-    
-    InitializeObjectAttributes(&ObjectAttributes,
-                               &DirectoryPathU,
-                               OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-                               NULL,
-                               NULL);
-    
-    Status = ZwCreateFile(&DirectoryHandle,
-                          FILE_LIST_DIRECTORY | SYNCHRONIZE,
-                          &ObjectAttributes,
-                          &IoStatusBlock,
-                          0,
-                          0,
-                          FILE_SHARE_READ |
-                            FILE_SHARE_WRITE |
-                            FILE_SHARE_DELETE,
-                          FILE_OPEN,
-                          FILE_DIRECTORY_FILE | 
-                            FILE_SYNCHRONOUS_IO_NONALERT | 
-                            FILE_OPEN_FOR_BACKUP_INTENT,
-                          NULL,
-                          0);
 
-    if (!NT_SUCCESS(Status)) {
+    InitializeObjectAttributes(&ObjectAttributes, &DirectoryPathU, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL,
+                               NULL);
+
+    Status = ZwCreateFile(&DirectoryHandle, FILE_LIST_DIRECTORY | SYNCHRONIZE, &ObjectAttributes, &IoStatusBlock, 0, 0,
+                          FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_OPEN,
+                          FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT, NULL, 0);
+
+    if (!NT_SUCCESS(Status))
+    {
         goto cleanup;
     }
 
@@ -5775,11 +5781,10 @@ Environment:
     //
 
     QueryBufferSize = 4 * PAGE_SIZE;
-    QueryBuffer = ExAllocatePoolWithTag(PagedPool | POOL_COLD_ALLOCATION,
-                                        QueryBufferSize,
-                                        CCPF_ALLOC_QUERY_TAG);
+    QueryBuffer = ExAllocatePoolWithTag(PagedPool | POOL_COLD_ALLOCATION, QueryBufferSize, CCPF_ALLOC_QUERY_TAG);
 
-    if (!QueryBuffer) {
+    if (!QueryBuffer)
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto cleanup;
     }
@@ -5788,39 +5793,33 @@ Environment:
     // Query names of files in the directory hopefully causing the
     // file system to touch the directory contents sequentially. If
     // the directory is really big, we don't want to attempt to bring
-    // it all in, so we limit the number of times we query. 
+    // it all in, so we limit the number of times we query.
     //
     // Assuming filenames are 16 characters long on average, we can
     // fit 32 filenames in 1KB, 128 on an x86 page. A 4 page query
     // buffer holds 512 file names. If we do it 10 times, we end up
     // prefetching data for about 5000 files.
     //
-    
+
     RestartScan = TRUE;
 
-    for (QueryIdx = 0; QueryIdx < 10; QueryIdx++) {
-        
-        Status = ZwQueryDirectoryFile(DirectoryHandle,
-                                      NULL,
-                                      NULL,
-                                      NULL,
-                                      &IoStatusBlock,
-                                      QueryBuffer,
-                                      QueryBufferSize,
-                                      FileNamesInformation,
-                                      FALSE,
-                                      NULL,
-                                      RestartScan);
-        
+    for (QueryIdx = 0; QueryIdx < 10; QueryIdx++)
+    {
+
+        Status = ZwQueryDirectoryFile(DirectoryHandle, NULL, NULL, NULL, &IoStatusBlock, QueryBuffer, QueryBufferSize,
+                                      FileNamesInformation, FALSE, NULL, RestartScan);
+
         RestartScan = FALSE;
 
-        if (!NT_SUCCESS(Status)) {
-            
+        if (!NT_SUCCESS(Status))
+        {
+
             //
             // If the status is that we got all the files, we are done.
             //
 
-            if (Status == STATUS_NO_MORE_FILES) {
+            if (Status == STATUS_NO_MORE_FILES)
+            {
                 break;
             }
 
@@ -5830,25 +5829,24 @@ Environment:
 
     Status = STATUS_SUCCESS;
 
- cleanup:
+cleanup:
 
-    if (QueryBuffer) {
+    if (QueryBuffer)
+    {
         ExFreePool(QueryBuffer);
     }
-    
-    if (OpenedDirectory) {
+
+    if (OpenedDirectory)
+    {
         ZwClose(DirectoryHandle);
     }
 
-    DBGPR((CCPFID,PFPRFD,"CCPF: PrefetchDirectory(%ws)=%x\n",DirectoryPath, Status)); 
+    DBGPR((CCPFID, PFPRFD, "CCPF: PrefetchDirectory(%ws)=%x\n", DirectoryPath, Status));
 
     return Status;
 }
 
-VOID
-CcPfInitializePrefetchHeader (
-    OUT PCCPF_PREFETCH_HEADER PrefetchHeader
-)
+VOID CcPfInitializePrefetchHeader(OUT PCCPF_PREFETCH_HEADER PrefetchHeader)
 
 /*++
 
@@ -5887,13 +5885,9 @@ Environment:
 
     InitializeListHead(&PrefetchHeader->BadVolumeList);
     InitializeListHead(&PrefetchHeader->OpenedVolumeList);
-    
 }
 
-VOID
-CcPfCleanupPrefetchHeader (
-    IN PCCPF_PREFETCH_HEADER PrefetchHeader
-    )
+VOID CcPfCleanupPrefetchHeader(IN PCCPF_PREFETCH_HEADER PrefetchHeader)
 
 /*++
 
@@ -5919,42 +5913,38 @@ Environment:
 {
     PCCPF_PREFETCH_VOLUME_INFO VolumeNode;
     PLIST_ENTRY RemovedEntry;
-    
-    DBGPR((CCPFID,PFTRC,"CCPF: CleanupPrefetchHeader(%p)\n", PrefetchHeader));
+
+    DBGPR((CCPFID, PFTRC, "CCPF: CleanupPrefetchHeader(%p)\n", PrefetchHeader));
 
     //
     // Walk the opened volumes list and close the handles.
     //
 
-    while (!IsListEmpty(&PrefetchHeader->OpenedVolumeList)) {
+    while (!IsListEmpty(&PrefetchHeader->OpenedVolumeList))
+    {
 
         RemovedEntry = RemoveHeadList(&PrefetchHeader->OpenedVolumeList);
 
-        VolumeNode = CONTAINING_RECORD(RemovedEntry,
-                                       CCPF_PREFETCH_VOLUME_INFO,
-                                       VolumeLink);
+        VolumeNode = CONTAINING_RECORD(RemovedEntry, CCPF_PREFETCH_VOLUME_INFO, VolumeLink);
 
         CCPF_ASSERT(VolumeNode->VolumeHandle);
 
         ZwClose(VolumeNode->VolumeHandle);
     }
-    
+
     //
     // Free allocated volume nodes.
     //
 
-    if (PrefetchHeader->VolumeNodes) {
+    if (PrefetchHeader->VolumeNodes)
+    {
         ExFreePool(PrefetchHeader->VolumeNodes);
     }
-
 }
 
 NTSTATUS
-CcPfGetPrefetchInstructions(
-    IN PPF_SCENARIO_ID ScenarioId,
-    IN PF_SCENARIO_TYPE ScenarioType,
-    OUT PPF_SCENARIO_HEADER *ScenarioHeader
-    )
+CcPfGetPrefetchInstructions(IN PPF_SCENARIO_ID ScenarioId, IN PF_SCENARIO_TYPE ScenarioType,
+                            OUT PPF_SCENARIO_HEADER *ScenarioHeader)
 
 /*++
 
@@ -5983,7 +5973,7 @@ Environment:
 --*/
 
 {
-    NTSTATUS Status;  
+    NTSTATUS Status;
     PWSTR SystemRootPath = L"\\SystemRoot";
     PWSTR FilePath;
     UNICODE_STRING ScenarioFilePath;
@@ -6006,14 +5996,14 @@ Environment:
     Scenario = NULL;
     OpenedScenarioFile = FALSE;
 
-    DBGPR((CCPFID,PFPREF,"CCPF: GetInstructions(%ws)\n", ScenarioId->ScenName)); 
+    DBGPR((CCPFID, PFPREF, "CCPF: GetInstructions(%ws)\n", ScenarioId->ScenName));
 
     //
     // Hold the parameters lock while building path to instructions so
     // RootDirPath does not change beneath our feet.
     //
 
-    CurrentThread = KeGetCurrentThread ();
+    CurrentThread = KeGetCurrentThread();
     KeEnterCriticalRegionThread(CurrentThread);
     ExAcquireResourceSharedLite(&CcPfGlobals.Parameters.ParametersLock, TRUE);
 
@@ -6027,24 +6017,19 @@ Environment:
     FilePathSize += wcslen(CcPfGlobals.Parameters.Parameters.RootDirPath) * sizeof(WCHAR);
     FilePathSize += PF_MAX_SCENARIO_FILE_NAME * sizeof(WCHAR);
     FilePathSize += sizeof(WCHAR);
-    
-    FilePath = ExAllocatePoolWithTag(PagedPool | POOL_COLD_ALLOCATION,
-                                     FilePathSize,
-                                     CCPF_ALLOC_FILENAME_TAG);
 
-    if (!FilePath) {
+    FilePath = ExAllocatePoolWithTag(PagedPool | POOL_COLD_ALLOCATION, FilePathSize, CCPF_ALLOC_FILENAME_TAG);
+
+    if (!FilePath)
+    {
         ExReleaseResourceLite(&CcPfGlobals.Parameters.ParametersLock);
         KeLeaveCriticalRegionThread(CurrentThread);
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto cleanup;
     }
 
-    swprintf(FilePath,
-             L"%s\\%s\\" PF_SCEN_FILE_NAME_FORMAT, 
-             SystemRootPath,
-             CcPfGlobals.Parameters.Parameters.RootDirPath,
-             ScenarioId->ScenName,
-             ScenarioId->HashId,
+    swprintf(FilePath, L"%s\\%s\\" PF_SCEN_FILE_NAME_FORMAT, SystemRootPath,
+             CcPfGlobals.Parameters.Parameters.RootDirPath, ScenarioId->ScenName, ScenarioId->HashId,
              PF_PREFETCH_FILE_EXTENSION);
 
     //
@@ -6059,25 +6044,19 @@ Environment:
     // end up with half a file when the service is updating it etc.
     //
 
-    DBGPR((CCPFID,PFPRFD,"CCPF: GetInstructions-[%ws]\n", FilePath)); 
+    DBGPR((CCPFID, PFPRFD, "CCPF: GetInstructions-[%ws]\n", FilePath));
 
     RtlInitUnicodeString(&ScenarioFilePath, FilePath);
-    
-    InitializeObjectAttributes(&ObjectAttributes,
-                               &ScenarioFilePath,
-                               OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-                               NULL,
+
+    InitializeObjectAttributes(&ObjectAttributes, &ScenarioFilePath, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL,
                                NULL);
-                                        
-    Status = ZwOpenFile(&ScenarioFile,
-                        GENERIC_READ | SYNCHRONIZE,
-                        &ObjectAttributes,
-                        &IoStatus,
-                        0,
+
+    Status = ZwOpenFile(&ScenarioFile, GENERIC_READ | SYNCHRONIZE, &ObjectAttributes, &IoStatus, 0,
                         FILE_SYNCHRONOUS_IO_NONALERT);
 
-    if (!NT_SUCCESS(Status)) {
-        DBGPR((CCPFID,PFWARN,"CCPF: GetInstructions-FailedOpenFile\n")); 
+    if (!NT_SUCCESS(Status))
+    {
+        DBGPR((CCPFID, PFWARN, "CCPF: GetInstructions-FailedOpenFile\n"));
         goto cleanup;
     }
 
@@ -6087,24 +6066,21 @@ Environment:
     // Get file size. If it is too big or too small, give up.
     //
 
-    Status = ZwQueryInformationFile(ScenarioFile,
-                                    &IoStatus,
-                                    &StandardInfo,
-                                    sizeof(StandardInfo),
-                                    FileStandardInformation);
+    Status =
+        ZwQueryInformationFile(ScenarioFile, &IoStatus, &StandardInfo, sizeof(StandardInfo), FileStandardInformation);
 
-    if (!NT_SUCCESS(Status)) {
-        DBGPR((CCPFID,PFWARN,"CCPF: GetInstructions-FailedGetInfo\n")); 
+    if (!NT_SUCCESS(Status))
+    {
+        DBGPR((CCPFID, PFWARN, "CCPF: GetInstructions-FailedGetInfo\n"));
         goto cleanup;
     }
 
     ScenarioSize = StandardInfo.EndOfFile.LowPart;
 
-    if (ScenarioSize > PF_MAXIMUM_SCENARIO_SIZE ||
-        ScenarioSize == 0 ||
-        StandardInfo.EndOfFile.HighPart) {
+    if (ScenarioSize > PF_MAXIMUM_SCENARIO_SIZE || ScenarioSize == 0 || StandardInfo.EndOfFile.HighPart)
+    {
 
-        DBGPR((CCPFID,PFWARN,"CCPF: GetInstructions-FileTooBig\n")); 
+        DBGPR((CCPFID, PFWARN, "CCPF: GetInstructions-FileTooBig\n"));
         Status = STATUS_UNSUCCESSFUL;
         goto cleanup;
     }
@@ -6113,11 +6089,10 @@ Environment:
     // Allocate scenario buffer.
     //
 
-    Scenario = ExAllocatePoolWithTag(PagedPool,
-                                     ScenarioSize,
-                                     CCPF_ALLOC_PREFSCEN_TAG);
+    Scenario = ExAllocatePoolWithTag(PagedPool, ScenarioSize, CCPF_ALLOC_PREFSCEN_TAG);
 
-    if (!Scenario) {
+    if (!Scenario)
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto cleanup;
     }
@@ -6126,27 +6101,21 @@ Environment:
     // Read the scenario file.
     //
 
-    Status = ZwReadFile(ScenarioFile,
-                        0,
-                        0,
-                        0,
-                        &IoStatus,
-                        Scenario,
-                        ScenarioSize,
-                        0,
-                        0);
-    
-    if (!NT_SUCCESS(Status)) {
-        DBGPR((CCPFID,PFWARN,"CCPF: GetInstructions-FailedRead\n")); 
+    Status = ZwReadFile(ScenarioFile, 0, 0, 0, &IoStatus, Scenario, ScenarioSize, 0, 0);
+
+    if (!NT_SUCCESS(Status))
+    {
+        DBGPR((CCPFID, PFWARN, "CCPF: GetInstructions-FailedRead\n"));
         goto cleanup;
     }
 
     //
     // Verify the scenario file.
     //
-    
-    if (!PfVerifyScenarioBuffer(Scenario, ScenarioSize, &FailedCheck)) {
-        DBGPR((CCPFID,PFWARN,"CCPF: GetInstructions-FailedVerify\n")); 
+
+    if (!PfVerifyScenarioBuffer(Scenario, ScenarioSize, &FailedCheck))
+    {
+        DBGPR((CCPFID, PFWARN, "CCPF: GetInstructions-FailedVerify\n"));
         Status = STATUS_UNSUCCESSFUL;
         goto cleanup;
     }
@@ -6155,8 +6124,9 @@ Environment:
     // Verify that the scenario type matches.
     //
 
-    if (Scenario->ScenarioType != ScenarioType) {
-        DBGPR((CCPFID,PFWARN,"CCPF: GetInstructions-ScenTypeMismatch\n")); 
+    if (Scenario->ScenarioType != ScenarioType)
+    {
+        DBGPR((CCPFID, PFWARN, "CCPF: GetInstructions-ScenTypeMismatch\n"));
         Status = STATUS_UNSUCCESSFUL;
         goto cleanup;
     }
@@ -6164,40 +6134,39 @@ Environment:
     //
     // Setup return pointer.
     //
-    
+
     *ScenarioHeader = Scenario;
 
     Status = STATUS_SUCCESS;
 
- cleanup:
+cleanup:
 
-    if (OpenedScenarioFile) {
+    if (OpenedScenarioFile)
+    {
         ZwClose(ScenarioFile);
     }
 
-    if (FilePath) {
+    if (FilePath)
+    {
         ExFreePool(FilePath);
     }
 
-    if (!NT_SUCCESS(Status)) {
-        if (Scenario) {
+    if (!NT_SUCCESS(Status))
+    {
+        if (Scenario)
+        {
             ExFreePool(Scenario);
         }
     }
 
-    DBGPR((CCPFID,PFPREF,"CCPF: GetInstructions(%ws)=%x,%p\n", ScenarioId->ScenName, Status, Scenario)); 
+    DBGPR((CCPFID, PFPREF, "CCPF: GetInstructions(%ws)=%x,%p\n", ScenarioId->ScenName, Status, Scenario));
 
     return Status;
 }
 
 NTSTATUS
-CcPfQueryScenarioInformation(
-    IN PPF_SCENARIO_HEADER Scenario,
-    IN CCPF_SCENARIO_INFORMATION_TYPE InformationType,
-    OUT PVOID Buffer,
-    IN ULONG BufferSize,
-    OUT PULONG RequiredSize
-    )
+CcPfQueryScenarioInformation(IN PPF_SCENARIO_HEADER Scenario, IN CCPF_SCENARIO_INFORMATION_TYPE InformationType,
+                             OUT PVOID Buffer, IN ULONG BufferSize, OUT PULONG RequiredSize)
 
 /*++
 
@@ -6267,13 +6236,14 @@ Environment:
     UserinitSuffix = L"\\SYSTEM32\\USERINIT.EXE";
     UserinitSuffixLength = wcslen(UserinitSuffix);
 
-    DBGPR((CCPFID,PFTRC,"CCPF: QueryScenario(%p,%x,%p)\n",Scenario,InformationType,Buffer));
+    DBGPR((CCPFID, PFTRC, "CCPF: QueryScenario(%p,%x,%p)\n", Scenario, InformationType, Buffer));
 
     //
     // Check requested information type.
     //
 
-    if (InformationType >= CcPfMaxScenarioInformationType) {
+    if (InformationType >= CcPfMaxScenarioInformationType)
+    {
         Status = STATUS_INVALID_PARAMETER;
         goto cleanup;
     }
@@ -6281,20 +6251,19 @@ Environment:
     //
     // Initialize pointers to data in the scenario.
     //
-    
-    SectionRecords = (PPF_SECTION_RECORD) 
-        ((PCHAR) Scenario + Scenario->SectionInfoOffset);
-    
-    PageRecords = (PPF_PAGE_RECORD) 
-        ((PCHAR) Scenario + Scenario->PageInfoOffset);
 
-    FileNameData = (PCHAR) Scenario + Scenario->FileNameInfoOffset;
-    
+    SectionRecords = (PPF_SECTION_RECORD)((PCHAR)Scenario + Scenario->SectionInfoOffset);
+
+    PageRecords = (PPF_PAGE_RECORD)((PCHAR)Scenario + Scenario->PageInfoOffset);
+
+    FileNameData = (PCHAR)Scenario + Scenario->FileNameInfoOffset;
+
     //
     // Collect requested information.
     //
 
-    switch(InformationType) {
+    switch (InformationType)
+    {
 
     case CcPfBasicScenarioInformation:
 
@@ -6302,12 +6271,13 @@ Environment:
         // Check buffer size.
         //
 
-        if (BufferSize < sizeof(CCPF_BASIC_SCENARIO_INFORMATION)) {
+        if (BufferSize < sizeof(CCPF_BASIC_SCENARIO_INFORMATION))
+        {
             *RequiredSize = sizeof(CCPF_BASIC_SCENARIO_INFORMATION);
             Status = STATUS_BUFFER_TOO_SMALL;
             goto cleanup;
         }
-        
+
         //
         // Initialize return buffer.
         //
@@ -6319,19 +6289,21 @@ Environment:
         // Go through the scenario's sections.
         //
 
-        for (SectionIdx = 0; SectionIdx < Scenario->NumSections; SectionIdx ++) {
-            
+        for (SectionIdx = 0; SectionIdx < Scenario->NumSections; SectionIdx++)
+        {
+
             SectionRecord = &SectionRecords[SectionIdx];
-              
+
             //
             // Skip this section if it was marked ignore for some reason.
             //
-            
-            if (SectionRecord->IsIgnore) {
+
+            if (SectionRecord->IsIgnore)
+            {
                 BasicInfo->NumIgnoredSections++;
                 continue;
             }
-            
+
             //
             // Initialize loop locals.
             //
@@ -6344,8 +6316,9 @@ Environment:
             // Note that we will prefetch the header page as a data
             // page if this section will be prefetched as image.
             //
-            
-            if (SectionRecord->IsImage) {
+
+            if (SectionRecord->IsImage)
+            {
                 NumDataPages++;
                 AddedHeaderPage = TRUE;
             }
@@ -6355,26 +6328,29 @@ Environment:
             //
 
             PageIdx = SectionRecord->FirstPageIdx;
-            while (PageIdx != PF_INVALID_PAGE_IDX) {
-                
+            while (PageIdx != PF_INVALID_PAGE_IDX)
+            {
+
                 PageRecord = &PageRecords[PageIdx];
 
                 //
                 // Get the index for the next page in the list.
                 //
-                
+
                 PageIdx = PageRecord->NextPageIdx;
-            
+
                 //
                 // Skip pages we have marked "ignore" for some reason.
                 //
-                
-                if (PageRecord->IsIgnore) {
+
+                if (PageRecord->IsIgnore)
+                {
                     BasicInfo->NumIgnoredPages++;
                     continue;
                 }
 
-                if (PageRecord->IsData) {
+                if (PageRecord->IsData)
+                {
 
                     //
                     // If this page is the first page, count it only
@@ -6382,17 +6358,18 @@ Environment:
                     // for image mapping.
                     //
 
-                    if (PageRecord->FileOffset != 0 ||
-                        AddedHeaderPage == FALSE) {
+                    if (PageRecord->FileOffset != 0 || AddedHeaderPage == FALSE)
+                    {
                         NumDataPages++;
                     }
                 }
 
-                if (PageRecord->IsImage) {
+                if (PageRecord->IsImage)
+                {
                     NumImagePages++;
                 }
             }
-            
+
             //
             // Update the information structure.
             //
@@ -6400,11 +6377,13 @@ Environment:
             BasicInfo->NumDataPages += NumDataPages;
             BasicInfo->NumImagePages += NumImagePages;
 
-            if (!NumImagePages && NumDataPages) {
+            if (!NumImagePages && NumDataPages)
+            {
                 BasicInfo->NumDataOnlySections++;
             }
 
-            if (NumImagePages && (NumDataPages == 1)) {
+            if (NumImagePages && (NumDataPages == 1))
+            {
                 BasicInfo->NumImageOnlySections++;
             }
         }
@@ -6419,12 +6398,13 @@ Environment:
         // Check buffer size.
         //
 
-        if (BufferSize < sizeof(CCPF_BOOT_SCENARIO_INFORMATION)) {
+        if (BufferSize < sizeof(CCPF_BOOT_SCENARIO_INFORMATION))
+        {
             *RequiredSize = sizeof(CCPF_BOOT_SCENARIO_INFORMATION);
             Status = STATUS_BUFFER_TOO_SMALL;
             goto cleanup;
         }
-        
+
         //
         // Initialize return buffer.
         //
@@ -6436,7 +6416,8 @@ Environment:
         // Verify that this is a boot scenario.
         //
 
-        if (Scenario->ScenarioType != PfSystemBootScenarioType) {
+        if (Scenario->ScenarioType != PfSystemBootScenarioType)
+        {
             Status = STATUS_INVALID_PARAMETER;
             goto cleanup;
         }
@@ -6445,63 +6426,76 @@ Environment:
         // Go through the scenario's sections.
         //
 
-        for (SectionIdx = 0; SectionIdx < Scenario->NumSections; SectionIdx ++) {
-            
+        for (SectionIdx = 0; SectionIdx < Scenario->NumSections; SectionIdx++)
+        {
+
             SectionRecord = &SectionRecords[SectionIdx];
-        
-            SectionName = (WCHAR *) (FileNameData + SectionRecord->FileNameOffset);
+
+            SectionName = (WCHAR *)(FileNameData + SectionRecord->FileNameOffset);
 
             //
             // Update boot phase based on section name.
             //
-            
-            if (SectionRecord->FileNameLength > SmssSuffixLength) {               
-                SectionNameSuffix = SectionName + (SectionRecord->FileNameLength - SmssSuffixLength);               
-                if (!wcscmp(SectionNameSuffix, SmssSuffix)) {                   
+
+            if (SectionRecord->FileNameLength > SmssSuffixLength)
+            {
+                SectionNameSuffix = SectionName + (SectionRecord->FileNameLength - SmssSuffixLength);
+                if (!wcscmp(SectionNameSuffix, SmssSuffix))
+                {
                     BootPhaseIdx = CcPfBootScenSubsystemInitPhase;
                 }
             }
 
-            if (SectionRecord->FileNameLength > WinlogonSuffixLength) {               
-                SectionNameSuffix = SectionName + (SectionRecord->FileNameLength - WinlogonSuffixLength);               
-                if (!wcscmp(SectionNameSuffix, WinlogonSuffix)) {                   
+            if (SectionRecord->FileNameLength > WinlogonSuffixLength)
+            {
+                SectionNameSuffix = SectionName + (SectionRecord->FileNameLength - WinlogonSuffixLength);
+                if (!wcscmp(SectionNameSuffix, WinlogonSuffix))
+                {
                     BootPhaseIdx = CcPfBootScenSystemProcInitPhase;
                 }
             }
 
-            if (SectionRecord->FileNameLength > SvchostSuffixLength) {               
-                SectionNameSuffix = SectionName + (SectionRecord->FileNameLength - SvchostSuffixLength);               
-                if (!wcscmp(SectionNameSuffix, SvchostSuffix)) {                   
+            if (SectionRecord->FileNameLength > SvchostSuffixLength)
+            {
+                SectionNameSuffix = SectionName + (SectionRecord->FileNameLength - SvchostSuffixLength);
+                if (!wcscmp(SectionNameSuffix, SvchostSuffix))
+                {
                     BootPhaseIdx = CcPfBootScenServicesInitPhase;
                 }
             }
 
-            if (SectionRecord->FileNameLength > UserinitSuffixLength) {               
-                SectionNameSuffix = SectionName + (SectionRecord->FileNameLength - UserinitSuffixLength);               
-                if (!wcscmp(SectionNameSuffix, UserinitSuffix)) {                   
+            if (SectionRecord->FileNameLength > UserinitSuffixLength)
+            {
+                SectionNameSuffix = SectionName + (SectionRecord->FileNameLength - UserinitSuffixLength);
+                if (!wcscmp(SectionNameSuffix, UserinitSuffix))
+                {
                     BootPhaseIdx = CcPfBootScenUserInitPhase;
                 }
             }
 
             CCPF_ASSERT(BootPhaseIdx < CcPfBootScenMaxPhase);
-              
+
             //
             // Skip this section if it was marked ignore for some reason.
             //
-            
-            if (SectionRecord->IsIgnore) {
+
+            if (SectionRecord->IsIgnore)
+            {
                 continue;
             }
-            
+
             //
             // Note that we will prefetch the header page as a data
             // page if this section will be prefetched as image.
             //
-            
-            if (SectionRecord->IsImage) {
+
+            if (SectionRecord->IsImage)
+            {
                 BootInfo->NumDataPages[BootPhaseIdx]++;
                 AddedHeaderPage = TRUE;
-            } else {
+            }
+            else
+            {
                 AddedHeaderPage = FALSE;
             }
 
@@ -6510,25 +6504,28 @@ Environment:
             //
 
             PageIdx = SectionRecord->FirstPageIdx;
-            while (PageIdx != PF_INVALID_PAGE_IDX) {
-                
+            while (PageIdx != PF_INVALID_PAGE_IDX)
+            {
+
                 PageRecord = &PageRecords[PageIdx];
 
                 //
                 // Get the index for the next page in the list.
                 //
-                
+
                 PageIdx = PageRecord->NextPageIdx;
-            
+
                 //
                 // Skip pages we have marked "ignore" for some reason.
                 //
-                
-                if (PageRecord->IsIgnore) {
+
+                if (PageRecord->IsIgnore)
+                {
                     continue;
                 }
 
-                if (PageRecord->IsData) {
+                if (PageRecord->IsData)
+                {
 
                     //
                     // If this page is the first page, count it only
@@ -6536,18 +6533,19 @@ Environment:
                     // for image mapping.
                     //
 
-                    if (PageRecord->FileOffset != 0 ||
-                        AddedHeaderPage == FALSE) {
+                    if (PageRecord->FileOffset != 0 || AddedHeaderPage == FALSE)
+                    {
                         BootInfo->NumDataPages[BootPhaseIdx]++;
                     }
                 }
 
-                if (PageRecord->IsImage) {
+                if (PageRecord->IsImage)
+                {
                     BootInfo->NumImagePages[BootPhaseIdx]++;
                 }
             }
         }
-        
+
         Status = STATUS_SUCCESS;
 
         break;
@@ -6560,18 +6558,16 @@ Environment:
     //
     // Fall through with status from the switch statement.
     //
-        
- cleanup:
 
-    DBGPR((CCPFID,PFTRC,"CCPF: QueryScenario(%p,%x)=%x\n",Scenario,InformationType,Status));
+cleanup:
+
+    DBGPR((CCPFID, PFTRC, "CCPF: QueryScenario(%p,%x)=%x\n", Scenario, InformationType, Status));
 
     return Status;
 }
 
 NTSTATUS
-CcPfOpenVolumesForPrefetch (
-    IN PCCPF_PREFETCH_HEADER PrefetchHeader
-    )
+CcPfOpenVolumesForPrefetch(IN PCCPF_PREFETCH_HEADER PrefetchHeader)
 
 /*++
 
@@ -6618,13 +6614,14 @@ Environment:
 
     Scenario = PrefetchHeader->Scenario;
 
-    DBGPR((CCPFID,PFPREF,"CCPF: OpenVolumesForPrefetch(%p)\n",PrefetchHeader)); 
+    DBGPR((CCPFID, PFPREF, "CCPF: OpenVolumesForPrefetch(%p)\n", PrefetchHeader));
 
     //
     // Verify parameters.
     //
 
-    if (Scenario == NULL) {
+    if (Scenario == NULL)
+    {
         CCPF_ASSERT(Scenario);
         Status = STATUS_INVALID_PARAMETER;
         goto cleanup;
@@ -6636,11 +6633,10 @@ Environment:
 
     AllocationSize = Scenario->NumMetadataRecords * sizeof(CCPF_PREFETCH_VOLUME_INFO);
 
-    PrefetchHeader->VolumeNodes = ExAllocatePoolWithTag(PagedPool, 
-                                                        AllocationSize,
-                                                        CCPF_ALLOC_VOLUME_TAG);
+    PrefetchHeader->VolumeNodes = ExAllocatePoolWithTag(PagedPool, AllocationSize, CCPF_ALLOC_VOLUME_TAG);
 
-    if (!PrefetchHeader->VolumeNodes) {
+    if (!PrefetchHeader->VolumeNodes)
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto cleanup;
     }
@@ -6650,25 +6646,23 @@ Environment:
     //
 
     MetadataInfoBase = (PCHAR)Scenario + Scenario->MetadataInfoOffset;
-    MetadataRecordTable = (PPF_METADATA_RECORD) MetadataInfoBase;
+    MetadataRecordTable = (PPF_METADATA_RECORD)MetadataInfoBase;
 
     //
     // Go through metadata records and build the volume nodes for prefetching.
     //
 
-    for (MetadataRecordIdx = 0;
-         MetadataRecordIdx < Scenario->NumMetadataRecords;
-         MetadataRecordIdx++) {
+    for (MetadataRecordIdx = 0; MetadataRecordIdx < Scenario->NumMetadataRecords; MetadataRecordIdx++)
+    {
 
         //
         // Initialize loop locals.
         //
-        
+
         MetadataRecord = &MetadataRecordTable[MetadataRecordIdx];
         VolumeHandle = NULL;
-        
-        VolumePath = (PWCHAR)
-            (MetadataInfoBase + MetadataRecord->VolumeNameOffset);  
+
+        VolumePath = (PWCHAR)(MetadataInfoBase + MetadataRecord->VolumeNameOffset);
 
         //
         // Is the volume mounted?
@@ -6676,10 +6670,11 @@ Environment:
 
         Status = CcPfIsVolumeMounted(VolumePath, &VolumeMounted);
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
 
             //
-            // Since we could not tell for sure, treat this volume as 
+            // Since we could not tell for sure, treat this volume as
             // if it were not mounted.
             //
 
@@ -6688,12 +6683,13 @@ Environment:
 
         //
         // If the volume is not mounted we don't want to cause it to be
-        // mounted. This creates a problem especially during boot for 
-        // clustering where a single physical disk is shared by many 
+        // mounted. This creates a problem especially during boot for
+        // clustering where a single physical disk is shared by many
         // computers.
         //
 
-        if (!VolumeMounted) {
+        if (!VolumeMounted)
+        {
             Status = STATUS_VOLUME_DISMOUNTED;
             goto NextVolume;
         }
@@ -6702,12 +6698,10 @@ Environment:
         // Open the volume and get relevant information.
         //
 
-        Status = CcPfQueryVolumeInfo(VolumePath,
-                                     &VolumeHandle,
-                                     &CreationTime,
-                                     &SerialNumber);
-        
-        if (!NT_SUCCESS(Status)) {
+        Status = CcPfQueryVolumeInfo(VolumePath, &VolumeHandle, &CreationTime, &SerialNumber);
+
+        if (!NT_SUCCESS(Status))
+        {
             goto NextVolume;
         }
 
@@ -6718,9 +6712,10 @@ Environment:
         // (e.g. \Device\HarddiskVolume2 should be \Device\HarddiskVolume3 etc.)
         // Verify that such a change has not taken place.
         //
-        
+
         if (SerialNumber != MetadataRecord->SerialNumber ||
-            CreationTime.QuadPart != MetadataRecord->CreationTime.QuadPart) {
+            CreationTime.QuadPart != MetadataRecord->CreationTime.QuadPart)
+        {
 
             Status = STATUS_REVISION_MISMATCH;
             goto NextVolume;
@@ -6728,12 +6723,12 @@ Environment:
 
         Status = STATUS_SUCCESS;
 
-      NextVolume:
+    NextVolume:
 
         //
         // Update the volume node we'll keep around for prefetching.
         //
-    
+
         VolumeNode = &PrefetchHeader->VolumeNodes[MetadataRecordIdx];
 
         VolumeNode->VolumePath = VolumePath;
@@ -6742,20 +6737,24 @@ Environment:
         //
         // If we failed to open the volume, or if it was not mounted or if
         // its SerialNumber / CreationTime has changed put it in the list of
-        // volumes we won't prefetch from. Otherwise put it in the list of 
+        // volumes we won't prefetch from. Otherwise put it in the list of
         // opened volumes so we don't have to open it again.
         //
 
-        if (NT_SUCCESS(Status) && VolumeHandle) {
+        if (NT_SUCCESS(Status) && VolumeHandle)
+        {
             VolumeNode->VolumeHandle = VolumeHandle;
             VolumeHandle = NULL;
             InsertTailList(&PrefetchHeader->OpenedVolumeList, &VolumeNode->VolumeLink);
-        } else {
+        }
+        else
+        {
             VolumeNode->VolumeHandle = NULL;
             InsertTailList(&PrefetchHeader->BadVolumeList, &VolumeNode->VolumeLink);
         }
 
-        if (VolumeHandle) {
+        if (VolumeHandle)
+        {
             ZwClose(VolumeHandle);
             VolumeHandle = NULL;
         }
@@ -6767,18 +6766,15 @@ Environment:
 
     Status = STATUS_SUCCESS;
 
- cleanup:
+cleanup:
 
-    DBGPR((CCPFID,PFPREF,"CCPF: OpenVolumesForPrefetch(%p)=%x\n",PrefetchHeader,Status)); 
-    
+    DBGPR((CCPFID, PFPREF, "CCPF: OpenVolumesForPrefetch(%p)=%x\n", PrefetchHeader, Status));
+
     return Status;
 }
 
-PCCPF_PREFETCH_VOLUME_INFO 
-CcPfFindPrefetchVolumeInfoInList(
-    WCHAR *Path,
-    PLIST_ENTRY List
-    )
+PCCPF_PREFETCH_VOLUME_INFO
+CcPfFindPrefetchVolumeInfoInList(WCHAR *Path, PLIST_ENTRY List)
 /*++
 
 Routine Description:
@@ -6817,15 +6813,13 @@ Environment:
     // Walk the list.
     //
 
-    for (NextEntry = List->Flink;
-         NextEntry != List;
-         NextEntry = NextEntry->Flink) {
+    for (NextEntry = List->Flink; NextEntry != List; NextEntry = NextEntry->Flink)
+    {
 
-        VolumeInfo = CONTAINING_RECORD(NextEntry,
-                                       CCPF_PREFETCH_VOLUME_INFO,
-                                       VolumeLink);
+        VolumeInfo = CONTAINING_RECORD(NextEntry, CCPF_PREFETCH_VOLUME_INFO, VolumeLink);
 
-        if (!wcsncmp(Path, VolumeInfo->VolumePath, VolumeInfo->VolumePathLength)) {
+        if (!wcsncmp(Path, VolumeInfo->VolumePath, VolumeInfo->VolumePathLength))
+        {
             FoundVolume = VolumeInfo;
             break;
         }
@@ -6835,13 +6829,8 @@ Environment:
 }
 
 NTSTATUS
-CcPfGetSectionObject(
-    IN PUNICODE_STRING FilePath,
-    IN LOGICAL ImageSection,
-    OUT PVOID* SectionObject,
-    OUT PFILE_OBJECT* FileObject,
-    OUT HANDLE* FileHandle
-    )
+CcPfGetSectionObject(IN PUNICODE_STRING FilePath, IN LOGICAL ImageSection, OUT PVOID *SectionObject,
+                     OUT PFILE_OBJECT *FileObject, OUT HANDLE *FileHandle)
 
 /*++
 
@@ -6882,8 +6871,8 @@ Environment:
     ULONG FileAccess;
     extern POBJECT_TYPE IoFileObjectType;
 
-    DBGPR((CCPFID,PFPRFD,"CCPF: GetSection(%wZ,%d)\n", FilePath, ImageSection)); 
- 
+    DBGPR((CCPFID, PFPRFD, "CCPF: GetSection(%wZ,%d)\n", FilePath, ImageSection));
+
     //
     // Reset parameters.
     //
@@ -6892,11 +6881,14 @@ Environment:
     *FileObject = NULL;
     *FileHandle = NULL;
 
-    if (!ImageSection) {
+    if (!ImageSection)
+    {
         SectionFlags = SEC_RESERVE;
-        FileAccess =  FILE_READ_DATA | FILE_READ_ATTRIBUTES;
+        FileAccess = FILE_READ_DATA | FILE_READ_ATTRIBUTES;
         SectionAccess = PAGE_READWRITE;
-    } else {
+    }
+    else
+    {
         SectionFlags = SEC_IMAGE;
         FileAccess = FILE_EXECUTE;
         SectionAccess = PAGE_EXECUTE;
@@ -6908,30 +6900,15 @@ Environment:
     // handle all the details.
     //
 
-    InitializeObjectAttributes(&ObjectAttributes,
-                               FilePath,
-                               OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-                               NULL,
-                               NULL);
+    InitializeObjectAttributes(&ObjectAttributes, FilePath, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
 
-    status = IoCreateFile(FileHandle,
-                          (ACCESS_MASK) FileAccess,
-                          &ObjectAttributes,
-                          &IoStatus,
-                          NULL,
-                          FILE_ATTRIBUTE_NORMAL,
-                          FILE_SHARE_READ | FILE_SHARE_DELETE,
-                          FILE_OPEN,
-                          FILE_NON_DIRECTORY_FILE,
-                          NULL,
-                          0,
-                          CreateFileTypeNone,
-                          (PVOID)NULL,
-                          IO_FORCE_ACCESS_CHECK |
-                            IO_NO_PARAMETER_CHECKING |
-                            IO_CHECK_CREATE_PARAMETERS);
+    status = IoCreateFile(FileHandle, (ACCESS_MASK)FileAccess, &ObjectAttributes, &IoStatus, NULL,
+                          FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ | FILE_SHARE_DELETE, FILE_OPEN,
+                          FILE_NON_DIRECTORY_FILE, NULL, 0, CreateFileTypeNone, (PVOID)NULL,
+                          IO_FORCE_ACCESS_CHECK | IO_NO_PARAMETER_CHECKING | IO_CHECK_CREATE_PARAMETERS);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto _return;
     }
 
@@ -6939,21 +6916,13 @@ Environment:
     // Create section.
     //
 
-    InitializeObjectAttributes(&ObjectAttributes,
-                               NULL,
-                               OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-                               NULL,
-                               NULL);
+    InitializeObjectAttributes(&ObjectAttributes, NULL, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
 
-    status = ZwCreateSection(&SectionHandle,
-                             SECTION_MAP_READ | SECTION_MAP_EXECUTE | SECTION_QUERY,
-                             &ObjectAttributes,
-                             NULL,
-                             SectionAccess,
-                             SectionFlags,
-                             *FileHandle);
+    status = ZwCreateSection(&SectionHandle, SECTION_MAP_READ | SECTION_MAP_EXECUTE | SECTION_QUERY, &ObjectAttributes,
+                             NULL, SectionAccess, SectionFlags, *FileHandle);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         ZwClose(*FileHandle);
         *FileHandle = NULL;
         goto _return;
@@ -6963,18 +6932,13 @@ Environment:
     // Get section object pointer.
     //
 
-    status = ObReferenceObjectByHandle(
-        SectionHandle,
-        SECTION_MAP_READ | SECTION_MAP_EXECUTE | SECTION_QUERY,
-        MmSectionObjectType,
-        KernelMode,
-        SectionObject,
-        NULL
-        );
+    status = ObReferenceObjectByHandle(SectionHandle, SECTION_MAP_READ | SECTION_MAP_EXECUTE | SECTION_QUERY,
+                                       MmSectionObjectType, KernelMode, SectionObject, NULL);
 
     ZwClose(SectionHandle);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         *SectionObject = NULL;
         ZwClose(*FileHandle);
         *FileHandle = NULL;
@@ -6985,14 +6949,11 @@ Environment:
     // Get file object pointer.
     //
 
-    status = ObReferenceObjectByHandle(*FileHandle,
-                                       FileAccess,
-                                       IoFileObjectType,
-                                       KernelMode,
-                                       (PVOID*)FileObject,
-                                       NULL);
+    status =
+        ObReferenceObjectByHandle(*FileHandle, FileAccess, IoFileObjectType, KernelMode, (PVOID *)FileObject, NULL);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         ObDereferenceObject(*SectionObject);
         *SectionObject = NULL;
         *FileObject = NULL;
@@ -7001,9 +6962,9 @@ Environment:
         goto _return;
     }
 
- _return:
+_return:
 
-    DBGPR((CCPFID,PFPRFD,"CCPF: GetSection(%wZ)=%x\n", FilePath, status)); 
+    DBGPR((CCPFID, PFPRFD, "CCPF: GetSection(%wZ)=%x\n", FilePath, status));
 
     return status;
 }
@@ -7013,10 +6974,7 @@ Environment:
 //
 
 NTSTATUS
-CcPfScanCommandLine(
-    OUT PULONG PrefetchHint,
-    OPTIONAL OUT PULONG HashId
-    )
+CcPfScanCommandLine(OUT PULONG PrefetchHint, OPTIONAL OUT PULONG HashId)
 
 /*++
 
@@ -7063,7 +7021,7 @@ Environment:
     NTSTATUS Status;
     ULONG PrefetchHintStringMaxChars;
     WCHAR PrefetchHintString[15];
-    
+
     //
     // Initialize locals.
     //
@@ -7083,20 +7041,21 @@ Environment:
     // Make sure the user mode process environment block is not gone.
     //
 
-    if (!Peb) {
+    if (!Peb)
+    {
         Status = STATUS_TOO_LATE;
         goto cleanup;
     }
 
-    try {
+    try
+    {
 
         //
         // Make sure we can access the process parameters structure.
         //
 
         ProcessParameters = Peb->ProcessParameters;
-        ProbeForReadSmallStructure(ProcessParameters,
-                                   sizeof(*ProcessParameters),
+        ProbeForReadSmallStructure(ProcessParameters, sizeof(*ProcessParameters),
                                    _alignof(RTL_USER_PROCESS_PARAMETERS));
 
         //
@@ -7109,7 +7068,8 @@ Environment:
         // Is there a command line?
         //
 
-        if (!CommandLine.Buffer) {
+        if (!CommandLine.Buffer)
+        {
             Status = STATUS_NOT_FOUND;
             goto cleanup;
         }
@@ -7118,8 +7078,9 @@ Environment:
         // If ProcessParameters has been de-normalized, normalize CommandLine.
         //
 
-        if ((ProcessParameters->Flags & RTL_USER_PROC_PARAMS_NORMALIZED) == 0) {
-            CommandLine.Buffer = (PWSTR)((PCHAR)ProcessParameters + (ULONG_PTR) CommandLine.Buffer);
+        if ((ProcessParameters->Flags & RTL_USER_PROC_PARAMS_NORMALIZED) == 0)
+        {
+            CommandLine.Buffer = (PWSTR)((PCHAR)ProcessParameters + (ULONG_PTR)CommandLine.Buffer);
         }
 
         //
@@ -7134,7 +7095,8 @@ Environment:
 
         FoundPosition = CcPfFindString(&CommandLine, &PrefetchParameterName);
 
-        if (FoundPosition) {
+        if (FoundPosition)
+        {
 
             //
             // Copy the decimal number following the prefetch hint switch into
@@ -7154,9 +7116,8 @@ Environment:
             // hint command line parameter.
             //
 
-            while ((Source < SourceEnd) && 
-                   (Destination < DestinationEnd) && 
-                   (*Source != L' ')) {
+            while ((Source < SourceEnd) && (Destination < DestinationEnd) && (*Source != L' '))
+            {
 
                 *Destination = *Source;
 
@@ -7165,7 +7126,7 @@ Environment:
             }
 
             //
-            // Terminate prefetch hint string. DestinationEnd is the last 
+            // Terminate prefetch hint string. DestinationEnd is the last
             // character within the PrefetchHintString bounds. Destination
             // can only be <= DestinationEnd.
             //
@@ -7179,14 +7140,14 @@ Environment:
             //
 
             *PrefetchHint = _wtol(PrefetchHintString);
-
         }
 
         //
         // Calculate hash id.
         //
 
-        if (HashId) {
+        if (HashId)
+        {
             *HashId = CcPfHashValue(CommandLine.Buffer, CommandLine.Length);
         }
 
@@ -7195,8 +7156,9 @@ Environment:
         //
 
         Status = STATUS_SUCCESS;
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         Status = GetExceptionCode();
         CCPF_ASSERT(!NT_SUCCESS(Status));
@@ -7208,17 +7170,14 @@ Environment:
 
 cleanup:
 
-    return Status;    
+    return Status;
 }
 
 //
 // Reference count implementation:
 //
 
-VOID
-CcPfInitializeRefCount(
-    PCCPF_REFCOUNT RefCount
-    )
+VOID CcPfInitializeRefCount(PCCPF_REFCOUNT RefCount)
 
 /*++
 
@@ -7238,7 +7197,7 @@ Environment:
 
     Kernel Mode, IRQL == PASSIVE_LEVEL.
 
---*/   
+--*/
 
 {
     //
@@ -7246,11 +7205,11 @@ Environment:
     // exclusive access they decrement it one extra so it may become
     // 0.
     //
-    
+
     RefCount->RefCount = 1;
 
     //
-    // Nobody has exclusive access to start with. 
+    // Nobody has exclusive access to start with.
     //
 
     RefCount->Exclusive = 0;
@@ -7258,9 +7217,7 @@ Environment:
 
 NTSTATUS
 FASTCALL
-CcPfAddRef(
-    PCCPF_REFCOUNT RefCount
-    )
+CcPfAddRef(PCCPF_REFCOUNT RefCount)
 
 /*++
 
@@ -7281,15 +7238,16 @@ Environment:
 
     Kernel Mode, IRQL <= DISPATCH_LEVEL if RefCount is non-paged.
 
---*/   
+--*/
 
 {
     //
     // Do a fast check if the lock was acquire exclusive. If so just
     // return.
     //
-    
-    if (RefCount->Exclusive) {
+
+    if (RefCount->Exclusive)
+    {
         return STATUS_UNSUCCESSFUL;
     }
 
@@ -7298,38 +7256,36 @@ Environment:
     //
 
     InterlockedIncrement(&RefCount->RefCount);
-    
+
     //
     // If it was acquired exclusive, pull back.
     //
 
-    if (RefCount->Exclusive) {
-        
+    if (RefCount->Exclusive)
+    {
+
         InterlockedDecrement(&RefCount->RefCount);
 
         //
         // Reference count should never go negative.
         //
-        
-        CCPF_ASSERT(RefCount->RefCount >= 0);
-                
-        return STATUS_UNSUCCESSFUL;
 
-    } else {
+        CCPF_ASSERT(RefCount->RefCount >= 0);
+
+        return STATUS_UNSUCCESSFUL;
+    }
+    else
+    {
 
         //
         // We got our reference.
         //
 
         return STATUS_SUCCESS;
-    }  
+    }
 }
 
-VOID
-FASTCALL
-CcPfDecRef(
-    PCCPF_REFCOUNT RefCount
-    )
+VOID FASTCALL CcPfDecRef(PCCPF_REFCOUNT RefCount)
 
 /*++
 
@@ -7349,14 +7305,14 @@ Environment:
 
     Kernel Mode, IRQL <= DISPATCH_LEVEL if RefCount is non-paged.
 
---*/   
+--*/
 
 {
     //
     // Decrement the reference count.
     //
 
-    InterlockedDecrement(&RefCount->RefCount);   
+    InterlockedDecrement(&RefCount->RefCount);
 
     //
     // Reference count should never go negative.
@@ -7367,10 +7323,7 @@ Environment:
 
 NTSTATUS
 FASTCALL
-CcPfAddRefEx(
-    PCCPF_REFCOUNT RefCount,
-    ULONG Count
-    )
+CcPfAddRefEx(PCCPF_REFCOUNT RefCount, ULONG Count)
 
 /*++
 
@@ -7392,15 +7345,16 @@ Environment:
 
     Kernel Mode, IRQL <= DISPATCH_LEVEL if RefCount is non-paged.
 
---*/   
+--*/
 
 {
     //
     // Do a fast check if the lock was acquire exclusive. If so just
     // return.
     //
-    
-    if (RefCount->Exclusive) {
+
+    if (RefCount->Exclusive)
+    {
         return STATUS_UNSUCCESSFUL;
     }
 
@@ -7409,39 +7363,36 @@ Environment:
     //
 
     InterlockedExchangeAdd(&RefCount->RefCount, Count);
-    
+
     //
     // If it was acquired exclusive, pull back.
     //
 
-    if (RefCount->Exclusive) {
-        
-        InterlockedExchangeAdd(&RefCount->RefCount, -(LONG) Count);
+    if (RefCount->Exclusive)
+    {
+
+        InterlockedExchangeAdd(&RefCount->RefCount, -(LONG)Count);
 
         //
         // Reference count should never go negative.
         //
-        
-        CCPF_ASSERT(RefCount->RefCount >= 0);
-                
-        return STATUS_UNSUCCESSFUL;
 
-    } else {
+        CCPF_ASSERT(RefCount->RefCount >= 0);
+
+        return STATUS_UNSUCCESSFUL;
+    }
+    else
+    {
 
         //
         // We got our reference.
         //
 
         return STATUS_SUCCESS;
-    }  
+    }
 }
 
-VOID
-FASTCALL
-CcPfDecRefEx(
-    PCCPF_REFCOUNT RefCount,
-    ULONG Count
-    )
+VOID FASTCALL CcPfDecRefEx(PCCPF_REFCOUNT RefCount, ULONG Count)
 
 /*++
 
@@ -7462,14 +7413,14 @@ Environment:
 
     Kernel Mode, IRQL <= DISPATCH_LEVEL if RefCount is non-paged.
 
---*/   
+--*/
 
 {
     //
     // Decrement the reference count.
     //
 
-    InterlockedExchangeAdd(&RefCount->RefCount, -(LONG) Count);   
+    InterlockedExchangeAdd(&RefCount->RefCount, -(LONG)Count);
 
     //
     // Reference count should never go negative.
@@ -7479,9 +7430,7 @@ Environment:
 }
 
 NTSTATUS
-CcPfAcquireExclusiveRef(
-    PCCPF_REFCOUNT RefCount
-    )
+CcPfAcquireExclusiveRef(PCCPF_REFCOUNT RefCount)
 
 /*++
 
@@ -7503,7 +7452,7 @@ Environment:
 
     Kernel Mode, IRQL == PASSIVE_LEVEL.
 
---*/   
+--*/
 
 {
     LONG OldValue;
@@ -7515,12 +7464,13 @@ Environment:
 
     OldValue = InterlockedCompareExchange(&RefCount->Exclusive, 1, 0);
 
-    if (OldValue != 0) {
+    if (OldValue != 0)
+    {
 
         //
         // Somebody already had the lock.
         //
-        
+
         return STATUS_UNSUCCESSFUL;
     }
 
@@ -7535,33 +7485,34 @@ Environment:
     // references are released.
     //
 
-    do {
+    do
+    {
 
-        if (RefCount->RefCount == 0) {
+        if (RefCount->RefCount == 0)
+        {
 
             break;
-
-        } else {
+        }
+        else
+        {
 
             //
             // Sleep for a while [in 100ns, negative so it is relative
             // to current system time].
             //
 
-            SleepTime.QuadPart = - 10 * 1000 * 10; // 10 ms.
+            SleepTime.QuadPart = -10 * 1000 * 10; // 10 ms.
 
             KeDelayExecutionThread(KernelMode, FALSE, &SleepTime);
         }
 
-    } while(TRUE);
+    } while (TRUE);
 
     return STATUS_SUCCESS;
 }
 
 PCCPF_TRACE_HEADER
-CcPfReferenceProcessTrace(
-    PEPROCESS Process
-    )
+CcPfReferenceProcessTrace(PEPROCESS Process)
 /*++
 
 Routine Description:
@@ -7589,42 +7540,47 @@ Return Value:
     //
     // Attempt the fast reference
     //
-    
-    OldRef = ExFastReference (&Process->PrefetchTrace);
 
-    Trace = ExFastRefGetObject (OldRef);
+    OldRef = ExFastReference(&Process->PrefetchTrace);
+
+    Trace = ExFastRefGetObject(OldRef);
 
     //
     // Optimize the common path where there won't be a trace on the
     // process header (since traces are just for the application launch.)
     //
 
-    if (Trace == NULL) {
+    if (Trace == NULL)
+    {
         return 0;
     }
-    
+
     //
     // We fail if there wasn't a trace or if it has no cached references
     // left. Both of these cases had the cached reference count zero.
     //
-    
-    Unused = ExFastRefGetUnusedReferences (OldRef);
 
-    if (Unused <= 1) {
+    Unused = ExFastRefGetUnusedReferences(OldRef);
+
+    if (Unused <= 1)
+    {
         //
         // If there are no references left then we have to do this under the lock
         //
-        if (Unused == 0) {
+        if (Unused == 0)
+        {
             Status = STATUS_SUCCESS;
-            KeAcquireSpinLock(&CcPfGlobals.ActiveTracesLock, &OldIrql);                    
+            KeAcquireSpinLock(&CcPfGlobals.ActiveTracesLock, &OldIrql);
 
-            Trace = ExFastRefGetObject (Process->PrefetchTrace);
-            if (Trace != NULL) {
+            Trace = ExFastRefGetObject(Process->PrefetchTrace);
+            if (Trace != NULL)
+            {
                 Status = CcPfAddRef(&Trace->RefCount);
             }
             KeReleaseSpinLock(&CcPfGlobals.ActiveTracesLock, OldIrql);
 
-            if (!NT_SUCCESS (Status)) {
+            if (!NT_SUCCESS(Status))
+            {
                 Trace = NULL;
             }
             return Trace;
@@ -7635,34 +7591,33 @@ Return Value:
         // the next referencer by resetting the counter to its max. Since we now
         // have a reference to the object we can do this.
         //
-        
-        RefsToAdd = ExFastRefGetAdditionalReferenceCount ();
-        Status = CcPfAddRefEx (&Trace->RefCount, RefsToAdd);
+
+        RefsToAdd = ExFastRefGetAdditionalReferenceCount();
+        Status = CcPfAddRefEx(&Trace->RefCount, RefsToAdd);
 
         //
         // If we failed to obtain additional references then just ignore the fixup.
         //
-        
-        if (NT_SUCCESS (Status)) {
+
+        if (NT_SUCCESS(Status))
+        {
 
             //
             // If we fail to add them to the fast reference structure then
             // give them back to the trace and forget about fixup.
             //
-            
-            if (!ExFastRefAddAdditionalReferenceCounts (&Process->PrefetchTrace, Trace, RefsToAdd)) {
-                CcPfDecRefEx (&Trace->RefCount, RefsToAdd);
+
+            if (!ExFastRefAddAdditionalReferenceCounts(&Process->PrefetchTrace, Trace, RefsToAdd))
+            {
+                CcPfDecRefEx(&Trace->RefCount, RefsToAdd);
             }
         }
-
     }
     return Trace;
 }
 
 PCCPF_TRACE_HEADER
-CcPfRemoveProcessTrace(
-    PEPROCESS Process
-    )
+CcPfRemoveProcessTrace(PEPROCESS Process)
 /*++
 
 Routine Description:
@@ -7690,8 +7645,8 @@ Return Value:
     // Do the swap.
     //
 
-    OldRef = ExFastRefSwapObject (&Process->PrefetchTrace, NULL);
-    Trace = ExFastRefGetObject (OldRef);
+    OldRef = ExFastRefSwapObject(&Process->PrefetchTrace, NULL);
+    Trace = ExFastRefGetObject(OldRef);
 
     //
     // We should have a trace on the process if we are trying to remove it.
@@ -7700,23 +7655,24 @@ Return Value:
     CCPF_ASSERT(Trace);
 
     //
-    // Work out how many cached references there were (if any) and 
+    // Work out how many cached references there were (if any) and
     // return them.
     //
 
-    RefsToReturn = ExFastRefGetUnusedReferences (OldRef);
+    RefsToReturn = ExFastRefGetUnusedReferences(OldRef);
 
-    if (RefsToReturn > 0) {
-        CcPfDecRefEx (&Trace->RefCount, RefsToReturn);
+    if (RefsToReturn > 0)
+    {
+        CcPfDecRefEx(&Trace->RefCount, RefsToReturn);
     }
 
     //
-    // Force any slow path references out of that path now before we return 
+    // Force any slow path references out of that path now before we return
     // the trace.
     //
 
-#if !defined (NT_UP)
-    KeAcquireSpinLock(&CcPfGlobals.ActiveTracesLock, &OldIrql);                    
+#if !defined(NT_UP)
+    KeAcquireSpinLock(&CcPfGlobals.ActiveTracesLock, &OldIrql);
     KeReleaseSpinLock(&CcPfGlobals.ActiveTracesLock, OldIrql);
 #endif // NT_UP
 
@@ -7726,14 +7682,10 @@ Return Value:
     //
 
     return Trace;
-
 }
 
 NTSTATUS
-CcPfAddProcessTrace(
-    PEPROCESS Process,
-    PCCPF_TRACE_HEADER Trace
-    )
+CcPfAddProcessTrace(PEPROCESS Process, PCCPF_TRACE_HEADER Trace)
 /*++
 
 Routine Description:
@@ -7759,12 +7711,13 @@ Return Value:
     // be associated with the fast reference as a whole (allowing the slow
     // path to access the trace.)
     //
-    
-    Status = CcPfAddRefEx (&Trace->RefCount, ExFastRefGetAdditionalReferenceCount () + 1);
-    if (NT_SUCCESS (Status)) {
-        ExFastRefInitialize (&Process->PrefetchTrace, Trace);
+
+    Status = CcPfAddRefEx(&Trace->RefCount, ExFastRefGetAdditionalReferenceCount() + 1);
+    if (NT_SUCCESS(Status))
+    {
+        ExFastRefInitialize(&Process->PrefetchTrace, Trace);
     }
-    
+
     return Status;
 }
 
@@ -7773,10 +7726,7 @@ Return Value:
 //
 
 PWCHAR
-CcPfFindString (
-    PUNICODE_STRING SearchIn,
-    PUNICODE_STRING SearchFor
-    )
+CcPfFindString(PUNICODE_STRING SearchIn, PUNICODE_STRING SearchFor)
 
 /*++
 
@@ -7813,7 +7763,8 @@ Environment:
 
     SearchForEnd = SearchFor->Buffer + (SearchFor->Length / sizeof(WCHAR));
 
-    while (SearchInPosition < SearchInEnd) {
+    while (SearchInPosition < SearchInEnd)
+    {
 
         //
         // Try to match the SearchFor string starting at SearchInPosition.
@@ -7821,10 +7772,10 @@ Environment:
 
         SearchInMatchPosition = SearchInPosition;
         SearchForPosition = SearchFor->Buffer;
-        
-        while ((SearchInMatchPosition < SearchInEnd) &&
-               (SearchForPosition < SearchForEnd) &&
-               (*SearchInMatchPosition == *SearchForPosition)) {
+
+        while ((SearchInMatchPosition < SearchInEnd) && (SearchForPosition < SearchForEnd) &&
+               (*SearchInMatchPosition == *SearchForPosition))
+        {
 
             SearchInMatchPosition++;
             SearchForPosition++;
@@ -7836,12 +7787,13 @@ Environment:
 
         CCPF_ASSERT(SearchInMatchPosition <= SearchInEnd);
         CCPF_ASSERT(SearchForPosition <= SearchForEnd);
-               
+
         //
         // If we matched up to the end of SearchFor string, we found it.
         //
 
-        if (SearchForPosition == SearchForEnd) {
+        if (SearchForPosition == SearchForEnd)
+        {
             return SearchInPosition;
         }
 
@@ -7860,10 +7812,7 @@ Environment:
 }
 
 ULONG
-CcPfHashValue(
-    PVOID key,
-    ULONG len
-    )
+CcPfHashValue(PVOID key, ULONG len)
 
 /*++
 
@@ -7889,24 +7838,21 @@ Environment:
 
 {
     char *cp = key;
-    ULONG i, convkey=0;
-    for(i = 0; i < len; i++)
+    ULONG i, convkey = 0;
+    for (i = 0; i < len; i++)
     {
-        convkey = 37 * convkey + (unsigned int) *cp;
+        convkey = 37 * convkey + (unsigned int)*cp;
         cp++;
     }
 
-    #define CCPF_RNDM_CONSTANT   314159269
-    #define CCPF_RNDM_PRIME     1000000007
+#define CCPF_RNDM_CONSTANT 314159269
+#define CCPF_RNDM_PRIME 1000000007
 
     return (abs(CCPF_RNDM_CONSTANT * convkey) % CCPF_RNDM_PRIME);
 }
 
-NTSTATUS 
-CcPfIsVolumeMounted (
-    IN WCHAR *VolumePath,
-    OUT BOOLEAN *VolumeMounted
-    )
+NTSTATUS
+CcPfIsVolumeMounted(IN WCHAR *VolumePath, OUT BOOLEAN *VolumeMounted)
 
 /*++
 
@@ -7943,7 +7889,7 @@ Environment:
     //
     // Initialize locals.
     //
-      
+
     OpenedVolume = FALSE;
 
     //
@@ -7951,28 +7897,17 @@ Environment:
     // causing it to be mounted.
     //
 
-    RtlInitUnicodeString(&VolumePathU, VolumePath);  
+    RtlInitUnicodeString(&VolumePathU, VolumePath);
 
-    InitializeObjectAttributes(&ObjectAttributes,
-                               &VolumePathU,
-                               OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-                               NULL,
-                               NULL);
-   
-    
-    Status = ZwCreateFile(&VolumeHandle,
-                          FILE_READ_ATTRIBUTES | SYNCHRONIZE,
-                          &ObjectAttributes,
-                          &IoStatusBlock,
-                          0,
-                          0,
-                          FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
-                          FILE_OPEN,
-                          FILE_SYNCHRONOUS_IO_NONALERT,
-                          NULL,
-                          0);
+    InitializeObjectAttributes(&ObjectAttributes, &VolumePathU, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
 
-    if (!NT_SUCCESS(Status)) {
+
+    Status = ZwCreateFile(&VolumeHandle, FILE_READ_ATTRIBUTES | SYNCHRONIZE, &ObjectAttributes, &IoStatusBlock, 0, 0,
+                          FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_OPEN,
+                          FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
+
+    if (!NT_SUCCESS(Status))
+    {
         goto cleanup;
     }
 
@@ -7982,13 +7917,11 @@ Environment:
     // Make the device info query.
     //
 
-    Status = ZwQueryVolumeInformationFile(VolumeHandle,
-                                          &IoStatusBlock,
-                                          &DeviceInfo,
-                                          sizeof(DeviceInfo),
+    Status = ZwQueryVolumeInformationFile(VolumeHandle, &IoStatusBlock, &DeviceInfo, sizeof(DeviceInfo),
                                           FileFsDeviceInformation);
-    
-    if (NT_ERROR(Status)) {
+
+    if (NT_ERROR(Status))
+    {
         goto cleanup;
     }
 
@@ -8002,21 +7935,17 @@ Environment:
 
 cleanup:
 
-    if (OpenedVolume) {
+    if (OpenedVolume)
+    {
         ZwClose(VolumeHandle);
     }
 
     return Status;
-
 }
 
 NTSTATUS
-CcPfQueryVolumeInfo (
-    IN WCHAR *VolumePath,
-    OPTIONAL OUT HANDLE *VolumeHandleOut,
-    OUT PLARGE_INTEGER CreationTime,
-    OUT PULONG SerialNumber
-    )
+CcPfQueryVolumeInfo(IN WCHAR *VolumePath, OPTIONAL OUT HANDLE *VolumeHandleOut, OUT PLARGE_INTEGER CreationTime,
+                    OUT PULONG SerialNumber)
 
 /*++
 
@@ -8057,11 +7986,11 @@ Environment:
     IO_STATUS_BLOCK IoStatusBlock;
     NTSTATUS Status;
     BOOLEAN OpenedVolume;
-        
+
     //
     // Initialize locals.
     //
-      
+
     OpenedVolume = FALSE;
 
     //
@@ -8070,31 +7999,20 @@ Environment:
     // mounted.
     //
 
-    RtlInitUnicodeString(&VolumePathU, VolumePath);  
+    RtlInitUnicodeString(&VolumePathU, VolumePath);
 
-    InitializeObjectAttributes(&ObjectAttributes,
-                               &VolumePathU,
-                               OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-                               NULL,
-                               NULL);
-   
-    
-    Status = ZwCreateFile(&VolumeHandle,
-                          FILE_WRITE_ATTRIBUTES | FILE_READ_ATTRIBUTES | SYNCHRONIZE,
-                          &ObjectAttributes,
-                          &IoStatusBlock,
-                          0,
-                          0,
-                          FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
-                          FILE_OPEN,
-                          FILE_SYNCHRONOUS_IO_NONALERT,
-                          NULL,
-                          0);
+    InitializeObjectAttributes(&ObjectAttributes, &VolumePathU, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
 
-    if (!NT_SUCCESS(Status)) {
+
+    Status = ZwCreateFile(&VolumeHandle, FILE_WRITE_ATTRIBUTES | FILE_READ_ATTRIBUTES | SYNCHRONIZE, &ObjectAttributes,
+                          &IoStatusBlock, 0, 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_OPEN,
+                          FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
+
+    if (!NT_SUCCESS(Status))
+    {
         goto cleanup;
     }
-    
+
     OpenedVolume = TRUE;
 
     //
@@ -8104,13 +8022,11 @@ Environment:
     // and return a STATUS_MORE_DATA warning status.
     //
 
-    Status = ZwQueryVolumeInformationFile(VolumeHandle,
-                                          &IoStatusBlock,
-                                          &VolumeInfo,
-                                          sizeof(VolumeInfo),
+    Status = ZwQueryVolumeInformationFile(VolumeHandle, &IoStatusBlock, &VolumeInfo, sizeof(VolumeInfo),
                                           FileFsVolumeInformation);
-    
-    if (NT_ERROR(Status)) {
+
+    if (NT_ERROR(Status))
+    {
         goto cleanup;
     }
 
@@ -8119,22 +8035,25 @@ Environment:
 
     Status = STATUS_SUCCESS;
 
- cleanup:
+cleanup:
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // If the caller wants the volume handle, hand it over to them.
         // It is their responsibility to close the handle.
         //
 
-        if (VolumeHandleOut) {
+        if (VolumeHandleOut)
+        {
             *VolumeHandleOut = VolumeHandle;
             OpenedVolume = FALSE;
         }
     }
-   
-    if (OpenedVolume) {
+
+    if (OpenedVolume)
+    {
         ZwClose(VolumeHandle);
     }
 
@@ -8150,11 +8069,7 @@ Environment:
 //
 
 BOOLEAN
-PfWithinBounds(
-    PVOID Pointer,
-    PVOID Base,
-    ULONG Length
-    )
+PfWithinBounds(PVOID Pointer, PVOID Base, ULONG Length)
 
 /*++
 
@@ -8179,20 +8094,20 @@ Return Value:
 --*/
 
 {
-    if (((PCHAR)Pointer < (PCHAR)Base) ||
-        ((PCHAR)Pointer >= ((PCHAR)Base + Length))) {
+    if (((PCHAR)Pointer < (PCHAR)Base) || ((PCHAR)Pointer >= ((PCHAR)Base + Length)))
+    {
 
         return FALSE;
-    } else {
+    }
+    else
+    {
 
         return TRUE;
     }
 }
 
 BOOLEAN
-PfVerifyScenarioId (
-    PPF_SCENARIO_ID ScenarioId
-    )
+PfVerifyScenarioId(PPF_SCENARIO_ID ScenarioId)
 
 /*++
 
@@ -8210,7 +8125,7 @@ Return Value:
     FALSE - ScenarioId is corrupt.
 
 --*/
-    
+
 {
     LONG CurCharIdx;
 
@@ -8218,14 +8133,17 @@ Return Value:
     // Make sure the scenario name is NUL terminated.
     //
 
-    for (CurCharIdx = PF_SCEN_ID_MAX_CHARS; CurCharIdx >= 0; CurCharIdx--) {
+    for (CurCharIdx = PF_SCEN_ID_MAX_CHARS; CurCharIdx >= 0; CurCharIdx--)
+    {
 
-        if (ScenarioId->ScenName[CurCharIdx] == 0) {
+        if (ScenarioId->ScenName[CurCharIdx] == 0)
+        {
             break;
         }
     }
 
-    if (ScenarioId->ScenName[CurCharIdx] != 0) {
+    if (ScenarioId->ScenName[CurCharIdx] != 0)
+    {
         return FALSE;
     }
 
@@ -8233,23 +8151,20 @@ Return Value:
     // Make sure there is a scenario name.
     //
 
-    if (CurCharIdx == 0) {
+    if (CurCharIdx == 0)
+    {
         return FALSE;
     }
 
     //
     // Checks passed.
     //
-    
+
     return TRUE;
 }
 
 BOOLEAN
-PfVerifyScenarioBuffer(
-    PPF_SCENARIO_HEADER Scenario,
-    ULONG BufferSize,
-    PULONG FailedCheck
-    )
+PfVerifyScenarioBuffer(PPF_SCENARIO_HEADER Scenario, ULONG BufferSize, PULONG FailedCheck)
 
 /*++
 
@@ -8281,7 +8196,7 @@ Return Value:
     ULONG SectionIdx;
     PPF_PAGE_RECORD Pages;
     PPF_PAGE_RECORD pPage;
-    LONG PageIdx;   
+    LONG PageIdx;
     PCHAR FileNames;
     PCHAR pFileNameStart;
     PCHAR pFileNameEnd;
@@ -8307,20 +8222,21 @@ Return Value:
     //
 
     FailedCheckId = 0;
-        
+
     //
     // Initialize return value to FALSE. It will be set to TRUE only
     // after all the checks pass.
     //
-    
+
     ScenarioVerified = FALSE;
 
     //
     // The buffer should at least contain the scenario header.
     //
 
-    if (BufferSize < sizeof(PF_SCENARIO_HEADER)) {
-        
+    if (BufferSize < sizeof(PF_SCENARIO_HEADER))
+    {
+
         FailedCheckId = 10;
         goto cleanup;
     }
@@ -8329,8 +8245,8 @@ Return Value:
     // Check version and magic on the header.
     //
 
-    if (Scenario->Version != PF_CURRENT_VERSION ||
-        Scenario->MagicNumber != PF_SCENARIO_MAGIC_NUMBER) { 
+    if (Scenario->Version != PF_CURRENT_VERSION || Scenario->MagicNumber != PF_SCENARIO_MAGIC_NUMBER)
+    {
 
         FailedCheckId = 20;
         goto cleanup;
@@ -8340,8 +8256,9 @@ Return Value:
     // The buffer should not be greater than max allowed size.
     //
 
-    if (BufferSize > PF_MAXIMUM_SCENARIO_SIZE) {
-        
+    if (BufferSize > PF_MAXIMUM_SCENARIO_SIZE)
+    {
+
         FailedCheckId = 25;
         goto cleanup;
     }
@@ -8350,7 +8267,8 @@ Return Value:
     // Check for legal scenario type.
     //
 
-    if (Scenario->ScenarioType >= PfMaxScenarioType) {
+    if (Scenario->ScenarioType >= PfMaxScenarioType)
+    {
         FailedCheckId = 27;
         goto cleanup;
     }
@@ -8359,30 +8277,28 @@ Return Value:
     // Check limits on number of pages, sections etc.
     //
 
-    if (Scenario->NumSections > PF_MAXIMUM_SECTIONS ||
-        Scenario->NumMetadataRecords > PF_MAXIMUM_SECTIONS ||
-        Scenario->NumPages > PF_MAXIMUM_PAGES ||
-        Scenario->FileNameInfoSize > PF_MAXIMUM_FILE_NAME_DATA_SIZE) {
-        
+    if (Scenario->NumSections > PF_MAXIMUM_SECTIONS || Scenario->NumMetadataRecords > PF_MAXIMUM_SECTIONS ||
+        Scenario->NumPages > PF_MAXIMUM_PAGES || Scenario->FileNameInfoSize > PF_MAXIMUM_FILE_NAME_DATA_SIZE)
+    {
+
         FailedCheckId = 30;
         goto cleanup;
     }
 
-    if (Scenario->NumSections == 0 ||
-        Scenario->NumPages == 0 ||
-        Scenario->FileNameInfoSize == 0) {
-        
+    if (Scenario->NumSections == 0 || Scenario->NumPages == 0 || Scenario->FileNameInfoSize == 0)
+    {
+
         FailedCheckId = 33;
         goto cleanup;
     }
-    
+
     //
     // Check limit on sensitivity.
     //
 
-    if (Scenario->Sensitivity < PF_MIN_SENSITIVITY ||
-        Scenario->Sensitivity > PF_MAX_SENSITIVITY) {
-        
+    if (Scenario->Sensitivity < PF_MIN_SENSITIVITY || Scenario->Sensitivity > PF_MAX_SENSITIVITY)
+    {
+
         FailedCheckId = 35;
         goto cleanup;
     }
@@ -8391,8 +8307,9 @@ Return Value:
     // Make sure the scenario id is valid.
     //
 
-    if (!PfVerifyScenarioId(&Scenario->ScenarioId)) {
-        
+    if (!PfVerifyScenarioId(&Scenario->ScenarioId))
+    {
+
         FailedCheckId = 37;
         goto cleanup;
     }
@@ -8401,107 +8318,110 @@ Return Value:
     // Initialize pointers to tables.
     //
 
-    Sections = (PPF_SECTION_RECORD) ((PCHAR)Scenario + Scenario->SectionInfoOffset);
-       
-    if (!PfWithinBounds(Sections, Scenario, BufferSize)) {
+    Sections = (PPF_SECTION_RECORD)((PCHAR)Scenario + Scenario->SectionInfoOffset);
+
+    if (!PfWithinBounds(Sections, Scenario, BufferSize))
+    {
         FailedCheckId = 40;
         goto cleanup;
     }
 
-    if (!PfWithinBounds((PCHAR) &Sections[Scenario->NumSections] - 1, 
-                        Scenario, 
-                        BufferSize)) {
+    if (!PfWithinBounds((PCHAR)&Sections[Scenario->NumSections] - 1, Scenario, BufferSize))
+    {
         FailedCheckId = 45;
         goto cleanup;
-    }   
+    }
 
-    Pages = (PPF_PAGE_RECORD) ((PCHAR)Scenario + Scenario->PageInfoOffset);
-       
-    if (!PfWithinBounds(Pages, Scenario, BufferSize)) {
+    Pages = (PPF_PAGE_RECORD)((PCHAR)Scenario + Scenario->PageInfoOffset);
+
+    if (!PfWithinBounds(Pages, Scenario, BufferSize))
+    {
         FailedCheckId = 50;
         goto cleanup;
     }
 
-    if (!PfWithinBounds((PCHAR) &Pages[Scenario->NumPages] - 1, 
-                        Scenario, 
-                        BufferSize)) {
+    if (!PfWithinBounds((PCHAR)&Pages[Scenario->NumPages] - 1, Scenario, BufferSize))
+    {
         FailedCheckId = 55;
         goto cleanup;
     }
 
     FileNames = (PCHAR)Scenario + Scenario->FileNameInfoOffset;
-      
-    if (!PfWithinBounds(FileNames, Scenario, BufferSize)) {
+
+    if (!PfWithinBounds(FileNames, Scenario, BufferSize))
+    {
         FailedCheckId = 60;
         goto cleanup;
     }
 
-    if (!PfWithinBounds(FileNames + Scenario->FileNameInfoSize - 1, 
-                        Scenario, 
-                        BufferSize)) {
+    if (!PfWithinBounds(FileNames + Scenario->FileNameInfoSize - 1, Scenario, BufferSize))
+    {
         FailedCheckId = 70;
         goto cleanup;
     }
 
     MetadataInfoBase = (PCHAR)Scenario + Scenario->MetadataInfoOffset;
-    MetadataRecordTable = (PPF_METADATA_RECORD) MetadataInfoBase;
+    MetadataRecordTable = (PPF_METADATA_RECORD)MetadataInfoBase;
 
-    if (!PfWithinBounds(MetadataInfoBase, Scenario, BufferSize)) {
+    if (!PfWithinBounds(MetadataInfoBase, Scenario, BufferSize))
+    {
         FailedCheckId = 73;
         goto cleanup;
     }
 
-    if (!PfWithinBounds(MetadataInfoBase + Scenario->MetadataInfoSize - 1, 
-                        Scenario, 
-                        BufferSize)) {
+    if (!PfWithinBounds(MetadataInfoBase + Scenario->MetadataInfoSize - 1, Scenario, BufferSize))
+    {
         FailedCheckId = 74;
         goto cleanup;
-    }   
+    }
 
-    if (!PfWithinBounds(((PCHAR) &MetadataRecordTable[Scenario->NumMetadataRecords]) - 1, 
-                        Scenario, 
-                        BufferSize)) {
+    if (!PfWithinBounds(((PCHAR)&MetadataRecordTable[Scenario->NumMetadataRecords]) - 1, Scenario, BufferSize))
+    {
         FailedCheckId = 75;
         goto cleanup;
-    }   
-    
+    }
+
     //
     // Verify that sections contain valid information.
     //
 
     NumRemainingPages = Scenario->NumPages;
 
-    for (SectionIdx = 0; SectionIdx < Scenario->NumSections; SectionIdx++) {
-        
+    for (SectionIdx = 0; SectionIdx < Scenario->NumSections; SectionIdx++)
+    {
+
         pSection = &Sections[SectionIdx];
 
         //
-        // Check if file name is within bounds. 
+        // Check if file name is within bounds.
         //
 
         pFileNameStart = FileNames + pSection->FileNameOffset;
 
-        if (!PfWithinBounds(pFileNameStart, Scenario, BufferSize)) {
+        if (!PfWithinBounds(pFileNameStart, Scenario, BufferSize))
+        {
             FailedCheckId = 80;
             goto cleanup;
         }
 
         //
-        // Make sure there is a valid sized file name. 
+        // Make sure there is a valid sized file name.
         //
 
-        if (pSection->FileNameLength == 0) {
+        if (pSection->FileNameLength == 0)
+        {
             FailedCheckId = 90;
-            goto cleanup;    
+            goto cleanup;
         }
 
         //
         // Check file name max length.
         //
 
-        if (pSection->FileNameLength > PF_MAXIMUM_SECTION_FILE_NAME_LENGTH) {
+        if (pSection->FileNameLength > PF_MAXIMUM_SECTION_FILE_NAME_LENGTH)
+        {
             FailedCheckId = 100;
-            goto cleanup;    
+            goto cleanup;
         }
 
         //
@@ -8512,7 +8432,8 @@ Return Value:
         FileNameSize = (pSection->FileNameLength + 1) * sizeof(WCHAR);
         pFileNameEnd = pFileNameStart + FileNameSize - 1;
 
-        if (!PfWithinBounds(pFileNameEnd, Scenario, BufferSize)) {
+        if (!PfWithinBounds(pFileNameEnd, Scenario, BufferSize))
+        {
             FailedCheckId = 110;
             goto cleanup;
         }
@@ -8520,10 +8441,11 @@ Return Value:
         //
         // Check if the file name is NUL terminated.
         //
-        
-        pwFileName = (PWCHAR) pFileNameStart;
-        
-        if (pwFileName[pSection->FileNameLength] != 0) {
+
+        pwFileName = (PWCHAR)pFileNameStart;
+
+        if (pwFileName[pSection->FileNameLength] != 0)
+        {
             FailedCheckId = 120;
             goto cleanup;
         }
@@ -8532,9 +8454,10 @@ Return Value:
         // Check max number of pages in a section.
         //
 
-        if (pSection->NumPages > PF_MAXIMUM_SECTION_PAGES) {
+        if (pSection->NumPages > PF_MAXIMUM_SECTION_PAGES)
+        {
             FailedCheckId = 140;
-            goto cleanup;    
+            goto cleanup;
         }
 
         //
@@ -8543,7 +8466,8 @@ Return Value:
         // remaining pages.
         //
 
-        if (pSection->NumPages > NumRemainingPages) {
+        if (pSection->NumPages > NumRemainingPages)
+        {
             FailedCheckId = 150;
             goto cleanup;
         }
@@ -8559,13 +8483,15 @@ Return Value:
         NumPages = 0;
         PreviousPageIdx = PF_INVALID_PAGE_IDX;
 
-        while (PageIdx != PF_INVALID_PAGE_IDX) {
-            
+        while (PageIdx != PF_INVALID_PAGE_IDX)
+        {
+
             //
             // Check that page idx is within range.
             //
-            
-            if (PageIdx < 0 || (ULONG) PageIdx >= Scenario->NumPages) {
+
+            if (PageIdx < 0 || (ULONG)PageIdx >= Scenario->NumPages)
+            {
                 FailedCheckId = 160;
                 goto cleanup;
             }
@@ -8576,9 +8502,10 @@ Return Value:
             // duplicate offset here.
             //
 
-            if (PreviousPageIdx != PF_INVALID_PAGE_IDX) {
-                if (Pages[PageIdx].FileOffset <= 
-                    Pages[PreviousPageIdx].FileOffset) {
+            if (PreviousPageIdx != PF_INVALID_PAGE_IDX)
+            {
+                if (Pages[PageIdx].FileOffset <= Pages[PreviousPageIdx].FileOffset)
+                {
 
                     FailedCheckId = 165;
                     goto cleanup;
@@ -8597,7 +8524,7 @@ Return Value:
 
             pPage = &Pages[PageIdx];
             PageIdx = pPage->NextPageIdx;
-            
+
             //
             // Update the number of pages we've seen on the list so
             // far. If it is greater than what there should be on the
@@ -8605,18 +8532,20 @@ Return Value:
             //
 
             NumPages++;
-            if (NumPages > pSection->NumPages) {
+            if (NumPages > pSection->NumPages)
+            {
                 FailedCheckId = 170;
                 goto cleanup;
             }
         }
-        
+
         //
         // Make sure the section has exactly the number of pages it
         // says it does.
         //
 
-        if (NumPages != pSection->NumPages) {
+        if (NumPages != pSection->NumPages)
+        {
             FailedCheckId = 180;
             goto cleanup;
         }
@@ -8626,7 +8555,8 @@ Return Value:
     // We should have accounted for all pages in the scenario.
     //
 
-    if (NumRemainingPages) {
+    if (NumRemainingPages)
+    {
         FailedCheckId = 190;
         goto cleanup;
     }
@@ -8635,44 +8565,44 @@ Return Value:
     // Make sure metadata prefetch records make sense.
     //
 
-    for (MetadataRecordIdx = 0;
-         MetadataRecordIdx < Scenario->NumMetadataRecords;
-         MetadataRecordIdx++) {
+    for (MetadataRecordIdx = 0; MetadataRecordIdx < Scenario->NumMetadataRecords; MetadataRecordIdx++)
+    {
 
         MetadataRecord = &MetadataRecordTable[MetadataRecordIdx];
-        
+
         //
         // Make sure that the volume path is within bounds and NUL
         // terminated.
         //
 
-        VolumePath = (PWCHAR)(MetadataInfoBase + MetadataRecord->VolumeNameOffset);  
-        
-        if (!PfWithinBounds(VolumePath, Scenario, BufferSize)) {
+        VolumePath = (PWCHAR)(MetadataInfoBase + MetadataRecord->VolumeNameOffset);
+
+        if (!PfWithinBounds(VolumePath, Scenario, BufferSize))
+        {
             FailedCheckId = 200;
             goto cleanup;
         }
 
-        if (!PfWithinBounds(((PCHAR)(VolumePath + MetadataRecord->VolumeNameLength + 1)) - 1, 
-                            Scenario, 
-                            BufferSize)) {
+        if (!PfWithinBounds(((PCHAR)(VolumePath + MetadataRecord->VolumeNameLength + 1)) - 1, Scenario, BufferSize))
+        {
             FailedCheckId = 210;
             goto cleanup;
         }
 
-        if (VolumePath[MetadataRecord->VolumeNameLength] != 0) {
+        if (VolumePath[MetadataRecord->VolumeNameLength] != 0)
+        {
             FailedCheckId = 220;
-            goto cleanup;           
+            goto cleanup;
         }
 
         //
         // Make sure that FilePrefetchInformation is within bounds.
         //
 
-        FilePrefetchInfo = (PFILE_PREFETCH) 
-            (MetadataInfoBase + MetadataRecord->FilePrefetchInfoOffset);
-        
-        if (!PfWithinBounds(FilePrefetchInfo, Scenario, BufferSize)) {
+        FilePrefetchInfo = (PFILE_PREFETCH)(MetadataInfoBase + MetadataRecord->FilePrefetchInfoOffset);
+
+        if (!PfWithinBounds(FilePrefetchInfo, Scenario, BufferSize))
+        {
             FailedCheckId = 230;
             goto cleanup;
         }
@@ -8682,16 +8612,18 @@ Return Value:
         // structure (so we can safely access the fields).
         //
 
-        if (MetadataRecord->FilePrefetchInfoSize < sizeof(FILE_PREFETCH)) {
+        if (MetadataRecord->FilePrefetchInfoSize < sizeof(FILE_PREFETCH))
+        {
             FailedCheckId = 240;
             goto cleanup;
         }
-        
+
         //
         // It should be for prefetching file creates.
         //
 
-        if (FilePrefetchInfo->Type != FILE_PREFETCH_TYPE_FOR_CREATE) {
+        if (FilePrefetchInfo->Type != FILE_PREFETCH_TYPE_FOR_CREATE)
+        {
             FailedCheckId = 250;
             goto cleanup;
         }
@@ -8703,7 +8635,8 @@ Return Value:
         // be suspicious and thus ignored.
         //
 
-        if (FilePrefetchInfo->Count > PF_MAXIMUM_DIRECTORIES + PF_MAXIMUM_SECTIONS) {
+        if (FilePrefetchInfo->Count > PF_MAXIMUM_DIRECTORIES + PF_MAXIMUM_SECTIONS)
+        {
             FailedCheckId = 260;
             goto cleanup;
         }
@@ -8714,13 +8647,13 @@ Return Value:
         //
 
         FilePrefetchInfoSize = sizeof(FILE_PREFETCH);
-        if (FilePrefetchInfo->Count) {
+        if (FilePrefetchInfo->Count)
+        {
             FilePrefetchInfoSize += (FilePrefetchInfo->Count - 1) * sizeof(ULONGLONG);
         }
 
-        if (!PfWithinBounds((PCHAR) FilePrefetchInfo + MetadataRecord->FilePrefetchInfoSize - 1,
-                            Scenario,
-                            BufferSize)) {
+        if (!PfWithinBounds((PCHAR)FilePrefetchInfo + MetadataRecord->FilePrefetchInfoSize - 1, Scenario, BufferSize))
+        {
             FailedCheckId = 270;
             goto cleanup;
         }
@@ -8730,34 +8663,33 @@ Return Value:
         // sense.
         //
 
-        if (MetadataRecord->NumDirectories > PF_MAXIMUM_DIRECTORIES) {
+        if (MetadataRecord->NumDirectories > PF_MAXIMUM_DIRECTORIES)
+        {
             FailedCheckId = 280;
             goto cleanup;
         }
 
-        DirectoryPath = (PPF_COUNTED_STRING) 
-            (MetadataInfoBase + MetadataRecord->DirectoryPathsOffset);
-        
-        for (DirectoryIdx = 0;
-             DirectoryIdx < MetadataRecord->NumDirectories;
-             DirectoryIdx ++) {
-            
+        DirectoryPath = (PPF_COUNTED_STRING)(MetadataInfoBase + MetadataRecord->DirectoryPathsOffset);
+
+        for (DirectoryIdx = 0; DirectoryIdx < MetadataRecord->NumDirectories; DirectoryIdx++)
+        {
+
             //
             // Make sure head of the structure is within bounds.
             //
 
-            if (!PfWithinBounds((PCHAR)DirectoryPath + sizeof(PF_COUNTED_STRING) - 1, 
-                                Scenario, 
-                                BufferSize)) {
+            if (!PfWithinBounds((PCHAR)DirectoryPath + sizeof(PF_COUNTED_STRING) - 1, Scenario, BufferSize))
+            {
                 FailedCheckId = 290;
                 goto cleanup;
             }
-                
+
             //
             // Check the length of the string.
             //
-            
-            if (DirectoryPath->Length >= PF_MAXIMUM_SECTION_FILE_NAME_LENGTH) {
+
+            if (DirectoryPath->Length >= PF_MAXIMUM_SECTION_FILE_NAME_LENGTH)
+            {
                 FailedCheckId = 300;
                 goto cleanup;
             }
@@ -8765,30 +8697,29 @@ Return Value:
             //
             // Make sure end of the string is within bounds.
             //
-            
-            if (!PfWithinBounds((PCHAR)(&DirectoryPath->String[DirectoryPath->Length + 1]) - 1,
-                                Scenario, 
-                                BufferSize)) {
+
+            if (!PfWithinBounds((PCHAR)(&DirectoryPath->String[DirectoryPath->Length + 1]) - 1, Scenario, BufferSize))
+            {
                 FailedCheckId = 310;
                 goto cleanup;
             }
-            
+
             //
             // Make sure the string is NUL terminated.
             //
-            
-            if (DirectoryPath->String[DirectoryPath->Length] != 0) {
+
+            if (DirectoryPath->String[DirectoryPath->Length] != 0)
+            {
                 FailedCheckId = 320;
-                goto cleanup;   
+                goto cleanup;
             }
-            
+
             //
             // Set pointer to next DirectoryPath.
             //
-            
-            DirectoryPath = (PPF_COUNTED_STRING) 
-                (&DirectoryPath->String[DirectoryPath->Length + 1]);
-        }            
+
+            DirectoryPath = (PPF_COUNTED_STRING)(&DirectoryPath->String[DirectoryPath->Length + 1]);
+        }
     }
 
     //
@@ -8797,7 +8728,7 @@ Return Value:
 
     ScenarioVerified = TRUE;
 
- cleanup:
+cleanup:
 
     *FailedCheck = FailedCheckId;
 
@@ -8805,11 +8736,7 @@ Return Value:
 }
 
 BOOLEAN
-PfVerifyTraceBuffer(
-    PPF_TRACE_HEADER Trace,
-    ULONG BufferSize,
-    PULONG FailedCheck
-    )
+PfVerifyTraceBuffer(PPF_TRACE_HEADER Trace, ULONG BufferSize, PULONG FailedCheck)
 
 /*++
 
@@ -8860,13 +8787,15 @@ Return Value:
     // after all the checks pass.
     //
 
-    TraceVerified = FALSE;;
+    TraceVerified = FALSE;
+    ;
 
     //
     // The buffer should at least contain the scenario header.
     //
 
-    if (BufferSize < sizeof(PF_TRACE_HEADER)) {
+    if (BufferSize < sizeof(PF_TRACE_HEADER))
+    {
         FailedCheckId = 10;
         goto cleanup;
     }
@@ -8875,8 +8804,8 @@ Return Value:
     // Check version and magic on the header.
     //
 
-    if (Trace->Version != PF_CURRENT_VERSION ||
-        Trace->MagicNumber != PF_TRACE_MAGIC_NUMBER) {
+    if (Trace->Version != PF_CURRENT_VERSION || Trace->MagicNumber != PF_TRACE_MAGIC_NUMBER)
+    {
         FailedCheckId = 20;
         goto cleanup;
     }
@@ -8885,7 +8814,8 @@ Return Value:
     // The buffer should not be greater than max allowed size.
     //
 
-    if (BufferSize > PF_MAXIMUM_TRACE_SIZE) {
+    if (BufferSize > PF_MAXIMUM_TRACE_SIZE)
+    {
         FailedCheckId = 23;
         goto cleanup;
     }
@@ -8894,7 +8824,8 @@ Return Value:
     // Check for legal scenario type.
     //
 
-    if (Trace->ScenarioType >= PfMaxScenarioType) {
+    if (Trace->ScenarioType >= PfMaxScenarioType)
+    {
         FailedCheckId = 25;
         goto cleanup;
     }
@@ -8903,9 +8834,9 @@ Return Value:
     // Check limits on number of pages, sections etc.
     //
 
-    if (Trace->NumSections > PF_MAXIMUM_SECTIONS ||
-        Trace->NumEntries > PF_MAXIMUM_LOG_ENTRIES ||
-        Trace->NumVolumes > PF_MAXIMUM_SECTIONS) {
+    if (Trace->NumSections > PF_MAXIMUM_SECTIONS || Trace->NumEntries > PF_MAXIMUM_LOG_ENTRIES ||
+        Trace->NumVolumes > PF_MAXIMUM_SECTIONS)
+    {
         FailedCheckId = 30;
         goto cleanup;
     }
@@ -8914,7 +8845,8 @@ Return Value:
     // Check buffer size and the size of the trace.
     //
 
-    if (Trace->Size != BufferSize) {
+    if (Trace->Size != BufferSize)
+    {
         FailedCheckId = 35;
         goto cleanup;
     }
@@ -8923,8 +8855,9 @@ Return Value:
     // Make sure the scenario id is valid.
     //
 
-    if (!PfVerifyScenarioId(&Trace->ScenarioId)) {
-        
+    if (!PfVerifyScenarioId(&Trace->ScenarioId))
+    {
+
         FailedCheckId = 37;
         goto cleanup;
     }
@@ -8933,16 +8866,16 @@ Return Value:
     // Check Bounds of Trace Buffer
     //
 
-    LogEntries = (PPF_LOG_ENTRY) ((PCHAR)Trace + Trace->TraceBufferOffset);
+    LogEntries = (PPF_LOG_ENTRY)((PCHAR)Trace + Trace->TraceBufferOffset);
 
-    if (!PfWithinBounds(LogEntries, Trace, BufferSize)) {
+    if (!PfWithinBounds(LogEntries, Trace, BufferSize))
+    {
         FailedCheckId = 40;
         goto cleanup;
     }
 
-    if (!PfWithinBounds((PCHAR)&LogEntries[Trace->NumEntries] - 1, 
-                        Trace, 
-                        BufferSize)) {
+    if (!PfWithinBounds((PCHAR)&LogEntries[Trace->NumEntries] - 1, Trace, BufferSize))
+    {
         FailedCheckId = 50;
         goto cleanup;
     }
@@ -8951,13 +8884,15 @@ Return Value:
     // Verify pages contain valid information.
     //
 
-    for (EntryIdx = 0; EntryIdx < Trace->NumEntries; EntryIdx++) {
+    for (EntryIdx = 0; EntryIdx < Trace->NumEntries; EntryIdx++)
+    {
 
         //
         // Make sure sequence number is within bounds.
         //
 
-        if (LogEntries[EntryIdx].SectionId >= Trace->NumSections) {
+        if (LogEntries[EntryIdx].SectionId >= Trace->NumSections)
+        {
             FailedCheckId = 60;
             goto cleanup;
         }
@@ -8967,15 +8902,17 @@ Return Value:
     // Verify section info entries are valid.
     //
 
-    Section = (PPF_SECTION_INFO) ((PCHAR)Trace + Trace->SectionInfoOffset);
+    Section = (PPF_SECTION_INFO)((PCHAR)Trace + Trace->SectionInfoOffset);
 
-    for (SectionIdx = 0; SectionIdx < Trace->NumSections; SectionIdx++) {
+    for (SectionIdx = 0; SectionIdx < Trace->NumSections; SectionIdx++)
+    {
 
         //
         // Make sure the section is within bounds.
         //
 
-        if (!PfWithinBounds(Section, Trace, BufferSize)) {
+        if (!PfWithinBounds(Section, Trace, BufferSize))
+        {
             FailedCheckId = 70;
             goto cleanup;
         }
@@ -8984,16 +8921,18 @@ Return Value:
         // Make sure the file name is not too big.
         //
 
-        if(Section->FileNameLength > PF_MAXIMUM_SECTION_FILE_NAME_LENGTH) {
+        if (Section->FileNameLength > PF_MAXIMUM_SECTION_FILE_NAME_LENGTH)
+        {
             FailedCheckId = 80;
             goto cleanup;
         }
-        
+
         //
         // Make sure the file name is NUL terminated.
         //
-        
-        if (Section->FileName[Section->FileNameLength] != 0) {
+
+        if (Section->FileName[Section->FileNameLength] != 0)
+        {
             FailedCheckId = 90;
             goto cleanup;
         }
@@ -9002,17 +8941,15 @@ Return Value:
         // Calculate size of this section entry.
         //
 
-        SectionLength = sizeof(PF_SECTION_INFO) +
-            (Section->FileNameLength) * sizeof(WCHAR);
+        SectionLength = sizeof(PF_SECTION_INFO) + (Section->FileNameLength) * sizeof(WCHAR);
 
         //
         // Make sure all of the data in the section info is within
         // bounds.
         //
 
-        if (!PfWithinBounds((PUCHAR)Section + SectionLength - 1, 
-                            Trace, 
-                            BufferSize)) {
+        if (!PfWithinBounds((PUCHAR)Section + SectionLength - 1, Trace, BufferSize))
+        {
 
             FailedCheckId = 100;
             goto cleanup;
@@ -9022,27 +8959,28 @@ Return Value:
         // Set pointer to next section.
         //
 
-        Section = (PPF_SECTION_INFO) ((PUCHAR) Section + SectionLength);
+        Section = (PPF_SECTION_INFO)((PUCHAR)Section + SectionLength);
     }
 
     //
     // Check FaultsPerPeriod information.
     //
 
-    if (!PfWithinBounds((PCHAR)&Trace->FaultsPerPeriod[PF_MAX_NUM_TRACE_PERIODS] - 1,
-                        Trace,
-                        BufferSize)) {
+    if (!PfWithinBounds((PCHAR)&Trace->FaultsPerPeriod[PF_MAX_NUM_TRACE_PERIODS] - 1, Trace, BufferSize))
+    {
         FailedCheckId = 110;
         goto cleanup;
     }
 
     TotalFaults = 0;
 
-    for (PeriodIdx = 0; PeriodIdx < PF_MAX_NUM_TRACE_PERIODS; PeriodIdx++) {
+    for (PeriodIdx = 0; PeriodIdx < PF_MAX_NUM_TRACE_PERIODS; PeriodIdx++)
+    {
         TotalFaults += Trace->FaultsPerPeriod[PeriodIdx];
     }
 
-    if (TotalFaults > Trace->NumEntries) {
+    if (TotalFaults > Trace->NumEntries)
+    {
         FailedCheckId = 120;
         goto cleanup;
     }
@@ -9051,25 +8989,26 @@ Return Value:
     // Verify the volume information block.
     //
 
-    VolumeInfo = (PPF_VOLUME_INFO) ((PCHAR)Trace + Trace->VolumeInfoOffset);
+    VolumeInfo = (PPF_VOLUME_INFO)((PCHAR)Trace + Trace->VolumeInfoOffset);
 
-    if (!PfWithinBounds(VolumeInfo, Trace, BufferSize)) {
+    if (!PfWithinBounds(VolumeInfo, Trace, BufferSize))
+    {
         FailedCheckId = 130;
         goto cleanup;
     }
 
-    if (!PfWithinBounds((PCHAR)VolumeInfo + Trace->VolumeInfoSize - 1, 
-                        Trace, 
-                        BufferSize)) {
+    if (!PfWithinBounds((PCHAR)VolumeInfo + Trace->VolumeInfoSize - 1, Trace, BufferSize))
+    {
         FailedCheckId = 140;
         goto cleanup;
     }
-    
+
     //
     // If there are sections, we should have at least one volume.
     //
 
-    if (Trace->NumSections && !Trace->NumVolumes) {
+    if (Trace->NumSections && !Trace->NumVolumes)
+    {
         FailedCheckId = 150;
         goto cleanup;
     }
@@ -9078,8 +9017,9 @@ Return Value:
     // Verify the volume info structures per volume.
     //
 
-    for (VolumeIdx = 0; VolumeIdx < Trace->NumVolumes; VolumeIdx++) {
-        
+    for (VolumeIdx = 0; VolumeIdx < Trace->NumVolumes; VolumeIdx++)
+    {
+
         //
         // Make sure the whole volume structure is within bounds. Note
         // that VolumeInfo structure contains space for the
@@ -9088,29 +9028,29 @@ Return Value:
 
         VolumeInfoSize = sizeof(PF_VOLUME_INFO);
         VolumeInfoSize += VolumeInfo->VolumePathLength * sizeof(WCHAR);
-        
-        if (!PfWithinBounds((PCHAR) VolumeInfo + VolumeInfoSize - 1,
-                            Trace,
-                            BufferSize)) {
+
+        if (!PfWithinBounds((PCHAR)VolumeInfo + VolumeInfoSize - 1, Trace, BufferSize))
+        {
             FailedCheckId = 160;
             goto cleanup;
         }
-        
+
         //
         // Verify that the volume path string is terminated.
         //
 
-        if (VolumeInfo->VolumePath[VolumeInfo->VolumePathLength] != 0) {
+        if (VolumeInfo->VolumePath[VolumeInfo->VolumePathLength] != 0)
+        {
             FailedCheckId = 170;
             goto cleanup;
         }
-        
+
         //
         // Get the next volume.
         //
 
-        VolumeInfo = (PPF_VOLUME_INFO) ((PCHAR) VolumeInfo + VolumeInfoSize);
-        
+        VolumeInfo = (PPF_VOLUME_INFO)((PCHAR)VolumeInfo + VolumeInfoSize);
+
         //
         // Make sure VolumeInfo is aligned.
         //
@@ -9121,13 +9061,12 @@ Return Value:
     //
     // We've passed all the checks.
     //
-    
+
     TraceVerified = TRUE;
-    
- cleanup:
+
+cleanup:
 
     *FailedCheck = FailedCheckId;
 
     return TraceVerified;
 }
-

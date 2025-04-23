@@ -24,12 +24,7 @@ Revision History:
 
 #include "mi.h"
 
-VOID
-MiSetDirtyBit (
-    IN PVOID FaultingAddress,
-    IN PMMPTE PointerPte,
-    IN ULONG PfnHeld
-    )
+VOID MiSetDirtyBit(IN PVOID FaultingAddress, IN PMMPTE PointerPte, IN ULONG PfnHeld)
 
 /*++
 
@@ -70,7 +65,7 @@ Environment:
     //
 
     // KiFlushSingleDataTb( FaultingAddress );
-    __dtbis( FaultingAddress );
+    __dtbis(FaultingAddress);
 
     //
     // The page is NOT copy on write, update the PTE setting both the
@@ -79,11 +74,11 @@ Environment:
     //
 
     PageFrameIndex = PointerPte->u.Hard.PageFrameNumber;
-    Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+    Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
 
     TempPte = *PointerPte;
     TempPte.u.Hard.Dirty = 1;
-    MI_SET_ACCESSED_IN_PTE (&TempPte, 1);
+    MI_SET_ACCESSED_IN_PTE(&TempPte, 1);
     *PointerPte = TempPte;
 
     //
@@ -91,7 +86,8 @@ Environment:
     // PFN database.
     //
 
-    if (PfnHeld) {
+    if (PfnHeld)
+    {
 
         //
         // Set the modified field in the PFN database, also, if the physical
@@ -99,14 +95,14 @@ Environment:
         // as the contents are now worthless.
         //
 
-        if ( (Pfn1->OriginalPte.u.Soft.Prototype == 0) &&
-             (Pfn1->u3.e1.WriteInProgress == 0) ) {
+        if ((Pfn1->OriginalPte.u.Soft.Prototype == 0) && (Pfn1->u3.e1.WriteInProgress == 0))
+        {
 
             //
             // This page is in page file format, deallocate the page file space.
             //
 
-            MiReleasePageFileSpace (Pfn1->OriginalPte);
+            MiReleasePageFileSpace(Pfn1->OriginalPte);
 
             //
             // Change original PTE to indicate no page file space is reserved,
@@ -118,7 +114,6 @@ Environment:
         }
 
         Pfn1->u3.e1.Modified = 1;
-
     }
 
 

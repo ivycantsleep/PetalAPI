@@ -48,15 +48,12 @@ ULONG InbvTerminalBkgdColor = HEADLESS_TERM_DEFAULT_BKGD_COLOR;
 ULONG InbvTerminalTextColor = HEADLESS_TERM_DEFAULT_TEXT_COLOR;
 
 PUCHAR
-FindBitmapResource(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock,
-    IN ULONG_PTR ResourceIdentifier
-    );
+FindBitmapResource(IN PLOADER_PARAMETER_BLOCK LoaderBlock, IN ULONG_PTR ResourceIdentifier);
 
 #if defined(ALLOC_PRAGMA)
-#pragma alloc_text(INIT,InbvIndicateProgress)
-#pragma alloc_text(INIT,InbvDriverInitialize)
-#pragma alloc_text(INIT,FindBitmapResource)
+#pragma alloc_text(INIT, InbvIndicateProgress)
+#pragma alloc_text(INIT, InbvDriverInitialize)
+#pragma alloc_text(INIT, FindBitmapResource)
 #endif
 
 //
@@ -71,31 +68,33 @@ KSPIN_LOCK BootDriverLock;
 KIRQL InbvOldIrql;
 
 INBV_RESET_DISPLAY_PARAMETERS InbvResetDisplayParameters = NULL;
-INBV_DISPLAY_STRING_FILTER    InbvDisplayFilter          = NULL;
+INBV_DISPLAY_STRING_FILTER InbvDisplayFilter = NULL;
 
 #define MAX_RESOURCES 15
 
-ULONG   ResourceCount = 0;
-PUCHAR  ResourceList[MAX_RESOURCES];
+ULONG ResourceCount = 0;
+PUCHAR ResourceList[MAX_RESOURCES];
 
-ULONG   ProgressBarLeft;
-ULONG   ProgressBarTop;
+ULONG ProgressBarLeft;
+ULONG ProgressBarTop;
 BOOLEAN ShowProgressBar = TRUE;
 
-struct _InbvProgressState {
-    ULONG   Floor;
-    ULONG   Ceiling;
-    ULONG   Bias;
+struct _InbvProgressState
+{
+    ULONG Floor;
+    ULONG Ceiling;
+    ULONG Bias;
 } InbvProgressState;
 
 #ifdef ALLOC_DATA_PRAGMA
 #pragma data_seg("INITDATA")
 #endif
 
-struct _BT_PROGRESS_INDICATOR {
-    ULONG   Count;
-    ULONG   Expected;
-    ULONG   Percentage;
+struct _BT_PROGRESS_INDICATOR
+{
+    ULONG Count;
+    ULONG Expected;
+    ULONG Percentage;
 } InbvProgressIndicator = { 0, 25, 0 };
 
 
@@ -103,10 +102,7 @@ struct _BT_PROGRESS_INDICATOR {
 #pragma data_seg()
 #endif
 
-VOID
-InbvAcquireLock(
-    VOID
-    )
+VOID InbvAcquireLock(VOID)
 
 /*++
 
@@ -127,7 +123,8 @@ Notes:
 
     LocalIrql = KeGetCurrentIrql();
 
-    if (LocalIrql <= DISPATCH_LEVEL) {
+    if (LocalIrql <= DISPATCH_LEVEL)
+    {
 
         while (!KeTestSpinLock(&BootDriverLock))
             ;
@@ -139,10 +136,7 @@ Notes:
     InbvOldIrql = LocalIrql;
 }
 
-VOID
-InbvReleaseLock(
-    VOID
-    )
+VOID InbvReleaseLock(VOID)
 
 /*++
 
@@ -157,15 +151,14 @@ Routine Description:
 
     KiReleaseSpinLock(&BootDriverLock);
 
-    if (OldIrql <= DISPATCH_LEVEL) {
+    if (OldIrql <= DISPATCH_LEVEL)
+    {
         KeLowerIrql(OldIrql);
     }
 }
 
 BOOLEAN
-InbvTestLock(
-    VOID
-    )
+InbvTestLock(VOID)
 
 /*++
 
@@ -188,19 +181,19 @@ Notes:
 {
     KIRQL Irql;
 
-    if (KeTryToAcquireSpinLock(&BootDriverLock, &Irql)) {
+    if (KeTryToAcquireSpinLock(&BootDriverLock, &Irql))
+    {
         InbvOldIrql = Irql;
         return TRUE;
-    } else {
+    }
+    else
+    {
         return FALSE;
     }
 }
 
-
-VOID
-InbvEnableBootDriver(
-    BOOLEAN bEnable
-    )
+
+VOID InbvEnableBootDriver(BOOLEAN bEnable)
 
 /*++
 
@@ -217,9 +210,11 @@ Arguments:
 --*/
 
 {
-    if (InbvBootDriverInstalled) {
+    if (InbvBootDriverInstalled)
+    {
 
-        if (InbvDisplayState < INBV_DISPLAY_STATE_LOST) {
+        if (InbvDisplayState < INBV_DISPLAY_STATE_LOST)
+        {
 
             //
             // We can only wait for our lock, and execute our clean up code
@@ -228,15 +223,17 @@ Arguments:
 
             InbvAcquireLock();
 
-            if (InbvDisplayState == INBV_DISPLAY_STATE_OWNED) {
+            if (InbvDisplayState == INBV_DISPLAY_STATE_OWNED)
+            {
                 VidCleanUp();
             }
 
             InbvDisplayState = (bEnable ? INBV_DISPLAY_STATE_OWNED : INBV_DISPLAY_STATE_DISABLED);
             InbvReleaseLock();
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // This allow us to set display state before boot driver starts.
@@ -245,11 +242,9 @@ Arguments:
         InbvDisplayState = (bEnable ? INBV_DISPLAY_STATE_OWNED : INBV_DISPLAY_STATE_DISABLED);
     }
 }
-
+
 BOOLEAN
-InbvEnableDisplayString(
-    BOOLEAN bEnable
-    )
+InbvEnableDisplayString(BOOLEAN bEnable)
 
 /*++
 
@@ -280,9 +275,7 @@ Returns:
 
 
 BOOLEAN
-InbvIsBootDriverInstalled(
-    VOID
-    )
+InbvIsBootDriverInstalled(VOID)
 
 /*++
 
@@ -298,8 +291,7 @@ Routine Description:
 }
 
 BOOLEAN
-InbvResetDisplay(
-    )
+InbvResetDisplay()
 
 /*++
 
@@ -315,23 +307,18 @@ Notes:
 --*/
 
 {
-    if (InbvBootDriverInstalled && (InbvDisplayState == INBV_DISPLAY_STATE_OWNED)) {
+    if (InbvBootDriverInstalled && (InbvDisplayState == INBV_DISPLAY_STATE_OWNED))
+    {
         VidResetDisplay(TRUE);
         return TRUE;
-    } else {
+    }
+    else
+    {
         return FALSE;
     }
 }
 
-VOID
-InbvScreenToBufferBlt(
-    PUCHAR Buffer,
-    ULONG x,
-    ULONG y,
-    ULONG width,
-    ULONG height,
-    ULONG lDelta
-    )
+VOID InbvScreenToBufferBlt(PUCHAR Buffer, ULONG x, ULONG y, ULONG width, ULONG height, ULONG lDelta)
 
 /*++
 
@@ -359,20 +346,13 @@ Notes:
 --*/
 
 {
-    if (InbvBootDriverInstalled && (InbvDisplayState == INBV_DISPLAY_STATE_OWNED)) {
+    if (InbvBootDriverInstalled && (InbvDisplayState == INBV_DISPLAY_STATE_OWNED))
+    {
         VidScreenToBufferBlt(Buffer, x, y, width, height, lDelta);
     }
 }
 
-VOID
-InbvBufferToScreenBlt(
-    PUCHAR Buffer,
-    ULONG x,
-    ULONG y,
-    ULONG width,
-    ULONG height,
-    ULONG lDelta
-    )
+VOID InbvBufferToScreenBlt(PUCHAR Buffer, ULONG x, ULONG y, ULONG width, ULONG height, ULONG lDelta)
 
 /*++
 
@@ -400,17 +380,13 @@ Notes:
 --*/
 
 {
-    if (InbvBootDriverInstalled && (InbvDisplayState == INBV_DISPLAY_STATE_OWNED)) {
+    if (InbvBootDriverInstalled && (InbvDisplayState == INBV_DISPLAY_STATE_OWNED))
+    {
         VidBufferToScreenBlt(Buffer, x, y, width, height, lDelta);
     }
 }
 
-VOID
-InbvBitBlt(
-    PUCHAR Buffer,
-    ULONG x,
-    ULONG y
-    )
+VOID InbvBitBlt(PUCHAR Buffer, ULONG x, ULONG y)
 
 /*++
 
@@ -428,21 +404,15 @@ Arguments:
 --*/
 
 {
-    if (InbvBootDriverInstalled && (InbvDisplayState == INBV_DISPLAY_STATE_OWNED)) {
+    if (InbvBootDriverInstalled && (InbvDisplayState == INBV_DISPLAY_STATE_OWNED))
+    {
         InbvAcquireLock();
         VidBitBlt(Buffer, x, y);
         InbvReleaseLock();
     }
 }
 
-VOID
-InbvSolidColorFill(
-    ULONG x1,
-    ULONG y1,
-    ULONG x2,
-    ULONG y2,
-    ULONG color
-    )
+VOID InbvSolidColorFill(ULONG x1, ULONG y1, ULONG x2, ULONG y2, ULONG color)
 
 /*++
 
@@ -456,29 +426,31 @@ Routine Description:
 {
     ULONG x, y;
     HEADLESS_CMD_SET_COLOR HeadlessCmd;
-    
-    if (InbvBootDriverInstalled && (InbvDisplayState == INBV_DISPLAY_STATE_OWNED)) {
+
+    if (InbvBootDriverInstalled && (InbvDisplayState == INBV_DISPLAY_STATE_OWNED))
+    {
         InbvAcquireLock();
         VidSolidColorFill(x1, y1, x2, y2, color);
-        
+
         //
         // Now fill in the area on the terminal
         //
-        
+
         //
-        // Color comes in as the palette index to the standard windows VGA palette. 
+        // Color comes in as the palette index to the standard windows VGA palette.
         // Convert it.
         //
-        switch (color) {
-            
+        switch (color)
+        {
+
         case 0:
             InbvTerminalBkgdColor = 40;
             break;
-                     
+
         case 4:
             InbvTerminalBkgdColor = 44;
             break;
-            
+
         default:
             //
             // Guess
@@ -488,28 +460,21 @@ Routine Description:
 
         HeadlessCmd.FgColor = InbvTerminalTextColor;
         HeadlessCmd.BkgColor = InbvTerminalBkgdColor;
-        HeadlessDispatch(HeadlessCmdSetColor,
-                         &HeadlessCmd,
-                         sizeof(HEADLESS_CMD_SET_COLOR),
-                         NULL,
-                         NULL
-                        );
-              
+        HeadlessDispatch(HeadlessCmdSetColor, &HeadlessCmd, sizeof(HEADLESS_CMD_SET_COLOR), NULL, NULL);
+
         //
         // All block fills come in as if on VGA (640x480).  The terminal is only 24x80
         // so just assume it is full screen reset for now. This works because the only
         // thing enables terminal output is KeBugCheckEx(), which does a full screen fill.
         //
         HeadlessDispatch(HeadlessCmdClearDisplay, NULL, 0, NULL, NULL);
-        
+
         InbvReleaseLock();
     }
 }
 
 ULONG
-InbvSetTextColor(
-    ULONG Color
-    )
+InbvSetTextColor(ULONG Color)
 
 /*++
 
@@ -531,42 +496,35 @@ Returns:
     HEADLESS_CMD_SET_COLOR HeadlessCmd;
 
     //
-    // Color comes in as the palette index to the standard windows VGA palette. 
+    // Color comes in as the palette index to the standard windows VGA palette.
     // Convert it.
     //
-    switch (Color) {
-            
+    switch (Color)
+    {
+
     case 0:
         InbvTerminalBkgdColor = 40;
         break;
-            
+
     case 4:
         InbvTerminalTextColor = 44;
         break;
-            
+
     default:
         //
         // Guess
         //
         InbvTerminalTextColor = Color + 40;
     }
-            
+
     HeadlessCmd.FgColor = InbvTerminalTextColor;
     HeadlessCmd.BkgColor = InbvTerminalBkgdColor;
-    HeadlessDispatch(HeadlessCmdSetColor,
-                     &HeadlessCmd,
-                     sizeof(HEADLESS_CMD_SET_COLOR),
-                     NULL,
-                     NULL
-                    );
+    HeadlessDispatch(HeadlessCmdSetColor, &HeadlessCmd, sizeof(HEADLESS_CMD_SET_COLOR), NULL, NULL);
 
     return VidSetTextColor(Color);
 }
 
-VOID
-InbvInstallDisplayStringFilter(
-    INBV_DISPLAY_STRING_FILTER DisplayFilter
-    )
+VOID InbvInstallDisplayStringFilter(INBV_DISPLAY_STRING_FILTER DisplayFilter)
 
 /*++
 
@@ -577,9 +535,7 @@ InbvInstallDisplayStringFilter(
 }
 
 BOOLEAN
-InbvDisplayString(
-    PUCHAR Str
-    )
+InbvDisplayString(PUCHAR Str)
 
 /*++
 
@@ -596,53 +552,48 @@ Arguments:
 {
     PUCHAR *String = &Str;
 
-    if (InbvBootDriverInstalled && (InbvDisplayState == INBV_DISPLAY_STATE_OWNED)) {
+    if (InbvBootDriverInstalled && (InbvDisplayState == INBV_DISPLAY_STATE_OWNED))
+    {
 
-        if (InbvDisplayDebugStrings) {
+        if (InbvDisplayDebugStrings)
+        {
 
-            if (InbvDisplayFilter) {
+            if (InbvDisplayFilter)
+            {
                 InbvDisplayFilter(String);
             }
 
             InbvAcquireLock();
-            
+
             VidDisplayString(*String);
-            
+
             //
             // Since the command structure is exactly a string, we can do this. The
             // ASSERT() will catch if this ever changes.  If it does change, then
             // we will need to allocate a structure, or have one pre-allocated, for
             // filling in and copying over the string.
             //
-            ASSERT(FIELD_OFFSET(HEADLESS_CMD_PUT_STRING, String) == 0); 
-            HeadlessDispatch(HeadlessCmdPutString,
-                             *String,
-                             strlen(*String) + sizeof('\0'),
-                             NULL,
-                             NULL
-                            );
+            ASSERT(FIELD_OFFSET(HEADLESS_CMD_PUT_STRING, String) == 0);
+            HeadlessDispatch(HeadlessCmdPutString, *String, strlen(*String) + sizeof('\0'), NULL, NULL);
 
             InbvReleaseLock();
         }
 
         return TRUE;
-
-    } else {
+    }
+    else
+    {
 
         return FALSE;
     }
 }
-
-#define PROGRESS_BAR_TICK_WIDTH    9
-#define PROGRESS_BAR_TICK_HEIGHT   8
-#define PROGRESS_BAR_TICKS        18
-#define PROGRESS_BAR_COLOR        11
 
-VOID
-InbvSetProgressBarCoordinates(
-    ULONG x,
-    ULONG y
-    )
+#define PROGRESS_BAR_TICK_WIDTH 9
+#define PROGRESS_BAR_TICK_HEIGHT 8
+#define PROGRESS_BAR_TICKS 18
+#define PROGRESS_BAR_COLOR 11
+
+VOID InbvSetProgressBarCoordinates(ULONG x, ULONG y)
 
 /*++
 
@@ -658,14 +609,11 @@ Arguments:
 
 {
     ProgressBarLeft = x;
-    ProgressBarTop  = y;
+    ProgressBarTop = y;
     ShowProgressBar = TRUE;
 }
 
-VOID
-InbvUpdateProgressBar(
-    ULONG Percentage
-    )
+VOID InbvUpdateProgressBar(ULONG Percentage)
 
 /*++
 
@@ -679,40 +627,35 @@ Routine Description:
 {
     int i, Ticks;
 
-    if (ShowProgressBar && InbvBootDriverInstalled && (InbvDisplayState == INBV_DISPLAY_STATE_OWNED)) {
+    if (ShowProgressBar && InbvBootDriverInstalled && (InbvDisplayState == INBV_DISPLAY_STATE_OWNED))
+    {
 
         //
         // Draw the ticks for the current percentage
         //
 
         //
-        // The following calculations are biased by 100 do that 
+        // The following calculations are biased by 100 do that
         // InbvProgressState.Bias can be expressed as an integer fraction.
         //
 
-        Ticks =  Percentage * InbvProgressState.Bias;
+        Ticks = Percentage * InbvProgressState.Bias;
         Ticks += InbvProgressState.Floor;
         Ticks *= PROGRESS_BAR_TICKS;
         Ticks /= 10000;
 
-        for (i=0; i<Ticks; i++) {
+        for (i = 0; i < Ticks; i++)
+        {
             InbvAcquireLock();
-            VidSolidColorFill(ProgressBarLeft + (i * PROGRESS_BAR_TICK_WIDTH),
-                              ProgressBarTop,
+            VidSolidColorFill(ProgressBarLeft + (i * PROGRESS_BAR_TICK_WIDTH), ProgressBarTop,
                               ProgressBarLeft + ((i + 1) * PROGRESS_BAR_TICK_WIDTH) - 2,
-                              ProgressBarTop + PROGRESS_BAR_TICK_HEIGHT - 1,
-                              PROGRESS_BAR_COLOR);
+                              ProgressBarTop + PROGRESS_BAR_TICK_HEIGHT - 1, PROGRESS_BAR_COLOR);
             InbvReleaseLock();
         }
-
     }
 }
-
-VOID
-InbvSetProgressBarSubset(
-    ULONG   Floor,
-    ULONG   Ceiling
-    )
+
+VOID InbvSetProgressBarSubset(ULONG Floor, ULONG Ceiling)
 
 /*++
 
@@ -742,11 +685,8 @@ Return Value:
     InbvProgressState.Ceiling = Ceiling * 100;
     InbvProgressState.Bias = (Ceiling - Floor);
 }
-
-VOID
-InbvIndicateProgress(
-    VOID
-    )
+
+VOID InbvIndicateProgress(VOID)
 
 /*++
 
@@ -776,8 +716,7 @@ Return Value:
     // Calculate how far along we think we are.
     //
 
-    Percentage = (InbvProgressIndicator.Count * 100) /
-                  InbvProgressIndicator.Expected;
+    Percentage = (InbvProgressIndicator.Count * 100) / InbvProgressIndicator.Expected;
 
     //
     // The Expected number of calls can vary from boot to boot
@@ -786,7 +725,8 @@ Return Value:
     // (The progress bar simply stalls at this point).
     //
 
-    if (Percentage > 99) {
+    if (Percentage > 99)
+    {
         Percentage = 99;
     }
 
@@ -794,17 +734,15 @@ Return Value:
     // See if the progress bar should be updated.
     //
 
-    if (Percentage != InbvProgressIndicator.Percentage) {
+    if (Percentage != InbvProgressIndicator.Percentage)
+    {
         InbvProgressIndicator.Percentage = Percentage;
         InbvUpdateProgressBar(Percentage);
     }
 }
 
 PUCHAR
-FindBitmapResource(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock,
-    IN ULONG_PTR ResourceIdentifier
-    )
+FindBitmapResource(IN PLOADER_PARAMETER_BLOCK LoaderBlock, IN ULONG_PTR ResourceIdentifier)
 
 /*++
 
@@ -825,14 +763,14 @@ Return Value:
 --*/
 
 {
-    NTSTATUS                   Status;
-    PLIST_ENTRY                Entry;
-    PKLDR_DATA_TABLE_ENTRY      DataTableEntry;
-    ULONG_PTR                   ResourceIdPath[3];
+    NTSTATUS Status;
+    PLIST_ENTRY Entry;
+    PKLDR_DATA_TABLE_ENTRY DataTableEntry;
+    ULONG_PTR ResourceIdPath[3];
     PIMAGE_RESOURCE_DATA_ENTRY ResourceDataEntry;
-    PUCHAR                     Bitmap;
-    UNICODE_STRING             KernelString1;
-    UNICODE_STRING             KernelString2;
+    PUCHAR Bitmap;
+    UNICODE_STRING KernelString1;
+    UNICODE_STRING KernelString2;
 
     RtlInitUnicodeString(&KernelString1, L"NTOSKRNL.EXE");
     RtlInitUnicodeString(&KernelString2, L"NTKRNLMP.EXE");
@@ -842,29 +780,26 @@ Return Value:
     //
 
     Entry = LoaderBlock->LoadOrderListHead.Flink;
-    while (Entry != &LoaderBlock->LoadOrderListHead) {
-    
+    while (Entry != &LoaderBlock->LoadOrderListHead)
+    {
+
         //
         // Get the address of the data table entry for this component.
         //
-        
-        DataTableEntry = CONTAINING_RECORD(Entry,
-                                           KLDR_DATA_TABLE_ENTRY,
-                                           InLoadOrderLinks);
+
+        DataTableEntry = CONTAINING_RECORD(Entry, KLDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
         //
         // Case-insensitive comparison with "NTOSKRNL.EXE" and "NTKRNLMP.EXE"
         //
 
-        if (RtlEqualUnicodeString(&DataTableEntry->BaseDllName, 
-                                  &KernelString1,
-                                  TRUE) == TRUE) {
+        if (RtlEqualUnicodeString(&DataTableEntry->BaseDllName, &KernelString1, TRUE) == TRUE)
+        {
             break;
         }
 
-        if (RtlEqualUnicodeString(&DataTableEntry->BaseDllName, 
-                                  &KernelString2,
-                                  TRUE) == TRUE) {
+        if (RtlEqualUnicodeString(&DataTableEntry->BaseDllName, &KernelString2, TRUE) == TRUE)
+        {
             break;
         }
 
@@ -875,38 +810,33 @@ Return Value:
     // If we couldn't find ntoskrnl in the loader list, give up
     //
 
-    if (Entry == &LoaderBlock->LoadOrderListHead) {
+    if (Entry == &LoaderBlock->LoadOrderListHead)
+    {
         return NULL;
     }
 
-    ResourceIdPath[0] = 2;  // RT_BITMAP = 2
+    ResourceIdPath[0] = 2; // RT_BITMAP = 2
     ResourceIdPath[1] = ResourceIdentifier;
-    ResourceIdPath[2] = 0;  // ??
+    ResourceIdPath[2] = 0; // ??
 
-    Status = LdrFindResource_U( DataTableEntry->DllBase,
-                                ResourceIdPath,
-                                3,
-                                (VOID *) &ResourceDataEntry );
+    Status = LdrFindResource_U(DataTableEntry->DllBase, ResourceIdPath, 3, (VOID *)&ResourceDataEntry);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return NULL;
     }
 
-    Status = LdrAccessResource( DataTableEntry->DllBase,
-                                ResourceDataEntry,
-                                &Bitmap,
-                                NULL );
-    if (!NT_SUCCESS(Status)) {
+    Status = LdrAccessResource(DataTableEntry->DllBase, ResourceDataEntry, &Bitmap, NULL);
+    if (!NT_SUCCESS(Status))
+    {
         return NULL;
     }
-    
+
     return Bitmap;
 }
 
 PUCHAR
-InbvGetResourceAddress(
-    IN ULONG ResourceNumber
-    )
+InbvGetResourceAddress(IN ULONG ResourceNumber)
 
 /*++
 
@@ -918,18 +848,18 @@ Routine Description:
 --*/
 
 {
-    if (ResourceNumber <= ResourceCount) {
-        return ResourceList[ResourceNumber-1];
-    } else {
+    if (ResourceNumber <= ResourceCount)
+    {
+        return ResourceList[ResourceNumber - 1];
+    }
+    else
+    {
         return NULL;
     }
 }
 
 BOOLEAN
-InbvDriverInitialize(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock,
-    ULONG Count
-    )
+InbvDriverInitialize(IN PLOADER_PARAMETER_BLOCK LoaderBlock, ULONG Count)
 
 /*++
 
@@ -951,34 +881,41 @@ Routine Description:
     // Only do this once.
     //
 
-    if (InbvBootDriverInstalled == TRUE) {
+    if (InbvBootDriverInstalled == TRUE)
+    {
         return TRUE;
     }
 
     KeInitializeSpinLock(&BootDriverLock);
 
-    if (InbvDisplayState == INBV_DISPLAY_STATE_OWNED) {
+    if (InbvDisplayState == INBV_DISPLAY_STATE_OWNED)
+    {
 
         Options = LoaderBlock->LoadOptions ? _strupr(LoaderBlock->LoadOptions) : NULL;
 
-        if (Options) {
+        if (Options)
+        {
             DispModeChange = (BOOLEAN)(strstr(Options, "BOOTLOGO") == NULL);
-        } else {
+        }
+        else
+        {
             DispModeChange = TRUE;
         }
     }
 
     InbvBootDriverInstalled = VidInitialize(DispModeChange);
 
-    if (InbvBootDriverInstalled == FALSE) {
+    if (InbvBootDriverInstalled == FALSE)
+    {
         return FALSE;
     }
 
     ResourceCount = Count;
 
-    for (i=1; i<=Count; i++) {
-        p = (ULONG_PTR) i;
-        ResourceList[i-1] = FindBitmapResource(LoaderBlock, p);
+    for (i = 1; i <= Count; i++)
+    {
+        p = (ULONG_PTR)i;
+        ResourceList[i - 1] = FindBitmapResource(LoaderBlock, p);
     }
 
     //
@@ -990,10 +927,7 @@ Routine Description:
     return InbvBootDriverInstalled;
 }
 
-VOID
-InbvNotifyDisplayOwnershipLost(
-    INBV_RESET_DISPLAY_PARAMETERS ResetDisplayParameters
-    )
+VOID InbvNotifyDisplayOwnershipLost(INBV_RESET_DISPLAY_PARAMETERS ResetDisplayParameters)
 
 /*++
 
@@ -1006,7 +940,8 @@ Routine Description:
 --*/
 
 {
-    if (InbvBootDriverInstalled) {
+    if (InbvBootDriverInstalled)
+    {
 
         //
         // We can only wait for our lock, and execute our clean up code
@@ -1014,24 +949,23 @@ Routine Description:
         //
 
         InbvAcquireLock();
-        if (InbvDisplayState != INBV_DISPLAY_STATE_LOST) {
+        if (InbvDisplayState != INBV_DISPLAY_STATE_LOST)
+        {
             VidCleanUp();
         }
         InbvDisplayState = INBV_DISPLAY_STATE_LOST;
         InbvResetDisplayParameters = ResetDisplayParameters;
         InbvReleaseLock();
-
-    } else {
+    }
+    else
+    {
 
         InbvDisplayState = INBV_DISPLAY_STATE_LOST;
         InbvResetDisplayParameters = ResetDisplayParameters;
     }
 }
 
-VOID
-InbvAcquireDisplayOwnership(
-    VOID
-    )
+VOID InbvAcquireDisplayOwnership(VOID)
 
 /*++
 
@@ -1042,17 +976,15 @@ Routine Description:
 --*/
 
 {
-    if (InbvResetDisplayParameters && (InbvDisplayState == INBV_DISPLAY_STATE_LOST)) {
-        InbvResetDisplayParameters(80,50);
+    if (InbvResetDisplayParameters && (InbvDisplayState == INBV_DISPLAY_STATE_LOST))
+    {
+        InbvResetDisplayParameters(80, 50);
     }
 
     InbvDisplayState = INBV_DISPLAY_STATE_OWNED;
 }
 
-VOID
-InbvSetDisplayOwnership(
-    BOOLEAN DisplayOwned
-    )
+VOID InbvSetDisplayOwnership(BOOLEAN DisplayOwned)
 
 /*++
 
@@ -1069,17 +1001,18 @@ Arguments:
 --*/
 
 {
-    if (DisplayOwned) {
+    if (DisplayOwned)
+    {
         InbvDisplayState = INBV_DISPLAY_STATE_OWNED;
-    } else {
+    }
+    else
+    {
         InbvDisplayState = INBV_DISPLAY_STATE_LOST;
     }
 }
 
 BOOLEAN
-InbvCheckDisplayOwnership(
-    VOID
-    )
+InbvCheckDisplayOwnership(VOID)
 
 /*++
 
@@ -1094,9 +1027,7 @@ Routine Description:
 }
 
 INBV_DISPLAY_STATE
-InbvGetDisplayState(
-    VOID
-    )
+InbvGetDisplayState(VOID)
 
 /*++
 
@@ -1110,13 +1041,7 @@ Routine Description:
     return InbvDisplayState;
 }
 
-VOID
-InbvSetScrollRegion(
-    ULONG x1,
-    ULONG y1,
-    ULONG x2,
-    ULONG y2
-    )
+VOID InbvSetScrollRegion(ULONG x1, ULONG y1, ULONG x2, ULONG y2)
 
 /*++
 

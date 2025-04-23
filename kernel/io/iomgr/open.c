@@ -29,16 +29,10 @@ Revision History:
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, NtOpenFile)
 #endif
-
+
 NTSTATUS
-NtOpenFile(
-    OUT PHANDLE FileHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_ATTRIBUTES ObjectAttributes,
-    OUT PIO_STATUS_BLOCK IoStatusBlock,
-    IN ULONG ShareAccess,
-    IN ULONG OpenOptions
-    )
+NtOpenFile(OUT PHANDLE FileHandle, IN ACCESS_MASK DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes,
+           OUT PIO_STATUS_BLOCK IoStatusBlock, IN ULONG ShareAccess, IN ULONG OpenOptions)
 
 /*++
 
@@ -79,18 +73,6 @@ Return Value:
 
     PAGED_CODE();
 
-    return IoCreateFile( FileHandle,
-                         DesiredAccess,
-                         ObjectAttributes,
-                         IoStatusBlock,
-                         (PLARGE_INTEGER) NULL,
-                         0L,
-                         ShareAccess,
-                         FILE_OPEN,
-                         OpenOptions,
-                         (PVOID) NULL,
-                         0L,
-                         CreateFileTypeNone,
-                         (PVOID) NULL,
-                         0 );
+    return IoCreateFile(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, (PLARGE_INTEGER)NULL, 0L,
+                        ShareAccess, FILE_OPEN, OpenOptions, (PVOID)NULL, 0L, CreateFileTypeNone, (PVOID)NULL, 0);
 }

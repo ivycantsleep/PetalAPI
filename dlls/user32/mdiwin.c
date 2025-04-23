@@ -29,15 +29,12 @@
 * 04-16-91 MikeHar Win31 Merge
 \***************************************************************************/
 
-void xxxSetFrameTitle(
-    PWND pwndFrame,
-    PWND pwndMDI,
-    LPWSTR lpch)
+void xxxSetFrameTitle(PWND pwndFrame, PWND pwndMDI, LPWSTR lpch)
 {
     PWND pwnd;
     PMDI pmdi;
     WCHAR sz[MAX_TITLE_LEN];
-    HWND  hwndFrame = HW(pwndFrame);
+    HWND hwndFrame = HW(pwndFrame);
 
     CheckLock(pwndFrame);
     CheckLock(pwndMDI);
@@ -47,30 +44,37 @@ void xxxSetFrameTitle(
      */
     pmdi = ((PMDIWND)pwndMDI)->pmdi;
 
-    if (IS_PTR(lpch) || lpch == NULL) {
-        if (HTITLE(pmdi)) {
+    if (IS_PTR(lpch) || lpch == NULL)
+    {
+        if (HTITLE(pmdi))
+        {
             UserLocalFree(HTITLE(pmdi));
         }
         HTITLE(pmdi) = TextAlloc(lpch);
     }
 
-    if (HTITLE(pmdi)) {
+    if (HTITLE(pmdi))
+    {
         LARGE_UNICODE_STRING str;
         int cch;
 
         RtlInitLargeUnicodeString(&str, HTITLE(pmdi), (UINT)-1);
-        TextCopy(&str, sz, sizeof(sz)/sizeof(WCHAR));
+        TextCopy(&str, sz, sizeof(sz) / sizeof(WCHAR));
 
-        if (MAXED(pmdi) && (pwnd = ValidateHwnd(MAXED(pmdi))) && pwnd->strName.Length) {
+        if (MAXED(pmdi) && (pwnd = ValidateHwnd(MAXED(pmdi))) && pwnd->strName.Length)
+        {
 
             cch = MAX_TITLE_LEN - ((str.Length / sizeof(WCHAR)) + TITLE_EXTRA);
-            if (cch > 0) {
+            if (cch > 0)
+            {
                 wcscat(sz, TEXT(" - ["));
                 wcsncat(sz, REBASE(pwnd, strName.Buffer), cch - 1);
                 wcscat(sz, TEXT("]"));
             }
         }
-    } else {
+    }
+    else
+    {
         sz[0] = 0;
     }
 
@@ -79,7 +83,8 @@ void xxxSetFrameTitle(
     if (lpch == (LPWSTR)1L)
         NtUserRedrawFrameAndHook(hwndFrame);
 
-    else if (lpch != (LPWSTR)2L) {
+    else if (lpch != (LPWSTR)2L)
+    {
         if (!NtUserRedrawTitle(hwndFrame, DC_TEXT))
             NtUserRedrawFrame(hwndFrame);
     }
@@ -95,9 +100,7 @@ void xxxSetFrameTitle(
 
 
 FUNCLOG2(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, TranslateMDISysAccel, HWND, hwnd, LPMSG, lpMsg)
-BOOL TranslateMDISysAccel(
-    HWND hwnd,
-    LPMSG lpMsg)
+BOOL TranslateMDISysAccel(HWND hwnd, LPMSG lpMsg)
 {
     PWND pwnd;
     PMDI pmdi;
@@ -106,7 +109,8 @@ BOOL TranslateMDISysAccel(
     /*
      * Is this a message we care about?
      */
-    if (lpMsg->message != WM_KEYDOWN && lpMsg->message != WM_SYSKEYDOWN) {
+    if (lpMsg->message != WM_KEYDOWN && lpMsg->message != WM_SYSKEYDOWN)
+    {
         return FALSE;
     }
 
@@ -117,7 +121,8 @@ BOOL TranslateMDISysAccel(
      * on every one of these, causing RIPs.... Make it nice so it just
      * returns FALSE.
      */
-    if ((pwnd = ValidateHwndNoRip(hwnd)) == NULL) {
+    if ((pwnd = ValidateHwndNoRip(hwnd)) == NULL)
+    {
         RIPERR0(ERROR_INVALID_WINDOW_HANDLE, RIP_VERBOSE, "");
         return FALSE;
     }
@@ -129,7 +134,8 @@ BOOL TranslateMDISysAccel(
      * calls this function with a different window class and caused us
      * to get an access violation.
      */
-    if (GETFNID(pwnd) != FNID_MDICLIENT) {
+    if (GETFNID(pwnd) != FNID_MDICLIENT)
+    {
         RIPMSG0(RIP_WARNING, "Window not of MDIClient class");
         return FALSE;
     }
@@ -145,7 +151,8 @@ BOOL TranslateMDISysAccel(
     if (!IsWindowEnabled(ACTIVE(pmdi)))
         return FALSE;
 
-    switch (lpMsg->wParam) {
+    switch (lpMsg->wParam)
+    {
     case VK_F4:
         event = SC_CLOSE;
         break;
@@ -180,16 +187,17 @@ BOOL TranslateMDISysAccel(
 *
 \***************************************************************************/
 
-#define SBJ_HORZ  HAS_SBHORZ
-#define SBJ_VERT  HAS_SBVERT
-#define SBJ_BOTH  (SBJ_HORZ | SBJ_VERT)
+#define SBJ_HORZ HAS_SBHORZ
+#define SBJ_VERT HAS_SBVERT
+#define SBJ_BOTH (SBJ_HORZ | SBJ_VERT)
 
 void ByteOutsetRect(LPRECT lprc)
 {
     int FAR *pi;
     int i;
 
-    for (i = 0, pi = (int FAR *) lprc; i < 4; i++, pi++) {
+    for (i = 0, pi = (int FAR *)lprc; i < 4; i++, pi++)
+    {
         if (*pi > 0)
             *pi += 7;
         else if (*pi < 0)
@@ -215,7 +223,8 @@ void CalcClientScrolling(HWND hwnd, UINT sbj, BOOL fIgnoreMin)
     BOOL fNeedScrolls;
     SCROLLINFO si;
 
-    if ((pwnd = ValidateHwnd(hwnd)) == NULL) {
+    if ((pwnd = ValidateHwnd(hwnd)) == NULL)
+    {
         return;
     }
     CheckLock(pwnd);
@@ -229,7 +238,7 @@ void CalcClientScrolling(HWND hwnd, UINT sbj, BOOL fIgnoreMin)
 
     fVert = FALSE;
     fHorz = FALSE;
-    fNeedScrolls=FALSE;
+    fNeedScrolls = FALSE;
 
     fCheckHorz = (sbj & SBJ_HORZ);
     fCheckVert = (sbj & SBJ_VERT);
@@ -239,9 +248,12 @@ void CalcClientScrolling(HWND hwnd, UINT sbj, BOOL fIgnoreMin)
 
     fHadVert = TestWF(pwnd, WFVSCROLL);
     if (fCheckVert && fHadVert)
-        if (TestWF(pwnd, WEFLAYOUTRTL)) {
+        if (TestWF(pwnd, WEFLAYOUTRTL))
+        {
             rcClient.left -= SYSMET(CXVSCROLL);
-        } else {
+        }
+        else
+        {
             rcClient.right += SYSMET(CXVSCROLL);
         }
 
@@ -252,13 +264,15 @@ void CalcClientScrolling(HWND hwnd, UINT sbj, BOOL fIgnoreMin)
     // find the rectangle that bounds all visible child windows
     SetRectEmpty(&rcScroll);
 
-    for (pwndT = REBASEPWND(pwnd, spwndChild); pwndT;
-            pwndT = REBASEPWND(pwndT, spwndNext)) {
+    for (pwndT = REBASEPWND(pwnd, spwndChild); pwndT; pwndT = REBASEPWND(pwndT, spwndNext))
+    {
         if (fIgnoreMin && TestWF(pwndT, WFMINIMIZED))
             continue;
 
-        if (TestWF(pwndT,WFVISIBLE)) {
-            if (TestWF(pwndT, WFMAXIMIZED)) {
+        if (TestWF(pwndT, WFVISIBLE))
+        {
+            if (TestWF(pwndT, WFMAXIMIZED))
+            {
                 fNeedScrolls = FALSE;
                 break;
             }
@@ -273,7 +287,8 @@ void CalcClientScrolling(HWND hwnd, UINT sbj, BOOL fIgnoreMin)
              * client area
              */
             UnionRect(&rcT, &rcClient, KPRECT_TO_PRECT(&pwndT->rcWindow));
-            if (!EqualRect(&rcClient, &rcT)) {
+            if (!EqualRect(&rcClient, &rcT))
+            {
                 fNeedScrolls = TRUE;
             }
         }
@@ -289,46 +304,52 @@ void CalcClientScrolling(HWND hwnd, UINT sbj, BOOL fIgnoreMin)
     /*
      * Swap the left and right if pwnd is a mirrored window.
      */
-    if (TestWF(pwnd, WEFLAYOUTRTL)) {
-       int  nSaveLeft;
+    if (TestWF(pwnd, WEFLAYOUTRTL))
+    {
+        int nSaveLeft;
 
-       nSaveLeft = rcScroll.left;
-       rcScroll.left  = rcScroll.right;
-       rcScroll.right = nSaveLeft;
+        nSaveLeft = rcScroll.left;
+        rcScroll.left = rcScroll.right;
+        rcScroll.right = nSaveLeft;
     }
 
     OffsetRect(&rcClient, -rcClient.left, -rcClient.top);
 
     if (!fNeedScrolls)
         rcClient.bottom = rcClient.right = 0;
-    else do
-    {
+    else
+        do
+        {
             /*
              * the range is the union of the parent client with all of its
              * children
              */
-        CopyRect(&rcT, &rcRange);
-        UnionRect(&rcRange, &rcScroll, &rcClient);
+            CopyRect(&rcT, &rcRange);
+            UnionRect(&rcRange, &rcScroll, &rcClient);
 
-        if (fCheckVert) {
-            // subtract off space for the vertical scroll if we need it
-            if (((rcRange.bottom - rcRange.top) > rcClient.bottom) && !fVert) {
-                fVert = TRUE;
-                rcClient.right -= SYSMET(CXVSCROLL);
+            if (fCheckVert)
+            {
+                // subtract off space for the vertical scroll if we need it
+                if (((rcRange.bottom - rcRange.top) > rcClient.bottom) && !fVert)
+                {
+                    fVert = TRUE;
+                    rcClient.right -= SYSMET(CXVSCROLL);
+                }
             }
-        }
 
-        if (fCheckHorz) {
-            // subtract off space for the horizontal scroll if we need it
-            if (((rcRange.right - rcRange.left) > rcClient.right) && !fHorz) {
-                fHorz = TRUE;
-                rcClient.bottom -= SYSMET(CYHSCROLL);
+            if (fCheckHorz)
+            {
+                // subtract off space for the horizontal scroll if we need it
+                if (((rcRange.right - rcRange.left) > rcClient.right) && !fHorz)
+                {
+                    fHorz = TRUE;
+                    rcClient.bottom -= SYSMET(CYHSCROLL);
+                }
             }
-        }
-    }
-    while (!EqualRect(&rcRange, &rcT));
+        } while (!EqualRect(&rcRange, &rcT));
 
-    if (fNeedScrolls) {
+    if (fNeedScrolls)
+    {
         // HACK of death beginning
         if (rcRange.right == rcClient.right)
             rcRange.right -= 8;
@@ -338,55 +359,63 @@ void CalcClientScrolling(HWND hwnd, UINT sbj, BOOL fIgnoreMin)
         // HACK of death ending
     }
 
-    if (fCheckVert) {
+    if (fCheckVert)
+    {
 
         /*
          * check to see if we are changing the presence of the vertical
          * scrollbar
          */
-        if ((rcRange.bottom - rcRange.top) <= rcClient.bottom) {
+        if ((rcRange.bottom - rcRange.top) <= rcClient.bottom)
+        {
             ClearWindowState(pwnd, WFVSCROLL);
-        } else {
+        }
+        else
+        {
             SetWindowState(pwnd, WFVSCROLL);
-       }
+        }
     }
 
-    if (fCheckHorz) {
+    if (fCheckHorz)
+    {
 
         /*
          * same for horizontal scroll
          */
-        if ((rcRange.right - rcRange.left) <= rcClient.right) {
+        if ((rcRange.right - rcRange.left) <= rcClient.right)
+        {
             ClearWindowState(pwnd, WFHSCROLL);
-        } else {
+        }
+        else
+        {
             SetWindowState(pwnd, WFHSCROLL);
         }
     }
 
-    if (fNeedScrolls) {
+    if (fNeedScrolls)
+    {
         ByteOutsetRect(&rcClient);
         ByteOutsetRect(&rcRange);
     }
 
-    si.cbSize   = sizeof(SCROLLINFO);
-    si.fMask    = SIF_ALL;
-    si.nPos     = 0;
+    si.cbSize = sizeof(SCROLLINFO);
+    si.fMask = SIF_ALL;
+    si.nPos = 0;
 
-    si.nMin     = rcRange.left;
-    si.nMax     = rcRange.right;
-    si.nPage    = rcClient.right;
+    si.nMin = rcRange.left;
+    si.nMax = rcRange.right;
+    si.nPage = rcClient.right;
 
     SetScrollInfo(hwnd, SB_HORZ, &si, FALSE);
 
-    si.nMin     = rcRange.top;
-    si.nMax     = rcRange.bottom;
-    si.nPage    = rcClient.bottom;
+    si.nMin = rcRange.top;
+    si.nMax = rcRange.bottom;
+    si.nPage = rcClient.bottom;
 
     SetScrollInfo(hwnd, SB_VERT, &si, FALSE);
 
-    if ((fHadVert != TestWF(pwnd, WFVSCROLL)) ||
-        (fHadHorz != TestWF(pwnd, WFHSCROLL)))
-    NtUserRedrawFrame(hwnd);
+    if ((fHadVert != TestWF(pwnd, WFVSCROLL)) || (fHadHorz != TestWF(pwnd, WFHSCROLL)))
+        NtUserRedrawFrame(hwnd);
 }
 
 
@@ -399,28 +428,25 @@ void CalcClientScrolling(HWND hwnd, UINT sbj, BOOL fIgnoreMin)
 * 11-14-90 MikeHar Ported from windows
 \***************************************************************************/
 
-void ScrollMDIChildren(
-    HWND hwnd,
-    int nCtl,
-    UINT wCmd,
-    int iThumbPos)
+void ScrollMDIChildren(HWND hwnd, int nCtl, UINT wCmd, int iThumbPos)
 {
-    SCROLLINFO  si;
+    SCROLLINFO si;
     int wInc;
     int wNewPos;
     //SHORT sPos;
-    int          x, y;
+    int x, y;
 
     wInc = (((nCtl == SB_VERT) ? SYSMET(CYSIZE) : SYSMET(CXSIZE)) + 7) / 8;
 
-    si.cbSize   = sizeof(SCROLLINFO);
-    si.fMask    = SIF_ALL;
+    si.cbSize = sizeof(SCROLLINFO);
+    si.fMask = SIF_ALL;
     GetScrollInfo(hwnd, nCtl, &si);
 
     si.nPage--;
     si.nMax -= si.nPage;
 
-    switch (wCmd) {
+    switch (wCmd)
+    {
     case SB_BOTTOM:
         wNewPos = si.nMax;
         break;
@@ -467,29 +493,24 @@ void ScrollMDIChildren(
 
     x = (si.nPos - wNewPos) * 8;
 
-    if (nCtl == SB_VERT) {
+    if (nCtl == SB_VERT)
+    {
         y = x;
         x = 0;
-    } else
+    }
+    else
         // x is already set properly for this case
         y = 0;
 
     NtUserScrollWindowEx(hwnd, x, y, NULL, NULL, NULL, NULL,
-           SW_SCROLLWINDOW | SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN);
+                         SW_SCROLLWINDOW | SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN);
 }
 
 
-
 FUNCLOGVOID3(LOG_GENERAL, DUMMYCALLINGTYPE, ScrollChildren, HWND, hwnd, UINT, wMsg, DWORD, wParam)
-VOID ScrollChildren(
-    HWND hwnd,
-    UINT wMsg,
-    DWORD wParam)
+VOID ScrollChildren(HWND hwnd, UINT wMsg, DWORD wParam)
 {
-    ScrollMDIChildren(hwnd,
-                      wMsg == WM_VSCROLL ? SB_VERT : SB_HORZ,
-                      LOWORD(wParam),
-                      (short)(HIWORD(wParam)));
+    ScrollMDIChildren(hwnd, wMsg == WM_VSCROLL ? SB_VERT : SB_HORZ, LOWORD(wParam), (short)(HIWORD(wParam)));
 }
 
 
@@ -501,14 +522,14 @@ VOID ScrollChildren(
 * 04-16-91 MikeHar Win31 Merge
 \***************************************************************************/
 
-void RecalculateScrollRanges(
-    PWND pwndParent,
-    BOOL fIgnoreMin)
+void RecalculateScrollRanges(PWND pwndParent, BOOL fIgnoreMin)
 {
     PMDI pmdi = ((PMDIWND)pwndParent)->pmdi;
 
-    if (!(SCROLL(pmdi) & (CALCSCROLL | SCROLLCOUNT))) {
-        if (PostMessage(HWq(pwndParent), MM_CALCSCROLL, fIgnoreMin, 0L)) {
+    if (!(SCROLL(pmdi) & (CALCSCROLL | SCROLLCOUNT)))
+    {
+        if (PostMessage(HWq(pwndParent), MM_CALCSCROLL, fIgnoreMin, 0L))
+        {
             SCROLL(pmdi) |= CALCSCROLL;
         }
     }
@@ -523,10 +544,9 @@ void RecalculateScrollRanges(
 * 01-12-94 FritzS  Ported from Chicago
 \***************************************************************************/
 
-void GetCascadeWindowPos(
-    LPCRECT prcClient,  /* area to arrange to */
-    int     iWindow,    /* index of this window */
-    LPRECT  lprc)       /* resulting rectangle */
+void GetCascadeWindowPos(LPCRECT prcClient, /* area to arrange to */
+                         int iWindow,       /* index of this window */
+                         LPRECT lprc)       /* resulting rectangle */
 {
     int cStack;
     int xStep, yStep;
@@ -558,7 +578,8 @@ void GetCascadeWindowPos(
      * HACK!: Mod by cStack+1 and make sure no div-by-zero
      * exception happens.
      */
-    if (++cStack <= 0) {
+    if (++cStack <= 0)
+    {
         cStack = 1;
     }
 
@@ -575,13 +596,11 @@ void GetCascadeWindowPos(
 * 04-16-91 MikeHar Win31 Merge
 \***************************************************************************/
 
-void MDICheckCascadeRect(
-    PWND pwndClient,
-    LPRECT lprc)
+void MDICheckCascadeRect(PWND pwndClient, LPRECT lprc)
 {
     PMDI pmdi;
     RECT rc, rcClient;
-    int         iWindow;
+    int iWindow;
 
     /*
      * Get a pointer to the MDI structure
@@ -593,17 +612,18 @@ void MDICheckCascadeRect(
     GetRect(pwndClient, &rcClient, GRECT_CLIENT | GRECT_CLIENTCOORDS);
     GetCascadeWindowPos(&rcClient, iWindow, &rc);
 
-    if ((lprc->right == CW_USEDEFAULT || lprc->right == CW2_USEDEFAULT) ||
-            !(lprc->right)) {
+    if ((lprc->right == CW_USEDEFAULT || lprc->right == CW2_USEDEFAULT) || !(lprc->right))
+    {
         lprc->right = rc.right;
     }
 
-    if ((lprc->bottom == CW_USEDEFAULT || lprc->bottom == CW2_USEDEFAULT) ||
-            !(lprc->bottom)) {
+    if ((lprc->bottom == CW_USEDEFAULT || lprc->bottom == CW2_USEDEFAULT) || !(lprc->bottom))
+    {
         lprc->bottom = rc.bottom;
     }
 
-    if (lprc->left == CW_USEDEFAULT || lprc->left == CW2_USEDEFAULT) {
+    if (lprc->left == CW_USEDEFAULT || lprc->left == CW2_USEDEFAULT)
+    {
         lprc->left = rc.left;
         lprc->top = rc.top;
     }
@@ -621,8 +641,7 @@ void MDICheckCascadeRect(
 * 4-16-91 MikeHar       Win31 Merge
 \***************************************************************************/
 
-BOOL UnmaximizeChildWindows(
-    HWND hwndParent)
+BOOL UnmaximizeChildWindows(HWND hwndParent)
 {
     HWND hwndMove;
     PWND pwndMove;
@@ -637,26 +656,27 @@ BOOL UnmaximizeChildWindows(
      * Get the hwnd list.  It is returned in a block of memory
      * allocated with LocalAlloc.
      */
-    if (hwndChild == NULL ||
-            (chwnd = BuildHwndList(NULL, GetWindow(hwndParent, GW_CHILD),
-                                   FALSE, 0, &phwndList)) == 0) {
+    if (hwndChild == NULL || (chwnd = BuildHwndList(NULL, GetWindow(hwndParent, GW_CHILD), FALSE, 0, &phwndList)) == 0)
+    {
         return FALSE;
     }
 
     fAsync = (hwndParent == GetDesktopWindow());
 
-    for (phwnd = phwndList; chwnd > 0; chwnd--, phwnd++) {
+    for (phwnd = phwndList; chwnd > 0; chwnd--, phwnd++)
+    {
         if ((hwndMove = *phwnd) == NULL)
             continue;
 
         if ((pwndMove = ValidateHwnd(hwndMove)) == NULL)
             continue;
 
-// Not in Chicago -- FritzS
-//        if (pwndMove->spwndOwner != NULL)
-//            continue;
+        // Not in Chicago -- FritzS
+        //        if (pwndMove->spwndOwner != NULL)
+        //            continue;
 
-        if (TestWF(pwndMove, WFMAXIMIZED) && TestWF(pwndMove, WFVISIBLE)) {
+        if (TestWF(pwndMove, WFMAXIMIZED) && TestWF(pwndMove, WFVISIBLE))
+        {
             //
             // If we haven't done it yet, lock the screen to prevent sending
             // paints for a cleaner update.
@@ -675,22 +695,22 @@ BOOL UnmaximizeChildWindows(
 
     UserLocalFree(phwndList);
 
-    if (fFoundOne && fAsync) {
+    if (fFoundOne && fAsync)
+    {
 
         HWND hwndActive = NtUserGetForegroundWindow();
-        if (hwndActive != NULL) {
+        if (hwndActive != NULL)
+        {
 
             /*
              * Hack! Since the above showwindows cause zorder changes, we want
              * the active window to be in front.  This makes sure...
              */
             NtUserSetWindowPos(hwndActive, HWND_TOP, 0, 0, 0, 0,
-                SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_ASYNCWINDOWPOS);
-
+                               SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_ASYNCWINDOWPOS);
         }
         NtUserLockWindowUpdate(NULL);
-        RedrawWindow(hwndParent, NULL, NULL,
-                RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE | RDW_FRAME);
+        RedrawWindow(hwndParent, NULL, NULL, RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE | RDW_FRAME);
     }
 
     return fFoundOne;
@@ -703,19 +723,19 @@ BOOL UnmaximizeChildWindows(
 *
 \***************************************************************************/
 
-typedef struct tagARRANGEWINDOWSDATA {
-    PWND    pwndParent;
-    UINT    flags;
-    LPRECT  lprcParent;
-    int     chwnd;
-    int     chwndReal;
-    HWND *  phwnd;
-    PWND    pwndDesktop;
-    HDWP    hdwp;
-    UINT    uGRCFlags;
-    int     fVerifyParent;
+typedef struct tagARRANGEWINDOWSDATA
+{
+    PWND pwndParent;
+    UINT flags;
+    LPRECT lprcParent;
+    int chwnd;
+    int chwndReal;
+    HWND *phwnd;
+    PWND pwndDesktop;
+    HDWP hdwp;
+    UINT uGRCFlags;
+    int fVerifyParent;
 } ARRANGEWINDOWSDATA, *PARRANGEWINDOWSDATA;
-
 
 
 /***************************************************************************\
@@ -729,27 +749,26 @@ typedef struct tagARRANGEWINDOWSDATA {
 * 10-Jul-1997 adams     Created.
 \***************************************************************************/
 
-WORD ArrangeWindows(
-    HWND            hwndParent,
-    UINT            flags,
-    CONST RECT *    lpRect,
-    UINT            chwnd,
-    CONST HWND *    ahwnd,
-    MONITORENUMPROC lpfnEnum)
+WORD ArrangeWindows(HWND hwndParent, UINT flags, CONST RECT *lpRect, UINT chwnd, CONST HWND *ahwnd,
+                    MONITORENUMPROC lpfnEnum)
 {
-    ARRANGEWINDOWSDATA  awd;
-    HWND *              phwnd = NULL;
+    ARRANGEWINDOWSDATA awd;
+    HWND *phwnd = NULL;
 
     /*
      * Get parent window
      */
     awd.pwndDesktop = _GetDesktopWindow();
-    if (!hwndParent) {
+    if (!hwndParent)
+    {
         hwndParent = HW(awd.pwndDesktop);
         awd.pwndParent = awd.pwndDesktop;
-    } else {
+    }
+    else
+    {
         awd.pwndParent = ValidateHwnd(hwndParent);
-        if (awd.pwndParent == NULL) {
+        if (awd.pwndParent == NULL)
+        {
             return 0;
         }
     }
@@ -760,12 +779,10 @@ WORD ArrangeWindows(
      * If the rect passed in contains the desktop window,
      * arrange the windows on the desktop
      */
-    if ( lpRect &&
-         awd.pwndParent == awd.pwndDesktop   &&
-         lpRect->left   <= awd.pwndDesktop->rcClient.left   &&
-         lpRect->top    <= awd.pwndDesktop->rcClient.top    &&
-         lpRect->right  >= awd.pwndDesktop->rcClient.right  &&
-         lpRect->bottom >= awd.pwndDesktop->rcClient.bottom ) {
+    if (lpRect && awd.pwndParent == awd.pwndDesktop && lpRect->left <= awd.pwndDesktop->rcClient.left &&
+        lpRect->top <= awd.pwndDesktop->rcClient.top && lpRect->right >= awd.pwndDesktop->rcClient.right &&
+        lpRect->bottom >= awd.pwndDesktop->rcClient.bottom)
+    {
 
         lpRect = NULL;
     }
@@ -774,13 +791,16 @@ WORD ArrangeWindows(
      * Arrange iconic windows if appropriate, and determine flags
      * for getting the client rectangle if no rect is given.
      */
-    if (lpRect == NULL) {
-        if (    (   awd.pwndParent != awd.pwndDesktop ||
-                    !(SYSMET(ARRANGE) & ARW_HIDE)) &&
-                NtUserArrangeIconicWindows(hwndParent) != 0) {
+    if (lpRect == NULL)
+    {
+        if ((awd.pwndParent != awd.pwndDesktop || !(SYSMET(ARRANGE) & ARW_HIDE)) &&
+            NtUserArrangeIconicWindows(hwndParent) != 0)
+        {
 
             awd.uGRCFlags = GRC_SCROLLS | GRC_MINWNDS;
-        } else {
+        }
+        else
+        {
             awd.uGRCFlags = GRC_SCROLLS;
         }
     }
@@ -788,14 +808,15 @@ WORD ArrangeWindows(
     /*
      * Get window list
      */
-    if (ahwnd == NULL) {
+    if (ahwnd == NULL)
+    {
         HWND hwndChild;
         PWND pwndChild;
 
         pwndChild = REBASEPWND(awd.pwndParent, spwndChild);
         hwndChild = HW(pwndChild);
-        if (    hwndChild == NULL ||
-                (chwnd = BuildHwndList(NULL, hwndChild, FALSE, 0, &phwnd)) == 0) {
+        if (hwndChild == NULL || (chwnd = BuildHwndList(NULL, hwndChild, FALSE, 0, &phwnd)) == 0)
+        {
             return 0;
         }
     }
@@ -808,10 +829,10 @@ WORD ArrangeWindows(
         goto Done;
 
     awd.flags = flags;
-    awd.lprcParent = (LPRECT) lpRect;
+    awd.lprcParent = (LPRECT)lpRect;
     awd.chwnd = chwnd;
     awd.chwndReal = 0;
-    awd.phwnd = ahwnd ? (HWND *) ahwnd : phwnd;
+    awd.phwnd = ahwnd ? (HWND *)ahwnd : phwnd;
     awd.fVerifyParent = (ahwnd != NULL);
 
     /*
@@ -819,25 +840,29 @@ WORD ArrangeWindows(
      * arrange the windows on each monitor. Otherwise, arrange the
      * windows once by calling the enumeration function directly.
      */
-    if (awd.pwndParent == awd.pwndDesktop && lpRect == NULL) {
-            NtUserEnumDisplayMonitors(NULL, NULL, lpfnEnum, (LPARAM) &awd);
-    } else {
-        (*lpfnEnum)(NULL, NULL, NULL, (LPARAM) &awd);
+    if (awd.pwndParent == awd.pwndDesktop && lpRect == NULL)
+    {
+        NtUserEnumDisplayMonitors(NULL, NULL, lpfnEnum, (LPARAM)&awd);
+    }
+    else
+    {
+        (*lpfnEnum)(NULL, NULL, NULL, (LPARAM)&awd);
     }
 
     /* Make this arrangement asynchronous so we don't hang */
-    if (awd.hdwp != NULL) {
+    if (awd.hdwp != NULL)
+    {
         NtUserEndDeferWindowPosEx(awd.hdwp, TRUE);
     }
 
 Done:
-    if (phwnd) {
+    if (phwnd)
+    {
         UserLocalFree(phwnd);
     }
 
     return (awd.hdwp != NULL) ? awd.chwndReal : 0;
 }
-
 
 
 /***************************************************************************\
@@ -850,14 +875,16 @@ Done:
 * 10-Jul-1997 adams     Created.
 \***************************************************************************/
 
-void
-GetParentArrangeRect(PARRANGEWINDOWSDATA pawd, PMONITOR pMonitor, LPRECT lprc)
+void GetParentArrangeRect(PARRANGEWINDOWSDATA pawd, PMONITOR pMonitor, LPRECT lprc)
 {
-    UINT    uGRCFlags;
+    UINT uGRCFlags;
 
-    if (pawd->lprcParent) {
+    if (pawd->lprcParent)
+    {
         *lprc = *pawd->lprcParent;
-    } else {
+    }
+    else
+    {
         uGRCFlags = pawd->uGRCFlags;
 
         /*
@@ -865,15 +892,14 @@ GetParentArrangeRect(PARRANGEWINDOWSDATA pawd, PMONITOR pMonitor, LPRECT lprc)
          * shown on the primary monitor. So remove the GRC_MINWNDS
          * flag for monitors other than the primary.
          */
-        if (pMonitor && pMonitor != GetPrimaryMonitor()) {
+        if (pMonitor && pMonitor != GetPrimaryMonitor())
+        {
             uGRCFlags &= ~GRC_MINWNDS;
         }
 
-        GetRealClientRect(
-                pawd->pwndParent, lprc, uGRCFlags, pMonitor);
+        GetRealClientRect(pawd->pwndParent, lprc, uGRCFlags, pMonitor);
     }
 }
-
 
 
 /***************************************************************************\
@@ -886,53 +912,50 @@ GetParentArrangeRect(PARRANGEWINDOWSDATA pawd, PMONITOR pMonitor, LPRECT lprc)
 * 10-Jul-1997 adams     Created.
 \***************************************************************************/
 
-PWND
-ValidatePositionableWindow(
-        HWND        hwndChild,
-        PWND        pwndParent,
-        PWND        pwndDesktop,
-        DWORD       dwMDIFlags,
-        PMONITOR    pMonitor,
-        DWORD *     pdwSWPFlags)
+PWND ValidatePositionableWindow(HWND hwndChild, PWND pwndParent, PWND pwndDesktop, DWORD dwMDIFlags, PMONITOR pMonitor,
+                                DWORD *pdwSWPFlags)
 {
-    PWND    pwndChild;
+    PWND pwndChild;
 
     pwndChild = ValidateHwnd(hwndChild);
-    if (pwndChild) {
-        if (pwndParent && REBASEPWND(pwndChild, spwndParent) != pwndParent) {
+    if (pwndChild)
+    {
+        if (pwndParent && REBASEPWND(pwndChild, spwndParent) != pwndParent)
+        {
             RIPMSG0(RIP_WARNING, "Cascade/Tile Windows: Windows in list must have same parent");
-        } else if (
-                /*
+        }
+        else if (
+            /*
                  * mikesch - removed the maximized check since the call
                  * to restore maximized windows in unmaximizechildwindows occurs
                  * asynchronously now.
                  */
-                TestWF(pwndChild, WFVISIBLE) &&
-                TestWF(pwndChild, WFCPRESENT) &&
-                !TestWF(pwndChild, WFMINIMIZED) &&
-                !TestWF(pwndChild, WEFTOPMOST) &&
-                (!(dwMDIFlags & MDITILE_SKIPDISABLED) || !TestWF(pwndChild, WFDISABLED)) &&
-                !TestWF(pwndChild, WEFTOOLWINDOW) &&
-                ((pMonitor) ?
-                    (pMonitor == _MonitorFromWindow(pwndChild, MONITOR_DEFAULTTONULL)) :
-                    (pwndParent != pwndDesktop || _MonitorFromWindow(pwndChild, MONITOR_DEFAULTTONULL)))) {
+            TestWF(pwndChild, WFVISIBLE) && TestWF(pwndChild, WFCPRESENT) && !TestWF(pwndChild, WFMINIMIZED) &&
+            !TestWF(pwndChild, WEFTOPMOST) &&
+            (!(dwMDIFlags & MDITILE_SKIPDISABLED) || !TestWF(pwndChild, WFDISABLED)) &&
+            !TestWF(pwndChild, WEFTOOLWINDOW) &&
+            ((pMonitor) ? (pMonitor == _MonitorFromWindow(pwndChild, MONITOR_DEFAULTTONULL))
+                        : (pwndParent != pwndDesktop || _MonitorFromWindow(pwndChild, MONITOR_DEFAULTTONULL))))
+        {
 
-                    if (pdwSWPFlags) {
-                        *pdwSWPFlags = SWP_NOACTIVATE | SWP_NOCOPYBITS;
-                        if (!TestWF(pwndChild, WFSIZEBOX)) {
-                            *pdwSWPFlags |= SWP_NOSIZE;
-                        }
-                        if (!(dwMDIFlags & MDITILE_ZORDER)) {
-                            *pdwSWPFlags |= SWP_NOZORDER;
-                        }
-                    }
+            if (pdwSWPFlags)
+            {
+                *pdwSWPFlags = SWP_NOACTIVATE | SWP_NOCOPYBITS;
+                if (!TestWF(pwndChild, WFSIZEBOX))
+                {
+                    *pdwSWPFlags |= SWP_NOSIZE;
+                }
+                if (!(dwMDIFlags & MDITILE_ZORDER))
+                {
+                    *pdwSWPFlags |= SWP_NOZORDER;
+                }
+            }
             return pwndChild;
         }
     }
 
     return NULL;
 }
-
 
 
 /***************************************************************************\
@@ -944,21 +967,16 @@ ValidatePositionableWindow(
 * 10-Jul-1997 adams     Created.
 \***************************************************************************/
 
-BOOL CALLBACK
-CascadeWindowsEnum(
-        HMONITOR    hmonitor,
-        HDC         hdc,
-        LPRECT      lprc,
-        LPARAM      lparam)
+BOOL CALLBACK CascadeWindowsEnum(HMONITOR hmonitor, HDC hdc, LPRECT lprc, LPARAM lparam)
 {
     PARRANGEWINDOWSDATA pawd = (PARRANGEWINDOWSDATA)lparam;
-    PMONITOR    pMonitor = hmonitor ? VALIDATEHMONITOR(hmonitor) : NULL;
-    RECT        rcParent;
-    int         i;
-    int         chwndReal = 0;
-    RECT        rc;
-    HWND        * phwnd, * phwndCopy;
-    BOOL        fRet = TRUE;
+    PMONITOR pMonitor = hmonitor ? VALIDATEHMONITOR(hmonitor) : NULL;
+    RECT rcParent;
+    int i;
+    int chwndReal = 0;
+    RECT rc;
+    HWND *phwnd, *phwndCopy;
+    BOOL fRet = TRUE;
 
     UNREFERENCED_PARAMETER(hdc);
     UNREFERENCED_PARAMETER(lprc);
@@ -972,15 +990,17 @@ CascadeWindowsEnum(
      * New for NT5: MDITILE_ZORDER (for the SHELL guys)
      * Sort pawd->phwnd by z-order
      */
-    if (pawd->flags & MDITILE_ZORDER) {
+    if (pawd->flags & MDITILE_ZORDER)
+    {
         PWND pwndChild;
-        HWND * phwndFullList, * phwndNext, * phwndSort, * phwndSearch;
+        HWND *phwndFullList, *phwndNext, *phwndSort, *phwndSearch;
         int chwndFullList, chwndSort, chwndSearch;
         /*
          * Make a copy to leave their array alone (it's supposed to be const)
          */
         phwndCopy = UserLocalAlloc(0, pawd->chwnd * sizeof(HWND));
-        if (phwndCopy == NULL) {
+        if (phwndCopy == NULL)
+        {
             return FALSE;
         }
         RtlCopyMemory(phwndCopy, pawd->phwnd, pawd->chwnd * sizeof(HWND));
@@ -988,12 +1008,14 @@ CascadeWindowsEnum(
          * Get the sibblings Z-Ordered list.
          */
         pwndChild = REBASEPWND(pawd->pwndParent, spwndChild);
-        if (pwndChild == NULL) {
+        if (pwndChild == NULL)
+        {
             fRet = FALSE;
             goto CleanUp;
         }
         chwndFullList = BuildHwndList(NULL, HWq(pwndChild), FALSE, 0, &phwndFullList);
-        if (chwndFullList == 0) {
+        if (chwndFullList == 0)
+        {
             fRet = FALSE;
             goto CleanUp;
         }
@@ -1001,16 +1023,16 @@ CascadeWindowsEnum(
          * Loop through the Z-Ordered list looking for the windows in the array
          */
         for (phwndNext = phwndFullList, chwndSort = pawd->chwnd, phwndSort = phwndCopy;
-                (chwndFullList > 0) && (chwndSort > 1);
-                chwndFullList--, phwndNext++) {
+             (chwndFullList > 0) && (chwndSort > 1); chwndFullList--, phwndNext++)
+        {
 
-            for (chwndSearch = chwndSort, phwndSearch = phwndSort;
-                    chwndSearch > 0;
-                    chwndSearch--, phwndSearch++) {
+            for (chwndSearch = chwndSort, phwndSearch = phwndSort; chwndSearch > 0; chwndSearch--, phwndSearch++)
+            {
                 /*
                  * If it found a window, move it after the last sorted window.
                  */
-                if (*phwndNext == *phwndSearch) {
+                if (*phwndNext == *phwndSearch)
+                {
                     HWND hwndFirst = *phwndSort;
                     *phwndSort = *phwndSearch;
                     *phwndSearch = hwndFirst;
@@ -1021,54 +1043,45 @@ CascadeWindowsEnum(
             }
         }
         UserLocalFree(phwndFullList);
-    } else { /* if (pawd->flags & MDITILE_ZORDER) */
+    }
+    else
+    { /* if (pawd->flags & MDITILE_ZORDER) */
         phwndCopy = pawd->phwnd;
     }
 
     /*
      * Arrange the windows in the list, preserving z-order.
      */
-    for (i = pawd->chwnd, phwnd = phwndCopy + i - 1; --i >= 0; phwnd--) {
-        HWND    hwndChild;
-        PWND    pwndChild = NULL;
-        DWORD   dwSWPFlags;
+    for (i = pawd->chwnd, phwnd = phwndCopy + i - 1; --i >= 0; phwnd--)
+    {
+        HWND hwndChild;
+        PWND pwndChild = NULL;
+        DWORD dwSWPFlags;
 
         hwndChild = *phwnd;
-        pwndChild = ValidatePositionableWindow(
-                hwndChild,
-                pawd->fVerifyParent ? pawd->pwndParent : NULL,
-                pawd->pwndDesktop,
-                pawd->flags,
-                pMonitor,
-                &dwSWPFlags);
+        pwndChild = ValidatePositionableWindow(hwndChild, pawd->fVerifyParent ? pawd->pwndParent : NULL,
+                                               pawd->pwndDesktop, pawd->flags, pMonitor, &dwSWPFlags);
 
         if (!pwndChild)
             continue;
 
         GetCascadeWindowPos(&rcParent, chwndReal, &rc);
 
-        pawd->hdwp = NtUserDeferWindowPos(
-                pawd->hdwp,
-                hwndChild,
-                HWND_TOP,
-                rc.left,
-                rc.top,
-                rc.right,
-                rc.bottom,
-                dwSWPFlags);
+        pawd->hdwp =
+            NtUserDeferWindowPos(pawd->hdwp, hwndChild, HWND_TOP, rc.left, rc.top, rc.right, rc.bottom, dwSWPFlags);
 
         chwndReal++;
         pawd->chwndReal++;
     }
 
 CleanUp:
-    if (pawd->flags & MDITILE_ZORDER) {
+    if (pawd->flags & MDITILE_ZORDER)
+    {
         UserLocalFree(phwndCopy);
     }
 
     return fRet && (pawd->hdwp != NULL);
 }
-
 
 
 /***************************************************************************\
@@ -1079,34 +1092,24 @@ CleanUp:
 *  the rectangle passed in.
 *
 \***************************************************************************/
-WORD CascadeWindows(
-    HWND hwndParent,
-    UINT flags,
-    CONST RECT *lpRect,
-    UINT chwnd,
-    CONST HWND *ahwnd)
+WORD CascadeWindows(HWND hwndParent, UINT flags, CONST RECT *lpRect, UINT chwnd, CONST HWND *ahwnd)
 {
     return ArrangeWindows(hwndParent, flags, lpRect, chwnd, ahwnd, CascadeWindowsEnum);
 }
 
-BOOL CALLBACK
-TileWindowsEnum(
-        HMONITOR    hmonitor,
-        HDC         hdc,
-        LPRECT      lprc,
-        LPARAM      lparam)
+BOOL CALLBACK TileWindowsEnum(HMONITOR hmonitor, HDC hdc, LPRECT lprc, LPARAM lparam)
 {
     PARRANGEWINDOWSDATA pawd = (PARRANGEWINDOWSDATA)lparam;
-    PMONITOR    pMonitor = hmonitor ? VALIDATEHMONITOR(hmonitor) : NULL;
-    RECT        rcParent;
-    int         ihwnd;
-    int         chwndReal;
-    int         square;
-    int         iCol, iRow;
-    int         cCol, cRow;
-    int         cRem;
-    int         dx, dy;
-    int         xRes, yRes;
+    PMONITOR pMonitor = hmonitor ? VALIDATEHMONITOR(hmonitor) : NULL;
+    RECT rcParent;
+    int ihwnd;
+    int chwndReal;
+    int square;
+    int iCol, iRow;
+    int cCol, cRow;
+    int cRem;
+    int dx, dy;
+    int xRes, yRes;
 
     UNREFERENCED_PARAMETER(hdc);
     UNREFERENCED_PARAMETER(lprc);
@@ -1120,14 +1123,11 @@ TileWindowsEnum(
      * Now, figure out how many REAL windows we have.
      */
     chwndReal = 0;
-    for (ihwnd = pawd->chwnd; --ihwnd >= 0;) {
-        if (ValidatePositionableWindow(
-                pawd->phwnd[ihwnd],
-                pawd->fVerifyParent ? pawd->pwndParent : NULL,
-                pawd->pwndDesktop,
-                pawd->flags,
-                pMonitor,
-                NULL)) {
+    for (ihwnd = pawd->chwnd; --ihwnd >= 0;)
+    {
+        if (ValidatePositionableWindow(pawd->phwnd[ihwnd], pawd->fVerifyParent ? pawd->pwndParent : NULL,
+                                       pawd->pwndDesktop, pawd->flags, pMonitor, NULL))
+        {
 
             chwndReal++;
         }
@@ -1144,15 +1144,19 @@ TileWindowsEnum(
     /*
      * Compute nearest least square
      */
-    for (square = 2; square * square <= chwndReal; square++) {
+    for (square = 2; square * square <= chwndReal; square++)
+    {
         ;
     }
 
-    if (pawd->flags & MDITILE_HORIZONTAL) {
+    if (pawd->flags & MDITILE_HORIZONTAL)
+    {
         cCol = square - 1;
         cRow = chwndReal / cCol;
         cRem = chwndReal % cCol;
-    } else {
+    }
+    else
+    {
         cRow = square - 1;
         cCol = chwndReal / cRow;
         cRem = chwndReal % cRow;
@@ -1160,23 +1164,26 @@ TileWindowsEnum(
 
     chwndReal = 0;
     ihwnd = -1;
-    for (iCol = 0; iCol < cCol; iCol++) {
+    for (iCol = 0; iCol < cCol; iCol++)
+    {
         /*
          * Add one extra row to handle the remainders.
          */
-        if (cCol - iCol <= cRem) {
+        if (cCol - iCol <= cRem)
+        {
             cRow++;
         }
 
-        for (iRow = 0; iRow < cRow; iRow++) {
-            HWND    hwndChild;
-            PWND    pwndChild;
-            DWORD   dwSWPFlags;
+        for (iRow = 0; iRow < cRow; iRow++)
+        {
+            HWND hwndChild;
+            PWND pwndChild;
+            DWORD dwSWPFlags;
 
             dx = xRes / cCol;
             dy = yRes / cRow;
 
-NextWindow:
+        NextWindow:
             /*
              * Skip bogus and nonpositionable windows
              */
@@ -1185,13 +1192,8 @@ NextWindow:
                 return TRUE;
 
             hwndChild = pawd->phwnd[ihwnd];
-            pwndChild = ValidatePositionableWindow(
-                    hwndChild,
-                    pawd->fVerifyParent ? pawd->pwndParent : NULL,
-                    pawd->pwndDesktop,
-                    pawd->flags,
-                    pMonitor,
-                    &dwSWPFlags);
+            pwndChild = ValidatePositionableWindow(hwndChild, pawd->fVerifyParent ? pawd->pwndParent : NULL,
+                                                   pawd->pwndDesktop, pawd->flags, pMonitor, &dwSWPFlags);
 
             if (!pwndChild)
                 goto NextWindow;
@@ -1199,15 +1201,8 @@ NextWindow:
             /*
              * Move, size the window
              */
-            pawd->hdwp = NtUserDeferWindowPos(
-                    pawd->hdwp,
-                    hwndChild,
-                    HWND_TOP,
-                    rcParent.left + iCol*dx,
-                    rcParent.top + iRow*dy,
-                    dx,
-                    dy,
-                    dwSWPFlags);
+            pawd->hdwp = NtUserDeferWindowPos(pawd->hdwp, hwndChild, HWND_TOP, rcParent.left + iCol * dx,
+                                              rcParent.top + iRow * dy, dx, dy, dwSWPFlags);
 
             if (pawd->hdwp == NULL)
                 return FALSE;
@@ -1216,7 +1211,8 @@ NextWindow:
             pawd->chwndReal++;
         }
 
-        if (cCol - iCol <= cRem) {
+        if (cCol - iCol <= cRem)
+        {
             cRow--;
             cRem--;
         }
@@ -1224,7 +1220,6 @@ NextWindow:
 
     return TRUE;
 }
-
 
 
 /***************************************************************************\
@@ -1235,16 +1230,10 @@ NextWindow:
 *  the rectangle passed in.
 *
 \***************************************************************************/
-WORD TileWindows(
-    HWND        hwndParent,
-    UINT        flags,
-    CONST RECT *lpRect,
-    UINT        chwnd,
-    CONST HWND *ahwnd)
+WORD TileWindows(HWND hwndParent, UINT flags, CONST RECT *lpRect, UINT chwnd, CONST HWND *ahwnd)
 {
     return ArrangeWindows(hwndParent, flags, lpRect, chwnd, ahwnd, TileWindowsEnum);
 }
-
 
 
 /***************************************************************************\
@@ -1255,9 +1244,7 @@ WORD TileWindows(
 *  4-16-91 MikeHar Win31 Merge
 \***************************************************************************/
 
-void xxxMDIActivate(
-    PWND pwnd,
-    PWND pwndActivate)
+void xxxMDIActivate(PWND pwnd, PWND pwndActivate)
 {
     HWND hwndOld;
     PWND pwndOld;
@@ -1282,7 +1269,8 @@ void xxxMDIActivate(
     if (ACTIVE(pmdi) == hwndActivate)
         return;
 
-    if ((pwndActivate != NULL) && (TestWF(pwndActivate, WFDISABLED))) {
+    if ((pwndActivate != NULL) && (TestWF(pwndActivate, WFDISABLED)))
+    {
         /*
          * Don't even try activating disabled or invisible windows.
          */
@@ -1290,16 +1278,17 @@ void xxxMDIActivate(
     }
 
     pwndT = REBASEPWND(pwnd, spwndParent);
-    fShowActivate = (HW(pwndT) ==
-            NtUserQueryWindow(hwnd, WindowActiveWindow));
+    fShowActivate = (HW(pwndT) == NtUserQueryWindow(hwnd, WindowActiveWindow));
 
     hwndOld = ACTIVE(pmdi);
-    if (hwndOld && (pwndOld = ValidateHwnd(hwndOld)) == NULL) {
+    if (hwndOld && (pwndOld = ValidateHwnd(hwndOld)) == NULL)
+    {
         hwndOld = NULL;
     }
     ThreadLock(pwndOld, &tlpwndOld);
 
-    if (hwndOld) {
+    if (hwndOld)
+    {
 
         /*
          * Attempt to deactivate the MDI child window.
@@ -1307,12 +1296,14 @@ void xxxMDIActivate(
          * But this only applies if the MDI frame is the active window
          * and the app is a 3.1 app or later
          */
-        if (!SendMessage(hwndOld, WM_NCACTIVATE, FALSE, 0L) && fShowActivate) {
+        if (!SendMessage(hwndOld, WM_NCACTIVATE, FALSE, 0L) && fShowActivate)
+        {
             if (TestWF(pwndOld, WFWIN31COMPAT))
                 goto UnlockOld;
         }
 
-        if (!TestWF(pwndOld, WFWIN31COMPAT) && TestWF(pwndOld, WFFRAMEON)) {
+        if (!TestWF(pwndOld, WFWIN31COMPAT) && TestWF(pwndOld, WFFRAMEON))
+        {
 
             /*
              * Error: Quicken for Windows is sort of bogus.  They try to fail
@@ -1330,8 +1321,7 @@ void xxxMDIActivate(
          * Uncheck the old window menu entry.
          */
         if (WINDOW(pmdi))
-            CheckMenuItem(WINDOW(pmdi), PtrToUlong(pwndOld->spmenu),
-                MF_BYCOMMAND | MF_UNCHECKED);
+            CheckMenuItem(WINDOW(pmdi), PtrToUlong(pwndOld->spmenu), MF_BYCOMMAND | MF_UNCHECKED);
     }
 
     //
@@ -1340,18 +1330,22 @@ void xxxMDIActivate(
     // become active doesn't have a WS_MAXIMIZEBOX, restore the old one to
     // it's normal size to clean up the MDI maximized menubar mess
     //
-    if (MAXED(pmdi) && MAXED(pmdi) != hwndActivate) {
+    if (MAXED(pmdi) && MAXED(pmdi) != hwndActivate)
+    {
         HWND hwndMax;
-        int  iShowCode;
+        int iShowCode;
 
         // The MAXBOX check is a new thing for 4.0 dudes; it breaks 3.x apps.
         // See comment in the WM_MDIMAXIMIZE handling.
 
-        if (pwndActivate && (TestWF(pwndActivate, WFMAXBOX) || !TestWF(pwndActivate, WFWIN40COMPAT))) {
+        if (pwndActivate && (TestWF(pwndActivate, WFMAXBOX) || !TestWF(pwndActivate, WFWIN40COMPAT)))
+        {
             hwndMax = hwndActivate;
             iShowCode = SW_SHOWMAXIMIZED;
             Lock(&ACTIVE(pmdi), hwndMax);
-        } else {
+        }
+        else
+        {
             hwndMax = MAXED(pmdi);
             iShowCode = SW_SHOWNORMAL;
         }
@@ -1370,21 +1364,26 @@ void xxxMDIActivate(
     /*
      * We may be removing the activation entirely...
      */
-    if (!pwndActivate) {
+    if (!pwndActivate)
+    {
         if (fShowActivate)
             NtUserSetFocus(hwnd);
         goto UnlockOld;
     }
 
-    if (WINDOW(pmdi)) {
+    if (WINDOW(pmdi))
+    {
 
         /*
          * Check the new window menu entry.
          */
         nID = GetWindowID(ACTIVE(pmdi));
-        if (nID - FIRST(pmdi) < (MAXITEMS - 1)) {
+        if (nID - FIRST(pmdi) < (MAXITEMS - 1))
+        {
             CheckMenuItem(WINDOW(pmdi), nID, MF_BYCOMMAND | MFS_CHECKED);
-        } else {
+        }
+        else
+        {
             /*
              * the item is not in the menu at all!  Swap it with number 9.
              */
@@ -1400,13 +1399,13 @@ void xxxMDIActivate(
     /*
      * Bring the window to the top.
      */
-    NtUserSetWindowPos(ACTIVE(pmdi), NULL, 0, 0, 0, 0,
-        SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+    NtUserSetWindowPos(ACTIVE(pmdi), NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 
     /*
      * Update the Caption bar.  Don't muck with styles for 3.1.
      */
-    if (fShowActivate) {
+    if (fShowActivate)
+    {
         SendMessage(ACTIVE(pmdi), WM_NCACTIVATE, TRUE, 0L);
 
         ThreadLock(pwnd, &tlpwnd);
@@ -1422,8 +1421,7 @@ void xxxMDIActivate(
     /*
      * Notify the new active window of his activation.
      */
-    SendMessage(ACTIVE(pmdi), WM_MDIACTIVATE, (WPARAM)hwndOld,
-                (LPARAM)hwndActivate);
+    SendMessage(ACTIVE(pmdi), WM_MDIACTIVATE, (WPARAM)hwndOld, (LPARAM)hwndActivate);
 
 UnlockOld:
     ThreadUnlock(&tlpwndOld);
@@ -1438,10 +1436,7 @@ UnlockOld:
 *  4-16-91 MikeHar Win31 Merge
 \***************************************************************************/
 
-void xxxMDINext(
-    PWND pwndMDI,
-    PWND pwnd,
-    BOOL fPrevWindow)
+void xxxMDINext(PWND pwndMDI, PWND pwnd, BOOL fPrevWindow)
 {
     PMDI pmdi;
     PWND pwndNextGuy;
@@ -1458,17 +1453,22 @@ void xxxMDINext(
 
     pwndNextGuy = pwnd;
 
-    while (TRUE) {
+    while (TRUE)
+    {
         if (fPrevWindow)
             pwndNextGuy = _GetWindow(pwndNextGuy, GW_HWNDPREV);
         else
             pwndNextGuy = REBASEPWND(pwndNextGuy, spwndNext);
 
-        if (!pwndNextGuy) {
-            if (fPrevWindow) {
+        if (!pwndNextGuy)
+        {
+            if (fPrevWindow)
+            {
                 pwndNextGuy = _GetWindow(pwnd, GW_HWNDLAST);
-            } else {
-                pwndNextGuy =  REBASEPWND(pwndMDI, spwndChild);
+            }
+            else
+            {
+                pwndNextGuy = REBASEPWND(pwndMDI, spwndChild);
             }
         }
 
@@ -1483,7 +1483,8 @@ void xxxMDINext(
             break;
     }
 
-    if (MAXED(pmdi)) {
+    if (MAXED(pmdi))
+    {
         NtUserSetVisible(HWq(pwndMDI), SV_UNSET | SV_CLRFTRUEVIS);
         fHack = TRUE;
     }
@@ -1493,64 +1494,40 @@ void xxxMDINext(
     /*
      * activate the new window (first, in case of maximized windows)
      */
-    hdwp = NtUserDeferWindowPos(hdwp, HW(pwndNextGuy), HWND_TOP, 0, 0, 0, 0,
-        SWP_NOMOVE | SWP_NOSIZE);
+    hdwp = NtUserDeferWindowPos(hdwp, HW(pwndNextGuy), HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
-// LATER 30-Mar-1992 mikeke
-// this used to be _GetWindow(pwndMDI->spwndChild, GW_HWNDLAST)
-// instead of HWND_BOTTOM
-   if (hdwp && !fPrevWindow && (pwnd != pwndNextGuy))
-       hdwp = NtUserDeferWindowPos(hdwp, HW(pwnd),
-            HWND_BOTTOM, 0, 0, 0, 0,
-            SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE );
+    // LATER 30-Mar-1992 mikeke
+    // this used to be _GetWindow(pwndMDI->spwndChild, GW_HWNDLAST)
+    // instead of HWND_BOTTOM
+    if (hdwp && !fPrevWindow && (pwnd != pwndNextGuy))
+        hdwp = NtUserDeferWindowPos(hdwp, HW(pwnd), HWND_BOTTOM, 0, 0, 0, 0, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE);
 
     NtUserEndDeferWindowPosEx(hdwp, FALSE);
 
-    if (fHack) {
+    if (fHack)
+    {
         NtUserShowWindow(HWq(pwndMDI), SW_SHOW);
     }
 }
 
 
-
-FUNCLOG10(LOG_GENERAL, HWND, DUMMYCALLINGTYPE, CreateMDIWindowA, LPCSTR, pClassName, LPCSTR, pWindowName, DWORD, dwStyle, int, x, int, y, int, nWidth, int, nHeight, HWND, hwndParent, HINSTANCE, hModule, LPARAM, lParam)
-HWND
-CreateMDIWindowA(
-    LPCSTR pClassName,
-    LPCSTR pWindowName,
-    DWORD dwStyle,
-    int x,
-    int y,
-    int nWidth,
-    int nHeight,
-    HWND hwndParent,
-    HINSTANCE hModule,
-    LPARAM lParam)
+FUNCLOG10(LOG_GENERAL, HWND, DUMMYCALLINGTYPE, CreateMDIWindowA, LPCSTR, pClassName, LPCSTR, pWindowName, DWORD,
+          dwStyle, int, x, int, y, int, nWidth, int, nHeight, HWND, hwndParent, HINSTANCE, hModule, LPARAM, lParam)
+HWND CreateMDIWindowA(LPCSTR pClassName, LPCSTR pWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight,
+                      HWND hwndParent, HINSTANCE hModule, LPARAM lParam)
 {
-    return CreateWindowExA(WS_EX_MDICHILD, pClassName, pWindowName,
-                                 dwStyle, x, y, nWidth, nHeight,
-                                 hwndParent, NULL, hModule, (LPVOID)lParam);
+    return CreateWindowExA(WS_EX_MDICHILD, pClassName, pWindowName, dwStyle, x, y, nWidth, nHeight, hwndParent, NULL,
+                           hModule, (LPVOID)lParam);
 }
 
 
-
-FUNCLOG10(LOG_GENERAL, HWND, DUMMYCALLINGTYPE, CreateMDIWindowW, LPCWSTR, pClassName, LPCWSTR, pWindowName, DWORD, dwStyle, int, x, int, y, int, nWidth, int, nHeight, HWND, hwndParent, HINSTANCE, hModule, LPARAM, lParam)
-HWND
-CreateMDIWindowW(
-    LPCWSTR pClassName,
-    LPCWSTR pWindowName,
-    DWORD dwStyle,
-    int x,
-    int y,
-    int nWidth,
-    int nHeight,
-    HWND hwndParent,
-    HINSTANCE hModule,
-    LPARAM lParam)
+FUNCLOG10(LOG_GENERAL, HWND, DUMMYCALLINGTYPE, CreateMDIWindowW, LPCWSTR, pClassName, LPCWSTR, pWindowName, DWORD,
+          dwStyle, int, x, int, y, int, nWidth, int, nHeight, HWND, hwndParent, HINSTANCE, hModule, LPARAM, lParam)
+HWND CreateMDIWindowW(LPCWSTR pClassName, LPCWSTR pWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight,
+                      HWND hwndParent, HINSTANCE hModule, LPARAM lParam)
 {
-    return CreateWindowExW(WS_EX_MDICHILD, pClassName, pWindowName,
-                                 dwStyle, x, y, nWidth, nHeight,
-                                 hwndParent, NULL, hModule, (LPVOID)lParam);
+    return CreateWindowExW(WS_EX_MDICHILD, pClassName, pWindowName, dwStyle, x, y, nWidth, nHeight, hwndParent, NULL,
+                           hModule, (LPVOID)lParam);
 }
 
 
@@ -1562,9 +1539,7 @@ CreateMDIWindowW(
 *  4-16-91 MikeHar Win31 Merge
 \***************************************************************************/
 
-void xxxMDIDestroy(
-    PWND pwnd,
-    HWND hwndVictim)
+void xxxMDIDestroy(PWND pwnd, HWND hwndVictim)
 {
     PWND pwndVictim;
     TL tlpwndParent;
@@ -1574,7 +1549,8 @@ void xxxMDIDestroy(
 
     CheckLock(pwnd);
 
-    if ((pwndVictim = ValidateHwnd(hwndVictim)) == NULL) {
+    if ((pwndVictim = ValidateHwnd(hwndVictim)) == NULL)
+    {
         return;
     }
     CheckLock(pwndVictim);
@@ -1585,22 +1561,22 @@ void xxxMDIDestroy(
     pmdi = ((PMDIWND)pwnd)->pmdi;
 
 #ifdef NEVER
-// don't do this validation - because it sometimes doesn't work! If an
-// app passed in idFirstChild (through CLIENTCREATESTRUCT) as -1, this
-// code fails because it treats the id comparisons as unsigned compares.
-// Change them to signed compares and it still doesn't work. That is because
-// when ShiftMenuIDs() is called, you'll shift mdi windows out of the signed
-// comparison range and this check won't allow them to be destroyed. This
-// is straight win3.1 code.
-//
+    // don't do this validation - because it sometimes doesn't work! If an
+    // app passed in idFirstChild (through CLIENTCREATESTRUCT) as -1, this
+    // code fails because it treats the id comparisons as unsigned compares.
+    // Change them to signed compares and it still doesn't work. That is because
+    // when ShiftMenuIDs() is called, you'll shift mdi windows out of the signed
+    // comparison range and this check won't allow them to be destroyed. This
+    // is straight win3.1 code.
+    //
     /*
      * Validate that this is one of the mdi children we are keeping track
      * of. If it isn't don't destroy it because it'll get mdi id tracking
      * code all messed up.
      */
-    if (((UINT)pwndVictim->spmenu) < FIRST(pmdi) ||
-            ((UINT)pwndVictim->spmenu) >= (UINT)(FIRST(pmdi) + CKIDS(pmdi)) ||
-            pwndVictim->spwndOwner != NULL) {
+    if (((UINT)pwndVictim->spmenu) < FIRST(pmdi) || ((UINT)pwndVictim->spmenu) >= (UINT)(FIRST(pmdi) + CKIDS(pmdi)) ||
+        pwndVictim->spwndOwner != NULL)
+    {
         RIPERR0(ERROR_NON_MDICHILD_WINDOW, RIP_VERBOSE, "");
         return;
     }
@@ -1611,13 +1587,15 @@ void xxxMDIDestroy(
     /*
      * First Activate another window.
      */
-    if (SAMEWOWHANDLE(hwndVictim, ACTIVE(pmdi))) {
+    if (SAMEWOWHANDLE(hwndVictim, ACTIVE(pmdi)))
+    {
         xxxMDINext(pwnd, pwndVictim, FALSE);
 
         /*
          * Destroying only child?
          */
-        if (SAMEWOWHANDLE(hwndVictim, ACTIVE(pmdi))) {
+        if (SAMEWOWHANDLE(hwndVictim, ACTIVE(pmdi)))
+        {
             NtUserShowWindow(hwndVictim, SW_HIDE);
 
             /*
@@ -1625,9 +1603,10 @@ void xxxMDIDestroy(
              * now otherwise it may get deleted twice.  Once when the child
              * is destroyed and once when the frame is destroyed.
              */
-            if (MAXED(pmdi)) {
+            if (MAXED(pmdi))
+            {
                 pwndParent = REBASEPWND(pwnd, spwndParent);
-                MDIRemoveSysMenu(PtoH(REBASE(pwndParent,spmenu)), MAXED(pmdi));
+                MDIRemoveSysMenu(PtoH(REBASE(pwndParent, spmenu)), MAXED(pmdi));
                 Unlock(&MAXED(pmdi));
                 ThreadLock(pwndParent, &tlpwndParent);
                 xxxSetFrameTitle(pwndParent, pwnd, (LPWSTR)1L);
@@ -1664,7 +1643,7 @@ void xxxMDIDestroy(
      * Remove revalidate if we get client side locking
      */
     if (ValidateHwnd(hwnd) == NULL)
-       return;
+        return;
 
     /*
      * Deleting a window can change the scroll ranges.
@@ -1679,12 +1658,7 @@ void xxxMDIDestroy(
 * 11-14-90 MikeHar Ported from windows
 \***************************************************************************/
 
-LRESULT MDIClientWndProcWorker(
-    PWND pwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam,
-    DWORD fAnsi)
+LRESULT MDIClientWndProcWorker(PWND pwnd, UINT message, WPARAM wParam, LPARAM lParam, DWORD fAnsi)
 {
     HWND hwnd = HWq(pwnd);
     HWND hwndT;
@@ -1704,8 +1678,10 @@ LRESULT MDIClientWndProcWorker(
      */
     pmdi = ((PMDIWND)pwnd)->pmdi;
 
-    if (pmdi == NULL) {
-        switch (message) {
+    if (pmdi == NULL)
+    {
+        switch (message)
+        {
         case WM_MDICREATE:
         case WM_MDIMAXIMIZE:
         case WM_PARENTNOTIFY:
@@ -1725,19 +1701,22 @@ LRESULT MDIClientWndProcWorker(
         }
     }
 
-    switch (message) {
+    switch (message)
+    {
     case WM_NCACTIVATE:
 
         /*
          * We are changing app activation.  Fix the active child's caption.
          */
-        if (ACTIVE(pmdi) != NULL) {
+        if (ACTIVE(pmdi) != NULL)
+        {
             SendMessage(ACTIVE(pmdi), WM_NCACTIVATE, wParam, lParam);
         }
         goto CallDWP;
 
     case WM_MDIGETACTIVE:
-        if (lParam != 0) {
+        if (lParam != 0)
+        {
             *((LPBOOL)lParam) = (MAXED(pmdi) != NULL);
         }
 
@@ -1749,7 +1728,7 @@ LRESULT MDIClientWndProcWorker(
             return 0;
 
         if (SAMEWOWHANDLE(hwndT, ACTIVE(pmdi)))
-              break;
+            break;
 
         NtUserSetWindowPos(hwndT, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
         break;
@@ -1761,8 +1740,9 @@ LRESULT MDIClientWndProcWorker(
         /*
          * Unmaximize any maximized window.
          */
-#ifdef NEVER  // Not in Chicago -- FritzS
-        if (MAXED(pmdi) != NULL) {
+#ifdef NEVER // Not in Chicago -- FritzS
+        if (MAXED(pmdi) != NULL)
+        {
             NtUserShowWindow(MAXED(pmdi), SW_SHOWNORMAL);
         }
 #endif
@@ -1777,13 +1757,12 @@ LRESULT MDIClientWndProcWorker(
     case WM_VSCROLL:
     case WM_HSCROLL:
         pmdi->wScroll |= SCROLLSUPPRESS;
-        ScrollMDIChildren(hwnd, (message == WM_VSCROLL) ? SB_VERT : SB_HORZ,
-              LOWORD(wParam), (short)(HIWORD(wParam)));
+        ScrollMDIChildren(hwnd, (message == WM_VSCROLL) ? SB_VERT : SB_HORZ, LOWORD(wParam), (short)(HIWORD(wParam)));
         pmdi->wScroll &= ~SCROLLCOUNT;
         break;
 
     case WM_MDICREATE:
-        {
+    {
         LPMDICREATESTRUCTA lpMCSA = (LPMDICREATESTRUCTA)lParam;
         LPMDICREATESTRUCTW lpMCSW = (LPMDICREATESTRUCTW)lParam;
         DWORD exStyle = WS_EX_MDICHILD;
@@ -1793,19 +1772,19 @@ LRESULT MDIClientWndProcWorker(
          */
         exStyle |= (pwnd->ExStyle & (WS_EX_RIGHT | WS_EX_RTLREADING | WS_EX_LEFTSCROLLBAR));
 
-        if (fAnsi) {
-            hwndT = CreateWindowExA(exStyle, lpMCSA->szClass, lpMCSA->szTitle,
-                lpMCSA->style, lpMCSA->x, lpMCSA->y, lpMCSA->cx, lpMCSA->cy,
-                hwnd, NULL, lpMCSA->hOwner, (LPSTR)lpMCSA->lParam);
-        } else {
-            hwndT = CreateWindowExW(exStyle, lpMCSW->szClass, lpMCSW->szTitle,
-                lpMCSW->style, lpMCSW->x, lpMCSW->y, lpMCSW->cx, lpMCSW->cy,
-                hwnd, NULL, lpMCSW->hOwner, (LPWSTR)lpMCSW->lParam);
+        if (fAnsi)
+        {
+            hwndT = CreateWindowExA(exStyle, lpMCSA->szClass, lpMCSA->szTitle, lpMCSA->style, lpMCSA->x, lpMCSA->y,
+                                    lpMCSA->cx, lpMCSA->cy, hwnd, NULL, lpMCSA->hOwner, (LPSTR)lpMCSA->lParam);
+        }
+        else
+        {
+            hwndT = CreateWindowExW(exStyle, lpMCSW->szClass, lpMCSW->szTitle, lpMCSW->style, lpMCSW->x, lpMCSW->y,
+                                    lpMCSW->cx, lpMCSW->cy, hwnd, NULL, lpMCSW->hOwner, (LPWSTR)lpMCSW->lParam);
         }
 
-        return((LRESULT)hwndT);
-
-        }
+        return ((LRESULT)hwndT);
+    }
 
     case WM_MDIDESTROY:
         xxxMDIDestroy(pwnd, (HWND)wParam);
@@ -1820,7 +1799,8 @@ LRESULT MDIClientWndProcWorker(
         // backwards-compatibility issues with VB apps (see#12211)
         // So, we do this only for WIN40COMPAT apps and beyond.
         //
-        if ((TestWF(pwndT, WFMAXBOX)) || !(TestWF(pwndT, WFWIN40COMPAT))) {
+        if ((TestWF(pwndT, WFMAXBOX)) || !(TestWF(pwndT, WFWIN40COMPAT)))
+        {
             NtUserShowWindow(hwndT, SW_SHOWMAXIMIZED);
         }
         break;
@@ -1840,8 +1820,9 @@ LRESULT MDIClientWndProcWorker(
         /*
          * Unmaximize any maximized window.
          */
-#ifdef NEVER  //Not in Chicago
-        if (MAXED(pmdi) != NULL) {
+#ifdef NEVER //Not in Chicago
+        if (MAXED(pmdi) != NULL)
+        {
             NtUserShowWindow(MAXED(pmdi), SW_SHOWNORMAL);
         }
 #endif
@@ -1861,13 +1842,17 @@ LRESULT MDIClientWndProcWorker(
         break;
 
     case WM_MDINEXT:
-        if (wParam) {
+        if (wParam)
+        {
             hwndT = (HWND)wParam;
-        } else {
+        }
+        else
+        {
             hwndT = ACTIVE(pmdi);
         }
 
-        if ((pwndT = ValidateHwnd(hwndT)) == NULL) {
+        if ((pwndT = ValidateHwnd(hwndT)) == NULL)
+        {
             return 0;
         }
 
@@ -1880,17 +1865,19 @@ LRESULT MDIClientWndProcWorker(
         break;
 
     case WM_MDIREFRESHMENU:
-            return (LRESULT)MDISetMenu(pwnd, TRUE, NULL, NULL);
+        return (LRESULT)MDISetMenu(pwnd, TRUE, NULL, NULL);
 
     case WM_MDISETMENU:
-            return (LRESULT)MDISetMenu(pwnd, FALSE, (HMENU)wParam, (HMENU)lParam);
+        return (LRESULT)MDISetMenu(pwnd, FALSE, (HMENU)wParam, (HMENU)lParam);
 
     case WM_PARENTNOTIFY:
-        if (wParam == WM_LBUTTONDOWN) {
+        if (wParam == WM_LBUTTONDOWN)
+        {
             HWND hwndChild;
             POINT pt;
 
-            if ((pwndT = ValidateHwnd(hwnd)) == NULL) {
+            if ((pwndT = ValidateHwnd(hwnd)) == NULL)
+            {
                 return 0;
             }
 
@@ -1907,48 +1894,51 @@ LRESULT MDIClientWndProcWorker(
              * calculations are done properly in NtUserChildWindowFromPointEx.
              * [samera]
              */
-            if (TestWF(pwndT, WEFLAYOUTRTL)) {
-                pt.x = (pwndT->rcClient.right-pwndT->rcClient.left)-pt.x;
+            if (TestWF(pwndT, WEFLAYOUTRTL))
+            {
+                pt.x = (pwndT->rcClient.right - pwndT->rcClient.left) - pt.x;
             }
 
-            hwndChild = NtUserChildWindowFromPointEx(hwnd, pt,
-                CWP_SKIPDISABLED | CWP_SKIPINVISIBLE);
+            hwndChild = NtUserChildWindowFromPointEx(hwnd, pt, CWP_SKIPDISABLED | CWP_SKIPINVISIBLE);
 
-            if ((hwndChild) && (hwndChild != hwnd)) {
+            if ((hwndChild) && (hwndChild != hwnd))
+            {
 
-                if (hwndChild != ACTIVE(pmdi)) {
-                    NtUserSetWindowPos(hwndChild, HWND_TOP, 0, 0, 0, 0,
-                                 SWP_NOMOVE | SWP_NOSIZE);
+                if (hwndChild != ACTIVE(pmdi))
+                {
+                    NtUserSetWindowPos(hwndChild, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
                 }
             }
         }
         break;
 
     case WM_SETFOCUS:
-        if (ACTIVE(pmdi) != NULL && !IsIconic(ACTIVE(pmdi))) {
+        if (ACTIVE(pmdi) != NULL && !IsIconic(ACTIVE(pmdi)))
+        {
             NtUserSetFocus(ACTIVE(pmdi));
         }
         break;
 
     case WM_SIZE:
-        if (ACTIVE(pmdi) && (pwndT = ValidateHwnd(ACTIVE(pmdi))) &&
-            TestWF(pwndT, WFMAXIMIZED)) {
+        if (ACTIVE(pmdi) && (pwndT = ValidateHwnd(ACTIVE(pmdi))) && TestWF(pwndT, WFMAXIMIZED))
+        {
 
             RECT rc;
 
             rc.top = rc.left = 0;
             rc.right = (int)MAKEPOINTS(lParam).x;
             rc.bottom = (int)MAKEPOINTS(lParam).y;
-            RealAdjustWindowRectEx(&rc, pwndT->style, FALSE,
-                    pwndT->ExStyle);
-            NtUserMoveWindow(ACTIVE(pmdi), rc.left, rc.top,
-                    rc.right - rc.left, rc.bottom - rc.top, TRUE);
-        } else {
+            RealAdjustWindowRectEx(&rc, pwndT->style, FALSE, pwndT->ExStyle);
+            NtUserMoveWindow(ACTIVE(pmdi), rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, TRUE);
+        }
+        else
+        {
             RecalculateScrollRanges(pwnd, FALSE);
         }
         goto CallDWP;
 
-    case MM_CALCSCROLL: {
+    case MM_CALCSCROLL:
+    {
 
         if (SCROLL(pmdi) & SCROLLCOUNT)
             break;
@@ -1958,7 +1948,7 @@ LRESULT MDIClientWndProcWorker(
 
             if (sbj)
             {
-                CalcClientScrolling(hwnd, sbj, (BOOL) wParam);
+                CalcClientScrolling(hwnd, sbj, (BOOL)wParam);
 
                 SCROLL(pmdi) &= ~CALCSCROLL;
             }
@@ -1966,26 +1956,30 @@ LRESULT MDIClientWndProcWorker(
         break;
     }
 
-    case WM_CREATE: {
+    case WM_CREATE:
+    {
         LPCLIENTCREATESTRUCT pccs = ((LPCREATESTRUCT)lParam)->lpCreateParams;
 
         /*
          * Try to allocate space for the pmdi
          */
-        if ((pmdi = (PMDI)UserLocalAlloc(HEAP_ZERO_MEMORY, sizeof(MDI)))) {
+        if ((pmdi = (PMDI)UserLocalAlloc(HEAP_ZERO_MEMORY, sizeof(MDI))))
+        {
             NtUserSetWindowLongPtr(hwnd, GWLP_MDIDATA, (LONG_PTR)pmdi, FALSE);
-        } else {
+        }
+        else
+        {
             NtUserSetWindowFNID(hwnd, FNID_CLEANEDUP_BIT);
             break;
         }
 
         pwndParent = REBASEPWND(pwnd, spwndParent);
         ACTIVE(pmdi) = NULL;
-        MAXED(pmdi)  = NULL;
-        CKIDS(pmdi)  = 0;
+        MAXED(pmdi) = NULL;
+        CKIDS(pmdi) = 0;
         WINDOW(pmdi) = pccs->hWindowMenu;
 
-        FIRST(pmdi)  = pccs->idFirstChild;
+        FIRST(pmdi) = pccs->idFirstChild;
         SCROLL(pmdi) = 0;
         HTITLE(pmdi) = TextAlloc(REBASE(pwndParent, strName.Buffer));
 
@@ -1999,7 +1993,8 @@ LRESULT MDIClientWndProcWorker(
             SCROLL(pmdi) |= HAS_SBVERT;
         if (TestWF(pwnd, WFHSCROLL))
             SCROLL(pmdi) |= HAS_SBHORZ;
-        if (SCROLL(pmdi)) {
+        if (SCROLL(pmdi))
+        {
             ClearWindowState(pwnd, WFVSCROLL | WFHSCROLL);
         }
 
@@ -2012,7 +2007,8 @@ LRESULT MDIClientWndProcWorker(
          * make sure we have the correct window client area if scrolls are
          * removed...  hack to take care of small progman bug
          */
-        if (SCROLL(pmdi)) {
+        if (SCROLL(pmdi))
+        {
             NtUserUpdateClientRect(hwnd);
         }
         break;
@@ -2020,7 +2016,8 @@ LRESULT MDIClientWndProcWorker(
 
     case WM_DESTROY:
     case WM_FINALDESTROY:
-        if (MAXED(pmdi)) {
+        if (MAXED(pmdi))
+        {
             PWND pwndParent;
             PMENU pmenu;
 
@@ -2032,7 +2029,8 @@ LRESULT MDIClientWndProcWorker(
         /*
          * delete the title
          */
-        if (HTITLE(pmdi)) {
+        if (HTITLE(pmdi))
+        {
             UserLocalFree(HTITLE(pmdi));
             HTITLE(pmdi) = NULL;
         }
@@ -2044,14 +2042,16 @@ LRESULT MDIClientWndProcWorker(
          *
          * Increase CKIDS by 1 after checking to delete the separator
          */
-        if (IsMenu(WINDOW(pmdi)) && CKIDS(pmdi)++) {
+        if (IsMenu(WINDOW(pmdi)) && CKIDS(pmdi)++)
+        {
             UINT iPosition;
 
             if (CKIDS(pmdi) > MAXITEMS + 1)
                 CKIDS(pmdi) = MAXITEMS + 1;
 
             iPosition = GetMenuItemCount(WINDOW(pmdi));
-            while (CKIDS(pmdi)--) {
+            while (CKIDS(pmdi)--)
+            {
                 NtUserDeleteMenu(WINDOW(pmdi), --iPosition, MF_BYPOSITION);
             }
         }
@@ -2072,7 +2072,7 @@ LRESULT MDIClientWndProcWorker(
         break;
 
     default:
-CallDWP:
+    CallDWP:
         return DefWindowProcWorker(pwnd, message, wParam, lParam, fAnsi);
     }
     return 0L;
@@ -2082,30 +2082,24 @@ CallDWP:
 *
 \***************************************************************************/
 
-LRESULT WINAPI MDIClientWndProcA(
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT WINAPI MDIClientWndProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     PWND pwnd;
 
-    if ((pwnd = ValidateHwnd(hwnd)) == NULL) {
+    if ((pwnd = ValidateHwnd(hwnd)) == NULL)
+    {
         return 0;
     }
 
     return MDIClientWndProcWorker(pwnd, message, wParam, lParam, TRUE);
 }
 
-LRESULT WINAPI MDIClientWndProcW(
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT WINAPI MDIClientWndProcW(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     PWND pwnd;
 
-    if ((pwnd = ValidateHwnd(hwnd)) == NULL) {
+    if ((pwnd = ValidateHwnd(hwnd)) == NULL)
+    {
         return 0;
     }
 
@@ -2120,13 +2114,7 @@ LRESULT WINAPI MDIClientWndProcW(
 * 11-14-90 MikeHar      Ported from windows
 \***************************************************************************/
 
-LRESULT DefFrameProcWorker(
-    HWND hwnd,
-    HWND hwndMDI,
-    UINT wMsg,
-    WPARAM wParam,
-    LPARAM lParam,
-    BOOL fAnsi)
+LRESULT DefFrameProcWorker(HWND hwnd, HWND hwndMDI, UINT wMsg, WPARAM wParam, LPARAM lParam, BOOL fAnsi)
 {
     PWND pwnd;
     PWND pwndMDI;
@@ -2137,16 +2125,19 @@ LRESULT DefFrameProcWorker(
     PMDINEXTMENU pmnm;
     WINDOWPLACEMENT wp;
 
-    if ((pwnd = ValidateHwnd(hwnd)) == NULL) {
+    if ((pwnd = ValidateHwnd(hwnd)) == NULL)
+    {
         return (0L);
     }
     CheckLock(pwnd);
 
-    if (hwndMDI == NULL) {
+    if (hwndMDI == NULL)
+    {
         goto CallDWP;
     }
 
-    if ((pwndMDI = ValidateHwnd(hwndMDI)) == NULL) {
+    if ((pwndMDI = ValidateHwnd(hwndMDI)) == NULL)
+    {
         return (0L);
     }
     CheckLock(pwndMDI);
@@ -2156,15 +2147,18 @@ LRESULT DefFrameProcWorker(
      */
     pmdi = ((PMDIWND)pwndMDI)->pmdi;
 
-    switch (wMsg) {
+    switch (wMsg)
+    {
 
     /*
      * If there is a maximized child window, add it's window text...
      */
-    case WM_SETTEXT: {
+    case WM_SETTEXT:
+    {
         LPWSTR lpwsz = NULL;
 
-        if (fAnsi && lParam) {
+        if (fAnsi && lParam)
+        {
             if (!MBToWCS((LPSTR)lParam, -1, &lpwsz, -1, TRUE))
                 return 0;
             lParam = (LPARAM)lpwsz;
@@ -2180,31 +2174,31 @@ LRESULT DefFrameProcWorker(
         goto CallDWP;
 
     case WM_COMMAND:
-        if ((UINT)LOWORD(wParam) == (FIRST(pmdi) + MAXITEMS -1)) {
+        if ((UINT)LOWORD(wParam) == (FIRST(pmdi) + MAXITEMS - 1))
+        {
 
             /*
              * selected the More...  item
              */
-            if (fAnsi) {
-                wParam = DialogBoxParamA(hmodUser,
-                                         MAKEINTRESOURCEA(IDD_MDI_ACTIVATE),
-                                         hwnd,
-                                         MDIActivateDlgProcA,
-                                         (LPARAM)pwndMDI);
-            } else {
-                wParam = DialogBoxParamW(hmodUser,
-                                         MAKEINTRESOURCEW(IDD_MDI_ACTIVATE),
-                                         hwnd,
-                                         MDIActivateDlgProcW,
+            if (fAnsi)
+            {
+                wParam = DialogBoxParamA(hmodUser, MAKEINTRESOURCEA(IDD_MDI_ACTIVATE), hwnd, MDIActivateDlgProcA,
                                          (LPARAM)pwndMDI);
             }
-            if ((int)wParam >= 0) {
+            else
+            {
+                wParam = DialogBoxParamW(hmodUser, MAKEINTRESOURCEW(IDD_MDI_ACTIVATE), hwnd, MDIActivateDlgProcW,
+                                         (LPARAM)pwndMDI);
+            }
+            if ((int)wParam >= 0)
+            {
                 wParam += FIRST(pmdi);
                 goto ActivateTheChild;
             }
-        } else if (((UINT)LOWORD(wParam) >= FIRST(pmdi)) &&
-                ((UINT)LOWORD(wParam) < FIRST(pmdi) + CKIDS(pmdi))) {
-ActivateTheChild:
+        }
+        else if (((UINT)LOWORD(wParam) >= FIRST(pmdi)) && ((UINT)LOWORD(wParam) < FIRST(pmdi) + CKIDS(pmdi)))
+        {
+        ActivateTheChild:
             pwndT = FindPwndChild(pwndMDI, (UINT)LOWORD(wParam));
             ThreadLock(pwndT, &tlpwndT);
 
@@ -2214,16 +2208,17 @@ ActivateTheChild:
              * if minimized, restore it.
              */
             if (pwndT != NULL && TestWF(pwndT, WFMINIMIZED))
-                    //
-                    // Fix for B#1510.  Don't restore directly.  Send child
-                    // a restore message.
-                    //
+                //
+                // Fix for B#1510.  Don't restore directly.  Send child
+                // a restore message.
+                //
                 SendMessage(HWq(pwndT), WM_SYSCOMMAND, (WPARAM)SC_RESTORE, 0L);
             ThreadUnlock(&tlpwndT);
             break;
         }
 
-        switch (wParam & 0xFFF0) {
+        switch (wParam & 0xFFF0)
+        {
 
         /*
          * System menu commands on a maxed mdi child
@@ -2237,11 +2232,13 @@ ActivateTheChild:
         case SC_MINIMIZE:
         case SC_MAXIMIZE:
             hwndT = MAXED(pmdi);
-            if (hwndT != NULL) {
+            if (hwndT != NULL)
+            {
                 PWND pwndT = ValidateHwnd(hwndT);
                 if (pwndT == NULL)
                     break;
-                if ((wParam & 0xFFF0) == SC_CLOSE) {
+                if ((wParam & 0xFFF0) == SC_CLOSE)
+                {
                     /*
                      * Since the window is maxed, we've cleared WFSYSMENU (see
                      *  MDIAddSysMenu). We need to set it back here so GetSysMenuHandle
@@ -2252,10 +2249,13 @@ ActivateTheChild:
                     SetWindowState(pwndT, WFSYSMENU);
                     fCanClose = xxxMNCanClose(pwndT);
                     ClearWindowState(pwndT, WFSYSMENU);
-                    if (!fCanClose) {
+                    if (!fCanClose)
+                    {
                         break;
                     }
-                } else if (((wParam & 0xFFF0) == SC_MINIMIZE) && !TestWF(pwndT, WFMINBOX)) {
+                }
+                else if (((wParam & 0xFFF0) == SC_MINIMIZE) && !TestWF(pwndT, WFMINBOX))
+                {
                     break;
                 }
 
@@ -2265,30 +2265,32 @@ ActivateTheChild:
         goto CallDWP;
 
     case WM_SIZE:
-        if (wParam != SIZEICONIC) {
+        if (wParam != SIZEICONIC)
+        {
             NtUserMoveWindow(hwndMDI, 0, 0, LOWORD(lParam), HIWORD(lParam), TRUE);
-        } else {
+        }
+        else
+        {
             wp.length = sizeof(WINDOWPLACEMENT);
-            if (GetWindowPlacement(hwnd, &wp)) {
+            if (GetWindowPlacement(hwnd, &wp))
+            {
                 RECT rcT;
-                int  clB;
+                int clB;
 
-               /*
+                /*
                 * If frame is iconic, size mdi win to be size of restored
                 * frame's client area.  Thus mdi children etc created in here
                 * use the proper mdiclient size.
                 */
-               clB = GetWindowBorders(pwnd->style, pwnd->ExStyle, TRUE, TRUE);
+                clB = GetWindowBorders(pwnd->style, pwnd->ExStyle, TRUE, TRUE);
 
-               CopyInflateRect(&rcT, &wp.rcNormalPosition,
-                        -clB*SYSMET(CXBORDER), -clB*SYSMET(CYBORDER));
+                CopyInflateRect(&rcT, &wp.rcNormalPosition, -clB * SYSMET(CXBORDER), -clB * SYSMET(CYBORDER));
 
-               if (TestWF(pwnd, WFBORDERMASK) == LOBYTE(WFCAPTION))
-                       rcT.top += SYSMET(CYCAPTION);
-               rcT.top += SYSMET(CYMENU);
+                if (TestWF(pwnd, WFBORDERMASK) == LOBYTE(WFCAPTION))
+                    rcT.top += SYSMET(CYCAPTION);
+                rcT.top += SYSMET(CYMENU);
 
-               NtUserMoveWindow(hwndMDI, 0, 0, rcT.right-rcT.left,
-                       rcT.bottom-rcT.top, TRUE);
+                NtUserMoveWindow(hwndMDI, 0, 0, rcT.right - rcT.left, rcT.bottom - rcT.top, TRUE);
             }
         }
         goto CallDWP;
@@ -2298,8 +2300,7 @@ ActivateTheChild:
         break;
 
     case WM_NEXTMENU:
-        if (TestWF(pwnd, WFSYSMENU) && !TestWF(pwnd, WFMINIMIZED) &&
-            ACTIVE(pmdi) && !MAXED(pmdi))
+        if (TestWF(pwnd, WFSYSMENU) && !TestWF(pwnd, WFMINIMIZED) && ACTIVE(pmdi) && !MAXED(pmdi))
         {
             PMENU pmenuIn;
             /*
@@ -2311,8 +2312,8 @@ ActivateTheChild:
             pmenuIn = RevalidateHmenu(pmnm->hmenuIn);
 
             if (pmenuIn && ((wParam == VK_LEFT && pmenuIn == REBASE(pwnd, spmenu)) ||
-                    (wParam == VK_RIGHT && pmnm->hmenuIn ==
-                    NtUserGetSystemMenu(hwnd, FALSE)))) {
+                            (wParam == VK_RIGHT && pmnm->hmenuIn == NtUserGetSystemMenu(hwnd, FALSE))))
+            {
 
                 HMENU hmenu;
                 PWND pwndActive;
@@ -2320,7 +2321,8 @@ ActivateTheChild:
                 //
                 // Make sure the window is still valid
                 //
-                if ((pwndActive = ValidateHwnd(ACTIVE(pmdi))) == NULL) {
+                if ((pwndActive = ValidateHwnd(ACTIVE(pmdi))) == NULL)
+                {
                     return 0;
                 }
 
@@ -2328,7 +2330,8 @@ ActivateTheChild:
                 // Make sure the child's system menu items are updated
                 // (i.e. the ones are enabled/disabled)
                 //
-                if (!TestWF(pwndActive,WFMAXIMIZED)) {
+                if (!TestWF(pwndActive, WFMAXIMIZED))
+                {
                     NtUserSetSysMenu(ACTIVE(pmdi));
                 }
 
@@ -2346,14 +2349,15 @@ ActivateTheChild:
         return 0L;
 
     case WM_MENUCHAR:
-        if (!TestWF(pwnd, WFMINIMIZED) && LOWORD(wParam) == TEXT('-')) {
+        if (!TestWF(pwnd, WFMINIMIZED) && LOWORD(wParam) == TEXT('-'))
+        {
             if (MAXED(pmdi))
                 return MAKELONG(0, 2);
-            else if (ACTIVE(pmdi)) {
-              PostMessage(ACTIVE(pmdi), WM_SYSCOMMAND,
-                    SC_KEYMENU, MAKELONG(TEXT('-'), 0));
-              return MAKELONG(0, 1);
-          }
+            else if (ACTIVE(pmdi))
+            {
+                PostMessage(ACTIVE(pmdi), WM_SYSCOMMAND, SC_KEYMENU, MAKELONG(TEXT('-'), 0));
+                return MAKELONG(0, 1);
+            }
         }
 
         /*
@@ -2361,7 +2365,7 @@ ActivateTheChild:
          */
 
     default:
-CallDWP:
+    CallDWP:
         return DefWindowProcWorker(pwnd, wMsg, wParam, lParam, fAnsi);
     }
 
@@ -2369,30 +2373,19 @@ CallDWP:
 }
 
 
-
-FUNCLOG5(LOG_GENERAL, LRESULT, WINAPI, DefFrameProcW, HWND, hwnd, HWND, hwndMDIClient, UINT, message, WPARAM, wParam, LPARAM, lParam)
-LRESULT WINAPI DefFrameProcW(
-    HWND hwnd,
-    HWND hwndMDIClient,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+FUNCLOG5(LOG_GENERAL, LRESULT, WINAPI, DefFrameProcW, HWND, hwnd, HWND, hwndMDIClient, UINT, message, WPARAM, wParam,
+         LPARAM, lParam)
+LRESULT WINAPI DefFrameProcW(HWND hwnd, HWND hwndMDIClient, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    return DefFrameProcWorker(hwnd, hwndMDIClient, message, wParam, lParam,
-                              FALSE);
+    return DefFrameProcWorker(hwnd, hwndMDIClient, message, wParam, lParam, FALSE);
 }
 
 
-FUNCLOG5(LOG_GENERAL, LRESULT, WINAPI, DefFrameProcA, HWND, hwnd, HWND, hwndMDIClient, UINT, message, WPARAM, wParam, LPARAM, lParam)
-LRESULT WINAPI DefFrameProcA(
-    HWND hwnd,
-    HWND hwndMDIClient,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+FUNCLOG5(LOG_GENERAL, LRESULT, WINAPI, DefFrameProcA, HWND, hwnd, HWND, hwndMDIClient, UINT, message, WPARAM, wParam,
+         LPARAM, lParam)
+LRESULT WINAPI DefFrameProcA(HWND hwnd, HWND hwndMDIClient, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    return DefFrameProcWorker(hwnd, hwndMDIClient, message, wParam,
-                              lParam, TRUE);
+    return DefFrameProcWorker(hwnd, hwndMDIClient, message, wParam, lParam, TRUE);
 }
 
 
@@ -2403,9 +2396,7 @@ LRESULT WINAPI DefFrameProcA(
 * 11-14-90 MikeHar Ported from windows
 \***************************************************************************/
 
-void ChildMinMaxInfo(
-    PWND pwnd,
-    PMINMAXINFO pmmi)
+void ChildMinMaxInfo(PWND pwnd, PMINMAXINFO pmmi)
 {
     PWND pwndParent = REBASEPWND(pwnd, spwndParent);
     RECT rc;
@@ -2419,12 +2410,13 @@ void ChildMinMaxInfo(
     /*
      * Swap the left and right if pwnd is a mirrored window.
      */
-    if (TestWF(pwnd, WEFLAYOUTRTL)) {
-       int nSaveLeft;
+    if (TestWF(pwnd, WEFLAYOUTRTL))
+    {
+        int nSaveLeft;
 
-       nSaveLeft = rc.left;
-       rc.left   = rc.right;
-       rc.right  = nSaveLeft;
+        nSaveLeft = rc.left;
+        rc.left = rc.right;
+        rc.right = nSaveLeft;
     }
 
     RealAdjustWindowRectEx(&rc, pwnd->style, FALSE, pwnd->ExStyle);
@@ -2446,9 +2438,7 @@ void ChildMinMaxInfo(
 * 11-14-90 MikeHar Ported from windows
 \***************************************************************************/
 
-void xxxChildResize(
-    PWND pwnd,
-    UINT wMode)
+void xxxChildResize(PWND pwnd, UINT wMode)
 {
     PWND pwndT;
     PWND pwndMDI = REBASEPWND(pwnd, spwndParent);
@@ -2475,12 +2465,14 @@ void xxxChildResize(
     pmdi = ((PMDIWND)pwndMDI)->pmdi;
     pmenu = REBASE(pwndFrame, spmenu);
 
-    if (MAXED(pmdi) == hwnd && wMode != SIZEFULLSCREEN) {
+    if (MAXED(pmdi) == hwnd && wMode != SIZEFULLSCREEN)
+    {
         /*
          * Restoring the current maximized window...
          * Remove the system menu from the Frame window.
          */
-        if (!(SCROLL(pmdi) & OTHERMAXING)) {
+        if (!(SCROLL(pmdi) & OTHERMAXING))
+        {
             Unlock(&MAXED(pmdi));
             MDIRemoveSysMenu(PtoH(pmenu), hwnd);
             Unlock(&MAXED(pmdi));
@@ -2488,7 +2480,8 @@ void xxxChildResize(
         }
     }
 
-    if (wMode == SIZEFULLSCREEN) {
+    if (wMode == SIZEFULLSCREEN)
+    {
 
         /*
          * Already maximized?
@@ -2502,7 +2495,8 @@ void xxxChildResize(
 
         pmdi->wScroll |= OTHERMAXING | SCROLLCOUNT;
 
-        if (hwndOldActive = MAXED(pmdi)) {
+        if (hwndOldActive = MAXED(pmdi))
+        {
             SendMessage(hwndOldActive, WM_SETREDRAW, FALSE, 0L);
             MDIRemoveSysMenu(PtoH(pmenu), hwndOldActive);
             NtUserMinMaximize(hwndOldActive, SW_MDIRESTORE, FALSE);
@@ -2520,16 +2514,17 @@ void xxxChildResize(
         pmdi->wScroll &= ~(OTHERMAXING | SCROLLCOUNT);
     }
 
-    if (wMode == SIZEICONIC) {
-        for (pwndT = REBASEPWND(pwndMDI, spwndChild); pwndT;
-                pwndT = REBASEPWND(pwndT, spwndNext)) {
+    if (wMode == SIZEICONIC)
+    {
+        for (pwndT = REBASEPWND(pwndMDI, spwndChild); pwndT; pwndT = REBASEPWND(pwndT, spwndNext))
+        {
             if (!pwndT->spwndOwner && TestWF(pwndT, WFVISIBLE))
                 break;
         }
 
         hwndActive = NtUserQueryWindow(hwnd, WindowActiveWindow);
-        if ((pwndT != NULL) && (hwndActive != NULL) &&
-                IsChild(hwndActive, HWq(pwndMDI))) {
+        if ((pwndT != NULL) && (hwndActive != NULL) && IsChild(hwndActive, HWq(pwndMDI)))
+        {
             ThreadLockAlways(pwndT, &tlpwndT);
             SendMessage(HWq(pwndT), WM_CHILDACTIVATE, 0, 0L);
             ThreadUnlock(&tlpwndT);
@@ -2552,12 +2547,7 @@ Exit:
 * 11-14-90 MikeHar Ported from windows
 \***************************************************************************/
 
-LRESULT DefMDIChildProcWorker(
-    HWND hwnd,
-    UINT wMsg,
-    WPARAM wParam,
-    LPARAM lParam,
-    BOOL fAnsi)
+LRESULT DefMDIChildProcWorker(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam, BOOL fAnsi)
 {
     PWND pwnd;
     PWND pwndParent;
@@ -2569,7 +2559,8 @@ LRESULT DefMDIChildProcWorker(
     TL tlpwndParent;
     LRESULT lRet;
 
-    if ((pwnd = ValidateHwnd(hwnd)) == NULL) {
+    if ((pwnd = ValidateHwnd(hwnd)) == NULL)
+    {
         return (0L);
     }
 
@@ -2579,7 +2570,8 @@ LRESULT DefMDIChildProcWorker(
      * Check to see if this is a real mdi child window
      */
     pwndParent = REBASEPWND(pwnd, spwndParent);
-    if (!pwndParent || GETFNID(pwndParent) != FNID_MDICLIENT) {
+    if (!pwndParent || GETFNID(pwndParent) != FNID_MDICLIENT)
+    {
         RIPERR0(ERROR_NON_MDICHILD_WINDOW, RIP_VERBOSE, "");
         return DefWindowProcWorker(pwnd, wMsg, wParam, lParam, fAnsi);
     }
@@ -2588,13 +2580,16 @@ LRESULT DefMDIChildProcWorker(
      * Get a pointer to the MDI structure, if it still exists
      */
     pmdi = ((PMDIWND)pwndParent)->pmdi;
-    if ((ULONG_PTR)pmdi == (ULONG_PTR)-1) {
+    if ((ULONG_PTR)pmdi == (ULONG_PTR)-1)
+    {
         goto CallDWP;
     }
 
-    switch (wMsg) {
+    switch (wMsg)
+    {
     case WM_SETFOCUS:
-        if (DIFFWOWHANDLE(hwnd, ACTIVE(pmdi))) {
+        if (DIFFWOWHANDLE(hwnd, ACTIVE(pmdi)))
+        {
             ThreadLockAlways(pwndParent, &tlpwndParent);
             xxxMDIActivate(pwndParent, pwnd);
             ThreadUnlock(&tlpwndParent);
@@ -2610,9 +2605,7 @@ LRESULT DefMDIChildProcWorker(
         pmnm = (PMDINEXTMENU)lParam;
         pwndT = REBASEPWND(pwndParent, spwndParent);
         pmnm->hwndNext = HW(pwndT);
-        pmnm->hmenuNext = (wParam == VK_LEFT) ?
-                NtUserGetSystemMenu(pmnm->hwndNext, FALSE) :
-                GetMenu(pmnm->hwndNext);
+        pmnm->hmenuNext = (wParam == VK_LEFT) ? NtUserGetSystemMenu(pmnm->hwndNext, FALSE) : GetMenu(pmnm->hwndNext);
         return TRUE;
 #if 0
              hWnd->hwndParent->hwndParent
@@ -2625,14 +2618,14 @@ LRESULT DefMDIChildProcWorker(
 #endif
     case WM_CLOSE:
         hwndT = GetParent(hwnd);
-        if (hwndT != NULL) {
+        if (hwndT != NULL)
+        {
             SendMessage(hwndT, WM_MDIDESTROY, (WPARAM)hwnd, 0L);
         }
         break;
 
     case WM_MENUCHAR:
-        PostMessage(GetParent(GetParent(hwnd)), WM_SYSCOMMAND,
-                (DWORD)SC_KEYMENU, (LONG)LOWORD(wParam));
+        PostMessage(GetParent(GetParent(hwnd)), WM_SYSCOMMAND, (DWORD)SC_KEYMENU, (LONG)LOWORD(wParam));
         return 0x10000;
 
     case WM_SETTEXT:
@@ -2640,7 +2633,8 @@ LRESULT DefMDIChildProcWorker(
         if (WINDOW(pmdi))
             ModifyMenuItem(pwnd);
 
-        if (TestWF(pwnd, WFMAXIMIZED)) {
+        if (TestWF(pwnd, WFMAXIMIZED))
+        {
 
             /*
              * Add the child's window text to the frame since it is
@@ -2675,28 +2669,31 @@ LRESULT DefMDIChildProcWorker(
         break;
 
     case WM_SYSCOMMAND:
-        switch (wParam & 0xFFF0) {
+        switch (wParam & 0xFFF0)
+        {
         case SC_NEXTWINDOW:
         case SC_PREVWINDOW:
             hwndT = GetParent(hwnd);
-            SendMessage(hwndT, WM_MDINEXT, (WPARAM)hwnd,
-                    (DWORD)((wParam & 0xFFF0) == SC_PREVWINDOW));
+            SendMessage(hwndT, WM_MDINEXT, (WPARAM)hwnd, (DWORD)((wParam & 0xFFF0) == SC_PREVWINDOW));
             break;
 
         case SC_SIZE:
         case SC_MOVE:
-            if (SAMEWOWHANDLE(hwnd, MAXED(pmdi))) {
+            if (SAMEWOWHANDLE(hwnd, MAXED(pmdi)))
+            {
 
                 /*
                  * If a maxed child gets a size or move message, blow it
                  * off.
                  */
                 break;
-            } else
+            }
+            else
                 goto CallDWP;
 
         case SC_MAXIMIZE:
-            if (SAMEWOWHANDLE(hwnd, MAXED(pmdi))) {
+            if (SAMEWOWHANDLE(hwnd, MAXED(pmdi)))
+            {
 
                 /*
                  * If a maxed child gets a maximize message, forward it
@@ -2706,8 +2703,7 @@ LRESULT DefMDIChildProcWorker(
                  */
                 pwndT = REBASEPWND(pwndParent, spwndParent);
                 ThreadLock(pwndT, &tlpwndT);
-                lRet = SendMessage(HW(pwndT),
-                        WM_SYSCOMMAND, SC_MAXIMIZE, lParam);
+                lRet = SendMessage(HW(pwndT), WM_SYSCOMMAND, SC_MAXIMIZE, lParam);
                 ThreadUnlock(&tlpwndT);
                 return lRet;
             }
@@ -2722,7 +2718,7 @@ LRESULT DefMDIChildProcWorker(
         break;
 
     default:
-CallDWP:
+    CallDWP:
         return DefWindowProcWorker(pwnd, wMsg, wParam, lParam, fAnsi);
     }
 
@@ -2740,35 +2736,28 @@ CallDWP:
 
 
 FUNCLOG4(LOG_GENERAL, LRESULT, WINAPI, DefMDIChildProcW, HWND, hwnd, UINT, message, WPARAM, wParam, LPARAM, lParam)
-LRESULT WINAPI DefMDIChildProcW(
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT WINAPI DefMDIChildProcW(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     return DefMDIChildProcWorker(hwnd, message, wParam, lParam, FALSE);
 }
 
 
 FUNCLOG4(LOG_GENERAL, LRESULT, WINAPI, DefMDIChildProcA, HWND, hwnd, UINT, message, WPARAM, wParam, LPARAM, lParam)
-LRESULT WINAPI DefMDIChildProcA(
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT WINAPI DefMDIChildProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     return DefMDIChildProcWorker(hwnd, message, wParam, lParam, TRUE);
 }
 
-BOOL MDICompleteChildCreation(HWND hwndChild, HMENU hSysMenu, BOOL fVisible, BOOL fDisabled) {
+BOOL MDICompleteChildCreation(HWND hwndChild, HMENU hSysMenu, BOOL fVisible, BOOL fDisabled)
+{
     PWND pwndChild;
-    PWND  pwndClient;
-    HWND  hwndClient;
-    BOOL  fHasOwnSysMenu;
+    PWND pwndClient;
+    HWND hwndClient;
+    BOOL fHasOwnSysMenu;
     PMDI pmdi;
 
     pwndChild = ValidateHwnd(hwndChild);
-    pwndClient = REBASEPWND(pwndChild,spwndParent);
+    pwndClient = REBASEPWND(pwndChild, spwndParent);
     hwndClient = HWq(pwndClient);
 
     fHasOwnSysMenu = (pwndChild->spmenuSys) ? TRUE : FALSE;
@@ -2796,8 +2785,7 @@ BOOL MDICompleteChildCreation(HWND hwndChild, HMENU hSysMenu, BOOL fVisible, BOO
     {
         if (!TestWF(pwndChild, WFMINIMIZED) || !ACTIVE(pmdi))
         {
-            NtUserSetWindowPos(hwndChild, HWND_TOP, 0, 0, 0, 0,
-                    SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+            NtUserSetWindowPos(hwndChild, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
 
             if (TestWF(pwndChild, WFMAXIMIZED) && !fHasOwnSysMenu)
             {
@@ -2818,13 +2806,8 @@ BOOL MDICompleteChildCreation(HWND hwndChild, HMENU hSysMenu, BOOL fVisible, BOO
 }
 
 
-BOOL
-CreateMDIChild(
-        PSHORTCREATE        psc,
-        LPMDICREATESTRUCT   pmcs,
-        DWORD               dwExpWinVerAndFlags,
-        HMENU *             phSysMenu,
-        PWND                pwndParent)
+BOOL CreateMDIChild(PSHORTCREATE psc, LPMDICREATESTRUCT pmcs, DWORD dwExpWinVerAndFlags, HMENU *phSysMenu,
+                    PWND pwndParent)
 {
     BOOL fVisible;
     RECT rcT;
@@ -2859,30 +2842,32 @@ CreateMDIChild(
     // Save ORIGINAL parameters in MDICREATESTRUCT.  This is for
     // compatibility with old WM_MDICREATE.
     //
-    pmcs->x   = rcT.left   = psc->x;
-    pmcs->y   = rcT.top    = psc->y;
-    pmcs->cx  = rcT.right  = psc->cx;
-    pmcs->cy  = rcT.bottom = psc->cy;
+    pmcs->x = rcT.left = psc->x;
+    pmcs->y = rcT.top = psc->y;
+    pmcs->cx = rcT.right = psc->cx;
+    pmcs->cy = rcT.bottom = psc->cy;
 
     MDICheckCascadeRect(pwndParent, &rcT);
 
     //
     // Setup creation coords
     //
-    psc->x       = rcT.left;
-    psc->y       = rcT.top;
-    psc->cx      = rcT.right;
-    psc->cy      = rcT.bottom;
+    psc->x = rcT.left;
+    psc->y = rcT.top;
+    psc->cx = rcT.right;
+    psc->cy = rcT.bottom;
 
     // Load the system menu
-    if (psc->style & WS_SYSMENU) {
+    if (psc->style & WS_SYSMENU)
+    {
 #ifdef LAME_BUTTON
         hSysMenu = xxxLoadSysMenu(CHILDSYSMENU, NULL);
 #else
         hSysMenu = xxxLoadSysMenu(CHILDSYSMENU);
 #endif // LAME_BUTTON
 
-        if (hSysMenu == NULL) {
+        if (hSysMenu == NULL)
+        {
             return FALSE;
         }
     }
@@ -2899,18 +2884,17 @@ CreateMDIChild(
         // we could nuke the hwndPrevMaxed during the SendMessage32
         // so recheck just in case, B#11122, [t-arthb]
 
-        if ( IsWindow(hwndPrevMaxed) )
+        if (IsWindow(hwndPrevMaxed))
         {
             NtUserMinMaximize(hwndPrevMaxed, SW_SHOWNORMAL, TRUE);
 
-            if ( psc->style & WS_MAXIMIZE )
-               SendMessage(hwndPrevMaxed, WM_SETREDRAW, (WPARAM)TRUE, 0L);
+            if (psc->style & WS_MAXIMIZE)
+                SendMessage(hwndPrevMaxed, WM_SETREDRAW, (WPARAM)TRUE, 0L);
         }
-
     }
 
     // Set the proper Child Window ID for this MDI child.
-    psc->hMenu = (HMENU)UIntToPtr( (FIRST(pmdi) + CKIDS(pmdi)) );
+    psc->hMenu = (HMENU)UIntToPtr((FIRST(pmdi) + CKIDS(pmdi)));
 
     *phSysMenu = hSysMenu;
 

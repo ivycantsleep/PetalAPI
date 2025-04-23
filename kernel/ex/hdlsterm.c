@@ -40,30 +40,36 @@ Revision History:
 
 
 //
-// Note: HdlspAddLogEntry() allocates a buffer off the stack of this size, 
-// so keep this number small.  Anything longer than 80 is probably useless, as 
+// Note: HdlspAddLogEntry() allocates a buffer off the stack of this size,
+// so keep this number small.  Anything longer than 80 is probably useless, as
 // a VT100 can only handle 80 characters across.
 // Do not make this any shorter than the string for HEADLESS_LOG_LOADING_FILENAME
 //
 #define HDLSP_LOG_MAX_STRING_LENGTH 80
 
 
-#define HEADLESS_ACQUIRE_SPIN_LOCK() \
-        if (!HeadlessGlobals->InBugCheck) { \
-            KeAcquireSpinLock(&(HeadlessGlobals->SpinLock), &OldIrql); \
-        } else { \
-            OldIrql = (KIRQL)-1; \
-        }
+#define HEADLESS_ACQUIRE_SPIN_LOCK()                               \
+    if (!HeadlessGlobals->InBugCheck)                              \
+    {                                                              \
+        KeAcquireSpinLock(&(HeadlessGlobals->SpinLock), &OldIrql); \
+    }                                                              \
+    else                                                           \
+    {                                                              \
+        OldIrql = (KIRQL) - 1;                                     \
+    }
 
-#define HEADLESS_RELEASE_SPIN_LOCK() \
-        if (OldIrql != (KIRQL)-1) { \
-            KeReleaseSpinLock(&(HeadlessGlobals->SpinLock), OldIrql); \
-        } else { \
-            ASSERT(HeadlessGlobals->InBugCheck); \
-        }
+#define HEADLESS_RELEASE_SPIN_LOCK()                              \
+    if (OldIrql != (KIRQL) - 1)                                   \
+    {                                                             \
+        KeReleaseSpinLock(&(HeadlessGlobals->SpinLock), OldIrql); \
+    }                                                             \
+    else                                                          \
+    {                                                             \
+        ASSERT(HeadlessGlobals->InBugCheck);                      \
+    }
 
-#define COM1_PORT   0x03f8
-#define COM2_PORT   0x02f8
+#define COM1_PORT 0x03f8
+#define COM2_PORT 0x02f8
 
 
 //
@@ -77,165 +83,47 @@ Revision History:
 // value and use the resulting value as an offset into this array.  For
 // example, 0x80 ->(remove the high bit) 00 -> 0x00C7.
 //
-USHORT PcAnsiToUnicode[0xFF] = {
-        0x00C7,
-        0x00FC,
-        0x00E9,
-        0x00E2,
-        0x00E4,
-        0x00E0,
-        0x00E5,
-        0x0087,
-        0x00EA,
-        0x00EB,
-        0x00E8,
-        0x00EF,
-        0x00EE,
-        0x00EC,
-        0x00C4,
-        0x00C5,
-        0x00C9,
-        0x00E6,
-        0x00C6,
-        0x00F4,
-        0x00F6,
-        0x00F2,
-        0x00FB,
-        0x00F9,
-        0x00FF,
-        0x00D6,
-        0x00DC,
-        0x00A2,
-        0x00A3,
-        0x00A5,
-        0x20A7,
-        0x0192,
-        0x00E1,
-        0x00ED,
-        0x00F3,
-        0x00FA,
-        0x00F1,
-        0x00D1,
-        0x00AA,
-        0x00BA,
-        0x00BF,
-        0x2310,
-        0x00AC,
-        0x00BD,
-        0x00BC,
-        0x00A1,
-        0x00AB,
-        0x00BB,
-        0x2591,
-        0x2592,
-        0x2593,
-        0x2502,
-        0x2524,
-        0x2561,
-        0x2562,
-        0x2556,
-        0x2555,
-        0x2563,
-        0x2551,
-        0x2557,
-        0x255D,
-        0x255C,
-        0x255B,
-        0x2510,
-        0x2514,
-        0x2534,
-        0x252C,
-        0x251C,
-        0x2500,
-        0x253C,
-        0x255E,
-        0x255F,
-        0x255A,
-        0x2554,
-        0x2569,
-        0x2566,
-        0x2560,
-        0x2550,
-        0x256C,
-        0x2567,
-        0x2568,
-        0x2564,
-        0x2565,
-        0x2559,
-        0x2558,
-        0x2552,
-        0x2553,
-        0x256B,
-        0x256A,
-        0x2518,
-        0x250C,
-        0x2588,
-        0x2584,
-        0x258C,
-        0x2590,
-        0x2580,
-        0x03B1,
-        0x00DF,
-        0x0393,
-        0x03C0,
-        0x03A3,
-        0x03C3,
-        0x00B5,
-        0x03C4,
-        0x03A6,
-        0x0398,
-        0x03A9,
-        0x03B4,
-        0x221E,
-        0x03C6,
-        0x03B5,
-        0x2229,
-        0x2261,
-        0x00B1,
-        0x2265,
-        0x2264,
-        0x2320,
-        0x2321,
-        0x00F7,
-        0x2248,
-        0x00B0,
-        0x2219,
-        0x00B7,
-        0x221A,
-        0x207F,
-        0x00B2,
-        0x25A0,
-        0x00A0
-        };
-
-
-
+USHORT PcAnsiToUnicode[0xFF] = { 0x00C7, 0x00FC, 0x00E9, 0x00E2, 0x00E4, 0x00E0, 0x00E5, 0x0087, 0x00EA, 0x00EB, 0x00E8,
+                                 0x00EF, 0x00EE, 0x00EC, 0x00C4, 0x00C5, 0x00C9, 0x00E6, 0x00C6, 0x00F4, 0x00F6, 0x00F2,
+                                 0x00FB, 0x00F9, 0x00FF, 0x00D6, 0x00DC, 0x00A2, 0x00A3, 0x00A5, 0x20A7, 0x0192, 0x00E1,
+                                 0x00ED, 0x00F3, 0x00FA, 0x00F1, 0x00D1, 0x00AA, 0x00BA, 0x00BF, 0x2310, 0x00AC, 0x00BD,
+                                 0x00BC, 0x00A1, 0x00AB, 0x00BB, 0x2591, 0x2592, 0x2593, 0x2502, 0x2524, 0x2561, 0x2562,
+                                 0x2556, 0x2555, 0x2563, 0x2551, 0x2557, 0x255D, 0x255C, 0x255B, 0x2510, 0x2514, 0x2534,
+                                 0x252C, 0x251C, 0x2500, 0x253C, 0x255E, 0x255F, 0x255A, 0x2554, 0x2569, 0x2566, 0x2560,
+                                 0x2550, 0x256C, 0x2567, 0x2568, 0x2564, 0x2565, 0x2559, 0x2558, 0x2552, 0x2553, 0x256B,
+                                 0x256A, 0x2518, 0x250C, 0x2588, 0x2584, 0x258C, 0x2590, 0x2580, 0x03B1, 0x00DF, 0x0393,
+                                 0x03C0, 0x03A3, 0x03C3, 0x00B5, 0x03C4, 0x03A6, 0x0398, 0x03A9, 0x03B4, 0x221E, 0x03C6,
+                                 0x03B5, 0x2229, 0x2261, 0x00B1, 0x2265, 0x2264, 0x2320, 0x2321, 0x00F7, 0x2248, 0x00B0,
+                                 0x2219, 0x00B7, 0x221A, 0x207F, 0x00B2, 0x25A0, 0x00A0 };
 
 
 //
 // Log entry structure
 //
-typedef struct _HEADLESS_LOG_ENTRY {
+typedef struct _HEADLESS_LOG_ENTRY
+{
     SYSTEM_TIMEOFDAY_INFORMATION TimeOfEntry;
     PWCHAR String;
 } HEADLESS_LOG_ENTRY, *PHEADLESS_LOG_ENTRY;
 
 // Blue Screen Data Structure
 //
-typedef struct _HEADLESS_BLUE_SCREEN_DATA {
-        PUCHAR Property;
-        PUCHAR XMLData;
-        struct _HEADLESS_BLUE_SCREEN_DATA *Next;
-}HEADLESS_BLUE_SCREEN_DATA, * PHEADLESS_BLUE_SCREEN_DATA;
+typedef struct _HEADLESS_BLUE_SCREEN_DATA
+{
+    PUCHAR Property;
+    PUCHAR XMLData;
+    struct _HEADLESS_BLUE_SCREEN_DATA *Next;
+} HEADLESS_BLUE_SCREEN_DATA, *PHEADLESS_BLUE_SCREEN_DATA;
 
 //
 // Global variables headless component uses
 //
-typedef struct _HEADLESS_GLOBALS {
-    
+typedef struct _HEADLESS_GLOBALS
+{
+
     //
     // Global spin lock for accessing headless internal routines.
-    // 
+    //
     KSPIN_LOCK SpinLock;
 
     //
@@ -244,10 +132,10 @@ typedef struct _HEADLESS_GLOBALS {
     HANDLE PageLockHandle;
 
     //
-    // List of log entries. 
+    // List of log entries.
     //
     PHEADLESS_LOG_ENTRY LogEntries;
-    
+
     //
     // Global temp buffer, not to be held across lock release/acquires.
     //
@@ -259,26 +147,28 @@ typedef struct _HEADLESS_GLOBALS {
     PUCHAR InputBuffer;
 
     //
-    // Blue Screen Data 
+    // Blue Screen Data
     //
     PHEADLESS_BLUE_SCREEN_DATA BlueScreenData;
 
     //
     // Flags and parameters for determining headless state
     //
-    union {
-        struct {
-            ULONG TerminalEnabled    : 1;
-            ULONG InBugCheck         : 1;
-            ULONG NewLogEntryAdded   : 1;
-            ULONG UsedBiosSettings   : 1;
-            ULONG InputProcessing    : 1;
-            ULONG InputLineDone      : 1;
-            ULONG ProcessingCmd      : 1;
-            ULONG TerminalParity     : 1;
-            ULONG TerminalStopBits   : 1;
+    union
+    {
+        struct
+        {
+            ULONG TerminalEnabled : 1;
+            ULONG InBugCheck : 1;
+            ULONG NewLogEntryAdded : 1;
+            ULONG UsedBiosSettings : 1;
+            ULONG InputProcessing : 1;
+            ULONG InputLineDone : 1;
+            ULONG ProcessingCmd : 1;
+            ULONG TerminalParity : 1;
+            ULONG TerminalStopBits : 1;
             ULONG TerminalPortNumber : 3;
-            ULONG IsNonLegacyDevice  : 1;
+            ULONG IsNonLegacyDevice : 1;
         };
         ULONG AllFlags;
     };
@@ -289,15 +179,15 @@ typedef struct _HEADLESS_GLOBALS {
     ULONG TerminalBaudRate;
     ULONG TerminalPort;
     PUCHAR TerminalPortAddress;
-    LARGE_INTEGER DelayTime;            // in 100ns units
+    LARGE_INTEGER DelayTime; // in 100ns units
     ULONG MicroSecondsDelayTime;
-    UCHAR TerminalType;                 // What kind of terminal do we think
-                                        // we're talking to?
-                                        // 0 = VT100
-                                        // 1 = VT100+
-                                        // 2 = VT-UTF8
-                                        // 3 = PC ANSI
-                                        // 4-255 = reserved
+    UCHAR TerminalType; // What kind of terminal do we think
+                        // we're talking to?
+                        // 0 = VT100
+                        // 1 = VT100+
+                        // 2 = VT-UTF8
+                        // 3 = PC ANSI
+                        // 4-255 = reserved
 
 
     //
@@ -314,14 +204,14 @@ typedef struct _HEADLESS_GLOBALS {
     //
     // Machine's GUID.
     //
-    GUID    SystemGUID;
+    GUID SystemGUID;
 
-    BOOLEAN IsMMIODevice;               // Is UART in SysIO or MMIO space?
+    BOOLEAN IsMMIODevice; // Is UART in SysIO or MMIO space?
 
     //
     // if this is TRUE, then the last character was a CR.
-    // if this is TRUE and the current character is a LF, 
-    //      then we filter the LF. 
+    // if this is TRUE and the current character is a LF,
+    //      then we filter the LF.
     //
     BOOLEAN IsLastCharCR;
 
@@ -338,81 +228,39 @@ PHEADLESS_GLOBALS HeadlessGlobals = NULL;
 // Forward declarations.
 //
 NTSTATUS
-HdlspDispatch(
-    IN  HEADLESS_CMD Command,
-    IN  PVOID  InputBuffer OPTIONAL,
-    IN  SIZE_T InputBufferSize OPTIONAL,
-    OUT PVOID OutputBuffer OPTIONAL,
-    OUT PSIZE_T OutputBufferSize OPTIONAL
-    );
+HdlspDispatch(IN HEADLESS_CMD Command, IN PVOID InputBuffer OPTIONAL, IN SIZE_T InputBufferSize OPTIONAL,
+              OUT PVOID OutputBuffer OPTIONAL, OUT PSIZE_T OutputBufferSize OPTIONAL);
 
 NTSTATUS
-HdlspEnableTerminal(
-    BOOLEAN bEnable
-    );
+HdlspEnableTerminal(BOOLEAN bEnable);
 
-VOID
-HdlspPutString(
-    PUCHAR String
-    );
+VOID HdlspPutString(PUCHAR String);
 
-VOID
-HdlspPutData(
-    PUCHAR InputBuffer,
-    SIZE_T InputBufferLength
-    );
+VOID HdlspPutData(PUCHAR InputBuffer, SIZE_T InputBufferLength);
 
 BOOLEAN
-HdlspGetLine(
-    PUCHAR InputBuffer,
-    SIZE_T InputBufferLength
-    );
+HdlspGetLine(PUCHAR InputBuffer, SIZE_T InputBufferLength);
 
-VOID
-HdlspBugCheckProcessing(
-    VOID
-    );
+VOID HdlspBugCheckProcessing(VOID);
 
-VOID
-HdlspProcessDumpCommand(
-    IN BOOLEAN Paging
-    );
+VOID HdlspProcessDumpCommand(IN BOOLEAN Paging);
 
-VOID
-HdlspPutMore(
-    OUT PBOOLEAN Stop
-    );
+VOID HdlspPutMore(OUT PBOOLEAN Stop);
 
-VOID
-HdlspAddLogEntry(
-    IN PWCHAR String
-    );
+VOID HdlspAddLogEntry(IN PWCHAR String);
 
 NTSTATUS
-HdlspSetBlueScreenInformation(
-    IN PHEADLESS_CMD_SET_BLUE_SCREEN_DATA pData,
-    IN SIZE_T cData
-    );
+HdlspSetBlueScreenInformation(IN PHEADLESS_CMD_SET_BLUE_SCREEN_DATA pData, IN SIZE_T cData);
 
-VOID
-HdlspSendBlueScreenInfo(
-    ULONG BugcheckCode
-    );
+VOID HdlspSendBlueScreenInfo(ULONG BugcheckCode);
 
-VOID
-HdlspKernelAddLogEntry(
-    IN ULONG StringCode,
-    IN PUNICODE_STRING DriverName OPTIONAL
-    );
+VOID HdlspKernelAddLogEntry(IN ULONG StringCode, IN PUNICODE_STRING DriverName OPTIONAL);
 
-VOID
-HdlspSendStringAtBaud(
-    IN PUCHAR String
-    );
+VOID HdlspSendStringAtBaud(IN PUCHAR String);
 
 #if defined(ALLOC_PRAGMA)
-#pragma alloc_text(INIT,     HeadlessInit)
-#pragma alloc_text(PAGE,     HeadlessTerminalAddResources)
+#pragma alloc_text(INIT, HeadlessInit)
+#pragma alloc_text(PAGE, HeadlessTerminalAddResources)
 #pragma alloc_text(PAGEHDLS, HdlspDispatch)
 #pragma alloc_text(PAGEHDLS, HdlspEnableTerminal)
 #pragma alloc_text(PAGEHDLS, HdlspPutString)
@@ -429,11 +277,7 @@ HdlspSendStringAtBaud(
 #endif
 
 
-
-VOID
-HeadlessInit(
-    PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+VOID HeadlessInit(PLOADER_PARAMETER_BLOCK LoaderBlock)
 
 /*++
 
@@ -458,7 +302,8 @@ Environment:
     ULONG TmpUlong;
 
 
-    if (LoaderBlock->Extension->HeadlessLoaderBlock == NULL) {
+    if (LoaderBlock->Extension->HeadlessLoaderBlock == NULL)
+    {
         return;
     }
 
@@ -466,17 +311,16 @@ Environment:
     HeadlessLoaderBlock = LoaderBlock->Extension->HeadlessLoaderBlock;
 
 
-    if ((HeadlessLoaderBlock->PortNumber <= 4) || (BOOLEAN)(HeadlessLoaderBlock->UsedBiosSettings)) {
+    if ((HeadlessLoaderBlock->PortNumber <= 4) || (BOOLEAN)(HeadlessLoaderBlock->UsedBiosSettings))
+    {
 
         //
         // Allocate space for the global variables we will use.
         //
-        GlobalBlock =  ExAllocatePoolWithTag(NonPagedPool,
-                                             sizeof(HEADLESS_GLOBALS),
-                                             ((ULONG)'sldH')
-                                            );
+        GlobalBlock = ExAllocatePoolWithTag(NonPagedPool, sizeof(HEADLESS_GLOBALS), ((ULONG)'sldH'));
 
-        if (GlobalBlock == NULL) {
+        if (GlobalBlock == NULL)
+        {
 
             return;
         }
@@ -485,8 +329,8 @@ Environment:
         // Start everything at zero, and then init the rest by hand.
         //
         RtlZeroMemory(GlobalBlock, sizeof(HEADLESS_GLOBALS));
-        
-        
+
+
         KeInitializeSpinLock(&(GlobalBlock->SpinLock));
 
         //
@@ -501,10 +345,8 @@ Environment:
         GlobalBlock->IsMMIODevice = (BOOLEAN)(HeadlessLoaderBlock->IsMMIODevice);
         GlobalBlock->IsLastCharCR = FALSE;
         GlobalBlock->TerminalType = (UCHAR)(HeadlessLoaderBlock->TerminalType);
-        
-        RtlCopyMemory( &GlobalBlock->SystemGUID,
-                       &HeadlessLoaderBlock->SystemGUID,
-                       sizeof(GUID) );
+
+        RtlCopyMemory(&GlobalBlock->SystemGUID, &HeadlessLoaderBlock->SystemGUID, sizeof(GUID));
 
 
         //
@@ -517,7 +359,8 @@ Environment:
         // Therefore, if the address is outside of System I/O, *or* if it's
         // sitting on a PCI device, then set the IsNonLegacyDevice entry.
         //
-        if( GlobalBlock->IsMMIODevice ) {
+        if (GlobalBlock->IsMMIODevice)
+        {
             GlobalBlock->IsNonLegacyDevice = TRUE;
         }
 
@@ -527,10 +370,9 @@ Environment:
         // use the debugger APIs to make sure the device is understood and that it
         // doesn't get moved.
         //
-        if( (HeadlessLoaderBlock->PciDeviceId != (USHORT)0xFFFF) &&
-            (HeadlessLoaderBlock->PciDeviceId != 0) &&
-            (HeadlessLoaderBlock->PciVendorId != (USHORT)0xFFFF) &&
-            (HeadlessLoaderBlock->PciVendorId != 0) ) {
+        if ((HeadlessLoaderBlock->PciDeviceId != (USHORT)0xFFFF) && (HeadlessLoaderBlock->PciDeviceId != 0) &&
+            (HeadlessLoaderBlock->PciVendorId != (USHORT)0xFFFF) && (HeadlessLoaderBlock->PciVendorId != 0))
+        {
 
             //
             // The loader thinks he spoke through a PCI device.  Remember
@@ -544,12 +386,12 @@ Environment:
             // device and possibly apply power management to it.  They can indicate
             // this by setting bit 0 of PciFlags.
             //
-            if( !(HeadlessLoaderBlock->PciFlags & 0x1) ) {
+            if (!(HeadlessLoaderBlock->PciFlags & 0x1))
+            {
 
-                DEBUG_DEVICE_DESCRIPTOR  DebugDeviceDescriptor;
+                DEBUG_DEVICE_DESCRIPTOR DebugDeviceDescriptor;
 
-                RtlZeroMemory( &DebugDeviceDescriptor,
-                               sizeof(DEBUG_DEVICE_DESCRIPTOR) );
+                RtlZeroMemory(&DebugDeviceDescriptor, sizeof(DEBUG_DEVICE_DESCRIPTOR));
 
                 //
                 // We're required to understand exactly what this structure looks like
@@ -572,23 +414,19 @@ Environment:
                 //
                 // Do it.
                 //
-                KdSetupPciDeviceForDebugging( LoaderBlock,
-                                              &DebugDeviceDescriptor );
+                KdSetupPciDeviceForDebugging(LoaderBlock, &DebugDeviceDescriptor);
             }
         }
-
 
 
         //
         // Allocate space for log entries.
         //
-        GlobalBlock->LogEntries = ExAllocatePoolWithTag(NonPagedPool,
-                                                        HEADLESS_LOG_NUMBER_OF_ENTRIES *
-                                                            sizeof(HEADLESS_LOG_ENTRY),
-                                                        ((ULONG)'sldH')
-                                                       );
+        GlobalBlock->LogEntries = ExAllocatePoolWithTag(
+            NonPagedPool, HEADLESS_LOG_NUMBER_OF_ENTRIES * sizeof(HEADLESS_LOG_ENTRY), ((ULONG)'sldH'));
 
-        if (GlobalBlock->LogEntries == NULL) {
+        if (GlobalBlock->LogEntries == NULL)
+        {
 
             goto Fail;
         }
@@ -600,29 +438,26 @@ Environment:
         //
         // Allocate a temporary buffer for general use.
         //
-        GlobalBlock->TmpBuffer = ExAllocatePoolWithTag(NonPagedPool,
-                                                       HEADLESS_TMP_BUFFER_SIZE,
-                                                       ((ULONG)'sldH')
-                                                      );
+        GlobalBlock->TmpBuffer = ExAllocatePoolWithTag(NonPagedPool, HEADLESS_TMP_BUFFER_SIZE, ((ULONG)'sldH'));
 
-        if (GlobalBlock->TmpBuffer == NULL) {
+        if (GlobalBlock->TmpBuffer == NULL)
+        {
 
             goto Fail;
         }
 
-        GlobalBlock->InputBuffer = ExAllocatePoolWithTag(NonPagedPool,
-                                                         HEADLESS_TMP_BUFFER_SIZE,
-                                                         ((ULONG)'sldH')
-                                                        );
+        GlobalBlock->InputBuffer = ExAllocatePoolWithTag(NonPagedPool, HEADLESS_TMP_BUFFER_SIZE, ((ULONG)'sldH'));
 
-        if (GlobalBlock->InputBuffer == NULL) {
+        if (GlobalBlock->InputBuffer == NULL)
+        {
 
             goto Fail;
         }
 
         GlobalBlock->PageLockHandle = MmLockPagableCodeSection((PVOID)(ULONG_PTR)HdlspDispatch);
 
-        if (GlobalBlock->PageLockHandle == NULL) {
+        if (GlobalBlock->PageLockHandle == NULL)
+        {
 
             goto Fail;
         }
@@ -630,52 +465,51 @@ Environment:
         //
         // Figure to delay time between bytes to satify the baud rate given.
         //
-        if (GlobalBlock->TerminalBaudRate == 9600) {
+        if (GlobalBlock->TerminalBaudRate == 9600)
+        {
 
             TmpUlong = GlobalBlock->TerminalBaudRate;
 
             //
             // Convert to chars per second.
             //
-            TmpUlong = TmpUlong / 10;        // 10 bits per character (8-1-1) is the max.
+            TmpUlong = TmpUlong / 10; // 10 bits per character (8-1-1) is the max.
 
-            GlobalBlock->MicroSecondsDelayTime = ((1000000 /  TmpUlong) * 10) / 8;      // We will send at 80% speed to be sure.
-            GlobalBlock->DelayTime.HighPart = -1;                                    
-            GlobalBlock->DelayTime.LowPart = -10 * GlobalBlock->MicroSecondsDelayTime;  // relative time
+            GlobalBlock->MicroSecondsDelayTime =
+                ((1000000 / TmpUlong) * 10) / 8; // We will send at 80% speed to be sure.
+            GlobalBlock->DelayTime.HighPart = -1;
+            GlobalBlock->DelayTime.LowPart = -10 * GlobalBlock->MicroSecondsDelayTime; // relative time
         }
 
         HeadlessGlobals = GlobalBlock;
-
     }
 
     return;
 
 Fail:
 
-    if (GlobalBlock->LogEntries != NULL) {
+    if (GlobalBlock->LogEntries != NULL)
+    {
         ExFreePool(GlobalBlock->LogEntries);
     }
 
-    if (GlobalBlock->TmpBuffer != NULL) {
+    if (GlobalBlock->TmpBuffer != NULL)
+    {
         ExFreePool(GlobalBlock->TmpBuffer);
     }
 
-    if (GlobalBlock->InputBuffer != NULL) {
+    if (GlobalBlock->InputBuffer != NULL)
+    {
         ExFreePool(GlobalBlock->InputBuffer);
     }
 
     ExFreePool(GlobalBlock);
 }
 
-
+
 NTSTATUS
-HeadlessDispatch(
-    IN  HEADLESS_CMD Command,
-    IN  PVOID   InputBuffer OPTIONAL,
-    IN  SIZE_T  InputBufferSize OPTIONAL,
-    OUT PVOID   OutputBuffer OPTIONAL,
-    OUT PSIZE_T OutputBufferSize OPTIONAL
-    )
+HeadlessDispatch(IN HEADLESS_CMD Command, IN PVOID InputBuffer OPTIONAL, IN SIZE_T InputBufferSize OPTIONAL,
+                 OUT PVOID OutputBuffer OPTIONAL, OUT PSIZE_T OutputBufferSize OPTIONAL)
 
 /*++
 
@@ -711,23 +545,25 @@ Environment:
     // If for some reason we were unable to lock the headless component down into
     // memory when we initialized, treat this as the terminal not being connected.
     //
-    if ((HeadlessGlobals == NULL) || (HeadlessGlobals->PageLockHandle == NULL)) {
+    if ((HeadlessGlobals == NULL) || (HeadlessGlobals->PageLockHandle == NULL))
+    {
 
-        if (Command == HeadlessCmdEnableTerminal) {
+        if (Command == HeadlessCmdEnableTerminal)
+        {
             return STATUS_UNSUCCESSFUL;
-        }        
-        
+        }
+
         //
         // The following command all have responses, so we must fill in the
         // correct response for when headless is not enabled.
         //
-        if ((Command == HeadlessCmdQueryInformation) ||
-            (Command == HeadlessCmdGetByte) ||
-            (Command == HeadlessCmdGetLine) ||
-            (Command == HeadlessCmdCheckForReboot) ||
-            (Command == HeadlessCmdTerminalPoll)) {
+        if ((Command == HeadlessCmdQueryInformation) || (Command == HeadlessCmdGetByte) ||
+            (Command == HeadlessCmdGetLine) || (Command == HeadlessCmdCheckForReboot) ||
+            (Command == HeadlessCmdTerminalPoll))
+        {
 
-            if ((OutputBuffer == NULL) || (OutputBufferSize == NULL)) {
+            if ((OutputBuffer == NULL) || (OutputBufferSize == NULL))
+            {
                 return STATUS_INVALID_PARAMETER;
             }
 
@@ -741,24 +577,13 @@ Environment:
         return STATUS_SUCCESS;
     }
 
-    return HdlspDispatch(Command, 
-                         InputBuffer, 
-                         InputBufferSize, 
-                         OutputBuffer, 
-                         OutputBufferSize
-                        );
-
+    return HdlspDispatch(Command, InputBuffer, InputBufferSize, OutputBuffer, OutputBufferSize);
 }
 
-
+
 NTSTATUS
-HdlspDispatch(
-    IN  HEADLESS_CMD Command,
-    IN  PVOID InputBuffer OPTIONAL,
-    IN  SIZE_T InputBufferSize OPTIONAL,
-    OUT PVOID OutputBuffer OPTIONAL,
-    OUT PSIZE_T OutputBufferSize OPTIONAL
-    )
+HdlspDispatch(IN HEADLESS_CMD Command, IN PVOID InputBuffer OPTIONAL, IN SIZE_T InputBufferSize OPTIONAL,
+              OUT PVOID OutputBuffer OPTIONAL, OUT PSIZE_T OutputBufferSize OPTIONAL)
 
 /*++
 
@@ -818,19 +643,19 @@ Environment:
     ASSERT(HeadlessGlobals->PageLockHandle != NULL);
 
 
-    if ((Command != HeadlessCmdAddLogEntry) &&
-        (Command != HeadlessCmdStartBugCheck) &&
-        (Command != HeadlessCmdSendBlueScreenData) &&
-        (Command != HeadlessCmdDoBugCheckProcessing)) {
+    if ((Command != HeadlessCmdAddLogEntry) && (Command != HeadlessCmdStartBugCheck) &&
+        (Command != HeadlessCmdSendBlueScreenData) && (Command != HeadlessCmdDoBugCheckProcessing))
+    {
 
         HEADLESS_ACQUIRE_SPIN_LOCK();
 
-        if (HeadlessGlobals->ProcessingCmd) {
-            
+        if (HeadlessGlobals->ProcessingCmd)
+        {
+
             HEADLESS_RELEASE_SPIN_LOCK();
             return STATUS_UNSUCCESSFUL;
         }
-        
+
         HeadlessGlobals->ProcessingCmd = TRUE;
 
         HEADLESS_RELEASE_SPIN_LOCK();
@@ -840,15 +665,16 @@ Environment:
     // Verify parameters for each command and then call the appropriate subroutine
     // to process it.
     //
-    switch (Command) {
+    switch (Command)
+    {
 
         //
         // Enable terminal
         //
     case HeadlessCmdEnableTerminal:
-        
-        if ((InputBuffer == NULL) || 
-            (InputBufferSize != sizeof(HEADLESS_CMD_ENABLE_TERMINAL))) {
+
+        if ((InputBuffer == NULL) || (InputBufferSize != sizeof(HEADLESS_CMD_ENABLE_TERMINAL)))
+        {
             Status = STATUS_INVALID_PARAMETER;
             goto EndOfFunction;
         }
@@ -861,95 +687,93 @@ Environment:
         // Check for reboot string
         //
     case HeadlessCmdCheckForReboot:
-        
-        if ((OutputBuffer == NULL) || 
-            (OutputBufferSize == NULL) ||
-            (*OutputBufferSize != sizeof(HEADLESS_RSP_REBOOT))) {
+
+        if ((OutputBuffer == NULL) || (OutputBufferSize == NULL) || (*OutputBufferSize != sizeof(HEADLESS_RSP_REBOOT)))
+        {
             Status = STATUS_INVALID_PARAMETER;
             goto EndOfFunction;
         }
 
-        if (HeadlessGlobals->TerminalEnabled) {
+        if (HeadlessGlobals->TerminalEnabled)
+        {
 
-            if (HdlspGetLine(LocalBuffer, HEADLESS_TMP_BUFFER_SIZE)) {
+            if (HdlspGetLine(LocalBuffer, HEADLESS_TMP_BUFFER_SIZE))
+            {
 
-                ((PHEADLESS_RSP_REBOOT)OutputBuffer)->Reboot = (BOOLEAN)
-                       (!strcmp((LPCSTR)LocalBuffer, "reboot") || 
-                        !strcmp((LPCSTR)LocalBuffer, "shutdown"));
-
+                ((PHEADLESS_RSP_REBOOT)OutputBuffer)->Reboot =
+                    (BOOLEAN)(!strcmp((LPCSTR)LocalBuffer, "reboot") || !strcmp((LPCSTR)LocalBuffer, "shutdown"));
             }
-
-        } else {
+        }
+        else
+        {
 
             ((PHEADLESS_RSP_REBOOT)OutputBuffer)->Reboot = FALSE;
-
         }
 
         Status = STATUS_SUCCESS;
         goto EndOfFunction;
-
 
 
         //
         // Output a string.
         //
     case HeadlessCmdPutString:
-        
-        if (InputBuffer == NULL) {
+
+        if (InputBuffer == NULL)
+        {
             Status = STATUS_INVALID_PARAMETER;
             goto EndOfFunction;
         }
 
-        if (HeadlessGlobals->TerminalEnabled) {
+        if (HeadlessGlobals->TerminalEnabled)
+        {
 
             HdlspPutString(&(((PHEADLESS_CMD_PUT_STRING)InputBuffer)->String[0]));
-
         }
         Status = STATUS_SUCCESS;
         goto EndOfFunction;
-        
+
 
         //
         // Output a data stream.
         //
     case HeadlessCmdPutData:
-        
-        if ( (InputBuffer == NULL) ||
-             (InputBufferSize == 0) ) {
+
+        if ((InputBuffer == NULL) || (InputBufferSize == 0))
+        {
             Status = STATUS_INVALID_PARAMETER;
             goto EndOfFunction;
         }
 
-        if (HeadlessGlobals->TerminalEnabled) {
+        if (HeadlessGlobals->TerminalEnabled)
+        {
 
-            HdlspPutData(&(((PHEADLESS_CMD_PUT_STRING)InputBuffer)->String[0]),
-                         InputBufferSize);
-
+            HdlspPutData(&(((PHEADLESS_CMD_PUT_STRING)InputBuffer)->String[0]), InputBufferSize);
         }
         Status = STATUS_SUCCESS;
         goto EndOfFunction;
-        
+
 
         //
         // Poll for input
         //
     case HeadlessCmdTerminalPoll:
-        
-        if ((OutputBuffer == NULL) || 
-            (OutputBufferSize == NULL) ||
-            (*OutputBufferSize != sizeof(HEADLESS_RSP_POLL))) {
+
+        if ((OutputBuffer == NULL) || (OutputBufferSize == NULL) || (*OutputBufferSize != sizeof(HEADLESS_RSP_POLL)))
+        {
             Status = STATUS_INVALID_PARAMETER;
             goto EndOfFunction;
         }
 
-        if (HeadlessGlobals->TerminalEnabled) {
+        if (HeadlessGlobals->TerminalEnabled)
+        {
 
             ((PHEADLESS_RSP_POLL)OutputBuffer)->QueuedInput = InbvPortPollOnly(HeadlessGlobals->TerminalPort);
-
-        } else {
+        }
+        else
+        {
 
             ((PHEADLESS_RSP_POLL)OutputBuffer)->QueuedInput = FALSE;
-
         }
 
         Status = STATUS_SUCCESS;
@@ -960,28 +784,30 @@ Environment:
         // Get a single byte of input
         //
     case HeadlessCmdGetByte:
-        
-        if ((OutputBuffer == NULL) || 
-            (OutputBufferSize == NULL) ||
-            (*OutputBufferSize != sizeof(HEADLESS_RSP_GET_BYTE))) {
+
+        if ((OutputBuffer == NULL) || (OutputBufferSize == NULL) ||
+            (*OutputBufferSize != sizeof(HEADLESS_RSP_GET_BYTE)))
+        {
             Status = STATUS_INVALID_PARAMETER;
             goto EndOfFunction;
         }
 
-        if (HeadlessGlobals->TerminalEnabled) {
+        if (HeadlessGlobals->TerminalEnabled)
+        {
 
-            if (InbvPortPollOnly(HeadlessGlobals->TerminalPort)) {
-                InbvPortGetByte(HeadlessGlobals->TerminalPort,
-                                &(((PHEADLESS_RSP_GET_BYTE)OutputBuffer)->Value)
-                               );
-            } else {
+            if (InbvPortPollOnly(HeadlessGlobals->TerminalPort))
+            {
+                InbvPortGetByte(HeadlessGlobals->TerminalPort, &(((PHEADLESS_RSP_GET_BYTE)OutputBuffer)->Value));
+            }
+            else
+            {
                 ((PHEADLESS_RSP_GET_BYTE)OutputBuffer)->Value = 0;
             }
-
-        } else {
+        }
+        else
+        {
 
             ((PHEADLESS_RSP_GET_BYTE)OutputBuffer)->Value = 0;
-
         }
 
         Status = STATUS_SUCCESS;
@@ -992,27 +818,24 @@ Environment:
         // Get an entire line of input, if available.
         //
     case HeadlessCmdGetLine:
-        
-        if ((OutputBuffer == NULL) || 
-            (OutputBufferSize == NULL) ||
-            (*OutputBufferSize < sizeof(HEADLESS_RSP_GET_LINE))) {
+
+        if ((OutputBuffer == NULL) || (OutputBufferSize == NULL) || (*OutputBufferSize < sizeof(HEADLESS_RSP_GET_LINE)))
+        {
             Status = STATUS_INVALID_PARAMETER;
             goto EndOfFunction;
         }
 
-        if (HeadlessGlobals->TerminalEnabled) {
+        if (HeadlessGlobals->TerminalEnabled)
+        {
 
-            ((PHEADLESS_RSP_GET_LINE)OutputBuffer)->LineComplete = 
+            ((PHEADLESS_RSP_GET_LINE)OutputBuffer)->LineComplete =
                 HdlspGetLine(&(((PHEADLESS_RSP_GET_LINE)OutputBuffer)->Buffer[0]),
-                             *OutputBufferSize - 
-                               sizeof(HEADLESS_RSP_GET_LINE) + 
-                               sizeof(UCHAR)
-                            );
-
-        } else {
+                             *OutputBufferSize - sizeof(HEADLESS_RSP_GET_LINE) + sizeof(UCHAR));
+        }
+        else
+        {
 
             ((PHEADLESS_RSP_GET_LINE)OutputBuffer)->LineComplete = FALSE;
-
         }
 
         Status = STATUS_SUCCESS;
@@ -1023,26 +846,25 @@ Environment:
         // Let the kernel know to convert to bug check processing mode.
         //
     case HeadlessCmdStartBugCheck:
-        
+
         HeadlessGlobals->InBugCheck = TRUE;
         Status = STATUS_SUCCESS;
 
         goto EndOfFunction;
 
 
-
         //
         // Process user I/O during a bugcheck
         //
     case HeadlessCmdDoBugCheckProcessing:
-        
-        if (HeadlessGlobals->TerminalEnabled) {
+
+        if (HeadlessGlobals->TerminalEnabled)
+        {
 
             //
             // NOTE: No spin lock here because we are in bugcheck.
             //
             HdlspBugCheckProcessing();
-
         }
 
         Status = STATUS_SUCCESS;
@@ -1053,10 +875,10 @@ Environment:
         // Process query information command
         //
     case HeadlessCmdQueryInformation:
-        
-        if ((OutputBuffer == NULL) || 
-            (OutputBufferSize == NULL) ||
-            (*OutputBufferSize < sizeof(HEADLESS_RSP_QUERY_INFO))) {
+
+        if ((OutputBuffer == NULL) || (OutputBufferSize == NULL) ||
+            (*OutputBufferSize < sizeof(HEADLESS_RSP_QUERY_INFO)))
+        {
             Status = STATUS_INVALID_PARAMETER;
             goto EndOfFunction;
         }
@@ -1068,18 +890,19 @@ Environment:
         Response->Serial.UsedBiosSettings = (BOOLEAN)(HeadlessGlobals->UsedBiosSettings);
         Response->Serial.TerminalBaudRate = HeadlessGlobals->TerminalBaudRate;
 
-        if( (HeadlessGlobals->TerminalPortNumber >= 1) ||  (BOOLEAN)(HeadlessGlobals->UsedBiosSettings) ) {
+        if ((HeadlessGlobals->TerminalPortNumber >= 1) || (BOOLEAN)(HeadlessGlobals->UsedBiosSettings))
+        {
 
             Response->Serial.TerminalPort = HeadlessGlobals->TerminalPortNumber;
             Response->Serial.TerminalPortBaseAddress = HeadlessGlobals->TerminalPortAddress;
             Response->Serial.TerminalType = HeadlessGlobals->TerminalType;
-
-        } else {
+        }
+        else
+        {
 
             Response->Serial.TerminalPort = SerialPortUndefined;
             Response->Serial.TerminalPortBaseAddress = 0;
             Response->Serial.TerminalType = HeadlessGlobals->TerminalType;
-
         }
         Status = STATUS_SUCCESS;
         goto EndOfFunction;
@@ -1089,8 +912,9 @@ Environment:
         // Process add log entry command
         //
     case HeadlessCmdAddLogEntry:
-        
-        if (InputBuffer == NULL) {
+
+        if (InputBuffer == NULL)
+        {
             Status = STATUS_INVALID_PARAMETER;
             goto EndOfFunction;
         }
@@ -1106,9 +930,9 @@ Environment:
         // Print log entries
         //
     case HeadlessCmdDisplayLog:
-        
-        if ((InputBuffer == NULL) || 
-            (InputBufferSize != sizeof(HEADLESS_CMD_DISPLAY_LOG))) {
+
+        if ((InputBuffer == NULL) || (InputBufferSize != sizeof(HEADLESS_CMD_DISPLAY_LOG)))
+        {
             Status = STATUS_INVALID_PARAMETER;
             goto EndOfFunction;
         }
@@ -1127,60 +951,56 @@ Environment:
     case HeadlessCmdDisplayInverseVideo:
     case HeadlessCmdSetColor:
     case HeadlessCmdPositionCursor:
-        
-        if (HeadlessGlobals->TerminalEnabled) {
 
-            switch (Command) {
+        if (HeadlessGlobals->TerminalEnabled)
+        {
+
+            switch (Command)
+            {
             case HeadlessCmdClearDisplay:
-                Tmp = (PUCHAR)"\033[2J";
+                Tmp = (PUCHAR) "\033[2J";
                 break;
 
             case HeadlessCmdClearToEndOfDisplay:
-                Tmp = (PUCHAR)"\033[0J";
+                Tmp = (PUCHAR) "\033[0J";
                 break;
 
             case HeadlessCmdClearToEndOfLine:
-                Tmp = (PUCHAR)"\033[0K";
+                Tmp = (PUCHAR) "\033[0K";
                 break;
 
             case HeadlessCmdDisplayAttributesOff:
-                Tmp = (PUCHAR)"\033[0m";
+                Tmp = (PUCHAR) "\033[0m";
                 break;
 
             case HeadlessCmdDisplayInverseVideo:
-                Tmp = (PUCHAR)"\033[7m";
+                Tmp = (PUCHAR) "\033[7m";
                 break;
 
             case HeadlessCmdSetColor:
 
-                if ((InputBuffer == NULL) || 
-                    (InputBufferSize != sizeof(HEADLESS_CMD_SET_COLOR))) {
+                if ((InputBuffer == NULL) || (InputBufferSize != sizeof(HEADLESS_CMD_SET_COLOR)))
+                {
                     Status = STATUS_INVALID_PARAMETER;
                     goto EndOfFunction;
                 }
 
-                sprintf((LPSTR)LocalBuffer, 
-                        "\033[%d;%dm", 
-                        ((PHEADLESS_CMD_SET_COLOR)InputBuffer)->BkgColor, 
-                        ((PHEADLESS_CMD_SET_COLOR)InputBuffer)->FgColor
-                       );
+                sprintf((LPSTR)LocalBuffer, "\033[%d;%dm", ((PHEADLESS_CMD_SET_COLOR)InputBuffer)->BkgColor,
+                        ((PHEADLESS_CMD_SET_COLOR)InputBuffer)->FgColor);
 
                 Tmp = &(LocalBuffer[0]);
                 break;
 
             case HeadlessCmdPositionCursor:
 
-                if ((InputBuffer == NULL) || 
-                    (InputBufferSize != sizeof(HEADLESS_CMD_POSITION_CURSOR))) {
+                if ((InputBuffer == NULL) || (InputBufferSize != sizeof(HEADLESS_CMD_POSITION_CURSOR)))
+                {
                     Status = STATUS_INVALID_PARAMETER;
                     goto EndOfFunction;
                 }
 
-                sprintf((LPSTR)LocalBuffer, 
-                        "\033[%d;%dH", 
-                        ((PHEADLESS_CMD_POSITION_CURSOR)InputBuffer)->Y + 1, 
-                        ((PHEADLESS_CMD_POSITION_CURSOR)InputBuffer)->X + 1
-                       );
+                sprintf((LPSTR)LocalBuffer, "\033[%d;%dH", ((PHEADLESS_CMD_POSITION_CURSOR)InputBuffer)->Y + 1,
+                        ((PHEADLESS_CMD_POSITION_CURSOR)InputBuffer)->X + 1);
 
                 Tmp = &(LocalBuffer[0]);
                 break;
@@ -1193,54 +1013,50 @@ Environment:
                 ASSERT(0);
                 Status = STATUS_INVALID_PARAMETER;
                 goto EndOfFunction;
-
             }
 
             HdlspSendStringAtBaud(Tmp);
-
         }
         Status = STATUS_SUCCESS;
         goto EndOfFunction;
 
     case HeadlessCmdSetBlueScreenData:
 
-        if (InputBuffer == NULL) {
+        if (InputBuffer == NULL)
+        {
             return STATUS_INVALID_PARAMETER;
         }
 
         Status = HdlspSetBlueScreenInformation(InputBuffer, InputBufferSize);
         goto EndOfFunction;
 
-    case HeadlessCmdSendBlueScreenData:            
+    case HeadlessCmdSendBlueScreenData:
 
-        if (HeadlessGlobals->TerminalEnabled && HeadlessGlobals->InBugCheck) {
+        if (HeadlessGlobals->TerminalEnabled && HeadlessGlobals->InBugCheck)
+        {
 
-            if ((InputBuffer == NULL) || 
-                (InputBufferSize != sizeof(HEADLESS_CMD_SEND_BLUE_SCREEN_DATA))) {
+            if ((InputBuffer == NULL) || (InputBufferSize != sizeof(HEADLESS_CMD_SEND_BLUE_SCREEN_DATA)))
+            {
                 ASSERT(0);
                 return STATUS_INVALID_PARAMETER;
             }
 
             HdlspSendBlueScreenInfo(((PHEADLESS_CMD_SEND_BLUE_SCREEN_DATA)InputBuffer)->BugcheckCode);
 
-            HdlspSendStringAtBaud((PUCHAR)"\n\r!SAC>");
-
+            HdlspSendStringAtBaud((PUCHAR) "\n\r!SAC>");
         }
         goto EndOfFunction;
 
     case HeadlessCmdQueryGUID:
-        
-        if( (OutputBuffer == NULL) || 
-            (OutputBufferSize == NULL) ||
-            (*OutputBufferSize < sizeof(GUID)) ) {
+
+        if ((OutputBuffer == NULL) || (OutputBufferSize == NULL) || (*OutputBufferSize < sizeof(GUID)))
+        {
 
             Status = STATUS_INVALID_PARAMETER;
             goto EndOfFunction;
         }
 
-        RtlCopyMemory( OutputBuffer,
-                       &HeadlessGlobals->SystemGUID,
-                       sizeof(GUID) );
+        RtlCopyMemory(OutputBuffer, &HeadlessGlobals->SystemGUID, sizeof(GUID));
 
         Status = STATUS_SUCCESS;
         goto EndOfFunction;
@@ -1249,15 +1065,13 @@ Environment:
     default:
         Status = STATUS_INVALID_PARAMETER;
         goto EndOfFunction;
-        
     }
 
 EndOfFunction:
 
-    if ((Command != HeadlessCmdAddLogEntry) &&
-        (Command != HeadlessCmdStartBugCheck) &&
-        (Command != HeadlessCmdSendBlueScreenData) &&
-        (Command != HeadlessCmdDoBugCheckProcessing)) {
+    if ((Command != HeadlessCmdAddLogEntry) && (Command != HeadlessCmdStartBugCheck) &&
+        (Command != HeadlessCmdSendBlueScreenData) && (Command != HeadlessCmdDoBugCheckProcessing))
+    {
 
         ASSERT(HeadlessGlobals->ProcessingCmd);
 
@@ -1266,11 +1080,9 @@ EndOfFunction:
 
     return Status;
 }
-
+
 NTSTATUS
-HdlspEnableTerminal(
-    BOOLEAN bEnable
-    )
+HdlspEnableTerminal(BOOLEAN bEnable)
 
 /*++
 
@@ -1296,27 +1108,25 @@ Environment:
 
 --*/
 {
-    if ((bEnable == TRUE) && !HeadlessGlobals->TerminalEnabled) {
+    if ((bEnable == TRUE) && !HeadlessGlobals->TerminalEnabled)
+    {
 
         HeadlessGlobals->TerminalEnabled = InbvPortInitialize(
-                                               HeadlessGlobals->TerminalBaudRate, 
-                                               HeadlessGlobals->TerminalPortNumber, 
-                                               HeadlessGlobals->TerminalPortAddress, 
-                                               &(HeadlessGlobals->TerminalPort),
-                                               HeadlessGlobals->IsMMIODevice
-                                              );
+            HeadlessGlobals->TerminalBaudRate, HeadlessGlobals->TerminalPortNumber,
+            HeadlessGlobals->TerminalPortAddress, &(HeadlessGlobals->TerminalPort), HeadlessGlobals->IsMMIODevice);
 
-        if (!HeadlessGlobals->TerminalEnabled) {
+        if (!HeadlessGlobals->TerminalEnabled)
+        {
             return STATUS_UNSUCCESSFUL;
         }
-
-    } else if (bEnable == FALSE) {
+    }
+    else if (bEnable == FALSE)
+    {
 
         InbvPortTerminate(HeadlessGlobals->TerminalPort);
 
         HeadlessGlobals->TerminalPort = 0;
         HeadlessGlobals->TerminalEnabled = FALSE;
-
     }
 
     //
@@ -1328,19 +1138,12 @@ Environment:
     // turn ON  the term port FIFO if we enable headless
     // turn OFF the term port FIFO if we disable headless
     //
-    InbvPortEnableFifo(
-        HeadlessGlobals->TerminalPort, 
-        bEnable
-        );
-    
+    InbvPortEnableFifo(HeadlessGlobals->TerminalPort, bEnable);
+
     return STATUS_SUCCESS;
 }
-
-VOID
-UTF8Encode(
-    USHORT  InputValue,
-    PUCHAR UTF8Encoding
-    )
+
+VOID UTF8Encode(USHORT InputValue, PUCHAR UTF8Encoding)
 /*++
 
 Routine Description:
@@ -1366,19 +1169,24 @@ Return Value:
     // If the first five bits are zero (00000yyy yyxxxxxx), encode it as two bytes 110yyyyy 10xxxxxx
     // Otherwise (zzzzyyyy yyxxxxxx), encode it as three bytes 1110zzzz 10yyyyyy 10xxxxxx
     //
-    if( (InputValue & 0xFF80) == 0 ) {
+    if ((InputValue & 0xFF80) == 0)
+    {
         //
         // if the top 9 bits are zero, then just
         // encode as 1 byte.  (ASCII passes through unchanged).
         //
         UTF8Encoding[2] = (UCHAR)(InputValue & 0xFF);
-    } else if( (InputValue & 0xF700) == 0 ) {
+    }
+    else if ((InputValue & 0xF700) == 0)
+    {
         //
         // if the top 5 bits are zero, then encode as 2 bytes
         //
         UTF8Encoding[2] = (UCHAR)(InputValue & 0x3F) | 0x80;
         UTF8Encoding[1] = (UCHAR)((InputValue >> 6) & 0x1F) | 0xC0;
-    } else {
+    }
+    else
+    {
         //
         // encode as 3 bytes
         //
@@ -1387,11 +1195,8 @@ Return Value:
         UTF8Encoding[0] = (UCHAR)((InputValue >> 12) & 0xF) | 0xE0;
     }
 }
-
-VOID
-HdlspPutString(
-    PUCHAR String
-    )
+
+VOID HdlspPutString(PUCHAR String)
 
 /*++
 
@@ -1416,7 +1221,7 @@ Environment:
 --*/
 {
     PUCHAR Src, Dest;
-    UCHAR  Char = 0;
+    UCHAR Char = 0;
 
     //
     // We need to worry about sending a vt100 characters not in the standard
@@ -1426,15 +1231,18 @@ Environment:
     Src = String;
     Dest = &(HeadlessGlobals->TmpBuffer[0]);
 
-    while (*Src != '\0') {
+    while (*Src != '\0')
+    {
 
-        if (Dest >= &(HeadlessGlobals->TmpBuffer[HEADLESS_TMP_BUFFER_SIZE - 1])) {
-            
+        if (Dest >= &(HeadlessGlobals->TmpBuffer[HEADLESS_TMP_BUFFER_SIZE - 1]))
+        {
+
             HeadlessGlobals->TmpBuffer[HEADLESS_TMP_BUFFER_SIZE - 1] = '\0';
             HdlspSendStringAtBaud(HeadlessGlobals->TmpBuffer);
             Dest = &(HeadlessGlobals->TmpBuffer[0]);
-
-        } else {
+        }
+        else
+        {
 
             Char = *Src;
 
@@ -1442,100 +1250,94 @@ Environment:
             // filter some characters that aren't printable in VT100
             // into substitute characters which are printable
             //
-            if (Char & 0x80) {
+            if (Char & 0x80)
+            {
 
-                switch (Char) {
-                case 0xB0:  // Light shaded block
-                case 0xB3:  // Light vertical
-                case 0xBA:  // Double vertical line
+                switch (Char)
+                {
+                case 0xB0: // Light shaded block
+                case 0xB3: // Light vertical
+                case 0xBA: // Double vertical line
                     Char = '|';
                     break;
-                case 0xB1:  // Middle shaded block
-                case 0xDC:  // Lower half block
-                case 0xDD:  // Right half block
-                case 0xDE:  // Left half block
-                case 0xDF:  // Upper half block
+                case 0xB1: // Middle shaded block
+                case 0xDC: // Lower half block
+                case 0xDD: // Right half block
+                case 0xDE: // Left half block
+                case 0xDF: // Upper half block
                     Char = '%';
                     break;
-                case 0xB2:  // Dark shaded block
-                case 0xDB:  // Full block
+                case 0xB2: // Dark shaded block
+                case 0xDB: // Full block
                     Char = '#';
                     break;
-                case 0xA9:  // Reversed NOT sign
-                case 0xAA:  // NOT sign
-                case 0xBB:  // '»'
-                case 0xBC:  // '¼'
-                case 0xBF:  // '¿'
-                case 0xC0:  // 'À'
-                case 0xC8:  // 'È'
-                case 0xC9:  // 'É'
-                case 0xD9:  // 'Ù'
-                case 0xDA:  // 'Ú'
+                case 0xA9: // Reversed NOT sign
+                case 0xAA: // NOT sign
+                case 0xBB: // '»'
+                case 0xBC: // '¼'
+                case 0xBF: // '¿'
+                case 0xC0: // 'À'
+                case 0xC8: // 'È'
+                case 0xC9: // 'É'
+                case 0xD9: // 'Ù'
+                case 0xDA: // 'Ú'
                     Char = '+';
                     break;
-                case 0xC4:  // 'Ä'
+                case 0xC4: // 'Ä'
                     Char = '-';
                     break;
-                case 0xCD:  // 'Í'
+                case 0xCD: // 'Í'
                     Char = '=';
                     break;
                 }
-
             }
-
 
 
             //
             // If the high-bit is still set, and we're here, then we are going to
             // spew UTF8-encoded data (assuming our terminal type says it's okay).
             //
-            if( (Char & 0x80) ) {
+            if ((Char & 0x80))
+            {
 
-                UCHAR  UTF8Encoding[3];
-                ULONG  i;
+                UCHAR UTF8Encoding[3];
+                ULONG i;
 
                 //
                 // Lookup the Unicode equivilent of this 8-bit ANSI value.
                 //
-                UTF8Encode( PcAnsiToUnicode[(Char & 0x7F)],
-                            UTF8Encoding );
+                UTF8Encode(PcAnsiToUnicode[(Char & 0x7F)], UTF8Encoding);
 
-                for( i = 0; i < 3; i++ ) {
-                    if( UTF8Encoding[i] != 0 ) {
+                for (i = 0; i < 3; i++)
+                {
+                    if (UTF8Encoding[i] != 0)
+                    {
                         *Dest = UTF8Encoding[i];
                         Dest++;
                     }
                 }
-
-
-            } else {
+            }
+            else
+            {
 
                 //
-                // He's 7-bit ASCII.  Put it in the Destination buffer 
+                // He's 7-bit ASCII.  Put it in the Destination buffer
                 // and move on.
                 //
                 *Dest = Char;
                 Dest++;
-
             }
 
             Src++;
-
         }
-
     }
 
     *Dest = '\0';
 
     HdlspSendStringAtBaud(HeadlessGlobals->TmpBuffer);
-
 }
-
-VOID
-HdlspPutData(
-    PUCHAR InputBuffer,
-    SIZE_T InputBufferSize  
-    )
+
+VOID HdlspPutData(PUCHAR InputBuffer, SIZE_T InputBufferSize)
 
 /*++
 
@@ -1561,20 +1363,19 @@ Environment:
 
 --*/
 {
-    KIRQL   CurrentIrql;
-    ULONG   i;
+    KIRQL CurrentIrql;
+    ULONG i;
 
 
     //
     // Get the data into our own buffer.
     //
-    if( InputBufferSize > HEADLESS_TMP_BUFFER_SIZE ) {
+    if (InputBufferSize > HEADLESS_TMP_BUFFER_SIZE)
+    {
         InputBufferSize = HEADLESS_TMP_BUFFER_SIZE;
     }
 
-    RtlCopyMemory( &(HeadlessGlobals->TmpBuffer[0]),
-                   InputBuffer,
-                   InputBufferSize );
+    RtlCopyMemory(&(HeadlessGlobals->TmpBuffer[0]), InputBuffer, InputBufferSize);
 
 
     //
@@ -1589,38 +1390,40 @@ Environment:
     //
     CurrentIrql = KeGetCurrentIrql();
 
-    if (CurrentIrql < DISPATCH_LEVEL) {
+    if (CurrentIrql < DISPATCH_LEVEL)
+    {
         ExSetTimerResolution(-1 * HeadlessGlobals->DelayTime.LowPart, TRUE);
     }
 
-    for (i = 0; i < InputBufferSize; i++) {
-        
+    for (i = 0; i < InputBufferSize; i++)
+    {
+
         InbvPortPutByte(HeadlessGlobals->TerminalPort, HeadlessGlobals->TmpBuffer[i]);
 
-        if( HeadlessGlobals->TerminalBaudRate == 9600 ) {
-            if (CurrentIrql < DISPATCH_LEVEL) {
+        if (HeadlessGlobals->TerminalBaudRate == 9600)
+        {
+            if (CurrentIrql < DISPATCH_LEVEL)
+            {
                 KeDelayExecutionThread(KernelMode, FALSE, &(HeadlessGlobals->DelayTime));
-            } else {
+            }
+            else
+            {
                 KeStallExecutionProcessor(HeadlessGlobals->MicroSecondsDelayTime);
             }
         }
-
     }
 
     //
     // If we are in the worker thread, reset the timer resolution.
     //
-    if (CurrentIrql < DISPATCH_LEVEL) {
+    if (CurrentIrql < DISPATCH_LEVEL)
+    {
         ExSetTimerResolution(0, FALSE);
     }
-
 }
-
+
 BOOLEAN
-HdlspGetLine(
-    PUCHAR InputBuffer,
-    SIZE_T InputBufferLength
-    )
+HdlspGetLine(PUCHAR InputBuffer, SIZE_T InputBufferLength)
 
 
 /*++
@@ -1657,7 +1460,8 @@ Environment:
 
     HEADLESS_ACQUIRE_SPIN_LOCK();
 
-    if (HeadlessGlobals->InputProcessing) {
+    if (HeadlessGlobals->InputProcessing)
+    {
         HEADLESS_RELEASE_SPIN_LOCK();
         return FALSE;
     }
@@ -1667,24 +1471,26 @@ Environment:
     HEADLESS_RELEASE_SPIN_LOCK();
 
     //
-    // Check if we already have a line to be returned (could happen if 
+    // Check if we already have a line to be returned (could happen if
     // InputBuffer is/was too small to contain the whole line)
     //
-    if (HeadlessGlobals->InputLineDone) {
+    if (HeadlessGlobals->InputLineDone)
+    {
         goto ReturnInputLine;
     }
 
 GetByte:
 
-    if (!InbvPortPollOnly(HeadlessGlobals->TerminalPort) ||
-        !InbvPortGetByte(HeadlessGlobals->TerminalPort, &NewByte)) {
+    if (!InbvPortPollOnly(HeadlessGlobals->TerminalPort) || !InbvPortGetByte(HeadlessGlobals->TerminalPort, &NewByte))
+    {
         NewByte = 0;
     }
 
-    // 
+    //
     // If no waiting input, leave
     //
-    if (NewByte == 0) {
+    if (NewByte == 0)
+    {
         HeadlessGlobals->InputProcessing = FALSE;
         return FALSE;
     }
@@ -1697,20 +1503,20 @@ GetByte:
     //
     // filter out the LF if we JUST received a CR
     //
-    if (HeadlessGlobals->IsLastCharCR) {
-        
+    if (HeadlessGlobals->IsLastCharCR)
+    {
+
         //
         // if this is a LF, then ignore it and go get the next character.
         // if this is NOT an LF, then there is nothing to do
         //
-        if (NewByte == 0x0A) {
-        
-            HeadlessGlobals->IsLastCharCR = FALSE;
-            
-            goto GetByte;
-        
-        }
+        if (NewByte == 0x0A)
+        {
 
+            HeadlessGlobals->IsLastCharCR = FALSE;
+
+            goto GetByte;
+        }
     }
 
     //
@@ -1718,11 +1524,12 @@ GetByte:
     //
     HeadlessGlobals->IsLastCharCR = (NewByte == 0x0D) ? TRUE : FALSE;
 
-    // 
+    //
     // If this is a return, then we are done and need to return the line
     //
-    if ((NewByte == (UCHAR)'\n') || (NewByte == (UCHAR)'\r')) {
-        HdlspSendStringAtBaud((PUCHAR)"\r\n");
+    if ((NewByte == (UCHAR)'\n') || (NewByte == (UCHAR)'\r'))
+    {
+        HdlspSendStringAtBaud((PUCHAR) "\r\n");
         HeadlessGlobals->InputBuffer[HeadlessGlobals->InputBufferIndex] = '\0';
         HeadlessGlobals->InputBufferIndex++;
         goto StripWhitespaceAndReturnLine;
@@ -1731,14 +1538,17 @@ GetByte:
     //
     // If this is a backspace or delete, then we need to do that.
     //
-    if ((NewByte == 0x8) || (NewByte == 0x7F)) {  // backspace (^H) or delete
+    if ((NewByte == 0x8) || (NewByte == 0x7F))
+    { // backspace (^H) or delete
 
-        if (HeadlessGlobals->InputBufferIndex > 0) {
-            HdlspSendStringAtBaud((PUCHAR)"\010 \010");
+        if (HeadlessGlobals->InputBufferIndex > 0)
+        {
+            HdlspSendStringAtBaud((PUCHAR) "\010 \010");
             HeadlessGlobals->InputBufferIndex--;
         }
-
-    } else if (NewByte == 0x3) { // Control-C
+    }
+    else if (NewByte == 0x3)
+    { // Control-C
 
         //
         // Terminate the string and return it.
@@ -1747,26 +1557,29 @@ GetByte:
         HeadlessGlobals->InputBuffer[HeadlessGlobals->InputBufferIndex] = '\0';
         HeadlessGlobals->InputBufferIndex++;
         goto StripWhitespaceAndReturnLine;
-
-    } else if ((NewByte == 0x9) || (NewByte == 0x1B)) { // Tab or Esc
+    }
+    else if ((NewByte == 0x9) || (NewByte == 0x1B))
+    { // Tab or Esc
 
         //
         // Ignore tabs and escapes
         //
-        HdlspSendStringAtBaud((PUCHAR)"\007");
+        HdlspSendStringAtBaud((PUCHAR) "\007");
         HeadlessGlobals->InputProcessing = FALSE;
         return FALSE;
+    }
+    else if (HeadlessGlobals->InputBufferIndex == HEADLESS_TMP_BUFFER_SIZE - 2)
+    {
 
-    } else if (HeadlessGlobals->InputBufferIndex == HEADLESS_TMP_BUFFER_SIZE - 2) {
-        
         //
-        // We are at the end of the buffer - remove the last character from 
+        // We are at the end of the buffer - remove the last character from
         // the terminal screen and replace it with this one.
         //
         sprintf((LPSTR)HeadlessGlobals->TmpBuffer, "\010%c", NewByte);
         HdlspSendStringAtBaud(HeadlessGlobals->TmpBuffer);
-
-    } else {
+    }
+    else
+    {
 
         //
         // Echo the character to the screen
@@ -1774,7 +1587,6 @@ GetByte:
         sprintf((LPSTR)HeadlessGlobals->TmpBuffer, "%c", NewByte);
         HdlspSendStringAtBaud(HeadlessGlobals->TmpBuffer);
         HeadlessGlobals->InputBufferIndex++;
-
     }
 
     goto GetByte;
@@ -1788,29 +1600,28 @@ StripWhitespaceAndReturnLine:
 
     i = HeadlessGlobals->InputBufferIndex - 1;
 
-    while ((i != 0) &&
-           ((HeadlessGlobals->InputBuffer[i] == '\0') ||
-            (HeadlessGlobals->InputBuffer[i] == ' ') ||
-            (HeadlessGlobals->InputBuffer[i] == '\t'))) {
+    while ((i != 0) && ((HeadlessGlobals->InputBuffer[i] == '\0') || (HeadlessGlobals->InputBuffer[i] == ' ') ||
+                        (HeadlessGlobals->InputBuffer[i] == '\t')))
+    {
         i--;
     }
 
-    if (HeadlessGlobals->InputBuffer[i] != '\0') {      
+    if (HeadlessGlobals->InputBuffer[i] != '\0')
+    {
         HeadlessGlobals->InputBuffer[i + 1] = '\0';
     }
 
     i = 0;
 
     while ((HeadlessGlobals->InputBuffer[i] != '\0') &&
-           ((HeadlessGlobals->InputBuffer[i] == '\t') ||
-            (HeadlessGlobals->InputBuffer[i] == ' '))) {
+           ((HeadlessGlobals->InputBuffer[i] == '\t') || (HeadlessGlobals->InputBuffer[i] == ' ')))
+    {
         i++;
     }
 
-    if (i != 0) {
-        strcpy(
-            (LPSTR)&(HeadlessGlobals->InputBuffer[0]), 
-            (LPSTR)&(HeadlessGlobals->InputBuffer[i]));
+    if (i != 0)
+    {
+        strcpy((LPSTR) & (HeadlessGlobals->InputBuffer[0]), (LPSTR) & (HeadlessGlobals->InputBuffer[i]));
     }
 
 ReturnInputLine:
@@ -1819,37 +1630,31 @@ ReturnInputLine:
     // Return the line.
     //
 
-    if (InputBufferLength >= HeadlessGlobals->InputBufferIndex) {
+    if (InputBufferLength >= HeadlessGlobals->InputBufferIndex)
+    {
 
         RtlCopyMemory(InputBuffer, HeadlessGlobals->InputBuffer, HeadlessGlobals->InputBufferIndex);
         HeadlessGlobals->InputBufferIndex = 0;
         HeadlessGlobals->InputLineDone = FALSE;
-
-    } else {
+    }
+    else
+    {
 
         RtlCopyMemory(InputBuffer, HeadlessGlobals->InputBuffer, InputBufferLength);
-        RtlCopyBytes(HeadlessGlobals->InputBuffer, 
-                     &(HeadlessGlobals->InputBuffer[InputBufferLength]), 
-                     HeadlessGlobals->InputBufferIndex - InputBufferLength
-                    );
+        RtlCopyBytes(HeadlessGlobals->InputBuffer, &(HeadlessGlobals->InputBuffer[InputBufferLength]),
+                     HeadlessGlobals->InputBufferIndex - InputBufferLength);
         HeadlessGlobals->InputLineDone = TRUE;
         HeadlessGlobals->InputBufferIndex -= InputBufferLength;
-
-    }    
+    }
 
     HeadlessGlobals->InputProcessing = FALSE;
 
     return TRUE;
 }
-
+
 NTSTATUS
-HeadlessTerminalAddResources(
-    PCM_RESOURCE_LIST Resources,
-    ULONG ResourceListSize,
-    BOOLEAN TranslatedList,
-    PCM_RESOURCE_LIST *NewList,
-    PULONG NewListSize
-    )
+HeadlessTerminalAddResources(PCM_RESOURCE_LIST Resources, ULONG ResourceListSize, BOOLEAN TranslatedList,
+                             PCM_RESOURCE_LIST *NewList, PULONG NewListSize)
 
 
 /*++
@@ -1883,13 +1688,15 @@ Return Value:
     PHYSICAL_ADDRESS TranslatedAddress;
     ULONG AddressSpace;
 
-    if (HeadlessGlobals == NULL) {        
+    if (HeadlessGlobals == NULL)
+    {
         *NewList = NULL;
         *NewListSize = 0;
         return STATUS_SUCCESS;
     }
 
-    if( HeadlessGlobals->IsNonLegacyDevice ) {
+    if (HeadlessGlobals->IsNonLegacyDevice)
+    {
         *NewList = NULL;
         *NewListSize = 0;
         return STATUS_SUCCESS;
@@ -1901,15 +1708,16 @@ Return Value:
     *NewListSize = ResourceListSize + sizeof(CM_FULL_RESOURCE_DESCRIPTOR);
 
     *NewList = (PCM_RESOURCE_LIST)ExAllocatePool(PagedPool, *NewListSize);
-    
-    if (*NewList == NULL) {
+
+    if (*NewList == NULL)
+    {
         *NewListSize = 0;
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     //
     // Copy old list into the new buffer
-    // 
+    //
     RtlCopyMemory(*NewList, Resources, ResourceListSize);
 
     Address.QuadPart = PtrToUlong(HeadlessGlobals->TerminalPortAddress);
@@ -1917,16 +1725,18 @@ Return Value:
     //
     // If this port information is supposed to be translated, do it.
     //
-    if (TranslatedList) {
-        AddressSpace = 1;   // Address space port.
-        HalTranslateBusAddress(Internal,                    // device bus or internal
-                               0,                           // bus number
-                               Address,                     // source address
-                               &AddressSpace,               // address space
-                               &TranslatedAddress           // translated address
-                              ); 
-
-    } else {
+    if (TranslatedList)
+    {
+        AddressSpace = 1;                         // Address space port.
+        HalTranslateBusAddress(Internal,          // device bus or internal
+                               0,                 // bus number
+                               Address,           // source address
+                               &AddressSpace,     // address space
+                               &TranslatedAddress // translated address
+        );
+    }
+    else
+    {
         TranslatedAddress = Address;
     }
 
@@ -1945,20 +1755,15 @@ Return Value:
     NewDescriptor->PartialResourceList.Revision = 0;
     NewDescriptor->PartialResourceList.Version = 0;
     NewDescriptor->PartialResourceList.PartialDescriptors[0].Type = CmResourceTypePort;
-    NewDescriptor->PartialResourceList.PartialDescriptors[0].ShareDisposition = 
-        CmResourceShareDriverExclusive; 
+    NewDescriptor->PartialResourceList.PartialDescriptors[0].ShareDisposition = CmResourceShareDriverExclusive;
     NewDescriptor->PartialResourceList.PartialDescriptors[0].Flags = CM_RESOURCE_PORT_IO;
-    NewDescriptor->PartialResourceList.PartialDescriptors[0].u.Port.Start = 
-        TranslatedAddress;
+    NewDescriptor->PartialResourceList.PartialDescriptors[0].u.Port.Start = TranslatedAddress;
     NewDescriptor->PartialResourceList.PartialDescriptors[0].u.Port.Length = 0x8;
 
     return STATUS_SUCCESS;
 }
-
-VOID
-HdlspBugCheckProcessing(
-    VOID
-    )
+
+VOID HdlspBugCheckProcessing(VOID)
 /*++
 
 Routine Description:
@@ -1990,49 +1795,50 @@ Environment:
     //
     // Check for characters
     //
-    if (HdlspGetLine(InputBuffer, HEADLESS_TMP_BUFFER_SIZE)) {
-        
+    if (HdlspGetLine(InputBuffer, HEADLESS_TMP_BUFFER_SIZE))
+    {
+
         //
         // Process the line
         //
-        if ((_stricmp((LPCSTR)InputBuffer, "?") == 0) ||
-            (_stricmp((LPCSTR)InputBuffer, "help") == 0)) {
+        if ((_stricmp((LPCSTR)InputBuffer, "?") == 0) || (_stricmp((LPCSTR)InputBuffer, "help") == 0))
+        {
 
-            HdlspSendStringAtBaud((PUCHAR)"\r\n");
-            HdlspSendStringAtBaud((PUCHAR)"d        Display all log entries, paging is on.\r\n");
-            HdlspSendStringAtBaud((PUCHAR)"help     Display this list.\r\n");
-            HdlspSendStringAtBaud((PUCHAR)"restart  Restart the system immediately.\r\n");
-            HdlspSendStringAtBaud((PUCHAR)"?        Display this list.\r\n");
-            HdlspSendStringAtBaud((PUCHAR)"\r\n");
-
-        } else if (_stricmp((LPCSTR)InputBuffer, "d") == 0) {
+            HdlspSendStringAtBaud((PUCHAR) "\r\n");
+            HdlspSendStringAtBaud((PUCHAR) "d        Display all log entries, paging is on.\r\n");
+            HdlspSendStringAtBaud((PUCHAR) "help     Display this list.\r\n");
+            HdlspSendStringAtBaud((PUCHAR) "restart  Restart the system immediately.\r\n");
+            HdlspSendStringAtBaud((PUCHAR) "?        Display this list.\r\n");
+            HdlspSendStringAtBaud((PUCHAR) "\r\n");
+        }
+        else if (_stricmp((LPCSTR)InputBuffer, "d") == 0)
+        {
 
             HdlspProcessDumpCommand(TRUE);
+        }
+        else if (_stricmp((LPCSTR)InputBuffer, "restart") == 0)
+        {
 
-        } else if (_stricmp((LPCSTR)InputBuffer, "restart") == 0) {
-
-            InbvSolidColorFill(0,0,639,479,0); // make the screen black
-            for (i =0; i<10; i++) { // pause long enough for things to get out serial port
+            InbvSolidColorFill(0, 0, 639, 479, 0); // make the screen black
+            for (i = 0; i < 10; i++)
+            { // pause long enough for things to get out serial port
                 KeStallExecutionProcessor(100000);
             }
             HalReturnToFirmware(HalRebootRoutine);
-
-        } else {
-            HdlspSendStringAtBaud((PUCHAR)"Type ? or Help for a list of commands.\r\n");
+        }
+        else
+        {
+            HdlspSendStringAtBaud((PUCHAR) "Type ? or Help for a list of commands.\r\n");
         }
 
         //
         // Put a new command prompt
         //
-        HdlspSendStringAtBaud((PUCHAR)"\n\r!SAC>");
+        HdlspSendStringAtBaud((PUCHAR) "\n\r!SAC>");
     }
-
 }
-
-VOID
-HdlspProcessDumpCommand( 
-    IN BOOLEAN Paging
-    )
+
+VOID HdlspProcessDumpCommand(IN BOOLEAN Paging)
 /*++
 
 Routine Description:
@@ -2061,11 +1867,12 @@ Environment:
     ULONG LineNumber;
     BOOLEAN Stop;
     KIRQL OldIrql;
-    
+
     HEADLESS_ACQUIRE_SPIN_LOCK();
 
-    if (HeadlessGlobals->LogEntryStart == (USHORT)-1) {
-        
+    if (HeadlessGlobals->LogEntryStart == (USHORT)-1)
+    {
+
         HEADLESS_RELEASE_SPIN_LOCK();
         return;
     }
@@ -2079,7 +1886,8 @@ Environment:
     LogEntryIndex = HeadlessGlobals->LogEntryStart;
     LineNumber = 0;
 
-    while (TRUE) {
+    while (TRUE)
+    {
 
         LogEntry = &(HeadlessGlobals->LogEntries[LogEntryIndex]);
 
@@ -2091,45 +1899,43 @@ Environment:
 
         RtlTimeToTimeFields(&(LogEntry->TimeOfEntry.CurrentTime), &TimeFields);
 
-        sprintf((LPSTR)HeadlessGlobals->TmpBuffer, 
-                "%02d:%02d:%02d.%03d : ",
-                TimeFields.Hour,
-                TimeFields.Minute,
-                TimeFields.Second,
-                TimeFields.Milliseconds
-               );
+        sprintf((LPSTR)HeadlessGlobals->TmpBuffer, "%02d:%02d:%02d.%03d : ", TimeFields.Hour, TimeFields.Minute,
+                TimeFields.Second, TimeFields.Milliseconds);
 
 
         HdlspPutString(HeadlessGlobals->TmpBuffer);
 
-        if (wcslen(LogEntry->String) >= HEADLESS_TMP_BUFFER_SIZE - 1) {
+        if (wcslen(LogEntry->String) >= HEADLESS_TMP_BUFFER_SIZE - 1)
+        {
             LogEntry->String[HEADLESS_TMP_BUFFER_SIZE - 1] = UNICODE_NULL;
         }
 
         RtlInitUnicodeString(&UnicodeString, LogEntry->String);
-        RtlUnicodeStringToAnsiString(&AnsiString, &UnicodeString, FALSE);        
-        
+        RtlUnicodeStringToAnsiString(&AnsiString, &UnicodeString, FALSE);
+
         HEADLESS_ACQUIRE_SPIN_LOCK();
 
-        if (HeadlessGlobals->NewLogEntryAdded) {
+        if (HeadlessGlobals->NewLogEntryAdded)
+        {
 
             //
             // Inform user and quite current output
             //
-            HdlspPutString((PUCHAR)"New log entries have been added during dump, command aborted.\r\n");
+            HdlspPutString((PUCHAR) "New log entries have been added during dump, command aborted.\r\n");
 
             HEADLESS_RELEASE_SPIN_LOCK();
             return;
         }
 
         HdlspPutString(HeadlessGlobals->TmpBuffer);
-        HdlspPutString((PUCHAR)"\r\n");
+        HdlspPutString((PUCHAR) "\r\n");
         LineNumber++;
 
         //
         // if last item, exit loop.
         //
-        if (LogEntryIndex == HeadlessGlobals->LogEntryLast) {
+        if (LogEntryIndex == HeadlessGlobals->LogEntryLast)
+        {
             HEADLESS_RELEASE_SPIN_LOCK();
             return;
         }
@@ -2137,7 +1943,8 @@ Environment:
         //
         // If screen is full, pause for paging.
         //
-        if (Paging && (LineNumber > 20)) {
+        if (Paging && (LineNumber > 20))
+        {
 
             HEADLESS_RELEASE_SPIN_LOCK();
 
@@ -2145,20 +1952,22 @@ Environment:
 
             HEADLESS_ACQUIRE_SPIN_LOCK();
 
-            if (Stop) {
+            if (Stop)
+            {
 
-                HdlspPutString((PUCHAR)"\r\n");
+                HdlspPutString((PUCHAR) "\r\n");
 
                 HEADLESS_RELEASE_SPIN_LOCK();
                 return;
             }
 
-            if (HeadlessGlobals->NewLogEntryAdded) {
+            if (HeadlessGlobals->NewLogEntryAdded)
+            {
 
                 //
                 // Inform user and quite current output
                 //
-                HdlspPutString((PUCHAR)"New log entries have been added while waiting, command aborted.\r\n");
+                HdlspPutString((PUCHAR) "New log entries have been added while waiting, command aborted.\r\n");
 
                 HEADLESS_RELEASE_SPIN_LOCK();
                 return;
@@ -2173,13 +1982,9 @@ Environment:
         LogEntryIndex++;
         LogEntryIndex %= HEADLESS_LOG_NUMBER_OF_ENTRIES;
     }
-    
 }
-
-VOID
-HdlspPutMore(
-    OUT PBOOLEAN Stop
-    )
+
+VOID HdlspPutMore(OUT PBOOLEAN Stop)
 /*++
 
 Routine Description:
@@ -2198,33 +2003,36 @@ Return Value:
 {
     UCHAR Buffer[10];
     LARGE_INTEGER WaitTime;
-    
+
     WaitTime.QuadPart = Int32x32To64((LONG)100, -1000); // 100ms from now.
 
-    HdlspPutString((PUCHAR)"----Press <Enter> for more----");
+    HdlspPutString((PUCHAR) "----Press <Enter> for more----");
 
-    while (!HdlspGetLine(Buffer, 10)) {
-        if (!HeadlessGlobals->InBugCheck) {
+    while (!HdlspGetLine(Buffer, 10))
+    {
+        if (!HeadlessGlobals->InBugCheck)
+        {
             KeDelayExecutionThread(KernelMode, FALSE, &WaitTime);
         }
     }
-    if (Buffer[0] == 0x3) { // Control-C
+    if (Buffer[0] == 0x3)
+    { // Control-C
         *Stop = TRUE;
-    } else {
+    }
+    else
+    {
         *Stop = FALSE;
     }
-    
-    // 
+
+    //
     // Drain any remaining buffered input
     //
-    while (HdlspGetLine(Buffer, 10)) {
+    while (HdlspGetLine(Buffer, 10))
+    {
     }
 }
-
-VOID
-HdlspAddLogEntry(
-    PWCHAR String
-    )
+
+VOID HdlspAddLogEntry(PWCHAR String)
 /*++
 
 Routine Description:
@@ -2246,8 +2054,8 @@ Environment:
 --*/
 {
     SIZE_T StringSize;
-    PWCHAR OldString = NULL;    
-    PWCHAR NewString;    
+    PWCHAR OldString = NULL;
+    PWCHAR NewString;
     SYSTEM_TIMEOFDAY_INFORMATION TimeOfEntry;
     NTSTATUS Status;
     KIRQL OldIrql;
@@ -2257,7 +2065,8 @@ Environment:
     //
     // Guard against ZwQuery..() call being paged out.
     //
-    if (KeGetCurrentIrql() >= DISPATCH_LEVEL) {
+    if (KeGetCurrentIrql() >= DISPATCH_LEVEL)
+    {
         ASSERT(KeGetCurrentIrql() < DISPATCH_LEVEL);
         return;
     }
@@ -2265,31 +2074,28 @@ Environment:
     //
     // Get the time so we can log it.
     //
-    Status = ZwQuerySystemInformation(SystemTimeOfDayInformation,
-                                      &TimeOfEntry,
-                                      sizeof(TimeOfEntry),
-                                      NULL
-                                     );
+    Status = ZwQuerySystemInformation(SystemTimeOfDayInformation, &TimeOfEntry, sizeof(TimeOfEntry), NULL);
 
-    if (!NT_SUCCESS(Status)) {
-        
+    if (!NT_SUCCESS(Status))
+    {
+
         RtlZeroMemory(&TimeOfEntry, sizeof(TimeOfEntry));
-
     }
-    
+
     //
     // Allocate a string for the log entry.
     //
     NewString = ExAllocatePoolWithTag(NonPagedPool, StringSize, ((ULONG)'sldH'));
 
-    if (NewString != NULL) {
+    if (NewString != NULL)
+    {
         RtlCopyMemory(NewString, String, StringSize);
     }
 
     HEADLESS_ACQUIRE_SPIN_LOCK();
 
     HeadlessGlobals->NewLogEntryAdded = TRUE;
-    
+
     //
     // Get the entry to use.
     //
@@ -2299,58 +2105,58 @@ Environment:
     //
     // See if we have to move the start entry index
     //
-    if (HeadlessGlobals->LogEntryLast == HeadlessGlobals->LogEntryStart) {
+    if (HeadlessGlobals->LogEntryLast == HeadlessGlobals->LogEntryStart)
+    {
 
         //
         // Store away the old string so we can free it later.
         //
-        if (wcscmp(HeadlessGlobals->LogEntries[HeadlessGlobals->LogEntryStart].String,
-                   HEADLESS_OOM_STRING) != 0) {
+        if (wcscmp(HeadlessGlobals->LogEntries[HeadlessGlobals->LogEntryStart].String, HEADLESS_OOM_STRING) != 0)
+        {
 
             OldString = HeadlessGlobals->LogEntries[HeadlessGlobals->LogEntryStart].String;
         }
 
-        HeadlessGlobals->LogEntryStart++;;
+        HeadlessGlobals->LogEntryStart++;
+        ;
         HeadlessGlobals->LogEntryStart %= HEADLESS_LOG_NUMBER_OF_ENTRIES;
-
-    } else if (HeadlessGlobals->LogEntryStart == (USHORT)-1) {
+    }
+    else if (HeadlessGlobals->LogEntryStart == (USHORT)-1)
+    {
 
         HeadlessGlobals->LogEntryStart = 0;
-
     }
 
 
     //
     // Fill in the entry part
     //
-    RtlCopyMemory(&(HeadlessGlobals->LogEntries[HeadlessGlobals->LogEntryLast].TimeOfEntry),
-                  &(TimeOfEntry),
-                  sizeof(TimeOfEntry)
-                 );
+    RtlCopyMemory(&(HeadlessGlobals->LogEntries[HeadlessGlobals->LogEntryLast].TimeOfEntry), &(TimeOfEntry),
+                  sizeof(TimeOfEntry));
 
     //
     // Set the entry pointer
     //
-    if (NewString == NULL) {
+    if (NewString == NULL)
+    {
         HeadlessGlobals->LogEntries[HeadlessGlobals->LogEntryLast].String = HEADLESS_OOM_STRING;
-    } else {
+    }
+    else
+    {
         HeadlessGlobals->LogEntries[HeadlessGlobals->LogEntryLast].String = NewString;
     }
 
     HEADLESS_RELEASE_SPIN_LOCK();
-    
-    if (OldString != NULL) {
+
+    if (OldString != NULL)
+    {
         ExFreePool(OldString);
     }
-
 }
 
 
 NTSTATUS
-HdlspSetBlueScreenInformation(
-    IN PHEADLESS_CMD_SET_BLUE_SCREEN_DATA pData,
-    IN SIZE_T cData
-    )
+HdlspSetBlueScreenInformation(IN PHEADLESS_CMD_SET_BLUE_SCREEN_DATA pData, IN SIZE_T cData)
 /*++
 
 Routine Description:
@@ -2382,23 +2188,24 @@ Environment:
 --*/
 {
 
-    PHEADLESS_BLUE_SCREEN_DATA HeadlessProp,Prev;
+    PHEADLESS_BLUE_SCREEN_DATA HeadlessProp, Prev;
     NTSTATUS Status;
-    PUCHAR pVal,pOldVal;
+    PUCHAR pVal, pOldVal;
     PUCHAR pNewVal;
     SIZE_T len;
-    
-    ASSERT(FIELD_OFFSET(HEADLESS_CMD_SET_BLUE_SCREEN_DATA,Data) == sizeof(ULONG));
 
-    if (HeadlessGlobals->InBugCheck) { 
+    ASSERT(FIELD_OFFSET(HEADLESS_CMD_SET_BLUE_SCREEN_DATA, Data) == sizeof(ULONG));
+
+    if (HeadlessGlobals->InBugCheck)
+    {
         return STATUS_UNSUCCESSFUL;
     }
 
-    if ((pData == NULL) || 
-        (pData->ValueIndex < 2) || // There must be at least two \0 characters in the pair.
-        (pData->ValueIndex  >= (cData - sizeof(HEADLESS_CMD_SET_BLUE_SCREEN_DATA)) / sizeof (UCHAR)) ||
-        (pData->Data[pData->ValueIndex-1] != '\0') ||
-        (pData->Data[(cData - sizeof(HEADLESS_CMD_SET_BLUE_SCREEN_DATA))/sizeof(UCHAR)] != '\0' )) {
+    if ((pData == NULL) || (pData->ValueIndex < 2) || // There must be at least two \0 characters in the pair.
+        (pData->ValueIndex >= (cData - sizeof(HEADLESS_CMD_SET_BLUE_SCREEN_DATA)) / sizeof(UCHAR)) ||
+        (pData->Data[pData->ValueIndex - 1] != '\0') ||
+        (pData->Data[(cData - sizeof(HEADLESS_CMD_SET_BLUE_SCREEN_DATA)) / sizeof(UCHAR)] != '\0'))
+    {
 
         return STATUS_INVALID_PARAMETER;
     }
@@ -2411,145 +2218,145 @@ Environment:
     //
     HeadlessProp = Prev = HeadlessGlobals->BlueScreenData;
 
-    while (HeadlessProp) {
+    while (HeadlessProp)
+    {
 
-        if (strcmp((LPCSTR)HeadlessProp->Property, (LPCSTR)pData->Data) == 0) {
+        if (strcmp((LPCSTR)HeadlessProp->Property, (LPCSTR)pData->Data) == 0)
+        {
             break;
         }
         Prev = HeadlessProp;
         HeadlessProp = HeadlessProp->Next;
     }
 
-    
-    pVal = (PUCHAR)&((pData->Data)[pData->ValueIndex]);
 
-    len = strlen((LPCSTR)pVal);    
+    pVal = (PUCHAR) & ((pData->Data)[pData->ValueIndex]);
 
-    if (HeadlessProp != NULL) {
+    len = strlen((LPCSTR)pVal);
+
+    if (HeadlessProp != NULL)
+    {
 
         //
         // The property exists. So replace it.
         //
-        if (len) {
+        if (len)
+        {
 
             //
             // need to replace old string.
             //
-            pNewVal = (PUCHAR)ExAllocatePoolWithTag(NonPagedPool,
-                                                   len+1,
-                                                   ((ULONG)'sldH') 
-                                                  );
+            pNewVal = (PUCHAR)ExAllocatePoolWithTag(NonPagedPool, len + 1, ((ULONG)'sldH'));
 
-            if (pNewVal) {
-                strcpy( (LPSTR)pNewVal, (LPCSTR)pVal );
+            if (pNewVal)
+            {
+                strcpy((LPSTR)pNewVal, (LPCSTR)pVal);
 
                 pOldVal = HeadlessProp->XMLData;
                 HeadlessProp->XMLData = pNewVal;
 
-                if (HeadlessGlobals->InBugCheck == FALSE) {
+                if (HeadlessGlobals->InBugCheck == FALSE)
+                {
                     ExFreePool(pOldVal);
                 }
-
-            } else {
+            }
+            else
+            {
                 Status = STATUS_NO_MEMORY;
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // We want to delete it, hence we passed an empty string
             //
             Prev->Next = HeadlessProp->Next;
 
-            if (HeadlessGlobals->BlueScreenData == HeadlessProp) {
+            if (HeadlessGlobals->BlueScreenData == HeadlessProp)
+            {
                 HeadlessGlobals->BlueScreenData = Prev->Next;
             }
 
-            if (HeadlessGlobals->InBugCheck == FALSE) {
-                ExFreePool ( HeadlessProp->XMLData );
-                ExFreePool ( HeadlessProp->Property );
-                ExFreePool ( HeadlessProp );
+            if (HeadlessGlobals->InBugCheck == FALSE)
+            {
+                ExFreePool(HeadlessProp->XMLData);
+                ExFreePool(HeadlessProp->Property);
+                ExFreePool(HeadlessProp);
             }
-
         }
+    }
+    else
+    {
 
-    } else {
-    
         //
         // Create a new Property-XMLValue Pair
         //
-        if (len) { // Must be a non-empty string
-            
-            HeadlessProp = (PHEADLESS_BLUE_SCREEN_DATA)ExAllocatePoolWithTag(NonPagedPool,
-                                                                             sizeof(HEADLESS_BLUE_SCREEN_DATA),
-                                                                             ((ULONG) 'sldH' )
-                                                                            );
+        if (len)
+        { // Must be a non-empty string
 
-            if (HeadlessProp) {
-                
-                HeadlessProp->XMLData = (PUCHAR)ExAllocatePoolWithTag(NonPagedPool,
-                                                                      len+1,
-                                                                      ((ULONG)'sldH')
-                                                                     );
-                if (HeadlessProp->XMLData) {
+            HeadlessProp = (PHEADLESS_BLUE_SCREEN_DATA)ExAllocatePoolWithTag(
+                NonPagedPool, sizeof(HEADLESS_BLUE_SCREEN_DATA), ((ULONG)'sldH'));
 
-                    strcpy((LPSTR)HeadlessProp->XMLData,(LPCSTR)pVal);
-                    pVal = pData->Data; 
-                    len = strlen ((LPCSTR)pVal);
+            if (HeadlessProp)
+            {
 
-                    if (len) {
+                HeadlessProp->XMLData = (PUCHAR)ExAllocatePoolWithTag(NonPagedPool, len + 1, ((ULONG)'sldH'));
+                if (HeadlessProp->XMLData)
+                {
 
-                        HeadlessProp->Property = (PUCHAR)ExAllocatePoolWithTag(NonPagedPool,
-                                                                               len+1,
-                                                                               ((ULONG)'sldH')
-                                                                              );
+                    strcpy((LPSTR)HeadlessProp->XMLData, (LPCSTR)pVal);
+                    pVal = pData->Data;
+                    len = strlen((LPCSTR)pVal);
 
-                        if (HeadlessProp->Property) {
+                    if (len)
+                    {
 
-                            strcpy((LPSTR)HeadlessProp->Property,(LPCSTR) pVal);
+                        HeadlessProp->Property = (PUCHAR)ExAllocatePoolWithTag(NonPagedPool, len + 1, ((ULONG)'sldH'));
+
+                        if (HeadlessProp->Property)
+                        {
+
+                            strcpy((LPSTR)HeadlessProp->Property, (LPCSTR)pVal);
                             HeadlessProp->Next = HeadlessGlobals->BlueScreenData;
                             HeadlessGlobals->BlueScreenData = HeadlessProp;
+                        }
+                        else
+                        {
 
-                        } else {
-                            
                             Status = STATUS_NO_MEMORY;
                             ExFreePool(HeadlessProp->XMLData);
-                            ExFreePool ( HeadlessProp );
-
+                            ExFreePool(HeadlessProp);
                         }
-
-                    } else { // empty property string ( will never come here ) 
+                    }
+                    else
+                    { // empty property string ( will never come here )
 
                         Status = STATUS_INVALID_PARAMETER;
                         ExFreePool(HeadlessProp->XMLData);
                         ExFreePool(HeadlessProp);
-
                     }
-
-                } else {
+                }
+                else
+                {
 
                     Status = STATUS_NO_MEMORY;
                     ExFreePool(HeadlessProp);
-
                 }
             }
-
-        } else {// empty value string.
+        }
+        else
+        { // empty value string.
 
             Status = STATUS_INVALID_PARAMETER;
-
         }
-
     }
 
     return Status;
 }
 
 
-VOID
-HdlspSendBlueScreenInfo(
-    ULONG BugcheckCode
-    )
+VOID HdlspSendBlueScreenInfo(ULONG BugcheckCode)
 /*++
 
 Routine Description:
@@ -2575,32 +2382,28 @@ Environment:
 
     ASSERT(HeadlessGlobals->InBugCheck);
 
-    HdlspSendStringAtBaud((PUCHAR)"\007\007\007<?xml>\007<BP>");
+    HdlspSendStringAtBaud((PUCHAR) "\007\007\007<?xml>\007<BP>");
 
-    HdlspSendStringAtBaud((PUCHAR)"\r\n<INSTANCE CLASSNAME=\"BLUESCREEN\">");
+    HdlspSendStringAtBaud((PUCHAR) "\r\n<INSTANCE CLASSNAME=\"BLUESCREEN\">");
 
-    sprintf((LPSTR)Temp,"\r\n<PROPERTY NAME=\"STOPCODE\" TYPE=\"string\"><VALUE>\"0x%0X\"</VALUE></PROPERTY>",BugcheckCode);
+    sprintf((LPSTR)Temp, "\r\n<PROPERTY NAME=\"STOPCODE\" TYPE=\"string\"><VALUE>\"0x%0X\"</VALUE></PROPERTY>",
+            BugcheckCode);
 
     HdlspSendStringAtBaud(Temp);
 
     pData = HeadlessGlobals->BlueScreenData;
 
-    while (pData) {
+    while (pData)
+    {
 
         HdlspSendStringAtBaud(pData->XMLData);
         pData = pData->Next;
-
     }
 
-    HdlspSendStringAtBaud((PUCHAR)"\r\n</INSTANCE>\r\n</BP>\007");
-
+    HdlspSendStringAtBaud((PUCHAR) "\r\n</INSTANCE>\r\n</BP>\007");
 }
-
-VOID
-HeadlessKernelAddLogEntry(
-    IN ULONG StringCode,
-    IN PUNICODE_STRING DriverName OPTIONAL
-    )
+
+VOID HeadlessKernelAddLogEntry(IN ULONG StringCode, IN PUNICODE_STRING DriverName OPTIONAL)
 
 /*++
 
@@ -2624,7 +2427,8 @@ Return Value:
     //
     // If headless not enabled, just exit now.
     //
-    if ((HeadlessGlobals == NULL) || (HeadlessGlobals->PageLockHandle == NULL)) {
+    if ((HeadlessGlobals == NULL) || (HeadlessGlobals->PageLockHandle == NULL))
+    {
         return;
     }
 
@@ -2634,12 +2438,8 @@ Return Value:
     //
     HdlspKernelAddLogEntry(StringCode, DriverName);
 }
-
-VOID
-HdlspKernelAddLogEntry(
-    IN ULONG StringCode,
-    IN PUNICODE_STRING DriverName OPTIONAL
-    )
+
+VOID HdlspKernelAddLogEntry(IN ULONG StringCode, IN PUNICODE_STRING DriverName OPTIONAL)
 
 /*++
 
@@ -2661,8 +2461,7 @@ Return Value:
 
 {
     PHEADLESS_CMD_ADD_LOG_ENTRY HeadlessLogEntry;
-    UCHAR LocalBuffer[sizeof(HEADLESS_CMD_ADD_LOG_ENTRY) + 
-                        (HDLSP_LOG_MAX_STRING_LENGTH * sizeof(WCHAR))];
+    UCHAR LocalBuffer[sizeof(HEADLESS_CMD_ADD_LOG_ENTRY) + (HDLSP_LOG_MAX_STRING_LENGTH * sizeof(WCHAR))];
     SIZE_T Index;
     SIZE_T StringLength;
     PWCHAR String;
@@ -2673,7 +2472,8 @@ Return Value:
     //
     // Get the string associated with this string code.
     //
-    switch (StringCode) {
+    switch (StringCode)
+    {
     case HEADLESS_LOG_LOADING_FILENAME:
         String = L"KRNL: Loading ";
         break;
@@ -2717,7 +2517,7 @@ Return Value:
     case HEADLESS_LOG_SYSTEM_DRIVERS_INIT_FAILED:
         String = L"KRNL: Failed to initialize system drivers.";
         break;
-    
+
     case HEADLESS_LOG_ASSIGN_SYSTEM_ROOT_FAILED:
         String = L"KRNL: Failed to reassign system root.";
         break;
@@ -2759,24 +2559,26 @@ Return Value:
         String = NULL;
     }
 
-    if (String != NULL) {
-        
+    if (String != NULL)
+    {
+
         //
         // Start by copying in the given string.
         //
         wcscpy(&(HeadlessLogEntry->String[0]), String);
-
-    } else {
+    }
+    else
+    {
 
         HeadlessLogEntry->String[0] = UNICODE_NULL;
-
     }
 
     //
     // If this is the loading_filename command, then we need to append the
     // name to the end.
     //
-    if ((StringCode == HEADLESS_LOG_LOADING_FILENAME) && (DriverName != NULL)) {
+    if ((StringCode == HEADLESS_LOG_LOADING_FILENAME) && (DriverName != NULL))
+    {
 
         ASSERT(String != NULL);
 
@@ -2785,21 +2587,22 @@ Return Value:
         //
         // Only copy as many bytes as we have room for.
         //
-        if (DriverName->Length >= (HDLSP_LOG_MAX_STRING_LENGTH - StringLength)) {
+        if (DriverName->Length >= (HDLSP_LOG_MAX_STRING_LENGTH - StringLength))
+        {
             Index = (HDLSP_LOG_MAX_STRING_LENGTH - StringLength - 1);
-        } else {
+        }
+        else
+        {
             Index = DriverName->Length / sizeof(WCHAR);
         }
 
         //
         // Copy in this many bytes.
         //
-        RtlCopyBytes(&(HeadlessLogEntry->String[StringLength]),
-                     DriverName->Buffer,
-                     Index * sizeof(WCHAR)
-                    );
+        RtlCopyBytes(&(HeadlessLogEntry->String[StringLength]), DriverName->Buffer, Index * sizeof(WCHAR));
 
-        if (DriverName->Buffer[(DriverName->Length / sizeof(WCHAR)) - 1] != UNICODE_NULL) {
+        if (DriverName->Buffer[(DriverName->Length / sizeof(WCHAR)) - 1] != UNICODE_NULL)
+        {
             HeadlessLogEntry->String[StringLength + Index] = UNICODE_NULL;
         }
     }
@@ -2807,19 +2610,12 @@ Return Value:
     //
     // Log it.
     //
-    HdlspDispatch(HeadlessCmdAddLogEntry,
-                  HeadlessLogEntry,
-                  sizeof(HEADLESS_CMD_ADD_LOG_ENTRY) + 
-                      (wcslen(&(HeadlessLogEntry->String[0])) * sizeof(WCHAR)),
-                  NULL,
-                  NULL
-                 );
+    HdlspDispatch(HeadlessCmdAddLogEntry, HeadlessLogEntry,
+                  sizeof(HEADLESS_CMD_ADD_LOG_ENTRY) + (wcslen(&(HeadlessLogEntry->String[0])) * sizeof(WCHAR)), NULL,
+                  NULL);
 }
-
-VOID
-HdlspSendStringAtBaud(
-    IN PUCHAR String
-    )
+
+VOID HdlspSendStringAtBaud(IN PUCHAR String)
 
 /*++
 
@@ -2848,30 +2644,34 @@ Return Value:
     // If we are in the worker thread, up the timer resolution so we can output
     // the string at the appropriate baud rate.
     //
-    if (CurrentIrql < DISPATCH_LEVEL) {
+    if (CurrentIrql < DISPATCH_LEVEL)
+    {
         ExSetTimerResolution(-1 * HeadlessGlobals->DelayTime.LowPart, TRUE);
     }
 
-    for (Dest = String; *Dest != '\0'; Dest++) {
-        
+    for (Dest = String; *Dest != '\0'; Dest++)
+    {
+
         InbvPortPutByte(HeadlessGlobals->TerminalPort, *Dest);
 
-        if( HeadlessGlobals->TerminalBaudRate == 9600 ) {
-            if (CurrentIrql < DISPATCH_LEVEL) {
+        if (HeadlessGlobals->TerminalBaudRate == 9600)
+        {
+            if (CurrentIrql < DISPATCH_LEVEL)
+            {
                 KeDelayExecutionThread(KernelMode, FALSE, &(HeadlessGlobals->DelayTime));
-            } else {
+            }
+            else
+            {
                 KeStallExecutionProcessor(HeadlessGlobals->MicroSecondsDelayTime);
             }
         }
-
     }
 
     //
     // If we are in the worker thread, reset the timer resolution.
     //
-    if (CurrentIrql < DISPATCH_LEVEL) {
+    if (CurrentIrql < DISPATCH_LEVEL)
+    {
         ExSetTimerResolution(0, FALSE);
     }
-
 }
-

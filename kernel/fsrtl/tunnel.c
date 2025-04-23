@@ -67,9 +67,9 @@ Revision History:
 //  Registry keys/values for controlling tunneling
 //
 
-#define TUNNEL_KEY_NAME           L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\FileSystem"
-#define TUNNEL_AGE_VALUE_NAME     L"MaximumTunnelEntryAgeInSeconds"
-#define TUNNEL_SIZE_VALUE_NAME    L"MaximumTunnelEntries"
+#define TUNNEL_KEY_NAME L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\FileSystem"
+#define TUNNEL_AGE_VALUE_NAME L"MaximumTunnelEntryAgeInSeconds"
+#define TUNNEL_SIZE_VALUE_NAME L"MaximumTunnelEntries"
 #define KEY_WORK_AREA ((sizeof(KEY_VALUE_FULL_INFORMATION) + sizeof(ULONG)) + 64)
 
 //
@@ -79,8 +79,8 @@ Revision History:
 #ifdef ALLOC_DATA_PRAGMA
 #pragma data_seg("PAGEDATA")
 #endif
-ULONG   TunnelMaxEntries = 256; // Value for !MmIsThisAnNtAsSystem()
-ULONG   TunnelMaxAge = 15;
+ULONG TunnelMaxEntries = 256; // Value for !MmIsThisAnNtAsSystem()
+ULONG TunnelMaxAge = 15;
 #ifdef ALLOC_DATA_PRAGMA
 #pragma data_seg()
 #endif
@@ -93,20 +93,18 @@ ULONG   TunnelMaxAge = 15;
 //  this may be required.
 //
 
-PAGED_LOOKASIDE_LIST    TunnelLookasideList;
-#define MAX_LOOKASIDE_DEPTH     256
+PAGED_LOOKASIDE_LIST TunnelLookasideList;
+#define MAX_LOOKASIDE_DEPTH 256
 
-#define LOOKASIDE_NODE_SIZE     ( sizeof(TUNNEL_NODE) +     \
-                                  sizeof(WCHAR)*(8+1+3) +   \
-                                  sizeof(WCHAR)*(16) +      \
-                                  sizeof(ULONGLONG) )
+#define LOOKASIDE_NODE_SIZE \
+    (sizeof(TUNNEL_NODE) + sizeof(WCHAR) * (8 + 1 + 3) + sizeof(WCHAR) * (16) + sizeof(ULONGLONG))
 
 //
 //  Flag bits in the TUNNEL_NODE
 //
 
-#define TUNNEL_FLAG_NON_LOOKASIDE    0x1
-#define TUNNEL_FLAG_KEY_SHORT        0x2
+#define TUNNEL_FLAG_NON_LOOKASIDE 0x1
+#define TUNNEL_FLAG_KEY_SHORT 0x2
 
 //
 //  A node of tunneled information in the cache
@@ -119,51 +117,52 @@ PAGED_LOOKASIDE_LIST    TunnelLookasideList;
 //  into a timer queue for age expiration.
 //
 
-typedef struct {
+typedef struct
+{
 
     //
     //  Splay links in the Cache tree
     //
 
-    RTL_SPLAY_LINKS      CacheLinks;
+    RTL_SPLAY_LINKS CacheLinks;
 
     //
     //  List links in the timer queue
     //
 
-    LIST_ENTRY           ListLinks;
+    LIST_ENTRY ListLinks;
 
     //
     //  Time this entry was created (for constant time insert)
     //
 
-    LARGE_INTEGER        CreateTime;
+    LARGE_INTEGER CreateTime;
 
     //
     //  Directory these names are associated with
     //
 
-    ULONGLONG            DirKey;
+    ULONGLONG DirKey;
 
     //
     //  Flags for the entry
     //
 
-    ULONG                Flags;
+    ULONG Flags;
 
     //
     //  Long/Short names of the file
     //
 
-    UNICODE_STRING       LongName;
-    UNICODE_STRING       ShortName;
+    UNICODE_STRING LongName;
+    UNICODE_STRING ShortName;
 
     //
     //  Opaque tunneled data
     //
 
-    PVOID                TunnelData;
-    ULONG                TunnelDataLength;
+    PVOID TunnelData;
+    ULONG TunnelDataLength;
 
 } TUNNEL_NODE, *PTUNNEL_NODE;
 
@@ -172,14 +171,9 @@ typedef struct {
 //
 
 NTSTATUS
-FsRtlGetTunnelParameterValue (
-    IN PUNICODE_STRING ValueName,
-    IN OUT PULONG Value);
+FsRtlGetTunnelParameterValue(IN PUNICODE_STRING ValueName, IN OUT PULONG Value);
 
-VOID
-FsRtlPruneTunnelCache (
-    IN PTUNNEL Cache,
-    IN OUT PLIST_ENTRY FreePoolList);
+VOID FsRtlPruneTunnelCache(IN PTUNNEL Cache, IN OUT PLIST_ENTRY FreePoolList);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, FsRtlInitializeTunnels)
@@ -200,9 +194,9 @@ FsRtlPruneTunnelCache (
 
 #if defined(TUNNELTEST) || defined(KEYVIEW)
 VOID DumpUnicodeString(UNICODE_STRING *s);
-VOID DumpNode( TUNNEL_NODE *Node, ULONG Indent );
-VOID DumpTunnel( TUNNEL *Tunnel );
-#define DblHex64(a) (ULONG)((a >> 32) & 0xffffffff),(ULONG)(a & 0xffffffff)
+VOID DumpNode(TUNNEL_NODE *Node, ULONG Indent);
+VOID DumpTunnel(TUNNEL *Tunnel);
+#define DblHex64(a) (ULONG)((a >> 32) & 0xffffffff), (ULONG)(a & 0xffffffff)
 #endif // TUNNELTEST
 
 #ifdef USERTEST
@@ -218,14 +212,9 @@ VOID DumpTunnel( TUNNEL *Tunnel );
 #define PAGED_CODE()
 #endif
 
-
+
 INLINE
-LONG
-FsRtlCompareNodeAndKey (
-    TUNNEL_NODE *Node,
-    ULONGLONG DirectoryKey,
-    PUNICODE_STRING Name
-    )
+LONG FsRtlCompareNodeAndKey(TUNNEL_NODE *Node, ULONGLONG DirectoryKey, PUNICODE_STRING Name)
 /*++
 
 Routine Description:
@@ -247,21 +236,18 @@ Return Value:
 --*/
 
 {
-    return  (Node->DirKey > DirectoryKey ?  1 :
-            (Node->DirKey < DirectoryKey ? -1 :
-            RtlCompareUnicodeString((FlagOn(Node->Flags, TUNNEL_FLAG_KEY_SHORT) ?
-                                        &Node->ShortName : &Node->LongName),
-                                    Name,
-                                    TRUE)));
+    return (Node->DirKey > DirectoryKey
+                ? 1
+                : (Node->DirKey < DirectoryKey
+                       ? -1
+                       : RtlCompareUnicodeString(
+                             (FlagOn(Node->Flags, TUNNEL_FLAG_KEY_SHORT) ? &Node->ShortName : &Node->LongName), Name,
+                             TRUE)));
 }
 
-
+
 INLINE
-VOID
-FsRtlFreeTunnelNode (
-    PTUNNEL_NODE Node,
-    PLIST_ENTRY FreePoolList OPTIONAL
-    )
+VOID FsRtlFreeTunnelNode(PTUNNEL_NODE Node, PLIST_ENTRY FreePoolList OPTIONAL)
 /*++
 
 Routine Description:
@@ -280,29 +266,30 @@ Return Value:
 
 -*/
 {
-    if (FreePoolList) {
+    if (FreePoolList)
+    {
 
         InsertHeadList(FreePoolList, &Node->ListLinks);
+    }
+    else
+    {
 
-    } else {
+        if (FlagOn(Node->Flags, TUNNEL_FLAG_NON_LOOKASIDE))
+        {
 
-        if (FlagOn(Node->Flags, TUNNEL_FLAG_NON_LOOKASIDE)) {
-    
             ExFreePool(Node);
-    
-        } else {
-    
+        }
+        else
+        {
+
             ExFreeToPagedLookasideList(&TunnelLookasideList, Node);
         }
     }
 }
 
-
+
 INLINE
-VOID
-FsRtlEmptyFreePoolList (
-    PLIST_ENTRY FreePoolList
-    )
+VOID FsRtlEmptyFreePoolList(PLIST_ENTRY FreePoolList)
 /*++
 
 Routine Description:
@@ -321,7 +308,8 @@ Return Value:
 {
     PTUNNEL_NODE FreeNode;
 
-    while (!IsListEmpty(FreePoolList)) {
+    while (!IsListEmpty(FreePoolList))
+    {
 
         FreeNode = CONTAINING_RECORD(FreePoolList->Flink, TUNNEL_NODE, ListLinks);
         RemoveEntryList(FreePoolList->Flink);
@@ -330,15 +318,10 @@ Return Value:
     }
 }
 
-
+
 INLINE
-VOID
-FsRtlRemoveNodeFromTunnel (
-    IN PTUNNEL Cache,
-    IN PTUNNEL_NODE Node,
-    IN PLIST_ENTRY FreePoolList,
-    IN PBOOLEAN Splay OPTIONAL
-    )
+VOID FsRtlRemoveNodeFromTunnel(IN PTUNNEL Cache, IN PTUNNEL_NODE Node, IN PLIST_ENTRY FreePoolList,
+                               IN PBOOLEAN Splay OPTIONAL)
 /*++
 
 Routine Description:
@@ -365,13 +348,15 @@ Return Value:
 
 --*/
 {
-    if (Splay && *Splay) {
+    if (Splay && *Splay)
+    {
 
         Cache->Cache = RtlDelete(&Node->CacheLinks);
 
         *Splay = FALSE;
-
-    } else {
+    }
+    else
+    {
 
         RtlDeleteNoSplay(&Node->CacheLinks, &Cache->Cache);
     }
@@ -383,11 +368,8 @@ Return Value:
     FsRtlFreeTunnelNode(Node, FreePoolList);
 }
 
-
-VOID
-FsRtlInitializeTunnels (
-    VOID
-    )
+
+VOID FsRtlInitializeTunnels(VOID)
 /*++
 
 Routine Description:
@@ -404,15 +386,15 @@ Return Value:
 
 --*/
 {
-    UNICODE_STRING  ValueName;
-    USHORT          LookasideDepth;
+    UNICODE_STRING ValueName;
+    USHORT LookasideDepth;
 
     PAGED_CODE();
 
-    if (MmIsThisAnNtAsSystem()) {
+    if (MmIsThisAnNtAsSystem())
+    {
 
         TunnelMaxEntries = 1024;
-
     }
 
     //
@@ -432,7 +414,8 @@ Return Value:
     ValueName.MaximumLength = sizeof(TUNNEL_AGE_VALUE_NAME);
     (VOID) FsRtlGetTunnelParameterValue(&ValueName, &TunnelMaxAge);
 
-    if (TunnelMaxAge == 0) {
+    if (TunnelMaxAge == 0)
+    {
 
         //
         //  If the registry has been set so the timeout is zero, we should force
@@ -454,20 +437,23 @@ Return Value:
     //  Build the lookaside list for common node allocation
     //
 
-    if (TunnelMaxEntries > MAXUSHORT) {
+    if (TunnelMaxEntries > MAXUSHORT)
+    {
 
         //
         //  User is hinting a big need to us
         //
 
         LookasideDepth = MAX_LOOKASIDE_DEPTH;
+    }
+    else
+    {
 
-    } else {
-
-        LookasideDepth = ((USHORT)TunnelMaxEntries)/16;
+        LookasideDepth = ((USHORT)TunnelMaxEntries) / 16;
     }
 
-    if (LookasideDepth == 0 && TunnelMaxEntries) {
+    if (LookasideDepth == 0 && TunnelMaxEntries)
+    {
 
         //
         //  Miniscule number of entries allowed. Lookaside 'em all.
@@ -476,7 +462,8 @@ Return Value:
         LookasideDepth = (USHORT)TunnelMaxEntries + 1;
     }
 
-    if (LookasideDepth > MAX_LOOKASIDE_DEPTH) {
+    if (LookasideDepth > MAX_LOOKASIDE_DEPTH)
+    {
 
         //
         //  Finally, restrict the depth to something reasonable.
@@ -485,18 +472,12 @@ Return Value:
         LookasideDepth = MAX_LOOKASIDE_DEPTH;
     }
 
-    ExInitializePagedLookasideList( &TunnelLookasideList,
-                                    NULL,
-                                    NULL,
-                                    0,
-                                    LOOKASIDE_NODE_SIZE,
-                                    'LnuT',
-                                    LookasideDepth );
+    ExInitializePagedLookasideList(&TunnelLookasideList, NULL, NULL, 0, LOOKASIDE_NODE_SIZE, 'LnuT', LookasideDepth);
 
     return;
 }
 
-
+
 //
 //  *** SPEC
 //
@@ -514,10 +495,7 @@ Return Value:
 //  creation time, with a proposed default of 15 seconds.
 //
 
-VOID
-FsRtlInitializeTunnelCache (
-    IN PTUNNEL Cache
-    )
+VOID FsRtlInitializeTunnelCache(IN PTUNNEL Cache)
 /*++
 
 Routine Description:
@@ -545,7 +523,7 @@ Return Value:
     return;
 }
 
-
+
 //
 //  *** SPEC
 //
@@ -581,16 +559,8 @@ Return Value:
 //  Change: Specify that Data, ShortName, and LongName are copied for storage.
 //
 
-VOID
-FsRtlAddToTunnelCache (
-    IN PTUNNEL Cache,
-    IN ULONGLONG DirKey,
-    IN PUNICODE_STRING ShortName,
-    IN PUNICODE_STRING LongName,
-    IN BOOLEAN KeyByShortName,
-    IN ULONG DataLength,
-    IN PVOID Data
-    )
+VOID FsRtlAddToTunnelCache(IN PTUNNEL Cache, IN ULONGLONG DirKey, IN PUNICODE_STRING ShortName,
+                           IN PUNICODE_STRING LongName, IN BOOLEAN KeyByShortName, IN ULONG DataLength, IN PVOID Data)
 /*++
 
 Routine Description:
@@ -644,7 +614,8 @@ Return Value:
     //  If MaxEntries is 0 then tunneling is disabled.
     //
 
-    if (TunnelMaxEntries == 0) return;
+    if (TunnelMaxEntries == 0)
+        return;
 
     InitializeListHead(&FreePoolList);
 
@@ -654,20 +625,23 @@ Return Value:
 
     NodeSize = sizeof(TUNNEL_NODE) + ShortName->Length + LongName->Length + DataLength;
 
-    if (LOOKASIDE_NODE_SIZE >= NodeSize) {
+    if (LOOKASIDE_NODE_SIZE >= NodeSize)
+    {
 
         NewNode = ExAllocateFromPagedLookasideList(&TunnelLookasideList);
     }
 
-    if (NewNode == NULL) {
+    if (NewNode == NULL)
+    {
 
         //
         //  Data doesn't fit in lookaside nodes
         //
 
-        NewNode = ExAllocatePoolWithTag(PagedPool|POOL_COLD_ALLOCATION, NodeSize, 'PnuT');
+        NewNode = ExAllocatePoolWithTag(PagedPool | POOL_COLD_ALLOCATION, NodeSize, 'PnuT');
 
-        if (NewNode == NULL) {
+        if (NewNode == NULL)
+        {
 
             //
             //  Give up tunneling this entry
@@ -689,23 +663,28 @@ Return Value:
 
     Links = &Cache->Cache;
 
-    while (*Links) {
+    while (*Links)
+    {
 
         Node = CONTAINING_RECORD(*Links, TUNNEL_NODE, CacheLinks);
 
         Compare = FsRtlCompareNodeAndKey(Node, DirKey, NameKey);
 
-        if (Compare > 0) {
+        if (Compare > 0)
+        {
 
             Links = &RtlLeftChild(&Node->CacheLinks);
+        }
+        else
+        {
 
-        } else {
-
-            if (Compare < 0) {
+            if (Compare < 0)
+            {
 
                 Links = &RtlRightChild(&Node->CacheLinks);
-
-            } else {
+            }
+            else
+            {
 
                 break;
             }
@@ -718,13 +697,15 @@ Return Value:
 
     RtlInitializeSplayLinks(&NewNode->CacheLinks);
 
-    if (Node) {
+    if (Node)
+    {
 
         //
         //  Not inserting first node in tree
         //
 
-        if (*Links) {
+        if (*Links)
+        {
 
             //
             //  Entry exists in the cache, so replace by swapping all splay links
@@ -733,10 +714,13 @@ Return Value:
             RtlRightChild(&NewNode->CacheLinks) = RtlRightChild(*Links);
             RtlLeftChild(&NewNode->CacheLinks) = RtlLeftChild(*Links);
 
-            if (RtlRightChild(*Links)) RtlParent(RtlRightChild(*Links)) = &NewNode->CacheLinks;
-            if (RtlLeftChild(*Links)) RtlParent(RtlLeftChild(*Links)) = &NewNode->CacheLinks;
+            if (RtlRightChild(*Links))
+                RtlParent(RtlRightChild(*Links)) = &NewNode->CacheLinks;
+            if (RtlLeftChild(*Links))
+                RtlParent(RtlLeftChild(*Links)) = &NewNode->CacheLinks;
 
-            if (!RtlIsRoot(*Links)) {
+            if (!RtlIsRoot(*Links))
+            {
 
                 //
                 //  Change over the parent links. Note that we've messed with *Links now
@@ -745,16 +729,19 @@ Return Value:
 
                 RtlParent(&NewNode->CacheLinks) = RtlParent(*Links);
 
-                if (RtlIsLeftChild(*Links)) {
+                if (RtlIsLeftChild(*Links))
+                {
 
                     RtlLeftChild(RtlParent(*Links)) = &NewNode->CacheLinks;
-
-                } else {
+                }
+                else
+                {
 
                     RtlRightChild(RtlParent(*Links)) = &NewNode->CacheLinks;
                 }
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  Set root of the cache
@@ -772,8 +759,9 @@ Return Value:
             FsRtlFreeTunnelNode(Node, &FreePoolList);
 
             Cache->NumEntries--;
-
-        } else {
+        }
+        else
+        {
 
             //
             //  Simple insertion as a leaf
@@ -782,8 +770,9 @@ Return Value:
             NewNode->CacheLinks.Parent = &Node->CacheLinks;
             *Links = &NewNode->CacheLinks;
         }
-
-    } else {
+    }
+    else
+    {
 
         Cache->Cache = &NewNode->CacheLinks;
     }
@@ -803,11 +792,13 @@ Return Value:
 
     NewNode->DirKey = DirKey;
 
-    if (KeyByShortName) {
+    if (KeyByShortName)
+    {
 
         NewNode->Flags = TUNNEL_FLAG_KEY_SHORT;
-
-    } else {
+    }
+    else
+    {
 
         NewNode->Flags = 0;
     }
@@ -831,12 +822,14 @@ Return Value:
     NewNode->ShortName.Length = NewNode->ShortName.MaximumLength = ShortName->Length;
     NewNode->LongName.Length = NewNode->LongName.MaximumLength = LongName->Length;
 
-    if (ShortName->Length) {
+    if (ShortName->Length)
+    {
 
         RtlCopyMemory(NewNode->ShortName.Buffer, ShortName->Buffer, ShortName->Length);
     }
 
-    if (LongName->Length) {
+    if (LongName->Length)
+    {
 
         RtlCopyMemory(NewNode->LongName.Buffer, LongName->Buffer, LongName->Length);
     }
@@ -847,12 +840,13 @@ Return Value:
 
     RtlCopyMemory(NewNode->TunnelData, Data, DataLength);
 
-    if (AllocatedFromPool) {
+    if (AllocatedFromPool)
+    {
 
         SetFlag(NewNode->Flags, TUNNEL_FLAG_NON_LOOKASIDE);
     }
 
-#if defined(TUNNELTEST) || defined (KEYVIEW)
+#if defined(TUNNELTEST) || defined(KEYVIEW)
     DbgPrint("FsRtlAddToTunnelCache:\n");
     DumpNode(NewNode, 1);
 #ifndef KEYVIEW
@@ -873,7 +867,7 @@ Return Value:
     return;
 }
 
-
+
 //
 //  *** SPEC
 //
@@ -911,15 +905,8 @@ Return Value:
 //
 
 BOOLEAN
-FsRtlFindInTunnelCache (
-    IN PTUNNEL Cache,
-    IN ULONGLONG DirKey,
-    IN PUNICODE_STRING Name,
-    OUT PUNICODE_STRING ShortName,
-    OUT PUNICODE_STRING LongName,
-    IN OUT PULONG  DataLength,
-    OUT PVOID Data
-    )
+FsRtlFindInTunnelCache(IN PTUNNEL Cache, IN ULONGLONG DirKey, IN PUNICODE_STRING Name, OUT PUNICODE_STRING ShortName,
+                       OUT PUNICODE_STRING LongName, IN OUT PULONG DataLength, OUT PVOID Data)
 /*++
 
 Routine Description:
@@ -969,7 +956,8 @@ Return Value:
     //  If MaxEntries is 0 then tunneling is disabled.
     //
 
-    if (TunnelMaxEntries == 0) return FALSE;
+    if (TunnelMaxEntries == 0)
+        return FALSE;
 
     InitializeListHead(&FreePoolList);
 
@@ -987,23 +975,28 @@ Return Value:
 
     Links = Cache->Cache;
 
-    while (Links) {
+    while (Links)
+    {
 
         Node = CONTAINING_RECORD(Links, TUNNEL_NODE, CacheLinks);
 
         Compare = FsRtlCompareNodeAndKey(Node, DirKey, Name);
 
-        if (Compare > 0) {
+        if (Compare > 0)
+        {
 
             Links = RtlLeftChild(&Node->CacheLinks);
+        }
+        else
+        {
 
-        } else {
-
-            if (Compare < 0) {
+            if (Compare < 0)
+            {
 
                 Links = RtlRightChild(&Node->CacheLinks);
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  Found tunneling information
@@ -1022,51 +1015,56 @@ Return Value:
         }
     }
 
-    try {
+    try
+    {
 
-        if (Links) {
-    
+        if (Links)
+        {
+
             //
             //  Copy node data into caller's area
             //
-    
-            ASSERT(ShortName->MaximumLength >= (8+1+3)*sizeof(WCHAR));
+
+            ASSERT(ShortName->MaximumLength >= (8 + 1 + 3) * sizeof(WCHAR));
             RtlCopyUnicodeString(ShortName, &Node->ShortName);
-    
-            if (LongName->MaximumLength >= Node->LongName.Length) {
-    
+
+            if (LongName->MaximumLength >= Node->LongName.Length)
+            {
+
                 RtlCopyUnicodeString(LongName, &Node->LongName);
-    
-            } else {
-    
+            }
+            else
+            {
+
                 //
                 //  Need to allocate more memory for the long name
                 //
-    
+
                 LongName->Buffer = FsRtlAllocatePoolWithTag(PagedPool, Node->LongName.Length, '4nuT');
                 LongName->Length = LongName->MaximumLength = Node->LongName.Length;
-    
+
                 RtlCopyMemory(LongName->Buffer, Node->LongName.Buffer, Node->LongName.Length);
             }
-    
+
             ASSERT(*DataLength >= Node->TunnelDataLength);
             RtlCopyMemory(Data, Node->TunnelData, Node->TunnelDataLength);
             *DataLength = Node->TunnelDataLength;
-    
+
             Status = TRUE;
         }
-
-    } finally {
+    }
+    finally
+    {
 
         ExReleaseFastMutex(&Cache->Mutex);
-    
+
         FsRtlEmptyFreePoolList(&FreePoolList);
     }
-    
+
     return Status;
 }
 
-
+
 //
 //  *** SPEC
 //
@@ -1083,11 +1081,7 @@ Return Value:
 //        DirectoryKey    ULONGLONG unique ID of the directory that is being deleted
 //
 
-VOID
-FsRtlDeleteKeyFromTunnelCache (
-    IN PTUNNEL Cache,
-    IN ULONGLONG DirKey
-    )
+VOID FsRtlDeleteKeyFromTunnelCache(IN PTUNNEL Cache, IN ULONGLONG DirKey)
 /*++
 
 Routine Description:
@@ -1120,7 +1114,8 @@ Return Value:
     //  If MaxEntries is 0 then tunneling is disabled.
     //
 
-    if (TunnelMaxEntries == 0) return;
+    if (TunnelMaxEntries == 0)
+        return;
 
     InitializeListHead(&FreePoolList);
 
@@ -1132,23 +1127,28 @@ Return Value:
 
     Links = Cache->Cache;
 
-    while (Links) {
+    while (Links)
+    {
 
         Node = CONTAINING_RECORD(Links, TUNNEL_NODE, CacheLinks);
 
-        if (Node->DirKey > DirKey) {
+        if (Node->DirKey > DirKey)
+        {
 
             //
             //  All nodes to the right are bigger, go left
             //
 
             Links = RtlLeftChild(&Node->CacheLinks);
+        }
+        else
+        {
 
-        } else {
+            if (Node->DirKey < DirKey)
+            {
 
-            if (Node->DirKey < DirKey) {
-
-                if (LastLinks) {
+                if (LastLinks)
+                {
 
                     //
                     //  If we have previously seen a candidate node to delete
@@ -1159,8 +1159,9 @@ Return Value:
                 }
 
                 Links = RtlRightChild(&Node->CacheLinks);
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  Node is a candidate to be deleted, but we might have more nodes
@@ -1173,14 +1174,14 @@ Return Value:
         }
     }
 
-    for (Links = LastLinks;
-         Links;
-         Links = SuccessorLinks) {
+    for (Links = LastLinks; Links; Links = SuccessorLinks)
+    {
 
         SuccessorLinks = RtlRealSuccessor(Links);
         Node = CONTAINING_RECORD(Links, TUNNEL_NODE, CacheLinks);
 
-        if (Node->DirKey != DirKey) {
+        if (Node->DirKey != DirKey)
+        {
 
             //
             //  Reached nodes which have a different key, so we're done
@@ -1210,7 +1211,7 @@ Return Value:
     return;
 }
 
-
+
 //
 //  *** SPEC
 //
@@ -1223,10 +1224,7 @@ Return Value:
 //        Cache        a tunnel cache initialized by FsRtlInitializeTunnelCache()
 //
 
-VOID
-FsRtlDeleteTunnelCache (
-    IN PTUNNEL Cache
-    )
+VOID FsRtlDeleteTunnelCache(IN PTUNNEL Cache)
 /*++
 
 Routine Description:
@@ -1252,7 +1250,8 @@ Return Value:
     //  If MaxEntries is 0 then tunneling is disabled.
     //
 
-    if (TunnelMaxEntries == 0) return;
+    if (TunnelMaxEntries == 0)
+        return;
 
     //
     //  Zero out the cache and delete everything on the timer list
@@ -1261,9 +1260,8 @@ Return Value:
     Cache->Cache = NULL;
     Cache->NumEntries = 0;
 
-    for (Link = Cache->TimerQueue.Flink;
-         Link != &Cache->TimerQueue;
-         Link = Next) {
+    for (Link = Cache->TimerQueue.Flink; Link != &Cache->TimerQueue; Link = Next)
+    {
 
         Next = Link->Flink;
 
@@ -1277,12 +1275,8 @@ Return Value:
     return;
 }
 
-
-VOID
-FsRtlPruneTunnelCache (
-    IN PTUNNEL Cache,
-    IN OUT PLIST_ENTRY FreePoolList
-    )
+
+VOID FsRtlPruneTunnelCache(IN PTUNNEL Cache, IN OUT PLIST_ENTRY FreePoolList)
 /*++
 
 Routine Description:
@@ -1326,20 +1320,23 @@ Return Value:
     //  prevent entries from going away.
     //
 
-    while (!IsListEmpty(&Cache->TimerQueue)) {
+    while (!IsListEmpty(&Cache->TimerQueue))
+    {
 
         Node = CONTAINING_RECORD(Cache->TimerQueue.Flink, TUNNEL_NODE, ListLinks);
 
-        if (Node->CreateTime.QuadPart < ExpireTime.QuadPart ||
-            Node->CreateTime.QuadPart > CurrentTime.QuadPart) {
+        if (Node->CreateTime.QuadPart < ExpireTime.QuadPart || Node->CreateTime.QuadPart > CurrentTime.QuadPart)
+        {
 
 #if defined(TUNNELTEST) || defined(KEYVIEW)
-            DbgPrint("Expiring node %x (%ud%ud 1/10 msec too old)\n", Node, DblHex64(ExpireTime.QuadPart - Node->CreateTime.QuadPart));
+            DbgPrint("Expiring node %x (%ud%ud 1/10 msec too old)\n", Node,
+                     DblHex64(ExpireTime.QuadPart - Node->CreateTime.QuadPart));
 #endif // TUNNELTEST
 
             FsRtlRemoveNodeFromTunnel(Cache, Node, FreePoolList, &Splay);
-
-        } else {
+        }
+        else
+        {
 
             //
             //  No more nodes to be expired
@@ -1353,12 +1350,13 @@ Return Value:
     //  Remove entries until we're under the TunnelMaxEntries limit
     //
 
-    while (Cache->NumEntries > TunnelMaxEntries) {
+    while (Cache->NumEntries > TunnelMaxEntries)
+    {
 
         Node = CONTAINING_RECORD(Cache->TimerQueue.Flink, TUNNEL_NODE, ListLinks);
 
 #if defined(TUNNELTEST) || defined(KEYVIEW)
-            DbgPrint("Dumping node %x (%d > %d)\n", Node, Cache->NumEntries, TunnelMaxEntries);
+        DbgPrint("Dumping node %x (%d > %d)\n", Node, Cache->NumEntries, TunnelMaxEntries);
 #endif // TUNNELTEST
 
         FsRtlRemoveNodeFromTunnel(Cache, Node, FreePoolList, &Splay);
@@ -1367,12 +1365,9 @@ Return Value:
     return;
 }
 
-
+
 NTSTATUS
-FsRtlGetTunnelParameterValue (
-    IN PUNICODE_STRING ValueName,
-    IN OUT PULONG Value
-    )
+FsRtlGetTunnelParameterValue(IN PUNICODE_STRING ValueName, IN OUT PULONG Value)
 
 /*++
 
@@ -1412,17 +1407,12 @@ Return Value:
     KeyName.Length = sizeof(TUNNEL_KEY_NAME) - sizeof(WCHAR);
     KeyName.MaximumLength = sizeof(TUNNEL_KEY_NAME);
 
-    InitializeObjectAttributes(&ObjectAttributes,
-                               &KeyName,
-                               OBJ_CASE_INSENSITIVE,
-                               NULL,
-                               NULL);
+    InitializeObjectAttributes(&ObjectAttributes, &KeyName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    Status = ZwOpenKey(&Handle,
-                       KEY_READ,
-                       &ObjectAttributes);
+    Status = ZwOpenKey(&Handle, KEY_READ, &ObjectAttributes);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         return Status;
     }
@@ -1431,40 +1421,38 @@ Return Value:
 
     KeyValueInformation = (PKEY_VALUE_FULL_INFORMATION)Buffer;
 
-    while (1) {
+    while (1)
+    {
 
-        Status = ZwQueryValueKey(Handle,
-                                 ValueName,
-                                 KeyValueFullInformation,
-                                 KeyValueInformation,
-                                 RequestLength,
+        Status = ZwQueryValueKey(Handle, ValueName, KeyValueFullInformation, KeyValueInformation, RequestLength,
                                  &ResultLength);
 
-        ASSERT( Status != STATUS_BUFFER_OVERFLOW );
+        ASSERT(Status != STATUS_BUFFER_OVERFLOW);
 
-        if (Status == STATUS_BUFFER_OVERFLOW) {
+        if (Status == STATUS_BUFFER_OVERFLOW)
+        {
 
             //
             // Try to get a buffer big enough.
             //
 
-            if (KeyValueInformation != (PKEY_VALUE_FULL_INFORMATION)Buffer) {
+            if (KeyValueInformation != (PKEY_VALUE_FULL_INFORMATION)Buffer)
+            {
 
                 ExFreePool(KeyValueInformation);
             }
 
             RequestLength += 256;
 
-            KeyValueInformation = (PKEY_VALUE_FULL_INFORMATION)
-                                  ExAllocatePoolWithTag(PagedPool,
-                                                        RequestLength,
-                                                        'KnuT');
+            KeyValueInformation = (PKEY_VALUE_FULL_INFORMATION)ExAllocatePoolWithTag(PagedPool, RequestLength, 'KnuT');
 
-            if (!KeyValueInformation) {
+            if (!KeyValueInformation)
+            {
                 return STATUS_NO_MEMORY;
             }
-
-        } else {
+        }
+        else
+        {
 
             break;
         }
@@ -1472,9 +1460,11 @@ Return Value:
 
     ZwClose(Handle);
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
-        if (KeyValueInformation->DataLength != 0) {
+        if (KeyValueInformation->DataLength != 0)
+        {
 
             PULONG DataPtr;
 
@@ -1482,11 +1472,11 @@ Return Value:
             // Return contents to the caller.
             //
 
-            DataPtr = (PULONG)
-              ((PUCHAR)KeyValueInformation + KeyValueInformation->DataOffset);
+            DataPtr = (PULONG)((PUCHAR)KeyValueInformation + KeyValueInformation->DataOffset);
             *Value = *DataPtr;
-
-        } else {
+        }
+        else
+        {
 
             //
             // Treat as if no value was found
@@ -1496,7 +1486,8 @@ Return Value:
         }
     }
 
-    if (KeyValueInformation != (PKEY_VALUE_FULL_INFORMATION)Buffer) {
+    if (KeyValueInformation != (PKEY_VALUE_FULL_INFORMATION)Buffer)
+    {
 
         ExFreePool(KeyValueInformation);
     }
@@ -1504,13 +1495,10 @@ Return Value:
     return Status;
 }
 
-
+
 #if defined(TUNNELTEST) || defined(KEYVIEW)
 
-VOID
-DumpTunnel (
-    PTUNNEL Tunnel
-    )
+VOID DumpTunnel(PTUNNEL Tunnel)
 {
     PRTL_SPLAY_LINKS SplayLinks, Ptr;
     PTUNNEL_NODE Node;
@@ -1526,20 +1514,23 @@ DumpTunnel (
 
     SplayLinks = Tunnel->Cache;
 
-    if (SplayLinks == NULL) {
+    if (SplayLinks == NULL)
+    {
 
         goto end;
     }
 
-    while (RtlLeftChild(SplayLinks) != NULL) {
+    while (RtlLeftChild(SplayLinks) != NULL)
+    {
 
         SplayLinks = RtlLeftChild(SplayLinks);
         Indent++;
     }
 
-    while (SplayLinks) {
+    while (SplayLinks)
+    {
 
-        Node = CONTAINING_RECORD( SplayLinks, TUNNEL_NODE, CacheLinks );
+        Node = CONTAINING_RECORD(SplayLinks, TUNNEL_NODE, CacheLinks);
 
         EntryCount++;
 
@@ -1562,18 +1553,21 @@ DumpTunnel (
                        \
         */
 
-        if ((Ptr = RtlRightChild(SplayLinks)) != NULL) {
+        if ((Ptr = RtlRightChild(SplayLinks)) != NULL)
+        {
 
             Indent++;
-            while (RtlLeftChild(Ptr) != NULL) {
+            while (RtlLeftChild(Ptr) != NULL)
+            {
 
                 Indent++;
                 Ptr = RtlLeftChild(Ptr);
             }
 
             SplayLinks = Ptr;
-
-        } else {
+        }
+        else
+        {
             /*
               we do not have a right child so check to see if have a parent and if
               so find the first ancestor that we are a left decendent of. That
@@ -1588,21 +1582,24 @@ DumpTunnel (
             */
 
             Ptr = SplayLinks;
-            while (RtlIsRightChild(Ptr)) {
+            while (RtlIsRightChild(Ptr))
+            {
 
                 Indent--;
                 Ptr = RtlParent(Ptr);
             }
 
-            if (!RtlIsLeftChild(Ptr)) {
+            if (!RtlIsLeftChild(Ptr))
+            {
 
                 //
                 //  we do not have a real successor so we simply return
                 //  NULL
                 //
                 SplayLinks = NULL;
-
-            } else {
+            }
+            else
+            {
 
                 Indent--;
                 SplayLinks = RtlParent(Ptr);
@@ -1610,9 +1607,10 @@ DumpTunnel (
         }
     }
 
-    end:
+end:
 
-    if (CountOff = (EntryCount != Tunnel->NumEntries)) {
+    if (CountOff = (EntryCount != Tunnel->NumEntries))
+    {
 
         DbgPrint("!!!!!!!!!! Splay Tree Count Mismatch (%d != %d)\n", EntryCount, Tunnel->NumEntries);
     }
@@ -1621,18 +1619,18 @@ DumpTunnel (
 
     DbgPrint("****** Timer Queue\n");
 
-    for (Link = Tunnel->TimerQueue.Flink;
-         Link != &Tunnel->TimerQueue;
-         Link = Link->Flink) {
+    for (Link = Tunnel->TimerQueue.Flink; Link != &Tunnel->TimerQueue; Link = Link->Flink)
+    {
 
-        Node = CONTAINING_RECORD( Link, TUNNEL_NODE, ListLinks );
+        Node = CONTAINING_RECORD(Link, TUNNEL_NODE, ListLinks);
 
         EntryCount++;
 
         DumpNode(Node, 1);
     }
 
-    if (CountOff |= (EntryCount != Tunnel->NumEntries)) {
+    if (CountOff |= (EntryCount != Tunnel->NumEntries))
+    {
 
         DbgPrint("!!!!!!!!!! Timer Queue Count Mismatch (%d != %d)\n", EntryCount, Tunnel->NumEntries);
     }
@@ -1642,20 +1640,17 @@ DumpTunnel (
     DbgPrint("------------------------------------------------------------------\n");
 }
 
-#define MAXINDENT  128
+#define MAXINDENT 128
 #define INDENTSTEP 3
 
-VOID
-DumpNode (
-    PTUNNEL_NODE Node,
-    ULONG Indent
-    )
+VOID DumpNode(PTUNNEL_NODE Node, ULONG Indent)
 {
     ULONG i;
-    CHAR  SpaceBuf[MAXINDENT*INDENTSTEP + 1];
+    CHAR SpaceBuf[MAXINDENT * INDENTSTEP + 1];
 
     Indent--;
-    if (Indent > MAXINDENT) {
+    if (Indent > MAXINDENT)
+    {
         Indent = MAXINDENT;
     }
 
@@ -1664,24 +1659,15 @@ DumpNode (
     //  so just build up the indentation all at once on the stack.
     //
 
-    RtlFillMemory(SpaceBuf, Indent*INDENTSTEP, ' ');
-    SpaceBuf[Indent*INDENTSTEP] = '\0';
+    RtlFillMemory(SpaceBuf, Indent * INDENTSTEP, ' ');
+    SpaceBuf[Indent * INDENTSTEP] = '\0';
 
-    DbgPrint("%sNode 0x%x  CreateTime = %08x%08x, DirKey = %08x%08x, Flags = %d\n",
-             SpaceBuf,
-             Node,
-             DblHex64(Node->CreateTime.QuadPart),
-             DblHex64(Node->DirKey),
-             Node->Flags );
+    DbgPrint("%sNode 0x%x  CreateTime = %08x%08x, DirKey = %08x%08x, Flags = %d\n", SpaceBuf, Node,
+             DblHex64(Node->CreateTime.QuadPart), DblHex64(Node->DirKey), Node->Flags);
 
-    DbgPrint("%sShort = %wZ, Long = %wZ\n", SpaceBuf,
-                                            &Node->ShortName,
-                                            &Node->LongName );
+    DbgPrint("%sShort = %wZ, Long = %wZ\n", SpaceBuf, &Node->ShortName, &Node->LongName);
 
-    DbgPrint("%sP = %x, R = %x, L = %x\n", SpaceBuf,
-                                           RtlParent(&Node->CacheLinks),
-                                           RtlRightChild(&Node->CacheLinks),
-                                           RtlLeftChild(&Node->CacheLinks) );
+    DbgPrint("%sP = %x, R = %x, L = %x\n", SpaceBuf, RtlParent(&Node->CacheLinks), RtlRightChild(&Node->CacheLinks),
+             RtlLeftChild(&Node->CacheLinks));
 }
 #endif // TUNNELTEST
-

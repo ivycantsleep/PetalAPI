@@ -14,7 +14,14 @@
 #include "precomp.h"
 #pragma hdrstop
 
-#define out(c) if (cchLimit) {*lpOut++=(c); cchLimit--;} else goto errorout
+#define out(c)          \
+    if (cchLimit)       \
+    {                   \
+        *lpOut++ = (c); \
+        cchLimit--;     \
+    }                   \
+    else                \
+        goto errorout
 
 /***************************************************************************\
 * SP_PutNumber
@@ -28,25 +35,22 @@
 *  12-11-90  GregoryW   need to increment lpstr after assignment of mod
 \***************************************************************************/
 
-int SP_PutNumber(
-    LPSTR   lpstr,
-    ULONG64 n,
-    int     limit,
-    DWORD   radix,
-    int     uppercase)
+int SP_PutNumber(LPSTR lpstr, ULONG64 n, int limit, DWORD radix, int uppercase)
 {
     DWORD mod;
     int count = 0;
 
     /* It might not work for some locales or digit sets */
-    if(uppercase)
-        uppercase =  'A'-'0'-10;
+    if (uppercase)
+        uppercase = 'A' - '0' - 10;
     else
-        uppercase = 'a'-'0'-10;
+        uppercase = 'a' - '0' - 10;
 
-    if (count < limit) {
-        do  {
-            mod =  (ULONG)(n % radix);
+    if (count < limit)
+    {
+        do
+        {
+            mod = (ULONG)(n % radix);
             n /= radix;
 
             mod += '0';
@@ -54,7 +58,7 @@ int SP_PutNumber(
                 mod += uppercase;
             *lpstr++ = (char)mod;
             count++;
-        } while((count < limit) && n);
+        } while ((count < limit) && n);
     }
 
     return count;
@@ -70,13 +74,12 @@ int SP_PutNumber(
 *  12-11-90  GregoryW   fixed boundary conditions; removed count
 \***************************************************************************/
 
-void SP_Reverse(
-    LPSTR lpFirst,
-    LPSTR lpLast)
+void SP_Reverse(LPSTR lpFirst, LPSTR lpLast)
 {
     char ch;
 
-    while(lpLast > lpFirst){
+    while (lpLast > lpFirst)
+    {
         ch = *lpFirst;
         *lpFirst++ = *lpLast;
         *lpLast-- = ch;
@@ -92,14 +95,13 @@ void SP_Reverse(
 *  11-12-90  MikeHar    Ported from windows 3
 \***************************************************************************/
 
-LPCSTR SP_GetFmtValue(
-    LPCSTR lpch,
-    int *lpw)
+LPCSTR SP_GetFmtValue(LPCSTR lpch, int *lpw)
 {
     int ii = 0;
 
     /* It might not work for some locales or digit sets */
-    while (*lpch >= '0' && *lpch <= '9') {
+    while (*lpch >= '0' && *lpch <= '9')
+    {
         ii *= 10;
         ii += (int)(*lpch - '0');
         lpch++;
@@ -123,14 +125,13 @@ LPCSTR SP_GetFmtValue(
 *  07-27-92  GregoryW   Created Unicode version (copied from SP_GetFmtValue)
 \***************************************************************************/
 
-LPCWSTR SP_GetFmtValueW(
-    LPCWSTR lpch,
-    int *lpw)
+LPCWSTR SP_GetFmtValueW(LPCWSTR lpch, int *lpw)
 {
     int ii = 0;
 
     /* It might not work for some locales or digit sets */
-    while (*lpch >= L'0' && *lpch <= L'9') {
+    while (*lpch >= L'0' && *lpch <= L'9')
+    {
         ii *= 10;
         ii += (int)(*lpch - L'0');
         lpch++;
@@ -167,10 +168,7 @@ LPCWSTR SP_GetFmtValueW(
 
 
 FUNCLOG3(LOG_GENERAL, int, DUMMYCALLINGTYPE, wvsprintfA, LPSTR, lpOut, LPCSTR, lpFmt, va_list, arglist)
-int wvsprintfA(
-    LPSTR lpOut,
-    LPCSTR lpFmt,
-    va_list arglist)
+int wvsprintfA(LPSTR lpOut, LPCSTR lpFmt, va_list arglist)
 {
     BOOL fAllocateMem;
     char prefix, fillch;
@@ -179,21 +177,25 @@ int wvsprintfA(
     LPSTR lpT, lpTMB;
     LPWSTR pwsz;
     va_list varglist = arglist;
-    union {
+    union
+    {
         LONG64 l;
         ULONG64 ul;
         char sz[2];
         WCHAR wsz[2];
     } val;
 
-    while (*lpFmt != 0) {
-        if (*lpFmt == '%') {
+    while (*lpFmt != 0)
+    {
+        if (*lpFmt == '%')
+        {
             /*
              * read the flags.  These can be in any order
              */
             left = 0;
             prefix = 0;
-            while (*++lpFmt) {
+            while (*++lpFmt)
+            {
                 if (*lpFmt == '-')
                     left++;
                 else if (*lpFmt == '#')
@@ -205,10 +207,12 @@ int wvsprintfA(
             /*
              * find fill character
              */
-            if (*lpFmt == '0') {
+            if (*lpFmt == '0')
+            {
                 fillch = '0';
                 lpFmt++;
-            } else
+            }
+            else
                 fillch = ' ';
 
             /*
@@ -220,10 +224,12 @@ int wvsprintfA(
             /*
              * read the precision
              */
-            if (*lpFmt == '.') {
+            if (*lpFmt == '.')
+            {
                 lpFmt = SP_GetFmtValue((LPCSTR)++lpFmt, &cch);
                 prec = cch;
-            } else
+            }
+            else
                 prec = -1;
 
             /*
@@ -236,32 +242,49 @@ int wvsprintfA(
              * is tested for non-zero below (IanJa)
              */
             hprefix = 0;
-            if (*lpFmt == 'w') {
+            if (*lpFmt == 'w')
+            {
                 size = 2;
                 lpFmt++;
-            } else if (*lpFmt == 'l') {
+            }
+            else if (*lpFmt == 'l')
+            {
                 size = 1;
                 lpFmt++;
-            } else if (*lpFmt == 't') {
+            }
+            else if (*lpFmt == 't')
+            {
                 size = 0;
                 lpFmt++;
-            } else if (*lpFmt == 'I') {
-                if (*(lpFmt+1) == '3' && *(lpFmt+2) == '2') {
+            }
+            else if (*lpFmt == 'I')
+            {
+                if (*(lpFmt + 1) == '3' && *(lpFmt + 2) == '2')
+                {
                     size = 1;
                     lpFmt += 3;
-                } else if (*(lpFmt+1) == '6' && *(lpFmt+2) == '4') {
+                }
+                else if (*(lpFmt + 1) == '6' && *(lpFmt + 2) == '4')
+                {
                     size = 3;
                     lpFmt += 3;
-                } else {
+                }
+                else
+                {
                     size = (sizeof(INT_PTR) == sizeof(LONG)) ? 1 : 3;
                     lpFmt++;
                 }
-            } else {
+            }
+            else
+            {
                 size = 0;
-                if (*lpFmt == 'h') {
+                if (*lpFmt == 'h')
+                {
                     lpFmt++;
                     hprefix = 1;
-                } else if ((*lpFmt == 'i') || (*lpFmt == 'd')) {
+                }
+                else if ((*lpFmt == 'i') || (*lpFmt == 'd'))
+                {
                     // %i or %d specified (no modifiers) - use long
                     // %u seems to have always been short - leave alone
                     size = 1;
@@ -272,7 +295,8 @@ int wvsprintfA(
             sign = 0;
             radix = 10;
 
-            switch (*lpFmt) {
+            switch (*lpFmt)
+            {
             case 0:
                 goto errorout;
 
@@ -285,7 +309,7 @@ int wvsprintfA(
             case 'u':
                 /* turn off prefix if decimal */
                 prefix = 0;
-donumeric:
+            donumeric:
                 /* special cases to act like MSC v5.10 */
                 if (left || prec >= 0)
                     fillch = ' ';
@@ -295,13 +319,20 @@ donumeric:
                  * if size == 2, "%wu" was specified (bad)
                  * if size == 3, "%p" was specified
                  */
-                if (size == 3) {
+                if (size == 3)
+                {
                     val.l = va_arg(varglist, LONG64);
-                } else if (size) {
+                }
+                else if (size)
+                {
                     val.l = va_arg(varglist, long);
-                } else if (sign) {
+                }
+                else if (sign)
+                {
                     val.l = (long)va_arg(varglist, short);
-                } else {
+                }
+                else
+                {
                     val.ul = va_arg(varglist, unsigned);
                 }
 
@@ -315,7 +346,8 @@ donumeric:
                  * here are not in canonical longword format to prevent
                  * the sign extended upper 32-bits from being printed.
                  */
-                if (size != 3) {
+                if (size != 3)
+                {
                     val.l &= MAXULONG;
                 }
 
@@ -340,18 +372,22 @@ donumeric:
                 while (prec-- > 0)
                     out('0');
 
-                if (width > 0 && !left) {
+                if (width > 0 && !left)
+                {
                     /*
                      * if we're filling with spaces, put sign first
                      */
-                    if (fillch != '0') {
-                        if (sign) {
+                    if (fillch != '0')
+                    {
+                        if (sign)
+                        {
                             sign = 0;
                             out('-');
                             width--;
                         }
 
-                        if (prefix) {
+                        if (prefix)
+                        {
                             out(prefix);
                             out('0');
                             prefix = 0;
@@ -373,7 +409,8 @@ donumeric:
                     if (sign)
                         out('-');
 
-                    if (prefix) {
+                    if (prefix)
+                    {
                         out(prefix);
                         out('0');
                     }
@@ -382,16 +419,20 @@ donumeric:
                      * now reverse the string in place
                      */
                     SP_Reverse(lpT, lpOut - 1);
-                } else {
+                }
+                else
+                {
                     /*
                      * add the sign character
                      */
-                    if (sign) {
+                    if (sign)
+                    {
                         out('-');
                         width--;
                     }
 
-                    if (prefix) {
+                    if (prefix)
+                    {
                         out(prefix);
                         out('0');
                     }
@@ -411,7 +452,8 @@ donumeric:
 
             case 'p':
                 size = (sizeof(PVOID) == sizeof(LONG)) ? 1 : 3;
-                if (prec == -1) {
+                if (prec == -1)
+                {
                     prec = 2 * sizeof(PVOID);
                 }
 
@@ -435,8 +477,9 @@ donumeric:
                 /*
                  * explicit size specifier overrides case
                  */
-                if (!size && !hprefix) {
-                    size = 1;           // force WCHAR
+                if (!size && !hprefix)
+                {
+                    size = 1; // force WCHAR
                 }
 
                 /*** FALL THROUGH to case 'c' ***/
@@ -448,12 +491,15 @@ donumeric:
                  * if size == 2, "%wc" was specified (WCHAR)
                  */
                 cch = 1; /* One character must be copied to the output buffer */
-                if (size) {
+                if (size)
+                {
                     val.wsz[0] = va_arg(varglist, WCHAR);
                     val.wsz[1] = 0x0000;
                     pwsz = val.wsz;
                     goto putwstring;
-                } else {
+                }
+                else
+                {
                     val.sz[0] = va_arg(varglist, CHAR);
                     val.sz[1] = 0;
                     lpT = val.sz;
@@ -464,8 +510,9 @@ donumeric:
                 /*
                  * explicit size specifier overrides case
                  */
-                if (!size && !hprefix) {
-                    size = 1;           // force LPWSTR
+                if (!size && !hprefix)
+                {
+                    size = 1; // force LPWSTR
                 }
 
                 /*** FALL THROUGH to case 's' ***/
@@ -476,25 +523,34 @@ donumeric:
                  * if size == 1, "%S" or "%ls" was specified (LPWSTR);
                  * if size == 2, "%ws" was specified (LPWSTR)
                  */
-                if (size) {
+                if (size)
+                {
                     pwsz = va_arg(varglist, LPWSTR);
-                    if (pwsz == NULL) {
+                    if (pwsz == NULL)
+                    {
                         cch = 0;
-                    } else {
+                    }
+                    else
+                    {
                         cch = wcslen(pwsz);
                     }
-putwstring:
+                putwstring:
                     cch = WCSToMB(pwsz, cch, &lpTMB, -1, TRUE);
-                    fAllocateMem = (BOOL) cch;
+                    fAllocateMem = (BOOL)cch;
                     lpT = lpTMB;
-                } else {
+                }
+                else
+                {
                     lpT = va_arg(varglist, LPSTR);
-                    if (lpT == NULL) {
+                    if (lpT == NULL)
+                    {
                         cch = 0;
-                    } else {
+                    }
+                    else
+                    {
                         cch = strlen(lpT);
                     }
-putstring:
+                putstring:
                     fAllocateMem = FALSE;
                 }
 
@@ -502,43 +558,50 @@ putstring:
                     cch = prec;
                 width -= cch;
 
-                if (fAllocateMem) {
-                    if (cch + (width < 0 ? 0 : width) >= cchLimit) {
+                if (fAllocateMem)
+                {
+                    if (cch + (width < 0 ? 0 : width) >= cchLimit)
+                    {
                         UserLocalFree(lpTMB);
                         goto errorout;
                     }
                 }
 
-                if (left) {
+                if (left)
+                {
                     while (cch--)
                         out(*lpT++);
                     while (width-- > 0)
                         out(fillch);
-                } else {
+                }
+                else
+                {
                     while (width-- > 0)
                         out(fillch);
                     while (cch--)
                         out(*lpT++);
                 }
 
-                if (fAllocateMem) {
-                     UserLocalFree(lpTMB);
+                if (fAllocateMem)
+                {
+                    UserLocalFree(lpTMB);
                 }
                 break;
 
             default:
-normalch:
+            normalch:
                 out(*lpFmt);
                 break;
-            }  /* END OF SWITCH(*lpFmt) */
-        }  /* END OF IF(%) */ else
-            goto normalch;  /* character not a '%', just do it */
+            } /* END OF SWITCH(*lpFmt) */
+        } /* END OF IF(%) */
+        else
+            goto normalch; /* character not a '%', just do it */
 
         /*
          * advance to next format string character
          */
         lpFmt++;
-    }  /* END OF OUTER WHILE LOOP */
+    } /* END OF OUTER WHILE LOOP */
 
 errorout:
     *lpOut = 0;
@@ -556,10 +619,7 @@ errorout:
 * 02-05-90 DarrinM      Cleaned up with STDARG.h vararg stuff.
 \***************************************************************************/
 
-int WINAPIV wsprintfA(
-    LPSTR lpOut,
-    LPCSTR lpFmt,
-    ...)
+int WINAPIV wsprintfA(LPSTR lpOut, LPCSTR lpFmt, ...)
 {
     va_list arglist;
     int ret;
@@ -583,33 +643,30 @@ int WINAPIV wsprintfA(
 *  02-11-92  GregoryW   temporary version until we have C runtime support
 \***************************************************************************/
 
-int SP_PutNumberW(
-    LPWSTR  lpstr,
-    ULONG64 n,
-    int     limit,
-    DWORD   radix,
-    int     uppercase)
+int SP_PutNumberW(LPWSTR lpstr, ULONG64 n, int limit, DWORD radix, int uppercase)
 {
     DWORD mod;
     int count = 0;
 
     /* It might not work for some locales or digit sets */
-    if(uppercase)
-        uppercase =  'A'-'0'-10;
+    if (uppercase)
+        uppercase = 'A' - '0' - 10;
     else
-        uppercase = 'a'-'0'-10;
+        uppercase = 'a' - '0' - 10;
 
-    if (count < limit) {
-        do  {
-            mod =  (ULONG)(n % radix);
+    if (count < limit)
+    {
+        do
+        {
+            mod = (ULONG)(n % radix);
             n /= radix;
 
             mod += '0';
             if (mod > '9')
-            mod += uppercase;
+                mod += uppercase;
             *lpstr++ = (WCHAR)mod;
             count++;
-        } while((count < limit) && n);
+        } while ((count < limit) && n);
     }
 
     return count;
@@ -626,13 +683,12 @@ int SP_PutNumberW(
 *  02-11-92  GregoryW   temporary version until we have C runtime support
 \***************************************************************************/
 
-void SP_ReverseW(
-    LPWSTR lpFirst,
-    LPWSTR lpLast)
+void SP_ReverseW(LPWSTR lpFirst, LPWSTR lpLast)
 {
     WCHAR ch;
 
-    while(lpLast > lpFirst){
+    while (lpLast > lpFirst)
+    {
         ch = *lpFirst;
         *lpFirst++ = *lpLast;
         *lpLast-- = ch;
@@ -652,10 +708,7 @@ void SP_ReverseW(
 
 
 FUNCLOG3(LOG_GENERAL, int, DUMMYCALLINGTYPE, wvsprintfW, LPWSTR, lpOut, LPCWSTR, lpFmt, va_list, arglist)
-int wvsprintfW(
-    LPWSTR lpOut,
-    LPCWSTR lpFmt,
-    va_list arglist)
+int wvsprintfW(LPWSTR lpOut, LPCWSTR lpFmt, va_list arglist)
 {
     BOOL fAllocateMem;
     WCHAR prefix, fillch;
@@ -664,22 +717,26 @@ int wvsprintfW(
     LPWSTR lpT, lpTWC;
     LPBYTE psz;
     va_list varglist = arglist;
-    union {
+    union
+    {
         LONG64 l;
         ULONG64 ul;
         char sz[2];
         WCHAR wsz[2];
     } val;
 
-    while (*lpFmt != 0) {
-        if (*lpFmt == L'%') {
+    while (*lpFmt != 0)
+    {
+        if (*lpFmt == L'%')
+        {
 
             /*
              * read the flags.  These can be in any order
              */
             left = 0;
             prefix = 0;
-            while (*++lpFmt) {
+            while (*++lpFmt)
+            {
                 if (*lpFmt == L'-')
                     left++;
                 else if (*lpFmt == L'#')
@@ -691,10 +748,12 @@ int wvsprintfW(
             /*
              * find fill character
              */
-            if (*lpFmt == L'0') {
+            if (*lpFmt == L'0')
+            {
                 fillch = L'0';
                 lpFmt++;
-            } else
+            }
+            else
                 fillch = L' ';
 
             /*
@@ -706,10 +765,12 @@ int wvsprintfW(
             /*
              * read the precision
              */
-            if (*lpFmt == L'.') {
+            if (*lpFmt == L'.')
+            {
                 lpFmt = SP_GetFmtValueW(++lpFmt, &cch);
                 prec = cch;
-            } else
+            }
+            else
                 prec = -1;
 
             /*
@@ -722,29 +783,44 @@ int wvsprintfW(
              * is tested for non-zero below (IanJa)
              */
             hprefix = 0;
-            if ((*lpFmt == L'w') || (*lpFmt == L't')) {
+            if ((*lpFmt == L'w') || (*lpFmt == L't'))
+            {
                 size = 2;
                 lpFmt++;
-            } else if (*lpFmt == L'l') {
+            }
+            else if (*lpFmt == L'l')
+            {
                 size = 1;
                 lpFmt++;
-            } else if (*lpFmt == L'I') {
-                if (*(lpFmt+1) == L'3' && *(lpFmt+2) == L'2') {
+            }
+            else if (*lpFmt == L'I')
+            {
+                if (*(lpFmt + 1) == L'3' && *(lpFmt + 2) == L'2')
+                {
                     size = 1;
                     lpFmt += 3;
-                } else if (*(lpFmt+1) == L'6' && *(lpFmt+2) == L'4') {
+                }
+                else if (*(lpFmt + 1) == L'6' && *(lpFmt + 2) == L'4')
+                {
                     size = 3;
                     lpFmt += 3;
-                } else {
+                }
+                else
+                {
                     size = (sizeof(INT_PTR) == sizeof(LONG)) ? 1 : 3;
                     lpFmt++;
                 }
-            } else {
+            }
+            else
+            {
                 size = 0;
-                if (*lpFmt == L'h') {
+                if (*lpFmt == L'h')
+                {
                     lpFmt++;
                     hprefix = 1;
-                } else if ((*lpFmt == L'i') || (*lpFmt == L'd')) {
+                }
+                else if ((*lpFmt == L'i') || (*lpFmt == L'd'))
+                {
                     // %i or %d specified (no modifiers) - use long
                     // %u seems to have always been short - leave alone
                     size = 1;
@@ -755,7 +831,8 @@ int wvsprintfW(
             sign = 0;
             radix = 10;
 
-            switch (*lpFmt) {
+            switch (*lpFmt)
+            {
             case 0:
                 goto errorout;
 
@@ -768,7 +845,7 @@ int wvsprintfW(
             case L'u':
                 /* turn off prefix if decimal */
                 prefix = 0;
-donumeric:
+            donumeric:
                 /* special cases to act like MSC v5.10 */
                 if (left || prec >= 0)
                     fillch = L' ';
@@ -778,13 +855,20 @@ donumeric:
                  * if size == 2, "%wu" was specified (bad)
                  * if size == 3, "%p" was specified
                  */
-                if (size == 3) {
+                if (size == 3)
+                {
                     val.l = va_arg(varglist, LONG64);
-                } else if (size) {
+                }
+                else if (size)
+                {
                     val.l = va_arg(varglist, LONG);
-                } else if (sign) {
+                }
+                else if (sign)
+                {
                     val.l = va_arg(varglist, SHORT);
-                } else {
+                }
+                else
+                {
                     val.ul = va_arg(varglist, unsigned);
                 }
 
@@ -798,7 +882,8 @@ donumeric:
                  * here are not in canonical longword format to prevent
                  * the sign extended upper 32-bits from being printed.
                  */
-                if (size != 3) {
+                if (size != 3)
+                {
                     val.l &= MAXULONG;
                 }
 
@@ -823,18 +908,22 @@ donumeric:
                 while (prec-- > 0)
                     out(L'0');
 
-                if (width > 0 && !left) {
+                if (width > 0 && !left)
+                {
                     /*
                      * if we're filling with spaces, put sign first
                      */
-                    if (fillch != L'0') {
-                        if (sign) {
+                    if (fillch != L'0')
+                    {
+                        if (sign)
+                        {
                             sign = 0;
                             out(L'-');
                             width--;
                         }
 
-                        if (prefix) {
+                        if (prefix)
+                        {
                             out(prefix);
                             out(L'0');
                             prefix = 0;
@@ -856,7 +945,8 @@ donumeric:
                     if (sign)
                         out(L'-');
 
-                    if (prefix) {
+                    if (prefix)
+                    {
                         out(prefix);
                         out(L'0');
                     }
@@ -865,16 +955,20 @@ donumeric:
                      * now reverse the string in place
                      */
                     SP_ReverseW(lpT, lpOut - 1);
-                } else {
+                }
+                else
+                {
                     /*
                      * add the sign character
                      */
-                    if (sign) {
+                    if (sign)
+                    {
                         out(L'-');
                         width--;
                     }
 
-                    if (prefix) {
+                    if (prefix)
+                    {
                         out(prefix);
                         out(L'0');
                     }
@@ -894,7 +988,8 @@ donumeric:
 
             case L'p':
                 size = (sizeof(PVOID) == sizeof(LONG)) ? 1 : 3;
-                if (prec == -1) {
+                if (prec == -1)
+                {
                     prec = 2 * sizeof(PVOID);
                 }
 
@@ -915,8 +1010,9 @@ donumeric:
                 goto donumeric;
 
             case L'c':
-                if (!size && !hprefix) {
-                    size = 1;           // force WCHAR
+                if (!size && !hprefix)
+                {
+                    size = 1; // force WCHAR
                 }
 
                 /*** FALL THROUGH to case 'C' ***/
@@ -928,12 +1024,15 @@ donumeric:
                  * if size == 2, "%wc" or "%tc" was specified (WCHAR)
                  */
                 cch = 1; /* One character must be copied to the output buffer */
-                if (size) {
+                if (size)
+                {
                     val.wsz[0] = va_arg(varglist, WCHAR);
                     val.wsz[1] = 0;
                     lpT = val.wsz;
                     goto putwstring;
-                } else {
+                }
+                else
+                {
                     val.sz[0] = va_arg(varglist, CHAR);
                     val.sz[1] = 0;
                     psz = val.sz;
@@ -941,8 +1040,9 @@ donumeric:
                 }
 
             case L's':
-                if (!size && !hprefix) {
-                    size = 1;           // force LPWSTR
+                if (!size && !hprefix)
+                {
+                    size = 1; // force LPWSTR
                 }
 
                 /*** FALL THROUGH to case 'S' ***/
@@ -953,25 +1053,34 @@ donumeric:
                  * if size == 1, "%s" or "%ls" was specified (LPWSTR);
                  * if size == 2, "%ws" or "%ts" was specified (LPWSTR)
                  */
-                if (size) {
+                if (size)
+                {
                     lpT = va_arg(varglist, LPWSTR);
-                    if (lpT == NULL) {
+                    if (lpT == NULL)
+                    {
                         cch = 0;
-                    } else {
+                    }
+                    else
+                    {
                         cch = wcslen(lpT);
                     }
-putwstring:
+                putwstring:
                     fAllocateMem = FALSE;
-                } else {
+                }
+                else
+                {
                     psz = va_arg(varglist, LPBYTE);
-                    if (psz == NULL) {
+                    if (psz == NULL)
+                    {
                         cch = 0;
-                    } else {
+                    }
+                    else
+                    {
                         cch = strlen(psz);
                     }
-putstring:
+                putstring:
                     cch = MBToWCS(psz, cch, &lpTWC, -1, TRUE);
-                    fAllocateMem = (BOOL) cch;
+                    fAllocateMem = (BOOL)cch;
                     lpT = lpTWC;
                 }
 
@@ -979,44 +1088,51 @@ putstring:
                     cch = prec;
                 width -= cch;
 
-                if (fAllocateMem) {
-                    if (cch + (width < 0 ? 0 : width) >= cchLimit) {
+                if (fAllocateMem)
+                {
+                    if (cch + (width < 0 ? 0 : width) >= cchLimit)
+                    {
                         UserLocalFree(lpTWC);
                         goto errorout;
                     }
                 }
 
-                if (left) {
+                if (left)
+                {
                     while (cch--)
                         out(*lpT++);
                     while (width-- > 0)
                         out(fillch);
-                } else {
+                }
+                else
+                {
                     while (width-- > 0)
                         out(fillch);
                     while (cch--)
                         out(*lpT++);
                 }
 
-                if (fAllocateMem) {
-                     UserLocalFree(lpTWC);
+                if (fAllocateMem)
+                {
+                    UserLocalFree(lpTWC);
                 }
 
                 break;
 
             default:
-normalch:
+            normalch:
                 out((WCHAR)*lpFmt);
                 break;
-            }  /* END OF SWITCH(*lpFmt) */
-        }  /* END OF IF(%) */ else
-            goto normalch;  /* character not a '%', just do it */
+            } /* END OF SWITCH(*lpFmt) */
+        } /* END OF IF(%) */
+        else
+            goto normalch; /* character not a '%', just do it */
 
         /*
          * advance to next format string character
          */
         lpFmt++;
-    }  /* END OF OUTER WHILE LOOP */
+    } /* END OF OUTER WHILE LOOP */
 
 errorout:
     *lpOut = 0;
@@ -1024,10 +1140,7 @@ errorout:
     return WSPRINTF_LIMIT - cchLimit;
 }
 
-int WINAPIV wsprintfW(
-    LPWSTR lpOut,
-    LPCWSTR lpFmt,
-    ...)
+int WINAPIV wsprintfW(LPWSTR lpOut, LPCWSTR lpFmt, ...)
 {
     va_list arglist;
     int ret;

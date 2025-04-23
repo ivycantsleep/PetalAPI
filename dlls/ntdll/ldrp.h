@@ -35,13 +35,9 @@ extern INVERTED_FUNCTION_TABLE LdrpInvertedFunctionTable;
 #endif
 
 #if DBG
-#define LdrpShouldDbgPrintStatus(st) \
-    (!NT_SUCCESS(st) \
-        && (ShowSnaps \
-            || (   (st) != STATUS_NO_SUCH_FILE \
-                && (st) != STATUS_DLL_NOT_FOUND \
-                && (st) != STATUS_OBJECT_NAME_NOT_FOUND \
-                )))
+#define LdrpShouldDbgPrintStatus(st)                                                                  \
+    (!NT_SUCCESS(st) && (ShowSnaps || ((st) != STATUS_NO_SUCH_FILE && (st) != STATUS_DLL_NOT_FOUND && \
+                                       (st) != STATUS_OBJECT_NAME_NOT_FOUND)))
 #else
 #define LdrpShouldDbgPrintStatus(st) (FALSE)
 #endif
@@ -80,25 +76,18 @@ extern BOOLEAN LdrpLoaderLockAcquisionCount;
 #define ASCII_CHAR_IS_L(_ch) (((_ch) == 'l') || ((_ch) == 'L'))
 #define ASCII_CHAR_IS_DOT(_ch) ((_ch) == '.')
 
-#define ASCII_STRING_IS_NTDLL(_p) \
-    ((_p) != NULL) && \
-    (((_p)->Length == (5 * sizeof(CHAR))) && \
-     (ASCII_CHAR_IS_N((_p)->Buffer[0]) && \
-      ASCII_CHAR_IS_T((_p)->Buffer[1]) && \
-      ASCII_CHAR_IS_D((_p)->Buffer[2]) && \
-      ASCII_CHAR_IS_L((_p)->Buffer[3]) && \
-      ASCII_CHAR_IS_L((_p)->Buffer[4])) || \
-     ((_p)->Length == ((5 + 1 + 3) * sizeof(CHAR))) && \
-     (ASCII_CHAR_IS_N((_p)->Buffer[0]) && \
-      ASCII_CHAR_IS_T((_p)->Buffer[1]) && \
-      ASCII_CHAR_IS_D((_p)->Buffer[2]) && \
-      ASCII_CHAR_IS_L((_p)->Buffer[3]) && \
-      ASCII_CHAR_IS_L((_p)->Buffer[4]) && \
-      ASCII_CHAR_IS_DOT((_p)->Buffer[5]) && \
-      ASCII_CHAR_IS_D((_p)->Buffer[6]) && \
-      ASCII_CHAR_IS_L((_p)->Buffer[7]) && \
-      ASCII_CHAR_IS_L((_p)->Buffer[8])))
-      
+#define ASCII_STRING_IS_NTDLL(_p)                                                                     \
+    ((_p) != NULL) && (((_p)->Length == (5 * sizeof(CHAR))) &&                                        \
+                           (ASCII_CHAR_IS_N((_p)->Buffer[0]) && ASCII_CHAR_IS_T((_p)->Buffer[1]) &&   \
+                            ASCII_CHAR_IS_D((_p)->Buffer[2]) && ASCII_CHAR_IS_L((_p)->Buffer[3]) &&   \
+                            ASCII_CHAR_IS_L((_p)->Buffer[4])) ||                                      \
+                       ((_p)->Length == ((5 + 1 + 3) * sizeof(CHAR))) &&                              \
+                           (ASCII_CHAR_IS_N((_p)->Buffer[0]) && ASCII_CHAR_IS_T((_p)->Buffer[1]) &&   \
+                            ASCII_CHAR_IS_D((_p)->Buffer[2]) && ASCII_CHAR_IS_L((_p)->Buffer[3]) &&   \
+                            ASCII_CHAR_IS_L((_p)->Buffer[4]) && ASCII_CHAR_IS_DOT((_p)->Buffer[5]) && \
+                            ASCII_CHAR_IS_D((_p)->Buffer[6]) && ASCII_CHAR_IS_L((_p)->Buffer[7]) &&   \
+                            ASCII_CHAR_IS_L((_p)->Buffer[8])))
+
 //
 // + 1 is to preserve that code was using 266
 // after explaining why it should be 265. Note
@@ -123,7 +112,8 @@ extern LIST_ENTRY RtlpDynamicFunctionTable;
 
 RTL_CRITICAL_SECTION RtlpCalloutEntryLock;
 
-typedef struct _LDRP_DLL_NOTIFICATION_BLOCK {
+typedef struct _LDRP_DLL_NOTIFICATION_BLOCK
+{
     LIST_ENTRY Links;
     PLDR_DLL_NOTIFICATION_FUNCTION NotificationFunction;
     PVOID Context;
@@ -137,54 +127,37 @@ LIST_ENTRY LdrpDllNotificationList;
 
 #define LDR_NUMBER_OF(x) (sizeof(x) / sizeof((x)[0]))
 
-#if defined (BUILD_WOW6432)
+#if defined(BUILD_WOW6432)
 NTSTATUS
-LdrpWx86FormatVirtualImage(
-    IN PUNICODE_STRING DosImagePathName OPTIONAL,
-    IN PIMAGE_NT_HEADERS32 NtHeaders,
-    IN PVOID DllBase
-    );
+LdrpWx86FormatVirtualImage(IN PUNICODE_STRING DosImagePathName OPTIONAL, IN PIMAGE_NT_HEADERS32 NtHeaders,
+                           IN PVOID DllBase);
 
 NTSTATUS
-Wx86SetRelocatedSharedProtection (
-    IN PVOID Base,
-    IN BOOLEAN Reset
-    );
+Wx86SetRelocatedSharedProtection(IN PVOID Base, IN BOOLEAN Reset);
 
 ULONG
-LdrpWx86RelocatedFixupDiff(
-    IN PUCHAR ImageBase,
-    IN PIMAGE_NT_HEADERS NtHeaders,
-    IN ULONG  Offset
-    );
+LdrpWx86RelocatedFixupDiff(IN PUCHAR ImageBase, IN PIMAGE_NT_HEADERS NtHeaders, IN ULONG Offset);
 
 BOOLEAN
-LdrpWx86DllHasRelocatedSharedSection(
-    IN PUCHAR ImageBase);
+LdrpWx86DllHasRelocatedSharedSection(IN PUCHAR ImageBase);
 
-#define NATIVE_PAGE_SIZE  0x2000
+#define NATIVE_PAGE_SIZE 0x2000
 #define NATIVE_PAGE_SHIFT 13L
-#define NATIVE_BYTES_TO_PAGES(Size)  ((ULONG)((ULONG_PTR)(Size) >> NATIVE_PAGE_SHIFT) + \
-                                    (((ULONG)(Size) & (NATIVE_PAGE_SIZE - 1)) != 0))
+#define NATIVE_BYTES_TO_PAGES(Size) \
+    ((ULONG)((ULONG_PTR)(Size) >> NATIVE_PAGE_SHIFT) + (((ULONG)(Size) & (NATIVE_PAGE_SIZE - 1)) != 0))
 #else
-#define NATIVE_PAGE_SIZE  PAGE_SIZE
+#define NATIVE_PAGE_SIZE PAGE_SIZE
 #define NATIVE_PAGE_SHIFT PAGE_SHIFT
 #define NATIVE_BYTES_TO_PAGES(Size) BYTES_TO_PAGES(Size)
 #endif
 
-VOID
-RtlpWaitForCriticalSection (
-    IN PRTL_CRITICAL_SECTION CriticalSection
-    );
+VOID RtlpWaitForCriticalSection(IN PRTL_CRITICAL_SECTION CriticalSection);
 
-VOID
-RtlpUnWaitCriticalSection (
-    IN PRTL_CRITICAL_SECTION CriticalSection
-    );
+VOID RtlpUnWaitCriticalSection(IN PRTL_CRITICAL_SECTION CriticalSection);
 
 #define LDRP_HASH_TABLE_SIZE 32
-#define LDRP_HASH_MASK       (LDRP_HASH_TABLE_SIZE-1)
-#define LDRP_COMPUTE_HASH_INDEX(wch) ( (RtlUpcaseUnicodeChar((wch)) - (WCHAR)'A') & LDRP_HASH_MASK )
+#define LDRP_HASH_MASK (LDRP_HASH_TABLE_SIZE - 1)
+#define LDRP_COMPUTE_HASH_INDEX(wch) ((RtlUpcaseUnicodeChar((wch)) - (WCHAR)'A') & LDRP_HASH_MASK)
 LIST_ENTRY LdrpHashTable[LDRP_HASH_TABLE_SIZE];
 
 
@@ -192,7 +165,8 @@ LIST_ENTRY LdrpHashTable[LDRP_HASH_TABLE_SIZE];
 #define LDRP_BAD_DLL LongToPtr(0xffbadd11)
 
 LIST_ENTRY LdrpDefaultPathCache;
-typedef struct _LDRP_PATH_CACHE {
+typedef struct _LDRP_PATH_CACHE
+{
     LIST_ENTRY Links;
     UNICODE_STRING Component;
     HANDLE Directory;
@@ -200,95 +174,45 @@ typedef struct _LDRP_PATH_CACHE {
 
 
 NTSTATUS
-LdrpSnapIAT(
-    IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry_Export,
-    IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry_Import,
-    IN PIMAGE_IMPORT_DESCRIPTOR ImportDescriptor,
-    IN BOOLEAN SnapForwardersOnly
-    );
+LdrpSnapIAT(IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry_Export, IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry_Import,
+            IN PIMAGE_IMPORT_DESCRIPTOR ImportDescriptor, IN BOOLEAN SnapForwardersOnly);
 
 NTSTATUS
-LdrpSnapThunk(
-    IN PVOID DllBase,
-    IN PVOID ImageBase,
-    IN PIMAGE_THUNK_DATA OriginalThunk,
-    IN OUT PIMAGE_THUNK_DATA Thunk,
-    IN PIMAGE_EXPORT_DIRECTORY ExportDirectory,
-    IN ULONG ExportSize,
-    IN BOOLEAN StaticSnap,
-    IN PSZ DllName OPTIONAL
-    );
+LdrpSnapThunk(IN PVOID DllBase, IN PVOID ImageBase, IN PIMAGE_THUNK_DATA OriginalThunk, IN OUT PIMAGE_THUNK_DATA Thunk,
+              IN PIMAGE_EXPORT_DIRECTORY ExportDirectory, IN ULONG ExportSize, IN BOOLEAN StaticSnap,
+              IN PSZ DllName OPTIONAL);
 
 USHORT
-LdrpNameToOrdinal(
-    IN PSZ Name,
-    IN ULONG NumberOfNames,
-    IN PVOID DllBase,
-    IN PULONG NameTableBase,
-    IN PUSHORT NameOrdinalTableBase
-    );
+LdrpNameToOrdinal(IN PSZ Name, IN ULONG NumberOfNames, IN PVOID DllBase, IN PULONG NameTableBase,
+                  IN PUSHORT NameOrdinalTableBase);
 
 PLDR_DATA_TABLE_ENTRY
-LdrpAllocateDataTableEntry(
-    IN PVOID DllBase
-    );
+LdrpAllocateDataTableEntry(IN PVOID DllBase);
 
-VOID
-LdrpDeallocateDataTableEntry(
-    IN PLDR_DATA_TABLE_ENTRY Entry
-    );
+VOID LdrpDeallocateDataTableEntry(IN PLDR_DATA_TABLE_ENTRY Entry);
 
-VOID
-LdrpFinalizeAndDeallocateDataTableEntry(
-    IN PLDR_DATA_TABLE_ENTRY Entry
-    );
+VOID LdrpFinalizeAndDeallocateDataTableEntry(IN PLDR_DATA_TABLE_ENTRY Entry);
 
 BOOLEAN
-LdrpCheckForLoadedDll(
-    IN PWSTR DllPath OPTIONAL,
-    IN PUNICODE_STRING DllName,
-    IN BOOLEAN StaticLink,
-    IN BOOLEAN Redirected,
-    OUT PLDR_DATA_TABLE_ENTRY *LdrDataTableEntry
-    );
+LdrpCheckForLoadedDll(IN PWSTR DllPath OPTIONAL, IN PUNICODE_STRING DllName, IN BOOLEAN StaticLink,
+                      IN BOOLEAN Redirected, OUT PLDR_DATA_TABLE_ENTRY *LdrDataTableEntry);
 
 BOOLEAN
-LdrpCheckForLoadedDllHandle(
-    IN PVOID DllHandle,
-    OUT PLDR_DATA_TABLE_ENTRY *LdrDataTableEntry
-    );
+LdrpCheckForLoadedDllHandle(IN PVOID DllHandle, OUT PLDR_DATA_TABLE_ENTRY *LdrDataTableEntry);
 
 NTSTATUS
-LdrpMapDll(
-    IN PWSTR DllPath OPTIONAL,
-    IN PWSTR DllName,
-    IN PULONG DllCharacteristics OPTIONAL,
-    IN BOOLEAN StaticLink,
-    IN BOOLEAN Redirected,
-    OUT PLDR_DATA_TABLE_ENTRY *LdrDataTableEntry
-    );
+LdrpMapDll(IN PWSTR DllPath OPTIONAL, IN PWSTR DllName, IN PULONG DllCharacteristics OPTIONAL, IN BOOLEAN StaticLink,
+           IN BOOLEAN Redirected, OUT PLDR_DATA_TABLE_ENTRY *LdrDataTableEntry);
 
 NTSTATUS
-LdrpWalkImportDescriptor(
-    IN PWSTR DllPath OPTIONAL,
-    IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry
-    );
+LdrpWalkImportDescriptor(IN PWSTR DllPath OPTIONAL, IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry);
 
 NTSTATUS
-LdrpRunInitializeRoutines(
-    IN PCONTEXT Context OPTIONAL
-    );
+LdrpRunInitializeRoutines(IN PCONTEXT Context OPTIONAL);
 
-int
-LdrpInitializeProcessWrapperFilter(
-    IN const struct _EXCEPTION_POINTERS *ExceptionPointers
-    );
+int LdrpInitializeProcessWrapperFilter(IN const struct _EXCEPTION_POINTERS *ExceptionPointers);
 
-int
-LdrpGenericExceptionFilter(
-    IN const struct _EXCEPTION_POINTERS *ExceptionPointers,
-    IN PCSTR FunctionName
-    );
+int LdrpGenericExceptionFilter(IN const struct _EXCEPTION_POINTERS *ExceptionPointers, IN PCSTR FunctionName);
 
 
 //
@@ -335,97 +259,51 @@ LdrpPinLoadedDll(
     IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry
     );
 */
-#define LdrpReferenceLoadedDll(LdrDataTableEntry) LdrpUpdateLoadCount2(LdrDataTableEntry, LDRP_UPDATE_LOAD_COUNT_INCREMENT)
-#define LdrpDereferenceLoadedDll(LdrDataTableEntry) LdrpUpdateLoadCount2(LdrDataTableEntry, LDRP_UPDATE_LOAD_COUNT_DECREMENT)
+#define LdrpReferenceLoadedDll(LdrDataTableEntry) \
+    LdrpUpdateLoadCount2(LdrDataTableEntry, LDRP_UPDATE_LOAD_COUNT_INCREMENT)
+#define LdrpDereferenceLoadedDll(LdrDataTableEntry) \
+    LdrpUpdateLoadCount2(LdrDataTableEntry, LDRP_UPDATE_LOAD_COUNT_DECREMENT)
 #define LdrpPinLoadedDll(LdrDataTableEntry) LdrpUpdateLoadCount2(LdrDataTableEntry, LDRP_UPDATE_LOAD_COUNT_PIN)
 
 #define LDRP_UPDATE_LOAD_COUNT_INCREMENT (1)
 #define LDRP_UPDATE_LOAD_COUNT_DECREMENT (2)
-#define LDRP_UPDATE_LOAD_COUNT_PIN       (3)
+#define LDRP_UPDATE_LOAD_COUNT_PIN (3)
 
-VOID
-LdrpUpdateLoadCount3(
-    IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry,
-    IN ULONG UpdateCountHow,
-    IN OUT PUNICODE_STRING PreAllocatedRedirectionBuffer OPTIONAL
-    );
+VOID LdrpUpdateLoadCount3(IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry, IN ULONG UpdateCountHow,
+                          IN OUT PUNICODE_STRING PreAllocatedRedirectionBuffer OPTIONAL);
 
-VOID
-LdrpUpdateLoadCount2(
-    IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry,
-    IN ULONG UpdateCountHow
-    );
+VOID LdrpUpdateLoadCount2(IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry, IN ULONG UpdateCountHow);
 
 NTSTATUS
-LdrpInitializeProcess(
-    IN PCONTEXT Context OPTIONAL,
-    IN PVOID SystemDllBase,
-    IN PUNICODE_STRING UnicodeImageName,
-    IN BOOLEAN UseCOR,
-    IN BOOLEAN ImageFileOptionsPresent
-    );
+LdrpInitializeProcess(IN PCONTEXT Context OPTIONAL, IN PVOID SystemDllBase, IN PUNICODE_STRING UnicodeImageName,
+                      IN BOOLEAN UseCOR, IN BOOLEAN ImageFileOptionsPresent);
 
-VOID
-LdrpInitialize(
-    IN PCONTEXT Context,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    );
+VOID LdrpInitialize(IN PCONTEXT Context, IN PVOID SystemArgument1, IN PVOID SystemArgument2);
 
-VOID
-LdrpInsertMemoryTableEntry(
-    IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry
-    );
+VOID LdrpInsertMemoryTableEntry(IN PLDR_DATA_TABLE_ENTRY LdrDataTableEntry);
 
 NTSTATUS
-LdrpResolveDllName(
-    IN PWSTR DllPath OPTIONAL,
-    IN PWSTR DllName,
-    IN BOOLEAN Redirected,
-    OUT PUNICODE_STRING FullDllName,
-    OUT PUNICODE_STRING BaseDllName,
-    OUT PHANDLE DllFile
-    );
+LdrpResolveDllName(IN PWSTR DllPath OPTIONAL, IN PWSTR DllName, IN BOOLEAN Redirected, OUT PUNICODE_STRING FullDllName,
+                   OUT PUNICODE_STRING BaseDllName, OUT PHANDLE DllFile);
 
 NTSTATUS
-LdrpResolveDllNameForAppPrivateRedirection(
-    IN PCUNICODE_STRING DllName,
-    OUT PUNICODE_STRING FullDllName
-    );
+LdrpResolveDllNameForAppPrivateRedirection(IN PCUNICODE_STRING DllName, OUT PUNICODE_STRING FullDllName);
 
 NTSTATUS
-LdrpCreateDllSection(
-    IN PUNICODE_STRING FullDllName,
-    IN HANDLE DllFile,
-    IN PUNICODE_STRING BaseName,
-    IN PULONG DllCharacteristics OPTIONAL,
-    OUT PHANDLE SectionHandle
-    );
+LdrpCreateDllSection(IN PUNICODE_STRING FullDllName, IN HANDLE DllFile, IN PUNICODE_STRING BaseName,
+                     IN PULONG DllCharacteristics OPTIONAL, OUT PHANDLE SectionHandle);
 
-VOID
-LdrpInitializePathCache(
-    VOID
-    );
+VOID LdrpInitializePathCache(VOID);
 
 PVOID
-LdrpFetchAddressOfEntryPoint(
-    IN PVOID Base
-    );
+LdrpFetchAddressOfEntryPoint(IN PVOID Base);
 
 NTSTATUS
-LdrpCheckForKnownDll(
-    IN PWSTR DllName,
-    OUT PUNICODE_STRING FullDllName,
-    OUT PUNICODE_STRING BaseDllName,
-    OUT HANDLE *Section
-    );
+LdrpCheckForKnownDll(IN PWSTR DllName, OUT PUNICODE_STRING FullDllName, OUT PUNICODE_STRING BaseDllName,
+                     OUT HANDLE *Section);
 
 NTSTATUS
-LdrpSetProtection(
-    IN PVOID Base,
-    IN BOOLEAN Reset,
-    IN BOOLEAN StaticLink
-    );
+LdrpSetProtection(IN PVOID Base, IN BOOLEAN Reset, IN BOOLEAN StaticLink);
 
 #if DBG
 ULONG LdrpCompareCount;
@@ -470,7 +348,8 @@ extern UNICODE_STRING DefaultExtension;
 extern UNICODE_STRING User32String;
 extern UNICODE_STRING Kernel32String;
 
-typedef struct _LDRP_TLS_ENTRY {
+typedef struct _LDRP_TLS_ENTRY
+{
     LIST_ENTRY Links;
     IMAGE_TLS_DIRECTORY Tls;
 } LDRP_TLS_ENTRY, *PLDRP_TLS_ENTRY;
@@ -479,84 +358,47 @@ LIST_ENTRY LdrpTlsList;
 ULONG LdrpNumberOfTlsEntries;
 
 NTSTATUS
-LdrpInitializeTls(
-        VOID
-        );
+LdrpInitializeTls(VOID);
 
 NTSTATUS
-LdrpAllocateTls(
-        VOID
-        );
-VOID
-LdrpFreeTls(
-        VOID
-        );
+LdrpAllocateTls(VOID);
+VOID LdrpFreeTls(VOID);
 
-VOID
-LdrpCallTlsInitializers(
-    PVOID DllBase,
-    ULONG Reason
-    );
+VOID LdrpCallTlsInitializers(PVOID DllBase, ULONG Reason);
 
 NTSTATUS
-LdrpAllocateUnicodeString(
-    OUT PUNICODE_STRING StringOut,
-    IN USHORT Length
-    );
+LdrpAllocateUnicodeString(OUT PUNICODE_STRING StringOut, IN USHORT Length);
 
 NTSTATUS
-LdrpCopyUnicodeString(
-    OUT PUNICODE_STRING StringOut,
-    IN PCUNICODE_STRING StringIn
-    );
+LdrpCopyUnicodeString(OUT PUNICODE_STRING StringOut, IN PCUNICODE_STRING StringIn);
 
-VOID
-LdrpFreeUnicodeString(
-    IN OUT PUNICODE_STRING String
-    );
+VOID LdrpFreeUnicodeString(IN OUT PUNICODE_STRING String);
 
-VOID
-LdrpEnsureLoaderLockIsHeld(
-    VOID
-    );
+VOID LdrpEnsureLoaderLockIsHeld(VOID);
 
 #define LDRP_LOAD_DLL_FLAG_DLL_IS_REDIRECTED (0x00000001)
 
 NTSTATUS
-LdrpLoadDll(
-    IN ULONG Flags OPTIONAL,
-    IN PWSTR DllPath OPTIONAL,
-    IN PULONG DllCharacteristics OPTIONAL,
-    IN PUNICODE_STRING DllName,
-    OUT PVOID *DllHandle,
-    IN BOOLEAN RunInitRoutines
-    );
+LdrpLoadDll(IN ULONG Flags OPTIONAL, IN PWSTR DllPath OPTIONAL, IN PULONG DllCharacteristics OPTIONAL,
+            IN PUNICODE_STRING DllName, OUT PVOID *DllHandle, IN BOOLEAN RunInitRoutines);
 
 NTSTATUS
 NTAPI
-LdrpGetProcedureAddress(
-    IN PVOID DllHandle,
-    IN CONST ANSI_STRING* ProcedureName OPTIONAL,
-    IN ULONG ProcedureNumber OPTIONAL,
-    OUT PVOID *ProcedureAddress,
-    IN BOOLEAN RunInitRoutines
-    );
+LdrpGetProcedureAddress(IN PVOID DllHandle, IN CONST ANSI_STRING *ProcedureName OPTIONAL,
+                        IN ULONG ProcedureNumber OPTIONAL, OUT PVOID *ProcedureAddress, IN BOOLEAN RunInitRoutines);
 
 PLIST_ENTRY
-RtlpLockProcessHeapsList( VOID );
+RtlpLockProcessHeapsList(VOID);
 
 
-VOID
-RtlpUnlockProcessHeapsList( VOID );
+VOID RtlpUnlockProcessHeapsList(VOID);
 
 BOOLEAN
-RtlpSerializeHeap(
-    IN PVOID HeapHandle
-    );
+RtlpSerializeHeap(IN PVOID HeapHandle);
 
 ULONG NtdllBaseTag;
 
-#define MAKE_TAG( t ) (RTL_HEAP_MAKE_TAG( NtdllBaseTag, t ))
+#define MAKE_TAG(t) (RTL_HEAP_MAKE_TAG(NtdllBaseTag, t))
 
 #define CSR_TAG 0
 #define LDR_TAG 1
@@ -568,88 +410,66 @@ ULONG NtdllBaseTag;
 #define ATOM_TAG 7
 
 PVOID
-LdrpDefineDllTag(
-    PWSTR TagName,
-    PUSHORT TagIndex
-    );
+LdrpDefineDllTag(PWSTR TagName, PUSHORT TagIndex);
 
-#define LDRP_ACTIVATE_ACTIVATION_CONTEXT(LdrpDllActivateActivationContext_TableEntry) \
-    { \
-        RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME LdrpDllActivateActivationContext_ActivationFrame = \
-            {   sizeof(LdrpDllActivateActivationContext_ActivationFrame), \
-                RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_FORMAT_WHISTLER \
-            }; \
-     \
-        RtlActivateActivationContextUnsafeFast(&LdrpDllActivateActivationContext_ActivationFrame, LdrpDllActivateActivationContext_TableEntry->EntryPointActivationContext); \
-        __try {
+#define LDRP_ACTIVATE_ACTIVATION_CONTEXT(LdrpDllActivateActivationContext_TableEntry)                            \
+    {                                                                                                            \
+        RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME LdrpDllActivateActivationContext_ActivationFrame = { \
+            sizeof(LdrpDllActivateActivationContext_ActivationFrame),                                            \
+            RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_FORMAT_WHISTLER                                  \
+        };                                                                                                       \
+                                                                                                                 \
+        RtlActivateActivationContextUnsafeFast(                                                                  \
+            &LdrpDllActivateActivationContext_ActivationFrame,                                                   \
+            LdrpDllActivateActivationContext_TableEntry->EntryPointActivationContext);                           \
+        __try                                                                                                    \
+        {
 
-#define LDRP_DEACTIVATE_ACTIVATION_CONTEXT() \
-        } __finally { \
-            RtlDeactivateActivationContextUnsafeFast(&LdrpDllActivateActivationContext_ActivationFrame); \
-        } \
+#define LDRP_DEACTIVATE_ACTIVATION_CONTEXT()                                                         \
+    }                                                                                                \
+    __finally                                                                                        \
+    {                                                                                                \
+        RtlDeactivateActivationContextUnsafeFast(&LdrpDllActivateActivationContext_ActivationFrame); \
+    }                                                                                                \
     }
 
 #if defined(_X86_)
 BOOLEAN
-LdrpCallInitRoutine(
-    IN PDLL_INIT_ROUTINE InitRoutine,
-    IN PVOID DllHandle,
-    IN ULONG Reason,
-    IN PCONTEXT Context OPTIONAL
-    );
+LdrpCallInitRoutine(IN PDLL_INIT_ROUTINE InitRoutine, IN PVOID DllHandle, IN ULONG Reason,
+                    IN PCONTEXT Context OPTIONAL);
 #else
 
-#define LdrpCallInitRoutine(InitRoutine, DllHandle, Reason, Context)    \
-    (InitRoutine)((DllHandle), (Reason), (Context))
+#define LdrpCallInitRoutine(InitRoutine, DllHandle, Reason, Context) (InitRoutine)((DllHandle), (Reason), (Context))
 
 #endif
 
 NTSTATUS
-LdrpCorValidateImage(
-    IN OUT PVOID *pImageBase,
-    IN LPWSTR ImageName
-    );
+LdrpCorValidateImage(IN OUT PVOID *pImageBase, IN LPWSTR ImageName);
 
-VOID
-LdrpCorUnloadImage(
-    IN PVOID ImageBase
-    );
+VOID LdrpCorUnloadImage(IN PVOID ImageBase);
 
-VOID
-LdrpCorReplaceStartContext(
-    IN PCONTEXT Context
-    );
+VOID LdrpCorReplaceStartContext(IN PCONTEXT Context);
 
 typedef VOID (*PCOR_EXE_MAIN)(VOID);
 extern PCOR_EXE_MAIN CorExeMain;
 
-VOID
-LdrpSendDllUnloadedNotifications(
-    PLDR_DATA_TABLE_ENTRY Entry,
-    ULONG Flags
-    );
+VOID LdrpSendDllUnloadedNotifications(PLDR_DATA_TABLE_ENTRY Entry, ULONG Flags);
 
-VOID
-LdrpSendDllLoadedNotifications(
-    PLDR_DATA_TABLE_ENTRY Entry,
-    ULONG Flags
-    );
+VOID LdrpSendDllLoadedNotifications(PLDR_DATA_TABLE_ENTRY Entry, ULONG Flags);
 
 //
 // The prototypes for the shim engine callback
 //
 
-typedef void (*PFNSE_INSTALLBEFOREINIT)(PUNICODE_STRING UnicodeImageName,
-                                        PVOID           pShimExeData);
+typedef void (*PFNSE_INSTALLBEFOREINIT)(PUNICODE_STRING UnicodeImageName, PVOID pShimExeData);
 
-typedef BOOLEAN (*PFNSE_INSTALLAFTERINIT)(PUNICODE_STRING UnicodeImageName,
-                                          PVOID           pShimExeData);
+typedef BOOLEAN (*PFNSE_INSTALLAFTERINIT)(PUNICODE_STRING UnicodeImageName, PVOID pShimExeData);
 
 typedef void (*PFNSE_DLLLOADED)(PLDR_DATA_TABLE_ENTRY LdrEntry);
 
 typedef void (*PFNSE_DLLUNLOADED)(PLDR_DATA_TABLE_ENTRY LdrEntry);
 
-typedef void (*PFNSE_GETPROCADDRESS)(PVOID* pProcAddress);
+typedef void (*PFNSE_GETPROCADDRESS)(PVOID *pProcAddress);
 
 typedef int (*PFNSE_ISSHIMDLL)(PVOID pDllBase);
 
@@ -661,26 +481,16 @@ typedef void (*PFNSE_PROCESSDYING)(void);
 //
 
 PVOID
-RtlpGetStackTraceAddress (
-    USHORT Index
-    );
+RtlpGetStackTraceAddress(USHORT Index);
 
 //
 // Function defined in ntos\rtl\stktrace.c needed to speedup
 // RtlCaptureStackContext on x86.
 //
 
-VOID
-RtlpStkMarkDllRange (
-    PLDR_DATA_TABLE_ENTRY DllEntry
-    );
+VOID RtlpStkMarkDllRange(PLDR_DATA_TABLE_ENTRY DllEntry);
 
-VOID
-RtlpCheckForCriticalSectionsInMemoryRange(
-    IN PVOID StartAddress,
-    IN SIZE_T RegionSize,
-    IN PVOID Information
-    );
+VOID RtlpCheckForCriticalSectionsInMemoryRange(IN PVOID StartAddress, IN SIZE_T RegionSize, IN PVOID Information);
 
 //
 // resource.c
@@ -689,9 +499,7 @@ RtlpCheckForCriticalSectionsInMemoryRange(
 extern BOOLEAN RtlpCriticalSectionVerifier;
 
 BOOLEAN
-RtlpCreateCriticalSectionSem(
-    IN PRTL_CRITICAL_SECTION CriticalSection
-    );
+RtlpCreateCriticalSectionSem(IN PRTL_CRITICAL_SECTION CriticalSection);
 
 //
 // Application verifier

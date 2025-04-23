@@ -30,21 +30,15 @@ Revision History:
 // really a kapc and not something else, like deallocated pool.
 //
 
-#define ASSERT_APC(E) {             \
-    ASSERT((E)->Type == ApcObject); \
-}
+#define ASSERT_APC(E)                   \
+    {                                   \
+        ASSERT((E)->Type == ApcObject); \
+    }
 
-VOID
-KeInitializeApc (
-    IN PRKAPC Apc,
-    IN PRKTHREAD Thread,
-    IN KAPC_ENVIRONMENT Environment,
-    IN PKKERNEL_ROUTINE KernelRoutine,
-    IN PKRUNDOWN_ROUTINE RundownRoutine OPTIONAL,
-    IN PKNORMAL_ROUTINE NormalRoutine OPTIONAL,
-    IN KPROCESSOR_MODE ApcMode OPTIONAL,
-    IN PVOID NormalContext OPTIONAL
-    )
+VOID KeInitializeApc(IN PRKAPC Apc, IN PRKTHREAD Thread, IN KAPC_ENVIRONMENT Environment,
+                     IN PKKERNEL_ROUTINE KernelRoutine, IN PKRUNDOWN_ROUTINE RundownRoutine OPTIONAL,
+                     IN PKNORMAL_ROUTINE NormalRoutine OPTIONAL, IN KPROCESSOR_MODE ApcMode OPTIONAL,
+                     IN PVOID NormalContext OPTIONAL)
 
 /*++
 
@@ -106,10 +100,12 @@ Return Value:
     // APC. Otherwise, the processor mode is taken from the argument list.
     //
 
-    if (Environment == CurrentApcEnvironment) {
+    if (Environment == CurrentApcEnvironment)
+    {
         Apc->ApcStateIndex = Thread->ApcStateIndex;
-
-    } else {
+    }
+    else
+    {
 
         ASSERT((Environment <= Thread->ApcStateIndex) || (Environment == InsertApcEnvironment));
 
@@ -120,11 +116,13 @@ Return Value:
     Apc->KernelRoutine = KernelRoutine;
     Apc->RundownRoutine = RundownRoutine;
     Apc->NormalRoutine = NormalRoutine;
-    if (ARGUMENT_PRESENT(NormalRoutine)) {
+    if (ARGUMENT_PRESENT(NormalRoutine))
+    {
         Apc->ApcMode = ApcMode;
         Apc->NormalContext = NormalContext;
-
-    } else {
+    }
+    else
+    {
         Apc->ApcMode = KernelMode;
         Apc->NormalContext = NIL;
     }
@@ -134,10 +132,7 @@ Return Value:
 }
 
 PLIST_ENTRY
-KeFlushQueueApc (
-    IN PKTHREAD Thread,
-    IN KPROCESSOR_MODE ApcMode
-    )
+KeFlushQueueApc(IN PKTHREAD Thread, IN KPROCESSOR_MODE ApcMode)
 
 /*++
 
@@ -172,7 +167,8 @@ Return Value:
 
     ASSERT(KeGetCurrentIrql() <= DISPATCH_LEVEL);
 
-    if (IsListEmpty(&Thread->ApcState.ApcListHead[ApcMode])) {
+    if (IsListEmpty(&Thread->ApcState.ApcListHead[ApcMode]))
+    {
         return NULL;
     }
 
@@ -192,13 +188,16 @@ Return Value:
     //
 
     FirstEntry = Thread->ApcState.ApcListHead[ApcMode].Flink;
-    if (FirstEntry == &Thread->ApcState.ApcListHead[ApcMode]) {
+    if (FirstEntry == &Thread->ApcState.ApcListHead[ApcMode])
+    {
         FirstEntry = (PLIST_ENTRY)NULL;
-
-    } else {
+    }
+    else
+    {
         RemoveEntryList(&Thread->ApcState.ApcListHead[ApcMode]);
         NextEntry = FirstEntry;
-        do {
+        do
+        {
             Apc = CONTAINING_RECORD(NextEntry, KAPC, ApcListEntry);
             Apc->Inserted = FALSE;
             NextEntry = NextEntry->Flink;
@@ -224,12 +223,7 @@ Return Value:
 }
 
 BOOLEAN
-KeInsertQueueApc (
-    IN PRKAPC Apc,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2,
-    IN KPRIORITY Increment
-    )
+KeInsertQueueApc(IN PRKAPC Apc, IN PVOID SystemArgument1, IN PVOID SystemArgument2, IN KPRIORITY Increment)
 
 /*++
 
@@ -282,10 +276,12 @@ Return Value:
     // system parameter values in APC object, and attempt to queue APC.
     //
 
-    if (Thread->ApcQueueable == FALSE) {
+    if (Thread->ApcQueueable == FALSE)
+    {
         Inserted = FALSE;
-
-    } else {
+    }
+    else
+    {
         Apc->SystemArgument1 = SystemArgument1;
         Apc->SystemArgument2 = SystemArgument2;
         Inserted = KiInsertQueueApc(Apc, Increment);
@@ -303,9 +299,7 @@ Return Value:
 }
 
 BOOLEAN
-KeRemoveQueueApc (
-    IN PKAPC Apc
-    )
+KeRemoveQueueApc(IN PKAPC Apc)
 
 /*++
 
@@ -353,15 +347,19 @@ Return Value:
     //
 
     Inserted = Apc->Inserted;
-    if (Inserted != FALSE) {
+    if (Inserted != FALSE)
+    {
         Apc->Inserted = FALSE;
         ApcState = Thread->ApcStatePointer[Apc->ApcStateIndex];
         RemoveEntryList(&Apc->ApcListEntry);
-        if (IsListEmpty(&ApcState->ApcListHead[Apc->ApcMode]) != FALSE) {
-            if (Apc->ApcMode == KernelMode) {
+        if (IsListEmpty(&ApcState->ApcListHead[Apc->ApcMode]) != FALSE)
+        {
+            if (Apc->ApcMode == KernelMode)
+            {
                 ApcState->KernelApcPending = FALSE;
-
-            } else {
+            }
+            else
+            {
                 ApcState->UserApcPending = FALSE;
             }
         }

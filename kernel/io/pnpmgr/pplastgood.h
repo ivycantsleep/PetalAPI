@@ -19,9 +19,4 @@ Revision History:
 
 --*/
 
-VOID
-PpLastGoodDoBootProcessing(
-    VOID
-    );
-
-
+VOID PpLastGoodDoBootProcessing(VOID);

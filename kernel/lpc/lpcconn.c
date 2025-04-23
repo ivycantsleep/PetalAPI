@@ -25,32 +25,22 @@ Revision History:
 //
 
 PVOID
-LpcpFreeConMsg(
-    IN PLPCP_MESSAGE *Msg,
-    PLPCP_CONNECTION_MESSAGE *ConnectMsg,
-    IN PETHREAD CurrentThread
-    );
+LpcpFreeConMsg(IN PLPCP_MESSAGE *Msg, PLPCP_CONNECTION_MESSAGE *ConnectMsg, IN PETHREAD CurrentThread);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,NtConnectPort)
-#pragma alloc_text(PAGE,NtSecureConnectPort)
-#pragma alloc_text(PAGE,LpcpFreeConMsg)
+#pragma alloc_text(PAGE, NtConnectPort)
+#pragma alloc_text(PAGE, NtSecureConnectPort)
+#pragma alloc_text(PAGE, LpcpFreeConMsg)
 #endif
 
-
+
 NTSYSAPI
 NTSTATUS
 NTAPI
-NtConnectPort (
-    OUT PHANDLE PortHandle,
-    IN PUNICODE_STRING PortName,
-    IN PSECURITY_QUALITY_OF_SERVICE SecurityQos,
-    IN OUT PPORT_VIEW ClientView OPTIONAL,
-    IN OUT PREMOTE_PORT_VIEW ServerView OPTIONAL,
-    OUT PULONG MaxMessageLength OPTIONAL,
-    IN OUT PVOID ConnectionInformation OPTIONAL,
-    IN OUT PULONG ConnectionInformationLength OPTIONAL
-    )
+NtConnectPort(OUT PHANDLE PortHandle, IN PUNICODE_STRING PortName, IN PSECURITY_QUALITY_OF_SERVICE SecurityQos,
+              IN OUT PPORT_VIEW ClientView OPTIONAL, IN OUT PREMOTE_PORT_VIEW ServerView OPTIONAL,
+              OUT PULONG MaxMessageLength OPTIONAL, IN OUT PVOID ConnectionInformation OPTIONAL,
+              IN OUT PULONG ConnectionInformationLength OPTIONAL)
 
 /*++
 
@@ -69,30 +59,16 @@ Return Value:
 --*/
 
 {
-    return NtSecureConnectPort( PortHandle,
-                                PortName,
-                                SecurityQos,
-                                ClientView,
-                                NULL,
-                                ServerView,
-                                MaxMessageLength,
-                                ConnectionInformation,
-                                ConnectionInformationLength );
+    return NtSecureConnectPort(PortHandle, PortName, SecurityQos, ClientView, NULL, ServerView, MaxMessageLength,
+                               ConnectionInformation, ConnectionInformationLength);
 }
 
-
+
 NTSTATUS
-NtSecureConnectPort (
-    OUT PHANDLE PortHandle,
-    IN PUNICODE_STRING PortName,
-    IN PSECURITY_QUALITY_OF_SERVICE SecurityQos,
-    IN OUT PPORT_VIEW ClientView OPTIONAL,
-    IN PSID RequiredServerSid,
-    IN OUT PREMOTE_PORT_VIEW ServerView OPTIONAL,
-    OUT PULONG MaxMessageLength OPTIONAL,
-    IN OUT PVOID ConnectionInformation OPTIONAL,
-    IN OUT PULONG ConnectionInformationLength OPTIONAL
-    )
+NtSecureConnectPort(OUT PHANDLE PortHandle, IN PUNICODE_STRING PortName, IN PSECURITY_QUALITY_OF_SERVICE SecurityQos,
+                    IN OUT PPORT_VIEW ClientView OPTIONAL, IN PSID RequiredServerSid,
+                    IN OUT PREMOTE_PORT_VIEW ServerView OPTIONAL, OUT PULONG MaxMessageLength OPTIONAL,
+                    IN OUT PVOID ConnectionInformation OPTIONAL, IN OUT PULONG ConnectionInformationLength OPTIONAL)
 
 /*++
 
@@ -269,106 +245,113 @@ Return Value:
     PreviousMode = KeGetPreviousMode();
     ConnectionInfoLength = 0;
 
-    if (PreviousMode != KernelMode) {
+    if (PreviousMode != KernelMode)
+    {
 
-        try {
+        try
+        {
 
-            ProbeForWriteHandle( PortHandle );
+            ProbeForWriteHandle(PortHandle);
 
-            if (ARGUMENT_PRESENT( ClientView )) {
+            if (ARGUMENT_PRESENT(ClientView))
+            {
 
-                CapturedClientView = ProbeAndReadStructure( ClientView, PORT_VIEW );
+                CapturedClientView = ProbeAndReadStructure(ClientView, PORT_VIEW);
 
-                if (CapturedClientView.Length != sizeof( *ClientView )) {
+                if (CapturedClientView.Length != sizeof(*ClientView))
+                {
 
-                    return( STATUS_INVALID_PARAMETER );
+                    return (STATUS_INVALID_PARAMETER);
                 }
 
-                ProbeForWriteSmallStructure( ClientView,
-                                             sizeof( *ClientView ),
-                                             sizeof( ULONG ));
+                ProbeForWriteSmallStructure(ClientView, sizeof(*ClientView), sizeof(ULONG));
             }
 
-            if (ARGUMENT_PRESENT( ServerView )) {
+            if (ARGUMENT_PRESENT(ServerView))
+            {
 
-                if (ProbeAndReadUlong( &ServerView->Length ) != sizeof( *ServerView )) {
+                if (ProbeAndReadUlong(&ServerView->Length) != sizeof(*ServerView))
+                {
 
-                    return( STATUS_INVALID_PARAMETER );
+                    return (STATUS_INVALID_PARAMETER);
                 }
 
-                ProbeForWriteSmallStructure( ServerView,
-                                             sizeof( *ServerView ),
-                                             sizeof( ULONG ));
+                ProbeForWriteSmallStructure(ServerView, sizeof(*ServerView), sizeof(ULONG));
             }
 
-            if (ARGUMENT_PRESENT( MaxMessageLength )) {
+            if (ARGUMENT_PRESENT(MaxMessageLength))
+            {
 
-                ProbeForWriteUlong( MaxMessageLength );
+                ProbeForWriteUlong(MaxMessageLength);
             }
 
-            if (ARGUMENT_PRESENT( ConnectionInformationLength )) {
+            if (ARGUMENT_PRESENT(ConnectionInformationLength))
+            {
 
-                ConnectionInfoLength = ProbeAndReadUlong( ConnectionInformationLength );
-                ProbeForWriteUlong( ConnectionInformationLength );
+                ConnectionInfoLength = ProbeAndReadUlong(ConnectionInformationLength);
+                ProbeForWriteUlong(ConnectionInformationLength);
             }
 
-            if (ARGUMENT_PRESENT( ConnectionInformation )) {
+            if (ARGUMENT_PRESENT(ConnectionInformation))
+            {
 
-                ProbeForWrite( ConnectionInformation,
-                               ConnectionInfoLength,
-                               sizeof( UCHAR ));
+                ProbeForWrite(ConnectionInformation, ConnectionInfoLength, sizeof(UCHAR));
             }
 
-            CapturedQos = ProbeAndReadStructure( SecurityQos, SECURITY_QUALITY_OF_SERVICE );
+            CapturedQos = ProbeAndReadStructure(SecurityQos, SECURITY_QUALITY_OF_SERVICE);
 
             CapturedRequiredServerSid = RequiredServerSid;
 
-            if (ARGUMENT_PRESENT( RequiredServerSid )) {
+            if (ARGUMENT_PRESENT(RequiredServerSid))
+            {
 
-                Status = SeCaptureSid( RequiredServerSid,
-                                       PreviousMode,
-                                       NULL,
-                                       0,
-                                       PagedPool,
-                                       TRUE,
-                                       &CapturedRequiredServerSid );
+                Status =
+                    SeCaptureSid(RequiredServerSid, PreviousMode, NULL, 0, PagedPool, TRUE, &CapturedRequiredServerSid);
 
-                if (!NT_SUCCESS(Status)) {
+                if (!NT_SUCCESS(Status))
+                {
 
                     return Status;
                 }
             }
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
-        } except( EXCEPTION_EXECUTE_HANDLER ) {
-
-            return( GetExceptionCode() );
+            return (GetExceptionCode());
         }
 
-    //
-    //  Otherwise this is a kernel mode operation
-    //
+        //
+        //  Otherwise this is a kernel mode operation
+        //
+    }
+    else
+    {
 
-    } else {
+        if (ARGUMENT_PRESENT(ClientView))
+        {
 
-        if (ARGUMENT_PRESENT( ClientView )) {
+            if (ClientView->Length != sizeof(*ClientView))
+            {
 
-            if (ClientView->Length != sizeof( *ClientView )) {
-
-                return( STATUS_INVALID_PARAMETER );
+                return (STATUS_INVALID_PARAMETER);
             }
 
             CapturedClientView = *ClientView;
         }
 
-        if (ARGUMENT_PRESENT( ServerView )) {
+        if (ARGUMENT_PRESENT(ServerView))
+        {
 
-            if (ServerView->Length != sizeof( *ServerView )) {
+            if (ServerView->Length != sizeof(*ServerView))
+            {
 
-                return( STATUS_INVALID_PARAMETER );
+                return (STATUS_INVALID_PARAMETER);
             }
         }
 
-        if (ARGUMENT_PRESENT( ConnectionInformationLength )) {
+        if (ARGUMENT_PRESENT(ConnectionInformationLength))
+        {
 
             ConnectionInfoLength = *ConnectionInformationLength;
         }
@@ -382,30 +365,19 @@ Return Value:
     //  unsuccessful.
     //
 
-    Status = ObReferenceObjectByName( PortName,
-                                      0,
-                                      NULL,
-                                      PORT_CONNECT,
-                                      LpcPortObjectType,
-                                      PreviousMode,
-                                      NULL,
-                                      (PVOID *)&ConnectionPort );
+    Status = ObReferenceObjectByName(PortName, 0, NULL, PORT_CONNECT, LpcPortObjectType, PreviousMode, NULL,
+                                     (PVOID *)&ConnectionPort);
 
     //
     //  If the port type object didn't work then try for a waitable port type
     //  object
     //
 
-    if ( Status == STATUS_OBJECT_TYPE_MISMATCH ) {
+    if (Status == STATUS_OBJECT_TYPE_MISMATCH)
+    {
 
-        Status = ObReferenceObjectByName( PortName,
-                                          0,
-                                          NULL,
-                                          PORT_CONNECT,
-                                          LpcWaitablePortObjectType,
-                                          PreviousMode,
-                                          NULL,
-                                          (PVOID *)&ConnectionPort );
+        Status = ObReferenceObjectByName(PortName, 0, NULL, PORT_CONNECT, LpcWaitablePortObjectType, PreviousMode, NULL,
+                                         (PVOID *)&ConnectionPort);
     }
 
     //
@@ -413,29 +385,33 @@ Return Value:
     //  return error status back to our caller
     //
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        if (CapturedRequiredServerSid != RequiredServerSid) {
+        if (CapturedRequiredServerSid != RequiredServerSid)
+        {
 
-            SeReleaseSid( CapturedRequiredServerSid, PreviousMode, TRUE);
+            SeReleaseSid(CapturedRequiredServerSid, PreviousMode, TRUE);
         }
 
         return Status;
     }
 
-    LpcpTrace(("Connecting to port %wZ\n", PortName ));
+    LpcpTrace(("Connecting to port %wZ\n", PortName));
 
     //
     //  Error if user didn't give us a server communication port
     //
 
-    if ((ConnectionPort->Flags & PORT_TYPE) != SERVER_CONNECTION_PORT) {
+    if ((ConnectionPort->Flags & PORT_TYPE) != SERVER_CONNECTION_PORT)
+    {
 
-        ObDereferenceObject( ConnectionPort );
+        ObDereferenceObject(ConnectionPort);
 
-        if (CapturedRequiredServerSid != RequiredServerSid) {
+        if (CapturedRequiredServerSid != RequiredServerSid)
+        {
 
-            SeReleaseSid( CapturedRequiredServerSid, PreviousMode, TRUE);
+            SeReleaseSid(CapturedRequiredServerSid, PreviousMode, TRUE);
         }
 
         return STATUS_INVALID_PORT_HANDLE;
@@ -446,34 +422,37 @@ Return Value:
     //  the SID of the server process.  Fail if not equal.
     //
 
-    if (ARGUMENT_PRESENT( RequiredServerSid )) {
+    if (ARGUMENT_PRESENT(RequiredServerSid))
+    {
 
         PTOKEN_USER TokenInfo;
 
-        if (ConnectionPort->ServerProcess != NULL) {
+        if (ConnectionPort->ServerProcess != NULL)
+        {
 
-            PACCESS_TOKEN Token ;
+            PACCESS_TOKEN Token;
 
-            Token = PsReferencePrimaryToken( ConnectionPort->ServerProcess );
+            Token = PsReferencePrimaryToken(ConnectionPort->ServerProcess);
 
-    
-            Status = SeQueryInformationToken( Token,
-                                              TokenUser,
-                                              &TokenInfo );
-            
-            PsDereferencePrimaryTokenEx( ConnectionPort->ServerProcess, Token );
 
-            if (NT_SUCCESS( Status )) {
+            Status = SeQueryInformationToken(Token, TokenUser, &TokenInfo);
 
-                if (!RtlEqualSid( CapturedRequiredServerSid, TokenInfo->User.Sid )) {
+            PsDereferencePrimaryTokenEx(ConnectionPort->ServerProcess, Token);
+
+            if (NT_SUCCESS(Status))
+            {
+
+                if (!RtlEqualSid(CapturedRequiredServerSid, TokenInfo->User.Sid))
+                {
 
                     Status = STATUS_SERVER_SID_MISMATCH;
                 }
 
-                ExFreePool( TokenInfo );
+                ExFreePool(TokenInfo);
             }
-
-        } else {
+        }
+        else
+        {
 
             Status = STATUS_SERVER_SID_MISMATCH;
         }
@@ -483,9 +462,10 @@ Return Value:
         //  now release one if we had to capture it
         //
 
-        if (CapturedRequiredServerSid != RequiredServerSid) {
+        if (CapturedRequiredServerSid != RequiredServerSid)
+        {
 
-            SeReleaseSid( CapturedRequiredServerSid, PreviousMode, TRUE);
+            SeReleaseSid(CapturedRequiredServerSid, PreviousMode, TRUE);
         }
 
         //
@@ -493,9 +473,10 @@ Return Value:
         //  error to our caller
         //
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            ObDereferenceObject( ConnectionPort );
+            ObDereferenceObject(ConnectionPort);
 
             return Status;
         }
@@ -508,19 +489,13 @@ Return Value:
     //  will cause it to be deleted and return the system service status.
     //
 
-    Status = ObCreateObject( PreviousMode,
-                             LpcPortObjectType,
-                             NULL,
-                             PreviousMode,
-                             NULL,
-                             FIELD_OFFSET( LPCP_PORT_OBJECT, WaitEvent ),
-                             0,
-                             0,
-                             (PVOID *)&ClientPort );
+    Status = ObCreateObject(PreviousMode, LpcPortObjectType, NULL, PreviousMode, NULL,
+                            FIELD_OFFSET(LPCP_PORT_OBJECT, WaitEvent), 0, 0, (PVOID *)&ClientPort);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        ObDereferenceObject( ConnectionPort );
+        ObDereferenceObject(ConnectionPort);
 
         return Status;
     }
@@ -538,35 +513,35 @@ Return Value:
     //  fields.
     //
 
-    RtlZeroMemory( ClientPort, FIELD_OFFSET( LPCP_PORT_OBJECT, WaitEvent ));
+    RtlZeroMemory(ClientPort, FIELD_OFFSET(LPCP_PORT_OBJECT, WaitEvent));
 
     ClientPort->Flags = CLIENT_COMMUNICATION_PORT;
     ClientPort->ConnectionPort = ConnectionPort;
     ClientPort->MaxMessageLength = ConnectionPort->MaxMessageLength;
     ClientPort->SecurityQos = CapturedQos;
 
-    InitializeListHead( &ClientPort->LpcReplyChainHead );
-    InitializeListHead( &ClientPort->LpcDataInfoChainHead );
+    InitializeListHead(&ClientPort->LpcReplyChainHead);
+    InitializeListHead(&ClientPort->LpcDataInfoChainHead);
 
     //
     //  Set the security tracking mode, and initialize the client security
     //  context if it is static tracking.
     //
 
-    if (CapturedQos.ContextTrackingMode == SECURITY_DYNAMIC_TRACKING) {
+    if (CapturedQos.ContextTrackingMode == SECURITY_DYNAMIC_TRACKING)
+    {
 
         ClientPort->Flags |= PORT_DYNAMIC_SECURITY;
+    }
+    else
+    {
 
-    } else {
+        Status = SeCreateClientSecurity(CurrentThread, &CapturedQos, FALSE, &ClientPort->StaticSecurity);
 
-        Status = SeCreateClientSecurity( CurrentThread,
-                                         &CapturedQos,
-                                         FALSE,
-                                         &ClientPort->StaticSecurity );
+        if (!NT_SUCCESS(Status))
+        {
 
-        if (!NT_SUCCESS( Status )) {
-
-            ObDereferenceObject( ClientPort );
+            ObDereferenceObject(ClientPort);
 
             return Status;
         }
@@ -577,11 +552,12 @@ Return Value:
     //  replies.
     //
 
-    Status = LpcpInitializePortQueue( ClientPort );
+    Status = LpcpInitializePortQueue(ClientPort);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        ObDereferenceObject( ClientPort );
+        ObDereferenceObject(ClientPort);
 
         return Status;
     }
@@ -596,25 +572,21 @@ Return Value:
     //  request message.
     //
 
-    if (ARGUMENT_PRESENT( ClientView )) {
+    if (ARGUMENT_PRESENT(ClientView))
+    {
 
-        Status = ObReferenceObjectByHandle( CapturedClientView.SectionHandle,
-                                            SECTION_MAP_READ |
-                                            SECTION_MAP_WRITE,
-                                            MmSectionObjectType,
-                                            PreviousMode,
-                                            (PVOID *)&SectionToMap,
-                                            NULL );
+        Status = ObReferenceObjectByHandle(CapturedClientView.SectionHandle, SECTION_MAP_READ | SECTION_MAP_WRITE,
+                                           MmSectionObjectType, PreviousMode, (PVOID *)&SectionToMap, NULL);
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            ObDereferenceObject( ClientPort );
+            ObDereferenceObject(ClientPort);
 
             return Status;
         }
 
-        SectionOffset.LowPart = CapturedClientView.SectionOffset,
-        SectionOffset.HighPart = 0;
+        SectionOffset.LowPart = CapturedClientView.SectionOffset, SectionOffset.HighPart = 0;
 
         CurrentProcess = PsGetCurrentProcess();
 
@@ -623,23 +595,16 @@ Return Value:
         //  and not the section handle itself, because the handle may have changed
         //
 
-        Status = MmMapViewOfSection( SectionToMap,
-                                     CurrentProcess,
-                                     &ClientPort->ClientSectionBase,
-                                     0,
-                                     0,
-                                     &SectionOffset,
-                                     &CapturedClientView.ViewSize,
-                                     ViewUnmap,
-                                     0,
-                                     PAGE_READWRITE );
+        Status = MmMapViewOfSection(SectionToMap, CurrentProcess, &ClientPort->ClientSectionBase, 0, 0, &SectionOffset,
+                                    &CapturedClientView.ViewSize, ViewUnmap, 0, PAGE_READWRITE);
 
         CapturedClientView.SectionOffset = SectionOffset.LowPart;
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            ObDereferenceObject( SectionToMap );
-            ObDereferenceObject( ClientPort );
+            ObDereferenceObject(SectionToMap);
+            ObDereferenceObject(ClientPort);
 
             return Status;
         }
@@ -647,15 +612,16 @@ Return Value:
         CapturedClientView.ViewBase = ClientPort->ClientSectionBase;
 
         //
-        //  We'll add an extra-reference to the current process, when we have 
-        //  a section mapped in that process. 
+        //  We'll add an extra-reference to the current process, when we have
+        //  a section mapped in that process.
         //
 
         ClientPort->MappingProcess = CurrentProcess;
 
-        ObReferenceObject( ClientPort->MappingProcess );
-
-    } else {
+        ObReferenceObject(ClientPort->MappingProcess);
+    }
+    else
+    {
 
         SectionToMap = NULL;
     }
@@ -665,7 +631,8 @@ Return Value:
     //  to be the no longer than one the connection port will accept
     //
 
-    if (ConnectionInfoLength > ConnectionPort->MaxConnectionInfoLength) {
+    if (ConnectionInfoLength > ConnectionPort->MaxConnectionInfoLength)
+    {
 
         ConnectionInfoLength = ConnectionPort->MaxConnectionInfoLength;
     }
@@ -679,22 +646,22 @@ Return Value:
     //  information
     //
 
-    Msg = LpcpAllocateFromPortZone( sizeof( *Msg ) +
-                                    sizeof( *ConnectMsg ) +
-                                    ConnectionInfoLength );
+    Msg = LpcpAllocateFromPortZone(sizeof(*Msg) + sizeof(*ConnectMsg) + ConnectionInfoLength);
 
     //
     //  If we didn't get memory for the message then tell our caller we failed
     //
 
-    if (Msg == NULL) {
+    if (Msg == NULL)
+    {
 
-        if (SectionToMap != NULL) {
+        if (SectionToMap != NULL)
+        {
 
-            ObDereferenceObject( SectionToMap );
+            ObDereferenceObject(SectionToMap);
         }
 
-        ObDereferenceObject( ClientPort );
+        ObDereferenceObject(ClientPort);
 
         return STATUS_NO_MEMORY;
     }
@@ -718,23 +685,23 @@ Return Value:
     //  otherwise we'll zero out all of the view information
     //
 
-    if (ARGUMENT_PRESENT( ClientView )) {
+    if (ARGUMENT_PRESENT(ClientView))
+    {
 
         Msg->Request.ClientViewSize = CapturedClientView.ViewSize;
 
-        RtlCopyMemory( &ConnectMsg->ClientView,
-                       &CapturedClientView,
-                       sizeof( CapturedClientView ));
+        RtlCopyMemory(&ConnectMsg->ClientView, &CapturedClientView, sizeof(CapturedClientView));
 
-        RtlZeroMemory( &ConnectMsg->ServerView, sizeof( ConnectMsg->ServerView ));
-
-    } else {
+        RtlZeroMemory(&ConnectMsg->ServerView, sizeof(ConnectMsg->ServerView));
+    }
+    else
+    {
 
         Msg->Request.ClientViewSize = 0;
-        RtlZeroMemory( ConnectMsg, sizeof( *ConnectMsg ));
+        RtlZeroMemory(ConnectMsg, sizeof(*ConnectMsg));
     }
 
-    ConnectMsg->ClientPort = NULL;              // Set below
+    ConnectMsg->ClientPort = NULL; // Set below
     ConnectMsg->SectionToMap = SectionToMap;
 
     //
@@ -743,15 +710,13 @@ Return Value:
     //  information
     //
 
-    Msg->Request.u1.s1.DataLength = (CSHORT)(sizeof( *ConnectMsg ) +
-                                             ConnectionInfoLength);
+    Msg->Request.u1.s1.DataLength = (CSHORT)(sizeof(*ConnectMsg) + ConnectionInfoLength);
 
     //
     //  The total length add on the LPCP message
     //
 
-    Msg->Request.u1.s1.TotalLength = (CSHORT)(sizeof( *Msg ) +
-                                              Msg->Request.u1.s1.DataLength);
+    Msg->Request.u1.s1.TotalLength = (CSHORT)(sizeof(*Msg) + Msg->Request.u1.s1.DataLength);
 
     //
     //  This will be a connection request message
@@ -764,29 +729,31 @@ Return Value:
     //  that into place right now
     //
 
-    if (ARGUMENT_PRESENT( ConnectionInformation )) {
+    if (ARGUMENT_PRESENT(ConnectionInformation))
+    {
 
-        try {
+        try
+        {
 
-            RtlCopyMemory( ConnectMsg + 1,
-                           ConnectionInformation,
-                           ConnectionInfoLength );
-
-        } except( EXCEPTION_EXECUTE_HANDLER ) {
+            RtlCopyMemory(ConnectMsg + 1, ConnectionInformation, ConnectionInfoLength);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             //  If we fail then cleanup after ourselves and return the
             //  error to our caller
             //
 
-            LpcpFreeToPortZone( Msg, 0 );
+            LpcpFreeToPortZone(Msg, 0);
 
-            if (SectionToMap != NULL) {
+            if (SectionToMap != NULL)
+            {
 
-                ObDereferenceObject( SectionToMap );
+                ObDereferenceObject(SectionToMap);
             }
 
-            ObDereferenceObject( ClientPort );
+            ObDereferenceObject(ClientPort);
 
             return GetExceptionCode();
         }
@@ -812,13 +779,15 @@ Return Value:
     //  don't queue the message and don't wait for a reply
     //
 
-    if (ConnectionPort->Flags & PORT_NAME_DELETED) {
+    if (ConnectionPort->Flags & PORT_NAME_DELETED)
+    {
 
         Status = STATUS_OBJECT_NAME_NOT_FOUND;
+    }
+    else
+    {
 
-    } else {
-
-        LpcpTrace(( "Send Connect Msg %lx to Port %wZ (%lx)\n", Msg, PortName, ConnectionPort ));
+        LpcpTrace(("Send Connect Msg %lx to Port %wZ (%lx)\n", Msg, PortName, ConnectionPort));
 
         //
         //  Stamp the request message with a serial number, insert the message
@@ -830,9 +799,9 @@ Return Value:
 
         CurrentThread->LpcReplyMessageId = Msg->Request.MessageId;
 
-        InsertTailList( &ConnectionPort->MsgQueue.ReceiveHead, &Msg->Entry );
+        InsertTailList(&ConnectionPort->MsgQueue.ReceiveHead, &Msg->Entry);
 
-        InsertTailList( &ConnectionPort->LpcReplyChainHead, &CurrentThread->LpcReplyChain );
+        InsertTailList(&ConnectionPort->LpcReplyChainHead, &CurrentThread->LpcReplyChain);
 
         CurrentThread->LpcReplyMessage = Msg;
 
@@ -842,13 +811,13 @@ Return Value:
         //  reference will be released when the message is freed.
         //
 
-        ObReferenceObject( ClientPort );
+        ObReferenceObject(ClientPort);
 
         ConnectMsg->ClientPort = ClientPort;
 
-        KeEnterCriticalRegionThread (&CurrentThread->Tcb);
+        KeEnterCriticalRegionThread(&CurrentThread->Tcb);
     }
-    
+
     LpcpReleaseLpcpLock();
 
     //
@@ -857,16 +826,18 @@ Return Value:
     //  to single the server and wait for a reply
     //
 
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         //  If this is a waitable port then set the event that they might be
         //  waiting on
         //
 
-        if ( ConnectionPort->Flags & PORT_WAITABLE ) {
+        if (ConnectionPort->Flags & PORT_WAITABLE)
+        {
 
-            KeSetEvent( &ConnectionPort->WaitEvent, 1, FALSE );
+            KeSetEvent(&ConnectionPort->WaitEvent, 1, FALSE);
         }
 
         //
@@ -877,33 +848,23 @@ Return Value:
         //  for the current thread.
         //
 
-        KeReleaseSemaphore( ConnectionPort->MsgQueue.Semaphore,
-                            1,
-                            1,
-                            FALSE );
-        KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+        KeReleaseSemaphore(ConnectionPort->MsgQueue.Semaphore, 1, 1, FALSE);
+        KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
 
-        Status = KeWaitForSingleObject( &CurrentThread->LpcReplySemaphore,
-                                        Executive,
-                                        PreviousMode,
-                                        FALSE,
-                                        NULL );
-
+        Status = KeWaitForSingleObject(&CurrentThread->LpcReplySemaphore, Executive, PreviousMode, FALSE, NULL);
     }
 
-    if (Status == STATUS_USER_APC) {
+    if (Status == STATUS_USER_APC)
+    {
 
         //
         //  if the semaphore is signaled, then clear it
         //
 
-        if (KeReadStateSemaphore( &CurrentThread->LpcReplySemaphore )) {
+        if (KeReadStateSemaphore(&CurrentThread->LpcReplySemaphore))
+        {
 
-            KeWaitForSingleObject( &CurrentThread->LpcReplySemaphore,
-                                   WrExecutive,
-                                   KernelMode,
-                                   FALSE,
-                                   NULL );
+            KeWaitForSingleObject(&CurrentThread->LpcReplySemaphore, WrExecutive, KernelMode, FALSE, NULL);
 
             Status = STATUS_SUCCESS;
         }
@@ -914,15 +875,17 @@ Return Value:
     //  communication port has been filled in.
     //
 
-    if (Status == STATUS_SUCCESS) {
+    if (Status == STATUS_SUCCESS)
+    {
 
-        SectionToMap = LpcpFreeConMsg( &Msg, &ConnectMsg, CurrentThread );
+        SectionToMap = LpcpFreeConMsg(&Msg, &ConnectMsg, CurrentThread);
 
         //
         //  Check that we got a reply message
         //
 
-        if (Msg != NULL) {
+        if (Msg != NULL)
+        {
 
             //
             //  Copy any connection information back to the caller, but first
@@ -930,25 +893,28 @@ Return Value:
             //  don't let it grow beyond what we probed originally
             //
 
-            if ((Msg->Request.u1.s1.DataLength - sizeof( *ConnectMsg )) < ConnectionInfoLength) {
+            if ((Msg->Request.u1.s1.DataLength - sizeof(*ConnectMsg)) < ConnectionInfoLength)
+            {
 
-                ConnectionInfoLength = Msg->Request.u1.s1.DataLength - sizeof( *ConnectMsg );
+                ConnectionInfoLength = Msg->Request.u1.s1.DataLength - sizeof(*ConnectMsg);
             }
 
-            if (ARGUMENT_PRESENT( ConnectionInformation )) {
+            if (ARGUMENT_PRESENT(ConnectionInformation))
+            {
 
-                try {
+                try
+                {
 
-                    if (ARGUMENT_PRESENT( ConnectionInformationLength )) {
+                    if (ARGUMENT_PRESENT(ConnectionInformationLength))
+                    {
 
                         *ConnectionInformationLength = ConnectionInfoLength;
                     }
 
-                    RtlCopyMemory( ConnectionInformation,
-                                   ConnectMsg + 1,
-                                   ConnectionInfoLength );
-
-                } except( EXCEPTION_EXECUTE_HANDLER ) {
+                    RtlCopyMemory(ConnectionInformation, ConnectMsg + 1, ConnectionInfoLength);
+                }
+                except(EXCEPTION_EXECUTE_HANDLER)
+                {
 
                     Status = GetExceptionCode();
                 }
@@ -963,7 +929,8 @@ Return Value:
             //  initialize the port.
             //
 
-            if (ClientPort->ConnectedPort != NULL) {
+            if (ClientPort->ConnectedPort != NULL)
+            {
 
                 ULONG CapturedMaxMessageLength;
 
@@ -979,14 +946,10 @@ Return Value:
                 //  Now create a handle for the new client port object.
                 //
 
-                Status = ObInsertObject( ClientPort,
-                                         NULL,
-                                         PORT_ALL_ACCESS,
-                                         0,
-                                         (PVOID *)NULL,
-                                         &Handle );
+                Status = ObInsertObject(ClientPort, NULL, PORT_ALL_ACCESS, 0, (PVOID *)NULL, &Handle);
 
-                if (NT_SUCCESS( Status )) {
+                if (NT_SUCCESS(Status))
+                {
 
                     //
                     //  This is the only successful path through this routine.
@@ -994,53 +957,56 @@ Return Value:
                     //  back to the port zone and return to our caller
                     //
 
-                    try {
+                    try
+                    {
 
                         *PortHandle = Handle;
 
-                        if (ARGUMENT_PRESENT( MaxMessageLength )) {
+                        if (ARGUMENT_PRESENT(MaxMessageLength))
+                        {
 
                             *MaxMessageLength = CapturedMaxMessageLength;
                         }
 
-                        if (ARGUMENT_PRESENT( ClientView )) {
+                        if (ARGUMENT_PRESENT(ClientView))
+                        {
 
-                            RtlCopyMemory( ClientView,
-                                           &ConnectMsg->ClientView,
-                                           sizeof( *ClientView ));
+                            RtlCopyMemory(ClientView, &ConnectMsg->ClientView, sizeof(*ClientView));
                         }
 
-                        if (ARGUMENT_PRESENT( ServerView )) {
+                        if (ARGUMENT_PRESENT(ServerView))
+                        {
 
-                            RtlCopyMemory( ServerView,
-                                           &ConnectMsg->ServerView,
-                                           sizeof( *ServerView ));
+                            RtlCopyMemory(ServerView, &ConnectMsg->ServerView, sizeof(*ServerView));
                         }
-
-                    } except( EXCEPTION_EXECUTE_HANDLER ) {
+                    }
+                    except(EXCEPTION_EXECUTE_HANDLER)
+                    {
 
                         Status = GetExceptionCode();
-                        NtClose( Handle );
+                        NtClose(Handle);
                     }
                 }
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  Otherwise we did not get a connect port from the server so
                 //  the connection was refused
                 //
 
-                LpcpTrace(( "Connection request refused.\n" ));
+                LpcpTrace(("Connection request refused.\n"));
 
-                if ( SectionToMap != NULL ) {
+                if (SectionToMap != NULL)
+                {
 
-                    ObDereferenceObject( SectionToMap );
+                    ObDereferenceObject(SectionToMap);
                 }
 
                 //
                 //  Synchronize with the deletion path for the port object
-                //  If the server accepted the connection and immediately 
+                //  If the server accepted the connection and immediately
                 //  closed the server handle, the ConnectionPort field will be NULL.
                 //  If the server closed the connection port as well, the captured
                 //  value for the connection port will be invalid.
@@ -1048,46 +1014,49 @@ Return Value:
 
                 LpcpAcquireLpcpLockByThread(CurrentThread);
 
-                if ((ClientPort->ConnectionPort == NULL)
-                        ||
-                    (ConnectionPort->Flags & PORT_NAME_DELETED)) {
+                if ((ClientPort->ConnectionPort == NULL) || (ConnectionPort->Flags & PORT_NAME_DELETED))
+                {
 
                     Status = STATUS_OBJECT_NAME_NOT_FOUND;
-
-                } else {
+                }
+                else
+                {
 
                     Status = STATUS_PORT_CONNECTION_REFUSED;
                 }
-                
+
                 LpcpReleaseLpcpLock();
 
-                ObDereferenceObject( ClientPort );
+                ObDereferenceObject(ClientPort);
             }
 
             //
             //  Free the reply message back to the port zone
             //
 
-            LpcpFreeToPortZone( Msg, 0 );
-
-        } else {
+            LpcpFreeToPortZone(Msg, 0);
+        }
+        else
+        {
 
             //
             //  We did not get a reply message so the connection must have
             //  been refused
             //
 
-            if (SectionToMap != NULL) {
+            if (SectionToMap != NULL)
+            {
 
-                ObDereferenceObject( SectionToMap );
+                ObDereferenceObject(SectionToMap);
             }
 
-            ObDereferenceObject( ClientPort );
+            ObDereferenceObject(ClientPort);
 
             Status = STATUS_PORT_CONNECTION_REFUSED;
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         //  Our wait was not successful
@@ -1099,26 +1068,24 @@ Return Value:
         //  port's zone.
         //
 
-        SectionToMap = LpcpFreeConMsg( &Msg, &ConnectMsg, CurrentThread );
-        
+        SectionToMap = LpcpFreeConMsg(&Msg, &ConnectMsg, CurrentThread);
+
         //
         //  The wait was not successful, but in the meantime the server could
         //  replied, so it signaled the lpc semaphore. We have to clear the
         //  semaphore state right now.
         //
 
-        if (KeReadStateSemaphore( &CurrentThread->LpcReplySemaphore )) {
+        if (KeReadStateSemaphore(&CurrentThread->LpcReplySemaphore))
+        {
 
-            KeWaitForSingleObject( &CurrentThread->LpcReplySemaphore,
-                                   WrExecutive,
-                                   KernelMode,
-                                   FALSE,
-                                   NULL );
+            KeWaitForSingleObject(&CurrentThread->LpcReplySemaphore, WrExecutive, KernelMode, FALSE, NULL);
         }
 
-        if (Msg != NULL) {
+        if (Msg != NULL)
+        {
 
-            LpcpFreeToPortZone( Msg, 0 );
+            LpcpFreeToPortZone(Msg, 0);
         }
 
         //
@@ -1126,9 +1093,10 @@ Return Value:
         //  object.
         //
 
-        if ( SectionToMap != NULL ) {
+        if (SectionToMap != NULL)
+        {
 
-            ObDereferenceObject( SectionToMap );
+            ObDereferenceObject(SectionToMap);
         }
 
         //
@@ -1137,7 +1105,7 @@ Return Value:
         //  be deleted.
         //
 
-        ObDereferenceObject( ClientPort );
+        ObDereferenceObject(ClientPort);
     }
 
     //
@@ -1147,17 +1115,13 @@ Return Value:
     return Status;
 }
 
-
+
 //
 //  Local support routine
 //
 
 PVOID
-LpcpFreeConMsg (
-    IN PLPCP_MESSAGE *Msg,
-    PLPCP_CONNECTION_MESSAGE *ConnectMsg,
-    IN PETHREAD CurrentThread
-    )
+LpcpFreeConMsg(IN PLPCP_MESSAGE *Msg, PLPCP_CONNECTION_MESSAGE *ConnectMsg, IN PETHREAD CurrentThread)
 
 /*++
 
@@ -1197,20 +1161,22 @@ Return Value:
     //  a reply
     //
 
-    if (!IsListEmpty( &CurrentThread->LpcReplyChain )) {
+    if (!IsListEmpty(&CurrentThread->LpcReplyChain))
+    {
 
-        RemoveEntryList( &CurrentThread->LpcReplyChain );
+        RemoveEntryList(&CurrentThread->LpcReplyChain);
 
-        InitializeListHead( &CurrentThread->LpcReplyChain );
+        InitializeListHead(&CurrentThread->LpcReplyChain);
     }
 
     //
     //  Check if the thread has an LPC reply message waiting to be handled
     //
-    
+
     LpcMessage = LpcpGetThreadMessage(CurrentThread);
 
-    if (LpcMessage != NULL) {
+    if (LpcMessage != NULL)
+    {
 
         //
         //  Take the message off the threads list
@@ -1218,12 +1184,13 @@ Return Value:
 
         *Msg = LpcMessage;
 
-        if (!IsListEmpty( &LpcMessage->Entry )) {
+        if (!IsListEmpty(&LpcMessage->Entry))
+        {
 
-            RemoveEntryList( &LpcMessage->Entry );
-            InitializeListHead( &LpcMessage->Entry );
+            RemoveEntryList(&LpcMessage->Entry);
+            InitializeListHead(&LpcMessage->Entry);
         }
-        
+
         CurrentThread->LpcReplyMessage = NULL;
 
         CurrentThread->LpcReplyMessageId = 0;
@@ -1237,8 +1204,9 @@ Return Value:
 
         SectionToMap = (*ConnectMsg)->SectionToMap;
         (*ConnectMsg)->SectionToMap = NULL;
-
-    } else {
+    }
+    else
+    {
 
         //
         //  Otherwise there is no LPC message to be handle so we'll return
@@ -1257,4 +1225,3 @@ Return Value:
 
     return SectionToMap;
 }
-

@@ -87,16 +87,16 @@ Revision History:
 #if DBG
 
 extern ULONG RtlDebugFlags;
-#define DBGPRINT  ((RtlDebugFlags & 0x4) != 0) && DbgPrint
+#define DBGPRINT ((RtlDebugFlags & 0x4) != 0) && DbgPrint
 #define DBGPRINT2 ((RtlDebugFlags & 0x8) != 0) && DbgPrint
 
 #else
 
-#define DBGPRINT  0 && DbgPrint
+#define DBGPRINT 0 && DbgPrint
 #define DBGPRINT2 0 && DbgPrint
 
 #endif
-
+
 #define LOW_PART(Quad) ((ULONG)(Quad))
 #define HIGH_PART(Quad) ((ULONG)(Quad >> 32))
 #define MAKE_QUAD(Low, High) (((ULONGLONG)(High)) << 32 | ((ULONGLONG)(Low)))
@@ -119,26 +119,23 @@ extern ULONG RtlDebugFlags;
 #define SINGLE_NAN_BIT (1 << 24)
 
 #define DoubleSignalNan(DoubleOperand) \
-    (((DoubleOperand)->Nan != FALSE) && \
-     (((DoubleOperand)->MantissaHigh & DOUBLE_NAN_BIT_HIGH) == 0))
+    (((DoubleOperand)->Nan != FALSE) && (((DoubleOperand)->MantissaHigh & DOUBLE_NAN_BIT_HIGH) == 0))
 
 #define DoubleQuietNan(DoubleOperand) \
-    (((DoubleOperand)->Nan != FALSE) && \
-     (((DoubleOperand)->MantissaHigh & DOUBLE_NAN_BIT_HIGH) != 0))
+    (((DoubleOperand)->Nan != FALSE) && (((DoubleOperand)->MantissaHigh & DOUBLE_NAN_BIT_HIGH) != 0))
 
 #define SingleSignalNan(SingleOperand) \
-    (((SingleOperand)->Nan != FALSE) && \
-     (((SingleOperand)->Mantissa & SINGLE_NAN_BIT) == 0))
+    (((SingleOperand)->Nan != FALSE) && (((SingleOperand)->Mantissa & SINGLE_NAN_BIT) == 0))
 
 #define SingleQuietNan(SingleOperand) \
-    (((SingleOperand)->Nan != FALSE) && \
-     (((SingleOperand)->Mantissa & SINGLE_NAN_BIT) != 0))
+    (((SingleOperand)->Nan != FALSE) && (((SingleOperand)->Mantissa & SINGLE_NAN_BIT) != 0))
 
 //
 // Define context block structure.
 //
 
-typedef struct _FP_CONTEXT_BLOCK {
+typedef struct _FP_CONTEXT_BLOCK
+{
     ULONG Fc;
     PEXCEPTION_RECORD ExceptionRecord;
     PKEXCEPTION_FRAME ExceptionFrame;
@@ -153,10 +150,11 @@ typedef struct _FP_CONTEXT_BLOCK {
 // Define single and double operand value structures.
 //
 
-typedef struct _FP_DOUBLE_OPERAND {
+typedef struct _FP_DOUBLE_OPERAND
+{
     LONG MantissaHigh;
     ULONG MantissaLow;
-    LONGLONG Mantissa;                  // ## Not fully used yet
+    LONGLONG Mantissa; // ## Not fully used yet
     LONG Exponent;
     LONG Sign;
     BOOLEAN Infinity;
@@ -164,7 +162,8 @@ typedef struct _FP_DOUBLE_OPERAND {
     BOOLEAN Normal;
 } FP_DOUBLE_OPERAND, *PFP_DOUBLE_OPERAND;
 
-typedef struct _FP_SINGLE_OPERAND {
+typedef struct _FP_SINGLE_OPERAND
+{
     LONG Mantissa;
     LONG Exponent;
     LONG Sign;
@@ -177,128 +176,75 @@ typedef struct _FP_SINGLE_OPERAND {
 // Define single and double IEEE floating point memory formats.
 //
 
-typedef struct _DOUBLE_FORMAT {
+typedef struct _DOUBLE_FORMAT
+{
     ULONGLONG Mantissa : 52;
     ULONGLONG Exponent : 11;
     ULONGLONG Sign : 1;
 } DOUBLE_FORMAT, *PDOUBLE_FORMAT;
 
-typedef struct _SINGLE_FORMAT {
+typedef struct _SINGLE_FORMAT
+{
     ULONG Mantissa : 23;
     ULONG Exponent : 8;
     ULONG Sign : 1;
 } SINGLE_FORMAT, *PSINGLE_FORMAT;
-
+
 //
 // Define forward referenced function prototypes.
 //
 
 ULONGLONG
-KiConvertSingleOperandToRegister (
-    IN ULONG SingleValue
-    );
+KiConvertSingleOperandToRegister(IN ULONG SingleValue);
 
 ULONG
-KiConvertRegisterToSingleOperand (
-    IN ULONGLONG DoubleValue
-    );
+KiConvertRegisterToSingleOperand(IN ULONGLONG DoubleValue);
 
 BOOLEAN
-KiConvertQuadwordToLongword (
-    IN PFP_CONTEXT_BLOCK ContextBlock,
-    IN LONGLONG Quadword
-    );
+KiConvertQuadwordToLongword(IN PFP_CONTEXT_BLOCK ContextBlock, IN LONGLONG Quadword);
 
 BOOLEAN
-KiDivideByZeroDouble (
-    IN PFP_CONTEXT_BLOCK ContextBlock,
-    IN PFP_DOUBLE_OPERAND DoubleOperand1,
-    IN PFP_DOUBLE_OPERAND DoubleOperand2
-    );
+KiDivideByZeroDouble(IN PFP_CONTEXT_BLOCK ContextBlock, IN PFP_DOUBLE_OPERAND DoubleOperand1,
+                     IN PFP_DOUBLE_OPERAND DoubleOperand2);
 
 BOOLEAN
-KiDivideByZeroSingle (
-    IN PFP_CONTEXT_BLOCK ContextBlock,
-    IN PFP_SINGLE_OPERAND SingleOperand1,
-    IN PFP_SINGLE_OPERAND SingleOperand2
-    );
+KiDivideByZeroSingle(IN PFP_CONTEXT_BLOCK ContextBlock, IN PFP_SINGLE_OPERAND SingleOperand1,
+                     IN PFP_SINGLE_OPERAND SingleOperand2);
 
 PFP_IEEE_VALUE
-KiInitializeIeeeValue (
-    IN PEXCEPTION_RECORD ExceptionRecord
-    );
+KiInitializeIeeeValue(IN PEXCEPTION_RECORD ExceptionRecord);
 
 BOOLEAN
-KiInvalidCompareDouble (
-    IN PFP_CONTEXT_BLOCK ContextBlock,
-    IN BOOLEAN CheckForSignalNan,
-    IN PFP_DOUBLE_OPERAND DoubleOperand1,
-    IN PFP_DOUBLE_OPERAND DoubleOperand2
-    );
+KiInvalidCompareDouble(IN PFP_CONTEXT_BLOCK ContextBlock, IN BOOLEAN CheckForSignalNan,
+                       IN PFP_DOUBLE_OPERAND DoubleOperand1, IN PFP_DOUBLE_OPERAND DoubleOperand2);
 
 BOOLEAN
-KiInvalidOperationDouble (
-    IN PFP_CONTEXT_BLOCK ContextBlock,
-    IN BOOLEAN CheckForSignalNan,
-    IN PFP_DOUBLE_OPERAND DoubleOperand1,
-    IN PFP_DOUBLE_OPERAND DoubleOperand2
-    );
+KiInvalidOperationDouble(IN PFP_CONTEXT_BLOCK ContextBlock, IN BOOLEAN CheckForSignalNan,
+                         IN PFP_DOUBLE_OPERAND DoubleOperand1, IN PFP_DOUBLE_OPERAND DoubleOperand2);
 
 BOOLEAN
-KiInvalidOperationQuadword (
-    IN PFP_CONTEXT_BLOCK ContextBlock,
-    IN ULONGLONG ResultValue
-    );
+KiInvalidOperationQuadword(IN PFP_CONTEXT_BLOCK ContextBlock, IN ULONGLONG ResultValue);
 
 BOOLEAN
-KiInvalidOperationSingle (
-    IN PFP_CONTEXT_BLOCK ContextBlock,
-    IN BOOLEAN CheckForSignalNan,
-    IN PFP_SINGLE_OPERAND SingleOperand1,
-    IN PFP_SINGLE_OPERAND SingleOperand2
-    );
+KiInvalidOperationSingle(IN PFP_CONTEXT_BLOCK ContextBlock, IN BOOLEAN CheckForSignalNan,
+                         IN PFP_SINGLE_OPERAND SingleOperand1, IN PFP_SINGLE_OPERAND SingleOperand2);
 
 BOOLEAN
-KiNormalizeDouble (
-    IN PFP_CONTEXT_BLOCK ContextBlock,
-    IN PFP_DOUBLE_OPERAND ResultOperand,
-    IN ULONGLONG StickyBits
-    );
+KiNormalizeDouble(IN PFP_CONTEXT_BLOCK ContextBlock, IN PFP_DOUBLE_OPERAND ResultOperand, IN ULONGLONG StickyBits);
 
 BOOLEAN
-KiNormalizeQuadword (
-    IN PFP_CONTEXT_BLOCK ContextBlock,
-    IN PFP_DOUBLE_OPERAND ResultOperand
-    );
+KiNormalizeQuadword(IN PFP_CONTEXT_BLOCK ContextBlock, IN PFP_DOUBLE_OPERAND ResultOperand);
 
 BOOLEAN
-KiNormalizeSingle (
-    IN PFP_CONTEXT_BLOCK ContextBlock,
-    IN PFP_SINGLE_OPERAND ResultOperand,
-    IN ULONG StickyBits
-    );
+KiNormalizeSingle(IN PFP_CONTEXT_BLOCK ContextBlock, IN PFP_SINGLE_OPERAND ResultOperand, IN ULONG StickyBits);
 
-VOID
-KiUnpackDouble (
-    IN ULONG Source,
-    IN PFP_CONTEXT_BLOCK ContextBlock,
-    OUT PFP_DOUBLE_OPERAND DoubleOperand
-    );
+VOID KiUnpackDouble(IN ULONG Source, IN PFP_CONTEXT_BLOCK ContextBlock, OUT PFP_DOUBLE_OPERAND DoubleOperand);
 
-VOID
-KiUnpackSingle (
-    IN ULONG Source,
-    IN PFP_CONTEXT_BLOCK ContextBlock,
-    OUT PFP_SINGLE_OPERAND SingleOperand
-    );
-
+VOID KiUnpackSingle(IN ULONG Source, IN PFP_CONTEXT_BLOCK ContextBlock, OUT PFP_SINGLE_OPERAND SingleOperand);
+
 BOOLEAN
-KiEmulateFloating (
-    IN OUT PEXCEPTION_RECORD ExceptionRecord,
-    IN OUT PKEXCEPTION_FRAME ExceptionFrame,
-    IN OUT PKTRAP_FRAME TrapFrame,
-    IN OUT PSW_FPCR SoftwareFpcr
-    )
+KiEmulateFloating(IN OUT PEXCEPTION_RECORD ExceptionRecord, IN OUT PKEXCEPTION_FRAME ExceptionFrame,
+                  IN OUT PKTRAP_FRAME TrapFrame, IN OUT PSW_FPCR SoftwareFpcr)
 
 /*++
 
@@ -378,7 +324,8 @@ Return Value:
     // record and a value of FALSE is returned.
     //
 
-    try {
+    try
+    {
 
         //
         // Fetch the faulting or trapping instruction. Check the opcode and
@@ -392,92 +339,101 @@ Return Value:
         //
 
         Instruction = *((PALPHA_INSTRUCTION)ExceptionRecord->ExceptionAddress);
-        DBGPRINT("KiEmulateFloating: Instruction = %.8lx, Fpcr = %.16Lx\n",
-                 Instruction.Long, TrapFrame->Fpcr);
+        DBGPRINT("KiEmulateFloating: Instruction = %.8lx, Fpcr = %.16Lx\n", Instruction.Long, TrapFrame->Fpcr);
         Function = Instruction.FpOp.Function;
 
         ValidOperation = FALSE;
-        if (Instruction.FpOp.Opcode == IEEEFP_OP) {
+        if (Instruction.FpOp.Opcode == IEEEFP_OP)
+        {
 
             //
             // Adjust the function code if the instruction is CVTST.
             //
 
-            if (Function == CVTST_FUNC) {
+            if (Function == CVTST_FUNC)
+            {
                 Function = CVTST_FUNC_PROPER;
-
-            } else if (Function == CVTST_S_FUNC) {
+            }
+            else if (Function == CVTST_S_FUNC)
+            {
                 Function = CVTST_FUNC_PROPER | FP_TRAP_ENABLE_S;
             }
 
-            switch (Function & FP_FUNCTION_MASK) {
-            case ADDS_FUNC :
-            case SUBS_FUNC :
-            case MULS_FUNC :
-            case DIVS_FUNC :
-            case ADDT_FUNC :
-            case SUBT_FUNC :
-            case MULT_FUNC :
-            case DIVT_FUNC :
-            case CVTTQ_FUNC :
-            case CVTTS_FUNC :
+            switch (Function & FP_FUNCTION_MASK)
+            {
+            case ADDS_FUNC:
+            case SUBS_FUNC:
+            case MULS_FUNC:
+            case DIVS_FUNC:
+            case ADDT_FUNC:
+            case SUBT_FUNC:
+            case MULT_FUNC:
+            case DIVT_FUNC:
+            case CVTTQ_FUNC:
+            case CVTTS_FUNC:
 
-                switch (Function & FP_TRAP_ENABLE_MASK) {
-                case FP_TRAP_ENABLE_NONE :
-                case FP_TRAP_ENABLE_U :
-                case FP_TRAP_ENABLE_SU :
-                case FP_TRAP_ENABLE_SUI :
-
-                    ValidOperation = TRUE;
-                    break;
-                }
-                break;
-
-            case CVTQS_FUNC :
-            case CVTQT_FUNC :
-
-                switch (Function & FP_TRAP_ENABLE_MASK) {
-                case FP_TRAP_ENABLE_NONE :
-                case FP_TRAP_ENABLE_SUI :
+                switch (Function & FP_TRAP_ENABLE_MASK)
+                {
+                case FP_TRAP_ENABLE_NONE:
+                case FP_TRAP_ENABLE_U:
+                case FP_TRAP_ENABLE_SU:
+                case FP_TRAP_ENABLE_SUI:
 
                     ValidOperation = TRUE;
                     break;
                 }
                 break;
 
-            case CVTST_FUNC_PROPER :
+            case CVTQS_FUNC:
+            case CVTQT_FUNC:
 
-                switch (Function & FP_TRAP_ENABLE_MASK) {
-                case FP_TRAP_ENABLE_NONE :
-                case FP_TRAP_ENABLE_S :
+                switch (Function & FP_TRAP_ENABLE_MASK)
+                {
+                case FP_TRAP_ENABLE_NONE:
+                case FP_TRAP_ENABLE_SUI:
 
                     ValidOperation = TRUE;
                     break;
                 }
                 break;
 
-            case CMPTEQ_FUNC :
-            case CMPTLE_FUNC :
-            case CMPTLT_FUNC :
-            case CMPTUN_FUNC :
+            case CVTST_FUNC_PROPER:
+
+                switch (Function & FP_TRAP_ENABLE_MASK)
+                {
+                case FP_TRAP_ENABLE_NONE:
+                case FP_TRAP_ENABLE_S:
+
+                    ValidOperation = TRUE;
+                    break;
+                }
+                break;
+
+            case CMPTEQ_FUNC:
+            case CMPTLE_FUNC:
+            case CMPTLT_FUNC:
+            case CMPTUN_FUNC:
 
                 ValidOperation = TRUE;
                 break;
             }
-
-        } else if (Instruction.FpOp.Opcode == FPOP_OP) {
-            switch (Function) {
-            case CVTLQ_FUNC :
-            case CVTQL_FUNC :
-            case CVTQLV_FUNC :
-            case CVTQLSV_FUNC :
+        }
+        else if (Instruction.FpOp.Opcode == FPOP_OP)
+        {
+            switch (Function)
+            {
+            case CVTLQ_FUNC:
+            case CVTQL_FUNC:
+            case CVTQLV_FUNC:
+            case CVTQLSV_FUNC:
 
                 ValidOperation = TRUE;
                 break;
             }
         }
 
-        if (ValidOperation == FALSE) {
+        if (ValidOperation == FALSE)
+        {
 
             //
             // An illegal instruction, function code, format value, or trap
@@ -517,17 +473,21 @@ Return Value:
         // case of an unimplemented floating instruction fault.
         //
 
-        if ((Function & FP_TRAP_ENABLE_S) != 0) {
+        if ((Function & FP_TRAP_ENABLE_S) != 0)
+        {
             ContextBlock.IeeeMode = TRUE;
-
-        } else {
+        }
+        else
+        {
             ContextBlock.IeeeMode = FALSE;
         }
 
-        if ((Function & FP_TRAP_ENABLE_U) != 0) {
+        if ((Function & FP_TRAP_ENABLE_U) != 0)
+        {
             ContextBlock.UnderflowEnable = TRUE;
-
-        } else {
+        }
+        else
+        {
             ContextBlock.UnderflowEnable = FALSE;
         }
 
@@ -543,10 +503,12 @@ Return Value:
         Fa = Instruction.FpOp.Fa;
         Fb = Instruction.FpOp.Fb;
 
-        if ((Function & FP_ROUND_MASK) == FP_ROUND_D) {
+        if ((Function & FP_ROUND_MASK) == FP_ROUND_D)
+        {
             ContextBlock.Round = ((PFPCR)&TrapFrame->Fpcr)->DynamicRoundingMode;
-
-        } else {
+        }
+        else
+        {
             ContextBlock.Round = (Function & FP_ROUND_MASK) >> FP_ROUND_SHIFT;
         }
 
@@ -556,11 +518,12 @@ Return Value:
         // Unpack operands and dispense with NaNs.
         //
 
-        switch (Function & FP_FUNCTION_MASK) {
-        case ADDS_FUNC :
-        case SUBS_FUNC :
-        case MULS_FUNC :
-        case DIVS_FUNC :
+        switch (Function & FP_FUNCTION_MASK)
+        {
+        case ADDS_FUNC:
+        case SUBS_FUNC:
+        case MULS_FUNC:
+        case DIVS_FUNC:
 
             //
             // The function has two single operand values.
@@ -575,13 +538,14 @@ Return Value:
             //
 
             if ((ContextBlock.IeeeMode == FALSE) &&
-                ((SingleOperand1.Normal == FALSE) ||
-                 (SingleOperand2.Normal == FALSE))) {
+                ((SingleOperand1.Normal == FALSE) || (SingleOperand2.Normal == FALSE)))
+            {
                 ExceptionRecord->ExceptionCode = STATUS_FLOAT_INVALID_OPERATION;
                 return FALSE;
             }
 
-            if ((SingleOperand1.Nan != FALSE) || (SingleOperand2.Nan != FALSE)) {
+            if ((SingleOperand1.Nan != FALSE) || (SingleOperand2.Nan != FALSE))
+            {
 
                 //
                 // Store a quiet NaN if the invalid operation trap
@@ -590,17 +554,14 @@ Return Value:
                 // is a signaling NaN.
                 //
 
-                return KiInvalidOperationSingle(&ContextBlock,
-                                                TRUE,
-                                                &SingleOperand1,
-                                                &SingleOperand2);
+                return KiInvalidOperationSingle(&ContextBlock, TRUE, &SingleOperand1, &SingleOperand2);
             }
             break;
 
-        case ADDT_FUNC :
-        case SUBT_FUNC :
-        case MULT_FUNC :
-        case DIVT_FUNC :
+        case ADDT_FUNC:
+        case SUBT_FUNC:
+        case MULT_FUNC:
+        case DIVT_FUNC:
 
             //
             // The function has two double operand values.
@@ -615,12 +576,13 @@ Return Value:
             //
 
             if ((ContextBlock.IeeeMode == FALSE) &&
-                ((DoubleOperand1.Normal == FALSE) ||
-                 (DoubleOperand2.Normal == FALSE))) {
+                ((DoubleOperand1.Normal == FALSE) || (DoubleOperand2.Normal == FALSE)))
+            {
                 ExceptionRecord->ExceptionCode = STATUS_FLOAT_INVALID_OPERATION;
                 return FALSE;
             }
-            if ((DoubleOperand1.Nan != FALSE) || (DoubleOperand2.Nan != FALSE)) {
+            if ((DoubleOperand1.Nan != FALSE) || (DoubleOperand2.Nan != FALSE))
+            {
 
                 //
                 // Store a quiet NaN if the invalid operation trap
@@ -629,17 +591,14 @@ Return Value:
                 // is a signaling NaN.
                 //
 
-                return KiInvalidOperationDouble(&ContextBlock,
-                                                TRUE,
-                                                &DoubleOperand1,
-                                                &DoubleOperand2);
+                return KiInvalidOperationDouble(&ContextBlock, TRUE, &DoubleOperand1, &DoubleOperand2);
             }
             break;
 
-        case CMPTEQ_FUNC :
-        case CMPTLE_FUNC :
-        case CMPTLT_FUNC :
-        case CMPTUN_FUNC :
+        case CMPTEQ_FUNC:
+        case CMPTLE_FUNC:
+        case CMPTLT_FUNC:
+        case CMPTUN_FUNC:
 
             //
             // The function has two double operand values.
@@ -654,10 +613,9 @@ Return Value:
             //
 
             if ((ContextBlock.IeeeMode == FALSE) &&
-                (((DoubleOperand1.Normal == FALSE) &&
-                  (DoubleOperand1.Infinity == FALSE)) ||
-                 ((DoubleOperand2.Normal == FALSE) &&
-                  (DoubleOperand2.Infinity == FALSE)))) {
+                (((DoubleOperand1.Normal == FALSE) && (DoubleOperand1.Infinity == FALSE)) ||
+                 ((DoubleOperand2.Normal == FALSE) && (DoubleOperand2.Infinity == FALSE))))
+            {
                 ExceptionRecord->ExceptionCode = STATUS_FLOAT_INVALID_OPERATION;
                 return FALSE;
             }
@@ -671,7 +629,8 @@ Return Value:
             // unordered operation, store a false result.
             //
 
-            if ((DoubleOperand1.Nan != FALSE) || (DoubleOperand2.Nan != FALSE)) {
+            if ((DoubleOperand1.Nan != FALSE) || (DoubleOperand2.Nan != FALSE))
+            {
 
                 //
                 // If the compare is an unordered compare, then store a true
@@ -687,53 +646,37 @@ Return Value:
                 // the invalid operation trap is enabled.
                 //
 
-                if ((Function & FP_FUNCTION_MASK) == CMPTUN_FUNC) {
-                    KiSetRegisterValue(ContextBlock.Fc + 32,
-                                       FP_COMPARE_TRUE,
-                                       ExceptionFrame,
-                                       TrapFrame);
+                if ((Function & FP_FUNCTION_MASK) == CMPTUN_FUNC)
+                {
+                    KiSetRegisterValue(ContextBlock.Fc + 32, FP_COMPARE_TRUE, ExceptionFrame, TrapFrame);
 
-                    return KiInvalidCompareDouble(&ContextBlock,
-                                                  TRUE,
-                                                  &DoubleOperand1,
-                                                  &DoubleOperand2);
-
-                } else if ((Function & FP_FUNCTION_MASK) == CMPTEQ_FUNC) {
-                    KiSetRegisterValue(ContextBlock.Fc + 32,
-                                       FP_COMPARE_FALSE,
-                                       ExceptionFrame,
-                                       TrapFrame);
-
-                    return KiInvalidCompareDouble(&ContextBlock,
-                                                  TRUE,
-                                                  &DoubleOperand1,
-                                                  &DoubleOperand2);
-
-                } else {
-                    KiSetRegisterValue(ContextBlock.Fc + 32,
-                                       FP_COMPARE_FALSE,
-                                       ExceptionFrame,
-                                       TrapFrame);
-
-                    return KiInvalidCompareDouble(&ContextBlock,
-                                                  FALSE,
-                                                  &DoubleOperand1,
-                                                  &DoubleOperand2);
+                    return KiInvalidCompareDouble(&ContextBlock, TRUE, &DoubleOperand1, &DoubleOperand2);
                 }
+                else if ((Function & FP_FUNCTION_MASK) == CMPTEQ_FUNC)
+                {
+                    KiSetRegisterValue(ContextBlock.Fc + 32, FP_COMPARE_FALSE, ExceptionFrame, TrapFrame);
 
-            } else {
-                if ((Function & FP_FUNCTION_MASK) == CMPTUN_FUNC) {
-                    KiSetRegisterValue(ContextBlock.Fc + 32,
-                                       FP_COMPARE_FALSE,
-                                       ExceptionFrame,
-                                       TrapFrame);
+                    return KiInvalidCompareDouble(&ContextBlock, TRUE, &DoubleOperand1, &DoubleOperand2);
+                }
+                else
+                {
+                    KiSetRegisterValue(ContextBlock.Fc + 32, FP_COMPARE_FALSE, ExceptionFrame, TrapFrame);
+
+                    return KiInvalidCompareDouble(&ContextBlock, FALSE, &DoubleOperand1, &DoubleOperand2);
+                }
+            }
+            else
+            {
+                if ((Function & FP_FUNCTION_MASK) == CMPTUN_FUNC)
+                {
+                    KiSetRegisterValue(ContextBlock.Fc + 32, FP_COMPARE_FALSE, ExceptionFrame, TrapFrame);
 
                     return TRUE;
                 }
             }
             break;
 
-        case CVTST_FUNC_PROPER :
+        case CVTST_FUNC_PROPER:
 
             //
             // The function has one single operand value which is found in
@@ -747,15 +690,15 @@ Return Value:
             // denormal operands.
             //
 
-            if ((ContextBlock.IeeeMode == FALSE) &&
-                (SingleOperand1.Normal == FALSE)) {
+            if ((ContextBlock.IeeeMode == FALSE) && (SingleOperand1.Normal == FALSE))
+            {
                 ExceptionRecord->ExceptionCode = STATUS_FLOAT_INVALID_OPERATION;
                 return FALSE;
             }
             break;
 
-        case CVTTQ_FUNC :
-        case CVTTS_FUNC :
+        case CVTTQ_FUNC:
+        case CVTTS_FUNC:
 
             //
             // The function has one double operand value which is found in
@@ -769,73 +712,72 @@ Return Value:
             // denormal operands.
             //
 
-            if ((ContextBlock.IeeeMode == FALSE) &&
-                (DoubleOperand1.Normal == FALSE)) {
+            if ((ContextBlock.IeeeMode == FALSE) && (DoubleOperand1.Normal == FALSE))
+            {
                 ExceptionRecord->ExceptionCode = STATUS_FLOAT_INVALID_OPERATION;
                 return FALSE;
             }
             break;
 
-        case CVTLQ_FUNC :
-        case CVTQL_FUNC :
-        case CVTQS_FUNC :
-        case CVTQT_FUNC :
+        case CVTLQ_FUNC:
+        case CVTQL_FUNC:
+        case CVTQS_FUNC:
+        case CVTQT_FUNC:
 
             //
             // The function has one quadword operand value which is found in
             // the second operand.
             //
 
-            Quadword = KiGetRegisterValue(Fb + 32,
-                                          ContextBlock.ExceptionFrame,
-                                          ContextBlock.TrapFrame);
+            Quadword = KiGetRegisterValue(Fb + 32, ContextBlock.ExceptionFrame, ContextBlock.TrapFrame);
             break;
         }
-
+
         //
         // Case to the proper function routine to emulate the operation.
         //
 
         Negation = 0;
-        switch (Function & FP_FUNCTION_MASK) {
+        switch (Function & FP_FUNCTION_MASK)
+        {
 
-        //
-        // Floating subtract operation.
-        //
-        // Floating subtract is accomplished by complementing the sign
-        // of the second operand and then performing an add operation.
-        //
+            //
+            // Floating subtract operation.
+            //
+            // Floating subtract is accomplished by complementing the sign
+            // of the second operand and then performing an add operation.
+            //
 
-        case SUBS_FUNC :
+        case SUBS_FUNC:
             DBGPRINT2("subs\n");
             Negation = 0x1;
 
-        //
-        // Floating add operation.
-        //
-        // Floating add is accomplished using signed magnitude addition.
-        //
-        // The exponent difference is calculated and the smaller number
-        // is right shifted by the specified amount, but no more than
-        // the width of the operand values (i.e., 26 for single and 55
-        // for double). The shifted out value is saved for rounding.
-        //
-        // If the signs of the two operands are the same, then they
-        // are added together after having performed the alignment
-        // shift.
-        //
-        // If the signs of the two operands are different, then the
-        // sign of the result is the sign of the larger operand and
-        // the smaller operand is subtracted from the larger operand.
-        // In order to avoid making a double level test (i.e., one on
-        // the exponents, and one on the mantissas if the exponents
-        // are equal), it is possible that the result of the subtract
-        // could be negative (if the exponents are equal). If this
-        // occurs, then the result sign and mantissa are complemented
-        // to obtain the correct result.
-        //
+            //
+            // Floating add operation.
+            //
+            // Floating add is accomplished using signed magnitude addition.
+            //
+            // The exponent difference is calculated and the smaller number
+            // is right shifted by the specified amount, but no more than
+            // the width of the operand values (i.e., 26 for single and 55
+            // for double). The shifted out value is saved for rounding.
+            //
+            // If the signs of the two operands are the same, then they
+            // are added together after having performed the alignment
+            // shift.
+            //
+            // If the signs of the two operands are different, then the
+            // sign of the result is the sign of the larger operand and
+            // the smaller operand is subtracted from the larger operand.
+            // In order to avoid making a double level test (i.e., one on
+            // the exponents, and one on the mantissas if the exponents
+            // are equal), it is possible that the result of the subtract
+            // could be negative (if the exponents are equal). If this
+            // occurs, then the result sign and mantissa are complemented
+            // to obtain the correct result.
+            //
 
-        case ADDS_FUNC :
+        case ADDS_FUNC:
             DBGPRINT2("adds\n");
 
             //
@@ -850,7 +792,8 @@ Return Value:
             // so that Operand1 exponent will be >= Operand2 exponent.
             //
 
-            if (SingleOperand2.Exponent > SingleOperand1.Exponent) {
+            if (SingleOperand2.Exponent > SingleOperand1.Exponent)
+            {
                 SingleOperand3 = SingleOperand2;
                 SingleOperand2 = SingleOperand1;
                 SingleOperand1 = SingleOperand3;
@@ -863,15 +806,14 @@ Return Value:
             // bits and are used later in the rounding operation.
             //
 
-            ExponentDifference =
-                SingleOperand1.Exponent - SingleOperand2.Exponent;
+            ExponentDifference = SingleOperand1.Exponent - SingleOperand2.Exponent;
 
-            if (ExponentDifference > 26) {
+            if (ExponentDifference > 26)
+            {
                 ExponentDifference = 26;
             }
 
-            StickyBits =
-                    SingleOperand2.Mantissa & ((1 << ExponentDifference) - 1);
+            StickyBits = SingleOperand2.Mantissa & ((1 << ExponentDifference) - 1);
             SingleMantissa = SingleOperand2.Mantissa >> ExponentDifference;
 
             //
@@ -881,24 +823,26 @@ Return Value:
             // subtracting the second operand from the first operand.
             //
 
-            if ((SingleOperand1.Sign ^ SingleOperand2.Sign) == 0) {
+            if ((SingleOperand1.Sign ^ SingleOperand2.Sign) == 0)
+            {
                 SingleOperand1.Mantissa += SingleMantissa;
-
-            } else {
-                if ((SingleOperand1.Infinity != FALSE) &&
-                    (SingleOperand2.Infinity != FALSE)) {
-                    return KiInvalidOperationSingle(&ContextBlock,
-                                                    FALSE,
-                                                    &SingleOperand1,
-                                                    &SingleOperand2);
-
-                } else if (SingleOperand1.Infinity == FALSE) {
-                    if (StickyBits != 0) {
+            }
+            else
+            {
+                if ((SingleOperand1.Infinity != FALSE) && (SingleOperand2.Infinity != FALSE))
+                {
+                    return KiInvalidOperationSingle(&ContextBlock, FALSE, &SingleOperand1, &SingleOperand2);
+                }
+                else if (SingleOperand1.Infinity == FALSE)
+                {
+                    if (StickyBits != 0)
+                    {
                         SingleOperand1.Mantissa -= 1;
                     }
 
                     SingleOperand1.Mantissa -= SingleMantissa;
-                    if (SingleOperand1.Mantissa < 0) {
+                    if (SingleOperand1.Mantissa < 0)
+                    {
                         SingleOperand1.Mantissa = -SingleOperand1.Mantissa;
                         SingleOperand1.Sign ^= 0x1;
                     }
@@ -909,11 +853,14 @@ Return Value:
                     // when the rounding mode is minus infinity.
                     //
 
-                    if ((SingleOperand1.Mantissa == 0) && (StickyBits == 0)) {
-                        if (ContextBlock.Round == ROUND_TO_MINUS_INFINITY) {
+                    if ((SingleOperand1.Mantissa == 0) && (StickyBits == 0))
+                    {
+                        if (ContextBlock.Round == ROUND_TO_MINUS_INFINITY)
+                        {
                             SingleOperand1.Sign = 0x1;
-
-                        } else {
+                        }
+                        else
+                        {
                             SingleOperand1.Sign = 0x0;
                         }
                     }
@@ -924,15 +871,13 @@ Return Value:
             // Normalize and store the result value.
             //
 
-            return KiNormalizeSingle(&ContextBlock,
-                                     &SingleOperand1,
-                                     StickyBits);
-
-        case SUBT_FUNC :
+            return KiNormalizeSingle(&ContextBlock, &SingleOperand1, StickyBits);
+
+        case SUBT_FUNC:
             DBGPRINT2("subt\n");
             Negation = 0x1;
 
-        case ADDT_FUNC :
+        case ADDT_FUNC:
             DBGPRINT2("addt\n");
 
             //
@@ -947,7 +892,8 @@ Return Value:
             // so that Operand1 exponent will be >= Operand2 exponent.
             //
 
-            if (DoubleOperand2.Exponent > DoubleOperand1.Exponent) {
+            if (DoubleOperand2.Exponent > DoubleOperand1.Exponent)
+            {
                 DoubleOperand3 = DoubleOperand2;
                 DoubleOperand2 = DoubleOperand1;
                 DoubleOperand1 = DoubleOperand3;
@@ -960,35 +906,34 @@ Return Value:
             // bits and are used later in the rounding operation.
             //
 
-            ExponentDifference =
-                DoubleOperand1.Exponent - DoubleOperand2.Exponent;
+            ExponentDifference = DoubleOperand1.Exponent - DoubleOperand2.Exponent;
 
-            if (ExponentDifference > 55) {
+            if (ExponentDifference > 55)
+            {
                 ExponentDifference = 55;
             }
 
-            if (ExponentDifference >= 32) {
+            if (ExponentDifference >= 32)
+            {
                 ExponentDifference -= 32;
-                StickyBits = (DoubleOperand2.MantissaLow) |
-                    (DoubleOperand2.MantissaHigh & ((1 << ExponentDifference) - 1));
+                StickyBits =
+                    (DoubleOperand2.MantissaLow) | (DoubleOperand2.MantissaHigh & ((1 << ExponentDifference) - 1));
 
-                DoubleMantissaLow =
-                    DoubleOperand2.MantissaHigh >> ExponentDifference;
+                DoubleMantissaLow = DoubleOperand2.MantissaHigh >> ExponentDifference;
 
                 DoubleMantissaHigh = 0;
+            }
+            else if (ExponentDifference > 0)
+            {
+                StickyBits = DoubleOperand2.MantissaLow & ((1 << ExponentDifference) - 1);
 
-            } else if (ExponentDifference > 0) {
-                StickyBits =
-                    DoubleOperand2.MantissaLow & ((1 << ExponentDifference) - 1);
+                DoubleMantissaLow = (DoubleOperand2.MantissaLow >> ExponentDifference) |
+                                    (DoubleOperand2.MantissaHigh << (32 - ExponentDifference));
 
-                DoubleMantissaLow =
-                    (DoubleOperand2.MantissaLow >> ExponentDifference) |
-                    (DoubleOperand2.MantissaHigh << (32 - ExponentDifference));
-
-                DoubleMantissaHigh =
-                    DoubleOperand2.MantissaHigh >> ExponentDifference;
-
-            } else {
+                DoubleMantissaHigh = DoubleOperand2.MantissaHigh >> ExponentDifference;
+            }
+            else
+            {
                 StickyBits = 0;
                 DoubleMantissaLow = DoubleOperand2.MantissaLow;
                 DoubleMantissaHigh = DoubleOperand2.MantissaHigh;
@@ -1001,40 +946,46 @@ Return Value:
             // subtracting the second operand from the first operand.
             //
 
-            if ((DoubleOperand1.Sign ^ DoubleOperand2.Sign) == 0) {
+            if ((DoubleOperand1.Sign ^ DoubleOperand2.Sign) == 0)
+            {
                 DoubleOperand1.MantissaLow += DoubleMantissaLow;
                 DoubleOperand1.MantissaHigh += DoubleMantissaHigh;
-                if (DoubleOperand1.MantissaLow < DoubleMantissaLow) {
+                if (DoubleOperand1.MantissaLow < DoubleMantissaLow)
+                {
                     DoubleOperand1.MantissaHigh += 1;
                 }
-
-            } else {
-                if ((DoubleOperand1.Infinity != FALSE) &&
-                    (DoubleOperand2.Infinity != FALSE)) {
-                    return KiInvalidOperationDouble(&ContextBlock,
-                                                    FALSE,
-                                                    &DoubleOperand1,
-                                                    &DoubleOperand2);
-
-                } else if (DoubleOperand1.Infinity == FALSE) {
-                    if (StickyBits != 0) {
-                        if (DoubleOperand1.MantissaLow < 1) {
+            }
+            else
+            {
+                if ((DoubleOperand1.Infinity != FALSE) && (DoubleOperand2.Infinity != FALSE))
+                {
+                    return KiInvalidOperationDouble(&ContextBlock, FALSE, &DoubleOperand1, &DoubleOperand2);
+                }
+                else if (DoubleOperand1.Infinity == FALSE)
+                {
+                    if (StickyBits != 0)
+                    {
+                        if (DoubleOperand1.MantissaLow < 1)
+                        {
                             DoubleOperand1.MantissaHigh -= 1;
                         }
 
                         DoubleOperand1.MantissaLow -= 1;
                     }
 
-                    if (DoubleOperand1.MantissaLow < DoubleMantissaLow) {
+                    if (DoubleOperand1.MantissaLow < DoubleMantissaLow)
+                    {
                         DoubleOperand1.MantissaHigh -= 1;
                     }
 
                     DoubleOperand1.MantissaLow -= DoubleMantissaLow;
                     DoubleOperand1.MantissaHigh -= DoubleMantissaHigh;
-                    if (DoubleOperand1.MantissaHigh < 0) {
+                    if (DoubleOperand1.MantissaHigh < 0)
+                    {
                         DoubleOperand1.MantissaLow = -(LONG)DoubleOperand1.MantissaLow;
                         DoubleOperand1.MantissaHigh = -DoubleOperand1.MantissaHigh;
-                        if (DoubleOperand1.MantissaLow != 0) {
+                        if (DoubleOperand1.MantissaLow != 0)
+                        {
                             DoubleOperand1.MantissaHigh -= 1;
                         }
                         DoubleOperand1.Sign ^= 0x1;
@@ -1046,13 +997,14 @@ Return Value:
                     // when the rounding mode is minus infinity.
                     //
 
-                    if ((DoubleOperand1.MantissaHigh == 0) &&
-                        (DoubleOperand1.MantissaLow == 0) &&
-                        (StickyBits == 0)) {
-                        if (ContextBlock.Round == ROUND_TO_MINUS_INFINITY) {
+                    if ((DoubleOperand1.MantissaHigh == 0) && (DoubleOperand1.MantissaLow == 0) && (StickyBits == 0))
+                    {
+                        if (ContextBlock.Round == ROUND_TO_MINUS_INFINITY)
+                        {
                             DoubleOperand1.Sign = 0x1;
-
-                        } else {
+                        }
+                        else
+                        {
                             DoubleOperand1.Sign = 0x0;
                         }
                     }
@@ -1063,22 +1015,20 @@ Return Value:
             // Normalize and store the result value.
             //
 
-            return KiNormalizeDouble(&ContextBlock,
-                                     &DoubleOperand1,
-                                     StickyBits);
-
-        //
-        // Floating multiply operation.
-        //
-        // Floating multiply is accomplished using unsigned multiplies
-        // of the mantissa values, and adding the partial results together
-        // to form the total product.
-        //
-        // The two mantissa values are preshifted such that the final
-        // result is properly aligned.
-        //
+            return KiNormalizeDouble(&ContextBlock, &DoubleOperand1, StickyBits);
 
-        case MULS_FUNC :
+            //
+            // Floating multiply operation.
+            //
+            // Floating multiply is accomplished using unsigned multiplies
+            // of the mantissa values, and adding the partial results together
+            // to form the total product.
+            //
+            // The two mantissa values are preshifted such that the final
+            // result is properly aligned.
+            //
+
+        case MULS_FUNC:
             DBGPRINT2("muls\n");
 
             //
@@ -1086,7 +1036,8 @@ Return Value:
             // so that Operand1 exponent will be >= Operand2 exponent.
             //
 
-            if (SingleOperand2.Exponent > SingleOperand1.Exponent) {
+            if (SingleOperand2.Exponent > SingleOperand1.Exponent)
+            {
                 SingleOperand3 = SingleOperand2;
                 SingleOperand2 = SingleOperand1;
                 SingleOperand1 = SingleOperand3;
@@ -1097,13 +1048,10 @@ Return Value:
             // zero, then an invalid operation is specified.
             //
 
-            if ((SingleOperand1.Infinity != FALSE) &&
-                (SingleOperand2.Infinity == FALSE) &&
-                (SingleOperand2.Mantissa == 0)) {
-                return KiInvalidOperationSingle(&ContextBlock,
-                                                FALSE,
-                                                &SingleOperand1,
-                                                &SingleOperand2);
+            if ((SingleOperand1.Infinity != FALSE) && (SingleOperand2.Infinity == FALSE) &&
+                (SingleOperand2.Mantissa == 0))
+            {
+                return KiInvalidOperationSingle(&ContextBlock, FALSE, &SingleOperand1, &SingleOperand2);
             }
 
             //
@@ -1137,18 +1085,15 @@ Return Value:
             //
 
             SingleOperand1.Sign ^= SingleOperand2.Sign;
-            SingleOperand1.Exponent +=
-                        SingleOperand2.Exponent - SINGLE_EXPONENT_BIAS;
+            SingleOperand1.Exponent += SingleOperand2.Exponent - SINGLE_EXPONENT_BIAS;
 
             //
             // Normalize and store the result value.
             //
 
-            return KiNormalizeSingle(&ContextBlock,
-                                     &SingleOperand1,
-                                     StickyBits);
-
-        case MULT_FUNC :
+            return KiNormalizeSingle(&ContextBlock, &SingleOperand1, StickyBits);
+
+        case MULT_FUNC:
             DBGPRINT2("mult\n");
 
             //
@@ -1156,7 +1101,8 @@ Return Value:
             // so that Operand1 exponent will be >= Operand2 exponent.
             //
 
-            if (DoubleOperand2.Exponent > DoubleOperand1.Exponent) {
+            if (DoubleOperand2.Exponent > DoubleOperand1.Exponent)
+            {
                 DoubleOperand3 = DoubleOperand2;
                 DoubleOperand2 = DoubleOperand1;
                 DoubleOperand1 = DoubleOperand3;
@@ -1167,13 +1113,10 @@ Return Value:
             // zero, then an invalid operation is specified.
             //
 
-            if ((DoubleOperand1.Infinity != FALSE) &&
-                (DoubleOperand2.Infinity == FALSE) &&
-                (DoubleOperand2.MantissaHigh == 0)) {
-                return KiInvalidOperationDouble(&ContextBlock,
-                                                FALSE,
-                                                &DoubleOperand1,
-                                                &DoubleOperand2);
+            if ((DoubleOperand1.Infinity != FALSE) && (DoubleOperand2.Infinity == FALSE) &&
+                (DoubleOperand2.MantissaHigh == 0))
+            {
+                return KiInvalidOperationDouble(&ContextBlock, FALSE, &DoubleOperand1, &DoubleOperand2);
             }
 
             //
@@ -1196,14 +1139,11 @@ Return Value:
             // the other the remaining 1 bit.
             //
 
-            DoubleOperand1.MantissaHigh =
-                    (DoubleOperand1.MantissaHigh << 1) |
-                            (DoubleOperand1.MantissaLow >> 31);
+            DoubleOperand1.MantissaHigh = (DoubleOperand1.MantissaHigh << 1) | (DoubleOperand1.MantissaLow >> 31);
 
             DoubleOperand1.MantissaLow <<= 1;
             DoubleOperand2.MantissaHigh =
-                    (DoubleOperand2.MantissaHigh << (64 - 55)) |
-                            (DoubleOperand2.MantissaLow >> (32 - (64 - 55)));
+                (DoubleOperand2.MantissaHigh << (64 - 55)) | (DoubleOperand2.MantissaLow >> (32 - (64 - 55)));
 
             DoubleOperand2.MantissaLow <<= (64 - 55);
 
@@ -1221,46 +1161,50 @@ Return Value:
             //                              Alow * Blow
             //
 
-            AhighBhigh.QuadPart = (ULONGLONG)(ULONG)DoubleOperand1.MantissaHigh *
-                                  (ULONGLONG)(ULONG)DoubleOperand2.MantissaHigh;
+            AhighBhigh.QuadPart =
+                (ULONGLONG)(ULONG)DoubleOperand1.MantissaHigh * (ULONGLONG)(ULONG)DoubleOperand2.MantissaHigh;
 
-            AhighBlow.QuadPart = (ULONGLONG)(ULONG)DoubleOperand1.MantissaHigh *
-                                 (ULONGLONG)DoubleOperand2.MantissaLow;
+            AhighBlow.QuadPart = (ULONGLONG)(ULONG)DoubleOperand1.MantissaHigh * (ULONGLONG)DoubleOperand2.MantissaLow;
 
-            AlowBhigh.QuadPart = (ULONGLONG)DoubleOperand1.MantissaLow *
-                                 (ULONGLONG)(ULONG)DoubleOperand2.MantissaHigh;
+            AlowBhigh.QuadPart = (ULONGLONG)DoubleOperand1.MantissaLow * (ULONGLONG)(ULONG)DoubleOperand2.MantissaHigh;
 
-            AlowBlow.QuadPart = (ULONGLONG)DoubleOperand1.MantissaLow *
-                                (ULONGLONG)DoubleOperand2.MantissaLow;
+            AlowBlow.QuadPart = (ULONGLONG)DoubleOperand1.MantissaLow * (ULONGLONG)DoubleOperand2.MantissaLow;
 
             AlowBlow.HighPart += AhighBlow.LowPart;
-            if (AlowBlow.HighPart < AhighBlow.LowPart) {
+            if (AlowBlow.HighPart < AhighBlow.LowPart)
+            {
                 Carry1 = 1;
-
-            } else {
+            }
+            else
+            {
                 Carry1 = 0;
             }
 
             AlowBlow.HighPart += AlowBhigh.LowPart;
-            if (AlowBlow.HighPart < AlowBhigh.LowPart) {
+            if (AlowBlow.HighPart < AlowBhigh.LowPart)
+            {
                 Carry1 += 1;
             }
 
             DoubleOperand1.MantissaLow = AhighBlow.HighPart + Carry1;
-            if (DoubleOperand1.MantissaLow < Carry1) {
+            if (DoubleOperand1.MantissaLow < Carry1)
+            {
                 Carry2 = 1;
-
-            } else {
+            }
+            else
+            {
                 Carry2 = 0;
             }
 
             DoubleOperand1.MantissaLow += AlowBhigh.HighPart;
-            if (DoubleOperand1.MantissaLow < AlowBhigh.HighPart) {
+            if (DoubleOperand1.MantissaLow < AlowBhigh.HighPart)
+            {
                 Carry2 += 1;
             }
 
             DoubleOperand1.MantissaLow += AhighBhigh.LowPart;
-            if (DoubleOperand1.MantissaLow < AhighBhigh.LowPart) {
+            if (DoubleOperand1.MantissaLow < AhighBhigh.LowPart)
+            {
                 Carry2 += 1;
             }
 
@@ -1272,30 +1216,27 @@ Return Value:
             //
 
             DoubleOperand1.Sign ^= DoubleOperand2.Sign;
-            DoubleOperand1.Exponent +=
-                        DoubleOperand2.Exponent - DOUBLE_EXPONENT_BIAS;
+            DoubleOperand1.Exponent += DoubleOperand2.Exponent - DOUBLE_EXPONENT_BIAS;
 
             //
             // Normalize and store the result value.
             //
 
-            return KiNormalizeDouble(&ContextBlock,
-                                     &DoubleOperand1,
-                                     StickyBits);
-
-        //
-        // Floating divide operation.
-        //
-        // Floating division is accomplished by repeated subtract using
-        // a single one-bit-at-a-time algorithm. The number of division
-        // steps performed is equal to the mantissa size plus one guard
-        // bit.
-        //
-        // The sticky bits are the remainder after the specified number
-        // of division steps.
-        //
+            return KiNormalizeDouble(&ContextBlock, &DoubleOperand1, StickyBits);
 
-        case DIVS_FUNC :
+            //
+            // Floating divide operation.
+            //
+            // Floating division is accomplished by repeated subtract using
+            // a single one-bit-at-a-time algorithm. The number of division
+            // steps performed is equal to the mantissa size plus one guard
+            // bit.
+            //
+            // The sticky bits are the remainder after the specified number
+            // of division steps.
+            //
+
+        case DIVS_FUNC:
             DBGPRINT2("divs\n");
 
             //
@@ -1304,16 +1245,11 @@ Return Value:
             // operation is specified.
             //
 
-            if (((SingleOperand1.Infinity != FALSE) &&
-                 (SingleOperand2.Infinity != FALSE)) ||
-                ((SingleOperand1.Infinity == FALSE) &&
-                 (SingleOperand1.Mantissa == 0) &&
-                 (SingleOperand2.Infinity == FALSE) &&
-                 (SingleOperand2.Mantissa == 0))) {
-                return KiInvalidOperationSingle(&ContextBlock,
-                                                FALSE,
-                                                &SingleOperand1,
-                                                &SingleOperand2);
+            if (((SingleOperand1.Infinity != FALSE) && (SingleOperand2.Infinity != FALSE)) ||
+                ((SingleOperand1.Infinity == FALSE) && (SingleOperand1.Mantissa == 0) &&
+                 (SingleOperand2.Infinity == FALSE) && (SingleOperand2.Mantissa == 0)))
+            {
+                return KiInvalidOperationSingle(&ContextBlock, FALSE, &SingleOperand1, &SingleOperand2);
             }
 
             //
@@ -1321,11 +1257,9 @@ Return Value:
             // operation is specified.
             //
 
-            if ((SingleOperand2.Infinity == FALSE) &&
-                (SingleOperand2.Mantissa == 0)) {
-                return KiDivideByZeroSingle(&ContextBlock,
-                                            &SingleOperand1,
-                                            &SingleOperand2);
+            if ((SingleOperand2.Infinity == FALSE) && (SingleOperand2.Mantissa == 0))
+            {
+                return KiDivideByZeroSingle(&ContextBlock, &SingleOperand1, &SingleOperand2);
             }
 
             //
@@ -1335,19 +1269,17 @@ Return Value:
             // be infinite).
             //
 
-            if (SingleOperand1.Infinity != FALSE) {
+            if (SingleOperand1.Infinity != FALSE)
+            {
                 SingleOperand1.Sign ^= SingleOperand2.Sign;
-                return KiNormalizeSingle(&ContextBlock,
-                                         &SingleOperand1,
-                                         0);
-
-            } else if (SingleOperand2.Infinity != FALSE) {
+                return KiNormalizeSingle(&ContextBlock, &SingleOperand1, 0);
+            }
+            else if (SingleOperand2.Infinity != FALSE)
+            {
                 SingleOperand1.Sign ^= SingleOperand2.Sign;
                 SingleOperand1.Exponent = 0;
                 SingleOperand1.Mantissa = 0;
-                return KiNormalizeSingle(&ContextBlock,
-                                         &SingleOperand1,
-                                         0);
+                return KiNormalizeSingle(&ContextBlock, &SingleOperand1, 0);
             }
 
             //
@@ -1356,9 +1288,11 @@ Return Value:
             //
 
             SingleOperand3.Mantissa = 0;
-            for (Index = 0; Index < 26; Index += 1) {
+            for (Index = 0; Index < 26; Index += 1)
+            {
                 SingleOperand3.Mantissa <<= 1;
-                if (SingleOperand1.Mantissa >= SingleOperand2.Mantissa) {
+                if (SingleOperand1.Mantissa >= SingleOperand2.Mantissa)
+                {
                     SingleOperand1.Mantissa -= SingleOperand2.Mantissa;
                     SingleOperand3.Mantissa |= 1;
                 }
@@ -1371,8 +1305,7 @@ Return Value:
             //
 
             SingleOperand3.Sign = SingleOperand1.Sign ^ SingleOperand2.Sign;
-            SingleOperand3.Exponent = SingleOperand1.Exponent -
-                            SingleOperand2.Exponent + SINGLE_EXPONENT_BIAS;
+            SingleOperand3.Exponent = SingleOperand1.Exponent - SingleOperand2.Exponent + SINGLE_EXPONENT_BIAS;
 
             //
             // Normalize and store the result value.
@@ -1380,11 +1313,9 @@ Return Value:
 
             SingleOperand3.Infinity = FALSE;
             SingleOperand3.Nan = FALSE;
-            return KiNormalizeSingle(&ContextBlock,
-                                     &SingleOperand3,
-                                     SingleOperand1.Mantissa);
-
-        case DIVT_FUNC :
+            return KiNormalizeSingle(&ContextBlock, &SingleOperand3, SingleOperand1.Mantissa);
+
+        case DIVT_FUNC:
             DBGPRINT2("divt\n");
 
             //
@@ -1393,16 +1324,11 @@ Return Value:
             // operation is specified.
             //
 
-            if (((DoubleOperand1.Infinity != FALSE) &&
-                 (DoubleOperand2.Infinity != FALSE)) ||
-                ((DoubleOperand1.Infinity == FALSE) &&
-                 (DoubleOperand1.MantissaHigh == 0) &&
-                 (DoubleOperand2.Infinity == FALSE) &&
-                 (DoubleOperand2.MantissaHigh == 0))) {
-                return KiInvalidOperationDouble(&ContextBlock,
-                                                FALSE,
-                                                &DoubleOperand1,
-                                                &DoubleOperand2);
+            if (((DoubleOperand1.Infinity != FALSE) && (DoubleOperand2.Infinity != FALSE)) ||
+                ((DoubleOperand1.Infinity == FALSE) && (DoubleOperand1.MantissaHigh == 0) &&
+                 (DoubleOperand2.Infinity == FALSE) && (DoubleOperand2.MantissaHigh == 0)))
+            {
+                return KiInvalidOperationDouble(&ContextBlock, FALSE, &DoubleOperand1, &DoubleOperand2);
             }
 
             //
@@ -1410,11 +1336,9 @@ Return Value:
             // operation is specified.
             //
 
-            if ((DoubleOperand2.Infinity == FALSE) &&
-                (DoubleOperand2.MantissaHigh == 0)) {
-                return KiDivideByZeroDouble(&ContextBlock,
-                                            &DoubleOperand1,
-                                            &DoubleOperand2);
+            if ((DoubleOperand2.Infinity == FALSE) && (DoubleOperand2.MantissaHigh == 0))
+            {
+                return KiDivideByZeroDouble(&ContextBlock, &DoubleOperand1, &DoubleOperand2);
             }
 
             //
@@ -1424,20 +1348,18 @@ Return Value:
             // be infinite).
             //
 
-            if (DoubleOperand1.Infinity != FALSE) {
+            if (DoubleOperand1.Infinity != FALSE)
+            {
                 DoubleOperand1.Sign ^= DoubleOperand2.Sign;
-                return KiNormalizeDouble(&ContextBlock,
-                                         &DoubleOperand1,
-                                         0);
-
-            } else if (DoubleOperand2.Infinity != FALSE) {
+                return KiNormalizeDouble(&ContextBlock, &DoubleOperand1, 0);
+            }
+            else if (DoubleOperand2.Infinity != FALSE)
+            {
                 DoubleOperand1.Sign ^= DoubleOperand2.Sign;
                 DoubleOperand1.Exponent = 0;
                 DoubleOperand1.MantissaHigh = 0;
                 DoubleOperand1.MantissaLow = 0;
-                return KiNormalizeDouble(&ContextBlock,
-                                         &DoubleOperand1,
-                                         0);
+                return KiNormalizeDouble(&ContextBlock, &DoubleOperand1, 0);
             }
 
             //
@@ -1451,20 +1373,18 @@ Return Value:
             DoubleDivisor.HighPart = DoubleOperand2.MantissaHigh;
             DoubleQuotient.LowPart = 0;
             DoubleQuotient.HighPart = 0;
-            for (Index = 0; Index < 55; Index += 1) {
-                DoubleQuotient.HighPart =
-                            (DoubleQuotient.HighPart << 1) |
-                                            DoubleQuotient.LowPart >> 31;
+            for (Index = 0; Index < 55; Index += 1)
+            {
+                DoubleQuotient.HighPart = (DoubleQuotient.HighPart << 1) | DoubleQuotient.LowPart >> 31;
 
                 DoubleQuotient.LowPart <<= 1;
-                if (DoubleDividend.QuadPart >= DoubleDivisor.QuadPart) {
+                if (DoubleDividend.QuadPart >= DoubleDivisor.QuadPart)
+                {
                     DoubleDividend.QuadPart = DoubleDividend.QuadPart - DoubleDivisor.QuadPart;
                     DoubleQuotient.LowPart |= 1;
                 }
 
-                DoubleDividend.HighPart =
-                            (DoubleDividend.HighPart << 1) |
-                                            DoubleDividend.LowPart >> 31;
+                DoubleDividend.HighPart = (DoubleDividend.HighPart << 1) | DoubleDividend.LowPart >> 31;
 
                 DoubleDividend.LowPart <<= 1;
             }
@@ -1477,8 +1397,7 @@ Return Value:
             //
 
             DoubleOperand3.Sign = DoubleOperand1.Sign ^ DoubleOperand2.Sign;
-            DoubleOperand3.Exponent = DoubleOperand1.Exponent -
-                            DoubleOperand2.Exponent + DOUBLE_EXPONENT_BIAS;
+            DoubleOperand3.Exponent = DoubleOperand1.Exponent - DoubleOperand2.Exponent + DOUBLE_EXPONENT_BIAS;
 
             //
             // Normalize and store the result value.
@@ -1486,10 +1405,8 @@ Return Value:
 
             DoubleOperand3.Infinity = FALSE;
             DoubleOperand3.Nan = FALSE;
-            return KiNormalizeDouble(&ContextBlock,
-                                     &DoubleOperand3,
-                                     DoubleDividend.LowPart | DoubleDividend.HighPart);
-
+            return KiNormalizeDouble(&ContextBlock, &DoubleOperand3, DoubleDividend.LowPart | DoubleDividend.HighPart);
+
             //
             // Floating compare double.
             //
@@ -1503,9 +1420,9 @@ Return Value:
             // N.B. The sign of zero is ignored.
             //
 
-        case CMPTEQ_FUNC :
-        case CMPTLE_FUNC :
-        case CMPTLT_FUNC :
+        case CMPTEQ_FUNC:
+        case CMPTLE_FUNC:
+        case CMPTLT_FUNC:
 
             //
             // If either operand is zero, then set the sign of the operand
@@ -1513,14 +1430,14 @@ Return Value:
             // denormal number.
             //
 
-            if ((DoubleOperand1.Infinity == FALSE) &&
-                (DoubleOperand1.MantissaHigh == 0)) {
+            if ((DoubleOperand1.Infinity == FALSE) && (DoubleOperand1.MantissaHigh == 0))
+            {
                 DoubleOperand1.Sign = 0;
                 DoubleOperand1.Exponent = -52;
             }
 
-            if ((DoubleOperand2.Infinity == FALSE) &&
-                (DoubleOperand2.MantissaHigh == 0)) {
+            if ((DoubleOperand2.Infinity == FALSE) && (DoubleOperand2.MantissaHigh == 0))
+            {
                 DoubleOperand2.Sign = 0;
                 DoubleOperand2.Exponent = -52;
             }
@@ -1529,7 +1446,8 @@ Return Value:
             // Compare signs first.
             //
 
-            if (DoubleOperand1.Sign < DoubleOperand2.Sign) {
+            if (DoubleOperand1.Sign < DoubleOperand2.Sign)
+            {
 
                 //
                 // The first operand is greater than the second operand.
@@ -1537,8 +1455,9 @@ Return Value:
 
                 CompareEqual = FALSE;
                 CompareLess = FALSE;
-
-            } else if (DoubleOperand1.Sign > DoubleOperand2.Sign) {
+            }
+            else if (DoubleOperand1.Sign > DoubleOperand2.Sign)
+            {
 
                 //
                 // The first operand is less than the second operand.
@@ -1546,8 +1465,9 @@ Return Value:
 
                 CompareEqual = FALSE;
                 CompareLess = TRUE;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // The operand signs are equal.
@@ -1556,86 +1476,98 @@ Return Value:
                 // the comparison is reversed.
                 //
 
-                if (DoubleOperand1.Sign == 0) {
+                if (DoubleOperand1.Sign == 0)
+                {
 
                     //
                     // Compare positive operand with positive operand.
                     //
 
-                    if (DoubleOperand1.Exponent > DoubleOperand2.Exponent) {
+                    if (DoubleOperand1.Exponent > DoubleOperand2.Exponent)
+                    {
                         CompareEqual = FALSE;
                         CompareLess = FALSE;
-
-                    } else if (DoubleOperand1.Exponent < DoubleOperand2.Exponent) {
+                    }
+                    else if (DoubleOperand1.Exponent < DoubleOperand2.Exponent)
+                    {
                         CompareEqual = FALSE;
                         CompareLess = TRUE;
-
-                    } else {
-                        if (DoubleOperand1.MantissaHigh >
-                            DoubleOperand2.MantissaHigh) {
+                    }
+                    else
+                    {
+                        if (DoubleOperand1.MantissaHigh > DoubleOperand2.MantissaHigh)
+                        {
                             CompareEqual = FALSE;
                             CompareLess = FALSE;
-
-                        } else if (DoubleOperand1.MantissaHigh <
-                                   DoubleOperand2.MantissaHigh) {
+                        }
+                        else if (DoubleOperand1.MantissaHigh < DoubleOperand2.MantissaHigh)
+                        {
                             CompareEqual = FALSE;
                             CompareLess = TRUE;
-
-                        } else {
-                            if (DoubleOperand1.MantissaLow >
-                                DoubleOperand2.MantissaLow) {
+                        }
+                        else
+                        {
+                            if (DoubleOperand1.MantissaLow > DoubleOperand2.MantissaLow)
+                            {
                                 CompareEqual = FALSE;
                                 CompareLess = FALSE;
-
-                            } else if (DoubleOperand1.MantissaLow <
-                                       DoubleOperand2.MantissaLow) {
+                            }
+                            else if (DoubleOperand1.MantissaLow < DoubleOperand2.MantissaLow)
+                            {
                                 CompareEqual = FALSE;
                                 CompareLess = TRUE;
-
-                            } else {
+                            }
+                            else
+                            {
                                 CompareEqual = TRUE;
                                 CompareLess = FALSE;
                             }
                         }
                     }
-
-                } else {
+                }
+                else
+                {
 
                     //
                     // Compare negative operand with negative operand.
                     //
 
-                    if (DoubleOperand2.Exponent > DoubleOperand1.Exponent) {
+                    if (DoubleOperand2.Exponent > DoubleOperand1.Exponent)
+                    {
                         CompareEqual = FALSE;
                         CompareLess = FALSE;
-
-                    } else if (DoubleOperand2.Exponent < DoubleOperand1.Exponent) {
+                    }
+                    else if (DoubleOperand2.Exponent < DoubleOperand1.Exponent)
+                    {
                         CompareEqual = FALSE;
                         CompareLess = TRUE;
-
-                    } else {
-                        if (DoubleOperand2.MantissaHigh >
-                            DoubleOperand1.MantissaHigh) {
+                    }
+                    else
+                    {
+                        if (DoubleOperand2.MantissaHigh > DoubleOperand1.MantissaHigh)
+                        {
                             CompareEqual = FALSE;
                             CompareLess = FALSE;
-
-                        } else if (DoubleOperand2.MantissaHigh <
-                                   DoubleOperand1.MantissaHigh) {
+                        }
+                        else if (DoubleOperand2.MantissaHigh < DoubleOperand1.MantissaHigh)
+                        {
                             CompareEqual = FALSE;
                             CompareLess = TRUE;
-
-                        } else {
-                            if (DoubleOperand2.MantissaLow >
-                                DoubleOperand1.MantissaLow) {
+                        }
+                        else
+                        {
+                            if (DoubleOperand2.MantissaLow > DoubleOperand1.MantissaLow)
+                            {
                                 CompareEqual = FALSE;
                                 CompareLess = FALSE;
-
-                            } else if (DoubleOperand2.MantissaLow <
-                                       DoubleOperand1.MantissaLow) {
+                            }
+                            else if (DoubleOperand2.MantissaLow < DoubleOperand1.MantissaLow)
+                            {
                                 CompareEqual = FALSE;
                                 CompareLess = TRUE;
-
-                            } else {
+                            }
+                            else
+                            {
                                 CompareEqual = TRUE;
                                 CompareLess = FALSE;
                             }
@@ -1649,18 +1581,19 @@ Return Value:
             // information and the compare function codes.
             //
 
-            switch (Function & FP_FUNCTION_MASK) {
-            case CMPTEQ_FUNC :
+            switch (Function & FP_FUNCTION_MASK)
+            {
+            case CMPTEQ_FUNC:
                 CompareResult = CompareEqual;
                 DBGPRINT2("cmpteq\n");
                 break;
 
-            case CMPTLE_FUNC :
+            case CMPTLE_FUNC:
                 CompareResult = (CompareLess | CompareEqual);
                 DBGPRINT2("cmptle\n");
                 break;
 
-            case CMPTLT_FUNC :
+            case CMPTLT_FUNC:
                 CompareResult = CompareLess;
                 DBGPRINT2("cmptlt\n");
                 break;
@@ -1671,29 +1604,25 @@ Return Value:
             // otherwise store 0.0.
             //
 
-            if (CompareResult != FALSE) {
-                KiSetRegisterValue(ContextBlock.Fc + 32,
-                                   FP_COMPARE_TRUE,
-                                   ExceptionFrame,
-                                   TrapFrame);
-
-            } else {
-                KiSetRegisterValue(ContextBlock.Fc + 32,
-                                   FP_COMPARE_FALSE,
-                                   ExceptionFrame,
-                                   TrapFrame);
+            if (CompareResult != FALSE)
+            {
+                KiSetRegisterValue(ContextBlock.Fc + 32, FP_COMPARE_TRUE, ExceptionFrame, TrapFrame);
+            }
+            else
+            {
+                KiSetRegisterValue(ContextBlock.Fc + 32, FP_COMPARE_FALSE, ExceptionFrame, TrapFrame);
             }
             return TRUE;
-
-        //
-        // Floating convert single to double.
-        //
-        // Floating conversion to double is accomplished by forming a
-        // double floating operand and then normalizing and storing
-        // the result value.
-        //
 
-        case CVTST_FUNC_PROPER :
+            //
+            // Floating convert single to double.
+            //
+            // Floating conversion to double is accomplished by forming a
+            // double floating operand and then normalizing and storing
+            // the result value.
+            //
+
+        case CVTST_FUNC_PROPER:
             DBGPRINT2("cvtst\n");
 
             //
@@ -1703,31 +1632,24 @@ Return Value:
             // is a signaling NaN.
             //
 
-            if (SingleOperand1.Nan != FALSE) {
-                DoubleOperand1.MantissaHigh =
-                        SingleOperand1.Mantissa >> (26 - (55 - 32));
-                DoubleOperand1.MantissaLow =
-                        SingleOperand1.Mantissa << (32 - (26 - (55 - 32)));
+            if (SingleOperand1.Nan != FALSE)
+            {
+                DoubleOperand1.MantissaHigh = SingleOperand1.Mantissa >> (26 - (55 - 32));
+                DoubleOperand1.MantissaLow = SingleOperand1.Mantissa << (32 - (26 - (55 - 32)));
                 DoubleOperand1.Exponent = DOUBLE_MAXIMUM_EXPONENT;
                 DoubleOperand1.Sign = SingleOperand1.Sign;
                 DoubleOperand1.Infinity = FALSE;
                 DoubleOperand1.Nan = TRUE;
-                return KiInvalidOperationDouble(&ContextBlock,
-                                                TRUE,
-                                                &DoubleOperand1,
-                                                &DoubleOperand1);
+                return KiInvalidOperationDouble(&ContextBlock, TRUE, &DoubleOperand1, &DoubleOperand1);
             }
 
             //
             // Transform the single operand to double format.
             //
 
-            DoubleOperand1.MantissaHigh =
-                        SingleOperand1.Mantissa >> (26 - (55 - 32));
-            DoubleOperand1.MantissaLow =
-                        SingleOperand1.Mantissa << (32 - (26 - (55 - 32)));
-            DoubleOperand1.Exponent = SingleOperand1.Exponent +
-                                DOUBLE_EXPONENT_BIAS - SINGLE_EXPONENT_BIAS;
+            DoubleOperand1.MantissaHigh = SingleOperand1.Mantissa >> (26 - (55 - 32));
+            DoubleOperand1.MantissaLow = SingleOperand1.Mantissa << (32 - (26 - (55 - 32)));
+            DoubleOperand1.Exponent = SingleOperand1.Exponent + DOUBLE_EXPONENT_BIAS - SINGLE_EXPONENT_BIAS;
             DoubleOperand1.Sign = SingleOperand1.Sign;
             DoubleOperand1.Infinity = SingleOperand1.Infinity;
             DoubleOperand1.Nan = FALSE;
@@ -1736,19 +1658,17 @@ Return Value:
             // Normalize and store the result value.
             //
 
-            return KiNormalizeDouble(&ContextBlock,
-                                     &DoubleOperand1,
-                                     0);
-
-        //
-        // Floating convert double to single.
-        //
-        // Floating conversion to single is accomplished by forming a
-        // single floating operand and then normalizing and storing the
-        // result value.
-        //
+            return KiNormalizeDouble(&ContextBlock, &DoubleOperand1, 0);
 
-        case CVTTS_FUNC :
+            //
+            // Floating convert double to single.
+            //
+            // Floating conversion to single is accomplished by forming a
+            // single floating operand and then normalizing and storing the
+            // result value.
+            //
+
+        case CVTTS_FUNC:
             DBGPRINT2("cvtts\n");
 
             //
@@ -1758,30 +1678,25 @@ Return Value:
             // is a signaling NaN.
             //
 
-            if (DoubleOperand1.Nan != FALSE) {
-                SingleOperand1.Mantissa =
-                    (DoubleOperand1.MantissaHigh << (26 - (55 - 32))) |
-                    (DoubleOperand1.MantissaLow >> (32 - (26 - (55 - 32))));
+            if (DoubleOperand1.Nan != FALSE)
+            {
+                SingleOperand1.Mantissa = (DoubleOperand1.MantissaHigh << (26 - (55 - 32))) |
+                                          (DoubleOperand1.MantissaLow >> (32 - (26 - (55 - 32))));
                 SingleOperand1.Exponent = SINGLE_MAXIMUM_EXPONENT;
                 SingleOperand1.Sign = DoubleOperand1.Sign;
                 SingleOperand1.Infinity = FALSE;
                 SingleOperand1.Nan = TRUE;
-                return KiInvalidOperationSingle(&ContextBlock,
-                                                TRUE,
-                                                &SingleOperand1,
-                                                &SingleOperand1);
+                return KiInvalidOperationSingle(&ContextBlock, TRUE, &SingleOperand1, &SingleOperand1);
             }
 
             //
             // Transform the double operand to single format.
             //
 
-            SingleOperand1.Mantissa =
-                (DoubleOperand1.MantissaHigh << (26 - (55 - 32))) |
-                (DoubleOperand1.MantissaLow >> (32 - (26 - (55 - 32))));
+            SingleOperand1.Mantissa = (DoubleOperand1.MantissaHigh << (26 - (55 - 32))) |
+                                      (DoubleOperand1.MantissaLow >> (32 - (26 - (55 - 32))));
             StickyBits = DoubleOperand1.MantissaLow << (26 - (55 - 32));
-            SingleOperand1.Exponent = DoubleOperand1.Exponent +
-                                SINGLE_EXPONENT_BIAS - DOUBLE_EXPONENT_BIAS;
+            SingleOperand1.Exponent = DoubleOperand1.Exponent + SINGLE_EXPONENT_BIAS - DOUBLE_EXPONENT_BIAS;
             SingleOperand1.Sign = DoubleOperand1.Sign;
             SingleOperand1.Infinity = DoubleOperand1.Infinity;
             SingleOperand1.Nan = FALSE;
@@ -1790,18 +1705,16 @@ Return Value:
             // Normalize and store the result value.
             //
 
-            return KiNormalizeSingle(&ContextBlock,
-                                     &SingleOperand1,
-                                     StickyBits);
-
-        //
-        // Floating convert longword to quadword.
-        //
-        // Floating conversion from longword to quadword is accomplished by
-        // a repositioning of 32 bits of the operand, with sign extension.
-        //
+            return KiNormalizeSingle(&ContextBlock, &SingleOperand1, StickyBits);
 
-        case CVTLQ_FUNC :
+            //
+            // Floating convert longword to quadword.
+            //
+            // Floating conversion from longword to quadword is accomplished by
+            // a repositioning of 32 bits of the operand, with sign extension.
+            //
+
+        case CVTLQ_FUNC:
             DBGPRINT2("cvtlq\n");
 
             //
@@ -1812,46 +1725,45 @@ Return Value:
             //
 
             Quadword = ((Quadword >> 62) << 62) | ((ULONGLONG)(Quadword << 5) >> 2);
-            KiSetRegisterValue(ContextBlock.Fc + 32,
-                               Quadword >> 32,
-                               ExceptionFrame,
-                               TrapFrame);
+            KiSetRegisterValue(ContextBlock.Fc + 32, Quadword >> 32, ExceptionFrame, TrapFrame);
 
             return TRUE;
-
-        //
-        // Floating convert quadword to longword.
-        //
-        // Floating conversion from quadword to longword is accomplished by
-        // truncating the high order 32 bits of the quadword after checking
-        // for overflow.
-        //
 
-        case CVTQL_FUNC :
+            //
+            // Floating convert quadword to longword.
+            //
+            // Floating conversion from quadword to longword is accomplished by
+            // truncating the high order 32 bits of the quadword after checking
+            // for overflow.
+            //
+
+        case CVTQL_FUNC:
             DBGPRINT2("cvtql\n");
 
             return KiConvertQuadwordToLongword(&ContextBlock, Quadword);
-
-        //
-        // Floating convert quadword to single.
-        //
-        // Floating conversion to single is accomplished by forming a
-        // single floating operand and then normalizing and storing the
-        // result value.
-        //
 
-        case CVTQS_FUNC :
+            //
+            // Floating convert quadword to single.
+            //
+            // Floating conversion to single is accomplished by forming a
+            // single floating operand and then normalizing and storing the
+            // result value.
+            //
+
+        case CVTQS_FUNC:
             DBGPRINT2("cvtqs\n");
 
             //
             // Compute the sign of the result.
             //
 
-            if (Quadword < 0) {
+            if (Quadword < 0)
+            {
                 SingleOperand1.Sign = 0x1;
                 Quadword = -Quadword;
-
-            } else {
+            }
+            else
+            {
                 SingleOperand1.Sign = 0;
             }
 
@@ -1867,22 +1779,27 @@ Return Value:
             // value.
             //
 
-            if (Quadword != 0) {
+            if (Quadword != 0)
+            {
                 SingleOperand1.Exponent = SINGLE_EXPONENT_BIAS + 63;
-                while (Quadword > 0) {
+                while (Quadword > 0)
+                {
                     Quadword <<= 1;
                     SingleOperand1.Exponent -= 1;
                 }
 
                 SingleOperand1.Mantissa = (LONG)((ULONGLONG)Quadword >> (64 - 26));
-                if (Quadword & (((ULONGLONG)1 << (64 - 26)) - 1)) {
+                if (Quadword & (((ULONGLONG)1 << (64 - 26)) - 1))
+                {
                     StickyBits = 1;
-
-                } else {
+                }
+                else
+                {
                     StickyBits = 0;
                 }
-
-            } else {
+            }
+            else
+            {
                 SingleOperand1.Exponent = 0;
                 SingleOperand1.Mantissa = 0;
                 StickyBits = 0;
@@ -1892,30 +1809,30 @@ Return Value:
             // Normalize and store the result value.
             //
 
-            return KiNormalizeSingle(&ContextBlock,
-                                     &SingleOperand1,
-                                     StickyBits);
-
-        //
-        // Floating convert quadword to double.
-        //
-        // Floating conversion to double is accomplished by forming a
-        // double floating operand and then normalizing and storing the
-        // result value.
-        //
+            return KiNormalizeSingle(&ContextBlock, &SingleOperand1, StickyBits);
 
-        case CVTQT_FUNC :
+            //
+            // Floating convert quadword to double.
+            //
+            // Floating conversion to double is accomplished by forming a
+            // double floating operand and then normalizing and storing the
+            // result value.
+            //
+
+        case CVTQT_FUNC:
             DBGPRINT2("cvtqt\n");
 
             //
             // Compute the sign of the result.
             //
 
-            if (Quadword < 0) {
+            if (Quadword < 0)
+            {
                 DoubleOperand1.Sign = 0x1;
                 Quadword = -Quadword;
-
-            } else {
+            }
+            else
+            {
                 DoubleOperand1.Sign = 0;
             }
 
@@ -1931,23 +1848,28 @@ Return Value:
             // value.
             //
 
-            if (Quadword != 0) {
+            if (Quadword != 0)
+            {
                 DoubleOperand1.Exponent = DOUBLE_EXPONENT_BIAS + 63;
-                while (Quadword > 0) {
+                while (Quadword > 0)
+                {
                     Quadword <<= 1;
                     DoubleOperand1.Exponent -= 1;
                 }
 
                 DoubleOperand1.MantissaHigh = (LONG)((ULONGLONG)Quadword >> ((64 - 55) + 32));
                 DoubleOperand1.MantissaLow = (LONG)((ULONGLONG)Quadword >> (64 - 55));
-                if (Quadword & (((ULONGLONG)1 << (64 - 55)) - 1)) {
+                if (Quadword & (((ULONGLONG)1 << (64 - 55)) - 1))
+                {
                     StickyBits = 1;
-
-                } else {
+                }
+                else
+                {
                     StickyBits = 0;
                 }
-
-            } else {
+            }
+            else
+            {
                 DoubleOperand1.MantissaHigh = 0;
                 DoubleOperand1.MantissaLow = 0;
                 DoubleOperand1.Exponent = 0;
@@ -1958,18 +1880,16 @@ Return Value:
             // Normalize and store the result value.
             //
 
-            return KiNormalizeDouble(&ContextBlock,
-                                     &DoubleOperand1,
-                                     StickyBits);
-
-        //
-        // Floating convert double to quadword.
-        //
-        // Floating conversion to quadword is accomplished by forming
-        // a quadword value from a double floating value.
-        //
+            return KiNormalizeDouble(&ContextBlock, &DoubleOperand1, StickyBits);
 
-        case CVTTQ_FUNC :
+            //
+            // Floating convert double to quadword.
+            //
+            // Floating conversion to quadword is accomplished by forming
+            // a quadword value from a double floating value.
+            //
+
+        case CVTTQ_FUNC:
             DBGPRINT2("cvttq\n");
 
             //
@@ -1979,8 +1899,8 @@ Return Value:
             // the invalid trap is enabled.
             //
 
-            if ((DoubleOperand1.Infinity != FALSE) ||
-                (DoubleOperand1.Nan != FALSE)) {
+            if ((DoubleOperand1.Infinity != FALSE) || (DoubleOperand1.Nan != FALSE))
+            {
                 return KiInvalidOperationQuadword(&ContextBlock, 0);
             }
 
@@ -1991,13 +1911,13 @@ Return Value:
             return KiNormalizeQuadword(&ContextBlock, &DoubleOperand1);
         }
 
-    //
-    // If an exception occurs, then copy the new exception information to the
-    // original exception record and handle the exception.
-    //
-
-    } except (KiCopyInformation(ExceptionRecord,
-                                (GetExceptionInformation())->ExceptionRecord)) {
+        //
+        // If an exception occurs, then copy the new exception information to the
+        // original exception record and handle the exception.
+        //
+    }
+    except(KiCopyInformation(ExceptionRecord, (GetExceptionInformation())->ExceptionRecord))
+    {
 
         //
         // Preserve the original exception address.
@@ -2011,11 +1931,9 @@ Return Value:
     DBGPRINT("KiEmulateFloating: Invalid Instruction\n");
     return FALSE;
 }
-
+
 ULONGLONG
-KiConvertSingleOperandToRegister (
-    IN ULONG SingleValue
-    )
+KiConvertSingleOperandToRegister(IN ULONG SingleValue)
 
 /*++
 
@@ -2047,23 +1965,23 @@ Return Value:
 
     DoubleFormat->Sign = SingleFormat->Sign;
     DoubleFormat->Mantissa = ((ULONGLONG)SingleFormat->Mantissa) << (52 - 23);
-    if (SingleFormat->Exponent == SINGLE_MAXIMUM_EXPONENT) {
+    if (SingleFormat->Exponent == SINGLE_MAXIMUM_EXPONENT)
+    {
         DoubleFormat->Exponent = DOUBLE_MAXIMUM_EXPONENT;
-
-    } else if (SingleFormat->Exponent == SINGLE_MINIMUM_EXPONENT) {
+    }
+    else if (SingleFormat->Exponent == SINGLE_MINIMUM_EXPONENT)
+    {
         DoubleFormat->Exponent = DOUBLE_MINIMUM_EXPONENT;
-
-    } else {
-        DoubleFormat->Exponent = SingleFormat->Exponent - SINGLE_EXPONENT_BIAS +
-                                 DOUBLE_EXPONENT_BIAS;
+    }
+    else
+    {
+        DoubleFormat->Exponent = SingleFormat->Exponent - SINGLE_EXPONENT_BIAS + DOUBLE_EXPONENT_BIAS;
     }
     return Result;
 }
-
+
 ULONG
-KiConvertRegisterToSingleOperand (
-    IN ULONGLONG DoubleValue
-    )
+KiConvertRegisterToSingleOperand(IN ULONGLONG DoubleValue)
 
 /*++
 
@@ -2094,24 +2012,23 @@ Return Value:
 
     SingleFormat->Sign = (ULONG)DoubleFormat->Sign;
     SingleFormat->Mantissa = (ULONG)(DoubleFormat->Mantissa >> (52 - 23));
-    if (DoubleFormat->Exponent == DOUBLE_MAXIMUM_EXPONENT) {
+    if (DoubleFormat->Exponent == DOUBLE_MAXIMUM_EXPONENT)
+    {
         SingleFormat->Exponent = SINGLE_MAXIMUM_EXPONENT;
-
-    } else if (DoubleFormat->Exponent == DOUBLE_MINIMUM_EXPONENT) {
+    }
+    else if (DoubleFormat->Exponent == DOUBLE_MINIMUM_EXPONENT)
+    {
         SingleFormat->Exponent = SINGLE_MINIMUM_EXPONENT;
-
-    } else {
-        SingleFormat->Exponent = (ULONG)(DoubleFormat->Exponent - DOUBLE_EXPONENT_BIAS +
-                                         SINGLE_EXPONENT_BIAS);
+    }
+    else
+    {
+        SingleFormat->Exponent = (ULONG)(DoubleFormat->Exponent - DOUBLE_EXPONENT_BIAS + SINGLE_EXPONENT_BIAS);
     }
     return Result;
 }
-
+
 BOOLEAN
-KiConvertQuadwordToLongword (
-    IN PFP_CONTEXT_BLOCK ContextBlock,
-    IN LONGLONG Quadword
-    )
+KiConvertQuadwordToLongword(IN PFP_CONTEXT_BLOCK ContextBlock, IN LONGLONG Quadword)
 
 /*++
 
@@ -2146,26 +2063,28 @@ Return Value:
     // to floating register longword integer format.
     //
 
-    ResultValue = ((Quadword & (ULONGLONG)0xc0000000) << 32) |
-                  ((Quadword & (ULONGLONG)0x3fffffff) << 29);
+    ResultValue = ((Quadword & (ULONGLONG)0xc0000000) << 32) | ((Quadword & (ULONGLONG)0x3fffffff) << 29);
 
     //
     // Check to determine if an exception should be delivered or the result
     // should be written to the destination register.
     //
 
-    if ((Quadword < (LONG)0x80000000) || (Quadword > (LONG)0x7fffffff)) {
+    if ((Quadword < (LONG)0x80000000) || (Quadword > (LONG)0x7fffffff))
+    {
         Fpcr = (PFPCR)&ContextBlock->TrapFrame->Fpcr;
         Fpcr->InvalidOperation = 1;
         Fpcr->SummaryBit = 1;
-        if (ContextBlock->IeeeMode == FALSE) {
+        if (ContextBlock->IeeeMode == FALSE)
+        {
             ExceptionRecord = ContextBlock->ExceptionRecord;
             ExceptionRecord->ExceptionCode = STATUS_FLOAT_INVALID_OPERATION;
             return FALSE;
         }
         SoftwareFpcr = ContextBlock->SoftwareFpcr;
         SoftwareFpcr->StatusInvalid = 1;
-        if (SoftwareFpcr->EnableInvalid != 0) {
+        if (SoftwareFpcr->EnableInvalid != 0)
+        {
             ExceptionRecord = ContextBlock->ExceptionRecord;
             ExceptionRecord->ExceptionCode = STATUS_FLOAT_INVALID_OPERATION;
             IeeeValue = KiInitializeIeeeValue(ExceptionRecord);
@@ -2181,19 +2100,13 @@ Return Value:
     // Set the destination register value and return a value of TRUE.
     //
 
-    KiSetRegisterValue(ContextBlock->Fc + 32,
-                       ResultValue,
-                       ContextBlock->ExceptionFrame,
-                       ContextBlock->TrapFrame);
+    KiSetRegisterValue(ContextBlock->Fc + 32, ResultValue, ContextBlock->ExceptionFrame, ContextBlock->TrapFrame);
     return TRUE;
 }
-
+
 BOOLEAN
-KiDivideByZeroDouble (
-    IN PFP_CONTEXT_BLOCK ContextBlock,
-    IN PFP_DOUBLE_OPERAND DoubleOperand1,
-    IN PFP_DOUBLE_OPERAND DoubleOperand2
-    )
+KiDivideByZeroDouble(IN PFP_CONTEXT_BLOCK ContextBlock, IN PFP_DOUBLE_OPERAND DoubleOperand1,
+                     IN PFP_DOUBLE_OPERAND DoubleOperand2)
 
 /*++
 
@@ -2245,19 +2158,22 @@ Return Value:
     // infinity and return a value of TRUE.
     //
 
-    if (DoubleOperand1->Infinity == FALSE) {
+    if (DoubleOperand1->Infinity == FALSE)
+    {
 
         Fpcr = (PFPCR)&ContextBlock->TrapFrame->Fpcr;
         Fpcr->DivisionByZero = 1;
         Fpcr->SummaryBit = 1;
-        if (ContextBlock->IeeeMode == FALSE) {
+        if (ContextBlock->IeeeMode == FALSE)
+        {
             ExceptionRecord = ContextBlock->ExceptionRecord;
             ExceptionRecord->ExceptionCode = STATUS_FLOAT_DIVIDE_BY_ZERO;
             return FALSE;
         }
         SoftwareFpcr = ContextBlock->SoftwareFpcr;
         SoftwareFpcr->StatusDivisionByZero = 1;
-        if (SoftwareFpcr->EnableDivisionByZero != 0) {
+        if (SoftwareFpcr->EnableDivisionByZero != 0)
+        {
             ExceptionRecord = ContextBlock->ExceptionRecord;
             ExceptionRecord->ExceptionCode = STATUS_FLOAT_DIVIDE_BY_ZERO;
             IeeeValue = KiInitializeIeeeValue(ExceptionRecord);
@@ -2269,20 +2185,15 @@ Return Value:
         Fpcr->DisableDivisionByZero = 1;
     }
 
-    KiSetRegisterValue(ContextBlock->Fc + 32,
-                       MAKE_QUAD(ResultValueLow, ResultValueHigh),
-                       ContextBlock->ExceptionFrame,
+    KiSetRegisterValue(ContextBlock->Fc + 32, MAKE_QUAD(ResultValueLow, ResultValueHigh), ContextBlock->ExceptionFrame,
                        ContextBlock->TrapFrame);
 
     return TRUE;
 }
-
+
 BOOLEAN
-KiDivideByZeroSingle (
-    IN PFP_CONTEXT_BLOCK ContextBlock,
-    IN PFP_SINGLE_OPERAND SingleOperand1,
-    IN PFP_SINGLE_OPERAND SingleOperand2
-    )
+KiDivideByZeroSingle(IN PFP_CONTEXT_BLOCK ContextBlock, IN PFP_SINGLE_OPERAND SingleOperand1,
+                     IN PFP_SINGLE_OPERAND SingleOperand2)
 
 /*++
 
@@ -2332,19 +2243,22 @@ Return Value:
     // infinity and return a value of TRUE.
     //
 
-    if (SingleOperand1->Infinity == FALSE) {
+    if (SingleOperand1->Infinity == FALSE)
+    {
 
         Fpcr = (PFPCR)&ContextBlock->TrapFrame->Fpcr;
         Fpcr->DivisionByZero = 1;
         Fpcr->SummaryBit = 1;
-        if (ContextBlock->IeeeMode == FALSE) {
+        if (ContextBlock->IeeeMode == FALSE)
+        {
             ExceptionRecord = ContextBlock->ExceptionRecord;
             ExceptionRecord->ExceptionCode = STATUS_FLOAT_DIVIDE_BY_ZERO;
             return FALSE;
         }
         SoftwareFpcr = ContextBlock->SoftwareFpcr;
         SoftwareFpcr->StatusDivisionByZero = 1;
-        if (SoftwareFpcr->EnableDivisionByZero != 0) {
+        if (SoftwareFpcr->EnableDivisionByZero != 0)
+        {
             ExceptionRecord = ContextBlock->ExceptionRecord;
             ExceptionRecord->ExceptionCode = STATUS_FLOAT_DIVIDE_BY_ZERO;
             IeeeValue = KiInitializeIeeeValue(ExceptionRecord);
@@ -2355,18 +2269,14 @@ Return Value:
         Fpcr->DisableDivisionByZero = 1;
     }
 
-    KiSetRegisterValue(ContextBlock->Fc + 32,
-                       KiConvertSingleOperandToRegister(ResultValue),
-                       ContextBlock->ExceptionFrame,
-                       ContextBlock->TrapFrame);
+    KiSetRegisterValue(ContextBlock->Fc + 32, KiConvertSingleOperandToRegister(ResultValue),
+                       ContextBlock->ExceptionFrame, ContextBlock->TrapFrame);
 
     return TRUE;
 }
-
+
 PFP_IEEE_VALUE
-KiInitializeIeeeValue (
-    IN PEXCEPTION_RECORD ExceptionRecord
-    )
+KiInitializeIeeeValue(IN PEXCEPTION_RECORD ExceptionRecord)
 
 /*++
 
@@ -2399,8 +2309,7 @@ Return Value:
 
     ExceptionRecord->NumberParameters = 6;
     ExceptionRecord->ExceptionInformation[0] = 0;
-    ExceptionRecord->ExceptionInformation[1] =
-        ((ULONG_PTR)(ExceptionRecord)->ExceptionAddress) + 4;
+    ExceptionRecord->ExceptionInformation[1] = ((ULONG_PTR)(ExceptionRecord)->ExceptionAddress) + 4;
     ExceptionRecord->ExceptionInformation[2] = 0;
     ExceptionRecord->ExceptionInformation[3] = 0;
     ExceptionRecord->ExceptionInformation[4] = 0;
@@ -2412,14 +2321,10 @@ Return Value:
 
     return (PFP_IEEE_VALUE)&ExceptionRecord->ExceptionInformation[2];
 }
-
+
 BOOLEAN
-KiInvalidCompareDouble (
-    IN PFP_CONTEXT_BLOCK ContextBlock,
-    IN BOOLEAN CheckForSignalNan,
-    IN PFP_DOUBLE_OPERAND DoubleOperand1,
-    IN PFP_DOUBLE_OPERAND DoubleOperand2
-    )
+KiInvalidCompareDouble(IN PFP_CONTEXT_BLOCK ContextBlock, IN BOOLEAN CheckForSignalNan,
+                       IN PFP_DOUBLE_OPERAND DoubleOperand1, IN PFP_DOUBLE_OPERAND DoubleOperand2)
 
 /*++
 
@@ -2463,21 +2368,23 @@ Return Value:
     // value of TRUE.
     //
 
-    if ((CheckForSignalNan == FALSE) ||
-        (DoubleSignalNan(DoubleOperand1) != FALSE) ||
-        (DoubleSignalNan(DoubleOperand2) != FALSE)) {
+    if ((CheckForSignalNan == FALSE) || (DoubleSignalNan(DoubleOperand1) != FALSE) ||
+        (DoubleSignalNan(DoubleOperand2) != FALSE))
+    {
 
         Fpcr = (PFPCR)&ContextBlock->TrapFrame->Fpcr;
         Fpcr->InvalidOperation = 1;
         Fpcr->SummaryBit = 1;
-        if (ContextBlock->IeeeMode == FALSE) {
+        if (ContextBlock->IeeeMode == FALSE)
+        {
             ExceptionRecord = ContextBlock->ExceptionRecord;
             ExceptionRecord->ExceptionCode = STATUS_FLOAT_INVALID_OPERATION;
             return FALSE;
         }
         SoftwareFpcr = ContextBlock->SoftwareFpcr;
         SoftwareFpcr->StatusInvalid = 1;
-        if (SoftwareFpcr->EnableInvalid != 0) {
+        if (SoftwareFpcr->EnableInvalid != 0)
+        {
             ExceptionRecord = ContextBlock->ExceptionRecord;
             ExceptionRecord->ExceptionCode = STATUS_FLOAT_INVALID_OPERATION;
             IeeeValue = KiInitializeIeeeValue(ExceptionRecord);
@@ -2490,14 +2397,10 @@ Return Value:
 
     return TRUE;
 }
-
+
 BOOLEAN
-KiInvalidOperationDouble (
-    IN PFP_CONTEXT_BLOCK ContextBlock,
-    IN BOOLEAN CheckForSignalNan,
-    IN PFP_DOUBLE_OPERAND DoubleOperand1,
-    IN PFP_DOUBLE_OPERAND DoubleOperand2
-    )
+KiInvalidOperationDouble(IN PFP_CONTEXT_BLOCK ContextBlock, IN BOOLEAN CheckForSignalNan,
+                         IN PFP_DOUBLE_OPERAND DoubleOperand1, IN PFP_DOUBLE_OPERAND DoubleOperand2)
 
 /*++
 
@@ -2542,32 +2445,31 @@ Return Value:
     // (real indefinite) NaN.
     //
 
-    DBGPRINT("Operand1: Inf=%d NaN=%d Sign=%d Exponent=%d Mantissa=%.8x%.8x\n",
-             DoubleOperand1->Infinity, DoubleOperand1->Nan,
-             DoubleOperand1->Sign,
-             DoubleOperand1->Exponent,
-             DoubleOperand1->MantissaHigh, DoubleOperand1->MantissaLow);
-    DBGPRINT("Operand2: Inf=%d NaN=%d Sign=%d Exponent=%d Mantissa=%.8x%.8x\n",
-             DoubleOperand2->Infinity, DoubleOperand2->Nan,
-             DoubleOperand2->Sign,
-             DoubleOperand2->Exponent,
-             DoubleOperand2->MantissaHigh, DoubleOperand2->MantissaLow);
+    DBGPRINT("Operand1: Inf=%d NaN=%d Sign=%d Exponent=%d Mantissa=%.8x%.8x\n", DoubleOperand1->Infinity,
+             DoubleOperand1->Nan, DoubleOperand1->Sign, DoubleOperand1->Exponent, DoubleOperand1->MantissaHigh,
+             DoubleOperand1->MantissaLow);
+    DBGPRINT("Operand2: Inf=%d NaN=%d Sign=%d Exponent=%d Mantissa=%.8x%.8x\n", DoubleOperand2->Infinity,
+             DoubleOperand2->Nan, DoubleOperand2->Sign, DoubleOperand2->Exponent, DoubleOperand2->MantissaHigh,
+             DoubleOperand2->MantissaLow);
 
-    if (DoubleOperand2->Nan != FALSE) {
+    if (DoubleOperand2->Nan != FALSE)
+    {
         ResultValueLow = DoubleOperand2->MantissaLow >> 2;
         ResultValueLow |= DoubleOperand2->MantissaHigh << 30;
         ResultValueHigh = DoubleOperand2->MantissaHigh >> 2;
         ResultValueHigh |= DOUBLE_QUIET_NAN_PREFIX_HIGH;
         ResultValueHigh |= DoubleOperand2->Sign << 31;
-
-    } else if (DoubleOperand1->Nan != FALSE) {
+    }
+    else if (DoubleOperand1->Nan != FALSE)
+    {
         ResultValueLow = DoubleOperand1->MantissaLow >> 2;
         ResultValueLow |= DoubleOperand1->MantissaHigh << 30;
         ResultValueHigh = DoubleOperand1->MantissaHigh >> 2;
         ResultValueHigh |= DOUBLE_QUIET_NAN_PREFIX_HIGH;
         ResultValueHigh |= DoubleOperand1->Sign << 31;
-
-    } else {
+    }
+    else
+    {
         ResultValueLow = DOUBLE_QUIET_NAN_VALUE_LOW;
         ResultValueHigh = DOUBLE_QUIET_NAN_VALUE_HIGH;
     }
@@ -2580,21 +2482,23 @@ Return Value:
     // result and return a value of TRUE.
     //
 
-    if ((CheckForSignalNan == FALSE) ||
-        (DoubleSignalNan(DoubleOperand1) != FALSE) ||
-        (DoubleSignalNan(DoubleOperand2) != FALSE)) {
+    if ((CheckForSignalNan == FALSE) || (DoubleSignalNan(DoubleOperand1) != FALSE) ||
+        (DoubleSignalNan(DoubleOperand2) != FALSE))
+    {
 
         Fpcr = (PFPCR)&ContextBlock->TrapFrame->Fpcr;
         Fpcr->InvalidOperation = 1;
         Fpcr->SummaryBit = 1;
-        if (ContextBlock->IeeeMode == FALSE) {
+        if (ContextBlock->IeeeMode == FALSE)
+        {
             ExceptionRecord = ContextBlock->ExceptionRecord;
             ExceptionRecord->ExceptionCode = STATUS_FLOAT_INVALID_OPERATION;
             return FALSE;
         }
         SoftwareFpcr = ContextBlock->SoftwareFpcr;
         SoftwareFpcr->StatusInvalid = 1;
-        if (SoftwareFpcr->EnableInvalid != 0) {
+        if (SoftwareFpcr->EnableInvalid != 0)
+        {
             ExceptionRecord = ContextBlock->ExceptionRecord;
             ExceptionRecord->ExceptionCode = STATUS_FLOAT_INVALID_OPERATION;
             IeeeValue = KiInitializeIeeeValue(ExceptionRecord);
@@ -2606,19 +2510,14 @@ Return Value:
         Fpcr->DisableInvalid = 1;
     }
 
-    KiSetRegisterValue(ContextBlock->Fc + 32,
-                       MAKE_QUAD(ResultValueLow, ResultValueHigh),
-                       ContextBlock->ExceptionFrame,
+    KiSetRegisterValue(ContextBlock->Fc + 32, MAKE_QUAD(ResultValueLow, ResultValueHigh), ContextBlock->ExceptionFrame,
                        ContextBlock->TrapFrame);
 
     return TRUE;
 }
-
+
 BOOLEAN
-KiInvalidOperationQuadword (
-    IN PFP_CONTEXT_BLOCK ContextBlock,
-    IN ULONGLONG ResultValue
-    )
+KiInvalidOperationQuadword(IN PFP_CONTEXT_BLOCK ContextBlock, IN ULONGLONG ResultValue)
 
 /*++
 
@@ -2658,14 +2557,16 @@ Return Value:
     Fpcr = (PFPCR)&ContextBlock->TrapFrame->Fpcr;
     Fpcr->InvalidOperation = 1;
     Fpcr->SummaryBit = 1;
-    if (ContextBlock->IeeeMode == FALSE) {
+    if (ContextBlock->IeeeMode == FALSE)
+    {
         ExceptionRecord = ContextBlock->ExceptionRecord;
         ExceptionRecord->ExceptionCode = STATUS_FLOAT_INVALID_OPERATION;
         return FALSE;
     }
     SoftwareFpcr = ContextBlock->SoftwareFpcr;
     SoftwareFpcr->StatusInvalid = 1;
-    if (SoftwareFpcr->EnableInvalid != 0) {
+    if (SoftwareFpcr->EnableInvalid != 0)
+    {
         ExceptionRecord = ContextBlock->ExceptionRecord;
         ExceptionRecord->ExceptionCode = STATUS_FLOAT_INVALID_OPERATION;
         IeeeValue = KiInitializeIeeeValue(ExceptionRecord);
@@ -2676,21 +2577,14 @@ Return Value:
 
     Fpcr->DisableInvalid = 1;
 
-    KiSetRegisterValue(ContextBlock->Fc + 32,
-                       ResultValue,
-                       ContextBlock->ExceptionFrame,
-                       ContextBlock->TrapFrame);
+    KiSetRegisterValue(ContextBlock->Fc + 32, ResultValue, ContextBlock->ExceptionFrame, ContextBlock->TrapFrame);
 
     return TRUE;
 }
-
+
 BOOLEAN
-KiInvalidOperationSingle (
-    IN PFP_CONTEXT_BLOCK ContextBlock,
-    IN BOOLEAN CheckForSignalNan,
-    IN PFP_SINGLE_OPERAND SingleOperand1,
-    IN PFP_SINGLE_OPERAND SingleOperand2
-    )
+KiInvalidOperationSingle(IN PFP_CONTEXT_BLOCK ContextBlock, IN BOOLEAN CheckForSignalNan,
+                         IN PFP_SINGLE_OPERAND SingleOperand1, IN PFP_SINGLE_OPERAND SingleOperand2)
 
 /*++
 
@@ -2734,17 +2628,20 @@ Return Value:
     // (real indefinite) NaN.
     //
 
-    if (SingleOperand2->Nan != FALSE) {
+    if (SingleOperand2->Nan != FALSE)
+    {
         ResultValue = SingleOperand2->Mantissa >> 2;
         ResultValue |= SINGLE_QUIET_NAN_PREFIX;
         ResultValue |= SingleOperand2->Sign << 31;
-
-    } else if (SingleOperand1->Nan != FALSE) {
+    }
+    else if (SingleOperand1->Nan != FALSE)
+    {
         ResultValue = SingleOperand1->Mantissa >> 2;
         ResultValue |= SINGLE_QUIET_NAN_PREFIX;
         ResultValue |= SingleOperand1->Sign << 31;
-
-    } else {
+    }
+    else
+    {
         ResultValue = SINGLE_QUIET_NAN_VALUE;
     }
 
@@ -2756,21 +2653,23 @@ Return Value:
     // result and return a value of TRUE.
     //
 
-    if ((CheckForSignalNan == FALSE) ||
-        (SingleSignalNan(SingleOperand1) != FALSE) ||
-        (SingleSignalNan(SingleOperand2) != FALSE)) {
+    if ((CheckForSignalNan == FALSE) || (SingleSignalNan(SingleOperand1) != FALSE) ||
+        (SingleSignalNan(SingleOperand2) != FALSE))
+    {
 
         Fpcr = (PFPCR)&ContextBlock->TrapFrame->Fpcr;
         Fpcr->InvalidOperation = 1;
         Fpcr->SummaryBit = 1;
-        if (ContextBlock->IeeeMode == FALSE) {
+        if (ContextBlock->IeeeMode == FALSE)
+        {
             ExceptionRecord = ContextBlock->ExceptionRecord;
             ExceptionRecord->ExceptionCode = STATUS_FLOAT_INVALID_OPERATION;
             return FALSE;
         }
         SoftwareFpcr = ContextBlock->SoftwareFpcr;
         SoftwareFpcr->StatusInvalid = 1;
-        if (SoftwareFpcr->EnableInvalid != 0) {
+        if (SoftwareFpcr->EnableInvalid != 0)
+        {
             ExceptionRecord = ContextBlock->ExceptionRecord;
             ExceptionRecord->ExceptionCode = STATUS_FLOAT_INVALID_OPERATION;
             IeeeValue = KiInitializeIeeeValue(ExceptionRecord);
@@ -2781,20 +2680,14 @@ Return Value:
         Fpcr->DisableInvalid = 1;
     }
 
-    KiSetRegisterValue(ContextBlock->Fc + 32,
-                       KiConvertSingleOperandToRegister(ResultValue),
-                       ContextBlock->ExceptionFrame,
-                       ContextBlock->TrapFrame);
+    KiSetRegisterValue(ContextBlock->Fc + 32, KiConvertSingleOperandToRegister(ResultValue),
+                       ContextBlock->ExceptionFrame, ContextBlock->TrapFrame);
 
     return TRUE;
 }
-
+
 BOOLEAN
-KiNormalizeDouble (
-    IN PFP_CONTEXT_BLOCK ContextBlock,
-    IN PFP_DOUBLE_OPERAND ResultOperand,
-    IN ULONGLONG StickyBits
-    )
+KiNormalizeDouble(IN PFP_CONTEXT_BLOCK ContextBlock, IN PFP_DOUBLE_OPERAND ResultOperand, IN ULONGLONG StickyBits)
 
 /*++
 
@@ -2858,25 +2751,22 @@ Return Value:
     // round and normalize the result and check for overflow and underflow.
     //
 
-    DBGPRINT("KiNormalizeDouble: Inf=%d NaN=%d Sign=%d Exponent=%d Mantissa=%.8x%.8x\n",
-             ResultOperand->Infinity, ResultOperand->Nan, ResultOperand->Sign,
-             ResultOperand->Exponent,
-             ResultOperand->MantissaHigh, ResultOperand->MantissaLow);
+    DBGPRINT("KiNormalizeDouble: Inf=%d NaN=%d Sign=%d Exponent=%d Mantissa=%.8x%.8x\n", ResultOperand->Infinity,
+             ResultOperand->Nan, ResultOperand->Sign, ResultOperand->Exponent, ResultOperand->MantissaHigh,
+             ResultOperand->MantissaLow);
     DBGPRINT("KiNormalizeDouble: StickyBits=%.16Lx\n", StickyBits);
 
-    if (ResultOperand->Infinity != FALSE) {
-        KiSetRegisterValue(ContextBlock->Fc + 32,
-                           MAKE_QUAD(DOUBLE_INFINITY_VALUE_LOW,
-                                     DOUBLE_INFINITY_VALUE_HIGH |
-                                         (ResultOperand->Sign << 31)),
-                           ContextBlock->ExceptionFrame,
-                           ContextBlock->TrapFrame);
+    if (ResultOperand->Infinity != FALSE)
+    {
+        KiSetRegisterValue(
+            ContextBlock->Fc + 32,
+            MAKE_QUAD(DOUBLE_INFINITY_VALUE_LOW, DOUBLE_INFINITY_VALUE_HIGH | (ResultOperand->Sign << 31)),
+            ContextBlock->ExceptionFrame, ContextBlock->TrapFrame);
 
         return TRUE;
     }
 
-    Mantissa = MAKE_QUAD(ResultOperand->MantissaLow,
-                         ResultOperand->MantissaHigh);
+    Mantissa = MAKE_QUAD(ResultOperand->MantissaLow, ResultOperand->MantissaHigh);
     Fpcr = (PFPCR)&ContextBlock->TrapFrame->Fpcr;
     SoftwareFpcr = ContextBlock->SoftwareFpcr;
 
@@ -2886,7 +2776,8 @@ Return Value:
     // value.
     //
 
-    if ((Mantissa & ((ULONGLONG)1 << 55)) != 0) {
+    if ((Mantissa & ((ULONGLONG)1 << 55)) != 0)
+    {
         StickyBits |= (Mantissa & 0x1);
         Mantissa >>= 1;
         ResultOperand->Exponent += 1;
@@ -2897,8 +2788,10 @@ Return Value:
     // shifting one bit at a time until there is a one bit in bit 54.
     //
 
-    if (Mantissa != 0) {
-        while ((Mantissa & ((ULONGLONG)1 << 54)) == 0) {
+    if (Mantissa != 0)
+    {
+        while ((Mantissa & ((ULONGLONG)1 << 54)) == 0)
+        {
             Mantissa <<= 1;
             ResultOperand->Exponent -= 1;
         }
@@ -2919,7 +2812,8 @@ Return Value:
     // exception record, if needed.
     //
 
-    if (ResultOperand->Exponent <= DOUBLE_MINIMUM_EXPONENT && Mantissa != 0) {
+    if (ResultOperand->Exponent <= DOUBLE_MINIMUM_EXPONENT && Mantissa != 0)
+    {
 
         //
         // Save everything needed for calculating IEEE exception record value
@@ -2942,7 +2836,8 @@ Return Value:
         // A denormal shift of 54 guarantees 0 mantissa and 0 round bit and preserves all sticky bits
         //
 
-        if (DenormalizeShift > 54) {
+        if (DenormalizeShift > 54)
+        {
             DenormalizeShift = 54;
         }
 
@@ -2951,8 +2846,8 @@ Return Value:
         // shifted.  Preserve existing Round and Sticky Bits.
         //
 
-        StickyBits |= RoundBit; 
-        StickyBits |= (Mantissa << 1) << (64 - DenormalizeShift); 
+        StickyBits |= RoundBit;
+        StickyBits |= (Mantissa << 1) << (64 - DenormalizeShift);
         RoundBit = (ULONG)(Mantissa >> (DenormalizeShift - 1)) & 1;
         Mantissa = Mantissa >> DenormalizeShift;
         ResultOperand->Exponent = DOUBLE_MINIMUM_EXPONENT;
@@ -2962,15 +2857,18 @@ Return Value:
     // Round the result value using the mantissa, the round bit, and the sticky bits.
     //
 
-    switch (ContextBlock->Round) {
+    switch (ContextBlock->Round)
+    {
 
         //
         // Round to nearest representable number.
         //
 
     case ROUND_TO_NEAREST:
-        if (RoundBit != 0) {
-            if ((StickyBits != 0) || ((Mantissa & 0x1) != 0)) {
+        if (RoundBit != 0)
+        {
+            if ((StickyBits != 0) || ((Mantissa & 0x1) != 0))
+            {
                 Mantissa += 1;
             }
         }
@@ -2988,8 +2886,8 @@ Return Value:
         //
 
     case ROUND_TO_PLUS_INFINITY:
-        if ((ResultOperand->Sign == 0) &&
-            ((StickyBits != 0) || (RoundBit != 0))) {
+        if ((ResultOperand->Sign == 0) && ((StickyBits != 0) || (RoundBit != 0)))
+        {
             Mantissa += 1;
         }
         break;
@@ -2999,8 +2897,8 @@ Return Value:
         //
 
     case ROUND_TO_MINUS_INFINITY:
-        if ((ResultOperand->Sign != 0) &&
-            ((StickyBits != 0) || (RoundBit != 0))) {
+        if ((ResultOperand->Sign != 0) && ((StickyBits != 0) || (RoundBit != 0)))
+        {
             Mantissa += 1;
         }
         break;
@@ -3011,7 +2909,8 @@ Return Value:
     // mantissa one bit and adjust the exponent.
     //
 
-    if ((Mantissa & ((ULONGLONG)1 << 53)) != 0) {
+    if ((Mantissa & ((ULONGLONG)1 << 53)) != 0)
+    {
         Mantissa >>= 1;
         ResultOperand->Exponent += 1;
     }
@@ -3021,8 +2920,8 @@ Return Value:
     // adjust the exponent.
     //
 
-    if ((ResultOperand->Exponent == DOUBLE_MINIMUM_EXPONENT) && 
-        (Mantissa & ((ULONGLONG)1 << 52)) != 0) {
+    if ((ResultOperand->Exponent == DOUBLE_MINIMUM_EXPONENT) && (Mantissa & ((ULONGLONG)1 << 52)) != 0)
+    {
         ResultOperand->Exponent += 1;
     }
 
@@ -3034,7 +2933,7 @@ Return Value:
     // If the exponent value is less than or equal to the minimum exponent
     // value, the mantissa is nonzero, and the denormalized result is inexact,
     // then underflow has occurred.  This results in both the inexact and
-    // underflow sticky bits being set in the FPCR. 
+    // underflow sticky bits being set in the FPCR.
     //
     // Or if underflow exceptions are enabled, underflow occurs for all denormal
     // numbers.  This results in the underflow sticky bit always being set in the
@@ -3046,7 +2945,8 @@ Return Value:
     // FPCR.
     //
 
-    if (ResultOperand->Exponent >= DOUBLE_MAXIMUM_EXPONENT) {
+    if (ResultOperand->Exponent >= DOUBLE_MAXIMUM_EXPONENT)
+    {
         Inexact = TRUE;
         Overflow = TRUE;
         Underflow = FALSE;
@@ -3055,7 +2955,8 @@ Return Value:
         // The overflow value is dependent on the rounding mode.
         //
 
-        switch (ContextBlock->Round) {
+        switch (ContextBlock->Round)
+        {
 
             //
             // Round to nearest representable number.
@@ -3064,9 +2965,8 @@ Return Value:
             //
 
         case ROUND_TO_NEAREST:
-            ResultValue = MAKE_QUAD(DOUBLE_INFINITY_VALUE_LOW,
-                                    DOUBLE_INFINITY_VALUE_HIGH |
-                                        (ResultOperand->Sign << 31));
+            ResultValue =
+                MAKE_QUAD(DOUBLE_INFINITY_VALUE_LOW, DOUBLE_INFINITY_VALUE_HIGH | (ResultOperand->Sign << 31));
             break;
 
             //
@@ -3076,9 +2976,7 @@ Return Value:
             //
 
         case ROUND_TO_ZERO:
-            ResultValue = MAKE_QUAD(DOUBLE_MAXIMUM_VALUE_LOW,
-                                    DOUBLE_MAXIMUM_VALUE_HIGH |
-                                        (ResultOperand->Sign << 31));
+            ResultValue = MAKE_QUAD(DOUBLE_MAXIMUM_VALUE_LOW, DOUBLE_MAXIMUM_VALUE_HIGH | (ResultOperand->Sign << 31));
             break;
 
             //
@@ -3090,14 +2988,13 @@ Return Value:
             //
 
         case ROUND_TO_PLUS_INFINITY:
-            if (ResultOperand->Sign == 0) {
-                ResultValue = MAKE_QUAD(DOUBLE_INFINITY_VALUE_LOW,
-                                        DOUBLE_INFINITY_VALUE_HIGH);
-
-            } else {
-                ResultValue = MAKE_QUAD(DOUBLE_MAXIMUM_VALUE_LOW,
-                                        DOUBLE_MAXIMUM_VALUE_HIGH |
-                                            (1 << 31));
+            if (ResultOperand->Sign == 0)
+            {
+                ResultValue = MAKE_QUAD(DOUBLE_INFINITY_VALUE_LOW, DOUBLE_INFINITY_VALUE_HIGH);
+            }
+            else
+            {
+                ResultValue = MAKE_QUAD(DOUBLE_MAXIMUM_VALUE_LOW, DOUBLE_MAXIMUM_VALUE_HIGH | (1 << 31));
             }
             break;
 
@@ -3111,14 +3008,13 @@ Return Value:
 
 
         case ROUND_TO_MINUS_INFINITY:
-            if (ResultOperand->Sign != 0) {
-                ResultValue = MAKE_QUAD(DOUBLE_INFINITY_VALUE_LOW,
-                                        DOUBLE_INFINITY_VALUE_HIGH |
-                                            (1 << 31));
-
-            } else {
-                ResultValue = MAKE_QUAD(DOUBLE_MAXIMUM_VALUE_LOW,
-                                        DOUBLE_MAXIMUM_VALUE_HIGH);
+            if (ResultOperand->Sign != 0)
+            {
+                ResultValue = MAKE_QUAD(DOUBLE_INFINITY_VALUE_LOW, DOUBLE_INFINITY_VALUE_HIGH | (1 << 31));
+            }
+            else
+            {
+                ResultValue = MAKE_QUAD(DOUBLE_MAXIMUM_VALUE_LOW, DOUBLE_MAXIMUM_VALUE_HIGH);
             }
             break;
         }
@@ -3131,8 +3027,9 @@ Return Value:
         ExceptionResult = Mantissa & (((ULONGLONG)1 << 52) - 1);
         ExceptionResult |= (((ULONGLONG)ResultOperand->Exponent - 1536) << 52);
         ExceptionResult |= ((ULONGLONG)ResultOperand->Sign << 63);
-
-    } else {
+    }
+    else
+    {
 
         //
         // After rounding if the exponent value is equal to
@@ -3141,7 +3038,8 @@ Return Value:
         //
 
         if ((ResultOperand->Exponent == DOUBLE_MINIMUM_EXPONENT) &&
-            (Mantissa != 0 || RoundBit != 00 || StickyBits != 0)) {
+            (Mantissa != 0 || RoundBit != 00 || StickyBits != 0))
+        {
 
             //
             // If the FPCR underflow to zero (denormal enable) control bit
@@ -3149,15 +3047,16 @@ Return Value:
             // not set an underflow status or generate an exception.
             //
 
-            if ((ContextBlock->IeeeMode == FALSE) ||
-                (SoftwareFpcr->DenormalResultEnable == 0)) {
+            if ((ContextBlock->IeeeMode == FALSE) || (SoftwareFpcr->DenormalResultEnable == 0))
+            {
                 DBGPRINT("SoftwareFpcr->DenormalResultEnable == 0\n");
                 ResultValue = 0;
                 Inexact = FALSE;
                 Overflow = FALSE;
                 Underflow = FALSE;
-
-            } else {
+            }
+            else
+            {
 
                 ResultValue = Mantissa;
                 ResultValue |= (ULONGLONG)ResultOperand->Sign << 63;
@@ -3172,15 +3071,18 @@ Return Value:
                 // Round the result value using the mantissa, the round bit, and the sticky bits.
                 //
 
-                switch (ContextBlock->Round) {
+                switch (ContextBlock->Round)
+                {
 
                     //
                     // Round to nearest representable number.
                     //
 
                 case ROUND_TO_NEAREST:
-                    if (ResultRoundBit != 0) {
-                        if ((ResultStickyBits != 0) || ((ResultMantissa & 0x1) != 0)) {
+                    if (ResultRoundBit != 0)
+                    {
+                        if ((ResultStickyBits != 0) || ((ResultMantissa & 0x1) != 0))
+                        {
                             ResultMantissa += 1;
                         }
                     }
@@ -3198,8 +3100,8 @@ Return Value:
                     //
 
                 case ROUND_TO_PLUS_INFINITY:
-                    if ((ResultOperand->Sign == 0) &&
-                        ((ResultStickyBits != 0) || (ResultRoundBit != 0))) {
+                    if ((ResultOperand->Sign == 0) && ((ResultStickyBits != 0) || (ResultRoundBit != 0)))
+                    {
                         ResultMantissa += 1;
                     }
                     break;
@@ -3209,8 +3111,8 @@ Return Value:
                     //
 
                 case ROUND_TO_MINUS_INFINITY:
-                    if ((ResultOperand->Sign != 0) &&
-                        ((ResultStickyBits != 0) || (ResultRoundBit != 0))) {
+                    if ((ResultOperand->Sign != 0) && ((ResultStickyBits != 0) || (ResultRoundBit != 0)))
+                    {
                         ResultMantissa += 1;
                     }
                     break;
@@ -3221,7 +3123,8 @@ Return Value:
                 // mantissa one bit and adjust the exponent.
                 //
 
-                if ((ResultMantissa & ((ULONGLONG)1 << 53)) != 0) {
+                if ((ResultMantissa & ((ULONGLONG)1 << 53)) != 0)
+                {
                     ResultMantissa >>= 1;
                     ResultExponent += 1;
                 }
@@ -3242,31 +3145,37 @@ Return Value:
 
                 Overflow = FALSE;
                 Underflow = TRUE;
-                if ((StickyBits != 0) || (RoundBit != 0)) {
+                if ((StickyBits != 0) || (RoundBit != 0))
+                {
                     Inexact = TRUE;
-
-                } else {
+                }
+                else
+                {
                     Inexact = FALSE;
                 }
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // If the result is zero, then set the proper sign for zero.
             //
 
-            if (Mantissa == 0) {
+            if (Mantissa == 0)
+            {
                 ResultOperand->Exponent = 0;
             }
 
             ResultValue = Mantissa & (((ULONGLONG)1 << 52) - 1);
             ResultValue |= (ULONGLONG)ResultOperand->Exponent << 52;
             ResultValue |= (ULONGLONG)ResultOperand->Sign << 63;
-            if ((StickyBits != 0) || (RoundBit != 0)) {
+            if ((StickyBits != 0) || (RoundBit != 0))
+            {
                 Inexact = TRUE;
-
-            } else {
+            }
+            else
+            {
                 Inexact = FALSE;
             }
             Overflow = FALSE;
@@ -3280,62 +3189,75 @@ Return Value:
 
     ExceptionRecord = ContextBlock->ExceptionRecord;
 
-    if (Overflow != FALSE) {
+    if (Overflow != FALSE)
+    {
         Fpcr->Overflow = 1;
         Fpcr->InexactResult = 1;
         Fpcr->SummaryBit = 1;
-        if (ContextBlock->IeeeMode == FALSE) {
+        if (ContextBlock->IeeeMode == FALSE)
+        {
             ExceptionRecord->ExceptionCode = STATUS_FLOAT_OVERFLOW;
             return FALSE;
         }
         IeeeValue = KiInitializeIeeeValue(ExceptionRecord);
         SoftwareFpcr->StatusOverflow = 1;
         SoftwareFpcr->StatusInexact = 1;
-        if (SoftwareFpcr->EnableOverflow != 0) {
+        if (SoftwareFpcr->EnableOverflow != 0)
+        {
             ExceptionRecord->ExceptionCode = STATUS_FLOAT_OVERFLOW;
             IeeeValue->Value.Fp64Value.W[0] = LOW_PART(ExceptionResult);
             IeeeValue->Value.Fp64Value.W[1] = HIGH_PART(ExceptionResult);
             ReturnValue = FALSE;
-        } else if (SoftwareFpcr->EnableInexact != 0) {
+        }
+        else if (SoftwareFpcr->EnableInexact != 0)
+        {
             ExceptionRecord->ExceptionCode = STATUS_FLOAT_INEXACT_RESULT;
             IeeeValue->Value.Fp64Value.W[0] = LOW_PART(ExceptionResult);
             IeeeValue->Value.Fp64Value.W[1] = HIGH_PART(ExceptionResult);
             ReturnValue = FALSE;
-        } else {
+        }
+        else
+        {
             Fpcr->DisableOverflow = 1;
             Fpcr->DisableInexact = 1;
         }
-
-    } else if (Underflow != FALSE) {
+    }
+    else if (Underflow != FALSE)
+    {
 
         //
         // Non-IEEE instruction always forces underflow to zero
         //
 
-        if (ContextBlock->IeeeMode == FALSE) {
+        if (ContextBlock->IeeeMode == FALSE)
+        {
             Fpcr->Underflow = 1;
             Fpcr->SummaryBit = 1;
             Fpcr->InexactResult = 1;
-            if (ContextBlock->UnderflowEnable != FALSE) {
+            if (ContextBlock->UnderflowEnable != FALSE)
+            {
                 ExceptionRecord->ExceptionCode = STATUS_FLOAT_UNDERFLOW;
                 return FALSE;
             }
 
-        //
-        // IEEE instructions don't report underflow unless the results are
-        // inexact or underflow exceptions are enabled
-        //
-
-        } else {
+            //
+            // IEEE instructions don't report underflow unless the results are
+            // inexact or underflow exceptions are enabled
+            //
+        }
+        else
+        {
             IeeeValue = KiInitializeIeeeValue(ExceptionRecord);
-            if (Inexact != FALSE) {
+            if (Inexact != FALSE)
+            {
                 Fpcr->Underflow = 1;
                 Fpcr->SummaryBit = 1;
                 Fpcr->InexactResult = 1;
                 SoftwareFpcr->StatusUnderflow = 1;
                 SoftwareFpcr->StatusInexact = 1;
-            } 
-            if (SoftwareFpcr->EnableUnderflow != 0) {
+            }
+            if (SoftwareFpcr->EnableUnderflow != 0)
+            {
                 Fpcr->Underflow = 1;
                 Fpcr->SummaryBit = 1;
                 SoftwareFpcr->StatusUnderflow = 1;
@@ -3343,29 +3265,38 @@ Return Value:
                 IeeeValue->Value.Fp64Value.W[0] = LOW_PART(ExceptionResult);
                 IeeeValue->Value.Fp64Value.W[1] = HIGH_PART(ExceptionResult);
                 ReturnValue = FALSE;
-            } else if (Inexact != FALSE && SoftwareFpcr->EnableInexact != 0) {
+            }
+            else if (Inexact != FALSE && SoftwareFpcr->EnableInexact != 0)
+            {
                 ExceptionRecord->ExceptionCode = STATUS_FLOAT_INEXACT_RESULT;
                 IeeeValue->Value.Fp64Value.W[0] = LOW_PART(ExceptionResult);
                 IeeeValue->Value.Fp64Value.W[1] = HIGH_PART(ExceptionResult);
                 ReturnValue = FALSE;
-            } else if (Inexact != FALSE) {
+            }
+            else if (Inexact != FALSE)
+            {
                 Fpcr->DisableUnderflow = 1;
                 Fpcr->DisableInexact = 1;
             }
         }
-
-    } else if (Inexact != FALSE) {
+    }
+    else if (Inexact != FALSE)
+    {
         Fpcr->InexactResult = 1;
         Fpcr->SummaryBit = 1;
-        if (ContextBlock->IeeeMode != FALSE) {
+        if (ContextBlock->IeeeMode != FALSE)
+        {
             IeeeValue = KiInitializeIeeeValue(ExceptionRecord);
             SoftwareFpcr->StatusInexact = 1;
-            if (SoftwareFpcr->EnableInexact != 0) {
+            if (SoftwareFpcr->EnableInexact != 0)
+            {
                 ExceptionRecord->ExceptionCode = STATUS_FLOAT_INEXACT_RESULT;
                 IeeeValue->Value.Fp64Value.W[0] = LOW_PART(ResultValue);
                 IeeeValue->Value.Fp64Value.W[1] = HIGH_PART(ResultValue);
                 ReturnValue = FALSE;
-            } else {
+            }
+            else
+            {
                 Fpcr->DisableInexact = 1;
             }
         }
@@ -3376,10 +3307,7 @@ Return Value:
     // then dismissed, the correct value must be in the register.
     //
 
-    KiSetRegisterValue(ContextBlock->Fc + 32,
-                       ResultValue,
-                       ContextBlock->ExceptionFrame,
-                       ContextBlock->TrapFrame);
+    KiSetRegisterValue(ContextBlock->Fc + 32, ResultValue, ContextBlock->ExceptionFrame, ContextBlock->TrapFrame);
 
     //
     // Return a value of TRUE.unless an exception should be generated
@@ -3387,12 +3315,9 @@ Return Value:
 
     return ReturnValue;
 }
-
+
 BOOLEAN
-KiNormalizeQuadword (
-    IN PFP_CONTEXT_BLOCK ContextBlock,
-    IN PFP_DOUBLE_OPERAND ResultOperand
-    )
+KiNormalizeQuadword(IN PFP_CONTEXT_BLOCK ContextBlock, IN PFP_DOUBLE_OPERAND ResultOperand)
 
 /*++
 
@@ -3447,15 +3372,14 @@ Return Value:
     //
 
     ExponentShift = ResultOperand->Exponent - DOUBLE_EXPONENT_BIAS;
-    DBGPRINT("KiNormalizeQuadword: Inf=%d NaN=%d Sign=%d Exponent=%d Mantissa=%.8x%.8x\n",
-             ResultOperand->Infinity, ResultOperand->Nan, ResultOperand->Sign,
-             ResultOperand->Exponent,
-             ResultOperand->MantissaHigh, ResultOperand->MantissaLow);
+    DBGPRINT("KiNormalizeQuadword: Inf=%d NaN=%d Sign=%d Exponent=%d Mantissa=%.8x%.8x\n", ResultOperand->Infinity,
+             ResultOperand->Nan, ResultOperand->Sign, ResultOperand->Exponent, ResultOperand->MantissaHigh,
+             ResultOperand->MantissaLow);
     DBGPRINT(".. ExponentShift = %d\n", ExponentShift);
-    Mantissa = MAKE_QUAD(ResultOperand->MantissaLow,
-                         ResultOperand->MantissaHigh);
+    Mantissa = MAKE_QUAD(ResultOperand->MantissaLow, ResultOperand->MantissaHigh);
 
-    if (ExponentShift < 54) {
+    if (ExponentShift < 54)
+    {
 
         //
         // The integer result value is less than 2**54 and so a right shift
@@ -3463,17 +3387,20 @@ Return Value:
         //
 
         ExponentShift = 54 - ExponentShift;
-        if (ExponentShift < 64) {
+        if (ExponentShift < 64)
+        {
             StickyBits = Mantissa << (64 - ExponentShift);
             ResultValue = Mantissa >> ExponentShift;
-
-        } else {
+        }
+        else
+        {
             StickyBits = Mantissa;
             ResultValue = 0;
         }
         Overflow = FALSE;
-
-    } else if (ExponentShift > 54) {
+    }
+    else if (ExponentShift > 54)
+    {
         ExponentShift -= 54;
 
         //
@@ -3483,29 +3410,33 @@ Return Value:
         // bits of the true result.
         //
 
-        if (ExponentShift < (64 - 54)) {
+        if (ExponentShift < (64 - 54))
+        {
             StickyBits = Mantissa >> (64 - ExponentShift);
             ResultValue = Mantissa << ExponentShift;
             Overflow = FALSE;
-
-        } else {
+        }
+        else
+        {
             StickyBits = 0;
-            if (ExponentShift < 64) {
+            if (ExponentShift < 64)
+            {
                 ResultValue = Mantissa << ExponentShift;
-
-            } else {
+            }
+            else
+            {
                 ResultValue = 0;
             }
             Overflow = TRUE;
         }
-
-    } else {
+    }
+    else
+    {
         StickyBits = 0;
         ResultValue = Mantissa;
         Overflow = FALSE;
     }
-    DBGPRINT(".. ResultValue = %.16Lx, StickyBits = %.16Lx\n",
-             ResultValue, StickyBits);
+    DBGPRINT(".. ResultValue = %.16Lx, StickyBits = %.16Lx\n", ResultValue, StickyBits);
 
     //
     // Round the result value using the mantissa, the round bit, and the
@@ -3514,19 +3445,22 @@ Return Value:
 
     RoundBit = (ULONG)(StickyBits >> 63);
     StickyBits <<= 1;
-    DBGPRINT(".. ResultValue = %.16Lx, StickyBits = %.16Lx, RoundBit = %lx\n",
-             ResultValue, StickyBits, RoundBit);
-    switch (ContextBlock->Round) {
+    DBGPRINT(".. ResultValue = %.16Lx, StickyBits = %.16Lx, RoundBit = %lx\n", ResultValue, StickyBits, RoundBit);
+    switch (ContextBlock->Round)
+    {
 
         //
         // Round to nearest representable number.
         //
 
     case ROUND_TO_NEAREST:
-        if (RoundBit != 0) {
-            if ((StickyBits != 0) || ((ResultValue & 0x1) != 0)) {
+        if (RoundBit != 0)
+        {
+            if ((StickyBits != 0) || ((ResultValue & 0x1) != 0))
+            {
                 ResultValue += 1;
-                if (ResultValue == 0) {
+                if (ResultValue == 0)
+                {
                     Overflow = TRUE;
                 }
             }
@@ -3545,10 +3479,11 @@ Return Value:
         //
 
     case ROUND_TO_PLUS_INFINITY:
-        if ((ResultOperand->Sign == 0) &&
-            ((StickyBits != 0) || (RoundBit != 0))) {
+        if ((ResultOperand->Sign == 0) && ((StickyBits != 0) || (RoundBit != 0)))
+        {
             ResultValue += 1;
-            if (ResultValue == 0) {
+            if (ResultValue == 0)
+            {
                 Overflow = TRUE;
             }
         }
@@ -3559,10 +3494,11 @@ Return Value:
         //
 
     case ROUND_TO_MINUS_INFINITY:
-        if ((ResultOperand->Sign != 0) &&
-            ((StickyBits != 0) || (RoundBit != 0))) {
+        if ((ResultOperand->Sign != 0) && ((StickyBits != 0) || (RoundBit != 0)))
+        {
             ResultValue += 1;
-            if (ResultValue == 0) {
+            if (ResultValue == 0)
+            {
                 Overflow = TRUE;
             }
         }
@@ -3576,36 +3512,43 @@ Return Value:
     // overflow has occurred.
     //
 
-    if (ResultOperand->Sign == 0) {
-        if ((LONGLONG)ResultValue < 0) {
-            Overflow = TRUE;
-        }
-
-    } else {
-        ResultValue = -(LONGLONG)ResultValue;
-        if ((LONGLONG)ResultValue > 0) {
+    if (ResultOperand->Sign == 0)
+    {
+        if ((LONGLONG)ResultValue < 0)
+        {
             Overflow = TRUE;
         }
     }
-    DBGPRINT(".. ResultValue = %.16Lx, StickyBits = %.16Lx\n",
-             ResultValue, StickyBits);
+    else
+    {
+        ResultValue = -(LONGLONG)ResultValue;
+        if ((LONGLONG)ResultValue > 0)
+        {
+            Overflow = TRUE;
+        }
+    }
+    DBGPRINT(".. ResultValue = %.16Lx, StickyBits = %.16Lx\n", ResultValue, StickyBits);
 
     //
     // Check to determine if an exception should be delivered or the result
     // should be written to the destination register.
     //
 
-    if (Overflow != FALSE) {
+    if (Overflow != FALSE)
+    {
         return KiInvalidOperationQuadword(ContextBlock, ResultValue);
-
-    } else if ((StickyBits | RoundBit) != 0) {
+    }
+    else if ((StickyBits | RoundBit) != 0)
+    {
         Fpcr = (PFPCR)&ContextBlock->TrapFrame->Fpcr;
         Fpcr->InexactResult = 1;
         Fpcr->SummaryBit = 1;
-        if (ContextBlock->IeeeMode != FALSE) {
+        if (ContextBlock->IeeeMode != FALSE)
+        {
             SoftwareFpcr = ContextBlock->SoftwareFpcr;
             SoftwareFpcr->StatusInexact = 1;
-            if (SoftwareFpcr->EnableInexact != 0) {
+            if (SoftwareFpcr->EnableInexact != 0)
+            {
                 ExceptionRecord = ContextBlock->ExceptionRecord;
                 ExceptionRecord->ExceptionCode = STATUS_FLOAT_INEXACT_RESULT;
                 IeeeValue = KiInitializeIeeeValue(ExceptionRecord);
@@ -3622,20 +3565,13 @@ Return Value:
     // Set the destination register value and return a value of TRUE.
     //
 
-    KiSetRegisterValue(ContextBlock->Fc + 32,
-                       ResultValue,
-                       ContextBlock->ExceptionFrame,
-                       ContextBlock->TrapFrame);
+    KiSetRegisterValue(ContextBlock->Fc + 32, ResultValue, ContextBlock->ExceptionFrame, ContextBlock->TrapFrame);
 
     return TRUE;
 }
-
+
 BOOLEAN
-KiNormalizeSingle (
-    IN PFP_CONTEXT_BLOCK ContextBlock,
-    IN PFP_SINGLE_OPERAND ResultOperand,
-    IN ULONG StickyBits
-    )
+KiNormalizeSingle(IN PFP_CONTEXT_BLOCK ContextBlock, IN PFP_SINGLE_OPERAND ResultOperand, IN ULONG StickyBits)
 
 /*++
 
@@ -3699,17 +3635,15 @@ Return Value:
     // round and normalize the result and check for overflow and underflow.
     //
 
-    DBGPRINT("KiNormalizeSingle: Inf=%d NaN=%d Sign=%d Exponent=%d Mantissa=%.8x\n",
-             ResultOperand->Infinity, ResultOperand->Nan, ResultOperand->Sign,
-             ResultOperand->Exponent, ResultOperand->Mantissa);
+    DBGPRINT("KiNormalizeSingle: Inf=%d NaN=%d Sign=%d Exponent=%d Mantissa=%.8x\n", ResultOperand->Infinity,
+             ResultOperand->Nan, ResultOperand->Sign, ResultOperand->Exponent, ResultOperand->Mantissa);
     DBGPRINT("KiNormalizeSingle: StickyBits=%.8lx\n", StickyBits);
 
-    if (ResultOperand->Infinity != FALSE) {
+    if (ResultOperand->Infinity != FALSE)
+    {
         ResultValue = SINGLE_INFINITY_VALUE | (ResultOperand->Sign << 31);
-        KiSetRegisterValue(ContextBlock->Fc + 32,
-                           KiConvertSingleOperandToRegister(ResultValue),
-                           ContextBlock->ExceptionFrame,
-                           ContextBlock->TrapFrame);
+        KiSetRegisterValue(ContextBlock->Fc + 32, KiConvertSingleOperandToRegister(ResultValue),
+                           ContextBlock->ExceptionFrame, ContextBlock->TrapFrame);
 
         return TRUE;
     }
@@ -3724,7 +3658,8 @@ Return Value:
     // value.
     //
 
-    if ((Mantissa & (1 << 26)) != 0) {
+    if ((Mantissa & (1 << 26)) != 0)
+    {
         StickyBits |= (Mantissa & 0x1);
         Mantissa >>= 1;
         ResultOperand->Exponent += 1;
@@ -3735,8 +3670,10 @@ Return Value:
     // shifting one bit at a time until there is a one bit in bit 25.
     //
 
-    if (Mantissa != 0) {
-        while ((Mantissa & (1 << 25)) == 0) {
+    if (Mantissa != 0)
+    {
+        while ((Mantissa & (1 << 25)) == 0)
+        {
             Mantissa <<= 1;
             ResultOperand->Exponent -= 1;
         }
@@ -3757,7 +3694,8 @@ Return Value:
     // exception record, if needed.
     //
 
-    if (ResultOperand->Exponent <= SINGLE_MINIMUM_EXPONENT && Mantissa != 0) {
+    if (ResultOperand->Exponent <= SINGLE_MINIMUM_EXPONENT && Mantissa != 0)
+    {
 
         //
         // Save everything needed for calculating IEEE exception record value
@@ -3780,7 +3718,8 @@ Return Value:
         // A denormal shift of 25 guarantees 0 mantissa and 0 round bit and preserves all sticky bits
         //
 
-        if (DenormalizeShift > 25) {
+        if (DenormalizeShift > 25)
+        {
             DenormalizeShift = 25;
         }
 
@@ -3789,8 +3728,8 @@ Return Value:
         // shifted.  Preserve existing Round and Sticky Bits.
         //
 
-        StickyBits |= RoundBit; 
-        StickyBits |= (Mantissa << 1) << (32 - DenormalizeShift); 
+        StickyBits |= RoundBit;
+        StickyBits |= (Mantissa << 1) << (32 - DenormalizeShift);
         RoundBit = (Mantissa >> (DenormalizeShift - 1)) & 1;
         Mantissa = Mantissa >> DenormalizeShift;
         ResultOperand->Exponent = SINGLE_MINIMUM_EXPONENT;
@@ -3800,15 +3739,18 @@ Return Value:
     // Round the result value using the mantissa, the round bit, and the sticky bits.
     //
 
-    switch (ContextBlock->Round) {
+    switch (ContextBlock->Round)
+    {
 
         //
         // Round to nearest representable number.
         //
 
     case ROUND_TO_NEAREST:
-        if (RoundBit != 0) {
-            if ((StickyBits != 0) || ((Mantissa & 0x1) != 0)) {
+        if (RoundBit != 0)
+        {
+            if ((StickyBits != 0) || ((Mantissa & 0x1) != 0))
+            {
                 Mantissa += 1;
             }
         }
@@ -3826,8 +3768,8 @@ Return Value:
         //
 
     case ROUND_TO_PLUS_INFINITY:
-        if ((ResultOperand->Sign == 0) &&
-            ((StickyBits != 0) || (RoundBit != 0))) {
+        if ((ResultOperand->Sign == 0) && ((StickyBits != 0) || (RoundBit != 0)))
+        {
             Mantissa += 1;
         }
         break;
@@ -3837,8 +3779,8 @@ Return Value:
         //
 
     case ROUND_TO_MINUS_INFINITY:
-        if ((ResultOperand->Sign != 0) &&
-            ((StickyBits != 0) || (RoundBit != 0))) {
+        if ((ResultOperand->Sign != 0) && ((StickyBits != 0) || (RoundBit != 0)))
+        {
             Mantissa += 1;
         }
         break;
@@ -3849,7 +3791,8 @@ Return Value:
     // mantissa one bit and adjust the exponent.
     //
 
-    if ((Mantissa & (1 << 24)) != 0) {
+    if ((Mantissa & (1 << 24)) != 0)
+    {
         Mantissa >>= 1;
         ResultOperand->Exponent += 1;
     }
@@ -3859,8 +3802,8 @@ Return Value:
     // adjust the exponent.
     //
 
-    if ((ResultOperand->Exponent == SINGLE_MINIMUM_EXPONENT) && 
-        (Mantissa & (1 << 23)) != 0) {
+    if ((ResultOperand->Exponent == SINGLE_MINIMUM_EXPONENT) && (Mantissa & (1 << 23)) != 0)
+    {
         ResultOperand->Exponent += 1;
     }
 
@@ -3872,7 +3815,7 @@ Return Value:
     // If the exponent value is less than or equal to the minimum exponent
     // value, the mantissa is nonzero, and the denormalized result is inexact,
     // then underflow has occurred.  This results in both the inexact and
-    // underflow sticky bits being set in the FPCR. 
+    // underflow sticky bits being set in the FPCR.
     //
     // Or if underflow exceptions are enabled, underflow occurs for all denormal
     // numbers.  This results in the underflow sticky bit always being set in the
@@ -3884,7 +3827,8 @@ Return Value:
     // FPCR.
     //
 
-    if (ResultOperand->Exponent >= SINGLE_MAXIMUM_EXPONENT) {
+    if (ResultOperand->Exponent >= SINGLE_MAXIMUM_EXPONENT)
+    {
         Inexact = TRUE;
         Overflow = TRUE;
         Underflow = FALSE;
@@ -3893,7 +3837,8 @@ Return Value:
         // The overflow value is dependent on the rounding mode.
         //
 
-        switch (ContextBlock->Round) {
+        switch (ContextBlock->Round)
+        {
 
             //
             // Round to nearest representable number.
@@ -3924,10 +3869,12 @@ Return Value:
             //
 
         case ROUND_TO_PLUS_INFINITY:
-            if (ResultOperand->Sign == 0) {
+            if (ResultOperand->Sign == 0)
+            {
                 ResultValue = SINGLE_INFINITY_VALUE;
-
-            } else {
+            }
+            else
+            {
                 ResultValue = (ULONG)(SINGLE_MAXIMUM_VALUE | (1 << 31));
             }
             break;
@@ -3941,10 +3888,12 @@ Return Value:
             //
 
         case ROUND_TO_MINUS_INFINITY:
-            if (ResultOperand->Sign != 0) {
+            if (ResultOperand->Sign != 0)
+            {
                 ResultValue = (ULONG)(SINGLE_INFINITY_VALUE | (1 << 31));
-
-            } else {
+            }
+            else
+            {
                 ResultValue = SINGLE_MAXIMUM_VALUE;
             }
             break;
@@ -3958,8 +3907,9 @@ Return Value:
         ExceptionResult = Mantissa & ((1 << 23) - 1);
         ExceptionResult |= ((ResultOperand->Exponent - 192) << 23);
         ExceptionResult |= (ResultOperand->Sign << 31);
-
-    } else {
+    }
+    else
+    {
 
         //
         // After rounding if the exponent value is equal to
@@ -3968,7 +3918,8 @@ Return Value:
         //
 
         if ((ResultOperand->Exponent == SINGLE_MINIMUM_EXPONENT) &&
-            (Mantissa != 0 || RoundBit != 00 || StickyBits != 0)) {
+            (Mantissa != 0 || RoundBit != 00 || StickyBits != 0))
+        {
 
             //
             // If the FPCR underflow to zero (denormal enable) control bit
@@ -3976,15 +3927,16 @@ Return Value:
             // not set an underflow status or generate an exception.
             //
 
-            if ((ContextBlock->IeeeMode == FALSE) ||
-                (SoftwareFpcr->DenormalResultEnable == 0)) {
+            if ((ContextBlock->IeeeMode == FALSE) || (SoftwareFpcr->DenormalResultEnable == 0))
+            {
                 DBGPRINT("SoftwareFpcr->DenormalResultEnable == 0\n");
                 ResultValue = 0;
                 Inexact = FALSE;
                 Overflow = FALSE;
                 Underflow = FALSE;
-
-            } else {
+            }
+            else
+            {
 
                 ResultValue = Mantissa;
                 ResultValue |= ResultOperand->Sign << 31;
@@ -3999,15 +3951,18 @@ Return Value:
                 // Round the result value using the mantissa, the round bit, and the sticky bits.
                 //
 
-                switch (ContextBlock->Round) {
+                switch (ContextBlock->Round)
+                {
 
                     //
                     // Round to nearest representable number.
                     //
 
                 case ROUND_TO_NEAREST:
-                    if (ResultRoundBit != 0) {
-                        if ((ResultStickyBits != 0) || ((ResultMantissa & 0x1) != 0)) {
+                    if (ResultRoundBit != 0)
+                    {
+                        if ((ResultStickyBits != 0) || ((ResultMantissa & 0x1) != 0))
+                        {
                             ResultMantissa += 1;
                         }
                     }
@@ -4025,8 +3980,8 @@ Return Value:
                     //
 
                 case ROUND_TO_PLUS_INFINITY:
-                    if ((ResultOperand->Sign == 0) &&
-                        ((ResultStickyBits != 0) || (ResultRoundBit != 0))) {
+                    if ((ResultOperand->Sign == 0) && ((ResultStickyBits != 0) || (ResultRoundBit != 0)))
+                    {
                         ResultMantissa += 1;
                     }
                     break;
@@ -4036,8 +3991,8 @@ Return Value:
                     //
 
                 case ROUND_TO_MINUS_INFINITY:
-                    if ((ResultOperand->Sign != 0) &&
-                        ((ResultStickyBits != 0) || (ResultRoundBit != 0))) {
+                    if ((ResultOperand->Sign != 0) && ((ResultStickyBits != 0) || (ResultRoundBit != 0)))
+                    {
                         ResultMantissa += 1;
                     }
                     break;
@@ -4048,7 +4003,8 @@ Return Value:
                 // mantissa one bit and adjust the exponent.
                 //
 
-                if ((ResultMantissa & (1 << 24)) != 0) {
+                if ((ResultMantissa & (1 << 24)) != 0)
+                {
                     ResultMantissa >>= 1;
                     ResultExponent += 1;
                 }
@@ -4070,31 +4026,37 @@ Return Value:
 
                 Overflow = FALSE;
                 Underflow = TRUE;
-                if ((StickyBits != 0) || (RoundBit != 0)) {
+                if ((StickyBits != 0) || (RoundBit != 0))
+                {
                     Inexact = TRUE;
-
-                } else {
+                }
+                else
+                {
                     Inexact = FALSE;
                 }
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // If the result is zero, then set the proper sign for zero.
             //
 
-            if (Mantissa == 0) {
+            if (Mantissa == 0)
+            {
                 ResultOperand->Exponent = 0;
             }
 
             ResultValue = Mantissa & ((1 << 23) - 1);
             ResultValue |= (ResultOperand->Exponent << 23);
             ResultValue |= (ResultOperand->Sign << 31);
-            if ((StickyBits != 0) || (RoundBit != 0)) {
+            if ((StickyBits != 0) || (RoundBit != 0))
+            {
                 Inexact = TRUE;
-
-            } else {
+            }
+            else
+            {
                 Inexact = FALSE;
             }
             Overflow = FALSE;
@@ -4108,87 +4070,109 @@ Return Value:
 
     ExceptionRecord = ContextBlock->ExceptionRecord;
 
-    if (Overflow != FALSE) {
+    if (Overflow != FALSE)
+    {
         Fpcr->Overflow = 1;
         Fpcr->InexactResult = 1;
         Fpcr->SummaryBit = 1;
-        if (ContextBlock->IeeeMode == FALSE) {
+        if (ContextBlock->IeeeMode == FALSE)
+        {
             ExceptionRecord->ExceptionCode = STATUS_FLOAT_OVERFLOW;
             return FALSE;
         }
         IeeeValue = KiInitializeIeeeValue(ExceptionRecord);
         SoftwareFpcr->StatusOverflow = 1;
         SoftwareFpcr->StatusInexact = 1;
-        if (SoftwareFpcr->EnableOverflow != 0) {
+        if (SoftwareFpcr->EnableOverflow != 0)
+        {
             ExceptionRecord->ExceptionCode = STATUS_FLOAT_OVERFLOW;
             IeeeValue->Value.Fp32Value.W[0] = ExceptionResult;
             ReturnValue = FALSE;
-        } else if (SoftwareFpcr->EnableInexact != 0) {
+        }
+        else if (SoftwareFpcr->EnableInexact != 0)
+        {
             ExceptionRecord->ExceptionCode = STATUS_FLOAT_INEXACT_RESULT;
             IeeeValue->Value.Fp32Value.W[0] = ExceptionResult;
             ReturnValue = FALSE;
-        } else {
+        }
+        else
+        {
             Fpcr->DisableOverflow = 1;
             Fpcr->DisableInexact = 1;
         }
-
-    } else if (Underflow != FALSE) {
+    }
+    else if (Underflow != FALSE)
+    {
 
         //
         // Non-IEEE instruction always forces underflow to zero
         //
 
-        if (ContextBlock->IeeeMode == FALSE) {
+        if (ContextBlock->IeeeMode == FALSE)
+        {
             Fpcr->Underflow = 1;
             Fpcr->SummaryBit = 1;
             Fpcr->InexactResult = 1;
-            if (ContextBlock->UnderflowEnable != FALSE) {
+            if (ContextBlock->UnderflowEnable != FALSE)
+            {
                 ExceptionRecord->ExceptionCode = STATUS_FLOAT_UNDERFLOW;
                 return FALSE;
             }
 
-        //
-        // IEEE instructions don't report underflow unless the results are
-        // inexact or underflow exceptions are enabled
-        //
-
-        } else {
+            //
+            // IEEE instructions don't report underflow unless the results are
+            // inexact or underflow exceptions are enabled
+            //
+        }
+        else
+        {
             IeeeValue = KiInitializeIeeeValue(ExceptionRecord);
-            if (Inexact != FALSE) {
+            if (Inexact != FALSE)
+            {
                 Fpcr->Underflow = 1;
                 Fpcr->InexactResult = 1;
                 Fpcr->SummaryBit = 1;
                 SoftwareFpcr->StatusUnderflow = 1;
                 SoftwareFpcr->StatusInexact = 1;
             }
-            if (SoftwareFpcr->EnableUnderflow != 0) {
+            if (SoftwareFpcr->EnableUnderflow != 0)
+            {
                 Fpcr->Underflow = 1;
                 Fpcr->SummaryBit = 1;
                 SoftwareFpcr->StatusUnderflow = 1;
                 ExceptionRecord->ExceptionCode = STATUS_FLOAT_UNDERFLOW;
                 IeeeValue->Value.Fp32Value.W[0] = ExceptionResult;
                 ReturnValue = FALSE;
-            } else if (Inexact != FALSE && SoftwareFpcr->EnableInexact != 0) {
+            }
+            else if (Inexact != FALSE && SoftwareFpcr->EnableInexact != 0)
+            {
                 ExceptionRecord->ExceptionCode = STATUS_FLOAT_INEXACT_RESULT;
                 IeeeValue->Value.Fp32Value.W[0] = ExceptionResult;
                 ReturnValue = FALSE;
-            } else if (Inexact != FALSE) {
+            }
+            else if (Inexact != FALSE)
+            {
                 Fpcr->DisableUnderflow = 1;
                 Fpcr->DisableInexact = 1;
             }
         }
-
-    } else if (Inexact != FALSE) {
+    }
+    else if (Inexact != FALSE)
+    {
         Fpcr->InexactResult = 1;
         Fpcr->SummaryBit = 1;
-        if (ContextBlock->IeeeMode != FALSE) {
+        if (ContextBlock->IeeeMode != FALSE)
+        {
             IeeeValue = KiInitializeIeeeValue(ExceptionRecord);
             SoftwareFpcr->StatusInexact = 1;
-            if (SoftwareFpcr->EnableInexact != 0) {
+            if (SoftwareFpcr->EnableInexact != 0)
+            {
                 ExceptionRecord->ExceptionCode = STATUS_FLOAT_INEXACT_RESULT;
                 IeeeValue->Value.Fp32Value.W[0] = ResultValue;
                 ReturnValue = FALSE;
-            } else {
+            }
+            else
+            {
                 Fpcr->DisableInexact = 1;
             }
         }
@@ -4199,10 +4183,8 @@ Return Value:
     // then dismissed, the correct value must be in the register.
     //
 
-    KiSetRegisterValue(ContextBlock->Fc + 32,
-                       KiConvertSingleOperandToRegister(ResultValue),
-                       ContextBlock->ExceptionFrame,
-                       ContextBlock->TrapFrame);
+    KiSetRegisterValue(ContextBlock->Fc + 32, KiConvertSingleOperandToRegister(ResultValue),
+                       ContextBlock->ExceptionFrame, ContextBlock->TrapFrame);
 
     //
     // Return a value of TRUE.unless an exception should be generated
@@ -4210,13 +4192,8 @@ Return Value:
 
     return ReturnValue;
 }
-
-VOID
-KiUnpackDouble (
-    IN ULONG Source,
-    IN PFP_CONTEXT_BLOCK ContextBlock,
-    OUT PFP_DOUBLE_OPERAND DoubleOperand
-    )
+
+VOID KiUnpackDouble(IN ULONG Source, IN PFP_CONTEXT_BLOCK ContextBlock, OUT PFP_DOUBLE_OPERAND DoubleOperand)
 
 /*++
 
@@ -4261,9 +4238,7 @@ Return Value:
     // mantissa value.
     //
 
-    Value = KiGetRegisterValue(Source + 32,
-                               ContextBlock->ExceptionFrame,
-                               ContextBlock->TrapFrame);
+    Value = KiGetRegisterValue(Source + 32, ContextBlock->ExceptionFrame, ContextBlock->TrapFrame);
     Value1 = (ULONG)Value;
     Value2 = (ULONG)(Value >> 32);
 
@@ -4279,42 +4254,52 @@ Return Value:
     // denormalized. Otherwise the number is finite and normal.
     //
 
-    if (DoubleOperand->Exponent == DOUBLE_MAXIMUM_EXPONENT) {
+    if (DoubleOperand->Exponent == DOUBLE_MAXIMUM_EXPONENT)
+    {
         DoubleOperand->Normal = FALSE;
-        if ((DoubleOperand->MantissaLow | DoubleOperand->MantissaHigh) != 0) {
+        if ((DoubleOperand->MantissaLow | DoubleOperand->MantissaHigh) != 0)
+        {
             DoubleOperand->Infinity = FALSE;
             DoubleOperand->Nan = TRUE;
-
-        } else {
+        }
+        else
+        {
             DoubleOperand->Infinity = TRUE;
             DoubleOperand->Nan = FALSE;
         }
-
-    } else {
+    }
+    else
+    {
         DoubleOperand->Infinity = FALSE;
         DoubleOperand->Nan = FALSE;
         DoubleOperand->Normal = TRUE;
-        if (DoubleOperand->Exponent == DOUBLE_MINIMUM_EXPONENT) {
-            if ((DoubleOperand->MantissaHigh | DoubleOperand->MantissaLow) != 0) {
-                if (ContextBlock->SoftwareFpcr->DenormalOperandsEnable == 0) {
+        if (DoubleOperand->Exponent == DOUBLE_MINIMUM_EXPONENT)
+        {
+            if ((DoubleOperand->MantissaHigh | DoubleOperand->MantissaLow) != 0)
+            {
+                if (ContextBlock->SoftwareFpcr->DenormalOperandsEnable == 0)
+                {
                     DBGPRINT("SoftwareFpcr->DenormalOperandsEnable == 0\n");
                     DoubleOperand->MantissaHigh = 0;
                     DoubleOperand->MantissaLow = 0;
                     DoubleOperand->Exponent = 0;
-                } else {
+                }
+                else
+                {
                     DoubleOperand->Normal = FALSE;
                     DoubleOperand->Exponent += 1;
-                    while ((DoubleOperand->MantissaHigh & (1 << 20)) == 0) {
+                    while ((DoubleOperand->MantissaHigh & (1 << 20)) == 0)
+                    {
                         DoubleOperand->MantissaHigh =
-                                (DoubleOperand->MantissaHigh << 1) |
-                                                (DoubleOperand->MantissaLow >> 31);
+                            (DoubleOperand->MantissaHigh << 1) | (DoubleOperand->MantissaLow >> 31);
                         DoubleOperand->MantissaLow <<= 1;
                         DoubleOperand->Exponent -= 1;
                     }
                 }
             }
-
-        } else {
+        }
+        else
+        {
             DoubleOperand->MantissaHigh |= (1 << 20);
         }
     }
@@ -4324,23 +4309,16 @@ Return Value:
     // bit.
     //
 
-    DoubleOperand->MantissaHigh =
-        (DoubleOperand->MantissaHigh << 2) | (DoubleOperand->MantissaLow >> 30);
+    DoubleOperand->MantissaHigh = (DoubleOperand->MantissaHigh << 2) | (DoubleOperand->MantissaLow >> 30);
     DoubleOperand->MantissaLow <<= 2;
-    DBGPRINT("KiUnpackDouble: Inf=%d NaN=%d Sign=%d Exponent=%d Mantissa=%.8x%.8x\n",
-             DoubleOperand->Infinity, DoubleOperand->Nan, DoubleOperand->Sign,
-             DoubleOperand->Exponent,
-             DoubleOperand->MantissaHigh, DoubleOperand->MantissaLow);
+    DBGPRINT("KiUnpackDouble: Inf=%d NaN=%d Sign=%d Exponent=%d Mantissa=%.8x%.8x\n", DoubleOperand->Infinity,
+             DoubleOperand->Nan, DoubleOperand->Sign, DoubleOperand->Exponent, DoubleOperand->MantissaHigh,
+             DoubleOperand->MantissaLow);
 
     return;
 }
-
-VOID
-KiUnpackSingle (
-    IN ULONG Source,
-    IN PFP_CONTEXT_BLOCK ContextBlock,
-    OUT PFP_SINGLE_OPERAND SingleOperand
-    )
+
+VOID KiUnpackSingle(IN ULONG Source, IN PFP_CONTEXT_BLOCK ContextBlock, OUT PFP_SINGLE_OPERAND SingleOperand)
 
 /*++
 
@@ -4384,9 +4362,7 @@ Return Value:
     //
 
     Value = KiConvertRegisterToSingleOperand(
-                KiGetRegisterValue(Source + 32,
-                                  ContextBlock->ExceptionFrame,
-                                  ContextBlock->TrapFrame));
+        KiGetRegisterValue(Source + 32, ContextBlock->ExceptionFrame, ContextBlock->TrapFrame));
 
     SingleOperand->Sign = Value >> 31;
     SingleOperand->Exponent = (Value >> 23) & 0xff;
@@ -4399,38 +4375,49 @@ Return Value:
     // denormalized. Otherwise the number is finite and normal.
     //
 
-    if (SingleOperand->Exponent == SINGLE_MAXIMUM_EXPONENT) {
+    if (SingleOperand->Exponent == SINGLE_MAXIMUM_EXPONENT)
+    {
         SingleOperand->Normal = FALSE;
-        if (SingleOperand->Mantissa != 0) {
+        if (SingleOperand->Mantissa != 0)
+        {
             SingleOperand->Infinity = FALSE;
             SingleOperand->Nan = TRUE;
-
-        } else {
+        }
+        else
+        {
             SingleOperand->Infinity = TRUE;
             SingleOperand->Nan = FALSE;
         }
-
-    } else {
+    }
+    else
+    {
         SingleOperand->Infinity = FALSE;
         SingleOperand->Nan = FALSE;
         SingleOperand->Normal = TRUE;
-        if (SingleOperand->Exponent == SINGLE_MINIMUM_EXPONENT) {
-            if (SingleOperand->Mantissa != 0) {
-                if (ContextBlock->SoftwareFpcr->DenormalOperandsEnable == 0) {
+        if (SingleOperand->Exponent == SINGLE_MINIMUM_EXPONENT)
+        {
+            if (SingleOperand->Mantissa != 0)
+            {
+                if (ContextBlock->SoftwareFpcr->DenormalOperandsEnable == 0)
+                {
                     DBGPRINT("SoftwareFpcr->DenormalOperandsEnable == 0\n");
                     SingleOperand->Mantissa = 0;
                     SingleOperand->Exponent = 0;
-                } else {
+                }
+                else
+                {
                     SingleOperand->Normal = FALSE;
                     SingleOperand->Exponent += 1;
-                    while ((SingleOperand->Mantissa & (1 << 23)) == 0) {
+                    while ((SingleOperand->Mantissa & (1 << 23)) == 0)
+                    {
                         SingleOperand->Mantissa <<= 1;
                         SingleOperand->Exponent -= 1;
                     }
                 }
             }
-
-        } else {
+        }
+        else
+        {
             SingleOperand->Mantissa |= (1 << 23);
         }
     }
@@ -4441,8 +4428,7 @@ Return Value:
     //
 
     SingleOperand->Mantissa <<= 2;
-    DBGPRINT("KiUnpackSingle: Inf=%d NaN=%d Sign=%d Exponent=%d Mantissa=%.8x\n",
-             SingleOperand->Infinity, SingleOperand->Nan, SingleOperand->Sign,
-             SingleOperand->Exponent, SingleOperand->Mantissa);
+    DBGPRINT("KiUnpackSingle: Inf=%d NaN=%d Sign=%d Exponent=%d Mantissa=%.8x\n", SingleOperand->Infinity,
+             SingleOperand->Nan, SingleOperand->Sign, SingleOperand->Exponent, SingleOperand->Mantissa);
     return;
 }

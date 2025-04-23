@@ -23,7 +23,7 @@ BOOLEAN LOCAL IsTrigPt(char *pszProcName);
  */
 
 int giTraceLevel = 0, giIndent = 0;
-char aszTrigPtBuff[MAX_TRIG_PTS][MAX_TRIGPT_LEN + 1] = {0};
+char aszTrigPtBuff[MAX_TRIG_PTS][MAX_TRIGPT_LEN + 1] = { 0 };
 ULONG dwcTriggers = 0;
 
 /***EP  IsTraceOn - Determine if tracing is on for the given procedure
@@ -47,8 +47,7 @@ BOOLEAN EXPORT IsTraceOn(UCHAR n, char *pszProcName, BOOLEAN fEnter)
     {
         gDebugger.dwfDebugger |= DBGF_CHECKING_TRACE;
 
-        if ((gDebugger.dwfDebugger & DBGF_TRIGGER_MODE) &&
-            IsTrigPt(pszProcName))
+        if ((gDebugger.dwfDebugger & DBGF_TRIGGER_MODE) && IsTrigPt(pszProcName))
         {
             if (fEnter)
                 dwcTriggers++;
@@ -56,9 +55,7 @@ BOOLEAN EXPORT IsTraceOn(UCHAR n, char *pszProcName, BOOLEAN fEnter)
                 dwcTriggers--;
             rc = TRUE;
         }
-        else if ((n <= giTraceLevel) &&
-                 (!(gDebugger.dwfDebugger & DBGF_TRIGGER_MODE) ||
-                  (dwcTriggers > 0)))
+        else if ((n <= giTraceLevel) && (!(gDebugger.dwfDebugger & DBGF_TRIGGER_MODE) || (dwcTriggers > 0)))
         {
             rc = TRUE;
         }
@@ -70,7 +67,7 @@ BOOLEAN EXPORT IsTraceOn(UCHAR n, char *pszProcName, BOOLEAN fEnter)
     }
 
     return rc;
-}       //IsTraceOn
+} //IsTraceOn
 
 /***LP  IsTrigPt - Find the procedure name in the TrigPt buffer
  *
@@ -90,15 +87,14 @@ BOOLEAN LOCAL IsTrigPt(char *pszProcName)
 
     for (i = 0; (rc == FALSE) && (i < MAX_TRIG_PTS); ++i)
     {
-        if ((aszTrigPtBuff[i][0] != '\0') &&
-            (STRSTR(pszProcName, &aszTrigPtBuff[i][0]) != NULL))
+        if ((aszTrigPtBuff[i][0] != '\0') && (STRSTR(pszProcName, &aszTrigPtBuff[i][0]) != NULL))
         {
             rc = TRUE;
         }
     }
 
     return rc;
-}       //IsTrigPt
+} //IsTrigPt
 
 /***LP  TraceIndent - Indent trace output
  *
@@ -118,7 +114,7 @@ VOID LOCAL TraceIndent(VOID)
     {
         PRINTF("| ");
     }
-}       //TraceIndent
+} //TraceIndent
 
 /***LP  SetTrace - set trace modes
  *
@@ -144,8 +140,7 @@ LONG LOCAL SetTrace(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
         int i;
 
         PRINTF("\nTrace Level = %d\n", giTraceLevel);
-        PRINTF("Trace Trigger Mode = %s\n\n",
-               gDebugger.dwfDebugger & DBGF_TRIGGER_MODE? "ON": "OFF");
+        PRINTF("Trace Trigger Mode = %s\n\n", gDebugger.dwfDebugger & DBGF_TRIGGER_MODE ? "ON" : "OFF");
 
         for (i = 0; i < MAX_TRIG_PTS; ++i)
         {
@@ -154,7 +149,7 @@ LONG LOCAL SetTrace(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
     }
 
     return DBGERR_NONE;
-}       //SetTrace
+} //SetTrace
 
 /***LP  AddTraceTrigPts - Add trace trigger points
  *
@@ -170,8 +165,7 @@ LONG LOCAL SetTrace(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
  *      returns negative error code
  */
 
-LONG LOCAL AddTraceTrigPts(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                           ULONG dwNonSWArgs)
+LONG LOCAL AddTraceTrigPts(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
 {
     LONG rc = DBGERR_NONE;
     PSZ psz;
@@ -205,7 +199,7 @@ LONG LOCAL AddTraceTrigPts(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
     }
 
     return rc;
-}       //AddTraceTrigPts
+} //AddTraceTrigPts
 
 /***LP  ZapTraceTrigPts - Zap trace trigger points
  *
@@ -221,8 +215,7 @@ LONG LOCAL AddTraceTrigPts(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
  *      returns negative error code
  */
 
-LONG LOCAL ZapTraceTrigPts(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
-                           ULONG dwNonSWArgs)
+LONG LOCAL ZapTraceTrigPts(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum, ULONG dwNonSWArgs)
 {
     LONG rc = DBGERR_NONE;
     PSZ psz, psz1;
@@ -248,6 +241,6 @@ LONG LOCAL ZapTraceTrigPts(PCMDARG pArg, PSZ pszArg, ULONG dwArgNum,
     }
 
     return rc;
-}       //ZapTraceTrigPts
+} //ZapTraceTrigPts
 
-#endif  //ifdef TRACING
+#endif //ifdef TRACING

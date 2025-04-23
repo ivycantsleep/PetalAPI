@@ -33,13 +33,7 @@ Revision History:
 
 #include <remlock.h>
 
-#define MinutesToTicks(x) \
-        (ULONGLONG) KeQueryTimeIncrement() * \
-        10 * \
-        1000 * \
-        1000 * \
-        60 * \
-        x
+#define MinutesToTicks(x) (ULONGLONG) KeQueryTimeIncrement() * 10 * 1000 * 1000 * 60 * x
 // 10 -> microseconds, 1000 -> miliseconds, 1000 -> seconds, 60 -> minutes
 
 // LIST_ENTRY RtlpRemoveLockList;
@@ -47,11 +41,7 @@ Revision History:
 NTSYSAPI
 PRTL_REMOVE_LOCK
 NTAPI
-RtlAllocateRemoveLock(
-    IN  ULONG   MaxLockedMinutes,
-    IN  ULONG   AllocateTag,
-    IN  ULONG   HighWatermark
-    )
+RtlAllocateRemoveLock(IN ULONG MaxLockedMinutes, IN ULONG AllocateTag, IN ULONG HighWatermark)
 /*++
 
 Routine Description:
@@ -62,11 +52,10 @@ Routine Description:
 {
     PRTL_REMOVE_LOCK lock;
 
-    lock = ExAllocatePoolWithTag (NonPagedPool,
-                                  sizeof (RTL_REMOVE_LOCK),
-                                  AllocateTag);
+    lock = ExAllocatePoolWithTag(NonPagedPool, sizeof(RTL_REMOVE_LOCK), AllocateTag);
 
-    if (lock) {
+    if (lock)
+    {
 
         lock->Signature = RTL_REMOVE_LOCK_SIG;
         lock->Removed = FALSE;
@@ -76,7 +65,7 @@ Routine Description:
         lock->HighWatermark = HighWatermark;
         lock->MaxLockedMinutes = MaxLockedMinutes;
         lock->AllocateTag = AllocateTag;
-        KeInitializeSpinLock (&lock->Spin);
+        KeInitializeSpinLock(&lock->Spin);
         lock->Blocks.Link = NULL;
 #endif
     }
@@ -84,16 +73,11 @@ Routine Description:
     return lock;
 }
 
-
+
 NTSYSAPI
 NTSTATUS
 NTAPI
-RtlAcquireRemoveLockEx(
-    IN PRTL_REMOVE_LOCK RemoveLock,
-    IN OPTIONAL PVOID   Tag,
-    IN PCSTR            File,
-    IN ULONG            Line
-    )
+RtlAcquireRemoveLockEx(IN PRTL_REMOVE_LOCK RemoveLock, IN OPTIONAL PVOID Tag, IN PCSTR File, IN ULONG Line)
 
 /*++
 
@@ -132,8 +116,8 @@ Return Value:
 --*/
 
 {
-    LONG        lockValue;
-    NTSTATUS    status;
+    LONG lockValue;
+    NTSTATUS status;
 
 #if DBG
     PRTL_REMOVE_LOCK_TRACKING_BLOCK trackingBlock;
@@ -145,29 +129,27 @@ Return Value:
 
     lockValue = InterlockedIncrement(&RemoveLock->IoCount);
 
-    ASSERTMSG("RtlAcquireRemoveLock - lock value was negative : ",
-              (lockValue > 0));
+    ASSERTMSG("RtlAcquireRemoveLock - lock value was negative : ", (lockValue > 0));
 
     ASSERTMSG("RemoveLock increased to meet LockHighWatermark",
-              ((0 == RemoveLock->HighWatermark) ||
-               (lockValue <= RemoveLock->HighWatermark)));
+              ((0 == RemoveLock->HighWatermark) || (lockValue <= RemoveLock->HighWatermark)));
 
-    if (! RemoveLock->Removed) {
+    if (!RemoveLock->Removed)
+    {
 
 #if DBG
-        trackingBlock = ExAllocatePoolWithTag(
-                            NonPagedPool,
-                            sizeof(RTL_REMOVE_LOCK_TRACKING_BLOCK),
-                            RemoveLock->AllocateTag);
+        trackingBlock =
+            ExAllocatePoolWithTag(NonPagedPool, sizeof(RTL_REMOVE_LOCK_TRACKING_BLOCK), RemoveLock->AllocateTag);
 
-        RtlZeroMemory (trackingBlock,
-                       sizeof (RTL_REMOVE_LOCK_TRACKING_BLOCK));
+        RtlZeroMemory(trackingBlock, sizeof(RTL_REMOVE_LOCK_TRACKING_BLOCK));
 
-        if (NULL == trackingBlock) {
+        if (NULL == trackingBlock)
+        {
 
-            ASSERTMSG ("insufficient resources", FALSE);
-
-        } else {
+            ASSERTMSG("insufficient resources", FALSE);
+        }
+        else
+        {
 
             KIRQL oldIrql;
 
@@ -177,7 +159,7 @@ Return Value:
 
             KeQueryTickCount(&trackingBlock->TimeLocked);
 
-            KeAcquireSpinLock (&RemoveLock->Spin, &oldIrql);
+            KeAcquireSpinLock(&RemoveLock->Spin, &oldIrql);
             trackingBlock->Link = RemoveLock->Blocks.Link;
             RemoveLock->Blocks.Link = trackingBlock;
             KeReleaseSpinLock(&RemoveLock->Spin, oldIrql);
@@ -185,11 +167,13 @@ Return Value:
 #endif
 
         status = STATUS_SUCCESS;
+    }
+    else
+    {
 
-    } else {
-
-        if (0 == InterlockedDecrement (&RemoveLock->IoCount)) {
-            KeSetEvent (&RemoveLock->RemoveEvent, 0, FALSE);
+        if (0 == InterlockedDecrement(&RemoveLock->IoCount))
+        {
+            KeSetEvent(&RemoveLock->RemoveEvent, 0, FALSE);
         }
         status = STATUS_DELETE_PENDING;
     }
@@ -197,14 +181,9 @@ Return Value:
     return status;
 }
 
-
+
 NTSYSAPI
-VOID
-NTAPI
-RtlReleaseRemoveLock(
-    IN PRTL_REMOVE_LOCK RemoveLock,
-    IN PVOID            Tag
-    )
+VOID NTAPI RtlReleaseRemoveLock(IN PRTL_REMOVE_LOCK RemoveLock, IN PVOID Tag)
 
 /*++
 
@@ -233,13 +212,13 @@ Return Value:
 --*/
 
 {
-    LONG            lockValue;
+    LONG lockValue;
 
 #if DBG
-    KIRQL           oldIrql;
-    LARGE_INTEGER   difference;
-    BOOLEAN         found;
-    LONGLONG        maxTime;
+    KIRQL oldIrql;
+    LARGE_INTEGER difference;
+    BOOLEAN found;
+    LONGLONG maxTime;
 
     PRTL_REMOVE_LOCK_TRACKING_BLOCK last;
     PRTL_REMOVE_LOCK_TRACKING_BLOCK current;
@@ -257,32 +236,32 @@ Return Value:
     // Note the first one is the sentinal
     //
 
-    while (NULL != current) {
+    while (NULL != current)
+    {
 
         KeQueryTickCount((&difference));
         difference.QuadPart -= current->TimeLocked.QuadPart;
-        maxTime = MinutesToTicks (RemoveLock->MaxLockedMinutes);
+        maxTime = MinutesToTicks(RemoveLock->MaxLockedMinutes);
 
-        if (maxTime && (maxTime < difference.QuadPart)) {
+        if (maxTime && (maxTime < difference.QuadPart))
+        {
 
             KdPrint(("RtlReleaseRemoveLock: Lock %#08lx (tag %#08lx) locked "
                      "for %I64d ticks - TOO LONG\n",
-                     RemoveLock,
-                     current->Tag,
-                     difference.QuadPart));
+                     RemoveLock, current->Tag, difference.QuadPart));
 
             KdPrint(("RtlReleaseRemoveLock: Lock acquired in file "
                      "%s on line %d\n",
-                     current->File,
-                     current->Line));
+                     current->File, current->Line));
             ASSERT(FALSE);
         }
 
-        if ((!found) && (current->Tag == Tag)) {
+        if ((!found) && (current->Tag == Tag))
+        {
             found = TRUE;
             last->Link = current->Link;
-            ExFreePool (current);
-                          current = last->Link;
+            ExFreePool(current);
+            current = last->Link;
             continue;
         }
 
@@ -292,11 +271,12 @@ Return Value:
 
     KeReleaseSpinLock(&RemoveLock->Spin, oldIrql);
 
-    if (!found) {
+    if (!found)
+    {
 
-        KdPrint (("RtlReleaseRemoveLock: Couldn't find Tag %#08lx "
-                  "in the lock tracking list\n",
-                  Tag));
+        KdPrint(("RtlReleaseRemoveLock: Couldn't find Tag %#08lx "
+                 "in the lock tracking list\n",
+                 Tag));
         ASSERT(FALSE);
     }
 #endif
@@ -305,30 +285,24 @@ Return Value:
 
     ASSERT(0 <= lockValue);
 
-    if (0 == lockValue) {
+    if (0 == lockValue)
+    {
 
-        ASSERT (RemoveLock->Removed);
+        ASSERT(RemoveLock->Removed);
 
         //
         // The device needs to be removed.  Signal the remove event
         // that it's safe to go ahead.
         //
 
-        KeSetEvent(&RemoveLock->RemoveEvent,
-                   IO_NO_INCREMENT,
-                   FALSE);
+        KeSetEvent(&RemoveLock->RemoveEvent, IO_NO_INCREMENT, FALSE);
     }
     return;
 }
 
-
+
 NTSYSAPI
-VOID
-NTAPI
-RtlReleaseRemoveLockAndWait (
-    IN PRTL_REMOVE_LOCK RemoveLock,
-    IN PVOID            Tag
-    )
+VOID NTAPI RtlReleaseRemoveLockAndWait(IN PRTL_REMOVE_LOCK RemoveLock, IN PVOID Tag)
 
 /*++
 
@@ -350,36 +324,29 @@ Return Value:
 
 --*/
 {
-    LONG    ioCount;
+    LONG ioCount;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
     RemoveLock->Removed = TRUE;
 
-    ioCount = InterlockedDecrement (&RemoveLock->IoCount);
-    ASSERT (0 < ioCount);
+    ioCount = InterlockedDecrement(&RemoveLock->IoCount);
+    ASSERT(0 < ioCount);
 
-    if (0 < InterlockedDecrement (&RemoveLock->IoCount)) {
-        KeWaitForSingleObject (&RemoveLock->RemoveEvent,
-                               Executive,
-                               KernelMode,
-                               FALSE,
-                               NULL);
+    if (0 < InterlockedDecrement(&RemoveLock->IoCount))
+    {
+        KeWaitForSingleObject(&RemoveLock->RemoveEvent, Executive, KernelMode, FALSE, NULL);
     }
 
 #if DBG
-    ASSERT (RemoveLock->Blocks.Link);
-    if (Tag != RemoveLock->Blocks.Link->Tag) {
-        KdPrint (("RtlRelaseRemoveLockAndWait last tag invalid %x %x\n",
-                  Tag,
-                  RemoveLock->Blocks.Link->Tag));
+    ASSERT(RemoveLock->Blocks.Link);
+    if (Tag != RemoveLock->Blocks.Link->Tag)
+    {
+        KdPrint(("RtlRelaseRemoveLockAndWait last tag invalid %x %x\n", Tag, RemoveLock->Blocks.Link->Tag));
 
-        ASSERT (Tag != RemoveLock->Blocks.Link->Tag);
+        ASSERT(Tag != RemoveLock->Blocks.Link->Tag);
     }
 
-    ExFreePool (RemoveLock->Blocks.Link);
+    ExFreePool(RemoveLock->Blocks.Link);
 #endif
-
 }
-
-

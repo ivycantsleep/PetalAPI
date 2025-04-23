@@ -49,11 +49,12 @@ Revision History:
 // Define balance set wait object types.
 //
 
-typedef enum _BALANCE_OBJECT {
+typedef enum _BALANCE_OBJECT
+{
     TimerExpiration,
     WorkingSetManagerEvent,
     MaximumObject
-    } BALANCE_OBJECT;
+} BALANCE_OBJECT;
 
 //
 // Define maximum number of thread stacks that can be out swapped in
@@ -73,7 +74,7 @@ typedef enum _BALANCE_OBJECT {
 // is priority boosted (approximately 4 seconds).
 //
 
-#define READY_WITHOUT_RUNNING  (4 * 75)
+#define READY_WITHOUT_RUNNING (4 * 75)
 
 //
 // Define kernel stack protect time. For small systems the protect time
@@ -99,37 +100,19 @@ ULONG KiStackProtectTime;
 // Define local procedure prototypes.
 //
 
-VOID
-KiAdjustIrpCredits (
-    VOID
-    );
+VOID KiAdjustIrpCredits(VOID);
 
-VOID
-KiInSwapKernelStacks (
-    IN PSINGLE_LIST_ENTRY SwapEntry
-    );
+VOID KiInSwapKernelStacks(IN PSINGLE_LIST_ENTRY SwapEntry);
 
-VOID
-KiInSwapProcesses (
-    IN PSINGLE_LIST_ENTRY SwapEntry
-    );
+VOID KiInSwapProcesses(IN PSINGLE_LIST_ENTRY SwapEntry);
 
-VOID
-KiOutSwapKernelStacks (
-    VOID
-    );
+VOID KiOutSwapKernelStacks(VOID);
 
-VOID
-KiOutSwapProcesses (
-    IN PSINGLE_LIST_ENTRY SwapEntry
-    );
+VOID KiOutSwapProcesses(IN PSINGLE_LIST_ENTRY SwapEntry);
 
-VOID
-KiScanReadyQueues (
-    VOID
-    );
+VOID KiScanReadyQueues(VOID);
 
-// 
+//
 // Define global IRP credit adjustment data.
 //
 
@@ -151,10 +134,7 @@ ULONG KiReadyQueueIndex = 1;
 
 LONG KiStackOutSwapRequest = FALSE;
 
-VOID
-KeBalanceSetManager (
-    IN PVOID Context
-    )
+VOID KeBalanceSetManager(IN PVOID Context)
 
 /*++
 
@@ -197,7 +177,7 @@ Return Value:
     //
 
     KeInitializeTimer(&PeriodTimer);
-    DueTime.QuadPart = - PERIODIC_INTERVAL;
+    DueTime.QuadPart = -PERIODIC_INTERVAL;
     KeSetTimer(&PeriodTimer, DueTime, NULL);
     StackScanPeriod = STACK_SCAN_PERIOD;
 
@@ -205,10 +185,12 @@ Return Value:
     // Compute the stack protect time based on the system size.
     //
 
-    if (MmQuerySystemSize() == MmSmallSystem) {
+    if (MmQuerySystemSize() == MmSmallSystem)
+    {
         KiStackProtectTime = SMALL_SYSTEM_STACK_PROTECT_TIME;
-
-    } else {
+    }
+    else
+    {
         KiStackProtectTime = LARGE_SYSTEM_STACK_PROTECT_TIME;
     }
 
@@ -223,7 +205,8 @@ Return Value:
     // Loop forever processing balance set manager events.
     //
 
-    do {
+    do
+    {
 
         //
         // Wait for a memory management memory low event, a swap event,
@@ -231,20 +214,15 @@ Return Value:
         // set manager runs at.
         //
 
-        Status = KeWaitForMultipleObjects(MaximumObject,
-                                          &WaitObjects[0],
-                                          WaitAny,
-                                          Executive,
-                                          KernelMode,
-                                          FALSE,
-                                          NULL,
+        Status = KeWaitForMultipleObjects(MaximumObject, &WaitObjects[0], WaitAny, Executive, KernelMode, FALSE, NULL,
                                           &WaitBlockArray[0]);
 
         //
         // Switch on the wait status.
         //
 
-        switch (Status) {
+        switch (Status)
+        {
 
             //
             // Periodic timer expiration.
@@ -295,11 +273,11 @@ Return Value:
             //
 
             StackScanPeriod -= 1;
-            if (StackScanPeriod == 0) {
+            if (StackScanPeriod == 0)
+            {
                 StackScanPeriod = STACK_SCAN_PERIOD;
-                if (InterlockedCompareExchange(&KiStackOutSwapRequest,
-                                               TRUE,
-                                               FALSE) == FALSE) {
+                if (InterlockedCompareExchange(&KiStackOutSwapRequest, TRUE, FALSE) == FALSE)
+                {
 
                     KiLockDispatcherDatabase(&OldIrql);
                     KiSetSwapEvent();
@@ -337,10 +315,7 @@ Return Value:
     return;
 }
 
-VOID
-KeSwapProcessOrStack (
-    IN PVOID Context
-    )
+VOID KeSwapProcessOrStack(IN PVOID Context)
 
 /*++
 
@@ -382,17 +357,14 @@ Return Value:
     // N.B. This is the ONLY thread that processes swap events.
     //
 
-    do {
+    do
+    {
 
         //
         // Wait for a swap event to occur.
         //
 
-        KeWaitForSingleObject(&KiSwapEvent,
-                              Executive,
-                              KernelMode,
-                              FALSE,
-                              NULL);
+        KeWaitForSingleObject(&KiSwapEvent, Executive, KernelMode, FALSE, NULL);
 
         //
         // The following events are processed one after the other. If
@@ -405,9 +377,8 @@ Return Value:
         // request pending.
         //
 
-        if (InterlockedCompareExchange(&KiStackOutSwapRequest,
-                                       FALSE,
-                                       TRUE) == TRUE) {
+        if (InterlockedCompareExchange(&KiStackOutSwapRequest, FALSE, TRUE) == TRUE)
+        {
 
             KiOutSwapKernelStacks();
         }
@@ -417,7 +388,8 @@ Return Value:
         //
 
         SwapEntry = InterlockedFlushSingleList(&KiProcessOutSwapListHead);
-        if (SwapEntry != NULL) {
+        if (SwapEntry != NULL)
+        {
             KiOutSwapProcesses(SwapEntry);
         }
 
@@ -426,7 +398,8 @@ Return Value:
         //
 
         SwapEntry = InterlockedFlushSingleList(&KiProcessInSwapListHead);
-        if (SwapEntry != NULL) {
+        if (SwapEntry != NULL)
+        {
             KiInSwapProcesses(SwapEntry);
         }
 
@@ -435,7 +408,8 @@ Return Value:
         //
 
         SwapEntry = InterlockedFlushSingleList(&KiStackInSwapListHead);
-        if (SwapEntry != NULL) {
+        if (SwapEntry != NULL)
+        {
             KiInSwapKernelStacks(SwapEntry);
         }
 
@@ -446,10 +420,7 @@ Return Value:
 
 #if !defined(NT_UP)
 
-VOID
-KiAdjustIrpCredits (
-    VOID
-    )
+VOID KiAdjustIrpCredits(VOID)
 
 /*++
 
@@ -488,7 +459,8 @@ Return Value:
 
     Last = KiLastProcessor;
     Next = Last + 1;
-    if (Next >= KeNumberProcessors) {
+    if (Next >= KeNumberProcessors)
+    {
         Next = 0;
     }
 
@@ -502,7 +474,8 @@ Return Value:
     LastCount = LastPrcb->LookasideIrpFloat;
     NextCount = NextPrcb->LookasideIrpFloat;
     Average = (LastCount + NextCount) >> 1;
-    if (Average > 0) {
+    if (Average > 0)
+    {
 
         //
         // If the last count is greater than the average, then adjust by
@@ -510,10 +483,12 @@ Return Value:
         // adjust by an amount equal to the next count minus the average.
         //
 
-        if (LastCount > Average ) {
+        if (LastCount > Average)
+        {
             Adjust = Average - LastCount;
-
-        } else {
+        }
+        else
+        {
             Adjust = NextCount - Average;
         }
 
@@ -531,10 +506,7 @@ Return Value:
 
 #endif
 
-VOID
-KiInSwapKernelStacks (
-    IN PSINGLE_LIST_ENTRY SwapEntry
-    )
+VOID KiInSwapKernelStacks(IN PSINGLE_LIST_ENTRY SwapEntry)
 
 /*++
 
@@ -563,7 +535,8 @@ Return Value:
     // SLIST, make its kernel stack resident, and ready it for execution.
     //
 
-    do {
+    do
+    {
         Thread = CONTAINING_RECORD(SwapEntry, KTHREAD, SwapListEntry);
         SwapEntry = SwapEntry->Next;
         MmInPageKernelStack(Thread);
@@ -576,10 +549,7 @@ Return Value:
     return;
 }
 
-VOID
-KiInSwapProcesses (
-    IN PSINGLE_LIST_ENTRY SwapEntry
-    )
+VOID KiInSwapProcesses(IN PSINGLE_LIST_ENTRY SwapEntry)
 
 /*++
 
@@ -609,7 +579,8 @@ Return Value:
     // the list, make the process resident, and process its ready list.
     //
 
-    do {
+    do
+    {
         Process = CONTAINING_RECORD(SwapEntry, KPROCESS, SwapListEntry);
         SwapEntry = SwapEntry->Next;
         Process->State = ProcessInSwap;
@@ -617,7 +588,8 @@ Return Value:
         KiLockDispatcherDatabase(&OldIrql);
         Process->State = ProcessInMemory;
         NextEntry = Process->ReadyListHead.Flink;
-        while (NextEntry != &Process->ReadyListHead) {
+        while (NextEntry != &Process->ReadyListHead)
+        {
             Thread = CONTAINING_RECORD(NextEntry, KTHREAD, WaitListEntry);
             RemoveEntryList(NextEntry);
             Thread->ProcessReadyQueue = FALSE;
@@ -631,10 +603,7 @@ Return Value:
     return;
 }
 
-VOID
-KiOutSwapKernelStacks (
-    VOID
-    )
+VOID KiOutSwapKernelStacks(VOID)
 
 /*++
 
@@ -679,8 +648,8 @@ Return Value:
     WaitLimit = KiQueryLowTickCount() - KiStackProtectTime;
     KiLockDispatcherDatabase(&OldIrql);
     NextEntry = KiWaitListHead.Flink;
-    while ((NextEntry != &KiWaitListHead) &&
-           (NumberOfThreads < MAXIMUM_THREAD_STACKS)) {
+    while ((NextEntry != &KiWaitListHead) && (NumberOfThreads < MAXIMUM_THREAD_STACKS))
+    {
 
         Thread = CONTAINING_RECORD(NextEntry, KTHREAD, WaitListEntry);
 
@@ -702,14 +671,17 @@ Return Value:
         //      the stack.
         //
 
-        if (WaitLimit < Thread->WaitTime) {
+        if (WaitLimit < Thread->WaitTime)
+        {
             break;
-
-        } else if (Thread->Priority >= (LOW_REALTIME_PRIORITY + 9)) {
+        }
+        else if (Thread->Priority >= (LOW_REALTIME_PRIORITY + 9))
+        {
             RemoveEntryList(&Thread->WaitListEntry);
             Thread->WaitListEntry.Flink = NULL;
-
-        } else if (KiIsThreadNumericStateSaved(Thread)) {
+        }
+        else if (KiIsThreadNumericStateSaved(Thread))
+        {
             Thread->KernelStackResident = FALSE;
             ThreadObjects[NumberOfThreads] = Thread;
             NumberOfThreads += 1;
@@ -717,10 +689,10 @@ Return Value:
             Thread->WaitListEntry.Flink = NULL;
             Process = Thread->ApcState.Process;
             Process->StackCount -= 1;
-            if (Process->StackCount == 0) {
+            if (Process->StackCount == 0)
+            {
                 Process->State = ProcessOutTransition;
-                InterlockedPushEntrySingleList(&KiProcessOutSwapListHead,
-                                               &Process->SwapListEntry);
+                InterlockedPushEntrySingleList(&KiProcessOutSwapListHead, &Process->SwapListEntry);
 
                 KiSwapEvent.Header.SignalState = 1;
             }
@@ -738,7 +710,8 @@ Return Value:
     // Out swap the kernel stack for the selected set of threads.
     //
 
-    while (NumberOfThreads > 0) {
+    while (NumberOfThreads > 0)
+    {
         NumberOfThreads -= 1;
         Thread = ThreadObjects[NumberOfThreads];
         MmOutPageKernelStack(Thread);
@@ -747,10 +720,7 @@ Return Value:
     return;
 }
 
-VOID
-KiOutSwapProcesses (
-    IN PSINGLE_LIST_ENTRY SwapEntry
-    )
+VOID KiOutSwapProcesses(IN PSINGLE_LIST_ENTRY SwapEntry)
 
 /*++
 
@@ -780,7 +750,8 @@ Return Value:
     // the list, make the process nonresident, and process its ready list.
     //
 
-    do {
+    do
+    {
         Process = CONTAINING_RECORD(SwapEntry, KPROCESS, SwapListEntry);
         SwapEntry = SwapEntry->Next;
 
@@ -792,9 +763,11 @@ Return Value:
 
         KiLockDispatcherDatabase(&OldIrql);
         NextEntry = Process->ReadyListHead.Flink;
-        if (NextEntry != &Process->ReadyListHead) {
+        if (NextEntry != &Process->ReadyListHead)
+        {
             Process->State = ProcessInMemory;
-            while (NextEntry != &Process->ReadyListHead) {
+            while (NextEntry != &Process->ReadyListHead)
+            {
                 Thread = CONTAINING_RECORD(NextEntry, KTHREAD, WaitListEntry);
                 RemoveEntryList(NextEntry);
                 Thread->ProcessReadyQueue = FALSE;
@@ -803,8 +776,9 @@ Return Value:
             }
 
             KiUnlockDispatcherDatabase(OldIrql);
-
-        } else {
+        }
+        else
+        {
             Process->State = ProcessOutSwap;
             KiUnlockDispatcherDatabase(OldIrql);
             MmOutSwapProcess(Process);
@@ -818,14 +792,15 @@ Return Value:
 
             KiLockDispatcherDatabase(&OldIrql);
             NextEntry = Process->ReadyListHead.Flink;
-            if (NextEntry != &Process->ReadyListHead) {
+            if (NextEntry != &Process->ReadyListHead)
+            {
                 Process->State = ProcessInTransition;
-                InterlockedPushEntrySingleList(&KiProcessInSwapListHead,
-                                               &Process->SwapListEntry);
+                InterlockedPushEntrySingleList(&KiProcessInSwapListHead, &Process->SwapListEntry);
 
                 KiSwapEvent.Header.SignalState = 1;
-
-            } else {
+            }
+            else
+            {
                 Process->State = ProcessOutOfMemory;
             }
 
@@ -837,10 +812,7 @@ Return Value:
     return;
 }
 
-VOID
-KiScanReadyQueues (
-    VOID
-    )
+VOID KiScanReadyQueues(VOID)
 
 /*++
 
@@ -885,8 +857,10 @@ Return Value:
     WaitLimit = KiQueryLowTickCount() - READY_WITHOUT_RUNNING;
     KiLockDispatcherDatabase(&OldIrql);
     Summary = KiReadySummary & ((1 << THREAD_BOOST_PRIORITY) - 2);
-    if (Summary != 0) {
-        do {
+    if (Summary != 0)
+    {
+        do
+        {
 
             //
             // If the current ready queue index is beyond the end of the range
@@ -894,7 +868,8 @@ Return Value:
             // priority.
             //
 
-            if (Index > THREAD_SCAN_PRIORITY) {
+            if (Index > THREAD_SCAN_PRIORITY)
+            {
                 Index = 1;
                 Mask = 2;
             }
@@ -904,14 +879,16 @@ Return Value:
             // level, then attempt to boost the thread priority.
             //
 
-            if ((Summary & Mask) != 0) {
+            if ((Summary & Mask) != 0)
+            {
                 Summary ^= Mask;
                 ListHead = &KiDispatcherReadyListHead[Index];
                 Entry = ListHead->Flink;
 
                 ASSERT(Entry != ListHead);
 
-                do {
+                do
+                {
 
                     //
                     // If the thread has been waiting for an extended period,
@@ -919,7 +896,8 @@ Return Value:
                     //
 
                     Thread = CONTAINING_RECORD(Entry, KTHREAD, WaitListEntry);
-                    if (WaitLimit >= Thread->WaitTime) {
+                    if (WaitLimit >= Thread->WaitTime)
+                    {
 
                         //
                         // Remove the thread from the respective ready queue.
@@ -927,7 +905,8 @@ Return Value:
 
                         Entry = Entry->Blink;
                         RemoveEntryList(Entry->Flink);
-                        if (IsListEmpty(ListHead) != FALSE) {
+                        if (IsListEmpty(ListHead) != FALSE)
+                        {
                             KiReadySummary ^= Mask;
                         }
 
@@ -937,8 +916,7 @@ Return Value:
                         // thread quantum, and ready the thread for execution.
                         //
 
-                        Thread->PriorityDecrement +=
-                                        THREAD_BOOST_PRIORITY - Thread->Priority;
+                        Thread->PriorityDecrement += THREAD_BOOST_PRIORITY - Thread->Priority;
 
                         Thread->DecrementCount = ROUND_TRIP_DECREMENT_COUNT;
                         Thread->Priority = THREAD_BOOST_PRIORITY;
@@ -964,10 +942,12 @@ Return Value:
     //
 
     KiUnlockDispatcherDatabase(OldIrql);
-    if ((Count != 0) && (Number != 0)) {
+    if ((Count != 0) && (Number != 0))
+    {
         KiReadyQueueIndex = 1;
-
-    } else {
+    }
+    else
+    {
         KiReadyQueueIndex = Index;
     }
 

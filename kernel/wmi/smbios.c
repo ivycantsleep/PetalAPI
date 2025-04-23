@@ -29,69 +29,28 @@ Revision History:
 #include "arc.h"
 #include "smbios.h"
 
-void WmipGetSMBiosFromLoaderBlock(
-    PVOID LoaderBlockPtr
-    );
+void WmipGetSMBiosFromLoaderBlock(PVOID LoaderBlockPtr);
 
-NTSTATUS WmipSMBiosDataRegQueryRoutine(
-    IN PWSTR ValueName,
-    IN ULONG ValueType,
-    IN PVOID ValueData,
-    IN ULONG ValueLength,
-    IN PVOID Context,
-    IN PVOID EntryContext
-    );
+NTSTATUS WmipSMBiosDataRegQueryRoutine(IN PWSTR ValueName, IN ULONG ValueType, IN PVOID ValueData, IN ULONG ValueLength,
+                                       IN PVOID Context, IN PVOID EntryContext);
 
-BOOLEAN WmipIsSMBiosKey(
-    HANDLE ParentKeyHandle,
-    PWCHAR KeyName,
-    PUCHAR *SMBiosTableVirtualAddress,
-    PULONG SMBiosTableLength
-    );
+BOOLEAN WmipIsSMBiosKey(HANDLE ParentKeyHandle, PWCHAR KeyName, PUCHAR *SMBiosTableVirtualAddress,
+                        PULONG SMBiosTableLength);
 
-NTSTATUS WmipSMBiosIdentifierRegQueryRoutine(
-    IN PWSTR ValueName,
-    IN ULONG ValueType,
-    IN PVOID ValueData,
-    IN ULONG ValueLength,
-    IN PVOID Context,
-    IN PVOID EntryContext
-    );
+NTSTATUS WmipSMBiosIdentifierRegQueryRoutine(IN PWSTR ValueName, IN ULONG ValueType, IN PVOID ValueData,
+                                             IN ULONG ValueLength, IN PVOID Context, IN PVOID EntryContext);
 
-BOOLEAN WmipFindSMBiosEPSHeader(
-    PUCHAR SMBiosVirtualAddress,
-    ULONG BiosSize,
-    PSMBIOS_EPS_HEADER EPSHeader
-    );
+BOOLEAN WmipFindSMBiosEPSHeader(PUCHAR SMBiosVirtualAddress, ULONG BiosSize, PSMBIOS_EPS_HEADER EPSHeader);
 
-NTSTATUS WmipFindSMBiosStructure(
-    IN UCHAR Type,
-    OUT PVOID *StructPtr,
-    OUT PVOID *MapPtr,
-    OUT PULONG MapSize
-    );
+NTSTATUS WmipFindSMBiosStructure(IN UCHAR Type, OUT PVOID *StructPtr, OUT PVOID *MapPtr, OUT PULONG MapSize);
 
-NTSTATUS WmipFindSysIdTable(
-    PPHYSICAL_ADDRESS SysidTablePhysicalAddress,
-    PUCHAR SysIdBiosRevision,
-    PULONG NumberEntries
-    );
+NTSTATUS WmipFindSysIdTable(PPHYSICAL_ADDRESS SysidTablePhysicalAddress, PUCHAR SysIdBiosRevision,
+                            PULONG NumberEntries);
 
-NTSTATUS WmipParseSysIdTable(
-    PHYSICAL_ADDRESS PhysicalAddress,
-    ULONG NumberEntries,
-    PSYSID_UUID SysIdUuid,
-    ULONG *SysIdUuidCount,
-    PSYSID_1394 SysId1394,
-    ULONG *SysId1394Count
-    );
+NTSTATUS WmipParseSysIdTable(PHYSICAL_ADDRESS PhysicalAddress, ULONG NumberEntries, PSYSID_UUID SysIdUuid,
+                             ULONG *SysIdUuidCount, PSYSID_1394 SysId1394, ULONG *SysId1394Count);
 
-NTSTATUS WmipGetSysIds(
-    PSYSID_UUID *SysIdUuid,
-    ULONG *SysIdUuidCount,
-    PSYSID_1394 *SysId1394,
-    ULONG *SysId1394Count
-    );
+NTSTATUS WmipGetSysIds(PSYSID_UUID *SysIdUuid, ULONG *SysIdUuidCount, PSYSID_1394 *SysId1394, ULONG *SysId1394Count);
 
 #ifdef ALLOC_DATA_PRAGMA
 #pragma data_seg("PAGEDATA")
@@ -104,10 +63,10 @@ NTSTATUS WmipGetSysIds(
 // contains the SMBIOS data. In both cases WmipSMBiosTableLength holds the
 // actual length of the SMBIOS table. If both the physical and virtual
 // addresses are 0 then SMBIOS data is not available.
-PHYSICAL_ADDRESS WmipSMBiosTablePhysicalAddress = {0};
+PHYSICAL_ADDRESS WmipSMBiosTablePhysicalAddress = { 0 };
 PUCHAR WmipSMBiosTableVirtualAddress = NULL;
 ULONG WmipSMBiosTableLength = 0;
-SMBIOSVERSIONINFO WmipSMBiosVersionInfo = {0};
+SMBIOSVERSIONINFO WmipSMBiosVersionInfo = { 0 };
 BOOLEAN WmipSMBiosChecked = FALSE;
 
 //
@@ -124,31 +83,27 @@ PSYSID_1394 WmipSysId1394;
 ULONG WmipSysId1394Count;
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,WmipGetSMBiosFromLoaderBlock)
+#pragma alloc_text(INIT, WmipGetSMBiosFromLoaderBlock)
 
-#pragma alloc_text(PAGE,WmipFindSMBiosEPSHeader)
-#pragma alloc_text(PAGE,WmipFindSMBiosTable)
-#pragma alloc_text(PAGE,WmipFindSMBiosStructure)
-#pragma alloc_text(PAGE,WmipFindSysIdTable)
-#pragma alloc_text(PAGE,WmipParseSysIdTable)
-#pragma alloc_text(PAGE,WmipGetSysIds)
-#pragma alloc_text(PAGE,WmipGetSMBiosTableData)
-#pragma alloc_text(PAGE,WmipGetSMBiosEventlog)
-#pragma alloc_text(PAGE,WmipDockUndockEventCallback)
+#pragma alloc_text(PAGE, WmipFindSMBiosEPSHeader)
+#pragma alloc_text(PAGE, WmipFindSMBiosTable)
+#pragma alloc_text(PAGE, WmipFindSMBiosStructure)
+#pragma alloc_text(PAGE, WmipFindSysIdTable)
+#pragma alloc_text(PAGE, WmipParseSysIdTable)
+#pragma alloc_text(PAGE, WmipGetSysIds)
+#pragma alloc_text(PAGE, WmipGetSMBiosTableData)
+#pragma alloc_text(PAGE, WmipGetSMBiosEventlog)
+#pragma alloc_text(PAGE, WmipDockUndockEventCallback)
 
-#pragma alloc_text(PAGE,WmipSMBiosDataRegQueryRoutine)
-#pragma alloc_text(PAGE,WmipSMBiosIdentifierRegQueryRoutine)
-#pragma alloc_text(PAGE,WmipIsSMBiosKey)
+#pragma alloc_text(PAGE, WmipSMBiosDataRegQueryRoutine)
+#pragma alloc_text(PAGE, WmipSMBiosIdentifierRegQueryRoutine)
+#pragma alloc_text(PAGE, WmipIsSMBiosKey)
 
 
 #endif
 
 
-BOOLEAN WmipFindSMBiosEPSHeader(
-    PUCHAR SMBiosVirtualAddress,
-    ULONG BiosSize,
-    PSMBIOS_EPS_HEADER EPSHeader
-    )
+BOOLEAN WmipFindSMBiosEPSHeader(PUCHAR SMBiosVirtualAddress, ULONG BiosSize, PSMBIOS_EPS_HEADER EPSHeader)
 /*++
 
 Routine Description:
@@ -179,78 +134,78 @@ Return Value:
     PAGED_CODE();
 
     RtlZeroMemory(EPSHeader, sizeof(SMBIOS_EPS_HEADER));
-    
+
     //
     // Scan the bios for the two anchor strings that that signal the SMBIOS
     // table.
-    SearchEnd = SMBiosVirtualAddress + SMBIOS_EPS_SEARCH_SIZE -
-                                             2 * SMBIOS_EPS_SEARCH_INCREMENT;
+    SearchEnd = SMBiosVirtualAddress + SMBIOS_EPS_SEARCH_SIZE - 2 * SMBIOS_EPS_SEARCH_INCREMENT;
 
     while (SMBiosVirtualAddress < SearchEnd)
     {
-       SMBiosEPSHeader = (PSMBIOS_EPS_HEADER)SMBiosVirtualAddress;
-       DMIBiosEPSHeader = (PDMIBIOS_EPS_HEADER)SMBiosVirtualAddress;
+        SMBiosEPSHeader = (PSMBIOS_EPS_HEADER)SMBiosVirtualAddress;
+        DMIBiosEPSHeader = (PDMIBIOS_EPS_HEADER)SMBiosVirtualAddress;
 
-       //
-       // First check for _DMI_ anchor string
-       if ((*((PULONG)DMIBiosEPSHeader->Signature2) == DMI_EPS_SIGNATURE) &&
-           (DMIBiosEPSHeader->Signature2[4] == '_'))
-       {
-           WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: Found possible DMIBIOS EPS Header at %x\n", SMBiosEPSHeader));
-           CheckLength = sizeof(DMIBIOS_EPS_HEADER);
-       }
+        //
+        // First check for _DMI_ anchor string
+        if ((*((PULONG)DMIBiosEPSHeader->Signature2) == DMI_EPS_SIGNATURE) && (DMIBiosEPSHeader->Signature2[4] == '_'))
+        {
+            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: Found possible DMIBIOS EPS Header at %x\n",
+                              SMBiosEPSHeader));
+            CheckLength = sizeof(DMIBIOS_EPS_HEADER);
+        }
 
-       //
-       // Then check for full _SM_ anchor string
-       else if ((*((PULONG)SMBiosEPSHeader->Signature) == SMBIOS_EPS_SIGNATURE) &&
-                (SMBiosEPSHeader->Length >= sizeof(SMBIOS_EPS_HEADER)) &&
-                (*((PULONG)SMBiosEPSHeader->Signature2) == DMI_EPS_SIGNATURE) &&
-                (SMBiosEPSHeader->Signature2[4] == '_' ))
-       {
-           WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: Found possible SMBIOS EPS Header at %p\n", SMBiosEPSHeader));
-           CheckLength = SMBiosEPSHeader->Length;
-       } else {
-           //
-           // Did not find anchor string, go search next paragraph
-           SMBiosVirtualAddress += SMBIOS_EPS_SEARCH_INCREMENT;
-           continue;
-       }
+        //
+        // Then check for full _SM_ anchor string
+        else if ((*((PULONG)SMBiosEPSHeader->Signature) == SMBIOS_EPS_SIGNATURE) &&
+                 (SMBiosEPSHeader->Length >= sizeof(SMBIOS_EPS_HEADER)) &&
+                 (*((PULONG)SMBiosEPSHeader->Signature2) == DMI_EPS_SIGNATURE) &&
+                 (SMBiosEPSHeader->Signature2[4] == '_'))
+        {
+            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: Found possible SMBIOS EPS Header at %p\n",
+                              SMBiosEPSHeader));
+            CheckLength = SMBiosEPSHeader->Length;
+        }
+        else
+        {
+            //
+            // Did not find anchor string, go search next paragraph
+            SMBiosVirtualAddress += SMBIOS_EPS_SEARCH_INCREMENT;
+            continue;
+        }
 
-       //
-       // Verify anchor string with checksum
-       CheckSum = 0;
-       for (i = 0; i < CheckLength ; i++)
-       {
-           CheckSum += SMBiosVirtualAddress[i];
-       }
+        //
+        // Verify anchor string with checksum
+        CheckSum = 0;
+        for (i = 0; i < CheckLength; i++)
+        {
+            CheckSum += SMBiosVirtualAddress[i];
+        }
 
-       if (CheckSum == 0)
-       {
-           WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: Found SMBIOS EPS Header at %p\n", SMBiosEPSHeader));
-           if (CheckLength == sizeof(DMIBIOS_EPS_HEADER))
-           {
-               //
-               // We only had got a DMI header so copy that
-               //
-               RtlCopyMemory(&EPSHeader->Signature2[0],
-                             DMIBiosEPSHeader,
-                             sizeof(DMIBIOS_EPS_HEADER));
-           } else {
-               //
-               // We got the full SMBIOS header so copy that
-               //
-               RtlCopyMemory(EPSHeader,
-                             SMBiosEPSHeader,
-                             sizeof(SMBIOS_EPS_HEADER));
-           }
-           return(TRUE);
-       }
-       SMBiosVirtualAddress += SMBIOS_EPS_SEARCH_INCREMENT;
-
+        if (CheckSum == 0)
+        {
+            WmipDebugPrintEx(
+                (DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: Found SMBIOS EPS Header at %p\n", SMBiosEPSHeader));
+            if (CheckLength == sizeof(DMIBIOS_EPS_HEADER))
+            {
+                //
+                // We only had got a DMI header so copy that
+                //
+                RtlCopyMemory(&EPSHeader->Signature2[0], DMIBiosEPSHeader, sizeof(DMIBIOS_EPS_HEADER));
+            }
+            else
+            {
+                //
+                // We got the full SMBIOS header so copy that
+                //
+                RtlCopyMemory(EPSHeader, SMBiosEPSHeader, sizeof(SMBIOS_EPS_HEADER));
+            }
+            return (TRUE);
+        }
+        SMBiosVirtualAddress += SMBIOS_EPS_SEARCH_INCREMENT;
     }
 
-    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: SMBIOS EPS Header not found\n"));
-    return(FALSE);
+    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: SMBIOS EPS Header not found\n"));
+    return (FALSE);
 }
 
 #ifndef _IA64_
@@ -264,14 +219,8 @@ Return Value:
 // For x86 and ia64 the key is Someplace like
 // HKLM\Hardware\System\MultiFunctionAdapter\<some number>
 //
-NTSTATUS WmipSMBiosIdentifierRegQueryRoutine(
-    IN PWSTR ValueName,
-    IN ULONG ValueType,
-    IN PVOID ValueData,
-    IN ULONG ValueLength,
-    IN PVOID Context,
-    IN PVOID EntryContext
-    )
+NTSTATUS WmipSMBiosIdentifierRegQueryRoutine(IN PWSTR ValueName, IN ULONG ValueType, IN PVOID ValueData,
+                                             IN ULONG ValueLength, IN PVOID Context, IN PVOID EntryContext)
 /*++
 
 Routine Description:
@@ -308,23 +257,15 @@ Return Value:
 
     PAGED_CODE();
 
-    Status =  ((ValueType == REG_SZ) &&
-               (ValueData != NULL) &&
-               (wcscmp(ValueData, SMBIOSIDENTIFIERVALUEDATA) == 0)) ?
-                       STATUS_SUCCESS :
-                       STATUS_UNSUCCESSFUL;
+    Status = ((ValueType == REG_SZ) && (ValueData != NULL) && (wcscmp(ValueData, SMBIOSIDENTIFIERVALUEDATA) == 0))
+                 ? STATUS_SUCCESS
+                 : STATUS_UNSUCCESSFUL;
 
-    return(Status);
+    return (Status);
 }
 
-NTSTATUS WmipSMBiosDataRegQueryRoutine(
-    IN PWSTR ValueName,
-    IN ULONG ValueType,
-    IN PVOID ValueData,
-    IN ULONG ValueLength,
-    IN PVOID Context,
-    IN PVOID EntryContext
-    )
+NTSTATUS WmipSMBiosDataRegQueryRoutine(IN PWSTR ValueName, IN ULONG ValueType, IN PVOID ValueData, IN ULONG ValueLength,
+                                       IN PVOID Context, IN PVOID EntryContext)
 /*++
 
 Routine Description:
@@ -368,8 +309,7 @@ Return Value:
 
     WmipAssert(EntryContext != NULL);
 
-    if ((ValueType == REG_FULL_RESOURCE_DESCRIPTOR) &&
-        (ValueData != NULL))
+    if ((ValueType == REG_FULL_RESOURCE_DESCRIPTOR) && (ValueData != NULL))
     {
         //
         // On x86 get the actual SMBIOS data out of the registry and
@@ -387,68 +327,58 @@ Return Value:
             // by NTDETECT.
 
             PartialDescriptor = &PartialResourceList->PartialDescriptors[0];
-            Buffer = (PUCHAR)PartialDescriptor +
-                             sizeof(CM_PARTIAL_RESOURCE_DESCRIPTOR) +
-                             PartialDescriptor->u.DeviceSpecificData.DataSize;
+            Buffer = (PUCHAR)PartialDescriptor + sizeof(CM_PARTIAL_RESOURCE_DESCRIPTOR) +
+                     PartialDescriptor->u.DeviceSpecificData.DataSize;
             PartialDescriptor = (PCM_PARTIAL_RESOURCE_DESCRIPTOR)Buffer;
             BufferSize = PartialDescriptor->u.DeviceSpecificData.DataSize;
             RegQueryBufferXfer->BufferSize = BufferSize;
             Status = STATUS_SUCCESS;
             if (BufferSize > 0)
             {
-                RegQueryBufferXfer->Buffer = (PUCHAR)ExAllocatePoolWithTag(
-                                                                  PagedPool,
-                                                                  BufferSize,
-                                                                  WMIPOOLTAG);
+                RegQueryBufferXfer->Buffer = (PUCHAR)ExAllocatePoolWithTag(PagedPool, BufferSize, WMIPOOLTAG);
                 if (RegQueryBufferXfer->Buffer != NULL)
                 {
                     Buffer += sizeof(CM_PARTIAL_RESOURCE_DESCRIPTOR);
-                    RtlCopyMemory(RegQueryBufferXfer->Buffer,
-                                  Buffer,
-                                  BufferSize);
-                } else {
+                    RtlCopyMemory(RegQueryBufferXfer->Buffer, Buffer, BufferSize);
+                }
+                else
+                {
                     Status = STATUS_INSUFFICIENT_RESOURCES;
                 }
             }
-        } else {
-            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: Old NTDETECT.COM - No SMBIOS partial resource descriptor\n"));
+        }
+        else
+        {
+            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
+                              "WMI: Old NTDETECT.COM - No SMBIOS partial resource descriptor\n"));
             Status = STATUS_SUCCESS;
             RegQueryBufferXfer->BufferSize = 0;
         }
-    } else {
+    }
+    else
+    {
         Status = STATUS_UNSUCCESSFUL;
     }
-    return(Status);
+    return (Status);
 }
 
-BOOLEAN WmipIsSMBiosKey(
-    HANDLE ParentKeyHandle,
-    PWCHAR KeyName,
-    PUCHAR *SMBiosTableVirtualAddress,
-    PULONG SMBiosTableLength
-    )
+BOOLEAN WmipIsSMBiosKey(HANDLE ParentKeyHandle, PWCHAR KeyName, PUCHAR *SMBiosTableVirtualAddress,
+                        PULONG SMBiosTableLength)
 {
     NTSTATUS Status;
     OBJECT_ATTRIBUTES ObjectAttributes;
     UNICODE_STRING BaseKeyName;
     HANDLE KeyHandle;
     RTL_QUERY_REGISTRY_TABLE QueryTable[3];
-    REGQUERYBUFFERXFER RegQueryBufferXfer = {0, NULL};
+    REGQUERYBUFFERXFER RegQueryBufferXfer = { 0, NULL };
 
     PAGED_CODE();
 
-    RtlInitUnicodeString(&BaseKeyName,
-                         KeyName);
+    RtlInitUnicodeString(&BaseKeyName, KeyName);
 
-    InitializeObjectAttributes(&ObjectAttributes,
-                               &BaseKeyName,
-                               OBJ_CASE_INSENSITIVE,
-                               ParentKeyHandle,
-                               NULL);
+    InitializeObjectAttributes(&ObjectAttributes, &BaseKeyName, OBJ_CASE_INSENSITIVE, ParentKeyHandle, NULL);
 
-    Status = ZwOpenKey(&KeyHandle,
-                       KEY_READ,
-                       &ObjectAttributes);
+    Status = ZwOpenKey(&KeyHandle, KEY_READ, &ObjectAttributes);
     if (NT_SUCCESS(Status))
     {
         RtlZeroMemory(QueryTable, sizeof(QueryTable));
@@ -463,11 +393,8 @@ BOOLEAN WmipIsSMBiosKey(
         QueryTable[1].DefaultType = REG_FULL_RESOURCE_DESCRIPTOR;
         QueryTable[1].QueryRoutine = WmipSMBiosDataRegQueryRoutine;
 
-        Status = RtlQueryRegistryValues(RTL_REGISTRY_HANDLE | RTL_REGISTRY_ABSOLUTE,
-                                        (PWCHAR)KeyHandle,
-                                        QueryTable,
-                                        NULL,
-                                        NULL);
+        Status = RtlQueryRegistryValues(RTL_REGISTRY_HANDLE | RTL_REGISTRY_ABSOLUTE, (PWCHAR)KeyHandle, QueryTable,
+                                        NULL, NULL);
         if (NT_SUCCESS(Status))
         {
             *SMBiosTableVirtualAddress = RegQueryBufferXfer.Buffer;
@@ -475,22 +402,20 @@ BOOLEAN WmipIsSMBiosKey(
         }
 
         ZwClose(KeyHandle);
-    } else {
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: H/D/S/MultifunctionAdapter subkey open error %x\n",
-                 Status));
+    }
+    else
+    {
+        WmipDebugPrintEx(
+            (DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: H/D/S/MultifunctionAdapter subkey open error %x\n", Status));
     }
 
-    return(NT_SUCCESS(Status));
+    return (NT_SUCCESS(Status));
 }
 
 #endif
 
-BOOLEAN WmipFindSMBiosTable(
-    PPHYSICAL_ADDRESS SMBiosTablePhysicalAddress,
-    PUCHAR *SMBiosTableVirtualAddress,
-    PULONG SMBiosTableLength,
-    PSMBIOSVERSIONINFO SMBiosVersionInfo
-    )
+BOOLEAN WmipFindSMBiosTable(PPHYSICAL_ADDRESS SMBiosTablePhysicalAddress, PUCHAR *SMBiosTableVirtualAddress,
+                            PULONG SMBiosTableLength, PSMBIOSVERSIONINFO SMBiosVersionInfo)
 /*++
 
 Routine Description:
@@ -526,8 +451,7 @@ Return Value:
     HANDLE KeyHandle;
     ULONG KeyInformationLength;
     ULONG KeyIndex;
-    UCHAR KeyInformationBuffer[sizeof(KEY_BASIC_INFORMATION) +
-                               (sizeof(WCHAR) * MAXSMBIOSKEYNAMESIZE)];
+    UCHAR KeyInformationBuffer[sizeof(KEY_BASIC_INFORMATION) + (sizeof(WCHAR) * MAXSMBIOSKEYNAMESIZE)];
     PKEY_BASIC_INFORMATION KeyInformation;
     OBJECT_ATTRIBUTES ObjectAttributes;
     SMBIOS_EPS_HEADER SMBiosEPSHeader;
@@ -540,25 +464,18 @@ Return Value:
     *SMBiosTableVirtualAddress = NULL;
     *SMBiosTableLength = 0;
 
-#ifndef _IA64_  
+#ifndef _IA64_
     //
     // First check registry to see if we captured SMBIOS 2.0 data in
     // NTDETECT. Search the keys under
     // MultiFunctionAdapter for the one
     // with the "PnP Bios" (x86)
     //
-    RtlInitUnicodeString(&BaseKeyName,
-                         SMBIOSPARENTKEYNAME);
+    RtlInitUnicodeString(&BaseKeyName, SMBIOSPARENTKEYNAME);
 
-    InitializeObjectAttributes(&ObjectAttributes,
-                               &BaseKeyName,
-                               OBJ_CASE_INSENSITIVE,
-                               NULL,
-                               NULL);
+    InitializeObjectAttributes(&ObjectAttributes, &BaseKeyName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    Status = ZwOpenKey(&KeyHandle,
-                       KEY_READ,
-                       &ObjectAttributes);
+    Status = ZwOpenKey(&KeyHandle, KEY_READ, &ObjectAttributes);
 
     if (NT_SUCCESS(Status))
     {
@@ -568,19 +485,12 @@ Return Value:
         while (NT_SUCCESS(Status))
         {
 
-            Status = ZwEnumerateKey(KeyHandle,
-                                    KeyIndex++,
-                                    KeyBasicInformation,
-                                    KeyInformation,
-                                    sizeof(KeyInformationBuffer) - sizeof(WCHAR),
-                                    &KeyInformationLength);
+            Status = ZwEnumerateKey(KeyHandle, KeyIndex++, KeyBasicInformation, KeyInformation,
+                                    sizeof(KeyInformationBuffer) - sizeof(WCHAR), &KeyInformationLength);
             if (NT_SUCCESS(Status))
             {
                 KeyInformation->Name[KeyInformation->NameLength / sizeof(WCHAR)] = UNICODE_NULL;
-                if (WmipIsSMBiosKey(KeyHandle,
-                                    KeyInformation->Name,
-                                    SMBiosTableVirtualAddress,
-                                    SMBiosTableLength))
+                if (WmipIsSMBiosKey(KeyHandle, KeyInformation->Name, SMBiosTableVirtualAddress, SMBiosTableLength))
                 {
                     if (*SMBiosTableLength != 0)
                     {
@@ -589,38 +499,41 @@ Return Value:
                     }
                     break;
                 }
-            } else {
-                WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: Status %x enum H\\D\\S\\MultiFunctionAdapter key, index %d\n",
-                 Status, KeyIndex-1));
+            }
+            else
+            {
+                WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
+                                  "WMI: Status %x enum H\\D\\S\\MultiFunctionAdapter key, index %d\n", Status,
+                                  KeyIndex - 1));
             }
         }
         ZwClose(KeyHandle);
-    } else {
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: Status %x opening H\\D\\S\\MultiFunctionAdapter key\n",
-                 Status));
+    }
+    else
+    {
+        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
+                          "WMI: Status %x opening H\\D\\S\\MultiFunctionAdapter key\n", Status));
     }
 #endif
-    
+
     if (SearchForHeader)
     {
         //
         // If not in registry then check for EPS in the BIOS
         BiosPhysicalAddress.QuadPart = SMBIOS_EPS_SEARCH_START;
-        BiosVirtualAddress = MmMapIoSpace(BiosPhysicalAddress,
-                                          SMBIOS_EPS_SEARCH_SIZE,
-                                          MmCached);
+        BiosVirtualAddress = MmMapIoSpace(BiosPhysicalAddress, SMBIOS_EPS_SEARCH_SIZE, MmCached);
 
         if (BiosVirtualAddress != NULL)
         {
-            HaveEPSHeader = WmipFindSMBiosEPSHeader(BiosVirtualAddress,
-                                                    SMBIOS_EPS_SEARCH_SIZE,
-                                                    &SMBiosEPSHeader);
+            HaveEPSHeader = WmipFindSMBiosEPSHeader(BiosVirtualAddress, SMBIOS_EPS_SEARCH_SIZE, &SMBiosEPSHeader);
             MmUnmapIoSpace(BiosVirtualAddress, SMBIOS_EPS_SEARCH_SIZE);
         }
-    } else {
-         WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: SMBIOS data recovered from loader\n"));
     }
-        
+    else
+    {
+        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: SMBIOS data recovered from loader\n"));
+    }
+
     if (HaveEPSHeader)
     {
         //
@@ -640,21 +553,16 @@ Return Value:
         SMBiosVersionInfo->SMBiosMinorVersion = SMBiosEPSHeader.MinorVersion;
 
         SMBiosVersionInfo->DMIBiosRevision = DMIBiosEPSHeader->Revision;
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: SMBIOS 2.1 data at (%x%x) size %x \n",
-                      SMBiosTablePhysicalAddress->HighPart,
-                      SMBiosTablePhysicalAddress->LowPart,
-                      *SMBiosTableLength));
+        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: SMBIOS 2.1 data at (%x%x) size %x \n",
+                          SMBiosTablePhysicalAddress->HighPart, SMBiosTablePhysicalAddress->LowPart,
+                          *SMBiosTableLength));
     }
 
 
-    return(*SMBiosTableLength > 0);
+    return (*SMBiosTableLength > 0);
 }
 
-NTSTATUS WmipGetSMBiosTableData(
-    OUT PUCHAR Buffer,
-    IN OUT PULONG BufferSize,
-    OUT PSMBIOSVERSIONINFO SMBiosVersionInfo
-    )
+NTSTATUS WmipGetSMBiosTableData(OUT PUCHAR Buffer, IN OUT PULONG BufferSize, OUT PSMBIOSVERSIONINFO SMBiosVersionInfo)
 /*++
 
 Routine Description:
@@ -684,13 +592,11 @@ Return Value:
     PAGED_CODE();
 
     WmipEnterSMCritSection();
-    if (! WmipSMBiosChecked)
+    if (!WmipSMBiosChecked)
     {
         //
         // See if there is any SMBIOS information and if so register
-        WmipFindSMBiosTable(&WmipSMBiosTablePhysicalAddress,
-                            &WmipSMBiosTableVirtualAddress,
-                            &WmipSMBiosTableLength,
+        WmipFindSMBiosTable(&WmipSMBiosTablePhysicalAddress, &WmipSMBiosTableVirtualAddress, &WmipSMBiosTableLength,
                             &WmipSMBiosVersionInfo);
         WmipSMBiosChecked = TRUE;
     }
@@ -707,100 +613,96 @@ Return Value:
         {
             //
             // 2.1 table format - map in table and copy
-            SMBiosDataVirtualAddress = MmMapIoSpace(WmipSMBiosTablePhysicalAddress,
-                                                    WmipSMBiosTableLength,
-                                                    MmCached);
+            SMBiosDataVirtualAddress = MmMapIoSpace(WmipSMBiosTablePhysicalAddress, WmipSMBiosTableLength, MmCached);
             if (SMBiosDataVirtualAddress != NULL)
             {
-                RtlCopyMemory(Buffer,
-                          SMBiosDataVirtualAddress,
-                          WmipSMBiosTableLength);
+                RtlCopyMemory(Buffer, SMBiosDataVirtualAddress, WmipSMBiosTableLength);
 
-                MmUnmapIoSpace(SMBiosDataVirtualAddress,
-                               WmipSMBiosTableLength);
+                MmUnmapIoSpace(SMBiosDataVirtualAddress, WmipSMBiosTableLength);
                 status = STATUS_SUCCESS;
-            } else {
+            }
+            else
+            {
                 status = STATUS_INSUFFICIENT_RESOURCES;
             }
-        } else if (WmipSMBiosTableVirtualAddress != NULL) {
-            RtlCopyMemory(Buffer,
-                          WmipSMBiosTableVirtualAddress,
-                          WmipSMBiosTableLength);
+        }
+        else if (WmipSMBiosTableVirtualAddress != NULL)
+        {
+            RtlCopyMemory(Buffer, WmipSMBiosTableVirtualAddress, WmipSMBiosTableLength);
             status = STATUS_SUCCESS;
-        } else {
+        }
+        else
+        {
             status = STATUS_INVALID_DEVICE_REQUEST;
         }
-    } else {
+    }
+    else
+    {
         status = STATUS_BUFFER_TOO_SMALL;
     }
 
     *BufferSize = WmipSMBiosTableLength;
 
-    return(status);
+    return (status);
 }
 
 
-
-#if defined(_IA64_)   // EFI actually
-void WmipGetSMBiosFromLoaderBlock(
-    PVOID LoaderBlockPtr
-    )
+#if defined(_IA64_) // EFI actually
+void WmipGetSMBiosFromLoaderBlock(PVOID LoaderBlockPtr)
 {
     PLOADER_PARAMETER_BLOCK LoaderBlock = (PLOADER_PARAMETER_BLOCK)LoaderBlockPtr;
-	PLOADER_PARAMETER_EXTENSION LoaderExtension = LoaderBlock->Extension;
+    PLOADER_PARAMETER_EXTENSION LoaderExtension = LoaderBlock->Extension;
     PSMBIOS_EPS_HEADER SMBiosEPSHeader;
     PDMIBIOS_EPS_HEADER DMIBiosEPSHeader;
 
-	PAGED_CODE();
-	
-	if (LoaderExtension->Size >= sizeof(LOADER_PARAMETER_EXTENSION))
-	{	
-		SMBiosEPSHeader = LoaderExtension->SMBiosEPSHeader;
+    PAGED_CODE();
 
-		if (SMBiosEPSHeader != NULL)
-		{
-			DMIBiosEPSHeader = (PDMIBIOS_EPS_HEADER)&SMBiosEPSHeader->Signature2[0];
+    if (LoaderExtension->Size >= sizeof(LOADER_PARAMETER_EXTENSION))
+    {
+        SMBiosEPSHeader = LoaderExtension->SMBiosEPSHeader;
 
-			WmipSMBiosVersionInfo.Used20CallingMethod = FALSE;
+        if (SMBiosEPSHeader != NULL)
+        {
+            DMIBiosEPSHeader = (PDMIBIOS_EPS_HEADER)&SMBiosEPSHeader->Signature2[0];
 
-			WmipSMBiosTablePhysicalAddress.HighPart = 0;
-			WmipSMBiosTablePhysicalAddress.LowPart = DMIBiosEPSHeader->StructureTableAddress;
+            WmipSMBiosVersionInfo.Used20CallingMethod = FALSE;
 
-			WmipSMBiosTableLength = DMIBiosEPSHeader->StructureTableLength;
+            WmipSMBiosTablePhysicalAddress.HighPart = 0;
+            WmipSMBiosTablePhysicalAddress.LowPart = DMIBiosEPSHeader->StructureTableAddress;
 
-			WmipSMBiosVersionInfo.SMBiosMajorVersion = SMBiosEPSHeader->MajorVersion;
-			WmipSMBiosVersionInfo.SMBiosMinorVersion = SMBiosEPSHeader->MinorVersion;
+            WmipSMBiosTableLength = DMIBiosEPSHeader->StructureTableLength;
 
-			WmipSMBiosVersionInfo.DMIBiosRevision = DMIBiosEPSHeader->Revision;
+            WmipSMBiosVersionInfo.SMBiosMajorVersion = SMBiosEPSHeader->MajorVersion;
+            WmipSMBiosVersionInfo.SMBiosMinorVersion = SMBiosEPSHeader->MinorVersion;
 
-			WmipSMBiosChecked = TRUE;
+            WmipSMBiosVersionInfo.DMIBiosRevision = DMIBiosEPSHeader->Revision;
 
-			WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
-							  "WMI: SMBIOS 2.1 data from EFI at (%x%x) size %x \n",
-						  WmipSMBiosTablePhysicalAddress.HighPart,
-						  WmipSMBiosTablePhysicalAddress.LowPart,
-						  WmipSMBiosTableLength));
-		} else {
-			WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
-							  "WMI: No SMBIOS data in loader block\n"));
-		}
-	} else {
-		WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
-						  "WMI: Loader extension does not contain SMBIOS header\n"));
-	}
+            WmipSMBiosChecked = TRUE;
+
+            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
+                              "WMI: SMBIOS 2.1 data from EFI at (%x%x) size %x \n",
+                              WmipSMBiosTablePhysicalAddress.HighPart, WmipSMBiosTablePhysicalAddress.LowPart,
+                              WmipSMBiosTableLength));
+        }
+        else
+        {
+            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: No SMBIOS data in loader block\n"));
+        }
+    }
+    else
+    {
+        WmipDebugPrintEx(
+            (DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: Loader extension does not contain SMBIOS header\n"));
+    }
 }
 #endif
 
 
 #define WmipUnmapSMBiosStructure(Address, Size) \
-    if ((Address) != NULL) MmUnmapIoSpace((Address), (Size));
+    if ((Address) != NULL)                      \
+        MmUnmapIoSpace((Address), (Size));
 
-NTSTATUS WmipFindSMBiosStructure(
-    IN UCHAR Type,
-    OUT PVOID *StructPtr,
-    OUT PVOID *MapPtr,
-    OUT PULONG MapSize
-    )
+NTSTATUS WmipFindSMBiosStructure(IN UCHAR Type, OUT PVOID *StructPtr, OUT PVOID *MapPtr, OUT PULONG MapSize)
 /*++
 
 Routine Description:
@@ -835,16 +737,16 @@ Return Value:
     //
     // Make sure SMBIOS table has been obtained. Note we already hold
     // the critical section
-    if (! WmipSMBiosChecked)
+    if (!WmipSMBiosChecked)
     {
         //
         // See if there is any SMBIOS information and if so register
-        Found = WmipFindSMBiosTable(&WmipSMBiosTablePhysicalAddress,
-                            &WmipSMBiosTableVirtualAddress,
-                            &WmipSMBiosTableLength,
-                            &WmipSMBiosVersionInfo);
+        Found = WmipFindSMBiosTable(&WmipSMBiosTablePhysicalAddress, &WmipSMBiosTableVirtualAddress,
+                                    &WmipSMBiosTableLength, &WmipSMBiosVersionInfo);
         WmipSMBiosChecked = TRUE;
-    } else {
+    }
+    else
+    {
         Found = (WmipSMBiosTableLength > 0);
     }
 
@@ -855,23 +757,28 @@ Return Value:
         {
             //
             // SMBIOS is available in physical memory
-            *MapPtr = MmMapIoSpace(WmipSMBiosTablePhysicalAddress,
-                                   WmipSMBiosTableLength,
-                                   MmCached);
+            *MapPtr = MmMapIoSpace(WmipSMBiosTablePhysicalAddress, WmipSMBiosTableLength, MmCached);
             if (*MapPtr != NULL)
             {
                 *MapSize = WmipSMBiosTableLength;
                 Ptr = *MapPtr;
-            } else {
+            }
+            else
+            {
                 //
                 // Lets hope this is a temporary problem
                 Status = STATUS_INSUFFICIENT_RESOURCES;
             }
-        } else if (WmipSMBiosTableVirtualAddress != NULL) {
+        }
+        else if (WmipSMBiosTableVirtualAddress != NULL)
+        {
             *MapPtr = NULL;
             Ptr = WmipSMBiosTableVirtualAddress;
-        } else {
-            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: SMBIOS table was found, but is not in physical or virtual memory\n"));
+        }
+        else
+        {
+            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
+                              "WMI: SMBIOS table was found, but is not in physical or virtual memory\n"));
             WmipAssert(FALSE);
             Status = STATUS_UNSUCCESSFUL;
         }
@@ -891,43 +798,42 @@ Return Value:
 
                     if (StructHeader->Type == Type)
                     {
-                        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: SMBIOS struct for type %d found at %p\n",
-                             Type, Ptr));
+                        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
+                                          "WMI: SMBIOS struct for type %d found at %p\n", Type, Ptr));
                         *StructPtr = Ptr;
                         Status = STATUS_SUCCESS;
                         break;
                     }
 
-                    Ptr+= StructHeader->Length;
-                    while ( (*((USHORT UNALIGNED *)Ptr) != 0)  &&
-                            (Ptr < PtrEnd) )
+                    Ptr += StructHeader->Length;
+                    while ((*((USHORT UNALIGNED *)Ptr) != 0) && (Ptr < PtrEnd))
                     {
                         Ptr++;
                     }
                     Ptr += 2;
                 }
-            } except(EXCEPTION_EXECUTE_HANDLER) {
-                WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: Invalid SMBIOS data table %p at %p\n",
-                         *MapPtr, StructHeader));
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
+                WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: Invalid SMBIOS data table %p at %p\n",
+                                  *MapPtr, StructHeader));
                 WmipAssert(FALSE);
             }
 
-            if (! NT_SUCCESS(Status) )
+            if (!NT_SUCCESS(Status))
             {
                 WmipUnmapSMBiosStructure(*MapPtr, *MapSize);
             }
         }
-    } else {
+    }
+    else
+    {
         Status = STATUS_UNSUCCESSFUL;
     }
-    return(Status);
+    return (Status);
 }
 
-NTSTATUS WmipFindSysIdTable(
-    PPHYSICAL_ADDRESS SysidTablePhysicalAddress,
-    PUCHAR SysIdBiosRevision,
-    PULONG NumberEntries
-    )
+NTSTATUS WmipFindSysIdTable(PPHYSICAL_ADDRESS SysidTablePhysicalAddress, PUCHAR SysIdBiosRevision, PULONG NumberEntries)
 /*++
 
 Routine Description:
@@ -960,9 +866,7 @@ Return Value:
     PAGED_CODE();
 
     BiosPhysicalAddress.QuadPart = SYSID_EPS_SEARCH_START;
-    BiosVirtualAddress = MmMapIoSpace(BiosPhysicalAddress,
-                                      SYSID_EPS_SEARCH_SIZE,
-                                      MmCached);
+    BiosVirtualAddress = MmMapIoSpace(BiosPhysicalAddress, SYSID_EPS_SEARCH_SIZE, MmCached);
 
     SearchEnd = (PSYSID_EPS_HEADER)(BiosVirtualAddress + SYSID_EPS_SEARCH_SIZE);
     SysIdEps = (PSYSID_EPS_HEADER)BiosVirtualAddress;
@@ -974,8 +878,7 @@ Return Value:
             while (SysIdEps < SearchEnd)
             {
                 if (((*(PULONG)SysIdEps->Signature) == SYSID_EPS_SIGNATURE) &&
-                     (*(PUSHORT)(&SysIdEps->Signature[4]) == SYSID_EPS_SIGNATURE2) &&
-                     (SysIdEps->Signature[6] == '_') )
+                    (*(PUSHORT)(&SysIdEps->Signature[4]) == SYSID_EPS_SIGNATURE2) && (SysIdEps->Signature[6] == '_'))
                 {
                     //
                     // This may be the SYSID table, check the checksum
@@ -988,17 +891,18 @@ Return Value:
 
                     if (Checksum == 0)
                     {
-                        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: SYSID EPS found at %p\n",
-                                     SysIdEps));
+                        WmipDebugPrintEx(
+                            (DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: SYSID EPS found at %p\n", SysIdEps));
                         break;
-                    } else {
-                        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: Invalis SYSID EPS checksum at %p\n",
-                                  SysIdEps));
+                    }
+                    else
+                    {
+                        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
+                                          "WMI: Invalis SYSID EPS checksum at %p\n", SysIdEps));
                     }
                 }
 
-                SysIdEps = (PSYSID_EPS_HEADER)( ((PUCHAR)SysIdEps) +
-                                     SYSID_EPS_SEARCH_INCREMENT);
+                SysIdEps = (PSYSID_EPS_HEADER)(((PUCHAR)SysIdEps) + SYSID_EPS_SEARCH_INCREMENT);
             }
 
             if (SysIdEps != SearchEnd)
@@ -1008,40 +912,40 @@ Return Value:
                 *SysIdBiosRevision = SysIdEps->BiosRev;
                 *NumberEntries = SysIdEps->SysIdCount;
                 Status = STATUS_SUCCESS;
-            } else {
+            }
+            else
+            {
                 //
                 // Not finding the SYSID EPS is a terminal error
                 Status = STATUS_UNSUCCESSFUL;
             }
-        } except(EXCEPTION_EXECUTE_HANDLER) {
-            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: Invalid SYSID EPS Table at %p\n", SysIdEps));
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: Invalid SYSID EPS Table at %p\n", SysIdEps));
             Status = STATUS_UNSUCCESSFUL;
         }
 
         MmUnmapIoSpace(BiosVirtualAddress, SYSID_EPS_SEARCH_SIZE);
-    } else {
+    }
+    else
+    {
         //
         // Lets hope that failure to map memory is a temporary problem
         Status = STATUS_INSUFFICIENT_RESOURCES;
     }
-    return(Status);
+    return (Status);
 }
 
 typedef enum
 {
-	SYSID_UNKNOWN_TYPE,
-	SYSID_UUID_TYPE,
-	SYSID_1394_TYPE
+    SYSID_UNKNOWN_TYPE,
+    SYSID_UUID_TYPE,
+    SYSID_1394_TYPE
 } SYSID_ENTRY_TYPE, *PSYSID_ENTRY_TYPE;
 
-NTSTATUS WmipParseSysIdTable(
-    PHYSICAL_ADDRESS PhysicalAddress,
-    ULONG NumberEntries,
-    PSYSID_UUID SysIdUuid,
-    ULONG *SysIdUuidCount,
-    PSYSID_1394 SysId1394,
-    ULONG *SysId1394Count
-    )
+NTSTATUS WmipParseSysIdTable(PHYSICAL_ADDRESS PhysicalAddress, ULONG NumberEntries, PSYSID_UUID SysIdUuid,
+                             ULONG *SysIdUuidCount, PSYSID_1394 SysId1394, ULONG *SysId1394Count)
 /*++
 
 Routine Description:
@@ -1074,7 +978,7 @@ Return Value:
     NTSTATUS Status;
     ULONG TableSize = NumberEntries * LARGEST_SYSID_TABLE_ENTRY;
     ULONG i;
-    ULONG  j;
+    ULONG j;
     PUCHAR VirtualAddress;
     PSYSID_TABLE_ENTRY SysId;
     PUCHAR p;
@@ -1082,13 +986,11 @@ Return Value:
     ULONG Length;
     ULONG x1394Count, UuidCount;
     ULONG BytesLeft;
-	SYSID_ENTRY_TYPE SysidType;
+    SYSID_ENTRY_TYPE SysidType;
 
     PAGED_CODE();
 
-    VirtualAddress = MmMapIoSpace(PhysicalAddress,
-                                  TableSize,
-                                  MmCached);
+    VirtualAddress = MmMapIoSpace(PhysicalAddress, TableSize, MmCached);
 
     if (VirtualAddress != NULL)
     {
@@ -1107,37 +1009,33 @@ Return Value:
             {
 
                 Length = SysId->Length;
-				
-				//
-				// Determine what kind of sysid we have
-				//
-				if ((RtlCompareMemory(&SysId->Type,
-									  SYSID_TYPE_UUID, 6) == 6) &&
-					(Length == sizeof(SYSID_UUID_ENTRY)))
-				{
-					SysidType = SYSID_UUID_TYPE;
-				} else if ((RtlCompareMemory(&SysId->Type,
-											SYSID_TYPE_1394, 6) == 6) &&
-						   (Length == sizeof(SYSID_1394_ENTRY))) {
 
-					SysidType = SYSID_1394_TYPE;
-				} else {
-					//
-					// unknown type SYSID
-					//
-					WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: Unknown SYSID type %c%c%c%c%c%c found at %p\n",
-								 SysId->Type[0],
-								 SysId->Type[1],
-								 SysId->Type[2],
-								 SysId->Type[3],
-								 SysId->Type[4],
-								 SysId->Type[5],
-								 SysId
-							 ));
-					Status = STATUS_UNSUCCESSFUL;
-					break;
-				}
-				
+                //
+                // Determine what kind of sysid we have
+                //
+                if ((RtlCompareMemory(&SysId->Type, SYSID_TYPE_UUID, 6) == 6) && (Length == sizeof(SYSID_UUID_ENTRY)))
+                {
+                    SysidType = SYSID_UUID_TYPE;
+                }
+                else if ((RtlCompareMemory(&SysId->Type, SYSID_TYPE_1394, 6) == 6) &&
+                         (Length == sizeof(SYSID_1394_ENTRY)))
+                {
+
+                    SysidType = SYSID_1394_TYPE;
+                }
+                else
+                {
+                    //
+                    // unknown type SYSID
+                    //
+                    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
+                                      "WMI: Unknown SYSID type %c%c%c%c%c%c found at %p\n", SysId->Type[0],
+                                      SysId->Type[1], SysId->Type[2], SysId->Type[3], SysId->Type[4], SysId->Type[5],
+                                      SysId));
+                    Status = STATUS_UNSUCCESSFUL;
+                    break;
+                }
+
                 //
                 // Validate checksum for this table entry
 
@@ -1152,8 +1050,8 @@ Return Value:
 
                     if (Checksum != 0)
                     {
-                        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: SYSID Table checksum is not valid at %p\n",
-                                 SysId));
+                        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
+                                          "WMI: SYSID Table checksum is not valid at %p\n", SysId));
                         Status = STATUS_UNSUCCESSFUL;
                         break;
                     }
@@ -1169,16 +1067,18 @@ Return Value:
                             UuidCount++;
                             if (SysIdUuid != NULL)
                             {
-                                RtlCopyMemory(SysIdUuid,
-                                              SysId->Data,
-                                              sizeof(SYSID_UUID));
+                                RtlCopyMemory(SysIdUuid, SysId->Data, sizeof(SYSID_UUID));
                                 SysIdUuid++;
                             }
-                         } else {
+                        }
+                        else
+                        {
                             Status = STATUS_UNSUCCESSFUL;
                             break;
-                         }
-                    } else if (SysidType == SYSID_1394_TYPE) {
+                        }
+                    }
+                    else if (SysidType == SYSID_1394_TYPE)
+                    {
                         if (BytesLeft >= sizeof(SYSID_1394_ENTRY))
                         {
                             //
@@ -1186,34 +1086,40 @@ Return Value:
                             x1394Count++;
                             if (SysId1394 != NULL)
                             {
-                                RtlCopyMemory(SysId1394,
-                                              SysId->Data,
-                                              sizeof(SYSID_1394));
+                                RtlCopyMemory(SysId1394, SysId->Data, sizeof(SYSID_1394));
                                 SysId1394++;
                             }
-                        } else {
+                        }
+                        else
+                        {
                             Status = STATUS_UNSUCCESSFUL;
                             break;
                         }
-                    } else {
-						WmipAssert(FALSE);
-						Status = STATUS_UNSUCCESSFUL;
-						break;
-					}
-                    
+                    }
+                    else
+                    {
+                        WmipAssert(FALSE);
+                        Status = STATUS_UNSUCCESSFUL;
+                        break;
+                    }
+
                     //
                     // Advance to next sysid in table
                     SysId = (PSYSID_TABLE_ENTRY)(((PUCHAR)SysId) + Length);
                     BytesLeft -= Length;
-                } else {
-                    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: SYSID Table at %p is larger at %p than expected",
-                             VirtualAddress, SysId));
+                }
+                else
+                {
+                    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
+                                      "WMI: SYSID Table at %p is larger at %p than expected", VirtualAddress, SysId));
                     Status = STATUS_UNSUCCESSFUL;
                     break;
                 }
-            } else {
-                WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: SYSID Table at %p is larger at %p than expected",
-                         VirtualAddress, SysId));
+            }
+            else
+            {
+                WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
+                                  "WMI: SYSID Table at %p is larger at %p than expected", VirtualAddress, SysId));
                 Status = STATUS_UNSUCCESSFUL;
                 break;
             }
@@ -1223,21 +1129,18 @@ Return Value:
         *SysId1394Count = x1394Count;
 
         MmUnmapIoSpace(VirtualAddress, TableSize);
-    } else {
+    }
+    else
+    {
         //
         // Lets hope that the failure to map is a temporary condition
         Status = STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    return(Status);
+    return (Status);
 }
 
-NTSTATUS WmipGetSysIds(
-    PSYSID_UUID *SysIdUuid,
-    ULONG *SysIdUuidCount,
-    PSYSID_1394 *SysId1394,
-    ULONG *SysId1394Count
-    )
+NTSTATUS WmipGetSysIds(PSYSID_UUID *SysIdUuid, ULONG *SysIdUuidCount, PSYSID_1394 *SysId1394, ULONG *SysId1394Count)
 /*++
 
 Routine Description:
@@ -1280,56 +1183,42 @@ Return Value:
 
     //
     // First See if we have already obtained the SYSIDS
-    if (! WmipSysIdRead)
+    if (!WmipSysIdRead)
     {
         //
         // First see if the sysids are maintained in a separate SYSID table
-        Status = WmipFindSysIdTable(&PhysicalAddress,
-                                    &BiosRevision,
-                                    &NumberEntries);
+        Status = WmipFindSysIdTable(&PhysicalAddress, &BiosRevision, &NumberEntries);
 
         if (NT_SUCCESS(Status))
         {
             //
             // Get the count of entries in each table
-            Status = WmipParseSysIdTable(PhysicalAddress,
-                                         NumberEntries,
-                                         NULL,
-                                         &UuidCount,
-                                         NULL,
-                                         &x1394Count);
+            Status = WmipParseSysIdTable(PhysicalAddress, NumberEntries, NULL, &UuidCount, NULL, &x1394Count);
 
             if (NT_SUCCESS(Status))
             {
-                 //
+                //
                 // Get the entire SYSID table
 
                 UuidSize = UuidCount * sizeof(SYSID_UUID);
                 x1394Size = x1394Count * sizeof(SYSID_1394);
-                TotalSize = UuidSize+x1394Size;
+                TotalSize = UuidSize + x1394Size;
 
                 if (TotalSize > 0)
                 {
-                    Uuid = ExAllocatePoolWithTag(PagedPool,
-                                                 TotalSize,
-                                                 WMISYSIDPOOLTAG);
+                    Uuid = ExAllocatePoolWithTag(PagedPool, TotalSize, WMISYSIDPOOLTAG);
 
                     if (Uuid == NULL)
                     {
                         WmipLeaveSMCritSection();
-                        return(STATUS_INSUFFICIENT_RESOURCES);
+                        return (STATUS_INSUFFICIENT_RESOURCES);
                     }
 
-                    x1394 = (PSYSID_1394)( ((PUCHAR)Uuid) + UuidSize );
+                    x1394 = (PSYSID_1394)(((PUCHAR)Uuid) + UuidSize);
 
                     //
                     // Now get the SYSIDs
-                    Status = WmipParseSysIdTable(PhysicalAddress,
-                                         NumberEntries,
-                                         Uuid,
-                                         &UuidCount,
-                                         x1394,
-                                         &x1394Count);
+                    Status = WmipParseSysIdTable(PhysicalAddress, NumberEntries, Uuid, &UuidCount, x1394, &x1394Count);
 
                     if (NT_SUCCESS(Status))
                     {
@@ -1337,24 +1226,23 @@ Return Value:
                         WmipSysIdUuidCount = UuidCount;
                         WmipSysId1394 = x1394;
                         WmipSysId1394Count = x1394Count;
-                    } else {
+                    }
+                    else
+                    {
                         ExFreePool(Uuid);
                     }
-
                 }
-
             }
-        } else {
+        }
+        else
+        {
             //
             // Get SYSID information from SMBIOS
             PVOID MapAddress;
             PSMBIOS_SYSTEM_INFORMATION_STRUCT Info;
             ULONG MapSize;
 
-            Status = WmipFindSMBiosStructure(SMBIOS_SYSTEM_INFORMATION,
-                                             (PVOID *)&Info,
-                                             &MapAddress,
-                                             &MapSize);
+            Status = WmipFindSMBiosStructure(SMBIOS_SYSTEM_INFORMATION, (PVOID *)&Info, &MapAddress, &MapSize);
 
             if (NT_SUCCESS(Status))
             {
@@ -1365,28 +1253,30 @@ Return Value:
                 {
                     if (Info->Length > SMBIOS_SYSTEM_INFORMATION_LENGTH_20)
                     {
-                        Uuid = ExAllocatePoolWithTag(PagedPool,
-                                                           sizeof(SYSID_UUID),
-                                                           WMISYSIDPOOLTAG);
+                        Uuid = ExAllocatePoolWithTag(PagedPool, sizeof(SYSID_UUID), WMISYSIDPOOLTAG);
                         if (Uuid != NULL)
                         {
-                            RtlCopyMemory(Uuid,
-                                          Info->Uuid,
-                                          sizeof(SYSID_UUID));
+                            RtlCopyMemory(Uuid, Info->Uuid, sizeof(SYSID_UUID));
                             WmipSysIdUuidCount = 1;
                             WmipSysIdUuid = Uuid;
                             Status = STATUS_SUCCESS;
-                        } else {
+                        }
+                        else
+                        {
                             ExFreePool(Uuid);
                             Status = STATUS_UNSUCCESSFUL;
                         }
-                    } else {
+                    }
+                    else
+                    {
                         WmipSysIdUuid = NULL;
                         WmipSysIdUuidCount = 0;
                     }
-                } except(EXCEPTION_EXECUTE_HANDLER) {
-                    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: Invalid SMBIOS SYSTEM INFO structure %p\n",
-                              Info));
+                }
+                except(EXCEPTION_EXECUTE_HANDLER)
+                {
+                    WmipDebugPrintEx(
+                        (DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: Invalid SMBIOS SYSTEM INFO structure %p\n", Info));
                     WmipAssert(FALSE);
                     Status = STATUS_UNSUCCESSFUL;
                 }
@@ -1411,13 +1301,10 @@ Return Value:
         *SysId1394Count = WmipSysId1394Count;
     }
 
-    return(WmipSysIdStatus);
+    return (WmipSysIdStatus);
 }
 
-NTSTATUS WmipGetSMBiosEventlog(
-    PUCHAR Buffer,
-    PULONG BufferSize
-    )
+NTSTATUS WmipGetSMBiosEventlog(PUCHAR Buffer, PULONG BufferSize)
 /*++
 
 Routine Description:
@@ -1456,10 +1343,7 @@ Return Value:
     ULONG SizeNeeded;
 
     PAGED_CODE();
-    Status = WmipFindSMBiosStructure(SMBIOS_SYSTEM_EVENTLOG,
-                                     (PVOID *)&SystemEventlog,
-                                     &MapAddress,
-                                     &MapSize);
+    Status = WmipFindSMBiosStructure(SMBIOS_SYSTEM_EVENTLOG, (PVOID *)&SystemEventlog, &MapAddress, &MapSize);
 
     if (NT_SUCCESS(Status))
     {
@@ -1472,12 +1356,10 @@ Return Value:
 
         if (SystemEventlog->Length >= SMBIOS_SYSTEM_EVENTLOG_LENGTH)
         {
-            LogTypeDescLength = SystemEventlog->NumLogTypeDescriptors *
-                                SystemEventlog->LenLogTypeDescriptors;
+            LogTypeDescLength = SystemEventlog->NumLogTypeDescriptors * SystemEventlog->LenLogTypeDescriptors;
             LogHeaderDescExists = 1;
-            if (SystemEventlog->Length != (LogTypeDescLength +
-                                  FIELD_OFFSET(SMBIOS_SYSTEM_EVENTLOG_STRUCT,
-                                               LogTypeDescriptor)))
+            if (SystemEventlog->Length !=
+                (LogTypeDescLength + FIELD_OFFSET(SMBIOS_SYSTEM_EVENTLOG_STRUCT, LogTypeDescriptor)))
             {
                 //
                 // The SMBIOS spec says that the Length of the structure
@@ -1485,25 +1367,24 @@ Return Value:
                 // the length of the type descriptors. Since this is not
                 // the case we may have run into a buggy bios
                 //
-                WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: SMBIOS System Eventlog struture %p size is %x, but expecting %x\n",
-                           SystemEventlog,
-                           SystemEventlog->Length,
-                           (LogTypeDescLength +
-                            FIELD_OFFSET(SMBIOS_SYSTEM_EVENTLOG_STRUCT,
-                                         LogTypeDescriptor)) ));
+                WmipDebugPrintEx(
+                    (DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
+                     "WMI: SMBIOS System Eventlog struture %p size is %x, but expecting %x\n", SystemEventlog,
+                     SystemEventlog->Length,
+                     (LogTypeDescLength + FIELD_OFFSET(SMBIOS_SYSTEM_EVENTLOG_STRUCT, LogTypeDescriptor))));
                 WmipAssert(FALSE);
                 WmipUnmapSMBiosStructure(MapAddress, MapSize);
                 Status = STATUS_UNSUCCESSFUL;
-                return(Status);
+                return (Status);
             }
-        } else {
+        }
+        else
+        {
             LogTypeDescLength = 0;
             LogHeaderDescExists = 0;
         }
 
-        SizeNeeded = FIELD_OFFSET(SMBIOS_EVENTLOG_INFO, VariableData) +
-                                         LogTypeDescLength +
-                                         LogAreaLength;
+        SizeNeeded = FIELD_OFFSET(SMBIOS_EVENTLOG_INFO, VariableData) + LogTypeDescLength + LogAreaLength;
         if (*BufferSize >= SizeNeeded)
         {
             EventlogInfo = (PSMBIOS_EVENTLOG_INFO)Buffer;
@@ -1519,20 +1400,18 @@ Return Value:
                 // if log header descriptors exist (smbios 2.1+) then copy
                 // rest of smbios header plus log type descriptors
                 //
-                RtlCopyMemory(&EventlogInfo->LogAreaLength,
-                              &SystemEventlog->LogAreaLength,
-                              (SystemEventlog->Length -
-                                  FIELD_OFFSET(SMBIOS_SYSTEM_EVENTLOG_STRUCT,
-                                               LogAreaLength)));
-            } else {
+                RtlCopyMemory(&EventlogInfo->LogAreaLength, &SystemEventlog->LogAreaLength,
+                              (SystemEventlog->Length - FIELD_OFFSET(SMBIOS_SYSTEM_EVENTLOG_STRUCT, LogAreaLength)));
+            }
+            else
+            {
                 //
                 // if no log header descriptors then just copy smbios 2.0
                 // defined fields and zero out rest of structure
                 //
-                RtlCopyMemory(&EventlogInfo->LogAreaLength,
-                              &SystemEventlog->LogAreaLength,
-                        FIELD_OFFSET(SMBIOS_EVENTLOG_INFO, LogHeaderFormat) -
-                        FIELD_OFFSET(SMBIOS_EVENTLOG_INFO, LogAreaLength));
+                RtlCopyMemory(&EventlogInfo->LogAreaLength, &SystemEventlog->LogAreaLength,
+                              FIELD_OFFSET(SMBIOS_EVENTLOG_INFO, LogHeaderFormat) -
+                                  FIELD_OFFSET(SMBIOS_EVENTLOG_INFO, LogAreaLength));
 
                 *((PUSHORT)&EventlogInfo->LogHeaderFormat) = 0;
                 EventlogInfo->LengthEachLogTypeDesc = 0;
@@ -1540,84 +1419,79 @@ Return Value:
 
             WmipUnmapSMBiosStructure(MapAddress, MapSize);
 
-            switch(AccessMethod)
+            switch (AccessMethod)
             {
-                case ACCESS_METHOD_MEMMAP:
+            case ACCESS_METHOD_MEMMAP:
+            {
+                //
+                // Eventlog is maintained in physical memory
+                //
+                PHYSICAL_ADDRESS PhysicalAddress;
+                PUCHAR EventlogVirtualAddress;
+
+                PhysicalAddress.HighPart = 0;
+                PhysicalAddress.LowPart = AccessMethodAddress.AccessMethodAddress.PhysicalAddress32;
+                EventlogVirtualAddress = MmMapIoSpace(PhysicalAddress, LogAreaLength, MmCached);
+
+                if ((EventlogArea != NULL) && (EventlogVirtualAddress != NULL))
                 {
-                    //
-                    // Eventlog is maintained in physical memory
-                    //
-                    PHYSICAL_ADDRESS PhysicalAddress;
-                    PUCHAR EventlogVirtualAddress;
-
-                    PhysicalAddress.HighPart = 0;
-                    PhysicalAddress.LowPart = AccessMethodAddress.AccessMethodAddress.PhysicalAddress32;
-                    EventlogVirtualAddress = MmMapIoSpace(PhysicalAddress,
-                                                LogAreaLength,
-                                                MmCached);
-
-                    if ((EventlogArea != NULL) &&
-                        (EventlogVirtualAddress != NULL))
-                    {
-                        RtlCopyMemory(EventlogArea,
-                                      EventlogVirtualAddress,
-                                      LogAreaLength);
-                        MmUnmapIoSpace(EventlogVirtualAddress,
-                                       LogAreaLength);
-                        Status = STATUS_SUCCESS;
-                    } else {
-                        Status = STATUS_UNSUCCESSFUL;
-                    }
-                    break;
-                };
-
-                case ACCESS_METHOD_INDEXIO_1:
+                    RtlCopyMemory(EventlogArea, EventlogVirtualAddress, LogAreaLength);
+                    MmUnmapIoSpace(EventlogVirtualAddress, LogAreaLength);
+                    Status = STATUS_SUCCESS;
+                }
+                else
                 {
-//                  break;
-                };
-
-                case ACCESS_METHOD_INDEXIO_2:
-                {
-//                  break;
-                };
-
-                case ACCESS_METHOD_INDEXIO_3:
-                {
-//                  break;
-                };
-
-                case ACCESS_METHOD_GPNV:
-                {
-                    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: SMBIOS Eventlog access method GPNV %x\n",
-                                     AccessMethod));
-                    Status = STATUS_UNSUCCESSFUL;
-                    break;
-                };
-
-                default:
-                {
-                    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: SMBIOS Eventlog access method %x\n",
-                                     AccessMethod));
-                    WmipAssert(FALSE);
                     Status = STATUS_UNSUCCESSFUL;
                 }
+                break;
+            };
+
+            case ACCESS_METHOD_INDEXIO_1:
+            {
+                //                  break;
+            };
+
+            case ACCESS_METHOD_INDEXIO_2:
+            {
+                //                  break;
+            };
+
+            case ACCESS_METHOD_INDEXIO_3:
+            {
+                //                  break;
+            };
+
+            case ACCESS_METHOD_GPNV:
+            {
+                WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: SMBIOS Eventlog access method GPNV %x\n",
+                                  AccessMethod));
+                Status = STATUS_UNSUCCESSFUL;
+                break;
+            };
+
+            default:
+            {
+                WmipDebugPrintEx(
+                    (DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: SMBIOS Eventlog access method %x\n", AccessMethod));
+                WmipAssert(FALSE);
+                Status = STATUS_UNSUCCESSFUL;
+            }
             };
 
             Status = STATUS_SUCCESS;
-        } else {
+        }
+        else
+        {
             WmipUnmapSMBiosStructure(MapAddress, MapSize);
             Status = STATUS_BUFFER_TOO_SMALL;
         }
         *BufferSize = SizeNeeded;
     }
-    return(Status);
+    return (Status);
 }
 
 NTSTATUS
-WmipDockUndockEventCallback(
-    IN PVOID NoificationStructure,
-    IN PVOID Context
-    )
+WmipDockUndockEventCallback(IN PVOID NoificationStructure, IN PVOID Context)
 {
     PAGED_CODE();
 
@@ -1634,10 +1508,7 @@ WmipDockUndockEventCallback(
         WmipLeaveSMCritSection();
     }
 
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }
 
 #endif
-
-
-

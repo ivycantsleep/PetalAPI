@@ -25,84 +25,58 @@ Revision History:
 
 #include "wmikmp.h"
 
-void WmipWaitForIrpCompletion(
-    PREGENTRY RegEntry
-    );
+void WmipWaitForIrpCompletion(PREGENTRY RegEntry);
 
-NTSTATUS WmipUpdateDS(
-    PREGENTRY RegEntry
-    );
+NTSTATUS WmipUpdateDS(PREGENTRY RegEntry);
 
-NTSTATUS WmipRegisterDS(
-    PREGENTRY RegEntry
-);
+NTSTATUS WmipRegisterDS(PREGENTRY RegEntry);
 
-void WmipRemoveDS(
-    PREGENTRY RegEntry
-);
+void WmipRemoveDS(PREGENTRY RegEntry);
 
-NTSTATUS WmipValidateWmiRegInfoString(
-    PWMIREGINFO WmiRegInfo,
-    ULONG BufferSize,
-    ULONG Offset,
-    PWCHAR *String
-);
+NTSTATUS WmipValidateWmiRegInfoString(PWMIREGINFO WmiRegInfo, ULONG BufferSize, ULONG Offset, PWCHAR *String);
 
 
-NTSTATUS WmipRegisterOrUpdateDS(
-    PREGENTRY RegEntry,
-    BOOLEAN Update
-    );
+NTSTATUS WmipRegisterOrUpdateDS(PREGENTRY RegEntry, BOOLEAN Update);
 
-void WmipRegistrationWorker(
-    PVOID Context
-   );
+void WmipRegistrationWorker(PVOID Context);
 
-NTSTATUS WmipQueueRegWork(
-    REGOPERATION RegOperation,
-    PREGENTRY RegEntry
-    );
+NTSTATUS WmipQueueRegWork(REGOPERATION RegOperation, PREGENTRY RegEntry);
 
 
 #if defined(_WIN64)
-PREGENTRY WmipFindRegEntryByProviderId(
-    ULONG ProviderId,
-    BOOLEAN ReferenceIrp
-    );
+PREGENTRY WmipFindRegEntryByProviderId(ULONG ProviderId, BOOLEAN ReferenceIrp);
 
-ULONG WmipAllocProviderId(
-    PDEVICE_OBJECT DeviceObject
-    );
+ULONG WmipAllocProviderId(PDEVICE_OBJECT DeviceObject);
 
 #endif
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,WmipInitializeRegistration)
+#pragma alloc_text(INIT, WmipInitializeRegistration)
 
-#pragma alloc_text(PAGE,WmipRegisterDevice)
-#pragma alloc_text(PAGE,WmipDeregisterDevice)
-#pragma alloc_text(PAGE,WmipUpdateRegistration)
-#pragma alloc_text(PAGE,WmipDoUnreferenceRegEntry)
-#pragma alloc_text(PAGE,WmipWaitForIrpCompletion)
-#pragma alloc_text(PAGE,WmipFindRegEntryByDevice)
-#pragma alloc_text(PAGE,WmipTranslatePDOInstanceNames)
-#pragma alloc_text(PAGE,WmipPDOToDeviceInstanceName)
-#pragma alloc_text(PAGE,WmipRemoveDS)
-#pragma alloc_text(PAGE,WmipRegisterDS)
-#pragma alloc_text(PAGE,WmipUpdateDS)
-#pragma alloc_text(PAGE,WmipValidateWmiRegInfoString)
-#pragma alloc_text(PAGE,WmipProcessWmiRegInfo)
-#pragma alloc_text(PAGE,WmipRegisterOrUpdateDS)
-#pragma alloc_text(PAGE,WmipQueueRegWork)
-#pragma alloc_text(PAGE,WmipRegistrationWorker)
-#pragma alloc_text(PAGE,WmipAllocRegEntry)
+#pragma alloc_text(PAGE, WmipRegisterDevice)
+#pragma alloc_text(PAGE, WmipDeregisterDevice)
+#pragma alloc_text(PAGE, WmipUpdateRegistration)
+#pragma alloc_text(PAGE, WmipDoUnreferenceRegEntry)
+#pragma alloc_text(PAGE, WmipWaitForIrpCompletion)
+#pragma alloc_text(PAGE, WmipFindRegEntryByDevice)
+#pragma alloc_text(PAGE, WmipTranslatePDOInstanceNames)
+#pragma alloc_text(PAGE, WmipPDOToDeviceInstanceName)
+#pragma alloc_text(PAGE, WmipRemoveDS)
+#pragma alloc_text(PAGE, WmipRegisterDS)
+#pragma alloc_text(PAGE, WmipUpdateDS)
+#pragma alloc_text(PAGE, WmipValidateWmiRegInfoString)
+#pragma alloc_text(PAGE, WmipProcessWmiRegInfo)
+#pragma alloc_text(PAGE, WmipRegisterOrUpdateDS)
+#pragma alloc_text(PAGE, WmipQueueRegWork)
+#pragma alloc_text(PAGE, WmipRegistrationWorker)
+#pragma alloc_text(PAGE, WmipAllocRegEntry)
 
 #if defined(_WIN64)
-#pragma alloc_text(PAGE,WmipFindRegEntryByProviderId)
-#pragma alloc_text(PAGE,WmipAllocProviderId)
+#pragma alloc_text(PAGE, WmipFindRegEntryByProviderId)
+#pragma alloc_text(PAGE, WmipAllocProviderId)
 #endif
 #endif
 
-LIST_ENTRY WmipInUseRegEntryHead = {&WmipInUseRegEntryHead,&WmipInUseRegEntryHead};
+LIST_ENTRY WmipInUseRegEntryHead = { &WmipInUseRegEntryHead, &WmipInUseRegEntryHead };
 ULONG WmipInUseRegEntryCount = 0;
 
 KSPIN_LOCK WmipRegistrationSpinLock;
@@ -123,11 +97,9 @@ WORK_QUEUE_ITEM WmipRegWorkQueue;
 // irps
 //
 ULONG WmipRegWorkItemCount = 1;
-LIST_ENTRY WmipRegWorkList = {&WmipRegWorkList, &WmipRegWorkList};
+LIST_ENTRY WmipRegWorkList = { &WmipRegWorkList, &WmipRegWorkList };
 
-void WmipInitializeRegistration(
-    ULONG Phase
-    )
+void WmipInitializeRegistration(ULONG Phase)
 {
     PAGED_CODE();
 
@@ -136,30 +108,24 @@ void WmipInitializeRegistration(
         //
         //  Initialize lookaside lists
         //
-        ExInitializeNPagedLookasideList(&WmipRegLookaside,
-                                   NULL,
-                                   NULL,
-                                   0,
-                                   sizeof(REGENTRY),
-                                   WMIREGPOOLTAG,
-                                   0);
+        ExInitializeNPagedLookasideList(&WmipRegLookaside, NULL, NULL, 0, sizeof(REGENTRY), WMIREGPOOLTAG, 0);
 
         //
         // Initialize Registration Spin Lock
         KeInitializeSpinLock(&WmipRegistrationSpinLock);
-        
+
         // TODO: If we have any early registrants then we need to add them to
         //       the RegEntry list now.
-    } else {
+    }
+    else
+    {
         //
         // Kick off work item that will send reg irps to all of the
         // drivers that have registered. We are sure there is at least
         // one device that needs this since there is the internal wmi
         // data device
         //
-        ExInitializeWorkItem( &WmipRegWorkQueue,
-                          WmipRegistrationWorker,
-                          NULL );
+        ExInitializeWorkItem(&WmipRegWorkQueue, WmipRegistrationWorker, NULL);
 
         if (InterlockedDecrement(&WmipRegWorkItemCount) != 0)
         {
@@ -170,22 +136,17 @@ void WmipInitializeRegistration(
 
 #if defined(_WIN64)
 ULONG WmipProviderIdCounter = 1;
-ULONG WmipAllocProviderId(
-    PDEVICE_OBJECT DeviceObject
-    )
+ULONG WmipAllocProviderId(PDEVICE_OBJECT DeviceObject)
 {
     PAGED_CODE();
-    
-    return(InterlockedIncrement(&WmipProviderIdCounter));
+
+    return (InterlockedIncrement(&WmipProviderIdCounter));
 }
 #else
 #define WmipAllocProviderId(DeviceObject) ((ULONG)(DeviceObject))
 #endif
 
-PREGENTRY WmipAllocRegEntry(
-    PDEVICE_OBJECT DeviceObject,
-    ULONG Flags
-    )
+PREGENTRY WmipAllocRegEntry(PDEVICE_OBJECT DeviceObject, ULONG Flags)
 /*++
 
 Routine Description:
@@ -209,7 +170,7 @@ Return Value:
     PREGENTRY RegEntry;
 
     PAGED_CODE();
-    
+
     RegEntry = ExAllocateFromNPagedLookasideList(&WmipRegLookaside);
 
     if (RegEntry != NULL)
@@ -217,9 +178,7 @@ Return Value:
         //
         // Initialize the RegEntry. Note that the regentry will start out with
         // a ref count of 1
-        KeInitializeEvent(&RegEntry->Event,
-                          SynchronizationEvent,
-                          FALSE);
+        KeInitializeEvent(&RegEntry->Event, SynchronizationEvent, FALSE);
 
 
         RegEntry->Flags = Flags;
@@ -235,16 +194,12 @@ Return Value:
         //  Now place the RegEntry on the in use list
         InterlockedIncrement(&WmipInUseRegEntryCount);
 
-        ExInterlockedInsertTailList(&WmipInUseRegEntryHead,
-                                    &RegEntry->InUseEntryList,
-                                    &WmipRegistrationSpinLock);
+        ExInterlockedInsertTailList(&WmipInUseRegEntryHead, &RegEntry->InUseEntryList, &WmipRegistrationSpinLock);
     }
-    return(RegEntry);
+    return (RegEntry);
 }
 
-BOOLEAN WmipDoUnreferenceRegEntry(
-    PREGENTRY RegEntry
-    )
+BOOLEAN WmipDoUnreferenceRegEntry(PREGENTRY RegEntry)
 /*++
 
 Routine Description:
@@ -285,31 +240,28 @@ Return Value:
             ObDereferenceObject(RegEntry->PDO);
             RegEntry->PDO = NULL;
         }
-        
+
         //
         // Remove entry from in use list
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, \
-                      "WMI: RegEntry %p removed from list\n", \
-                      RegEntry, __FILE__, __LINE__)); \
+        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: RegEntry %p removed from list\n", RegEntry,
+                          __FILE__, __LINE__));
         ProviderId = RegEntry->ProviderId;
-        ExInterlockedRemoveHeadList(RegEntry->InUseEntryList.Blink,
-                                   &WmipRegistrationSpinLock);
+        ExInterlockedRemoveHeadList(RegEntry->InUseEntryList.Blink, &WmipRegistrationSpinLock);
         InterlockedDecrement(&WmipInUseRegEntryCount);
         WmipLeaveSMCritSection();
 
         WmipRemoveDS(RegEntry);
 
-        ExFreeToNPagedLookasideList(&WmipRegLookaside,
-                                   RegEntry);
-    } else {
+        ExFreeToNPagedLookasideList(&WmipRegLookaside, RegEntry);
+    }
+    else
+    {
         WmipLeaveSMCritSection();
     }
-    return(Freed);
+    return (Freed);
 }
 
-void WmipWaitForIrpCompletion(
-    PREGENTRY RegEntry
-    )
+void WmipWaitForIrpCompletion(PREGENTRY RegEntry)
 /*++
 
 Routine Description:
@@ -334,22 +286,15 @@ Return Value:
     {
         //
         // CONSIDER: If irp is marked pending do we need to cancel it ???
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: Waiting for %x to complete all irps\n",
-                  RegEntry->DeviceObject));
+        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: Waiting for %x to complete all irps\n",
+                          RegEntry->DeviceObject));
 
-        KeWaitForSingleObject(&RegEntry->Event,
-                              Executive,
-                              KernelMode,
-                              FALSE,
-                              (PLARGE_INTEGER)NULL);
+        KeWaitForSingleObject(&RegEntry->Event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
         WmipAssert(RegEntry->IrpCount == 0);
     }
 }
 
-NTSTATUS WmipRegisterDevice(
-    PDEVICE_OBJECT DeviceObject,
-    ULONG RegistrationFlag
-    )
+NTSTATUS WmipRegisterDevice(PDEVICE_OBJECT DeviceObject, ULONG RegistrationFlag)
 /*++
 
 Routine Description:
@@ -389,7 +334,7 @@ Return Value:
     RegEntry = WmipFindRegEntryByDevice(DeviceObject, FALSE);
     if (RegEntry == NULL)
     {
-        if (! IsCallback)
+        if (!IsCallback)
         {
             //
             // Data providers that register with a device object and not a
@@ -397,15 +342,15 @@ Return Value:
             // stick around while WMI needs it. This reference is removed
             // when the device unregisters with WMI and all WMI irps are
             // completed.
-            Status = ObReferenceObjectByPointer(DeviceObject,
-                                        0,
-                                        NULL,    /* *IoDeviceObjectType */
-                                        KernelMode);
+            Status = ObReferenceObjectByPointer(DeviceObject, 0, NULL, /* *IoDeviceObjectType */
+                                                KernelMode);
             if (NT_SUCCESS(Status))
             {
                 UpdateDeviceStackSize = TRUE;
             }
-        } else {
+        }
+        else
+        {
             //
             // No reference counting is done for callbacks. It is the data
             // provider's responsibility to synchronize any unloading and
@@ -417,10 +362,10 @@ Return Value:
         {
             //
             // Allocate, initialize and place on active list
-            Flags = REGENTRY_FLAG_NEWREGINFO | REGENTRY_FLAG_INUSE |
-                            (IsCallback ? REGENTRY_FLAG_CALLBACK : 0);
+            Flags = REGENTRY_FLAG_NEWREGINFO | REGENTRY_FLAG_INUSE | (IsCallback ? REGENTRY_FLAG_CALLBACK : 0);
 #ifndef MEMPHIS
-            if (RegistrationFlag & WMIREG_FLAG_TRACE_PROVIDER) {
+            if (RegistrationFlag & WMIREG_FLAG_TRACE_PROVIDER)
+            {
                 Flags |= REGENTRY_FLAG_TRACED;
                 Flags |= (RegistrationFlag & WMIREG_FLAG_TRACE_NOTIFY_MASK);
             }
@@ -429,16 +374,16 @@ Return Value:
             RegEntry = WmipAllocRegEntry(DeviceObject, Flags);
 
             if (RegEntry != NULL)
-            {               
+            {
                 // We need to take an extra ref count before
                 // releasing the critical section.  One class of drivers
-                // (kmixer) will register and unregister multiple times 
+                // (kmixer) will register and unregister multiple times
                 // in different threads and this can lead to a race where
                 // the regentry is removed from the list twice
                 //
                 WmipReferenceRegEntry(RegEntry);
                 WmipLeaveSMCritSection();
-                
+
                 //
                 // Go and get registration information from the driver
                 //
@@ -456,18 +401,21 @@ Return Value:
                         // accepting unregister calls
                         //
                         RegEntry->Flags &= ~REGENTRY_FLAG_REG_IN_PROGRESS;
-                    } else {
+                    }
+                    else
+                    {
                         WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
-                                          "WMI: WmipRegisterDS(%p) failed %x for device %p\n",
-                                          RegEntry, Status, RegEntry->DeviceObject));
+                                          "WMI: WmipRegisterDS(%p) failed %x for device %p\n", RegEntry, Status,
+                                          RegEntry->DeviceObject));
 
                         //
                         // Remove ref so regentry goes away
                         //
                         WmipUnreferenceRegEntry(RegEntry);
                     }
-                    
-                } else {
+                }
+                else
+                {
                     //
                     // We need to send the registration irp from within
                     // a work item and not in the context of this
@@ -476,13 +424,12 @@ Return Value:
                     // context, so we'd get deadlock
                     //
                     Status = WmipQueueRegWork(RegisterSingleDriver, RegEntry);
-                    if (! NT_SUCCESS(Status))
+                    if (!NT_SUCCESS(Status))
                     {
                         //
                         // If failed then remove regentry from list
                         //
-                        RegEntry->Flags |= (REGENTRY_FLAG_RUNDOWN |
-                                            REGENTRY_FLAG_NOT_ACCEPTING_IRPS);
+                        RegEntry->Flags |= (REGENTRY_FLAG_RUNDOWN | REGENTRY_FLAG_NOT_ACCEPTING_IRPS);
                         WmipUnreferenceRegEntry(RegEntry);
                     }
                 }
@@ -491,21 +438,26 @@ Return Value:
                 // Remove extra regentry ref count taken above
                 //
                 WmipUnreferenceRegEntry(RegEntry);
-
-            } else {
+            }
+            else
+            {
                 WmipLeaveSMCritSection();
                 Status = STATUS_INSUFFICIENT_RESOURCES;
             }
-        } else {
+        }
+        else
+        {
             WmipLeaveSMCritSection();
         }
-    } else {
+    }
+    else
+    {
         //
         // A device object may only register once
         WmipLeaveSMCritSection();
         Status = STATUS_OBJECT_NAME_EXISTS;
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: Device Object %x attempting to register twice\n",
-                 DeviceObject));
+        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: Device Object %x attempting to register twice\n",
+                          DeviceObject));
         WmipUnreferenceRegEntry(RegEntry);
     }
 
@@ -514,16 +466,13 @@ Return Value:
         //
         // Since WMI will be forwarding irps to this device the WMI irp
         // stack size must be at least one larger than that of the device
-        WmipUpdateDeviceStackSize(
-                                  (CCHAR)(DeviceObject->StackSize+1));
+        WmipUpdateDeviceStackSize((CCHAR)(DeviceObject->StackSize + 1));
     }
 
-    return(Status);
+    return (Status);
 }
 
-NTSTATUS WmipDeregisterDevice(
-    PDEVICE_OBJECT DeviceObject
-    )
+NTSTATUS WmipDeregisterDevice(PDEVICE_OBJECT DeviceObject)
 /*++
 
 Routine Description:
@@ -555,9 +504,7 @@ Return Value:
         //
         // Mark the regentry as invalid so that no more irps are sent to the
         // device and the event will set when the last irp completes.
-        Flags = InterlockedExchange(&RegEntry->Flags,
-                        (REGENTRY_FLAG_RUNDOWN |
-                         REGENTRY_FLAG_NOT_ACCEPTING_IRPS) );
+        Flags = InterlockedExchange(&RegEntry->Flags, (REGENTRY_FLAG_RUNDOWN | REGENTRY_FLAG_NOT_ACCEPTING_IRPS));
 
         //
         // Once the regentry is marked as RUNDOWN then it will not be found
@@ -569,7 +516,7 @@ Return Value:
         // Now if there are any outstanding irps for the device then we need
         // to wait here until they complete.
         WmipWaitForIrpCompletion(RegEntry);
-        if (! (Flags & REGENTRY_FLAG_CALLBACK))
+        if (!(Flags & REGENTRY_FLAG_CALLBACK))
         {
             ObDereferenceObject(DeviceObject);
         }
@@ -579,20 +526,20 @@ Return Value:
         WmipUnreferenceRegEntry(RegEntry);
 
         Status = STATUS_SUCCESS;
-    } else {
+    }
+    else
+    {
         WmipLeaveSMCritSection();
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: WmipDeregisterDevice called with invalid Device Object %x\n",
-                 DeviceObject));
+        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
+                          "WMI: WmipDeregisterDevice called with invalid Device Object %x\n", DeviceObject));
         Status = STATUS_INVALID_PARAMETER;
     }
 
 
-    return(Status);
+    return (Status);
 }
 
-NTSTATUS WmipUpdateRegistration(
-    PDEVICE_OBJECT DeviceObject
-    )
+NTSTATUS WmipUpdateRegistration(PDEVICE_OBJECT DeviceObject)
 /*++
 
 Routine Description:
@@ -619,53 +566,45 @@ Return Value:
     RegEntry = WmipFindRegEntryByDevice(DeviceObject, FALSE);
     if (RegEntry != NULL)
     {
-        Status = WmipQueueRegWork(RegisterUpdateSingleDriver,
-                                  RegEntry);
+        Status = WmipQueueRegWork(RegisterUpdateSingleDriver, RegEntry);
         WmipUnreferenceRegEntry(RegEntry);
-    } else {
+    }
+    else
+    {
         Status = STATUS_INVALID_PARAMETER;
     }
 
-    return(Status);
+    return (Status);
 }
 
 #if defined(_WIN64)
 
-PREGENTRY WmipDoFindRegEntryByProviderId(
-    ULONG ProviderId,
-    ULONG InvalidFlags
-    )
+PREGENTRY WmipDoFindRegEntryByProviderId(ULONG ProviderId, ULONG InvalidFlags)
 {
     //
     // This routine assumes that any synchronization mechanism has
     // been taken. This routine can be called at dispatch level
     //
-    
+
     PREGENTRY RegEntry;
     PLIST_ENTRY RegEntryList;
-    
+
     RegEntryList = WmipInUseRegEntryHead.Flink;
     while (RegEntryList != &WmipInUseRegEntryHead)
     {
-        RegEntry = CONTAINING_RECORD(RegEntryList,
-                                     REGENTRY,
-                                     InUseEntryList);
+        RegEntry = CONTAINING_RECORD(RegEntryList, REGENTRY, InUseEntryList);
 
-        if ((RegEntry->ProviderId == ProviderId) &&
-            (! (RegEntry->Flags & InvalidFlags)))
+        if ((RegEntry->ProviderId == ProviderId) && (!(RegEntry->Flags & InvalidFlags)))
 
         {
-            return(RegEntry);
+            return (RegEntry);
         }
         RegEntryList = RegEntryList->Flink;
     }
-    return(NULL);
+    return (NULL);
 }
 
-PREGENTRY WmipFindRegEntryByProviderId(
-    ULONG ProviderId,
-    BOOLEAN ReferenceIrp
-    )
+PREGENTRY WmipFindRegEntryByProviderId(ULONG ProviderId, BOOLEAN ReferenceIrp)
 /*++
 
 Routine Description:
@@ -692,8 +631,7 @@ Return Value:
 
     WmipEnterSMCritSection();
 
-    RegEntry = WmipDoFindRegEntryByProviderId(ProviderId,
-                                              REGENTRY_FLAG_RUNDOWN);
+    RegEntry = WmipDoFindRegEntryByProviderId(ProviderId, REGENTRY_FLAG_RUNDOWN);
     if (RegEntry != NULL)
     {
         WmipReferenceRegEntry(RegEntry);
@@ -702,47 +640,38 @@ Return Value:
             InterlockedIncrement(&RegEntry->IrpCount);
         }
     }
-    
+
     WmipLeaveSMCritSection();
-    return(RegEntry);
+    return (RegEntry);
 }
 #endif
 
-PREGENTRY WmipDoFindRegEntryByDevice(
-    PDEVICE_OBJECT DeviceObject,
-    ULONG InvalidFlags
-    )
+PREGENTRY WmipDoFindRegEntryByDevice(PDEVICE_OBJECT DeviceObject, ULONG InvalidFlags)
 {
     //
     // This routine assumes that any synchronization mechanism has
     // been taken. This routine can be called at dispatch level
     //
-    
+
     PREGENTRY RegEntry;
     PLIST_ENTRY RegEntryList;
-    
+
     RegEntryList = WmipInUseRegEntryHead.Flink;
     while (RegEntryList != &WmipInUseRegEntryHead)
     {
-        RegEntry = CONTAINING_RECORD(RegEntryList,
-                                     REGENTRY,
-                                     InUseEntryList);
+        RegEntry = CONTAINING_RECORD(RegEntryList, REGENTRY, InUseEntryList);
 
-        if ((RegEntry->DeviceObject == DeviceObject) &&
-            (! (RegEntry->Flags & InvalidFlags)))
+        if ((RegEntry->DeviceObject == DeviceObject) && (!(RegEntry->Flags & InvalidFlags)))
 
         {
-            return(RegEntry);
+            return (RegEntry);
         }
         RegEntryList = RegEntryList->Flink;
     }
-    return(NULL);
+    return (NULL);
 }
 
-PREGENTRY WmipFindRegEntryByDevice(
-    PDEVICE_OBJECT DeviceObject,
-    BOOLEAN ReferenceIrp
-    )
+PREGENTRY WmipFindRegEntryByDevice(PDEVICE_OBJECT DeviceObject, BOOLEAN ReferenceIrp)
 /*++
 
 Routine Description:
@@ -781,13 +710,11 @@ Return Value:
     }
 
     WmipLeaveSMCritSection();
-    return(RegEntry);
+    return (RegEntry);
 }
 
 
-void WmipDecrementIrpCount(
-    IN PREGENTRY RegEntry
-    )
+void WmipDecrementIrpCount(IN PREGENTRY RegEntry)
 /*++
 
 Routine Description:
@@ -809,8 +736,7 @@ Return Value:
     ULONG IrpCount;
 
     IrpCount = InterlockedDecrement(&RegEntry->IrpCount);
-    if ((RegEntry->Flags & REGENTRY_FLAG_RUNDOWN) &&
-        (IrpCount == 0))
+    if ((RegEntry->Flags & REGENTRY_FLAG_RUNDOWN) && (IrpCount == 0))
     {
         //
         // If this is the last outstanding irp for the device and
@@ -819,17 +745,11 @@ Return Value:
 
         WmipAssert(RegEntry->Flags & REGENTRY_FLAG_NOT_ACCEPTING_IRPS);
 
-        KeSetEvent(&RegEntry->Event,
-                   0,
-                   FALSE);
-
+        KeSetEvent(&RegEntry->Event, 0, FALSE);
     }
 }
 
-NTSTATUS WmipPDOToDeviceInstanceName(
-    IN PDEVICE_OBJECT PDO,
-    OUT PUNICODE_STRING DeviceInstanceName
-    )
+NTSTATUS WmipPDOToDeviceInstanceName(IN PDEVICE_OBJECT PDO, OUT PUNICODE_STRING DeviceInstanceName)
 /*++
 
 Routine Description:
@@ -862,35 +782,25 @@ Return Value:
 
 #ifdef MEMPHIS
     DevNode = _NtKernPhysicalDeviceObjectToDevNode(PDO);
-    if ((DevNode) &&
-        (CM_Get_DevNode_Key(DevNode,
-                            NULL,
-                            &RegistryKeyName,
-                            Length,
-                            CM_REGISTRY_SOFTWARE) == CR_SUCCESS))
+    if ((DevNode) && (CM_Get_DevNode_Key(DevNode, NULL, &RegistryKeyName, Length, CM_REGISTRY_SOFTWARE) == CR_SUCCESS))
     {
         RtlInitAnsiString(&AnsiInstancePath, RegistryKeyName);
-        Status = RtlAnsiStringToUnicodeString(DeviceInstanceName,
-                                              &AnsiInstancePath,
-                                              TRUE);
-    } else {
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: Error getting devnode key for PDO %x\n",
-                 PDO));
+        Status = RtlAnsiStringToUnicodeString(DeviceInstanceName, &AnsiInstancePath, TRUE);
+    }
+    else
+    {
+        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: Error getting devnode key for PDO %x\n", PDO));
         Status = STATUS_UNSUCCESSFUL;
     }
 #else
     WmipAssert(PDO != NULL);
     Status = IoGetDeviceInstanceName(PDO, DeviceInstanceName);
 #endif
-    return(Status);
+    return (Status);
 }
 
-void WmipTranslatePDOInstanceNames(
-    IN OUT PIRP Irp,
-    IN UCHAR MinorFunction,
-    IN ULONG MaxBufferSize,
-    IN OUT PREGENTRY RegEntry
-    )
+void WmipTranslatePDOInstanceNames(IN OUT PIRP Irp, IN UCHAR MinorFunction, IN ULONG MaxBufferSize,
+                                   IN OUT PREGENTRY RegEntry)
 /*++
 
 Routine Description:
@@ -945,17 +855,15 @@ Return Value:
     WmiRegInfo = (PWMIREGINFO)WmiRegInfoBase;
     do
     {
-        for (i = 0; i < WmiRegInfo->GuidCount;  i++)
+        for (i = 0; i < WmiRegInfo->GuidCount; i++)
         {
             WmiRegGuid = &WmiRegInfo->WmiRegGuid[i];
 
             //
             // If data provider already registers this guid then it overrides
             // any default mapping done here.
-            if ((IsEqualGUID(&WmiRegGuid->Guid,
-                             &WmipDataProviderPnpidGuid)) ||
-                (IsEqualGUID(&WmiRegGuid->Guid,
-                             &WmipDataProviderPnPIdInstanceNamesGuid)))
+            if ((IsEqualGUID(&WmiRegGuid->Guid, &WmipDataProviderPnpidGuid)) ||
+                (IsEqualGUID(&WmiRegGuid->Guid, &WmipDataProviderPnPIdInstanceNamesGuid)))
             {
                 AllowPnPIdMap = FALSE;
 
@@ -971,7 +879,7 @@ Return Value:
             }
 
             if (WmiRegGuid->Flags & WMIREG_FLAG_INSTANCE_PDO)
-            {               
+            {
                 //
                 // This instance name must be translated from PDO to
                 // device instance name
@@ -983,20 +891,16 @@ Return Value:
                     WmiRegInfo2 = (PWMIREGINFO)WmiRegInfoBase;
                     while (WmiRegInfo2->NextWmiRegInfo != 0)
                     {
-                        WmiRegInfo2 = (PWMIREGINFO)((PUCHAR)WmiRegInfo2 +
-                                                 WmiRegInfo2->NextWmiRegInfo);
+                        WmiRegInfo2 = (PWMIREGINFO)((PUCHAR)WmiRegInfo2 + WmiRegInfo2->NextWmiRegInfo);
                     }
-                    FreeSpacePtr = (PUCHAR)WmiRegInfo2 +
-                                 ((WmiRegInfo2->BufferSize + 1) & 0xfffffffe);
+                    FreeSpacePtr = (PUCHAR)WmiRegInfo2 + ((WmiRegInfo2->BufferSize + 1) & 0xfffffffe);
                     FreeSpaceLeft = MaxBufferSize - (ULONG)(FreeSpacePtr - WmiRegInfoBase);
-
                 }
 
                 //
                 // Keep track of the max number of instances for the PDO name
-                MaxInstanceNames = MaxInstanceNames < WmiRegGuid->InstanceCount ?
-                                            WmiRegGuid->InstanceCount :
-                                            MaxInstanceNames;
+                MaxInstanceNames =
+                    MaxInstanceNames < WmiRegGuid->InstanceCount ? WmiRegGuid->InstanceCount : MaxInstanceNames;
 
                 //
                 // Get device instance name for the PDO
@@ -1005,27 +909,30 @@ Return Value:
                 {
                     WmiRegGuid->Flags |= WMIREG_FLAG_INSTANCE_BASENAME;
                     WmiRegGuid->BaseNameOffset = LastBaseNameOffset;
-                } else {
+                }
+                else
+                {
 
                     Status = WmipPDOToDeviceInstanceName(PDO, &InstancePath);
                     if (NT_SUCCESS(Status))
                     {
-                        if (AllowPnPIdMap &&
-                            ((PnPIdPDO == NULL) || (PnPIdPDO == PDO)))
+                        if (AllowPnPIdMap && ((PnPIdPDO == NULL) || (PnPIdPDO == PDO)))
                         {
                             if (PnPIdPDO == NULL)
                             {
                                 PnPIdPDO = PDO;
                                 ObReferenceObject(PnPIdPDO);
                             }
-                        } else {
+                        }
+                        else
+                        {
                             //
                             // If the PDO value changes then we don't
                             // do any instance name stuff. In this case
                             // make sure we remove any ref on the PDO
                             //
                             AllowPnPIdMap = FALSE;
-                            
+
                             if (PnPIdPDO != NULL)
                             {
                                 ObDereferenceObject(PnPIdPDO);
@@ -1033,31 +940,28 @@ Return Value:
                             }
                         }
 
-                        InstancePathLength = InstancePath.Length +
-                                              sizeof(USHORT) + sizeof(WCHAR);
+                        InstancePathLength = InstancePath.Length + sizeof(USHORT) + sizeof(WCHAR);
 
                         SizeNeeded += InstancePathLength;
-                        if ((WmiRegInfoTooSmall) ||
-                            (InstancePathLength > FreeSpaceLeft))
+                        if ((WmiRegInfoTooSmall) || (InstancePathLength > FreeSpaceLeft))
                         {
                             WmiRegInfoTooSmall = TRUE;
-                        } else {
+                        }
+                        else
+                        {
                             WmiRegGuid->Flags |= WMIREG_FLAG_INSTANCE_BASENAME;
 
                             LastBaseNameOffset = (ULONG)(FreeSpacePtr - (PUCHAR)WmiRegInfo);
                             LastPDO = PDO;
 
                             WmiRegGuid->BaseNameOffset = LastBaseNameOffset;
-                            (*(PUSHORT)FreeSpacePtr) = InstancePath.Length +
-                                                          sizeof(WCHAR);
-                            FreeSpacePtr +=  sizeof(USHORT);
-                            RtlCopyMemory(FreeSpacePtr,
-                                      InstancePath.Buffer,
-                                      InstancePath.Length);
-                             FreeSpacePtr += InstancePath.Length;
-                             *((PWCHAR)FreeSpacePtr) = L'_';
-                             FreeSpacePtr += sizeof(WCHAR);
-                             FreeSpaceLeft -= InstancePathLength;
+                            (*(PUSHORT)FreeSpacePtr) = InstancePath.Length + sizeof(WCHAR);
+                            FreeSpacePtr += sizeof(USHORT);
+                            RtlCopyMemory(FreeSpacePtr, InstancePath.Buffer, InstancePath.Length);
+                            FreeSpacePtr += InstancePath.Length;
+                            *((PWCHAR)FreeSpacePtr) = L'_';
+                            FreeSpacePtr += sizeof(WCHAR);
+                            FreeSpaceLeft -= InstancePathLength;
                         }
                     }
 
@@ -1090,26 +994,25 @@ Return Value:
             //
             // Pad so that new WmiRegInfo starts on 8 byte boundry and
             // adjust free buffer size
-            FreeSpacePadPtr = (PUCHAR)(((ULONG_PTR)FreeSpacePtr+7) & ~7);
+            FreeSpacePadPtr = (PUCHAR)(((ULONG_PTR)FreeSpacePtr + 7) & ~7);
             PadSpace = (ULONG)(FreeSpacePadPtr - FreeSpacePtr);
             FreeSpaceLeft -= PadSpace;
             FreeSpacePtr = FreeSpacePadPtr;
 
             //
             // Figure out how much space we will need to include extra guid
-            InstancePathLength = InstancePath.Length +
-                                 sizeof(USHORT) + sizeof(WCHAR);
+            InstancePathLength = InstancePath.Length + sizeof(USHORT) + sizeof(WCHAR);
 
-            ExtraRoom = 2 * (InstancePathLength + sizeof(WMIREGGUID)) +
-                          sizeof(WMIREGINFO);
+            ExtraRoom = 2 * (InstancePathLength + sizeof(WMIREGGUID)) + sizeof(WMIREGINFO);
 
             SizeNeeded += ExtraRoom + PadSpace;
 
-            if ((WmiRegInfoTooSmall) ||
-                (ExtraRoom > FreeSpaceLeft))
+            if ((WmiRegInfoTooSmall) || (ExtraRoom > FreeSpaceLeft))
             {
                 WmiRegInfoTooSmall = TRUE;
-            } else {
+            }
+            else
+            {
                 if (RegEntry->PDO == NULL)
                 {
                     //
@@ -1122,11 +1025,10 @@ Return Value:
                     RegEntry->PDO = PnPIdPDO;
                     RegEntry->MaxInstanceNames = MaxInstanceNames;
 
-                    WmiRegInfo->NextWmiRegInfo = (ULONG)(FreeSpacePtr -
-                                                         (PUCHAR)WmiRegInfo);
+                    WmiRegInfo->NextWmiRegInfo = (ULONG)(FreeSpacePtr - (PUCHAR)WmiRegInfo);
 
                     WmiRegInfo = (PWMIREGINFO)FreeSpacePtr;
-                    FreeSpaceOffset = sizeof(WMIREGINFO) + 2*sizeof(WMIREGGUID);
+                    FreeSpaceOffset = sizeof(WMIREGINFO) + 2 * sizeof(WMIREGGUID);
                     FreeSpacePtr += FreeSpaceOffset;
 
                     RtlZeroMemory(WmiRegInfo, FreeSpaceOffset);
@@ -1134,22 +1036,18 @@ Return Value:
                     WmiRegInfo->GuidCount = 2;
 
                     WmiRegGuid = &WmiRegInfo->WmiRegGuid[0];
-                    WmiRegGuid->Flags = WMIREG_FLAG_INSTANCE_BASENAME |
-                                        WMIREG_FLAG_INSTANCE_PDO;
+                    WmiRegGuid->Flags = WMIREG_FLAG_INSTANCE_BASENAME | WMIREG_FLAG_INSTANCE_PDO;
                     WmiRegGuid->InstanceCount = MaxInstanceNames;
                     WmiRegGuid->Guid = WmipDataProviderPnpidGuid;
                     WmiRegGuid->BaseNameOffset = FreeSpaceOffset;
 
                     (*(PUSHORT)FreeSpacePtr) = InstancePath.Length + sizeof(WCHAR);
-                    FreeSpacePtr +=  sizeof(USHORT);
-                    RtlCopyMemory(FreeSpacePtr,
-                                  InstancePath.Buffer,
-                                  InstancePath.Length);
+                    FreeSpacePtr += sizeof(USHORT);
+                    RtlCopyMemory(FreeSpacePtr, InstancePath.Buffer, InstancePath.Length);
                     FreeSpacePtr += InstancePath.Length;
                     *((PWCHAR)FreeSpacePtr) = L'_';
                     FreeSpacePtr += sizeof(WCHAR);
-                    FreeSpaceOffset += sizeof(USHORT) +
-                                       InstancePath.Length + sizeof(WCHAR);
+                    FreeSpaceOffset += sizeof(USHORT) + InstancePath.Length + sizeof(WCHAR);
 
 
                     WmiRegGuid = &WmiRegInfo->WmiRegGuid[1];
@@ -1159,20 +1057,19 @@ Return Value:
                     WmiRegGuid->BaseNameOffset = FreeSpaceOffset;
 
                     (*(PUSHORT)FreeSpacePtr) = InstancePath.Length;
-                    FreeSpacePtr +=  sizeof(USHORT);
-                    RtlCopyMemory(FreeSpacePtr,
-                                  InstancePath.Buffer,
-                                  InstancePath.Length);
+                    FreeSpacePtr += sizeof(USHORT);
+                    RtlCopyMemory(FreeSpacePtr, InstancePath.Buffer, InstancePath.Length);
                     FreeSpacePtr += InstancePath.Length;
                 }
-
             }
 
             RtlFreeUnicodeString(&InstancePath);
         }
 
         ObDereferenceObject(PnPIdPDO);
-    } else {
+    }
+    else
+    {
         WmipAssert(PnPIdPDO == NULL);
     }
 
@@ -1180,19 +1077,16 @@ Return Value:
     {
         *((PULONG)Buffer) = SizeNeeded;
         Irp->IoStatus.Information = sizeof(ULONG);
-    } else {
+    }
+    else
+    {
         WmiRegInfo = (PWMIREGINFO)WmiRegInfoBase;
         WmiRegInfo->BufferSize = SizeNeeded;
         Irp->IoStatus.Information = SizeNeeded;
     }
 }
 
-NTSTATUS WmipValidateWmiRegInfoString(
-    PWMIREGINFO WmiRegInfo,
-    ULONG BufferSize,
-    ULONG Offset,
-    PWCHAR *String
-)
+NTSTATUS WmipValidateWmiRegInfoString(PWMIREGINFO WmiRegInfo, ULONG BufferSize, ULONG Offset, PWCHAR *String)
 {
     PWCHAR s;
 
@@ -1203,38 +1097,34 @@ NTSTATUS WmipValidateWmiRegInfoString(
         //
         // Offset is beyond bounds of buffer or is misaligned
         //
-        return(STATUS_INVALID_PARAMETER);
+        return (STATUS_INVALID_PARAMETER);
     }
 
     if (Offset != 0)
     {
         s = (PWCHAR)OffsetToPtr(WmiRegInfo, Offset);
-           if (*s + Offset > BufferSize)
+        if (*s + Offset > BufferSize)
         {
             //
-               // string extends beyond end of buffer
+            // string extends beyond end of buffer
             //
-            return(STATUS_INVALID_PARAMETER);
+            return (STATUS_INVALID_PARAMETER);
         }
         *String = s;
-    } else {
+    }
+    else
+    {
         //
         // Offset of 0 implies null string
         //
         *String = NULL;
     }
 
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }
 
-NTSTATUS WmipProcessWmiRegInfo(
-    IN PREGENTRY RegEntry,
-    IN PWMIREGINFO WmiRegInfo,
-    IN ULONG BufferSize,
-    IN PWMIGUIDOBJECT RequestObject,
-    IN BOOLEAN Update,
-    IN BOOLEAN IsUserMode
-    )
+NTSTATUS WmipProcessWmiRegInfo(IN PREGENTRY RegEntry, IN PWMIREGINFO WmiRegInfo, IN ULONG BufferSize,
+                               IN PWMIGUIDOBJECT RequestObject, IN BOOLEAN Update, IN BOOLEAN IsUserMode)
 /*+++
 
 Routine Description:
@@ -1273,7 +1163,8 @@ Return Value:
 
     FinalStatus = STATUS_INVALID_PARAMETER;
 
-    do {
+    do
+    {
         //
         // First we validate that the WMIREGINFO looks correct
         //
@@ -1289,11 +1180,8 @@ Return Value:
         //
         // Validate registry path string
         //
-        Status = WmipValidateWmiRegInfoString(WmiRegInfo,
-                                              BufferSize,
-                                              WmiRegInfo->RegistryPath,
-                                              &RegPath);
-        if (! NT_SUCCESS(Status))
+        Status = WmipValidateWmiRegInfoString(WmiRegInfo, BufferSize, WmiRegInfo->RegistryPath, &RegPath);
+        if (!NT_SUCCESS(Status))
         {
             break;
         }
@@ -1301,11 +1189,8 @@ Return Value:
         //
         // Validate resource name string
         //
-        Status = WmipValidateWmiRegInfoString(WmiRegInfo,
-                                              BufferSize,
-                                              WmiRegInfo->MofResourceName,
-                                              &ResourceName);
-        if (! NT_SUCCESS(Status))
+        Status = WmipValidateWmiRegInfoString(WmiRegInfo, BufferSize, WmiRegInfo->MofResourceName, &ResourceName);
+        if (!NT_SUCCESS(Status))
         {
             break;
         }
@@ -1315,8 +1200,7 @@ Return Value:
         // buffer. Note that WmipAddDataSource verifies that the instance
         // names within each guid is within bounds.
         //
-        GuidBufferSize = sizeof(WMIREGINFO) +
-                          WmiRegInfo->GuidCount * sizeof(WMIREGGUID);
+        GuidBufferSize = sizeof(WMIREGINFO) + WmiRegInfo->GuidCount * sizeof(WMIREGGUID);
         if (GuidBufferSize > BufferSize)
         {
             Status = STATUS_INVALID_PARAMETER;
@@ -1333,24 +1217,19 @@ Return Value:
             // CONSIDER: UM Code had held the critsect over all
             // WMIREGINFOs linked together
             //
-            Status = WmipUpdateDataSource(RegEntry,
-                                              WmiRegInfo,
-                                              BufferSize);
+            Status = WmipUpdateDataSource(RegEntry, WmiRegInfo, BufferSize);
 #if DBG
-            if (! NT_SUCCESS(Status))
+            if (!NT_SUCCESS(Status))
             {
-                WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: WmipUpdateDataSourceFailed %x for RegEntry %p\n",
-                         Status, RegEntry));
+                WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
+                                  "WMI: WmipUpdateDataSourceFailed %x for RegEntry %p\n", Status, RegEntry));
             }
 #endif
-        } else {
-            Status = WmipAddDataSource(RegEntry,
-                                           WmiRegInfo,
-                                           BufferSize,
-                                           RegPath,
-                                           ResourceName,
-                                           RequestObject,
-                                           IsUserMode);
+        }
+        else
+        {
+            Status =
+                WmipAddDataSource(RegEntry, WmiRegInfo, BufferSize, RegPath, ResourceName, RequestObject, IsUserMode);
         }
 
         if (NT_SUCCESS(Status))
@@ -1360,10 +1239,11 @@ Return Value:
             // successfully then the final status is success
             //
             FinalStatus = STATUS_SUCCESS;
-
-        } else {
-            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: WmipAddDataSourceFailed %x for RegEntry %p\n",
-                          Status, RegEntry));
+        }
+        else
+        {
+            WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: WmipAddDataSourceFailed %x for RegEntry %p\n",
+                              Status, RegEntry));
         }
 
         Linkage = WmiRegInfo->NextWmiRegInfo;
@@ -1374,7 +1254,9 @@ Return Value:
             //
             WmiRegInfo = (PWMIREGINFO)((PUCHAR)WmiRegInfo + Linkage);
             BufferSize -= Linkage;
-        } else {
+        }
+        else
+        {
             //
             // There is not enough room in buffer for next WMIREGINFO
             //
@@ -1383,7 +1265,7 @@ Return Value:
 
     } while (Linkage != 0);
 
-    return(FinalStatus);
+    return (FinalStatus);
 }
 
 //
@@ -1395,10 +1277,7 @@ Return Value:
 #define INITIALREGINFOSIZE 8192
 #endif
 
-NTSTATUS WmipRegisterOrUpdateDS(
-    PREGENTRY RegEntry,
-    BOOLEAN Update
-    )
+NTSTATUS WmipRegisterOrUpdateDS(PREGENTRY RegEntry, BOOLEAN Update)
 {
     PUCHAR Buffer;
     IO_STATUS_BLOCK IoStatus;
@@ -1415,42 +1294,27 @@ NTSTATUS WmipRegisterOrUpdateDS(
     SizeNeeded = INITIALREGINFOSIZE;
     do
     {
-        Buffer = ExAllocatePoolWithTag(NonPagedPool, SizeNeeded,
-                                       WmipRegisterDSPoolTag);
+        Buffer = ExAllocatePoolWithTag(NonPagedPool, SizeNeeded, WmipRegisterDSPoolTag);
         if (Buffer != NULL)
         {
             //
             // First send IRP_MN_REGINFO_EX to see if we've got
             // a sophisticated client
             //
-            Status = WmipSendWmiIrp(IRP_MN_REGINFO_EX,
-                                    RegEntry->ProviderId,
-                                    UlongToPtr(Update ?
-                                                  WMIUPDATE :
-                                                  WMIREGISTER),
-                                    SizeNeeded,
-                                    Buffer,
-                                    &IoStatus);
-                                                  
-            if ((! NT_SUCCESS(Status)) &&
-                (Status != STATUS_BUFFER_TOO_SMALL))
+            Status = WmipSendWmiIrp(IRP_MN_REGINFO_EX, RegEntry->ProviderId,
+                                    UlongToPtr(Update ? WMIUPDATE : WMIREGISTER), SizeNeeded, Buffer, &IoStatus);
+
+            if ((!NT_SUCCESS(Status)) && (Status != STATUS_BUFFER_TOO_SMALL))
             {
                 //
                 // If IRP_MN_REGINFO_EX doesn't work then try our old
                 // reliable IRP_MN_REGINFO
                 //
-                Status = WmipSendWmiIrp(IRP_MN_REGINFO,
-                                        RegEntry->ProviderId,
-                                        UlongToPtr(Update ?
-                                                      WMIUPDATE :
-                                                      WMIREGISTER),
-                                        SizeNeeded,
-                                        Buffer,
-                                        &IoStatus);
+                Status = WmipSendWmiIrp(IRP_MN_REGINFO, RegEntry->ProviderId,
+                                        UlongToPtr(Update ? WMIUPDATE : WMIREGISTER), SizeNeeded, Buffer, &IoStatus);
             }
 
-            if ((Status == STATUS_BUFFER_TOO_SMALL) ||
-                (IoStatus.Information == sizeof(ULONG)))
+            if ((Status == STATUS_BUFFER_TOO_SMALL) || (IoStatus.Information == sizeof(ULONG)))
             {
                 //
                 // if the buffer was too small then get the size we need
@@ -1460,8 +1324,9 @@ NTSTATUS WmipRegisterOrUpdateDS(
                 ExFreePool(Buffer);
                 Status = STATUS_BUFFER_TOO_SMALL;
             }
-
-        } else {
+        }
+        else
+        {
             //
             // CONSIDER: retry this later to see if we can get more memory
             //
@@ -1475,12 +1340,7 @@ NTSTATUS WmipRegisterOrUpdateDS(
     //
     if (NT_SUCCESS(Status))
     {
-        Status = WmipProcessWmiRegInfo(RegEntry,
-                                       (PWMIREGINFO)Buffer,
-                                       (ULONG)IoStatus.Information,
-                                       NULL,
-                                       Update,
-                                       FALSE);
+        Status = WmipProcessWmiRegInfo(RegEntry, (PWMIREGINFO)Buffer, (ULONG)IoStatus.Information, NULL, Update, FALSE);
     }
 
     if (Buffer != NULL)
@@ -1488,33 +1348,25 @@ NTSTATUS WmipRegisterOrUpdateDS(
         ExFreePool(Buffer);
     }
 
-    return(Status);
+    return (Status);
 }
 
 
-NTSTATUS WmipUpdateDS(
-    PREGENTRY RegEntry
-    )
+NTSTATUS WmipUpdateDS(PREGENTRY RegEntry)
 {
     PAGED_CODE();
 
-    return(WmipRegisterOrUpdateDS(RegEntry,
-                                  TRUE));
+    return (WmipRegisterOrUpdateDS(RegEntry, TRUE));
 }
 
-NTSTATUS WmipRegisterDS(
-    PREGENTRY RegEntry
-)
+NTSTATUS WmipRegisterDS(PREGENTRY RegEntry)
 {
     PAGED_CODE();
 
-    return(WmipRegisterOrUpdateDS(RegEntry,
-                                  FALSE));
+    return (WmipRegisterOrUpdateDS(RegEntry, FALSE));
 }
 
-void WmipRemoveDS(
-    PREGENTRY RegEntry
-)
+void WmipRemoveDS(PREGENTRY RegEntry)
 {
     PAGED_CODE();
 
@@ -1522,9 +1374,7 @@ void WmipRemoveDS(
 }
 
 
-void WmipRegistrationWorker(
-    PVOID Context
-   )
+void WmipRegistrationWorker(PVOID Context)
 {
     PREGISTRATIONWORKITEM RegWork;
     ULONG RegWorkCount;
@@ -1539,62 +1389,62 @@ void WmipRegistrationWorker(
     do
     {
         WmipEnterSMCritSection();
-        WmipAssert(! IsListEmpty(&WmipRegWorkList));
+        WmipAssert(!IsListEmpty(&WmipRegWorkList));
         RegWorkList = RemoveHeadList(&WmipRegWorkList);
         WmipLeaveSMCritSection();
-        RegWork = CONTAINING_RECORD(RegWorkList,
-                                    REGISTRATIONWORKITEM,
-                                    ListEntry);
+        RegWork = CONTAINING_RECORD(RegWorkList, REGISTRATIONWORKITEM, ListEntry);
 
         RegEntry = RegWork->RegEntry;
 
-        switch(RegWork->RegOperation)
+        switch (RegWork->RegOperation)
         {
-            case RegisterSingleDriver:
+        case RegisterSingleDriver:
+        {
+            Status = WmipRegisterDS(RegEntry);
+            if (NT_SUCCESS(Status))
             {
-                Status = WmipRegisterDS(RegEntry);
-                if (NT_SUCCESS(Status))
-                {
-                    //
-                    // Mark regentry as fully registered so now we can start
-                    // accepting unregister calls
-                    //
-                    RegEntry->Flags &= ~REGENTRY_FLAG_REG_IN_PROGRESS;
-                } else {
-                    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
-                                      "WMI: WmipRegisterDS(%p) failed %x for device %p\n",
-                                      RegEntry, Status, RegEntry->DeviceObject));
-                    // CONSIDER: Do we remove regentry ??
-                }
                 //
-                // Remove ref when work item was queued
+                // Mark regentry as fully registered so now we can start
+                // accepting unregister calls
                 //
-                WmipUnreferenceRegEntry(RegEntry);
+                RegEntry->Flags &= ~REGENTRY_FLAG_REG_IN_PROGRESS;
+            }
+            else
+            {
+                WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
+                                  "WMI: WmipRegisterDS(%p) failed %x for device %p\n", RegEntry, Status,
+                                  RegEntry->DeviceObject));
+                // CONSIDER: Do we remove regentry ??
+            }
+            //
+            // Remove ref when work item was queued
+            //
+            WmipUnreferenceRegEntry(RegEntry);
 
-                break;
+            break;
+        }
+
+        case RegisterUpdateSingleDriver:
+        {
+            Status = WmipUpdateDS(RegEntry);
+            if (!NT_SUCCESS(Status))
+            {
+                WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
+                                  "WMI: WmipUpdateDS(%p) failed %x for device %p\n", RegEntry, Status,
+                                  RegEntry->DeviceObject));
             }
 
-            case RegisterUpdateSingleDriver:
-            {
-                Status = WmipUpdateDS(RegEntry);
-                if (! NT_SUCCESS(Status))
-                {
-                    WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,
-                                      "WMI: WmipUpdateDS(%p) failed %x for device %p\n",
-                                      RegEntry, Status, RegEntry->DeviceObject));
-                }
+            //
+            // Remove ref when work item was queued
+            //
+            WmipUnreferenceRegEntry(RegEntry);
+            break;
+        }
 
-                //
-                // Remove ref when work item was queued
-                //
-                WmipUnreferenceRegEntry(RegEntry);
-                break;
-            }
-
-            default:
-            {
-                WmipAssert(FALSE);
-            }
+        default:
+        {
+            WmipAssert(FALSE);
+        }
         }
         WmipFree(RegWork);
 
@@ -1602,10 +1452,7 @@ void WmipRegistrationWorker(
     } while (RegWorkCount != 0);
 }
 
-NTSTATUS WmipQueueRegWork(
-    REGOPERATION RegOperation,
-    PREGENTRY RegEntry
-    )
+NTSTATUS WmipQueueRegWork(REGOPERATION RegOperation, PREGENTRY RegEntry)
 {
     PREGISTRATIONWORKITEM RegWork;
     NTSTATUS Status;
@@ -1624,8 +1471,7 @@ NTSTATUS WmipQueueRegWork(
         RegWork->RegEntry = RegEntry;
 
         WmipEnterSMCritSection();
-        InsertTailList(&WmipRegWorkList,
-                       &RegWork->ListEntry);
+        InsertTailList(&WmipRegWorkList, &RegWork->ListEntry);
         WmipLeaveSMCritSection();
 
         if (InterlockedIncrement(&WmipRegWorkItemCount) == 1)
@@ -1641,16 +1487,16 @@ NTSTATUS WmipQueueRegWork(
         //
         // RegWork will be freed by the work item processing
         //
-    } else {
+    }
+    else
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
     }
-    return(Status);
+    return (Status);
 }
 
 #if defined(_WIN64)
-ULONG IoWMIDeviceObjectToProviderId(
-    PDEVICE_OBJECT DeviceObject
-    )
+ULONG IoWMIDeviceObjectToProviderId(PDEVICE_OBJECT DeviceObject)
 /*++
 
 Routine Description:
@@ -1670,22 +1516,21 @@ Return Value:
     ULONG ProviderId;
     KIRQL OldIrql;
 
-    KeAcquireSpinLock(&WmipRegistrationSpinLock,
-                     &OldIrql);
-    
-    RegEntry = WmipDoFindRegEntryByDevice(DeviceObject,
-                                         REGENTRY_FLAG_RUNDOWN);
-    
+    KeAcquireSpinLock(&WmipRegistrationSpinLock, &OldIrql);
+
+    RegEntry = WmipDoFindRegEntryByDevice(DeviceObject, REGENTRY_FLAG_RUNDOWN);
+
     if (RegEntry != NULL)
     {
         ProviderId = RegEntry->ProviderId;
-    } else {
+    }
+    else
+    {
         ProviderId = 0;
     }
-    
-    KeReleaseSpinLock(&WmipRegistrationSpinLock,
-                      OldIrql);
-    
-    return(ProviderId);
+
+    KeReleaseSpinLock(&WmipRegistrationSpinLock, OldIrql);
+
+    return (ProviderId);
 }
 #endif

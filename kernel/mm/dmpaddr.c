@@ -28,14 +28,12 @@ Revision History:
 #if DBG
 
 LOGICAL
-MiFlushUnusedSectionInternal (
-    IN PCONTROL_AREA ControlArea
-    );
+MiFlushUnusedSectionInternal(IN PCONTROL_AREA ControlArea);
 
 #endif
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,MmPerfSnapShotValidPhysicalMemory)
+#pragma alloc_text(PAGE, MmPerfSnapShotValidPhysicalMemory)
 #endif
 
 extern PFN_NUMBER MiStartOfInitialPoolFrame;
@@ -46,19 +44,18 @@ extern PMMPTE MmSystemPtesEnd[MaximumPtePoolTypes];
 PFN_NUMBER MiIdentifyFrame = (PFN_NUMBER)-1;
 ULONG MiIdentifyCounters[64];
 
-#define MI_INCREMENT_IDENTIFY_COUNTER(x) {  \
-            ASSERT (x < 64);                \
-            MiIdentifyCounters[x] += 1;     \
-        }
+#define MI_INCREMENT_IDENTIFY_COUNTER(x) \
+    {                                    \
+        ASSERT(x < 64);                  \
+        MiIdentifyCounters[x] += 1;      \
+    }
 #else
 #define MI_INCREMENT_IDENTIFY_COUNTER(x)
 #endif
 
-
+
 #if DBG
-VOID
-MiDumpValidAddresses (
-    )
+VOID MiDumpValidAddresses()
 {
     ULONG_PTR va;
     ULONG i;
@@ -67,24 +64,27 @@ MiDumpValidAddresses (
     PMMPTE PointerPte;
 
     va = 0;
-    PointerPde = MiGetPdeAddress ((PVOID)va);
+    PointerPde = MiGetPdeAddress((PVOID)va);
 
-    for (i = 0; i < PDE_PER_PAGE; i += 1) {
-        if (PointerPde->u.Hard.Valid) {
-            DbgPrint("  **valid PDE, element %ld  %lx %lx\n",i,i,
-                          PointerPde->u.Long);
-            PointerPte = MiGetPteAddress ((PVOID)va);
+    for (i = 0; i < PDE_PER_PAGE; i += 1)
+    {
+        if (PointerPde->u.Hard.Valid)
+        {
+            DbgPrint("  **valid PDE, element %ld  %lx %lx\n", i, i, PointerPde->u.Long);
+            PointerPte = MiGetPteAddress((PVOID)va);
 
-            for (j = 0 ; j < PTE_PER_PAGE; j += 1) {
-                if (PointerPte->u.Hard.Valid) {
-                    DbgPrint("Valid address at %p PTE %p\n", (ULONG)va,
-                          PointerPte->u.Long);
+            for (j = 0; j < PTE_PER_PAGE; j += 1)
+            {
+                if (PointerPte->u.Hard.Valid)
+                {
+                    DbgPrint("Valid address at %p PTE %p\n", (ULONG)va, PointerPte->u.Long);
                 }
                 va += PAGE_SIZE;
                 PointerPte += 1;
             }
         }
-        else {
+        else
+        {
             va += (ULONG_PTR)PDE_PER_PAGE * (ULONG_PTR)PAGE_SIZE;
         }
 
@@ -92,42 +92,31 @@ MiDumpValidAddresses (
     }
 
     return;
-
 }
 
-VOID
-MiFormatPte (
-    IN PMMPTE PointerPte
-    )
+VOID MiFormatPte(IN PMMPTE PointerPte)
 {
 
     PMMPTE proto_pte;
     PSUBSECTION subsect;
 
-    if (MmIsAddressValid (PointerPte) == FALSE) {
-        DbgPrint("   cannot dump PTE %p - it's not valid\n\n",
-                 PointerPte);
+    if (MmIsAddressValid(PointerPte) == FALSE)
+    {
+        DbgPrint("   cannot dump PTE %p - it's not valid\n\n", PointerPte);
         return;
     }
 
-    DbgPrint("***DumpPTE at %p contains %p\n",
-             PointerPte,
-             PointerPte->u.Long);
+    DbgPrint("***DumpPTE at %p contains %p\n", PointerPte, PointerPte->u.Long);
 
     proto_pte = MiPteToProto(PointerPte);
     subsect = MiGetSubsectionAddress(PointerPte);
 
-    DbgPrint("   protoaddr %p subsectaddr %p\n\n",
-             proto_pte,
-             (ULONG_PTR)subsect);
+    DbgPrint("   protoaddr %p subsectaddr %p\n\n", proto_pte, (ULONG_PTR)subsect);
 
     return;
 }
-
-VOID
-MiDumpWsl (
-    VOID
-    )
+
+VOID MiDumpWsl(VOID)
 {
     ULONG i;
     PMMWSLE wsle;
@@ -135,29 +124,24 @@ MiDumpWsl (
 
     CurrentProcess = PsGetCurrentProcess();
 
-    DbgPrint("***WSLE cursize %lx frstfree %lx  Min %lx  Max %lx\n",
-        CurrentProcess->Vm.WorkingSetSize,
-        MmWorkingSetList->FirstFree,
-        CurrentProcess->Vm.MinimumWorkingSetSize,
-        CurrentProcess->Vm.MaximumWorkingSetSize);
+    DbgPrint("***WSLE cursize %lx frstfree %lx  Min %lx  Max %lx\n", CurrentProcess->Vm.WorkingSetSize,
+             MmWorkingSetList->FirstFree, CurrentProcess->Vm.MinimumWorkingSetSize,
+             CurrentProcess->Vm.MaximumWorkingSetSize);
 
-    DbgPrint("   quota %lx   firstdyn %lx  last ent %lx  next slot %lx\n",
-        MmWorkingSetList->Quota,
-        MmWorkingSetList->FirstDynamic,
-        MmWorkingSetList->LastEntry,
-        MmWorkingSetList->NextSlot);
+    DbgPrint("   quota %lx   firstdyn %lx  last ent %lx  next slot %lx\n", MmWorkingSetList->Quota,
+             MmWorkingSetList->FirstDynamic, MmWorkingSetList->LastEntry, MmWorkingSetList->NextSlot);
 
     wsle = MmWsle;
 
-    for (i = 0; i < MmWorkingSetList->LastEntry; i += 1) {
-        DbgPrint(" index %lx  %p\n",i,wsle->u1.Long);
+    for (i = 0; i < MmWorkingSetList->LastEntry; i += 1)
+    {
+        DbgPrint(" index %lx  %p\n", i, wsle->u1.Long);
         wsle += 1;
     }
     return;
-
 }
 
-#define ALLOC_SIZE ((ULONG)8*1024)
+#define ALLOC_SIZE ((ULONG)8 * 1024)
 #define MM_SAVED_CONTROL 64
 
 //
@@ -165,37 +149,28 @@ MiDumpWsl (
 // than the highest user address.
 //
 
-#define MM_NONPAGED_POOL_MARK           ((PUCHAR)(LONG_PTR)0xfffff123)
-#define MM_PAGED_POOL_MARK              ((PUCHAR)(LONG_PTR)0xfffff124)
-#define MM_KERNEL_STACK_MARK            ((PUCHAR)(LONG_PTR)0xfffff125)
-#define MM_PAGEFILE_BACKED_SHMEM_MARK   ((PUCHAR)(LONG_PTR)0xfffff126)
+#define MM_NONPAGED_POOL_MARK ((PUCHAR)(LONG_PTR)0xfffff123)
+#define MM_PAGED_POOL_MARK ((PUCHAR)(LONG_PTR)0xfffff124)
+#define MM_KERNEL_STACK_MARK ((PUCHAR)(LONG_PTR)0xfffff125)
+#define MM_PAGEFILE_BACKED_SHMEM_MARK ((PUCHAR)(LONG_PTR)0xfffff126)
 
-#define MM_DUMP_ONLY_VALID_PAGES    1
+#define MM_DUMP_ONLY_VALID_PAGES 1
 
-typedef struct _KERN_MAP {
+typedef struct _KERN_MAP
+{
     PVOID StartVa;
     PVOID EndVa;
     PKLDR_DATA_TABLE_ENTRY Entry;
 } KERN_MAP, *PKERN_MAP;
 
 ULONG
-MiBuildKernelMap (
-    OUT PKERN_MAP *KernelMapOut
-    );
+MiBuildKernelMap(OUT PKERN_MAP *KernelMapOut);
 
 LOGICAL
-MiIsAddressRangeValid (
-    IN PVOID VirtualAddress,
-    IN SIZE_T Length
-    );
+MiIsAddressRangeValid(IN PVOID VirtualAddress, IN SIZE_T Length);
 
 NTSTATUS
-MmMemoryUsage (
-    IN PVOID Buffer,
-    IN ULONG Size,
-    IN ULONG Type,
-    OUT PULONG OutLength
-    )
+MmMemoryUsage(IN PVOID Buffer, IN ULONG Size, IN ULONG Type, OUT PULONG OutLength)
 
 /*++
 
@@ -239,15 +214,15 @@ Return Value:
     PEPROCESS Process;
     PUCHAR End;
     PCONTROL_AREA SavedControl[MM_SAVED_CONTROL];
-    PSYSTEM_MEMORY_INFO  SavedInfo[MM_SAVED_CONTROL];
+    PSYSTEM_MEMORY_INFO SavedInfo[MM_SAVED_CONTROL];
     ULONG j;
     ULONG ControlCount;
     UCHAR PageFileMappedString[] = "PageFile Mapped";
-    UCHAR MetaFileString[] =       "Fs Meta File";
-    UCHAR NoNameString[] =         "No File Name";
-    UCHAR NonPagedPoolString[] =   "NonPagedPool";
-    UCHAR PagedPoolString[] =      "PagedPool";
-    UCHAR KernelStackString[] =    "Kernel Stack";
+    UCHAR MetaFileString[] = "Fs Meta File";
+    UCHAR NoNameString[] = "No File Name";
+    UCHAR NonPagedPoolString[] = "NonPagedPool";
+    UCHAR PagedPoolString[] = "PagedPool";
+    UCHAR KernelStackString[] = "Kernel Stack";
     PUCHAR NameString;
     PKERN_MAP KernMap;
     ULONG KernSize;
@@ -260,15 +235,17 @@ Return Value:
     Master = NULL;
     status = STATUS_SUCCESS;
 
-    KernSize = MiBuildKernelMap (&KernMap);
-    if (KernSize == 0) {
+    KernSize = MiBuildKernelMap(&KernMap);
+    if (KernSize == 0)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    MemInfo = ExAllocatePoolWithTag (NonPagedPool, (SIZE_T) Size, 'lMmM');
+    MemInfo = ExAllocatePoolWithTag(NonPagedPool, (SIZE_T)Size, 'lMmM');
 
-    if (MemInfo == NULL) {
-        ExFreePool (KernMap);
+    if (MemInfo == NULL)
+    {
+        ExFreePool(KernMap);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -280,33 +257,37 @@ Return Value:
     // Walk through the ranges identifying pages.
     //
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    for (i = 0; i < MmPhysicalMemoryBlock->NumberOfRuns; i += 1) {
+    for (i = 0; i < MmPhysicalMemoryBlock->NumberOfRuns; i += 1)
+    {
 
-        Pfn1 = MI_PFN_ELEMENT (MmPhysicalMemoryBlock->Run[i].BasePage);
+        Pfn1 = MI_PFN_ELEMENT(MmPhysicalMemoryBlock->Run[i].BasePage);
         LastPfn = Pfn1 + MmPhysicalMemoryBlock->Run[i].PageCount;
 
-        for ( ; Pfn1 < LastPfn; Pfn1 += 1) {
+        for (; Pfn1 < LastPfn; Pfn1 += 1)
+        {
 
-            RtlZeroMemory (&PfnId, sizeof(PfnId));
+            RtlZeroMemory(&PfnId, sizeof(PfnId));
 
-            MiIdentifyPfn (Pfn1, &PfnId);
+            MiIdentifyPfn(Pfn1, &PfnId);
 
-            if ((PfnId.u1.e1.ListDescription == FreePageList) ||
-                (PfnId.u1.e1.ListDescription == ZeroedPageList) ||
-                (PfnId.u1.e1.ListDescription == BadPageList) ||
-                (PfnId.u1.e1.ListDescription == TransitionPage)) {
-                    continue;
+            if ((PfnId.u1.e1.ListDescription == FreePageList) || (PfnId.u1.e1.ListDescription == ZeroedPageList) ||
+                (PfnId.u1.e1.ListDescription == BadPageList) || (PfnId.u1.e1.ListDescription == TransitionPage))
+            {
+                continue;
             }
 
-            if (PfnId.u1.e1.ListDescription != ActiveAndValid) {
-                if (Type == MM_DUMP_ONLY_VALID_PAGES) {
+            if (PfnId.u1.e1.ListDescription != ActiveAndValid)
+            {
+                if (Type == MM_DUMP_ONLY_VALID_PAGES)
+                {
                     continue;
                 }
             }
 
-            if (PfnId.u1.e1.UseDescription == MMPFNUSE_PAGEFILEMAPPED) {
+            if (PfnId.u1.e1.UseDescription == MMPFNUSE_PAGEFILEMAPPED)
+            {
 
                 //
                 // This page belongs to a pagefile-backed shared memory section.
@@ -314,18 +295,19 @@ Return Value:
 
                 Master = MM_PAGEFILE_BACKED_SHMEM_MARK;
             }
-            else if ((PfnId.u1.e1.UseDescription == MMPFNUSE_FILE) ||
-                     (PfnId.u1.e1.UseDescription == MMPFNUSE_METAFILE)) {
+            else if ((PfnId.u1.e1.UseDescription == MMPFNUSE_FILE) || (PfnId.u1.e1.UseDescription == MMPFNUSE_METAFILE))
+            {
 
                 //
                 // This shared page maps a file or file metadata.
                 //
 
-                Subsection = MiGetSubsectionAddress (&Pfn1->OriginalPte);
+                Subsection = MiGetSubsectionAddress(&Pfn1->OriginalPte);
                 ControlArea = Subsection->ControlArea;
-                Master = (PUCHAR) ControlArea;
+                Master = (PUCHAR)ControlArea;
             }
-            else if (PfnId.u1.e1.UseDescription == MMPFNUSE_NONPAGEDPOOL) {
+            else if (PfnId.u1.e1.UseDescription == MMPFNUSE_NONPAGEDPOOL)
+            {
 
                 //
                 // This is nonpaged pool, put it in the nonpaged pool cell.
@@ -333,7 +315,8 @@ Return Value:
 
                 Master = MM_NONPAGED_POOL_MARK;
             }
-            else if (PfnId.u1.e1.UseDescription == MMPFNUSE_PAGEDPOOL) {
+            else if (PfnId.u1.e1.UseDescription == MMPFNUSE_PAGEDPOOL)
+            {
 
                 //
                 // This is paged pool, put it in the paged pool cell.
@@ -341,7 +324,8 @@ Return Value:
 
                 Master = MM_PAGED_POOL_MARK;
             }
-            else if (PfnId.u1.e1.UseDescription == MMPFNUSE_SESSIONPRIVATE) {
+            else if (PfnId.u1.e1.UseDescription == MMPFNUSE_SESSIONPRIVATE)
+            {
 
                 //
                 // Call this paged pool for now.
@@ -349,7 +333,8 @@ Return Value:
 
                 Master = MM_PAGED_POOL_MARK;
             }
-            else if (PfnId.u1.e1.UseDescription == MMPFNUSE_DRIVERLOCKPAGE) {
+            else if (PfnId.u1.e1.UseDescription == MMPFNUSE_DRIVERLOCKPAGE)
+            {
 
                 //
                 // Call this nonpaged pool for now.
@@ -357,7 +342,8 @@ Return Value:
 
                 Master = MM_NONPAGED_POOL_MARK;
             }
-            else if (PfnId.u1.e1.UseDescription == MMPFNUSE_AWEPAGE) {
+            else if (PfnId.u1.e1.UseDescription == MMPFNUSE_AWEPAGE)
+            {
 
                 //
                 // Call this nonpaged pool for now.
@@ -365,7 +351,8 @@ Return Value:
 
                 Master = MM_NONPAGED_POOL_MARK;
             }
-            else {
+            else
+            {
 
                 //
                 // See if the page is part of the kernel or a driver image.
@@ -378,26 +365,32 @@ Return Value:
 
                 VirtualAddress = PfnId.u2.VirtualAddress;
 
-                for (j = 0; j < KernSize; j += 1) {
-                    if ((VirtualAddress >= KernMap[j].StartVa) &&
-                        (VirtualAddress < KernMap[j].EndVa)) {
+                for (j = 0; j < KernSize; j += 1)
+                {
+                    if ((VirtualAddress >= KernMap[j].StartVa) && (VirtualAddress < KernMap[j].EndVa))
+                    {
                         Master = (PUCHAR)&KernMap[j];
                         break;
                     }
                 }
 
-                if (j == KernSize) {
-                    if (PfnId.u1.e1.UseDescription == MMPFNUSE_SYSTEMPTE) {
+                if (j == KernSize)
+                {
+                    if (PfnId.u1.e1.UseDescription == MMPFNUSE_SYSTEMPTE)
+                    {
                         Master = MM_KERNEL_STACK_MARK;
                     }
-                    else if (MI_IS_SESSION_PTE (VirtualAddress)) {
+                    else if (MI_IS_SESSION_PTE(VirtualAddress))
+                    {
                         Master = MM_NONPAGED_POOL_MARK;
                     }
-                    else {
+                    else
+                    {
 
-                        ASSERT ((PfnId.u1.e1.UseDescription == MMPFNUSE_PROCESSPRIVATE) || (PfnId.u1.e1.UseDescription == MMPFNUSE_PAGETABLE));
+                        ASSERT((PfnId.u1.e1.UseDescription == MMPFNUSE_PROCESSPRIVATE) ||
+                               (PfnId.u1.e1.UseDescription == MMPFNUSE_PAGETABLE));
 
-                        Master = (PUCHAR) (ULONG_PTR) PfnId.u1.e3.PageDirectoryBase;
+                        Master = (PUCHAR)(ULONG_PTR)PfnId.u1.e3.PageDirectoryBase;
                     }
                 }
             }
@@ -407,38 +400,46 @@ Return Value:
             // See if there is already a bucket allocated for it.
             //
 
-            for (Info = InfoStart; Info < InfoEnd; Info += 1) {
-                if (Info->StringOffset == Master) {
+            for (Info = InfoStart; Info < InfoEnd; Info += 1)
+            {
+                if (Info->StringOffset == Master)
+                {
                     break;
                 }
             }
 
-            if (Info == InfoEnd) {
+            if (Info == InfoEnd)
+            {
 
                 InfoEnd += 1;
-                if ((PUCHAR)InfoEnd > End) {
+                if ((PUCHAR)InfoEnd > End)
+                {
                     status = STATUS_DATA_OVERRUN;
                     goto Done;
                 }
 
-                RtlZeroMemory (Info, sizeof(*Info));
+                RtlZeroMemory(Info, sizeof(*Info));
                 Info->StringOffset = Master;
             }
 
-            if (PfnId.u1.e1.ListDescription == ActiveAndValid) {
+            if (PfnId.u1.e1.ListDescription == ActiveAndValid)
+            {
                 Info->ValidCount += 1;
             }
             else if ((PfnId.u1.e1.ListDescription == StandbyPageList) ||
-                     (PfnId.u1.e1.ListDescription == TransitionPage)) {
+                     (PfnId.u1.e1.ListDescription == TransitionPage))
+            {
 
                 Info->TransitionCount += 1;
             }
             else if ((PfnId.u1.e1.ListDescription == ModifiedPageList) ||
-                     (PfnId.u1.e1.ListDescription == ModifiedNoWritePageList)) {
+                     (PfnId.u1.e1.ListDescription == ModifiedNoWritePageList))
+            {
                 Info->ModifiedCount += 1;
             }
 
-            if (PfnId.u1.e1.UseDescription == MMPFNUSE_PAGETABLE) {
+            if (PfnId.u1.e1.UseDescription == MMPFNUSE_PAGETABLE)
+            {
                 Info->PageTableCount += 1;
             }
         }
@@ -451,34 +452,41 @@ Return Value:
     // Process the buckets ...
     //
 
-    for (Info = InfoStart; Info < InfoEnd; Info += 1) {
+    for (Info = InfoStart; Info < InfoEnd; Info += 1)
+    {
 
         ControlArea = NULL;
 
-        if (Info->StringOffset == MM_PAGEFILE_BACKED_SHMEM_MARK) {
+        if (Info->StringOffset == MM_PAGEFILE_BACKED_SHMEM_MARK)
+        {
             Length = 16;
             NameString = PageFileMappedString;
         }
-        else if (Info->StringOffset == MM_NONPAGED_POOL_MARK) {
+        else if (Info->StringOffset == MM_NONPAGED_POOL_MARK)
+        {
             Length = 14;
             NameString = NonPagedPoolString;
         }
-        else if (Info->StringOffset == MM_PAGED_POOL_MARK) {
+        else if (Info->StringOffset == MM_PAGED_POOL_MARK)
+        {
             Length = 14;
             NameString = PagedPoolString;
         }
-        else if (Info->StringOffset == MM_KERNEL_STACK_MARK) {
+        else if (Info->StringOffset == MM_KERNEL_STACK_MARK)
+        {
             Length = 14;
             NameString = KernelStackString;
         }
         else if (((PUCHAR)Info->StringOffset >= (PUCHAR)&KernMap[0]) &&
-                   ((PUCHAR)Info->StringOffset <= (PUCHAR)&KernMap[KernSize])) {
+                 ((PUCHAR)Info->StringOffset <= (PUCHAR)&KernMap[KernSize]))
+        {
 
             DataTableEntry = ((PKERN_MAP)Info->StringOffset)->Entry;
             NameString = (PUCHAR)DataTableEntry->BaseDllName.Buffer;
             Length = DataTableEntry->BaseDllName.Length;
         }
-        else if (Info->StringOffset > (PUCHAR)MM_HIGHEST_USER_ADDRESS) {
+        else if (Info->StringOffset > (PUCHAR)MM_HIGHEST_USER_ADDRESS)
+        {
 
             //
             // This points to a control area - get the file name.
@@ -488,29 +496,34 @@ Return Value:
             NameString = (PUCHAR)&ControlArea->FilePointer->FileName.Buffer[0];
 
             Length = ControlArea->FilePointer->FileName.Length;
-            if (Length == 0) {
-                if (ControlArea->u.Flags.NoModifiedWriting) {
+            if (Length == 0)
+            {
+                if (ControlArea->u.Flags.NoModifiedWriting)
+                {
                     NameString = MetaFileString;
                     Length = 14;
                 }
-                else if (ControlArea->u.Flags.File == 0) {
+                else if (ControlArea->u.Flags.File == 0)
+                {
                     NameString = PageFileMappedString;
                     Length = 16;
                 }
-                else {
+                else
+                {
                     NameString = NoNameString;
                     Length = 14;
                 }
             }
         }
-        else {
+        else
+        {
 
             //
             // This is a process (or session) top-level page directory.
             //
 
-            Pfn1 = MI_PFN_ELEMENT (PtrToUlong(Info->StringOffset));
-            ASSERT (Pfn1->u4.PteFrame == (ULONG_PTR)(Pfn1 - MmPfnDatabase));
+            Pfn1 = MI_PFN_ELEMENT(PtrToUlong(Info->StringOffset));
+            ASSERT(Pfn1->u4.PteFrame == (ULONG_PTR)(Pfn1 - MmPfnDatabase));
 
             Process = (PEPROCESS)Pfn1->u1.Event;
 
@@ -518,25 +531,27 @@ Return Value:
             Length = 16;
         }
 
-        if ((String+Length+2) >= End) {
+        if ((String + Length + 2) >= End)
+        {
             status = STATUS_DATA_OVERRUN;
             Info->StringOffset = NULL;
             goto Done;
         }
 
-        if ((ControlArea == NULL) ||
-            (MiIsAddressRangeValid (NameString, Length))) {
+        if ((ControlArea == NULL) || (MiIsAddressRangeValid(NameString, Length)))
+        {
 
-            RtlCopyMemory (String, NameString, Length);
+            RtlCopyMemory(String, NameString, Length);
             Info->StringOffset = (PUCHAR)Buffer + ((PUCHAR)String - (PUCHAR)MemInfo);
             String[Length] = 0;
             String[Length + 1] = 0;
             String += Length + 2;
         }
-        else {
-            if (!(ControlArea->u.Flags.BeingCreated ||
-                  ControlArea->u.Flags.BeingDeleted) &&
-                  (ControlCount < MM_SAVED_CONTROL)) {
+        else
+        {
+            if (!(ControlArea->u.Flags.BeingCreated || ControlArea->u.Flags.BeingDeleted) &&
+                (ControlCount < MM_SAVED_CONTROL))
+            {
 
                 SavedControl[ControlCount] = ControlArea;
                 SavedInfo[ControlCount] = Info;
@@ -548,10 +563,11 @@ Return Value:
     }
 
 Done:
-    UNLOCK_PFN (OldIrql);
-    ExFreePool (KernMap);
+    UNLOCK_PFN(OldIrql);
+    ExFreePool(KernMap);
 
-    while (ControlCount != 0) {
+    while (ControlCount != 0)
+    {
 
         //
         // Process all the pagable name strings.
@@ -562,36 +578,41 @@ Done:
         Info = SavedInfo[ControlCount];
         NameString = (PUCHAR)&ControlArea->FilePointer->FileName.Buffer[0];
         Length = ControlArea->FilePointer->FileName.Length;
-        if (Length == 0) {
-            if (ControlArea->u.Flags.NoModifiedWriting) {
+        if (Length == 0)
+        {
+            if (ControlArea->u.Flags.NoModifiedWriting)
+            {
                 Length = 12;
                 NameString = MetaFileString;
             }
-            else if (ControlArea->u.Flags.File == 0) {
+            else if (ControlArea->u.Flags.File == 0)
+            {
                 NameString = PageFileMappedString;
                 Length = 16;
-
             }
-            else {
+            else
+            {
                 NameString = NoNameString;
                 Length = 12;
             }
         }
-        if ((String+Length+2) >= End) {
+        if ((String + Length + 2) >= End)
+        {
             status = STATUS_DATA_OVERRUN;
         }
-        if (status != STATUS_DATA_OVERRUN) {
-            RtlCopyMemory (String, NameString, Length);
+        if (status != STATUS_DATA_OVERRUN)
+        {
+            RtlCopyMemory(String, NameString, Length);
             Info->StringOffset = (PUCHAR)Buffer + ((PUCHAR)String - (PUCHAR)MemInfo);
             String[Length] = 0;
             String[Length + 1] = 0;
             String += Length + 2;
         }
 
-        LOCK_PFN (OldIrql);
+        LOCK_PFN(OldIrql);
         ControlArea->NumberOfSectionReferences -= 1;
-        MiCheckForControlAreaDeletion (ControlArea);
-        UNLOCK_PFN (OldIrql);
+        MiCheckForControlAreaDeletion(ControlArea);
+        UNLOCK_PFN(OldIrql);
     }
     *OutLength = (ULONG)((PUCHAR)String - (PUCHAR)MemInfo);
 
@@ -599,21 +620,22 @@ Done:
     // Carefully copy the results to the user buffer.
     //
 
-    try {
-        RtlCopyMemory (Buffer, MemInfo, (ULONG_PTR)String - (ULONG_PTR)MemInfo);
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    try
+    {
+        RtlCopyMemory(Buffer, MemInfo, (ULONG_PTR)String - (ULONG_PTR)MemInfo);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         status = GetExceptionCode();
     }
 
-    ExFreePool (MemInfo);
+    ExFreePool(MemInfo);
 
     return status;
 }
-
+
 ULONG
-MiBuildKernelMap (
-    OUT PKERN_MAP *KernelMapOut
-    )
+MiBuildKernelMap(OUT PKERN_MAP *KernelMapOut)
 {
     PKTHREAD CurrentThread;
     PLIST_ENTRY NextEntry;
@@ -622,9 +644,9 @@ MiBuildKernelMap (
     ULONG i;
 
     i = 0;
-    CurrentThread = KeGetCurrentThread ();
-    KeEnterCriticalRegionThread (CurrentThread);
-    ExAcquireResourceShared (&PsLoadedModuleResource, TRUE);
+    CurrentThread = KeGetCurrentThread();
+    KeEnterCriticalRegionThread(CurrentThread);
+    ExAcquireResourceShared(&PsLoadedModuleResource, TRUE);
 
     //
     // The caller wants us to allocate the return result buffer.  Size it
@@ -635,16 +657,16 @@ MiBuildKernelMap (
     //
 
     NextEntry = PsLoadedModuleList.Flink;
-    while (NextEntry != &PsLoadedModuleList) {
+    while (NextEntry != &PsLoadedModuleList)
+    {
         i += 1;
         NextEntry = NextEntry->Flink;
     }
 
-    KernelMap = ExAllocatePoolWithTag (NonPagedPool,
-                                       i * sizeof(KERN_MAP),
-                                       'lMmM');
+    KernelMap = ExAllocatePoolWithTag(NonPagedPool, i * sizeof(KERN_MAP), 'lMmM');
 
-    if (KernelMap == NULL) {
+    if (KernelMap == NULL)
+    {
         return 0;
     }
 
@@ -652,28 +674,23 @@ MiBuildKernelMap (
 
     i = 0;
     NextEntry = PsLoadedModuleList.Flink;
-    while (NextEntry != &PsLoadedModuleList) {
-        DataTableEntry = CONTAINING_RECORD (NextEntry,
-                                            KLDR_DATA_TABLE_ENTRY,
-                                            InLoadOrderLinks);
+    while (NextEntry != &PsLoadedModuleList)
+    {
+        DataTableEntry = CONTAINING_RECORD(NextEntry, KLDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
         KernelMap[i].Entry = DataTableEntry;
         KernelMap[i].StartVa = DataTableEntry->DllBase;
-        KernelMap[i].EndVa = (PVOID)((ULONG_PTR)KernelMap[i].StartVa +
-                                         DataTableEntry->SizeOfImage);
+        KernelMap[i].EndVa = (PVOID)((ULONG_PTR)KernelMap[i].StartVa + DataTableEntry->SizeOfImage);
         i += 1;
         NextEntry = NextEntry->Flink;
     }
 
     ExReleaseResourceLite(&PsLoadedModuleResource);
-    KeLeaveCriticalRegionThread (CurrentThread);
+    KeLeaveCriticalRegionThread(CurrentThread);
 
     return i;
 }
-
-VOID
-MiDumpReferencedPages (
-    VOID
-    )
+
+VOID MiDumpReferencedPages(VOID)
 
 /*++
 
@@ -697,42 +714,40 @@ Return Value:
     PMMPFN Pfn1;
     PMMPFN PfnLast;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    Pfn1 = MI_PFN_ELEMENT (MmLowestPhysicalPage);
-    PfnLast = MI_PFN_ELEMENT (MmHighestPhysicalPage);
+    Pfn1 = MI_PFN_ELEMENT(MmLowestPhysicalPage);
+    PfnLast = MI_PFN_ELEMENT(MmHighestPhysicalPage);
 
-    while (Pfn1 <= PfnLast) {
+    while (Pfn1 <= PfnLast)
+    {
 
-        if ((Pfn1->u2.ShareCount == 0) && (Pfn1->u3.e2.ReferenceCount != 0)) {
-            MiFormatPfn (Pfn1);
+        if ((Pfn1->u2.ShareCount == 0) && (Pfn1->u3.e2.ReferenceCount != 0))
+        {
+            MiFormatPfn(Pfn1);
         }
 
-        if (Pfn1->u3.e2.ReferenceCount > 1) {
-            MiFormatPfn (Pfn1);
+        if (Pfn1->u3.e2.ReferenceCount > 1)
+        {
+            MiFormatPfn(Pfn1);
         }
 
         Pfn1 += 1;
     }
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
     return;
 }
 
 #else //DBG
 
 NTSTATUS
-MmMemoryUsage (
-    IN PVOID Buffer,
-    IN ULONG Size,
-    IN ULONG Type,
-    OUT PULONG OutLength
-    )
+MmMemoryUsage(IN PVOID Buffer, IN ULONG Size, IN ULONG Type, OUT PULONG OutLength)
 {
-    UNREFERENCED_PARAMETER (Buffer);
-    UNREFERENCED_PARAMETER (Size);
-    UNREFERENCED_PARAMETER (Type);
-    UNREFERENCED_PARAMETER (OutLength);
+    UNREFERENCED_PARAMETER(Buffer);
+    UNREFERENCED_PARAMETER(Size);
+    UNREFERENCED_PARAMETER(Type);
+    UNREFERENCED_PARAMETER(OutLength);
 
     return STATUS_NOT_IMPLEMENTED;
 }
@@ -745,13 +760,11 @@ MmMemoryUsage (
 // of the bitmap routines.
 //
 
-#define MI_MAXIMUM_PFNID_RUN    4096
+#define MI_MAXIMUM_PFNID_RUN 4096
 
-
+
 NTSTATUS
-MmPerfSnapShotValidPhysicalMemory (
-    VOID
-    )
+MmPerfSnapShotValidPhysicalMemory(VOID)
 
 /*++
 
@@ -777,7 +790,8 @@ Environment:
     ULONG i;
     PFN_NUMBER StartPage;
     PFN_NUMBER EndPage;
-    ULONG_PTR MemSnapLocal[(sizeof(MMPFN_MEMSNAP_INFORMATION)/sizeof(ULONG_PTR)) + (MI_MAXIMUM_PFNID_RUN / (8*sizeof(ULONG_PTR))) ];
+    ULONG_PTR MemSnapLocal[(sizeof(MMPFN_MEMSNAP_INFORMATION) / sizeof(ULONG_PTR)) +
+                           (MI_MAXIMUM_PFNID_RUN / (8 * sizeof(ULONG_PTR)))];
     PMMPFN_MEMSNAP_INFORMATION MemSnap;
     PMMPFN Pfn1;
     PMMPFN FirstPfn;
@@ -787,39 +801,43 @@ Environment:
     RTL_BITMAP BitMap;
     PULONG ActualBits;
 
-    ASSERT (KeGetCurrentIrql() == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
-    ASSERT ((MI_MAXIMUM_PFNID_RUN % (8 * sizeof(ULONG_PTR))) == 0);
+    ASSERT((MI_MAXIMUM_PFNID_RUN % (8 * sizeof(ULONG_PTR))) == 0);
 
     MemSnap = (PMMPFN_MEMSNAP_INFORMATION)&MemSnapLocal;
 
     ActualBits = (PULONG)(MemSnap + 1);
 
-    RtlInitializeBitMap (&BitMap, ActualBits, MI_MAXIMUM_PFNID_RUN);
+    RtlInitializeBitMap(&BitMap, ActualBits, MI_MAXIMUM_PFNID_RUN);
 
     MemSnap->Count = 0;
-    RtlClearAllBits (&BitMap);
+    RtlClearAllBits(&BitMap);
 
-    ExAcquireFastMutex (&MmDynamicMemoryMutex);
+    ExAcquireFastMutex(&MmDynamicMemoryMutex);
 
-    for (i = 0; i < MmPhysicalMemoryBlock->NumberOfRuns; i += 1) {
+    for (i = 0; i < MmPhysicalMemoryBlock->NumberOfRuns; i += 1)
+    {
 
         StartPage = MmPhysicalMemoryBlock->Run[i].BasePage;
         EndPage = StartPage + MmPhysicalMemoryBlock->Run[i].PageCount;
-        FirstPfn = MI_PFN_ELEMENT (StartPage);
-        LastPfn = MI_PFN_ELEMENT (EndPage);
+        FirstPfn = MI_PFN_ELEMENT(StartPage);
+        LastPfn = MI_PFN_ELEMENT(EndPage);
 
         //
         // Find the first valid PFN and start the run there.
         //
 
-        for (Pfn1 = FirstPfn; Pfn1 < LastPfn; Pfn1 += 1) {
-            if (Pfn1->u3.e1.PageLocation == ActiveAndValid) {
+        for (Pfn1 = FirstPfn; Pfn1 < LastPfn; Pfn1 += 1)
+        {
+            if (Pfn1->u3.e1.PageLocation == ActiveAndValid)
+            {
                 break;
             }
         }
 
-        if (Pfn1 == LastPfn) {
+        if (Pfn1 == LastPfn)
+        {
 
             //
             // No valid PFNs in this block, move on to the next block.
@@ -831,33 +849,35 @@ Environment:
         MaxPfn = LastPfn;
         InitialPfn = NULL;
 
-        do {
-            if (Pfn1->u3.e1.PageLocation == ActiveAndValid) {
-                if (InitialPfn == NULL) { 
+        do
+        {
+            if (Pfn1->u3.e1.PageLocation == ActiveAndValid)
+            {
+                if (InitialPfn == NULL)
+                {
                     MemSnap->InitialPageFrameIndex = Pfn1 - MmPfnDatabase;
                     InitialPfn = Pfn1;
                     MaxPfn = InitialPfn + MI_MAXIMUM_PFNID_RUN;
                 }
-                RtlSetBit (&BitMap, (ULONG) (Pfn1 - InitialPfn));
+                RtlSetBit(&BitMap, (ULONG)(Pfn1 - InitialPfn));
             }
 
             Pfn1 += 1;
 
-            if ((Pfn1 >= MaxPfn) && (InitialPfn != NULL)) {
+            if ((Pfn1 >= MaxPfn) && (InitialPfn != NULL))
+            {
 
                 //
                 // Log the bitmap as we're at then end of it.
                 //
 
-                ASSERT ((Pfn1 - InitialPfn) == MI_MAXIMUM_PFNID_RUN);
+                ASSERT((Pfn1 - InitialPfn) == MI_MAXIMUM_PFNID_RUN);
                 MemSnap->Count = MI_MAXIMUM_PFNID_RUN;
-                PerfInfoLogBytes (PERFINFO_LOG_TYPE_MEMORYSNAPLITE,
-                                  MemSnap,
-                                  sizeof(MemSnapLocal));
+                PerfInfoLogBytes(PERFINFO_LOG_TYPE_MEMORYSNAPLITE, MemSnap, sizeof(MemSnapLocal));
 
                 InitialPfn = NULL;
                 MaxPfn = LastPfn;
-                RtlClearAllBits (&BitMap);
+                RtlClearAllBits(&BitMap);
             }
         } while (Pfn1 < LastPfn);
 
@@ -865,34 +885,31 @@ Environment:
         // Dump any straggling bitmap entries now as this range is finished.
         //
 
-        if (InitialPfn != NULL) {
+        if (InitialPfn != NULL)
+        {
 
-            ASSERT (Pfn1 == LastPfn);
-            ASSERT (Pfn1 < MaxPfn);
-            ASSERT (Pfn1 > InitialPfn);
+            ASSERT(Pfn1 == LastPfn);
+            ASSERT(Pfn1 < MaxPfn);
+            ASSERT(Pfn1 > InitialPfn);
 
             MemSnap->Count = Pfn1 - InitialPfn;
-            PerfInfoLogBytes (PERFINFO_LOG_TYPE_MEMORYSNAPLITE,
-                              MemSnap,
-                              sizeof(MMPFN_MEMSNAP_INFORMATION) +
-                                  (ULONG) ((MemSnap->Count + 8) / 8));
+            PerfInfoLogBytes(PERFINFO_LOG_TYPE_MEMORYSNAPLITE, MemSnap,
+                             sizeof(MMPFN_MEMSNAP_INFORMATION) + (ULONG)((MemSnap->Count + 8) / 8));
 
-            RtlClearAllBits (&BitMap);
+            RtlClearAllBits(&BitMap);
         }
     }
 
-    ExReleaseFastMutex (&MmDynamicMemoryMutex);
+    ExReleaseFastMutex(&MmDynamicMemoryMutex);
 
     return STATUS_SUCCESS;
 }
 
-#define PFN_ID_BUFFERS    128
+#define PFN_ID_BUFFERS 128
 
-
+
 NTSTATUS
-MmIdentifyPhysicalMemory (
-    VOID
-    )
+MmIdentifyPhysicalMemory(VOID)
 
 /*++
 
@@ -926,52 +943,54 @@ Environment:
     PMMPFN_IDENTITY BufferPointer;
     PMMPFN_IDENTITY BufferLast;
 
-    ASSERT (KeGetCurrentIrql() == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
     BufferPointer = &PfnIdBuffer[0];
     BufferLast = BufferPointer + PFN_ID_BUFFERS;
-    RtlZeroMemory (PfnIdBuffer, sizeof(PfnIdBuffer));
+    RtlZeroMemory(PfnIdBuffer, sizeof(PfnIdBuffer));
 
-    ExAcquireFastMutex (&MmDynamicMemoryMutex);
+    ExAcquireFastMutex(&MmDynamicMemoryMutex);
 
     //
     // Walk through the ranges and identify pages until
     // the buffer is full or we've run out of pages.
     //
 
-    for (i = 0; i < MmPhysicalMemoryBlock->NumberOfRuns; i += 1) {
+    for (i = 0; i < MmPhysicalMemoryBlock->NumberOfRuns; i += 1)
+    {
 
         PageFrameIndex = MmPhysicalMemoryBlock->Run[i].BasePage;
-        Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+        Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
 
         EndPfn = Pfn1 + MmPhysicalMemoryBlock->Run[i].PageCount;
 
-        LOCK_PFN (OldIrql);
+        LOCK_PFN(OldIrql);
 
-        while (Pfn1 < EndPfn) {
+        while (Pfn1 < EndPfn)
+        {
 
-            MiIdentifyPfn (Pfn1, BufferPointer);
+            MiIdentifyPfn(Pfn1, BufferPointer);
 
             BufferPointer += 1;
 
-            if (BufferPointer == BufferLast) {
+            if (BufferPointer == BufferLast)
+            {
 
                 //
                 // Release and reacquire the PFN lock so it's not held so long.
                 //
 
-                UNLOCK_PFN (OldIrql);
+                UNLOCK_PFN(OldIrql);
 
                 //
                 // Log the buffered entries.
                 //
 
                 BufferPointer = &PfnIdBuffer[0];
-                do {
+                do
+                {
 
-                    PerfInfoLogBytes (PERFINFO_LOG_TYPE_PAGEINMEMORY,
-                                      BufferPointer,
-                                      sizeof(PfnIdBuffer[0]));
+                    PerfInfoLogBytes(PERFINFO_LOG_TYPE_PAGEINMEMORY, BufferPointer, sizeof(PfnIdBuffer[0]));
 
                     BufferPointer += 1;
 
@@ -982,14 +1001,14 @@ Environment:
                 //
 
                 BufferPointer = &PfnIdBuffer[0];
-                RtlZeroMemory (PfnIdBuffer, sizeof(PfnIdBuffer));
+                RtlZeroMemory(PfnIdBuffer, sizeof(PfnIdBuffer));
 
-                LOCK_PFN (OldIrql);
+                LOCK_PFN(OldIrql);
             }
             Pfn1 += 1;
         }
 
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
     }
 
     //
@@ -1000,18 +1019,18 @@ Environment:
     // routine is purely a side effect not deliberate.
     //
 
-    ExReleaseFastMutex (&MmDynamicMemoryMutex);
+    ExReleaseFastMutex(&MmDynamicMemoryMutex);
 
-    if (BufferPointer != &PfnIdBuffer[0]) {
+    if (BufferPointer != &PfnIdBuffer[0])
+    {
 
         BufferLast = BufferPointer;
         BufferPointer = &PfnIdBuffer[0];
 
-        do {
+        do
+        {
 
-            PerfInfoLogBytes (PERFINFO_LOG_TYPE_PAGEINMEMORY,
-                              BufferPointer,
-                              sizeof(PfnIdBuffer[0]));
+            PerfInfoLogBytes(PERFINFO_LOG_TYPE_PAGEINMEMORY, BufferPointer, sizeof(PfnIdBuffer[0]));
 
             BufferPointer += 1;
 
@@ -1021,12 +1040,7 @@ Environment:
     return STATUS_SUCCESS;
 }
 
-VOID
-FASTCALL
-MiIdentifyPfn (
-    IN PMMPFN Pfn1,
-    OUT PMMPFN_IDENTITY PfnIdentity
-    )
+VOID FASTCALL MiIdentifyPfn(IN PMMPFN Pfn1, OUT PMMPFN_IDENTITY PfnIdentity)
 
 /*++
 
@@ -1059,13 +1073,13 @@ Environment:
     PFILE_OBJECT FilePointer;
     PFN_NUMBER PageFrameIndex;
 
-    MI_INCREMENT_IDENTIFY_COUNTER (8);
+    MI_INCREMENT_IDENTIFY_COUNTER(8);
 
-    ASSERT (PfnIdentity->u2.VirtualAddress == 0);
-    ASSERT (PfnIdentity->u1.e1.ListDescription == 0);
-    ASSERT (PfnIdentity->u1.e1.UseDescription == 0);
-    ASSERT (PfnIdentity->u1.e1.Pinned == 0);
-    ASSERT (PfnIdentity->u1.e2.Offset == 0);
+    ASSERT(PfnIdentity->u2.VirtualAddress == 0);
+    ASSERT(PfnIdentity->u1.e1.ListDescription == 0);
+    ASSERT(PfnIdentity->u1.e1.UseDescription == 0);
+    ASSERT(PfnIdentity->u1.e1.Pinned == 0);
+    ASSERT(PfnIdentity->u1.e2.Offset == 0);
 
     MM_PFN_LOCK_ASSERT();
 
@@ -1074,106 +1088,108 @@ Environment:
     PfnIdentity->u1.e1.ListDescription = Pfn1->u3.e1.PageLocation;
 
 #if DBG
-    if (PageFrameIndex == MiIdentifyFrame) {
-        DbgPrint ("MmIdentifyPfn: requested PFN %p\n", PageFrameIndex);
-        DbgBreakPoint ();
+    if (PageFrameIndex == MiIdentifyFrame)
+    {
+        DbgPrint("MmIdentifyPfn: requested PFN %p\n", PageFrameIndex);
+        DbgBreakPoint();
     }
 #endif
 
-    MI_INCREMENT_IDENTIFY_COUNTER (Pfn1->u3.e1.PageLocation);
+    MI_INCREMENT_IDENTIFY_COUNTER(Pfn1->u3.e1.PageLocation);
 
-    switch (Pfn1->u3.e1.PageLocation) {
+    switch (Pfn1->u3.e1.PageLocation)
+    {
 
-        case ZeroedPageList:
-        case FreePageList:
-        case BadPageList:
-                return;
+    case ZeroedPageList:
+    case FreePageList:
+    case BadPageList:
+        return;
 
-        case ActiveAndValid:
+    case ActiveAndValid:
 
-                //
-                // It's too much work to determine if the page is locked
-                // in a working set due to cross-process WSL references, etc.
-                // So don't bother for now.
-                //
+        //
+        // It's too much work to determine if the page is locked
+        // in a working set due to cross-process WSL references, etc.
+        // So don't bother for now.
+        //
 
-                ASSERT (PfnIdentity->u1.e1.ListDescription == MMPFNLIST_ACTIVE);
+        ASSERT(PfnIdentity->u1.e1.ListDescription == MMPFNLIST_ACTIVE);
 
-                if (Pfn1->u1.WsIndex == 0) {
-                    MI_INCREMENT_IDENTIFY_COUNTER (9);
-                    PfnIdentity->u1.e1.Pinned = 1;
-                }
-                else if (Pfn1->u3.e2.ReferenceCount > 1) {
+        if (Pfn1->u1.WsIndex == 0)
+        {
+            MI_INCREMENT_IDENTIFY_COUNTER(9);
+            PfnIdentity->u1.e1.Pinned = 1;
+        }
+        else if (Pfn1->u3.e2.ReferenceCount > 1)
+        {
 
-                    //
-                    // This page is pinned, presumably for an ongoing I/O.
-                    //
+            //
+            // This page is pinned, presumably for an ongoing I/O.
+            //
 
-                    PfnIdentity->u1.e1.Pinned = 1;
-                    MI_INCREMENT_IDENTIFY_COUNTER (10);
-                }
-                break;
+            PfnIdentity->u1.e1.Pinned = 1;
+            MI_INCREMENT_IDENTIFY_COUNTER(10);
+        }
+        break;
 
-        case StandbyPageList:
-        case ModifiedPageList:
-        case ModifiedNoWritePageList:
-                if (Pfn1->u3.e2.ReferenceCount >= 1) {
+    case StandbyPageList:
+    case ModifiedPageList:
+    case ModifiedNoWritePageList:
+        if (Pfn1->u3.e2.ReferenceCount >= 1)
+        {
 
-                    //
-                    // This page is pinned, presumably for an ongoing I/O.
-                    //
+            //
+            // This page is pinned, presumably for an ongoing I/O.
+            //
 
-                    PfnIdentity->u1.e1.Pinned = 1;
-                    MI_INCREMENT_IDENTIFY_COUNTER (11);
-                }
+            PfnIdentity->u1.e1.Pinned = 1;
+            MI_INCREMENT_IDENTIFY_COUNTER(11);
+        }
 
-                if ((Pfn1->u3.e1.PageLocation == ModifiedPageList) &&
-                    (MI_IS_PFN_DELETED (Pfn1)) &&
-                    (Pfn1->u2.ShareCount == 0)) {
+        if ((Pfn1->u3.e1.PageLocation == ModifiedPageList) && (MI_IS_PFN_DELETED(Pfn1)) && (Pfn1->u2.ShareCount == 0))
+        {
 
-                    //
-                    // This page may be a modified write completing in the
-                    // context of the modified writer thread.  If the
-                    // address space was deleted while the I/O was in
-                    // progress, the frame will be released now.  More
-                    // importantly, the frame's containing frame is
-                    // meaningless as it may have already been freed
-                    // and reused.
-                    //
-                    // We can't tell what this page was being used for
-                    // since its address space is gone, so just call it
-                    // process private for now.
-                    //
+            //
+            // This page may be a modified write completing in the
+            // context of the modified writer thread.  If the
+            // address space was deleted while the I/O was in
+            // progress, the frame will be released now.  More
+            // importantly, the frame's containing frame is
+            // meaningless as it may have already been freed
+            // and reused.
+            //
+            // We can't tell what this page was being used for
+            // since its address space is gone, so just call it
+            // process private for now.
+            //
 
-                    MI_INCREMENT_IDENTIFY_COUNTER (40);
-                    PfnIdentity->u1.e1.UseDescription = MMPFNUSE_PROCESSPRIVATE;
+            MI_INCREMENT_IDENTIFY_COUNTER(40);
+            PfnIdentity->u1.e1.UseDescription = MMPFNUSE_PROCESSPRIVATE;
 
-                    return;
-                }
+            return;
+        }
 
-                break;
+        break;
 
-        case TransitionPage:
+    case TransitionPage:
 
-                //
-                // This page is pinned due to a straggling I/O - the virtual
-                // address has been deleted but an I/O referencing it has not
-                // completed.
-                //
+        //
+        // This page is pinned due to a straggling I/O - the virtual
+        // address has been deleted but an I/O referencing it has not
+        // completed.
+        //
 
-                PfnIdentity->u1.e1.Pinned = 1;
-                MI_INCREMENT_IDENTIFY_COUNTER (11);
-                PfnIdentity->u1.e1.UseDescription = MMPFNUSE_PROCESSPRIVATE;
-                return;
+        PfnIdentity->u1.e1.Pinned = 1;
+        MI_INCREMENT_IDENTIFY_COUNTER(11);
+        PfnIdentity->u1.e1.UseDescription = MMPFNUSE_PROCESSPRIVATE;
+        return;
 
-        default:
+    default:
 #if DBG
-                DbgPrint ("MmIdentifyPfn: unknown PFN %p %x\n",
-                            Pfn1, Pfn1->u3.e1.PageLocation);
-                DbgBreakPoint ();
+        DbgPrint("MmIdentifyPfn: unknown PFN %p %x\n", Pfn1, Pfn1->u3.e1.PageLocation);
+        DbgBreakPoint();
 #endif
-                break;
-
+        break;
     }
 
     //
@@ -1185,11 +1201,13 @@ Environment:
     // for speed, check for these first.
     //
 
-    if (Pfn1->u3.e1.PrototypePte == 1) {
+    if (Pfn1->u3.e1.PrototypePte == 1)
+    {
 
-        MI_INCREMENT_IDENTIFY_COUNTER (12);
+        MI_INCREMENT_IDENTIFY_COUNTER(12);
 
-        if (Pfn1->OriginalPte.u.Soft.Prototype == 0) {
+        if (Pfn1->OriginalPte.u.Soft.Prototype == 0)
+        {
 
             //
             // Demand zero or (equivalently) pagefile backed.
@@ -1205,7 +1223,7 @@ Environment:
             //     the PFN lock is held right now.
             //
 
-            MI_INCREMENT_IDENTIFY_COUNTER (13);
+            MI_INCREMENT_IDENTIFY_COUNTER(13);
 
 #if 0
             PfnIdentity->u2.FileObject = (PVOID) ControlArea->Segment->u1.CreatingProcess;
@@ -1217,24 +1235,26 @@ Environment:
             return;
         }
 
-        MI_INCREMENT_IDENTIFY_COUNTER (14);
+        MI_INCREMENT_IDENTIFY_COUNTER(14);
 
         //
         // Backed by a mapped file.
         //
 
-        Subsection = MiGetSubsectionAddress (&Pfn1->OriginalPte);
+        Subsection = MiGetSubsectionAddress(&Pfn1->OriginalPte);
         ControlArea = Subsection->ControlArea;
-        ASSERT (ControlArea->u.Flags.File == 1);
+        ASSERT(ControlArea->u.Flags.File == 1);
         FilePointer = ControlArea->FilePointer;
-        ASSERT (FilePointer != NULL);
+        ASSERT(FilePointer != NULL);
 
         PfnIdentity->u2.FileObject = FilePointer;
 
-        if (Subsection->SubsectionBase != NULL) {
-            PfnIdentity->u1.e2.Offset = (MiStartingOffset (Subsection, Pfn1->PteAddress) >> MMSECTOR_SHIFT);
+        if (Subsection->SubsectionBase != NULL)
+        {
+            PfnIdentity->u1.e2.Offset = (MiStartingOffset(Subsection, Pfn1->PteAddress) >> MMSECTOR_SHIFT);
         }
-        else {
+        else
+        {
 
             //
             // The only time we should be here (a valid PFN with no subsection)
@@ -1244,7 +1264,7 @@ Environment:
             // so just treat this as an offset of 0 as it should be rare.
             //
 
-            ASSERT (PsGetCurrentThread()->StartAddress == (PVOID)(ULONG_PTR)MiDereferenceSegmentThread);
+            ASSERT(PsGetCurrentThread()->StartAddress == (PVOID)(ULONG_PTR)MiDereferenceSegmentThread);
         }
 
         //
@@ -1252,19 +1272,21 @@ Environment:
         // metadata although it could also be registry data (which is named).
         //
 
-        if (ControlArea->u.Flags.NoModifiedWriting) {
-            MI_INCREMENT_IDENTIFY_COUNTER (15);
+        if (ControlArea->u.Flags.NoModifiedWriting)
+        {
+            MI_INCREMENT_IDENTIFY_COUNTER(15);
             PfnIdentity->u1.e1.UseDescription = MMPFNUSE_METAFILE;
             return;
         }
 
-        if (FilePointer->FileName.Length != 0) {
+        if (FilePointer->FileName.Length != 0)
+        {
 
             //
             // This mapped file has a name.
             //
 
-            MI_INCREMENT_IDENTIFY_COUNTER (16);
+            MI_INCREMENT_IDENTIFY_COUNTER(16);
             PfnIdentity->u1.e1.UseDescription = MMPFNUSE_FILE;
             return;
         }
@@ -1274,31 +1296,32 @@ Environment:
         // still *was* a mapped file of some sort.
         //
 
-        MI_INCREMENT_IDENTIFY_COUNTER (17);
+        MI_INCREMENT_IDENTIFY_COUNTER(17);
         PfnIdentity->u1.e1.UseDescription = MMPFNUSE_FILE;
         return;
     }
 
-    if ((PageFrameIndex >= MiStartOfInitialPoolFrame) &&
-        (PageFrameIndex <= MiEndOfInitialPoolFrame)) {
+    if ((PageFrameIndex >= MiStartOfInitialPoolFrame) && (PageFrameIndex <= MiEndOfInitialPoolFrame))
+    {
 
         //
         // This is initial nonpaged pool.
         //
 
-        MI_INCREMENT_IDENTIFY_COUNTER (18);
+        MI_INCREMENT_IDENTIFY_COUNTER(18);
         PfnIdentity->u1.e1.UseDescription = MMPFNUSE_NONPAGEDPOOL;
-        VirtualAddress = (PVOID)((ULONG_PTR)MmNonPagedPoolStart +
-                                ((PageFrameIndex - MiStartOfInitialPoolFrame) << PAGE_SHIFT));
+        VirtualAddress =
+            (PVOID)((ULONG_PTR)MmNonPagedPoolStart + ((PageFrameIndex - MiStartOfInitialPoolFrame) << PAGE_SHIFT));
         PfnIdentity->u2.VirtualAddress = PAGE_ALIGN(VirtualAddress);
         return;
     }
 
     PteAddress = Pfn1->PteAddress;
-    VirtualAddress = MiGetVirtualAddressMappedByPte (PteAddress);
+    VirtualAddress = MiGetVirtualAddressMappedByPte(PteAddress);
     PfnIdentity->u2.VirtualAddress = PAGE_ALIGN(VirtualAddress);
 
-    if (MI_IS_SESSION_ADDRESS(VirtualAddress)) {
+    if (MI_IS_SESSION_ADDRESS(VirtualAddress))
+    {
 
         //
         // Note session addresses that map images (or views) that haven't
@@ -1307,61 +1330,58 @@ Environment:
         // pages.
         //
 
-        MI_INCREMENT_IDENTIFY_COUNTER (19);
+        MI_INCREMENT_IDENTIFY_COUNTER(19);
         PfnIdentity->u1.e1.UseDescription = MMPFNUSE_SESSIONPRIVATE;
         return;
     }
 
-    if ((VirtualAddress >= MmPagedPoolStart) &&
-        (VirtualAddress <= MmPagedPoolEnd)) {
+    if ((VirtualAddress >= MmPagedPoolStart) && (VirtualAddress <= MmPagedPoolEnd))
+    {
 
         //
         // This is paged pool.
         //
 
-        MI_INCREMENT_IDENTIFY_COUNTER (20);
+        MI_INCREMENT_IDENTIFY_COUNTER(20);
         PfnIdentity->u1.e1.UseDescription = MMPFNUSE_PAGEDPOOL;
         return;
-
     }
 
-    if ((VirtualAddress >= MmNonPagedPoolExpansionStart) &&
-        (VirtualAddress < MmNonPagedPoolEnd)) {
+    if ((VirtualAddress >= MmNonPagedPoolExpansionStart) && (VirtualAddress < MmNonPagedPoolEnd))
+    {
 
         //
         // This is expansion nonpaged pool.
         //
 
-        MI_INCREMENT_IDENTIFY_COUNTER (21);
+        MI_INCREMENT_IDENTIFY_COUNTER(21);
         PfnIdentity->u1.e1.UseDescription = MMPFNUSE_NONPAGEDPOOL;
         return;
     }
 
-    if ((VirtualAddress >= MmNonPagedSystemStart) &&
-        (PteAddress <= MmSystemPtesEnd[SystemPteSpace])) {
+    if ((VirtualAddress >= MmNonPagedSystemStart) && (PteAddress <= MmSystemPtesEnd[SystemPteSpace]))
+    {
 
         //
         // This is driver space, kernel stack, special pool or other
         // system PTE mappings.
         //
 
-        MI_INCREMENT_IDENTIFY_COUNTER (22);
+        MI_INCREMENT_IDENTIFY_COUNTER(22);
         PfnIdentity->u1.e1.UseDescription = MMPFNUSE_SYSTEMPTE;
         return;
     }
 
-#if defined (_X86_)
+#if defined(_X86_)
 
     //
     // 2 other ranges of system PTEs can exist on x86.
     //
 
-    if (((MiNumberOfExtraSystemPdes != 0) &&
-         (VirtualAddress >= (PVOID)MiExtraResourceStart) &&
+    if (((MiNumberOfExtraSystemPdes != 0) && (VirtualAddress >= (PVOID)MiExtraResourceStart) &&
          (VirtualAddress < (PVOID)MiExtraResourceEnd)) ||
 
-        ((MiUseMaximumSystemSpace != 0) &&
-         (VirtualAddress >= (PVOID)MiUseMaximumSystemSpace) &&
+        ((MiUseMaximumSystemSpace != 0) && (VirtualAddress >= (PVOID)MiUseMaximumSystemSpace) &&
          (VirtualAddress < (PVOID)MiUseMaximumSystemSpaceEnd)))
     {
         //
@@ -1369,33 +1389,36 @@ Environment:
         // system PTE mappings.
         //
 
-        MI_INCREMENT_IDENTIFY_COUNTER (23);
+        MI_INCREMENT_IDENTIFY_COUNTER(23);
         PfnIdentity->u1.e1.UseDescription = MMPFNUSE_SYSTEMPTE;
         return;
     }
 
 #endif
 
-    if (Pfn1->u4.PteFrame == MI_MAGIC_AWE_PTEFRAME) {
+    if (Pfn1->u4.PteFrame == MI_MAGIC_AWE_PTEFRAME)
+    {
 
-        MI_INCREMENT_IDENTIFY_COUNTER (24);
+        MI_INCREMENT_IDENTIFY_COUNTER(24);
 
         //
         // Carefully check here as this could be a legitimate frame as well.
         //
 
-        if ((Pfn1->u3.e1.StartOfAllocation == 1) &&
-            (Pfn1->u3.e1.EndOfAllocation == 1) &&
-            (Pfn1->u3.e1.PageLocation == ActiveAndValid)) {
-                if (MI_IS_PFN_DELETED (Pfn1)) {
-                    MI_INCREMENT_IDENTIFY_COUNTER (25);
-                    PfnIdentity->u1.e1.UseDescription = MMPFNUSE_DRIVERLOCKPAGE;
-                }
-                else {
-                    MI_INCREMENT_IDENTIFY_COUNTER (26);
-                    PfnIdentity->u1.e1.UseDescription = MMPFNUSE_AWEPAGE;
-                }
-                return;
+        if ((Pfn1->u3.e1.StartOfAllocation == 1) && (Pfn1->u3.e1.EndOfAllocation == 1) &&
+            (Pfn1->u3.e1.PageLocation == ActiveAndValid))
+        {
+            if (MI_IS_PFN_DELETED(Pfn1))
+            {
+                MI_INCREMENT_IDENTIFY_COUNTER(25);
+                PfnIdentity->u1.e1.UseDescription = MMPFNUSE_DRIVERLOCKPAGE;
+            }
+            else
+            {
+                MI_INCREMENT_IDENTIFY_COUNTER(26);
+                PfnIdentity->u1.e1.UseDescription = MMPFNUSE_AWEPAGE;
+            }
+            return;
         }
     }
 
@@ -1406,19 +1429,20 @@ Environment:
     // when the AWE frame is freed.
     //
 
-    if (Pfn1->u4.PteFrame == MI_MAGIC_AWE_PTEFRAME - 1) {
+    if (Pfn1->u4.PteFrame == MI_MAGIC_AWE_PTEFRAME - 1)
+    {
 
-        MI_INCREMENT_IDENTIFY_COUNTER (24);
+        MI_INCREMENT_IDENTIFY_COUNTER(24);
 
         //
         // Carefully check here as this could be a legitimate frame as well.
         //
 
-        if ((Pfn1->u3.e1.StartOfAllocation == 0) &&
-            (Pfn1->u3.e1.EndOfAllocation == 0) &&
-            (Pfn1->u3.e1.PageLocation == StandbyPageList)) {
+        if ((Pfn1->u3.e1.StartOfAllocation == 0) && (Pfn1->u3.e1.EndOfAllocation == 0) &&
+            (Pfn1->u3.e1.PageLocation == StandbyPageList))
+        {
 
-            MI_INCREMENT_IDENTIFY_COUNTER (26);
+            MI_INCREMENT_IDENTIFY_COUNTER(26);
             PfnIdentity->u1.e1.UseDescription = MMPFNUSE_AWEPAGE;
             return;
         }
@@ -1437,9 +1461,11 @@ Environment:
     // containing page table frame.
     //
 
-    if (Pfn1->u3.e1.PageLocation == ActiveAndValid) {
+    if (Pfn1->u3.e1.PageLocation == ActiveAndValid)
+    {
 
-        if (Pfn1->u1.WsIndex == 0) {
+        if (Pfn1->u1.WsIndex == 0)
+        {
 
             //
             // Default to calling these allocations nonpaged pool because even
@@ -1449,8 +1475,8 @@ Environment:
             //
 
             PfnIdentity->u1.e1.UseDescription = MMPFNUSE_NONPAGEDPOOL;
-            ASSERT (PfnIdentity->u1.e1.Pinned == 1);
-            MI_INCREMENT_IDENTIFY_COUNTER (27);
+            ASSERT(PfnIdentity->u1.e1.Pinned == 1);
+            MI_INCREMENT_IDENTIFY_COUNTER(27);
             return;
         }
     }
@@ -1465,7 +1491,8 @@ Environment:
     //
 
     i = 0;
-    while (Pfn1->u4.PteFrame != PageFrameIndex) {
+    while (Pfn1->u4.PteFrame != PageFrameIndex)
+    {
 
         //
         // The only way the PTE address will go out of bounds is if this is
@@ -1478,34 +1505,31 @@ Environment:
 
 #if defined(_IA64_)
 
-        if (((Pfn1->PteAddress >= (PMMPTE) PTE_BASE) &&
-            (Pfn1->PteAddress <= (PMMPTE) PTE_TOP)) ||
+        if (((Pfn1->PteAddress >= (PMMPTE)PTE_BASE) && (Pfn1->PteAddress <= (PMMPTE)PTE_TOP)) ||
 
-            ((Pfn1->PteAddress >= (PMMPTE) PTE_KBASE) &&
-            (Pfn1->PteAddress <= (PMMPTE) PTE_KTOP)) ||
+            ((Pfn1->PteAddress >= (PMMPTE)PTE_KBASE) && (Pfn1->PteAddress <= (PMMPTE)PTE_KTOP)) ||
 
-            ((Pfn1->PteAddress >= (PMMPTE) PTE_SBASE) &&
-            (Pfn1->PteAddress <= (PMMPTE) PTE_STOP)))
+            ((Pfn1->PteAddress >= (PMMPTE)PTE_SBASE) && (Pfn1->PteAddress <= (PMMPTE)PTE_STOP)))
 
 #else
 
-        if ((Pfn1->PteAddress >= (PMMPTE) PTE_BASE) &&
-            (Pfn1->PteAddress <= (PMMPTE) PTE_TOP))
+        if ((Pfn1->PteAddress >= (PMMPTE)PTE_BASE) && (Pfn1->PteAddress <= (PMMPTE)PTE_TOP))
 
 #endif
 
         {
             PageFrameIndex = Pfn1->u4.PteFrame;
-            Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+            Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
             i += 1;
         }
-        else {
-            MI_INCREMENT_IDENTIFY_COUNTER (41);
+        else
+        {
+            MI_INCREMENT_IDENTIFY_COUNTER(41);
             break;
         }
     }
 
-    MI_INCREMENT_IDENTIFY_COUNTER (31+i);
+    MI_INCREMENT_IDENTIFY_COUNTER(31 + i);
 
     PfnIdentity->u1.e3.PageDirectoryBase = PageFrameIndex;
 
@@ -1520,26 +1544,28 @@ Environment:
     // across 127 processes and resides in the system global space.
     //
 
-    if (i == _MI_PAGING_LEVELS + 1) {
+    if (i == _MI_PAGING_LEVELS + 1)
+    {
 
         //
         // Had to walk all the way to the top.  Must be a data page.
         //
 
-        MI_INCREMENT_IDENTIFY_COUNTER (29);
+        MI_INCREMENT_IDENTIFY_COUNTER(29);
         PfnIdentity->u1.e1.UseDescription = MMPFNUSE_PROCESSPRIVATE;
         return;
     }
 
 #else
 
-    if (i == _MI_PAGING_LEVELS) {
+    if (i == _MI_PAGING_LEVELS)
+    {
 
         //
         // Had to walk all the way to the top.  Must be a data page.
         //
 
-        MI_INCREMENT_IDENTIFY_COUNTER (29);
+        MI_INCREMENT_IDENTIFY_COUNTER(29);
         PfnIdentity->u1.e1.UseDescription = MMPFNUSE_PROCESSPRIVATE;
         return;
     }
@@ -1551,7 +1577,7 @@ Environment:
     // at the top early.
     //
 
-    MI_INCREMENT_IDENTIFY_COUNTER (30);
+    MI_INCREMENT_IDENTIFY_COUNTER(30);
     PfnIdentity->u1.e1.UseDescription = MMPFNUSE_PAGETABLE;
 
     return;

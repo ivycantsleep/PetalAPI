@@ -26,7 +26,8 @@ Revision History:
 
 #include "iomgr.h"
 
-typedef struct _IO_QUERY_DESC {
+typedef struct _IO_QUERY_DESC
+{
     PINTERFACE_TYPE BusType;
     PULONG BusNumber;
     PCONFIGURATION_TYPE ControllerType;
@@ -39,22 +40,12 @@ typedef struct _IO_QUERY_DESC {
 
 
 NTSTATUS
-pIoQueryBusDescription(
-    PIO_QUERY_DESC QueryDescription,
-    UNICODE_STRING PathName,
-    HANDLE RootHandle,
-    PULONG BusNum,
-    BOOLEAN HighKey
-    );
+pIoQueryBusDescription(PIO_QUERY_DESC QueryDescription, UNICODE_STRING PathName, HANDLE RootHandle, PULONG BusNum,
+                       BOOLEAN HighKey);
 
 NTSTATUS
-pIoQueryDeviceDescription(
-    PIO_QUERY_DESC QueryDescription,
-    UNICODE_STRING PathName,
-    HANDLE RootHandle,
-    ULONG BusNum,
-    PKEY_VALUE_FULL_INFORMATION *BusValueInfo
-    );
+pIoQueryDeviceDescription(PIO_QUERY_DESC QueryDescription, UNICODE_STRING PathName, HANDLE RootHandle, ULONG BusNum,
+                          PKEY_VALUE_FULL_INFORMATION *BusValueInfo);
 
 
 #ifdef ALLOC_PRAGMA
@@ -64,19 +55,11 @@ pIoQueryDeviceDescription(
 #endif
 
 
-
-
 NTSTATUS
-IoQueryDeviceDescription(
-    IN PINTERFACE_TYPE BusType OPTIONAL,
-    IN PULONG BusNumber OPTIONAL,
-    IN PCONFIGURATION_TYPE ControllerType OPTIONAL,
-    IN PULONG ControllerNumber OPTIONAL,
-    IN PCONFIGURATION_TYPE PeripheralType OPTIONAL,
-    IN PULONG PeripheralNumber OPTIONAL,
-    IN PIO_QUERY_DEVICE_ROUTINE CalloutRoutine,
-    IN PVOID Context
-    )
+IoQueryDeviceDescription(IN PINTERFACE_TYPE BusType OPTIONAL, IN PULONG BusNumber OPTIONAL,
+                         IN PCONFIGURATION_TYPE ControllerType OPTIONAL, IN PULONG ControllerNumber OPTIONAL,
+                         IN PCONFIGURATION_TYPE PeripheralType OPTIONAL, IN PULONG PeripheralNumber OPTIONAL,
+                         IN PIO_QUERY_DEVICE_ROUTINE CalloutRoutine, IN PVOID Context)
 
 /*++
 
@@ -130,18 +113,19 @@ Notes:
     NTSTATUS status;
     UNICODE_STRING registryPathName;
     HANDLE rootHandle;
-    ULONG busNumber = (ULONG) -1;
+    ULONG busNumber = (ULONG)-1;
 
 
     PAGED_CODE();
 
-    ASSERT( CalloutRoutine != NULL );
+    ASSERT(CalloutRoutine != NULL);
 
     //
     // Check if we need to return the machine information
     //
 
-    if (!ARGUMENT_PRESENT( BusType )) {
+    if (!ARGUMENT_PRESENT(BusType))
+    {
         return STATUS_NOT_IMPLEMENTED;
     }
 
@@ -161,72 +145,55 @@ Notes:
     //
 
     registryPathName.Length = 0;
-    registryPathName.MaximumLength = UNICODE_REGISTRY_PATH_LENGTH *
-                                     sizeof(WCHAR);
+    registryPathName.MaximumLength = UNICODE_REGISTRY_PATH_LENGTH * sizeof(WCHAR);
 
-    registryPathName.Buffer = ExAllocatePoolWithTag( PagedPool,
-                                                     UNICODE_REGISTRY_PATH_LENGTH,
-                                                     'NRoI' );
+    registryPathName.Buffer = ExAllocatePoolWithTag(PagedPool, UNICODE_REGISTRY_PATH_LENGTH, 'NRoI');
 
-    if (!registryPathName.Buffer) {
+    if (!registryPathName.Buffer)
+    {
 
         return STATUS_INSUFFICIENT_RESOURCES;
-
     }
 
-    RtlAppendUnicodeStringToString( &registryPathName,
-                                    &CmRegistryMachineHardwareDescriptionSystemName );
+    RtlAppendUnicodeStringToString(&registryPathName, &CmRegistryMachineHardwareDescriptionSystemName);
 
 
     //
     // Open a handle to the root path we have.
     //
 
-    status = IopOpenRegistryKey( &rootHandle,
-                                 (HANDLE) NULL,
-                                 &registryPathName,
-                                 KEY_READ,
-                                 FALSE );
+    status = IopOpenRegistryKey(&rootHandle, (HANDLE)NULL, &registryPathName, KEY_READ, FALSE);
 
-    if (NT_SUCCESS( status )) {
+    if (NT_SUCCESS(status))
+    {
 
-        status = pIoQueryBusDescription(&queryDesc,
-                                        registryPathName,
-                                        rootHandle,
-                                        &busNumber,
-                                        TRUE );
+        status = pIoQueryBusDescription(&queryDesc, registryPathName, rootHandle, &busNumber, TRUE);
 
-        ZwClose( rootHandle );
-
+        ZwClose(rootHandle);
     }
 
-    ExFreePool( registryPathName.Buffer );
+    ExFreePool(registryPathName.Buffer);
 
     //
     // For compatibility with old version of the function.
     //
 
-    if (status == STATUS_NO_MORE_ENTRIES) {
+    if (status == STATUS_NO_MORE_ENTRIES)
+    {
 
         return STATUS_OBJECT_NAME_NOT_FOUND;
-
-
-    } else {
+    }
+    else
+    {
 
         return status;
-
     }
 }
 
-
+
 NTSTATUS
-pIoQueryBusDescription(
-    PIO_QUERY_DESC QueryDescription,
-    UNICODE_STRING PathName,
-    HANDLE RootHandle,
-    PULONG BusNum,
-    BOOLEAN HighKey
-    )
+pIoQueryBusDescription(PIO_QUERY_DESC QueryDescription, UNICODE_STRING PathName, HANDLE RootHandle, PULONG BusNum,
+                       BOOLEAN HighKey)
 
 /*++
 
@@ -279,29 +246,26 @@ Notes:
 
     PAGED_CODE();
 
-    status = IopGetRegistryKeyInformation( RootHandle,
-                                           &keyInformation );
+    status = IopGetRegistryKeyInformation(RootHandle, &keyInformation);
 
-    if (NT_SUCCESS( status )) {
+    if (NT_SUCCESS(status))
+    {
 
         //
         // With the keyInformation, allocate a buffer that will be large
         // enough for all the subkeys
         //
 
-        keyBasicInformationSize = keyInformation->MaxNameLen +
-                                  sizeof(KEY_NODE_INFORMATION);
+        keyBasicInformationSize = keyInformation->MaxNameLen + sizeof(KEY_NODE_INFORMATION);
 
-        keyBasicInformation = ExAllocatePoolWithTag( PagedPool,
-                                                     keyBasicInformationSize,
-                                                     'BKoI' );
+        keyBasicInformation = ExAllocatePoolWithTag(PagedPool, keyBasicInformationSize, 'BKoI');
 
         ExFreePool(keyInformation);
 
-        if (keyBasicInformation == NULL) {
+        if (keyBasicInformation == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
     }
 
@@ -309,36 +273,32 @@ Notes:
     // Now we need to enumerate the keys and see if one of them is a bus
     //
 
-    for (i = 0; NT_SUCCESS( status ); i++) {
+    for (i = 0; NT_SUCCESS(status); i++)
+    {
 
 
         //
         // If we have found the Bus we are looking for, break
         //
 
-        if ((ARGUMENT_PRESENT( QueryDescription->BusNumber )) &&
-            (*(QueryDescription->BusNumber) == *BusNum)) {
+        if ((ARGUMENT_PRESENT(QueryDescription->BusNumber)) && (*(QueryDescription->BusNumber) == *BusNum))
+        {
 
             break;
-
         }
 
-        status = ZwEnumerateKey( RootHandle,
-                                 i,
-                                 KeyBasicInformation,
-                                 keyBasicInformation,
-                                 keyBasicInformationSize,
-                                 &size );
+        status =
+            ZwEnumerateKey(RootHandle, i, KeyBasicInformation, keyBasicInformation, keyBasicInformationSize, &size);
 
         //
         // If the sub function enumerated all the buses till the end, then
         // treat that as success.
         //
 
-        if (!NT_SUCCESS( status )) {
+        if (!NT_SUCCESS(status))
+        {
 
             break;
-
         }
 
         //
@@ -350,17 +310,16 @@ Notes:
         // Otherwise, go on to the next key.
         //
 
-        if (HighKey) {
+        if (HighKey)
+        {
 
-            if (wcsncmp( keyBasicInformation->Name,
-                         CmTypeString[MultiFunctionAdapter],
-                         keyBasicInformation->NameLength / sizeof(WCHAR) )  &&
-                wcsncmp( keyBasicInformation->Name,
-                         CmTypeString[EisaAdapter],
-                         keyBasicInformation->NameLength / sizeof(WCHAR) )  &&
-                wcsncmp( keyBasicInformation->Name,
-                         CmTypeString[TcAdapter],
-                         keyBasicInformation->NameLength / sizeof(WCHAR) )) {
+            if (wcsncmp(keyBasicInformation->Name, CmTypeString[MultiFunctionAdapter],
+                        keyBasicInformation->NameLength / sizeof(WCHAR)) &&
+                wcsncmp(keyBasicInformation->Name, CmTypeString[EisaAdapter],
+                        keyBasicInformation->NameLength / sizeof(WCHAR)) &&
+                wcsncmp(keyBasicInformation->Name, CmTypeString[TcAdapter],
+                        keyBasicInformation->NameLength / sizeof(WCHAR)))
+            {
 
                 //
                 // All the comparisons returned 1 (which means they all were
@@ -379,21 +338,17 @@ Notes:
         //
 
         unicodeString.Buffer = keyBasicInformation->Name;
-        unicodeString.Length = (USHORT) keyBasicInformation->NameLength;
-        unicodeString.MaximumLength = (USHORT) keyBasicInformation->NameLength;
+        unicodeString.Length = (USHORT)keyBasicInformation->NameLength;
+        unicodeString.MaximumLength = (USHORT)keyBasicInformation->NameLength;
 
-        if (!NT_SUCCESS( IopOpenRegistryKey( &handle,
-                                             RootHandle,
-                                             &unicodeString,
-                                             KEY_READ,
-                                             FALSE ) )) {
+        if (!NT_SUCCESS(IopOpenRegistryKey(&handle, RootHandle, &unicodeString, KEY_READ, FALSE)))
+        {
 
             //
             // The key could not be opened. Go to the next key
             //
 
             continue;
-
         }
 
         //
@@ -404,23 +359,22 @@ Notes:
 
         registryPathName = PathName;
 
-        RtlAppendUnicodeToString( &registryPathName,
-                                  L"\\" );
+        RtlAppendUnicodeToString(&registryPathName, L"\\");
 
-        RtlAppendUnicodeStringToString( &registryPathName,
-                                        &unicodeString );
+        RtlAppendUnicodeStringToString(&registryPathName, &unicodeString);
 
 
-        if (!HighKey) {
+        if (!HighKey)
+        {
 
             //
             // We have a Key. Get the information for that key
             //
 
-            status = IopGetRegistryValues( handle,
-                                           &busValueInfo[0] );
+            status = IopGetRegistryValues(handle, &busValueInfo[0]);
 
-            if (NT_SUCCESS( status )) {
+            if (NT_SUCCESS(status))
+            {
 
                 //
                 // Verify that the identifier value for this bus
@@ -429,12 +383,12 @@ Notes:
                 // buses.
                 //
 
-                if (( busValueInfo[IoQueryDeviceConfigurationData] != NULL ) &&
-                    ( busValueInfo[IoQueryDeviceConfigurationData]->DataLength != 0 ) &&
-                    ( ((PCM_FULL_RESOURCE_DESCRIPTOR)
-                        ((PCCHAR) busValueInfo[IoQueryDeviceConfigurationData] +
-                        busValueInfo[IoQueryDeviceConfigurationData]->DataOffset))
-                        ->InterfaceType == *(QueryDescription->BusType) )) {
+                if ((busValueInfo[IoQueryDeviceConfigurationData] != NULL) &&
+                    (busValueInfo[IoQueryDeviceConfigurationData]->DataLength != 0) &&
+                    (((PCM_FULL_RESOURCE_DESCRIPTOR)((PCCHAR)busValueInfo[IoQueryDeviceConfigurationData] +
+                                                     busValueInfo[IoQueryDeviceConfigurationData]->DataOffset))
+                         ->InterfaceType == *(QueryDescription->BusType)))
+                {
 
                     //
                     // Increment the number of buses of desired type we
@@ -452,8 +406,8 @@ Notes:
                     // information can be reported.
                     //
 
-                    if ( (QueryDescription->BusNumber == NULL) ||
-                         (*(QueryDescription->BusNumber) == *BusNum) ) {
+                    if ((QueryDescription->BusNumber == NULL) || (*(QueryDescription->BusNumber) == *BusNum))
+                    {
 
 
                         //
@@ -462,30 +416,18 @@ Notes:
                         // Otherwise just return the bus information.
                         //
 
-                        if (QueryDescription->ControllerType != NULL) {
+                        if (QueryDescription->ControllerType != NULL)
+                        {
 
-                            status = pIoQueryDeviceDescription(
-                                         QueryDescription,
-                                         registryPathName,
-                                         handle,
-                                         *BusNum,
-                                         (PKEY_VALUE_FULL_INFORMATION *) busValueInfo );
-
-                        } else {
+                            status = pIoQueryDeviceDescription(QueryDescription, registryPathName, handle, *BusNum,
+                                                               (PKEY_VALUE_FULL_INFORMATION *)busValueInfo);
+                        }
+                        else
+                        {
 
                             status = QueryDescription->CalloutRoutine(
-                                         QueryDescription->Context,
-                                         &registryPathName,
-                                         *(QueryDescription->BusType),
-                                         *BusNum,
-                                         (PKEY_VALUE_FULL_INFORMATION *) busValueInfo,
-                                         0,
-                                         0,
-                                         NULL,
-                                         0,
-                                         0,
-                                         NULL );
-
+                                QueryDescription->Context, &registryPathName, *(QueryDescription->BusType), *BusNum,
+                                (PKEY_VALUE_FULL_INFORMATION *)busValueInfo, 0, 0, NULL, 0, 0, NULL);
                         }
                     }
                 }
@@ -494,19 +436,21 @@ Notes:
                 // Free the pool allocated for the controller value data.
                 //
 
-                if (busValueInfo[0]) {
-                    ExFreePool( busValueInfo[0] );
+                if (busValueInfo[0])
+                {
+                    ExFreePool(busValueInfo[0]);
                     busValueInfo[0] = NULL;
                 }
-                if (busValueInfo[1]) {
-                    ExFreePool( busValueInfo[1] );
+                if (busValueInfo[1])
+                {
+                    ExFreePool(busValueInfo[1]);
                     busValueInfo[1] = NULL;
                 }
-                if (busValueInfo[2]) {
-                    ExFreePool( busValueInfo[2] );
+                if (busValueInfo[2])
+                {
+                    ExFreePool(busValueInfo[2]);
                     busValueInfo[2] = NULL;
                 }
-
             }
 
 
@@ -514,12 +458,11 @@ Notes:
             // Shortcurt exit to avoid the recursive call.
             //
 
-            if ((QueryDescription->BusNumber !=NULL ) &&
-                (*(QueryDescription->BusNumber) == *BusNum)) {
-                ZwClose( handle );
+            if ((QueryDescription->BusNumber != NULL) && (*(QueryDescription->BusNumber) == *BusNum))
+            {
+                ZwClose(handle);
                 handle = NULL;
                 continue;
-
             }
         }
 
@@ -528,47 +471,35 @@ Notes:
         // enumaration (for both high and low keys)
         //
 
-        status = pIoQueryBusDescription(
-                     QueryDescription,
-                     registryPathName,
-                     handle,
-                     BusNum,
-                     (BOOLEAN)!HighKey );
+        status = pIoQueryBusDescription(QueryDescription, registryPathName, handle, BusNum, (BOOLEAN)!HighKey);
 
         //
         // If the sub function enumerated all the buses till the end, then
         // treat that as success.
         //
 
-        if (status == STATUS_NO_MORE_ENTRIES) {
+        if (status == STATUS_NO_MORE_ENTRIES)
+        {
 
             status = STATUS_SUCCESS;
-
         }
 
-        ZwClose( handle );
+        ZwClose(handle);
         handle = NULL;
-
     }
 
-    if (keyBasicInformation) {
-        ExFreePool( keyBasicInformation );
+    if (keyBasicInformation)
+    {
+        ExFreePool(keyBasicInformation);
     }
 
     return status;
 }
 
 
-
-
 NTSTATUS
-pIoQueryDeviceDescription(
-    PIO_QUERY_DESC QueryDescription,
-    UNICODE_STRING PathName,
-    HANDLE RootHandle,
-    ULONG BusNum,
-    PKEY_VALUE_FULL_INFORMATION *BusValueInfo
-    )
+pIoQueryDeviceDescription(PIO_QUERY_DESC QueryDescription, UNICODE_STRING PathName, HANDLE RootHandle, ULONG BusNum,
+                          PKEY_VALUE_FULL_INFORMATION *BusValueInfo)
 
 {
 
@@ -609,17 +540,16 @@ pIoQueryDeviceDescription(
     // Add the controller name to the registry path name.
     //
 
-    status = RtlAppendUnicodeToString( &registryPathName,
-                                       L"\\" );
+    status = RtlAppendUnicodeToString(&registryPathName, L"\\");
 
-    if (NT_SUCCESS( status )) {
+    if (NT_SUCCESS(status))
+    {
 
-        status = RtlAppendUnicodeToString( &registryPathName,
-                                           CmTypeString[*(QueryDescription->ControllerType)] );
-
+        status = RtlAppendUnicodeToString(&registryPathName, CmTypeString[*(QueryDescription->ControllerType)]);
     }
 
-    if (!NT_SUCCESS( status )) {
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
@@ -629,12 +559,14 @@ pIoQueryDeviceDescription(
     // by querying the key.
     //
 
-    if (ARGUMENT_PRESENT( QueryDescription->ControllerNumber )) {
+    if (ARGUMENT_PRESENT(QueryDescription->ControllerNumber))
+    {
 
         controllerNum = *(QueryDescription->ControllerNumber);
         maxControllerNum = controllerNum + 1;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Open the registry key for the controller and
@@ -644,18 +576,14 @@ pIoQueryDeviceDescription(
         // Note the memory allocated by the query must be freed.
         //
 
-        status = IopOpenRegistryKey( &controllerHandle,
-                                     (HANDLE) NULL,
-                                     &registryPathName,
-                                     KEY_READ,
-                                     FALSE );
+        status = IopOpenRegistryKey(&controllerHandle, (HANDLE)NULL, &registryPathName, KEY_READ, FALSE);
 
-        if (NT_SUCCESS( status )) {
+        if (NT_SUCCESS(status))
+        {
 
-            status = IopGetRegistryKeyInformation( controllerHandle,
-                                                   &controllerTypeInfo );
+            status = IopGetRegistryKeyInformation(controllerHandle, &controllerTypeInfo);
 
-            ZwClose( controllerHandle );
+            ZwClose(controllerHandle);
             controllerHandle = NULL;
         }
 
@@ -665,10 +593,10 @@ pIoQueryDeviceDescription(
         // so that the memory gets freed, but we continue looping.
         //
 
-        if (!NT_SUCCESS( status )) {
+        if (!NT_SUCCESS(status))
+        {
 
             return status;
-
         }
 
         //
@@ -679,7 +607,7 @@ pIoQueryDeviceDescription(
         maxControllerNum = controllerTypeInfo->SubKeys;
         controllerNum = 0;
 
-        ExFreePool( controllerTypeInfo );
+        ExFreePool(controllerTypeInfo);
         controllerTypeInfo = NULL;
     }
 
@@ -697,7 +625,8 @@ pIoQueryDeviceDescription(
     // zero.
     //
 
-    for ( ; controllerNum < maxControllerNum; controllerNum++) {
+    for (; controllerNum < maxControllerNum; controllerNum++)
+    {
 
         //
         // Reset the string to its original value
@@ -710,26 +639,23 @@ pIoQueryDeviceDescription(
         // it to the registry path name.
         //
 
-        bufferUnicodeString.Length = (UNICODE_NUM_LENGTH-1) * sizeof(WCHAR);
-        status = RtlIntegerToUnicodeString( controllerNum,
-                                            10,
-                                            &bufferUnicodeString );
+        bufferUnicodeString.Length = (UNICODE_NUM_LENGTH - 1) * sizeof(WCHAR);
+        status = RtlIntegerToUnicodeString(controllerNum, 10, &bufferUnicodeString);
 
-        if (NT_SUCCESS( status )) {
+        if (NT_SUCCESS(status))
+        {
 
-            status = RtlAppendUnicodeToString( &registryPathName,
-                                               L"\\" );
+            status = RtlAppendUnicodeToString(&registryPathName, L"\\");
 
-            if (NT_SUCCESS( status )) {
+            if (NT_SUCCESS(status))
+            {
 
-                status = RtlAppendUnicodeStringToString(
-                                                     &registryPathName,
-                                                     &bufferUnicodeString );
-
+                status = RtlAppendUnicodeStringToString(&registryPathName, &bufferUnicodeString);
             }
         }
 
-        if (!NT_SUCCESS( status )) {
+        if (!NT_SUCCESS(status))
+        {
             break;
         }
 
@@ -739,18 +665,14 @@ pIoQueryDeviceDescription(
         //
 
 
-        status = IopOpenRegistryKey( &controllerHandle,
-                                     (HANDLE) NULL,
-                                     &registryPathName,
-                                     KEY_READ,
-                                     FALSE );
+        status = IopOpenRegistryKey(&controllerHandle, (HANDLE)NULL, &registryPathName, KEY_READ, FALSE);
 
-        if (NT_SUCCESS( status )) {
+        if (NT_SUCCESS(status))
+        {
 
-            status = IopGetRegistryValues( controllerHandle,
-                                           &controllerValueInfo[0] );
+            status = IopGetRegistryValues(controllerHandle, &controllerValueInfo[0]);
 
-            ZwClose( controllerHandle );
+            ZwClose(controllerHandle);
             controllerHandle = NULL;
         }
 
@@ -760,7 +682,8 @@ pIoQueryDeviceDescription(
         // loop to determine when we get to the last controller.
         //
 
-        if (!NT_SUCCESS( status )) {
+        if (!NT_SUCCESS(status))
+        {
             continue;
         }
 
@@ -770,20 +693,13 @@ pIoQueryDeviceDescription(
         // next loop (unless an error occurs in the callout).
         //
 
-        if (!ARGUMENT_PRESENT( (QueryDescription->PeripheralType) )) {
+        if (!ARGUMENT_PRESENT((QueryDescription->PeripheralType)))
+        {
 
-            status = QueryDescription->CalloutRoutine(
-                         QueryDescription->Context,
-                         &registryPathName,
-                         *(QueryDescription->BusType),
-                         BusNum,
-                         BusValueInfo,
-                         *(QueryDescription->ControllerType),
-                         controllerNum,
-                         (PKEY_VALUE_FULL_INFORMATION *) controllerValueInfo,
-                         0,
-                         0,
-                         NULL );
+            status = QueryDescription->CalloutRoutine(QueryDescription->Context, &registryPathName,
+                                                      *(QueryDescription->BusType), BusNum, BusValueInfo,
+                                                      *(QueryDescription->ControllerType), controllerNum,
+                                                      (PKEY_VALUE_FULL_INFORMATION *)controllerValueInfo, 0, 0, NULL);
 
             goto IoQueryDeviceControllerLoop;
         }
@@ -792,18 +708,16 @@ pIoQueryDeviceDescription(
         // Add the peripheral name to the registry path name.
         //
 
-        status = RtlAppendUnicodeToString( &registryPathName,
-                                           L"\\" );
+        status = RtlAppendUnicodeToString(&registryPathName, L"\\");
 
-        if (NT_SUCCESS( status )) {
+        if (NT_SUCCESS(status))
+        {
 
-            status = RtlAppendUnicodeToString(
-                                             &registryPathName,
-                                             CmTypeString[*(QueryDescription->PeripheralType)] );
-
+            status = RtlAppendUnicodeToString(&registryPathName, CmTypeString[*(QueryDescription->PeripheralType)]);
         }
 
-        if (!NT_SUCCESS( status )) {
+        if (!NT_SUCCESS(status))
+        {
             goto IoQueryDeviceControllerLoop;
         }
 
@@ -813,12 +727,14 @@ pIoQueryDeviceDescription(
         // present by querying the key.
         //
 
-        if (ARGUMENT_PRESENT( (QueryDescription->PeripheralNumber) )) {
+        if (ARGUMENT_PRESENT((QueryDescription->PeripheralNumber)))
+        {
 
             peripheralNum = *(QueryDescription->PeripheralNumber);
             maxPeripheralNum = peripheralNum + 1;
-
-        } else {
+        }
+        else
+        {
 
             //
             // Open the registry key for the peripheral and
@@ -828,18 +744,14 @@ pIoQueryDeviceDescription(
             // Note the memory allocated by the query must be freed.
             //
 
-            status = IopOpenRegistryKey( &peripheralHandle,
-                                         (HANDLE) NULL,
-                                         &registryPathName,
-                     KEY_READ,
-                     FALSE );
+            status = IopOpenRegistryKey(&peripheralHandle, (HANDLE)NULL, &registryPathName, KEY_READ, FALSE);
 
-            if (NT_SUCCESS( status )) {
+            if (NT_SUCCESS(status))
+            {
 
-                status = IopGetRegistryKeyInformation( peripheralHandle,
-                           &peripheralTypeInfo );
+                status = IopGetRegistryKeyInformation(peripheralHandle, &peripheralTypeInfo);
 
-                ZwClose( peripheralHandle );
+                ZwClose(peripheralHandle);
                 peripheralHandle = NULL;
             }
 
@@ -849,7 +761,8 @@ pIoQueryDeviceDescription(
             // status so that the memory gets freed, but we continue looping.
             //
 
-            if (!NT_SUCCESS( status )) {
+            if (!NT_SUCCESS(status))
+            {
                 status = STATUS_SUCCESS;
                 goto IoQueryDeviceControllerLoop;
             }
@@ -862,7 +775,7 @@ pIoQueryDeviceDescription(
             maxPeripheralNum = peripheralTypeInfo->SubKeys;
             peripheralNum = 0;
 
-            ExFreePool( peripheralTypeInfo );
+            ExFreePool(peripheralTypeInfo);
             peripheralTypeInfo = NULL;
         }
 
@@ -880,7 +793,8 @@ pIoQueryDeviceDescription(
         // value is not zero.
         //
 
-        for ( ; peripheralNum < maxPeripheralNum; peripheralNum++) {
+        for (; peripheralNum < maxPeripheralNum; peripheralNum++)
+        {
 
             //
             // Reset the string to its original value.
@@ -893,27 +807,23 @@ pIoQueryDeviceDescription(
             // it to the registry path name.
             //
 
-            bufferUnicodeString.Length =
-                (UNICODE_NUM_LENGTH-1) * sizeof(WCHAR);
-            status = RtlIntegerToUnicodeString( peripheralNum,
-                                                10,
-                                                &bufferUnicodeString );
+            bufferUnicodeString.Length = (UNICODE_NUM_LENGTH - 1) * sizeof(WCHAR);
+            status = RtlIntegerToUnicodeString(peripheralNum, 10, &bufferUnicodeString);
 
-            if (NT_SUCCESS( status )) {
+            if (NT_SUCCESS(status))
+            {
 
-                status = RtlAppendUnicodeToString( &registryPathName,
-                                                   L"\\" );
+                status = RtlAppendUnicodeToString(&registryPathName, L"\\");
 
-                if (NT_SUCCESS( status )) {
+                if (NT_SUCCESS(status))
+                {
 
-                    status = RtlAppendUnicodeStringToString(
-                                                     &registryPathName,
-                                                     &bufferUnicodeString );
-
+                    status = RtlAppendUnicodeStringToString(&registryPathName, &bufferUnicodeString);
                 }
             }
 
-            if (!NT_SUCCESS( status )) {
+            if (!NT_SUCCESS(status))
+            {
                 break;
             }
 
@@ -923,18 +833,14 @@ pIoQueryDeviceDescription(
             // later.
             //
 
-            status = IopOpenRegistryKey( &peripheralHandle,
-                                         (HANDLE) NULL,
-                                         &registryPathName,
-                                         KEY_READ,
-                                         FALSE );
+            status = IopOpenRegistryKey(&peripheralHandle, (HANDLE)NULL, &registryPathName, KEY_READ, FALSE);
 
-            if (NT_SUCCESS( status )) {
+            if (NT_SUCCESS(status))
+            {
 
-                status = IopGetRegistryValues( peripheralHandle,
-                                               &peripheralValueInfo[0] );
+                status = IopGetRegistryValues(peripheralHandle, &peripheralValueInfo[0]);
 
-                ZwClose( peripheralHandle );
+                ZwClose(peripheralHandle);
                 peripheralHandle = NULL;
             }
 
@@ -943,35 +849,32 @@ pIoQueryDeviceDescription(
             // call the user-specified callout routine.
             //
 
-            if (NT_SUCCESS( status )) {
+            if (NT_SUCCESS(status))
+            {
 
                 status = QueryDescription->CalloutRoutine(
-                             QueryDescription->Context,
-                             &registryPathName,
-                             *(QueryDescription->BusType),
-                             BusNum,
-                             BusValueInfo,
-                             *(QueryDescription->ControllerType),
-                             controllerNum,
-                             (PKEY_VALUE_FULL_INFORMATION *) controllerValueInfo,
-                             *(QueryDescription->PeripheralType),
-                             peripheralNum,
-                             (PKEY_VALUE_FULL_INFORMATION *) peripheralValueInfo );
+                    QueryDescription->Context, &registryPathName, *(QueryDescription->BusType), BusNum, BusValueInfo,
+                    *(QueryDescription->ControllerType), controllerNum,
+                    (PKEY_VALUE_FULL_INFORMATION *)controllerValueInfo, *(QueryDescription->PeripheralType),
+                    peripheralNum, (PKEY_VALUE_FULL_INFORMATION *)peripheralValueInfo);
 
                 //
                 // Free the pool allocated for the peripheral value data.
                 //
 
-                if (peripheralValueInfo[0]) {
-                    ExFreePool( peripheralValueInfo[0] );
+                if (peripheralValueInfo[0])
+                {
+                    ExFreePool(peripheralValueInfo[0]);
                     peripheralValueInfo[0] = NULL;
                 }
-                if (peripheralValueInfo[1]) {
-                    ExFreePool( peripheralValueInfo[1] );
+                if (peripheralValueInfo[1])
+                {
+                    ExFreePool(peripheralValueInfo[1]);
                     peripheralValueInfo[1] = NULL;
                 }
-                if (peripheralValueInfo[2]) {
-                    ExFreePool( peripheralValueInfo[2] );
+                if (peripheralValueInfo[2])
+                {
+                    ExFreePool(peripheralValueInfo[2]);
                     peripheralValueInfo[2] = NULL;
                 }
 
@@ -980,39 +883,44 @@ pIoQueryDeviceDescription(
                 // an unsuccessful status, quit.
                 //
 
-                if (!NT_SUCCESS( status )) {
+                if (!NT_SUCCESS(status))
+                {
                     break;
-               }
+                }
             }
 
         } // for ( ; peripheralNum < maxPeripheralNum ...
 
-IoQueryDeviceControllerLoop:
+    IoQueryDeviceControllerLoop:
 
         //
         // Free the pool allocated for the controller value data.
         //
 
-        if (controllerValueInfo[0]) {
-            ExFreePool( controllerValueInfo[0] );
+        if (controllerValueInfo[0])
+        {
+            ExFreePool(controllerValueInfo[0]);
             controllerValueInfo[0] = NULL;
         }
-        if (controllerValueInfo[1]) {
-            ExFreePool( controllerValueInfo[1] );
+        if (controllerValueInfo[1])
+        {
+            ExFreePool(controllerValueInfo[1]);
             controllerValueInfo[1] = NULL;
         }
-        if (controllerValueInfo[2]) {
-            ExFreePool( controllerValueInfo[2] );
+        if (controllerValueInfo[2])
+        {
+            ExFreePool(controllerValueInfo[2]);
             controllerValueInfo[2] = NULL;
         }
 
-        if (!NT_SUCCESS( status )) {
+        if (!NT_SUCCESS(status))
+        {
             break;
         }
 
     } // for ( ; controllerNum < maxControllerNum...
 
 
-    return( status );
+    return (status);
 }
 

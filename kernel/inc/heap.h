@@ -27,14 +27,17 @@ Revision History:
 
 #define HEAP_LARGE_TAG_MASK 0xFF000000
 
-#define ROUND_UP_TO_POWER2( x, n ) (((ULONG_PTR)(x) + ((n)-1)) & ~((ULONG_PTR)(n)-1))
-#define ROUND_DOWN_TO_POWER2( x, n ) ((ULONG_PTR)(x) & ~((ULONG_PTR)(n)-1))
+#define ROUND_UP_TO_POWER2(x, n) (((ULONG_PTR)(x) + ((n) - 1)) & ~((ULONG_PTR)(n) - 1))
+#define ROUND_DOWN_TO_POWER2(x, n) ((ULONG_PTR)(x) & ~((ULONG_PTR)(n) - 1))
 
-typedef struct _HEAP_ENTRY {
+typedef struct _HEAP_ENTRY
+{
 
 #if !defined(_WIN64)
-    union {
-        struct {
+    union
+    {
+        struct
+        {
 
             //
             //  This field gives the size of the current block in allocation
@@ -61,7 +64,7 @@ typedef struct _HEAP_ENTRY {
     };
 
 #else
-    
+
     USHORT Size;
     USHORT PreviousSize;
 
@@ -119,9 +122,12 @@ typedef struct _HEAP_ENTRY {
 //      sizeof( HEAP_ENTRY_EXTRA ) == sizeof( HEAP_ENTRY )
 //
 
-typedef struct _HEAP_ENTRY_EXTRA {
-    union {
-        struct {
+typedef struct _HEAP_ENTRY_EXTRA
+{
+    union
+    {
+        struct
+        {
             //
             // This field is for debugging purposes.  It will normally contain a
             // stack back trace index of the allocator for x86 systems.
@@ -145,7 +151,8 @@ typedef struct _HEAP_ENTRY_EXTRA {
             ULONG_PTR Settable;
         };
 #if defined(_WIN64)
-        struct {
+        struct
+        {
             ULONGLONG ZeroInit;
             ULONGLONG ZeroInit1;
         };
@@ -162,7 +169,8 @@ typedef struct _HEAP_ENTRY_EXTRA {
 // Works best when coalesce on free is disabled, along with decommitment.
 //
 
-typedef struct _HEAP_FREE_ENTRY_EXTRA {
+typedef struct _HEAP_FREE_ENTRY_EXTRA
+{
     USHORT TagIndex;
     USHORT FreeBackTraceIndex;
 } HEAP_FREE_ENTRY_EXTRA, *PHEAP_FREE_ENTRY_EXTRA;
@@ -173,7 +181,8 @@ typedef struct _HEAP_FREE_ENTRY_EXTRA {
 // HEAP_ENTRY_VIRTUAL_ALLOC flag set.
 //
 
-typedef struct _HEAP_VIRTUAL_ALLOC_ENTRY {
+typedef struct _HEAP_VIRTUAL_ALLOC_ENTRY
+{
     LIST_ENTRY Entry;
     HEAP_ENTRY_EXTRA ExtraStuff;
     SIZE_T CommitSize;
@@ -181,7 +190,8 @@ typedef struct _HEAP_VIRTUAL_ALLOC_ENTRY {
     HEAP_ENTRY BusyBlock;
 } HEAP_VIRTUAL_ALLOC_ENTRY, *PHEAP_VIRTUAL_ALLOC_ENTRY;
 
-typedef struct _HEAP_FREE_ENTRY {
+typedef struct _HEAP_FREE_ENTRY
+{
     //
     // This field gives the size of the current block in allocation
     // granularity units.  (i.e. Size << HEAP_GRANULARITY_SHIFT
@@ -237,28 +247,27 @@ typedef struct _HEAP_FREE_ENTRY {
 } HEAP_FREE_ENTRY, *PHEAP_FREE_ENTRY;
 
 
-
-#define HEAP_GRANULARITY            ((LONG) sizeof( HEAP_ENTRY ))
+#define HEAP_GRANULARITY ((LONG)sizeof(HEAP_ENTRY))
 #if defined(_WIN64)
-#define HEAP_GRANULARITY_SHIFT      4   // Log2( HEAP_GRANULARITY )
+#define HEAP_GRANULARITY_SHIFT 4 // Log2( HEAP_GRANULARITY )
 #else
-#define HEAP_GRANULARITY_SHIFT      3   // Log2( HEAP_GRANULARITY )
+#define HEAP_GRANULARITY_SHIFT 3 // Log2( HEAP_GRANULARITY )
 #endif
 
-#define HEAP_MAXIMUM_BLOCK_SIZE     (USHORT)(((0x10000 << HEAP_GRANULARITY_SHIFT) - PAGE_SIZE) >> HEAP_GRANULARITY_SHIFT)
+#define HEAP_MAXIMUM_BLOCK_SIZE (USHORT)(((0x10000 << HEAP_GRANULARITY_SHIFT) - PAGE_SIZE) >> HEAP_GRANULARITY_SHIFT)
 
 #define HEAP_MAXIMUM_FREELISTS 128
 #define HEAP_MAXIMUM_SEGMENTS 64
 
-#define HEAP_ENTRY_BUSY             0x01
-#define HEAP_ENTRY_EXTRA_PRESENT    0x02
-#define HEAP_ENTRY_FILL_PATTERN     0x04
-#define HEAP_ENTRY_VIRTUAL_ALLOC    0x08
-#define HEAP_ENTRY_LAST_ENTRY       0x10
-#define HEAP_ENTRY_SETTABLE_FLAG1   0x20
-#define HEAP_ENTRY_SETTABLE_FLAG2   0x40
-#define HEAP_ENTRY_SETTABLE_FLAG3   0x80
-#define HEAP_ENTRY_SETTABLE_FLAGS   0xE0
+#define HEAP_ENTRY_BUSY 0x01
+#define HEAP_ENTRY_EXTRA_PRESENT 0x02
+#define HEAP_ENTRY_FILL_PATTERN 0x04
+#define HEAP_ENTRY_VIRTUAL_ALLOC 0x08
+#define HEAP_ENTRY_LAST_ENTRY 0x10
+#define HEAP_ENTRY_SETTABLE_FLAG1 0x20
+#define HEAP_ENTRY_SETTABLE_FLAG2 0x40
+#define HEAP_ENTRY_SETTABLE_FLAG3 0x80
+#define HEAP_ENTRY_SETTABLE_FLAGS 0xE0
 
 //
 // HEAP_SEGMENT defines the structure used to describe a range of
@@ -266,14 +275,16 @@ typedef struct _HEAP_FREE_ENTRY {
 // a heap.
 //
 
-typedef struct _HEAP_UNCOMMMTTED_RANGE {
+typedef struct _HEAP_UNCOMMMTTED_RANGE
+{
     struct _HEAP_UNCOMMMTTED_RANGE *Next;
     ULONG_PTR Address;
     SIZE_T Size;
     ULONG filler;
 } HEAP_UNCOMMMTTED_RANGE, *PHEAP_UNCOMMMTTED_RANGE;
 
-typedef struct _HEAP_SEGMENT {
+typedef struct _HEAP_SEGMENT
+{
     HEAP_ENTRY Entry;
 
     ULONG Signature;
@@ -294,21 +305,24 @@ typedef struct _HEAP_SEGMENT {
     PHEAP_ENTRY LastEntryInSegment;
 } HEAP_SEGMENT, *PHEAP_SEGMENT;
 
-#define HEAP_SEGMENT_SIGNATURE  0xFFEEFFEE
+#define HEAP_SEGMENT_SIGNATURE 0xFFEEFFEE
 #define HEAP_SEGMENT_USER_ALLOCATED (ULONG)0x00000001
 
 //
 // HEAP defines the header for a heap.
 //
 
-typedef struct _HEAP_LOCK {
-    union {
+typedef struct _HEAP_LOCK
+{
+    union
+    {
         RTL_CRITICAL_SECTION CriticalSection;
         ERESOURCE Resource;
     } Lock;
 } HEAP_LOCK, *PHEAP_LOCK;
 
-typedef struct _HEAP_UCR_SEGMENT {
+typedef struct _HEAP_UCR_SEGMENT
+{
     struct _HEAP_UCR_SEGMENT *Next;
     SIZE_T ReservedSize;
     SIZE_T CommittedSize;
@@ -316,23 +330,26 @@ typedef struct _HEAP_UCR_SEGMENT {
 } HEAP_UCR_SEGMENT, *PHEAP_UCR_SEGMENT;
 
 
-typedef struct _HEAP_TAG_ENTRY {
+typedef struct _HEAP_TAG_ENTRY
+{
     ULONG Allocs;
     ULONG Frees;
     SIZE_T Size;
     USHORT TagIndex;
     USHORT CreatorBackTraceIndex;
-    WCHAR TagName[ 24 ];
-} HEAP_TAG_ENTRY, *PHEAP_TAG_ENTRY;     // sizeof( HEAP_TAG_ENTRY ) must divide page size evenly
+    WCHAR TagName[24];
+} HEAP_TAG_ENTRY, *PHEAP_TAG_ENTRY; // sizeof( HEAP_TAG_ENTRY ) must divide page size evenly
 
-typedef struct _HEAP_PSEUDO_TAG_ENTRY {
+typedef struct _HEAP_PSEUDO_TAG_ENTRY
+{
     ULONG Allocs;
     ULONG Frees;
     SIZE_T Size;
 } HEAP_PSEUDO_TAG_ENTRY, *PHEAP_PSEUDO_TAG_ENTRY;
 
-
-typedef struct _HEAP {
+
+typedef struct _HEAP
+{
     HEAP_ENTRY Entry;
 
     ULONG Signature;
@@ -369,14 +386,16 @@ typedef struct _HEAP {
 
     LIST_ENTRY VirtualAllocdBlocks;
 
-    PHEAP_SEGMENT Segments[ HEAP_MAXIMUM_SEGMENTS ];
+    PHEAP_SEGMENT Segments[HEAP_MAXIMUM_SEGMENTS];
 
-    union {
-        ULONG FreeListsInUseUlong[ HEAP_MAXIMUM_FREELISTS / 32 ];
-        UCHAR FreeListsInUseBytes[ HEAP_MAXIMUM_FREELISTS / 8 ];
+    union
+    {
+        ULONG FreeListsInUseUlong[HEAP_MAXIMUM_FREELISTS / 32];
+        UCHAR FreeListsInUseBytes[HEAP_MAXIMUM_FREELISTS / 8];
     } u;
 
-    union {
+    union
+    {
 
         USHORT FreeListsInUseTerminate;
         USHORT DecommitCount;
@@ -388,7 +407,7 @@ typedef struct _HEAP {
     PVOID LargeBlocksIndex;
     PHEAP_PSEUDO_TAG_ENTRY PseudoTagEntries;
 
-    LIST_ENTRY FreeLists[ HEAP_MAXIMUM_FREELISTS ];
+    LIST_ENTRY FreeLists[HEAP_MAXIMUM_FREELISTS];
 
     PHEAP_LOCK LockVariable;
     PRTL_HEAP_COMMIT_ROUTINE CommitRoutine;
@@ -402,59 +421,42 @@ typedef struct _HEAP {
     //  means the heap is not locked.  Each lock operation increments the
     //  heap count and each unlock decrements the counter
     //
-    
+
     PVOID FrontEndHeap;
-    
+
     USHORT FrontHeapLockCount;
     UCHAR FrontEndHeapType;
     UCHAR LastSegmentIndex;
 
 } HEAP, *PHEAP;
 
-#define HEAP_SIGNATURE                      (ULONG)0xEEFFEEFF
-#define HEAP_LOCK_USER_ALLOCATED            (ULONG)0x80000000
-#define HEAP_VALIDATE_PARAMETERS_ENABLED    (ULONG)0x40000000
-#define HEAP_VALIDATE_ALL_ENABLED           (ULONG)0x20000000
-#define HEAP_SKIP_VALIDATION_CHECKS         (ULONG)0x10000000
-#define HEAP_CAPTURE_STACK_BACKTRACES       (ULONG)0x08000000
+#define HEAP_SIGNATURE (ULONG)0xEEFFEEFF
+#define HEAP_LOCK_USER_ALLOCATED (ULONG)0x80000000
+#define HEAP_VALIDATE_PARAMETERS_ENABLED (ULONG)0x40000000
+#define HEAP_VALIDATE_ALL_ENABLED (ULONG)0x20000000
+#define HEAP_SKIP_VALIDATION_CHECKS (ULONG)0x10000000
+#define HEAP_CAPTURE_STACK_BACKTRACES (ULONG)0x08000000
 
 #define CHECK_HEAP_TAIL_SIZE HEAP_GRANULARITY
 #define CHECK_HEAP_TAIL_FILL 0xAB
 #define FREE_HEAP_FILL 0xFEEEFEEE
 #define ALLOC_HEAP_FILL 0xBAADF00D
 
-#define HEAP_MAXIMUM_SMALL_TAG              0xFF
-#define HEAP_SMALL_TAG_MASK                 (HEAP_MAXIMUM_SMALL_TAG << HEAP_TAG_SHIFT)
-#define HEAP_NEED_EXTRA_FLAGS ((HEAP_TAG_MASK ^ HEAP_SMALL_TAG_MASK)  | \
-                               HEAP_CAPTURE_STACK_BACKTRACES          | \
-                               HEAP_SETTABLE_USER_VALUE                 \
-                              )
-#define HEAP_NUMBER_OF_PSEUDO_TAG           (HEAP_MAXIMUM_FREELISTS+1)
+#define HEAP_MAXIMUM_SMALL_TAG 0xFF
+#define HEAP_SMALL_TAG_MASK (HEAP_MAXIMUM_SMALL_TAG << HEAP_TAG_SHIFT)
+#define HEAP_NEED_EXTRA_FLAGS \
+    ((HEAP_TAG_MASK ^ HEAP_SMALL_TAG_MASK) | HEAP_CAPTURE_STACK_BACKTRACES | HEAP_SETTABLE_USER_VALUE)
+#define HEAP_NUMBER_OF_PSEUDO_TAG (HEAP_MAXIMUM_FREELISTS + 1)
 
 
-#if (HEAP_ENTRY_SETTABLE_FLAG1 ^    \
-     HEAP_ENTRY_SETTABLE_FLAG2 ^    \
-     HEAP_ENTRY_SETTABLE_FLAG3 ^    \
-     HEAP_ENTRY_SETTABLE_FLAGS      \
-    )
+#if (HEAP_ENTRY_SETTABLE_FLAG1 ^ HEAP_ENTRY_SETTABLE_FLAG2 ^ HEAP_ENTRY_SETTABLE_FLAG3 ^ HEAP_ENTRY_SETTABLE_FLAGS)
 #error Invalid HEAP_ENTRY_SETTABLE_FLAGS
 #endif
 
-#if ((HEAP_ENTRY_BUSY ^             \
-      HEAP_ENTRY_EXTRA_PRESENT ^    \
-      HEAP_ENTRY_FILL_PATTERN ^     \
-      HEAP_ENTRY_VIRTUAL_ALLOC ^    \
-      HEAP_ENTRY_LAST_ENTRY ^       \
-      HEAP_ENTRY_SETTABLE_FLAGS     \
-     ) !=                           \
-     (HEAP_ENTRY_BUSY |             \
-      HEAP_ENTRY_EXTRA_PRESENT |    \
-      HEAP_ENTRY_FILL_PATTERN |     \
-      HEAP_ENTRY_VIRTUAL_ALLOC |    \
-      HEAP_ENTRY_LAST_ENTRY |       \
-      HEAP_ENTRY_SETTABLE_FLAGS     \
-     )                              \
-    )
+#if ((HEAP_ENTRY_BUSY ^ HEAP_ENTRY_EXTRA_PRESENT ^ HEAP_ENTRY_FILL_PATTERN ^ HEAP_ENTRY_VIRTUAL_ALLOC ^ \
+      HEAP_ENTRY_LAST_ENTRY ^ HEAP_ENTRY_SETTABLE_FLAGS) !=                                             \
+     (HEAP_ENTRY_BUSY | HEAP_ENTRY_EXTRA_PRESENT | HEAP_ENTRY_FILL_PATTERN | HEAP_ENTRY_VIRTUAL_ALLOC | \
+      HEAP_ENTRY_LAST_ENTRY | HEAP_ENTRY_SETTABLE_FLAGS))
 #error Conflicting HEAP_ENTRY flags
 #endif
 
@@ -462,17 +464,21 @@ typedef struct _HEAP {
 #error HEAP_SETTABLE_USER_FLAGS in ntrtl.h conflicts with HEAP_ENTRY_SETTABLE_FLAGS in heap.h
 #endif
 
-typedef struct _HEAP_STOP_ON_TAG {
-    union {
+typedef struct _HEAP_STOP_ON_TAG
+{
+    union
+    {
         ULONG HeapAndTagIndex;
-        struct {
+        struct
+        {
             USHORT TagIndex;
             USHORT HeapIndex;
         };
     };
 } HEAP_STOP_ON_TAG, *PHEAP_STOP_ON_TAG;
 
-typedef struct _HEAP_STOP_ON_VALUES {
+typedef struct _HEAP_STOP_ON_VALUES
+{
     SIZE_T AllocAddress;
     HEAP_STOP_ON_TAG AllocTag;
     SIZE_T ReAllocAddress;
@@ -490,9 +496,7 @@ extern PHEAP RtlpGlobalTagHeap;
 extern HEAP_STOP_ON_VALUES RtlpHeapStopOn;
 
 BOOLEAN
-RtlpHeapIsLocked(
-    IN PVOID HeapHandle
-    );
+RtlpHeapIsLocked(IN PVOID HeapHandle);
 
 //
 // Page heap external interface.

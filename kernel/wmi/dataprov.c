@@ -29,84 +29,39 @@ Revision History:
 #ifdef MCE_INSERTION
 typedef struct _MCEQUERYINFO MCEQUERYINFO, *PMCEQUERYINFO;
 extern MCEQUERYINFO WmipMcaQueryInfo;
-extern MCEQUERYINFO WmipCmcQueryInfo;                               
+extern MCEQUERYINFO WmipCmcQueryInfo;
 extern MCEQUERYINFO WmipCpeQueryInfo;
 
-NTSTATUS WmipInsertMce(
-    PMCEQUERYINFO QueryInfo,
-    ULONG LogSize,
-    PUCHAR Log
-    );
+NTSTATUS WmipInsertMce(PMCEQUERYINFO QueryInfo, ULONG LogSize, PUCHAR Log);
 #endif
 #endif
 
 NTSTATUS
-WmipQueryWmiDataBlock(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG GuidIndex,
-    IN ULONG InstanceIndex,
-    IN ULONG InstanceCount,
-    IN OUT PULONG InstanceLengthArray,
-    IN ULONG BufferAvail,
-    OUT PUCHAR Buffer
-    );
+WmipQueryWmiDataBlock(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG GuidIndex, IN ULONG InstanceIndex,
+                      IN ULONG InstanceCount, IN OUT PULONG InstanceLengthArray, IN ULONG BufferAvail,
+                      OUT PUCHAR Buffer);
 
 NTSTATUS
-WmipQueryWmiRegInfo(
-    IN PDEVICE_OBJECT DeviceObject,
-    OUT ULONG *RegFlags,
-    OUT PUNICODE_STRING InstanceName,
-    OUT PUNICODE_STRING *RegistryPath
-    );
+WmipQueryWmiRegInfo(IN PDEVICE_OBJECT DeviceObject, OUT ULONG *RegFlags, OUT PUNICODE_STRING InstanceName,
+                    OUT PUNICODE_STRING *RegistryPath);
 
-NTSTATUS WmipSetWmiDataBlock(
-    PDEVICE_OBJECT DeviceObject,
-    PIRP Irp,
-    ULONG GuidIndex,
-    ULONG InstanceIndex,
-    ULONG BufferSize,
-    PUCHAR Buffer
-    );
+NTSTATUS WmipSetWmiDataBlock(PDEVICE_OBJECT DeviceObject, PIRP Irp, ULONG GuidIndex, ULONG InstanceIndex,
+                             ULONG BufferSize, PUCHAR Buffer);
 
 NTSTATUS
-WmipExecuteWmiMethod (
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG GuidIndex,
-    IN ULONG InstanceIndex,
-    IN ULONG MethodId,
-    IN ULONG InBufferSize,
-    IN ULONG OutBufferSize,
-    IN OUT PUCHAR Buffer
-    );
+WmipExecuteWmiMethod(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG GuidIndex, IN ULONG InstanceIndex,
+                     IN ULONG MethodId, IN ULONG InBufferSize, IN ULONG OutBufferSize, IN OUT PUCHAR Buffer);
 
 BOOLEAN
-WmipFindGuid(
-    IN PGUIDREGINFO GuidList,
-    IN ULONG GuidCount,
-    IN LPGUID Guid,
-    OUT PULONG GuidIndex,
-    OUT PULONG InstanceCount
-    );
+WmipFindGuid(IN PGUIDREGINFO GuidList, IN ULONG GuidCount, IN LPGUID Guid, OUT PULONG GuidIndex,
+             OUT PULONG InstanceCount);
 
 NTSTATUS
-IoWMICompleteRequest(
-    IN PWMILIB_INFO WmiLibInfo,
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN NTSTATUS Status,
-    IN ULONG BufferUsed,
-    IN CCHAR PriorityBoost
-    );
+IoWMICompleteRequest(IN PWMILIB_INFO WmiLibInfo, IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN NTSTATUS Status,
+                     IN ULONG BufferUsed, IN CCHAR PriorityBoost);
 
 NTSTATUS
-IoWMISystemControl(
-    IN PWMILIB_INFO WmiLibInfo,
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    );
-
+IoWMISystemControl(IN PWMILIB_INFO WmiLibInfo, IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 
 #ifdef ALLOC_DATA_PRAGMA
@@ -119,100 +74,47 @@ GUID WmipGenerateMCEGuid = GenerateMCEGuid;
 #endif
 
 
-const GUIDREGINFO WmipGuidList[] =
-{
+const GUIDREGINFO WmipGuidList[] = {
     //
     // This is the pnp id guid which is registered by wmi into other device
     // objects' registration info. And requests to the innocent devices
     // are hijacked by wmi so that wmi can complete the request for it. We
     // have the WMIREG_FLAG_REMOVE_GUID set so that the guid is not registered
     // for the wmi device which does not support it.
-    {
-        DATA_PROVIDER_PNPID_GUID,
-        0,
-        WMIREG_FLAG_REMOVE_GUID
-    },
+    { DATA_PROVIDER_PNPID_GUID, 0, WMIREG_FLAG_REMOVE_GUID },
 
-    {
-        DATA_PROVIDER_PNPID_INSTANCE_NAMES_GUID,
-        0,
-        WMIREG_FLAG_REMOVE_GUID
-    },
+    { DATA_PROVIDER_PNPID_INSTANCE_NAMES_GUID, 0, WMIREG_FLAG_REMOVE_GUID },
 
-    {
-        MSAcpiInfoGuid,
-        1,
-        0
-    },
-    
-#if  defined(_AMD64_) || defined(_IA64_) || defined(i386) || defined(MEMPHIS)
-    {
-        SMBIOS_DATA_GUID,
-        1,
-        0
-    },
+    { MSAcpiInfoGuid, 1, 0 },
 
-    {
-        SYSID_UUID_DATA_GUID,
-        1,
-        0
-    },
+#if defined(_AMD64_) || defined(_IA64_) || defined(i386) || defined(MEMPHIS)
+    { SMBIOS_DATA_GUID, 1, 0 },
 
-    {
-        SYSID_1394_DATA_GUID,
-        1,
-        0
-    },
+    { SYSID_UUID_DATA_GUID, 1, 0 },
 
-    {
-        MSSmBios_SMBiosEventlogGuid,
-        1,
-        0
-    },
+    { SYSID_1394_DATA_GUID, 1, 0 },
+
+    { MSSmBios_SMBiosEventlogGuid, 1, 0 },
 #endif
 
 #if defined(_IA64_)
-    {
-        MSMCAInfo_RawMCADataGuid,
-        1,
-        0
-    },
+    { MSMCAInfo_RawMCADataGuid, 1, 0 },
 
-#ifdef CPE_CONTROL  
-    {
-        MSMCAInfo_CPEControlGuid,
-        1,
-        0
-    },
-#endif  
+#ifdef CPE_CONTROL
+    { MSMCAInfo_CPEControlGuid, 1, 0 },
+#endif
 
 #ifdef GENERATE_MCA
-    {
-        GenerateMCEGuid,
-        1,
-        0
-    },
-    
+    { GenerateMCEGuid, 1, 0 },
+
 #endif
-    
-    {
-        MSMCAInfo_RawMCAEventGuid,
-        1,
-        WMIREG_FLAG_EVENT_ONLY_GUID
-    },
 
-    {
-        MSMCAInfo_RawCMCEventGuid,
-        1,
-        WMIREG_FLAG_EVENT_ONLY_GUID
-    },
+    { MSMCAInfo_RawMCAEventGuid, 1, WMIREG_FLAG_EVENT_ONLY_GUID },
 
-    {
-        MSMCAInfo_RawCorrectedPlatformEventGuid,
-        1,
-        WMIREG_FLAG_EVENT_ONLY_GUID
-    },
-    
+    { MSMCAInfo_RawCMCEventGuid, 1, WMIREG_FLAG_EVENT_ONLY_GUID },
+
+    { MSMCAInfo_RawCorrectedPlatformEventGuid, 1, WMIREG_FLAG_EVENT_ONLY_GUID },
+
 #endif
 
 };
@@ -220,20 +122,20 @@ const GUIDREGINFO WmipGuidList[] =
 
 typedef enum
 {
-    PnPIdGuidIndex =      0,
+    PnPIdGuidIndex = 0,
     PnPIdInstanceNamesGuidIndex,
     MSAcpiInfoGuidIndex,
-#if  defined(_AMD64_) || defined(_IA64_) || defined(i386) || defined(MEMPHIS)
+#if defined(_AMD64_) || defined(_IA64_) || defined(i386) || defined(MEMPHIS)
     SmbiosDataGuidIndex,
     SysidUuidGuidIndex,
     Sysid1394GuidIndex,
     SmbiosEventGuidIndex,
-#endif  
+#endif
 #if defined(_IA64_)
     MCARawDataGuidIndex,
-#ifdef CPE_CONTROL  
+#ifdef CPE_CONTROL
     CPEControlGuidIndex,
-#endif  
+#endif
 #ifdef GENERATE_MCA
     GenerateMCEGuidIndex,
 #endif
@@ -242,48 +144,41 @@ typedef enum
     RawCPEEventGuidIndex,
 #endif
 } WMIGUIDINDEXES;
-    
 
-const WMILIB_INFO WmipWmiLibInfo =
-{
-    NULL,
-    NULL,
-    WmipGuidCount,
-    (PGUIDREGINFO)WmipGuidList,
-    WmipQueryWmiRegInfo,
-    WmipQueryWmiDataBlock,
+
+const WMILIB_INFO WmipWmiLibInfo = { NULL,
+                                     NULL,
+                                     WmipGuidCount,
+                                     (PGUIDREGINFO)WmipGuidList,
+                                     WmipQueryWmiRegInfo,
+                                     WmipQueryWmiDataBlock,
 #ifdef CPE_CONTROL
-    WmipSetWmiDataBlock,
+                                     WmipSetWmiDataBlock,
 #else
-    NULL,
+                                     NULL,
 #endif
-    NULL,
+                                     NULL,
 #ifdef GENERATE_MCA
-    WmipExecuteWmiMethod,
+                                     WmipExecuteWmiMethod,
 #else
-    NULL,
+                                     NULL,
 #endif
-    NULL
-};
+                                     NULL };
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,WmipQueryWmiRegInfo)
-#pragma alloc_text(PAGE,WmipQueryWmiDataBlock)
-#pragma alloc_text(PAGE,WmipSetWmiDataBlock)
-#pragma alloc_text(PAGE,WmipExecuteWmiMethod)
-#pragma alloc_text(PAGE,WmipFindGuid)
-#pragma alloc_text(PAGE,IoWMISystemControl)
-#pragma alloc_text(PAGE,IoWMICompleteRequest)
+#pragma alloc_text(PAGE, WmipQueryWmiRegInfo)
+#pragma alloc_text(PAGE, WmipQueryWmiDataBlock)
+#pragma alloc_text(PAGE, WmipSetWmiDataBlock)
+#pragma alloc_text(PAGE, WmipExecuteWmiMethod)
+#pragma alloc_text(PAGE, WmipFindGuid)
+#pragma alloc_text(PAGE, IoWMISystemControl)
+#pragma alloc_text(PAGE, IoWMICompleteRequest)
 #endif
 
 
 NTSTATUS
-WmipQueryWmiRegInfo(
-    IN PDEVICE_OBJECT DeviceObject,
-    OUT ULONG *RegFlags,
-    OUT PUNICODE_STRING InstanceName,
-    OUT PUNICODE_STRING *RegistryPath
-    )
+WmipQueryWmiRegInfo(IN PDEVICE_OBJECT DeviceObject, OUT ULONG *RegFlags, OUT PUNICODE_STRING InstanceName,
+                    OUT PUNICODE_STRING *RegistryPath)
 /*++
 
 Routine Description:
@@ -330,20 +225,13 @@ Return Value:
 
     Status = RtlAnsiStringToUnicodeString(InstanceName, &AnsiString, TRUE);
 
-    return(Status);
+    return (Status);
 }
 
 NTSTATUS
-WmipQueryWmiDataBlock(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG GuidIndex,
-    IN ULONG InstanceIndex,
-    IN ULONG InstanceCount,
-    IN OUT PULONG InstanceLengthArray,
-    IN ULONG BufferAvail,
-    OUT PUCHAR Buffer
-    )
+WmipQueryWmiDataBlock(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG GuidIndex, IN ULONG InstanceIndex,
+                      IN ULONG InstanceCount, IN OUT PULONG InstanceLengthArray, IN ULONG BufferAvail,
+                      OUT PUCHAR Buffer)
 /*++
 
 Routine Description:
@@ -396,558 +284,535 @@ Return Value:
 
     switch (GuidIndex)
     {
-        case SmbiosDataGuidIndex:
-        {
-            //
-            // SMBIOS data table query
+    case SmbiosDataGuidIndex:
+    {
+        //
+        // SMBIOS data table query
 #if defined(_AMD64_) || defined(_IA64_) || defined(i386) || defined(MEMPHIS)
-            WmipAssert((InstanceIndex == 0) && (InstanceCount == 1));
+        WmipAssert((InstanceIndex == 0) && (InstanceCount == 1));
 
-            sizeNeeded = sizeof(SMBIOSVERSIONINFO) + sizeof(ULONG);
-            if (BufferAvail >= sizeNeeded)
-            {
-                sizeSMBios = BufferAvail - sizeNeeded;
-                SMBiosVersionInfo = (PSMBIOSVERSIONINFO)Buffer;
-                TableSize = (PULONG) (Buffer + sizeof(SMBIOSVERSIONINFO));
-                BufferPtr = Buffer + sizeNeeded;
-            } else {
-                sizeSMBios = 0;
-                BufferPtr = NULL;
-                SMBiosVersionInfo = NULL;
-            }
+        sizeNeeded = sizeof(SMBIOSVERSIONINFO) + sizeof(ULONG);
+        if (BufferAvail >= sizeNeeded)
+        {
+            sizeSMBios = BufferAvail - sizeNeeded;
+            SMBiosVersionInfo = (PSMBIOSVERSIONINFO)Buffer;
+            TableSize = (PULONG)(Buffer + sizeof(SMBIOSVERSIONINFO));
+            BufferPtr = Buffer + sizeNeeded;
+        }
+        else
+        {
+            sizeSMBios = 0;
+            BufferPtr = NULL;
+            SMBiosVersionInfo = NULL;
+        }
 
-            status = WmipGetSMBiosTableData(BufferPtr,
-                                        &sizeSMBios,
-                                        SMBiosVersionInfo);
+        status = WmipGetSMBiosTableData(BufferPtr, &sizeSMBios, SMBiosVersionInfo);
 
-            sizeNeeded += sizeSMBios;
+        sizeNeeded += sizeSMBios;
 
-            if (NT_SUCCESS(status))
-            {
-                *(TableSize) = sizeSMBios;
-                *InstanceLengthArray = sizeNeeded;
-            }
+        if (NT_SUCCESS(status))
+        {
+            *(TableSize) = sizeSMBios;
+            *InstanceLengthArray = sizeNeeded;
+        }
 #else
-            status = STATUS_WMI_GUID_NOT_FOUND;
+        status = STATUS_WMI_GUID_NOT_FOUND;
 #endif
-            break;
-        }
+        break;
+    }
 
-        case PnPIdGuidIndex:
+    case PnPIdGuidIndex:
+    {
+        PDEVICE_OBJECT pDO;
+        UNICODE_STRING instancePath;
+        PREGENTRY regEntry;
+        ULONG dataBlockSize, paddedDataBlockSize, padSize;
+        ULONG i;
+
+        regEntry = WmipFindRegEntryByDevice(DeviceObject, FALSE);
+        if (regEntry != NULL)
         {
-            PDEVICE_OBJECT pDO;
-            UNICODE_STRING instancePath;
-            PREGENTRY regEntry;
-            ULONG dataBlockSize, paddedDataBlockSize, padSize;
-            ULONG i;
+            pDO = regEntry->PDO;
+            WmipAssert(pDO != NULL);
 
-            regEntry = WmipFindRegEntryByDevice(DeviceObject, FALSE);
-            if (regEntry != NULL)
+            if (pDO != NULL)
             {
-                pDO = regEntry->PDO;
-                WmipAssert(pDO != NULL);
-
-                if (pDO != NULL)
-                {
-                    status = WmipPDOToDeviceInstanceName(pDO, &instancePath);
-                } else {
-                    status = STATUS_UNSUCCESSFUL;
-                }
-
-                if (NT_SUCCESS(status))
-                {
-                    dataBlockSize = instancePath.Length + sizeof(USHORT);
-                    paddedDataBlockSize = (dataBlockSize + 7) & ~7;
-                    padSize = paddedDataBlockSize - dataBlockSize;
-                    sizeNeeded = paddedDataBlockSize * InstanceCount;
-                    if (sizeNeeded <= BufferAvail)
-                    {
-                        for (i = InstanceIndex;
-                             i < (InstanceIndex + InstanceCount);
-                             i++)
-                        {
-                            *InstanceLengthArray++ = dataBlockSize;
-                            *((PUSHORT)Buffer) = instancePath.Length;
-                            Buffer += sizeof(USHORT);
-                            RtlCopyMemory(Buffer,
-                                             instancePath.Buffer,
-                                          instancePath.Length);
-                            Buffer += instancePath.Length;
-                            RtlZeroMemory(Buffer, padSize);
-                            Buffer += padSize;
-                        }
-                    } else {
-                        status = STATUS_BUFFER_TOO_SMALL;
-                    }
-
-                    RtlFreeUnicodeString(&instancePath);
-
-                } else {
-                    status = STATUS_WMI_GUID_NOT_FOUND;
-                }
-                WmipUnreferenceRegEntry(regEntry);
-            } else {
-                WmipAssert(FALSE);
-                status = STATUS_WMI_GUID_NOT_FOUND;
+                status = WmipPDOToDeviceInstanceName(pDO, &instancePath);
             }
-
-            break;
-        }
-
-        case PnPIdInstanceNamesGuidIndex:
-        {
-            PDEVICE_OBJECT pDO;
-            UNICODE_STRING instancePath;
-            PREGENTRY regEntry;
-
-            regEntry = WmipFindRegEntryByDevice(DeviceObject, FALSE);
-            if (regEntry != NULL)
+            else
             {
-                pDO = regEntry->PDO;
-                WmipAssert(pDO != NULL);
-
-                if (pDO != NULL)
-                {
-                    status = WmipPDOToDeviceInstanceName(pDO, &instancePath);
-                } else {
-                    status = STATUS_UNSUCCESSFUL;
-                }
-
-                if (NT_SUCCESS(status))
-                {
-                    sizeNeeded = sizeof(ULONG) +
-                                    instancePath.Length + 2 * sizeof(WCHAR) +
-                    sizeof(USHORT);
-
-                    if (sizeNeeded <= BufferAvail)
-                    {
-                        *((PULONG)Buffer) = 1;
-                        Buffer += sizeof(ULONG);
-                        *InstanceLengthArray = sizeNeeded;
-                        *((PUSHORT)Buffer) = instancePath.Length + 2*sizeof(WCHAR);
-                        Buffer += sizeof(USHORT);
-                        RtlCopyMemory(Buffer,
-                                      instancePath.Buffer,
-                                      instancePath.Length);
-                        Buffer += instancePath.Length;
-                        *((PWCHAR)Buffer) = '_';
-                        Buffer += sizeof(WCHAR);
-                        *((PWCHAR)Buffer) = '0';
-                    } else {
-                        status = STATUS_BUFFER_TOO_SMALL;
-                    }
-
-                    RtlFreeUnicodeString(&instancePath);
-
-                } else {
-                    status = STATUS_WMI_GUID_NOT_FOUND;
-                }
-                WmipUnreferenceRegEntry(regEntry);
-            } else {
-                WmipAssert(FALSE);
-                status = STATUS_WMI_GUID_NOT_FOUND;
+                status = STATUS_UNSUCCESSFUL;
             }
-
-            break;
-        }
-
-        case MSAcpiInfoGuidIndex:
-        {
-            RTL_QUERY_REGISTRY_TABLE queryTable[4];
-            ULONG bootArchitecture = 0;
-            ULONG preferredProfile = 0;
-            ULONG capabilities = 0;
-
-            queryTable[0].QueryRoutine = NULL;
-            queryTable[0].Flags = RTL_QUERY_REGISTRY_DIRECT |
-                                  RTL_QUERY_REGISTRY_REQUIRED;
-            queryTable[0].Name = L"BootArchitecture";
-            queryTable[0].EntryContext = &bootArchitecture;
-            queryTable[0].DefaultType = REG_NONE;
-
-            queryTable[1].QueryRoutine = NULL;
-            queryTable[1].Flags = RTL_QUERY_REGISTRY_DIRECT |
-                                  RTL_QUERY_REGISTRY_REQUIRED;
-            queryTable[1].Name = L"PreferredProfile";
-            queryTable[1].EntryContext = &preferredProfile;
-            queryTable[1].DefaultType = REG_NONE;
-
-            queryTable[2].QueryRoutine = NULL;
-            queryTable[2].Flags = RTL_QUERY_REGISTRY_DIRECT |
-                                  RTL_QUERY_REGISTRY_REQUIRED;
-            queryTable[2].Name = L"Capabilities";
-            queryTable[2].EntryContext = &capabilities;
-            queryTable[2].DefaultType = REG_NONE;
-
-            queryTable[3].QueryRoutine = NULL;
-            queryTable[3].Flags = 0;
-            
-            status = RtlQueryRegistryValues(RTL_REGISTRY_ABSOLUTE,
-                                            L"\\Registry\\Machine\\Hardware\\Description\\System",
-                                            queryTable,
-                                            NULL,
-                                            NULL);
 
             if (NT_SUCCESS(status))
             {
-                sizeNeeded = sizeof(MSAcpiInfo);
+                dataBlockSize = instancePath.Length + sizeof(USHORT);
+                paddedDataBlockSize = (dataBlockSize + 7) & ~7;
+                padSize = paddedDataBlockSize - dataBlockSize;
+                sizeNeeded = paddedDataBlockSize * InstanceCount;
                 if (sizeNeeded <= BufferAvail)
                 {
-                    PMSAcpiInfo info = (PMSAcpiInfo)Buffer;
-                    info->BootArchitecture = bootArchitecture;
-                    info->PreferredProfile = preferredProfile;
-                    info->Capabilities = capabilities;
-                    status = STATUS_SUCCESS;
-                } else {
+                    for (i = InstanceIndex; i < (InstanceIndex + InstanceCount); i++)
+                    {
+                        *InstanceLengthArray++ = dataBlockSize;
+                        *((PUSHORT)Buffer) = instancePath.Length;
+                        Buffer += sizeof(USHORT);
+                        RtlCopyMemory(Buffer, instancePath.Buffer, instancePath.Length);
+                        Buffer += instancePath.Length;
+                        RtlZeroMemory(Buffer, padSize);
+                        Buffer += padSize;
+                    }
+                }
+                else
+                {
                     status = STATUS_BUFFER_TOO_SMALL;
                 }
-            } else {
+
+                RtlFreeUnicodeString(&instancePath);
+            }
+            else
+            {
                 status = STATUS_WMI_GUID_NOT_FOUND;
             }
-            break;
+            WmipUnreferenceRegEntry(regEntry);
         }
-        
-        case Sysid1394GuidIndex:
-        case SysidUuidGuidIndex:
+        else
         {
-            PSYSID_UUID uuid;
-            ULONG uuidCount;
-            PSYSID_1394 x1394;
-            ULONG x1394Count;
-            PUCHAR data;
-            ULONG count;
+            WmipAssert(FALSE);
+            status = STATUS_WMI_GUID_NOT_FOUND;
+        }
 
-#if defined(_AMD64_) || defined(_IA64_) || defined(i386) || defined(MEMPHIS)
+        break;
+    }
 
-            status = WmipGetSysIds(&uuid,
-                                   &uuidCount,
-                                   &x1394,
-                                   &x1394Count);
+    case PnPIdInstanceNamesGuidIndex:
+    {
+        PDEVICE_OBJECT pDO;
+        UNICODE_STRING instancePath;
+        PREGENTRY regEntry;
+
+        regEntry = WmipFindRegEntryByDevice(DeviceObject, FALSE);
+        if (regEntry != NULL)
+        {
+            pDO = regEntry->PDO;
+            WmipAssert(pDO != NULL);
+
+            if (pDO != NULL)
+            {
+                status = WmipPDOToDeviceInstanceName(pDO, &instancePath);
+            }
+            else
+            {
+                status = STATUS_UNSUCCESSFUL;
+            }
 
             if (NT_SUCCESS(status))
             {
-                if (GuidIndex == Sysid1394GuidIndex)
-                {
-                    sizeNeeded = x1394Count * sizeof(SYSID_1394) +
-                                 sizeof(ULONG);
-                    data = (PUCHAR)x1394;
-                    count = x1394Count;
-                } else {
-                    sizeNeeded = uuidCount * sizeof(SYSID_UUID) +
-                                 sizeof(ULONG);
-                    data = (PUCHAR)uuid;
-                    count = uuidCount;
-                }
+                sizeNeeded = sizeof(ULONG) + instancePath.Length + 2 * sizeof(WCHAR) + sizeof(USHORT);
 
-                if (BufferAvail >= sizeNeeded)
+                if (sizeNeeded <= BufferAvail)
                 {
-                    *InstanceLengthArray = sizeNeeded;
-                    *((PULONG)Buffer) = count;
+                    *((PULONG)Buffer) = 1;
                     Buffer += sizeof(ULONG);
-                    RtlCopyMemory(Buffer, data, sizeNeeded-sizeof(ULONG));
-                    status = STATUS_SUCCESS;
-                } else {
+                    *InstanceLengthArray = sizeNeeded;
+                    *((PUSHORT)Buffer) = instancePath.Length + 2 * sizeof(WCHAR);
+                    Buffer += sizeof(USHORT);
+                    RtlCopyMemory(Buffer, instancePath.Buffer, instancePath.Length);
+                    Buffer += instancePath.Length;
+                    *((PWCHAR)Buffer) = '_';
+                    Buffer += sizeof(WCHAR);
+                    *((PWCHAR)Buffer) = '0';
+                }
+                else
+                {
                     status = STATUS_BUFFER_TOO_SMALL;
                 }
-            }
-#else
-            status = STATUS_WMI_GUID_NOT_FOUND;
-#endif
 
-            break;
+                RtlFreeUnicodeString(&instancePath);
+            }
+            else
+            {
+                status = STATUS_WMI_GUID_NOT_FOUND;
+            }
+            WmipUnreferenceRegEntry(regEntry);
+        }
+        else
+        {
+            WmipAssert(FALSE);
+            status = STATUS_WMI_GUID_NOT_FOUND;
         }
 
-        case SmbiosEventGuidIndex:
+        break;
+    }
+
+    case MSAcpiInfoGuidIndex:
+    {
+        RTL_QUERY_REGISTRY_TABLE queryTable[4];
+        ULONG bootArchitecture = 0;
+        ULONG preferredProfile = 0;
+        ULONG capabilities = 0;
+
+        queryTable[0].QueryRoutine = NULL;
+        queryTable[0].Flags = RTL_QUERY_REGISTRY_DIRECT | RTL_QUERY_REGISTRY_REQUIRED;
+        queryTable[0].Name = L"BootArchitecture";
+        queryTable[0].EntryContext = &bootArchitecture;
+        queryTable[0].DefaultType = REG_NONE;
+
+        queryTable[1].QueryRoutine = NULL;
+        queryTable[1].Flags = RTL_QUERY_REGISTRY_DIRECT | RTL_QUERY_REGISTRY_REQUIRED;
+        queryTable[1].Name = L"PreferredProfile";
+        queryTable[1].EntryContext = &preferredProfile;
+        queryTable[1].DefaultType = REG_NONE;
+
+        queryTable[2].QueryRoutine = NULL;
+        queryTable[2].Flags = RTL_QUERY_REGISTRY_DIRECT | RTL_QUERY_REGISTRY_REQUIRED;
+        queryTable[2].Name = L"Capabilities";
+        queryTable[2].EntryContext = &capabilities;
+        queryTable[2].DefaultType = REG_NONE;
+
+        queryTable[3].QueryRoutine = NULL;
+        queryTable[3].Flags = 0;
+
+        status = RtlQueryRegistryValues(RTL_REGISTRY_ABSOLUTE, L"\\Registry\\Machine\\Hardware\\Description\\System",
+                                        queryTable, NULL, NULL);
+
+        if (NT_SUCCESS(status))
         {
-            //
-            // SMBIOS eventlog query
+            sizeNeeded = sizeof(MSAcpiInfo);
+            if (sizeNeeded <= BufferAvail)
+            {
+                PMSAcpiInfo info = (PMSAcpiInfo)Buffer;
+                info->BootArchitecture = bootArchitecture;
+                info->PreferredProfile = preferredProfile;
+                info->Capabilities = capabilities;
+                status = STATUS_SUCCESS;
+            }
+            else
+            {
+                status = STATUS_BUFFER_TOO_SMALL;
+            }
+        }
+        else
+        {
+            status = STATUS_WMI_GUID_NOT_FOUND;
+        }
+        break;
+    }
+
+    case Sysid1394GuidIndex:
+    case SysidUuidGuidIndex:
+    {
+        PSYSID_UUID uuid;
+        ULONG uuidCount;
+        PSYSID_1394 x1394;
+        ULONG x1394Count;
+        PUCHAR data;
+        ULONG count;
 
 #if defined(_AMD64_) || defined(_IA64_) || defined(i386) || defined(MEMPHIS)
-            WmipAssert((InstanceIndex == 0) && (InstanceCount == 1));
 
-            if (BufferAvail == 0)
+        status = WmipGetSysIds(&uuid, &uuidCount, &x1394, &x1394Count);
+
+        if (NT_SUCCESS(status))
+        {
+            if (GuidIndex == Sysid1394GuidIndex)
             {
-                sizeNeeded = 0;
-                BufferPtr = NULL;
-            } else {
-                sizeNeeded = BufferAvail;
-                BufferPtr = Buffer;
+                sizeNeeded = x1394Count * sizeof(SYSID_1394) + sizeof(ULONG);
+                data = (PUCHAR)x1394;
+                count = x1394Count;
+            }
+            else
+            {
+                sizeNeeded = uuidCount * sizeof(SYSID_UUID) + sizeof(ULONG);
+                data = (PUCHAR)uuid;
+                count = uuidCount;
             }
 
-            status = WmipGetSMBiosEventlog(BufferPtr, &sizeNeeded);
-
-            if (NT_SUCCESS(status))
+            if (BufferAvail >= sizeNeeded)
             {
                 *InstanceLengthArray = sizeNeeded;
+                *((PULONG)Buffer) = count;
+                Buffer += sizeof(ULONG);
+                RtlCopyMemory(Buffer, data, sizeNeeded - sizeof(ULONG));
+                status = STATUS_SUCCESS;
             }
-#else
-            status = STATUS_WMI_GUID_NOT_FOUND;
-#endif
-            break;
+            else
+            {
+                status = STATUS_BUFFER_TOO_SMALL;
+            }
         }
+#else
+        status = STATUS_WMI_GUID_NOT_FOUND;
+#endif
+
+        break;
+    }
+
+    case SmbiosEventGuidIndex:
+    {
+        //
+        // SMBIOS eventlog query
+
+#if defined(_AMD64_) || defined(_IA64_) || defined(i386) || defined(MEMPHIS)
+        WmipAssert((InstanceIndex == 0) && (InstanceCount == 1));
+
+        if (BufferAvail == 0)
+        {
+            sizeNeeded = 0;
+            BufferPtr = NULL;
+        }
+        else
+        {
+            sizeNeeded = BufferAvail;
+            BufferPtr = Buffer;
+        }
+
+        status = WmipGetSMBiosEventlog(BufferPtr, &sizeNeeded);
+
+        if (NT_SUCCESS(status))
+        {
+            *InstanceLengthArray = sizeNeeded;
+        }
+#else
+        status = STATUS_WMI_GUID_NOT_FOUND;
+#endif
+        break;
+    }
 
 #if defined(_IA64_)
-        case MCARawDataGuidIndex:
+    case MCARawDataGuidIndex:
+    {
+        PULONG ptr;
+        ULONG size;
+
+        if (WmipRawMCA != NULL)
         {
-            PULONG ptr;
-            ULONG size;
-
-            if (WmipRawMCA != NULL)
+            //
+            // MCA data is available from last boot so return that
+            // to the caller
+            //
+            sizeNeeded = 2 * sizeof(ULONG) + WmipRawMCASize;
+            if (BufferAvail >= sizeNeeded)
             {
-                //
-                // MCA data is available from last boot so return that
-                // to the caller
-                //
-                sizeNeeded = 2 * sizeof(ULONG) + WmipRawMCASize;
-                if (BufferAvail >= sizeNeeded)
+                ptr = (PULONG)Buffer;
+                *ptr++ = 1;              // 1 MCA record
+                *ptr++ = WmipRawMCASize; // record size
+                size = BufferAvail - 2 * sizeof(ULONG);
+                status = WmipGetRawMCAInfo((PUCHAR)ptr, &size);
+                if (status == STATUS_BUFFER_TOO_SMALL)
                 {
-                    ptr = (PULONG)Buffer;
-                    *ptr++ = 1;                // 1 MCA record
-                    *ptr++ = WmipRawMCASize;   // record size
-                    size = BufferAvail - 2*sizeof(ULONG);
-                    status = WmipGetRawMCAInfo((PUCHAR)ptr,
-                                               &size);
-                    if (status == STATUS_BUFFER_TOO_SMALL)
-                    {
-                        sizeNeeded = size + 2*sizeof(ULONG);
-                    }
-                } else {
-                    status = STATUS_BUFFER_TOO_SMALL;
-                }
-            } else {
-                //
-                // MCA data is not available so return 0 records
-                //
-                sizeNeeded = sizeof(ULONG);
-                if (BufferAvail >= sizeNeeded)
-                {
-                    ptr = (PULONG)Buffer;
-                    *ptr = 0;
-                    status = STATUS_SUCCESS;
-                } else {
-                    status = STATUS_BUFFER_TOO_SMALL;
+                    sizeNeeded = size + 2 * sizeof(ULONG);
                 }
             }
-
-            if (NT_SUCCESS(status))
+            else
             {
-                *InstanceLengthArray = sizeNeeded;
+                status = STATUS_BUFFER_TOO_SMALL;
             }
-            break;
         }
+        else
+        {
+            //
+            // MCA data is not available so return 0 records
+            //
+            sizeNeeded = sizeof(ULONG);
+            if (BufferAvail >= sizeNeeded)
+            {
+                ptr = (PULONG)Buffer;
+                *ptr = 0;
+                status = STATUS_SUCCESS;
+            }
+            else
+            {
+                status = STATUS_BUFFER_TOO_SMALL;
+            }
+        }
+
+        if (NT_SUCCESS(status))
+        {
+            *InstanceLengthArray = sizeNeeded;
+        }
+        break;
+    }
 #endif
-        
+
 //
 // For now don't expose the CPE control guid
 //
 #ifdef CPE_CONTROL
-        case CPEControlGuidIndex:
+    case CPEControlGuidIndex:
+    {
+        sizeNeeded = sizeof(MSMCAInfo_CPEControl);
+        if (BufferAvail >= sizeNeeded)
         {
-            sizeNeeded = sizeof(MSMCAInfo_CPEControl);
-            if (BufferAvail >= sizeNeeded)
-            {
-                PMSMCAInfo_CPEControl cpeControl;
+            PMSMCAInfo_CPEControl cpeControl;
 
-                cpeControl = (PMSMCAInfo_CPEControl)Buffer;
-                cpeControl->CPEPollingInterval = WmipCpePollInterval;
-                cpeControl->CPEGenerationEnabled = (WmipCpePollInterval != HAL_CPE_DISABLED) ?
-                                                    TRUE :
-                                                    FALSE;
-                *InstanceLengthArray = sizeNeeded;
-                status = STATUS_SUCCESS;
-            } else {
-                status = STATUS_BUFFER_TOO_SMALL;
-            }
-            break;
+            cpeControl = (PMSMCAInfo_CPEControl)Buffer;
+            cpeControl->CPEPollingInterval = WmipCpePollInterval;
+            cpeControl->CPEGenerationEnabled = (WmipCpePollInterval != HAL_CPE_DISABLED) ? TRUE : FALSE;
+            *InstanceLengthArray = sizeNeeded;
+            status = STATUS_SUCCESS;
         }
+        else
+        {
+            status = STATUS_BUFFER_TOO_SMALL;
+        }
+        break;
+    }
 #endif
 
 #ifdef GENERATE_MCA
-        case GenerateMCEGuidIndex:
+    case GenerateMCEGuidIndex:
+    {
+        sizeNeeded = sizeof(ULONG);
+        if (BufferAvail >= sizeNeeded)
         {
-            sizeNeeded = sizeof(ULONG);
-            if (BufferAvail >= sizeNeeded)
-            {
-                *((PULONG)Buffer) = 0;
-                *InstanceLengthArray = sizeNeeded;
-            } else {
-                status = STATUS_BUFFER_TOO_SMALL;
-            }
-            break;
+            *((PULONG)Buffer) = 0;
+            *InstanceLengthArray = sizeNeeded;
         }
+        else
+        {
+            status = STATUS_BUFFER_TOO_SMALL;
+        }
+        break;
+    }
 #endif
 
-        default:
-        {
-            WmipAssert(FALSE);
-            status = STATUS_WMI_GUID_NOT_FOUND;
-            break;
-        }
+    default:
+    {
+        WmipAssert(FALSE);
+        status = STATUS_WMI_GUID_NOT_FOUND;
+        break;
+    }
     }
 
-    status = IoWMICompleteRequest((PWMILIB_INFO)&WmipWmiLibInfo,
-                                 DeviceObject,
-                                 Irp,
-                                 status,
-                                 sizeNeeded,
-                                 IO_NO_INCREMENT);
-    return(status);
+    status =
+        IoWMICompleteRequest((PWMILIB_INFO)&WmipWmiLibInfo, DeviceObject, Irp, status, sizeNeeded, IO_NO_INCREMENT);
+    return (status);
 }
 
 
 #ifdef CPE_CONTROL
-NTSTATUS WmipSetWmiDataBlock(
-    PDEVICE_OBJECT DeviceObject,
-    PIRP Irp,
-    ULONG GuidIndex,
-    ULONG InstanceIndex,
-    ULONG BufferSize,
-    PUCHAR Buffer
-    )
+NTSTATUS WmipSetWmiDataBlock(PDEVICE_OBJECT DeviceObject, PIRP Irp, ULONG GuidIndex, ULONG InstanceIndex,
+                             ULONG BufferSize, PUCHAR Buffer)
 {
     NTSTATUS status;
     ULONG sizeNeeded;
-    
+
     PAGED_CODE();
-    
+
     if (GuidIndex == CPEControlGuidIndex)
     {
-        sizeNeeded = FIELD_OFFSET(MSMCAInfo_CPEControl,
-                                  CPEGenerationEnabled) +
-                     sizeof(BOOLEAN);
+        sizeNeeded = FIELD_OFFSET(MSMCAInfo_CPEControl, CPEGenerationEnabled) + sizeof(BOOLEAN);
         if (BufferSize == sizeNeeded)
         {
             PMSMCAInfo_CPEControl cpeControl;
 
             cpeControl = (PMSMCAInfo_CPEControl)Buffer;
-            status = WmipSetCPEPolling(cpeControl->CPEGenerationEnabled,
-                                       cpeControl->CPEPollingInterval);
-        } else {
+            status = WmipSetCPEPolling(cpeControl->CPEGenerationEnabled, cpeControl->CPEPollingInterval);
+        }
+        else
+        {
             status = STATUS_INVALID_PARAMETER;
         }
-    } else {
+    }
+    else
+    {
         status = STATUS_WMI_READ_ONLY;
     }
-    
-    status = IoWMICompleteRequest((PWMILIB_INFO)&WmipWmiLibInfo,
-                                 DeviceObject,
-                                 Irp,
-                                 status,
-                                 0,
-                                 IO_NO_INCREMENT);
-    return(status);
+
+    status = IoWMICompleteRequest((PWMILIB_INFO)&WmipWmiLibInfo, DeviceObject, Irp, status, 0, IO_NO_INCREMENT);
+    return (status);
 }
 #endif
 
 #ifdef GENERATE_MCA
 NTSTATUS
-WmipExecuteWmiMethod (
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG GuidIndex,
-    IN ULONG InstanceIndex,
-    IN ULONG MethodId,
-    IN ULONG InBufferSize,
-    IN ULONG OutBufferSize,
-    IN OUT PUCHAR Buffer
-    )
+WmipExecuteWmiMethod(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG GuidIndex, IN ULONG InstanceIndex,
+                     IN ULONG MethodId, IN ULONG InBufferSize, IN ULONG OutBufferSize, IN OUT PUCHAR Buffer)
 {
     NTSTATUS status;
     ULONG sizeNeeded;
-    
+
     PAGED_CODE();
 
     if (GuidIndex == GenerateMCEGuidIndex)
     {
         switch (MethodId)
         {
-            //
-            // MCA insertion by ID
-            //
-            case 1:
+        //
+        // MCA insertion by ID
+        //
+        case 1:
+        {
+            if (InBufferSize == sizeof(ULONG))
             {
-                if (InBufferSize == sizeof(ULONG))
+                sizeNeeded = sizeof(NTSTATUS);
+                if (OutBufferSize >= sizeNeeded)
                 {
-                    sizeNeeded = sizeof(NTSTATUS);
-                    if (OutBufferSize >= sizeNeeded)
-                    {
-                        status = WmipGenerateMCE(*((PULONG)Buffer));
-                        *((NTSTATUS *)Buffer) = status;
-                        status = STATUS_SUCCESS;
-                    }
-                } else {
-                    status = STATUS_INVALID_PARAMETER;
+                    status = WmipGenerateMCE(*((PULONG)Buffer));
+                    *((NTSTATUS *)Buffer) = status;
+                    status = STATUS_SUCCESS;
                 }
-                
-                break;
+            }
+            else
+            {
+                status = STATUS_INVALID_PARAMETER;
             }
 
-            //
-            // Corrected MCA insertion by fully formed MCA exception
-            //
-            case 2:
-            {
-#ifdef MCE_INSERTION
-                status = WmipInsertMce(&WmipCmcQueryInfo,
-                                       InBufferSize,
-                                       Buffer);
-#else
-                WmipGenerateMCAEventlog(Buffer,
-                                        InBufferSize,
-                                        FALSE);
-                status = STATUS_SUCCESS;
-#endif
-                sizeNeeded = 0;
-                break;
-            }
-            
-            //
-            // Fatal MCA insertion by fully formed MCA exception
-            //
-            case 3:
-            {
-#ifdef MCE_INSERTION
-                status = WmipInsertMce(&WmipCpeQueryInfo,
-                                       InBufferSize,
-                                       Buffer);
-#else
-                WmipGenerateMCAEventlog(Buffer,
-                                        InBufferSize,
-                                        TRUE);
-                status = STATUS_SUCCESS;
-#endif
-                sizeNeeded = 0;
-                break;
-            }
-            
-            default:
-            {
-                status = STATUS_WMI_ITEMID_NOT_FOUND;
-            }
+            break;
         }
-    } else {
+
+        //
+        // Corrected MCA insertion by fully formed MCA exception
+        //
+        case 2:
+        {
+#ifdef MCE_INSERTION
+            status = WmipInsertMce(&WmipCmcQueryInfo, InBufferSize, Buffer);
+#else
+            WmipGenerateMCAEventlog(Buffer, InBufferSize, FALSE);
+            status = STATUS_SUCCESS;
+#endif
+            sizeNeeded = 0;
+            break;
+        }
+
+        //
+        // Fatal MCA insertion by fully formed MCA exception
+        //
+        case 3:
+        {
+#ifdef MCE_INSERTION
+            status = WmipInsertMce(&WmipCpeQueryInfo, InBufferSize, Buffer);
+#else
+            WmipGenerateMCAEventlog(Buffer, InBufferSize, TRUE);
+            status = STATUS_SUCCESS;
+#endif
+            sizeNeeded = 0;
+            break;
+        }
+
+        default:
+        {
+            status = STATUS_WMI_ITEMID_NOT_FOUND;
+        }
+        }
+    }
+    else
+    {
         status = STATUS_WMI_GUID_NOT_FOUND;
     }
 
-    status = IoWMICompleteRequest((PWMILIB_INFO)&WmipWmiLibInfo,
-                                 DeviceObject,
-                                 Irp,
-                                 status,
-                                 sizeNeeded,
-                                 IO_NO_INCREMENT);
-    
-    return(status);
+    status =
+        IoWMICompleteRequest((PWMILIB_INFO)&WmipWmiLibInfo, DeviceObject, Irp, status, sizeNeeded, IO_NO_INCREMENT);
+
+    return (status);
 }
 #endif
 
 BOOLEAN
-WmipFindGuid(
-    IN PGUIDREGINFO GuidList,
-    IN ULONG GuidCount,
-    IN LPGUID Guid,
-    OUT PULONG GuidIndex,
-    OUT PULONG InstanceCount
-    )
+WmipFindGuid(IN PGUIDREGINFO GuidList, IN ULONG GuidCount, IN LPGUID Guid, OUT PULONG GuidIndex,
+             OUT PULONG InstanceCount)
 /*++
 
 Routine Description:
@@ -983,20 +848,16 @@ Return Value:
         {
             *GuidIndex = i;
             *InstanceCount = GuidList[i].InstanceCount;
-            return(TRUE);
+            return (TRUE);
         }
     }
 
-    return(FALSE);
+    return (FALSE);
 }
 
 
 NTSTATUS
-IoWMISystemControl(
-    IN PWMILIB_INFO WmiLibInfo,
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    )
+IoWMISystemControl(IN PWMILIB_INFO WmiLibInfo, IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -1037,10 +898,8 @@ Return Value:
     // If the irp is not a WMI irp or it is not targetted at this device
     // or this device has not regstered with WMI then just forward it on.
     minorFunction = irpStack->MinorFunction;
-    if ((minorFunction > IRP_MN_REGINFO_EX) ||
-        (irpStack->Parameters.WMI.ProviderId != (ULONG_PTR)DeviceObject) ||
-        (((minorFunction != IRP_MN_REGINFO) &&
-         ((minorFunction != IRP_MN_REGINFO_EX))) &&
+    if ((minorFunction > IRP_MN_REGINFO_EX) || (irpStack->Parameters.WMI.ProviderId != (ULONG_PTR)DeviceObject) ||
+        (((minorFunction != IRP_MN_REGINFO) && ((minorFunction != IRP_MN_REGINFO_EX))) &&
          (WmiLibInfo->GuidList == NULL)))
     {
         //
@@ -1048,531 +907,462 @@ Return Value:
         if (WmiLibInfo->LowerDeviceObject != NULL)
         {
             IoSkipCurrentIrpStackLocation(Irp);
-            return(IoCallDriver(WmiLibInfo->LowerDeviceObject, Irp));
-        } else {
+            return (IoCallDriver(WmiLibInfo->LowerDeviceObject, Irp));
+        }
+        else
+        {
             status = STATUS_INVALID_DEVICE_REQUEST;
             Irp->IoStatus.Status = status;
             IoCompleteRequest(Irp, IO_NO_INCREMENT);
-            return(status);
+            return (status);
         }
     }
 
     buffer = (PUCHAR)irpStack->Parameters.WMI.Buffer;
     bufferSize = irpStack->Parameters.WMI.BufferSize;
 
-    if ((minorFunction != IRP_MN_REGINFO) &&
-        (minorFunction != IRP_MN_REGINFO_EX))
+    if ((minorFunction != IRP_MN_REGINFO) && (minorFunction != IRP_MN_REGINFO_EX))
     {
         //
         // For all requests other than query registration info we are passed
         // a guid. Determine if the guid is one that is supported by the
         // device.
-        if (WmipFindGuid(WmiLibInfo->GuidList,
-                            WmiLibInfo->GuidCount,
-                            (LPGUID)irpStack->Parameters.WMI.DataPath,
-                            &guidIndex,
-                            &instanceCount))
+        if (WmipFindGuid(WmiLibInfo->GuidList, WmiLibInfo->GuidCount, (LPGUID)irpStack->Parameters.WMI.DataPath,
+                         &guidIndex, &instanceCount))
         {
             status = STATUS_SUCCESS;
-        } else {
+        }
+        else
+        {
             status = STATUS_WMI_GUID_NOT_FOUND;
         }
 
         if (NT_SUCCESS(status) &&
-            ((minorFunction == IRP_MN_QUERY_SINGLE_INSTANCE) ||
-             (minorFunction == IRP_MN_CHANGE_SINGLE_INSTANCE) ||
-             (minorFunction == IRP_MN_CHANGE_SINGLE_ITEM) ||
-             (minorFunction == IRP_MN_EXECUTE_METHOD)))
+            ((minorFunction == IRP_MN_QUERY_SINGLE_INSTANCE) || (minorFunction == IRP_MN_CHANGE_SINGLE_INSTANCE) ||
+             (minorFunction == IRP_MN_CHANGE_SINGLE_ITEM) || (minorFunction == IRP_MN_EXECUTE_METHOD)))
         {
             instanceIndex = ((PWNODE_SINGLE_INSTANCE)buffer)->InstanceIndex;
 
-            if ( ! (((PWNODE_HEADER)buffer)->Flags) &
-                                          WNODE_FLAG_STATIC_INSTANCE_NAMES)
+            if (!(((PWNODE_HEADER)buffer)->Flags) & WNODE_FLAG_STATIC_INSTANCE_NAMES)
             {
                 status = STATUS_WMI_INSTANCE_NOT_FOUND;
             }
         }
 
-        if (! NT_SUCCESS(status))
+        if (!NT_SUCCESS(status))
         {
             Irp->IoStatus.Status = status;
             IoCompleteRequest(Irp, IO_NO_INCREMENT);
-            return(status);
+            return (status);
         }
     }
 
-    switch(minorFunction)
+    switch (minorFunction)
     {
-        case IRP_MN_REGINFO:
-        case IRP_MN_REGINFO_EX:
+    case IRP_MN_REGINFO:
+    case IRP_MN_REGINFO_EX:
+    {
+        ULONG guidCount;
+        PGUIDREGINFO guidList;
+        PWMIREGINFOW wmiRegInfo;
+        PWMIREGGUIDW wmiRegGuid;
+        PDEVICE_OBJECT pdo;
+        PUNICODE_STRING regPath;
+        PWCHAR stringPtr;
+        ULONG registryPathOffset;
+        ULONG mofResourceOffset;
+        ULONG bufferNeeded;
+        ULONG i;
+        ULONG_PTR nameInfo;
+        ULONG nameSize, nameOffset, nameFlags;
+        UNICODE_STRING name;
+        UNICODE_STRING nullRegistryPath;
+
+        WmipAssert(WmiLibInfo->QueryWmiRegInfo != NULL);
+        WmipAssert(WmiLibInfo->QueryWmiDataBlock != NULL);
+
+        name.Buffer = NULL;
+        name.Length = 0;
+        name.MaximumLength = 0;
+        nameFlags = 0;
+        status = WmiLibInfo->QueryWmiRegInfo(DeviceObject, &nameFlags, &name, &regPath);
+
+        if (NT_SUCCESS(status) && (!(nameFlags & WMIREG_FLAG_INSTANCE_PDO) && (name.Buffer == NULL)))
         {
-            ULONG guidCount;
-            PGUIDREGINFO guidList;
-            PWMIREGINFOW wmiRegInfo;
-            PWMIREGGUIDW wmiRegGuid;
-            PDEVICE_OBJECT pdo;
-            PUNICODE_STRING regPath;
-            PWCHAR stringPtr;
-            ULONG registryPathOffset;
-            ULONG mofResourceOffset;
-            ULONG bufferNeeded;
-            ULONG i;
-            ULONG_PTR nameInfo;
-            ULONG nameSize, nameOffset, nameFlags;
-            UNICODE_STRING name;
-            UNICODE_STRING nullRegistryPath;
-
-            WmipAssert(WmiLibInfo->QueryWmiRegInfo != NULL);
-            WmipAssert(WmiLibInfo->QueryWmiDataBlock != NULL);
-
-            name.Buffer = NULL;
-            name.Length = 0;
-            name.MaximumLength = 0;
-            nameFlags = 0;
-            status = WmiLibInfo->QueryWmiRegInfo(
-                                                    DeviceObject,
-                                                    &nameFlags,
-                                                    &name,
-                                                    &regPath);
-
-            if (NT_SUCCESS(status) &&
-                (! (nameFlags &  WMIREG_FLAG_INSTANCE_PDO) &&
-                (name.Buffer == NULL)))
-            {
-                //
-                // if PDO flag not specified then an instance name must be
-                status = STATUS_INVALID_DEVICE_REQUEST;
-            }
-
-#if DBG
-            if (nameFlags &  WMIREG_FLAG_INSTANCE_PDO)
-            {
-                WmipAssert(WmiLibInfo->LowerPDO != NULL);
-            }
-#endif
-            if (NT_SUCCESS(status))
-            {
-                WmipAssert(WmiLibInfo->GuidList != NULL);
-
-                guidList = WmiLibInfo->GuidList;
-                guidCount = WmiLibInfo->GuidCount;
-
-                nameOffset = FIELD_OFFSET(WMIREGINFOW, WmiRegGuid) +
-                                      guidCount * sizeof(WMIREGGUIDW);
-
-                if (nameFlags & WMIREG_FLAG_INSTANCE_PDO)
-                {
-                    nameSize = 0;
-                    nameInfo = (ULONG_PTR)WmiLibInfo->LowerPDO;
-                } else {
-                    nameFlags |= WMIREG_FLAG_INSTANCE_LIST;
-                    nameSize = name.Length + sizeof(USHORT);
-                    nameInfo = nameOffset;
-                }
-
-                if (regPath == NULL)
-                {
-                    //
-                    // No registry path specified. This is a bad thing for
-                    // the device to do, but is not fatal
-                    nullRegistryPath.Buffer = NULL;
-                    nullRegistryPath.Length = 0;
-                    nullRegistryPath.MaximumLength = 0;
-                    regPath = &nullRegistryPath;
-                }
-
-                mofResourceOffset = 0;
-
-                registryPathOffset = nameOffset + nameSize; 
-
-                bufferNeeded = registryPathOffset +
-                regPath->Length + sizeof(USHORT);
-
-                if (bufferNeeded <= bufferSize)
-                {
-                    retSize = bufferNeeded;
-
-                    wmiRegInfo = (PWMIREGINFO)buffer;
-                    wmiRegInfo->BufferSize = bufferNeeded;
-                    wmiRegInfo->NextWmiRegInfo = 0;
-                    wmiRegInfo->MofResourceName = mofResourceOffset;
-                    wmiRegInfo->RegistryPath = registryPathOffset;
-                    wmiRegInfo->GuidCount = guidCount;
-
-                    for (i = 0; i < guidCount; i++)
-                    {
-                        wmiRegGuid = &wmiRegInfo->WmiRegGuid[i];
-                        wmiRegGuid->Guid = guidList[i].Guid;
-                        wmiRegGuid->Flags = guidList[i].Flags | nameFlags;
-                        wmiRegGuid->InstanceInfo = nameInfo;
-                        wmiRegGuid->InstanceCount = guidList[i].InstanceCount;
-                    }
-
-                    if ( nameFlags &  WMIREG_FLAG_INSTANCE_LIST)
-                    {
-                        stringPtr = (PWCHAR)((PUCHAR)buffer + nameOffset);
-                        *stringPtr++ = name.Length;
-                        RtlCopyMemory(stringPtr,
-                                  name.Buffer,
-                                  name.Length);
-                    }
-
-                    stringPtr = (PWCHAR)((PUCHAR)buffer + registryPathOffset);
-                    *stringPtr++ = regPath->Length;
-                    RtlCopyMemory(stringPtr,
-                              regPath->Buffer,
-                              regPath->Length);
-                } else {
-                    *((PULONG)buffer) = bufferNeeded;
-                    retSize = sizeof(ULONG);
-                }
-            } else {
-                retSize = 0;
-            }
-
-            if (name.Buffer != NULL)
-            {
-                ExFreePool(name.Buffer);
-            }
-
-            Irp->IoStatus.Status = status;
-            Irp->IoStatus.Information = retSize;
-            IoCompleteRequest(Irp, IO_NO_INCREMENT);
-            return(status);
+            //
+            // if PDO flag not specified then an instance name must be
+            status = STATUS_INVALID_DEVICE_REQUEST;
         }
 
-        case IRP_MN_QUERY_ALL_DATA:
+#if DBG
+        if (nameFlags & WMIREG_FLAG_INSTANCE_PDO)
         {
-            PWNODE_ALL_DATA wnode;
-            ULONG bufferAvail;
-            PULONG instanceLengthArray;
-            PUCHAR dataBuffer;
-            ULONG instanceLengthArraySize;
-            ULONG dataBlockOffset;
-            PREGENTRY regEntry;
+            WmipAssert(WmiLibInfo->LowerPDO != NULL);
+        }
+#endif
+        if (NT_SUCCESS(status))
+        {
+            WmipAssert(WmiLibInfo->GuidList != NULL);
 
-            wnode = (PWNODE_ALL_DATA)buffer;
+            guidList = WmiLibInfo->GuidList;
+            guidCount = WmiLibInfo->GuidCount;
 
-            if (bufferSize < FIELD_OFFSET(WNODE_ALL_DATA,
-                                          OffsetInstanceDataAndLength))
+            nameOffset = FIELD_OFFSET(WMIREGINFOW, WmiRegGuid) + guidCount * sizeof(WMIREGGUIDW);
+
+            if (nameFlags & WMIREG_FLAG_INSTANCE_PDO)
+            {
+                nameSize = 0;
+                nameInfo = (ULONG_PTR)WmiLibInfo->LowerPDO;
+            }
+            else
+            {
+                nameFlags |= WMIREG_FLAG_INSTANCE_LIST;
+                nameSize = name.Length + sizeof(USHORT);
+                nameInfo = nameOffset;
+            }
+
+            if (regPath == NULL)
             {
                 //
-                // The buffer should never be smaller than the size of
-                // WNODE_ALL_DATA, however if it is then return with an
-                // error requesting the minimum sized buffer.
+                // No registry path specified. This is a bad thing for
+                // the device to do, but is not fatal
+                nullRegistryPath.Buffer = NULL;
+                nullRegistryPath.Length = 0;
+                nullRegistryPath.MaximumLength = 0;
+                regPath = &nullRegistryPath;
+            }
+
+            mofResourceOffset = 0;
+
+            registryPathOffset = nameOffset + nameSize;
+
+            bufferNeeded = registryPathOffset + regPath->Length + sizeof(USHORT);
+
+            if (bufferNeeded <= bufferSize)
+            {
+                retSize = bufferNeeded;
+
+                wmiRegInfo = (PWMIREGINFO)buffer;
+                wmiRegInfo->BufferSize = bufferNeeded;
+                wmiRegInfo->NextWmiRegInfo = 0;
+                wmiRegInfo->MofResourceName = mofResourceOffset;
+                wmiRegInfo->RegistryPath = registryPathOffset;
+                wmiRegInfo->GuidCount = guidCount;
+
+                for (i = 0; i < guidCount; i++)
+                {
+                    wmiRegGuid = &wmiRegInfo->WmiRegGuid[i];
+                    wmiRegGuid->Guid = guidList[i].Guid;
+                    wmiRegGuid->Flags = guidList[i].Flags | nameFlags;
+                    wmiRegGuid->InstanceInfo = nameInfo;
+                    wmiRegGuid->InstanceCount = guidList[i].InstanceCount;
+                }
+
+                if (nameFlags & WMIREG_FLAG_INSTANCE_LIST)
+                {
+                    stringPtr = (PWCHAR)((PUCHAR)buffer + nameOffset);
+                    *stringPtr++ = name.Length;
+                    RtlCopyMemory(stringPtr, name.Buffer, name.Length);
+                }
+
+                stringPtr = (PWCHAR)((PUCHAR)buffer + registryPathOffset);
+                *stringPtr++ = regPath->Length;
+                RtlCopyMemory(stringPtr, regPath->Buffer, regPath->Length);
+            }
+            else
+            {
+                *((PULONG)buffer) = bufferNeeded;
+                retSize = sizeof(ULONG);
+            }
+        }
+        else
+        {
+            retSize = 0;
+        }
+
+        if (name.Buffer != NULL)
+        {
+            ExFreePool(name.Buffer);
+        }
+
+        Irp->IoStatus.Status = status;
+        Irp->IoStatus.Information = retSize;
+        IoCompleteRequest(Irp, IO_NO_INCREMENT);
+        return (status);
+    }
+
+    case IRP_MN_QUERY_ALL_DATA:
+    {
+        PWNODE_ALL_DATA wnode;
+        ULONG bufferAvail;
+        PULONG instanceLengthArray;
+        PUCHAR dataBuffer;
+        ULONG instanceLengthArraySize;
+        ULONG dataBlockOffset;
+        PREGENTRY regEntry;
+
+        wnode = (PWNODE_ALL_DATA)buffer;
+
+        if (bufferSize < FIELD_OFFSET(WNODE_ALL_DATA, OffsetInstanceDataAndLength))
+        {
+            //
+            // The buffer should never be smaller than the size of
+            // WNODE_ALL_DATA, however if it is then return with an
+            // error requesting the minimum sized buffer.
+            WmipAssert(FALSE);
+            status = IoWMICompleteRequest(WmiLibInfo, DeviceObject, Irp, STATUS_BUFFER_TOO_SMALL,
+                                          FIELD_OFFSET(WNODE_ALL_DATA, OffsetInstanceDataAndLength), IO_NO_INCREMENT);
+            break;
+        }
+
+        //
+        // If this is the pnp id guid then we need to get the instance
+        // count from the regentry for the device and switch the
+        // device object.
+
+        if ((guidIndex == PnPIdGuidIndex) || (guidIndex == PnPIdInstanceNamesGuidIndex))
+        {
+            regEntry = WmipFindRegEntryByProviderId(wnode->WnodeHeader.ProviderId, FALSE);
+            if (regEntry == NULL)
+            {
+                //
+                // Why couldn't we get the regentry again ??
                 WmipAssert(FALSE);
-                status = IoWMICompleteRequest(WmiLibInfo,
-                                              DeviceObject,
-                                              Irp,
-                                              STATUS_BUFFER_TOO_SMALL,
-                                              FIELD_OFFSET(WNODE_ALL_DATA,
-                                                           OffsetInstanceDataAndLength),
-                                              IO_NO_INCREMENT);
+                status =
+                    IoWMICompleteRequest(WmiLibInfo, DeviceObject, Irp, STATUS_WMI_GUID_NOT_FOUND, 0, IO_NO_INCREMENT);
                 break;
             }
 
+            DeviceObject = regEntry->DeviceObject;
+            instanceCount = (guidIndex == PnPIdGuidIndex) ? regEntry->MaxInstanceNames : 1;
+
+            WmipUnreferenceRegEntry(regEntry);
+        }
+
+        wnode->InstanceCount = instanceCount;
+
+        wnode->WnodeHeader.Flags &= ~WNODE_FLAG_FIXED_INSTANCE_SIZE;
+
+        instanceLengthArraySize = instanceCount * sizeof(OFFSETINSTANCEDATAANDLENGTH);
+
+        dataBlockOffset =
+            (FIELD_OFFSET(WNODE_ALL_DATA, OffsetInstanceDataAndLength) + instanceLengthArraySize + 7) & ~7;
+
+        wnode->DataBlockOffset = dataBlockOffset;
+        if (dataBlockOffset <= bufferSize)
+        {
+            instanceLengthArray = (PULONG)&wnode->OffsetInstanceDataAndLength[0];
+            dataBuffer = buffer + dataBlockOffset;
+            bufferAvail = bufferSize - dataBlockOffset;
+        }
+        else
+        {
             //
-            // If this is the pnp id guid then we need to get the instance
-            // count from the regentry for the device and switch the
-            // device object.
-
-            if ((guidIndex == PnPIdGuidIndex) ||
-                (guidIndex == PnPIdInstanceNamesGuidIndex))
-            {
-                regEntry = WmipFindRegEntryByProviderId(wnode->WnodeHeader.ProviderId,
-                                                        FALSE);
-                if (regEntry == NULL)
-                {
-                    //
-                    // Why couldn't we get the regentry again ??
-                    WmipAssert(FALSE);
-                    status = IoWMICompleteRequest(WmiLibInfo,
-                                              DeviceObject,
-                                              Irp,
-                                              STATUS_WMI_GUID_NOT_FOUND,
-                                              0,
-                                              IO_NO_INCREMENT);
-                    break;
-                }
-
-                DeviceObject = regEntry->DeviceObject;
-                instanceCount = (guidIndex == PnPIdGuidIndex) ? regEntry->MaxInstanceNames : 1;
-
-                WmipUnreferenceRegEntry(regEntry);
-            }
-
-            wnode->InstanceCount = instanceCount;
-
-            wnode->WnodeHeader.Flags &= ~WNODE_FLAG_FIXED_INSTANCE_SIZE;
-
-            instanceLengthArraySize = instanceCount * sizeof(OFFSETINSTANCEDATAANDLENGTH);
-
-            dataBlockOffset = (FIELD_OFFSET(WNODE_ALL_DATA, OffsetInstanceDataAndLength) + instanceLengthArraySize + 7) & ~7;
-
-            wnode->DataBlockOffset = dataBlockOffset;
-            if (dataBlockOffset <= bufferSize)
-            {
-                instanceLengthArray = (PULONG)&wnode->OffsetInstanceDataAndLength[0];
-                dataBuffer = buffer + dataBlockOffset;
-                bufferAvail = bufferSize - dataBlockOffset;
-            } else {
-                //
-                // There is not enough room in the WNODE to complete
-                // the query
-                instanceLengthArray = NULL;
-                dataBuffer = NULL;
-                bufferAvail = 0;
-            }
-
-            status = WmiLibInfo->QueryWmiDataBlock(
-                                             DeviceObject,
-                                             Irp,
-                                             guidIndex,
-                                             0,
-                                             instanceCount,
-                                             instanceLengthArray,
-                                             bufferAvail,
-                                             dataBuffer);
-            break;
+            // There is not enough room in the WNODE to complete
+            // the query
+            instanceLengthArray = NULL;
+            dataBuffer = NULL;
+            bufferAvail = 0;
         }
 
-        case IRP_MN_QUERY_SINGLE_INSTANCE:
-        {
-            PWNODE_SINGLE_INSTANCE wnode;
-            ULONG dataBlockOffset;
-            PREGENTRY regEntry;
-
-            wnode = (PWNODE_SINGLE_INSTANCE)buffer;
-
-            if ((guidIndex == PnPIdGuidIndex) ||
-                (guidIndex == PnPIdInstanceNamesGuidIndex))
-            {
-                regEntry = WmipFindRegEntryByProviderId(wnode->WnodeHeader.ProviderId,
-                                                        FALSE);
-                if (regEntry != NULL)
-                {
-                    DeviceObject = regEntry->DeviceObject;
-                    WmipUnreferenceRegEntry(regEntry);          
-                } else {
-                    //
-                    // Why couldn't we get the regentry again ??
-                    WmipAssert(FALSE);
-                    status = IoWMICompleteRequest(WmiLibInfo,
-                                              DeviceObject,
-                                              Irp,
-                                              STATUS_WMI_GUID_NOT_FOUND,
-                                              0,
-                                              IO_NO_INCREMENT);
-                    break;
-                }
-
-            }
-
-            dataBlockOffset = wnode->DataBlockOffset;
-
-            status = WmiLibInfo->QueryWmiDataBlock(
-                                          DeviceObject,
-                                          Irp,
-                                          guidIndex,
-                                          instanceIndex,
-                                          1,
-                                          &wnode->SizeDataBlock,
-                                          bufferSize - dataBlockOffset,
-                                          (PUCHAR)wnode + dataBlockOffset);
-
-            break;
-        }
-
-        case IRP_MN_CHANGE_SINGLE_INSTANCE:
-        {
-            PWNODE_SINGLE_INSTANCE wnode;
-
-            if (WmiLibInfo->SetWmiDataBlock != NULL)
-            {
-                wnode = (PWNODE_SINGLE_INSTANCE)buffer;
-
-                status = WmiLibInfo->SetWmiDataBlock(
-                                     DeviceObject,
-                                     Irp,
-                                     guidIndex,
-                                     instanceIndex,
-                                     wnode->SizeDataBlock,
-                                     (PUCHAR)wnode + wnode->DataBlockOffset);
-            } else {
-                //
-                // If set callback is not filled in then it must be readonly
-                status = STATUS_WMI_READ_ONLY;
-                Irp->IoStatus.Status = status;
-                Irp->IoStatus.Information = 0;
-                IoCompleteRequest(Irp, IO_NO_INCREMENT);
-            }
-
-
-            break;
-        }
-
-        case IRP_MN_CHANGE_SINGLE_ITEM:
-        {
-            PWNODE_SINGLE_ITEM wnode;
-
-            if (WmiLibInfo->SetWmiDataItem != NULL)
-            {
-                wnode = (PWNODE_SINGLE_ITEM)buffer;
-
-                status = WmiLibInfo->SetWmiDataItem(
-                                     DeviceObject,
-                                     Irp,
-                                     guidIndex,
-                                     instanceIndex,
-                                     wnode->ItemId,
-                                     wnode->SizeDataItem,
-                                     (PUCHAR)wnode + wnode->DataBlockOffset);
-
-            } else {
-                //
-                // If set callback is not filled in then it must be readonly
-                status = STATUS_WMI_READ_ONLY;
-                Irp->IoStatus.Status = status;
-                Irp->IoStatus.Information = 0;
-                IoCompleteRequest(Irp, IO_NO_INCREMENT);
-            }
-            break;
-        }
-
-        case IRP_MN_EXECUTE_METHOD:
-        {
-            PWNODE_METHOD_ITEM wnode;
-
-            if (WmiLibInfo->ExecuteWmiMethod != NULL)
-            {
-                wnode = (PWNODE_METHOD_ITEM)buffer;
-
-                status = WmiLibInfo->ExecuteWmiMethod(
-                                         DeviceObject,
-                                         Irp,
-                                         guidIndex,
-                                         instanceIndex,
-                                         wnode->MethodId,
-                                         wnode->SizeDataBlock,
-                                         bufferSize - wnode->DataBlockOffset,
-                                         buffer + wnode->DataBlockOffset);
-
-            } else {
-                //
-                // If method callback is not filled in then it must be error
-                status = STATUS_INVALID_DEVICE_REQUEST;
-                Irp->IoStatus.Status = status;
-                Irp->IoStatus.Information = 0;
-                IoCompleteRequest(Irp, IO_NO_INCREMENT);
-            }
-
-            break;
-        }
-
-        case IRP_MN_ENABLE_EVENTS:
-        {
-            if (WmiLibInfo->WmiFunctionControl != NULL)
-            {
-                status = WmiLibInfo->WmiFunctionControl(
-                                                           DeviceObject,
-                                                           Irp,
-                                                           guidIndex,
-                                                           WmiEventGeneration,
-                                                           TRUE);
-            } else {
-                //
-                // If callback is not filled in then just succeed
-                status = STATUS_SUCCESS;
-                Irp->IoStatus.Status = status;
-                Irp->IoStatus.Information = 0;
-                IoCompleteRequest(Irp, IO_NO_INCREMENT);
-            }
-            break;
-        }
-
-        case IRP_MN_DISABLE_EVENTS:
-        {
-            if (WmiLibInfo->WmiFunctionControl != NULL)
-            {
-                status = WmiLibInfo->WmiFunctionControl(
-                                                           DeviceObject,
-                                                           Irp,
-                                                           guidIndex,
-                                                           WmiEventGeneration,
-                                                           FALSE);
-            } else {
-                //
-                // If callback is not filled in then just succeed
-                status = STATUS_SUCCESS;
-                Irp->IoStatus.Status = status;
-                Irp->IoStatus.Information = 0;
-                IoCompleteRequest(Irp, IO_NO_INCREMENT);
-            }
-            break;
-        }
-
-        case IRP_MN_ENABLE_COLLECTION:
-        {
-            if (WmiLibInfo->WmiFunctionControl != NULL)
-            {
-                status = WmiLibInfo->WmiFunctionControl(
-                                                         DeviceObject,
-                                                         Irp,
-                                                         guidIndex,
-                                                         WmiDataBlockCollection,
-                                                         TRUE);
-            } else {
-                //
-                // If callback is not filled in then just succeed
-                status = STATUS_SUCCESS;
-                Irp->IoStatus.Status = status;
-                Irp->IoStatus.Information = 0;
-                IoCompleteRequest(Irp, IO_NO_INCREMENT);
-            }
-            break;
-        }
-
-        case IRP_MN_DISABLE_COLLECTION:
-        {
-            if (WmiLibInfo->WmiFunctionControl != NULL)
-            {
-                status = WmiLibInfo->WmiFunctionControl(
-                                                         DeviceObject,
-                                                         Irp,
-                                                         guidIndex,
-                                                         WmiDataBlockCollection,
-                                                         FALSE);
-            } else {
-                //
-                // If callback is not filled in then just succeed
-                status = STATUS_SUCCESS;
-                Irp->IoStatus.Status = status;
-                Irp->IoStatus.Information = 0;
-                IoCompleteRequest(Irp, IO_NO_INCREMENT);
-            }
-            break;
-        }
-
-        default:
-        {
-            status = STATUS_INVALID_DEVICE_REQUEST;
-            break;
-        }
-
+        status = WmiLibInfo->QueryWmiDataBlock(DeviceObject, Irp, guidIndex, 0, instanceCount, instanceLengthArray,
+                                               bufferAvail, dataBuffer);
+        break;
     }
 
-    return(status);
+    case IRP_MN_QUERY_SINGLE_INSTANCE:
+    {
+        PWNODE_SINGLE_INSTANCE wnode;
+        ULONG dataBlockOffset;
+        PREGENTRY regEntry;
+
+        wnode = (PWNODE_SINGLE_INSTANCE)buffer;
+
+        if ((guidIndex == PnPIdGuidIndex) || (guidIndex == PnPIdInstanceNamesGuidIndex))
+        {
+            regEntry = WmipFindRegEntryByProviderId(wnode->WnodeHeader.ProviderId, FALSE);
+            if (regEntry != NULL)
+            {
+                DeviceObject = regEntry->DeviceObject;
+                WmipUnreferenceRegEntry(regEntry);
+            }
+            else
+            {
+                //
+                // Why couldn't we get the regentry again ??
+                WmipAssert(FALSE);
+                status =
+                    IoWMICompleteRequest(WmiLibInfo, DeviceObject, Irp, STATUS_WMI_GUID_NOT_FOUND, 0, IO_NO_INCREMENT);
+                break;
+            }
+        }
+
+        dataBlockOffset = wnode->DataBlockOffset;
+
+        status = WmiLibInfo->QueryWmiDataBlock(DeviceObject, Irp, guidIndex, instanceIndex, 1, &wnode->SizeDataBlock,
+                                               bufferSize - dataBlockOffset, (PUCHAR)wnode + dataBlockOffset);
+
+        break;
+    }
+
+    case IRP_MN_CHANGE_SINGLE_INSTANCE:
+    {
+        PWNODE_SINGLE_INSTANCE wnode;
+
+        if (WmiLibInfo->SetWmiDataBlock != NULL)
+        {
+            wnode = (PWNODE_SINGLE_INSTANCE)buffer;
+
+            status = WmiLibInfo->SetWmiDataBlock(DeviceObject, Irp, guidIndex, instanceIndex, wnode->SizeDataBlock,
+                                                 (PUCHAR)wnode + wnode->DataBlockOffset);
+        }
+        else
+        {
+            //
+            // If set callback is not filled in then it must be readonly
+            status = STATUS_WMI_READ_ONLY;
+            Irp->IoStatus.Status = status;
+            Irp->IoStatus.Information = 0;
+            IoCompleteRequest(Irp, IO_NO_INCREMENT);
+        }
+
+
+        break;
+    }
+
+    case IRP_MN_CHANGE_SINGLE_ITEM:
+    {
+        PWNODE_SINGLE_ITEM wnode;
+
+        if (WmiLibInfo->SetWmiDataItem != NULL)
+        {
+            wnode = (PWNODE_SINGLE_ITEM)buffer;
+
+            status = WmiLibInfo->SetWmiDataItem(DeviceObject, Irp, guidIndex, instanceIndex, wnode->ItemId,
+                                                wnode->SizeDataItem, (PUCHAR)wnode + wnode->DataBlockOffset);
+        }
+        else
+        {
+            //
+            // If set callback is not filled in then it must be readonly
+            status = STATUS_WMI_READ_ONLY;
+            Irp->IoStatus.Status = status;
+            Irp->IoStatus.Information = 0;
+            IoCompleteRequest(Irp, IO_NO_INCREMENT);
+        }
+        break;
+    }
+
+    case IRP_MN_EXECUTE_METHOD:
+    {
+        PWNODE_METHOD_ITEM wnode;
+
+        if (WmiLibInfo->ExecuteWmiMethod != NULL)
+        {
+            wnode = (PWNODE_METHOD_ITEM)buffer;
+
+            status = WmiLibInfo->ExecuteWmiMethod(DeviceObject, Irp, guidIndex, instanceIndex, wnode->MethodId,
+                                                  wnode->SizeDataBlock, bufferSize - wnode->DataBlockOffset,
+                                                  buffer + wnode->DataBlockOffset);
+        }
+        else
+        {
+            //
+            // If method callback is not filled in then it must be error
+            status = STATUS_INVALID_DEVICE_REQUEST;
+            Irp->IoStatus.Status = status;
+            Irp->IoStatus.Information = 0;
+            IoCompleteRequest(Irp, IO_NO_INCREMENT);
+        }
+
+        break;
+    }
+
+    case IRP_MN_ENABLE_EVENTS:
+    {
+        if (WmiLibInfo->WmiFunctionControl != NULL)
+        {
+            status = WmiLibInfo->WmiFunctionControl(DeviceObject, Irp, guidIndex, WmiEventGeneration, TRUE);
+        }
+        else
+        {
+            //
+            // If callback is not filled in then just succeed
+            status = STATUS_SUCCESS;
+            Irp->IoStatus.Status = status;
+            Irp->IoStatus.Information = 0;
+            IoCompleteRequest(Irp, IO_NO_INCREMENT);
+        }
+        break;
+    }
+
+    case IRP_MN_DISABLE_EVENTS:
+    {
+        if (WmiLibInfo->WmiFunctionControl != NULL)
+        {
+            status = WmiLibInfo->WmiFunctionControl(DeviceObject, Irp, guidIndex, WmiEventGeneration, FALSE);
+        }
+        else
+        {
+            //
+            // If callback is not filled in then just succeed
+            status = STATUS_SUCCESS;
+            Irp->IoStatus.Status = status;
+            Irp->IoStatus.Information = 0;
+            IoCompleteRequest(Irp, IO_NO_INCREMENT);
+        }
+        break;
+    }
+
+    case IRP_MN_ENABLE_COLLECTION:
+    {
+        if (WmiLibInfo->WmiFunctionControl != NULL)
+        {
+            status = WmiLibInfo->WmiFunctionControl(DeviceObject, Irp, guidIndex, WmiDataBlockCollection, TRUE);
+        }
+        else
+        {
+            //
+            // If callback is not filled in then just succeed
+            status = STATUS_SUCCESS;
+            Irp->IoStatus.Status = status;
+            Irp->IoStatus.Information = 0;
+            IoCompleteRequest(Irp, IO_NO_INCREMENT);
+        }
+        break;
+    }
+
+    case IRP_MN_DISABLE_COLLECTION:
+    {
+        if (WmiLibInfo->WmiFunctionControl != NULL)
+        {
+            status = WmiLibInfo->WmiFunctionControl(DeviceObject, Irp, guidIndex, WmiDataBlockCollection, FALSE);
+        }
+        else
+        {
+            //
+            // If callback is not filled in then just succeed
+            status = STATUS_SUCCESS;
+            Irp->IoStatus.Status = status;
+            Irp->IoStatus.Information = 0;
+            IoCompleteRequest(Irp, IO_NO_INCREMENT);
+        }
+        break;
+    }
+
+    default:
+    {
+        status = STATUS_INVALID_DEVICE_REQUEST;
+        break;
+    }
+    }
+
+    return (status);
 }
 
 NTSTATUS
-IoWMICompleteRequest(
-    IN PWMILIB_INFO WmiLibInfo,
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN NTSTATUS Status,
-    IN ULONG BufferUsed,
-    IN CCHAR PriorityBoost
-    )
+IoWMICompleteRequest(IN PWMILIB_INFO WmiLibInfo, IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN NTSTATUS Status,
+                     IN ULONG BufferUsed, IN CCHAR PriorityBoost)
 /*++
 
 Routine Description:
@@ -1618,147 +1408,152 @@ Return Value:
     buffer = (PUCHAR)irpStack->Parameters.WMI.Buffer;
     bufferSize = irpStack->Parameters.WMI.BufferSize;
 
-    switch(minorFunction)
+    switch (minorFunction)
     {
-        case IRP_MN_QUERY_ALL_DATA:
+    case IRP_MN_QUERY_ALL_DATA:
+    {
+        PWNODE_ALL_DATA wnode;
+        PWNODE_TOO_SMALL wnodeTooSmall;
+        ULONG bufferNeeded;
+        ULONG instanceCount;
+        POFFSETINSTANCEDATAANDLENGTH offsetInstanceDataAndLength;
+        ULONG i;
+        PULONG instanceLengthArray;
+        ULONG dataBlockOffset;
+
+        wnode = (PWNODE_ALL_DATA)buffer;
+
+        dataBlockOffset = wnode->DataBlockOffset;
+        instanceCount = wnode->InstanceCount;
+        bufferNeeded = dataBlockOffset + BufferUsed;
+
+        if ((NT_SUCCESS(Status)) && (bufferNeeded > irpStack->Parameters.WMI.BufferSize))
         {
-            PWNODE_ALL_DATA wnode;
-            PWNODE_TOO_SMALL wnodeTooSmall;
-            ULONG bufferNeeded;
-            ULONG instanceCount;
-            POFFSETINSTANCEDATAANDLENGTH offsetInstanceDataAndLength;
-            ULONG i;
-            PULONG instanceLengthArray;
-            ULONG dataBlockOffset;
+            Status = STATUS_BUFFER_TOO_SMALL;
+        }
 
-            wnode = (PWNODE_ALL_DATA)buffer;
-
-            dataBlockOffset = wnode->DataBlockOffset;
-            instanceCount = wnode->InstanceCount;
-            bufferNeeded = dataBlockOffset + BufferUsed;
-
-            if ((NT_SUCCESS(Status)) &&
-                (bufferNeeded > irpStack->Parameters.WMI.BufferSize))
+        if (!NT_SUCCESS(Status))
+        {
+            if (Status == STATUS_BUFFER_TOO_SMALL)
             {
-                Status = STATUS_BUFFER_TOO_SMALL;
-            }
+                wnodeTooSmall = (PWNODE_TOO_SMALL)wnode;
 
-            if (! NT_SUCCESS(Status))
+                wnodeTooSmall->WnodeHeader.BufferSize = sizeof(WNODE_TOO_SMALL);
+                wnodeTooSmall->WnodeHeader.Flags = WNODE_FLAG_TOO_SMALL;
+                wnodeTooSmall->SizeNeeded = bufferNeeded;
+
+                retSize = sizeof(WNODE_TOO_SMALL);
+                Status = STATUS_SUCCESS;
+            }
+            else
             {
-                if (Status == STATUS_BUFFER_TOO_SMALL)
-                {
-                    wnodeTooSmall = (PWNODE_TOO_SMALL)wnode;
-
-                    wnodeTooSmall->WnodeHeader.BufferSize = sizeof(WNODE_TOO_SMALL);
-                    wnodeTooSmall->WnodeHeader.Flags = WNODE_FLAG_TOO_SMALL;
-                    wnodeTooSmall->SizeNeeded = bufferNeeded;
-
-                    retSize = sizeof(WNODE_TOO_SMALL);
-                    Status = STATUS_SUCCESS;
-                } else {
-                    retSize = 0;
-                }
-                break;
+                retSize = 0;
             }
+            break;
+        }
 
+        KeQuerySystemTime(&wnode->WnodeHeader.TimeStamp);
+
+        instanceLengthArray = (PULONG)&wnode->OffsetInstanceDataAndLength[0];
+        offsetInstanceDataAndLength = (POFFSETINSTANCEDATAANDLENGTH)instanceLengthArray;
+
+        wnode->WnodeHeader.BufferSize = bufferNeeded;
+        retSize = bufferNeeded;
+
+        for (i = instanceCount; i != 0; i--)
+        {
+            offsetInstanceDataAndLength[i - 1].LengthInstanceData = instanceLengthArray[i - 1];
+        }
+
+        for (i = 0; i < instanceCount; i++)
+        {
+            offsetInstanceDataAndLength[i].OffsetInstanceData = dataBlockOffset;
+            dataBlockOffset = (dataBlockOffset + offsetInstanceDataAndLength[i].LengthInstanceData + 7) & ~7;
+        }
+
+        break;
+    }
+
+    case IRP_MN_QUERY_SINGLE_INSTANCE:
+    {
+        PWNODE_SINGLE_INSTANCE wnode;
+        PWNODE_TOO_SMALL wnodeTooSmall;
+        ULONG bufferNeeded;
+
+        wnode = (PWNODE_SINGLE_INSTANCE)buffer;
+
+        bufferNeeded = wnode->DataBlockOffset + BufferUsed;
+
+        if (NT_SUCCESS(Status))
+        {
+            retSize = bufferNeeded;
+            wnode->WnodeHeader.BufferSize = bufferNeeded;
             KeQuerySystemTime(&wnode->WnodeHeader.TimeStamp);
 
-            instanceLengthArray = (PULONG)&wnode->OffsetInstanceDataAndLength[0];
-            offsetInstanceDataAndLength = (POFFSETINSTANCEDATAANDLENGTH)instanceLengthArray;
-
-            wnode->WnodeHeader.BufferSize = bufferNeeded;
-            retSize = bufferNeeded;
-
-            for (i = instanceCount; i != 0; i--)
-            {
-                offsetInstanceDataAndLength[i-1].LengthInstanceData = instanceLengthArray[i-1];
-            }
-
-            for (i = 0; i < instanceCount; i++)
-            {
-                offsetInstanceDataAndLength[i].OffsetInstanceData = dataBlockOffset;
-                dataBlockOffset = (dataBlockOffset + offsetInstanceDataAndLength[i].LengthInstanceData + 7) & ~7;
-            }
-
-            break;
+            WmipAssert(wnode->SizeDataBlock <= BufferUsed);
         }
-
-        case IRP_MN_QUERY_SINGLE_INSTANCE:
+        else if (Status == STATUS_BUFFER_TOO_SMALL)
         {
-            PWNODE_SINGLE_INSTANCE wnode;
-            PWNODE_TOO_SMALL wnodeTooSmall;
-            ULONG bufferNeeded;
+            wnodeTooSmall = (PWNODE_TOO_SMALL)wnode;
 
-            wnode = (PWNODE_SINGLE_INSTANCE)buffer;
-
-            bufferNeeded = wnode->DataBlockOffset + BufferUsed;
-
-            if (NT_SUCCESS(Status))
-            {
-                retSize = bufferNeeded;
-                wnode->WnodeHeader.BufferSize = bufferNeeded;
-                KeQuerySystemTime(&wnode->WnodeHeader.TimeStamp);
-
-                WmipAssert(wnode->SizeDataBlock <= BufferUsed);
-
-            } else if (Status == STATUS_BUFFER_TOO_SMALL) {
-                wnodeTooSmall = (PWNODE_TOO_SMALL)wnode;
-
-                wnodeTooSmall->WnodeHeader.BufferSize = sizeof(WNODE_TOO_SMALL);
-                wnodeTooSmall->WnodeHeader.Flags = WNODE_FLAG_TOO_SMALL;
-                wnodeTooSmall->SizeNeeded = bufferNeeded;
-                retSize = sizeof(WNODE_TOO_SMALL);
-                Status = STATUS_SUCCESS;
-            } else {
-                retSize = 0;
-            }
-            break;
+            wnodeTooSmall->WnodeHeader.BufferSize = sizeof(WNODE_TOO_SMALL);
+            wnodeTooSmall->WnodeHeader.Flags = WNODE_FLAG_TOO_SMALL;
+            wnodeTooSmall->SizeNeeded = bufferNeeded;
+            retSize = sizeof(WNODE_TOO_SMALL);
+            Status = STATUS_SUCCESS;
         }
-
-        case IRP_MN_EXECUTE_METHOD:
+        else
         {
-            PWNODE_METHOD_ITEM wnode;
-            PWNODE_TOO_SMALL wnodeTooSmall;
-            ULONG bufferNeeded;
-
-            wnode = (PWNODE_METHOD_ITEM)buffer;
-
-            bufferNeeded = wnode->DataBlockOffset + BufferUsed;
-
-            if (NT_SUCCESS(Status))
-            {
-                retSize = bufferNeeded;
-                wnode->WnodeHeader.BufferSize = bufferNeeded;
-                KeQuerySystemTime(&wnode->WnodeHeader.TimeStamp);
-                wnode->SizeDataBlock = BufferUsed;
-
-            } else if (Status == STATUS_BUFFER_TOO_SMALL) {
-                wnodeTooSmall = (PWNODE_TOO_SMALL)wnode;
-
-                wnodeTooSmall->WnodeHeader.BufferSize = sizeof(WNODE_TOO_SMALL);
-                wnodeTooSmall->WnodeHeader.Flags = WNODE_FLAG_TOO_SMALL;
-                wnodeTooSmall->SizeNeeded = bufferNeeded;
-                retSize = sizeof(WNODE_TOO_SMALL);
-                Status = STATUS_SUCCESS;
-            } else {
-                retSize = 0;
-            }
-            break;
-        }
-
-        default:
-        {
-            //
-            // All other requests don't return any data
             retSize = 0;
-            break;
         }
+        break;
+    }
 
+    case IRP_MN_EXECUTE_METHOD:
+    {
+        PWNODE_METHOD_ITEM wnode;
+        PWNODE_TOO_SMALL wnodeTooSmall;
+        ULONG bufferNeeded;
+
+        wnode = (PWNODE_METHOD_ITEM)buffer;
+
+        bufferNeeded = wnode->DataBlockOffset + BufferUsed;
+
+        if (NT_SUCCESS(Status))
+        {
+            retSize = bufferNeeded;
+            wnode->WnodeHeader.BufferSize = bufferNeeded;
+            KeQuerySystemTime(&wnode->WnodeHeader.TimeStamp);
+            wnode->SizeDataBlock = BufferUsed;
+        }
+        else if (Status == STATUS_BUFFER_TOO_SMALL)
+        {
+            wnodeTooSmall = (PWNODE_TOO_SMALL)wnode;
+
+            wnodeTooSmall->WnodeHeader.BufferSize = sizeof(WNODE_TOO_SMALL);
+            wnodeTooSmall->WnodeHeader.Flags = WNODE_FLAG_TOO_SMALL;
+            wnodeTooSmall->SizeNeeded = bufferNeeded;
+            retSize = sizeof(WNODE_TOO_SMALL);
+            Status = STATUS_SUCCESS;
+        }
+        else
+        {
+            retSize = 0;
+        }
+        break;
+    }
+
+    default:
+    {
+        //
+        // All other requests don't return any data
+        retSize = 0;
+        break;
+    }
     }
 
     Irp->IoStatus.Status = Status;
     Irp->IoStatus.Information = retSize;
     IoCompleteRequest(Irp, PriorityBoost);
-    return(Status);
+    return (Status);
 }
-

@@ -24,16 +24,14 @@ Revision History:
 #include <nturtl.h>
 #include <ldrp.h>
 
-typedef struct _VECTXCPT_CALLOUT_ENTRY {
+typedef struct _VECTXCPT_CALLOUT_ENTRY
+{
     LIST_ENTRY Links;
     PVECTORED_EXCEPTION_HANDLER VectoredHandler;
 } VECTXCPT_CALLOUT_ENTRY, *PVECTXCPT_CALLOUT_ENTRY;
 
 BOOLEAN
-RtlCallVectoredExceptionHandlers(
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PCONTEXT ContextRecord
-    )
+RtlCallVectoredExceptionHandlers(IN PEXCEPTION_RECORD ExceptionRecord, IN PCONTEXT ContextRecord)
 /*++
 
 Routine Description:
@@ -63,24 +61,26 @@ Return Value:
 
 --*/
 {
-    
+
     PLIST_ENTRY Next;
     PVECTXCPT_CALLOUT_ENTRY CalloutEntry;
     LONG ReturnValue;
     EXCEPTION_POINTERS ExceptionInfo;
 
-    if (IsListEmpty (&RtlpCalloutEntryList)) {
+    if (IsListEmpty(&RtlpCalloutEntryList))
+    {
         return FALSE;
     }
 
     ExceptionInfo.ExceptionRecord = ExceptionRecord;
     ExceptionInfo.ContextRecord = ContextRecord;
-    
+
     RtlEnterCriticalSection(&RtlpCalloutEntryLock);
-    
+
     Next = RtlpCalloutEntryList.Flink;
 
-    while ( Next != &RtlpCalloutEntryList) {
+    while (Next != &RtlpCalloutEntryList)
+    {
 
         //
         // Call all of the vectored handlers
@@ -88,23 +88,21 @@ Return Value:
         // have "handled" the exception.
         //
 
-        CalloutEntry = (PVECTXCPT_CALLOUT_ENTRY)(CONTAINING_RECORD(Next,VECTXCPT_CALLOUT_ENTRY,Links));
+        CalloutEntry = (PVECTXCPT_CALLOUT_ENTRY)(CONTAINING_RECORD(Next, VECTXCPT_CALLOUT_ENTRY, Links));
         ReturnValue = (CalloutEntry->VectoredHandler)(&ExceptionInfo);
-        if (ReturnValue == EXCEPTION_CONTINUE_EXECUTION) {
+        if (ReturnValue == EXCEPTION_CONTINUE_EXECUTION)
+        {
             RtlLeaveCriticalSection(&RtlpCalloutEntryLock);
             return TRUE;
-            }
-        Next = Next->Flink;
         }
+        Next = Next->Flink;
+    }
     RtlLeaveCriticalSection(&RtlpCalloutEntryLock);
     return FALSE;
 }
 
 PVOID
-RtlAddVectoredExceptionHandler(
-    IN ULONG FirstHandler,
-    IN PVECTORED_EXCEPTION_HANDLER VectoredHandler
-    )
+RtlAddVectoredExceptionHandler(IN ULONG FirstHandler, IN PVECTORED_EXCEPTION_HANDLER VectoredHandler)
 /*++
 
 Routine Description:
@@ -135,20 +133,24 @@ Return Value:
 
 --*/
 {
-    
+
     PVECTXCPT_CALLOUT_ENTRY CalloutEntry;
     LONG ReturnValue;
 
-    CalloutEntry = RtlAllocateHeap(RtlProcessHeap(),0,sizeof(*CalloutEntry));
+    CalloutEntry = RtlAllocateHeap(RtlProcessHeap(), 0, sizeof(*CalloutEntry));
 
-    if (CalloutEntry) {
+    if (CalloutEntry)
+    {
         CalloutEntry->VectoredHandler = VectoredHandler;
 
         RtlEnterCriticalSection(&RtlpCalloutEntryLock);
-        if (FirstHandler) {
-            InsertHeadList(&RtlpCalloutEntryList,&CalloutEntry->Links);
-        } else {
-            InsertTailList(&RtlpCalloutEntryList,&CalloutEntry->Links);
+        if (FirstHandler)
+        {
+            InsertHeadList(&RtlpCalloutEntryList, &CalloutEntry->Links);
+        }
+        else
+        {
+            InsertTailList(&RtlpCalloutEntryList, &CalloutEntry->Links);
         }
         RtlLeaveCriticalSection(&RtlpCalloutEntryLock);
     }
@@ -157,9 +159,7 @@ Return Value:
 
 
 ULONG
-RtlRemoveVectoredExceptionHandler(
-    IN PVOID VectoredHandlerHandle
-    )
+RtlRemoveVectoredExceptionHandler(IN PVOID VectoredHandlerHandle)
 /*++
 
 Routine Description:
@@ -181,7 +181,7 @@ Return Value:
 
 --*/
 {
-    
+
     PLIST_ENTRY Next;
     PVECTXCPT_CALLOUT_ENTRY CalloutEntry;
     LONG ReturnValue;
@@ -190,21 +190,24 @@ Return Value:
     RtlEnterCriticalSection(&RtlpCalloutEntryLock);
     Next = RtlpCalloutEntryList.Flink;
 
-    while ( Next != &RtlpCalloutEntryList) {
+    while (Next != &RtlpCalloutEntryList)
+    {
 
-        CalloutEntry = (PVECTXCPT_CALLOUT_ENTRY)(CONTAINING_RECORD(Next,VECTXCPT_CALLOUT_ENTRY,Links));
-        
-        if (CalloutEntry == VectoredHandlerHandle) {
+        CalloutEntry = (PVECTXCPT_CALLOUT_ENTRY)(CONTAINING_RECORD(Next, VECTXCPT_CALLOUT_ENTRY, Links));
+
+        if (CalloutEntry == VectoredHandlerHandle)
+        {
             RemoveEntryList(&CalloutEntry->Links);
             FoundOne = TRUE;
             break;
-            }
+        }
         Next = Next->Flink;
-        }
+    }
     RtlLeaveCriticalSection(&RtlpCalloutEntryLock);
-        
-    if (FoundOne) {
-        RtlFreeHeap(RtlProcessHeap(),0,CalloutEntry);
-        }
+
+    if (FoundOne)
+    {
+        RtlFreeHeap(RtlProcessHeap(), 0, CalloutEntry);
+    }
     return FoundOne ? 1 : 0;
 }

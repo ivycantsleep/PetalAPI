@@ -24,19 +24,14 @@ Revision History:
 --*/
 
 #include "ki.h"
-
+
 
 //
 // Prototypes
 //
 
-VOID
-KeInvalidateAllCachesTarget (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    );
+VOID KeInvalidateAllCachesTarget(IN PKIPI_CONTEXT SignalDone, IN PVOID Parameter1, IN PVOID Parameter2,
+                                 IN PVOID Parameter3);
 
 extern ULONG KeI386CpuType;
 
@@ -184,9 +179,7 @@ Return Value:
 #endif
 
 BOOLEAN
-KeInvalidateAllCaches (
-    IN BOOLEAN AllProcessors
-    )
+KeInvalidateAllCaches(IN BOOLEAN AllProcessors)
 /*++
 
 Routine Description:
@@ -217,7 +210,8 @@ Return Value:
     // onward.
     //
 
-    if (KeI386CpuType < 6 ) {
+    if (KeI386CpuType < 6)
+    {
         return FALSE;
     }
 
@@ -228,9 +222,12 @@ Return Value:
 
     KiLockContextSwap(&OldIrql);
     Prcb = KeGetCurrentPrcb();
-    if (AllProcessors) {
+    if (AllProcessors)
+    {
         TargetProcessors = KeActiveProcessors;
-    } else {
+    }
+    else
+    {
         Process = Prcb->CurrentThread->ApcState.Process;
         TargetProcessors = Process->ActiveProcessors;
     }
@@ -242,13 +239,10 @@ Return Value:
     // invalidate packet to the target set of processors.
     //
 
-    if (TargetProcessors != 0) {
-        KiIpiSendSynchronousPacket(Prcb,
-                                   TargetProcessors,
-                                   KeInvalidateAllCachesTarget,
-                                   (PVOID)&Prcb->ReverseStall,
-                                   NULL,
-                                   NULL);
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendSynchronousPacket(Prcb, TargetProcessors, KeInvalidateAllCachesTarget, (PVOID)&Prcb->ReverseStall,
+                                   NULL, NULL);
 
         KiIpiStallOnPacketTargets(TargetProcessors);
     }
@@ -273,7 +267,8 @@ Return Value:
     // Wait until all target processors have finished and completed packet.
     //
 
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
         Prcb->ReverseStall += 1;
     }
 
@@ -288,13 +283,8 @@ Return Value:
     return TRUE;
 }
 
-VOID
-KeInvalidateAllCachesTarget (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Proceed,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    )
+VOID KeInvalidateAllCachesTarget(IN PKIPI_CONTEXT SignalDone, IN PVOID Proceed, IN PVOID Parameter2,
+                                 IN PVOID Parameter3)
 /*++
 
 Routine Description:
@@ -328,5 +318,5 @@ Arguments:
 
     }
 
-    KiIpiSignalPacketDoneAndStall (SignalDone, Proceed);
+    KiIpiSignalPacketDoneAndStall(SignalDone, Proceed);
 }

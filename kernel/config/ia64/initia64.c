@@ -61,18 +61,18 @@ extern UCHAR CmpIA64Proc[];
 #define BIOS_DATE_LENGTH 64
 #define MAXIMUM_BIOS_VERSION_LENGTH 128
 
-WCHAR   SystemBIOSDateString[BIOS_DATE_LENGTH];
-WCHAR   SystemBIOSVersionString[MAXIMUM_BIOS_VERSION_LENGTH];
-WCHAR   VideoBIOSDateString[BIOS_DATE_LENGTH];
-WCHAR   VideoBIOSVersionString[MAXIMUM_BIOS_VERSION_LENGTH];
+WCHAR SystemBIOSDateString[BIOS_DATE_LENGTH];
+WCHAR SystemBIOSVersionString[MAXIMUM_BIOS_VERSION_LENGTH];
+WCHAR VideoBIOSDateString[BIOS_DATE_LENGTH];
+WCHAR VideoBIOSVersionString[MAXIMUM_BIOS_VERSION_LENGTH];
 
 //
 // Extended CPUID function definitions
 //
 
-#define CPUID_PROCESSOR_NAME_STRING_SZ  65
-#define CPUID_EXTFN_BASE                0x80000000
-#define CPUID_EXTFN_PROCESSOR_NAME      0x80000002
+#define CPUID_PROCESSOR_NAME_STRING_SZ 65
+#define CPUID_EXTFN_BASE 0x80000000
+#define CPUID_EXTFN_PROCESSOR_NAME 0x80000002
 
 
 extern ULONG CmpConfigurationAreaSize;
@@ -80,32 +80,19 @@ extern PCM_FULL_RESOURCE_DESCRIPTOR CmpConfigurationData;
 
 
 BOOLEAN
-CmpGetBiosVersion (
-    PCHAR SearchArea,
-    ULONG SearchLength,
-    PCHAR VersionString
-    );
+CmpGetBiosVersion(PCHAR SearchArea, ULONG SearchLength, PCHAR VersionString);
 
 BOOLEAN
-CmpGetBiosDate (
-    PCHAR SearchArea,
-    ULONG SearchLength,
-    PCHAR DateString
-    );
+CmpGetBiosDate(PCHAR SearchArea, ULONG SearchLength, PCHAR DateString);
 
 ULONG
-Ke386CyrixId (
-    VOID
-    );
+Ke386CyrixId(VOID);
 
-VOID
-InitializeProcessorInformationFromSMBIOS(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    );
+VOID InitializeProcessorInformationFromSMBIOS(IN PLOADER_PARAMETER_BLOCK LoaderBlock);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,CmpInitializeMachineDependentConfiguration)
-#pragma alloc_text(INIT,InitializeProcessorInformationFromSMBIOS)
+#pragma alloc_text(INIT, CmpInitializeMachineDependentConfiguration)
+#pragma alloc_text(INIT, InitializeProcessorInformationFromSMBIOS)
 #endif
 
 
@@ -369,16 +356,11 @@ Found:
     return (TRUE);
 }
 
-#endif  // #if 0
+#endif // #if 0
 
 
-
-
-
 NTSTATUS
-CmpInitializeMachineDependentConfiguration(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+CmpInitializeMachineDependentConfiguration(IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 /*++
 
 Routine Description:
@@ -409,9 +391,9 @@ Returns:
     HANDLE CurrentControlSet;
     CONFIGURATION_COMPONENT_DATA CurrentEntry;
     PUCHAR VendorID;
-    UCHAR  Buffer[MAXIMUM_BIOS_VERSION_LENGTH];
+    UCHAR Buffer[MAXIMUM_BIOS_VERSION_LENGTH];
     PKPRCB Prcb;
-    ULONG  i, Junk;
+    ULONG i, Junk;
     ULONG VersionsLength = 0, Length;
     PCHAR VersionStrings, VersionPointer;
     UNICODE_STRING SectionName;
@@ -423,14 +405,17 @@ Returns:
     ULONG MaxExtFn;
     PULONG NameString = NULL;
     ULONG ReturnedLength;
-    struct {
-        union {
-            UCHAR   Bytes[CPUID_PROCESSOR_NAME_STRING_SZ];
-            ULONG   DWords[1];
+    struct
+    {
+        union
+        {
+            UCHAR Bytes[CPUID_PROCESSOR_NAME_STRING_SZ];
+            ULONG DWords[1];
         } u;
     } ProcessorNameString;
 
-    for (i = 0; i < NUMBER_TYPES; i++) {
+    for (i = 0; i < NUMBER_TYPES; i++)
+    {
         DeviceIndexTable[i] = 0;
     }
 
@@ -441,20 +426,13 @@ Returns:
     InitializeProcessorInformationFromSMBIOS(LoaderBlock);
 
 
+    InitializeObjectAttributes(&ObjectAttributes, &CmRegistryMachineHardwareDescriptionSystemName, OBJ_CASE_INSENSITIVE,
+                               NULL, NULL);
 
-    InitializeObjectAttributes( &ObjectAttributes,
-                                &CmRegistryMachineHardwareDescriptionSystemName,
-                                OBJ_CASE_INSENSITIVE,
-                                NULL,
-                                NULL
-                              );
+    Status = NtOpenKey(&ParentHandle, KEY_READ, &ObjectAttributes);
 
-    Status = NtOpenKey( &ParentHandle,
-                        KEY_READ,
-                        &ObjectAttributes
-                      );
-
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         // Something is really wrong...
         return Status;
     }
@@ -468,54 +446,39 @@ Returns:
     // not already present).
     //
 
-    RtlInitUnicodeString( &KeyName,
-                          L"CentralProcessor"
-                        );
+    RtlInitUnicodeString(&KeyName, L"CentralProcessor");
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &KeyName,
-        0,
-        ParentHandle,
-        NULL
-        );
+    InitializeObjectAttributes(&ObjectAttributes, &KeyName, 0, ParentHandle, NULL);
 
     ObjectAttributes.Attributes |= OBJ_CASE_INSENSITIVE;
 
-    Status = NtCreateKey(
-                &BaseHandle,
-                KEY_READ | KEY_WRITE,
-                &ObjectAttributes,
-                TITLE_INDEX_VALUE,
-                &CmClassName[ProcessorClass],
-                0,
-                &Disposition
-                );
+    Status = NtCreateKey(&BaseHandle, KEY_READ | KEY_WRITE, &ObjectAttributes, TITLE_INDEX_VALUE,
+                         &CmClassName[ProcessorClass], 0, &Disposition);
 
-    NtClose (BaseHandle);
+    NtClose(BaseHandle);
 
-    if (Disposition == REG_CREATED_NEW_KEY) {
+    if (Disposition == REG_CREATED_NEW_KEY)
+    {
 
         //
         // The ARC rom didn't add the processor(s) into the registry.
         // Do it now.
         //
 
-        CmpConfigurationData = (PCM_FULL_RESOURCE_DESCRIPTOR)ExAllocatePool(
-                                            PagedPool,
-                                            CmpConfigurationAreaSize
-                                            );
+        CmpConfigurationData = (PCM_FULL_RESOURCE_DESCRIPTOR)ExAllocatePool(PagedPool, CmpConfigurationAreaSize);
 
-        if (CmpConfigurationData == NULL) {
+        if (CmpConfigurationData == NULL)
+        {
             // bail out
-            NtClose (ParentHandle);
-            return(STATUS_INSUFFICIENT_RESOURCES);
+            NtClose(ParentHandle);
+            return (STATUS_INSUFFICIENT_RESOURCES);
         }
 
-        for (i=0; i < (ULONG)KeNumberProcessors; i++) {
+        for (i = 0; i < (ULONG)KeNumberProcessors; i++)
+        {
             Prcb = KiProcessorBlock[i];
 
-            RtlZeroMemory (&CurrentEntry, sizeof CurrentEntry);
+            RtlZeroMemory(&CurrentEntry, sizeof CurrentEntry);
             CurrentEntry.ComponentEntry.Class = ProcessorClass;
             CurrentEntry.ComponentEntry.Type = CentralProcessor;
             CurrentEntry.ComponentEntry.Key = i;
@@ -523,68 +486,45 @@ Returns:
 
             CurrentEntry.ComponentEntry.Identifier = Buffer;
 
-            sprintf( Buffer, CmpID,
-                     Prcb->ProcessorFamily,
-                     Prcb->ProcessorModel,
-                     Prcb->ProcessorRevision
-                   );
+            sprintf(Buffer, CmpID, Prcb->ProcessorFamily, Prcb->ProcessorModel, Prcb->ProcessorRevision);
 
-            CurrentEntry.ComponentEntry.IdentifierLength =
-                strlen (Buffer) + 1;
+            CurrentEntry.ComponentEntry.IdentifierLength = strlen(Buffer) + 1;
 
-            Status = CmpInitializeRegistryNode(
-                &CurrentEntry,
-                ParentHandle,
-                &BaseHandle,
-                -1,
-                (ULONG)-1,
-                DeviceIndexTable
-                );
+            Status =
+                CmpInitializeRegistryNode(&CurrentEntry, ParentHandle, &BaseHandle, -1, (ULONG)-1, DeviceIndexTable);
 
-            if (!NT_SUCCESS(Status)) {
-                return(Status);
+            if (!NT_SUCCESS(Status))
+            {
+                return (Status);
             }
 
             VendorID = Prcb->ProcessorVendorString;
-            if ( *VendorID == '\0' ) {
-               VendorID = NULL;
+            if (*VendorID == '\0')
+            {
+                VendorID = NULL;
             }
 
-            if (VendorID) {
+            if (VendorID)
+            {
 
                 //
                 // Add Vendor Indentifier to the registry
                 //
 
-                RtlInitUnicodeString(
-                    &ValueName,
-                    CmpVendorID
-                    );
+                RtlInitUnicodeString(&ValueName, CmpVendorID);
 
-                RtlInitAnsiString(
-                    &AnsiString,
-                    VendorID
-                    );
+                RtlInitAnsiString(&AnsiString, VendorID);
 
-                RtlAnsiStringToUnicodeString(
-                    &ValueData,
-                    &AnsiString,
-                    TRUE
-                    );
+                RtlAnsiStringToUnicodeString(&ValueData, &AnsiString, TRUE);
 
-                Status = NtSetValueKey(
-                            BaseHandle,
-                            &ValueName,
-                            TITLE_INDEX_VALUE,
-                            REG_SZ,
-                            ValueData.Buffer,
-                            ValueData.Length + sizeof( UNICODE_NULL )
-                            );
+                Status = NtSetValueKey(BaseHandle, &ValueName, TITLE_INDEX_VALUE, REG_SZ, ValueData.Buffer,
+                                       ValueData.Length + sizeof(UNICODE_NULL));
 
                 RtlFreeUnicodeString(&ValueData);
             }
 
-            if ( VendorID && !strcmp( VendorID, CmpIntelID ) )   {
+            if (VendorID && !strcmp(VendorID, CmpIntelID))
+            {
 
                 ULONG processorModel;
                 PUCHAR processorNameString = CmpItanium;
@@ -593,100 +533,68 @@ Returns:
                 // Add Processor Name String to the registry
                 //
 
-                RtlInitUnicodeString(
-                    &ValueName,
-                    CmpProcessorNameString
-                    );
+                RtlInitUnicodeString(&ValueName, CmpProcessorNameString);
 
                 //
                 // ISSUE-2000/02/10-v-thief - Pseudo cases to be updated when known.
                 //
 
                 processorModel = Prcb->ProcessorModel;
-                switch( processorModel )  {
-                   case 1: // Pseudo-Itanium:
-                      break;
+                switch (processorModel)
+                {
+                case 1: // Pseudo-Itanium:
+                    break;
 
-                   case 2: // Pseudo-McKinley:
-                      processorNameString = CmpMcKinley;
-                      break;
+                case 2: // Pseudo-McKinley:
+                    processorNameString = CmpMcKinley;
+                    break;
 
-                   default:
-                      processorNameString = CmpIA64Proc;
-                      break;
+                default:
+                    processorNameString = CmpIA64Proc;
+                    break;
                 }
 
-                RtlInitAnsiString(
-                    &AnsiString,
-                    processorNameString
-                    );
+                RtlInitAnsiString(&AnsiString, processorNameString);
 
-                RtlAnsiStringToUnicodeString(
-                    &ValueData,
-                    &AnsiString,
-                    TRUE
-                    );
+                RtlAnsiStringToUnicodeString(&ValueData, &AnsiString, TRUE);
 
-                Status = NtSetValueKey(
-                            BaseHandle,
-                            &ValueName,
-                            TITLE_INDEX_VALUE,
-                            REG_SZ,
-                            ValueData.Buffer,
-                            ValueData.Length + sizeof( UNICODE_NULL )
-                            );
+                Status = NtSetValueKey(BaseHandle, &ValueName, TITLE_INDEX_VALUE, REG_SZ, ValueData.Buffer,
+                                       ValueData.Length + sizeof(UNICODE_NULL));
 
                 RtlFreeUnicodeString(&ValueData);
-
             }
 
 
-//
-// If more processor IDs have to be restored or initialized,
-// check non-IA64 implementations of this function.
-//
+            //
+            // If more processor IDs have to be restored or initialized,
+            // check non-IA64 implementations of this function.
+            //
 
 
-            if ( Prcb->ProcessorFeatureBits ) {
+            if (Prcb->ProcessorFeatureBits)
+            {
 
                 //
                 // Add processor feature bits to the registry
                 //
 
-                RtlInitUnicodeString(
-                    &ValueName,
-                    CmpFeatureBits
-                    );
+                RtlInitUnicodeString(&ValueName, CmpFeatureBits);
 
-                Status = NtSetValueKey(
-                            BaseHandle,
-                            &ValueName,
-                            TITLE_INDEX_VALUE,
-                            REG_QWORD,
-                            &Prcb->ProcessorFeatureBits,
-                            sizeof( Prcb->ProcessorFeatureBits )
-                            );
+                Status = NtSetValueKey(BaseHandle, &ValueName, TITLE_INDEX_VALUE, REG_QWORD,
+                                       &Prcb->ProcessorFeatureBits, sizeof(Prcb->ProcessorFeatureBits));
             }
 
 
-            if (Prcb->MHz) {
+            if (Prcb->MHz)
+            {
                 //
                 // Add processor MHz to the registry
                 //
 
-                RtlInitUnicodeString(
-                    &ValueName,
-                    CmpMHz
-                    );
+                RtlInitUnicodeString(&ValueName, CmpMHz);
 
-                Status = NtSetValueKey(
-                            BaseHandle,
-                            &ValueName,
-                            TITLE_INDEX_VALUE,
-                            REG_DWORD,
-                            &Prcb->MHz,
-                            sizeof (Prcb->MHz)
-                            );
+                Status =
+                    NtSetValueKey(BaseHandle, &ValueName, TITLE_INDEX_VALUE, REG_DWORD, &Prcb->MHz, sizeof(Prcb->MHz));
             }
 
 
@@ -717,11 +625,11 @@ Returns:
                             );
             }
 
-#endif // 0
-            //
-            // Add ia32 floating point enties for iVE.
-            //
-            RtlZeroMemory (&CurrentEntry, sizeof CurrentEntry);
+#endif // 0                                    \
+    //                                         \
+    // Add ia32 floating point enties for iVE. \
+    //
+            RtlZeroMemory(&CurrentEntry, sizeof CurrentEntry);
             CurrentEntry.ComponentEntry.Class = ProcessorClass;
             CurrentEntry.ComponentEntry.Type = FloatingPointProcessor;
             CurrentEntry.ComponentEntry.Key = i;
@@ -734,19 +642,12 @@ Returns:
             // This is the value returned by the ia32 CPUID instruction
             // on Merced (Itanium)
             //
-            strcpy (Buffer, "x86 Family 7 Model 0 Stepping 0");
+            strcpy(Buffer, "x86 Family 7 Model 0 Stepping 0");
 
-            CurrentEntry.ComponentEntry.IdentifierLength =
-                strlen (Buffer) + 1;
+            CurrentEntry.ComponentEntry.IdentifierLength = strlen(Buffer) + 1;
 
-            Status = CmpInitializeRegistryNode(
-                &CurrentEntry,
-                ParentHandle,
-                &NpxHandle,
-                -1,
-                (ULONG)-1,
-                DeviceIndexTable
-                );
+            Status =
+                CmpInitializeRegistryNode(&CurrentEntry, ParentHandle, &NpxHandle, -1, (ULONG)-1, DeviceIndexTable);
 
 
             //
@@ -755,9 +656,10 @@ Returns:
             // keys? For the moment, since it was checked on the i386
             // then do the check here too...
             //
-            if (!NT_SUCCESS(Status)) {
+            if (!NT_SUCCESS(Status))
+            {
                 NtClose(BaseHandle);
-                return(Status);
+                return (Status);
             }
 
             //
@@ -775,84 +677,48 @@ Returns:
     //
     // Next we try to collect System BIOS date and version strings.
     //
-    if( SystemBIOSDateString[0] != 0 ) {
+    if (SystemBIOSDateString[0] != 0)
+    {
 
-        RtlInitUnicodeString(
-            &ValueName,
-            L"SystemBiosDate"
-            );
+        RtlInitUnicodeString(&ValueName, L"SystemBiosDate");
 
-        Status = NtSetValueKey(
-                    ParentHandle,
-                    &ValueName,
-                    TITLE_INDEX_VALUE,
-                    REG_SZ,
-                    SystemBIOSDateString,
-                    (wcslen(SystemBIOSDateString)+1) * sizeof( WCHAR )
-                    );
-
+        Status = NtSetValueKey(ParentHandle, &ValueName, TITLE_INDEX_VALUE, REG_SZ, SystemBIOSDateString,
+                               (wcslen(SystemBIOSDateString) + 1) * sizeof(WCHAR));
     }
 
-    if( SystemBIOSVersionString[0] != 0 ) {
+    if (SystemBIOSVersionString[0] != 0)
+    {
 
-        RtlInitUnicodeString(
-            &ValueName,
-            L"SystemBiosVersion"
-            );
+        RtlInitUnicodeString(&ValueName, L"SystemBiosVersion");
 
-        Status = NtSetValueKey(
-                    ParentHandle,
-                    &ValueName,
-                    TITLE_INDEX_VALUE,
-                    REG_SZ,
-                    SystemBIOSVersionString,
-                    (wcslen(SystemBIOSVersionString)+1) * sizeof( WCHAR )
-                    );
-
+        Status = NtSetValueKey(ParentHandle, &ValueName, TITLE_INDEX_VALUE, REG_SZ, SystemBIOSVersionString,
+                               (wcslen(SystemBIOSVersionString) + 1) * sizeof(WCHAR));
     }
 
 
     //
     // Next we try to collect Video BIOS date and version strings.
     //
-    if( VideoBIOSDateString[0] != 0 ) {
+    if (VideoBIOSDateString[0] != 0)
+    {
 
-        RtlInitUnicodeString(
-            &ValueName,
-            L"VideoBiosDate"
-            );
+        RtlInitUnicodeString(&ValueName, L"VideoBiosDate");
 
-        Status = NtSetValueKey(
-                    ParentHandle,
-                    &ValueName,
-                    TITLE_INDEX_VALUE,
-                    REG_SZ,
-                    VideoBIOSDateString,
-                    (wcslen(VideoBIOSDateString)+1) * sizeof( WCHAR )
-                    );
-
+        Status = NtSetValueKey(ParentHandle, &ValueName, TITLE_INDEX_VALUE, REG_SZ, VideoBIOSDateString,
+                               (wcslen(VideoBIOSDateString) + 1) * sizeof(WCHAR));
     }
 
-    if( VideoBIOSVersionString[0] != 0 ) {
+    if (VideoBIOSVersionString[0] != 0)
+    {
 
-        RtlInitUnicodeString(
-            &ValueName,
-            L"VideoBiosVersion"
-            );
+        RtlInitUnicodeString(&ValueName, L"VideoBiosVersion");
 
-        Status = NtSetValueKey(
-                    ParentHandle,
-                    &ValueName,
-                    TITLE_INDEX_VALUE,
-                    REG_SZ,
-                    VideoBIOSVersionString,
-                    (wcslen(VideoBIOSVersionString)+1) * sizeof( WCHAR )
-                    );
-
+        Status = NtSetValueKey(ParentHandle, &ValueName, TITLE_INDEX_VALUE, REG_SZ, VideoBIOSVersionString,
+                               (wcslen(VideoBIOSVersionString) + 1) * sizeof(WCHAR));
     }
 
 
-    NtClose (ParentHandle);
+    NtClose(ParentHandle);
 
     //
     // Add any other x86 specific code here...
@@ -862,11 +728,7 @@ Returns:
 }
 
 
-
-VOID
-InitializeProcessorInformationFromSMBIOS(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+VOID InitializeProcessorInformationFromSMBIOS(IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 /*++
 
 Routine Description:
@@ -885,19 +747,19 @@ Return Value:
 
 --*/
 {
-    PLOADER_PARAMETER_EXTENSION     LoaderExtension;
-    NTSTATUS                        Status = STATUS_SUCCESS;
-    PSMBIOS_EPS_HEADER              SMBiosEPSHeader;
-    PDMIBIOS_EPS_HEADER             DMIBiosEPSHeader;
-    BOOLEAN                         Found = FALSE;
-    PHYSICAL_ADDRESS                SMBiosTablePhysicalAddress = {0};
-    PUCHAR                          StartPtr = NULL;
-    PUCHAR                          EndPtr = NULL;
-    PUCHAR                          SMBiosDataVirtualAddress = NULL;
-    PSMBIOS_STRUCT_HEADER           Header = NULL;
-    ULONG                           i = 0;
-    PKPRCB                          Prcb;
-    UCHAR                           Checksum;
+    PLOADER_PARAMETER_EXTENSION LoaderExtension;
+    NTSTATUS Status = STATUS_SUCCESS;
+    PSMBIOS_EPS_HEADER SMBiosEPSHeader;
+    PDMIBIOS_EPS_HEADER DMIBiosEPSHeader;
+    BOOLEAN Found = FALSE;
+    PHYSICAL_ADDRESS SMBiosTablePhysicalAddress = { 0 };
+    PUCHAR StartPtr = NULL;
+    PUCHAR EndPtr = NULL;
+    PUCHAR SMBiosDataVirtualAddress = NULL;
+    PSMBIOS_STRUCT_HEADER Header = NULL;
+    ULONG i = 0;
+    PKPRCB Prcb;
+    UCHAR Checksum;
 
 
     PAGED_CODE();
@@ -905,10 +767,12 @@ Return Value:
 
     LoaderExtension = LoaderBlock->Extension;
 
-    if (LoaderExtension->Size >= sizeof(LOADER_PARAMETER_EXTENSION)) {
+    if (LoaderExtension->Size >= sizeof(LOADER_PARAMETER_EXTENSION))
+    {
 
 
-        if (LoaderExtension->SMBiosEPSHeader != NULL) {
+        if (LoaderExtension->SMBiosEPSHeader != NULL)
+        {
 
             //
             // Load the SMBIOS table address and checksum it just to make sure.
@@ -921,24 +785,26 @@ Return Value:
 
             StartPtr = (PUCHAR)SMBiosEPSHeader;
             Checksum = 0;
-            for( i = 0; i < SMBiosEPSHeader->Length; i++ ) {
+            for (i = 0; i < SMBiosEPSHeader->Length; i++)
+            {
                 Checksum += StartPtr[i];
             }
-            if( Checksum != 0 ) {
-                CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,"InitializeProcessorInformationFromSMBIOS: _SM_ table has an incorrect checksum.\n"));
+            if (Checksum != 0)
+            {
+                CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+                             "InitializeProcessorInformationFromSMBIOS: _SM_ table has an incorrect checksum.\n"));
                 return;
             }
-
 
 
             //
             // Map the table into a virtual address and search it.
             //
-            SMBiosDataVirtualAddress = MmMapIoSpace( SMBiosTablePhysicalAddress,
-                                                     DMIBiosEPSHeader->StructureTableLength,
-                                                     MmCached );
+            SMBiosDataVirtualAddress =
+                MmMapIoSpace(SMBiosTablePhysicalAddress, DMIBiosEPSHeader->StructureTableLength, MmCached);
 
-            if( SMBiosDataVirtualAddress != NULL ) {
+            if (SMBiosDataVirtualAddress != NULL)
+            {
 
                 //
                 // Search...
@@ -946,17 +812,20 @@ Return Value:
                 StartPtr = SMBiosDataVirtualAddress;
                 EndPtr = StartPtr + DMIBiosEPSHeader->StructureTableLength;
                 Found = FALSE;
-                while( (StartPtr < EndPtr) ) {
+                while ((StartPtr < EndPtr))
+                {
 
                     Header = (PSMBIOS_STRUCT_HEADER)StartPtr;
 
 
-                    if( Header->Type == SMBIOS_BIOS_INFORMATION_TYPE ) {
+                    if (Header->Type == SMBIOS_BIOS_INFORMATION_TYPE)
+                    {
 
                         PSMBIOS_BIOS_INFORMATION_STRUCT InfoHeader = (PSMBIOS_BIOS_INFORMATION_STRUCT)StartPtr;
-                        PUCHAR      StringPtr = NULL;
+                        PUCHAR StringPtr = NULL;
 
-                        KdPrintEx((DPFLTR_SYSTEM_ID, DPFLTR_INFO_LEVEL,"InitializeProcessorInformationFromSMBIOS: SMBIOS_BIOS_INFORMATION\n"));
+                        KdPrintEx((DPFLTR_SYSTEM_ID, DPFLTR_INFO_LEVEL,
+                                   "InitializeProcessorInformationFromSMBIOS: SMBIOS_BIOS_INFORMATION\n"));
 
                         //
                         // Load the System BIOS Version information.
@@ -966,15 +835,19 @@ Return Value:
                         // Now jump to the BiosInfoHeader->BIOSVersion-th string which
                         // is appended onto the end of the formatted section of the table.
 
-                        KdPrintEx((DPFLTR_SYSTEM_ID, DPFLTR_INFO_LEVEL,"    I think the version string is at offset: %d\n", (ULONG)InfoHeader->Version));
-                        if( (ULONG)InfoHeader->Version > 0 ) {
+                        KdPrintEx((DPFLTR_SYSTEM_ID, DPFLTR_INFO_LEVEL,
+                                   "    I think the version string is at offset: %d\n", (ULONG)InfoHeader->Version));
+                        if ((ULONG)InfoHeader->Version > 0)
+                        {
 
                             // Jump to the end of the formatted portion of the SMBIOS table.
                             StringPtr = StartPtr + Header->Length;
 
                             // Jump over some number of strings to get to our string.
-                            for( i = 0; i < ((ULONG)InfoHeader->Version-1); i++ ) {
-                                while( (*StringPtr != 0) && (StringPtr < EndPtr) ) {
+                            for (i = 0; i < ((ULONG)InfoHeader->Version - 1); i++)
+                            {
+                                while ((*StringPtr != 0) && (StringPtr < EndPtr))
+                                {
                                     StringPtr++;
                                 }
                                 StringPtr++;
@@ -982,27 +855,20 @@ Return Value:
 
                             // StringPtr should be sitting at the BIOSVersion string.  Convert him to
                             // Unicode and save it off.
-                            if( StringPtr < EndPtr ) {
-                                UNICODE_STRING  UnicodeString;
-                                ANSI_STRING     AnsiString;
+                            if (StringPtr < EndPtr)
+                            {
+                                UNICODE_STRING UnicodeString;
+                                ANSI_STRING AnsiString;
 
-                                KdPrintEx((DPFLTR_SYSTEM_ID, DPFLTR_INFO_LEVEL,"    I'm about to load the Version string %s\n", StringPtr));
+                                KdPrintEx((DPFLTR_SYSTEM_ID, DPFLTR_INFO_LEVEL,
+                                           "    I'm about to load the Version string %s\n", StringPtr));
                                 UnicodeString.Buffer = SystemBIOSVersionString;
                                 UnicodeString.MaximumLength = MAXIMUM_BIOS_VERSION_LENGTH;
-                                RtlInitAnsiString(
-                                    &AnsiString,
-                                    StringPtr
-                                    );
+                                RtlInitAnsiString(&AnsiString, StringPtr);
 
-                                RtlAnsiStringToUnicodeString(
-                                    &UnicodeString,
-                                    &AnsiString,
-                                    FALSE
-                                    );
-
+                                RtlAnsiStringToUnicodeString(&UnicodeString, &AnsiString, FALSE);
                             }
                         }
-
 
 
                         //
@@ -1011,15 +877,20 @@ Return Value:
 
                         // Now jump to the BiosInfoHeader->BIOSDate-th string which
                         // is appended onto the end of the formatted section of the table.
-                        KdPrintEx((DPFLTR_SYSTEM_ID, DPFLTR_INFO_LEVEL,"    I think the ReleaseDate string is at offset: %d\n", (ULONG)InfoHeader->ReleaseDate));
-                        if( (ULONG)InfoHeader->ReleaseDate > 0 ) {
+                        KdPrintEx((DPFLTR_SYSTEM_ID, DPFLTR_INFO_LEVEL,
+                                   "    I think the ReleaseDate string is at offset: %d\n",
+                                   (ULONG)InfoHeader->ReleaseDate));
+                        if ((ULONG)InfoHeader->ReleaseDate > 0)
+                        {
 
                             // Jump to the end of the formatted portion of the SMBIOS table.
                             StringPtr = StartPtr + Header->Length;
 
                             // Jump over some number of strings to get to our string.
-                            for( i = 0; i < ((ULONG)InfoHeader->ReleaseDate-1); i++ ) {
-                                while( (*StringPtr != 0) && (StringPtr < EndPtr) ) {
+                            for (i = 0; i < ((ULONG)InfoHeader->ReleaseDate - 1); i++)
+                            {
+                                while ((*StringPtr != 0) && (StringPtr < EndPtr))
+                                {
                                     StringPtr++;
                                 }
                                 StringPtr++;
@@ -1027,34 +898,30 @@ Return Value:
 
                             // StringPtr should be sitting at the BIOSDate string.  Convert him to
                             // Unicode and save it off.
-                            if( StringPtr < EndPtr ) {
-                                UNICODE_STRING  UnicodeString;
-                                ANSI_STRING     AnsiString;
+                            if (StringPtr < EndPtr)
+                            {
+                                UNICODE_STRING UnicodeString;
+                                ANSI_STRING AnsiString;
 
 
-                                KdPrintEx((DPFLTR_SYSTEM_ID, DPFLTR_INFO_LEVEL,"    I'm about to load the Date string %s\n", StringPtr));
+                                KdPrintEx((DPFLTR_SYSTEM_ID, DPFLTR_INFO_LEVEL,
+                                           "    I'm about to load the Date string %s\n", StringPtr));
                                 UnicodeString.Buffer = SystemBIOSDateString;
                                 UnicodeString.MaximumLength = BIOS_DATE_LENGTH;
-                                RtlInitAnsiString(
-                                    &AnsiString,
-                                    StringPtr
-                                    );
+                                RtlInitAnsiString(&AnsiString, StringPtr);
 
-                                RtlAnsiStringToUnicodeString(
-                                    &UnicodeString,
-                                    &AnsiString,
-                                    FALSE
-                                    );
-
+                                RtlAnsiStringToUnicodeString(&UnicodeString, &AnsiString, FALSE);
                             }
                         }
+                    }
+                    else if (Header->Type == SMBIOS_BASE_BOARD_INFORMATION_TYPE)
+                    {
+                        PSMBIOS_BASE_BOARD_INFORMATION_STRUCT InfoHeader =
+                            (PSMBIOS_BASE_BOARD_INFORMATION_STRUCT)StartPtr;
+                        PUCHAR StringPtr = NULL;
 
-
-                    } else if( Header->Type == SMBIOS_BASE_BOARD_INFORMATION_TYPE ) {
-                        PSMBIOS_BASE_BOARD_INFORMATION_STRUCT InfoHeader = (PSMBIOS_BASE_BOARD_INFORMATION_STRUCT)StartPtr;
-                        PUCHAR      StringPtr = NULL;
-
-                        KdPrintEx((DPFLTR_SYSTEM_ID, DPFLTR_INFO_LEVEL,"InitializeProcessorInformationFromSMBIOS: SMBIOS_BASE_BOARD_INFORMATION\n"));
+                        KdPrintEx((DPFLTR_SYSTEM_ID, DPFLTR_INFO_LEVEL,
+                                   "InitializeProcessorInformationFromSMBIOS: SMBIOS_BASE_BOARD_INFORMATION\n"));
 
 #if 0
 //
@@ -1133,14 +1000,16 @@ Return Value:
                             KdPrintEx((DPFLTR_SYSTEM_ID, DPFLTR_INFO_LEVEL,"     SerialNumber: %s\n", StringPtr));
                         }
 #endif
+                    }
+                    else if (Header->Type == SMBIOS_SYSTEM_CHASIS_INFORMATION_TYPE)
+                    {
 
+                        PSMBIOS_SYSTEM_CHASIS_INFORMATION_STRUCT InfoHeader =
+                            (PSMBIOS_SYSTEM_CHASIS_INFORMATION_STRUCT)StartPtr;
+                        PUCHAR StringPtr = NULL;
 
-                    } else if( Header->Type == SMBIOS_SYSTEM_CHASIS_INFORMATION_TYPE ) {
-
-                        PSMBIOS_SYSTEM_CHASIS_INFORMATION_STRUCT InfoHeader = (PSMBIOS_SYSTEM_CHASIS_INFORMATION_STRUCT)StartPtr;
-                        PUCHAR      StringPtr = NULL;
-
-                        KdPrintEx((DPFLTR_SYSTEM_ID, DPFLTR_INFO_LEVEL,"InitializeProcessorInformationFromSMBIOS: SMBIOS_SYSTEM_CHASIS_INFORMATION\n"));
+                        KdPrintEx((DPFLTR_SYSTEM_ID, DPFLTR_INFO_LEVEL,
+                                   "InitializeProcessorInformationFromSMBIOS: SMBIOS_SYSTEM_CHASIS_INFORMATION\n"));
 
 #if 0
 //
@@ -1221,42 +1090,47 @@ Return Value:
                         }
 
 #endif
-
                     }
 
 
                     //
                     // Go to the next table.
                     //
-                    KdPrintEx((DPFLTR_SYSTEM_ID, DPFLTR_INFO_LEVEL,"InitializeProcessorInformationFromSMBIOS: Haven't found the ProcessorInformation block yet.  Just looked at a block of type: %d.\n", Header->Type));
+                    KdPrintEx((DPFLTR_SYSTEM_ID, DPFLTR_INFO_LEVEL,
+                               "InitializeProcessorInformationFromSMBIOS: Haven't found the ProcessorInformation block "
+                               "yet.  Just looked at a block of type: %d.\n",
+                               Header->Type));
 
-                    StartPtr +=  Header->Length;
+                    StartPtr += Header->Length;
 
                     // jump over any trailing string-list too.
-                    while ( (*((USHORT UNALIGNED *)StartPtr) != 0)  &&
-                            (StartPtr < EndPtr) )
+                    while ((*((USHORT UNALIGNED *)StartPtr) != 0) && (StartPtr < EndPtr))
                     {
                         StartPtr++;
                     }
                     StartPtr += 2;
-
                 }
 
 
                 MmUnmapIoSpace(SMBiosDataVirtualAddress, DMIBiosEPSHeader->StructureTableLength);
-
-            } else {
-                KdPrintEx((DPFLTR_SYSTEM_ID, DPFLTR_INFO_LEVEL,"InitializeProcessorInformationFromSMBIOS: Failed to map the SMBIOS physical address.\n"));
             }
-
-        } else {
-            KdPrintEx((DPFLTR_SYSTEM_ID, DPFLTR_INFO_LEVEL,"InitializeProcessorInformationFromSMBIOS: The SMBiosEPSHeader is NULL in the extension block.\n"));
+            else
+            {
+                KdPrintEx((DPFLTR_SYSTEM_ID, DPFLTR_INFO_LEVEL,
+                           "InitializeProcessorInformationFromSMBIOS: Failed to map the SMBIOS physical address.\n"));
+            }
         }
-
-    } else {
-        KdPrintEx((DPFLTR_SYSTEM_ID, DPFLTR_INFO_LEVEL,"InitializeProcessorInformationFromSMBIOS: LoaderBlock extension is out of sync with the kernel.\n"));
-
+        else
+        {
+            KdPrintEx(
+                (DPFLTR_SYSTEM_ID, DPFLTR_INFO_LEVEL,
+                 "InitializeProcessorInformationFromSMBIOS: The SMBiosEPSHeader is NULL in the extension block.\n"));
+        }
+    }
+    else
+    {
+        KdPrintEx(
+            (DPFLTR_SYSTEM_ID, DPFLTR_INFO_LEVEL,
+             "InitializeProcessorInformationFromSMBIOS: LoaderBlock extension is out of sync with the kernel.\n"));
     }
 }
-
-

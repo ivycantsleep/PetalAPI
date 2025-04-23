@@ -66,95 +66,52 @@ Revision History:
 #include "wmikmp.h"
 
 NTSTATUS
-WmipSecurityMethod (
-    IN PVOID Object,
-    IN SECURITY_OPERATION_CODE OperationCode,
-    IN PSECURITY_INFORMATION SecurityInformation,
-    IN OUT PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN OUT PULONG CapturedLength,
-    IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor,
-    IN POOL_TYPE PoolType,
-    IN PGENERIC_MAPPING GenericMapping
-    );
+WmipSecurityMethod(IN PVOID Object, IN SECURITY_OPERATION_CODE OperationCode,
+                   IN PSECURITY_INFORMATION SecurityInformation, IN OUT PSECURITY_DESCRIPTOR SecurityDescriptor,
+                   IN OUT PULONG CapturedLength, IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor,
+                   IN POOL_TYPE PoolType, IN PGENERIC_MAPPING GenericMapping);
 
-VOID WmipDeleteMethod(
-    IN  PVOID   Object
-    );
+VOID WmipDeleteMethod(IN PVOID Object);
 
-VOID WmipCloseMethod(
-    IN PEPROCESS Process OPTIONAL,
-    IN PVOID Object,
-    IN ACCESS_MASK GrantedAccess,
-    IN ULONG ProcessHandleCount,
-    IN ULONG SystemHandleCount
-    );
+VOID WmipCloseMethod(IN PEPROCESS Process OPTIONAL, IN PVOID Object, IN ACCESS_MASK GrantedAccess,
+                     IN ULONG ProcessHandleCount, IN ULONG SystemHandleCount);
 
 NTSTATUS
-WmipGetGuidSecurityDescriptor(
-    PUNICODE_STRING GuidName,
-    PSECURITY_DESCRIPTOR *SecurityDescriptor
-    );
+WmipGetGuidSecurityDescriptor(PUNICODE_STRING GuidName, PSECURITY_DESCRIPTOR *SecurityDescriptor);
 
 NTSTATUS
-WmipSaveGuidSecurityDescriptor(
-    PUNICODE_STRING GuidName,
-    PSECURITY_DESCRIPTOR SecurityDescriptor
-    );
+WmipSaveGuidSecurityDescriptor(PUNICODE_STRING GuidName, PSECURITY_DESCRIPTOR SecurityDescriptor);
 
 NTSTATUS
-WmipSDRegistryQueryRoutine(
-    IN PWSTR ValueName,
-    IN ULONG ValueType,
-    IN PVOID ValueData,
-    IN ULONG ValueLength,
-    IN PVOID Context,
-    IN PVOID EntryContext
-    );
+WmipSDRegistryQueryRoutine(IN PWSTR ValueName, IN ULONG ValueType, IN PVOID ValueData, IN ULONG ValueLength,
+                           IN PVOID Context, IN PVOID EntryContext);
 
 NTSTATUS
-WmipCreateGuidObject(
-    IN POBJECT_ATTRIBUTES ObjectAttributes,
-    IN ACCESS_MASK DesiredAccess,
-    IN LPGUID Guid,
-    OUT PHANDLE CreatorHandle,
-    OUT PWMIGUIDOBJECT *Object
-    );
+WmipCreateGuidObject(IN POBJECT_ATTRIBUTES ObjectAttributes, IN ACCESS_MASK DesiredAccess, IN LPGUID Guid,
+                     OUT PHANDLE CreatorHandle, OUT PWMIGUIDOBJECT *Object);
 
 NTSTATUS
-WmipUuidFromString (
-    IN PWCHAR StringUuid,
-    OUT LPGUID Uuid
-    );
+WmipUuidFromString(IN PWCHAR StringUuid, OUT LPGUID Uuid);
 
 BOOLEAN
-WmipHexStringToDword(
-    IN PWCHAR lpsz,
-    OUT PULONG RetValue,
-    IN ULONG cDigits,
-    IN WCHAR chDelim
-    );
+WmipHexStringToDword(IN PWCHAR lpsz, OUT PULONG RetValue, IN ULONG cDigits, IN WCHAR chDelim);
 
-VOID WmipCloseMethod(
-    IN PEPROCESS Process OPTIONAL,
-    IN PVOID Object,
-    IN ACCESS_MASK GrantedAccess,
-    IN ULONG ProcessHandleCount,
-    IN ULONG SystemHandleCount
-    );
+VOID WmipCloseMethod(IN PEPROCESS Process OPTIONAL, IN PVOID Object, IN ACCESS_MASK GrantedAccess,
+                     IN ULONG ProcessHandleCount, IN ULONG SystemHandleCount);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,WmipInitializeSecurity)
-#pragma alloc_text(PAGE,WmipGetGuidSecurityDescriptor)
-#pragma alloc_text(PAGE,WmipSaveGuidSecurityDescriptor)
-#pragma alloc_text(PAGE,WmipOpenGuidObject)
-#pragma alloc_text(PAGE,WmipCheckGuidAccess)
-#pragma alloc_text(PAGE,WmipSDRegistryQueryRoutine)
-#pragma alloc_text(PAGE,WmipSecurityMethod)
-#pragma alloc_text(PAGE,WmipDeleteMethod)
-#pragma alloc_text(PAGE,WmipCreateGuidObject)
-#pragma alloc_text(PAGE,WmipUuidFromString)
-#pragma alloc_text(PAGE,WmipHexStringToDword)
-#pragma alloc_text(PAGE,WmipCloseMethod)
+#pragma alloc_text(INIT, WmipInitializeSecurity)
+#pragma alloc_text(PAGE, WmipGetGuidSecurityDescriptor)
+#pragma alloc_text(PAGE, WmipSaveGuidSecurityDescriptor)
+#pragma alloc_text(PAGE, WmipOpenGuidObject)
+#pragma alloc_text(PAGE, WmipCheckGuidAccess)
+#pragma alloc_text(PAGE, WmipSDRegistryQueryRoutine)
+#pragma alloc_text(PAGE, WmipSecurityMethod)
+#pragma alloc_text(PAGE, WmipDeleteMethod)
+#pragma alloc_text(PAGE, WmipCreateGuidObject)
+#pragma alloc_text(PAGE, WmipUuidFromString)
+#pragma alloc_text(PAGE, WmipHexStringToDword)
+#pragma alloc_text(PAGE, WmipCloseMethod)
 #endif
 
 #ifdef ALLOC_DATA_PRAGMA
@@ -178,29 +135,20 @@ PSECURITY_DESCRIPTOR WmipAnyoneAccessSd;
 
 //
 // Generic mapping for specific rights
-const GENERIC_MAPPING WmipGenericMapping =
-{
-    STANDARD_RIGHTS_READ |        // GENERIC_READ <--> WMIGUID_QUERY
-        WMIGUID_QUERY,
-    STANDARD_RIGHTS_WRITE |       // GENERIC_WRUTE <--> WMIGUID_SET
-        WMIGUID_SET,
-    STANDARD_RIGHTS_EXECUTE |     // GENERIC_EXECUTE <--> WMIGUID_EXECUTE
-        WMIGUID_EXECUTE,
-    WMIGUID_ALL_ACCESS | STANDARD_RIGHTS_READ
-};
+const GENERIC_MAPPING WmipGenericMapping = { STANDARD_RIGHTS_READ | // GENERIC_READ <--> WMIGUID_QUERY
+                                                 WMIGUID_QUERY,
+                                             STANDARD_RIGHTS_WRITE | // GENERIC_WRUTE <--> WMIGUID_SET
+                                                 WMIGUID_SET,
+                                             STANDARD_RIGHTS_EXECUTE | // GENERIC_EXECUTE <--> WMIGUID_EXECUTE
+                                                 WMIGUID_EXECUTE,
+                                             WMIGUID_ALL_ACCESS | STANDARD_RIGHTS_READ };
 
 
 NTSTATUS
-WmipSecurityMethod (
-    IN PVOID Object,
-    IN SECURITY_OPERATION_CODE OperationCode,
-    IN PSECURITY_INFORMATION SecurityInformation,
-    IN OUT PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN OUT PULONG CapturedLength,
-    IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor,
-    IN POOL_TYPE PoolType,
-    IN PGENERIC_MAPPING GenericMapping
-    )
+WmipSecurityMethod(IN PVOID Object, IN SECURITY_OPERATION_CODE OperationCode,
+                   IN PSECURITY_INFORMATION SecurityInformation, IN OUT PSECURITY_DESCRIPTOR SecurityDescriptor,
+                   IN OUT PULONG CapturedLength, IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor,
+                   IN POOL_TYPE PoolType, IN PGENERIC_MAPPING GenericMapping)
 
 /*++
 
@@ -296,115 +244,94 @@ Return Value:
     //  Make sure the common parts of our input are proper
     //
 
-    ASSERT( (OperationCode == SetSecurityDescriptor) ||
-            (OperationCode == QuerySecurityDescriptor) ||
-            (OperationCode == AssignSecurityDescriptor) ||
-            (OperationCode == DeleteSecurityDescriptor) );
+    ASSERT((OperationCode == SetSecurityDescriptor) || (OperationCode == QuerySecurityDescriptor) ||
+           (OperationCode == AssignSecurityDescriptor) || (OperationCode == DeleteSecurityDescriptor));
 
     //
     //  This routine simply cases off of the operation code to decide
     //  which support routine to call
     //
 
-    switch (OperationCode) {
+    switch (OperationCode)
+    {
 
-        case SetSecurityDescriptor:
+    case SetSecurityDescriptor:
+    {
+        UNICODE_STRING GuidName;
+        WCHAR GuidBuffer[38];
+        LPGUID Guid;
+        SECURITY_INFORMATION LocalSecInfo;
+        PSECURITY_DESCRIPTOR SecurityDescriptorCopy;
+        ULONG SecurityDescriptorLength;
+        ULONG Status2;
+
+        ASSERT((PoolType == PagedPool) || (PoolType == NonPagedPool));
+
+        Status = ObReferenceObjectByPointer(Object, 0, WmipGuidObjectType, KernelMode);
+        ASSERT(Status == STATUS_SUCCESS);
+
+        if (NT_SUCCESS(Status))
         {
-            UNICODE_STRING GuidName;
-            WCHAR GuidBuffer[38];
-            LPGUID Guid;
-            SECURITY_INFORMATION LocalSecInfo;
-            PSECURITY_DESCRIPTOR SecurityDescriptorCopy;
-            ULONG SecurityDescriptorLength;
-            ULONG Status2;
-
-            ASSERT( (PoolType == PagedPool) || (PoolType == NonPagedPool) );
-
-            Status = ObReferenceObjectByPointer(Object,
-                                                0,
-                                                WmipGuidObjectType,
-                                                KernelMode);
-            ASSERT(Status == STATUS_SUCCESS);
+            Status = ObSetSecurityDescriptorInfo(Object, SecurityInformation, SecurityDescriptor,
+                                                 ObjectsSecurityDescriptor, PoolType, GenericMapping);
 
             if (NT_SUCCESS(Status))
             {
-                Status = ObSetSecurityDescriptorInfo( Object,
-                                                SecurityInformation,
-                                                SecurityDescriptor,
-                                                ObjectsSecurityDescriptor,
-                                                PoolType,
-                                                GenericMapping
-                                                );
+                //
+                // Serialize the guid's new security descriptor in
+                // the registry. But first we need to get a copy of
+                // it.
 
-                if (NT_SUCCESS(Status))
+                SecurityDescriptorLength = 1024;
+                do
                 {
-                    //
-                    // Serialize the guid's new security descriptor in
-                    // the registry. But first we need to get a copy of
-                    // it.
+                    SecurityDescriptorCopy = ExAllocatePoolWithTag(PoolType, SecurityDescriptorLength, WMIPOOLTAG);
 
-                    SecurityDescriptorLength = 1024;
-                    do
+                    if (SecurityDescriptorCopy == NULL)
                     {
-                        SecurityDescriptorCopy = ExAllocatePoolWithTag(
-                                                                PoolType,
-                                                                SecurityDescriptorLength,
-                                                                WMIPOOLTAG);
-
-                        if (SecurityDescriptorCopy == NULL)
-                        {
-                            Status2 = STATUS_INSUFFICIENT_RESOURCES;
-                            break;
-                        }
-                        LocalSecInfo = 0xffffffff;
-                        Status2 = ObQuerySecurityDescriptorInfo( Object,
-                                                                 &LocalSecInfo,
-                                                                 SecurityDescriptorCopy,
-                                                                 &SecurityDescriptorLength,
-                                                                 ObjectsSecurityDescriptor);
-
-
-                        if (Status2 == STATUS_BUFFER_TOO_SMALL)
-                        {
-                            ExFreePool(SecurityDescriptorCopy);
-                        } else {
-                            break;
-                        }
-
-                    } while (TRUE);
-
-
-                    if (NT_SUCCESS(Status2))
-                    {
-                        Guid = &((PWMIGUIDOBJECT)Object)->Guid;
-                        swprintf(GuidBuffer,
-                              L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-                             Guid->Data1, Guid->Data2,
-                             Guid->Data3,
-                             Guid->Data4[0], Guid->Data4[1],
-                             Guid->Data4[2], Guid->Data4[3],
-                             Guid->Data4[4], Guid->Data4[5],
-                             Guid->Data4[6], Guid->Data4[7]);
-
-                        RtlInitUnicodeString(&GuidName, GuidBuffer);
-
-                        WmipSaveGuidSecurityDescriptor(&GuidName,
-                                                   SecurityDescriptorCopy);
+                        Status2 = STATUS_INSUFFICIENT_RESOURCES;
+                        break;
                     }
+                    LocalSecInfo = 0xffffffff;
+                    Status2 = ObQuerySecurityDescriptorInfo(Object, &LocalSecInfo, SecurityDescriptorCopy,
+                                                            &SecurityDescriptorLength, ObjectsSecurityDescriptor);
 
-                    if (SecurityDescriptorCopy != NULL)
+
+                    if (Status2 == STATUS_BUFFER_TOO_SMALL)
                     {
                         ExFreePool(SecurityDescriptorCopy);
                     }
+                    else
+                    {
+                        break;
+                    }
 
+                } while (TRUE);
+
+
+                if (NT_SUCCESS(Status2))
+                {
+                    Guid = &((PWMIGUIDOBJECT)Object)->Guid;
+                    swprintf(GuidBuffer, L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x", Guid->Data1, Guid->Data2,
+                             Guid->Data3, Guid->Data4[0], Guid->Data4[1], Guid->Data4[2], Guid->Data4[3],
+                             Guid->Data4[4], Guid->Data4[5], Guid->Data4[6], Guid->Data4[7]);
+
+                    RtlInitUnicodeString(&GuidName, GuidBuffer);
+
+                    WmipSaveGuidSecurityDescriptor(&GuidName, SecurityDescriptorCopy);
                 }
 
-                ObDereferenceObject(Object);
+                if (SecurityDescriptorCopy != NULL)
+                {
+                    ExFreePool(SecurityDescriptorCopy);
+                }
             }
 
-            return(Status);
+            ObDereferenceObject(Object);
         }
 
+        return (Status);
+    }
 
 
     case QuerySecurityDescriptor:
@@ -415,16 +342,13 @@ Return Value:
         //  method
         //
 
-        ASSERT( CapturedLength != NULL );
+        ASSERT(CapturedLength != NULL);
 
 
-        return ObQuerySecurityDescriptorInfo( Object,
-                                              SecurityInformation,
-                                              SecurityDescriptor,
-                                              CapturedLength,
-                                              ObjectsSecurityDescriptor );
+        return ObQuerySecurityDescriptorInfo(Object, SecurityInformation, SecurityDescriptor, CapturedLength,
+                                             ObjectsSecurityDescriptor);
 
-        return(Status);
+        return (Status);
     }
 
     case DeleteSecurityDescriptor:
@@ -435,15 +359,13 @@ Return Value:
         //
 
         Status = ObDeassignSecurity(ObjectsSecurityDescriptor);
-        return(Status);
+        return (Status);
     }
 
     case AssignSecurityDescriptor:
 
-        ObAssignObjectSecurityDescriptor( Object,
-                                          SecurityDescriptor,
-                                          PoolType );
-        return( STATUS_SUCCESS );
+        ObAssignObjectSecurityDescriptor(Object, SecurityDescriptor, PoolType);
+        return (STATUS_SUCCESS);
 
     default:
 
@@ -452,16 +374,13 @@ Return Value:
         //  the earlier asserts are still checked.
         //
 
-        KeBugCheckEx( SECURITY_SYSTEM, 1, STATUS_INVALID_PARAMETER, 0, 0 );
+        KeBugCheckEx(SECURITY_SYSTEM, 1, STATUS_INVALID_PARAMETER, 0, 0);
         return (0); // bash compiler
     }
-
 }
 
 
-NTSTATUS WmipInitializeSecurity(
-    void
-    )
+NTSTATUS WmipInitializeSecurity(void)
 /*++
 
 Routine Description:
@@ -493,97 +412,68 @@ Return Value:
 
     //
     // Establish a SD for those guids with no specific or default SD
-    DaclLength = (ULONG)sizeof(ACL) +
-                   (3*((ULONG)sizeof(ACCESS_ALLOWED_ACE))) +
-                   SeLengthSid( SeLocalSystemSid ) +
-                   SeLengthSid( SeAliasAdminsSid ) +
-                   SeLengthSid( SeWorldSid ) +
-                   8; // The 8 is just for good measure
+    DaclLength = (ULONG)sizeof(ACL) + (3 * ((ULONG)sizeof(ACCESS_ALLOWED_ACE))) + SeLengthSid(SeLocalSystemSid) +
+                 SeLengthSid(SeAliasAdminsSid) + SeLengthSid(SeWorldSid) + 8; // The 8 is just for good measure
 
 
-    AnyoneAccessDacl = (PACL)ExAllocatePoolWithTag(PagedPool,
-                                                   DaclLength,
-                                                   WMIPOOLTAG);
+    AnyoneAccessDacl = (PACL)ExAllocatePoolWithTag(PagedPool, DaclLength, WMIPOOLTAG);
     if (AnyoneAccessDacl == NULL)
     {
-        return(STATUS_INSUFFICIENT_RESOURCES);
+        return (STATUS_INSUFFICIENT_RESOURCES);
     }
 
-    Status = RtlCreateAcl( AnyoneAccessDacl,
-                           DaclLength,
-                           ACL_REVISION2);
-    if (! NT_SUCCESS(Status))
+    Status = RtlCreateAcl(AnyoneAccessDacl, DaclLength, ACL_REVISION2);
+    if (!NT_SUCCESS(Status))
     {
         goto Cleanup;
     }
 
-    Status = RtlAddAccessAllowedAce (
-                 AnyoneAccessDacl,
-                 ACL_REVISION2,
-                 (STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL),
-                 SeLocalSystemSid
-                 );
-    if (! NT_SUCCESS(Status))
+    Status = RtlAddAccessAllowedAce(AnyoneAccessDacl, ACL_REVISION2, (STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL),
+                                    SeLocalSystemSid);
+    if (!NT_SUCCESS(Status))
     {
         goto Cleanup;
     }
 
-    Status = RtlAddAccessAllowedAce (
-                 AnyoneAccessDacl,
-                 ACL_REVISION2,
-                 (STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL),
-                 SeAliasAdminsSid
-                 );
-    if (! NT_SUCCESS(Status))
+    Status = RtlAddAccessAllowedAce(AnyoneAccessDacl, ACL_REVISION2, (STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL),
+                                    SeAliasAdminsSid);
+    if (!NT_SUCCESS(Status))
     {
         goto Cleanup;
     }
 
-    Status = RtlAddAccessAllowedAce (
-                 AnyoneAccessDacl,
-                 ACL_REVISION2,
-                 WMIGUID_ALL_ACCESS,
-                 SeWorldSid
-                 );
-    if (! NT_SUCCESS(Status))
+    Status = RtlAddAccessAllowedAce(AnyoneAccessDacl, ACL_REVISION2, WMIGUID_ALL_ACCESS, SeWorldSid);
+    if (!NT_SUCCESS(Status))
     {
         goto Cleanup;
     }
 
     WmipAnyoneAccessSd = &WmipAnyoneAccessSecurityDescriptor;
-    Status = RtlCreateSecurityDescriptor(
-                 WmipAnyoneAccessSd,
-                 SECURITY_DESCRIPTOR_REVISION1
-                 );
+    Status = RtlCreateSecurityDescriptor(WmipAnyoneAccessSd, SECURITY_DESCRIPTOR_REVISION1);
 
-    Status = RtlSetDaclSecurityDescriptor(
-                 WmipAnyoneAccessSd,
-                 TRUE,                       // DaclPresent
-                 AnyoneAccessDacl,
-                 FALSE                       // DaclDefaulted
-                 );
-    if (! NT_SUCCESS(Status))
+    Status = RtlSetDaclSecurityDescriptor(WmipAnyoneAccessSd,
+                                          TRUE, // DaclPresent
+                                          AnyoneAccessDacl,
+                                          FALSE // DaclDefaulted
+    );
+    if (!NT_SUCCESS(Status))
     {
         goto Cleanup;
     }
 
-    Status = RtlSetOwnerSecurityDescriptor(WmipAnyoneAccessSd,
-                                           SeAliasAdminsSid,
-                                           FALSE);
-    if (! NT_SUCCESS(Status))
+    Status = RtlSetOwnerSecurityDescriptor(WmipAnyoneAccessSd, SeAliasAdminsSid, FALSE);
+    if (!NT_SUCCESS(Status))
     {
         goto Cleanup;
     }
 
-    Status = RtlSetGroupSecurityDescriptor(WmipAnyoneAccessSd,
-                                           SeAliasAdminsSid,
-                                           FALSE);
-    if (! NT_SUCCESS(Status))
+    Status = RtlSetGroupSecurityDescriptor(WmipAnyoneAccessSd, SeAliasAdminsSid, FALSE);
+    if (!NT_SUCCESS(Status))
     {
-Cleanup:
+    Cleanup:
         ExFreePool(AnyoneAccessDacl);
         WmipAnyoneAccessSd = NULL;
-        return(Status);
+        return (Status);
     }
 
     //
@@ -629,12 +519,9 @@ Cleanup:
     ObjectTypeInitializer.CloseProcedure = WmipCloseMethod;
     RtlInitUnicodeString(&ObjectTypeName, L"WmiGuid");
 
-    Status = ObCreateObjectType(&ObjectTypeName,
-                                &ObjectTypeInitializer,
-                                NULL,
-                                &WmipGuidObjectType);
+    Status = ObCreateObjectType(&ObjectTypeName, &ObjectTypeInitializer, NULL, &WmipGuidObjectType);
 
-    if (! NT_SUCCESS(Status))
+    if (!NT_SUCCESS(Status))
     {
         goto Cleanup;
     }
@@ -659,17 +546,11 @@ Cleanup:
         NtClose(Handle);
     }
 #endif
-    return(Status);
+    return (Status);
 }
 
-NTSTATUS WmipSDRegistryQueryRoutine(
-    IN PWSTR ValueName,
-    IN ULONG ValueType,
-    IN PVOID ValueData,
-    IN ULONG ValueLength,
-    IN PVOID Context,
-    IN PVOID EntryContext
-    )
+NTSTATUS WmipSDRegistryQueryRoutine(IN PWSTR ValueName, IN ULONG ValueType, IN PVOID ValueData, IN ULONG ValueLength,
+                                    IN PVOID Context, IN PVOID EntryContext)
 /*++
 
 Routine Description:
@@ -703,31 +584,25 @@ Return Value:
     PAGED_CODE();
 
     Status = STATUS_SUCCESS;
-    if ((ValueType == REG_BINARY) &&
-        (ValueData != NULL))
+    if ((ValueType == REG_BINARY) && (ValueData != NULL))
     {
         //
         // If a SD is specified in the registry then copy it
         SecurityDescriptor = (PSECURITY_DESCRIPTOR *)EntryContext;
-        *SecurityDescriptor = ExAllocatePoolWithTag(PagedPool,
-                                                    ValueLength,
-                            WMIPOOLTAG);
+        *SecurityDescriptor = ExAllocatePoolWithTag(PagedPool, ValueLength, WMIPOOLTAG);
         if (*SecurityDescriptor != NULL)
         {
-            RtlCopyMemory(*SecurityDescriptor,
-                          ValueData,
-                          ValueLength);
-        } else {
+            RtlCopyMemory(*SecurityDescriptor, ValueData, ValueLength);
+        }
+        else
+        {
             Status = STATUS_INSUFFICIENT_RESOURCES;
         }
     }
-    return(Status);
+    return (Status);
 }
 
-NTSTATUS WmipSaveGuidSecurityDescriptor(
-    PUNICODE_STRING GuidName,
-    PSECURITY_DESCRIPTOR SecurityDescriptor
-    )
+NTSTATUS WmipSaveGuidSecurityDescriptor(PUNICODE_STRING GuidName, PSECURITY_DESCRIPTOR SecurityDescriptor)
 /*++
 
 Routine Description:
@@ -757,20 +632,13 @@ Return Value:
     PAGED_CODE();
 
     SecurityDescriptorLength = RtlLengthSecurityDescriptor(SecurityDescriptor);
-    Status = RtlWriteRegistryValue(RTL_REGISTRY_CONTROL,
-                              L"WMI\\Security",
-                              GuidName->Buffer,
-                              REG_BINARY,
-                              SecurityDescriptor,
-                              SecurityDescriptorLength);
+    Status = RtlWriteRegistryValue(RTL_REGISTRY_CONTROL, L"WMI\\Security", GuidName->Buffer, REG_BINARY,
+                                   SecurityDescriptor, SecurityDescriptorLength);
 
-    return(Status);
+    return (Status);
 }
 
-NTSTATUS WmipGetGuidSecurityDescriptor(
-    PUNICODE_STRING GuidName,
-    PSECURITY_DESCRIPTOR *SecurityDescriptor
-    )
+NTSTATUS WmipGetGuidSecurityDescriptor(PUNICODE_STRING GuidName, PSECURITY_DESCRIPTOR *SecurityDescriptor)
 /*++
 
 Routine Description:
@@ -817,11 +685,7 @@ Return Value:
     QueryRegistryTable[1].Name = DefaultSecurityGuidName;
     QueryRegistryTable[1].DefaultType = REG_BINARY;
 
-    Status = RtlQueryRegistryValues(RTL_REGISTRY_CONTROL,
-                              L"WMI\\Security",
-                              QueryRegistryTable,
-                              NULL,
-                              NULL);
+    Status = RtlQueryRegistryValues(RTL_REGISTRY_CONTROL, L"WMI\\Security", QueryRegistryTable, NULL, NULL);
 
     *SecurityDescriptor = NULL;
     if (NT_SUCCESS(Status))
@@ -837,10 +701,14 @@ Return Value:
             {
                 ExFreePool(DefaultSecurityDescriptor);
             }
-        } else if (DefaultSecurityDescriptor != NULL) {
+        }
+        else if (DefaultSecurityDescriptor != NULL)
+        {
             *SecurityDescriptor = DefaultSecurityDescriptor;
         }
-    } else if (Status == STATUS_OBJECT_NAME_NOT_FOUND) {
+    }
+    else if (Status == STATUS_OBJECT_NAME_NOT_FOUND)
+    {
         Status = STATUS_SUCCESS;
     }
 
@@ -849,17 +717,12 @@ Return Value:
         *SecurityDescriptor = WmipAnyoneAccessSd;
     }
 
-    return(Status);
+    return (Status);
 }
 
 
-NTSTATUS WmipOpenGuidObject(
-    IN POBJECT_ATTRIBUTES CapturedObjectAttributes,
-    IN ACCESS_MASK DesiredAccess,
-    IN KPROCESSOR_MODE AccessMode,
-    OUT PHANDLE Handle,
-    OUT PWMIGUIDOBJECT *ObjectPtr
-    )
+NTSTATUS WmipOpenGuidObject(IN POBJECT_ATTRIBUTES CapturedObjectAttributes, IN ACCESS_MASK DesiredAccess,
+                            IN KPROCESSOR_MODE AccessMode, OUT PHANDLE Handle, OUT PWMIGUIDOBJECT *ObjectPtr)
 /*++
 
 Routine Description:
@@ -902,43 +765,33 @@ Return Value:
     // correct object directory and the correct format for a uuid
     CapturedGuidString = CapturedObjectAttributes->ObjectName;
 
-    if (RtlEqualMemory(CapturedGuidString->Buffer,
-                         WmiGuidObjectDirectory,
-                         (WmiGuidObjectDirectoryLength-1) * sizeof(WCHAR)) == 0)
+    if (RtlEqualMemory(CapturedGuidString->Buffer, WmiGuidObjectDirectory,
+                       (WmiGuidObjectDirectoryLength - 1) * sizeof(WCHAR)) == 0)
     {
-        return(STATUS_INVALID_PARAMETER);
+        return (STATUS_INVALID_PARAMETER);
     }
 
     Status = WmipUuidFromString(&CapturedGuidString->Buffer[9], &Guid);
-    if (! NT_SUCCESS(Status))
+    if (!NT_SUCCESS(Status))
     {
-        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL,"WMI: Invalid uuid format for guid object %ws\n", CapturedGuidString->Buffer));
-        return(Status);
+        WmipDebugPrintEx((DPFLTR_WMICORE_ID, DPFLTR_INFO_LEVEL, "WMI: Invalid uuid format for guid object %ws\n",
+                          CapturedGuidString->Buffer));
+        return (Status);
     }
 
     //
     // If it does not exist then create an object for the guid ....
     //
-    Status = WmipCreateGuidObject(CapturedObjectAttributes,
-                                  DesiredAccess,
-                                  &Guid,
-                                  &CreatorHandle,
-                                  &GuidObject);
+    Status = WmipCreateGuidObject(CapturedObjectAttributes, DesiredAccess, &Guid, &CreatorHandle, &GuidObject);
 
     if (NT_SUCCESS(Status))
     {
         //
         // .... and try again to open it
         //
-        Status = ObOpenObjectByPointer(GuidObject,
-                                       0,
-                                       NULL,
-                                       DesiredAccess,
-                                       WmipGuidObjectType,
-                                       AccessMode,
-                                       Handle);
+        Status = ObOpenObjectByPointer(GuidObject, 0, NULL, DesiredAccess, WmipGuidObjectType, AccessMode, Handle);
 
-        if (! NT_SUCCESS(Status))
+        if (!NT_SUCCESS(Status))
         {
             //
             // Remove extra ref count taken by ObInsertObject since we
@@ -952,22 +805,17 @@ Return Value:
         // attach to the system process since the handle was created in
         // its handle table.
         //
-        KeAttachProcess( &PsInitialSystemProcess->Pcb );
+        KeAttachProcess(&PsInitialSystemProcess->Pcb);
         ZwClose(CreatorHandle);
-        KeDetachProcess( );
+        KeDetachProcess();
         *ObjectPtr = GuidObject;
     }
 
-    return(Status);
+    return (Status);
 }
 
-NTSTATUS WmipCreateGuidObject(
-    IN OUT POBJECT_ATTRIBUTES ObjectAttributes,
-    IN ACCESS_MASK DesiredAccess,
-    IN LPGUID Guid,
-    OUT PHANDLE CreatorHandle,
-    OUT PWMIGUIDOBJECT *Object
-    )
+NTSTATUS WmipCreateGuidObject(IN OUT POBJECT_ATTRIBUTES ObjectAttributes, IN ACCESS_MASK DesiredAccess, IN LPGUID Guid,
+                              OUT PHANDLE CreatorHandle, OUT PWMIGUIDOBJECT *Object)
 /*++
 
 Routine Description:
@@ -1016,8 +864,7 @@ Return Value:
 
     //
     // Obtain security descriptor associated with the guid
-    Status = WmipGetGuidSecurityDescriptor(&UnicodeString,
-                                           &SecurityDescriptor);
+    Status = WmipGetGuidSecurityDescriptor(&UnicodeString, &SecurityDescriptor);
 
     if (NT_SUCCESS(Status))
     {
@@ -1035,10 +882,7 @@ Return Value:
 
         //
         // Create an AccessState and wack on the token
-        Status = SeCreateAccessState(&LocalAccessState,
-                                     &AuxData,
-                                     DesiredAccess,
-                                     (PGENERIC_MAPPING)&WmipGenericMapping);
+        Status = SeCreateAccessState(&LocalAccessState, &AuxData, DesiredAccess, (PGENERIC_MAPPING)&WmipGenericMapping);
 
         if (NT_SUCCESS(Status))
         {
@@ -1050,17 +894,10 @@ Return Value:
             // Attach to system process so that the initial handle created
             // by ObInsertObject is not available to user mode. This handle
             // allows full access to the object.
-            KeAttachProcess( &PsInitialSystemProcess->Pcb );
+            KeAttachProcess(&PsInitialSystemProcess->Pcb);
 
-            Status = ObCreateObject(KernelMode,
-                                    WmipGuidObjectType,
-                                    &UnnamedObjectAttributes,
-                                    KernelMode,
-                                    NULL,
-                                    sizeof(WMIGUIDOBJECT),
-                                    0,
-                                    0,
-                                    (PVOID *)Object);
+            Status = ObCreateObject(KernelMode, WmipGuidObjectType, &UnnamedObjectAttributes, KernelMode, NULL,
+                                    sizeof(WMIGUIDOBJECT), 0, 0, (PVOID *)Object);
 
             if (NT_SUCCESS(Status))
             {
@@ -1069,9 +906,7 @@ Return Value:
                 //
                 RtlZeroMemory(*Object, sizeof(WMIGUIDOBJECT));
 
-                KeInitializeEvent(&(*Object)->Event,
-                                  NotificationEvent,
-                                  FALSE);
+                KeInitializeEvent(&(*Object)->Event, NotificationEvent, FALSE);
 
                 (*Object)->HiPriority.MaxBufferSize = 0x1000;
                 (*Object)->LoPriority.MaxBufferSize = 0x1000;
@@ -1085,12 +920,7 @@ Return Value:
                 // code. User mode can guess the handle and close it
                 // even before we return it.
                 //
-                Status = ObInsertObject(*Object,
-                                        &LocalAccessState,
-                                        DesiredAccess,
-                                        1,
-                                        &NewObject,
-                                        CreatorHandle);
+                Status = ObInsertObject(*Object, &LocalAccessState, DesiredAccess, 1, &NewObject, CreatorHandle);
 
                 WmipAssert(Status != STATUS_OBJECT_NAME_EXISTS);
             }
@@ -1098,7 +928,7 @@ Return Value:
             *SubjectContext = SavedSubjectContext;
             SeDeleteAccessState(&LocalAccessState);
 
-            KeDetachProcess( );
+            KeDetachProcess();
         }
 
         if (SecurityDescriptor != WmipAnyoneAccessSd)
@@ -1107,16 +937,11 @@ Return Value:
         }
     }
 
-    return(Status);
+    return (Status);
 }
 
-VOID WmipCloseMethod(
-    IN PEPROCESS Process OPTIONAL,
-    IN PVOID Object,
-    IN ACCESS_MASK GrantedAccess,
-    IN ULONG ProcessHandleCount,
-    IN ULONG SystemHandleCount
-    )
+VOID WmipCloseMethod(IN PEPROCESS Process OPTIONAL, IN PVOID Object, IN ACCESS_MASK GrantedAccess,
+                     IN ULONG ProcessHandleCount, IN ULONG SystemHandleCount)
 /*++
 
 Routine Description:
@@ -1170,9 +995,7 @@ Return Value:
             {
                 //
                 //
-                MBRequest = CONTAINING_RECORD(RequestList,
-                                                  MBREQUESTS,
-                                                  RequestListEntry);
+                MBRequest = CONTAINING_RECORD(RequestList, MBREQUESTS, RequestListEntry);
 
                 if (MBRequest->ReplyObject == ReplyObject)
                 {
@@ -1191,10 +1014,7 @@ Return Value:
 }
 
 
-
-VOID WmipDeleteMethod(
-    IN  PVOID   Object
-    )
+VOID WmipDeleteMethod(IN PVOID Object)
 {
     PIRP Irp;
     PWMIGUIDOBJECT GuidObject, ReplyObject;
@@ -1231,9 +1051,7 @@ VOID WmipDeleteMethod(
                 Wnode.BufferSize = sizeof(WNODE_HEADER);
                 Wnode.Flags = WNODE_FLAG_INTERNAL;
                 Wnode.ProviderId = WmiRequestDied;
-                WmipWriteWnodeToObject(ReplyObject,
-                                       &Wnode,
-                                       TRUE);
+                WmipWriteWnodeToObject(ReplyObject, &Wnode, TRUE);
 
                 RemoveEntryList(&MBRequest->RequestListEntry);
                 MBRequest->ReplyObject = NULL;
@@ -1257,18 +1075,20 @@ VOID WmipDeleteMethod(
                 DataSource->RequestObject = NULL;
             }
 
-            RegEntry->Flags |= (REGENTRY_FLAG_RUNDOWN |
-                                    REGENTRY_FLAG_NOT_ACCEPTING_IRPS);
+            RegEntry->Flags |= (REGENTRY_FLAG_RUNDOWN | REGENTRY_FLAG_NOT_ACCEPTING_IRPS);
             WmipUnreferenceRegEntry(RegEntry);
         }
         WmipLeaveSMCritSection();
-
-    } else if (GuidObject->Flags & WMIGUID_FLAG_REPLY_OBJECT) {
+    }
+    else if (GuidObject->Flags & WMIGUID_FLAG_REPLY_OBJECT)
+    {
         //
         // This is a reply obejct that is going away
         //
         ASSERT(GuidObject->GuidEntry == NULL);
-    } else if (GuidObject->GuidEntry != NULL)  {
+    }
+    else if (GuidObject->GuidEntry != NULL)
+    {
         //
         // If there is a guid entry associated with the object
         // then we need to see if we should disable collection
@@ -1278,9 +1098,7 @@ VOID WmipDeleteMethod(
         //
         if (GuidObject->EnableRequestSent)
         {
-            WmipDisableCollectOrEvent(GuidObject->GuidEntry,
-                                      GuidObject->Type,
-                                      0);
+            WmipDisableCollectOrEvent(GuidObject->GuidEntry, GuidObject->Type, 0);
         }
 
         WmipEnterSMCritSection();
@@ -1331,7 +1149,9 @@ VOID WmipDeleteMethod(
                     IoCompleteRequest(Irp, IO_NO_INCREMENT);
                 }
             }
-        } else if (GuidObject->EventQueueAction == RECEIVE_ACTION_CREATE_THREAD) {
+        }
+        else if (GuidObject->EventQueueAction == RECEIVE_ACTION_CREATE_THREAD)
+        {
             //
             // If the object is going away and is part of a list of
             // objects waiting for an event to start a thread, all we
@@ -1342,7 +1162,7 @@ VOID WmipDeleteMethod(
             WmipClearObjectFromThreadList(GuidObject);
         }
         WmipLeaveSMCritSection();
-    }    
+    }
 }
 
 //
@@ -1368,12 +1188,7 @@ VOID WmipDeleteMethod(
 //
 //--------------------------------------------------------------------------
 BOOLEAN
-WmipHexStringToDword(
-    IN PWCHAR lpsz,
-    OUT PULONG RetValue,
-    IN ULONG cDigits,
-    IN WCHAR chDelim
-    )
+WmipHexStringToDword(IN PWCHAR lpsz, OUT PULONG RetValue, IN ULONG cDigits, IN WCHAR chDelim)
 {
     ULONG Count;
     ULONG Value;
@@ -1390,7 +1205,7 @@ WmipHexStringToDword(
         else if (*lpsz >= 'a' && *lpsz <= 'f')
             Value = (Value << 4) + *lpsz - 'a' + 10;
         else
-            return(FALSE);
+            return (FALSE);
     }
 
     *RetValue = Value;
@@ -1403,10 +1218,7 @@ WmipHexStringToDword(
 
 
 NTSTATUS
-WmipUuidFromString (
-    IN PWCHAR StringUuid,
-    OUT LPGUID Uuid
-    )
+WmipUuidFromString(IN PWCHAR StringUuid, OUT LPGUID Uuid)
 /*++
 
 Routine Description:
@@ -1432,98 +1244,95 @@ Return Value:
 
     PAGED_CODE();
 
-    if (!WmipHexStringToDword(lpsz, &Uuid->Data1, sizeof(ULONG)*2, '-'))
+    if (!WmipHexStringToDword(lpsz, &Uuid->Data1, sizeof(ULONG) * 2, '-'))
     {
-        return(STATUS_INVALID_PARAMETER);
+        return (STATUS_INVALID_PARAMETER);
     }
-    lpsz += sizeof(ULONG)*2 + 1;
+    lpsz += sizeof(ULONG) * 2 + 1;
 
 
-    if (!WmipHexStringToDword(lpsz, &dw, sizeof(USHORT)*2, '-'))
+    if (!WmipHexStringToDword(lpsz, &dw, sizeof(USHORT) * 2, '-'))
     {
-        return(STATUS_INVALID_PARAMETER);
+        return (STATUS_INVALID_PARAMETER);
     }
     Uuid->Data2 = (USHORT)dw;
-    lpsz += sizeof(USHORT)*2 + 1;
+    lpsz += sizeof(USHORT) * 2 + 1;
 
 
-    if (!WmipHexStringToDword(lpsz, &dw, sizeof(USHORT)*2, '-'))
+    if (!WmipHexStringToDword(lpsz, &dw, sizeof(USHORT) * 2, '-'))
     {
-        return(STATUS_INVALID_PARAMETER);
+        return (STATUS_INVALID_PARAMETER);
     }
     Uuid->Data3 = (USHORT)dw;
-    lpsz += sizeof(USHORT)*2 + 1;
+    lpsz += sizeof(USHORT) * 2 + 1;
 
 
-    if (!WmipHexStringToDword(lpsz, &dw, sizeof(UCHAR)*2, 0))
+    if (!WmipHexStringToDword(lpsz, &dw, sizeof(UCHAR) * 2, 0))
     {
-        return(STATUS_INVALID_PARAMETER);
+        return (STATUS_INVALID_PARAMETER);
     }
     Uuid->Data4[0] = (UCHAR)dw;
-    lpsz += sizeof(UCHAR)*2;
+    lpsz += sizeof(UCHAR) * 2;
 
 
-    if (!WmipHexStringToDword(lpsz, &dw, sizeof(UCHAR)*2, '-'))
+    if (!WmipHexStringToDword(lpsz, &dw, sizeof(UCHAR) * 2, '-'))
     {
-        return(STATUS_INVALID_PARAMETER);
+        return (STATUS_INVALID_PARAMETER);
     }
     Uuid->Data4[1] = (UCHAR)dw;
-    lpsz += sizeof(UCHAR)*2+1;
+    lpsz += sizeof(UCHAR) * 2 + 1;
 
 
-    if (!WmipHexStringToDword(lpsz, &dw, sizeof(UCHAR)*2, 0))
+    if (!WmipHexStringToDword(lpsz, &dw, sizeof(UCHAR) * 2, 0))
     {
-        return(STATUS_INVALID_PARAMETER);
+        return (STATUS_INVALID_PARAMETER);
     }
     Uuid->Data4[2] = (UCHAR)dw;
-    lpsz += sizeof(UCHAR)*2;
+    lpsz += sizeof(UCHAR) * 2;
 
 
-    if (!WmipHexStringToDword(lpsz, &dw, sizeof(UCHAR)*2, 0))
+    if (!WmipHexStringToDword(lpsz, &dw, sizeof(UCHAR) * 2, 0))
     {
-        return(STATUS_INVALID_PARAMETER);
+        return (STATUS_INVALID_PARAMETER);
     }
     Uuid->Data4[3] = (UCHAR)dw;
-    lpsz += sizeof(UCHAR)*2;
+    lpsz += sizeof(UCHAR) * 2;
 
 
-    if (!WmipHexStringToDword(lpsz, &dw, sizeof(UCHAR)*2, 0))
+    if (!WmipHexStringToDword(lpsz, &dw, sizeof(UCHAR) * 2, 0))
     {
-        return(STATUS_INVALID_PARAMETER);
+        return (STATUS_INVALID_PARAMETER);
     }
     Uuid->Data4[4] = (UCHAR)dw;
-    lpsz += sizeof(UCHAR)*2;
+    lpsz += sizeof(UCHAR) * 2;
 
-    if (!WmipHexStringToDword(lpsz, &dw, sizeof(UCHAR)*2, 0))
+    if (!WmipHexStringToDword(lpsz, &dw, sizeof(UCHAR) * 2, 0))
     {
-        return(STATUS_INVALID_PARAMETER);
+        return (STATUS_INVALID_PARAMETER);
     }
     Uuid->Data4[5] = (UCHAR)dw;
-    lpsz += sizeof(UCHAR)*2;
+    lpsz += sizeof(UCHAR) * 2;
 
 
-    if (!WmipHexStringToDword(lpsz, &dw, sizeof(UCHAR)*2, 0))
+    if (!WmipHexStringToDword(lpsz, &dw, sizeof(UCHAR) * 2, 0))
     {
-        return(STATUS_INVALID_PARAMETER);
+        return (STATUS_INVALID_PARAMETER);
     }
     Uuid->Data4[6] = (UCHAR)dw;
-    lpsz += sizeof(UCHAR)*2;
+    lpsz += sizeof(UCHAR) * 2;
 
 
-    if (!WmipHexStringToDword(lpsz, &dw, sizeof(UCHAR)*2, 0))
+    if (!WmipHexStringToDword(lpsz, &dw, sizeof(UCHAR) * 2, 0))
     {
-        return(STATUS_INVALID_PARAMETER);
+        return (STATUS_INVALID_PARAMETER);
     }
     Uuid->Data4[7] = (UCHAR)dw;
 
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }
 
 NTSTATUS
-WmipCheckGuidAccess(
-    IN LPGUID Guid,
-    IN ACCESS_MASK DesiredAccess
-    )
+WmipCheckGuidAccess(IN LPGUID Guid, IN ACCESS_MASK DesiredAccess)
 /*++
 
 Routine Description:
@@ -1555,33 +1364,20 @@ Return Value:
 
     PAGED_CODE();
 
-    swprintf(GuidBuffer,
-             L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-                         Guid->Data1, Guid->Data2,
-                         Guid->Data3,
-                         Guid->Data4[0], Guid->Data4[1],
-                         Guid->Data4[2], Guid->Data4[3],
-                         Guid->Data4[4], Guid->Data4[5],
-                         Guid->Data4[6], Guid->Data4[7]);
+    swprintf(GuidBuffer, L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x", Guid->Data1, Guid->Data2, Guid->Data3,
+             Guid->Data4[0], Guid->Data4[1], Guid->Data4[2], Guid->Data4[3], Guid->Data4[4], Guid->Data4[5],
+             Guid->Data4[6], Guid->Data4[7]);
     RtlInitUnicodeString(&GuidString, GuidBuffer);
 
-    Status = WmipGetGuidSecurityDescriptor(&GuidString,
-                                           &SecurityDescriptor);
+    Status = WmipGetGuidSecurityDescriptor(&GuidString, &SecurityDescriptor);
 
     if (NT_SUCCESS(Status))
     {
         SeCaptureSubjectContext(&SecuritySubjectContext);
 
-          Granted = SeAccessCheck (SecurityDescriptor,
-                             &SecuritySubjectContext,
-                             FALSE,
-                             DesiredAccess,
-                             PreviousGrantedAccess,
-                             NULL,
-                             (PGENERIC_MAPPING)&WmipGenericMapping,
-                             UserMode,
-                             &GrantedAccess,
-                             &Status);
+        Granted =
+            SeAccessCheck(SecurityDescriptor, &SecuritySubjectContext, FALSE, DesiredAccess, PreviousGrantedAccess,
+                          NULL, (PGENERIC_MAPPING)&WmipGenericMapping, UserMode, &GrantedAccess, &Status);
 
         SeReleaseSubjectContext(&SecuritySubjectContext);
 
@@ -1591,8 +1387,7 @@ Return Value:
         }
     }
 
-    return(Status);
+    return (Status);
 }
 
 #endif
-

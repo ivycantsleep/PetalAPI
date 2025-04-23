@@ -21,20 +21,14 @@ Revision History:
 #include "basedll.h"
 #include "faultrep.h"
 
-HANDLE BasepDefaultTimerQueue ;
-ULONG BasepTimerQueueInitFlag ;
-ULONG BasepTimerQueueDoneFlag ;
+HANDLE BasepDefaultTimerQueue;
+ULONG BasepTimerQueueInitFlag;
+ULONG BasepTimerQueueDoneFlag;
 
 HANDLE
 APIENTRY
-CreateThread(
-    LPSECURITY_ATTRIBUTES lpThreadAttributes,
-    SIZE_T dwStackSize,
-    LPTHREAD_START_ROUTINE lpStartAddress,
-    LPVOID lpParameter,
-    DWORD dwCreationFlags,
-    LPDWORD lpThreadId
-    )
+CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress,
+             LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId)
 
 /*++
 
@@ -47,27 +41,14 @@ Routine Description:
 
 --*/
 {
-    return CreateRemoteThread( NtCurrentProcess(),
-                               lpThreadAttributes,
-                               dwStackSize,
-                               lpStartAddress,
-                               lpParameter,
-                               dwCreationFlags,
-                               lpThreadId
-                             );
+    return CreateRemoteThread(NtCurrentProcess(), lpThreadAttributes, dwStackSize, lpStartAddress, lpParameter,
+                              dwCreationFlags, lpThreadId);
 }
 
 HANDLE
 APIENTRY
-CreateRemoteThread(
-    HANDLE hProcess,
-    LPSECURITY_ATTRIBUTES lpThreadAttributes,
-    SIZE_T dwStackSize,
-    LPTHREAD_START_ROUTINE lpStartAddress,
-    LPVOID lpParameter,
-    DWORD dwCreationFlags,
-    LPDWORD lpThreadId
-    )
+CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
+                   LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId)
 
 /*++
 
@@ -168,7 +149,7 @@ Return Value:
     INITIAL_TEB InitialTeb;
     CLIENT_ID ClientId;
     ULONG i;
-    ACTIVATION_CONTEXT_BASIC_INFORMATION ActivationContextInfo = {0};
+    ACTIVATION_CONTEXT_BASIC_INFORMATION ActivationContextInfo = { 0 };
     const ACTIVATION_CONTEXT_INFO_CLASS ActivationContextInfoClass = ActivationContextBasicInformation;
 
 #if !defined(BUILD_WOW6432)
@@ -183,24 +164,21 @@ Return Value:
 #endif
 
 
-
     //
     // Allocate a stack for this thread in the address space of the target
     // process.
     //
-    if (dwCreationFlags&STACK_SIZE_PARAM_IS_A_RESERVATION) {
-        Status = BaseCreateStack (hProcess,
-                                  0L,
-                                  dwStackSize,
-                                  &InitialTeb);
-    } else {
-        Status = BaseCreateStack (hProcess,
-                                  dwStackSize,
-                                  0L,
-                                  &InitialTeb);
+    if (dwCreationFlags & STACK_SIZE_PARAM_IS_A_RESERVATION)
+    {
+        Status = BaseCreateStack(hProcess, 0L, dwStackSize, &InitialTeb);
+    }
+    else
+    {
+        Status = BaseCreateStack(hProcess, dwStackSize, 0L, &InitialTeb);
     }
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return NULL;
     }
@@ -209,81 +187,67 @@ Return Value:
     // Create an initial context for the new thread.
     //
 
-    BaseInitializeContext(
-        &ThreadContext,
-        lpParameter,
-        (PVOID)lpStartAddress,
-        InitialTeb.StackBase,
-        BaseContextTypeThread
-        );
+    BaseInitializeContext(&ThreadContext, lpParameter, (PVOID)lpStartAddress, InitialTeb.StackBase,
+                          BaseContextTypeThread);
 
-    pObja = BaseFormatObjectAttributes(&Obja,lpThreadAttributes,NULL);
+    pObja = BaseFormatObjectAttributes(&Obja, lpThreadAttributes, NULL);
 
 
-    Status = NtCreateThread(
-                &Handle,
-                THREAD_ALL_ACCESS,
-                pObja,
-                hProcess,
-                &ClientId,
-                &ThreadContext,
-                &InitialTeb,
-                TRUE // CreateSuspended
-                );
-    if (!NT_SUCCESS(Status)) {
-        BaseFreeThreadStack(hProcess,NULL, &InitialTeb);
+    Status = NtCreateThread(&Handle, THREAD_ALL_ACCESS, pObja, hProcess, &ClientId, &ThreadContext, &InitialTeb,
+                            TRUE // CreateSuspended
+    );
+    if (!NT_SUCCESS(Status))
+    {
+        BaseFreeThreadStack(hProcess, NULL, &InitialTeb);
         BaseSetLastNTError(Status);
         return NULL;
-        }
+    }
 
 
-
-    __try {
+    __try
+    {
         // If the current thread has a non-default, inheriting activation context active, send it
         // on over to the new thread.
-        if (hProcess == NtCurrentProcess()) {
+        if (hProcess == NtCurrentProcess())
+        {
             THREAD_BASIC_INFORMATION tbi;
             ULONG_PTR Cookie; // not really used but non-optional parameter
 
             // We need the TEB pointer for the new thread...
-            Status = NtQueryInformationThread(
-                Handle,
-                ThreadBasicInformation,
-                &tbi,
-                sizeof(tbi),
-                NULL);
-            if (!NT_SUCCESS(Status)) {
-                DbgPrint("SXS: %s - Failing thread create becuase NtQueryInformationThread() failed with status %08lx\n", __FUNCTION__, Status);
+            Status = NtQueryInformationThread(Handle, ThreadBasicInformation, &tbi, sizeof(tbi), NULL);
+            if (!NT_SUCCESS(Status))
+            {
+                DbgPrint(
+                    "SXS: %s - Failing thread create becuase NtQueryInformationThread() failed with status %08lx\n",
+                    __FUNCTION__, Status);
                 __leave;
             }
 
             // There might be some per-context activation going on in the current thread;
             // we need to propogate it to the new thread.
-            Status =
-                RtlQueryInformationActivationContext(
-                    RTL_QUERY_INFORMATION_ACTIVATION_CONTEXT_FLAG_USE_ACTIVE_ACTIVATION_CONTEXT,
-                    NULL,
-                    0,
-                    ActivationContextInfoClass,
-                    &ActivationContextInfo,
-                    sizeof(ActivationContextInfo),
-                    NULL       
-                    );
-            if (!NT_SUCCESS(Status)) {
-                DbgPrint("SXS: %s - Failing thread create because RtlQueryInformationActivationContext() failed with status %08lx\n", __FUNCTION__, Status);
+            Status = RtlQueryInformationActivationContext(
+                RTL_QUERY_INFORMATION_ACTIVATION_CONTEXT_FLAG_USE_ACTIVE_ACTIVATION_CONTEXT, NULL, 0,
+                ActivationContextInfoClass, &ActivationContextInfo, sizeof(ActivationContextInfo), NULL);
+            if (!NT_SUCCESS(Status))
+            {
+                DbgPrint("SXS: %s - Failing thread create because RtlQueryInformationActivationContext() failed with "
+                         "status %08lx\n",
+                         __FUNCTION__, Status);
                 __leave;
             }
 
             // Only do the propogation if an activation context other than the process default is active and the NO_INHERIT flag isn't set.
             if ((ActivationContextInfo.ActivationContext != NULL) &&
-                (!(ActivationContextInfo.Flags & ACTIVATION_CONTEXT_FLAG_NO_INHERIT))) {
+                (!(ActivationContextInfo.Flags & ACTIVATION_CONTEXT_FLAG_NO_INHERIT)))
+            {
                 Status = RtlActivateActivationContextEx(
-                    RTL_ACTIVATE_ACTIVATION_CONTEXT_EX_FLAG_RELEASE_ON_STACK_DEALLOCATION,
-                    tbi.TebBaseAddress,
-                    ActivationContextInfo.ActivationContext,
-                    &Cookie);
-                if (!NT_SUCCESS(Status)) {
-                    DbgPrint("SXS: %s - Failing thread create because RtlActivateActivationContextEx() failed with status %08lx\n", __FUNCTION__, Status);
+                    RTL_ACTIVATE_ACTIVATION_CONTEXT_EX_FLAG_RELEASE_ON_STACK_DEALLOCATION, tbi.TebBaseAddress,
+                    ActivationContextInfo.ActivationContext, &Cookie);
+                if (!NT_SUCCESS(Status))
+                {
+                    DbgPrint("SXS: %s - Failing thread create because RtlActivateActivationContextEx() failed with "
+                             "status %08lx\n",
+                             __FUNCTION__, Status);
                     __leave;
                 }
             }
@@ -294,43 +258,34 @@ Return Value:
         //
         // Check the Target Processes to see if this is a Wx86 process
         //
-        Status = NtQueryInformationProcess(hProcess,
-                                           ProcessWx86Information,
-                                           &Wx86Info,
-                                           sizeof(Wx86Info),
-                                           NULL
-                                           );
-        if (!NT_SUCCESS(Status)) {
+        Status = NtQueryInformationProcess(hProcess, ProcessWx86Information, &Wx86Info, sizeof(Wx86Info), NULL);
+        if (!NT_SUCCESS(Status))
+        {
             leave;
-            }
+        }
 
         Wx86Tib = (PWX86TIB)NtCurrentTeb()->Vdm;
 
         //
         // if Wx86 process, setup for emulation
         //
-        if ((ULONG_PTR)Wx86Info == sizeof(WX86TIB)) {
+        if ((ULONG_PTR)Wx86Info == sizeof(WX86TIB))
+        {
 
             //
             // create a WX86Tib and initialize it's Teb->Vdm.
             //
-            Status = BaseCreateWx86Tib(hProcess,
-                                       Handle,
-                                       (ULONG)((ULONG_PTR)lpStartAddress),
-                                       dwStackSize,
-                                       0L,
-                                       (Wx86Tib &&
-                                        Wx86Tib->Size == sizeof(WX86TIB) &&
-                                        Wx86Tib->EmulateInitialPc)
-                                       );
-            if (!NT_SUCCESS(Status)) {
+            Status = BaseCreateWx86Tib(hProcess, Handle, (ULONG)((ULONG_PTR)lpStartAddress), dwStackSize, 0L,
+                                       (Wx86Tib && Wx86Tib->Size == sizeof(WX86TIB) && Wx86Tib->EmulateInitialPc));
+            if (!NT_SUCCESS(Status))
+            {
                 leave;
-                }
+            }
 
             bWx86 = TRUE;
-
-            }
-        else if (Wx86Tib && Wx86Tib->EmulateInitialPc) {
+        }
+        else if (Wx86Tib && Wx86Tib->EmulateInitialPc)
+        {
 
             //
             // if not Wx86 process, and caller wants to call x86 code in that
@@ -338,94 +293,90 @@ Return Value:
             //
             Status = STATUS_ACCESS_DENIED;
             leave;
+        }
 
-            }
-
-#endif  // WX86
+#endif // WX86
 
 
         //
         // Call the Windows server to let it know about the
         // thread.
         //
-        if ( !BaseRunningInServerProcess ) {
+        if (!BaseRunningInServerProcess)
+        {
 
 #if defined(BUILD_WOW6432)
-            Status = CsrBasepCreateThread(Handle,
-                                          ClientId
-                                          );
+            Status = CsrBasepCreateThread(Handle, ClientId);
 #else
             a->ThreadHandle = Handle;
             a->ClientId = ClientId;
-            CsrClientCallServer( (PCSR_API_MSG)&m,
-                                 NULL,
-                                 CSR_MAKE_API_NUMBER( BASESRV_SERVERDLL_INDEX,
-                                                      BasepCreateThread
-                                                    ),
-                                 sizeof( *a )
-                               );
+            CsrClientCallServer((PCSR_API_MSG)&m, NULL, CSR_MAKE_API_NUMBER(BASESRV_SERVERDLL_INDEX, BasepCreateThread),
+                                sizeof(*a));
 
             Status = m.ReturnValue;
 #endif
         }
 
-        else {
-            if (hProcess != NtCurrentProcess()) {
+        else
+        {
+            if (hProcess != NtCurrentProcess())
+            {
                 CSRREMOTEPROCPROC ProcAddress;
-                ProcAddress = (CSRREMOTEPROCPROC)GetProcAddress(
-                                                    GetModuleHandleA("csrsrv"),
-                                                    "CsrCreateRemoteThread"
-                                                    );
-                if (ProcAddress) {
+                ProcAddress = (CSRREMOTEPROCPROC)GetProcAddress(GetModuleHandleA("csrsrv"), "CsrCreateRemoteThread");
+                if (ProcAddress)
+                {
                     Status = (ProcAddress)(Handle, &ClientId);
-                    }
                 }
             }
-
-
-        if (!NT_SUCCESS(Status)) {
-            Status = (NTSTATUS)STATUS_NO_MEMORY;
-            }
-        else {
-
-            if ( ARGUMENT_PRESENT(lpThreadId) ) {
-                *lpThreadId = HandleToUlong(ClientId.UniqueThread);
-                }
-
-            if (!( dwCreationFlags & CREATE_SUSPENDED) ) {
-                NtResumeThread(Handle,&i);
-                }
-            }
-
         }
-    __finally {
+
+
+        if (!NT_SUCCESS(Status))
+        {
+            Status = (NTSTATUS)STATUS_NO_MEMORY;
+        }
+        else
+        {
+
+            if (ARGUMENT_PRESENT(lpThreadId))
+            {
+                *lpThreadId = HandleToUlong(ClientId.UniqueThread);
+            }
+
+            if (!(dwCreationFlags & CREATE_SUSPENDED))
+            {
+                NtResumeThread(Handle, &i);
+            }
+        }
+    }
+    __finally
+    {
         if (ActivationContextInfo.ActivationContext != NULL)
             RtlReleaseActivationContext(ActivationContextInfo.ActivationContext);
 
-        if (!NT_SUCCESS(Status)) {
-             //
-             // A second release is needed because we activated the activation context
-             // on the new thread but we did not succeed in completing creation of the
-             // thread. Had the thread been created, it would have deactivated the
-             // activation context upon exit (RtlFreeThreadActivationContextStack).
-             // This extra addref/releasing is triggered
-             // by the flags ACTIVATE_ACTIVATION_CONTEXT_FLAG_RELEASE_ON_STACK_DEALLOCATION
-             // and ACTIVATION_CONTEXT_STACK_FRAME_RELEASE_ON_DEACTIVATION.
-             //
-             if (ActivationContextInfo.ActivationContext != NULL) {
-                 RtlReleaseActivationContext(ActivationContextInfo.ActivationContext);
-             }
-            BaseFreeThreadStack(hProcess,
-                                Handle,
-                                &InitialTeb
-                                );
+        if (!NT_SUCCESS(Status))
+        {
+            //
+            // A second release is needed because we activated the activation context
+            // on the new thread but we did not succeed in completing creation of the
+            // thread. Had the thread been created, it would have deactivated the
+            // activation context upon exit (RtlFreeThreadActivationContextStack).
+            // This extra addref/releasing is triggered
+            // by the flags ACTIVATE_ACTIVATION_CONTEXT_FLAG_RELEASE_ON_STACK_DEALLOCATION
+            // and ACTIVATION_CONTEXT_STACK_FRAME_RELEASE_ON_DEACTIVATION.
+            //
+            if (ActivationContextInfo.ActivationContext != NULL)
+            {
+                RtlReleaseActivationContext(ActivationContextInfo.ActivationContext);
+            }
+            BaseFreeThreadStack(hProcess, Handle, &InitialTeb);
 
             NtTerminateThread(Handle, Status);
             NtClose(Handle);
             BaseSetLastNTError(Status);
             Handle = NULL;
-            }
         }
+    }
 
 
     return Handle;
@@ -433,37 +384,35 @@ Return Value:
 
 NTSTATUS
 NTAPI
-BaseCreateThreadPoolThread(
-    PUSER_THREAD_START_ROUTINE Function,
-    PVOID Parameter,
-    HANDLE * ThreadHandleReturn
-    )
+BaseCreateThreadPoolThread(PUSER_THREAD_START_ROUTINE Function, PVOID Parameter, HANDLE *ThreadHandleReturn)
 {
     NTSTATUS Status;
-    RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME Frame = { sizeof(Frame), RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_FORMAT_WHISTLER };
+    RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME Frame = {
+        sizeof(Frame), RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_FORMAT_WHISTLER
+    };
 
     RtlActivateActivationContextUnsafeFast(&Frame, NULL);
-    __try {
-        *ThreadHandleReturn
-            = CreateRemoteThread(
-                NtCurrentProcess(),
-                NULL,
-                0,
-                (LPTHREAD_START_ROUTINE) Function,
-                Parameter,
-                CREATE_SUSPENDED,
-                NULL);
+    __try
+    {
+        *ThreadHandleReturn = CreateRemoteThread(NtCurrentProcess(), NULL, 0, (LPTHREAD_START_ROUTINE)Function,
+                                                 Parameter, CREATE_SUSPENDED, NULL);
 
-        if (*ThreadHandleReturn) {
+        if (*ThreadHandleReturn)
+        {
             Status = STATUS_SUCCESS;
-        } else {
+        }
+        else
+        {
             Status = NtCurrentTeb()->LastStatusValue;
 
-            if (NT_SUCCESS(Status)) {
+            if (NT_SUCCESS(Status))
+            {
                 Status = STATUS_UNSUCCESSFUL;
             }
         }
-    } __finally {
+    }
+    __finally
+    {
         RtlDeactivateActivationContextUnsafeFast(&Frame);
     }
 
@@ -472,21 +421,15 @@ BaseCreateThreadPoolThread(
 
 NTSTATUS
 NTAPI
-BaseExitThreadPoolThread(
-    NTSTATUS Status
-    )
+BaseExitThreadPoolThread(NTSTATUS Status)
 {
-    ExitThread( (DWORD) Status );
-    return STATUS_SUCCESS ;
+    ExitThread((DWORD)Status);
+    return STATUS_SUCCESS;
 }
 
 HANDLE
 WINAPI
-OpenThread(
-    DWORD dwDesiredAccess,
-    BOOL bInheritHandle,
-    DWORD dwThreadId
-    )
+OpenThread(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwThreadId)
 
 /*++
 
@@ -565,35 +508,21 @@ Return Value:
     ClientId.UniqueThread = (HANDLE)LongToHandle(dwThreadId);
     ClientId.UniqueProcess = (HANDLE)NULL;
 
-    InitializeObjectAttributes(
-        &Obja,
-        NULL,
-        (bInheritHandle ? OBJ_INHERIT : 0),
-        NULL,
-        NULL
-        );
-    Status = NtOpenThread(
-                &Handle,
-                (ACCESS_MASK)dwDesiredAccess,
-                &Obja,
-                &ClientId
-                );
-    if ( NT_SUCCESS(Status) ) {
+    InitializeObjectAttributes(&Obja, NULL, (bInheritHandle ? OBJ_INHERIT : 0), NULL, NULL);
+    Status = NtOpenThread(&Handle, (ACCESS_MASK)dwDesiredAccess, &Obja, &ClientId);
+    if (NT_SUCCESS(Status))
+    {
         return Handle;
-        }
-    else {
+    }
+    else
+    {
         BaseSetLastNTError(Status);
         return NULL;
-        }
+    }
 }
 
 
-BOOL
-APIENTRY
-SetThreadPriority(
-    HANDLE hThread,
-    int nPriority
-    )
+BOOL APIENTRY SetThreadPriority(HANDLE hThread, int nPriority)
 
 /*++
 
@@ -691,30 +620,24 @@ Return Value:
     // saturation is indicated by calling with a value of 16 or -16
     //
 
-    if ( BasePriority == THREAD_PRIORITY_TIME_CRITICAL ) {
+    if (BasePriority == THREAD_PRIORITY_TIME_CRITICAL)
+    {
         BasePriority = ((HIGH_PRIORITY + 1) / 2);
-        }
-    else if ( BasePriority == THREAD_PRIORITY_IDLE ) {
+    }
+    else if (BasePriority == THREAD_PRIORITY_IDLE)
+    {
         BasePriority = -((HIGH_PRIORITY + 1) / 2);
-        }
-    Status = NtSetInformationThread(
-                hThread,
-                ThreadBasePriority,
-                &BasePriority,
-                sizeof(BasePriority)
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    }
+    Status = NtSetInformationThread(hThread, ThreadBasePriority, &BasePriority, sizeof(BasePriority));
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
     return TRUE;
 }
 
-int
-APIENTRY
-GetThreadPriority(
-    HANDLE hThread
-    )
+int APIENTRY GetThreadPriority(HANDLE hThread)
 
 /*++
 
@@ -741,75 +664,52 @@ Return Value:
     THREAD_BASIC_INFORMATION BasicInfo;
     int returnvalue;
 
-    Status = NtQueryInformationThread(
-                hThread,
-                ThreadBasicInformation,
-                &BasicInfo,
-                sizeof(BasicInfo),
-                NULL
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = NtQueryInformationThread(hThread, ThreadBasicInformation, &BasicInfo, sizeof(BasicInfo), NULL);
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return (int)THREAD_PRIORITY_ERROR_RETURN;
-        }
+    }
 
     returnvalue = (int)BasicInfo.BasePriority;
-    if ( returnvalue == ((HIGH_PRIORITY + 1) / 2) ) {
+    if (returnvalue == ((HIGH_PRIORITY + 1) / 2))
+    {
         returnvalue = THREAD_PRIORITY_TIME_CRITICAL;
-        }
-    else if ( returnvalue == -((HIGH_PRIORITY + 1) / 2) ) {
+    }
+    else if (returnvalue == -((HIGH_PRIORITY + 1) / 2))
+    {
         returnvalue = THREAD_PRIORITY_IDLE;
-        }
+    }
     return returnvalue;
 }
 
-BOOL
-WINAPI
-SetThreadPriorityBoost(
-    HANDLE hThread,
-    BOOL bDisablePriorityBoost
-    )
+BOOL WINAPI SetThreadPriorityBoost(HANDLE hThread, BOOL bDisablePriorityBoost)
 {
     NTSTATUS Status;
     ULONG DisableBoost;
 
     DisableBoost = bDisablePriorityBoost ? 1 : 0;
 
-    Status = NtSetInformationThread(
-                hThread,
-                ThreadPriorityBoost,
-                &DisableBoost,
-                sizeof(DisableBoost)
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = NtSetInformationThread(hThread, ThreadPriorityBoost, &DisableBoost, sizeof(DisableBoost));
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
     return TRUE;
-
 }
 
-BOOL
-WINAPI
-GetThreadPriorityBoost(
-    HANDLE hThread,
-    PBOOL pDisablePriorityBoost
-    )
+BOOL WINAPI GetThreadPriorityBoost(HANDLE hThread, PBOOL pDisablePriorityBoost)
 {
     NTSTATUS Status;
     DWORD DisableBoost;
 
-    Status = NtQueryInformationThread(
-                hThread,
-                ThreadPriorityBoost,
-                &DisableBoost,
-                sizeof(DisableBoost),
-                NULL
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = NtQueryInformationThread(hThread, ThreadPriorityBoost, &DisableBoost, sizeof(DisableBoost), NULL);
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 
 
     *pDisablePriorityBoost = DisableBoost;
@@ -817,11 +717,7 @@ GetThreadPriorityBoost(
     return TRUE;
 }
 
-VOID
-APIENTRY
-ExitThread(
-    DWORD dwExitCode
-    )
+VOID APIENTRY ExitThread(DWORD dwExitCode)
 
 /*++
 
@@ -864,51 +760,47 @@ Return Value:
     // Assert on exiting while holding loader lock
     //
     LoaderLock = NtCurrentPeb()->LoaderLock;
-    if (LoaderLock) {
+    if (LoaderLock)
+    {
         ASSERT(Teb->ClientId.UniqueThread != LoaderLock->OwningThread);
     }
 #endif
-    st = NtQueryInformationThread(
-            NtCurrentThread(),
-            ThreadAmILastThread,
-            &LastThread,
-            sizeof(LastThread),
-            NULL
-            );
-    if ( st == STATUS_SUCCESS && LastThread ) {
+    st = NtQueryInformationThread(NtCurrentThread(), ThreadAmILastThread, &LastThread, sizeof(LastThread), NULL);
+    if (st == STATUS_SUCCESS && LastThread)
+    {
         ExitProcess(dwExitCode);
-    } else {
-        
+    }
+    else
+    {
+
         RtlFreeThreadActivationContextStack();
         LdrShutdownThread();
-        if (Teb->TlsExpansionSlots) {
+        if (Teb->TlsExpansionSlots)
+        {
             //
             // Serialize with TlsXXX functions so the kernel code that zero's tls slots
             // wont' trash heap
             //
             RtlAcquirePebLock();
-            try {
-                RtlFreeHeap(RtlProcessHeap(),0,Teb->TlsExpansionSlots);
+            try
+            {
+                RtlFreeHeap(RtlProcessHeap(), 0, Teb->TlsExpansionSlots);
                 Teb->TlsExpansionSlots = NULL;
-            } finally {
+            }
+            finally
+            {
                 RtlReleasePebLock();
             }
         }
 
         Teb->FreeStackOnTermination = TRUE;
-        NtTerminateThread (NULL, (NTSTATUS)dwExitCode);
+        NtTerminateThread(NULL, (NTSTATUS)dwExitCode);
         ExitProcess(dwExitCode);
     }
 }
 
 
-
-BOOL
-APIENTRY
-TerminateThread(
-    HANDLE hThread,
-    DWORD dwExitCode
-    )
+BOOL APIENTRY TerminateThread(HANDLE hThread, DWORD dwExitCode)
 
 /*++
 
@@ -956,10 +848,11 @@ Return Value:
     THREAD_BASIC_INFORMATION ThreadInfo;
 #endif
 
-    if ( hThread == NULL ) {
+    if (hThread == NULL)
+    {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
-        }
+    }
 
     //
     // Assert on suicide while holding loader lock
@@ -967,39 +860,32 @@ Return Value:
 
 #if DBG
     LoaderLock = NtCurrentPeb()->LoaderLock;
-    if (LoaderLock) {
-        Status = NtQueryInformationThread(
-                                hThread,
-                                ThreadBasicInformation,
-                                &ThreadInfo,
-                                sizeof(ThreadInfo),
-                                NULL
-                                );
+    if (LoaderLock)
+    {
+        Status = NtQueryInformationThread(hThread, ThreadBasicInformation, &ThreadInfo, sizeof(ThreadInfo), NULL);
 
-        if (NT_SUCCESS(Status)) {
-            ASSERT( NtCurrentTeb()->ClientId.UniqueThread != ThreadInfo.ClientId.UniqueThread ||
-                    NtCurrentTeb()->ClientId.UniqueThread != LoaderLock->OwningThread);
-            }
+        if (NT_SUCCESS(Status))
+        {
+            ASSERT(NtCurrentTeb()->ClientId.UniqueThread != ThreadInfo.ClientId.UniqueThread ||
+                   NtCurrentTeb()->ClientId.UniqueThread != LoaderLock->OwningThread);
         }
+    }
 #endif
 
-    Status = NtTerminateThread(hThread,(NTSTATUS)dwExitCode);
-    if ( NT_SUCCESS(Status) ) {
+    Status = NtTerminateThread(hThread, (NTSTATUS)dwExitCode);
+    if (NT_SUCCESS(Status))
+    {
         return TRUE;
-        }
-    else {
+    }
+    else
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 }
 
 
-BOOL
-APIENTRY
-GetExitCodeThread(
-    HANDLE hThread,
-    LPDWORD lpExitCode
-    )
+BOOL APIENTRY GetExitCodeThread(HANDLE hThread, LPDWORD lpExitCode)
 
 /*++
 
@@ -1034,29 +920,24 @@ Return Value:
     NTSTATUS Status;
     THREAD_BASIC_INFORMATION BasicInformation;
 
-    Status = NtQueryInformationThread(
-                hThread,
-                ThreadBasicInformation,
-                &BasicInformation,
-                sizeof(BasicInformation),
-                NULL
-                );
+    Status =
+        NtQueryInformationThread(hThread, ThreadBasicInformation, &BasicInformation, sizeof(BasicInformation), NULL);
 
-    if ( NT_SUCCESS(Status) ) {
+    if (NT_SUCCESS(Status))
+    {
         *lpExitCode = BasicInformation.ExitStatus;
         return TRUE;
-        }
-    else {
+    }
+    else
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 }
 
 HANDLE
 APIENTRY
-GetCurrentThread(
-    VOID
-    )
+GetCurrentThread(VOID)
 
 /*++
 
@@ -1088,9 +969,7 @@ Return Value:
 
 DWORD
 APIENTRY
-GetCurrentThreadId(
-    VOID
-    )
+GetCurrentThreadId(VOID)
 
 /*++
 
@@ -1115,12 +994,7 @@ Return Value:
     return HandleToUlong(NtCurrentTeb()->ClientId.UniqueThread);
 }
 
-BOOL
-APIENTRY
-GetThreadContext(
-    HANDLE hThread,
-    LPCONTEXT lpContext
-    )
+BOOL APIENTRY GetThreadContext(HANDLE hThread, LPCONTEXT lpContext)
 
 /*++
 
@@ -1164,23 +1038,20 @@ Return Value:
 
     NTSTATUS Status;
 
-    Status = NtGetContextThread(hThread,lpContext);
+    Status = NtGetContextThread(hThread, lpContext);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
-    else {
+    }
+    else
+    {
         return TRUE;
-        }
+    }
 }
 
-BOOL
-APIENTRY
-SetThreadContext(
-    HANDLE hThread,
-    CONST CONTEXT *lpContext
-    )
+BOOL APIENTRY SetThreadContext(HANDLE hThread, CONST CONTEXT *lpContext)
 
 /*++
 
@@ -1221,22 +1092,22 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = NtSetContextThread(hThread,(PCONTEXT)lpContext);
+    Status = NtSetContextThread(hThread, (PCONTEXT)lpContext);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
-    else {
+    }
+    else
+    {
         return TRUE;
-        }
+    }
 }
 
 DWORD
 APIENTRY
-SuspendThread(
-    HANDLE hThread
-    )
+SuspendThread(HANDLE hThread)
 
 /*++
 
@@ -1274,22 +1145,22 @@ Return Value:
     NTSTATUS Status;
     DWORD PreviousSuspendCount;
 
-    Status = NtSuspendThread(hThread,&PreviousSuspendCount);
+    Status = NtSuspendThread(hThread, &PreviousSuspendCount);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return (DWORD)-1;
-        }
-    else {
+    }
+    else
+    {
         return PreviousSuspendCount;
-        }
+    }
 }
 
 DWORD
 APIENTRY
-ResumeThread(
-    IN HANDLE hThread
-    )
+ResumeThread(IN HANDLE hThread)
 
 /*++
 
@@ -1340,25 +1211,21 @@ Return Value:
     NTSTATUS Status;
     DWORD PreviousSuspendCount;
 
-    Status = NtResumeThread(hThread,&PreviousSuspendCount);
+    Status = NtResumeThread(hThread, &PreviousSuspendCount);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return (DWORD)-1;
-        }
-    else {
+    }
+    else
+    {
         return PreviousSuspendCount;
-        }
+    }
 }
 
-VOID
-APIENTRY
-RaiseException(
-    DWORD dwExceptionCode,
-    DWORD dwExceptionFlags,
-    DWORD nNumberOfArguments,
-    CONST ULONG_PTR *lpArguments
-    )
+VOID APIENTRY RaiseException(DWORD dwExceptionCode, DWORD dwExceptionFlags, DWORD nNumberOfArguments,
+                             CONST ULONG_PTR *lpArguments)
 
 /*++
 
@@ -1401,32 +1268,35 @@ Return Value:
 {
     EXCEPTION_RECORD ExceptionRecord;
     ULONG n;
-    PULONG_PTR s,d;
+    PULONG_PTR s, d;
     ExceptionRecord.ExceptionCode = (DWORD)dwExceptionCode;
     ExceptionRecord.ExceptionFlags = dwExceptionFlags & EXCEPTION_NONCONTINUABLE;
     ExceptionRecord.ExceptionRecord = NULL;
     ExceptionRecord.ExceptionAddress = (PVOID)RaiseException;
-    if ( ARGUMENT_PRESENT(lpArguments) ) {
-        n =  nNumberOfArguments;
-        if ( n > EXCEPTION_MAXIMUM_PARAMETERS ) {
+    if (ARGUMENT_PRESENT(lpArguments))
+    {
+        n = nNumberOfArguments;
+        if (n > EXCEPTION_MAXIMUM_PARAMETERS)
+        {
             n = EXCEPTION_MAXIMUM_PARAMETERS;
-            }
+        }
         ExceptionRecord.NumberParameters = n;
         s = (PULONG_PTR)lpArguments;
         d = ExceptionRecord.ExceptionInformation;
-        while(n--){
+        while (n--)
+        {
             *d++ = *s++;
-            }
         }
-    else {
+    }
+    else
+    {
         ExceptionRecord.NumberParameters = 0;
-        }
+    }
     RtlRaiseException(&ExceptionRecord);
 }
 
 
-UINT
-GetErrorMode();
+UINT GetErrorMode();
 
 BOOLEAN BasepAlreadyHadHardError = FALSE;
 
@@ -1434,9 +1304,7 @@ LPTOP_LEVEL_EXCEPTION_FILTER BasepCurrentTopLevelFilter;
 
 LPTOP_LEVEL_EXCEPTION_FILTER
 WINAPI
-SetUnhandledExceptionFilter(
-    LPTOP_LEVEL_EXCEPTION_FILTER lpTopLevelExceptionFilter
-    )
+SetUnhandledExceptionFilter(LPTOP_LEVEL_EXCEPTION_FILTER lpTopLevelExceptionFilter)
 
 /*++
 
@@ -1499,10 +1367,7 @@ Return Value:
     return PreviousTopLevelFilter;
 }
 
-LONG
-BasepCheckForReadOnlyResource(
-    PVOID Va
-    )
+LONG BasepCheckForReadOnlyResource(PVOID Va)
 {
     SIZE_T RegionSize;
     ULONG OldProtect;
@@ -1517,61 +1382,51 @@ BasepCheckForReadOnlyResource(
     // Locate the base address that continas this va
     //
 
-    Status = NtQueryVirtualMemory(
-                NtCurrentProcess(),
-                Va,
-                MemoryBasicInformation,
-                (PVOID)&MemInfo,
-                sizeof(MemInfo),
-                NULL
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status =
+        NtQueryVirtualMemory(NtCurrentProcess(), Va, MemoryBasicInformation, (PVOID)&MemInfo, sizeof(MemInfo), NULL);
+    if (!NT_SUCCESS(Status))
+    {
         return EXCEPTION_CONTINUE_SEARCH;
-        }
+    }
 
     //
     // if the va is readonly and in an image then continue
     //
 
-    if ( !((MemInfo.Protect == PAGE_READONLY) && (MemInfo.Type == MEM_IMAGE)) ){
+    if (!((MemInfo.Protect == PAGE_READONLY) && (MemInfo.Type == MEM_IMAGE)))
+    {
         return EXCEPTION_CONTINUE_SEARCH;
-        }
+    }
 
     ReturnValue = EXCEPTION_CONTINUE_SEARCH;
 
-    try {
-        ResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)
-            RtlImageDirectoryEntryToData(MemInfo.AllocationBase,
-                                         TRUE,
-                                         IMAGE_DIRECTORY_ENTRY_RESOURCE,
-                                         &ResourceSize
-                                         );
+    try
+    {
+        ResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)RtlImageDirectoryEntryToData(
+            MemInfo.AllocationBase, TRUE, IMAGE_DIRECTORY_ENTRY_RESOURCE, &ResourceSize);
 
         rbase = (char *)ResourceDirectory;
         va = (char *)Va;
 
-        if ( rbase && va >= rbase && va < rbase+ResourceSize ) {
+        if (rbase && va >= rbase && va < rbase + ResourceSize)
+        {
             RegionSize = 1;
-            Status = NtProtectVirtualMemory(
-                        NtCurrentProcess(),
-                        &va,
-                        &RegionSize,
-                        PAGE_READWRITE,
-                        &OldProtect
-                        );
-            if ( NT_SUCCESS(Status) ) {
+            Status = NtProtectVirtualMemory(NtCurrentProcess(), &va, &RegionSize, PAGE_READWRITE, &OldProtect);
+            if (NT_SUCCESS(Status))
+            {
                 ReturnValue = EXCEPTION_CONTINUE_EXECUTION;
-                }
             }
         }
-    except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         ;
-        }
+    }
 
     return ReturnValue;
 }
 
-// 
+//
 // Used for fault reporting in UnhandledExceptionFilter
 //
 static CHAR *StrStrIA(const CHAR *cs1, const CHAR *cs2)
@@ -1584,16 +1439,16 @@ static CHAR *StrStrIA(const CHAR *cs1, const CHAR *cs2)
         s1 = cp;
         s2 = (CHAR *)cs2;
 
-        while (*s1 != '\0' && *s2 !='\0' && (tolower(*s1) - tolower(*s2)) == 0)
+        while (*s1 != '\0' && *s2 != '\0' && (tolower(*s1) - tolower(*s2)) == 0)
             s1++, s2++;
 
         if (*s2 == '\0')
-             return(cp);
+            return (cp);
 
         cp++;
     }
 
-    return(NULL);
+    return (NULL);
 }
 
 
@@ -1714,16 +1569,13 @@ LONG
 UnhandledExceptionFilterEx(
     struct _EXCEPTION_POINTERS *ExceptionInfo
     )
-#else 
-LONG
-UnhandledExceptionFilter(
-    struct _EXCEPTION_POINTERS *ExceptionInfo
-    )
+#else
+LONG UnhandledExceptionFilter(struct _EXCEPTION_POINTERS *ExceptionInfo)
 #endif
 {
     EFaultRepRetVal frrv = frrvErrNoDW;
     NTSTATUS Status;
-    ULONG_PTR Parameters[ 4 ];
+    ULONG_PTR Parameters[4];
     ULONG Response;
     HANDLE DebugPort;
     CHAR AeDebuggerCmdLine[256];
@@ -1739,15 +1591,17 @@ UnhandledExceptionFilter(
     // succeeds, then silently proceed.
     //
 
-    if ( ExceptionInfo->ExceptionRecord->ExceptionCode == STATUS_ACCESS_VIOLATION
-        && ExceptionInfo->ExceptionRecord->ExceptionInformation[0] ) {
+    if (ExceptionInfo->ExceptionRecord->ExceptionCode == STATUS_ACCESS_VIOLATION &&
+        ExceptionInfo->ExceptionRecord->ExceptionInformation[0])
+    {
 
         FilterReturn = BasepCheckForReadOnlyResource((PVOID)ExceptionInfo->ExceptionRecord->ExceptionInformation[1]);
 
-        if ( FilterReturn == EXCEPTION_CONTINUE_EXECUTION ) {
+        if (FilterReturn == EXCEPTION_CONTINUE_EXECUTION)
+        {
             return FilterReturn;
-            }
         }
+    }
 
     //
     // If the process is being debugged, just let the exception happen
@@ -1756,49 +1610,46 @@ UnhandledExceptionFilter(
     //
 
     DebugPort = (HANDLE)NULL;
-    Status = NtQueryInformationProcess(
-                GetCurrentProcess(),
-                ProcessDebugPort,
-                (PVOID)&DebugPort,
-                sizeof(DebugPort),
-                NULL
-                );
+    Status =
+        NtQueryInformationProcess(GetCurrentProcess(), ProcessDebugPort, (PVOID)&DebugPort, sizeof(DebugPort), NULL);
 
-    if ( NT_SUCCESS(Status) && DebugPort ) {
+    if (NT_SUCCESS(Status) && DebugPort)
+    {
 
         //
         // Output a verifier_stop message for certain exception codes
         // if app_verifier is enabled and process runs under debugger.
         //
 
-        if ((NtCurrentPeb()->NtGlobalFlag & FLG_APPLICATION_VERIFIER)) {
+        if ((NtCurrentPeb()->NtGlobalFlag & FLG_APPLICATION_VERIFIER))
+        {
 
             static LONG NoMessageYet = 0;
 
-            if (ExceptionInfo->ExceptionRecord->ExceptionCode == STATUS_ACCESS_VIOLATION) {
+            if (ExceptionInfo->ExceptionRecord->ExceptionCode == STATUS_ACCESS_VIOLATION)
+            {
 
-                if (InterlockedExchange(&NoMessageYet, 1) == 0) {
+                if (InterlockedExchange(&NoMessageYet, 1) == 0)
+                {
 
-                    VERIFIER_STOP (APPLICATION_VERIFIER_ACCESS_VIOLATION | APPLICATION_VERIFIER_NO_BREAK,
-                                   "access violation exception for current stack trace",
-                                   ExceptionInfo->ExceptionRecord->ExceptionInformation[1],
-                                   "Invalid address being accessed",
-                                   ExceptionInfo->ExceptionRecord->ExceptionAddress,
-                                   "Code performing invalid access",
-                                   ExceptionInfo->ExceptionRecord, 
-                                   ".exr (exception record)", 
-                                   ExceptionInfo->ContextRecord, 
-                                   ".cxr (context record)");
+                    VERIFIER_STOP(APPLICATION_VERIFIER_ACCESS_VIOLATION | APPLICATION_VERIFIER_NO_BREAK,
+                                  "access violation exception for current stack trace",
+                                  ExceptionInfo->ExceptionRecord->ExceptionInformation[1],
+                                  "Invalid address being accessed", ExceptionInfo->ExceptionRecord->ExceptionAddress,
+                                  "Code performing invalid access", ExceptionInfo->ExceptionRecord,
+                                  ".exr (exception record)", ExceptionInfo->ContextRecord, ".cxr (context record)");
                 }
             }
-            
-            if (ExceptionInfo->ExceptionRecord->ExceptionCode == STATUS_INVALID_HANDLE) {
 
-                if (InterlockedExchange(&NoMessageYet, 1) == 0) {
+            if (ExceptionInfo->ExceptionRecord->ExceptionCode == STATUS_INVALID_HANDLE)
+            {
 
-                    VERIFIER_STOP (APPLICATION_VERIFIER_INVALID_HANDLE | APPLICATION_VERIFIER_NO_BREAK,
-                                   "invalid handle exception for current stack trace",
-                                   0, NULL, 0, NULL, 0, NULL, 0, NULL);
+                if (InterlockedExchange(&NoMessageYet, 1) == 0)
+                {
+
+                    VERIFIER_STOP(APPLICATION_VERIFIER_INVALID_HANDLE | APPLICATION_VERIFIER_NO_BREAK,
+                                  "invalid handle exception for current stack trace", 0, NULL, 0, NULL, 0, NULL, 0,
+                                  NULL);
                 }
             }
         }
@@ -1809,57 +1660,56 @@ UnhandledExceptionFilter(
         // Return a code that specifies that the exception
         // processing is to continue
         //
-        
+
         return EXCEPTION_CONTINUE_SEARCH;
     }
 
-    if ( BasepCurrentTopLevelFilter ) {
+    if (BasepCurrentTopLevelFilter)
+    {
         FilterReturn = (BasepCurrentTopLevelFilter)(ExceptionInfo);
-        if ( FilterReturn == EXCEPTION_EXECUTE_HANDLER ||
-             FilterReturn == EXCEPTION_CONTINUE_EXECUTION ) {
+        if (FilterReturn == EXCEPTION_EXECUTE_HANDLER || FilterReturn == EXCEPTION_CONTINUE_EXECUTION)
+        {
             return FilterReturn;
-            }
         }
+    }
 
-    if ( GetErrorMode() & SEM_NOGPFAULTERRORBOX ) {
+    if (GetErrorMode() & SEM_NOGPFAULTERRORBOX)
+    {
         return EXCEPTION_EXECUTE_HANDLER;
-        }
+    }
 
     //
     // See if the process's job has been programmed to NOGPFAULTERRORBOX
     //
-    Status = NtQueryInformationJobObject(
-                NULL,
-                JobObjectBasicLimitInformation,
-                &BasicLimit,
-                sizeof(BasicLimit),
-                NULL
-                );
-    if ( NT_SUCCESS(Status) && (BasicLimit.LimitFlags & JOB_OBJECT_LIMIT_DIE_ON_UNHANDLED_EXCEPTION) ) {
+    Status = NtQueryInformationJobObject(NULL, JobObjectBasicLimitInformation, &BasicLimit, sizeof(BasicLimit), NULL);
+    if (NT_SUCCESS(Status) && (BasicLimit.LimitFlags & JOB_OBJECT_LIMIT_DIE_ON_UNHANDLED_EXCEPTION))
+    {
         return EXCEPTION_EXECUTE_HANDLER;
-        }
+    }
 
     //
     // The process is not being debugged, so do the hard error
     // popup.
     //
 
-    Parameters[ 0 ] = (ULONG_PTR)ExceptionInfo->ExceptionRecord->ExceptionCode;
-    Parameters[ 1 ] = (ULONG_PTR)ExceptionInfo->ExceptionRecord->ExceptionAddress;
+    Parameters[0] = (ULONG_PTR)ExceptionInfo->ExceptionRecord->ExceptionCode;
+    Parameters[1] = (ULONG_PTR)ExceptionInfo->ExceptionRecord->ExceptionAddress;
 
     //
     // For inpage i/o errors, juggle the real status code to overwrite the
     // read/write field
     //
 
-    if ( ExceptionInfo->ExceptionRecord->ExceptionCode == STATUS_IN_PAGE_ERROR ) {
-        Parameters[ 2 ] = ExceptionInfo->ExceptionRecord->ExceptionInformation[ 2 ];
-        }
-    else {
-        Parameters[ 2 ] = ExceptionInfo->ExceptionRecord->ExceptionInformation[ 0 ];
-        }
+    if (ExceptionInfo->ExceptionRecord->ExceptionCode == STATUS_IN_PAGE_ERROR)
+    {
+        Parameters[2] = ExceptionInfo->ExceptionRecord->ExceptionInformation[2];
+    }
+    else
+    {
+        Parameters[2] = ExceptionInfo->ExceptionRecord->ExceptionInformation[0];
+    }
 
-    Parameters[ 3 ] = ExceptionInfo->ExceptionRecord->ExceptionInformation[ 1 ];
+    Parameters[3] = ExceptionInfo->ExceptionRecord->ExceptionInformation[1];
 
     //
     // See if a debugger has been programmed in. If so, use the
@@ -1881,42 +1731,36 @@ UnhandledExceptionFilter(
 
     PebLockPointer = NtCurrentPeb()->FastPebLock;
 
-    if ( PebLockPointer->OwningThread != NtCurrentTeb()->ClientId.UniqueThread ) {
-        
-        PRTL_CRITICAL_SECTION   LoaderLockPointer;
-        HMODULE                 hmodFaultRep = NULL;
+    if (PebLockPointer->OwningThread != NtCurrentTeb()->ClientId.UniqueThread)
+    {
 
-        try {
-            if ( GetProfileString(
-                    "AeDebug",
-                    "Debugger",
-                    NULL,
-                    AeDebuggerCmdLine,
-                    sizeof(AeDebuggerCmdLine)-1
-                    ) ) {
+        PRTL_CRITICAL_SECTION LoaderLockPointer;
+        HMODULE hmodFaultRep = NULL;
+
+        try
+        {
+            if (GetProfileString("AeDebug", "Debugger", NULL, AeDebuggerCmdLine, sizeof(AeDebuggerCmdLine) - 1))
+            {
                 ResponseFlag = OptionOkCancel;
-                }
+            }
 
-            if ( GetProfileString(
-                    "AeDebug",
-                    "Auto",
-                    "0",
-                    AeAutoDebugString,
-                    sizeof(AeAutoDebugString)-1
-                    ) ) {
+            if (GetProfileString("AeDebug", "Auto", "0", AeAutoDebugString, sizeof(AeAutoDebugString) - 1))
+            {
 
-                if ( !strcmp(AeAutoDebugString,"1") ) {
-                    if ( ResponseFlag == OptionOkCancel ) {
+                if (!strcmp(AeAutoDebugString, "1"))
+                {
+                    if (ResponseFlag == OptionOkCancel)
+                    {
                         AeAutoDebug = TRUE;
-                        }
                     }
                 }
+            }
 
-            // 
-            // Attempt to report the fault back to Microsoft.  ReportFault 
+            //
+            // Attempt to report the fault back to Microsoft.  ReportFault
             //  will return the following:
             //  frrvErrNoDW:    Always show our own fault notification.
-            // 
+            //
             //  frrvErrTimeout: see frrvOkHeadless
             //  frrvOkQueued:   see frrvOkHeadless
             //  frrvOkHeadless: If we need to ask whether to launch a debugger,
@@ -1930,51 +1774,49 @@ UnhandledExceptionFilter(
 
             LoaderLockPointer = NtCurrentPeb()->LoaderLock;
             frrv = frrvErrNoDW;
-            if ( BasepAlreadyHadHardError == FALSE &&
-                 LoaderLockPointer->OwningThread != NtCurrentTeb()->ClientId.UniqueThread &&
-                 ( AeAutoDebug == FALSE ||
-                   StrStrIA(AeDebuggerCmdLine, "drwtsn32") != NULL ))
+            if (BasepAlreadyHadHardError == FALSE &&
+                LoaderLockPointer->OwningThread != NtCurrentTeb()->ClientId.UniqueThread &&
+                (AeAutoDebug == FALSE || StrStrIA(AeDebuggerCmdLine, "drwtsn32") != NULL))
             {
                 WCHAR wszDll[MAX_PATH];
-                PVOID   pvLdrLockCookie;
-                ULONG   ulLockState;
+                PVOID pvLdrLockCookie;
+                ULONG ulLockState;
 
                 wszDll[0] = 0;
 
                 if (GetSystemDirectoryW(wszDll, sizeof(wszDll) / sizeof(WCHAR)))
-                    wcscat(wszDll, L"\\faultrep.dll"); 
+                    wcscat(wszDll, L"\\faultrep.dll");
                 else
                     wszDll[0] = 0;
- 
+
                 // make sure that no one else owns the loader lock because we
                 //  could otherwise deadlock
-                LdrLockLoaderLock(LDR_LOCK_LOADER_LOCK_FLAG_TRY_ONLY, &ulLockState, 
-                                  &pvLdrLockCookie);
-                if (ulLockState == LDR_LOCK_LOADER_LOCK_DISPOSITION_LOCK_ACQUIRED) {
+                LdrLockLoaderLock(LDR_LOCK_LOADER_LOCK_FLAG_TRY_ONLY, &ulLockState, &pvLdrLockCookie);
+                if (ulLockState == LDR_LOCK_LOADER_LOCK_DISPOSITION_LOCK_ACQUIRED)
+                {
                     hmodFaultRep = LoadLibraryExW(wszDll, NULL, 0);
                     LdrUnlockLoaderLock(0, pvLdrLockCookie);
                 }
-                
+
                 if (hmodFaultRep != NULL)
                 {
-                    pfn_REPORTFAULT  pfn;
-                    DWORD            dwDebug;
+                    pfn_REPORTFAULT pfn;
+                    DWORD dwDebug;
 
                     // parameter 2 to ReportFault should be:
-                    //  froNoDebugWait: don't display a debug button but wait 
-                    //                   for DW to finish- this is a special 
-                    //                   case to make sure DW is done before 
+                    //  froNoDebugWait: don't display a debug button but wait
+                    //                   for DW to finish- this is a special
+                    //                   case to make sure DW is done before
                     //                   Dr. Watson starts
                     //  froNoDebugWait : don't display a debug button
-                    //  froDebug : display a debug button and wait for DW to 
+                    //  froDebug : display a debug button and wait for DW to
                     //              finish
                     if (ResponseFlag == OptionOkCancel)
                         dwDebug = (AeAutoDebug) ? froNoDebugWait : froDebug;
                     else
                         dwDebug = froNoDebug;
 
-                    pfn = (pfn_REPORTFAULT)GetProcAddress(hmodFaultRep, 
-                                                          "ReportFault");
+                    pfn = (pfn_REPORTFAULT)GetProcAddress(hmodFaultRep, "ReportFault");
                     if (pfn != NULL)
                         frrv = (*pfn)(ExceptionInfo, dwDebug);
 
@@ -1983,59 +1825,54 @@ UnhandledExceptionFilter(
                 }
             }
 
-            // 
-            // Since we're supposed to launch the debugger anyway, just set the 
+            //
+            // Since we're supposed to launch the debugger anyway, just set the
             // AeAutoDebug flag to true to minimize code munging below
             //
-            if ( frrv == frrvLaunchDebugger )
+            if (frrv == frrvLaunchDebugger)
                 AeAutoDebug = TRUE;
-
-            }
-        except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             ResponseFlag = OptionOk;
             AeAutoDebug = FALSE;
             frrv = frrvErrNoDW;
             if (hmodFaultRep != NULL)
                 FreeLibrary(hmodFaultRep);
-            }
         }
+    }
 
-    // 
-    // only display this dialog if we couldn't show DW & we're not set to 
+    //
+    // only display this dialog if we couldn't show DW & we're not set to
     //  automatically launch a debugger.  The conditions here are:
     //  1.  cannot be directly launching a debugger (auto == 1)
     //  2a. DW must have failed to launch
-    //      -or- 
+    //      -or-
     //      we needed to ask the user if he wanted to debug but could not (due
     //       to either no UI being shown or us not being able to wait long enuf
     //       to find out.)
-    if ( !AeAutoDebug && 
-         ( frrv == frrvErrNoDW || 
-           ( ResponseFlag == OptionOkCancel && 
-             ( frrv == frrvErrTimeout || frrv == frrvOkQueued || 
-               frrv == frrvOkHeadless ) ) ) )
-        {
-        Status =NtRaiseHardError( STATUS_UNHANDLED_EXCEPTION | HARDERROR_OVERRIDE_ERRORMODE,
-                                  4,
-                                  0,
-                                  Parameters,
-                                  BasepAlreadyHadHardError ? OptionOk : ResponseFlag,
-                                  &Response
-                                );
-
-        }
-    else {
+    if (!AeAutoDebug &&
+        (frrv == frrvErrNoDW || (ResponseFlag == OptionOkCancel &&
+                                 (frrv == frrvErrTimeout || frrv == frrvOkQueued || frrv == frrvOkHeadless))))
+    {
+        Status = NtRaiseHardError(STATUS_UNHANDLED_EXCEPTION | HARDERROR_OVERRIDE_ERRORMODE, 4, 0, Parameters,
+                                  BasepAlreadyHadHardError ? OptionOk : ResponseFlag, &Response);
+    }
+    else
+    {
         Status = STATUS_SUCCESS;
         Response = (AeAutoDebug) ? ResponseCancel : ResponseOk;
-        }
+    }
 
     //
     // Internally, send OkCancel. If we get back Ok then die.
     // If we get back Cancel, then enter the debugger
     //
 
-    if ( NT_SUCCESS(Status) && Response == ResponseCancel && BasepAlreadyHadHardError == FALSE) {
-        if ( !BaseRunningInServerProcess ) {
+    if (NT_SUCCESS(Status) && Response == ResponseCancel && BasepAlreadyHadHardError == FALSE)
+    {
+        if (!BaseRunningInServerProcess)
+        {
             BOOL b;
             STARTUPINFO StartupInfo;
             PROCESS_INFORMATION ProcessInformation;
@@ -2052,118 +1889,94 @@ UnhandledExceptionFilter(
             // attach occurs. Process ID are reused very quickly and attaching to the wrong process is
             // confusing.
             //
-            if (!DuplicateHandle (GetCurrentProcess (),
-                                  GetCurrentProcess (),
-                                  GetCurrentProcess (),
-                                  &CurrentProcess,
-                                  0,
-                                  TRUE,
-                                  DUPLICATE_SAME_ACCESS)) {
+            if (!DuplicateHandle(GetCurrentProcess(), GetCurrentProcess(), GetCurrentProcess(), &CurrentProcess, 0,
+                                 TRUE, DUPLICATE_SAME_ACCESS))
+            {
                 CurrentProcess = NULL;
             }
 
-            if (!DuplicateHandle (GetCurrentProcess (),
-                                  GetCurrentThread (),
-                                  GetCurrentProcess (),
-                                  &CurrentThread,
-                                  0,
-                                  TRUE,
-                                  DUPLICATE_SAME_ACCESS)) {
+            if (!DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &CurrentThread, 0, TRUE,
+                                 DUPLICATE_SAME_ACCESS))
+            {
                 CurrentThread = NULL;
             }
 
             sa.nLength = sizeof(sa);
             sa.lpSecurityDescriptor = NULL;
             sa.bInheritHandle = TRUE;
-            EventHandle = CreateEvent(&sa,TRUE,FALSE,NULL);
-            RtlZeroMemory(&StartupInfo,sizeof(StartupInfo));
-            sprintf(CmdLine,AeDebuggerCmdLine,GetCurrentProcessId(),EventHandle);
+            EventHandle = CreateEvent(&sa, TRUE, FALSE, NULL);
+            RtlZeroMemory(&StartupInfo, sizeof(StartupInfo));
+            sprintf(CmdLine, AeDebuggerCmdLine, GetCurrentProcessId(), EventHandle);
             StartupInfo.cb = sizeof(StartupInfo);
             StartupInfo.lpDesktop = "Winsta0\\Default";
             CsrIdentifyAlertableThread();
-            b =  CreateProcess(
-                    NULL,
-                    CmdLine,
-                    NULL,
-                    NULL,
-                    TRUE,
-                    0,
-                    NULL,
-                    NULL,
-                    &StartupInfo,
-                    &ProcessInformation
-                    );
+            b = CreateProcess(NULL, CmdLine, NULL, NULL, TRUE, 0, NULL, NULL, &StartupInfo, &ProcessInformation);
 
-            if (CurrentProcess != NULL) {
-                CloseHandle (CurrentProcess);
+            if (CurrentProcess != NULL)
+            {
+                CloseHandle(CurrentProcess);
             }
-            if (CurrentThread != NULL) {
-                CloseHandle (CurrentThread);
+            if (CurrentThread != NULL)
+            {
+                CloseHandle(CurrentThread);
             }
-            if ( b && EventHandle) {
+            if (b && EventHandle)
+            {
 
                 //
                 // Do an alertable wait on the event
                 //
 
-                do {
+                do
+                {
                     HANDLE WaitHandles[2];
 
                     WaitHandles[0] = EventHandle;
                     WaitHandles[1] = ProcessInformation.hProcess;
-                    Status = NtWaitForMultipleObjects (2,
-                                                       WaitHandles,
-                                                       WaitAny,
-                                                       TRUE,
-                                                       NULL);
+                    Status = NtWaitForMultipleObjects(2, WaitHandles, WaitAny, TRUE, NULL);
                 } while (Status == STATUS_USER_APC || Status == STATUS_ALERTED);
 
                 //
                 // If the debugger process died then see if the debugger is now
                 // attached by another thread
                 //
-                if (Status == 1) {
-                    Status = NtQueryInformationProcess (GetCurrentProcess(),
-                                                        ProcessDebugPort,
-                                                        &DebugPort,
-                                                        sizeof (DebugPort),
-                                                        NULL);
-                    if (!NT_SUCCESS (Status) || DebugPort == NULL) {
+                if (Status == 1)
+                {
+                    Status = NtQueryInformationProcess(GetCurrentProcess(), ProcessDebugPort, &DebugPort,
+                                                       sizeof(DebugPort), NULL);
+                    if (!NT_SUCCESS(Status) || DebugPort == NULL)
+                    {
                         BasepAlreadyHadHardError = TRUE;
                     }
                 }
-                CloseHandle (EventHandle);
-                CloseHandle (ProcessInformation.hProcess);
-                CloseHandle (ProcessInformation.hThread);
+                CloseHandle(EventHandle);
+                CloseHandle(ProcessInformation.hProcess);
+                CloseHandle(ProcessInformation.hThread);
 
                 return EXCEPTION_CONTINUE_SEARCH;
             }
-
         }
         BasepAlreadyHadHardError = TRUE;
     }
 
 #if DBG
-    if (!NT_SUCCESS( Status )) {
-        DbgPrint( "BASEDLL: Unhandled exception: %lx  IP: %x\n",
-                  ExceptionInfo->ExceptionRecord->ExceptionCode,
-                  ExceptionInfo->ExceptionRecord->ExceptionAddress
-                );
-        }
+    if (!NT_SUCCESS(Status))
+    {
+        DbgPrint("BASEDLL: Unhandled exception: %lx  IP: %x\n", ExceptionInfo->ExceptionRecord->ExceptionCode,
+                 ExceptionInfo->ExceptionRecord->ExceptionAddress);
+    }
 #endif
-    if ( BasepAlreadyHadHardError ) {
-        NtTerminateProcess(NtCurrentProcess(),ExceptionInfo->ExceptionRecord->ExceptionCode);
-        }
+    if (BasepAlreadyHadHardError)
+    {
+        NtTerminateProcess(NtCurrentProcess(), ExceptionInfo->ExceptionRecord->ExceptionCode);
+    }
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
 
-
 DWORD
 APIENTRY
-TlsAlloc(
-    VOID
-    )
+TlsAlloc(VOID)
 
 /*++
 
@@ -2192,7 +2005,7 @@ Return Value:
 --*/
 
 {
-    PEB* const peb = NtCurrentTeb()->ProcessEnvironmentBlock;
+    PEB *const peb = NtCurrentTeb()->ProcessEnvironmentBlock;
     RtlAcquirePebLock();
     DWORD index = RtlFindClearBitsAndSet(peb->TlsBitmap, 1, 1);
     if (index != ~0U)
@@ -2205,8 +2018,8 @@ Return Value:
         if (index != ~0U)
         {
             if (!NtCurrentTeb()->TlsExpansionSlots &&
-                !(NtCurrentTeb()->TlsExpansionSlots = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                    8 * sizeof(peb->TlsExpansionBitmapBits) * sizeof(void*))))
+                !(NtCurrentTeb()->TlsExpansionSlots = HeapAlloc(
+                      GetProcessHeap(), HEAP_ZERO_MEMORY, 8 * sizeof(peb->TlsExpansionBitmapBits) * sizeof(void *))))
             {
                 RtlClearBits(peb->TlsExpansionBitmap, index, 1);
                 index = ~0U;
@@ -2218,19 +2031,17 @@ Return Value:
                 index = index + TLS_MINIMUM_AVAILABLE;
             }
         }
-        else SetLastError(ERROR_NO_MORE_ITEMS);
+        else
+            SetLastError(ERROR_NO_MORE_ITEMS);
     }
     RtlReleasePebLock();
     return index;
 }
 
 
-
 LPVOID
 APIENTRY
-TlsGetValue(
-    DWORD index
-    )
+TlsGetValue(DWORD index)
 
 /*++
 
@@ -2289,31 +2100,26 @@ Return Value:
     }
     if (index >= TLS_MINIMUM_AVAILABLE
         {
-            index = index - TLS_MINIMUM_AVAILABLE;
+        index = index - TLS_MINIMUM_AVAILABLE;
 
-            if (index >= 8 * sizeof(NtCurrentTeb()->ProcessEnvironmentBlock->TlsExpansionBitmapBits))
-            {
-                SetLastError(ERROR_INVALID_PARAMETER);
-                result = NULL;
-            }
-            if (!NtCurrentTeb()->TlsExpansionSlots)
-            {
-                result = NULL;
-            }
+        if (index >= 8 * sizeof(NtCurrentTeb()->ProcessEnvironmentBlock->TlsExpansionBitmapBits))
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            result = NULL;
+        }
+        if (!NtCurrentTeb()->TlsExpansionSlots)
+        {
+            result = NULL;
+        }
 
-            else
+        else
             result = NtCurrentTeb()->TlsExpansionSlots[index];
         }
     SetLastError(ERROR_SUCCESS);
     return result;
 }
 
-BOOL
-APIENTRY
-TlsSetValue(
-    DWORD index,
-    LPVOID value
-    )
+BOOL APIENTRY TlsSetValue(DWORD index, LPVOID value)
 
 /*++
 
@@ -2371,31 +2177,26 @@ Return Value:
     }
     if (index >= TLS_MINIMUM_AVAILABLE
         {
-            index = index - TLS_MINIMUM_AVAILABLE;
+        index = index - TLS_MINIMUM_AVAILABLE;
 
-            if (index >= 8 * sizeof(NtCurrentTeb()->ProcessEnvironmentBlock->TlsExpansionBitmapBits))
-            {
-                SetLastError(ERROR_INVALID_PARAMETER);
-                result = NULL;
-            }
-            if (!NtCurrentTeb()->TlsExpansionSlots)
-            {
-                result = NULL;
-            }
+        if (index >= 8 * sizeof(NtCurrentTeb()->ProcessEnvironmentBlock->TlsExpansionBitmapBits))
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            result = NULL;
+        }
+        if (!NtCurrentTeb()->TlsExpansionSlots)
+        {
+            result = NULL;
+        }
 
-            else
+        else
             result = NtCurrentTeb()->TlsExpansionSlots[index];
         }
     SetLastError(ERROR_SUCCESS);
     return result;
 }
 
-BOOL
-WINAPI
-TlsFree(
-    DWORD
-    index
-    )
+BOOL WINAPI TlsFree(DWORD index)
 {
     BOOL result;
 
@@ -2409,7 +2210,8 @@ TlsFree(
 
     if (index >= TLS_MINIMUM_AVAILABLE)
     {
-        result = RtlAreBitsSet(NtCurrentTeb()->ProcessEnvironmentBlock->TlsExpansionBitmap, index - TLS_MINIMUM_AVAILABLE, 1);
+        result = RtlAreBitsSet(NtCurrentTeb()->ProcessEnvironmentBlock->TlsExpansionBitmap,
+                               index - TLS_MINIMUM_AVAILABLE, 1);
         if (result != 0)
             RtlClearBits(NtCurrentTeb()->ProcessEnvironmentBlock->TlsExpansionBitmap, index - TLS_MINIMUM_AVAILABLE, 1);
     }
@@ -2428,17 +2230,8 @@ TlsFree(
 }
 
 
-
-
-BOOL
-WINAPI
-GetThreadTimes(
-    HANDLE hThread,
-    LPFILETIME lpCreationTime,
-    LPFILETIME lpExitTime,
-    LPFILETIME lpKernelTime,
-    LPFILETIME lpUserTime
-    )
+BOOL WINAPI GetThreadTimes(HANDLE hThread, LPFILETIME lpCreationTime, LPFILETIME lpExitTime, LPFILETIME lpKernelTime,
+                           LPFILETIME lpUserTime)
 
 /*++
 
@@ -2482,17 +2275,12 @@ Return Value:
     NTSTATUS Status;
     KERNEL_USER_TIMES TimeInfo;
 
-    Status = NtQueryInformationThread(
-                hThread,
-                ThreadTimes,
-                (PVOID)&TimeInfo,
-                sizeof(TimeInfo),
-                NULL
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = NtQueryInformationThread(hThread, ThreadTimes, (PVOID)&TimeInfo, sizeof(TimeInfo), NULL);
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 
     *lpCreationTime = *(LPFILETIME)&TimeInfo.CreateTime;
     *lpExitTime = *(LPFILETIME)&TimeInfo.ExitTime;
@@ -2502,12 +2290,7 @@ Return Value:
     return TRUE;
 }
 
-BOOL
-WINAPI
-GetThreadIOPendingFlag(
-    IN HANDLE hThread,
-    OUT PBOOL lpIOIsPending
-    )
+BOOL WINAPI GetThreadIOPendingFlag(IN HANDLE hThread, OUT PBOOL lpIOIsPending)
 
 /*++
 
@@ -2537,12 +2320,9 @@ Return Value:
     NTSTATUS Status;
     ULONG Pending;
 
-    Status = NtQueryInformationThread(hThread,
-                                      ThreadIsIoPending,
-                                      &Pending,
-                                      sizeof(Pending),
-                                      NULL);
-    if (! NT_SUCCESS(Status)) {
+    Status = NtQueryInformationThread(hThread, ThreadIsIoPending, &Pending, sizeof(Pending), NULL);
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -2553,10 +2333,7 @@ Return Value:
 
 DWORD_PTR
 WINAPI
-SetThreadAffinityMask(
-    HANDLE hThread,
-    DWORD_PTR dwThreadAffinityMask
-    )
+SetThreadAffinityMask(HANDLE hThread, DWORD_PTR dwThreadAffinityMask)
 
 /*++
 
@@ -2594,65 +2371,64 @@ Return Value:
     DWORD_PTR LocalThreadAffinityMask;
 
 
-    Status = NtQueryInformationThread(
-                hThread,
-                ThreadBasicInformation,
-                &BasicInformation,
-                sizeof(BasicInformation),
-                NULL
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status =
+        NtQueryInformationThread(hThread, ThreadBasicInformation, &BasicInformation, sizeof(BasicInformation), NULL);
+    if (!NT_SUCCESS(Status))
+    {
         rv = 0;
-        }
-    else {
+    }
+    else
+    {
         LocalThreadAffinityMask = dwThreadAffinityMask;
 
-        Status = NtSetInformationThread(
-                    hThread,
-                    ThreadAffinityMask,
-                    &LocalThreadAffinityMask,
-                    sizeof(LocalThreadAffinityMask)
-                    );
-        if ( !NT_SUCCESS(Status) ) {
+        Status = NtSetInformationThread(hThread, ThreadAffinityMask, &LocalThreadAffinityMask,
+                                        sizeof(LocalThreadAffinityMask));
+        if (!NT_SUCCESS(Status))
+        {
             rv = 0;
-            }
-        else {
+        }
+        else
+        {
             rv = BasicInformation.AffinityMask;
-            }
         }
+    }
 
 
-    if ( !rv ) {
+    if (!rv)
+    {
         BaseSetLastNTError(Status);
-        }
+    }
 
     return rv;
 }
 
-VOID
-BaseDispatchAPC(
-    LPVOID lpApcArgument1,
-    LPVOID lpApcArgument2,
-    LPVOID lpApcArgument3
-    )
+VOID BaseDispatchAPC(LPVOID lpApcArgument1, LPVOID lpApcArgument2, LPVOID lpApcArgument3)
 {
     PAPCFUNC pfnAPC;
     ULONG_PTR dwData;
     PACTIVATION_CONTEXT ActivationContext;
     NTSTATUS Status;
-    RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME ActivationFrame = { sizeof(ActivationFrame), RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_FORMAT_WHISTLER };
+    RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME ActivationFrame = {
+        sizeof(ActivationFrame), RTL_CALLER_ALLOCATED_ACTIVATION_CONTEXT_STACK_FRAME_FORMAT_WHISTLER
+    };
 
-    pfnAPC = (PAPCFUNC) lpApcArgument1;
-    dwData = (ULONG_PTR) lpApcArgument2;
-    ActivationContext = (PACTIVATION_CONTEXT) lpApcArgument3;
+    pfnAPC = (PAPCFUNC)lpApcArgument1;
+    dwData = (ULONG_PTR)lpApcArgument2;
+    ActivationContext = (PACTIVATION_CONTEXT)lpApcArgument3;
 
-    if (ActivationContext == INVALID_ACTIVATION_CONTEXT) {
+    if (ActivationContext == INVALID_ACTIVATION_CONTEXT)
+    {
         (*pfnAPC)(dwData);
-    } else {
+    }
+    else
+    {
         RtlActivateActivationContextUnsafeFast(&ActivationFrame, ActivationContext);
-        __try {
+        __try
+        {
             (*pfnAPC)(dwData);
-        } __finally {
+        }
+        __finally
+        {
             RtlDeactivateActivationContextUnsafeFast(&ActivationFrame);
             RtlReleaseActivationContext(ActivationContext);
         }
@@ -2663,11 +2439,7 @@ BaseDispatchAPC(
 WINBASEAPI
 DWORD
 WINAPI
-QueueUserAPC(
-    PAPCFUNC pfnAPC,
-    HANDLE hThread,
-    ULONG_PTR dwData
-    )
+QueueUserAPC(PAPCFUNC pfnAPC, HANDLE hThread, ULONG_PTR dwData)
 /*++
 
 Routine Description:
@@ -2695,70 +2467,56 @@ Return Value:
 
 {
     NTSTATUS Status;
-    PVOID Argument1 = (PVOID) pfnAPC;
-    PVOID Argument2 = (PVOID) dwData;
+    PVOID Argument1 = (PVOID)pfnAPC;
+    PVOID Argument2 = (PVOID)dwData;
     PVOID Argument3 = NULL;
     ACTIVATION_CONTEXT_BASIC_INFORMATION acbi = { 0 };
 
-    Status =
-        RtlQueryInformationActivationContext(
-            RTL_QUERY_INFORMATION_ACTIVATION_CONTEXT_FLAG_USE_ACTIVE_ACTIVATION_CONTEXT,
-            NULL,
-            0,
-            ActivationContextBasicInformation,
-            &acbi,
-            sizeof(acbi),
-            NULL);
-    if (!NT_SUCCESS(Status)) {
-        DbgPrint("SXS: %s failing because RtlQueryInformationActivationContext() returned status %08lx\n", __FUNCTION__, Status);
+    Status = RtlQueryInformationActivationContext(
+        RTL_QUERY_INFORMATION_ACTIVATION_CONTEXT_FLAG_USE_ACTIVE_ACTIVATION_CONTEXT, NULL, 0,
+        ActivationContextBasicInformation, &acbi, sizeof(acbi), NULL);
+    if (!NT_SUCCESS(Status))
+    {
+        DbgPrint("SXS: %s failing because RtlQueryInformationActivationContext() returned status %08lx\n", __FUNCTION__,
+                 Status);
         return FALSE;
     }
 
     Argument3 = acbi.ActivationContext;
 
-    if (acbi.Flags & ACTIVATION_CONTEXT_FLAG_NO_INHERIT) {
+    if (acbi.Flags & ACTIVATION_CONTEXT_FLAG_NO_INHERIT)
+    {
         // We're not supposed to propogate the activation context; set it to a value to indicate such.
         Argument3 = INVALID_ACTIVATION_CONTEXT;
     }
 
-    Status = NtQueueApcThread(
-                hThread,
-                &BaseDispatchAPC,
-                Argument1,
-                Argument2,
-                Argument3
-                );
+    Status = NtQueueApcThread(hThread, &BaseDispatchAPC, Argument1, Argument2, Argument3);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         return 0;
-        }
+    }
     return 1;
 }
 
 
 DWORD
 WINAPI
-SetThreadIdealProcessor(
-    HANDLE hThread,
-    DWORD dwIdealProcessor
-    )
+SetThreadIdealProcessor(HANDLE hThread, DWORD dwIdealProcessor)
 {
     NTSTATUS Status;
     ULONG rv;
 
-    Status = NtSetInformationThread(
-                hThread,
-                ThreadIdealProcessor,
-                &dwIdealProcessor,
-                sizeof(dwIdealProcessor)
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = NtSetInformationThread(hThread, ThreadIdealProcessor, &dwIdealProcessor, sizeof(dwIdealProcessor));
+    if (!NT_SUCCESS(Status))
+    {
         rv = (DWORD)0xFFFFFFFF;
         BaseSetLastNTError(Status);
-        }
-    else {
+    }
+    else
+    {
         rv = (ULONG)Status;
-        }
+    }
 
     return rv;
 }
@@ -2766,11 +2524,7 @@ SetThreadIdealProcessor(
 WINBASEAPI
 LPVOID
 WINAPI
-CreateFiber(
-    SIZE_T dwStackSize,
-    LPFIBER_START_ROUTINE lpStartAddress,
-    LPVOID lpParameter
-    )
+CreateFiber(SIZE_T dwStackSize, LPFIBER_START_ROUTINE lpStartAddress, LPVOID lpParameter)
 /*++
 
 Routine Description:
@@ -2790,23 +2544,17 @@ Return Value:
 
 --*/
 {
-    return CreateFiberEx (dwStackSize, // dwStackCommitSize
-                          0,           // dwStackReserveSize
-                          0,           // dwFlags
-                          lpStartAddress,
-                          lpParameter);
+    return CreateFiberEx(dwStackSize, // dwStackCommitSize
+                         0,           // dwStackReserveSize
+                         0,           // dwFlags
+                         lpStartAddress, lpParameter);
 }
 
 WINBASEAPI
 LPVOID
 WINAPI
-CreateFiberEx(
-    SIZE_T dwStackCommitSize,
-    SIZE_T dwStackReserveSize,
-    DWORD dwFlags,
-    LPFIBER_START_ROUTINE lpStartAddress,
-    LPVOID lpParameter
-    )
+CreateFiberEx(SIZE_T dwStackCommitSize, SIZE_T dwStackReserveSize, DWORD dwFlags, LPFIBER_START_ROUTINE lpStartAddress,
+              LPVOID lpParameter)
 /*++
 
 Routine Description:
@@ -2836,25 +2584,25 @@ Return Value:
     //
     //  Reserve these flags for later use
     //
-    if (dwFlags != 0) {
-        SetLastError (ERROR_INVALID_PARAMETER);
+    if (dwFlags != 0)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
         return NULL;
     }
 
-    Fiber = RtlAllocateHeap (RtlProcessHeap (), MAKE_TAG (TMP_TAG), sizeof (*Fiber));
-    if (Fiber == NULL) {
+    Fiber = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), sizeof(*Fiber));
+    if (Fiber == NULL)
+    {
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
         return Fiber;
     }
 
-    Status = BaseCreateStack (NtCurrentProcess(),
-                              dwStackCommitSize,
-                              dwStackReserveSize,
-                              &InitialTeb);
+    Status = BaseCreateStack(NtCurrentProcess(), dwStackCommitSize, dwStackReserveSize, &InitialTeb);
 
-    if (!NT_SUCCESS (Status)) {
-        BaseSetLastNTError (Status);
-        RtlFreeHeap (RtlProcessHeap(), 0, Fiber);
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        RtlFreeHeap(RtlProcessHeap(), 0, Fiber);
         return NULL;
     }
 
@@ -2868,8 +2616,8 @@ Return Value:
 #ifdef _IA64_
 
     Fiber->BStoreLimit = InitialTeb.BStoreLimit;
-    Fiber->DeallocationBStore = (PVOID) ((ULONG_PTR)InitialTeb.StackBase +
-                      ((ULONG_PTR)InitialTeb.StackBase - (ULONG_PTR)InitialTeb.StackAllocationBase));
+    Fiber->DeallocationBStore = (PVOID)((ULONG_PTR)InitialTeb.StackBase +
+                                        ((ULONG_PTR)InitialTeb.StackBase - (ULONG_PTR)InitialTeb.StackAllocationBase));
 
 #endif // _IA64_
 
@@ -2877,21 +2625,14 @@ Return Value:
     // Create an initial context for the new fiber.
     //
 
-    BaseInitializeContext (&Fiber->FiberContext,
-                           lpParameter,
-                           (PVOID)lpStartAddress,
-                           InitialTeb.StackBase,
-                           BaseContextTypeFiber);
+    BaseInitializeContext(&Fiber->FiberContext, lpParameter, (PVOID)lpStartAddress, InitialTeb.StackBase,
+                          BaseContextTypeFiber);
 
     return Fiber;
 }
 
 WINBASEAPI
-VOID
-WINAPI
-DeleteFiber(
-    LPVOID lpFiber
-    )
+VOID WINAPI DeleteFiber(LPVOID lpFiber)
 {
     SIZE_T dwStackSize;
     PFIBER Fiber = lpFiber;
@@ -2901,17 +2642,20 @@ DeleteFiber(
     // If the current fiber makes this call, then it's just a thread exit
     //
     Teb = NtCurrentTeb();
-    if (Teb->NtTib.FiberData == Fiber) {
+    if (Teb->NtTib.FiberData == Fiber)
+    {
         //
         // Free the fiber data if there is some.
         //
 
-        if (Teb->HasFiberData) {
+        if (Teb->HasFiberData)
+        {
 
-            Fiber = Teb->NtTib.FiberData;    
+            Fiber = Teb->NtTib.FiberData;
 
-            if (Fiber != NULL) {
-                RtlFreeHeap(RtlProcessHeap(),0,Fiber);
+            if (Fiber != NULL)
+            {
+                RtlFreeHeap(RtlProcessHeap(), 0, Fiber);
             }
         }
 
@@ -2920,42 +2664,36 @@ DeleteFiber(
 
     dwStackSize = 0;
 
-    NtFreeVirtualMemory (NtCurrentProcess(),
-                         &Fiber->DeallocationStack,
-                         &dwStackSize,
-                         MEM_RELEASE);
+    NtFreeVirtualMemory(NtCurrentProcess(), &Fiber->DeallocationStack, &dwStackSize, MEM_RELEASE);
 
-#if defined (WX86)
+#if defined(WX86)
 
-    if (Fiber->Wx86Tib && Fiber->Wx86Tib->Size == sizeof(WX86TIB)) {
+    if (Fiber->Wx86Tib && Fiber->Wx86Tib->Size == sizeof(WX86TIB))
+    {
         PVOID BaseAddress = Fiber->Wx86Tib->DeallocationStack;
 
         dwStackSize = 0;
 
-        NtFreeVirtualMemory (NtCurrentProcess(),
-                             &BaseAddress,
-                             &dwStackSize,
-                             MEM_RELEASE);
+        NtFreeVirtualMemory(NtCurrentProcess(), &BaseAddress, &dwStackSize, MEM_RELEASE);
     }
 #endif
 
-    RtlFreeHeap(RtlProcessHeap(),0,Fiber);
+    RtlFreeHeap(RtlProcessHeap(), 0, Fiber);
 }
 
 
 WINBASEAPI
 LPVOID
 WINAPI
-ConvertThreadToFiber(
-    LPVOID lpParameter
-    )
+ConvertThreadToFiber(LPVOID lpParameter)
 {
 
     PFIBER Fiber;
     PTEB Teb;
 
-    Fiber = RtlAllocateHeap( RtlProcessHeap(), MAKE_TAG( TMP_TAG ), sizeof(*Fiber) );
-    if (Fiber == NULL) {
+    Fiber = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), sizeof(*Fiber));
+    if (Fiber == NULL)
+    {
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
         return Fiber;
     }
@@ -2981,11 +2719,7 @@ ConvertThreadToFiber(
 }
 
 WINBASEAPI
-BOOL
-WINAPI
-ConvertFiberToThread(
-    VOID
-    )
+BOOL WINAPI ConvertFiberToThread(VOID)
 {
 
     PFIBER Fiber;
@@ -2993,8 +2727,9 @@ ConvertFiberToThread(
 
     Teb = NtCurrentTeb();
 
-    if (!Teb->HasFiberData) {
-        SetLastError (ERROR_INVALID_PARAMETER);
+    if (!Teb->HasFiberData)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
@@ -3002,18 +2737,15 @@ ConvertFiberToThread(
 
     Fiber = Teb->NtTib.FiberData;
     Teb->NtTib.FiberData = NULL;
-    if (Fiber != NULL) {
-        RtlFreeHeap (RtlProcessHeap (), 0, Fiber);
+    if (Fiber != NULL)
+    {
+        RtlFreeHeap(RtlProcessHeap(), 0, Fiber);
     }
 
     return TRUE;
 }
 
-BOOL
-WINAPI
-SwitchToThread(
-    VOID
-    )
+BOOL WINAPI SwitchToThread(VOID)
 
 /*++
 
@@ -3040,24 +2772,19 @@ Return Value:
 
 {
 
-    if (NtYieldExecution() == STATUS_NO_YIELD_PERFORMED) {
+    if (NtYieldExecution() == STATUS_NO_YIELD_PERFORMED)
+    {
         return FALSE;
-    } else {
+    }
+    else
+    {
         return TRUE;
     }
 }
 
 
-BOOL
-WINAPI
-RegisterWaitForSingleObject(
-    PHANDLE phNewWaitObject,
-    HANDLE hObject,
-    WAITORTIMERCALLBACK Callback,
-    PVOID Context,
-    ULONG dwMilliseconds,
-    ULONG dwFlags
-    )
+BOOL WINAPI RegisterWaitForSingleObject(PHANDLE phNewWaitObject, HANDLE hObject, WAITORTIMERCALLBACK Callback,
+                                        PVOID Context, ULONG dwMilliseconds, ULONG dwFlags)
 /*++
 
 Routine Description:
@@ -3106,19 +2833,22 @@ Return Value:
 
 --*/
 {
-    NTSTATUS Status ;
+    NTSTATUS Status;
     PPEB Peb;
 
     *phNewWaitObject = NULL;
     Peb = NtCurrentPeb();
-    switch( HandleToUlong(hObject) )
+    switch (HandleToUlong(hObject))
     {
-        case STD_INPUT_HANDLE:  hObject = Peb->ProcessParameters->StandardInput;
-                                break;
-        case STD_OUTPUT_HANDLE: hObject = Peb->ProcessParameters->StandardOutput;
-                                break;
-        case STD_ERROR_HANDLE:  hObject = Peb->ProcessParameters->StandardError;
-                                break;
+    case STD_INPUT_HANDLE:
+        hObject = Peb->ProcessParameters->StandardInput;
+        break;
+    case STD_OUTPUT_HANDLE:
+        hObject = Peb->ProcessParameters->StandardOutput;
+        break;
+    case STD_ERROR_HANDLE:
+        hObject = Peb->ProcessParameters->StandardError;
+        break;
     }
 
     if (CONSOLE_HANDLE(hObject) && VerifyConsoleIoHandle(hObject))
@@ -3126,35 +2856,23 @@ Return Value:
         hObject = GetConsoleInputWaitHandle();
     }
 
-    Status = RtlRegisterWait(
-                phNewWaitObject,
-                hObject,
-                Callback,
-                Context,
-                dwMilliseconds,
-                dwFlags );
+    Status = RtlRegisterWait(phNewWaitObject, hObject, Callback, Context, dwMilliseconds, dwFlags);
 
-    if ( NT_SUCCESS( Status ) )
+    if (NT_SUCCESS(Status))
     {
-        return TRUE ;
+        return TRUE;
     }
 
-    BaseSetLastNTError( Status );
+    BaseSetLastNTError(Status);
 
-    return FALSE ;
-
+    return FALSE;
 }
 
 
 HANDLE
 WINAPI
-RegisterWaitForSingleObjectEx(
-    HANDLE hObject,
-    WAITORTIMERCALLBACK Callback,
-    PVOID Context,
-    ULONG dwMilliseconds,
-    ULONG dwFlags
-    )
+RegisterWaitForSingleObjectEx(HANDLE hObject, WAITORTIMERCALLBACK Callback, PVOID Context, ULONG dwMilliseconds,
+                              ULONG dwFlags)
 /*++
 
 Routine Description:
@@ -3202,19 +2920,22 @@ Return Value:
 
 --*/
 {
-    HANDLE WaitHandle ;
-    NTSTATUS Status ;
+    HANDLE WaitHandle;
+    NTSTATUS Status;
     PPEB Peb;
 
     Peb = NtCurrentPeb();
-    switch( HandleToUlong(hObject) )
+    switch (HandleToUlong(hObject))
     {
-        case STD_INPUT_HANDLE:  hObject = Peb->ProcessParameters->StandardInput;
-                                break;
-        case STD_OUTPUT_HANDLE: hObject = Peb->ProcessParameters->StandardOutput;
-                                break;
-        case STD_ERROR_HANDLE:  hObject = Peb->ProcessParameters->StandardError;
-                                break;
+    case STD_INPUT_HANDLE:
+        hObject = Peb->ProcessParameters->StandardInput;
+        break;
+    case STD_OUTPUT_HANDLE:
+        hObject = Peb->ProcessParameters->StandardOutput;
+        break;
+    case STD_ERROR_HANDLE:
+        hObject = Peb->ProcessParameters->StandardError;
+        break;
     }
 
     if (CONSOLE_HANDLE(hObject) && VerifyConsoleIoHandle(hObject))
@@ -3222,30 +2943,19 @@ Return Value:
         hObject = GetConsoleInputWaitHandle();
     }
 
-    Status = RtlRegisterWait(
-                &WaitHandle,
-                hObject,
-                Callback,
-                Context,
-                dwMilliseconds,
-                dwFlags );
+    Status = RtlRegisterWait(&WaitHandle, hObject, Callback, Context, dwMilliseconds, dwFlags);
 
-    if ( NT_SUCCESS( Status ) )
+    if (NT_SUCCESS(Status))
     {
-        return WaitHandle ;
+        return WaitHandle;
     }
 
-    BaseSetLastNTError( Status );
+    BaseSetLastNTError(Status);
 
-    return NULL ;
-
+    return NULL;
 }
 
-BOOL
-WINAPI
-UnregisterWait(
-    HANDLE WaitHandle
-    )
+BOOL WINAPI UnregisterWait(HANDLE WaitHandle)
 /*++
 
 Routine Description:
@@ -3267,37 +2977,31 @@ Return Value:
 
 --*/
 {
-    NTSTATUS Status ;
+    NTSTATUS Status;
 
-    if ( WaitHandle )
+    if (WaitHandle)
     {
-        Status = RtlDeregisterWait( WaitHandle );
+        Status = RtlDeregisterWait(WaitHandle);
 
         // set error if it is a non-blocking call and STATUS_PENDING was returned
 
-        if ( Status == STATUS_PENDING  || !NT_SUCCESS( Status ) )
+        if (Status == STATUS_PENDING || !NT_SUCCESS(Status))
         {
 
-            BaseSetLastNTError( Status );
+            BaseSetLastNTError(Status);
             return FALSE;
         }
 
-        return TRUE ;
-
+        return TRUE;
     }
 
-    SetLastError( ERROR_INVALID_HANDLE );
+    SetLastError(ERROR_INVALID_HANDLE);
 
-    return FALSE ;
+    return FALSE;
 }
 
 
-BOOL
-WINAPI
-UnregisterWaitEx(
-    HANDLE WaitHandle,
-    HANDLE CompletionEvent
-    )
+BOOL WINAPI UnregisterWaitEx(HANDLE WaitHandle, HANDLE CompletionEvent)
 /*++
 
 Routine Description:
@@ -3324,38 +3028,30 @@ Return Value:
 
 --*/
 {
-    NTSTATUS Status ;
+    NTSTATUS Status;
 
-    if ( WaitHandle )
+    if (WaitHandle)
     {
-        Status = RtlDeregisterWaitEx( WaitHandle, CompletionEvent );
+        Status = RtlDeregisterWaitEx(WaitHandle, CompletionEvent);
 
         // set error if it is a non-blocking call and STATUS_PENDING was returned
-        
-        if ( (CompletionEvent != INVALID_HANDLE_VALUE && Status == STATUS_PENDING)
-            || ( ! NT_SUCCESS( Status ) ) )
+
+        if ((CompletionEvent != INVALID_HANDLE_VALUE && Status == STATUS_PENDING) || (!NT_SUCCESS(Status)))
         {
 
-            BaseSetLastNTError( Status );
+            BaseSetLastNTError(Status);
             return FALSE;
         }
-        
-        return TRUE ;
 
+        return TRUE;
     }
 
-    SetLastError( ERROR_INVALID_HANDLE );
+    SetLastError(ERROR_INVALID_HANDLE);
 
-    return FALSE ;
+    return FALSE;
 }
 
-BOOL
-WINAPI
-QueueUserWorkItem(
-    LPTHREAD_START_ROUTINE Function,
-    PVOID Context,
-    ULONG Flags
-    )
+BOOL WINAPI QueueUserWorkItem(LPTHREAD_START_ROUTINE Function, PVOID Context, ULONG Flags)
 /*++
 
 Routine Description:
@@ -3393,30 +3089,21 @@ Return Value:
 --*/
 
 {
-    NTSTATUS Status ;
+    NTSTATUS Status;
 
-    Status = RtlQueueWorkItem(
-                (WORKERCALLBACKFUNC) Function,
-                Context,
-                Flags );
+    Status = RtlQueueWorkItem((WORKERCALLBACKFUNC)Function, Context, Flags);
 
-    if ( NT_SUCCESS( Status ) )
+    if (NT_SUCCESS(Status))
     {
-        return TRUE ;
+        return TRUE;
     }
 
-    BaseSetLastNTError( Status );
+    BaseSetLastNTError(Status);
 
-    return FALSE ;
+    return FALSE;
 }
 
-BOOL
-WINAPI
-BindIoCompletionCallback (
-    HANDLE FileHandle,
-    LPOVERLAPPED_COMPLETION_ROUTINE Function,
-    ULONG Flags
-    )
+BOOL WINAPI BindIoCompletionCallback(HANDLE FileHandle, LPOVERLAPPED_COMPLETION_ROUTINE Function, ULONG Flags)
 /*++
 
 Routine Description:
@@ -3441,21 +3128,18 @@ Return Value:
 --*/
 
 {
-    NTSTATUS Status ;
+    NTSTATUS Status;
 
-    Status = RtlSetIoCompletionCallback(
-                FileHandle,
-                (APC_CALLBACK_FUNCTION) Function,
-                Flags );
+    Status = RtlSetIoCompletionCallback(FileHandle, (APC_CALLBACK_FUNCTION)Function, Flags);
 
-    if ( NT_SUCCESS( Status ) )
+    if (NT_SUCCESS(Status))
     {
-        return TRUE ;
+        return TRUE;
     }
 
-    BaseSetLastNTError( Status );
+    BaseSetLastNTError(Status);
 
-    return FALSE ;
+    return FALSE;
 }
 
 
@@ -3474,31 +3158,28 @@ Return Value:
 //  Notes:
 //
 //----------------------------------------------------------------------------
-BOOL
-BasepCreateDefaultTimerQueue(
-    VOID
-    )
+BOOL BasepCreateDefaultTimerQueue(VOID)
 {
-    NTSTATUS Status ;
+    NTSTATUS Status;
 
-    while ( 1 )
+    while (1)
     {
-        if ( !InterlockedExchange( &BasepTimerQueueInitFlag, 1 ) )
+        if (!InterlockedExchange(&BasepTimerQueueInitFlag, 1))
         {
             //
             // Force the done flag to 0.  If it was 1, so one already tried to
             // init and failed.
             //
 
-            InterlockedExchange( &BasepTimerQueueDoneFlag, 0 );
+            InterlockedExchange(&BasepTimerQueueDoneFlag, 0);
 
-            Status = RtlCreateTimerQueue( &BasepDefaultTimerQueue );
+            Status = RtlCreateTimerQueue(&BasepDefaultTimerQueue);
 
-            if ( NT_SUCCESS( Status ) )
+            if (NT_SUCCESS(Status))
             {
-                InterlockedIncrement( &BasepTimerQueueDoneFlag );
+                InterlockedIncrement(&BasepTimerQueueDoneFlag);
 
-                return TRUE ;
+                return TRUE;
             }
 
             //
@@ -3508,28 +3189,28 @@ BasepCreateDefaultTimerQueue(
             // the done flag, or any other threads would be stuck.
             //
 
-            BaseSetLastNTError( Status );
+            BaseSetLastNTError(Status);
 
-            InterlockedIncrement( &BasepTimerQueueDoneFlag );
+            InterlockedIncrement(&BasepTimerQueueDoneFlag);
 
-            InterlockedDecrement( &BasepTimerQueueInitFlag );
+            InterlockedDecrement(&BasepTimerQueueInitFlag);
 
-            return FALSE ;
+            return FALSE;
         }
         else
         {
-            LARGE_INTEGER TimeOut ;
+            LARGE_INTEGER TimeOut;
 
-            TimeOut.QuadPart = -1 * 10 * 10000 ;
+            TimeOut.QuadPart = -1 * 10 * 10000;
 
             //
             // yield the quantum so that the other thread can
             // try to create the timer queue.
             //
 
-            while ( !BasepTimerQueueDoneFlag )
+            while (!BasepTimerQueueDoneFlag)
             {
-                NtDelayExecution( FALSE, &TimeOut );
+                NtDelayExecution(FALSE, &TimeOut);
             }
 
             //
@@ -3538,20 +3219,17 @@ BasepCreateDefaultTimerQueue(
             // the queue if another thread failed.
             //
 
-            if ( BasepDefaultTimerQueue )
+            if (BasepDefaultTimerQueue)
             {
-                return TRUE ;
+                return TRUE;
             }
-
         }
     }
 }
 
 HANDLE
 WINAPI
-CreateTimerQueue(
-    VOID
-    )
+CreateTimerQueue(VOID)
 /*++
 
 Routine Description:
@@ -3575,34 +3253,24 @@ Return Value:
 
 --*/
 {
-    NTSTATUS Status ;
-    HANDLE Handle ;
+    NTSTATUS Status;
+    HANDLE Handle;
 
-    Status = RtlCreateTimerQueue( &Handle );
+    Status = RtlCreateTimerQueue(&Handle);
 
-    if ( NT_SUCCESS( Status ) )
+    if (NT_SUCCESS(Status))
     {
-        return Handle ;
+        return Handle;
     }
 
-    BaseSetLastNTError( Status );
+    BaseSetLastNTError(Status);
 
-    return NULL ;
-
+    return NULL;
 }
 
 
-BOOL
-WINAPI
-CreateTimerQueueTimer(
-    PHANDLE phNewTimer,
-    HANDLE TimerQueue,
-    WAITORTIMERCALLBACK Callback,
-    PVOID Parameter,
-    DWORD DueTime,
-    DWORD Period,
-    ULONG Flags
-    )
+BOOL WINAPI CreateTimerQueueTimer(PHANDLE phNewTimer, HANDLE TimerQueue, WAITORTIMERCALLBACK Callback, PVOID Parameter,
+                                  DWORD DueTime, DWORD Period, ULONG Flags)
 /*++
 
 Routine Description:
@@ -3656,58 +3324,42 @@ Return Value:
 
 --*/
 {
-    NTSTATUS Status ;
+    NTSTATUS Status;
 
-    *phNewTimer = NULL ;
+    *phNewTimer = NULL;
 
     //
     // if the passed timer queue is NULL, use the default one.  If it is null,
     // call the initializer that will do it in a nice thread safe fashion.
     //
 
-    if ( !TimerQueue )
+    if (!TimerQueue)
     {
-        if ( !BasepDefaultTimerQueue )
+        if (!BasepDefaultTimerQueue)
         {
-            if ( !BasepCreateDefaultTimerQueue( ) )
+            if (!BasepCreateDefaultTimerQueue())
             {
-                return FALSE ;
+                return FALSE;
             }
         }
 
-        TimerQueue = BasepDefaultTimerQueue ;
+        TimerQueue = BasepDefaultTimerQueue;
     }
 
-    Status = RtlCreateTimer(
-                TimerQueue,
-                phNewTimer,
-                Callback,
-                Parameter,
-                DueTime,
-                Period,
-                Flags );
+    Status = RtlCreateTimer(TimerQueue, phNewTimer, Callback, Parameter, DueTime, Period, Flags);
 
-    if ( NT_SUCCESS( Status ) )
+    if (NT_SUCCESS(Status))
     {
-        return TRUE ;
+        return TRUE;
     }
 
-    BaseSetLastNTError( Status );
+    BaseSetLastNTError(Status);
 
-    return FALSE ;
-
+    return FALSE;
 }
 
 
-
-BOOL
-WINAPI
-ChangeTimerQueueTimer(
-    HANDLE TimerQueue,
-    HANDLE Timer,
-    ULONG DueTime,
-    ULONG Period
-    )
+BOOL WINAPI ChangeTimerQueueTimer(HANDLE TimerQueue, HANDLE Timer, ULONG DueTime, ULONG Period)
 /*++
 
 Routine Description:
@@ -3737,48 +3389,39 @@ Return Value:
 --*/
 
 {
-    NTSTATUS Status ;
+    NTSTATUS Status;
 
     //
     // Use the default timer queue if none was passed in.  If there isn't one, then
     // the process hasn't created one with SetTimerQueueTimer, and that's an error.
     //
 
-    if ( !TimerQueue )
+    if (!TimerQueue)
     {
-        TimerQueue = BasepDefaultTimerQueue ;
+        TimerQueue = BasepDefaultTimerQueue;
 
-        if ( !TimerQueue )
+        if (!TimerQueue)
         {
-            SetLastError( ERROR_INVALID_PARAMETER );
+            SetLastError(ERROR_INVALID_PARAMETER);
 
-            return FALSE ;
+            return FALSE;
         }
     }
 
-    Status = RtlUpdateTimer( TimerQueue,
-                             Timer,
-                             DueTime,
-                             Period );
+    Status = RtlUpdateTimer(TimerQueue, Timer, DueTime, Period);
 
-    if ( NT_SUCCESS( Status ) )
+    if (NT_SUCCESS(Status))
     {
-        return TRUE ;
+        return TRUE;
     }
 
-    BaseSetLastNTError( Status );
+    BaseSetLastNTError(Status);
 
-    return FALSE ;
+    return FALSE;
 }
 
 
-BOOL
-WINAPI
-DeleteTimerQueueTimer(
-    HANDLE TimerQueue,
-    HANDLE Timer,
-    HANDLE CompletionEvent
-    )
+BOOL WINAPI DeleteTimerQueueTimer(HANDLE TimerQueue, HANDLE Timer, HANDLE CompletionEvent)
 /*++
 
 Routine Description:
@@ -3806,48 +3449,41 @@ Return Value:
 
 --*/
 {
-    NTSTATUS Status ;
+    NTSTATUS Status;
 
     //
     // Use the default timer queue if none was passed in.  If there isn't one, then
     // the process hasn't created one with SetTimerQueueTimer, and that's an error.
     //
 
-    if ( !TimerQueue )
+    if (!TimerQueue)
     {
-        TimerQueue = BasepDefaultTimerQueue ;
+        TimerQueue = BasepDefaultTimerQueue;
 
-        if ( !TimerQueue )
+        if (!TimerQueue)
         {
-            SetLastError( ERROR_INVALID_PARAMETER );
+            SetLastError(ERROR_INVALID_PARAMETER);
 
-            return FALSE ;
+            return FALSE;
         }
     }
 
-    Status = RtlDeleteTimer( TimerQueue, Timer, CompletionEvent );
+    Status = RtlDeleteTimer(TimerQueue, Timer, CompletionEvent);
 
     // set error if it is a non-blocking call and STATUS_PENDING was returned
-    
-    if ( (CompletionEvent != INVALID_HANDLE_VALUE && Status == STATUS_PENDING)
-        || ( ! NT_SUCCESS( Status ) ) )
+
+    if ((CompletionEvent != INVALID_HANDLE_VALUE && Status == STATUS_PENDING) || (!NT_SUCCESS(Status)))
     {
 
-        BaseSetLastNTError( Status );
+        BaseSetLastNTError(Status);
         return FALSE;
     }
-    
-    return TRUE ;
 
+    return TRUE;
 }
 
 
-BOOL
-WINAPI
-DeleteTimerQueueEx(
-    HANDLE TimerQueue,
-    HANDLE CompletionEvent
-    )
+BOOL WINAPI DeleteTimerQueueEx(HANDLE TimerQueue, HANDLE CompletionEvent)
 /*++
 
 Routine Description:
@@ -3874,36 +3510,30 @@ Return Value:
 
 --*/
 {
-    NTSTATUS Status ;
+    NTSTATUS Status;
 
-    if ( TimerQueue )
+    if (TimerQueue)
     {
-        Status = RtlDeleteTimerQueueEx( TimerQueue, CompletionEvent );
+        Status = RtlDeleteTimerQueueEx(TimerQueue, CompletionEvent);
 
         // set error if it is a non-blocking call and STATUS_PENDING was returned
-        
-        if ( (CompletionEvent != INVALID_HANDLE_VALUE && Status == STATUS_PENDING)
-            || ( ! NT_SUCCESS( Status ) ) )
+
+        if ((CompletionEvent != INVALID_HANDLE_VALUE && Status == STATUS_PENDING) || (!NT_SUCCESS(Status)))
         {
 
-            BaseSetLastNTError( Status );
+            BaseSetLastNTError(Status);
             return FALSE;
         }
-       
-        return TRUE ;
 
+        return TRUE;
     }
 
 
-    SetLastError( ERROR_INVALID_HANDLE );
-    return FALSE ;
+    SetLastError(ERROR_INVALID_HANDLE);
+    return FALSE;
 }
 
-BOOL
-WINAPI
-ThreadPoolCleanup (
-    ULONG Flags
-    )
+BOOL WINAPI ThreadPoolCleanup(ULONG Flags)
 /*++
 
 Routine Description:
@@ -3924,70 +3554,54 @@ Return Value:
 
     // RtlThreadPoolCleanup( Flags ) ;
 
-    return TRUE ;
+    return TRUE;
 }
 
 
 /*OBSOLETE FUNCTION - REPLACED BY CreateTimerQueueTimer */
 HANDLE
 WINAPI
-SetTimerQueueTimer(
-    HANDLE TimerQueue,
-    WAITORTIMERCALLBACK Callback,
-    PVOID Parameter,
-    DWORD DueTime,
-    DWORD Period,
-    BOOL PreferIo
-    )
+SetTimerQueueTimer(HANDLE TimerQueue, WAITORTIMERCALLBACK Callback, PVOID Parameter, DWORD DueTime, DWORD Period,
+                   BOOL PreferIo)
 /*OBSOLETE FUNCTION - REPLACED BY CreateTimerQueueTimer */
 {
-    NTSTATUS Status ;
-    HANDLE Handle ;
+    NTSTATUS Status;
+    HANDLE Handle;
 
     //
     // if the passed timer queue is NULL, use the default one.  If it is null,
     // call the initializer that will do it in a nice thread safe fashion.
     //
 
-    if ( !TimerQueue )
+    if (!TimerQueue)
     {
-        if ( !BasepDefaultTimerQueue )
+        if (!BasepDefaultTimerQueue)
         {
-            if ( !BasepCreateDefaultTimerQueue( ) )
+            if (!BasepCreateDefaultTimerQueue())
             {
-                return NULL ;
+                return NULL;
             }
         }
 
-        TimerQueue = BasepDefaultTimerQueue ;
+        TimerQueue = BasepDefaultTimerQueue;
     }
 
-    Status = RtlCreateTimer(
-                TimerQueue,
-                &Handle,
-                Callback,
-                Parameter,
-                DueTime,
-                Period,
-                (PreferIo ? WT_EXECUTEINIOTHREAD : 0 ) );
+    Status = RtlCreateTimer(TimerQueue, &Handle, Callback, Parameter, DueTime, Period,
+                            (PreferIo ? WT_EXECUTEINIOTHREAD : 0));
 
-    if ( NT_SUCCESS( Status ) )
+    if (NT_SUCCESS(Status))
     {
-        return Handle ;
+        return Handle;
     }
 
-    BaseSetLastNTError( Status );
+    BaseSetLastNTError(Status);
 
-    return NULL ;
+    return NULL;
 }
 
 
 /*OBSOLETE: Replaced by DeleteTimerQueueEx */
-BOOL
-WINAPI
-DeleteTimerQueue(
-    HANDLE TimerQueue
-    )
+BOOL WINAPI DeleteTimerQueue(HANDLE TimerQueue)
 /*++
 
   OBSOLETE: Replaced by DeleteTimerQueueEx
@@ -4011,11 +3625,11 @@ Return Value:
 
 --*/
 {
-    NTSTATUS Status ;
+    NTSTATUS Status;
 
     if (TimerQueue)
     {
-        Status = RtlDeleteTimerQueueEx( TimerQueue, NULL );
+        Status = RtlDeleteTimerQueueEx(TimerQueue, NULL);
 
         // set error if it is a non-blocking call and STATUS_PENDING was returned
         /*
@@ -4026,53 +3640,46 @@ Return Value:
             return FALSE;
         }
         */
-        return TRUE ;
-
+        return TRUE;
     }
 
-    SetLastError( ERROR_INVALID_HANDLE );
+    SetLastError(ERROR_INVALID_HANDLE);
 
-    return FALSE ;
+    return FALSE;
 }
 
 
 /*OBSOLETE: USE DeleteTimerQueueTimer*/
-BOOL
-WINAPI
-CancelTimerQueueTimer(
-    HANDLE TimerQueue,
-    HANDLE Timer
-    )
+BOOL WINAPI CancelTimerQueueTimer(HANDLE TimerQueue, HANDLE Timer)
 /*OBSOLETE: USE DeleteTimerQueueTimer*/
 {
-    NTSTATUS Status ;
+    NTSTATUS Status;
 
     //
     // Use the default timer queue if none was passed in.  If there isn't one, then
     // the process hasn't created one with SetTimerQueueTimer, and that's an error.
     //
 
-    if ( !TimerQueue )
+    if (!TimerQueue)
     {
-        TimerQueue = BasepDefaultTimerQueue ;
+        TimerQueue = BasepDefaultTimerQueue;
 
-        if ( !TimerQueue )
+        if (!TimerQueue)
         {
-            SetLastError( ERROR_INVALID_PARAMETER );
+            SetLastError(ERROR_INVALID_PARAMETER);
 
-            return FALSE ;
+            return FALSE;
         }
     }
 
-    Status = RtlDeleteTimer( TimerQueue, Timer, NULL );
+    Status = RtlDeleteTimer(TimerQueue, Timer, NULL);
 
-    if ( NT_SUCCESS( Status ) )
+    if (NT_SUCCESS(Status))
     {
-        return TRUE ;
+        return TRUE;
     }
 
-    BaseSetLastNTError( Status );
+    BaseSetLastNTError(Status);
 
-    return FALSE ;
-
+    return FALSE;
 }

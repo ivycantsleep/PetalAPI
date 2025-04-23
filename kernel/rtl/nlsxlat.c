@@ -17,41 +17,32 @@
 
 
 NTSTATUS
-RtlConsoleMultiByteToUnicodeN(
-    OUT PWCH UnicodeString,
-    IN ULONG MaxBytesInUnicodeString,
-    OUT PULONG BytesInUnicodeString OPTIONAL,
-    IN PCH MultiByteString,
-    IN ULONG BytesInMultiByteString,
-    OUT PULONG pdwSpecialChar );
+RtlConsoleMultiByteToUnicodeN(OUT PWCH UnicodeString, IN ULONG MaxBytesInUnicodeString,
+                              OUT PULONG BytesInUnicodeString OPTIONAL, IN PCH MultiByteString,
+                              IN ULONG BytesInMultiByteString, OUT PULONG pdwSpecialChar);
 
-VOID
-RtlpInitUpcaseTable(
-    IN PUSHORT TableBase,
-    OUT PNLSTABLEINFO CodePageTable
-    );
+VOID RtlpInitUpcaseTable(IN PUSHORT TableBase, OUT PNLSTABLEINFO CodePageTable);
 
 #if defined(ALLOC_PRAGMA) && defined(NTOS_KERNEL_RUNTIME)
-#pragma alloc_text(PAGE,RtlConsoleMultiByteToUnicodeN)
-#pragma alloc_text(PAGE,RtlMultiByteToUnicodeN)
-#pragma alloc_text(PAGE,RtlOemToUnicodeN)
-#pragma alloc_text(PAGE,RtlUnicodeToMultiByteN)
-#pragma alloc_text(PAGE,RtlUpcaseUnicodeToMultiByteN)
-#pragma alloc_text(PAGE,RtlUnicodeToOemN)
-#pragma alloc_text(PAGE,RtlUpcaseUnicodeToOemN)
-#pragma alloc_text(PAGE,RtlpDidUnicodeToOemWork)
-#pragma alloc_text(PAGE,RtlCustomCPToUnicodeN)
-#pragma alloc_text(PAGE,RtlUnicodeToCustomCPN)
-#pragma alloc_text(PAGE,RtlUpcaseUnicodeToCustomCPN)
-#pragma alloc_text(PAGE,RtlInitCodePageTable)
-#pragma alloc_text(PAGE,RtlpInitUpcaseTable)
-#pragma alloc_text(PAGE,RtlInitNlsTables)
-#pragma alloc_text(PAGE,RtlResetRtlTranslations)
-#pragma alloc_text(PAGE,RtlMultiByteToUnicodeSize)
-#pragma alloc_text(PAGE,RtlUnicodeToMultiByteSize)
-#pragma alloc_text(PAGE,RtlGetDefaultCodePage)
+#pragma alloc_text(PAGE, RtlConsoleMultiByteToUnicodeN)
+#pragma alloc_text(PAGE, RtlMultiByteToUnicodeN)
+#pragma alloc_text(PAGE, RtlOemToUnicodeN)
+#pragma alloc_text(PAGE, RtlUnicodeToMultiByteN)
+#pragma alloc_text(PAGE, RtlUpcaseUnicodeToMultiByteN)
+#pragma alloc_text(PAGE, RtlUnicodeToOemN)
+#pragma alloc_text(PAGE, RtlUpcaseUnicodeToOemN)
+#pragma alloc_text(PAGE, RtlpDidUnicodeToOemWork)
+#pragma alloc_text(PAGE, RtlCustomCPToUnicodeN)
+#pragma alloc_text(PAGE, RtlUnicodeToCustomCPN)
+#pragma alloc_text(PAGE, RtlUpcaseUnicodeToCustomCPN)
+#pragma alloc_text(PAGE, RtlInitCodePageTable)
+#pragma alloc_text(PAGE, RtlpInitUpcaseTable)
+#pragma alloc_text(PAGE, RtlInitNlsTables)
+#pragma alloc_text(PAGE, RtlResetRtlTranslations)
+#pragma alloc_text(PAGE, RtlMultiByteToUnicodeSize)
+#pragma alloc_text(PAGE, RtlUnicodeToMultiByteSize)
+#pragma alloc_text(PAGE, RtlGetDefaultCodePage)
 #endif
-
 
 
 //
@@ -80,34 +71,34 @@ PUSHORT Nls844UnicodeLowercaseTable = NULL;
 //
 // ACP related data
 //
-USHORT   NlsLeadByteInfoTable[DBCS_TABLE_SIZE] = {0}; // Lead byte info. for ACP
-USHORT   NlsAnsiCodePage = 0;               // Default ANSI code page
-USHORT   NlsOemCodePage = 0;                // Default OEM code page
-const PUSHORT  NlsLeadByteInfo = NlsLeadByteInfoTable;
-PUSHORT  NlsMbAnsiCodePageTables = NULL;   // Multibyte to Unicode translation tables
-PUSHORT  NlsAnsiToUnicodeData = NULL;      // Ansi CP to Unicode translation table
-PCH      NlsUnicodeToAnsiData = NULL;      // Unicode to Ansi CP translation table
-PUSHORT  NlsUnicodeToMbAnsiData = NULL;    // Unicode to Multibyte Ansi CP translation table
-BOOLEAN  NlsMbCodePageTag = FALSE;         // TRUE -> Multibyte ACP, FALSE -> Singlebyte ACP
+USHORT NlsLeadByteInfoTable[DBCS_TABLE_SIZE] = { 0 }; // Lead byte info. for ACP
+USHORT NlsAnsiCodePage = 0;                           // Default ANSI code page
+USHORT NlsOemCodePage = 0;                            // Default OEM code page
+const PUSHORT NlsLeadByteInfo = NlsLeadByteInfoTable;
+PUSHORT NlsMbAnsiCodePageTables = NULL; // Multibyte to Unicode translation tables
+PUSHORT NlsAnsiToUnicodeData = NULL;    // Ansi CP to Unicode translation table
+PCH NlsUnicodeToAnsiData = NULL;        // Unicode to Ansi CP translation table
+PUSHORT NlsUnicodeToMbAnsiData = NULL;  // Unicode to Multibyte Ansi CP translation table
+BOOLEAN NlsMbCodePageTag = FALSE;       // TRUE -> Multibyte ACP, FALSE -> Singlebyte ACP
 
 //
 // OEM related data
 //
-USHORT   NlsOemLeadByteInfoTable[DBCS_TABLE_SIZE] = {0}; // Lead byte info. for 0CP
-const PUSHORT  NlsOemLeadByteInfo = NlsOemLeadByteInfoTable;
-PUSHORT  NlsMbOemCodePageTables = NULL;       // OEM Multibyte to Unicode translation tables
-PUSHORT  NlsOemToUnicodeData = NULL;          // Oem CP to Unicode translation table
-PCH      NlsUnicodeToOemData = NULL;          // Unicode to Oem CP translation table
-PUSHORT  NlsUnicodeToMbOemData = NULL;        // Unicode to Multibyte Oem CP translation table
-BOOLEAN  NlsMbOemCodePageTag = FALSE;         // TRUE -> Multibyte OCP, FALSE -> Singlebyte OCP
+USHORT NlsOemLeadByteInfoTable[DBCS_TABLE_SIZE] = { 0 }; // Lead byte info. for 0CP
+const PUSHORT NlsOemLeadByteInfo = NlsOemLeadByteInfoTable;
+PUSHORT NlsMbOemCodePageTables = NULL; // OEM Multibyte to Unicode translation tables
+PUSHORT NlsOemToUnicodeData = NULL;    // Oem CP to Unicode translation table
+PCH NlsUnicodeToOemData = NULL;        // Unicode to Oem CP translation table
+PUSHORT NlsUnicodeToMbOemData = NULL;  // Unicode to Multibyte Oem CP translation table
+BOOLEAN NlsMbOemCodePageTag = FALSE;   // TRUE -> Multibyte OCP, FALSE -> Singlebyte OCP
 
 //
 // Default info taken from data files
 //
-USHORT   UnicodeDefaultChar = 0;
+USHORT UnicodeDefaultChar = 0;
 
-USHORT   OemDefaultChar = 0;
-USHORT   OemTransUniDefaultChar = 0;
+USHORT OemDefaultChar = 0;
+USHORT OemTransUniDefaultChar = 0;
 
 //
 // Default info NOT taken from data files
@@ -115,15 +106,10 @@ USHORT   OemTransUniDefaultChar = 0;
 #define UnicodeNull 0x0000
 
 
-
 NTSTATUS
-RtlConsoleMultiByteToUnicodeN(
-    OUT PWCH UnicodeString,
-    IN ULONG MaxBytesInUnicodeString,
-    OUT PULONG BytesInUnicodeString OPTIONAL,
-    IN PCH MultiByteString,
-    IN ULONG BytesInMultiByteString,
-    OUT PULONG pdwSpecialChar )
+RtlConsoleMultiByteToUnicodeN(OUT PWCH UnicodeString, IN ULONG MaxBytesInUnicodeString,
+                              OUT PULONG BytesInUnicodeString OPTIONAL, IN PCH MultiByteString,
+                              IN ULONG BytesInMultiByteString, OUT PULONG pdwSpecialChar)
 
 /*++
 
@@ -182,127 +168,163 @@ Return Value:
 
     MaxCharsInUnicodeString = MaxBytesInUnicodeString / sizeof(WCHAR);
 
-    if (!NlsMbCodePageTag) {
+    if (!NlsMbCodePageTag)
+    {
 
-        LoopCount = (MaxCharsInUnicodeString < BytesInMultiByteString) ?
-                     MaxCharsInUnicodeString : BytesInMultiByteString;
+        LoopCount =
+            (MaxCharsInUnicodeString < BytesInMultiByteString) ? MaxCharsInUnicodeString : BytesInMultiByteString;
 
         if (ARGUMENT_PRESENT(BytesInUnicodeString))
             *BytesInUnicodeString = LoopCount * sizeof(WCHAR);
 
-        TranslateTable = NlsAnsiToUnicodeData;  // used to help the mips compiler
+        TranslateTable = NlsAnsiToUnicodeData; // used to help the mips compiler
 
-        quick_copy:
-            switch( LoopCount ) {
-            default:
-                if ((UCHAR)MultiByteString[0x1F] < 0x20)    goto  bad_case;
-                UnicodeString[0x1F] = TranslateTable[(UCHAR)MultiByteString[0x1F]];
-            case 0x1F:
-                if ((UCHAR)MultiByteString[0x1E] < 0x20)    goto  bad_case;
-                UnicodeString[0x1E] = TranslateTable[(UCHAR)MultiByteString[0x1E]];
-            case 0x1E:
-                if ((UCHAR)MultiByteString[0x1D] < 0x20)    goto  bad_case;
-                UnicodeString[0x1D] = TranslateTable[(UCHAR)MultiByteString[0x1D]];
-            case 0x1D:
-                if ((UCHAR)MultiByteString[0x1C] < 0x20)    goto  bad_case;
-                UnicodeString[0x1C] = TranslateTable[(UCHAR)MultiByteString[0x1C]];
-            case 0x1C:
-                if ((UCHAR)MultiByteString[0x1B] < 0x20)    goto  bad_case;
-                UnicodeString[0x1B] = TranslateTable[(UCHAR)MultiByteString[0x1B]];
-            case 0x1B:
-                if ((UCHAR)MultiByteString[0x1A] < 0x20)    goto  bad_case;
-                UnicodeString[0x1A] = TranslateTable[(UCHAR)MultiByteString[0x1A]];
-            case 0x1A:
-                if ((UCHAR)MultiByteString[0x19] < 0x20)    goto  bad_case;
-                UnicodeString[0x19] = TranslateTable[(UCHAR)MultiByteString[0x19]];
-            case 0x19:
-                if ((UCHAR)MultiByteString[0x18] < 0x20)    goto  bad_case;
-                UnicodeString[0x18] = TranslateTable[(UCHAR)MultiByteString[0x18]];
-            case 0x18:
-                if ((UCHAR)MultiByteString[0x17] < 0x20)    goto  bad_case;
-                UnicodeString[0x17] = TranslateTable[(UCHAR)MultiByteString[0x17]];
-            case 0x17:
-                if ((UCHAR)MultiByteString[0x16] < 0x20)    goto  bad_case;
-                UnicodeString[0x16] = TranslateTable[(UCHAR)MultiByteString[0x16]];
-            case 0x16:
-                if ((UCHAR)MultiByteString[0x15] < 0x20)    goto  bad_case;
-                UnicodeString[0x15] = TranslateTable[(UCHAR)MultiByteString[0x15]];
-            case 0x15:
-                if ((UCHAR)MultiByteString[0x14] < 0x20)    goto  bad_case;
-                UnicodeString[0x14] = TranslateTable[(UCHAR)MultiByteString[0x14]];
-            case 0x14:
-                if ((UCHAR)MultiByteString[0x13] < 0x20)    goto  bad_case;
-                UnicodeString[0x13] = TranslateTable[(UCHAR)MultiByteString[0x13]];
-            case 0x13:
-                if ((UCHAR)MultiByteString[0x12] < 0x20)    goto  bad_case;
-                UnicodeString[0x12] = TranslateTable[(UCHAR)MultiByteString[0x12]];
-            case 0x12:
-                if ((UCHAR)MultiByteString[0x11] < 0x20)    goto  bad_case;
-                UnicodeString[0x11] = TranslateTable[(UCHAR)MultiByteString[0x11]];
-            case 0x11:
-                if ((UCHAR)MultiByteString[0x10] < 0x20)    goto  bad_case;
-                UnicodeString[0x10] = TranslateTable[(UCHAR)MultiByteString[0x10]];
-            case 0x10:
-                if ((UCHAR)MultiByteString[0x0F] < 0x20)    goto  bad_case;
-                UnicodeString[0x0F] = TranslateTable[(UCHAR)MultiByteString[0x0F]];
-            case 0x0F:
-                if ((UCHAR)MultiByteString[0x0E] < 0x20)    goto  bad_case;
-                UnicodeString[0x0E] = TranslateTable[(UCHAR)MultiByteString[0x0E]];
-            case 0x0E:
-                if ((UCHAR)MultiByteString[0x0D] < 0x20)    goto  bad_case;
-                UnicodeString[0x0D] = TranslateTable[(UCHAR)MultiByteString[0x0D]];
-            case 0x0D:
-                if ((UCHAR)MultiByteString[0x0C] < 0x20)    goto  bad_case;
-                UnicodeString[0x0C] = TranslateTable[(UCHAR)MultiByteString[0x0C]];
-            case 0x0C:
-                if ((UCHAR)MultiByteString[0x0B] < 0x20)    goto  bad_case;
-                UnicodeString[0x0B] = TranslateTable[(UCHAR)MultiByteString[0x0B]];
-            case 0x0B:
-                if ((UCHAR)MultiByteString[0x0A] < 0x20)    goto  bad_case;
-                UnicodeString[0x0A] = TranslateTable[(UCHAR)MultiByteString[0x0A]];
-            case 0x0A:
-                if ((UCHAR)MultiByteString[0x09] < 0x20)    goto  bad_case;
-                UnicodeString[0x09] = TranslateTable[(UCHAR)MultiByteString[0x09]];
-            case 0x09:
-                if ((UCHAR)MultiByteString[0x08] < 0x20)    goto  bad_case;
-                UnicodeString[0x08] = TranslateTable[(UCHAR)MultiByteString[0x08]];
-            case 0x08:
-                if ((UCHAR)MultiByteString[0x07] < 0x20)    goto  bad_case;
-                UnicodeString[0x07] = TranslateTable[(UCHAR)MultiByteString[0x07]];
-            case 0x07:
-                if ((UCHAR)MultiByteString[0x06] < 0x20)    goto  bad_case;
-                UnicodeString[0x06] = TranslateTable[(UCHAR)MultiByteString[0x06]];
-            case 0x06:
-                if ((UCHAR)MultiByteString[0x05] < 0x20)    goto  bad_case;
-                UnicodeString[0x05] = TranslateTable[(UCHAR)MultiByteString[0x05]];
-            case 0x05:
-                if ((UCHAR)MultiByteString[0x04] < 0x20)    goto  bad_case;
-                UnicodeString[0x04] = TranslateTable[(UCHAR)MultiByteString[0x04]];
-            case 0x04:
-                if ((UCHAR)MultiByteString[0x03] < 0x20)    goto  bad_case;
-                UnicodeString[0x03] = TranslateTable[(UCHAR)MultiByteString[0x03]];
-            case 0x03:
-                if ((UCHAR)MultiByteString[0x02] < 0x20)    goto  bad_case;
-                UnicodeString[0x02] = TranslateTable[(UCHAR)MultiByteString[0x02]];
-            case 0x02:
-                if ((UCHAR)MultiByteString[0x01] < 0x20)    goto  bad_case;
-                UnicodeString[0x01] = TranslateTable[(UCHAR)MultiByteString[0x01]];
-            case 0x01:
-                if ((UCHAR)MultiByteString[0x00] < 0x20)    goto  bad_case;
-                UnicodeString[0x00] = TranslateTable[(UCHAR)MultiByteString[0x00]];
-            case 0x00:
-                ;
-            }
+    quick_copy:
+        switch (LoopCount)
+        {
+        default:
+            if ((UCHAR)MultiByteString[0x1F] < 0x20)
+                goto bad_case;
+            UnicodeString[0x1F] = TranslateTable[(UCHAR)MultiByteString[0x1F]];
+        case 0x1F:
+            if ((UCHAR)MultiByteString[0x1E] < 0x20)
+                goto bad_case;
+            UnicodeString[0x1E] = TranslateTable[(UCHAR)MultiByteString[0x1E]];
+        case 0x1E:
+            if ((UCHAR)MultiByteString[0x1D] < 0x20)
+                goto bad_case;
+            UnicodeString[0x1D] = TranslateTable[(UCHAR)MultiByteString[0x1D]];
+        case 0x1D:
+            if ((UCHAR)MultiByteString[0x1C] < 0x20)
+                goto bad_case;
+            UnicodeString[0x1C] = TranslateTable[(UCHAR)MultiByteString[0x1C]];
+        case 0x1C:
+            if ((UCHAR)MultiByteString[0x1B] < 0x20)
+                goto bad_case;
+            UnicodeString[0x1B] = TranslateTable[(UCHAR)MultiByteString[0x1B]];
+        case 0x1B:
+            if ((UCHAR)MultiByteString[0x1A] < 0x20)
+                goto bad_case;
+            UnicodeString[0x1A] = TranslateTable[(UCHAR)MultiByteString[0x1A]];
+        case 0x1A:
+            if ((UCHAR)MultiByteString[0x19] < 0x20)
+                goto bad_case;
+            UnicodeString[0x19] = TranslateTable[(UCHAR)MultiByteString[0x19]];
+        case 0x19:
+            if ((UCHAR)MultiByteString[0x18] < 0x20)
+                goto bad_case;
+            UnicodeString[0x18] = TranslateTable[(UCHAR)MultiByteString[0x18]];
+        case 0x18:
+            if ((UCHAR)MultiByteString[0x17] < 0x20)
+                goto bad_case;
+            UnicodeString[0x17] = TranslateTable[(UCHAR)MultiByteString[0x17]];
+        case 0x17:
+            if ((UCHAR)MultiByteString[0x16] < 0x20)
+                goto bad_case;
+            UnicodeString[0x16] = TranslateTable[(UCHAR)MultiByteString[0x16]];
+        case 0x16:
+            if ((UCHAR)MultiByteString[0x15] < 0x20)
+                goto bad_case;
+            UnicodeString[0x15] = TranslateTable[(UCHAR)MultiByteString[0x15]];
+        case 0x15:
+            if ((UCHAR)MultiByteString[0x14] < 0x20)
+                goto bad_case;
+            UnicodeString[0x14] = TranslateTable[(UCHAR)MultiByteString[0x14]];
+        case 0x14:
+            if ((UCHAR)MultiByteString[0x13] < 0x20)
+                goto bad_case;
+            UnicodeString[0x13] = TranslateTable[(UCHAR)MultiByteString[0x13]];
+        case 0x13:
+            if ((UCHAR)MultiByteString[0x12] < 0x20)
+                goto bad_case;
+            UnicodeString[0x12] = TranslateTable[(UCHAR)MultiByteString[0x12]];
+        case 0x12:
+            if ((UCHAR)MultiByteString[0x11] < 0x20)
+                goto bad_case;
+            UnicodeString[0x11] = TranslateTable[(UCHAR)MultiByteString[0x11]];
+        case 0x11:
+            if ((UCHAR)MultiByteString[0x10] < 0x20)
+                goto bad_case;
+            UnicodeString[0x10] = TranslateTable[(UCHAR)MultiByteString[0x10]];
+        case 0x10:
+            if ((UCHAR)MultiByteString[0x0F] < 0x20)
+                goto bad_case;
+            UnicodeString[0x0F] = TranslateTable[(UCHAR)MultiByteString[0x0F]];
+        case 0x0F:
+            if ((UCHAR)MultiByteString[0x0E] < 0x20)
+                goto bad_case;
+            UnicodeString[0x0E] = TranslateTable[(UCHAR)MultiByteString[0x0E]];
+        case 0x0E:
+            if ((UCHAR)MultiByteString[0x0D] < 0x20)
+                goto bad_case;
+            UnicodeString[0x0D] = TranslateTable[(UCHAR)MultiByteString[0x0D]];
+        case 0x0D:
+            if ((UCHAR)MultiByteString[0x0C] < 0x20)
+                goto bad_case;
+            UnicodeString[0x0C] = TranslateTable[(UCHAR)MultiByteString[0x0C]];
+        case 0x0C:
+            if ((UCHAR)MultiByteString[0x0B] < 0x20)
+                goto bad_case;
+            UnicodeString[0x0B] = TranslateTable[(UCHAR)MultiByteString[0x0B]];
+        case 0x0B:
+            if ((UCHAR)MultiByteString[0x0A] < 0x20)
+                goto bad_case;
+            UnicodeString[0x0A] = TranslateTable[(UCHAR)MultiByteString[0x0A]];
+        case 0x0A:
+            if ((UCHAR)MultiByteString[0x09] < 0x20)
+                goto bad_case;
+            UnicodeString[0x09] = TranslateTable[(UCHAR)MultiByteString[0x09]];
+        case 0x09:
+            if ((UCHAR)MultiByteString[0x08] < 0x20)
+                goto bad_case;
+            UnicodeString[0x08] = TranslateTable[(UCHAR)MultiByteString[0x08]];
+        case 0x08:
+            if ((UCHAR)MultiByteString[0x07] < 0x20)
+                goto bad_case;
+            UnicodeString[0x07] = TranslateTable[(UCHAR)MultiByteString[0x07]];
+        case 0x07:
+            if ((UCHAR)MultiByteString[0x06] < 0x20)
+                goto bad_case;
+            UnicodeString[0x06] = TranslateTable[(UCHAR)MultiByteString[0x06]];
+        case 0x06:
+            if ((UCHAR)MultiByteString[0x05] < 0x20)
+                goto bad_case;
+            UnicodeString[0x05] = TranslateTable[(UCHAR)MultiByteString[0x05]];
+        case 0x05:
+            if ((UCHAR)MultiByteString[0x04] < 0x20)
+                goto bad_case;
+            UnicodeString[0x04] = TranslateTable[(UCHAR)MultiByteString[0x04]];
+        case 0x04:
+            if ((UCHAR)MultiByteString[0x03] < 0x20)
+                goto bad_case;
+            UnicodeString[0x03] = TranslateTable[(UCHAR)MultiByteString[0x03]];
+        case 0x03:
+            if ((UCHAR)MultiByteString[0x02] < 0x20)
+                goto bad_case;
+            UnicodeString[0x02] = TranslateTable[(UCHAR)MultiByteString[0x02]];
+        case 0x02:
+            if ((UCHAR)MultiByteString[0x01] < 0x20)
+                goto bad_case;
+            UnicodeString[0x01] = TranslateTable[(UCHAR)MultiByteString[0x01]];
+        case 0x01:
+            if ((UCHAR)MultiByteString[0x00] < 0x20)
+                goto bad_case;
+            UnicodeString[0x00] = TranslateTable[(UCHAR)MultiByteString[0x00]];
+        case 0x00:;
+        }
 
-            if ( LoopCount > 0x20 ) {
-                LoopCount -= 0x20;
-                UnicodeString += 0x20;
-                MultiByteString += 0x20;
+        if (LoopCount > 0x20)
+        {
+            LoopCount -= 0x20;
+            UnicodeString += 0x20;
+            MultiByteString += 0x20;
 
-                goto  quick_copy;
-            }
+            goto quick_copy;
+        }
         /* end of copy... */
-    } else {
+    }
+    else
+    {
         register USHORT Entry;
 
         PWCH UnicodeStringAnchor = UnicodeString;
@@ -312,10 +334,12 @@ Return Value:
         // The ACP is a multibyte code page.  Check each character
         // to see if it is a lead byte before doing the translation.
         //
-        while (MaxCharsInUnicodeString && BytesInMultiByteString) {
+        while (MaxCharsInUnicodeString && BytesInMultiByteString)
+        {
             MaxCharsInUnicodeString--;
             BytesInMultiByteString--;
-            if (NlsLeadByteInfo[*(PUCHAR)MultiByteString]) {
+            if (NlsLeadByteInfo[*(PUCHAR)MultiByteString])
+            {
                 //
                 // Lead byte - Make sure there is a trail byte.  If not,
                 // pass back a space rather than an error.  Some 3.x
@@ -332,7 +356,7 @@ Return Value:
                 // Get the unicode character.
                 //
                 Entry = NlsLeadByteInfo[*(PUCHAR)MultiByteString++];
-                *UnicodeString = (WCHAR)TranslateTable[ Entry + *(PUCHAR)MultiByteString++ ];
+                *UnicodeString = (WCHAR)TranslateTable[Entry + *(PUCHAR)MultiByteString++];
                 UnicodeString++;
 
                 //
@@ -340,7 +364,9 @@ Return Value:
                 // for the double byte character.
                 //
                 BytesInMultiByteString--;
-            } else {
+            }
+            else
+            {
                 //
                 // Single byte character.
                 //
@@ -356,24 +382,20 @@ Return Value:
 
     return STATUS_SUCCESS;
 
-    bad_case:
-        //
-        // this is a low probability case, so we optimized the loop.  If have a
-        // special char, finish trans and notify caller.
-        //
-        *pdwSpecialChar = 1;
-        return RtlMultiByteToUnicodeN(UnicodeString, MaxBytesInUnicodeString,
-                NULL, MultiByteString, LoopCount);
+bad_case:
+    //
+    // this is a low probability case, so we optimized the loop.  If have a
+    // special char, finish trans and notify caller.
+    //
+    *pdwSpecialChar = 1;
+    return RtlMultiByteToUnicodeN(UnicodeString, MaxBytesInUnicodeString, NULL, MultiByteString, LoopCount);
 }
 
 
 NTSTATUS
-RtlMultiByteToUnicodeN(
-    OUT PWCH UnicodeString,
-    IN ULONG MaxBytesInUnicodeString,
-    OUT PULONG BytesInUnicodeString OPTIONAL,
-    IN PCSTR MultiByteString,
-    IN ULONG BytesInMultiByteString)
+RtlMultiByteToUnicodeN(OUT PWCH UnicodeString, IN ULONG MaxBytesInUnicodeString,
+                       OUT PULONG BytesInUnicodeString OPTIONAL, IN PCSTR MultiByteString,
+                       IN ULONG BytesInMultiByteString)
 
 /*++
 
@@ -424,99 +446,103 @@ Return Value:
     RTL_PAGED_CODE();
 
     MaxCharsInUnicodeString = MaxBytesInUnicodeString / sizeof(WCHAR);
-    if (!NlsMbCodePageTag) {
+    if (!NlsMbCodePageTag)
+    {
 
-        LoopCount = (MaxCharsInUnicodeString < BytesInMultiByteString) ?
-                     MaxCharsInUnicodeString : BytesInMultiByteString;
+        LoopCount =
+            (MaxCharsInUnicodeString < BytesInMultiByteString) ? MaxCharsInUnicodeString : BytesInMultiByteString;
 
         if (ARGUMENT_PRESENT(BytesInUnicodeString))
             *BytesInUnicodeString = LoopCount * sizeof(WCHAR);
 
-        TranslateTable = NlsAnsiToUnicodeData;  // used to help the mips compiler
+        TranslateTable = NlsAnsiToUnicodeData; // used to help the mips compiler
 
         TmpCount = LoopCount & 0x1F;
         UnicodeString += (LoopCount - TmpCount);
         MultiByteString += (LoopCount - TmpCount);
-        quick_copy:
-            switch( TmpCount ) {
-            default:
-                UnicodeString[0x1F] = TranslateTable[(UCHAR)MultiByteString[0x1F]];
-            case 0x1F:
-                UnicodeString[0x1E] = TranslateTable[(UCHAR)MultiByteString[0x1E]];
-            case 0x1E:
-                UnicodeString[0x1D] = TranslateTable[(UCHAR)MultiByteString[0x1D]];
-            case 0x1D:
-                UnicodeString[0x1C] = TranslateTable[(UCHAR)MultiByteString[0x1C]];
-            case 0x1C:
-                UnicodeString[0x1B] = TranslateTable[(UCHAR)MultiByteString[0x1B]];
-            case 0x1B:
-                UnicodeString[0x1A] = TranslateTable[(UCHAR)MultiByteString[0x1A]];
-            case 0x1A:
-                UnicodeString[0x19] = TranslateTable[(UCHAR)MultiByteString[0x19]];
-            case 0x19:
-                UnicodeString[0x18] = TranslateTable[(UCHAR)MultiByteString[0x18]];
-            case 0x18:
-                UnicodeString[0x17] = TranslateTable[(UCHAR)MultiByteString[0x17]];
-            case 0x17:
-                UnicodeString[0x16] = TranslateTable[(UCHAR)MultiByteString[0x16]];
-            case 0x16:
-                UnicodeString[0x15] = TranslateTable[(UCHAR)MultiByteString[0x15]];
-            case 0x15:
-                UnicodeString[0x14] = TranslateTable[(UCHAR)MultiByteString[0x14]];
-            case 0x14:
-                UnicodeString[0x13] = TranslateTable[(UCHAR)MultiByteString[0x13]];
-            case 0x13:
-                UnicodeString[0x12] = TranslateTable[(UCHAR)MultiByteString[0x12]];
-            case 0x12:
-                UnicodeString[0x11] = TranslateTable[(UCHAR)MultiByteString[0x11]];
-            case 0x11:
-                UnicodeString[0x10] = TranslateTable[(UCHAR)MultiByteString[0x10]];
-            case 0x10:
-                UnicodeString[0x0F] = TranslateTable[(UCHAR)MultiByteString[0x0F]];
-            case 0x0F:
-                UnicodeString[0x0E] = TranslateTable[(UCHAR)MultiByteString[0x0E]];
-            case 0x0E:
-                UnicodeString[0x0D] = TranslateTable[(UCHAR)MultiByteString[0x0D]];
-            case 0x0D:
-                UnicodeString[0x0C] = TranslateTable[(UCHAR)MultiByteString[0x0C]];
-            case 0x0C:
-                UnicodeString[0x0B] = TranslateTable[(UCHAR)MultiByteString[0x0B]];
-            case 0x0B:
-                UnicodeString[0x0A] = TranslateTable[(UCHAR)MultiByteString[0x0A]];
-            case 0x0A:
-                UnicodeString[0x09] = TranslateTable[(UCHAR)MultiByteString[0x09]];
-            case 0x09:
-                UnicodeString[0x08] = TranslateTable[(UCHAR)MultiByteString[0x08]];
-            case 0x08:
-                UnicodeString[0x07] = TranslateTable[(UCHAR)MultiByteString[0x07]];
-            case 0x07:
-                UnicodeString[0x06] = TranslateTable[(UCHAR)MultiByteString[0x06]];
-            case 0x06:
-                UnicodeString[0x05] = TranslateTable[(UCHAR)MultiByteString[0x05]];
-            case 0x05:
-                UnicodeString[0x04] = TranslateTable[(UCHAR)MultiByteString[0x04]];
-            case 0x04:
-                UnicodeString[0x03] = TranslateTable[(UCHAR)MultiByteString[0x03]];
-            case 0x03:
-                UnicodeString[0x02] = TranslateTable[(UCHAR)MultiByteString[0x02]];
-            case 0x02:
-                UnicodeString[0x01] = TranslateTable[(UCHAR)MultiByteString[0x01]];
-            case 0x01:
-                UnicodeString[0x00] = TranslateTable[(UCHAR)MultiByteString[0x00]];
-            case 0x00:
-                ;
-            }
+    quick_copy:
+        switch (TmpCount)
+        {
+        default:
+            UnicodeString[0x1F] = TranslateTable[(UCHAR)MultiByteString[0x1F]];
+        case 0x1F:
+            UnicodeString[0x1E] = TranslateTable[(UCHAR)MultiByteString[0x1E]];
+        case 0x1E:
+            UnicodeString[0x1D] = TranslateTable[(UCHAR)MultiByteString[0x1D]];
+        case 0x1D:
+            UnicodeString[0x1C] = TranslateTable[(UCHAR)MultiByteString[0x1C]];
+        case 0x1C:
+            UnicodeString[0x1B] = TranslateTable[(UCHAR)MultiByteString[0x1B]];
+        case 0x1B:
+            UnicodeString[0x1A] = TranslateTable[(UCHAR)MultiByteString[0x1A]];
+        case 0x1A:
+            UnicodeString[0x19] = TranslateTable[(UCHAR)MultiByteString[0x19]];
+        case 0x19:
+            UnicodeString[0x18] = TranslateTable[(UCHAR)MultiByteString[0x18]];
+        case 0x18:
+            UnicodeString[0x17] = TranslateTable[(UCHAR)MultiByteString[0x17]];
+        case 0x17:
+            UnicodeString[0x16] = TranslateTable[(UCHAR)MultiByteString[0x16]];
+        case 0x16:
+            UnicodeString[0x15] = TranslateTable[(UCHAR)MultiByteString[0x15]];
+        case 0x15:
+            UnicodeString[0x14] = TranslateTable[(UCHAR)MultiByteString[0x14]];
+        case 0x14:
+            UnicodeString[0x13] = TranslateTable[(UCHAR)MultiByteString[0x13]];
+        case 0x13:
+            UnicodeString[0x12] = TranslateTable[(UCHAR)MultiByteString[0x12]];
+        case 0x12:
+            UnicodeString[0x11] = TranslateTable[(UCHAR)MultiByteString[0x11]];
+        case 0x11:
+            UnicodeString[0x10] = TranslateTable[(UCHAR)MultiByteString[0x10]];
+        case 0x10:
+            UnicodeString[0x0F] = TranslateTable[(UCHAR)MultiByteString[0x0F]];
+        case 0x0F:
+            UnicodeString[0x0E] = TranslateTable[(UCHAR)MultiByteString[0x0E]];
+        case 0x0E:
+            UnicodeString[0x0D] = TranslateTable[(UCHAR)MultiByteString[0x0D]];
+        case 0x0D:
+            UnicodeString[0x0C] = TranslateTable[(UCHAR)MultiByteString[0x0C]];
+        case 0x0C:
+            UnicodeString[0x0B] = TranslateTable[(UCHAR)MultiByteString[0x0B]];
+        case 0x0B:
+            UnicodeString[0x0A] = TranslateTable[(UCHAR)MultiByteString[0x0A]];
+        case 0x0A:
+            UnicodeString[0x09] = TranslateTable[(UCHAR)MultiByteString[0x09]];
+        case 0x09:
+            UnicodeString[0x08] = TranslateTable[(UCHAR)MultiByteString[0x08]];
+        case 0x08:
+            UnicodeString[0x07] = TranslateTable[(UCHAR)MultiByteString[0x07]];
+        case 0x07:
+            UnicodeString[0x06] = TranslateTable[(UCHAR)MultiByteString[0x06]];
+        case 0x06:
+            UnicodeString[0x05] = TranslateTable[(UCHAR)MultiByteString[0x05]];
+        case 0x05:
+            UnicodeString[0x04] = TranslateTable[(UCHAR)MultiByteString[0x04]];
+        case 0x04:
+            UnicodeString[0x03] = TranslateTable[(UCHAR)MultiByteString[0x03]];
+        case 0x03:
+            UnicodeString[0x02] = TranslateTable[(UCHAR)MultiByteString[0x02]];
+        case 0x02:
+            UnicodeString[0x01] = TranslateTable[(UCHAR)MultiByteString[0x01]];
+        case 0x01:
+            UnicodeString[0x00] = TranslateTable[(UCHAR)MultiByteString[0x00]];
+        case 0x00:;
+        }
 
-            if ( LoopCount >= 0x20 ) {
-                TmpCount = 0x20;
-                LoopCount -= 0x20;
-                UnicodeString -= 0x20;
-                MultiByteString -= 0x20;
+        if (LoopCount >= 0x20)
+        {
+            TmpCount = 0x20;
+            LoopCount -= 0x20;
+            UnicodeString -= 0x20;
+            MultiByteString -= 0x20;
 
-                goto  quick_copy;
-            }
+            goto quick_copy;
+        }
         /* end of copy... */
-    } else {
+    }
+    else
+    {
         register USHORT Entry;
         PWCH UnicodeStringAnchor = UnicodeString;
         TranslateTable = (PUSHORT)NlsMbAnsiCodePageTables;
@@ -525,10 +551,12 @@ Return Value:
         // The ACP is a multibyte code page.  Check each character
         // to see if it is a lead byte before doing the translation.
         //
-        while (MaxCharsInUnicodeString && BytesInMultiByteString) {
+        while (MaxCharsInUnicodeString && BytesInMultiByteString)
+        {
             MaxCharsInUnicodeString--;
             BytesInMultiByteString--;
-            if (NlsLeadByteInfo[*(PUCHAR)MultiByteString]) {
+            if (NlsLeadByteInfo[*(PUCHAR)MultiByteString])
+            {
                 //
                 // Lead byte - Make sure there is a trail byte.  If not,
                 // pass back a space rather than an error.  Some 3.x
@@ -545,7 +573,7 @@ Return Value:
                 // Get the unicode character.
                 //
                 Entry = NlsLeadByteInfo[*(PUCHAR)MultiByteString++];
-                *UnicodeString = (WCHAR)TranslateTable[ Entry + *(PUCHAR)MultiByteString++ ];
+                *UnicodeString = (WCHAR)TranslateTable[Entry + *(PUCHAR)MultiByteString++];
                 UnicodeString++;
 
                 //
@@ -553,7 +581,9 @@ Return Value:
                 // for the double byte character.
                 //
                 BytesInMultiByteString--;
-            } else {
+            }
+            else
+            {
                 //
                 // Single byte character.
                 //
@@ -566,17 +596,12 @@ Return Value:
     }
 
     return STATUS_SUCCESS;
-
 }
 
 
 NTSTATUS
-RtlOemToUnicodeN(
-    OUT PWCH UnicodeString,
-    IN ULONG MaxBytesInUnicodeString,
-    OUT PULONG BytesInUnicodeString OPTIONAL,
-    IN PCH OemString,
-    IN ULONG BytesInOemString)
+RtlOemToUnicodeN(OUT PWCH UnicodeString, IN ULONG MaxBytesInUnicodeString, OUT PULONG BytesInUnicodeString OPTIONAL,
+                 IN PCH OemString, IN ULONG BytesInOemString)
 
 /*++
 
@@ -633,73 +658,78 @@ Return Value:
 
     MaxCharsInUnicodeString = MaxBytesInUnicodeString / sizeof(WCHAR);
 
-    if (!NlsMbOemCodePageTag) {
+    if (!NlsMbOemCodePageTag)
+    {
 
-        LoopCount = (MaxCharsInUnicodeString < BytesInOemString) ?
-                     MaxCharsInUnicodeString : BytesInOemString;
+        LoopCount = (MaxCharsInUnicodeString < BytesInOemString) ? MaxCharsInUnicodeString : BytesInOemString;
 
         if (ARGUMENT_PRESENT(BytesInUnicodeString))
             *BytesInUnicodeString = LoopCount * sizeof(WCHAR);
 
 
-        TranslateTable = NlsOemToUnicodeData;  // used to help the mips compiler
+        TranslateTable = NlsOemToUnicodeData; // used to help the mips compiler
 
-        quick_copy:
-            switch( LoopCount ) {
-            default:
-                UnicodeString[0x0F] = TranslateTable[(UCHAR)OemString[0x0F]];
-            case 0x0F:
-                UnicodeString[0x0E] = TranslateTable[(UCHAR)OemString[0x0E]];
-            case 0x0E:
-                UnicodeString[0x0D] = TranslateTable[(UCHAR)OemString[0x0D]];
-            case 0x0D:
-                UnicodeString[0x0C] = TranslateTable[(UCHAR)OemString[0x0C]];
-            case 0x0C:
-                UnicodeString[0x0B] = TranslateTable[(UCHAR)OemString[0x0B]];
-            case 0x0B:
-                UnicodeString[0x0A] = TranslateTable[(UCHAR)OemString[0x0A]];
-            case 0x0A:
-                UnicodeString[0x09] = TranslateTable[(UCHAR)OemString[0x09]];
-            case 0x09:
-                UnicodeString[0x08] = TranslateTable[(UCHAR)OemString[0x08]];
-            case 0x08:
-                UnicodeString[0x07] = TranslateTable[(UCHAR)OemString[0x07]];
-            case 0x07:
-                UnicodeString[0x06] = TranslateTable[(UCHAR)OemString[0x06]];
-            case 0x06:
-                UnicodeString[0x05] = TranslateTable[(UCHAR)OemString[0x05]];
-            case 0x05:
-                UnicodeString[0x04] = TranslateTable[(UCHAR)OemString[0x04]];
-            case 0x04:
-                UnicodeString[0x03] = TranslateTable[(UCHAR)OemString[0x03]];
-            case 0x03:
-                UnicodeString[0x02] = TranslateTable[(UCHAR)OemString[0x02]];
-            case 0x02:
-                UnicodeString[0x01] = TranslateTable[(UCHAR)OemString[0x01]];
-            case 0x01:
-                UnicodeString[0x00] = TranslateTable[(UCHAR)OemString[0x00]];
-            case 0x00:
-                ;
-            }
+    quick_copy:
+        switch (LoopCount)
+        {
+        default:
+            UnicodeString[0x0F] = TranslateTable[(UCHAR)OemString[0x0F]];
+        case 0x0F:
+            UnicodeString[0x0E] = TranslateTable[(UCHAR)OemString[0x0E]];
+        case 0x0E:
+            UnicodeString[0x0D] = TranslateTable[(UCHAR)OemString[0x0D]];
+        case 0x0D:
+            UnicodeString[0x0C] = TranslateTable[(UCHAR)OemString[0x0C]];
+        case 0x0C:
+            UnicodeString[0x0B] = TranslateTable[(UCHAR)OemString[0x0B]];
+        case 0x0B:
+            UnicodeString[0x0A] = TranslateTable[(UCHAR)OemString[0x0A]];
+        case 0x0A:
+            UnicodeString[0x09] = TranslateTable[(UCHAR)OemString[0x09]];
+        case 0x09:
+            UnicodeString[0x08] = TranslateTable[(UCHAR)OemString[0x08]];
+        case 0x08:
+            UnicodeString[0x07] = TranslateTable[(UCHAR)OemString[0x07]];
+        case 0x07:
+            UnicodeString[0x06] = TranslateTable[(UCHAR)OemString[0x06]];
+        case 0x06:
+            UnicodeString[0x05] = TranslateTable[(UCHAR)OemString[0x05]];
+        case 0x05:
+            UnicodeString[0x04] = TranslateTable[(UCHAR)OemString[0x04]];
+        case 0x04:
+            UnicodeString[0x03] = TranslateTable[(UCHAR)OemString[0x03]];
+        case 0x03:
+            UnicodeString[0x02] = TranslateTable[(UCHAR)OemString[0x02]];
+        case 0x02:
+            UnicodeString[0x01] = TranslateTable[(UCHAR)OemString[0x01]];
+        case 0x01:
+            UnicodeString[0x00] = TranslateTable[(UCHAR)OemString[0x00]];
+        case 0x00:;
+        }
 
-            if ( LoopCount > 0x10 ) {
-                LoopCount -= 0x10;
-                OemString += 0x10;
-                UnicodeString += 0x10;
+        if (LoopCount > 0x10)
+        {
+            LoopCount -= 0x10;
+            OemString += 0x10;
+            UnicodeString += 0x10;
 
-                goto  quick_copy;
-            }
+            goto quick_copy;
+        }
         /* end of copy... */
-    } else {
+    }
+    else
+    {
         register USHORT Entry;
         PWCH UnicodeStringAnchor = UnicodeString;
 
         TranslateTable = (PUSHORT)NlsMbOemCodePageTables;
 
-        while (MaxCharsInUnicodeString && BytesInOemString) {
+        while (MaxCharsInUnicodeString && BytesInOemString)
+        {
             MaxCharsInUnicodeString--;
             BytesInOemString--;
-            if (NlsOemLeadByteInfo[*(PUCHAR)OemString]) {
+            if (NlsOemLeadByteInfo[*(PUCHAR)OemString])
+            {
                 //
                 // Lead byte - Make sure there is a trail byte.  If not,
                 // pass back a space rather than an error.  Some 3.x
@@ -716,7 +746,7 @@ Return Value:
                 // Get the unicode character.
                 //
                 Entry = NlsOemLeadByteInfo[*(PUCHAR)OemString++];
-                *UnicodeString = TranslateTable[ Entry + *(PUCHAR)OemString++ ];
+                *UnicodeString = TranslateTable[Entry + *(PUCHAR)OemString++];
                 UnicodeString++;
 
                 //
@@ -724,7 +754,9 @@ Return Value:
                 // for the double byte character.
                 //
                 BytesInOemString--;
-            } else {
+            }
+            else
+            {
                 //
                 // Single byte character.
                 //
@@ -739,17 +771,12 @@ Return Value:
     //
     //  Check if we were able to use all of the source Oem String
     //
-    return (BytesInOemString <= MaxCharsInUnicodeString) ?
-           STATUS_SUCCESS :
-           STATUS_BUFFER_OVERFLOW;
+    return (BytesInOemString <= MaxCharsInUnicodeString) ? STATUS_SUCCESS : STATUS_BUFFER_OVERFLOW;
 }
 
 
 NTSTATUS
-RtlMultiByteToUnicodeSize(
-    OUT PULONG BytesInUnicodeString,
-    IN PCSTR MultiByteString,
-    IN ULONG BytesInMultiByteString)
+RtlMultiByteToUnicodeSize(OUT PULONG BytesInUnicodeString, IN PCSTR MultiByteString, IN ULONG BytesInMultiByteString)
 
 /*++
 
@@ -790,19 +817,23 @@ Return Value:
 
     RTL_PAGED_CODE();
 
-    if (NlsMbCodePageTag) {
+    if (NlsMbCodePageTag)
+    {
         //
         // The ACP is a multibyte code page.  Check each character
         // to see if it is a lead byte before doing the translation.
         //
-        while (BytesInMultiByteString--) {
-            if (NlsLeadByteInfo[*(PUCHAR)MultiByteString++]) {
+        while (BytesInMultiByteString--)
+        {
+            if (NlsLeadByteInfo[*(PUCHAR)MultiByteString++])
+            {
                 //
                 // Lead byte - translate the trail byte using the table
                 // that corresponds to this lead byte.  NOTE: make sure
                 // we have a trail byte to convert.
                 //
-                if (BytesInMultiByteString == 0) {
+                if (BytesInMultiByteString == 0)
+                {
                     //
                     // RtlMultibyteToUnicodeN() uses the unicode
                     // default character if the last multibyte
@@ -810,7 +841,9 @@ Return Value:
                     //
                     cbUnicode += sizeof(WCHAR);
                     break;
-                } else {
+                }
+                else
+                {
                     BytesInMultiByteString--;
                     MultiByteString++;
                 }
@@ -818,7 +851,9 @@ Return Value:
             cbUnicode += sizeof(WCHAR);
         }
         *BytesInUnicodeString = cbUnicode;
-    } else {
+    }
+    else
+    {
         //
         // The ACP is a single byte code page.
         //
@@ -830,10 +865,7 @@ Return Value:
 
 
 NTSTATUS
-RtlUnicodeToMultiByteSize(
-    OUT PULONG BytesInMultiByteString,
-    IN PWCH UnicodeString,
-    IN ULONG BytesInUnicodeString)
+RtlUnicodeToMultiByteSize(OUT PULONG BytesInMultiByteString, IN PWCH UnicodeString, IN ULONG BytesInUnicodeString)
 
 /*++
 
@@ -874,20 +906,26 @@ Return Value:
      */
     CharsInUnicodeString = BytesInUnicodeString / sizeof(WCHAR);
 
-    if (NlsMbCodePageTag) {
+    if (NlsMbCodePageTag)
+    {
         USHORT MbChar;
 
-        while (CharsInUnicodeString--) {
-            MbChar = NlsUnicodeToMbAnsiData[ *UnicodeString++ ];
-            if (HIBYTE(MbChar) == 0) {
-                cbMultiByte++ ;
-            } else {
+        while (CharsInUnicodeString--)
+        {
+            MbChar = NlsUnicodeToMbAnsiData[*UnicodeString++];
+            if (HIBYTE(MbChar) == 0)
+            {
+                cbMultiByte++;
+            }
+            else
+            {
                 cbMultiByte += 2;
             }
         }
         *BytesInMultiByteString = cbMultiByte;
     }
-    else {
+    else
+    {
         *BytesInMultiByteString = CharsInUnicodeString;
     }
 
@@ -896,12 +934,8 @@ Return Value:
 
 
 NTSTATUS
-RtlUnicodeToMultiByteN(
-    OUT PCH MultiByteString,
-    IN ULONG MaxBytesInMultiByteString,
-    OUT PULONG BytesInMultiByteString OPTIONAL,
-    IN PWCH UnicodeString,
-    IN ULONG BytesInUnicodeString)
+RtlUnicodeToMultiByteN(OUT PCH MultiByteString, IN ULONG MaxBytesInMultiByteString,
+                       OUT PULONG BytesInMultiByteString OPTIONAL, IN PWCH UnicodeString, IN ULONG BytesInUnicodeString)
 
 /*++
 
@@ -950,15 +984,16 @@ Return Value:
     // Convert Unicode byte count to character count. Byte count of
     // multibyte string is equivalent to character count.
     //
-    if (!NlsMbCodePageTag) {
+    if (!NlsMbCodePageTag)
+    {
 
-        LoopCount = (CharsInUnicodeString < MaxBytesInMultiByteString) ?
-                     CharsInUnicodeString : MaxBytesInMultiByteString;
+        LoopCount =
+            (CharsInUnicodeString < MaxBytesInMultiByteString) ? CharsInUnicodeString : MaxBytesInMultiByteString;
 
         if (ARGUMENT_PRESENT(BytesInMultiByteString))
             *BytesInMultiByteString = LoopCount;
 
-        TranslateTable = NlsUnicodeToAnsiData;  // used to help the mips compiler
+        TranslateTable = NlsUnicodeToAnsiData; // used to help the mips compiler
 
         TmpCount = LoopCount & 0x0F;
         UnicodeString += TmpCount;
@@ -966,7 +1001,8 @@ Return Value:
 
         do
         {
-            switch( TmpCount ) {
+            switch (TmpCount)
+            {
             default:
                 UnicodeString += 0x10;
                 MultiByteString += 0x10;
@@ -1002,31 +1038,35 @@ Return Value:
                 MultiByteString[-0x02] = TranslateTable[UnicodeString[-0x02]];
             case 0x01:
                 MultiByteString[-0x01] = TranslateTable[UnicodeString[-0x01]];
-            case 0x00:
-                ;
+            case 0x00:;
             }
 
             LoopCount -= TmpCount;
             TmpCount = 0x10;
-        } while ( LoopCount > 0 );
+        } while (LoopCount > 0);
 
         /* end of copy... */
-    } else {
+    }
+    else
+    {
         USHORT MbChar;
         PCH MultiByteStringAnchor = MultiByteString;
 
-        while ( CharsInUnicodeString && MaxBytesInMultiByteString ) {
+        while (CharsInUnicodeString && MaxBytesInMultiByteString)
+        {
 
-            MbChar = NlsUnicodeToMbAnsiData[ *UnicodeString++ ];
-            if (HIBYTE(MbChar) != 0) {
+            MbChar = NlsUnicodeToMbAnsiData[*UnicodeString++];
+            if (HIBYTE(MbChar) != 0)
+            {
                 //
                 // Need at least 2 bytes to copy a double byte char.
                 // Don't want to truncate in the middle of a DBCS char.
                 //
-                if (MaxBytesInMultiByteString-- < 2) {
+                if (MaxBytesInMultiByteString-- < 2)
+                {
                     break;
                 }
-                *MultiByteString++ = HIBYTE(MbChar);  // lead byte
+                *MultiByteString++ = HIBYTE(MbChar); // lead byte
             }
             *MultiByteString++ = LOBYTE(MbChar);
             MaxBytesInMultiByteString--;
@@ -1043,12 +1083,9 @@ Return Value:
 
 
 NTSTATUS
-RtlUpcaseUnicodeToMultiByteN(
-    OUT PCH MultiByteString,
-    IN ULONG MaxBytesInMultiByteString,
-    OUT PULONG BytesInMultiByteString OPTIONAL,
-    IN PWCH UnicodeString,
-    IN ULONG BytesInUnicodeString)
+RtlUpcaseUnicodeToMultiByteN(OUT PCH MultiByteString, IN ULONG MaxBytesInMultiByteString,
+                             OUT PULONG BytesInMultiByteString OPTIONAL, IN PWCH UnicodeString,
+                             IN ULONG BytesInUnicodeString)
 
 /*++
 
@@ -1099,15 +1136,16 @@ Return Value:
     // Convert Unicode byte count to character count. Byte count of
     // multibyte string is equivalent to character count.
     //
-    if (!NlsMbCodePageTag) {
+    if (!NlsMbCodePageTag)
+    {
 
-        LoopCount = (CharsInUnicodeString < MaxBytesInMultiByteString) ?
-                     CharsInUnicodeString : MaxBytesInMultiByteString;
+        LoopCount =
+            (CharsInUnicodeString < MaxBytesInMultiByteString) ? CharsInUnicodeString : MaxBytesInMultiByteString;
 
         if (ARGUMENT_PRESENT(BytesInMultiByteString))
             *BytesInMultiByteString = LoopCount;
 
-        TranslateTable = NlsUnicodeToAnsiData;  // used to help the mips compiler
+        TranslateTable = NlsUnicodeToAnsiData; // used to help the mips compiler
 
         TmpCount = LoopCount & 0x0F;
         UnicodeString += TmpCount;
@@ -1120,7 +1158,8 @@ Return Value:
             // to ensure the visual best fits are converted and
             // upper cased properly.
             //
-            switch( TmpCount ) {
+            switch (TmpCount)
+            {
             default:
                 UnicodeString += 0x10;
                 MultiByteString += 0x10;
@@ -1204,35 +1243,40 @@ Return Value:
                 UnicodeChar = NlsAnsiToUnicodeData[SbChar];
                 UnicodeChar = (WCHAR)NLS_UPCASE(UnicodeChar);
                 MultiByteString[-0x01] = TranslateTable[UnicodeChar];
-            case 0x00:
-                ;
+            case 0x00:;
             }
 
             LoopCount -= TmpCount;
             TmpCount = 0x10;
-        } while ( LoopCount > 0 );
+        } while (LoopCount > 0);
 
         /* end of copy... */
-    } else {
+    }
+    else
+    {
         USHORT MbChar;
         register USHORT Entry;
         PCH MultiByteStringAnchor = MultiByteString;
 
-        while ( CharsInUnicodeString && MaxBytesInMultiByteString ) {
+        while (CharsInUnicodeString && MaxBytesInMultiByteString)
+        {
             //
             // Convert to ANSI and back to Unicode before upper casing
             // to ensure the visual best fits are converted and
             // upper cased properly.
             //
-            MbChar = NlsUnicodeToMbAnsiData[ *UnicodeString++ ];
-            if ( NlsLeadByteInfo[HIBYTE(MbChar)] ) {
+            MbChar = NlsUnicodeToMbAnsiData[*UnicodeString++];
+            if (NlsLeadByteInfo[HIBYTE(MbChar)])
+            {
                 //
                 // Lead byte - translate the trail byte using the table
                 // that corresponds to this lead byte.
                 //
                 Entry = NlsLeadByteInfo[HIBYTE(MbChar)];
-                UnicodeChar = (WCHAR)NlsMbAnsiCodePageTables[ Entry + LOBYTE(MbChar) ];
-            } else {
+                UnicodeChar = (WCHAR)NlsMbAnsiCodePageTables[Entry + LOBYTE(MbChar)];
+            }
+            else
+            {
                 //
                 // Single byte character.
                 //
@@ -1241,15 +1285,17 @@ Return Value:
             UnicodeChar = (WCHAR)NLS_UPCASE(UnicodeChar);
             MbChar = NlsUnicodeToMbAnsiData[UnicodeChar];
 
-            if (HIBYTE(MbChar) != 0) {
+            if (HIBYTE(MbChar) != 0)
+            {
                 //
                 // Need at least 2 bytes to copy a double byte char.
                 // Don't want to truncate in the middle of a DBCS char.
                 //
-                if (MaxBytesInMultiByteString-- < 2) {
+                if (MaxBytesInMultiByteString-- < 2)
+                {
                     break;
                 }
-                *MultiByteString++ = HIBYTE(MbChar);  // lead byte
+                *MultiByteString++ = HIBYTE(MbChar); // lead byte
             }
             *MultiByteString++ = LOBYTE(MbChar);
             MaxBytesInMultiByteString--;
@@ -1266,12 +1312,8 @@ Return Value:
 
 
 NTSTATUS
-RtlUnicodeToOemN(
-    OUT PCH OemString,
-    IN ULONG MaxBytesInOemString,
-    OUT PULONG BytesInOemString OPTIONAL,
-    IN PWCH UnicodeString,
-    IN ULONG BytesInUnicodeString)
+RtlUnicodeToOemN(OUT PCH OemString, IN ULONG MaxBytesInOemString, OUT PULONG BytesInOemString OPTIONAL,
+                 IN PWCH UnicodeString, IN ULONG BytesInUnicodeString)
 
 /*++
 
@@ -1323,15 +1365,15 @@ Return Value:
     // Convert Unicode byte count to character count. Byte count of
     // multibyte string is equivalent to character count.
     //
-    if (!NlsMbOemCodePageTag) {
+    if (!NlsMbOemCodePageTag)
+    {
 
-        LoopCount = (CharsInUnicodeString < MaxBytesInOemString) ?
-                     CharsInUnicodeString : MaxBytesInOemString;
+        LoopCount = (CharsInUnicodeString < MaxBytesInOemString) ? CharsInUnicodeString : MaxBytesInOemString;
 
         if (ARGUMENT_PRESENT(BytesInOemString))
             *BytesInOemString = LoopCount;
 
-        TranslateTable = NlsUnicodeToOemData;  // used to help the mips compiler
+        TranslateTable = NlsUnicodeToOemData; // used to help the mips compiler
 
         TmpCount = LoopCount & 0x0F;
         UnicodeString += TmpCount;
@@ -1339,7 +1381,8 @@ Return Value:
 
         do
         {
-            switch( TmpCount ) {
+            switch (TmpCount)
+            {
             default:
                 UnicodeString += 0x10;
                 OemString += 0x10;
@@ -1375,31 +1418,35 @@ Return Value:
                 OemString[-0x02] = TranslateTable[UnicodeString[-0x02]];
             case 0x01:
                 OemString[-0x01] = TranslateTable[UnicodeString[-0x01]];
-            case 0x00:
-                ;
+            case 0x00:;
             }
 
             LoopCount -= TmpCount;
             TmpCount = 0x10;
-        } while ( LoopCount > 0 );
+        } while (LoopCount > 0);
 
         /* end of copy... */
-    } else {
+    }
+    else
+    {
         register USHORT MbChar;
         PCH OemStringAnchor = OemString;
 
-        while ( CharsInUnicodeString && MaxBytesInOemString ) {
+        while (CharsInUnicodeString && MaxBytesInOemString)
+        {
 
-            MbChar = NlsUnicodeToMbOemData[ *UnicodeString++ ];
-            if (HIBYTE(MbChar) != 0) {
+            MbChar = NlsUnicodeToMbOemData[*UnicodeString++];
+            if (HIBYTE(MbChar) != 0)
+            {
                 //
                 // Need at least 2 bytes to copy a double byte char.
                 // Don't want to truncate in the middle of a DBCS char.
                 //
-                if (MaxBytesInOemString-- < 2) {
+                if (MaxBytesInOemString-- < 2)
+                {
                     break;
                 }
-                *OemString++ = HIBYTE(MbChar);  // lead byte
+                *OemString++ = HIBYTE(MbChar); // lead byte
             }
             *OemString++ = LOBYTE(MbChar);
             MaxBytesInOemString--;
@@ -1414,19 +1461,13 @@ Return Value:
     //
     //  Check if we were able to use all of the source Unicode String
     //
-    return ( CharsInUnicodeString <= MaxBytesInOemString ) ?
-           STATUS_SUCCESS :
-           STATUS_BUFFER_OVERFLOW;
+    return (CharsInUnicodeString <= MaxBytesInOemString) ? STATUS_SUCCESS : STATUS_BUFFER_OVERFLOW;
 }
 
 
 NTSTATUS
-RtlUpcaseUnicodeToOemN(
-    OUT PCH OemString,
-    IN ULONG MaxBytesInOemString,
-    OUT PULONG BytesInOemString OPTIONAL,
-    IN PWCH UnicodeString,
-    IN ULONG BytesInUnicodeString)
+RtlUpcaseUnicodeToOemN(OUT PCH OemString, IN ULONG MaxBytesInOemString, OUT PULONG BytesInOemString OPTIONAL,
+                       IN PWCH UnicodeString, IN ULONG BytesInUnicodeString)
 
 /*++
 
@@ -1481,15 +1522,15 @@ Return Value:
     // Convert Unicode byte count to character count. Byte count of
     // multibyte string is equivalent to character count.
     //
-    if (!NlsMbOemCodePageTag) {
+    if (!NlsMbOemCodePageTag)
+    {
 
-        LoopCount = (CharsInUnicodeString < MaxBytesInOemString) ?
-                     CharsInUnicodeString : MaxBytesInOemString;
+        LoopCount = (CharsInUnicodeString < MaxBytesInOemString) ? CharsInUnicodeString : MaxBytesInOemString;
 
         if (ARGUMENT_PRESENT(BytesInOemString))
             *BytesInOemString = LoopCount;
 
-        TranslateTable = NlsUnicodeToOemData;  // used to help the mips compiler
+        TranslateTable = NlsUnicodeToOemData; // used to help the mips compiler
 
         TmpCount = LoopCount & 0x0F;
         UnicodeString += TmpCount;
@@ -1502,7 +1543,8 @@ Return Value:
             // to ensure the visual best fits are converted and
             // upper cased properly.
             //
-            switch( TmpCount ) {
+            switch (TmpCount)
+            {
             default:
                 UnicodeString += 0x10;
                 OemString += 0x10;
@@ -1586,35 +1628,40 @@ Return Value:
                 UnicodeChar = NlsOemToUnicodeData[SbChar];
                 UnicodeChar = (WCHAR)NLS_UPCASE(UnicodeChar);
                 OemString[-0x01] = TranslateTable[UnicodeChar];
-            case 0x00:
-                ;
+            case 0x00:;
             }
 
             LoopCount -= TmpCount;
             TmpCount = 0x10;
-        } while ( LoopCount > 0 );
+        } while (LoopCount > 0);
 
         /* end of copy... */
-    } else {
+    }
+    else
+    {
         USHORT MbChar;
         register USHORT Entry;
         PCH OemStringAnchor = OemString;
 
-        while ( CharsInUnicodeString && MaxBytesInOemString ) {
+        while (CharsInUnicodeString && MaxBytesInOemString)
+        {
             //
             // Convert to OEM and back to Unicode before upper casing
             // to ensure the visual best fits are converted and
             // upper cased properly.
             //
-            MbChar = NlsUnicodeToMbOemData[ *UnicodeString++ ];
-            if (NlsOemLeadByteInfo[HIBYTE(MbChar)]) {
+            MbChar = NlsUnicodeToMbOemData[*UnicodeString++];
+            if (NlsOemLeadByteInfo[HIBYTE(MbChar)])
+            {
                 //
                 // Lead byte - translate the trail byte using the table
                 // that corresponds to this lead byte.
                 //
                 Entry = NlsOemLeadByteInfo[HIBYTE(MbChar)];
-                UnicodeChar = (WCHAR)NlsMbOemCodePageTables[ Entry + LOBYTE(MbChar) ];
-            } else {
+                UnicodeChar = (WCHAR)NlsMbOemCodePageTables[Entry + LOBYTE(MbChar)];
+            }
+            else
+            {
                 //
                 // Single byte character.
                 //
@@ -1623,15 +1670,17 @@ Return Value:
             UnicodeChar = (WCHAR)NLS_UPCASE(UnicodeChar);
             MbChar = NlsUnicodeToMbOemData[UnicodeChar];
 
-            if (HIBYTE(MbChar) != 0) {
+            if (HIBYTE(MbChar) != 0)
+            {
                 //
                 // Need at least 2 bytes to copy a double byte char.
                 // Don't want to truncate in the middle of a DBCS char.
                 //
-                if (MaxBytesInOemString-- < 2) {
+                if (MaxBytesInOemString-- < 2)
+                {
                     break;
                 }
-                *OemString++ = HIBYTE(MbChar);  // lead byte
+                *OemString++ = HIBYTE(MbChar); // lead byte
             }
             *OemString++ = LOBYTE(MbChar);
             MaxBytesInOemString--;
@@ -1646,16 +1695,11 @@ Return Value:
     //
     //  Check if we were able to use all of the source Unicode String
     //
-    return ( CharsInUnicodeString <= MaxBytesInOemString ) ?
-           STATUS_SUCCESS :
-           STATUS_BUFFER_OVERFLOW;
+    return (CharsInUnicodeString <= MaxBytesInOemString) ? STATUS_SUCCESS : STATUS_BUFFER_OVERFLOW;
 }
 
 BOOLEAN
-RtlpDidUnicodeToOemWork(
-    IN PCOEM_STRING OemString,
-    IN PCUNICODE_STRING UnicodeString
-    )
+RtlpDidUnicodeToOemWork(IN PCOEM_STRING OemString, IN PCUNICODE_STRING UnicodeString)
 
 /*++
 
@@ -1685,43 +1729,45 @@ Return Value:
 
     RTL_PAGED_CODE();
 
-    if (!NlsMbOemCodePageTag) {
+    if (!NlsMbOemCodePageTag)
+    {
 
-        for (OemOffset = 0;
-             OemOffset < OemString->Length;
-             OemOffset += 1) {
+        for (OemOffset = 0; OemOffset < OemString->Length; OemOffset += 1)
+        {
 
             if ((OemString->Buffer[OemOffset] == (UCHAR)OemDefaultChar) &&
-                (UnicodeString->Buffer[OemOffset] != OemTransUniDefaultChar)) {
+                (UnicodeString->Buffer[OemOffset] != OemTransUniDefaultChar))
+            {
 
                 Result = FALSE;
                 break;
             }
         }
-
-    } else {
+    }
+    else
+    {
 
         ULONG UnicodeOffset;
 
-        for (OemOffset = 0, UnicodeOffset = 0;
-             OemOffset < OemString->Length;
-             OemOffset += 1, UnicodeOffset += 1) {
+        for (OemOffset = 0, UnicodeOffset = 0; OemOffset < OemString->Length; OemOffset += 1, UnicodeOffset += 1)
+        {
 
             //
             //  If we landed on a DBCS character handle it accordingly
             //
 
-            if (NlsOemLeadByteInfo[(UCHAR)OemString->Buffer[OemOffset]]) {
+            if (NlsOemLeadByteInfo[(UCHAR)OemString->Buffer[OemOffset]])
+            {
 
                 USHORT DbcsChar;
 
-                ASSERT( OemOffset + 1 < OemString->Length );
+                ASSERT(OemOffset + 1 < OemString->Length);
 
-                DbcsChar = (OemString->Buffer[OemOffset] << 8) + (UCHAR)OemString->Buffer[OemOffset+1];
+                DbcsChar = (OemString->Buffer[OemOffset] << 8) + (UCHAR)OemString->Buffer[OemOffset + 1];
                 OemOffset++;
 
-                if ((DbcsChar == OemDefaultChar) &&
-                    (UnicodeString->Buffer[UnicodeOffset] != OemTransUniDefaultChar)) {
+                if ((DbcsChar == OemDefaultChar) && (UnicodeString->Buffer[UnicodeOffset] != OemTransUniDefaultChar))
+                {
 
                     Result = FALSE;
                     break;
@@ -1731,7 +1777,8 @@ Return Value:
             }
 
             if ((OemString->Buffer[OemOffset] == (UCHAR)OemDefaultChar) &&
-                (UnicodeString->Buffer[UnicodeOffset] != OemTransUniDefaultChar)) {
+                (UnicodeString->Buffer[UnicodeOffset] != OemTransUniDefaultChar))
+            {
 
                 Result = FALSE;
                 break;
@@ -1744,13 +1791,8 @@ Return Value:
 
 
 NTSTATUS
-RtlCustomCPToUnicodeN(
-    IN PCPTABLEINFO CustomCP,
-    OUT PWCH UnicodeString,
-    IN ULONG MaxBytesInUnicodeString,
-    OUT PULONG BytesInUnicodeString OPTIONAL,
-    IN PCH CustomCPString,
-    IN ULONG BytesInCustomCPString)
+RtlCustomCPToUnicodeN(IN PCPTABLEINFO CustomCP, OUT PWCH UnicodeString, IN ULONG MaxBytesInUnicodeString,
+                      OUT PULONG BytesInUnicodeString OPTIONAL, IN PCH CustomCPString, IN ULONG BytesInCustomCPString)
 
 /*++
 
@@ -1807,13 +1849,13 @@ Return Value:
 
     MaxCharsInUnicodeString = MaxBytesInUnicodeString / sizeof(WCHAR);
 
-    if (!(CustomCP->DBCSCodePage)) {
+    if (!(CustomCP->DBCSCodePage))
+    {
         //
         // The Custom CP is a single byte code page.
         //
 
-        LoopCount = (MaxCharsInUnicodeString < BytesInCustomCPString) ?
-                     MaxCharsInUnicodeString : BytesInCustomCPString;
+        LoopCount = (MaxCharsInUnicodeString < BytesInCustomCPString) ? MaxCharsInUnicodeString : BytesInCustomCPString;
 
         if (ARGUMENT_PRESENT(BytesInUnicodeString))
             *BytesInUnicodeString = LoopCount * sizeof(WCHAR);
@@ -1821,53 +1863,56 @@ Return Value:
 
         TranslateTable = CustomCP->MultiByteTable;
 
-        quick_copy:
-            switch( LoopCount ) {
-            default:
-                UnicodeString[0x0F] = TranslateTable[(UCHAR)CustomCPString[0x0F]];
-            case 0x0F:
-                UnicodeString[0x0E] = TranslateTable[(UCHAR)CustomCPString[0x0E]];
-            case 0x0E:
-                UnicodeString[0x0D] = TranslateTable[(UCHAR)CustomCPString[0x0D]];
-            case 0x0D:
-                UnicodeString[0x0C] = TranslateTable[(UCHAR)CustomCPString[0x0C]];
-            case 0x0C:
-                UnicodeString[0x0B] = TranslateTable[(UCHAR)CustomCPString[0x0B]];
-            case 0x0B:
-                UnicodeString[0x0A] = TranslateTable[(UCHAR)CustomCPString[0x0A]];
-            case 0x0A:
-                UnicodeString[0x09] = TranslateTable[(UCHAR)CustomCPString[0x09]];
-            case 0x09:
-                UnicodeString[0x08] = TranslateTable[(UCHAR)CustomCPString[0x08]];
-            case 0x08:
-                UnicodeString[0x07] = TranslateTable[(UCHAR)CustomCPString[0x07]];
-            case 0x07:
-                UnicodeString[0x06] = TranslateTable[(UCHAR)CustomCPString[0x06]];
-            case 0x06:
-                UnicodeString[0x05] = TranslateTable[(UCHAR)CustomCPString[0x05]];
-            case 0x05:
-                UnicodeString[0x04] = TranslateTable[(UCHAR)CustomCPString[0x04]];
-            case 0x04:
-                UnicodeString[0x03] = TranslateTable[(UCHAR)CustomCPString[0x03]];
-            case 0x03:
-                UnicodeString[0x02] = TranslateTable[(UCHAR)CustomCPString[0x02]];
-            case 0x02:
-                UnicodeString[0x01] = TranslateTable[(UCHAR)CustomCPString[0x01]];
-            case 0x01:
-                UnicodeString[0x00] = TranslateTable[(UCHAR)CustomCPString[0x00]];
-            case 0x00:
-                ;
-            }
+    quick_copy:
+        switch (LoopCount)
+        {
+        default:
+            UnicodeString[0x0F] = TranslateTable[(UCHAR)CustomCPString[0x0F]];
+        case 0x0F:
+            UnicodeString[0x0E] = TranslateTable[(UCHAR)CustomCPString[0x0E]];
+        case 0x0E:
+            UnicodeString[0x0D] = TranslateTable[(UCHAR)CustomCPString[0x0D]];
+        case 0x0D:
+            UnicodeString[0x0C] = TranslateTable[(UCHAR)CustomCPString[0x0C]];
+        case 0x0C:
+            UnicodeString[0x0B] = TranslateTable[(UCHAR)CustomCPString[0x0B]];
+        case 0x0B:
+            UnicodeString[0x0A] = TranslateTable[(UCHAR)CustomCPString[0x0A]];
+        case 0x0A:
+            UnicodeString[0x09] = TranslateTable[(UCHAR)CustomCPString[0x09]];
+        case 0x09:
+            UnicodeString[0x08] = TranslateTable[(UCHAR)CustomCPString[0x08]];
+        case 0x08:
+            UnicodeString[0x07] = TranslateTable[(UCHAR)CustomCPString[0x07]];
+        case 0x07:
+            UnicodeString[0x06] = TranslateTable[(UCHAR)CustomCPString[0x06]];
+        case 0x06:
+            UnicodeString[0x05] = TranslateTable[(UCHAR)CustomCPString[0x05]];
+        case 0x05:
+            UnicodeString[0x04] = TranslateTable[(UCHAR)CustomCPString[0x04]];
+        case 0x04:
+            UnicodeString[0x03] = TranslateTable[(UCHAR)CustomCPString[0x03]];
+        case 0x03:
+            UnicodeString[0x02] = TranslateTable[(UCHAR)CustomCPString[0x02]];
+        case 0x02:
+            UnicodeString[0x01] = TranslateTable[(UCHAR)CustomCPString[0x01]];
+        case 0x01:
+            UnicodeString[0x00] = TranslateTable[(UCHAR)CustomCPString[0x00]];
+        case 0x00:;
+        }
 
-            if ( LoopCount > 0x10 ) {
-                LoopCount -= 0x10;
-                CustomCPString += 0x10;
-                UnicodeString += 0x10;
+        if (LoopCount > 0x10)
+        {
+            LoopCount -= 0x10;
+            CustomCPString += 0x10;
+            UnicodeString += 0x10;
 
-                goto  quick_copy;
-            }
+            goto quick_copy;
+        }
         /* end of copy... */
-    } else {
+    }
+    else
+    {
         register USHORT Entry;
         PWCH UnicodeStringAnchor = UnicodeString;
         PUSHORT NlsCustomLeadByteInfo = CustomCP->DBCSOffsets;
@@ -1878,10 +1923,12 @@ Return Value:
         //
         TranslateTable = (PUSHORT)(CustomCP->DBCSOffsets);
 
-        while (MaxCharsInUnicodeString && BytesInCustomCPString) {
+        while (MaxCharsInUnicodeString && BytesInCustomCPString)
+        {
             MaxCharsInUnicodeString--;
             BytesInCustomCPString--;
-            if (NlsCustomLeadByteInfo[*(PUCHAR)CustomCPString]) {
+            if (NlsCustomLeadByteInfo[*(PUCHAR)CustomCPString])
+            {
                 //
                 // Lead byte - Make sure there is a trail byte.  If not,
                 // pass back a space rather than an error.  Some 3.x
@@ -1898,7 +1945,7 @@ Return Value:
                 // Get the unicode character.
                 //
                 Entry = NlsCustomLeadByteInfo[*(PUCHAR)CustomCPString++];
-                *UnicodeString = TranslateTable[ Entry + *(PUCHAR)CustomCPString++ ];
+                *UnicodeString = TranslateTable[Entry + *(PUCHAR)CustomCPString++];
                 UnicodeString++;
 
                 //
@@ -1906,7 +1953,9 @@ Return Value:
                 // for the double byte character.
                 //
                 BytesInCustomCPString--;
-            } else {
+            }
+            else
+            {
                 //
                 // Single byte character.
                 //
@@ -1921,20 +1970,13 @@ Return Value:
     //
     //  Check if we were able to use all of the source CustomCP String
     //
-    return ( BytesInCustomCPString <= MaxCharsInUnicodeString ) ?
-           STATUS_SUCCESS :
-           STATUS_BUFFER_OVERFLOW;
+    return (BytesInCustomCPString <= MaxCharsInUnicodeString) ? STATUS_SUCCESS : STATUS_BUFFER_OVERFLOW;
 }
 
 
 NTSTATUS
-RtlUnicodeToCustomCPN(
-    IN PCPTABLEINFO CustomCP,
-    OUT PCH CustomCPString,
-    IN ULONG MaxBytesInCustomCPString,
-    OUT PULONG BytesInCustomCPString OPTIONAL,
-    IN PWCH UnicodeString,
-    IN ULONG BytesInUnicodeString)
+RtlUnicodeToCustomCPN(IN PCPTABLEINFO CustomCP, OUT PCH CustomCPString, IN ULONG MaxBytesInCustomCPString,
+                      OUT PULONG BytesInCustomCPString OPTIONAL, IN PWCH UnicodeString, IN ULONG BytesInUnicodeString)
 
 /*++
 
@@ -1990,10 +2032,10 @@ Return Value:
     // Convert Unicode byte count to character count. Byte count of
     // multibyte string is equivalent to character count.
     //
-    if (!(CustomCP->DBCSCodePage)) {
+    if (!(CustomCP->DBCSCodePage))
+    {
 
-        LoopCount = (CharsInUnicodeString < MaxBytesInCustomCPString) ?
-                     CharsInUnicodeString : MaxBytesInCustomCPString;
+        LoopCount = (CharsInUnicodeString < MaxBytesInCustomCPString) ? CharsInUnicodeString : MaxBytesInCustomCPString;
 
         if (ARGUMENT_PRESENT(BytesInCustomCPString))
             *BytesInCustomCPString = LoopCount;
@@ -2006,7 +2048,8 @@ Return Value:
 
         do
         {
-            switch( TmpCount ) {
+            switch (TmpCount)
+            {
             default:
                 UnicodeString += 0x10;
                 CustomCPString += 0x10;
@@ -2042,33 +2085,37 @@ Return Value:
                 CustomCPString[-0x02] = TranslateTable[UnicodeString[-0x02]];
             case 0x01:
                 CustomCPString[-0x01] = TranslateTable[UnicodeString[-0x01]];
-            case 0x00:
-                ;
+            case 0x00:;
             }
 
             LoopCount -= TmpCount;
             TmpCount = 0x10;
-        } while ( LoopCount > 0 );
+        } while (LoopCount > 0);
 
         /* end of copy... */
-    } else {
+    }
+    else
+    {
         USHORT MbChar;
         PCH CustomCPStringAnchor = CustomCPString;
 
         WideTranslateTable = CustomCP->WideCharTable;
 
-        while (CharsInUnicodeString && MaxBytesInCustomCPString) {
+        while (CharsInUnicodeString && MaxBytesInCustomCPString)
+        {
 
-            MbChar = WideTranslateTable[ *UnicodeString++ ];
-            if (HIBYTE(MbChar) != 0) {
+            MbChar = WideTranslateTable[*UnicodeString++];
+            if (HIBYTE(MbChar) != 0)
+            {
                 //
                 // Need at least 2 bytes to copy a double byte char.
                 // Don't want to truncate in the middle of a DBCS char.
                 //
-                if (MaxBytesInCustomCPString-- < 2) {
+                if (MaxBytesInCustomCPString-- < 2)
+                {
                     break;
                 }
-                *CustomCPString++ = HIBYTE(MbChar);  // lead byte
+                *CustomCPString++ = HIBYTE(MbChar); // lead byte
             }
             *CustomCPString++ = LOBYTE(MbChar);
             MaxBytesInCustomCPString--;
@@ -2083,20 +2130,14 @@ Return Value:
     //
     //  Check if we were able to use all of the source Unicode String
     //
-    return ( CharsInUnicodeString <= MaxBytesInCustomCPString ) ?
-           STATUS_SUCCESS :
-           STATUS_BUFFER_OVERFLOW;
+    return (CharsInUnicodeString <= MaxBytesInCustomCPString) ? STATUS_SUCCESS : STATUS_BUFFER_OVERFLOW;
 }
 
 
 NTSTATUS
-RtlUpcaseUnicodeToCustomCPN(
-    IN PCPTABLEINFO CustomCP,
-    OUT PCH CustomCPString,
-    IN ULONG MaxBytesInCustomCPString,
-    OUT PULONG BytesInCustomCPString OPTIONAL,
-    IN PWCH UnicodeString,
-    IN ULONG BytesInUnicodeString)
+RtlUpcaseUnicodeToCustomCPN(IN PCPTABLEINFO CustomCP, OUT PCH CustomCPString, IN ULONG MaxBytesInCustomCPString,
+                            OUT PULONG BytesInCustomCPString OPTIONAL, IN PWCH UnicodeString,
+                            IN ULONG BytesInUnicodeString)
 
 /*++
 
@@ -2155,10 +2196,10 @@ Return Value:
     // Convert Unicode byte count to character count. Byte count of
     // multibyte string is equivalent to character count.
     //
-    if (!(CustomCP->DBCSCodePage)) {
+    if (!(CustomCP->DBCSCodePage))
+    {
 
-        LoopCount = (CharsInUnicodeString < MaxBytesInCustomCPString) ?
-                     CharsInUnicodeString : MaxBytesInCustomCPString;
+        LoopCount = (CharsInUnicodeString < MaxBytesInCustomCPString) ? CharsInUnicodeString : MaxBytesInCustomCPString;
 
         if (ARGUMENT_PRESENT(BytesInCustomCPString))
             *BytesInCustomCPString = LoopCount;
@@ -2176,7 +2217,8 @@ Return Value:
             // casing to ensure the visual best fits are converted and
             // upper cased properly.
             //
-            switch( TmpCount ) {
+            switch (TmpCount)
+            {
             default:
                 UnicodeString += 0x10;
                 CustomCPString += 0x10;
@@ -2260,16 +2302,17 @@ Return Value:
                 UnicodeChar = (CustomCP->MultiByteTable)[SbChar];
                 UnicodeChar = (WCHAR)NLS_UPCASE(UnicodeChar);
                 CustomCPString[-0x01] = TranslateTable[UnicodeChar];
-            case 0x00:
-                ;
+            case 0x00:;
             }
 
             LoopCount -= TmpCount;
             TmpCount = 0x10;
-        } while ( LoopCount > 0 );
+        } while (LoopCount > 0);
 
         /* end of copy... */
-    } else {
+    }
+    else
+    {
         USHORT MbChar;
         register USHORT Entry;
         PCH CustomCPStringAnchor = CustomCPString;
@@ -2277,21 +2320,25 @@ Return Value:
 
         WideTranslateTable = CustomCP->WideCharTable;
 
-        while ( CharsInUnicodeString && MaxBytesInCustomCPString ) {
+        while (CharsInUnicodeString && MaxBytesInCustomCPString)
+        {
             //
             // Convert to Single Byte and back to Unicode before upper
             // casing to ensure the visual best fits are converted and
             // upper cased properly.
             //
-            MbChar = WideTranslateTable[ *UnicodeString++ ];
-            if (NlsCustomLeadByteInfo[HIBYTE(MbChar)]) {
+            MbChar = WideTranslateTable[*UnicodeString++];
+            if (NlsCustomLeadByteInfo[HIBYTE(MbChar)])
+            {
                 //
                 // Lead byte - translate the trail byte using the table
                 // that corresponds to this lead byte.
                 //
                 Entry = NlsCustomLeadByteInfo[HIBYTE(MbChar)];
-                UnicodeChar = NlsCustomLeadByteInfo[ Entry + LOBYTE(MbChar) ];
-            } else {
+                UnicodeChar = NlsCustomLeadByteInfo[Entry + LOBYTE(MbChar)];
+            }
+            else
+            {
                 //
                 // Single byte character.
                 //
@@ -2300,15 +2347,17 @@ Return Value:
             UnicodeChar = (WCHAR)NLS_UPCASE(UnicodeChar);
             MbChar = WideTranslateTable[UnicodeChar];
 
-            if (HIBYTE(MbChar) != 0) {
+            if (HIBYTE(MbChar) != 0)
+            {
                 //
                 // Need at least 2 bytes to copy a double byte char.
                 // Don't want to truncate in the middle of a DBCS char.
                 //
-                if (MaxBytesInCustomCPString-- < 2) {
+                if (MaxBytesInCustomCPString-- < 2)
+                {
                     break;
                 }
-                *CustomCPString++ = HIBYTE(MbChar);  // lead byte
+                *CustomCPString++ = HIBYTE(MbChar); // lead byte
             }
             *CustomCPString++ = LOBYTE(MbChar);
             MaxBytesInCustomCPString--;
@@ -2323,25 +2372,19 @@ Return Value:
     //
     //  Check if we were able to use all of the source Unicode String
     //
-    return ( CharsInUnicodeString <= MaxBytesInCustomCPString ) ?
-           STATUS_SUCCESS :
-           STATUS_BUFFER_OVERFLOW;
+    return (CharsInUnicodeString <= MaxBytesInCustomCPString) ? STATUS_SUCCESS : STATUS_BUFFER_OVERFLOW;
 }
 
-#define MB_TBL_SIZE      256             /* size of MB tables */
-#define GLYPH_TBL_SIZE   MB_TBL_SIZE     /* size of GLYPH tables */
-#define DBCS_TBL_SIZE    256             /* size of DBCS tables */
-#define GLYPH_HEADER     1               /* size of GLYPH table header */
-#define DBCS_HEADER      1               /* size of DBCS table header */
-#define LANG_HEADER      1               /* size of LANGUAGE file header */
-#define UP_HEADER        1               /* size of UPPERCASE table header */
-#define LO_HEADER        1               /* size of LOWERCASE table header */
+#define MB_TBL_SIZE 256            /* size of MB tables */
+#define GLYPH_TBL_SIZE MB_TBL_SIZE /* size of GLYPH tables */
+#define DBCS_TBL_SIZE 256          /* size of DBCS tables */
+#define GLYPH_HEADER 1             /* size of GLYPH table header */
+#define DBCS_HEADER 1              /* size of DBCS table header */
+#define LANG_HEADER 1              /* size of LANGUAGE file header */
+#define UP_HEADER 1                /* size of UPPERCASE table header */
+#define LO_HEADER 1                /* size of LOWERCASE table header */
 
-VOID
-RtlInitCodePageTable(
-    IN PUSHORT TableBase,
-    OUT PCPTABLEINFO CodePageTable
-    )
+VOID RtlInitCodePageTable(IN PUSHORT TableBase, OUT PCPTABLEINFO CodePageTable)
 {
     USHORT offMB;
     USHORT offWC;
@@ -2364,48 +2407,44 @@ RtlInitCodePageTable(
 
     CodePageTable->CodePage = TableBase[1];
     CodePageTable->MaximumCharacterSize = TableBase[2];
-    CodePageTable->DefaultChar = TableBase[3];           // default character (MB)
-    CodePageTable->UniDefaultChar = TableBase[4];        // default character (Unicode)
-    CodePageTable->TransDefaultChar = TableBase[5];      // trans of default char (Unicode)
-    CodePageTable->TransUniDefaultChar = TableBase[6];   // trans of Uni default char (MB)
-    RtlCopyMemory(
-        &CodePageTable->LeadByte,
-        &TableBase[7],
-        MAXIMUM_LEADBYTES
-        );
+    CodePageTable->DefaultChar = TableBase[3];         // default character (MB)
+    CodePageTable->UniDefaultChar = TableBase[4];      // default character (Unicode)
+    CodePageTable->TransDefaultChar = TableBase[5];    // trans of default char (Unicode)
+    CodePageTable->TransUniDefaultChar = TableBase[6]; // trans of Uni default char (MB)
+    RtlCopyMemory(&CodePageTable->LeadByte, &TableBase[7], MAXIMUM_LEADBYTES);
     CodePageTable->MultiByteTable = (TableBase + offMB + 1);
 
     pGlyph = CodePageTable->MultiByteTable + MB_TBL_SIZE;
 
-    if (pGlyph[0] != 0) {
+    if (pGlyph[0] != 0)
+    {
         pRange = CodePageTable->DBCSRanges = pGlyph + GLYPH_HEADER + GLYPH_TBL_SIZE;
-        }
-    else {
+    }
+    else
+    {
         pRange = CodePageTable->DBCSRanges = pGlyph + GLYPH_HEADER;
-        }
+    }
 
     //
     //  Attach DBCS information to CP hash node.
     //
 
-    if (pRange[0] > 0) {
+    if (pRange[0] > 0)
+    {
         CodePageTable->DBCSOffsets = pRange + DBCS_HEADER;
         CodePageTable->DBCSCodePage = 1;
-        }
-    else {
+    }
+    else
+    {
         CodePageTable->DBCSCodePage = 0;
         CodePageTable->DBCSOffsets = NULL;
-        }
+    }
 
     CodePageTable->WideCharTable = (TableBase + offWC + 1);
 }
 
 
-VOID
-RtlpInitUpcaseTable(
-    IN PUSHORT TableBase,
-    OUT PNLSTABLEINFO CodePageTable
-    )
+VOID RtlpInitUpcaseTable(IN PUSHORT TableBase, OUT PNLSTABLEINFO CodePageTable)
 {
     USHORT offUP;
     USHORT offLO;
@@ -2422,35 +2461,29 @@ RtlpInitUpcaseTable(
 }
 
 
-VOID
-RtlInitNlsTables(
-    IN PUSHORT AnsiNlsBase,
-    IN PUSHORT OemNlsBase,
-    IN PUSHORT LanguageNlsBase,
-    OUT PNLSTABLEINFO TableInfo
-    )
+VOID RtlInitNlsTables(IN PUSHORT AnsiNlsBase, IN PUSHORT OemNlsBase, IN PUSHORT LanguageNlsBase,
+                      OUT PNLSTABLEINFO TableInfo)
 {
     RTL_PAGED_CODE();
 
-    RtlInitCodePageTable(AnsiNlsBase,&TableInfo->AnsiTableInfo);
-    RtlInitCodePageTable(OemNlsBase,&TableInfo->OemTableInfo);
-    RtlpInitUpcaseTable(LanguageNlsBase,TableInfo);
+    RtlInitCodePageTable(AnsiNlsBase, &TableInfo->AnsiTableInfo);
+    RtlInitCodePageTable(OemNlsBase, &TableInfo->OemTableInfo);
+    RtlpInitUpcaseTable(LanguageNlsBase, TableInfo);
 }
 
 
-VOID
-RtlResetRtlTranslations(
-    PNLSTABLEINFO TableInfo
-    )
+VOID RtlResetRtlTranslations(PNLSTABLEINFO TableInfo)
 {
     RTL_PAGED_CODE();
 
-    if ( TableInfo->AnsiTableInfo.DBCSCodePage ) {
-        RtlMoveMemory(NlsLeadByteInfo,TableInfo->AnsiTableInfo.DBCSOffsets,DBCS_TBL_SIZE*sizeof(USHORT));
-        }
-    else {
-        RtlZeroMemory(NlsLeadByteInfo,DBCS_TBL_SIZE*sizeof(USHORT));
-        }
+    if (TableInfo->AnsiTableInfo.DBCSCodePage)
+    {
+        RtlMoveMemory(NlsLeadByteInfo, TableInfo->AnsiTableInfo.DBCSOffsets, DBCS_TBL_SIZE * sizeof(USHORT));
+    }
+    else
+    {
+        RtlZeroMemory(NlsLeadByteInfo, DBCS_TBL_SIZE * sizeof(USHORT));
+    }
 
     NlsMbAnsiCodePageTables = (PUSHORT)TableInfo->AnsiTableInfo.DBCSOffsets;
 
@@ -2460,12 +2493,14 @@ RtlResetRtlTranslations(
     NlsMbCodePageTag = TableInfo->AnsiTableInfo.DBCSCodePage ? TRUE : FALSE;
     NlsAnsiCodePage = TableInfo->AnsiTableInfo.CodePage;
 
-    if ( TableInfo->OemTableInfo.DBCSCodePage ) {
-        RtlMoveMemory(NlsOemLeadByteInfo,TableInfo->OemTableInfo.DBCSOffsets,DBCS_TBL_SIZE*sizeof(USHORT));
-        }
-    else {
-        RtlZeroMemory(NlsOemLeadByteInfo,DBCS_TBL_SIZE*sizeof(USHORT));
-        }
+    if (TableInfo->OemTableInfo.DBCSCodePage)
+    {
+        RtlMoveMemory(NlsOemLeadByteInfo, TableInfo->OemTableInfo.DBCSOffsets, DBCS_TBL_SIZE * sizeof(USHORT));
+    }
+    else
+    {
+        RtlZeroMemory(NlsOemLeadByteInfo, DBCS_TBL_SIZE * sizeof(USHORT));
+    }
 
     NlsMbOemCodePageTables = (PUSHORT)TableInfo->OemTableInfo.DBCSOffsets;
 
@@ -2482,18 +2517,9 @@ RtlResetRtlTranslations(
     UnicodeDefaultChar = TableInfo->AnsiTableInfo.UniDefaultChar;
 }
 
-void
-RtlGetDefaultCodePage(
-    OUT PUSHORT AnsiCodePage,
-    OUT PUSHORT OemCodePage
-    )
+void RtlGetDefaultCodePage(OUT PUSHORT AnsiCodePage, OUT PUSHORT OemCodePage)
 {
     RTL_PAGED_CODE();
     *AnsiCodePage = NlsAnsiCodePage;
     *OemCodePage = NlsOemCodePage;
 }
-
-
-
-
-

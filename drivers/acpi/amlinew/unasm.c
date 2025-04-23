@@ -22,8 +22,7 @@ LONG LOCAL UnAsmDataObj(PUCHAR *ppbOp);
 LONG LOCAL UnAsmNameObj(PUCHAR *ppbOp, PNSOBJ *ppns, char c);
 LONG LOCAL UnAsmNameTail(PUCHAR *ppbOp, PSZ pszBuff, int iLen);
 LONG LOCAL UnAsmTermObj(PASLTERM pterm, PUCHAR *ppbOp);
-LONG LOCAL UnAsmArgs(PSZ pszUnAsmArgTypes, PSZ pszArgActions, PUCHAR *ppbOp,
-                     PNSOBJ *ppns);
+LONG LOCAL UnAsmArgs(PSZ pszUnAsmArgTypes, PSZ pszArgActions, PUCHAR *ppbOp, PNSOBJ *ppns);
 LONG LOCAL UnAsmSuperName(PUCHAR *ppbOp);
 LONG LOCAL UnAsmDataList(PUCHAR *ppbOp, PUCHAR pbEnd);
 LONG LOCAL UnAsmPkgList(PUCHAR *ppbOp, PUCHAR pbEnd);
@@ -83,8 +82,7 @@ LONG LOCAL UnAsmScope(PUCHAR *ppbOp, PUCHAR pbEnd, int iLevel, int icLines)
             {
                 char szReply[2];
 
-                ConPrompt("\nPress <space> to continue and 'q' to quit? ",
-                          szReply, sizeof(szReply));
+                ConPrompt("\nPress <space> to continue and 'q' to quit? ", szReply, sizeof(szReply));
                 PRINTF("\n");
                 if (szReply[0] == 'q')
                 {
@@ -115,7 +113,7 @@ LONG LOCAL UnAsmScope(PUCHAR *ppbOp, PUCHAR pbEnd, int iLevel, int icLines)
     }
 
     return rc;
-}       //UnAsmScope
+} //UnAsmScope
 
 /***LP  Indent - Print indent level
  *
@@ -136,7 +134,7 @@ VOID LOCAL Indent(PUCHAR pbOp, int iLevel)
     {
         PRINTF("| ");
     }
-}       //Indent
+} //Indent
 
 /***LP  FindOpClass - Find opcode class of extended opcode
  *
@@ -168,7 +166,7 @@ UCHAR LOCAL FindOpClass(UCHAR bOp, POPMAP pOpTable)
     }
 
     return bOpClass;
-}       //FindOpClass
+} //FindOpClass
 
 /***LP  FindOpTerm - Find opcode in TermTable
  *
@@ -189,10 +187,8 @@ PASLTERM LOCAL FindOpTerm(ULONG dwOpcode)
     for (i = 0; TermTable[i].pszID != NULL; ++i)
     {
         if ((TermTable[i].dwOpcode == dwOpcode) &&
-            (TermTable[i].dwfTermClass &
-             (UTC_CONST_NAME | UTC_SHORT_NAME | UTC_NAMESPACE_MODIFIER |
-              UTC_DATA_OBJECT | UTC_NAMED_OBJECT | UTC_OPCODE_TYPE1 |
-              UTC_OPCODE_TYPE2)))
+            (TermTable[i].dwfTermClass & (UTC_CONST_NAME | UTC_SHORT_NAME | UTC_NAMESPACE_MODIFIER | UTC_DATA_OBJECT |
+                                          UTC_NAMED_OBJECT | UTC_OPCODE_TYPE1 | UTC_OPCODE_TYPE2)))
         {
             break;
         }
@@ -204,7 +200,7 @@ PASLTERM LOCAL FindOpTerm(ULONG dwOpcode)
     }
 
     return pterm;
-}       //FindOpTerm
+} //FindOpTerm
 
 /***LP  FindKeywordTerm - Find keyword in TermTable
  *
@@ -225,10 +221,8 @@ PASLTERM LOCAL FindKeywordTerm(char cKWGroup, UCHAR bData)
 
     for (i = 0; TermTable[i].pszID != NULL; ++i)
     {
-        if ((TermTable[i].dwfTermClass == UTC_KEYWORD) &&
-            (TermTable[i].pszArgActions[0] == cKWGroup) &&
-            ((bData & (UCHAR)(TermTable[i].dwTermData >> 8)) ==
-             (UCHAR)(TermTable[i].dwTermData & 0xff)))
+        if ((TermTable[i].dwfTermClass == UTC_KEYWORD) && (TermTable[i].pszArgActions[0] == cKWGroup) &&
+            ((bData & (UCHAR)(TermTable[i].dwTermData >> 8)) == (UCHAR)(TermTable[i].dwTermData & 0xff)))
         {
             break;
         }
@@ -240,7 +234,7 @@ PASLTERM LOCAL FindKeywordTerm(char cKWGroup, UCHAR bData)
     }
 
     return pterm;
-}       //FindKeywordTerm
+} //FindKeywordTerm
 
 /***LP  UnAsmOpcode - Unassemble an Opcode
  *
@@ -266,7 +260,7 @@ LONG LOCAL UnAsmOpcode(PUCHAR *ppbOp)
     if (**ppbOp == OP_EXT_PREFIX)
     {
         (*ppbOp)++;
-        dwOpcode = (((ULONG)**ppbOp) << 8) | OP_EXT_PREFIX;
+        dwOpcode = (((ULONG) * *ppbOp) << 8) | OP_EXT_PREFIX;
         bOp = FindOpClass(**ppbOp, ExOpClassTable);
     }
     else
@@ -277,53 +271,50 @@ LONG LOCAL UnAsmOpcode(PUCHAR *ppbOp)
 
     switch (bOp)
     {
-        case OPCLASS_DATA_OBJ:
-            rc = UnAsmDataObj(ppbOp);
-            break;
+    case OPCLASS_DATA_OBJ:
+        rc = UnAsmDataObj(ppbOp);
+        break;
 
-        case OPCLASS_NAME_OBJ:
-            if (((rc = UnAsmNameObj(ppbOp, &pns, NSTYPE_UNKNOWN)) ==
-                 UNASMERR_NONE) &&
-                (pns != NULL) &&
-                (pns->ObjData.dwDataType == OBJTYPE_METHOD))
+    case OPCLASS_NAME_OBJ:
+        if (((rc = UnAsmNameObj(ppbOp, &pns, NSTYPE_UNKNOWN)) == UNASMERR_NONE) && (pns != NULL) &&
+            (pns->ObjData.dwDataType == OBJTYPE_METHOD))
+        {
+            int iNumArgs;
+
+            iNumArgs = ((PMETHODOBJ)pns->ObjData.pbDataBuff)->bMethodFlags & METHOD_NUMARG_MASK;
+
+            for (i = 0; i < iNumArgs; ++i)
             {
-                int iNumArgs;
-
-                iNumArgs = ((PMETHODOBJ)pns->ObjData.pbDataBuff)->bMethodFlags &
-                           METHOD_NUMARG_MASK;
-
-                for (i = 0; i < iNumArgs; ++i)
-                {
-                    szUnAsmArgTypes[i] = 'C';
-                }
-                szUnAsmArgTypes[i] = '\0';
-                rc = UnAsmArgs(szUnAsmArgTypes, NULL, ppbOp, NULL);
+                szUnAsmArgTypes[i] = 'C';
             }
-            break;
+            szUnAsmArgTypes[i] = '\0';
+            rc = UnAsmArgs(szUnAsmArgTypes, NULL, ppbOp, NULL);
+        }
+        break;
 
-        case OPCLASS_ARG_OBJ:
-        case OPCLASS_LOCAL_OBJ:
-        case OPCLASS_CODE_OBJ:
-        case OPCLASS_CONST_OBJ:
-            if ((pterm = FindOpTerm(dwOpcode)) == NULL)
-            {
-                DBG_ERROR(("UnAsmOpcode: invalid opcode 0x%x", dwOpcode));
-                rc = UNASMERR_FATAL;
-            }
-            else
-            {
-                (*ppbOp)++;
-                rc = UnAsmTermObj(pterm, ppbOp);
-            }
-            break;
-
-        default:
-            DBG_ERROR(("UnAsmOpcode: invalid opcode class %d", bOp));
+    case OPCLASS_ARG_OBJ:
+    case OPCLASS_LOCAL_OBJ:
+    case OPCLASS_CODE_OBJ:
+    case OPCLASS_CONST_OBJ:
+        if ((pterm = FindOpTerm(dwOpcode)) == NULL)
+        {
+            DBG_ERROR(("UnAsmOpcode: invalid opcode 0x%x", dwOpcode));
             rc = UNASMERR_FATAL;
+        }
+        else
+        {
+            (*ppbOp)++;
+            rc = UnAsmTermObj(pterm, ppbOp);
+        }
+        break;
+
+    default:
+        DBG_ERROR(("UnAsmOpcode: invalid opcode class %d", bOp));
+        rc = UNASMERR_FATAL;
     }
 
     return rc;
-}       //UnAsmOpcode
+} //UnAsmOpcode
 
 /***LP  UnAsmDataObj - Unassemble data object
  *
@@ -345,42 +336,42 @@ LONG LOCAL UnAsmDataObj(PUCHAR *ppbOp)
     (*ppbOp)++;
     switch (bOp)
     {
-        case OP_BYTE:
-            PRINTF("0x%x", **ppbOp);
-            *ppbOp += sizeof(UCHAR);
-            break;
+    case OP_BYTE:
+        PRINTF("0x%x", **ppbOp);
+        *ppbOp += sizeof(UCHAR);
+        break;
 
-        case OP_WORD:
-            PRINTF("0x%x", *((UNALIGNED USHORT *)*ppbOp));
-            *ppbOp += sizeof(USHORT);
-            break;
+    case OP_WORD:
+        PRINTF("0x%x", *((UNALIGNED USHORT *)*ppbOp));
+        *ppbOp += sizeof(USHORT);
+        break;
 
-        case OP_DWORD:
-            PRINTF("0x%x", *((UNALIGNED ULONG *)*ppbOp));
-            *ppbOp += sizeof(ULONG);
-            break;
+    case OP_DWORD:
+        PRINTF("0x%x", *((UNALIGNED ULONG *)*ppbOp));
+        *ppbOp += sizeof(ULONG);
+        break;
 
-        case OP_STRING:
-            PRINTF("\"");
-            for (psz = (PSZ)*ppbOp; *psz != '\0'; psz++)
+    case OP_STRING:
+        PRINTF("\"");
+        for (psz = (PSZ)*ppbOp; *psz != '\0'; psz++)
+        {
+            if (*psz == '\\')
             {
-                if (*psz == '\\')
-                {
-                    PRINTF("\\");
-                }
-                PRINTF("%c", *psz);
+                PRINTF("\\");
             }
-            PRINTF("\"");
-            *ppbOp += STRLEN((PSZ)*ppbOp) + 1;
-            break;
+            PRINTF("%c", *psz);
+        }
+        PRINTF("\"");
+        *ppbOp += STRLEN((PSZ)*ppbOp) + 1;
+        break;
 
-        default:
-            DBG_ERROR(("UnAsmDataObj: unexpected opcode 0x%x", bOp));
-            rc = UNASMERR_INVALID_OPCODE;
+    default:
+        DBG_ERROR(("UnAsmDataObj: unexpected opcode 0x%x", bOp));
+        rc = UNASMERR_INVALID_OPCODE;
     }
 
     return rc;
-}       //UnAsmDataObj
+} //UnAsmDataObj
 
 /***LP  UnAsmNameObj - Unassemble name object
  *
@@ -442,8 +433,7 @@ LONG LOCAL UnAsmNameObj(PUCHAR *ppbOp, PNSOBJ *ppns, char c)
 
         PRINTF("%s", szName);
 
-        if ((rc = GetNameSpaceObject(szName, gpnsCurUnAsmScope, &pns, 0)) !=
-            UNASMERR_NONE)
+        if ((rc = GetNameSpaceObject(szName, gpnsCurUnAsmScope, &pns, 0)) != UNASMERR_NONE)
         {
             rc = UNASMERR_NONE;
         }
@@ -463,7 +453,7 @@ LONG LOCAL UnAsmNameObj(PUCHAR *ppbOp, PNSOBJ *ppns, char c)
     }
 
     return rc;
-}       //UnAsmNameObj
+} //UnAsmNameObj
 
 /***LP  UnAsmNameTail - Parse AML name tail
  *
@@ -533,7 +523,7 @@ LONG LOCAL UnAsmNameTail(PUCHAR *ppbOp, PSZ pszBuff, int iLen)
     }
 
     return rc;
-}       //UnAsmNameTail
+} //UnAsmNameTail
 
 /***LP  UnAsmTermObj - Unassemble term object
  *
@@ -563,8 +553,7 @@ LONG LOCAL UnAsmTermObj(PASLTERM pterm, PUCHAR *ppbOp)
 
     if (pterm->pszUnAsmArgTypes != NULL)
     {
-        rc = UnAsmArgs(pterm->pszUnAsmArgTypes, pterm->pszArgActions, ppbOp,
-                       &pns);
+        rc = UnAsmArgs(pterm->pszUnAsmArgTypes, pterm->pszArgActions, ppbOp, &pns);
     }
 
     if (rc == UNASMERR_NONE)
@@ -583,8 +572,7 @@ LONG LOCAL UnAsmTermObj(PASLTERM pterm, PUCHAR *ppbOp)
         }
         else if (pterm->dwfTerm & TF_PACKAGE_LEN)
         {
-            if ((pterm->dwfTerm & TF_CHANGE_CHILDSCOPE) &&
-                (pns != NULL))
+            if ((pterm->dwfTerm & TF_CHANGE_CHILDSCOPE) && (pns != NULL))
             {
                 gpnsCurUnAsmScope = pns;
             }
@@ -595,7 +583,7 @@ LONG LOCAL UnAsmTermObj(PASLTERM pterm, PUCHAR *ppbOp)
     gpnsCurUnAsmScope = pnsScopeSave;
 
     return rc;
-}       //UnAsmTermObj
+} //UnAsmTermObj
 
 /***LP  UnAsmArgs - Unassemble arguments
  *
@@ -611,13 +599,12 @@ LONG LOCAL UnAsmTermObj(PASLTERM pterm, PUCHAR *ppbOp)
  *      returns negative error code
  */
 
-LONG LOCAL UnAsmArgs(PSZ pszUnAsmArgTypes, PSZ pszArgActions, PUCHAR *ppbOp,
-                     PNSOBJ *ppns)
+LONG LOCAL UnAsmArgs(PSZ pszUnAsmArgTypes, PSZ pszArgActions, PUCHAR *ppbOp, PNSOBJ *ppns)
 {
     LONG rc = UNASMERR_NONE;
     static UCHAR bArgData = 0;
     int iNumArgs, i;
-    PASLTERM pterm = {0};
+    PASLTERM pterm = { 0 };
 
     iNumArgs = STRLEN(pszUnAsmArgTypes);
     PRINTF("(");
@@ -631,92 +618,90 @@ LONG LOCAL UnAsmArgs(PSZ pszUnAsmArgTypes, PSZ pszArgActions, PUCHAR *ppbOp,
 
         switch (pszUnAsmArgTypes[i])
         {
-            case 'N':
-                ASSERT(pszArgActions != NULL);
-                rc = UnAsmNameObj(ppbOp, ppns, pszArgActions[i]);
-                break;
+        case 'N':
+            ASSERT(pszArgActions != NULL);
+            rc = UnAsmNameObj(ppbOp, ppns, pszArgActions[i]);
+            break;
 
-            case 'O':
-                if ((**ppbOp == OP_BUFFER) || (**ppbOp == OP_PACKAGE) ||
-                    (OpClassTable[**ppbOp] == OPCLASS_CONST_OBJ))
+        case 'O':
+            if ((**ppbOp == OP_BUFFER) || (**ppbOp == OP_PACKAGE) || (OpClassTable[**ppbOp] == OPCLASS_CONST_OBJ))
+            {
+                pterm = FindOpTerm((ULONG)(**ppbOp));
+                ASSERT(pterm != NULL);
+                (*ppbOp)++;
+                if (pterm)
                 {
-                    pterm = FindOpTerm((ULONG)(**ppbOp));
-                    ASSERT(pterm != NULL);
-                    (*ppbOp)++;
-                    if(pterm)
-                    {
-                        rc = UnAsmTermObj(pterm, ppbOp);
-                    }
-                    else
-                    {
-                        rc = UNASMERR_INVALID_OPCODE;
-                    }
+                    rc = UnAsmTermObj(pterm, ppbOp);
                 }
                 else
                 {
-                    rc = UnAsmDataObj(ppbOp);
+                    rc = UNASMERR_INVALID_OPCODE;
                 }
-                break;
+            }
+            else
+            {
+                rc = UnAsmDataObj(ppbOp);
+            }
+            break;
 
-            case 'C':
-                rc = UnAsmOpcode(ppbOp);
-                break;
+        case 'C':
+            rc = UnAsmOpcode(ppbOp);
+            break;
 
-            case 'B':
-                PRINTF("0x%x", **ppbOp);
+        case 'B':
+            PRINTF("0x%x", **ppbOp);
+            *ppbOp += sizeof(UCHAR);
+            break;
+
+        case 'K':
+        case 'k':
+            if (pszUnAsmArgTypes[i] == 'K')
+            {
+                bArgData = **ppbOp;
+            }
+
+            if ((pszArgActions != NULL) && (pszArgActions[i] == '!'))
+            {
+                PRINTF("0x%x", **ppbOp & 0x07);
+            }
+            else
+            {
+                pterm = FindKeywordTerm(pszArgActions[i], bArgData);
+                ASSERT(pterm != NULL);
+                PRINTF("%s", pterm->pszID);
+            }
+
+            if (pszUnAsmArgTypes[i] == 'K')
+            {
                 *ppbOp += sizeof(UCHAR);
-                break;
+            }
+            break;
 
-            case 'K':
-            case 'k':
-                if (pszUnAsmArgTypes[i] == 'K')
-                {
-                    bArgData = **ppbOp;
-                }
+        case 'W':
+            PRINTF("0x%x", *((PUSHORT)*ppbOp));
+            *ppbOp += sizeof(USHORT);
+            break;
 
-                if ((pszArgActions != NULL) && (pszArgActions[i] == '!'))
-                {
-                    PRINTF("0x%x", **ppbOp & 0x07);
-                }
-                else
-                {
-                    pterm = FindKeywordTerm(pszArgActions[i], bArgData);
-                    ASSERT(pterm != NULL);
-                    PRINTF("%s", pterm->pszID);
-                }
+        case 'D':
+            PRINTF("0x%x", *((PULONG)*ppbOp));
+            *ppbOp += sizeof(ULONG);
+            break;
 
-                if (pszUnAsmArgTypes[i] == 'K')
-                {
-                    *ppbOp += sizeof(UCHAR);
-                }
-                break;
+        case 'S':
+            ASSERT(pszArgActions != NULL);
+            rc = UnAsmSuperName(ppbOp);
+            break;
 
-            case 'W':
-                PRINTF("0x%x", *((PUSHORT)*ppbOp));
-                *ppbOp += sizeof(USHORT);
-                break;
-
-            case 'D':
-                PRINTF("0x%x", *((PULONG)*ppbOp));
-                *ppbOp += sizeof(ULONG);
-                break;
-
-            case 'S':
-                ASSERT(pszArgActions != NULL);
-                rc = UnAsmSuperName(ppbOp);
-                break;
-
-            default:
-                DBG_ERROR(("UnAsmOpcode: invalid ArgType '%c'",
-                           pszUnAsmArgTypes[i]));
-                rc = UNASMERR_FATAL;
+        default:
+            DBG_ERROR(("UnAsmOpcode: invalid ArgType '%c'", pszUnAsmArgTypes[i]));
+            rc = UNASMERR_FATAL;
         }
     }
 
     PRINTF(")");
 
     return rc;
-}       //UnAsmArgs
+} //UnAsmArgs
 
 /***LP  UnAsmSuperName - Unassemble supername
  *
@@ -746,8 +731,7 @@ LONG LOCAL UnAsmSuperName(PUCHAR *ppbOp)
     {
         rc = UnAsmNameObj(ppbOp, NULL, NSTYPE_UNKNOWN);
     }
-    else if ((**ppbOp == OP_INDEX) ||
-             (OpClassTable[**ppbOp] == OPCLASS_ARG_OBJ) ||
+    else if ((**ppbOp == OP_INDEX) || (OpClassTable[**ppbOp] == OPCLASS_ARG_OBJ) ||
              (OpClassTable[**ppbOp] == OPCLASS_LOCAL_OBJ))
     {
         rc = UnAsmOpcode(ppbOp);
@@ -759,7 +743,7 @@ LONG LOCAL UnAsmSuperName(PUCHAR *ppbOp)
     }
 
     return rc;
-}       //UnAsmSuperName
+} //UnAsmSuperName
 
 /***LP  UnAsmDataList - Unassemble data list
  *
@@ -803,7 +787,7 @@ LONG LOCAL UnAsmDataList(PUCHAR *ppbOp, PUCHAR pbEnd)
     PRINTF("}");
 
     return rc;
-}       //UnAsmDataList
+} //UnAsmDataList
 
 /***LP  UnAsmPkgList - Unassemble package list
  *
@@ -830,8 +814,7 @@ LONG LOCAL UnAsmPkgList(PUCHAR *ppbOp, PUCHAR pbEnd)
     {
         Indent(*ppbOp, giLevel);
 
-        if ((**ppbOp == OP_BUFFER) || (**ppbOp == OP_PACKAGE) ||
-            (OpClassTable[**ppbOp] == OPCLASS_CONST_OBJ))
+        if ((**ppbOp == OP_BUFFER) || (**ppbOp == OP_PACKAGE) || (OpClassTable[**ppbOp] == OPCLASS_CONST_OBJ))
         {
             pterm = FindOpTerm((ULONG)(**ppbOp));
             ASSERT(pterm != NULL);
@@ -865,7 +848,7 @@ LONG LOCAL UnAsmPkgList(PUCHAR *ppbOp, PUCHAR pbEnd)
     }
 
     return rc;
-}       //UnAsmPkgList
+} //UnAsmPkgList
 
 /***LP  UnAsmFieldList - Unassemble field list
  *
@@ -912,7 +895,7 @@ LONG LOCAL UnAsmFieldList(PUCHAR *ppbOp, PUCHAR pbEnd)
     }
 
     return rc;
-}       //UnAsmFieldList
+} //UnAsmFieldList
 
 /***LP  UnAsmField - Unassemble field
  *
@@ -932,11 +915,11 @@ LONG LOCAL UnAsmField(PUCHAR *ppbOp, PULONG pdwBitPos)
 
     if (**ppbOp == 0x01)
     {
-        PASLTERM pterm = {0};
+        PASLTERM pterm = { 0 };
 
         (*ppbOp)++;
         pterm = FindKeywordTerm('A', **ppbOp);
-        if(pterm)
+        if (pterm)
         {
             PRINTF("AccessAs(%s, 0x%x)", pterm->pszID, *(*ppbOp + 1));
         }
@@ -964,7 +947,7 @@ LONG LOCAL UnAsmField(PUCHAR *ppbOp, PULONG pdwBitPos)
         {
             if ((dwcbBits > 32) && (((*pdwBitPos + dwcbBits) % 8) == 0))
             {
-                PRINTF("Offset(0x%x)", (*pdwBitPos + dwcbBits)/8);
+                PRINTF("Offset(0x%x)", (*pdwBitPos + dwcbBits) / 8);
             }
             else
             {
@@ -980,6 +963,6 @@ LONG LOCAL UnAsmField(PUCHAR *ppbOp, PULONG pdwBitPos)
     }
 
     return rc;
-}       //UnAsmField
+} //UnAsmField
 
-#endif  //ifdef DEBUGGER
+#endif //ifdef DEBUGGER

@@ -34,39 +34,17 @@ Revision History:
 //  Internal Support Routines.
 //
 
-VOID
-CcUnmapVacb (
-    IN PVACB Vacb,
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN BOOLEAN UnmapBehind
-    );
+VOID CcUnmapVacb(IN PVACB Vacb, IN PSHARED_CACHE_MAP SharedCacheMap, IN BOOLEAN UnmapBehind);
 
 PVACB
-CcGetVacbMiss (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN LARGE_INTEGER FileOffset,
-    IN OUT PKIRQL OldIrql
-    );
+CcGetVacbMiss(IN PSHARED_CACHE_MAP SharedCacheMap, IN LARGE_INTEGER FileOffset, IN OUT PKIRQL OldIrql);
 
-VOID
-CcCalculateVacbLevelLockCount (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN PVACB *VacbArray,
-    IN ULONG Level
-    );
+VOID CcCalculateVacbLevelLockCount(IN PSHARED_CACHE_MAP SharedCacheMap, IN PVACB *VacbArray, IN ULONG Level);
 
 PVACB
-CcGetVacbLargeOffset (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN LONGLONG FileOffset
-    );
+CcGetVacbLargeOffset(IN PSHARED_CACHE_MAP SharedCacheMap, IN LONGLONG FileOffset);
 
-VOID
-CcSetVacbLargeOffset (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN LONGLONG FileOffset,
-    IN PVACB Vacb
-    );
+VOID CcSetVacbLargeOffset(IN PSHARED_CACHE_MAP SharedCacheMap, IN LONGLONG FileOffset, IN PVACB Vacb);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, CcInitializeVacbs)
@@ -76,26 +54,21 @@ CcSetVacbLargeOffset (
 //  Define a few macros for manipulating the Vacb array.
 //
 
-#define GetVacb(SCM,OFF) (                                                                \
-    ((SCM)->SectionSize.QuadPart > VACB_SIZE_OF_FIRST_LEVEL) ?                            \
-    CcGetVacbLargeOffset((SCM),(OFF).QuadPart) :                                          \
-    (SCM)->Vacbs[(OFF).LowPart >> VACB_OFFSET_SHIFT]                                      \
-)
+#define GetVacb(SCM, OFF)                                                                                   \
+    (((SCM)->SectionSize.QuadPart > VACB_SIZE_OF_FIRST_LEVEL) ? CcGetVacbLargeOffset((SCM), (OFF).QuadPart) \
+                                                              : (SCM)->Vacbs[(OFF).LowPart >> VACB_OFFSET_SHIFT])
 
-_inline
-VOID
-SetVacb (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN LARGE_INTEGER Offset,
-    IN PVACB Vacb
-    )
+_inline VOID SetVacb(IN PSHARED_CACHE_MAP SharedCacheMap, IN LARGE_INTEGER Offset, IN PVACB Vacb)
 {
-    if (SharedCacheMap->SectionSize.QuadPart > VACB_SIZE_OF_FIRST_LEVEL) {
+    if (SharedCacheMap->SectionSize.QuadPart > VACB_SIZE_OF_FIRST_LEVEL)
+    {
         CcSetVacbLargeOffset(SharedCacheMap, Offset.QuadPart, Vacb);
 #ifdef VACB_DBG
         ASSERT(Vacb >= VACB_SPECIAL_FIRST_VALID || CcGetVacbLargeOffset(SharedCacheMap, Offset.QuadPart) == Vacb);
 #endif // VACB_DBG
-    } else if (Vacb < VACB_SPECIAL_FIRST_VALID) {
+    }
+    else if (Vacb < VACB_SPECIAL_FIRST_VALID)
+    {
         SharedCacheMap->Vacbs[Offset.LowPart >> VACB_OFFSET_SHIFT] = Vacb;
     }
 #ifdef VACB_DBG
@@ -104,16 +77,20 @@ SetVacb (
     //  has been stolen for other purposes.
     //
 
-    if (Vacb < VACB_SPECIAL_FIRST_VALID) {
-        if (Vacb != NULL) {
+    if (Vacb < VACB_SPECIAL_FIRST_VALID)
+    {
+        if (Vacb != NULL)
+        {
             SharedCacheMap->ReservedForAlignment++;
-        } else {
+        }
+        else
+        {
             SharedCacheMap->ReservedForAlignment--;
         }
     }
     ASSERT((SharedCacheMap->SectionSize.QuadPart <= VACB_SIZE_OF_FIRST_LEVEL) ||
            (SharedCacheMap->ReservedForAlignment == 0) ||
-           IsVacbLevelReferenced( SharedCacheMap, SharedCacheMap->Vacbs, 1 ));
+           IsVacbLevelReferenced(SharedCacheMap, SharedCacheMap->Vacbs, 1));
 #endif // VACB_DBG
 }
 
@@ -121,25 +98,20 @@ SetVacb (
 //  Define the macro for referencing the multilevel Vacb array.
 //
 
-_inline
-VOID
-ReferenceVacbLevel (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN PVACB *VacbArray,
-    IN ULONG Level,
-    IN LONG Amount,
-    IN LOGICAL Special
-    )
+_inline VOID ReferenceVacbLevel(IN PSHARED_CACHE_MAP SharedCacheMap, IN PVACB *VacbArray, IN ULONG Level,
+                                IN LONG Amount, IN LOGICAL Special)
 {
-    PVACB_LEVEL_REFERENCE VacbReference = VacbLevelReference( SharedCacheMap, VacbArray, Level );
+    PVACB_LEVEL_REFERENCE VacbReference = VacbLevelReference(SharedCacheMap, VacbArray, Level);
 
-    ASSERT( Amount > 0 ||
-            (!Special && VacbReference->Reference >= (0 - Amount)) ||
-            ( Special && VacbReference->SpecialReference >= (0 - Amount)));
+    ASSERT(Amount > 0 || (!Special && VacbReference->Reference >= (0 - Amount)) ||
+           (Special && VacbReference->SpecialReference >= (0 - Amount)));
 
-    if (Special) {
+    if (Special)
+    {
         VacbReference->SpecialReference += Amount;
-    } else {
+    }
+    else
+    {
         VacbReference->Reference += Amount;
     }
 
@@ -151,8 +123,8 @@ ReferenceVacbLevel (
 
     {
         LONG Current = VacbReference->Reference;
-        CcCalculateVacbLevelLockCount( SharedCacheMap, VacbArray, Level );
-        ASSERT( Current == VacbReference->Reference );
+        CcCalculateVacbLevelLockCount(SharedCacheMap, VacbArray, Level);
+        ASSERT(Current == VacbReference->Reference);
     }
 #endif // VACB_DBG
 }
@@ -161,39 +133,39 @@ ReferenceVacbLevel (
 //  Define the macros for moving the VACBs on the LRU list
 //
 
-#define CcMoveVacbToReuseFree(V)        RemoveEntryList( &(V)->LruList );                 \
-                                        InsertHeadList( &CcVacbFreeList, &(V)->LruList );
+#define CcMoveVacbToReuseFree(V)    \
+    RemoveEntryList(&(V)->LruList); \
+    InsertHeadList(&CcVacbFreeList, &(V)->LruList);
 
-#define CcMoveVacbToReuseTail(V)        RemoveEntryList( &(V)->LruList );                 \
-                                        InsertTailList( &CcVacbLru, &(V)->LruList );
+#define CcMoveVacbToReuseTail(V)    \
+    RemoveEntryList(&(V)->LruList); \
+    InsertTailList(&CcVacbLru, &(V)->LruList);
 
 //
 //  If the HighPart is nonzero, then we will go to a multi-level structure anyway, which is
 //  most easily triggered by returning MAXULONG.
 //
 
-#define SizeOfVacbArray(LSZ) (                                                            \
-    ((LSZ).HighPart != 0) ? MAXULONG :                                                    \
-    ((LSZ).LowPart > (PREALLOCATED_VACBS * VACB_MAPPING_GRANULARITY) ?                    \
-     (((LSZ).LowPart >> VACB_OFFSET_SHIFT) * sizeof(PVACB)) :                             \
-     (PREALLOCATED_VACBS * sizeof(PVACB)))                                                \
-)
+#define SizeOfVacbArray(LSZ)                                                                  \
+    (((LSZ).HighPart != 0) ? MAXULONG                                                         \
+                           : ((LSZ).LowPart > (PREALLOCATED_VACBS * VACB_MAPPING_GRANULARITY) \
+                                  ? (((LSZ).LowPart >> VACB_OFFSET_SHIFT) * sizeof(PVACB))    \
+                                  : (PREALLOCATED_VACBS * sizeof(PVACB))))
 
-#define CheckedDec(N) {  \
-    ASSERT((N) != 0);    \
-    (N) -= 1;            \
-}
+#define CheckedDec(N)     \
+    {                     \
+        ASSERT((N) != 0); \
+        (N) -= 1;         \
+    }
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,CcInitializeVacbs)
-#pragma alloc_text(PAGE,CcCreateVacbArray)
-#pragma alloc_text(PAGE,CcUnmapVacb)
+#pragma alloc_text(INIT, CcInitializeVacbs)
+#pragma alloc_text(PAGE, CcCreateVacbArray)
+#pragma alloc_text(PAGE, CcUnmapVacb)
 #endif
 
-
-VOID
-CcInitializeVacbs(
-)
+
+VOID CcInitializeVacbs()
 
 /*++
 
@@ -219,30 +191,28 @@ Return Value:
     CcNumberVacbs = (MmSizeOfSystemCacheInPages >> (VACB_OFFSET_SHIFT - PAGE_SHIFT)) - 2;
     VacbBytes = CcNumberVacbs * sizeof(VACB);
 
-    CcVacbs = (PVACB) ExAllocatePoolWithTag( NonPagedPool, VacbBytes, 'aVcC' );
+    CcVacbs = (PVACB)ExAllocatePoolWithTag(NonPagedPool, VacbBytes, 'aVcC');
 
-    if (CcVacbs != NULL) {
+    if (CcVacbs != NULL)
+    {
         CcBeyondVacbs = (PVACB)((PCHAR)CcVacbs + VacbBytes);
-        RtlZeroMemory( CcVacbs, VacbBytes );
+        RtlZeroMemory(CcVacbs, VacbBytes);
 
-        InitializeListHead( &CcVacbLru );
-        InitializeListHead( &CcVacbFreeList );
+        InitializeListHead(&CcVacbLru);
+        InitializeListHead(&CcVacbFreeList);
 
-        for (NextVacb = CcVacbs; NextVacb < CcBeyondVacbs; NextVacb++) {
+        for (NextVacb = CcVacbs; NextVacb < CcBeyondVacbs; NextVacb++)
+        {
 
-            InsertTailList( &CcVacbFreeList, &NextVacb->LruList );
+            InsertTailList(&CcVacbFreeList, &NextVacb->LruList);
         }
     }
 }
 
-
+
 PVOID
-CcGetVirtualAddressIfMapped (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN LONGLONG FileOffset,
-    OUT PVACB *Vacb,
-    OUT PULONG ReceivedLength
-    )
+CcGetVirtualAddressIfMapped(IN PSHARED_CACHE_MAP SharedCacheMap, IN LONGLONG FileOffset, OUT PVACB *Vacb,
+                            OUT PULONG ReceivedLength)
 
 /*++
 
@@ -309,19 +279,21 @@ Return Value:
     //  MmUnmapViewInSystemCache() via CcUnmapVacb() complete.
     //
 
-    ExAcquirePushLockExclusive( &SharedCacheMap->VacbPushLock );
+    ExAcquirePushLockExclusive(&SharedCacheMap->VacbPushLock);
 
     //
     //  Acquire the Vacb lock to see if the desired offset is already mapped.
     //
 
-    CcAcquireVacbLock( &OldIrql );
+    CcAcquireVacbLock(&OldIrql);
 
-    ASSERT( FileOffset <= SharedCacheMap->SectionSize.QuadPart );
+    ASSERT(FileOffset <= SharedCacheMap->SectionSize.QuadPart);
 
-    if ((*Vacb = GetVacb( SharedCacheMap, *(PLARGE_INTEGER)&FileOffset )) != NULL) {
+    if ((*Vacb = GetVacb(SharedCacheMap, *(PLARGE_INTEGER)&FileOffset)) != NULL)
+    {
 
-        if ((*Vacb)->Overlay.ActiveCount == 0) {
+        if ((*Vacb)->Overlay.ActiveCount == 0)
+        {
             SharedCacheMap->VacbActiveCount += 1;
         }
 
@@ -332,26 +304,22 @@ Return Value:
         //  looking at it for reuse.
         //
 
-        CcMoveVacbToReuseTail( *Vacb );
+        CcMoveVacbToReuseTail(*Vacb);
 
         Value = (PVOID)((PCHAR)(*Vacb)->BaseAddress + VacbOffset);
     }
 
-    CcReleaseVacbLock( OldIrql );
-    
-    ExReleasePushLockExclusive( &SharedCacheMap->VacbPushLock );
-    
+    CcReleaseVacbLock(OldIrql);
+
+    ExReleasePushLockExclusive(&SharedCacheMap->VacbPushLock);
+
     return Value;
 }
 
-
+
 PVOID
-CcGetVirtualAddress (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN LARGE_INTEGER FileOffset,
-    OUT PVACB *Vacb,
-    IN OUT PULONG ReceivedLength
-    )
+CcGetVirtualAddress(IN PSHARED_CACHE_MAP SharedCacheMap, IN LARGE_INTEGER FileOffset, OUT PVACB *Vacb,
+                    IN OUT PULONG ReceivedLength)
 
 /*++
 
@@ -398,24 +366,27 @@ Return Value:
     //  might unmap a Vacb.  See CcGetVirtualAddressIfMapped() for more
     //  details.
     //
-            
-    ExAcquirePushLockShared( &SharedCacheMap->VacbPushLock );
+
+    ExAcquirePushLockShared(&SharedCacheMap->VacbPushLock);
 
     //
     //  Acquire the Vacb lock to see if the desired offset is already mapped.
     //
 
-    CcAcquireVacbLock( &OldIrql );
+    CcAcquireVacbLock(&OldIrql);
 
-    ASSERT( FileOffset.QuadPart <= SharedCacheMap->SectionSize.QuadPart );
+    ASSERT(FileOffset.QuadPart <= SharedCacheMap->SectionSize.QuadPart);
 
-    if ((TempVacb = GetVacb( SharedCacheMap, FileOffset )) == NULL) {
+    if ((TempVacb = GetVacb(SharedCacheMap, FileOffset)) == NULL)
+    {
 
-        TempVacb = CcGetVacbMiss( SharedCacheMap, FileOffset, &OldIrql );
+        TempVacb = CcGetVacbMiss(SharedCacheMap, FileOffset, &OldIrql);
+    }
+    else
+    {
 
-    } else {
-
-        if (TempVacb->Overlay.ActiveCount == 0) {
+        if (TempVacb->Overlay.ActiveCount == 0)
+        {
             SharedCacheMap->VacbActiveCount += 1;
         }
 
@@ -427,12 +398,12 @@ Return Value:
     //  looking at it for reuse.
     //
 
-    CcMoveVacbToReuseTail( TempVacb );
+    CcMoveVacbToReuseTail(TempVacb);
 
-    CcReleaseVacbLock( OldIrql );
+    CcReleaseVacbLock(OldIrql);
 
-    ExReleasePushLockShared( &SharedCacheMap->VacbPushLock );
-    
+    ExReleasePushLockShared(&SharedCacheMap->VacbPushLock);
+
     //
     //  Now form all outputs.
     //
@@ -447,18 +418,14 @@ Return Value:
     //  about users of this function.
     //
 
-    ASSERT( TempVacb->BaseAddress != NULL );
+    ASSERT(TempVacb->BaseAddress != NULL);
 
     return (PVOID)((PCHAR)TempVacb->BaseAddress + VacbOffset);
 }
 
-
+
 PVACB
-CcGetVacbMiss (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN LARGE_INTEGER FileOffset,
-    IN OUT PKIRQL OldIrql
-    )
+CcGetVacbMiss(IN PSHARED_CACHE_MAP SharedCacheMap, IN LARGE_INTEGER FileOffset, IN OUT PKIRQL OldIrql)
 
 /*++
 
@@ -530,7 +497,8 @@ Return Value:
 
     if (!FlagOn(SharedCacheMap->Flags, RANDOM_ACCESS_SEEN) &&
         ((NormalOffset.LowPart & (SEQUENTIAL_MAP_LIMIT - 1)) == 0) &&
-        (NormalOffset.QuadPart >= (SEQUENTIAL_MAP_LIMIT * 2))) {
+        (NormalOffset.QuadPart >= (SEQUENTIAL_MAP_LIMIT * 2)))
+    {
 
         //
         //  Use MappedLength as a scratch variable to form the offset
@@ -546,30 +514,33 @@ Return Value:
         //  the file to push out the dirty bits.
         //
 
-        CcReleaseVacbLock( *OldIrql );
+        CcReleaseVacbLock(*OldIrql);
         MappedLength.QuadPart = NormalOffset.QuadPart - (SEQUENTIAL_MAP_LIMIT * 2);
-        CcUnmapVacbArray( SharedCacheMap, &MappedLength, (SEQUENTIAL_MAP_LIMIT * 2), TRUE );
-        CcAcquireVacbLock( OldIrql );
+        CcUnmapVacbArray(SharedCacheMap, &MappedLength, (SEQUENTIAL_MAP_LIMIT * 2), TRUE);
+        CcAcquireVacbLock(OldIrql);
     }
 
     //
     //  If there is a free view, move it to the LRU and we're done.
     //
 
-    if (!IsListEmpty(&CcVacbFreeList)) {
-    
-        Vacb = CONTAINING_RECORD( CcVacbFreeList.Flink, VACB, LruList );
-        CcMoveVacbToReuseTail( Vacb );
+    if (!IsListEmpty(&CcVacbFreeList))
+    {
 
-    } else {
+        Vacb = CONTAINING_RECORD(CcVacbFreeList.Flink, VACB, LruList);
+        CcMoveVacbToReuseTail(Vacb);
+    }
+    else
+    {
 
         //
         //  Scan from the front of the lru for the next victim Vacb
         //
 
-        Vacb = CONTAINING_RECORD( CcVacbLru.Flink, VACB, LruList );
+        Vacb = CONTAINING_RECORD(CcVacbLru.Flink, VACB, LruList);
 
-        while (TRUE) {
+        while (TRUE)
+        {
 
             //
             //  If this guy is not active, break out and use him.  Also, if
@@ -579,9 +550,8 @@ Return Value:
 
             OldSharedCacheMap = Vacb->SharedCacheMap;
             if ((Vacb->Overlay.ActiveCount == 0) ||
-                ((ActiveVacb == NULL) &&
-                 (OldSharedCacheMap != NULL) &&
-                 (OldSharedCacheMap->ActiveVacb == Vacb))) {
+                ((ActiveVacb == NULL) && (OldSharedCacheMap != NULL) && (OldSharedCacheMap->ActiveVacb == Vacb)))
+            {
 
                 //
                 //  The normal case is that the Vacb is no longer mapped
@@ -589,28 +559,31 @@ Return Value:
                 //  handle the case where it is mapped.
                 //
 
-                if (Vacb->BaseAddress != NULL) {
+                if (Vacb->BaseAddress != NULL)
+                {
 
 
                     //
                     //  If this Vacb is active, it must be the ActiveVacb.
                     //
 
-                    if (Vacb->Overlay.ActiveCount != 0) {
+                    if (Vacb->Overlay.ActiveCount != 0)
+                    {
 
                         //
                         //  Get the active Vacb.
                         //
 
-                        GetActiveVacbAtDpcLevel( Vacb->SharedCacheMap, ActiveVacb, ActivePage, PageIsDirty );
+                        GetActiveVacbAtDpcLevel(Vacb->SharedCacheMap, ActiveVacb, ActivePage, PageIsDirty);
 
-                    //
-                    //  Otherwise we will break out and use this Vacb.  If it
-                    //  is still mapped we can now safely increment the open
-                    //  count.
-                    //
-
-                    } else {
+                        //
+                        //  Otherwise we will break out and use this Vacb.  If it
+                        //  is still mapped we can now safely increment the open
+                        //  count.
+                        //
+                    }
+                    else
+                    {
 
                         //
                         //  Note that if the SharedCacheMap is currently
@@ -622,15 +595,18 @@ Return Value:
 
                         CcAcquireMasterLockAtDpcLevel();
                         if (Vacb->SharedCacheMap->FileObject->SectionObjectPointer->SharedCacheMap ==
-                            Vacb->SharedCacheMap) {
+                            Vacb->SharedCacheMap)
+                        {
 
-                            CcIncrementOpenCount( Vacb->SharedCacheMap, 'mvGS' );
+                            CcIncrementOpenCount(Vacb->SharedCacheMap, 'mvGS');
                             CcReleaseMasterLockFromDpcLevel();
                             break;
                         }
                         CcReleaseMasterLockFromDpcLevel();
                     }
-                } else {
+                }
+                else
+                {
                     break;
                 }
             }
@@ -640,21 +616,24 @@ Return Value:
             //  the entire list.
             //
 
-            if (Vacb->LruList.Flink != &CcVacbLru) {
+            if (Vacb->LruList.Flink != &CcVacbLru)
+            {
 
-                Vacb = CONTAINING_RECORD( Vacb->LruList.Flink, VACB, LruList );
+                Vacb = CONTAINING_RECORD(Vacb->LruList.Flink, VACB, LruList);
+            }
+            else
+            {
 
-            } else {
-
-                CcReleaseVacbLock( *OldIrql );
+                CcReleaseVacbLock(*OldIrql);
 
                 //
                 //  If we found an active vacb, then free it and go back and
                 //  try again.  Else it's time to bail.
                 //
 
-                if (ActiveVacb != NULL) {
-                    CcFreeActiveVacb( ActiveVacb->SharedCacheMap, ActiveVacb, ActivePage, PageIsDirty );
+                if (ActiveVacb != NULL)
+                {
+                    CcFreeActiveVacb(ActiveVacb->SharedCacheMap, ActiveVacb, ActivePage, PageIsDirty);
                     ActiveVacb = NULL;
 
                     //
@@ -662,15 +641,16 @@ Return Value:
                     //  of the LRU for the next pass.
                     //
 
-                    CcAcquireVacbLock( OldIrql );
+                    CcAcquireVacbLock(OldIrql);
 
-                    Vacb = CONTAINING_RECORD( CcVacbLru.Flink, VACB, LruList );
+                    Vacb = CONTAINING_RECORD(CcVacbLru.Flink, VACB, LruList);
+                }
+                else
+                {
 
-                } else {
+                    ExReleasePushLockShared(&SharedCacheMap->VacbPushLock);
 
-                    ExReleasePushLockShared( &SharedCacheMap->VacbPushLock );
-
-                    ExRaiseStatus( STATUS_INSUFFICIENT_RESOURCES );
+                    ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
                 }
             }
         }
@@ -681,10 +661,11 @@ Return Value:
     //  guy will not try to use it when we free the spin lock.
     //
 
-    if (Vacb->SharedCacheMap != NULL) {
+    if (Vacb->SharedCacheMap != NULL)
+    {
 
         OldSharedCacheMap = Vacb->SharedCacheMap;
-        SetVacb( OldSharedCacheMap, Vacb->Overlay.FileOffset, NULL );
+        SetVacb(OldSharedCacheMap, Vacb->Overlay.FileOffset, NULL);
         Vacb->SharedCacheMap = NULL;
     }
 
@@ -696,13 +677,14 @@ Return Value:
     Vacb->Overlay.ActiveCount = 1;
     SharedCacheMap->VacbActiveCount += 1;
 
-    CcReleaseVacbLock( *OldIrql );
+    CcReleaseVacbLock(*OldIrql);
 
     //
     //  If the Vacb is already mapped, then unmap it.
     //
 
-    if (Vacb->BaseAddress != NULL) {
+    if (Vacb->BaseAddress != NULL)
+    {
 
         //
         //  Check to see if we need to drain the zone.
@@ -710,32 +692,31 @@ Return Value:
 
         CcDrainVacbLevelZone();
 
-        CcUnmapVacb( Vacb, OldSharedCacheMap, FALSE );
+        CcUnmapVacb(Vacb, OldSharedCacheMap, FALSE);
 
         //
         //  Now we can decrement the open count as we normally
         //  do, possibly deleting the guy.
         //
 
-        CcAcquireMasterLock( OldIrql );
+        CcAcquireMasterLock(OldIrql);
 
         //
         //  Now release our open count.
         //
 
-        CcDecrementOpenCount( OldSharedCacheMap, 'mvGF' );
+        CcDecrementOpenCount(OldSharedCacheMap, 'mvGF');
 
-        if ((OldSharedCacheMap->OpenCount == 0) &&
-            !FlagOn(OldSharedCacheMap->Flags, WRITE_QUEUED) &&
-            (OldSharedCacheMap->DirtyPages == 0)) {
+        if ((OldSharedCacheMap->OpenCount == 0) && !FlagOn(OldSharedCacheMap->Flags, WRITE_QUEUED) &&
+            (OldSharedCacheMap->DirtyPages == 0))
+        {
 
             //
             //  Move to the dirty list.
             //
 
-            RemoveEntryList( &OldSharedCacheMap->SharedCacheMapLinks );
-            InsertTailList( &CcDirtySharedCacheMapList.SharedCacheMapLinks,
-                            &OldSharedCacheMap->SharedCacheMapLinks );
+            RemoveEntryList(&OldSharedCacheMap->SharedCacheMapLinks);
+            InsertTailList(&CcDirtySharedCacheMapList.SharedCacheMapLinks, &OldSharedCacheMap->SharedCacheMapLinks);
 
             //
             //  Make sure the Lazy Writer will wake up, because we
@@ -743,12 +724,13 @@ Return Value:
             //
 
             LazyWriter.OtherWork = TRUE;
-            if (!LazyWriter.ScanActive) {
-                CcScheduleLazyWriteScan( FALSE );
+            if (!LazyWriter.ScanActive)
+            {
+                CcScheduleLazyWriteScan(FALSE);
             }
         }
 
-        CcReleaseMasterLock( *OldIrql );
+        CcReleaseMasterLock(*OldIrql);
     }
 
     //
@@ -756,7 +738,8 @@ Return Value:
     //  exception.
     //
 
-    try {
+    try
+    {
 
         //
         //  Assume we are mapping to the end of the section, but
@@ -766,8 +749,8 @@ Return Value:
 
         MappedLength.QuadPart = SharedCacheMap->SectionSize.QuadPart - NormalOffset.QuadPart;
 
-        if ((MappedLength.HighPart != 0) ||
-            (MappedLength.LowPart > VACB_MAPPING_GRANULARITY)) {
+        if ((MappedLength.HighPart != 0) || (MappedLength.LowPart > VACB_MAPPING_GRANULARITY))
+        {
 
             MappedLength.LowPart = VACB_MAPPING_GRANULARITY;
         }
@@ -776,50 +759,48 @@ Return Value:
         //  Now map this one in the system cache.
         //
 
-        DebugTrace( 0, mm, "MmMapViewInSystemCache:\n", 0 );
-        DebugTrace( 0, mm, "    Section = %08lx\n", SharedCacheMap->Section );
-        DebugTrace2(0, mm, "    Offset = %08lx, %08lx\n",
-                                NormalOffset.LowPart,
-                                NormalOffset.HighPart );
-        DebugTrace( 0, mm, "    ViewSize = %08lx\n", MappedLength.LowPart );
+        DebugTrace(0, mm, "MmMapViewInSystemCache:\n", 0);
+        DebugTrace(0, mm, "    Section = %08lx\n", SharedCacheMap->Section);
+        DebugTrace2(0, mm, "    Offset = %08lx, %08lx\n", NormalOffset.LowPart, NormalOffset.HighPart);
+        DebugTrace(0, mm, "    ViewSize = %08lx\n", MappedLength.LowPart);
 
         Status =
-          MmMapViewInSystemCache( SharedCacheMap->Section,
-                                  &Vacb->BaseAddress,
-                                  &NormalOffset,
-                                  &MappedLength.LowPart );
+            MmMapViewInSystemCache(SharedCacheMap->Section, &Vacb->BaseAddress, &NormalOffset, &MappedLength.LowPart);
 
-        DebugTrace( 0, mm, "    <BaseAddress = %08lx\n", Vacb->BaseAddress );
-        DebugTrace( 0, mm, "    <ViewSize = %08lx\n", MappedLength.LowPart );
+        DebugTrace(0, mm, "    <BaseAddress = %08lx\n", Vacb->BaseAddress);
+        DebugTrace(0, mm, "    <ViewSize = %08lx\n", MappedLength.LowPart);
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            DebugTrace( 0, 0, "Error from Map, Status = %08lx\n", Status );
+            DebugTrace(0, 0, "Error from Map, Status = %08lx\n", Status);
 
-            ExReleasePushLockShared( &SharedCacheMap->VacbPushLock );
+            ExReleasePushLockShared(&SharedCacheMap->VacbPushLock);
 
-            ExRaiseStatus( FsRtlNormalizeNtstatus( Status,
-                                                   STATUS_UNEXPECTED_MM_MAP_ERROR ));
+            ExRaiseStatus(FsRtlNormalizeNtstatus(Status, STATUS_UNEXPECTED_MM_MAP_ERROR));
         }
-
-    } finally {
+    }
+    finally
+    {
 
         //
         //  Take this opportunity to free the active vacb.
         //
 
-        if (ActiveVacb != NULL) {
+        if (ActiveVacb != NULL)
+        {
 
-            CcFreeActiveVacb( ActiveVacb->SharedCacheMap, ActiveVacb, ActivePage, PageIsDirty );
+            CcFreeActiveVacb(ActiveVacb->SharedCacheMap, ActiveVacb, ActivePage, PageIsDirty);
         }
 
         //
         //  On abnormal termination, get this guy back in the list.
         //
 
-        if (AbnormalTermination()) {
+        if (AbnormalTermination())
+        {
 
-            CcAcquireVacbLock( OldIrql );
+            CcAcquireVacbLock(OldIrql);
 
             //
             //  This is like the unlucky case below.  Just back out the stuff
@@ -837,11 +818,12 @@ Return Value:
             //  wake them here.
             //
 
-            if (SharedCacheMap->WaitOnActiveCount != NULL) {
-                KeSetEvent( SharedCacheMap->WaitOnActiveCount, 0, FALSE );
+            if (SharedCacheMap->WaitOnActiveCount != NULL)
+            {
+                KeSetEvent(SharedCacheMap->WaitOnActiveCount, 0, FALSE);
             }
 
-            CcReleaseVacbLock( *OldIrql );
+            CcReleaseVacbLock(*OldIrql);
         }
     }
 
@@ -849,24 +831,26 @@ Return Value:
     //  Make sure the zone contains the worst case number of entries.
     //
 
-    if (SharedCacheMap->SectionSize.QuadPart > VACB_SIZE_OF_FIRST_LEVEL) {
+    if (SharedCacheMap->SectionSize.QuadPart > VACB_SIZE_OF_FIRST_LEVEL)
+    {
 
         //
         //  Raise if we cannot preallocate enough buffers.
         //
 
-        if (!CcPrefillVacbLevelZone( CcMaxVacbLevelsSeen - 1,
-                                     OldIrql,
-                                     FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED) )) {
+        if (!CcPrefillVacbLevelZone(CcMaxVacbLevelsSeen - 1, OldIrql,
+                                    FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED)))
+        {
 
-            ExReleasePushLockShared( &SharedCacheMap->VacbPushLock );
+            ExReleasePushLockShared(&SharedCacheMap->VacbPushLock);
 
-            ExRaiseStatus( STATUS_INSUFFICIENT_RESOURCES );
+            ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
         }
+    }
+    else
+    {
 
-    } else {
-
-        CcAcquireVacbLock( OldIrql );
+        CcAcquireVacbLock(OldIrql);
     }
 
     //
@@ -878,31 +862,34 @@ Return Value:
     //  drop the spin lock.
     //
 
-    if ((TempVacb = GetVacb( SharedCacheMap, NormalOffset )) == NULL) {
+    if ((TempVacb = GetVacb(SharedCacheMap, NormalOffset)) == NULL)
+    {
 
         Vacb->SharedCacheMap = SharedCacheMap;
         Vacb->Overlay.FileOffset = NormalOffset;
         Vacb->Overlay.ActiveCount = 1;
 
-        SetVacb( SharedCacheMap, NormalOffset, Vacb );
+        SetVacb(SharedCacheMap, NormalOffset, Vacb);
 
-    //
-    //  This is the unlucky case where we collided with someone else
-    //  trying to map the same view.  He can get in because we dropped
-    //  the spin lock above.  Rather than allocating events and making
-    //  someone wait, considering this case is fairly unlikely, we just
-    //  dump this one at the head of the LRU and use the one from the
-    //  guy who beat us.
-    //
-
-    } else {
+        //
+        //  This is the unlucky case where we collided with someone else
+        //  trying to map the same view.  He can get in because we dropped
+        //  the spin lock above.  Rather than allocating events and making
+        //  someone wait, considering this case is fairly unlikely, we just
+        //  dump this one at the head of the LRU and use the one from the
+        //  guy who beat us.
+        //
+    }
+    else
+    {
 
         //
         //  Now we have to increment all of the counts for the one that
         //  was already there, then ditch the one we had.
         //
 
-        if (TempVacb->Overlay.ActiveCount == 0) {
+        if (TempVacb->Overlay.ActiveCount == 0)
+        {
             SharedCacheMap->VacbActiveCount += 1;
         }
 
@@ -914,16 +901,16 @@ Return Value:
         //  and then reacquire the spinlock before cleaning up.
         //
 
-        CcReleaseVacbLock( *OldIrql );
+        CcReleaseVacbLock(*OldIrql);
 
-        CcUnmapVacb( Vacb, SharedCacheMap, FALSE );
+        CcUnmapVacb(Vacb, SharedCacheMap, FALSE);
 
-        CcAcquireVacbLock( OldIrql );
+        CcAcquireVacbLock(OldIrql);
         CheckedDec(Vacb->Overlay.ActiveCount);
         CheckedDec(SharedCacheMap->VacbActiveCount);
         Vacb->SharedCacheMap = NULL;
 
-        CcMoveVacbToReuseFree( Vacb );
+        CcMoveVacbToReuseFree(Vacb);
 
         Vacb = TempVacb;
     }
@@ -931,12 +918,8 @@ Return Value:
     return Vacb;
 }
 
-
-VOID
-FASTCALL
-CcFreeVirtualAddress (
-    IN PVACB Vacb
-    )
+
+VOID FASTCALL CcFreeVirtualAddress(IN PVACB Vacb)
 
 /*++
 
@@ -959,7 +942,7 @@ Return Value:
     KIRQL OldIrql;
     PSHARED_CACHE_MAP SharedCacheMap = Vacb->SharedCacheMap;
 
-    CcAcquireVacbLock( &OldIrql );
+    CcAcquireVacbLock(&OldIrql);
 
     CheckedDec(Vacb->Overlay.ActiveCount);
 
@@ -968,7 +951,8 @@ Return Value:
     //  Active count.
     //
 
-    if (Vacb->Overlay.ActiveCount == 0) {
+    if (Vacb->Overlay.ActiveCount == 0)
+    {
 
         //
         //  If the SharedCacheMap address is not NULL, then this one is
@@ -976,7 +960,8 @@ Return Value:
         //  count and see if anyone is waiting.
         //
 
-        if (SharedCacheMap != NULL) {
+        if (SharedCacheMap != NULL)
+        {
 
             CheckedDec(SharedCacheMap->VacbActiveCount);
 
@@ -985,46 +970,45 @@ Return Value:
             //  wake them here.
             //
 
-            if (SharedCacheMap->WaitOnActiveCount != NULL) {
-                KeSetEvent( SharedCacheMap->WaitOnActiveCount, 0, FALSE );
+            if (SharedCacheMap->WaitOnActiveCount != NULL)
+            {
+                KeSetEvent(SharedCacheMap->WaitOnActiveCount, 0, FALSE);
             }
 
             //
             //  Go to the back of the LRU to save this range for a bit
             //
 
-            CcMoveVacbToReuseTail( Vacb );
-
-        } else {
+            CcMoveVacbToReuseTail(Vacb);
+        }
+        else
+        {
 
             //
             //  This range is no longer referenced, so make it available
             //
 
-            ASSERT( Vacb->BaseAddress == NULL );
+            ASSERT(Vacb->BaseAddress == NULL);
 
-            CcMoveVacbToReuseFree( Vacb );
+            CcMoveVacbToReuseFree(Vacb);
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         //  This range is still in use, so move it away from the front
         //  so that it doesn't consume cycles being checked.
         //
 
-        CcMoveVacbToReuseTail( Vacb );
+        CcMoveVacbToReuseTail(Vacb);
     }
 
-    CcReleaseVacbLock( OldIrql );
+    CcReleaseVacbLock(OldIrql);
 }
 
-
-VOID
-CcReferenceFileOffset (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN LARGE_INTEGER FileOffset
-    )
+
+VOID CcReferenceFileOffset(IN PSHARED_CACHE_MAP SharedCacheMap, IN LARGE_INTEGER FileOffset)
 
 /*++
 
@@ -1054,24 +1038,25 @@ Return Value:
     //  This operation only has meaning if the Vacbs are in the multilevel form.
     //
 
-    if (SharedCacheMap->SectionSize.QuadPart > VACB_SIZE_OF_FIRST_LEVEL) {
+    if (SharedCacheMap->SectionSize.QuadPart > VACB_SIZE_OF_FIRST_LEVEL)
+    {
 
         //
         //  Prefill the level zone so that we can expand the tree if required.
         //
 
-        if (!CcPrefillVacbLevelZone( CcMaxVacbLevelsSeen - 1,
-                                     &OldIrql,
-                                     FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED) )) {
+        if (!CcPrefillVacbLevelZone(CcMaxVacbLevelsSeen - 1, &OldIrql,
+                                    FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED)))
+        {
 
-            ExRaiseStatus( STATUS_INSUFFICIENT_RESOURCES );
+            ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
         }
 
-        ASSERT( FileOffset.QuadPart <= SharedCacheMap->SectionSize.QuadPart );
+        ASSERT(FileOffset.QuadPart <= SharedCacheMap->SectionSize.QuadPart);
 
-        SetVacb( SharedCacheMap, FileOffset, VACB_SPECIAL_REFERENCE );
+        SetVacb(SharedCacheMap, FileOffset, VACB_SPECIAL_REFERENCE);
 
-        CcReleaseVacbLock( OldIrql );
+        CcReleaseVacbLock(OldIrql);
     }
 
     ASSERT(KeGetCurrentIrql() < DISPATCH_LEVEL);
@@ -1079,12 +1064,8 @@ Return Value:
     return;
 }
 
-
-VOID
-CcDereferenceFileOffset (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN LARGE_INTEGER FileOffset
-    )
+
+VOID CcDereferenceFileOffset(IN PSHARED_CACHE_MAP SharedCacheMap, IN LARGE_INTEGER FileOffset)
 
 /*++
 
@@ -1114,19 +1095,20 @@ Return Value:
     //  This operation only has meaning if the Vacbs are in the multilevel form.
     //
 
-    if (SharedCacheMap->SectionSize.QuadPart > VACB_SIZE_OF_FIRST_LEVEL) {
+    if (SharedCacheMap->SectionSize.QuadPart > VACB_SIZE_OF_FIRST_LEVEL)
+    {
 
         //
         //  Acquire the Vacb lock to synchronize the dereference.
         //
 
-        CcAcquireVacbLock( &OldIrql );
+        CcAcquireVacbLock(&OldIrql);
 
-        ASSERT( FileOffset.QuadPart <= SharedCacheMap->SectionSize.QuadPart );
+        ASSERT(FileOffset.QuadPart <= SharedCacheMap->SectionSize.QuadPart);
 
-        SetVacb( SharedCacheMap, FileOffset, VACB_SPECIAL_DEREFERENCE );
+        SetVacb(SharedCacheMap, FileOffset, VACB_SPECIAL_DEREFERENCE);
 
-        CcReleaseVacbLock( OldIrql );
+        CcReleaseVacbLock(OldIrql);
     }
 
     ASSERT(KeGetCurrentIrql() < DISPATCH_LEVEL);
@@ -1134,11 +1116,8 @@ Return Value:
     return;
 }
 
-
-VOID
-CcWaitOnActiveCount (
-    IN PSHARED_CACHE_MAP SharedCacheMap
-    )
+
+VOID CcWaitOnActiveCount(IN PSHARED_CACHE_MAP SharedCacheMap)
 
 /*++
 
@@ -1180,18 +1159,20 @@ Return Value:
     //  fail here.
     //
 
-    CcAcquireVacbLock( &OldIrql );
+    CcAcquireVacbLock(&OldIrql);
 
     //
     //  It is possible that the count went to zero before we acquired the
     //  spinlock, so we must handle two cases here.
     //
 
-    if (SharedCacheMap->VacbActiveCount != 0) {
+    if (SharedCacheMap->VacbActiveCount != 0)
+    {
 
         Event = SharedCacheMap->WaitOnActiveCount;
 
-        if (Event == NULL) {
+        if (Event == NULL)
+        {
 
             //
             //  Take the event.  We avoid dispatcher lock overhead for
@@ -1201,40 +1182,32 @@ Return Value:
 
             Event = &SharedCacheMap->Event;
 
-            KeInitializeEvent( Event,
-                               NotificationEvent,
-                               FALSE );
+            KeInitializeEvent(Event, NotificationEvent, FALSE);
 
             SharedCacheMap->WaitOnActiveCount = Event;
         }
-        else {
-            KeClearEvent( Event );
+        else
+        {
+            KeClearEvent(Event);
         }
 
-        CcReleaseVacbLock( OldIrql );
+        CcReleaseVacbLock(OldIrql);
 
-        KeWaitForSingleObject( Event,
-                               Executive,
-                               KernelMode,
-                               FALSE,
-                               (PLARGE_INTEGER)NULL);
-    } else {
+        KeWaitForSingleObject(Event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
+    }
+    else
+    {
 
-        CcReleaseVacbLock( OldIrql );
+        CcReleaseVacbLock(OldIrql);
     }
 }
 
-
+
 //
 //  Internal Support Routine.
 //
 
-VOID
-CcUnmapVacb (
-    IN PVACB Vacb,
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN BOOLEAN UnmapBehind
-    )
+VOID CcUnmapVacb(IN PVACB Vacb, IN PSHARED_CACHE_MAP SharedCacheMap, IN BOOLEAN UnmapBehind)
 
 /*++
 
@@ -1268,24 +1241,19 @@ Return Value:
     //  Call MM to unmap it.
     //
 
-    DebugTrace( 0, mm, "MmUnmapViewInSystemCache:\n", 0 );
-    DebugTrace( 0, mm, "    BaseAddress = %08lx\n", Vacb->BaseAddress );
+    DebugTrace(0, mm, "MmUnmapViewInSystemCache:\n", 0);
+    DebugTrace(0, mm, "    BaseAddress = %08lx\n", Vacb->BaseAddress);
 
-    MmUnmapViewInSystemCache( Vacb->BaseAddress,
-                              SharedCacheMap->Section,
-                              UnmapBehind &&
-                              FlagOn(SharedCacheMap->Flags, ONLY_SEQUENTIAL_ONLY_SEEN) );
+    MmUnmapViewInSystemCache(Vacb->BaseAddress, SharedCacheMap->Section,
+                             UnmapBehind && FlagOn(SharedCacheMap->Flags, ONLY_SEQUENTIAL_ONLY_SEEN));
 
     Vacb->BaseAddress = NULL;
 }
 
-
+
 NTSTATUS
 FASTCALL
-CcCreateVacbArray (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN LARGE_INTEGER NewSectionSize
-    )
+CcCreateVacbArray(IN PSHARED_CACHE_MAP SharedCacheMap, IN LARGE_INTEGER NewSectionSize)
 
 /*++
 
@@ -1323,7 +1291,8 @@ Return Value:
     //  for nonzero will surely only catch errors.
     //
 
-    if (NewSectionSize.HighPart & ~(PAGE_SIZE - 1)) {
+    if (NewSectionSize.HighPart & ~(PAGE_SIZE - 1))
+    {
         return STATUS_SECTION_TOO_BIG;
     }
 
@@ -1331,15 +1300,17 @@ Return Value:
     //  See if we can use the array inside the shared cache map.
     //
 
-    if (NewSize == (PREALLOCATED_VACBS * sizeof(PVACB))) {
+    if (NewSize == (PREALLOCATED_VACBS * sizeof(PVACB)))
+    {
 
         NewAddresses = &SharedCacheMap->InitialVacbs[0];
 
-    //
-    //  Else allocate the array.
-    //
-
-    } else {
+        //
+        //  Else allocate the array.
+        //
+    }
+    else
+    {
 
         //
         //  For large metadata streams, double the size to allocate
@@ -1354,7 +1325,8 @@ Return Value:
         //  then fix the size to allocate the root.
         //
 
-        if (NewSize > VACB_LEVEL_BLOCK_SIZE) {
+        if (NewSize > VACB_LEVEL_BLOCK_SIZE)
+        {
 
             ULONG Level = 0;
             ULONG Shift = VACB_OFFSET_SHIFT + VACB_LEVEL_SHIFT;
@@ -1368,7 +1340,8 @@ Return Value:
             //  shift to index into the first level.
             //
 
-            do {
+            do
+            {
 
                 Level += 1;
                 Shift += VACB_LEVEL_SHIFT;
@@ -1379,19 +1352,22 @@ Return Value:
             //  Remember the maximum level ever seen (which is actually Level + 1).
             //
 
-            if (Level >= CcMaxVacbLevelsSeen) {
+            if (Level >= CcMaxVacbLevelsSeen)
+            {
                 ASSERT(Level <= VACB_NUMBER_OF_LEVELS);
                 CcMaxVacbLevelsSeen = Level + 1;
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             //  Does this stream get a Bcb Listhead array?
             //
 
             if (FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED) &&
-                (NewSectionSize.QuadPart > BEGIN_BCB_LIST_ARRAY)) {
+                (NewSectionSize.QuadPart > BEGIN_BCB_LIST_ARRAY))
+            {
 
                 SizeToAllocate *= 2;
                 CreateBcbListHeads = TRUE;
@@ -1404,15 +1380,17 @@ Return Value:
             //  this will not change the amount of space allocated
             //
 
-            if (NewSize == VACB_LEVEL_BLOCK_SIZE) {
+            if (NewSize == VACB_LEVEL_BLOCK_SIZE)
+            {
 
                 SizeToAllocate += sizeof(VACB_LEVEL_REFERENCE);
                 CreateReference = TRUE;
             }
         }
 
-        NewAddresses = ExAllocatePoolWithTag( NonPagedPool, SizeToAllocate, 'pVcC' );
-        if (NewAddresses == NULL) {
+        NewAddresses = ExAllocatePoolWithTag(NonPagedPool, SizeToAllocate, 'pVcC');
+        if (NewAddresses == NULL)
+        {
             SharedCacheMap->Status = STATUS_INSUFFICIENT_RESOURCES;
             return STATUS_INSUFFICIENT_RESOURCES;
         }
@@ -1422,12 +1400,13 @@ Return Value:
     //  Zero out the Vacb array and the trailing reference counts.
     //
 
-    RtlZeroMemory( (PCHAR)NewAddresses, NewSize );
+    RtlZeroMemory((PCHAR)NewAddresses, NewSize);
 
-    if (CreateReference) {
+    if (CreateReference)
+    {
 
         SizeToAllocate -= sizeof(VACB_LEVEL_REFERENCE);
-        RtlZeroMemory( (PCHAR)NewAddresses + SizeToAllocate, sizeof(VACB_LEVEL_REFERENCE) );
+        RtlZeroMemory((PCHAR)NewAddresses + SizeToAllocate, sizeof(VACB_LEVEL_REFERENCE));
     }
 
     //
@@ -1435,13 +1414,14 @@ Return Value:
     //  Bcb list.
     //
 
-    if (CreateBcbListHeads) {
+    if (CreateBcbListHeads)
+    {
 
         for (BcbListHead = (PLIST_ENTRY)((PCHAR)NewAddresses + NewSize);
-             BcbListHead < (PLIST_ENTRY)((PCHAR)NewAddresses + SizeToAllocate);
-             BcbListHead++) {
+             BcbListHead < (PLIST_ENTRY)((PCHAR)NewAddresses + SizeToAllocate); BcbListHead++)
+        {
 
-            InsertHeadList( &SharedCacheMap->BcbList, BcbListHead );
+            InsertHeadList(&SharedCacheMap->BcbList, BcbListHead);
         }
     }
 
@@ -1451,12 +1431,9 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
-
+
 NTSTATUS
-CcExtendVacbArray (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN LARGE_INTEGER NewSectionSize
-    )
+CcExtendVacbArray(IN PSHARED_CACHE_MAP SharedCacheMap, IN LARGE_INTEGER NewSectionSize)
 
 /*++
 
@@ -1495,7 +1472,8 @@ Return Value:
     //  for nonzero will surely only catch errors.
     //
 
-    if (NewSectionSize.HighPart & ~(PAGE_SIZE - 1)) {
+    if (NewSectionSize.HighPart & ~(PAGE_SIZE - 1))
+    {
         return STATUS_SECTION_TOO_BIG;
     }
 
@@ -1504,8 +1482,8 @@ Return Value:
     //  master lock if so.
     //
 
-    if (FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED) &&
-        (NewSectionSize.QuadPart > BEGIN_BCB_LIST_ARRAY)) {
+    if (FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED) && (NewSectionSize.QuadPart > BEGIN_BCB_LIST_ARRAY))
+    {
 
         GrowingBcbListHeads = TRUE;
     }
@@ -1514,13 +1492,15 @@ Return Value:
     //  Is there any work to do?
     //
 
-    if (NewSectionSize.QuadPart > SharedCacheMap->SectionSize.QuadPart) {
+    if (NewSectionSize.QuadPart > SharedCacheMap->SectionSize.QuadPart)
+    {
 
         //
         //  Handle the growth of the first level here.
         //
 
-        if (SharedCacheMap->SectionSize.QuadPart < VACB_SIZE_OF_FIRST_LEVEL) {
+        if (SharedCacheMap->SectionSize.QuadPart < VACB_SIZE_OF_FIRST_LEVEL)
+        {
 
             NextLevelSize = NewSectionSize;
 
@@ -1528,7 +1508,8 @@ Return Value:
             //  Limit the growth of this level
             //
 
-            if (NextLevelSize.QuadPart >= VACB_SIZE_OF_FIRST_LEVEL) {
+            if (NextLevelSize.QuadPart >= VACB_SIZE_OF_FIRST_LEVEL)
+            {
                 NextLevelSize.QuadPart = VACB_SIZE_OF_FIRST_LEVEL;
                 CreateReference = TRUE;
             }
@@ -1546,13 +1527,15 @@ Return Value:
             //  Only do something if the size is growing.
             //
 
-            if (NewSize > OldSize) {
+            if (NewSize > OldSize)
+            {
 
                 //
                 //  Does this stream get a Bcb Listhead array?
                 //
 
-                if (GrowingBcbListHeads) {
+                if (GrowingBcbListHeads)
+                {
                     SizeToAllocate *= 2;
                 }
 
@@ -1560,12 +1543,14 @@ Return Value:
                 //  Do we need space for the reference count?
                 //
 
-                if (CreateReference) {
+                if (CreateReference)
+                {
                     SizeToAllocate += sizeof(VACB_LEVEL_REFERENCE);
                 }
 
-                NewAddresses = ExAllocatePoolWithTag( NonPagedPool, SizeToAllocate, 'pVcC' );
-                if (NewAddresses == NULL) {
+                NewAddresses = ExAllocatePoolWithTag(NonPagedPool, SizeToAllocate, 'pVcC');
+                if (NewAddresses == NULL)
+                {
                     return STATUS_INSUFFICIENT_RESOURCES;
                 }
 
@@ -1574,54 +1559,61 @@ Return Value:
                 //  master lock if so.
                 //
 
-                if (GrowingBcbListHeads) {
+                if (GrowingBcbListHeads)
+                {
 
-                    KeAcquireInStackQueuedSpinLock( &SharedCacheMap->BcbSpinLock, &LockHandle );
+                    KeAcquireInStackQueuedSpinLock(&SharedCacheMap->BcbSpinLock, &LockHandle);
                     CcAcquireVacbLockAtDpcLevel();
-
-                } else {
+                }
+                else
+                {
 
                     //
                     //  Acquire the spin lock to serialize with anyone who might like
                     //  to "steal" one of the mappings we are going to move.
                     //
 
-                    CcAcquireVacbLock( &LockHandle.OldIrql );
+                    CcAcquireVacbLock(&LockHandle.OldIrql);
                 }
 
                 OldAddresses = SharedCacheMap->Vacbs;
-                if (OldAddresses != NULL) {
-                    RtlCopyMemory( NewAddresses, OldAddresses, OldSize );
-                } else {
+                if (OldAddresses != NULL)
+                {
+                    RtlCopyMemory(NewAddresses, OldAddresses, OldSize);
+                }
+                else
+                {
                     OldSize = 0;
                 }
 
-                RtlZeroMemory( (PCHAR)NewAddresses + OldSize, NewSize - OldSize );
+                RtlZeroMemory((PCHAR)NewAddresses + OldSize, NewSize - OldSize);
 
-                if (CreateReference) {
+                if (CreateReference)
+                {
 
                     SizeToAllocate -= sizeof(VACB_LEVEL_REFERENCE);
-                    RtlZeroMemory( (PCHAR)NewAddresses + SizeToAllocate, sizeof(VACB_LEVEL_REFERENCE) );
+                    RtlZeroMemory((PCHAR)NewAddresses + SizeToAllocate, sizeof(VACB_LEVEL_REFERENCE));
                 }
 
                 //
                 //  See if we have to initialize Bcb Listheads.
                 //
 
-                if (GrowingBcbListHeads) {
+                if (GrowingBcbListHeads)
+                {
 
                     LARGE_INTEGER Offset;
                     PLIST_ENTRY BcbListHeadNew, TempEntry;
 
                     Offset.QuadPart = 0;
-                    BcbListHeadNew = (PLIST_ENTRY)((PCHAR)NewAddresses + NewSize );
+                    BcbListHeadNew = (PLIST_ENTRY)((PCHAR)NewAddresses + NewSize);
 
                     //
                     //  Handle case where the old array had Bcb Listheads.
                     //
 
-                    if ((SharedCacheMap->SectionSize.QuadPart > BEGIN_BCB_LIST_ARRAY) &&
-                        (OldAddresses != NULL)) {
+                    if ((SharedCacheMap->SectionSize.QuadPart > BEGIN_BCB_LIST_ARRAY) && (OldAddresses != NULL))
+                    {
 
                         PLIST_ENTRY BcbListHeadOld;
 
@@ -1632,21 +1624,23 @@ Return Value:
                         //  in its place.
                         //
 
-                        do {
+                        do
+                        {
                             TempEntry = BcbListHeadOld->Flink;
-                            RemoveEntryList( BcbListHeadOld );
-                            InsertTailList( TempEntry, BcbListHeadNew );
+                            RemoveEntryList(BcbListHeadOld);
+                            InsertTailList(TempEntry, BcbListHeadNew);
                             Offset.QuadPart += SIZE_PER_BCB_LIST;
                             BcbListHeadOld += 1;
                             BcbListHeadNew += 1;
                         } while (Offset.QuadPart < SharedCacheMap->SectionSize.QuadPart);
 
-                    //
-                    //  Otherwise, handle the case where we are adding Bcb
-                    //  Listheads.
-                    //
-
-                    } else {
+                        //
+                        //  Otherwise, handle the case where we are adding Bcb
+                        //  Listheads.
+                        //
+                    }
+                    else
+                    {
 
                         TempEntry = SharedCacheMap->BcbList.Blink;
 
@@ -1654,14 +1648,17 @@ Return Value:
                         //  Loop through any/all Bcbs to insert the new listheads.
                         //
 
-                        while (TempEntry != &SharedCacheMap->BcbList) {
+                        while (TempEntry != &SharedCacheMap->BcbList)
+                        {
 
                             //
                             //  Sit on this Bcb until we have inserted all listheads
                             //  that go before it.
                             //
 
-                            while (Offset.QuadPart <= ((PBCB)CONTAINING_RECORD(TempEntry, BCB, BcbLinks))->FileOffset.QuadPart) {
+                            while (Offset.QuadPart <=
+                                   ((PBCB)CONTAINING_RECORD(TempEntry, BCB, BcbLinks))->FileOffset.QuadPart)
+                            {
 
                                 InsertHeadList(TempEntry, BcbListHeadNew);
                                 Offset.QuadPart += SIZE_PER_BCB_LIST;
@@ -1676,7 +1673,8 @@ Return Value:
                     //  not finished in either loop above.
                     //
 
-                    while (Offset.QuadPart < NextLevelSize.QuadPart) {
+                    while (Offset.QuadPart < NextLevelSize.QuadPart)
+                    {
 
                         InsertHeadList(&SharedCacheMap->BcbList, BcbListHeadNew);
                         Offset.QuadPart += SIZE_PER_BCB_LIST;
@@ -1695,16 +1693,19 @@ Return Value:
                 //  Now we can free the spinlocks ahead of freeing pool.
                 //
 
-                if (GrowingBcbListHeads) {
+                if (GrowingBcbListHeads)
+                {
                     CcReleaseVacbLockFromDpcLevel();
-                    KeReleaseInStackQueuedSpinLock( &LockHandle );
-                } else {
-                    CcReleaseVacbLock( LockHandle.OldIrql );
+                    KeReleaseInStackQueuedSpinLock(&LockHandle);
+                }
+                else
+                {
+                    CcReleaseVacbLock(LockHandle.OldIrql);
                 }
 
-                if ((OldAddresses != &SharedCacheMap->InitialVacbs[0]) &&
-                    (OldAddresses != NULL)) {
-                    ExFreePool( OldAddresses );
+                if ((OldAddresses != &SharedCacheMap->InitialVacbs[0]) && (OldAddresses != NULL))
+                {
+                    ExFreePool(OldAddresses);
                 }
             }
 
@@ -1724,7 +1725,8 @@ Return Value:
         //  in the new root(s).
         //
 
-        if (NewSectionSize.QuadPart > SharedCacheMap->SectionSize.QuadPart) {
+        if (NewSectionSize.QuadPart > SharedCacheMap->SectionSize.QuadPart)
+        {
 
             PVACB *NextVacbArray;
             ULONG NewLevel;
@@ -1735,7 +1737,8 @@ Return Value:
             //  Loop to calculate how many levels we currently have.
             //
 
-            while (SharedCacheMap->SectionSize.QuadPart > ((LONGLONG)1 << Shift)) {
+            while (SharedCacheMap->SectionSize.QuadPart > ((LONGLONG)1 << Shift))
+            {
 
                 Level += 1;
                 Shift += VACB_LEVEL_SHIFT;
@@ -1747,7 +1750,8 @@ Return Value:
             //  Loop to calculate how many levels we need.
             //
 
-            while (((NewSectionSize.QuadPart - 1) >> Shift) != 0) {
+            while (((NewSectionSize.QuadPart - 1) >> Shift) != 0)
+            {
 
                 NewLevel += 1;
                 Shift += VACB_LEVEL_SHIFT;
@@ -1757,13 +1761,15 @@ Return Value:
             //  Now see if we have any work to do.
             //
 
-            if (NewLevel > Level) {
+            if (NewLevel > Level)
+            {
 
                 //
                 //  Remember the maximum level ever seen (which is actually NewLevel + 1).
                 //
 
-                if (NewLevel >= CcMaxVacbLevelsSeen) {
+                if (NewLevel >= CcMaxVacbLevelsSeen)
+                {
                     ASSERT(NewLevel <= VACB_NUMBER_OF_LEVELS);
                     CcMaxVacbLevelsSeen = NewLevel + 1;
                 }
@@ -1772,7 +1778,8 @@ Return Value:
                 //  Raise if we cannot preallocate enough buffers.
                 //
 
-                if (!CcPrefillVacbLevelZone( NewLevel - Level, &LockHandle.OldIrql, FALSE )) {
+                if (!CcPrefillVacbLevelZone(NewLevel - Level, &LockHandle.OldIrql, FALSE))
+                {
 
                     return STATUS_INSUFFICIENT_RESOURCES;
                 }
@@ -1783,13 +1790,14 @@ Return Value:
                 //  boundary case we have made sure that the reference space is available.
                 //
 
-                if (Level == 1) {
+                if (Level == 1)
+                {
 
                     //
                     //  We know this is always a leaf-like level right now.
                     //
 
-                    CcCalculateVacbLevelLockCount( SharedCacheMap, SharedCacheMap->Vacbs, 0 );
+                    CcCalculateVacbLevelLockCount(SharedCacheMap, SharedCacheMap->Vacbs, 0);
                 }
 
                 //
@@ -1800,20 +1808,23 @@ Return Value:
                 //  empty leaves!
                 //
 
-                if (IsVacbLevelReferenced( SharedCacheMap, SharedCacheMap->Vacbs, Level - 1 )) {
+                if (IsVacbLevelReferenced(SharedCacheMap, SharedCacheMap->Vacbs, Level - 1))
+                {
 
-                    while (NewLevel > Level++) {
+                    while (NewLevel > Level++)
+                    {
 
                         ASSERT(CcVacbLevelEntries != 0);
                         NextVacbArray = CcAllocateVacbLevel(FALSE);
 
                         NextVacbArray[0] = (PVACB)SharedCacheMap->Vacbs;
-                        ReferenceVacbLevel( SharedCacheMap, NextVacbArray, Level, 1, FALSE );
+                        ReferenceVacbLevel(SharedCacheMap, NextVacbArray, Level, 1, FALSE);
 
                         SharedCacheMap->Vacbs = NextVacbArray;
                     }
-
-                } else {
+                }
+                else
+                {
 
                     //
                     //  We are now possesed of the additional problem that this level has no
@@ -1824,7 +1835,8 @@ Return Value:
                     //  Bcb listheads in the old one.
                     //
 
-                    if (Level == 1 && FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED)) {
+                    if (Level == 1 && FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED))
+                    {
 
                         PLIST_ENTRY PredecessorListHead, SuccessorListHead;
 
@@ -1832,11 +1844,13 @@ Return Value:
                         SharedCacheMap->Vacbs = CcAllocateVacbLevel(FALSE);
 
                         PredecessorListHead = ((PLIST_ENTRY)((PCHAR)NextVacbArray + VACB_LEVEL_BLOCK_SIZE))->Flink;
-                        SuccessorListHead = ((PLIST_ENTRY)((PCHAR)NextVacbArray + (VACB_LEVEL_BLOCK_SIZE * 2) - sizeof(LIST_ENTRY)))->Blink;
+                        SuccessorListHead =
+                            ((PLIST_ENTRY)((PCHAR)NextVacbArray + (VACB_LEVEL_BLOCK_SIZE * 2) - sizeof(LIST_ENTRY)))
+                                ->Blink;
                         PredecessorListHead->Blink = SuccessorListHead;
                         SuccessorListHead->Flink = PredecessorListHead;
 
-                        CcDeallocateVacbLevel( NextVacbArray, TRUE );
+                        CcDeallocateVacbLevel(NextVacbArray, TRUE);
                     }
                 }
 
@@ -1846,7 +1860,7 @@ Return Value:
                 //
 
                 SharedCacheMap->SectionSize = NewSectionSize;
-                CcReleaseVacbLock( LockHandle.OldIrql );
+                CcReleaseVacbLock(LockHandle.OldIrql);
             }
 
             //
@@ -1861,15 +1875,11 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
-
+
 BOOLEAN
 FASTCALL
-CcUnmapVacbArray (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN PLARGE_INTEGER FileOffset OPTIONAL,
-    IN ULONG Length,
-    IN BOOLEAN UnmapBehind
-    )
+CcUnmapVacbArray(IN PSHARED_CACHE_MAP SharedCacheMap, IN PLARGE_INTEGER FileOffset OPTIONAL, IN ULONG Length,
+                 IN BOOLEAN UnmapBehind)
 
 /*++
 
@@ -1900,14 +1910,15 @@ Return Value:
 {
     PVACB Vacb;
     KIRQL OldIrql;
-    LARGE_INTEGER StartingFileOffset = {0,0};
+    LARGE_INTEGER StartingFileOffset = { 0, 0 };
     LARGE_INTEGER EndingFileOffset = SharedCacheMap->SectionSize;
 
     //
     //  We could be just cleaning up for error recovery.
     //
 
-    if (SharedCacheMap->Vacbs == NULL) {
+    if (SharedCacheMap->Vacbs == NULL)
+    {
         return TRUE;
     }
 
@@ -1916,12 +1927,13 @@ Return Value:
     //  works in the loop below
     //
 
-    if (ARGUMENT_PRESENT(FileOffset)) {
+    if (ARGUMENT_PRESENT(FileOffset))
+    {
         StartingFileOffset.QuadPart = ((FileOffset->QuadPart) & (~((LONGLONG)VACB_MAPPING_GRANULARITY - 1)));
-        if (Length != 0) {
+        if (Length != 0)
+        {
 
             EndingFileOffset.QuadPart = FileOffset->QuadPart + Length;
-
         }
     }
 
@@ -1929,9 +1941,10 @@ Return Value:
     //  Acquire the spin lock to
     //
 
-    CcAcquireVacbLock( &OldIrql );
+    CcAcquireVacbLock(&OldIrql);
 
-    while (StartingFileOffset.QuadPart < EndingFileOffset.QuadPart) {
+    while (StartingFileOffset.QuadPart < EndingFileOffset.QuadPart)
+    {
 
         //
         //  Note that the caller with an explicit range may be off the
@@ -1944,7 +1957,8 @@ Return Value:
         //
 
         if ((StartingFileOffset.QuadPart < SharedCacheMap->SectionSize.QuadPart) &&
-            ((Vacb = GetVacb( SharedCacheMap, StartingFileOffset )) != NULL)) {
+            ((Vacb = GetVacb(SharedCacheMap, StartingFileOffset)) != NULL))
+        {
 
             //
             //  Return here if we are unlucky and see an active
@@ -1952,9 +1966,10 @@ Return Value:
             //  may have done a CcGetVirtualAddressIfMapped!
             //
 
-            if (Vacb->Overlay.ActiveCount != 0) {
+            if (Vacb->Overlay.ActiveCount != 0)
+            {
 
-                CcReleaseVacbLock( OldIrql );
+                CcReleaseVacbLock(OldIrql);
                 return FALSE;
             }
 
@@ -1963,7 +1978,7 @@ Return Value:
             //  guy will not try to use it when we free the spin lock.
             //
 
-            SetVacb( SharedCacheMap, StartingFileOffset, NULL );
+            SetVacb(SharedCacheMap, StartingFileOffset, NULL);
             Vacb->SharedCacheMap = NULL;
 
             //
@@ -1977,45 +1992,41 @@ Return Value:
             //  Release the spin lock.
             //
 
-            CcReleaseVacbLock( OldIrql );
+            CcReleaseVacbLock(OldIrql);
 
             //
             //  Unmap and free it if we really got it above.
             //
 
-            CcUnmapVacb( Vacb, SharedCacheMap, UnmapBehind );
+            CcUnmapVacb(Vacb, SharedCacheMap, UnmapBehind);
 
             //
             //  Reacquire the spin lock so that we can decrment the count.
             //
 
-            CcAcquireVacbLock( &OldIrql );
+            CcAcquireVacbLock(&OldIrql);
             Vacb->Overlay.ActiveCount -= 1;
 
             //
             //  Place this VACB at the head of the LRU
             //
 
-            CcMoveVacbToReuseFree( Vacb );
+            CcMoveVacbToReuseFree(Vacb);
         }
 
         StartingFileOffset.QuadPart = StartingFileOffset.QuadPart + VACB_MAPPING_GRANULARITY;
     }
 
-    CcReleaseVacbLock( OldIrql );
+    CcReleaseVacbLock(OldIrql);
 
     CcDrainVacbLevelZone();
 
     return TRUE;
 }
 
-
+
 ULONG
-CcPrefillVacbLevelZone (
-    IN ULONG NumberNeeded,
-    OUT PKIRQL OldIrql,
-    IN ULONG NeedBcbListHeads
-    )
+CcPrefillVacbLevelZone(IN ULONG NumberNeeded, OUT PKIRQL OldIrql, IN ULONG NeedBcbListHeads)
 
 /*++
 
@@ -2051,67 +2062,71 @@ Environment:
 {
     PVACB *NextVacbArray;
 
-    CcAcquireVacbLock( OldIrql );
+    CcAcquireVacbLock(OldIrql);
 
     //
     //  Loop until there is enough entries, else return failure...
     //
 
-    while ((NumberNeeded > CcVacbLevelEntries) ||
-           (NeedBcbListHeads && (CcVacbLevelWithBcbsFreeList == NULL))) {
+    while ((NumberNeeded > CcVacbLevelEntries) || (NeedBcbListHeads && (CcVacbLevelWithBcbsFreeList == NULL)))
+    {
 
 
         //
         //  Else release the spinlock so we can do the allocate/zero.
         //
 
-        CcReleaseVacbLock( *OldIrql );
+        CcReleaseVacbLock(*OldIrql);
 
         //
         //  First handle the case where we need a VacbListHead with Bcb Listheads.
         //  The pointer test is unsafe but see below.
         //
 
-        if (NeedBcbListHeads && (CcVacbLevelWithBcbsFreeList == NULL)) {
+        if (NeedBcbListHeads && (CcVacbLevelWithBcbsFreeList == NULL))
+        {
 
             //
             //  Allocate and initialize the Vacb block for this level, and store its pointer
             //  back into our parent.  We do not zero the listhead area.
             //
 
-            NextVacbArray =
-            (PVACB *)ExAllocatePoolWithTag( NonPagedPool, (VACB_LEVEL_BLOCK_SIZE * 2) + sizeof(VACB_LEVEL_REFERENCE), 'lVcC' );
+            NextVacbArray = (PVACB *)ExAllocatePoolWithTag(
+                NonPagedPool, (VACB_LEVEL_BLOCK_SIZE * 2) + sizeof(VACB_LEVEL_REFERENCE), 'lVcC');
 
-            if (NextVacbArray == NULL) {
+            if (NextVacbArray == NULL)
+            {
                 return FALSE;
             }
 
-            RtlZeroMemory( (PCHAR)NextVacbArray, VACB_LEVEL_BLOCK_SIZE );
-            RtlZeroMemory( (PCHAR)NextVacbArray + (VACB_LEVEL_BLOCK_SIZE * 2), sizeof(VACB_LEVEL_REFERENCE) );
+            RtlZeroMemory((PCHAR)NextVacbArray, VACB_LEVEL_BLOCK_SIZE);
+            RtlZeroMemory((PCHAR)NextVacbArray + (VACB_LEVEL_BLOCK_SIZE * 2), sizeof(VACB_LEVEL_REFERENCE));
 
-            CcAcquireVacbLock( OldIrql );
+            CcAcquireVacbLock(OldIrql);
 
             NextVacbArray[0] = (PVACB)CcVacbLevelWithBcbsFreeList;
             CcVacbLevelWithBcbsFreeList = NextVacbArray;
             CcVacbLevelWithBcbsEntries += 1;
-
-        } else {
+        }
+        else
+        {
 
             //
             //  Allocate and initialize the Vacb block for this level, and store its pointer
             //  back into our parent.
             //
 
-            NextVacbArray =
-            (PVACB *)ExAllocatePoolWithTag( NonPagedPool, VACB_LEVEL_BLOCK_SIZE + sizeof(VACB_LEVEL_REFERENCE), 'lVcC' );
+            NextVacbArray = (PVACB *)ExAllocatePoolWithTag(
+                NonPagedPool, VACB_LEVEL_BLOCK_SIZE + sizeof(VACB_LEVEL_REFERENCE), 'lVcC');
 
-            if (NextVacbArray == NULL) {
+            if (NextVacbArray == NULL)
+            {
                 return FALSE;
             }
 
-            RtlZeroMemory( (PCHAR)NextVacbArray, VACB_LEVEL_BLOCK_SIZE + sizeof(VACB_LEVEL_REFERENCE) );
+            RtlZeroMemory((PCHAR)NextVacbArray, VACB_LEVEL_BLOCK_SIZE + sizeof(VACB_LEVEL_REFERENCE));
 
-            CcAcquireVacbLock( OldIrql );
+            CcAcquireVacbLock(OldIrql);
 
             NextVacbArray[0] = (PVACB)CcVacbLevelFreeList;
             CcVacbLevelFreeList = NextVacbArray;
@@ -2122,10 +2137,8 @@ Environment:
     return TRUE;
 }
 
-
-VOID
-CcDrainVacbLevelZone (
-    )
+
+VOID CcDrainVacbLevelZone()
 
 /*++
 
@@ -2155,43 +2168,43 @@ Environment:
     //  clean up.
     //
 
-    while ((CcVacbLevelEntries > (CcMaxVacbLevelsSeen * 4)) ||
-           (CcVacbLevelWithBcbsEntries > 2)) {
+    while ((CcVacbLevelEntries > (CcMaxVacbLevelsSeen * 4)) || (CcVacbLevelWithBcbsEntries > 2))
+    {
 
         //
         //  Now go in and try to pick up one entry to free under a FastLock.
         //
 
         NextVacbArray = NULL;
-        CcAcquireVacbLock( &OldIrql );
-        if (CcVacbLevelEntries > (CcMaxVacbLevelsSeen * 4)) {
+        CcAcquireVacbLock(&OldIrql);
+        if (CcVacbLevelEntries > (CcMaxVacbLevelsSeen * 4))
+        {
             NextVacbArray = CcVacbLevelFreeList;
             CcVacbLevelFreeList = (PVACB *)NextVacbArray[0];
             CcVacbLevelEntries -= 1;
-        } else if (CcVacbLevelWithBcbsEntries > 2) {
+        }
+        else if (CcVacbLevelWithBcbsEntries > 2)
+        {
             NextVacbArray = CcVacbLevelWithBcbsFreeList;
             CcVacbLevelWithBcbsFreeList = (PVACB *)NextVacbArray[0];
             CcVacbLevelWithBcbsEntries -= 1;
         }
-        CcReleaseVacbLock( OldIrql );
+        CcReleaseVacbLock(OldIrql);
 
         //
         //  Since the loop is unsafe, we may not have gotten anything.
         //
 
-        if (NextVacbArray != NULL) {
+        if (NextVacbArray != NULL)
+        {
             ExFreePool(NextVacbArray);
         }
     }
 }
 
-
+
 PLIST_ENTRY
-CcGetBcbListHeadLargeOffset (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN LONGLONG FileOffset,
-    IN BOOLEAN FailToSuccessor
-    )
+CcGetBcbListHeadLargeOffset(IN PSHARED_CACHE_MAP SharedCacheMap, IN LONGLONG FileOffset, IN BOOLEAN FailToSuccessor)
 
 /*++
 
@@ -2249,7 +2262,8 @@ Environment:
     //  shift to index into the first level.
     //
 
-    do {
+    do
+    {
 
         Level += 1;
         Shift += VACB_LEVEL_SHIFT;
@@ -2261,7 +2275,8 @@ Environment:
     //  is actually off the size of the level, then return the main listhead.
     //
 
-    if (FileOffset >= ((LONGLONG)1 << Shift)) {
+    if (FileOffset >= ((LONGLONG)1 << Shift))
+    {
         return &SharedCacheMap->BcbList;
     }
 
@@ -2270,7 +2285,8 @@ Environment:
     //
 
     Shift -= VACB_LEVEL_SHIFT;
-    do {
+    do
+    {
 
         //
         //  Decrement back to the level that describes the size we are within.
@@ -2296,24 +2312,29 @@ Environment:
         //  comes before the guy we are looking for, i.e., its predecessor.
         //
 
-        if (NextVacbArray == NULL) {
+        if (NextVacbArray == NULL)
+        {
 
             //
             //  Back up to look for the highest guy earlier in this tree, i.e., the
             //  predecessor listhead.
             //
 
-            while (TRUE) {
+            while (TRUE)
+            {
 
                 //
                 //  Scan, if we can, in the current array for a non-null index.
                 //
 
-                if (FailToSuccessor) {
+                if (FailToSuccessor)
+                {
 
-                    if (Index != VACB_LAST_INDEX_FOR_LEVEL) {
+                    if (Index != VACB_LAST_INDEX_FOR_LEVEL)
+                    {
 
-                        while ((Index != VACB_LAST_INDEX_FOR_LEVEL) && (VacbArray[++Index] == NULL)) {
+                        while ((Index != VACB_LAST_INDEX_FOR_LEVEL) && (VacbArray[++Index] == NULL))
+                        {
                             continue;
                         }
 
@@ -2322,16 +2343,20 @@ Environment:
                         //  listhead.
                         //
 
-                        if ((NextVacbArray = (PVACB *)VacbArray[Index]) != NULL) {
+                        if ((NextVacbArray = (PVACB *)VacbArray[Index]) != NULL)
+                        {
                             break;
                         }
                     }
+                }
+                else
+                {
 
-                } else {
+                    if (Index != 0)
+                    {
 
-                    if (Index != 0) {
-
-                        while ((Index != 0) && (VacbArray[--Index] == NULL)) {
+                        while ((Index != 0) && (VacbArray[--Index] == NULL))
+                        {
                             continue;
                         }
 
@@ -2340,7 +2365,8 @@ Environment:
                         //  listhead.
                         //
 
-                        if ((NextVacbArray = (PVACB *)VacbArray[Index]) != NULL) {
+                        if ((NextVacbArray = (PVACB *)VacbArray[Index]) != NULL)
+                        {
                             break;
                         }
                     }
@@ -2351,7 +2377,8 @@ Environment:
                 //  successor - it is the main listhead.
                 //
 
-                if (SavedLevels == 0) {
+                if (SavedLevels == 0)
+                {
                     return &SharedCacheMap->BcbList;
                 }
 
@@ -2371,9 +2398,12 @@ Environment:
             //  So smash FileOffset accordingly (we mask the high bits out anyway).
             //
 
-            if (FailToSuccessor) {
+            if (FailToSuccessor)
+            {
                 FileOffset = 0;
-            } else {
+            }
+            else
+            {
                 FileOffset = MAXLONGLONG;
             }
         }
@@ -2396,9 +2426,9 @@ Environment:
         FileOffset &= ((LONGLONG)1 << Shift) - 1;
         Shift -= VACB_LEVEL_SHIFT;
 
-    //
-    //  Loop until we hit the bottom level.
-    //
+        //
+        //  Loop until we hit the bottom level.
+        //
 
     } while (Level != 0);
 
@@ -2413,13 +2443,8 @@ Environment:
     return (PLIST_ENTRY)((PCHAR)&VacbArray[Index & ~1] + VACB_LEVEL_BLOCK_SIZE);
 }
 
-
-VOID
-CcAdjustVacbLevelLockCount (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN LONGLONG FileOffset,
-    IN LONG Adjustment
-    )
+
+VOID CcAdjustVacbLevelLockCount(IN PSHARED_CACHE_MAP SharedCacheMap, IN LONGLONG FileOffset, IN LONG Adjustment)
 
 /*++
 
@@ -2474,7 +2499,8 @@ Environment:
     //  shift to index into the first level.
     //
 
-    do {
+    do
+    {
 
         Level += 1;
         Shift += VACB_LEVEL_SHIFT;
@@ -2486,7 +2512,8 @@ Environment:
     //
 
     Shift -= VACB_LEVEL_SHIFT;
-    do {
+    do
+    {
 
         VacbArray = (PVACB *)VacbArray[(ULONG)(FileOffset >> Shift)];
 
@@ -2502,7 +2529,7 @@ Environment:
     //  Now we have reached the final level, do the adjustment.
     //
 
-    ReferenceVacbLevel( SharedCacheMap, VacbArray, Level, Adjustment, FALSE );
+    ReferenceVacbLevel(SharedCacheMap, VacbArray, Level, Adjustment, FALSE);
 
     //
     //  Now, if we decremented the count to 0, then force the collapse to happen by
@@ -2510,20 +2537,16 @@ Environment:
     //  the first entry so we do not recalculate!
     //
 
-    if (!IsVacbLevelReferenced( SharedCacheMap, VacbArray, Level )) {
-        ReferenceVacbLevel( SharedCacheMap, VacbArray, Level, 1, TRUE );
+    if (!IsVacbLevelReferenced(SharedCacheMap, VacbArray, Level))
+    {
+        ReferenceVacbLevel(SharedCacheMap, VacbArray, Level, 1, TRUE);
         OriginalFileOffset &= ~(VACB_SIZE_OF_FIRST_LEVEL - 1);
-        CcSetVacbLargeOffset( SharedCacheMap, OriginalFileOffset, VACB_SPECIAL_DEREFERENCE );
+        CcSetVacbLargeOffset(SharedCacheMap, OriginalFileOffset, VACB_SPECIAL_DEREFERENCE);
     }
 }
 
-
-VOID
-CcCalculateVacbLevelLockCount (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN PVACB *VacbArray,
-    IN ULONG Level
-    )
+
+VOID CcCalculateVacbLevelLockCount(IN PSHARED_CACHE_MAP SharedCacheMap, IN PVACB *VacbArray, IN ULONG Level)
 
 /*++
 
@@ -2564,8 +2587,10 @@ Environment:
     //  First loop through to count how many Vacb pointers are in use.
     //
 
-    for (Index = 0; Index <= VACB_LAST_INDEX_FOR_LEVEL; Index++) {
-        if (*(VacbTemp++) != NULL) {
+    for (Index = 0; Index <= VACB_LAST_INDEX_FOR_LEVEL; Index++)
+    {
+        if (*(VacbTemp++) != NULL)
+        {
             Count += 1;
         }
     }
@@ -2575,7 +2600,8 @@ Environment:
     //  corresponding listheads.
     //
 
-    if (FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED) && (Level == 0)) {
+    if (FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED) && (Level == 0))
+    {
 
         //
         //  Pick up the Blink of the first listhead, casting it to a Bcb.
@@ -2591,11 +2617,15 @@ Environment:
         //  block.
         //
 
-        do {
+        do
+        {
 
-            if (Bcb->NodeTypeCode == CACHE_NTC_BCB) {
+            if (Bcb->NodeTypeCode == CACHE_NTC_BCB)
+            {
                 Count += 1;
-            } else {
+            }
+            else
+            {
                 Index += 1;
             }
 
@@ -2608,16 +2638,13 @@ Environment:
     //  Store the count and get out... (by hand, don't touch the special count)
     //
 
-    VacbReference = VacbLevelReference( SharedCacheMap, VacbArray, Level );
+    VacbReference = VacbLevelReference(SharedCacheMap, VacbArray, Level);
     VacbReference->Reference = Count;
 }
 
-
+
 PVACB
-CcGetVacbLargeOffset (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN LONGLONG FileOffset
-    )
+CcGetVacbLargeOffset(IN PSHARED_CACHE_MAP SharedCacheMap, IN LONGLONG FileOffset)
 
 /*++
 
@@ -2668,7 +2695,8 @@ Environment:
     //  shift to index into the first level.
     //
 
-    do {
+    do
+    {
 
         Level += 1;
         Shift += VACB_LEVEL_SHIFT;
@@ -2680,7 +2708,8 @@ Environment:
     //
 
     Shift -= VACB_LEVEL_SHIFT;
-    while (((Vacb = (PVACB)VacbArray[FileOffset >> Shift]) != NULL) && (Level != 0)) {
+    while (((Vacb = (PVACB)VacbArray[FileOffset >> Shift]) != NULL) && (Level != 0))
+    {
 
         Level -= 1;
 
@@ -2699,13 +2728,8 @@ Environment:
     return Vacb;
 }
 
-
-VOID
-CcSetVacbLargeOffset (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN LONGLONG FileOffset,
-    IN PVACB Vacb
-    )
+
+VOID CcSetVacbLargeOffset(IN PSHARED_CACHE_MAP SharedCacheMap, IN LONGLONG FileOffset, IN PVACB Vacb)
 
 /*++
 
@@ -2772,7 +2796,8 @@ Environment:
     //  shift to index into the first level.
     //
 
-    do {
+    do
+    {
 
         Level += 1;
         Shift += VACB_LEVEL_SHIFT;
@@ -2784,7 +2809,8 @@ Environment:
     //
 
     Shift -= VACB_LEVEL_SHIFT;
-    do {
+    do
+    {
 
         //
         //  Decrement back to the level that describes the size we are within.
@@ -2818,14 +2844,15 @@ Environment:
         //  If it is NULL then we have to allocate the next level to fill it in.
         //
 
-        if (NextVacbArray == NULL) {
+        if (NextVacbArray == NULL)
+        {
 
             //
             //  We better not be thinking we're dereferencing a level if the level
             //  doesn't currently exist.
             //
 
-            ASSERT( Vacb != VACB_SPECIAL_DEREFERENCE );
+            ASSERT(Vacb != VACB_SPECIAL_DEREFERENCE);
 
             AllocatingBcbListHeads = FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED) && (Level == 0);
 
@@ -2841,7 +2868,8 @@ Environment:
             //  If we allocated Bcb Listheads, we must link them in.
             //
 
-            if (AllocatingBcbListHeads) {
+            if (AllocatingBcbListHeads)
+            {
 
                 ULONG i;
 
@@ -2849,7 +2877,7 @@ Environment:
                 //  Find our predecessor.
                 //
 
-                PredecessorListHead = CcGetBcbListHeadLargeOffset( SharedCacheMap, OriginalFileOffset, FALSE );
+                PredecessorListHead = CcGetBcbListHeadLargeOffset(SharedCacheMap, OriginalFileOffset, FALSE);
 
                 //
                 //  If he is followed by any Bcbs, they "belong" to him, and we have to
@@ -2857,7 +2885,8 @@ Environment:
                 //
 
                 while (((PBCB)CONTAINING_RECORD(PredecessorListHead->Blink, BCB, BcbLinks))->NodeTypeCode ==
-                       CACHE_NTC_BCB) {
+                       CACHE_NTC_BCB)
+                {
                     PredecessorListHead = (PLIST_ENTRY)PredecessorListHead->Blink;
                 }
 
@@ -2879,7 +2908,8 @@ Environment:
                 //  Now loop to link all of the new listheads together.
                 //
 
-                for (i = 0; i < ((VACB_LEVEL_BLOCK_SIZE / sizeof(LIST_ENTRY) - 1)); i++) {
+                for (i = 0; i < ((VACB_LEVEL_BLOCK_SIZE / sizeof(LIST_ENTRY) - 1)); i++)
+                {
 
                     CurrentListHead->Blink = CurrentListHead + 1;
                     CurrentListHead += 1;
@@ -2901,7 +2931,7 @@ Environment:
             //  what level NextVacbArray is at, not VacbArray.
             //
 
-            ReferenceVacbLevel( SharedCacheMap, VacbArray, Level + 1, 1, FALSE );
+            ReferenceVacbLevel(SharedCacheMap, VacbArray, Level + 1, 1, FALSE);
         }
 
         //
@@ -2913,13 +2943,14 @@ Environment:
         FileOffset &= ((LONGLONG)1 << Shift) - 1;
         Shift -= VACB_LEVEL_SHIFT;
 
-    //
-    //  Loop until we hit the bottom level.
-    //
+        //
+        //  Loop until we hit the bottom level.
+        //
 
     } while (Level != 0);
 
-    if (Vacb < VACB_SPECIAL_FIRST_VALID) {
+    if (Vacb < VACB_SPECIAL_FIRST_VALID)
+    {
 
         //
         //  Now calculate the index for the bottom level and store the caller's Vacb pointer.
@@ -2928,11 +2959,12 @@ Environment:
         Index = (ULONG)(FileOffset >> Shift);
         VacbArray[Index] = Vacb;
 
-    //
-    //  Handle the special actions.
-    //
-
-    } else {
+        //
+        //  Handle the special actions.
+        //
+    }
+    else
+    {
 
         Special = TRUE;
 
@@ -2940,7 +2972,8 @@ Environment:
         //  Induce the dereference.
         //
 
-        if (Vacb == VACB_SPECIAL_DEREFERENCE) {
+        if (Vacb == VACB_SPECIAL_DEREFERENCE)
+        {
 
             Vacb = NULL;
         }
@@ -2950,26 +2983,29 @@ Environment:
     //  If he is storing a nonzero pointer, just reference the level.
     //
 
-    if (Vacb != NULL) {
+    if (Vacb != NULL)
+    {
 
-        ASSERT( !(Special && Level != 0) );
+        ASSERT(!(Special && Level != 0));
 
-        ReferenceVacbLevel( SharedCacheMap, VacbArray, Level, 1, Special );
+        ReferenceVacbLevel(SharedCacheMap, VacbArray, Level, 1, Special);
 
-    //
-    //  Otherwise we are storing a NULL pointer, and we have to see if we can collapse
-    //  the tree by deallocating empty blocks of pointers.
-    //
-
-    } else {
+        //
+        //  Otherwise we are storing a NULL pointer, and we have to see if we can collapse
+        //  the tree by deallocating empty blocks of pointers.
+        //
+    }
+    else
+    {
 
         //
         //  Loop until doing all possible collapse except for the top level.
         //
 
-        while (TRUE) {
+        while (TRUE)
+        {
 
-            ReferenceVacbLevel( SharedCacheMap, VacbArray, Level, -1, Special );
+            ReferenceVacbLevel(SharedCacheMap, VacbArray, Level, -1, Special);
 
             //
             //  If this was a special dereference, then recognize that this was
@@ -2984,7 +3020,8 @@ Environment:
             //  block and keep looping.
             //
 
-            if (!IsVacbLevelReferenced( SharedCacheMap, VacbArray, Level ) && (SavedLevels != 0)) {
+            if (!IsVacbLevelReferenced(SharedCacheMap, VacbArray, Level) && (SavedLevels != 0))
+            {
 
                 SavedLevels -= 1;
 
@@ -2994,11 +3031,13 @@ Environment:
                 //
 
                 AllocatingBcbListHeads = FALSE;
-                if ((Level++ == 0) && FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED)) {
+                if ((Level++ == 0) && FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED))
+                {
 
                     AllocatingBcbListHeads = TRUE;
                     PredecessorListHead = ((PLIST_ENTRY)((PCHAR)VacbArray + VACB_LEVEL_BLOCK_SIZE))->Flink;
-                    SuccessorListHead = ((PLIST_ENTRY)((PCHAR)VacbArray + (VACB_LEVEL_BLOCK_SIZE * 2) - sizeof(LIST_ENTRY)))->Blink;
+                    SuccessorListHead =
+                        ((PLIST_ENTRY)((PCHAR)VacbArray + (VACB_LEVEL_BLOCK_SIZE * 2) - sizeof(LIST_ENTRY)))->Blink;
                     PredecessorListHead->Blink = SuccessorListHead;
                     SuccessorListHead->Flink = PredecessorListHead;
                 }
@@ -3008,30 +3047,25 @@ Environment:
                 //  index and erase the pointer to this block.
                 //
 
-                CcDeallocateVacbLevel( VacbArray, AllocatingBcbListHeads );
+                CcDeallocateVacbLevel(VacbArray, AllocatingBcbListHeads);
                 Index = SavedIndexes[SavedLevels];
                 VacbArray = SavedVacbArrays[SavedLevels];
                 VacbArray[Index] = NULL;
 
-            //
-            //  No more collapsing if we hit a block that still has pointers, or we hit the root.
-            //
-
-            } else {
+                //
+                //  No more collapsing if we hit a block that still has pointers, or we hit the root.
+                //
+            }
+            else
+            {
                 break;
             }
         }
     }
 }
 
-
-VOID
-CcGetActiveVacb (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    OUT PVACB *Vacb,
-    OUT PULONG Page,
-    OUT PULONG Dirty
-    )
+
+VOID CcGetActiveVacb(IN PSHARED_CACHE_MAP SharedCacheMap, OUT PVACB *Vacb, OUT PULONG Page, OUT PULONG Dirty)
 
 /*++
 
@@ -3069,7 +3103,8 @@ Environment:
 
     ExAcquireFastLock(&SharedCacheMap->ActiveVacbSpinLock, &Irql);
     *Vacb = SharedCacheMap->ActiveVacb;
-    if (*Vacb != NULL) {
+    if (*Vacb != NULL)
+    {
         *Page = SharedCacheMap->ActivePage;
         SharedCacheMap->ActiveVacb = NULL;
         *Dirty = SharedCacheMap->Flags & ACTIVE_PAGE_IS_DIRTY;
@@ -3077,14 +3112,8 @@ Environment:
     ExReleaseFastLock(&SharedCacheMap->ActiveVacbSpinLock, Irql);
 }
 
-
-VOID
-CcSetActiveVacb (
-    IN PSHARED_CACHE_MAP SharedCacheMap,
-    IN OUT PVACB *Vacb,
-    IN ULONG Page,
-    IN ULONG Dirty
-    )
+
+VOID CcSetActiveVacb(IN PSHARED_CACHE_MAP SharedCacheMap, IN OUT PVACB *Vacb, IN ULONG Page, IN ULONG Dirty)
 
 /*++
 
@@ -3143,27 +3172,35 @@ Environment:
     //
 
 #if !defined(NT_UP)
-    if (Dirty) {
+    if (Dirty)
+    {
         CcAcquireMasterLock(&Irql);
         ExAcquireSpinLockAtDpcLevel(&SharedCacheMap->ActiveVacbSpinLock);
-    } else {
+    }
+    else
+    {
         ExAcquireSpinLock(&SharedCacheMap->ActiveVacbSpinLock, &Irql);
     }
 #else
     ExAcquireFastLock(&SharedCacheMap->ActiveVacbSpinLock, &Irql);
 #endif
 
-    do {
-        if (SharedCacheMap->ActiveVacb == NULL) {
-            if ((SharedCacheMap->Flags & ACTIVE_PAGE_IS_DIRTY) != Dirty) {
-                if (Dirty) {
+    do
+    {
+        if (SharedCacheMap->ActiveVacb == NULL)
+        {
+            if ((SharedCacheMap->Flags & ACTIVE_PAGE_IS_DIRTY) != Dirty)
+            {
+                if (Dirty)
+                {
                     SharedCacheMap->ActiveVacb = *Vacb;
                     SharedCacheMap->ActivePage = Page;
                     *Vacb = NULL;
                     SetFlag(SharedCacheMap->Flags, ACTIVE_PAGE_IS_DIRTY);
                     CcTotalDirtyPages += 1;
                     SharedCacheMap->DirtyPages += 1;
-                    if (SharedCacheMap->DirtyPages == 1) {
+                    if (SharedCacheMap->DirtyPages == 1)
+                    {
                         PLIST_ENTRY Blink;
                         PLIST_ENTRY Entry;
                         PLIST_ENTRY Flink;
@@ -3179,7 +3216,8 @@ Environment:
                         Entry->Blink = Blink;
                         Blink->Flink = Entry;
                         Head->Blink = Entry;
-                        if (!LazyWriter.ScanActive) {
+                        if (!LazyWriter.ScanActive)
+                        {
                             LazyWriter.ScanActive = TRUE;
 #if !defined(NT_UP)
                             ExReleaseSpinLockFromDpcLevel(&SharedCacheMap->ActiveVacbSpinLock);
@@ -3187,32 +3225,35 @@ Environment:
 #else
                             ExReleaseFastLock(&SharedCacheMap->ActiveVacbSpinLock, Irql);
 #endif
-                            KeSetTimer( &LazyWriter.ScanTimer,
-                                        CcFirstDelay,
-                                        &LazyWriter.ScanDpc );
+                            KeSetTimer(&LazyWriter.ScanTimer, CcFirstDelay, &LazyWriter.ScanDpc);
                             break;
                         }
                     }
                 }
-            } else {
+            }
+            else
+            {
                 SharedCacheMap->ActiveVacb = *Vacb;
                 SharedCacheMap->ActivePage = Page;
                 *Vacb = NULL;
             }
         }
 #if !defined(NT_UP)
-        if (Dirty) {
+        if (Dirty)
+        {
             ExReleaseSpinLockFromDpcLevel(&SharedCacheMap->ActiveVacbSpinLock);
             CcReleaseMasterLock(Irql);
-        } else {
+        }
+        else
+        {
             ExReleaseSpinLock(&SharedCacheMap->ActiveVacbSpinLock, Irql);
         }
 #else
         ExReleaseFastLock(&SharedCacheMap->ActiveVacbSpinLock, Irql);
 #endif
-        if (*Vacb != NULL) {
-            CcFreeActiveVacb( SharedCacheMap, *Vacb, Page, Dirty);
+        if (*Vacb != NULL)
+        {
+            CcFreeActiveVacb(SharedCacheMap, *Vacb, Page, Dirty);
         }
     } while (FALSE);
 }
-

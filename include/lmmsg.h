@@ -30,78 +30,55 @@ Abstract:
 #endif
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-//
-// Function Prototypes
-//
+    //
+    // Function Prototypes
+    //
 
-NET_API_STATUS NET_API_FUNCTION
-NetMessageNameAdd (
-    IN  LPCWSTR  servername,
-    IN  LPCWSTR  msgname
-    );
+    NET_API_STATUS NET_API_FUNCTION NetMessageNameAdd(IN LPCWSTR servername, IN LPCWSTR msgname);
 
-NET_API_STATUS NET_API_FUNCTION
-NetMessageNameEnum (
-    IN  LPCWSTR     servername,
-    IN  DWORD       level,
-    OUT LPBYTE      *bufptr,
-    IN  DWORD       prefmaxlen,
-    OUT LPDWORD     entriesread,
-    OUT LPDWORD     totalentries,
-    IN OUT LPDWORD  resume_handle
-    );
+    NET_API_STATUS NET_API_FUNCTION NetMessageNameEnum(IN LPCWSTR servername, IN DWORD level, OUT LPBYTE *bufptr,
+                                                       IN DWORD prefmaxlen, OUT LPDWORD entriesread,
+                                                       OUT LPDWORD totalentries, IN OUT LPDWORD resume_handle);
 
-NET_API_STATUS NET_API_FUNCTION
-NetMessageNameGetInfo (
-    IN  LPCWSTR servername,
-    IN  LPCWSTR msgname,
-    IN  DWORD   level,
-    OUT LPBYTE  *bufptr
-    );
+    NET_API_STATUS NET_API_FUNCTION NetMessageNameGetInfo(IN LPCWSTR servername, IN LPCWSTR msgname, IN DWORD level,
+                                                          OUT LPBYTE *bufptr);
 
-NET_API_STATUS NET_API_FUNCTION
-NetMessageNameDel (
-    IN  LPCWSTR   servername,
-    IN  LPCWSTR   msgname
-    );
+    NET_API_STATUS NET_API_FUNCTION NetMessageNameDel(IN LPCWSTR servername, IN LPCWSTR msgname);
 
-NET_API_STATUS NET_API_FUNCTION
-NetMessageBufferSend (
-    IN  LPCWSTR  servername,
-    IN  LPCWSTR  msgname,
-    IN  LPCWSTR  fromname,
-    IN  LPBYTE   buf,
-    IN  DWORD    buflen
-    );
+    NET_API_STATUS NET_API_FUNCTION NetMessageBufferSend(IN LPCWSTR servername, IN LPCWSTR msgname, IN LPCWSTR fromname,
+                                                         IN LPBYTE buf, IN DWORD buflen);
 
-//
-//  Data Structures
-//
+    //
+    //  Data Structures
+    //
 
-typedef struct _MSG_INFO_0 {
-    LPWSTR  msgi0_name;
-}MSG_INFO_0, *PMSG_INFO_0, *LPMSG_INFO_0;
+    typedef struct _MSG_INFO_0
+    {
+        LPWSTR msgi0_name;
+    } MSG_INFO_0, *PMSG_INFO_0, *LPMSG_INFO_0;
 
-typedef struct _MSG_INFO_1 {
-    LPWSTR  msgi1_name;
-    DWORD   msgi1_forward_flag;
-    LPWSTR  msgi1_forward;
-}MSG_INFO_1, *PMSG_INFO_1, *LPMSG_INFO_1;
+    typedef struct _MSG_INFO_1
+    {
+        LPWSTR msgi1_name;
+        DWORD msgi1_forward_flag;
+        LPWSTR msgi1_forward;
+    } MSG_INFO_1, *PMSG_INFO_1, *LPMSG_INFO_1;
 
-//
-// Special Values and Constants
-//
+    //
+    // Special Values and Constants
+    //
 
-//
-// Values for msgi1_forward_flag.
-//
+    //
+    // Values for msgi1_forward_flag.
+    //
 
-#define MSGNAME_NOT_FORWARDED   0       // Name not forwarded
-#define MSGNAME_FORWARDED_TO    0x04    // Name forward to remote station
-#define MSGNAME_FORWARDED_FROM  0x10    // Name forwarded from remote station
+#define MSGNAME_NOT_FORWARDED 0     // Name not forwarded
+#define MSGNAME_FORWARDED_TO 0x04   // Name forward to remote station
+#define MSGNAME_FORWARDED_FROM 0x10 // Name forwarded from remote station
 
 #ifdef __cplusplus
 }

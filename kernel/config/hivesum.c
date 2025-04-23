@@ -21,16 +21,14 @@ Revision History:
 
 --*/
 
-#include    "cmp.h"
+#include "cmp.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,HvpHeaderCheckSum)
+#pragma alloc_text(PAGE, HvpHeaderCheckSum)
 #endif
 
 ULONG
-HvpHeaderCheckSum(
-    PHBASE_BLOCK    BaseBlock
-    )
+HvpHeaderCheckSum(PHBASE_BLOCK BaseBlock)
 /*++
 
 Routine Description:
@@ -47,17 +45,20 @@ Return Value:
 
 --*/
 {
-    ULONG   sum;
-    ULONG   i;
+    ULONG sum;
+    ULONG i;
 
     sum = 0;
-    for (i = 0; i < 127; i++) {
+    for (i = 0; i < 127; i++)
+    {
         sum ^= ((PULONG)BaseBlock)[i];
     }
-    if (sum == (ULONG)-1) {
+    if (sum == (ULONG)-1)
+    {
         sum = (ULONG)-2;
     }
-    if (sum == 0) {
+    if (sum == 0)
+    {
         sum = 1;
     }
     return sum;

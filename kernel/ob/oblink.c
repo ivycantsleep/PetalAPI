@@ -20,21 +20,17 @@ Revision History:
 
 #include "obp.h"
 
-VOID
-ObpProcessDosDeviceSymbolicLink (
-    POBJECT_SYMBOLIC_LINK SymbolicLink,
-    ULONG Action
-    );
+VOID ObpProcessDosDeviceSymbolicLink(POBJECT_SYMBOLIC_LINK SymbolicLink, ULONG Action);
 
 #if defined(ALLOC_PRAGMA)
-#pragma alloc_text(PAGE,NtCreateSymbolicLinkObject)
-#pragma alloc_text(PAGE,NtOpenSymbolicLinkObject)
-#pragma alloc_text(PAGE,NtQuerySymbolicLinkObject)
-#pragma alloc_text(PAGE,ObpParseSymbolicLink)
-#pragma alloc_text(PAGE,ObpDeleteSymbolicLink)
-#pragma alloc_text(PAGE,ObpDeleteSymbolicLinkName)
-#pragma alloc_text(PAGE,ObpCreateSymbolicLinkName)
-#pragma alloc_text(PAGE,ObpProcessDosDeviceSymbolicLink)
+#pragma alloc_text(PAGE, NtCreateSymbolicLinkObject)
+#pragma alloc_text(PAGE, NtOpenSymbolicLinkObject)
+#pragma alloc_text(PAGE, NtQuerySymbolicLinkObject)
+#pragma alloc_text(PAGE, ObpParseSymbolicLink)
+#pragma alloc_text(PAGE, ObpDeleteSymbolicLink)
+#pragma alloc_text(PAGE, ObpDeleteSymbolicLinkName)
+#pragma alloc_text(PAGE, ObpCreateSymbolicLinkName)
+#pragma alloc_text(PAGE, ObpProcessDosDeviceSymbolicLink)
 #endif
 
 //
@@ -55,14 +51,10 @@ extern ULONG ObpLUIDDeviceMapsEnabled;
 #define CREATE_SYMBOLIC_LINK 0
 #define DELETE_SYMBOLIC_LINK 1
 
-
+
 NTSTATUS
-NtCreateSymbolicLinkObject (
-    OUT PHANDLE LinkHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_ATTRIBUTES ObjectAttributes,
-    IN PUNICODE_STRING LinkTarget
-    )
+NtCreateSymbolicLinkObject(OUT PHANDLE LinkHandle, IN ACCESS_MASK DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes,
+                           IN PUNICODE_STRING LinkTarget)
 
 /*++
 
@@ -106,32 +98,30 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    if (PreviousMode != KernelMode) {
+    if (PreviousMode != KernelMode)
+    {
 
-        try {
+        try
+        {
 
-            ProbeForReadSmallStructure( ObjectAttributes,
-                                        sizeof( OBJECT_ATTRIBUTES ),
-                                        sizeof( ULONG ));
+            ProbeForReadSmallStructure(ObjectAttributes, sizeof(OBJECT_ATTRIBUTES), sizeof(ULONG));
 
-            ProbeForReadSmallStructure( LinkTarget,
-                                        sizeof( *LinkTarget ),
-                                        sizeof( UCHAR ));
+            ProbeForReadSmallStructure(LinkTarget, sizeof(*LinkTarget), sizeof(UCHAR));
 
             CapturedLinkTarget = *LinkTarget;
 
-            ProbeForRead( CapturedLinkTarget.Buffer,
-                          CapturedLinkTarget.MaximumLength,
-                          sizeof( UCHAR ));
+            ProbeForRead(CapturedLinkTarget.Buffer, CapturedLinkTarget.MaximumLength, sizeof(UCHAR));
 
-            ProbeForWriteHandle( LinkHandle );
-
-        } except( EXCEPTION_EXECUTE_HANDLER ) {
-
-            return( GetExceptionCode() );
+            ProbeForWriteHandle(LinkHandle);
         }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
-    } else {
+            return (GetExceptionCode());
+        }
+    }
+    else
+    {
 
         CapturedLinkTarget = *LinkTarget;
     }
@@ -140,13 +130,14 @@ Return Value:
     //  Check if there is an odd MaximumLength
     //
 
-    if (CapturedLinkTarget.MaximumLength % sizeof( WCHAR )) {
+    if (CapturedLinkTarget.MaximumLength % sizeof(WCHAR))
+    {
 
         //
         //  Round down the MaximumLength to a valid even size
         //
 
-        CapturedLinkTarget.MaximumLength = (CapturedLinkTarget.MaximumLength / sizeof( WCHAR )) * sizeof( WCHAR );
+        CapturedLinkTarget.MaximumLength = (CapturedLinkTarget.MaximumLength / sizeof(WCHAR)) * sizeof(WCHAR);
     }
 
     //
@@ -154,69 +145,62 @@ Return Value:
     //  the maximum length, or zero and creating.
     //
 
-    if ((CapturedLinkTarget.MaximumLength == 0) ||
-        (CapturedLinkTarget.Length > CapturedLinkTarget.MaximumLength) ||
-        (CapturedLinkTarget.Length % sizeof( WCHAR ))) {
+    if ((CapturedLinkTarget.MaximumLength == 0) || (CapturedLinkTarget.Length > CapturedLinkTarget.MaximumLength) ||
+        (CapturedLinkTarget.Length % sizeof(WCHAR)))
+    {
 
-        KdPrint(( "OB: Invalid symbolic link target - %wZ\n", &CapturedLinkTarget ));
+        KdPrint(("OB: Invalid symbolic link target - %wZ\n", &CapturedLinkTarget));
 
-        return( STATUS_INVALID_PARAMETER );
+        return (STATUS_INVALID_PARAMETER);
     }
 
     //
     //  Create the symbolic link object
     //
 
-    Status = ObCreateObject( PreviousMode,
-                             ObpSymbolicLinkObjectType,
-                             ObjectAttributes,
-                             PreviousMode,
-                             NULL,
-                             sizeof( *SymbolicLink ),
-                             0,
-                             0,
-                             (PVOID *)&SymbolicLink );
+    Status = ObCreateObject(PreviousMode, ObpSymbolicLinkObjectType, ObjectAttributes, PreviousMode, NULL,
+                            sizeof(*SymbolicLink), 0, 0, (PVOID *)&SymbolicLink);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        return( Status );
+        return (Status);
     }
 
     //
     //  Fill in symbolic link object with link target name string
     //
 
-    KeQuerySystemTime( &SymbolicLink->CreationTime );
+    KeQuerySystemTime(&SymbolicLink->CreationTime);
 
     SymbolicLink->DosDeviceDriveIndex = 0;
     SymbolicLink->LinkTargetObject = NULL;
 
-    RtlInitUnicodeString( &SymbolicLink->LinkTargetRemaining,  NULL );
+    RtlInitUnicodeString(&SymbolicLink->LinkTargetRemaining, NULL);
 
     SymbolicLink->LinkTarget.MaximumLength = CapturedLinkTarget.MaximumLength;
     SymbolicLink->LinkTarget.Length = CapturedLinkTarget.Length;
-    SymbolicLink->LinkTarget.Buffer = (PWCH)ExAllocatePoolWithTag( PagedPool,
-                                                                   CapturedLinkTarget.MaximumLength,
-                                                                   'tmyS' );
+    SymbolicLink->LinkTarget.Buffer = (PWCH)ExAllocatePoolWithTag(PagedPool, CapturedLinkTarget.MaximumLength, 'tmyS');
 
-    if (SymbolicLink->LinkTarget.Buffer == NULL) {
+    if (SymbolicLink->LinkTarget.Buffer == NULL)
+    {
 
-        ObDereferenceObject( SymbolicLink );
+        ObDereferenceObject(SymbolicLink);
 
         return STATUS_NO_MEMORY;
     }
 
-    try {
+    try
+    {
 
-        RtlCopyMemory( SymbolicLink->LinkTarget.Buffer,
-                       CapturedLinkTarget.Buffer,
-                       CapturedLinkTarget.MaximumLength );
+        RtlCopyMemory(SymbolicLink->LinkTarget.Buffer, CapturedLinkTarget.Buffer, CapturedLinkTarget.MaximumLength);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
-    } except( EXCEPTION_EXECUTE_HANDLER ) {
+        ObDereferenceObject(SymbolicLink);
 
-        ObDereferenceObject( SymbolicLink );
-
-        return( GetExceptionCode() );
+        return (GetExceptionCode());
     }
 
     //
@@ -224,34 +208,27 @@ Return Value:
     //  set symbolic link handle value and return status.
     //
 
-    Status = ObInsertObject( SymbolicLink,
-                             NULL,
-                             DesiredAccess,
-                             0,
-                             (PVOID *)&Object,
-                             &Handle );
+    Status = ObInsertObject(SymbolicLink, NULL, DesiredAccess, 0, (PVOID *)&Object, &Handle);
 
-    try {
+    try
+    {
 
         *LinkHandle = Handle;
-
-    } except( EXCEPTION_EXECUTE_HANDLER ) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         //
         // Fall through, since we do not want to undo what we have done.
         //
     }
 
-    return( Status );
+    return (Status);
 }
 
-
+
 NTSTATUS
-NtOpenSymbolicLinkObject (
-    OUT PHANDLE LinkHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_ATTRIBUTES ObjectAttributes
-    )
+NtOpenSymbolicLinkObject(OUT PHANDLE LinkHandle, IN ACCESS_MASK DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes)
 
 /*++
 
@@ -291,15 +268,18 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    if (PreviousMode != KernelMode) {
+    if (PreviousMode != KernelMode)
+    {
 
-        try {
+        try
+        {
 
-            ProbeForWriteHandle( LinkHandle );
+            ProbeForWriteHandle(LinkHandle);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
-        } except( EXCEPTION_EXECUTE_HANDLER ) {
-
-            return( GetExceptionCode() );
+            return (GetExceptionCode());
         }
     }
 
@@ -309,35 +289,28 @@ Return Value:
     //  status.
     //
 
-    Status = ObOpenObjectByName( ObjectAttributes,
-                                 ObpSymbolicLinkObjectType,
-                                 PreviousMode,
-                                 NULL,
-                                 DesiredAccess,
-                                 NULL,
-                                 &Handle );
+    Status = ObOpenObjectByName(ObjectAttributes, ObpSymbolicLinkObjectType, PreviousMode, NULL, DesiredAccess, NULL,
+                                &Handle);
 
-    try {
+    try
+    {
 
         *LinkHandle = Handle;
-
-    } except( EXCEPTION_EXECUTE_HANDLER ) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         //
         //  Fall through, since we do not want to undo what we have done.
         //
     }
 
-    return( Status );
+    return (Status);
 }
 
-
+
 NTSTATUS
-NtQuerySymbolicLinkObject (
-    IN HANDLE LinkHandle,
-    IN OUT PUNICODE_STRING LinkTarget,
-    OUT PULONG ReturnedLength OPTIONAL
-    )
+NtQuerySymbolicLinkObject(IN HANDLE LinkHandle, IN OUT PUNICODE_STRING LinkTarget, OUT PULONG ReturnedLength OPTIONAL)
 
 /*++
 
@@ -377,35 +350,36 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    if (PreviousMode != KernelMode) {
+    if (PreviousMode != KernelMode)
+    {
 
-        try {
+        try
+        {
 
-            ProbeForReadSmallStructure( LinkTarget,
-                                        sizeof( *LinkTarget ),
-                                        sizeof( WCHAR ) );
+            ProbeForReadSmallStructure(LinkTarget, sizeof(*LinkTarget), sizeof(WCHAR));
 
-            ProbeForWriteUshort( &LinkTarget->Length );
+            ProbeForWriteUshort(&LinkTarget->Length);
 
-            ProbeForWriteUshort( &LinkTarget->MaximumLength );
+            ProbeForWriteUshort(&LinkTarget->MaximumLength);
 
             CapturedLinkTarget = *LinkTarget;
 
-            ProbeForWrite( CapturedLinkTarget.Buffer,
-                           CapturedLinkTarget.MaximumLength,
-                           sizeof( UCHAR ) );
+            ProbeForWrite(CapturedLinkTarget.Buffer, CapturedLinkTarget.MaximumLength, sizeof(UCHAR));
 
-            if (ARGUMENT_PRESENT( ReturnedLength )) {
+            if (ARGUMENT_PRESENT(ReturnedLength))
+            {
 
-                ProbeForWriteUlong( ReturnedLength );
+                ProbeForWriteUlong(ReturnedLength);
             }
-
-        } except( EXCEPTION_EXECUTE_HANDLER ) {
-
-            return( GetExceptionCode() );
         }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
-    } else {
+            return (GetExceptionCode());
+        }
+    }
+    else
+    {
 
         CapturedLinkTarget = *LinkTarget;
     }
@@ -416,20 +390,17 @@ Return Value:
     //  status.
     //
 
-    Status = ObReferenceObjectByHandle( LinkHandle,
-                                        SYMBOLIC_LINK_QUERY,
-                                        ObpSymbolicLinkObjectType,
-                                        PreviousMode,
-                                        (PVOID *)&SymbolicLink,
-                                        NULL );
+    Status = ObReferenceObjectByHandle(LinkHandle, SYMBOLIC_LINK_QUERY, ObpSymbolicLinkObjectType, PreviousMode,
+                                       (PVOID *)&SymbolicLink, NULL);
 
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
 
         POBJECT_HEADER ObjectHeader;
 
-        ObjectHeader = OBJECT_TO_OBJECT_HEADER( SymbolicLink );
+        ObjectHeader = OBJECT_TO_OBJECT_HEADER(SymbolicLink);
 
-        ObpLockObject( ObjectHeader );
+        ObpLockObject(ObjectHeader);
 
         //
         //  If the caller wants a return length and what we found can easily
@@ -441,36 +412,40 @@ Return Value:
         //  make up the string and nothing extra
         //
 
-        if ((ARGUMENT_PRESENT( ReturnedLength ) &&
-                (SymbolicLink->LinkTarget.MaximumLength <= CapturedLinkTarget.MaximumLength))
+        if ((ARGUMENT_PRESENT(ReturnedLength) &&
+             (SymbolicLink->LinkTarget.MaximumLength <= CapturedLinkTarget.MaximumLength))
 
-                    ||
+            ||
 
-            (!ARGUMENT_PRESENT( ReturnedLength ) &&
-                (SymbolicLink->LinkTarget.Length <= CapturedLinkTarget.MaximumLength)) ) {
+            (!ARGUMENT_PRESENT(ReturnedLength) &&
+             (SymbolicLink->LinkTarget.Length <= CapturedLinkTarget.MaximumLength)))
+        {
 
-            try {
+            try
+            {
 
-                RtlCopyMemory( CapturedLinkTarget.Buffer,
-                               SymbolicLink->LinkTarget.Buffer,
-                               ARGUMENT_PRESENT( ReturnedLength ) ? SymbolicLink->LinkTarget.MaximumLength
-                                                                  : SymbolicLink->LinkTarget.Length );
+                RtlCopyMemory(CapturedLinkTarget.Buffer, SymbolicLink->LinkTarget.Buffer,
+                              ARGUMENT_PRESENT(ReturnedLength) ? SymbolicLink->LinkTarget.MaximumLength
+                                                               : SymbolicLink->LinkTarget.Length);
 
                 LinkTarget->Length = SymbolicLink->LinkTarget.Length;
 
-                if (ARGUMENT_PRESENT( ReturnedLength )) {
+                if (ARGUMENT_PRESENT(ReturnedLength))
+                {
 
                     *ReturnedLength = SymbolicLink->LinkTarget.MaximumLength;
                 }
-
-            } except( EXCEPTION_EXECUTE_HANDLER ) {
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
 
                 //
                 // Fall through, since we do cannot undo what we have done.
                 //
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             //  The output buffer is just too small for the link target, but
@@ -478,13 +453,16 @@ Return Value:
             //  return value
             //
 
-            if (ARGUMENT_PRESENT( ReturnedLength )) {
+            if (ARGUMENT_PRESENT(ReturnedLength))
+            {
 
-                try {
+                try
+                {
 
                     *ReturnedLength = SymbolicLink->LinkTarget.MaximumLength;
-
-                } except( EXCEPTION_EXECUTE_HANDLER ) {
+                }
+                except(EXCEPTION_EXECUTE_HANDLER)
+                {
 
                     //
                     // Fall through, since we do cannot undo what we have done.
@@ -495,28 +473,20 @@ Return Value:
             Status = STATUS_BUFFER_TOO_SMALL;
         }
 
-        ObpUnlockObject( ObjectHeader );
+        ObpUnlockObject(ObjectHeader);
 
-        ObDereferenceObject( SymbolicLink );
+        ObDereferenceObject(SymbolicLink);
     }
 
-    return( Status );
+    return (Status);
 }
 
-
+
 NTSTATUS
-ObpParseSymbolicLink (
-    IN PVOID ParseObject,
-    IN PVOID ObjectType,
-    IN PACCESS_STATE AccessState,
-    IN KPROCESSOR_MODE AccessMode,
-    IN ULONG Attributes,
-    IN OUT PUNICODE_STRING CompleteName,
-    IN OUT PUNICODE_STRING RemainingName,
-    IN OUT PVOID Context OPTIONAL,
-    IN PSECURITY_QUALITY_OF_SERVICE SecurityQos OPTIONAL,
-    OUT PVOID *Object
-    )
+ObpParseSymbolicLink(IN PVOID ParseObject, IN PVOID ObjectType, IN PACCESS_STATE AccessState,
+                     IN KPROCESSOR_MODE AccessMode, IN ULONG Attributes, IN OUT PUNICODE_STRING CompleteName,
+                     IN OUT PUNICODE_STRING RemainingName, IN OUT PVOID Context OPTIONAL,
+                     IN PSECURITY_QUALITY_OF_SERVICE SecurityQos OPTIONAL, OUT PVOID *Object)
 
 /*++
 
@@ -589,7 +559,8 @@ Return Value:
     //  operation.  Which uses the root directory mutex.
     //
 
-    try {
+    try
+    {
 
         *Object = NULL;
 
@@ -601,33 +572,35 @@ Return Value:
         //  return that error status
         //
 
-        if (RemainingName->Length == 0) {
+        if (RemainingName->Length == 0)
+        {
 
-            if ( ObjectType ) {
+            if (ObjectType)
+            {
 
-                Status = ObReferenceObjectByPointer( ParseObject,
-                                                     0,
-                                                     ObjectType,
-                                                     AccessMode );
+                Status = ObReferenceObjectByPointer(ParseObject, 0, ObjectType, AccessMode);
 
-                if (NT_SUCCESS( Status )) {
+                if (NT_SUCCESS(Status))
+                {
 
                     *Object = ParseObject;
 
                     leave;
-
-                } else if (Status != STATUS_OBJECT_TYPE_MISMATCH) {
+                }
+                else if (Status != STATUS_OBJECT_TYPE_MISMATCH)
+                {
 
                     leave;
                 }
-           }
+            }
 
-        //
-        //  If the remaining name does not start with a "\" then
-        //  its is illformed and we'll call it a type mismatch
-        //
-
-        } else if (*(RemainingName->Buffer) != OBJ_NAME_PATH_SEPARATOR) {
+            //
+            //  If the remaining name does not start with a "\" then
+            //  its is illformed and we'll call it a type mismatch
+            //
+        }
+        else if (*(RemainingName->Buffer) != OBJ_NAME_PATH_SEPARATOR)
+        {
 
             Status = STATUS_OBJECT_TYPE_MISMATCH;
             leave;
@@ -640,7 +613,8 @@ Return Value:
 
         SymbolicLink = (POBJECT_SYMBOLIC_LINK)ParseObject;
 
-        if (SymbolicLink->LinkTargetObject != NULL) {
+        if (SymbolicLink->LinkTargetObject != NULL)
+        {
 
             //
             //  This is a snapped link.  Get the remaining portion of the
@@ -649,7 +623,8 @@ Return Value:
 
             LinkTargetName = &SymbolicLink->LinkTargetRemaining;
 
-            if (LinkTargetName->Length == 0) {
+            if (LinkTargetName->Length == 0)
+            {
 
                 //
                 //  Remaining link target string is zero, so return to caller
@@ -671,18 +646,19 @@ Return Value:
 
             InsertAmount = LinkTargetName->Length;
 
-            if ((LinkTargetName->Buffer[ (InsertAmount / sizeof( WCHAR )) - 1 ] == OBJ_NAME_PATH_SEPARATOR)
+            if ((LinkTargetName->Buffer[(InsertAmount / sizeof(WCHAR)) - 1] == OBJ_NAME_PATH_SEPARATOR)
 
-                    &&
+                &&
 
-                (*(RemainingName->Buffer) == OBJ_NAME_PATH_SEPARATOR)) {
+                (*(RemainingName->Buffer) == OBJ_NAME_PATH_SEPARATOR))
+            {
 
                 //
                 //  Both the link target name ends in a "\" and the remaining
                 //  starts with a "\" but we only need one when we're done
                 //
 
-                InsertAmount -= sizeof( WCHAR );
+                InsertAmount -= sizeof(WCHAR);
             }
 
             //
@@ -691,11 +667,11 @@ Return Value:
             //  and we need the length in bytes
             //
 
-            NewLength = (ULONG)(((RemainingName->Buffer - CompleteName->Buffer) * sizeof( WCHAR )) +
-                        InsertAmount +
-                        RemainingName->Length);
+            NewLength = (ULONG)(((RemainingName->Buffer - CompleteName->Buffer) * sizeof(WCHAR)) + InsertAmount +
+                                RemainingName->Length);
 
-            if (NewLength > 0xFFF0) {
+            if (NewLength > 0xFFF0)
+            {
 
                 Status = STATUS_NAME_TOO_LONG;
                 leave;
@@ -708,17 +684,19 @@ Return Value:
             //  buffer containing the complete name
             //
 
-            if (CompleteName->MaximumLength <= Length) {
+            if (CompleteName->MaximumLength <= Length)
+            {
 
                 //
                 //  The new concatentated name is larger than the buffer supplied for
                 //  the complete name.  Allocate space for this new string
                 //
 
-                MaximumLength = Length + sizeof( UNICODE_NULL );
-                NewName = ExAllocatePoolWithTag( OB_NAMESPACE_POOL_TYPE, MaximumLength, 'mNbO' );
+                MaximumLength = Length + sizeof(UNICODE_NULL);
+                NewName = ExAllocatePoolWithTag(OB_NAMESPACE_POOL_TYPE, MaximumLength, 'mNbO');
 
-                if (NewName == NULL) {
+                if (NewName == NULL)
+                {
 
                     Status = STATUS_INSUFFICIENT_RESOURCES;
                     leave;
@@ -736,34 +714,33 @@ Return Value:
                 //  Copy over all the names that we've processed so far
                 //
 
-                RtlCopyMemory( NewName,
-                               CompleteName->Buffer,
-                               ((RemainingName->Buffer - CompleteName->Buffer) * sizeof( WCHAR )));
+                RtlCopyMemory(NewName, CompleteName->Buffer,
+                              ((RemainingName->Buffer - CompleteName->Buffer) * sizeof(WCHAR)));
 
                 //
                 //  If we have some remaining names then those over at the
                 //  the location offset to hold the link target name
                 //
 
-                if (RemainingName->Length != 0) {
+                if (RemainingName->Length != 0)
+                {
 
-                    RtlCopyMemory( (PVOID)((PUCHAR)NewRemainingName + InsertAmount),
-                                   RemainingName->Buffer,
-                                   RemainingName->Length );
+                    RtlCopyMemory((PVOID)((PUCHAR)NewRemainingName + InsertAmount), RemainingName->Buffer,
+                                  RemainingName->Length);
                 }
 
                 //
                 //  Now insert the link target name
                 //
 
-                RtlCopyMemory( NewRemainingName, LinkTargetName->Buffer, InsertAmount );
+                RtlCopyMemory(NewRemainingName, LinkTargetName->Buffer, InsertAmount);
 
                 //
                 //  Free the old complete name buffer and reset the input
                 //  strings to use the new buffer
                 //
 
-                ExFreePool( CompleteName->Buffer );
+                ExFreePool(CompleteName->Buffer);
 
                 CompleteName->Buffer = NewName;
                 CompleteName->Length = Length;
@@ -771,9 +748,10 @@ Return Value:
 
                 RemainingName->Buffer = NewRemainingName;
                 RemainingName->Length = Length - (USHORT)((PCHAR)NewRemainingName - (PCHAR)NewName);
-                RemainingName->MaximumLength = RemainingName->Length + sizeof( UNICODE_NULL );
-
-            } else {
+                RemainingName->MaximumLength = RemainingName->Length + sizeof(UNICODE_NULL);
+            }
+            else
+            {
 
                 //
                 //  Insert extra text associated with this symbolic link name before
@@ -783,18 +761,18 @@ Return Value:
                 //  link target name
                 //
 
-                if (RemainingName->Length != 0) {
+                if (RemainingName->Length != 0)
+                {
 
-                    RtlMoveMemory( (PVOID)((PUCHAR)RemainingName->Buffer + InsertAmount),
-                                   RemainingName->Buffer,
-                                   RemainingName->Length );
+                    RtlMoveMemory((PVOID)((PUCHAR)RemainingName->Buffer + InsertAmount), RemainingName->Buffer,
+                                  RemainingName->Length);
                 }
 
                 //
                 //  Now insert the link target name
                 //
 
-                RtlCopyMemory( RemainingName->Buffer, LinkTargetName->Buffer, InsertAmount );
+                RtlCopyMemory(RemainingName->Buffer, LinkTargetName->Buffer, InsertAmount);
 
                 //
                 //  Adjust input strings to account for this inserted text
@@ -803,9 +781,9 @@ Return Value:
                 CompleteName->Length += LinkTargetName->Length;
 
                 RemainingName->Length += LinkTargetName->Length;
-                RemainingName->MaximumLength += RemainingName->Length + sizeof( UNICODE_NULL );
+                RemainingName->MaximumLength += RemainingName->Length + sizeof(UNICODE_NULL);
 
-                CompleteName->Buffer[ CompleteName->Length / sizeof( WCHAR ) ] = UNICODE_NULL;
+                CompleteName->Buffer[CompleteName->Length / sizeof(WCHAR)] = UNICODE_NULL;
             }
 
             //
@@ -830,25 +808,23 @@ Return Value:
 
         InsertAmount = LinkTargetName->Length;
 
-        if ((InsertAmount != 0)
-                &&
-            (LinkTargetName->Buffer[ (InsertAmount / sizeof( WCHAR )) - 1 ] == OBJ_NAME_PATH_SEPARATOR)
-                &&
-            (RemainingName->Length != 0)
-                &&
-            (*(RemainingName->Buffer) == OBJ_NAME_PATH_SEPARATOR)) {
+        if ((InsertAmount != 0) &&
+            (LinkTargetName->Buffer[(InsertAmount / sizeof(WCHAR)) - 1] == OBJ_NAME_PATH_SEPARATOR) &&
+            (RemainingName->Length != 0) && (*(RemainingName->Buffer) == OBJ_NAME_PATH_SEPARATOR))
+        {
 
             //
             //  Both the link target name ends in a "\" and the remaining
             //  starts with a "\" but we only need one when we're done
             //
 
-            InsertAmount -= sizeof( WCHAR );
+            InsertAmount -= sizeof(WCHAR);
         }
 
         NewLength = InsertAmount + RemainingName->Length;
 
-        if (NewLength > 0xFFF0) {
+        if (NewLength > 0xFFF0)
+        {
 
             Status = STATUS_NAME_TOO_LONG;
             leave;
@@ -856,23 +832,26 @@ Return Value:
 
         Length = (USHORT)NewLength;
 
-        if (CompleteName->MaximumLength <= Length) {
+        if (CompleteName->MaximumLength <= Length)
+        {
 
             //
             //  The new concatentated name is larger than the buffer supplied for
             //  the complete name.
             //
 
-            MaximumLength = Length + sizeof( UNICODE_NULL );
-            NewName = ExAllocatePoolWithTag( OB_NAMESPACE_POOL_TYPE, MaximumLength, 'mNbO' );
+            MaximumLength = Length + sizeof(UNICODE_NULL);
+            NewName = ExAllocatePoolWithTag(OB_NAMESPACE_POOL_TYPE, MaximumLength, 'mNbO');
 
-            if (NewName == NULL) {
+            if (NewName == NULL)
+            {
 
                 Status = STATUS_INSUFFICIENT_RESOURCES;
                 leave;
             }
-
-        } else {
+        }
+        else
+        {
 
             MaximumLength = CompleteName->MaximumLength;
             NewName = CompleteName->Buffer;
@@ -884,25 +863,25 @@ Return Value:
         //  name up to the remaining name with the links target name
         //
 
-        if (RemainingName->Length != 0) {
+        if (RemainingName->Length != 0)
+        {
 
-            RtlMoveMemory( (PVOID)((PUCHAR)NewName + InsertAmount),
-                           RemainingName->Buffer,
-                           RemainingName->Length );
+            RtlMoveMemory((PVOID)((PUCHAR)NewName + InsertAmount), RemainingName->Buffer, RemainingName->Length);
         }
 
-        RtlCopyMemory( NewName, LinkTargetName->Buffer, InsertAmount );
+        RtlCopyMemory(NewName, LinkTargetName->Buffer, InsertAmount);
 
-        NewName[ Length / sizeof( WCHAR ) ] = UNICODE_NULL;
+        NewName[Length / sizeof(WCHAR)] = UNICODE_NULL;
 
         //
         //  If a new name buffer was allocated, then free the original complete
         //  name buffer.
         //
 
-        if (NewName != CompleteName->Buffer) {
+        if (NewName != CompleteName->Buffer)
+        {
 
-            ExFreePool( CompleteName->Buffer );
+            ExFreePool(CompleteName->Buffer);
         }
 
         //
@@ -915,8 +894,9 @@ Return Value:
         CompleteName->MaximumLength = MaximumLength;
 
         Status = STATUS_REPARSE;
-
-    } finally {
+    }
+    finally
+    {
 
         //
         //  Nothing to do here
@@ -926,11 +906,8 @@ Return Value:
     return Status;
 }
 
-
-VOID
-ObpDeleteSymbolicLink (
-    IN  PVOID   Object
-    )
+
+VOID ObpDeleteSymbolicLink(IN PVOID Object)
 
 /*++
 
@@ -959,9 +936,10 @@ Return Value:
     //  buffer
     //
 
-    if (SymbolicLink->LinkTarget.Buffer != NULL) {
+    if (SymbolicLink->LinkTarget.Buffer != NULL)
+    {
 
-        ExFreePool( SymbolicLink->LinkTarget.Buffer );
+        ExFreePool(SymbolicLink->LinkTarget.Buffer);
     }
 
     SymbolicLink->LinkTarget.Buffer = NULL;
@@ -973,11 +951,8 @@ Return Value:
     return;
 }
 
-
-VOID
-ObpDeleteSymbolicLinkName (
-    POBJECT_SYMBOLIC_LINK SymbolicLink
-    )
+
+VOID ObpDeleteSymbolicLinkName(POBJECT_SYMBOLIC_LINK SymbolicLink)
 
 /*++
 
@@ -1001,16 +976,13 @@ Return Value:
 
 {
 
-    ObpProcessDosDeviceSymbolicLink( SymbolicLink, DELETE_SYMBOLIC_LINK );
+    ObpProcessDosDeviceSymbolicLink(SymbolicLink, DELETE_SYMBOLIC_LINK);
 
     return;
 }
 
-
-VOID
-ObpCreateSymbolicLinkName (
-    POBJECT_SYMBOLIC_LINK SymbolicLink
-    )
+
+VOID ObpCreateSymbolicLinkName(POBJECT_SYMBOLIC_LINK SymbolicLink)
 
 /*++
 
@@ -1065,14 +1037,13 @@ Return Value:
     //  So no need to hold the type specific mutex while we look at the name.
     //
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( SymbolicLink );
-    NameInfo = ObpReferenceNameInfo( ObjectHeader );
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(SymbolicLink);
+    NameInfo = ObpReferenceNameInfo(ObjectHeader);
 
-    if ((NameInfo == NULL) ||
-        (NameInfo->Directory == NULL) ||
-        (NameInfo->Directory->DeviceMap == NULL)) {
+    if ((NameInfo == NULL) || (NameInfo->Directory == NULL) || (NameInfo->Directory->DeviceMap == NULL))
+    {
 
-        ObpDereferenceNameInfo( NameInfo );
+        ObpDereferenceNameInfo(NameInfo);
         return;
     }
 
@@ -1084,12 +1055,13 @@ Return Value:
 
     DosDeviceDriveIndex = 0;
 
-    if ((NameInfo->Name.Length == (2 * sizeof( WCHAR ))) &&
-        (NameInfo->Name.Buffer[ 1 ] == L':')) {
+    if ((NameInfo->Name.Length == (2 * sizeof(WCHAR))) && (NameInfo->Name.Buffer[1] == L':'))
+    {
 
-        DosDeviceDriveLetter = RtlUpcaseUnicodeChar( NameInfo->Name.Buffer[ 0 ] );
+        DosDeviceDriveLetter = RtlUpcaseUnicodeChar(NameInfo->Name.Buffer[0]);
 
-        if ((DosDeviceDriveLetter >= L'A') && (DosDeviceDriveLetter <= L'Z')) {
+        if ((DosDeviceDriveLetter >= L'A') && (DosDeviceDriveLetter <= L'Z'))
+        {
 
             DosDeviceDriveIndex = DosDeviceDriveLetter - L'A';
             DosDeviceDriveIndex += 1;
@@ -1102,25 +1074,21 @@ Return Value:
     //  Now traverse the target path seeing if we can snap the link now.
     //
 
-    ObpProcessDosDeviceSymbolicLink( SymbolicLink, CREATE_SYMBOLIC_LINK );
+    ObpProcessDosDeviceSymbolicLink(SymbolicLink, CREATE_SYMBOLIC_LINK);
 
-    ObpDereferenceNameInfo( NameInfo );
+    ObpDereferenceNameInfo(NameInfo);
 
     return;
 }
 
-
+
 //
 //  Local support routine
 //
 
 #define MAX_DEPTH 16
 
-VOID
-ObpProcessDosDeviceSymbolicLink (
-    POBJECT_SYMBOLIC_LINK SymbolicLink,
-    ULONG Action
-    )
+VOID ObpProcessDosDeviceSymbolicLink(POBJECT_SYMBOLIC_LINK SymbolicLink, ULONG Action)
 
 /*++
 
@@ -1166,7 +1134,7 @@ Return Value:
     UNICODE_STRING ComponentName;
     BOOLEAN HaveWorldTraverseAccess;
     ULONG Depth;
-    POBJECT_DIRECTORY Directories[ MAX_DEPTH ], Directory, ParentDirectory;
+    POBJECT_DIRECTORY Directories[MAX_DEPTH], Directory, ParentDirectory;
     PDEVICE_OBJECT DeviceObject;
     PDEVICE_MAP DeviceMap = NULL;
     ULONG DosDeviceDriveType;
@@ -1177,29 +1145,30 @@ Return Value:
     POBJECT_DIRECTORY SymLinkDirectory = NULL;
     BOOLEAN PreviousLockingState;
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( SymbolicLink );
-    NameInfo = OBJECT_HEADER_TO_NAME_INFO( ObjectHeader );
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(SymbolicLink);
+    NameInfo = OBJECT_HEADER_TO_NAME_INFO(ObjectHeader);
 
-    if (NameInfo != NULL) {
+    if (NameInfo != NULL)
+    {
 
         SymLinkDirectory = NameInfo->Directory;
     }
 
     Object = NULL;
-    RtlInitUnicodeString( &RemainingTarget, NULL );
+    RtlInitUnicodeString(&RemainingTarget, NULL);
 
-    ObpInitializeLookupContext( &LookupContext );
+    ObpInitializeLookupContext(&LookupContext);
 
     //
     //  Check if we are creating a symbolic link or if the link has already
     //  been snapped
     //
 
-    if ((Action == CREATE_SYMBOLIC_LINK) ||
-        (SymbolicLink->LinkTargetObject != NULL)) {
+    if ((Action == CREATE_SYMBOLIC_LINK) || (SymbolicLink->LinkTargetObject != NULL))
+    {
 
         ParentDirectory = NULL;
-        Depth    = 0;
+        Depth = 0;
         Directory = ObpRootDirectoryObject;
         RemainingName = SymbolicLink->LinkTarget;
 
@@ -1210,10 +1179,12 @@ Return Value:
         // With LUID device maps enabled, the process' device map pointer
         // may be NULL
         //
-        if (ObpLUIDDeviceMapsEnabled != 0) {
+        if (ObpLUIDDeviceMapsEnabled != 0)
+        {
             DeviceMap = ObSystemDeviceMap;
         }
-        else {
+        else
+        {
             //
             // use the device map associated with the process
             //
@@ -1221,16 +1192,18 @@ Return Value:
         }
 
 
-ReCalcDeviceMap:
+    ReCalcDeviceMap:
 
-        if (DeviceMap) {
+        if (DeviceMap)
+        {
 
 
-            if (!((ULONG_PTR)(RemainingName.Buffer) & (sizeof(ULONGLONG)-1))
+            if (!((ULONG_PTR)(RemainingName.Buffer) & (sizeof(ULONGLONG) - 1))
 
-                        &&
+                &&
 
-                (DeviceMap->DosDevicesDirectory != NULL )) {
+                (DeviceMap->DosDevicesDirectory != NULL))
+            {
 
                 //
                 //  Check if the object name is actually equal to the
@@ -1239,9 +1212,10 @@ ReCalcDeviceMap:
 
                 if ((RemainingName.Length >= ObpDosDevicesShortName.Length)
 
-                        &&
+                    &&
 
-                    (*(PULONGLONG)(RemainingName.Buffer) == ObpDosDevicesShortNamePrefix.Alignment.QuadPart)) {
+                    (*(PULONGLONG)(RemainingName.Buffer) == ObpDosDevicesShortNamePrefix.Alignment.QuadPart))
+                {
 
                     //
                     //  The user gave us the dos short name prefix so we'll
@@ -1251,11 +1225,10 @@ ReCalcDeviceMap:
 
                     Directory = DeviceMap->DosDevicesDirectory;
 
-                    RemainingName.Buffer += (ObpDosDevicesShortName.Length / sizeof( WCHAR ));
+                    RemainingName.Buffer += (ObpDosDevicesShortName.Length / sizeof(WCHAR));
                     RemainingName.Length -= ObpDosDevicesShortName.Length;
 
                     DeviceMapUsed = TRUE;
-
                 }
             }
         }
@@ -1268,16 +1241,18 @@ ReCalcDeviceMap:
         //  to traverse to process this action.
         //
 
-        while (TRUE) {
+        while (TRUE)
+        {
 
             //
             //  Gobble up the "\" in the remaining name
             //
 
-            if (*(RemainingName.Buffer) == OBJ_NAME_PATH_SEPARATOR) {
+            if (*(RemainingName.Buffer) == OBJ_NAME_PATH_SEPARATOR)
+            {
 
                 RemainingName.Buffer++;
-                RemainingName.Length -= sizeof( OBJ_NAME_PATH_SEPARATOR );
+                RemainingName.Length -= sizeof(OBJ_NAME_PATH_SEPARATOR);
             }
 
             //
@@ -1287,20 +1262,23 @@ ReCalcDeviceMap:
 
             ComponentName = RemainingName;
 
-            while (RemainingName.Length != 0) {
+            while (RemainingName.Length != 0)
+            {
 
-                if (*(RemainingName.Buffer) == OBJ_NAME_PATH_SEPARATOR) {
+                if (*(RemainingName.Buffer) == OBJ_NAME_PATH_SEPARATOR)
+                {
 
                     break;
                 }
 
                 RemainingName.Buffer++;
-                RemainingName.Length -= sizeof( OBJ_NAME_PATH_SEPARATOR );
+                RemainingName.Length -= sizeof(OBJ_NAME_PATH_SEPARATOR);
             }
 
             ComponentName.Length -= RemainingName.Length;
 
-            if (ComponentName.Length == 0) {
+            if (ComponentName.Length == 0)
+            {
 
                 ObpReleaseLookupContext(&LookupContext);
                 return;
@@ -1310,7 +1288,8 @@ ReCalcDeviceMap:
             //  See if we have world traverse access to look this name up
             //
 
-            if (ParentDirectory != NULL) {
+            if (ParentDirectory != NULL)
+            {
 
                 HaveWorldTraverseAccess = FALSE;
 
@@ -1318,38 +1297,36 @@ ReCalcDeviceMap:
                 //  Obtain the object's security descriptor
                 //
 
-                Status = ObGetObjectSecurity( ParentDirectory,
-                                              &SecurityDescriptor,
-                                              &MemoryAllocated );
+                Status = ObGetObjectSecurity(ParentDirectory, &SecurityDescriptor, &MemoryAllocated);
 
-                if (NT_SUCCESS( Status )) {
+                if (NT_SUCCESS(Status))
+                {
 
                     //
                     //  Check to see if WORLD has TRAVERSE access and then release
                     //  the security descriptor
                     //
 
-                    HaveWorldTraverseAccess = SeFastTraverseCheck( SecurityDescriptor,
-                                                                   DIRECTORY_TRAVERSE,
-                                                                   UserMode );
+                    HaveWorldTraverseAccess = SeFastTraverseCheck(SecurityDescriptor, DIRECTORY_TRAVERSE, UserMode);
 
-                    ObReleaseObjectSecurity( SecurityDescriptor,
-                                             MemoryAllocated );
+                    ObReleaseObjectSecurity(SecurityDescriptor, MemoryAllocated);
                 }
 
-                if (!HaveWorldTraverseAccess) {
+                if (!HaveWorldTraverseAccess)
+                {
 
                     Object = NULL;
                     break;
                 }
 
-                if (Depth >= MAX_DEPTH) {
+                if (Depth >= MAX_DEPTH)
+                {
 
                     Object = NULL;
                     break;
                 }
 
-                Directories[ Depth++ ] = ParentDirectory;
+                Directories[Depth++] = ParentDirectory;
             }
 
             //
@@ -1363,24 +1340,23 @@ ReCalcDeviceMap:
             //  the lookupcontext state and avoid recursive locking
             //
 
-            if (Directory == SymLinkDirectory) {
+            if (Directory == SymLinkDirectory)
+            {
 
                 PreviousLockingState = LookupContext.DirectoryLocked;
                 LookupContext.DirectoryLocked = TRUE;
             }
 
-            Object = ObpLookupDirectoryEntry( Directory,
-                                              &ComponentName,
-                                              0,
-                                              FALSE ,
-                                              &LookupContext);
+            Object = ObpLookupDirectoryEntry(Directory, &ComponentName, 0, FALSE, &LookupContext);
 
-            if (Directory == SymLinkDirectory) {
+            if (Directory == SymLinkDirectory)
+            {
 
                 LookupContext.DirectoryLocked = PreviousLockingState;
             }
 
-            if (Object == NULL) {
+            if (Object == NULL)
+            {
 
                 break;
             }
@@ -1389,22 +1365,25 @@ ReCalcDeviceMap:
             //  See if this is a object directory object.  If so, keep going
             //
 
-            ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
+            ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
 
-            if (ObjectHeader->Type == ObpDirectoryObjectType) {
+            if (ObjectHeader->Type == ObpDirectoryObjectType)
+            {
 
                 ParentDirectory = Directory;
                 Directory = (POBJECT_DIRECTORY)Object;
-
-            } else if ((ObjectHeader->Type == ObpSymbolicLinkObjectType) &&
-                       (((POBJECT_SYMBOLIC_LINK)Object)->DosDeviceDriveIndex == 0)) {
+            }
+            else if ((ObjectHeader->Type == ObpSymbolicLinkObjectType) &&
+                     (((POBJECT_SYMBOLIC_LINK)Object)->DosDeviceDriveIndex == 0))
+            {
 
                 //
                 // To prevent Denial of Service attacks from parsing
                 // symbolic links infinitely.
                 // Check the number of symbolic link parse attempts
                 //
-                if (MaxReparse == 0) {
+                if (MaxReparse == 0)
+                {
 
                     Object = NULL;
                     break;
@@ -1426,7 +1405,8 @@ ReCalcDeviceMap:
                 //  Save the remaining name
                 //
 
-                if (RemainingTarget.Length == 0) {
+                if (RemainingTarget.Length == 0)
+                {
 
                     RemainingTarget = RemainingName;
                 }
@@ -1434,8 +1414,9 @@ ReCalcDeviceMap:
                 RemainingName = ((POBJECT_SYMBOLIC_LINK)Object)->LinkTarget;
 
                 goto ReCalcDeviceMap;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  Not an object directory object, or a symbolic link to an
@@ -1451,18 +1432,22 @@ ReCalcDeviceMap:
         //  with each directory object walked over.
         //
 
-        while (Depth--) {
+        while (Depth--)
+        {
 
-            Directory = Directories[ Depth ];
+            Directory = Directories[Depth];
 
-            if (Action == CREATE_SYMBOLIC_LINK) {
+            if (Action == CREATE_SYMBOLIC_LINK)
+            {
 
-                if (Object != NULL) {
+                if (Object != NULL)
+                {
 
                     Directory->SymbolicLinkUsageCount += 1;
                 }
-
-            } else {
+            }
+            else
+            {
 
                 Directory->SymbolicLinkUsageCount -= 1;
             }
@@ -1482,28 +1467,32 @@ ReCalcDeviceMap:
 
     DeviceMap = NULL;
 
-    if (SymbolicLink->DosDeviceDriveIndex != 0) {
+    if (SymbolicLink->DosDeviceDriveIndex != 0)
+    {
 
-        ObjectHeader = OBJECT_TO_OBJECT_HEADER( SymbolicLink );
-        NameInfo = ObpReferenceNameInfo( ObjectHeader );
+        ObjectHeader = OBJECT_TO_OBJECT_HEADER(SymbolicLink);
+        NameInfo = ObpReferenceNameInfo(ObjectHeader);
 
-        if (NameInfo != NULL && NameInfo->Directory) {
+        if (NameInfo != NULL && NameInfo->Directory)
+        {
 
             DeviceMap = NameInfo->Directory->DeviceMap;
         }
 
-        ObpDereferenceNameInfo( NameInfo );
+        ObpDereferenceNameInfo(NameInfo);
     }
 
     //
     //  Check if we are creating a symbolic link
     //
 
-    if (Action == CREATE_SYMBOLIC_LINK) {
+    if (Action == CREATE_SYMBOLIC_LINK)
+    {
 
         DosDeviceDriveType = DOSDEVICE_DRIVE_CALCULATE;
 
-        if (Object != NULL) {
+        if (Object != NULL)
+        {
 
 
             //
@@ -1517,7 +1506,8 @@ ReCalcDeviceMap:
             //
             // Disable snapping until we come up with a delete scheme for it
             //
-            if (FALSE /*( PsGetCurrentProcess()->SessionId == 0) || (DeviceMapUsed)*/) {
+            if (FALSE /*( PsGetCurrentProcess()->SessionId == 0) || (DeviceMapUsed)*/)
+            {
                 //
                 //  Create action.  Store a referenced pointer to the snapped object
                 //  along with the description of any remaining name string.  Also,
@@ -1525,7 +1515,7 @@ ReCalcDeviceMap:
                 //  device map object.
                 //
 
-                ObReferenceObject( Object );
+                ObReferenceObject(Object);
 
                 SymbolicLink->LinkTargetObject = Object;
 
@@ -1534,23 +1524,27 @@ ReCalcDeviceMap:
                 //  we'll set it to the symbolic link object
                 //
 
-                if ( RemainingTarget.Length ) {
+                if (RemainingTarget.Length)
+                {
 
                     RemainingName = RemainingTarget;
                 }
 
                 if ((*(RemainingName.Buffer) == OBJ_NAME_PATH_SEPARATOR) &&
-                    (RemainingName.Length == sizeof( OBJ_NAME_PATH_SEPARATOR))) {
+                    (RemainingName.Length == sizeof(OBJ_NAME_PATH_SEPARATOR)))
+                {
 
-                    RtlInitUnicodeString( &SymbolicLink->LinkTargetRemaining, NULL );
-
-                } else {
+                    RtlInitUnicodeString(&SymbolicLink->LinkTargetRemaining, NULL);
+                }
+                else
+                {
 
                     SymbolicLink->LinkTargetRemaining = RemainingName;
                 }
             }
 
-            if (SymbolicLink->DosDeviceDriveIndex != 0) {
+            if (SymbolicLink->DosDeviceDriveIndex != 0)
+            {
 
                 //
                 //  Default is to calculate the drive type in user mode if we are
@@ -1558,13 +1552,15 @@ ReCalcDeviceMap:
                 //  DEVICE_OBJECT we know about.
                 //
 
-                ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
+                ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
 
-                if (ObjectHeader->Type == IoDeviceObjectType) {
+                if (ObjectHeader->Type == IoDeviceObjectType)
+                {
 
                     DeviceObject = (PDEVICE_OBJECT)Object;
 
-                    switch (DeviceObject->DeviceType) {
+                    switch (DeviceObject->DeviceType)
+                    {
 
                     case FILE_DEVICE_CD_ROM:
                     case FILE_DEVICE_CD_ROM_FILE_SYSTEM:
@@ -1577,11 +1573,13 @@ ReCalcDeviceMap:
                     case FILE_DEVICE_DISK_FILE_SYSTEM:
                     case FILE_DEVICE_FILE_SYSTEM:
 
-                        if (DeviceObject->Characteristics & FILE_REMOVABLE_MEDIA) {
+                        if (DeviceObject->Characteristics & FILE_REMOVABLE_MEDIA)
+                        {
 
                             DosDeviceDriveType = DOSDEVICE_DRIVE_REMOVABLE;
-
-                        } else {
+                        }
+                        else
+                        {
 
                             DosDeviceDriveType = DOSDEVICE_DRIVE_FIXED;
                         }
@@ -1606,12 +1604,12 @@ ReCalcDeviceMap:
                         //  like a local drive.
                         //
 
-                        if (IoRemoteBootClient &&
-                            (SymbolicLink->DosDeviceDriveIndex == 24)) {
+                        if (IoRemoteBootClient && (SymbolicLink->DosDeviceDriveIndex == 24))
+                        {
 
                             DosDeviceDriveType = DOSDEVICE_DRIVE_FIXED;
-
-                        } else
+                        }
+                        else
 #endif // defined(REMOTE_BOOT)
                         {
                             DosDeviceDriveType = DOSDEVICE_DRIVE_REMOTE;
@@ -1640,31 +1638,34 @@ ReCalcDeviceMap:
         //  and mark as valid drive letter.
         //
 
-        if (DeviceMap != NULL) {
+        if (DeviceMap != NULL)
+        {
 
             ObpLockDeviceMap();
 
-            DeviceMap->DriveType[ SymbolicLink->DosDeviceDriveIndex-1 ] = (UCHAR)DosDeviceDriveType;
-            DeviceMap->DriveMap |= 1 << (SymbolicLink->DosDeviceDriveIndex-1) ;
+            DeviceMap->DriveType[SymbolicLink->DosDeviceDriveIndex - 1] = (UCHAR)DosDeviceDriveType;
+            DeviceMap->DriveMap |= 1 << (SymbolicLink->DosDeviceDriveIndex - 1);
 
             ObpUnlockDeviceMap();
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         //  Deleting the symbolic link.  Dereference the snapped object pointer if any
         //  and zero out the snapped object fields.
         //
 
-        RtlInitUnicodeString( &SymbolicLink->LinkTargetRemaining, NULL );
+        RtlInitUnicodeString(&SymbolicLink->LinkTargetRemaining, NULL);
 
         Object = SymbolicLink->LinkTargetObject;
 
-        if (Object != NULL) {
+        if (Object != NULL)
+        {
 
             SymbolicLink->LinkTargetObject = NULL;
-            ObDereferenceObject( Object );
+            ObDereferenceObject(Object);
         }
 
         //
@@ -1672,12 +1673,13 @@ ReCalcDeviceMap:
         //  unknown and clear the bit in the drive letter bit map.
         //
 
-        if (DeviceMap != NULL) {
+        if (DeviceMap != NULL)
+        {
 
             ObpLockDeviceMap();
 
-            DeviceMap->DriveMap &= ~(1 << (SymbolicLink->DosDeviceDriveIndex-1));
-            DeviceMap->DriveType[ SymbolicLink->DosDeviceDriveIndex-1 ] = DOSDEVICE_DRIVE_UNKNOWN;
+            DeviceMap->DriveMap &= ~(1 << (SymbolicLink->DosDeviceDriveIndex - 1));
+            DeviceMap->DriveType[SymbolicLink->DosDeviceDriveIndex - 1] = DOSDEVICE_DRIVE_UNKNOWN;
 
             ObpUnlockDeviceMap();
 
@@ -1685,15 +1687,13 @@ ReCalcDeviceMap:
         }
 
         //
-        //  N.B. The original code freed here the target buffer. This is 
+        //  N.B. The original code freed here the target buffer. This is
         //  illegal because the parse routine for symbolic links reads the buffer unsynchronized
         //  The buffer will be released in the delete procedure, when the sym link goes away
         //
-
     }
 
     ObpReleaseLookupContext(&LookupContext);
 
     return;
 }
-

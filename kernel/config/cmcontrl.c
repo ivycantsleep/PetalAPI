@@ -18,40 +18,29 @@ Revision History:
 
 --*/
 
-#include    "cmp.h"
+#include "cmp.h"
 
-extern WCHAR   CmDefaultLanguageId[];
-extern ULONG   CmDefaultLanguageIdLength;
-extern ULONG   CmDefaultLanguageIdType;
+extern WCHAR CmDefaultLanguageId[];
+extern ULONG CmDefaultLanguageIdLength;
+extern ULONG CmDefaultLanguageIdType;
 
-extern WCHAR   CmInstallUILanguageId[];
-extern ULONG   CmInstallUILanguageIdLength;
-extern ULONG   CmInstallUILanguageIdType;
+extern WCHAR CmInstallUILanguageId[];
+extern ULONG CmInstallUILanguageIdLength;
+extern ULONG CmInstallUILanguageIdType;
 
 HCELL_INDEX
-CmpWalkPath(
-    PHHIVE      SystemHive,
-    HCELL_INDEX ParentCell,
-    PWSTR       Path
-    );
+CmpWalkPath(PHHIVE SystemHive, HCELL_INDEX ParentCell, PWSTR Path);
 
 LANGID
-CmpConvertLangId(
-    PWSTR LangIdString,
-    ULONG LangIdStringLength
-);
+CmpConvertLangId(PWSTR LangIdString, ULONG LangIdStringLength);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,CmGetSystemControlValues)
-#pragma alloc_text(INIT,CmpWalkPath)
-#pragma alloc_text(INIT,CmpConvertLangId)
+#pragma alloc_text(INIT, CmGetSystemControlValues)
+#pragma alloc_text(INIT, CmpWalkPath)
+#pragma alloc_text(INIT, CmpConvertLangId)
 #endif
 
-VOID
-CmGetSystemControlValues(
-    PVOID                   SystemHiveBuffer,
-    PCM_SYSTEM_CONTROL_VECTOR  ControlVector
-    )
+VOID CmGetSystemControlValues(PVOID SystemHiveBuffer, PCM_SYSTEM_CONTROL_VECTOR ControlVector)
 /*++
 
 Routine Description:
@@ -73,22 +62,22 @@ Return Value:
 
 --*/
 {
-    NTSTATUS        status;
-    PHHIVE          SystemHive;
-    CMHIVE          TempHive;
-    HCELL_INDEX     RootCell;
-    HCELL_INDEX     BaseCell;
-    UNICODE_STRING  Name;
-    PHCELL_INDEX    Index;
-    HCELL_INDEX     KeyCell;
-    HCELL_INDEX     ValueCell;
-    PCM_KEY_VALUE   ValueBody;
-    PVOID           ValueData;
-    ULONG           Length;
-    BOOLEAN         AutoSelect;
-    BOOLEAN         small;
-    ULONG           tmplength;
-    PCM_KEY_NODE    Node;
+    NTSTATUS status;
+    PHHIVE SystemHive;
+    CMHIVE TempHive;
+    HCELL_INDEX RootCell;
+    HCELL_INDEX BaseCell;
+    UNICODE_STRING Name;
+    PHCELL_INDEX Index;
+    HCELL_INDEX KeyCell;
+    HCELL_INDEX ValueCell;
+    PCM_KEY_VALUE ValueBody;
+    PVOID ValueData;
+    ULONG Length;
+    BOOLEAN AutoSelect;
+    BOOLEAN small;
+    ULONG tmplength;
+    PCM_KEY_NODE Node;
 
     //
     // set up to read flat system hive image loader passes us
@@ -97,57 +86,41 @@ Return Value:
     SystemHive = &(TempHive.Hive);
     CmpInitHiveViewList((PCMHIVE)SystemHive);
     CmpInitSecurityCache((PCMHIVE)SystemHive);
-    status = HvInitializeHive(
-                SystemHive,
-                HINIT_FLAT,
-                HIVE_VOLATILE,
-                HFILE_TYPE_PRIMARY,
-                SystemHiveBuffer,
-                NULL,
-                NULL,
-                NULL,
-                NULL,
-                NULL,
-                NULL,
-                1,
-                NULL
-                );
-    if (!NT_SUCCESS(status)) {
-         CM_BUGCHECK(BAD_SYSTEM_CONFIG_INFO,BAD_SYSTEM_CONTROL_VALUES,1,SystemHive,status);
+    status = HvInitializeHive(SystemHive, HINIT_FLAT, HIVE_VOLATILE, HFILE_TYPE_PRIMARY, SystemHiveBuffer, NULL, NULL,
+                              NULL, NULL, NULL, NULL, 1, NULL);
+    if (!NT_SUCCESS(status))
+    {
+        CM_BUGCHECK(BAD_SYSTEM_CONFIG_INFO, BAD_SYSTEM_CONTROL_VALUES, 1, SystemHive, status);
     }
 
     //
     // don't bother locking/releasing cells
     //
-    ASSERT( SystemHive->ReleaseCellRoutine == NULL );
+    ASSERT(SystemHive->ReleaseCellRoutine == NULL);
     //
     // get hive.cell of root of current control set
     //
     RootCell = ((PHBASE_BLOCK)SystemHiveBuffer)->RootCell;
     RtlInitUnicodeString(&Name, L"current");
-    BaseCell = CmpFindControlSet(
-                    SystemHive,
-                    RootCell,
-                    &Name,
-                    &AutoSelect
-                    );
-    if (BaseCell == HCELL_NIL) {
-        CM_BUGCHECK(BAD_SYSTEM_CONFIG_INFO,BAD_SYSTEM_CONTROL_VALUES,2,SystemHive,&Name);
+    BaseCell = CmpFindControlSet(SystemHive, RootCell, &Name, &AutoSelect);
+    if (BaseCell == HCELL_NIL)
+    {
+        CM_BUGCHECK(BAD_SYSTEM_CONFIG_INFO, BAD_SYSTEM_CONTROL_VALUES, 2, SystemHive, &Name);
     }
 
-    Node = (PCM_KEY_NODE)HvGetCell(SystemHive,BaseCell);
-    if( Node == NULL ) {
+    Node = (PCM_KEY_NODE)HvGetCell(SystemHive, BaseCell);
+    if (Node == NULL)
+    {
         //
         // we couldn't map a view for the bin containing this cell
         //
         return;
     }
     RtlInitUnicodeString(&Name, L"control");
-    BaseCell = CmpFindSubKeyByName(SystemHive,
-                                   Node,
-                                   &Name);
-    if (BaseCell == HCELL_NIL) {
-        CM_BUGCHECK(BAD_SYSTEM_CONFIG_INFO,BAD_SYSTEM_CONTROL_VALUES,3,Node,&Name);
+    BaseCell = CmpFindSubKeyByName(SystemHive, Node, &Name);
+    if (BaseCell == HCELL_NIL)
+    {
+        CM_BUGCHECK(BAD_SYSTEM_CONFIG_INFO, BAD_SYSTEM_CONTROL_VALUES, 3, Node, &Name);
     }
 
     //
@@ -157,46 +130,52 @@ Return Value:
     //
     // step through vector, trying to fetch each value
     //
-    while (ControlVector->KeyPath != NULL) {
+    while (ControlVector->KeyPath != NULL)
+    {
 
         //
         //  Assume we will fail to find the key or value.
         //
-        
+
         Length = (ULONG)-1;
 
         KeyCell = CmpWalkPath(SystemHive, BaseCell, ControlVector->KeyPath);
 
-        if (KeyCell != HCELL_NIL) {
+        if (KeyCell != HCELL_NIL)
+        {
 
             //
             // found the key, look for the value entry
             //
-            Node = (PCM_KEY_NODE)HvGetCell(SystemHive,KeyCell);
-            if( Node == NULL ) {
+            Node = (PCM_KEY_NODE)HvGetCell(SystemHive, KeyCell);
+            if (Node == NULL)
+            {
                 //
                 // we couldn't map a view for the bin containing this cell
                 //
                 return;
             }
             RtlInitUnicodeString(&Name, ControlVector->ValueName);
-            ValueCell = CmpFindValueByName(SystemHive,
-                                           Node,
-                                           &Name);
-            if (ValueCell != HCELL_NIL) {
+            ValueCell = CmpFindValueByName(SystemHive, Node, &Name);
+            if (ValueCell != HCELL_NIL)
+            {
 
                 //
                 // SystemHive.ValueCell is value entry body
                 //
 
-                if (ControlVector->BufferLength == NULL) {
+                if (ControlVector->BufferLength == NULL)
+                {
                     tmplength = sizeof(ULONG);
-                } else {
+                }
+                else
+                {
                     tmplength = *(ControlVector->BufferLength);
                 }
 
                 ValueBody = (PCM_KEY_VALUE)HvGetCell(SystemHive, ValueCell);
-                if( ValueBody == NULL ) {
+                if (ValueBody == NULL)
+                {
                     //
                     // we couldn't map a view for the bin containing this cell
                     //
@@ -205,48 +184,51 @@ Return Value:
 
                 small = CmpIsHKeyValueSmall(Length, ValueBody->DataLength);
 
-                if (tmplength < Length) {
+                if (tmplength < Length)
+                {
                     Length = tmplength;
                 }
 
-                if (Length > 0) {
+                if (Length > 0)
+                {
 
-                    PCELL_DATA  Buffer;
-                    BOOLEAN     BufferAllocated;
-                    ULONG       realsize;
+                    PCELL_DATA Buffer;
+                    BOOLEAN BufferAllocated;
+                    ULONG realsize;
                     HCELL_INDEX CellToRelease;
 
                     ASSERT((small ? (Length <= CM_KEY_VALUE_SMALL) : TRUE));
                     //
                     // get the data from source, regardless of the size
                     //
-                    if( CmpGetValueData(SystemHive,ValueBody,&realsize,&Buffer,&BufferAllocated,&CellToRelease) == FALSE ) {
+                    if (CmpGetValueData(SystemHive, ValueBody, &realsize, &Buffer, &BufferAllocated, &CellToRelease) ==
+                        FALSE)
+                    {
                         //
                         // insufficient resources; return NULL
                         //
-                        ASSERT( BufferAllocated == FALSE );
-                        ASSERT( Buffer == NULL );
+                        ASSERT(BufferAllocated == FALSE);
+                        ASSERT(Buffer == NULL);
                         return;
                     }
 
-                    RtlCopyMemory(
-                        ControlVector->Buffer,
-                        Buffer,
-                        Length
-                        );
+                    RtlCopyMemory(ControlVector->Buffer, Buffer, Length);
 
                     //
                     // cleanup the temporary buffer
                     //
-                    if( BufferAllocated == TRUE ) {
-                        ExFreePool( Buffer );
+                    if (BufferAllocated == TRUE)
+                    {
+                        ExFreePool(Buffer);
                     }
-                    if( CellToRelease != HCELL_NIL ) {
-                        HvReleaseCell(SystemHive,CellToRelease);
+                    if (CellToRelease != HCELL_NIL)
+                    {
+                        HvReleaseCell(SystemHive, CellToRelease);
                     }
                 }
 
-                if (ControlVector->Type != NULL) {
+                if (ControlVector->Type != NULL)
+                {
                     *(ControlVector->Type) = ValueBody->Type;
                 }
             }
@@ -255,8 +237,9 @@ Return Value:
         //
         // Stash the length of result (-1 if nothing was found)
         //
-        
-        if (ControlVector->BufferLength != NULL) {
+
+        if (ControlVector->BufferLength != NULL)
+        {
             *(ControlVector->BufferLength) = Length;
         }
 
@@ -267,11 +250,12 @@ Return Value:
     // Get the default locale ID for the system from the registry.
     //
 
-    if (CmDefaultLanguageIdType == REG_SZ) {
-        PsDefaultSystemLocaleId = (LCID) CmpConvertLangId( 
-                                                CmDefaultLanguageId,
-                                                CmDefaultLanguageIdLength);
-    } else {
+    if (CmDefaultLanguageIdType == REG_SZ)
+    {
+        PsDefaultSystemLocaleId = (LCID)CmpConvertLangId(CmDefaultLanguageId, CmDefaultLanguageIdLength);
+    }
+    else
+    {
         PsDefaultSystemLocaleId = 0x00000409;
     }
 
@@ -279,18 +263,19 @@ Return Value:
     // Get the install (native UI) language ID for the system from the registry.
     //
 
-    if (CmInstallUILanguageIdType == REG_SZ) {
-        PsInstallUILanguageId =  CmpConvertLangId( 
-                                                CmInstallUILanguageId,
-                                                CmInstallUILanguageIdLength);
-    } else {
+    if (CmInstallUILanguageIdType == REG_SZ)
+    {
+        PsInstallUILanguageId = CmpConvertLangId(CmInstallUILanguageId, CmInstallUILanguageIdLength);
+    }
+    else
+    {
         PsInstallUILanguageId = LANGIDFROMLCID(PsDefaultSystemLocaleId);
     }
 
     //
     // Set the default thread locale to the default system locale
     // for now.  This will get changed as soon as somebody logs in.
-    // Use the install (native) language id as our default UI language id. 
+    // Use the install (native) language id as our default UI language id.
     // This also will get changed as soon as somebody logs in.
     //
 
@@ -300,11 +285,7 @@ Return Value:
 
 
 HCELL_INDEX
-CmpWalkPath(
-    PHHIVE      SystemHive,
-    HCELL_INDEX ParentCell,
-    PWSTR       Path
-    )
+CmpWalkPath(PHHIVE SystemHive, HCELL_INDEX ParentCell, PWSTR Path)
 /*++
 
 Routine Description:
@@ -325,52 +306,51 @@ Return Value:
 
 --*/
 {
-    NTSTATUS        status;
-    UNICODE_STRING  PathString;
-    UNICODE_STRING  NextName;
-    BOOLEAN         Last;
-    PHCELL_INDEX    Index;
-    HCELL_INDEX     KeyCell;
-    PCM_KEY_NODE    Node;
+    NTSTATUS status;
+    UNICODE_STRING PathString;
+    UNICODE_STRING NextName;
+    BOOLEAN Last;
+    PHCELL_INDEX Index;
+    HCELL_INDEX KeyCell;
+    PCM_KEY_NODE Node;
 
     //
     // don't bother counting/releasing used cells
     //
-    ASSERT( SystemHive->ReleaseCellRoutine == NULL );
+    ASSERT(SystemHive->ReleaseCellRoutine == NULL);
 
     KeyCell = ParentCell;
     RtlInitUnicodeString(&PathString, Path);
 
-    while (TRUE) {
+    while (TRUE)
+    {
 
         CmpGetNextName(&PathString, &NextName, &Last);
 
-        if (NextName.Length == 0) {
+        if (NextName.Length == 0)
+        {
             return KeyCell;
         }
 
-        Node = (PCM_KEY_NODE)HvGetCell(SystemHive,KeyCell);
-        if( Node == NULL ) {
+        Node = (PCM_KEY_NODE)HvGetCell(SystemHive, KeyCell);
+        if (Node == NULL)
+        {
             //
             // we couldn't map a view for the bin containing this cell
             //
             return HCELL_NIL;
         }
-        KeyCell = CmpFindSubKeyByName(SystemHive,
-                                      Node,
-                                      &NextName);
+        KeyCell = CmpFindSubKeyByName(SystemHive, Node, &NextName);
 
-        if (KeyCell == HCELL_NIL) {
+        if (KeyCell == HCELL_NIL)
+        {
             return HCELL_NIL;
         }
     }
 }
 
 LANGID
-CmpConvertLangId(
-    PWSTR LangIdString,
-    ULONG LangIdStringLength
-)
+CmpConvertLangId(PWSTR LangIdString, ULONG LangIdStringLength)
 {
 
 
@@ -379,24 +359,30 @@ CmpConvertLangId(
     LANGID LangId;
 
     LangId = 0;
-    LangIdStringLength = LangIdStringLength / sizeof( WCHAR );
-    for (i=0; i < LangIdStringLength; i++) {
-        c = LangIdString[ i ];
+    LangIdStringLength = LangIdStringLength / sizeof(WCHAR);
+    for (i = 0; i < LangIdStringLength; i++)
+    {
+        c = LangIdString[i];
 
-        if (c >= L'0' && c <= L'9') {
+        if (c >= L'0' && c <= L'9')
+        {
             Digit = c - L'0';
-
-        } else if (c >= L'A' && c <= L'F') {
+        }
+        else if (c >= L'A' && c <= L'F')
+        {
             Digit = c - L'A' + 10;
-
-        } else if (c >= L'a' && c <= L'f') {
+        }
+        else if (c >= L'a' && c <= L'f')
+        {
             Digit = c - L'a' + 10;
-
-        } else {
+        }
+        else
+        {
             break;
         }
 
-        if (Digit >= 16) {
+        if (Digit >= 16)
+        {
             break;
         }
 
@@ -405,4 +391,3 @@ CmpConvertLangId(
 
     return LangId;
 }
-

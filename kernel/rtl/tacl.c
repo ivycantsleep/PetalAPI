@@ -35,10 +35,7 @@ Revision History:
 #include "nt.h"
 #include "ntrtl.h"
 
-VOID
-RtlDumpAcl(
-    IN PACL Acl
-    );
+VOID RtlDumpAcl(IN PACL Acl);
 
 UCHAR FredAclBuffer[128];
 UCHAR WilmaAclBuffer[128];
@@ -51,11 +48,7 @@ UCHAR BambamAclBuffer[128];
 UCHAR GuidMaskBuffer[512];
 STANDARD_ACE AceListBuffer[2];
 
-int
-main(
-    int argc,
-    char *argv[]
-    )
+int main(int argc, char *argv[])
 {
     PACL FredAcl = (PACL)FredAclBuffer;
     PACL WilmaAcl = (PACL)WilmaAclBuffer;
@@ -80,7 +73,8 @@ main(
     //  test create acl
     //
 
-    if (!NT_SUCCESS(RtlCreateAcl(FredAcl, 128, 1))) {
+    if (!NT_SUCCESS(RtlCreateAcl(FredAcl, 128, 1)))
+    {
         DbgPrint("RtlCreateAcl Error\n");
     }
 
@@ -103,7 +97,8 @@ main(
     AceListBuffer[1].Mask = 0x44444444;
     CopyGuid(&AceListBuffer[1].Guid, &WilmaGuid);
 
-    if (!NT_SUCCESS(RtlAddAce(FredAcl, 1, 0, AceListBuffer, 2*sizeof(STANDARD_ACE)))) {
+    if (!NT_SUCCESS(RtlAddAce(FredAcl, 1, 0, AceListBuffer, 2 * sizeof(STANDARD_ACE))))
+    {
         DbgPrint("RtlAddAce Error\n");
     }
 
@@ -120,7 +115,8 @@ main(
     AceListBuffer[0].Mask = 0x11111111;
     CopyGuid(&AceListBuffer[0].Guid, &PebbleGuid);
 
-    if (!NT_SUCCESS(RtlAddAce(FredAcl, 1, 0, AceListBuffer, sizeof(STANDARD_ACE)))) {
+    if (!NT_SUCCESS(RtlAddAce(FredAcl, 1, 0, AceListBuffer, sizeof(STANDARD_ACE))))
+    {
         DbgPrint("RtlAddAce Error\n");
     }
 
@@ -137,7 +133,8 @@ main(
     AceListBuffer[0].Mask = 0x33333333;
     CopyGuid(&AceListBuffer[0].Guid, &DinoGuid);
 
-    if (!NT_SUCCESS(RtlAddAce(FredAcl, 1, 2, AceListBuffer, sizeof(STANDARD_ACE)))) {
+    if (!NT_SUCCESS(RtlAddAce(FredAcl, 1, 2, AceListBuffer, sizeof(STANDARD_ACE))))
+    {
         DbgPrint("RtlAddAce Error\n");
     }
 
@@ -154,7 +151,8 @@ main(
     AceListBuffer[0].Mask = 0x55555555;
     CopyGuid(&AceListBuffer[0].Guid, &FlintstoneGuid);
 
-    if (!NT_SUCCESS(RtlAddAce(FredAcl, 1, MAXULONG, AceListBuffer, sizeof(STANDARD_ACE)))) {
+    if (!NT_SUCCESS(RtlAddAce(FredAcl, 1, MAXULONG, AceListBuffer, sizeof(STANDARD_ACE))))
+    {
         DbgPrint("RtlAddAce Error\n");
     }
 
@@ -168,12 +166,13 @@ main(
     {
         PSTANDARD_ACE Ace;
 
-        if (!NT_SUCCESS(RtlGetAce(FredAcl, 2, (PVOID *)(&Ace)))) {
+        if (!NT_SUCCESS(RtlGetAce(FredAcl, 2, (PVOID *)(&Ace))))
+        {
             DbgPrint("RtlGetAce Error\n");
         }
 
-        if ((Ace->Header.AceType != ACCESS_DENIED_ACE_TYPE) ||
-            (Ace->Mask != 0x33333333)) {
+        if ((Ace->Header.AceType != ACCESS_DENIED_ACE_TYPE) || (Ace->Mask != 0x33333333))
+        {
             DbgPrint("Got bad ace from RtlGetAce\n");
         }
     }
@@ -182,7 +181,8 @@ main(
     //  test delete ace middle ace
     //
 
-    if (!NT_SUCCESS(RtlDeleteAce(FredAcl, 2))) {
+    if (!NT_SUCCESS(RtlDeleteAce(FredAcl, 2)))
+    {
         DbgPrint("RtlDeleteAce Error\n");
     }
 
@@ -193,25 +193,24 @@ main(
     //  Test query information acl
     //
 
-    if (!NT_SUCCESS(RtlQueryInformationAcl( FredAcl,
-                                         (PVOID)&AclRevisionInfo,
-                                         sizeof(ACL_REVISION_INFORMATION),
-                                         AclRevisionInformation))) {
+    if (!NT_SUCCESS(RtlQueryInformationAcl(FredAcl, (PVOID)&AclRevisionInfo, sizeof(ACL_REVISION_INFORMATION),
+                                           AclRevisionInformation)))
+    {
         DbgPrint("RtlQueryInformationAcl Error\n");
     }
-    if (AclRevisionInfo.AclRevision != ACL_REVISION) {
+    if (AclRevisionInfo.AclRevision != ACL_REVISION)
+    {
         DbgPrint("RtlAclRevision Error\n");
     }
 
-    if (!NT_SUCCESS(RtlQueryInformationAcl( FredAcl,
-                                         (PVOID)&AclSizeInfo,
-                                         sizeof(ACL_SIZE_INFORMATION),
-                                         AclSizeInformation))) {
+    if (!NT_SUCCESS(
+            RtlQueryInformationAcl(FredAcl, (PVOID)&AclSizeInfo, sizeof(ACL_SIZE_INFORMATION), AclSizeInformation)))
+    {
         DbgPrint("RtlQueryInformationAcl Error\n");
     }
-    if ((AclSizeInfo.AceCount != 4) ||
-        (AclSizeInfo.AclBytesInUse != (sizeof(ACL)+4*sizeof(STANDARD_ACE))) ||
-        (AclSizeInfo.AclBytesFree != 128 - AclSizeInfo.AclBytesInUse)) {
+    if ((AclSizeInfo.AceCount != 4) || (AclSizeInfo.AclBytesInUse != (sizeof(ACL) + 4 * sizeof(STANDARD_ACE))) ||
+        (AclSizeInfo.AclBytesFree != 128 - AclSizeInfo.AclBytesInUse))
+    {
         DbgPrint("RtlAclSize Error\n");
         DbgPrint("AclSizeInfo.AceCount = %8lx\n", AclSizeInfo.AceCount);
         DbgPrint("AclSizeInfo.AclBytesInUse = %8lx\n", AclSizeInfo.AclBytesInUse);
@@ -224,42 +223,39 @@ main(
     //
 
     GuidMasks->PairCount = 11;
-    CopyGuid(&GuidMasks->MaskGuid[ 0].Guid, &FredGuid);
-    CopyGuid(&GuidMasks->MaskGuid[ 1].Guid, &WilmaGuid);
-    CopyGuid(&GuidMasks->MaskGuid[ 2].Guid, &PebbleGuid);
-    CopyGuid(&GuidMasks->MaskGuid[ 3].Guid, &DinoGuid);
-    CopyGuid(&GuidMasks->MaskGuid[ 4].Guid, &BarneyGuid);
-    CopyGuid(&GuidMasks->MaskGuid[ 5].Guid, &BettyGuid);
-    CopyGuid(&GuidMasks->MaskGuid[ 6].Guid, &BambamGuid);
-    CopyGuid(&GuidMasks->MaskGuid[ 7].Guid, &FlintstoneGuid);
-    CopyGuid(&GuidMasks->MaskGuid[ 8].Guid, &RubbleGuid);
-    CopyGuid(&GuidMasks->MaskGuid[ 9].Guid, &AdultGuid);
+    CopyGuid(&GuidMasks->MaskGuid[0].Guid, &FredGuid);
+    CopyGuid(&GuidMasks->MaskGuid[1].Guid, &WilmaGuid);
+    CopyGuid(&GuidMasks->MaskGuid[2].Guid, &PebbleGuid);
+    CopyGuid(&GuidMasks->MaskGuid[3].Guid, &DinoGuid);
+    CopyGuid(&GuidMasks->MaskGuid[4].Guid, &BarneyGuid);
+    CopyGuid(&GuidMasks->MaskGuid[5].Guid, &BettyGuid);
+    CopyGuid(&GuidMasks->MaskGuid[6].Guid, &BambamGuid);
+    CopyGuid(&GuidMasks->MaskGuid[7].Guid, &FlintstoneGuid);
+    CopyGuid(&GuidMasks->MaskGuid[8].Guid, &RubbleGuid);
+    CopyGuid(&GuidMasks->MaskGuid[9].Guid, &AdultGuid);
     CopyGuid(&GuidMasks->MaskGuid[10].Guid, &ChildGuid);
-    if (!NT_SUCCESS(RtlMakeMaskFromAcl(FredAcl, GuidMasks))) {
+    if (!NT_SUCCESS(RtlMakeMaskFromAcl(FredAcl, GuidMasks)))
+    {
         DbgPrint("RtlMakeMaskFromAcl Error\n");
     }
-    if ((GuidMasks->MaskGuid[ 0].Mask != 0x22222222) ||
-        (GuidMasks->MaskGuid[ 1].Mask != 0x44444444) ||
-        (GuidMasks->MaskGuid[ 2].Mask != 0x00000000) ||
-        (GuidMasks->MaskGuid[ 3].Mask != 0x00000000) ||
-        (GuidMasks->MaskGuid[ 4].Mask != 0x00000000) ||
-        (GuidMasks->MaskGuid[ 5].Mask != 0x00000000) ||
-        (GuidMasks->MaskGuid[ 6].Mask != 0x00000000) ||
-        (GuidMasks->MaskGuid[ 7].Mask != 0x00000000) ||
-        (GuidMasks->MaskGuid[ 8].Mask != 0x00000000) ||
-        (GuidMasks->MaskGuid[ 9].Mask != 0x00000000) ||
-        (GuidMasks->MaskGuid[10].Mask != 0x00000000)) {
+    if ((GuidMasks->MaskGuid[0].Mask != 0x22222222) || (GuidMasks->MaskGuid[1].Mask != 0x44444444) ||
+        (GuidMasks->MaskGuid[2].Mask != 0x00000000) || (GuidMasks->MaskGuid[3].Mask != 0x00000000) ||
+        (GuidMasks->MaskGuid[4].Mask != 0x00000000) || (GuidMasks->MaskGuid[5].Mask != 0x00000000) ||
+        (GuidMasks->MaskGuid[6].Mask != 0x00000000) || (GuidMasks->MaskGuid[7].Mask != 0x00000000) ||
+        (GuidMasks->MaskGuid[8].Mask != 0x00000000) || (GuidMasks->MaskGuid[9].Mask != 0x00000000) ||
+        (GuidMasks->MaskGuid[10].Mask != 0x00000000))
+    {
         DbgPrint("Make Mask Error\n");
-        DbgPrint("Fred gets       %8lx\n", GuidMasks->MaskGuid[ 0].Mask);
-        DbgPrint("Wilma gets      %8lx\n", GuidMasks->MaskGuid[ 1].Mask);
-        DbgPrint("Pebble gets     %8lx\n", GuidMasks->MaskGuid[ 2].Mask);
-        DbgPrint("Dino gets       %8lx\n", GuidMasks->MaskGuid[ 3].Mask);
-        DbgPrint("Barney gets     %8lx\n", GuidMasks->MaskGuid[ 4].Mask);
-        DbgPrint("Betty gets      %8lx\n", GuidMasks->MaskGuid[ 5].Mask);
-        DbgPrint("Banbam gets     %8lx\n", GuidMasks->MaskGuid[ 6].Mask);
-        DbgPrint("Flintstone gets %8lx\n", GuidMasks->MaskGuid[ 7].Mask);
-        DbgPrint("Rubble gets     %8lx\n", GuidMasks->MaskGuid[ 8].Mask);
-        DbgPrint("Adult gets      %8lx\n", GuidMasks->MaskGuid[ 9].Mask);
+        DbgPrint("Fred gets       %8lx\n", GuidMasks->MaskGuid[0].Mask);
+        DbgPrint("Wilma gets      %8lx\n", GuidMasks->MaskGuid[1].Mask);
+        DbgPrint("Pebble gets     %8lx\n", GuidMasks->MaskGuid[2].Mask);
+        DbgPrint("Dino gets       %8lx\n", GuidMasks->MaskGuid[3].Mask);
+        DbgPrint("Barney gets     %8lx\n", GuidMasks->MaskGuid[4].Mask);
+        DbgPrint("Betty gets      %8lx\n", GuidMasks->MaskGuid[5].Mask);
+        DbgPrint("Banbam gets     %8lx\n", GuidMasks->MaskGuid[6].Mask);
+        DbgPrint("Flintstone gets %8lx\n", GuidMasks->MaskGuid[7].Mask);
+        DbgPrint("Rubble gets     %8lx\n", GuidMasks->MaskGuid[8].Mask);
+        DbgPrint("Adult gets      %8lx\n", GuidMasks->MaskGuid[9].Mask);
         DbgPrint("Child gets      %8lx\n", GuidMasks->MaskGuid[10].Mask);
     }
 
@@ -277,7 +273,8 @@ main(
     //  Initialize and dump a posix style acl
     //
 
-    if (!NT_SUCCESS(RtlMakeAclFromMask(GuidMasks, AclPosixEnvironment, BarneyAcl, 128, 1))) {
+    if (!NT_SUCCESS(RtlMakeAclFromMask(GuidMasks, AclPosixEnvironment, BarneyAcl, 128, 1)))
+    {
         DbgPrint("RtlMakeAclFromMask Error\n");
     }
 
@@ -288,7 +285,8 @@ main(
     //  Initialize and dump a OS/2 style acl
     //
 
-    if (!NT_SUCCESS(RtlMakeAclFromMask(GuidMasks, AclOs2Environment, BettyAcl, 128, 1))) {
+    if (!NT_SUCCESS(RtlMakeAclFromMask(GuidMasks, AclOs2Environment, BettyAcl, 128, 1)))
+    {
         DbgPrint("RtlMakeAclFromMask Error\n");
     }
 
@@ -303,6 +301,4 @@ main(
 
     return TRUE;
 }
-
-
 

@@ -35,7 +35,7 @@ Revision History:
 //      MESSAGE NAME FORMAT
 //
 //          PDH_CSTATUS_...   messages are data item status message and
-//                     are returned in reference to the status of a data 
+//                     are returned in reference to the status of a data
 //                     item
 //          PDH_...           messages are returned by FUNCTIONS only and
 //                     not used as data item status values
@@ -78,10 +78,10 @@ Revision History:
 //
 // Define the severity codes
 //
-#define STATUS_SEVERITY_WARNING          0x2
-#define STATUS_SEVERITY_SUCCESS          0x0
-#define STATUS_SEVERITY_INFORMATIONAL    0x1
-#define STATUS_SEVERITY_ERROR            0x3
+#define STATUS_SEVERITY_WARNING 0x2
+#define STATUS_SEVERITY_SUCCESS 0x0
+#define STATUS_SEVERITY_INFORMATIONAL 0x1
+#define STATUS_SEVERITY_ERROR 0x3
 
 
 //
@@ -91,7 +91,7 @@ Revision History:
 //
 //  The returned data is valid.
 //
-#define PDH_CSTATUS_VALID_DATA           ((DWORD)0x00000000L)
+#define PDH_CSTATUS_VALID_DATA ((DWORD)0x00000000L)
 
 //
 // MessageId: PDH_CSTATUS_NEW_DATA
@@ -100,7 +100,7 @@ Revision History:
 //
 //  The return data value is valid and different from the last sample.
 //
-#define PDH_CSTATUS_NEW_DATA             ((DWORD)0x00000001L)
+#define PDH_CSTATUS_NEW_DATA ((DWORD)0x00000001L)
 
 //
 //        Informational messages
@@ -108,7 +108,7 @@ Revision History:
 //  None
 //
 //      Warning Messages
-//         These messages are returned when the function has completed 
+//         These messages are returned when the function has completed
 //         successfully but the results may be different than expected.
 //
 //
@@ -118,7 +118,7 @@ Revision History:
 //
 //  Unable to connect to specified machine or machine is off line.
 //
-#define PDH_CSTATUS_NO_MACHINE           ((DWORD)0x800007D0L)
+#define PDH_CSTATUS_NO_MACHINE ((DWORD)0x800007D0L)
 
 //
 // MessageId: PDH_CSTATUS_NO_INSTANCE
@@ -127,7 +127,7 @@ Revision History:
 //
 //  The specified instance is not present.
 //
-#define PDH_CSTATUS_NO_INSTANCE          ((DWORD)0x800007D1L)
+#define PDH_CSTATUS_NO_INSTANCE ((DWORD)0x800007D1L)
 
 //
 // MessageId: PDH_MORE_DATA
@@ -137,17 +137,17 @@ Revision History:
 //  There is more data to return than would fit in the supplied buffer. Allocate
 //  a larger buffer and call the function again.
 //
-#define PDH_MORE_DATA                    ((DWORD)0x800007D2L)
+#define PDH_MORE_DATA ((DWORD)0x800007D2L)
 
 //
 // MessageId: PDH_CSTATUS_ITEM_NOT_VALIDATED
 //
 // MessageText:
 //
-//  The data item has been added to the query, but has not been validated nor 
+//  The data item has been added to the query, but has not been validated nor
 //  accessed. No other status information on this data item is available.
 //
-#define PDH_CSTATUS_ITEM_NOT_VALIDATED   ((DWORD)0x800007D3L)
+#define PDH_CSTATUS_ITEM_NOT_VALIDATED ((DWORD)0x800007D3L)
 
 //
 // MessageId: PDH_RETRY
@@ -156,7 +156,7 @@ Revision History:
 //
 //  The selected operation should be retried.
 //
-#define PDH_RETRY                        ((DWORD)0x800007D4L)
+#define PDH_RETRY ((DWORD)0x800007D4L)
 
 //
 // MessageId: PDH_NO_DATA
@@ -165,7 +165,7 @@ Revision History:
 //
 //  No data to return.
 //
-#define PDH_NO_DATA                      ((DWORD)0x800007D5L)
+#define PDH_NO_DATA ((DWORD)0x800007D5L)
 
 //
 // MessageId: PDH_CALC_NEGATIVE_DENOMINATOR
@@ -174,7 +174,7 @@ Revision History:
 //
 //  A counter with a negative denominator value was detected.
 //
-#define PDH_CALC_NEGATIVE_DENOMINATOR    ((DWORD)0x800007D6L)
+#define PDH_CALC_NEGATIVE_DENOMINATOR ((DWORD)0x800007D6L)
 
 //
 // MessageId: PDH_CALC_NEGATIVE_TIMEBASE
@@ -183,7 +183,7 @@ Revision History:
 //
 //  A counter with a negative timebase value was detected.
 //
-#define PDH_CALC_NEGATIVE_TIMEBASE       ((DWORD)0x800007D7L)
+#define PDH_CALC_NEGATIVE_TIMEBASE ((DWORD)0x800007D7L)
 
 //
 // MessageId: PDH_CALC_NEGATIVE_VALUE
@@ -192,7 +192,7 @@ Revision History:
 //
 //  A counter with a negative value was detected.
 //
-#define PDH_CALC_NEGATIVE_VALUE          ((DWORD)0x800007D8L)
+#define PDH_CALC_NEGATIVE_VALUE ((DWORD)0x800007D8L)
 
 //
 // MessageId: PDH_DIALOG_CANCELLED
@@ -201,7 +201,7 @@ Revision History:
 //
 //  The user cancelled the dialog box.
 //
-#define PDH_DIALOG_CANCELLED             ((DWORD)0x800007D9L)
+#define PDH_DIALOG_CANCELLED ((DWORD)0x800007D9L)
 
 //
 // MessageId: PDH_END_OF_LOG_FILE
@@ -210,7 +210,7 @@ Revision History:
 //
 //  The end of the log file was reached.
 //
-#define PDH_END_OF_LOG_FILE              ((DWORD)0x800007DAL)
+#define PDH_END_OF_LOG_FILE ((DWORD)0x800007DAL)
 
 //
 // MessageId: PDH_ASYNC_QUERY_TIMEOUT
@@ -219,7 +219,7 @@ Revision History:
 //
 //  Time out while waiting for asynchronous counter collection thread to end.
 //
-#define PDH_ASYNC_QUERY_TIMEOUT          ((DWORD)0x800007DBL)
+#define PDH_ASYNC_QUERY_TIMEOUT ((DWORD)0x800007DBL)
 
 //
 // MessageId: PDH_CANNOT_SET_DEFAULT_REALTIME_DATASOURCE
@@ -244,7 +244,7 @@ Revision History:
 //
 //  The specified object is not found on the system.
 //
-#define PDH_CSTATUS_NO_OBJECT            ((DWORD)0xC0000BB8L)
+#define PDH_CSTATUS_NO_OBJECT ((DWORD)0xC0000BB8L)
 
 //
 // MessageId: PDH_CSTATUS_NO_COUNTER
@@ -253,7 +253,7 @@ Revision History:
 //
 //  The specified counter could not be found.
 //
-#define PDH_CSTATUS_NO_COUNTER           ((DWORD)0xC0000BB9L)
+#define PDH_CSTATUS_NO_COUNTER ((DWORD)0xC0000BB9L)
 
 //
 // MessageId: PDH_CSTATUS_INVALID_DATA
@@ -262,7 +262,7 @@ Revision History:
 //
 //  The returned data is not valid.
 //
-#define PDH_CSTATUS_INVALID_DATA         ((DWORD)0xC0000BBAL)
+#define PDH_CSTATUS_INVALID_DATA ((DWORD)0xC0000BBAL)
 
 //
 // MessageId: PDH_MEMORY_ALLOCATION_FAILURE
@@ -270,10 +270,10 @@ Revision History:
 // MessageText:
 //
 //  A PDH function could not allocate enough temporary memory to complete the
-//  operation. Close some applications or extend the pagefile and retry the 
+//  operation. Close some applications or extend the pagefile and retry the
 //  function.
 //
-#define PDH_MEMORY_ALLOCATION_FAILURE    ((DWORD)0xC0000BBBL)
+#define PDH_MEMORY_ALLOCATION_FAILURE ((DWORD)0xC0000BBBL)
 
 //
 // MessageId: PDH_INVALID_HANDLE
@@ -282,7 +282,7 @@ Revision History:
 //
 //  The handle is not a valid PDH object.
 //
-#define PDH_INVALID_HANDLE               ((DWORD)0xC0000BBCL)
+#define PDH_INVALID_HANDLE ((DWORD)0xC0000BBCL)
 
 //
 // MessageId: PDH_INVALID_ARGUMENT
@@ -291,7 +291,7 @@ Revision History:
 //
 //  A required argument is missing or incorrect.
 //
-#define PDH_INVALID_ARGUMENT             ((DWORD)0xC0000BBDL)
+#define PDH_INVALID_ARGUMENT ((DWORD)0xC0000BBDL)
 
 //
 // MessageId: PDH_FUNCTION_NOT_FOUND
@@ -300,7 +300,7 @@ Revision History:
 //
 //  Unable to find the specified function.
 //
-#define PDH_FUNCTION_NOT_FOUND           ((DWORD)0xC0000BBEL)
+#define PDH_FUNCTION_NOT_FOUND ((DWORD)0xC0000BBEL)
 
 //
 // MessageId: PDH_CSTATUS_NO_COUNTERNAME
@@ -309,17 +309,17 @@ Revision History:
 //
 //  No counter was specified.
 //
-#define PDH_CSTATUS_NO_COUNTERNAME       ((DWORD)0xC0000BBFL)
+#define PDH_CSTATUS_NO_COUNTERNAME ((DWORD)0xC0000BBFL)
 
 //
 // MessageId: PDH_CSTATUS_BAD_COUNTERNAME
 //
 // MessageText:
 //
-//  Unable to parse the counter path. Check the format and syntax of the 
+//  Unable to parse the counter path. Check the format and syntax of the
 //  specified path.
 //
-#define PDH_CSTATUS_BAD_COUNTERNAME      ((DWORD)0xC0000BC0L)
+#define PDH_CSTATUS_BAD_COUNTERNAME ((DWORD)0xC0000BC0L)
 
 //
 // MessageId: PDH_INVALID_BUFFER
@@ -328,7 +328,7 @@ Revision History:
 //
 //  The buffer passed by the caller is invalid.
 //
-#define PDH_INVALID_BUFFER               ((DWORD)0xC0000BC1L)
+#define PDH_INVALID_BUFFER ((DWORD)0xC0000BC1L)
 
 //
 // MessageId: PDH_INSUFFICIENT_BUFFER
@@ -338,7 +338,7 @@ Revision History:
 //  The requested data is larger than the buffer supplied. Unable to return the
 //  requested data.
 //
-#define PDH_INSUFFICIENT_BUFFER          ((DWORD)0xC0000BC2L)
+#define PDH_INSUFFICIENT_BUFFER ((DWORD)0xC0000BC2L)
 
 //
 // MessageId: PDH_CANNOT_CONNECT_MACHINE
@@ -347,7 +347,7 @@ Revision History:
 //
 //  Unable to connect to the requested machine.
 //
-#define PDH_CANNOT_CONNECT_MACHINE       ((DWORD)0xC0000BC3L)
+#define PDH_CANNOT_CONNECT_MACHINE ((DWORD)0xC0000BC3L)
 
 //
 // MessageId: PDH_INVALID_PATH
@@ -356,7 +356,7 @@ Revision History:
 //
 //  The specified counter path could not be interpreted.
 //
-#define PDH_INVALID_PATH                 ((DWORD)0xC0000BC4L)
+#define PDH_INVALID_PATH ((DWORD)0xC0000BC4L)
 
 //
 // MessageId: PDH_INVALID_INSTANCE
@@ -365,7 +365,7 @@ Revision History:
 //
 //  The instance name could not be read from the specified counter path.
 //
-#define PDH_INVALID_INSTANCE             ((DWORD)0xC0000BC5L)
+#define PDH_INVALID_INSTANCE ((DWORD)0xC0000BC5L)
 
 //
 // MessageId: PDH_INVALID_DATA
@@ -374,7 +374,7 @@ Revision History:
 //
 //  The data is not valid.
 //
-#define PDH_INVALID_DATA                 ((DWORD)0xC0000BC6L)
+#define PDH_INVALID_DATA ((DWORD)0xC0000BC6L)
 
 //
 // MessageId: PDH_NO_DIALOG_DATA
@@ -383,7 +383,7 @@ Revision History:
 //
 //  The dialog box data block was missing or invalid.
 //
-#define PDH_NO_DIALOG_DATA               ((DWORD)0xC0000BC7L)
+#define PDH_NO_DIALOG_DATA ((DWORD)0xC0000BC7L)
 
 //
 // MessageId: PDH_CANNOT_READ_NAME_STRINGS
@@ -392,7 +392,7 @@ Revision History:
 //
 //  Unable to read the counter and/or explain text from the specified machine.
 //
-#define PDH_CANNOT_READ_NAME_STRINGS     ((DWORD)0xC0000BC8L)
+#define PDH_CANNOT_READ_NAME_STRINGS ((DWORD)0xC0000BC8L)
 
 //
 // MessageId: PDH_LOG_FILE_CREATE_ERROR
@@ -401,7 +401,7 @@ Revision History:
 //
 //  Unable to create the specified log file.
 //
-#define PDH_LOG_FILE_CREATE_ERROR        ((DWORD)0xC0000BC9L)
+#define PDH_LOG_FILE_CREATE_ERROR ((DWORD)0xC0000BC9L)
 
 //
 // MessageId: PDH_LOG_FILE_OPEN_ERROR
@@ -410,7 +410,7 @@ Revision History:
 //
 //  Unable to open the specified log file.
 //
-#define PDH_LOG_FILE_OPEN_ERROR          ((DWORD)0xC0000BCAL)
+#define PDH_LOG_FILE_OPEN_ERROR ((DWORD)0xC0000BCAL)
 
 //
 // MessageId: PDH_LOG_TYPE_NOT_FOUND
@@ -419,7 +419,7 @@ Revision History:
 //
 //  The specified log file type has not been installed on this system.
 //
-#define PDH_LOG_TYPE_NOT_FOUND           ((DWORD)0xC0000BCBL)
+#define PDH_LOG_TYPE_NOT_FOUND ((DWORD)0xC0000BCBL)
 
 //
 // MessageId: PDH_NO_MORE_DATA
@@ -428,7 +428,7 @@ Revision History:
 //
 //  No more data is available.
 //
-#define PDH_NO_MORE_DATA                 ((DWORD)0xC0000BCCL)
+#define PDH_NO_MORE_DATA ((DWORD)0xC0000BCCL)
 
 //
 // MessageId: PDH_ENTRY_NOT_IN_LOG_FILE
@@ -437,7 +437,7 @@ Revision History:
 //
 //  The specified record was not found in the log file.
 //
-#define PDH_ENTRY_NOT_IN_LOG_FILE        ((DWORD)0xC0000BCDL)
+#define PDH_ENTRY_NOT_IN_LOG_FILE ((DWORD)0xC0000BCDL)
 
 //
 // MessageId: PDH_DATA_SOURCE_IS_LOG_FILE
@@ -446,7 +446,7 @@ Revision History:
 //
 //  The specified data source is a log file.
 //
-#define PDH_DATA_SOURCE_IS_LOG_FILE      ((DWORD)0xC0000BCEL)
+#define PDH_DATA_SOURCE_IS_LOG_FILE ((DWORD)0xC0000BCEL)
 
 //
 // MessageId: PDH_DATA_SOURCE_IS_REAL_TIME
@@ -455,7 +455,7 @@ Revision History:
 //
 //  The specified data source is the current activity.
 //
-#define PDH_DATA_SOURCE_IS_REAL_TIME     ((DWORD)0xC0000BCFL)
+#define PDH_DATA_SOURCE_IS_REAL_TIME ((DWORD)0xC0000BCFL)
 
 //
 // MessageId: PDH_UNABLE_READ_LOG_HEADER
@@ -464,7 +464,7 @@ Revision History:
 //
 //  The log file header could not be read.
 //
-#define PDH_UNABLE_READ_LOG_HEADER       ((DWORD)0xC0000BD0L)
+#define PDH_UNABLE_READ_LOG_HEADER ((DWORD)0xC0000BD0L)
 
 //
 // MessageId: PDH_FILE_NOT_FOUND
@@ -473,7 +473,7 @@ Revision History:
 //
 //  Unable to find the specified file.
 //
-#define PDH_FILE_NOT_FOUND               ((DWORD)0xC0000BD1L)
+#define PDH_FILE_NOT_FOUND ((DWORD)0xC0000BD1L)
 
 //
 // MessageId: PDH_FILE_ALREADY_EXISTS
@@ -482,7 +482,7 @@ Revision History:
 //
 //  There is already a file with the specified file name.
 //
-#define PDH_FILE_ALREADY_EXISTS          ((DWORD)0xC0000BD2L)
+#define PDH_FILE_ALREADY_EXISTS ((DWORD)0xC0000BD2L)
 
 //
 // MessageId: PDH_NOT_IMPLEMENTED
@@ -491,27 +491,27 @@ Revision History:
 //
 //  The function referenced has not been implemented.
 //
-#define PDH_NOT_IMPLEMENTED              ((DWORD)0xC0000BD3L)
+#define PDH_NOT_IMPLEMENTED ((DWORD)0xC0000BD3L)
 
 //
 // MessageId: PDH_STRING_NOT_FOUND
 //
 // MessageText:
 //
-//  Unable to find the specified string in the list of performance name and 
+//  Unable to find the specified string in the list of performance name and
 //  explain text strings.
 //
-#define PDH_STRING_NOT_FOUND             ((DWORD)0xC0000BD4L)
+#define PDH_STRING_NOT_FOUND ((DWORD)0xC0000BD4L)
 
 //
 // MessageId: PDH_UNABLE_MAP_NAME_FILES
 //
 // MessageText:
 //
-//  Unable to map to the performance counter name data files. The data 
+//  Unable to map to the performance counter name data files. The data
 //  will be read from the registry and stored locally.
 //
-#define PDH_UNABLE_MAP_NAME_FILES        ((DWORD)0x80000BD5L)
+#define PDH_UNABLE_MAP_NAME_FILES ((DWORD)0x80000BD5L)
 
 //
 // MessageId: PDH_UNKNOWN_LOG_FORMAT
@@ -520,7 +520,7 @@ Revision History:
 //
 //  The format of the specified log file is not recognized by the PDH DLL.
 //
-#define PDH_UNKNOWN_LOG_FORMAT           ((DWORD)0xC0000BD6L)
+#define PDH_UNKNOWN_LOG_FORMAT ((DWORD)0xC0000BD6L)
 
 //
 // MessageId: PDH_UNKNOWN_LOGSVC_COMMAND
@@ -529,7 +529,7 @@ Revision History:
 //
 //  The specified Log Service command value is not recognized.
 //
-#define PDH_UNKNOWN_LOGSVC_COMMAND       ((DWORD)0xC0000BD7L)
+#define PDH_UNKNOWN_LOGSVC_COMMAND ((DWORD)0xC0000BD7L)
 
 //
 // MessageId: PDH_LOGSVC_QUERY_NOT_FOUND
@@ -539,7 +539,7 @@ Revision History:
 //  The specified Query from the Log Service could not be found or could not
 //  be opened.
 //
-#define PDH_LOGSVC_QUERY_NOT_FOUND       ((DWORD)0xC0000BD8L)
+#define PDH_LOGSVC_QUERY_NOT_FOUND ((DWORD)0xC0000BD8L)
 
 //
 // MessageId: PDH_LOGSVC_NOT_OPENED
@@ -549,7 +549,7 @@ Revision History:
 //  The Performance Data Log Service key could not be opened. This may be due
 //  to insufficient privilege or because the service has not been installed.
 //
-#define PDH_LOGSVC_NOT_OPENED            ((DWORD)0xC0000BD9L)
+#define PDH_LOGSVC_NOT_OPENED ((DWORD)0xC0000BD9L)
 
 //
 // MessageId: PDH_WBEM_ERROR
@@ -558,29 +558,29 @@ Revision History:
 //
 //  An error occured while accessing the WBEM data store.
 //
-#define PDH_WBEM_ERROR                   ((DWORD)0xC0000BDAL)
+#define PDH_WBEM_ERROR ((DWORD)0xC0000BDAL)
 
 //
 // MessageId: PDH_ACCESS_DENIED
 //
 // MessageText:
 //
-//  Unable to access the desired machine or service. Check the permissions and 
-//  authentication of the log service or the interactive user session against 
+//  Unable to access the desired machine or service. Check the permissions and
+//  authentication of the log service or the interactive user session against
 //  those on the machine or service being monitored.
 //
-#define PDH_ACCESS_DENIED                ((DWORD)0xC0000BDBL)
+#define PDH_ACCESS_DENIED ((DWORD)0xC0000BDBL)
 
 //
 // MessageId: PDH_LOG_FILE_TOO_SMALL
 //
 // MessageText:
 //
-//  The maximum log file size specified is too small to log the selected counters. 
+//  The maximum log file size specified is too small to log the selected counters.
 //  No data will be recorded in this log file. Specify a smaller set of counters
 //  to log or a larger file size and retry this call.
 //
-#define PDH_LOG_FILE_TOO_SMALL           ((DWORD)0xC0000BDCL)
+#define PDH_LOG_FILE_TOO_SMALL ((DWORD)0xC0000BDCL)
 
 //
 // MessageId: PDH_INVALID_DATASOURCE
@@ -589,7 +589,7 @@ Revision History:
 //
 //  Cannot connect to ODBC DataSource Name.
 //
-#define PDH_INVALID_DATASOURCE           ((DWORD)0xC0000BDDL)
+#define PDH_INVALID_DATASOURCE ((DWORD)0xC0000BDDL)
 
 //
 // MessageId: PDH_INVALID_SQLDB
@@ -598,7 +598,7 @@ Revision History:
 //
 //  SQL Database does not contain a valid set of tables for Perfmon, use PdhCreateSQLTables.
 //
-#define PDH_INVALID_SQLDB                ((DWORD)0xC0000BDEL)
+#define PDH_INVALID_SQLDB ((DWORD)0xC0000BDEL)
 
 //
 // MessageId: PDH_NO_COUNTERS
@@ -607,7 +607,7 @@ Revision History:
 //
 //  No counters were found for this Perfmon SQL Log Set.
 //
-#define PDH_NO_COUNTERS                  ((DWORD)0xC0000BDFL)
+#define PDH_NO_COUNTERS ((DWORD)0xC0000BDFL)
 
 //
 // MessageId: PDH_SQL_ALLOC_FAILED
@@ -616,7 +616,7 @@ Revision History:
 //
 //  Call to SQLAllocStmt failed with %1.
 //
-#define PDH_SQL_ALLOC_FAILED             ((DWORD)0xC0000BE0L)
+#define PDH_SQL_ALLOC_FAILED ((DWORD)0xC0000BE0L)
 
 //
 // MessageId: PDH_SQL_ALLOCCON_FAILED
@@ -625,7 +625,7 @@ Revision History:
 //
 //  Call to SQLAllocConnect failed with %1.
 //
-#define PDH_SQL_ALLOCCON_FAILED          ((DWORD)0xC0000BE1L)
+#define PDH_SQL_ALLOCCON_FAILED ((DWORD)0xC0000BE1L)
 
 //
 // MessageId: PDH_SQL_EXEC_DIRECT_FAILED
@@ -634,7 +634,7 @@ Revision History:
 //
 //  Call to SQLExecDirect failed with %1.
 //
-#define PDH_SQL_EXEC_DIRECT_FAILED       ((DWORD)0xC0000BE2L)
+#define PDH_SQL_EXEC_DIRECT_FAILED ((DWORD)0xC0000BE2L)
 
 //
 // MessageId: PDH_SQL_FETCH_FAILED
@@ -643,7 +643,7 @@ Revision History:
 //
 //  Call to SQLFetch failed with %1.
 //
-#define PDH_SQL_FETCH_FAILED             ((DWORD)0xC0000BE3L)
+#define PDH_SQL_FETCH_FAILED ((DWORD)0xC0000BE3L)
 
 //
 // MessageId: PDH_SQL_ROWCOUNT_FAILED
@@ -652,7 +652,7 @@ Revision History:
 //
 //  Call to SQLRowCount failed with %1.
 //
-#define PDH_SQL_ROWCOUNT_FAILED          ((DWORD)0xC0000BE4L)
+#define PDH_SQL_ROWCOUNT_FAILED ((DWORD)0xC0000BE4L)
 
 //
 // MessageId: PDH_SQL_MORE_RESULTS_FAILED
@@ -661,7 +661,7 @@ Revision History:
 //
 //  Call to SQLMoreResults failed with %1.
 //
-#define PDH_SQL_MORE_RESULTS_FAILED      ((DWORD)0xC0000BE5L)
+#define PDH_SQL_MORE_RESULTS_FAILED ((DWORD)0xC0000BE5L)
 
 //
 // MessageId: PDH_SQL_CONNECT_FAILED
@@ -670,7 +670,7 @@ Revision History:
 //
 //  Call to SQLConnect failed with %1.
 //
-#define PDH_SQL_CONNECT_FAILED           ((DWORD)0xC0000BE6L)
+#define PDH_SQL_CONNECT_FAILED ((DWORD)0xC0000BE6L)
 
 //
 // MessageId: PDH_SQL_BIND_FAILED
@@ -679,7 +679,7 @@ Revision History:
 //
 //  Call to SQLBindCol failed with %1.
 //
-#define PDH_SQL_BIND_FAILED              ((DWORD)0xC0000BE7L)
+#define PDH_SQL_BIND_FAILED ((DWORD)0xC0000BE7L)
 
 //
 // MessageId: PDH_CANNOT_CONNECT_WMI_SERVER
@@ -688,7 +688,7 @@ Revision History:
 //
 //  Unable to connect to the WMI server on requested machine.
 //
-#define PDH_CANNOT_CONNECT_WMI_SERVER    ((DWORD)0xC0000BE8L)
+#define PDH_CANNOT_CONNECT_WMI_SERVER ((DWORD)0xC0000BE8L)
 
 //
 // MessageId: PDH_PLA_COLLECTION_ALREADY_RUNNING
@@ -706,7 +706,7 @@ Revision History:
 //
 //  The specified start time is after the end time.
 //
-#define PDH_PLA_ERROR_SCHEDULE_OVERLAP   ((DWORD)0xC0000BEAL)
+#define PDH_PLA_ERROR_SCHEDULE_OVERLAP ((DWORD)0xC0000BEAL)
 
 //
 // MessageId: PDH_PLA_COLLECTION_NOT_FOUND
@@ -715,7 +715,7 @@ Revision History:
 //
 //  Collection "%1!s!" does not exist.
 //
-#define PDH_PLA_COLLECTION_NOT_FOUND     ((DWORD)0xC0000BEBL)
+#define PDH_PLA_COLLECTION_NOT_FOUND ((DWORD)0xC0000BEBL)
 
 //
 // MessageId: PDH_PLA_ERROR_SCHEDULE_ELAPSED
@@ -724,7 +724,7 @@ Revision History:
 //
 //  The specified end time has already elapsed.
 //
-#define PDH_PLA_ERROR_SCHEDULE_ELAPSED   ((DWORD)0xC0000BECL)
+#define PDH_PLA_ERROR_SCHEDULE_ELAPSED ((DWORD)0xC0000BECL)
 
 //
 // MessageId: PDH_PLA_ERROR_NOSTART
@@ -733,7 +733,7 @@ Revision History:
 //
 //  Collection "%1!s!" did not start, check the application event log for any errors.
 //
-#define PDH_PLA_ERROR_NOSTART            ((DWORD)0xC0000BEDL)
+#define PDH_PLA_ERROR_NOSTART ((DWORD)0xC0000BEDL)
 
 //
 // MessageId: PDH_PLA_ERROR_ALREADY_EXISTS
@@ -742,7 +742,7 @@ Revision History:
 //
 //  Collection "%1!s!" already exists.
 //
-#define PDH_PLA_ERROR_ALREADY_EXISTS     ((DWORD)0xC0000BEEL)
+#define PDH_PLA_ERROR_ALREADY_EXISTS ((DWORD)0xC0000BEEL)
 
 //
 // MessageId: PDH_PLA_ERROR_TYPE_MISMATCH
@@ -751,7 +751,7 @@ Revision History:
 //
 //  There is a mismatch in the settings type.
 //
-#define PDH_PLA_ERROR_TYPE_MISMATCH      ((DWORD)0xC0000BEFL)
+#define PDH_PLA_ERROR_TYPE_MISMATCH ((DWORD)0xC0000BEFL)
 
 //
 // MessageId: PDH_PLA_ERROR_FILEPATH
@@ -760,7 +760,7 @@ Revision History:
 //
 //  The information specified does not resolve to a valid path name.
 //
-#define PDH_PLA_ERROR_FILEPATH           ((DWORD)0xC0000BF0L)
+#define PDH_PLA_ERROR_FILEPATH ((DWORD)0xC0000BF0L)
 
 //
 // MessageId: PDH_PLA_SERVICE_ERROR
@@ -769,7 +769,7 @@ Revision History:
 //
 //  The "Performance Logs & Alerts" service did not repond.
 //
-#define PDH_PLA_SERVICE_ERROR            ((DWORD)0xC0000BF1L)
+#define PDH_PLA_SERVICE_ERROR ((DWORD)0xC0000BF1L)
 
 //
 // MessageId: PDH_PLA_VALIDATION_ERROR
@@ -778,7 +778,7 @@ Revision History:
 //
 //  The information passed is not valid.
 //
-#define PDH_PLA_VALIDATION_ERROR         ((DWORD)0xC0000BF2L)
+#define PDH_PLA_VALIDATION_ERROR ((DWORD)0xC0000BF2L)
 
 //
 // MessageId: PDH_PLA_VALIDATION_WARNING
@@ -787,7 +787,7 @@ Revision History:
 //
 //  The information passed is not valid.
 //
-#define PDH_PLA_VALIDATION_WARNING       ((DWORD)0x80000BF3L)
+#define PDH_PLA_VALIDATION_WARNING ((DWORD)0x80000BF3L)
 
 //
 // MessageId: PDH_PLA_ERROR_NAME_TOO_LONG
@@ -796,7 +796,7 @@ Revision History:
 //
 //  The name supplied is too long.
 //
-#define PDH_PLA_ERROR_NAME_TOO_LONG      ((DWORD)0xC0000BF4L)
+#define PDH_PLA_ERROR_NAME_TOO_LONG ((DWORD)0xC0000BF4L)
 
 //
 // MessageId: PDH_INVALID_SQL_LOG_FORMAT
@@ -805,7 +805,7 @@ Revision History:
 //
 //  SQL log format is incorrect. Correct format is "SQL:<DSN-name>!<LogSet-Name>".
 //
-#define PDH_INVALID_SQL_LOG_FORMAT       ((DWORD)0xC0000BF5L)
+#define PDH_INVALID_SQL_LOG_FORMAT ((DWORD)0xC0000BF5L)
 
 //
 // MessageId: PDH_COUNTER_ALREADY_IN_QUERY
@@ -815,7 +815,7 @@ Revision History:
 //  Performance counter in PdhAddCounter() call has already been added
 //  in the performacne query. This counter is ignored.
 //
-#define PDH_COUNTER_ALREADY_IN_QUERY     ((DWORD)0xC0000BF6L)
+#define PDH_COUNTER_ALREADY_IN_QUERY ((DWORD)0xC0000BF6L)
 
 #endif //_PDH_MSG_H_
 // end of generated file

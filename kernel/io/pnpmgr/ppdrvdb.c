@@ -31,37 +31,38 @@ Revision History:
 #pragma hdrstop
 
 // Bit 0 indicates policy for filters (0 = critical, 1 = non-critical)
-#define DDB_DRIVER_POLICY_CRITICAL_BIT          (1 << 0)
+#define DDB_DRIVER_POLICY_CRITICAL_BIT (1 << 0)
 // Bit 1 indicates policy for user-mode setup blocking (0 = block, 1 = no-block)
-#define DDB_DRIVER_POLICY_SETUP_NO_BLOCK_BIT    (1 << 1)
+#define DDB_DRIVER_POLICY_SETUP_NO_BLOCK_BIT (1 << 1)
 
-#define DDB_BOOT_NOT_LOADED_ERROR       (1 << 0)
-#define DDB_BOOT_OUT_OF_MEMORY_ERROR    (1 << 1)
-#define DDB_BOOT_INIT_ERROR             (1 << 2)
-#define DDB_DRIVER_PATH_ERROR           (1 << 3)
-#define DDB_OPEN_FILE_ERROR             (1 << 4)
-#define DDB_CREATE_SECTION_ERROR        (1 << 5)
-#define DDB_MAP_SECTION_ERROR           (1 << 6)
-#define DDB_MAPPED_INIT_ERROR           (1 << 7)
-#define DDB_READ_INFORMATION_ERROR      (1 << 8)
+#define DDB_BOOT_NOT_LOADED_ERROR (1 << 0)
+#define DDB_BOOT_OUT_OF_MEMORY_ERROR (1 << 1)
+#define DDB_BOOT_INIT_ERROR (1 << 2)
+#define DDB_DRIVER_PATH_ERROR (1 << 3)
+#define DDB_OPEN_FILE_ERROR (1 << 4)
+#define DDB_CREATE_SECTION_ERROR (1 << 5)
+#define DDB_MAP_SECTION_ERROR (1 << 6)
+#define DDB_MAPPED_INIT_ERROR (1 << 7)
+#define DDB_READ_INFORMATION_ERROR (1 << 8)
 
 //#define USE_HANDLES 0
 
 extern BOOLEAN ExpInTextModeSetup;
 
-#define INVALID_HANDLE_VALUE    ((HANDLE)-1)
+#define INVALID_HANDLE_VALUE ((HANDLE) - 1)
 
-typedef struct _DDBCACHE_ENTRY {
+typedef struct _DDBCACHE_ENTRY
+{
     //
     // These fields are used as matching critereon for cache lookup.
     //
-    UNICODE_STRING  Name;           // Driver name
-    ULONG           TimeDateStamp;  // Link date of the driver
+    UNICODE_STRING Name; // Driver name
+    ULONG TimeDateStamp; // Link date of the driver
     //
     // Reference data for the cached entry.
     //
-    NTSTATUS        Status;         // Status from the DDB lookup
-    GUID            Guid;
+    NTSTATUS Status; // Status from the DDB lookup
+    GUID Guid;
 
 } DDBCACHE_ENTRY, *PDDBCACHE_ENTRY;
 
@@ -112,61 +113,27 @@ ULONG PiLoggedErrorEventsMask = 0;
 #endif
 
 NTSTATUS
-PiLookupInDDB(
-    IN PUNICODE_STRING  FullPath,
-    IN PVOID            ImageBase,
-    IN ULONG            ImageSize,
-    IN BOOLEAN          IsFilter,
-    OUT LPGUID          EntryGuid
-    );
+PiLookupInDDB(IN PUNICODE_STRING FullPath, IN PVOID ImageBase, IN ULONG ImageSize, IN BOOLEAN IsFilter,
+              OUT LPGUID EntryGuid);
 
 NTSTATUS
-PiIsDriverBlocked(
-    IN HSDB             SdbHandle,
-    IN PUNICODE_STRING  FullPath,
-    IN PVOID            ImageBase,
-    IN ULONG            ImageSize,
-    IN BOOLEAN          IsFilter,
-    OUT LPGUID          EntryGuid
-    );
+PiIsDriverBlocked(IN HSDB SdbHandle, IN PUNICODE_STRING FullPath, IN PVOID ImageBase, IN ULONG ImageSize,
+                  IN BOOLEAN IsFilter, OUT LPGUID EntryGuid);
 
-VOID
-PiLogDriverBlockedEvent(
-    IN PWCHAR InsertionString,
-    IN PVOID Data,
-    IN ULONG DataLength,
-    IN NTSTATUS Status
-    );
+VOID PiLogDriverBlockedEvent(IN PWCHAR InsertionString, IN PVOID Data, IN ULONG DataLength, IN NTSTATUS Status);
 
 NTSTATUS
-PiInitializeDDBCache(
-    VOID
-    );
+PiInitializeDDBCache(VOID);
 
 RTL_GENERIC_COMPARE_RESULTS
 NTAPI
-PiCompareDDBCacheEntries(
-    IN  PRTL_GENERIC_TABLE          Table,
-    IN  PVOID                       FirstStruct,
-    IN  PVOID                       SecondStruct
-    );
+PiCompareDDBCacheEntries(IN PRTL_GENERIC_TABLE Table, IN PVOID FirstStruct, IN PVOID SecondStruct);
 
 NTSTATUS
-PiLookupInDDBCache(
-    IN PUNICODE_STRING    FullPath,
-    IN PVOID              ImageBase,
-    IN ULONG              ImageSize,
-    OUT LPGUID            EntryGuid
-    );
+PiLookupInDDBCache(IN PUNICODE_STRING FullPath, IN PVOID ImageBase, IN ULONG ImageSize, OUT LPGUID EntryGuid);
 
-VOID
-PiUpdateDriverDBCache(
-    IN PUNICODE_STRING      FullPath,
-    IN PVOID                ImageBase,
-    IN ULONG                ImageSize,
-    IN NTSTATUS             Status,
-    IN GUID                 *Guid
-    );
+VOID PiUpdateDriverDBCache(IN PUNICODE_STRING FullPath, IN PVOID ImageBase, IN ULONG ImageSize, IN NTSTATUS Status,
+                           IN GUID *Guid);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, PpInitializeBootDDB)
@@ -183,9 +150,7 @@ PiUpdateDriverDBCache(
 #endif
 
 NTSTATUS
-PpInitializeBootDDB(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+PpInitializeBootDDB(IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 /*++
 
 Routine Description:
@@ -211,7 +176,7 @@ Return Value:
     // Initialize the lock for serializing access to the DDB.
     //
     ExInitializeResource(&PiDDBLock);
-    PiDDBPath = (ExpInTextModeSetup)? PiSetupDDBPath : PiNormalDDBPath;
+    PiDDBPath = (ExpInTextModeSetup) ? PiSetupDDBPath : PiNormalDDBPath;
     //
     // Initialize DDB cache.
     //
@@ -219,20 +184,16 @@ Return Value:
     //
     // Return failure if the loader did not load the database.
     //
-    if (LoaderBlock->Extension->DrvDBSize == 0 ||
-        LoaderBlock->Extension->DrvDBImage == NULL) {
+    if (LoaderBlock->Extension->DrvDBSize == 0 || LoaderBlock->Extension->DrvDBImage == NULL)
+    {
 
-        if (!(PiLoggedErrorEventsMask & DDB_BOOT_NOT_LOADED_ERROR)) {
+        if (!(PiLoggedErrorEventsMask & DDB_BOOT_NOT_LOADED_ERROR))
+        {
 
-            IopDbgPrint((IOP_ERROR_LEVEL,
-                         "PpInitializeDriverDB: Driver database not loaded!\n"));
+            IopDbgPrint((IOP_ERROR_LEVEL, "PpInitializeDriverDB: Driver database not loaded!\n"));
 
             PiLoggedErrorEventsMask |= DDB_BOOT_NOT_LOADED_ERROR;
-            PiLogDriverBlockedEvent(
-                TEXT("DATABASE NOT LOADED"),
-                NULL,
-                0,
-                STATUS_DRIVER_DATABASE_ERROR);
+            PiLogDriverBlockedEvent(TEXT("DATABASE NOT LOADED"), NULL, 0, STATUS_DRIVER_DATABASE_ERROR);
         }
 
         return STATUS_UNSUCCESSFUL;
@@ -244,20 +205,17 @@ Return Value:
     // support for a new loader memory type (PAGEABLE DATA).
     //
     PpBootDDB = ExAllocatePool(PagedPool, LoaderBlock->Extension->DrvDBSize);
-    if (PpBootDDB == NULL) {
+    if (PpBootDDB == NULL)
+    {
 
-        IopDbgPrint((IOP_ERROR_LEVEL,
-                     "PpInitializeDriverDB: Failed to allocate memory to copy driver database!\n"));
+        IopDbgPrint((IOP_ERROR_LEVEL, "PpInitializeDriverDB: Failed to allocate memory to copy driver database!\n"));
         ASSERT(PpBootDDB);
 
-        if (!(PiLoggedErrorEventsMask & DDB_BOOT_OUT_OF_MEMORY_ERROR)) {
+        if (!(PiLoggedErrorEventsMask & DDB_BOOT_OUT_OF_MEMORY_ERROR))
+        {
 
             PiLoggedErrorEventsMask |= DDB_BOOT_OUT_OF_MEMORY_ERROR;
-            PiLogDriverBlockedEvent(
-                TEXT("OUT OF MEMORY"),
-                NULL,
-                0,
-                STATUS_DRIVER_DATABASE_ERROR);
+            PiLogDriverBlockedEvent(TEXT("OUT OF MEMORY"), NULL, 0, STATUS_DRIVER_DATABASE_ERROR);
         }
 
         return STATUS_INSUFFICIENT_RESOURCES;
@@ -267,22 +225,19 @@ Return Value:
     // Initialize the database from the memory image.
     //
     PpDDBHandle = SdbInitDatabaseInMemory(PpBootDDB, LoaderBlock->Extension->DrvDBSize);
-    if (PpDDBHandle == NULL) {
+    if (PpDDBHandle == NULL)
+    {
 
         ExFreePool(PpBootDDB);
         PpBootDDB = NULL;
-        IopDbgPrint((IOP_ERROR_LEVEL,
-                     "PpInitializeDriverDB: Failed to initialize driver database!\n"));
+        IopDbgPrint((IOP_ERROR_LEVEL, "PpInitializeDriverDB: Failed to initialize driver database!\n"));
         ASSERT(PpDDBHandle);
 
-        if (!(PiLoggedErrorEventsMask & DDB_BOOT_INIT_ERROR)) {
+        if (!(PiLoggedErrorEventsMask & DDB_BOOT_INIT_ERROR))
+        {
 
             PiLoggedErrorEventsMask |= DDB_BOOT_INIT_ERROR;
-            PiLogDriverBlockedEvent(
-                TEXT("INIT DATABASE FAILED"),
-                NULL,
-                0,
-                STATUS_DRIVER_DATABASE_ERROR);
+            PiLogDriverBlockedEvent(TEXT("INIT DATABASE FAILED"), NULL, 0, STATUS_DRIVER_DATABASE_ERROR);
         }
 
         return STATUS_UNSUCCESSFUL;
@@ -292,9 +247,7 @@ Return Value:
 }
 
 NTSTATUS
-PpReleaseBootDDB(
-    VOID
-    )
+PpReleaseBootDDB(VOID)
 /*++
 
 Routine Description:
@@ -324,7 +277,8 @@ Return Value:
     //
     // Free the DDB if any.
     //
-    if (PpDDBHandle) {
+    if (PpDDBHandle)
+    {
 
         ASSERT(PpBootDDB);
         SdbReleaseDatabase(PpDDBHandle);
@@ -332,10 +286,11 @@ Return Value:
         ExFreePool(PpBootDDB);
         PpBootDDB = NULL;
         status = STATUS_SUCCESS;
-    } else {
+    }
+    else
+    {
 
-        IopDbgPrint((IOP_WARNING_LEVEL,
-                     "PpReleaseBootDDB called with uninitialized database!\n"));
+        IopDbgPrint((IOP_WARNING_LEVEL, "PpReleaseBootDDB called with uninitialized database!\n"));
         status = STATUS_UNSUCCESSFUL;
     }
     //
@@ -348,14 +303,8 @@ Return Value:
 }
 
 NTSTATUS
-PpCheckInDriverDatabase(
-    IN PUNICODE_STRING KeyName,
-    IN HANDLE KeyHandle,
-    IN PVOID ImageBase,
-    IN ULONG ImageSize,
-    IN BOOLEAN IsFilter,
-    OUT LPGUID EntryGuid
-    )
+PpCheckInDriverDatabase(IN PUNICODE_STRING KeyName, IN HANDLE KeyHandle, IN PVOID ImageBase, IN ULONG ImageSize,
+                        IN BOOLEAN IsFilter, OUT LPGUID EntryGuid)
 /*++
 
 Routine Description:
@@ -386,12 +335,14 @@ Return Value:
     //
     // No driver blocking during textmode setup.
     //
-    if (ExpInTextModeSetup) {
+    if (ExpInTextModeSetup)
+    {
         return STATUS_SUCCESS;
     }
 
     status = IopBuildFullDriverPath(KeyName, KeyHandle, &fullPath);
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         //
         // Lock the database access.
         //
@@ -401,7 +352,8 @@ Return Value:
         // First check the cache.
         //
         status = PiLookupInDDBCache(&fullPath, ImageBase, ImageSize, EntryGuid);
-        if (status == STATUS_UNSUCCESSFUL) {
+        if (status == STATUS_UNSUCCESSFUL)
+        {
             //
             // Cache miss, try the database.
             //
@@ -414,27 +366,25 @@ Return Value:
         KeLeaveCriticalRegion();
 
         ExFreePool(fullPath.Buffer);
-    } else {
+    }
+    else
+    {
 
-        IopDbgPrint((IOP_ERROR_LEVEL,
-                     "IopCheckInDriverDatabase: Failed to build full driver path!\n"));
+        IopDbgPrint((IOP_ERROR_LEVEL, "IopCheckInDriverDatabase: Failed to build full driver path!\n"));
         ASSERT(NT_SUCCESS(status));
 
-        if (!(PiLoggedErrorEventsMask & DDB_DRIVER_PATH_ERROR)) {
+        if (!(PiLoggedErrorEventsMask & DDB_DRIVER_PATH_ERROR))
+        {
 
             PiLoggedErrorEventsMask |= DDB_DRIVER_PATH_ERROR;
-            PiLogDriverBlockedEvent(
-                TEXT("BUILD DRIVER PATH FAILED"),
-                NULL,
-                0,
-                STATUS_DRIVER_DATABASE_ERROR);
+            PiLogDriverBlockedEvent(TEXT("BUILD DRIVER PATH FAILED"), NULL, 0, STATUS_DRIVER_DATABASE_ERROR);
         }
     }
     //
     // Ingore errors.
     //
-    if (status != STATUS_DRIVER_BLOCKED &&
-        status != STATUS_DRIVER_BLOCKED_CRITICAL) {
+    if (status != STATUS_DRIVER_BLOCKED && status != STATUS_DRIVER_BLOCKED_CRITICAL)
+    {
 
         status = STATUS_SUCCESS;
     }
@@ -443,13 +393,8 @@ Return Value:
 }
 
 NTSTATUS
-PiLookupInDDB(
-    IN PUNICODE_STRING   FullPath,
-    IN PVOID             ImageBase,
-    IN ULONG             ImageSize,
-    IN BOOLEAN           IsFilter,
-    OUT LPGUID           EntryGuid
-    )
+PiLookupInDDB(IN PUNICODE_STRING FullPath, IN PVOID ImageBase, IN ULONG ImageSize, IN BOOLEAN IsFilter,
+              OUT LPGUID EntryGuid)
 /*++
 
 Routine Description:
@@ -485,112 +430,79 @@ Return Value:
     fileHandle = (HANDLE)0;
     sectionHandle = (HANDLE)0;
     ddbAddress = NULL;
-    if (PpDDBHandle == NULL) {
+    if (PpDDBHandle == NULL)
+    {
         //
         // Map the database in memory and initialize it.
         //
         RtlInitUnicodeString(&fileName, PiDDBPath);
-        InitializeObjectAttributes(&objectAttributes,
-                                   &fileName,
-                                   (OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE),
-                                   NULL,
+        InitializeObjectAttributes(&objectAttributes, &fileName, (OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE), NULL,
                                    NULL);
-        status = ZwOpenFile (&fileHandle,
-                             GENERIC_READ,
-                             &objectAttributes,
-                             &ioStatus,
-                             FILE_SHARE_READ | FILE_SHARE_DELETE,
-                             0);
-        if (!NT_SUCCESS(status)) {
+        status =
+            ZwOpenFile(&fileHandle, GENERIC_READ, &objectAttributes, &ioStatus, FILE_SHARE_READ | FILE_SHARE_DELETE, 0);
+        if (!NT_SUCCESS(status))
+        {
 
-            if (!(PiLoggedErrorEventsMask & DDB_OPEN_FILE_ERROR)) {
+            if (!(PiLoggedErrorEventsMask & DDB_OPEN_FILE_ERROR))
+            {
 
-                IopDbgPrint((IOP_ERROR_LEVEL,
-                             "PiLookupInDDB: Failed to open driver database %wZ!\n", &fileName));
+                IopDbgPrint((IOP_ERROR_LEVEL, "PiLookupInDDB: Failed to open driver database %wZ!\n", &fileName));
 
                 PiLoggedErrorEventsMask |= DDB_OPEN_FILE_ERROR;
-                PiLogDriverBlockedEvent(
-                    TEXT("DATABASE OPEN FAILED"),
-                    NULL,
-                    0,
-                    STATUS_DRIVER_DATABASE_ERROR);
+                PiLogDriverBlockedEvent(TEXT("DATABASE OPEN FAILED"), NULL, 0, STATUS_DRIVER_DATABASE_ERROR);
             }
 
             goto Cleanup;
         }
-        status = ZwCreateSection(
-            &sectionHandle,
-            SECTION_MAP_READ,
-            NULL,
-            NULL,
-            PAGE_READONLY,
-            SEC_COMMIT,
-            fileHandle);
-        if (!NT_SUCCESS(status)) {
+        status = ZwCreateSection(&sectionHandle, SECTION_MAP_READ, NULL, NULL, PAGE_READONLY, SEC_COMMIT, fileHandle);
+        if (!NT_SUCCESS(status))
+        {
 
-            IopDbgPrint((IOP_ERROR_LEVEL,
-                         "PiLookupInDDB: Failed to create section to map driver database %wZ!\n", &fileName));
+            IopDbgPrint(
+                (IOP_ERROR_LEVEL, "PiLookupInDDB: Failed to create section to map driver database %wZ!\n", &fileName));
             ASSERT(NT_SUCCESS(status));
 
-            if (!(PiLoggedErrorEventsMask & DDB_CREATE_SECTION_ERROR)) {
+            if (!(PiLoggedErrorEventsMask & DDB_CREATE_SECTION_ERROR))
+            {
 
                 PiLoggedErrorEventsMask |= DDB_CREATE_SECTION_ERROR;
-                PiLogDriverBlockedEvent(
-                    TEXT("DATABASE SECTION FAILED"),
-                    NULL,
-                    0,
-                    STATUS_DRIVER_DATABASE_ERROR);
+                PiLogDriverBlockedEvent(TEXT("DATABASE SECTION FAILED"), NULL, 0, STATUS_DRIVER_DATABASE_ERROR);
             }
 
             goto Cleanup;
         }
         ddbSize = 0;
-        status = ZwMapViewOfSection(
-            sectionHandle,
-            NtCurrentProcess(),
-            &ddbAddress,
-            0,
-            0,
-            NULL,
-            &ddbSize,
-            ViewShare,
-            0,
-            PAGE_READONLY
-            );
-        if (!NT_SUCCESS(status)) {
+        status = ZwMapViewOfSection(sectionHandle, NtCurrentProcess(), &ddbAddress, 0, 0, NULL, &ddbSize, ViewShare, 0,
+                                    PAGE_READONLY);
+        if (!NT_SUCCESS(status))
+        {
 
-            IopDbgPrint((IOP_ERROR_LEVEL,
-                         "PiLookupInDDB: Failed to map driver database %wZ!\n", &fileName));
+            IopDbgPrint((IOP_ERROR_LEVEL, "PiLookupInDDB: Failed to map driver database %wZ!\n", &fileName));
             ASSERT(NT_SUCCESS(status));
 
-            if (!(PiLoggedErrorEventsMask & DDB_MAP_SECTION_ERROR)) {
+            if (!(PiLoggedErrorEventsMask & DDB_MAP_SECTION_ERROR))
+            {
 
                 PiLoggedErrorEventsMask |= DDB_MAP_SECTION_ERROR;
-                PiLogDriverBlockedEvent(
-                    TEXT("DATABASE MAPPING FAILED"),
-                    NULL,
-                    0,
-                    STATUS_DRIVER_DATABASE_ERROR);
+                PiLogDriverBlockedEvent(TEXT("DATABASE MAPPING FAILED"), NULL, 0, STATUS_DRIVER_DATABASE_ERROR);
             }
 
             goto Cleanup;
         }
         PpDDBHandle = SdbInitDatabaseInMemory(ddbAddress, (ULONG)ddbSize);
-        if (PpDDBHandle == NULL) {
+        if (PpDDBHandle == NULL)
+        {
 
-            IopDbgPrint((IOP_ERROR_LEVEL,
-                         "PiLookupInDDB: Failed to initialize mapped driver database %wZ!\n", &fileName));
+            IopDbgPrint(
+                (IOP_ERROR_LEVEL, "PiLookupInDDB: Failed to initialize mapped driver database %wZ!\n", &fileName));
             status = STATUS_UNSUCCESSFUL;
             ASSERT(PpDDBHandle);
 
-            if (!(PiLoggedErrorEventsMask & DDB_MAPPED_INIT_ERROR)) {
+            if (!(PiLoggedErrorEventsMask & DDB_MAPPED_INIT_ERROR))
+            {
 
                 PiLoggedErrorEventsMask |= DDB_MAPPED_INIT_ERROR;
-                PiLogDriverBlockedEvent(
-                    TEXT("INIT DATABASE FAILED"),
-                    NULL,
-                    0,
-                    STATUS_DRIVER_DATABASE_ERROR);
+                PiLogDriverBlockedEvent(TEXT("INIT DATABASE FAILED"), NULL, 0, STATUS_DRIVER_DATABASE_ERROR);
             }
 
             goto Cleanup;
@@ -600,7 +512,8 @@ Return Value:
     // Lookup the driver in the DDB.
     //
     status = PiIsDriverBlocked(PpDDBHandle, FullPath, ImageBase, ImageSize, IsFilter, EntryGuid);
-    if (ddbAddress) {
+    if (ddbAddress)
+    {
 
         SdbReleaseDatabase(PpDDBHandle);
         PpDDBHandle = NULL;
@@ -608,16 +521,19 @@ Return Value:
 
 Cleanup:
 
-    if (ddbAddress) {
+    if (ddbAddress)
+    {
 
         unmapStatus = ZwUnmapViewOfSection(NtCurrentProcess(), ddbAddress);
         ASSERT(NT_SUCCESS(unmapStatus));
     }
-    if (sectionHandle) {
+    if (sectionHandle)
+    {
 
         ZwClose(sectionHandle);
     }
-    if (fileHandle) {
+    if (fileHandle)
+    {
 
         ZwClose(fileHandle);
     }
@@ -626,14 +542,8 @@ Cleanup:
 }
 
 NTSTATUS
-PiIsDriverBlocked(
-    IN HSDB             SdbHandle,
-    IN PUNICODE_STRING  FullPath,
-    IN PVOID            ImageBase,
-    IN ULONG            ImageSize,
-    IN BOOLEAN          IsFilter,
-    OUT LPGUID          EntryGuid
-    )
+PiIsDriverBlocked(IN HSDB SdbHandle, IN PUNICODE_STRING FullPath, IN PVOID ImageBase, IN ULONG ImageSize,
+                  IN BOOLEAN IsFilter, OUT LPGUID EntryGuid)
 /*++
 
 Routine Description:
@@ -678,24 +588,18 @@ Return Value:
     ASSERT(ARGUMENT_PRESENT(EntryGuid));
 
 #ifdef USE_HANDLES
-    if (PnPBootDriversInitialized) {
+    if (PnPBootDriversInitialized)
+    {
 
         RtlInitUnicodeString(&fileName, FullPath->Buffer);
-        InitializeObjectAttributes(&objectAttributes,
-                                   &fileName,
-                                   (OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE),
-                                   NULL,
+        InitializeObjectAttributes(&objectAttributes, &fileName, (OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE), NULL,
                                    NULL);
-        status = ZwOpenFile (&fileHandle,
-                             GENERIC_READ,
-                             &objectAttributes,
-                             &ioStatus,
-                             FILE_SHARE_READ | FILE_SHARE_DELETE,
-                             0);
-        if (!NT_SUCCESS(status)) {
+        status =
+            ZwOpenFile(&fileHandle, GENERIC_READ, &objectAttributes, &ioStatus, FILE_SHARE_READ | FILE_SHARE_DELETE, 0);
+        if (!NT_SUCCESS(status))
+        {
 
-            IopDbgPrint((IOP_ERROR_LEVEL,
-                         "PiIsDriverBlocked: Failed to open driver %wZ!\n", FullPath));
+            IopDbgPrint((IOP_ERROR_LEVEL, "PiIsDriverBlocked: Failed to open driver %wZ!\n", FullPath));
             ASSERT(NT_SUCCESS(status));
             fileHandle = INVALID_HANDLE_VALUE;
         }
@@ -704,61 +608,53 @@ Return Value:
 
     ASSERT(SdbHandle != NULL);
     driverTag = SdbGetDatabaseMatch(SdbHandle, FullPath->Buffer, fileHandle, ImageBase, ImageSize);
-    if (TAGREF_NULL != driverTag) {
+    if (TAGREF_NULL != driverTag)
+    {
         //
         // Read the driver policy (we care only about bit 0).
         //
         size = sizeof(policy);
         type = REG_DWORD;
-        if (    SdbQueryDriverInformation(  SdbHandle,
-                                            driverTag,
-                                            L"Policy",
-                                            &type,
-                                            &policy,
-                                            &size) != ERROR_SUCCESS ||
-                (policy & DDB_DRIVER_POLICY_CRITICAL_BIT) == 0 || IsFilter == FALSE) {
+        if (SdbQueryDriverInformation(SdbHandle, driverTag, L"Policy", &type, &policy, &size) != ERROR_SUCCESS ||
+            (policy & DDB_DRIVER_POLICY_CRITICAL_BIT) == 0 || IsFilter == FALSE)
+        {
 
-            status =  STATUS_DRIVER_BLOCKED_CRITICAL;
-        } else {
+            status = STATUS_DRIVER_BLOCKED_CRITICAL;
+        }
+        else
+        {
             //
             // Bit 0 of POLICY==1 for a filter, means ok to start the devnode minus this filter.
             //
             status = STATUS_DRIVER_BLOCKED;
         }
-        if (!SdbReadDriverInformation(SdbHandle, driverTag, &entryInfo)) {
+        if (!SdbReadDriverInformation(SdbHandle, driverTag, &entryInfo))
+        {
 
             IopDbgPrint((IOP_ERROR_LEVEL,
                          "PiIsDriverBlocked: Failed to read the GUID from the database for driver %wZ!\n", FullPath));
             ASSERT(0);
 
-            if (!(PiLoggedErrorEventsMask & DDB_READ_INFORMATION_ERROR)) {
+            if (!(PiLoggedErrorEventsMask & DDB_READ_INFORMATION_ERROR))
+            {
 
                 PiLoggedErrorEventsMask |= DDB_READ_INFORMATION_ERROR;
-                PiLogDriverBlockedEvent(
-                    TEXT("READ DRIVER ID FAILED"),
-                    NULL,
-                    0,
-                    STATUS_DRIVER_DATABASE_ERROR);
+                PiLogDriverBlockedEvent(TEXT("READ DRIVER ID FAILED"), NULL, 0, STATUS_DRIVER_DATABASE_ERROR);
             }
-
-        } else {
+        }
+        else
+        {
 
             IopDbgPrint((IOP_INFO_LEVEL,
                          "PiIsDriverBlocked: Driver entry GUID = {%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
-                         entryInfo.guidID.Data1,
-                         entryInfo.guidID.Data2,
-                         entryInfo.guidID.Data3,
-                         entryInfo.guidID.Data4[0],
-                         entryInfo.guidID.Data4[1],
-                         entryInfo.guidID.Data4[2],
-                         entryInfo.guidID.Data4[3],
-                         entryInfo.guidID.Data4[4],
-                         entryInfo.guidID.Data4[5],
-                         entryInfo.guidID.Data4[6],
-                         entryInfo.guidID.Data4[7]
-                         ));
+                         entryInfo.guidID.Data1, entryInfo.guidID.Data2, entryInfo.guidID.Data3,
+                         entryInfo.guidID.Data4[0], entryInfo.guidID.Data4[1], entryInfo.guidID.Data4[2],
+                         entryInfo.guidID.Data4[3], entryInfo.guidID.Data4[4], entryInfo.guidID.Data4[5],
+                         entryInfo.guidID.Data4[6], entryInfo.guidID.Data4[7]));
         }
-    } else {
+    }
+    else
+    {
         //
         // Driver not found in the database.
         //
@@ -767,52 +663,45 @@ Return Value:
     //
     // Write an entry to the event log.
     //
-    if (status == STATUS_DRIVER_BLOCKED_CRITICAL ||
-        status == STATUS_DRIVER_BLOCKED) {
+    if (status == STATUS_DRIVER_BLOCKED_CRITICAL || status == STATUS_DRIVER_BLOCKED)
+    {
 
-        IopDbgPrint((IOP_ERROR_LEVEL,
-                     "PiIsDriverBlocked: %wZ blocked from loading!!!\n", FullPath));
+        IopDbgPrint((IOP_ERROR_LEVEL, "PiIsDriverBlocked: %wZ blocked from loading!!!\n", FullPath));
 
         fileName = wcsrchr(FullPath->Buffer, L'\\');
-        if (fileName == NULL) {
+        if (fileName == NULL)
+        {
 
             fileName = FullPath->Buffer;
-        } else {
+        }
+        else
+        {
 
             fileName++;
         }
-        PiLogDriverBlockedEvent(
-            fileName,
-            &entryInfo.guidID,
-            sizeof(entryInfo.guidID),
-            status);
+        PiLogDriverBlockedEvent(fileName, &entryInfo.guidID, sizeof(entryInfo.guidID), status);
     }
     //
     // Update the cache if neccessary.
     //
-    if (status == STATUS_DRIVER_BLOCKED_CRITICAL ||
-        status == STATUS_DRIVER_BLOCKED ||
-        status == STATUS_SUCCESS) {
+    if (status == STATUS_DRIVER_BLOCKED_CRITICAL || status == STATUS_DRIVER_BLOCKED || status == STATUS_SUCCESS)
+    {
         //
         // Update our cache with the results.
         //
-        PiUpdateDriverDBCache(
-            FullPath,
-            ImageBase,
-            ImageSize,
-            status,
-            &entryInfo.guidID);
+        PiUpdateDriverDBCache(FullPath, ImageBase, ImageSize, status, &entryInfo.guidID);
     }
 
     //
     // If the driver was blocked, return the entry GUID.
     //
-    if ((status == STATUS_DRIVER_BLOCKED_CRITICAL ||
-         status == STATUS_DRIVER_BLOCKED) && (ARGUMENT_PRESENT(EntryGuid))) {
+    if ((status == STATUS_DRIVER_BLOCKED_CRITICAL || status == STATUS_DRIVER_BLOCKED) && (ARGUMENT_PRESENT(EntryGuid)))
+    {
         RtlCopyMemory(EntryGuid, &entryInfo.guidID, sizeof(GUID));
     }
 
-    if (fileHandle != INVALID_HANDLE_VALUE) {
+    if (fileHandle != INVALID_HANDLE_VALUE)
+    {
 
         ZwClose(fileHandle);
     }
@@ -820,13 +709,7 @@ Return Value:
     return status;
 }
 
-VOID
-PiLogDriverBlockedEvent(
-    IN PWCHAR InsertionString,
-    IN PVOID Data,
-    IN ULONG DataLength,
-    IN NTSTATUS Status
-    )
+VOID PiLogDriverBlockedEvent(IN PWCHAR InsertionString, IN PVOID Data, IN ULONG DataLength, IN NTSTATUS Status)
 /*++
 
 Routine Description:
@@ -856,36 +739,39 @@ Return Value:
     PAGED_CODE();
 
     stringLength = (wcslen(InsertionString) * sizeof(WCHAR)) + sizeof(UNICODE_NULL);
-    size =  (sizeof(IO_ERROR_LOG_PACKET) - sizeof(ULONG)) +
-            DataLength + stringLength;
-    if (size <= ERROR_LOG_MAXIMUM_SIZE) {
+    size = (sizeof(IO_ERROR_LOG_PACKET) - sizeof(ULONG)) + DataLength + stringLength;
+    if (size <= ERROR_LOG_MAXIMUM_SIZE)
+    {
 
         errorLogEntry = IoAllocateGenericErrorLogEntry((UCHAR)size);
-        if (errorLogEntry) {
+        if (errorLogEntry)
+        {
 
             RtlZeroMemory(errorLogEntry, size);
             errorLogEntry->ErrorCode = Status;
             errorLogEntry->FinalStatus = Status;
             errorLogEntry->DumpDataSize = (USHORT)DataLength;
-            if (Data) {
+            if (Data)
+            {
 
                 RtlCopyMemory(&errorLogEntry->DumpData[0], Data, DataLength);
             }
             errorLogEntry->NumberOfStrings = 1;
-            errorLogEntry->StringOffset = (USHORT)(((PUCHAR)&errorLogEntry->DumpData[0] + errorLogEntry->DumpDataSize) - (PUCHAR)errorLogEntry);
+            errorLogEntry->StringOffset =
+                (USHORT)(((PUCHAR)&errorLogEntry->DumpData[0] + errorLogEntry->DumpDataSize) - (PUCHAR)errorLogEntry);
             RtlCopyMemory(((PUCHAR)errorLogEntry + errorLogEntry->StringOffset), InsertionString, stringLength);
             IoWriteErrorLogEntry(errorLogEntry);
         }
-    } else {
+    }
+    else
+    {
 
         ASSERT(size <= ERROR_LOG_MAXIMUM_SIZE);
     }
 }
 
 NTSTATUS
-PiInitializeDDBCache(
-    VOID
-    )
+PiInitializeDDBCache(VOID)
 /*++
 
 Routine Description:
@@ -905,23 +791,15 @@ Return Value:
 {
     PAGED_CODE();
 
-    RtlInitializeGenericTable(
-        &PiDDBCacheTable,
-        PiCompareDDBCacheEntries,
-        PiAllocateGenericTableEntry,
-        PiFreeGenericTableEntry,
-        NULL);
+    RtlInitializeGenericTable(&PiDDBCacheTable, PiCompareDDBCacheEntries, PiAllocateGenericTableEntry,
+                              PiFreeGenericTableEntry, NULL);
 
     return STATUS_SUCCESS;
 }
 
 RTL_GENERIC_COMPARE_RESULTS
 NTAPI
-PiCompareDDBCacheEntries(
-    IN  PRTL_GENERIC_TABLE          Table,
-    IN  PVOID                       FirstStruct,
-    IN  PVOID                       SecondStruct
-    )
+PiCompareDDBCacheEntries(IN PRTL_GENERIC_TABLE Table, IN PVOID FirstStruct, IN PVOID SecondStruct)
 /*++
 
 Routine Description:
@@ -949,21 +827,28 @@ Return Value:
     PAGED_CODE();
 
     result = RtlCompareUnicodeString(&lhs->Name, &rhs->Name, TRUE);
-    if (result < 0) {
+    if (result < 0)
+    {
 
         return GenericLessThan;
-    } else if (result > 0) {
+    }
+    else if (result > 0)
+    {
 
         return GenericGreaterThan;
     }
-    if (!Table->TableContext) {
+    if (!Table->TableContext)
+    {
         //
         // Link date as other matching criteria.
         //
-        if (lhs->TimeDateStamp < rhs->TimeDateStamp) {
+        if (lhs->TimeDateStamp < rhs->TimeDateStamp)
+        {
 
             return GenericLessThan;
-        } else if (lhs->TimeDateStamp > rhs->TimeDateStamp) {
+        }
+        else if (lhs->TimeDateStamp > rhs->TimeDateStamp)
+        {
 
             return GenericGreaterThan;
         }
@@ -973,12 +858,7 @@ Return Value:
 }
 
 NTSTATUS
-PiLookupInDDBCache(
-    IN  PUNICODE_STRING     FullPath,
-    IN  PVOID               ImageBase,
-    IN  ULONG               ImageSize,
-    OUT LPGUID              EntryGuid
-    )
+PiLookupInDDBCache(IN PUNICODE_STRING FullPath, IN PVOID ImageBase, IN ULONG ImageSize, OUT LPGUID EntryGuid)
 /*++
 
 Routine Description:
@@ -1008,31 +888,31 @@ Return Value:
 
     status = STATUS_UNSUCCESSFUL;
     PiDDBCacheTable.TableContext = NULL;
-    if (!RtlIsGenericTableEmpty(&PiDDBCacheTable)) {
+    if (!RtlIsGenericTableEmpty(&PiDDBCacheTable))
+    {
         //
         // Lookup in the cache.
         //
         header = RtlImageNtHeader(ImageBase);
         key.Name.Buffer = wcsrchr(FullPath->Buffer, L'\\');
-        if (!key.Name.Buffer) {
+        if (!key.Name.Buffer)
+        {
 
             key.Name.Buffer = FullPath->Buffer;
         }
         key.Name.Length = wcslen(key.Name.Buffer) * sizeof(WCHAR);
         key.Name.MaximumLength = key.Name.Length + sizeof(UNICODE_NULL);
         key.TimeDateStamp = header->FileHeader.TimeDateStamp;
-        cachedEntry = (PDDBCACHE_ENTRY)RtlLookupElementGenericTable(
-            &PiDDBCacheTable,
-            &key);
-        if (cachedEntry) {
+        cachedEntry = (PDDBCACHE_ENTRY)RtlLookupElementGenericTable(&PiDDBCacheTable, &key);
+        if (cachedEntry)
+        {
 
-            IopDbgPrint((IOP_WARNING_LEVEL,
-                         "PiLookupInDDBCache: Found cached entry for %ws (status = %08x)!\n",
-                         cachedEntry->Name.Buffer,
-                         cachedEntry->Status));
+            IopDbgPrint((IOP_WARNING_LEVEL, "PiLookupInDDBCache: Found cached entry for %ws (status = %08x)!\n",
+                         cachedEntry->Name.Buffer, cachedEntry->Status));
             status = cachedEntry->Status;
 
-            if (ARGUMENT_PRESENT(EntryGuid)) {
+            if (ARGUMENT_PRESENT(EntryGuid))
+            {
                 RtlCopyMemory(EntryGuid, &cachedEntry->Guid, sizeof(GUID));
             }
         }
@@ -1041,14 +921,8 @@ Return Value:
     return status;
 }
 
-VOID
-PiUpdateDriverDBCache(
-    IN PUNICODE_STRING      FullPath,
-    IN PVOID                ImageBase,
-    IN ULONG                ImageSize,
-    IN NTSTATUS             Status,
-    IN GUID                 *Guid
-    )
+VOID PiUpdateDriverDBCache(IN PUNICODE_STRING FullPath, IN PVOID ImageBase, IN ULONG ImageSize, IN NTSTATUS Status,
+                           IN GUID *Guid)
 /*++
 
 Routine Description:
@@ -1082,16 +956,14 @@ Return Value:
     //
     PiDDBCacheTable.TableContext = (PVOID)1;
     key.Name = *FullPath;
-    cachedEntry = (PDDBCACHE_ENTRY)RtlLookupElementGenericTable(
-       &PiDDBCacheTable,
-       &key);
-    if (cachedEntry) {
+    cachedEntry = (PDDBCACHE_ENTRY)RtlLookupElementGenericTable(&PiDDBCacheTable, &key);
+    if (cachedEntry)
+    {
 
-        IopDbgPrint((IOP_INFO_LEVEL,
-                     "PiUpdateDriverDBCache: Found previously cached entry for %wZ with status=%08x!\n",
-                     &cachedEntry->Name,
-                     cachedEntry->Status));
-        if (cachedEntry->Status != STATUS_SUCCESS) {
+        IopDbgPrint((IOP_INFO_LEVEL, "PiUpdateDriverDBCache: Found previously cached entry for %wZ with status=%08x!\n",
+                     &cachedEntry->Name, cachedEntry->Status));
+        if (cachedEntry->Status != STATUS_SUCCESS)
+        {
 
             PpBlockedDriverCount--;
         }
@@ -1109,37 +981,34 @@ Return Value:
     key.Status = Status;
     key.TimeDateStamp = header->FileHeader.TimeDateStamp;
     name = wcsrchr(FullPath->Buffer, L'\\');
-    if (!name) {
+    if (!name)
+    {
 
         name = FullPath->Buffer;
     }
     key.Name.Length = key.Name.MaximumLength = wcslen(name) * sizeof(WCHAR);
     key.Name.Buffer = ExAllocatePool(PagedPool, key.Name.MaximumLength);
-    if (key.Name.Buffer) {
+    if (key.Name.Buffer)
+    {
 
         RtlCopyMemory(key.Name.Buffer, name, key.Name.Length);
-        RtlInsertElementGenericTable(
-            &PiDDBCacheTable,
-            (PVOID)&key,
-            (CLONG)sizeof(DDBCACHE_ENTRY),
-            NULL);
-    } else {
-
-        IopDbgPrint((IOP_WARNING_LEVEL,
-                     "PiUpdateDriverDBCache: Could not allocate memory to update driver database cache!\n"));
+        RtlInsertElementGenericTable(&PiDDBCacheTable, (PVOID)&key, (CLONG)sizeof(DDBCACHE_ENTRY), NULL);
     }
-    if (Status != STATUS_SUCCESS) {
+    else
+    {
+
+        IopDbgPrint(
+            (IOP_WARNING_LEVEL, "PiUpdateDriverDBCache: Could not allocate memory to update driver database cache!\n"));
+    }
+    if (Status != STATUS_SUCCESS)
+    {
 
         PpBlockedDriverCount++;
     }
 }
 
 NTSTATUS
-PpGetBlockedDriverList(
-    IN OUT GUID  *Buffer,
-    IN OUT PULONG  Size,
-    IN ULONG Flags
-    )
+PpGetBlockedDriverList(IN OUT GUID *Buffer, IN OUT PULONG Size, IN ULONG Flags)
 /*++
 
 Routine Description:
@@ -1178,25 +1047,28 @@ Return Value:
     // Enumerate all entries in our cache and compute the buffer size to hold
     // the MULTI_SZ string.
     //
-    for (ptr = (PDDBCACHE_ENTRY)RtlEnumerateGenericTable(&PiDDBCacheTable, TRUE);
-         ptr != NULL;
-         ptr = (PDDBCACHE_ENTRY)RtlEnumerateGenericTable(&PiDDBCacheTable, FALSE)) {
+    for (ptr = (PDDBCACHE_ENTRY)RtlEnumerateGenericTable(&PiDDBCacheTable, TRUE); ptr != NULL;
+         ptr = (PDDBCACHE_ENTRY)RtlEnumerateGenericTable(&PiDDBCacheTable, FALSE))
+    {
 
-        if (ptr->Status != STATUS_SUCCESS) {
+        if (ptr->Status != STATUS_SUCCESS)
+        {
 
             resultSize += sizeof(GUID);
         }
     }
-    if (*Size >= resultSize) {
+    if (*Size >= resultSize)
+    {
         //
         // Enumerate all entries in our cache.
         //
         result = Buffer;
-        for (ptr = (PDDBCACHE_ENTRY)RtlEnumerateGenericTable(&PiDDBCacheTable, TRUE);
-             ptr != NULL;
-             ptr = (PDDBCACHE_ENTRY)RtlEnumerateGenericTable(&PiDDBCacheTable, FALSE)) {
+        for (ptr = (PDDBCACHE_ENTRY)RtlEnumerateGenericTable(&PiDDBCacheTable, TRUE); ptr != NULL;
+             ptr = (PDDBCACHE_ENTRY)RtlEnumerateGenericTable(&PiDDBCacheTable, FALSE))
+        {
 
-            if (ptr->Status != STATUS_SUCCESS) {
+            if (ptr->Status != STATUS_SUCCESS)
+            {
 
                 *result = ptr->Guid;
                 result++;
@@ -1204,7 +1076,9 @@ Return Value:
         }
         *Size = resultSize;
         status = STATUS_SUCCESS;
-    } else {
+    }
+    else
+    {
 
         *Size = resultSize;
         status = STATUS_BUFFER_TOO_SMALL;
@@ -1217,4 +1091,3 @@ Return Value:
 
     return status;
 }
-

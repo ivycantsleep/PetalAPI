@@ -29,18 +29,15 @@ Revision History:
 // Local definitions
 //
 
-#define _1MB  (0x100000)
+#define _1MB (0x100000)
 #define _16MB (0x1000000)
 #define _24MB (0x1800000)
 #define _32MB (0x2000000)
 
 SIZE_T MmExpandedNonPagedPoolInBytes;
 
-
-VOID
-MiInitMachineDependent (
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+
+VOID MiInitMachineDependent(IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 
 /*++
 
@@ -120,13 +117,13 @@ Environment:
     FreeDescriptor = NULL;
     FreeDescriptorLowMem = NULL;
 
-    PointerPte = MiGetPdeAddress (PDE_BASE);
+    PointerPte = MiGetPdeAddress(PDE_BASE);
 
     PdePageNumber = PointerPte->u.Hard.PageFrameNumber;
 
     PsGetCurrentProcess()->Pcb.DirectoryTableBase[0] = PointerPte->u.Long;
 
-    KeSweepDcache (FALSE);
+    KeSweepDcache(FALSE);
 
     //
     // Get the lower bound of the free physical memory and the
@@ -148,27 +145,29 @@ Environment:
 
     MmHiberPages = 96;
 
-    while (NextMd != &LoaderBlock->MemoryDescriptorListHead) {
+    while (NextMd != &LoaderBlock->MemoryDescriptorListHead)
+    {
 
-        MemoryDescriptor = CONTAINING_RECORD(NextMd,
-                                             MEMORY_ALLOCATION_DESCRIPTOR,
-                                             ListEntry);
+        MemoryDescriptor = CONTAINING_RECORD(NextMd, MEMORY_ALLOCATION_DESCRIPTOR, ListEntry);
 
-        HighPage = MemoryDescriptor->BasePage + MemoryDescriptor->PageCount-1;
+        HighPage = MemoryDescriptor->BasePage + MemoryDescriptor->PageCount - 1;
 
         //
         // This check results in /BURNMEMORY chunks not being counted.
         //
 
-        if (MemoryDescriptor->MemoryType != LoaderBad) {
+        if (MemoryDescriptor->MemoryType != LoaderBad)
+        {
             MmNumberOfPhysicalPages += MemoryDescriptor->PageCount;
         }
 
-        if (MemoryDescriptor->BasePage < MmLowestPhysicalPage) {
+        if (MemoryDescriptor->BasePage < MmLowestPhysicalPage)
+        {
             MmLowestPhysicalPage = MemoryDescriptor->BasePage;
         }
 
-        if (HighPage > MmHighestPhysicalPage) {
+        if (HighPage > MmHighestPhysicalPage)
+        {
             MmHighestPhysicalPage = HighPage;
         }
 
@@ -177,10 +176,10 @@ Environment:
         // and the largest free block.
         //
 
-        if ((MemoryDescriptor->MemoryType == LoaderFree) ||
-            (MemoryDescriptor->MemoryType == LoaderLoadedProgram) ||
+        if ((MemoryDescriptor->MemoryType == LoaderFree) || (MemoryDescriptor->MemoryType == LoaderLoadedProgram) ||
             (MemoryDescriptor->MemoryType == LoaderFirmwareTemporary) ||
-            (MemoryDescriptor->MemoryType == LoaderOsloaderStack)) {
+            (MemoryDescriptor->MemoryType == LoaderOsloaderStack))
+        {
 
             //
             // Every page that will be used as free memory that is not already
@@ -188,23 +187,27 @@ Environment:
             // the proper amount.
             //
 
-            if (MemoryDescriptor->MemoryType != LoaderFree) {
+            if (MemoryDescriptor->MemoryType != LoaderFree)
+            {
                 MmHiberPages += MemoryDescriptor->PageCount;
             }
 
             if ((MemoryDescriptor->PageCount > MostFreeLowMem) &&
-                (MemoryDescriptor->BasePage < (_16MB >> PAGE_SHIFT)) &&
-                (HighPage < MM_PAGES_IN_KSEG0)) {
+                (MemoryDescriptor->BasePage < (_16MB >> PAGE_SHIFT)) && (HighPage < MM_PAGES_IN_KSEG0))
+            {
 
-                    MostFreeLowMem = MemoryDescriptor->PageCount;
-                    FreeDescriptorLowMem = MemoryDescriptor;
-
-            } else if (MemoryDescriptor->PageCount > MostFreePage) {
-
-                    MostFreePage = MemoryDescriptor->PageCount;
-                    FreeDescriptor = MemoryDescriptor;
+                MostFreeLowMem = MemoryDescriptor->PageCount;
+                FreeDescriptorLowMem = MemoryDescriptor;
             }
-        } else if (MemoryDescriptor->MemoryType == LoaderOsloaderHeap) {
+            else if (MemoryDescriptor->PageCount > MostFreePage)
+            {
+
+                MostFreePage = MemoryDescriptor->PageCount;
+                FreeDescriptor = MemoryDescriptor;
+            }
+        }
+        else if (MemoryDescriptor->MemoryType == LoaderOsloaderHeap)
+        {
             //
             // We do not want to use this memory yet as it still has important
             // data structures in it. But we still want to account for this in
@@ -221,20 +224,19 @@ Environment:
     // descriptors.
     //
 
-    if (MmNumberOfPhysicalPages < 1024) {
-        KeBugCheckEx (INSTALL_MORE_MEMORY,
-                      MmNumberOfPhysicalPages,
-                      MmLowestPhysicalPage,
-                      MmHighestPhysicalPage,
-                      0);
+    if (MmNumberOfPhysicalPages < 1024)
+    {
+        KeBugCheckEx(INSTALL_MORE_MEMORY, MmNumberOfPhysicalPages, MmLowestPhysicalPage, MmHighestPhysicalPage, 0);
     }
 
-    if (FreeDescriptorLowMem == NULL){
+    if (FreeDescriptorLowMem == NULL)
+    {
         InbvDisplayString("MmInit *** FATAL ERROR *** no free descriptors that begin below physical address 16MB\n");
-        KeBugCheck (MEMORY_MANAGEMENT);
+        KeBugCheck(MEMORY_MANAGEMENT);
     }
 
-    if (MmDynamicPfn == TRUE) {
+    if (MmDynamicPfn == TRUE)
+    {
 
         //
         // Since a ~128mb PFN database is required to span the 32GB supported
@@ -242,14 +244,17 @@ Environment:
         // this option.
         //
 
-        if (MmNumberOfPhysicalPages >= (256 * 1024 * 1024) / PAGE_SIZE) {
+        if (MmNumberOfPhysicalPages >= (256 * 1024 * 1024) / PAGE_SIZE)
+        {
             MmHighestPossiblePhysicalPage = 0x400000 - 1;
         }
-        else {
+        else
+        {
             MmDynamicPfn = FALSE;
         }
     }
-    else {
+    else
+    {
         MmHighestPossiblePhysicalPage = MmHighestPhysicalPage;
     }
 
@@ -270,8 +275,8 @@ Environment:
     // are also physically contiguous.
     //
 
-    if ((MmSizeOfNonPagedPoolInBytes >> PAGE_SHIFT) >
-                        (7 * (MmNumberOfPhysicalPages >> 3))) {
+    if ((MmSizeOfNonPagedPoolInBytes >> PAGE_SHIFT) > (7 * (MmNumberOfPhysicalPages >> 3)))
+    {
 
         //
         // More than 7/8 of memory allocated to nonpagedpool, reset to 0.
@@ -280,7 +285,8 @@ Environment:
         MmSizeOfNonPagedPoolInBytes = 0;
     }
 
-    if (MmSizeOfNonPagedPoolInBytes < MmMinimumNonPagedPoolSize) {
+    if (MmSizeOfNonPagedPoolInBytes < MmMinimumNonPagedPoolSize)
+    {
 
         //
         // Calculate the size of nonpaged pool.  Use the minimum size,
@@ -290,9 +296,7 @@ Environment:
         MmSizeOfNonPagedPoolInBytes = MmMinimumNonPagedPoolSize;
 
         MmSizeOfNonPagedPoolInBytes +=
-                         ((MmNumberOfPhysicalPages - 1024) /
-                        (_1MB >> PAGE_SHIFT) ) *
-                        MmMinAdditionNonPagedPoolPerMb;
+            ((MmNumberOfPhysicalPages - 1024) / (_1MB >> PAGE_SHIFT)) * MmMinAdditionNonPagedPoolPerMb;
     }
 
     //
@@ -305,7 +309,8 @@ Environment:
     // Limit initial nonpaged pool size to MM_MAX_INITIAL_NONPAGED_POOL
     //
 
-    if (MmSizeOfNonPagedPoolInBytes > MM_MAX_INITIAL_NONPAGED_POOL) {
+    if (MmSizeOfNonPagedPoolInBytes > MM_MAX_INITIAL_NONPAGED_POOL)
+    {
         MmSizeOfNonPagedPoolInBytes = MM_MAX_INITIAL_NONPAGED_POOL;
     }
 
@@ -318,39 +323,39 @@ Environment:
     // cannot boot the operating system.
     //
 
-    if ((MmSizeOfNonPagedPoolInBytes >> PAGE_SHIFT) > NumberOfPages) {
+    if ((MmSizeOfNonPagedPoolInBytes >> PAGE_SHIFT) > NumberOfPages)
+    {
 
-         //
-         // Reserve all of low memory for nonpaged pool.
-         //
+        //
+        // Reserve all of low memory for nonpaged pool.
+        //
 
-         MmSizeOfNonPagedPoolInBytes = NumberOfPages << PAGE_SHIFT;
-         LowMemoryReserved = NextPhysicalPage;
+        MmSizeOfNonPagedPoolInBytes = NumberOfPages << PAGE_SHIFT;
+        LowMemoryReserved = NextPhysicalPage;
 
-         //
-         // Switch to backup descriptor for all other allocations.
-         //
+        //
+        // Switch to backup descriptor for all other allocations.
+        //
 
-         NextPhysicalPage = FreeDescriptor->BasePage;
-         NumberOfPages = FreeDescriptor->PageCount;
+        NextPhysicalPage = FreeDescriptor->BasePage;
+        NumberOfPages = FreeDescriptor->PageCount;
 
-         if (MmSizeOfNonPagedPoolInBytes < MmMinimumNonPagedPoolSize) {
+        if (MmSizeOfNonPagedPoolInBytes < MmMinimumNonPagedPoolSize)
+        {
             InbvDisplayString("MmInit *** FATAL ERROR *** cannot allocate non-paged pool\n");
-            sprintf(Buffer,
-                    "Largest description = %d pages, require %d pages\n",
-                    NumberOfPages,
+            sprintf(Buffer, "Largest description = %d pages, require %d pages\n", NumberOfPages,
                     MmMinimumNonPagedPoolSize >> PAGE_SHIFT);
-            InbvDisplayString (Buffer );
-            KeBugCheck (MEMORY_MANAGEMENT);
-
-         }
+            InbvDisplayString(Buffer);
+            KeBugCheck(MEMORY_MANAGEMENT);
+        }
     }
 
     //
     // Calculate the maximum size of pool.
     //
 
-    if (MmMaximumNonPagedPoolInBytes == 0) {
+    if (MmMaximumNonPagedPoolInBytes == 0)
+    {
 
         //
         // Calculate the size of nonpaged pool.
@@ -363,20 +368,16 @@ Environment:
         // Make sure enough expansion for the PFN database exists.
         //
 
-        MmMaximumNonPagedPoolInBytes += (ULONG)PAGE_ALIGN (
-                                      MmHighestPhysicalPage * sizeof(MMPFN));
+        MmMaximumNonPagedPoolInBytes += (ULONG)PAGE_ALIGN(MmHighestPhysicalPage * sizeof(MMPFN));
 
         MmMaximumNonPagedPoolInBytes +=
-                         ((MmNumberOfPhysicalPages - 1024) /
-                         (_1MB >> PAGE_SHIFT) ) *
-                         MmMaxAdditionNonPagedPoolPerMb;
+            ((MmNumberOfPhysicalPages - 1024) / (_1MB >> PAGE_SHIFT)) * MmMaxAdditionNonPagedPoolPerMb;
     }
 
-    MaxPool = MmSizeOfNonPagedPoolInBytes + PAGE_SIZE * 16 +
-                                   (ULONG)PAGE_ALIGN (
-                                        MmHighestPhysicalPage * sizeof(MMPFN));
+    MaxPool = MmSizeOfNonPagedPoolInBytes + PAGE_SIZE * 16 + (ULONG)PAGE_ALIGN(MmHighestPhysicalPage * sizeof(MMPFN));
 
-    if (MmMaximumNonPagedPoolInBytes < MaxPool) {
+    if (MmMaximumNonPagedPoolInBytes < MaxPool)
+    {
         MmMaximumNonPagedPoolInBytes = MaxPool;
     }
 
@@ -387,27 +388,33 @@ Environment:
     // into kseg0 to free up more PTEs.
     //
 
-    if (MmMaximumNonPagedPoolInBytes > MM_MAX_ADDITIONAL_NONPAGED_POOL) {
+    if (MmMaximumNonPagedPoolInBytes > MM_MAX_ADDITIONAL_NONPAGED_POOL)
+    {
 
         ULONG InitialNonPagedPages;
         ULONG ExpansionPagesToMove;
         ULONG LowAvailPages;
 
-        if (MiRequestedSystemPtes == (ULONG)-1) {
+        if (MiRequestedSystemPtes == (ULONG)-1)
+        {
             MmMaximumNonPagedPoolInBytes = MM_MAX_ADDITIONAL_NONPAGED_POOL;
 
-            if (LowMemoryReserved == 0) {
+            if (LowMemoryReserved == 0)
+            {
 
                 InitialNonPagedPages = (MmSizeOfNonPagedPoolInBytes >> PAGE_SHIFT);
 
-                if (InitialNonPagedPages + 1024 < NumberOfPages) {
+                if (InitialNonPagedPages + 1024 < NumberOfPages)
+                {
                     LowAvailPages = NumberOfPages - 1024 - InitialNonPagedPages;
 
                     ExpansionPagesToMove = (MmMaximumNonPagedPoolInBytes >> PAGE_SHIFT) - InitialNonPagedPages;
 
-                    if (ExpansionPagesToMove > 32) {
+                    if (ExpansionPagesToMove > 32)
+                    {
                         ExpansionPagesToMove -= 32;
-                        if (LowAvailPages > ExpansionPagesToMove) {
+                        if (LowAvailPages > ExpansionPagesToMove)
+                        {
                             LowAvailPages = ExpansionPagesToMove;
                         }
 
@@ -416,8 +423,9 @@ Environment:
                 }
             }
 
-            if (MmSizeOfNonPagedPoolInBytes == MmMaximumNonPagedPoolInBytes) {
-                ASSERT (MmSizeOfNonPagedPoolInBytes > (32 << PAGE_SHIFT));
+            if (MmSizeOfNonPagedPoolInBytes == MmMaximumNonPagedPoolInBytes)
+            {
+                ASSERT(MmSizeOfNonPagedPoolInBytes > (32 << PAGE_SHIFT));
                 MmSizeOfNonPagedPoolInBytes -= (32 << PAGE_SHIFT);
             }
         }
@@ -427,21 +435,27 @@ Environment:
     // Limit maximum nonpaged pool to MM_MAX_ADDITIONAL_NONPAGED_POOL.
     //
 
-    if (MmMaximumNonPagedPoolInBytes > MM_MAX_ADDITIONAL_NONPAGED_POOL) {
+    if (MmMaximumNonPagedPoolInBytes > MM_MAX_ADDITIONAL_NONPAGED_POOL)
+    {
 
-        if (MmMaximumNonPagedPoolInBytes > MM_MAX_INITIAL_NONPAGED_POOL + MM_MAX_ADDITIONAL_NONPAGED_POOL) {
+        if (MmMaximumNonPagedPoolInBytes > MM_MAX_INITIAL_NONPAGED_POOL + MM_MAX_ADDITIONAL_NONPAGED_POOL)
+        {
             MmMaximumNonPagedPoolInBytes = MM_MAX_INITIAL_NONPAGED_POOL + MM_MAX_ADDITIONAL_NONPAGED_POOL;
         }
 
-        if (LowMemoryReserved != 0) {
-            if (MmMaximumNonPagedPoolInBytes > MmSizeOfNonPagedPoolInBytes + MM_MAX_ADDITIONAL_NONPAGED_POOL) {
+        if (LowMemoryReserved != 0)
+        {
+            if (MmMaximumNonPagedPoolInBytes > MmSizeOfNonPagedPoolInBytes + MM_MAX_ADDITIONAL_NONPAGED_POOL)
+            {
                 MmMaximumNonPagedPoolInBytes = MmSizeOfNonPagedPoolInBytes + MM_MAX_ADDITIONAL_NONPAGED_POOL;
             }
             MmExpandedNonPagedPoolInBytes = MmMaximumNonPagedPoolInBytes - MmSizeOfNonPagedPoolInBytes;
         }
-        else {
+        else
+        {
 
-            if ((MM_MAX_INITIAL_NONPAGED_POOL >> PAGE_SHIFT) >= NumberOfPages) {
+            if ((MM_MAX_INITIAL_NONPAGED_POOL >> PAGE_SHIFT) >= NumberOfPages)
+            {
 
                 //
                 // Reserve all of low memory for nonpaged pool.
@@ -450,7 +464,8 @@ Environment:
                 SIZE_T Diff;
 
                 Diff = MmMaximumNonPagedPoolInBytes - MmSizeOfNonPagedPoolInBytes;
-                if (Diff > MM_MAX_ADDITIONAL_NONPAGED_POOL) {
+                if (Diff > MM_MAX_ADDITIONAL_NONPAGED_POOL)
+                {
                     Diff = MM_MAX_ADDITIONAL_NONPAGED_POOL;
                 }
 
@@ -465,7 +480,8 @@ Environment:
                 NextPhysicalPage = FreeDescriptor->BasePage;
                 NumberOfPages = FreeDescriptor->PageCount;
             }
-            else {
+            else
+            {
 
                 MmSizeOfNonPagedPoolInBytes = MM_MAX_INITIAL_NONPAGED_POOL;
 
@@ -485,19 +501,20 @@ Environment:
 
             MmExpandedNonPagedPoolInBytes = MmMaximumNonPagedPoolInBytes - MmSizeOfNonPagedPoolInBytes;
 
-            if (MmExpandedNonPagedPoolInBytes > MM_MAX_ADDITIONAL_NONPAGED_POOL) {
+            if (MmExpandedNonPagedPoolInBytes > MM_MAX_ADDITIONAL_NONPAGED_POOL)
+            {
                 MmExpandedNonPagedPoolInBytes = MM_MAX_ADDITIONAL_NONPAGED_POOL;
             }
         }
     }
 
-    if (MmExpandedNonPagedPoolInBytes) {
-        MmNonPagedPoolStart = (PVOID)((ULONG)MmNonPagedPoolEnd
-                                          - MmExpandedNonPagedPoolInBytes);
+    if (MmExpandedNonPagedPoolInBytes)
+    {
+        MmNonPagedPoolStart = (PVOID)((ULONG)MmNonPagedPoolEnd - MmExpandedNonPagedPoolInBytes);
     }
-    else {
-        MmNonPagedPoolStart = (PVOID)((ULONG)MmNonPagedPoolEnd
-                                          - (MmMaximumNonPagedPoolInBytes - 1));
+    else
+    {
+        MmNonPagedPoolStart = (PVOID)((ULONG)MmNonPagedPoolEnd - (MmMaximumNonPagedPoolInBytes - 1));
     }
 
     MmNonPagedPoolStart = (PVOID)PAGE_ALIGN(MmNonPagedPoolStart);
@@ -508,28 +525,29 @@ Environment:
     // right below the nonpaged pool.
     //
 
-    MmNonPagedSystemStart = (PVOID)(((ULONG)MmNonPagedPoolStart -
-                                ((MmNumberOfSystemPtes + 1) * PAGE_SIZE)) &
-                                 (~PAGE_DIRECTORY_MASK));
+    MmNonPagedSystemStart =
+        (PVOID)(((ULONG)MmNonPagedPoolStart - ((MmNumberOfSystemPtes + 1) * PAGE_SIZE)) & (~PAGE_DIRECTORY_MASK));
 
-    if (MmNonPagedSystemStart < MM_LOWEST_NONPAGED_SYSTEM_START) {
+    if (MmNonPagedSystemStart < MM_LOWEST_NONPAGED_SYSTEM_START)
+    {
         MmNonPagedSystemStart = MM_LOWEST_NONPAGED_SYSTEM_START;
     }
 
-    MmNumberOfSystemPtes = (((ULONG)MmNonPagedPoolStart -
-                             (ULONG)MmNonPagedSystemStart) >> PAGE_SHIFT)-1;
-    ASSERT (MmNumberOfSystemPtes > 1000);
+    MmNumberOfSystemPtes = (((ULONG)MmNonPagedPoolStart - (ULONG)MmNonPagedSystemStart) >> PAGE_SHIFT) - 1;
+    ASSERT(MmNumberOfSystemPtes > 1000);
 
     //
     // Set the global bit for all PDEs in system space.
     //
 
-    StartPde = MiGetPdeAddress (MM_SYSTEM_SPACE_START);
-    EndPde = MiGetPdeAddress (MM_SYSTEM_SPACE_END);
+    StartPde = MiGetPdeAddress(MM_SYSTEM_SPACE_START);
+    EndPde = MiGetPdeAddress(MM_SYSTEM_SPACE_END);
 
-    while (StartPde <= EndPde) {
+    while (StartPde <= EndPde)
+    {
 
-        if (StartPde->u.Hard.Global == 0) {
+        if (StartPde->u.Hard.Global == 0)
+        {
             TempPte = *StartPde;
             TempPte.u.Hard.Global = 1;
             *StartPde = TempPte;
@@ -542,72 +560,78 @@ Environment:
     // Clear the global bit for all session space addresses.
     //
 
-    StartPde = MiGetPdeAddress (MmSessionBase);
-    EndPde = MiGetPdeAddress (MI_SESSION_SPACE_END);
+    StartPde = MiGetPdeAddress(MmSessionBase);
+    EndPde = MiGetPdeAddress(MI_SESSION_SPACE_END);
 
-    while (StartPde < EndPde) {
+    while (StartPde < EndPde)
+    {
 
-        if (StartPde->u.Hard.Global == 1) {
+        if (StartPde->u.Hard.Global == 1)
+        {
             TempPte = *StartPde;
             TempPte.u.Hard.Global = 0;
             *StartPde = TempPte;
         }
 
-        ASSERT (StartPde->u.Long == 0);
+        ASSERT(StartPde->u.Long == 0);
         StartPde += 1;
     }
 
-    StartPde = MiGetPdeAddress (MmNonPagedSystemStart);
+    StartPde = MiGetPdeAddress(MmNonPagedSystemStart);
 
-    EndPde = MiGetPdeAddress (MmNonPagedPoolEnd);
+    EndPde = MiGetPdeAddress(MmNonPagedPoolEnd);
 
-    ASSERT ((EndPde - StartPde) < (LONG)NumberOfPages);
+    ASSERT((EndPde - StartPde) < (LONG)NumberOfPages);
 
     TempPte = ValidKernelPte;
 
-    while (StartPde <= EndPde) {
-        if (StartPde->u.Hard.Valid == 0) {
+    while (StartPde <= EndPde)
+    {
+        if (StartPde->u.Hard.Valid == 0)
+        {
 
-        //
-        // Map in a page directory page.
-        //
+            //
+            // Map in a page directory page.
+            //
 
-        TempPte.u.Hard.PageFrameNumber = NextPhysicalPage;
-        NumberOfPages -= 1;
-        NextPhysicalPage += 1;
+            TempPte.u.Hard.PageFrameNumber = NextPhysicalPage;
+            NumberOfPages -= 1;
+            NextPhysicalPage += 1;
 
-        if (NumberOfPages == 0) {
-            ASSERT (NextPhysicalPage != (FreeDescriptor->BasePage +
-                    FreeDescriptor->PageCount));
-            NextPhysicalPage = FreeDescriptor->BasePage;
-            NumberOfPages = FreeDescriptor->PageCount;
+            if (NumberOfPages == 0)
+            {
+                ASSERT(NextPhysicalPage != (FreeDescriptor->BasePage + FreeDescriptor->PageCount));
+                NextPhysicalPage = FreeDescriptor->BasePage;
+                NumberOfPages = FreeDescriptor->PageCount;
+            }
+            *StartPde = TempPte;
         }
-        *StartPde = TempPte;
-      }
-      StartPde += 1;
+        StartPde += 1;
     }
 
     //
     // Zero the PTEs before non-paged pool.
     //
 
-    StartPde = MiGetPteAddress (MmNonPagedSystemStart);
-    PointerPte = MiGetPteAddress (MmNonPagedPoolStart);
+    StartPde = MiGetPteAddress(MmNonPagedSystemStart);
+    PointerPte = MiGetPteAddress(MmNonPagedPoolStart);
 
-    RtlZeroMemory (StartPde, (ULONG)PointerPte - (ULONG)StartPde);
+    RtlZeroMemory(StartPde, (ULONG)PointerPte - (ULONG)StartPde);
 
     //
     // Fill in the PTEs for non-paged pool.
     //
 
     PointerPte = MiGetPteAddress(MmNonPagedPoolStart);
-    LastPte = MiGetPteAddress((ULONG)MmNonPagedPoolStart +
-                                        MmSizeOfNonPagedPoolInBytes - 1);
+    LastPte = MiGetPteAddress((ULONG)MmNonPagedPoolStart + MmSizeOfNonPagedPoolInBytes - 1);
 
-    if (MmExpandedNonPagedPoolInBytes == 0) {
-        if (!LowMemoryReserved) {
+    if (MmExpandedNonPagedPoolInBytes == 0)
+    {
+        if (!LowMemoryReserved)
+        {
 
-            if (NumberOfPages < (ULONG)(LastPte - PointerPte + 1)) {
+            if (NumberOfPages < (ULONG)(LastPte - PointerPte + 1))
+            {
 
                 //
                 // Can't just switch descriptors here - the initial nonpaged
@@ -615,46 +639,45 @@ Environment:
                 // virtually and physically contiguous.
                 //
 
-                KeBugCheckEx (INSTALL_MORE_MEMORY,
-                              MmNumberOfPhysicalPages,
-                              NumberOfPages,
-                              LastPte - PointerPte + 1,
-                              1);
+                KeBugCheckEx(INSTALL_MORE_MEMORY, MmNumberOfPhysicalPages, NumberOfPages, LastPte - PointerPte + 1, 1);
             }
 
-            while (PointerPte <= LastPte) {
+            while (PointerPte <= LastPte)
+            {
                 TempPte.u.Hard.PageFrameNumber = NextPhysicalPage;
                 NextPhysicalPage += 1;
                 NumberOfPages -= 1;
-                ASSERT (NumberOfPages != 0);
+                ASSERT(NumberOfPages != 0);
                 *PointerPte = TempPte;
                 PointerPte += 1;
             }
-
-        } else {
+        }
+        else
+        {
 
             ULONG ReservedPage = FreeDescriptorLowMem->BasePage;
 
-            while (PointerPte <= LastPte) {
+            while (PointerPte <= LastPte)
+            {
                 TempPte.u.Hard.PageFrameNumber = ReservedPage;
                 ReservedPage += 1;
                 *PointerPte = TempPte;
                 PointerPte += 1;
             }
         }
-        LastPte = MiGetPteAddress ((ULONG)MmNonPagedPoolStart +
-                                      MmMaximumNonPagedPoolInBytes - 1);
+        LastPte = MiGetPteAddress((ULONG)MmNonPagedPoolStart + MmMaximumNonPagedPoolInBytes - 1);
     }
-    else {
-        LastPte = MiGetPteAddress ((ULONG)MmNonPagedPoolStart +
-                                      MmExpandedNonPagedPoolInBytes - 1);
+    else
+    {
+        LastPte = MiGetPteAddress((ULONG)MmNonPagedPoolStart + MmExpandedNonPagedPoolInBytes - 1);
     }
 
     //
     // Zero the remaining PTEs for non-paged pool maximum.
     //
 
-    while (PointerPte <= LastPte) {
+    while (PointerPte <= LastPte)
+    {
         *PointerPte = ZeroKernelPte;
         PointerPte += 1;
     }
@@ -663,37 +686,42 @@ Environment:
     // Zero the remaining PTEs (if any).
     //
 
-    while (((ULONG)PointerPte & (PAGE_SIZE - 1)) != 0) {
+    while (((ULONG)PointerPte & (PAGE_SIZE - 1)) != 0)
+    {
         *PointerPte = ZeroKernelPte;
         PointerPte += 1;
     }
 
-    if (MmExpandedNonPagedPoolInBytes) {
+    if (MmExpandedNonPagedPoolInBytes)
+    {
 
-        if (LowMemoryReserved) {
-            MmNonPagedPoolStart = (PVOID)((LowMemoryReserved << PAGE_SHIFT) |
-                                  KSEG0_BASE);
+        if (LowMemoryReserved)
+        {
+            MmNonPagedPoolStart = (PVOID)((LowMemoryReserved << PAGE_SHIFT) | KSEG0_BASE);
         }
-        else if (RemovedLowPage) {
-            MmNonPagedPoolStart = (PVOID)((RemovedLowPage << PAGE_SHIFT) |
-                                  KSEG0_BASE);
+        else if (RemovedLowPage)
+        {
+            MmNonPagedPoolStart = (PVOID)((RemovedLowPage << PAGE_SHIFT) | KSEG0_BASE);
         }
-        else {
-            ASSERT (FALSE);
+        else
+        {
+            ASSERT(FALSE);
         }
     }
-    else {
-        PointerPte = MiGetPteAddress (MmNonPagedPoolStart);
-        MmNonPagedPoolStart = (PVOID)((PointerPte->u.Hard.PageFrameNumber << PAGE_SHIFT) |
-                              KSEG0_BASE);
+    else
+    {
+        PointerPte = MiGetPteAddress(MmNonPagedPoolStart);
+        MmNonPagedPoolStart = (PVOID)((PointerPte->u.Hard.PageFrameNumber << PAGE_SHIFT) | KSEG0_BASE);
     }
 
     MmPageAlignedPoolBase[NonPagedPool] = MmNonPagedPoolStart;
 
     MmSubsectionBase = (ULONG)MmNonPagedPoolStart;
 
-    if (MmExpandedNonPagedPoolInBytes == 0) {
-        if (NextPhysicalPage < (MM_SUBSECTION_MAP >> PAGE_SHIFT)) {
+    if (MmExpandedNonPagedPoolInBytes == 0)
+    {
+        if (NextPhysicalPage < (MM_SUBSECTION_MAP >> PAGE_SHIFT))
+        {
             MmSubsectionBase = KSEG0_BASE;
         }
     }
@@ -704,15 +732,16 @@ Environment:
     // Non-paged pages now exist, build the pool structures.
     //
 
-    if (MmExpandedNonPagedPoolInBytes) {
+    if (MmExpandedNonPagedPoolInBytes)
+    {
         MmNonPagedPoolExpansionStart = (PVOID)NonPagedPoolStartVirtual;
     }
-    else {
-        MmNonPagedPoolExpansionStart = (PVOID)((PCHAR)NonPagedPoolStartVirtual +
-                        MmSizeOfNonPagedPoolInBytes);
+    else
+    {
+        MmNonPagedPoolExpansionStart = (PVOID)((PCHAR)NonPagedPoolStartVirtual + MmSizeOfNonPagedPoolInBytes);
     }
 
-    MiInitializeNonPagedPool ();
+    MiInitializeNonPagedPool();
 
     //
     // Before Non-paged pool can be used, the PFN database must
@@ -729,7 +758,8 @@ Environment:
     // secondary colors to the end of the PFN database.
     //
 
-    if (MmSecondaryColors == 0) {
+    if (MmSecondaryColors == 0)
+    {
         MmSecondaryColors = PCR->SecondLevelCacheSize;
     }
 
@@ -739,18 +769,19 @@ Environment:
     // Make sure value is power of two and within limits.
     //
 
-    if (((MmSecondaryColors & (MmSecondaryColors -1)) != 0) ||
-        (MmSecondaryColors < MM_SECONDARY_COLORS_MIN) ||
-        (MmSecondaryColors > MM_SECONDARY_COLORS_MAX)) {
+    if (((MmSecondaryColors & (MmSecondaryColors - 1)) != 0) || (MmSecondaryColors < MM_SECONDARY_COLORS_MIN) ||
+        (MmSecondaryColors > MM_SECONDARY_COLORS_MAX))
+    {
 
         MmSecondaryColors = MM_SECONDARY_COLORS_DEFAULT;
     }
 
     MmSecondaryColorMask = MmSecondaryColors - 1;
 
-    PfnAllocation = 1 + ((((MmHighestPossiblePhysicalPage + 1) * sizeof(MMPFN)) +
-                        (MmSecondaryColors * sizeof(MMCOLOR_TABLES)*2))
-                            >> PAGE_SHIFT);
+    PfnAllocation =
+        1 +
+        ((((MmHighestPossiblePhysicalPage + 1) * sizeof(MMPFN)) + (MmSecondaryColors * sizeof(MMCOLOR_TABLES) * 2)) >>
+         PAGE_SHIFT);
 
     //
     // If the number of pages remaining in the current descriptor is
@@ -763,8 +794,8 @@ Environment:
     //
 
 #ifndef PFN_CONSISTENCY
-    if ((NumberOfPages >= PfnAllocation) &&
-        (NextPhysicalPage + NumberOfPages <= MM_PAGES_IN_KSEG0)) {
+    if ((NumberOfPages >= PfnAllocation) && (NextPhysicalPage + NumberOfPages <= MM_PAGES_IN_KSEG0))
+    {
 
         //
         // Allocate the PFN database in kseg0.
@@ -775,8 +806,7 @@ Environment:
 
         PfnInKseg0 = TRUE;
         HighPage = NextPhysicalPage + NumberOfPages;
-        MmPfnDatabase = (PMMPFN)(KSEG0_BASE |
-                                 ((HighPage - PfnAllocation) << PAGE_SHIFT));
+        MmPfnDatabase = (PMMPFN)(KSEG0_BASE | ((HighPage - PfnAllocation) << PAGE_SHIFT));
         RtlZeroMemory(MmPfnDatabase, PfnAllocation * PAGE_SIZE);
 
         //
@@ -786,16 +816,17 @@ Environment:
         NumberOfPages -= PfnAllocation;
 
         if (NextPhysicalPage >= FreeDescriptorLowMem->BasePage &&
-            NextPhysicalPage < (FreeDescriptorLowMem->BasePage +
-                                FreeDescriptorLowMem->PageCount)) {
+            NextPhysicalPage < (FreeDescriptorLowMem->BasePage + FreeDescriptorLowMem->PageCount))
+        {
 
             //
             // We haven't used the other descriptor.
             //
 
             FreeDescriptorLowMem->PageCount -= PfnAllocation;
-
-        } else {
+        }
+        else
+        {
 
             FreeDescriptor->PageCount -= PfnAllocation;
         }
@@ -810,13 +841,15 @@ Environment:
         // the highest nonpaged pool allocation.
         //
 
-        if (MiReserveSystemPtes (1, NonPagedPoolExpansion) == NULL) {
-            MiIssueNoPtesBugcheck (1, NonPagedPoolExpansion);
+        if (MiReserveSystemPtes(1, NonPagedPoolExpansion) == NULL)
+        {
+            MiIssueNoPtesBugcheck(1, NonPagedPoolExpansion);
         }
     }
-    else {
+    else
+    {
 
-#endif   // PFN_CONSISTENCY
+#endif // PFN_CONSISTENCY
 
         //
         // Calculate the start of the Pfn database (it starts at physical
@@ -824,9 +857,10 @@ Environment:
         //
 
         PfnInKseg0 = FALSE;
-        PointerPte = MiReserveSystemPtes (PfnAllocation, NonPagedPoolExpansion);
-        if (PointerPte == NULL) {
-            MiIssueNoPtesBugcheck (PfnAllocation, NonPagedPoolExpansion);
+        PointerPte = MiReserveSystemPtes(PfnAllocation, NonPagedPoolExpansion);
+        if (PointerPte == NULL)
+        {
+            MiIssueNoPtesBugcheck(PfnAllocation, NonPagedPoolExpansion);
         }
 
 #if PFN_CONSISTENCY
@@ -834,7 +868,7 @@ Environment:
         MiPfnPtes = PfnAllocation;
 #endif
 
-        MmPfnDatabase = (PMMPFN)(MiGetVirtualAddressMappedByPte (PointerPte));
+        MmPfnDatabase = (PMMPFN)(MiGetVirtualAddressMappedByPte(PointerPte));
 
         //
         // Allocate one more PTE just below the PFN database.  This provides
@@ -846,8 +880,9 @@ Environment:
         // the highest nonpaged pool allocation.
         //
 
-        if (MiReserveSystemPtes (1, NonPagedPoolExpansion) == NULL) {
-            MiIssueNoPtesBugcheck (1, NonPagedPoolExpansion);
+        if (MiReserveSystemPtes(1, NonPagedPoolExpansion) == NULL)
+        {
+            MiIssueNoPtesBugcheck(1, NonPagedPoolExpansion);
         }
 
         //
@@ -859,49 +894,48 @@ Environment:
 
         NextMd = LoaderBlock->MemoryDescriptorListHead.Flink;
 
-        while (NextMd != &LoaderBlock->MemoryDescriptorListHead) {
+        while (NextMd != &LoaderBlock->MemoryDescriptorListHead)
+        {
 
-            MemoryDescriptor = CONTAINING_RECORD(NextMd,
-                                                 MEMORY_ALLOCATION_DESCRIPTOR,
-                                                 ListEntry);
+            MemoryDescriptor = CONTAINING_RECORD(NextMd, MEMORY_ALLOCATION_DESCRIPTOR, ListEntry);
 
-            PointerPte = MiGetPteAddress (MI_PFN_ELEMENT(
-                                            MemoryDescriptor->BasePage));
+            PointerPte = MiGetPteAddress(MI_PFN_ELEMENT(MemoryDescriptor->BasePage));
 
-            LastPte = MiGetPteAddress (((PCHAR)(MI_PFN_ELEMENT(
-                                            MemoryDescriptor->BasePage +
-                                            MemoryDescriptor->PageCount))) - 1);
+            LastPte = MiGetPteAddress(
+                ((PCHAR)(MI_PFN_ELEMENT(MemoryDescriptor->BasePage + MemoryDescriptor->PageCount))) - 1);
 
             //
             // If memory was temporarily removed to create the initial non
             // paged pool, account for it now so PFN entries are created for it.
             //
 
-            if (MemoryDescriptor == FreeDescriptorLowMem) {
-                if (RemovedLowPage) {
-                    ASSERT (MemoryDescriptor->BasePage + MemoryDescriptor->PageCount == RemovedLowPage);
-                    LastPte = MiGetPteAddress (((PCHAR)(MI_PFN_ELEMENT(
-                                                    MemoryDescriptor->BasePage +
-                                                    RemovedLowCount +
-                                                    MemoryDescriptor->PageCount))) - 1);
+            if (MemoryDescriptor == FreeDescriptorLowMem)
+            {
+                if (RemovedLowPage)
+                {
+                    ASSERT(MemoryDescriptor->BasePage + MemoryDescriptor->PageCount == RemovedLowPage);
+                    LastPte = MiGetPteAddress(((PCHAR)(MI_PFN_ELEMENT(MemoryDescriptor->BasePage + RemovedLowCount +
+                                                                      MemoryDescriptor->PageCount))) -
+                                              1);
                 }
             }
 
-            while (PointerPte <= LastPte) {
+            while (PointerPte <= LastPte)
+            {
 
-                if (PointerPte->u.Hard.Valid == 0) {
+                if (PointerPte->u.Hard.Valid == 0)
+                {
                     TempPte.u.Hard.PageFrameNumber = NextPhysicalPage;
                     NextPhysicalPage += 1;
                     NumberOfPages -= 1;
-                    if (NumberOfPages == 0) {
-                        ASSERT (NextPhysicalPage != (FreeDescriptor->BasePage +
-                                FreeDescriptor->PageCount));
+                    if (NumberOfPages == 0)
+                    {
+                        ASSERT(NextPhysicalPage != (FreeDescriptor->BasePage + FreeDescriptor->PageCount));
                         NextPhysicalPage = FreeDescriptor->BasePage;
                         NumberOfPages = FreeDescriptor->PageCount;
                     }
                     *PointerPte = TempPte;
-                    RtlZeroMemory (MiGetVirtualAddressMappedByPte (PointerPte),
-                                   PAGE_SIZE);
+                    RtlZeroMemory(MiGetVirtualAddressMappedByPte(PointerPte), PAGE_SIZE);
                 }
                 PointerPte += 1;
             }
@@ -915,8 +949,7 @@ Environment:
     // Initialize support for colored pages.
     //
 
-    MmFreePagesByColor[0] = (PMMCOLOR_TABLES)
-                                &MmPfnDatabase[MmHighestPossiblePhysicalPage + 1];
+    MmFreePagesByColor[0] = (PMMCOLOR_TABLES)&MmPfnDatabase[MmHighestPossiblePhysicalPage + 1];
 
     MmFreePagesByColor[1] = &MmFreePagesByColor[0][MmSecondaryColors];
 
@@ -924,39 +957,42 @@ Environment:
     // Make sure the PTEs are mapped.
     //
 
-    if (!MI_IS_PHYSICAL_ADDRESS(MmFreePagesByColor[0])) {
+    if (!MI_IS_PHYSICAL_ADDRESS(MmFreePagesByColor[0]))
+    {
 
-        PointerPte = MiGetPteAddress (&MmFreePagesByColor[0][0]);
+        PointerPte = MiGetPteAddress(&MmFreePagesByColor[0][0]);
 
-        LastPte = MiGetPteAddress (
-                  (PVOID)((PCHAR)&MmFreePagesByColor[1][MmSecondaryColors]-1));
+        LastPte = MiGetPteAddress((PVOID)((PCHAR)&MmFreePagesByColor[1][MmSecondaryColors] - 1));
 
-        while (PointerPte <= LastPte) {
-            if (PointerPte->u.Hard.Valid == 0) {
+        while (PointerPte <= LastPte)
+        {
+            if (PointerPte->u.Hard.Valid == 0)
+            {
                 TempPte.u.Hard.PageFrameNumber = NextPhysicalPage;
                 NextPhysicalPage += 1;
                 NumberOfPages -= 1;
-                if (NumberOfPages == 0) {
-                    ASSERT (NextPhysicalPage != (FreeDescriptor->BasePage +
-                                                 FreeDescriptor->PageCount));
+                if (NumberOfPages == 0)
+                {
+                    ASSERT(NextPhysicalPage != (FreeDescriptor->BasePage + FreeDescriptor->PageCount));
                     NextPhysicalPage = FreeDescriptor->BasePage;
                     NumberOfPages = FreeDescriptor->PageCount;
                 }
                 *PointerPte = TempPte;
-                RtlZeroMemory (MiGetVirtualAddressMappedByPte (PointerPte),
-                               PAGE_SIZE);
+                RtlZeroMemory(MiGetVirtualAddressMappedByPte(PointerPte), PAGE_SIZE);
             }
             PointerPte += 1;
         }
     }
 
-    for (i = 0; i < MmSecondaryColors; i += 1) {
+    for (i = 0; i < MmSecondaryColors; i += 1)
+    {
         MmFreePagesByColor[ZeroedPageList][i].Flink = MM_EMPTY_LIST;
         MmFreePagesByColor[FreePageList][i].Flink = MM_EMPTY_LIST;
     }
 
 #if MM_MAXIMUM_NUMBER_OF_COLORS > 1
-    for (i = 0; i < MM_MAXIMUM_NUMBER_OF_COLORS; i += 1) {
+    for (i = 0; i < MM_MAXIMUM_NUMBER_OF_COLORS; i += 1)
+    {
         MmFreePagesByPrimaryColor[ZeroedPageList][i].ListName = ZeroedPageList;
         MmFreePagesByPrimaryColor[FreePageList][i].ListName = FreePageList;
         MmFreePagesByPrimaryColor[ZeroedPageList][i].Flink = MM_EMPTY_LIST;
@@ -971,7 +1007,7 @@ Environment:
     // valid, update the corresponding PFN database element.
     //
 
-    PointerPde = MiGetPdeAddress (PTE_BASE);
+    PointerPde = MiGetPdeAddress(PTE_BASE);
 
     PdePage = PointerPde->u.Hard.PageFrameNumber;
     Pfn1 = MI_PFN_ELEMENT(PdePage);
@@ -980,20 +1016,21 @@ Environment:
     Pfn1->u2.ShareCount += 1;
     Pfn1->u3.e2.ReferenceCount = 1;
     Pfn1->u3.e1.PageLocation = ActiveAndValid;
-    Pfn1->u3.e1.PageColor =
-        MI_GET_COLOR_FROM_SECONDARY(GET_PAGE_COLOR_FROM_PTE (PointerPde));
+    Pfn1->u3.e1.PageColor = MI_GET_COLOR_FROM_SECONDARY(GET_PAGE_COLOR_FROM_PTE(PointerPde));
 
     //
     // Add the pages which were used to construct nonpaged pool to
     // the PFN database.
     //
 
-    Pde = MiGetPdeAddress (MmNonPagedSystemStart);
+    Pde = MiGetPdeAddress(MmNonPagedSystemStart);
 
     EndPde = MiGetPdeAddress(NON_PAGED_SYSTEM_END);
 
-    while (Pde <= EndPde) {
-        if (Pde->u.Hard.Valid == 1) {
+    while (Pde <= EndPde)
+    {
+        if (Pde->u.Hard.Valid == 1)
+        {
             PdePage = Pde->u.Hard.PageFrameNumber;
             Pfn1 = MI_PFN_ELEMENT(PdePage);
             Pfn1->PteFrame = PointerPde->u.Hard.PageFrameNumber;
@@ -1001,12 +1038,13 @@ Environment:
             Pfn1->u2.ShareCount += 1;
             Pfn1->u3.e2.ReferenceCount = 1;
             Pfn1->u3.e1.PageLocation = ActiveAndValid;
-            Pfn1->u3.e1.PageColor =
-                MI_GET_COLOR_FROM_SECONDARY(GET_PAGE_COLOR_FROM_PTE (Pde));
+            Pfn1->u3.e1.PageColor = MI_GET_COLOR_FROM_SECONDARY(GET_PAGE_COLOR_FROM_PTE(Pde));
 
-            PointerPte = MiGetVirtualAddressMappedByPte (Pde);
-            for (j = 0 ; j < PTE_PER_PAGE; j += 1) {
-                if (PointerPte->u.Hard.Valid == 1) {
+            PointerPte = MiGetVirtualAddressMappedByPte(Pde);
+            for (j = 0; j < PTE_PER_PAGE; j += 1)
+            {
+                if (PointerPte->u.Hard.Valid == 1)
+                {
 
                     PageFrameIndex = PointerPte->u.Hard.PageFrameNumber;
                     Pfn2 = MI_PFN_ELEMENT(PageFrameIndex);
@@ -1015,11 +1053,9 @@ Environment:
                     Pfn2->u3.e2.ReferenceCount = 1;
                     Pfn2->u3.e1.PageLocation = ActiveAndValid;
 
-                    Pfn2->PteAddress =
-                            (PMMPTE)(KSEG0_BASE | (PageFrameIndex << PTE_SHIFT));
+                    Pfn2->PteAddress = (PMMPTE)(KSEG0_BASE | (PageFrameIndex << PTE_SHIFT));
 
-                    Pfn2->u3.e1.PageColor =
-                            MI_GET_COLOR_FROM_SECONDARY(GET_PAGE_COLOR_FROM_PTE (Pfn2->PteAddress));
+                    Pfn2->u3.e1.PageColor = MI_GET_COLOR_FROM_SECONDARY(GET_PAGE_COLOR_FROM_PTE(Pfn2->PteAddress));
                 }
                 PointerPte += 1;
             }
@@ -1031,21 +1067,21 @@ Environment:
     // Handle the initial nonpaged pool on expanded systems.
     //
 
-    if (MmExpandedNonPagedPoolInBytes) {
+    if (MmExpandedNonPagedPoolInBytes)
+    {
         PageFrameIndex = (((ULONG_PTR)MmNonPagedPoolStart & ~KSEG0_BASE) >> PAGE_SHIFT);
         Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
         j = PageFrameIndex + (MmSizeOfNonPagedPoolInBytes >> PAGE_SHIFT);
-        while (PageFrameIndex < j) {
+        while (PageFrameIndex < j)
+        {
             Pfn1->PteFrame = PdePage;
             Pfn1->u2.ShareCount += 1;
             Pfn1->u3.e2.ReferenceCount = 1;
             Pfn1->u3.e1.PageLocation = ActiveAndValid;
 
-            Pfn1->PteAddress =
-                    (PMMPTE)(KSEG0_BASE | (PageFrameIndex << PTE_SHIFT));
+            Pfn1->PteAddress = (PMMPTE)(KSEG0_BASE | (PageFrameIndex << PTE_SHIFT));
 
-            Pfn1->u3.e1.PageColor =
-                    MI_GET_COLOR_FROM_SECONDARY(GET_PAGE_COLOR_FROM_PTE (Pfn1->PteAddress));
+            Pfn1->u3.e1.PageColor = MI_GET_COLOR_FROM_SECONDARY(GET_PAGE_COLOR_FROM_PTE(Pfn1->PteAddress));
             PageFrameIndex += 1;
             Pfn1 += 1;
         }
@@ -1058,22 +1094,22 @@ Environment:
     //
 
     Pfn1 = &MmPfnDatabase[MmLowestPhysicalPage];
-    if (Pfn1->u3.e2.ReferenceCount == 0) {
+    if (Pfn1->u3.e2.ReferenceCount == 0)
+    {
 
         //
         // Make the reference count non-zero and point it into a
         // page directory.
         //
 
-        Pde = MiGetPdeAddress (0xb0000000);
+        Pde = MiGetPdeAddress(0xb0000000);
         PdePage = Pde->u.Hard.PageFrameNumber;
         Pfn1->PteFrame = PdePageNumber;
         Pfn1->PteAddress = Pde;
         Pfn1->u2.ShareCount += 1;
         Pfn1->u3.e2.ReferenceCount = 1;
         Pfn1->u3.e1.PageLocation = ActiveAndValid;
-        Pfn1->u3.e1.PageColor =
-                MI_GET_COLOR_FROM_SECONDARY(GET_PAGE_COLOR_FROM_PTE (Pde));
+        Pfn1->u3.e1.PageColor = MI_GET_COLOR_FROM_SECONDARY(GET_PAGE_COLOR_FROM_PTE(Pde));
     }
 
     // end of temporary set to physical page zero.
@@ -1085,77 +1121,77 @@ Environment:
 
     NextMd = LoaderBlock->MemoryDescriptorListHead.Flink;
 
-    while (NextMd != &LoaderBlock->MemoryDescriptorListHead) {
+    while (NextMd != &LoaderBlock->MemoryDescriptorListHead)
+    {
 
-        MemoryDescriptor = CONTAINING_RECORD(NextMd,
-                                             MEMORY_ALLOCATION_DESCRIPTOR,
-                                             ListEntry);
+        MemoryDescriptor = CONTAINING_RECORD(NextMd, MEMORY_ALLOCATION_DESCRIPTOR, ListEntry);
 
         i = MemoryDescriptor->PageCount;
         NextPhysicalPage = MemoryDescriptor->BasePage;
 
-        switch (MemoryDescriptor->MemoryType) {
-            case LoaderBad:
-                while (i != 0) {
-                    MiInsertPageInList (&MmBadPageListHead, NextPhysicalPage);
-                    i -= 1;
-                    NextPhysicalPage += 1;
-                }
-                break;
+        switch (MemoryDescriptor->MemoryType)
+        {
+        case LoaderBad:
+            while (i != 0)
+            {
+                MiInsertPageInList(&MmBadPageListHead, NextPhysicalPage);
+                i -= 1;
+                NextPhysicalPage += 1;
+            }
+            break;
 
-            case LoaderFree:
-            case LoaderLoadedProgram:
-            case LoaderFirmwareTemporary:
-            case LoaderOsloaderStack:
+        case LoaderFree:
+        case LoaderLoadedProgram:
+        case LoaderFirmwareTemporary:
+        case LoaderOsloaderStack:
 
-                Pfn1 = MI_PFN_ELEMENT (NextPhysicalPage);
-                while (i != 0) {
-                    if (Pfn1->u3.e2.ReferenceCount == 0) {
-
-                        //
-                        // Set the PTE address to the physical page for
-                        // virtual address alignment checking.
-                        //
-
-                        Pfn1->PteAddress =
-                                        (PMMPTE)(NextPhysicalPage << PTE_SHIFT);
-
-                        Pfn1->u3.e1.PageColor =
-                MI_GET_COLOR_FROM_SECONDARY(GET_PAGE_COLOR_FROM_PTE (Pfn1->PteAddress));
-                        MiInsertPageInFreeList (NextPhysicalPage);
-                    }
-                    Pfn1 += 1;
-                    i -= 1;
-                    NextPhysicalPage += 1;
-                }
-                break;
-
-            default:
-
-                PointerPte = MiGetPteAddress (KSEG0_BASE |
-                                            (NextPhysicalPage << PAGE_SHIFT));
-                Pfn1 = MI_PFN_ELEMENT (NextPhysicalPage);
-                while (i != 0) {
+            Pfn1 = MI_PFN_ELEMENT(NextPhysicalPage);
+            while (i != 0)
+            {
+                if (Pfn1->u3.e2.ReferenceCount == 0)
+                {
 
                     //
-                    // Set page as in use.
+                    // Set the PTE address to the physical page for
+                    // virtual address alignment checking.
                     //
 
-                    Pfn1->PteFrame = PdePageNumber;
-                    Pfn1->PteAddress = PointerPte;
-                    Pfn1->u2.ShareCount += 1;
-                    Pfn1->u3.e2.ReferenceCount = 1;
-                    Pfn1->u3.e1.PageLocation = ActiveAndValid;
-                    Pfn1->u3.e1.PageColor =
-                MI_GET_COLOR_FROM_SECONDARY(GET_PAGE_COLOR_FROM_PTE (PointerPte));
+                    Pfn1->PteAddress = (PMMPTE)(NextPhysicalPage << PTE_SHIFT);
 
-                    Pfn1 += 1;
-                    i -= 1;
-                    NextPhysicalPage += 1;
-                    PointerPte += 1;
+                    Pfn1->u3.e1.PageColor = MI_GET_COLOR_FROM_SECONDARY(GET_PAGE_COLOR_FROM_PTE(Pfn1->PteAddress));
+                    MiInsertPageInFreeList(NextPhysicalPage);
                 }
+                Pfn1 += 1;
+                i -= 1;
+                NextPhysicalPage += 1;
+            }
+            break;
 
-                break;
+        default:
+
+            PointerPte = MiGetPteAddress(KSEG0_BASE | (NextPhysicalPage << PAGE_SHIFT));
+            Pfn1 = MI_PFN_ELEMENT(NextPhysicalPage);
+            while (i != 0)
+            {
+
+                //
+                // Set page as in use.
+                //
+
+                Pfn1->PteFrame = PdePageNumber;
+                Pfn1->PteAddress = PointerPte;
+                Pfn1->u2.ShareCount += 1;
+                Pfn1->u3.e2.ReferenceCount = 1;
+                Pfn1->u3.e1.PageLocation = ActiveAndValid;
+                Pfn1->u3.e1.PageColor = MI_GET_COLOR_FROM_SECONDARY(GET_PAGE_COLOR_FROM_PTE(PointerPte));
+
+                Pfn1 += 1;
+                i -= 1;
+                NextPhysicalPage += 1;
+                PointerPte += 1;
+            }
+
+            break;
         }
 
         NextMd = MemoryDescriptor->ListEntry.Flink;
@@ -1164,7 +1200,8 @@ Environment:
     //
     // Indicate that the PFN database is allocated in NonPaged pool.
     //
-    if (PfnInKseg0 == FALSE) {
+    if (PfnInKseg0 == FALSE)
+    {
 
         //
         // The PFN database is allocated in virtual memory
@@ -1176,8 +1213,9 @@ Environment:
         Pfn1->u3.e1.StartOfAllocation = 1;
         Pfn1 = MI_PFN_ELEMENT(MiGetPteAddress(&MmPfnDatabase[MmHighestPossiblePhysicalPage])->u.Hard.PageFrameNumber);
         Pfn1->u3.e1.EndOfAllocation = 1;
-
-    } else {
+    }
+    else
+    {
 
         //
         // The PFN database is allocated in KSEG0.
@@ -1187,10 +1225,10 @@ Environment:
 
         PageNumber = ((ULONG)MmPfnDatabase - KSEG0_BASE) >> PAGE_SHIFT;
         Pfn1 = MI_PFN_ELEMENT(PageNumber);
-        do {
+        do
+        {
             Pfn1->PteAddress = (PMMPTE)(PageNumber << PTE_SHIFT);
-            Pfn1->u3.e1.PageColor =
-                MI_GET_COLOR_FROM_SECONDARY(GET_PAGE_COLOR_FROM_PTE (Pfn1->PteAddress));
+            Pfn1->u3.e1.PageColor = MI_GET_COLOR_FROM_SECONDARY(GET_PAGE_COLOR_FROM_PTE(Pfn1->PteAddress));
             Pfn1 += 1;
             PfnAllocation -= 1;
         } while (PfnAllocation != 0);
@@ -1200,9 +1238,11 @@ Environment:
         // These pages are unused and can be added to the free list
         //
 
-        if (MmDynamicPfn == FALSE) {
+        if (MmDynamicPfn == FALSE)
+        {
             BottomPfn = MI_PFN_ELEMENT(MmHighestPhysicalPage);
-            do {
+            do
+            {
 
                 //
                 // Compute the address of the start of the page that is next
@@ -1210,16 +1250,19 @@ Environment:
                 // is reached or just crossed.
                 //
 
-                if (((ULONG)BottomPfn & (PAGE_SIZE - 1)) != 0) {
+                if (((ULONG)BottomPfn & (PAGE_SIZE - 1)) != 0)
+                {
                     BasePfn = (PMMPFN)((ULONG)BottomPfn & ~(PAGE_SIZE - 1));
                     TopPfn = BottomPfn + 1;
-
-                } else {
+                }
+                else
+                {
                     BasePfn = (PMMPFN)((ULONG)BottomPfn - PAGE_SIZE);
                     TopPfn = BottomPfn;
                 }
 
-                while (BottomPfn > BasePfn) {
+                while (BottomPfn > BasePfn)
+                {
                     BottomPfn -= 1;
                 }
 
@@ -1231,7 +1274,8 @@ Environment:
                 //
 
                 Range = (ULONG)TopPfn - (ULONG)BottomPfn;
-                if (RtlCompareMemoryUlong((PVOID)BottomPfn, Range, 0) == Range) {
+                if (RtlCompareMemoryUlong((PVOID)BottomPfn, Range, 0) == Range)
+                {
 
                     //
                     // Set the PTE address to the physical page for
@@ -1246,10 +1290,9 @@ Environment:
                     PfnAllocation += 1;
 
                     Pfn1->PteAddress = (PMMPTE)(PageNumber << PTE_SHIFT);
-                    Pfn1->u3.e1.PageColor =
-                        MI_GET_COLOR_FROM_SECONDARY(GET_PAGE_COLOR_FROM_PTE (Pfn1->PteAddress));
+                    Pfn1->u3.e1.PageColor = MI_GET_COLOR_FROM_SECONDARY(GET_PAGE_COLOR_FROM_PTE(Pfn1->PteAddress));
 
-                    MiInsertPageInFreeList (PageNumber);
+                    MiInsertPageInFreeList(PageNumber);
                 }
 
             } while (BottomPfn > MmPfnDatabase);
@@ -1262,9 +1305,10 @@ Environment:
     //
 
     i = MmSizeOfNonPagedMustSucceed;
-    Pfn1 = MI_PFN_ELEMENT(MI_CONVERT_PHYSICAL_TO_PFN (MmNonPagedMustSucceed));
+    Pfn1 = MI_PFN_ELEMENT(MI_CONVERT_PHYSICAL_TO_PFN(MmNonPagedMustSucceed));
 
-    while ((LONG)i > 0) {
+    while ((LONG)i > 0)
+    {
         Pfn1->u3.e1.StartOfAllocation = 1;
         Pfn1->u3.e1.EndOfAllocation = 1;
         i -= PAGE_SIZE;
@@ -1275,14 +1319,14 @@ Environment:
     // Initialize the nonpaged pool.
     //
 
-    InitializePool (NonPagedPool, 0);
+    InitializePool(NonPagedPool, 0);
 
     //
     // Initialize the nonpaged available PTEs for mapping I/O space
     // and kernel stacks.
     //
 
-    PointerPte = MiGetPteAddress (MmNonPagedSystemStart);
+    PointerPte = MiGetPteAddress(MmNonPagedSystemStart);
 
     //
     // Since the initial nonpaged pool must always reside in KSEG0 (many changes
@@ -1292,7 +1336,7 @@ Environment:
 
     MmNumberOfSystemPtes = MiGetPteAddress(MmNonPagedPoolExpansionStart) - PointerPte - 1;
 
-    MiInitializeSystemPtes (PointerPte, MmNumberOfSystemPtes, SystemPteSpace);
+    MiInitializeSystemPtes(PointerPte, MmNumberOfSystemPtes, SystemPteSpace);
 
     //
     // Initialize memory management structures for this process.
@@ -1308,7 +1352,7 @@ Environment:
 
     PointerPte = MiGetPdeAddress(HYPER_SPACE);
 
-    ASSERT (PointerPte->u.Hard.Valid == 1);
+    ASSERT(PointerPte->u.Hard.Valid == 1);
     PointerPte->u.Hard.Global = 0;
     PointerPte->u.Hard.Write = 1;
     PageFrameIndex = PointerPte->u.Hard.PageFrameNumber;
@@ -1318,14 +1362,14 @@ Environment:
     //
 
     PointerPte = MiGetPteAddress(HYPER_SPACE);
-    RtlZeroMemory ((PVOID)PointerPte, PAGE_SIZE);
+    RtlZeroMemory((PVOID)PointerPte, PAGE_SIZE);
 
     //
     // Hyper space now exists, set the necessary variables.
     //
 
-    MmFirstReservedMappingPte = MiGetPteAddress (FIRST_MAPPING_PTE);
-    MmLastReservedMappingPte = MiGetPteAddress (LAST_MAPPING_PTE);
+    MmFirstReservedMappingPte = MiGetPteAddress(FIRST_MAPPING_PTE);
+    MmLastReservedMappingPte = MiGetPteAddress(LAST_MAPPING_PTE);
 
     //
     // Initialize this process's memory management structures including
@@ -1338,9 +1382,9 @@ Environment:
     // wrong.
     //
 
-    Pfn1 = MI_PFN_ELEMENT (PdePageNumber);
+    Pfn1 = MI_PFN_ELEMENT(PdePageNumber);
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
     Pfn1->u2.ShareCount = 0;
     Pfn1->u3.e2.ReferenceCount = 0;
@@ -1351,54 +1395,47 @@ Environment:
     // so they won't be wrong.
     //
 
-    Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+    Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
     Pfn1->u2.ShareCount = 0;
     Pfn1->u3.e2.ReferenceCount = 0;
 
-    CurrentProcess = PsGetCurrentProcess ();
+    CurrentProcess = PsGetCurrentProcess();
 
     //
     // Get a page for the working set list and map it into the Page
     // directory at the page after hyperspace.
     //
 
-    PointerPte = MiGetPteAddress (HYPER_SPACE);
-    PageFrameIndex = MiRemoveAnyPage (MI_GET_PAGE_COLOR_FROM_PTE(PointerPte));
+    PointerPte = MiGetPteAddress(HYPER_SPACE);
+    PageFrameIndex = MiRemoveAnyPage(MI_GET_PAGE_COLOR_FROM_PTE(PointerPte));
 
     CurrentProcess->WorkingSetPage = PageFrameIndex;
 
     TempPte.u.Hard.PageFrameNumber = PageFrameIndex;
-    PointerPde = MiGetPdeAddress (HYPER_SPACE) + 1;
+    PointerPde = MiGetPdeAddress(HYPER_SPACE) + 1;
 
     //
     // Assert that the double mapped pages have the same alignment.
     //
 
-    ASSERT ((PointerPte->u.Long & (0xF << PTE_SHIFT)) ==
-            (PointerPde->u.Long & (0xF << PTE_SHIFT)));
+    ASSERT((PointerPte->u.Long & (0xF << PTE_SHIFT)) == (PointerPde->u.Long & (0xF << PTE_SHIFT)));
 
     *PointerPde = TempPte;
     PointerPde->u.Hard.Global = 0;
 
-    PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
+    PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
 
-    KeFillEntryTb ((PHARDWARE_PTE)PointerPde,
-                    PointerPte,
-                    TRUE);
+    KeFillEntryTb((PHARDWARE_PTE)PointerPde, PointerPte, TRUE);
 
-    RtlZeroMemory ((PVOID)PointerPte, PAGE_SIZE);
+    RtlZeroMemory((PVOID)PointerPte, PAGE_SIZE);
 
     TempPte = *PointerPde;
     TempPte.u.Hard.Valid = 0;
     TempPte.u.Hard.Global = 0;
 
-    KeFlushSingleTb (PointerPte,
-                     TRUE,
-                     FALSE,
-                     (PHARDWARE_PTE)PointerPde,
-                     TempPte.u.Hard);
+    KeFlushSingleTb(PointerPte, TRUE, FALSE, (PHARDWARE_PTE)PointerPde, TempPte.u.Hard);
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
     //
     // Initialize hyperspace for this process.
@@ -1410,10 +1447,7 @@ Environment:
     CurrentProcess->Vm.MaximumWorkingSetSize = MmSystemProcessWorkingSetMax;
     CurrentProcess->Vm.MinimumWorkingSetSize = MmSystemProcessWorkingSetMin;
 
-    MmInitializeProcessAddressSpace (CurrentProcess,
-                                (PEPROCESS)NULL,
-                                (PVOID)NULL,
-                                (PVOID)NULL);
+    MmInitializeProcessAddressSpace(CurrentProcess, (PEPROCESS)NULL, (PVOID)NULL, (PVOID)NULL);
 
     *PointerPde = ZeroKernelPte;
 
@@ -1428,46 +1462,47 @@ Environment:
     //
 
     if ((((ULONG)MmFreePagesByColor[0] & (PAGE_SIZE - 1)) == 0) &&
-       ((MmSecondaryColors * 2 * sizeof(MMCOLOR_TABLES)) < PAGE_SIZE)) {
+        ((MmSecondaryColors * 2 * sizeof(MMCOLOR_TABLES)) < PAGE_SIZE))
+    {
 
         PMMCOLOR_TABLES c;
 
         c = MmFreePagesByColor[0];
 
-        MmFreePagesByColor[0] = ExAllocatePoolWithTag (NonPagedPoolMustSucceed,
-                               MmSecondaryColors * 2 * sizeof(MMCOLOR_TABLES),
-                               '  mM');
+        MmFreePagesByColor[0] =
+            ExAllocatePoolWithTag(NonPagedPoolMustSucceed, MmSecondaryColors * 2 * sizeof(MMCOLOR_TABLES), '  mM');
 
         MmFreePagesByColor[1] = &MmFreePagesByColor[0][MmSecondaryColors];
 
-        RtlCopyMemory (MmFreePagesByColor[0],
-                       c,
-                       MmSecondaryColors * 2 * sizeof(MMCOLOR_TABLES));
+        RtlCopyMemory(MmFreePagesByColor[0], c, MmSecondaryColors * 2 * sizeof(MMCOLOR_TABLES));
 
         //
         // Free the page.
         //
 
-        if (!MI_IS_PHYSICAL_ADDRESS(c)) {
+        if (!MI_IS_PHYSICAL_ADDRESS(c))
+        {
             PointerPte = MiGetPteAddress(c);
             PageFrameIndex = PointerPte->u.Hard.PageFrameNumber;
             *PointerPte = ZeroKernelPte;
-        } else {
-            PageFrameIndex = MI_CONVERT_PHYSICAL_TO_PFN (c);
+        }
+        else
+        {
+            PageFrameIndex = MI_CONVERT_PHYSICAL_TO_PFN(c);
         }
 
-        LOCK_PFN (OldIrql);
+        LOCK_PFN(OldIrql);
 
-        Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
-        ASSERT ((Pfn1->u3.e2.ReferenceCount <= 1) && (Pfn1->u2.ShareCount <= 1));
+        Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
+        ASSERT((Pfn1->u3.e2.ReferenceCount <= 1) && (Pfn1->u2.ShareCount <= 1));
         Pfn1->u2.ShareCount = 0;
         Pfn1->u3.e2.ReferenceCount = 0;
-        MI_SET_PFN_DELETED (Pfn1);
+        MI_SET_PFN_DELETED(Pfn1);
 #if DBG
         Pfn1->u3.e1.PageLocation = StandbyPageList;
 #endif //DBG
-        MiInsertPageInFreeList (PageFrameIndex);
-        UNLOCK_PFN (OldIrql);
+        MiInsertPageInFreeList(PageFrameIndex);
+        UNLOCK_PFN(OldIrql);
     }
 
     return;

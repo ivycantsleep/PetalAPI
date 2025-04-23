@@ -21,7 +21,7 @@ Revision History:
 --*/
 #include "cmp.h"
 
-
+
 //
 // Function prototypes private to this module
 //
@@ -30,66 +30,36 @@ Revision History:
 // Dragos: modified to use the security cache
 //
 BOOLEAN
-CmpFindMatchingDescriptorCell(
-    IN PCMHIVE CmHive,
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN ULONG Type,
-    OUT PHCELL_INDEX MatchingCell,
-    OUT OPTIONAL PCM_KEY_SECURITY_CACHE *CachedSecurityPointer
-    );
+CmpFindMatchingDescriptorCell(IN PCMHIVE CmHive, IN PSECURITY_DESCRIPTOR SecurityDescriptor, IN ULONG Type,
+                              OUT PHCELL_INDEX MatchingCell,
+                              OUT OPTIONAL PCM_KEY_SECURITY_CACHE *CachedSecurityPointer);
 
 ////////////////
 NTSTATUS
-CmpSetSecurityDescriptorInfo(
-    IN PCM_KEY_CONTROL_BLOCK kcb,
-    IN PSECURITY_INFORMATION SecurityInformation,
-    IN PSECURITY_DESCRIPTOR ModificationDescriptor,
-    IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor,
-    IN POOL_TYPE PoolType,
-    IN PGENERIC_MAPPING GenericMapping
-    );
+CmpSetSecurityDescriptorInfo(IN PCM_KEY_CONTROL_BLOCK kcb, IN PSECURITY_INFORMATION SecurityInformation,
+                             IN PSECURITY_DESCRIPTOR ModificationDescriptor,
+                             IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor, IN POOL_TYPE PoolType,
+                             IN PGENERIC_MAPPING GenericMapping);
 
 NTSTATUS
-CmpQuerySecurityDescriptorInfo(
-    IN PCM_KEY_CONTROL_BLOCK kcb,
-    IN PSECURITY_INFORMATION SecurityInformation,
-    OUT PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN OUT PULONG Length,
-    IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor
-    );
+CmpQuerySecurityDescriptorInfo(IN PCM_KEY_CONTROL_BLOCK kcb, IN PSECURITY_INFORMATION SecurityInformation,
+                               OUT PSECURITY_DESCRIPTOR SecurityDescriptor, IN OUT PULONG Length,
+                               IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor);
 
 PCM_KEY_SECURITY
-CmpGetKeySecurity(
-    IN PHHIVE Hive,
-    IN PCM_KEY_NODE Key,
-    OUT PHCELL_INDEX SecurityCell OPTIONAL
-    );
+CmpGetKeySecurity(IN PHHIVE Hive, IN PCM_KEY_NODE Key, OUT PHCELL_INDEX SecurityCell OPTIONAL);
 
 NTSTATUS
-CmpGetObjectSecurity(
-    IN HCELL_INDEX Cell,
-    IN PHHIVE Hive,
-    OUT PCM_KEY_SECURITY *Security,
-    OUT PHCELL_INDEX SecurityCell OPTIONAL
-    );
+CmpGetObjectSecurity(IN HCELL_INDEX Cell, IN PHHIVE Hive, OUT PCM_KEY_SECURITY *Security,
+                     OUT PHCELL_INDEX SecurityCell OPTIONAL);
 
 BOOLEAN
-CmpInsertSecurityCellList(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX NodeCell,
-    IN HCELL_INDEX SecurityCell
-    );
+CmpInsertSecurityCellList(IN PHHIVE Hive, IN HCELL_INDEX NodeCell, IN HCELL_INDEX SecurityCell);
 
-VOID
-CmpRemoveSecurityCellList(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX SecurityCell
-    );
+VOID CmpRemoveSecurityCellList(IN PHHIVE Hive, IN HCELL_INDEX SecurityCell);
 
 ULONG
-CmpSecurityExceptionFilter(
-    IN PEXCEPTION_POINTERS ExceptionPointers
-    );
+CmpSecurityExceptionFilter(IN PEXCEPTION_POINTERS ExceptionPointers);
 
 //
 // This macro takes a PSECURITY_DESCRIPTOR and returns the size of the
@@ -97,29 +67,26 @@ CmpSecurityExceptionFilter(
 //
 
 #define SECURITY_CELL_LENGTH(pDescriptor) \
-    FIELD_OFFSET(CM_KEY_SECURITY,Descriptor) + \
-    RtlLengthSecurityDescriptor(pDescriptor)
+    FIELD_OFFSET(CM_KEY_SECURITY, Descriptor) + RtlLengthSecurityDescriptor(pDescriptor)
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,CmpSecurityMethod )
-#pragma alloc_text(PAGE,CmpSetSecurityDescriptorInfo)
-#pragma alloc_text(PAGE,CmpAssignSecurityDescriptor)
-#pragma alloc_text(PAGE,CmpQuerySecurityDescriptorInfo)
-#pragma alloc_text(PAGE,CmpCheckCreateAccess)
-#pragma alloc_text(PAGE,CmpCheckNotifyAccess)
-#pragma alloc_text(PAGE,CmpGetObjectSecurity)
-#pragma alloc_text(PAGE,CmpGetKeySecurity)
-#pragma alloc_text(PAGE,CmpHiveRootSecurityDescriptor)
-#pragma alloc_text(PAGE,CmpFreeSecurityDescriptor)
-#pragma alloc_text(PAGE,CmpInsertSecurityCellList)
-#pragma alloc_text(PAGE,CmpRemoveSecurityCellList)
-#pragma alloc_text(PAGE,CmpSecurityExceptionFilter)
+#pragma alloc_text(PAGE, CmpSecurityMethod)
+#pragma alloc_text(PAGE, CmpSetSecurityDescriptorInfo)
+#pragma alloc_text(PAGE, CmpAssignSecurityDescriptor)
+#pragma alloc_text(PAGE, CmpQuerySecurityDescriptorInfo)
+#pragma alloc_text(PAGE, CmpCheckCreateAccess)
+#pragma alloc_text(PAGE, CmpCheckNotifyAccess)
+#pragma alloc_text(PAGE, CmpGetObjectSecurity)
+#pragma alloc_text(PAGE, CmpGetKeySecurity)
+#pragma alloc_text(PAGE, CmpHiveRootSecurityDescriptor)
+#pragma alloc_text(PAGE, CmpFreeSecurityDescriptor)
+#pragma alloc_text(PAGE, CmpInsertSecurityCellList)
+#pragma alloc_text(PAGE, CmpRemoveSecurityCellList)
+#pragma alloc_text(PAGE, CmpSecurityExceptionFilter)
 #endif
 
 ULONG
-CmpSecurityExceptionFilter(
-    IN PEXCEPTION_POINTERS ExceptionPointers
-    )
+CmpSecurityExceptionFilter(IN PEXCEPTION_POINTERS ExceptionPointers)
 
 /*++
 
@@ -135,41 +102,36 @@ Return Value:
 
 {
 #ifndef _CM_LDR_
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"CM: Registry security exception %lx, ExceptionPointers = %p\n",
-            ExceptionPointers->ExceptionRecord->ExceptionCode,
-            ExceptionPointers);
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL, "CM: Registry security exception %lx, ExceptionPointers = %p\n",
+               ExceptionPointers->ExceptionRecord->ExceptionCode, ExceptionPointers);
 #endif //_CM_LDR_
-    
+
     //
-    // This is a request from the base test team; no dbg should be hit on the free builds 
+    // This is a request from the base test team; no dbg should be hit on the free builds
     // at the client; after RC2 is shipped we should enable this on free builds too.
     //
 #if DBG
-    try {
+    try
+    {
         DbgBreakPoint();
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         //
         // no debugger enabled, just keep going
         //
-
     }
 #endif
 
-    return(EXCEPTION_EXECUTE_HANDLER);
+    return (EXCEPTION_EXECUTE_HANDLER);
 }
 
 NTSTATUS
-CmpSecurityMethod (
-    IN PVOID Object,
-    IN SECURITY_OPERATION_CODE OperationCode,
-    IN PSECURITY_INFORMATION SecurityInformation,
-    IN OUT PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN OUT PULONG CapturedLength,
-    IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor,
-    IN POOL_TYPE PoolType,
-    IN PGENERIC_MAPPING GenericMapping
-    )
+CmpSecurityMethod(IN PVOID Object, IN SECURITY_OPERATION_CODE OperationCode,
+                  IN PSECURITY_INFORMATION SecurityInformation, IN OUT PSECURITY_DESCRIPTOR SecurityDescriptor,
+                  IN OUT PULONG CapturedLength, IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor,
+                  IN POOL_TYPE PoolType, IN PGENERIC_MAPPING GenericMapping)
 
 /*++
 
@@ -247,10 +209,10 @@ Return Value:
 --*/
 
 {
-    PCM_KEY_CONTROL_BLOCK   kcb;
-    NTSTATUS                Status;
-    CM_KEY_REFERENCE        Key;
-    PCM_KEY_NODE            TempNode;
+    PCM_KEY_CONTROL_BLOCK kcb;
+    NTSTATUS Status;
+    CM_KEY_REFERENCE Key;
+    PCM_KEY_NODE TempNode;
 
     //
     //  Make sure the common parts of our input are proper
@@ -259,43 +221,47 @@ Return Value:
     PAGED_CODE();
     ASSERT_KEY_OBJECT(Object);
 
-    ASSERT( (OperationCode == SetSecurityDescriptor) ||
-            (OperationCode == QuerySecurityDescriptor) ||
-            (OperationCode == AssignSecurityDescriptor) ||
-            (OperationCode == DeleteSecurityDescriptor) );
+    ASSERT((OperationCode == SetSecurityDescriptor) || (OperationCode == QuerySecurityDescriptor) ||
+           (OperationCode == AssignSecurityDescriptor) || (OperationCode == DeleteSecurityDescriptor));
 
     //
     // Lock hive for shared or exclusive, depending on what we need
     // to do.
     //
-    if (OperationCode == QuerySecurityDescriptor) {
+    if (OperationCode == QuerySecurityDescriptor)
+    {
         CmpLockRegistry();
-    } else {
+    }
+    else
+    {
         CmpLockRegistryExclusive();
 #ifdef CHECK_REGISTRY_USECOUNT
         CmpCheckRegistryUseCount();
 #endif //CHECK_REGISTRY_USECOUNT
     }
 
-    if (((PCM_KEY_BODY)Object)->KeyControlBlock->Delete) {
+    if (((PCM_KEY_BODY)Object)->KeyControlBlock->Delete)
+    {
         //
         // Key has been deleted, performing security operations on
         // it is Not Allowed.
         //
         CmpUnlockRegistry();
-        return(STATUS_KEY_DELETED);
+        return (STATUS_KEY_DELETED);
     }
 
     kcb = ((PCM_KEY_BODY)Object)->KeyControlBlock;
 
-    try {
+    try
+    {
 
         //
         //  This routine simply cases off of the operation code to decide
         //  which support routine to call
         //
 
-        switch (OperationCode) {
+        switch (OperationCode)
+        {
 
         case SetSecurityDescriptor:
 
@@ -303,26 +269,20 @@ Return Value:
             //  check the rest of our input and call the set security
             //  method
             //
-            ASSERT( (PoolType == PagedPool) || (PoolType == NonPagedPool) );
+            ASSERT((PoolType == PagedPool) || (PoolType == NonPagedPool));
 
-            Status = CmpSetSecurityDescriptorInfo( kcb,
-                                                   SecurityInformation,
-                                                   SecurityDescriptor,
-                                                   ObjectsSecurityDescriptor,
-                                                   PoolType,
-                                                   GenericMapping );
+            Status = CmpSetSecurityDescriptorInfo(kcb, SecurityInformation, SecurityDescriptor,
+                                                  ObjectsSecurityDescriptor, PoolType, GenericMapping);
 
             //
             // this is the one and only path on which a user could change
             // a security descriptor, therefore, report such changes for
             // notification here.
             //
-            if (NT_SUCCESS(Status)) {
-                CmpReportNotify(kcb,
-                                kcb->KeyHive,
-                                kcb->KeyCell,
+            if (NT_SUCCESS(Status))
+            {
+                CmpReportNotify(kcb, kcb->KeyHive, kcb->KeyCell,
                                 REG_NOTIFY_CHANGE_ATTRIBUTES | REG_NOTIFY_CHANGE_SECURITY);
-    
             }
 
             break;
@@ -333,12 +293,9 @@ Return Value:
             //  check the rest of our input and call the default query security
             //  method
             //
-            ASSERT( CapturedLength != NULL );
-            Status = CmpQuerySecurityDescriptorInfo( kcb,
-                                                     SecurityInformation,
-                                                     SecurityDescriptor,
-                                                     CapturedLength,
-                                                     ObjectsSecurityDescriptor );
+            ASSERT(CapturedLength != NULL);
+            Status = CmpQuerySecurityDescriptorInfo(kcb, SecurityInformation, SecurityDescriptor, CapturedLength,
+                                                    ObjectsSecurityDescriptor);
             break;
 
         case DeleteSecurityDescriptor:
@@ -362,10 +319,11 @@ Return Value:
 
             Status = ObAssignObjectSecurityDescriptor(Object, NULL, PagedPool);
 
-            ASSERT( NT_SUCCESS( Status ));
+            ASSERT(NT_SUCCESS(Status));
 
             TempNode = (PCM_KEY_NODE)HvGetCell(kcb->KeyHive, kcb->KeyCell);
-            if( TempNode == NULL ) {
+            if (TempNode == NULL)
+            {
                 //
                 // we couldn't map the bin containing this cell
                 //
@@ -373,22 +331,19 @@ Return Value:
                 // step thru exit
                 break;
             }
-            
+
             ASSERT_CM_LOCK_OWNED_EXCLUSIVE();
             // release the cell right here as we are holding the reglock exclusive
             HvReleaseCell(kcb->KeyHive, kcb->KeyCell);
             //
             // Assign the actual descriptor.
             //
-            Status = CmpAssignSecurityDescriptor( kcb->KeyHive,
-                                                  kcb->KeyCell,
-                                                  TempNode,
-                                                  SecurityDescriptor );
+            Status = CmpAssignSecurityDescriptor(kcb->KeyHive, kcb->KeyCell, TempNode, SecurityDescriptor);
             //
             // Security has been changed, update the cache.
             //
             ASSERT_CM_LOCK_OWNED_EXCLUSIVE();
-            CmpAssignSecurityToKcb(kcb,TempNode->Security);
+            CmpAssignSecurityToKcb(kcb, TempNode->Security);
 
             break;
 
@@ -398,29 +353,24 @@ Return Value:
             //  Bugcheck on any other operation code,  We won't get here if
             //  the earlier asserts are still checked.
             //
-            CM_BUGCHECK( REGISTRY_ERROR,BAD_SECURITY_METHOD,1,kcb,OperationCode);
-
+            CM_BUGCHECK(REGISTRY_ERROR, BAD_SECURITY_METHOD, 1, kcb, OperationCode);
         }
-
-    } except (CmpSecurityExceptionFilter(GetExceptionInformation())) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_EXCEPTION,"!!CmpSecurityMethod: code:%08lx\n", GetExceptionCode()));
+    }
+    except(CmpSecurityExceptionFilter(GetExceptionInformation()))
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_EXCEPTION, "!!CmpSecurityMethod: code:%08lx\n", GetExceptionCode()));
         Status = GetExceptionCode();
     }
 
     CmpUnlockRegistry();
-    return(Status);
-
+    return (Status);
 }
 
 NTSTATUS
-CmpSetSecurityDescriptorInfo(
-    IN PCM_KEY_CONTROL_BLOCK Key,
-    IN PSECURITY_INFORMATION SecurityInformation,
-    IN PSECURITY_DESCRIPTOR ModificationDescriptor,
-    IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor,
-    IN POOL_TYPE PoolType,
-    IN PGENERIC_MAPPING GenericMapping
-    )
+CmpSetSecurityDescriptorInfo(IN PCM_KEY_CONTROL_BLOCK Key, IN PSECURITY_INFORMATION SecurityInformation,
+                             IN PSECURITY_DESCRIPTOR ModificationDescriptor,
+                             IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor, IN POOL_TYPE PoolType,
+                             IN PGENERIC_MAPPING GenericMapping)
 /*++
 
 Routine Description:
@@ -462,31 +412,32 @@ Return Value:
 --*/
 
 {
-    NTSTATUS                Status;
-    HCELL_INDEX             SecurityCell;
-    HCELL_INDEX             MatchSecurityCell;
-    HCELL_INDEX             NewCell;
-    HCELL_INDEX             OldCell;
-    PCM_KEY_SECURITY        Security;
-    PCM_KEY_SECURITY        NewSecurity;
-    PCM_KEY_SECURITY        FlinkSecurity;
-    PCM_KEY_SECURITY        BlinkSecurity;
-    PCM_KEY_NODE            Node;
-    ULONG                   DescriptorLength;
-    PSECURITY_DESCRIPTOR    DescriptorCopy;
-    PSECURITY_DESCRIPTOR    OldDescriptorCopy;
-    ULONG                   Type;
-    LARGE_INTEGER           SystemTime;
-    PHHIVE                  Hive;
-    PCM_KEY_SECURITY_CACHE  CachedSecurity;
+    NTSTATUS Status;
+    HCELL_INDEX SecurityCell;
+    HCELL_INDEX MatchSecurityCell;
+    HCELL_INDEX NewCell;
+    HCELL_INDEX OldCell;
+    PCM_KEY_SECURITY Security;
+    PCM_KEY_SECURITY NewSecurity;
+    PCM_KEY_SECURITY FlinkSecurity;
+    PCM_KEY_SECURITY BlinkSecurity;
+    PCM_KEY_NODE Node;
+    ULONG DescriptorLength;
+    PSECURITY_DESCRIPTOR DescriptorCopy;
+    PSECURITY_DESCRIPTOR OldDescriptorCopy;
+    ULONG Type;
+    LARGE_INTEGER SystemTime;
+    PHHIVE Hive;
+    PCM_KEY_SECURITY_CACHE CachedSecurity;
 
     PAGED_CODE();
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SEC,"CmpSetSecurityDescriptorInfo:\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SEC, "CmpSetSecurityDescriptorInfo:\n"));
 
     ASSERT_CM_LOCK_OWNED_EXCLUSIVE();
 
     Node = (PCM_KEY_NODE)HvGetCell(Key->KeyHive, Key->KeyCell);
-    if( Node == NULL ) {
+    if (Node == NULL)
+    {
         //
         // we couldn't map the bin containing this cell;
         // this shouldn't happen as we are about to modify the cell
@@ -504,10 +455,9 @@ Return Value:
     // changing its security descriptor and then being unable to bring
     // the hive cell into memory for updating.
     //
-    Security = CmpGetKeySecurity(Key->KeyHive,
-                                 Node,
-                                 &SecurityCell);
-    if( Security == NULL ) {
+    Security = CmpGetKeySecurity(Key->KeyHive, Node, &SecurityCell);
+    if (Security == NULL)
+    {
         //
         // couldn't map view inside
         //
@@ -520,15 +470,12 @@ Return Value:
     // be returned.
     //
     DescriptorCopy = &Security->Descriptor;
-    Status = SeSetSecurityDescriptorInfo( NULL,
-                                          SecurityInformation,
-                                          ModificationDescriptor,
-                                          &DescriptorCopy,
-                                          PoolType,
-                                          GenericMapping );
+    Status = SeSetSecurityDescriptorInfo(NULL, SecurityInformation, ModificationDescriptor, &DescriptorCopy, PoolType,
+                                         GenericMapping);
 
-    if (!NT_SUCCESS(Status)) {
-        return(Status);
+    if (!NT_SUCCESS(Status))
+    {
+        return (Status);
     }
 
     //
@@ -539,8 +486,7 @@ Return Value:
     Type = HvGetCellType(Key->KeyCell);
     Hive = Key->KeyHive;
 
-    if (! (HvMarkCellDirty(Hive, Key->KeyCell) &&
-           HvMarkCellDirty(Hive, SecurityCell)))
+    if (!(HvMarkCellDirty(Hive, Key->KeyCell) && HvMarkCellDirty(Hive, SecurityCell)))
     {
         ExFreePool(DescriptorCopy);
         return STATUS_NO_LOG_SPACE;
@@ -549,11 +495,13 @@ Return Value:
     //
     // Try to find an existing security descriptor that we can share.
     //
-    if (CmpFindMatchingDescriptorCell((PCMHIVE)Hive, DescriptorCopy, Type, &MatchSecurityCell,&CachedSecurity)) {
+    if (CmpFindMatchingDescriptorCell((PCMHIVE)Hive, DescriptorCopy, Type, &MatchSecurityCell, &CachedSecurity))
+    {
         //
         // A match was found.
         //
-        if( MatchSecurityCell == SecurityCell ) {
+        if (MatchSecurityCell == SecurityCell)
+        {
             //
             // Whoops !!!; what we want to set is already here ! bail out
             // (office instalation does this !!!!)
@@ -563,7 +511,7 @@ Return Value:
             //
             // Update the LastWriteTime of the key. Do we need to do that? ==> Ask John.
             //
-#pragma message ("Dragos ==> John - Do we need to update the time even though nothing changed?")
+#pragma message("Dragos ==> John - Do we need to update the time even though nothing changed?")
 
             KeQuerySystemTime(&SystemTime);
             Node->LastWriteTime = SystemTime;
@@ -571,23 +519,29 @@ Return Value:
             Key->KcbLastWriteTime = SystemTime;
 
             return STATUS_SUCCESS;
-        } else {
-            if (!HvMarkCellDirty(Hive, MatchSecurityCell)) {
+        }
+        else
+        {
+            if (!HvMarkCellDirty(Hive, MatchSecurityCell))
+            {
                 ExFreePool(DescriptorCopy);
-                return(STATUS_NO_LOG_SPACE);
+                return (STATUS_NO_LOG_SPACE);
             }
-            if (Security->ReferenceCount == 1) {
+            if (Security->ReferenceCount == 1)
+            {
                 //
                 // No more references to the old security cell, so we can free it now.
                 //
-                if (! (HvMarkCellDirty(Hive, Security->Flink) &&
-                       HvMarkCellDirty(Hive, Security->Blink))) {
+                if (!(HvMarkCellDirty(Hive, Security->Flink) && HvMarkCellDirty(Hive, Security->Blink)))
+                {
                     ExFreePool(DescriptorCopy);
-                    return(STATUS_NO_LOG_SPACE);
+                    return (STATUS_NO_LOG_SPACE);
                 }
                 CmpRemoveSecurityCellList(Hive, SecurityCell);
                 HvFreeCell(Hive, SecurityCell);
-            } else {
+            }
+            else
+            {
 
                 //
                 // Just decrement the count on the old security cell
@@ -599,12 +553,13 @@ Return Value:
             // Set the node to point at the matching security cell.
             //
             Security = (PCM_KEY_SECURITY)HvGetCell(Hive, MatchSecurityCell);
-            if( Security == NULL ) {
+            if (Security == NULL)
+            {
                 //
                 // we couldn't map the bin containing this cell
                 // this should not happen as we just marked the cell dirty
                 //
-                ASSERT( FALSE );
+                ASSERT(FALSE);
                 ExFreePool(DescriptorCopy);
                 return STATUS_INSUFFICIENT_RESOURCES;
             }
@@ -615,28 +570,30 @@ Return Value:
             Security->ReferenceCount += 1;
             Node->Security = MatchSecurityCell;
         }
-    } else {
+    }
+    else
+    {
 
         //
         // No match was found, we need to create a new cell.
         //
-        if (Security->ReferenceCount > 1) {
+        if (Security->ReferenceCount > 1)
+        {
 
             //
             // We can't change the existing security cell, since it is shared
             // by multiple keys.  Allocate a new cell and decrement the existing
             // one's reference count.
             //
-            NewCell = HvAllocateCell(Key->KeyHive,
-                                     SECURITY_CELL_LENGTH(DescriptorCopy),
-                                     Type,
-                                     HCELL_NIL);
-            if (NewCell == HCELL_NIL) {
+            NewCell = HvAllocateCell(Key->KeyHive, SECURITY_CELL_LENGTH(DescriptorCopy), Type, HCELL_NIL);
+            if (NewCell == HCELL_NIL)
+            {
                 ExFreePool(DescriptorCopy);
-                return(STATUS_INSUFFICIENT_RESOURCES);
+                return (STATUS_INSUFFICIENT_RESOURCES);
             }
 
-            if (! HvMarkCellDirty(Key->KeyHive, Security->Flink)) {
+            if (!HvMarkCellDirty(Key->KeyHive, Security->Flink))
+            {
                 ExFreePool(DescriptorCopy);
                 return STATUS_NO_LOG_SPACE;
             }
@@ -646,8 +603,9 @@ Return Value:
             //
             // Map in the new cell and insert it into the linked list.
             //
-            NewSecurity = (PCM_KEY_SECURITY) HvGetCell(Key->KeyHive, NewCell);
-            if( NewSecurity == NULL ) {
+            NewSecurity = (PCM_KEY_SECURITY)HvGetCell(Key->KeyHive, NewCell);
+            if (NewSecurity == NULL)
+            {
                 //
                 // we couldn't map the bin containing this cell
                 //
@@ -660,8 +618,9 @@ Return Value:
 
             NewSecurity->Blink = SecurityCell;
             NewSecurity->Flink = Security->Flink;
-            FlinkSecurity = (PCM_KEY_SECURITY) HvGetCell(Key->KeyHive, Security->Flink);
-            if( FlinkSecurity == NULL ) {
+            FlinkSecurity = (PCM_KEY_SECURITY)HvGetCell(Key->KeyHive, Security->Flink);
+            if (FlinkSecurity == NULL)
+            {
                 //
                 // we couldn't map the bin containing this cell
                 //
@@ -680,24 +639,23 @@ Return Value:
             NewSecurity->Signature = CM_KEY_SECURITY_SIGNATURE;
             NewSecurity->ReferenceCount = 1;
             NewSecurity->DescriptorLength = DescriptorLength;
-            Security=NewSecurity;
+            Security = NewSecurity;
 
             //
             // copy the descriptor
             //
-            RtlCopyMemory( &(Security->Descriptor),
-                           DescriptorCopy,
-                           DescriptorLength );
+            RtlCopyMemory(&(Security->Descriptor), DescriptorCopy, DescriptorLength);
 
             //
             // Add the new created security cell to the cache
             //
-            if( !NT_SUCCESS(CmpAddSecurityCellToCache( (PCMHIVE)Key->KeyHive,NewCell,FALSE)) ) {
+            if (!NT_SUCCESS(CmpAddSecurityCellToCache((PCMHIVE)Key->KeyHive, NewCell, FALSE)))
+            {
                 //
                 // we couldn't map the bin containing this cell
                 // this shouldn't happen as we just allocated (marked dirty) the cell
                 //
-                ASSERT( FALSE );
+                ASSERT(FALSE);
                 ExFreePool(DescriptorCopy);
                 return STATUS_INSUFFICIENT_RESOURCES;
             }
@@ -706,41 +664,42 @@ Return Value:
             // Update the pointer in the node cell.
             //
             Node->Security = NewCell;
-
-        } else {
+        }
+        else
+        {
             //
             // when this is FALSE, the new cell is ADDED to cache;
-            // Otherwise (the cell index and size did not change), 
+            // Otherwise (the cell index and size did not change),
             // the new sd is copied over the one in cache
             //
             BOOLEAN UpdateCache;
 
-            if (DescriptorLength != Security->DescriptorLength) {
+            if (DescriptorLength != Security->DescriptorLength)
+            {
 
                 //
                 // The security descriptor's size has changed, and it is not shared
                 // by any other cells, so reallocate the cell.
                 //
-                if (! (HvMarkCellDirty(Key->KeyHive, Security->Flink) &&
-                       HvMarkCellDirty(Key->KeyHive, Security->Blink))) {
+                if (!(HvMarkCellDirty(Key->KeyHive, Security->Flink) && HvMarkCellDirty(Key->KeyHive, Security->Blink)))
+                {
                     ExFreePool(DescriptorCopy);
-                    return(STATUS_INSUFFICIENT_RESOURCES);
+                    return (STATUS_INSUFFICIENT_RESOURCES);
                 }
 
                 DCmCheckRegistry((PCMHIVE)(Key->KeyHive));
                 OldCell = SecurityCell;
-                SecurityCell = HvReallocateCell( Key->KeyHive,
-                                                 SecurityCell,
-                                                 SECURITY_CELL_LENGTH(DescriptorCopy) );
-                if (SecurityCell == HCELL_NIL) {
+                SecurityCell = HvReallocateCell(Key->KeyHive, SecurityCell, SECURITY_CELL_LENGTH(DescriptorCopy));
+                if (SecurityCell == HCELL_NIL)
+                {
                     ExFreePool(DescriptorCopy);
-                    return(STATUS_INSUFFICIENT_RESOURCES);
+                    return (STATUS_INSUFFICIENT_RESOURCES);
                 }
 
                 //
                 // remove the old cell from security cache and signal that the new one should be added
                 //
-                CmpRemoveFromSecurityCache ((PCMHIVE)Key->KeyHive,OldCell);
+                CmpRemoveFromSecurityCache((PCMHIVE)Key->KeyHive, OldCell);
                 UpdateCache = FALSE;
 
                 //
@@ -751,14 +710,15 @@ Return Value:
                 //
                 // Update Security to point to where the new security object is
                 //
-                Security = (PCM_KEY_SECURITY) HvGetCell(Key->KeyHive, SecurityCell);
-                if( Security == NULL ) {
+                Security = (PCM_KEY_SECURITY)HvGetCell(Key->KeyHive, SecurityCell);
+                if (Security == NULL)
+                {
                     //
                     // we couldn't map the bin containing this cell
                     // this shouldn't happen as we just allocated this cell
                     // (i.e. it should be pinned into memory at this point)
                     //
-                    ASSERT( FALSE );
+                    ASSERT(FALSE);
                     ExFreePool(DescriptorCopy);
                     return STATUS_INSUFFICIENT_RESOURCES;
                 }
@@ -771,14 +731,15 @@ Return Value:
                 //
                 // Update other list references to the node
                 //
-                if (Security->Flink == OldCell) {
+                if (Security->Flink == OldCell)
+                {
                     Security->Flink = SecurityCell; // point to new self
-                } else {
-                    FlinkSecurity = (PCM_KEY_SECURITY) HvGetCell(
-                                                            Key->KeyHive,
-                                                            Security->Flink
-                                                            );
-                    if( FlinkSecurity == NULL ) {
+                }
+                else
+                {
+                    FlinkSecurity = (PCM_KEY_SECURITY)HvGetCell(Key->KeyHive, Security->Flink);
+                    if (FlinkSecurity == NULL)
+                    {
                         //
                         // we couldn't map the bin containing this cell
                         //
@@ -792,14 +753,15 @@ Return Value:
                     FlinkSecurity->Blink = SecurityCell;
                 }
 
-                if (Security->Blink == OldCell) {
+                if (Security->Blink == OldCell)
+                {
                     Security->Blink = SecurityCell; // point to new self
-                } else {
-                    BlinkSecurity = (PCM_KEY_SECURITY) HvGetCell(
-                                                            Key->KeyHive,
-                                                            Security->Blink
-                                                            );
-                    if( BlinkSecurity == NULL ) {
+                }
+                else
+                {
+                    BlinkSecurity = (PCM_KEY_SECURITY)HvGetCell(Key->KeyHive, Security->Blink);
+                    if (BlinkSecurity == NULL)
+                    {
                         //
                         // we couldn't map the bin containing this cell
                         //
@@ -808,7 +770,7 @@ Return Value:
                     }
 
                     // release the cell right here as we are holding the reglock exclusive
-                    HvReleaseCell(Key->KeyHive,Security->Blink);
+                    HvReleaseCell(Key->KeyHive, Security->Blink);
 
                     BlinkSecurity->Flink = SecurityCell;
                 }
@@ -818,8 +780,9 @@ Return Value:
                 //
                 Security->DescriptorLength = DescriptorLength;
                 DCmCheckRegistry((PCMHIVE)(Key->KeyHive));
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // Size hasn't changed, and it's not shared by any other cells, so
@@ -827,7 +790,7 @@ Return Value:
                 //
 
                 //
-                // new bits should be copied over the cached security 
+                // new bits should be copied over the cached security
                 // descriptor too, to keep cache consistency
                 //
                 //
@@ -835,58 +798,56 @@ Return Value:
                 //
                 ULONG Index;
 
-                if( CmpFindSecurityCellCacheIndex ((PCMHIVE)Hive,SecurityCell,&Index) == FALSE ) {
+                if (CmpFindSecurityCellCacheIndex((PCMHIVE)Hive, SecurityCell, &Index) == FALSE)
+                {
                     //
                     // this cannot happen !!!
                     //
-                    CM_BUGCHECK( REGISTRY_ERROR,BAD_SECURITY_CACHE,2,Key,SecurityCell);
-                } 
+                    CM_BUGCHECK(REGISTRY_ERROR, BAD_SECURITY_CACHE, 2, Key, SecurityCell);
+                }
                 CachedSecurity = ((PCMHIVE)Hive)->SecurityCache[Index].CachedSecurity;
 
                 UpdateCache = TRUE;
             }
 
-            RtlCopyMemory( &(Security->Descriptor),
-                           DescriptorCopy,
-                           DescriptorLength );
+            RtlCopyMemory(&(Security->Descriptor), DescriptorCopy, DescriptorLength);
 
-            if( UpdateCache == TRUE ) {
+            if (UpdateCache == TRUE)
+            {
                 //
                 // we just need to copy the descriptor over the existing one
                 // (keep the security cache in sync !!!)
                 //
-                RtlCopyMemory( &(CachedSecurity->Descriptor),
-                                DescriptorCopy,
-                                DescriptorLength );
+                RtlCopyMemory(&(CachedSecurity->Descriptor), DescriptorCopy, DescriptorLength);
                 //
                 // recalculate the conv key and insert the sd in the proper place in the hash
                 //
                 CmpRemoveEntryList(&(CachedSecurity->List));
-                CachedSecurity->ConvKey = CmpSecConvKey(DescriptorLength,(PULONG)(DescriptorCopy));
-                InsertTailList( &(((PCMHIVE)Hive)->SecurityHash[CachedSecurity->ConvKey % CmpSecHashTableSize]),
-                                &(CachedSecurity->List)
-                              );
-
-            
-            } else {
+                CachedSecurity->ConvKey = CmpSecConvKey(DescriptorLength, (PULONG)(DescriptorCopy));
+                InsertTailList(&(((PCMHIVE)Hive)->SecurityHash[CachedSecurity->ConvKey % CmpSecHashTableSize]),
+                               &(CachedSecurity->List));
+            }
+            else
+            {
                 //
                 // add new cell to the security cache
                 //
-                if( !NT_SUCCESS(CmpAddSecurityCellToCache( (PCMHIVE)Hive,SecurityCell,FALSE)) ) {
+                if (!NT_SUCCESS(CmpAddSecurityCellToCache((PCMHIVE)Hive, SecurityCell, FALSE)))
+                {
                     //
                     // we couldn't map the bin containing this cell
                     // this shouldn't happen as we just allocated (marked dirty) the cell
                     //
-                    ASSERT( FALSE );
+                    ASSERT(FALSE);
                     ExFreePool(DescriptorCopy);
                     return STATUS_INSUFFICIENT_RESOURCES;
                 }
             }
-        }    
+        }
     }
 
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SEC,"\tObject's SD has been changed\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SEC, "\tObject's SD has been changed\n"));
     //CmpDumpSecurityDescriptor(DescriptorCopy, "NEW DESCRIPTOR\n");
 
     ExFreePool(DescriptorCopy);
@@ -904,18 +865,14 @@ Return Value:
     // Security has changed, update the cache.
     //
     ASSERT_CM_LOCK_OWNED_EXCLUSIVE();
-    CmpAssignSecurityToKcb(Key,Node->Security);
+    CmpAssignSecurityToKcb(Key, Node->Security);
 
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }
 
 NTSTATUS
-CmpAssignSecurityDescriptor(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX Cell,
-    IN PCM_KEY_NODE Node,
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor
-    )
+CmpAssignSecurityDescriptor(IN PHHIVE Hive, IN HCELL_INDEX Cell, IN PCM_KEY_NODE Node,
+                            IN PSECURITY_DESCRIPTOR SecurityDescriptor)
 
 /*++
 
@@ -958,7 +915,8 @@ Return Value:
     //
     // Map the node that we need to assign the security descriptor to.
     //
-    if (! HvMarkCellDirty(Hive, Cell)) {
+    if (!HvMarkCellDirty(Hive, Cell))
+    {
         return STATUS_NO_LOG_SPACE;
     }
     ASSERT_NODE(Node);
@@ -971,12 +929,13 @@ Return Value:
 
         Name.MaximumLength = Name.Length = Node->NameLength;
         Name.Buffer = Node->Name;
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SEC,"CmpAssignSecurityDescriptor: '%wZ' (H %p C %lx)\n",&Name,Hive,Cell ));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SEC,"\tSecurityCell = %lx\n",Node->Security));
+        CmKdPrintEx(
+            (DPFLTR_CONFIG_ID, CML_SEC, "CmpAssignSecurityDescriptor: '%wZ' (H %p C %lx)\n", &Name, Hive, Cell));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SEC, "\tSecurityCell = %lx\n", Node->Security));
     }
 #endif
 
-    ASSERT(Node->Security==HCELL_NIL);
+    ASSERT(Node->Security == HCELL_NIL);
 
     //
     // This is a CreateKey, so the registry node has just been created and
@@ -991,33 +950,29 @@ Return Value:
     // just point to the existing one and increment its reference count.
     //
     Type = HvGetCellType(Cell);
-    if (!CmpFindMatchingDescriptorCell( (PCMHIVE)Hive,
-                                        SecurityDescriptor,
-                                        Type,
-                                        &SecurityCell,
-                                        NULL)) {
+    if (!CmpFindMatchingDescriptorCell((PCMHIVE)Hive, SecurityDescriptor, Type, &SecurityCell, NULL))
+    {
         //
         // No matching descriptor found, allocate and initialize a new one.
         //
-        SecurityCell = HvAllocateCell(Hive,
-                                      SECURITY_CELL_LENGTH(SecurityDescriptor),
-                                      Type,
-                                      HCELL_NIL);
-        if (SecurityCell == HCELL_NIL) {
+        SecurityCell = HvAllocateCell(Hive, SECURITY_CELL_LENGTH(SecurityDescriptor), Type, HCELL_NIL);
+        if (SecurityCell == HCELL_NIL)
+        {
             return STATUS_INSUFFICIENT_RESOURCES;
         }
 
         //
         // Map the security cell
         //
-        Security = (PCM_KEY_SECURITY) HvGetCell(Hive, SecurityCell);
-        if( Security == NULL ) {
+        Security = (PCM_KEY_SECURITY)HvGetCell(Hive, SecurityCell);
+        if (Security == NULL)
+        {
             //
             // we couldn't map the bin containing this cell
             // this shouldn't happen as we just allocated this cell
             // (i.e. it should be PINNED into memory at this point)
             //
-            ASSERT( FALSE );
+            ASSERT(FALSE);
             HvFreeCell(Hive, SecurityCell);
             return STATUS_INSUFFICIENT_RESOURCES;
         }
@@ -1033,37 +988,38 @@ Return Value:
         Security->Signature = CM_KEY_SECURITY_SIGNATURE;
         Security->ReferenceCount = 1;
         Security->DescriptorLength = DescriptorLength;
-        RtlCopyMemory( &(Security->Descriptor),
-                       SecurityDescriptor,
-                       DescriptorLength );
+        RtlCopyMemory(&(Security->Descriptor), SecurityDescriptor, DescriptorLength);
 
         //
         // Insert the new security descriptor into the list of security
         // cells; takes care of cache too
         //
-        if (!CmpInsertSecurityCellList(Hive,Cell,SecurityCell))
+        if (!CmpInsertSecurityCellList(Hive, Cell, SecurityCell))
         {
             HvFreeCell(Hive, SecurityCell);
             return STATUS_NO_LOG_SPACE;
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // Found identical descriptor already existing.  Map it in and
         // increment its reference count.
         //
-        if (! HvMarkCellDirty(Hive, SecurityCell)) {
+        if (!HvMarkCellDirty(Hive, SecurityCell))
+        {
             return STATUS_NO_LOG_SPACE;
         }
-        Security = (PCM_KEY_SECURITY) HvGetCell(Hive, SecurityCell);
-        if( Security == NULL ) {
+        Security = (PCM_KEY_SECURITY)HvGetCell(Hive, SecurityCell);
+        if (Security == NULL)
+        {
             //
             // we couldn't map the bin containing this cell
             // this shouldn't happen as we just marked the cell dirty
             // (dirty means PIN !)
             //
-            ASSERT( FALSE );
+            ASSERT(FALSE);
             return STATUS_INSUFFICIENT_RESOURCES;
         }
 
@@ -1078,20 +1034,16 @@ Return Value:
     //
     Node->Security = SecurityCell;
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SEC,"\tSecurityCell = %lx\n",Node->Security));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SEC, "\tSecurityCell = %lx\n", Node->Security));
 
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }
 
-
+
 NTSTATUS
-CmpQuerySecurityDescriptorInfo(
-    IN PCM_KEY_CONTROL_BLOCK kcb,
-    IN PSECURITY_INFORMATION SecurityInformation,
-    OUT PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN OUT PULONG Length,
-    IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor
-    )
+CmpQuerySecurityDescriptorInfo(IN PCM_KEY_CONTROL_BLOCK kcb, IN PSECURITY_INFORMATION SecurityInformation,
+                               OUT PSECURITY_DESCRIPTOR SecurityDescriptor, IN OUT PULONG Length,
+                               IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor)
 
 /*++
 
@@ -1136,34 +1088,24 @@ Note:
 --*/
 
 {
-    NTSTATUS                Status;
-    PSECURITY_DESCRIPTOR    CellSecurityDescriptor;
+    NTSTATUS Status;
+    PSECURITY_DESCRIPTOR CellSecurityDescriptor;
 
     PAGED_CODE();
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SEC,"CmpQuerySecurityDescriptorInfo:\n"));
-
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SEC, "CmpQuerySecurityDescriptorInfo:\n"));
 
 
     CellSecurityDescriptor = &(kcb->CachedSecurity->Descriptor);
 
-    Status = SeQuerySecurityDescriptorInfo( SecurityInformation,
-                                            SecurityDescriptor,
-                                            Length,
-                                            &CellSecurityDescriptor );
+    Status = SeQuerySecurityDescriptorInfo(SecurityInformation, SecurityDescriptor, Length, &CellSecurityDescriptor);
 
     return Status;
 }
 
-
+
 BOOLEAN
-CmpCheckCreateAccess(
-    IN PUNICODE_STRING RelativeName,
-    IN PSECURITY_DESCRIPTOR Descriptor,
-    IN PACCESS_STATE AccessState,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN ACCESS_MASK AdditionalAccess,
-    OUT PNTSTATUS AccessStatus
-    )
+CmpCheckCreateAccess(IN PUNICODE_STRING RelativeName, IN PSECURITY_DESCRIPTOR Descriptor, IN PACCESS_STATE AccessState,
+                     IN KPROCESSOR_MODE PreviousMode, IN ACCESS_MASK AdditionalAccess, OUT PNTSTATUS AccessStatus)
 
 /*++
 
@@ -1211,43 +1153,32 @@ Return Value:
     BOOLEAN AuditPerformed = FALSE;
 
     PAGED_CODE();
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SEC,"CmpCheckCreateAccess:\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SEC, "CmpCheckCreateAccess:\n"));
 
-    SeLockSubjectContext( &AccessState->SubjectSecurityContext );
+    SeLockSubjectContext(&AccessState->SubjectSecurityContext);
 
-    AccessAllowed = SeAccessCheck(
-                        Descriptor,
-                        &AccessState->SubjectSecurityContext,
-                        TRUE,                              // Token is read locked
-                        (KEY_CREATE_SUB_KEY | AdditionalAccess),
-                        0,
-                        NULL,
-                        &CmpKeyObjectType->TypeInfo.GenericMapping,
-                        PreviousMode,
-                        &GrantedAccess,
-                        AccessStatus
-                        );
+    AccessAllowed =
+        SeAccessCheck(Descriptor, &AccessState->SubjectSecurityContext,
+                      TRUE, // Token is read locked
+                      (KEY_CREATE_SUB_KEY | AdditionalAccess), 0, NULL, &CmpKeyObjectType->TypeInfo.GenericMapping,
+                      PreviousMode, &GrantedAccess, AccessStatus);
 
-    SeUnlockSubjectContext( &AccessState->SubjectSecurityContext );
+    SeUnlockSubjectContext(&AccessState->SubjectSecurityContext);
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SEC,"Create access %s\n",AccessAllowed ? "granted" : "denied"));
-/*
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SEC, "Create access %s\n", AccessAllowed ? "granted" : "denied"));
+    /*
 #if DBG
     if (!AccessAllowed) {
         CmpDumpSecurityDescriptor(Descriptor, "DENYING DESCRIPTOR");
     }
 #endif
 */
-    return(AccessAllowed);
+    return (AccessAllowed);
 }
 
-
+
 BOOLEAN
-CmpCheckNotifyAccess(
-    IN PCM_NOTIFY_BLOCK NotifyBlock,
-    IN PHHIVE Hive,
-    IN PCM_KEY_NODE Node
-    )
+CmpCheckNotifyAccess(IN PCM_NOTIFY_BLOCK NotifyBlock, IN PHHIVE Hive, IN PCM_KEY_NODE Node)
 /*++
 
 Routine Description:
@@ -1277,44 +1208,37 @@ Note:
 
 --*/
 {
-    PCM_KEY_SECURITY        Security;
-    PSECURITY_DESCRIPTOR    SecurityDescriptor;
-    BOOLEAN                 AccessAllowed;
-    NTSTATUS                Status;
-    ACCESS_MASK             GrantedAccess = 0;
-    ULONG                   Index;
+    PCM_KEY_SECURITY Security;
+    PSECURITY_DESCRIPTOR SecurityDescriptor;
+    BOOLEAN AccessAllowed;
+    NTSTATUS Status;
+    ACCESS_MASK GrantedAccess = 0;
+    ULONG Index;
 
     PAGED_CODE();
 
     ASSERT_CM_LOCK_OWNED();
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SEC,"CmpCheckAccessForNotify:\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SEC, "CmpCheckAccessForNotify:\n"));
 
-    if( CmpFindSecurityCellCacheIndex ((PCMHIVE)Hive,Node->Security,&Index) == FALSE ) {
+    if (CmpFindSecurityCellCacheIndex((PCMHIVE)Hive, Node->Security, &Index) == FALSE)
+    {
         return FALSE;
     }
 
 
-    SeLockSubjectContext( &NotifyBlock->SubjectContext );
+    SeLockSubjectContext(&NotifyBlock->SubjectContext);
 
     SecurityDescriptor = &(((PCMHIVE)Hive)->SecurityCache[Index].CachedSecurity->Descriptor);
 
 
-    AccessAllowed = SeAccessCheck( SecurityDescriptor,
-                                   &NotifyBlock->SubjectContext,
-                                   TRUE,
-                                   KEY_NOTIFY,
-                                   0,
-                                   NULL,
-                                   &CmpKeyObjectType->TypeInfo.GenericMapping,
-                                   UserMode,
-                                   &GrantedAccess,
-                                   &Status );
+    AccessAllowed = SeAccessCheck(SecurityDescriptor, &NotifyBlock->SubjectContext, TRUE, KEY_NOTIFY, 0, NULL,
+                                  &CmpKeyObjectType->TypeInfo.GenericMapping, UserMode, &GrantedAccess, &Status);
 
-    SeUnlockSubjectContext( &NotifyBlock->SubjectContext );
+    SeUnlockSubjectContext(&NotifyBlock->SubjectContext);
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SEC,"Notify access %s\n",AccessAllowed ? "granted" : "denied"));
-/*
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SEC, "Notify access %s\n", AccessAllowed ? "granted" : "denied"));
+    /*
 #if DBG
     if (!AccessAllowed) {
         CmpDumpSecurityDescriptor(SecurityDescriptor, "DENYING DESCRIPTOR");
@@ -1324,14 +1248,10 @@ Note:
     return AccessAllowed;
 }
 
-
+
 NTSTATUS
-CmpGetObjectSecurity(
-    IN HCELL_INDEX Cell,
-    IN PHHIVE Hive,
-    OUT PCM_KEY_SECURITY *Security,
-    OUT PHCELL_INDEX SecurityCell OPTIONAL
-    )
+CmpGetObjectSecurity(IN HCELL_INDEX Cell, IN PHHIVE Hive, OUT PCM_KEY_SECURITY *Security,
+                     OUT PHCELL_INDEX SecurityCell OPTIONAL)
 
 /*++
 
@@ -1363,9 +1283,10 @@ Return Value:
     //
     // Map the node we need to get the security descriptor for
     //
-    Node = (PCM_KEY_NODE) HvGetCell(Hive, Cell);
+    Node = (PCM_KEY_NODE)HvGetCell(Hive, Cell);
 
-    if( Node == NULL ) {
+    if (Node == NULL)
+    {
         //
         // we couldn't map the bin containing this cell
         //
@@ -1378,16 +1299,17 @@ Return Value:
 
         Name.MaximumLength = Name.Length = Node->NameLength;
         Name.Buffer = Node->Name;
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SEC,"CmpGetObjectSecurity for: "));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SEC,"%wZ\n", &Name));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SEC, "CmpGetObjectSecurity for: "));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SEC, "%wZ\n", &Name));
     }
 #endif
 
-    *Security = CmpGetKeySecurity(Hive,Node,SecurityCell);
+    *Security = CmpGetKeySecurity(Hive, Node, SecurityCell);
 
     HvReleaseCell(Hive, Cell);
 
-    if( *Security == NULL ) {
+    if (*Security == NULL)
+    {
         //
         // couldn't map view inside
         //
@@ -1396,13 +1318,9 @@ Return Value:
 
     return STATUS_SUCCESS;
 }
-
+
 PCM_KEY_SECURITY
-CmpGetKeySecurity(
-    IN PHHIVE Hive,
-    IN PCM_KEY_NODE Key,
-    OUT PHCELL_INDEX SecurityCell OPTIONAL
-    )
+CmpGetKeySecurity(IN PHHIVE Hive, IN PCM_KEY_NODE Key, OUT PHCELL_INDEX SecurityCell OPTIONAL)
 
 /*++
 
@@ -1440,8 +1358,8 @@ Return Value:
 
         Name.MaximumLength = Name.Length = Key->NameLength;
         Name.Buffer = Key->Name;
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SEC,"CmpGetObjectSecurity for: "));
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SEC,"%wZ\n", &Name));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SEC, "CmpGetObjectSecurity for: "));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SEC, "%wZ\n", &Name));
     }
 #endif
 
@@ -1450,8 +1368,9 @@ Return Value:
     //
     // Map in the security descriptor cell
     //
-    Security = (PCM_KEY_SECURITY) HvGetCell(Hive, CellIndex);
-    if( Security == NULL ) {
+    Security = (PCM_KEY_SECURITY)HvGetCell(Hive, CellIndex);
+    if (Security == NULL)
+    {
         //
         // we couldn't map the bin containing this cell
         //
@@ -1461,17 +1380,16 @@ Return Value:
     HvReleaseCell(Hive, CellIndex);
     ASSERT_SECURITY(Security);
 
-    if (ARGUMENT_PRESENT(SecurityCell)) {
+    if (ARGUMENT_PRESENT(SecurityCell))
+    {
         *SecurityCell = CellIndex;
     }
 
-    return(Security);
+    return (Security);
 }
-
+
 PSECURITY_DESCRIPTOR
-CmpHiveRootSecurityDescriptor(
-    VOID
-    )
+CmpHiveRootSecurityDescriptor(VOID)
 /*++
 
 Routine Description:
@@ -1496,13 +1414,13 @@ Return Value:
 
 {
     NTSTATUS Status;
-    PSECURITY_DESCRIPTOR SecurityDescriptor=NULL;
-    PACL Acl=NULL;
+    PSECURITY_DESCRIPTOR SecurityDescriptor = NULL;
+    PACL Acl = NULL;
     PACL AclCopy;
-    PSID WorldSid=NULL;
-    PSID RestrictedSid=NULL;
-    PSID SystemSid=NULL;
-    PSID AdminSid=NULL;
+    PSID WorldSid = NULL;
+    PSID RestrictedSid = NULL;
+    PSID SystemSid = NULL;
+    PSID AdminSid = NULL;
     SID_IDENTIFIER_AUTHORITY WorldAuthority = SECURITY_WORLD_SID_AUTHORITY;
     SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
     ULONG AceLength;
@@ -1514,14 +1432,12 @@ Return Value:
     //
     // Allocate and initialize the SIDs we will need.
     //
-    WorldSid  = ExAllocatePool(PagedPool, RtlLengthRequiredSid(1));
-    RestrictedSid  = ExAllocatePool(PagedPool, RtlLengthRequiredSid(1));
+    WorldSid = ExAllocatePool(PagedPool, RtlLengthRequiredSid(1));
+    RestrictedSid = ExAllocatePool(PagedPool, RtlLengthRequiredSid(1));
     SystemSid = ExAllocatePool(PagedPool, RtlLengthRequiredSid(1));
-    AdminSid  = ExAllocatePool(PagedPool, RtlLengthRequiredSid(2));
-    if ((WorldSid  == NULL) ||
-        (RestrictedSid == NULL) ||
-        (SystemSid == NULL) ||
-        (AdminSid  == NULL)) {
+    AdminSid = ExAllocatePool(PagedPool, RtlLengthRequiredSid(2));
+    if ((WorldSid == NULL) || (RestrictedSid == NULL) || (SystemSid == NULL) || (AdminSid == NULL))
+    {
 
         CM_BUGCHECK(REGISTRY_ERROR, ALLOCATE_SECURITY_DESCRIPTOR, 1, 0, 0);
     }
@@ -1529,7 +1445,8 @@ Return Value:
     if ((!NT_SUCCESS(RtlInitializeSid(WorldSid, &WorldAuthority, 1))) ||
         (!NT_SUCCESS(RtlInitializeSid(RestrictedSid, &NtAuthority, 1))) ||
         (!NT_SUCCESS(RtlInitializeSid(SystemSid, &NtAuthority, 1))) ||
-        (!NT_SUCCESS(RtlInitializeSid(AdminSid, &NtAuthority, 2)))) {
+        (!NT_SUCCESS(RtlInitializeSid(AdminSid, &NtAuthority, 2))))
+    {
         CM_BUGCHECK(REGISTRY_ERROR, ALLOCATE_SECURITY_DESCRIPTOR, 2, 0, 0);
     }
 
@@ -1551,18 +1468,10 @@ Return Value:
     // Compute the size of the ACE list
     //
 
-    AceLength = (SeLengthSid(WorldSid)  -
-                 sizeof(ULONG)          +
-                 sizeof(ACCESS_ALLOWED_ACE))
-              + (SeLengthSid(RestrictedSid)  -
-                 sizeof(ULONG)          +
-                 sizeof(ACCESS_ALLOWED_ACE))
-              + (SeLengthSid(SystemSid) -
-                 sizeof(ULONG)          +
-                 sizeof(ACCESS_ALLOWED_ACE))
-              + (SeLengthSid(AdminSid)  -
-                 sizeof(ULONG)          +
-                 sizeof(ACCESS_ALLOWED_ACE));
+    AceLength = (SeLengthSid(WorldSid) - sizeof(ULONG) + sizeof(ACCESS_ALLOWED_ACE)) +
+                (SeLengthSid(RestrictedSid) - sizeof(ULONG) + sizeof(ACCESS_ALLOWED_ACE)) +
+                (SeLengthSid(SystemSid) - sizeof(ULONG) + sizeof(ACCESS_ALLOWED_ACE)) +
+                (SeLengthSid(AdminSid) - sizeof(ULONG) + sizeof(ACCESS_ALLOWED_ACE));
 
     //
     // Allocate and initialize the ACL
@@ -1570,45 +1479,40 @@ Return Value:
 
     AclLength = AceLength + sizeof(ACL);
     Acl = ExAllocatePool(PagedPool, AclLength);
-    if (Acl == NULL) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SEC,"CmpHiveRootSecurityDescriptor: couldn't allocate ACL\n"));
+    if (Acl == NULL)
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SEC, "CmpHiveRootSecurityDescriptor: couldn't allocate ACL\n"));
 
         CM_BUGCHECK(REGISTRY_ERROR, ALLOCATE_SECURITY_DESCRIPTOR, 3, 0, 0);
     }
 
     Status = RtlCreateAcl(Acl, AclLength, ACL_REVISION);
-    if (!NT_SUCCESS(Status)) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SEC,"CmpHiveRootSecurityDescriptor: couldn't initialize ACL\n"));
+    if (!NT_SUCCESS(Status))
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SEC, "CmpHiveRootSecurityDescriptor: couldn't initialize ACL\n"));
         CM_BUGCHECK(REGISTRY_ERROR, ALLOCATE_SECURITY_DESCRIPTOR, 4, Status, 0);
     }
 
     //
     // Now add the ACEs to the ACL
     //
-    Status = RtlAddAccessAllowedAce(Acl,
-                                    ACL_REVISION,
-                                    KEY_ALL_ACCESS,
-                                    SystemSid);
-    if (NT_SUCCESS(Status)) {
-        Status = RtlAddAccessAllowedAce(Acl,
-                                        ACL_REVISION,
-                                        KEY_ALL_ACCESS,
-                                        AdminSid);
+    Status = RtlAddAccessAllowedAce(Acl, ACL_REVISION, KEY_ALL_ACCESS, SystemSid);
+    if (NT_SUCCESS(Status))
+    {
+        Status = RtlAddAccessAllowedAce(Acl, ACL_REVISION, KEY_ALL_ACCESS, AdminSid);
     }
-    if (NT_SUCCESS(Status)) {
-        Status = RtlAddAccessAllowedAce(Acl,
-                                        ACL_REVISION,
-                                        KEY_READ,
-                                        WorldSid);
+    if (NT_SUCCESS(Status))
+    {
+        Status = RtlAddAccessAllowedAce(Acl, ACL_REVISION, KEY_READ, WorldSid);
     }
-    if (NT_SUCCESS(Status)) {
-        Status = RtlAddAccessAllowedAce(Acl,
-                                        ACL_REVISION,
-                                        KEY_READ,
-                                        RestrictedSid);
+    if (NT_SUCCESS(Status))
+    {
+        Status = RtlAddAccessAllowedAce(Acl, ACL_REVISION, KEY_READ, RestrictedSid);
     }
-    if (!NT_SUCCESS(Status)) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SEC,"CmpHiveRootSecurityDescriptor: RtlAddAce failed status %08lx\n", Status));
+    if (!NT_SUCCESS(Status))
+    {
+        CmKdPrintEx(
+            (DPFLTR_CONFIG_ID, CML_SEC, "CmpHiveRootSecurityDescriptor: RtlAddAce failed status %08lx\n", Status));
 
         CM_BUGCHECK(REGISTRY_ERROR, ALLOCATE_SECURITY_DESCRIPTOR, 5, Status, 0);
     }
@@ -1616,19 +1520,19 @@ Return Value:
     //
     // Make the ACEs inheritable
     //
-    Status = RtlGetAce(Acl,0,&AceHeader);
+    Status = RtlGetAce(Acl, 0, &AceHeader);
     ASSERT(NT_SUCCESS(Status));
     AceHeader->AceFlags |= CONTAINER_INHERIT_ACE;
 
-    Status = RtlGetAce(Acl,1,&AceHeader);
+    Status = RtlGetAce(Acl, 1, &AceHeader);
     ASSERT(NT_SUCCESS(Status));
     AceHeader->AceFlags |= CONTAINER_INHERIT_ACE;
 
-    Status = RtlGetAce(Acl,2,&AceHeader);
+    Status = RtlGetAce(Acl, 2, &AceHeader);
     ASSERT(NT_SUCCESS(Status));
     AceHeader->AceFlags |= CONTAINER_INHERIT_ACE;
 
-    Status = RtlGetAce(Acl,3,&AceHeader);
+    Status = RtlGetAce(Acl, 3, &AceHeader);
     ASSERT(NT_SUCCESS(Status));
     AceHeader->AceFlags |= CONTAINER_INHERIT_ACE;
     //
@@ -1638,66 +1542,63 @@ Return Value:
     // done with it.
     //
 
-    SecurityDescriptor = ExAllocatePool(
-                            PagedPool,
-                            sizeof(SECURITY_DESCRIPTOR) + AclLength
-                            );
+    SecurityDescriptor = ExAllocatePool(PagedPool, sizeof(SECURITY_DESCRIPTOR) + AclLength);
 
-    if (SecurityDescriptor == NULL) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SEC,"CmpHiveRootSecurityDescriptor: Couldn't allocate Sec. Desc.\n"));
+    if (SecurityDescriptor == NULL)
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SEC, "CmpHiveRootSecurityDescriptor: Couldn't allocate Sec. Desc.\n"));
         CM_BUGCHECK(REGISTRY_ERROR, ALLOCATE_SECURITY_DESCRIPTOR, 6, 0, 0);
     }
 
-    AclCopy = (PACL)((PISECURITY_DESCRIPTOR)SecurityDescriptor+1);
+    AclCopy = (PACL)((PISECURITY_DESCRIPTOR)SecurityDescriptor + 1);
     RtlCopyMemory(AclCopy, Acl, AclLength);
 
-    Status = RtlCreateSecurityDescriptor( SecurityDescriptor,
-                                          SECURITY_DESCRIPTOR_REVISION );
-    if (!NT_SUCCESS(Status)) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SEC,"CmpHiveRootSecurityDescriptor: CreateSecDesc failed %08lx\n",Status));
+    Status = RtlCreateSecurityDescriptor(SecurityDescriptor, SECURITY_DESCRIPTOR_REVISION);
+    if (!NT_SUCCESS(Status))
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SEC, "CmpHiveRootSecurityDescriptor: CreateSecDesc failed %08lx\n", Status));
         ExFreePool(SecurityDescriptor);
-        SecurityDescriptor=NULL;
+        SecurityDescriptor = NULL;
         CM_BUGCHECK(REGISTRY_ERROR, ALLOCATE_SECURITY_DESCRIPTOR, 7, Status, 0);
     }
 
-    Status = RtlSetDaclSecurityDescriptor( SecurityDescriptor,
-                                           TRUE,
-                                           AclCopy,
-                                           FALSE );
-    if (!NT_SUCCESS(Status)) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SEC,"CmpHiveRootSecurityDescriptor: SetDacl failed %08lx\n",Status));
+    Status = RtlSetDaclSecurityDescriptor(SecurityDescriptor, TRUE, AclCopy, FALSE);
+    if (!NT_SUCCESS(Status))
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SEC, "CmpHiveRootSecurityDescriptor: SetDacl failed %08lx\n", Status));
         ExFreePool(SecurityDescriptor);
-        SecurityDescriptor=NULL;
+        SecurityDescriptor = NULL;
         CM_BUGCHECK(REGISTRY_ERROR, ALLOCATE_SECURITY_DESCRIPTOR, 8, Status, 0);
     }
 
     //
     // free any allocations we made
     //
-    if (WorldSid!=NULL) {
+    if (WorldSid != NULL)
+    {
         ExFreePool(WorldSid);
     }
-    if (RestrictedSid!=NULL) {
+    if (RestrictedSid != NULL)
+    {
         ExFreePool(RestrictedSid);
     }
-    if (SystemSid!=NULL) {
+    if (SystemSid != NULL)
+    {
         ExFreePool(SystemSid);
     }
-    if (AdminSid!=NULL) {
+    if (AdminSid != NULL)
+    {
         ExFreePool(AdminSid);
     }
-    if (Acl!=NULL) {
+    if (Acl != NULL)
+    {
         ExFreePool(Acl);
     }
 
-    return(SecurityDescriptor);
+    return (SecurityDescriptor);
 }
-
-VOID
-CmpFreeSecurityDescriptor(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX Cell
-    )
+
+VOID CmpFreeSecurityDescriptor(IN PHHIVE Hive, IN HCELL_INDEX Cell)
 
 /*++
 
@@ -1727,14 +1628,15 @@ Return Value:
     HCELL_INDEX SecurityCell;
 
     PAGED_CODE();
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SEC,"CmpFreeSecurityDescriptor for cell %ld\n",Cell));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SEC, "CmpFreeSecurityDescriptor for cell %ld\n", Cell));
 
     ASSERT_CM_EXCLUSIVE_HIVE_ACCESS(Hive);
     //
     // Map in the cell whose security descriptor is being freed
     //
     Node = HvGetCell(Hive, Cell);
-    if( Node == NULL ) {
+    if (Node == NULL)
+    {
         //
         // we couldn't map the bin containing this cell
         // Sorry, we cannot free the descriptor
@@ -1748,7 +1650,8 @@ Return Value:
     //
     SecurityCell = Node->u.KeyNode.Security;
     Security = HvGetCell(Hive, SecurityCell);
-    if( Security == NULL ) {
+    if (Security == NULL)
+    {
         //
         // we couldn't map the bin containing this cell
         // Sorry, we cannot free the descriptor
@@ -1759,7 +1662,8 @@ Return Value:
     ASSERT_SECURITY(&(Security->u.KeySecurity));
 
 
-    if (Security->u.KeySecurity.ReferenceCount == 1) {
+    if (Security->u.KeySecurity.ReferenceCount == 1)
+    {
 
         //
         // This is the only cell that references this security descriptor,
@@ -1767,15 +1671,17 @@ Return Value:
         //
         CmpRemoveSecurityCellList(Hive, SecurityCell);
         HvFreeCell(Hive, SecurityCell);
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SEC,"CmpFreeSecurityDescriptor: freeing security cell\n"));
-    } else {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SEC, "CmpFreeSecurityDescriptor: freeing security cell\n"));
+    }
+    else
+    {
 
         //
         // More than one node references this security descriptor, so
         // just decrement the reference count.
         //
         Security->u.KeySecurity.ReferenceCount -= 1;
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SEC,"CmpFreeSecurityDescriptor: decrementing reference count\n"));
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SEC, "CmpFreeSecurityDescriptor: decrementing reference count\n"));
     }
 
     //
@@ -1788,11 +1694,7 @@ Return Value:
 }
 
 BOOLEAN
-CmpInsertSecurityCellList(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX NodeCell,
-    IN HCELL_INDEX SecurityCell
-    )
+CmpInsertSecurityCellList(IN PHHIVE Hive, IN HCELL_INDEX NodeCell, IN HCELL_INDEX SecurityCell)
 /*++
 
 Routine Description:
@@ -1820,11 +1722,11 @@ Return Value:
 --*/
 
 {
-    PCM_KEY_SECURITY    FlinkCell;
-    PCM_KEY_SECURITY    BlinkCell;
-    PCM_KEY_SECURITY    Cell;
-    PCM_KEY_NODE        Node;
-    PCM_KEY_NODE        ParentNode;
+    PCM_KEY_SECURITY FlinkCell;
+    PCM_KEY_SECURITY BlinkCell;
+    PCM_KEY_SECURITY Cell;
+    PCM_KEY_NODE Node;
+    PCM_KEY_NODE ParentNode;
 
     PAGED_CODE();
     //
@@ -1846,11 +1748,12 @@ Return Value:
     //ASSERT_CM_LOCK_OWNED_EXCLUSIVE();
     ASSERT_CM_EXCLUSIVE_HIVE_ACCESS(Hive);
 
-    Cell = (PCM_KEY_SECURITY) HvGetCell(Hive, SecurityCell);
-    if( Cell == NULL ) {
+    Cell = (PCM_KEY_SECURITY)HvGetCell(Hive, SecurityCell);
+    if (Cell == NULL)
+    {
         //
         // we couldn't map the bin containing this cell
-        // 
+        //
         return FALSE;
     }
 
@@ -1859,17 +1762,20 @@ Return Value:
 
     ASSERT_SECURITY(Cell);
 
-    if (HvGetCellType(SecurityCell) == Volatile) {
+    if (HvGetCellType(SecurityCell) == Volatile)
+    {
 
         Cell->Flink = Cell->Blink = SecurityCell;
+    }
+    else
+    {
 
-    } else {
-
-        Node = (PCM_KEY_NODE) HvGetCell(Hive, NodeCell);
-        if( Node == NULL ) {
+        Node = (PCM_KEY_NODE)HvGetCell(Hive, NodeCell);
+        if (Node == NULL)
+        {
             //
             // we couldn't map the bin containing this cell
-            // 
+            //
             return FALSE;
         }
 
@@ -1878,39 +1784,40 @@ Return Value:
 
         ASSERT_NODE(Node);
 
-        if (Node->Flags & KEY_HIVE_ENTRY) {
+        if (Node->Flags & KEY_HIVE_ENTRY)
+        {
             //
             // This must be the hive creation, so this cell becomes the anchor
             // for the list.
             //
-            CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SEC,"CmpInsertSecurityCellList: hive creation\n"));
+            CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SEC, "CmpInsertSecurityCellList: hive creation\n"));
             Cell->Flink = Cell->Blink = SecurityCell;
-
-        } else {
-            CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SEC,"CmpInsertSecurityCellList: insert at parent\n"));
+        }
+        else
+        {
+            CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SEC, "CmpInsertSecurityCellList: insert at parent\n"));
             //
             // Map in the node's parent's security cell, so we can hook into
             // the list there.
             //
-            ParentNode = (PCM_KEY_NODE) HvGetCell(Hive, Node->Parent);
-            if( ParentNode == NULL ) {
+            ParentNode = (PCM_KEY_NODE)HvGetCell(Hive, Node->Parent);
+            if (ParentNode == NULL)
+            {
                 //
                 // we couldn't map the bin containing this cell
-                // 
+                //
                 return FALSE;
             }
             // release the cell as we hold the reglock exclusive
             HvReleaseCell(Hive, Node->Parent);
 
             ASSERT_NODE(ParentNode);
-            BlinkCell = (PCM_KEY_SECURITY) HvGetCell(
-                                            Hive,
-                                            ParentNode->Security
-                                            );
-            if( BlinkCell == NULL ) {
+            BlinkCell = (PCM_KEY_SECURITY)HvGetCell(Hive, ParentNode->Security);
+            if (BlinkCell == NULL)
+            {
                 //
                 // we couldn't map the bin containing this cell
-                // 
+                //
                 return FALSE;
             }
             // release the cell as we hold the reglock exclusive
@@ -1921,14 +1828,12 @@ Return Value:
             //
             // Map in the Flink of the parent's security cell.
             //
-            FlinkCell = (PCM_KEY_SECURITY) HvGetCell(
-                                            Hive,
-                                            BlinkCell->Flink
-                                            );
-            if( FlinkCell == NULL ) {
+            FlinkCell = (PCM_KEY_SECURITY)HvGetCell(Hive, BlinkCell->Flink);
+            if (FlinkCell == NULL)
+            {
                 //
                 // we couldn't map the bin containing this cell
-                // 
+                //
                 return FALSE;
             }
             // release the cell as we hold the reglock exclusive
@@ -1936,8 +1841,7 @@ Return Value:
 
             ASSERT_SECURITY(FlinkCell);
 
-            if (! (HvMarkCellDirty(Hive, ParentNode->Security) &&
-                   HvMarkCellDirty(Hive, BlinkCell->Flink)))
+            if (!(HvMarkCellDirty(Hive, ParentNode->Security) && HvMarkCellDirty(Hive, BlinkCell->Flink)))
             {
                 return FALSE;
             }
@@ -1955,19 +1859,16 @@ Return Value:
     //
     // add the new security cell to the hive's security cache
     //
-    if( !NT_SUCCESS( CmpAddSecurityCellToCache ( (PCMHIVE)Hive,SecurityCell,FALSE) ) ) {
+    if (!NT_SUCCESS(CmpAddSecurityCellToCache((PCMHIVE)Hive, SecurityCell, FALSE)))
+    {
         return FALSE;
     }
 
     return TRUE;
 }
 
-
-VOID
-CmpRemoveSecurityCellList(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX SecurityCell
-    )
+
+VOID CmpRemoveSecurityCellList(IN PHHIVE Hive, IN HCELL_INDEX SecurityCell)
 /*++
 
 Routine Description:
@@ -1996,32 +1897,35 @@ Return Value:
     PCM_KEY_SECURITY Cell;
 
     PAGED_CODE();
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SEC,"CmpRemoveSecurityCellList: index %ld\n",SecurityCell));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SEC, "CmpRemoveSecurityCellList: index %ld\n", SecurityCell));
 
     ASSERT_CM_EXCLUSIVE_HIVE_ACCESS(Hive);
 
-    Cell = (PCM_KEY_SECURITY) HvGetCell(Hive, SecurityCell);
-    if( Cell == NULL ) {
+    Cell = (PCM_KEY_SECURITY)HvGetCell(Hive, SecurityCell);
+    if (Cell == NULL)
+    {
         //
         // we couldn't map the bin containing one of these cells
-        // 
+        //
         return;
     }
 
-    FlinkCell = (PCM_KEY_SECURITY) HvGetCell(Hive, Cell->Flink);
-    if( FlinkCell == NULL ) {
+    FlinkCell = (PCM_KEY_SECURITY)HvGetCell(Hive, Cell->Flink);
+    if (FlinkCell == NULL)
+    {
         //
         // we couldn't map the bin containing one of these cells
-        // 
+        //
         HvReleaseCell(Hive, SecurityCell);
         return;
     }
 
-    BlinkCell = (PCM_KEY_SECURITY) HvGetCell(Hive, Cell->Blink);
-    if( BlinkCell == NULL ) {
+    BlinkCell = (PCM_KEY_SECURITY)HvGetCell(Hive, Cell->Blink);
+    if (BlinkCell == NULL)
+    {
         //
         // we couldn't map the bin containing one of these cells
-        // 
+        //
         HvReleaseCell(Hive, SecurityCell);
         HvReleaseCell(Hive, Cell->Flink);
         return;
@@ -2036,7 +1940,7 @@ Return Value:
     //
     // finally, remove the security cell from cache, as it'll be freed
     //
-    CmpRemoveFromSecurityCache ( (PCMHIVE)Hive,SecurityCell);
+    CmpRemoveFromSecurityCache((PCMHIVE)Hive, SecurityCell);
 
     //
     // release used cells
@@ -2045,4 +1949,3 @@ Return Value:
     HvReleaseCell(Hive, Cell->Flink);
     HvReleaseCell(Hive, SecurityCell);
 }
-

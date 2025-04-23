@@ -29,38 +29,25 @@ Revision History:
 --*/
 
 #include "ki.h"
-
+
 //
 // Define forward referenced prototypes.
 //
 
 ULONG
-KiGetFeatureBits (
-    VOID
-    );
+KiGetFeatureBits(VOID);
 
-__inline
-ULONG
-amask(
-    IN ULONG Feature
-    )
+__inline ULONG amask(IN ULONG Feature)
 
 {
-    return(__asm("amask %0, v0",Feature));
+    return (__asm("amask %0, v0", Feature));
 }
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, KiInitializeKernel)
 #endif
-
-VOID
-KiInitializeKernel (
-    IN PKPROCESS Process,
-    IN PKTHREAD Thread,
-    IN PVOID IdleStack,
-    IN PKPRCB Prcb,
-    IN CCHAR Number,
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+
+VOID KiInitializeKernel(IN PKPROCESS Process, IN PKTHREAD Thread, IN PVOID IdleStack, IN PKPRCB Prcb, IN CCHAR Number,
+                        IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 
 /*++
 
@@ -125,7 +112,8 @@ Return Value:
     // number of processors and the current processor number.
     //
 
-    if ((Number + 1) > KeNumberProcessors) {
+    if ((Number + 1) > KeNumberProcessors)
+    {
         KeNumberProcessors = Number + 1;
     }
 
@@ -134,10 +122,12 @@ Return Value:
     // address space numbers passed via the loader block.
     //
 
-    if (Number == 0) {
+    if (Number == 0)
+    {
         KiMaximumAsn = LoaderBlock->u.Alpha.MaximumAddressSpaceNumber;
-
-    } else if (KiMaximumAsn > LoaderBlock->u.Alpha.MaximumAddressSpaceNumber) {
+    }
+    else if (KiMaximumAsn > LoaderBlock->u.Alpha.MaximumAddressSpaceNumber)
+    {
         KiMaximumAsn = LoaderBlock->u.Alpha.MaximumAddressSpaceNumber;
     }
 
@@ -148,8 +138,7 @@ Return Value:
     Pcr->InterruptRoutine[0] = KiPassiveRelease;
     Pcr->InterruptRoutine[APC_LEVEL] = KiApcInterrupt;
     Pcr->InterruptRoutine[DISPATCH_LEVEL] = KiDispatchInterrupt;
-    Pcr->ReservedVectors =
-        (1 << PASSIVE_LEVEL) | (1 << APC_LEVEL) | (1 << DISPATCH_LEVEL);
+    Pcr->ReservedVectors = (1 << PASSIVE_LEVEL) | (1 << APC_LEVEL) | (1 << DISPATCH_LEVEL);
 
     //
     // Initialize the processor id fields in the PCR.
@@ -185,9 +174,7 @@ Return Value:
     Prcb->Number = Number;
     Prcb->SetMember = 1 << Number;
 
-    KeInitializeDpc(&Prcb->QuantumEndDpc,
-                    (PKDEFERRED_ROUTINE)KiQuantumEnd,
-                    NIL);
+    KeInitializeDpc(&Prcb->QuantumEndDpc, (PKDEFERRED_ROUTINE)KiQuantumEnd, NIL);
 
     //
     // initialize the per processor lock queue entry for implemented locks.
@@ -247,14 +234,15 @@ Return Value:
     // Set the appropriate member in the active processors set.
     //
 
-    SetMember( Number, KeActiveProcessors );
+    SetMember(Number, KeActiveProcessors);
 
     //
     // Set the number of processors based on the maximum of the current
     // number of processors and the current processor number.
     //
 
-    if( (Number+1) > KeNumberProcessors ){
+    if ((Number + 1) > KeNumberProcessors)
+    {
         KeNumberProcessors = Number + 1;
     }
 
@@ -262,7 +250,7 @@ Return Value:
     // Initialize processors PowerState
     //
 
-    PoInitializePrcb (Prcb);
+    PoInitializePrcb(Prcb);
 
     //
     // Set global processor architecture, level and revision.  The
@@ -275,13 +263,13 @@ Return Value:
     KeProcessorArchitecture = PROCESSOR_ARCHITECTURE_ALPHA;
 #endif
 
-    if ((KeProcessorLevel == 0) ||
-        (KeProcessorLevel > (USHORT)Pcr->ProcessorType)) {
+    if ((KeProcessorLevel == 0) || (KeProcessorLevel > (USHORT)Pcr->ProcessorType))
+    {
         KeProcessorLevel = (USHORT)Pcr->ProcessorType;
     }
 
-    if ((KeProcessorRevision == 0) ||
-        (KeProcessorRevision > (USHORT)Pcr->ProcessorRevision)) {
+    if ((KeProcessorRevision == 0) || (KeProcessorRevision > (USHORT)Pcr->ProcessorRevision))
+    {
         KeProcessorRevision = (USHORT)Pcr->ProcessorRevision;
     }
 
@@ -295,7 +283,8 @@ Return Value:
     //      vector.
     //
 
-    if (Number == 0) {
+    if (Number == 0)
+    {
 
         //
         // Set default node.  Used in non-multinode systems and in
@@ -308,7 +297,8 @@ Return Value:
 
 #if defined(KE_MULTINODE)
 
-        for (Index = 1; Index < MAXIMUM_CCNUMA_NODES; Index++) {
+        for (Index = 1; Index < MAXIMUM_CCNUMA_NODES; Index++)
+        {
 
             extern KNODE KiNodeInit[];
 
@@ -338,7 +328,8 @@ Return Value:
         // run on to ensure that the code is actually in memory.
         //
 
-        for (Index = 0; Index < DISPATCH_LENGTH; Index += 1) {
+        for (Index = 0; Index < DISPATCH_LENGTH; Index += 1)
+        {
             KxUnexpectedInterrupt.DispatchCode[Index] = KiInterruptTemplate[Index];
         }
 
@@ -347,8 +338,9 @@ Return Value:
         //
 
         KiImb();
-
-    } else {
+    }
+    else
+    {
 
         //
         // Mask off feature bits that are not supported on all processors.
@@ -361,11 +353,11 @@ Return Value:
     // Update processor features
     //
 
-    SharedUserData->ProcessorFeatures[PF_ALPHA_BYTE_INSTRUCTIONS] =
-        (KeFeatureBits & KF_BYTE) ? TRUE : FALSE;
+    SharedUserData->ProcessorFeatures[PF_ALPHA_BYTE_INSTRUCTIONS] = (KeFeatureBits & KF_BYTE) ? TRUE : FALSE;
 
-    for (Index = DISPATCH_LEVEL+1; Index < MAXIMUM_VECTOR; Index += 1) {
-        Pcr->InterruptRoutine[Index] =  (PKINTERRUPT_ROUTINE)(&KxUnexpectedInterrupt.DispatchCode);
+    for (Index = DISPATCH_LEVEL + 1; Index < MAXIMUM_VECTOR; Index += 1)
+    {
+        Pcr->InterruptRoutine[Index] = (PKINTERRUPT_ROUTINE)(&KxUnexpectedInterrupt.DispatchCode);
     }
 
     //
@@ -379,7 +371,8 @@ Return Value:
     // per system data structures.
     //
 
-    if (Number == 0) {
+    if (Number == 0)
+    {
 
         //
         // Initialize the address of the restart block for the boot master.
@@ -391,7 +384,8 @@ Return Value:
         // Initialize the kernel debugger if enabled by the load options.
         //
 
-        if (KdInitSystem(0, LoaderBlock, FALSE) == FALSE) {
+        if (KdInitSystem(0, LoaderBlock, FALSE) == FALSE)
+        {
             KeBugCheck(PHASE0_INITIALIZATION_FAILED);
         }
 
@@ -399,7 +393,8 @@ Return Value:
         // Initialize processor block array.
         //
 
-        for (Index = 1; Index < MAXIMUM_PROCESSORS; Index += 1) {
+        for (Index = 1; Index < MAXIMUM_PROCESSORS; Index += 1)
+        {
             KiProcessorBlock[Index] = (PKPRCB)NULL;
         }
 
@@ -423,11 +418,7 @@ Return Value:
         //      3. the active processor mask to the specified processor.
         //
 
-        KeInitializeProcess(Process,
-                            (KPRIORITY)0,
-                            (KAFFINITY)(0xffffffff),
-                            (PULONG_PTR)PDE_SELFMAP,
-                            FALSE);
+        KeInitializeProcess(Process, (KPRIORITY)0, (KAFFINITY)(0xffffffff), (PULONG_PTR)PDE_SELFMAP, FALSE);
 
         Process->ThreadQuantum = MAXCHAR;
     }
@@ -444,14 +435,8 @@ Return Value:
     //          set.
     //
 
-    KeInitializeThread(Thread,
-                       (PVOID)((ULONG_PTR)IdleStack - PAGE_SIZE),
-                       (PKSYSTEM_ROUTINE)NULL,
-                       (PKSTART_ROUTINE)NULL,
-                       (PVOID)NULL,
-                       (PCONTEXT)NULL,
-                       (PVOID)NULL,
-                       Process);
+    KeInitializeThread(Thread, (PVOID)((ULONG_PTR)IdleStack - PAGE_SIZE), (PKSYSTEM_ROUTINE)NULL, (PKSTART_ROUTINE)NULL,
+                       (PVOID)NULL, (PCONTEXT)NULL, (PVOID)NULL, Process);
 
     Thread->InitialStack = IdleStack;
     Thread->StackBase = IdleStack;
@@ -467,7 +452,8 @@ Return Value:
     // bit in the active summary of the idle process.
     //
 
-    if (Number == 0) {
+    if (Number == 0)
+    {
         SetMember(Number, Process->ActiveProcessors);
     }
 
@@ -475,13 +461,13 @@ Return Value:
     // call the executive initialization routine.
     //
 
-    try {
+    try
+    {
         ExpInitializeExecutive(Number, LoaderBlock);
-
-    } except(KeBugCheckEx(PHASE0_EXCEPTION,
-                          (ULONG)GetExceptionCode(),
-                          (ULONG_PTR)GetExceptionInformation(),
-                          0,0), EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(KeBugCheckEx(PHASE0_EXCEPTION, (ULONG)GetExceptionCode(), (ULONG_PTR)GetExceptionInformation(), 0, 0),
+           EXCEPTION_EXECUTE_HANDLER)
+    {
         ; // should never get here
     }
 
@@ -492,9 +478,9 @@ Return Value:
     // overrides.
     //
 
-    if (Number == 0) {
-        KiTimeIncrementReciprocal = KiComputeReciprocal((LONG)KeMaximumIncrement,
-                                                        &KiTimeIncrementShiftCount);
+    if (Number == 0)
+    {
+        KiTimeIncrementReciprocal = KiComputeReciprocal((LONG)KeMaximumIncrement, &KiTimeIncrementShiftCount);
 
         Prcb->MaximumDpcQueueDepth = KiMaximumDpcQueueDepth;
         Prcb->MinimumDpcRate = KiMinimumDpcRate;
@@ -544,7 +530,8 @@ Return Value:
 #if !defined(NT_UP)
 
     RestartBlock = Prcb->RestartBlock;
-    if (RestartBlock != NULL) {
+    if (RestartBlock != NULL)
+    {
         RestartBlock->BootStatus.BootFinished = 1;
     }
 
@@ -554,7 +541,8 @@ Return Value:
     // idle summary.
     //
 
-    if ((Number != 0) && (Prcb->NextThread == NULL)) {
+    if ((Number != 0) && (Prcb->NextThread == NULL))
+    {
         SetMember(Number, KiIdleSummary);
     }
 
@@ -564,9 +552,7 @@ Return Value:
 }
 
 ULONG
-KiGetFeatureBits(
-    VOID
-    )
+KiGetFeatureBits(VOID)
 
 /*++
 
@@ -582,7 +568,8 @@ KiGetFeatureBits(
     // Check for byte instructions.
     //
 
-    if (amask(1) == 0) {
+    if (amask(1) == 0)
+    {
         Features |= KF_BYTE;
     }
 
@@ -591,14 +578,8 @@ KiGetFeatureBits(
 
 #if defined(_AXP64_)
 
-
-VOID
-KiStartHalThread (
-    IN PKTHREAD Thread,
-    IN PVOID Stack,
-    IN PKSTART_ROUTINE StartRoutine,
-    IN ULONG_PTR Process
-    )
+
+VOID KiStartHalThread(IN PKTHREAD Thread, IN PVOID Stack, IN PKSTART_ROUTINE StartRoutine, IN ULONG_PTR Process)
 
 /*++
 
@@ -628,20 +609,13 @@ Return Value:
     // Initialize the specified thread object.
     //
 
-    KeInitializeThread(Thread,
-                       Stack,
-                       (PKSYSTEM_ROUTINE)StartRoutine,
-                       NULL,
-                       NULL,
-                       NULL,
-                       NULL,
-                       (PKPROCESS)Process);
+    KeInitializeThread(Thread, Stack, (PKSYSTEM_ROUTINE)StartRoutine, NULL, NULL, NULL, NULL, (PKPROCESS)Process);
 
     //
     // Set thread priority.
     //
 
-    Thread->Priority = (KPRIORITY) NORMAL_BASE_PRIORITY - 1;
+    Thread->Priority = (KPRIORITY)NORMAL_BASE_PRIORITY - 1;
     KeReadyThread(Thread);
     return;
 }

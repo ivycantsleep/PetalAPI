@@ -35,12 +35,7 @@ POBJECT_TYPE LpcWaitablePortObjectType;
 #pragma const_seg("INITCONST")
 #pragma data_seg("PAGEDATA")
 #endif // ALLOC_DATA_PRAGMA
-const GENERIC_MAPPING LpcpPortMapping = {
-    READ_CONTROL | PORT_CONNECT,
-    DELETE | PORT_CONNECT,
-    0,
-    PORT_ALL_ACCESS
-};
+const GENERIC_MAPPING LpcpPortMapping = { READ_CONTROL | PORT_CONNECT, DELETE | PORT_CONNECT, 0, PORT_ALL_ACCESS };
 ULONG LpcpNextMessageId = 1;
 ULONG LpcpNextCallbackId = 1;
 #ifdef ALLOC_DATA_PRAGMA
@@ -61,36 +56,25 @@ LPC_MUTEX LpcpLock;
 
 #if ENABLE_LPC_TRACING
 
-char *LpcpMessageTypeName[] = {
-    "UNUSED_MSG_TYPE",
-    "LPC_REQUEST",
-    "LPC_REPLY",
-    "LPC_DATAGRAM",
-    "LPC_LOST_REPLY",
-    "LPC_PORT_CLOSED",
-    "LPC_CLIENT_DIED",
-    "LPC_EXCEPTION",
-    "LPC_DEBUG_EVENT",
-    "LPC_ERROR_EVENT",
-    "LPC_CONNECTION_REQUEST"
-};
+char *LpcpMessageTypeName[] = { "UNUSED_MSG_TYPE", "LPC_REQUEST",           "LPC_REPLY",
+                                "LPC_DATAGRAM",    "LPC_LOST_REPLY",        "LPC_PORT_CLOSED",
+                                "LPC_CLIENT_DIED", "LPC_EXCEPTION",         "LPC_DEBUG_EVENT",
+                                "LPC_ERROR_EVENT", "LPC_CONNECTION_REQUEST" };
 
 #endif // ENABLE_LPC_TRACING
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,LpcInitSystem)
+#pragma alloc_text(INIT, LpcInitSystem)
 
 #if ENABLE_LPC_TRACING
-#pragma alloc_text(PAGE,LpcpGetCreatorName)
+#pragma alloc_text(PAGE, LpcpGetCreatorName)
 #endif // ENABLE_LPC_TRACING
 
 #endif // ALLOC_PRAGMA
 
-
+
 BOOLEAN
-LpcInitSystem (
-    VOID
-)
+LpcInitSystem(VOID)
 
 /*++
 
@@ -128,41 +112,35 @@ Return Value:
     //  Create the object type for the port object
     //
 
-    RtlInitUnicodeString( &PortTypeName, L"Port" );
+    RtlInitUnicodeString(&PortTypeName, L"Port");
 
-    RtlZeroMemory( &ObjectTypeInitializer, sizeof( ObjectTypeInitializer ));
+    RtlZeroMemory(&ObjectTypeInitializer, sizeof(ObjectTypeInitializer));
 
-    ObjectTypeInitializer.Length = sizeof( ObjectTypeInitializer );
+    ObjectTypeInitializer.Length = sizeof(ObjectTypeInitializer);
     ObjectTypeInitializer.GenericMapping = LpcpPortMapping;
     ObjectTypeInitializer.MaintainTypeList = FALSE;
     ObjectTypeInitializer.PoolType = PagedPool;
-    ObjectTypeInitializer.DefaultPagedPoolCharge = FIELD_OFFSET( LPCP_PORT_OBJECT, WaitEvent );
-    ObjectTypeInitializer.DefaultNonPagedPoolCharge = sizeof( LPCP_NONPAGED_PORT_QUEUE );
+    ObjectTypeInitializer.DefaultPagedPoolCharge = FIELD_OFFSET(LPCP_PORT_OBJECT, WaitEvent);
+    ObjectTypeInitializer.DefaultNonPagedPoolCharge = sizeof(LPCP_NONPAGED_PORT_QUEUE);
     ObjectTypeInitializer.InvalidAttributes = OBJ_VALID_ATTRIBUTES ^ PORT_VALID_OBJECT_ATTRIBUTES;
     ObjectTypeInitializer.ValidAccessMask = PORT_ALL_ACCESS;
     ObjectTypeInitializer.CloseProcedure = LpcpClosePort;
     ObjectTypeInitializer.DeleteProcedure = LpcpDeletePort;
-    ObjectTypeInitializer.UseDefaultObject = TRUE ;
+    ObjectTypeInitializer.UseDefaultObject = TRUE;
 
-    ObCreateObjectType( &PortTypeName,
-                        &ObjectTypeInitializer,
-                        (PSECURITY_DESCRIPTOR)NULL,
-                        &LpcPortObjectType );
+    ObCreateObjectType(&PortTypeName, &ObjectTypeInitializer, (PSECURITY_DESCRIPTOR)NULL, &LpcPortObjectType);
 
     //
     //  Create the object type for the waitable port object
     //
 
-    RtlInitUnicodeString( &PortTypeName, L"WaitablePort" );
+    RtlInitUnicodeString(&PortTypeName, L"WaitablePort");
     ObjectTypeInitializer.PoolType = NonPagedPool;
-    ObjectTypeInitializer.DefaultNonPagedPoolCharge += sizeof( LPCP_PORT_OBJECT );
+    ObjectTypeInitializer.DefaultNonPagedPoolCharge += sizeof(LPCP_PORT_OBJECT);
     ObjectTypeInitializer.DefaultPagedPoolCharge = 0;
     ObjectTypeInitializer.UseDefaultObject = FALSE;
 
-    ObCreateObjectType( &PortTypeName,
-                        &ObjectTypeInitializer,
-                        (PSECURITY_DESCRIPTOR)NULL,
-                        &LpcWaitablePortObjectType );
+    ObCreateObjectType(&PortTypeName, &ObjectTypeInitializer, (PSECURITY_DESCRIPTOR)NULL, &LpcWaitablePortObjectType);
 
     //
     //  Initialize the lpc port zone.  Each element can contain a max
@@ -170,32 +148,26 @@ Return Value:
     //  message
     //
 
-    ZoneElementSize = PORT_MAXIMUM_MESSAGE_LENGTH +
-                      sizeof( LPCP_MESSAGE ) +
-                      sizeof( LPCP_CONNECTION_MESSAGE );
+    ZoneElementSize = PORT_MAXIMUM_MESSAGE_LENGTH + sizeof(LPCP_MESSAGE) + sizeof(LPCP_CONNECTION_MESSAGE);
 
     //
     //  Round up the size to the next 16 byte alignment
     //
 
-    ZoneElementSize = (ZoneElementSize + LPCP_ZONE_ALIGNMENT - 1) &
-                      LPCP_ZONE_ALIGNMENT_MASK;
+    ZoneElementSize = (ZoneElementSize + LPCP_ZONE_ALIGNMENT - 1) & LPCP_ZONE_ALIGNMENT_MASK;
 
     //
     //  Initialize the zone
     //
 
-    LpcpInitializePortZone( ZoneElementSize );
+    LpcpInitializePortZone(ZoneElementSize);
 
-    return( TRUE );
+    return (TRUE);
 }
 
 #if ENABLE_LPC_TRACING
-
-char *
-LpcpGetCreatorName (
-    PLPCP_PORT_OBJECT PortObject
-    )
+
+char *LpcpGetCreatorName(PLPCP_PORT_OBJECT PortObject)
 
 /*++
 
@@ -222,18 +194,20 @@ Return Value:
     //  First find the process that created the port object
     //
 
-    Status = PsLookupProcessByProcessId( PortObject->Creator.UniqueProcess, &Process );
+    Status = PsLookupProcessByProcessId(PortObject->Creator.UniqueProcess, &Process);
 
     //
     //  If we were able to get the process then return the name of the process
     //  to our caller
     //
 
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
 
         return (char *)Process->ImageFileName;
-
-    } else {
+    }
+    else
+    {
 
         //
         //  Otherwise tell our caller we don't know the name
@@ -243,4 +217,3 @@ Return Value:
     }
 }
 #endif // ENABLE_LPC_TRACING
-

@@ -23,10 +23,7 @@ Environment:
 
 #include "ntrtlp.h"
 
-VOID
-RtlRaiseException (
-    IN PEXCEPTION_RECORD ExceptionRecord
-    )
+VOID RtlRaiseException(IN PEXCEPTION_RECORD ExceptionRecord)
 
 /*++
 
@@ -63,42 +60,39 @@ Return Value:
     RtlCaptureContext(&ContextRecord);
     ControlPc = ContextRecord.Rip;
     FunctionEntry = RtlLookupFunctionEntry(ControlPc, &ImageBase, NULL);
-    if (FunctionEntry != NULL) {
-        RtlVirtualUnwind(UNW_FLAG_NHANDLER,
-                         ImageBase,
-                         ControlPc,
-                         FunctionEntry,
-                         &ContextRecord,
-                         &HandlerData,
-                         &EstablisherFrame,
-                         NULL);
+    if (FunctionEntry != NULL)
+    {
+        RtlVirtualUnwind(UNW_FLAG_NHANDLER, ImageBase, ControlPc, FunctionEntry, &ContextRecord, &HandlerData,
+                         &EstablisherFrame, NULL);
 
         ExceptionRecord->ExceptionAddress = (PVOID)ContextRecord.Rip;
 
 #if defined(NTOS_KERNEL_RUNTIME)
 
-        if (RtlDispatchException(ExceptionRecord, &ContextRecord) != FALSE) {
+        if (RtlDispatchException(ExceptionRecord, &ContextRecord) != FALSE)
+        {
             return;
-    
         }
 
         Status = ZwRaiseException(ExceptionRecord, &ContextRecord, FALSE);
 
 #else
 
-        if (ZwQueryPortInformationProcess() == FALSE) {
-            if (RtlDispatchException(ExceptionRecord, &ContextRecord) != FALSE) {
+        if (ZwQueryPortInformationProcess() == FALSE)
+        {
+            if (RtlDispatchException(ExceptionRecord, &ContextRecord) != FALSE)
+            {
                 return;
             }
 
             Status = ZwRaiseException(ExceptionRecord, &ContextRecord, FALSE);
-
-        } else {
+        }
+        else
+        {
             Status = ZwRaiseException(ExceptionRecord, &ContextRecord, TRUE);
         }
 
 #endif
-
     }
 
     //
@@ -112,12 +106,9 @@ Return Value:
 }
 
 #pragma warning(push)
-#pragma warning(disable:4717)       // recursive function
-                     
-VOID
-RtlRaiseStatus (
-    IN NTSTATUS Status
-    )
+#pragma warning(disable : 4717) // recursive function
+
+VOID RtlRaiseStatus(IN NTSTATUS Status)
 
 /*++
 
@@ -166,11 +157,13 @@ Return Value:
 
 #else
 
-    if (ZwQueryPortInformationProcess() == FALSE) {
+    if (ZwQueryPortInformationProcess() == FALSE)
+    {
         RtlDispatchException(&ExceptionRecord, &ContextRecord);
         Status = ZwRaiseException(&ExceptionRecord, &ContextRecord, FALSE);
-
-    } else {
+    }
+    else
+    {
         Status = ZwRaiseException(&ExceptionRecord, &ContextRecord, TRUE);
     }
 

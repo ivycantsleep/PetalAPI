@@ -27,19 +27,14 @@ Revision History:
 #include "ki.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text (PAGE, KeUserModeCallback)
-#pragma alloc_text (PAGE, NtW32Call)
+#pragma alloc_text(PAGE, KeUserModeCallback)
+#pragma alloc_text(PAGE, NtW32Call)
 #endif
 
-
+
 NTSTATUS
-KeUserModeCallback (
-    IN ULONG ApiNumber,
-    IN PVOID InputBuffer,
-    IN ULONG InputLength,
-    OUT PVOID *OutputBuffer,
-    IN PULONG OutputLength
-    )
+KeUserModeCallback(IN ULONG ApiNumber, IN PVOID InputBuffer, IN ULONG InputLength, OUT PVOID *OutputBuffer,
+                   IN PULONG OutputLength)
 
 /*++
 
@@ -95,7 +90,8 @@ Return Value:
     OldRsPFS = TrapFrame->RsPFS;
     OldStIFS = TrapFrame->StIFS;
 
-    try {
+    try
+    {
 
         //
         // Compute new user mode stack address, probe for writability,
@@ -105,7 +101,7 @@ Return Value:
         //      the input length must be rounded up to a 16-byte boundary.
         //
 
-        Length =  (InputLength + 16 - 1 + sizeof(UCALLOUT_FRAME) + STACK_SCRATCH_AREA) & ~(16 - 1);
+        Length = (InputLength + 16 - 1 + sizeof(UCALLOUT_FRAME) + STACK_SCRATCH_AREA) & ~(16 - 1);
         NewStack = OldStack - Length;
         CalloutFrame = (PUCALLOUT_FRAME)(NewStack + STACK_SCRATCH_AREA);
         ProbeForWrite((PVOID)NewStack, Length, sizeof(QUAD));
@@ -127,16 +123,17 @@ Return Value:
         // unwinding work across the call out.
         //
 
-        KeFlushUserRseState (TrapFrame);
+        KeFlushUserRseState(TrapFrame);
 
 
-    //
-    // If an exception occurs during the probe of the user stack, then
-    // always handle the exception and return the exception code as the
-    // status value.
-    //
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+        //
+        // If an exception occurs during the probe of the user stack, then
+        // always handle the exception and return the exception code as the
+        // status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         return GetExceptionCode();
     }
 
@@ -157,19 +154,23 @@ Return Value:
 
     GdiBatchCount = 1;
 
-    try {
+    try
+    {
         GdiBatchCount = ((PTEB)KeGetCurrentThread()->Teb)->GdiBatchCount;
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         NOTHING;
     }
 
-    if (GdiBatchCount > 0) {
+    if (GdiBatchCount > 0)
+    {
 
 
         //
         // Some of the call back functions store a return values in the
         // stack.  The batch flush routine can sometimes overwrite these
-        // values causing failures.  Add some slop in the stack to 
+        // values causing failures.  Add some slop in the stack to
         // preserve these values.
         //
 
@@ -186,17 +187,11 @@ Return Value:
     TrapFrame->RsPFS = OldRsPFS;
     TrapFrame->StIFS = OldStIFS;
     return Status;
-
 }
-
+
 NTSTATUS
-NtW32Call (
-    IN ULONG ApiNumber,
-    IN PVOID InputBuffer,
-    IN ULONG InputLength,
-    OUT PVOID *OutputBuffer,
-    OUT PULONG OutputLength
-    )
+NtW32Call(IN ULONG ApiNumber, IN PVOID InputBuffer, IN ULONG InputLength, OUT PVOID *OutputBuffer,
+          OUT PULONG OutputLength)
 
 /*++
 
@@ -240,7 +235,8 @@ Return Value:
     // since the thread does not have a large stack.
     //
 
-    if (KeGetCurrentThread()->Win32Thread == (PVOID)&KeServiceDescriptorTable[0]) {
+    if (KeGetCurrentThread()->Win32Thread == (PVOID)&KeServiceDescriptorTable[0])
+    {
         return STATUS_NOT_IMPLEMENTED;
     }
 
@@ -248,17 +244,19 @@ Return Value:
     // Probe the output buffer address and length for writeability.
     //
 
-    try {
+    try
+    {
         ProbeForWriteUlong((PULONG)OutputBuffer);
         ProbeForWriteUlong(OutputLength);
 
-    //
-    // If an exception occurs during the probe of the output buffer or
-    // length, then always handle the exception and return the exception
-    // code as the status value.
-    //
-
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+        //
+        // If an exception occurs during the probe of the output buffer or
+        // length, then always handle the exception and return the exception
+        // code as the status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         return GetExceptionCode();
     }
 
@@ -266,32 +264,29 @@ Return Value:
     // Call out to user mode specifying the input buffer and API number.
     //
 
-    Status = KeUserModeCallback(ApiNumber,
-                                InputBuffer,
-                                InputLength,
-                                &ValueBuffer,
-                                &ValueLength);
+    Status = KeUserModeCallback(ApiNumber, InputBuffer, InputLength, &ValueBuffer, &ValueLength);
 
     //
     // If the callout is successful, then the output buffer address and
     // length.
     //
 
-    if (NT_SUCCESS(Status)) {
-        try {
+    if (NT_SUCCESS(Status))
+    {
+        try
+        {
             *OutputBuffer = ValueBuffer;
             *OutputLength = ValueLength;
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
         }
     }
 
     return Status;
 }
-
-VOID
-KiTestGdiBatchCount (
-    )
+
+VOID KiTestGdiBatchCount()
 
 /*++
 
@@ -312,13 +307,17 @@ Return Value:
 {
     ULONG GdiBatchCount = 1;
 
-    try {
+    try
+    {
         GdiBatchCount = ((PTEB)KeGetCurrentThread()->Teb)->GdiBatchCount;
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-          NOTHING;
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        NOTHING;
     }
 
-    if (GdiBatchCount > 0) {
+    if (GdiBatchCount > 0)
+    {
         KeGdiFlushUserBatch();
     }
 }

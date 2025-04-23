@@ -36,18 +36,14 @@ Revision History:
 #pragma alloc_text(PAGEVRFY, VfSettingsSetValue)
 #endif
 
-#define POOL_TAG_VERIFIER_SETTINGS  'oGfV'
+#define POOL_TAG_VERIFIER_SETTINGS 'oGfV'
 
 //
 // This points to the global list of verifier settings.
 //
 PVERIFIER_SETTINGS_SNAPSHOT VfSettingsGlobal = NULL;
 
-VOID
-FASTCALL
-VfSettingsInit(
-    IN  ULONG   MmFlags
-    )
+VOID FASTCALL VfSettingsInit(IN ULONG MmFlags)
 /*++
 
   Description:
@@ -70,20 +66,18 @@ VfSettingsInit(
     // As this is system startup code, it is one of the very few places where
     // it's ok to use MustSucceed.
     //
-    VfSettingsGlobal = (PVERIFIER_SETTINGS_SNAPSHOT) ExAllocatePoolWithTag(
-        NonPagedPoolMustSucceed,
-        VfSettingsGetSnapshotSize(),
-        POOL_TAG_VERIFIER_SETTINGS
-        );
+    VfSettingsGlobal = (PVERIFIER_SETTINGS_SNAPSHOT)ExAllocatePoolWithTag(
+        NonPagedPoolMustSucceed, VfSettingsGetSnapshotSize(), POOL_TAG_VERIFIER_SETTINGS);
 
     RtlZeroMemory(VfSettingsGlobal, VfSettingsGetSnapshotSize());
 
     //
     // Set IRP deferral time to 300 us.
     //
-    VfSettingsSetValue(NULL, VERIFIER_VALUE_IRP_DEFERRAL_TIME,  10 * 300);
+    VfSettingsSetValue(NULL, VERIFIER_VALUE_IRP_DEFERRAL_TIME, 10 * 300);
 
-    if (MmFlags & DRIVER_VERIFIER_IO_CHECKING) {
+    if (MmFlags & DRIVER_VERIFIER_IO_CHECKING)
+    {
 
         VfSettingsSetOption(NULL, VERIFIER_OPTION_EXAMINE_RELATION_PDOS, TRUE);
         VfSettingsSetOption(NULL, VERIFIER_OPTION_TRACK_IRPS, TRUE);
@@ -91,7 +85,8 @@ VfSettingsInit(
         VfSettingsSetOption(NULL, VERIFIER_OPTION_POLICE_IRPS, TRUE);
         VfSettingsSetOption(NULL, VERIFIER_OPTION_MONITOR_MAJORS, TRUE);
 
-        if (MmFlags & DRIVER_VERIFIER_ENHANCED_IO_CHECKING) {
+        if (MmFlags & DRIVER_VERIFIER_ENHANCED_IO_CHECKING)
+        {
 
 #if 0
             //
@@ -122,29 +117,28 @@ VfSettingsInit(
         }
     }
 
-    if (MmFlags & DRIVER_VERIFIER_DMA_VERIFIER) {
+    if (MmFlags & DRIVER_VERIFIER_DMA_VERIFIER)
+    {
 
         VfSettingsSetOption(NULL, VERIFIER_OPTION_VERIFY_DMA, TRUE);
         VfSettingsSetOption(NULL, VERIFIER_OPTION_DOUBLE_BUFFER_DMA, TRUE);
     }
 
-    if (MmFlags & DRIVER_VERIFIER_HARDWARE_VERIFICATION) {
+    if (MmFlags & DRIVER_VERIFIER_HARDWARE_VERIFICATION)
+    {
 
         VfSettingsSetOption(NULL, VERIFIER_OPTION_HARDWARE_VERIFICATION, TRUE);
     }
 
-    if (MmFlags & DRIVER_VERIFIER_SYSTEM_BIOS_VERIFICATION) {
+    if (MmFlags & DRIVER_VERIFIER_SYSTEM_BIOS_VERIFICATION)
+    {
 
         VfSettingsSetOption(NULL, VERIFIER_OPTION_SYSTEM_BIOS_VERIFICATION, TRUE);
     }
 }
 
 
-VOID
-FASTCALL
-VfSettingsCreateSnapshot(
-    IN OUT  PVERIFIER_SETTINGS_SNAPSHOT VerifierSettingsSnapshot
-    )
+VOID FASTCALL VfSettingsCreateSnapshot(IN OUT PVERIFIER_SETTINGS_SNAPSHOT VerifierSettingsSnapshot)
 /*++
 
   Description:
@@ -163,19 +157,13 @@ VfSettingsCreateSnapshot(
 
 --*/
 {
-    RtlCopyMemory(
-        VerifierSettingsSnapshot,
-        VfSettingsGlobal,
-        VfSettingsGetSnapshotSize()
-        );
+    RtlCopyMemory(VerifierSettingsSnapshot, VfSettingsGlobal, VfSettingsGetSnapshotSize());
 }
 
 
 ULONG
 FASTCALL
-VfSettingsGetSnapshotSize(
-    VOID
-    )
+VfSettingsGetSnapshotSize(VOID)
 /*++
 
   Description:
@@ -199,10 +187,8 @@ VfSettingsGetSnapshotSize(
 
 BOOLEAN
 FASTCALL
-VfSettingsIsOptionEnabled(
-    IN  PVERIFIER_SETTINGS_SNAPSHOT VerifierSettingsSnapshot  OPTIONAL,
-    IN  VERIFIER_OPTION             VerifierOption
-    )
+VfSettingsIsOptionEnabled(IN PVERIFIER_SETTINGS_SNAPSHOT VerifierSettingsSnapshot OPTIONAL,
+                          IN VERIFIER_OPTION VerifierOption)
 /*++
 
   Description:
@@ -228,7 +214,8 @@ VfSettingsIsOptionEnabled(
     //
     // Bounds check.
     //
-    if ((VerifierOption >= VERIFIER_OPTION_MAX) || (VerifierOption == 0)) {
+    if ((VerifierOption >= VERIFIER_OPTION_MAX) || (VerifierOption == 0))
+    {
 
         ASSERT(0);
         return FALSE;
@@ -237,33 +224,30 @@ VfSettingsIsOptionEnabled(
     //
     // Extract appropriate bit.
     //
-    verifierIndex = (ULONG) VerifierOption;
+    verifierIndex = (ULONG)VerifierOption;
     verifierMask = 1 << (verifierIndex % 32);
     verifierIndex /= 32;
 
-    if (VerifierSettingsSnapshot) {
+    if (VerifierSettingsSnapshot)
+    {
 
-        verifierData = (PULONG) VerifierSettingsSnapshot;
+        verifierData = (PULONG)VerifierSettingsSnapshot;
+    }
+    else
+    {
 
-    } else {
-
-        verifierData = (PULONG) VfSettingsGlobal;
+        verifierData = (PULONG)VfSettingsGlobal;
     }
 
     //
     // And now the test.
     //
-    return (BOOLEAN)((verifierData[verifierIndex]&verifierMask) != 0);
+    return (BOOLEAN)((verifierData[verifierIndex] & verifierMask) != 0);
 }
 
 
-VOID
-FASTCALL
-VfSettingsSetOption(
-    IN  PVERIFIER_SETTINGS_SNAPSHOT VerifierSettingsSnapshot  OPTIONAL,
-    IN  VERIFIER_OPTION             VerifierOption,
-    IN  BOOLEAN                     Setting
-    )
+VOID FASTCALL VfSettingsSetOption(IN PVERIFIER_SETTINGS_SNAPSHOT VerifierSettingsSnapshot OPTIONAL,
+                                  IN VERIFIER_OPTION VerifierOption, IN BOOLEAN Setting)
 /*++
 
   Description:
@@ -291,7 +275,8 @@ VfSettingsSetOption(
     //
     // Bounds check.
     //
-    if ((VerifierOption >= VERIFIER_OPTION_MAX) || (VerifierOption == 0)) {
+    if ((VerifierOption >= VERIFIER_OPTION_MAX) || (VerifierOption == 0))
+    {
 
         ASSERT(0);
         return;
@@ -300,47 +285,47 @@ VfSettingsSetOption(
     //
     // Extract appropriate bit.
     //
-    verifierIndex = (ULONG) VerifierOption;
+    verifierIndex = (ULONG)VerifierOption;
     verifierMask = 1 << (verifierIndex % 32);
     verifierIndex /= 32;
 
-    if (VerifierSettingsSnapshot) {
+    if (VerifierSettingsSnapshot)
+    {
 
-        verifierData = (PULONG) VerifierSettingsSnapshot;
+        verifierData = (PULONG)VerifierSettingsSnapshot;
+    }
+    else
+    {
 
-    } else {
-
-        verifierData = (PULONG) VfSettingsGlobal;
+        verifierData = (PULONG)VfSettingsGlobal;
     }
 
     //
     // And now to set the value as atomically as possible.
     //
-    do {
+    do
+    {
 
         oldValue = verifierData[verifierIndex];
-        if (Setting) {
+        if (Setting)
+        {
 
             newValue = oldValue | verifierMask;
-
-        } else {
+        }
+        else
+        {
 
             newValue = oldValue &= ~verifierMask;
         }
 
         lastValue = InterlockedExchange((PLONG)(verifierData + verifierIndex), newValue);
 
-    } while ( lastValue != newValue );
+    } while (lastValue != newValue);
 }
 
 
-VOID
-FASTCALL
-VfSettingsGetValue(
-    IN  PVERIFIER_SETTINGS_SNAPSHOT VerifierSettingsSnapshot  OPTIONAL,
-    IN  VERIFIER_VALUE              VerifierValue,
-    OUT ULONG                       *Value
-    )
+VOID FASTCALL VfSettingsGetValue(IN PVERIFIER_SETTINGS_SNAPSHOT VerifierSettingsSnapshot OPTIONAL,
+                                 IN VERIFIER_VALUE VerifierValue, OUT ULONG *Value)
 /*++
 
   Description:
@@ -367,7 +352,8 @@ VfSettingsGetValue(
     //
     // Sanity check values
     //
-    if ((VerifierValue == 0) || (VerifierValue >= VERIFIER_VALUE_MAX)) {
+    if ((VerifierValue == 0) || (VerifierValue >= VERIFIER_VALUE_MAX))
+    {
 
         *Value = 0;
         return;
@@ -376,13 +362,15 @@ VfSettingsGetValue(
     //
     // Get appropriate array
     //
-    if (VerifierSettingsSnapshot) {
+    if (VerifierSettingsSnapshot)
+    {
 
-        valueArray = (PULONG) (((PUCHAR) VerifierSettingsSnapshot) + OPTION_SIZE);
+        valueArray = (PULONG)(((PUCHAR)VerifierSettingsSnapshot) + OPTION_SIZE);
+    }
+    else
+    {
 
-    } else {
-
-        valueArray = (PULONG) (((PUCHAR) VfSettingsGlobal) + OPTION_SIZE);
+        valueArray = (PULONG)(((PUCHAR)VfSettingsGlobal) + OPTION_SIZE);
     }
 
     //
@@ -392,13 +380,8 @@ VfSettingsGetValue(
 }
 
 
-VOID
-FASTCALL
-VfSettingsSetValue(
-    IN  PVERIFIER_SETTINGS_SNAPSHOT VerifierSettingsSnapshot  OPTIONAL,
-    IN  VERIFIER_VALUE              VerifierValue,
-    IN  ULONG                       Value
-    )
+VOID FASTCALL VfSettingsSetValue(IN PVERIFIER_SETTINGS_SNAPSHOT VerifierSettingsSnapshot OPTIONAL,
+                                 IN VERIFIER_VALUE VerifierValue, IN ULONG Value)
 /*++
 
   Description:
@@ -425,7 +408,8 @@ VfSettingsSetValue(
     //
     // Sanity check values
     //
-    if ((VerifierValue == 0) || (VerifierValue >= VERIFIER_VALUE_MAX)) {
+    if ((VerifierValue == 0) || (VerifierValue >= VERIFIER_VALUE_MAX))
+    {
 
         return;
     }
@@ -433,13 +417,15 @@ VfSettingsSetValue(
     //
     // Get appropriate array
     //
-    if (VerifierSettingsSnapshot) {
+    if (VerifierSettingsSnapshot)
+    {
 
-        valueArray = (PULONG) (((PUCHAR) VerifierSettingsSnapshot) + OPTION_SIZE);
+        valueArray = (PULONG)(((PUCHAR)VerifierSettingsSnapshot) + OPTION_SIZE);
+    }
+    else
+    {
 
-    } else {
-
-        valueArray = (PULONG) (((PUCHAR) VfSettingsGlobal) + OPTION_SIZE);
+        valueArray = (PULONG)(((PUCHAR)VfSettingsGlobal) + OPTION_SIZE);
     }
 
     //
@@ -447,4 +433,3 @@ VfSettingsSetValue(
     //
     valueArray[VerifierValue] = Value;
 }
-

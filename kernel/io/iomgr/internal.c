@@ -32,29 +32,25 @@ Revision History:
 
 //PLJTMP
 #if defined(_X86_)
-VOID
-RtlAssert(
-    IN PVOID FailedAssertion,
-    IN PVOID FileName,
-    IN ULONG LineNumber,
-    IN PCHAR Message OPTIONAL
-    );
+VOID RtlAssert(IN PVOID FailedAssertion, IN PVOID FileName, IN ULONG LineNumber, IN PCHAR Message OPTIONAL);
 #endif
 //PLJTMPend
 
-#define IsFileLocal( FileObject ) ( !((FileObject)->DeviceObject->Characteristics & FILE_REMOTE_DEVICE) )
+#define IsFileLocal(FileObject) (!((FileObject)->DeviceObject->Characteristics & FILE_REMOTE_DEVICE))
 
-#define IO_MAX_ALLOCATE_IRP_TRIES   30*60    // Try for 7 minutes
-#define IO_INFINITE_RETRIES         -1       // Try for ever
+#define IO_MAX_ALLOCATE_IRP_TRIES 30 * 60 // Try for 7 minutes
+#define IO_INFINITE_RETRIES -1            // Try for ever
 
 typedef LINK_TRACKING_INFORMATION FILE_VOLUMEID_WITH_TYPE, *PFILE_VOLUMEID_WITH_TYPE;
 
-typedef struct _TRACKING_BUFFER {
+typedef struct _TRACKING_BUFFER
+{
     FILE_TRACKING_INFORMATION TrackingInformation;
     UCHAR Buffer[256];
 } TRACKING_BUFFER, *PTRACKING_BUFFER;
 
-typedef struct _REMOTE_LINK_BUFFER {
+typedef struct _REMOTE_LINK_BUFFER
+{
     REMOTE_LINK_TRACKING_INFORMATION TrackingInformation;
     UCHAR Buffer[256];
 } REMOTE_LINK_BUFFER, *PREMOTE_LINK_BUFFER;
@@ -62,60 +58,27 @@ typedef struct _REMOTE_LINK_BUFFER {
 PIRP IopDeadIrp;
 
 NTSTATUS
-IopResurrectDriver(
-    PDRIVER_OBJECT DriverObject
-    );
+IopResurrectDriver(PDRIVER_OBJECT DriverObject);
 
-VOID
-IopUserRundown(
-    IN PKAPC Apc
-    );
+VOID IopUserRundown(IN PKAPC Apc);
 
-VOID
-IopMarshalIds(
-    OUT PTRACKING_BUFFER TrackingBuffer,
-    IN  PFILE_VOLUMEID_WITH_TYPE  TargetVolumeId,
-    IN  PFILE_OBJECTID_BUFFER  TargetObjectId,
-    IN  PFILE_TRACKING_INFORMATION TrackingInfo
-    );
+VOID IopMarshalIds(OUT PTRACKING_BUFFER TrackingBuffer, IN PFILE_VOLUMEID_WITH_TYPE TargetVolumeId,
+                   IN PFILE_OBJECTID_BUFFER TargetObjectId, IN PFILE_TRACKING_INFORMATION TrackingInfo);
 
-VOID
-IopUnMarshalIds(
-    IN  FILE_TRACKING_INFORMATION * TrackingInformation,
-    OUT FILE_VOLUMEID_WITH_TYPE * TargetVolumeId,
-    OUT GUID * TargetObjectId,
-    OUT GUID * TargetMachineId
-    );
+VOID IopUnMarshalIds(IN FILE_TRACKING_INFORMATION *TrackingInformation, OUT FILE_VOLUMEID_WITH_TYPE *TargetVolumeId,
+                     OUT GUID *TargetObjectId, OUT GUID *TargetMachineId);
 
 NTSTATUS
-IopBootLogToFile(
-    PUNICODE_STRING String
-    );
+IopBootLogToFile(PUNICODE_STRING String);
 
-VOID
-IopCopyBootLogRegistryToFile(
-    VOID
-    );
+VOID IopCopyBootLogRegistryToFile(VOID);
 
 #ifdef ALLOC_PRAGMA
-
-VOID
-IopRaiseHardError(
-    IN PVOID NormalContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    );
-VOID
-IopApcHardError(
-    IN PVOID StartContext
-    );
 
-PVPB
-IopMountInitializeVpb(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PDEVICE_OBJECT  AttachedDevice,
-    IN  ULONG           RawMountOnly
-    );
+VOID IopRaiseHardError(IN PVOID NormalContext, IN PVOID SystemArgument1, IN PVOID SystemArgument2);
+VOID IopApcHardError(IN PVOID StartContext);
+
+PVPB IopMountInitializeVpb(IN PDEVICE_OBJECT DeviceObject, IN PDEVICE_OBJECT AttachedDevice, IN ULONG RawMountOnly);
 
 #pragma alloc_text(PAGE, IopAbortRequest)
 #pragma alloc_text(PAGE, IopAcquireFileObjectLock)
@@ -171,14 +134,7 @@ IopMountInitializeVpb(
 #endif
 
 
-
-
-
-
-VOID
-IopAbortRequest(
-    IN PKAPC Apc
-    )
+VOID IopAbortRequest(IN PKAPC Apc)
 
 /*++
 
@@ -205,20 +161,12 @@ Return Value:
     // Invoke the normal special kernel APC routine.
     //
 
-    IopCompleteRequest( Apc,
-                        &Apc->NormalRoutine,
-                        &Apc->NormalContext,
-                        &Apc->SystemArgument1,
-                        &Apc->SystemArgument2 );
+    IopCompleteRequest(Apc, &Apc->NormalRoutine, &Apc->NormalContext, &Apc->SystemArgument1, &Apc->SystemArgument2);
 }
-
+
 NTSTATUS
-IopAcquireFileObjectLock(
-    IN PFILE_OBJECT FileObject,
-    IN KPROCESSOR_MODE RequestorMode,
-    IN BOOLEAN Alertable,
-    OUT PBOOLEAN Interrupted
-    )
+IopAcquireFileObjectLock(IN PFILE_OBJECT FileObject, IN KPROCESSOR_MODE RequestorMode, IN BOOLEAN Alertable,
+                         OUT PBOOLEAN Interrupted)
 
 /*++
 
@@ -261,22 +209,25 @@ Return Value:
     // Loop attempting to acquire the lock for the file object.
     //
 
-    InterlockedIncrement (&FileObject->Waiters);
+    InterlockedIncrement(&FileObject->Waiters);
 
-    for (;;) {
-        if (!FileObject->Busy) {
+    for (;;)
+    {
+        if (!FileObject->Busy)
+        {
 
             //
             // The file object appears to be un-owned, try to acquire it
             //
 
-            if (IopAcquireFastLock ( FileObject ) ) {
+            if (IopAcquireFastLock(FileObject))
+            {
 
                 //
                 // Object was acquired. Remove our count and return success
                 //
 
-                InterlockedDecrement (&FileObject->Waiters);
+                InterlockedDecrement(&FileObject->Waiters);
                 return STATUS_SUCCESS;
             }
         }
@@ -286,11 +237,7 @@ Return Value:
         // owns the file object has released it.
         //
 
-        status = KeWaitForSingleObject( &FileObject->Lock,
-                                        Executive,
-                                        RequestorMode,
-                                        Alertable,
-                                        (PLARGE_INTEGER) NULL );
+        status = KeWaitForSingleObject(&FileObject->Lock, Executive, RequestorMode, Alertable, (PLARGE_INTEGER)NULL);
 
         //
         // If the above wait was interrupted, then indicate so and return.
@@ -301,25 +248,22 @@ Return Value:
         // again so that they wake up and check the state of the busy flag.
         //
 
-        if (status == STATUS_USER_APC || status == STATUS_ALERTED) {
-            InterlockedDecrement (&FileObject->Waiters);
+        if (status == STATUS_USER_APC || status == STATUS_ALERTED)
+        {
+            InterlockedDecrement(&FileObject->Waiters);
 
-            if (!FileObject->Busy  &&  FileObject->Waiters) {
-                KeSetEvent( &FileObject->Lock, 0, FALSE );
-
+            if (!FileObject->Busy && FileObject->Waiters)
+            {
+                KeSetEvent(&FileObject->Lock, 0, FALSE);
             }
             *Interrupted = TRUE;
             return status;
         }
     }
 }
-
-
-VOID
-IopAllocateIrpCleanup(
-    IN PFILE_OBJECT FileObject,
-    IN PKEVENT EventObject OPTIONAL
-    )
+
+
+VOID IopAllocateIrpCleanup(IN PFILE_OBJECT FileObject, IN PKEVENT EventObject OPTIONAL)
 
 /*++
 
@@ -349,8 +293,9 @@ Return Value:
     // Begin by dereferencing the event, if one was specified.
     //
 
-    if (ARGUMENT_PRESENT( EventObject )) {
-        ObDereferenceObject( EventObject );
+    if (ARGUMENT_PRESENT(EventObject))
+    {
+        ObDereferenceObject(EventObject);
     }
 
     //
@@ -358,19 +303,17 @@ Return Value:
     // dereference the file object.
     //
 
-    if (FileObject->Flags & FO_SYNCHRONOUS_IO) {
-        IopReleaseFileObjectLock( FileObject );
+    if (FileObject->Flags & FO_SYNCHRONOUS_IO)
+    {
+        IopReleaseFileObjectLock(FileObject);
     }
 
-    ObDereferenceObject( FileObject );
+    ObDereferenceObject(FileObject);
 
     return;
 }
-
-PIRP
-IopAllocateIrpMustSucceed(
-    IN CCHAR StackSize
-    )
+
+PIRP IopAllocateIrpMustSucceed(IN CCHAR StackSize)
 
 /*++
 
@@ -397,7 +340,7 @@ Return Value:
 {
     PIRP irp;
     USHORT packetSize;
-    LONG  numTries;
+    LONG numTries;
     LARGE_INTEGER interval;
 
     //
@@ -410,12 +353,14 @@ Return Value:
 
     irp = IoAllocateIrp(StackSize, FALSE);
 
-    while (!irp && numTries)  {
+    while (!irp && numTries)
+    {
 
         interval.QuadPart = -1000 * 1000 * 10; // 10 Msec.
         KeDelayExecutionThread(KernelMode, FALSE, &interval);
         irp = IoAllocateIrp(StackSize, FALSE);
-        if (numTries != IO_INFINITE_RETRIES) {
+        if (numTries != IO_INFINITE_RETRIES)
+        {
             numTries--;
         }
     }
@@ -425,7 +370,8 @@ Return Value:
     // Its time to try the must succeed pool.
     //
 
-    if (!irp) {
+    if (!irp)
+    {
         packetSize = IoSizeOfIrp(StackSize);
         irp = ExAllocatePoolWithTag(NonPagedPoolMustSucceed, packetSize, ' prI');
         IoInitializeIrp(irp, packetSize, StackSize);
@@ -434,11 +380,8 @@ Return Value:
 
     return irp;
 }
-
-VOID
-IopApcHardError(
-    IN PVOID StartContext
-    )
+
+VOID IopApcHardError(IN PVOID StartContext)
 
 /*++
 
@@ -463,17 +406,13 @@ Return Value:
 
     packet = StartContext;
 
-    IopRaiseHardError( packet->Irp, packet->Vpb, packet->RealDeviceObject );
+    IopRaiseHardError(packet->Irp, packet->Vpb, packet->RealDeviceObject);
 
-    ExFreePool( packet );
+    ExFreePool(packet);
 }
 
-
-VOID
-IopCancelAlertedRequest(
-    IN PKEVENT Event,
-    IN PIRP Irp
-    )
+
+VOID IopCancelAlertedRequest(IN PKEVENT Event, IN PIRP Irp)
 
 /*++
 
@@ -511,24 +450,26 @@ Return Value:
     // complete.
     //
 
-    KeRaiseIrql( APC_LEVEL, &irql );
+    KeRaiseIrql(APC_LEVEL, &irql);
 
     //
     // Check the state of the event to determine whether or not the
     // packet has already been completed.
     //
 
-    if (KeReadStateEvent( Event ) == 0) {
+    if (KeReadStateEvent(Event) == 0)
+    {
 
         //
         // The packet has not been completed, so attempt to cancel it.
         //
 
-        canceled = IoCancelIrp( Irp );
+        canceled = IoCancelIrp(Irp);
 
-        KeLowerIrql( irql );
+        KeLowerIrql(irql);
 
-        if (canceled) {
+        if (canceled)
+        {
 
             //
             // The packet had a cancel routine, so it was canceled.  Loop,
@@ -536,15 +477,16 @@ Return Value:
             // immediately.
             //
 
-            deltaTime.QuadPart = - 10 * 1000 * 10;
+            deltaTime.QuadPart = -10 * 1000 * 10;
 
-            while (KeReadStateEvent( Event ) == 0) {
+            while (KeReadStateEvent(Event) == 0)
+            {
 
-                KeDelayExecutionThread( KernelMode, FALSE, &deltaTime );
-
+                KeDelayExecutionThread(KernelMode, FALSE, &deltaTime);
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // The packet did not have a cancel routine, so simply wait for
@@ -556,32 +498,24 @@ Return Value:
             // processing the request.
             //
 
-            (VOID) KeWaitForSingleObject( Event,
-                                          Executive,
-                                          KernelMode,
-                                          FALSE,
-                                          (PLARGE_INTEGER) NULL );
-
+            (VOID) KeWaitForSingleObject(Event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // The packet has already been completed, so simply lower the
         // IRQL back to its original value and exit.
         //
 
-        KeLowerIrql( irql );
-
+        KeLowerIrql(irql);
     }
 }
-
+
 NTSTATUS
-IopCheckGetQuotaBufferValidity(
-    IN PFILE_GET_QUOTA_INFORMATION QuotaBuffer,
-    IN ULONG QuotaLength,
-    OUT PULONG_PTR ErrorOffset
-    )
+IopCheckGetQuotaBufferValidity(IN PFILE_GET_QUOTA_INFORMATION QuotaBuffer, IN ULONG QuotaLength,
+                               OUT PULONG_PTR ErrorOffset)
 
 /*++
 
@@ -611,7 +545,7 @@ Return Value:
 
 {
 
-#define GET_OFFSET_LENGTH( CurrentSid, SidBase ) ( (ULONG) ((PCHAR) CurrentSid - (PCHAR) SidBase) )
+#define GET_OFFSET_LENGTH(CurrentSid, SidBase) ((ULONG)((PCHAR)CurrentSid - (PCHAR)SidBase))
 
     LONG tempLength;
     LONG entrySize;
@@ -627,17 +561,19 @@ Return Value:
     sids = QuotaBuffer;
     tempLength = QuotaLength;
 
-    for (;;) {
+    for (;;)
+    {
 
         //
         // Ensure that the current entry is valid.
         //
 
-        if ((tempLength < (LONG) (FIELD_OFFSET(FILE_GET_QUOTA_INFORMATION, Sid.SubAuthority) +
-                                  sizeof (sids->Sid.SubAuthority))) ||
-            !RtlValidSid( &sids->Sid)) {
+        if ((tempLength <
+             (LONG)(FIELD_OFFSET(FILE_GET_QUOTA_INFORMATION, Sid.SubAuthority) + sizeof(sids->Sid.SubAuthority))) ||
+            !RtlValidSid(&sids->Sid))
+        {
 
-            *ErrorOffset = GET_OFFSET_LENGTH( sids, QuotaBuffer );
+            *ErrorOffset = GET_OFFSET_LENGTH(sids, QuotaBuffer);
             return STATUS_QUOTA_LIST_INCONSISTENT;
         }
 
@@ -645,9 +581,10 @@ Return Value:
         // Get the size of the current entry in the buffer.
         //
 
-        entrySize = FIELD_OFFSET( FILE_GET_QUOTA_INFORMATION, Sid ) + RtlLengthSid( (&sids->Sid) );
+        entrySize = FIELD_OFFSET(FILE_GET_QUOTA_INFORMATION, Sid) + RtlLengthSid((&sids->Sid));
 
-        if (sids->NextEntryOffset) {
+        if (sids->NextEntryOffset)
+        {
 
             //
             // There is another entry in the buffer and it must be longword
@@ -655,12 +592,13 @@ Return Value:
             // isn't, return an invalid parameter status.
             //
 
-            if (entrySize > (LONG) sids->NextEntryOffset ||
-                sids->NextEntryOffset & (sizeof( ULONG ) - 1)) {
-                *ErrorOffset = GET_OFFSET_LENGTH( sids, QuotaBuffer );
+            if (entrySize > (LONG)sids->NextEntryOffset || sids->NextEntryOffset & (sizeof(ULONG) - 1))
+            {
+                *ErrorOffset = GET_OFFSET_LENGTH(sids, QuotaBuffer);
                 return STATUS_QUOTA_LIST_INCONSISTENT;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // There is another entry in the buffer, so account for the
@@ -669,14 +607,16 @@ Return Value:
                 //
 
                 tempLength -= sids->NextEntryOffset;
-                if (tempLength < 0) {
-                    *ErrorOffset = GET_OFFSET_LENGTH( sids, QuotaBuffer );
+                if (tempLength < 0)
+                {
+                    *ErrorOffset = GET_OFFSET_LENGTH(sids, QuotaBuffer);
                     return STATUS_QUOTA_LIST_INCONSISTENT;
                 }
-                sids = (PFILE_GET_QUOTA_INFORMATION) ((PCHAR) sids + sids->NextEntryOffset);
+                sids = (PFILE_GET_QUOTA_INFORMATION)((PCHAR)sids + sids->NextEntryOffset);
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // There are no other entries in the buffer.  Simply account for
@@ -695,8 +635,9 @@ Return Value:
     // error.
     //
 
-    if (tempLength < 0) {
-        *ErrorOffset = GET_OFFSET_LENGTH( sids, QuotaBuffer );
+    if (tempLength < 0)
+    {
+        *ErrorOffset = GET_OFFSET_LENGTH(sids, QuotaBuffer);
         return STATUS_QUOTA_LIST_INCONSISTENT;
     }
 
@@ -708,13 +649,8 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
-
-VOID
-IopCompleteUnloadOrDelete(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN BOOLEAN OnCleanStack,
-    IN KIRQL Irql
-    )
+
+VOID IopCompleteUnloadOrDelete(IN PDEVICE_OBJECT DeviceObject, IN BOOLEAN OnCleanStack, IN KIRQL Irql)
 
 /*++
 
@@ -757,14 +693,15 @@ Return Value:
 
     driverObject = DeviceObject->DriverObject;
 
-    if (DeviceObject->DeviceObjectExtension->ExtensionFlags & DOE_REMOVE_PENDING) {
+    if (DeviceObject->DeviceObjectExtension->ExtensionFlags & DOE_REMOVE_PENDING)
+    {
 
         //
         // Run some tests to determine if it is an appropriate time to notify
         // PnP that all file objects in the attachment chain have gone away.
         //
 
-        baseDeviceObject = IopGetDeviceAttachmentBase( DeviceObject );
+        baseDeviceObject = IopGetDeviceAttachmentBase(DeviceObject);
         deviceExtension = baseDeviceObject->DeviceObjectExtension;
 
         ASSERT(deviceExtension->DeviceNode != NULL);
@@ -782,16 +719,18 @@ Return Value:
         //
 
         attachedDeviceObject = baseDeviceObject;
-        while (attachedDeviceObject != NULL) {
+        while (attachedDeviceObject != NULL)
+        {
 
-            if (attachedDeviceObject->ReferenceCount != 0) {
+            if (attachedDeviceObject->ReferenceCount != 0)
+            {
 
                 //
                 // At least one device object in the attachment chain has
                 // an outstanding open.
                 //
 
-                KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, Irql );
+                KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, Irql);
 
                 return;
             }
@@ -804,7 +743,8 @@ Return Value:
         //
 
         attachedDeviceObject = baseDeviceObject;
-        while (attachedDeviceObject != NULL) {
+        while (attachedDeviceObject != NULL)
+        {
 
             deviceExtension = attachedDeviceObject->DeviceObjectExtension;
 
@@ -819,18 +759,19 @@ Return Value:
         // to release the spinlock before doing so.
         //
 
-        KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, Irql );
+        KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, Irql);
 
-        IopChainDereferenceComplete( baseDeviceObject, OnCleanStack );
+        IopChainDereferenceComplete(baseDeviceObject, OnCleanStack);
 
         return;
     }
 
-    if (DeviceObject->DeviceObjectExtension->ExtensionFlags & DOE_DELETE_PENDING) {
+    if (DeviceObject->DeviceObjectExtension->ExtensionFlags & DOE_DELETE_PENDING)
+    {
 
-        if ((DeviceObject->DeviceObjectExtension->ExtensionFlags &
-            DOE_UNLOAD_PENDING) == 0 ||
-            driverObject->Flags & DRVO_UNLOAD_INVOKED) {
+        if ((DeviceObject->DeviceObjectExtension->ExtensionFlags & DOE_UNLOAD_PENDING) == 0 ||
+            driverObject->Flags & DRVO_UNLOAD_INVOKED)
+        {
 
             unload = FALSE;
         }
@@ -840,7 +781,8 @@ Return Value:
         // driver that the device is being deleted.
         //
 
-        if (DeviceObject->AttachedDevice) {
+        if (DeviceObject->AttachedDevice)
+        {
             PFAST_IO_DISPATCH fastIoDispatch = DeviceObject->AttachedDevice->DriverObject->FastIoDispatch;
             PDEVICE_OBJECT attachedDevice = DeviceObject->AttachedDevice;
 
@@ -851,15 +793,16 @@ Return Value:
 
             DeviceObject->ReferenceCount++;
 
-            KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, Irql );
+            KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, Irql);
 
             if (fastIoDispatch &&
-                fastIoDispatch->SizeOfFastIoDispatch > FIELD_OFFSET( FAST_IO_DISPATCH, FastIoDetachDevice ) &&
-                fastIoDispatch->FastIoDetachDevice) {
-                (fastIoDispatch->FastIoDetachDevice)( attachedDevice, DeviceObject );
+                fastIoDispatch->SizeOfFastIoDispatch > FIELD_OFFSET(FAST_IO_DISPATCH, FastIoDetachDevice) &&
+                fastIoDispatch->FastIoDetachDevice)
+            {
+                (fastIoDispatch->FastIoDetachDevice)(attachedDevice, DeviceObject);
             }
 
-            Irql = KeAcquireQueuedSpinLock( LockQueueIoDatabaseLock );
+            Irql = KeAcquireQueuedSpinLock(LockQueueIoDatabaseLock);
 
             //
             // Restore the reference count value.
@@ -867,43 +810,45 @@ Return Value:
 
             DeviceObject->ReferenceCount--;
 
-            if (DeviceObject->AttachedDevice ||
-                DeviceObject->ReferenceCount != 0) {
+            if (DeviceObject->AttachedDevice || DeviceObject->ReferenceCount != 0)
+            {
 
 
-                KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, Irql );
+                KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, Irql);
                 return;
             }
         }
 
-        KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, Irql );
+        KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, Irql);
 
         //
         // Deallocate the memory for the security descriptor that was allocated
         // for this device object.
         //
 
-        if (DeviceObject->SecurityDescriptor != (PSECURITY_DESCRIPTOR) NULL) {
-            ObDereferenceSecurityDescriptor( DeviceObject->SecurityDescriptor, 1 );
+        if (DeviceObject->SecurityDescriptor != (PSECURITY_DESCRIPTOR)NULL)
+        {
+            ObDereferenceSecurityDescriptor(DeviceObject->SecurityDescriptor, 1);
         }
 
         //
         // Remove this device object from the driver object's list.
         //
 
-        IopInsertRemoveDevice( DeviceObject->DriverObject, DeviceObject, FALSE );
+        IopInsertRemoveDevice(DeviceObject->DriverObject, DeviceObject, FALSE);
 
         //
         // Finally, dereference the object so it is deleted.
         //
 
-        ObDereferenceObject( DeviceObject );
+        ObDereferenceObject(DeviceObject);
 
         //
         // Return if the unload does not need to be done.
         //
 
-        if (!unload) {
+        if (!unload)
+        {
             return;
         }
 
@@ -912,15 +857,16 @@ Return Value:
         // not been called.
         //
 
-        Irql = KeAcquireQueuedSpinLock( LockQueueIoDatabaseLock );
+        Irql = KeAcquireQueuedSpinLock(LockQueueIoDatabaseLock);
 
-        if (driverObject->Flags & DRVO_UNLOAD_INVOKED) {
+        if (driverObject->Flags & DRVO_UNLOAD_INVOKED)
+        {
 
             //
             // Some other thread is doing the unload, release the lock and return.
             //
 
-            KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, Irql );
+            KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, Irql);
             return;
         }
     }
@@ -933,9 +879,11 @@ Return Value:
 
     deviceObject = driverObject->DeviceObject;
 
-    while (deviceObject) {
+    while (deviceObject)
+    {
         if (deviceObject->ReferenceCount || deviceObject->AttachedDevice ||
-            deviceObject->DeviceObjectExtension->ExtensionFlags & (DOE_DELETE_PENDING | DOE_REMOVE_PENDING)) {
+            deviceObject->DeviceObjectExtension->ExtensionFlags & (DOE_DELETE_PENDING | DOE_REMOVE_PENDING))
+        {
             unload = FALSE;
             break;
         }
@@ -947,57 +895,50 @@ Return Value:
     // skip the unload.
     //
 
-    if (driverObject->Flags & DRVO_BASE_FILESYSTEM_DRIVER && driverObject->DeviceObject) {
+    if (driverObject->Flags & DRVO_BASE_FILESYSTEM_DRIVER && driverObject->DeviceObject)
+    {
         unload = FALSE;
     }
 
-    if (unload) {
+    if (unload)
+    {
         driverObject->Flags |= DRVO_UNLOAD_INVOKED;
     }
 
-    KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, Irql );
+    KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, Irql);
 
     //
     // If the reference counts for all of the devices is zero, then this
     // driver can now be unloaded.
     //
 
-    if (unload) {
+    if (unload)
+    {
         LOAD_PACKET loadPacket;
 
-        KeInitializeEvent( &loadPacket.Event, NotificationEvent, FALSE );
+        KeInitializeEvent(&loadPacket.Event, NotificationEvent, FALSE);
         loadPacket.DriverObject = driverObject;
 
-        if (OnCleanStack) {
+        if (OnCleanStack)
+        {
 
-             IopLoadUnloadDriver(&loadPacket);
+            IopLoadUnloadDriver(&loadPacket);
+        }
+        else
+        {
 
-        } else {
-
-            ExInitializeWorkItem( &loadPacket.WorkQueueItem,
-                                  IopLoadUnloadDriver,
-                                  &loadPacket );
-            ExQueueWorkItem( &loadPacket.WorkQueueItem, DelayedWorkQueue );
-            (VOID) KeWaitForSingleObject( &loadPacket.Event,
-                                          Executive,
-                                          KernelMode,
-                                          FALSE,
-                                          (PLARGE_INTEGER) NULL );
+            ExInitializeWorkItem(&loadPacket.WorkQueueItem, IopLoadUnloadDriver, &loadPacket);
+            ExQueueWorkItem(&loadPacket.WorkQueueItem, DelayedWorkQueue);
+            (VOID) KeWaitForSingleObject(&loadPacket.Event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
         }
 
-        ObMakeTemporaryObject( driverObject );
-        ObDereferenceObject( driverObject );
+        ObMakeTemporaryObject(driverObject);
+        ObDereferenceObject(driverObject);
     }
 }
-
-VOID
-IopCompletePageWrite(
-    IN PKAPC Apc,
-    IN PKNORMAL_ROUTINE *NormalRoutine,
-    IN PVOID *NormalContext,
-    IN PVOID *SystemArgument1,
-    IN PVOID *SystemArgument2
-    )
+
+VOID IopCompletePageWrite(IN PKAPC Apc, IN PKNORMAL_ROUTINE *NormalRoutine, IN PVOID *NormalContext,
+                          IN PVOID *SystemArgument1, IN PVOID *SystemArgument2)
 
 /*++
 
@@ -1041,16 +982,16 @@ Return Value:
     PVOID apcContext;
     PIO_STATUS_BLOCK ioStatus;
 
-    UNREFERENCED_PARAMETER( NormalRoutine );
-    UNREFERENCED_PARAMETER( NormalContext );
-    UNREFERENCED_PARAMETER( SystemArgument1 );
-    UNREFERENCED_PARAMETER( SystemArgument2 );
+    UNREFERENCED_PARAMETER(NormalRoutine);
+    UNREFERENCED_PARAMETER(NormalContext);
+    UNREFERENCED_PARAMETER(SystemArgument1);
+    UNREFERENCED_PARAMETER(SystemArgument2);
 
     //
     // Begin by getting the address of the I/O Request Packet from the APC.
     //
 
-    irp = CONTAINING_RECORD( Apc, IRP, Tail.Apc );
+    irp = CONTAINING_RECORD(Apc, IRP, Tail.Apc);
 
     //
     // If this I/O operation did not complete successfully through the
@@ -1058,8 +999,9 @@ Return Value:
     // now and return to the original call point in the MPW.
     //
 
-    if (!irp->PendingReturned && NT_ERROR( irp->IoStatus.Status )) {
-        IoFreeIrp( irp );
+    if (!irp->PendingReturned && NT_ERROR(irp->IoStatus.Status))
+    {
+        IoFreeIrp(irp);
         return;
     }
 
@@ -1078,26 +1020,20 @@ Return Value:
     apcContext = irp->Overlay.AsynchronousParameters.UserApcContext;
     ioStatus = irp->UserIosb;
 
-    IoFreeIrp( irp );
+    IoFreeIrp(irp);
 
     //
     // Finally, invoke the MPW's APC routine.
     //
 
-    apcRoutine( apcContext, ioStatus, 0 );
+    apcRoutine(apcContext, ioStatus, 0);
 
     return;
 }
-
 
-VOID
-IopCompleteRequest(
-    IN PKAPC Apc,
-    IN PKNORMAL_ROUTINE *NormalRoutine,
-    IN PVOID *NormalContext,
-    IN PVOID *SystemArgument1,
-    IN PVOID *SystemArgument2
-    )
+
+VOID IopCompleteRequest(IN PKAPC Apc, IN PKNORMAL_ROUTINE *NormalRoutine, IN PVOID *NormalContext,
+                        IN PVOID *SystemArgument1, IN PVOID *SystemArgument2)
 
 /*++
 
@@ -1153,18 +1089,17 @@ Return Value:
 
 --*/
 {
-#define SynchronousIo( Irp, FileObject ) (  \
-    (Irp->Flags & IRP_SYNCHRONOUS_API) ||   \
-    (FileObject == NULL ? 0 : FileObject->Flags & FO_SYNCHRONOUS_IO) )
+#define SynchronousIo(Irp, FileObject) \
+    ((Irp->Flags & IRP_SYNCHRONOUS_API) || (FileObject == NULL ? 0 : FileObject->Flags & FO_SYNCHRONOUS_IO))
 
     PIRP irp;
     PMDL mdl, nextMdl;
     PETHREAD thread;
     PFILE_OBJECT fileObject;
-    NTSTATUS    status;
+    NTSTATUS status;
 
-    UNREFERENCED_PARAMETER( NormalRoutine );
-    UNREFERENCED_PARAMETER( NormalContext );
+    UNREFERENCED_PARAMETER(NormalRoutine);
+    UNREFERENCED_PARAMETER(NormalContext);
 
     //
     // Begin by getting the address of the I/O Request Packet.  Also, get
@@ -1172,9 +1107,9 @@ Return Value:
     // object for this I/O operation.
     //
 
-    irp = CONTAINING_RECORD( Apc, IRP, Tail.Apc );
+    irp = CONTAINING_RECORD(Apc, IRP, Tail.Apc);
     thread = PsGetCurrentThread();
-    fileObject = (PFILE_OBJECT) *SystemArgument1;
+    fileObject = (PFILE_OBJECT)*SystemArgument1;
 
     IOVP_COMPLETE_REQUEST(Apc, SystemArgument1, SystemArgument2);
 
@@ -1184,13 +1119,14 @@ Return Value:
     // as a status code.
     //
 
-    ASSERT( irp->IoStatus.Status != 0xffffffff );
+    ASSERT(irp->IoStatus.Status != 0xffffffff);
 
     //
     // See if we need to do the name transmogrify work.
     //
 
-    if ( *SystemArgument2 != NULL ) {
+    if (*SystemArgument2 != NULL)
+    {
 
         PREPARSE_DATA_BUFFER reparseBuffer = NULL;
 
@@ -1198,18 +1134,16 @@ Return Value:
         // The IO_REPARSE_TAG_MOUNT_POINT tag needs attention.
         //
 
-        if ( irp->IoStatus.Status == STATUS_REPARSE &&
-             irp->IoStatus.Information == IO_REPARSE_TAG_MOUNT_POINT ) {
+        if (irp->IoStatus.Status == STATUS_REPARSE && irp->IoStatus.Information == IO_REPARSE_TAG_MOUNT_POINT)
+        {
 
-            reparseBuffer = (PREPARSE_DATA_BUFFER) *SystemArgument2;
+            reparseBuffer = (PREPARSE_DATA_BUFFER)*SystemArgument2;
 
-            ASSERT( reparseBuffer->ReparseTag == IO_REPARSE_TAG_MOUNT_POINT );
-            ASSERT( reparseBuffer->ReparseDataLength < MAXIMUM_REPARSE_DATA_BUFFER_SIZE );
-            ASSERT( reparseBuffer->Reserved < MAXIMUM_REPARSE_DATA_BUFFER_SIZE );
+            ASSERT(reparseBuffer->ReparseTag == IO_REPARSE_TAG_MOUNT_POINT);
+            ASSERT(reparseBuffer->ReparseDataLength < MAXIMUM_REPARSE_DATA_BUFFER_SIZE);
+            ASSERT(reparseBuffer->Reserved < MAXIMUM_REPARSE_DATA_BUFFER_SIZE);
 
-            IopDoNameTransmogrify( irp,
-                                   fileObject,
-                                   reparseBuffer );
+            IopDoNameTransmogrify(irp, fileObject, reparseBuffer);
         }
     }
 
@@ -1219,7 +1153,8 @@ Return Value:
     // free the system buffer if necessary.
     //
 
-    if (irp->Flags & IRP_BUFFERED_IO) {
+    if (irp->Flags & IRP_BUFFERED_IO)
+    {
 
         //
         // Copy the data if this was an input operation.  Note that no copy
@@ -1227,9 +1162,9 @@ Return Value:
         // required, or if the final status was an error-level severity.
         //
 
-        if (irp->Flags & IRP_INPUT_OPERATION  &&
-            irp->IoStatus.Status != STATUS_VERIFY_REQUIRED &&
-            !NT_ERROR( irp->IoStatus.Status )) {
+        if (irp->Flags & IRP_INPUT_OPERATION && irp->IoStatus.Status != STATUS_VERIFY_REQUIRED &&
+            !NT_ERROR(irp->IoStatus.Status))
+        {
 
             //
             // Copy the information from the system buffer to the caller's
@@ -1239,11 +1174,12 @@ Return Value:
             // the service was executing.
             //
 
-            try {
-                RtlCopyMemory( irp->UserBuffer,
-                               irp->AssociatedIrp.SystemBuffer,
-                               irp->IoStatus.Information );
-            } except(IopExceptionFilter(GetExceptionInformation(), &status)) {
+            try
+            {
+                RtlCopyMemory(irp->UserBuffer, irp->AssociatedIrp.SystemBuffer, irp->IoStatus.Information);
+            }
+            except(IopExceptionFilter(GetExceptionInformation(), &status))
+            {
 
                 //
                 // An exception occurred while attempting to copy the
@@ -1254,8 +1190,9 @@ Return Value:
                 // IoRetryIrpCompletions.
                 //
 
-                if (status == STATUS_MULTIPLE_FAULT_VIOLATION) {
-                    irp->Tail.Overlay.OriginalFileObject = fileObject;  /* Wiped out by APC  overlay */
+                if (status == STATUS_MULTIPLE_FAULT_VIOLATION)
+                {
+                    irp->Tail.Overlay.OriginalFileObject = fileObject; /* Wiped out by APC  overlay */
                     irp->Flags |= IRP_RETRY_IO_COMPLETION;
                     return;
                 }
@@ -1267,12 +1204,13 @@ Return Value:
         // Free the buffer if needed.
         //
 
-        if (irp->Flags & IRP_DEALLOCATE_BUFFER) {
-            ExFreePool( irp->AssociatedIrp.SystemBuffer );
+        if (irp->Flags & IRP_DEALLOCATE_BUFFER)
+        {
+            ExFreePool(irp->AssociatedIrp.SystemBuffer);
         }
     }
 
-    irp->Flags &= ~(IRP_DEALLOCATE_BUFFER|IRP_BUFFERED_IO);
+    irp->Flags &= ~(IRP_DEALLOCATE_BUFFER | IRP_BUFFERED_IO);
 
     //
     // If there is an MDL (or MDLs) associated with this I/O request,
@@ -1280,10 +1218,12 @@ Return Value:
     // hanging off of the IRP and deallocating each MDL encountered.
     //
 
-    if (irp->MdlAddress) {
-        for (mdl = irp->MdlAddress; mdl != NULL; mdl = nextMdl) {
+    if (irp->MdlAddress)
+    {
+        for (mdl = irp->MdlAddress; mdl != NULL; mdl = nextMdl)
+        {
             nextMdl = mdl->Next;
-            IoFreeMdl( mdl );
+            IoFreeMdl(mdl);
         }
     }
 
@@ -1295,10 +1235,9 @@ Return Value:
     // out of here.
     //
 
-    if (!NT_ERROR( irp->IoStatus.Status ) ||
-        (NT_ERROR( irp->IoStatus.Status ) &&
-        irp->PendingReturned &&
-        !SynchronousIo( irp, fileObject ))) {
+    if (!NT_ERROR(irp->IoStatus.Status) ||
+        (NT_ERROR(irp->IoStatus.Status) && irp->PendingReturned && !SynchronousIo(irp, fileObject)))
+    {
 
         PVOID port = NULL;
         PVOID key;
@@ -1309,7 +1248,8 @@ Return Value:
         // save it here so that the file object can be dereferenced.
         //
 
-        if (fileObject && fileObject->CompletionContext) {
+        if (fileObject && fileObject->CompletionContext)
+        {
             port = fileObject->CompletionContext->Port;
             key = fileObject->CompletionContext->Key;
         }
@@ -1326,7 +1266,8 @@ Return Value:
         // place!
         //
 
-        try {
+        try
+        {
 
             //
             // Since HasOverlappedIoCompleted and GetOverlappedResult only
@@ -1336,29 +1277,33 @@ Return Value:
             //
 
 #if defined(_WIN64)
-            PIO_STATUS_BLOCK32    UserIosb32;
+            PIO_STATUS_BLOCK32 UserIosb32;
 
             //
             // If the caller passes a 32 bit IOSB the ApcRoutine has the LSB set to 1
             //
-            if (IopIsIosb32(irp->Overlay.AsynchronousParameters.UserApcRoutine)) {
+            if (IopIsIosb32(irp->Overlay.AsynchronousParameters.UserApcRoutine))
+            {
                 UserIosb32 = (PIO_STATUS_BLOCK32)irp->UserIosb;
 
                 UserIosb32->Information = (ULONG)irp->IoStatus.Information;
-                KeMemoryBarrier ();
+                KeMemoryBarrier();
                 UserIosb32->Status = (NTSTATUS)irp->IoStatus.Status;
-            } else {
+            }
+            else
+            {
                 irp->UserIosb->Information = irp->IoStatus.Information;
-                KeMemoryBarrier ();
+                KeMemoryBarrier();
                 irp->UserIosb->Status = irp->IoStatus.Status;
             }
 #else
             irp->UserIosb->Information = irp->IoStatus.Information;
-            KeMemoryBarrier ();
+            KeMemoryBarrier();
             irp->UserIosb->Status = irp->IoStatus.Status;
-#endif  /*_WIN64 */
-
-        } except(IopExceptionFilter(GetExceptionInformation(), &status)) {
+#endif /*_WIN64 */
+        }
+        except(IopExceptionFilter(GetExceptionInformation(), &status))
+        {
 
             //
             // An exception was incurred attempting to write the caller's
@@ -1369,8 +1314,9 @@ Return Value:
             // this routine. Mm will call us back later and we will retry this
             // operation (IoRetryIrpCompletions)
             //
-            if (status == STATUS_MULTIPLE_FAULT_VIOLATION) {
-                irp->Tail.Overlay.OriginalFileObject = fileObject;  /* Wiped out by APC  overlay */
+            if (status == STATUS_MULTIPLE_FAULT_VIOLATION)
+            {
+                irp->Tail.Overlay.OriginalFileObject = fileObject; /* Wiped out by APC  overlay */
                 irp->Flags |= IRP_RETRY_IO_COMPLETION;
                 return;
             }
@@ -1398,27 +1344,35 @@ Return Value:
         // go away).
         //
 
-        if (irp->UserEvent) {
-            (VOID) KeSetEvent( irp->UserEvent, 0, FALSE );
-            if (fileObject) {
-                if (!(irp->Flags & IRP_SYNCHRONOUS_API)) {
-                    ObDereferenceObject( irp->UserEvent );
+        if (irp->UserEvent)
+        {
+            (VOID) KeSetEvent(irp->UserEvent, 0, FALSE);
+            if (fileObject)
+            {
+                if (!(irp->Flags & IRP_SYNCHRONOUS_API))
+                {
+                    ObDereferenceObject(irp->UserEvent);
                 }
-                if (fileObject->Flags & FO_SYNCHRONOUS_IO && !(irp->Flags & IRP_OB_QUERY_NAME)) {
-                    (VOID) KeSetEvent( &fileObject->Event, 0, FALSE );
+                if (fileObject->Flags & FO_SYNCHRONOUS_IO && !(irp->Flags & IRP_OB_QUERY_NAME))
+                {
+                    (VOID) KeSetEvent(&fileObject->Event, 0, FALSE);
                     fileObject->FinalStatus = irp->IoStatus.Status;
                 }
-                if (irp->Flags & IRP_CREATE_OPERATION) {
+                if (irp->Flags & IRP_CREATE_OPERATION)
+                {
                     createOperation = TRUE;
-                    irp->Overlay.AsynchronousParameters.UserApcRoutine = (PIO_APC_ROUTINE) NULL;
+                    irp->Overlay.AsynchronousParameters.UserApcRoutine = (PIO_APC_ROUTINE)NULL;
                 }
             }
-        } else if (fileObject) {
-            (VOID) KeSetEvent( &fileObject->Event, 0, FALSE );
+        }
+        else if (fileObject)
+        {
+            (VOID) KeSetEvent(&fileObject->Event, 0, FALSE);
             fileObject->FinalStatus = irp->IoStatus.Status;
-            if (irp->Flags & IRP_CREATE_OPERATION) {
+            if (irp->Flags & IRP_CREATE_OPERATION)
+            {
                 createOperation = TRUE;
-                irp->Overlay.AsynchronousParameters.UserApcRoutine = (PIO_APC_ROUTINE) NULL;
+                irp->Overlay.AsynchronousParameters.UserApcRoutine = (PIO_APC_ROUTINE)NULL;
             }
         }
 
@@ -1426,18 +1380,25 @@ Return Value:
         // If this is normal I/O, update the transfer count for this process.
         //
 
-        if (!(irp->Flags & IRP_CREATE_OPERATION)) {
-            if (irp->Flags & IRP_READ_OPERATION) {
-                IopUpdateReadTransferCount( (ULONG) irp->IoStatus.Information );
-            } else if (irp->Flags & IRP_WRITE_OPERATION) {
-                IopUpdateWriteTransferCount( (ULONG) irp->IoStatus.Information );
-            } else {
+        if (!(irp->Flags & IRP_CREATE_OPERATION))
+        {
+            if (irp->Flags & IRP_READ_OPERATION)
+            {
+                IopUpdateReadTransferCount((ULONG)irp->IoStatus.Information);
+            }
+            else if (irp->Flags & IRP_WRITE_OPERATION)
+            {
+                IopUpdateWriteTransferCount((ULONG)irp->IoStatus.Information);
+            }
+            else
+            {
                 //
                 // If the information field contains a pointer then skip the update.
                 // Some PNP IRPs contain this.
                 //
-                if (!((ULONG) irp->IoStatus.Information & 0x80000000)) {
-                    IopUpdateOtherTransferCount( (ULONG) irp->IoStatus.Information );
+                if (!((ULONG)irp->IoStatus.Information & 0x80000000))
+                {
+                    IopUpdateOtherTransferCount((ULONG)irp->IoStatus.Information);
                 }
             }
         }
@@ -1446,38 +1407,33 @@ Return Value:
         // Dequeue the packet from the thread's pending I/O request list.
         //
 
-        IopDequeueThreadIrp( irp );
+        IopDequeueThreadIrp(irp);
 
         //
         // If the caller requested an APC, queue it to the thread.  If not, then
         // simply free the packet now.
         //
 
-#ifdef  _WIN64
+#ifdef _WIN64
         //
         // For 64 bit systems clear the LSB field of the ApcRoutine that indicates whether
         // the IOSB is a 32 bit IOSB or a 64 bit IOSB.
         //
         irp->Overlay.AsynchronousParameters.UserApcRoutine =
-          (PIO_APC_ROUTINE)((LONG_PTR)(irp->Overlay.AsynchronousParameters.UserApcRoutine) & ~1);
+            (PIO_APC_ROUTINE)((LONG_PTR)(irp->Overlay.AsynchronousParameters.UserApcRoutine) & ~1);
 #endif
 
-        if (irp->Overlay.AsynchronousParameters.UserApcRoutine) {
-            KeInitializeApc( &irp->Tail.Apc,
-                             &thread->Tcb,
-                             CurrentApcEnvironment,
-                             IopUserCompletion,
-                             (PKRUNDOWN_ROUTINE) IopUserRundown,
-                             (PKNORMAL_ROUTINE) irp->Overlay.AsynchronousParameters.UserApcRoutine,
-                             irp->RequestorMode,
-                             irp->Overlay.AsynchronousParameters.UserApcContext );
+        if (irp->Overlay.AsynchronousParameters.UserApcRoutine)
+        {
+            KeInitializeApc(&irp->Tail.Apc, &thread->Tcb, CurrentApcEnvironment, IopUserCompletion,
+                            (PKRUNDOWN_ROUTINE)IopUserRundown,
+                            (PKNORMAL_ROUTINE)irp->Overlay.AsynchronousParameters.UserApcRoutine, irp->RequestorMode,
+                            irp->Overlay.AsynchronousParameters.UserApcContext);
 
-            KeInsertQueueApc( &irp->Tail.Apc,
-                              irp->UserIosb,
-                              NULL,
-                              2 );
-
-        } else if (port && irp->Overlay.AsynchronousParameters.UserApcContext) {
+            KeInsertQueueApc(&irp->Tail.Apc, irp->UserIosb, NULL, 2);
+        }
+        else if (port && irp->Overlay.AsynchronousParameters.UserApcContext)
+        {
 
             //
             // If there is a completion context associated w/this I/O operation,
@@ -1487,30 +1443,33 @@ Return Value:
             irp->Tail.CompletionKey = key;
             irp->Tail.Overlay.PacketType = IopCompletionPacketIrp;
 
-            KeInsertQueue( (PKQUEUE) port,
-                           &irp->Tail.Overlay.ListEntry );
-
-        } else {
+            KeInsertQueue((PKQUEUE)port, &irp->Tail.Overlay.ListEntry);
+        }
+        else
+        {
 
             //
             // Free the IRP now since it is no longer needed.
             //
 
-            IoFreeIrp( irp );
+            IoFreeIrp(irp);
         }
 
-        if (fileObject && !createOperation) {
+        if (fileObject && !createOperation)
+        {
 
             //
             // Dereference the file object now.
             //
 
-            ObDereferenceObject( fileObject );
+            ObDereferenceObject(fileObject);
         }
+    }
+    else
+    {
 
-    } else {
-
-        if (irp->PendingReturned && fileObject) {
+        if (irp->PendingReturned && fileObject)
+        {
 
             //
             // This is an I/O operation that completed as an error for
@@ -1530,16 +1489,22 @@ Return Value:
             // status from the file object itself.
             //
 
-            if (irp->Flags & IRP_SYNCHRONOUS_API) {
+            if (irp->Flags & IRP_SYNCHRONOUS_API)
+            {
                 *irp->UserIosb = irp->IoStatus;
-                if (irp->UserEvent) {
-                    (VOID) KeSetEvent( irp->UserEvent, 0, FALSE );
-                } else {
-                    (VOID) KeSetEvent( &fileObject->Event, 0, FALSE );
+                if (irp->UserEvent)
+                {
+                    (VOID) KeSetEvent(irp->UserEvent, 0, FALSE);
                 }
-            } else {
+                else
+                {
+                    (VOID) KeSetEvent(&fileObject->Event, 0, FALSE);
+                }
+            }
+            else
+            {
                 fileObject->FinalStatus = irp->IoStatus.Status;
-                (VOID) KeSetEvent( &fileObject->Event, 0, FALSE );
+                (VOID) KeSetEvent(&fileObject->Event, 0, FALSE);
             }
         }
 
@@ -1554,27 +1519,25 @@ Return Value:
         //     ApcRoutine - Do nothing.
         //
 
-        if (fileObject) {
-            if (!(irp->Flags & IRP_CREATE_OPERATION)) {
-                ObDereferenceObject( fileObject );
+        if (fileObject)
+        {
+            if (!(irp->Flags & IRP_CREATE_OPERATION))
+            {
+                ObDereferenceObject(fileObject);
             }
         }
 
-        if (irp->UserEvent &&
-            fileObject &&
-            !(irp->Flags & IRP_SYNCHRONOUS_API)) {
-            ObDereferenceObject( irp->UserEvent );
+        if (irp->UserEvent && fileObject && !(irp->Flags & IRP_SYNCHRONOUS_API))
+        {
+            ObDereferenceObject(irp->UserEvent);
         }
 
-        IopDequeueThreadIrp( irp );
-        IoFreeIrp( irp );
+        IopDequeueThreadIrp(irp);
+        IoFreeIrp(irp);
     }
 }
-
-VOID
-IopConnectLinkTrackingPort(
-    IN PVOID Parameter
-    )
+
+VOID IopConnectLinkTrackingPort(IN PVOID Parameter)
 
 /*++
 
@@ -1596,11 +1559,9 @@ Return Value:
 --*/
 
 {
-    #define MESSAGE_SIZE    ( (2 * sizeof( FILE_VOLUMEID_WITH_TYPE )) + \
-                            sizeof( FILE_OBJECTID_BUFFER ) +              \
-                            sizeof( GUID ) + \
-                            sizeof( NTSTATUS ) + \
-                            sizeof( ULONG ) )
+#define MESSAGE_SIZE                                                                                          \
+    ((2 * sizeof(FILE_VOLUMEID_WITH_TYPE)) + sizeof(FILE_OBJECTID_BUFFER) + sizeof(GUID) + sizeof(NTSTATUS) + \
+     sizeof(ULONG))
 
     PLINK_TRACKING_PACKET ltp;
     HANDLE serviceHandle;
@@ -1611,7 +1572,7 @@ Return Value:
     // Begin by getting a pointer to the link tracking packet.
     //
 
-    ltp = (PLINK_TRACKING_PACKET) Parameter;
+    ltp = (PLINK_TRACKING_PACKET)Parameter;
 
 
     //
@@ -1619,13 +1580,15 @@ Return Value:
     //
 
     status = STATUS_SUCCESS;
-    if (!IopLinkTrackingServiceObject) {
+    if (!IopLinkTrackingServiceObject)
+    {
 
         UNICODE_STRING portName;
         ULONG maxMessageLength;
         SECURITY_QUALITY_OF_SERVICE dynamicQos;
 
-        if (KeReadStateEvent( IopLinkTrackingServiceEvent )) {
+        if (KeReadStateEvent(IopLinkTrackingServiceEvent))
+        {
 
             //
             // Attempt to open a handle to the port.
@@ -1645,32 +1608,27 @@ Return Value:
             // Generate the string structure for describing the port.
             //
 
-            RtlInitUnicodeString( &portName, L"\\Security\\TRKWKS_PORT" );
+            RtlInitUnicodeString(&portName, L"\\Security\\TRKWKS_PORT");
 
-            status = NtConnectPort( &serviceHandle,
-                                    &portName,
-                                    &dynamicQos,
-                                    (PPORT_VIEW) NULL,
-                                    (PREMOTE_PORT_VIEW) NULL,
-                                    &maxMessageLength,
-                                    (PVOID) NULL,
-                                    (PULONG) NULL );
-            if (NT_SUCCESS( status )) {
-                if (maxMessageLength >= MESSAGE_SIZE) {
-                    status = ObReferenceObjectByHandle( serviceHandle,
-                                                        0,
-                                                        LpcPortObjectType,
-                                                        KernelMode,
-                                                        &IopLinkTrackingServiceObject,
-                                                        NULL );
-                    NtClose( serviceHandle );
-                } else {
-                    NtClose( serviceHandle );
+            status = NtConnectPort(&serviceHandle, &portName, &dynamicQos, (PPORT_VIEW)NULL, (PREMOTE_PORT_VIEW)NULL,
+                                   &maxMessageLength, (PVOID)NULL, (PULONG)NULL);
+            if (NT_SUCCESS(status))
+            {
+                if (maxMessageLength >= MESSAGE_SIZE)
+                {
+                    status = ObReferenceObjectByHandle(serviceHandle, 0, LpcPortObjectType, KernelMode,
+                                                       &IopLinkTrackingServiceObject, NULL);
+                    NtClose(serviceHandle);
+                }
+                else
+                {
+                    NtClose(serviceHandle);
                     status = STATUS_INVALID_PARAMETER;
                 }
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // The service has not been started so the port does not exist.
@@ -1685,13 +1643,10 @@ Return Value:
     // Return final status and wake the caller up.
     //
     ltp->FinalStatus = status;
-    KeSetEvent( &ltp->Event, 0, FALSE );
+    KeSetEvent(&ltp->Event, 0, FALSE);
 }
-
-VOID
-IopDisassociateThreadIrp(
-    VOID
-    )
+
+VOID IopDisassociateThreadIrp(VOID)
 
 /*++
 
@@ -1729,7 +1684,7 @@ Return Value:
     // the thread's queue.
     //
 
-    KeRaiseIrql( APC_LEVEL, &irql );
+    KeRaiseIrql(APC_LEVEL, &irql);
 
     thread = PsGetCurrentThread();
 
@@ -1739,8 +1694,9 @@ Return Value:
     // simply return to its caller.
     //
 
-    if (IsListEmpty( &thread->IrpList )) {
-        KeLowerIrql( irql );
+    if (IsListEmpty(&thread->IrpList))
+    {
+        KeLowerIrql(irql);
         return;
     }
 
@@ -1757,7 +1713,7 @@ Return Value:
     // the packet can be safely examined.
     //
 
-    spIrql = KeAcquireQueuedSpinLock( LockQueueIoCompletionLock );
+    spIrql = KeAcquireQueuedSpinLock(LockQueueIoCompletionLock);
 
     //
     // Check to see whether or not the packet has been completed (that is,
@@ -1765,9 +1721,10 @@ Return Value:
     //
 
     entry = thread->IrpList.Flink;
-    irp = CONTAINING_RECORD( entry, IRP, ThreadListEntry );
+    irp = CONTAINING_RECORD(entry, IRP, ThreadListEntry);
 
-    if (irp->CurrentLocation == irp->StackCount + 2) {
+    if (irp->CurrentLocation == irp->StackCount + 2)
+    {
 
         //
         // The request has just gone through enough of completion that
@@ -1775,8 +1732,8 @@ Return Value:
         // lock and return.
         //
 
-        KeReleaseQueuedSpinLock( LockQueueIoCompletionLock, spIrql );
-        KeLowerIrql( irql );
+        KeReleaseQueuedSpinLock(LockQueueIoCompletionLock, spIrql);
+        KeLowerIrql(irql);
         return;
     }
 
@@ -1792,37 +1749,42 @@ Return Value:
     // device object the operation is being performed.
     //
 
-////
-////DbgPrint( "Disassociating Irp:  %x\n", irp );
-////DbgBreakPoint();
-////
+    ////
+    ////DbgPrint( "Disassociating Irp:  %x\n", irp );
+    ////DbgBreakPoint();
+    ////
 
     IopDeadIrp = irp;
 
-    irp->Tail.Overlay.Thread = (PETHREAD) NULL;
-    entry = RemoveHeadList( &thread->IrpList );
+    irp->Tail.Overlay.Thread = (PETHREAD)NULL;
+    entry = RemoveHeadList(&thread->IrpList);
 
     // Initialize the thread entry. Otherwise the assertion in IoFreeIrp
     // called via IopDeadIrp will fail.
-    InitializeListHead (&(irp)->ThreadListEntry);
+    InitializeListHead(&(irp)->ThreadListEntry);
 
-    irpSp = IoGetCurrentIrpStackLocation( irp );
-    if (irp->CurrentLocation <= irp->StackCount) {
+    irpSp = IoGetCurrentIrpStackLocation(irp);
+    if (irp->CurrentLocation <= irp->StackCount)
+    {
         deviceObject = irpSp->DeviceObject;
-    } else {
-        deviceObject = (PDEVICE_OBJECT) NULL;
     }
-    KeReleaseQueuedSpinLock( LockQueueIoCompletionLock, spIrql );
-    KeLowerIrql( irql );
+    else
+    {
+        deviceObject = (PDEVICE_OBJECT)NULL;
+    }
+    KeReleaseQueuedSpinLock(LockQueueIoCompletionLock, spIrql);
+    KeLowerIrql(irql);
 
     //
     // If a device object could be identified then try to write to the event log about this
     // device object.
     //
 
-    if (deviceObject) {
+    if (deviceObject)
+    {
         errorLogEntry = IoAllocateErrorLogEntry(deviceObject, sizeof(IO_ERROR_LOG_PACKET));
-        if (errorLogEntry) {
+        if (errorLogEntry)
+        {
             errorLogEntry->ErrorCode = IO_DRIVER_CANCEL_TIMEOUT;
             IoWriteErrorLogEntry(errorLogEntry);
         }
@@ -1830,15 +1792,9 @@ Return Value:
 
     return;
 }
-
-VOID
-IopDeallocateApc(
-    IN PKAPC Apc,
-    IN PKNORMAL_ROUTINE *NormalRoutine,
-    IN PVOID *NormalContext,
-    IN PVOID *SystemArgument1,
-    IN PVOID *SystemArgument2
-    )
+
+VOID IopDeallocateApc(IN PKAPC Apc, IN PKNORMAL_ROUTINE *NormalRoutine, IN PVOID *NormalContext,
+                      IN PVOID *SystemArgument1, IN PVOID *SystemArgument2)
 
 /*++
 
@@ -1867,10 +1823,10 @@ Return Value:
 --*/
 
 {
-    UNREFERENCED_PARAMETER( NormalRoutine );
-    UNREFERENCED_PARAMETER( NormalContext );
-    UNREFERENCED_PARAMETER( SystemArgument1 );
-    UNREFERENCED_PARAMETER( SystemArgument2 );
+    UNREFERENCED_PARAMETER(NormalRoutine);
+    UNREFERENCED_PARAMETER(NormalContext);
+    UNREFERENCED_PARAMETER(SystemArgument1);
+    UNREFERENCED_PARAMETER(SystemArgument2);
 
     PAGED_CODE();
 
@@ -1878,14 +1834,10 @@ Return Value:
     // Free the APC.
     //
 
-    ExFreePool( Apc );
+    ExFreePool(Apc);
 }
-
-VOID
-IopDropIrp(
-    IN PIRP Irp,
-    IN PFILE_OBJECT FileObject
-    )
+
+VOID IopDropIrp(IN PIRP Irp, IN PFILE_OBJECT FileObject)
 
 /*++
 
@@ -1915,39 +1867,38 @@ Return Value:
     // Free the resources associated with the IRP.
     //
 
-    if (Irp->Flags & IRP_DEALLOCATE_BUFFER) {
-        ExFreePool( Irp->AssociatedIrp.SystemBuffer );
+    if (Irp->Flags & IRP_DEALLOCATE_BUFFER)
+    {
+        ExFreePool(Irp->AssociatedIrp.SystemBuffer);
     }
 
-    if (Irp->MdlAddress) {
-        for (mdl = Irp->MdlAddress; mdl; mdl = nextMdl) {
+    if (Irp->MdlAddress)
+    {
+        for (mdl = Irp->MdlAddress; mdl; mdl = nextMdl)
+        {
             nextMdl = mdl->Next;
-            IoFreeMdl( mdl );
+            IoFreeMdl(mdl);
         }
     }
 
-    if (Irp->UserEvent &&
-        FileObject &&
-        !(Irp->Flags & IRP_SYNCHRONOUS_API)) {
-        ObDereferenceObject( Irp->UserEvent );
+    if (Irp->UserEvent && FileObject && !(Irp->Flags & IRP_SYNCHRONOUS_API))
+    {
+        ObDereferenceObject(Irp->UserEvent);
     }
 
-    if (FileObject && !(Irp->Flags & IRP_CREATE_OPERATION)) {
-        ObDereferenceObject( FileObject );
+    if (FileObject && !(Irp->Flags & IRP_CREATE_OPERATION))
+    {
+        ObDereferenceObject(FileObject);
     }
 
     //
     // Finally, free the IRP itself.
     //
 
-    IoFreeIrp( Irp );
+    IoFreeIrp(Irp);
 }
-
-LONG
-IopExceptionFilter(
-    IN PEXCEPTION_POINTERS ExceptionPointer,
-    OUT PNTSTATUS ExceptionCode
-    )
+
+LONG IopExceptionFilter(IN PEXCEPTION_POINTERS ExceptionPointer, OUT PNTSTATUS ExceptionCode)
 
 /*++
 
@@ -1978,29 +1929,25 @@ Return Value:
     //
 
     *ExceptionCode = ExceptionPointer->ExceptionRecord->ExceptionCode;
-    if (*ExceptionCode == STATUS_IN_PAGE_ERROR &&
-        ExceptionPointer->ExceptionRecord->NumberParameters >= 3) {
-        *ExceptionCode = (LONG) ExceptionPointer->ExceptionRecord->ExceptionInformation[2];
+    if (*ExceptionCode == STATUS_IN_PAGE_ERROR && ExceptionPointer->ExceptionRecord->NumberParameters >= 3)
+    {
+        *ExceptionCode = (LONG)ExceptionPointer->ExceptionRecord->ExceptionInformation[2];
     }
 
     //
     // Translate alignment warnings into alignment errors.
     //
 
-    if (*ExceptionCode == STATUS_DATATYPE_MISALIGNMENT) {
+    if (*ExceptionCode == STATUS_DATATYPE_MISALIGNMENT)
+    {
         *ExceptionCode = STATUS_DATATYPE_MISALIGNMENT_ERROR;
     }
 
     return EXCEPTION_EXECUTE_HANDLER;
 }
-
-VOID
-IopExceptionCleanup(
-    IN PFILE_OBJECT FileObject,
-    IN PIRP Irp,
-    IN PKEVENT EventObject OPTIONAL,
-    IN PKEVENT KernelEvent OPTIONAL
-    )
+
+VOID IopExceptionCleanup(IN PFILE_OBJECT FileObject, IN PIRP Irp, IN PKEVENT EventObject OPTIONAL,
+                         IN PKEVENT KernelEvent OPTIONAL)
 
 /*++
 
@@ -2048,23 +1995,25 @@ Return Value:
     // If a system buffer was allocated from nonpaged pool, free it.
     //
 
-    if (Irp->AssociatedIrp.SystemBuffer != NULL) {
-        ExFreePool( Irp->AssociatedIrp.SystemBuffer );
+    if (Irp->AssociatedIrp.SystemBuffer != NULL)
+    {
+        ExFreePool(Irp->AssociatedIrp.SystemBuffer);
     }
 
     //
     // If an MDL was allocated, free it.
     //
 
-    if (Irp->MdlAddress != NULL) {
-        IoFreeMdl( Irp->MdlAddress );
+    if (Irp->MdlAddress != NULL)
+    {
+        IoFreeMdl(Irp->MdlAddress);
     }
 
     //
     // Free the I/O Request Packet.
     //
 
-    IoFreeIrp( Irp );
+    IoFreeIrp(Irp);
 
     //
     // Finally, release the synchronization semaphore if it is currently
@@ -2072,27 +2021,27 @@ Return Value:
     // event if one was allocated, and dereference the file object.
     //
 
-    if (FileObject->Flags & FO_SYNCHRONOUS_IO) {
-        IopReleaseFileObjectLock( FileObject );
+    if (FileObject->Flags & FO_SYNCHRONOUS_IO)
+    {
+        IopReleaseFileObjectLock(FileObject);
     }
 
-    if (ARGUMENT_PRESENT( EventObject )) {
-        ObDereferenceObject( EventObject );
+    if (ARGUMENT_PRESENT(EventObject))
+    {
+        ObDereferenceObject(EventObject);
     }
 
-    if (ARGUMENT_PRESENT( KernelEvent )) {
-        ExFreePool( KernelEvent );
+    if (ARGUMENT_PRESENT(KernelEvent))
+    {
+        ExFreePool(KernelEvent);
     }
 
-    ObDereferenceObject( FileObject );
+    ObDereferenceObject(FileObject);
 
     return;
 }
-
-VOID
-IopFreeIrpAndMdls(
-    IN PIRP Irp
-    )
+
+VOID IopFreeIrpAndMdls(IN PIRP Irp)
 
 /*++
 
@@ -2119,24 +2068,22 @@ Return Value:
     // If there are any MDLs that need to be freed, free them now.
     //
 
-    for (mdl = Irp->MdlAddress; mdl != (PMDL) NULL; mdl = nextMdl) {
+    for (mdl = Irp->MdlAddress; mdl != (PMDL)NULL; mdl = nextMdl)
+    {
         nextMdl = mdl->Next;
-        IoFreeMdl( mdl );
+        IoFreeMdl(mdl);
     }
 
     //
     // Free the IRP.
     //
 
-    IoFreeIrp( Irp );
+    IoFreeIrp(Irp);
     return;
 }
-
+
 NTSTATUS
-IopGetDriverNameFromKeyNode(
-    IN HANDLE KeyHandle,
-    OUT PUNICODE_STRING DriverName
-    )
+IopGetDriverNameFromKeyNode(IN HANDLE KeyHandle, OUT PUNICODE_STRING DriverName)
 
 /*++
 
@@ -2173,11 +2120,10 @@ Return Value:
     // driver.
     //
 
-    status = IopGetRegistryValue( KeyHandle,
-                                  L"ObjectName",
-                                  &keyValueInformation );
+    status = IopGetRegistryValue(KeyHandle, L"ObjectName", &keyValueInformation);
 
-    if (NT_SUCCESS( status )) {
+    if (NT_SUCCESS(status))
+    {
 
         PWSTR src, dst;
         ULONG i;
@@ -2188,23 +2134,26 @@ Return Value:
         // object.
         //
 
-        if (!keyValueInformation->DataLength) {
-            ExFreePool( keyValueInformation );
+        if (!keyValueInformation->DataLength)
+        {
+            ExFreePool(keyValueInformation);
             return STATUS_ILL_FORMED_SERVICE_ENTRY;
         }
 
-        DriverName->Length = (USHORT) (keyValueInformation->DataLength - sizeof( WCHAR ));
-        DriverName->MaximumLength = (USHORT) keyValueInformation->DataLength;
+        DriverName->Length = (USHORT)(keyValueInformation->DataLength - sizeof(WCHAR));
+        DriverName->MaximumLength = (USHORT)keyValueInformation->DataLength;
 
-        src = (PWSTR) ((PUCHAR) keyValueInformation + keyValueInformation->DataOffset);
-        dst = (PWSTR) keyValueInformation;
-        for (i = DriverName->Length; i; i--) {
+        src = (PWSTR)((PUCHAR)keyValueInformation + keyValueInformation->DataOffset);
+        dst = (PWSTR)keyValueInformation;
+        for (i = DriverName->Length; i; i--)
+        {
             *dst++ = *src++;
         }
 
-        DriverName->Buffer = (PWSTR) keyValueInformation;
-
-    } else {
+        DriverName->Buffer = (PWSTR)keyValueInformation;
+    }
+    else
+    {
 
         PULONG driverType;
         PWSTR baseObjectName;
@@ -2216,10 +2165,9 @@ Return Value:
         // the information in the key.
         //
 
-        status = IopGetRegistryValue( KeyHandle,
-                                      L"Type",
-                                      &keyValueInformation );
-        if (!NT_SUCCESS( status ) || !keyValueInformation->DataLength) {
+        status = IopGetRegistryValue(KeyHandle, L"Type", &keyValueInformation);
+        if (!NT_SUCCESS(status) || !keyValueInformation->DataLength)
+        {
 
             //
             // There must be some type of "Type" associated with this driver,
@@ -2227,8 +2175,9 @@ Return Value:
             // formed.
             //
 
-            if (NT_SUCCESS( status )) {
-                ExFreePool( keyValueInformation );
+            if (NT_SUCCESS(status))
+            {
+                ExFreePool(keyValueInformation);
             }
 
             return STATUS_ILL_FORMED_SERVICE_ENTRY;
@@ -2240,14 +2189,14 @@ Return Value:
         //
 
         baseObjectName = L"\\Driver\\";
-        DriverName->Length = 8*2;
+        DriverName->Length = 8 * 2;
 
-        driverType = (PULONG) ((PUCHAR) keyValueInformation + keyValueInformation->DataOffset);
+        driverType = (PULONG)((PUCHAR)keyValueInformation + keyValueInformation->DataOffset);
 
-        if (*driverType == FileSystemType ||
-            *driverType == RecognizerType) {
+        if (*driverType == FileSystemType || *driverType == RecognizerType)
+        {
             baseObjectName = L"\\FileSystem\\";
-            DriverName->Length = 12*2;
+            DriverName->Length = 12 * 2;
         }
 
         //
@@ -2256,26 +2205,20 @@ Return Value:
         // string, which can be used to formulate the name of the driver.
         //
 
-        status = ZwQueryKey( KeyHandle,
-                             KeyBasicInformation,
-                             (PVOID) NULL,
-                             0,
-                             &keyBasicLength );
+        status = ZwQueryKey(KeyHandle, KeyBasicInformation, (PVOID)NULL, 0, &keyBasicLength);
 
-        keyBasicInformation = ExAllocatePool( NonPagedPool, keyBasicLength );
-        if (!keyBasicInformation) {
-            ExFreePool( keyValueInformation );
+        keyBasicInformation = ExAllocatePool(NonPagedPool, keyBasicLength);
+        if (!keyBasicInformation)
+        {
+            ExFreePool(keyValueInformation);
             return STATUS_INSUFFICIENT_RESOURCES;
         }
 
-        status = ZwQueryKey( KeyHandle,
-                             KeyBasicInformation,
-                             keyBasicInformation,
-                             keyBasicLength,
-                             &keyBasicLength );
-        if (!NT_SUCCESS( status )) {
-            ExFreePool( keyBasicInformation );
-            ExFreePool( keyValueInformation );
+        status = ZwQueryKey(KeyHandle, KeyBasicInformation, keyBasicInformation, keyBasicLength, &keyBasicLength);
+        if (!NT_SUCCESS(status))
+        {
+            ExFreePool(keyBasicInformation);
+            ExFreePool(keyValueInformation);
             return status;
         }
 
@@ -2284,12 +2227,12 @@ Return Value:
         // entire name string of the driver object.
         //
 
-        DriverName->MaximumLength = (USHORT) (DriverName->Length + keyBasicInformation->NameLength);
-        DriverName->Buffer = ExAllocatePool( NonPagedPool,
-                                            DriverName->MaximumLength );
-        if (!DriverName->Buffer) {
-            ExFreePool( keyBasicInformation );
-            ExFreePool( keyValueInformation );
+        DriverName->MaximumLength = (USHORT)(DriverName->Length + keyBasicInformation->NameLength);
+        DriverName->Buffer = ExAllocatePool(NonPagedPool, DriverName->MaximumLength);
+        if (!DriverName->Buffer)
+        {
+            ExFreePool(keyBasicInformation);
+            ExFreePool(keyValueInformation);
             return STATUS_INSUFFICIENT_RESOURCES;
         }
 
@@ -2298,13 +2241,13 @@ Return Value:
         //
 
         DriverName->Length = 0;
-        RtlAppendUnicodeToString( DriverName, baseObjectName );
-        remainderName.Length = (USHORT) keyBasicInformation->NameLength;
+        RtlAppendUnicodeToString(DriverName, baseObjectName);
+        remainderName.Length = (USHORT)keyBasicInformation->NameLength;
         remainderName.MaximumLength = remainderName.Length;
         remainderName.Buffer = &keyBasicInformation->Name[0];
-        RtlAppendUnicodeStringToString( DriverName, &remainderName );
-        ExFreePool( keyBasicInformation );
-        ExFreePool( keyValueInformation );
+        RtlAppendUnicodeStringToString(DriverName, &remainderName);
+        ExFreePool(keyBasicInformation);
+        ExFreePool(keyValueInformation);
     }
 
     //
@@ -2315,15 +2258,10 @@ Return Value:
 
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-IopGetFileInformation(
-    IN PFILE_OBJECT FileObject,
-    IN ULONG Length,
-    IN FILE_INFORMATION_CLASS FileInformationClass,
-    OUT PVOID FileInformation,
-    OUT PULONG ReturnedLength
-    )
+IopGetFileInformation(IN PFILE_OBJECT FileObject, IN ULONG Length, IN FILE_INFORMATION_CLASS FileInformationClass,
+                      OUT PVOID FileInformation, OUT PULONG ReturnedLength)
 
 /*++
 
@@ -2371,7 +2309,7 @@ Return Value:
     // object.
     //
 
-    ObReferenceObject( FileObject );
+    ObReferenceObject(FileObject);
 
     //
     // Initialize an event that will be used to synchronize the completion of
@@ -2380,27 +2318,28 @@ Return Value:
     // synchronous I/O and may be busy.
     //
 
-    KeInitializeEvent( &event, SynchronizationEvent, FALSE );
+    KeInitializeEvent(&event, SynchronizationEvent, FALSE);
 
     //
     // Get the address of the target device object.
     //
 
-    deviceObject = IoGetRelatedDeviceObject( FileObject );
+    deviceObject = IoGetRelatedDeviceObject(FileObject);
 
     //
     // Allocate and initialize the I/O Request Packet (IRP) for this operation.
     //
 
-    irp = IoAllocateIrp( deviceObject->StackSize, FALSE );
-    if (!irp) {
+    irp = IoAllocateIrp(deviceObject->StackSize, FALSE);
+    if (!irp)
+    {
 
         //
         // An IRP could not be allocated.  Cleanup and return an appropriate
         // error status code.
         //
 
-        ObDereferenceObject( FileObject );
+        ObDereferenceObject(FileObject);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -2418,14 +2357,14 @@ Return Value:
     irp->UserEvent = &event;
     irp->Flags = IRP_SYNCHRONOUS_API | IRP_OB_QUERY_NAME;
     irp->UserIosb = &localIoStatus;
-    irp->Overlay.AsynchronousParameters.UserApcRoutine = (PIO_APC_ROUTINE) NULL;
+    irp->Overlay.AsynchronousParameters.UserApcRoutine = (PIO_APC_ROUTINE)NULL;
 
     //
     // Get a pointer to the stack location for the first driver.  This will be
     // used to pass the original function codes and parameters.
     //
 
-    irpSp = IoGetNextIrpStackLocation( irp );
+    irpSp = IoGetNextIrpStackLocation(irp);
     irpSp->MajorFunction = IRP_MJ_QUERY_INFORMATION;
     irpSp->FileObject = FileObject;
 
@@ -2449,36 +2388,31 @@ Return Value:
     // Insert the packet at the head of the IRP list for the thread.
     //
 
-    IopQueueThreadIrp( irp );
+    IopQueueThreadIrp(irp);
 
     //
     // Now simply invoke the driver at its dispatch entry with the IRP.
     //
 
-    status = IoCallDriver( deviceObject, irp );
+    status = IoCallDriver(deviceObject, irp);
 
     //
     // Now get the final status of the operation once the request completes
     // and return the length of the buffer written.
     //
 
-    if (status == STATUS_PENDING) {
-        (VOID) KeWaitForSingleObject( &event,
-                                      Executive,
-                                      KernelMode,
-                                      FALSE,
-                                      (PLARGE_INTEGER) NULL );
+    if (status == STATUS_PENDING)
+    {
+        (VOID) KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
         status = localIoStatus.Status;
     }
 
-    *ReturnedLength = (ULONG) localIoStatus.Information;
+    *ReturnedLength = (ULONG)localIoStatus.Information;
     return status;
 }
-
+
 BOOLEAN
-IopGetMountFlag(
-    IN PDEVICE_OBJECT DeviceObject
-    )
+IopGetMountFlag(IN PDEVICE_OBJECT DeviceObject)
 
 /*++
 
@@ -2512,22 +2446,21 @@ Return Value:
     // still has a VPB without holding the lock.
     //
 
-    irql = KeAcquireQueuedSpinLock( LockQueueIoVpbLock );
-    if (DeviceObject->Vpb) {
-        if (DeviceObject->Vpb->Flags & VPB_MOUNTED) {
+    irql = KeAcquireQueuedSpinLock(LockQueueIoVpbLock);
+    if (DeviceObject->Vpb)
+    {
+        if (DeviceObject->Vpb->Flags & VPB_MOUNTED)
+        {
             deviceMounted = TRUE;
         }
     }
-    KeReleaseQueuedSpinLock( LockQueueIoVpbLock, irql );
+    KeReleaseQueuedSpinLock(LockQueueIoVpbLock, irql);
 
     return deviceMounted;
 }
-
+
 NTSTATUS
-IopGetRegistryKeyInformation(
-    IN HANDLE KeyHandle,
-    OUT PKEY_FULL_INFORMATION *Information
-    )
+IopGetRegistryKeyInformation(IN HANDLE KeyHandle, OUT PKEY_FULL_INFORMATION *Information)
 
 /*++
 
@@ -2565,13 +2498,9 @@ Return Value:
     // appropriate size can be allocated.
     //
 
-    status = ZwQueryKey( KeyHandle,
-                         KeyFullInformation,
-                         (PVOID) NULL,
-                         0,
-                         &keyInfoLength );
-    if (status != STATUS_BUFFER_OVERFLOW &&
-        status != STATUS_BUFFER_TOO_SMALL) {
+    status = ZwQueryKey(KeyHandle, KeyFullInformation, (PVOID)NULL, 0, &keyInfoLength);
+    if (status != STATUS_BUFFER_OVERFLOW && status != STATUS_BUFFER_TOO_SMALL)
+    {
         return status;
     }
 
@@ -2579,8 +2508,9 @@ Return Value:
     // Allocate a buffer large enough to contain the entire key data.
     //
 
-    infoBuffer = ExAllocatePool( NonPagedPool, keyInfoLength );
-    if (!infoBuffer) {
+    infoBuffer = ExAllocatePool(NonPagedPool, keyInfoLength);
+    if (!infoBuffer)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -2588,13 +2518,10 @@ Return Value:
     // Query the full key data for the key.
     //
 
-    status = ZwQueryKey( KeyHandle,
-                         KeyFullInformation,
-                         infoBuffer,
-                         keyInfoLength,
-                         &keyInfoLength );
-    if (!NT_SUCCESS( status )) {
-        ExFreePool( infoBuffer );
+    status = ZwQueryKey(KeyHandle, KeyFullInformation, infoBuffer, keyInfoLength, &keyInfoLength);
+    if (!NT_SUCCESS(status))
+    {
+        ExFreePool(infoBuffer);
         return status;
     }
 
@@ -2606,13 +2533,9 @@ Return Value:
     *Information = infoBuffer;
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-IopGetRegistryValue(
-    IN HANDLE KeyHandle,
-    IN PWSTR  ValueName,
-    OUT PKEY_VALUE_FULL_INFORMATION *Information
-    )
+IopGetRegistryValue(IN HANDLE KeyHandle, IN PWSTR ValueName, OUT PKEY_VALUE_FULL_INFORMATION *Information)
 
 /*++
 
@@ -2647,20 +2570,19 @@ Return Value:
 
     PAGED_CODE();
 
-    RtlInitUnicodeString( &unicodeString, ValueName );
+    RtlInitUnicodeString(&unicodeString, ValueName);
 
     //
     // Set an initial size to try when loading a key. Note that
     // KeyValueFullInformation already comes with a single WCHAR of data.
     //
-    guessSize = sizeof(KEY_VALUE_FULL_INFORMATION) +
-                wcslen(ValueName)*sizeof(WCHAR);
+    guessSize = sizeof(KEY_VALUE_FULL_INFORMATION) + wcslen(ValueName) * sizeof(WCHAR);
 
     //
     // Now round up to a natural alignment. This needs to be done because our
     // data member will naturally aligned as well.
     //
-    guessSize = (ULONG) ALIGN_POINTER_OFFSET(guessSize);
+    guessSize = (ULONG)ALIGN_POINTER_OFFSET(guessSize);
 
     //
     // Set the data cache length to a ULONG's worth of data, because most data
@@ -2669,7 +2591,8 @@ Return Value:
     guessSize += sizeof(ULONG);
 
     infoBuffer = ExAllocatePool(NonPagedPool, guessSize);
-    if (!infoBuffer) {
+    if (!infoBuffer)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -2678,13 +2601,10 @@ Return Value:
     // appropriate size can be allocated.
     //
 
-    status = ZwQueryValueKey( KeyHandle,
-                              &unicodeString,
-                              KeyValueFullInformation,
-                              (PVOID) infoBuffer,
-                              guessSize,
-                              &keyValueLength );
-    if (NT_SUCCESS(status)) {
+    status = ZwQueryValueKey(KeyHandle, &unicodeString, KeyValueFullInformation, (PVOID)infoBuffer, guessSize,
+                             &keyValueLength);
+    if (NT_SUCCESS(status))
+    {
 
         //
         // First guess worked, bail!
@@ -2694,8 +2614,8 @@ Return Value:
     }
 
     ExFreePool(infoBuffer);
-    if (status != STATUS_BUFFER_OVERFLOW &&
-        status != STATUS_BUFFER_TOO_SMALL) {
+    if (status != STATUS_BUFFER_OVERFLOW && status != STATUS_BUFFER_TOO_SMALL)
+    {
 
         ASSERT(!NT_SUCCESS(status));
         return status;
@@ -2705,8 +2625,9 @@ Return Value:
     // Allocate a buffer large enough to contain the entire key data value.
     //
 
-    infoBuffer = ExAllocatePool( NonPagedPool, keyValueLength );
-    if (!infoBuffer) {
+    infoBuffer = ExAllocatePool(NonPagedPool, keyValueLength);
+    if (!infoBuffer)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -2714,14 +2635,11 @@ Return Value:
     // Query the data for the key value.
     //
 
-    status = ZwQueryValueKey( KeyHandle,
-                              &unicodeString,
-                              KeyValueFullInformation,
-                              infoBuffer,
-                              keyValueLength,
-                              &keyValueLength );
-    if (!NT_SUCCESS( status )) {
-        ExFreePool( infoBuffer );
+    status = ZwQueryValueKey(KeyHandle, &unicodeString, KeyValueFullInformation, infoBuffer, keyValueLength,
+                             &keyValueLength);
+    if (!NT_SUCCESS(status))
+    {
+        ExFreePool(infoBuffer);
         return status;
     }
 
@@ -2733,12 +2651,9 @@ Return Value:
     *Information = infoBuffer;
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-IopGetRegistryValues(
-    IN HANDLE KeyHandle,
-    IN PKEY_VALUE_FULL_INFORMATION *ValueList
-    )
+IopGetRegistryValues(IN HANDLE KeyHandle, IN PKEY_VALUE_FULL_INFORMATION *ValueList)
 
 /*++
 
@@ -2788,40 +2703,32 @@ Note:
     // constitute an error.
     //
 
-    status = IopGetRegistryValue( KeyHandle,
-                                  L"Identifier",
-                                  ValueList );
+    status = IopGetRegistryValue(KeyHandle, L"Identifier", ValueList);
 
-    if (!NT_SUCCESS( status ) && (status != STATUS_OBJECT_NAME_NOT_FOUND)) {
+    if (!NT_SUCCESS(status) && (status != STATUS_OBJECT_NAME_NOT_FOUND))
+    {
         return status;
     }
 
-    status = IopGetRegistryValue( KeyHandle,
-                                  L"Configuration Data",
-                                  ++ValueList );
+    status = IopGetRegistryValue(KeyHandle, L"Configuration Data", ++ValueList);
 
-    if (!NT_SUCCESS( status ) && (status != STATUS_OBJECT_NAME_NOT_FOUND)) {
+    if (!NT_SUCCESS(status) && (status != STATUS_OBJECT_NAME_NOT_FOUND))
+    {
         return status;
     }
 
-    status = IopGetRegistryValue( KeyHandle,
-                                  L"Component Information",
-                                  ++ValueList );
+    status = IopGetRegistryValue(KeyHandle, L"Component Information", ++ValueList);
 
-    if (!NT_SUCCESS( status ) && (status != STATUS_OBJECT_NAME_NOT_FOUND)) {
+    if (!NT_SUCCESS(status) && (status != STATUS_OBJECT_NAME_NOT_FOUND))
+    {
         return status;
     }
 
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-IopGetSetObjectId(
-    IN PFILE_OBJECT FileObject,
-    IN OUT PVOID Buffer,
-    IN ULONG Length,
-    IN ULONG Function
-    )
+IopGetSetObjectId(IN PFILE_OBJECT FileObject, IN OUT PVOID Buffer, IN ULONG Length, IN ULONG Function)
 
 /*++
 
@@ -2872,27 +2779,18 @@ Return Value:
     // request.
     //
 
-    KeInitializeEvent( &event,
-                       NotificationEvent,
-                       FALSE );
+    KeInitializeEvent(&event, NotificationEvent, FALSE);
 
     //
     // Build an I/O Request Packet to be sent to the file system driver to get
     // the object ID.
     //
 
-    deviceObject = IoGetRelatedDeviceObject( FileObject );
+    deviceObject = IoGetRelatedDeviceObject(FileObject);
 
-    irp = IoBuildDeviceIoControlRequest( Function,
-                                         deviceObject,
-                                         NULL,
-                                         0,
-                                         NULL,
-                                         0,
-                                         FALSE,
-                                         &event,
-                                         &ioStatus );
-    if (!irp) {
+    irp = IoBuildDeviceIoControlRequest(Function, deviceObject, NULL, 0, NULL, 0, FALSE, &event, &ioStatus);
+    if (!irp)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -2906,16 +2804,18 @@ Return Value:
     irp->AssociatedIrp.SystemBuffer = Buffer;
     irp->Tail.Overlay.OriginalFileObject = FileObject;
 
-    irpSp = IoGetNextIrpStackLocation( irp );
+    irpSp = IoGetNextIrpStackLocation(irp);
     irpSp->FileObject = FileObject;
     irpSp->MajorFunction = IRP_MJ_FILE_SYSTEM_CONTROL;
     irpSp->MinorFunction = IRP_MN_KERNEL_CALL;
 
-    if (Function == FSCTL_LMR_GET_LINK_TRACKING_INFORMATION ||
-        Function == FSCTL_CREATE_OR_GET_OBJECT_ID ||
-        Function == FSCTL_GET_OBJECT_ID ) {
+    if (Function == FSCTL_LMR_GET_LINK_TRACKING_INFORMATION || Function == FSCTL_CREATE_OR_GET_OBJECT_ID ||
+        Function == FSCTL_GET_OBJECT_ID)
+    {
         irpSp->Parameters.FileSystemControl.OutputBufferLength = Length;
-    } else {
+    }
+    else
+    {
         irpSp->Parameters.FileSystemControl.InputBufferLength = Length;
     }
 
@@ -2924,36 +2824,29 @@ Return Value:
     // not get deleted.
     //
 
-    ObReferenceObject( FileObject );
+    ObReferenceObject(FileObject);
 
     //
     // Call the driver to get the request.
     //
 
-    status = IoCallDriver( deviceObject, irp );
+    status = IoCallDriver(deviceObject, irp);
 
     //
     // Synchronize completion of the request.
     //
 
-    if (status == STATUS_PENDING) {
-        status = KeWaitForSingleObject( &event,
-                                        Executive,
-                                        KernelMode,
-                                        FALSE,
-                                        (PLARGE_INTEGER) NULL );
+    if (status == STATUS_PENDING)
+    {
+        status = KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
         status = ioStatus.Status;
     }
 
     return status;
 }
-
+
 NTSTATUS
-IopGetVolumeId(
-    IN PFILE_OBJECT FileObject,
-    IN OUT PFILE_VOLUMEID_WITH_TYPE ObjectId,
-    IN ULONG Length
-    )
+IopGetVolumeId(IN PFILE_OBJECT FileObject, IN OUT PFILE_VOLUMEID_WITH_TYPE ObjectId, IN ULONG Length)
 
 /*++
 
@@ -2993,27 +2886,18 @@ Return Value:
     // request.
     //
 
-    KeInitializeEvent( &event,
-                       NotificationEvent,
-                       FALSE );
+    KeInitializeEvent(&event, NotificationEvent, FALSE);
 
     //
     // Build an I/O Request Packet to be sent to the file system driver to get
     // the volume ID.
     //
 
-    deviceObject = IoGetRelatedDeviceObject( FileObject );
+    deviceObject = IoGetRelatedDeviceObject(FileObject);
 
-    irp = IoBuildDeviceIoControlRequest( 0,
-                                         deviceObject,
-                                         NULL,
-                                         0,
-                                         NULL,
-                                         0,
-                                         FALSE,
-                                         &event,
-                                         &ioStatus );
-    if (!irp) {
+    irp = IoBuildDeviceIoControlRequest(0, deviceObject, NULL, 0, NULL, 0, FALSE, &event, &ioStatus);
+    if (!irp)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -3027,10 +2911,10 @@ Return Value:
     irp->AssociatedIrp.SystemBuffer = &volumeId;
     irp->Tail.Overlay.OriginalFileObject = FileObject;
 
-    irpSp = IoGetNextIrpStackLocation( irp );
+    irpSp = IoGetNextIrpStackLocation(irp);
     irpSp->FileObject = FileObject;
     irpSp->MajorFunction = IRP_MJ_QUERY_VOLUME_INFORMATION;
-    irpSp->Parameters.QueryVolume.Length = sizeof( volumeId );
+    irpSp->Parameters.QueryVolume.Length = sizeof(volumeId);
     irpSp->Parameters.QueryVolume.FsInformationClass = FileFsObjectIdInformation;
 
     //
@@ -3038,24 +2922,21 @@ Return Value:
     // not get deleted.
     //
 
-    ObReferenceObject( FileObject );
+    ObReferenceObject(FileObject);
 
     //
     // Call the driver to get the request.
     //
 
-    status = IoCallDriver( deviceObject, irp );
+    status = IoCallDriver(deviceObject, irp);
 
     //
     // Synchronize completion of the request.
     //
 
-    if (status == STATUS_PENDING) {
-        status = KeWaitForSingleObject( &event,
-                                        Executive,
-                                        KernelMode,
-                                        FALSE,
-                                        (PLARGE_INTEGER) NULL );
+    if (status == STATUS_PENDING)
+    {
+        status = KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
         status = ioStatus.Status;
     }
 
@@ -3064,73 +2945,64 @@ Return Value:
     // buffer and set the file system tracking type.
     //
 
-    if (NT_SUCCESS( status )) {
+    if (NT_SUCCESS(status))
+    {
         ObjectId->Type = NtfsLinkTrackingInformation;
-        RtlCopyMemory( ObjectId->VolumeId,
-                       &volumeId.ObjectId,
-                       sizeof( GUID ) );
+        RtlCopyMemory(ObjectId->VolumeId, &volumeId.ObjectId, sizeof(GUID));
     }
 
     return status;
 }
-
+
 PIOP_HARD_ERROR_PACKET
-IopRemoveHardErrorPacket(
-    VOID
-    )
+IopRemoveHardErrorPacket(VOID)
 {
-    PIOP_HARD_ERROR_PACKET  hardErrorPacket;
+    PIOP_HARD_ERROR_PACKET hardErrorPacket;
     KIRQL oldIrql;
     PVOID entry;
 
-    ExAcquireFastLock( &IopHardError.WorkQueueSpinLock, &oldIrql );
+    ExAcquireFastLock(&IopHardError.WorkQueueSpinLock, &oldIrql);
 
     //
     // The work queue structures are now exclusively owned, so remove the
     // first packet from the head of the list.
     //
 
-    entry = RemoveHeadList( &IopHardError.WorkQueue );
+    entry = RemoveHeadList(&IopHardError.WorkQueue);
 
-    hardErrorPacket = CONTAINING_RECORD( entry,
-                                         IOP_HARD_ERROR_PACKET,
-                                         WorkQueueLinks );
+    hardErrorPacket = CONTAINING_RECORD(entry, IOP_HARD_ERROR_PACKET, WorkQueueLinks);
 
     IopCurrentHardError = hardErrorPacket;
 
-    ExReleaseFastLock( &IopHardError.WorkQueueSpinLock, oldIrql );
+    ExReleaseFastLock(&IopHardError.WorkQueueSpinLock, oldIrql);
 
     return hardErrorPacket;
 }
 
 BOOLEAN
-IopCheckHardErrorEmpty(
-    VOID
-    )
+IopCheckHardErrorEmpty(VOID)
 {
     BOOLEAN MoreEntries;
-    KIRQL   oldIrql;
+    KIRQL oldIrql;
 
     MoreEntries = TRUE;
 
-    ExAcquireFastLock( &IopHardError.WorkQueueSpinLock, &oldIrql );
+    ExAcquireFastLock(&IopHardError.WorkQueueSpinLock, &oldIrql);
 
     IopCurrentHardError = NULL;
 
-    if ( IsListEmpty( &IopHardError.WorkQueue ) ) {
+    if (IsListEmpty(&IopHardError.WorkQueue))
+    {
         IopHardError.ThreadStarted = FALSE;
         MoreEntries = FALSE;
     }
 
-    ExReleaseFastLock( &IopHardError.WorkQueueSpinLock, oldIrql );
+    ExReleaseFastLock(&IopHardError.WorkQueueSpinLock, oldIrql);
 
     return MoreEntries;
 }
 
-VOID
-IopHardErrorThread(
-    IN PVOID StartContext
-    )
+VOID IopHardErrorThread(IN PVOID StartContext)
 
 /*++
 
@@ -3156,7 +3028,7 @@ Return Value:
     BOOLEAN MoreEntries;
     PIOP_HARD_ERROR_PACKET hardErrorPacket;
 
-    UNREFERENCED_PARAMETER( StartContext );
+    UNREFERENCED_PARAMETER(StartContext);
 
     PAGED_CODE();
     //
@@ -3167,13 +3039,11 @@ Return Value:
 
     MoreEntries = TRUE;
 
-    do {
+    do
+    {
 
-        (VOID) KeWaitForSingleObject( &IopHardError.WorkQueueSemaphore,
-                                      Executive,
-                                      KernelMode,
-                                      FALSE,
-                                      (PLARGE_INTEGER) NULL );
+        (VOID)
+            KeWaitForSingleObject(&IopHardError.WorkQueueSemaphore, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
 
         hardErrorPacket = IopRemoveHardErrorPacket();
 
@@ -3182,16 +3052,13 @@ Return Value:
         // Simply raise the hard error if the system is ready to accept one.
         //
 
-        errorParameter = (ULONG_PTR) &hardErrorPacket->String;
+        errorParameter = (ULONG_PTR)&hardErrorPacket->String;
         parameterPresent = (hardErrorPacket->String.Buffer != NULL);
 
-        if (ExReadyForErrors) {
-            (VOID) ExRaiseHardError( hardErrorPacket->ErrorStatus,
-                                     parameterPresent,
-                                     parameterPresent,
-                                     parameterPresent ? &errorParameter : NULL,
-                                     OptionOkNoWait,
-                                     &errorResponse );
+        if (ExReadyForErrors)
+        {
+            (VOID) ExRaiseHardError(hardErrorPacket->ErrorStatus, parameterPresent, parameterPresent,
+                                    parameterPresent ? &errorParameter : NULL, OptionOkNoWait, &errorResponse);
         }
 
         //
@@ -3204,21 +3071,19 @@ Return Value:
         // Now free the packet and the buffer, if one was specified.
         //
 
-        if (hardErrorPacket->String.Buffer) {
-            ExFreePool( hardErrorPacket->String.Buffer );
+        if (hardErrorPacket->String.Buffer)
+        {
+            ExFreePool(hardErrorPacket->String.Buffer);
         }
 
-        ExFreePool( hardErrorPacket );
+        ExFreePool(hardErrorPacket);
 
-    } while ( MoreEntries );
+    } while (MoreEntries);
 }
 
-
+
 NTSTATUS
-IopInvalidDeviceRequest(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    )
+IopInvalidDeviceRequest(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 
 /*++
 
@@ -3246,26 +3111,24 @@ Return Value:
 --*/
 
 {
-    UNREFERENCED_PARAMETER( DeviceObject );
+    UNREFERENCED_PARAMETER(DeviceObject);
 
     //
     // Simply store the appropriate status, complete the request, and return
     // the same status stored in the packet.
     //
 
-    if ((IoGetCurrentIrpStackLocation(Irp))->MajorFunction == IRP_MJ_POWER) {
+    if ((IoGetCurrentIrpStackLocation(Irp))->MajorFunction == IRP_MJ_POWER)
+    {
         PoStartNextPowerIrp(Irp);
     }
     Irp->IoStatus.Status = STATUS_INVALID_DEVICE_REQUEST;
-    IoCompleteRequest( Irp, IO_NO_INCREMENT );
+    IoCompleteRequest(Irp, IO_NO_INCREMENT);
     return STATUS_INVALID_DEVICE_REQUEST;
 }
-
+
 BOOLEAN
-IopIsSameMachine(
-    IN PFILE_OBJECT SourceFile,
-    IN HANDLE TargetFile
-    )
+IopIsSameMachine(IN PFILE_OBJECT SourceFile, IN HANDLE TargetFile)
 
 /*++
 
@@ -3307,19 +3170,14 @@ Return Value:
     // stand what is being done here.
     //
 
-    deviceObject = IoGetRelatedDeviceObject( SourceFile );
+    deviceObject = IoGetRelatedDeviceObject(SourceFile);
 
     fastIoDispatch = deviceObject->DriverObject->FastIoDispatch;
-    if (fastIoDispatch && fastIoDispatch->FastIoDeviceControl) {
-        if (fastIoDispatch->FastIoDeviceControl( SourceFile,
-                                                 TRUE,
-                                                 (PVOID) &target,
-                                                 sizeof( target ),
-                                                 (PVOID) NULL,
-                                                 0,
-                                                 IOCTL_LMR_ARE_FILE_OBJECTS_ON_SAME_SERVER,
-                                                 &ioStatus,
-                                                 deviceObject )) {
+    if (fastIoDispatch && fastIoDispatch->FastIoDeviceControl)
+    {
+        if (fastIoDispatch->FastIoDeviceControl(SourceFile, TRUE, (PVOID)&target, sizeof(target), (PVOID)NULL, 0,
+                                                IOCTL_LMR_ARE_FILE_OBJECTS_ON_SAME_SERVER, &ioStatus, deviceObject))
+        {
             status = ioStatus.Status;
         }
     }
@@ -3328,11 +3186,7 @@ Return Value:
 }
 
 NTSTATUS
-IopBuildFullDriverPath(
-    IN PUNICODE_STRING KeyName,
-    IN HANDLE KeyHandle,
-    OUT PUNICODE_STRING FullPath
-    )
+IopBuildFullDriverPath(IN PUNICODE_STRING KeyName, IN HANDLE KeyHandle, OUT PUNICODE_STRING FullPath)
 /*++
 
 Routine Description:
@@ -3356,28 +3210,30 @@ Return Value:
 
 --*/
 {
-    NTSTATUS                    status;
-    PWCHAR                      path, name, ext;
-    ULONG                       pathLength, nameLength, extLength;
+    NTSTATUS status;
+    PWCHAR path, name, ext;
+    ULONG pathLength, nameLength, extLength;
     PKEY_VALUE_FULL_INFORMATION keyValueInformation;
 
     FullPath->Length = FullPath->MaximumLength = 0;
     FullPath->Buffer = NULL;
     extLength = nameLength = pathLength = 0;
     keyValueInformation = NULL;
-    status = IopGetRegistryValue( KeyHandle,
-                                  L"ImagePath",
-                                  &keyValueInformation);
-    if (NT_SUCCESS(status) && keyValueInformation->DataLength) {
+    status = IopGetRegistryValue(KeyHandle, L"ImagePath", &keyValueInformation);
+    if (NT_SUCCESS(status) && keyValueInformation->DataLength)
+    {
 
         nameLength = keyValueInformation->DataLength - sizeof(WCHAR);
         name = (PWCHAR)KEY_VALUE_DATA(keyValueInformation);
-        if (name[0] != L'\\') {
+        if (name[0] != L'\\')
+        {
 
             path = L"\\SystemRoot\\";
             pathLength = sizeof(L"\\SystemRoot\\") - sizeof(UNICODE_NULL);
         }
-    } else {
+    }
+    else
+    {
 
         nameLength = KeyName->Length;
         name = KeyName->Buffer;
@@ -3391,21 +3247,25 @@ Return Value:
     //
     FullPath->MaximumLength = (USHORT)(pathLength + nameLength + extLength + sizeof(UNICODE_NULL));
     FullPath->Buffer = ExAllocatePool(PagedPool, FullPath->MaximumLength);
-    if (FullPath->Buffer) {
+    if (FullPath->Buffer)
+    {
 
         FullPath->Length = FullPath->MaximumLength - sizeof(UNICODE_NULL);
         //
         // Create the full path by combining path, name and ext.
         //
-        if (pathLength) {
+        if (pathLength)
+        {
 
             RtlCopyMemory(FullPath->Buffer, path, pathLength);
         }
-        if (nameLength) {
+        if (nameLength)
+        {
 
             RtlCopyMemory((PUCHAR)FullPath->Buffer + pathLength, name, nameLength);
         }
-        if (extLength) {
+        if (extLength)
+        {
 
             RtlCopyMemory((PUCHAR)FullPath->Buffer + pathLength + nameLength, ext, extLength);
         }
@@ -3414,8 +3274,9 @@ Return Value:
         //
         FullPath->Buffer[FullPath->Length / sizeof(WCHAR)] = UNICODE_NULL;
         status = STATUS_SUCCESS;
-
-    } else {
+    }
+    else
+    {
 
         FullPath->MaximumLength = 0;
         status = STATUS_INSUFFICIENT_RESOURCES;
@@ -3423,7 +3284,8 @@ Return Value:
     //
     // Clean up on the way out.
     //
-    if (keyValueInformation) {
+    if (keyValueInformation)
+    {
 
         ExFreePool(keyValueInformation);
     }
@@ -3432,12 +3294,7 @@ Return Value:
 }
 
 NTSTATUS
-IopLoadDriver(
-    IN  HANDLE      KeyHandle,
-    IN  BOOLEAN     CheckForSafeBoot,
-    IN  BOOLEAN     IsFilter,
-    OUT NTSTATUS   *DriverEntryStatus
-    )
+IopLoadDriver(IN HANDLE KeyHandle, IN BOOLEAN CheckForSafeBoot, IN BOOLEAN IsFilter, OUT NTSTATUS *DriverEntryStatus)
 /*++
 
 Routine Description:
@@ -3476,7 +3333,7 @@ Notes:
     PKEY_BASIC_INFORMATION keyBasicInformation = NULL;
     ULONG keyBasicLength;
     UNICODE_STRING baseName;
-    UNICODE_STRING serviceName = {0, 0, NULL};
+    UNICODE_STRING serviceName = { 0, 0, NULL };
     OBJECT_ATTRIBUTES objectAttributes;
     PVOID sectionPointer;
     UNICODE_STRING driverName;
@@ -3494,7 +3351,7 @@ Notes:
 
     PAGED_CODE();
 
-    driverName.Buffer = (PWSTR) NULL;
+    driverName.Buffer = (PWSTR)NULL;
     *DriverEntryStatus = STATUS_SUCCESS;
     baseName.Buffer = NULL;
 
@@ -3505,30 +3362,23 @@ Notes:
     // loading the driver image, since the node can override that name.
     //
 
-    status = NtQueryKey( KeyHandle,
-                         KeyBasicInformation,
-                         (PVOID) NULL,
-                         0,
-                         &keyBasicLength );
-    if (status != STATUS_BUFFER_OVERFLOW &&
-        status != STATUS_BUFFER_TOO_SMALL) {
+    status = NtQueryKey(KeyHandle, KeyBasicInformation, (PVOID)NULL, 0, &keyBasicLength);
+    if (status != STATUS_BUFFER_OVERFLOW && status != STATUS_BUFFER_TOO_SMALL)
+    {
         status = STATUS_ILL_FORMED_SERVICE_ENTRY;
         goto IopLoadExit;
     }
 
-    keyBasicInformation = ExAllocatePool( NonPagedPool,
-                                          keyBasicLength + (4 * 2) );
-    if (!keyBasicInformation) {
+    keyBasicInformation = ExAllocatePool(NonPagedPool, keyBasicLength + (4 * 2));
+    if (!keyBasicInformation)
+    {
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto IopLoadExit;
     }
 
-    status = NtQueryKey( KeyHandle,
-                         KeyBasicInformation,
-                         keyBasicInformation,
-                         keyBasicLength,
-                         &keyBasicLength );
-    if (!NT_SUCCESS( status )) {
+    status = NtQueryKey(KeyHandle, KeyBasicInformation, keyBasicInformation, keyBasicLength, &keyBasicLength);
+    if (!NT_SUCCESS(status))
+    {
         goto IopLoadExit;
     }
 
@@ -3537,31 +3387,34 @@ Notes:
     // driver.
     //
 
-    baseName.Length = (USHORT) keyBasicInformation->NameLength;
-    baseName.MaximumLength = (USHORT) (baseName.Length + (4 * 2));
+    baseName.Length = (USHORT)keyBasicInformation->NameLength;
+    baseName.MaximumLength = (USHORT)(baseName.Length + (4 * 2));
     baseName.Buffer = &keyBasicInformation->Name[0];
 
     serviceName.Buffer = ExAllocatePool(PagedPool, baseName.Length + sizeof(UNICODE_NULL));
-    if (serviceName.Buffer) {
+    if (serviceName.Buffer)
+    {
         serviceName.Length = baseName.Length;
         serviceName.MaximumLength = serviceName.Length + sizeof(UNICODE_NULL);
         RtlCopyMemory(serviceName.Buffer, baseName.Buffer, baseName.Length);
         serviceName.Buffer[serviceName.Length / sizeof(WCHAR)] = UNICODE_NULL;
     }
 #if DBG
-      else {
+    else
+    {
         DbgPrint("IopLoadDriver: No memory available for Service Keyname\n");
     }
 #endif
 
-    RtlAppendUnicodeToString( &baseName, L".SYS" );
+    RtlAppendUnicodeToString(&baseName, L".SYS");
 
     //
     // Log the file name
     //
     HeadlessKernelAddLogEntry(HEADLESS_LOG_LOADING_FILENAME, &baseName);
 
-    if (CheckForSafeBoot && InitSafeBootMode) {
+    if (CheckForSafeBoot && InitSafeBootMode)
+    {
 
         BOOLEAN GroupIsGood = FALSE;
         UNICODE_STRING string;
@@ -3569,41 +3422,36 @@ Notes:
         UCHAR nameBuffer[FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data) + 64];
         ULONG length;
 
-        RtlInitUnicodeString( &string, L"Group" );
+        RtlInitUnicodeString(&string, L"Group");
         keyValue = (PKEY_VALUE_PARTIAL_INFORMATION)nameBuffer;
         RtlZeroMemory(nameBuffer, sizeof(nameBuffer));
 
-        status = NtQueryValueKey(
-            KeyHandle,
-            &string,
-            KeyValuePartialInformation,
-            keyValue,
-            sizeof(nameBuffer),
-            &length
-            );
-        if (NT_SUCCESS(status)) {
+        status = NtQueryValueKey(KeyHandle, &string, KeyValuePartialInformation, keyValue, sizeof(nameBuffer), &length);
+        if (NT_SUCCESS(status))
+        {
 
             string.Length = (USHORT)(keyValue->DataLength - sizeof(WCHAR));
             string.MaximumLength = string.Length;
             string.Buffer = (PWSTR)keyValue->Data;
 
-            if (IopSafebootDriverLoad(&string)) {
+            if (IopSafebootDriverLoad(&string))
+            {
                 GroupIsGood = TRUE;
             }
         }
 
-        if (!GroupIsGood && !IopSafebootDriverLoad(&baseName)) {
+        if (!GroupIsGood && !IopSafebootDriverLoad(&baseName))
+        {
             //
             // don't load the driver
             //
 
             IopBootLog(&baseName, FALSE);
 
-            DbgPrint("SAFEBOOT: skipping device = %wZ(%wZ)\n",&baseName,&string);
+            DbgPrint("SAFEBOOT: skipping device = %wZ(%wZ)\n", &baseName, &string);
             HeadlessKernelAddLogEntry(HEADLESS_LOG_LOAD_SUCCESSFUL, NULL);
             return STATUS_SUCCESS;
         }
-
     }
 
     //
@@ -3614,28 +3462,26 @@ Notes:
     // No need to do KeEnterCriticalRegion as this is called
     // from system process only.
     //
-    ExAcquireResourceSharedLite( &PsLoadedModuleResource, TRUE );
+    ExAcquireResourceSharedLite(&PsLoadedModuleResource, TRUE);
     nextEntry = PsLoadedModuleList.Flink;
-    while (nextEntry != &PsLoadedModuleList) {
+    while (nextEntry != &PsLoadedModuleList)
+    {
 
         //
         // Look at the next boot driver in the list.
         //
 
-        driverEntry = CONTAINING_RECORD( nextEntry,
-                                         KLDR_DATA_TABLE_ENTRY,
-                                         InLoadOrderLinks );
+        driverEntry = CONTAINING_RECORD(nextEntry, KLDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
         //
         // If this is not the kernel image (ntoskrnl) and not the HAL (hal),
         // then this is a driver, so initialize it.
         //
 
-        if (RtlEqualString( (PSTRING) &baseName,
-                            (PSTRING) &driverEntry->FullDllName,
-                            TRUE )) {
+        if (RtlEqualString((PSTRING)&baseName, (PSTRING)&driverEntry->FullDllName, TRUE))
+        {
             status = STATUS_IMAGE_ALREADY_LOADED;
-            ExReleaseResourceLite( &PsLoadedModuleResource );
+            ExReleaseResourceLite(&PsLoadedModuleResource);
 
             IopBootLog(&baseName, TRUE);
             baseName.Buffer = NULL;
@@ -3644,7 +3490,7 @@ Notes:
 
         nextEntry = nextEntry->Flink;
     }
-    ExReleaseResourceLite( &PsLoadedModuleResource );
+    ExReleaseResourceLite(&PsLoadedModuleResource);
 
     //
     // This driver has not already been loaded by the OS loader.  Form the
@@ -3652,7 +3498,8 @@ Notes:
     //
 
     status = IopBuildFullDriverPath(&serviceName, KeyHandle, &baseName);
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         baseName.Buffer = NULL;
         goto IopLoadExit;
@@ -3662,37 +3509,30 @@ Notes:
     // Now get the name of the driver object.
     //
 
-    status = IopGetDriverNameFromKeyNode( KeyHandle,
-                                          &driverName );
-    if (!NT_SUCCESS( status )) {
+    status = IopGetDriverNameFromKeyNode(KeyHandle, &driverName);
+    if (!NT_SUCCESS(status))
+    {
         goto IopLoadExit;
     }
 
-    InitializeObjectAttributes( &objectAttributes,
-                                &driverName,
-                                OBJ_PERMANENT,
-                                (HANDLE) NULL,
-                                (PSECURITY_DESCRIPTOR) NULL );
+    InitializeObjectAttributes(&objectAttributes, &driverName, OBJ_PERMANENT, (HANDLE)NULL, (PSECURITY_DESCRIPTOR)NULL);
 
     //
     // Load the driver image into memory.  If this fails partway through
     // the operation, then it will automatically be unloaded.
     //
 
-    status = MmLoadSystemImage( &baseName,
-                                NULL,
-                                NULL,
-                                0,
-                                &sectionPointer,
-                                (PVOID *) &imageBaseAddress );
+    status = MmLoadSystemImage(&baseName, NULL, NULL, 0, &sectionPointer, (PVOID *)&imageBaseAddress);
 
-    if (!NT_SUCCESS( status )) {
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // If the image was not already loaded then exit.
         //
 
-        if (status != STATUS_IMAGE_ALREADY_LOADED) {
+        if (status != STATUS_IMAGE_ALREADY_LOADED)
+        {
 
             IopBootLog(&baseName, FALSE);
 
@@ -3703,20 +3543,16 @@ Notes:
         // Open the driver object.
         //
 
-        status = ObOpenObjectByName( &objectAttributes,
-                                     IoDriverObjectType,
-                                     KernelMode,
-                                     NULL,
-                                     0,
-                                     NULL,
-                                     &driverHandle );
+        status = ObOpenObjectByName(&objectAttributes, IoDriverObjectType, KernelMode, NULL, 0, NULL, &driverHandle);
 
 
-        if (!NT_SUCCESS( status )) {
+        if (!NT_SUCCESS(status))
+        {
 
             IopBootLog(&baseName, FALSE);
 
-            if (status == STATUS_OBJECT_NAME_NOT_FOUND) {
+            if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+            {
 
                 //
                 // Adjust the exit code so that we can distinguish drivers that
@@ -3734,21 +3570,18 @@ Notes:
         // the handle can be deleted without the object going away.
         //
 
-        status = ObReferenceObjectByHandle( driverHandle,
-                                            0,
-                                            IoDriverObjectType,
-                                            KeGetPreviousMode(),
-                                            (PVOID *) &driverObject,
-                                            (POBJECT_HANDLE_INFORMATION) NULL );
-        NtClose( driverHandle );
+        status = ObReferenceObjectByHandle(driverHandle, 0, IoDriverObjectType, KeGetPreviousMode(),
+                                           (PVOID *)&driverObject, (POBJECT_HANDLE_INFORMATION)NULL);
+        NtClose(driverHandle);
 
-        if (!NT_SUCCESS( status )) {
+        if (!NT_SUCCESS(status))
+        {
             IopBootLog(&baseName, FALSE);
             goto IopLoadExit;
         }
 
 
-        status = IopResurrectDriver( driverObject );
+        status = IopResurrectDriver(driverObject);
 
         //
         // Regardless of the status the driver object should be dereferenced.
@@ -3757,25 +3590,27 @@ Notes:
         // original reference.
         //
 
-        ObDereferenceObject( driverObject );
+        ObDereferenceObject(driverObject);
         IopBootLog(&baseName, FALSE);
         goto IopLoadExit;
-    } else {
+    }
+    else
+    {
 
-        ntHeaders = RtlImageNtHeader( imageBaseAddress );
+        ntHeaders = RtlImageNtHeader(imageBaseAddress);
 
         //
         // Check should this driver be loaded.  If yes, the enum subkey
         // of the service will be prepared.
         //
 
-        status = IopPrepareDriverLoading (&serviceName, KeyHandle, imageBaseAddress, IsFilter);
-        if (!NT_SUCCESS(status)) {
+        status = IopPrepareDriverLoading(&serviceName, KeyHandle, imageBaseAddress, IsFilter);
+        if (!NT_SUCCESS(status))
+        {
             MmUnloadSystemImage(sectionPointer);
             IopBootLog(&baseName, FALSE);
             goto IopLoadExit;
         }
-
     }
 
     //
@@ -3783,17 +3618,11 @@ Notes:
     // object that represents this image.
     //
 
-    status = ObCreateObject( KeGetPreviousMode(),
-                             IoDriverObjectType,
-                             &objectAttributes,
-                             KernelMode,
-                             (PVOID) NULL,
-                             (ULONG) (sizeof( DRIVER_OBJECT ) + sizeof ( DRIVER_EXTENSION )),
-                             0,
-                             0,
-                             (PVOID *) &driverObject );
+    status = ObCreateObject(KeGetPreviousMode(), IoDriverObjectType, &objectAttributes, KernelMode, (PVOID)NULL,
+                            (ULONG)(sizeof(DRIVER_OBJECT) + sizeof(DRIVER_EXTENSION)), 0, 0, (PVOID *)&driverObject);
 
-    if (!NT_SUCCESS( status )) {
+    if (!NT_SUCCESS(status))
+    {
         IopBootLog(&baseName, FALSE);
         goto IopLoadExit;
     }
@@ -3802,34 +3631,32 @@ Notes:
     // Initialize this driver object and insert it into the object table.
     //
 
-    RtlZeroMemory( driverObject, sizeof( DRIVER_OBJECT ) + sizeof ( DRIVER_EXTENSION) );
-    driverObject->DriverExtension = (PDRIVER_EXTENSION) (driverObject + 1);
+    RtlZeroMemory(driverObject, sizeof(DRIVER_OBJECT) + sizeof(DRIVER_EXTENSION));
+    driverObject->DriverExtension = (PDRIVER_EXTENSION)(driverObject + 1);
     driverObject->DriverExtension->DriverObject = driverObject;
 
-    for (i = 0; i <= IRP_MJ_MAXIMUM_FUNCTION; i++) {
+    for (i = 0; i <= IRP_MJ_MAXIMUM_FUNCTION; i++)
+    {
         driverObject->MajorFunction[i] = IopInvalidDeviceRequest;
     }
 
     driverObject->Type = IO_TYPE_DRIVER;
-    driverObject->Size = sizeof( DRIVER_OBJECT );
-    ntHeaders = RtlImageNtHeader( imageBaseAddress );
+    driverObject->Size = sizeof(DRIVER_OBJECT);
+    ntHeaders = RtlImageNtHeader(imageBaseAddress);
     entryPoint = ntHeaders->OptionalHeader.AddressOfEntryPoint;
-    entryPoint += (ULONG_PTR) imageBaseAddress;
-    if (!(ntHeaders->OptionalHeader.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_WDM_DRIVER)) {
+    entryPoint += (ULONG_PTR)imageBaseAddress;
+    if (!(ntHeaders->OptionalHeader.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_WDM_DRIVER))
+    {
         driverObject->Flags |= DRVO_LEGACY_DRIVER;
     }
-    driverObject->DriverInit = (PDRIVER_INITIALIZE) entryPoint;
+    driverObject->DriverInit = (PDRIVER_INITIALIZE)entryPoint;
     driverObject->DriverSection = sectionPointer;
     driverObject->DriverStart = imageBaseAddress;
     driverObject->DriverSize = ntHeaders->OptionalHeader.SizeOfImage;
 
-    status = ObInsertObject( driverObject,
-                             (PACCESS_STATE) NULL,
-                             FILE_READ_DATA,
-                             0,
-                             (PVOID *) NULL,
-                             &driverHandle );
-    if (!NT_SUCCESS( status )) {
+    status = ObInsertObject(driverObject, (PACCESS_STATE)NULL, FILE_READ_DATA, 0, (PVOID *)NULL, &driverHandle);
+    if (!NT_SUCCESS(status))
+    {
         IopBootLog(&baseName, FALSE);
         goto IopLoadExit;
     }
@@ -3839,39 +3666,32 @@ Notes:
     // the handle can be deleted without the object going away.
     //
 
-    status = ObReferenceObjectByHandle( driverHandle,
-                                        0,
-                                        IoDriverObjectType,
-                                        KeGetPreviousMode(),
-                                        (PVOID *) &driverObject,
-                                        (POBJECT_HANDLE_INFORMATION) NULL );
+    status = ObReferenceObjectByHandle(driverHandle, 0, IoDriverObjectType, KeGetPreviousMode(), (PVOID *)&driverObject,
+                                       (POBJECT_HANDLE_INFORMATION)NULL);
 
     ASSERT(status == STATUS_SUCCESS);
 
-    NtClose( driverHandle );
+    NtClose(driverHandle);
 
     //
     // Load the Registry information in the appropriate fields of the device
     // object.
     //
 
-    driverObject->HardwareDatabase =
-        &CmRegistryMachineHardwareDescriptionSystemName;
+    driverObject->HardwareDatabase = &CmRegistryMachineHardwareDescriptionSystemName;
 
     //
     // Store the name of the device driver in the driver object so that it
     // can be easily found by the error log thread.
     //
 
-    driverObject->DriverName.Buffer = ExAllocatePool( PagedPool,
-                                                      driverName.MaximumLength );
-    if (driverObject->DriverName.Buffer) {
+    driverObject->DriverName.Buffer = ExAllocatePool(PagedPool, driverName.MaximumLength);
+    if (driverObject->DriverName.Buffer)
+    {
         driverObject->DriverName.MaximumLength = driverName.MaximumLength;
         driverObject->DriverName.Length = driverName.Length;
 
-        RtlCopyMemory( driverObject->DriverName.Buffer,
-                       driverName.Buffer,
-                       driverName.MaximumLength );
+        RtlCopyMemory(driverObject->DriverName.Buffer, driverName.Buffer, driverName.MaximumLength);
     }
 
     //
@@ -3879,44 +3699,42 @@ Notes:
     // be passed to the driver.
     //
 
-    registryPath = ExAllocatePool( NonPagedPool, PAGE_SIZE );
-    if (!registryPath) {
-        ObMakeTemporaryObject( driverObject );
-        ObDereferenceObject( driverObject );
+    registryPath = ExAllocatePool(NonPagedPool, PAGE_SIZE);
+    if (!registryPath)
+    {
+        ObMakeTemporaryObject(driverObject);
+        ObDereferenceObject(driverObject);
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto IopLoadExit;
     }
 
-    status = NtQueryObject( KeyHandle,
-                            ObjectNameInformation,
-                            registryPath,
-                            PAGE_SIZE,
-                            &i );
-    if (!NT_SUCCESS( status )) {
-        ObMakeTemporaryObject( driverObject );
-        ObDereferenceObject( driverObject );
-        ExFreePool( registryPath );
+    status = NtQueryObject(KeyHandle, ObjectNameInformation, registryPath, PAGE_SIZE, &i);
+    if (!NT_SUCCESS(status))
+    {
+        ObMakeTemporaryObject(driverObject);
+        ObDereferenceObject(driverObject);
+        ExFreePool(registryPath);
         goto IopLoadExit;
     }
 
 #if DBG
-    KeQuerySystemTime (&stime);
+    KeQuerySystemTime(&stime);
 #endif
 
     //
     // Store the service key name of the device driver in the driver object
     //
 
-    if (serviceName.Buffer) {
-        driverObject->DriverExtension->ServiceKeyName.Buffer =
-            ExAllocatePool( NonPagedPool, serviceName.MaximumLength );
-        if (driverObject->DriverExtension->ServiceKeyName.Buffer) {
+    if (serviceName.Buffer)
+    {
+        driverObject->DriverExtension->ServiceKeyName.Buffer = ExAllocatePool(NonPagedPool, serviceName.MaximumLength);
+        if (driverObject->DriverExtension->ServiceKeyName.Buffer)
+        {
             driverObject->DriverExtension->ServiceKeyName.MaximumLength = serviceName.MaximumLength;
             driverObject->DriverExtension->ServiceKeyName.Length = serviceName.Length;
 
-            RtlCopyMemory( driverObject->DriverExtension->ServiceKeyName.Buffer,
-                           serviceName.Buffer,
-                           serviceName.MaximumLength );
+            RtlCopyMemory(driverObject->DriverExtension->ServiceKeyName.Buffer, serviceName.Buffer,
+                          serviceName.MaximumLength);
         }
     }
 
@@ -3924,10 +3742,11 @@ Notes:
     // Now invoke the driver's initialization routine to initialize itself.
     //
 
-    status = driverObject->DriverInit( driverObject, &registryPath->Name );
+    status = driverObject->DriverInit(driverObject, &registryPath->Name);
 
     *DriverEntryStatus = status;
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         status = STATUS_FAILED_DRIVER_ENTRY;
     }
@@ -3938,17 +3757,13 @@ Notes:
     // If DriverInit took longer than 5 seconds, print a message.
     //
 
-    KeQuerySystemTime (&etime);
-    dtime  = (ULONG) ((etime.QuadPart - stime.QuadPart) / 1000000);
+    KeQuerySystemTime(&etime);
+    dtime = (ULONG)((etime.QuadPart - stime.QuadPart) / 1000000);
 
-    if (dtime > 50) {
-        DbgPrint( "IOLOAD: Driver %wZ took %d.%ds to %s\n",
-            &driverName,
-            dtime/10,
-            dtime%10,
-            NT_SUCCESS(status) ? "initialize" : "fail initialization"
-            );
-
+    if (dtime > 50)
+    {
+        DbgPrint("IOLOAD: Driver %wZ took %d.%ds to %s\n", &driverName, dtime / 10, dtime % 10,
+                 NT_SUCCESS(status) ? "initialize" : "fail initialization");
     }
 #endif
 
@@ -3956,8 +3771,10 @@ Notes:
     // Workaround for broken NT 4.0 3D labs driver
     // They zero out some function table entries by mistake.
 
-    for (i = 0; i <= IRP_MJ_MAXIMUM_FUNCTION; i++) {
-        if (driverObject->MajorFunction[i] == NULL) {
+    for (i = 0; i <= IRP_MJ_MAXIMUM_FUNCTION; i++)
+    {
+        if (driverObject->MajorFunction[i] == NULL)
+        {
             ASSERT(driverObject->MajorFunction[i] != NULL);
             driverObject->MajorFunction[i] = IopInvalidDeviceRequest;
         }
@@ -3968,7 +3785,7 @@ Notes:
     // object as temporary.  This will cause everything to be deleted.
     //
 
-    ExFreePool( registryPath );
+    ExFreePool(registryPath);
 
     //
     // If we load the driver because we think it is a legacy driver and
@@ -3976,16 +3793,21 @@ Notes:
     // unload this driver.
     //
 
-    if (NT_SUCCESS(status) && !IopIsLegacyDriver(driverObject)) {
+    if (NT_SUCCESS(status) && !IopIsLegacyDriver(driverObject))
+    {
 
         status = IopPnpDriverStarted(driverObject, KeyHandle, &serviceName);
 
-        if (!NT_SUCCESS(status)) {
-            if (driverObject->DriverUnload) {
+        if (!NT_SUCCESS(status))
+        {
+            if (driverObject->DriverUnload)
+            {
                 driverObject->Flags |= DRVO_UNLOAD_INVOKED;
                 driverObject->DriverUnload(driverObject);
                 IopBootLog(&baseName, FALSE);
-            } else {
+            }
+            else
+            {
 #if DBG
                 DbgPrint("IopLoadDriver: A PnP driver %wZ does not support DriverUnload routine.\n", &driverName);
                 // ASSERT(0);
@@ -3994,25 +3816,31 @@ Notes:
         }
     }
 
-    if (!NT_SUCCESS( status )) {
-        ObMakeTemporaryObject( driverObject );
-        ObDereferenceObject( driverObject );
-    } else {
+    if (!NT_SUCCESS(status))
+    {
+        ObMakeTemporaryObject(driverObject);
+        ObDereferenceObject(driverObject);
+    }
+    else
+    {
 
         //
         // Free the memory occupied by the driver's initialization routines.
         //
 
         IopBootLog(&baseName, TRUE);
-        MmFreeDriverInitialization( driverObject->DriverSection );
-        IopReadyDeviceObjects( driverObject );
+        MmFreeDriverInitialization(driverObject->DriverSection);
+        IopReadyDeviceObjects(driverObject);
     }
 
 IopLoadExit:
 
-    if (NT_SUCCESS(status) || (status == STATUS_IMAGE_ALREADY_LOADED)) {
+    if (NT_SUCCESS(status) || (status == STATUS_IMAGE_ALREADY_LOADED))
+    {
         HeadlessKernelAddLogEntry(HEADLESS_LOG_LOAD_SUCCESSFUL, NULL);
-    } else {
+    }
+    else
+    {
         HeadlessKernelAddLogEntry(HEADLESS_LOG_LOAD_FAILED, NULL);
     }
 
@@ -4021,19 +3849,23 @@ IopLoadExit:
     // been freed.
     //
 
-    if (driverName.Buffer != NULL) {
-        ExFreePool( driverName.Buffer );
+    if (driverName.Buffer != NULL)
+    {
+        ExFreePool(driverName.Buffer);
     }
 
-    if (keyBasicInformation != NULL) {
-        ExFreePool( keyBasicInformation );
+    if (keyBasicInformation != NULL)
+    {
+        ExFreePool(keyBasicInformation);
     }
 
-    if (serviceName.Buffer != NULL) {
+    if (serviceName.Buffer != NULL)
+    {
         ExFreePool(serviceName.Buffer);
     }
 
-    if (baseName.Buffer != NULL) {
+    if (baseName.Buffer != NULL)
+    {
         ExFreePool(baseName.Buffer);
     }
 
@@ -4043,13 +3875,15 @@ IopLoadExit:
     // disabled by hardware profile.  In this case we don't need to report it.
     //
 
-    if (!NT_SUCCESS( status ) && (status != STATUS_PLUGPLAY_NO_DEVICE)) {
+    if (!NT_SUCCESS(status) && (status != STATUS_PLUGPLAY_NO_DEVICE))
+    {
 
         NTSTATUS lStatus;
         PULONG errorControl;
         PKEY_VALUE_FULL_INFORMATION keyValueInformation;
 
-        if (status != STATUS_IMAGE_ALREADY_LOADED) {
+        if (status != STATUS_IMAGE_ALREADY_LOADED)
+        {
 
             //
             // If driver was loaded, do not call IopDriverLoadingFailed to change
@@ -4058,17 +3892,19 @@ IopLoadExit:
             //
 
             IopDriverLoadingFailed(KeyHandle, NULL);
-            lStatus = IopGetRegistryValue( KeyHandle,
-                                           L"ErrorControl",
-                                           &keyValueInformation );
-            if (!NT_SUCCESS( lStatus ) || !keyValueInformation->DataLength) {
-                if (NT_SUCCESS( lStatus )) {
-                    ExFreePool( keyValueInformation );
+            lStatus = IopGetRegistryValue(KeyHandle, L"ErrorControl", &keyValueInformation);
+            if (!NT_SUCCESS(lStatus) || !keyValueInformation->DataLength)
+            {
+                if (NT_SUCCESS(lStatus))
+                {
+                    ExFreePool(keyValueInformation);
                 }
-            } else {
-                errorControl = (PULONG) ((PUCHAR) keyValueInformation + keyValueInformation->DataOffset);
-                CmBootLastKnownGood( *errorControl );
-                ExFreePool( keyValueInformation );
+            }
+            else
+            {
+                errorControl = (PULONG)((PUCHAR)keyValueInformation + keyValueInformation->DataOffset);
+                CmBootLastKnownGood(*errorControl);
+                ExFreePool(keyValueInformation);
             }
         }
     }
@@ -4078,15 +3914,13 @@ IopLoadExit:
     // operation.
     //
 
-    NtClose( KeyHandle );
+    NtClose(KeyHandle);
     return status;
 }
 
-
+
 PDEVICE_OBJECT
-IopGetDeviceAttachmentBase(
-    IN PDEVICE_OBJECT DeviceObject
-    )
+IopGetDeviceAttachmentBase(IN PDEVICE_OBJECT DeviceObject)
 
 /*++
 
@@ -4121,7 +3955,8 @@ Return Value:
 
     baseDeviceObject = DeviceObject;
     deviceExtension = baseDeviceObject->DeviceObjectExtension;
-    while (deviceExtension->AttachedTo != NULL) {
+    while (deviceExtension->AttachedTo != NULL)
+    {
 
         baseDeviceObject = deviceExtension->AttachedTo;
         deviceExtension = baseDeviceObject->DeviceObjectExtension;
@@ -4130,14 +3965,8 @@ Return Value:
     return baseDeviceObject;
 }
 
-
 
-VOID
-IopDecrementDeviceObjectRef(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN BOOLEAN AlwaysUnload,
-    IN BOOLEAN OnCleanStack
-    )
+VOID IopDecrementDeviceObjectRef(IN PDEVICE_OBJECT DeviceObject, IN BOOLEAN AlwaysUnload, IN BOOLEAN OnCleanStack)
 
 /*++
 
@@ -4174,27 +4003,26 @@ Return Value:
     // then unload it.
     //
 
-    irql = KeAcquireQueuedSpinLock( LockQueueIoDatabaseLock );
+    irql = KeAcquireQueuedSpinLock(LockQueueIoDatabaseLock);
 
-    ASSERT( DeviceObject->ReferenceCount > 0 );
+    ASSERT(DeviceObject->ReferenceCount > 0);
 
     DeviceObject->ReferenceCount--;
 
-    if (!DeviceObject->ReferenceCount && (AlwaysUnload ||
-         DeviceObject->DeviceObjectExtension->ExtensionFlags &
-         (DOE_DELETE_PENDING | DOE_UNLOAD_PENDING | DOE_REMOVE_PENDING))) {
+    if (!DeviceObject->ReferenceCount &&
+        (AlwaysUnload || DeviceObject->DeviceObjectExtension->ExtensionFlags &
+                             (DOE_DELETE_PENDING | DOE_UNLOAD_PENDING | DOE_REMOVE_PENDING)))
+    {
 
-        IopCompleteUnloadOrDelete( DeviceObject, OnCleanStack, irql );
-    } else {
-        KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+        IopCompleteUnloadOrDelete(DeviceObject, OnCleanStack, irql);
     }
-
+    else
+    {
+        KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
+    }
 }
-
-VOID
-IopLoadFileSystemDriver(
-    IN PDEVICE_OBJECT DeviceObject
-    )
+
+VOID IopLoadFileSystemDriver(IN PDEVICE_OBJECT DeviceObject)
 
 /*++
 
@@ -4227,7 +4055,8 @@ Return Value:
     PAGED_CODE();
 
     attachedDevice = DeviceObject;
-    while (attachedDevice->AttachedDevice) {
+    while (attachedDevice->AttachedDevice)
+    {
         attachedDevice = attachedDevice->AttachedDevice;
     }
 
@@ -4236,25 +4065,19 @@ Return Value:
     // driver load the real file system.
     //
 
-    KeInitializeEvent( &event, NotificationEvent, FALSE );
+    KeInitializeEvent(&event, NotificationEvent, FALSE);
 
-    irp = IoBuildDeviceIoControlRequest( IRP_MJ_DEVICE_CONTROL,
-                                         attachedDevice,
-                                         (PVOID) NULL,
-                                         0,
-                                         (PVOID) NULL,
-                                         0,
-                                         FALSE,
-                                         &event,
-                                         &ioStatus );
-    if (irp) {
+    irp = IoBuildDeviceIoControlRequest(IRP_MJ_DEVICE_CONTROL, attachedDevice, (PVOID)NULL, 0, (PVOID)NULL, 0, FALSE,
+                                        &event, &ioStatus);
+    if (irp)
+    {
 
         //
         // Change the actual major and minor function codes to be a file system
         // control with a minor function code of load FS driver.
         //
 
-        irpSp = IoGetNextIrpStackLocation( irp );
+        irpSp = IoGetNextIrpStackLocation(irp);
         irpSp->MajorFunction = IRP_MJ_FILE_SYSTEM_CONTROL;
         irpSp->MinorFunction = IRP_MN_LOAD_FILE_SYSTEM;
 
@@ -4262,13 +4085,10 @@ Return Value:
         // Now issue the request.
         //
 
-        status = IoCallDriver( attachedDevice, irp );
-        if (status == STATUS_PENDING) {
-            (VOID) KeWaitForSingleObject( &event,
-                                          Executive,
-                                          KernelMode,
-                                          FALSE,
-                                          (PLARGE_INTEGER) NULL );
+        status = IoCallDriver(attachedDevice, irp);
+        if (status == STATUS_PENDING)
+        {
+            (VOID) KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
         }
     }
 
@@ -4282,11 +4102,8 @@ Return Value:
 
     return;
 }
-
-VOID
-IopLoadUnloadDriver(
-    IN PVOID Parameter
-    )
+
+VOID IopLoadUnloadDriver(IN PVOID Parameter)
 
 /*++
 
@@ -4320,7 +4137,7 @@ Return Value:
     // Begin by getting a pointer to the load packet.
     //
 
-    loadPacket = (PLOAD_PACKET) Parameter;
+    loadPacket = (PLOAD_PACKET)Parameter;
 
     //
     // If the driver object field of the packet is non-NULL, then this is
@@ -4329,12 +4146,14 @@ Return Value:
     // is ignored, so it is not set here.
     //
 
-    if (loadPacket->DriverObject) {
+    if (loadPacket->DriverObject)
+    {
 
-        loadPacket->DriverObject->DriverUnload( loadPacket->DriverObject );
+        loadPacket->DriverObject->DriverUnload(loadPacket->DriverObject);
         status = STATUS_SUCCESS;
-
-    } else {
+    }
+    else
+    {
 
         PLIST_ENTRY entry;
         PREINIT_PACKET reinitEntry;
@@ -4346,12 +4165,9 @@ Return Value:
         // responsible for closing the handle.
         //
 
-        status = IopOpenRegistryKey( &keyHandle,
-                                     (HANDLE) NULL,
-                                     loadPacket->DriverServiceName,
-                                     KEY_READ,
-                                     FALSE );
-        if (NT_SUCCESS( status )) {
+        status = IopOpenRegistryKey(&keyHandle, (HANDLE)NULL, loadPacket->DriverServiceName, KEY_READ, FALSE);
+        if (NT_SUCCESS(status))
+        {
 
             //
             // Invoke the internal common routine to perform the work.
@@ -4359,13 +4175,15 @@ Return Value:
             // initialization code to load drivers.
             //
 
-            status = IopLoadDriver( keyHandle, TRUE, FALSE, &driverEntryStatus );
+            status = IopLoadDriver(keyHandle, TRUE, FALSE, &driverEntryStatus);
 
-            if (status == STATUS_FAILED_DRIVER_ENTRY) {
+            if (status == STATUS_FAILED_DRIVER_ENTRY)
+            {
 
                 status = driverEntryStatus;
-
-            } else if (status == STATUS_DRIVER_FAILED_PRIOR_UNLOAD) {
+            }
+            else if (status == STATUS_DRIVER_FAILED_PRIOR_UNLOAD)
+            {
 
                 //
                 // Keep legacy behavior (don't change status code)
@@ -4383,17 +4201,12 @@ Return Value:
     //
 
     loadPacket->FinalStatus = status;
-    (VOID) KeSetEvent( &loadPacket->Event, 0, FALSE );
+    (VOID) KeSetEvent(&loadPacket->Event, 0, FALSE);
 }
-
+
 NTSTATUS
-IopMountVolume(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN BOOLEAN AllowRawMount,
-    IN BOOLEAN DeviceLockAlreadyHeld,
-    IN BOOLEAN Alertable,
-    OUT PVPB    *Vpb
-    )
+IopMountVolume(IN PDEVICE_OBJECT DeviceObject, IN BOOLEAN AllowRawMount, IN BOOLEAN DeviceLockAlreadyHeld,
+               IN BOOLEAN Alertable, OUT PVPB *Vpb)
 
 /*++
 
@@ -4444,7 +4257,7 @@ Return Value:
 
     PAGED_CODE();
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
 
     //
     // Obtain the lock for the device to be mounted.  This guarantees that
@@ -4452,13 +4265,11 @@ Return Value:
     // device at a time.
     //
 
-    if (!DeviceLockAlreadyHeld) {
+    if (!DeviceLockAlreadyHeld)
+    {
 
-        status = KeWaitForSingleObject( &DeviceObject->DeviceLock,
-                                        Executive,
-                                        KeGetPreviousModeByThread(&CurrentThread->Tcb),
-                                        Alertable,
-                                        (PLARGE_INTEGER) NULL );
+        status = KeWaitForSingleObject(&DeviceObject->DeviceLock, Executive,
+                                       KeGetPreviousModeByThread(&CurrentThread->Tcb), Alertable, (PLARGE_INTEGER)NULL);
 
         //
         // If the wait ended because of an alert or an APC, return now
@@ -4466,7 +4277,8 @@ Return Value:
         // event was unsuccessful, we do not set it on exit.
         //
 
-        if (status == STATUS_ALERTED || status == STATUS_USER_APC) {
+        if (status == STATUS_ALERTED || status == STATUS_USER_APC)
+        {
 
             return status;
         }
@@ -4478,7 +4290,7 @@ Return Value:
     //
 
     KeEnterCriticalRegionThread(&CurrentThread->Tcb);
-    (VOID) ExAcquireResourceSharedLite( &IopDatabaseResource, TRUE );
+    (VOID) ExAcquireResourceSharedLite(&IopDatabaseResource, TRUE);
 
     //
     // Check the 'mounted' flag of the VPB to ensure that it is still clear.
@@ -4486,7 +4298,8 @@ Return Value:
     // Attempt to mount the volume in this case.
     //
 
-    if ((DeviceObject->Vpb->Flags & (VPB_MOUNTED | VPB_REMOVE_PENDING)) == 0) {
+    if ((DeviceObject->Vpb->Flags & (VPB_MOUNTED | VPB_REMOVE_PENDING)) == 0)
+    {
 
         //
         // This volume has never been mounted.  Initialize the event and set the
@@ -4494,7 +4307,7 @@ Return Value:
         // has the verify bit set, clear it.
         //
 
-        KeInitializeEvent( &event, NotificationEvent, FALSE );
+        KeInitializeEvent(&event, NotificationEvent, FALSE);
         status = STATUS_UNSUCCESSFUL;
         DeviceObject->Flags &= ~DO_VERIFY_VOLUME;
 
@@ -4505,7 +4318,8 @@ Return Value:
         //
 
         attachedDevice = DeviceObject;
-        while (attachedDevice->AttachedDevice) {
+        while (attachedDevice->AttachedDevice)
+        {
             attachedDevice = attachedDevice->AttachedDevice;
         }
 
@@ -4513,19 +4327,23 @@ Return Value:
         // Reference the device object so it cannot go away.
         //
 
-        ObReferenceObject( attachedDevice );
+        ObReferenceObject(attachedDevice);
 
         //
         // Determine which type of file system should be invoked based on
         // the device type of the device being mounted.
         //
 
-        if (DeviceObject->DeviceType == FILE_DEVICE_DISK ||
-            DeviceObject->DeviceType == FILE_DEVICE_VIRTUAL_DISK) {
+        if (DeviceObject->DeviceType == FILE_DEVICE_DISK || DeviceObject->DeviceType == FILE_DEVICE_VIRTUAL_DISK)
+        {
             queueHeader = &IopDiskFileSystemQueueHead;
-        } else if (DeviceObject->DeviceType == FILE_DEVICE_CD_ROM) {
+        }
+        else if (DeviceObject->DeviceType == FILE_DEVICE_CD_ROM)
+        {
             queueHeader = &IopCdRomFileSystemQueueHead;
-        } else {
+        }
+        else
+        {
             queueHeader = &IopTapeFileSystemQueueHead;
         }
 
@@ -4536,9 +4354,8 @@ Return Value:
         // the system to see whether anyone understands the media in the device.
         //
 
-        for (entry = queueHeader->Flink;
-             entry != queueHeader && !NT_SUCCESS( status );
-             entry = entry->Flink) {
+        for (entry = queueHeader->Flink; entry != queueHeader && !NT_SUCCESS(status); entry = entry->Flink)
+        {
 
             PDEVICE_OBJECT savedFsDeviceObject;
 
@@ -4549,7 +4366,8 @@ Return Value:
             // be mounted for the caller's purposes.
             //
 
-            if (!AllowRawMount && entry->Flink == queueHeader && entry != queueHeader->Flink) {
+            if (!AllowRawMount && entry->Flink == queueHeader && entry != queueHeader->Flink)
+            {
                 break;
             }
 
@@ -4557,11 +4375,12 @@ Return Value:
             // If raw mount is the only one requested and this is not the last entry on the list
             // then skip.
             //
-            if (rawMountOnly && (entry->Flink != queueHeader)) {
+            if (rawMountOnly && (entry->Flink != queueHeader))
+            {
                 continue;
             }
 
-            fsDeviceObject = CONTAINING_RECORD( entry, DEVICE_OBJECT, Queue.ListEntry );
+            fsDeviceObject = CONTAINING_RECORD(entry, DEVICE_OBJECT, Queue.ListEntry);
             savedFsDeviceObject = fsDeviceObject;
 
             //
@@ -4575,7 +4394,8 @@ Return Value:
 
             extraStack = 1;
 
-            while (fsDeviceObject->AttachedDevice) {
+            while (fsDeviceObject->AttachedDevice)
+            {
                 fsDeviceObject = fsDeviceObject->AttachedDevice;
                 extraStack++;
             }
@@ -4589,7 +4409,7 @@ Return Value:
             // the I/O operation.
             //
 
-            KeClearEvent( &event );
+            KeClearEvent(&event);
 
             //
             // Allocate and initialize an IRP for this mount operation.  Notice
@@ -4598,9 +4418,10 @@ Return Value:
             // operations is exactly the same logic.
             //
 
-            irp = IoAllocateIrp ((CCHAR) (attachedDevice->StackSize + extraStack), FALSE);
+            irp = IoAllocateIrp((CCHAR)(attachedDevice->StackSize + extraStack), FALSE);
 
-            if ( !irp ) {
+            if (!irp)
+            {
 
                 status = STATUS_INSUFFICIENT_RESOURCES;
                 break;
@@ -4611,7 +4432,7 @@ Return Value:
             irp->UserEvent = &event;
             irp->UserIosb = &ioStatus;
             irp->Tail.Overlay.Thread = CurrentThread;
-            irpSp = IoGetNextIrpStackLocation( irp );
+            irpSp = IoGetNextIrpStackLocation(irp);
             irpSp->MajorFunction = IRP_MJ_FILE_SYSTEM_CONTROL;
             irpSp->MinorFunction = IRP_MN_MOUNT_VOLUME;
             irpSp->Flags = AllowRawMount;
@@ -4626,25 +4447,23 @@ Return Value:
             // holding the database resource.
             //
 
-            IopInterlockedIncrementUlong( LockQueueIoDatabaseLock,
-                                          &savedFsDeviceObject->ReferenceCount );
+            IopInterlockedIncrementUlong(LockQueueIoDatabaseLock, &savedFsDeviceObject->ReferenceCount);
 
-            ExReleaseResourceLite( &IopDatabaseResource );
+            ExReleaseResourceLite(&IopDatabaseResource);
             KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
 
-            status = IoCallDriver( fsDeviceObject, irp );
+            status = IoCallDriver(fsDeviceObject, irp);
 
             //
             // Wait for the I/O operation to complete.
             //
 
-            if (status == STATUS_PENDING) {
-                (VOID) KeWaitForSingleObject( &event,
-                                              Executive,
-                                              KernelMode,
-                                              FALSE,
-                                              (PLARGE_INTEGER) NULL );
-            } else {
+            if (status == STATUS_PENDING)
+            {
+                (VOID) KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
+            }
+            else
+            {
 
                 //
                 // Ensure that the proper status value gets picked up.
@@ -4655,7 +4474,7 @@ Return Value:
             }
 
             KeEnterCriticalRegionThread(&CurrentThread->Tcb);
-            (VOID) ExAcquireResourceSharedLite( &IopDatabaseResource, TRUE );
+            (VOID) ExAcquireResourceSharedLite(&IopDatabaseResource, TRUE);
 
 
             //
@@ -4665,20 +4484,21 @@ Return Value:
             // which should happen later.
             //
 
-            IopInterlockedDecrementUlong( LockQueueIoDatabaseLock,
-                                          &savedFsDeviceObject->ReferenceCount );
+            IopInterlockedDecrementUlong(LockQueueIoDatabaseLock, &savedFsDeviceObject->ReferenceCount);
 
             //
             // If the operation was successful then set the VPB as mounted.
             //
 
-            if (NT_SUCCESS( ioStatus.Status )) {
+            if (NT_SUCCESS(ioStatus.Status))
+            {
 
                 status = ioStatus.Status;
 
                 *Vpb = IopMountInitializeVpb(DeviceObject, attachedDevice, rawMountOnly);
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // The mount operation failed.  Make a special check here to
@@ -4688,8 +4508,8 @@ Return Value:
                 //
 
                 status = ioStatus.Status;
-                if (IoIsErrorUserInduced(status) &&
-                    ioStatus.Information == IOP_ABORT) {
+                if (IoIsErrorUserInduced(status) && ioStatus.Information == IOP_ABORT)
+                {
                     break;
                 }
 
@@ -4698,7 +4518,8 @@ Return Value:
                 // we unlocked the database resource bail out and start all over again.
                 //
 
-                if (numRegOps != IopFsRegistrationOps) {
+                if (numRegOps != IopFsRegistrationOps)
+                {
 
                     //
                     // Reset the list back to the beginning and start over
@@ -4718,7 +4539,8 @@ Return Value:
                 // reacquire the locks.
                 //
 
-                if (status == STATUS_FS_DRIVER_REQUIRED) {
+                if (status == STATUS_FS_DRIVER_REQUIRED)
+                {
 
                     //
                     // Increment the number of reasons that this driver cannot
@@ -4726,16 +4548,16 @@ Return Value:
                     // holding the database resource.
                     //
 
-                    IopInterlockedIncrementUlong( LockQueueIoDatabaseLock,
-                                                  &savedFsDeviceObject->ReferenceCount );
+                    IopInterlockedIncrementUlong(LockQueueIoDatabaseLock, &savedFsDeviceObject->ReferenceCount);
 
-                    ExReleaseResourceLite( &IopDatabaseResource );
+                    ExReleaseResourceLite(&IopDatabaseResource);
                     KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
 
-                    if (!DeviceLockAlreadyHeld) {
-                        KeSetEvent( &DeviceObject->DeviceLock, 0, FALSE );
+                    if (!DeviceLockAlreadyHeld)
+                    {
+                        KeSetEvent(&DeviceObject->DeviceLock, 0, FALSE);
                     }
-                    IopLoadFileSystemDriver( savedFsDeviceObject );
+                    IopLoadFileSystemDriver(savedFsDeviceObject);
 
                     //
                     // Now reacquire the locks, in the correct order, and check
@@ -4744,29 +4566,30 @@ Return Value:
                     // file system queue scan from the beginning.
                     //
 
-                    if (!DeviceLockAlreadyHeld) {
-                        status = KeWaitForSingleObject( &DeviceObject->DeviceLock,
-                                                        Executive,
-                                                        KeGetPreviousModeByThread(&CurrentThread->Tcb),
-                                                        Alertable,
-                                                        (PLARGE_INTEGER) NULL );
-                        if (status == STATUS_ALERTED || status == STATUS_USER_APC) {
+                    if (!DeviceLockAlreadyHeld)
+                    {
+                        status = KeWaitForSingleObject(&DeviceObject->DeviceLock, Executive,
+                                                       KeGetPreviousModeByThread(&CurrentThread->Tcb), Alertable,
+                                                       (PLARGE_INTEGER)NULL);
+                        if (status == STATUS_ALERTED || status == STATUS_USER_APC)
+                        {
 
                             //
                             // The device was not mounted by us so
                             // drop the reference before returning.
                             //
 
-                            ObDereferenceObject( attachedDevice );
+                            ObDereferenceObject(attachedDevice);
 
                             return status;
                         }
                     }
 
                     KeEnterCriticalRegionThread(&CurrentThread->Tcb);
-                    (VOID) ExAcquireResourceSharedLite( &IopDatabaseResource, TRUE );
+                    (VOID) ExAcquireResourceSharedLite(&IopDatabaseResource, TRUE);
 
-                    if (DeviceObject->Vpb->Flags & VPB_MOUNTED) {
+                    if (DeviceObject->Vpb->Flags & VPB_MOUNTED)
+                    {
 
                         //
                         //  This volume was mounted before we got back.
@@ -4775,7 +4598,7 @@ Return Value:
                         //  used by the filesystem.
                         //
 
-                        ObDereferenceObject( attachedDevice );
+                        ObDereferenceObject(attachedDevice);
                         status = STATUS_SUCCESS;
                         break;
                     }
@@ -4796,34 +4619,35 @@ Return Value:
                 // is no reason to continue looping.
                 //
 
-                if (!AllowRawMount && (status != STATUS_UNRECOGNIZED_VOLUME) &&
-                    FsRtlIsTotalDeviceFailure(status)) {
+                if (!AllowRawMount && (status != STATUS_UNRECOGNIZED_VOLUME) && FsRtlIsTotalDeviceFailure(status))
+                {
                     break;
                 }
-
             }
         }
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 
             //
             // The device was not mounted by us so
             // drop the reference.
             //
 
-            ObDereferenceObject( attachedDevice );
-
+            ObDereferenceObject(attachedDevice);
         }
-
-    } else if((DeviceObject->Vpb->Flags & VPB_REMOVE_PENDING) != 0) {
+    }
+    else if ((DeviceObject->Vpb->Flags & VPB_REMOVE_PENDING) != 0)
+    {
 
         //
         // Pnp is attempting to remove this volume.  Don't allow the mount.
         //
 
         status = STATUS_DEVICE_DOES_NOT_EXIST;
-
-    } else {
+    }
+    else
+    {
 
         //
         // The volume for this device has already been mounted.  Return a
@@ -4833,7 +4657,7 @@ Return Value:
         status = STATUS_SUCCESS;
     }
 
-    ExReleaseResourceLite( &IopDatabaseResource );
+    ExReleaseResourceLite(&IopDatabaseResource);
     KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
 
     //
@@ -4841,8 +4665,9 @@ Return Value:
     // the device.
     //
 
-    if (!DeviceLockAlreadyHeld) {
-        KeSetEvent( &DeviceObject->DeviceLock, 0, FALSE );
+    if (!DeviceLockAlreadyHeld)
+    {
+        KeSetEvent(&DeviceObject->DeviceLock, 0, FALSE);
     }
 
     //
@@ -4853,20 +4678,17 @@ Return Value:
     // Note: Don't bugcheck if the system is already booted.
     //
 
-    if (!NT_SUCCESS( status ) &&
-        DeviceObject->Flags & DO_SYSTEM_BOOT_PARTITION &&
-        InitializationPhase < 2) {
-        KeBugCheckEx( UNMOUNTABLE_BOOT_VOLUME, (ULONG_PTR) DeviceObject, status, 0, 0 );
+    if (!NT_SUCCESS(status) && DeviceObject->Flags & DO_SYSTEM_BOOT_PARTITION && InitializationPhase < 2)
+    {
+        KeBugCheckEx(UNMOUNTABLE_BOOT_VOLUME, (ULONG_PTR)DeviceObject, status, 0, 0);
     }
 
     return status;
 }
 
-
+
 NTSTATUS
-IopInvalidateVolumesForDevice(
-    IN PDEVICE_OBJECT DeviceObject
-    )
+IopInvalidateVolumesForDevice(IN PDEVICE_OBJECT DeviceObject)
 
 /*++
 
@@ -4913,13 +4735,15 @@ Return Value:
     // this is not a high performance path and is backwards compatible.
     //
 
-    for (attachedDevice = DeviceObject ;attachedDevice; attachedDevice = attachedDevice->AttachedDevice) {
+    for (attachedDevice = DeviceObject; attachedDevice; attachedDevice = attachedDevice->AttachedDevice)
+    {
 
         //
         // If the device object has no VPB skip.
         //
 
-        if (!attachedDevice->Vpb) {
+        if (!attachedDevice->Vpb)
+        {
             continue;
         }
 
@@ -4927,11 +4751,7 @@ Return Value:
         // Synchronize against mounts.
         //
 
-        KeWaitForSingleObject(&(attachedDevice->DeviceLock),
-                      Executive,
-                      KernelMode,
-                      FALSE,
-                      NULL);
+        KeWaitForSingleObject(&(attachedDevice->DeviceLock), Executive, KernelMode, FALSE, NULL);
         //
         // Get a handle to this device for use in the fsctl.  The way we have to do
         // this is kind of loopy: note we wind up with two references to clean up.
@@ -4940,48 +4760,50 @@ Return Value:
         // invalidate volumes on.  It isn't used for anything else, and must not be.
         //
 
-        try {
+        try
+        {
 
             storageFileObject = NULL;
-            storageFileObject = IoCreateStreamFileObjectLite( NULL, attachedDevice );
+            storageFileObject = IoCreateStreamFileObjectLite(NULL, attachedDevice);
             storageFileObject->Vpb = attachedDevice->Vpb;
 
             storageHandle = NULL;
-            status = ObOpenObjectByPointer( storageFileObject,
-                                            OBJ_KERNEL_HANDLE,
-                                            NULL,
-                                            0,
-                                            IoFileObjectType,
-                                            KernelMode,
-                                            &storageHandle );
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+            status = ObOpenObjectByPointer(storageFileObject, OBJ_KERNEL_HANDLE, NULL, 0, IoFileObjectType, KernelMode,
+                                           &storageHandle);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             status = GetExceptionCode();
         }
 
-        if (NT_SUCCESS( status )) {
+        if (NT_SUCCESS(status))
+        {
 
             //
             // Now acquire the resource database lock for the I/O system to perform this
             // operation.  This resource protects access to the file system queue.
             //
 
-            CurrentThread = KeGetCurrentThread ();
+            CurrentThread = KeGetCurrentThread();
             KeEnterCriticalRegionThread(CurrentThread);
-            (VOID) ExAcquireResourceSharedLite( &IopDatabaseResource, TRUE );
+            (VOID) ExAcquireResourceSharedLite(&IopDatabaseResource, TRUE);
 
             //
             // Determine which type of file system should be invoked based on
             // the device type of the device being invalidated.
             //
 
-            if (DeviceObject->DeviceType == FILE_DEVICE_DISK ||
-                DeviceObject->DeviceType == FILE_DEVICE_VIRTUAL_DISK) {
+            if (DeviceObject->DeviceType == FILE_DEVICE_DISK || DeviceObject->DeviceType == FILE_DEVICE_VIRTUAL_DISK)
+            {
                 queueHeader = &IopDiskFileSystemQueueHead;
-            } else if (DeviceObject->DeviceType == FILE_DEVICE_CD_ROM) {
+            }
+            else if (DeviceObject->DeviceType == FILE_DEVICE_CD_ROM)
+            {
                 queueHeader = &IopCdRomFileSystemQueueHead;
-            } else {
+            }
+            else
+            {
                 queueHeader = &IopTapeFileSystemQueueHead;
             }
 
@@ -4990,7 +4812,7 @@ Return Value:
             // for the loop.
             //
 
-            KeInitializeEvent( &event, NotificationEvent, FALSE );
+            KeInitializeEvent(&event, NotificationEvent, FALSE);
             finalStatus = STATUS_SUCCESS;
 
             //
@@ -4999,9 +4821,8 @@ Return Value:
             // on it.
             //
 
-            for (entry = queueHeader->Flink;
-                 entry != queueHeader;
-                 entry = entry->Flink) {
+            for (entry = queueHeader->Flink; entry != queueHeader; entry = entry->Flink)
+            {
 
                 //
                 // If this is the final entry (Raw file system), then break out of the
@@ -5009,18 +4830,20 @@ Return Value:
                 // purposes in Raw.
                 //
 
-                if (entry->Flink == queueHeader) {
+                if (entry->Flink == queueHeader)
+                {
                     break;
                 }
 
-                fsDeviceObject = CONTAINING_RECORD( entry, DEVICE_OBJECT, Queue.ListEntry );
+                fsDeviceObject = CONTAINING_RECORD(entry, DEVICE_OBJECT, Queue.ListEntry);
 
                 //
                 // It is possible that the file system has been attached to, so
                 // walk the attached list for the file system.
                 //
 
-                while (fsDeviceObject->AttachedDevice) {
+                while (fsDeviceObject->AttachedDevice)
+                {
                     fsDeviceObject = fsDeviceObject->AttachedDevice;
                 }
 
@@ -5032,47 +4855,39 @@ Return Value:
                 // the I/O operation.
                 //
 
-                KeClearEvent( &event );
+                KeClearEvent(&event);
 
                 //
                 // Build an IRP for this operation.
                 //
 
-                irp = IoBuildDeviceIoControlRequest( FSCTL_INVALIDATE_VOLUMES,
-                                                     fsDeviceObject,
-                                                     &storageHandle,
-                                                     sizeof(HANDLE),
-                                                     NULL,
-                                                     0,
-                                                     FALSE,
-                                                     &event,
-                                                     &ioStatus );
+                irp = IoBuildDeviceIoControlRequest(FSCTL_INVALIDATE_VOLUMES, fsDeviceObject, &storageHandle,
+                                                    sizeof(HANDLE), NULL, 0, FALSE, &event, &ioStatus);
 
-                if (irp == NULL) {
+                if (irp == NULL)
+                {
 
                     finalStatus = STATUS_INSUFFICIENT_RESOURCES;
                     break;
                 }
 
-                irpSp = IoGetNextIrpStackLocation( irp );
+                irpSp = IoGetNextIrpStackLocation(irp);
                 irpSp->MajorFunction = IRP_MJ_FILE_SYSTEM_CONTROL;
 
-                status = IoCallDriver( fsDeviceObject, irp );
+                status = IoCallDriver(fsDeviceObject, irp);
 
                 //
                 // Wait for the I/O operation to complete.
                 //
 
-                if (status == STATUS_PENDING) {
-                    (VOID) KeWaitForSingleObject( &event,
-                                                  Executive,
-                                                  KernelMode,
-                                                  FALSE,
-                                                  (PLARGE_INTEGER) NULL );
+                if (status == STATUS_PENDING)
+                {
+                    (VOID) KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
 
                     status = ioStatus.Status;
-
-                } else {
+                }
+                else
+                {
 
                     //
                     // Ensure that the proper status value gets picked up.
@@ -5088,8 +4903,8 @@ Return Value:
                 // hold volumes that are not mounted.
                 //
 
-                if (status == STATUS_INVALID_DEVICE_REQUEST ||
-                    status == STATUS_NOT_IMPLEMENTED) {
+                if (status == STATUS_INVALID_DEVICE_REQUEST || status == STATUS_NOT_IMPLEMENTED)
+                {
 
                     status = STATUS_SUCCESS;
                 }
@@ -5098,19 +4913,22 @@ Return Value:
                 //  Hand back the first failure we get, but plow on anyway.
                 //
 
-                if (NT_SUCCESS( finalStatus ) && !NT_SUCCESS( status )) {
+                if (NT_SUCCESS(finalStatus) && !NT_SUCCESS(status))
+                {
                     finalStatus = status;
                 }
             }
 
-            ExReleaseResourceLite( &IopDatabaseResource );
+            ExReleaseResourceLite(&IopDatabaseResource);
             KeLeaveCriticalRegionThread(CurrentThread);
 
-            if (storageFileObject) {
-                ObDereferenceObject( storageFileObject );
-                if (storageHandle) {
-                    ZwClose( storageHandle ); // Note that this is a close for which the FS has not
-                                              // gotten the corresponding open.
+            if (storageFileObject)
+            {
+                ObDereferenceObject(storageFileObject);
+                if (storageHandle)
+                {
+                    ZwClose(storageHandle); // Note that this is a close for which the FS has not
+                                            // gotten the corresponding open.
                 }
             }
 
@@ -5128,14 +4946,10 @@ Return Value:
     return status;
 }
 
-
+
 BOOLEAN
-IopNotifyPnpWhenChainDereferenced(
-    IN PDEVICE_OBJECT *PhysicalDeviceObjects,
-    IN ULONG DeviceObjectCount,
-    IN BOOLEAN Query,
-    OUT PDEVICE_OBJECT *VetoingDevice
-    )
+IopNotifyPnpWhenChainDereferenced(IN PDEVICE_OBJECT *PhysicalDeviceObjects, IN ULONG DeviceObjectCount,
+                                  IN BOOLEAN Query, OUT PDEVICE_OBJECT *VetoingDevice)
 
 /*++
 
@@ -5196,21 +5010,25 @@ Return Value:
     LONG i;
     KIRQL irql;
 
-    irql = KeAcquireQueuedSpinLock( LockQueueIoDatabaseLock );
+    irql = KeAcquireQueuedSpinLock(LockQueueIoDatabaseLock);
 
-    if (Query) {
+    if (Query)
+    {
         pass1SetFlag = DOE_REMOVE_PROCESSED;
         pass1ClearFlag = 0;
-    } else {
+    }
+    else
+    {
         pass1SetFlag = DOE_REMOVE_PENDING;
         pass1ClearFlag = DOE_REMOVE_PROCESSED;
     }
 
-    for (i = 0; i < (LONG)DeviceObjectCount; i++) {
+    for (i = 0; i < (LONG)DeviceObjectCount; i++)
+    {
         deviceObject = PhysicalDeviceObjects[i];
         deviceExtension = deviceObject->DeviceObjectExtension;
 
-        ASSERT( deviceExtension->DeviceNode != NULL );
+        ASSERT(deviceExtension->DeviceNode != NULL);
 
         //
         // Assume that at least one device object has a reference.  Walk the
@@ -5228,7 +5046,8 @@ Return Value:
 
         referenced = 0;
         attachedDeviceObject = deviceObject;
-        do {
+        do
+        {
             deviceExtension = attachedDeviceObject->DeviceObjectExtension;
 
             ASSERT(deviceExtension != NULL);
@@ -5243,7 +5062,8 @@ Return Value:
 
         } while (attachedDeviceObject != NULL);
 
-        if (!Query && referenced == 0) {
+        if (!Query && referenced == 0)
+        {
 
             //
             // There aren't any outstanding references, retraverse the chain and
@@ -5253,7 +5073,8 @@ Return Value:
             //
 
             attachedDeviceObject = deviceObject;
-            do {
+            do
+            {
                 deviceExtension = attachedDeviceObject->DeviceObjectExtension;
 
                 deviceExtension->ExtensionFlags &= ~DOE_REMOVE_PENDING;
@@ -5263,23 +5084,28 @@ Return Value:
 
             } while (attachedDeviceObject != NULL);
 
-            KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+            KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
 
-            IopChainDereferenceComplete( deviceObject, TRUE );
+            IopChainDereferenceComplete(deviceObject, TRUE);
 
-            irql = KeAcquireQueuedSpinLock( LockQueueIoDatabaseLock );
-        } else if (Query && referenced != 0) {
+            irql = KeAcquireQueuedSpinLock(LockQueueIoDatabaseLock);
+        }
+        else if (Query && referenced != 0)
+        {
             break;
         }
     }
 
-    if (Query && referenced != 0) {
+    if (Query && referenced != 0)
+    {
 
-        if (VetoingDevice != NULL) {
+        if (VetoingDevice != NULL)
+        {
             *VetoingDevice = deviceObject;
         }
 
-        for (; i >= 0; i--) {
+        for (; i >= 0; i--)
+        {
             deviceObject = PhysicalDeviceObjects[i];
             deviceExtension = deviceObject->DeviceObjectExtension;
 
@@ -5289,7 +5115,8 @@ Return Value:
             //
 
             attachedDeviceObject = deviceObject;
-            do {
+            do
+            {
                 deviceExtension = attachedDeviceObject->DeviceObjectExtension;
 
                 deviceExtension->ExtensionFlags &= ~DOE_REMOVE_PROCESSED;
@@ -5300,18 +5127,13 @@ Return Value:
         }
     }
 
-    KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+    KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
 
     return !Query || referenced != 0;
 }
-
+
 NTSTATUS
-IopOpenLinkOrRenameTarget(
-    OUT PHANDLE TargetHandle,
-    IN PIRP Irp,
-    IN PVOID RenameBuffer,
-    IN PFILE_OBJECT FileObject
-    )
+IopOpenLinkOrRenameTarget(OUT PHANDLE TargetHandle, IN PIRP Irp, IN PVOID RenameBuffer, IN PFILE_OBJECT FileObject)
 
 /*++
 
@@ -5364,32 +5186,27 @@ Note:
     PFILE_OBJECT targetFileObject;
     OBJECT_HANDLE_INFORMATION handleInformation;
     PFILE_RENAME_INFORMATION renameBuffer = RenameBuffer;
-    FILE_BASIC_INFORMATION  basicInformation;
+    FILE_BASIC_INFORMATION basicInformation;
     ACCESS_MASK accessMask;
 
     PAGED_CODE();
 
-    ASSERT( sizeof( FILE_RENAME_INFORMATION ) ==
-            sizeof( FILE_LINK_INFORMATION ) );
-    ASSERT( FIELD_OFFSET( FILE_RENAME_INFORMATION, ReplaceIfExists ) ==
-            FIELD_OFFSET( FILE_LINK_INFORMATION, ReplaceIfExists ) );
-    ASSERT( FIELD_OFFSET( FILE_RENAME_INFORMATION, RootDirectory ) ==
-            FIELD_OFFSET( FILE_LINK_INFORMATION, RootDirectory ) );
-    ASSERT( FIELD_OFFSET( FILE_RENAME_INFORMATION, FileNameLength ) ==
-            FIELD_OFFSET( FILE_LINK_INFORMATION, FileNameLength ) );
-    ASSERT( FIELD_OFFSET( FILE_RENAME_INFORMATION, FileName ) ==
-            FIELD_OFFSET( FILE_LINK_INFORMATION, FileName ) );
+    ASSERT(sizeof(FILE_RENAME_INFORMATION) == sizeof(FILE_LINK_INFORMATION));
+    ASSERT(FIELD_OFFSET(FILE_RENAME_INFORMATION, ReplaceIfExists) ==
+           FIELD_OFFSET(FILE_LINK_INFORMATION, ReplaceIfExists));
+    ASSERT(FIELD_OFFSET(FILE_RENAME_INFORMATION, RootDirectory) == FIELD_OFFSET(FILE_LINK_INFORMATION, RootDirectory));
+    ASSERT(FIELD_OFFSET(FILE_RENAME_INFORMATION, FileNameLength) ==
+           FIELD_OFFSET(FILE_LINK_INFORMATION, FileNameLength));
+    ASSERT(FIELD_OFFSET(FILE_RENAME_INFORMATION, FileName) == FIELD_OFFSET(FILE_LINK_INFORMATION, FileName));
 
-    ASSERT( sizeof( FILE_RENAME_INFORMATION ) ==
-            sizeof( FILE_MOVE_CLUSTER_INFORMATION ) );
-    ASSERT( FIELD_OFFSET( FILE_RENAME_INFORMATION, ReplaceIfExists ) ==
-            FIELD_OFFSET( FILE_MOVE_CLUSTER_INFORMATION, ClusterCount ) );
-    ASSERT( FIELD_OFFSET( FILE_RENAME_INFORMATION, RootDirectory ) ==
-            FIELD_OFFSET( FILE_MOVE_CLUSTER_INFORMATION, RootDirectory ) );
-    ASSERT( FIELD_OFFSET( FILE_RENAME_INFORMATION, FileNameLength ) ==
-            FIELD_OFFSET( FILE_MOVE_CLUSTER_INFORMATION, FileNameLength ) );
-    ASSERT( FIELD_OFFSET( FILE_RENAME_INFORMATION, FileName ) ==
-            FIELD_OFFSET( FILE_MOVE_CLUSTER_INFORMATION, FileName ) );
+    ASSERT(sizeof(FILE_RENAME_INFORMATION) == sizeof(FILE_MOVE_CLUSTER_INFORMATION));
+    ASSERT(FIELD_OFFSET(FILE_RENAME_INFORMATION, ReplaceIfExists) ==
+           FIELD_OFFSET(FILE_MOVE_CLUSTER_INFORMATION, ClusterCount));
+    ASSERT(FIELD_OFFSET(FILE_RENAME_INFORMATION, RootDirectory) ==
+           FIELD_OFFSET(FILE_MOVE_CLUSTER_INFORMATION, RootDirectory));
+    ASSERT(FIELD_OFFSET(FILE_RENAME_INFORMATION, FileNameLength) ==
+           FIELD_OFFSET(FILE_MOVE_CLUSTER_INFORMATION, FileNameLength));
+    ASSERT(FIELD_OFFSET(FILE_RENAME_INFORMATION, FileName) == FIELD_OFFSET(FILE_MOVE_CLUSTER_INFORMATION, FileName));
 
     //
     // Check if the fileobject is a directory or a regular file.
@@ -5398,14 +5215,17 @@ Note:
 
     accessMask = FILE_WRITE_DATA;
 
-    if (!(FileObject->Flags & FO_DIRECT_DEVICE_OPEN)) {
+    if (!(FileObject->Flags & FO_DIRECT_DEVICE_OPEN))
+    {
         status = IopGetBasicInformationFile(FileObject, &basicInformation);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             return status;
         }
 
-        if (basicInformation.FileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+        if (basicInformation.FileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+        {
             accessMask = FILE_ADD_SUBDIRECTORY;
         }
     }
@@ -5415,86 +5235,65 @@ Note:
     // the parent directory of the specified target file.
     //
 
-    newFileName.Length = (USHORT) renameBuffer->FileNameLength;
-    newFileName.MaximumLength = (USHORT) renameBuffer->FileNameLength;
+    newFileName.Length = (USHORT)renameBuffer->FileNameLength;
+    newFileName.MaximumLength = (USHORT)renameBuffer->FileNameLength;
     newFileName.Buffer = renameBuffer->FileName;
 
-    InitializeObjectAttributes( &objectAttributes,
-                                &newFileName,
-                                (FileObject->Flags & FO_OPENED_CASE_SENSITIVE ? 0 : OBJ_CASE_INSENSITIVE)|OBJ_KERNEL_HANDLE,
-                                renameBuffer->RootDirectory,
-                                (PSECURITY_DESCRIPTOR) NULL );
+    InitializeObjectAttributes(&objectAttributes, &newFileName,
+                               (FileObject->Flags & FO_OPENED_CASE_SENSITIVE ? 0 : OBJ_CASE_INSENSITIVE) |
+                                   OBJ_KERNEL_HANDLE,
+                               renameBuffer->RootDirectory, (PSECURITY_DESCRIPTOR)NULL);
 
     //
     // Check if the fileobject is not to the top of the stack.
     //
 
-    if (FileObject->Flags & FO_FILE_OBJECT_HAS_EXTENSION) {
+    if (FileObject->Flags & FO_FILE_OBJECT_HAS_EXTENSION)
+    {
 
-        PIOP_FILE_OBJECT_EXTENSION  fileObjectExtension =
-            (PIOP_FILE_OBJECT_EXTENSION)(FileObject + 1);
+        PIOP_FILE_OBJECT_EXTENSION fileObjectExtension = (PIOP_FILE_OBJECT_EXTENSION)(FileObject + 1);
 
         ASSERT(!(FileObject->Flags & FO_DIRECT_DEVICE_OPEN));
 
-        status = IoCreateFileSpecifyDeviceObjectHint( &handle,
-                                                      accessMask | SYNCHRONIZE,
-                                                      &objectAttributes,
-                                                      &ioStatus,
-                                                      (PLARGE_INTEGER) NULL,
-                                                      0,
-                                                      FILE_SHARE_READ | FILE_SHARE_WRITE,
-                                                      FILE_OPEN,
-                                                      FILE_OPEN_FOR_BACKUP_INTENT,
-                                                      (PVOID) NULL,
-                                                      0L,
-                                                      CreateFileTypeNone,
-                                                      (PVOID) NULL,
-                                                      IO_NO_PARAMETER_CHECKING |
-                                                      IO_OPEN_TARGET_DIRECTORY |
-                                                      IO_FORCE_ACCESS_CHECK |
-                                                      IOP_CREATE_USE_TOP_DEVICE_OBJECT_HINT,
-                                                      fileObjectExtension->TopDeviceObjectHint );
+        status = IoCreateFileSpecifyDeviceObjectHint(&handle, accessMask | SYNCHRONIZE, &objectAttributes, &ioStatus,
+                                                     (PLARGE_INTEGER)NULL, 0, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                                     FILE_OPEN, FILE_OPEN_FOR_BACKUP_INTENT, (PVOID)NULL, 0L,
+                                                     CreateFileTypeNone, (PVOID)NULL,
+                                                     IO_NO_PARAMETER_CHECKING | IO_OPEN_TARGET_DIRECTORY |
+                                                         IO_FORCE_ACCESS_CHECK | IOP_CREATE_USE_TOP_DEVICE_OBJECT_HINT,
+                                                     fileObjectExtension->TopDeviceObjectHint);
+    }
+    else
+    {
 
-    } else {
-
-        status = IoCreateFile( &handle,
-                               accessMask | SYNCHRONIZE,
-                               &objectAttributes,
-                               &ioStatus,
-                               (PLARGE_INTEGER) NULL,
-                               0,
-                               FILE_SHARE_READ | FILE_SHARE_WRITE,
-                               FILE_OPEN,
-                               FILE_OPEN_FOR_BACKUP_INTENT,
-                               (PVOID) NULL,
-                               0L,
-                               CreateFileTypeNone,
-                               (PVOID) NULL,
-                               IO_NO_PARAMETER_CHECKING |
-                               IO_OPEN_TARGET_DIRECTORY |
-                               IO_FORCE_ACCESS_CHECK );
+        status = IoCreateFile(&handle, accessMask | SYNCHRONIZE, &objectAttributes, &ioStatus, (PLARGE_INTEGER)NULL, 0,
+                              FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_OPEN, FILE_OPEN_FOR_BACKUP_INTENT, (PVOID)NULL,
+                              0L, CreateFileTypeNone, (PVOID)NULL,
+                              IO_NO_PARAMETER_CHECKING | IO_OPEN_TARGET_DIRECTORY | IO_FORCE_ACCESS_CHECK);
     }
 
-    if (NT_SUCCESS( status )) {
+    if (NT_SUCCESS(status))
+    {
         //
         // The open operation for the target file's parent directory was
         // successful.  Check to see whether or not the file exists.
         //
 
-        irpSp = IoGetNextIrpStackLocation( Irp );
-        if (irpSp->Parameters.SetFile.FileInformationClass == FileLinkInformation &&
-            !renameBuffer->ReplaceIfExists &&
-            ioStatus.Information == FILE_EXISTS) {
+        irpSp = IoGetNextIrpStackLocation(Irp);
+        if (irpSp->Parameters.SetFile.FileInformationClass == FileLinkInformation && !renameBuffer->ReplaceIfExists &&
+            ioStatus.Information == FILE_EXISTS)
+        {
 
             //
             // The target file exists, and the caller does not want to replace
             // it.  This is a name collision error so cleanup and return.
             //
 
-            ObCloseHandle( handle , KernelMode);
+            ObCloseHandle(handle, KernelMode);
             status = STATUS_OBJECT_NAME_COLLISION;
-
-        } else {
+        }
+        else
+        {
 
             //
             // Everything up to this point is fine, so dereference the handle
@@ -5502,28 +5301,26 @@ Note:
             // specifications refer to the same device.
             //
 
-            status = ObReferenceObjectByHandle( handle,
-                                              accessMask,
-                                              IoFileObjectType,
-                                              KernelMode,
-                                              (PVOID *) &targetFileObject,
-                                              &handleInformation );
-            if (NT_SUCCESS( status )) {
+            status = ObReferenceObjectByHandle(handle, accessMask, IoFileObjectType, KernelMode,
+                                               (PVOID *)&targetFileObject, &handleInformation);
+            if (NT_SUCCESS(status))
+            {
 
-                ObDereferenceObject( targetFileObject );
+                ObDereferenceObject(targetFileObject);
 
-                if (IoGetRelatedDeviceObject( targetFileObject) !=
-                    IoGetRelatedDeviceObject( FileObject )) {
+                if (IoGetRelatedDeviceObject(targetFileObject) != IoGetRelatedDeviceObject(FileObject))
+                {
 
                     //
                     // The two files refer to different devices.  Clean everything
                     // up and return an appropriate error.
                     //
 
-                    ObCloseHandle( handle, KernelMode );
+                    ObCloseHandle(handle, KernelMode);
                     status = STATUS_NOT_SAME_DEVICE;
-
-                } else {
+                }
+                else
+                {
 
                     //
                     // Otherwise, everything worked, so allow the rename operation
@@ -5533,10 +5330,10 @@ Note:
                     irpSp->Parameters.SetFile.FileObject = targetFileObject;
                     *TargetHandle = handle;
                     status = STATUS_SUCCESS;
-
                 }
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // There was an error referencing the handle to what should
@@ -5545,10 +5342,8 @@ Note:
                 // Simply attempt to close the handle and return the error.
                 //
 
-                ObCloseHandle( handle , KernelMode);
-
+                ObCloseHandle(handle, KernelMode);
             }
-
         }
     }
 
@@ -5558,15 +5353,10 @@ Note:
 
     return status;
 }
-
+
 NTSTATUS
-IopOpenRegistryKey(
-    OUT PHANDLE Handle,
-    IN HANDLE BaseHandle OPTIONAL,
-    IN PUNICODE_STRING KeyName,
-    IN ACCESS_MASK DesiredAccess,
-    IN BOOLEAN Create
-    )
+IopOpenRegistryKey(OUT PHANDLE Handle, IN HANDLE BaseHandle OPTIONAL, IN PUNICODE_STRING KeyName,
+                   IN ACCESS_MASK DesiredAccess, IN BOOLEAN Create)
 
 /*++
 
@@ -5605,41 +5395,28 @@ Return Value:
     // Initialize the object for the key.
     //
 
-    InitializeObjectAttributes( &objectAttributes,
-                                KeyName,
-                                OBJ_CASE_INSENSITIVE,
-                                BaseHandle,
-                                (PSECURITY_DESCRIPTOR) NULL );
+    InitializeObjectAttributes(&objectAttributes, KeyName, OBJ_CASE_INSENSITIVE, BaseHandle,
+                               (PSECURITY_DESCRIPTOR)NULL);
 
     //
     // Create the key or open it, as appropriate based on the caller's
     // wishes.
     //
 
-    if (Create) {
-        return ZwCreateKey( Handle,
-                            DesiredAccess,
-                            &objectAttributes,
-                            0,
-                            (PUNICODE_STRING) NULL,
-                            REG_OPTION_VOLATILE,
-                            &disposition );
-    } else {
-        return ZwOpenKey( Handle,
-                          DesiredAccess,
-                          &objectAttributes );
+    if (Create)
+    {
+        return ZwCreateKey(Handle, DesiredAccess, &objectAttributes, 0, (PUNICODE_STRING)NULL, REG_OPTION_VOLATILE,
+                           &disposition);
+    }
+    else
+    {
+        return ZwOpenKey(Handle, DesiredAccess, &objectAttributes);
     }
 }
-
+
 NTSTATUS
-IopQueryXxxInformation(
-    IN PFILE_OBJECT FileObject,
-    IN ULONG InformationClass,
-    IN ULONG Length,
-    OUT PVOID Information,
-    OUT PULONG ReturnedLength,
-    IN BOOLEAN FileInformation
-    )
+IopQueryXxxInformation(IN PFILE_OBJECT FileObject, IN ULONG InformationClass, IN ULONG Length, OUT PVOID Information,
+                       OUT PULONG ReturnedLength, IN BOOLEAN FileInformation)
 
 /*++
 
@@ -5692,7 +5469,7 @@ Return Value:
     // object.
     //
 
-    ObReferenceObject( FileObject );
+    ObReferenceObject(FileObject);
 
     //
     // Make a special check here to determine whether this is a synchronous
@@ -5701,24 +5478,27 @@ Return Value:
     // operation, then initialize the local event.
     //
 
-    if (FileObject->Flags & FO_SYNCHRONOUS_IO) {
+    if (FileObject->Flags & FO_SYNCHRONOUS_IO)
+    {
 
         BOOLEAN interrupted;
 
-        if (!IopAcquireFastLock( FileObject )) {
-            status = IopAcquireFileObjectLock( FileObject,
-                                               KernelMode,
-                                               (BOOLEAN) ((FileObject->Flags & FO_ALERTABLE_IO) != 0),
-                                               &interrupted );
-            if (interrupted) {
-                ObDereferenceObject( FileObject );
+        if (!IopAcquireFastLock(FileObject))
+        {
+            status = IopAcquireFileObjectLock(FileObject, KernelMode,
+                                              (BOOLEAN)((FileObject->Flags & FO_ALERTABLE_IO) != 0), &interrupted);
+            if (interrupted)
+            {
+                ObDereferenceObject(FileObject);
                 return status;
             }
         }
-        KeClearEvent( &FileObject->Event );
+        KeClearEvent(&FileObject->Event);
         synchronousIo = TRUE;
-    } else {
-        KeInitializeEvent( &event, SynchronizationEvent, FALSE );
+    }
+    else
+    {
+        KeInitializeEvent(&event, SynchronizationEvent, FALSE);
         synchronousIo = FALSE;
     }
 
@@ -5726,7 +5506,7 @@ Return Value:
     // Get the address of the target device object.
     //
 
-    deviceObject = IoGetRelatedDeviceObject( FileObject );
+    deviceObject = IoGetRelatedDeviceObject(FileObject);
 
     //
     // Allocate and initialize the I/O Request Packet (IRP) for this operation.
@@ -5734,15 +5514,16 @@ Return Value:
     // caller does not have enough quota to allocate the packet.
     //
 
-    irp = IoAllocateIrp( deviceObject->StackSize, TRUE );
-    if (!irp) {
+    irp = IoAllocateIrp(deviceObject->StackSize, TRUE);
+    if (!irp)
+    {
 
         //
         // An IRP could not be allocated.  Cleanup and return an appropriate
         // error status code.
         //
 
-        IopAllocateIrpCleanup( FileObject, (PKEVENT) NULL );
+        IopAllocateIrpCleanup(FileObject, (PKEVENT)NULL);
 
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -5754,24 +5535,25 @@ Return Value:
     // Fill in the service independent parameters in the IRP.
     //
 
-    if (synchronousIo) {
-        irp->UserEvent = (PKEVENT) NULL;
-    } else {
+    if (synchronousIo)
+    {
+        irp->UserEvent = (PKEVENT)NULL;
+    }
+    else
+    {
         irp->UserEvent = &event;
         irp->Flags = IRP_SYNCHRONOUS_API;
     }
     irp->UserIosb = &localIoStatus;
-    irp->Overlay.AsynchronousParameters.UserApcRoutine = (PIO_APC_ROUTINE) NULL;
+    irp->Overlay.AsynchronousParameters.UserApcRoutine = (PIO_APC_ROUTINE)NULL;
 
     //
     // Get a pointer to the stack location for the first driver.  This will be
     // used to pass the original function codes and parameters.
     //
 
-    irpSp = IoGetNextIrpStackLocation( irp );
-    irpSp->MajorFunction = FileInformation ?
-                           IRP_MJ_QUERY_INFORMATION :
-                           IRP_MJ_QUERY_VOLUME_INFORMATION;
+    irpSp = IoGetNextIrpStackLocation(irp);
+    irpSp->MajorFunction = FileInformation ? IRP_MJ_QUERY_INFORMATION : IRP_MJ_QUERY_VOLUME_INFORMATION;
     irpSp->FileObject = FileObject;
 
     //
@@ -5787,10 +5569,13 @@ Return Value:
     // IRP.
     //
 
-    if (FileInformation) {
+    if (FileInformation)
+    {
         irpSp->Parameters.QueryFile.Length = Length;
         irpSp->Parameters.QueryFile.FileInformationClass = InformationClass;
-    } else {
+    }
+    else
+    {
         irpSp->Parameters.QueryVolume.Length = Length;
         irpSp->Parameters.QueryVolume.FsInformationClass = InformationClass;
     }
@@ -5799,13 +5584,13 @@ Return Value:
     // Insert the packet at the head of the IRP list for the thread.
     //
 
-    IopQueueThreadIrp( irp );
+    IopQueueThreadIrp(irp);
 
     //
     // Now simply invoke the driver at its dispatch entry with the IRP.
     //
 
-    status = IoCallDriver( deviceObject, irp );
+    status = IoCallDriver(deviceObject, irp);
 
     //
     // If this operation was a synchronous I/O operation, check the return
@@ -5814,21 +5599,22 @@ Return Value:
     // and obtain the final status from the file object itself.
     //
 
-    if (synchronousIo) {
-        if (status == STATUS_PENDING) {
-            status = KeWaitForSingleObject( &FileObject->Event,
-                                            Executive,
-                                            KernelMode,
-                                            (BOOLEAN) ((FileObject->Flags & FO_ALERTABLE_IO) != 0),
-                                            (PLARGE_INTEGER) NULL );
-            if (status == STATUS_ALERTED) {
-                IopCancelAlertedRequest( &FileObject->Event, irp );
+    if (synchronousIo)
+    {
+        if (status == STATUS_PENDING)
+        {
+            status = KeWaitForSingleObject(&FileObject->Event, Executive, KernelMode,
+                                           (BOOLEAN)((FileObject->Flags & FO_ALERTABLE_IO) != 0), (PLARGE_INTEGER)NULL);
+            if (status == STATUS_ALERTED)
+            {
+                IopCancelAlertedRequest(&FileObject->Event, irp);
             }
             status = FileObject->FinalStatus;
         }
-        IopReleaseFileObjectLock( FileObject );
-
-    } else {
+        IopReleaseFileObjectLock(FileObject);
+    }
+    else
+    {
 
         //
         // This is a normal synchronous I/O operation, as opposed to a
@@ -5837,26 +5623,18 @@ Return Value:
         // back to the caller.
         //
 
-        if (status == STATUS_PENDING) {
-            (VOID) KeWaitForSingleObject( &event,
-                                          Executive,
-                                          KernelMode,
-                                          FALSE,
-                                          (PLARGE_INTEGER) NULL );
+        if (status == STATUS_PENDING)
+        {
+            (VOID) KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
             status = localIoStatus.Status;
         }
     }
 
-    *ReturnedLength = (ULONG) localIoStatus.Information;
+    *ReturnedLength = (ULONG)localIoStatus.Information;
     return status;
 }
-
-VOID
-IopRaiseHardError(
-    IN PVOID NormalContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    )
+
+VOID IopRaiseHardError(IN PVOID NormalContext, IN PVOID SystemArgument1, IN PVOID SystemArgument2)
 
 /*++
 
@@ -5889,9 +5667,9 @@ Return Value:
     ULONG parameterMask;
     ULONG response;
     NTSTATUS status;
-    PIRP irp = (PIRP) NormalContext;
-    PVPB vpb = (PVPB) SystemArgument1;
-    PDEVICE_OBJECT realDeviceObject = (PDEVICE_OBJECT) SystemArgument2;
+    PIRP irp = (PIRP)NormalContext;
+    PVPB vpb = (PVPB)SystemArgument1;
+    PDEVICE_OBJECT realDeviceObject = (PDEVICE_OBJECT)SystemArgument2;
 
     ULONG length = 0;
     POBJECT_NAME_INFORMATION objectName;
@@ -5905,22 +5683,21 @@ Return Value:
     // because "that's the ways Steve's routine works".
     //
 
-    ObQueryNameString( realDeviceObject, NULL, 0, &length );
+    ObQueryNameString(realDeviceObject, NULL, 0, &length);
 
-    if ((objectName = ExAllocatePool(PagedPool, length)) == NULL) {
+    if ((objectName = ExAllocatePool(PagedPool, length)) == NULL)
+    {
 
         status = STATUS_INSUFFICIENT_RESOURCES;
-
-    } else {
+    }
+    else
+    {
 
         status = STATUS_SUCCESS;
     }
 
-    if (!NT_SUCCESS( status ) ||
-        !NT_SUCCESS( status = ObQueryNameString( realDeviceObject,
-                                                 objectName,
-                                                 length,
-                                                 &response ) )) {
+    if (!NT_SUCCESS(status) || !NT_SUCCESS(status = ObQueryNameString(realDeviceObject, objectName, length, &response)))
+    {
 
         //
         // Allocation of the pool to put up this popup did not work or
@@ -5928,14 +5705,15 @@ Return Value:
         // done here.  Simply return an error back to the user.
         //
 
-        if (objectName) {
-            ExFreePool( objectName );
+        if (objectName)
+        {
+            ExFreePool(objectName);
         }
 
         irp->IoStatus.Status = status;
         irp->IoStatus.Information = 0;
 
-        IoCompleteRequest( irp, IO_DISK_INCREMENT );
+        IoCompleteRequest(irp, IO_DISK_INCREMENT);
 
         return;
     }
@@ -5945,15 +5723,17 @@ Return Value:
     // it to a Unicode string for output in the popup message.
     //
 
-    if (vpb != NULL && vpb->Flags & VPB_MOUNTED) {
+    if (vpb != NULL && vpb->Flags & VPB_MOUNTED)
+    {
 
         labelName.Buffer = &vpb->VolumeLabel[0];
         labelName.Length = vpb->VolumeLabelLength;
         labelName.MaximumLength = MAXIMUM_VOLUME_LABEL_LENGTH;
+    }
+    else
+    {
 
-    } else {
-
-        RtlInitUnicodeString( &labelName, NULL );
+        RtlInitUnicodeString(&labelName, NULL);
     }
 
     //
@@ -5961,7 +5741,8 @@ Return Value:
     // specific error value, adjust the parameters.
     //
 
-    switch( irp->IoStatus.Status ) {
+    switch (irp->IoStatus.Status)
+    {
 
     case STATUS_MEDIA_WRITE_PROTECTED:
     case STATUS_WRONG_VOLUME:
@@ -5969,8 +5750,8 @@ Return Value:
         numberOfParameters = 2;
         parameterMask = 3;
 
-        parameters[0] = (ULONG_PTR) &labelName;
-        parameters[1] = (ULONG_PTR) &objectName->Name;
+        parameters[0] = (ULONG_PTR)&labelName;
+        parameters[1] = (ULONG_PTR)&objectName->Name;
 
         break;
 
@@ -5982,7 +5763,7 @@ Return Value:
         numberOfParameters = 1;
         parameterMask = 1;
 
-        parameters[0] = (ULONG_PTR) &objectName->Name;
+        parameters[0] = (ULONG_PTR)&objectName->Name;
         parameters[1] = 0;
 
         break;
@@ -5991,22 +5772,19 @@ Return Value:
 
         numberOfParameters = 0;
         parameterMask = 0;
-
     }
 
     //
     // Simply raise the hard error.
     //
 
-    if (ExReadyForErrors) {
-        status = ExRaiseHardError( irp->IoStatus.Status,
-                                   numberOfParameters,
-                                   parameterMask,
-                                   parameters,
-                                   OptionCancelTryContinue,
-                                   &response );
-
-    } else {
+    if (ExReadyForErrors)
+    {
+        status = ExRaiseHardError(irp->IoStatus.Status, numberOfParameters, parameterMask, parameters,
+                                  OptionCancelTryContinue, &response);
+    }
+    else
+    {
 
         status = STATUS_UNSUCCESSFUL;
         response = ResponseReturnToCaller;
@@ -6017,7 +5795,7 @@ Return Value:
     // popup.
     //
 
-    ExFreePool( objectName );
+    ExFreePool(objectName);
 
     //
     // If there was a problem, or the user didn't want to retry, just
@@ -6025,7 +5803,8 @@ Return Value:
     // point and retry the IRP as if it had never been tried before.
     //
 
-    if (!NT_SUCCESS( status ) || response != ResponseTryAgain) {
+    if (!NT_SUCCESS(status) || response != ResponseTryAgain)
+    {
 
         //
         // Before completing the request, make one last check.  If this was
@@ -6034,12 +5813,15 @@ Return Value:
         // block to indicate whether or not an abort was performed.
         //
 
-        if (response == ResponseCancel) {
-            PIO_STACK_LOCATION irpSp = IoGetCurrentIrpStackLocation( irp );
-            if (irpSp->MajorFunction == IRP_MJ_FILE_SYSTEM_CONTROL &&
-                irpSp->MinorFunction == IRP_MN_MOUNT_VOLUME) {
+        if (response == ResponseCancel)
+        {
+            PIO_STACK_LOCATION irpSp = IoGetCurrentIrpStackLocation(irp);
+            if (irpSp->MajorFunction == IRP_MJ_FILE_SYSTEM_CONTROL && irpSp->MinorFunction == IRP_MN_MOUNT_VOLUME)
+            {
                 irp->IoStatus.Information = IOP_ABORT;
-            } else {
+            }
+            else
+            {
                 irp->IoStatus.Status = STATUS_REQUEST_ABORTED;
             }
         }
@@ -6050,15 +5832,17 @@ Return Value:
         // IopCompleteRequest will try to copy to the user's buffer.
         //
 
-        if (irp->Flags & IRP_INPUT_OPERATION) {
+        if (irp->Flags & IRP_INPUT_OPERATION)
+        {
             irp->IoStatus.Information = 0;
         }
 
-        IoCompleteRequest( irp, IO_DISK_INCREMENT );
+        IoCompleteRequest(irp, IO_DISK_INCREMENT);
+    }
+    else
+    {
 
-    } else {
-
-        PIO_STACK_LOCATION irpSp = IoGetCurrentIrpStackLocation( irp );
+        PIO_STACK_LOCATION irpSp = IoGetCurrentIrpStackLocation(irp);
         PDEVICE_OBJECT fsDeviceObject = irpSp->DeviceObject;
         PDRIVER_OBJECT driverObject = fsDeviceObject->DriverObject;
 
@@ -6066,18 +5850,11 @@ Return Value:
         // Retry the request from the top.
         //
 
-        driverObject->MajorFunction[irpSp->MajorFunction]( fsDeviceObject,
-                                                           irp );
-
+        driverObject->MajorFunction[irpSp->MajorFunction](fsDeviceObject, irp);
     }
 }
-
-VOID
-IopRaiseInformationalHardError(
-    IN PVOID NormalContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    )
+
+VOID IopRaiseInformationalHardError(IN PVOID NormalContext, IN PVOID SystemArgument1, IN PVOID SystemArgument2)
 
 /*++
 
@@ -6107,44 +5884,39 @@ Return Value:
     ULONG errorResponse;
     PIOP_HARD_ERROR_PACKET hardErrorPacket;
 
-    UNREFERENCED_PARAMETER( SystemArgument1 );
-    UNREFERENCED_PARAMETER( SystemArgument2 );
+    UNREFERENCED_PARAMETER(SystemArgument1);
+    UNREFERENCED_PARAMETER(SystemArgument2);
 
-    hardErrorPacket = (PIOP_HARD_ERROR_PACKET) NormalContext;
+    hardErrorPacket = (PIOP_HARD_ERROR_PACKET)NormalContext;
 
     //
     // Simply raise the hard error if the system is ready to accept one.
     //
 
-    errorParameter = (ULONG_PTR) &hardErrorPacket->String;
+    errorParameter = (ULONG_PTR)&hardErrorPacket->String;
 
     parameterPresent = (hardErrorPacket->String.Buffer != NULL);
 
-    if (ExReadyForErrors) {
-        (VOID) ExRaiseHardError( hardErrorPacket->ErrorStatus,
-                                 parameterPresent,
-                                 parameterPresent,
-                                 parameterPresent ? &errorParameter : NULL,
-                                 OptionOkNoWait,
-                                 &errorResponse );
+    if (ExReadyForErrors)
+    {
+        (VOID) ExRaiseHardError(hardErrorPacket->ErrorStatus, parameterPresent, parameterPresent,
+                                parameterPresent ? &errorParameter : NULL, OptionOkNoWait, &errorResponse);
     }
 
     //
     // Now free the packet and the buffer, if one was specified.
     //
 
-    if (hardErrorPacket->String.Buffer) {
-        ExFreePool( hardErrorPacket->String.Buffer );
+    if (hardErrorPacket->String.Buffer)
+    {
+        ExFreePool(hardErrorPacket->String.Buffer);
     }
 
-    ExFreePool( hardErrorPacket );
+    ExFreePool(hardErrorPacket);
     InterlockedDecrement(&IopHardError.NumPendingApcPopups);
 }
-
-VOID
-IopReadyDeviceObjects(
-    IN PDRIVER_OBJECT DriverObject
-    )
+
+VOID IopReadyDeviceObjects(IN PDRIVER_OBJECT DriverObject)
 
 /*++
 
@@ -6176,16 +5948,15 @@ Return Value:
     //
 
     DriverObject->Flags |= DRVO_INITIALIZED;
-    while (deviceObject) {
+    while (deviceObject)
+    {
         deviceObject->Flags &= ~DO_DEVICE_INITIALIZING;
         deviceObject = deviceObject->NextDevice;
     }
 }
-
+
 NTSTATUS
-IopResurrectDriver(
-    PDRIVER_OBJECT DriverObject
-    )
+IopResurrectDriver(PDRIVER_OBJECT DriverObject)
 
 /*++
 
@@ -6217,12 +5988,13 @@ Return Value:
     // driver flags.
     //
 
-    irql = KeAcquireQueuedSpinLock( LockQueueIoDatabaseLock );
+    irql = KeAcquireQueuedSpinLock(LockQueueIoDatabaseLock);
 
     if (DriverObject->Flags & DRVO_UNLOAD_INVOKED || !deviceObject ||
-        !(deviceObject->DeviceObjectExtension->ExtensionFlags & DOE_UNLOAD_PENDING)) {
+        !(deviceObject->DeviceObjectExtension->ExtensionFlags & DOE_UNLOAD_PENDING))
+    {
 
-        KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+        KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
         return STATUS_IMAGE_ALREADY_LOADED;
     }
 
@@ -6231,23 +6003,18 @@ Return Value:
     // DOE_UNLOAD_PENDING flag.
     //
 
-    while (deviceObject) {
+    while (deviceObject)
+    {
         deviceObject->DeviceObjectExtension->ExtensionFlags &= ~DOE_UNLOAD_PENDING;
         deviceObject = deviceObject->NextDevice;
     }
 
-    KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+    KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
     return STATUS_SUCCESS;
-
 }
 
-VOID
-IopMarshalIds(
-    OUT PTRACKING_BUFFER TrackingBuffer,
-    IN  PFILE_VOLUMEID_WITH_TYPE  TargetVolumeId,
-    IN  PFILE_OBJECTID_BUFFER  TargetObjectId,
-    IN  PFILE_TRACKING_INFORMATION TrackingInfo
-    )
+VOID IopMarshalIds(OUT PTRACKING_BUFFER TrackingBuffer, IN PFILE_VOLUMEID_WITH_TYPE TargetVolumeId,
+                   IN PFILE_OBJECTID_BUFFER TargetObjectId, IN PFILE_TRACKING_INFORMATION TrackingInfo)
 
 /*++
 
@@ -6274,42 +6041,32 @@ Arguments:
 {
     ULONG ObjectInformationLength = 0;
 
-    TrackingBuffer->TrackingInformation.DestinationFile = (HANDLE) NULL;
+    TrackingBuffer->TrackingInformation.DestinationFile = (HANDLE)NULL;
 
-    RtlZeroMemory( &TrackingBuffer->TrackingInformation.ObjectInformation[ ObjectInformationLength ],
-                   sizeof(TargetVolumeId->Type) );
+    RtlZeroMemory(&TrackingBuffer->TrackingInformation.ObjectInformation[ObjectInformationLength],
+                  sizeof(TargetVolumeId->Type));
 
-    RtlCopyMemory( &TrackingBuffer->TrackingInformation.ObjectInformation[ ObjectInformationLength ],
-                   &TargetVolumeId->Type,
-                   sizeof(TargetVolumeId->Type) );
+    RtlCopyMemory(&TrackingBuffer->TrackingInformation.ObjectInformation[ObjectInformationLength],
+                  &TargetVolumeId->Type, sizeof(TargetVolumeId->Type));
     ObjectInformationLength += sizeof(TargetVolumeId->Type);
 
-    RtlCopyMemory( &TrackingBuffer->TrackingInformation.ObjectInformation[ ObjectInformationLength ],
-                   &TargetVolumeId->VolumeId[0],
-                   sizeof(TargetVolumeId->VolumeId) );
+    RtlCopyMemory(&TrackingBuffer->TrackingInformation.ObjectInformation[ObjectInformationLength],
+                  &TargetVolumeId->VolumeId[0], sizeof(TargetVolumeId->VolumeId));
     ObjectInformationLength += sizeof(TargetVolumeId->VolumeId);
 
-    RtlCopyMemory( &TrackingBuffer->TrackingInformation.ObjectInformation[ ObjectInformationLength ],
-                   &TargetObjectId->ObjectId[0],
-                   sizeof(TargetObjectId->ObjectId) );
+    RtlCopyMemory(&TrackingBuffer->TrackingInformation.ObjectInformation[ObjectInformationLength],
+                  &TargetObjectId->ObjectId[0], sizeof(TargetObjectId->ObjectId));
     ObjectInformationLength += sizeof(TargetObjectId->ObjectId);
 
-    RtlCopyMemory( &TrackingBuffer->TrackingInformation.ObjectInformation[ ObjectInformationLength ],
-                   &TrackingInfo->ObjectInformation[0],
-                   TrackingInfo->ObjectInformationLength );
+    RtlCopyMemory(&TrackingBuffer->TrackingInformation.ObjectInformation[ObjectInformationLength],
+                  &TrackingInfo->ObjectInformation[0], TrackingInfo->ObjectInformationLength);
     ObjectInformationLength += TrackingInfo->ObjectInformationLength;
 
     TrackingBuffer->TrackingInformation.ObjectInformationLength = ObjectInformationLength;
-
 }
 
-VOID
-IopUnMarshalIds(
-    IN  FILE_TRACKING_INFORMATION * TrackingInformation,
-    OUT FILE_VOLUMEID_WITH_TYPE * TargetVolumeId,
-    OUT GUID * TargetObjectId,
-    OUT GUID * TargetMachineId
-    )
+VOID IopUnMarshalIds(IN FILE_TRACKING_INFORMATION *TrackingInformation, OUT FILE_VOLUMEID_WITH_TYPE *TargetVolumeId,
+                     OUT GUID *TargetObjectId, OUT GUID *TargetMachineId)
 
 /*++
 
@@ -6333,37 +6090,32 @@ Arguments:
 {
     ULONG ObjectInformationLength = 0;
 
-    RtlCopyMemory( &TargetVolumeId->Type,
-                   &TrackingInformation->ObjectInformation[ ObjectInformationLength ],
-                   sizeof(TargetVolumeId->Type) );
+    RtlCopyMemory(&TargetVolumeId->Type, &TrackingInformation->ObjectInformation[ObjectInformationLength],
+                  sizeof(TargetVolumeId->Type));
     ObjectInformationLength += sizeof(TargetVolumeId->Type);
 
 
-    RtlCopyMemory( &TargetVolumeId->VolumeId[0],
-                   &TrackingInformation->ObjectInformation[ ObjectInformationLength ],
-                   sizeof(TargetVolumeId->VolumeId) );
+    RtlCopyMemory(&TargetVolumeId->VolumeId[0], &TrackingInformation->ObjectInformation[ObjectInformationLength],
+                  sizeof(TargetVolumeId->VolumeId));
     ObjectInformationLength += sizeof(TargetVolumeId->VolumeId);
 
-    RtlCopyMemory( TargetObjectId,
-                   &TrackingInformation->ObjectInformation[ ObjectInformationLength ],
-                   sizeof(*TargetObjectId) );
+    RtlCopyMemory(TargetObjectId, &TrackingInformation->ObjectInformation[ObjectInformationLength],
+                  sizeof(*TargetObjectId));
     ObjectInformationLength += sizeof(*TargetObjectId);
 
-    if( TrackingInformation->ObjectInformationLength > ObjectInformationLength ) {
-        RtlCopyMemory( TargetMachineId,
-                       &TrackingInformation->ObjectInformation[ ObjectInformationLength ],
-                       min( sizeof(*TargetMachineId), TrackingInformation->ObjectInformationLength - ObjectInformationLength) );
+    if (TrackingInformation->ObjectInformationLength > ObjectInformationLength)
+    {
+        RtlCopyMemory(
+            TargetMachineId, &TrackingInformation->ObjectInformation[ObjectInformationLength],
+            min(sizeof(*TargetMachineId), TrackingInformation->ObjectInformationLength - ObjectInformationLength));
         // ObjectInformationLength += sizeof(GUID);
     }
 }
 
-
+
 NTSTATUS
-IopSendMessageToTrackService(
-    IN PFILE_VOLUMEID_WITH_TYPE SourceVolumeId,
-    IN PFILE_OBJECTID_BUFFER SourceObjectId,
-    IN PFILE_TRACKING_INFORMATION TargetObjectInformation
-    )
+IopSendMessageToTrackService(IN PFILE_VOLUMEID_WITH_TYPE SourceVolumeId, IN PFILE_OBJECTID_BUFFER SourceObjectId,
+                             IN PFILE_TRACKING_INFORMATION TargetObjectInformation)
 
 /*++
 
@@ -6389,23 +6141,25 @@ Return Value:
 --*/
 
 {
-    typedef struct _LINK_TRACKING_MESSAGE {
+    typedef struct _LINK_TRACKING_MESSAGE
+    {
         NTSTATUS Status;
         ULONG Request;
-        FILE_VOLUMEID_WITH_TYPE SourceVolumeId;    // src vol type & id
-        FILE_OBJECTID_BUFFER     SourceObjectId;    // src obj id & birth info
-        FILE_VOLUMEID_WITH_TYPE TargetVolumeId;    // tgt vol type & id
-        GUID TargetObjectId;                        // tgt obj id
+        FILE_VOLUMEID_WITH_TYPE SourceVolumeId; // src vol type & id
+        FILE_OBJECTID_BUFFER SourceObjectId;    // src obj id & birth info
+        FILE_VOLUMEID_WITH_TYPE TargetVolumeId; // tgt vol type & id
+        GUID TargetObjectId;                    // tgt obj id
         GUID TargetMachineId;
     } LINK_TRACKING_MESSAGE, *PLINK_TRACKING_MESSAGE;
 
-    typedef struct _LINK_TRACKING_RESPONSE {
+    typedef struct _LINK_TRACKING_RESPONSE
+    {
         NTSTATUS Status;
     } LINK_TRACKING_RESPONSE, *PLINK_TRACKING_RESPONSE;
 
     PPORT_MESSAGE portMessage;
     PPORT_MESSAGE portReplyMessage;
-    CHAR portReply[ 256 ];
+    CHAR portReply[256];
     PLINK_TRACKING_MESSAGE requestMessage;
     PLINK_TRACKING_RESPONSE replyMessage;
     LINK_TRACKING_PACKET ltp;
@@ -6423,7 +6177,8 @@ Return Value:
 
 retry:
 
-    if (!IopLinkTrackingServiceObject) {
+    if (!IopLinkTrackingServiceObject)
+    {
 
         //
         // The port has not yet been opened.  Check to see whether or not
@@ -6431,65 +6186,62 @@ retry:
         // will be no port if the service is not running.
         //
 
-        if (!KeReadStateEvent( IopLinkTrackingServiceEvent )) {
+        if (!KeReadStateEvent(IopLinkTrackingServiceEvent))
+        {
             return STATUS_NO_TRACKING_SERVICE;
         }
 
-                for (;; ) {
-                        status = KeWaitForSingleObject(&IopLinkTrackingPortObject,
-                                                                                  Executive,
-                                                                                  PreviousMode,
-                                                                                  FALSE,
-                                                                                  (PLARGE_INTEGER) NULL );
+        for (;;)
+        {
+            status =
+                KeWaitForSingleObject(&IopLinkTrackingPortObject, Executive, PreviousMode, FALSE, (PLARGE_INTEGER)NULL);
 
-                        if ((status == STATUS_USER_APC) || (status == STATUS_ALERTED)) {
-                                return status;
-                        }
+            if ((status == STATUS_USER_APC) || (status == STATUS_ALERTED))
+            {
+                return status;
+            }
 
-                        //
-                        // There is no referenced object pointer to the
-                        // link tracking port so open it.
-                        //
-                        if (!IopLinkTrackingServiceObject)  {
-                                ExInitializeWorkItem(
-                                        &IopLinkTrackingPacket.WorkQueueItem,
-                                        IopConnectLinkTrackingPort,
-                                        &IopLinkTrackingPacket);
-                                (VOID)KeResetEvent(&IopLinkTrackingPacket.Event);
-                                ExQueueWorkItem( &IopLinkTrackingPacket.WorkQueueItem,
-                                                                        DelayedWorkQueue );
-                                status = KeWaitForSingleObject(
-                                                        &IopLinkTrackingPacket.Event,
-                                                        Executive,
-                                                        PreviousMode,
-                                                        FALSE,
-                                                        (PLARGE_INTEGER) NULL );
+            //
+            // There is no referenced object pointer to the
+            // link tracking port so open it.
+            //
+            if (!IopLinkTrackingServiceObject)
+            {
+                ExInitializeWorkItem(&IopLinkTrackingPacket.WorkQueueItem, IopConnectLinkTrackingPort,
+                                     &IopLinkTrackingPacket);
+                (VOID) KeResetEvent(&IopLinkTrackingPacket.Event);
+                ExQueueWorkItem(&IopLinkTrackingPacket.WorkQueueItem, DelayedWorkQueue);
+                status = KeWaitForSingleObject(&IopLinkTrackingPacket.Event, Executive, PreviousMode, FALSE,
+                                               (PLARGE_INTEGER)NULL);
 
-                                if ((status == STATUS_USER_APC) || (status == STATUS_ALERTED)) {
-                                        NOTHING;
-                                } else if (!NT_SUCCESS( IopLinkTrackingPacket.FinalStatus )) {
-                                        status = IopLinkTrackingPacket.FinalStatus;
-                                }
+                if ((status == STATUS_USER_APC) || (status == STATUS_ALERTED))
+                {
+                    NOTHING;
+                }
+                else if (!NT_SUCCESS(IopLinkTrackingPacket.FinalStatus))
+                {
+                    status = IopLinkTrackingPacket.FinalStatus;
+                }
 
-                                KeSetEvent(&IopLinkTrackingPortObject,
-                                                0,
-                                                FALSE);
-                                if (status == STATUS_SUCCESS) {
-                                                break;
-                                } else {
-                                        return status;
-                                }
+                KeSetEvent(&IopLinkTrackingPortObject, 0, FALSE);
+                if (status == STATUS_SUCCESS)
+                {
+                    break;
+                }
+                else
+                {
+                    return status;
+                }
+            }
+            else
+            {
+                //
+                // The connection is established.
+                //
 
-                        } else {
-                                //
-                                // The connection is established.
-                                //
-
-                                KeSetEvent(&IopLinkTrackingPortObject,
-                                                0,
-                                                FALSE);
-                                break;
-                        }
+                KeSetEvent(&IopLinkTrackingPortObject, 0, FALSE);
+                break;
+            }
         }
     }
 
@@ -6497,76 +6249,60 @@ retry:
     // Form a message from the input parameters and send it to the caller.
     //
 
-    portMessage = ExAllocatePool( PagedPool,
-                                  sizeof( LINK_TRACKING_MESSAGE ) +
-                                  sizeof( PORT_MESSAGE ) );
-    if (!portMessage) {
+    portMessage = ExAllocatePool(PagedPool, sizeof(LINK_TRACKING_MESSAGE) + sizeof(PORT_MESSAGE));
+    if (!portMessage)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    requestMessage = (PLINK_TRACKING_MESSAGE) (portMessage + 1);
-    RtlZeroMemory( requestMessage, sizeof(*requestMessage) );
+    requestMessage = (PLINK_TRACKING_MESSAGE)(portMessage + 1);
+    RtlZeroMemory(requestMessage, sizeof(*requestMessage));
 
     requestMessage->Status = STATUS_SUCCESS;
     requestMessage->Request = 0;
 
-    RtlCopyMemory( &requestMessage->SourceVolumeId,
-                   SourceVolumeId,
-                   sizeof( FILE_VOLUMEID_WITH_TYPE ) );
+    RtlCopyMemory(&requestMessage->SourceVolumeId, SourceVolumeId, sizeof(FILE_VOLUMEID_WITH_TYPE));
 
-    RtlCopyMemory( &requestMessage->SourceObjectId,
-                   SourceObjectId,
-                   sizeof( FILE_OBJECTID_BUFFER ) );
+    RtlCopyMemory(&requestMessage->SourceObjectId, SourceObjectId, sizeof(FILE_OBJECTID_BUFFER));
 
-    IopUnMarshalIds(  TargetObjectInformation,
-                   &requestMessage->TargetVolumeId,
-                   &requestMessage->TargetObjectId,
-                   &requestMessage->TargetMachineId);
+    IopUnMarshalIds(TargetObjectInformation, &requestMessage->TargetVolumeId, &requestMessage->TargetObjectId,
+                    &requestMessage->TargetMachineId);
 
-    portMessage->u1.s1.TotalLength = (USHORT) (sizeof( PORT_MESSAGE ) +
-                                              sizeof( LINK_TRACKING_MESSAGE ));
-    portMessage->u1.s1.DataLength = (USHORT) sizeof( LINK_TRACKING_MESSAGE );
+    portMessage->u1.s1.TotalLength = (USHORT)(sizeof(PORT_MESSAGE) + sizeof(LINK_TRACKING_MESSAGE));
+    portMessage->u1.s1.DataLength = (USHORT)sizeof(LINK_TRACKING_MESSAGE);
     portMessage->u2.ZeroInit = 0;
 
-    status = LpcRequestWaitReplyPort( IopLinkTrackingServiceObject,
-                                      portMessage,
-                                      (PPORT_MESSAGE) &portReply[0] );
-    if (!NT_SUCCESS( status )) {
-        if (status == STATUS_PORT_DISCONNECTED) {
-                        status = KeWaitForSingleObject(&IopLinkTrackingPortObject,
-                                                                                                Executive,
-                                                                                                PreviousMode,
-                                                                                                FALSE,
-                                                                                                (PLARGE_INTEGER) NULL );
-            ObDereferenceObject( IopLinkTrackingServiceObject );
-                        IopLinkTrackingServiceObject = NULL;
-                        KeSetEvent(&IopLinkTrackingPortObject,
-                                0,
-                                FALSE);
-            if (!loopCount) {
+    status = LpcRequestWaitReplyPort(IopLinkTrackingServiceObject, portMessage, (PPORT_MESSAGE)&portReply[0]);
+    if (!NT_SUCCESS(status))
+    {
+        if (status == STATUS_PORT_DISCONNECTED)
+        {
+            status =
+                KeWaitForSingleObject(&IopLinkTrackingPortObject, Executive, PreviousMode, FALSE, (PLARGE_INTEGER)NULL);
+            ObDereferenceObject(IopLinkTrackingServiceObject);
+            IopLinkTrackingServiceObject = NULL;
+            KeSetEvent(&IopLinkTrackingPortObject, 0, FALSE);
+            if (!loopCount)
+            {
                 loopCount += 1;
                 goto retry;
             }
         }
     }
 
-    if (NT_SUCCESS( status )) {
-        portReplyMessage = (PPORT_MESSAGE) &portReply[0];
-        replyMessage = (PLINK_TRACKING_RESPONSE) (portReplyMessage + 1);
+    if (NT_SUCCESS(status))
+    {
+        portReplyMessage = (PPORT_MESSAGE)&portReply[0];
+        replyMessage = (PLINK_TRACKING_RESPONSE)(portReplyMessage + 1);
         status = replyMessage->Status;
     }
 
     return status;
 }
-
+
 NTSTATUS
-IopSetEaOrQuotaInformationFile(
-    IN HANDLE FileHandle,
-    OUT PIO_STATUS_BLOCK IoStatusBlock,
-    IN PVOID Buffer,
-    IN ULONG Length,
-    IN BOOLEAN SetEa
-    )
+IopSetEaOrQuotaInformationFile(IN HANDLE FileHandle, OUT PIO_STATUS_BLOCK IoStatusBlock, IN PVOID Buffer,
+                               IN ULONG Length, IN BOOLEAN SetEa)
 
 /*++
 
@@ -6601,7 +6337,7 @@ Return Value:
     NTSTATUS status;
     PFILE_OBJECT fileObject;
     PDEVICE_OBJECT deviceObject;
-    PKEVENT event = (PKEVENT) NULL;
+    PKEVENT event = (PKEVENT)NULL;
     KPROCESSOR_MODE requestorMode;
     PIO_STACK_LOCATION irpSp;
     IO_STATUS_BLOCK localIoStatus;
@@ -6614,10 +6350,11 @@ Return Value:
     // Get the previous mode;  i.e., the mode of the caller.
     //
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
     requestorMode = KeGetPreviousModeByThread(&CurrentThread->Tcb);
 
-    if (requestorMode != KernelMode) {
+    if (requestorMode != KernelMode)
+    {
 
         //
         // The caller's access mode is user, so probe each of the arguments
@@ -6627,21 +6364,23 @@ Return Value:
         // dispatcher.
         //
 
-        try {
+        try
+        {
 
             //
             // The IoStatusBlock parameter must be writeable by the caller.
             //
 
-            ProbeForWriteIoStatus( IoStatusBlock);
+            ProbeForWriteIoStatus(IoStatusBlock);
 
             //
             // The Buffer parameter must be readable by the caller.
             //
 
-            ProbeForRead( Buffer, Length, sizeof( ULONG ) );
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+            ProbeForRead(Buffer, Length, sizeof(ULONG));
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // An exception was incurred while probing the caller's parameters.
@@ -6659,13 +6398,10 @@ Return Value:
     // access to the file, then it will fail.
     //
 
-    status = ObReferenceObjectByHandle( FileHandle,
-                                        SetEa ? FILE_WRITE_EA : FILE_WRITE_DATA,
-                                        IoFileObjectType,
-                                        requestorMode,
-                                        (PVOID *) &fileObject,
-                                        NULL );
-    if (!NT_SUCCESS( status )) {
+    status = ObReferenceObjectByHandle(FileHandle, SetEa ? FILE_WRITE_EA : FILE_WRITE_DATA, IoFileObjectType,
+                                       requestorMode, (PVOID *)&fileObject, NULL);
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
@@ -6676,22 +6412,25 @@ Return Value:
     // operation, then allocate and initialize the local event.
     //
 
-    if (fileObject->Flags & FO_SYNCHRONOUS_IO) {
+    if (fileObject->Flags & FO_SYNCHRONOUS_IO)
+    {
 
         BOOLEAN interrupted;
 
-        if (!IopAcquireFastLock( fileObject )) {
-            status = IopAcquireFileObjectLock( fileObject,
-                                               requestorMode,
-                                               (BOOLEAN) ((fileObject->Flags & FO_ALERTABLE_IO) != 0),
-                                               &interrupted );
-            if (interrupted) {
-                ObDereferenceObject( fileObject );
+        if (!IopAcquireFastLock(fileObject))
+        {
+            status = IopAcquireFileObjectLock(fileObject, requestorMode,
+                                              (BOOLEAN)((fileObject->Flags & FO_ALERTABLE_IO) != 0), &interrupted);
+            if (interrupted)
+            {
+                ObDereferenceObject(fileObject);
                 return status;
             }
         }
         synchronousIo = TRUE;
-    } else {
+    }
+    else
+    {
 
         //
         // This is a synchronous API being invoked for a file that is opened
@@ -6700,12 +6439,13 @@ Return Value:
         // to the caller.  A local event is used to do this.
         //
 
-        event = ExAllocatePool( NonPagedPool, sizeof( KEVENT ) );
-        if (!event) {
-            ObDereferenceObject( fileObject );
+        event = ExAllocatePool(NonPagedPool, sizeof(KEVENT));
+        if (!event)
+        {
+            ObDereferenceObject(fileObject);
             return STATUS_INSUFFICIENT_RESOURCES;
         }
-        KeInitializeEvent( event, SynchronizationEvent, FALSE );
+        KeInitializeEvent(event, SynchronizationEvent, FALSE);
         synchronousIo = FALSE;
     }
 
@@ -6713,32 +6453,34 @@ Return Value:
     // Set the file object to the Not-Signaled state.
     //
 
-    KeClearEvent( &fileObject->Event );
+    KeClearEvent(&fileObject->Event);
 
     //
     // Get the address of the target device object.
     //
 
-    deviceObject = IoGetRelatedDeviceObject( fileObject );
+    deviceObject = IoGetRelatedDeviceObject(fileObject);
 
     //
     // Allocate and initialize the I/O Request Packet (IRP) for this operation.
     // The allocation is performed with an exception handler in case the
     // caller does not have enough quota to allocate the packet.
 
-    irp = IoAllocateIrp( deviceObject->StackSize, TRUE );
-    if (!irp) {
+    irp = IoAllocateIrp(deviceObject->StackSize, TRUE);
+    if (!irp)
+    {
 
         //
         // An IRP could not be allocated.  Cleanup and return an appropriate
         // error status code.
         //
 
-        if (!(fileObject->Flags & FO_SYNCHRONOUS_IO)) {
-            ExFreePool( event );
+        if (!(fileObject->Flags & FO_SYNCHRONOUS_IO))
+        {
+            ExFreePool(event);
         }
 
-        IopAllocateIrpCleanup( fileObject, (PKEVENT) NULL );
+        IopAllocateIrpCleanup(fileObject, (PKEVENT)NULL);
 
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -6750,22 +6492,25 @@ Return Value:
     // Fill in the service independent parameters in the IRP.
     //
 
-    if (synchronousIo) {
-        irp->UserEvent = (PKEVENT) NULL;
+    if (synchronousIo)
+    {
+        irp->UserEvent = (PKEVENT)NULL;
         irp->UserIosb = IoStatusBlock;
-    } else {
+    }
+    else
+    {
         irp->UserEvent = event;
         irp->UserIosb = &localIoStatus;
         irp->Flags = IRP_SYNCHRONOUS_API;
     }
-    irp->Overlay.AsynchronousParameters.UserApcRoutine = (PIO_APC_ROUTINE) NULL;
+    irp->Overlay.AsynchronousParameters.UserApcRoutine = (PIO_APC_ROUTINE)NULL;
 
     //
     // Get a pointer to the stack location for the first driver.  This will be
     // used to pass the original function codes and parameters.
     //
 
-    irpSp = IoGetNextIrpStackLocation( irp );
+    irpSp = IoGetNextIrpStackLocation(irp);
     irpSp->MajorFunction = SetEa ? IRP_MJ_SET_EA : IRP_MJ_SET_QUOTA;
     irpSp->FileObject = fileObject;
 
@@ -6781,7 +6526,8 @@ Return Value:
     // checking and buffering if any is required.
     //
 
-    if (deviceObject->Flags & DO_BUFFERED_IO) {
+    if (deviceObject->Flags & DO_BUFFERED_IO)
+    {
 
         PVOID systemBuffer;
         ULONG errorOffset;
@@ -6795,7 +6541,8 @@ Return Value:
         // cleanup if the operation fails.
         //
 
-        try {
+        try
+        {
 
             //
             // Allocate the intermediary system buffer and charge the caller
@@ -6803,29 +6550,30 @@ Return Value:
             // system buffer and check to ensure that it is valid.
             //
 
-            systemBuffer = ExAllocatePoolWithQuota( NonPagedPool, Length );
+            systemBuffer = ExAllocatePoolWithQuota(NonPagedPool, Length);
 
             irp->AssociatedIrp.SystemBuffer = systemBuffer;
 
-            RtlCopyMemory( systemBuffer, Buffer, Length );
+            RtlCopyMemory(systemBuffer, Buffer, Length);
 
-            if (SetEa) {
-                status = IoCheckEaBufferValidity( systemBuffer,
-                                                  Length,
-                                                  &errorOffset );
-            } else {
-                status = IoCheckQuotaBufferValidity( systemBuffer,
-                                                     Length,
-                                                     &errorOffset );
+            if (SetEa)
+            {
+                status = IoCheckEaBufferValidity(systemBuffer, Length, &errorOffset);
+            }
+            else
+            {
+                status = IoCheckQuotaBufferValidity(systemBuffer, Length, &errorOffset);
             }
 
-            if (!NT_SUCCESS( status )) {
+            if (!NT_SUCCESS(status))
+            {
                 IoStatusBlock->Status = status;
                 IoStatusBlock->Information = errorOffset;
-                ExRaiseStatus( status );
+                ExRaiseStatus(status);
             }
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // An exception was incurred while allocating the buffer, copying
@@ -6834,13 +6582,9 @@ Return Value:
             // code.
             //
 
-            IopExceptionCleanup( fileObject,
-                                 irp,
-                                 (PKEVENT) NULL,
-                                 event );
+            IopExceptionCleanup(fileObject, irp, (PKEVENT)NULL, event);
 
             return GetExceptionCode();
-
         }
 
         //
@@ -6849,8 +6593,9 @@ Return Value:
         //
 
         irp->Flags |= IRP_BUFFERED_IO | IRP_DEALLOCATE_BUFFER;
-
-    } else if (deviceObject->Flags & DO_DIRECT_IO) {
+    }
+    else if (deviceObject->Flags & DO_DIRECT_IO)
+    {
 
         PMDL mdl;
 
@@ -6861,9 +6606,10 @@ Return Value:
         // operation fails.
         //
 
-        mdl = (PMDL) NULL;
+        mdl = (PMDL)NULL;
 
-        try {
+        try
+        {
 
             //
             // Allocate an MDL, charging quota for it, and hang it off of the
@@ -6872,13 +6618,15 @@ Return Value:
             // pages.
             //
 
-            mdl = IoAllocateMdl( Buffer, Length, FALSE, TRUE, irp );
-            if (!mdl) {
-                ExRaiseStatus( STATUS_INSUFFICIENT_RESOURCES );
+            mdl = IoAllocateMdl(Buffer, Length, FALSE, TRUE, irp);
+            if (!mdl)
+            {
+                ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
             }
-            IopProbeAndLockPages( mdl, requestorMode, IoReadAccess, deviceObject, irpSp->MajorFunction);
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+            IopProbeAndLockPages(mdl, requestorMode, IoReadAccess, deviceObject, irpSp->MajorFunction);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // An exception was incurred while either probing the caller's
@@ -6886,16 +6634,13 @@ Return Value:
             // clean everything up, and return an appropriate error status code.
             //
 
-            IopExceptionCleanup( fileObject,
-                                 irp,
-                                 (PKEVENT) NULL,
-                                 event );
+            IopExceptionCleanup(fileObject, irp, (PKEVENT)NULL, event);
 
             return GetExceptionCode();
-
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // Pass the address of the user's buffer so the driver has access to
@@ -6903,7 +6648,6 @@ Return Value:
         //
 
         irp->UserBuffer = Buffer;
-
     }
 
     //
@@ -6911,9 +6655,12 @@ Return Value:
     // IRP.
     //
 
-    if (SetEa) {
+    if (SetEa)
+    {
         irpSp->Parameters.SetEa.Length = Length;
-    } else {
+    }
+    else
+    {
         irpSp->Parameters.SetQuota.Length = Length;
     }
 
@@ -6922,13 +6669,8 @@ Return Value:
     // I/O completion.
     //
 
-    status = IopSynchronousServiceTail( deviceObject,
-                                        irp,
-                                        fileObject,
-                                        FALSE,
-                                        requestorMode,
-                                        synchronousIo,
-                                        OtherTransfer );
+    status =
+        IopSynchronousServiceTail(deviceObject, irp, fileObject, FALSE, requestorMode, synchronousIo, OtherTransfer);
 
     //
     // If the file for this operation was not opened for synchronous I/O, then
@@ -6938,25 +6680,18 @@ Return Value:
     // operation now.
     //
 
-    if (!synchronousIo) {
+    if (!synchronousIo)
+    {
 
-        status = IopSynchronousApiServiceTail( status,
-                                               event,
-                                               irp,
-                                               requestorMode,
-                                               &localIoStatus,
-                                               IoStatusBlock );
+        status = IopSynchronousApiServiceTail(status, event, irp, requestorMode, &localIoStatus, IoStatusBlock);
     }
 
     return status;
 }
-
+
 NTSTATUS
-IopSetRemoteLink(
-    IN PFILE_OBJECT FileObject,
-    IN PFILE_OBJECT DestinationFileObject OPTIONAL,
-    IN PFILE_TRACKING_INFORMATION FileInformation OPTIONAL
-    )
+IopSetRemoteLink(IN PFILE_OBJECT FileObject, IN PFILE_OBJECT DestinationFileObject OPTIONAL,
+                 IN PFILE_TRACKING_INFORMATION FileInformation OPTIONAL)
 
 /*++
 
@@ -6999,27 +6734,19 @@ Return Value:
     // request.
     //
 
-    KeInitializeEvent( &event,
-                       NotificationEvent,
-                       FALSE );
+    KeInitializeEvent(&event, NotificationEvent, FALSE);
 
     //
     // Build an I/O Request Packet to be sent to the file system driver to get
     // the volume ID.
     //
 
-    deviceObject = IoGetRelatedDeviceObject( FileObject );
+    deviceObject = IoGetRelatedDeviceObject(FileObject);
 
-    irp = IoBuildDeviceIoControlRequest( FSCTL_LMR_SET_LINK_TRACKING_INFORMATION,
-                                         deviceObject,
-                                         NULL,
-                                         0,
-                                         NULL,
-                                         0,
-                                         FALSE,
-                                         &event,
-                                         &ioStatus );
-    if (!irp) {
+    irp = IoBuildDeviceIoControlRequest(FSCTL_LMR_SET_LINK_TRACKING_INFORMATION, deviceObject, NULL, 0, NULL, 0, FALSE,
+                                        &event, &ioStatus);
+    if (!irp)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -7027,37 +6754,39 @@ Return Value:
     // Initialize the remote link buffer according to the input information.
     //
 
-    if (DestinationFileObject) {
+    if (DestinationFileObject)
+    {
 
         // The FileObject and DestinationFileObject are on the same machine
         remoteBuffer.TrackingInformation.TargetFileObject = DestinationFileObject;
 
-        if (FileInformation) {
+        if (FileInformation)
+        {
             // Copy the ObjectInformation from the FileInformation buffer into
             // the TargetLinkTrackingInformationBuffer.  Set 'length' to include
             // this buffer.
 
-            remoteBuffer.TrackingInformation.TargetLinkTrackingInformationLength
-                = length = FileInformation->ObjectInformationLength;
-            RtlCopyMemory( &remoteBuffer.TrackingInformation.TargetLinkTrackingInformationBuffer,
-                           FileInformation->ObjectInformation,
-                           length );
-        } else {
+            remoteBuffer.TrackingInformation.TargetLinkTrackingInformationLength = length =
+                FileInformation->ObjectInformationLength;
+            RtlCopyMemory(&remoteBuffer.TrackingInformation.TargetLinkTrackingInformationBuffer,
+                          FileInformation->ObjectInformation, length);
+        }
+        else
+        {
             // We don't have any extra FileInformation.
             remoteBuffer.TrackingInformation.TargetLinkTrackingInformationLength = 0;
         }
 
         // Increment the length to include the size of the non-optional fields in
         // REMOTE_LINK_TRACKING_INFORMATION.
-        length += sizeof( PFILE_OBJECT ) + sizeof( ULONG );
-
-    } else {
+        length += sizeof(PFILE_OBJECT) + sizeof(ULONG);
+    }
+    else
+    {
         // There's no DestinationFileObject, so all the necessary information is in the
         // FileInformation structure.
-        length = FileInformation->ObjectInformationLength + sizeof( HANDLE ) + sizeof( ULONG );
-        RtlCopyMemory( &remoteBuffer.TrackingInformation,
-                       FileInformation,
-                       length );
+        length = FileInformation->ObjectInformationLength + sizeof(HANDLE) + sizeof(ULONG);
+        RtlCopyMemory(&remoteBuffer.TrackingInformation, FileInformation, length);
         remoteBuffer.TrackingInformation.TargetFileObject = NULL;
     }
 
@@ -7070,7 +6799,7 @@ Return Value:
     irp->AssociatedIrp.SystemBuffer = &remoteBuffer;
     irp->Tail.Overlay.OriginalFileObject = FileObject;
 
-    irpSp = IoGetNextIrpStackLocation( irp );
+    irpSp = IoGetNextIrpStackLocation(irp);
     irpSp->FileObject = FileObject;
     irpSp->MajorFunction = IRP_MJ_FILE_SYSTEM_CONTROL;
     irpSp->MinorFunction = IRP_MN_KERNEL_CALL;
@@ -7081,34 +6810,28 @@ Return Value:
     // not get deleted.
     //
 
-    ObReferenceObject( FileObject );
+    ObReferenceObject(FileObject);
 
     //
     // Call the driver to get the request.
     //
 
-    status = IoCallDriver( deviceObject, irp );
+    status = IoCallDriver(deviceObject, irp);
 
     //
     // Synchronize completion of the request.
     //
 
-    if (status == STATUS_PENDING) {
-        status = KeWaitForSingleObject( &event,
-                                        Executive,
-                                        KernelMode,
-                                        FALSE,
-                                        (PLARGE_INTEGER) NULL );
+    if (status == STATUS_PENDING)
+    {
+        status = KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
         status = ioStatus.Status;
     }
 
     return status;
 }
-
-VOID
-IopStartApcHardError(
-    IN PVOID StartContext
-    )
+
+VOID IopStartApcHardError(IN PVOID StartContext)
 
 /*++
 
@@ -7137,20 +6860,15 @@ Return Value:
     //  can't do this then just complete the Irp with the error.
     //
 
-    status = PsCreateSystemThread( &thread,
-                                   0,
-                                   (POBJECT_ATTRIBUTES)NULL,
-                                   (HANDLE)0,
-                                   (PCLIENT_ID)NULL,
-                                   IopApcHardError,
-                                   StartContext );
+    status = PsCreateSystemThread(&thread, 0, (POBJECT_ATTRIBUTES)NULL, (HANDLE)0, (PCLIENT_ID)NULL, IopApcHardError,
+                                  StartContext);
 
-    if ( !NT_SUCCESS( status ) ) {
+    if (!NT_SUCCESS(status))
+    {
 
 
-        IoCompleteRequest( ((PIOP_APC_HARD_ERROR_PACKET)StartContext)->Irp,
-                           IO_DISK_INCREMENT );
-        ExFreePool( StartContext );
+        IoCompleteRequest(((PIOP_APC_HARD_ERROR_PACKET)StartContext)->Irp, IO_DISK_INCREMENT);
+        ExFreePool(StartContext);
         return;
     }
 
@@ -7160,16 +6878,11 @@ Return Value:
 
     ZwClose(thread);
 }
-
+
 NTSTATUS
-IopSynchronousApiServiceTail(
-    IN NTSTATUS ReturnedStatus,
-    IN PKEVENT Event,
-    IN PIRP Irp,
-    IN KPROCESSOR_MODE RequestorMode,
-    IN PIO_STATUS_BLOCK LocalIoStatus,
-    OUT PIO_STATUS_BLOCK IoStatusBlock
-    )
+IopSynchronousApiServiceTail(IN NTSTATUS ReturnedStatus, IN PKEVENT Event, IN PIRP Irp,
+                             IN KPROCESSOR_MODE RequestorMode, IN PIO_STATUS_BLOCK LocalIoStatus,
+                             OUT PIO_STATUS_BLOCK IoStatusBlock)
 
 /*++
 
@@ -7219,15 +6932,13 @@ Return Value:
 
     status = ReturnedStatus;
 
-    if (status == STATUS_PENDING) {
+    if (status == STATUS_PENDING)
+    {
 
-        status = KeWaitForSingleObject( Event,
-                                        Executive,
-                                        RequestorMode,
-                                        FALSE,
-                                        (PLARGE_INTEGER) NULL );
+        status = KeWaitForSingleObject(Event, Executive, RequestorMode, FALSE, (PLARGE_INTEGER)NULL);
 
-        if (status == STATUS_USER_APC) {
+        if (status == STATUS_USER_APC)
+        {
 
             //
             // The wait request has ended either because the thread was
@@ -7238,18 +6949,19 @@ Return Value:
             // be around to set to the Signaled state.
             //
 
-            IopCancelAlertedRequest( Event, Irp );
-
+            IopCancelAlertedRequest(Event, Irp);
         }
 
         status = LocalIoStatus->Status;
     }
 
-    try {
+    try
+    {
 
         *IoStatusBlock = *LocalIoStatus;
-
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         //
         // An exception occurred attempting to write the caller's I/O
@@ -7260,21 +6972,15 @@ Return Value:
         status = GetExceptionCode();
     }
 
-    ExFreePool( Event );
+    ExFreePool(Event);
 
     return status;
 }
-
+
 NTSTATUS
-IopSynchronousServiceTail(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN PFILE_OBJECT FileObject,
-    IN BOOLEAN DeferredIoCompletion,
-    IN KPROCESSOR_MODE RequestorMode,
-    IN BOOLEAN SynchronousIo,
-    IN TRANSFER_TYPE TransferType
-    )
+IopSynchronousServiceTail(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PFILE_OBJECT FileObject,
+                          IN BOOLEAN DeferredIoCompletion, IN KPROCESSOR_MODE RequestorMode, IN BOOLEAN SynchronousIo,
+                          IN TRANSFER_TYPE TransferType)
 
 /*++
 
@@ -7315,13 +7021,14 @@ Return Value:
     // Insert the packet at the head of the IRP list for the thread.
     //
 
-    IopQueueThreadIrp( Irp );
+    IopQueueThreadIrp(Irp);
 
     //
     // Update the operation count statistic for the current process.
     //
 
-    switch( TransferType ) {
+    switch (TransferType)
+    {
 
     case ReadTransfer:
         IopUpdateReadOperationCount();
@@ -7340,7 +7047,7 @@ Return Value:
     // Now simply invoke the driver at its dispatch entry with the IRP.
     //
 
-    status = IoCallDriver( DeviceObject, Irp );
+    status = IoCallDriver(DeviceObject, Irp);
 
     //
     // If deferred I/O completion is possible, check for pending returned
@@ -7348,9 +7055,11 @@ Return Value:
     // packet has not actually been completed yet, so complete it here.
     //
 
-    if (DeferredIoCompletion) {
+    if (DeferredIoCompletion)
+    {
 
-        if (status != STATUS_PENDING) {
+        if (status != STATUS_PENDING)
+        {
 
             //
             // The I/O operation was completed without returning a status of
@@ -7362,15 +7071,11 @@ Return Value:
             PVOID normalContext;
             KIRQL irql;
 
-            ASSERT( !Irp->PendingReturned );
+            ASSERT(!Irp->PendingReturned);
 
-            KeRaiseIrql( APC_LEVEL, &irql );
-            IopCompleteRequest( &Irp->Tail.Apc,
-                                &normalRoutine,
-                                &normalContext,
-                                (PVOID *) &FileObject,
-                                &normalContext );
-            KeLowerIrql( irql );
+            KeRaiseIrql(APC_LEVEL, &irql);
+            IopCompleteRequest(&Irp->Tail.Apc, &normalRoutine, &normalContext, (PVOID *)&FileObject, &normalContext);
+            KeLowerIrql(irql);
         }
     }
 
@@ -7381,17 +7086,17 @@ Return Value:
     // and obtain the final status from the file object itself.
     //
 
-    if (SynchronousIo) {
+    if (SynchronousIo)
+    {
 
-        if (status == STATUS_PENDING) {
+        if (status == STATUS_PENDING)
+        {
 
-            status = KeWaitForSingleObject( &FileObject->Event,
-                                            Executive,
-                                            RequestorMode,
-                                            (BOOLEAN) ((FileObject->Flags & FO_ALERTABLE_IO) != 0),
-                                            (PLARGE_INTEGER) NULL );
+            status = KeWaitForSingleObject(&FileObject->Event, Executive, RequestorMode,
+                                           (BOOLEAN)((FileObject->Flags & FO_ALERTABLE_IO) != 0), (PLARGE_INTEGER)NULL);
 
-            if (status == STATUS_ALERTED || status == STATUS_USER_APC) {
+            if (status == STATUS_ALERTED || status == STATUS_USER_APC)
+            {
 
                 //
                 // The wait request has ended either because the thread was alerted
@@ -7402,28 +7107,19 @@ Return Value:
                 // intact.
                 //
 
-                IopCancelAlertedRequest( &FileObject->Event, Irp );
-
+                IopCancelAlertedRequest(&FileObject->Event, Irp);
             }
 
             status = FileObject->FinalStatus;
-
         }
 
-        IopReleaseFileObjectLock( FileObject );
-
+        IopReleaseFileObjectLock(FileObject);
     }
 
     return status;
 }
-
-VOID
-IopTimerDispatch(
-    IN PKDPC Dpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    )
+
+VOID IopTimerDispatch(IN PKDPC Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1, IN PVOID SystemArgument2)
 
 /*++
 
@@ -7454,10 +7150,10 @@ Return Value:
     KIRQL irql;
     ULONG i;
 
-    UNREFERENCED_PARAMETER( Dpc );
-    UNREFERENCED_PARAMETER( DeferredContext );
-    UNREFERENCED_PARAMETER( SystemArgument1 );
-    UNREFERENCED_PARAMETER( SystemArgument2 );
+    UNREFERENCED_PARAMETER(Dpc);
+    UNREFERENCED_PARAMETER(DeferredContext);
+    UNREFERENCED_PARAMETER(SystemArgument1);
+    UNREFERENCED_PARAMETER(SystemArgument2);
 
     //
     // Check to see whether or not there are any timers in the queue that
@@ -7469,14 +7165,15 @@ Return Value:
     // not a critical resource for the most part.
     //
 
-    if (IopTimerCount) {
+    if (IopTimerCount)
+    {
 
         //
         // There is at least one timer entry in the queue that is enabled.
         // Walk the queue and invoke each specified timer routine.
         //
 
-        ExAcquireSpinLock( &IopTimerLock, &irql );
+        ExAcquireSpinLock(&IopTimerLock, &irql);
         i = IopTimerCount;
         timerEntry = IopTimerQueueHead.Flink;
 
@@ -7487,34 +7184,27 @@ Return Value:
         // queue, but they are not enabled.
         //
 
-        for (timerEntry = IopTimerQueueHead.Flink;
-             (timerEntry != &IopTimerQueueHead) && i;
-             timerEntry = timerEntry->Flink ) {
+        for (timerEntry = IopTimerQueueHead.Flink; (timerEntry != &IopTimerQueueHead) && i;
+             timerEntry = timerEntry->Flink)
+        {
 
-            timer = CONTAINING_RECORD( timerEntry, IO_TIMER, TimerList );
+            timer = CONTAINING_RECORD(timerEntry, IO_TIMER, TimerList);
 
-            if (timer->TimerFlag) {
-                timer->TimerRoutine( timer->DeviceObject, timer->Context );
+            if (timer->TimerFlag)
+            {
+                timer->TimerRoutine(timer->DeviceObject, timer->Context);
                 i--;
             }
         }
-        ExReleaseSpinLock( &IopTimerLock, irql );
+        ExReleaseSpinLock(&IopTimerLock, irql);
     }
 }
 
 
-
-
-
 NTSTATUS
-IopTrackLink(
-    IN PFILE_OBJECT FileObject,
-    IN OUT PIO_STATUS_BLOCK IoStatusBlock,
-    IN PFILE_TRACKING_INFORMATION FileInformation,
-    IN ULONG Length,
-    IN PKEVENT Event,
-    IN KPROCESSOR_MODE RequestorMode
-    )
+IopTrackLink(IN PFILE_OBJECT FileObject, IN OUT PIO_STATUS_BLOCK IoStatusBlock,
+             IN PFILE_TRACKING_INFORMATION FileInformation, IN ULONG Length, IN PKEVENT Event,
+             IN KPROCESSOR_MODE RequestorMode)
 
 /*++
 
@@ -7568,21 +7258,24 @@ Return Value:
     // Begin by capturing the caller's buffer, if required.
     //
 
-    if (RequestorMode != KernelMode) {
+    if (RequestorMode != KernelMode)
+    {
 
-        try {
-            trackingInfo = ExAllocatePoolWithQuota( PagedPool,
-                                                    Length );
-            RtlCopyMemory( trackingInfo, FileInformation, Length );
+        try
+        {
+            trackingInfo = ExAllocatePoolWithQuota(PagedPool, Length);
+            RtlCopyMemory(trackingInfo, FileInformation, Length);
 
             if (!trackingInfo->DestinationFile ||
-               ((Length - FIELD_OFFSET( FILE_TRACKING_INFORMATION, ObjectInformation ))
-                < trackingInfo->ObjectInformationLength)) {
-                ExFreePool( trackingInfo );
+                ((Length - FIELD_OFFSET(FILE_TRACKING_INFORMATION, ObjectInformation)) <
+                 trackingInfo->ObjectInformationLength))
+            {
+                ExFreePool(trackingInfo);
                 return STATUS_INVALID_PARAMETER;
             }
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // An exception was incurred while allocating the intermediary
@@ -7590,13 +7283,16 @@ Return Value:
             // buffer.  Cleanup and return an appropriate error status code.
             //
 
-            if (trackingInfo) {
-                ExFreePool( trackingInfo );
+            if (trackingInfo)
+            {
+                ExFreePool(trackingInfo);
             }
 
             return GetExceptionCode();
         }
-    } else {
+    }
+    else
+    {
         trackingInfo = FileInformation;
     }
 
@@ -7605,29 +7301,30 @@ Return Value:
     // a file object.
     //
 
-    if (trackingInfo->DestinationFile) {
-        status = ObReferenceObjectByHandle( trackingInfo->DestinationFile,
-                                            FILE_WRITE_DATA,
-                                            IoFileObjectType,
-                                            RequestorMode,
-                                            (PVOID *) &dstFileObject,
-                                            NULL );
-        if (!NT_SUCCESS( status )) {
-            if (RequestorMode != KernelMode) {
-                ExFreePool( trackingInfo );
+    if (trackingInfo->DestinationFile)
+    {
+        status = ObReferenceObjectByHandle(trackingInfo->DestinationFile, FILE_WRITE_DATA, IoFileObjectType,
+                                           RequestorMode, (PVOID *)&dstFileObject, NULL);
+        if (!NT_SUCCESS(status))
+        {
+            if (RequestorMode != KernelMode)
+            {
+                ExFreePool(trackingInfo);
             }
             return status;
         }
     }
 
-    try {
+    try
+    {
 
         //
         // Determine whether this is a local or a remote link tracking
         // operation.
         //
 
-        if (IsFileLocal( FileObject )) {
+        if (IsFileLocal(FileObject))
+        {
 
             //
             // The source file, i.e., the one being moved, is a file local to
@@ -7635,9 +7332,11 @@ Return Value:
             // it accordingly.
             //
 
-            if (trackingInfo->DestinationFile) {
+            if (trackingInfo->DestinationFile)
+            {
 
-                if (IsFileLocal( dstFileObject )) {
+                if (IsFileLocal(dstFileObject))
+                {
 
                     BOOLEAN IdSetOnTarget = FALSE;
 
@@ -7649,16 +7348,16 @@ Return Value:
                     // operation worked.
                     //
 
-                    status = IopGetSetObjectId( FileObject,
-                                                &SourceObjectId,
-                                                sizeof( SourceObjectId ),
-                                                FSCTL_GET_OBJECT_ID );
+                    status =
+                        IopGetSetObjectId(FileObject, &SourceObjectId, sizeof(SourceObjectId), FSCTL_GET_OBJECT_ID);
 
-                    if (status == STATUS_OBJECT_NAME_NOT_FOUND) {
-                        return(STATUS_SUCCESS);
+                    if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+                    {
+                        return (STATUS_SUCCESS);
                     }
 
-                    if (!NT_SUCCESS( status )) {
+                    if (!NT_SUCCESS(status))
+                    {
                         return status;
                     }
 
@@ -7666,10 +7365,10 @@ Return Value:
                     // If the extended info field is zero then this file
                     // has no interesting tracking information.
                     //
-                    if (RtlCompareMemoryUlong(SourceObjectId.BirthObjectId,
-                                       sizeof(SourceObjectId.BirthObjectId),
-                                       0) == sizeof(SourceObjectId.BirthObjectId)) {
-                            return (STATUS_SUCCESS);
+                    if (RtlCompareMemoryUlong(SourceObjectId.BirthObjectId, sizeof(SourceObjectId.BirthObjectId), 0) ==
+                        sizeof(SourceObjectId.BirthObjectId))
+                    {
+                        return (STATUS_SUCCESS);
                     }
 
 
@@ -7677,17 +7376,15 @@ Return Value:
                     // Get the volume ID of the source and destination
                     //
 
-                    status = IopGetVolumeId( dstFileObject,
-                                             &TargetVolumeId,
-                                             sizeof( TargetVolumeId ) );
-                    if (!NT_SUCCESS( status )) {
+                    status = IopGetVolumeId(dstFileObject, &TargetVolumeId, sizeof(TargetVolumeId));
+                    if (!NT_SUCCESS(status))
+                    {
                         return status;
                     }
 
-                    status = IopGetVolumeId( FileObject,
-                                             &SourceVolumeId,
-                                             sizeof( SourceVolumeId ) );
-                    if (!NT_SUCCESS( status )) {
+                    status = IopGetVolumeId(FileObject, &SourceVolumeId, sizeof(SourceVolumeId));
+                    if (!NT_SUCCESS(status))
+                    {
                         return status;
                     }
 
@@ -7697,11 +7394,9 @@ Return Value:
                     // subsequent error, we'll try to restore it.
                     //
 
-                    status = IopGetSetObjectId( FileObject,
-                                                NULL,
-                                                0,
-                                                FSCTL_DELETE_OBJECT_ID );
-                    if (!NT_SUCCESS( status )) {
+                    status = IopGetSetObjectId(FileObject, NULL, 0, FSCTL_DELETE_OBJECT_ID);
+                    if (!NT_SUCCESS(status))
+                    {
                         return status;
                     }
 
@@ -7712,58 +7407,54 @@ Return Value:
                     //
 
                     CrossVolumeObjectId = TargetObjectId = SourceObjectId;
-                    if( !RtlEqualMemory( &TargetVolumeId.VolumeId[0],
-                                         &SourceVolumeId.VolumeId[0],
-                                         sizeof(SourceVolumeId.VolumeId) )) {
+                    if (!RtlEqualMemory(&TargetVolumeId.VolumeId[0], &SourceVolumeId.VolumeId[0],
+                                        sizeof(SourceVolumeId.VolumeId)))
+                    {
                         CrossVolumeObjectId.BirthVolumeId[0] |= 1;
                     }
 
-                    status = IopGetSetObjectId( dstFileObject,
-                                                &CrossVolumeObjectId,
-                                                sizeof( CrossVolumeObjectId ),
-                                                FSCTL_SET_OBJECT_ID );
+                    status = IopGetSetObjectId(dstFileObject, &CrossVolumeObjectId, sizeof(CrossVolumeObjectId),
+                                               FSCTL_SET_OBJECT_ID);
 
-                    if( status == STATUS_DUPLICATE_NAME ||
-                        status == STATUS_OBJECT_NAME_COLLISION ) {
+                    if (status == STATUS_DUPLICATE_NAME || status == STATUS_OBJECT_NAME_COLLISION)
+                    {
 
                         // This object ID is already in use on the target volume,
                         // or the dest file already has an object ID.
                         // Get the file's ID (or have NTFS generate a new one).
 
-                        status = IopGetSetObjectId( dstFileObject,
-                                                    &TargetObjectId,
-                                                    sizeof(TargetObjectId),
-                                                    FSCTL_CREATE_OR_GET_OBJECT_ID );
-                        if( NT_SUCCESS(status) ) {
+                        status = IopGetSetObjectId(dstFileObject, &TargetObjectId, sizeof(TargetObjectId),
+                                                   FSCTL_CREATE_OR_GET_OBJECT_ID);
+                        if (NT_SUCCESS(status))
+                        {
 
                             // Write the birth ID
 
-                            status = IopGetSetObjectId( dstFileObject,
-                                                        &CrossVolumeObjectId.ExtendedInfo[0],
-                                                        sizeof( CrossVolumeObjectId.ExtendedInfo ),
-                                                        FSCTL_SET_OBJECT_ID_EXTENDED );
+                            status = IopGetSetObjectId(dstFileObject, &CrossVolumeObjectId.ExtendedInfo[0],
+                                                       sizeof(CrossVolumeObjectId.ExtendedInfo),
+                                                       FSCTL_SET_OBJECT_ID_EXTENDED);
                         }
                     }
 
-                    if( NT_SUCCESS(status) ) {
+                    if (NT_SUCCESS(status))
+                    {
 
                         IdSetOnTarget = TRUE;
 
                         // If this was a cross-volume move, notify the tracking service.
 
-                        if( !RtlEqualMemory( &TargetVolumeId.VolumeId[0],
-                                             &SourceVolumeId.VolumeId[0],
-                                             sizeof(SourceVolumeId.VolumeId) )) {
+                        if (!RtlEqualMemory(&TargetVolumeId.VolumeId[0], &SourceVolumeId.VolumeId[0],
+                                            sizeof(SourceVolumeId.VolumeId)))
+                        {
 
-                            IopMarshalIds( &trackingBuffer, &TargetVolumeId, &TargetObjectId, trackingInfo );
+                            IopMarshalIds(&trackingBuffer, &TargetVolumeId, &TargetObjectId, trackingInfo);
 
                             // Bit 0 must be reset before notifying tracking service
                             NormalizedObjectId = SourceObjectId;
                             NormalizedObjectId.BirthVolumeId[0] &= 0xfe;
 
-                            status = IopSendMessageToTrackService( &SourceVolumeId,
-                                                                   &NormalizedObjectId,
-                                                                   &trackingBuffer.TrackingInformation );
+                            status = IopSendMessageToTrackService(&SourceVolumeId, &NormalizedObjectId,
+                                                                  &trackingBuffer.TrackingInformation);
                         }
                     }
 
@@ -7772,45 +7463,42 @@ Return Value:
                     // from the source.  Try to restore it before returning.
                     //
 
-                    if( !NT_SUCCESS(status) ) {
+                    if (!NT_SUCCESS(status))
+                    {
                         NTSTATUS statusT = STATUS_SUCCESS;
 
-                        if( IdSetOnTarget ) {
+                        if (IdSetOnTarget)
+                        {
 
-                            if( RtlEqualMemory( &TargetObjectId.ObjectId,
-                                                &SourceObjectId.ObjectId,
-                                                sizeof(TargetObjectId.ObjectId) )) {
+                            if (RtlEqualMemory(&TargetObjectId.ObjectId, &SourceObjectId.ObjectId,
+                                               sizeof(TargetObjectId.ObjectId)))
+                            {
 
                                 // This ID was set with FSCTL_SET_OBJECT_ID
-                                statusT = IopGetSetObjectId( dstFileObject,
-                                                             NULL,
-                                                             0,
-                                                             FSCTL_DELETE_OBJECT_ID );
-
-                            } else {
+                                statusT = IopGetSetObjectId(dstFileObject, NULL, 0, FSCTL_DELETE_OBJECT_ID);
+                            }
+                            else
+                            {
 
                                 // Restore the target's extended data.
 
-                                statusT = IopGetSetObjectId( dstFileObject,
-                                                             &TargetObjectId.ExtendedInfo[0],
-                                                             sizeof(TargetObjectId.ExtendedInfo),
-                                                             FSCTL_SET_OBJECT_ID_EXTENDED );
+                                statusT = IopGetSetObjectId(dstFileObject, &TargetObjectId.ExtendedInfo[0],
+                                                            sizeof(TargetObjectId.ExtendedInfo),
+                                                            FSCTL_SET_OBJECT_ID_EXTENDED);
                             }
                         }
 
-                        if( NT_SUCCESS( statusT )) {
+                        if (NT_SUCCESS(statusT))
+                        {
 
-                            IopGetSetObjectId( FileObject,
-                                               &SourceObjectId,
-                                               sizeof(SourceObjectId),
-                                               FSCTL_SET_OBJECT_ID );
+                            IopGetSetObjectId(FileObject, &SourceObjectId, sizeof(SourceObjectId), FSCTL_SET_OBJECT_ID);
                         }
 
                         return status;
                     }
-
-
-                } else {    // if (IsFileLocal( dstFileObject ))
+                }
+                else
+                { // if (IsFileLocal( dstFileObject ))
 
                     //
                     // The source file is local, but the destination file object
@@ -7825,11 +7513,10 @@ Return Value:
                     // operation worked.
                     //
 
-                    status = IopGetSetObjectId( FileObject,
-                                                &SourceObjectId,
-                                                sizeof( SourceObjectId ),
-                                                FSCTL_GET_OBJECT_ID );
-                    if (!NT_SUCCESS( status )) {
+                    status =
+                        IopGetSetObjectId(FileObject, &SourceObjectId, sizeof(SourceObjectId), FSCTL_GET_OBJECT_ID);
+                    if (!NT_SUCCESS(status))
+                    {
                         return STATUS_SUCCESS;
                     }
 
@@ -7838,21 +7525,20 @@ Return Value:
                     // If the extended info field is zero then this file
                     // has no interesting tracking information.
                     //
-                    if (RtlCompareMemoryUlong(&SourceObjectId.BirthObjectId,
-                                       sizeof(SourceObjectId.BirthObjectId),
-                                       0) == sizeof(SourceObjectId.BirthObjectId)) {
-                            return (STATUS_SUCCESS);
+                    if (RtlCompareMemoryUlong(&SourceObjectId.BirthObjectId, sizeof(SourceObjectId.BirthObjectId), 0) ==
+                        sizeof(SourceObjectId.BirthObjectId))
+                    {
+                        return (STATUS_SUCCESS);
                     }
 
                     //
                     // Query the volume ID of the target.
                     //
 
-                    status = IopGetSetObjectId( dstFileObject,
-                                                &TargetVolumeId,
-                                                sizeof( FILE_VOLUMEID_WITH_TYPE ),
-                                                FSCTL_LMR_GET_LINK_TRACKING_INFORMATION );
-                    if (!NT_SUCCESS( status )) {
+                    status = IopGetSetObjectId(dstFileObject, &TargetVolumeId, sizeof(FILE_VOLUMEID_WITH_TYPE),
+                                               FSCTL_LMR_GET_LINK_TRACKING_INFORMATION);
+                    if (!NT_SUCCESS(status))
+                    {
                         return status;
                     }
 
@@ -7860,11 +7546,10 @@ Return Value:
                     // Query the object ID of the target.
                     //
 
-                    status = IopGetSetObjectId( dstFileObject,
-                                                &TargetObjectId,
-                                                sizeof( TargetObjectId ),
-                                                FSCTL_CREATE_OR_GET_OBJECT_ID );
-                    if (!NT_SUCCESS( status )) {
+                    status = IopGetSetObjectId(dstFileObject, &TargetObjectId, sizeof(TargetObjectId),
+                                               FSCTL_CREATE_OR_GET_OBJECT_ID);
+                    if (!NT_SUCCESS(status))
+                    {
                         return status;
                     }
 
@@ -7872,16 +7557,13 @@ Return Value:
                     // Notify the tracking system of the move.
                     //
 
-                    IopMarshalIds( &trackingBuffer, &TargetVolumeId, &TargetObjectId, trackingInfo );
-                    status = IopTrackLink( FileObject,
-                                           IoStatusBlock,
-                                           &trackingBuffer.TrackingInformation,
-                                           FIELD_OFFSET( FILE_TRACKING_INFORMATION,
-                                                ObjectInformation ) +
-                                                    trackingBuffer.TrackingInformation.ObjectInformationLength,
-                                           Event,
-                                           KernelMode );
-                    if (!NT_SUCCESS( status )) {
+                    IopMarshalIds(&trackingBuffer, &TargetVolumeId, &TargetObjectId, trackingInfo);
+                    status = IopTrackLink(FileObject, IoStatusBlock, &trackingBuffer.TrackingInformation,
+                                          FIELD_OFFSET(FILE_TRACKING_INFORMATION, ObjectInformation) +
+                                              trackingBuffer.TrackingInformation.ObjectInformationLength,
+                                          Event, KernelMode);
+                    if (!NT_SUCCESS(status))
+                    {
                         return status;
                     }
 
@@ -7889,11 +7571,9 @@ Return Value:
                     // Delete the ID from the source
                     //
 
-                    status = IopGetSetObjectId( FileObject,
-                                                NULL,
-                                                0,
-                                                FSCTL_DELETE_OBJECT_ID );
-                    if( !NT_SUCCESS( status )) {
+                    status = IopGetSetObjectId(FileObject, NULL, 0, FSCTL_DELETE_OBJECT_ID);
+                    if (!NT_SUCCESS(status))
+                    {
                         return status;
                     }
 
@@ -7906,24 +7586,21 @@ Return Value:
                     CrossVolumeObjectId = SourceObjectId;
                     CrossVolumeObjectId.BirthVolumeId[0] |= 1;
 
-                    status = IopGetSetObjectId( dstFileObject,
-                                                &CrossVolumeObjectId.ExtendedInfo[0],
-                                                sizeof( CrossVolumeObjectId.ExtendedInfo ),
-                                                FSCTL_SET_OBJECT_ID_EXTENDED );
-                    if (!NT_SUCCESS( status )) {
+                    status = IopGetSetObjectId(dstFileObject, &CrossVolumeObjectId.ExtendedInfo[0],
+                                               sizeof(CrossVolumeObjectId.ExtendedInfo), FSCTL_SET_OBJECT_ID_EXTENDED);
+                    if (!NT_SUCCESS(status))
+                    {
 
                         // Try to restore the source
-                        IopGetSetObjectId( FileObject,
-                                           &SourceObjectId,
-                                           sizeof(SourceObjectId),
-                                           FSCTL_SET_OBJECT_ID );
+                        IopGetSetObjectId(FileObject, &SourceObjectId, sizeof(SourceObjectId), FSCTL_SET_OBJECT_ID);
                         return status;
                     }
 
 
-                }   // if (IsFileLocal( dstFileObject ))
-
-            } else {    // if (trackingInfo->DestinationFile)
+                } // if (IsFileLocal( dstFileObject ))
+            }
+            else
+            { // if (trackingInfo->DestinationFile)
 
                 //
                 // A destination file handle was not specified.  Simply query
@@ -7933,18 +7610,15 @@ Return Value:
                 // assumed that the source file has an object ID.
                 //
 
-                status = IopGetVolumeId( FileObject,
-                                         &SourceVolumeId,
-                                         sizeof( SourceVolumeId ) );
-                if (!NT_SUCCESS( status )) {
+                status = IopGetVolumeId(FileObject, &SourceVolumeId, sizeof(SourceVolumeId));
+                if (!NT_SUCCESS(status))
+                {
                     return status;
                 }
 
-                status = IopGetSetObjectId( FileObject,
-                                            &SourceObjectId,
-                                            sizeof( SourceObjectId ),
-                                            FSCTL_GET_OBJECT_ID );
-                if (!NT_SUCCESS( status )) {
+                status = IopGetSetObjectId(FileObject, &SourceObjectId, sizeof(SourceObjectId), FSCTL_GET_OBJECT_ID);
+                if (!NT_SUCCESS(status))
+                {
                     return status;
                 }
 
@@ -7952,10 +7626,10 @@ Return Value:
                 // If the extended info field is zero then this file
                 // has no interesting tracking information.
                 //
-                if (RtlCompareMemoryUlong(SourceObjectId.BirthObjectId,
-                                       sizeof(SourceObjectId.BirthObjectId),
-                                       0) == sizeof(SourceObjectId.BirthObjectId)) {
-                            return (STATUS_SUCCESS);
+                if (RtlCompareMemoryUlong(SourceObjectId.BirthObjectId, sizeof(SourceObjectId.BirthObjectId), 0) ==
+                    sizeof(SourceObjectId.BirthObjectId))
+                {
+                    return (STATUS_SUCCESS);
                 }
                 //
                 // Inform the user-mode link tracking service that the file
@@ -7965,16 +7639,16 @@ Return Value:
                 NormalizedObjectId = SourceObjectId;
                 NormalizedObjectId.BirthVolumeId[0] &= 0xfe;
 
-                status = IopSendMessageToTrackService( &SourceVolumeId,
-                                                       &NormalizedObjectId,
-                                                       FileInformation );
-                if (!NT_SUCCESS( status )) {
+                status = IopSendMessageToTrackService(&SourceVolumeId, &NormalizedObjectId, FileInformation);
+                if (!NT_SUCCESS(status))
+                {
                     return status;
                 }
 
-            }   // if (trackingInfo->DestinationFile) ... else
-
-        } else {    // if (IsFileLocal( FileObject ))
+            } // if (trackingInfo->DestinationFile) ... else
+        }
+        else
+        { // if (IsFileLocal( FileObject ))
 
             //
             // The source file is remote.  For this case, remote the operation
@@ -7983,17 +7657,15 @@ Return Value:
             // not, then get out now since there is nothing to be done.
             //
 
-            status = IopGetSetObjectId( FileObject,
-                                        &SourceObjectId,
-                                        sizeof( SourceObjectId ),
-                                        FSCTL_GET_OBJECT_ID );
+            status = IopGetSetObjectId(FileObject, &SourceObjectId, sizeof(SourceObjectId), FSCTL_GET_OBJECT_ID);
 
             if (status == STATUS_OBJECT_NAME_NOT_FOUND)
             {
                 return STATUS_SUCCESS;
             }
 
-            if (!NT_SUCCESS( status )) {
+            if (!NT_SUCCESS(status))
+            {
                 return status;
             }
 
@@ -8001,12 +7673,13 @@ Return Value:
             // If the extended info field is zero then this file
             // has no interesting tracking information.
             //
-            if (RtlCompareMemoryUlong(SourceObjectId.BirthObjectId,
-                                      sizeof(SourceObjectId.BirthObjectId),
-                                      0) == sizeof(SourceObjectId.BirthObjectId)) {
+            if (RtlCompareMemoryUlong(SourceObjectId.BirthObjectId, sizeof(SourceObjectId.BirthObjectId), 0) ==
+                sizeof(SourceObjectId.BirthObjectId))
+            {
                 return (STATUS_SUCCESS);
             }
-            if (trackingInfo->DestinationFile) {
+            if (trackingInfo->DestinationFile)
+            {
 
                 //
                 // A handle was specified for the destination file.  Determine
@@ -8019,7 +7692,8 @@ Return Value:
                 // machine where the source file resides.
                 //
 
-                if (IsFileLocal( dstFileObject )) {
+                if (IsFileLocal(dstFileObject))
+                {
 
                     //
                     // The source is remote and the destination is local, so
@@ -8027,18 +7701,16 @@ Return Value:
                     // the link from the source file's remote node.
                     //
 
-                    status = IopGetVolumeId( dstFileObject,
-                                             &TargetVolumeId,
-                                             sizeof( TargetVolumeId ) );
-                    if (!NT_SUCCESS( status )) {
+                    status = IopGetVolumeId(dstFileObject, &TargetVolumeId, sizeof(TargetVolumeId));
+                    if (!NT_SUCCESS(status))
+                    {
                         return status;
                     }
 
-                    status = IopGetSetObjectId( dstFileObject,
-                                                &TargetObjectId,
-                                                sizeof( TargetObjectId ),
-                                                FSCTL_CREATE_OR_GET_OBJECT_ID );
-                    if (!NT_SUCCESS( status )) {
+                    status = IopGetSetObjectId(dstFileObject, &TargetObjectId, sizeof(TargetObjectId),
+                                               FSCTL_CREATE_OR_GET_OBJECT_ID);
+                    if (!NT_SUCCESS(status))
+                    {
                         return status;
                     }
 
@@ -8047,17 +7719,14 @@ Return Value:
                     // Notify the tracking system of the move.
                     //
 
-                    IopMarshalIds( &trackingBuffer, &TargetVolumeId, &TargetObjectId, trackingInfo );
+                    IopMarshalIds(&trackingBuffer, &TargetVolumeId, &TargetObjectId, trackingInfo);
 
-                    status = IopTrackLink( FileObject,
-                                           IoStatusBlock,
-                                           &trackingBuffer.TrackingInformation,
-                                           FIELD_OFFSET( FILE_TRACKING_INFORMATION,
-                                                ObjectInformation ) +
-                                                    trackingBuffer.TrackingInformation.ObjectInformationLength,
-                                           Event,
-                                           KernelMode );
-                    if( !NT_SUCCESS(status) ) {
+                    status = IopTrackLink(FileObject, IoStatusBlock, &trackingBuffer.TrackingInformation,
+                                          FIELD_OFFSET(FILE_TRACKING_INFORMATION, ObjectInformation) +
+                                              trackingBuffer.TrackingInformation.ObjectInformationLength,
+                                          Event, KernelMode);
+                    if (!NT_SUCCESS(status))
+                    {
                         return status;
                     }
 
@@ -8065,11 +7734,9 @@ Return Value:
                     //  Delete the ID from the source
                     //
 
-                    status = IopGetSetObjectId( FileObject,
-                                                NULL,
-                                                0,
-                                                FSCTL_DELETE_OBJECT_ID );
-                    if( !NT_SUCCESS( status )) {
+                    status = IopGetSetObjectId(FileObject, NULL, 0, FSCTL_DELETE_OBJECT_ID);
+                    if (!NT_SUCCESS(status))
+                    {
                         return status;
                     }
 
@@ -8081,23 +7748,20 @@ Return Value:
                     CrossVolumeObjectId = SourceObjectId;
                     CrossVolumeObjectId.BirthVolumeId[0] |= 1;
 
-                    status = IopGetSetObjectId( dstFileObject,
-                                                &CrossVolumeObjectId.ExtendedInfo[0],
-                                                sizeof( CrossVolumeObjectId.ExtendedInfo ),
-                                                FSCTL_SET_OBJECT_ID_EXTENDED );
+                    status = IopGetSetObjectId(dstFileObject, &CrossVolumeObjectId.ExtendedInfo[0],
+                                               sizeof(CrossVolumeObjectId.ExtendedInfo), FSCTL_SET_OBJECT_ID_EXTENDED);
 
-                    if( !NT_SUCCESS( status )) {
+                    if (!NT_SUCCESS(status))
+                    {
 
-                        IopGetSetObjectId( FileObject,
-                                           &SourceObjectId,
-                                           sizeof(SourceObjectId),
-                                           FSCTL_SET_OBJECT_ID );
+                        IopGetSetObjectId(FileObject, &SourceObjectId, sizeof(SourceObjectId), FSCTL_SET_OBJECT_ID);
                         return status;
                     }
 
-                }   // if (IsFileLocal( dstFileObject ))
+                } // if (IsFileLocal( dstFileObject ))
 
-                else if (!IopIsSameMachine( FileObject, trackingInfo->DestinationFile)) {
+                else if (!IopIsSameMachine(FileObject, trackingInfo->DestinationFile))
+                {
 
                     //
                     // The source and the target are remote from each other and from
@@ -8109,12 +7773,11 @@ Return Value:
                     // Query the volume ID of the target.
                     //
 
-                    status = IopGetSetObjectId( dstFileObject,
-                                                &TargetVolumeId,
-                                                sizeof( FILE_VOLUMEID_WITH_TYPE ),
-                                                FSCTL_LMR_GET_LINK_TRACKING_INFORMATION );
+                    status = IopGetSetObjectId(dstFileObject, &TargetVolumeId, sizeof(FILE_VOLUMEID_WITH_TYPE),
+                                               FSCTL_LMR_GET_LINK_TRACKING_INFORMATION);
 
-                    if (!NT_SUCCESS( status )) {
+                    if (!NT_SUCCESS(status))
+                    {
                         return status;
                     }
 
@@ -8122,11 +7785,10 @@ Return Value:
                     // Query the object ID of the target.
                     //
 
-                    status = IopGetSetObjectId( dstFileObject,
-                                                &TargetObjectId,
-                                                sizeof( TargetObjectId ),
-                                                FSCTL_CREATE_OR_GET_OBJECT_ID );
-                    if( !NT_SUCCESS( status )) {
+                    status = IopGetSetObjectId(dstFileObject, &TargetObjectId, sizeof(TargetObjectId),
+                                               FSCTL_CREATE_OR_GET_OBJECT_ID);
+                    if (!NT_SUCCESS(status))
+                    {
                         return status;
                     }
 
@@ -8134,17 +7796,14 @@ Return Value:
                     // Notify the tracking system of the move.
                     //
 
-                    IopMarshalIds( &trackingBuffer, &TargetVolumeId, &TargetObjectId, trackingInfo );
+                    IopMarshalIds(&trackingBuffer, &TargetVolumeId, &TargetObjectId, trackingInfo);
 
-                    status = IopTrackLink( FileObject,
-                                           IoStatusBlock,
-                                           &trackingBuffer.TrackingInformation,
-                                           FIELD_OFFSET( FILE_TRACKING_INFORMATION,
-                                                ObjectInformation ) +
-                                                    trackingBuffer.TrackingInformation.ObjectInformationLength,
-                                           Event,
-                                           KernelMode );
-                    if( !NT_SUCCESS( status )) {
+                    status = IopTrackLink(FileObject, IoStatusBlock, &trackingBuffer.TrackingInformation,
+                                          FIELD_OFFSET(FILE_TRACKING_INFORMATION, ObjectInformation) +
+                                              trackingBuffer.TrackingInformation.ObjectInformationLength,
+                                          Event, KernelMode);
+                    if (!NT_SUCCESS(status))
+                    {
                         return status;
                     }
 
@@ -8156,20 +7815,17 @@ Return Value:
                     CrossVolumeObjectId = SourceObjectId;
                     CrossVolumeObjectId.BirthVolumeId[0] |= 1;
 
-                    status = IopGetSetObjectId( dstFileObject,
-                                                &CrossVolumeObjectId.ExtendedInfo[0],
-                                                sizeof( CrossVolumeObjectId.ExtendedInfo ),
-                                                FSCTL_SET_OBJECT_ID_EXTENDED );
+                    status = IopGetSetObjectId(dstFileObject, &CrossVolumeObjectId.ExtendedInfo[0],
+                                               sizeof(CrossVolumeObjectId.ExtendedInfo), FSCTL_SET_OBJECT_ID_EXTENDED);
 
-                    if( !NT_SUCCESS( status )) {
-                        IopGetSetObjectId( FileObject,
-                                           &SourceObjectId,
-                                           sizeof(SourceObjectId),
-                                           FSCTL_SET_OBJECT_ID );
+                    if (!NT_SUCCESS(status))
+                    {
+                        IopGetSetObjectId(FileObject, &SourceObjectId, sizeof(SourceObjectId), FSCTL_SET_OBJECT_ID);
                         return status;
                     }
-
-                } else {    // else if (!IopIsSameMachine( FileObject, trackingInfo->DestinationFile))
+                }
+                else
+                { // else if (!IopIsSameMachine( FileObject, trackingInfo->DestinationFile))
 
                     //
                     // Both the source and the target are remote and they're
@@ -8177,11 +7833,12 @@ Return Value:
                     // the entire API using the file object pointers.
                     //
 
-                    status = IopSetRemoteLink( FileObject, dstFileObject, trackingInfo );
+                    status = IopSetRemoteLink(FileObject, dstFileObject, trackingInfo);
 
-                }   // else if (!IopIsSameMachine( FileObject, trackingInfo->DestinationFile)) ... else
-
-            } else {    // if (trackingInfo->DestinationFile)
+                } // else if (!IopIsSameMachine( FileObject, trackingInfo->DestinationFile)) ... else
+            }
+            else
+            { // if (trackingInfo->DestinationFile)
 
                 //
                 // The source file is remote and the object ID of the target is
@@ -8190,39 +7847,36 @@ Return Value:
                 // and the object ID of the target in the buffer.
                 //
 
-                status = IopSetRemoteLink( FileObject, NULL, FileInformation );
+                status = IopSetRemoteLink(FileObject, NULL, FileInformation);
 
-            }   // if (trackingInfo->DestinationFile) ... else
-        }   // if (IsFileLocal( FileObject )) ... else
-
-    } finally {
+            } // if (trackingInfo->DestinationFile) ... else
+        } // if (IsFileLocal( FileObject )) ... else
+    }
+    finally
+    {
 
         //
         // Ensure that everything has been cleaned up.
         //
 
-        if (RequestorMode != KernelMode && trackingInfo) {
-            ExFreePool( trackingInfo );
+        if (RequestorMode != KernelMode && trackingInfo)
+        {
+            ExFreePool(trackingInfo);
         }
 
-        if (dstFileObject ) {
-            ObDereferenceObject( dstFileObject );
+        if (dstFileObject)
+        {
+            ObDereferenceObject(dstFileObject);
         }
 
-        KeSetEvent( Event, 0, FALSE );
+        KeSetEvent(Event, 0, FALSE);
     }
 
     return status;
 }
-
-VOID
-IopUserCompletion(
-    IN PKAPC Apc,
-    IN PKNORMAL_ROUTINE *NormalRoutine,
-    IN PVOID *NormalContext,
-    IN PVOID *SystemArgument1,
-    IN PVOID *SystemArgument2
-    )
+
+VOID IopUserCompletion(IN PKAPC Apc, IN PKNORMAL_ROUTINE *NormalRoutine, IN PVOID *NormalContext,
+                       IN PVOID *SystemArgument1, IN PVOID *SystemArgument2)
 
 /*++
 
@@ -8269,10 +7923,10 @@ Caution:
 --*/
 
 {
-    UNREFERENCED_PARAMETER( NormalRoutine );
-    UNREFERENCED_PARAMETER( NormalContext );
-    UNREFERENCED_PARAMETER( SystemArgument1 );
-    UNREFERENCED_PARAMETER( SystemArgument2 );
+    UNREFERENCED_PARAMETER(NormalRoutine);
+    UNREFERENCED_PARAMETER(NormalContext);
+    UNREFERENCED_PARAMETER(SystemArgument1);
+    UNREFERENCED_PARAMETER(SystemArgument2);
 
     PAGED_CODE();
 
@@ -8280,15 +7934,11 @@ Caution:
     // Free the packet.
     //
 
-    IoFreeIrp( CONTAINING_RECORD( Apc, IRP, Tail.Apc ) );
+    IoFreeIrp(CONTAINING_RECORD(Apc, IRP, Tail.Apc));
 }
 
 
-
-VOID
-IopUserRundown(
-    IN PKAPC Apc
-    )
+VOID IopUserRundown(IN PKAPC Apc)
 
 /*++
 
@@ -8315,23 +7965,14 @@ Return Value:
     // Free the packet.
     //
 
-    IoFreeIrp( CONTAINING_RECORD( Apc, IRP, Tail.Apc ) );
+    IoFreeIrp(CONTAINING_RECORD(Apc, IRP, Tail.Apc));
 }
-
+
 NTSTATUS
-IopXxxControlFile(
-    IN HANDLE FileHandle,
-    IN HANDLE Event OPTIONAL,
-    IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
-    IN PVOID ApcContext OPTIONAL,
-    OUT PIO_STATUS_BLOCK IoStatusBlock,
-    IN ULONG IoControlCode,
-    IN PVOID InputBuffer OPTIONAL,
-    IN ULONG InputBufferLength,
-    OUT PVOID OutputBuffer OPTIONAL,
-    IN ULONG OutputBufferLength,
-    IN BOOLEAN DeviceIoControl
-    )
+IopXxxControlFile(IN HANDLE FileHandle, IN HANDLE Event OPTIONAL, IN PIO_APC_ROUTINE ApcRoutine OPTIONAL,
+                  IN PVOID ApcContext OPTIONAL, OUT PIO_STATUS_BLOCK IoStatusBlock, IN ULONG IoControlCode,
+                  IN PVOID InputBuffer OPTIONAL, IN ULONG InputBufferLength, OUT PVOID OutputBuffer OPTIONAL,
+                  IN ULONG OutputBufferLength, IN BOOLEAN DeviceIoControl)
 
 /*++
 
@@ -8390,7 +8031,7 @@ Return Value:
     NTSTATUS status;
     PFILE_OBJECT fileObject;
     PDEVICE_OBJECT deviceObject;
-    PKEVENT eventObject = (PKEVENT) NULL;
+    PKEVENT eventObject = (PKEVENT)NULL;
     PIO_STACK_LOCATION irpSp;
     ULONG method;
     OBJECT_HANDLE_INFORMATION handleInformation;
@@ -8414,10 +8055,11 @@ Return Value:
     // Check the caller's parameters based on the mode of the caller.
     //
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
     requestorMode = KeGetPreviousModeByThread(&CurrentThread->Tcb);
 
-    if (requestorMode != KernelMode) {
+    if (requestorMode != KernelMode)
+    {
 
         //
         // The caller's access mode is not kernel so probe each of the arguments
@@ -8427,13 +8069,14 @@ Return Value:
         // dispatcher.
         //
 
-        try {
+        try
+        {
 
             //
             // The IoStatusBlock parameter must be writeable by the caller.
             //
 
-            ProbeForWriteIoStatusEx( IoStatusBlock , ApcRoutine);
+            ProbeForWriteIoStatusEx(IoStatusBlock, ApcRoutine);
 
             //
             // The output buffer can be used in any one of the following three ways,
@@ -8452,27 +8095,32 @@ Return Value:
             // If the method is not 3 we probe the input buffer for read access.
             //
 
-            if (method == METHOD_BUFFERED) {
-                if (ARGUMENT_PRESENT( OutputBuffer )) {
-                    ProbeForWrite( OutputBuffer,
-                                   OutputBufferLength,
-                                   sizeof( UCHAR ) );
-                } else {
+            if (method == METHOD_BUFFERED)
+            {
+                if (ARGUMENT_PRESENT(OutputBuffer))
+                {
+                    ProbeForWrite(OutputBuffer, OutputBufferLength, sizeof(UCHAR));
+                }
+                else
+                {
                     OutputBufferLength = 0;
                 }
             }
 
-            if (method != METHOD_NEITHER) {
-                if (ARGUMENT_PRESENT( InputBuffer )) {
-                    ProbeForRead( InputBuffer,
-                                  InputBufferLength,
-                                  sizeof( UCHAR ) );
-                } else {
+            if (method != METHOD_NEITHER)
+            {
+                if (ARGUMENT_PRESENT(InputBuffer))
+                {
+                    ProbeForRead(InputBuffer, InputBufferLength, sizeof(UCHAR));
+                }
+                else
+                {
                     InputBufferLength = 0;
                 }
             }
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // An exception was incurred while attempting to probe or write
@@ -8481,7 +8129,6 @@ Return Value:
             //
 
             return GetExceptionCode();
-
         }
     }
 
@@ -8492,13 +8139,10 @@ Return Value:
     // access to the file, then it will fail.
     //
 
-    status = ObReferenceObjectByHandle( FileHandle,
-                                        0L,
-                                        IoFileObjectType,
-                                        requestorMode,
-                                        (PVOID *) &fileObject,
-                                        &handleInformation );
-    if (!NT_SUCCESS( status )) {
+    status = ObReferenceObjectByHandle(FileHandle, 0L, IoFileObjectType, requestorMode, (PVOID *)&fileObject,
+                                       &handleInformation);
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
@@ -8508,8 +8152,9 @@ Return Value:
     // exclusive methods for I/O completion notification.
     //
 
-    if (fileObject->CompletionContext && IopApcRoutinePresent( ApcRoutine )) {
-        ObDereferenceObject( fileObject );
+    if (fileObject->CompletionContext && IopApcRoutinePresent(ApcRoutine))
+    {
+        ObDereferenceObject(fileObject);
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -8519,11 +8164,13 @@ Return Value:
     // operation.
     //
 
-    if (requestorMode != KernelMode) {
+    if (requestorMode != KernelMode)
+    {
 
         ULONG accessMode = (IoControlCode >> 14) & 3;
 
-        if (accessMode != FILE_ANY_ACCESS) {
+        if (accessMode != FILE_ANY_ACCESS)
+        {
 
             //
             // This I/O control requires that the caller have read, write,
@@ -8531,8 +8178,9 @@ Return Value:
             // then cleanup and return an appropriate error status code.
             //
 
-            if (SeComputeGrantedAccesses( handleInformation.GrantedAccess, accessMode ) != accessMode ) {
-                ObDereferenceObject( fileObject );
+            if (SeComputeGrantedAccesses(handleInformation.GrantedAccess, accessMode) != accessMode)
+            {
+                ObDereferenceObject(fileObject);
                 return STATUS_ACCESS_DENIED;
             }
         }
@@ -8545,18 +8193,18 @@ Return Value:
     // written, then the reference will fail.
     //
 
-    if (ARGUMENT_PRESENT( Event )) {
-        status = ObReferenceObjectByHandle( Event,
-                                            EVENT_MODIFY_STATE,
-                                            ExEventObjectType,
-                                            requestorMode,
-                                            (PVOID *) &eventObject,
-                                            NULL );
-        if (!NT_SUCCESS( status )) {
-            ObDereferenceObject( fileObject );
+    if (ARGUMENT_PRESENT(Event))
+    {
+        status = ObReferenceObjectByHandle(Event, EVENT_MODIFY_STATE, ExEventObjectType, requestorMode,
+                                           (PVOID *)&eventObject, NULL);
+        if (!NT_SUCCESS(status))
+        {
+            ObDereferenceObject(fileObject);
             return status;
-        } else {
-            KeClearEvent( eventObject );
+        }
+        else
+        {
+            KeClearEvent(eventObject);
         }
     }
 
@@ -8566,24 +8214,28 @@ Return Value:
     // the current thread.
     //
 
-    if (fileObject->Flags & FO_SYNCHRONOUS_IO) {
+    if (fileObject->Flags & FO_SYNCHRONOUS_IO)
+    {
         BOOLEAN interrupted;
 
-        if (!IopAcquireFastLock( fileObject )) {
-            status = IopAcquireFileObjectLock( fileObject,
-                                               requestorMode,
-                                               (BOOLEAN) ((fileObject->Flags & FO_ALERTABLE_IO) != 0),
-                                               &interrupted );
-            if (interrupted) {
-                if (eventObject) {
-                    ObDereferenceObject( eventObject );
+        if (!IopAcquireFastLock(fileObject))
+        {
+            status = IopAcquireFileObjectLock(fileObject, requestorMode,
+                                              (BOOLEAN)((fileObject->Flags & FO_ALERTABLE_IO) != 0), &interrupted);
+            if (interrupted)
+            {
+                if (eventObject)
+                {
+                    ObDereferenceObject(eventObject);
                 }
-                ObDereferenceObject( fileObject );
+                ObDereferenceObject(fileObject);
                 return status;
             }
         }
         synchronousIo = TRUE;
-    } else {
+    }
+    else
+    {
         synchronousIo = FALSE;
     }
 
@@ -8593,13 +8245,17 @@ Return Value:
     // attached device(s) directly.
     //
 
-    if (!(fileObject->Flags & FO_DIRECT_DEVICE_OPEN)) {
-        deviceObject = IoGetRelatedDeviceObject( fileObject );
-    } else {
-        deviceObject = IoGetAttachedDevice( fileObject->DeviceObject );
+    if (!(fileObject->Flags & FO_DIRECT_DEVICE_OPEN))
+    {
+        deviceObject = IoGetRelatedDeviceObject(fileObject);
+    }
+    else
+    {
+        deviceObject = IoGetAttachedDevice(fileObject->DeviceObject);
     }
 
-    if (DeviceIoControl) {
+    if (DeviceIoControl)
+    {
 
         //
         // Also get the address of the Fast I/O dispatch structure.
@@ -8615,28 +8271,31 @@ Return Value:
         // go the "long way" and create an Irp.
         //
 
-        if (fastIoDispatch && fastIoDispatch->FastIoDeviceControl) {
+        if (fastIoDispatch && fastIoDispatch->FastIoDeviceControl)
+        {
 
             //
             // Before we actually call the fast I/O routine in the driver,
             // we must probe OutputBuffer if the method is METHOD_IN_DIRECT or METHOD_OUT_DIRECT.
             //
 
-            if (requestorMode != KernelMode && ARGUMENT_PRESENT(OutputBuffer)) {
+            if (requestorMode != KernelMode && ARGUMENT_PRESENT(OutputBuffer))
+            {
 
-                try {
+                try
+                {
 
-                    if (method == METHOD_IN_DIRECT) {
-                        ProbeForRead( OutputBuffer,
-                                      OutputBufferLength,
-                                      sizeof( UCHAR ) );
-                    } else if (method == METHOD_OUT_DIRECT) {
-                        ProbeForWrite( OutputBuffer,
-                                       OutputBufferLength,
-                                       sizeof( UCHAR ) );
+                    if (method == METHOD_IN_DIRECT)
+                    {
+                        ProbeForRead(OutputBuffer, OutputBufferLength, sizeof(UCHAR));
                     }
-
-                } except(EXCEPTION_EXECUTE_HANDLER) {
+                    else if (method == METHOD_OUT_DIRECT)
+                    {
+                        ProbeForWrite(OutputBuffer, OutputBufferLength, sizeof(UCHAR));
+                    }
+                }
+                except(EXCEPTION_EXECUTE_HANDLER)
+                {
 
                     //
                     // An exception was incurred while attempting to probe
@@ -8644,15 +8303,17 @@ Return Value:
                     // appropriate error status code.
                     //
 
-                    if (synchronousIo) {
-                        IopReleaseFileObjectLock( fileObject );
+                    if (synchronousIo)
+                    {
+                        IopReleaseFileObjectLock(fileObject);
                     }
 
-                    if (eventObject) {
-                        ObDereferenceObject( eventObject );
+                    if (eventObject)
+                    {
+                        ObDereferenceObject(eventObject);
                     }
 
-                    ObDereferenceObject( fileObject );
+                    ObDereferenceObject(fileObject);
 
                     return GetExceptionCode();
                 }
@@ -8664,8 +8325,9 @@ Return Value:
             // of current directory handles.
             //
 
-            if (IoControlCode == FSCTL_DISMOUNT_VOLUME) {
-                InterlockedIncrement( (PLONG) &SharedUserData->DismountCount );
+            if (IoControlCode == FSCTL_DISMOUNT_VOLUME)
+            {
+                InterlockedIncrement((PLONG)&SharedUserData->DismountCount);
             }
 
 
@@ -8673,15 +8335,9 @@ Return Value:
             // Call the driver's fast I/O routine.
             //
 
-            if (fastIoDispatch->FastIoDeviceControl( fileObject,
-                                                     TRUE,
-                                                     InputBuffer,
-                                                     InputBufferLength,
-                                                     OutputBuffer,
-                                                     OutputBufferLength,
-                                                     IoControlCode,
-                                                     &localIoStatus,
-                                                     deviceObject )) {
+            if (fastIoDispatch->FastIoDeviceControl(fileObject, TRUE, InputBuffer, InputBufferLength, OutputBuffer,
+                                                    OutputBufferLength, IoControlCode, &localIoStatus, deviceObject))
+            {
 
                 //
                 // The driver successfully performed the I/O in it's
@@ -8689,25 +8345,31 @@ Return Value:
                 // I/O status.
                 //
 
-                try {
+                try
+                {
 #if defined(_WIN64)
                     //
                     // If this is a32-bit thread, and the IO request is
                     // asynchronous, then the IOSB is 32-bit. Wow64 always sends
                     // the 32-bit IOSB when the I/O is asynchronous.
                     //
-                    if (IopIsIosb32(ApcRoutine)) {
+                    if (IopIsIosb32(ApcRoutine))
+                    {
                         PIO_STATUS_BLOCK32 UserIosb32 = (PIO_STATUS_BLOCK32)IoStatusBlock;
 
                         UserIosb32->Information = (ULONG)localIoStatus.Information;
                         UserIosb32->Status = (NTSTATUS)localIoStatus.Status;
-                    } else {
+                    }
+                    else
+                    {
                         *IoStatusBlock = localIoStatus;
                     }
 #else
                     *IoStatusBlock = localIoStatus;
 #endif
-                } except( EXCEPTION_EXECUTE_HANDLER ) {
+                }
+                except(EXCEPTION_EXECUTE_HANDLER)
+                {
                     localIoStatus.Status = GetExceptionCode();
                     localIoStatus.Information = 0;
                 }
@@ -8716,9 +8378,10 @@ Return Value:
                 // If an event was specified, set it.
                 //
 
-                if (ARGUMENT_PRESENT( Event )) {
-                    KeSetEvent( eventObject, 0, FALSE );
-                    ObDereferenceObject( eventObject );
+                if (ARGUMENT_PRESENT(Event))
+                {
+                    KeSetEvent(eventObject, 0, FALSE);
+                    ObDereferenceObject(eventObject);
                 }
 
                 //
@@ -8727,8 +8390,9 @@ Return Value:
                 // file object lock, if necessary.
                 //
 
-                if (synchronousIo) {
-                    IopReleaseFileObjectLock( fileObject );
+                if (synchronousIo)
+                {
+                    IopReleaseFileObjectLock(fileObject);
                 }
 
                 //
@@ -8737,13 +8401,12 @@ Return Value:
                 // message needs to be queued.
                 //
 
-                if (fileObject->CompletionContext && ARGUMENT_PRESENT( ApcContext )) {
-                    if (!NT_SUCCESS(IoSetIoCompletion( fileObject->CompletionContext->Port,
-                                                       fileObject->CompletionContext->Key,
-                                                       ApcContext,
-                                                       localIoStatus.Status,
-                                                       localIoStatus.Information,
-                                                       TRUE ))) {
+                if (fileObject->CompletionContext && ARGUMENT_PRESENT(ApcContext))
+                {
+                    if (!NT_SUCCESS(IoSetIoCompletion(fileObject->CompletionContext->Port,
+                                                      fileObject->CompletionContext->Key, ApcContext,
+                                                      localIoStatus.Status, localIoStatus.Information, TRUE)))
+                    {
                         localIoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
                     }
                 }
@@ -8752,42 +8415,42 @@ Return Value:
                 // Cleanup and return.
                 //
 
-                ObDereferenceObject( fileObject );
+                ObDereferenceObject(fileObject);
                 return localIoStatus.Status;
             }
         }
-
     }
 
     //
     // Set the file object to the Not-Signaled state.
     //
 
-    KeClearEvent( &fileObject->Event );
+    KeClearEvent(&fileObject->Event);
 
     //
     // Allocate and initialize the I/O Request Packet (IRP) for this operation.
 
-    irp = IopAllocateIrp( deviceObject->StackSize, TRUE );
+    irp = IopAllocateIrp(deviceObject->StackSize, TRUE);
 
-    if (!irp) {
+    if (!irp)
+    {
 
         //
         // An IRP could not be allocated.  Cleanup and return an appropriate
         // error status code.
         //
 
-        IopAllocateIrpCleanup( fileObject, eventObject );
+        IopAllocateIrpCleanup(fileObject, eventObject);
 
         return STATUS_INSUFFICIENT_RESOURCES;
     }
     irp->Tail.Overlay.OriginalFileObject = fileObject;
     irp->Tail.Overlay.Thread = CurrentThread;
-    irp->Tail.Overlay.AuxiliaryBuffer = (PVOID) NULL;
+    irp->Tail.Overlay.AuxiliaryBuffer = (PVOID)NULL;
     irp->RequestorMode = requestorMode;
     irp->PendingReturned = FALSE;
     irp->Cancel = FALSE;
-    irp->CancelRoutine = (PDRIVER_CANCEL) NULL;
+    irp->CancelRoutine = (PDRIVER_CANCEL)NULL;
 
     //
     // Fill in the service independent parameters in the IRP.
@@ -8808,8 +8471,8 @@ Return Value:
     //      Control = 0;
     //
 
-    irpSp = IoGetNextIrpStackLocation( irp );
-    majorFunction = (PULONG) (&irpSp->MajorFunction);
+    irpSp = IoGetNextIrpStackLocation(irp);
+    majorFunction = (PULONG)(&irpSp->MajorFunction);
     *majorFunction = DeviceIoControl ? IRP_MJ_DEVICE_CONTROL : IRP_MJ_FILE_SYSTEM_CONTROL;
     irpSp->FileObject = fileObject;
 
@@ -8834,10 +8497,11 @@ Return Value:
     // place so the exception handler must catch access violations.
     //
 
-    irp->MdlAddress = (PMDL) NULL;
-    irp->AssociatedIrp.SystemBuffer = (PVOID) NULL;
+    irp->MdlAddress = (PMDL)NULL;
+    irp->AssociatedIrp.SystemBuffer = (PVOID)NULL;
 
-    switch ( method ) {
+    switch (method)
+    {
 
     case METHOD_BUFFERED:
 
@@ -8847,31 +8511,35 @@ Return Value:
         // the allocated buffer and set the appropriate IRP fields.
         //
 
-        irpSp->Parameters.DeviceIoControl.Type3InputBuffer = (PVOID) NULL;
+        irpSp->Parameters.DeviceIoControl.Type3InputBuffer = (PVOID)NULL;
 
-        try {
+        try
+        {
 
-            if (InputBufferLength || OutputBufferLength) {
-                irp->AssociatedIrp.SystemBuffer =
-                    ExAllocatePoolWithQuota( poolType,
-                                             (InputBufferLength > OutputBufferLength) ? InputBufferLength : OutputBufferLength );
+            if (InputBufferLength || OutputBufferLength)
+            {
+                irp->AssociatedIrp.SystemBuffer = ExAllocatePoolWithQuota(
+                    poolType, (InputBufferLength > OutputBufferLength) ? InputBufferLength : OutputBufferLength);
 
-                if (ARGUMENT_PRESENT( InputBuffer )) {
-                    RtlCopyMemory( irp->AssociatedIrp.SystemBuffer,
-                                   InputBuffer,
-                                   InputBufferLength );
+                if (ARGUMENT_PRESENT(InputBuffer))
+                {
+                    RtlCopyMemory(irp->AssociatedIrp.SystemBuffer, InputBuffer, InputBufferLength);
                 }
                 irp->Flags = IRP_BUFFERED_IO | IRP_DEALLOCATE_BUFFER;
                 irp->UserBuffer = OutputBuffer;
-                if (ARGUMENT_PRESENT( OutputBuffer )) {
+                if (ARGUMENT_PRESENT(OutputBuffer))
+                {
                     irp->Flags |= IRP_INPUT_OPERATION;
                 }
-            } else {
-                irp->Flags = 0;
-                irp->UserBuffer = (PVOID) NULL;
             }
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+            else
+            {
+                irp->Flags = 0;
+                irp->UserBuffer = (PVOID)NULL;
+            }
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // An exception was incurred while either allocating the
@@ -8880,10 +8548,7 @@ Return Value:
             // an appropriate error status code.
             //
 
-            IopExceptionCleanup( fileObject,
-                                 irp,
-                                 eventObject,
-                                 (PKEVENT) NULL );
+            IopExceptionCleanup(fileObject, irp, eventObject, (PKEVENT)NULL);
 
             return GetExceptionCode();
         }
@@ -8908,37 +8573,32 @@ Return Value:
         //
 
         irp->Flags = 0;
-        irpSp->Parameters.DeviceIoControl.Type3InputBuffer = (PVOID) NULL;
+        irpSp->Parameters.DeviceIoControl.Type3InputBuffer = (PVOID)NULL;
 
-        try {
+        try
+        {
 
-            if (InputBufferLength && ARGUMENT_PRESENT( InputBuffer )) {
-                irp->AssociatedIrp.SystemBuffer =
-                    ExAllocatePoolWithQuota( poolType,
-                                             InputBufferLength );
-                RtlCopyMemory( irp->AssociatedIrp.SystemBuffer,
-                               InputBuffer,
-                               InputBufferLength );
+            if (InputBufferLength && ARGUMENT_PRESENT(InputBuffer))
+            {
+                irp->AssociatedIrp.SystemBuffer = ExAllocatePoolWithQuota(poolType, InputBufferLength);
+                RtlCopyMemory(irp->AssociatedIrp.SystemBuffer, InputBuffer, InputBufferLength);
                 irp->Flags = IRP_BUFFERED_IO | IRP_DEALLOCATE_BUFFER;
             }
 
-            if (OutputBufferLength != 0) {
-                irp->MdlAddress = IoAllocateMdl( OutputBuffer,
-                                                 OutputBufferLength,
-                                                 FALSE,
-                                                 TRUE,
-                                                 irp  );
-                if (irp->MdlAddress == NULL) {
-                    ExRaiseStatus( STATUS_INSUFFICIENT_RESOURCES );
+            if (OutputBufferLength != 0)
+            {
+                irp->MdlAddress = IoAllocateMdl(OutputBuffer, OutputBufferLength, FALSE, TRUE, irp);
+                if (irp->MdlAddress == NULL)
+                {
+                    ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
                 }
-                IopProbeAndLockPages( irp->MdlAddress,
-                                     requestorMode,
-                                     (LOCK_OPERATION) ((method == 1) ? IoReadAccess : IoWriteAccess),
-                                       deviceObject,
-                                      *majorFunction);
+                IopProbeAndLockPages(irp->MdlAddress, requestorMode,
+                                     (LOCK_OPERATION)((method == 1) ? IoReadAccess : IoWriteAccess), deviceObject,
+                                     *majorFunction);
             }
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // An exception was incurred while either allocating the
@@ -8948,10 +8608,7 @@ Return Value:
             // an appropriate error status code.
             //
 
-            IopExceptionCleanup( fileObject,
-                                 irp,
-                                 eventObject,
-                                 (PKEVENT) NULL );
+            IopExceptionCleanup(fileObject, irp, eventObject, (PKEVENT)NULL);
 
             return GetExceptionCode();
         }
@@ -8977,15 +8634,18 @@ Return Value:
     // compatibility reasons.
     //
 
-    irpSp->Flags |= SeComputeGrantedAccesses( handleInformation.GrantedAccess, FILE_READ_DATA ) ? SL_READ_ACCESS_GRANTED : 0;
-    irpSp->Flags |= SeComputeGrantedAccesses( handleInformation.GrantedAccess, FILE_WRITE_DATA ) ? SL_WRITE_ACCESS_GRANTED : 0;
+    irpSp->Flags |=
+        SeComputeGrantedAccesses(handleInformation.GrantedAccess, FILE_READ_DATA) ? SL_READ_ACCESS_GRANTED : 0;
+    irpSp->Flags |=
+        SeComputeGrantedAccesses(handleInformation.GrantedAccess, FILE_WRITE_DATA) ? SL_WRITE_ACCESS_GRANTED : 0;
 
     //
     // Defer I/O completion for FSCTL requests, but not for IOCTL requests,
     // since file systems set pending properly but device driver do not.
     //
 
-    if (!DeviceIoControl) {
+    if (!DeviceIoControl)
+    {
         irp->Flags |= IRP_DEFER_IO_COMPLETION;
     }
 
@@ -8995,8 +8655,9 @@ Return Value:
     // of current directory handles.
     //
 
-    if (IoControlCode == FSCTL_DISMOUNT_VOLUME) {
-        InterlockedIncrement( (PLONG) &SharedUserData->DismountCount );
+    if (IoControlCode == FSCTL_DISMOUNT_VOLUME)
+    {
+        InterlockedIncrement((PLONG)&SharedUserData->DismountCount);
     }
 
 
@@ -9005,23 +8666,13 @@ Return Value:
     // I/O completion.
     //
 
-    return IopSynchronousServiceTail( deviceObject,
-                                      irp,
-                                      fileObject,
-                                      (BOOLEAN)!DeviceIoControl,
-                                      requestorMode,
-                                      synchronousIo,
-                                      OtherTransfer );
+    return IopSynchronousServiceTail(deviceObject, irp, fileObject, (BOOLEAN)!DeviceIoControl, requestorMode,
+                                     synchronousIo, OtherTransfer);
 }
-
+
 NTSTATUS
-IopLookupBusStringFromID (
-    IN  HANDLE KeyHandle,
-    IN  INTERFACE_TYPE InterfaceType,
-    OUT PWCHAR Buffer,
-    IN  ULONG Length,
-    OUT PULONG BusFlags OPTIONAL
-    )
+IopLookupBusStringFromID(IN HANDLE KeyHandle, IN INTERFACE_TYPE InterfaceType, OUT PWCHAR Buffer, IN ULONG Length,
+                         OUT PULONG BusFlags OPTIONAL)
 /*++
 
 Routine Description:
@@ -9053,37 +8704,34 @@ Return Value:
 
 --*/
 {
-    NTSTATUS                        status;
-    ULONG                           Index, junk, i, j;
-    PULONG                          pl;
-    PKEY_VALUE_FULL_INFORMATION     KeyInformation;
-    WCHAR                           c;
+    NTSTATUS status;
+    ULONG Index, junk, i, j;
+    PULONG pl;
+    PKEY_VALUE_FULL_INFORMATION KeyInformation;
+    WCHAR c;
 
     PAGED_CODE();
 
     Index = 0;
-    KeyInformation = (PKEY_VALUE_FULL_INFORMATION) Buffer;
+    KeyInformation = (PKEY_VALUE_FULL_INFORMATION)Buffer;
 
-    for (; ;) {
-        status = ZwEnumerateValueKey (
-                        KeyHandle,
-                        Index++,
-                        KeyValueFullInformation,
-                        Buffer,
-                        Length,
-                        &junk
-                        );
+    for (;;)
+    {
+        status = ZwEnumerateValueKey(KeyHandle, Index++, KeyValueFullInformation, Buffer, Length, &junk);
 
-        if (!NT_SUCCESS (status)) {
+        if (!NT_SUCCESS(status))
+        {
             return status;
         }
 
-        if (KeyInformation->Type != REG_BINARY) {
+        if (KeyInformation->Type != REG_BINARY)
+        {
             continue;
         }
 
-        pl = (PULONG) ((PUCHAR) KeyInformation + KeyInformation->DataOffset);
-        if ((ULONG) InterfaceType != pl[0]) {
+        pl = (PULONG)((PUCHAR)KeyInformation + KeyInformation->DataOffset);
+        if ((ULONG)InterfaceType != pl[0])
+        {
             continue;
         }
 
@@ -9091,12 +8739,14 @@ Return Value:
         // Found a match - move the name to the start of the buffer
         //
 
-        if(ARGUMENT_PRESENT(BusFlags)) {
+        if (ARGUMENT_PRESENT(BusFlags))
+        {
             *BusFlags = pl[1];
         }
 
-        j = KeyInformation->NameLength / sizeof (WCHAR);
-        for (i=0; i < j; i++) {
+        j = KeyInformation->NameLength / sizeof(WCHAR);
+        for (i = 0; i < j; i++)
+        {
             c = KeyInformation->Name[i];
             Buffer[i] = c;
         }
@@ -9108,9 +8758,7 @@ Return Value:
 
 
 BOOLEAN
-IopSafebootDriverLoad(
-    PUNICODE_STRING DriverId
-    )
+IopSafebootDriverLoad(PUNICODE_STRING DriverId)
 /*++
 
 Routine Description:
@@ -9132,72 +8780,66 @@ Return Value:
 --*/
 {
     NTSTATUS status;
-    HANDLE hSafeBoot,hGuid;
+    HANDLE hSafeBoot, hGuid;
     UNICODE_STRING safeBootKey;
     UNICODE_STRING SafeBootTypeString;
-
 
 
     //
     // set the first part of the registry key name
     //
 
-    switch (InitSafeBootMode) {
-        case SAFEBOOT_MINIMAL:
-            RtlInitUnicodeString(&SafeBootTypeString,SAFEBOOT_MINIMAL_STR_W);
-            break;
+    switch (InitSafeBootMode)
+    {
+    case SAFEBOOT_MINIMAL:
+        RtlInitUnicodeString(&SafeBootTypeString, SAFEBOOT_MINIMAL_STR_W);
+        break;
 
-        case SAFEBOOT_NETWORK:
-            RtlInitUnicodeString(&SafeBootTypeString,SAFEBOOT_NETWORK_STR_W);
-            break;
+    case SAFEBOOT_NETWORK:
+        RtlInitUnicodeString(&SafeBootTypeString, SAFEBOOT_NETWORK_STR_W);
+        break;
 
-        case SAFEBOOT_DSREPAIR:
-            return TRUE;
+    case SAFEBOOT_DSREPAIR:
+        return TRUE;
 
-        default:
-            KdPrint(("SAFEBOOT: invalid safeboot option = %d\n",InitSafeBootMode));
-            return FALSE;
+    default:
+        KdPrint(("SAFEBOOT: invalid safeboot option = %d\n", InitSafeBootMode));
+        return FALSE;
     }
 
     safeBootKey.Length = 0;
-    safeBootKey.MaximumLength = DriverId->Length + SafeBootTypeString.Length + (4*sizeof(WCHAR));
-    safeBootKey.Buffer = (PWCHAR)ExAllocatePool(PagedPool,safeBootKey.MaximumLength);
-    if (!safeBootKey.Buffer) {
+    safeBootKey.MaximumLength = DriverId->Length + SafeBootTypeString.Length + (4 * sizeof(WCHAR));
+    safeBootKey.Buffer = (PWCHAR)ExAllocatePool(PagedPool, safeBootKey.MaximumLength);
+    if (!safeBootKey.Buffer)
+    {
         KdPrint(("SAFEBOOT: could not allocate pool\n"));
         return FALSE;
     }
 
-    RtlCopyUnicodeString(&safeBootKey,&SafeBootTypeString);
-    status = RtlAppendUnicodeToString(&safeBootKey,L"\\");
-    if (!NT_SUCCESS(status)) {
-        ExFreePool (safeBootKey.Buffer);
-        KdPrint(("SAFEBOOT: could not create registry key string = %x\n",status));
+    RtlCopyUnicodeString(&safeBootKey, &SafeBootTypeString);
+    status = RtlAppendUnicodeToString(&safeBootKey, L"\\");
+    if (!NT_SUCCESS(status))
+    {
+        ExFreePool(safeBootKey.Buffer);
+        KdPrint(("SAFEBOOT: could not create registry key string = %x\n", status));
         return FALSE;
     }
-    status = RtlAppendUnicodeStringToString(&safeBootKey,DriverId);
-    if (!NT_SUCCESS(status)) {
-        ExFreePool (safeBootKey.Buffer);
-        KdPrint(("SAFEBOOT: could not create registry key string = %x\n",status));
+    status = RtlAppendUnicodeStringToString(&safeBootKey, DriverId);
+    if (!NT_SUCCESS(status))
+    {
+        ExFreePool(safeBootKey.Buffer);
+        KdPrint(("SAFEBOOT: could not create registry key string = %x\n", status));
         return FALSE;
     }
 
-    status = IopOpenRegistryKey (
-        &hSafeBoot,
-        NULL,
-        &CmRegistryMachineSystemCurrentControlSetControlSafeBoot,
-        KEY_ALL_ACCESS,
-        FALSE
-        );
-    if (NT_SUCCESS(status)) {
-        status = IopOpenRegistryKey (
-            &hGuid,
-            hSafeBoot,
-            &safeBootKey,
-            KEY_ALL_ACCESS,
-            FALSE
-            );
+    status = IopOpenRegistryKey(&hSafeBoot, NULL, &CmRegistryMachineSystemCurrentControlSetControlSafeBoot,
+                                KEY_ALL_ACCESS, FALSE);
+    if (NT_SUCCESS(status))
+    {
+        status = IopOpenRegistryKey(&hGuid, hSafeBoot, &safeBootKey, KEY_ALL_ACCESS, FALSE);
         NtClose(hSafeBoot);
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
             NtClose(hGuid);
             ExFreePool(safeBootKey.Buffer);
             return TRUE;
@@ -9210,20 +8852,15 @@ Return Value:
 }
 
 
-
 #ifdef ALLOC_DATA_PRAGMA
-#pragma  data_seg("PAGEDATA")
+#pragma data_seg("PAGEDATA")
 #endif
 static PBOOT_LOG_RECORD BootLogRecord;
 #ifdef ALLOC_DATA_PRAGMA
-#pragma  data_seg()
+#pragma data_seg()
 #endif
 
-VOID
-IopInitializeBootLogging(
-    PLOADER_PARAMETER_BLOCK LoaderBlock,
-    PCHAR HeaderString
-    )
+VOID IopInitializeBootLogging(PLOADER_PARAMETER_BLOCK LoaderBlock, PCHAR HeaderString)
 /*++
 
 Routine Description:
@@ -9251,13 +8888,15 @@ Return Value:
 
     PAGED_CODE();
 
-    if (BootLogRecord != NULL) {
+    if (BootLogRecord != NULL)
+    {
         return;
     }
 
-    BootLogRecord = (PBOOT_LOG_RECORD) ExAllocatePool(NonPagedPool, sizeof(BOOT_LOG_RECORD));
+    BootLogRecord = (PBOOT_LOG_RECORD)ExAllocatePool(NonPagedPool, sizeof(BOOT_LOG_RECORD));
 
-    if (BootLogRecord == NULL) {
+    if (BootLogRecord == NULL)
+    {
         return;
     }
 
@@ -9271,13 +8910,12 @@ Return Value:
     //
     ExAcquireResourceExclusiveLite(&BootLogRecord->Resource, TRUE);
 
-    DataTableEntry = CONTAINING_RECORD(LoaderBlock->LoadOrderListHead.Flink,
-                                        KLDR_DATA_TABLE_ENTRY,
-                                        InLoadOrderLinks);
+    DataTableEntry = CONTAINING_RECORD(LoaderBlock->LoadOrderListHead.Flink, KLDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
-    Status = RtlFindMessage (DataTableEntry->DllBase, 11, 0, BOOTLOG_LOADED, &MessageEntry);
+    Status = RtlFindMessage(DataTableEntry->DllBase, 11, 0, BOOTLOG_LOADED, &MessageEntry);
 
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
         AnsiString.Buffer = MessageEntry->Text;
         AnsiString.Length = (USHORT)strlen(MessageEntry->Text);
         AnsiString.MaximumLength = AnsiString.Length + 1;
@@ -9286,15 +8924,17 @@ Return Value:
 
         // whack the crlf at the end of the string
 
-        if (BootLogRecord->LoadedString.Length > 2 * sizeof(WCHAR)) {
+        if (BootLogRecord->LoadedString.Length > 2 * sizeof(WCHAR))
+        {
             BootLogRecord->LoadedString.Length -= 2 * sizeof(WCHAR);
             BootLogRecord->LoadedString.Buffer[BootLogRecord->LoadedString.Length / sizeof(WCHAR)] = UNICODE_NULL;
         }
     }
 
-    Status = RtlFindMessage (DataTableEntry->DllBase, 11, 0, BOOTLOG_NOT_LOADED, &MessageEntry);
+    Status = RtlFindMessage(DataTableEntry->DllBase, 11, 0, BOOTLOG_NOT_LOADED, &MessageEntry);
 
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
         AnsiString.Buffer = MessageEntry->Text;
         AnsiString.Length = (USHORT)strlen(MessageEntry->Text);
         AnsiString.MaximumLength = AnsiString.Length + 1;
@@ -9303,7 +8943,8 @@ Return Value:
 
         // whack the crlf at the end of the string
 
-        if (BootLogRecord->NotLoadedString.Length > 2 * sizeof(WCHAR)) {
+        if (BootLogRecord->NotLoadedString.Length > 2 * sizeof(WCHAR))
+        {
             BootLogRecord->NotLoadedString.Length -= 2 * sizeof(WCHAR);
             BootLogRecord->NotLoadedString.Buffer[BootLogRecord->NotLoadedString.Length / sizeof(WCHAR)] = UNICODE_NULL;
         }
@@ -9317,33 +8958,28 @@ Return Value:
 
     // Log the drivers loaded by the boot loader
 
-    ExAcquireResourceSharedLite( &PsLoadedModuleResource, TRUE );
+    ExAcquireResourceSharedLite(&PsLoadedModuleResource, TRUE);
     nextEntry = PsLoadedModuleList.Flink;
-    while (nextEntry != &PsLoadedModuleList) {
+    while (nextEntry != &PsLoadedModuleList)
+    {
 
         //
         // Look at the next boot driver in the list.
         //
 
-        driverEntry = CONTAINING_RECORD( nextEntry,
-                                         KLDR_DATA_TABLE_ENTRY,
-                                         InLoadOrderLinks );
+        driverEntry = CONTAINING_RECORD(nextEntry, KLDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
         IopBootLog(&driverEntry->FullDllName, TRUE);
 
         nextEntry = nextEntry->Flink;
     }
 
-    ExReleaseResourceLite( &PsLoadedModuleResource );
+    ExReleaseResourceLite(&PsLoadedModuleResource);
 
     ExReleaseResourceLite(&BootLogRecord->Resource);
 }
 
-VOID
-IopBootLog(
-    PUNICODE_STRING LogEntry,
-    BOOLEAN Loaded
-    )
+VOID IopBootLog(PUNICODE_STRING LogEntry, BOOLEAN Loaded)
 /*++
 
 Routine Description:
@@ -9373,15 +9009,12 @@ Return Value:
     NTSTATUS Status;
 
     WCHAR MessageBuffer[BOOTLOG_STRSIZE];
-    UNICODE_STRING MessageString = {
-        0,
-        BOOTLOG_STRSIZE,
-        &MessageBuffer[0]
-    };
+    UNICODE_STRING MessageString = { 0, BOOTLOG_STRSIZE, &MessageBuffer[0] };
 
     PAGED_CODE();
 
-    if (BootLogRecord == NULL) {
+    if (BootLogRecord == NULL)
+    {
         return;
     }
 
@@ -9391,9 +9024,12 @@ Return Value:
     //
     ExAcquireResourceExclusiveLite(&BootLogRecord->Resource, TRUE);
 
-    if (Loaded) {
+    if (Loaded)
+    {
         RtlCopyUnicodeString(&MessageString, &BootLogRecord->LoadedString);
-    } else {
+    }
+    else
+    {
         RtlCopyUnicodeString(&MessageString, &BootLogRecord->NotLoadedString);
     }
 
@@ -9415,38 +9051,27 @@ Return Value:
     RtlCreateUnicodeString(&KeyName, NameBuffer);
     RtlInitUnicodeString(&ValueName, L"");
 
-    if (!BootLogRecord->FileLogging) {
+    if (!BootLogRecord->FileLogging)
+    {
         HANDLE hLogKey, hBootKey;
 
-        Status = IopOpenRegistryKey (
-            &hBootKey,
-            NULL,
-            &CmRegistryMachineSystemCurrentControlSetControlBootLog,
-            KEY_ALL_ACCESS,
-            TRUE
-            );
+        Status = IopOpenRegistryKey(&hBootKey, NULL, &CmRegistryMachineSystemCurrentControlSetControlBootLog,
+                                    KEY_ALL_ACCESS, TRUE);
 
-        if (NT_SUCCESS(Status)) {
-            Status = IopOpenRegistryKey (
-                &hLogKey,
-                hBootKey,
-                &KeyName,
-                KEY_ALL_ACCESS,
-                TRUE
-                );
-            if (NT_SUCCESS(Status)) {
-                Status = IopSetRegistryStringValue(
-                    hLogKey,
-                    &ValueName,
-                    &MessageString
-                    );
+        if (NT_SUCCESS(Status))
+        {
+            Status = IopOpenRegistryKey(&hLogKey, hBootKey, &KeyName, KEY_ALL_ACCESS, TRUE);
+            if (NT_SUCCESS(Status))
+            {
+                Status = IopSetRegistryStringValue(hLogKey, &ValueName, &MessageString);
                 ZwClose(hLogKey);
             }
             ZwClose(hBootKey);
         }
-
-    } else {
-        IopBootLogToFile( &MessageString );
+    }
+    else
+    {
+        IopBootLogToFile(&MessageString);
     }
 
     RtlFreeUnicodeString(&KeyName);
@@ -9454,10 +9079,7 @@ Return Value:
     ExReleaseResourceLite(&BootLogRecord->Resource);
 }
 
-VOID
-IopCopyBootLogRegistryToFile(
-    VOID
-    )
+VOID IopCopyBootLogRegistryToFile(VOID)
 /*++
 
 Routine Description:
@@ -9492,11 +9114,12 @@ Return Value:
 
     PAGED_CODE();
 
-    if (BootLogRecord == NULL) {
+    if (BootLogRecord == NULL)
+    {
         return;
     }
 
-    CurrentThread = KeGetCurrentThread ();
+    CurrentThread = KeGetCurrentThread();
     KeEnterCriticalRegionThread(CurrentThread);
     ExAcquireResourceExclusiveLite(&BootLogRecord->Resource, TRUE);
 
@@ -9506,17 +9129,8 @@ Return Value:
 
     RtlTimeToTimeFields(&LocalTime, &TimeFields);
 
-    sprintf(
-        AnsiTimeBuffer,
-        "%2d %2d %4d %02d:%02d:%02d.%03d\r\n",
-        TimeFields.Month,
-        TimeFields.Day,
-        TimeFields.Year,
-        TimeFields.Hour,
-        TimeFields.Minute,
-        TimeFields.Second,
-        TimeFields.Milliseconds
-    );
+    sprintf(AnsiTimeBuffer, "%2d %2d %4d %02d:%02d:%02d.%03d\r\n", TimeFields.Month, TimeFields.Day, TimeFields.Year,
+            TimeFields.Hour, TimeFields.Minute, TimeFields.Second, TimeFields.Milliseconds);
 
     RtlInitAnsiString(&AnsiTimeString, AnsiTimeBuffer);
 
@@ -9531,37 +9145,26 @@ Return Value:
     // Delete the registry keys when done.
     //
 
-    Status = IopOpenRegistryKey (
-        &hBootKey,
-        NULL,
-        &CmRegistryMachineSystemCurrentControlSetControlBootLog,
-        KEY_ALL_ACCESS,
-        FALSE
-        );
+    Status = IopOpenRegistryKey(&hBootKey, NULL, &CmRegistryMachineSystemCurrentControlSetControlBootLog,
+                                KEY_ALL_ACCESS, FALSE);
 
-    if (NT_SUCCESS(Status)) {
-        for (Index = 0; Index < BootLogRecord->NextKey; Index++) {
+    if (NT_SUCCESS(Status))
+    {
+        for (Index = 0; Index < BootLogRecord->NextKey; Index++)
+        {
             swprintf(NameBuffer, L"%d", Index);
 
             RtlCreateUnicodeString(&KeyName, NameBuffer);
 
-            Status = IopOpenRegistryKey (
-                &hLogKey,
-                hBootKey,
-                &KeyName,
-                KEY_ALL_ACCESS,
-                FALSE
-                );
+            Status = IopOpenRegistryKey(&hLogKey, hBootKey, &KeyName, KEY_ALL_ACCESS, FALSE);
 
-            if (NT_SUCCESS(Status)) {
-                Status = IopGetRegistryValue(
-                    hLogKey,
-                    L"",
-                    &Information
-                    );
+            if (NT_SUCCESS(Status))
+            {
+                Status = IopGetRegistryValue(hLogKey, L"", &Information);
 
-                if (NT_SUCCESS(Status)){
-                    RtlInitUnicodeString(&LogString, (PWSTR) ((PUCHAR)Information + Information->DataOffset));
+                if (NT_SUCCESS(Status))
+                {
+                    RtlInitUnicodeString(&LogString, (PWSTR)((PUCHAR)Information + Information->DataOffset));
                     IopBootLogToFile(&LogString);
                 }
                 ExFreePool(Information);
@@ -9585,9 +9188,7 @@ Return Value:
 
 
 NTSTATUS
-IopBootLogToFile(
-    PUNICODE_STRING String
-    )
+IopBootLogToFile(PUNICODE_STRING String)
 /*++
 
 Routine Description:
@@ -9615,73 +9216,50 @@ Return Value:
 
     PAGED_CODE();
 
-    if (BootLogRecord == NULL) {
+    if (BootLogRecord == NULL)
+    {
         return STATUS_SUCCESS;
     }
 
-    CurrentThread = KeGetCurrentThread ();
+    CurrentThread = KeGetCurrentThread();
     KeEnterCriticalRegionThread(CurrentThread);
     ExAcquireResourceExclusiveLite(&BootLogRecord->Resource, TRUE);
 
-    if (BootLogRecord->LogFileName.Buffer == NULL) {
+    if (BootLogRecord->LogFileName.Buffer == NULL)
+    {
         RtlInitUnicodeString(&BootLogRecord->LogFileName, L"\\SystemRoot\\ntbtlog.txt");
     }
 
     InitializeObjectAttributes(&ObjA, &BootLogRecord->LogFileName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    Status = ZwCreateFile(&FileHandle,
-                            GENERIC_WRITE,
-                            &ObjA,
-                            &IoStatusBlock,
-                            NULL,
-                            FILE_ATTRIBUTE_NORMAL,
-                            FILE_SHARE_READ,
-                            FILE_OPEN_IF,
-                            FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE | FILE_SEQUENTIAL_ONLY,
-                            NULL,
-                            0
-                            );
+    Status = ZwCreateFile(&FileHandle, GENERIC_WRITE, &ObjA, &IoStatusBlock, NULL, FILE_ATTRIBUTE_NORMAL,
+                          FILE_SHARE_READ, FILE_OPEN_IF,
+                          FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE | FILE_SEQUENTIAL_ONLY, NULL, 0);
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // If the file is created for the first time, write the header.
         //
 
-        if (IoStatusBlock.Information == FILE_CREATED) {
+        if (IoStatusBlock.Information == FILE_CREATED)
+        {
 
-            Status = ZwWriteFile(
-                        FileHandle,
-                        NULL,
-                        NULL,
-                        NULL,
-                        &IoStatusBlock,
-                        (PVOID) &UnicodeHeader,
-                        sizeof(WCHAR),
-                        NULL,
-                        NULL
-                        );
+            Status = ZwWriteFile(FileHandle, NULL, NULL, NULL, &IoStatusBlock, (PVOID)&UnicodeHeader, sizeof(WCHAR),
+                                 NULL, NULL);
         }
 
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
 
             LARGE_INTEGER EndOfFile;
 
             EndOfFile.HighPart = 0xffffffff;
             EndOfFile.LowPart = FILE_WRITE_TO_END_OF_FILE;
 
-            Status = ZwWriteFile(
-                        FileHandle,
-                        NULL,
-                        NULL,
-                        NULL,
-                        &IoStatusBlock,
-                        (PVOID) String->Buffer,
-                        String->Length,
-                        &EndOfFile,
-                        NULL
-                        );
-
+            Status = ZwWriteFile(FileHandle, NULL, NULL, NULL, &IoStatusBlock, (PVOID)String->Buffer, String->Length,
+                                 &EndOfFile, NULL);
         }
 
         ZwClose(FileHandle);
@@ -9695,10 +9273,7 @@ Return Value:
 
 PLIST_ENTRY
 FASTCALL
-IopInterlockedInsertHeadList (
-    IN PLIST_ENTRY ListHead,
-    IN PLIST_ENTRY ListEntry
-    )
+IopInterlockedInsertHeadList(IN PLIST_ENTRY ListHead, IN PLIST_ENTRY ListEntry)
 
 /*++
 
@@ -9726,23 +9301,21 @@ Return Value:
     PLIST_ENTRY entry;
     KIRQL irql;
 
-    irql = KeAcquireQueuedSpinLock( LockQueueIoDatabaseLock );
+    irql = KeAcquireQueuedSpinLock(LockQueueIoDatabaseLock);
     entry = ListHead->Flink;
-    if ( entry == ListHead ) {
+    if (entry == ListHead)
+    {
         entry = NULL;
     }
 
-    InsertHeadList( ListHead, ListEntry );
-    KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+    InsertHeadList(ListHead, ListEntry);
+    KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
     return entry;
 }
 
 PLIST_ENTRY
 FASTCALL
-IopInterlockedInsertTailList (
-    IN PLIST_ENTRY ListHead,
-    IN PLIST_ENTRY ListEntry
-    )
+IopInterlockedInsertTailList(IN PLIST_ENTRY ListHead, IN PLIST_ENTRY ListEntry)
 
 /*++
 
@@ -9770,22 +9343,21 @@ Return Value:
     PLIST_ENTRY entry;
     KIRQL irql;
 
-    irql = KeAcquireQueuedSpinLock( LockQueueIoDatabaseLock );
+    irql = KeAcquireQueuedSpinLock(LockQueueIoDatabaseLock);
     entry = ListHead->Blink;
-    if ( entry == ListHead) {
+    if (entry == ListHead)
+    {
         entry = NULL;
     }
 
-    InsertTailList( ListHead, ListEntry );
-    KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+    InsertTailList(ListHead, ListEntry);
+    KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
     return entry;
 }
 
 PLIST_ENTRY
 FASTCALL
-IopInterlockedRemoveHeadList (
-    IN PLIST_ENTRY ListHead
-    )
+IopInterlockedRemoveHeadList(IN PLIST_ENTRY ListHead)
 
 /*++
 
@@ -9811,25 +9383,24 @@ Return Value:
     PLIST_ENTRY entry;
     KIRQL irql;
 
-    irql = KeAcquireQueuedSpinLock( LockQueueIoDatabaseLock );
+    irql = KeAcquireQueuedSpinLock(LockQueueIoDatabaseLock);
     entry = ListHead->Flink;
-    if ( entry != ListHead ) {
-        RemoveEntryList( entry );
-
-    } else {
+    if (entry != ListHead)
+    {
+        RemoveEntryList(entry);
+    }
+    else
+    {
         entry = NULL;
     }
 
-    KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+    KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
     return entry;
 }
 
 ULONG
 FASTCALL
-IopInterlockedDecrementUlong (
-   IN KSPIN_LOCK_QUEUE_NUMBER Number,
-   IN OUT PULONG Addend
-   )
+IopInterlockedDecrementUlong(IN KSPIN_LOCK_QUEUE_NUMBER Number, IN OUT PULONG Addend)
 
 /*++
 
@@ -9855,19 +9426,16 @@ Return Value:
     KIRQL irql;
     ULONG value;
 
-    irql = KeAcquireQueuedSpinLock( Number );
+    irql = KeAcquireQueuedSpinLock(Number);
     value = *Addend;
     *Addend -= 1;
-    KeReleaseQueuedSpinLock( Number, irql );
+    KeReleaseQueuedSpinLock(Number, irql);
     return value;
 }
 
 ULONG
 FASTCALL
-IopInterlockedIncrementUlong (
-   IN KSPIN_LOCK_QUEUE_NUMBER Number,
-   IN OUT PULONG Addend
-   )
+IopInterlockedIncrementUlong(IN KSPIN_LOCK_QUEUE_NUMBER Number, IN OUT PULONG Addend)
 
 /*++
 
@@ -9893,17 +9461,15 @@ Return Value:
     KIRQL irql;
     ULONG value;
 
-    irql = KeAcquireQueuedSpinLock( Number );
+    irql = KeAcquireQueuedSpinLock(Number);
     value = *Addend;
     *Addend += 1;
-    KeReleaseQueuedSpinLock( Number, irql );
+    KeReleaseQueuedSpinLock(Number, irql);
     return value;
 }
 
 BOOLEAN
-IopCallBootDriverReinitializationRoutines(
-    VOID
-    )
+IopCallBootDriverReinitializationRoutines(VOID)
 
 /*++
 
@@ -9933,24 +9499,22 @@ Returns:
     // initialization entry point.
     //
 
-    while (entry = IopInterlockedRemoveHeadList( &IopBootDriverReinitializeQueueHead )) {
+    while (entry = IopInterlockedRemoveHeadList(&IopBootDriverReinitializeQueueHead))
+    {
         routinesFound = TRUE;
-        reinitEntry = CONTAINING_RECORD( entry, REINIT_PACKET, ListEntry );
+        reinitEntry = CONTAINING_RECORD(entry, REINIT_PACKET, ListEntry);
         reinitEntry->DriverObject->DriverExtension->Count++;
         reinitEntry->DriverObject->Flags &= ~DRVO_BOOTREINIT_REGISTERED;
-        reinitEntry->DriverReinitializationRoutine( reinitEntry->DriverObject,
-                                                    reinitEntry->Context,
-                                                    reinitEntry->DriverObject->DriverExtension->Count );
-        ExFreePool( reinitEntry );
+        reinitEntry->DriverReinitializationRoutine(reinitEntry->DriverObject, reinitEntry->Context,
+                                                   reinitEntry->DriverObject->DriverExtension->Count);
+        ExFreePool(reinitEntry);
     }
 
     return routinesFound;
 }
 
 BOOLEAN
-IopCallDriverReinitializationRoutines(
-    VOID
-    )
+IopCallDriverReinitializationRoutines(VOID)
 
 /*++
 
@@ -9982,24 +9546,22 @@ Returns:
     // initialization entry point.
     //
 
-    while (entry = IopInterlockedRemoveHeadList( &IopDriverReinitializeQueueHead )) {
+    while (entry = IopInterlockedRemoveHeadList(&IopDriverReinitializeQueueHead))
+    {
         routinesFound = TRUE;
-        reinitEntry = CONTAINING_RECORD( entry, REINIT_PACKET, ListEntry );
+        reinitEntry = CONTAINING_RECORD(entry, REINIT_PACKET, ListEntry);
         reinitEntry->DriverObject->DriverExtension->Count++;
         reinitEntry->DriverObject->Flags &= ~DRVO_REINIT_REGISTERED;
-        reinitEntry->DriverReinitializationRoutine( reinitEntry->DriverObject,
-                                                    reinitEntry->Context,
-                                                    reinitEntry->DriverObject->DriverExtension->Count );
-        ExFreePool( reinitEntry );
+        reinitEntry->DriverReinitializationRoutine(reinitEntry->DriverObject, reinitEntry->Context,
+                                                   reinitEntry->DriverObject->DriverExtension->Count);
+        ExFreePool(reinitEntry);
     }
 
     return routinesFound;
 }
-
+
 PDRIVER_OBJECT
-IopReferenceDriverObjectByName (
-    IN PUNICODE_STRING DriverName
-    )
+IopReferenceDriverObjectByName(IN PUNICODE_STRING DriverName)
 
 /*++
 
@@ -10028,52 +9590,37 @@ Returns:
     // Make sure the driver name is valid.
     //
 
-    if (DriverName->Length == 0) {
+    if (DriverName->Length == 0)
+    {
         return NULL;
     }
 
-    InitializeObjectAttributes(&objectAttributes,
-                               DriverName,
-                               OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-                               NULL,
-                               NULL
-                               );
-    status = ObOpenObjectByName(&objectAttributes,
-                                IoDriverObjectType,
-                                KernelMode,
-                                NULL,
-                                FILE_READ_ATTRIBUTES,
-                                NULL,
-                                &driverHandle
-                                );
-    if (NT_SUCCESS(status)) {
+    InitializeObjectAttributes(&objectAttributes, DriverName, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
+    status = ObOpenObjectByName(&objectAttributes, IoDriverObjectType, KernelMode, NULL, FILE_READ_ATTRIBUTES, NULL,
+                                &driverHandle);
+    if (NT_SUCCESS(status))
+    {
 
         //
         // Now reference the driver object.
         //
 
-        status = ObReferenceObjectByHandle(driverHandle,
-                                           0,
-                                           IoDriverObjectType,
-                                           KernelMode,
-                                           &driverObject,
-                                           NULL
-                                           );
+        status = ObReferenceObjectByHandle(driverHandle, 0, IoDriverObjectType, KernelMode, &driverObject, NULL);
         NtClose(driverHandle);
     }
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         return driverObject;
-    } else {
+    }
+    else
+    {
         return NULL;
     }
 }
 
 
-PIRP
-IopAllocateReserveIrp(
-    IN CCHAR StackSize
-    )
+PIRP IopAllocateReserveIrp(IN CCHAR StackSize)
 /*++
 
 Routine Description:
@@ -10090,31 +9637,25 @@ Return Value:
 
 --*/
 {
-    PIOP_RESERVE_IRP_ALLOCATOR  allocator = &IopReserveIrpAllocator;
+    PIOP_RESERVE_IRP_ALLOCATOR allocator = &IopReserveIrpAllocator;
 
-    if (StackSize > allocator->ReserveIrpStackSize) {
+    if (StackSize > allocator->ReserveIrpStackSize)
+    {
         return NULL;
     }
 
 
-    while (InterlockedExchange(&allocator->IrpAllocated, 1) == 1) {
+    while (InterlockedExchange(&allocator->IrpAllocated, 1) == 1)
+    {
 
-        (VOID)KeWaitForSingleObject(&allocator->Event,
-                                    Executive,
-                                    KernelMode,
-                                    FALSE,
-                                    (PLARGE_INTEGER)0);
+        (VOID) KeWaitForSingleObject(&allocator->Event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)0);
     }
 
     IoInitializeIrp(allocator->ReserveIrp, IoSizeOfIrp(StackSize), StackSize);
     return (allocator->ReserveIrp);
 }
 
-VOID
-IopFreeReserveIrp(
-    IN  PIRP    Irp,
-    IN  CCHAR   PriorityBoost
-    )
+VOID IopFreeReserveIrp(IN PIRP Irp, IN CCHAR PriorityBoost)
 /*++
 
 Routine Description:
@@ -10137,10 +9678,7 @@ Return Value:
 
 
 NTSTATUS
-IopGetBasicInformationFile(
-    IN  PFILE_OBJECT            FileObject,
-    IN  PFILE_BASIC_INFORMATION BasicInformationBuffer
-    )
+IopGetBasicInformationFile(IN PFILE_OBJECT FileObject, IN PFILE_BASIC_INFORMATION BasicInformationBuffer)
 /*++
 
 Routine Description:
@@ -10162,23 +9700,23 @@ Return Value:
     PDEVICE_OBJECT deviceObject;
     IO_STATUS_BLOCK localIoStatus;
     PFAST_IO_DISPATCH fastIoDispatch;
-    ULONG   lengthNeeded;
+    ULONG lengthNeeded;
     BOOLEAN queryResult;
 
     PAGED_CODE();
 
-    deviceObject = IoGetRelatedDeviceObject( FileObject );
+    deviceObject = IoGetRelatedDeviceObject(FileObject);
 
     fastIoDispatch = deviceObject->DriverObject->FastIoDispatch;
 
-    if (fastIoDispatch && fastIoDispatch->FastIoQueryBasicInfo) {
+    if (fastIoDispatch && fastIoDispatch->FastIoQueryBasicInfo)
+    {
 
-        queryResult = fastIoDispatch->FastIoQueryBasicInfo( FileObject,
-                                                            (FileObject->Flags & FO_SYNCHRONOUS_IO) ? TRUE : FALSE,
-                                                            BasicInformationBuffer,
-                                                            &localIoStatus,
-                                                            deviceObject );
-        if (queryResult) {
+        queryResult =
+            fastIoDispatch->FastIoQueryBasicInfo(FileObject, (FileObject->Flags & FO_SYNCHRONOUS_IO) ? TRUE : FALSE,
+                                                 BasicInformationBuffer, &localIoStatus, deviceObject);
+        if (queryResult)
+        {
             return (localIoStatus.Status);
         }
     }
@@ -10187,20 +9725,12 @@ Return Value:
     // Use the special API because the fileobject may be synchronous.
     //
 
-    status = IopGetFileInformation(FileObject,
-                                   sizeof(FILE_BASIC_INFORMATION),
-                                   FileBasicInformation,
-                                   BasicInformationBuffer,
-                                   &lengthNeeded);
+    status = IopGetFileInformation(FileObject, sizeof(FILE_BASIC_INFORMATION), FileBasicInformation,
+                                   BasicInformationBuffer, &lengthNeeded);
     return status;
 }
 
-PVPB
-IopMountInitializeVpb(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PDEVICE_OBJECT  AttachedDevice,
-    IN  ULONG           RawMountOnly
-    )
+PVPB IopMountInitializeVpb(IN PDEVICE_OBJECT DeviceObject, IN PDEVICE_OBJECT AttachedDevice, IN ULONG RawMountOnly)
 /*++
 
 Routine Description:
@@ -10219,8 +9749,8 @@ Return Value:
 
 --*/
 {
-    KIRQL   irql;
-    PVPB    vpb;
+    KIRQL irql;
+    PVPB vpb;
 
     IoAcquireVpbSpinLock(&irql);
 
@@ -10235,11 +9765,12 @@ Return Value:
     // could be clearing other flags which should be cleared.
     //
 
-    if (RawMountOnly) {
+    if (RawMountOnly)
+    {
         vpb->Flags |= VPB_RAW_MOUNT;
     }
 
-    vpb->DeviceObject->StackSize = (UCHAR) (AttachedDevice->StackSize + 1);
+    vpb->DeviceObject->StackSize = (UCHAR)(AttachedDevice->StackSize + 1);
 
     //
     // Set the reverse Vpb pointer in the filesystem device object's VPB.
@@ -10255,10 +9786,7 @@ Return Value:
 }
 
 BOOLEAN
-IopVerifyDeviceObjectOnStack(
-    IN  PDEVICE_OBJECT  BaseDeviceObject,
-    IN  PDEVICE_OBJECT  TopDeviceObject
-    )
+IopVerifyDeviceObjectOnStack(IN PDEVICE_OBJECT BaseDeviceObject, IN PDEVICE_OBJECT TopDeviceObject)
 /*++
 
 Routine Description:
@@ -10276,8 +9804,8 @@ Return Value:
 
 --*/
 {
-    KIRQL           irql;
-    PDEVICE_OBJECT  currentDeviceObject;
+    KIRQL irql;
+    PDEVICE_OBJECT currentDeviceObject;
 
     //
     // Loop through all of the device object's attached to the specified
@@ -10285,29 +9813,28 @@ Return Value:
     // to, return it.
     //
 
-    ASSERT( BaseDeviceObject != NULL);
+    ASSERT(BaseDeviceObject != NULL);
 
-    irql = KeAcquireQueuedSpinLock( LockQueueIoDatabaseLock );
+    irql = KeAcquireQueuedSpinLock(LockQueueIoDatabaseLock);
     currentDeviceObject = BaseDeviceObject;
 
-    do {
-        if (currentDeviceObject == TopDeviceObject) {
-            KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+    do
+    {
+        if (currentDeviceObject == TopDeviceObject)
+        {
+            KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
             return TRUE;
         }
         currentDeviceObject = currentDeviceObject->AttachedDevice;
     } while (currentDeviceObject);
 
-    KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+    KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
     return FALSE;
 }
 
 BOOLEAN
-IopVerifyDiskSignature(
-    IN PDRIVE_LAYOUT_INFORMATION_EX DriveLayout,
-    IN PARC_DISK_SIGNATURE          LoaderDiskBlock,
-    OUT PULONG                      DiskSignature
-    )
+IopVerifyDiskSignature(IN PDRIVE_LAYOUT_INFORMATION_EX DriveLayout, IN PARC_DISK_SIGNATURE LoaderDiskBlock,
+                       OUT PULONG DiskSignature)
 /*++
 
 Routine Description:
@@ -10328,9 +9855,10 @@ Return Value:
 
 --*/
 {
-    ULONG   diskSignature;
+    ULONG diskSignature;
 
-    if (!LoaderDiskBlock->ValidPartitionTable) {
+    if (!LoaderDiskBlock->ValidPartitionTable)
+    {
         return FALSE;
     }
 
@@ -10339,10 +9867,13 @@ Return Value:
     // its a MBR disk
     //
 
-    if (DriveLayout->PartitionStyle == PARTITION_STYLE_MBR) {
+    if (DriveLayout->PartitionStyle == PARTITION_STYLE_MBR)
+    {
         diskSignature = DriveLayout->Mbr.Signature;
-        if (LoaderDiskBlock->Signature == diskSignature) {
-            if (DiskSignature) {
+        if (LoaderDiskBlock->Signature == diskSignature)
+        {
+            if (DiskSignature)
+            {
                 *DiskSignature = diskSignature;
             }
             return TRUE;
@@ -10353,17 +9884,21 @@ Return Value:
     // Get hold of the signature from MBR if its GPT disk
     //
 
-    if (DriveLayout->PartitionStyle == PARTITION_STYLE_GPT) {
+    if (DriveLayout->PartitionStyle == PARTITION_STYLE_GPT)
+    {
 
-        if (!LoaderDiskBlock->IsGpt) {
+        if (!LoaderDiskBlock->IsGpt)
+        {
             return FALSE;
         }
 
-        if (!RtlEqualMemory(LoaderDiskBlock->GptSignature, &DriveLayout->Gpt.DiskId, sizeof(GUID))) {
+        if (!RtlEqualMemory(LoaderDiskBlock->GptSignature, &DriveLayout->Gpt.DiskId, sizeof(GUID)))
+        {
             return FALSE;
         }
 
-        if (DiskSignature) {
+        if (DiskSignature)
+        {
             *DiskSignature = 0;
         }
         return TRUE;
@@ -10373,11 +9908,7 @@ Return Value:
 }
 
 NTSTATUS
-IopGetDriverPathInformation(
-    IN  PFILE_OBJECT                        FileObject,
-    IN  PFILE_FS_DRIVER_PATH_INFORMATION    FsDpInfo,
-    IN  ULONG                               Length
-    )
+IopGetDriverPathInformation(IN PFILE_OBJECT FileObject, IN PFILE_FS_DRIVER_PATH_INFORMATION FsDpInfo, IN ULONG Length)
 /*++
 
 Routine Description:
@@ -10396,12 +9927,13 @@ Return Value:
 
 --*/
 {
-    UNICODE_STRING  driverString;
-    PDRIVER_OBJECT  driverObject;
-    NTSTATUS        status;
-    KIRQL           irql;
+    UNICODE_STRING driverString;
+    PDRIVER_OBJECT driverObject;
+    NTSTATUS status;
+    KIRQL irql;
 
-    if ((ULONG) (Length - FIELD_OFFSET( FILE_FS_DRIVER_PATH_INFORMATION, DriverName[0] )) < FsDpInfo->DriverNameLength) {
+    if ((ULONG)(Length - FIELD_OFFSET(FILE_FS_DRIVER_PATH_INFORMATION, DriverName[0])) < FsDpInfo->DriverNameLength)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -10409,31 +9941,32 @@ Return Value:
     driverString.Length = (USHORT)FsDpInfo->DriverNameLength;
     driverString.MaximumLength = (USHORT)FsDpInfo->DriverNameLength;
 
-    status = ObReferenceObjectByName(&driverString,
-                                     OBJ_CASE_INSENSITIVE,
-                                     NULL,                 // access state
-                                     0,                    // access mask
-                                     IoDriverObjectType,
-                                     KernelMode,
-                                     NULL,                 // parse context
+    status = ObReferenceObjectByName(&driverString, OBJ_CASE_INSENSITIVE,
+                                     NULL, // access state
+                                     0,    // access mask
+                                     IoDriverObjectType, KernelMode,
+                                     NULL, // parse context
                                      &driverObject);
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
-    irql = KeAcquireQueuedSpinLock( LockQueueIoDatabaseLock );
+    irql = KeAcquireQueuedSpinLock(LockQueueIoDatabaseLock);
 
 
-    if (FileObject->Vpb != NULL && FileObject->Vpb->DeviceObject != NULL) {
+    if (FileObject->Vpb != NULL && FileObject->Vpb->DeviceObject != NULL)
+    {
 
         //
         // Check the disk filesystem stack.
         //
 
-        if (IopVerifyDriverObjectOnStack(FileObject->Vpb->DeviceObject, driverObject)) {
+        if (IopVerifyDriverObjectOnStack(FileObject->Vpb->DeviceObject, driverObject))
+        {
 
             FsDpInfo->DriverInPath = TRUE;
-            KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+            KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
             ObDereferenceObject(driverObject);
             return STATUS_SUCCESS;
         }
@@ -10444,17 +9977,14 @@ Return Value:
     //
 
     FsDpInfo->DriverInPath = IopVerifyDriverObjectOnStack(FileObject->DeviceObject, driverObject);
-    KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+    KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
 
     ObDereferenceObject(driverObject);
     return STATUS_SUCCESS;
 }
 
 BOOLEAN
-IopVerifyDriverObjectOnStack(
-    IN  PDEVICE_OBJECT DeviceObject,
-    IN  PDRIVER_OBJECT DriverObject
-    )
+IopVerifyDriverObjectOnStack(IN PDEVICE_OBJECT DeviceObject, IN PDRIVER_OBJECT DriverObject)
 /*++
 
 Routine Description:
@@ -10473,12 +10003,14 @@ Return Value:
 
 --*/
 {
-    PDEVICE_OBJECT  currentDeviceObject;
+    PDEVICE_OBJECT currentDeviceObject;
 
     currentDeviceObject = IopGetDeviceAttachmentBase(DeviceObject);
 
-    while (currentDeviceObject) {
-        if (currentDeviceObject->DriverObject == DriverObject) {
+    while (currentDeviceObject)
+    {
+        if (currentDeviceObject->DriverObject == DriverObject)
+        {
             return TRUE;
         }
         currentDeviceObject = currentDeviceObject->AttachedDevice;
@@ -10486,27 +10018,18 @@ Return Value:
     return FALSE;
 }
 
-VOID
-IopIncrementDeviceObjectHandleCount(
-    IN  PDEVICE_OBJECT  DeviceObject
-    )
+VOID IopIncrementDeviceObjectHandleCount(IN PDEVICE_OBJECT DeviceObject)
 {
-  IopInterlockedIncrementUlong( LockQueueIoDatabaseLock,
-                                &DeviceObject->ReferenceCount );
+    IopInterlockedIncrementUlong(LockQueueIoDatabaseLock, &DeviceObject->ReferenceCount);
 }
 
-VOID
-IopDecrementDeviceObjectHandleCount(
-    IN  PDEVICE_OBJECT  DeviceObject
-    )
+VOID IopDecrementDeviceObjectHandleCount(IN PDEVICE_OBJECT DeviceObject)
 {
     IopDecrementDeviceObjectRef(DeviceObject, FALSE, FALSE);
 }
 
 NTSTATUS
-IopInitializeIrpStackProfiler(
-    VOID
-    )
+IopInitializeIrpStackProfiler(VOID)
 /*++
 
 Routine Description:
@@ -10522,15 +10045,15 @@ Return Value:
 
 --*/
 {
-    LARGE_INTEGER   dueTime;
-    LONG            i;
+    LARGE_INTEGER dueTime;
+    LONG i;
 
     RtlZeroMemory(IopIrpStackProfiler.Profile, MAX_LOOKASIDE_IRP_STACK_COUNT * sizeof(ULONG));
 
     KeInitializeTimer(&IopIrpStackProfiler.Timer);
     KeInitializeDpc(&IopIrpStackProfiler.Dpc, IopIrpStackProfilerTimer, &IopIrpStackProfiler);
 
-    dueTime.QuadPart = - IOP_PROFILE_TIME_PERIOD * 10 * 1000 * 1000;  // 1 Minute with a recurring period of a minute
+    dueTime.QuadPart = -IOP_PROFILE_TIME_PERIOD * 10 * 1000 * 1000; // 1 Minute with a recurring period of a minute
     IopIrpStackProfiler.TriggerCount = 0;
 
     KeSetTimerEx(&IopIrpStackProfiler.Timer, dueTime, IOP_PROFILE_TIME_PERIOD * 1000, &IopIrpStackProfiler.Dpc);
@@ -10538,13 +10061,8 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
-VOID
-IopIrpStackProfilerTimer(
-    IN struct _KDPC *Dpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    )
+VOID IopIrpStackProfilerTimer(IN struct _KDPC *Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1,
+                              IN PVOID SystemArgument2)
 /*++
 
 Routine Description:
@@ -10562,8 +10080,8 @@ Return Value:
 --*/
 {
     PIOP_IRP_STACK_PROFILER profiler = DeferredContext;
-    LONG                    i;
-    ULONG                   totalIrpsCounted;
+    LONG i;
+    ULONG totalIrpsCounted;
 
     //
     // If profile stack count is now enabled, we wait for ProfileDuration * 60 secs to stop
@@ -10571,12 +10089,15 @@ Return Value:
     // stack counts.
     //
 
-    if (profiler->Flags & IOP_PROFILE_STACK_COUNT) {
+    if (profiler->Flags & IOP_PROFILE_STACK_COUNT)
+    {
         totalIrpsCounted = 0;
-        for (i = 0; i < MAX_LOOKASIDE_IRP_STACK_COUNT; i++) {
+        for (i = 0; i < MAX_LOOKASIDE_IRP_STACK_COUNT; i++)
+        {
             totalIrpsCounted += profiler->Profile[i];
         }
-        if (totalIrpsCounted > NUM_SAMPLE_IRPS) {
+        if (totalIrpsCounted > NUM_SAMPLE_IRPS)
+        {
             profiler->Flags &= ~IOP_PROFILE_STACK_COUNT; // Stop the profiling.
             IopProcessIrpStackProfiler();
         }
@@ -10588,15 +10109,13 @@ Return Value:
     //
 
     profiler->TriggerCount++;
-    if ((profiler->TriggerCount % IOP_PROFILE_TRIGGER_INTERVAL) == 0) {
-        profiler->Flags |= IOP_PROFILE_STACK_COUNT;  // Enable profiling
+    if ((profiler->TriggerCount % IOP_PROFILE_TRIGGER_INTERVAL) == 0)
+    {
+        profiler->Flags |= IOP_PROFILE_STACK_COUNT; // Enable profiling
     }
 }
 
-VOID
-IopProcessIrpStackProfiler(
-    VOID
-    )
+VOID IopProcessIrpStackProfiler(VOID)
 /*++
 
 Routine Description:
@@ -10616,16 +10135,18 @@ Return Value:
 --*/
 {
     PIOP_IRP_STACK_PROFILER profiler = &IopIrpStackProfiler;
-    LONG                    i, j;
-    LONG                    bucket = 0;
-    LONG                    stackCount = 0;
-    LONG                    numRequests;
+    LONG i, j;
+    LONG bucket = 0;
+    LONG stackCount = 0;
+    LONG numRequests;
 
     numRequests = 0;
-    for (i = BASE_STACK_COUNT; i < MAX_LOOKASIDE_IRP_STACK_COUNT; i++) {
+    for (i = BASE_STACK_COUNT; i < MAX_LOOKASIDE_IRP_STACK_COUNT; i++)
+    {
         numRequests += profiler->Profile[i];
         profiler->Profile[i] = 0;
-        if (numRequests > bucket) {
+        if (numRequests > bucket)
+        {
             stackCount = i;
             bucket = numRequests;
         }
@@ -10637,7 +10158,8 @@ Return Value:
     // If the top allocation is less than the minimum threshold do nothing.
     //
 
-    if (bucket < MIN_IRP_THRESHOLD) {
+    if (bucket < MIN_IRP_THRESHOLD)
+    {
         return;
     }
 
@@ -10646,7 +10168,8 @@ Return Value:
     // right away.
     //
 
-    if (IopLargeIrpStackLocations != stackCount) {
+    if (IopLargeIrpStackLocations != stackCount)
+    {
         IopLargeIrpStackLocations = stackCount;
     }
 }

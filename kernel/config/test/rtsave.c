@@ -34,28 +34,24 @@ Revision History:
 #include <stdlib.h>
 #include <string.h>
 
-#define WORK_SIZE   1024
+#define WORK_SIZE 1024
 
 void __cdecl main(int, char *[]);
 void processargs();
 
-UNICODE_STRING  KeyPath;
-WCHAR           KeyPathBuffer[WORK_SIZE];
+UNICODE_STRING KeyPath;
+WCHAR KeyPathBuffer[WORK_SIZE];
 
-UNICODE_STRING  FileName;
-WCHAR           FileNameBuffer[WORK_SIZE];
+UNICODE_STRING FileName;
+WCHAR FileNameBuffer[WORK_SIZE];
 
-void
-__cdecl main(
-    int argc,
-    char *argv[]
-    )
+void __cdecl main(int argc, char *argv[])
 {
     NTSTATUS status;
     OBJECT_ATTRIBUTES ObjectAttributes;
-    IO_STATUS_BLOCK  IoStatus;
-    HANDLE  FileHandle;
-    HANDLE  KeyHandle;
+    IO_STATUS_BLOCK IoStatus;
+    HANDLE FileHandle;
+    HANDLE KeyHandle;
     BOOLEAN WasEnabled;
 
     //
@@ -78,58 +74,38 @@ __cdecl main(
     //
 
     printf("rtsave: starting\n");
-    printf("rtsave: saving hive rooted at\n\t'%ws'\nto file\n\t'%ws'\n",
-            KeyPath.Buffer, FileName.Buffer);
+    printf("rtsave: saving hive rooted at\n\t'%ws'\nto file\n\t'%ws'\n", KeyPath.Buffer, FileName.Buffer);
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &FileName,
-        0,
-        (HANDLE)NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&ObjectAttributes, &FileName, 0, (HANDLE)NULL, NULL);
     ObjectAttributes.Attributes |= OBJ_CASE_INSENSITIVE;
 
 
-    status = NtCreateFile(
-                &FileHandle,
-                GENERIC_WRITE | SYNCHRONIZE,
-                &ObjectAttributes,
-                &IoStatus,
-                NULL,                                   // AllocationSize
-                FILE_ATTRIBUTE_NORMAL,
-                FILE_SHARE_READ,                        // ShareAccess
-                FILE_CREATE,
-                FILE_SYNCHRONOUS_IO_NONALERT,
-                NULL,                                   // EaBuffer
-                0                                       // EaLength
-                );
+    status = NtCreateFile(&FileHandle, GENERIC_WRITE | SYNCHRONIZE, &ObjectAttributes, &IoStatus,
+                          NULL, // AllocationSize
+                          FILE_ATTRIBUTE_NORMAL,
+                          FILE_SHARE_READ, // ShareAccess
+                          FILE_CREATE, FILE_SYNCHRONOUS_IO_NONALERT,
+                          NULL, // EaBuffer
+                          0     // EaLength
+    );
 
-    if (!NT_SUCCESS(status)) {
-        if (status == STATUS_OBJECT_NAME_COLLISION) {
-            printf("rtsave: file '%ws' already exists!\n",
-                    FileName.Buffer);
+    if (!NT_SUCCESS(status))
+    {
+        if (status == STATUS_OBJECT_NAME_COLLISION)
+        {
+            printf("rtsave: file '%ws' already exists!\n", FileName.Buffer);
             exit(1);
         }
         printf("rtsave: file open failed status = %08lx\n", status);
         exit(1);
     }
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &KeyPath,
-        0,
-        (HANDLE)NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&ObjectAttributes, &KeyPath, 0, (HANDLE)NULL, NULL);
     ObjectAttributes.Attributes |= OBJ_CASE_INSENSITIVE;
 
-    status = NtOpenKey(
-                &KeyHandle,
-                MAXIMUM_ALLOWED,
-                &ObjectAttributes
-                );
-    if (!NT_SUCCESS(status)) {
+    status = NtOpenKey(&KeyHandle, MAXIMUM_ALLOWED, &ObjectAttributes);
+    if (!NT_SUCCESS(status))
+    {
         printf("rtsave: key open failed status = %08lx\n", status);
         exit(1);
     }
@@ -140,7 +116,8 @@ __cdecl main(
 
     RtlAdjustPrivilege(SE_BACKUP_PRIVILEGE, WasEnabled, FALSE, &WasEnabled);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         printf("rtsave: NtSaveKey failed status = %08lx\n", status);
         exit(1);
     }
@@ -148,51 +125,28 @@ __cdecl main(
     printf("rtsave: success\n");
     exit(0);
 }
-
-void
-processargs(
-    int argc,
-    char *argv[]
-    )
+
+void processargs(int argc, char *argv[])
 {
     ANSI_STRING temp;
     UNICODE_STRING DosFileName;
 
-    if ( (argc != 3) )
+    if ((argc != 3))
     {
-        printf("Usage: %s <KeyName> <FileName>\nWhere <FileName> does NOT already exist\n",
-                argv[0]);
-        printf("Example: %s \\registry\\machine\\security d:\\backups\\security\n",
-                argv[0]);
+        printf("Usage: %s <KeyName> <FileName>\nWhere <FileName> does NOT already exist\n", argv[0]);
+        printf("Example: %s \\registry\\machine\\security d:\\backups\\security\n", argv[0]);
         exit(1);
     }
 
-    RtlInitAnsiString(
-        &temp,
-        argv[1]
-        );
+    RtlInitAnsiString(&temp, argv[1]);
 
-    RtlAnsiStringToUnicodeString(
-        &KeyPath,
-        &temp,
-        TRUE
-        );
+    RtlAnsiStringToUnicodeString(&KeyPath, &temp, TRUE);
 
-    RtlInitAnsiString(
-        &temp,
-        argv[2]
-        );
+    RtlInitAnsiString(&temp, argv[2]);
 
-    RtlAnsiStringToUnicodeString(
-        &DosFileName,
-        &temp,
-        TRUE
-        );
+    RtlAnsiStringToUnicodeString(&DosFileName, &temp, TRUE);
 
-    RtlDosPathNameToNtPathName_U( DosFileName.Buffer,
-                                  &FileName,
-                                  NULL,
-                                  NULL );
+    RtlDosPathNameToNtPathName_U(DosFileName.Buffer, &FileName, NULL, NULL);
 
     return;
 }

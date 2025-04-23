@@ -39,25 +39,17 @@ Revision History:
 #include <wmistr.h>
 #include <ntwmi.h>
 
-typedef
-__int64
-(*WMI_GET_CPUCLOCK_ROUTINE) (
-    VOID
-    );
+typedef __int64 (*WMI_GET_CPUCLOCK_ROUTINE)(VOID);
 
 extern WMI_GET_CPUCLOCK_ROUTINE WmiGetCpuClock;
 
 extern ULONG WmiUsePerfClock;
 
-typedef
-VOID
-(*WMI_TRACE_BUFFER_CALLBACK) (
-    IN PWMI_BUFFER_HEADER Buffer,
-    IN PVOID Context
-    );
+typedef VOID (*WMI_TRACE_BUFFER_CALLBACK)(IN PWMI_BUFFER_HEADER Buffer, IN PVOID Context);
 
 // begin_wmikm
-typedef enum tagWMI_CLOCK_TYPE {
+typedef enum tagWMI_CLOCK_TYPE
+{
     WMICT_DEFAULT,
     WMICT_SYSTEMTIME,
     WMICT_PERFCOUNTER,
@@ -71,66 +63,45 @@ typedef enum tagWMI_CLOCK_TYPE {
 //
 NTKERNELAPI
 NTSTATUS
-WmiStartTrace(
-    IN OUT PWMI_LOGGER_INFORMATION LoggerInfo
-    );
+WmiStartTrace(IN OUT PWMI_LOGGER_INFORMATION LoggerInfo);
 
 NTKERNELAPI
 NTSTATUS
-WmiQueryTrace(
-    IN OUT PWMI_LOGGER_INFORMATION LoggerInfo
-    );
+WmiQueryTrace(IN OUT PWMI_LOGGER_INFORMATION LoggerInfo);
 
 NTKERNELAPI
 NTSTATUS
-WmiStopTrace(
-    IN PWMI_LOGGER_INFORMATION LoggerInfo
-    );
+WmiStopTrace(IN PWMI_LOGGER_INFORMATION LoggerInfo);
 
 NTKERNELAPI
 NTSTATUS
-WmiUpdateTrace(
-    IN OUT PWMI_LOGGER_INFORMATION LoggerInfo
-    );
+WmiUpdateTrace(IN OUT PWMI_LOGGER_INFORMATION LoggerInfo);
 
 NTKERNELAPI
 NTSTATUS
-WmiFlushTrace(
-    IN OUT PWMI_LOGGER_INFORMATION LoggerInfo
-    );
+WmiFlushTrace(IN OUT PWMI_LOGGER_INFORMATION LoggerInfo);
 //
 // Trace Provider APIs
 //
 NTKERNELAPI
 NTSTATUS
 FASTCALL
-WmiTraceEvent(
-    IN PWNODE_HEADER Wnode,
-    IN KPROCESSOR_MODE RequestorMode
-    );
+WmiTraceEvent(IN PWNODE_HEADER Wnode, IN KPROCESSOR_MODE RequestorMode);
 
 NTKERNELAPI
 NTSTATUS
 FASTCALL
-WmiTraceFastEvent(
-    IN PWNODE_HEADER Wnode
-    );
+WmiTraceFastEvent(IN PWNODE_HEADER Wnode);
 
 NTKERNELAPI
 LONG64
 FASTCALL
-WmiGetClock(
-    IN WMI_CLOCK_TYPE ClockType,
-    IN PVOID Context
-    );
+WmiGetClock(IN WMI_CLOCK_TYPE ClockType, IN PVOID Context);
 
 NTKERNELAPI
 NTSTATUS
 FASTCALL
-WmiGetClockType(
-    IN TRACEHANDLE LoggerHandle,
-    OUT WMI_CLOCK_TYPE *ClockType
-    );
+WmiGetClockType(IN TRACEHANDLE LoggerHandle, OUT WMI_CLOCK_TYPE *ClockType);
 
 // begin_ntddk begin_wdm
 
@@ -138,29 +109,20 @@ WmiGetClockType(
 
 NTKERNELAPI
 NTSTATUS
-WmiTraceMessage(
-    IN TRACEHANDLE  LoggerHandle,
-    IN ULONG        MessageFlags,
-    IN LPGUID       MessageGuid,
-    IN USHORT       MessageNumber,
-    IN ...
-    );
+WmiTraceMessage(IN TRACEHANDLE LoggerHandle, IN ULONG MessageFlags, IN LPGUID MessageGuid, IN USHORT MessageNumber,
+                IN...);
 
 NTKERNELAPI
 NTSTATUS
-WmiTraceMessageVa(
-    IN TRACEHANDLE  LoggerHandle,
-    IN ULONG        MessageFlags,
-    IN LPGUID       MessageGuid,
-    IN USHORT       MessageNumber,
-    IN va_list      MessageArgList
-    );
+WmiTraceMessageVa(IN TRACEHANDLE LoggerHandle, IN ULONG MessageFlags, IN LPGUID MessageGuid, IN USHORT MessageNumber,
+                  IN va_list MessageArgList);
 
 
 #endif // #ifdef RUN_WPP
 
 #ifndef TRACE_INFORMATION_CLASS_DEFINE
-typedef enum _TRACE_INFORMATION_CLASS {
+typedef enum _TRACE_INFORMATION_CLASS
+{
     TraceIdClass,
     TraceHandleClass,
     TraceEnableFlagsClass,
@@ -173,13 +135,8 @@ typedef enum _TRACE_INFORMATION_CLASS {
 
 NTKERNELAPI
 NTSTATUS
-WmiQueryTraceInformation(
-    IN TRACE_INFORMATION_CLASS TraceInformationClass,
-    OUT PVOID TraceInformation,
-    IN ULONG TraceInformationLength,
-    OUT PULONG RequiredLength OPTIONAL,
-    IN PVOID Buffer OPTIONAL
-    );
+WmiQueryTraceInformation(IN TRACE_INFORMATION_CLASS TraceInformationClass, OUT PVOID TraceInformation,
+                         IN ULONG TraceInformationLength, OUT PULONG RequiredLength OPTIONAL, IN PVOID Buffer OPTIONAL);
 #define TRACE_INFORMATION_CLASS_DEFINE
 #endif // TRACE_INFOPRMATION_CLASS_DEFINE
 
@@ -187,88 +144,45 @@ WmiQueryTraceInformation(
 
 NTKERNELAPI
 NTSTATUS
-WmiSetTraceBufferCallback(
-    IN TRACEHANDLE  TraceHandle,
-    IN WMI_TRACE_BUFFER_CALLBACK Callback,
-    IN PVOID Context
-    );
+WmiSetTraceBufferCallback(IN TRACEHANDLE TraceHandle, IN WMI_TRACE_BUFFER_CALLBACK Callback, IN PVOID Context);
 
 
 NTKERNELAPI
 NTSTATUS
-WmiTraceKernelEvent(
-    IN ULONG GroupType,
-    IN PVOID EventInfo,
-    IN ULONG EventInfoLen,
-    IN PETHREAD Thread
-    );
+WmiTraceKernelEvent(IN ULONG GroupType, IN PVOID EventInfo, IN ULONG EventInfoLen, IN PETHREAD Thread);
 
 
 NTKERNELAPI
 PPERFINFO_TRACE_HEADER
 FASTCALL
-WmiReserveWithPerfHeader(
-    IN ULONG AuxSize,
-    OUT PWMI_BUFFER_HEADER *BufferResource
-    );
+WmiReserveWithPerfHeader(IN ULONG AuxSize, OUT PWMI_BUFFER_HEADER *BufferResource);
 
 NTKERNELAPI
 ULONG
 FASTCALL
-WmiReleaseKernelBuffer(
-    IN PWMI_BUFFER_HEADER BufferResource
-    );
+WmiReleaseKernelBuffer(IN PWMI_BUFFER_HEADER BufferResource);
 
 NTKERNELAPI
-VOID
-FASTCALL
-WmiTraceProcess(
-    IN PEPROCESS Process,
-    IN BOOLEAN Create
-    );
+VOID FASTCALL WmiTraceProcess(IN PEPROCESS Process, IN BOOLEAN Create);
 
 NTKERNELAPI
-VOID
-WmiTraceThread(
-    IN PETHREAD Thread,
-    IN PINITIAL_TEB InitialTeb OPTIONAL,
-    IN BOOLEAN Create
-    );
+VOID WmiTraceThread(IN PETHREAD Thread, IN PINITIAL_TEB InitialTeb OPTIONAL, IN BOOLEAN Create);
 
 NTKERNELAPI
 NTSTATUS
-WmiSetMark(
-    IN PWMI_SET_MARK_INFORMATION MarkInfo,
-    IN ULONG InBufferLen
-    );
+WmiSetMark(IN PWMI_SET_MARK_INFORMATION MarkInfo, IN ULONG InBufferLen);
 
 NTKERNELAPI
-VOID
-WmiBootPhase1(
-    VOID
-    );
+VOID WmiBootPhase1(VOID);
 
 //
 // Context swap routines
 //
 
-VOID
-FASTCALL
-WmiTraceContextSwap (
-    IN PETHREAD pOldEThread,
-    IN PETHREAD pNewEThread
-    );
+VOID FASTCALL WmiTraceContextSwap(IN PETHREAD pOldEThread, IN PETHREAD pNewEThread);
 
-VOID
-FASTCALL
-WmiStartContextSwapTrace
-    (
-    );
+VOID FASTCALL WmiStartContextSwapTrace();
 
-VOID 
-FASTCALL
-WmiStopContextSwapTrace
-    (
-    );
+VOID FASTCALL WmiStopContextSwapTrace();
 
 #endif // _WMI_

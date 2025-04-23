@@ -25,20 +25,13 @@ Revision History:
 // Define external references.
 //
 
-VOID
-KdSetOwedBreakpoints(
-    VOID
-    );
+VOID KdSetOwedBreakpoints(VOID);
 
 BOOLEAN
-KdpLowWriteContent(
-    ULONG Index
-    );
+KdpLowWriteContent(ULONG Index);
 
 BOOLEAN
-KdpLowRestoreBreakpoint(
-    ULONG Index
-    );
+KdpLowRestoreBreakpoint(ULONG Index);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGEKD, KdpAddBreakpoint)
@@ -55,11 +48,9 @@ KdpLowRestoreBreakpoint(
 #endif
 #endif
 
-
+
 ULONG
-KdpAddBreakpoint (
-    IN PVOID Address
-    )
+KdpAddBreakpoint(IN PVOID Address)
 
 /*++
 
@@ -94,7 +85,8 @@ Return Value:
     // If the specified address is not properly aligned, then return zero.
     //
 
-    if (((ULONG_PTR)Address & KDP_BREAKPOINT_ALIGN) != 0) {
+    if (((ULONG_PTR)Address & KDP_BREAKPOINT_ALIGN) != 0)
+    {
         return 0;
     }
 
@@ -103,11 +95,14 @@ Return Value:
     // Don't allow setting the same breakpoint twice.
     //
 
-    for (Index = 0; Index < BREAKPOINT_TABLE_SIZE; Index += 1) {
+    for (Index = 0; Index < BREAKPOINT_TABLE_SIZE; Index += 1)
+    {
         if ((KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_IN_USE) != 0 &&
-            KdpBreakpointTable[Index].Address == Address) {
+            KdpBreakpointTable[Index].Address == Address)
+        {
 
-            if ((KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_NEEDS_REPLACE) != 0) {
+            if ((KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_NEEDS_REPLACE) != 0)
+            {
 
                 //
                 // Breakpoint was set, the page was written out and was not
@@ -116,12 +111,12 @@ Return Value:
                 //
                 KdpBreakpointTable[Index].Flags &= ~KD_BREAKPOINT_NEEDS_REPLACE;
                 return Index + 1;
-
-            } else {
+            }
+            else
+            {
 
                 DPRINT(("KD: Attempt to set breakpoint %08x twice!\n", Address));
                 return 0;
-
             }
         }
     }
@@ -130,8 +125,10 @@ Return Value:
     // Search the breakpoint table for a free entry.
     //
 
-    for (Index = 0; Index < BREAKPOINT_TABLE_SIZE; Index += 1) {
-        if (KdpBreakpointTable[Index].Flags == 0) {
+    for (Index = 0; Index < BREAKPOINT_TABLE_SIZE; Index += 1)
+    {
+        if (KdpBreakpointTable[Index].Flags == 0)
+        {
             break;
         }
     }
@@ -141,7 +138,8 @@ Return Value:
     // value plus one. Otherwise, return zero.
     //
 
-    if (Index == BREAKPOINT_TABLE_SIZE) {
+    if (Index == BREAKPOINT_TABLE_SIZE)
+    {
         DPRINT(("KD: ran out of breakpoints!\n"));
         return 0;
     }
@@ -154,14 +152,12 @@ Return Value:
     // then mark breakpoint as not accessible.
     //
 
-    Accessible = NT_SUCCESS(KdpCopyFromPtr(&Content,
-                                           Address,
-                                           sizeof(KDP_BREAKPOINT_TYPE),
-                                           NULL));
+    Accessible = NT_SUCCESS(KdpCopyFromPtr(&Content, Address, sizeof(KDP_BREAKPOINT_TYPE), NULL));
     //DPRINT(("KD: memory %saccessible\n", Accessible ? "" : "in"));
 
 #if defined(_IA64_)
-    if ( Accessible ) {
+    if (Accessible)
+    {
         KDP_BREAKPOINT_TYPE mBuf;
         PVOID BundleAddress;
 
@@ -171,34 +167,38 @@ Return Value:
         // check for two-slot MOVL instruction. Reject request if attempt to
         // set break in slot 2 of MLI template.
 
-        if (((ULONG_PTR)Address & 0xf) != 0) {
-            (ULONG_PTR)BundleAddress = (ULONG_PTR)Address & ~(0xf);
-            if (!NT_SUCCESS(KdpCopyFromPtr(&mBuf,
-                                           BundleAddress,
-                                           sizeof(KDP_BREAKPOINT_TYPE),
-                                           NULL))) {
+        if (((ULONG_PTR)Address & 0xf) != 0)
+        {
+            (ULONG_PTR) BundleAddress = (ULONG_PTR)Address & ~(0xf);
+            if (!NT_SUCCESS(KdpCopyFromPtr(&mBuf, BundleAddress, sizeof(KDP_BREAKPOINT_TYPE), NULL)))
+            {
                 //DPRINT(("KD: read 0x%08x template failed\n", BundleAddress));
                 return 0;
-            } else {
-                if (((mBuf & INST_TEMPL_MASK) >> 1) == 0x2) {
-                    if (((ULONG_PTR)Address & 0xf) == 4) {
+            }
+            else
+            {
+                if (((mBuf & INST_TEMPL_MASK) >> 1) == 0x2)
+                {
+                    if (((ULONG_PTR)Address & 0xf) == 4)
+                    {
                         // if template= type 2 MLI, change to type 0
                         mBuf &= ~((INST_TEMPL_MASK >> 1) << 1);
                         KdpBreakpointTable[Index].Flags |= KD_BREAKPOINT_IA64_MOVL;
-                        if (!NT_SUCCESS(KdpCopyToPtr(BundleAddress,
-                                                     &mBuf,
-                                                     sizeof(KDP_BREAKPOINT_TYPE),
-                                                     NULL))) {
+                        if (!NT_SUCCESS(KdpCopyToPtr(BundleAddress, &mBuf, sizeof(KDP_BREAKPOINT_TYPE), NULL)))
+                        {
                             //DPRINT(("KD: write to 0x%08x template failed\n", BundleAddress));
                             return 0;
-                         }
-                         else {
-                             //DPRINT(("KD: change MLI template to type 0 at 0x%08x set\n", Address));
-                         }
-                    } else {
-                         // set breakpoint at slot 2 of MOVL is illegal
-                         //DPRINT(("KD: illegal to set BP at slot 2 of MOVL at 0x%08x\n", BundleAddress));
-                         return 0;
+                        }
+                        else
+                        {
+                            //DPRINT(("KD: change MLI template to type 0 at 0x%08x set\n", Address));
+                        }
+                    }
+                    else
+                    {
+                        // set breakpoint at slot 2 of MOVL is illegal
+                        //DPRINT(("KD: illegal to set BP at slot 2 of MOVL at 0x%08x\n", BundleAddress));
+                        return 0;
                     }
                 }
             }
@@ -210,89 +210,90 @@ Return Value:
         KdpBreakpointTable[Index].Content = Content;
         KdpBreakpointTable[Index].Flags &= ~(KD_BREAKPOINT_STATE_MASK);
         KdpBreakpointTable[Index].Flags |= KD_BREAKPOINT_IN_USE;
-        if (Address < (PVOID)GLOBAL_BREAKPOINT_LIMIT) {
+        if (Address < (PVOID)GLOBAL_BREAKPOINT_LIMIT)
+        {
             KdpBreakpointTable[Index].DirectoryTableBase =
                 KeGetCurrentThread()->ApcState.Process->DirectoryTableBase[0];
-            }
-            switch ((ULONG_PTR)Address & 0xf) {
-            case 0:
-                Content = (Content & ~(INST_SLOT0_MASK)) | (KdpBreakpointInstruction << 5);
-                break;
+        }
+        switch ((ULONG_PTR)Address & 0xf)
+        {
+        case 0:
+            Content = (Content & ~(INST_SLOT0_MASK)) | (KdpBreakpointInstruction << 5);
+            break;
 
-            case 4:
-                Content = (Content & ~(INST_SLOT1_MASK)) | (KdpBreakpointInstruction << 14);
-                break;
+        case 4:
+            Content = (Content & ~(INST_SLOT1_MASK)) | (KdpBreakpointInstruction << 14);
+            break;
 
-            case 8:
-                Content = (Content & ~(INST_SLOT2_MASK)) | (KdpBreakpointInstruction << 23);
-                break;
+        case 8:
+            Content = (Content & ~(INST_SLOT2_MASK)) | (KdpBreakpointInstruction << 23);
+            break;
 
-            default:
-                //DPRINT(("KD: KdpAddBreakpoint bad instruction slot#\n"));
-                return 0;
-            }
-            if (!NT_SUCCESS(KdpCopyToPtr(Address,
-                                         &Content,
-                                         sizeof(KDP_BREAKPOINT_TYPE),
-                                         NULL))) {
+        default:
+            //DPRINT(("KD: KdpAddBreakpoint bad instruction slot#\n"));
+            return 0;
+        }
+        if (!NT_SUCCESS(KdpCopyToPtr(Address, &Content, sizeof(KDP_BREAKPOINT_TYPE), NULL)))
+        {
 
-                //DPRINT(("KD: Unable to write BP!\n"));
-                return 0;
-            }
-            else {
-                //DPRINT(("KD: breakpoint at 0x%08x set\n", Address));
-            }
-
-    } else {  // memory not accessible
+            //DPRINT(("KD: Unable to write BP!\n"));
+            return 0;
+        }
+        else
+        {
+            //DPRINT(("KD: breakpoint at 0x%08x set\n", Address));
+        }
+    }
+    else
+    { // memory not accessible
         KdpBreakpointTable[Index].Address = Address;
         KdpBreakpointTable[Index].Flags &= ~(KD_BREAKPOINT_STATE_MASK);
         KdpBreakpointTable[Index].Flags |= KD_BREAKPOINT_IN_USE;
         KdpBreakpointTable[Index].Flags |= KD_BREAKPOINT_NEEDS_WRITE;
         KdpOweBreakpoint = TRUE;
         //DPRINT(("KD: breakpoint write deferred\n"));
-        if (Address < (PVOID)GLOBAL_BREAKPOINT_LIMIT) {
+        if (Address < (PVOID)GLOBAL_BREAKPOINT_LIMIT)
+        {
             KdpBreakpointTable[Index].DirectoryTableBase =
                 KeGetCurrentThread()->ApcState.Process->DirectoryTableBase[0];
         }
     }
 #else
-    if ( Accessible ) {
+    if (Accessible)
+    {
         KdpBreakpointTable[Index].Address = Address;
         KdpBreakpointTable[Index].Content = Content;
         KdpBreakpointTable[Index].Flags = KD_BREAKPOINT_IN_USE;
-        if (Address < (PVOID)GLOBAL_BREAKPOINT_LIMIT) {
+        if (Address < (PVOID)GLOBAL_BREAKPOINT_LIMIT)
+        {
             KdpBreakpointTable[Index].DirectoryTableBase =
                 KeGetCurrentThread()->ApcState.Process->DirectoryTableBase[0];
         }
-        if (!NT_SUCCESS(KdpCopyToPtr(Address,
-                                     &KdpBreakpointInstruction,
-                                     sizeof(KDP_BREAKPOINT_TYPE),
-                                     NULL))) {
+        if (!NT_SUCCESS(KdpCopyToPtr(Address, &KdpBreakpointInstruction, sizeof(KDP_BREAKPOINT_TYPE), NULL)))
+        {
 
             DPRINT(("KD: Unable to write BP!\n"));
         }
-    } else {
+    }
+    else
+    {
         KdpBreakpointTable[Index].Address = Address;
         KdpBreakpointTable[Index].Flags = KD_BREAKPOINT_IN_USE | KD_BREAKPOINT_NEEDS_WRITE;
         KdpOweBreakpoint = TRUE;
         //DPRINT(("KD: breakpoint write deferred\n"));
-        if (Address < (PVOID)GLOBAL_BREAKPOINT_LIMIT) {
+        if (Address < (PVOID)GLOBAL_BREAKPOINT_LIMIT)
+        {
             KdpBreakpointTable[Index].DirectoryTableBase =
                 KeGetCurrentThread()->ApcState.Process->DirectoryTableBase[0];
         }
     }
-#endif  // IA64
+#endif // IA64
 
     return Index + 1;
-
 }
 
 
-
-VOID
-KdSetOwedBreakpoints(
-    VOID
-    )
+VOID KdSetOwedBreakpoints(VOID)
 
 /*++
 
@@ -322,7 +323,8 @@ Return Value:
     // If we don't owe any breakpoints then return
     //
 
-    if ( !KdpOweBreakpoint ) {
+    if (!KdpOweBreakpoint)
+    {
         return;
     }
 
@@ -340,9 +342,10 @@ Return Value:
     // written or replaced.
     //
 
-    for (Index = 0; Index < BREAKPOINT_TABLE_SIZE; Index += 1) {
-        if (KdpBreakpointTable[Index].Flags &
-                (KD_BREAKPOINT_NEEDS_WRITE | KD_BREAKPOINT_NEEDS_REPLACE) ) {
+    for (Index = 0; Index < BREAKPOINT_TABLE_SIZE; Index += 1)
+    {
+        if (KdpBreakpointTable[Index].Flags & (KD_BREAKPOINT_NEEDS_WRITE | KD_BREAKPOINT_NEEDS_REPLACE))
+        {
 
             //
             // Breakpoint needs to be written
@@ -355,26 +358,29 @@ Return Value:
 
             if ((KdpBreakpointTable[Index].Address >= (PVOID)GLOBAL_BREAKPOINT_LIMIT) ||
                 (KdpBreakpointTable[Index].DirectoryTableBase ==
-                 KeGetCurrentThread()->ApcState.Process->DirectoryTableBase[0])) {
+                 KeGetCurrentThread()->ApcState.Process->DirectoryTableBase[0]))
+            {
 
                 //
                 // Breakpoint is global, or its directory base matches
                 //
 
-                if (!NT_SUCCESS(KdpCopyFromPtr(&Content,
-                                               KdpBreakpointTable[Index].Address,
-                                               sizeof(KDP_BREAKPOINT_TYPE),
-                                               NULL))) {
+                if (!NT_SUCCESS(
+                        KdpCopyFromPtr(&Content, KdpBreakpointTable[Index].Address, sizeof(KDP_BREAKPOINT_TYPE), NULL)))
+                {
 
                     //DPRINT(("KD: read from 0x%08x failed\n", KdpBreakpointTable[Index].Address));
 
                     KdpOweBreakpoint = TRUE;
-
-                } else {
-                    if (KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_NEEDS_WRITE) {
+                }
+                else
+                {
+                    if (KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_NEEDS_WRITE)
+                    {
                         KdpBreakpointTable[Index].Content = Content;
 #if defined(_IA64_)
-                        switch ((ULONG_PTR)KdpBreakpointTable[Index].Address & 0xf) {
+                        switch ((ULONG_PTR)KdpBreakpointTable[Index].Address & 0xf)
+                        {
                         case 0:
                             Content = (Content & ~(INST_SLOT0_MASK)) | (KdpBreakpointInstruction << 5);
                             break;
@@ -391,10 +397,9 @@ Return Value:
                             //DPRINT(("KD: illegal instruction address 0x%08x\n", KdpBreakpointTable[Index].Address));
                             break;
                         }
-                        if (!NT_SUCCESS(KdpCopyToPtr(KdpBreakpointTable[Index].Address,
-                                                     &Content,
-                                                     sizeof(KDP_BREAKPOINT_TYPE),
-                                                     NULL))) {
+                        if (!NT_SUCCESS(KdpCopyToPtr(KdpBreakpointTable[Index].Address, &Content,
+                                                     sizeof(KDP_BREAKPOINT_TYPE), NULL)))
+                        {
                             KdpOweBreakpoint = TRUE;
                             //DPRINT(("KD: write to 0x%08x failed\n", KdpBreakpointTable[Index].Address));
                         }
@@ -403,42 +408,48 @@ Return Value:
                         // check for two-slot MOVL instruction. Reject request if attempt to
                         // set break in slot 2 of MLI template.
 
-                        else if (((ULONG_PTR)KdpBreakpointTable[Index].Address & 0xf) != 0) {
+                        else if (((ULONG_PTR)KdpBreakpointTable[Index].Address & 0xf) != 0)
+                        {
                             KDP_BREAKPOINT_TYPE mBuf;
                             PVOID BundleAddress;
 
-                            (ULONG_PTR)BundleAddress = (ULONG_PTR)KdpBreakpointTable[Index].Address  & ~(0xf);
-                            if (!NT_SUCCESS(KdpCopyFromPtr(&mBuf,
-                                                           BundleAddress,
-                                                           sizeof(KDP_BREAKPOINT_TYPE),
-                                                           NULL))) {
+                            (ULONG_PTR) BundleAddress = (ULONG_PTR)KdpBreakpointTable[Index].Address & ~(0xf);
+                            if (!NT_SUCCESS(KdpCopyFromPtr(&mBuf, BundleAddress, sizeof(KDP_BREAKPOINT_TYPE), NULL)))
+                            {
                                 KdpOweBreakpoint = TRUE;
                                 //DPRINT(("KD: read 0x%08x template failed\n", KdpBreakpointTable[Index].Address));
-                            } else {
-                                if (((mBuf & INST_TEMPL_MASK) >> 1) == 0x2) {
-                                    if (((ULONG_PTR)KdpBreakpointTable[Index].Address  & 0xf) == 4) {
+                            }
+                            else
+                            {
+                                if (((mBuf & INST_TEMPL_MASK) >> 1) == 0x2)
+                                {
+                                    if (((ULONG_PTR)KdpBreakpointTable[Index].Address & 0xf) == 4)
+                                    {
                                         // if template= type 2 MLI, change to type 0
                                         mBuf &= ~((INST_TEMPL_MASK >> 1) << 1);
                                         KdpBreakpointTable[Index].Flags |= KD_BREAKPOINT_IA64_MOVL;
-                                        if (!NT_SUCCESS(KdpCopyToPtr(BundleAddress,
-                                                                     &mBuf,
-                                                                     sizeof(KDP_BREAKPOINT_TYPE),
-                                                                     NULL))) {
+                                        if (!NT_SUCCESS(
+                                                KdpCopyToPtr(BundleAddress, &mBuf, sizeof(KDP_BREAKPOINT_TYPE), NULL)))
+                                        {
                                             KdpOweBreakpoint = TRUE;
                                             //DPRINT(("KD: write to 0x%08x template failed\n", KdpBreakpointTable[Index].Address));
                                         }
-                                        else {
+                                        else
+                                        {
                                             KdpBreakpointTable[Index].Flags &= ~(KD_BREAKPOINT_STATE_MASK);
                                             KdpBreakpointTable[Index].Flags |= KD_BREAKPOINT_IN_USE;
                                             //DPRINT(("KD: write to 0x%08x ok\n", KdpBreakpointTable[Index].Address));
                                         }
-                                    } else {
+                                    }
+                                    else
+                                    {
                                         // set breakpoint at slot 2 of MOVL is illegal
                                         KdpOweBreakpoint = TRUE;
                                         //DPRINT(("KD: illegal attempt to set BP at slot 2 of 0x%08x\n", KdpBreakpointTable[Index].Address));
                                     }
                                 }
-                                else {
+                                else
+                                {
                                     KdpBreakpointTable[Index].Flags &= ~(KD_BREAKPOINT_STATE_MASK);
                                     KdpBreakpointTable[Index].Flags |= KD_BREAKPOINT_IN_USE;
                                     //DPRINT(("KD: write to 0x%08x ok\n", KdpBreakpointTable[Index].Address));
@@ -446,18 +457,21 @@ Return Value:
                             }
                         }
 #else
-                        if (!NT_SUCCESS(KdpCopyToPtr(KdpBreakpointTable[Index].Address,
-                                                     &KdpBreakpointInstruction,
-                                                     sizeof(KDP_BREAKPOINT_TYPE),
-                                                     NULL))) {
+                        if (!NT_SUCCESS(KdpCopyToPtr(KdpBreakpointTable[Index].Address, &KdpBreakpointInstruction,
+                                                     sizeof(KDP_BREAKPOINT_TYPE), NULL)))
+                        {
                             KdpOweBreakpoint = TRUE;
                             DPRINT(("KD: write to 0x%08x failed\n", KdpBreakpointTable[Index].Address));
-                        } else {
+                        }
+                        else
+                        {
                             KdpBreakpointTable[Index].Flags = KD_BREAKPOINT_IN_USE;
                             DPRINT(("KD: write to 0x%08x ok\n", KdpBreakpointTable[Index].Address));
                         }
 #endif
-                    } else {
+                    }
+                    else
+                    {
 #if defined(_IA64_)
 
                         KDP_BREAKPOINT_TYPE mBuf;
@@ -467,28 +481,29 @@ Return Value:
 
                         // Read in memory since adjancent instructions in the same bundle may have
                         // been modified after we save them.
-                        if (!NT_SUCCESS(KdpCopyFromPtr(&mBuf,
-                                                       KdpBreakpointTable[Index].Address,
-                                                       sizeof(KDP_BREAKPOINT_TYPE),
-                                                       NULL))) {
+                        if (!NT_SUCCESS(KdpCopyFromPtr(&mBuf, KdpBreakpointTable[Index].Address,
+                                                       sizeof(KDP_BREAKPOINT_TYPE), NULL)))
+                        {
                             KdpOweBreakpoint = TRUE;
                             //DPRINT(("KD: read 0x%08x template failed\n", KdpBreakpointTable[Index].Address));
                         }
-                        else {
-                            switch ((ULONG_PTR)KdpBreakpointTable[Index].Address & 0xf) {
+                        else
+                        {
+                            switch ((ULONG_PTR)KdpBreakpointTable[Index].Address & 0xf)
+                            {
                             case 0:
-                                mBuf = (mBuf & ~(INST_SLOT0_MASK))
-                                             | (KdpBreakpointTable[Index].Content & INST_SLOT0_MASK);
+                                mBuf =
+                                    (mBuf & ~(INST_SLOT0_MASK)) | (KdpBreakpointTable[Index].Content & INST_SLOT0_MASK);
                                 break;
 
                             case 4:
-                                mBuf = (mBuf & ~(INST_SLOT1_MASK))
-                                             | (KdpBreakpointTable[Index].Content & INST_SLOT1_MASK);
+                                mBuf =
+                                    (mBuf & ~(INST_SLOT1_MASK)) | (KdpBreakpointTable[Index].Content & INST_SLOT1_MASK);
                                 break;
 
                             case 8:
-                                mBuf = (mBuf & ~(INST_SLOT2_MASK))
-                                             | (KdpBreakpointTable[Index].Content & INST_SLOT2_MASK);
+                                mBuf =
+                                    (mBuf & ~(INST_SLOT2_MASK)) | (KdpBreakpointTable[Index].Content & INST_SLOT2_MASK);
                                 break;
 
                             default:
@@ -496,49 +511,61 @@ Return Value:
                                 //DPRINT(("KD: illegal instruction address 0x%08x\n", KdpBreakpointTable[Index].Address));
                             }
 
-                            if (!NT_SUCCESS(KdpCopyToPtr(KdpBreakpointTable[Index].Address,
-                                                         &mBuf,
-                                                         sizeof(KDP_BREAKPOINT_TYPE),
-                                                         NULL))) {
+                            if (!NT_SUCCESS(KdpCopyToPtr(KdpBreakpointTable[Index].Address, &mBuf,
+                                                         sizeof(KDP_BREAKPOINT_TYPE), NULL)))
+                            {
                                 KdpOweBreakpoint = TRUE;
                                 //DPRINT(("KD: write to 0x%08x failed\n", KdpBreakpointTable[Index].Address));
                             }
-                            else {
-                                 // restore template to MLI if displaced instruction was MOVL
+                            else
+                            {
+                                // restore template to MLI if displaced instruction was MOVL
 
-                                if (KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_IA64_MOVL) {
-                                    (ULONG_PTR)BundleAddress = (ULONG_PTR)KdpBreakpointTable[Index].Address & ~(0xf);
-                                    if (!NT_SUCCESS(KdpCopyFromPtr(&mBuf,
-                                                                   BundleAddress,
-                                                                   sizeof(KDP_BREAKPOINT_TYPE),
-                                                                   NULL))) {
+                                if (KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_IA64_MOVL)
+                                {
+                                    (ULONG_PTR) BundleAddress = (ULONG_PTR)KdpBreakpointTable[Index].Address & ~(0xf);
+                                    if (!NT_SUCCESS(
+                                            KdpCopyFromPtr(&mBuf, BundleAddress, sizeof(KDP_BREAKPOINT_TYPE), NULL)))
+                                    {
                                         KdpOweBreakpoint = TRUE;
                                         //DPRINT(("KD: read template 0x%08x failed\n", KdpBreakpointTable[Index].Address));
                                     }
-                                    else {
+                                    else
+                                    {
                                         mBuf &= ~((INST_TEMPL_MASK >> 1) << 1); // set template to MLI
                                         mBuf |= 0x4;
 
-                                        if (!NT_SUCCESS(KdpCopyToPtr(BundleAddress,
-                                                                     &mBuf,
-                                                                     sizeof(KDP_BREAKPOINT_TYPE),
-                                                                     NULL))) {
+                                        if (!NT_SUCCESS(
+                                                KdpCopyToPtr(BundleAddress, &mBuf, sizeof(KDP_BREAKPOINT_TYPE), NULL)))
+                                        {
                                             KdpOweBreakpoint = TRUE;
                                             //DPRINT(("KD: write template to 0x%08x failed\n", KdpBreakpointTable[Index].Address));
-                                        } else {
+                                        }
+                                        else
+                                        {
                                             //DPRINT(("KD: write to 0x%08x ok\n", KdpBreakpointTable[Index].Address));
-                                            if (KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_SUSPENDED) {
-                                                KdpBreakpointTable[Index].Flags |= (KD_BREAKPOINT_SUSPENDED | KD_BREAKPOINT_IN_USE);
-                                            } else {
+                                            if (KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_SUSPENDED)
+                                            {
+                                                KdpBreakpointTable[Index].Flags |=
+                                                    (KD_BREAKPOINT_SUSPENDED | KD_BREAKPOINT_IN_USE);
+                                            }
+                                            else
+                                            {
                                                 KdpBreakpointTable[Index].Flags = 0;
                                             }
                                         }
                                     }
-                                } else {
+                                }
+                                else
+                                {
                                     //DPRINT(("KD: write to 0x%08x ok\n", KdpBreakpointTable[Index].Address));
-                                    if (KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_SUSPENDED) {
-                                        KdpBreakpointTable[Index].Flags |= (KD_BREAKPOINT_SUSPENDED | KD_BREAKPOINT_IN_USE);
-                                    } else {
+                                    if (KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_SUSPENDED)
+                                    {
+                                        KdpBreakpointTable[Index].Flags |=
+                                            (KD_BREAKPOINT_SUSPENDED | KD_BREAKPOINT_IN_USE);
+                                    }
+                                    else
+                                    {
                                         KdpBreakpointTable[Index].Flags = 0;
                                     }
                                 }
@@ -546,25 +573,30 @@ Return Value:
                         }
 #else
                         if (!NT_SUCCESS(KdpCopyToPtr(KdpBreakpointTable[Index].Address,
-                                                     &KdpBreakpointTable[Index].Content,
-                                                     sizeof(KDP_BREAKPOINT_TYPE),
-                                                     NULL))) {
+                                                     &KdpBreakpointTable[Index].Content, sizeof(KDP_BREAKPOINT_TYPE),
+                                                     NULL)))
+                        {
                             KdpOweBreakpoint = TRUE;
                             DPRINT(("KD: write to 0x%08x failed\n", KdpBreakpointTable[Index].Address));
-                        } else {
+                        }
+                        else
+                        {
                             //DPRINT(("KD: write to 0x%08x ok\n", KdpBreakpointTable[Index].Address));
-                            if (KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_SUSPENDED) {
+                            if (KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_SUSPENDED)
+                            {
                                 KdpBreakpointTable[Index].Flags = KD_BREAKPOINT_SUSPENDED | KD_BREAKPOINT_IN_USE;
-                            } else {
+                            }
+                            else
+                            {
                                 KdpBreakpointTable[Index].Flags = 0;
                             }
                         }
 #endif // _IA64_
-
                     }
                 }
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // Breakpoint is local and its directory base does not match
@@ -579,11 +611,9 @@ Return Value:
     return;
 }
 
-
+
 BOOLEAN
-KdpLowWriteContent (
-    IN ULONG Index
-    )
+KdpLowWriteContent(IN ULONG Index)
 
 /*++
 
@@ -621,7 +651,8 @@ Return Value:
     // Do the contents need to be replaced at all?
     //
 
-    if (KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_NEEDS_WRITE) {
+    if (KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_NEEDS_WRITE)
+    {
 
         //
         // The breakpoint was never written out.  Clear the flag
@@ -635,7 +666,8 @@ Return Value:
     }
 
 #if !defined(_IA64_)
-    if (KdpBreakpointTable[Index].Content == KdpBreakpointInstruction) {
+    if (KdpBreakpointTable[Index].Content == KdpBreakpointInstruction)
+    {
 
         //
         // The instruction is a breakpoint anyway.
@@ -656,31 +688,28 @@ Return Value:
 #if defined(_IA64_)
     // Read in memory since adjancent instructions in the same bundle may have
     // been modified after we save them.
-    if (!NT_SUCCESS(KdpCopyFromPtr(&mBuf,
-                                   KdpBreakpointTable[Index].Address,
-                                   sizeof(KDP_BREAKPOINT_TYPE),
-                                   NULL))) {
+    if (!NT_SUCCESS(KdpCopyFromPtr(&mBuf, KdpBreakpointTable[Index].Address, sizeof(KDP_BREAKPOINT_TYPE), NULL)))
+    {
         KdpOweBreakpoint = TRUE;
         //DPRINT(("KD: read 0x%08x failed\n", KdpBreakpointTable[Index].Address));
         KdpBreakpointTable[Index].Flags |= KD_BREAKPOINT_NEEDS_REPLACE;
         return FALSE;
     }
-    else {
+    else
+    {
 
-        switch ((ULONG_PTR)KdpBreakpointTable[Index].Address & 0xf) {
+        switch ((ULONG_PTR)KdpBreakpointTable[Index].Address & 0xf)
+        {
         case 0:
-            mBuf = (mBuf & ~(INST_SLOT0_MASK))
-                         | (KdpBreakpointTable[Index].Content & INST_SLOT0_MASK);
+            mBuf = (mBuf & ~(INST_SLOT0_MASK)) | (KdpBreakpointTable[Index].Content & INST_SLOT0_MASK);
             break;
 
         case 4:
-            mBuf = (mBuf & ~(INST_SLOT1_MASK))
-                         | (KdpBreakpointTable[Index].Content & INST_SLOT1_MASK);
+            mBuf = (mBuf & ~(INST_SLOT1_MASK)) | (KdpBreakpointTable[Index].Content & INST_SLOT1_MASK);
             break;
 
         case 8:
-            mBuf = (mBuf & ~(INST_SLOT2_MASK))
-                         | (KdpBreakpointTable[Index].Content & INST_SLOT2_MASK);
+            mBuf = (mBuf & ~(INST_SLOT2_MASK)) | (KdpBreakpointTable[Index].Content & INST_SLOT2_MASK);
             break;
 
         default:
@@ -689,89 +718,84 @@ Return Value:
             return FALSE;
         }
 
-        if (!NT_SUCCESS(KdpCopyToPtr(KdpBreakpointTable[Index].Address,
-                                     &mBuf,
-                                     sizeof(KDP_BREAKPOINT_TYPE),
-                                     NULL))) {
+        if (!NT_SUCCESS(KdpCopyToPtr(KdpBreakpointTable[Index].Address, &mBuf, sizeof(KDP_BREAKPOINT_TYPE), NULL)))
+        {
             KdpOweBreakpoint = TRUE;
             //DPRINT(("KD: write to 0x%08x failed\n", KdpBreakpointTable[Index].Address));
             KdpBreakpointTable[Index].Flags |= KD_BREAKPOINT_NEEDS_REPLACE;
             return FALSE;
         }
-        else {
+        else
+        {
 
-            if (NT_SUCCESS(KdpCopyFromPtr(&mBuf,
-                                          KdpBreakpointTable[Index].Address,
-                                          sizeof(KDP_BREAKPOINT_TYPE),
-                                          NULL))) {
+            if (NT_SUCCESS(KdpCopyFromPtr(&mBuf, KdpBreakpointTable[Index].Address, sizeof(KDP_BREAKPOINT_TYPE), NULL)))
+            {
                 //DPRINT(("\tcontent after memory move = 0x%08x 0x%08x\n", (ULONG)(mBuf >> 32), (ULONG)mBuf));
             }
 
             // restore template to MLI if displaced instruction was MOVL
 
-            if (KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_IA64_MOVL) {
-                (ULONG_PTR)BundleAddress = (ULONG_PTR)KdpBreakpointTable[Index].Address & ~(0xf);
-                if (!NT_SUCCESS(KdpCopyFromPtr(&mBuf,
-                                               BundleAddress,
-                                               sizeof(KDP_BREAKPOINT_TYPE),
-                                               NULL))) {
+            if (KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_IA64_MOVL)
+            {
+                (ULONG_PTR) BundleAddress = (ULONG_PTR)KdpBreakpointTable[Index].Address & ~(0xf);
+                if (!NT_SUCCESS(KdpCopyFromPtr(&mBuf, BundleAddress, sizeof(KDP_BREAKPOINT_TYPE), NULL)))
+                {
                     KdpOweBreakpoint = TRUE;
                     //DPRINT(("KD: read template 0x%08x failed\n", KdpBreakpointTable[Index].Address));
                     KdpBreakpointTable[Index].Flags |= KD_BREAKPOINT_NEEDS_REPLACE;
                     return FALSE;
                 }
-                else {
+                else
+                {
                     mBuf &= ~((INST_TEMPL_MASK >> 1) << 1); // set template to MLI
                     mBuf |= 0x4;
 
-                    if (!NT_SUCCESS(KdpCopyToPtr(BundleAddress,
-                                                 &mBuf,
-                                                 sizeof(KDP_BREAKPOINT_TYPE),
-                                                 NULL))) {
+                    if (!NT_SUCCESS(KdpCopyToPtr(BundleAddress, &mBuf, sizeof(KDP_BREAKPOINT_TYPE), NULL)))
+                    {
                         KdpOweBreakpoint = TRUE;
                         //DPRINT(("KD: write template to 0x%08x failed\n", KdpBreakpointTable[Index].Address));
                         KdpBreakpointTable[Index].Flags |= KD_BREAKPOINT_NEEDS_REPLACE;
                         return FALSE;
-                    } else {
+                    }
+                    else
+                    {
                         //DPRINT(("KD: Breakpoint at 0x%08x cleared.\n",
-                         //   KdpBreakpointTable[Index].Address));
+                        //   KdpBreakpointTable[Index].Address));
                         return TRUE;
                     }
                 }
             }
-            else {   // not MOVL
+            else
+            { // not MOVL
                 //DPRINT(("KD: Breakpoint at 0x%08x cleared.\n",
-                 //  KdpBreakpointTable[Index].Address));
+                //  KdpBreakpointTable[Index].Address));
                 return TRUE;
             }
         }
     }
 #else
-    if (!NT_SUCCESS(KdpCopyToPtr(KdpBreakpointTable[Index].Address,
-                                 &KdpBreakpointTable[Index].Content,
-                                 sizeof(KDP_BREAKPOINT_TYPE),
-                                 NULL))) {
+    if (!NT_SUCCESS(KdpCopyToPtr(KdpBreakpointTable[Index].Address, &KdpBreakpointTable[Index].Content,
+                                 sizeof(KDP_BREAKPOINT_TYPE), NULL)))
+    {
 
         KdpOweBreakpoint = TRUE;
         KdpBreakpointTable[Index].Flags |= KD_BREAKPOINT_NEEDS_REPLACE;
         //DPRINT(("KD: Breakpoint at 0x%08x; unable to clear, flag set.\n",
-            //KdpBreakpointTable[Index].Address));
+        //KdpBreakpointTable[Index].Address));
         return FALSE;
-    } else {
+    }
+    else
+    {
         //DPRINT(("KD: Breakpoint at 0x%08x cleared.\n",
-            //KdpBreakpointTable[Index].Address));
+        //KdpBreakpointTable[Index].Address));
         return TRUE;
     }
 #endif
-
 }
 
 
-
 BOOLEAN
-KdpDeleteBreakpoint (
-    IN ULONG Handle
-    )
+KdpDeleteBreakpoint(IN ULONG Handle)
 
 /*++
 
@@ -799,7 +823,8 @@ Return Value:
     // If the specified handle is not valid, then return FALSE.
     //
 
-    if ((Handle == 0) || (Handle > BREAKPOINT_TABLE_SIZE)) {
+    if ((Handle == 0) || (Handle > BREAKPOINT_TABLE_SIZE))
+    {
         DPRINT(("KD: Breakpoint %d invalid.\n", Index));
         return FALSE;
     }
@@ -808,7 +833,8 @@ Return Value:
     // If the specified breakpoint table entry is not valid, then return FALSE.
     //
 
-    if (KdpBreakpointTable[Index].Flags == 0) {
+    if (KdpBreakpointTable[Index].Flags == 0)
+    {
         //DPRINT(("KD: Breakpoint %d already clear.\n", Index));
         return FALSE;
     }
@@ -817,9 +843,11 @@ Return Value:
     // If the breakpoint is already suspended, just delete it from the table.
     //
 
-    if (KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_SUSPENDED) {
+    if (KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_SUSPENDED)
+    {
         //DPRINT(("KD: Deleting suspended breakpoint %d \n", Index));
-        if ( !(KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_NEEDS_REPLACE) ) {
+        if (!(KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_NEEDS_REPLACE))
+        {
             //DPRINT(("KD: already clear.\n"));
             KdpBreakpointTable[Index].Flags = 0;
             return TRUE;
@@ -830,7 +858,8 @@ Return Value:
     // Replace the instruction contents.
     //
 
-    if (KdpLowWriteContent(Index)) {
+    if (KdpLowWriteContent(Index))
+    {
 
         //
         // Delete breakpoint table entry
@@ -843,12 +872,9 @@ Return Value:
     return TRUE;
 }
 
-
+
 BOOLEAN
-KdpDeleteBreakpointRange (
-    IN PVOID Lower,
-    IN PVOID Upper
-    )
+KdpDeleteBreakpointRange(IN PVOID Lower, IN PVOID Upper)
 
 /*++
 
@@ -870,7 +896,7 @@ Return Value:
 --*/
 
 {
-    ULONG   Index;
+    ULONG Index;
     BOOLEAN ReturnStatus = FALSE;
 
     //
@@ -879,16 +905,15 @@ Return Value:
 
     for (Index = 0; Index < BREAKPOINT_TABLE_SIZE; Index++)
     {
-        if ( (KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_IN_USE) &&
-             ((KdpBreakpointTable[Index].Address >= Lower) &&
-              (KdpBreakpointTable[Index].Address <= Upper)) )
+        if ((KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_IN_USE) &&
+            ((KdpBreakpointTable[Index].Address >= Lower) && (KdpBreakpointTable[Index].Address <= Upper)))
         {
 
             //
             // Breakpoint is in use and falls in range, clear it.
             //
 
-            if (KdpDeleteBreakpoint(Index+1))
+            if (KdpDeleteBreakpoint(Index + 1))
             {
                 ReturnStatus = TRUE;
             }
@@ -896,18 +921,15 @@ Return Value:
     }
 
     return ReturnStatus;
-
 }
-
-VOID
-KdpSuspendBreakpoint (
-    ULONG Handle
-    )
+
+VOID KdpSuspendBreakpoint(ULONG Handle)
 {
     ULONG Index = Handle - 1;
 
-    if ( (KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_IN_USE) &&
-        !(KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_SUSPENDED) ) {
+    if ((KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_IN_USE) &&
+        !(KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_SUSPENDED))
+    {
 
         KdpBreakpointTable[Index].Flags |= KD_BREAKPOINT_SUSPENDED;
         KdpLowWriteContent(Index);
@@ -916,17 +938,15 @@ KdpSuspendBreakpoint (
     return;
 
 } // KdpSuspendBreakpoint
-
-VOID
-KdpSuspendAllBreakpoints (
-    VOID
-    )
+
+VOID KdpSuspendAllBreakpoints(VOID)
 {
     ULONG Handle;
 
     BreakpointsSuspended = TRUE;
 
-    for ( Handle = 1; Handle <= BREAKPOINT_TABLE_SIZE; Handle++ ) {
+    for (Handle = 1; Handle <= BREAKPOINT_TABLE_SIZE; Handle++)
+    {
         KdpSuspendBreakpoint(Handle);
     }
 
@@ -936,12 +956,9 @@ KdpSuspendAllBreakpoints (
 
 #if defined(_IA64_)
 
-
+
 BOOLEAN
-KdpSuspendBreakpointRange (
-    IN PVOID Lower,
-    IN PVOID Upper
-    )
+KdpSuspendBreakpointRange(IN PVOID Lower, IN PVOID Upper)
 
 /*++
 
@@ -967,7 +984,7 @@ Notes:
 --*/
 
 {
-    ULONG   Index;
+    ULONG Index;
     BOOLEAN ReturnStatus = FALSE;
 
     //DPRINT(("\nKD: entering KdpSuspendBreakpointRange() at 0x%08x 0x%08x\n", Lower, Upper));
@@ -976,18 +993,18 @@ Notes:
     // Examine each entry in the table in turn
     //
 
-    for (Index = BREAKPOINT_TABLE_SIZE - 1; Index != -1; Index--) {
+    for (Index = BREAKPOINT_TABLE_SIZE - 1; Index != -1; Index--)
+    {
 
-        if ( (KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_IN_USE) &&
-             ((KdpBreakpointTable[Index].Address >= Lower) &&
-              (KdpBreakpointTable[Index].Address <= Upper))
-           ) {
+        if ((KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_IN_USE) &&
+            ((KdpBreakpointTable[Index].Address >= Lower) && (KdpBreakpointTable[Index].Address <= Upper)))
+        {
 
             //
             // Breakpoint is in use and falls in range, suspend it.
             //
 
-            KdpSuspendBreakpoint(Index+1);
+            KdpSuspendBreakpoint(Index + 1);
             ReturnStatus = TRUE;
         }
     }
@@ -998,12 +1015,8 @@ Notes:
 } // KdpSuspendBreakpointRange
 
 
-
 BOOLEAN
-KdpRestoreBreakpointRange (
-    IN PVOID Lower,
-    IN PVOID Upper
-    )
+KdpRestoreBreakpointRange(IN PVOID Lower, IN PVOID Upper)
 
 /*++
 
@@ -1029,7 +1042,7 @@ Notes:
 --*/
 
 {
-    ULONG   Index;
+    ULONG Index;
     BOOLEAN ReturnStatus = FALSE;
 
     //DPRINT(("\nKD: entering KdpRestoreBreakpointRange() at 0x%08x 0x%08x\n", Lower, Upper));
@@ -1038,18 +1051,19 @@ Notes:
     // Examine each entry in the table in turn
     //
 
-    for (Index = 0; Index < BREAKPOINT_TABLE_SIZE; Index++) {
+    for (Index = 0; Index < BREAKPOINT_TABLE_SIZE; Index++)
+    {
 
-        if ( (KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_IN_USE) &&
-             ((KdpBreakpointTable[Index].Address >= Lower) &&
-              (KdpBreakpointTable[Index].Address <= Upper))
-           ) {
+        if ((KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_IN_USE) &&
+            ((KdpBreakpointTable[Index].Address >= Lower) && (KdpBreakpointTable[Index].Address <= Upper)))
+        {
 
             //
             // suspended breakpoint that falls in range, unsuspend it.
             //
 
-            if (KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_SUSPENDED) {
+            if (KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_SUSPENDED)
+            {
 
                 KdpBreakpointTable[Index].Flags &= ~KD_BREAKPOINT_SUSPENDED;
                 ReturnStatus = ReturnStatus || KdpLowRestoreBreakpoint(Index);
@@ -1065,11 +1079,9 @@ Notes:
 
 #endif // _IA64_
 
-
+
 BOOLEAN
-KdpLowRestoreBreakpoint (
-    IN ULONG Index
-    )
+KdpLowRestoreBreakpoint(IN ULONG Index)
 
 /*++
 
@@ -1102,7 +1114,8 @@ Return Value:
     // Does the breakpoint need to be written at all?
     //
 
-    if (KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_NEEDS_REPLACE) {
+    if (KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_NEEDS_REPLACE)
+    {
 
         //
         // The breakpoint was never removed.  Clear the flag
@@ -1113,7 +1126,8 @@ Return Value:
         return TRUE;
     }
 
-    if (KdpBreakpointTable[Index].Content == KdpBreakpointInstruction) {
+    if (KdpBreakpointTable[Index].Content == KdpBreakpointInstruction)
+    {
 
         //
         // The instruction is a breakpoint anyway.
@@ -1127,7 +1141,8 @@ Return Value:
     //
 
 #if !defined(_IA64_)
-    if (KdpBreakpointTable[Index].Content == KdpBreakpointInstruction) {
+    if (KdpBreakpointTable[Index].Content == KdpBreakpointInstruction)
+    {
 
         //
         // The instruction is a breakpoint anyway.
@@ -1145,84 +1160,85 @@ Return Value:
 
     // read in intruction in case the adjacent instruction has been modified.
 
-    if (!NT_SUCCESS(KdpCopyFromPtr(&mBuf,
-                                   KdpBreakpointTable[Index].Address,
-                                   sizeof(KDP_BREAKPOINT_TYPE),
-                                   NULL))) {
+    if (!NT_SUCCESS(KdpCopyFromPtr(&mBuf, KdpBreakpointTable[Index].Address, sizeof(KDP_BREAKPOINT_TYPE), NULL)))
+    {
         //DPRINT(("KD: read 0x%p template failed\n", KdpBreakpointTable[Index].Address));
         KdpBreakpointTable[Index].Flags |= KD_BREAKPOINT_NEEDS_WRITE;
         KdpOweBreakpoint = TRUE;
         return FALSE;
     }
 
-    switch ((ULONG_PTR)KdpBreakpointTable[Index].Address & 0xf) {
-        case 0:
-            mBuf = (mBuf & ~(INST_SLOT0_MASK)) | (KdpBreakpointInstruction << 5);
-            break;
+    switch ((ULONG_PTR)KdpBreakpointTable[Index].Address & 0xf)
+    {
+    case 0:
+        mBuf = (mBuf & ~(INST_SLOT0_MASK)) | (KdpBreakpointInstruction << 5);
+        break;
 
-        case 4:
-            mBuf = (mBuf & ~(INST_SLOT1_MASK)) | (KdpBreakpointInstruction << 14);
-            break;
+    case 4:
+        mBuf = (mBuf & ~(INST_SLOT1_MASK)) | (KdpBreakpointInstruction << 14);
+        break;
 
-        case 8:
-            mBuf = (mBuf & ~(INST_SLOT2_MASK)) | (KdpBreakpointInstruction << 23);
-            break;
+    case 8:
+        mBuf = (mBuf & ~(INST_SLOT2_MASK)) | (KdpBreakpointInstruction << 23);
+        break;
 
-        default:
-            //DPRINT(("KD: KdpAddBreakpoint bad instruction slot#\n"));
-            return FALSE;
+    default:
+        //DPRINT(("KD: KdpAddBreakpoint bad instruction slot#\n"));
+        return FALSE;
     }
-    if (!NT_SUCCESS(KdpCopyToPtr(KdpBreakpointTable[Index].Address,
-                                 &mBuf,
-                                 sizeof(KDP_BREAKPOINT_TYPE),
-                                 NULL))) {
+    if (!NT_SUCCESS(KdpCopyToPtr(KdpBreakpointTable[Index].Address, &mBuf, sizeof(KDP_BREAKPOINT_TYPE), NULL)))
+    {
 
         //DPRINT(("KD: Unable to write BP!\n"));
         KdpBreakpointTable[Index].Flags |= KD_BREAKPOINT_NEEDS_WRITE;
         KdpOweBreakpoint = TRUE;
         return FALSE;
     }
-    else {
+    else
+    {
 
         // check for two-slot MOVL instruction. Reject request if attempt to
         // set break in slot 2 of MLI template.
         // change template to type 0 if current instruction is MLI
 
-        if (((ULONG_PTR)KdpBreakpointTable[Index].Address & 0xf) != 0) {
-            (ULONG_PTR)BundleAddress = (ULONG_PTR)KdpBreakpointTable[Index].Address & ~(0xf);
-            if (!NT_SUCCESS(KdpCopyFromPtr(&mBuf,
-                                           BundleAddress,
-                                           sizeof(KDP_BREAKPOINT_TYPE),
-                                           NULL))) {
+        if (((ULONG_PTR)KdpBreakpointTable[Index].Address & 0xf) != 0)
+        {
+            (ULONG_PTR) BundleAddress = (ULONG_PTR)KdpBreakpointTable[Index].Address & ~(0xf);
+            if (!NT_SUCCESS(KdpCopyFromPtr(&mBuf, BundleAddress, sizeof(KDP_BREAKPOINT_TYPE), NULL)))
+            {
                 //DPRINT(("KD: read template failed at 0x%08x\n", BundleAddress));
                 KdpBreakpointTable[Index].Flags |= KD_BREAKPOINT_NEEDS_WRITE;
                 KdpOweBreakpoint = TRUE;
                 return FALSE;
             }
-            else {
-                if (((mBuf & INST_TEMPL_MASK) >> 1) == 0x2) {
-                    if (((ULONG_PTR)KdpBreakpointTable[Index].Address & 0xf) == 4) {
+            else
+            {
+                if (((mBuf & INST_TEMPL_MASK) >> 1) == 0x2)
+                {
+                    if (((ULONG_PTR)KdpBreakpointTable[Index].Address & 0xf) == 4)
+                    {
                         // if template= type 2 MLI, change to type 0
                         mBuf &= ~((INST_TEMPL_MASK >> 1) << 1);
                         KdpBreakpointTable[Index].Flags |= KD_BREAKPOINT_IA64_MOVL;
-                        if (!NT_SUCCESS(KdpCopyToPtr(BundleAddress,
-                                                     &mBuf,
-                                                     sizeof(KDP_BREAKPOINT_TYPE),
-                                                     NULL))) {
+                        if (!NT_SUCCESS(KdpCopyToPtr(BundleAddress, &mBuf, sizeof(KDP_BREAKPOINT_TYPE), NULL)))
+                        {
                             //DPRINT(("KD: write to 0x%08x template failed\n", BundleAddress));
                             KdpBreakpointTable[Index].Flags |= KD_BREAKPOINT_NEEDS_WRITE;
                             KdpOweBreakpoint = TRUE;
                             return FALSE;
                         }
-                        else {
-                             //DPRINT(("KD: change MLI template to type 0 at 0x%08x set\n", Address));
+                        else
+                        {
+                            //DPRINT(("KD: change MLI template to type 0 at 0x%08x set\n", Address));
                         }
-                    } else {
-                         // set breakpoint at slot 2 of MOVL is illegal
-                         //DPRINT(("KD: illegal to set BP at slot 2 of MOVL at 0x%08x\n", BundleAddress));
-                         KdpBreakpointTable[Index].Flags |= KD_BREAKPOINT_NEEDS_WRITE;
-                         KdpOweBreakpoint = TRUE;
-                         return FALSE;
+                    }
+                    else
+                    {
+                        // set breakpoint at slot 2 of MOVL is illegal
+                        //DPRINT(("KD: illegal to set BP at slot 2 of MOVL at 0x%08x\n", BundleAddress));
+                        KdpBreakpointTable[Index].Flags |= KD_BREAKPOINT_NEEDS_WRITE;
+                        KdpOweBreakpoint = TRUE;
+                        return FALSE;
                     }
                 }
             }
@@ -1232,38 +1248,36 @@ Return Value:
     }
 
 #else
-    if (!NT_SUCCESS(KdpCopyToPtr(KdpBreakpointTable[Index].Address,
-                                 &KdpBreakpointInstruction,
-                                 sizeof(KDP_BREAKPOINT_TYPE),
-                                 NULL))) {
+    if (!NT_SUCCESS(KdpCopyToPtr(KdpBreakpointTable[Index].Address, &KdpBreakpointInstruction,
+                                 sizeof(KDP_BREAKPOINT_TYPE), NULL)))
+    {
 
         KdpBreakpointTable[Index].Flags |= KD_BREAKPOINT_NEEDS_WRITE;
         KdpOweBreakpoint = TRUE;
         return FALSE;
-
-    } else {
+    }
+    else
+    {
 
         KdpBreakpointTable[Index].Flags &= ~KD_BREAKPOINT_NEEDS_WRITE;
         return TRUE;
     }
 #endif
-
 }
 
-
-VOID
-KdpRestoreAllBreakpoints (
-    VOID
-    )
+
+VOID KdpRestoreAllBreakpoints(VOID)
 {
     ULONG Index;
 
     BreakpointsSuspended = FALSE;
 
-    for ( Index = 0; Index < BREAKPOINT_TABLE_SIZE; Index++ ) {
+    for (Index = 0; Index < BREAKPOINT_TABLE_SIZE; Index++)
+    {
 
         if ((KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_IN_USE) &&
-            (KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_SUSPENDED) ) {
+            (KdpBreakpointTable[Index].Flags & KD_BREAKPOINT_SUSPENDED))
+        {
 
             KdpBreakpointTable[Index].Flags &= ~KD_BREAKPOINT_SUSPENDED;
             KdpLowRestoreBreakpoint(Index);
@@ -1274,20 +1288,19 @@ KdpRestoreAllBreakpoints (
 
 } // KdpRestoreAllBreakpoints
 
-VOID
-KdDeleteAllBreakpoints(
-    VOID
-    )
+VOID KdDeleteAllBreakpoints(VOID)
 {
     ULONG Handle;
 
-    if (KdDebuggerEnabled == FALSE || KdPitchDebugger != FALSE) {
+    if (KdDebuggerEnabled == FALSE || KdPitchDebugger != FALSE)
+    {
         return;
     }
 
     BreakpointsSuspended = FALSE;
 
-    for ( Handle = 1; Handle <= BREAKPOINT_TABLE_SIZE; Handle++ ) {
+    for (Handle = 1; Handle <= BREAKPOINT_TABLE_SIZE; Handle++)
+    {
         KdpDeleteBreakpoint(Handle);
     }
 

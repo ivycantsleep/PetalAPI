@@ -21,12 +21,12 @@ Revision History:
 #include "obp.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,NtMakeTemporaryObject)
-#pragma alloc_text(PAGE,NtClose)
-#pragma alloc_text(PAGE,ObMakeTemporaryObject)
-#pragma alloc_text(PAGE,ObpCloseHandleTableEntry)
-#pragma alloc_text(PAGE,ObCloseHandle)
-#pragma alloc_text(PAGE,ObpCloseHandle)
+#pragma alloc_text(PAGE, NtMakeTemporaryObject)
+#pragma alloc_text(PAGE, NtClose)
+#pragma alloc_text(PAGE, ObMakeTemporaryObject)
+#pragma alloc_text(PAGE, ObpCloseHandleTableEntry)
+#pragma alloc_text(PAGE, ObCloseHandle)
+#pragma alloc_text(PAGE, ObpCloseHandle)
 #endif
 
 //
@@ -36,14 +36,8 @@ Revision History:
 
 extern BOOLEAN SepAdtAuditingEnabled;
 
-ObpCloseHandleTableEntry (
-    IN PHANDLE_TABLE ObjectTable,
-    IN PHANDLE_TABLE_ENTRY ObjectTableEntry,
-    IN HANDLE Handle,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN BOOLEAN Rundown,
-    IN BOOLEAN CanNotRaise
-    )
+ObpCloseHandleTableEntry(IN PHANDLE_TABLE ObjectTable, IN PHANDLE_TABLE_ENTRY ObjectTableEntry, IN HANDLE Handle,
+                         IN KPROCESSOR_MODE PreviousMode, IN BOOLEAN Rundown, IN BOOLEAN CanNotRaise)
 /*++
 
 Routine Description:
@@ -68,9 +62,9 @@ Return Value:
     PVOID Object;
     ULONG CapturedGrantedAccess;
     ULONG CapturedAttributes;
-    #if DBG
+#if DBG
     KIRQL SaveIrql;
-    #endif // DBG
+#endif // DBG
 
     //
     //  From the object table entry we can grab a pointer to the object
@@ -88,23 +82,22 @@ Return Value:
     //  to our caller
     //
 
-    if (ObjectType->TypeInfo.OkayToCloseProcedure != NULL) {
+    if (ObjectType->TypeInfo.OkayToCloseProcedure != NULL)
+    {
 
-        ObpBeginTypeSpecificCallOut( SaveIrql );
+        ObpBeginTypeSpecificCallOut(SaveIrql);
 
-        if (!(*ObjectType->TypeInfo.OkayToCloseProcedure)( PsGetCurrentProcess(),
-                                                           Object,
-                                                           Handle,
-                                                           PreviousMode )) {
+        if (!(*ObjectType->TypeInfo.OkayToCloseProcedure)(PsGetCurrentProcess(), Object, Handle, PreviousMode))
+        {
 
-            ObpEndTypeSpecificCallOut( SaveIrql, "NtClose", ObjectType, Object );
+            ObpEndTypeSpecificCallOut(SaveIrql, "NtClose", ObjectType, Object);
 
-            ExUnlockHandleTableEntry( ObjectTable, ObjectTableEntry );
+            ExUnlockHandleTableEntry(ObjectTable, ObjectTableEntry);
 
             return STATUS_HANDLE_NOT_CLOSABLE;
         }
 
-        ObpEndTypeSpecificCallOut( SaveIrql, "NtClose", ObjectType, Object );
+        ObpEndTypeSpecificCallOut(SaveIrql, "NtClose", ObjectType, Object);
     }
 
     CapturedAttributes = ObpGetHandleAttributes(ObjectTableEntry);
@@ -115,47 +108,52 @@ Return Value:
     //  on the global flags and debugger port situation.
     //
 
-    if ((CapturedAttributes & OBJ_PROTECT_CLOSE) != 0 && Rundown == FALSE) {
+    if ((CapturedAttributes & OBJ_PROTECT_CLOSE) != 0 && Rundown == FALSE)
+    {
 
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
             PETHREAD CurrentThread;
 
-            ExUnlockHandleTableEntry( ObjectTable, ObjectTableEntry );
+            ExUnlockHandleTableEntry(ObjectTable, ObjectTableEntry);
 
-            CurrentThread = PsGetCurrentThread ();
+            CurrentThread = PsGetCurrentThread();
 
-            if (!CanNotRaise && !KeIsAttachedProcess() &&
-                !PsIsThreadTerminating (CurrentThread) &&
+            if (!CanNotRaise && !KeIsAttachedProcess() && !PsIsThreadTerminating(CurrentThread) &&
                 !CurrentThread->Tcb.ApcState.KernelApcInProgress &&
-                ((NtGlobalFlag & FLG_ENABLE_CLOSE_EXCEPTIONS) ||
-                 (PsGetCurrentProcess()->DebugPort != NULL))) {
+                ((NtGlobalFlag & FLG_ENABLE_CLOSE_EXCEPTIONS) || (PsGetCurrentProcess()->DebugPort != NULL)))
+            {
 
                 //
                 //  Raise and exception in user mode
                 //
                 return KeRaiseUserException(STATUS_HANDLE_NOT_CLOSABLE);
-
-            } else {
+            }
+            else
+            {
 
                 return STATUS_HANDLE_NOT_CLOSABLE;
             }
-
-        } else {
+        }
+        else
+        {
             KeBugCheckEx(INVALID_KERNEL_HANDLE, (ULONG_PTR)Handle, 0, 0, 0);
         }
     }
-    
+
     //
     //  Get the granted access for the handle
     //
 
-#if i386 
+#if i386
 
-    if (NtGlobalFlag & FLG_KERNEL_STACK_TRACE_DB) {
+    if (NtGlobalFlag & FLG_KERNEL_STACK_TRACE_DB)
+    {
 
-        CapturedGrantedAccess = ObpTranslateGrantedAccessIndex( ObjectTableEntry->GrantedAccessIndex );
-
-    } else {
+        CapturedGrantedAccess = ObpTranslateGrantedAccessIndex(ObjectTableEntry->GrantedAccessIndex);
+    }
+    else
+    {
 
         CapturedGrantedAccess = ObpDecodeGrantedAccess(ObjectTableEntry->GrantedAccess);
     }
@@ -164,15 +162,13 @@ Return Value:
 
     CapturedGrantedAccess = ObpDecodeGrantedAccess(ObjectTableEntry->GrantedAccess);
 
-#endif // i386 
+#endif // i386
 
     //
     //  Now remove the handle from the handle table
     //
 
-    ExDestroyHandle( ObjectTable,
-                     Handle,
-                     ObjectTableEntry );
+    ExDestroyHandle(ObjectTable, Handle, ObjectTableEntry);
 
     //
     //  perform any auditing required
@@ -184,13 +180,16 @@ Return Value:
     //  was stored by a call to ObSetGenerateOnClosed.
     //
 
-    if (CapturedAttributes & OBJ_AUDIT_OBJECT_CLOSE) {
+    if (CapturedAttributes & OBJ_AUDIT_OBJECT_CLOSE)
+    {
 
-        if ( SepAdtAuditingEnabled ) {
+        if (SepAdtAuditingEnabled)
+        {
 
-            SeCloseObjectAuditAlarm( Object,
-                                     (HANDLE)((ULONG_PTR)Handle & ~OBJ_HANDLE_TAGBITS),  // Mask off the tagbits defined for OB objects.
-                                     TRUE );
+            SeCloseObjectAuditAlarm(
+                Object,
+                (HANDLE)((ULONG_PTR)Handle & ~OBJ_HANDLE_TAGBITS), // Mask off the tagbits defined for OB objects.
+                TRUE);
         }
     }
 
@@ -199,12 +198,9 @@ Return Value:
     //  handle count, and remove a reference
     //
 
-    ObpDecrementHandleCount( PsGetCurrentProcess(),
-                             ObjectHeader,
-                             ObjectType,
-                             CapturedGrantedAccess );
+    ObpDecrementHandleCount(PsGetCurrentProcess(), ObjectHeader, ObjectType, CapturedGrantedAccess);
 
-    ObDereferenceObject( Object );
+    ObDereferenceObject(Object);
 
     //
     //  And return to our caller
@@ -213,13 +209,9 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
-
+
 NTSTATUS
-ObpCloseHandle (
-    IN HANDLE Handle,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN BOOLEAN CanNotRaise
-    )
+ObpCloseHandle(IN HANDLE Handle, IN KPROCESSOR_MODE PreviousMode, IN BOOLEAN CanNotRaise)
 /*++
 
 Routine Description:
@@ -247,10 +239,10 @@ Return Value:
     PEPROCESS CurrentProcess;
 
 
-    ObpValidateIrql( "NtClose" );
+    ObpValidateIrql("NtClose");
 
-    CurrentThread = PsGetCurrentThread ();
-    CurrentProcess = PsGetCurrentProcessByThread (CurrentThread);
+    CurrentThread = PsGetCurrentThread();
+    CurrentProcess = PsGetCurrentProcessByThread(CurrentThread);
     //
     //  For the current process we will grab its handle/object table and
     //  translate the handle to its corresponding table entry.  If the
@@ -258,21 +250,24 @@ Return Value:
     //  check for a kernel handle and attach and use that table if so.
     //
 
-    if (IsKernelHandle( Handle, PreviousMode ))  {
+    if (IsKernelHandle(Handle, PreviousMode))
+    {
 
-        Handle = DecodeKernelHandle( Handle );
+        Handle = DecodeKernelHandle(Handle);
 
         ObjectTable = ObpKernelHandleTable;
 
         //
         //  Go to the system process if we have to
         //
-        if (CurrentProcess != PsInitialSystemProcess) {
-           KeStackAttachProcess (&PsInitialSystemProcess->Pcb, &ApcState);
-           AttachedToProcess = TRUE;
+        if (CurrentProcess != PsInitialSystemProcess)
+        {
+            KeStackAttachProcess(&PsInitialSystemProcess->Pcb, &ApcState);
+            AttachedToProcess = TRUE;
         }
-
-    } else {
+    }
+    else
+    {
 
         ObjectTable = CurrentProcess->ObjectTable;
     }
@@ -284,30 +279,31 @@ Return Value:
 
     KeEnterCriticalRegionThread(&CurrentThread->Tcb);
 
-    ObjectTableEntry = ExMapHandleToPointer( ObjectTable,
-                                             Handle );
+    ObjectTableEntry = ExMapHandleToPointer(ObjectTable, Handle);
 
     //
     //  Check that the specified handle is legitimate otherwise we can
     //  assume the caller just passed in some bogus handle value
     //
 
-    if (ObjectTableEntry != NULL) {
+    if (ObjectTableEntry != NULL)
+    {
 
-        Status = ObpCloseHandleTableEntry (ObjectTable, ObjectTableEntry, Handle, PreviousMode, FALSE, CanNotRaise);
+        Status = ObpCloseHandleTableEntry(ObjectTable, ObjectTableEntry, Handle, PreviousMode, FALSE, CanNotRaise);
 
         KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
         //
         //  If we are attached to the system process then detach
         //
-        if (AttachedToProcess) {
+        if (AttachedToProcess)
+        {
 
             KeUnstackDetachProcess(&ApcState);
             AttachedToProcess = FALSE;
         }
-
-
-    } else {
+    }
+    else
+    {
 
         KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
 
@@ -321,7 +317,8 @@ Return Value:
         //  back to our caller
         //
 
-        if (AttachedToProcess) {
+        if (AttachedToProcess)
+        {
             KeUnstackDetachProcess(&ApcState);
             AttachedToProcess = FALSE;
         }
@@ -332,26 +329,28 @@ Return Value:
         //  or return an error
         //
 
-        if ((Handle != NULL) &&
-            (Handle != NtCurrentThread()) &&
-            (Handle != NtCurrentProcess())) {
+        if ((Handle != NULL) && (Handle != NtCurrentThread()) && (Handle != NtCurrentProcess()))
+        {
 
-            if (PreviousMode != KernelMode) {
+            if (PreviousMode != KernelMode)
+            {
 
-                if ((NtGlobalFlag & FLG_ENABLE_CLOSE_EXCEPTIONS) ||
-                    (CurrentProcess->DebugPort != NULL)) {
+                if ((NtGlobalFlag & FLG_ENABLE_CLOSE_EXCEPTIONS) || (CurrentProcess->DebugPort != NULL))
+                {
 
-                    if (!CanNotRaise && !KeIsAttachedProcess() &&
-                        !PsIsThreadTerminating (CurrentThread) &&
-                        !CurrentThread->Tcb.ApcState.KernelApcInProgress) {
-                        return KeRaiseUserException (STATUS_INVALID_HANDLE);
-                    } else {
+                    if (!CanNotRaise && !KeIsAttachedProcess() && !PsIsThreadTerminating(CurrentThread) &&
+                        !CurrentThread->Tcb.ApcState.KernelApcInProgress)
+                    {
+                        return KeRaiseUserException(STATUS_INVALID_HANDLE);
+                    }
+                    else
+                    {
                         return STATUS_INVALID_HANDLE;
                     }
-
                 }
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  bugcheck here if kernel debugger is enabled and if kernel mode code is
@@ -360,14 +359,14 @@ Return Value:
                 //  really starting.
                 //
 
-                if (( !PsIsThreadTerminating(CurrentThread)) &&
-                    (CurrentProcess->Peb != NULL)) {
+                if ((!PsIsThreadTerminating(CurrentThread)) && (CurrentProcess->Peb != NULL))
+                {
 
-                    if (KdDebuggerEnabled) {
+                    if (KdDebuggerEnabled)
+                    {
                         KeBugCheckEx(INVALID_KERNEL_HANDLE, (ULONG_PTR)Handle, 1, 0, 0);
                     }
                 }
-
             }
         }
 
@@ -379,10 +378,7 @@ Return Value:
 }
 
 NTSTATUS
-ObCloseHandle (
-    IN HANDLE Handle,
-    IN KPROCESSOR_MODE PreviousMode
-    )
+ObCloseHandle(IN HANDLE Handle, IN KPROCESSOR_MODE PreviousMode)
 /*++
 
 Routine Description:
@@ -400,16 +396,12 @@ Return Value:
 
 --*/
 {
-    return ObpCloseHandle (Handle,
-                           PreviousMode,
-                           TRUE);
+    return ObpCloseHandle(Handle, PreviousMode, TRUE);
 }
 
-
+
 NTSTATUS
-NtClose (
-    IN HANDLE Handle
-    )
+NtClose(IN HANDLE Handle)
 
 /*++
 
@@ -428,16 +420,12 @@ Return Value:
 --*/
 
 {
-    return ObpCloseHandle (Handle,
-                           KeGetPreviousMode (),
-                           FALSE);
+    return ObpCloseHandle(Handle, KeGetPreviousMode(), FALSE);
 }
 
-
+
 NTSTATUS
-NtMakeTemporaryObject (
-    IN HANDLE Handle
-    )
+NtMakeTemporaryObject(IN HANDLE Handle)
 
 /*++
 
@@ -469,15 +457,11 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    Status = ObReferenceObjectByHandle( Handle,
-                                        DELETE,
-                                        (POBJECT_TYPE)NULL,
-                                        PreviousMode,
-                                        &Object,
-                                        &HandleInformation );
-    if (!NT_SUCCESS( Status )) {
+    Status = ObReferenceObjectByHandle(Handle, DELETE, (POBJECT_TYPE)NULL, PreviousMode, &Object, &HandleInformation);
+    if (!NT_SUCCESS(Status))
+    {
 
-        return( Status );
+        return (Status);
     }
 
     //
@@ -486,28 +470,25 @@ Return Value:
     //  zero
     //
 
-    ObMakeTemporaryObject( Object );
+    ObMakeTemporaryObject(Object);
 
     //
     //  Check if we need to generate a delete object audit/alarm
     //
 
-    if (HandleInformation.HandleAttributes & OBJ_AUDIT_OBJECT_CLOSE) {
+    if (HandleInformation.HandleAttributes & OBJ_AUDIT_OBJECT_CLOSE)
+    {
 
-        SeDeleteObjectAuditAlarm( Object,
-                                  Handle );
+        SeDeleteObjectAuditAlarm(Object, Handle);
     }
 
-    ObDereferenceObject( Object );
+    ObDereferenceObject(Object);
 
-    return( Status );
+    return (Status);
 }
 
-
-VOID
-ObMakeTemporaryObject (
-    IN PVOID Object
-    )
+
+VOID ObMakeTemporaryObject(IN PVOID Object)
 
 /*++
 
@@ -535,23 +516,22 @@ Return Value:
     PAGED_CODE();
 
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
     ObjectType = ObjectHeader->Type;
 
     //
     // Other bits are set in this flags field by the handle database code. Synchronise with that.
     //
-    ObpLockObject( ObjectHeader );
+    ObpLockObject(ObjectHeader);
 
     ObjectHeader->Flags &= ~OB_FLAG_PERMANENT_OBJECT;
 
-    ObpUnlockObject( ObjectHeader );
+    ObpUnlockObject(ObjectHeader);
 
     //
     // Now delete the object name if no more handles are present.
     //
-    ObpDeleteNameCheck( Object );
+    ObpDeleteNameCheck(Object);
 
     return;
 }
-

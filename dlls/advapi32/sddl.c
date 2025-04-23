@@ -50,17 +50,18 @@ Revision History:
 #include <winldap.h>
 #include <ntldap.h>
 
-typedef LDAP * (LDAPAPI *PFN_LDAP_OPEN)( PCHAR, ULONG );
-typedef ULONG (LDAPAPI *PFN_LDAP_UNBIND)( LDAP * );
-typedef ULONG (LDAPAPI *PFN_LDAP_SEARCH)(LDAP *, PCHAR, ULONG, PCHAR, PCHAR *, ULONG,PLDAPControlA *, PLDAPControlA *, struct l_timeval *, ULONG, LDAPMessage **);
-typedef LDAPMessage * (LDAPAPI *PFN_LDAP_FIRST_ENTRY)( LDAP *, LDAPMessage * );
-typedef PCHAR * (LDAPAPI *PFN_LDAP_GET_VALUE)(LDAP *, LDAPMessage *, PCHAR );
-typedef ULONG (LDAPAPI *PFN_LDAP_MSGFREE)( LDAPMessage * );
-typedef ULONG (LDAPAPI *PFN_LDAP_VALUE_FREE)( PCHAR * );
-typedef ULONG (LDAPAPI *PFN_LDAP_MAP_ERROR)( ULONG );
+typedef LDAP *(LDAPAPI *PFN_LDAP_OPEN)(PCHAR, ULONG);
+typedef ULONG(LDAPAPI *PFN_LDAP_UNBIND)(LDAP *);
+typedef ULONG(LDAPAPI *PFN_LDAP_SEARCH)(LDAP *, PCHAR, ULONG, PCHAR, PCHAR *, ULONG, PLDAPControlA *, PLDAPControlA *,
+                                        struct l_timeval *, ULONG, LDAPMessage **);
+typedef LDAPMessage *(LDAPAPI *PFN_LDAP_FIRST_ENTRY)(LDAP *, LDAPMessage *);
+typedef PCHAR *(LDAPAPI *PFN_LDAP_GET_VALUE)(LDAP *, LDAPMessage *, PCHAR);
+typedef ULONG(LDAPAPI *PFN_LDAP_MSGFREE)(LDAPMessage *);
+typedef ULONG(LDAPAPI *PFN_LDAP_VALUE_FREE)(PCHAR *);
+typedef ULONG(LDAPAPI *PFN_LDAP_MAP_ERROR)(ULONG);
 
 // 64K-1
-#define SDDL_MAX_ACL_SIZE      0xFFFF
+#define SDDL_MAX_ACL_SIZE 0xFFFF
 
 
 //
@@ -75,18 +76,19 @@ typedef ULONG (LDAPAPI *PFN_LDAP_MAP_ERROR)( ULONG );
 // Local macros
 //
 #define STRING_GUID_LEN 36
-#define STRING_GUID_SIZE  ( STRING_GUID_LEN * sizeof( WCHAR ) )
-#define SDDL_LEN_TAG( tagdef )  ( sizeof( tagdef ) / sizeof( WCHAR ) - 1 )
-#define SDDL_SIZE_TAG( tagdef )  ( wcslen( tagdef ) * sizeof( WCHAR ) )
-#define SDDL_SIZE_SEP( sep ) (sizeof( WCHAR ) )
+#define STRING_GUID_SIZE (STRING_GUID_LEN * sizeof(WCHAR))
+#define SDDL_LEN_TAG(tagdef) (sizeof(tagdef) / sizeof(WCHAR) - 1)
+#define SDDL_SIZE_TAG(tagdef) (wcslen(tagdef) * sizeof(WCHAR))
+#define SDDL_SIZE_SEP(sep) (sizeof(WCHAR))
 
-#define SDDL_VALID_DACL  0x00000001
-#define SDDL_VALID_SACL  0x00000002
+#define SDDL_VALID_DACL 0x00000001
+#define SDDL_VALID_SACL 0x00000002
 
 //
 // This structure is used to do some lookups for mapping ACES
 //
-typedef struct _STRSD_KEY_LOOKUP {
+typedef struct _STRSD_KEY_LOOKUP
+{
 
     PWSTR Key;
     ULONG KeyLen;
@@ -95,7 +97,8 @@ typedef struct _STRSD_KEY_LOOKUP {
 
 } STRSD_KEY_LOOKUP, *PSTRSD_KEY_LOOKUP;
 
-typedef enum _STRSD_SID_TYPE {
+typedef enum _STRSD_SID_TYPE
+{
     ST_DOMAIN_RELATIVE = 0,
     ST_WORLD,
     ST_LOCALSY,
@@ -109,15 +112,16 @@ typedef enum _STRSD_SID_TYPE {
 //
 // This structure is used to map account monikers to sids
 //
-typedef struct _STRSD_SID_LOOKUP {
+typedef struct _STRSD_SID_LOOKUP
+{
 
     BOOLEAN Valid;
-    WCHAR Key[SDDL_ALIAS_SIZE+2];
+    WCHAR Key[SDDL_ALIAS_SIZE + 2];
     ULONG KeyLen;
     PSID Sid;
     ULONG Rid;
     STRSD_SID_TYPE SidType;
-    DWORD SidBuff[ sizeof( SID ) / sizeof( DWORD ) + 5];
+    DWORD SidBuff[sizeof(SID) / sizeof(DWORD) + 5];
 } STRSD_SID_LOOKUP, *PSTRSD_SID_LOOKUP;
 
 //
@@ -135,7 +139,7 @@ PSID  CreatorGroupSid = (PSID)CreatorGroupBuiltSid;
 */
 
 CRITICAL_SECTION SddlSidLookupCritical;
-static DWORD SidTableReinitializeInstance=0;
+static DWORD SidTableReinitializeInstance = 0;
 
 //    JINHUANG 3/26 BVT break for dcpromo
 //
@@ -149,267 +153,174 @@ static DWORD SidTableReinitializeInstance=0;
 //             2) do not stop the initialization process if an error occurs
 //                if the Valid field is already TRUE (already initialized), skip the row
 //
-static STRSD_SID_LOOKUP  SidLookup[] = {
-        { FALSE, SDDL_DOMAIN_ADMINISTRATORS, SDDL_LEN_TAG( SDDL_DOMAIN_ADMINISTRATORS ),
-            NULL, DOMAIN_GROUP_RID_ADMINS, ST_DOMAIN_RELATIVE, 0 },
-        { FALSE, SDDL_DOMAIN_GUESTS, SDDL_LEN_TAG( SDDL_DOMAIN_GUESTS ),
-            NULL, DOMAIN_GROUP_RID_GUESTS, ST_DOMAIN_RELATIVE, 0 },
-        { FALSE, SDDL_DOMAIN_USERS, SDDL_LEN_TAG( SDDL_DOMAIN_USERS ),
-              NULL, DOMAIN_GROUP_RID_USERS, ST_DOMAIN_RELATIVE, 0 },
-        { FALSE, SDDL_DOMAIN_DOMAIN_CONTROLLERS, SDDL_LEN_TAG( SDDL_DOMAIN_DOMAIN_CONTROLLERS ),
-              NULL, DOMAIN_GROUP_RID_CONTROLLERS, ST_DOMAIN_RELATIVE, 0 },
-        { FALSE, SDDL_DOMAIN_COMPUTERS, SDDL_LEN_TAG( SDDL_DOMAIN_COMPUTERS ),
-              NULL, DOMAIN_GROUP_RID_COMPUTERS, ST_DOMAIN_RELATIVE, 0 },
-        { FALSE, SDDL_SCHEMA_ADMINISTRATORS, SDDL_LEN_TAG( SDDL_SCHEMA_ADMINISTRATORS ),
-              NULL, DOMAIN_GROUP_RID_SCHEMA_ADMINS, ST_ROOT_DOMAIN_RELATIVE, 0 },  // should be root domain only ST_DOMAIN_RELATIVE,
-        { FALSE, SDDL_ENTERPRISE_ADMINS, SDDL_LEN_TAG( SDDL_ENTERPRISE_ADMINS ),
-              NULL, DOMAIN_GROUP_RID_ENTERPRISE_ADMINS, ST_ROOT_DOMAIN_RELATIVE, 0 }, // root domain only
-        { FALSE, SDDL_CERT_SERV_ADMINISTRATORS, SDDL_LEN_TAG( SDDL_CERT_SERV_ADMINISTRATORS ),
-              NULL, DOMAIN_GROUP_RID_CERT_ADMINS, ST_DOMAIN_RELATIVE, 0 },
-        { FALSE, SDDL_ACCOUNT_OPERATORS, SDDL_LEN_TAG( SDDL_ACCOUNT_OPERATORS ),
-              NULL, DOMAIN_ALIAS_RID_ACCOUNT_OPS, ST_BUILTIN, 0 },
-        { FALSE, SDDL_BACKUP_OPERATORS, SDDL_LEN_TAG( SDDL_BACKUP_OPERATORS ),
-              NULL, DOMAIN_ALIAS_RID_BACKUP_OPS, ST_BUILTIN, 0 },
-        { FALSE, SDDL_PRINTER_OPERATORS, SDDL_LEN_TAG( SDDL_PRINTER_OPERATORS ),
-              NULL, DOMAIN_ALIAS_RID_PRINT_OPS, ST_BUILTIN, 0 },
-        { FALSE, SDDL_SERVER_OPERATORS, SDDL_LEN_TAG( SDDL_SERVER_OPERATORS ),
-              NULL, DOMAIN_ALIAS_RID_SYSTEM_OPS, ST_BUILTIN, 0 },
-        { FALSE, SDDL_REPLICATOR, SDDL_LEN_TAG( SDDL_REPLICATOR ),
-              NULL, DOMAIN_ALIAS_RID_REPLICATOR, ST_BUILTIN, 0 },
-        { FALSE, SDDL_RAS_SERVERS, SDDL_LEN_TAG( SDDL_RAS_SERVERS ),
-              NULL, DOMAIN_ALIAS_RID_RAS_SERVERS, ST_DOMAIN_RELATIVE, 0 },  // ST_LOCAL
-        { FALSE, SDDL_AUTHENTICATED_USERS, SDDL_LEN_TAG( SDDL_AUTHENTICATED_USERS ),
-              NULL, SECURITY_AUTHENTICATED_USER_RID, ST_NTAUTH, 0 },
-        { FALSE, SDDL_PERSONAL_SELF, SDDL_LEN_TAG( SDDL_PERSONAL_SELF ),
-              NULL, SECURITY_PRINCIPAL_SELF_RID, ST_NTAUTH, 0 },
-        { FALSE, SDDL_CREATOR_OWNER, SDDL_LEN_TAG( SDDL_CREATOR_OWNER ),
-              NULL, SECURITY_CREATOR_OWNER_RID, ST_CREATOR, 0 },
-        { FALSE, SDDL_CREATOR_GROUP, SDDL_LEN_TAG( SDDL_CREATOR_GROUP ),
-              NULL, SECURITY_CREATOR_GROUP_RID, ST_CREATOR, 0 },
-        { FALSE, SDDL_LOCAL_SYSTEM, SDDL_LEN_TAG( SDDL_LOCAL_SYSTEM ),
-              NULL, SECURITY_LOCAL_SYSTEM_RID, ST_NTAUTH, 0 },
-        { FALSE, SDDL_INTERACTIVE, SDDL_LEN_TAG( SDDL_INTERACTIVE ),
-              NULL, SECURITY_INTERACTIVE_RID, ST_NTAUTH, 0 },
-        { FALSE, SDDL_NETWORK, SDDL_LEN_TAG( SDDL_NETWORK ),
-              NULL, SECURITY_NETWORK_RID, ST_NTAUTH, 0 },
-        { FALSE, SDDL_SERVICE, SDDL_LEN_TAG( SDDL_SERVICE ),
-              NULL, SECURITY_SERVICE_RID, ST_NTAUTH, 0 },
-        { FALSE, SDDL_ENTERPRISE_DOMAIN_CONTROLLERS, SDDL_LEN_TAG( SDDL_ENTERPRISE_DOMAIN_CONTROLLERS ),
-              NULL, SECURITY_SERVER_LOGON_RID, ST_NTAUTH, 0 },
-        { FALSE, SDDL_RESTRICTED_CODE, SDDL_LEN_TAG( SDDL_RESTRICTED_CODE ),
-              NULL, SECURITY_RESTRICTED_CODE_RID, ST_NTAUTH, 0 },
-        { FALSE, SDDL_ANONYMOUS, SDDL_LEN_TAG( SDDL_ANONYMOUS ),
-              NULL, SECURITY_ANONYMOUS_LOGON_RID, ST_NTAUTH, 0 },
-        { FALSE, SDDL_LOCAL_ADMIN, SDDL_LEN_TAG( SDDL_LOCAL_ADMIN ),
-              NULL, DOMAIN_USER_RID_ADMIN, ST_LOCAL, 0 },
-        { FALSE, SDDL_LOCAL_GUEST, SDDL_LEN_TAG( SDDL_LOCAL_GUEST ),
-              NULL, DOMAIN_USER_RID_GUEST, ST_LOCAL, 0 },
-        { FALSE, SDDL_BUILTIN_ADMINISTRATORS, SDDL_LEN_TAG( SDDL_BUILTIN_ADMINISTRATORS ),
-              NULL, DOMAIN_ALIAS_RID_ADMINS, ST_BUILTIN, 0 },
-        { FALSE, SDDL_BUILTIN_GUESTS, SDDL_LEN_TAG( SDDL_BUILTIN_GUESTS ),
-              NULL, DOMAIN_ALIAS_RID_GUESTS, ST_BUILTIN, 0 },
-        { FALSE, SDDL_BUILTIN_USERS, SDDL_LEN_TAG( SDDL_BUILTIN_USERS ),
-              NULL, DOMAIN_ALIAS_RID_USERS, ST_BUILTIN, 0 },
-        { FALSE, SDDL_POWER_USERS, SDDL_LEN_TAG( SDDL_POWER_USERS ),
-              NULL, DOMAIN_ALIAS_RID_POWER_USERS, ST_BUILTIN, 0 },
-        { FALSE, SDDL_EVERYONE, SDDL_LEN_TAG( SDDL_EVERYONE ),
-              NULL, SECURITY_WORLD_RID, ST_WORLD, 0 },
-        { FALSE, SDDL_GROUP_POLICY_ADMINS, SDDL_LEN_TAG( SDDL_GROUP_POLICY_ADMINS ),
-              NULL, DOMAIN_GROUP_RID_POLICY_ADMINS, ST_DOMAIN_RELATIVE, 0 },
-        { FALSE, SDDL_ALIAS_PREW2KCOMPACC, SDDL_LEN_TAG( SDDL_ALIAS_PREW2KCOMPACC ),
-              NULL, DOMAIN_ALIAS_RID_PREW2KCOMPACCESS, ST_BUILTIN, 0 },
-        { FALSE, SDDL_LOCAL_SERVICE, SDDL_LEN_TAG( SDDL_LOCAL_SERVICE ),
-              NULL, SECURITY_LOCAL_SERVICE_RID, ST_NTAUTH, 0 },
-        { FALSE, SDDL_NETWORK_SERVICE, SDDL_LEN_TAG( SDDL_NETWORK_SERVICE ),
-              NULL, SECURITY_NETWORK_SERVICE_RID, ST_NTAUTH, 0 },
-        { FALSE, SDDL_REMOTE_DESKTOP, SDDL_LEN_TAG( SDDL_REMOTE_DESKTOP ),
-              NULL, DOMAIN_ALIAS_RID_REMOTE_DESKTOP_USERS, ST_BUILTIN, 0 },
-        { FALSE, SDDL_NETWORK_CONFIGURATION_OPS, SDDL_LEN_TAG( SDDL_NETWORK_CONFIGURATION_OPS ),
-              NULL, DOMAIN_ALIAS_RID_NETWORK_CONFIGURATION_OPS, ST_BUILTIN, 0 }
-    };
+static STRSD_SID_LOOKUP SidLookup[] = {
+    { FALSE, SDDL_DOMAIN_ADMINISTRATORS, SDDL_LEN_TAG(SDDL_DOMAIN_ADMINISTRATORS), NULL, DOMAIN_GROUP_RID_ADMINS,
+      ST_DOMAIN_RELATIVE, 0 },
+    { FALSE, SDDL_DOMAIN_GUESTS, SDDL_LEN_TAG(SDDL_DOMAIN_GUESTS), NULL, DOMAIN_GROUP_RID_GUESTS, ST_DOMAIN_RELATIVE,
+      0 },
+    { FALSE, SDDL_DOMAIN_USERS, SDDL_LEN_TAG(SDDL_DOMAIN_USERS), NULL, DOMAIN_GROUP_RID_USERS, ST_DOMAIN_RELATIVE, 0 },
+    { FALSE, SDDL_DOMAIN_DOMAIN_CONTROLLERS, SDDL_LEN_TAG(SDDL_DOMAIN_DOMAIN_CONTROLLERS), NULL,
+      DOMAIN_GROUP_RID_CONTROLLERS, ST_DOMAIN_RELATIVE, 0 },
+    { FALSE, SDDL_DOMAIN_COMPUTERS, SDDL_LEN_TAG(SDDL_DOMAIN_COMPUTERS), NULL, DOMAIN_GROUP_RID_COMPUTERS,
+      ST_DOMAIN_RELATIVE, 0 },
+    { FALSE, SDDL_SCHEMA_ADMINISTRATORS, SDDL_LEN_TAG(SDDL_SCHEMA_ADMINISTRATORS), NULL, DOMAIN_GROUP_RID_SCHEMA_ADMINS,
+      ST_ROOT_DOMAIN_RELATIVE, 0 }, // should be root domain only ST_DOMAIN_RELATIVE,
+    { FALSE, SDDL_ENTERPRISE_ADMINS, SDDL_LEN_TAG(SDDL_ENTERPRISE_ADMINS), NULL, DOMAIN_GROUP_RID_ENTERPRISE_ADMINS,
+      ST_ROOT_DOMAIN_RELATIVE, 0 }, // root domain only
+    { FALSE, SDDL_CERT_SERV_ADMINISTRATORS, SDDL_LEN_TAG(SDDL_CERT_SERV_ADMINISTRATORS), NULL,
+      DOMAIN_GROUP_RID_CERT_ADMINS, ST_DOMAIN_RELATIVE, 0 },
+    { FALSE, SDDL_ACCOUNT_OPERATORS, SDDL_LEN_TAG(SDDL_ACCOUNT_OPERATORS), NULL, DOMAIN_ALIAS_RID_ACCOUNT_OPS,
+      ST_BUILTIN, 0 },
+    { FALSE, SDDL_BACKUP_OPERATORS, SDDL_LEN_TAG(SDDL_BACKUP_OPERATORS), NULL, DOMAIN_ALIAS_RID_BACKUP_OPS, ST_BUILTIN,
+      0 },
+    { FALSE, SDDL_PRINTER_OPERATORS, SDDL_LEN_TAG(SDDL_PRINTER_OPERATORS), NULL, DOMAIN_ALIAS_RID_PRINT_OPS, ST_BUILTIN,
+      0 },
+    { FALSE, SDDL_SERVER_OPERATORS, SDDL_LEN_TAG(SDDL_SERVER_OPERATORS), NULL, DOMAIN_ALIAS_RID_SYSTEM_OPS, ST_BUILTIN,
+      0 },
+    { FALSE, SDDL_REPLICATOR, SDDL_LEN_TAG(SDDL_REPLICATOR), NULL, DOMAIN_ALIAS_RID_REPLICATOR, ST_BUILTIN, 0 },
+    { FALSE, SDDL_RAS_SERVERS, SDDL_LEN_TAG(SDDL_RAS_SERVERS), NULL, DOMAIN_ALIAS_RID_RAS_SERVERS, ST_DOMAIN_RELATIVE,
+      0 }, // ST_LOCAL
+    { FALSE, SDDL_AUTHENTICATED_USERS, SDDL_LEN_TAG(SDDL_AUTHENTICATED_USERS), NULL, SECURITY_AUTHENTICATED_USER_RID,
+      ST_NTAUTH, 0 },
+    { FALSE, SDDL_PERSONAL_SELF, SDDL_LEN_TAG(SDDL_PERSONAL_SELF), NULL, SECURITY_PRINCIPAL_SELF_RID, ST_NTAUTH, 0 },
+    { FALSE, SDDL_CREATOR_OWNER, SDDL_LEN_TAG(SDDL_CREATOR_OWNER), NULL, SECURITY_CREATOR_OWNER_RID, ST_CREATOR, 0 },
+    { FALSE, SDDL_CREATOR_GROUP, SDDL_LEN_TAG(SDDL_CREATOR_GROUP), NULL, SECURITY_CREATOR_GROUP_RID, ST_CREATOR, 0 },
+    { FALSE, SDDL_LOCAL_SYSTEM, SDDL_LEN_TAG(SDDL_LOCAL_SYSTEM), NULL, SECURITY_LOCAL_SYSTEM_RID, ST_NTAUTH, 0 },
+    { FALSE, SDDL_INTERACTIVE, SDDL_LEN_TAG(SDDL_INTERACTIVE), NULL, SECURITY_INTERACTIVE_RID, ST_NTAUTH, 0 },
+    { FALSE, SDDL_NETWORK, SDDL_LEN_TAG(SDDL_NETWORK), NULL, SECURITY_NETWORK_RID, ST_NTAUTH, 0 },
+    { FALSE, SDDL_SERVICE, SDDL_LEN_TAG(SDDL_SERVICE), NULL, SECURITY_SERVICE_RID, ST_NTAUTH, 0 },
+    { FALSE, SDDL_ENTERPRISE_DOMAIN_CONTROLLERS, SDDL_LEN_TAG(SDDL_ENTERPRISE_DOMAIN_CONTROLLERS), NULL,
+      SECURITY_SERVER_LOGON_RID, ST_NTAUTH, 0 },
+    { FALSE, SDDL_RESTRICTED_CODE, SDDL_LEN_TAG(SDDL_RESTRICTED_CODE), NULL, SECURITY_RESTRICTED_CODE_RID, ST_NTAUTH,
+      0 },
+    { FALSE, SDDL_ANONYMOUS, SDDL_LEN_TAG(SDDL_ANONYMOUS), NULL, SECURITY_ANONYMOUS_LOGON_RID, ST_NTAUTH, 0 },
+    { FALSE, SDDL_LOCAL_ADMIN, SDDL_LEN_TAG(SDDL_LOCAL_ADMIN), NULL, DOMAIN_USER_RID_ADMIN, ST_LOCAL, 0 },
+    { FALSE, SDDL_LOCAL_GUEST, SDDL_LEN_TAG(SDDL_LOCAL_GUEST), NULL, DOMAIN_USER_RID_GUEST, ST_LOCAL, 0 },
+    { FALSE, SDDL_BUILTIN_ADMINISTRATORS, SDDL_LEN_TAG(SDDL_BUILTIN_ADMINISTRATORS), NULL, DOMAIN_ALIAS_RID_ADMINS,
+      ST_BUILTIN, 0 },
+    { FALSE, SDDL_BUILTIN_GUESTS, SDDL_LEN_TAG(SDDL_BUILTIN_GUESTS), NULL, DOMAIN_ALIAS_RID_GUESTS, ST_BUILTIN, 0 },
+    { FALSE, SDDL_BUILTIN_USERS, SDDL_LEN_TAG(SDDL_BUILTIN_USERS), NULL, DOMAIN_ALIAS_RID_USERS, ST_BUILTIN, 0 },
+    { FALSE, SDDL_POWER_USERS, SDDL_LEN_TAG(SDDL_POWER_USERS), NULL, DOMAIN_ALIAS_RID_POWER_USERS, ST_BUILTIN, 0 },
+    { FALSE, SDDL_EVERYONE, SDDL_LEN_TAG(SDDL_EVERYONE), NULL, SECURITY_WORLD_RID, ST_WORLD, 0 },
+    { FALSE, SDDL_GROUP_POLICY_ADMINS, SDDL_LEN_TAG(SDDL_GROUP_POLICY_ADMINS), NULL, DOMAIN_GROUP_RID_POLICY_ADMINS,
+      ST_DOMAIN_RELATIVE, 0 },
+    { FALSE, SDDL_ALIAS_PREW2KCOMPACC, SDDL_LEN_TAG(SDDL_ALIAS_PREW2KCOMPACC), NULL, DOMAIN_ALIAS_RID_PREW2KCOMPACCESS,
+      ST_BUILTIN, 0 },
+    { FALSE, SDDL_LOCAL_SERVICE, SDDL_LEN_TAG(SDDL_LOCAL_SERVICE), NULL, SECURITY_LOCAL_SERVICE_RID, ST_NTAUTH, 0 },
+    { FALSE, SDDL_NETWORK_SERVICE, SDDL_LEN_TAG(SDDL_NETWORK_SERVICE), NULL, SECURITY_NETWORK_SERVICE_RID, ST_NTAUTH,
+      0 },
+    { FALSE, SDDL_REMOTE_DESKTOP, SDDL_LEN_TAG(SDDL_REMOTE_DESKTOP), NULL, DOMAIN_ALIAS_RID_REMOTE_DESKTOP_USERS,
+      ST_BUILTIN, 0 },
+    { FALSE, SDDL_NETWORK_CONFIGURATION_OPS, SDDL_LEN_TAG(SDDL_NETWORK_CONFIGURATION_OPS), NULL,
+      DOMAIN_ALIAS_RID_NETWORK_CONFIGURATION_OPS, ST_BUILTIN, 0 }
+};
 
 
-
-STRSD_SID_LOOKUP  SidLookupDomOrRootDomRelative[] = {
-        { FALSE, SDDL_DOMAIN_ADMINISTRATORS, SDDL_LEN_TAG( SDDL_DOMAIN_ADMINISTRATORS ),
-            NULL, DOMAIN_GROUP_RID_ADMINS, ST_DOMAIN_RELATIVE, 0 },
-        { FALSE, SDDL_DOMAIN_GUESTS, SDDL_LEN_TAG( SDDL_DOMAIN_GUESTS ),
-            NULL, DOMAIN_GROUP_RID_GUESTS, ST_DOMAIN_RELATIVE, 0 },
-        { FALSE, SDDL_DOMAIN_USERS, SDDL_LEN_TAG( SDDL_DOMAIN_USERS ),
-              NULL, DOMAIN_GROUP_RID_USERS, ST_DOMAIN_RELATIVE, 0 },
-        { FALSE, SDDL_DOMAIN_DOMAIN_CONTROLLERS, SDDL_LEN_TAG( SDDL_DOMAIN_DOMAIN_CONTROLLERS ),
-              NULL, DOMAIN_GROUP_RID_CONTROLLERS, ST_DOMAIN_RELATIVE, 0 },
-        { FALSE, SDDL_DOMAIN_COMPUTERS, SDDL_LEN_TAG( SDDL_DOMAIN_COMPUTERS ),
-              NULL, DOMAIN_GROUP_RID_COMPUTERS, ST_DOMAIN_RELATIVE, 0 },
-        { FALSE, SDDL_CERT_SERV_ADMINISTRATORS, SDDL_LEN_TAG( SDDL_CERT_SERV_ADMINISTRATORS ),
-              NULL, DOMAIN_GROUP_RID_CERT_ADMINS, ST_DOMAIN_RELATIVE, 0 },
-        { FALSE, SDDL_RAS_SERVERS, SDDL_LEN_TAG( SDDL_RAS_SERVERS ),
-              NULL, DOMAIN_ALIAS_RID_RAS_SERVERS, ST_DOMAIN_RELATIVE, 0 },  // ST_LOCAL
-        { FALSE, SDDL_GROUP_POLICY_ADMINS, SDDL_LEN_TAG( SDDL_GROUP_POLICY_ADMINS ),
-              NULL, DOMAIN_GROUP_RID_POLICY_ADMINS, ST_DOMAIN_RELATIVE, 0 },
-        { FALSE, SDDL_SCHEMA_ADMINISTRATORS, SDDL_LEN_TAG( SDDL_SCHEMA_ADMINISTRATORS ),
-            NULL, DOMAIN_GROUP_RID_SCHEMA_ADMINS, ST_ROOT_DOMAIN_RELATIVE, 0 },
-        { FALSE, SDDL_ENTERPRISE_ADMINS, SDDL_LEN_TAG( SDDL_ENTERPRISE_ADMINS ),
-            NULL, DOMAIN_GROUP_RID_ENTERPRISE_ADMINS, ST_ROOT_DOMAIN_RELATIVE, 0 }
-    };
+STRSD_SID_LOOKUP SidLookupDomOrRootDomRelative[] = {
+    { FALSE, SDDL_DOMAIN_ADMINISTRATORS, SDDL_LEN_TAG(SDDL_DOMAIN_ADMINISTRATORS), NULL, DOMAIN_GROUP_RID_ADMINS,
+      ST_DOMAIN_RELATIVE, 0 },
+    { FALSE, SDDL_DOMAIN_GUESTS, SDDL_LEN_TAG(SDDL_DOMAIN_GUESTS), NULL, DOMAIN_GROUP_RID_GUESTS, ST_DOMAIN_RELATIVE,
+      0 },
+    { FALSE, SDDL_DOMAIN_USERS, SDDL_LEN_TAG(SDDL_DOMAIN_USERS), NULL, DOMAIN_GROUP_RID_USERS, ST_DOMAIN_RELATIVE, 0 },
+    { FALSE, SDDL_DOMAIN_DOMAIN_CONTROLLERS, SDDL_LEN_TAG(SDDL_DOMAIN_DOMAIN_CONTROLLERS), NULL,
+      DOMAIN_GROUP_RID_CONTROLLERS, ST_DOMAIN_RELATIVE, 0 },
+    { FALSE, SDDL_DOMAIN_COMPUTERS, SDDL_LEN_TAG(SDDL_DOMAIN_COMPUTERS), NULL, DOMAIN_GROUP_RID_COMPUTERS,
+      ST_DOMAIN_RELATIVE, 0 },
+    { FALSE, SDDL_CERT_SERV_ADMINISTRATORS, SDDL_LEN_TAG(SDDL_CERT_SERV_ADMINISTRATORS), NULL,
+      DOMAIN_GROUP_RID_CERT_ADMINS, ST_DOMAIN_RELATIVE, 0 },
+    { FALSE, SDDL_RAS_SERVERS, SDDL_LEN_TAG(SDDL_RAS_SERVERS), NULL, DOMAIN_ALIAS_RID_RAS_SERVERS, ST_DOMAIN_RELATIVE,
+      0 }, // ST_LOCAL
+    { FALSE, SDDL_GROUP_POLICY_ADMINS, SDDL_LEN_TAG(SDDL_GROUP_POLICY_ADMINS), NULL, DOMAIN_GROUP_RID_POLICY_ADMINS,
+      ST_DOMAIN_RELATIVE, 0 },
+    { FALSE, SDDL_SCHEMA_ADMINISTRATORS, SDDL_LEN_TAG(SDDL_SCHEMA_ADMINISTRATORS), NULL, DOMAIN_GROUP_RID_SCHEMA_ADMINS,
+      ST_ROOT_DOMAIN_RELATIVE, 0 },
+    { FALSE, SDDL_ENTERPRISE_ADMINS, SDDL_LEN_TAG(SDDL_ENTERPRISE_ADMINS), NULL, DOMAIN_GROUP_RID_ENTERPRISE_ADMINS,
+      ST_ROOT_DOMAIN_RELATIVE, 0 }
+};
 
 
+static DWORD RootDomSidBuf[sizeof(SID) / sizeof(DWORD) + 5];
+static BOOL RootDomInited = FALSE;
 
-
-static DWORD RootDomSidBuf[sizeof(SID)/sizeof(DWORD)+5];
-static BOOL RootDomInited=FALSE;
-
-#define STRSD_REINITIALIZE_ENTER              1
-#define STRSD_REINITIALIZE_LEAVE              2
+#define STRSD_REINITIALIZE_ENTER 1
+#define STRSD_REINITIALIZE_LEAVE 2
 
 BOOLEAN
-InitializeSidLookupTable(
-    IN BYTE InitFlag
-    );
+InitializeSidLookupTable(IN BYTE InitFlag);
 
 //
 // Control Lookup table
 //
 static STRSD_KEY_LOOKUP ControlLookup[] = {
-    { SDDL_PROTECTED, SDDL_LEN_TAG( SDDL_PROTECTED ), SE_DACL_PROTECTED, SDDL_VALID_DACL },
-    { SDDL_AUTO_INHERIT_REQ, SDDL_LEN_TAG( SDDL_AUTO_INHERIT_REQ ), SE_DACL_AUTO_INHERIT_REQ, SDDL_VALID_DACL },
-    { SDDL_AUTO_INHERITED, SDDL_LEN_TAG( SDDL_AUTO_INHERITED ), SE_DACL_AUTO_INHERITED, SDDL_VALID_DACL },
-    { SDDL_PROTECTED, SDDL_LEN_TAG( SDDL_PROTECTED ), SE_SACL_PROTECTED, SDDL_VALID_SACL },
-    { SDDL_AUTO_INHERIT_REQ, SDDL_LEN_TAG( SDDL_AUTO_INHERIT_REQ ), SE_SACL_AUTO_INHERIT_REQ, SDDL_VALID_SACL },
-    { SDDL_AUTO_INHERITED, SDDL_LEN_TAG( SDDL_AUTO_INHERITED ), SE_SACL_AUTO_INHERITED, SDDL_VALID_SACL }
-    };
+    { SDDL_PROTECTED, SDDL_LEN_TAG(SDDL_PROTECTED), SE_DACL_PROTECTED, SDDL_VALID_DACL },
+    { SDDL_AUTO_INHERIT_REQ, SDDL_LEN_TAG(SDDL_AUTO_INHERIT_REQ), SE_DACL_AUTO_INHERIT_REQ, SDDL_VALID_DACL },
+    { SDDL_AUTO_INHERITED, SDDL_LEN_TAG(SDDL_AUTO_INHERITED), SE_DACL_AUTO_INHERITED, SDDL_VALID_DACL },
+    { SDDL_PROTECTED, SDDL_LEN_TAG(SDDL_PROTECTED), SE_SACL_PROTECTED, SDDL_VALID_SACL },
+    { SDDL_AUTO_INHERIT_REQ, SDDL_LEN_TAG(SDDL_AUTO_INHERIT_REQ), SE_SACL_AUTO_INHERIT_REQ, SDDL_VALID_SACL },
+    { SDDL_AUTO_INHERITED, SDDL_LEN_TAG(SDDL_AUTO_INHERITED), SE_SACL_AUTO_INHERITED, SDDL_VALID_SACL }
+};
 
 //
 // Local prototypes
 //
-BOOL
-LocalConvertStringSidToSid(
-    IN  PWSTR String,
-    OUT PSID *SID,
-    OUT PWSTR *End
-    );
+BOOL LocalConvertStringSidToSid(IN PWSTR String, OUT PSID *SID, OUT PWSTR *End);
 
 PSTRSD_SID_LOOKUP
-LookupSidInTable(
-    IN PWSTR String, OPTIONAL
-    IN PSID Sid OPTIONAL,
-    IN PSID RootDomainSid OPTIONAL,
-    IN PSID DomainSid OPTIONAL,
-    IN PSTRSD_SID_LOOKUP tSidLookupDomOrRootDomRelativeTable OPTIONAL,
-    IN BOOLEAN DefaultToDomain,
-    OUT PVOID *pSASid
-    );
+LookupSidInTable(IN PWSTR String, OPTIONAL IN PSID Sid OPTIONAL, IN PSID RootDomainSid OPTIONAL,
+                 IN PSID DomainSid OPTIONAL, IN PSTRSD_SID_LOOKUP tSidLookupDomOrRootDomRelativeTable OPTIONAL,
+                 IN BOOLEAN DefaultToDomain, OUT PVOID *pSASid);
 
 DWORD
-LocalGetSidForString(
-    IN  PWSTR String,
-    OUT PSID *SID,
-    OUT PWSTR *End,
-    OUT PBOOLEAN FreeSid,
-    IN  PSID RootDomainSid OPTIONAL,
-    IN  PSID DomainSid OPTIONAL,
-    IN  PSTRSD_SID_LOOKUP tSidLookupDomOrRootDomRelativeTable OPTIONAL,
-    IN  BOOLEAN DefaultToDomain
-    );
+LocalGetSidForString(IN PWSTR String, OUT PSID *SID, OUT PWSTR *End, OUT PBOOLEAN FreeSid,
+                     IN PSID RootDomainSid OPTIONAL, IN PSID DomainSid OPTIONAL,
+                     IN PSTRSD_SID_LOOKUP tSidLookupDomOrRootDomRelativeTable OPTIONAL, IN BOOLEAN DefaultToDomain);
 
 PSTRSD_KEY_LOOKUP
-LookupAccessMaskInTable(
-    IN PWSTR String, OPTIONAL
-    IN ULONG AccessMask, OPTIONAL
-    IN ULONG LookupFlags
-    );
+LookupAccessMaskInTable(IN PWSTR String, OPTIONAL IN ULONG AccessMask, OPTIONAL IN ULONG LookupFlags);
 
 
 PSTRSD_KEY_LOOKUP
-LookupAceTypeInTable(
-    IN PWSTR String, OPTIONAL
-    IN ULONG AceType, OPTIONAL
-    IN ULONG LookupFlags
-    );
+LookupAceTypeInTable(IN PWSTR String, OPTIONAL IN ULONG AceType, OPTIONAL IN ULONG LookupFlags);
 
 PSTRSD_KEY_LOOKUP
-LookupAceFlagsInTable(
-    IN PWSTR String, OPTIONAL
-    IN ULONG AceFlags OPTIONAL,
-    IN ULONG LookupFlags
-    );
+LookupAceFlagsInTable(IN PWSTR String, OPTIONAL IN ULONG AceFlags OPTIONAL, IN ULONG LookupFlags);
 
 DWORD
-LocalGetStringForSid(
-    IN  PSID Sid,
-    OUT PWSTR *String,
-    IN  PSID RootDomainSid OPTIONAL
-    );
+LocalGetStringForSid(IN PSID Sid, OUT PWSTR *String, IN PSID RootDomainSid OPTIONAL);
 
 DWORD
-LocalGetStringForControl(
-    IN SECURITY_DESCRIPTOR_CONTROL ControlCode,
-    IN ULONG LookupFlags,
-    OUT PWSTR *ControlString
-    );
+LocalGetStringForControl(IN SECURITY_DESCRIPTOR_CONTROL ControlCode, IN ULONG LookupFlags, OUT PWSTR *ControlString);
 
 DWORD
-LocalGetSDControlForString (
-    IN  PWSTR AclString,
-    IN ULONG LookupFlags,
-    OUT SECURITY_DESCRIPTOR_CONTROL *pControl,
-    OUT PWSTR *End
-    );
+LocalGetSDControlForString(IN PWSTR AclString, IN ULONG LookupFlags, OUT SECURITY_DESCRIPTOR_CONTROL *pControl,
+                           OUT PWSTR *End);
 
 DWORD
-LocalGetAclForString (
-    IN  PWSTR AclString,
-    IN  BOOLEAN ConvertAsDacl,
-    OUT PACL *Acl,
-    OUT PWSTR *End,
-    IN  PSID RootDomainSid OPTIONAL,
-    IN  PSID DomainSid OPTIONAL,
-    IN  PSTRSD_SID_LOOKUP tSidLookupDomOrRootDomRelativeTable OPTIONAL,
-    IN  BOOLEAN DefaultToDomain
-    );
+LocalGetAclForString(IN PWSTR AclString, IN BOOLEAN ConvertAsDacl, OUT PACL *Acl, OUT PWSTR *End,
+                     IN PSID RootDomainSid OPTIONAL, IN PSID DomainSid OPTIONAL,
+                     IN PSTRSD_SID_LOOKUP tSidLookupDomOrRootDomRelativeTable OPTIONAL, IN BOOLEAN DefaultToDomain);
 
 DWORD
-LocalConvertAclToString(
-    IN PACL Acl,
-    IN BOOLEAN AclPresent,
-    IN BOOLEAN ConvertAsDacl,
-    OUT PWSTR *AclString,
-    OUT PDWORD AclStringSize,
-    IN PSID RootDomainSid OPTIONAL
-    );
+LocalConvertAclToString(IN PACL Acl, IN BOOLEAN AclPresent, IN BOOLEAN ConvertAsDacl, OUT PWSTR *AclString,
+                        OUT PDWORD AclStringSize, IN PSID RootDomainSid OPTIONAL);
 
 DWORD
-LocalConvertSDToStringSD_Rev1(
-    IN  PSID RootDomainSid OPTIONAL,
-    IN  PSECURITY_DESCRIPTOR  SecurityDescriptor,
-    IN  SECURITY_INFORMATION  SecurityInformation,
-    OUT LPWSTR  *StringSecurityDescriptor,
-    OUT PULONG StringSecurityDescriptorLen OPTIONAL
-    );
+LocalConvertSDToStringSD_Rev1(IN PSID RootDomainSid OPTIONAL, IN PSECURITY_DESCRIPTOR SecurityDescriptor,
+                              IN SECURITY_INFORMATION SecurityInformation, OUT LPWSTR *StringSecurityDescriptor,
+                              OUT PULONG StringSecurityDescriptorLen OPTIONAL);
 
 DWORD
-LocalConvertStringSDToSD_Rev1(
-    IN  PSID RootDomainSid OPTIONAL,
-    IN  PSID DomainSid OPTIONAL,
-    IN  BOOLEAN DefaultToDomain,
-    IN  LPCWSTR StringSecurityDescriptor,
-    OUT PSECURITY_DESCRIPTOR  *SecurityDescriptor,
-    OUT PULONG  SecurityDescriptorSize OPTIONAL
-    );
+LocalConvertStringSDToSD_Rev1(IN PSID RootDomainSid OPTIONAL, IN PSID DomainSid OPTIONAL, IN BOOLEAN DefaultToDomain,
+                              IN LPCWSTR StringSecurityDescriptor, OUT PSECURITY_DESCRIPTOR *SecurityDescriptor,
+                              OUT PULONG SecurityDescriptorSize OPTIONAL);
 
-BOOL
-SddlpGetRootDomainSid(void);
+BOOL SddlpGetRootDomainSid(void);
 
 //
 // Exported functions
 //
 
-BOOL
-APIENTRY
-ConvertSidToStringSidA(
-    IN  PSID     Sid,
-    OUT LPSTR  *StringSid
-    )
+BOOL APIENTRY ConvertSidToStringSidA(IN PSID Sid, OUT LPSTR *StringSid)
 /*++
 
 Routine Description:
@@ -422,51 +333,43 @@ Routine Description:
     ULONG AnsiLen, WideLen;
     BOOL ReturnValue;
 
-    if ( NULL == StringSid ) {
+    if (NULL == StringSid)
+    {
         //
         // invalid parameter
         //
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return(FALSE);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return (FALSE);
     }
 
-    ReturnValue = ConvertSidToStringSidW( Sid, &StringSidW );
+    ReturnValue = ConvertSidToStringSidW(Sid, &StringSidW);
 
-    if ( ReturnValue ) {
+    if (ReturnValue)
+    {
 
-        WideLen = wcslen( StringSidW ) + 1;
+        WideLen = wcslen(StringSidW) + 1;
 
-        AnsiLen = WideCharToMultiByte( CP_ACP,
-                                       0,
-                                       StringSidW,
-                                       WideLen,
-                                       *StringSid,
-                                       0,
-                                       NULL,
-                                       NULL );
+        AnsiLen = WideCharToMultiByte(CP_ACP, 0, StringSidW, WideLen, *StringSid, 0, NULL, NULL);
 
-        if ( AnsiLen != 0 ) {
+        if (AnsiLen != 0)
+        {
 
-            *StringSid = LocalAlloc( LMEM_FIXED, AnsiLen );
+            *StringSid = LocalAlloc(LMEM_FIXED, AnsiLen);
 
-            if ( *StringSid == NULL ) {
+            if (*StringSid == NULL)
+            {
 
-                SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+                SetLastError(ERROR_NOT_ENOUGH_MEMORY);
                 ReturnValue = FALSE;
+            }
+            else
+            {
 
-            } else {
+                AnsiLen = WideCharToMultiByte(CP_ACP, 0, StringSidW, WideLen, *StringSid, AnsiLen, NULL, NULL);
+                ASSERT(AnsiLen != 0);
 
-                AnsiLen = WideCharToMultiByte( CP_ACP,
-                                               0,
-                                               StringSidW,
-                                               WideLen,
-                                               *StringSid,
-                                               AnsiLen,
-                                               NULL,
-                                               NULL );
-                ASSERT( AnsiLen != 0 );
-
-                if ( AnsiLen == 0 ) {
+                if (AnsiLen == 0)
+                {
 
                     ReturnValue = FALSE;
                     //
@@ -476,36 +379,32 @@ Routine Description:
                     *StringSid = NULL;
                 }
             }
-
-        } else {
+        }
+        else
+        {
 
             ReturnValue = FALSE;
         }
-
     }
 
     //
     // jinhuang: free the wide buffer
     //
-    if ( StringSidW ) {
+    if (StringSidW)
+    {
         LocalFree(StringSidW);
     }
 
-    if ( ReturnValue ) {
+    if (ReturnValue)
+    {
         SetLastError(ERROR_SUCCESS);
     }
 
-    return( ReturnValue );
-
+    return (ReturnValue);
 }
 
 
-BOOL
-APIENTRY
-ConvertSidToStringSidW(
-    IN  PSID     Sid,
-    OUT LPWSTR  *StringSid
-    )
+BOOL APIENTRY ConvertSidToStringSidW(IN PSID Sid, OUT LPWSTR *StringSid)
 /*++
 
 Routine Description:
@@ -533,54 +432,50 @@ Return Value:
     NTSTATUS Status;
     UNICODE_STRING UnicodeStringSid;
 
-    if ( NULL == Sid || NULL == StringSid ) {
+    if (NULL == Sid || NULL == StringSid)
+    {
         //
         // invalid parameter
         //
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return( FALSE );
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return (FALSE);
     }
 
     //
     // Convert using the Rtl functions
     //
-    Status = RtlConvertSidToUnicodeString( &UnicodeStringSid, Sid, TRUE );
+    Status = RtlConvertSidToUnicodeString(&UnicodeStringSid, Sid, TRUE);
 
-    if ( !NT_SUCCESS( Status ) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        BaseSetLastNTError( Status );
-        return( FALSE );
+        BaseSetLastNTError(Status);
+        return (FALSE);
     }
 
     //
     // Convert it to the proper allocator
     //
-    *StringSid = LocalAlloc( LMEM_FIXED | LMEM_ZEROINIT,
-                             UnicodeStringSid.Length + sizeof( WCHAR ) );
+    *StringSid = LocalAlloc(LMEM_FIXED | LMEM_ZEROINIT, UnicodeStringSid.Length + sizeof(WCHAR));
 
-    if ( *StringSid == NULL ) {
+    if (*StringSid == NULL)
+    {
 
-        RtlFreeUnicodeString( &UnicodeStringSid );
+        RtlFreeUnicodeString(&UnicodeStringSid);
 
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-        return( FALSE );
-
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return (FALSE);
     }
 
-    RtlCopyMemory( *StringSid, UnicodeStringSid.Buffer, UnicodeStringSid.Length );
-    RtlFreeUnicodeString( &UnicodeStringSid );
+    RtlCopyMemory(*StringSid, UnicodeStringSid.Buffer, UnicodeStringSid.Length);
+    RtlFreeUnicodeString(&UnicodeStringSid);
 
     SetLastError(ERROR_SUCCESS);
-    return( TRUE );
+    return (TRUE);
 }
 
 
-BOOL
-APIENTRY
-ConvertStringSidToSidA(
-    IN LPCSTR  StringSid,
-    OUT PSID   *Sid
-    )
+BOOL APIENTRY ConvertStringSidToSidA(IN LPCSTR StringSid, OUT PSID *Sid)
 /*++
 
 Routine Description:
@@ -594,44 +489,40 @@ Routine Description:
     NTSTATUS Status;
     BOOL Result;
 
-    if ( NULL == StringSid || NULL == Sid ) {
+    if (NULL == StringSid || NULL == Sid)
+    {
 
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return(FALSE);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return (FALSE);
     }
 
-    RtlInitAnsiString( &AnsiString, StringSid );
+    RtlInitAnsiString(&AnsiString, StringSid);
 
-    Status = SddlpAnsiStringToUnicodeString(&Unicode,
-                                            &AnsiString);
+    Status = SddlpAnsiStringToUnicodeString(&Unicode, &AnsiString);
 
-    if ( !NT_SUCCESS( Status ) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        BaseSetLastNTError( Status );
+        BaseSetLastNTError(Status);
 
         return FALSE;
-
     }
 
 
-    Result = ConvertStringSidToSidW( ( LPCWSTR )Unicode.Buffer, Sid );
+    Result = ConvertStringSidToSidW((LPCWSTR)Unicode.Buffer, Sid);
 
-    LocalFree( Unicode.Buffer );
+    LocalFree(Unicode.Buffer);
 
-    if ( Result ) {
+    if (Result)
+    {
         SetLastError(ERROR_SUCCESS);
     }
 
-    return( Result );
+    return (Result);
 }
 
 
-BOOL
-APIENTRY
-ConvertStringSidToSidW(
-    IN LPCWSTR  StringSid,
-    OUT PSID   *Sid
-    )
+BOOL APIENTRY ConvertStringSidToSidW(IN LPCWSTR StringSid, OUT PSID *Sid)
 /*++
 
 Routine Description:
@@ -661,35 +552,41 @@ Return Value:
 {
     PWSTR End = NULL;
     BOOL ReturnValue = FALSE;
-    PSTRSD_SID_LOOKUP MatchedEntry=NULL;
-    PSID pSASid=NULL;
-    ULONG Len=0;
-    DWORD SaveCode=0;
-    DWORD Err=0;
+    PSTRSD_SID_LOOKUP MatchedEntry = NULL;
+    PSID pSASid = NULL;
+    ULONG Len = 0;
+    DWORD SaveCode = 0;
+    DWORD Err = 0;
 
-    if ( StringSid == NULL || Sid == NULL ) {
+    if (StringSid == NULL || Sid == NULL)
+    {
 
-        SetLastError( ERROR_INVALID_PARAMETER );
+        SetLastError(ERROR_INVALID_PARAMETER);
+    }
+    else
+    {
 
-    } else {
-
-        ReturnValue = LocalConvertStringSidToSid( ( PWSTR )StringSid, Sid, &End );
+        ReturnValue = LocalConvertStringSidToSid((PWSTR)StringSid, Sid, &End);
 
 
-        if ( ReturnValue == TRUE ) {
+        if (ReturnValue == TRUE)
+        {
 
-            if ( ( ULONG )( End - StringSid ) != wcslen( StringSid ) ) {
+            if ((ULONG)(End - StringSid) != wcslen(StringSid))
+            {
 
-                SetLastError( ERROR_INVALID_SID );
-                LocalFree( *Sid );
+                SetLastError(ERROR_INVALID_SID);
+                LocalFree(*Sid);
                 *Sid = FALSE;
                 ReturnValue = FALSE;
-
-            } else {
+            }
+            else
+            {
                 SetLastError(ERROR_SUCCESS);
             }
-
-        } else {
+        }
+        else
+        {
 
             SaveCode = GetLastError();
 
@@ -697,59 +594,60 @@ Return Value:
             // lookup in the SidLookup table to see if it's pre-defined
             //
 
-            MatchedEntry = LookupSidInTable( (PWSTR)StringSid,
-                                             NULL,
-                                             NULL,
-                                             NULL,
-                                             NULL,
-                                             FALSE,
-                                             (PVOID *)&pSASid);
+            MatchedEntry = LookupSidInTable((PWSTR)StringSid, NULL, NULL, NULL, NULL, FALSE, (PVOID *)&pSASid);
 
-            if ( MatchedEntry && MatchedEntry->Sid ) {
+            if (MatchedEntry && MatchedEntry->Sid)
+            {
 
                 //
                 // find it in the table, check if the input string is valid
                 //
-                if ( wcslen( (PWSTR)StringSid ) != MatchedEntry->KeyLen ) {
+                if (wcslen((PWSTR)StringSid) != MatchedEntry->KeyLen)
+                {
 
                     //
                     // the total string length doesn't match the table define
                     //
                     SetLastError(ERROR_INVALID_SID);
-
-                } else {
+                }
+                else
+                {
 
                     //
                     // matched! now copy it to the output buffer
                     //
-                    Len = RtlLengthSid ( MatchedEntry->Sid );
+                    Len = RtlLengthSid(MatchedEntry->Sid);
 
-                    *Sid = ( PSID )LocalAlloc( LMEM_FIXED | LMEM_ZEROINIT, Len );
+                    *Sid = (PSID)LocalAlloc(LMEM_FIXED | LMEM_ZEROINIT, Len);
 
-                    if ( *Sid == NULL ) {
+                    if (*Sid == NULL)
+                    {
 
                         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+                    }
+                    else
+                    {
 
-                    } else {
+                        Err = RtlNtStatusToDosError(RtlCopySid(Len, *Sid, MatchedEntry->Sid));
 
-                        Err = RtlNtStatusToDosError(RtlCopySid ( Len, *Sid, MatchedEntry->Sid ) );
-
-                        if ( ERROR_SUCCESS == Err ) {
+                        if (ERROR_SUCCESS == Err)
+                        {
 
                             ReturnValue = TRUE;
-
-                        } else {
+                        }
+                        else
+                        {
 
                             LocalFree(*Sid);
                             *Sid = NULL;
                         }
 
                         SetLastError(Err);
-
                     }
                 }
-
-            } else if ( pSASid && wcslen((PWSTR)StringSid) == SDDL_LEN_TAG( SDDL_SCHEMA_ADMINISTRATORS ) ) {
+            }
+            else if (pSASid && wcslen((PWSTR)StringSid) == SDDL_LEN_TAG(SDDL_SCHEMA_ADMINISTRATORS))
+            {
                 //
                 // this is schema admin SID
                 //
@@ -759,8 +657,9 @@ Return Value:
                 ReturnValue = TRUE;
 
                 SetLastError(ERROR_SUCCESS);
-
-            } else {
+            }
+            else
+            {
                 //
                 // reset last error
                 //
@@ -768,24 +667,20 @@ Return Value:
             }
         }
 
-        if ( pSASid ) {
+        if (pSASid)
+        {
             LocalFree(pSASid);
         }
     }
 
-    return( ReturnValue );
-
+    return (ReturnValue);
 }
 
 
-BOOL
-APIENTRY
-ConvertStringSecurityDescriptorToSecurityDescriptorA(
-    IN  LPCSTR StringSecurityDescriptor,
-    IN  DWORD StringSDRevision,
-    OUT PSECURITY_DESCRIPTOR  *SecurityDescriptor,
-    OUT PULONG  SecurityDescriptorSize OPTIONAL
-    )
+BOOL APIENTRY ConvertStringSecurityDescriptorToSecurityDescriptorA(IN LPCSTR StringSecurityDescriptor,
+                                                                   IN DWORD StringSDRevision,
+                                                                   OUT PSECURITY_DESCRIPTOR *SecurityDescriptor,
+                                                                   OUT PULONG SecurityDescriptorSize OPTIONAL)
 /*++
 
 Routine Description:
@@ -799,50 +694,43 @@ Routine Description:
     NTSTATUS Status;
     BOOL Result;
 
-    if ( NULL == StringSecurityDescriptor ||
-         NULL == SecurityDescriptor ) {
+    if (NULL == StringSecurityDescriptor || NULL == SecurityDescriptor)
+    {
 
         SetLastError(ERROR_INVALID_PARAMETER);
-        return(FALSE);
+        return (FALSE);
     }
 
-    RtlInitAnsiString( &AnsiString, StringSecurityDescriptor );
+    RtlInitAnsiString(&AnsiString, StringSecurityDescriptor);
 
-    Status = SddlpAnsiStringToUnicodeString(&Unicode,                                                             
-                                            &AnsiString);
+    Status = SddlpAnsiStringToUnicodeString(&Unicode, &AnsiString);
 
-    if ( !NT_SUCCESS( Status ) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        BaseSetLastNTError( Status );
+        BaseSetLastNTError(Status);
 
         return FALSE;
-
     }
 
-    Result = ConvertStringSecurityDescriptorToSecurityDescriptorW( ( LPCWSTR )Unicode.Buffer,
-                                                                   StringSDRevision,
-                                                                   SecurityDescriptor,
-                                                                   SecurityDescriptorSize);
+    Result = ConvertStringSecurityDescriptorToSecurityDescriptorW((LPCWSTR)Unicode.Buffer, StringSDRevision,
+                                                                  SecurityDescriptor, SecurityDescriptorSize);
 
-    LocalFree( Unicode.Buffer );
+    LocalFree(Unicode.Buffer);
 
-    if ( Result ) {
+    if (Result)
+    {
         SetLastError(ERROR_SUCCESS);
     }
 
-    return( Result );
+    return (Result);
 }
 
 
-
-BOOL
-APIENTRY
-ConvertStringSecurityDescriptorToSecurityDescriptorW(
-    IN  LPCWSTR StringSecurityDescriptor,
-    IN  DWORD StringSDRevision,
-    OUT PSECURITY_DESCRIPTOR  *SecurityDescriptor,
-    OUT PULONG  SecurityDescriptorSize OPTIONAL
-    )
+BOOL APIENTRY ConvertStringSecurityDescriptorToSecurityDescriptorW(IN LPCWSTR StringSecurityDescriptor,
+                                                                   IN DWORD StringSDRevision,
+                                                                   OUT PSECURITY_DESCRIPTOR *SecurityDescriptor,
+                                                                   OUT PULONG SecurityDescriptorSize OPTIONAL)
 /*++
 
 Routine Description:
@@ -943,21 +831,22 @@ Return Value:
     //
     // Little elementary parameter checking...
     //
-    if ( StringSecurityDescriptor == NULL || SecurityDescriptor == NULL ) {
+    if (StringSecurityDescriptor == NULL || SecurityDescriptor == NULL)
+    {
 
         Err = ERROR_INVALID_PARAMETER;
+    }
+    else
+    {
 
-    } else {
-
-        switch ( StringSDRevision ) {
+        switch (StringSDRevision)
+        {
         case SDDL_REVISION_1:
 
-            Err = LocalConvertStringSDToSD_Rev1( NULL,  // no root domain sid is provided
-                                                 NULL,  // no domain sid is provided for this API
-                                                 FALSE, //TRUE, do not default to domain for EA/SA
-                                                 StringSecurityDescriptor,
-                                                 SecurityDescriptor,
-                                                 SecurityDescriptorSize);
+            Err = LocalConvertStringSDToSD_Rev1(NULL,  // no root domain sid is provided
+                                                NULL,  // no domain sid is provided for this API
+                                                FALSE, //TRUE, do not default to domain for EA/SA
+                                                StringSecurityDescriptor, SecurityDescriptor, SecurityDescriptorSize);
             break;
 
         default:
@@ -965,24 +854,19 @@ Return Value:
             Err = ERROR_UNKNOWN_REVISION;
             break;
         }
-
     }
 
-    SetLastError( Err );
+    SetLastError(Err);
 
-    return( Err == ERROR_SUCCESS );
+    return (Err == ERROR_SUCCESS);
 }
 
 
-BOOL
-APIENTRY
-ConvertSecurityDescriptorToStringSecurityDescriptorA(
-    IN  PSECURITY_DESCRIPTOR  SecurityDescriptor,
-    IN  DWORD RequestedStringSDRevision,
-    IN  SECURITY_INFORMATION SecurityInformation,
-    OUT LPSTR  *StringSecurityDescriptor,
-    OUT PULONG StringSecurityDescriptorLen OPTIONAL
-    )
+BOOL APIENTRY ConvertSecurityDescriptorToStringSecurityDescriptorA(IN PSECURITY_DESCRIPTOR SecurityDescriptor,
+                                                                   IN DWORD RequestedStringSDRevision,
+                                                                   IN SECURITY_INFORMATION SecurityInformation,
+                                                                   OUT LPSTR *StringSecurityDescriptor,
+                                                                   OUT PULONG StringSecurityDescriptorLen OPTIONAL)
 /*++
 
 Routine Description:
@@ -993,59 +877,49 @@ Routine Description:
 {
     LPWSTR StringSecurityDescriptorW = NULL;
     ULONG AnsiLen, WideLen = 0;
-    BOOL ReturnValue ;
+    BOOL ReturnValue;
 
-    if ( StringSecurityDescriptor == NULL ) {
+    if (StringSecurityDescriptor == NULL)
+    {
 
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return( FALSE );
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return (FALSE);
     }
 
     ReturnValue = ConvertSecurityDescriptorToStringSecurityDescriptorW(
-                      SecurityDescriptor,
-                      RequestedStringSDRevision,
-                      SecurityInformation,
-                      &StringSecurityDescriptorW,
-                      &WideLen );
+        SecurityDescriptor, RequestedStringSDRevision, SecurityInformation, &StringSecurityDescriptorW, &WideLen);
 
-    if ( ReturnValue ) {
+    if (ReturnValue)
+    {
 
 
         //  jinhuang: WindeLen is returned from previous call
         //        WideLen = wcslen( StringSecurityDescriptorW ) + 1;
 
 
-        AnsiLen = WideCharToMultiByte( CP_ACP,
-                                       0,
-                                       StringSecurityDescriptorW,
-                                       WideLen + 1,
-                                       *StringSecurityDescriptor,
-                                       0,
-                                       NULL,
-                                       NULL );
+        AnsiLen = WideCharToMultiByte(CP_ACP, 0, StringSecurityDescriptorW, WideLen + 1, *StringSecurityDescriptor, 0,
+                                      NULL, NULL);
 
-        if ( AnsiLen != 0 ) {
+        if (AnsiLen != 0)
+        {
 
-            *StringSecurityDescriptor = LocalAlloc( LMEM_FIXED, AnsiLen );
+            *StringSecurityDescriptor = LocalAlloc(LMEM_FIXED, AnsiLen);
 
-            if ( *StringSecurityDescriptor == NULL ) {
+            if (*StringSecurityDescriptor == NULL)
+            {
 
-                SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+                SetLastError(ERROR_NOT_ENOUGH_MEMORY);
                 ReturnValue = FALSE;
+            }
+            else
+            {
 
-            } else {
+                AnsiLen = WideCharToMultiByte(CP_ACP, 0, StringSecurityDescriptorW, WideLen + 1,
+                                              *StringSecurityDescriptor, AnsiLen, NULL, NULL);
+                ASSERT(AnsiLen != 0);
 
-                AnsiLen = WideCharToMultiByte( CP_ACP,
-                                               0,
-                                               StringSecurityDescriptorW,
-                                               WideLen + 1,
-                                               *StringSecurityDescriptor,
-                                               AnsiLen,
-                                               NULL,
-                                               NULL );
-                ASSERT( AnsiLen != 0 );
-
-                if ( AnsiLen == 0 ) {
+                if (AnsiLen == 0)
+                {
 
                     LocalFree(*StringSecurityDescriptor);
                     *StringSecurityDescriptor = NULL;
@@ -1057,13 +931,14 @@ Routine Description:
                 // jinhuang
                 // output the length (optional)
                 //
-                if ( StringSecurityDescriptorLen ) {
+                if (StringSecurityDescriptorLen)
+                {
                     *StringSecurityDescriptorLen = AnsiLen;
                 }
-
             }
-
-        } else {
+        }
+        else
+        {
 
             ReturnValue = FALSE;
         }
@@ -1074,26 +949,22 @@ Routine Description:
         //
 
         LocalFree(StringSecurityDescriptorW);
-
     }
 
-    if ( ReturnValue ) {
+    if (ReturnValue)
+    {
         SetLastError(ERROR_SUCCESS);
     }
 
-    return( ReturnValue );
+    return (ReturnValue);
 }
 
 
-BOOL
-APIENTRY
-ConvertSecurityDescriptorToStringSecurityDescriptorW(
-    IN  PSECURITY_DESCRIPTOR  SecurityDescriptor,
-    IN  DWORD RequestedStringSDRevision,
-    IN  SECURITY_INFORMATION SecurityInformation,
-    OUT LPWSTR  *StringSecurityDescriptor,
-    OUT PULONG StringSecurityDescriptorLen OPTIONAL
-    )
+BOOL APIENTRY ConvertSecurityDescriptorToStringSecurityDescriptorW(IN PSECURITY_DESCRIPTOR SecurityDescriptor,
+                                                                   IN DWORD RequestedStringSDRevision,
+                                                                   IN SECURITY_INFORMATION SecurityInformation,
+                                                                   OUT LPWSTR *StringSecurityDescriptor,
+                                                                   OUT PULONG StringSecurityDescriptorLen OPTIONAL)
 /*++
 
 Routine Description:
@@ -1132,75 +1003,67 @@ Return Value:
     // A little parameter checking...
     //
 
-    if  ( (SecurityDescriptor == NULL || SecurityInformation == 0) && 
-          StringSecurityDescriptor ) {
-        
-        *StringSecurityDescriptor = LocalAlloc( LMEM_FIXED | LMEM_ZEROINIT, sizeof( WCHAR ) );
+    if ((SecurityDescriptor == NULL || SecurityInformation == 0) && StringSecurityDescriptor)
+    {
 
-        if (*StringSecurityDescriptor) {
-            
+        *StringSecurityDescriptor = LocalAlloc(LMEM_FIXED | LMEM_ZEROINIT, sizeof(WCHAR));
+
+        if (*StringSecurityDescriptor)
+        {
+
             (*StringSecurityDescriptor)[0] = L'\0';
 
-            if (StringSecurityDescriptorLen) {
+            if (StringSecurityDescriptorLen)
+            {
 
                 *StringSecurityDescriptorLen = 0;
-            
             }
-
         }
 
-        else {
-            
+        else
+        {
+
             Err = ERROR_NOT_ENOUGH_MEMORY;
-
         }
 
-        SetLastError( Err );
+        SetLastError(Err);
 
-        return( Err == ERROR_SUCCESS );
-
+        return (Err == ERROR_SUCCESS);
     }
-    
-    if ( SecurityDescriptor == NULL || StringSecurityDescriptor == NULL ||
-         SecurityInformation == 0 ) {
 
-        Err =  ERROR_INVALID_PARAMETER;
+    if (SecurityDescriptor == NULL || StringSecurityDescriptor == NULL || SecurityInformation == 0)
+    {
 
-    } else {
+        Err = ERROR_INVALID_PARAMETER;
+    }
+    else
+    {
 
-        switch ( RequestedStringSDRevision ) {
+        switch (RequestedStringSDRevision)
+        {
         case SDDL_REVISION_1:
 
-            Err = LocalConvertSDToStringSD_Rev1( NULL,  // root domain sid is not privided
-                                                 SecurityDescriptor,
-                                                 SecurityInformation,
-                                                 StringSecurityDescriptor,
-                                                 StringSecurityDescriptorLen );
+            Err = LocalConvertSDToStringSD_Rev1(NULL, // root domain sid is not privided
+                                                SecurityDescriptor, SecurityInformation, StringSecurityDescriptor,
+                                                StringSecurityDescriptorLen);
             break;
 
         default:
             Err = ERROR_UNKNOWN_REVISION;
             break;
         }
-
     }
 
-    SetLastError( Err );
+    SetLastError(Err);
 
-    return( Err == ERROR_SUCCESS);
+    return (Err == ERROR_SUCCESS);
 }
-
 
 
 //
 // Private functions
 //
-BOOL
-LocalConvertStringSidToSid (
-    IN  PWSTR       StringSid,
-    OUT PSID       *Sid,
-    OUT PWSTR      *End
-    )
+BOOL LocalConvertStringSidToSid(IN PWSTR StringSid, OUT PSID *Sid, OUT PWSTR *End)
 /*++
 
 Routine Description:
@@ -1244,50 +1107,50 @@ Return Value:
     PWSTR CurrEnd, Curr, Next;
     WCHAR Stub, *StubPtr = NULL;
     ULONG Index;
-    INT gBase=10;
-    INT lBase=10;
+    INT gBase = 10;
+    INT lBase = 10;
     ULONG Auto;
 
-    if ( NULL == StringSid || NULL == Sid || NULL == End ) {
+    if (NULL == StringSid || NULL == Sid || NULL == End)
+    {
 
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return( FALSE );
-
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return (FALSE);
     }
 
-//    if ( wcslen( StringSid ) < 2 || ( *StringSid != L'S' && *( StringSid + 1 ) != L'-' ) ) {
+    //    if ( wcslen( StringSid ) < 2 || ( *StringSid != L'S' && *( StringSid + 1 ) != L'-' ) ) {
 
     //
     // no need to check length because StringSid is NULL
     // and if the first char is NULL, it won't access the second char
     //
-    if ( (*StringSid != L'S' && *StringSid != L's') ||
-         *( StringSid + 1 ) != L'-' ) {
+    if ((*StringSid != L'S' && *StringSid != L's') || *(StringSid + 1) != L'-')
+    {
         //
         // string sid should always start with S-
         //
-        SetLastError( ERROR_INVALID_SID );
-        return( FALSE );
+        SetLastError(ERROR_INVALID_SID);
+        return (FALSE);
     }
 
 
     Curr = StringSid + 2;
 
-    if ( (*Curr == L'0') &&
-         ( *(Curr+1) == L'x' ||
-           *(Curr+1) == L'X' ) ) {
+    if ((*Curr == L'0') && (*(Curr + 1) == L'x' || *(Curr + 1) == L'X'))
+    {
 
         gBase = 16;
     }
 
-    Revision = ( UCHAR )wcstol( Curr, &CurrEnd, gBase );
+    Revision = (UCHAR)wcstol(Curr, &CurrEnd, gBase);
 
-    if ( CurrEnd == Curr || *CurrEnd != L'-' || *(CurrEnd+1) == L'\0' ) {
+    if (CurrEnd == Curr || *CurrEnd != L'-' || *(CurrEnd + 1) == L'\0')
+    {
         //
         // no revision is provided, or invalid delimeter
         //
-        SetLastError( ERROR_INVALID_SID );
-        return( FALSE );
+        SetLastError(ERROR_INVALID_SID);
+        return (FALSE);
     }
 
     Curr = CurrEnd + 1;
@@ -1295,8 +1158,8 @@ Return Value:
     //
     // Count the number of characters in the indentifer authority...
     //
-    Next = wcschr( Curr, L'-' );
-/*
+    Next = wcschr(Curr, L'-');
+    /*
     Length = 6 doesn't mean each digit is a id authority value, could be 0x...
 
     if ( Next != NULL && (Next - Curr == 6) ) {
@@ -1311,32 +1174,34 @@ Return Value:
 
     } else {
 */
-        if ( (*Curr == L'0') &&
-             ( *(Curr+1) == L'x' ||
-               *(Curr+1) == L'X' ) ) {
+    if ((*Curr == L'0') && (*(Curr + 1) == L'x' || *(Curr + 1) == L'X'))
+    {
 
-            lBase = 16;
-        } else {
-            lBase = gBase;
-        }
+        lBase = 16;
+    }
+    else
+    {
+        lBase = gBase;
+    }
 
-        Auto = wcstoul( Curr, &CurrEnd, lBase );
+    Auto = wcstoul(Curr, &CurrEnd, lBase);
 
-         if ( CurrEnd == Curr || *CurrEnd != L'-' || *(CurrEnd+1) == L'\0' ) {
-             //
-             // no revision is provided, or invalid delimeter
-             //
-             SetLastError( ERROR_INVALID_SID );
-             return( FALSE );
-         }
+    if (CurrEnd == Curr || *CurrEnd != L'-' || *(CurrEnd + 1) == L'\0')
+    {
+        //
+        // no revision is provided, or invalid delimeter
+        //
+        SetLastError(ERROR_INVALID_SID);
+        return (FALSE);
+    }
 
-         IDAuth.Value[0] = IDAuth.Value[1] = 0;
-         IDAuth.Value[5] = ( UCHAR )Auto & 0xFF;
-         IDAuth.Value[4] = ( UCHAR )(( Auto >> 8 ) & 0xFF );
-         IDAuth.Value[3] = ( UCHAR )(( Auto >> 16 ) & 0xFF );
-         IDAuth.Value[2] = ( UCHAR )(( Auto >> 24 ) & 0xFF );
-         Curr = CurrEnd;
-//    }
+    IDAuth.Value[0] = IDAuth.Value[1] = 0;
+    IDAuth.Value[5] = (UCHAR)Auto & 0xFF;
+    IDAuth.Value[4] = (UCHAR)((Auto >> 8) & 0xFF);
+    IDAuth.Value[3] = (UCHAR)((Auto >> 16) & 0xFF);
+    IDAuth.Value[2] = (UCHAR)((Auto >> 24) & 0xFF);
+    Curr = CurrEnd;
+    //    }
 
     //
     // Now, count the number of sub auths, at least one sub auth is required
@@ -1349,9 +1214,11 @@ Return Value:
     // since there are several deliminators that we can have...
     //
 
-    while ( Next ) {
+    while (Next)
+    {
 
-        if ( *Next == L'-' && *(Next-1) != L'-') {
+        if (*Next == L'-' && *(Next - 1) != L'-')
+        {
 
             //
             // do not allow two continuous '-'s
@@ -1359,45 +1226,46 @@ Return Value:
             //
             Subs++;
 
-            if ( (*(Next+1) == L'0') &&
-                 ( *(Next+2) == L'x' ||
-                   *(Next+2) == L'X' ) ) {
+            if ((*(Next + 1) == L'0') && (*(Next + 2) == L'x' || *(Next + 2) == L'X'))
+            {
                 //
                 // this is hex indicator
                 //
                 Next += 2;
-
             }
-
-        } else if ( *Next == SDDL_SEPERATORC || *Next  == L'\0' ||
-                    *Next == SDDL_ACE_ENDC || *Next == L' ' ||
-                    ( *(Next+1) == SDDL_DELIMINATORC &&
-                      (*Next == L'G' || *Next == L'O' || *Next == L'S')) ) {
+        }
+        else if (*Next == SDDL_SEPERATORC || *Next == L'\0' || *Next == SDDL_ACE_ENDC || *Next == L' ' ||
+                 (*(Next + 1) == SDDL_DELIMINATORC && (*Next == L'G' || *Next == L'O' || *Next == L'S')))
+        {
             //
             // space is a terminator too
             //
-            if ( *( Next - 1 ) == L'-' ) {
+            if (*(Next - 1) == L'-')
+            {
                 //
                 // shouldn't allow a SID terminated with '-'
                 //
                 Err = ERROR_INVALID_SID;
                 Next--;
-
-            } else {
+            }
+            else
+            {
                 Subs++;
             }
 
             *End = Next;
             break;
-
-        } else if ( !iswxdigit( *Next ) ) {
+        }
+        else if (!iswxdigit(*Next))
+        {
 
             Err = ERROR_INVALID_SID;
             *End = Next;
-//            Subs++;
+            //            Subs++;
             break;
-
-        } else {
+        }
+        else
+        {
 
             //
             // Note: SID is also used as a owner or group
@@ -1406,7 +1274,8 @@ Return Value:
             // if the current character is a character we care about and the next one is a
             // delminiator, we'll quit
             //
-            if ( *Next == L'D' && *( Next + 1 ) == SDDL_DELIMINATORC ) {
+            if (*Next == L'D' && *(Next + 1) == SDDL_DELIMINATORC)
+            {
 
                 //
                 // We'll also need to temporarily truncate the string to this length so
@@ -1419,46 +1288,52 @@ Return Value:
                 Subs++;
                 break;
             }
-
         }
 
         Next++;
-
     }
 
-    if ( Err == ERROR_SUCCESS ) {
+    if (Err == ERROR_SUCCESS)
+    {
 
-        if ( Subs != 0 ) Subs--;
+        if (Subs != 0)
+            Subs--;
 
-        if ( Subs != 0 ) {
+        if (Subs != 0)
+        {
 
             Curr++;
 
-            SubAuth = ( PULONG )LocalAlloc( LMEM_FIXED | LMEM_ZEROINIT, Subs * sizeof( ULONG ) );
+            SubAuth = (PULONG)LocalAlloc(LMEM_FIXED | LMEM_ZEROINIT, Subs * sizeof(ULONG));
 
-            if ( SubAuth == NULL ) {
+            if (SubAuth == NULL)
+            {
 
                 Err = ERROR_NOT_ENOUGH_MEMORY;
+            }
+            else
+            {
 
-            } else {
+                for (Index = 0; Index < Subs; Index++)
+                {
 
-                for ( Index = 0; Index < Subs; Index++ ) {
-
-                    if ( (*Curr == L'0') &&
-                         ( *(Curr+1) == L'x' ||
-                           *(Curr+1) == L'X' ) ) {
+                    if ((*Curr == L'0') && (*(Curr + 1) == L'x' || *(Curr + 1) == L'X'))
+                    {
 
                         lBase = 16;
-                    } else {
+                    }
+                    else
+                    {
                         lBase = gBase;
                     }
 
-                    SubAuth[Index] = wcstoul( Curr, &CurrEnd, lBase );
+                    SubAuth[Index] = wcstoul(Curr, &CurrEnd, lBase);
                     Curr = CurrEnd + 1;
                 }
             }
-
-        } else {
+        }
+        else
+        {
 
             Err = ERROR_INVALID_SID;
         }
@@ -1467,52 +1342,48 @@ Return Value:
     //
     // Now, create the SID
     //
-    if ( Err == ERROR_SUCCESS ) {
+    if (Err == ERROR_SUCCESS)
+    {
 
-        *Sid = ( PSID )LocalAlloc( LMEM_FIXED | LMEM_ZEROINIT,
-                                   sizeof( SID ) + Subs * sizeof( ULONG ) );
+        *Sid = (PSID)LocalAlloc(LMEM_FIXED | LMEM_ZEROINIT, sizeof(SID) + Subs * sizeof(ULONG));
 
-        if ( *Sid == NULL ) {
+        if (*Sid == NULL)
+        {
 
             Err = ERROR_NOT_ENOUGH_MEMORY;
+        }
+        else
+        {
 
-        } else {
-
-            PISID ISid = ( PISID )*Sid;
+            PISID ISid = (PISID)*Sid;
             ISid->Revision = Revision;
             ISid->SubAuthorityCount = Subs;
-            RtlCopyMemory( &( ISid->IdentifierAuthority ), &IDAuth,
-                           sizeof( SID_IDENTIFIER_AUTHORITY ) );
-            RtlCopyMemory( ISid->SubAuthority, SubAuth, Subs * sizeof( ULONG ) );
+            RtlCopyMemory(&(ISid->IdentifierAuthority), &IDAuth, sizeof(SID_IDENTIFIER_AUTHORITY));
+            RtlCopyMemory(ISid->SubAuthority, SubAuth, Subs * sizeof(ULONG));
         }
     }
 
-    LocalFree( SubAuth );
+    LocalFree(SubAuth);
 
     //
     // Restore any character we may have stubbed out
     //
-    if ( StubPtr ) {
+    if (StubPtr)
+    {
 
         *StubPtr = Stub;
     }
 
-    SetLastError( Err );
+    SetLastError(Err);
 
-    return( Err == ERROR_SUCCESS );
+    return (Err == ERROR_SUCCESS);
 }
 
 
 PSTRSD_SID_LOOKUP
-LookupSidInTable(
-    IN PWSTR String OPTIONAL,
-    IN PSID Sid OPTIONAL,
-    IN PSID RootDomainSid OPTIONAL,
-    IN PSID DomainSid OPTIONAL,
-    IN PSTRSD_SID_LOOKUP tSidLookupDomOrRootDomRelativeTable OPTIONAL,
-    IN BOOLEAN DefaultToDomain,
-    IN PVOID *pSASid
-    )
+LookupSidInTable(IN PWSTR String OPTIONAL, IN PSID Sid OPTIONAL, IN PSID RootDomainSid OPTIONAL,
+                 IN PSID DomainSid OPTIONAL, IN PSTRSD_SID_LOOKUP tSidLookupDomOrRootDomRelativeTable OPTIONAL,
+                 IN BOOLEAN DefaultToDomain, IN PVOID *pSASid)
 /*++
 
 Routine Description:
@@ -1537,21 +1408,22 @@ Return Value:
 --*/
 {
     BOOLEAN LookupSid = FALSE;
-    DWORD i, SidCount = sizeof( SidLookup ) / sizeof( STRSD_SID_LOOKUP );
+    DWORD i, SidCount = sizeof(SidLookup) / sizeof(STRSD_SID_LOOKUP);
     PSTRSD_SID_LOOKUP MatchedEntry = NULL;
     DWORD DomainAdminIndex;
 
-    BOOL  InitRootDomain;
+    BOOL InitRootDomain;
     ULONG Rid;
     BOOL bIsSA = FALSE;
 
 
-    if ( String == NULL && Sid == NULL ) {
+    if (String == NULL && Sid == NULL)
+    {
         //
         // JINHUANG: if both string and sid are NULL
         // just return NULL
         //
-        return((PSTRSD_SID_LOOKUP)NULL);
+        return ((PSTRSD_SID_LOOKUP)NULL);
     }
 
     *pSASid = NULL;
@@ -1559,7 +1431,8 @@ Return Value:
     InitRootDomain = FALSE;
     DomainAdminIndex = SidCount;
 
-    if ( String == NULL ) {
+    if (String == NULL)
+    {
         //
         // lookup on the Sid
         //
@@ -1568,26 +1441,30 @@ Return Value:
         //
         // check if the RID is for Enterprise Admins
         //
-        Rid = *( RtlSubAuthoritySid( Sid,
-                                     *( RtlSubAuthorityCountSid(Sid) ) - 1 ) );
+        Rid = *(RtlSubAuthoritySid(Sid, *(RtlSubAuthorityCountSid(Sid))-1));
 
-        if ( DOMAIN_GROUP_RID_ENTERPRISE_ADMINS == Rid ||
-             DOMAIN_GROUP_RID_SCHEMA_ADMINS == Rid ) {
+        if (DOMAIN_GROUP_RID_ENTERPRISE_ADMINS == Rid || DOMAIN_GROUP_RID_SCHEMA_ADMINS == Rid)
+        {
 
             InitRootDomain = TRUE;
-            if ( DOMAIN_GROUP_RID_SCHEMA_ADMINS == Rid ) {
+            if (DOMAIN_GROUP_RID_SCHEMA_ADMINS == Rid)
+            {
                 bIsSA = TRUE;
             }
         }
+    }
+    else
+    {
 
-    } else {
-
-        if ( _wcsnicmp( String, SDDL_ENTERPRISE_ADMINS, SDDL_LEN_TAG( SDDL_ENTERPRISE_ADMINS ) ) == 0 ) {
+        if (_wcsnicmp(String, SDDL_ENTERPRISE_ADMINS, SDDL_LEN_TAG(SDDL_ENTERPRISE_ADMINS)) == 0)
+        {
             //
             // Enterprise admins string is requested
             //
             InitRootDomain = TRUE;
-        } else if ( _wcsnicmp( String, SDDL_SCHEMA_ADMINISTRATORS, SDDL_LEN_TAG( SDDL_SCHEMA_ADMINISTRATORS ) ) == 0 ) {
+        }
+        else if (_wcsnicmp(String, SDDL_SCHEMA_ADMINISTRATORS, SDDL_LEN_TAG(SDDL_SCHEMA_ADMINISTRATORS)) == 0)
+        {
             //
             // schema admin is requested
             //
@@ -1601,14 +1478,16 @@ Return Value:
     // on demand, initialize domain relative dynamic table for new API ()
     //
 
-    if ( DomainSid ) {
+    if (DomainSid)
+    {
 
         //
         // in this search, we will deal with the per thread table and not the global table
         // in actuality, this per thread table is a proper subset of the global table
         //
 
-        for ( i = 0; i < sizeof(SidLookupDomOrRootDomRelative)/sizeof(STRSD_SID_LOOKUP); i++ ) {
+        for (i = 0; i < sizeof(SidLookupDomOrRootDomRelative) / sizeof(STRSD_SID_LOOKUP); i++)
+        {
 
             //
             // for performance, only compute SID etc. if names match.
@@ -1616,30 +1495,31 @@ Return Value:
             // this doesn't preclude future lookup calls from leveraging useful work done here
             //
 
-            if ( _wcsnicmp( String,
-                            tSidLookupDomOrRootDomRelativeTable[ i ].Key,
-                            tSidLookupDomOrRootDomRelativeTable[ i ].KeyLen ) == 0 ) {
+            if (_wcsnicmp(String, tSidLookupDomOrRootDomRelativeTable[i].Key,
+                          tSidLookupDomOrRootDomRelativeTable[i].KeyLen) == 0)
+            {
 
 
-                if (tSidLookupDomOrRootDomRelativeTable[ i ].Valid == FALSE ||
-                    tSidLookupDomOrRootDomRelativeTable[ i ].Sid == NULL) {
+                if (tSidLookupDomOrRootDomRelativeTable[i].Valid == FALSE ||
+                    tSidLookupDomOrRootDomRelativeTable[i].Sid == NULL)
+                {
 
                     PSID RootDomainSidOrDomainSid = NULL;
 
-                    if ( tSidLookupDomOrRootDomRelativeTable[ i ].SidType == ST_DOMAIN_RELATIVE )
+                    if (tSidLookupDomOrRootDomRelativeTable[i].SidType == ST_DOMAIN_RELATIVE)
                         RootDomainSidOrDomainSid = DomainSid;
-                    else if ( tSidLookupDomOrRootDomRelativeTable[ i ].SidType == ST_ROOT_DOMAIN_RELATIVE &&
-                              RootDomainSid )
+                    else if (tSidLookupDomOrRootDomRelativeTable[i].SidType == ST_ROOT_DOMAIN_RELATIVE && RootDomainSid)
                         RootDomainSidOrDomainSid = RootDomainSid;
-                    else {
-                        
+                    else
+                    {
+
                         //
-                        // this will happen when the RootDomainSid is not provided when using the 
+                        // this will happen when the RootDomainSid is not provided when using the
                         // new API and so ST_ROOT_DOMAIN_RELATIVE type SIDs will get resolved wrt
                         // the local m/c's root domain - so we will allow the lookup to continue
                         // in the normal way
                         //
-                        
+
                         break;
                     }
 
@@ -1647,60 +1527,52 @@ Return Value:
                     // do this for legacy-code reasons
                     //
 
-                    tSidLookupDomOrRootDomRelativeTable[ i ].Sid =
-                        ( PSID )tSidLookupDomOrRootDomRelativeTable[ i ].SidBuff;
+                    tSidLookupDomOrRootDomRelativeTable[i].Sid = (PSID)tSidLookupDomOrRootDomRelativeTable[i].SidBuff;
 
 
-                    RtlCopyMemory( tSidLookupDomOrRootDomRelativeTable[ i ].Sid, RootDomainSidOrDomainSid,
-                                   RtlLengthSid( RootDomainSidOrDomainSid ) );
-                    ( ( PISID )( tSidLookupDomOrRootDomRelativeTable[ i ].Sid ) )->SubAuthorityCount++;
-                    *( RtlSubAuthoritySid( tSidLookupDomOrRootDomRelativeTable[ i ].Sid,
-                                           *( RtlSubAuthorityCountSid( RootDomainSidOrDomainSid ) ) ) ) =
-                        tSidLookupDomOrRootDomRelativeTable[ i ].Rid;
+                    RtlCopyMemory(tSidLookupDomOrRootDomRelativeTable[i].Sid, RootDomainSidOrDomainSid,
+                                  RtlLengthSid(RootDomainSidOrDomainSid));
+                    ((PISID)(tSidLookupDomOrRootDomRelativeTable[i].Sid))->SubAuthorityCount++;
+                    *(RtlSubAuthoritySid(tSidLookupDomOrRootDomRelativeTable[i].Sid,
+                                         *(RtlSubAuthorityCountSid(RootDomainSidOrDomainSid)))) =
+                        tSidLookupDomOrRootDomRelativeTable[i].Rid;
 
-                    tSidLookupDomOrRootDomRelativeTable[ i ].Valid = TRUE;
-
+                    tSidLookupDomOrRootDomRelativeTable[i].Valid = TRUE;
                 }
 
-                if (tSidLookupDomOrRootDomRelativeTable[ i ].Valid == TRUE)
-                    MatchedEntry = &tSidLookupDomOrRootDomRelativeTable[ i ];
+                if (tSidLookupDomOrRootDomRelativeTable[i].Valid == TRUE)
+                    MatchedEntry = &tSidLookupDomOrRootDomRelativeTable[i];
 
                 //
                 // if we get here, we have to return MatchedEntry since we know that:
                 //
                 //      (a) the new API is the caller (DomainSid != NULL) and
-                //      (b) we are dealing with ST_DOMAIN_RELATIVE or 
+                //      (b) we are dealing with ST_DOMAIN_RELATIVE or
                 //          ST_ROOT_DOMAIN_RELATIVE type trustees (with RootDomainSid provided)
                 //      (c) there is a match with the trustee name such as "DA" or "EA"
                 //
 
                 return (MatchedEntry);
-
             }
-
         }
-
     }
 
     InitializeSidLookupTable(STRSD_REINITIALIZE_ENTER);
 
-    if ( InitRootDomain &&
-         RootDomainSid == NULL &&
-         DefaultToDomain == FALSE &&
-         ( RootDomInited == FALSE ||
-           !RtlValidSid( (PSID)RootDomSidBuf ) ) ) {
+    if (InitRootDomain && RootDomainSid == NULL && DefaultToDomain == FALSE &&
+        (RootDomInited == FALSE || !RtlValidSid((PSID)RootDomSidBuf)))
+    {
 
         //
         // get the root domain sid (using ldap calls)
         //
 
         SddlpGetRootDomainSid();
-
     }
 
 
-
-    for ( i = 0; i < SidCount; i++ ) {
+    for (i = 0; i < SidCount; i++)
+    {
 
         //
         // if new API and domain relative trustee, skip the entry
@@ -1711,167 +1583,165 @@ Return Value:
         // SidLookup[] is potentially matched against, shortly
         //
 
-        if ( InitRootDomain == FALSE &&
-             DomainSid &&
-             SidLookup[ i ].SidType == ST_DOMAIN_RELATIVE )
+        if (InitRootDomain == FALSE && DomainSid && SidLookup[i].SidType == ST_DOMAIN_RELATIVE)
             continue;
 
         //
         // if this is an entry that has been initialized, skip it
         //
 
-        if ( SidLookup[ i ].Valid == FALSE ||
-             SidLookup[ i ].Sid == NULL ) {
+        if (SidLookup[i].Valid == FALSE || SidLookup[i].Sid == NULL)
+        {
 
 
-            if ( SidLookup[ i ].SidType == ST_ROOT_DOMAIN_RELATIVE &&
-                 InitRootDomain ) {
+            if (SidLookup[i].SidType == ST_ROOT_DOMAIN_RELATIVE && InitRootDomain)
+            {
 
-                if ( RootDomainSid != NULL ) {
+                if (RootDomainSid != NULL)
+                {
 
                     EnterCriticalSection(&SddlSidLookupCritical);
 
-                    RtlCopyMemory( SidLookup[ i ].Sid, RootDomainSid,
-                                   RtlLengthSid( RootDomainSid ) );
-                    ( ( PISID )( SidLookup[ i ].Sid ) )->SubAuthorityCount++;
-                    *( RtlSubAuthoritySid( SidLookup[ i ].Sid,
-                                           *( RtlSubAuthorityCountSid( RootDomainSid ) ) ) ) =
-                                           SidLookup[ i ].Rid;
-                    SidLookup[ i ].Valid = TRUE;
+                    RtlCopyMemory(SidLookup[i].Sid, RootDomainSid, RtlLengthSid(RootDomainSid));
+                    ((PISID)(SidLookup[i].Sid))->SubAuthorityCount++;
+                    *(RtlSubAuthoritySid(SidLookup[i].Sid, *(RtlSubAuthorityCountSid(RootDomainSid)))) =
+                        SidLookup[i].Rid;
+                    SidLookup[i].Valid = TRUE;
 
                     LeaveCriticalSection(&SddlSidLookupCritical);
-
-                } else if ( DefaultToDomain ) {
+                }
+                else if (DefaultToDomain)
+                {
                     //
                     // should default EA to DA and SA to domain relative
                     //
-                } else {
+                }
+                else
+                {
 
-                    if ( RootDomInited && RtlValidSid( (PSID)RootDomSidBuf ) &&
-                         ( ( SidLookup[ i ].Valid == FALSE ) ||
-                           ( SidLookup[ i ].Sid == NULL ) ) ) {
+                    if (RootDomInited && RtlValidSid((PSID)RootDomSidBuf) &&
+                        ((SidLookup[i].Valid == FALSE) || (SidLookup[i].Sid == NULL)))
+                    {
 
                         EnterCriticalSection(&SddlSidLookupCritical);
 
-                        RtlCopyMemory( SidLookup[ i ].Sid, (PSID)RootDomSidBuf,
-                                       RtlLengthSid( (PSID)RootDomSidBuf ) );
-                        ( ( PISID )( SidLookup[ i ].Sid ) )->SubAuthorityCount++;
-                        *( RtlSubAuthoritySid( SidLookup[ i ].Sid,
-                                               *( RtlSubAuthorityCountSid( (PSID)RootDomSidBuf ) ) ) ) =
-                                               SidLookup[ i ].Rid;
-                        SidLookup[ i ].Valid = TRUE;
+                        RtlCopyMemory(SidLookup[i].Sid, (PSID)RootDomSidBuf, RtlLengthSid((PSID)RootDomSidBuf));
+                        ((PISID)(SidLookup[i].Sid))->SubAuthorityCount++;
+                        *(RtlSubAuthoritySid(SidLookup[i].Sid, *(RtlSubAuthorityCountSid((PSID)RootDomSidBuf)))) =
+                            SidLookup[i].Rid;
+                        SidLookup[i].Valid = TRUE;
 
                         LeaveCriticalSection(&SddlSidLookupCritical);
                     }
-
                 }
-
             }
 
 
-            if ( SidLookup[ i ].Valid == FALSE ||
-                 SidLookup[ i ].Sid == NULL ) {
+            if (SidLookup[i].Valid == FALSE || SidLookup[i].Sid == NULL)
+            {
                 continue;
             }
         }
 
-        if ( LookupSid ) {
+        if (LookupSid)
+        {
 
-            if ( RtlEqualSid( Sid, SidLookup[ i ].Sid ) ) {
+            if (RtlEqualSid(Sid, SidLookup[i].Sid))
+            {
 
                 break;
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // check for the current key first
             //
-            if ( _wcsnicmp( String, SidLookup[i].Key, SidLookup[i].KeyLen ) == 0 ) {
+            if (_wcsnicmp(String, SidLookup[i].Key, SidLookup[i].KeyLen) == 0)
+            {
 
                 break;
-
-            } else if ( InitRootDomain && DefaultToDomain &&
-                        (RootDomainSid == NULL) ) {
+            }
+            else if (InitRootDomain && DefaultToDomain && (RootDomainSid == NULL))
+            {
 
                 //
                 // looking for EA/SA, not found them,
                 // EA needs to default to DA, SA needs to default to domain relative
                 //
-                if ( _wcsnicmp( SDDL_DOMAIN_ADMINISTRATORS, SidLookup[i].Key, SidLookup[i].KeyLen ) == 0 ) {
+                if (_wcsnicmp(SDDL_DOMAIN_ADMINISTRATORS, SidLookup[i].Key, SidLookup[i].KeyLen) == 0)
+                {
                     DomainAdminIndex = i;
-//                    break;
+                    //                    break;
                 }
-
             }
         }
     }
 
 
-    if ( i < SidCount ) {
+    if (i < SidCount)
+    {
 
-        MatchedEntry = &SidLookup[ i ];
+        MatchedEntry = &SidLookup[i];
+    }
+    else if (InitRootDomain && DefaultToDomain && (RootDomainSid == NULL) && (DomainAdminIndex < SidCount))
+    {
 
-    } else if ( InitRootDomain && DefaultToDomain &&
-                (RootDomainSid == NULL) &&
-                ( DomainAdminIndex < SidCount ) ) {
-
-        if ( bIsSA ) {
+        if (bIsSA)
+        {
             //
             // default to domain relative sid
             //
 
-            if ( LookupSid ) {
+            if (LookupSid)
+            {
                 *pSASid = (PVOID)Sid;
-
-            } else if ( SidLookup[ DomainAdminIndex ].Sid ) {
+            }
+            else if (SidLookup[DomainAdminIndex].Sid)
+            {
                 //
                 // allocate buffer for domain relative SA sid
                 // which means it's only valid on the root domain
                 //
 
-                i = RtlLengthSid( SidLookup[ DomainAdminIndex ].Sid );
+                i = RtlLengthSid(SidLookup[DomainAdminIndex].Sid);
 
-                *pSASid = (PVOID)LocalAlloc( LMEM_FIXED, i+1 );
+                *pSASid = (PVOID)LocalAlloc(LMEM_FIXED, i + 1);
 
-                if ( *pSASid != NULL ) {
+                if (*pSASid != NULL)
+                {
 
-                    RtlCopyMemory( (PSID)(*pSASid), SidLookup[ DomainAdminIndex ].Sid, i );
+                    RtlCopyMemory((PSID)(*pSASid), SidLookup[DomainAdminIndex].Sid, i);
 
                     // replace the DA rid with SA rid
-                    *( RtlSubAuthoritySid( (PSID)(*pSASid),
-                                           *( RtlSubAuthorityCountSid( SidLookup[ DomainAdminIndex ].Sid )) - 1) ) =
-                                           DOMAIN_GROUP_RID_SCHEMA_ADMINS;
+                    *(RtlSubAuthoritySid((PSID)(*pSASid),
+                                         *(RtlSubAuthorityCountSid(SidLookup[DomainAdminIndex].Sid))-1)) =
+                        DOMAIN_GROUP_RID_SCHEMA_ADMINS;
                 }
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // default to the domain admin account
             //
 
-            MatchedEntry = &SidLookup[ DomainAdminIndex ];
+            MatchedEntry = &SidLookup[DomainAdminIndex];
         }
     }
 
     InitializeSidLookupTable(STRSD_REINITIALIZE_LEAVE);
 
-    return( MatchedEntry );
+    return (MatchedEntry);
 }
 
 
 DWORD
-LocalGetSidForString(
-    IN  PWSTR String,
-    OUT PSID *SID,
-    OUT PWSTR *End,
-    OUT PBOOLEAN FreeSid,
-    IN  PSID RootDomainSid OPTIONAL,
-    IN  PSID DomainSid OPTIONAL,
-    IN  PSTRSD_SID_LOOKUP tSidLookupDomOrRootDomRelativeTable OPTIONAL,
-    IN  BOOLEAN DefaultToDomain
-    )
+LocalGetSidForString(IN PWSTR String, OUT PSID *SID, OUT PWSTR *End, OUT PBOOLEAN FreeSid,
+                     IN PSID RootDomainSid OPTIONAL, IN PSID DomainSid OPTIONAL,
+                     IN PSTRSD_SID_LOOKUP tSidLookupDomOrRootDomRelativeTable OPTIONAL, IN BOOLEAN DefaultToDomain)
 /*++
 
 Routine Description:
@@ -1907,10 +1777,11 @@ Return Value:
 {
     DWORD Err = ERROR_SUCCESS;
     PSTRSD_SID_LOOKUP MatchedEntry;
-    PSID pSidSA=NULL;
+    PSID pSidSA = NULL;
 
-    if ( String == NULL || SID == NULL || End == NULL || FreeSid == NULL ) {
-        return(ERROR_INVALID_PARAMETER);
+    if (String == NULL || SID == NULL || End == NULL || FreeSid == NULL)
+    {
+        return (ERROR_INVALID_PARAMETER);
     }
 
     //
@@ -1918,12 +1789,13 @@ Return Value:
     //
     *FreeSid = FALSE;
 
-//    if ( wcslen( String ) < 2 ) {
-//  no need to do wcslen (expensive) because we know that String is not NULL
-//  so just check for the first and second char
-    if ( *String == L'\0' || *( String +1 ) == L'\0' ) {
+    //    if ( wcslen( String ) < 2 ) {
+    //  no need to do wcslen (expensive) because we know that String is not NULL
+    //  so just check for the first and second char
+    if (*String == L'\0' || *(String + 1) == L'\0')
+    {
 
-        return( ERROR_NONE_MAPPED );
+        return (ERROR_NONE_MAPPED);
     }
 
     //
@@ -1931,45 +1803,46 @@ Return Value:
     //
     *End = String + 2;
 
-    MatchedEntry = LookupSidInTable( String,
-                                     NULL,
-                                     RootDomainSid,
-                                     DomainSid,
-                                     tSidLookupDomOrRootDomRelativeTable,
-                                     DefaultToDomain,
-                                     (PVOID *)&pSidSA);
+    MatchedEntry = LookupSidInTable(String, NULL, RootDomainSid, DomainSid, tSidLookupDomOrRootDomRelativeTable,
+                                    DefaultToDomain, (PVOID *)&pSidSA);
 
     //
     // If we didn't find a match, try it as a sid string
     //
-    if ( MatchedEntry == NULL ) {
+    if (MatchedEntry == NULL)
+    {
 
-        if ( pSidSA ) {
+        if (pSidSA)
+        {
             //
             // this is schema admin lookup
             //
             *SID = pSidSA;
             *FreeSid = TRUE;
-
-        } else {
+        }
+        else
+        {
 
             //
             // We assumed a known moniker, so we'll have to unset our end of string pointer.
             // Also, if it's a not a SID, the Convert routine will return the appropriate error.
             //
             *End -= 2;
-            if ( LocalConvertStringSidToSid( String, SID, End) == FALSE ) {
+            if (LocalConvertStringSidToSid(String, SID, End) == FALSE)
+            {
 
                 Err = GetLastError();
             }
 
-            if ( Err == ERROR_SUCCESS && *SID != NULL ) {
+            if (Err == ERROR_SUCCESS && *SID != NULL)
+            {
 
                 *FreeSid = TRUE;
             }
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // If the entry that's been selected hasn't been initialized yet, do it now
@@ -1978,16 +1851,12 @@ Return Value:
     }
 
 
-    return(Err);
+    return (Err);
 }
 
 
 DWORD
-LocalGetStringForSid(
-    IN  PSID Sid,
-    OUT PWSTR *String,
-    IN  PSID RootDomainSid OPTIONAL
-    )
+LocalGetStringForSid(IN PSID Sid, OUT PWSTR *String, IN PSID RootDomainSid OPTIONAL)
 /*++
 
 Routine Description:
@@ -2016,125 +1885,126 @@ Return Value:
 {
     DWORD Err = ERROR_SUCCESS;
     PSTRSD_SID_LOOKUP MatchedEntry;
-    PSID pSidSA=NULL;
+    PSID pSidSA = NULL;
     DWORD Len;
 
-    if ( Sid == NULL || String == NULL ) {
+    if (Sid == NULL || String == NULL)
+    {
 
-        return(ERROR_INVALID_PARAMETER);
+        return (ERROR_INVALID_PARAMETER);
     }
 
     //
     // Try to find a match in the lookup table
     //
-    MatchedEntry = LookupSidInTable( NULL,
-                                     Sid,
-                                     RootDomainSid,
-                                     NULL,
-                                     NULL,
-                                     FALSE,
-                                     (PVOID *)&pSidSA );
+    MatchedEntry = LookupSidInTable(NULL, Sid, RootDomainSid, NULL, NULL, FALSE, (PVOID *)&pSidSA);
 
     //
     // If a match was found, return it
     //
-    if ( MatchedEntry || pSidSA ) {
+    if (MatchedEntry || pSidSA)
+    {
 
-        if ( MatchedEntry ) {
+        if (MatchedEntry)
+        {
             Len = MatchedEntry->KeyLen;
-        } else {
+        }
+        else
+        {
             Len = wcslen(SDDL_SCHEMA_ADMINISTRATORS);
         }
 
-        *String = LocalAlloc( LMEM_FIXED, ( Len * sizeof( WCHAR ) ) + sizeof( WCHAR ) );
-        if ( *String == NULL ) {
+        *String = LocalAlloc(LMEM_FIXED, (Len * sizeof(WCHAR)) + sizeof(WCHAR));
+        if (*String == NULL)
+        {
 
             Err = ERROR_NOT_ENOUGH_MEMORY;
+        }
+        else
+        {
 
-        } else {
-
-            if ( MatchedEntry ) {
-                wcscpy( *String, MatchedEntry->Key );
-            } else {
-                wcscpy( *String, SDDL_SCHEMA_ADMINISTRATORS);
+            if (MatchedEntry)
+            {
+                wcscpy(*String, MatchedEntry->Key);
+            }
+            else
+            {
+                wcscpy(*String, SDDL_SCHEMA_ADMINISTRATORS);
             }
         }
+    }
+    else
+    {
 
-    } else {
-
-        if ( ConvertSidToStringSidW( Sid, String ) == FALSE ) {
+        if (ConvertSidToStringSidW(Sid, String) == FALSE)
+        {
 
             Err = GetLastError();
         }
-
     }
 
-    return(Err);
+    return (Err);
 }
 
 DWORD
-LocalGetStringForControl(
-    IN SECURITY_DESCRIPTOR_CONTROL ControlCode,
-    IN ULONG LookupFlags,
-    OUT PWSTR *ControlString
-    )
+LocalGetStringForControl(IN SECURITY_DESCRIPTOR_CONTROL ControlCode, IN ULONG LookupFlags, OUT PWSTR *ControlString)
 {
-    DWORD   i, ControlCount = sizeof( ControlLookup ) / sizeof( STRSD_KEY_LOOKUP );
+    DWORD i, ControlCount = sizeof(ControlLookup) / sizeof(STRSD_KEY_LOOKUP);
     WCHAR Buffer[256];
-    DWORD nOffset=0;
+    DWORD nOffset = 0;
 
 
-    if ( !ControlString ) {
-        return(ERROR_INVALID_PARAMETER);
+    if (!ControlString)
+    {
+        return (ERROR_INVALID_PARAMETER);
     }
 
     *ControlString = NULL;
 
-    for ( i = 0; i < ControlCount; i++ ) {
+    for (i = 0; i < ControlCount; i++)
+    {
 
         //
         // If it doesn't match our lookup type, skip it.
         //
-        if ( ( LookupFlags & ControlLookup[ i ].ValidityFlags ) != LookupFlags ) {
+        if ((LookupFlags & ControlLookup[i].ValidityFlags) != LookupFlags)
+        {
 
             continue;
         }
 
-        if ( ControlCode & ControlLookup[ i ].Value ) {
+        if (ControlCode & ControlLookup[i].Value)
+        {
 
-            wcsncpy(Buffer+nOffset,
-                    ControlLookup[ i ].Key,
-                    ControlLookup[ i ].KeyLen );
+            wcsncpy(Buffer + nOffset, ControlLookup[i].Key, ControlLookup[i].KeyLen);
 
-            nOffset += ControlLookup[ i ].KeyLen;
-
+            nOffset += ControlLookup[i].KeyLen;
         }
     }
 
     Buffer[nOffset] = L'\0';
 
-    if ( nOffset ) {
-        *ControlString = (PWSTR)LocalAlloc(0, (nOffset+1)*sizeof(WCHAR));
+    if (nOffset)
+    {
+        *ControlString = (PWSTR)LocalAlloc(0, (nOffset + 1) * sizeof(WCHAR));
 
-        if ( *ControlString ) {
+        if (*ControlString)
+        {
 
             wcscpy(*ControlString, Buffer);
-
-        } else {
-            return(ERROR_NOT_ENOUGH_MEMORY);
+        }
+        else
+        {
+            return (ERROR_NOT_ENOUGH_MEMORY);
         }
     }
 
-    return( ERROR_SUCCESS );
+    return (ERROR_SUCCESS);
 }
 
 
 PSTRSD_KEY_LOOKUP
-LookupAccessMaskInTable(
-    IN PWSTR String, OPTIONAL
-    IN ULONG AccessMask, OPTIONAL
-    IN ULONG LookupFlags
-    )
+LookupAccessMaskInTable(IN PWSTR String, OPTIONAL IN ULONG AccessMask, OPTIONAL IN ULONG LookupFlags)
 /*++
 
 Routine Description:
@@ -2165,91 +2035,97 @@ Return Value:
     // This is how the access mask is looked up.  Always have the multi-char
     // rights before the single char ones
     //
-    static STRSD_KEY_LOOKUP  RightsLookup[] = {
-        { SDDL_READ_PROPERTY, SDDL_LEN_TAG( SDDL_READ_PROPERTY ), ACTRL_DS_READ_PROP, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_WRITE_PROPERTY, SDDL_LEN_TAG( SDDL_WRITE_PROPERTY ), ACTRL_DS_WRITE_PROP, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_CREATE_CHILD, SDDL_LEN_TAG( SDDL_CREATE_CHILD ), ACTRL_DS_CREATE_CHILD, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_DELETE_CHILD, SDDL_LEN_TAG( SDDL_DELETE_CHILD ), ACTRL_DS_DELETE_CHILD, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_LIST_CHILDREN, SDDL_LEN_TAG( SDDL_LIST_CHILDREN ), ACTRL_DS_LIST, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_SELF_WRITE, SDDL_LEN_TAG( SDDL_SELF_WRITE ), ACTRL_DS_SELF, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_LIST_OBJECT, SDDL_LEN_TAG( SDDL_LIST_OBJECT ), ACTRL_DS_LIST_OBJECT, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_DELETE_TREE, SDDL_LEN_TAG( SDDL_DELETE_TREE ), ACTRL_DS_DELETE_TREE, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_CONTROL_ACCESS, SDDL_LEN_TAG( SDDL_CONTROL_ACCESS ), ACTRL_DS_CONTROL_ACCESS, SDDL_VALID_DACL | SDDL_VALID_SACL },
+    static STRSD_KEY_LOOKUP RightsLookup[] = {
+        { SDDL_READ_PROPERTY, SDDL_LEN_TAG(SDDL_READ_PROPERTY), ACTRL_DS_READ_PROP, SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_WRITE_PROPERTY, SDDL_LEN_TAG(SDDL_WRITE_PROPERTY), ACTRL_DS_WRITE_PROP,
+          SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_CREATE_CHILD, SDDL_LEN_TAG(SDDL_CREATE_CHILD), ACTRL_DS_CREATE_CHILD,
+          SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_DELETE_CHILD, SDDL_LEN_TAG(SDDL_DELETE_CHILD), ACTRL_DS_DELETE_CHILD,
+          SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_LIST_CHILDREN, SDDL_LEN_TAG(SDDL_LIST_CHILDREN), ACTRL_DS_LIST, SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_SELF_WRITE, SDDL_LEN_TAG(SDDL_SELF_WRITE), ACTRL_DS_SELF, SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_LIST_OBJECT, SDDL_LEN_TAG(SDDL_LIST_OBJECT), ACTRL_DS_LIST_OBJECT, SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_DELETE_TREE, SDDL_LEN_TAG(SDDL_DELETE_TREE), ACTRL_DS_DELETE_TREE, SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_CONTROL_ACCESS, SDDL_LEN_TAG(SDDL_CONTROL_ACCESS), ACTRL_DS_CONTROL_ACCESS,
+          SDDL_VALID_DACL | SDDL_VALID_SACL },
 
-        { SDDL_READ_CONTROL, SDDL_LEN_TAG( SDDL_READ_CONTROL ), READ_CONTROL, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_WRITE_DAC, SDDL_LEN_TAG( SDDL_WRITE_DAC ), WRITE_DAC, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_WRITE_OWNER, SDDL_LEN_TAG( SDDL_WRITE_OWNER ), WRITE_OWNER, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_STANDARD_DELETE, SDDL_LEN_TAG( SDDL_STANDARD_DELETE ), DELETE, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_GENERIC_ALL, SDDL_LEN_TAG( SDDL_GENERIC_ALL ), GENERIC_ALL, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_GENERIC_READ, SDDL_LEN_TAG( SDDL_GENERIC_READ ), GENERIC_READ, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_GENERIC_WRITE, SDDL_LEN_TAG( SDDL_GENERIC_WRITE ), GENERIC_WRITE, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_GENERIC_EXECUTE, SDDL_LEN_TAG( SDDL_GENERIC_EXECUTE ), GENERIC_EXECUTE, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_FILE_ALL, SDDL_LEN_TAG( SDDL_FILE_ALL ), FILE_ALL_ACCESS, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_FILE_READ, SDDL_LEN_TAG( SDDL_FILE_READ ), FILE_GENERIC_READ, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_FILE_WRITE, SDDL_LEN_TAG( SDDL_FILE_WRITE ), FILE_GENERIC_WRITE, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_FILE_EXECUTE, SDDL_LEN_TAG( SDDL_FILE_EXECUTE ), FILE_GENERIC_EXECUTE, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_KEY_ALL, SDDL_LEN_TAG( SDDL_KEY_ALL ), KEY_ALL_ACCESS, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_KEY_READ, SDDL_LEN_TAG( SDDL_KEY_READ ), KEY_READ, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_KEY_WRITE, SDDL_LEN_TAG( SDDL_KEY_WRITE ), KEY_WRITE, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_KEY_EXECUTE, SDDL_LEN_TAG( SDDL_KEY_EXECUTE ), KEY_EXECUTE, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        };
-    DWORD   i, RightsCount = sizeof(RightsLookup) / sizeof(STRSD_KEY_LOOKUP);
+        { SDDL_READ_CONTROL, SDDL_LEN_TAG(SDDL_READ_CONTROL), READ_CONTROL, SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_WRITE_DAC, SDDL_LEN_TAG(SDDL_WRITE_DAC), WRITE_DAC, SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_WRITE_OWNER, SDDL_LEN_TAG(SDDL_WRITE_OWNER), WRITE_OWNER, SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_STANDARD_DELETE, SDDL_LEN_TAG(SDDL_STANDARD_DELETE), DELETE, SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_GENERIC_ALL, SDDL_LEN_TAG(SDDL_GENERIC_ALL), GENERIC_ALL, SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_GENERIC_READ, SDDL_LEN_TAG(SDDL_GENERIC_READ), GENERIC_READ, SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_GENERIC_WRITE, SDDL_LEN_TAG(SDDL_GENERIC_WRITE), GENERIC_WRITE, SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_GENERIC_EXECUTE, SDDL_LEN_TAG(SDDL_GENERIC_EXECUTE), GENERIC_EXECUTE,
+          SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_FILE_ALL, SDDL_LEN_TAG(SDDL_FILE_ALL), FILE_ALL_ACCESS, SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_FILE_READ, SDDL_LEN_TAG(SDDL_FILE_READ), FILE_GENERIC_READ, SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_FILE_WRITE, SDDL_LEN_TAG(SDDL_FILE_WRITE), FILE_GENERIC_WRITE, SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_FILE_EXECUTE, SDDL_LEN_TAG(SDDL_FILE_EXECUTE), FILE_GENERIC_EXECUTE, SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_KEY_ALL, SDDL_LEN_TAG(SDDL_KEY_ALL), KEY_ALL_ACCESS, SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_KEY_READ, SDDL_LEN_TAG(SDDL_KEY_READ), KEY_READ, SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_KEY_WRITE, SDDL_LEN_TAG(SDDL_KEY_WRITE), KEY_WRITE, SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_KEY_EXECUTE, SDDL_LEN_TAG(SDDL_KEY_EXECUTE), KEY_EXECUTE, SDDL_VALID_DACL | SDDL_VALID_SACL },
+    };
+    DWORD i, RightsCount = sizeof(RightsLookup) / sizeof(STRSD_KEY_LOOKUP);
     PSTRSD_KEY_LOOKUP MatchedEntry = NULL;
     BOOLEAN LookupString = FALSE;
 
-    if ( String ) {
+    if (String)
+    {
 
         LookupString = TRUE;
     }
 
-    for ( i = 0; i < RightsCount; i++ ) {
+    for (i = 0; i < RightsCount; i++)
+    {
 
         //
         // If it doesn't match our lookup type, skip it.
         //
-        if ( ( LookupFlags & RightsLookup[ i ].ValidityFlags ) != LookupFlags ) {
+        if ((LookupFlags & RightsLookup[i].ValidityFlags) != LookupFlags)
+        {
 
             continue;
         }
 
-        if ( LookupString ) {
+        if (LookupString)
+        {
 
-            if ( _wcsnicmp( String, RightsLookup[ i ].Key, RightsLookup[ i ].KeyLen ) == 0 ) {
-
-                break;
-            }
-
-        } else {
-
-            if ( AccessMask == RightsLookup[ i ].Value ) {
+            if (_wcsnicmp(String, RightsLookup[i].Key, RightsLookup[i].KeyLen) == 0)
+            {
 
                 break;
             }
-
         }
+        else
+        {
 
+            if (AccessMask == RightsLookup[i].Value)
+            {
+
+                break;
+            }
+        }
     }
 
     //
     // If a match was found, return it
     //
-    if ( i < RightsCount ) {
+    if (i < RightsCount)
+    {
 
-        MatchedEntry = &RightsLookup[ i ];
+        MatchedEntry = &RightsLookup[i];
     }
 
 
-    return( MatchedEntry );
-
+    return (MatchedEntry);
 }
 
 
 PSTRSD_KEY_LOOKUP
-LookupAceTypeInTable(
-    IN PWSTR String, OPTIONAL
-    IN ULONG AceType, OPTIONAL
-    IN ULONG LookupFlags
-    )
+LookupAceTypeInTable(IN PWSTR String, OPTIONAL IN ULONG AceType, OPTIONAL IN ULONG LookupFlags)
 /*++
 
 Routine Description:
@@ -2280,74 +2156,75 @@ Return Value:
     // Lookup table
     //
     static STRSD_KEY_LOOKUP TypeLookup[] = {
-        { SDDL_ACCESS_ALLOWED, SDDL_LEN_TAG( SDDL_ACCESS_ALLOWED ), ACCESS_ALLOWED_ACE_TYPE, SDDL_VALID_DACL },
-        { SDDL_ACCESS_DENIED, SDDL_LEN_TAG( SDDL_ACCESS_DENIED ), ACCESS_DENIED_ACE_TYPE, SDDL_VALID_DACL },
-        { SDDL_OBJECT_ACCESS_ALLOWED, SDDL_LEN_TAG( SDDL_OBJECT_ACCESS_ALLOWED ),
-                                                                ACCESS_ALLOWED_OBJECT_ACE_TYPE, SDDL_VALID_DACL },
-        { SDDL_OBJECT_ACCESS_DENIED, SDDL_LEN_TAG( SDDL_OBJECT_ACCESS_DENIED ),
-                                                                ACCESS_DENIED_OBJECT_ACE_TYPE, SDDL_VALID_DACL },
-        { SDDL_AUDIT, SDDL_LEN_TAG( SDDL_AUDIT ), SYSTEM_AUDIT_ACE_TYPE, SDDL_VALID_SACL },
-        { SDDL_ALARM, SDDL_LEN_TAG( SDDL_ALARM ), SYSTEM_ALARM_ACE_TYPE, SDDL_VALID_SACL },
-        { SDDL_OBJECT_AUDIT, SDDL_LEN_TAG( SDDL_OBJECT_AUDIT ), SYSTEM_AUDIT_OBJECT_ACE_TYPE, SDDL_VALID_SACL },
-        { SDDL_OBJECT_ALARM, SDDL_LEN_TAG( SDDL_OBJECT_ALARM ), SYSTEM_ALARM_OBJECT_ACE_TYPE, SDDL_VALID_SACL }
-        };
-    DWORD   i, TypeCount = sizeof( TypeLookup ) / sizeof( STRSD_KEY_LOOKUP );
+        { SDDL_ACCESS_ALLOWED, SDDL_LEN_TAG(SDDL_ACCESS_ALLOWED), ACCESS_ALLOWED_ACE_TYPE, SDDL_VALID_DACL },
+        { SDDL_ACCESS_DENIED, SDDL_LEN_TAG(SDDL_ACCESS_DENIED), ACCESS_DENIED_ACE_TYPE, SDDL_VALID_DACL },
+        { SDDL_OBJECT_ACCESS_ALLOWED, SDDL_LEN_TAG(SDDL_OBJECT_ACCESS_ALLOWED), ACCESS_ALLOWED_OBJECT_ACE_TYPE,
+          SDDL_VALID_DACL },
+        { SDDL_OBJECT_ACCESS_DENIED, SDDL_LEN_TAG(SDDL_OBJECT_ACCESS_DENIED), ACCESS_DENIED_OBJECT_ACE_TYPE,
+          SDDL_VALID_DACL },
+        { SDDL_AUDIT, SDDL_LEN_TAG(SDDL_AUDIT), SYSTEM_AUDIT_ACE_TYPE, SDDL_VALID_SACL },
+        { SDDL_ALARM, SDDL_LEN_TAG(SDDL_ALARM), SYSTEM_ALARM_ACE_TYPE, SDDL_VALID_SACL },
+        { SDDL_OBJECT_AUDIT, SDDL_LEN_TAG(SDDL_OBJECT_AUDIT), SYSTEM_AUDIT_OBJECT_ACE_TYPE, SDDL_VALID_SACL },
+        { SDDL_OBJECT_ALARM, SDDL_LEN_TAG(SDDL_OBJECT_ALARM), SYSTEM_ALARM_OBJECT_ACE_TYPE, SDDL_VALID_SACL }
+    };
+    DWORD i, TypeCount = sizeof(TypeLookup) / sizeof(STRSD_KEY_LOOKUP);
     PSTRSD_KEY_LOOKUP MatchedEntry = NULL;
     BOOLEAN LookupString = FALSE;
 
-    if ( String ) {
+    if (String)
+    {
 
         LookupString = TRUE;
     }
 
-    for ( i = 0; i < TypeCount; i++ ) {
+    for (i = 0; i < TypeCount; i++)
+    {
 
         //
         // If it doesn't match our lookup type, skip it.
         //
-        if ( ( LookupFlags & TypeLookup[ i ].ValidityFlags ) != LookupFlags ) {
+        if ((LookupFlags & TypeLookup[i].ValidityFlags) != LookupFlags)
+        {
 
             continue;
         }
 
-        if ( LookupString ) {
+        if (LookupString)
+        {
 
-            if ( _wcsnicmp( String, TypeLookup[ i ].Key, TypeLookup[ i ].KeyLen ) == 0 ) {
-
-                break;
-            }
-
-        } else {
-
-            if ( AceType == TypeLookup[ i ].Value ) {
+            if (_wcsnicmp(String, TypeLookup[i].Key, TypeLookup[i].KeyLen) == 0)
+            {
 
                 break;
             }
-
         }
+        else
+        {
 
+            if (AceType == TypeLookup[i].Value)
+            {
+
+                break;
+            }
+        }
     }
 
     //
     // If a match was found, return it
     //
-    if ( i < TypeCount ) {
+    if (i < TypeCount)
+    {
 
-        MatchedEntry = &TypeLookup[ i ];
+        MatchedEntry = &TypeLookup[i];
     }
 
 
-    return( MatchedEntry );
+    return (MatchedEntry);
 }
 
 
-
 PSTRSD_KEY_LOOKUP
-LookupAceFlagsInTable(
-    IN PWSTR String, OPTIONAL
-    IN ULONG AceFlags, OPTIONAL
-    IN ULONG LookupFlags
-    )
+LookupAceFlagsInTable(IN PWSTR String, OPTIONAL IN ULONG AceFlags, OPTIONAL IN ULONG LookupFlags)
 /*++
 
 Routine Description:
@@ -2377,87 +2254,94 @@ Return Value:
     //
     // Lookup tables
     //
-    static STRSD_KEY_LOOKUP  FlagLookup[] = {
-        { SDDL_CONTAINER_INHERIT, SDDL_LEN_TAG( SDDL_CONTAINER_INHERIT ), CONTAINER_INHERIT_ACE, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_OBJECT_INHERIT, SDDL_LEN_TAG( SDDL_OBJECT_INHERIT ), OBJECT_INHERIT_ACE, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_NO_PROPAGATE, SDDL_LEN_TAG( SDDL_NO_PROPAGATE  ), NO_PROPAGATE_INHERIT_ACE, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_INHERIT_ONLY, SDDL_LEN_TAG( SDDL_INHERIT_ONLY  ), INHERIT_ONLY_ACE, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_INHERITED, SDDL_LEN_TAG( SDDL_INHERITED  ), INHERITED_ACE, SDDL_VALID_DACL | SDDL_VALID_SACL },
-        { SDDL_AUDIT_SUCCESS, SDDL_LEN_TAG( SDDL_AUDIT_SUCCESS ), SUCCESSFUL_ACCESS_ACE_FLAG, SDDL_VALID_SACL },
-        { SDDL_AUDIT_FAILURE, SDDL_LEN_TAG( SDDL_AUDIT_FAILURE ), FAILED_ACCESS_ACE_FLAG, SDDL_VALID_SACL }
-        };
-    DWORD   i, FlagCount = sizeof( FlagLookup ) / sizeof( STRSD_KEY_LOOKUP );
+    static STRSD_KEY_LOOKUP FlagLookup[] = {
+        { SDDL_CONTAINER_INHERIT, SDDL_LEN_TAG(SDDL_CONTAINER_INHERIT), CONTAINER_INHERIT_ACE,
+          SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_OBJECT_INHERIT, SDDL_LEN_TAG(SDDL_OBJECT_INHERIT), OBJECT_INHERIT_ACE,
+          SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_NO_PROPAGATE, SDDL_LEN_TAG(SDDL_NO_PROPAGATE), NO_PROPAGATE_INHERIT_ACE,
+          SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_INHERIT_ONLY, SDDL_LEN_TAG(SDDL_INHERIT_ONLY), INHERIT_ONLY_ACE, SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_INHERITED, SDDL_LEN_TAG(SDDL_INHERITED), INHERITED_ACE, SDDL_VALID_DACL | SDDL_VALID_SACL },
+        { SDDL_AUDIT_SUCCESS, SDDL_LEN_TAG(SDDL_AUDIT_SUCCESS), SUCCESSFUL_ACCESS_ACE_FLAG, SDDL_VALID_SACL },
+        { SDDL_AUDIT_FAILURE, SDDL_LEN_TAG(SDDL_AUDIT_FAILURE), FAILED_ACCESS_ACE_FLAG, SDDL_VALID_SACL }
+    };
+    DWORD i, FlagCount = sizeof(FlagLookup) / sizeof(STRSD_KEY_LOOKUP);
     PSTRSD_KEY_LOOKUP MatchedEntry = NULL;
     BOOLEAN LookupString = FALSE;
 
-    if ( String ) {
+    if (String)
+    {
 
         LookupString = TRUE;
     }
 
 
-    for ( i = 0; i < FlagCount; i++ ) {
+    for (i = 0; i < FlagCount; i++)
+    {
 
         //
         // If it doesn't match our lookup type, skip it.
         //
-        if ( ( LookupFlags & FlagLookup[ i ].ValidityFlags ) != LookupFlags ) {
+        if ((LookupFlags & FlagLookup[i].ValidityFlags) != LookupFlags)
+        {
 
             continue;
         }
 
-        if ( LookupString ) {
+        if (LookupString)
+        {
 
-            if ( _wcsnicmp( String, FlagLookup[ i ].Key, FlagLookup[ i ].KeyLen ) == 0 ) {
-
-                break;
-            }
-
-        } else {
-
-            if ( AceFlags == FlagLookup[ i ].Value ) {
+            if (_wcsnicmp(String, FlagLookup[i].Key, FlagLookup[i].KeyLen) == 0)
+            {
 
                 break;
             }
-
         }
+        else
+        {
 
+            if (AceFlags == FlagLookup[i].Value)
+            {
+
+                break;
+            }
+        }
     }
 
     //
     // If a match was found, return it
     //
-    if ( i < FlagCount ) {
+    if (i < FlagCount)
+    {
 
-        MatchedEntry = &FlagLookup[ i ];
+        MatchedEntry = &FlagLookup[i];
     }
 
 
-    return( MatchedEntry );
+    return (MatchedEntry);
 }
 
 
 DWORD
-LocalGetSDControlForString (
-    IN  PWSTR ControlString,
-    IN ULONG LookupFlags,
-    OUT SECURITY_DESCRIPTOR_CONTROL *pControl,
-    OUT PWSTR *End
-    )
+LocalGetSDControlForString(IN PWSTR ControlString, IN ULONG LookupFlags, OUT SECURITY_DESCRIPTOR_CONTROL *pControl,
+                           OUT PWSTR *End)
 {
 
-    DWORD   i, ControlCount = sizeof( ControlLookup ) / sizeof( STRSD_KEY_LOOKUP );
-    PWSTR pCursor=ControlString;
+    DWORD i, ControlCount = sizeof(ControlLookup) / sizeof(STRSD_KEY_LOOKUP);
+    PWSTR pCursor = ControlString;
     BOOL bFound;
 
-    if ( !ControlString || !pControl || !End ) {
+    if (!ControlString || !pControl || !End)
+    {
 
-        return(ERROR_INVALID_PARAMETER);
+        return (ERROR_INVALID_PARAMETER);
     }
 
     *pControl = 0;
 
-    while ( pCursor && *pCursor == L' ' ) {
+    while (pCursor && *pCursor == L' ')
+    {
         //
         // skip any blanks
         //
@@ -2465,29 +2349,32 @@ LocalGetSDControlForString (
     }
 
 
-    do {
+    do
+    {
 
         bFound = FALSE;
 
-        for ( i = 0; i < ControlCount; i++ ) {
+        for (i = 0; i < ControlCount; i++)
+        {
 
             //
             // If it doesn't match our lookup type, skip it.
             //
-            if ( ( LookupFlags & ControlLookup[ i ].ValidityFlags ) != LookupFlags ) {
+            if ((LookupFlags & ControlLookup[i].ValidityFlags) != LookupFlags)
+            {
 
                 continue;
             }
 
-            if ( _wcsnicmp( pCursor,
-                            ControlLookup[ i ].Key,
-                            ControlLookup[ i ].KeyLen ) == 0 ) {
+            if (_wcsnicmp(pCursor, ControlLookup[i].Key, ControlLookup[i].KeyLen) == 0)
+            {
 
-                *pControl |= ControlLookup[ i ].Value;
+                *pControl |= ControlLookup[i].Value;
 
-                pCursor += ControlLookup[ i ].KeyLen;
+                pCursor += ControlLookup[i].KeyLen;
 
-                while ( pCursor && *pCursor == L' ' ) {
+                while (pCursor && *pCursor == L' ')
+                {
                     //
                     // skip any blanks
                     //
@@ -2496,31 +2383,23 @@ LocalGetSDControlForString (
 
                 bFound = TRUE;
 
-                break;  // break the for loop
+                break; // break the for loop
             }
         }
 
-    } while ( bFound );
+    } while (bFound);
 
 
     *End = pCursor;
 
 
-    return( ERROR_SUCCESS );
-
+    return (ERROR_SUCCESS);
 }
 
 DWORD
-LocalGetAclForString(
-    IN  PWSTR       AclString,
-    IN  BOOLEAN     ConvertAsDacl,
-    OUT PACL       *Acl,
-    OUT PWSTR      *End,
-    IN  PSID RootDomainSid OPTIONAL,
-    IN  PSID DomainSid OPTIONAL,
-    IN  PSTRSD_SID_LOOKUP tSidLookupDomOrRootDomRelativeTable OPTIONAL,
-    IN  BOOLEAN DefaultToDomain
-    )
+LocalGetAclForString(IN PWSTR AclString, IN BOOLEAN ConvertAsDacl, OUT PACL *Acl, OUT PWSTR *End,
+                     IN PSID RootDomainSid OPTIONAL, IN PSID DomainSid OPTIONAL,
+                     IN PSTRSD_SID_LOOKUP tSidLookupDomOrRootDomRelativeTable OPTIONAL, IN BOOLEAN DefaultToDomain)
 /*++
 
 Routine Description:
@@ -2568,23 +2447,26 @@ Return Value:
     DWORD AclSize = 0, AclUsed = 0;
     ULONG Acls = 0, i, j;
     PWSTR Curr, MaskEnd;
-    WCHAR ConvertGuidString[ STRING_GUID_LEN + 1];
+    WCHAR ConvertGuidString[STRING_GUID_LEN + 1];
     BOOLEAN FreeSid = FALSE;
     BOOL OpRes;
     PSTRSD_KEY_LOOKUP MatchedEntry;
     ULONG LookupFlags;
-    PSID  SidPtr = NULL;
+    PSID SidPtr = NULL;
 
 
-    if ( NULL == AclString || NULL == Acl || NULL == End ) {
-        return(ERROR_INVALID_PARAMETER);
+    if (NULL == AclString || NULL == Acl || NULL == End)
+    {
+        return (ERROR_INVALID_PARAMETER);
     }
 
-    if ( ConvertAsDacl ) {
+    if (ConvertAsDacl)
+    {
 
         LookupFlags = SDDL_VALID_DACL;
-
-    } else {
+    }
+    else
+    {
 
         LookupFlags = SDDL_VALID_SACL;
     }
@@ -2595,19 +2477,22 @@ Return Value:
     // delimited by either the end of the list or a ':' that seperates a key
     // from a value
     //
-    *End = wcschr( AclString, SDDL_DELIMINATORC );
+    *End = wcschr(AclString, SDDL_DELIMINATORC);
 
-    if ( *End == AclString ) {
-        return(ERROR_INVALID_PARAMETER);
+    if (*End == AclString)
+    {
+        return (ERROR_INVALID_PARAMETER);
     }
 
-    if ( *End == NULL ) {
+    if (*End == NULL)
+    {
 
-        *End = AclString + wcslen( AclString );
+        *End = AclString + wcslen(AclString);
+    }
+    else
+    {
 
-    } else {
-
-        ( *End )--;
+        (*End)--;
     }
 
     //
@@ -2616,14 +2501,17 @@ Return Value:
     Curr = AclString;
 
     OpRes = 0;
-//    while ( Curr != *End ) {
-    while ( Curr < *End ) {
+    //    while ( Curr != *End ) {
+    while (Curr < *End)
+    {
 
-        if ( *Curr == SDDL_SEPERATORC ) {
+        if (*Curr == SDDL_SEPERATORC)
+        {
 
             Acls++;
-
-        } else if ( *Curr != L' ' ) {
+        }
+        else if (*Curr != L' ')
+        {
             OpRes = 1;
         }
 
@@ -2634,42 +2522,48 @@ Return Value:
     // Now, we've counted the total number of seperators.  Make sure we
     // have the right number.  (There is 5 seperators per ace)
     //
-    if ( Acls % 5 == 0 ) {
+    if (Acls % 5 == 0)
+    {
 
-        if ( Acls == 0 && OpRes ) {
+        if (Acls == 0 && OpRes)
+        {
             //
             // gabbage chars in between
             //
             Err = ERROR_INVALID_PARAMETER;
-
-        } else {
+        }
+        else
+        {
             Acls = Acls / 5;
         }
-
-    } else {
+    }
+    else
+    {
 
         Err = ERROR_INVALID_PARAMETER;
     }
 
-    if (  Err == ERROR_SUCCESS && Acls == 0 ) {
+    if (Err == ERROR_SUCCESS && Acls == 0)
+    {
 
-        *Acl = LocalAlloc( LMEM_FIXED, sizeof( ACL ) );
+        *Acl = LocalAlloc(LMEM_FIXED, sizeof(ACL));
 
-        if ( *Acl == NULL ) {
+        if (*Acl == NULL)
+        {
 
             Err = ERROR_NOT_ENOUGH_MEMORY;
+        }
+        else
+        {
 
-        } else {
-
-            ( *Acl )->AclRevision = ACL_REVISION;
-            ( *Acl )->Sbz1 = ( BYTE )0;
-            ( *Acl )->AclSize = ( USHORT )sizeof( ACL ) ;
-            ( *Acl )->AceCount = 0;
-            ( *Acl )->Sbz2 = ( USHORT )0;
-
+            (*Acl)->AclRevision = ACL_REVISION;
+            (*Acl)->Sbz1 = (BYTE)0;
+            (*Acl)->AclSize = (USHORT)sizeof(ACL);
+            (*Acl)->AceCount = 0;
+            (*Acl)->Sbz2 = (USHORT)0;
         }
 
-        return( Err );
+        return (Err);
     }
 
     //
@@ -2681,39 +2575,43 @@ Return Value:
     // contains a lot of explicit SIDs.  Otherwise, the chosen buffer size
     // should be pretty close to the proper size
     //
-    if ( Err == ERROR_SUCCESS ) {
+    if (Err == ERROR_SUCCESS)
+    {
 
-        AclSize = sizeof( ACL ) + ( Acls * ( sizeof( ACCESS_ALLOWED_OBJECT_ACE ) +
-                                            sizeof( SID ) + ( 6 * sizeof( ULONG ) ) ) );
-        if ( AclSize > SDDL_MAX_ACL_SIZE ) {
+        AclSize = sizeof(ACL) + (Acls * (sizeof(ACCESS_ALLOWED_OBJECT_ACE) + sizeof(SID) + (6 * sizeof(ULONG))));
+        if (AclSize > SDDL_MAX_ACL_SIZE)
+        {
             AclSize = SDDL_MAX_ACL_SIZE;
         }
 
-        *Acl = ( PACL )LocalAlloc( LMEM_FIXED | LMEM_ZEROINIT, AclSize );
+        *Acl = (PACL)LocalAlloc(LMEM_FIXED | LMEM_ZEROINIT, AclSize);
 
-        if ( *Acl == NULL ) {
+        if (*Acl == NULL)
+        {
 
             Err = ERROR_NOT_ENOUGH_MEMORY;
+        }
+        else
+        {
 
-        } else {
-
-            AclUsed = sizeof( ACL );
+            AclUsed = sizeof(ACL);
 
             //
             // We'll start initializing it...
             //
-            ( *Acl )->AclRevision = ACL_REVISION;
-            ( *Acl )->Sbz1        = ( BYTE )0;
-            ( *Acl )->AclSize     = ( USHORT )AclSize;
-            ( *Acl )->AceCount    = 0;
-            ( *Acl )->Sbz2 = ( USHORT )0;
+            (*Acl)->AclRevision = ACL_REVISION;
+            (*Acl)->Sbz1 = (BYTE)0;
+            (*Acl)->AclSize = (USHORT)AclSize;
+            (*Acl)->AceCount = 0;
+            (*Acl)->Sbz2 = (USHORT)0;
 
             //
             // Ok, now we'll go through and start building them all
             //
             Curr = AclString;
 
-            for( i = 0; i < Acls; i++ ) {
+            for (i = 0; i < Acls; i++)
+            {
 
                 //
                 // First, get the type..
@@ -2724,37 +2622,42 @@ Return Value:
                 ACCESS_MASK Mask = 0;
                 GUID *ObjId = NULL, ObjGuid;
                 GUID *IObjId = NULL, IObjGuid;
-                PWSTR  Next;
+                PWSTR Next;
                 DWORD AceSize = 0;
 
                 //
                 // skip any space before (
                 //
-                while(*Curr == L' ' ) {
+                while (*Curr == L' ')
+                {
                     Curr++;
                 }
-                 //
-                 // Skip any parens that may exist in the ace list
-                 //
-                if ( *Curr == SDDL_ACE_BEGINC ) {
+                //
+                // Skip any parens that may exist in the ace list
+                //
+                if (*Curr == SDDL_ACE_BEGINC)
+                {
 
                     Curr++;
                 }
-                 //
-                 // skip any space after (
-                 //
-                 while(*Curr == L' ' ) {
-                     Curr++;
-                 }
+                //
+                // skip any space after (
+                //
+                while (*Curr == L' ')
+                {
+                    Curr++;
+                }
 
-                MatchedEntry = LookupAceTypeInTable( Curr, 0, LookupFlags );
+                MatchedEntry = LookupAceTypeInTable(Curr, 0, LookupFlags);
 
-                if ( MatchedEntry ) {
+                if (MatchedEntry)
+                {
 
-                    Type = ( UCHAR )MatchedEntry->Value;
+                    Type = (UCHAR)MatchedEntry->Value;
                     Curr += MatchedEntry->KeyLen + 1;
-
-                } else {
+                }
+                else
+                {
 
                     //
                     // Found an invalid type
@@ -2766,24 +2669,28 @@ Return Value:
                 //
                 // If we have any object aces, set the acl revision to REVISION_DS
                 //
-                if ( Type >= ACCESS_MIN_MS_OBJECT_ACE_TYPE && Type <= ACCESS_MAX_MS_OBJECT_ACE_TYPE ) {
+                if (Type >= ACCESS_MIN_MS_OBJECT_ACE_TYPE && Type <= ACCESS_MAX_MS_OBJECT_ACE_TYPE)
+                {
 
-                    ( *Acl )->AclRevision = ACL_REVISION_DS;
+                    (*Acl)->AclRevision = ACL_REVISION_DS;
                 }
 
                 //
                 // skip any space before ;
                 //
-                while(*Curr == L' ' ) {
+                while (*Curr == L' ')
+                {
                     Curr++;
                 }
 
                 //
                 // Next, get the flags...
                 //
-                while ( Curr != *End ) {
+                while (Curr != *End)
+                {
 
-                    if ( *Curr == SDDL_SEPERATORC ) {
+                    if (*Curr == SDDL_SEPERATORC)
+                    {
 
                         Curr++;
                         break;
@@ -2792,19 +2699,22 @@ Return Value:
                     //
                     // Skip any blanks
                     //
-                    while ( *Curr == L' ' ) {
+                    while (*Curr == L' ')
+                    {
 
                         Curr++;
                     }
 
-                    MatchedEntry = LookupAceFlagsInTable( Curr, 0, LookupFlags );
+                    MatchedEntry = LookupAceFlagsInTable(Curr, 0, LookupFlags);
 
-                    if ( MatchedEntry ) {
+                    if (MatchedEntry)
+                    {
 
-                        Flags |= ( UCHAR )MatchedEntry->Value;
+                        Flags |= (UCHAR)MatchedEntry->Value;
                         Curr += MatchedEntry->KeyLen;
-
-                    } else {
+                    }
+                    else
+                    {
                         //
                         // Found an invalid flag
                         //
@@ -2813,7 +2723,8 @@ Return Value:
                     }
                 }
 
-                if ( Err != ERROR_SUCCESS ) {
+                if (Err != ERROR_SUCCESS)
+                {
 
                     break;
                 }
@@ -2821,16 +2732,19 @@ Return Value:
                 //
                 // skip any space after ;
                 //
-                while(*Curr == L' ' ) {
+                while (*Curr == L' ')
+                {
                     Curr++;
                 }
 
                 //
                 // Now, get the access mask
                 //
-                while( TRUE ) {
+                while (TRUE)
+                {
 
-                    if ( *Curr == SDDL_SEPERATORC ) {
+                    if (*Curr == SDDL_SEPERATORC)
+                    {
 
                         Curr++;
                         break;
@@ -2839,31 +2753,36 @@ Return Value:
                     //
                     // Skip any blanks
                     //
-                    while ( *Curr == L' ' ) {
+                    while (*Curr == L' ')
+                    {
 
                         Curr++;
                     }
 
-                    MatchedEntry = LookupAccessMaskInTable( Curr, 0, LookupFlags );
+                    MatchedEntry = LookupAccessMaskInTable(Curr, 0, LookupFlags);
 
-                    if ( MatchedEntry ) {
+                    if (MatchedEntry)
+                    {
 
                         Mask |= MatchedEntry->Value;
                         Curr += MatchedEntry->KeyLen;
-
-                    } else {
+                    }
+                    else
+                    {
 
                         //
                         // If the rights couldn't be looked up, see if it's a converted mask
                         //
 
-                        Mask = wcstoul( Curr, &MaskEnd, 0 );
+                        Mask = wcstoul(Curr, &MaskEnd, 0);
 
-                        if ( MaskEnd != Curr ) {
+                        if (MaskEnd != Curr)
+                        {
 
                             Curr = MaskEnd;
-
-                        } else {
+                        }
+                        else
+                        {
                             //
                             // Found an invalid right
                             //
@@ -2873,7 +2792,8 @@ Return Value:
                     }
                 }
 
-                if ( Err != ERROR_SUCCESS ) {
+                if (Err != ERROR_SUCCESS)
+                {
 
                     break;
                 }
@@ -2881,40 +2801,49 @@ Return Value:
                 //
                 // If that worked, we'll get the ids
                 //
-                for ( j = 0; j < 2; j++ ) {
+                for (j = 0; j < 2; j++)
+                {
 
                     //
                     // skip any space before ;
                     //
-                    while(*Curr == L' ' ) {
+                    while (*Curr == L' ')
+                    {
                         Curr++;
                     }
 
-                    if ( *Curr != SDDL_SEPERATORC ) {
+                    if (*Curr != SDDL_SEPERATORC)
+                    {
 
-                        wcsncpy( ConvertGuidString, Curr, STRING_GUID_LEN );
-                        ConvertGuidString[ STRING_GUID_LEN ] = UNICODE_NULL;
+                        wcsncpy(ConvertGuidString, Curr, STRING_GUID_LEN);
+                        ConvertGuidString[STRING_GUID_LEN] = UNICODE_NULL;
 
-                        if ( j == 0 ) {
+                        if (j == 0)
+                        {
 
 
-                            if ( UuidFromStringW( ConvertGuidString, &ObjGuid ) == RPC_S_OK ) {
+                            if (UuidFromStringW(ConvertGuidString, &ObjGuid) == RPC_S_OK)
+                            {
 
                                 ObjId = &ObjGuid;
-
-                            } else {
+                            }
+                            else
+                            {
 
                                 Err = RPC_S_INVALID_STRING_UUID;
                                 break;
                             }
+                        }
+                        else
+                        {
 
-                        } else {
-
-                            if ( UuidFromStringW( ConvertGuidString, &IObjGuid ) == RPC_S_OK ) {
+                            if (UuidFromStringW(ConvertGuidString, &IObjGuid) == RPC_S_OK)
+                            {
 
                                 IObjId = &IObjGuid;
-
-                            } else {
+                            }
+                            else
+                            {
 
                                 Err = RPC_S_INVALID_STRING_UUID;
                                 break;
@@ -2923,19 +2852,19 @@ Return Value:
 
                         // success
                         Curr += STRING_GUID_LEN;
-                        if ( *Curr != SDDL_SEPERATORC &&
-                             *Curr != L' ' ) {
+                        if (*Curr != SDDL_SEPERATORC && *Curr != L' ')
+                        {
 
                             Err = RPC_S_INVALID_STRING_UUID;
                             break;
                         }
-
                     }
 
                     Curr++;
                 }
 
-                if ( Err != ERROR_SUCCESS ) {
+                if (Err != ERROR_SUCCESS)
+                {
 
                     break;
                 }
@@ -2943,57 +2872,61 @@ Return Value:
                 //
                 // skip any space before ;
                 //
-                while(*Curr == L' ' ) {
+                while (*Curr == L' ')
+                {
                     Curr++;
                 }
 
                 //
                 // Finally, the SID
                 //
-                if ( ERROR_SUCCESS == Err ) {
+                if (ERROR_SUCCESS == Err)
+                {
 
-                    PWSTR   End;
-                    Err = LocalGetSidForString( Curr,
-                                                &SidPtr,
-                                                &End,
-                                                &FreeSid,
-                                                RootDomainSid,
-                                                DomainSid,
-                                                tSidLookupDomOrRootDomRelativeTable,
-                                                DefaultToDomain );
+                    PWSTR End;
+                    Err = LocalGetSidForString(Curr, &SidPtr, &End, &FreeSid, RootDomainSid, DomainSid,
+                                               tSidLookupDomOrRootDomRelativeTable, DefaultToDomain);
 
-                    if ( Err == ERROR_SUCCESS ) {
+                    if (Err == ERROR_SUCCESS)
+                    {
 
-                        if ( End == NULL ) {
+                        if (End == NULL)
+                        {
                             Err = ERROR_INVALID_ACL;
-                        } else {
+                        }
+                        else
+                        {
 
-                            while(*End == L' ' ) {
+                            while (*End == L' ')
+                            {
                                 End++;
                             }
                             //
                             // a ace must be terminated by ')'
                             //
-                            if ( *End != SDDL_ACE_ENDC ) {
+                            if (*End != SDDL_ACE_ENDC)
+                            {
                                 Err = ERROR_INVALID_ACL;
-
-                            } else {
+                            }
+                            else
+                            {
 
                                 Curr = End + 1;
 
-                                if ( !SidPtr ) {
+                                if (!SidPtr)
+                                {
                                     Err = ERROR_INVALID_ACL;
                                 }
                             }
                         }
-
                     }
                 }
 
                 //
                 // Quit on an error
                 //
-                if ( Err != ERROR_SUCCESS ) {
+                if (Err != ERROR_SUCCESS)
+                {
 
                     break;
                 }
@@ -3005,44 +2938,47 @@ Return Value:
                 //
                 // First, make sure we have the room for it
                 //
-                switch ( Type ) {
+                switch (Type)
+                {
                 case ACCESS_ALLOWED_ACE_TYPE:
                 case ACCESS_DENIED_ACE_TYPE:
                 case SYSTEM_AUDIT_ACE_TYPE:
                 case SYSTEM_ALARM_ACE_TYPE:
 
-                    AceSize = sizeof( ACCESS_ALLOWED_ACE );
+                    AceSize = sizeof(ACCESS_ALLOWED_ACE);
                     break;
 
                 case ACCESS_ALLOWED_OBJECT_ACE_TYPE:
                 case ACCESS_DENIED_OBJECT_ACE_TYPE:
                 case SYSTEM_AUDIT_OBJECT_ACE_TYPE:
                 case SYSTEM_ALARM_OBJECT_ACE_TYPE:
-                    AceSize = sizeof( KNOWN_OBJECT_ACE );
+                    AceSize = sizeof(KNOWN_OBJECT_ACE);
 
-                    if ( ObjId ) {
+                    if (ObjId)
+                    {
 
-                        AceSize += sizeof ( GUID );
+                        AceSize += sizeof(GUID);
                     }
 
-                    if ( IObjId ) {
+                    if (IObjId)
+                    {
 
-                        AceSize += sizeof ( GUID );
+                        AceSize += sizeof(GUID);
                     }
                     break;
 
                 default:
                     Err = ERROR_INVALID_ACL;
                     break;
-
                 }
 
-                if ( Err != ERROR_SUCCESS ) {
+                if (Err != ERROR_SUCCESS)
+                {
 
                     break;
                 }
 
-                AceSize += RtlLengthSid( SidPtr )  - sizeof( ULONG );
+                AceSize += RtlLengthSid(SidPtr) - sizeof(ULONG);
 
                 if (AceSize + AclUsed > AclSize)
                 {
@@ -3050,19 +2986,20 @@ Return Value:
                     // We'll have to reallocate, since our buffer isn't
                     // big enough...
                     //
-                    PACL  NewAcl;
-                    DWORD NewSize = AclSize + ( ( Acls - i ) * AceSize );
+                    PACL NewAcl;
+                    DWORD NewSize = AclSize + ((Acls - i) * AceSize);
 
-                    NewAcl = ( PACL )LocalAlloc( LMEM_FIXED | LMEM_ZEROINIT,
-                                                 NewSize );
-                    if ( NewAcl == NULL ) {
+                    NewAcl = (PACL)LocalAlloc(LMEM_FIXED | LMEM_ZEROINIT, NewSize);
+                    if (NewAcl == NULL)
+                    {
 
-                        LocalFree( *Acl );
+                        LocalFree(*Acl);
                         *Acl = NULL;
 
-                        if ( FreeSid == TRUE ) {
+                        if (FreeSid == TRUE)
+                        {
 
-                            LocalFree( SidPtr );
+                            LocalFree(SidPtr);
                             SidPtr = NULL;
 
                             FreeSid = FALSE;
@@ -3070,97 +3007,64 @@ Return Value:
 
                         Err = ERROR_NOT_ENOUGH_MEMORY;
                         break;
+                    }
+                    else
+                    {
 
-                    } else {
+                        memcpy(NewAcl, *Acl, AclSize);
+                        NewAcl->AclSize = (USHORT)NewSize;
 
-                        memcpy( NewAcl, *Acl, AclSize );
-                        NewAcl->AclSize = ( USHORT )NewSize;
-
-                        LocalFree( *Acl );
+                        LocalFree(*Acl);
                         *Acl = NewAcl;
 
                         AclSize = NewSize;
                     }
-
                 }
 
                 AclUsed += AceSize;
 
-                SetLastError( ERROR_SUCCESS );
+                SetLastError(ERROR_SUCCESS);
 
                 switch (Type)
                 {
                 case SYSTEM_AUDIT_ACE_TYPE:
-                    OpRes = AddAuditAccessAceEx( *Acl,
-                                                 ACL_REVISION,
-                                                 Flags &
-                                                     ~(SUCCESSFUL_ACCESS_ACE_FLAG |
-                                                       FAILED_ACCESS_ACE_FLAG),
-                                                 Mask,
-                                                 SidPtr,
-                                                 Flags & SUCCESSFUL_ACCESS_ACE_FLAG,
-                                                 Flags & FAILED_ACCESS_ACE_FLAG );
+                    OpRes = AddAuditAccessAceEx(
+                        *Acl, ACL_REVISION, Flags & ~(SUCCESSFUL_ACCESS_ACE_FLAG | FAILED_ACCESS_ACE_FLAG), Mask,
+                        SidPtr, Flags & SUCCESSFUL_ACCESS_ACE_FLAG, Flags & FAILED_ACCESS_ACE_FLAG);
                     break;
 
                 case ACCESS_ALLOWED_ACE_TYPE:
-                    OpRes = AddAccessAllowedAceEx( *Acl,
-                                                   ACL_REVISION,
-                                                   Flags,
-                                                   Mask,
-                                                   SidPtr );
+                    OpRes = AddAccessAllowedAceEx(*Acl, ACL_REVISION, Flags, Mask, SidPtr);
 
                     break;
 
                 case ACCESS_DENIED_ACE_TYPE:
-                    OpRes = AddAccessDeniedAceEx( *Acl,
-                                                  ACL_REVISION,
-                                                   Flags,
-                                                  Mask,
-                                                  SidPtr );
+                    OpRes = AddAccessDeniedAceEx(*Acl, ACL_REVISION, Flags, Mask, SidPtr);
 
                     break;
 
                 case SYSTEM_AUDIT_OBJECT_ACE_TYPE:
-                    OpRes = AddAuditAccessObjectAce( *Acl,
-                                                     ACL_REVISION_DS,
-                                                     Flags,
-                                                     Mask,
-                                                     ObjId,
-                                                     IObjId,
-                                                     SidPtr,
-                                                     Flags & SUCCESSFUL_ACCESS_ACE_FLAG,
-                                                     Flags & FAILED_ACCESS_ACE_FLAG );
+                    OpRes = AddAuditAccessObjectAce(*Acl, ACL_REVISION_DS, Flags, Mask, ObjId, IObjId, SidPtr,
+                                                    Flags & SUCCESSFUL_ACCESS_ACE_FLAG, Flags & FAILED_ACCESS_ACE_FLAG);
                     break;
 
                 case ACCESS_ALLOWED_OBJECT_ACE_TYPE:
-                    OpRes = AddAccessAllowedObjectAce( *Acl,
-                                                       ACL_REVISION_DS,
-                                                       Flags,
-                                                       Mask,
-                                                       ObjId,
-                                                       IObjId,
-                                                        SidPtr );
+                    OpRes = AddAccessAllowedObjectAce(*Acl, ACL_REVISION_DS, Flags, Mask, ObjId, IObjId, SidPtr);
                     break;
 
                 case ACCESS_DENIED_OBJECT_ACE_TYPE:
-                    OpRes = AddAccessDeniedObjectAce( *Acl,
-                                                      ACL_REVISION_DS,
-                                                      Flags,
-                                                      Mask,
-                                                      ObjId,
-                                                      IObjId,
-                                                      SidPtr );
+                    OpRes = AddAccessDeniedObjectAce(*Acl, ACL_REVISION_DS, Flags, Mask, ObjId, IObjId, SidPtr);
 
                     break;
 
                 default:
-                    SetLastError( ERROR_INVALID_DATATYPE );
+                    SetLastError(ERROR_INVALID_DATATYPE);
                     OpRes = FALSE;
                     break;
-
                 }
 
-                if ( OpRes == FALSE ) {
+                if (OpRes == FALSE)
+                {
 
                     Err = GetLastError();
                     break;
@@ -3169,40 +3073,44 @@ Return Value:
                 //
                 // Clean up whatever memory we have to
                 //
-                if ( FreeSid == TRUE ) {
+                if (FreeSid == TRUE)
+                {
 
-                    LocalFree( SidPtr );
+                    LocalFree(SidPtr);
                 }
 
                 SidPtr = NULL;
 
-                if ( *Curr == SDDL_ACE_BEGINC ) {
+                if (*Curr == SDDL_ACE_BEGINC)
+                {
 
                     Curr++;
                 }
-
             }
 
             //
             // If something didn't work, clean up
             //
-            if ( Err != ERROR_SUCCESS ) {
+            if (Err != ERROR_SUCCESS)
+            {
 
-                LocalFree( *Acl );
+                LocalFree(*Acl);
                 *Acl = NULL;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // Set a more realistic acl size
                 //
-                ( *Acl )->AclSize = ( USHORT )AclUsed;
+                (*Acl)->AclSize = (USHORT)AclUsed;
             }
 
             //
             // free any SIDs buffer used
             //
-            if ( FreeSid && SidPtr ) {
+            if (FreeSid && SidPtr)
+            {
                 LocalFree(SidPtr);
                 SidPtr = NULL;
             }
@@ -3211,19 +3119,13 @@ Return Value:
         }
     }
 
-    return(Err);
+    return (Err);
 }
 
 
 DWORD
-LocalConvertAclToString(
-    IN PACL Acl,
-    IN BOOLEAN AclPresent,
-    IN BOOLEAN ConvertAsDacl,
-    OUT PWSTR *AclString,
-    OUT PDWORD AclStringSize,
-    IN PSID RootDomainSid OPTIONAL
-    )
+LocalConvertAclToString(IN PACL Acl, IN BOOLEAN AclPresent, IN BOOLEAN ConvertAsDacl, OUT PWSTR *AclString,
+                        OUT PDWORD AclStringSize, IN PSID RootDomainSid OPTIONAL)
 /*++
 
 Routine Description:
@@ -3272,8 +3174,8 @@ Return Value:
 
 --*/
 {
-    DWORD   Err = ERROR_SUCCESS;
-    DWORD   AclSize = 0, MaskSize;
+    DWORD Err = ERROR_SUCCESS;
+    DWORD AclSize = 0, MaskSize;
     PACE_HEADER AceHeader;
     ULONG i, j;
     PWSTR *SidStrings = NULL, Curr, Guid;
@@ -3284,56 +3186,51 @@ Return Value:
     PKNOWN_ACE KnownAce;
     PKNOWN_OBJECT_ACE KnownObjectAce;
     ACCESS_MASK AccessMask;
-    PSID Sid, pSidSA=NULL;
+    PSID Sid, pSidSA = NULL;
     GUID *Obj, *Inherit;
     ULONG LookupFlags;
-    ULONG AceFlags[ ] = {
-        OBJECT_INHERIT_ACE,
-        CONTAINER_INHERIT_ACE,
-        NO_PROPAGATE_INHERIT_ACE,
-        INHERIT_ONLY_ACE,
-        INHERITED_ACE,
-        SUCCESSFUL_ACCESS_ACE_FLAG,
-        FAILED_ACCESS_ACE_FLAG
-        };
+    ULONG AceFlags[] = { OBJECT_INHERIT_ACE, CONTAINER_INHERIT_ACE,      NO_PROPAGATE_INHERIT_ACE, INHERIT_ONLY_ACE,
+                         INHERITED_ACE,      SUCCESSFUL_ACCESS_ACE_FLAG, FAILED_ACCESS_ACE_FLAG };
 
 
-    if ( AclString == NULL || AclStringSize == NULL ) {
-        return(ERROR_INVALID_PARAMETER);
+    if (AclString == NULL || AclStringSize == NULL)
+    {
+        return (ERROR_INVALID_PARAMETER);
     }
 
     //
-    // treat the case when (AclPresent == TRUE and Acl == NULL) 
-    // same as the case when AclPresent == FALSE. 
-    // This fix is to be compatible with IsValidSecurityDescriptor() 
+    // treat the case when (AclPresent == TRUE and Acl == NULL)
+    // same as the case when AclPresent == FALSE.
+    // This fix is to be compatible with IsValidSecurityDescriptor()
     // when ACL_PRESENT bit is set and Acl == NULL
     //
 
-    if ( !AclPresent || 
-         (AclPresent &&  (Acl == NULL) ) ) {
+    if (!AclPresent || (AclPresent && (Acl == NULL)))
+    {
 
         *AclString = NULL;
         *AclStringSize = 0;
-        return( ERROR_SUCCESS );
-
+        return (ERROR_SUCCESS);
     }
 
     //
     // If the ace count is 0, then it's an empty acl, and we don't handle those...
     //
-    if ( Acl->AceCount == 0 ) {
+    if (Acl->AceCount == 0)
+    {
 
         *AclString = NULL;
         *AclStringSize = 0;
-        return( ERROR_SUCCESS );
-
+        return (ERROR_SUCCESS);
     }
 
-    if ( ConvertAsDacl ) {
+    if (ConvertAsDacl)
+    {
 
         LookupFlags = SDDL_VALID_DACL;
-
-    } else {
+    }
+    else
+    {
 
         LookupFlags = SDDL_VALID_SACL;
     }
@@ -3341,49 +3238,54 @@ Return Value:
     //
     // Allocate buffers to hold sids that are looked up
     //
-    SidStrings = LocalAlloc( LMEM_FIXED | LMEM_ZEROINIT, Acl->AceCount * sizeof( PWSTR ) );
+    SidStrings = LocalAlloc(LMEM_FIXED | LMEM_ZEROINIT, Acl->AceCount * sizeof(PWSTR));
 
-    if ( SidStrings == NULL ) {
+    if (SidStrings == NULL)
+    {
 
-        return( ERROR_NOT_ENOUGH_MEMORY );
+        return (ERROR_NOT_ENOUGH_MEMORY);
     }
 
-    SidFrees = LocalAlloc( LMEM_FIXED | LMEM_ZEROINIT, Acl->AceCount * sizeof( BOOLEAN ) );
+    SidFrees = LocalAlloc(LMEM_FIXED | LMEM_ZEROINIT, Acl->AceCount * sizeof(BOOLEAN));
 
-    if ( SidFrees == NULL ) {
+    if (SidFrees == NULL)
+    {
 
-        LocalFree( SidStrings );
-        return( ERROR_NOT_ENOUGH_MEMORY );
+        LocalFree(SidStrings);
+        return (ERROR_NOT_ENOUGH_MEMORY);
     }
 
-    pMaskAsString = LocalAlloc( LMEM_FIXED | LMEM_ZEROINIT, Acl->AceCount * sizeof( UINT ) );
+    pMaskAsString = LocalAlloc(LMEM_FIXED | LMEM_ZEROINIT, Acl->AceCount * sizeof(UINT));
 
-    if ( pMaskAsString == NULL ) {
+    if (pMaskAsString == NULL)
+    {
 
-        LocalFree( SidStrings );
-        LocalFree( SidFrees );
-        return( ERROR_NOT_ENOUGH_MEMORY );
+        LocalFree(SidStrings);
+        LocalFree(SidFrees);
+        return (ERROR_NOT_ENOUGH_MEMORY);
     }
 
-    AceHeader = ( PACE_HEADER )FirstAce( Acl );
+    AceHeader = (PACE_HEADER)FirstAce(Acl);
 
     //
     // Size the acl, so we know how big a buffer to allocate
     //
-    for(i = 0; i < Acl->AceCount && Err == ERROR_SUCCESS;
-        i++, AceHeader = ( PACE_HEADER )NextAce( AceHeader ) ) {
+    for (i = 0; i < Acl->AceCount && Err == ERROR_SUCCESS; i++, AceHeader = (PACE_HEADER)NextAce(AceHeader))
+    {
 
-        AclSize += sizeof( WCHAR );
+        AclSize += sizeof(WCHAR);
         //
         // First, the type
         //
-        MatchedEntry = LookupAceTypeInTable( NULL, ( ULONG )AceHeader->AceType, LookupFlags );
+        MatchedEntry = LookupAceTypeInTable(NULL, (ULONG)AceHeader->AceType, LookupFlags);
 
-        if ( MatchedEntry ) {
+        if (MatchedEntry)
+        {
 
-            AclSize += SDDL_SIZE_TAG( MatchedEntry->Key ) + SDDL_SIZE_SEP( SDDL_SEPERATORC );
-
-        } else {
+            AclSize += SDDL_SIZE_TAG(MatchedEntry->Key) + SDDL_SIZE_SEP(SDDL_SEPERATORC);
+        }
+        else
+        {
 
             //
             // Found an invalid type
@@ -3395,38 +3297,44 @@ Return Value:
         //
         // Next, process the ace flags
         //
-        for ( j = 0; j < sizeof( AceFlags ) / sizeof( ULONG ); j++ ) {
+        for (j = 0; j < sizeof(AceFlags) / sizeof(ULONG); j++)
+        {
 
-            if ( ( ULONG )AceHeader->AceFlags & ( AceFlags[ j ] ) ) {
+            if ((ULONG)AceHeader->AceFlags & (AceFlags[j]))
+            {
 
-                MatchedEntry = LookupAceFlagsInTable( 0, AceFlags[ j ], LookupFlags );
-                if ( MatchedEntry ) {
+                MatchedEntry = LookupAceFlagsInTable(0, AceFlags[j], LookupFlags);
+                if (MatchedEntry)
+                {
 
-                    AclSize += SDDL_SIZE_TAG( MatchedEntry->Key );
+                    AclSize += SDDL_SIZE_TAG(MatchedEntry->Key);
                 }
             }
         }
 
-        if ( Err != ERROR_SUCCESS ) {
+        if (Err != ERROR_SUCCESS)
+        {
 
             break;
+        }
+        else
+        {
 
-        } else {
-
-            AclSize += SDDL_SIZE_SEP( SDDL_SEPERATORC );
+            AclSize += SDDL_SIZE_SEP(SDDL_SEPERATORC);
         }
 
         //
         // Next, the rights and optionally the guids.  This gets done on a per ace type basis
         //
-        switch ( AceHeader->AceType ) {
+        switch (AceHeader->AceType)
+        {
         case ACCESS_ALLOWED_ACE_TYPE:
         case ACCESS_DENIED_ACE_TYPE:
         case SYSTEM_AUDIT_ACE_TYPE:
         case SYSTEM_ALARM_ACE_TYPE:
-            KnownAce = ( PKNOWN_ACE )AceHeader;
+            KnownAce = (PKNOWN_ACE)AceHeader;
             AccessMask = KnownAce->Mask;
-            Sid = ( PSID )&KnownAce->SidStart;
+            Sid = (PSID)&KnownAce->SidStart;
 
             break;
 
@@ -3434,19 +3342,21 @@ Return Value:
         case ACCESS_DENIED_OBJECT_ACE_TYPE:
         case SYSTEM_AUDIT_OBJECT_ACE_TYPE:
         case SYSTEM_ALARM_OBJECT_ACE_TYPE:
-            KnownObjectAce = ( PKNOWN_OBJECT_ACE )AceHeader;
+            KnownObjectAce = (PKNOWN_OBJECT_ACE)AceHeader;
             AccessMask = KnownObjectAce->Mask;
-            Sid = RtlObjectAceSid( AceHeader );
+            Sid = RtlObjectAceSid(AceHeader);
 
             //
             // Deal with potential guids
             //
-            if ( RtlObjectAceObjectType( AceHeader ) ) {
+            if (RtlObjectAceObjectType(AceHeader))
+            {
 
                 AclSize += STRING_GUID_SIZE;
             }
 
-            if ( RtlObjectAceInheritedObjectType( AceHeader ) ) {
+            if (RtlObjectAceInheritedObjectType(AceHeader))
+            {
 
                 AclSize += STRING_GUID_SIZE;
             }
@@ -3456,13 +3366,13 @@ Return Value:
         default:
             Err = ERROR_INVALID_ACL;
             break;
-
         }
 
         //
         // Size the rights
         //
-        if ( Err == ERROR_SUCCESS ) {
+        if (Err == ERROR_SUCCESS)
+        {
 
             MaskSize = 0;
             pMaskAsString[i] = 0;
@@ -3470,52 +3380,61 @@ Return Value:
             //
             // lookup for the exact value first
             //
-            MatchedEntry = LookupAccessMaskInTable( 0, AccessMask, LookupFlags );
+            MatchedEntry = LookupAccessMaskInTable(0, AccessMask, LookupFlags);
 
-            if ( MatchedEntry ) {
+            if (MatchedEntry)
+            {
 
                 pMaskAsString[i] = 1;
-                MaskSize += SDDL_SIZE_TAG( MatchedEntry->Key );
-
-            } else {
+                MaskSize += SDDL_SIZE_TAG(MatchedEntry->Key);
+            }
+            else
+            {
                 //
                 // look for each bit
                 //
-                for ( j = 0; j < 32; j++ ) {
+                for (j = 0; j < 32; j++)
+                {
 
-                    if ( AccessMask & ( 1 << j ) ) {
+                    if (AccessMask & (1 << j))
+                    {
 
-                        MatchedEntry = LookupAccessMaskInTable( 0, AccessMask & ( 1 << j ), LookupFlags );
+                        MatchedEntry = LookupAccessMaskInTable(0, AccessMask & (1 << j), LookupFlags);
 
-                        if ( MatchedEntry ) {
+                        if (MatchedEntry)
+                        {
 
-                            MaskSize += SDDL_SIZE_TAG( MatchedEntry->Key );
-
-                        } else {
+                            MaskSize += SDDL_SIZE_TAG(MatchedEntry->Key);
+                        }
+                        else
+                        {
 
                             //
                             // Found an invalid type.  We'll convert the whole thing to a string
                             //
                             pMaskAsString[i] = 2;
-                            MaskSize = 10 * sizeof( WCHAR );
+                            MaskSize = 10 * sizeof(WCHAR);
                             break;
                         }
                     }
                 }
             }
 
-            if ( Err != ERROR_SUCCESS ) {
+            if (Err != ERROR_SUCCESS)
+            {
 
                 break;
-
-            } else {
+            }
+            else
+            {
 
                 AclSize += MaskSize;
-                AclSize += SDDL_SIZE_SEP( SDDL_SEPERATORC );
+                AclSize += SDDL_SIZE_SEP(SDDL_SEPERATORC);
             }
         }
 
-        if ( Err != ERROR_SUCCESS ) {
+        if (Err != ERROR_SUCCESS)
+        {
 
             break;
         }
@@ -3523,86 +3442,92 @@ Return Value:
         //
         // Add in space for the guid seperators
         //
-        AclSize += 2 * SDDL_SIZE_SEP( SDDL_SEPERATORC );
+        AclSize += 2 * SDDL_SIZE_SEP(SDDL_SEPERATORC);
 
         //
         // Finally, lookup the sids
         //
-        MatchedSidEntry = LookupSidInTable( NULL,
-                                            Sid,
-                                            RootDomainSid,
-                                            NULL,
-                                            NULL,
-                                            FALSE,
-                                            &pSidSA );
+        MatchedSidEntry = LookupSidInTable(NULL, Sid, RootDomainSid, NULL, NULL, FALSE, &pSidSA);
 
         //
         // If we didn't find a match, try it as a sid string
         //
-        if ( MatchedSidEntry == NULL ) {
+        if (MatchedSidEntry == NULL)
+        {
 
-            if ( pSidSA ) {
+            if (pSidSA)
+            {
                 //
                 // when sid lookup finds the sid of SA, pSidSA is assigned to Sid
                 // so it doesn't need to be freed.
                 //
 
-                SidStrings[ i ] = LocalAlloc( LMEM_FIXED, (wcslen(SDDL_SCHEMA_ADMINISTRATORS)+1)*sizeof(TCHAR) );
+                SidStrings[i] = LocalAlloc(LMEM_FIXED, (wcslen(SDDL_SCHEMA_ADMINISTRATORS) + 1) * sizeof(TCHAR));
 
-                if ( SidStrings[ i ] == NULL ) {
+                if (SidStrings[i] == NULL)
+                {
 
                     Err = ERROR_NOT_ENOUGH_MEMORY;
                     break;
-
-                } else {
-                    wcscpy( SidStrings[ i ], SDDL_SCHEMA_ADMINISTRATORS );
-
-                    SidFrees[ i ] = TRUE;
                 }
+                else
+                {
+                    wcscpy(SidStrings[i], SDDL_SCHEMA_ADMINISTRATORS);
 
-            } else {
+                    SidFrees[i] = TRUE;
+                }
+            }
+            else
+            {
 
-                if ( ConvertSidToStringSidW( Sid, &SidStrings[ i ] ) == FALSE ) {
+                if (ConvertSidToStringSidW(Sid, &SidStrings[i]) == FALSE)
+                {
 
                     Err = GetLastError();
                     break;
+                }
+                else
+                {
 
-                } else {
-
-                    SidFrees[ i ] = TRUE;
+                    SidFrees[i] = TRUE;
                 }
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // If the entry that's been selected hasn't been initialized yet, do it now
             //
-            SidStrings[ i ] = MatchedSidEntry->Key;
+            SidStrings[i] = MatchedSidEntry->Key;
         }
-        AclSize += SDDL_SIZE_TAG( SidStrings[ i ] );
+        AclSize += SDDL_SIZE_TAG(SidStrings[i]);
 
 
-        AclSize += sizeof( WCHAR );  // Closing paren
-        AclSize += sizeof( WCHAR );  // Trailing NULL
+        AclSize += sizeof(WCHAR); // Closing paren
+        AclSize += sizeof(WCHAR); // Trailing NULL
     }
 
     //
     // If all of that worked, allocate the return buffer, and build the acl string
     //
-    if ( AclSize == 0 ) {
+    if (AclSize == 0)
+    {
         Err = ERROR_INVALID_ACL;
     }
 
-    if ( Err == ERROR_SUCCESS ) {
+    if (Err == ERROR_SUCCESS)
+    {
 
-        if ( AclSize % 2 != 0 ) {
+        if (AclSize % 2 != 0)
+        {
             AclSize++;
         }
 
-        *AclString = LocalAlloc( LMEM_FIXED, AclSize );
+        *AclString = LocalAlloc(LMEM_FIXED, AclSize);
 
-        if ( *AclString == NULL ) {
+        if (*AclString == NULL)
+        {
 
             Err = ERROR_NOT_ENOUGH_MEMORY;
         }
@@ -3611,17 +3536,18 @@ Return Value:
     //
     // Build the acl
     //
-    if ( Err == ERROR_SUCCESS ) {
+    if (Err == ERROR_SUCCESS)
+    {
 
         Curr = *AclString;
 
-        AceHeader = ( PACE_HEADER )FirstAce( Acl );
+        AceHeader = (PACE_HEADER)FirstAce(Acl);
 
         //
         // Size the acl, so we know how big a buffer to allocate
         //
-        for(i = 0; i < Acl->AceCount && Err == ERROR_SUCCESS;
-            i++, AceHeader = ( PACE_HEADER )NextAce( AceHeader ) ) {
+        for (i = 0; i < Acl->AceCount && Err == ERROR_SUCCESS; i++, AceHeader = (PACE_HEADER)NextAce(AceHeader))
+        {
 
             //
             // "("
@@ -3638,9 +3564,10 @@ Return Value:
             // First, the type, must find it
             // "T;"
             //
-            MatchedEntry = LookupAceTypeInTable( NULL, ( ULONG )AceHeader->AceType, LookupFlags );
-            if ( MatchedEntry ) {
-                wcscpy( Curr, MatchedEntry->Key );
+            MatchedEntry = LookupAceTypeInTable(NULL, (ULONG)AceHeader->AceType, LookupFlags);
+            if (MatchedEntry)
+            {
+                wcscpy(Curr, MatchedEntry->Key);
                 Curr += MatchedEntry->KeyLen;
             }
             *Curr = SDDL_SEPERATORC;
@@ -3650,19 +3577,20 @@ Return Value:
             // Next, process the ace flags
             // "CIIO;"
             //
-            for ( j = 0; j < sizeof( AceFlags ) / sizeof( ULONG ); j++ ) {
+            for (j = 0; j < sizeof(AceFlags) / sizeof(ULONG); j++)
+            {
 
-                if ( ( ULONG )AceHeader->AceFlags & ( AceFlags[ j ] ) ) {
+                if ((ULONG)AceHeader->AceFlags & (AceFlags[j]))
+                {
 
-                    MatchedEntry = LookupAceFlagsInTable( 0, AceFlags[ j ], LookupFlags );
+                    MatchedEntry = LookupAceFlagsInTable(0, AceFlags[j], LookupFlags);
 
-                    if ( MatchedEntry ) {
+                    if (MatchedEntry)
+                    {
 
-                        wcscpy( Curr, MatchedEntry->Key );
-                        Curr+= MatchedEntry->KeyLen;
-
+                        wcscpy(Curr, MatchedEntry->Key);
+                        Curr += MatchedEntry->KeyLen;
                     }
-
                 }
             }
             *Curr = SDDL_SEPERATORC;
@@ -3674,14 +3602,15 @@ Return Value:
             Obj = NULL;
             Inherit = NULL;
 
-            switch ( AceHeader->AceType ) {
+            switch (AceHeader->AceType)
+            {
             case ACCESS_ALLOWED_ACE_TYPE:
             case ACCESS_DENIED_ACE_TYPE:
             case SYSTEM_AUDIT_ACE_TYPE:
             case SYSTEM_ALARM_ACE_TYPE:
-                KnownAce = ( PKNOWN_ACE )AceHeader;
+                KnownAce = (PKNOWN_ACE)AceHeader;
                 AccessMask = KnownAce->Mask;
-                Sid = ( PSID )&KnownAce->SidStart;
+                Sid = (PSID)&KnownAce->SidStart;
 
                 break;
 
@@ -3689,58 +3618,64 @@ Return Value:
             case ACCESS_DENIED_OBJECT_ACE_TYPE:
             case SYSTEM_AUDIT_OBJECT_ACE_TYPE:
             case SYSTEM_ALARM_OBJECT_ACE_TYPE:
-                KnownObjectAce = ( PKNOWN_OBJECT_ACE )AceHeader;
+                KnownObjectAce = (PKNOWN_OBJECT_ACE)AceHeader;
                 AccessMask = KnownObjectAce->Mask;
-                Sid = RtlObjectAceSid( AceHeader );
+                Sid = RtlObjectAceSid(AceHeader);
 
                 //
                 // Deal with potential guids
                 //
-                Inherit = RtlObjectAceInheritedObjectType( AceHeader );
-                Obj = RtlObjectAceObjectType( AceHeader );
+                Inherit = RtlObjectAceInheritedObjectType(AceHeader);
+                Obj = RtlObjectAceObjectType(AceHeader);
                 break;
             }
 
             //
             // Add the rights
             //
-            if ( pMaskAsString[i] == 2 ) {
+            if (pMaskAsString[i] == 2)
+            {
 
-                wcscpy( Curr, L"0x");
+                wcscpy(Curr, L"0x");
                 Curr += 2;
-                _ultow( AccessMask, Curr, 16 );
-                Curr += wcslen( Curr );
-
-            } else if ( pMaskAsString[i] == 1 ) {
+                _ultow(AccessMask, Curr, 16);
+                Curr += wcslen(Curr);
+            }
+            else if (pMaskAsString[i] == 1)
+            {
 
                 //
                 // lookup for the entire value first
                 //
-                MatchedEntry = LookupAccessMaskInTable( 0, AccessMask, LookupFlags );
+                MatchedEntry = LookupAccessMaskInTable(0, AccessMask, LookupFlags);
 
-                if ( MatchedEntry ) {
+                if (MatchedEntry)
+                {
 
-                    wcscpy( Curr, MatchedEntry->Key );
+                    wcscpy(Curr, MatchedEntry->Key);
                     Curr += MatchedEntry->KeyLen;
                 }
+            }
+            else
+            { // 0
 
-            } else { // 0
+                for (j = 0; j < 32; j++)
+                {
 
-                for ( j = 0; j < 32; j++ ) {
+                    if (AccessMask & (1 << j))
+                    {
 
-                    if ( AccessMask & (1 << j) ) {
+                        MatchedEntry = LookupAccessMaskInTable(0, AccessMask & (1 << j), LookupFlags);
 
-                        MatchedEntry = LookupAccessMaskInTable( 0, AccessMask & ( 1 << j ), LookupFlags );
+                        if (MatchedEntry)
+                        {
 
-                        if ( MatchedEntry ) {
-
-                            wcscpy( Curr, MatchedEntry->Key );
+                            wcscpy(Curr, MatchedEntry->Key);
                             Curr += MatchedEntry->KeyLen;
 
                         } // else shouldn't happen but if it happens
-                          // it is too late to convert it into 0x format
-                          // because the buffer is already allocated with smaller size.
-
+                        // it is too late to convert it into 0x format
+                        // because the buffer is already allocated with smaller size.
                     }
                 }
             }
@@ -3752,36 +3687,38 @@ Return Value:
             //
             // Optional object guid
             //
-            if ( Obj ) {
+            if (Obj)
+            {
 
-                Err = UuidToStringW( Obj, &Guid );
+                Err = UuidToStringW(Obj, &Guid);
 
-                if ( Err != ERROR_SUCCESS ) {
+                if (Err != ERROR_SUCCESS)
+                {
 
                     break;
                 }
 
-                wcscpy( Curr, Guid );
-                Curr += wcslen( Guid );
-                RpcStringFreeW( &Guid );
-
+                wcscpy(Curr, Guid);
+                Curr += wcslen(Guid);
+                RpcStringFreeW(&Guid);
             }
             *Curr = SDDL_SEPERATORC;
             Curr++;
 
-            if ( Inherit ) {
+            if (Inherit)
+            {
 
-                Err = UuidToStringW( Inherit, &Guid );
+                Err = UuidToStringW(Inherit, &Guid);
 
-                if ( Err != ERROR_SUCCESS ) {
+                if (Err != ERROR_SUCCESS)
+                {
 
                     break;
                 }
 
-                wcscpy( Curr, Guid );
-                Curr += wcslen( Guid );
-                RpcStringFreeW( &Guid );
-
+                wcscpy(Curr, Guid);
+                Curr += wcslen(Guid);
+                RpcStringFreeW(&Guid);
             }
             *Curr = SDDL_SEPERATORC;
             Curr++;
@@ -3789,13 +3726,12 @@ Return Value:
             //
             // Finally, the sids
             //
-            wcscpy( Curr, SidStrings[ i ] );
-            Curr += wcslen( SidStrings[ i ] );
+            wcscpy(Curr, SidStrings[i]);
+            Curr += wcslen(SidStrings[i]);
 
             *Curr = SDDL_ACE_ENDC;
             Curr++;
             *Curr = UNICODE_NULL;
-
         }
     }
 
@@ -3804,45 +3740,44 @@ Return Value:
     // jinhuang: should always free the allocated buffer
     //
 
-//    if ( Err != ERROR_SUCCESS && SidStrings ) {
+    //    if ( Err != ERROR_SUCCESS && SidStrings ) {
 
-        for ( j = 0; j < Acl->AceCount; j++ ) {
+    for (j = 0; j < Acl->AceCount; j++)
+    {
 
-            if ( SidFrees[ j ] ) {
+        if (SidFrees[j])
+        {
 
-                LocalFree( SidStrings[ j ] );
-            }
+            LocalFree(SidStrings[j]);
         }
-//    }
+    }
+    //    }
 
-    LocalFree( SidStrings );
-    LocalFree( SidFrees );
-    LocalFree( pMaskAsString );
+    LocalFree(SidStrings);
+    LocalFree(SidFrees);
+    LocalFree(pMaskAsString);
 
-    if ( Err != ERROR_SUCCESS ) {
+    if (Err != ERROR_SUCCESS)
+    {
 
         LocalFree(*AclString);
         *AclString = NULL;
         *AclStringSize = 0;
-
-    } else {
+    }
+    else
+    {
 
         *AclStringSize = AclSize;
-
     }
 
-    return( Err );
+    return (Err);
 }
 
 
 DWORD
-LocalConvertSDToStringSD_Rev1(
-    IN  PSID RootDomainSid OPTIONAL,
-    IN  PSECURITY_DESCRIPTOR  SecurityDescriptor,
-    IN  SECURITY_INFORMATION  SecurityInformation,
-    OUT LPWSTR  *StringSecurityDescriptor,
-    OUT PULONG StringSecurityDescriptorLen OPTIONAL
-    )
+LocalConvertSDToStringSD_Rev1(IN PSID RootDomainSid OPTIONAL, IN PSECURITY_DESCRIPTOR SecurityDescriptor,
+                              IN SECURITY_INFORMATION SecurityInformation, OUT LPWSTR *StringSecurityDescriptor,
+                              OUT PULONG StringSecurityDescriptorLen OPTIONAL)
 /*++
 
 Routine Description:
@@ -3870,57 +3805,60 @@ Return Value:
 --*/
 {
     DWORD Err = ERROR_SUCCESS;
-    NTSTATUS Status=STATUS_SUCCESS;
+    NTSTATUS Status = STATUS_SUCCESS;
     DWORD ReturnBufferSize = 0, AclSize;
     PSID Owner = NULL, Group = NULL;
     PACL Dacl = NULL, Sacl = NULL;
-    BOOLEAN Defaulted, SaclPresent=FALSE, DaclPresent=FALSE;
+    BOOLEAN Defaulted, SaclPresent = FALSE, DaclPresent = FALSE;
     PWSTR OwnerString = NULL, GroupString = NULL, SaclString = NULL, DaclString = NULL;
     SECURITY_DESCRIPTOR_CONTROL ControlCode;
     ULONG Revision;
-    PWSTR DaclControl=NULL, SaclControl=NULL;
+    PWSTR DaclControl = NULL, SaclControl = NULL;
 
-    if ( SecurityDescriptor == NULL || StringSecurityDescriptor == NULL ) {
-        return(ERROR_INVALID_PARAMETER);
+    if (SecurityDescriptor == NULL || StringSecurityDescriptor == NULL)
+    {
+        return (ERROR_INVALID_PARAMETER);
     }
 
     //
     // Get the relevant security descriptor parts
     // based on the SecurityInforamtion input parameter
     //
-    if ( SecurityInformation & OWNER_SECURITY_INFORMATION ) {
+    if (SecurityInformation & OWNER_SECURITY_INFORMATION)
+    {
 
-        Status = RtlGetOwnerSecurityDescriptor( SecurityDescriptor, &Owner, &Defaulted );
+        Status = RtlGetOwnerSecurityDescriptor(SecurityDescriptor, &Owner, &Defaulted);
     }
 
-    if ( NT_SUCCESS( Status ) &&
-         SecurityInformation & GROUP_SECURITY_INFORMATION ) {
+    if (NT_SUCCESS(Status) && SecurityInformation & GROUP_SECURITY_INFORMATION)
+    {
 
-        Status = RtlGetGroupSecurityDescriptor( SecurityDescriptor, &Group, &Defaulted );
-
+        Status = RtlGetGroupSecurityDescriptor(SecurityDescriptor, &Group, &Defaulted);
     }
 
-    if ( NT_SUCCESS( Status ) &&
-         SecurityInformation & DACL_SECURITY_INFORMATION ) {
+    if (NT_SUCCESS(Status) && SecurityInformation & DACL_SECURITY_INFORMATION)
+    {
 
-        Status = RtlGetDaclSecurityDescriptor( SecurityDescriptor, &DaclPresent, &Dacl, &Defaulted );
+        Status = RtlGetDaclSecurityDescriptor(SecurityDescriptor, &DaclPresent, &Dacl, &Defaulted);
     }
 
-    if ( NT_SUCCESS( Status ) &&
-         SecurityInformation & SACL_SECURITY_INFORMATION ) {
+    if (NT_SUCCESS(Status) && SecurityInformation & SACL_SECURITY_INFORMATION)
+    {
 
-        Status = RtlGetSaclSecurityDescriptor( SecurityDescriptor, &SaclPresent, &Sacl, &Defaulted );
+        Status = RtlGetSaclSecurityDescriptor(SecurityDescriptor, &SaclPresent, &Sacl, &Defaulted);
     }
 
-    if ( NT_SUCCESS( Status ) ) {
+    if (NT_SUCCESS(Status))
+    {
 
-        Status = RtlGetControlSecurityDescriptor ( SecurityDescriptor, &ControlCode, &Revision);
+        Status = RtlGetControlSecurityDescriptor(SecurityDescriptor, &ControlCode, &Revision);
     }
 
-    if ( !NT_SUCCESS( Status ) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        Err = RtlNtStatusToDosError( Status );
-        return( Err );
+        Err = RtlNtStatusToDosError(Status);
+        return (Err);
     }
 
     //
@@ -3931,27 +3869,24 @@ Return Value:
     //
     // Convert the owner and group, if they exist
     //
-    if ( Owner ) {
+    if (Owner)
+    {
 
-        Err = LocalGetStringForSid( Owner,
-                                    &OwnerString,
-                                    RootDomainSid
-                                  );
-
+        Err = LocalGetStringForSid(Owner, &OwnerString, RootDomainSid);
     }
 
-    if ( Err == ERROR_SUCCESS && Group ) {
+    if (Err == ERROR_SUCCESS && Group)
+    {
 
-        Err = LocalGetStringForSid( Group,
-                                    &GroupString,
-                                    RootDomainSid );
+        Err = LocalGetStringForSid(Group, &GroupString, RootDomainSid);
     }
 
     //
     // JINHUANG 3/10/98
     // get DACL control string
     //
-    if ( Err == ERROR_SUCCESS && ControlCode ) {
+    if (Err == ERROR_SUCCESS && ControlCode)
+    {
 
         Err = LocalGetStringForControl(ControlCode, SDDL_VALID_DACL, &DaclControl);
     }
@@ -3959,7 +3894,8 @@ Return Value:
     //
     // get SACL control string
     //
-    if ( Err == ERROR_SUCCESS && ControlCode ) {
+    if (Err == ERROR_SUCCESS && ControlCode)
+    {
 
         Err = LocalGetStringForControl(ControlCode, SDDL_VALID_SACL, &SaclControl);
     }
@@ -3967,16 +3903,13 @@ Return Value:
     //
     // SACL first because the size of DACL is needed later
     //
-    if ( Err == ERROR_SUCCESS && SaclPresent ) {
+    if (Err == ERROR_SUCCESS && SaclPresent)
+    {
 
 
-        Err = LocalConvertAclToString( Sacl,
-                                       SaclPresent,
-                                       FALSE,
-                                       &SaclString,
-                                       &AclSize,
-                                       RootDomainSid );
-        if ( Err == ERROR_SUCCESS ) {
+        Err = LocalConvertAclToString(Sacl, SaclPresent, FALSE, &SaclString, &AclSize, RootDomainSid);
+        if (Err == ERROR_SUCCESS)
+        {
 
             ReturnBufferSize += AclSize;
         }
@@ -3985,16 +3918,13 @@ Return Value:
     //
     // Then, the DACL
     //
-    if ( Err == ERROR_SUCCESS && DaclPresent ) {
+    if (Err == ERROR_SUCCESS && DaclPresent)
+    {
 
-        Err = LocalConvertAclToString( Dacl,
-                                       DaclPresent,
-                                       TRUE,
-                                       &DaclString,
-                                       &AclSize,
-                                       RootDomainSid );
+        Err = LocalConvertAclToString(Dacl, DaclPresent, TRUE, &DaclString, &AclSize, RootDomainSid);
 
-        if ( Err == ERROR_SUCCESS ) {
+        if (Err == ERROR_SUCCESS)
+        {
 
             ReturnBufferSize += AclSize;
         }
@@ -4003,118 +3933,128 @@ Return Value:
     //
     // Now, if all of that worked, allocate and build the return string
     //
-    if ( Err == ERROR_SUCCESS ) {
+    if (Err == ERROR_SUCCESS)
+    {
 
-        if ( OwnerString ) {
+        if (OwnerString)
+        {
 
-            ReturnBufferSize += ( wcslen( OwnerString ) * sizeof( WCHAR ) ) +
-                                SDDL_SIZE_TAG( SDDL_OWNER )  +
-                                SDDL_SIZE_SEP( SDDL_DELIMINATORC );
+            ReturnBufferSize +=
+                (wcslen(OwnerString) * sizeof(WCHAR)) + SDDL_SIZE_TAG(SDDL_OWNER) + SDDL_SIZE_SEP(SDDL_DELIMINATORC);
         }
 
-        if ( GroupString ) {
+        if (GroupString)
+        {
 
-            ReturnBufferSize += ( wcslen( GroupString ) * sizeof( WCHAR ) ) +
-                                SDDL_SIZE_TAG( SDDL_GROUP )  +
-                                SDDL_SIZE_SEP( SDDL_DELIMINATORC );
+            ReturnBufferSize +=
+                (wcslen(GroupString) * sizeof(WCHAR)) + SDDL_SIZE_TAG(SDDL_GROUP) + SDDL_SIZE_SEP(SDDL_DELIMINATORC);
         }
 
-        if ( DaclPresent ) {
+        if (DaclPresent)
+        {
 
-            ReturnBufferSize += SDDL_SIZE_TAG( SDDL_DACL )  +
-                                SDDL_SIZE_SEP( SDDL_DELIMINATORC );
+            ReturnBufferSize += SDDL_SIZE_TAG(SDDL_DACL) + SDDL_SIZE_SEP(SDDL_DELIMINATORC);
 
-            if ( DaclControl ) {
-                ReturnBufferSize += (wcslen( DaclControl ) * sizeof(WCHAR)) ;
+            if (DaclControl)
+            {
+                ReturnBufferSize += (wcslen(DaclControl) * sizeof(WCHAR));
             }
         }
 
-        if ( SaclPresent ) {
+        if (SaclPresent)
+        {
 
-            ReturnBufferSize += SDDL_SIZE_TAG( SDDL_SACL )  +
-                                SDDL_SIZE_SEP( SDDL_DELIMINATORC );
+            ReturnBufferSize += SDDL_SIZE_TAG(SDDL_SACL) + SDDL_SIZE_SEP(SDDL_DELIMINATORC);
 
-            if ( SaclControl ) {
-                ReturnBufferSize += (wcslen( SaclControl ) * sizeof(WCHAR)) ;
+            if (SaclControl)
+            {
+                ReturnBufferSize += (wcslen(SaclControl) * sizeof(WCHAR));
             }
         }
 
 
-        *StringSecurityDescriptor = LocalAlloc( LMEM_FIXED | LMEM_ZEROINIT,
-                                                ReturnBufferSize + sizeof( WCHAR ) );
+        *StringSecurityDescriptor = LocalAlloc(LMEM_FIXED | LMEM_ZEROINIT, ReturnBufferSize + sizeof(WCHAR));
 
-        if ( *StringSecurityDescriptor == NULL ) {
+        if (*StringSecurityDescriptor == NULL)
+        {
 
             Err = ERROR_NOT_ENOUGH_MEMORY;
-
-        } else {
+        }
+        else
+        {
 
             //
             // Build the string from the previously determined components.  Note that
             // if a component is not present, it is skipped.
             //
-            DWORD dwOffset=0;
+            DWORD dwOffset = 0;
 
-            if ( OwnerString ) {
+            if (OwnerString)
+            {
 
-                swprintf( *StringSecurityDescriptor, L"%ws%wc%ws",
-                          SDDL_OWNER, SDDL_DELIMINATORC, OwnerString );
+                swprintf(*StringSecurityDescriptor, L"%ws%wc%ws", SDDL_OWNER, SDDL_DELIMINATORC, OwnerString);
 
                 dwOffset = wcslen(*StringSecurityDescriptor);
             }
 
-            if ( GroupString ) {
+            if (GroupString)
+            {
 
-                swprintf( *StringSecurityDescriptor + dwOffset,
-                          L"%ws%wc%ws", SDDL_GROUP, SDDL_DELIMINATORC, GroupString );
+                swprintf(*StringSecurityDescriptor + dwOffset, L"%ws%wc%ws", SDDL_GROUP, SDDL_DELIMINATORC,
+                         GroupString);
 
-                Revision = wcslen( *StringSecurityDescriptor + dwOffset ); // temp use
+                Revision = wcslen(*StringSecurityDescriptor + dwOffset); // temp use
                 dwOffset += Revision;
-
             }
 
-            if ( DaclPresent ) {
+            if (DaclPresent)
+            {
 
-                if ( DaclControl ) {
-                    swprintf( *StringSecurityDescriptor + dwOffset,
-                          L"%ws%wc%ws", SDDL_DACL, SDDL_DELIMINATORC, DaclControl );
-                } else {
-                    swprintf( *StringSecurityDescriptor + dwOffset,
-                          L"%ws%wc", SDDL_DACL, SDDL_DELIMINATORC );
+                if (DaclControl)
+                {
+                    swprintf(*StringSecurityDescriptor + dwOffset, L"%ws%wc%ws", SDDL_DACL, SDDL_DELIMINATORC,
+                             DaclControl);
+                }
+                else
+                {
+                    swprintf(*StringSecurityDescriptor + dwOffset, L"%ws%wc", SDDL_DACL, SDDL_DELIMINATORC);
                 }
 
-                Revision = wcslen( *StringSecurityDescriptor + dwOffset );
+                Revision = wcslen(*StringSecurityDescriptor + dwOffset);
                 dwOffset += Revision;
 
-                if ( DaclString ) {
+                if (DaclString)
+                {
 
-                    wcscpy( *StringSecurityDescriptor + dwOffset, DaclString );
+                    wcscpy(*StringSecurityDescriptor + dwOffset, DaclString);
 
-                    Revision = wcslen( *StringSecurityDescriptor + dwOffset ); // temp use
-                    dwOffset += Revision;  // (AclSize/sizeof(WCHAR));
+                    Revision = wcslen(*StringSecurityDescriptor + dwOffset); // temp use
+                    dwOffset += Revision;                                    // (AclSize/sizeof(WCHAR));
                 }
-
             }
 
-            if ( SaclPresent ) {
+            if (SaclPresent)
+            {
 
-                if ( SaclControl ) {
+                if (SaclControl)
+                {
 
-                    swprintf( *StringSecurityDescriptor + dwOffset,
-                              L"%ws%wc%ws", SDDL_SACL, SDDL_DELIMINATORC, SaclControl );
-                } else {
-                    swprintf( *StringSecurityDescriptor + dwOffset,
-                              L"%ws%wc", SDDL_SACL, SDDL_DELIMINATORC );
+                    swprintf(*StringSecurityDescriptor + dwOffset, L"%ws%wc%ws", SDDL_SACL, SDDL_DELIMINATORC,
+                             SaclControl);
+                }
+                else
+                {
+                    swprintf(*StringSecurityDescriptor + dwOffset, L"%ws%wc", SDDL_SACL, SDDL_DELIMINATORC);
                 }
 
-                Revision = wcslen( *StringSecurityDescriptor + dwOffset );
+                Revision = wcslen(*StringSecurityDescriptor + dwOffset);
                 dwOffset += Revision;
 
-                if ( SaclString ) {
+                if (SaclString)
+                {
 
-                    wcscpy( *StringSecurityDescriptor + dwOffset, SaclString);
+                    wcscpy(*StringSecurityDescriptor + dwOffset, SaclString);
                 }
-
             }
 
             //
@@ -4122,8 +4062,9 @@ Return Value:
             // output the buffer size
             //
 
-            if ( StringSecurityDescriptorLen ) {
-                *StringSecurityDescriptorLen = ReturnBufferSize/sizeof(WCHAR);
+            if (StringSecurityDescriptorLen)
+            {
+                *StringSecurityDescriptorLen = ReturnBufferSize / sizeof(WCHAR);
             }
         }
     }
@@ -4132,38 +4073,31 @@ Return Value:
     //
     // Free any buffers that were allocated
     //
-    LocalFree( OwnerString );
-    LocalFree( GroupString );
-    LocalFree( SaclString );
-    LocalFree( DaclString );
+    LocalFree(OwnerString);
+    LocalFree(GroupString);
+    LocalFree(SaclString);
+    LocalFree(DaclString);
 
     //
     // JINHUANG 3/10/98
     // it's ok to free them even if they are NULL
     //
-    LocalFree( SaclControl );
-    LocalFree( DaclControl );
+    LocalFree(SaclControl);
+    LocalFree(DaclControl);
 
     //
     // decrement the SidLookup instance
     //
     InitializeSidLookupTable(STRSD_REINITIALIZE_LEAVE);
 
-    return( Err );
+    return (Err);
 }
 
 
-
-
 DWORD
-LocalConvertStringSDToSD_Rev1(
-    IN  PSID RootDomainSid OPTIONAL,
-    IN  PSID DomainSid OPTIONAL,
-    IN  BOOLEAN DefaultToDomain,
-    IN  LPCWSTR StringSecurityDescriptor,
-    OUT PSECURITY_DESCRIPTOR  *SecurityDescriptor,
-    OUT PULONG  SecurityDescriptorSize OPTIONAL
-    )
+LocalConvertStringSDToSD_Rev1(IN PSID RootDomainSid OPTIONAL, IN PSID DomainSid OPTIONAL, IN BOOLEAN DefaultToDomain,
+                              IN LPCWSTR StringSecurityDescriptor, OUT PSECURITY_DESCRIPTOR *SecurityDescriptor,
+                              OUT PULONG SecurityDescriptorSize OPTIONAL)
 /*++
 
 Routine Description:
@@ -4200,7 +4134,7 @@ Return Value:
 {
     DWORD Err = ERROR_SUCCESS;
     PSID Owner = NULL, Group = NULL;
-    PACL Dacl  = NULL, Sacl  = NULL;
+    PACL Dacl = NULL, Sacl = NULL;
     SECURITY_INFORMATION SeInfo = 0;
     SECURITY_DESCRIPTOR SD;
     PWSTR Curr, End;
@@ -4210,15 +4144,17 @@ Return Value:
     SID_IDENTIFIER_AUTHORITY UaspCreatorAuthority = SECURITY_CREATOR_SID_AUTHORITY;
     ULONG SDSize = 0;
     BOOLEAN DaclPresent = FALSE, SaclPresent = FALSE;
-    SECURITY_DESCRIPTOR_CONTROL DaclControl=0, SaclControl=0;
-    PSTRSD_SID_LOOKUP    tSidLookupDomOrRootDomRelativeTable = NULL;
+    SECURITY_DESCRIPTOR_CONTROL DaclControl = 0, SaclControl = 0;
+    PSTRSD_SID_LOOKUP tSidLookupDomOrRootDomRelativeTable = NULL;
 
 
-    if ( StringSecurityDescriptor == NULL || SecurityDescriptor == NULL ) {
-        return(ERROR_INVALID_PARAMETER);
+    if (StringSecurityDescriptor == NULL || SecurityDescriptor == NULL)
+    {
+        return (ERROR_INVALID_PARAMETER);
     }
 
-    if ( SecurityDescriptorSize ) {
+    if (SecurityDescriptorSize)
+    {
 
         *SecurityDescriptorSize = 0;
     }
@@ -4235,11 +4171,11 @@ Return Value:
     //
 
 
-
-    if (DomainSid) {
+    if (DomainSid)
+    {
 
         tSidLookupDomOrRootDomRelativeTable =
-            (PSTRSD_SID_LOOKUP) LocalAlloc(LMEM_ZEROINIT, sizeof(SidLookupDomOrRootDomRelative));
+            (PSTRSD_SID_LOOKUP)LocalAlloc(LMEM_ZEROINIT, sizeof(SidLookupDomOrRootDomRelative));
 
         //
         // table copy/init from the template-table
@@ -4247,24 +4183,24 @@ Return Value:
 
         if (tSidLookupDomOrRootDomRelativeTable)
 
-            memcpy(tSidLookupDomOrRootDomRelativeTable,
-                   SidLookupDomOrRootDomRelative,
+            memcpy(tSidLookupDomOrRootDomRelativeTable, SidLookupDomOrRootDomRelative,
                    sizeof(SidLookupDomOrRootDomRelative));
 
         else
 
             Err = ERROR_NOT_ENOUGH_MEMORY;
-
     }
 
     //
     // Now, we'll just start parsing and building
     //
-    Curr = ( PWSTR )StringSecurityDescriptor;
+    Curr = (PWSTR)StringSecurityDescriptor;
 
-    while ( Err == ERROR_SUCCESS && Curr ) {
+    while (Err == ERROR_SUCCESS && Curr)
+    {
 
-        switch( *Curr ) {
+        switch (*Curr)
+        {
 
         //
         // Get the Owner sid
@@ -4273,22 +4209,19 @@ Return Value:
 
             Err = ERROR_INVALID_PARAMETER;
 
-            if ( *(Curr+1) == SDDL_DELIMINATORC ) {
+            if (*(Curr + 1) == SDDL_DELIMINATORC)
+            {
 
                 Curr += 2;
 
-                if ( Owner == NULL )  {
+                if (Owner == NULL)
+                {
 
-                    Err = LocalGetSidForString( Curr,
-                                                &Owner,
-                                                &End,
-                                                &FreeOwner,
-                                                RootDomainSid,
-                                                DomainSid,
-                                                tSidLookupDomOrRootDomRelativeTable,
-                                                DefaultToDomain );
+                    Err = LocalGetSidForString(Curr, &Owner, &End, &FreeOwner, RootDomainSid, DomainSid,
+                                               tSidLookupDomOrRootDomRelativeTable, DefaultToDomain);
 
-                    if ( Err == ERROR_SUCCESS ) {
+                    if (Err == ERROR_SUCCESS)
+                    {
 
                         Curr = End;
                         SeInfo |= OWNER_SECURITY_INFORMATION;
@@ -4304,22 +4237,19 @@ Return Value:
 
             Err = ERROR_INVALID_PARAMETER;
 
-            if ( *(Curr+1) == SDDL_DELIMINATORC ) {
+            if (*(Curr + 1) == SDDL_DELIMINATORC)
+            {
 
                 Curr += 2;
 
-                if ( Group == NULL ) {
+                if (Group == NULL)
+                {
 
-                    Err = LocalGetSidForString( Curr,
-                                                &Group,
-                                                &End,
-                                                &FreeGroup,
-                                                RootDomainSid,
-                                                DomainSid,
-                                                tSidLookupDomOrRootDomRelativeTable,
-                                                DefaultToDomain );
+                    Err = LocalGetSidForString(Curr, &Group, &End, &FreeGroup, RootDomainSid, DomainSid,
+                                               tSidLookupDomOrRootDomRelativeTable, DefaultToDomain);
 
-                    if ( Err == ERROR_SUCCESS ) {
+                    if (Err == ERROR_SUCCESS)
+                    {
 
                         Curr = End;
                         SeInfo |= GROUP_SECURITY_INFORMATION;
@@ -4333,52 +4263,51 @@ Return Value:
         //
         case L'D':
 
-            if ( *(Curr+1) == SDDL_DELIMINATORC ) {
+            if (*(Curr + 1) == SDDL_DELIMINATORC)
+            {
 
                 Curr += 2;
 
-                if ( Dacl == NULL ) {
+                if (Dacl == NULL)
+                {
 
                     //
                     // JINHUANG: 3/10/98
                     // look for any security descriptor controls
                     //
-                    if ( *Curr != SDDL_ACE_BEGINC ) {
+                    if (*Curr != SDDL_ACE_BEGINC)
+                    {
 
-                        Err = LocalGetSDControlForString( Curr,
-                                                          SDDL_VALID_DACL,
-                                                          &DaclControl,
-                                                          &End );
-                        if ( Err == ERROR_SUCCESS ) {
+                        Err = LocalGetSDControlForString(Curr, SDDL_VALID_DACL, &DaclControl, &End);
+                        if (Err == ERROR_SUCCESS)
+                        {
                             Curr = End;
                         }
                     }
 
-                    if ( Err == ERROR_SUCCESS ) {
+                    if (Err == ERROR_SUCCESS)
+                    {
 
-                        Err = LocalGetAclForString( Curr,
-                                                    TRUE,
-                                                    &Dacl,
-                                                    &End,
-                                                    RootDomainSid,
-                                                    DomainSid,
-                                                    tSidLookupDomOrRootDomRelativeTable,
-                                                    DefaultToDomain );
+                        Err = LocalGetAclForString(Curr, TRUE, &Dacl, &End, RootDomainSid, DomainSid,
+                                                   tSidLookupDomOrRootDomRelativeTable, DefaultToDomain);
 
-                        if ( Err == ERROR_SUCCESS ) {
+                        if (Err == ERROR_SUCCESS)
+                        {
 
                             Curr = End;
                             SeInfo |= DACL_SECURITY_INFORMATION;
                             DaclPresent = TRUE;
                         }
                     }
-
-                } else {
+                }
+                else
+                {
 
                     Err = ERROR_INVALID_PARAMETER;
                 }
-
-            } else {
+            }
+            else
+            {
 
                 Err = ERROR_INVALID_PARAMETER;
             }
@@ -4389,52 +4318,51 @@ Return Value:
         //
         case L'S':
 
-            if ( *(Curr+1) == SDDL_DELIMINATORC ) {
+            if (*(Curr + 1) == SDDL_DELIMINATORC)
+            {
 
                 Curr += 2;
 
-                if ( Sacl == NULL ) {
+                if (Sacl == NULL)
+                {
 
                     //
                     // JINHUANG: 3/10/98
                     // look for any security descriptor controls
                     //
-                    if ( *Curr != SDDL_ACE_BEGINC ) {
+                    if (*Curr != SDDL_ACE_BEGINC)
+                    {
 
-                        Err = LocalGetSDControlForString( Curr,
-                                                          SDDL_VALID_SACL,
-                                                          &SaclControl,
-                                                          &End );
-                        if ( Err == ERROR_SUCCESS ) {
+                        Err = LocalGetSDControlForString(Curr, SDDL_VALID_SACL, &SaclControl, &End);
+                        if (Err == ERROR_SUCCESS)
+                        {
                             Curr = End;
                         }
                     }
 
-                    if ( Err == ERROR_SUCCESS ) {
+                    if (Err == ERROR_SUCCESS)
+                    {
 
-                        Err = LocalGetAclForString( Curr,
-                                                    FALSE,
-                                                    &Sacl,
-                                                    &End,
-                                                    RootDomainSid,
-                                                    DomainSid,
-                                                    tSidLookupDomOrRootDomRelativeTable,
-                                                    DefaultToDomain );
+                        Err = LocalGetAclForString(Curr, FALSE, &Sacl, &End, RootDomainSid, DomainSid,
+                                                   tSidLookupDomOrRootDomRelativeTable, DefaultToDomain);
 
-                        if ( Err == ERROR_SUCCESS ) {
+                        if (Err == ERROR_SUCCESS)
+                        {
 
                             Curr = End;
                             SeInfo |= SACL_SECURITY_INFORMATION;
                             SaclPresent = TRUE;
                         }
                     }
-
-                } else {
+                }
+                else
+                {
 
                     Err = ERROR_INVALID_PARAMETER;
                 }
-
-            } else {
+            }
+            else
+            {
 
                 Err = ERROR_INVALID_PARAMETER;
             }
@@ -4468,9 +4396,11 @@ Return Value:
     // Ok, if we have the information we need, we'll create the security
     // descriptor
     //
-    if ( Err == ERROR_SUCCESS ) {
+    if (Err == ERROR_SUCCESS)
+    {
 
-        if ( InitializeSecurityDescriptor(&SD, SECURITY_DESCRIPTOR_REVISION ) == FALSE ) {
+        if (InitializeSecurityDescriptor(&SD, SECURITY_DESCRIPTOR_REVISION) == FALSE)
+        {
 
             Err = GetLastError();
         }
@@ -4485,17 +4415,21 @@ Return Value:
         //
         // Now, add the owner and group
         //
-        if ( Err == ERROR_SUCCESS && Owner != NULL ) {
+        if (Err == ERROR_SUCCESS && Owner != NULL)
+        {
 
-            if ( SetSecurityDescriptorOwner(&SD, Owner, FALSE ) == FALSE ) {
+            if (SetSecurityDescriptorOwner(&SD, Owner, FALSE) == FALSE)
+            {
 
                 Err = GetLastError();
             }
         }
 
-        if ( Err == ERROR_SUCCESS && Group != NULL ) {
+        if (Err == ERROR_SUCCESS && Group != NULL)
+        {
 
-            if ( SetSecurityDescriptorGroup( &SD, Group, FALSE ) == FALSE ) {
+            if (SetSecurityDescriptorGroup(&SD, Group, FALSE) == FALSE)
+            {
 
                 Err = GetLastError();
             }
@@ -4504,57 +4438,65 @@ Return Value:
         //
         // Then the DACL and SACL
         //
-        if ( Err == ERROR_SUCCESS && DaclPresent ) {
+        if (Err == ERROR_SUCCESS && DaclPresent)
+        {
 
-            if ( SetSecurityDescriptorDacl( &SD, DaclPresent, Dacl, FALSE ) == FALSE ) {
-
-                Err = GetLastError();
-            }
-        }
-
-        if ( Err == ERROR_SUCCESS && SaclPresent ) {
-
-            if ( SetSecurityDescriptorSacl( &SD, SaclPresent, Sacl, FALSE ) == FALSE ) {
+            if (SetSecurityDescriptorDacl(&SD, DaclPresent, Dacl, FALSE) == FALSE)
+            {
 
                 Err = GetLastError();
             }
         }
 
+        if (Err == ERROR_SUCCESS && SaclPresent)
+        {
+
+            if (SetSecurityDescriptorSacl(&SD, SaclPresent, Sacl, FALSE) == FALSE)
+            {
+
+                Err = GetLastError();
+            }
+        }
     }
 
     //
     // Finally, we'll allocate our buffer and return
     //
-    if ( Err == ERROR_SUCCESS ) {
+    if (Err == ERROR_SUCCESS)
+    {
 
-        MakeSelfRelativeSD( &SD, *SecurityDescriptor, &SDSize );
+        MakeSelfRelativeSD(&SD, *SecurityDescriptor, &SDSize);
 
-        if ( GetLastError() == ERROR_INSUFFICIENT_BUFFER ) {
+        if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+        {
 
-            *SecurityDescriptor = (PSECURITY_DESCRIPTOR) LocalAlloc( LMEM_FIXED | LMEM_ZEROINIT,
-                                                                     SDSize );
+            *SecurityDescriptor = (PSECURITY_DESCRIPTOR)LocalAlloc(LMEM_FIXED | LMEM_ZEROINIT, SDSize);
 
-            if ( *SecurityDescriptor == NULL ) {
+            if (*SecurityDescriptor == NULL)
+            {
 
                 Err = ERROR_NOT_ENOUGH_MEMORY;
+            }
+            else
+            {
 
-            } else {
-
-                if ( MakeSelfRelativeSD( &SD, *SecurityDescriptor, &SDSize ) == FALSE ) {
+                if (MakeSelfRelativeSD(&SD, *SecurityDescriptor, &SDSize) == FALSE)
+                {
 
                     Err = GetLastError();
-                    LocalFree( *SecurityDescriptor );
+                    LocalFree(*SecurityDescriptor);
                     *SecurityDescriptor = NULL;
-
                 }
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // This should never happen
             //
-            if ( GetLastError() == ERROR_SUCCESS ) {
+            if (GetLastError() == ERROR_SUCCESS)
+            {
 
                 Err = ERROR_INSUFFICIENT_BUFFER;
             }
@@ -4564,7 +4506,8 @@ Return Value:
     //
     // Return the security descriptor size, if requested
     //
-    if ( Err == ERROR_SUCCESS && SecurityDescriptorSize ) {
+    if (Err == ERROR_SUCCESS && SecurityDescriptorSize)
+    {
 
         *SecurityDescriptorSize = SDSize;
     }
@@ -4572,20 +4515,20 @@ Return Value:
     //
     // Finally, free any memory we may have allocated...
     //
-    if ( FreeOwner == TRUE ) {
+    if (FreeOwner == TRUE)
+    {
 
-        LocalFree( Owner );
-
+        LocalFree(Owner);
     }
 
-    if ( FreeGroup == TRUE ) {
+    if (FreeGroup == TRUE)
+    {
 
-        LocalFree( Group );
-
+        LocalFree(Group);
     }
 
-    LocalFree( Dacl );
-    LocalFree( Sacl );
+    LocalFree(Dacl);
+    LocalFree(Sacl);
 
     if (tSidLookupDomOrRootDomRelativeTable)
 
@@ -4596,13 +4539,11 @@ Return Value:
     //
     InitializeSidLookupTable(STRSD_REINITIALIZE_LEAVE);
 
-    return( Err );
+    return (Err);
 }
 
 BOOLEAN
-InitializeSidLookupTable(
-    IN BYTE InitFlag
-    )
+InitializeSidLookupTable(IN BYTE InitFlag)
 {
     SID_IDENTIFIER_AUTHORITY UaspWorldAuthority = SECURITY_WORLD_SID_AUTHORITY;
     SID_IDENTIFIER_AUTHORITY UaspLocalAuthority = SECURITY_LOCAL_SID_AUTHORITY;
@@ -4610,7 +4551,7 @@ InitializeSidLookupTable(
     SID_IDENTIFIER_AUTHORITY UaspNtAuthority = SECURITY_NT_AUTHORITY;
     DWORD i;
     OBJECT_ATTRIBUTES ObjectAttributes;
-    NTSTATUS Status=STATUS_SUCCESS;
+    NTSTATUS Status = STATUS_SUCCESS;
     LSA_HANDLE LsaPolicyHandle;
     PPOLICY_ACCOUNT_DOMAIN_INFO DomainInfo = NULL;
     PPOLICY_DNS_DOMAIN_INFO DnsDomainInfo = NULL;
@@ -4618,12 +4559,14 @@ InitializeSidLookupTable(
 
     EnterCriticalSection(&SddlSidLookupCritical);
 
-    switch ( InitFlag ) {
+    switch (InitFlag)
+    {
     case STRSD_REINITIALIZE_ENTER:
 
         SidTableReinitializeInstance++;
 
-        if ( SidTableReinitializeInstance > 1 ) {
+        if (SidTableReinitializeInstance > 1)
+        {
             //
             // there is another thread going, no need to reinitialize the table again
             //
@@ -4635,9 +4578,12 @@ InitializeSidLookupTable(
 
     case STRSD_REINITIALIZE_LEAVE:
 
-        if ( SidTableReinitializeInstance > 1 ) {
+        if (SidTableReinitializeInstance > 1)
+        {
             SidTableReinitializeInstance--;
-        } else {
+        }
+        else
+        {
             SidTableReinitializeInstance = 0;
         }
 
@@ -4653,23 +4599,18 @@ InitializeSidLookupTable(
     // if for some reason that the domain/DNS information can't be
     // queried, the relative SIDs will be invalid for this moment.
     //
-    InitializeObjectAttributes( &ObjectAttributes, NULL, 0, NULL, NULL );
+    InitializeObjectAttributes(&ObjectAttributes, NULL, 0, NULL, NULL);
 
-    Status = LsaOpenPolicy( NULL, &ObjectAttributes,
-                            POLICY_VIEW_LOCAL_INFORMATION,
-                            &LsaPolicyHandle );
+    Status = LsaOpenPolicy(NULL, &ObjectAttributes, POLICY_VIEW_LOCAL_INFORMATION, &LsaPolicyHandle);
 
-    if ( NT_SUCCESS(Status) ) {
+    if (NT_SUCCESS(Status))
+    {
 
-        Status = LsaQueryInformationPolicy( LsaPolicyHandle,
-                                            PolicyDnsDomainInformation,
-                                            ( PVOID * )&DnsDomainInfo );
+        Status = LsaQueryInformationPolicy(LsaPolicyHandle, PolicyDnsDomainInformation, (PVOID *)&DnsDomainInfo);
 
-        Status = LsaQueryInformationPolicy( LsaPolicyHandle,
-                                            PolicyAccountDomainInformation,
-                                            ( PVOID * )&DomainInfo );
+        Status = LsaQueryInformationPolicy(LsaPolicyHandle, PolicyAccountDomainInformation, (PVOID *)&DomainInfo);
 
-        LsaClose( LsaPolicyHandle );
+        LsaClose(LsaPolicyHandle);
     }
 
     //
@@ -4679,37 +4620,37 @@ InitializeSidLookupTable(
     // see comments above always try to initialization table
     // but skip the ones already initialized for performance
     //
-    for ( i = 0;
-          i < sizeof( SidLookup ) / sizeof( STRSD_SID_LOOKUP ); i++ ) {
+    for (i = 0; i < sizeof(SidLookup) / sizeof(STRSD_SID_LOOKUP); i++)
+    {
 
-        if ( STRSD_REINITIALIZE_ENTER == InitFlag ) {
-            SidLookup[ i ].Valid = FALSE;
+        if (STRSD_REINITIALIZE_ENTER == InitFlag)
+        {
+            SidLookup[i].Valid = FALSE;
         }
 
-        if ( SidLookup[ i ].Valid == TRUE &&
-             SidLookup[ i ].Sid != NULL ) {
+        if (SidLookup[i].Valid == TRUE && SidLookup[i].Sid != NULL)
+        {
             //
             // this one is already initialized
             //
             continue;
         }
 
-        SidLookup[ i ].Sid = ( PSID )SidLookup[ i ].SidBuff;
+        SidLookup[i].Sid = (PSID)SidLookup[i].SidBuff;
         Status = STATUS_SUCCESS;
 
-        switch ( SidLookup[ i ].SidType ) {
+        switch (SidLookup[i].SidType)
+        {
         case ST_DOMAIN_RELATIVE:
 
-            if ( DnsDomainInfo != NULL && DnsDomainInfo->Sid != NULL ) {
+            if (DnsDomainInfo != NULL && DnsDomainInfo->Sid != NULL)
+            {
 
-                RtlCopyMemory( SidLookup[ i ].Sid, DnsDomainInfo->Sid,
-                               RtlLengthSid( DnsDomainInfo->Sid ) );
-                ( ( PISID )( SidLookup[ i ].Sid ) )->SubAuthorityCount++;
-                *( RtlSubAuthoritySid( SidLookup[ i ].Sid,
-                                       *( RtlSubAuthorityCountSid( DnsDomainInfo->Sid ) ) ) ) =
-                                       SidLookup[ i ].Rid;
-                SidLookup[ i ].Valid = TRUE;
-
+                RtlCopyMemory(SidLookup[i].Sid, DnsDomainInfo->Sid, RtlLengthSid(DnsDomainInfo->Sid));
+                ((PISID)(SidLookup[i].Sid))->SubAuthorityCount++;
+                *(RtlSubAuthoritySid(SidLookup[i].Sid, *(RtlSubAuthorityCountSid(DnsDomainInfo->Sid)))) =
+                    SidLookup[i].Rid;
+                SidLookup[i].Valid = TRUE;
             }
 
             break;
@@ -4721,55 +4662,53 @@ InitializeSidLookupTable(
             break;
 
         case ST_WORLD:
-            RtlInitializeSid( SidLookup[ i ].Sid, &UaspWorldAuthority, 1 );
-            *( RtlSubAuthoritySid( SidLookup[ i ].Sid, 0 ) ) = SidLookup[ i ].Rid;
-            SidLookup[ i ].Valid = TRUE;
+            RtlInitializeSid(SidLookup[i].Sid, &UaspWorldAuthority, 1);
+            *(RtlSubAuthoritySid(SidLookup[i].Sid, 0)) = SidLookup[i].Rid;
+            SidLookup[i].Valid = TRUE;
             break;
 
         case ST_LOCALSY:
-            RtlInitializeSid( SidLookup[ i ].Sid, &UaspLocalAuthority, 1 );
-            *( RtlSubAuthoritySid( SidLookup[ i ].Sid, 0 ) ) = SidLookup[ i ].Rid;
-            SidLookup[ i ].Valid = TRUE;
+            RtlInitializeSid(SidLookup[i].Sid, &UaspLocalAuthority, 1);
+            *(RtlSubAuthoritySid(SidLookup[i].Sid, 0)) = SidLookup[i].Rid;
+            SidLookup[i].Valid = TRUE;
             break;
 
         case ST_LOCAL:
-            if ( DomainInfo != NULL && DomainInfo->DomainSid ) {
+            if (DomainInfo != NULL && DomainInfo->DomainSid)
+            {
 
-                RtlCopyMemory( SidLookup[ i ].Sid, DomainInfo->DomainSid,
-                               RtlLengthSid( DomainInfo->DomainSid ) );
+                RtlCopyMemory(SidLookup[i].Sid, DomainInfo->DomainSid, RtlLengthSid(DomainInfo->DomainSid));
 
-                ( ( PISID )( SidLookup[ i ].Sid ) )->SubAuthorityCount++;
-                *( RtlSubAuthoritySid( SidLookup[ i ].Sid,
-                                       *( RtlSubAuthorityCountSid( DomainInfo->DomainSid ) ) ) ) =
-                                       SidLookup[ i ].Rid;
-                SidLookup[ i ].Valid = TRUE;
+                ((PISID)(SidLookup[i].Sid))->SubAuthorityCount++;
+                *(RtlSubAuthoritySid(SidLookup[i].Sid, *(RtlSubAuthorityCountSid(DomainInfo->DomainSid)))) =
+                    SidLookup[i].Rid;
+                SidLookup[i].Valid = TRUE;
             }
             break;
 
         case ST_CREATOR:
-            RtlInitializeSid( SidLookup[ i ].Sid, &UaspCreatorAuthority, 1 );
-            *( RtlSubAuthoritySid( SidLookup[ i ].Sid, 0 ) ) = SidLookup[ i ].Rid;
-            SidLookup[ i ].Valid = TRUE;
+            RtlInitializeSid(SidLookup[i].Sid, &UaspCreatorAuthority, 1);
+            *(RtlSubAuthoritySid(SidLookup[i].Sid, 0)) = SidLookup[i].Rid;
+            SidLookup[i].Valid = TRUE;
             break;
 
         case ST_NTAUTH:
-            RtlInitializeSid( SidLookup[ i ].Sid, &UaspNtAuthority, 1 );
-            *( RtlSubAuthoritySid( SidLookup[ i ].Sid, 0 ) ) = SidLookup[ i ].Rid;
-            SidLookup[ i ].Valid = TRUE;
+            RtlInitializeSid(SidLookup[i].Sid, &UaspNtAuthority, 1);
+            *(RtlSubAuthoritySid(SidLookup[i].Sid, 0)) = SidLookup[i].Rid;
+            SidLookup[i].Valid = TRUE;
             break;
 
         case ST_BUILTIN:
-            RtlInitializeSid( SidLookup[ i ].Sid, &UaspNtAuthority, 2 );
-            *( RtlSubAuthoritySid( SidLookup[ i ].Sid, 0 ) ) = SECURITY_BUILTIN_DOMAIN_RID;
-            *( RtlSubAuthoritySid( SidLookup[ i ].Sid, 1 ) ) = SidLookup[ i ].Rid;
-            SidLookup[ i ].Valid = TRUE;
+            RtlInitializeSid(SidLookup[i].Sid, &UaspNtAuthority, 2);
+            *(RtlSubAuthoritySid(SidLookup[i].Sid, 0)) = SECURITY_BUILTIN_DOMAIN_RID;
+            *(RtlSubAuthoritySid(SidLookup[i].Sid, 1)) = SidLookup[i].Rid;
+            SidLookup[i].Valid = TRUE;
             break;
-
         }
     }
 
-    LsaFreeMemory( DomainInfo );
-    LsaFreeMemory( DnsDomainInfo );
+    LsaFreeMemory(DomainInfo);
+    LsaFreeMemory(DnsDomainInfo);
 
     LeaveCriticalSection(&SddlSidLookupCritical);
 
@@ -4777,66 +4716,50 @@ InitializeSidLookupTable(
 }
 
 
-BOOL
-APIENTRY
-ConvertStringSDToSDRootDomainA(
-    IN  PSID RootDomainSid OPTIONAL,
-    IN  LPCSTR StringSecurityDescriptor,
-    IN  DWORD StringSDRevision,
-    OUT PSECURITY_DESCRIPTOR  *SecurityDescriptor,
-    OUT PULONG  SecurityDescriptorSize OPTIONAL
-    )
+BOOL APIENTRY ConvertStringSDToSDRootDomainA(IN PSID RootDomainSid OPTIONAL, IN LPCSTR StringSecurityDescriptor,
+                                             IN DWORD StringSDRevision, OUT PSECURITY_DESCRIPTOR *SecurityDescriptor,
+                                             OUT PULONG SecurityDescriptorSize OPTIONAL)
 {
     UNICODE_STRING Unicode;
     ANSI_STRING AnsiString;
     NTSTATUS Status;
     BOOL Result;
 
-    if ( NULL == StringSecurityDescriptor ||
-         NULL == SecurityDescriptor ) {
+    if (NULL == StringSecurityDescriptor || NULL == SecurityDescriptor)
+    {
 
         SetLastError(ERROR_INVALID_PARAMETER);
-        return(FALSE);
+        return (FALSE);
     }
 
-    RtlInitAnsiString( &AnsiString, StringSecurityDescriptor );
+    RtlInitAnsiString(&AnsiString, StringSecurityDescriptor);
 
-    Status = SddlpAnsiStringToUnicodeString(&Unicode,                                                                                                            
-                                            &AnsiString);
+    Status = SddlpAnsiStringToUnicodeString(&Unicode, &AnsiString);
 
-    if ( !NT_SUCCESS( Status ) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        BaseSetLastNTError( Status );
+        BaseSetLastNTError(Status);
 
         return FALSE;
-
     }
 
-    Result = ConvertStringSDToSDRootDomainW( RootDomainSid,
-                                           ( LPCWSTR )Unicode.Buffer,
-                                           StringSDRevision,
-                                           SecurityDescriptor,
-                                           SecurityDescriptorSize);
+    Result = ConvertStringSDToSDRootDomainW(RootDomainSid, (LPCWSTR)Unicode.Buffer, StringSDRevision,
+                                            SecurityDescriptor, SecurityDescriptorSize);
 
-    LocalFree( Unicode.Buffer );
+    LocalFree(Unicode.Buffer);
 
-    if ( Result ) {
+    if (Result)
+    {
         SetLastError(ERROR_SUCCESS);
     }
 
-    return( Result );
-
+    return (Result);
 }
 
-BOOL
-APIENTRY
-ConvertStringSDToSDRootDomainW(
-    IN  PSID RootDomainSid OPTIONAL,
-    IN  LPCWSTR StringSecurityDescriptor,
-    IN  DWORD StringSDRevision,
-    OUT PSECURITY_DESCRIPTOR  *SecurityDescriptor,
-    OUT PULONG  SecurityDescriptorSize OPTIONAL
-    )
+BOOL APIENTRY ConvertStringSDToSDRootDomainW(IN PSID RootDomainSid OPTIONAL, IN LPCWSTR StringSecurityDescriptor,
+                                             IN DWORD StringSDRevision, OUT PSECURITY_DESCRIPTOR *SecurityDescriptor,
+                                             OUT PULONG SecurityDescriptorSize OPTIONAL)
 {
 
     DWORD Err = ERROR_SUCCESS;
@@ -4844,21 +4767,22 @@ ConvertStringSDToSDRootDomainW(
     //
     // Little elementary parameter checking...
     //
-    if ( StringSecurityDescriptor == NULL || SecurityDescriptor == NULL ) {
+    if (StringSecurityDescriptor == NULL || SecurityDescriptor == NULL)
+    {
 
         Err = ERROR_INVALID_PARAMETER;
+    }
+    else
+    {
 
-    } else {
-
-        switch ( StringSDRevision ) {
+        switch (StringSDRevision)
+        {
         case SDDL_REVISION_1:
 
-            Err = LocalConvertStringSDToSD_Rev1( RootDomainSid,  // root domain sid
-                                                 NULL,  // no domain sid is provided for this API
-                                                 TRUE, // default to domain for EA/SA if root domain sid is not provided
-                                                 StringSecurityDescriptor,
-                                                 SecurityDescriptor,
-                                                 SecurityDescriptorSize);
+            Err = LocalConvertStringSDToSD_Rev1(RootDomainSid, // root domain sid
+                                                NULL,          // no domain sid is provided for this API
+                                                TRUE, // default to domain for EA/SA if root domain sid is not provided
+                                                StringSecurityDescriptor, SecurityDescriptor, SecurityDescriptorSize);
             break;
 
         default:
@@ -4866,78 +4790,60 @@ ConvertStringSDToSDRootDomainW(
             Err = ERROR_UNKNOWN_REVISION;
             break;
         }
-
     }
 
-    SetLastError( Err );
+    SetLastError(Err);
 
-    return( Err == ERROR_SUCCESS );
+    return (Err == ERROR_SUCCESS);
 }
 
-BOOL
-APIENTRY
-ConvertSDToStringSDRootDomainA(
-    IN  PSID RootDomainSid OPTIONAL,
-    IN  PSECURITY_DESCRIPTOR  SecurityDescriptor,
-    IN  DWORD RequestedStringSDRevision,
-    IN  SECURITY_INFORMATION SecurityInformation,
-    OUT LPSTR  *StringSecurityDescriptor OPTIONAL,
-    OUT PULONG StringSecurityDescriptorLen OPTIONAL
-    )
+BOOL APIENTRY ConvertSDToStringSDRootDomainA(IN PSID RootDomainSid OPTIONAL, IN PSECURITY_DESCRIPTOR SecurityDescriptor,
+                                             IN DWORD RequestedStringSDRevision,
+                                             IN SECURITY_INFORMATION SecurityInformation,
+                                             OUT LPSTR *StringSecurityDescriptor OPTIONAL,
+                                             OUT PULONG StringSecurityDescriptorLen OPTIONAL)
 {
     LPWSTR StringSecurityDescriptorW = NULL;
     ULONG AnsiLen, WideLen = 0;
-    BOOL ReturnValue ;
+    BOOL ReturnValue;
 
-    if ( StringSecurityDescriptor == NULL ||
-         0 == SecurityInformation ) {
+    if (StringSecurityDescriptor == NULL || 0 == SecurityInformation)
+    {
 
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return( FALSE );
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return (FALSE);
     }
 
-    ReturnValue = ConvertSDToStringSDRootDomainW(
-                      RootDomainSid,
-                      SecurityDescriptor,
-                      RequestedStringSDRevision,
-                      SecurityInformation,
-                      &StringSecurityDescriptorW,
-                      &WideLen );
+    ReturnValue = ConvertSDToStringSDRootDomainW(RootDomainSid, SecurityDescriptor, RequestedStringSDRevision,
+                                                 SecurityInformation, &StringSecurityDescriptorW, &WideLen);
 
-    if ( ReturnValue ) {
+    if (ReturnValue)
+    {
 
 
-        AnsiLen = WideCharToMultiByte( CP_ACP,
-                                       0,
-                                       StringSecurityDescriptorW,
-                                       WideLen + 1,
-                                       *StringSecurityDescriptor,
-                                       0,
-                                       NULL,
-                                       NULL );
+        AnsiLen = WideCharToMultiByte(CP_ACP, 0, StringSecurityDescriptorW, WideLen + 1, *StringSecurityDescriptor, 0,
+                                      NULL, NULL);
 
-        if ( AnsiLen != 0 ) {
+        if (AnsiLen != 0)
+        {
 
-            *StringSecurityDescriptor = LocalAlloc( LMEM_FIXED, AnsiLen );
+            *StringSecurityDescriptor = LocalAlloc(LMEM_FIXED, AnsiLen);
 
-            if ( *StringSecurityDescriptor == NULL ) {
+            if (*StringSecurityDescriptor == NULL)
+            {
 
-                SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+                SetLastError(ERROR_NOT_ENOUGH_MEMORY);
                 ReturnValue = FALSE;
+            }
+            else
+            {
 
-            } else {
+                AnsiLen = WideCharToMultiByte(CP_ACP, 0, StringSecurityDescriptorW, WideLen + 1,
+                                              *StringSecurityDescriptor, AnsiLen, NULL, NULL);
+                ASSERT(AnsiLen != 0);
 
-                AnsiLen = WideCharToMultiByte( CP_ACP,
-                                               0,
-                                               StringSecurityDescriptorW,
-                                               WideLen + 1,
-                                               *StringSecurityDescriptor,
-                                               AnsiLen,
-                                               NULL,
-                                               NULL );
-                ASSERT( AnsiLen != 0 );
-
-                if ( AnsiLen == 0 ) {
+                if (AnsiLen == 0)
+                {
 
                     LocalFree(*StringSecurityDescriptor);
                     *StringSecurityDescriptor = NULL;
@@ -4949,39 +4855,34 @@ ConvertSDToStringSDRootDomainA(
                 // jinhuang
                 // output the length (optional)
                 //
-                if ( StringSecurityDescriptorLen ) {
+                if (StringSecurityDescriptorLen)
+                {
                     *StringSecurityDescriptorLen = AnsiLen;
                 }
-
             }
-
-        } else {
+        }
+        else
+        {
 
             ReturnValue = FALSE;
         }
 
         LocalFree(StringSecurityDescriptorW);
-
     }
 
-    if ( ReturnValue ) {
+    if (ReturnValue)
+    {
         SetLastError(ERROR_SUCCESS);
     }
 
-    return( ReturnValue );
-
+    return (ReturnValue);
 }
 
-BOOL
-APIENTRY
-ConvertSDToStringSDRootDomainW(
-    IN  PSID RootDomainSid OPTIONAL,
-    IN  PSECURITY_DESCRIPTOR  SecurityDescriptor,
-    IN  DWORD RequestedStringSDRevision,
-    IN  SECURITY_INFORMATION SecurityInformation,
-    OUT LPWSTR  *StringSecurityDescriptor OPTIONAL,
-    OUT PULONG StringSecurityDescriptorLen OPTIONAL
-    )
+BOOL APIENTRY ConvertSDToStringSDRootDomainW(IN PSID RootDomainSid OPTIONAL, IN PSECURITY_DESCRIPTOR SecurityDescriptor,
+                                             IN DWORD RequestedStringSDRevision,
+                                             IN SECURITY_INFORMATION SecurityInformation,
+                                             OUT LPWSTR *StringSecurityDescriptor OPTIONAL,
+                                             OUT PULONG StringSecurityDescriptorLen OPTIONAL)
 {
 
     DWORD Err = ERROR_SUCCESS;
@@ -4989,38 +4890,35 @@ ConvertSDToStringSDRootDomainW(
     //
     // A little parameter checking...
     //
-    if ( SecurityDescriptor == NULL || StringSecurityDescriptor == NULL ||
-         SecurityInformation == 0 ) {
+    if (SecurityDescriptor == NULL || StringSecurityDescriptor == NULL || SecurityInformation == 0)
+    {
 
-        Err =  ERROR_INVALID_PARAMETER;
+        Err = ERROR_INVALID_PARAMETER;
+    }
+    else
+    {
 
-    } else {
-
-        switch ( RequestedStringSDRevision ) {
+        switch (RequestedStringSDRevision)
+        {
         case SDDL_REVISION_1:
 
-            Err = LocalConvertSDToStringSD_Rev1( RootDomainSid,  // root domain sid
-                                                 SecurityDescriptor,
-                                                 SecurityInformation,
-                                                 StringSecurityDescriptor,
-                                                 StringSecurityDescriptorLen );
+            Err = LocalConvertSDToStringSD_Rev1(RootDomainSid, // root domain sid
+                                                SecurityDescriptor, SecurityInformation, StringSecurityDescriptor,
+                                                StringSecurityDescriptorLen);
             break;
 
         default:
             Err = ERROR_UNKNOWN_REVISION;
             break;
         }
-
     }
 
-    SetLastError( Err );
+    SetLastError(Err);
 
-    return( Err == ERROR_SUCCESS);
-
+    return (Err == ERROR_SUCCESS);
 }
 
-BOOL
-SddlpGetRootDomainSid(void)
+BOOL SddlpGetRootDomainSid(void)
 {
     //
     // get root domain sid, save it in RootDomSidBuf (global)
@@ -5032,123 +4930,103 @@ SddlpGetRootDomainSid(void)
     //    operational control LDAP_SERVER_EXTENDED_DN_OID as defined in sdk\inc\ntldap.h.
 
 
-    DWORD               Win32rc=NO_ERROR;
-    BOOL                bRetValue=FALSE;
+    DWORD Win32rc = NO_ERROR;
+    BOOL bRetValue = FALSE;
 
-    HINSTANCE                   hLdapDll=NULL;
-    PFN_LDAP_OPEN               pfnLdapOpen=NULL;
-    PFN_LDAP_UNBIND             pfnLdapUnbind=NULL;
-    PFN_LDAP_SEARCH             pfnLdapSearch=NULL;
-    PFN_LDAP_FIRST_ENTRY        pfnLdapFirstEntry=NULL;
-    PFN_LDAP_GET_VALUE          pfnLdapGetValue=NULL;
-    PFN_LDAP_MSGFREE            pfnLdapMsgFree=NULL;
-    PFN_LDAP_VALUE_FREE         pfnLdapValueFree=NULL;
-    PFN_LDAP_MAP_ERROR          pfnLdapMapError=NULL;
+    HINSTANCE hLdapDll = NULL;
+    PFN_LDAP_OPEN pfnLdapOpen = NULL;
+    PFN_LDAP_UNBIND pfnLdapUnbind = NULL;
+    PFN_LDAP_SEARCH pfnLdapSearch = NULL;
+    PFN_LDAP_FIRST_ENTRY pfnLdapFirstEntry = NULL;
+    PFN_LDAP_GET_VALUE pfnLdapGetValue = NULL;
+    PFN_LDAP_MSGFREE pfnLdapMsgFree = NULL;
+    PFN_LDAP_VALUE_FREE pfnLdapValueFree = NULL;
+    PFN_LDAP_MAP_ERROR pfnLdapMapError = NULL;
 
-    PLDAP                       phLdap=NULL;
+    PLDAP phLdap = NULL;
 
-    LDAPControlA    serverControls = { LDAP_SERVER_EXTENDED_DN_OID,
-                                       { 0, (PCHAR) NULL },
-                                       TRUE
-                                     };
-    LPSTR           Attribs[] = { LDAP_OPATT_ROOT_DOMAIN_NAMING_CONTEXT, NULL };
+    LDAPControlA serverControls = { LDAP_SERVER_EXTENDED_DN_OID, { 0, (PCHAR)NULL }, TRUE };
+    LPSTR Attribs[] = { LDAP_OPATT_ROOT_DOMAIN_NAMING_CONTEXT, NULL };
 
-    PLDAPControlA   rServerControls[] = { &serverControls, NULL };
-    PLDAPMessage    pMessage = NULL;
-    LDAPMessage     *pEntry = NULL;
-    PCHAR           *ppszValues=NULL;
+    PLDAPControlA rServerControls[] = { &serverControls, NULL };
+    PLDAPMessage pMessage = NULL;
+    LDAPMessage *pEntry = NULL;
+    PCHAR *ppszValues = NULL;
 
-    LPSTR           pSidStart, pSidEnd, pParse;
-    BYTE            *pDest;
-    BYTE            OneByte;
+    LPSTR pSidStart, pSidEnd, pParse;
+    BYTE *pDest;
+    BYTE OneByte;
 
     hLdapDll = LoadLibraryA("wldap32.dll");
 
-    if ( hLdapDll) {
-        pfnLdapOpen = (PFN_LDAP_OPEN)GetProcAddress(hLdapDll,
-                                                    "ldap_openA");
-        pfnLdapUnbind = (PFN_LDAP_UNBIND)GetProcAddress(hLdapDll,
-                                                      "ldap_unbind");
-        pfnLdapSearch = (PFN_LDAP_SEARCH)GetProcAddress(hLdapDll,
-                                                    "ldap_search_ext_sA");
-        pfnLdapFirstEntry = (PFN_LDAP_FIRST_ENTRY)GetProcAddress(hLdapDll,
-                                                      "ldap_first_entry");
-        pfnLdapGetValue = (PFN_LDAP_GET_VALUE)GetProcAddress(hLdapDll,
-                                                    "ldap_get_valuesA");
-        pfnLdapMsgFree = (PFN_LDAP_MSGFREE)GetProcAddress(hLdapDll,
-                                                      "ldap_msgfree");
-        pfnLdapValueFree = (PFN_LDAP_VALUE_FREE)GetProcAddress(hLdapDll,
-                                                    "ldap_value_freeA");
-        pfnLdapMapError = (PFN_LDAP_MAP_ERROR)GetProcAddress(hLdapDll,
-                                                      "LdapMapErrorToWin32");
+    if (hLdapDll)
+    {
+        pfnLdapOpen = (PFN_LDAP_OPEN)GetProcAddress(hLdapDll, "ldap_openA");
+        pfnLdapUnbind = (PFN_LDAP_UNBIND)GetProcAddress(hLdapDll, "ldap_unbind");
+        pfnLdapSearch = (PFN_LDAP_SEARCH)GetProcAddress(hLdapDll, "ldap_search_ext_sA");
+        pfnLdapFirstEntry = (PFN_LDAP_FIRST_ENTRY)GetProcAddress(hLdapDll, "ldap_first_entry");
+        pfnLdapGetValue = (PFN_LDAP_GET_VALUE)GetProcAddress(hLdapDll, "ldap_get_valuesA");
+        pfnLdapMsgFree = (PFN_LDAP_MSGFREE)GetProcAddress(hLdapDll, "ldap_msgfree");
+        pfnLdapValueFree = (PFN_LDAP_VALUE_FREE)GetProcAddress(hLdapDll, "ldap_value_freeA");
+        pfnLdapMapError = (PFN_LDAP_MAP_ERROR)GetProcAddress(hLdapDll, "LdapMapErrorToWin32");
     }
 
-    if ( pfnLdapOpen == NULL ||
-         pfnLdapUnbind == NULL ||
-         pfnLdapSearch == NULL ||
-         pfnLdapFirstEntry == NULL ||
-         pfnLdapGetValue == NULL ||
-         pfnLdapMsgFree == NULL ||
-         pfnLdapValueFree == NULL ||
-         pfnLdapMapError == NULL ) {
+    if (pfnLdapOpen == NULL || pfnLdapUnbind == NULL || pfnLdapSearch == NULL || pfnLdapFirstEntry == NULL ||
+        pfnLdapGetValue == NULL || pfnLdapMsgFree == NULL || pfnLdapValueFree == NULL || pfnLdapMapError == NULL)
+    {
 
         Win32rc = ERROR_PROC_NOT_FOUND;
-
-    } else {
+    }
+    else
+    {
 
         //
         // bind to ldap
         //
         phLdap = (*pfnLdapOpen)(NULL, LDAP_PORT);
 
-        if ( phLdap == NULL ) {
+        if (phLdap == NULL)
+        {
 
             Win32rc = ERROR_FILE_NOT_FOUND;
-
         }
     }
 
-    if ( NO_ERROR == Win32rc ) {
+    if (NO_ERROR == Win32rc)
+    {
         //
         // now get the ldap handle,
         //
 
-        Win32rc = (*pfnLdapSearch)(
-                        phLdap,
-                        "",
-                        LDAP_SCOPE_BASE,
-                        "(objectClass=*)",
-                        Attribs,
-                        0,
-                        (PLDAPControlA *)&rServerControls,
-                        NULL,
-                        NULL,
-                        10000,
-                        &pMessage);
+        Win32rc = (*pfnLdapSearch)(phLdap, "", LDAP_SCOPE_BASE, "(objectClass=*)", Attribs, 0,
+                                   (PLDAPControlA *)&rServerControls, NULL, NULL, 10000, &pMessage);
 
-        if( Win32rc == NO_ERROR && pMessage ) {
+        if (Win32rc == NO_ERROR && pMessage)
+        {
 
             Win32rc = ERROR_SUCCESS;
 
             pEntry = (*pfnLdapFirstEntry)(phLdap, pMessage);
 
-            if(pEntry == NULL) {
+            if (pEntry == NULL)
+            {
 
-                Win32rc = (*pfnLdapMapError)( phLdap->ld_errno );
-
-            } else {
+                Win32rc = (*pfnLdapMapError)(phLdap->ld_errno);
+            }
+            else
+            {
                 //
                 // Now, we'll have to get the values
                 //
-                ppszValues = (*pfnLdapGetValue)(phLdap,
-                                              pEntry,
-                                              Attribs[0]);
+                ppszValues = (*pfnLdapGetValue)(phLdap, pEntry, Attribs[0]);
 
-                if( ppszValues == NULL) {
+                if (ppszValues == NULL)
+                {
 
-                    Win32rc = (*pfnLdapMapError)( phLdap->ld_errno );
-
-                } else if ( ppszValues[0] && ppszValues[0][0] != '\0' ) {
+                    Win32rc = (*pfnLdapMapError)(phLdap->ld_errno);
+                }
+                else if (ppszValues[0] && ppszValues[0][0] != '\0')
+                {
 
                     //
                     // ppszValues[0] is the value to parse.
@@ -5162,31 +5040,40 @@ SddlpGetRootDomainSid(void)
 
                     pSidStart = strstr(ppszValues[0], "<SID=");
 
-                    if ( pSidStart ) {
+                    if (pSidStart)
+                    {
                         //
                         // find the end of this SID
                         //
                         pSidEnd = strchr(pSidStart, '>');
 
-                        if ( pSidEnd ) {
+                        if (pSidEnd)
+                        {
 
                             EnterCriticalSection(&SddlSidLookupCritical);
 
                             pParse = pSidStart + 5;
                             pDest = (BYTE *)RootDomSidBuf;
 
-                            while ( pParse < pSidEnd-1 ) {
+                            while (pParse < pSidEnd - 1)
+                            {
 
-                                if ( *pParse >= '0' && *pParse <= '9' ) {
-                                    OneByte = (BYTE) ((*pParse - '0') * 16);
-                                } else {
-                                    OneByte = (BYTE) ( (tolower(*pParse) - 'a' + 10) * 16 );
+                                if (*pParse >= '0' && *pParse <= '9')
+                                {
+                                    OneByte = (BYTE)((*pParse - '0') * 16);
+                                }
+                                else
+                                {
+                                    OneByte = (BYTE)((tolower(*pParse) - 'a' + 10) * 16);
                                 }
 
-                                if ( *(pParse+1) >= '0' && *(pParse+1) <= '9' ) {
-                                    OneByte += (BYTE) ( *(pParse+1) - '0' ) ;
-                                } else {
-                                    OneByte += (BYTE) ( tolower(*(pParse+1)) - 'a' + 10 ) ;
+                                if (*(pParse + 1) >= '0' && *(pParse + 1) <= '9')
+                                {
+                                    OneByte += (BYTE)(*(pParse + 1) - '0');
+                                }
+                                else
+                                {
+                                    OneByte += (BYTE)(tolower(*(pParse + 1)) - 'a' + 10);
                                 }
 
                                 *pDest = OneByte;
@@ -5199,33 +5086,37 @@ SddlpGetRootDomainSid(void)
                             LeaveCriticalSection(&SddlSidLookupCritical);
 
                             bRetValue = TRUE;
-
-                        } else {
+                        }
+                        else
+                        {
                             Win32rc = ERROR_OBJECT_NOT_FOUND;
                         }
-                    } else {
+                    }
+                    else
+                    {
                         Win32rc = ERROR_OBJECT_NOT_FOUND;
                     }
 
                     (*pfnLdapValueFree)(ppszValues);
-
-                } else {
+                }
+                else
+                {
                     Win32rc = ERROR_OBJECT_NOT_FOUND;
                 }
             }
 
             (*pfnLdapMsgFree)(pMessage);
         }
-
     }
 
     //
     // even though it's not binded, use unbind to close
     //
-    if ( phLdap != NULL && pfnLdapUnbind )
+    if (phLdap != NULL && pfnLdapUnbind)
         (*pfnLdapUnbind)(phLdap);
 
-    if ( hLdapDll ) {
+    if (hLdapDll)
+    {
         FreeLibrary(hLdapDll);
     }
 
@@ -5234,16 +5125,10 @@ SddlpGetRootDomainSid(void)
     return bRetValue;
 }
 
-BOOL
-APIENTRY
-ConvertStringSDToSDDomainA(
-    IN  PSID DomainSid,
-    IN  PSID RootDomainSid OPTIONAL,
-    IN  LPCSTR StringSecurityDescriptor,
-    IN  DWORD StringSDRevision,
-    OUT PSECURITY_DESCRIPTOR  *SecurityDescriptor,
-    OUT PULONG  SecurityDescriptorSize OPTIONAL
-    )
+BOOL APIENTRY ConvertStringSDToSDDomainA(IN PSID DomainSid, IN PSID RootDomainSid OPTIONAL,
+                                         IN LPCSTR StringSecurityDescriptor, IN DWORD StringSDRevision,
+                                         OUT PSECURITY_DESCRIPTOR *SecurityDescriptor,
+                                         OUT PULONG SecurityDescriptorSize OPTIONAL)
 /*
 Routine Description:
 
@@ -5258,56 +5143,43 @@ Routine Description:
     NTSTATUS Status;
     BOOL Result;
 
-    if ( NULL == StringSecurityDescriptor ||
-         NULL == SecurityDescriptor ||
-         NULL == DomainSid ||
-         !RtlValidSid(DomainSid) || 
-         (RootDomainSid && !RtlValidSid(RootDomainSid)) ) {
+    if (NULL == StringSecurityDescriptor || NULL == SecurityDescriptor || NULL == DomainSid ||
+        !RtlValidSid(DomainSid) || (RootDomainSid && !RtlValidSid(RootDomainSid)))
+    {
 
         SetLastError(ERROR_INVALID_PARAMETER);
-        return(FALSE);
+        return (FALSE);
     }
 
-    RtlInitAnsiString( &AnsiString, StringSecurityDescriptor );
+    RtlInitAnsiString(&AnsiString, StringSecurityDescriptor);
 
-    Status = SddlpAnsiStringToUnicodeString(&Unicode,                                                                                                        
-                                            &AnsiString);
+    Status = SddlpAnsiStringToUnicodeString(&Unicode, &AnsiString);
 
-    if ( !NT_SUCCESS( Status ) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        BaseSetLastNTError( Status );
+        BaseSetLastNTError(Status);
 
         return FALSE;
-
     }
 
-    Result = ConvertStringSDToSDDomainW( DomainSid,
-                                         RootDomainSid,                                           
-                                         ( LPCWSTR )Unicode.Buffer,                                           
-                                         StringSDRevision,                                           
-                                         SecurityDescriptor,                                           
-                                         SecurityDescriptorSize);
+    Result = ConvertStringSDToSDDomainW(DomainSid, RootDomainSid, (LPCWSTR)Unicode.Buffer, StringSDRevision,
+                                        SecurityDescriptor, SecurityDescriptorSize);
 
-    LocalFree( Unicode.Buffer );
+    LocalFree(Unicode.Buffer);
 
-    if ( Result ) {
+    if (Result)
+    {
         SetLastError(ERROR_SUCCESS);
     }
 
-    return( Result );
-
+    return (Result);
 }
 
-BOOL
-APIENTRY
-ConvertStringSDToSDDomainW(
-    IN  PSID DomainSid,
-    IN  PSID RootDomainSid OPTIONAL,
-    IN  LPCWSTR StringSecurityDescriptor,
-    IN  DWORD StringSDRevision,
-    OUT PSECURITY_DESCRIPTOR  *SecurityDescriptor,
-    OUT PULONG  SecurityDescriptorSize OPTIONAL
-    )
+BOOL APIENTRY ConvertStringSDToSDDomainW(IN PSID DomainSid, IN PSID RootDomainSid OPTIONAL,
+                                         IN LPCWSTR StringSecurityDescriptor, IN DWORD StringSDRevision,
+                                         OUT PSECURITY_DESCRIPTOR *SecurityDescriptor,
+                                         OUT PULONG SecurityDescriptorSize OPTIONAL)
 /*
 Routine Description:
 
@@ -5340,25 +5212,23 @@ Return Value:
     //
     // Little elementary parameter checking...
     //
-    if ( StringSecurityDescriptor == NULL ||
-         SecurityDescriptor == NULL ||
-         DomainSid == NULL ||
-         !RtlValidSid(DomainSid) ||
-        (RootDomainSid && !RtlValidSid(RootDomainSid)) ) {
+    if (StringSecurityDescriptor == NULL || SecurityDescriptor == NULL || DomainSid == NULL ||
+        !RtlValidSid(DomainSid) || (RootDomainSid && !RtlValidSid(RootDomainSid)))
+    {
 
         Err = ERROR_INVALID_PARAMETER;
+    }
+    else
+    {
 
-    } else {
-
-        switch ( StringSDRevision ) {
+        switch (StringSDRevision)
+        {
         case SDDL_REVISION_1:
 
-            Err = LocalConvertStringSDToSD_Rev1( RootDomainSid, // no root domain sid maybe provided for this API
-                                                 DomainSid, // domain sid
-                                                 FALSE,     // domain sid is required
-                                                 StringSecurityDescriptor,
-                                                 SecurityDescriptor,
-                                                 SecurityDescriptorSize);
+            Err = LocalConvertStringSDToSD_Rev1(RootDomainSid, // no root domain sid maybe provided for this API
+                                                DomainSid,     // domain sid
+                                                FALSE,         // domain sid is required
+                                                StringSecurityDescriptor, SecurityDescriptor, SecurityDescriptorSize);
             break;
 
         default:
@@ -5366,20 +5236,16 @@ Return Value:
             Err = ERROR_UNKNOWN_REVISION;
             break;
         }
-
     }
 
-    SetLastError( Err );
+    SetLastError(Err);
 
-    return( Err == ERROR_SUCCESS );
+    return (Err == ERROR_SUCCESS);
 }
 
 
 NTSTATUS
-SddlpAnsiStringToUnicodeString(
-    OUT PUNICODE_STRING DestinationString,
-    IN PANSI_STRING SourceString
-    )
+SddlpAnsiStringToUnicodeString(OUT PUNICODE_STRING DestinationString, IN PANSI_STRING SourceString)
 
 /*++
 
@@ -5417,32 +5283,27 @@ Return Value:
 
     UnicodeLength = RtlAnsiStringToUnicodeSize(SourceString);
 
-    DestinationString->Buffer = (PWSTR) LocalAlloc(LMEM_ZEROINIT, UnicodeLength);
-        
-    if ( !DestinationString->Buffer ) {
+    DestinationString->Buffer = (PWSTR)LocalAlloc(LMEM_ZEROINIT, UnicodeLength);
+
+    if (!DestinationString->Buffer)
+    {
         return STATUS_NO_MEMORY;
     }
 
-    st = RtlMultiByteToUnicodeN(
-             DestinationString->Buffer,
-             UnicodeLength - sizeof(UNICODE_NULL),
-             &Index,
-             SourceString->Buffer,
-             SourceString->Length
-             );
+    st = RtlMultiByteToUnicodeN(DestinationString->Buffer, UnicodeLength - sizeof(UNICODE_NULL), &Index,
+                                SourceString->Buffer, SourceString->Length);
 
-    if (!NT_SUCCESS(st)) {
-            
+    if (!NT_SUCCESS(st))
+    {
+
         LocalFree(DestinationString->Buffer);
 
         DestinationString->Buffer = NULL;
-        
+
         return st;
     }
 
     DestinationString->Buffer[Index / sizeof(WCHAR)] = UNICODE_NULL;
 
     return STATUS_SUCCESS;
-
 }
-

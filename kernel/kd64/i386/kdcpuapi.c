@@ -31,37 +31,18 @@ extern ULONG KdpCurrentSymbolStart, KdpCurrentSymbolEnd;
 extern ULONG KdSpecialCalls[];
 extern ULONG KdNumberOfSpecialCalls;
 
-LONG
-KdpLevelChange (
-    ULONG Pc,
-    PCONTEXT ContextRecord,
-    PBOOLEAN SpecialCall
-    );
+LONG KdpLevelChange(ULONG Pc, PCONTEXT ContextRecord, PBOOLEAN SpecialCall);
 
-LONG
-regValue(
-    UCHAR reg,
-    PCONTEXT ContextRecord
-    );
+LONG regValue(UCHAR reg, PCONTEXT ContextRecord);
 
 BOOLEAN
-KdpIsSpecialCall (
-    ULONG Pc,
-    PCONTEXT ContextRecord,
-    UCHAR opcode,
-    UCHAR ModRM
-    );
+KdpIsSpecialCall(ULONG Pc, PCONTEXT ContextRecord, UCHAR opcode, UCHAR ModRM);
 
 ULONG
-KdpGetReturnAddress (
-    PCONTEXT ContextRecord
-    );
+KdpGetReturnAddress(PCONTEXT ContextRecord);
 
 ULONG
-KdpGetCallNextOffset (
-    ULONG Pc,
-    PCONTEXT ContextRecord
-    );
+KdpGetCallNextOffset(ULONG Pc, PCONTEXT ContextRecord);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGEKD, KdpLevelChange)
@@ -93,10 +74,7 @@ KdpGetCallNextOffset (
 
 
 BOOLEAN
-KdpIsTryFinallyReturn (
-    ULONG Pc,
-    PCONTEXT ContextRecord
-    )
+KdpIsTryFinallyReturn(ULONG Pc, PCONTEXT ContextRecord)
 {
     ULONG retaddr;
     ULONG calldisp;
@@ -120,13 +98,15 @@ KdpIsTryFinallyReturn (
     //  on the stack.
     //
 
-    if (!NT_SUCCESS(KdpCopyFromPtr(&retaddr, ContextRecord->Esp, 4, NULL))) {
+    if (!NT_SUCCESS(KdpCopyFromPtr(&retaddr, ContextRecord->Esp, 4, NULL)))
+    {
         return FALSE;
     }
 
-//  DPRINT(( "Start %x return %x end %x\n", KdpCurrentSymbolStart, retaddr, KdpCurrentSymbolEnd ));
+    //  DPRINT(( "Start %x return %x end %x\n", KdpCurrentSymbolStart, retaddr, KdpCurrentSymbolEnd ));
 
-    if ( (KdpCurrentSymbolStart < retaddr) && (retaddr < KdpCurrentSymbolEnd) ) {
+    if ((KdpCurrentSymbolStart < retaddr) && (retaddr < KdpCurrentSymbolEnd))
+    {
 
         //
         //  Well, things aren't this nice.  We may have transferred but not yet
@@ -135,15 +115,18 @@ KdpIsTryFinallyReturn (
         //  Gross and not 100% reliable.
         //
 
-        if (!NT_SUCCESS(KdpCopyFromPtr(&inst, (PCHAR)retaddr - 5, 1, NULL))) {
+        if (!NT_SUCCESS(KdpCopyFromPtr(&inst, (PCHAR)retaddr - 5, 1, NULL)))
+        {
             return FALSE;
         }
-        if (!NT_SUCCESS(KdpCopyFromPtr(&calldisp, (PCHAR)retaddr - 4, 4, NULL))) {
+        if (!NT_SUCCESS(KdpCopyFromPtr(&calldisp, (PCHAR)retaddr - 4, 4, NULL)))
+        {
             return FALSE;
         }
 
-        if (inst == 0xe8 && calldisp + retaddr == Pc) {
-//  DPRINT(( "call to thunk @ %x\n", Pc ));
+        if (inst == 0xe8 && calldisp + retaddr == Pc)
+        {
+            //  DPRINT(( "call to thunk @ %x\n", Pc ));
             return FALSE;
         }
 
@@ -154,13 +137,15 @@ KdpIsTryFinallyReturn (
         //  and not ending with 0xc9.
         //
 
-        if (!NT_SUCCESS(KdpCopyFromPtr(&inst, (PCHAR)Pc - 1, 1, NULL))) {
+        if (!NT_SUCCESS(KdpCopyFromPtr(&inst, (PCHAR)Pc - 1, 1, NULL)))
+        {
             return FALSE;
         }
 
-        if ( inst != 0xc9 ) {
+        if (inst != 0xc9)
+        {
             // not a leave.  Assume a try-finally.
-//  DPRINT(( "transfer at %x is try-finally\n", Pc ));
+            //  DPRINT(( "transfer at %x is try-finally\n", Pc ));
             return TRUE;
         }
     }
@@ -187,12 +172,7 @@ KdpIsTryFinallyReturn (
 ***************************************************************************/
 
 
-LONG
-KdpLevelChange (
-    ULONG Pc,
-    PCONTEXT ContextRecord,
-    PBOOLEAN SpecialCall
-    )
+LONG KdpLevelChange(ULONG Pc, PCONTEXT ContextRecord, PBOOLEAN SpecialCall)
 {
     UCHAR membuf[2];
     ULONG Addr;
@@ -201,8 +181,9 @@ KdpLevelChange (
     membuf[1] = 0xcc;
     KdpCopyFromPtr(membuf, Pc, 2, NULL);
 
-    switch (membuf[0]) {
-    case 0xe8:  //  CALL direct w/32 bit displacement
+    switch (membuf[0])
+    {
+    case 0xe8: //  CALL direct w/32 bit displacement
         //
         //  For try/finally, the compiler may, in addition to the push/ret trick
         //  below, use a call to the finally thunk.  Since we treat a RET to
@@ -210,33 +191,38 @@ KdpLevelChange (
         //  treat such a call as not changing levels either
         //
 
-        if (!NT_SUCCESS(KdpCopyFromPtr(&Addr, (PCHAR)Pc + 1, 4, NULL))) {
+        if (!NT_SUCCESS(KdpCopyFromPtr(&Addr, (PCHAR)Pc + 1, 4, NULL)))
+        {
             Addr = 0;
-        } else {
+        }
+        else
+        {
             Addr += Pc + 5;
         }
 
-        if ((KdpCurrentSymbolStart <= Addr) && (Addr < KdpCurrentSymbolEnd)) {
+        if ((KdpCurrentSymbolStart <= Addr) && (Addr < KdpCurrentSymbolEnd))
+        {
             *SpecialCall = FALSE;
             return 0;
         }
 
 
-    case 0x9a:  //  CALL segmented 16:32
+    case 0x9a: //  CALL segmented 16:32
 
-        *SpecialCall = KdpIsSpecialCall( Pc, ContextRecord, membuf[0], membuf[1] );
+        *SpecialCall = KdpIsSpecialCall(Pc, ContextRecord, membuf[0], membuf[1]);
         return 1;
 
     case 0xff:
         //
         //  This is a compound instruction.  Dispatch on operation
         //
-        switch (membuf[1] & 0x38) {
-        case 0x10:  //  CALL with mod r/m
-            *SpecialCall = KdpIsSpecialCall( Pc, ContextRecord, membuf[0], membuf[1] );
+        switch (membuf[1] & 0x38)
+        {
+        case 0x10: //  CALL with mod r/m
+            *SpecialCall = KdpIsSpecialCall(Pc, ContextRecord, membuf[0], membuf[1]);
             return 1;
-        case 0x20:  //  JMP with mod r/m
-            *SpecialCall = KdpIsSpecialCall( Pc, ContextRecord, membuf[0], membuf[1] );
+        case 0x20: //  JMP with mod r/m
+            *SpecialCall = KdpIsSpecialCall(Pc, ContextRecord, membuf[0], membuf[1]);
 
             //
             //  If this is a try/finally, we'd like to treat it as call since the
@@ -250,16 +236,19 @@ KdpLevelChange (
             //  views this as a level up.
             //
 
-            if (KdpIsTryFinallyReturn( Pc, ContextRecord )) {
-                if (*SpecialCall) {
+            if (KdpIsTryFinallyReturn(Pc, ContextRecord))
+            {
+                if (*SpecialCall)
+                {
                     //
                     //  We won't see the return, so pretend it is just
                     //  inline code
                     //
 
                     return 0;
-
-                } else {
+                }
+                else
+                {
                     //
                     //  The destinations return will bring us back to this
                     //  context
@@ -267,12 +256,16 @@ KdpLevelChange (
 
                     return 1;
                 }
-            } else if (*SpecialCall) {
+            }
+            else if (*SpecialCall)
+            {
                 //
                 //  We won't see the return but we are, indeed, doing one.
                 //
                 return -1;
-            } else {
+            }
+            else
+            {
                 return 0;
             }
 
@@ -281,21 +274,22 @@ KdpLevelChange (
             return 0;
         }
 
-    case 0xc3:  //  RET
+    case 0xc3: //  RET
 
         //
         //  If we are a try/finally ret, then we indicate that it is NOT a level
         //  change
         //
 
-        if (KdpIsTryFinallyReturn( Pc, ContextRecord )) {
+        if (KdpIsTryFinallyReturn(Pc, ContextRecord))
+        {
             *SpecialCall = FALSE;
             return 0;
         }
 
-    case 0xc2:  //  RET  w/16 bit esp change
-    case 0xca:  //  RETF w/16 bit esp change
-    case 0xcb:  //  RETF
+    case 0xc2: //  RET  w/16 bit esp change
+    case 0xca: //  RETF w/16 bit esp change
+    case 0xcb: //  RETF
         *SpecialCall = FALSE;
         return -1;
 
@@ -305,49 +299,41 @@ KdpLevelChange (
     }
 
 } // KdpLevelChange
-
-LONG
-regValue(
-    UCHAR reg,
-    PCONTEXT ContextRecord
-    )
+
+LONG regValue(UCHAR reg, PCONTEXT ContextRecord)
 {
-    switch (reg) {
+    switch (reg)
+    {
     case 0x0:
-        return(ContextRecord->Eax);
+        return (ContextRecord->Eax);
         break;
     case 0x1:
-        return(ContextRecord->Ecx);
+        return (ContextRecord->Ecx);
         break;
     case 0x2:
-        return(ContextRecord->Edx);
+        return (ContextRecord->Edx);
         break;
     case 0x3:
-        return(ContextRecord->Ebx);
+        return (ContextRecord->Ebx);
         break;
     case 0x4:
-        return(ContextRecord->Esp);
+        return (ContextRecord->Esp);
         break;
     case 0x5:
-        return(ContextRecord->Ebp);
+        return (ContextRecord->Ebp);
         break;
     case 0x6:
-        return(ContextRecord->Esi);
+        return (ContextRecord->Esi);
         break;
     case 0x7:
-        return(ContextRecord->Edi);
+        return (ContextRecord->Edi);
         break;
     }
     return 0;
 }
-
+
 BOOLEAN
-KdpIsSpecialCall (
-    ULONG Pc,
-    PCONTEXT ContextRecord,
-    UCHAR opcode,
-    UCHAR modRM
-    )
+KdpIsSpecialCall(ULONG Pc, PCONTEXT ContextRecord, UCHAR opcode, UCHAR modRM)
 
 /*++
 
@@ -370,35 +356,44 @@ Argument:
     ULONG i;
     char d8;
 
-    if ( opcode == 0xe8 ) {
+    if (opcode == 0xe8)
+    {
 
         //
         // Signed offset from pc
         //
 
-        if (!NT_SUCCESS(KdpCopyFromPtr(&offset, (PCHAR)Pc + 1, 4, NULL))) {
+        if (!NT_SUCCESS(KdpCopyFromPtr(&offset, (PCHAR)Pc + 1, 4, NULL)))
+        {
             callAddr = 0;
-        } else {
+        }
+        else
+        {
             callAddr = Pc + offset + 5; // +5 for instr len.
         }
+    }
+    else if (opcode == 0xff)
+    {
 
-    } else if ( opcode == 0xff ) {
-
-        if ( ((modRM & 0x38) != 0x10) && ((modRM & 0x38) != 0x20) ) {
+        if (((modRM & 0x38) != 0x10) && ((modRM & 0x38) != 0x20))
+        {
             // not call or jump
             return FALSE;
         }
-        if ( (modRM & 0x08) == 0x08 ) {
+        if ((modRM & 0x08) == 0x08)
+        {
             // m16:16 or m16:32 -- we don't handle this
             return FALSE;
         }
 
-        if ( (modRM & 0xc0) == 0xc0 ) {
+        if ((modRM & 0xc0) == 0xc0)
+        {
 
             /* Direct register addressing */
-            callAddr = regValue( (UCHAR)(modRM&0x7), ContextRecord );
-
-        } else if ( (modRM & 0xc7) == 0x05 ) {
+            callAddr = regValue((UCHAR)(modRM & 0x7), ContextRecord);
+        }
+        else if ((modRM & 0xc7) == 0x05)
+        {
             //
             // Calls across dll boundaries involve a call into a jump table,
             // wherein the jump address is set to the real called routine at DLL
@@ -408,28 +403,36 @@ Argument:
             //  ff15 or ff25 -- call or jump indirect with disp32.  Get
             //  address of address
             //
-            if (!NT_SUCCESS(KdpCopyFromPtr(&addrAddr, (PCHAR)Pc + 2, 4, NULL))) {
+            if (!NT_SUCCESS(KdpCopyFromPtr(&addrAddr, (PCHAR)Pc + 2, 4, NULL)))
+            {
                 callAddr = 0;
-            } else {
+            }
+            else
+            {
                 //
                 //  Get real destination address
                 //
-                if (!NT_SUCCESS(KdpCopyFromPtr(&callAddr, addrAddr, 4, NULL))) {
+                if (!NT_SUCCESS(KdpCopyFromPtr(&callAddr, addrAddr, 4, NULL)))
+                {
                     callAddr = 0;
                 }
             }
-//  DPRINT(( "Indirect call/jmp @ %x\n", Pc ));
-        } else if ( (modRM & 0x7) == 0x4 ) {
+            //  DPRINT(( "Indirect call/jmp @ %x\n", Pc ));
+        }
+        else if ((modRM & 0x7) == 0x4)
+        {
 
             LONG indexValue;
 
             /* sib byte present */
-            if (!NT_SUCCESS(KdpCopyFromPtr(&sib, (PCHAR)Pc + 2, 1, NULL))) {
+            if (!NT_SUCCESS(KdpCopyFromPtr(&sib, (PCHAR)Pc + 2, 1, NULL)))
+            {
                 sib = 0;
             }
-            indexValue = regValue( (UCHAR)((sib & 0x31) >> 3), ContextRecord );
-            switch ( sib&0xc0 ) {
-            case 0x0:  /* x1 */
+            indexValue = regValue((UCHAR)((sib & 0x31) >> 3), ContextRecord);
+            switch (sib & 0xc0)
+            {
+            case 0x0: /* x1 */
                 break;
             case 0x40:
                 indexValue *= 2;
@@ -442,60 +445,67 @@ Argument:
                 break;
             } /* switch */
 
-            switch ( modRM & 0xc0 ) {
+            switch (modRM & 0xc0)
+            {
 
             case 0x0: /* no displacement */
-                if ( (sib & 0x7) == 0x5 ) {
-//                  DPRINT(("funny call #1 at %x\n", Pc));
+                if ((sib & 0x7) == 0x5)
+                {
+                    //                  DPRINT(("funny call #1 at %x\n", Pc));
                     return FALSE;
                 }
-                callAddr = indexValue + regValue((UCHAR)(sib&0x7), ContextRecord );
+                callAddr = indexValue + regValue((UCHAR)(sib & 0x7), ContextRecord);
                 break;
 
             case 0x40:
-                if ( (sib & 0x6) == 0x4 ) {
-//                  DPRINT(("Funny call #2\n")); /* calling into the stack */
+                if ((sib & 0x6) == 0x4)
+                {
+                    //                  DPRINT(("Funny call #2\n")); /* calling into the stack */
                     return FALSE;
                 }
-                if (!NT_SUCCESS(KdpCopyFromPtr( &d8, (PCHAR)Pc + 3, 1, NULL))) {
+                if (!NT_SUCCESS(KdpCopyFromPtr(&d8, (PCHAR)Pc + 3, 1, NULL)))
+                {
                     d8 = 0;
                 }
-                callAddr = indexValue + d8 +
-                                    regValue((UCHAR)(sib&0x7), ContextRecord );
+                callAddr = indexValue + d8 + regValue((UCHAR)(sib & 0x7), ContextRecord);
                 break;
 
             case 0x80:
-                if ( (sib & 0x6) == 0x4 ) {
-//                  DPRINT(("Funny call #3\n")); /* calling into the stack */
+                if ((sib & 0x6) == 0x4)
+                {
+                    //                  DPRINT(("Funny call #3\n")); /* calling into the stack */
                     return FALSE;
                 }
-                if (!NT_SUCCESS(KdpCopyFromPtr(&offset, (PCHAR)Pc + 3, 4, NULL))) {
+                if (!NT_SUCCESS(KdpCopyFromPtr(&offset, (PCHAR)Pc + 3, 4, NULL)))
+                {
                     offset = 0;
                 }
-                callAddr = indexValue + offset +
-                                    regValue((UCHAR)(sib&0x7), ContextRecord );
+                callAddr = indexValue + offset + regValue((UCHAR)(sib & 0x7), ContextRecord);
                 break;
 
             case 0xc0:
-                ASSERT( FALSE );
+                ASSERT(FALSE);
                 break;
-
             }
-
-        } else {
+        }
+        else
+        {
             //KdPrint(( "undecoded call at %x\n",
             //            CONTEXT_TO_PROGRAM_COUNTER(ContextRecord) ));
             return FALSE;
         }
-
-    } else if ( opcode == 0x9a ) {
+    }
+    else if (opcode == 0x9a)
+    {
 
         /* Absolute address call (best I can tell, cc doesn't generate this) */
-        if (!NT_SUCCESS(KdpCopyFromPtr( &callAddr, (PCHAR)Pc + 1, 4, NULL))) {
+        if (!NT_SUCCESS(KdpCopyFromPtr(&callAddr, (PCHAR)Pc + 1, 4, NULL)))
+        {
             callAddr = 0;
         }
-
-    } else {
+    }
+    else
+    {
         return FALSE;
     }
 
@@ -525,15 +535,16 @@ Argument:
     }
 #endif
 
-    for ( i = 0; i < KdNumberOfSpecialCalls; i++ ) {
-        if ( KdSpecialCalls[i] == callAddr ) {
+    for (i = 0; i < KdNumberOfSpecialCalls; i++)
+    {
+        if (KdSpecialCalls[i] == callAddr)
+        {
             return TRUE;
         }
     }
     return FALSE;
-
 }
-
+
 /*
  * Find the return address of the current function.  Only works when
  * locals haven't yet been pushed (ie, on the first instruction of the
@@ -541,24 +552,19 @@ Argument:
  */
 
 ULONG
-KdpGetReturnAddress (
-    PCONTEXT ContextRecord
-    )
+KdpGetReturnAddress(PCONTEXT ContextRecord)
 {
     ULONG retaddr;
 
-    if (!NT_SUCCESS(KdpCopyFromPtr(&retaddr, ContextRecord->Esp, 4, NULL))) {
+    if (!NT_SUCCESS(KdpCopyFromPtr(&retaddr, ContextRecord->Esp, 4, NULL)))
+    {
         retaddr = 0;
     }
     return retaddr;
 
 } // KdpGetReturnAddress
-
-VOID
-KdpSetContextState(
-    IN OUT PDBGKD_ANY_WAIT_STATE_CHANGE WaitStateChange,
-    IN PCONTEXT ContextRecord
-    )
+
+VOID KdpSetContextState(IN OUT PDBGKD_ANY_WAIT_STATE_CHANGE WaitStateChange, IN PCONTEXT ContextRecord)
 {
     PKPRCB Prcb;
 
@@ -567,16 +573,14 @@ KdpSetContextState(
     //
     Prcb = KeGetCurrentPrcb();
 
-    WaitStateChange->ControlReport.Dr6 =
-        Prcb->ProcessorState.SpecialRegisters.KernelDr6;
+    WaitStateChange->ControlReport.Dr6 = Prcb->ProcessorState.SpecialRegisters.KernelDr6;
 
-    WaitStateChange->ControlReport.Dr7 =
-        Prcb->ProcessorState.SpecialRegisters.KernelDr7;
+    WaitStateChange->ControlReport.Dr7 = Prcb->ProcessorState.SpecialRegisters.KernelDr7;
 
-    WaitStateChange->ControlReport.SegCs  = (USHORT)(ContextRecord->SegCs);
-    WaitStateChange->ControlReport.SegDs  = (USHORT)(ContextRecord->SegDs);
-    WaitStateChange->ControlReport.SegEs  = (USHORT)(ContextRecord->SegEs);
-    WaitStateChange->ControlReport.SegFs  = (USHORT)(ContextRecord->SegFs);
+    WaitStateChange->ControlReport.SegCs = (USHORT)(ContextRecord->SegCs);
+    WaitStateChange->ControlReport.SegDs = (USHORT)(ContextRecord->SegDs);
+    WaitStateChange->ControlReport.SegEs = (USHORT)(ContextRecord->SegEs);
+    WaitStateChange->ControlReport.SegFs = (USHORT)(ContextRecord->SegFs);
     WaitStateChange->ControlReport.EFlags = ContextRecord->EFlags;
 
     WaitStateChange->ControlReport.ReportFlags = X86_REPORT_INCLUDES_SEGS;
@@ -584,19 +588,14 @@ KdpSetContextState(
     // If the current code segment is a known flat code
     // segment let the debugger know so that it doesn't
     // have to retrieve the descriptor.
-    if (ContextRecord->SegCs == KGDT_R0_CODE ||
-        ContextRecord->SegCs == KGDT_R3_CODE + 3) {
+    if (ContextRecord->SegCs == KGDT_R0_CODE || ContextRecord->SegCs == KGDT_R3_CODE + 3)
+    {
         WaitStateChange->ControlReport.ReportFlags |= X86_REPORT_STANDARD_CS;
     }
 }
 
-VOID
-KdpSetStateChange(
-    IN OUT PDBGKD_ANY_WAIT_STATE_CHANGE WaitStateChange,
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PCONTEXT ContextRecord,
-    IN BOOLEAN SecondChance
-    )
+VOID KdpSetStateChange(IN OUT PDBGKD_ANY_WAIT_STATE_CHANGE WaitStateChange, IN PEXCEPTION_RECORD ExceptionRecord,
+                       IN PCONTEXT ContextRecord, IN BOOLEAN SecondChance)
 
 /*++
 
@@ -625,11 +624,7 @@ Return Value:
     KdpSetContextState(WaitStateChange, ContextRecord);
 }
 
-VOID
-KdpGetStateChange(
-    IN PDBGKD_MANIPULATE_STATE64 ManipulateState,
-    IN PCONTEXT ContextRecord
-    )
+VOID KdpGetStateChange(IN PDBGKD_MANIPULATE_STATE64 ManipulateState, IN PCONTEXT ContextRecord)
 
 /*++
 
@@ -651,9 +646,10 @@ Return Value:
 
 {
     PKPRCB Prcb;
-    ULONG  Processor;
+    ULONG Processor;
 
-    if (NT_SUCCESS(ManipulateState->u.Continue2.ContinueStatus) == TRUE) {
+    if (NT_SUCCESS(ManipulateState->u.Continue2.ContinueStatus) == TRUE)
+    {
 
         //
         // If NT_SUCCESS returns TRUE, then the debugger is doing a
@@ -662,23 +658,25 @@ Return Value:
         // to do with this exception, so control values are ignored.
         //
 
-        if (ManipulateState->u.Continue2.ControlSet.TraceFlag == TRUE) {
+        if (ManipulateState->u.Continue2.ControlSet.TraceFlag == TRUE)
+        {
             ContextRecord->EFlags |= 0x100L;
-
-        } else {
+        }
+        else
+        {
             ContextRecord->EFlags &= ~0x100L;
-
         }
 
-        for (Processor = 0; Processor < (ULONG)KeNumberProcessors; Processor++) {
+        for (Processor = 0; Processor < (ULONG)KeNumberProcessors; Processor++)
+        {
             Prcb = KiProcessorBlock[Processor];
 
-            Prcb->ProcessorState.SpecialRegisters.KernelDr7 =
-                ManipulateState->u.Continue2.ControlSet.Dr7;
+            Prcb->ProcessorState.SpecialRegisters.KernelDr7 = ManipulateState->u.Continue2.ControlSet.Dr7;
 
             Prcb->ProcessorState.SpecialRegisters.KernelDr6 = 0L;
         }
-        if (ManipulateState->u.Continue2.ControlSet.CurrentSymbolStart != 1) {
+        if (ManipulateState->u.Continue2.ControlSet.CurrentSymbolStart != 1)
+        {
             KdpCurrentSymbolStart = ManipulateState->u.Continue2.ControlSet.CurrentSymbolStart;
             KdpCurrentSymbolEnd = ManipulateState->u.Continue2.ControlSet.CurrentSymbolEnd;
         }
@@ -687,13 +685,7 @@ Return Value:
 
 
 NTSTATUS
-KdpSysReadControlSpace(
-    ULONG Processor,
-    ULONG64 Address,
-    PVOID Buffer,
-    ULONG Request,
-    PULONG Actual
-    )
+KdpSysReadControlSpace(ULONG Processor, ULONG64 Address, PVOID Buffer, ULONG Request, PULONG Actual)
 
 /*++
 
@@ -733,21 +725,19 @@ Return Value:
     NTSTATUS Status;
 
     Length = Request;
-    
-    if ((Address < sizeof(KPROCESSOR_STATE)) &&
-        (Processor < (ULONG)KeNumberProcessors)) {
+
+    if ((Address < sizeof(KPROCESSOR_STATE)) && (Processor < (ULONG)KeNumberProcessors))
+    {
         t = (ULONG)(sizeof(KPROCESSOR_STATE)) - (ULONG)Address;
-        if (t < Length) {
+        if (t < Length)
+        {
             Length = t;
         }
-        StartAddr = (PVOID)
-            ((ULONG)Address +
-             (ULONG)&(KiProcessorBlock[Processor]->ProcessorState));
-        Status = KdpCopyToPtr(Buffer,
-                              StartAddr,
-                              Length,
-                              Actual);
-    } else {
+        StartAddr = (PVOID)((ULONG)Address + (ULONG) & (KiProcessorBlock[Processor]->ProcessorState));
+        Status = KdpCopyToPtr(Buffer, StartAddr, Length, Actual);
+    }
+    else
+    {
         Status = STATUS_UNSUCCESSFUL;
         *Actual = 0;
     }
@@ -756,13 +746,7 @@ Return Value:
 }
 
 NTSTATUS
-KdpSysWriteControlSpace(
-    ULONG Processor,
-    ULONG64 Address,
-    PVOID Buffer,
-    ULONG Request,
-    PULONG Actual
-    )
+KdpSysWriteControlSpace(ULONG Processor, ULONG64 Address, PVOID Buffer, ULONG Request, PULONG Actual)
 
 /*++
 
@@ -795,18 +779,15 @@ Return Value:
     PVOID StartAddr;
     NTSTATUS Status;
 
-    if (((Address + Request) <= sizeof(KPROCESSOR_STATE)) &&
-        (Processor < (ULONG)KeNumberProcessors)) {
+    if (((Address + Request) <= sizeof(KPROCESSOR_STATE)) && (Processor < (ULONG)KeNumberProcessors))
+    {
 
-        StartAddr = (PVOID)
-            ((ULONG)Address +
-             (ULONG)&(KiProcessorBlock[Processor]->ProcessorState));
+        StartAddr = (PVOID)((ULONG)Address + (ULONG) & (KiProcessorBlock[Processor]->ProcessorState));
 
-        Status = KdpCopyFromPtr(StartAddr,
-                                Buffer,
-                                Request,
-                                Actual);
-    } else {
+        Status = KdpCopyFromPtr(StartAddr, Buffer, Request, Actual);
+    }
+    else
+    {
         Status = STATUS_UNSUCCESSFUL;
         *Actual = 0;
     }
@@ -815,15 +796,8 @@ Return Value:
 }
 
 NTSTATUS
-KdpSysReadIoSpace(
-    INTERFACE_TYPE InterfaceType,
-    ULONG BusNumber,
-    ULONG AddressSpace,
-    ULONG64 Address,
-    PVOID Buffer,
-    ULONG Request,
-    PULONG Actual
-    )
+KdpSysReadIoSpace(INTERFACE_TYPE InterfaceType, ULONG BusNumber, ULONG AddressSpace, ULONG64 Address, PVOID Buffer,
+                  ULONG Request, PULONG Actual)
 
 /*++
 
@@ -856,57 +830,56 @@ Return Value:
 {
     NTSTATUS Status = STATUS_SUCCESS;
 
-    if (InterfaceType != Isa || BusNumber != 0 || AddressSpace != 1) {
+    if (InterfaceType != Isa || BusNumber != 0 || AddressSpace != 1)
+    {
         *Actual = 0;
         return STATUS_UNSUCCESSFUL;
     }
-    
+
     //
     // Check Size and Alignment
     //
 
-    switch ( Request ) {
-        case 1:
-            *(PUCHAR)Buffer = READ_PORT_UCHAR((PUCHAR)(ULONG_PTR)Address);
-            *Actual = 1;
-            break;
-        case 2:
-            if ( Address & 1 ) {
-                Status = STATUS_DATATYPE_MISALIGNMENT;
-            } else {
-                *(PUSHORT)Buffer =
-                    READ_PORT_USHORT((PUSHORT)(ULONG_PTR)Address);
-                *Actual = 2;
-            }
-            break;
-        case 4:
-            if ( Address & 3 ) {
-                Status = STATUS_DATATYPE_MISALIGNMENT;
-            } else {
-                *(PULONG)Buffer =
-                    READ_PORT_ULONG((PULONG)(ULONG_PTR)Address);
-                *Actual = 4;
-            }
-            break;
-        default:
-            Status = STATUS_INVALID_PARAMETER;
-            *Actual = 0;
-            break;
+    switch (Request)
+    {
+    case 1:
+        *(PUCHAR)Buffer = READ_PORT_UCHAR((PUCHAR)(ULONG_PTR)Address);
+        *Actual = 1;
+        break;
+    case 2:
+        if (Address & 1)
+        {
+            Status = STATUS_DATATYPE_MISALIGNMENT;
+        }
+        else
+        {
+            *(PUSHORT)Buffer = READ_PORT_USHORT((PUSHORT)(ULONG_PTR)Address);
+            *Actual = 2;
+        }
+        break;
+    case 4:
+        if (Address & 3)
+        {
+            Status = STATUS_DATATYPE_MISALIGNMENT;
+        }
+        else
+        {
+            *(PULONG)Buffer = READ_PORT_ULONG((PULONG)(ULONG_PTR)Address);
+            *Actual = 4;
+        }
+        break;
+    default:
+        Status = STATUS_INVALID_PARAMETER;
+        *Actual = 0;
+        break;
     }
 
     return Status;
 }
 
 NTSTATUS
-KdpSysWriteIoSpace(
-    INTERFACE_TYPE InterfaceType,
-    ULONG BusNumber,
-    ULONG AddressSpace,
-    ULONG64 Address,
-    PVOID Buffer,
-    ULONG Request,
-    PULONG Actual
-    )
+KdpSysWriteIoSpace(INTERFACE_TYPE InterfaceType, ULONG BusNumber, ULONG AddressSpace, ULONG64 Address, PVOID Buffer,
+                   ULONG Request, PULONG Actual)
 
 /*++
 
@@ -939,53 +912,55 @@ Return Value:
 {
     NTSTATUS Status = STATUS_SUCCESS;
 
-    if (InterfaceType != Isa || BusNumber != 0 || AddressSpace != 1) {
+    if (InterfaceType != Isa || BusNumber != 0 || AddressSpace != 1)
+    {
         *Actual = 0;
         return STATUS_UNSUCCESSFUL;
     }
-    
+
     //
     // Check Size and Alignment
     //
 
-    switch ( Request ) {
-        case 1:
-            WRITE_PORT_UCHAR((PUCHAR)(ULONG_PTR)Address,
-                             *(PUCHAR)Buffer);
-            *Actual = 1;
-            break;
-        case 2:
-            if ( Address & 1 ) {
-                Status = STATUS_DATATYPE_MISALIGNMENT;
-            } else {
-                WRITE_PORT_USHORT((PUSHORT)(ULONG_PTR)Address,
-                                  *(PUSHORT)Buffer);
-                *Actual = 2;
-            }
-            break;
-        case 4:
-            if ( Address & 3 ) {
-                Status = STATUS_DATATYPE_MISALIGNMENT;
-            } else {
-                WRITE_PORT_ULONG((PULONG)(ULONG_PTR)Address,
-                                 *(PULONG)Buffer);
-                *Actual = 4;
-            }
-            break;
-        default:
-            Status = STATUS_INVALID_PARAMETER;
-            *Actual = 0;
-            break;
+    switch (Request)
+    {
+    case 1:
+        WRITE_PORT_UCHAR((PUCHAR)(ULONG_PTR)Address, *(PUCHAR)Buffer);
+        *Actual = 1;
+        break;
+    case 2:
+        if (Address & 1)
+        {
+            Status = STATUS_DATATYPE_MISALIGNMENT;
+        }
+        else
+        {
+            WRITE_PORT_USHORT((PUSHORT)(ULONG_PTR)Address, *(PUSHORT)Buffer);
+            *Actual = 2;
+        }
+        break;
+    case 4:
+        if (Address & 3)
+        {
+            Status = STATUS_DATATYPE_MISALIGNMENT;
+        }
+        else
+        {
+            WRITE_PORT_ULONG((PULONG)(ULONG_PTR)Address, *(PULONG)Buffer);
+            *Actual = 4;
+        }
+        break;
+    default:
+        Status = STATUS_INVALID_PARAMETER;
+        *Actual = 0;
+        break;
     }
 
     return Status;
 }
 
 NTSTATUS
-KdpSysReadMsr(
-    ULONG Msr,
-    PULONG64 Data
-    )
+KdpSysReadMsr(ULONG Msr, PULONG64 Data)
 
 /*++
 
@@ -1007,10 +982,13 @@ Return Value:
 
 {
     NTSTATUS Status = STATUS_SUCCESS;
-    
-    try {
+
+    try
+    {
         *Data = RDMSR(Msr);
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         *Data = 0;
         Status = STATUS_NO_SUCH_DEVICE;
     }
@@ -1019,10 +997,7 @@ Return Value:
 }
 
 NTSTATUS
-KdpSysWriteMsr(
-    ULONG Msr,
-    PULONG64 Data
-    )
+KdpSysWriteMsr(ULONG Msr, PULONG64 Data)
 
 /*++
 
@@ -1045,9 +1020,12 @@ Return Value:
 {
     NTSTATUS Status = STATUS_SUCCESS;
 
-    try {
-        WRMSR (Msr, *Data);
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    try
+    {
+        WRMSR(Msr, *Data);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = STATUS_NO_SUCH_DEVICE;
     }
 
@@ -1055,7 +1033,6 @@ Return Value:
 }
 
 
-
 /*** KdpGetCallNextOffset - compute "next" instruction on a call-like instruction
 *
 *   Purpose:
@@ -1069,37 +1046,45 @@ Return Value:
 *************************************************************************/
 
 ULONG
-KdpGetCallNextOffset (
-    ULONG Pc,
-    PCONTEXT ContextRecord
-    )
+KdpGetCallNextOffset(ULONG Pc, PCONTEXT ContextRecord)
 {
     UCHAR membuf[2];
     UCHAR opcode;
     ULONG sib;
     ULONG disp;
 
-    if (!NT_SUCCESS(KdpCopyFromPtr( membuf, Pc, 2, NULL ))) {
+    if (!NT_SUCCESS(KdpCopyFromPtr(membuf, Pc, 2, NULL)))
+    {
         return 0;
     }
 
     opcode = membuf[0];
 
-    if ( opcode == 0xe8 ) {         //  CALL 32 bit disp
-        return Pc+5;
-    } else if ( opcode == 0x9a ) {  //  CALL 16:32
-        return Pc+7;
-    } else if ( opcode == 0xff ) {
-        if ( membuf[1] == 0x25) {   //  JMP indirect
-            return KdpGetReturnAddress( ContextRecord );
+    if (opcode == 0xe8)
+    { //  CALL 32 bit disp
+        return Pc + 5;
+    }
+    else if (opcode == 0x9a)
+    { //  CALL 16:32
+        return Pc + 7;
+    }
+    else if (opcode == 0xff)
+    {
+        if (membuf[1] == 0x25)
+        { //  JMP indirect
+            return KdpGetReturnAddress(ContextRecord);
         }
         sib = ((membuf[1] & 0x07) == 0x04) ? 1 : 0;
         disp = (membuf[1] & 0xc0) >> 6;
-        switch (disp) {
+        switch (disp)
+        {
         case 0:
-            if ( (membuf[1] & 0x07) == 0x05 ) {
+            if ((membuf[1] & 0x07) == 0x05)
+            {
                 disp = 4; // disp32 alone
-            } else {
+            }
+            else
+            {
                 // disp = 0; // no displacement with reg or sib
             }
             break;

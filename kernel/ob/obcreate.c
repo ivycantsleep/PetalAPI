@@ -63,24 +63,17 @@ ULONG ObpObjectsWithName;
 ULONG ObpObjectsWithCreatorInfo;
 #endif // DBG
 
-C_ASSERT ( (FIELD_OFFSET (OBJECT_HEADER, Body) % MEMORY_ALLOCATION_ALIGNMENT) == 0 );
-C_ASSERT ( (sizeof (OBJECT_HEADER_CREATOR_INFO) % MEMORY_ALLOCATION_ALIGNMENT) == 0 );
-C_ASSERT ( (sizeof (OBJECT_HEADER_NAME_INFO) % MEMORY_ALLOCATION_ALIGNMENT) == 0 );
-C_ASSERT ( (sizeof (OBJECT_HEADER_QUOTA_INFO) % MEMORY_ALLOCATION_ALIGNMENT) == 0 );
+C_ASSERT((FIELD_OFFSET(OBJECT_HEADER, Body) % MEMORY_ALLOCATION_ALIGNMENT) == 0);
+C_ASSERT((sizeof(OBJECT_HEADER_CREATOR_INFO) % MEMORY_ALLOCATION_ALIGNMENT) == 0);
+C_ASSERT((sizeof(OBJECT_HEADER_NAME_INFO) % MEMORY_ALLOCATION_ALIGNMENT) == 0);
+C_ASSERT((sizeof(OBJECT_HEADER_QUOTA_INFO) % MEMORY_ALLOCATION_ALIGNMENT) == 0);
 
-
+
 NTSTATUS
-ObCreateObject (
-    IN KPROCESSOR_MODE ProbeMode,
-    IN POBJECT_TYPE ObjectType,
-    IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,
-    IN KPROCESSOR_MODE OwnershipMode,
-    IN OUT PVOID ParseContext OPTIONAL,
-    IN ULONG ObjectBodySize,
-    IN ULONG PagedPoolCharge,
-    IN ULONG NonPagedPoolCharge,
-    OUT PVOID *Object
-    )
+ObCreateObject(IN KPROCESSOR_MODE ProbeMode, IN POBJECT_TYPE ObjectType,
+               IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL, IN KPROCESSOR_MODE OwnershipMode,
+               IN OUT PVOID ParseContext OPTIONAL, IN ULONG ObjectBodySize, IN ULONG PagedPoolCharge,
+               IN ULONG NonPagedPoolCharge, OUT PVOID *Object)
 
 /*++
 
@@ -144,11 +137,13 @@ Return Value:
 
     ObjectCreateInfo = ObpAllocateObjectCreateInfoBuffer();
 
-    if (ObjectCreateInfo == NULL) {
+    if (ObjectCreateInfo == NULL)
+    {
 
         Status = STATUS_INSUFFICIENT_RESOURCES;
-
-    } else {
+    }
+    else
+    {
 
         //
         //  Capture the object attributes, quality of service, and object
@@ -157,38 +152,38 @@ Return Value:
         //  to default values.
         //
 
-        Status = ObpCaptureObjectCreateInformation( ObjectType,
-                                                    ProbeMode,
-                                                    OwnershipMode,
-                                                    ObjectAttributes,
-                                                    &CapturedObjectName,
-                                                    ObjectCreateInfo,
-                                                    FALSE );
+        Status = ObpCaptureObjectCreateInformation(ObjectType, ProbeMode, OwnershipMode, ObjectAttributes,
+                                                   &CapturedObjectName, ObjectCreateInfo, FALSE);
 
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
 
             //
             //  If the creation attributes are invalid, then return an error
             //  status.
             //
 
-            if (ObjectType->TypeInfo.InvalidAttributes & ObjectCreateInfo->Attributes) {
+            if (ObjectType->TypeInfo.InvalidAttributes & ObjectCreateInfo->Attributes)
+            {
 
                 Status = STATUS_INVALID_PARAMETER;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  Set the paged and nonpaged pool quota charges for the
                 //  object allocation.
                 //
 
-                if (PagedPoolCharge == 0) {
+                if (PagedPoolCharge == 0)
+                {
 
                     PagedPoolCharge = ObjectType->TypeInfo.DefaultPagedPoolCharge;
                 }
 
-                if (NonPagedPoolCharge == 0) {
+                if (NonPagedPoolCharge == 0)
+                {
 
                     NonPagedPoolCharge = ObjectType->TypeInfo.DefaultNonPagedPoolCharge;
                 }
@@ -200,14 +195,11 @@ Return Value:
                 //  Allocate and initialize the object.
                 //
 
-                Status = ObpAllocateObject( ObjectCreateInfo,
-                                            OwnershipMode,
-                                            ObjectType,
-                                            &CapturedObjectName,
-                                            ObjectBodySize,
-                                            &ObjectHeader );
+                Status = ObpAllocateObject(ObjectCreateInfo, OwnershipMode, ObjectType, &CapturedObjectName,
+                                           ObjectBodySize, &ObjectHeader);
 
-                if (NT_SUCCESS(Status)) {
+                if (NT_SUCCESS(Status))
+                {
 
                     //
                     //  If a permanent object is being created, then check if
@@ -216,10 +208,11 @@ Return Value:
 
                     *Object = &ObjectHeader->Body;
 
-                    if (ObjectHeader->Flags & OB_FLAG_PERMANENT_OBJECT) {
+                    if (ObjectHeader->Flags & OB_FLAG_PERMANENT_OBJECT)
+                    {
 
-                        if (!SeSinglePrivilegeCheck( SeCreatePermanentPrivilege,
-                                                     ProbeMode)) {
+                        if (!SeSinglePrivilegeCheck(SeCreatePermanentPrivilege, ProbeMode))
+                        {
 
                             ObpFreeObject(*Object);
 
@@ -228,21 +221,22 @@ Return Value:
                     }
 
 #ifdef POOL_TAGGING
-                    if (ObpTraceEnabled && NT_SUCCESS(Status)) {
+                    if (ObpTraceEnabled && NT_SUCCESS(Status))
+                    {
 
                         //
                         //  Register the object and push stack information for the
                         //  first reference
                         //
 
-                        ObpRegisterObject( ObjectHeader );
-                        ObpPushStackInfo( ObjectHeader, TRUE );
+                        ObpRegisterObject(ObjectHeader);
+                        ObpPushStackInfo(ObjectHeader, TRUE);
                     }
 #endif //POOL_TAGGING
 
                     //
                     //  Here is the only successful path out of this module but
-                    //  this path can also return privilege not held.  In the 
+                    //  this path can also return privilege not held.  In the
                     //  error case, all the resources have already been freed
                     //  by ObpFreeObject.
                     //
@@ -257,7 +251,8 @@ Return Value:
 
             ObpReleaseObjectCreateInformation(ObjectCreateInfo);
 
-            if (CapturedObjectName.Buffer != NULL) {
+            if (CapturedObjectName.Buffer != NULL)
+            {
 
                 ObpFreeObjectNameBuffer(&CapturedObjectName);
             }
@@ -277,17 +272,12 @@ Return Value:
     return Status;
 }
 
-
+
 NTSTATUS
-ObpCaptureObjectCreateInformation (
-    IN POBJECT_TYPE ObjectType OPTIONAL,
-    IN KPROCESSOR_MODE ProbeMode,
-    IN KPROCESSOR_MODE CreatorMode,
-    IN POBJECT_ATTRIBUTES ObjectAttributes,
-    IN OUT PUNICODE_STRING CapturedObjectName,
-    IN POBJECT_CREATE_INFORMATION ObjectCreateInfo,
-    IN LOGICAL UseLookaside
-    )
+ObpCaptureObjectCreateInformation(IN POBJECT_TYPE ObjectType OPTIONAL, IN KPROCESSOR_MODE ProbeMode,
+                                  IN KPROCESSOR_MODE CreatorMode, IN POBJECT_ATTRIBUTES ObjectAttributes,
+                                  IN OUT PUNICODE_STRING CapturedObjectName,
+                                  IN POBJECT_CREATE_INFORMATION ObjectCreateInfo, IN LOGICAL UseLookaside)
 
 /*++
 
@@ -341,23 +331,25 @@ Return Value:
 
     RtlZeroMemory(ObjectCreateInfo, sizeof(OBJECT_CREATE_INFORMATION));
 
-    try {
+    try
+    {
 
-        if (ARGUMENT_PRESENT(ObjectAttributes)) {
+        if (ARGUMENT_PRESENT(ObjectAttributes))
+        {
 
             //
             //  Probe the object attributes if necessary.
             //
 
-            if (ProbeMode != KernelMode) {
+            if (ProbeMode != KernelMode)
+            {
 
-                ProbeForReadSmallStructure( ObjectAttributes,
-                                            sizeof(OBJECT_ATTRIBUTES),
-                                            sizeof(ULONG_PTR) );
+                ProbeForReadSmallStructure(ObjectAttributes, sizeof(OBJECT_ATTRIBUTES), sizeof(ULONG_PTR));
             }
 
             if (ObjectAttributes->Length != sizeof(OBJECT_ATTRIBUTES) ||
-                (ObjectAttributes->Attributes & ~OBJ_VALID_ATTRIBUTES)) {
+                (ObjectAttributes->Attributes & ~OBJ_VALID_ATTRIBUTES))
+            {
 
                 Status = STATUS_INVALID_PARAMETER;
 
@@ -373,31 +365,33 @@ Return Value:
             //
             // Remove privileged option if passed in from user mode
             //
-            if (CreatorMode != KernelMode) {
+            if (CreatorMode != KernelMode)
+            {
                 ObjectCreateInfo->Attributes &= ~OBJ_KERNEL_HANDLE;
-            } else if (ObWatchHandles) {
-                if ((ObjectCreateInfo->Attributes&OBJ_KERNEL_HANDLE) == 0 &&
-                    PsGetCurrentProcess() != PsInitialSystemProcess) {
-                    DbgBreakPoint ();
+            }
+            else if (ObWatchHandles)
+            {
+                if ((ObjectCreateInfo->Attributes & OBJ_KERNEL_HANDLE) == 0 &&
+                    PsGetCurrentProcess() != PsInitialSystemProcess)
+                {
+                    DbgBreakPoint();
                 }
             }
             ObjectName = ObjectAttributes->ObjectName;
             SecurityDescriptor = ObjectAttributes->SecurityDescriptor;
             SecurityQos = ObjectAttributes->SecurityQualityOfService;
 
-            if (ARGUMENT_PRESENT(SecurityDescriptor)) {
+            if (ARGUMENT_PRESENT(SecurityDescriptor))
+            {
 
-                Status = SeCaptureSecurityDescriptor( SecurityDescriptor,
-                                                      ProbeMode,
-                                                      PagedPool,
-                                                      TRUE,
-                                                      &ObjectCreateInfo->SecurityDescriptor );
+                Status = SeCaptureSecurityDescriptor(SecurityDescriptor, ProbeMode, PagedPool, TRUE,
+                                                     &ObjectCreateInfo->SecurityDescriptor);
 
-                if (!NT_SUCCESS(Status)) {
+                if (!NT_SUCCESS(Status))
+                {
 
-                    KdPrint(( "OB: Failed to capture security descriptor at %08x - Status == %08x\n",
-                              SecurityDescriptor,
-                              Status) );
+                    KdPrint(("OB: Failed to capture security descriptor at %08x - Status == %08x\n", SecurityDescriptor,
+                             Status));
 
                     //
                     //  The cleanup routine depends on this being NULL if it isn't
@@ -410,30 +404,33 @@ Return Value:
                     goto failureExit;
                 }
 
-                SeComputeQuotaInformationSize(  ObjectCreateInfo->SecurityDescriptor,
-                                                &Size );
+                SeComputeQuotaInformationSize(ObjectCreateInfo->SecurityDescriptor, &Size);
 
-                ObjectCreateInfo->SecurityDescriptorCharge = SeComputeSecurityQuota( Size );
+                ObjectCreateInfo->SecurityDescriptorCharge = SeComputeSecurityQuota(Size);
                 ObjectCreateInfo->ProbeMode = ProbeMode;
             }
 
-            if (ARGUMENT_PRESENT(SecurityQos)) {
+            if (ARGUMENT_PRESENT(SecurityQos))
+            {
 
-                if (ProbeMode != KernelMode) {
+                if (ProbeMode != KernelMode)
+                {
 
-                    ProbeForReadSmallStructure( SecurityQos, sizeof(*SecurityQos), sizeof(ULONG));
+                    ProbeForReadSmallStructure(SecurityQos, sizeof(*SecurityQos), sizeof(ULONG));
                 }
 
                 ObjectCreateInfo->SecurityQualityOfService = *SecurityQos;
                 ObjectCreateInfo->SecurityQos = &ObjectCreateInfo->SecurityQualityOfService;
             }
-
-        } else {
+        }
+        else
+        {
 
             ObjectName = NULL;
         }
-
-    } except (ExSystemExceptionFilter()) {
+    }
+    except(ExSystemExceptionFilter())
+    {
 
         Status = GetExceptionCode();
 
@@ -446,20 +443,20 @@ Return Value:
     //  an incorrectly specified root directory.
     //
 
-    if (ARGUMENT_PRESENT(ObjectName)) {
+    if (ARGUMENT_PRESENT(ObjectName))
+    {
 
-        Status = ObpCaptureObjectName( ProbeMode,
-                                       ObjectName,
-                                       CapturedObjectName,
-                                       UseLookaside );
-
-    } else {
+        Status = ObpCaptureObjectName(ProbeMode, ObjectName, CapturedObjectName, UseLookaside);
+    }
+    else
+    {
 
         CapturedObjectName->Buffer = NULL;
         CapturedObjectName->Length = 0;
         CapturedObjectName->MaximumLength = 0;
 
-        if (ARGUMENT_PRESENT(ObjectCreateInfo->RootDirectory)) {
+        if (ARGUMENT_PRESENT(ObjectCreateInfo->RootDirectory))
+        {
 
             Status = STATUS_OBJECT_NAME_INVALID;
         }
@@ -473,7 +470,8 @@ Return Value:
 
 failureExit:
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         ObpReleaseObjectCreateInformation(ObjectCreateInfo);
     }
@@ -481,14 +479,10 @@ failureExit:
     return Status;
 }
 
-
+
 NTSTATUS
-ObpCaptureObjectName (
-    IN KPROCESSOR_MODE ProbeMode,
-    IN PUNICODE_STRING ObjectName,
-    IN OUT PUNICODE_STRING CapturedObjectName,
-    IN LOGICAL UseLookaside
-    )
+ObpCaptureObjectName(IN KPROCESSOR_MODE ProbeMode, IN PUNICODE_STRING ObjectName,
+                     IN OUT PUNICODE_STRING CapturedObjectName, IN LOGICAL UseLookaside)
 
 /*++
 
@@ -535,7 +529,8 @@ Return Value:
 
     Status = STATUS_SUCCESS;
 
-    try {
+    try
+    {
 
         //
         //  Probe and capture the name string descriptor and probe the
@@ -544,15 +539,15 @@ Return Value:
 
         FreeBuffer = NULL;
 
-        if (ProbeMode != KernelMode) {
+        if (ProbeMode != KernelMode)
+        {
 
             InputObjectName = ProbeAndReadUnicodeString(ObjectName);
 
-            ProbeForRead( InputObjectName.Buffer,
-                          InputObjectName.Length,
-                          sizeof(WCHAR) );
-
-        } else {
+            ProbeForRead(InputObjectName.Buffer, InputObjectName.Length, sizeof(WCHAR));
+        }
+        else
+        {
 
             InputObjectName = *ObjectName;
         }
@@ -561,7 +556,8 @@ Return Value:
         //  If the length of the string is not zero, then capture the string.
         //
 
-        if (InputObjectName.Length != 0) {
+        if (InputObjectName.Length != 0)
+        {
 
             //
             //  If the length of the string is not an even multiple of the
@@ -571,12 +567,13 @@ Return Value:
 
             Length = InputObjectName.Length;
 
-            if (((Length & (sizeof(WCHAR) - 1)) != 0) ||
-                (Length == (MAXUSHORT - sizeof(WCHAR) + 1))) {
+            if (((Length & (sizeof(WCHAR) - 1)) != 0) || (Length == (MAXUSHORT - sizeof(WCHAR) + 1)))
+            {
 
                 Status = STATUS_OBJECT_NAME_INVALID;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  Allocate a buffer for the specified name string.
@@ -586,15 +583,15 @@ Return Value:
                 //       the string descriptor.
                 //
 
-                FreeBuffer = ObpAllocateObjectNameBuffer( Length,
-                                                          UseLookaside,
-                                                          CapturedObjectName );
+                FreeBuffer = ObpAllocateObjectNameBuffer(Length, UseLookaside, CapturedObjectName);
 
-                if (FreeBuffer == NULL) {
+                if (FreeBuffer == NULL)
+                {
 
                     Status = STATUS_INSUFFICIENT_RESOURCES;
-
-                } else {
+                }
+                else
+                {
 
                     //
                     //  Copy the specified name string to the destination
@@ -612,12 +609,14 @@ Return Value:
                 }
             }
         }
-
-    } except(ExSystemExceptionFilter()) {
+    }
+    except(ExSystemExceptionFilter())
+    {
 
         Status = GetExceptionCode();
 
-        if (FreeBuffer != NULL) {
+        if (FreeBuffer != NULL)
+        {
 
             ExFreePool(FreeBuffer);
         }
@@ -626,13 +625,9 @@ Return Value:
     return Status;
 }
 
-
+
 PWCHAR
-ObpAllocateObjectNameBuffer (
-    IN ULONG Length,
-    IN LOGICAL UseLookaside,
-    IN OUT PUNICODE_STRING ObjectName
-    )
+ObpAllocateObjectNameBuffer(IN ULONG Length, IN LOGICAL UseLookaside, IN OUT PUNICODE_STRING ObjectName)
 
 /*++
 
@@ -674,15 +669,17 @@ Return Value:
 
     Maximum = Length + sizeof(WCHAR);
 
-    if ((UseLookaside == FALSE) || (Maximum > OBJECT_NAME_BUFFER_SIZE)) {
+    if ((UseLookaside == FALSE) || (Maximum > OBJECT_NAME_BUFFER_SIZE))
+    {
 
         //
         //  Attempt to allocate the buffer from nonpaged pool.
         //
 
-        Buffer = ExAllocatePoolWithTag( OB_NAMESPACE_POOL_TYPE , Maximum, 'mNbO' );
-
-    } else {
+        Buffer = ExAllocatePoolWithTag(OB_NAMESPACE_POOL_TYPE, Maximum, 'mNbO');
+    }
+    else
+    {
 
         //
         //  Attempt to allocate the name buffer from the lookaside list. If
@@ -705,12 +702,8 @@ Return Value:
     return (PWCHAR)Buffer;
 }
 
-
-VOID
-FASTCALL
-ObpFreeObjectNameBuffer (
-    OUT PUNICODE_STRING ObjectName
-    )
+
+VOID FASTCALL ObpFreeObjectNameBuffer(OUT PUNICODE_STRING ObjectName)
 
 /*++
 
@@ -743,22 +736,21 @@ Return Value:
 
     Buffer = ObjectName->Buffer;
 
-    if (ObjectName->MaximumLength != OBJECT_NAME_BUFFER_SIZE) {
+    if (ObjectName->MaximumLength != OBJECT_NAME_BUFFER_SIZE)
+    {
         ExFreePool(Buffer);
-
-    } else {
+    }
+    else
+    {
         ExFreeToPPLookasideList(LookasideNameBufferList, Buffer);
     }
 
     return;
 }
 
-
+
 NTKERNELAPI
-VOID
-ObDeleteCapturedInsertInfo (
-    IN PVOID Object
-    )
+VOID ObDeleteCapturedInsertInfo(IN PVOID Object)
 
 /*++
 
@@ -789,9 +781,11 @@ Return Value:
 
     ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
 
-    if (ObjectHeader->Flags & OB_FLAG_NEW_OBJECT) {
+    if (ObjectHeader->Flags & OB_FLAG_NEW_OBJECT)
+    {
 
-        if (ObjectHeader->ObjectCreateInfo != NULL) {
+        if (ObjectHeader->ObjectCreateInfo != NULL)
+        {
 
             ObpFreeObjectCreateInformation(ObjectHeader->ObjectCreateInfo);
 
@@ -802,16 +796,11 @@ Return Value:
     return;
 }
 
-
+
 NTSTATUS
-ObpAllocateObject (
-    IN POBJECT_CREATE_INFORMATION ObjectCreateInfo,
-    IN KPROCESSOR_MODE OwnershipMode,
-    IN POBJECT_TYPE ObjectType OPTIONAL,
-    IN PUNICODE_STRING ObjectName,
-    IN ULONG ObjectBodySize,
-    OUT POBJECT_HEADER *ReturnedObjectHeader
-    )
+ObpAllocateObject(IN POBJECT_CREATE_INFORMATION ObjectCreateInfo, IN KPROCESSOR_MODE OwnershipMode,
+                  IN POBJECT_TYPE ObjectType OPTIONAL, IN PUNICODE_STRING ObjectName, IN ULONG ObjectBodySize,
+                  OUT POBJECT_HEADER *ReturnedObjectHeader)
 
 /*++
 
@@ -870,14 +859,16 @@ Return Value:
     //  Compute the sizes of the optional object header components.
     //
 
-    if (ObjectCreateInfo == NULL) {
+    if (ObjectCreateInfo == NULL)
+    {
 
         QuotaInfoSize = 0;
         HandleInfoSize = 0;
-        NameInfoSize = sizeof( OBJECT_HEADER_NAME_INFO );
-        CreatorInfoSize = sizeof( OBJECT_HEADER_CREATOR_INFO );
-
-    } else {
+        NameInfoSize = sizeof(OBJECT_HEADER_NAME_INFO);
+        CreatorInfoSize = sizeof(OBJECT_HEADER_CREATOR_INFO);
+    }
+    else
+    {
 
         //
         //  The caller specified some additional object create info
@@ -888,15 +879,17 @@ Return Value:
         if (((ObjectCreateInfo->PagedPoolCharge != ObjectType->TypeInfo.DefaultPagedPoolCharge ||
               ObjectCreateInfo->NonPagedPoolCharge != ObjectType->TypeInfo.DefaultNonPagedPoolCharge ||
               ObjectCreateInfo->SecurityDescriptorCharge > SE_DEFAULT_SECURITY_QUOTA) &&
-                 PsGetCurrentProcess() != PsInitialSystemProcess) ||
-            (ObjectCreateInfo->Attributes & OBJ_EXCLUSIVE)) {
+             PsGetCurrentProcess() != PsInitialSystemProcess) ||
+            (ObjectCreateInfo->Attributes & OBJ_EXCLUSIVE))
+        {
 
-            QuotaInfoSize = sizeof( OBJECT_HEADER_QUOTA_INFO );
+            QuotaInfoSize = sizeof(OBJECT_HEADER_QUOTA_INFO);
 #if DBG
             ObpObjectsWithPoolQuota += 1;
 #endif // DBG
-
-        } else {
+        }
+        else
+        {
 
             QuotaInfoSize = 0;
         }
@@ -905,14 +898,16 @@ Return Value:
         //  Check if we are to allocate space to maintain handle counts
         //
 
-        if (ObjectType->TypeInfo.MaintainHandleCount) {
+        if (ObjectType->TypeInfo.MaintainHandleCount)
+        {
 
-            HandleInfoSize = sizeof( OBJECT_HEADER_HANDLE_INFO );
+            HandleInfoSize = sizeof(OBJECT_HEADER_HANDLE_INFO);
 #if DBG
             ObpObjectsWithHandleDB += 1;
 #endif // DBG
-
-        } else {
+        }
+        else
+        {
 
             HandleInfoSize = 0;
         }
@@ -921,14 +916,16 @@ Return Value:
         //  Check if we are to allocate space for the name
         //
 
-        if (ObjectName->Buffer != NULL) {
+        if (ObjectName->Buffer != NULL)
+        {
 
-            NameInfoSize = sizeof( OBJECT_HEADER_NAME_INFO );
+            NameInfoSize = sizeof(OBJECT_HEADER_NAME_INFO);
 #if DBG
             ObpObjectsWithName += 1;
 #endif // DBG
-
-        } else {
+        }
+        else
+        {
 
             NameInfoSize = 0;
         }
@@ -937,14 +934,16 @@ Return Value:
         //  Finally check if we are to maintain the creator info
         //
 
-        if (ObjectType->TypeInfo.MaintainTypeList) {
+        if (ObjectType->TypeInfo.MaintainTypeList)
+        {
 
-            CreatorInfoSize = sizeof( OBJECT_HEADER_CREATOR_INFO );
+            CreatorInfoSize = sizeof(OBJECT_HEADER_CREATOR_INFO);
 #if DBG
             ObpObjectsWithCreatorInfo += 1;
 #endif // DBG
-
-        } else {
+        }
+        else
+        {
 
             CreatorInfoSize = 0;
         }
@@ -954,11 +953,7 @@ Return Value:
     //  Now compute the total header size
     //
 
-    HeaderSize = QuotaInfoSize +
-                 HandleInfoSize +
-                 NameInfoSize +
-                 CreatorInfoSize +
-                 FIELD_OFFSET( OBJECT_HEADER, Body );
+    HeaderSize = QuotaInfoSize + HandleInfoSize + NameInfoSize + CreatorInfoSize + FIELD_OFFSET(OBJECT_HEADER, Body);
 
     //
     //  Allocate and initialize the object.
@@ -968,21 +963,22 @@ Return Value:
     //  Otherwise, allocate the object from paged pool.
     //
 
-    if ((ObjectType == NULL) || (ObjectType->TypeInfo.PoolType == NonPagedPool)) {
+    if ((ObjectType == NULL) || (ObjectType->TypeInfo.PoolType == NonPagedPool))
+    {
 
         PoolType = NonPagedPool;
-
-    } else {
+    }
+    else
+    {
 
         PoolType = PagedPool;
     }
 
-    ObjectHeader = ExAllocatePoolWithTag( PoolType,
-                                          HeaderSize + ObjectBodySize,
-                                          (ObjectType == NULL ? 'TjbO' : ObjectType->Key) |
-                                            PROTECTED_POOL );
+    ObjectHeader = ExAllocatePoolWithTag(PoolType, HeaderSize + ObjectBodySize,
+                                         (ObjectType == NULL ? 'TjbO' : ObjectType->Key) | PROTECTED_POOL);
 
-    if (ObjectHeader == NULL) {
+    if (ObjectHeader == NULL)
+    {
 
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -993,7 +989,8 @@ Return Value:
     //  it to free the object.
     //
 
-    if (QuotaInfoSize != 0) {
+    if (QuotaInfoSize != 0)
+    {
 
         QuotaInfo = (POBJECT_HEADER_QUOTA_INFO)ObjectHeader;
         QuotaInfo->PagedPoolCharge = ObjectCreateInfo->PagedPoolCharge;
@@ -1003,14 +1000,16 @@ Return Value:
         ObjectHeader = (POBJECT_HEADER)(QuotaInfo + 1);
     }
 
-    if (HandleInfoSize != 0) {
+    if (HandleInfoSize != 0)
+    {
 
         HandleInfo = (POBJECT_HEADER_HANDLE_INFO)ObjectHeader;
         HandleInfo->SingleEntry.HandleCount = 0;
         ObjectHeader = (POBJECT_HEADER)(HandleInfo + 1);
     }
 
-    if (NameInfoSize != 0) {
+    if (NameInfoSize != 0)
+    {
 
         NameInfo = (POBJECT_HEADER_NAME_INFO)ObjectHeader;
         NameInfo->Name = *ObjectName;
@@ -1019,12 +1018,13 @@ Return Value:
         ObjectHeader = (POBJECT_HEADER)(NameInfo + 1);
     }
 
-    if (CreatorInfoSize != 0) {
+    if (CreatorInfoSize != 0)
+    {
 
         CreatorInfo = (POBJECT_HEADER_CREATOR_INFO)ObjectHeader;
         CreatorInfo->CreatorBackTraceIndex = 0;
         CreatorInfo->CreatorUniqueProcess = PsGetCurrentProcess()->UniqueProcessId;
-        InitializeListHead( &CreatorInfo->TypeList );
+        InitializeListHead(&CreatorInfo->TypeList);
 
         PERFINFO_ADD_OBJECT_TO_ALLOCATED_TYPE_LIST(CreatorInfo, ObjectType);
 
@@ -1035,29 +1035,35 @@ Return Value:
     //  Compute the proper offsets based on what we have
     //
 
-    if (QuotaInfoSize != 0) {
+    if (QuotaInfoSize != 0)
+    {
 
         ObjectHeader->QuotaInfoOffset = (UCHAR)(QuotaInfoSize + HandleInfoSize + NameInfoSize + CreatorInfoSize);
-
-    } else {
+    }
+    else
+    {
 
         ObjectHeader->QuotaInfoOffset = 0;
     }
 
-    if (HandleInfoSize != 0) {
+    if (HandleInfoSize != 0)
+    {
 
         ObjectHeader->HandleInfoOffset = (UCHAR)(HandleInfoSize + NameInfoSize + CreatorInfoSize);
-
-    } else {
+    }
+    else
+    {
 
         ObjectHeader->HandleInfoOffset = 0;
     }
 
-    if (NameInfoSize != 0) {
+    if (NameInfoSize != 0)
+    {
 
-        ObjectHeader->NameInfoOffset =  (UCHAR)(NameInfoSize + CreatorInfoSize);
-
-    } else {
+        ObjectHeader->NameInfoOffset = (UCHAR)(NameInfoSize + CreatorInfoSize);
+    }
+    else
+    {
 
         ObjectHeader->NameInfoOffset = 0;
     }
@@ -1068,12 +1074,14 @@ Return Value:
 
     ObjectHeader->Flags = OB_FLAG_NEW_OBJECT;
 
-    if (CreatorInfoSize != 0) {
+    if (CreatorInfoSize != 0)
+    {
 
         ObjectHeader->Flags |= OB_FLAG_CREATOR_INFO;
     }
 
-    if (HandleInfoSize != 0) {
+    if (HandleInfoSize != 0)
+    {
 
         ObjectHeader->Flags |= OB_FLAG_SINGLE_HANDLE_ENTRY;
     }
@@ -1097,19 +1105,20 @@ Return Value:
     //       attributes, object ownership, and parse context.
     //
 
-    if (OwnershipMode == KernelMode) {
+    if (OwnershipMode == KernelMode)
+    {
 
         ObjectHeader->Flags |= OB_FLAG_KERNEL_OBJECT;
     }
 
-    if (ObjectCreateInfo != NULL &&
-        ObjectCreateInfo->Attributes & OBJ_PERMANENT ) {
+    if (ObjectCreateInfo != NULL && ObjectCreateInfo->Attributes & OBJ_PERMANENT)
+    {
 
         ObjectHeader->Flags |= OB_FLAG_PERMANENT_OBJECT;
     }
 
-    if ((ObjectCreateInfo != NULL) &&
-        (ObjectCreateInfo->Attributes & OBJ_EXCLUSIVE)) {
+    if ((ObjectCreateInfo != NULL) && (ObjectCreateInfo->Attributes & OBJ_EXCLUSIVE))
+    {
 
         ObjectHeader->Flags |= OB_FLAG_EXCLUSIVE_OBJECT;
     }
@@ -1117,11 +1126,13 @@ Return Value:
     ObjectHeader->ObjectCreateInfo = ObjectCreateInfo;
     ObjectHeader->SecurityDescriptor = NULL;
 
-    if (ObjectType != NULL) {
+    if (ObjectType != NULL)
+    {
 
         ObjectType->TotalNumberOfObjects += 1;
 
-        if (ObjectType->TotalNumberOfObjects > ObjectType->HighWaterNumberOfObjects) {
+        if (ObjectType->TotalNumberOfObjects > ObjectType->HighWaterNumberOfObjects)
+        {
 
             ObjectType->HighWaterNumberOfObjects = ObjectType->TotalNumberOfObjects;
         }
@@ -1133,17 +1144,20 @@ Return Value:
     //  On a checked build echo out allocs
     //
 
-    if (ObpShowAllocAndFree) {
+    if (ObpShowAllocAndFree)
+    {
 
-        DbgPrint( "OB: Alloc %lx (%lx) %04lu", ObjectHeader, ObjectHeader, ObjectBodySize );
+        DbgPrint("OB: Alloc %lx (%lx) %04lu", ObjectHeader, ObjectHeader, ObjectBodySize);
 
-        if (ObjectType) {
+        if (ObjectType)
+        {
 
-            DbgPrint(" - %wZ\n", &ObjectType->Name );
+            DbgPrint(" - %wZ\n", &ObjectType->Name);
+        }
+        else
+        {
 
-        } else {
-
-            DbgPrint(" - Type\n" );
+            DbgPrint(" - Type\n");
         }
     }
 #endif
@@ -1153,12 +1167,8 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
-
-VOID
-FASTCALL
-ObpFreeObject (
-    IN PVOID Object
-    )
+
+VOID FASTCALL ObpFreeObject(IN PVOID Object)
 
 /*++
 
@@ -1204,30 +1214,34 @@ Return Value:
 
     FreeBuffer = ObjectHeader;
 
-    CreatorInfo = OBJECT_HEADER_TO_CREATOR_INFO( ObjectHeader );
+    CreatorInfo = OBJECT_HEADER_TO_CREATOR_INFO(ObjectHeader);
 
-    if (CreatorInfo != NULL) {
+    if (CreatorInfo != NULL)
+    {
 
         FreeBuffer = CreatorInfo;
     }
 
-    NameInfo = OBJECT_HEADER_TO_NAME_INFO( ObjectHeader );
+    NameInfo = OBJECT_HEADER_TO_NAME_INFO(ObjectHeader);
 
-    if (NameInfo != NULL) {
+    if (NameInfo != NULL)
+    {
 
         FreeBuffer = NameInfo;
     }
 
-    HandleInfo = OBJECT_HEADER_TO_HANDLE_INFO( ObjectHeader );
+    HandleInfo = OBJECT_HEADER_TO_HANDLE_INFO(ObjectHeader);
 
-    if (HandleInfo != NULL) {
+    if (HandleInfo != NULL)
+    {
 
         FreeBuffer = HandleInfo;
     }
 
-    QuotaInfo = OBJECT_HEADER_TO_QUOTA_INFO( ObjectHeader );
+    QuotaInfo = OBJECT_HEADER_TO_QUOTA_INFO(ObjectHeader);
 
-    if (QuotaInfo != NULL) {
+    if (QuotaInfo != NULL)
+    {
 
         FreeBuffer = QuotaInfo;
     }
@@ -1238,9 +1252,10 @@ Return Value:
     //  On a checked build echo out frees
     //
 
-    if (ObpShowAllocAndFree) {
+    if (ObpShowAllocAndFree)
+    {
 
-        DbgPrint( "OB: Free  %lx (%lx) - Type: %wZ\n", ObjectHeader, ObjectHeader, &ObjectType->Name );
+        DbgPrint("OB: Free  %lx (%lx) - Type: %wZ\n", ObjectHeader, ObjectHeader, &ObjectType->Name);
     }
 #endif
 
@@ -1257,31 +1272,37 @@ Return Value:
     //  are unioned together.
     //
 
-    if (ObjectHeader->Flags & OB_FLAG_NEW_OBJECT) {
+    if (ObjectHeader->Flags & OB_FLAG_NEW_OBJECT)
+    {
 
-        if (ObjectHeader->ObjectCreateInfo != NULL) {
+        if (ObjectHeader->ObjectCreateInfo != NULL)
+        {
 
-            ObpFreeObjectCreateInformation( ObjectHeader->ObjectCreateInfo );
+            ObpFreeObjectCreateInformation(ObjectHeader->ObjectCreateInfo);
 
             ObjectHeader->ObjectCreateInfo = NULL;
         }
+    }
+    else
+    {
 
-    } else {
+        if (ObjectHeader->QuotaBlockCharged != NULL)
+        {
 
-        if (ObjectHeader->QuotaBlockCharged != NULL) {
+            if (QuotaInfo != NULL)
+            {
 
-            if (QuotaInfo != NULL) {
-
-                PagedPoolCharge = QuotaInfo->PagedPoolCharge +
-                                  QuotaInfo->SecurityDescriptorCharge;
+                PagedPoolCharge = QuotaInfo->PagedPoolCharge + QuotaInfo->SecurityDescriptorCharge;
 
                 NonPagedPoolCharge = QuotaInfo->NonPagedPoolCharge;
-
-            } else {
+            }
+            else
+            {
 
                 PagedPoolCharge = ObjectType->TypeInfo.DefaultPagedPoolCharge;
 
-                if (ObjectHeader->Flags & OB_FLAG_DEFAULT_SECURITY_QUOTA ) {
+                if (ObjectHeader->Flags & OB_FLAG_DEFAULT_SECURITY_QUOTA)
+                {
 
                     PagedPoolCharge += SE_DEFAULT_SECURITY_QUOTA;
                 }
@@ -1289,22 +1310,20 @@ Return Value:
                 NonPagedPoolCharge = ObjectType->TypeInfo.DefaultNonPagedPoolCharge;
             }
 
-            PsReturnSharedPoolQuota( ObjectHeader->QuotaBlockCharged,
-                                     PagedPoolCharge,
-                                     NonPagedPoolCharge );
+            PsReturnSharedPoolQuota(ObjectHeader->QuotaBlockCharged, PagedPoolCharge, NonPagedPoolCharge);
 
             ObjectHeader->QuotaBlockCharged = NULL;
         }
     }
 
-    if ((HandleInfo != NULL) &&
-        ((ObjectHeader->Flags & OB_FLAG_SINGLE_HANDLE_ENTRY) == 0)) {
+    if ((HandleInfo != NULL) && ((ObjectHeader->Flags & OB_FLAG_SINGLE_HANDLE_ENTRY) == 0))
+    {
 
         //
         //  If a handle database has been allocated, then free the memory.
         //
 
-        ExFreePool( HandleInfo->HandleCountDataBase );
+        ExFreePool(HandleInfo->HandleCountDataBase);
 
         HandleInfo->HandleCountDataBase = NULL;
     }
@@ -1313,9 +1332,10 @@ Return Value:
     //  If a name string buffer has been allocated, then free the memory.
     //
 
-    if (NameInfo != NULL && NameInfo->Name.Buffer != NULL) {
+    if (NameInfo != NULL && NameInfo->Name.Buffer != NULL)
+    {
 
-        ExFreePool( NameInfo->Name.Buffer );
+        ExFreePool(NameInfo->Name.Buffer);
 
         NameInfo->Name.Buffer = NULL;
     }
@@ -1326,24 +1346,18 @@ Return Value:
     //  Trash type field so we don't get far if we attempt to
     //  use a stale object pointer to this object.
     //
-    //  Sundown Note: trash it by zero-extended it. 
+    //  Sundown Note: trash it by zero-extended it.
     //                sign-extension will create a valid kernel address.
 
 
-    ObjectHeader->Type = UIntToPtr(0xBAD0B0B0); 
-    ExFreePoolWithTag( FreeBuffer,
-                       (ObjectType == NULL ? 'TjbO' : ObjectType->Key) |
-                            PROTECTED_POOL );
+    ObjectHeader->Type = UIntToPtr(0xBAD0B0B0);
+    ExFreePoolWithTag(FreeBuffer, (ObjectType == NULL ? 'TjbO' : ObjectType->Key) | PROTECTED_POOL);
 
     return;
 }
 
-
-VOID
-FASTCALL
-ObFreeObjectCreateInfoBuffer (
-    IN POBJECT_CREATE_INFORMATION ObjectCreateInfo
-    )
+
+VOID FASTCALL ObFreeObjectCreateInfoBuffer(IN POBJECT_CREATE_INFORMATION ObjectCreateInfo)
 
 /*++
 
@@ -1364,7 +1378,7 @@ Return Value:
 --*/
 
 {
-    ObpFreeObjectCreateInfoBuffer( ObjectCreateInfo );
+    ObpFreeObjectCreateInfoBuffer(ObjectCreateInfo);
 
     return;
 }

@@ -44,24 +44,18 @@ Revision History:
 
 #ifdef ALLOC_PRAGMA
 NTSTATUS
-SepCreateClientSecurity(
-    IN PACCESS_TOKEN Token,
-    IN PSECURITY_QUALITY_OF_SERVICE ClientSecurityQos,
-    IN BOOLEAN ServerIsRemote,
-    TOKEN_TYPE TokenType,
-    BOOLEAN ThreadEffectiveOnly,
-    SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
-    OUT PSECURITY_CLIENT_CONTEXT ClientContext
-    );
-#pragma alloc_text(PAGE,SepCreateClientSecurity)
-#pragma alloc_text(PAGE,SeCreateClientSecurity)
-#pragma alloc_text(PAGE,SeUpdateClientSecurity)
-#pragma alloc_text(PAGE,SeImpersonateClient)
-#pragma alloc_text(PAGE,SeImpersonateClientEx)
-#pragma alloc_text(PAGE,SeCreateClientSecurityFromSubjectContext)
+SepCreateClientSecurity(IN PACCESS_TOKEN Token, IN PSECURITY_QUALITY_OF_SERVICE ClientSecurityQos,
+                        IN BOOLEAN ServerIsRemote, TOKEN_TYPE TokenType, BOOLEAN ThreadEffectiveOnly,
+                        SECURITY_IMPERSONATION_LEVEL ImpersonationLevel, OUT PSECURITY_CLIENT_CONTEXT ClientContext);
+#pragma alloc_text(PAGE, SepCreateClientSecurity)
+#pragma alloc_text(PAGE, SeCreateClientSecurity)
+#pragma alloc_text(PAGE, SeUpdateClientSecurity)
+#pragma alloc_text(PAGE, SeImpersonateClient)
+#pragma alloc_text(PAGE, SeImpersonateClientEx)
+#pragma alloc_text(PAGE, SeCreateClientSecurityFromSubjectContext)
 #endif
 
-
+
 ////////////////////////////////////////////////////////////////////////
 //                                                                    //
 //           Routines                                                 //
@@ -70,15 +64,9 @@ SepCreateClientSecurity(
 
 
 NTSTATUS
-SepCreateClientSecurity(
-    IN PACCESS_TOKEN Token,
-    IN PSECURITY_QUALITY_OF_SERVICE ClientSecurityQos,
-    IN BOOLEAN ServerIsRemote,
-    TOKEN_TYPE TokenType,
-    BOOLEAN ThreadEffectiveOnly,
-    SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
-    OUT PSECURITY_CLIENT_CONTEXT ClientContext
-    )
+SepCreateClientSecurity(IN PACCESS_TOKEN Token, IN PSECURITY_QUALITY_OF_SERVICE ClientSecurityQos,
+                        IN BOOLEAN ServerIsRemote, TOKEN_TYPE TokenType, BOOLEAN ThreadEffectiveOnly,
+                        SECURITY_IMPERSONATION_LEVEL ImpersonationLevel, OUT PSECURITY_CLIENT_CONTEXT ClientContext)
 
 /*++
 
@@ -124,7 +112,8 @@ Return Value
 
     PAGED_CODE();
 
-    if ( !VALID_IMPERSONATION_LEVEL(ClientSecurityQos->ImpersonationLevel) ) {
+    if (!VALID_IMPERSONATION_LEVEL(ClientSecurityQos->ImpersonationLevel))
+    {
 
         return STATUS_INVALID_PARAMETER;
     }
@@ -139,18 +128,22 @@ Return Value
     // place to calculate it, and we are optimizing for DYNAMIC mode.
     //
 
-    if (TokenType == TokenImpersonation) {
+    if (TokenType == TokenImpersonation)
+    {
 
-        if ( ClientSecurityQos->ImpersonationLevel > ImpersonationLevel) {
+        if (ClientSecurityQos->ImpersonationLevel > ImpersonationLevel)
+        {
 
             return STATUS_BAD_IMPERSONATION_LEVEL;
         }
 
-        if ( SepBadImpersonationLevel(ImpersonationLevel,ServerIsRemote)) {
+        if (SepBadImpersonationLevel(ImpersonationLevel, ServerIsRemote))
+        {
 
             return STATUS_BAD_IMPERSONATION_LEVEL;
-
-        } else {
+        }
+        else
+        {
 
             //
             // TokenType is TokenImpersonation and the impersonation is legit.
@@ -159,74 +152,64 @@ Return Value
             //
 
             ClientContext->DirectAccessEffectiveOnly =
-                ( (ThreadEffectiveOnly || (ClientSecurityQos->EffectiveOnly)) ?
-                  TRUE : FALSE );
+                ((ThreadEffectiveOnly || (ClientSecurityQos->EffectiveOnly)) ? TRUE : FALSE);
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // TokenType is TokenPrimary.  In this case, the client specified
         // EffectiveOnly value is always used.
         //
 
-        ClientContext->DirectAccessEffectiveOnly =
-            ClientSecurityQos->EffectiveOnly;
+        ClientContext->DirectAccessEffectiveOnly = ClientSecurityQos->EffectiveOnly;
     }
 
     //
     // Copy the token if necessary (i.e., static tracking requested)
     //
 
-    if (ClientSecurityQos->ContextTrackingMode == SECURITY_STATIC_TRACKING) {
+    if (ClientSecurityQos->ContextTrackingMode == SECURITY_STATIC_TRACKING)
+    {
 
         ClientContext->DirectlyAccessClientToken = FALSE;
 
-        Status = SeCopyClientToken(
-                     Token,
-                     ClientSecurityQos->ImpersonationLevel,
-                     KernelMode,
-                     &DuplicateToken
-                     );
+        Status = SeCopyClientToken(Token, ClientSecurityQos->ImpersonationLevel, KernelMode, &DuplicateToken);
 
         Token = DuplicateToken;
 
         //
         // If there was an error, we're done.
         //
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             return Status;
         }
-
-    } else {
+    }
+    else
+    {
 
         ClientContext->DirectlyAccessClientToken = TRUE;
 
-        if (ServerIsRemote) {
+        if (ServerIsRemote)
+        {
             //
             // Get a copy of the client token's control information
             // so that we can tell if it changes in the future.
             //
 
-            SeGetTokenControlInformation( Token,
-                                          &ClientContext->ClientTokenControl
-                                          );
-
+            SeGetTokenControlInformation(Token, &ClientContext->ClientTokenControl);
         }
-
     }
 
-    ClientContext->SecurityQos.Length =
-        (ULONG)sizeof(SECURITY_QUALITY_OF_SERVICE);
+    ClientContext->SecurityQos.Length = (ULONG)sizeof(SECURITY_QUALITY_OF_SERVICE);
 
-    ClientContext->SecurityQos.ImpersonationLevel =
-        ClientSecurityQos->ImpersonationLevel;
+    ClientContext->SecurityQos.ImpersonationLevel = ClientSecurityQos->ImpersonationLevel;
 
-    ClientContext->SecurityQos.ContextTrackingMode =
-        ClientSecurityQos->ContextTrackingMode;
+    ClientContext->SecurityQos.ContextTrackingMode = ClientSecurityQos->ContextTrackingMode;
 
-    ClientContext->SecurityQos.EffectiveOnly =
-        ClientSecurityQos->EffectiveOnly;
+    ClientContext->SecurityQos.EffectiveOnly = ClientSecurityQos->EffectiveOnly;
 
     ClientContext->ServerIsRemote = ServerIsRemote;
 
@@ -236,12 +219,8 @@ Return Value
 }
 
 NTSTATUS
-SeCreateClientSecurity (
-    IN PETHREAD ClientThread,
-    IN PSECURITY_QUALITY_OF_SERVICE ClientSecurityQos,
-    IN BOOLEAN ServerIsRemote,
-    OUT PSECURITY_CLIENT_CONTEXT ClientContext
-    )
+SeCreateClientSecurity(IN PETHREAD ClientThread, IN PSECURITY_QUALITY_OF_SERVICE ClientSecurityQos,
+                       IN BOOLEAN ServerIsRemote, OUT PSECURITY_CLIENT_CONTEXT ClientContext)
 
 /*++
 
@@ -309,49 +288,32 @@ Return Value:
     // Gain access to the client thread's effective token
     //
 
-    Token = PsReferenceEffectiveToken(
-                ClientThread,
-                &TokenType,
-                &ThreadEffectiveOnly,
-                &ImpersonationLevel
-                );
+    Token = PsReferenceEffectiveToken(ClientThread, &TokenType, &ThreadEffectiveOnly, &ImpersonationLevel);
 
 
-    Status = SepCreateClientSecurity(
-                Token,
-                ClientSecurityQos,
-                ServerIsRemote,
-                TokenType,
-                ThreadEffectiveOnly,
-                ImpersonationLevel,
-                ClientContext );
+    Status = SepCreateClientSecurity(Token, ClientSecurityQos, ServerIsRemote, TokenType, ThreadEffectiveOnly,
+                                     ImpersonationLevel, ClientContext);
 
     //
     // If failed, or if a token was copied internally, then deref our token.
     //
 
-    if ((!NT_SUCCESS( Status )) || (ClientSecurityQos->ContextTrackingMode == SECURITY_STATIC_TRACKING)) {
+    if ((!NT_SUCCESS(Status)) || (ClientSecurityQos->ContextTrackingMode == SECURITY_STATIC_TRACKING))
+    {
 
-        ObDereferenceObject( Token );
+        ObDereferenceObject(Token);
     }
 
     return Status;
 }
 
 
-
 #if SAVE_FOR_PRODUCT_2
 
 
-
-
 NTSTATUS
-SeUpdateClientSecurity(
-    IN PETHREAD ClientThread,
-    IN OUT PSECURITY_CLIENT_CONTEXT ClientContext,
-    OUT PBOOLEAN ChangesMade,
-    OUT PBOOLEAN NewToken
-    )
+SeUpdateClientSecurity(IN PETHREAD ClientThread, IN OUT PSECURITY_CLIENT_CONTEXT ClientContext,
+                       OUT PBOOLEAN ChangesMade, OUT PBOOLEAN NewToken)
 
 /*++
 
@@ -424,13 +386,12 @@ Return Value:
 
     PAGED_CODE();
 
-    if (ClientContext->SecurityQos.ContextTrackingMode ==
-        SECURITY_STATIC_TRACKING) {
+    if (ClientContext->SecurityQos.ContextTrackingMode == SECURITY_STATIC_TRACKING)
+    {
 
         (*NewToken) = FALSE;
         (*ChangesMade) = FALSE;
         return STATUS_SUCCESS;
-
     }
 
 
@@ -441,18 +402,11 @@ Return Value:
     //////////////////////////////////////////////
 
 
-
     //
     // Gain access to the client thread's effective token
     //
 
-    Token = PsReferenceEffectiveToken(
-                ClientThread,
-                &TokenType,
-                &ThreadEffectiveOnly,
-                &ImpersonationLevel
-                );
-
+    Token = PsReferenceEffectiveToken(ClientThread, &TokenType, &ThreadEffectiveOnly, &ImpersonationLevel);
 
 
     //
@@ -460,10 +414,10 @@ Return Value:
     //
 
 
-    SeGetTokenControlInformation( Token, &TokenControl );
+    SeGetTokenControlInformation(Token, &TokenControl);
 
-    if ( SeSameToken( &TokenControl,
-                      &ClientContext->ClientTokenControl) ) {
+    if (SeSameToken(&TokenControl, &ClientContext->ClientTokenControl))
+    {
 
         (*NewToken = FALSE);
 
@@ -473,25 +427,28 @@ Return Value:
         // Is it unmodified?
         //
 
-        if ( (TokenControl.ModifiedId.HighPart ==
-              ClientContext->ClientTokenControl.ModifiedId.HighPart) &&
-             (TokenControl.ModifiedId.LowPart  ==
-              ClientContext->ClientTokenControl.ModifiedId.LowPart) )   {
+        if ((TokenControl.ModifiedId.HighPart == ClientContext->ClientTokenControl.ModifiedId.HighPart) &&
+            (TokenControl.ModifiedId.LowPart == ClientContext->ClientTokenControl.ModifiedId.LowPart))
+        {
 
             //
             // Yup.  No changes necessary.
             //
 
-            if (TokenType == TokenPrimary) {
-                PsDereferencePrimaryTokenEx(THREAD_TO_PROCESS(ClientThread), Token );
-            } else {
-                PsDereferenceImpersonationToken( Token );
+            if (TokenType == TokenPrimary)
+            {
+                PsDereferencePrimaryTokenEx(THREAD_TO_PROCESS(ClientThread), Token);
+            }
+            else
+            {
+                PsDereferenceImpersonationToken(Token);
             }
 
             (*ChangesMade) = FALSE;
             return STATUS_SUCCESS;
-
-        } else {
+        }
+        else
+        {
 
             //
             // Same token, but it has been modified.
@@ -501,12 +458,16 @@ Return Value:
             //
 
             (*ChangesMade) = TRUE;
-            if (ClientContext->DirectlyAccessClientToken) {
+            if (ClientContext->DirectlyAccessClientToken)
+            {
 
-                if (TokenType == TokenPrimary) {
+                if (TokenType == TokenPrimary)
+                {
                     PsDereferencePrimaryTokenEx(THREAD_TO_PROCESS(ClientThread), Token);
-                } else {
-                    PsDereferenceImpersonationToken (Token);
+                }
+                else
+                {
+                    PsDereferenceImpersonationToken(Token);
                 }
 
                 //
@@ -514,14 +475,14 @@ Return Value:
                 // the token is for effective use only
                 //
 
-                ClientContext->ClientTokenControl.ModifiedId =
-                    TokenControl.ModifiedId;
+                ClientContext->ClientTokenControl.ModifiedId = TokenControl.ModifiedId;
                 ClientContext->DirectAccessEffectiveOnly =
-                ( (ThreadEffectiveOnly || (ClientContext->SecurityQos.EffectiveOnly)) ?
-                  TRUE : FALSE );
+                    ((ThreadEffectiveOnly || (ClientContext->SecurityQos.EffectiveOnly)) ? TRUE : FALSE);
 
                 return STATUS_SUCCESS;
-            } else {
+            }
+            else
+            {
 
                 //
                 //  There is a possibility for a fair performance gain here
@@ -549,11 +510,12 @@ Return Value:
 
     (*NewToken) = TRUE;
     (*ChangesMade) = TRUE;
-    if (TokenType == TokenImpersonation) {
-        if ( SepBadImpersonationLevel(ImpersonationLevel,
-                                      ClientContext->ServerIsRemote)) {
+    if (TokenType == TokenImpersonation)
+    {
+        if (SepBadImpersonationLevel(ImpersonationLevel, ClientContext->ServerIsRemote))
+        {
 
-            PsDereferenceImpersonationToken(Token );
+            PsDereferenceImpersonationToken(Token);
             return STATUS_BAD_IMPERSONATION_LEVEL;
         }
     }
@@ -564,31 +526,28 @@ Return Value:
     //
 
 
-
-    Status = SeCopyClientToken(
-                 Token,
-                 ClientContext->SecurityQos.ImpersonationLevel,
-                 KernelMode,
-                 &DuplicateToken
-                 );
+    Status = SeCopyClientToken(Token, ClientContext->SecurityQos.ImpersonationLevel, KernelMode, &DuplicateToken);
 
 
     //
     // No longer need the pointer to the client's effective token
     //
 
-    if (TokenType == TokenPrimary) {
-        PsDereferencePrimaryToken( Token );
-    } else {
-        PsDereferenceImpersonationToken(Token );
+    if (TokenType == TokenPrimary)
+    {
+        PsDereferencePrimaryToken(Token);
     }
-
+    else
+    {
+        PsDereferenceImpersonationToken(Token);
+    }
 
 
     //
     // If there was an error, we're done.
     //
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
@@ -601,10 +560,13 @@ Return Value:
     ClientContext->ClientToken = DuplicateToken;
     ClientContext->DirectlyAccessClientToken = FALSE;
 
-    if (SeTokenType( Token ) == TokenPrimary) {
-        PsDereferencePrimaryToken( Token );
-    } else {
-        PsDereferenceImpersonationToken( Token );
+    if (SeTokenType(Token) == TokenPrimary)
+    {
+        PsDereferencePrimaryToken(Token);
+    }
+    else
+    {
+        PsDereferenceImpersonationToken(Token);
     }
 
 
@@ -613,26 +575,17 @@ Return Value:
     // so that we can tell if it changes in the future.
     //
 
-    SeGetTokenControlInformation( DuplicateToken,
-                                  &ClientContext->ClientTokenControl
-                                  );
+    SeGetTokenControlInformation(DuplicateToken, &ClientContext->ClientTokenControl);
 
 
     return STATUS_SUCCESS;
-
 }
 
 
 #endif
 
 
-
-
-VOID
-SeImpersonateClient(
-    IN PSECURITY_CLIENT_CONTEXT ClientContext,
-    IN PETHREAD ServerThread OPTIONAL
-    )
+VOID SeImpersonateClient(IN PSECURITY_CLIENT_CONTEXT ClientContext, IN PETHREAD ServerThread OPTIONAL)
 /*++
 
 Routine Description:
@@ -667,15 +620,12 @@ Return Value:
     DbgPrint("SE:  Obsolete call:  SeImpersonateClient\n");
 #endif
 
-    (VOID) SeImpersonateClientEx( ClientContext, ServerThread );
+    (VOID) SeImpersonateClientEx(ClientContext, ServerThread);
 }
 
 
 NTSTATUS
-SeImpersonateClientEx(
-    IN PSECURITY_CLIENT_CONTEXT ClientContext,
-    IN PETHREAD ServerThread OPTIONAL
-    )
+SeImpersonateClientEx(IN PSECURITY_CLIENT_CONTEXT ClientContext, IN PETHREAD ServerThread OPTIONAL)
 /*++
 
 Routine Description:
@@ -706,16 +656,18 @@ Return Value:
 
     BOOLEAN EffectiveValueToUse;
     PETHREAD Thread;
-    NTSTATUS Status ;
+    NTSTATUS Status;
 
     PAGED_CODE();
 
-    if (ClientContext->DirectlyAccessClientToken) {
+    if (ClientContext->DirectlyAccessClientToken)
+    {
         EffectiveValueToUse = ClientContext->DirectAccessEffectiveOnly;
-    } else {
+    }
+    else
+    {
         EffectiveValueToUse = ClientContext->SecurityQos.EffectiveOnly;
     }
-
 
 
     //
@@ -723,37 +675,31 @@ Return Value:
     // thread.
     //
 
-    if (!ARGUMENT_PRESENT(ServerThread)) {
+    if (!ARGUMENT_PRESENT(ServerThread))
+    {
         Thread = PsGetCurrentThread();
-    } else {
+    }
+    else
+    {
         Thread = ServerThread;
     }
-
 
 
     //
     // Assign the context to the calling thread
     //
 
-    Status = PsImpersonateClient( Thread,
-                         ClientContext->ClientToken,
-                         TRUE,
-                         EffectiveValueToUse,
-                         ClientContext->SecurityQos.ImpersonationLevel
-                         );
+    Status = PsImpersonateClient(Thread, ClientContext->ClientToken, TRUE, EffectiveValueToUse,
+                                 ClientContext->SecurityQos.ImpersonationLevel);
 
-    return Status ;
-
+    return Status;
 }
 
 
 NTSTATUS
-SeCreateClientSecurityFromSubjectContext (
-    IN PSECURITY_SUBJECT_CONTEXT SubjectContext,
-    IN PSECURITY_QUALITY_OF_SERVICE ClientSecurityQos,
-    IN BOOLEAN ServerIsRemote,
-    OUT PSECURITY_CLIENT_CONTEXT ClientContext
-    )                              
+SeCreateClientSecurityFromSubjectContext(IN PSECURITY_SUBJECT_CONTEXT SubjectContext,
+                                         IN PSECURITY_QUALITY_OF_SERVICE ClientSecurityQos, IN BOOLEAN ServerIsRemote,
+                                         OUT PSECURITY_CLIENT_CONTEXT ClientContext)
 /*++
 
 Routine Description:
@@ -816,39 +762,30 @@ Return Value:
 
     PAGED_CODE();
 
-    Token = SeQuerySubjectContextToken(
-                SubjectContext
-                );
+    Token = SeQuerySubjectContextToken(SubjectContext);
 
-    ObReferenceObject( Token );
+    ObReferenceObject(Token);
 
-    if ( SubjectContext->ClientToken )
+    if (SubjectContext->ClientToken)
     {
-        Type = TokenImpersonation ;
+        Type = TokenImpersonation;
     }
-    else 
+    else
     {
-        Type = TokenPrimary ;
+        Type = TokenPrimary;
     }
 
-    Status = SepCreateClientSecurity(
-                Token,
-                ClientSecurityQos,
-                ServerIsRemote,
-                Type,
-                FALSE,
-                SubjectContext->ImpersonationLevel,
-                ClientContext
-                );
+    Status = SepCreateClientSecurity(Token, ClientSecurityQos, ServerIsRemote, Type, FALSE,
+                                     SubjectContext->ImpersonationLevel, ClientContext);
 
     //
     // If failed, or if a token was copied internally, then deref our token.
     //
 
-    if ((!NT_SUCCESS( Status )) || (ClientSecurityQos->ContextTrackingMode == SECURITY_STATIC_TRACKING)) {
-        ObDereferenceObject( Token );
+    if ((!NT_SUCCESS(Status)) || (ClientSecurityQos->ContextTrackingMode == SECURITY_STATIC_TRACKING))
+    {
+        ObDereferenceObject(Token);
     }
-    
-    return Status ;
-}
 
+    return Status;
+}

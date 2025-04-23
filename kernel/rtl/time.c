@@ -49,62 +49,71 @@ Revision History:
 
 #if defined(ALLOC_PRAGMA) && defined(NTOS_KERNEL_RUNTIME)
 ULONG
-ElapsedDaysToYears (
-    IN ULONG ElapsedDays
-    );
-static
-VOID
-TimeToDaysAndFraction (
-    IN PLARGE_INTEGER Time,
-    OUT PULONG ElapsedDays,
-    OUT PULONG Milliseconds
-    );
-VOID
-DaysAndFractionToTime (
-    IN ULONG ElapsedDays,
-    IN ULONG Milliseconds,
-    OUT PLARGE_INTEGER Time
-    );
+ElapsedDaysToYears(IN ULONG ElapsedDays);
+static VOID TimeToDaysAndFraction(IN PLARGE_INTEGER Time, OUT PULONG ElapsedDays, OUT PULONG Milliseconds);
+VOID DaysAndFractionToTime(IN ULONG ElapsedDays, IN ULONG Milliseconds, OUT PLARGE_INTEGER Time);
 #pragma alloc_text(PAGE, RtlCutoverTimeToSystemTime)
 #pragma alloc_text(PAGE, RtlTimeToElapsedTimeFields)
 #pragma alloc_text(PAGE, RtlSystemTimeToLocalTime)
 #pragma alloc_text(PAGE, RtlLocalTimeToSystemTime)
 #endif
 
-
+
 //
 //  The following two tables map a day offset within a year to the month
 //  containing the day.  Both tables are zero based.  For example, day
 //  offset of 0 to 30 map to 0 (which is Jan).
 //
 
-CONST UCHAR LeapYearDayToMonth[366] = {
-     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // January
-     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,        // February
-     2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,  // March
-     3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,     // April
-     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,  // May
-     5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,     // June
-     6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,  // July
-     7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,  // August
-     8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,     // September
-     9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,  // October
-    10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,     // November
-    11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11}; // December
+CONST UCHAR LeapYearDayToMonth[366] = { 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+                                        0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, // January
+                                        1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+                                        1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, // February
+                                        2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,
+                                        2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2, // March
+                                        3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,
+                                        3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3, // April
+                                        4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,
+                                        4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4, // May
+                                        5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,
+                                        5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5, // June
+                                        6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,
+                                        6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6, // July
+                                        7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,
+                                        7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7, // August
+                                        8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,
+                                        8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8, // September
+                                        9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,
+                                        9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9, // October
+                                        10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+                                        10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, // November
+                                        11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,
+                                        11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11 }; // December
 
-CONST UCHAR NormalYearDayToMonth[365] = {
-     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // January
-     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,           // February
-     2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,  // March
-     3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,     // April
-     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,  // May
-     5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,     // June
-     6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,  // July
-     7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,  // August
-     8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,     // September
-     9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,  // October
-    10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,     // November
-    11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11}; // December
+CONST UCHAR NormalYearDayToMonth[365] = { 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+                                          0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, // January
+                                          1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+                                          1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, // February
+                                          2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,
+                                          2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2, // March
+                                          3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,
+                                          3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3,  3, // April
+                                          4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,
+                                          4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4, // May
+                                          5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,
+                                          5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5, // June
+                                          6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,
+                                          6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6, // July
+                                          7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,
+                                          7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7,  7, // August
+                                          8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,
+                                          8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8, // September
+                                          9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,
+                                          9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9, // October
+                                          10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
+                                          10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, // November
+                                          11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,
+                                          11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11 }; // December
 
 //
 //  The following two tables map a month index to the number of days preceding
@@ -114,37 +123,35 @@ CONST UCHAR NormalYearDayToMonth[365] = {
 //  of index i is the table entry of i+1 minus the table entry of i.
 //
 
-CONST CSHORT LeapYearDaysPrecedingMonth[13] = {
-    0,                                 // January
-    31,                                // February
-    31+29,                             // March
-    31+29+31,                          // April
-    31+29+31+30,                       // May
-    31+29+31+30+31,                    // June
-    31+29+31+30+31+30,                 // July
-    31+29+31+30+31+30+31,              // August
-    31+29+31+30+31+30+31+31,           // September
-    31+29+31+30+31+30+31+31+30,        // October
-    31+29+31+30+31+30+31+31+30+31,     // November
-    31+29+31+30+31+30+31+31+30+31+30,  // December
-    31+29+31+30+31+30+31+31+30+31+30+31};
+CONST CSHORT LeapYearDaysPrecedingMonth[13] = { 0,                                                    // January
+                                                31,                                                   // February
+                                                31 + 29,                                              // March
+                                                31 + 29 + 31,                                         // April
+                                                31 + 29 + 31 + 30,                                    // May
+                                                31 + 29 + 31 + 30 + 31,                               // June
+                                                31 + 29 + 31 + 30 + 31 + 30,                          // July
+                                                31 + 29 + 31 + 30 + 31 + 30 + 31,                     // August
+                                                31 + 29 + 31 + 30 + 31 + 30 + 31 + 31,                // September
+                                                31 + 29 + 31 + 30 + 31 + 30 + 31 + 31 + 30,           // October
+                                                31 + 29 + 31 + 30 + 31 + 30 + 31 + 31 + 30 + 31,      // November
+                                                31 + 29 + 31 + 30 + 31 + 30 + 31 + 31 + 30 + 31 + 30, // December
+                                                31 + 29 + 31 + 30 + 31 + 30 + 31 + 31 + 30 + 31 + 30 + 31 };
 
-CONST CSHORT NormalYearDaysPrecedingMonth[13] = {
-    0,                                 // January
-    31,                                // February
-    31+28,                             // March
-    31+28+31,                          // April
-    31+28+31+30,                       // May
-    31+28+31+30+31,                    // June
-    31+28+31+30+31+30,                 // July
-    31+28+31+30+31+30+31,              // August
-    31+28+31+30+31+30+31+31,           // September
-    31+28+31+30+31+30+31+31+30,        // October
-    31+28+31+30+31+30+31+31+30+31,     // November
-    31+28+31+30+31+30+31+31+30+31+30,  // December
-    31+28+31+30+31+30+31+31+30+31+30+31};
+CONST CSHORT NormalYearDaysPrecedingMonth[13] = { 0,                                                    // January
+                                                  31,                                                   // February
+                                                  31 + 28,                                              // March
+                                                  31 + 28 + 31,                                         // April
+                                                  31 + 28 + 31 + 30,                                    // May
+                                                  31 + 28 + 31 + 30 + 31,                               // June
+                                                  31 + 28 + 31 + 30 + 31 + 30,                          // July
+                                                  31 + 28 + 31 + 30 + 31 + 30 + 31,                     // August
+                                                  31 + 28 + 31 + 30 + 31 + 30 + 31 + 31,                // September
+                                                  31 + 28 + 31 + 30 + 31 + 30 + 31 + 31 + 30,           // October
+                                                  31 + 28 + 31 + 30 + 31 + 30 + 31 + 31 + 30 + 31,      // November
+                                                  31 + 28 + 31 + 30 + 31 + 30 + 31 + 31 + 30 + 31 + 30, // December
+                                                  31 + 28 + 31 + 30 + 31 + 30 + 31 + 31 + 30 + 31 + 30 + 31 };
 
-
+
 //
 //  The following definitions and declarations are some important constants
 //  used in the time conversion routines
@@ -154,7 +161,7 @@ CONST CSHORT NormalYearDaysPrecedingMonth[13] = {
 //  This is the week day that January 1st, 1601 fell on (a Monday)
 //
 
-#define WEEKDAY_OF_1601                  1
+#define WEEKDAY_OF_1601 1
 
 //
 //  These are known constants used to convert 1970 and 1980 times to 1601
@@ -165,9 +172,9 @@ CONST CSHORT NormalYearDaysPrecedingMonth[13] = {
 //  below.  The number of seconds from 1601 to 1980 is 379 years worth, or etc.
 //
 
-const LARGE_INTEGER SecondsToStartOf1970 = {0xb6109100, 0x00000002};
+const LARGE_INTEGER SecondsToStartOf1970 = { 0xb6109100, 0x00000002 };
 
-const LARGE_INTEGER SecondsToStartOf1980 = {0xc8df3700, 0x00000002};
+const LARGE_INTEGER SecondsToStartOf1980 = { 0xc8df3700, 0x00000002 };
 
 //
 //  These are the magic numbers needed to do our extended division.  The
@@ -180,53 +187,39 @@ const LARGE_INTEGER SecondsToStartOf1980 = {0xc8df3700, 0x00000002};
 //      86,400,000 = convert Millisecond tics to one day tics
 //
 
-const LARGE_INTEGER Magic10000    = {0xe219652c, 0xd1b71758};
-#define SHIFT10000                       13
+const LARGE_INTEGER Magic10000 = { 0xe219652c, 0xd1b71758 };
+#define SHIFT10000 13
 
-const LARGE_INTEGER Magic10000000 = {0xe57a42bd, 0xd6bf94d5};
-#define SHIFT10000000                    23
+const LARGE_INTEGER Magic10000000 = { 0xe57a42bd, 0xd6bf94d5 };
+#define SHIFT10000000 23
 
-const LARGE_INTEGER Magic86400000 = {0xfa67b90e, 0xc6d750eb};
-#define SHIFT86400000                    26
+const LARGE_INTEGER Magic86400000 = { 0xfa67b90e, 0xc6d750eb };
+#define SHIFT86400000 26
 
 //
 //  To make the code more readable we'll also define some macros to
 //  do the actual division for use
 //
 
-#define Convert100nsToMilliseconds(LARGE_INTEGER) (                         \
-    RtlExtendedMagicDivide( (LARGE_INTEGER), Magic10000, SHIFT10000 )       \
-    )
+#define Convert100nsToMilliseconds(LARGE_INTEGER) (RtlExtendedMagicDivide((LARGE_INTEGER), Magic10000, SHIFT10000))
 
-#define ConvertMillisecondsTo100ns(MILLISECONDS) (                 \
-    RtlExtendedIntegerMultiply( (MILLISECONDS), 10000 )            \
-    )
+#define ConvertMillisecondsTo100ns(MILLISECONDS) (RtlExtendedIntegerMultiply((MILLISECONDS), 10000))
 
-#define Convert100nsToSeconds(LARGE_INTEGER) (                              \
-    RtlExtendedMagicDivide( (LARGE_INTEGER), Magic10000000, SHIFT10000000 ) \
-    )
+#define Convert100nsToSeconds(LARGE_INTEGER) (RtlExtendedMagicDivide((LARGE_INTEGER), Magic10000000, SHIFT10000000))
 
-#define ConvertSecondsTo100ns(SECONDS) (                           \
-    RtlExtendedIntegerMultiply( (SECONDS), 10000000 )              \
-    )
+#define ConvertSecondsTo100ns(SECONDS) (RtlExtendedIntegerMultiply((SECONDS), 10000000))
 
-#define ConvertMillisecondsToDays(LARGE_INTEGER) (                          \
-    RtlExtendedMagicDivide( (LARGE_INTEGER), Magic86400000, SHIFT86400000 ) \
-    )
+#define ConvertMillisecondsToDays(LARGE_INTEGER) (RtlExtendedMagicDivide((LARGE_INTEGER), Magic86400000, SHIFT86400000))
 
-#define ConvertDaysToMilliseconds(DAYS) (                          \
-    Int32x32To64( (DAYS), 86400000 )                               \
-    )
+#define ConvertDaysToMilliseconds(DAYS) (Int32x32To64((DAYS), 86400000))
 
-
+
 //
 //  Local support routine
 //
 
 ULONG
-ElapsedDaysToYears (
-    IN ULONG ElapsedDays
-    )
+ElapsedDaysToYears(IN ULONG ElapsedDays)
 
 /*++
 
@@ -290,15 +283,12 @@ Return Value:
     //  leap year.
     //
 
-    Years = (NumberOf400s * 400) +
-            (NumberOf100s * 100) +
-            (NumberOf4s * 4) +
-            (ElapsedDays * 100 + 75) / 36525;
+    Years = (NumberOf400s * 400) + (NumberOf100s * 100) + (NumberOf4s * 4) + (ElapsedDays * 100 + 75) / 36525;
 
     return Years;
 }
 
-
+
 //
 //  ULONG
 //  NumberOfLeapYears (
@@ -311,9 +301,7 @@ Return Value:
 //  exception to the exception is the quadricenturies
 //
 
-#define NumberOfLeapYears(YEARS) (                    \
-    ((YEARS) / 4) - ((YEARS) / 100) + ((YEARS) / 400) \
-    )
+#define NumberOfLeapYears(YEARS) (((YEARS) / 4) - ((YEARS) / 100) + ((YEARS) / 400))
 
 //
 //  ULONG
@@ -326,9 +314,7 @@ Return Value:
 //  the number of leap years there are (i.e., the number of 366 days years)
 //
 
-#define ElapsedYearsToDays(YEARS) (            \
-    ((YEARS) * 365) + NumberOfLeapYears(YEARS) \
-    )
+#define ElapsedYearsToDays(YEARS) (((YEARS) * 365) + NumberOfLeapYears(YEARS))
 
 //
 //  BOOLEAN
@@ -340,13 +326,7 @@ Return Value:
 //  answer is true otherwise it's false
 //
 
-#define IsLeapYear(YEARS) (                        \
-    (((YEARS) % 400 == 0) ||                       \
-     ((YEARS) % 100 != 0) && ((YEARS) % 4 == 0)) ? \
-        TRUE                                       \
-    :                                              \
-        FALSE                                      \
-    )
+#define IsLeapYear(YEARS) ((((YEARS) % 400 == 0) || ((YEARS) % 100 != 0) && ((YEARS) % 4 == 0)) ? TRUE : FALSE)
 
 //
 //  ULONG
@@ -360,28 +340,16 @@ Return Value:
 //  to the following month
 //
 
-#define MaxDaysInMonth(YEAR,MONTH) (                                      \
-    IsLeapYear(YEAR) ?                                                    \
-        LeapYearDaysPrecedingMonth[(MONTH) + 1] -                         \
-                                    LeapYearDaysPrecedingMonth[(MONTH)]   \
-    :                                                                     \
-        NormalYearDaysPrecedingMonth[(MONTH) + 1] -                       \
-                                    NormalYearDaysPrecedingMonth[(MONTH)] \
-    )
+#define MaxDaysInMonth(YEAR, MONTH)                                                                   \
+    (IsLeapYear(YEAR) ? LeapYearDaysPrecedingMonth[(MONTH) + 1] - LeapYearDaysPrecedingMonth[(MONTH)] \
+                      : NormalYearDaysPrecedingMonth[(MONTH) + 1] - NormalYearDaysPrecedingMonth[(MONTH)])
 
 
-
 //
 //  Internal Support routine
 //
 
-static
-VOID
-TimeToDaysAndFraction (
-    IN PLARGE_INTEGER Time,
-    OUT PULONG ElapsedDays,
-    OUT PULONG Milliseconds
-    )
+static VOID TimeToDaysAndFraction(IN PLARGE_INTEGER Time, OUT PULONG ElapsedDays, OUT PULONG Milliseconds)
 
 /*++
 
@@ -413,13 +381,13 @@ Return Value:
     //  Convert the input time to total milliseconds
     //
 
-    TotalMilliseconds = Convert100nsToMilliseconds( *(PLARGE_INTEGER)Time );
+    TotalMilliseconds = Convert100nsToMilliseconds(*(PLARGE_INTEGER)Time);
 
     //
     //  Convert milliseconds to total days
     //
 
-    Temp = ConvertMillisecondsToDays( TotalMilliseconds );
+    Temp = ConvertMillisecondsToDays(TotalMilliseconds);
 
     //
     //  Set the elapsed days from temp, we've divided it enough so that
@@ -434,7 +402,7 @@ Return Value:
     //  the number of milliseconds left in the partial day
     //
 
-    Temp.QuadPart = ConvertDaysToMilliseconds( *ElapsedDays );
+    Temp.QuadPart = ConvertDaysToMilliseconds(*ElapsedDays);
 
     Temp.QuadPart = TotalMilliseconds.QuadPart - Temp.QuadPart;
 
@@ -452,18 +420,13 @@ Return Value:
     return;
 }
 
-
+
 //
 //  Internal Support routine
 //
 
 //static
-VOID
-DaysAndFractionToTime (
-    IN ULONG ElapsedDays,
-    IN ULONG Milliseconds,
-    OUT PLARGE_INTEGER Time
-    )
+VOID DaysAndFractionToTime(IN ULONG ElapsedDays, IN ULONG Milliseconds, OUT PLARGE_INTEGER Time)
 
 /*++
 
@@ -494,7 +457,7 @@ Return Value:
     //  Calculate the exact number of milliseconds in the elapsed days.
     //
 
-    Temp.QuadPart = ConvertDaysToMilliseconds( ElapsedDays );
+    Temp.QuadPart = ConvertDaysToMilliseconds(ElapsedDays);
 
     //
     //  Convert milliseconds to a large integer
@@ -513,7 +476,7 @@ Return Value:
     //  Finally convert the milliseconds to 100ns resolution
     //
 
-    *(PLARGE_INTEGER)Time = ConvertMillisecondsTo100ns( Temp );
+    *(PLARGE_INTEGER)Time = ConvertMillisecondsTo100ns(Temp);
 
     //
     //  and return to our caller
@@ -522,12 +485,8 @@ Return Value:
     return;
 }
 
-
-VOID
-RtlTimeToTimeFields (
-    IN PLARGE_INTEGER Time,
-    OUT PTIME_FIELDS TimeFields
-    )
+
+VOID RtlTimeToTimeFields(IN PLARGE_INTEGER Time, OUT PTIME_FIELDS TimeFields)
 
 /*++
 
@@ -565,7 +524,7 @@ Return Value:
     //  the number of whole days and part days (in milliseconds)
     //
 
-    TimeToDaysAndFraction( Time, &Days, &Milliseconds );
+    TimeToDaysAndFraction(Time, &Days, &Milliseconds);
 
     //
     //  Compute which weekday it is and save it away now in the output
@@ -581,7 +540,7 @@ Return Value:
     //  For example if Days = 500 then Years = 1
     //
 
-    Years = ElapsedDaysToYears( Days );
+    Years = ElapsedDaysToYears(Days);
 
     //
     //  And subtract the number of whole years from our elapsed days
@@ -589,7 +548,7 @@ Return Value:
     //  to 500 - 365 (normal year).
     //
 
-    Days = Days - ElapsedYearsToDays( Years );
+    Days = Days - ElapsedYearsToDays(Years);
 
     //
     //  Now test whether the year we are working on (i.e., The year
@@ -597,7 +556,8 @@ Return Value:
     //  or not.
     //
 
-    if (IsLeapYear( Years + 1 )) {
+    if (IsLeapYear(Years + 1))
+    {
 
         //
         //  The current year is a leap year, so figure out what month
@@ -607,8 +567,9 @@ Return Value:
 
         Month = LeapYearDayToMonth[Days];
         Days = Days - LeapYearDaysPrecedingMonth[Month];
-
-    } else {
+    }
+    else
+    {
 
         //
         //  The current year is a normal year, so figure out the month
@@ -617,7 +578,6 @@ Return Value:
 
         Month = NormalYearDayToMonth[Days];
         Days = Days - NormalYearDaysPrecedingMonth[Month];
-
     }
 
     //
@@ -655,12 +615,12 @@ Return Value:
     //  output variable
     //
 
-    TimeFields->Year         = (CSHORT)(Years + 1601);
-    TimeFields->Month        = (CSHORT)(Month + 1);
-    TimeFields->Day          = (CSHORT)(Days + 1);
-    TimeFields->Hour         = (CSHORT)Hours;
-    TimeFields->Minute       = (CSHORT)Minutes;
-    TimeFields->Second       = (CSHORT)Seconds;
+    TimeFields->Year = (CSHORT)(Years + 1601);
+    TimeFields->Month = (CSHORT)(Month + 1);
+    TimeFields->Day = (CSHORT)(Days + 1);
+    TimeFields->Hour = (CSHORT)Hours;
+    TimeFields->Minute = (CSHORT)Minutes;
+    TimeFields->Second = (CSHORT)Seconds;
     TimeFields->Milliseconds = (CSHORT)Milliseconds;
 
     //
@@ -671,12 +631,8 @@ Return Value:
 }
 
 BOOLEAN
-RtlCutoverTimeToSystemTime(
-    PTIME_FIELDS CutoverTime,
-    PLARGE_INTEGER SystemTime,
-    PLARGE_INTEGER CurrentSystemTime,
-    BOOLEAN ThisYear
-    )
+RtlCutoverTimeToSystemTime(PTIME_FIELDS CutoverTime, PLARGE_INTEGER SystemTime, PLARGE_INTEGER CurrentSystemTime,
+                           BOOLEAN ThisYear)
 {
     TIME_FIELDS CurrentTimeFields;
 
@@ -684,30 +640,34 @@ RtlCutoverTimeToSystemTime(
     // Get the current system time
     //
 
-    RtlTimeToTimeFields(CurrentSystemTime,&CurrentTimeFields);
+    RtlTimeToTimeFields(CurrentSystemTime, &CurrentTimeFields);
 
     //
     // check for absolute time field. If the year is specified,
     // the the time is an abosulte time
     //
 
-    if ( CutoverTime->Year ) {
+    if (CutoverTime->Year)
+    {
 
         //
         // Convert this to a time value and make sure it
         // is greater than the current system time
         //
 
-        if ( !RtlTimeFieldsToTime(CutoverTime,SystemTime) ) {
+        if (!RtlTimeFieldsToTime(CutoverTime, SystemTime))
+        {
             return FALSE;
-            }
-
-        if (SystemTime->QuadPart < CurrentSystemTime->QuadPart) {
-            return FALSE;
-            }
-        return TRUE;
         }
-    else {
+
+        if (SystemTime->QuadPart < CurrentSystemTime->QuadPart)
+        {
+            return FALSE;
+        }
+        return TRUE;
+    }
+    else
+    {
 
         TIME_FIELDS WorkingTimeField;
         TIME_FIELDS ScratchTimeField;
@@ -717,7 +677,7 @@ RtlCutoverTimeToSystemTime(
         CSHORT TargetWeekdayNumber;
         CSHORT TargetYear;
         CSHORT TargetMonth;
-        CSHORT TargetWeekday;     // range [0..6] == [Sunday..Saturday]
+        CSHORT TargetWeekday; // range [0..6] == [Sunday..Saturday]
         BOOLEAN MonthMatches;
         //
         // The time is an day in the month style time
@@ -731,28 +691,34 @@ RtlCutoverTimeToSystemTime(
         //
 
         TargetWeekdayNumber = CutoverTime->Day;
-        if ( TargetWeekdayNumber > 5 || TargetWeekdayNumber == 0 ) {
+        if (TargetWeekdayNumber > 5 || TargetWeekdayNumber == 0)
+        {
             return FALSE;
-            }
+        }
         TargetWeekday = CutoverTime->Weekday;
         TargetMonth = CutoverTime->Month;
         MonthMatches = FALSE;
-        if ( !ThisYear ) {
-            if ( TargetMonth < CurrentTimeFields.Month ) {
+        if (!ThisYear)
+        {
+            if (TargetMonth < CurrentTimeFields.Month)
+            {
                 TargetYear = CurrentTimeFields.Year + 1;
-                }
-            else if ( TargetMonth > CurrentTimeFields.Month ) {
+            }
+            else if (TargetMonth > CurrentTimeFields.Month)
+            {
                 TargetYear = CurrentTimeFields.Year;
-                }
-            else {
+            }
+            else
+            {
                 TargetYear = CurrentTimeFields.Year;
                 MonthMatches = TRUE;
-                }
             }
-        else {
+        }
+        else
+        {
             TargetYear = CurrentTimeFields.Year;
-            }
-try_next_year:
+        }
+    try_next_year:
         BestWeekdayDate = 0;
 
         WorkingTimeField.Year = TargetYear;
@@ -769,20 +735,23 @@ try_next_year:
         // the weekday of day 1 on the month
         //
 
-        if ( !RtlTimeFieldsToTime(&WorkingTimeField,&ScratchTime) ) {
+        if (!RtlTimeFieldsToTime(&WorkingTimeField, &ScratchTime))
+        {
             return FALSE;
-            }
-        RtlTimeToTimeFields(&ScratchTime,&ScratchTimeField);
+        }
+        RtlTimeToTimeFields(&ScratchTime, &ScratchTimeField);
 
         //
         // Compute bias to target weekday
         //
-        if ( ScratchTimeField.Weekday > TargetWeekday ) {
-            WorkingTimeField.Day += (7-(ScratchTimeField.Weekday - TargetWeekday));
-            }
-        else if ( ScratchTimeField.Weekday < TargetWeekday ) {
+        if (ScratchTimeField.Weekday > TargetWeekday)
+        {
+            WorkingTimeField.Day += (7 - (ScratchTimeField.Weekday - TargetWeekday));
+        }
+        else if (ScratchTimeField.Weekday < TargetWeekday)
+        {
             WorkingTimeField.Day += (TargetWeekday - ScratchTimeField.Weekday);
-            }
+        }
 
         //
         // We are now at the first weekday that matches our target weekday
@@ -796,15 +765,17 @@ try_next_year:
         // target weekday, or we match exactly
         //
 
-        while ( WorkingWeekdayNumber < TargetWeekdayNumber ) {
+        while (WorkingWeekdayNumber < TargetWeekdayNumber)
+        {
             WorkingTimeField.Day += 7;
-            if ( !RtlTimeFieldsToTime(&WorkingTimeField,&ScratchTime) ) {
+            if (!RtlTimeFieldsToTime(&WorkingTimeField, &ScratchTime))
+            {
                 break;
-                }
-            RtlTimeToTimeFields(&ScratchTime,&ScratchTimeField);
+            }
+            RtlTimeToTimeFields(&ScratchTime, &ScratchTimeField);
             WorkingWeekdayNumber++;
             BestWeekdayDate = ScratchTimeField.Day;
-            }
+        }
         WorkingTimeField.Day = BestWeekdayDate;
 
         //
@@ -812,36 +783,38 @@ try_next_year:
         // date, then be have to go to next year.
         //
 
-        if ( !RtlTimeFieldsToTime(&WorkingTimeField,&ScratchTime) ) {
+        if (!RtlTimeFieldsToTime(&WorkingTimeField, &ScratchTime))
+        {
             return FALSE;
-            }
-        if ( MonthMatches ) {
-            if ( WorkingTimeField.Day < CurrentTimeFields.Day ) {
+        }
+        if (MonthMatches)
+        {
+            if (WorkingTimeField.Day < CurrentTimeFields.Day)
+            {
                 MonthMatches = FALSE;
                 TargetYear++;
                 goto try_next_year;
-                }
-            if ( WorkingTimeField.Day == CurrentTimeFields.Day ) {
+            }
+            if (WorkingTimeField.Day == CurrentTimeFields.Day)
+            {
 
-                if (ScratchTime.QuadPart < CurrentSystemTime->QuadPart) {
+                if (ScratchTime.QuadPart < CurrentSystemTime->QuadPart)
+                {
                     MonthMatches = FALSE;
                     TargetYear++;
                     goto try_next_year;
-                    }
                 }
             }
+        }
         *SystemTime = ScratchTime;
 
         return TRUE;
-        }
+    }
 }
 
-
+
 BOOLEAN
-RtlTimeFieldsToTime (
-    IN PTIME_FIELDS TimeFields,
-    OUT PLARGE_INTEGER Time
-    )
+RtlTimeFieldsToTime(IN PTIME_FIELDS TimeFields, OUT PLARGE_INTEGER Time)
 
 /*++
 
@@ -884,12 +857,12 @@ Return Value:
     //  before 1601.
     //
 
-    Year         = TimeFields->Year;
-    Month        = TimeFields->Month - 1;
-    Day          = TimeFields->Day - 1;
-    Hour         = TimeFields->Hour;
-    Minute       = TimeFields->Minute;
-    Second       = TimeFields->Second;
+    Year = TimeFields->Year;
+    Month = TimeFields->Month - 1;
+    Day = TimeFields->Day - 1;
+    Hour = TimeFields->Hour;
+    Minute = TimeFields->Minute;
+    Second = TimeFields->Second;
     Milliseconds = TimeFields->Milliseconds;
 
     //
@@ -912,19 +885,12 @@ Return Value:
     //  year 30828.
     //
 
-    if ((TimeFields->Month < 1)                      ||
-        (TimeFields->Day < 1)                        ||
-        (Year < 1601)                                ||
-        (Year > 30827)                               ||
-        (Month > 11)                                 ||
-        ((CSHORT)Day >= MaxDaysInMonth(Year, Month)) ||
-        (Hour > 23)                                  ||
-        (Minute > 59)                                ||
-        (Second > 59)                                ||
-        (Milliseconds > 999)) {
+    if ((TimeFields->Month < 1) || (TimeFields->Day < 1) || (Year < 1601) || (Year > 30827) || (Month > 11) ||
+        ((CSHORT)Day >= MaxDaysInMonth(Year, Month)) || (Hour > 23) || (Minute > 59) || (Second > 59) ||
+        (Milliseconds > 999))
+    {
 
         return FALSE;
-
     }
 
     //
@@ -932,16 +898,17 @@ Return Value:
     //  input time field variable
     //
 
-    ElapsedDays = ElapsedYearsToDays( Year - 1601 );
+    ElapsedDays = ElapsedYearsToDays(Year - 1601);
 
-    if (IsLeapYear( Year - 1600 )) {
+    if (IsLeapYear(Year - 1600))
+    {
 
-        ElapsedDays += LeapYearDaysPrecedingMonth[ Month ];
+        ElapsedDays += LeapYearDaysPrecedingMonth[Month];
+    }
+    else
+    {
 
-    } else {
-
-        ElapsedDays += NormalYearDaysPrecedingMonth[ Month ];
-
+        ElapsedDays += NormalYearDaysPrecedingMonth[Month];
     }
 
     ElapsedDays += Day;
@@ -951,14 +918,14 @@ Return Value:
     //  part of the day
     //
 
-    ElapsedMilliseconds = (((Hour*60) + Minute)*60 + Second)*1000 + Milliseconds;
+    ElapsedMilliseconds = (((Hour * 60) + Minute) * 60 + Second) * 1000 + Milliseconds;
 
     //
     //  Given the elapsed days and milliseconds we can now build
     //  the output time variable
     //
 
-    DaysAndFractionToTime( ElapsedDays, ElapsedMilliseconds, Time );
+    DaysAndFractionToTime(ElapsedDays, ElapsedMilliseconds, Time);
 
     //
     //  And return to our caller
@@ -967,12 +934,8 @@ Return Value:
     return TRUE;
 }
 
-
-VOID
-RtlTimeToElapsedTimeFields (
-    IN PLARGE_INTEGER Time,
-    OUT PTIME_FIELDS TimeFields
-    )
+
+VOID RtlTimeToElapsedTimeFields(IN PLARGE_INTEGER Time, OUT PTIME_FIELDS TimeFields)
 
 /*++
 
@@ -1007,7 +970,7 @@ Return Value:
     //  the number of whole days and part days (in milliseconds)
     //
 
-    TimeToDaysAndFraction( Time, &Days, &Milliseconds );
+    TimeToDaysAndFraction(Time, &Days, &Milliseconds);
 
     //
     //  Now we need to compute the elapsed hour, minute, second, milliseconds
@@ -1044,12 +1007,12 @@ Return Value:
     //  output variable
     //
 
-    TimeFields->Year         = 0;
-    TimeFields->Month        = 0;
-    TimeFields->Day          = (CSHORT)Days;
-    TimeFields->Hour         = (CSHORT)Hours;
-    TimeFields->Minute       = (CSHORT)Minutes;
-    TimeFields->Second       = (CSHORT)Seconds;
+    TimeFields->Year = 0;
+    TimeFields->Month = 0;
+    TimeFields->Day = (CSHORT)Days;
+    TimeFields->Hour = (CSHORT)Hours;
+    TimeFields->Minute = (CSHORT)Minutes;
+    TimeFields->Second = (CSHORT)Seconds;
     TimeFields->Milliseconds = (CSHORT)Milliseconds;
 
     //
@@ -1059,12 +1022,9 @@ Return Value:
     return;
 }
 
-
+
 BOOLEAN
-RtlTimeToSecondsSince1980 (
-    IN PLARGE_INTEGER Time,
-    OUT PULONG ElapsedSeconds
-    )
+RtlTimeToSecondsSince1980(IN PLARGE_INTEGER Time, OUT PULONG ElapsedSeconds)
 
 /*++
 
@@ -1095,7 +1055,7 @@ Return Value:
     //  First convert time to seconds since 1601
     //
 
-    Seconds = Convert100nsToSeconds( *(PLARGE_INTEGER)Time );
+    Seconds = Convert100nsToSeconds(*(PLARGE_INTEGER)Time);
 
     //
     //  Then subtract the number of seconds from 1601 to 1980.
@@ -1109,10 +1069,10 @@ Return Value:
     //  future so we return FALSE
     //
 
-    if (Seconds.HighPart != 0) {
+    if (Seconds.HighPart != 0)
+    {
 
         return FALSE;
-
     }
 
     //
@@ -1128,12 +1088,8 @@ Return Value:
     return TRUE;
 }
 
-
-VOID
-RtlSecondsSince1980ToTime (
-    IN ULONG ElapsedSeconds,
-    OUT PLARGE_INTEGER Time
-    )
+
+VOID RtlSecondsSince1980ToTime(IN ULONG ElapsedSeconds, OUT PLARGE_INTEGER Time)
 
 /*++
 
@@ -1175,7 +1131,7 @@ Return Value:
     //  Convert seconds to 100ns resolution
     //
 
-    *(PLARGE_INTEGER)Time = ConvertSecondsTo100ns( Seconds );
+    *(PLARGE_INTEGER)Time = ConvertSecondsTo100ns(Seconds);
 
     //
     //  and return to our caller
@@ -1184,12 +1140,9 @@ Return Value:
     return;
 }
 
-
+
 BOOLEAN
-RtlTimeToSecondsSince1970 (
-    IN PLARGE_INTEGER Time,
-    OUT PULONG ElapsedSeconds
-    )
+RtlTimeToSecondsSince1970(IN PLARGE_INTEGER Time, OUT PULONG ElapsedSeconds)
 
 /*++
 
@@ -1220,7 +1173,7 @@ Return Value:
     //  First convert time to seconds since 1601
     //
 
-    Seconds = Convert100nsToSeconds( *(PLARGE_INTEGER)Time );
+    Seconds = Convert100nsToSeconds(*(PLARGE_INTEGER)Time);
 
     //
     //  Then subtract the number of seconds from 1601 to 1970.
@@ -1234,10 +1187,10 @@ Return Value:
     //  future so we return FALSE
     //
 
-    if (Seconds.HighPart != 0) {
+    if (Seconds.HighPart != 0)
+    {
 
         return FALSE;
-
     }
 
     //
@@ -1253,12 +1206,8 @@ Return Value:
     return TRUE;
 }
 
-
-VOID
-RtlSecondsSince1970ToTime (
-    IN ULONG ElapsedSeconds,
-    OUT PLARGE_INTEGER Time
-    )
+
+VOID RtlSecondsSince1970ToTime(IN ULONG ElapsedSeconds, OUT PLARGE_INTEGER Time)
 
 /*++
 
@@ -1300,7 +1249,7 @@ Return Value:
     //  Convert seconds to 100ns resolution
     //
 
-    *(PLARGE_INTEGER)Time = ConvertSecondsTo100ns( Seconds );
+    *(PLARGE_INTEGER)Time = ConvertSecondsTo100ns(Seconds);
 
     //
     //  return to our caller
@@ -1310,23 +1259,16 @@ Return Value:
 }
 
 NTSTATUS
-RtlSystemTimeToLocalTime (
-    IN PLARGE_INTEGER SystemTime,
-    OUT PLARGE_INTEGER LocalTime
-    )
+RtlSystemTimeToLocalTime(IN PLARGE_INTEGER SystemTime, OUT PLARGE_INTEGER LocalTime)
 {
     NTSTATUS Status;
     SYSTEM_TIMEOFDAY_INFORMATION TimeOfDay;
 
-    Status = ZwQuerySystemInformation(
-                SystemTimeOfDayInformation,
-                &TimeOfDay,
-                sizeof(TimeOfDay),
-                NULL
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = ZwQuerySystemInformation(SystemTimeOfDayInformation, &TimeOfDay, sizeof(TimeOfDay), NULL);
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
-        }
+    }
 
     //
     // LocalTime = SystemTime - TimeZoneBias
@@ -1338,24 +1280,17 @@ RtlSystemTimeToLocalTime (
 }
 
 NTSTATUS
-RtlLocalTimeToSystemTime (
-    IN PLARGE_INTEGER LocalTime,
-    OUT PLARGE_INTEGER SystemTime
-    )
+RtlLocalTimeToSystemTime(IN PLARGE_INTEGER LocalTime, OUT PLARGE_INTEGER SystemTime)
 {
 
     NTSTATUS Status;
     SYSTEM_TIMEOFDAY_INFORMATION TimeOfDay;
 
-    Status = ZwQuerySystemInformation(
-                SystemTimeOfDayInformation,
-                &TimeOfDay,
-                sizeof(TimeOfDay),
-                NULL
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = ZwQuerySystemInformation(SystemTimeOfDayInformation, &TimeOfDay, sizeof(TimeOfDay), NULL);
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
-        }
+    }
 
     //
     // SystemTime = LocalTime + TimeZoneBias

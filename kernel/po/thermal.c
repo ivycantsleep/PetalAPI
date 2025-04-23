@@ -20,36 +20,26 @@ Revision History:
 
 
 #include "pop.h"
-#include "stdio.h"          // for sprintf
+#include "stdio.h" // for sprintf
 
-VOID
-PopThermalZoneCleanup (
-    IN PDEVICE_OBJECT   DeviceObject,
-    IN PIRP             Irp,
-    IN PVOID            Context
-    );
+VOID PopThermalZoneCleanup(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID Context);
 
 PUCHAR
-PopTemperatureString (
-    OUT PUCHAR  TempString,
-    IN ULONG    TenthsKelvin
-    );
+PopTemperatureString(OUT PUCHAR TempString, IN ULONG TenthsKelvin);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, PopThermalDeviceHandler)
 #endif
-
+
 PUCHAR
-PopTemperatureString (
-    OUT PUCHAR  TempString,
-    IN ULONG    TenthsKelvin
-    )
+PopTemperatureString(OUT PUCHAR TempString, IN ULONG TenthsKelvin)
 {
 #if DBG
-    ULONG   k, c, f;
+    ULONG k, c, f;
 
     k = TenthsKelvin;
-    if (k < 2732) {
+    if (k < 2732)
+    {
 
         c = 2732 - k;
         f = c * 9 / 5 + 320;
@@ -62,8 +52,9 @@ PopTemperatureString (
 #else
         sprintf(TempString, "%d.%dK", k / 10, k % 10);
 #endif
-
-    } else {
+    }
+    else
+    {
 
         c = k - 2732;
         f = c * 9 / 5 + 320;
@@ -76,46 +67,32 @@ PopTemperatureString (
 #else
         sprintf(TempString, "%d.%dK", k / 10, k % 10);
 #endif
-
     }
     return TempString;
 #else
     return "";
 #endif
 }
-
+
 PUCHAR
-PopTimeString(
-    OUT PUCHAR      TimeString,
-    IN  ULONGLONG   CurrentTime
-    )
+PopTimeString(OUT PUCHAR TimeString, IN ULONGLONG CurrentTime)
 {
 #if DBG
-    LARGE_INTEGER   curTime;
-    TIME_FIELDS     exCurTime;
+    LARGE_INTEGER curTime;
+    TIME_FIELDS exCurTime;
 
     curTime.QuadPart = CurrentTime;
-    RtlTimeToTimeFields( &curTime, &exCurTime );
+    RtlTimeToTimeFields(&curTime, &exCurTime);
 
-    sprintf(
-        TimeString,
-        "%d:%02d:%02d.%03d",
-        exCurTime.Hour,
-        exCurTime.Minute,
-        exCurTime.Second,
-        exCurTime.Milliseconds
-        );
+    sprintf(TimeString, "%d:%02d:%02d.%03d", exCurTime.Hour, exCurTime.Minute, exCurTime.Second,
+            exCurTime.Milliseconds);
     return TimeString;
 #else
     return "";
 #endif
 }
-
-VOID
-PopThermalUpdateThrottle(
-    IN  PPOP_THERMAL_ZONE   ThermalZone,
-    IN  ULONGLONG           CurrentTime
-    )
+
+VOID PopThermalUpdateThrottle(IN PPOP_THERMAL_ZONE ThermalZone, IN ULONGLONG CurrentTime)
 /*++
 
 Routine Description:
@@ -138,28 +115,28 @@ Return Value:
 
 --*/
 {
-    BOOLEAN doThrottle      = FALSE;
-    KIRQL   oldIrql;
-    LONG    part1;
-    LONG    part2;
-    LONG    throttleDelta;
-    LONG    currentThrottle = 0;
-    LONG    minThrottle;
-    LONG    minThrottle2;
+    BOOLEAN doThrottle = FALSE;
+    KIRQL oldIrql;
+    LONG part1;
+    LONG part2;
+    LONG throttleDelta;
+    LONG currentThrottle = 0;
+    LONG minThrottle;
+    LONG minThrottle2;
 
-    PKPRCB  prcb;
-    UCHAR   s[40];
-    UCHAR   t[40];
+    PKPRCB prcb;
+    UCHAR s[40];
+    UCHAR t[40];
 
     //
     // If there are no processor throttling capablities, this function does
     // nothing useful. The same applies if the thermal zone does not belong
     // to a processor
     //
-    if (!ThermalZone->Info.Processors) {
+    if (!ThermalZone->Info.Processors)
+    {
 
         return;
-
     }
 
     //
@@ -167,63 +144,64 @@ Return Value:
     // Note that by using the time that was passed in (instead of fetching
     // again), we make sure that the printouts always read the same thing
     //
-    PopTimeString(t, CurrentTime );
+    PopTimeString(t, CurrentTime);
 
     //
     // Make sure to run on the context of the appropriate processor
     //
-    KeSetSystemAffinityThread( ThermalZone->Info.Processors );
+    KeSetSystemAffinityThread(ThermalZone->Info.Processors);
 
     //
     // Make sure to raise IRQL so that we can synchronize
     //
-    KeRaiseIrql( DISPATCH_LEVEL, &oldIrql );
+    KeRaiseIrql(DISPATCH_LEVEL, &oldIrql);
 
     //
     // Is there any support for throttling on this processor?
     //
     prcb = KeGetCurrentPrcb();
-    if ((prcb->PowerState.Flags & PSTATE_SUPPORTS_THROTTLE) == 0) {
+    if ((prcb->PowerState.Flags & PSTATE_SUPPORTS_THROTTLE) == 0)
+    {
 
-        KeLowerIrql( oldIrql );
+        KeLowerIrql(oldIrql);
         KeRevertToUserAffinityThread();
         return;
-
     }
 
     //
     // Do these calculations now, while its safe
     //
-    minThrottle2 = (LONG) (PopPolicy->MinThrottle * PO_TZ_THROTTLE_SCALE);
+    minThrottle2 = (LONG)(PopPolicy->MinThrottle * PO_TZ_THROTTLE_SCALE);
     minThrottle = prcb->PowerState.ProcessorMinThrottle * PO_TZ_THROTTLE_SCALE;
 
     //
     // No longer need to lock with the processor
     //
-    KeLowerIrql( oldIrql );
+    KeLowerIrql(oldIrql);
     KeRevertToUserAffinityThread();
 
     //
     // If Temperature isn't above the passive trip point, stop passive cooling
     //
-    if (ThermalZone->Info.CurrentTemperature < ThermalZone->Info.PassiveTripPoint) {
+    if (ThermalZone->Info.CurrentTemperature < ThermalZone->Info.PassiveTripPoint)
+    {
 
         //
         // If we aren't already throttling, then there isn't much to do
         //
-        if (!(ThermalZone->Flags & PO_TZ_THROTTLING) ) {
+        if (!(ThermalZone->Flags & PO_TZ_THROTTLING))
+        {
 
             return;
-
         }
 
         //
         // Make sure that we wait long enough...
         //
-        if ( (CurrentTime  - ThermalZone->LastTime) < ThermalZone->SampleRate) {
+        if ((CurrentTime - ThermalZone->LastTime) < ThermalZone->SampleRate)
+        {
 
             return;
-
         }
 
         //
@@ -231,19 +209,15 @@ Return Value:
         //
         doThrottle = FALSE;
         currentThrottle = PO_TZ_NO_THROTTLE;
-        PoPrint(
-            PO_THERM,
-            ("Thermal - Zone %p - %s - ending throttle #1\n",
-             ThermalZone, t
-            ) );
+        PoPrint(PO_THERM, ("Thermal - Zone %p - %s - ending throttle #1\n", ThermalZone, t));
         goto PopThermalUpdateThrottleExit;
-
     }
 
     //
     // Are we already throttling?
     //
-    if (!(ThermalZone->Flags & PO_TZ_THROTTLING) ) {
+    if (!(ThermalZone->Flags & PO_TZ_THROTTLING))
+    {
 
         //
         // Throttling is not enabled, but the thermal zone has exceeded
@@ -252,29 +226,24 @@ Return Value:
         doThrottle = TRUE;
         currentThrottle = PO_TZ_NO_THROTTLE;
 
-        ASSERT(
-            ThermalZone->Info.SamplingPeriod &&
-            ThermalZone->Info.SamplingPeriod < 4096
-            );
+        ASSERT(ThermalZone->Info.SamplingPeriod && ThermalZone->Info.SamplingPeriod < 4096);
 
         ThermalZone->SampleRate = 1000000 * ThermalZone->Info.SamplingPeriod;
         ThermalZone->LastTime = 0;
         ThermalZone->LastTemp = ThermalZone->Info.PassiveTripPoint;
 
-        PoPrint(
-            PO_THERM,
-            ("Thermal - Zone %p - %s - starting to throttle\n",
-             ThermalZone, t
-            ) );
-
-    } else if ( (CurrentTime  - ThermalZone->LastTime) < ThermalZone->SampleRate) {
+        PoPrint(PO_THERM, ("Thermal - Zone %p - %s - starting to throttle\n", ThermalZone, t));
+    }
+    else if ((CurrentTime - ThermalZone->LastTime) < ThermalZone->SampleRate)
+    {
 
         //
         // The sample period has not yet expired, so wait until it has
         //
         return;
-
-    } else {
+    }
+    else
+    {
 
         //
         // We need to get the current throttle value since our calculations
@@ -283,10 +252,9 @@ Return Value:
         // It is not necessary to synchronize access to this variable since
         // the flags are not also being accessed at the same time.
         //
-//        KeAcquireSpinLock( &PopThermalLock, &oldIrql );
+        //        KeAcquireSpinLock( &PopThermalLock, &oldIrql );
         currentThrottle = ThermalZone->Throttle;
-//        KeReleaseSpinLock( &PopThermalLock, oldIrql );
-
+        //        KeReleaseSpinLock( &PopThermalLock, oldIrql );
     }
 
     //
@@ -294,41 +262,27 @@ Return Value:
     //
     part1 = ThermalZone->Info.CurrentTemperature - ThermalZone->LastTemp;
     part2 = ThermalZone->Info.CurrentTemperature - ThermalZone->Info.PassiveTripPoint;
-    throttleDelta =
-        ThermalZone->Info.ThermalConstant1 * part1 +
-        ThermalZone->Info.ThermalConstant2 * part2;
-    PoPrint(
-        PO_THERM,
-        ("Thermal - Zone %p - %s - LastTemp %s ThrottleDelta = %d.%d%%\n",
-         ThermalZone, t,
-         PopTemperatureString(s, ThermalZone->LastTemp),
-         (throttleDelta / 10),
-         (throttleDelta % 10)
-        ) );
+    throttleDelta = ThermalZone->Info.ThermalConstant1 * part1 + ThermalZone->Info.ThermalConstant2 * part2;
+    PoPrint(PO_THERM, ("Thermal - Zone %p - %s - LastTemp %s ThrottleDelta = %d.%d%%\n", ThermalZone, t,
+                       PopTemperatureString(s, ThermalZone->LastTemp), (throttleDelta / 10), (throttleDelta % 10)));
 
     //
     // Only apply the throttle adjustment if it is in the same
     // direction as the tempature motion.
     //
-    if ( (part1 ^ throttleDelta) >= 0) {
+    if ((part1 ^ throttleDelta) >= 0)
+    {
 
         currentThrottle -= throttleDelta;
 
 #if DBG
-        PoPrint(
-            PO_THERM,
-            ("Thermal - Zone %p - %s - Subtracting delta from throttle\n",
-             ThermalZone, t)
-            );
+        PoPrint(PO_THERM, ("Thermal - Zone %p - %s - Subtracting delta from throttle\n", ThermalZone, t));
+    }
+    else
+    {
 
-    } else {
-
-        PoPrint(
-            PO_THERM,
-            ("Thermal - Zone %p - %s - TempDelta (%d.%d) ^ (%d.%d) < 0)\n",
-             ThermalZone, t, (part1 / 10), (part1 % 10),
-             (throttleDelta / 10), (throttleDelta % 10) )
-            );
+        PoPrint(PO_THERM, ("Thermal - Zone %p - %s - TempDelta (%d.%d) ^ (%d.%d) < 0)\n", ThermalZone, t, (part1 / 10),
+                           (part1 % 10), (throttleDelta / 10), (throttleDelta % 10)));
 
 #endif
     }
@@ -336,40 +290,32 @@ Return Value:
     //
     // If throttle is over 100% then we're done throttling
     //
-    if (currentThrottle > PO_TZ_NO_THROTTLE) {
+    if (currentThrottle > PO_TZ_NO_THROTTLE)
+    {
 
         currentThrottle = PO_TZ_NO_THROTTLE;
         doThrottle = FALSE;
-        PoPrint(
-            PO_THERM,
-            ("Thermal - Zone %p - %s - ending throttle #2\n",
-             ThermalZone, t)
-            );
-
-    } else {
+        PoPrint(PO_THERM, ("Thermal - Zone %p - %s - ending throttle #2\n", ThermalZone, t));
+    }
+    else
+    {
 
         //
         // Show the world what the two mininums are
         //
-        PoPrint(
-            PO_THERM,
-            ("Thermal - Zone %p - %s - Min #1 %d.%d  Min #2 %d.%d \n",
-             ThermalZone, t,
-             (minThrottle / 10), (minThrottle % 10),
-             (minThrottle2 / 10), (minThrottle2 % 10)
-            ) );
+        PoPrint(PO_THERM, ("Thermal - Zone %p - %s - Min #1 %d.%d  Min #2 %d.%d \n", ThermalZone, t, (minThrottle / 10),
+                           (minThrottle % 10), (minThrottle2 / 10), (minThrottle2 % 10)));
 
-        if (currentThrottle < minThrottle) {
+        if (currentThrottle < minThrottle)
+        {
 
             currentThrottle = minThrottle;
-
         }
 
         //
         // Remember to start throttling
         //
         doThrottle = TRUE;
-
     }
 
 PopThermalUpdateThrottleExit:
@@ -384,50 +330,40 @@ PopThermalUpdateThrottleExit:
     // At this point, we will set and remember the value that we calculated
     // in the above function
     //
-    KeAcquireSpinLock( &PopThermalLock, &oldIrql);
-    if (doThrottle) {
+    KeAcquireSpinLock(&PopThermalLock, &oldIrql);
+    if (doThrottle)
+    {
 
         ThermalZone->Flags |= PO_TZ_THROTTLING;
         ThermalZone->Throttle = currentThrottle;
-
-    } else {
+    }
+    else
+    {
 
         ThermalZone->Flags &= ~PO_TZ_THROTTLING;
         ThermalZone->Throttle = PO_TZ_NO_THROTTLE;
-
     }
 
     //
     // Apply thermal zone throttles to all effected processors
     //
-    PoPrint(
-        PO_THERM,
-        ("Thermal - Zone %p - %s - throttle set to %d.%d\n",
-         ThermalZone, t,
-         (ThermalZone->Throttle / 10),
-         (ThermalZone->Throttle % 10)
-         )
-        );
+    PoPrint(PO_THERM, ("Thermal - Zone %p - %s - throttle set to %d.%d\n", ThermalZone, t, (ThermalZone->Throttle / 10),
+                       (ThermalZone->Throttle % 10)));
 
-    KeReleaseSpinLock( &PopThermalLock, oldIrql );
+    KeReleaseSpinLock(&PopThermalLock, oldIrql);
 
     //
     // Make sure to apply the new throttle
     //
-    PopApplyThermalThrottle ();
+    PopApplyThermalThrottle();
 
     //
     // Done
     //
     return;
 }
-
-VOID
-PopThermalDeviceHandler (
-    IN PDEVICE_OBJECT   DeviceObject,
-    IN PIRP             Irp,
-    IN PVOID            Context
-    )
+
+VOID PopThermalDeviceHandler(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -448,146 +384,119 @@ Return Value:
 
 --*/
 {
-    BOOLEAN                 sendActiveIrp = FALSE;
-    PIO_STACK_LOCATION      irpSp;
-    PPOP_THERMAL_ZONE       thermalZone;
-    LARGE_INTEGER           dueTime;
-    ULONGLONG               currentTime;
-    ULONG                   activePoint;
-    ULONG                   i;
-    UCHAR                   s[40];
-    UCHAR                   t[40];
+    BOOLEAN sendActiveIrp = FALSE;
+    PIO_STACK_LOCATION irpSp;
+    PPOP_THERMAL_ZONE thermalZone;
+    LARGE_INTEGER dueTime;
+    ULONGLONG currentTime;
+    ULONG activePoint;
+    ULONG i;
+    UCHAR s[40];
+    UCHAR t[40];
 
     ASSERT_POLICY_LOCK_OWNED();
 
     irpSp = IoGetCurrentIrpStackLocation(Irp);
-    thermalZone = (PPOP_THERMAL_ZONE) Context;
-    currentTime = KeQueryInterruptTime ();
-    PopTimeString(t, currentTime );
+    thermalZone = (PPOP_THERMAL_ZONE)Context;
+    currentTime = KeQueryInterruptTime();
+    PopTimeString(t, currentTime);
 
     //
     // Irp had an error.  See if the thermal zone is being removed
     //
-    if (Irp->IoStatus.Status == STATUS_NO_SUCH_DEVICE) {
+    if (Irp->IoStatus.Status == STATUS_NO_SUCH_DEVICE)
+    {
 
         //
         // Thermal zone device has disappeared, clean up
         //
-        thermalZone->State   = PO_TZ_NO_STATE;
-        thermalZone->Flags  |= PO_TZ_CLEANUP;
+        thermalZone->State = PO_TZ_NO_STATE;
+        thermalZone->Flags |= PO_TZ_CLEANUP;
 
         //
         // Pass it to the DPC function to ensure the timer & dpc are idle
         //
-        PoPrint(
-            PO_THERM,
-            ("Thermal - Zone %p - %s - going away\n",
-             thermalZone, t)
-            );
+        PoPrint(PO_THERM, ("Thermal - Zone %p - %s - going away\n", thermalZone, t));
         dueTime.QuadPart = -1;
-        KeSetTimer (&thermalZone->PassiveTimer, dueTime, &thermalZone->PassiveDpc);
+        KeSetTimer(&thermalZone->PassiveTimer, dueTime, &thermalZone->PassiveDpc);
 
         //
         // Do not issue next IRP
         //
-        return
-            ;
+        return;
     }
 
     //
     // If irp completed with success, handle it
     //
-    if (NT_SUCCESS(Irp->IoStatus.Status)) {
-        switch (thermalZone->State) {
+    if (NT_SUCCESS(Irp->IoStatus.Status))
+    {
+        switch (thermalZone->State)
+        {
         case PO_TZ_READ_STATE:
 
             //
             // Read of thermal information has completed.
             //
-            PoPrint(
-                PO_THERM,
-                ("Thermal - Zone %p - %s\n  Current Temp: %s",
-                 thermalZone, t,
-                 PopTemperatureString(s, thermalZone->Info.CurrentTemperature)
-                ) );
-            PoPrint(
-                PO_THERM,
-                ("  Critical Trip: %s",
-                 PopTemperatureString(s, thermalZone->Info.CriticalTripPoint)
-                ) );
-            PoPrint(
-                PO_THERM,
-                ("  Passive Trip: %s\n",
-                 PopTemperatureString(s, thermalZone->Info.PassiveTripPoint)
-                ) );
+            PoPrint(PO_THERM, ("Thermal - Zone %p - %s\n  Current Temp: %s", thermalZone, t,
+                               PopTemperatureString(s, thermalZone->Info.CurrentTemperature)));
+            PoPrint(PO_THERM, ("  Critical Trip: %s", PopTemperatureString(s, thermalZone->Info.CriticalTripPoint)));
+            PoPrint(PO_THERM, ("  Passive Trip: %s\n", PopTemperatureString(s, thermalZone->Info.PassiveTripPoint)));
 #if DBG
-            for ( i=0; i < thermalZone->Info.ActiveTripPointCount; i++) {
+            for (i = 0; i < thermalZone->Info.ActiveTripPointCount; i++)
+            {
 
-                PoPrint(
-                    PO_THERM,
-                    ("  Active Trip %d: %s\n",
-                     i,
-                     PopTemperatureString(s, thermalZone->Info.ActiveTripPoint[i])
-                    ) );
+                PoPrint(PO_THERM,
+                        ("  Active Trip %d: %s\n", i, PopTemperatureString(s, thermalZone->Info.ActiveTripPoint[i])));
             }
 #endif
             //
             // Update the throttle
             //
-            PopThermalUpdateThrottle( thermalZone, currentTime );
+            PopThermalUpdateThrottle(thermalZone, currentTime);
 
             //
             // Check for change in active cooling
             //
-            for (activePoint = 0; activePoint < thermalZone->Info.ActiveTripPointCount; activePoint++) {
+            for (activePoint = 0; activePoint < thermalZone->Info.ActiveTripPointCount; activePoint++)
+            {
 
-                if (thermalZone->Info.CurrentTemperature >= thermalZone->Info.ActiveTripPoint[activePoint]) {
+                if (thermalZone->Info.CurrentTemperature >= thermalZone->Info.ActiveTripPoint[activePoint])
+                {
 
                     break;
-
                 }
-
             }
-            if (activePoint != thermalZone->ActivePoint) {
+            if (activePoint != thermalZone->ActivePoint)
+            {
 
-                PoPrint(
-                    PO_THERM,
-                    ("Thermal - Zone %p - %s - Pending Coooling Point is %x\n",
-                     thermalZone, t, activePoint)
-                    );
-                thermalZone->PendingActivePoint = (UCHAR) activePoint;
+                PoPrint(PO_THERM,
+                        ("Thermal - Zone %p - %s - Pending Coooling Point is %x\n", thermalZone, t, activePoint));
+                thermalZone->PendingActivePoint = (UCHAR)activePoint;
                 sendActiveIrp = TRUE;
-
             }
 
             //
             // Check for critical trip point
             //
-            if (thermalZone->Info.CurrentTemperature > thermalZone->Info.CriticalTripPoint) {
-                PoPrint(
-                    PO_THERM | PO_ERROR,
-                    ("Thermal - Zone %p - %s - Above critical (%x %x)\n",
-                    thermalZone, t,
-                    thermalZone->Info.CurrentTemperature,
-                    thermalZone->Info.CriticalTripPoint
-                    ));
+            if (thermalZone->Info.CurrentTemperature > thermalZone->Info.CriticalTripPoint)
+            {
+                PoPrint(PO_THERM | PO_ERROR,
+                        ("Thermal - Zone %p - %s - Above critical (%x %x)\n", thermalZone, t,
+                         thermalZone->Info.CurrentTemperature, thermalZone->Info.CriticalTripPoint));
 
-                PopCriticalShutdown (PolicyDeviceThermalZone);
+                PopCriticalShutdown(PolicyDeviceThermalZone);
             }
 
             break;
 
-            case PO_TZ_SET_MODE:
+        case PO_TZ_SET_MODE:
 
             //
             // Thermal zone cooling mode was successfully set
             //
             thermalZone->Mode = thermalZone->PendingMode;
-            PoPrint(
-                PO_THERM,
-                ("Thermal - Zone %p - %s - cooling mode set to %x\n",
-                 thermalZone, t, thermalZone->Mode)
-                );
+            PoPrint(PO_THERM, ("Thermal - Zone %p - %s - cooling mode set to %x\n", thermalZone, t, thermalZone->Mode));
 
             //
             // We want to force a resend of the Active Trip Point irp since
@@ -603,34 +512,25 @@ Return Value:
 
         case PO_TZ_SET_ACTIVE:
             thermalZone->ActivePoint = thermalZone->PendingActivePoint;
-            PoPrint(
-                PO_THERM,
-                ("Thermal - Zone %p - %s - active cooling point set to %x\n",
-                 thermalZone, t, thermalZone->ActivePoint)
-                );
+            PoPrint(PO_THERM, ("Thermal - Zone %p - %s - active cooling point set to %x\n", thermalZone, t,
+                               thermalZone->ActivePoint));
             break;
 
         default:
-            PopInternalAddToDumpFile( Irp, sizeof(IRP), DeviceObject, NULL, NULL, NULL );
-            KeBugCheckEx( INTERNAL_POWER_ERROR,
-                          0x500,
-                          POP_THERMAL,
-                          (ULONG_PTR)Irp,
-                          (ULONG_PTR)DeviceObject );
+            PopInternalAddToDumpFile(Irp, sizeof(IRP), DeviceObject, NULL, NULL, NULL);
+            KeBugCheckEx(INTERNAL_POWER_ERROR, 0x500, POP_THERMAL, (ULONG_PTR)Irp, (ULONG_PTR)DeviceObject);
         }
 
 #if DBG
-    } else if (Irp->IoStatus.Status != STATUS_DEVICE_NOT_CONNECTED &&
-        Irp->IoStatus.Status != STATUS_CANCELLED) {
+    }
+    else if (Irp->IoStatus.Status != STATUS_DEVICE_NOT_CONNECTED && Irp->IoStatus.Status != STATUS_CANCELLED)
+    {
 
         //
         // Unexpected error
         //
 
-        PoPrint(
-            PO_ERROR,
-            ("Thermal - Zone - %p - %s - unexpected error %x\n",
-             thermalZone, t, Irp->IoStatus.Status));
+        PoPrint(PO_ERROR, ("Thermal - Zone - %p - %s - unexpected error %x\n", thermalZone, t, Irp->IoStatus.Status));
 
 #endif
     }
@@ -639,7 +539,8 @@ Return Value:
     // Determine type of irp to send zone
     //
     irpSp = IoGetNextIrpStackLocation(Irp);
-    if (sendActiveIrp) {
+    if (sendActiveIrp)
+    {
 
         //
         // Thermal zone active cooling point not current
@@ -651,56 +552,47 @@ Return Value:
         irpSp->Parameters.DeviceIoControl.OutputBufferLength = 0;
         Irp->AssociatedIrp.SystemBuffer = &thermalZone->PendingActivePoint;
 
-        PoPrint(
-            PO_THERM,
-            ("Thermal - Zone %p - %s Sending Run Cooling Method: %x\n",
-             thermalZone, t, thermalZone->PendingActivePoint)
-            );
-
-    } else if (thermalZone->Mode != PopCoolingMode) {
+        PoPrint(PO_THERM, ("Thermal - Zone %p - %s Sending Run Cooling Method: %x\n", thermalZone, t,
+                           thermalZone->PendingActivePoint));
+    }
+    else if (thermalZone->Mode != PopCoolingMode)
+    {
 
         //
         // Thermal zone cooling mode does not match system cooling mode.
         //
-        thermalZone->State       = PO_TZ_SET_MODE;
-        thermalZone->PendingMode = (UCHAR) PopCoolingMode;
+        thermalZone->State = PO_TZ_SET_MODE;
+        thermalZone->PendingMode = (UCHAR)PopCoolingMode;
 
         irpSp->Parameters.DeviceIoControl.IoControlCode = IOCTL_THERMAL_SET_COOLING_POLICY;
         irpSp->Parameters.DeviceIoControl.InputBufferLength = sizeof(thermalZone->PendingMode);
         irpSp->Parameters.DeviceIoControl.OutputBufferLength = 0;
         Irp->AssociatedIrp.SystemBuffer = &thermalZone->PendingMode;
 
-        PoPrint(
-            PO_THERM,
-            ("Thermal - Zone %p - %s - Sending Set Cooling Policy: %x\n",
-             thermalZone, t, thermalZone->PendingMode)
-            );
-
-    } else {
+        PoPrint(PO_THERM, ("Thermal - Zone %p - %s - Sending Set Cooling Policy: %x\n", thermalZone, t,
+                           thermalZone->PendingMode));
+    }
+    else
+    {
 
         //
         // Issue query to get tempture of thermal zone
         //
         thermalZone->State = PO_TZ_READ_STATE;
-        if (thermalZone->Flags & PO_TZ_THROTTLING  &&  thermalZone->SampleRate) {
+        if (thermalZone->Flags & PO_TZ_THROTTLING && thermalZone->SampleRate)
+        {
 
             //
             // Compute time for next read
             //
             dueTime.QuadPart = thermalZone->LastTime + thermalZone->SampleRate;
-            if (dueTime.QuadPart > (LONGLONG) currentTime) {
+            if (dueTime.QuadPart > (LONGLONG)currentTime)
+            {
 
 #if DBG
-                PoPrint(
-                    PO_THERM,
-                    ("Thermal - Zone %x - %s waituntil",
-                     thermalZone, t) );
-                PoPrint(
-                    PO_THERM,
-                    (" %s (%d sec)\n",
-                     PopTimeString(t, dueTime.QuadPart),
-                     ( (thermalZone->SampleRate ) / (US2TIME * US2SEC) ) )
-                    );
+                PoPrint(PO_THERM, ("Thermal - Zone %x - %s waituntil", thermalZone, t));
+                PoPrint(PO_THERM, (" %s (%d sec)\n", PopTimeString(t, dueTime.QuadPart),
+                                   ((thermalZone->SampleRate) / (US2TIME * US2SEC))));
                 PopTimeString(t, currentTime);
 #endif
 
@@ -708,15 +600,15 @@ Return Value:
                 // Set timer for duration of wait
                 //
                 dueTime.QuadPart = currentTime - dueTime.QuadPart;
-                KeSetTimer (&thermalZone->PassiveTimer, dueTime, &thermalZone->PassiveDpc);
-
-            } else {
+                KeSetTimer(&thermalZone->PassiveTimer, dueTime, &thermalZone->PassiveDpc);
+            }
+            else
+            {
 
                 //
                 // Perform non-blocking IRP query information to get the Temperature now
                 //
                 thermalZone->Info.ThermalStamp = 0;
-
             }
         }
 
@@ -724,43 +616,35 @@ Return Value:
         irpSp->Parameters.DeviceIoControl.InputBufferLength = sizeof(thermalZone->Info);
         irpSp->Parameters.DeviceIoControl.OutputBufferLength = sizeof(thermalZone->Info);
         Irp->AssociatedIrp.SystemBuffer = &thermalZone->Info;
-        PoPrint(
-            PO_THERM,
-            ("Thermal - Zone %p - %s - Sending Query Temp - ThermalStamp = %x\n",
-             thermalZone, t, thermalZone->Info.ThermalStamp) );
-
+        PoPrint(PO_THERM, ("Thermal - Zone %p - %s - Sending Query Temp - ThermalStamp = %x\n", thermalZone, t,
+                           thermalZone->Info.ThermalStamp));
     }
 
     //
     // Send irp to driver
     //
-    IoSetCompletionRoutine (Irp, PopCompletePolicyIrp, NULL, TRUE, TRUE, TRUE);
-    IoCallDriver (DeviceObject, Irp);
+    IoSetCompletionRoutine(Irp, PopCompletePolicyIrp, NULL, TRUE, TRUE, TRUE);
+    IoCallDriver(DeviceObject, Irp);
 }
-
-VOID
-PopThermalZoneCleanup (
-    IN PDEVICE_OBJECT   DeviceObject,
-    IN PIRP             Irp,
-    IN PVOID            Context
-    )
+
+VOID PopThermalZoneCleanup(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID Context)
 {
-    KIRQL                   oldIrql;
-    PPOP_THERMAL_ZONE       thermalZone;
+    KIRQL oldIrql;
+    PPOP_THERMAL_ZONE thermalZone;
 
     ASSERT_POLICY_LOCK_OWNED();
 
-    thermalZone = (PPOP_THERMAL_ZONE) Context;
+    thermalZone = (PPOP_THERMAL_ZONE)Context;
 
     //
     // Acquire the Spinlock required to delete the thermal zone
     //
-    KeAcquireSpinLock( &PopThermalLock, &oldIrql );
+    KeAcquireSpinLock(&PopThermalLock, &oldIrql);
 
     //
     // Delete thermal zone from the linked list of thermal zones
     //
-    RemoveEntryList (&thermalZone->Link);
+    RemoveEntryList(&thermalZone->Link);
 
     //
     // Remember what the irp associated with the thermal zone was
@@ -772,37 +656,32 @@ PopThermalZoneCleanup (
     // bogus
     //
 #if DBG
-    RtlZeroMemory( thermalZone, sizeof(POP_THERMAL_ZONE) );
+    RtlZeroMemory(thermalZone, sizeof(POP_THERMAL_ZONE));
 #endif
 
     //
     // Release the spinlock that was protecting the thermal zone
     //
-    KeReleaseSpinLock( &PopThermalLock, oldIrql );
+    KeReleaseSpinLock(&PopThermalLock, oldIrql);
 
     //
     // Free the Irp that we had associated with it...
     //
-    IoFreeIrp (Irp);
+    IoFreeIrp(Irp);
 
     //
     // Free the reference we had to the device object
     //
-    ObDereferenceObject (DeviceObject);
+    ObDereferenceObject(DeviceObject);
 
     //
     // Finally, free the memory associated with the thermal zone
     //
-    ExFreePool (thermalZone);
+    ExFreePool(thermalZone);
 }
-
-VOID
-PopThermalZoneDpc (
-    IN struct _KDPC *Dpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    )
+
+VOID PopThermalZoneDpc(IN struct _KDPC *Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1,
+                       IN PVOID SystemArgument2)
 /*++
 
 Routine Description:
@@ -820,33 +699,33 @@ Return Value:
 
 --*/
 {
-    PPOP_THERMAL_ZONE       thermalZone;
-    PIO_STACK_LOCATION      irpSp;
+    PPOP_THERMAL_ZONE thermalZone;
+    PIO_STACK_LOCATION irpSp;
 #if DBG
-    ULONGLONG               currentTime;
-    UCHAR                   t[40];
+    ULONGLONG currentTime;
+    UCHAR t[40];
 
     currentTime = KeQueryInterruptTime();
     PopTimeString(t, currentTime);
 #endif
 
-    thermalZone = (PPOP_THERMAL_ZONE) DeferredContext;
+    thermalZone = (PPOP_THERMAL_ZONE)DeferredContext;
 
     //
     // If cleanup is set queue the thread zone to be cleaned up
     //
 
-    if (thermalZone->Flags & PO_TZ_CLEANUP) {
+    if (thermalZone->Flags & PO_TZ_CLEANUP)
+    {
 
         //
         // The irp is idle, use it to queue the request to the cleanup procedure
         //
 
         irpSp = IoGetCurrentIrpStackLocation(thermalZone->Irp);
-        irpSp += 1;     // get previous location
-        irpSp->Parameters.Others.Argument3 = (PVOID) PopThermalZoneCleanup;
-        PopCompletePolicyIrp (NULL, thermalZone->Irp, NULL);
-
+        irpSp += 1; // get previous location
+        irpSp->Parameters.Others.Argument3 = (PVOID)PopThermalZoneCleanup;
+        PopCompletePolicyIrp(NULL, thermalZone->Irp, NULL);
     }
 
     //
@@ -855,34 +734,26 @@ Return Value:
     // Temperature now or to issue a non-blocking thermal read state
     //
 
-    if (thermalZone->State == PO_TZ_READ_STATE) {
+    if (thermalZone->State == PO_TZ_READ_STATE)
+    {
 
 #if DBG
-        PoPrint(
-            PO_THERM,
-            ("Thermal - Zone %p - %s - Cancel Irp %p\n",
-             thermalZone, t, thermalZone->Irp)
-            );
+        PoPrint(PO_THERM, ("Thermal - Zone %p - %s - Cancel Irp %p\n", thermalZone, t, thermalZone->Irp));
 #endif
-        IoCancelIrp (thermalZone->Irp);
+        IoCancelIrp(thermalZone->Irp);
 
 #if DBG
-    } else {
+    }
+    else
+    {
 
-        PoPrint(
-            PO_THERM,
-            ("Thermal - Zone %p - %s - In state %08lx\n",
-             thermalZone, t, thermalZone->State )
-            );
+        PoPrint(PO_THERM, ("Thermal - Zone %p - %s - In state %08lx\n", thermalZone, t, thermalZone->State));
 
 #endif
     }
 }
-
-VOID
-PopApplyThermalThrottle (
-    VOID
-    )
+
+VOID PopApplyThermalThrottle(VOID)
 /*++
 
 Routine Description:
@@ -900,27 +771,27 @@ Return Value:
 
 --*/
 {
-    KAFFINITY               processors;
-    KAFFINITY               currentAffinity;
-    KAFFINITY               thermalProcessors;
-    KIRQL                   oldIrql;
-    PLIST_ENTRY             link;
-    PPOP_THERMAL_ZONE       thermalZone;
-    PPROCESSOR_POWER_STATE  pState;
-    UCHAR                   thermalLimit;
-    UCHAR                   thermalLimitIndex;
-    UCHAR                   forcedLimit;
-    UCHAR                   forcedLimitIndex;
-    UCHAR                   limit;
-    UCHAR                   index;
-    ULONG                   thermalThrottle;
-    ULONG                   forcedThrottle;
-    ULONG                   mode;
-    ULONG                   processorNumber;
-    ULONG                   i;
+    KAFFINITY processors;
+    KAFFINITY currentAffinity;
+    KAFFINITY thermalProcessors;
+    KIRQL oldIrql;
+    PLIST_ENTRY link;
+    PPOP_THERMAL_ZONE thermalZone;
+    PPROCESSOR_POWER_STATE pState;
+    UCHAR thermalLimit;
+    UCHAR thermalLimitIndex;
+    UCHAR forcedLimit;
+    UCHAR forcedLimitIndex;
+    UCHAR limit;
+    UCHAR index;
+    ULONG thermalThrottle;
+    ULONG forcedThrottle;
+    ULONG mode;
+    ULONG processorNumber;
+    ULONG i;
 #if DBG
-    ULONGLONG               currentTime;
-    UCHAR                   t[40];
+    ULONGLONG currentTime;
+    UCHAR t[40];
 
     currentTime = KeQueryInterruptTime();
     PopTimeString(t, currentTime);
@@ -932,10 +803,10 @@ Return Value:
     // If the system doesn't have processor throttle capabilities then
     // don't bother
     //
-    if (!PopCapabilities.ProcessorThrottle) {
+    if (!PopCapabilities.ProcessorThrottle)
+    {
 
-        return ;
-
+        return;
     }
 
 #if 0
@@ -950,21 +821,23 @@ Return Value:
     // use the lock to walk the list, but we need it to reference the
     // Throttle Value
     //
-    KeAcquireSpinLock( &PopThermalLock, &oldIrql );
+    KeAcquireSpinLock(&PopThermalLock, &oldIrql);
 
     //
     // Get the LCD of the thermal zones
     //
     thermalThrottle = PO_TZ_NO_THROTTLE;
     thermalProcessors = 0;
-    for (link = PopThermal.Flink; link != &PopThermal; link = link->Flink) {
+    for (link = PopThermal.Flink; link != &PopThermal; link = link->Flink)
+    {
 
-        thermalZone = CONTAINING_RECORD (link, POP_THERMAL_ZONE, Link);
+        thermalZone = CONTAINING_RECORD(link, POP_THERMAL_ZONE, Link);
 
         //
         // Handle zones which are throttling
         //
-        if (thermalZone->Flags & PO_TZ_THROTTLING) {
+        if (thermalZone->Flags & PO_TZ_THROTTLING)
+        {
 
             //
             // Include processors for this zone
@@ -974,7 +847,8 @@ Return Value:
             //
             // If zone is less then current thermal throttle, lower it
             //
-            if ((ULONG) thermalZone->Throttle < thermalThrottle) {
+            if ((ULONG)thermalZone->Throttle < thermalThrottle)
+            {
                 thermalThrottle = thermalZone->Throttle;
             }
 
@@ -1021,86 +895,70 @@ Return Value:
 
             }
 #endif
-
         }
     }
 
     //
     // Done with the lock
     //
-    KeReleaseSpinLock( &PopThermalLock, oldIrql );
+    KeReleaseSpinLock(&PopThermalLock, oldIrql);
 
 #if DBG
-    PoPrint(
-        PO_THERM,
-        ("PopApplyThermalThrottle - %s - Thermal throttle = %d.%d\n",
-         t, (thermalThrottle / 10), (thermalThrottle % 10) )
-        );
+    PoPrint(PO_THERM, ("PopApplyThermalThrottle - %s - Thermal throttle = %d.%d\n", t, (thermalThrottle / 10),
+                       (thermalThrottle % 10)));
 #endif
 
     //
     // Use Min of thermal throttle and forced system throttle
     //
     forcedThrottle = PopGetThrottle() * PO_TZ_THROTTLE_SCALE;
-    if (thermalThrottle > forcedThrottle) {
+    if (thermalThrottle > forcedThrottle)
+    {
 
         thermalThrottle = forcedThrottle;
 #if DBG
-        PoPrint(
-            PO_THERM,
-            ("PopApplyThermalThrottle - %s - Set to Forced throttle = %d.%d\n",
-             t, (thermalThrottle / 10), (thermalThrottle % 10) )
-            );
+        PoPrint(PO_THERM, ("PopApplyThermalThrottle - %s - Set to Forced throttle = %d.%d\n", t, (thermalThrottle / 10),
+                           (thermalThrottle % 10)));
 #endif
-
     }
 
     //
     // Check active vs. passive cooling
     //
-    if (thermalThrottle <= (ULONG) PopPolicy->FanThrottleTolerance * PO_TZ_THROTTLE_SCALE) {
+    if (thermalThrottle <= (ULONG)PopPolicy->FanThrottleTolerance * PO_TZ_THROTTLE_SCALE)
+    {
 
         //
         // Throttle is below tolerance, we should be in active cooling
         //
         mode = PO_TZ_ACTIVE;
-
-
-    } else {
+    }
+    else
+    {
 
         //
         // Throttle is above tolerance.  If optimize for power is set then
         // use passive cooling else use active cooling
         //
         mode = PopPolicy->OptimizeForPower ? PO_TZ_PASSIVE : PO_TZ_ACTIVE;
-
     }
 
     //
     // If current cooling mode is not correct, update it
     //
-    if (mode != PopCoolingMode) {
+    if (mode != PopCoolingMode)
+    {
 
 #if DBG
-        ULONG   fanTolerance = (ULONG) PopPolicy->FanThrottleTolerance * PO_TZ_THROTTLE_SCALE;
+        ULONG fanTolerance = (ULONG)PopPolicy->FanThrottleTolerance * PO_TZ_THROTTLE_SCALE;
 
-        PoPrint(
-            PO_THERM,
-            ("PopApplyThermalThrottle - %s - Throttle (%d.%d) %s FanTolerance (%d.%d)\n",
-             t, (thermalThrottle / 10), (thermalThrottle % 10),
-             (thermalThrottle <= fanTolerance ? "<=" : ">"),
-             (fanTolerance / 10), (fanTolerance % 10) )
-            );
-        PoPrint(
-            PO_THERM,
-            ("PopApplyThermalThrottle - %s - OptimizeForPower is %s\n",
-             t, (PopPolicy->OptimizeForPower ? "True" : "False") )
-            );
-        PoPrint(
-            PO_THERM,
-            ("PopApplyThermalThrottle - %s -  Changing cooling mode to %s\n",
-             t, (mode == PO_TZ_ACTIVE ? "Active" : "Passive") )
-            );
+        PoPrint(PO_THERM, ("PopApplyThermalThrottle - %s - Throttle (%d.%d) %s FanTolerance (%d.%d)\n", t,
+                           (thermalThrottle / 10), (thermalThrottle % 10),
+                           (thermalThrottle <= fanTolerance ? "<=" : ">"), (fanTolerance / 10), (fanTolerance % 10)));
+        PoPrint(PO_THERM, ("PopApplyThermalThrottle - %s - OptimizeForPower is %s\n", t,
+                           (PopPolicy->OptimizeForPower ? "True" : "False")));
+        PoPrint(PO_THERM, ("PopApplyThermalThrottle - %s -  Changing cooling mode to %s\n", t,
+                           (mode == PO_TZ_ACTIVE ? "Active" : "Passive")));
 #endif
         PopCoolingMode = mode;
 
@@ -1108,27 +966,26 @@ Return Value:
         // We are going to touch the Thermal list --- make sure that we hold
         // the correct lock
         //
-        KeAcquireSpinLock(&PopThermalLock, &oldIrql );
+        KeAcquireSpinLock(&PopThermalLock, &oldIrql);
 
         //
         // Cancel any blocked thermal reads in order to send set mode irps
         //
-        for (link = PopThermal.Flink; link != &PopThermal; link = link->Flink) {
+        for (link = PopThermal.Flink; link != &PopThermal; link = link->Flink)
+        {
 
-            thermalZone = CONTAINING_RECORD (link, POP_THERMAL_ZONE, Link);
-            if (thermalZone->State == PO_TZ_READ_STATE) {
+            thermalZone = CONTAINING_RECORD(link, POP_THERMAL_ZONE, Link);
+            if (thermalZone->State == PO_TZ_READ_STATE)
+            {
 
-                IoCancelIrp (thermalZone->Irp);
-
+                IoCancelIrp(thermalZone->Irp);
             }
-
         }
 
         //
         // Done with the thermal lock
         //
-        KeReleaseSpinLock(& PopThermalLock, oldIrql );
-
+        KeReleaseSpinLock(&PopThermalLock, oldIrql);
     }
 
     //
@@ -1138,13 +995,14 @@ Return Value:
     currentAffinity = 1;
     processors = KeActiveProcessors;
 
-    do {
+    do
+    {
 
-        if (!(processors & currentAffinity)) {
+        if (!(processors & currentAffinity))
+        {
 
             currentAffinity <<= 1;
             continue;
-
         }
         processors &= ~currentAffinity;
 
@@ -1157,21 +1015,21 @@ Return Value:
         // We need to be running at DISPATCH_LEVEL to access the
         // structures referenced within the pState...
         //
-        KeRaiseIrql( DISPATCH_LEVEL, &oldIrql );
+        KeRaiseIrql(DISPATCH_LEVEL, &oldIrql);
         pState = &(KeGetCurrentPrcb()->PowerState);
 
         //
         // Does this processor support throttling?
         //
-        if ((pState->Flags & PSTATE_SUPPORTS_THROTTLE) == 0) {
+        if ((pState->Flags & PSTATE_SUPPORTS_THROTTLE) == 0)
+        {
 
             //
             // No, then we don't care about it...
             //
             currentAffinity <<= 1;
-            KeLowerIrql( oldIrql );
+            KeLowerIrql(oldIrql);
             continue;
-
         }
 
         //
@@ -1179,45 +1037,22 @@ Return Value:
         // do this in the context of the target processor to make
         // sure that we get the correct set of perf levels
         //
-        PopRoundThrottle(
-            (UCHAR)(thermalThrottle/PO_TZ_THROTTLE_SCALE),
-            &thermalLimit,
-            NULL,
-            &thermalLimitIndex,
-            NULL
-            );
-        PopRoundThrottle(
-            (UCHAR)(forcedThrottle/PO_TZ_THROTTLE_SCALE),
-            &forcedLimit,
-            NULL,
-            &forcedLimitIndex,
-            NULL
-            );
+        PopRoundThrottle((UCHAR)(thermalThrottle / PO_TZ_THROTTLE_SCALE), &thermalLimit, NULL, &thermalLimitIndex,
+                         NULL);
+        PopRoundThrottle((UCHAR)(forcedThrottle / PO_TZ_THROTTLE_SCALE), &forcedLimit, NULL, &forcedLimitIndex, NULL);
 
 #if DBG
-        PoPrint(
-            PO_THROTTLE,
-            ("PopApplyThermalThrottle - %s - Thermal throttle = %d.%d -> Limit = %d\n",
-             t, (thermalThrottle / 10), (thermalThrottle % 10),
-             thermalLimit
-             )
-            );
-        PoPrint(
-            PO_THROTTLE,
-            ("PopApplyThermalThrottle - %s - Forced throttle = %d.%d -> Limit = %d\n",
-             t, (forcedThrottle / 10), (forcedThrottle % 10),
-             forcedLimit
-             )
-            );
+        PoPrint(PO_THROTTLE, ("PopApplyThermalThrottle - %s - Thermal throttle = %d.%d -> Limit = %d\n", t,
+                              (thermalThrottle / 10), (thermalThrottle % 10), thermalLimit));
+        PoPrint(PO_THROTTLE, ("PopApplyThermalThrottle - %s - Forced throttle = %d.%d -> Limit = %d\n", t,
+                              (forcedThrottle / 10), (forcedThrottle % 10), forcedLimit));
 #endif
 
         //
         // Figure out which one we are going to use...
         //
-        limit = (thermalProcessors & currentAffinity) ?
-            thermalLimit : forcedLimit;
-        index = (thermalProcessors & currentAffinity) ?
-            thermalLimitIndex : forcedLimitIndex;
+        limit = (thermalProcessors & currentAffinity) ? thermalLimit : forcedLimit;
+        index = (thermalProcessors & currentAffinity) ? thermalLimitIndex : forcedLimitIndex;
 
         //
         // Done with current affinity mask
@@ -1227,51 +1062,42 @@ Return Value:
         //
         // Check processor limits for to see if value is okay
         //
-        if (limit > pState->ProcessorMaxThrottle) {
+        if (limit > pState->ProcessorMaxThrottle)
+        {
 
 #if DBG
-            PoPrint(
-                PO_THROTTLE,
-                ("PopApplyThermalThrottle - %s - Limit (%d) > MaxThrottle (%d)\n",
-                 t, limit, pState->ProcessorMaxThrottle)
-                );
+            PoPrint(PO_THROTTLE, ("PopApplyThermalThrottle - %s - Limit (%d) > MaxThrottle (%d)\n", t, limit,
+                                  pState->ProcessorMaxThrottle));
 #endif
             limit = pState->ProcessorMaxThrottle;
-
-        } else if (limit < pState->ProcessorMinThrottle) {
+        }
+        else if (limit < pState->ProcessorMinThrottle)
+        {
 
 #if DBG
-            PoPrint(
-                PO_THROTTLE,
-                ("PopApplyThermalThrottle - %s - Limit (%d) < MinThrottle (%d)\n",
-                 t, limit, pState->ProcessorMinThrottle)
-                );
+            PoPrint(PO_THROTTLE, ("PopApplyThermalThrottle - %s - Limit (%d) < MinThrottle (%d)\n", t, limit,
+                                  pState->ProcessorMinThrottle));
 #endif
             limit = pState->ProcessorMinThrottle;
-
         }
 
         //
         // Update the limit (if required...)
         //
-        if (pState->ThermalThrottleLimit != limit) {
+        if (pState->ThermalThrottleLimit != limit)
+        {
 
             pState->ThermalThrottleLimit = limit;
             pState->ThermalThrottleIndex = index;
 #if DBG
-            PoPrint(
-                PO_THROTTLE,
-                ("PopApplyThermalThrottle - %s - New Limit (%d) Index (%d)\n",
-                 t, limit, index)
-                );
+            PoPrint(PO_THROTTLE, ("PopApplyThermalThrottle - %s - New Limit (%d) Index (%d)\n", t, limit, index));
 #endif
-
         }
 
         //
         // Rever back to our previous IRQL
         //
-        KeLowerIrql( oldIrql );
+        KeLowerIrql(oldIrql);
 
     } while (processors);
 

@@ -27,18 +27,17 @@
 * 03-22-95 JimA         Created.
 \**************************************************************************/
 
-BOOL RtlCaptureAnsiString(
-    PIN_STRING pstr,
-    LPCSTR psz,
-    BOOL fForceAlloc)
+BOOL RtlCaptureAnsiString(PIN_STRING pstr, LPCSTR psz, BOOL fForceAlloc)
 {
     int cbSrc;
     int cbDst;
 
     pstr->fAllocated = FALSE;
-    if (psz) {
+    if (psz)
+    {
         cbSrc = strlen(psz) + 1;
-        if (cbSrc > MAXUSHORT) {
+        if (cbSrc > MAXUSHORT)
+        {
             RIPMSG0(RIP_WARNING, "String too long for standard string");
             return FALSE;
         }
@@ -48,34 +47,37 @@ BOOL RtlCaptureAnsiString(
          * too long to fit in the TEB, allocate a buffer.
          * Otherwise, store the result in the TEB.
          */
-        if (fForceAlloc ||
-                cbSrc > (STATIC_UNICODE_BUFFER_LENGTH / sizeof(WCHAR))) {
-            pstr->strCapture.Buffer = RtlAllocateHeap(pUserHeap,
-                    0, cbSrc * sizeof(WCHAR));
+        if (fForceAlloc || cbSrc > (STATIC_UNICODE_BUFFER_LENGTH / sizeof(WCHAR)))
+        {
+            pstr->strCapture.Buffer = RtlAllocateHeap(pUserHeap, 0, cbSrc * sizeof(WCHAR));
             if (pstr->strCapture.Buffer == NULL)
                 return FALSE;
             pstr->fAllocated = TRUE;
             pstr->pstr = &pstr->strCapture;
             pstr->strCapture.MaximumLength = (USHORT)(cbSrc * sizeof(WCHAR));
-        } else {
+        }
+        else
+        {
             pstr->pstr = &NtCurrentTeb()->StaticUnicodeString;
         }
 
         /*
          * Convert the string to Unicode
          */
-        if (RtlMultiByteToUnicodeN(pstr->pstr->Buffer,
-                (ULONG)pstr->pstr->MaximumLength, &cbDst,
-                (LPSTR)psz, cbSrc)) {
+        if (RtlMultiByteToUnicodeN(pstr->pstr->Buffer, (ULONG)pstr->pstr->MaximumLength, &cbDst, (LPSTR)psz, cbSrc))
+        {
             RIPMSG0(RIP_WARNING, "Unicode conversion failed");
-            if (pstr->fAllocated) {
+            if (pstr->fAllocated)
+            {
                 RtlFreeHeap(pUserHeap, 0, pstr->strCapture.Buffer);
                 pstr->fAllocated = FALSE;
             }
             return FALSE;
         }
         pstr->pstr->Length = (USHORT)cbDst - sizeof(WCHAR);
-    } else {
+    }
+    else
+    {
         pstr->pstr = &pstr->strCapture;
         pstr->strCapture.Length = pstr->strCapture.MaximumLength = 0;
         pstr->strCapture.Buffer = NULL;
@@ -92,10 +94,7 @@ BOOL RtlCaptureAnsiString(
 * 03-22-95 JimA         Created.
 \**************************************************************************/
 
-BOOL RtlCaptureLargeAnsiString(
-    PLARGE_IN_STRING plstr,
-    LPCSTR psz,
-    BOOL fForceAlloc)
+BOOL RtlCaptureLargeAnsiString(PLARGE_IN_STRING plstr, LPCSTR psz, BOOL fForceAlloc)
 {
     int cchSrc;
     UINT uLength;
@@ -104,7 +103,8 @@ BOOL RtlCaptureLargeAnsiString(
     plstr->strCapture.bAnsi = FALSE;
     plstr->pstr = &plstr->strCapture;
 
-    if (psz) {
+    if (psz)
+    {
         cchSrc = strlen(psz) + 1;
 
         /*
@@ -112,34 +112,38 @@ BOOL RtlCaptureLargeAnsiString(
          * too long to fit in the TEB, allocate a buffer.
          * Otherwise, store the result in the TEB.
          */
-        if (fForceAlloc || cchSrc > STATIC_UNICODE_BUFFER_LENGTH) {
-            plstr->strCapture.Buffer = RtlAllocateHeap(pUserHeap,
-                    0, cchSrc * sizeof(WCHAR));
+        if (fForceAlloc || cchSrc > STATIC_UNICODE_BUFFER_LENGTH)
+        {
+            plstr->strCapture.Buffer = RtlAllocateHeap(pUserHeap, 0, cchSrc * sizeof(WCHAR));
             if (plstr->strCapture.Buffer == NULL)
                 return FALSE;
             plstr->fAllocated = TRUE;
             plstr->strCapture.MaximumLength = cchSrc * sizeof(WCHAR);
-        } else {
+        }
+        else
+        {
             plstr->strCapture.Buffer = NtCurrentTeb()->StaticUnicodeBuffer;
-            plstr->strCapture.MaximumLength =
-                    (UINT)(STATIC_UNICODE_BUFFER_LENGTH * sizeof(WCHAR));
+            plstr->strCapture.MaximumLength = (UINT)(STATIC_UNICODE_BUFFER_LENGTH * sizeof(WCHAR));
         }
 
         /*
          * Convert the string to Unicode
          */
-        if (RtlMultiByteToUnicodeN(KPWSTR_TO_PWSTR(plstr->pstr->Buffer),
-                plstr->pstr->MaximumLength, &uLength,
-                (LPSTR)psz, cchSrc)) {
+        if (RtlMultiByteToUnicodeN(KPWSTR_TO_PWSTR(plstr->pstr->Buffer), plstr->pstr->MaximumLength, &uLength,
+                                   (LPSTR)psz, cchSrc))
+        {
             RIPMSG0(RIP_WARNING, "Unicode conversion failed");
-            if (plstr->fAllocated) {
+            if (plstr->fAllocated)
+            {
                 RtlFreeHeap(pUserHeap, 0, KPWSTR_TO_PWSTR(plstr->strCapture.Buffer));
                 plstr->fAllocated = FALSE;
             }
             return FALSE;
         }
         plstr->pstr->Length = uLength - sizeof(WCHAR);
-    } else {
+    }
+    else
+    {
         plstr->strCapture.Length = plstr->strCapture.MaximumLength = 0;
         plstr->strCapture.Buffer = NULL;
     }
@@ -169,9 +173,10 @@ BOOL RtlCaptureLargeAnsiString(
 /***************************************************************************\
 \***************************************************************************/
 
-#define AllocateFromZone(Zone) \
+#define AllocateFromZone(Zone)      \
     (PVOID)((Zone)->FreeList.Next); \
-    if ( (Zone)->FreeList.Next ) (Zone)->FreeList.Next = (Zone)->FreeList.Next->Next
+    if ((Zone)->FreeList.Next)      \
+    (Zone)->FreeList.Next = (Zone)->FreeList.Next->Next
 
 
 //++
@@ -203,11 +208,9 @@ BOOL RtlCaptureLargeAnsiString(
 /***************************************************************************\
 \***************************************************************************/
 
-#define FreeToZone(Zone,Block)                                    \
-    ( ((PSINGLE_LIST_ENTRY)(Block))->Next = (Zone)->FreeList.Next,  \
-      (Zone)->FreeList.Next = ((PSINGLE_LIST_ENTRY)(Block)),        \
-      ((PSINGLE_LIST_ENTRY)(Block))->Next                           \
-    )
+#define FreeToZone(Zone, Block)                                   \
+    (((PSINGLE_LIST_ENTRY)(Block))->Next = (Zone)->FreeList.Next, \
+     (Zone)->FreeList.Next = ((PSINGLE_LIST_ENTRY)(Block)), ((PSINGLE_LIST_ENTRY)(Block))->Next)
 
 /***************************************************************************\
 * InitLookaside
@@ -219,10 +222,7 @@ BOOL RtlCaptureLargeAnsiString(
 \***************************************************************************/
 
 NTSTATUS
-InitLookaside(
-    PLOOKASIDE pla,
-    DWORD cbEntry,
-    DWORD cEntries)
+InitLookaside(PLOOKASIDE pla, DWORD cbEntry, DWORD cEntries)
 {
     ULONG i;
     PCH p;
@@ -235,9 +235,10 @@ InitLookaside(
 
     p = (PCH)UserLocalAlloc(0, InitialSegmentSize);
 
-    if ( !p ) {
+    if (!p)
+    {
         return STATUS_NO_MEMORY;
-        }
+    }
 
     RtlEnterCriticalSection(&gcsLookaside);
 
@@ -245,7 +246,8 @@ InitLookaside(
     // If the lookaside list has already been initialized, we're done.
     //
 
-    if (pla->LookasideBase != NULL && pla->EntrySize == cbEntry) {
+    if (pla->LookasideBase != NULL && pla->EntrySize == cbEntry)
+    {
         RtlLeaveCriticalSection(&gcsLookaside);
         UserLocalFree(p);
         return STATUS_SUCCESS;
@@ -265,18 +267,16 @@ InitLookaside(
 
     Zone->BlockSize = BlockSize;
 
-    Zone->SegmentList.Next = &((PZONE_SEGMENT_HEADER) InitialSegment)->SegmentList;
-    ((PZONE_SEGMENT_HEADER) InitialSegment)->SegmentList.Next = NULL;
-    ((PZONE_SEGMENT_HEADER) InitialSegment)->Reserved = NULL;
+    Zone->SegmentList.Next = &((PZONE_SEGMENT_HEADER)InitialSegment)->SegmentList;
+    ((PZONE_SEGMENT_HEADER)InitialSegment)->SegmentList.Next = NULL;
+    ((PZONE_SEGMENT_HEADER)InitialSegment)->Reserved = NULL;
 
     Zone->FreeList.Next = NULL;
 
     p = (PCH)InitialSegment + sizeof(ZONE_SEGMENT_HEADER);
 
-    for (i = sizeof(ZONE_SEGMENT_HEADER);
-         i <= InitialSegmentSize - BlockSize;
-         i += BlockSize
-        ) {
+    for (i = sizeof(ZONE_SEGMENT_HEADER); i <= InitialSegmentSize - BlockSize; i += BlockSize)
+    {
         ((PSINGLE_LIST_ENTRY)p)->Next = Zone->FreeList.Next;
         Zone->FreeList.Next = (PSINGLE_LIST_ENTRY)p;
         p += BlockSize;
@@ -286,7 +286,6 @@ InitLookaside(
     RtlLeaveCriticalSection(&gcsLookaside);
 
     return STATUS_SUCCESS;
-
 }
 
 /***************************************************************************\
@@ -297,8 +296,7 @@ InitLookaside(
 * 05-04-95 JimA         Created.
 \***************************************************************************/
 
-PVOID AllocLookasideEntry(
-    PLOOKASIDE pla)
+PVOID AllocLookasideEntry(PLOOKASIDE pla)
 {
     PVOID pEntry;
 
@@ -311,7 +309,8 @@ PVOID AllocLookasideEntry(
     pEntry = AllocateFromZone(&pla->LookasideZone);
     RtlLeaveCriticalSection(&gcsLookaside);
 
-    if ( !pEntry ) {
+    if (!pEntry)
+    {
 
         /*
          * Allocate a local structure.
@@ -321,14 +320,15 @@ PVOID AllocLookasideEntry(
 #endif // DBG
         if ((pEntry = UserLocalAlloc(0, pla->EntrySize)) == NULL)
             return NULL;
-        }
+    }
     RtlZeroMemory(pEntry, pla->EntrySize);
 #if DBG
     pla->AllocCalls++;
 
-    if (pla->AllocCalls - pla->DelCalls > pla->AllocHiWater ) {
+    if (pla->AllocCalls - pla->DelCalls > pla->AllocHiWater)
+    {
         pla->AllocHiWater = pla->AllocCalls - pla->DelCalls;
-        }
+    }
 #endif // DBG
 
     return pEntry;
@@ -342,9 +342,7 @@ PVOID AllocLookasideEntry(
 * 05-04-95 JimA         Created.
 \***************************************************************************/
 
-void FreeLookasideEntry(
-    PLOOKASIDE pla,
-    PVOID pEntry)
+void FreeLookasideEntry(PLOOKASIDE pla, PVOID pEntry)
 {
 #if DBG
     pla->DelCalls++;
@@ -353,16 +351,17 @@ void FreeLookasideEntry(
     //
     // If the pEntry was from zone, then free to zone
     //
-    if ( (PVOID)pEntry >= pla->LookasideBase && (PVOID)pEntry < pla->LookasideBounds ) {
+    if ((PVOID)pEntry >= pla->LookasideBase && (PVOID)pEntry < pla->LookasideBounds)
+    {
         RtlEnterCriticalSection(&gcsLookaside);
-        FreeToZone(&pla->LookasideZone,pEntry);
+        FreeToZone(&pla->LookasideZone, pEntry);
         RtlLeaveCriticalSection(&gcsLookaside);
-    } else {
+    }
+    else
+    {
 #if DBG
         pla->DelSlowCalls++;
 #endif // DBG
         UserLocalFree(pEntry);
     }
 }
-
-

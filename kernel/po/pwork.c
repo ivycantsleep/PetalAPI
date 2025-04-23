@@ -39,15 +39,12 @@ Revision History:
 #endif
 
 
-VOID
-PopAcquirePolicyLock(
-    VOID
-    )
+VOID PopAcquirePolicyLock(VOID)
 {
     PAGED_CODE();
 
     KeEnterCriticalRegion();
-    ExAcquireResourceExclusiveLite (&PopPolicyLock, TRUE);
+    ExAcquireResourceExclusiveLite(&PopPolicyLock, TRUE);
     //
     // Make sure we are not acquiring this recursively
     //
@@ -56,14 +53,11 @@ PopAcquirePolicyLock(
 }
 
 
-VOID
-PopReleasePolicyLock(
-    IN BOOLEAN      CheckForWork
-    )
+VOID PopReleasePolicyLock(IN BOOLEAN CheckForWork)
 {
     PAGED_CODE();
 
-    ASSERT (PopPolicyLockThread == KeGetCurrentThread());
+    ASSERT(PopPolicyLockThread == KeGetCurrentThread());
     PopPolicyLockThread = NULL;
     ExReleaseResourceLite(&PopPolicyLock);
 
@@ -77,7 +71,8 @@ PopReleasePolicyLock(
     // may have set that's OK.
     //
 
-    if (CheckForWork  && (PopWorkerPending & PopWorkerStatus)) {
+    if (CheckForWork && (PopWorkerPending & PopWorkerStatus))
+    {
 
         //
         // Worker bit is unmasked and pending.  Turn this thread
@@ -88,16 +83,13 @@ PopReleasePolicyLock(
         // Handle any pending work
         //
 
-        PopPolicyWorkerThread (NULL);
+        PopPolicyWorkerThread(NULL);
     }
 
-    KeLeaveCriticalRegion ();
+    KeLeaveCriticalRegion();
 }
 
-VOID
-PopGetPolicyWorker (
-    IN ULONG    WorkerType
-    )
+VOID PopGetPolicyWorker(IN ULONG WorkerType)
 /*++
 
 Routine Description:
@@ -118,9 +110,9 @@ Return Value:
 
 --*/
 {
-    KIRQL       OldIrql;
+    KIRQL OldIrql;
 
-    KeAcquireSpinLock (&PopWorkerSpinLock, &OldIrql);
+    KeAcquireSpinLock(&PopWorkerSpinLock, &OldIrql);
 
     //
     // Set pending to get worker to dispatch to handler
@@ -128,15 +120,11 @@ Return Value:
 
     PopWorkerPending |= WorkerType;
 
-    KeReleaseSpinLock (&PopWorkerSpinLock, OldIrql);
+    KeReleaseSpinLock(&PopWorkerSpinLock, OldIrql);
 }
 
 NTSTATUS
-PopCompletePolicyIrp (
-    IN PDEVICE_OBJECT   DeviceObject,
-    IN PIRP             Irp,
-    IN PVOID            Context
-    )
+PopCompletePolicyIrp(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -161,20 +149,21 @@ Return Value:
 
 --*/
 {
-    ULONG       Mask;
-    KIRQL       OldIrql;
+    ULONG Mask;
+    KIRQL OldIrql;
 
     //
     // Put the irp on a queue for a worker thread
     //
 
-    KeAcquireSpinLock (&PopWorkerSpinLock, &OldIrql);
-    InsertTailList (&PopPolicyIrpQueue, &Irp->Tail.Overlay.ListEntry);
+    KeAcquireSpinLock(&PopWorkerSpinLock, &OldIrql);
+    InsertTailList(&PopPolicyIrpQueue, &Irp->Tail.Overlay.ListEntry);
 
     //
     // Wait until base drivers are loaded before dispatching any policy irps
     //
-    if (PopDispatchPolicyIrps) {
+    if (PopDispatchPolicyIrps)
+    {
 
         //
         // Set pending to get worker to dispatch to handler
@@ -184,33 +173,28 @@ Return Value:
         //
         // If worker is not already running queue a thread
         //
-        if ((PopWorkerStatus & (PO_WORKER_MAIN | PO_WORKER_STATUS)) ==
-                (PO_WORKER_MAIN | PO_WORKER_STATUS) ) {
+        if ((PopWorkerStatus & (PO_WORKER_MAIN | PO_WORKER_STATUS)) == (PO_WORKER_MAIN | PO_WORKER_STATUS))
+        {
 
             PopWorkerStatus &= ~PO_WORKER_STATUS;
-            ExQueueWorkItem (&PopPolicyWorker, DelayedWorkQueue);
-
+            ExQueueWorkItem(&PopPolicyWorker, DelayedWorkQueue);
         }
-
     }
 
     //
     // If this irp has been cancelled, then make sure to clear the cancel flag
     //
-    if (Irp->IoStatus.Status == STATUS_CANCELLED) {
+    if (Irp->IoStatus.Status == STATUS_CANCELLED)
+    {
 
         Irp->Cancel = FALSE;
-
     }
-    KeReleaseSpinLock (&PopWorkerSpinLock, OldIrql);
+    KeReleaseSpinLock(&PopWorkerSpinLock, OldIrql);
 
     return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
-VOID
-PopCheckForWork (
-    IN BOOLEAN GetWorker
-    )
+VOID PopCheckForWork(IN BOOLEAN GetWorker)
 /*++
 
 Routine Description:
@@ -227,13 +211,14 @@ Return Value:
 
 --*/
 {
-    KIRQL       Irql;
+    KIRQL Irql;
 
     //
     // If pending work, handle it
     //
 
-    if (PopWorkerPending & PopWorkerStatus) {
+    if (PopWorkerPending & PopWorkerStatus)
+    {
 
         //
         // If current thread already owns the policy lock,
@@ -241,8 +226,9 @@ Return Value:
         // lock is released
         //
 
-        if (PopPolicyLockThread == KeGetCurrentThread()) {
-            return ;
+        if (PopPolicyLockThread == KeGetCurrentThread())
+        {
+            return;
         }
 
         //
@@ -250,38 +236,37 @@ Return Value:
         //
 
         Irql = KeGetCurrentIrql();
-        if (!GetWorker  &&  Irql < DISPATCH_LEVEL) {
+        if (!GetWorker && Irql < DISPATCH_LEVEL)
+        {
 
             //
             // Use calling thread
             //
 
-            KeEnterCriticalRegion ();
-            PopPolicyWorkerThread (NULL);
-            KeLeaveCriticalRegion ();
-
-        } else {
+            KeEnterCriticalRegion();
+            PopPolicyWorkerThread(NULL);
+            KeLeaveCriticalRegion();
+        }
+        else
+        {
 
             //
             // Get worker thread to handle it
             //
 
-            KeAcquireSpinLock (&PopWorkerSpinLock, &Irql);
-            if (PopWorkerStatus & PO_WORKER_STATUS) {
+            KeAcquireSpinLock(&PopWorkerSpinLock, &Irql);
+            if (PopWorkerStatus & PO_WORKER_STATUS)
+            {
                 PopWorkerStatus &= ~PO_WORKER_STATUS;
-                ExQueueWorkItem (&PopPolicyWorker, DelayedWorkQueue);
+                ExQueueWorkItem(&PopPolicyWorker, DelayedWorkQueue);
             }
-            KeReleaseSpinLock (&PopWorkerSpinLock, Irql);
-
+            KeReleaseSpinLock(&PopWorkerSpinLock, Irql);
         }
     }
 }
 
 
-VOID
-PopPolicyWorkerThread (
-    PVOID   Context
-    )
+VOID PopPolicyWorkerThread(PVOID Context)
 /*++
 
 Routine Description:
@@ -299,24 +284,26 @@ Return Value:
 
 --*/
 {
-    ULONG           WorkerType;
-    ULONG           Mask;
-    KIRQL           OldIrql;
-    ULONG           i;
-    ULONG           DelayedWork;
+    ULONG WorkerType;
+    ULONG Mask;
+    KIRQL OldIrql;
+    ULONG i;
+    ULONG DelayedWork;
 
     PAGED_CODE();
 
-    try {
+    try
+    {
         //
         // Dispatch
         //
 
-        KeAcquireSpinLock (&PopWorkerSpinLock, &OldIrql);
-        PopWorkerStatus |= (ULONG) ((ULONG_PTR)Context);
+        KeAcquireSpinLock(&PopWorkerSpinLock, &OldIrql);
+        PopWorkerStatus |= (ULONG)((ULONG_PTR)Context);
 
         DelayedWork = 0;
-        while (WorkerType = (PopWorkerPending & PopWorkerStatus)) {
+        while (WorkerType = (PopWorkerPending & PopWorkerStatus))
+        {
 
             //
             // Get highest priority worker
@@ -330,36 +317,34 @@ Return Value:
             //
 
             PopWorkerPending &= ~Mask;
-            PopWorkerStatus  &= ~Mask;
-            KeReleaseSpinLock (&PopWorkerSpinLock, OldIrql);
+            PopWorkerStatus &= ~Mask;
+            KeReleaseSpinLock(&PopWorkerSpinLock, OldIrql);
 
             //
             // Dispatch to handler
             //
 
-            DelayedWork |= PopWorkerTypes[i] ();
+            DelayedWork |= PopWorkerTypes[i]();
 
             //
             // No longer in progress
             //
 
-            KeAcquireSpinLock (&PopWorkerSpinLock, &OldIrql);
+            KeAcquireSpinLock(&PopWorkerSpinLock, &OldIrql);
             PopWorkerStatus |= Mask;
         }
 
         PopWorkerPending |= DelayedWork;
-        KeReleaseSpinLock (&PopWorkerSpinLock, OldIrql);
-
-    } except (PopExceptionFilter(GetExceptionInformation(), FALSE)) {
-
+        KeReleaseSpinLock(&PopWorkerSpinLock, OldIrql);
+    }
+    except(PopExceptionFilter(GetExceptionInformation(), FALSE))
+    {
     }
 }
 
 
 ULONG
-PopPolicyWorkerMain (
-    VOID
-    )
+PopPolicyWorkerMain(VOID)
 /*++
 
 Routine Description:
@@ -377,44 +362,39 @@ Return Value:
 
 --*/
 {
-    IN PIRP             Irp;
-    PIO_STACK_LOCATION  IrpSp;
-    POP_IRP_HANDLER     IrpHandler;
-    PLIST_ENTRY         Entry;
+    IN PIRP Irp;
+    PIO_STACK_LOCATION IrpSp;
+    POP_IRP_HANDLER IrpHandler;
+    PLIST_ENTRY Entry;
 
 
-    PopAcquirePolicyLock ();
+    PopAcquirePolicyLock();
 
     //
     // Dispatch any policy irps which have completed
     //
 
-    while (Entry = ExInterlockedRemoveHeadList (&PopPolicyIrpQueue, &PopWorkerSpinLock)) {
-        Irp = CONTAINING_RECORD (Entry, IRP, Tail.Overlay.ListEntry);
+    while (Entry = ExInterlockedRemoveHeadList(&PopPolicyIrpQueue, &PopWorkerSpinLock))
+    {
+        Irp = CONTAINING_RECORD(Entry, IRP, Tail.Overlay.ListEntry);
         IrpSp = IoGetCurrentIrpStackLocation(Irp);
 
         //
         // Dispatch irp to handler
         //
 
-        IrpHandler = (POP_IRP_HANDLER) IrpSp->Parameters.Others.Argument3;
-        IrpHandler ((PDEVICE_OBJECT) IrpSp->Parameters.Others.Argument1,
-                    Irp,
-                    (PVOID)          IrpSp->Parameters.Others.Argument2);
+        IrpHandler = (POP_IRP_HANDLER)IrpSp->Parameters.Others.Argument3;
+        IrpHandler((PDEVICE_OBJECT)IrpSp->Parameters.Others.Argument1, Irp, (PVOID)IrpSp->Parameters.Others.Argument2);
     }
 
 
-    PopReleasePolicyLock (FALSE);
-    PopCheckForWork (TRUE);
+    PopReleasePolicyLock(FALSE);
+    PopCheckForWork(TRUE);
 
     return 0;
 }
 
-VOID
-PopEventCalloutDispatch (
-    IN PSPOWEREVENTTYPE EventNumber,
-    IN ULONG_PTR Code
-    )
+VOID PopEventCalloutDispatch(IN PSPOWEREVENTTYPE EventNumber, IN ULONG_PTR Code)
 {
     WIN32_POWEREVENT_PARAMETERS Parms;
     ULONG Console;
@@ -427,7 +407,8 @@ PopEventCalloutDispatch (
 
     ASSERT(MmIsSessionAddress((PVOID)PopEventCallout));
 
-    if (EventNumber == PsW32GdiOn || EventNumber == PsW32GdiOff) {
+    if (EventNumber == PsW32GdiOn || EventNumber == PsW32GdiOff)
+    {
         //
         // These events go to the console session only.
         // The ActiveConsoleId session is stored with the SharedUserData.
@@ -440,28 +421,32 @@ PopEventCalloutDispatch (
         // so if it's not valid, just default to session 0, which is always
         // there.
         //
-        if (Console == ((ULONG)-1)) {
+        if (Console == ((ULONG)-1))
+        {
             Console = 0;
         }
 
-        if ((PsGetCurrentProcess()->Flags & PS_PROCESS_FLAGS_IN_SESSION) &&
-            (Console == PsGetCurrentProcessSessionId())) {
+        if ((PsGetCurrentProcess()->Flags & PS_PROCESS_FLAGS_IN_SESSION) && (Console == PsGetCurrentProcessSessionId()))
+        {
             //
             // If the caller is already in the specified session, call directly.
             //
             PopEventCallout(&Parms);
-
-        } else {
+        }
+        else
+        {
             //
             // Attach to the console session and dispatch the event.
             //
             OpaqueSession = MmGetSessionById(Console);
-            if (OpaqueSession) {
+            if (OpaqueSession)
+            {
 
                 Status = MmAttachSession(OpaqueSession, &ApcState);
                 ASSERT(NT_SUCCESS(Status));
 
-                if (NT_SUCCESS(Status)) {
+                if (NT_SUCCESS(Status))
+                {
 
                     PopEventCallout(&Parms);
 
@@ -473,30 +458,34 @@ PopEventCalloutDispatch (
                 ASSERT(NT_SUCCESS(Status));
             }
         }
-
-    } else {
+    }
+    else
+    {
         //
         // All other events are broadcast to all sessions.
         //
-        for (OpaqueSession = MmGetNextSession(NULL);
-             OpaqueSession != NULL;
-             OpaqueSession = MmGetNextSession(OpaqueSession)) {
+        for (OpaqueSession = MmGetNextSession(NULL); OpaqueSession != NULL;
+             OpaqueSession = MmGetNextSession(OpaqueSession))
+        {
 
             if ((PsGetCurrentProcess()->Flags & PS_PROCESS_FLAGS_IN_SESSION) &&
-                (MmGetSessionId(OpaqueSession) == PsGetCurrentProcessSessionId())) {
+                (MmGetSessionId(OpaqueSession) == PsGetCurrentProcessSessionId()))
+            {
                 //
                 // If the caller is already in the specified session, call directly.
                 //
                 PopEventCallout(&Parms);
-
-            } else {
+            }
+            else
+            {
                 //
                 // Attach to the session and dispatch the event.
                 //
                 Status = MmAttachSession(OpaqueSession, &ApcState);
                 ASSERT(NT_SUCCESS(Status));
 
-                if (NT_SUCCESS(Status)) {
+                if (NT_SUCCESS(Status))
+                {
 
                     PopEventCallout(&Parms);
 
@@ -510,21 +499,15 @@ PopEventCalloutDispatch (
 }
 
 
-
 ULONG
-PopPolicyTimeChange (
-    VOID
-    )
+PopPolicyTimeChange(VOID)
 {
-    PopEventCalloutDispatch (PsW32SystemTime, 0);
+    PopEventCalloutDispatch(PsW32SystemTime, 0);
     return 0;
 }
 
 
-VOID
-PopSetNotificationWork (
-    IN ULONG    Flags
-    )
+VOID PopSetNotificationWork(IN ULONG Flags)
 /*++
 
 Routine Description:
@@ -548,18 +531,17 @@ Return Value:
     //
 
 
-    if ((PopNotifyEvents & Flags) != Flags) {
+    if ((PopNotifyEvents & Flags) != Flags)
+    {
         PoPrint(PO_NOTIFY, ("PopSetNotificationWork: Queue notify of: %x\n", Flags));
-        InterlockedOr (&PopNotifyEvents, Flags);
-        PopGetPolicyWorker (PO_WORKER_NOTIFY);
+        InterlockedOr(&PopNotifyEvents, Flags);
+        PopGetPolicyWorker(PO_WORKER_NOTIFY);
     }
 }
 
 
 ULONG
-PopPolicyWorkerNotify (
-    VOID
-    )
+PopPolicyWorkerNotify(VOID)
 /*++
 
 Routine Description:
@@ -576,16 +558,17 @@ Return Value:
 
 --*/
 {
-    ULONG               i;
-    ULONG               Flags;
-    ULONG               Mask;
-    const POP_NOTIFY_WORK* NotifyWork;
+    ULONG i;
+    ULONG Flags;
+    ULONG Mask;
+    const POP_NOTIFY_WORK *NotifyWork;
 
     //
     // If Win32 event callout is registered, then don't dispatch right now
     //
 
-    if (!PopEventCallout) {
+    if (!PopEventCallout)
+    {
         return PO_WORKER_NOTIFY;
     }
 
@@ -593,9 +576,11 @@ Return Value:
     // While events are pending collect them and dispatch them
     //
 
-    while (Flags = InterlockedExchange (&PopNotifyEvents, 0)) {
+    while (Flags = InterlockedExchange(&PopNotifyEvents, 0))
+    {
 
-        while (Flags) {
+        while (Flags)
+        {
 
             //
             // Get change
@@ -610,34 +595,25 @@ Return Value:
             // Dispatch it
             //
 
-            NotifyWork->Function (NotifyWork->Arg);
+            NotifyWork->Function(NotifyWork->Arg);
         }
     }
     return 0;
 }
 
 
-VOID
-PopDispatchCallout (
-    IN ULONG Arg
-    )
+VOID PopDispatchCallout(IN ULONG Arg)
 {
-    PopEventCalloutDispatch (Arg, 0);
+    PopEventCalloutDispatch(Arg, 0);
 }
 
-VOID
-PopDispatchCallback (
-    IN ULONG Arg
-    )
+VOID PopDispatchCallback(IN ULONG Arg)
 {
     // Sundown: Arg is zero-extended
-    ExNotifyCallback (ExCbPowerState, ULongToPtr(Arg), 0);
+    ExNotifyCallback(ExCbPowerState, ULongToPtr(Arg), 0);
 }
 
-VOID
-PopDispatchDisplayRequired (
-    IN ULONG Arg
-    )
+VOID PopDispatchDisplayRequired(IN ULONG Arg)
 /*++
 
 Routine Description:
@@ -648,7 +624,7 @@ Routine Description:
 
 --*/
 {
-    ULONG   i;
+    ULONG i;
 
     i = PopAttributes[POP_DISPLAY_ATTRIBUTE].Count;
     PoPrint(PO_NOTIFY, ("PopNotify: DisplayRequired %x\n", i));
@@ -656,19 +632,17 @@ Routine Description:
     //
     // If the display is in use but has not yet been turned on, then do so now
     //
-    if (((PopFullWake & (PO_GDI_STATUS | PO_GDI_ON_PENDING)) == PO_GDI_ON_PENDING)) {
+    if (((PopFullWake & (PO_GDI_STATUS | PO_GDI_ON_PENDING)) == PO_GDI_ON_PENDING))
+    {
 
         PoPrint(PO_PACT, ("PopEventDispatch: gdi on\n"));
-        InterlockedOr (&PopFullWake, PO_GDI_STATUS);
-        PopEventCalloutDispatch (PsW32GdiOn, 0);
+        InterlockedOr(&PopFullWake, PO_GDI_STATUS);
+        PopEventCalloutDispatch(PsW32GdiOn, 0);
     }
-    PopEventCalloutDispatch (PsW32DisplayState, i);
+    PopEventCalloutDispatch(PsW32DisplayState, i);
 }
 
-VOID
-PopDispatchFullWake (
-    IN ULONG Arg
-    )
+VOID PopDispatchFullWake(IN ULONG Arg)
 /*++
 
 Routine Description:
@@ -684,39 +658,39 @@ Routine Description:
     // flags.
     //
 
-    if (PopAction.State != PO_ACT_SET_SYSTEM_STATE) {
+    if (PopAction.State != PO_ACT_SET_SYSTEM_STATE)
+    {
 
         //
         // Notify user32 of the wake events
         //
 
-        if ((PopFullWake & (PO_GDI_STATUS | PO_GDI_ON_PENDING)) == PO_GDI_ON_PENDING) {
+        if ((PopFullWake & (PO_GDI_STATUS | PO_GDI_ON_PENDING)) == PO_GDI_ON_PENDING)
+        {
             PoPrint(PO_PACT, ("PopEventDispatch: gdi on\n"));
-            InterlockedOr (&PopFullWake, PO_GDI_STATUS);
-            PopEventCalloutDispatch (PsW32GdiOn, 0);
+            InterlockedOr(&PopFullWake, PO_GDI_STATUS);
+            PopEventCalloutDispatch(PsW32GdiOn, 0);
         }
 
-        if ((PopFullWake & (PO_FULL_WAKE_STATUS | PO_FULL_WAKE_PENDING)) == PO_FULL_WAKE_PENDING) {
+        if ((PopFullWake & (PO_FULL_WAKE_STATUS | PO_FULL_WAKE_PENDING)) == PO_FULL_WAKE_PENDING)
+        {
             PoPrint(PO_PACT, ("PopEventDispatch: full wake\n"));
-            InterlockedOr (&PopFullWake, PO_FULL_WAKE_STATUS);
-            PopEventCalloutDispatch (PsW32FullWake, 0);
+            InterlockedOr(&PopFullWake, PO_FULL_WAKE_STATUS);
+            PopEventCalloutDispatch(PsW32FullWake, 0);
 
             //
             // Reset the idle detection policy
             //
 
             PopAcquirePolicyLock();
-            PopInitSIdle ();
-            PopReleasePolicyLock (FALSE);
+            PopInitSIdle();
+            PopReleasePolicyLock(FALSE);
         }
     }
 }
 
 
-VOID
-PopDispatchEventCodes (
-    IN ULONG Arg
-    )
+VOID PopDispatchEventCodes(IN ULONG Arg)
 /*++
 
 Routine Description:
@@ -725,20 +699,22 @@ Routine Description:
 
 --*/
 {
-    ULONG       i;
-    ULONG       Code;
+    ULONG i;
+    ULONG Code;
 
     PopAcquirePolicyLock();
-    for (i=0; i < POP_MAX_EVENT_CODES; i++) {
-        if (PopEventCode[i]) {
+    for (i = 0; i < POP_MAX_EVENT_CODES; i++)
+    {
+        if (PopEventCode[i])
+        {
             Code = PopEventCode[i];
             PopEventCode[i] = 0;
-            PopReleasePolicyLock (FALSE);
+            PopReleasePolicyLock(FALSE);
 
             PoPrint(PO_NOTIFY, ("PopNotify: Event %x\n", Code));
-            PopEventCalloutDispatch (PsW32EventCode, Code);
+            PopEventCalloutDispatch(PsW32EventCode, Code);
 
-            PopAcquirePolicyLock ();
+            PopAcquirePolicyLock();
         }
     }
 
@@ -747,10 +723,7 @@ Routine Description:
 }
 
 
-VOID
-PopDispatchAcDcCallback (
-    IN ULONG Arg
-    )
+VOID PopDispatchAcDcCallback(IN ULONG Arg)
 /*++
 
 Routine Description:
@@ -760,17 +733,10 @@ Routine Description:
 
 --*/
 {
-    ExNotifyCallback (
-        ExCbPowerState,
-        UIntToPtr(PO_CB_AC_STATUS),
-        UIntToPtr((PopPolicy == &PopAcPolicy))
-        );
+    ExNotifyCallback(ExCbPowerState, UIntToPtr(PO_CB_AC_STATUS), UIntToPtr((PopPolicy == &PopAcPolicy)));
 }
 
-VOID
-PopDispatchPolicyCallout (
-    IN ULONG Arg
-    )
+VOID PopDispatchPolicyCallout(IN ULONG Arg)
 /*++
 
 Routine Description:
@@ -780,13 +746,10 @@ Routine Description:
 --*/
 {
     PoPrint(PO_NOTIFY, ("PopNotify: PolicyChanged\n"));
-    PopEventCalloutDispatch (PsW32PowerPolicyChanged, PopPolicy->VideoTimeout);
+    PopEventCalloutDispatch(PsW32PowerPolicyChanged, PopPolicy->VideoTimeout);
 }
 
-VOID
-PopDispatchProcessorPolicyCallout (
-    IN ULONG Arg
-    )
+VOID PopDispatchProcessorPolicyCallout(IN ULONG Arg)
 /*++
 
 Routine Description:
@@ -800,10 +763,7 @@ Routine Description:
     Arg = Arg;
 }
 
-VOID
-PopDispatchSetStateFailure (
-    IN ULONG Arg
-    )
+VOID PopDispatchSetStateFailure(IN ULONG Arg)
 /*++
 
 Routine Description:
@@ -814,10 +774,10 @@ Routine Description:
 
 --*/
 {
-    BOOLEAN                 IssueCallout;
-    PO_SET_STATE_FAILURE    Failure;
+    BOOLEAN IssueCallout;
+    PO_SET_STATE_FAILURE Failure;
 
-    RtlZeroMemory (&Failure, sizeof(Failure));
+    RtlZeroMemory(&Failure, sizeof(Failure));
 
     PopAcquirePolicyLock();
 
@@ -826,20 +786,21 @@ Routine Description:
     // win32 of the failure
     //
 
-    if (PopAction.State == PO_ACT_IDLE  && !NT_SUCCESS(PopAction.Status)  &&
-        (PopAction.Flags & (POWER_ACTION_UI_ALLOWED | POWER_ACTION_CRITICAL)) ) {
+    if (PopAction.State == PO_ACT_IDLE && !NT_SUCCESS(PopAction.Status) &&
+        (PopAction.Flags & (POWER_ACTION_UI_ALLOWED | POWER_ACTION_CRITICAL)))
+    {
 
-        Failure.Status          = PopAction.Status;
-        Failure.PowerAction     = PopAction.Action;
-        Failure.MinState        = PopAction.LightestState;
-        Failure.Flags           = PopAction.Flags;
+        Failure.Status = PopAction.Status;
+        Failure.PowerAction = PopAction.Action;
+        Failure.MinState = PopAction.LightestState;
+        Failure.Flags = PopAction.Flags;
     }
 
-    PopReleasePolicyLock (FALSE);
+    PopReleasePolicyLock(FALSE);
 
-    if (!NT_SUCCESS(Failure.Status)) {
+    if (!NT_SUCCESS(Failure.Status))
+    {
         PoPrint(PO_NOTIFY, ("PopNotify: set state failed (code %x)\n", Failure.Status));
-        PopEventCalloutDispatch (PsW32SetStateFailed, (ULONG_PTR) &Failure);
+        PopEventCalloutDispatch(PsW32SetStateFailed, (ULONG_PTR)&Failure);
     }
 }
-

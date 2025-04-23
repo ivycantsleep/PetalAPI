@@ -28,15 +28,11 @@ Revision History:
 
 
 #include "ki.h"
-
+
 #if defined(KE_MULTINODE)
 
 NTSTATUS
-KiNotNumaQueryProcessorNode(
-    IN ULONG ProcessorNumber,
-    OUT PUSHORT Identifier,
-    OUT PUCHAR Node
-    );
+KiNotNumaQueryProcessorNode(IN ULONG ProcessorNumber, OUT PUSHORT Identifier, OUT PUCHAR Node);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, KiNotNumaQueryProcessorNode)
@@ -98,28 +94,14 @@ extern ULONG_PTR KiKernelPcrPage;
 // Define forward referenced prototypes.
 //
 
-VOID
-KiCalibratePerformanceCounter(
-    VOID
-    );
+VOID KiCalibratePerformanceCounter(VOID);
 
-VOID
-KiCalibratePerformanceCounterTarget (
-    IN PULONG SignalDone,
-    IN PVOID Count,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    );
+VOID KiCalibratePerformanceCounterTarget(IN PULONG SignalDone, IN PVOID Count, IN PVOID Parameter2,
+                                         IN PVOID Parameter3);
 
-VOID
-KiOSRendezvous (
-    VOID
-    );
-
-VOID
-KeStartAllProcessors(
-    VOID
-    )
+VOID KiOSRendezvous(VOID);
+
+VOID KeStartAllProcessors(VOID)
 
 /*++
 
@@ -167,18 +149,19 @@ Return Value:
     //
 
 
-    if (KeNumberNodes > 1) {
-        Status = KiQueryProcessorNode(0,
-                                      &ProcessorId,
-                                      &NodeNumber);
+    if (KeNumberNodes > 1)
+    {
+        Status = KiQueryProcessorNode(0, &ProcessorId, &NodeNumber);
 
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
 
             //
             // This should never fail.
             //
 
-            if (NodeNumber != 0) {
+            if (NodeNumber != 0)
+            {
                 KeNodeBlock[0]->ProcessorMask &= ~1I64;
                 KeNodeBlock[NodeNumber]->ProcessorMask |= 1;
                 KeGetCurrentPrcb()->ParentNode = KeNodeBlock[NodeNumber];
@@ -195,7 +178,8 @@ Return Value:
     // of supported processors.
     //
 
-    if (KeRegisteredProcessors > MAXIMUM_PROCESSORS) {
+    if (KeRegisteredProcessors > MAXIMUM_PROCESSORS)
+    {
         KeRegisteredProcessors = MAXIMUM_PROCESSORS;
     }
 
@@ -216,20 +200,21 @@ Return Value:
     Count = 1;
     RtlZeroMemory(&ProcessorState, sizeof(KPROCESSOR_STATE));
     ProcessorState.ContextFrame.StIIP = ((PPLABEL_DESCRIPTOR)KiOSRendezvous)->EntryPoint;
-    while (Count < KeRegisteredProcessors) {
+    while (Count < KeRegisteredProcessors)
+    {
 
         Number++;
 
-        if (Number >= MAXIMUM_PROCESSORS) {
+        if (Number >= MAXIMUM_PROCESSORS)
+        {
             break;
         }
 
 #if defined(KE_MULTINODE)
 
-        Status = KiQueryProcessorNode(Number,
-                                      &ProcessorId,
-                                      &NodeNumber);
-        if (!NT_SUCCESS(Status)) {
+        Status = KiQueryProcessorNode(Number, &ProcessorId, &NodeNumber);
+        if (!NT_SUCCESS(Status))
+        {
 
             //
             // No such processor, advance to next.
@@ -270,12 +255,14 @@ Return Value:
         RtlZeroMemory((PVOID)MemoryBlock1, ProcessorDataSize);
 #else
         MemoryBlock1 = (ULONG_PTR)ExAllocatePool(NonPagedPool, BLOCK1_SIZE);
-        if ((PVOID)MemoryBlock1 == NULL) {
+        if ((PVOID)MemoryBlock1 == NULL)
+        {
             break;
         }
 
         MemoryBlock2 = (ULONG_PTR)ExAllocatePool(NonPagedPool, BLOCK2_SIZE);
-        if ((PVOID)MemoryBlock2 == NULL) {
+        if ((PVOID)MemoryBlock2 == NULL)
+        {
             ExFreePool((PVOID)MemoryBlock1);
             break;
         }
@@ -299,8 +286,7 @@ Return Value:
         // Set address of panic stack in loader parameter block.
         //
 
-        KeLoaderBlock->u.Ia64.PanicStack = MemoryBlock1 + KERNEL_BSTORE_SIZE + 
-                                                          (2 * KERNEL_STACK_SIZE);
+        KeLoaderBlock->u.Ia64.PanicStack = MemoryBlock1 + KERNEL_BSTORE_SIZE + (2 * KERNEL_STACK_SIZE);
 
         //
         // Set the address of the processor block and executive thread in the
@@ -308,8 +294,7 @@ Return Value:
         //
 
         KeLoaderBlock->Prcb = MemoryBlock2;
-        KeLoaderBlock->Thread = KeLoaderBlock->Prcb + ROUND_UP(KPRCB) +
-                                                      ROUND_UP(KNODE);
+        KeLoaderBlock->Thread = KeLoaderBlock->Prcb + ROUND_UP(KPRCB) + ROUND_UP(KNODE);
         ((PKPRCB)KeLoaderBlock->Prcb)->Number = (UCHAR)Number;
 
 #if defined(KE_MULTINODE)
@@ -319,7 +304,8 @@ Return Value:
         // space allocated for KNODE as the KNODE.
         //
 
-        if (KeNodeBlock[NodeNumber] == &KiNodeInit[NodeNumber]) {
+        if (KeNodeBlock[NodeNumber] == &KiNodeInit[NodeNumber])
+        {
             Node = (PKNODE)(MemoryBlock1 + ROUND_UP(KPRCB));
             *Node = KiNodeInit[NodeNumber];
             KeNodeBlock[NodeNumber] = Node;
@@ -349,7 +335,7 @@ Return Value:
         // Initialize the NT page table base addresses in PCR
         //
 
-        NewPcr = (PKPCR) PcrAddress;
+        NewPcr = (PKPCR)PcrAddress;
         NewPcr->PteUbase = PCR->PteUbase;
         NewPcr->PteKbase = PCR->PteKbase;
         NewPcr->PteSbase = PCR->PteSbase;
@@ -368,14 +354,16 @@ Return Value:
 
         Started = HalStartNextProcessor(KeLoaderBlock, &ProcessorState);
 
-        if (Started) {
+        if (Started)
+        {
 
             //
             //  Wait for processor to initialize in kernel,
             //  then loop for another
             //
 
-            while (*((volatile ULONG_PTR *) &KeLoaderBlock->Prcb) != 0) {
+            while (*((volatile ULONG_PTR *)&KeLoaderBlock->Prcb) != 0)
+            {
                 KeYieldProcessor();
             }
 
@@ -384,8 +372,9 @@ Return Value:
             Node->ProcessorMask |= 1I64 << Number;
 
 #endif
-
-        } else {
+        }
+        else
+        {
 
 #if 0
             MmFreeIndependentPages((PVOID)MemoryBlock1, ProcessorDataSize);
@@ -394,7 +383,6 @@ Return Value:
             ExFreePool((PVOID)MemoryBlock2);
 #endif
             break;
-
         }
 
         Count += 1;
@@ -419,15 +407,12 @@ Return Value:
     // Reset and synchronize the performance counters of all processors.
     //
 
-    KiAdjustInterruptTime (0);
+    KiAdjustInterruptTime(0);
     return;
 }
-
+
 #if !defined(NT_UP)
-VOID
-KiAllProcessorsStarted(
-    VOID
-    )
+VOID KiAllProcessorsStarted(VOID)
 
 /*++
 
@@ -456,8 +441,10 @@ Return Value:
     // used during initialization.
     //
 
-    for (i = 0; i < KeNumberNodes; i++) {
-        if (KeNodeBlock[i] == &KiNodeInit[i]) {
+    for (i = 0; i < KeNumberNodes; i++)
+    {
+        if (KeNodeBlock[i] == &KiNodeInit[i])
+        {
 
             //
             // No processor started on this node so no new node
@@ -467,22 +454,23 @@ Return Value:
             // structure for the node.
             //
 
-            KeNodeBlock[i] = ExAllocatePoolWithTag(NonPagedPool,
-                                                   sizeof(KNODE),
-                                                   '  eK');
-            if (KeNodeBlock[i]) {
+            KeNodeBlock[i] = ExAllocatePoolWithTag(NonPagedPool, sizeof(KNODE), '  eK');
+            if (KeNodeBlock[i])
+            {
                 *KeNodeBlock[i] = KiNodeInit[i];
             }
         }
     }
 
-    for (i = KeNumberNodes; i < MAXIMUM_CCNUMA_NODES; i++) {
+    for (i = KeNumberNodes; i < MAXIMUM_CCNUMA_NODES; i++)
+    {
         KeNodeBlock[i] = NULL;
     }
 
 #endif
 
-    if (KeNumberNodes == 1) {
+    if (KeNumberNodes == 1)
+    {
 
         //
         // For Non NUMA machines, Node 0 gets all processors.
@@ -492,16 +480,12 @@ Return Value:
     }
 }
 #endif
-
+
 
 #if defined(KE_MULTINODE)
 
 NTSTATUS
-KiNotNumaQueryProcessorNode(
-    IN ULONG ProcessorNumber,
-    OUT PUSHORT Identifier,
-    OUT PUCHAR Node
-    )
+KiNotNumaQueryProcessorNode(IN ULONG ProcessorNumber, OUT PUSHORT Identifier, OUT PUCHAR Node)
 
 /*++
 
@@ -532,4 +516,3 @@ Return Value:
 }
 
 #endif
-

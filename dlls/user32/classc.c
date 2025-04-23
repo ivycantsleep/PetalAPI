@@ -19,37 +19,37 @@
 // !!! can't we get rid of this and just special case GCW_ATOM
 
 CONST BYTE afClassDWord[] = {
-     FIELD_SIZE(CLS, spicnSm),          // GCL_HICONSM       (-34)
-     0,
-     FIELD_SIZE(CLS, atomNVClassName),    // GCW_ATOM          (-32)
-     0,
-     0,
-     0,
-     0,
-     0,
-     FIELD_SIZE(CLS, style),            // GCL_STYLE         (-26)
-     0,
-     FIELD_SIZE(CLS, lpfnWndProc),      // GCL_WNDPROC       (-24)
-     0,
-     0,
-     0,
-     FIELD_SIZE(CLS, cbclsExtra),       // GCL_CBCLSEXTRA    (-20)
-     0,
-     FIELD_SIZE(CLS, cbwndExtra),       // GCL_CBWNDEXTRA    (-18)
-     0,
-     FIELD_SIZE(CLS, hModule),          // GCL_HMODULE       (-16)
-     0,
-     FIELD_SIZE(CLS, spicn),            // GCL_HICON         (-14)
-     0,
-     FIELD_SIZE(CLS, spcur),            // GCL_HCURSOR       (-12)
-     0,
-     FIELD_SIZE(CLS, hbrBackground),    // GCL_HBRBACKGROUND (-10)
-     0,
-     FIELD_SIZE(CLS, lpszMenuName)      // GCL_HMENUNAME      (-8)
+    FIELD_SIZE(CLS, spicnSm), // GCL_HICONSM       (-34)
+    0,
+    FIELD_SIZE(CLS, atomNVClassName), // GCW_ATOM          (-32)
+    0,
+    0,
+    0,
+    0,
+    0,
+    FIELD_SIZE(CLS, style), // GCL_STYLE         (-26)
+    0,
+    FIELD_SIZE(CLS, lpfnWndProc), // GCL_WNDPROC       (-24)
+    0,
+    0,
+    0,
+    FIELD_SIZE(CLS, cbclsExtra), // GCL_CBCLSEXTRA    (-20)
+    0,
+    FIELD_SIZE(CLS, cbwndExtra), // GCL_CBWNDEXTRA    (-18)
+    0,
+    FIELD_SIZE(CLS, hModule), // GCL_HMODULE       (-16)
+    0,
+    FIELD_SIZE(CLS, spicn), // GCL_HICON         (-14)
+    0,
+    FIELD_SIZE(CLS, spcur), // GCL_HCURSOR       (-12)
+    0,
+    FIELD_SIZE(CLS, hbrBackground), // GCL_HBRBACKGROUND (-10)
+    0,
+    FIELD_SIZE(CLS, lpszMenuName) // GCL_HMENUNAME      (-8)
 };
 
 CONST BYTE aiClassOffset[] = {
-    FIELD_OFFSET(CLS, spicnSm),         // GCL_HICONSM
+    FIELD_OFFSET(CLS, spicnSm), // GCL_HICONSM
     0,
     FIELD_OFFSET(CLS, atomNVClassName), // GCW_ATOM
     0,
@@ -57,25 +57,25 @@ CONST BYTE aiClassOffset[] = {
     0,
     0,
     0,
-    FIELD_OFFSET(CLS, style),           // GCL_STYLE
+    FIELD_OFFSET(CLS, style), // GCL_STYLE
     0,
-    FIELD_OFFSET(CLS, lpfnWndProc),     // GCL_WNDPROC
+    FIELD_OFFSET(CLS, lpfnWndProc), // GCL_WNDPROC
     0,
     0,
     0,
-    FIELD_OFFSET(CLS, cbclsExtra),      // GCL_CBCLSEXTRA
+    FIELD_OFFSET(CLS, cbclsExtra), // GCL_CBCLSEXTRA
     0,
-    FIELD_OFFSET(CLS, cbwndExtra),      // GCL_CBWNDEXTRA
+    FIELD_OFFSET(CLS, cbwndExtra), // GCL_CBWNDEXTRA
     0,
-    FIELD_OFFSET(CLS, hModule),         // GCL_HMODULE
+    FIELD_OFFSET(CLS, hModule), // GCL_HMODULE
     0,
-    FIELD_OFFSET(CLS, spicn),           // GCL_HICON
+    FIELD_OFFSET(CLS, spicn), // GCL_HICON
     0,
-    FIELD_OFFSET(CLS, spcur),           // GCL_HCURSOR
+    FIELD_OFFSET(CLS, spcur), // GCL_HCURSOR
     0,
-    FIELD_OFFSET(CLS, hbrBackground),   // GCL_HBRBACKGROUND
+    FIELD_OFFSET(CLS, hbrBackground), // GCL_HBRBACKGROUND
     0,
-    FIELD_OFFSET(CLS, lpszMenuName)     // GCL_MENUNAME
+    FIELD_OFFSET(CLS, lpszMenuName) // GCL_MENUNAME
 };
 
 /*
@@ -97,18 +97,17 @@ CONST BYTE aiClassOffset[] = {
 * 11-19-90 darrinm      Wrote.
 \***************************************************************************/
 
-ULONG_PTR _GetClassData(
-    PCLS pcls,
-    PWND pwnd,   // used for transition to kernel-mode for GCL_WNDPROC
-    int index,
-    BOOL bAnsi)
+ULONG_PTR _GetClassData(PCLS pcls,
+                        PWND pwnd, // used for transition to kernel-mode for GCL_WNDPROC
+                        int index, BOOL bAnsi)
 {
     KERNEL_ULONG_PTR dwData;
     DWORD dwCPDType = 0;
 
     index -= INDEX_OFFSET;
 
-    if (index < 0) {
+    if (index < 0)
+    {
         RIPERR0(ERROR_INVALID_INDEX, RIP_VERBOSE, "");
         return 0;
     }
@@ -116,12 +115,17 @@ ULONG_PTR _GetClassData(
     UserAssert(index >= 0);
     UserAssert(index < sizeof(afClassDWord));
     UserAssert(sizeof(afClassDWord) == sizeof(aiClassOffset));
-    if (afClassDWord[index] == sizeof(DWORD)) {
+    if (afClassDWord[index] == sizeof(DWORD))
+    {
         dwData = *(KPDWORD)(((KPBYTE)pcls) + aiClassOffset[index]);
-    } else if (afClassDWord[index] == sizeof(KERNEL_ULONG_PTR)) {
+    }
+    else if (afClassDWord[index] == sizeof(KERNEL_ULONG_PTR))
+    {
         dwData = *(KPKERNEL_ULONG_PTR)(((KPBYTE)pcls) + aiClassOffset[index]);
-    } else {
-        dwData = (DWORD)*(KPWORD)(((KPBYTE)pcls) + aiClassOffset[index]);
+    }
+    else
+    {
+        dwData = (DWORD) * (KPWORD)(((KPBYTE)pcls) + aiClassOffset[index]);
     }
 
     index += INDEX_OFFSET;
@@ -130,17 +134,17 @@ ULONG_PTR _GetClassData(
      * If we're returning an icon or cursor handle, do the reverse
      * mapping here.
      */
-    switch(index) {
+    switch (index)
+    {
     case GCLP_MENUNAME:
-        if (IS_PTR(pcls->lpszMenuName)) {
+        if (IS_PTR(pcls->lpszMenuName))
+        {
             /*
              * The Menu Name is a real string: return the client-side address.
              * (If the class was registered by another app this returns an
              * address in that app's addr. space, but it's the best we can do)
              */
-            dwData = bAnsi ?
-                    (ULONG_PTR)pcls->lpszClientAnsiMenuName :
-                    (ULONG_PTR)pcls->lpszClientUnicodeMenuName;
+            dwData = bAnsi ? (ULONG_PTR)pcls->lpszClientAnsiMenuName : (ULONG_PTR)pcls->lpszClientUnicodeMenuName;
         }
         break;
 
@@ -151,22 +155,26 @@ ULONG_PTR _GetClassData(
          * We have to go to the kernel to convert the pcursor to a handle because
          * cursors are allocated out of POOL, which is not accessable from the client.
          */
-        if (dwData) {
+        if (dwData)
+        {
             dwData = NtUserCallHwndParam(PtoH(pwnd), index, SFI_GETCLASSICOCUR);
         }
         break;
 
     case GCLP_WNDPROC:
-        {
+    {
 
         /*
          * Always return the client wndproc in case this is a server
          * window class.
          */
 
-        if (pcls->CSF_flags & CSF_SERVERSIDEPROC) {
+        if (pcls->CSF_flags & CSF_SERVERSIDEPROC)
+        {
             dwData = MapServerToClientPfn(dwData, bAnsi);
-        } else {
+        }
+        else
+        {
             KERNEL_ULONG_PTR dwT = dwData;
 
             dwData = MapClientNeuterToClientPfn(pcls, dwT, bAnsi);
@@ -175,32 +183,39 @@ ULONG_PTR _GetClassData(
              * If the client mapping didn't change the window proc then see if
              * we need a callproc handle.
              */
-            if (dwData == dwT) {
+            if (dwData == dwT)
+            {
                 /*
                  * Need to return a CallProc handle if there is an Ansi/Unicode mismatch
                  */
-                if (bAnsi != !!(pcls->CSF_flags & CSF_ANSIPROC)) {
+                if (bAnsi != !!(pcls->CSF_flags & CSF_ANSIPROC))
+                {
                     dwCPDType |= bAnsi ? CPD_ANSI_TO_UNICODE : CPD_UNICODE_TO_ANSI;
                 }
             }
         }
 
-        if (dwCPDType) {
+        if (dwCPDType)
+        {
             ULONG_PTR dwCPD;
 
             dwCPD = GetCPD(pwnd, dwCPDType | CPD_WNDTOCLS, KERNEL_ULONG_PTR_TO_ULONG_PTR(dwData));
 
-            if (dwCPD) {
+            if (dwCPD)
+            {
                 dwData = dwCPD;
-            } else {
+            }
+            else
+            {
                 RIPMSG0(RIP_WARNING, "GetClassLong unable to alloc CPD returning handle\n");
             }
         }
-        }
-        break;
+    }
+    break;
 
     case GCL_CBCLSEXTRA:
-        if ((pcls->CSF_flags & CSF_WOWCLASS) && (pcls->CSF_flags & CSF_WOWEXTRA)) {
+        if ((pcls->CSF_flags & CSF_WOWCLASS) && (pcls->CSF_flags & CSF_WOWEXTRA))
+        {
             /*
              * The 16-bit app changed its Extra bytes value.  Return the changed
              * value.  FritzS
@@ -217,9 +232,11 @@ ULONG_PTR _GetClassData(
      * WOW uses a pointer straight into the class structure.
      */
     case GCLP_WOWWORDS:
-        if (pcls->CSF_flags & CSF_WOWCLASS) {
+        if (pcls->CSF_flags & CSF_WOWCLASS)
+        {
             return ((ULONG_PTR)PWCFromPCLS(pcls));
-        } else
+        }
+        else
             return 0;
 
     case GCL_STYLE:
@@ -229,7 +246,6 @@ ULONG_PTR _GetClassData(
 
     return KERNEL_ULONG_PTR_TO_ULONG_PTR(dwData);
 }
-
 
 
 /***************************************************************************\
@@ -243,21 +259,24 @@ ULONG_PTR _GetClassData(
 * 10-16-90 darrinm      Wrote.
 \***************************************************************************/
 
-ULONG_PTR _GetClassLongPtr(
-    PWND pwnd,
-    int index,
-    BOOL bAnsi)
+ULONG_PTR _GetClassLongPtr(PWND pwnd, int index, BOOL bAnsi)
 {
     PCLS pcls = REBASEALWAYS(pwnd, pcls);
 
-    if (index < 0) {
+    if (index < 0)
+    {
         return _GetClassData(pcls, pwnd, index, bAnsi);
-    } else {
-        if (index + (int)sizeof(ULONG_PTR) > pcls->cbclsExtra) {
+    }
+    else
+    {
+        if (index + (int)sizeof(ULONG_PTR) > pcls->cbclsExtra)
+        {
             RIPERR0(ERROR_INVALID_INDEX, RIP_VERBOSE, "");
             return 0;
-        } else {
-            ULONG_PTR UNALIGNED * KPTR_MODIFIER pudw;
+        }
+        else
+        {
+            ULONG_PTR UNALIGNED *KPTR_MODIFIER pudw;
             pudw = (ULONG_PTR UNALIGNED * KPTR_MODIFIER)((KPBYTE)(pcls + 1) + index);
             return *pudw;
         }
@@ -265,25 +284,29 @@ ULONG_PTR _GetClassLongPtr(
 }
 
 #ifdef _WIN64
-DWORD _GetClassLong(
-    PWND pwnd,
-    int index,
-    BOOL bAnsi)
+DWORD _GetClassLong(PWND pwnd, int index, BOOL bAnsi)
 {
     PCLS pcls = REBASEALWAYS(pwnd, pcls);
 
-    if (index < 0) {
-        if (index < INDEX_OFFSET || afClassDWord[index - INDEX_OFFSET] > sizeof(DWORD)) {
+    if (index < 0)
+    {
+        if (index < INDEX_OFFSET || afClassDWord[index - INDEX_OFFSET] > sizeof(DWORD))
+        {
             RIPERR1(ERROR_INVALID_INDEX, RIP_WARNING, "GetClassLong: invalid index %d", index);
             return 0;
         }
         return (DWORD)_GetClassData(pcls, pwnd, index, bAnsi);
-    } else {
-        if (index + (int)sizeof(DWORD) > pcls->cbclsExtra) {
+    }
+    else
+    {
+        if (index + (int)sizeof(DWORD) > pcls->cbclsExtra)
+        {
             RIPERR0(ERROR_INVALID_INDEX, RIP_VERBOSE, "");
             return 0;
-        } else {
-            DWORD UNALIGNED * KPTR_MODIFIER pudw;
+        }
+        else
+        {
+            DWORD UNALIGNED *KPTR_MODIFIER pudw;
             pudw = (DWORD UNALIGNED * KPTR_MODIFIER)((KPBYTE)(pcls + 1) + index);
             return *pudw;
         }
@@ -304,9 +327,7 @@ DWORD _GetClassLong(
 
 
 FUNCLOG2(LOG_GENERAL, WORD, DUMMYCALLINGTYPE, GetClassWord, HWND, hwnd, int, index)
-WORD GetClassWord(
-    HWND hwnd,
-    int index)
+WORD GetClassWord(HWND hwnd, int index)
 {
     PWND pwnd;
     PCLS pclsClient;
@@ -318,27 +339,32 @@ WORD GetClassWord(
 
     pclsClient = (PCLS)REBASEALWAYS(pwnd, pcls);
 
-    try {
-        if (index == GCW_ATOM) {
+    try
+    {
+        if (index == GCW_ATOM)
+        {
             return (WORD)_GetClassData(pclsClient, pwnd, index, FALSE);
-        } else {
-            if ((index < 0) || (index + (int)sizeof(WORD) > pclsClient->cbclsExtra)) {
+        }
+        else
+        {
+            if ((index < 0) || (index + (int)sizeof(WORD) > pclsClient->cbclsExtra))
+            {
                 RIPERR0(ERROR_INVALID_INDEX, RIP_VERBOSE, "");
                 return 0;
-            } else {
-                WORD UNALIGNED * KPTR_MODIFIER puw;
+            }
+            else
+            {
+                WORD UNALIGNED *KPTR_MODIFIER puw;
                 puw = (WORD UNALIGNED * KPTR_MODIFIER)((KPBYTE)(pclsClient + 1) + index);
                 return *puw;
             }
         }
-    } except (W32ExceptionHandler(FALSE, RIP_WARNING)) {
-        RIPERR1(ERROR_INVALID_WINDOW_HANDLE,
-            RIP_WARNING,
-            "Window %x no longer valid",
-            hwnd);
+    }
+    except(W32ExceptionHandler(FALSE, RIP_WARNING))
+    {
+        RIPERR1(ERROR_INVALID_WINDOW_HANDLE, RIP_WARNING, "Window %x no longer valid", hwnd);
         return 0;
     }
-
 }
 
 /***************************************************************************\
@@ -357,47 +383,50 @@ WORD GetClassWord(
 * History:
 * 08-01-00 MHamid      Wrote.
 \***************************************************************************/
-LPWSTR ClassNameToVersion (LPCWSTR lpClassName, LPWSTR pClassVerName, LPWSTR *lpDllName, BOOL bIsANSI)
+LPWSTR ClassNameToVersion(LPCWSTR lpClassName, LPWSTR pClassVerName, LPWSTR *lpDllName, BOOL bIsANSI)
 {
     int cbSrc;
     int cbDst;
     UNICODE_STRING UnicodeClassName;
     ACTIVATION_CONTEXT_SECTION_KEYED_DATA acskd;
-    ACTIVATION_CONTEXT_DATA_WINDOW_CLASS_REDIRECTION UNALIGNED * pRedirEntry;
-    LPWSTR lpClassNameRet; 
+    ACTIVATION_CONTEXT_DATA_WINDOW_CLASS_REDIRECTION UNALIGNED *pRedirEntry;
+    LPWSTR lpClassNameRet;
     LPWSTR pwstr;
     ULONG strLength;
     LPWSTR Buffer;
     NTSTATUS Status;
-    
+
     /*
      * Allocate local buffer.
      */
     Buffer = UserLocalAlloc(0, MAX_ATOM_LEN * sizeof(WCHAR));
-    if (Buffer == NULL) {
+    if (Buffer == NULL)
+    {
         return NULL;
     }
 
     /*
      * Capture lpClassName into a local buffer.
      */
-    if (IS_PTR(lpClassName)) {
+    if (IS_PTR(lpClassName))
+    {
         /*
          * lpClassName is string.
          */
-        if (bIsANSI) {
+        if (bIsANSI)
+        {
             /*
              * it is ANSI then convert it to unicode.
              */
             cbSrc = strlen((LPSTR)lpClassName) + 1;
-            RtlMultiByteToUnicodeN(Buffer,
-                    MAX_ATOM_LEN * sizeof(WCHAR), &cbDst,
-                    (LPSTR)lpClassName, cbSrc);
-        } else {
+            RtlMultiByteToUnicodeN(Buffer, MAX_ATOM_LEN * sizeof(WCHAR), &cbDst, (LPSTR)lpClassName, cbSrc);
+        }
+        else
+        {
             /*
              * It is already unicode, then just copy it.
              */
-            cbSrc = min (wcslen(lpClassName) + 1, MAX_ATOM_LEN);
+            cbSrc = min(wcslen(lpClassName) + 1, MAX_ATOM_LEN);
             cbSrc *= sizeof(WCHAR);
             RtlCopyMemory(Buffer, lpClassName, cbSrc);
         }
@@ -405,7 +434,9 @@ LPWSTR ClassNameToVersion (LPCWSTR lpClassName, LPWSTR pClassVerName, LPWSTR *lp
          * Build the UNICODE_STRING
          */
         RtlInitUnicodeString(&UnicodeClassName, Buffer);
-    } else {
+    }
+    else
+    {
         /*
          * lpClassName is an atom, get its name and build the UNICODE_STRING
          */
@@ -413,7 +444,8 @@ LPWSTR ClassNameToVersion (LPCWSTR lpClassName, LPWSTR pClassVerName, LPWSTR *lp
         UnicodeClassName.Buffer = Buffer;
         UnicodeClassName.Length = (USHORT)NtUserGetAtomName((ATOM)lpClassName, &UnicodeClassName) * sizeof(WCHAR);
 
-        if (!UnicodeClassName.Length) {
+        if (!UnicodeClassName.Length)
+        {
             lpClassNameRet = NULL;
             goto Free_Buffer;
         }
@@ -425,17 +457,13 @@ LPWSTR ClassNameToVersion (LPCWSTR lpClassName, LPWSTR pClassVerName, LPWSTR *lp
     RtlZeroMemory(&acskd, sizeof(acskd));
     acskd.Size = sizeof(acskd);
 
-    Status = RtlFindActivationContextSectionString(
-        0,
-        NULL,
-        ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION,
-        &UnicodeClassName,
-        &acskd);
+    Status = RtlFindActivationContextSectionString(0, NULL, ACTIVATION_CONTEXT_SECTION_WINDOW_CLASS_REDIRECTION,
+                                                   &UnicodeClassName, &acskd);
     /*
      * If there is no Activation Section we will use the plain class name.
      */
-    if ((Status == STATUS_SXS_SECTION_NOT_FOUND) ||
-        (Status == STATUS_SXS_KEY_NOT_FOUND)) {
+    if ((Status == STATUS_SXS_SECTION_NOT_FOUND) || (Status == STATUS_SXS_KEY_NOT_FOUND))
+    {
         lpClassNameRet = (LPWSTR)lpClassName;
         goto Free_Buffer;
     }
@@ -443,21 +471,23 @@ LPWSTR ClassNameToVersion (LPCWSTR lpClassName, LPWSTR pClassVerName, LPWSTR *lp
     /*
      * Case of failure return NULL.
      */
-    if (!NT_SUCCESS(Status) || 
-        acskd.DataFormatVersion != ACTIVATION_CONTEXT_DATA_WINDOW_CLASS_REDIRECTION_FORMAT_WHISTLER) {
+    if (!NT_SUCCESS(Status) ||
+        acskd.DataFormatVersion != ACTIVATION_CONTEXT_DATA_WINDOW_CLASS_REDIRECTION_FORMAT_WHISTLER)
+    {
 
         lpClassNameRet = NULL;
         goto Free_Buffer;
     }
 
-    pRedirEntry = (PACTIVATION_CONTEXT_DATA_WINDOW_CLASS_REDIRECTION) acskd.Data;
+    pRedirEntry = (PACTIVATION_CONTEXT_DATA_WINDOW_CLASS_REDIRECTION)acskd.Data;
 
     UserAssert(pRedirEntry);
 
-    pwstr = (LPWSTR)(((ULONG_PTR) pRedirEntry) + pRedirEntry->VersionSpecificClassNameOffset);
+    pwstr = (LPWSTR)(((ULONG_PTR)pRedirEntry) + pRedirEntry->VersionSpecificClassNameOffset);
     strLength = pRedirEntry->VersionSpecificClassNameLength + sizeof(WCHAR);
-    if (lpDllName) {
-        *lpDllName = (LPWSTR)(((ULONG_PTR) acskd.SectionBase) + pRedirEntry->DllNameOffset);
+    if (lpDllName)
+    {
+        *lpDllName = (LPWSTR)(((ULONG_PTR)acskd.SectionBase) + pRedirEntry->DllNameOffset);
     }
 
     UserAssert(pwstr);
@@ -465,11 +495,12 @@ LPWSTR ClassNameToVersion (LPCWSTR lpClassName, LPWSTR pClassVerName, LPWSTR *lp
     /*
      * if the call is ANSI then convert the class name+version to ANSI string.
      */
-    if (bIsANSI) {
-        RtlUnicodeToMultiByteN((LPSTR)pClassVerName,
-                MAX_ATOM_LEN, &cbDst,
-                pwstr, strLength);
-    } else {
+    if (bIsANSI)
+    {
+        RtlUnicodeToMultiByteN((LPSTR)pClassVerName, MAX_ATOM_LEN, &cbDst, pwstr, strLength);
+    }
+    else
+    {
         /*
          * if it is unicode then just copy the class name+version to the caller's buffer.
          */
@@ -480,12 +511,10 @@ LPWSTR ClassNameToVersion (LPCWSTR lpClassName, LPWSTR pClassVerName, LPWSTR *lp
      */
     lpClassNameRet = pClassVerName;
 
-Free_Buffer: 
+Free_Buffer:
     /*
      * Don't forget to free the local memory.
      */
     UserLocalFree(Buffer);
     return lpClassNameRet;
 }
-
-

@@ -26,15 +26,12 @@ Environment:
 //
 // Table for installed GPE handlers
 //
-PGPE_VECTOR_ENTRY   GpeVectorTable      = NULL;
-UCHAR               GpeVectorFree       = 0;
-ULONG               GpeVectorTableSize  = 0;
+PGPE_VECTOR_ENTRY GpeVectorTable = NULL;
+UCHAR GpeVectorFree = 0;
+ULONG GpeVectorTableSize = 0;
 
-
-VOID
-ACPIVectorBuildVectorMasks(
-    VOID
-    )
+
+VOID ACPIVectorBuildVectorMasks(VOID)
 /*++
 
 Routine Description:
@@ -62,61 +59,50 @@ Return Value:
 --*/
 {
     BOOLEAN installed;
-    ULONG   i;
-    ULONG   mode;
+    ULONG i;
+    ULONG mode;
 
     //
     // Walk all the elements in the table
     //
-    for (i = 0; i < GpeVectorTableSize; i++) {
+    for (i = 0; i < GpeVectorTableSize; i++)
+    {
 
         //
         // Does this entry point to a vector object?
         //
-        if (GpeVectorTable[i].GpeVectorObject == NULL) {
+        if (GpeVectorTable[i].GpeVectorObject == NULL)
+        {
 
             continue;
-
         }
 
-        if (GpeVectorTable[i].GpeVectorObject->Mode == LevelSensitive) {
+        if (GpeVectorTable[i].GpeVectorObject->Mode == LevelSensitive)
+        {
 
             mode = ACPI_GPE_LEVEL_INSTALL;
-
-        } else {
+        }
+        else
+        {
 
             mode = ACPI_GPE_EDGE_INSTALL;
-
         }
 
         //
         // Install the GPE into bit-maps.  This validates the GPE number.
         //
-        installed = ACPIGpeInstallRemoveIndex(
-            GpeVectorTable[i].GpeVectorObject->Vector,
-            mode,
-            ACPI_GPE_HANDLER,
-            &(GpeVectorTable[i].GpeVectorObject->HasControlMethod)
-            );
-        if (!installed) {
+        installed = ACPIGpeInstallRemoveIndex(GpeVectorTable[i].GpeVectorObject->Vector, mode, ACPI_GPE_HANDLER,
+                                              &(GpeVectorTable[i].GpeVectorObject->HasControlMethod));
+        if (!installed)
+        {
 
-            ACPIPrint( (
-                ACPI_PRINT_CRITICAL,
-                "ACPIVectorBuildVectorMasks: Could not reenable Vector Object %d\n",
-                i
-                ) );
-
+            ACPIPrint((ACPI_PRINT_CRITICAL, "ACPIVectorBuildVectorMasks: Could not reenable Vector Object %d\n", i));
         }
-
     }
-
 }
-
+
 NTSTATUS
-ACPIVectorClear(
-    PDEVICE_OBJECT      AcpiDeviceObject,
-    PVOID               GpeVectorObject
-    )
+ACPIVectorClear(PDEVICE_OBJECT AcpiDeviceObject, PVOID GpeVectorObject)
 /*++
 
 Routine Description:
@@ -135,12 +121,12 @@ Return Value
 
 --*/
 {
-    PGPE_VECTOR_OBJECT  localVectorObject = GpeVectorObject;
-    ULONG               gpeIndex;
-    ULONG               bitOffset;
-    ULONG               i;
+    PGPE_VECTOR_OBJECT localVectorObject = GpeVectorObject;
+    ULONG gpeIndex;
+    ULONG bitOffset;
+    ULONG i;
 
-    ASSERT( localVectorObject );
+    ASSERT(localVectorObject);
 
     //
     // What is the GPE index for this vector?
@@ -155,25 +141,18 @@ Return Value
     //
     // Calculate the offset for the register
     //
-    i = ACPIGpeIndexToGpeRegister (gpeIndex);
+    i = ACPIGpeIndexToGpeRegister(gpeIndex);
 
     //
     // Clear the register
     //
-    ACPIWriteGpeStatusRegister (i, (UCHAR) (1 << bitOffset));
+    ACPIWriteGpeStatusRegister(i, (UCHAR)(1 << bitOffset));
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-ACPIVectorConnect(
-    PDEVICE_OBJECT          AcpiDeviceObject,
-    ULONG                   GpeVector,
-    KINTERRUPT_MODE         GpeMode,
-    BOOLEAN                 Sharable,
-    PGPE_SERVICE_ROUTINE    ServiceRoutine,
-    PVOID                   ServiceContext,
-    PVOID                   *GpeVectorObject
-    )
+ACPIVectorConnect(PDEVICE_OBJECT AcpiDeviceObject, ULONG GpeVector, KINTERRUPT_MODE GpeMode, BOOLEAN Sharable,
+                  PGPE_SERVICE_ROUTINE ServiceRoutine, PVOID ServiceContext, PVOID *GpeVectorObject)
 /*++
 
 Routine Description:
@@ -196,18 +175,15 @@ Return Value
 
 --*/
 {
-    BOOLEAN                 installed;
-    KIRQL                   oldIrql;
-    NTSTATUS                status;
-    PGPE_VECTOR_OBJECT      localVectorObject;
-    ULONG                   mode;
+    BOOLEAN installed;
+    KIRQL oldIrql;
+    NTSTATUS status;
+    PGPE_VECTOR_OBJECT localVectorObject;
+    ULONG mode;
 
-    ASSERT( GpeVectorObject );
+    ASSERT(GpeVectorObject);
 
-    ACPIPrint( (
-        ACPI_PRINT_INFO,
-        "ACPIVectorConnect: Attach GPE handler\n"
-        ) );
+    ACPIPrint((ACPI_PRINT_INFO, "ACPIVectorConnect: Attach GPE handler\n"));
 
     status = STATUS_SUCCESS;
     *GpeVectorObject = NULL;
@@ -215,39 +191,35 @@ Return Value
     //
     // Do GPEs exist on this machine?
     //
-    if (AcpiInformation->GpeSize == 0) {
+    if (AcpiInformation->GpeSize == 0)
+    {
 
         return STATUS_UNSUCCESSFUL;
-
     }
 
     //
     // Validate the vector number (GPE number)
     //
-    if ( !ACPIGpeValidIndex(GpeVector) ) {
+    if (!ACPIGpeValidIndex(GpeVector))
+    {
 
         return STATUS_INVALID_PARAMETER_2;
-
     }
 
     //
     // Create and initialize a vector object
     //
-    localVectorObject = ExAllocatePoolWithTag (
-        NonPagedPool,
-        sizeof(GPE_VECTOR_OBJECT),
-        ACPI_SHARED_GPE_POOLTAG
-        );
-    if (localVectorObject == NULL) {
+    localVectorObject = ExAllocatePoolWithTag(NonPagedPool, sizeof(GPE_VECTOR_OBJECT), ACPI_SHARED_GPE_POOLTAG);
+    if (localVectorObject == NULL)
+    {
 
         return STATUS_INSUFFICIENT_RESOURCES;
-
     }
-    RtlZeroMemory( localVectorObject, sizeof(GPE_VECTOR_OBJECT) );
-    localVectorObject->Vector   = GpeVector;
-    localVectorObject->Handler  = ServiceRoutine;
-    localVectorObject->Context  = ServiceContext;
-    localVectorObject->Mode     = GpeMode;
+    RtlZeroMemory(localVectorObject, sizeof(GPE_VECTOR_OBJECT));
+    localVectorObject->Vector = GpeVector;
+    localVectorObject->Handler = ServiceRoutine;
+    localVectorObject->Context = ServiceContext;
+    localVectorObject->Mode = GpeMode;
 
     //
     // We don't implement anything other than sharable...
@@ -257,20 +229,21 @@ Return Value
     //
     // Level/Edge mode for ACPIGpeInstallRemoveIndex()
     //
-    if (GpeMode == LevelSensitive) {
+    if (GpeMode == LevelSensitive)
+    {
 
         mode = ACPI_GPE_LEVEL_INSTALL;
-
-    } else {
+    }
+    else
+    {
 
         mode = ACPI_GPE_EDGE_INSTALL;
-
     }
 
     //
     // Lock the global tables
     //
-    KeAcquireSpinLock (&GpeTableLock, &oldIrql);
+    KeAcquireSpinLock(&GpeTableLock, &oldIrql);
 
     //
     // Disable GPEs while we are installing the handler
@@ -280,66 +253,52 @@ Return Value
     //
     // Install the GPE into bit-maps.  This validates the GPE number.
     //
-    installed = ACPIGpeInstallRemoveIndex(
-        GpeVector,
-        mode,
-        ACPI_GPE_HANDLER,
-        &(localVectorObject->HasControlMethod)
-        );
-    if (!installed) {
+    installed = ACPIGpeInstallRemoveIndex(GpeVector, mode, ACPI_GPE_HANDLER, &(localVectorObject->HasControlMethod));
+    if (!installed)
+    {
 
         status = STATUS_UNSUCCESSFUL;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Install GPE handler into vector table.
         //
-        installed = ACPIVectorInstall(
-            GpeVector,
-            localVectorObject
-            );
-        if (!installed) {
+        installed = ACPIVectorInstall(GpeVector, localVectorObject);
+        if (!installed)
+        {
 
-            ACPIGpeInstallRemoveIndex(
-                GpeVector,
-                ACPI_GPE_REMOVE,
-                0,
-                &localVectorObject->HasControlMethod
-                );
+            ACPIGpeInstallRemoveIndex(GpeVector, ACPI_GPE_REMOVE, 0, &localVectorObject->HasControlMethod);
             status = STATUS_UNSUCCESSFUL;
-
         }
-
     }
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
-        ExFreePool (localVectorObject);
-
-    } else {
+        ExFreePool(localVectorObject);
+    }
+    else
+    {
 
         *GpeVectorObject = localVectorObject;
-
     }
 
     //
     // Update hardware to match us
     //
-    ACPIGpeEnableDisableEvents (TRUE);
+    ACPIGpeEnableDisableEvents(TRUE);
 
     //
     // Unlock tables and return status
     //
-    KeReleaseSpinLock (&GpeTableLock, oldIrql);
+    KeReleaseSpinLock(&GpeTableLock, oldIrql);
     return status;
 }
-
+
 NTSTATUS
-ACPIVectorDisable(
-    PDEVICE_OBJECT      AcpiDeviceObject,
-    PVOID               GpeVectorObject
-    )
+ACPIVectorDisable(PDEVICE_OBJECT AcpiDeviceObject, PVOID GpeVectorObject)
 /*++
 
 Routine Description:
@@ -357,11 +316,11 @@ Return Value
 
 --*/
 {
-    PGPE_VECTOR_OBJECT  localVectorObject = GpeVectorObject;
-    KIRQL               oldIrql;
-    ULONG               gpeIndex;
-    ULONG               bit;
-    ULONG               i;
+    PGPE_VECTOR_OBJECT localVectorObject = GpeVectorObject;
+    KIRQL oldIrql;
+    ULONG gpeIndex;
+    ULONG bit;
+    ULONG i;
 
     //
     // The GPE index was validated when the handler was attached
@@ -372,12 +331,12 @@ Return Value
     // Calculate the mask and index
     //
     bit = (1 << (gpeIndex % 8));
-    i = ACPIGpeIndexToGpeRegister (gpeIndex);
+    i = ACPIGpeIndexToGpeRegister(gpeIndex);
 
     //
     // Lock the global tables
     //
-    KeAcquireSpinLock (&GpeTableLock, &oldIrql);
+    KeAcquireSpinLock(&GpeTableLock, &oldIrql);
 
     //
     // Disable GPEs while we are fussing with the enable bits
@@ -388,31 +347,25 @@ Return Value
     // Remove the GPE from the enable bit-maps.  This event will be completely disabled,
     // but the handler has not been removed.
     //
-    GpeEnable [i]      &= ~bit;
-    GpeCurEnable [i]   &= ~bit;
+    GpeEnable[i] &= ~bit;
+    GpeCurEnable[i] &= ~bit;
     ASSERT(!(GpeWakeEnable[i] & bit));
 
     //
     // Update hardware to match us
     //
-    ACPIGpeEnableDisableEvents (TRUE);
+    ACPIGpeEnableDisableEvents(TRUE);
 
     //
     // Unlock tables and return status
     //
-    KeReleaseSpinLock (&GpeTableLock, oldIrql);
-    ACPIPrint( (
-        ACPI_PRINT_RESOURCES_2,
-        "ACPIVectorDisable: GPE %x disabled\n",
-        gpeIndex
-        ) );
+    KeReleaseSpinLock(&GpeTableLock, oldIrql);
+    ACPIPrint((ACPI_PRINT_RESOURCES_2, "ACPIVectorDisable: GPE %x disabled\n", gpeIndex));
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-ACPIVectorDisconnect(
-    PVOID                   GpeVectorObject
-    )
+ACPIVectorDisconnect(PVOID GpeVectorObject)
 /*++
 
 Routine Description:
@@ -430,25 +383,22 @@ Return Value
 
 --*/
 {
-    BOOLEAN                 removed;
-    KIRQL                   oldIrql;
-    NTSTATUS                status          = STATUS_SUCCESS;
-    PGPE_VECTOR_OBJECT      gpeVectorObj    = GpeVectorObject;
+    BOOLEAN removed;
+    KIRQL oldIrql;
+    NTSTATUS status = STATUS_SUCCESS;
+    PGPE_VECTOR_OBJECT gpeVectorObj = GpeVectorObject;
 
-    ACPIPrint( (
-        ACPI_PRINT_INFO,
-        "ACPIVectorDisconnect: Detach GPE handler\n"
-        ) );
+    ACPIPrint((ACPI_PRINT_INFO, "ACPIVectorDisconnect: Detach GPE handler\n"));
 
     //
     // Lock the global tables
     //
-    KeAcquireSpinLock (&GpeTableLock, &oldIrql);
+    KeAcquireSpinLock(&GpeTableLock, &oldIrql);
 
     //
     // Disable GPEs while we are removing the handler
     //
-    ACPIGpeEnableDisableEvents (FALSE);
+    ACPIGpeEnableDisableEvents(FALSE);
 
     //
     // Remove GPE handler From vector table.
@@ -459,16 +409,11 @@ Return Value
     // Remove the GPE from the bit-maps.  Fall back to using control method
     // if available.
     //
-    removed = ACPIGpeInstallRemoveIndex(
-        gpeVectorObj->Vector,
-        ACPI_GPE_REMOVE,
-        0,
-        &(gpeVectorObj->HasControlMethod)
-        );
-    if (!removed) {
+    removed = ACPIGpeInstallRemoveIndex(gpeVectorObj->Vector, ACPI_GPE_REMOVE, 0, &(gpeVectorObj->HasControlMethod));
+    if (!removed)
+    {
 
         status = STATUS_UNSUCCESSFUL;
-
     }
 
     //
@@ -479,24 +424,21 @@ Return Value
     //
     // Unlock tables and return status
     //
-    KeReleaseSpinLock (&GpeTableLock, oldIrql);
+    KeReleaseSpinLock(&GpeTableLock, oldIrql);
 
     //
     // Free the vector object, it's purpose is done.
     //
-    if (status == STATUS_SUCCESS) {
+    if (status == STATUS_SUCCESS)
+    {
 
-        ExFreePool (GpeVectorObject);
-
+        ExFreePool(GpeVectorObject);
     }
     return status;
 }
-
+
 NTSTATUS
-ACPIVectorEnable(
-    PDEVICE_OBJECT      AcpiDeviceObject,
-    PVOID               GpeVectorObject
-    )
+ACPIVectorEnable(PDEVICE_OBJECT AcpiDeviceObject, PVOID GpeVectorObject)
 /*++
 
 Routine Description:
@@ -514,56 +456,49 @@ Return Value
 
 --*/
 {
-    KIRQL               oldIrql;
-    PGPE_VECTOR_OBJECT  localVectorObject = GpeVectorObject;
-    ULONG               bit;
-    ULONG               gpeIndex;
-    ULONG               gpeRegister;
+    KIRQL oldIrql;
+    PGPE_VECTOR_OBJECT localVectorObject = GpeVectorObject;
+    ULONG bit;
+    ULONG gpeIndex;
+    ULONG gpeRegister;
 
     //
     // The GPE index was validated when the handler was attached
     //
     gpeIndex = localVectorObject->Vector;
     bit = (1 << (gpeIndex % 8));
-    gpeRegister = ACPIGpeIndexToGpeRegister (gpeIndex);
+    gpeRegister = ACPIGpeIndexToGpeRegister(gpeIndex);
 
     //
     // Lock the global tables
     //
-    KeAcquireSpinLock (&GpeTableLock, &oldIrql);
+    KeAcquireSpinLock(&GpeTableLock, &oldIrql);
 
     //
     // Disable GPEs while we are fussing with the enable bits
     //
-    ACPIGpeEnableDisableEvents (FALSE);
+    ACPIGpeEnableDisableEvents(FALSE);
 
     //
     // Enable the GPE in the bit maps.
     //
-    GpeEnable [gpeRegister]      |= bit;
-    GpeCurEnable [gpeRegister]   |= bit;
+    GpeEnable[gpeRegister] |= bit;
+    GpeCurEnable[gpeRegister] |= bit;
 
     //
     // Update hardware to match us
     //
-    ACPIGpeEnableDisableEvents (TRUE);
+    ACPIGpeEnableDisableEvents(TRUE);
 
     //
     // Unlock tables and return status
     //
-    KeReleaseSpinLock (&GpeTableLock, oldIrql);
-    ACPIPrint( (
-        ACPI_PRINT_RESOURCES_2,
-        "ACPIVectorEnable: GPE %x enabled\n",
-        gpeIndex
-        ) );
+    KeReleaseSpinLock(&GpeTableLock, oldIrql);
+    ACPIPrint((ACPI_PRINT_RESOURCES_2, "ACPIVectorEnable: GPE %x enabled\n", gpeIndex));
     return STATUS_SUCCESS;
 }
-
-VOID
-ACPIVectorFreeEntry (
-    ULONG       TableIndex
-    )
+
+VOID ACPIVectorFreeEntry(ULONG TableIndex)
 /*++
 
 Routine Description:
@@ -585,13 +520,11 @@ Return Value:
     // Put onto free list
     //
     GpeVectorTable[TableIndex].Next = GpeVectorFree;
-    GpeVectorFree = (UCHAR) TableIndex;
+    GpeVectorFree = (UCHAR)TableIndex;
 }
-
+
 BOOLEAN
-ACPIVectorGetEntry (
-    PULONG              TableIndex
-    )
+ACPIVectorGetEntry(PULONG TableIndex)
 /*++
 
 Routine Description:
@@ -610,48 +543,39 @@ Return Value:
 
 --*/
 {
-    PGPE_VECTOR_ENTRY   Vector;
-    ULONG               i, j;
+    PGPE_VECTOR_ENTRY Vector;
+    ULONG i, j;
 
-#define NEW_TABLE_ENTRIES       4
+#define NEW_TABLE_ENTRIES 4
 
-    if (!GpeVectorFree) {
+    if (!GpeVectorFree)
+    {
 
         //
         // No free entries on vector table, make some
         //
         i = GpeVectorTableSize;
-        Vector = ExAllocatePoolWithTag (
-            NonPagedPool,
-            sizeof (GPE_VECTOR_ENTRY) * (i + NEW_TABLE_ENTRIES),
-            ACPI_SHARED_GPE_POOLTAG
-            );
-        if (Vector == NULL) {
+        Vector = ExAllocatePoolWithTag(NonPagedPool, sizeof(GPE_VECTOR_ENTRY) * (i + NEW_TABLE_ENTRIES),
+                                       ACPI_SHARED_GPE_POOLTAG);
+        if (Vector == NULL)
+        {
 
             return FALSE;
-
         }
 
         //
         // Make sure that its in a known state
         //
-        RtlZeroMemory(
-            Vector,
-            (sizeof(GPE_VECTOR_ENTRY) * (i + NEW_TABLE_ENTRIES) )
-            );
+        RtlZeroMemory(Vector, (sizeof(GPE_VECTOR_ENTRY) * (i + NEW_TABLE_ENTRIES)));
 
         //
         // Copy old table to new
         //
-        if (GpeVectorTable) {
+        if (GpeVectorTable)
+        {
 
-            RtlCopyMemory(
-                Vector,
-                GpeVectorTable,
-                sizeof (GPE_VECTOR_ENTRY) * i
-                );
-            ExFreePool (GpeVectorTable);
-
+            RtlCopyMemory(Vector, GpeVectorTable, sizeof(GPE_VECTOR_ENTRY) * i);
+            ExFreePool(GpeVectorTable);
         }
 
         GpeVectorTableSize += NEW_TABLE_ENTRIES;
@@ -660,23 +584,22 @@ Return Value:
         //
         // Link new entries
         //
-        for (j=0; j < NEW_TABLE_ENTRIES; j++) {
+        for (j = 0; j < NEW_TABLE_ENTRIES; j++)
+        {
 
-            GpeVectorTable[i+j].Next = (UCHAR) (i+j+1);
-
+            GpeVectorTable[i + j].Next = (UCHAR)(i + j + 1);
         }
 
         //
         // The last entry in the list gets pointed to 0, because we then
         // want to grow this list again
         //
-        GpeVectorTable[i+j-1].Next = 0;
+        GpeVectorTable[i + j - 1].Next = 0;
 
         //
         // The next free vector the head of the list that we just allocated
         //
-        GpeVectorFree = (UCHAR) i;
-
+        GpeVectorFree = (UCHAR)i;
     }
 
     *TableIndex = GpeVectorFree;
@@ -684,12 +607,9 @@ Return Value:
     GpeVectorFree = Vector->Next;
     return TRUE;
 }
-
+
 BOOLEAN
-ACPIVectorInstall(
-    ULONG               GpeIndex,
-    PGPE_VECTOR_OBJECT  GpeVectorObject
-    )
+ACPIVectorInstall(ULONG GpeIndex, PGPE_VECTOR_OBJECT GpeVectorObject)
 /*++
 
 Routine Description:
@@ -707,35 +627,33 @@ Return Value:
 
 --*/
 {
-    ULONG               byteIndex;
-    ULONG               tableIndex;
+    ULONG byteIndex;
+    ULONG tableIndex;
 
     //
     // Get an entry in the global vector table
     //
-    if (ACPIVectorGetEntry (&tableIndex)) {
+    if (ACPIVectorGetEntry(&tableIndex))
+    {
 
         //
         // Install the entry into the map table
         //
-        byteIndex = ACPIGpeIndexToByteIndex (GpeIndex);
-        GpeMap [byteIndex] = (UCHAR) tableIndex;
+        byteIndex = ACPIGpeIndexToByteIndex(GpeIndex);
+        GpeMap[byteIndex] = (UCHAR)tableIndex;
 
         //
         // Install the vector object in the vector table entry
         //
-        GpeVectorTable [tableIndex].GpeVectorObject = GpeVectorObject;
+        GpeVectorTable[tableIndex].GpeVectorObject = GpeVectorObject;
         return TRUE;
-
     }
 
     return FALSE;
 }
-
+
 BOOLEAN
-ACPIVectorRemove(
-    ULONG       GpeIndex
-    )
+ACPIVectorRemove(ULONG GpeIndex)
 /*++
 
 Routine Description:
@@ -754,22 +672,22 @@ Return Value:
 
 --*/
 {
-    ULONG               byteIndex;
-    ULONG               tableIndex;
+    ULONG byteIndex;
+    ULONG tableIndex;
 
     //
     // Get the table index from the map table
     //
-    byteIndex = ACPIGpeIndexToByteIndex (GpeIndex);
-    tableIndex = GpeMap [byteIndex];
+    byteIndex = ACPIGpeIndexToByteIndex(GpeIndex);
+    tableIndex = GpeMap[byteIndex];
 
     //
     // Bounds check
     //
-    if (tableIndex >= GpeVectorTableSize) {
+    if (tableIndex >= GpeVectorTableSize)
+    {
 
         return FALSE;
-
     }
 
     //
@@ -780,7 +698,6 @@ Return Value:
     //
     // Free the slot in the master vector table
     //
-    ACPIVectorFreeEntry (tableIndex);
+    ACPIVectorFreeEntry(tableIndex);
     return TRUE;
 }
-

@@ -30,18 +30,16 @@ Revision History:
 
 #ifdef _NTSLIST_DIRECT_
 #define INLINE_SLIST __inline
-#define RtlInitializeSListHead       _RtlInitializeSListHead
-#define _RtlFirstEntrySList          FirstEntrySList
+#define RtlInitializeSListHead _RtlInitializeSListHead
+#define _RtlFirstEntrySList FirstEntrySList
 
 PSINGLE_LIST_ENTRY
-FirstEntrySList (
-    const SLIST_HEADER *ListHead
-    );
+FirstEntrySList(const SLIST_HEADER *ListHead);
 
-#define RtlInterlockedPopEntrySList  _RtlInterlockedPopEntrySList
+#define RtlInterlockedPopEntrySList _RtlInterlockedPopEntrySList
 #define RtlInterlockedPushEntrySList _RtlInterlockedPushEntrySList
-#define RtlInterlockedFlushSList     _RtlInterlockedFlushSList
-#define _RtlQueryDepthSList          RtlpQueryDepthSList
+#define RtlInterlockedFlushSList _RtlInterlockedFlushSList
+#define _RtlQueryDepthSList RtlpQueryDepthSList
 #else
 #define INLINE_SLIST
 #endif // _NTSLIST_DIRECT_
@@ -61,42 +59,26 @@ FirstEntrySList (
 // Define forward referenced function prototypes.
 //
 
-VOID
-RtlpInitializeSListHead (
-    IN PSLIST_HEADER ListHead
-    );
+VOID RtlpInitializeSListHead(IN PSLIST_HEADER ListHead);
 
 PSINGLE_LIST_ENTRY
 FASTCALL
-RtlpInterlockedPopEntrySList (
-    IN PSLIST_HEADER ListHead
-    );
+RtlpInterlockedPopEntrySList(IN PSLIST_HEADER ListHead);
 
 PSINGLE_LIST_ENTRY
 FASTCALL
-RtlpInterlockedPushEntrySList (
-    IN PSLIST_HEADER ListHead,
-    IN PSINGLE_LIST_ENTRY ListEntry
-    );
+RtlpInterlockedPushEntrySList(IN PSLIST_HEADER ListHead, IN PSINGLE_LIST_ENTRY ListEntry);
 
 PSINGLE_LIST_ENTRY
 FASTCALL
-RtlpInterlockedFlushSList (
-    IN PSLIST_HEADER ListHead
-    );
+RtlpInterlockedFlushSList(IN PSLIST_HEADER ListHead);
 
 USHORT
-RtlpQueryDepthSList (
-    IN PSLIST_HEADER SListHead
-    );
+RtlpQueryDepthSList(IN PSLIST_HEADER SListHead);
 
 // end_ntslist
 
-VOID
-RtlpInitializeHeapLookaside (
-    IN PHEAP_LOOKASIDE Lookaside,
-    IN USHORT Depth
-    )
+VOID RtlpInitializeHeapLookaside(IN PHEAP_LOOKASIDE Lookaside, IN USHORT Depth)
 
 /*++
 
@@ -147,10 +129,7 @@ Return Value:
     return;
 }
 
-VOID
-RtlpDeleteHeapLookaside (
-    IN PHEAP_LOOKASIDE Lookaside
-    )
+VOID RtlpDeleteHeapLookaside(IN PHEAP_LOOKASIDE Lookaside)
 
 /*++
 
@@ -175,10 +154,7 @@ Return Value:
     return;
 }
 
-VOID
-RtlpAdjustHeapLookasideDepth (
-    IN PHEAP_LOOKASIDE Lookaside
-    )
+VOID RtlpAdjustHeapLookasideDepth(IN PHEAP_LOOKASIDE Lookaside)
 
 /*++
 
@@ -227,35 +203,45 @@ Return Value:
         // maximum depth based on the miss rate.
         //
 
-        if (Misses >= Allocates) {
+        if (Misses >= Allocates)
+        {
             Misses = Allocates;
         }
 
-        if (Allocates == 0) {
+        if (Allocates == 0)
+        {
             Allocates = 1;
         }
 
         Ratio = (Misses * 1000) / Allocates;
         Target = Lookaside->Depth;
-        if (Allocates < MINIMUM_ALLOCATION_THRESHOLD) {
-            if (Target > (MINIMUM_LOOKASIDE_DEPTH + 10)) {
+        if (Allocates < MINIMUM_ALLOCATION_THRESHOLD)
+        {
+            if (Target > (MINIMUM_LOOKASIDE_DEPTH + 10))
+            {
                 Target -= 10;
-
-            } else {
+            }
+            else
+            {
                 Target = MINIMUM_LOOKASIDE_DEPTH;
             }
-
-        } else if (Ratio < 5) {
-            if (Target > (MINIMUM_LOOKASIDE_DEPTH + 1)) {
+        }
+        else if (Ratio < 5)
+        {
+            if (Target > (MINIMUM_LOOKASIDE_DEPTH + 1))
+            {
                 Target -= 1;
-
-            } else {
+            }
+            else
+            {
                 Target = MINIMUM_LOOKASIDE_DEPTH;
             }
-
-        } else {
+        }
+        else
+        {
             Target += ((Ratio * Lookaside->MaximumDepth) / (1000 * 2)) + 5;
-            if (Target > Lookaside->MaximumDepth) {
+            if (Target > Lookaside->MaximumDepth)
+            {
                 Target = Lookaside->MaximumDepth;
             }
         }
@@ -267,9 +253,7 @@ Return Value:
 }
 
 PVOID
-RtlpAllocateFromHeapLookaside (
-    IN PHEAP_LOOKASIDE Lookaside
-    )
+RtlpAllocateFromHeapLookaside(IN PHEAP_LOOKASIDE Lookaside)
 
 /*++
 
@@ -302,14 +286,17 @@ Return Value:
     //  operation
     //
 
-    __try {
+    __try
+    {
         Entry = RtlpInterlockedPopEntrySList(&Lookaside->ListHead);
-
-    } __except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
         Entry = NULL;
     }
 
-    if (Entry != NULL) {
+    if (Entry != NULL)
+    {
         return Entry;
     }
 
@@ -318,10 +305,7 @@ Return Value:
 }
 
 BOOLEAN
-RtlpFreeToHeapLookaside (
-    IN PHEAP_LOOKASIDE Lookaside,
-    IN PVOID Entry
-    )
+RtlpFreeToHeapLookaside(IN PHEAP_LOOKASIDE Lookaside, IN PVOID Entry)
 
 /*++
 
@@ -347,9 +331,9 @@ Return Value:
 {
 
     Lookaside->TotalFrees += 1;
-    if (RtlpQueryDepthSList(&Lookaside->ListHead) < Lookaside->Depth) {
-        RtlpInterlockedPushEntrySList(&Lookaside->ListHead,
-                                      (PSINGLE_LIST_ENTRY)Entry);
+    if (RtlpQueryDepthSList(&Lookaside->ListHead) < Lookaside->Depth)
+    {
+        RtlpInterlockedPushEntrySList(&Lookaside->ListHead, (PSINGLE_LIST_ENTRY)Entry);
 
         return TRUE;
     }
@@ -361,10 +345,7 @@ Return Value:
 // begin_ntslist
 
 INLINE_SLIST
-VOID
-RtlInitializeSListHead (
-    IN PSLIST_HEADER SListHead
-    )
+VOID RtlInitializeSListHead(IN PSLIST_HEADER SListHead)
 
 /*++
 
@@ -390,9 +371,7 @@ Return Value:
 
 INLINE_SLIST
 PSINGLE_LIST_ENTRY
-RtlInterlockedPopEntrySList (
-    IN PSLIST_HEADER ListHead
-    )
+RtlInterlockedPopEntrySList(IN PSLIST_HEADER ListHead)
 
 /*++
 
@@ -431,11 +410,14 @@ Return Value:
     //
 
     Count = 0;
-    do {
-        __try {
+    do
+    {
+        __try
+        {
             return RtlpInterlockedPopEntrySList(ListHead);
-
-        } __except (Count++ < 20 ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH) {
+        }
+        __except (Count++ < 20 ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
+        {
             continue;
         }
 
@@ -444,10 +426,7 @@ Return Value:
 
 INLINE_SLIST
 PSINGLE_LIST_ENTRY
-RtlInterlockedPushEntrySList (
-    IN PSLIST_HEADER ListHead,
-    IN PSINGLE_LIST_ENTRY ListEntry
-    )
+RtlInterlockedPushEntrySList(IN PSLIST_HEADER ListHead, IN PSINGLE_LIST_ENTRY ListEntry)
 
 /*++
 
@@ -479,9 +458,7 @@ Return Value:
 
 INLINE_SLIST
 PSINGLE_LIST_ENTRY
-RtlInterlockedFlushSList (
-    IN PSLIST_HEADER ListHead
-    )
+RtlInterlockedFlushSList(IN PSLIST_HEADER ListHead)
 
 /*++
 
@@ -513,9 +490,7 @@ Return Value:
 // end_ntslist
 
 USHORT
-RtlQueryDepthSList (
-    IN PSLIST_HEADER SListHead
-    )
+RtlQueryDepthSList(IN PSLIST_HEADER SListHead)
 
 /*++
 
@@ -535,5 +510,5 @@ Return Value:
 --*/
 
 {
-     return RtlpQueryDepthSList(SListHead);
+    return RtlpQueryDepthSList(SListHead);
 }

@@ -44,7 +44,7 @@ Revision History:
 //  Trace level for the module
 //
 
-#define Dbg                              (0x10000000)
+#define Dbg (0x10000000)
 
 //
 //  Some special debugging stuff
@@ -53,7 +53,9 @@ Revision History:
 #if DBG
 
 extern ULONG DaveDebug;
-#define DavePrint if (DaveDebug) DbgPrint
+#define DavePrint  \
+    if (DaveDebug) \
+    DbgPrint
 
 #else
 
@@ -66,19 +68,15 @@ extern ULONG DaveDebug;
 //
 
 #undef MODULE_POOL_TAG
-#define MODULE_POOL_TAG                  ('nrSF')
+#define MODULE_POOL_TAG ('nrSF')
 
 //
 //  Local support routine prototypes
 //
 
 BOOLEAN
-FsRtlIsNameInExpressionPrivate (
-    IN PUNICODE_STRING Expression,
-    IN PUNICODE_STRING Name,
-    IN BOOLEAN IgnoreCase,
-    IN PWCH UpcaseTable
-    );
+FsRtlIsNameInExpressionPrivate(IN PUNICODE_STRING Expression, IN PUNICODE_STRING Name, IN BOOLEAN IgnoreCase,
+                               IN PWCH UpcaseTable);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, FsRtlAreNamesEqual)
@@ -88,13 +86,8 @@ FsRtlIsNameInExpressionPrivate (
 #pragma alloc_text(PAGE, FsRtlIsNameInExpressionPrivate)
 #endif
 
-
-VOID
-FsRtlDissectName (
-    IN UNICODE_STRING Path,
-    OUT PUNICODE_STRING FirstName,
-    OUT PUNICODE_STRING RemainingName
-    )
+
+VOID FsRtlDissectName(IN UNICODE_STRING Path, OUT PUNICODE_STRING FirstName, OUT PUNICODE_STRING RemainingName)
 
 /*++
 
@@ -169,7 +162,8 @@ Return Value:
     //  Check for an empty input string
     //
 
-    if (PathLength == 0) {
+    if (PathLength == 0)
+    {
 
         return;
     }
@@ -178,7 +172,8 @@ Return Value:
     //  Skip over a starting backslash, and make sure there is more.
     //
 
-    if ( Path.Buffer[0] == L'\\' ) {
+    if (Path.Buffer[0] == L'\\')
+    {
 
         i = 1;
     }
@@ -188,9 +183,8 @@ Return Value:
     //  of the string, remembering where we started;
     //
 
-    for ( FirstNameStart = i;
-          (i < PathLength) && (Path.Buffer[i] != L'\\');
-          i += 1 ) {
+    for (FirstNameStart = i; (i < PathLength) && (Path.Buffer[i] != L'\\'); i += 1)
+    {
 
         NOTHING;
     }
@@ -211,7 +205,8 @@ Return Value:
     //  a trailing backslash, the length will get correctly set to zero.
     //
 
-    if (i < PathLength) {
+    if (i < PathLength)
+    {
 
         RemainingName->Length = (USHORT)((PathLength - (i + 1)) * sizeof(WCHAR));
         RemainingName->MaximumLength = RemainingName->Length;
@@ -224,11 +219,9 @@ Return Value:
 
     return;
 }
-
+
 BOOLEAN
-FsRtlDoesNameContainWildCards (
-    IN PUNICODE_STRING Name
-    )
+FsRtlDoesNameContainWildCards(IN PUNICODE_STRING Name)
 
 /*++
 
@@ -256,16 +249,17 @@ Return Value:
     //  character.
     //
 
-    if( Name->Length ) {
-        for( p = Name->Buffer + (Name->Length / sizeof(WCHAR)) - 1;
-             p >= Name->Buffer && *p != L'\\' ;
-             p-- ) {
+    if (Name->Length)
+    {
+        for (p = Name->Buffer + (Name->Length / sizeof(WCHAR)) - 1; p >= Name->Buffer && *p != L'\\'; p--)
+        {
 
             //
             //  check for a wild card character
             //
 
-            if (FsRtlIsUnicodeCharacterWild( *p )) {
+            if (FsRtlIsUnicodeCharacterWild(*p))
+            {
 
                 //
                 //  Tell caller that this name contains wild cards
@@ -283,14 +277,10 @@ Return Value:
     return FALSE;
 }
 
-
+
 BOOLEAN
-FsRtlAreNamesEqual (
-    PCUNICODE_STRING ConstantNameA,
-    PCUNICODE_STRING ConstantNameB,
-    IN BOOLEAN IgnoreCase,
-    IN PCWCH UpcaseTable OPTIONAL
-    )
+FsRtlAreNamesEqual(PCUNICODE_STRING ConstantNameA, PCUNICODE_STRING ConstantNameB, IN BOOLEAN IgnoreCase,
+                   IN PCWCH UpcaseTable OPTIONAL)
 
 /*++
 
@@ -331,7 +321,8 @@ Return Value:
     // If the names aren't even the same size, then return FALSE right away.
     //
 
-    if ( ConstantNameA->Length != ConstantNameB->Length ) {
+    if (ConstantNameA->Length != ConstantNameB->Length)
+    {
 
         return FALSE;
     }
@@ -343,24 +334,27 @@ Return Value:
     //  ourselves.
     //
 
-    if ( IgnoreCase && !ARGUMENT_PRESENT(UpcaseTable) ) {
+    if (IgnoreCase && !ARGUMENT_PRESENT(UpcaseTable))
+    {
 
         NTSTATUS Status;
 
-        Status = RtlUpcaseUnicodeString( &LocalNameA, ConstantNameA, TRUE );
+        Status = RtlUpcaseUnicodeString(&LocalNameA, ConstantNameA, TRUE);
 
-        if ( !NT_SUCCESS(Status) ) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            ExRaiseStatus( Status );
+            ExRaiseStatus(Status);
         }
 
-        Status = RtlUpcaseUnicodeString( &LocalNameB, ConstantNameB, TRUE );
+        Status = RtlUpcaseUnicodeString(&LocalNameB, ConstantNameB, TRUE);
 
-        if ( !NT_SUCCESS(Status) ) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            RtlFreeUnicodeString( &LocalNameA );
+            RtlFreeUnicodeString(&LocalNameA);
 
-            ExRaiseStatus( Status );
+            ExRaiseStatus(Status);
         }
 
         ConstantNameA = &LocalNameA;
@@ -374,28 +368,30 @@ Return Value:
     //  Do either case sensitive or insensitive compare.
     //
 
-    if ( !IgnoreCase ) {
+    if (!IgnoreCase)
+    {
 
         BOOLEAN BytesEqual;
 
-        BytesEqual = (BOOLEAN) RtlEqualMemory( ConstantNameA->Buffer,
-                                               ConstantNameB->Buffer,
-                                               ConstantNameA->Length );
+        BytesEqual = (BOOLEAN)RtlEqualMemory(ConstantNameA->Buffer, ConstantNameB->Buffer, ConstantNameA->Length);
 
-        if ( FreeStrings ) {
+        if (FreeStrings)
+        {
 
-            RtlFreeUnicodeString( &LocalNameA );
-            RtlFreeUnicodeString( &LocalNameB );
+            RtlFreeUnicodeString(&LocalNameA);
+            RtlFreeUnicodeString(&LocalNameB);
         }
 
         return BytesEqual;
+    }
+    else
+    {
 
-    } else {
+        for (Index = 0; Index < NameLength; Index += 1)
+        {
 
-        for (Index = 0; Index < NameLength; Index += 1) {
-
-            if ( UpcaseTable[ConstantNameA->Buffer[Index]] !=
-                 UpcaseTable[ConstantNameB->Buffer[Index]] ) {
+            if (UpcaseTable[ConstantNameA->Buffer[Index]] != UpcaseTable[ConstantNameB->Buffer[Index]])
+            {
 
                 return FALSE;
             }
@@ -404,7 +400,7 @@ Return Value:
         return TRUE;
     }
 }
-
+
 
 //
 //  The following routine is just a wrapper around
@@ -412,12 +408,8 @@ Return Value:
 //
 
 BOOLEAN
-FsRtlIsNameInExpression (
-    IN PUNICODE_STRING Expression,
-    IN PUNICODE_STRING Name,
-    IN BOOLEAN IgnoreCase,
-    IN PWCH UpcaseTable OPTIONAL
-    )
+FsRtlIsNameInExpression(IN PUNICODE_STRING Expression, IN PUNICODE_STRING Name, IN BOOLEAN IgnoreCase,
+                        IN PWCH UpcaseTable OPTIONAL)
 
 {
     BOOLEAN Result;
@@ -428,22 +420,25 @@ FsRtlIsNameInExpression (
     //  ourselves.
     //
 
-    if ( IgnoreCase && !ARGUMENT_PRESENT(UpcaseTable) ) {
+    if (IgnoreCase && !ARGUMENT_PRESENT(UpcaseTable))
+    {
 
         NTSTATUS Status;
 
-        Status = RtlUpcaseUnicodeString( &LocalName, Name, TRUE );
+        Status = RtlUpcaseUnicodeString(&LocalName, Name, TRUE);
 
-        if ( !NT_SUCCESS(Status) ) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            ExRaiseStatus( Status );
+            ExRaiseStatus(Status);
         }
 
         Name = &LocalName;
 
         IgnoreCase = FALSE;
-
-    } else {
+    }
+    else
+    {
 
         LocalName.Buffer = NULL;
     }
@@ -453,25 +448,25 @@ FsRtlIsNameInExpression (
     //  if we allocated one.
     //
 
-    try {
+    try
+    {
 
-        Result = FsRtlIsNameInExpressionPrivate( Expression,
-                                                 Name,
-                                                 IgnoreCase,
-                                                 UpcaseTable );
+        Result = FsRtlIsNameInExpressionPrivate(Expression, Name, IgnoreCase, UpcaseTable);
+    }
+    finally
+    {
 
-    } finally {
+        if (LocalName.Buffer != NULL)
+        {
 
-        if (LocalName.Buffer != NULL) {
-
-            RtlFreeUnicodeString( &LocalName );
+            RtlFreeUnicodeString(&LocalName);
         }
     }
 
     return Result;
 }
 
-
+
 #define MATCHES_ARRAY_SIZE 16
 
 //
@@ -479,12 +474,8 @@ FsRtlIsNameInExpression (
 //
 
 BOOLEAN
-FsRtlIsNameInExpressionPrivate (
-    IN PUNICODE_STRING Expression,
-    IN PUNICODE_STRING Name,
-    IN BOOLEAN IgnoreCase,
-    IN PWCH UpcaseTable
-    )
+FsRtlIsNameInExpressionPrivate(IN PUNICODE_STRING Expression, IN PUNICODE_STRING Name, IN BOOLEAN IgnoreCase,
+                               IN PWCH UpcaseTable)
 
 /*++
 
@@ -608,36 +599,39 @@ Return Value:
     PAGED_CODE();
 
     DebugTrace(+1, Dbg, "FsRtlIsNameInExpression\n", 0);
-    DebugTrace( 0, Dbg, " Expression      = %Z\n", Expression );
-    DebugTrace( 0, Dbg, " Name            = %Z\n", Name );
-    DebugTrace( 0, Dbg, " CaseInsensitive = %08lx\n", CaseInsensitive );
+    DebugTrace(0, Dbg, " Expression      = %Z\n", Expression);
+    DebugTrace(0, Dbg, " Name            = %Z\n", Name);
+    DebugTrace(0, Dbg, " CaseInsensitive = %08lx\n", CaseInsensitive);
 
     //
     //  If one string is empty return FALSE.  If both are empty return TRUE.
     //
 
-    if ( (Name->Length == 0) || (Expression->Length == 0) ) {
+    if ((Name->Length == 0) || (Expression->Length == 0))
+    {
 
         return (BOOLEAN)(!(Name->Length + Expression->Length));
     }
-
+
     //
     //  Special case by far the most common wild card search of *
     //
 
-    if ((Expression->Length == 2) && (Expression->Buffer[0] == L'*')) {
+    if ((Expression->Length == 2) && (Expression->Buffer[0] == L'*'))
+    {
 
         return TRUE;
     }
 
-    ASSERT( !IgnoreCase || ARGUMENT_PRESENT(UpcaseTable) );
+    ASSERT(!IgnoreCase || ARGUMENT_PRESENT(UpcaseTable));
 
     //
     //  Also special case expressions of the form *X.  With this and the prior
     //  case we have covered virtually all normal queries.
     //
 
-    if (Expression->Buffer[0] == L'*') {
+    if (Expression->Buffer[0] == L'*')
+    {
 
         UNICODE_STRING LocalExpression;
 
@@ -650,43 +644,45 @@ Return Value:
         //  Only special case an expression with a single *
         //
 
-        if ( !FsRtlDoesNameContainWildCards( &LocalExpression ) ) {
+        if (!FsRtlDoesNameContainWildCards(&LocalExpression))
+        {
 
             ULONG StartingNameOffset;
 
-            if (Name->Length < (USHORT)(Expression->Length - sizeof(WCHAR))) {
+            if (Name->Length < (USHORT)(Expression->Length - sizeof(WCHAR)))
+            {
 
                 return FALSE;
             }
 
-            StartingNameOffset = ( Name->Length -
-                                   LocalExpression.Length ) / sizeof(WCHAR);
+            StartingNameOffset = (Name->Length - LocalExpression.Length) / sizeof(WCHAR);
 
             //
             //  Do a simple memory compare if case sensitive, otherwise
             //  we have got to check this one character at a time.
             //
 
-            if ( !IgnoreCase ) {
+            if (!IgnoreCase)
+            {
 
-                return (BOOLEAN) RtlEqualMemory( LocalExpression.Buffer,
-                                                 Name->Buffer + StartingNameOffset,
-                                                 LocalExpression.Length );
+                return (BOOLEAN)RtlEqualMemory(LocalExpression.Buffer, Name->Buffer + StartingNameOffset,
+                                               LocalExpression.Length);
+            }
+            else
+            {
 
-            } else {
-
-                for ( ExprOffset = 0;
-                      ExprOffset < (USHORT)(LocalExpression.Length / sizeof(WCHAR));
-                      ExprOffset += 1 ) {
+                for (ExprOffset = 0; ExprOffset < (USHORT)(LocalExpression.Length / sizeof(WCHAR)); ExprOffset += 1)
+                {
 
                     NameChar = Name->Buffer[StartingNameOffset + ExprOffset];
                     NameChar = UpcaseTable[NameChar];
 
                     ExprChar = LocalExpression.Buffer[ExprOffset];
 
-                    ASSERT( ExprChar == UpcaseTable[ExprChar] );
+                    ASSERT(ExprChar == UpcaseTable[ExprChar]);
 
-                    if ( NameChar != ExprChar ) {
+                    if (NameChar != ExprChar)
+                    {
 
                         return FALSE;
                     }
@@ -696,7 +692,7 @@ Return Value:
             }
         }
     }
-
+
     //
     //  Walk through the name string, picking off characters.  We go one
     //  character beyond the end because some wild cards are able to match
@@ -756,15 +752,19 @@ Return Value:
 
     MaxState = (USHORT)(Expression->Length * 2);
 
-    while ( !NameFinished ) {
+    while (!NameFinished)
+    {
 
-        if ( NameOffset < Name->Length ) {
+        if (NameOffset < Name->Length)
+        {
 
             NameChar = Name->Buffer[NameOffset / sizeof(WCHAR)];
 
-            NameOffset += sizeof(WCHAR);;
-
-        } else {
+            NameOffset += sizeof(WCHAR);
+            ;
+        }
+        else
+        {
 
             NameFinished = TRUE;
 
@@ -773,7 +773,8 @@ Return Value:
             //  continue.
             //
 
-            if ( PreviousMatches[MatchesCount-1] == MaxState ) {
+            if (PreviousMatches[MatchesCount - 1] == MaxState)
+            {
 
                 break;
             }
@@ -789,7 +790,8 @@ Return Value:
         DestCount = 0;
         PreviousDestCount = 0;
 
-        while ( SrcCount < MatchesCount ) {
+        while (SrcCount < MatchesCount)
+        {
 
             USHORT Length;
 
@@ -807,9 +809,11 @@ Return Value:
 
             Length = 0;
 
-            while ( TRUE ) {
+            while (TRUE)
+            {
 
-                if ( ExprOffset == Expression->Length ) {
+                if (ExprOffset == Expression->Length)
+                {
 
                     break;
                 }
@@ -824,7 +828,8 @@ Return Value:
 
                 CurrentState = (USHORT)(ExprOffset * 2);
 
-                if ( ExprOffset == Expression->Length ) {
+                if (ExprOffset == Expression->Length)
+                {
 
                     CurrentMatches[DestCount++] = MaxState;
                     break;
@@ -832,7 +837,7 @@ Return Value:
 
                 ExprChar = Expression->Buffer[ExprOffset / sizeof(WCHAR)];
 
-                ASSERT( !IgnoreCase || !((ExprChar >= L'a') && (ExprChar <= L'z')) );
+                ASSERT(!IgnoreCase || !((ExprChar >= L'a') && (ExprChar <= L'z')));
 
                 //
                 //  Before we get started, we have to check for something
@@ -841,35 +846,31 @@ Return Value:
                 //  some pool if this is the case.  Yuk!
                 //
 
-                if ( (DestCount >= MATCHES_ARRAY_SIZE - 2) &&
-                     (AuxBuffer == NULL) ) {
+                if ((DestCount >= MATCHES_ARRAY_SIZE - 2) && (AuxBuffer == NULL))
+                {
 
                     ULONG ExpressionChars;
 
                     ExpressionChars = Expression->Length / sizeof(WCHAR);
 
-                    AuxBuffer = FsRtlpAllocatePool( PagedPool,
-                                                    (ExpressionChars+1) *
-                                                    sizeof(USHORT)*2*2 );
+                    AuxBuffer = FsRtlpAllocatePool(PagedPool, (ExpressionChars + 1) * sizeof(USHORT) * 2 * 2);
 
-                    RtlCopyMemory( AuxBuffer,
-                                   CurrentMatches,
-                                   MATCHES_ARRAY_SIZE * sizeof(USHORT) );
+                    RtlCopyMemory(AuxBuffer, CurrentMatches, MATCHES_ARRAY_SIZE * sizeof(USHORT));
 
                     CurrentMatches = AuxBuffer;
 
-                    RtlCopyMemory( AuxBuffer + (ExpressionChars+1)*2,
-                                   PreviousMatches,
-                                   MATCHES_ARRAY_SIZE * sizeof(USHORT) );
+                    RtlCopyMemory(AuxBuffer + (ExpressionChars + 1) * 2, PreviousMatches,
+                                  MATCHES_ARRAY_SIZE * sizeof(USHORT));
 
-                    PreviousMatches = AuxBuffer + (ExpressionChars+1)*2;
+                    PreviousMatches = AuxBuffer + (ExpressionChars + 1) * 2;
                 }
 
                 //
                 //  * matches any character zero or more times.
                 //
 
-                if (ExprChar == L'*') {
+                if (ExprChar == L'*')
+                {
 
                     CurrentMatches[DestCount++] = CurrentState;
                     CurrentMatches[DestCount++] = CurrentState + 3;
@@ -880,7 +881,8 @@ Return Value:
                 //  DOS_STAR matches any character except . zero or more times.
                 //
 
-                if (ExprChar == DOS_STAR) {
+                if (ExprChar == DOS_STAR)
+                {
 
                     BOOLEAN ICanEatADot = FALSE;
 
@@ -889,15 +891,16 @@ Return Value:
                     //  consume it, ie. make sure it is not the last one.
                     //
 
-                    if ( !NameFinished && (NameChar == '.') ) {
+                    if (!NameFinished && (NameChar == '.'))
+                    {
 
                         USHORT Offset;
 
-                        for ( Offset = NameOffset;
-                              Offset < Name->Length;
-                              Offset += Length ) {
+                        for (Offset = NameOffset; Offset < Name->Length; Offset += Length)
+                        {
 
-                            if (Name->Buffer[Offset / sizeof(WCHAR)] == L'.') {
+                            if (Name->Buffer[Offset / sizeof(WCHAR)] == L'.')
+                            {
 
                                 ICanEatADot = TRUE;
                                 break;
@@ -905,13 +908,15 @@ Return Value:
                         }
                     }
 
-                    if (NameFinished || (NameChar != L'.') || ICanEatADot) {
+                    if (NameFinished || (NameChar != L'.') || ICanEatADot)
+                    {
 
                         CurrentMatches[DestCount++] = CurrentState;
                         CurrentMatches[DestCount++] = CurrentState + 3;
                         continue;
-
-                    } else {
+                    }
+                    else
+                    {
 
                         //
                         //  We are at a period.  We can only match zero
@@ -938,9 +943,11 @@ Return Value:
                 //  we match a single character.
                 //
 
-                if ( ExprChar == DOS_QM ) {
+                if (ExprChar == DOS_QM)
+                {
 
-                    if ( NameFinished || (NameChar == L'.') ) {
+                    if (NameFinished || (NameChar == L'.'))
+                    {
 
                         continue;
                     }
@@ -954,14 +961,17 @@ Return Value:
                 //  beyond the end of name.
                 //
 
-                if (ExprChar == DOS_DOT) {
+                if (ExprChar == DOS_DOT)
+                {
 
-                    if ( NameFinished ) {
+                    if (NameFinished)
+                    {
 
                         continue;
                     }
 
-                    if (NameChar == L'.') {
+                    if (NameChar == L'.')
+                    {
 
                         CurrentMatches[DestCount++] = CurrentState;
                         break;
@@ -973,7 +983,8 @@ Return Value:
                 //  continue, let alone make a match.
                 //
 
-                if ( NameFinished ) {
+                if (NameFinished)
+                {
 
                     break;
                 }
@@ -982,7 +993,8 @@ Return Value:
                 //  If this expression was a '?' we can match it once.
                 //
 
-                if (ExprChar == L'?') {
+                if (ExprChar == L'?')
+                {
 
                     CurrentMatches[DestCount++] = CurrentState;
                     break;
@@ -992,8 +1004,8 @@ Return Value:
                 //  Finally, check if the expression char matches the name char
                 //
 
-                if (ExprChar == (WCHAR)(IgnoreCase ?
-                                        UpcaseTable[NameChar] : NameChar)) {
+                if (ExprChar == (WCHAR)(IgnoreCase ? UpcaseTable[NameChar] : NameChar))
+                {
 
                     CurrentMatches[DestCount++] = CurrentState;
                     break;
@@ -1017,12 +1029,11 @@ Return Value:
             //  array.  This guarentees non-duplication in the dest. array.
             //
 
-            while ((SrcCount < MatchesCount) &&
-                   (PreviousDestCount < DestCount)) {
+            while ((SrcCount < MatchesCount) && (PreviousDestCount < DestCount))
+            {
 
-                while ((SrcCount < MatchesCount) &&
-                       (PreviousMatches[SrcCount] <
-                        CurrentMatches[PreviousDestCount])) {
+                while ((SrcCount < MatchesCount) && (PreviousMatches[SrcCount] < CurrentMatches[PreviousDestCount]))
+                {
 
                     SrcCount += 1;
                 }
@@ -1036,9 +1047,13 @@ Return Value:
         //  to bail.
         //
 
-        if ( DestCount == 0 ) {
+        if (DestCount == 0)
+        {
 
-            if (AuxBuffer != NULL) { ExFreePool( AuxBuffer ); }
+            if (AuxBuffer != NULL)
+            {
+                ExFreePool(AuxBuffer);
+            }
 
             return FALSE;
         }
@@ -1061,9 +1076,12 @@ Return Value:
     }
 
 
-    CurrentState = PreviousMatches[MatchesCount-1];
+    CurrentState = PreviousMatches[MatchesCount - 1];
 
-    if (AuxBuffer != NULL) { ExFreePool( AuxBuffer ); }
+    if (AuxBuffer != NULL)
+    {
+        ExFreePool(AuxBuffer);
+    }
 
 
     return (BOOLEAN)(CurrentState == MaxState);

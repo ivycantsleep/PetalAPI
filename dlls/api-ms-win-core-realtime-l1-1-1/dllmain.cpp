@@ -1,9 +1,9 @@
 //[80_PA] ELF, cracklab/exelab, 2023
-//FLAG 
+//FLAG
 //#define DEBUG_OUT 1
 
 
-// ------ globals ------ 
+// ------ globals ------
 BOOL isdp = false;
 
 #pragma code_seg(push, ".text$000004")
@@ -23,17 +23,15 @@ HMODULE pNtdll;
 typedef void(WINAPI api_QueryUnbiasedInterruptTimePrecise)(PULONGLONG lpUnbiasedInterruptTimePrecise);
 typedef void(WINAPI api_RtlGetInterruptTimePrecise)(PULONGLONG lpUnbiasedInterruptTimePrecise);
 
-api_QueryUnbiasedInterruptTimePrecise* farproc_lpUnbiasedInterruptTimePrecise = 0;
-api_RtlGetInterruptTimePrecise* farproc_RtlGetInterruptTimePrecise = 0;
+api_QueryUnbiasedInterruptTimePrecise *farproc_lpUnbiasedInterruptTimePrecise = 0;
+api_RtlGetInterruptTimePrecise *farproc_RtlGetInterruptTimePrecise = 0;
 
-BOOL APIENTRY DllMain( HMODULE hModule,
-                       DWORD  ul_reason_for_call,
-                       LPVOID lpReserved
-                     )
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
     switch (ul_reason_for_call)
     {
-    case DLL_PROCESS_ATTACH: {
+    case DLL_PROCESS_ATTACH:
+    {
 
 #ifdef DEBUG_OUT
         //for OUTPUT DEBUG STRINGS (if needed)
@@ -46,11 +44,14 @@ BOOL APIENTRY DllMain( HMODULE hModule,
             pNtdll = ::GetModuleHandle(WIDE_NTDLL32DLL);
             if (pKernel32 && pNtdll)
             {
-                farproc_lpUnbiasedInterruptTimePrecise = (api_QueryUnbiasedInterruptTimePrecise*)::GetProcAddress(pKernel32, A_QUITP);
-                farproc_RtlGetInterruptTimePrecise = (api_RtlGetInterruptTimePrecise*)::GetProcAddress(pNtdll, A_RTLGITP);
-            }//end  if (pKernel32)
-        }//end    if (!pKernel32)
-        break; }
+                farproc_lpUnbiasedInterruptTimePrecise =
+                    (api_QueryUnbiasedInterruptTimePrecise *)::GetProcAddress(pKernel32, A_QUITP);
+                farproc_RtlGetInterruptTimePrecise =
+                    (api_RtlGetInterruptTimePrecise *)::GetProcAddress(pNtdll, A_RTLGITP);
+            } //end  if (pKernel32)
+        } //end    if (!pKernel32)
+        break;
+    }
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
     case DLL_PROCESS_DETACH:
@@ -75,13 +76,13 @@ DLL 	Kernel32.dll
         {
             if (farproc_RtlGetInterruptTimePrecise)
             {
-              //  ULONGLONG bias_time = 0;
-                //ULONGLONG interrupt_kuser_shared_data = 
-             //   do{
+                //  ULONGLONG bias_time = 0;
+                //ULONGLONG interrupt_kuser_shared_data =
+                //   do{
 
-               //     farproc_RtlGetInterruptTimePrecise(&bias_time);
-             //   }while()
-            }//end  if (farproc_RtlGetInterruptTimePrecise)
+                //     farproc_RtlGetInterruptTimePrecise(&bias_time);
+                //   }while()
+            } //end  if (farproc_RtlGetInterruptTimePrecise)
             ::InterlockedIncrement(&unibias);
             *lpUnbiasedInterruptTimePrecise = unibias;
         }

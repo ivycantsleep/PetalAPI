@@ -38,42 +38,24 @@ Revision History:
 // macros
 //
 
-#define IS_DELIMITER(c,_BlankOk) \
-    (((c) == L' ' && (_BlankOk)) || \
-    ((c) == L'\t') || ((c) == L',') || ((c) == L';'))
+#define IS_DELIMITER(c, _BlankOk) (((c) == L' ' && (_BlankOk)) || ((c) == L'\t') || ((c) == L',') || ((c) == L';'))
 
 
 //
 // prototypes
 //
 
-static
-ULONG
-NextElement(
-    IN OUT PWSTR* InputBuffer,
-    IN OUT PULONG InputBufferLength,
-    OUT PWSTR OutputBuffer,
-    IN ULONG OutputBufferLength,
-    IN BOOLEAN BlankIsDelimiter
-    );
+static ULONG NextElement(IN OUT PWSTR *InputBuffer, IN OUT PULONG InputBufferLength, OUT PWSTR OutputBuffer,
+                         IN ULONG OutputBufferLength, IN BOOLEAN BlankIsDelimiter);
 
-static
-BOOLEAN
-ValidateName(
-    IN  PWSTR Name,
-    IN  ULONG Length
-    );
+static BOOLEAN ValidateName(IN PWSTR Name, IN ULONG Length);
 
 //
 // functions
 //
 
 NTSTATUS
-RtlConvertUiListToApiList(
-    IN  PUNICODE_STRING UiList OPTIONAL,
-    OUT PUNICODE_STRING ApiList,
-    IN BOOLEAN BlankIsDelimiter
-    )
+RtlConvertUiListToApiList(IN PUNICODE_STRING UiList OPTIONAL, OUT PUNICODE_STRING ApiList, IN BOOLEAN BlankIsDelimiter)
 
 /*++
 
@@ -121,56 +103,71 @@ Return Value:
     ULONG cLen;
     ULONG len;
     ULONG outLen = 0;
-    WCHAR element[MAX_COMPUTERNAME_LENGTH+1];
+    WCHAR element[MAX_COMPUTERNAME_LENGTH + 1];
     BOOLEAN firstElement = TRUE;
     BOOLEAN ok;
 
-    try {
-        if (ARGUMENT_PRESENT(UiList)) {
-            inLen = UiList->MaximumLength;  // read memory test
+    try
+    {
+        if (ARGUMENT_PRESENT(UiList))
+        {
+            inLen = UiList->MaximumLength; // read memory test
             inLen = UiList->Length;
             input = UiList->Buffer;
-            if (inLen & sizeof(WCHAR)-1) {
+            if (inLen & sizeof(WCHAR) - 1)
+            {
                 status = STATUS_INVALID_PARAMETER;
             }
         }
         RtlInitUnicodeString(ApiList, NULL);
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         status = STATUS_ACCESS_VIOLATION;
     }
-    if (NT_SUCCESS(status) && ARGUMENT_PRESENT(UiList) && inLen) {
+    if (NT_SUCCESS(status) && ARGUMENT_PRESENT(UiList) && inLen)
+    {
         buffer = RtlAllocateHeap(RtlProcessHeap(), 0, inLen + sizeof(WCHAR));
-        if (buffer == NULL) {
+        if (buffer == NULL)
+        {
             status = STATUS_NO_MEMORY;
-        } else {
+        }
+        else
+        {
             ApiList->Buffer = buffer;
             ApiList->MaximumLength = (USHORT)inLen + sizeof(WCHAR);
             output = buffer;
             ok = TRUE;
-            while (len = NextElement(&input,
-                                     &inLen,
-                                     element,
-                                     sizeof(element) - sizeof(element[0]),
-                                     BlankIsDelimiter )) {
-                if (len == (ULONG)-1L) {
+            while (len = NextElement(&input, &inLen, element, sizeof(element) - sizeof(element[0]), BlankIsDelimiter))
+            {
+                if (len == (ULONG)-1L)
+                {
                     ok = FALSE;
-                } else {
-                    cLen = len/sizeof(WCHAR);
+                }
+                else
+                {
+                    cLen = len / sizeof(WCHAR);
                     element[cLen] = 0;
                     ok = ValidateName(element, cLen);
                 }
-                if (ok) {
-                    if (!firstElement) {
+                if (ok)
+                {
+                    if (!firstElement)
+                    {
                         *output++ = L',';
 
                         outLen += sizeof(WCHAR);
-                    } else {
+                    }
+                    else
+                    {
                         firstElement = FALSE;
                     }
                     wcscpy(output, element);
                     outLen += len;
                     output += cLen;
-                } else {
+                }
+                else
+                {
                     RtlFreeHeap(RtlProcessHeap(), 0, buffer);
                     ApiList->Buffer = NULL;
                     status = STATUS_INVALID_COMPUTER_NAME;
@@ -178,9 +175,11 @@ Return Value:
                 }
             }
         }
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
             ApiList->Length = (USHORT)outLen;
-            if (!outLen) {
+            if (!outLen)
+            {
                 ApiList->MaximumLength = 0;
                 ApiList->Buffer = NULL;
                 RtlFreeHeap(RtlProcessHeap(), 0, buffer);
@@ -190,15 +189,8 @@ Return Value:
     return status;
 }
 
-static
-ULONG
-NextElement(
-    IN OUT PWSTR* InputBuffer,
-    IN OUT PULONG InputBufferLength,
-    OUT PWSTR OutputBuffer,
-    IN ULONG OutputBufferLength,
-    IN BOOLEAN BlankIsDelimiter
-    )
+static ULONG NextElement(IN OUT PWSTR *InputBuffer, IN OUT PULONG InputBufferLength, OUT PWSTR OutputBuffer,
+                         IN ULONG OutputBufferLength, IN BOOLEAN BlankIsDelimiter)
 
 /*++
 
@@ -233,12 +225,15 @@ Return Value:
     ULONG inputLength = *InputBufferLength;
     PWSTR input = *InputBuffer;
 
-    while (IS_DELIMITER(*input, BlankIsDelimiter) && inputLength) {
+    while (IS_DELIMITER(*input, BlankIsDelimiter) && inputLength)
+    {
         ++input;
         inputLength -= sizeof(*input);
     }
-    while (!IS_DELIMITER(*input, BlankIsDelimiter) && inputLength) {
-        if (!OutputBufferLength) {
+    while (!IS_DELIMITER(*input, BlankIsDelimiter) && inputLength)
+    {
+        if (!OutputBufferLength)
+        {
             return (ULONG)-1L;
         }
         *OutputBuffer++ = *input++;
@@ -256,18 +251,14 @@ Return Value:
 // include directory
 //
 
-#define ILLEGAL_NAME_CHARS      L"\001\002\003\004\005\006\007" \
-                            L"\010\011\012\013\014\015\016\017" \
-                            L"\020\021\022\023\024\025\026\027" \
-                            L"\030\031\032\033\034\035\036\037" \
-                            L"\"/\\[]:|<>+=;,?*"
+#define ILLEGAL_NAME_CHARS              \
+    L"\001\002\003\004\005\006\007"     \
+    L"\010\011\012\013\014\015\016\017" \
+    L"\020\021\022\023\024\025\026\027" \
+    L"\030\031\032\033\034\035\036\037" \
+    L"\"/\\[]:|<>+=;,?*"
 
-static
-BOOLEAN
-ValidateName(
-    IN  PWSTR Name,
-    IN  ULONG Length
-    )
+static BOOLEAN ValidateName(IN PWSTR Name, IN ULONG Length)
 
 /*++
 
@@ -289,7 +280,8 @@ Return Value:
 --*/
 
 {
-    if (Length > MAX_COMPUTERNAME_LENGTH || Length < 1) {
+    if (Length > MAX_COMPUTERNAME_LENGTH || Length < 1)
+    {
         return FALSE;
     }
 
@@ -297,8 +289,9 @@ Return Value:
     // Don't allow leading or trailing blanks in the computername.
     //
 
-    if ( Name[0] == ' ' || Name[Length-1] == ' ' ) {
-        return(FALSE);
+    if (Name[0] == ' ' || Name[Length - 1] == ' ')
+    {
+        return (FALSE);
     }
 
     return (BOOLEAN)((ULONG)wcscspn(Name, ILLEGAL_NAME_CHARS) == Length);

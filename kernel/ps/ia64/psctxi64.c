@@ -21,47 +21,40 @@ Revision History:
 #include "psp.h"
 #include <ia64.h>
 
-#define ALIGN_NATS(Result, Source, Start, AddressOffset, Mask)    \
-    if (AddressOffset == Start) {                                       \
-        Result = (ULONGLONG)Source;                                     \
-    } else if (AddressOffset < Start) {                                 \
-        Result = (ULONGLONG)(Source << (Start - AddressOffset));        \
-    } else {                                                            \
-        Result = (ULONGLONG)((Source >> (AddressOffset - Start)) |      \
-                             (Source << (64 + Start - AddressOffset))); \
-    }                                                                   \
+#define ALIGN_NATS(Result, Source, Start, AddressOffset, Mask)                                                \
+    if (AddressOffset == Start)                                                                               \
+    {                                                                                                         \
+        Result = (ULONGLONG)Source;                                                                           \
+    }                                                                                                         \
+    else if (AddressOffset < Start)                                                                           \
+    {                                                                                                         \
+        Result = (ULONGLONG)(Source << (Start - AddressOffset));                                              \
+    }                                                                                                         \
+    else                                                                                                      \
+    {                                                                                                         \
+        Result = (ULONGLONG)((Source >> (AddressOffset - Start)) | (Source << (64 + Start - AddressOffset))); \
+    }                                                                                                         \
     Result = Result & (ULONGLONG)Mask
 
-#define EXTRACT_NATS(Result, Source, Start, AddressOffset, Mask)        \
-    Result = (ULONGLONG)(Source & (ULONGLONG)Mask);                     \
-    if (AddressOffset < Start) {                                        \
-        Result = Result >> (Start - AddressOffset);                     \
-    } else if (AddressOffset > Start) {                                 \
-        Result = ((Result << (AddressOffset - Start)) |                 \
-                  (Result >> (64 + Start - AddressOffset)));            \
+#define EXTRACT_NATS(Result, Source, Start, AddressOffset, Mask)                                   \
+    Result = (ULONGLONG)(Source & (ULONGLONG)Mask);                                                \
+    if (AddressOffset < Start)                                                                     \
+    {                                                                                              \
+        Result = Result >> (Start - AddressOffset);                                                \
+    }                                                                                              \
+    else if (AddressOffset > Start)                                                                \
+    {                                                                                              \
+        Result = ((Result << (AddressOffset - Start)) | (Result >> (64 + Start - AddressOffset))); \
     }
 
-
-VOID
-KiGetDebugContext (
-    IN PKTRAP_FRAME TrapFrame,
-    IN OUT PCONTEXT ContextFrame
-    );
 
-VOID
-KiSetDebugContext (
-    IN OUT PKTRAP_FRAME TrapFrame,
-    IN PCONTEXT ContextFrame,
-    IN KPROCESSOR_MODE ProcessorMode
-    );
+VOID KiGetDebugContext(IN PKTRAP_FRAME TrapFrame, IN OUT PCONTEXT ContextFrame);
 
-
-VOID
-PspGetContext (
-    IN PKTRAP_FRAME                   TrapFrame,
-    IN PKNONVOLATILE_CONTEXT_POINTERS ContextPointers,
-    IN OUT PCONTEXT                   ContextEM
-    )
+VOID KiSetDebugContext(IN OUT PKTRAP_FRAME TrapFrame, IN PCONTEXT ContextFrame, IN KPROCESSOR_MODE ProcessorMode);
+
+
+VOID PspGetContext(IN PKTRAP_FRAME TrapFrame, IN PKNONVOLATILE_CONTEXT_POINTERS ContextPointers,
+                   IN OUT PCONTEXT ContextEM)
 
 /*++
 
@@ -95,7 +88,8 @@ Return Value:
     USHORT R1Offset, R4Offset;
     SHORT Temp, BsFrameSize;
 
-    if ((ContextEM->ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL) {
+    if ((ContextEM->ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL)
+    {
 
         ContextEM->IntGp = TrapFrame->IntGp;
         ContextEM->IntSp = TrapFrame->IntSp;
@@ -117,9 +111,10 @@ Return Value:
         ContextEM->RsRSC = TrapFrame->RsRSC;
         ContextEM->RsRNAT = TrapFrame->RsRNAT;
 
-        BsFrameSize = (SHORT) TrapFrame->StIFS & PFS_SIZE_MASK;
+        BsFrameSize = (SHORT)TrapFrame->StIFS & PFS_SIZE_MASK;
         Temp = BsFrameSize - (SHORT)((TrapFrame->RsBSP >> 3) & NAT_BITS_PER_RNAT_REG);
-        while (Temp > 0) {
+        while (Temp > 0)
+        {
             BsFrameSize++;
             Temp -= NAT_BITS_PER_RNAT_REG;
         }
@@ -146,10 +141,10 @@ Return Value:
         ContextEM->StFSR = __getReg(CV_IA64_AR28);
         ContextEM->StFIR = __getReg(CV_IA64_AR29);
         ContextEM->StFDR = __getReg(CV_IA64_AR30);
-
     }
 
-    if ((ContextEM->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER) {
+    if ((ContextEM->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)
+    {
 
         ContextEM->IntT0 = TrapFrame->IntT0;
         ContextEM->IntT1 = TrapFrame->IntT1;
@@ -164,7 +159,7 @@ Return Value:
         // t5 - t22
         //
 
-        memcpy(&ContextEM->IntT5, &TrapFrame->IntT5, 18*sizeof(ULONGLONG));
+        memcpy(&ContextEM->IntT5, &TrapFrame->IntT5, 18 * sizeof(ULONGLONG));
 
 
         //
@@ -205,13 +200,13 @@ Return Value:
         ContextEM->IntNats = IntNats1 | IntNats2;
 
 #ifdef DEBUG
-        DbgPrint("PspGetContext INTEGER: R1Offset = 0x%x, TF->IntNats = 0x%I64x, IntNats1 = 0x%I64x\n",
-               R1Offset, TrapFrame->IntNats, IntNats1);
+        DbgPrint("PspGetContext INTEGER: R1Offset = 0x%x, TF->IntNats = 0x%I64x, IntNats1 = 0x%I64x\n", R1Offset,
+                 TrapFrame->IntNats, IntNats1);
 #endif
-
     }
 
-    if ((ContextEM->ContextFlags & CONTEXT_LOWER_FLOATING_POINT) == CONTEXT_LOWER_FLOATING_POINT) {
+    if ((ContextEM->ContextFlags & CONTEXT_LOWER_FLOATING_POINT) == CONTEXT_LOWER_FLOATING_POINT)
+    {
 
         ContextEM->StFPSR = TrapFrame->StFPSR;
 
@@ -248,12 +243,11 @@ Return Value:
         // Get floating registers ft0 - ft9 from trap frame.
         //
 
-        RtlCopyIa64FloatRegisterContext(&ContextEM->FltT0,
-                                        &TrapFrame->FltT0,
-                                        sizeof(FLOAT128) * (10));
+        RtlCopyIa64FloatRegisterContext(&ContextEM->FltT0, &TrapFrame->FltT0, sizeof(FLOAT128) * (10));
     }
 
-    if ((ContextEM->ContextFlags & CONTEXT_HIGHER_FLOATING_POINT) == CONTEXT_HIGHER_FLOATING_POINT) {
+    if ((ContextEM->ContextFlags & CONTEXT_HIGHER_FLOATING_POINT) == CONTEXT_HIGHER_FLOATING_POINT)
+    {
 
         ContextEM->StFPSR = TrapFrame->StFPSR;
 
@@ -261,12 +255,12 @@ Return Value:
         // Get floating regs f32 - f127 from higher floating point save area
         //
 
-        if (TrapFrame->PreviousMode == UserMode) {
+        if (TrapFrame->PreviousMode == UserMode)
+        {
             RtlCopyIa64FloatRegisterContext(
                 &ContextEM->FltF32,
                 (PFLOAT128)GET_HIGH_FLOATING_POINT_REGISTER_SAVEAREA(KeGetCurrentThread()->StackBase),
-                96*sizeof(FLOAT128)
-                );
+                96 * sizeof(FLOAT128));
         }
     }
 
@@ -274,20 +268,16 @@ Return Value:
     // Get h/w debug register context
     //
 
-    if ((ContextEM->ContextFlags & CONTEXT_DEBUG) == CONTEXT_DEBUG) {
+    if ((ContextEM->ContextFlags & CONTEXT_DEBUG) == CONTEXT_DEBUG)
+    {
         KiGetDebugContext(TrapFrame, ContextEM);
     }
 
     return;
 }
-
-VOID
-PspSetContext (
-    IN OUT PKTRAP_FRAME               TrapFrame,
-    IN PKNONVOLATILE_CONTEXT_POINTERS ContextPointers,
-    IN PCONTEXT                       ContextEM,
-    IN KPROCESSOR_MODE                ProcessorMode
-    )
+
+VOID PspSetContext(IN OUT PKTRAP_FRAME TrapFrame, IN PKNONVOLATILE_CONTEXT_POINTERS ContextPointers,
+                   IN PCONTEXT ContextEM, IN KPROCESSOR_MODE ProcessorMode)
 
 /*++
 
@@ -324,7 +314,8 @@ Return Value:
     USHORT R1Offset, R4Offset;
     USHORT RNatSaveIndex;
 
-    if ((ContextEM->ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL) {
+    if ((ContextEM->ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL)
+    {
 
         TrapFrame->IntGp = ContextEM->IntGp;
         TrapFrame->IntSp = ContextEM->IntSp;
@@ -347,31 +338,34 @@ Return Value:
         TrapFrame->StIPSR = SANITIZE_PSR(ContextEM->StIPSR, ProcessorMode);
         TrapFrame->RsPFS = SANITIZE_PFS(ContextEM->RsPFS, ProcessorMode);
 
-        BsFrameSize = (SHORT) ContextEM->StIFS & PFS_SIZE_MASK;
+        BsFrameSize = (SHORT)ContextEM->StIFS & PFS_SIZE_MASK;
 
         RNatSaveIndex = (USHORT)((ContextEM->RsBSP >> 3) & NAT_BITS_PER_RNAT_REG);
 
         TempFrameSize = RNatSaveIndex + BsFrameSize - NAT_BITS_PER_RNAT_REG;
-        while (TempFrameSize >= 0) {
+        while (TempFrameSize >= 0)
+        {
             BsFrameSize++;
             TempFrameSize -= NAT_BITS_PER_RNAT_REG;
         }
 
         //
-        // If the BSP value is not being changed then preserve the 
+        // If the BSP value is not being changed then preserve the
         // preload count.  This is only necessary if KeFlushUserRseState
         // failed for some reason.
         //
 
-        if (TrapFrame->RsBSP == ContextEM->RsBSP + BsFrameSize * 8) {
-            
-            RSC  Rsc;
+        if (TrapFrame->RsBSP == ContextEM->RsBSP + BsFrameSize * 8)
+        {
+
+            RSC Rsc;
 
             Rsc.ull = ZERO_PRELOAD_SIZE(ContextEM->RsRSC);
-            Rsc.sb.rsc_preload = ((struct _RSC *) &(TrapFrame->RsRSC))->rsc_preload;
+            Rsc.sb.rsc_preload = ((struct _RSC *)&(TrapFrame->RsRSC))->rsc_preload;
             TrapFrame->RsRSC = Rsc.ull;
-
-        } else {
+        }
+        else
+        {
             TrapFrame->RsRSC = ZERO_PRELOAD_SIZE(ContextEM->RsRSC);
         }
 
@@ -380,8 +374,7 @@ Return Value:
         TrapFrame->RsRNAT = ContextEM->RsRNAT;
 
 #ifdef DEBUG
-        DbgPrint ("PspSetContext CONTROL: TrapFrame->RsRNAT = 0x%I64x\n",
-                TrapFrame->RsRNAT);
+        DbgPrint("PspSetContext CONTROL: TrapFrame->RsRNAT = 0x%I64x\n", TrapFrame->RsRNAT);
 #endif
 
         //
@@ -394,19 +387,19 @@ Return Value:
         // Set and sanitize iA status
         //
 
-        __setReg(CV_IA64_AR21, SANITIZE_AR21_FCR (ContextEM->StFCR, ProcessorMode));
-        __setReg(CV_IA64_AR24, SANITIZE_AR24_EFLAGS (ContextEM->Eflag, ProcessorMode));
+        __setReg(CV_IA64_AR21, SANITIZE_AR21_FCR(ContextEM->StFCR, ProcessorMode));
+        __setReg(CV_IA64_AR24, SANITIZE_AR24_EFLAGS(ContextEM->Eflag, ProcessorMode));
         __setReg(CV_IA64_AR25, ContextEM->SegCSD);
         __setReg(CV_IA64_AR26, ContextEM->SegSSD);
-        __setReg(CV_IA64_AR27, SANITIZE_AR27_CFLG (ContextEM->Cflag, ProcessorMode));
+        __setReg(CV_IA64_AR27, SANITIZE_AR27_CFLG(ContextEM->Cflag, ProcessorMode));
 
-        __setReg(CV_IA64_AR28, SANITIZE_AR28_FSR (ContextEM->StFSR, ProcessorMode));
-        __setReg(CV_IA64_AR29, SANITIZE_AR29_FIR (ContextEM->StFIR, ProcessorMode));
-        __setReg(CV_IA64_AR30, SANITIZE_AR30_FDR (ContextEM->StFDR, ProcessorMode));
-
+        __setReg(CV_IA64_AR28, SANITIZE_AR28_FSR(ContextEM->StFSR, ProcessorMode));
+        __setReg(CV_IA64_AR29, SANITIZE_AR29_FIR(ContextEM->StFIR, ProcessorMode));
+        __setReg(CV_IA64_AR30, SANITIZE_AR30_FDR(ContextEM->StFDR, ProcessorMode));
     }
 
-    if ((ContextEM->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER) {
+    if ((ContextEM->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)
+    {
 
         TrapFrame->IntT0 = ContextEM->IntT0;
         TrapFrame->IntT1 = ContextEM->IntT1;
@@ -421,7 +414,7 @@ Return Value:
         //  t5 - t2
         //
 
-        RtlCopyMemory(&TrapFrame->IntT5, &ContextEM->IntT5, 18*sizeof(ULONGLONG));
+        RtlCopyMemory(&TrapFrame->IntT5, &ContextEM->IntT5, 18 * sizeof(ULONGLONG));
 
         //
         // Set the integer nats fields
@@ -429,8 +422,7 @@ Return Value:
 
         R1Offset = (USHORT)((ULONG_PTR)(&TrapFrame->IntGp) >> 3) & 0x3f;
 
-        EXTRACT_NATS(TrapFrame->IntNats, ContextEM->IntNats,
-                     1, R1Offset, 0xFFFFFF0E);
+        EXTRACT_NATS(TrapFrame->IntNats, ContextEM->IntNats, 1, R1Offset, 0xFFFFFF0E);
 
         //
         // Set the preserved integer NAT fields
@@ -452,14 +444,18 @@ Return Value:
         *ContextPointers->IntS2Nat &= ~(0x1 << (((ULONG_PTR)ContextPointers->IntS2 & 0x1F8) >> 3));
         *ContextPointers->IntS3Nat &= ~(0x1 << (((ULONG_PTR)ContextPointers->IntS3 & 0x1F8) >> 3));
 
-        *ContextPointers->IntS0Nat |= (((ContextEM->IntNats >> 4) & 0x1) << (((ULONG_PTR)ContextPointers->IntS0 & 0x1F8) >> 3));
-        *ContextPointers->IntS1Nat |= (((ContextEM->IntNats >> 4) & 0x1) << (((ULONG_PTR)ContextPointers->IntS1 & 0x1F8) >> 3));
-        *ContextPointers->IntS2Nat |= (((ContextEM->IntNats >> 4) & 0x1) << (((ULONG_PTR)ContextPointers->IntS2 & 0x1F8) >> 3));
-        *ContextPointers->IntS3Nat |= (((ContextEM->IntNats >> 4) & 0x1) << (((ULONG_PTR)ContextPointers->IntS3 & 0x1F8) >> 3));
+        *ContextPointers->IntS0Nat |=
+            (((ContextEM->IntNats >> 4) & 0x1) << (((ULONG_PTR)ContextPointers->IntS0 & 0x1F8) >> 3));
+        *ContextPointers->IntS1Nat |=
+            (((ContextEM->IntNats >> 4) & 0x1) << (((ULONG_PTR)ContextPointers->IntS1 & 0x1F8) >> 3));
+        *ContextPointers->IntS2Nat |=
+            (((ContextEM->IntNats >> 4) & 0x1) << (((ULONG_PTR)ContextPointers->IntS2 & 0x1F8) >> 3));
+        *ContextPointers->IntS3Nat |=
+            (((ContextEM->IntNats >> 4) & 0x1) << (((ULONG_PTR)ContextPointers->IntS3 & 0x1F8) >> 3));
 
 #ifdef DEBUG
         DbgPrint("PspSetContext INTEGER: R1Offset = 0x%x, TF->IntNats = 0x%I64x, Context->IntNats = 0x%I64x\n",
-               R1Offset, TrapFrame->IntNats, ContextEM->IntNats);
+                 R1Offset, TrapFrame->IntNats, ContextEM->IntNats);
 #endif
 
         *ContextPointers->BrS0 = ContextEM->BrS0;
@@ -471,7 +467,8 @@ Return Value:
         TrapFrame->BrT1 = ContextEM->BrT1;
     }
 
-    if ((ContextEM->ContextFlags & CONTEXT_LOWER_FLOATING_POINT) == CONTEXT_LOWER_FLOATING_POINT) {
+    if ((ContextEM->ContextFlags & CONTEXT_LOWER_FLOATING_POINT) == CONTEXT_LOWER_FLOATING_POINT)
+    {
 
         TrapFrame->StFPSR = SANITIZE_FSR(ContextEM->StFPSR, ProcessorMode);
 
@@ -508,17 +505,17 @@ Return Value:
         // Set floating registers ft0 - ft9.
         //
 
-        RtlCopyIa64FloatRegisterContext(&TrapFrame->FltT0,
-                                        &ContextEM->FltT0,
-                                        sizeof(FLOAT128) * (10));
+        RtlCopyIa64FloatRegisterContext(&TrapFrame->FltT0, &ContextEM->FltT0, sizeof(FLOAT128) * (10));
     }
 
-    if ((ContextEM->ContextFlags & CONTEXT_HIGHER_FLOATING_POINT) == CONTEXT_HIGHER_FLOATING_POINT) {
+    if ((ContextEM->ContextFlags & CONTEXT_HIGHER_FLOATING_POINT) == CONTEXT_HIGHER_FLOATING_POINT)
+    {
 
 
         TrapFrame->StFPSR = SANITIZE_FSR(ContextEM->StFPSR, ProcessorMode);
 
-        if (ProcessorMode == UserMode) {
+        if (ProcessorMode == UserMode)
+        {
 
             //
             // Update the higher floating point save area (f32-f127) and
@@ -527,8 +524,7 @@ Return Value:
 
             RtlCopyIa64FloatRegisterContext(
                 (PFLOAT128)GET_HIGH_FLOATING_POINT_REGISTER_SAVEAREA(KeGetCurrentThread()->StackBase),
-                &ContextEM->FltF32,
-                96*sizeof(FLOAT128));
+                &ContextEM->FltF32, 96 * sizeof(FLOAT128));
 
             //
             // set the dfh bit to force a reload of the high fp register
@@ -537,28 +533,22 @@ Return Value:
 
             TrapFrame->StIPSR |= (1i64 << PSR_DFH);
         }
-
     }
 
     //
     // Set debug register contents if specified.
     //
 
-    if ((ContextEM->ContextFlags & CONTEXT_DEBUG) == CONTEXT_DEBUG) {
-        KiSetDebugContext (TrapFrame, ContextEM, ProcessorMode);
+    if ((ContextEM->ContextFlags & CONTEXT_DEBUG) == CONTEXT_DEBUG)
+    {
+        KiSetDebugContext(TrapFrame, ContextEM, ProcessorMode);
     }
 
     return;
 }
-
-VOID
-PspGetSetContextSpecialApcMain (
-    IN PKAPC Apc,
-    IN PKNORMAL_ROUTINE *NormalRoutine,
-    IN PVOID *NormalContext,
-    IN PVOID *SystemArgument1,
-    IN PVOID *SystemArgument2
-    )
+
+VOID PspGetSetContextSpecialApcMain(IN PKAPC Apc, IN PKNORMAL_ROUTINE *NormalRoutine, IN PVOID *NormalContext,
+                                    IN PVOID *SystemArgument1, IN PVOID *SystemArgument2)
 
 /*++
 
@@ -598,37 +588,39 @@ Return Value:
 --*/
 
 {
-    PGETSETCONTEXT                ContextInfo;
-    KNONVOLATILE_CONTEXT_POINTERS ContextPointers;  // Not currently used, needed later.
-    CONTEXT                       ContextRecord;
-    ULONGLONG                     ControlPc;
-    FRAME_POINTERS                EstablisherFrame;
-    PRUNTIME_FUNCTION             FunctionEntry;
-    BOOLEAN                       InFunction;
-    PKTRAP_FRAME                  TrFrame1;
-    ULONGLONG                     ImageBase;
-    ULONGLONG                     TargetGp;
+    PGETSETCONTEXT ContextInfo;
+    KNONVOLATILE_CONTEXT_POINTERS ContextPointers; // Not currently used, needed later.
+    CONTEXT ContextRecord;
+    ULONGLONG ControlPc;
+    FRAME_POINTERS EstablisherFrame;
+    PRUNTIME_FUNCTION FunctionEntry;
+    BOOLEAN InFunction;
+    PKTRAP_FRAME TrFrame1;
+    ULONGLONG ImageBase;
+    ULONGLONG TargetGp;
 
-    UNREFERENCED_PARAMETER (NormalRoutine);
-    UNREFERENCED_PARAMETER (NormalContext);
-    UNREFERENCED_PARAMETER (SystemArgument2);
+    UNREFERENCED_PARAMETER(NormalRoutine);
+    UNREFERENCED_PARAMETER(NormalContext);
+    UNREFERENCED_PARAMETER(SystemArgument2);
 
     //
     // Get the address of the context frame and compute the address of the
     // system entry trap frame.
     //
 
-    ContextInfo = CONTAINING_RECORD (Apc, GETSETCONTEXT, Apc);
+    ContextInfo = CONTAINING_RECORD(Apc, GETSETCONTEXT, Apc);
 
     TrFrame1 = NULL;
 
-    if (ContextInfo->Mode == KernelMode) {
-	TrFrame1 = PsGetCurrentThread()->Tcb.TrapFrame;
+    if (ContextInfo->Mode == KernelMode)
+    {
+        TrFrame1 = PsGetCurrentThread()->Tcb.TrapFrame;
     }
 
-    if (TrFrame1 == NULL) {
-	TrFrame1 = (PKTRAP_FRAME)(((ULONG_PTR)PsGetCurrentThread()->Tcb.InitialStack
-		     - KTHREAD_STATE_SAVEAREA_LENGTH - KTRAP_FRAME_LENGTH));
+    if (TrFrame1 == NULL)
+    {
+        TrFrame1 = (PKTRAP_FRAME)(((ULONG_PTR)PsGetCurrentThread()->Tcb.InitialStack - KTHREAD_STATE_SAVEAREA_LENGTH -
+                                   KTRAP_FRAME_LENGTH));
     }
 
     //
@@ -685,7 +677,8 @@ Return Value:
     // unwind call frames until the system entry trap frame is encountered.
     //
 
-    do {
+    do
+    {
 
         //
         // Lookup the function table entry using the point at which control
@@ -700,23 +693,21 @@ Return Value:
         // where control left the caller.
         //
 
-        if (FunctionEntry != NULL) {
-            ControlPc = RtlVirtualUnwind(ImageBase,
-                                         ControlPc,
-                                         FunctionEntry,
-                                         &ContextRecord,
-                                         &InFunction,
-                                         &EstablisherFrame,
-                                         &ContextPointers);
-
-        } else {
+        if (FunctionEntry != NULL)
+        {
+            ControlPc = RtlVirtualUnwind(ImageBase, ControlPc, FunctionEntry, &ContextRecord, &InFunction,
+                                         &EstablisherFrame, &ContextPointers);
+        }
+        else
+        {
             SHORT BsFrameSize, TempFrameSize;
 
             ControlPc = ContextRecord.BrRp;
             ContextRecord.StIFS = ContextRecord.RsPFS;
             BsFrameSize = (SHORT)(ContextRecord.StIFS >> PFS_SIZE_SHIFT) & PFS_SIZE_MASK;
             TempFrameSize = BsFrameSize - (SHORT)((ContextRecord.RsBSP >> 3) & NAT_BITS_PER_RNAT_REG);
-            while (TempFrameSize > 0) {
+            while (TempFrameSize > 0)
+            {
                 BsFrameSize++;
                 TempFrameSize -= NAT_BITS_PER_RNAT_REG;
             }
@@ -729,16 +720,17 @@ Return Value:
     // Process GetThreadContext or SetThreadContext as specified.
     //
 
-    if (*SystemArgument1 != 0) {
+    if (*SystemArgument1 != 0)
+    {
 
         //
         // Set Context from proper Context mode
         //
 
-        PspSetContext(TrFrame1, &ContextPointers, &ContextInfo->Context,
-                      ContextInfo->Mode);
-
-    } else {
+        PspSetContext(TrFrame1, &ContextPointers, &ContextInfo->Context, ContextInfo->Mode);
+    }
+    else
+    {
 
         //
         // Get Context from proper Context mode
@@ -746,7 +738,6 @@ Return Value:
 
         KeFlushUserRseState(TrFrame1);
         PspGetContext(TrFrame1, &ContextPointers, &ContextInfo->Context);
-
     }
 
     KeSetEvent(&ContextInfo->OperationComplete, 0, FALSE);

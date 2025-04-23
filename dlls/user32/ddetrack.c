@@ -12,15 +12,14 @@
 #pragma hdrstop
 
 #if defined(BUILD_WOW6432)
-#define DDEDATA_WITH_HANDLE_SIZE  (sizeof (DDEDATA_WOW6432))
+#define DDEDATA_WITH_HANDLE_SIZE (sizeof(DDEDATA_WOW6432))
 #else
-#define DDEDATA_WITH_HANDLE_SIZE  (sizeof (DDE_DATA))
+#define DDEDATA_WITH_HANDLE_SIZE (sizeof(DDE_DATA))
 #endif
 
 
-DWORD _ClientCopyDDEIn1(
-    HANDLE hClient, // client handle to dde data or ddepack data
-    PINTDDEINFO pi) // info for transfer
+DWORD _ClientCopyDDEIn1(HANDLE hClient, // client handle to dde data or ddepack data
+                        PINTDDEINFO pi) // info for transfer
 {
     PBYTE pData;
     DWORD flags;
@@ -33,27 +32,32 @@ DWORD _ClientCopyDDEIn1(
     pi->flags = flags;
     USERGLOBALLOCK(hClient, pData);
 
-    if (pData == NULL) {                            // bad hClient
+    if (pData == NULL)
+    { // bad hClient
         RIPMSG0(RIP_WARNING, "_ClientCopyDDEIn1:GlobalLock failed.");
         return (FAIL_POST);
     }
 
-    if (flags & XS_PACKED) {
+    if (flags & XS_PACKED)
+    {
 
-        if (UserGlobalSize(hClient) < sizeof(DDEPACK)) {
+        if (UserGlobalSize(hClient) < sizeof(DDEPACK))
+        {
             /*
              * must be a low memory condition. fail.
              */
-            return(FAIL_POST);
+            return (FAIL_POST);
         }
 
         pi->DdePack = *(PDDEPACK)pData;
         USERGLOBALUNLOCK(hClient);
-        UserGlobalFree(hClient);    // packed data handles are not WOW matched.
+        UserGlobalFree(hClient); // packed data handles are not WOW matched.
         hClient = NULL;
 
-        if (!(flags & (XS_LOHANDLE | XS_HIHANDLE))) {
-            if (flags & XS_EXECUTE && flags & XS_FREESRC) {
+        if (!(flags & (XS_LOHANDLE | XS_HIHANDLE)))
+        {
+            if (flags & XS_EXECUTE && flags & XS_FREESRC)
+            {
                 /*
                  * free execute ACK data
                  */
@@ -62,25 +66,31 @@ DWORD _ClientCopyDDEIn1(
             return (DO_POST); // no direct data
         }
 
-        if (flags & XS_LOHANDLE) {
+        if (flags & XS_LOHANDLE)
+        {
             pi->hDirect = (HANDLE)pi->DdePack.uiLo;
-        } else {
+        }
+        else
+        {
             pi->hDirect = (HANDLE)pi->DdePack.uiHi;
         }
 
-        if (pi->hDirect == 0) {
+        if (pi->hDirect == 0)
+        {
             return (DO_POST); // must be warm link
         }
 
         USERGLOBALLOCK(pi->hDirect, pi->pDirect);
-        if (pi->pDirect == NULL) {
-            RIPMSG1(RIP_ERROR, "_ClientCopyDDEIn1:GlobalLock failed for hDirect %p.",pi->hDirect);
+        if (pi->pDirect == NULL)
+        {
+            RIPMSG1(RIP_ERROR, "_ClientCopyDDEIn1:GlobalLock failed for hDirect %p.", pi->hDirect);
             return FAILNOFREE_POST;
         }
         pData = pi->pDirect;
         pi->cbDirect = (UINT)UserGlobalSize(pi->hDirect);
-
-    } else {    // not packed - must be execute data or we wouldn't be called
+    }
+    else
+    { // not packed - must be execute data or we wouldn't be called
 
         UserAssert(flags & XS_EXECUTE);
 
@@ -90,7 +100,8 @@ DWORD _ClientCopyDDEIn1(
         hClient = NULL;
     }
 
-    if (flags & XS_DATA) {
+    if (flags & XS_DATA)
+    {
         PDDE_DATA pDdeData = (PDDE_DATA)pData;
 
         /*
@@ -103,7 +114,8 @@ DWORD _ClientCopyDDEIn1(
         // check here for indirect data
         //
 
-        switch (pDdeData->wFmt) {
+        switch (pDdeData->wFmt)
+        {
         case CF_BITMAP:
         case CF_DSPBITMAP:
             //
@@ -111,9 +123,10 @@ DWORD _ClientCopyDDEIn1(
             //
             UserAssert(pi->cbDirect >= DDEDATA_WITH_HANDLE_SIZE);
             pi->hIndirect = (HANDLE)pDdeData->Data;
-            if (pi->hIndirect == 0) {
+            if (pi->hIndirect == 0)
+            {
                 RIPMSG0(RIP_WARNING, "_ClientCopyDDEIn1:GdiConvertBitmap failed");
-                return(FAILNOFREE_POST);
+                return (FAILNOFREE_POST);
             }
             // pi->cbIndirect = 0; // zero init.
             // pi->pIndirect = NULL; // zero init.
@@ -129,7 +142,8 @@ DWORD _ClientCopyDDEIn1(
             pi->flags |= XS_DIB;
             pi->hIndirect = (HANDLE)pDdeData->Data;
             USERGLOBALLOCK(pi->hIndirect, pi->pIndirect);
-            if (pi->pIndirect == NULL) {
+            if (pi->pIndirect == NULL)
+            {
                 RIPMSG0(RIP_WARNING, "_ClientCopyDDEIn1:CF_DIB GlobalLock failed.");
                 return (FAILNOFREE_POST);
             }
@@ -138,10 +152,11 @@ DWORD _ClientCopyDDEIn1(
 
         case CF_PALETTE:
             UserAssert(pi->cbDirect >= DDEDATA_WITH_HANDLE_SIZE);
-            pi->hIndirect = (HANDLE) pDdeData->Data;
-            if (pi->hIndirect == 0) {
+            pi->hIndirect = (HANDLE)pDdeData->Data;
+            if (pi->hIndirect == 0)
+            {
                 RIPMSG0(RIP_WARNING, "_ClientCopyDDEIn1:GdiConvertPalette failed.");
-                return(FAILNOFREE_POST);
+                return (FAILNOFREE_POST);
             }
             // pi->cbIndirect = 0; // zero init.
             // pi->pIndirect = NULL; // zero init.
@@ -157,9 +172,10 @@ DWORD _ClientCopyDDEIn1(
             //
             UserAssert(pi->cbDirect >= DDEDATA_WITH_HANDLE_SIZE);
             pi->hIndirect = GdiConvertMetaFilePict((HANDLE)pDdeData->Data);
-            if (pi->hIndirect == 0) {
+            if (pi->hIndirect == 0)
+            {
                 RIPMSG0(RIP_WARNING, "_ClientCopyDDEIn1:GdiConvertMetaFilePict failed");
-                return(FAILNOFREE_POST);
+                return (FAILNOFREE_POST);
             }
             // pi->cbIndirect = 0; // zero init.
             // pi->pIndirect = NULL; // zero init.
@@ -170,9 +186,10 @@ DWORD _ClientCopyDDEIn1(
         case CF_DSPENHMETAFILE:
             UserAssert(pi->cbDirect >= DDEDATA_WITH_HANDLE_SIZE);
             pi->hIndirect = GdiConvertEnhMetaFile((HENHMETAFILE)pDdeData->Data);
-            if (pi->hIndirect == 0) {
+            if (pi->hIndirect == 0)
+            {
                 RIPMSG0(RIP_WARNING, "_ClientCopyDDEIn1:GdiConvertEnhMetaFile failed");
-                return(FAILNOFREE_POST);
+                return (FAILNOFREE_POST);
             }
             // pi->cbIndirect = 0; // zero init.
             // pi->pIndirect = NULL; // zero init.
@@ -188,32 +205,32 @@ DWORD _ClientCopyDDEIn1(
 /*
  * unlocks and frees DDE data pointers as appropriate
  */
-VOID _ClientCopyDDEIn2(
-    PINTDDEINFO pi)
+VOID _ClientCopyDDEIn2(PINTDDEINFO pi)
 {
-    if (pi->cbDirect) {
+    if (pi->cbDirect)
+    {
         USERGLOBALUNLOCK(pi->hDirect);
-        if (pi->flags & XS_FREESRC) {
+        if (pi->flags & XS_FREESRC)
+        {
             WOWGLOBALFREE(pi->hDirect);
         }
     }
 
-    if (pi->cbIndirect) {
+    if (pi->cbIndirect)
+    {
         USERGLOBALUNLOCK(pi->hIndirect);
-        if (pi->flags & XS_FREESRC) {
+        if (pi->flags & XS_FREESRC)
+        {
             WOWGLOBALFREE(pi->hIndirect);
         }
     }
 }
 
 
-
 /*
  * returns fHandleValueChanged.
  */
-BOOL FixupDdeExecuteIfNecessary(
-HGLOBAL *phCommands,
-BOOL fNeedUnicode)
+BOOL FixupDdeExecuteIfNecessary(HGLOBAL *phCommands, BOOL fNeedUnicode)
 {
     UINT cbLen;
     UINT cbSrc = (UINT)GlobalSize(*phCommands);
@@ -223,21 +240,21 @@ BOOL fNeedUnicode)
 
     USERGLOBALLOCK(*phCommands, pstr);
 
-    if (cbSrc && pstr != NULL) {
+    if (cbSrc && pstr != NULL)
+    {
         BOOL fIsUnicodeText;
 #ifdef ISTEXTUNICODE_WORKS
         int flags;
 
-        flags = (IS_TEXT_UNICODE_UNICODE_MASK |
-                IS_TEXT_UNICODE_REVERSE_MASK |
-                (IS_TEXT_UNICODE_NOT_UNICODE_MASK &
-                (~IS_TEXT_UNICODE_ILLEGAL_CHARS)) |
-                IS_TEXT_UNICODE_NOT_ASCII_MASK);
+        flags =
+            (IS_TEXT_UNICODE_UNICODE_MASK | IS_TEXT_UNICODE_REVERSE_MASK |
+             (IS_TEXT_UNICODE_NOT_UNICODE_MASK & (~IS_TEXT_UNICODE_ILLEGAL_CHARS)) | IS_TEXT_UNICODE_NOT_ASCII_MASK);
         fIsUnicodeText = RtlIsTextUnicode(pstr, cbSrc - 2, &flags);
 #else
         fIsUnicodeText = ((cbSrc >= sizeof(WCHAR)) && (((LPSTR)pstr)[1] == '\0'));
 #endif
-        if (!fIsUnicodeText && fNeedUnicode) {
+        if (!fIsUnicodeText && fNeedUnicode)
+        {
             LPWSTR pwsz;
             /*
              * Contents needs to be UNICODE.
@@ -245,18 +262,13 @@ BOOL fNeedUnicode)
             cbLen = strlen(pstr) + 1;
             cbSrc = min(cbSrc, cbLen);
             pwsz = UserLocalAlloc(HEAP_ZERO_MEMORY, cbSrc * sizeof(WCHAR));
-            if (pwsz != NULL) {
-                if (NT_SUCCESS(RtlMultiByteToUnicodeN(
-                        pwsz,
-                        cbSrc * sizeof(WCHAR),
-                        NULL,
-                        (PCHAR)pstr,
-                        cbSrc))) {
+            if (pwsz != NULL)
+            {
+                if (NT_SUCCESS(RtlMultiByteToUnicodeN(pwsz, cbSrc * sizeof(WCHAR), NULL, (PCHAR)pstr, cbSrc)))
+                {
                     USERGLOBALUNLOCK(*phCommands);
-                    if ((hTemp = GlobalReAlloc(
-                            *phCommands,
-                            cbSrc * sizeof(WCHAR),
-                            GMEM_MOVEABLE)) != NULL) {
+                    if ((hTemp = GlobalReAlloc(*phCommands, cbSrc * sizeof(WCHAR), GMEM_MOVEABLE)) != NULL)
+                    {
                         fHandleValueChanged = (hTemp != *phCommands);
                         *phCommands = hTemp;
                         USERGLOBALLOCK(*phCommands, pstr);
@@ -266,7 +278,9 @@ BOOL fNeedUnicode)
                 }
                 UserLocalFree(pwsz);
             }
-        } else if (fIsUnicodeText && !fNeedUnicode) {
+        }
+        else if (fIsUnicodeText && !fNeedUnicode)
+        {
             LPSTR psz;
             /*
              * Contents needs to be ANSI.
@@ -274,18 +288,13 @@ BOOL fNeedUnicode)
             cbLen = (wcslen(pstr) + 1) * sizeof(WCHAR);
             cbSrc = min(cbSrc, cbLen);
             psz = UserLocalAlloc(HEAP_ZERO_MEMORY, cbSrc);
-            if (psz != NULL) {
-                if (NT_SUCCESS(RtlUnicodeToMultiByteN(
-                        psz,
-                        cbSrc,
-                        NULL,
-                        (PWSTR)pstr,
-                        cbSrc))) {
+            if (psz != NULL)
+            {
+                if (NT_SUCCESS(RtlUnicodeToMultiByteN(psz, cbSrc, NULL, (PWSTR)pstr, cbSrc)))
+                {
                     USERGLOBALUNLOCK(*phCommands);
-                    if ((hTemp = GlobalReAlloc(
-                            *phCommands,
-                            cbSrc / sizeof(WCHAR),
-                            GMEM_MOVEABLE)) != NULL) {
+                    if ((hTemp = GlobalReAlloc(*phCommands, cbSrc / sizeof(WCHAR), GMEM_MOVEABLE)) != NULL)
+                    {
                         fHandleValueChanged = (hTemp != *phCommands);
                         *phCommands = hTemp;
                         USERGLOBALLOCK(*phCommands, pstr);
@@ -299,40 +308,42 @@ BOOL fNeedUnicode)
         }
         USERGLOBALUNLOCK(*phCommands);
     }
-    return(fHandleValueChanged);
+    return (fHandleValueChanged);
 }
-
 
 
 /*
  * Allocates and locks global handles as appropriate in preperation
  * for thunk copying.
  */
-HANDLE _ClientCopyDDEOut1(
-    PINTDDEINFO pi)
+HANDLE _ClientCopyDDEOut1(PINTDDEINFO pi)
 {
     HANDLE hDdePack = NULL;
     PDDEPACK pDdePack = NULL;
 
-    if (pi->flags & XS_PACKED) {
+    if (pi->flags & XS_PACKED)
+    {
         /*
          * make a wrapper for the data
          */
-        hDdePack = UserGlobalAlloc(GMEM_DDESHARE | GMEM_FIXED,
-                sizeof(DDEPACK));
+        hDdePack = UserGlobalAlloc(GMEM_DDESHARE | GMEM_FIXED, sizeof(DDEPACK));
         pDdePack = (PDDEPACK)hDdePack;
-        if (pDdePack == NULL) {
+        if (pDdePack == NULL)
+        {
             RIPMSG0(RIP_WARNING, "_ClientCopyDDEOut1:Couldn't allocate DDEPACK");
             return (NULL);
         }
         *pDdePack = pi->DdePack;
     }
 
-    if (pi->cbDirect) {
+    if (pi->cbDirect)
+    {
         pi->hDirect = UserGlobalAlloc(GMEM_DDESHARE | GMEM_MOVEABLE, pi->cbDirect);
-        if (pi->hDirect == NULL) {
+        if (pi->hDirect == NULL)
+        {
             RIPMSG0(RIP_WARNING, "_ClientCopyDDEOut1:Couldn't allocate hDirect");
-            if (hDdePack) {
+            if (hDdePack)
+            {
                 UserGlobalFree(hDdePack);
             }
             return (NULL);
@@ -343,24 +354,30 @@ HANDLE _ClientCopyDDEOut1(
 
         // fixup packed data reference to direct data
 
-        if (pDdePack != NULL) {
-            if (pi->flags & XS_LOHANDLE) {
+        if (pDdePack != NULL)
+        {
+            if (pi->flags & XS_LOHANDLE)
+            {
                 pDdePack->uiLo = (UINT_PTR)pi->hDirect;
                 UserAssert((ULONG_PTR)pDdePack->uiLo == (ULONG_PTR)pi->hDirect);
-            } else if (pi->flags & XS_HIHANDLE) {
+            }
+            else if (pi->flags & XS_HIHANDLE)
+            {
                 pDdePack->uiHi = (UINT_PTR)pi->hDirect;
                 UserAssert((ULONG_PTR)pDdePack->uiHi == (ULONG_PTR)pi->hDirect);
             }
         }
 
-        if (pi->cbIndirect) {
-            pi->hIndirect = UserGlobalAlloc(GMEM_DDESHARE | GMEM_MOVEABLE,
-                    pi->cbIndirect);
-            if (pi->hIndirect == NULL) {
+        if (pi->cbIndirect)
+        {
+            pi->hIndirect = UserGlobalAlloc(GMEM_DDESHARE | GMEM_MOVEABLE, pi->cbIndirect);
+            if (pi->hIndirect == NULL)
+            {
                 RIPMSG0(RIP_WARNING, "_ClientCopyDDEOut1:Couldn't allocate hIndirect");
                 USERGLOBALUNLOCK(pi->hDirect);
                 UserGlobalFree(pi->hDirect);
-                if (hDdePack) {
+                if (hDdePack)
+                {
                     UserGlobalFree(hDdePack);
                 }
                 return (NULL);
@@ -370,29 +387,32 @@ HANDLE _ClientCopyDDEOut1(
         }
     }
 
-    if (hDdePack) {
+    if (hDdePack)
+    {
         return (hDdePack);
-    } else {
+    }
+    else
+    {
         return (pi->hDirect);
     }
 }
 
 
-
 /*
  * Fixes up internal poniters after thunk copy and unlocks handles.
  */
-BOOL _ClientCopyDDEOut2(
-    PINTDDEINFO pi)
+BOOL _ClientCopyDDEOut2(PINTDDEINFO pi)
 {
     BOOL fSuccess = TRUE;
     /*
      * done with copies - now fixup indirect references
      */
-    if (pi->hIndirect) {
+    if (pi->hIndirect)
+    {
         PDDE_DATA pDdeData = (PDDE_DATA)pi->pDirect;
 
-        switch (pDdeData->wFmt) {
+        switch (pDdeData->wFmt)
+        {
         case CF_BITMAP:
         case CF_DSPBITMAP:
         case CF_PALETTE:
@@ -427,19 +447,18 @@ BOOL _ClientCopyDDEOut2(
 
     UserAssert(pi->hDirect); // if its null, we didn't need to call this function.
     USERGLOBALUNLOCK(pi->hDirect);
-    if (pi->flags & XS_EXECUTE) {
+    if (pi->flags & XS_EXECUTE)
+    {
         /*
          * Its possible that in RAW DDE cases where the app allocated the
          * execute data as non-moveable, we have a different hDirect
          * than we started with.  This needs to be noted and passed
          * back to the server. (Very RARE case)
          */
-        FixupDdeExecuteIfNecessary(&pi->hDirect,
-                pi->flags & XS_UNICODE);
+        FixupDdeExecuteIfNecessary(&pi->hDirect, pi->flags & XS_UNICODE);
     }
     return fSuccess;
 }
-
 
 
 /*
@@ -451,46 +470,46 @@ BOOL _ClientCopyDDEOut2(
  */
 
 #if DBG
-    /*
+/*
      * Help track down a bug where I suspect the xxxFreeListFree is
      * freeing a handle already freed by some other means which has
      * since been reallocated and is trashing the client heap. (SAS)
      */
-    HANDLE DDEHandleLastFreed = 0;
+HANDLE DDEHandleLastFreed = 0;
 #endif
 
-BOOL _ClientFreeDDEHandle(
-HANDLE hDDE,
-DWORD flags)
+BOOL _ClientFreeDDEHandle(HANDLE hDDE, DWORD flags)
 {
     PDDEPACK pDdePack;
     HANDLE hNew;
 
-    if (flags & XS_PACKED) {
+    if (flags & XS_PACKED)
+    {
         pDdePack = (PDDEPACK)hDDE;
-        if (pDdePack == NULL) {
+        if (pDdePack == NULL)
+        {
             return (FALSE);
         }
-        if (flags & XS_LOHANDLE) {
+        if (flags & XS_LOHANDLE)
+        {
             hNew = (HANDLE)pDdePack->uiLo;
-        } else {
+        }
+        else
+        {
             hNew = (HANDLE)pDdePack->uiHi;
-
         }
         WOWGLOBALFREE(hDDE);
         hDDE = hNew;
-
     }
 
-   /*
+    /*
     * Do a range check and call GlobalFlags to validate, just to prevent heap checking
     * from complaining during the GlobalSize call.
     * Is this leaking atoms??
     */
-    if ((hDDE <= (HANDLE)0xFFFF)
-        || (GlobalFlags(hDDE) == GMEM_INVALID_HANDLE)
-        || !GlobalSize(hDDE)) {
-            /*
+    if ((hDDE <= (HANDLE)0xFFFF) || (GlobalFlags(hDDE) == GMEM_INVALID_HANDLE) || !GlobalSize(hDDE))
+    {
+        /*
              * There may be cases where apps improperly freed stuff
              * when they shouldn't have so make sure this handle
              * is valid by the time it gets here.
@@ -498,46 +517,54 @@ DWORD flags)
              * See SvSpontAdvise; it posts a message with an atom in uiHi. Then from _PostMessage
              *  in the kernel side, we might end up here. So it's not only for apps...
              */
-            return(FALSE);
+        return (FALSE);
     }
 
-    if (flags & XS_DUMPMSG) {
-        if (flags & XS_PACKED) {
-            if (!IS_PTR(hNew)) {
+    if (flags & XS_DUMPMSG)
+    {
+        if (flags & XS_PACKED)
+        {
+            if (!IS_PTR(hNew))
+            {
                 GlobalDeleteAtom(LOWORD((ULONG_PTR)hNew));
-                if (!(flags & XS_DATA)) {
-                    return(TRUE);     // ACK
+                if (!(flags & XS_DATA))
+                {
+                    return (TRUE); // ACK
                 }
             }
-        } else {
-            if (!(flags & XS_EXECUTE)) {
-                GlobalDeleteAtom(LOWORD((ULONG_PTR)hDDE));   // REQUEST, UNADVISE
-                return(TRUE);
+        }
+        else
+        {
+            if (!(flags & XS_EXECUTE))
+            {
+                GlobalDeleteAtom(LOWORD((ULONG_PTR)hDDE)); // REQUEST, UNADVISE
+                return (TRUE);
             }
         }
     }
-    if (flags & XS_DATA) {
+    if (flags & XS_DATA)
+    {
         // POKE, DATA
 #if DBG
         DDEHandleLastFreed = hDDE;
 #endif
         FreeDDEData(hDDE,
-                (flags & XS_DUMPMSG) ? FALSE : TRUE,    // fIgnorefRelease
-                (flags & XS_DUMPMSG) ? TRUE : FALSE);    // fDestroyTruelyGlobalObjects
-    } else {
+                    (flags & XS_DUMPMSG) ? FALSE : TRUE,  // fIgnorefRelease
+                    (flags & XS_DUMPMSG) ? TRUE : FALSE); // fDestroyTruelyGlobalObjects
+    }
+    else
+    {
         // ADVISE, EXECUTE
 #if DBG
         DDEHandleLastFreed = hDDE;
 #endif
-        WOWGLOBALFREE(hDDE);   // covers ADVISE case (fmt but no data)
+        WOWGLOBALFREE(hDDE); // covers ADVISE case (fmt but no data)
     }
     return (TRUE);
 }
 
 
-DWORD _ClientGetDDEFlags(
-HANDLE hDDE,
-DWORD flags)
+DWORD _ClientGetDDEFlags(HANDLE hDDE, DWORD flags)
 {
     PDDEPACK pDdePack;
     PWORD pw;
@@ -545,20 +572,26 @@ DWORD flags)
     DWORD retval = 0;
 
     pDdePack = (PDDEPACK)hDDE;
-    if (pDdePack == NULL) {
+    if (pDdePack == NULL)
+    {
         return (0);
     }
 
-    if (flags & XS_DATA) {
-        if (pDdePack->uiLo) {
+    if (flags & XS_DATA)
+    {
+        if (pDdePack->uiLo)
+        {
             hData = (HANDLE)pDdePack->uiLo;
             USERGLOBALLOCK(hData, pw);
-            if (pw != NULL) {
+            if (pw != NULL)
+            {
                 retval = (DWORD)*pw; // first word is hData is wStatus
                 USERGLOBALUNLOCK(hData);
             }
         }
-    } else {
+    }
+    else
+    {
         retval = (DWORD)pDdePack->uiLo;
     }
 
@@ -566,19 +599,16 @@ DWORD flags)
 }
 
 
-
 FUNCLOG3(LOG_GENERAL, LPARAM, APIENTRY, PackDDElParam, UINT, msg, UINT_PTR, uiLo, UINT_PTR, uiHi)
-LPARAM APIENTRY PackDDElParam(
-UINT msg,
-UINT_PTR uiLo,
-UINT_PTR uiHi)
+LPARAM APIENTRY PackDDElParam(UINT msg, UINT_PTR uiLo, UINT_PTR uiHi)
 {
     PDDEPACK pDdePack;
     HANDLE h;
 
-    switch (msg) {
+    switch (msg)
+    {
     case WM_DDE_EXECUTE:
-        return((LPARAM)uiHi);
+        return ((LPARAM)uiHi);
 
     case WM_DDE_ACK:
     case WM_DDE_ADVISE:
@@ -586,82 +616,84 @@ UINT_PTR uiHi)
     case WM_DDE_POKE:
         h = UserGlobalAlloc(GMEM_DDESHARE | GMEM_FIXED, sizeof(DDEPACK));
         pDdePack = (PDDEPACK)h;
-        if (pDdePack == NULL) {
-            return(0);
+        if (pDdePack == NULL)
+        {
+            return (0);
         }
         pDdePack->uiLo = uiLo;
         pDdePack->uiHi = uiHi;
-        return((LPARAM)h);
+        return ((LPARAM)h);
 
     default:
-        return(MAKELONG((WORD)uiLo, (WORD)uiHi));
+        return (MAKELONG((WORD)uiLo, (WORD)uiHi));
     }
 }
 
 
-
-
 FUNCLOG4(LOG_GENERAL, BOOL, APIENTRY, UnpackDDElParam, UINT, msg, LPARAM, lParam, PUINT_PTR, puiLo, PUINT_PTR, puiHi)
-BOOL APIENTRY UnpackDDElParam(
-UINT msg,
-LPARAM lParam,
-PUINT_PTR puiLo,
-PUINT_PTR puiHi)
+BOOL APIENTRY UnpackDDElParam(UINT msg, LPARAM lParam, PUINT_PTR puiLo, PUINT_PTR puiHi)
 {
     PDDEPACK pDdePack;
 
-    switch (msg) {
+    switch (msg)
+    {
     case WM_DDE_EXECUTE:
-        if (puiLo != NULL) {
+        if (puiLo != NULL)
+        {
             *puiLo = 0L;
         }
-        if (puiHi != NULL) {
+        if (puiHi != NULL)
+        {
             *puiHi = (UINT_PTR)lParam;
         }
-        return(TRUE);
+        return (TRUE);
 
     case WM_DDE_ACK:
     case WM_DDE_ADVISE:
     case WM_DDE_DATA:
     case WM_DDE_POKE:
         pDdePack = (PDDEPACK)lParam;
-        if (pDdePack == NULL || !GlobalHandle(pDdePack)) {
-            if (puiLo != NULL) {
+        if (pDdePack == NULL || !GlobalHandle(pDdePack))
+        {
+            if (puiLo != NULL)
+            {
                 *puiLo = 0L;
             }
-            if (puiHi != NULL) {
+            if (puiHi != NULL)
+            {
                 *puiHi = 0L;
             }
-            return(FALSE);
+            return (FALSE);
         }
-        if (puiLo != NULL) {
+        if (puiLo != NULL)
+        {
             *puiLo = pDdePack->uiLo;
         }
-        if (puiHi != NULL) {
+        if (puiHi != NULL)
+        {
             *puiHi = pDdePack->uiHi;
         }
-        return(TRUE);
+        return (TRUE);
 
     default:
-        if (puiLo != NULL) {
+        if (puiLo != NULL)
+        {
             *puiLo = (UINT)LOWORD(lParam);
         }
-        if (puiHi != NULL) {
+        if (puiHi != NULL)
+        {
             *puiHi = (UINT)HIWORD(lParam);
         }
-        return(TRUE);
+        return (TRUE);
     }
 }
 
 
-
-
 FUNCLOG2(LOG_GENERAL, BOOL, APIENTRY, FreeDDElParam, UINT, msg, LPARAM, lParam)
-BOOL APIENTRY FreeDDElParam(
-UINT msg,
-LPARAM lParam)
+BOOL APIENTRY FreeDDElParam(UINT msg, LPARAM lParam)
 {
-    switch (msg) {
+    switch (msg)
+    {
     case WM_DDE_ACK:
     case WM_DDE_ADVISE:
     case WM_DDE_DATA:
@@ -670,29 +702,26 @@ LPARAM lParam)
          * Do a range check and call GlobalFlags to validate,
          * just to prevent heap checking from complaining
          */
-        if ((lParam > (LPARAM)0xFFFF) && GlobalFlags((HANDLE)lParam) != GMEM_INVALID_HANDLE) {
+        if ((lParam > (LPARAM)0xFFFF) && GlobalFlags((HANDLE)lParam) != GMEM_INVALID_HANDLE)
+        {
             if (GlobalHandle((HANDLE)lParam))
-                return(UserGlobalFree((HANDLE)lParam) == NULL);
+                return (UserGlobalFree((HANDLE)lParam) == NULL);
         }
 
     default:
-        return(TRUE);
+        return (TRUE);
     }
 }
 
 
-
-FUNCLOG5(LOG_GENERAL, LPARAM, APIENTRY, ReuseDDElParam, LPARAM, lParam, UINT, msgIn, UINT, msgOut, UINT_PTR, uiLo, UINT_PTR, uiHi)
-LPARAM APIENTRY ReuseDDElParam(
-LPARAM lParam,
-UINT msgIn,
-UINT msgOut,
-UINT_PTR uiLo,
-UINT_PTR uiHi)
+FUNCLOG5(LOG_GENERAL, LPARAM, APIENTRY, ReuseDDElParam, LPARAM, lParam, UINT, msgIn, UINT, msgOut, UINT_PTR, uiLo,
+         UINT_PTR, uiHi)
+LPARAM APIENTRY ReuseDDElParam(LPARAM lParam, UINT msgIn, UINT msgOut, UINT_PTR uiLo, UINT_PTR uiHi)
 {
     PDDEPACK pDdePack;
 
-    switch (msgIn) {
+    switch (msgIn)
+    {
     case WM_DDE_ACK:
     case WM_DDE_DATA:
     case WM_DDE_POKE:
@@ -700,10 +729,11 @@ UINT_PTR uiHi)
         //
         // Incoming message was packed...
         //
-        switch (msgOut) {
+        switch (msgOut)
+        {
         case WM_DDE_EXECUTE:
             FreeDDElParam(msgIn, lParam);
-            return((LPARAM)uiHi);
+            return ((LPARAM)uiHi);
 
         case WM_DDE_ACK:
         case WM_DDE_ADVISE:
@@ -718,23 +748,24 @@ UINT_PTR uiHi)
             // Actual cases where lParam can be reused.
             //
             pDdePack = (PDDEPACK)lParam;
-            if (pDdePack == NULL) {
-                return(0);          // the only error case
+            if (pDdePack == NULL)
+            {
+                return (0); // the only error case
             }
             pDdePack->uiLo = uiLo;
             pDdePack->uiHi = uiHi;
-            return(lParam);
+            return (lParam);
 
 
         default:
             FreeDDElParam(msgIn, lParam);
-            return(MAKELONG((WORD)uiLo, (WORD)uiHi));
+            return (MAKELONG((WORD)uiLo, (WORD)uiHi));
         }
 
     default:
         //
         // Incoming message was not packed ==> PackDDElParam()
         //
-        return(PackDDElParam(msgOut, uiLo, uiHi));
+        return (PackDDElParam(msgOut, uiLo, uiHi));
     }
 }

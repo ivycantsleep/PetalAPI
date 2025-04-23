@@ -23,18 +23,18 @@ Revision History:
 #undef ObReferenceObjectByHandle
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,ObpInitStackTrace)
-#pragma alloc_text(PAGE,ObOpenObjectByName)
-#pragma alloc_text(PAGE,ObOpenObjectByPointer)
-#pragma alloc_text(PAGE,ObReferenceObjectByHandle)
-#pragma alloc_text(PAGE,ObReferenceObjectByName)
-#pragma alloc_text(PAGE,ObReferenceFileObjectForWrite)
-#pragma alloc_text(PAGE,ObpProcessRemoveObjectQueue)
-#pragma alloc_text(PAGE,ObpRemoveObjectRoutine)
-#pragma alloc_text(PAGE,ObpDeleteNameCheck)
-#pragma alloc_text(PAGE,ObpAuditObjectAccess)
-#pragma alloc_text(PAGE,ObIsObjectDeletionInline)
-#pragma alloc_text(PAGE,ObAuditObjectAccess)
+#pragma alloc_text(INIT, ObpInitStackTrace)
+#pragma alloc_text(PAGE, ObOpenObjectByName)
+#pragma alloc_text(PAGE, ObOpenObjectByPointer)
+#pragma alloc_text(PAGE, ObReferenceObjectByHandle)
+#pragma alloc_text(PAGE, ObReferenceObjectByName)
+#pragma alloc_text(PAGE, ObReferenceFileObjectForWrite)
+#pragma alloc_text(PAGE, ObpProcessRemoveObjectQueue)
+#pragma alloc_text(PAGE, ObpRemoveObjectRoutine)
+#pragma alloc_text(PAGE, ObpDeleteNameCheck)
+#pragma alloc_text(PAGE, ObpAuditObjectAccess)
+#pragma alloc_text(PAGE, ObIsObjectDeletionInline)
+#pragma alloc_text(PAGE, ObAuditObjectAccess)
 #endif
 
 //
@@ -50,26 +50,28 @@ BOOLEAN ObpTraceEnabled = FALSE;
 
 #ifdef POOL_TAGGING
 
-#define OBTRACE_OBJECTBUCKETS   401     // # of buckets in the object hash table (a prime)
-#define OBTRACE_STACKS          14747   // max # of unique stack traces (a prime)
-#define OBTRACE_STACKSPEROBJECT 32768   // max number of object references
-#define OBTRACE_TRACEDEPTH      16      // depth of stack traces
+#define OBTRACE_OBJECTBUCKETS 401     // # of buckets in the object hash table (a prime)
+#define OBTRACE_STACKS 14747          // max # of unique stack traces (a prime)
+#define OBTRACE_STACKSPEROBJECT 32768 // max number of object references
+#define OBTRACE_TRACEDEPTH 16         // depth of stack traces
 
-const ObpObjectBuckets   = OBTRACE_OBJECTBUCKETS;
-const ObpMaxStacks       = OBTRACE_STACKS;
+const ObpObjectBuckets = OBTRACE_OBJECTBUCKETS;
+const ObpMaxStacks = OBTRACE_STACKS;
 const ObpStacksPerObject = OBTRACE_STACKSPEROBJECT;
-const ObpTraceDepth      = OBTRACE_TRACEDEPTH;
+const ObpTraceDepth = OBTRACE_TRACEDEPTH;
 
 //
 // Object reference stacktrace structure
 //
 
-typedef struct _OBJECT_REF_TRACE {
+typedef struct _OBJECT_REF_TRACE
+{
     PVOID StackTrace[OBTRACE_TRACEDEPTH];
 } OBJECT_REF_TRACE, *POBJECT_REF_TRACE;
 
 
-typedef struct _OBJECT_REF_STACK_INFO {
+typedef struct _OBJECT_REF_STACK_INFO
+{
     USHORT Sequence;
     USHORT Index;
 } OBJECT_REF_STACK_INFO, *POBJECT_REF_STACK_INFO;
@@ -78,11 +80,12 @@ typedef struct _OBJECT_REF_STACK_INFO {
 // Object reference info structure
 //
 
-typedef struct _OBJECT_REF_INFO {
+typedef struct _OBJECT_REF_INFO
+{
     POBJECT_HEADER ObjectHeader;
     PVOID NextRef;
     UCHAR ImageFileName[16];
-    ULONG  NextPos;
+    ULONG NextPos;
     OBJECT_REF_STACK_INFO StackInfo[OBTRACE_STACKSPEROBJECT];
 } OBJECT_REF_INFO, *POBJECT_REF_INFO;
 
@@ -110,9 +113,7 @@ KSPIN_LOCK ObpStackTraceLock;
 #define OBTRACE_HASHOBJECT(x) (((((ULONG)(ULONG_PTR)(&(x)->Body)) >> 4) & 0xfffff) % OBTRACE_OBJECTBUCKETS)
 
 POBJECT_REF_INFO
-ObpGetObjectRefInfo (
-    POBJECT_HEADER ObjectHeader
-    )
+ObpGetObjectRefInfo(POBJECT_HEADER ObjectHeader)
 
 /*++
 
@@ -134,7 +135,8 @@ Return Value:
 {
     POBJECT_REF_INFO ObjectRefInfo = ObpObjectTable[OBTRACE_HASHOBJECT(ObjectHeader)];
 
-    while (ObjectRefInfo && ObjectRefInfo->ObjectHeader != ObjectHeader) {
+    while (ObjectRefInfo && ObjectRefInfo->ObjectHeader != ObjectHeader)
+    {
 
         ObjectRefInfo = (POBJECT_REF_INFO)ObjectRefInfo->NextRef;
     }
@@ -144,9 +146,7 @@ Return Value:
 
 
 ULONG
-ObpGetTraceIndex (
-    POBJECT_REF_TRACE Trace
-    )
+ObpGetTraceIndex(POBJECT_REF_TRACE Trace)
 
 /*++
 
@@ -177,7 +177,8 @@ Return Value:
     //
 
     Key = (PUSHORT)Trace->StackTrace;
-    for (Index = 0; Index < sizeof(Trace->StackTrace) / sizeof(*Key); Index += 2) {
+    for (Index = 0; Index < sizeof(Trace->StackTrace) / sizeof(*Key); Index += 2)
+    {
 
         Value += Key[Index] ^ Key[Index + 1];
     }
@@ -189,10 +190,12 @@ Return Value:
     //
 
     while (ObpStackTable[Hash].StackTrace[0] != NULL &&
-           RtlCompareMemory(&ObpStackTable[Hash], Trace, sizeof(OBJECT_REF_TRACE)) != sizeof(OBJECT_REF_TRACE)) {
+           RtlCompareMemory(&ObpStackTable[Hash], Trace, sizeof(OBJECT_REF_TRACE)) != sizeof(OBJECT_REF_TRACE))
+    {
 
         Hash = (Hash + 1) % OBTRACE_STACKS;
-        if (Hash == ((ULONG)Value) % OBTRACE_STACKS) {
+        if (Hash == ((ULONG)Value) % OBTRACE_STACKS)
+        {
 
             return OBTRACE_STACKS;
         }
@@ -202,7 +205,8 @@ Return Value:
     // If the trace doesn't already exist in the table, add it.
     //
 
-    if (ObpStackTable[Hash].StackTrace[0] == NULL) {
+    if (ObpStackTable[Hash].StackTrace[0] == NULL)
+    {
 
         RtlCopyMemory(&ObpStackTable[Hash], Trace, sizeof(OBJECT_REF_TRACE));
         ObpNumStackTraces++;
@@ -212,8 +216,7 @@ Return Value:
 }
 
 
-VOID
-ObpInitStackTrace()
+VOID ObpInitStackTrace()
 
 /*++
 
@@ -228,9 +231,9 @@ Return Value:
 --*/
 
 {
-    ULONG i,j;
+    ULONG i, j;
 
-    KeInitializeSpinLock( &ObpStackTraceLock );
+    KeInitializeSpinLock(&ObpStackTraceLock);
     RtlZeroMemory(ObpTracePoolTags, sizeof(ObpTracePoolTags));
     ObpStackSequence = 0;
     ObpNumStackTraces = 0;
@@ -244,9 +247,11 @@ Return Value:
     // The string should be in the form "Tag1;Tag2;Tag3; ..."
     //
 
-    for (i = 0; i < sizeof(ObpTracePoolTags) / sizeof(ULONG); i++) {
-        for (j = 0; j < 4; j++) {
-            ObpTracePoolTags[i] = (ObpTracePoolTags[i] << 8) | ObpTracePoolTagsBuffer[5*i+(3-j)];
+    for (i = 0; i < sizeof(ObpTracePoolTags) / sizeof(ULONG); i++)
+    {
+        for (j = 0; j < 4; j++)
+        {
+            ObpTracePoolTags[i] = (ObpTracePoolTags[i] << 8) | ObpTracePoolTagsBuffer[5 * i + (3 - j)];
         }
     }
 
@@ -256,32 +261,34 @@ Return Value:
     // fail, we turn off tracing by clearing the pool tag array.
     //
 
-    if (ObpTracePoolTags[0] != 0) {
+    if (ObpTracePoolTags[0] != 0)
+    {
 
-        ObpStackTable = ExAllocatePoolWithTag( NonPagedPool,
-                                               OBTRACE_STACKS * sizeof(OBJECT_REF_TRACE),
-                                               'TSbO' );
+        ObpStackTable = ExAllocatePoolWithTag(NonPagedPool, OBTRACE_STACKS * sizeof(OBJECT_REF_TRACE), 'TSbO');
 
-        if (ObpStackTable != NULL) {
+        if (ObpStackTable != NULL)
+        {
 
             RtlZeroMemory(ObpStackTable, OBTRACE_STACKS * sizeof(OBJECT_REF_TRACE));
 
-            ObpObjectTable = ExAllocatePoolWithTag( NonPagedPool,
-                                                    OBTRACE_OBJECTBUCKETS * sizeof(POBJECT_REF_INFO),
-                                                    'TSbO' );
-            if (ObpObjectTable != NULL) {
+            ObpObjectTable =
+                ExAllocatePoolWithTag(NonPagedPool, OBTRACE_OBJECTBUCKETS * sizeof(POBJECT_REF_INFO), 'TSbO');
+            if (ObpObjectTable != NULL)
+            {
 
                 RtlZeroMemory(ObpObjectTable, OBTRACE_OBJECTBUCKETS * sizeof(POBJECT_REF_INFO));
                 ObpTraceEnabled = TRUE;
+            }
+            else
+            {
 
-            } else {
-
-                ExFreePoolWithTag( ObpStackTable, 'TSbO' );
+                ExFreePoolWithTag(ObpStackTable, 'TSbO');
                 ObpStackTable = NULL;
                 RtlZeroMemory(ObpTracePoolTags, sizeof(ObpTracePoolTags));
             }
-
-        } else {
+        }
+        else
+        {
 
             RtlZeroMemory(ObpTracePoolTags, sizeof(ObpTracePoolTags));
         }
@@ -290,9 +297,7 @@ Return Value:
 
 
 BOOLEAN
-ObpIsObjectTraced (
-    POBJECT_HEADER ObjectHeader
-    )
+ObpIsObjectTraced(POBJECT_HEADER ObjectHeader)
 
 /*++
 
@@ -314,16 +319,19 @@ Return Value:
 {
     ULONG i;
 
-    if (ObjectHeader != NULL) {
+    if (ObjectHeader != NULL)
+    {
 
         //
         // Loop through the ObpTracePoolTags array, and return true if
         // the object type key matches one of them.
         //
 
-        for (i = 0; i < sizeof(ObpTracePoolTags) / sizeof(ULONG); i++) {
+        for (i = 0; i < sizeof(ObpTracePoolTags) / sizeof(ULONG); i++)
+        {
 
-            if (ObjectHeader->Type->Key == ObpTracePoolTags[i]) {
+            if (ObjectHeader->Type->Key == ObpTracePoolTags[i])
+            {
 
                 return TRUE;
             }
@@ -334,10 +342,7 @@ Return Value:
 }
 
 
-VOID
-ObpRegisterObject (
-    POBJECT_HEADER ObjectHeader
-    )
+VOID ObpRegisterObject(POBJECT_HEADER ObjectHeader)
 
 /*++
 
@@ -363,23 +368,24 @@ Return Value:
     // Are we tracing this object?
     //
 
-    if (ObpIsObjectTraced( ObjectHeader )) {
+    if (ObpIsObjectTraced(ObjectHeader))
+    {
 
-        ExAcquireSpinLock( &ObpStackTraceLock, &OldIrql );
+        ExAcquireSpinLock(&ObpStackTraceLock, &OldIrql);
 
         ObjectRefInfo = ObpGetObjectRefInfo(ObjectHeader);
 
-        if (ObjectRefInfo == NULL) {
+        if (ObjectRefInfo == NULL)
+        {
 
             //
             // Allocate a new OBJECT_REF_INFO for the object
             //
 
-            ObjectRefInfo = ExAllocatePoolWithTag( NonPagedPool,
-                                                   sizeof(OBJECT_REF_INFO),
-                                                   'TSbO' );
+            ObjectRefInfo = ExAllocatePoolWithTag(NonPagedPool, sizeof(OBJECT_REF_INFO), 'TSbO');
 
-            if (ObjectRefInfo != NULL) {
+            if (ObjectRefInfo != NULL)
+            {
 
                 //
                 // Place the object into the hash table (at the beginning of the bucket)
@@ -387,14 +393,16 @@ Return Value:
 
                 ObjectRefInfo->NextRef = ObpObjectTable[OBTRACE_HASHOBJECT(ObjectHeader)];
                 ObpObjectTable[OBTRACE_HASHOBJECT(ObjectHeader)] = ObjectRefInfo;
+            }
+            else
+            {
 
-            } else {
-
-                DbgPrint( "ObpRegisterObject - ExAllocatePoolWithTag failed.\n" );
+                DbgPrint("ObpRegisterObject - ExAllocatePoolWithTag failed.\n");
             }
         }
 
-        if (ObjectRefInfo != NULL) {
+        if (ObjectRefInfo != NULL)
+        {
 
             ObpNumTracedObjects++;
 
@@ -403,23 +411,18 @@ Return Value:
             //
 
             ObjectRefInfo->ObjectHeader = ObjectHeader;
-            RtlCopyMemory( ObjectRefInfo->ImageFileName,
-                           PsGetCurrentProcess()->ImageFileName,
-                           sizeof(ObjectRefInfo->ImageFileName) );
+            RtlCopyMemory(ObjectRefInfo->ImageFileName, PsGetCurrentProcess()->ImageFileName,
+                          sizeof(ObjectRefInfo->ImageFileName));
             ObjectRefInfo->NextPos = 0;
-            RtlZeroMemory( ObjectRefInfo->StackInfo,
-                           sizeof(ObjectRefInfo->StackInfo) );
+            RtlZeroMemory(ObjectRefInfo->StackInfo, sizeof(ObjectRefInfo->StackInfo));
         }
 
-        ExReleaseSpinLock( &ObpStackTraceLock, OldIrql );
+        ExReleaseSpinLock(&ObpStackTraceLock, OldIrql);
     }
 }
 
 
-VOID
-ObpDeregisterObject (
-    POBJECT_HEADER ObjectHeader
-    )
+VOID ObpDeregisterObject(POBJECT_HEADER ObjectHeader)
 
 /*++
 
@@ -445,31 +448,37 @@ Return Value:
     // Are we tracing this object?
     //
 
-    if (ObpIsObjectTraced( ObjectHeader )) {
+    if (ObpIsObjectTraced(ObjectHeader))
+    {
 
-        ExAcquireSpinLock( &ObpStackTraceLock, &OldIrql );
+        ExAcquireSpinLock(&ObpStackTraceLock, &OldIrql);
 
         ObjectRefInfo = ObpObjectTable[OBTRACE_HASHOBJECT(ObjectHeader)];
 
-        if (ObjectRefInfo != NULL) {
+        if (ObjectRefInfo != NULL)
+        {
 
             //
             // Remove the entry from the list
             //
 
-            if (ObjectRefInfo->ObjectHeader == ObjectHeader) {
+            if (ObjectRefInfo->ObjectHeader == ObjectHeader)
+            {
 
                 ObpObjectTable[OBTRACE_HASHOBJECT(ObjectHeader)] = ObjectRefInfo->NextRef;
-
-            } else {
+            }
+            else
+            {
 
                 POBJECT_REF_INFO PrevObjectRefInfo;
-                do {
+                do
+                {
                     PrevObjectRefInfo = ObjectRefInfo;
                     ObjectRefInfo = ObjectRefInfo->NextRef;
                 } while (ObjectRefInfo && ObjectRefInfo->ObjectHeader != ObjectHeader);
 
-                if (ObjectRefInfo && ObjectRefInfo->ObjectHeader == ObjectHeader) {
+                if (ObjectRefInfo && ObjectRefInfo->ObjectHeader == ObjectHeader)
+                {
 
                     PrevObjectRefInfo->NextRef = ObjectRefInfo->NextRef;
                 }
@@ -480,21 +489,18 @@ Return Value:
         // Free the object we just removed from the list
         //
 
-        if (ObjectRefInfo != NULL) {
+        if (ObjectRefInfo != NULL)
+        {
 
-            ExFreePoolWithTag( ObjectRefInfo, 'TSbO' );
+            ExFreePoolWithTag(ObjectRefInfo, 'TSbO');
         }
 
-        ExReleaseSpinLock( &ObpStackTraceLock, OldIrql );
+        ExReleaseSpinLock(&ObpStackTraceLock, OldIrql);
     }
 }
 
 
-VOID
-ObpPushStackInfo (
-    POBJECT_HEADER ObjectHeader,
-    BOOLEAN IsRef
-    )
+VOID ObpPushStackInfo(POBJECT_HEADER ObjectHeader, BOOLEAN IsRef)
 
 /*++
 
@@ -521,13 +527,15 @@ Return Value:
     // Are we tracing this object?
     //
 
-    if (ObpIsObjectTraced( ObjectHeader )) {
+    if (ObpIsObjectTraced(ObjectHeader))
+    {
 
-        ExAcquireSpinLock( &ObpStackTraceLock, &OldIrql );
+        ExAcquireSpinLock(&ObpStackTraceLock, &OldIrql);
 
-        ObjectInfo = ObpGetObjectRefInfo( ObjectHeader );
+        ObjectInfo = ObpGetObjectRefInfo(ObjectHeader);
 
-        if (ObjectInfo) {
+        if (ObjectInfo)
+        {
 
             OBJECT_REF_TRACE Stack = { 0 };
             ULONG StackIndex;
@@ -537,37 +545,41 @@ Return Value:
             // Capture the stack trace
             //
 
-            CapturedTraces = RtlCaptureStackBackTrace( 1, OBTRACE_TRACEDEPTH, Stack.StackTrace, &StackIndex );
+            CapturedTraces = RtlCaptureStackBackTrace(1, OBTRACE_TRACEDEPTH, Stack.StackTrace, &StackIndex);
 
-            if (CapturedTraces >= 1) {
+            if (CapturedTraces >= 1)
+            {
 
                 //
                 // Get the table index for the trace
                 //
 
-                StackIndex = ObpGetTraceIndex( &Stack );
+                StackIndex = ObpGetTraceIndex(&Stack);
 
-                if (StackIndex < OBTRACE_STACKS) {
+                if (StackIndex < OBTRACE_STACKS)
+                {
 
                     //
                     // Add new reference info to the object
                     //
 
-                    if (ObjectInfo->NextPos < OBTRACE_STACKSPEROBJECT) {
+                    if (ObjectInfo->NextPos < OBTRACE_STACKSPEROBJECT)
+                    {
 
                         ObjectInfo->StackInfo[ObjectInfo->NextPos].Index = (USHORT)StackIndex | (IsRef ? 0x8000 : 0);
                         ObpStackSequence++;
                         ObjectInfo->StackInfo[ObjectInfo->NextPos].Sequence = (USHORT)ObpStackSequence;
                         ObjectInfo->NextPos++;
                     }
-
-                } else {
-                    DbgPrint( "ObpPushStackInfo -- ObpStackTable overflow!\n" );
+                }
+                else
+                {
+                    DbgPrint("ObpPushStackInfo -- ObpStackTable overflow!\n");
                 }
             }
         }
 
-        ExReleaseSpinLock( &ObpStackTraceLock, OldIrql );
+        ExReleaseSpinLock(&ObpStackTraceLock, OldIrql);
     }
 }
 
@@ -577,26 +589,21 @@ Return Value:
 //  End Stack trace code
 //
 
-typedef struct _OB_TEMP_BUFFER {
+typedef struct _OB_TEMP_BUFFER
+{
 
     ACCESS_STATE LocalAccessState;
     OBJECT_CREATE_INFORMATION ObjectCreateInfo;
     OBP_LOOKUP_CONTEXT LookupContext;
     AUX_ACCESS_DATA AuxData;
 
-} OB_TEMP_BUFFER,  *POB_TEMP_BUFFER;
+} OB_TEMP_BUFFER, *POB_TEMP_BUFFER;
 
-
+
 NTSTATUS
-ObOpenObjectByName (
-    IN POBJECT_ATTRIBUTES ObjectAttributes,
-    IN POBJECT_TYPE ObjectType OPTIONAL,
-    IN KPROCESSOR_MODE AccessMode,
-    IN OUT PACCESS_STATE AccessState OPTIONAL,
-    IN ACCESS_MASK DesiredAccess OPTIONAL,
-    IN OUT PVOID ParseContext OPTIONAL,
-    OUT PHANDLE Handle
-    )
+ObOpenObjectByName(IN POBJECT_ATTRIBUTES ObjectAttributes, IN POBJECT_TYPE ObjectType OPTIONAL,
+                   IN KPROCESSOR_MODE AccessMode, IN OUT PACCESS_STATE AccessState OPTIONAL,
+                   IN ACCESS_MASK DesiredAccess OPTIONAL, IN OUT PVOID ParseContext OPTIONAL, OUT PHANDLE Handle)
 
 /*++
 
@@ -644,7 +651,7 @@ Return Value:
     POBJECT_HEADER ObjectHeader;
     UNICODE_STRING CapturedObjectName;
     PGENERIC_MAPPING GenericMapping;
-    
+
     PAGED_CODE();
 
     ObpValidateIrql("ObOpenObjectByName");
@@ -655,20 +662,20 @@ Return Value:
 
     *Handle = NULL;
 
-    if (!ARGUMENT_PRESENT(ObjectAttributes)) {
+    if (!ARGUMENT_PRESENT(ObjectAttributes))
+    {
 
         Status = STATUS_INVALID_PARAMETER;
-
-    } else {
+    }
+    else
+    {
 
         POB_TEMP_BUFFER TempBuffer;
 
-        TempBuffer = ExAllocatePoolWithTag( NonPagedPool,
-                                            sizeof(OB_TEMP_BUFFER),
-                                            'tSbO'
-                                          );
+        TempBuffer = ExAllocatePoolWithTag(NonPagedPool, sizeof(OB_TEMP_BUFFER), 'tSbO');
 
-        if (TempBuffer == NULL) {
+        if (TempBuffer == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
         }
@@ -677,22 +684,19 @@ Return Value:
         //  Capture the object creation information.
         //
 
-        Status = ObpCaptureObjectCreateInformation( ObjectType,
-                                                    AccessMode,
-                                                    AccessMode,
-                                                    ObjectAttributes,
-                                                    &CapturedObjectName,
-                                                    &TempBuffer->ObjectCreateInfo,
-                                                    TRUE );
+        Status = ObpCaptureObjectCreateInformation(ObjectType, AccessMode, AccessMode, ObjectAttributes,
+                                                   &CapturedObjectName, &TempBuffer->ObjectCreateInfo, TRUE);
 
         //
         //  If the object creation information is successfully captured,
         //  then generate the access state.
         //
 
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
 
-            if (!ARGUMENT_PRESENT(AccessState)) {
+            if (!ARGUMENT_PRESENT(AccessState))
+            {
 
                 //
                 //  If an object type descriptor is specified, then use
@@ -702,19 +706,19 @@ Return Value:
 
                 GenericMapping = NULL;
 
-                if (ARGUMENT_PRESENT(ObjectType)) {
+                if (ARGUMENT_PRESENT(ObjectType))
+                {
 
                     GenericMapping = &ObjectType->TypeInfo.GenericMapping;
                 }
 
                 AccessState = &TempBuffer->LocalAccessState;
 
-                Status = SeCreateAccessState( &TempBuffer->LocalAccessState,
-                                              &TempBuffer->AuxData,
-                                              DesiredAccess,
-                                              GenericMapping );
+                Status = SeCreateAccessState(&TempBuffer->LocalAccessState, &TempBuffer->AuxData, DesiredAccess,
+                                             GenericMapping);
 
-                if (!NT_SUCCESS(Status)) {
+                if (!NT_SUCCESS(Status))
+                {
 
                     goto FreeCreateInfo;
                 }
@@ -725,7 +729,8 @@ Return Value:
             //  attributes, then capture it in the access state.
             //
 
-            if (TempBuffer->ObjectCreateInfo.SecurityDescriptor != NULL) {
+            if (TempBuffer->ObjectCreateInfo.SecurityDescriptor != NULL)
+            {
 
                 AccessState->SecurityDescriptor = TempBuffer->ObjectCreateInfo.SecurityDescriptor;
             }
@@ -741,26 +746,21 @@ Return Value:
             //  name.
             //
 
-            if (NT_SUCCESS(Status)) {
+            if (NT_SUCCESS(Status))
+            {
 
-                Status = ObpLookupObjectName( TempBuffer->ObjectCreateInfo.RootDirectory,
-                                              &CapturedObjectName,
-                                              TempBuffer->ObjectCreateInfo.Attributes,
-                                              ObjectType,
-                                              AccessMode,
-                                              ParseContext,
-                                              TempBuffer->ObjectCreateInfo.SecurityQos,
-                                              NULL,
-                                              AccessState,
-                                              &TempBuffer->LookupContext,
-                                              &ExistingObject );
+                Status = ObpLookupObjectName(TempBuffer->ObjectCreateInfo.RootDirectory, &CapturedObjectName,
+                                             TempBuffer->ObjectCreateInfo.Attributes, ObjectType, AccessMode,
+                                             ParseContext, TempBuffer->ObjectCreateInfo.SecurityQos, NULL, AccessState,
+                                             &TempBuffer->LookupContext, &ExistingObject);
 
                 //
                 //  If the object was successfully looked up, then attempt
                 //  to create or open a handle.
                 //
 
-                if (NT_SUCCESS(Status)) {
+                if (NT_SUCCESS(Status))
+                {
 
                     ObjectHeader = OBJECT_TO_OBJECT_HEADER(ExistingObject);
 
@@ -770,17 +770,20 @@ Return Value:
                     //  an object is being opened.
                     //
 
-                    if (ObjectHeader->Flags & OB_FLAG_NEW_OBJECT) {
+                    if (ObjectHeader->Flags & OB_FLAG_NEW_OBJECT)
+                    {
 
                         OpenReason = ObCreateHandle;
 
-                        if (ObjectHeader->ObjectCreateInfo != NULL) {
+                        if (ObjectHeader->ObjectCreateInfo != NULL)
+                        {
 
                             ObpFreeObjectCreateInformation(ObjectHeader->ObjectCreateInfo);
                             ObjectHeader->ObjectCreateInfo = NULL;
                         }
-
-                    } else {
+                    }
+                    else
+                    {
 
                         OpenReason = ObOpenHandle;
                     }
@@ -790,13 +793,15 @@ Return Value:
                     //  return an error status.
                     //
 
-                    if (ObjectHeader->Type->TypeInfo.InvalidAttributes & TempBuffer->ObjectCreateInfo.Attributes) {
+                    if (ObjectHeader->Type->TypeInfo.InvalidAttributes & TempBuffer->ObjectCreateInfo.Attributes)
+                    {
 
                         Status = STATUS_INVALID_PARAMETER;
 
-                        ObpReleaseLookupContext( &TempBuffer->LookupContext );
-
-                    } else {
+                        ObpReleaseLookupContext(&TempBuffer->LookupContext);
+                    }
+                    else
+                    {
 
                         //
                         //  The status returned by the object lookup routine
@@ -805,32 +810,29 @@ Return Value:
                         //  is returned.
                         //
 
-                        HandleStatus = ObpCreateHandle( OpenReason,
-                                                        ExistingObject,
-                                                        ObjectType,
-                                                        AccessState,
-                                                        0,
-                                                        TempBuffer->ObjectCreateInfo.Attributes,
-                                                        &TempBuffer->LookupContext,
-                                                        AccessMode,
-                                                        (PVOID *)NULL,
-                                                        &NewHandle );
+                        HandleStatus =
+                            ObpCreateHandle(OpenReason, ExistingObject, ObjectType, AccessState, 0,
+                                            TempBuffer->ObjectCreateInfo.Attributes, &TempBuffer->LookupContext,
+                                            AccessMode, (PVOID *)NULL, &NewHandle);
 
-                        if (!NT_SUCCESS(HandleStatus)) {
+                        if (!NT_SUCCESS(HandleStatus))
+                        {
 
                             ObDereferenceObject(ExistingObject);
 
                             Status = HandleStatus;
-
-                        } else {
+                        }
+                        else
+                        {
 
                             *Handle = NewHandle;
                         }
                     }
+                }
+                else
+                {
 
-                } else {
-
-                    ObpReleaseLookupContext( &TempBuffer->LookupContext );
+                    ObpReleaseLookupContext(&TempBuffer->LookupContext);
                 }
             }
 
@@ -839,7 +841,8 @@ Return Value:
             //  state.
             //
 
-            if (AccessState == &TempBuffer->LocalAccessState) {
+            if (AccessState == &TempBuffer->LocalAccessState)
+            {
 
                 SeDeleteAccessState(AccessState);
             }
@@ -852,7 +855,8 @@ Return Value:
 
             ObpReleaseObjectCreateInformation(&TempBuffer->ObjectCreateInfo);
 
-            if (CapturedObjectName.Buffer != NULL) {
+            if (CapturedObjectName.Buffer != NULL)
+            {
 
                 ObpFreeObjectNameBuffer(&CapturedObjectName);
             }
@@ -864,17 +868,11 @@ Return Value:
     return Status;
 }
 
-
+
 NTSTATUS
-ObOpenObjectByPointer (
-    IN PVOID Object,
-    IN ULONG HandleAttributes,
-    IN PACCESS_STATE PassedAccessState OPTIONAL,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_TYPE ObjectType,
-    IN KPROCESSOR_MODE AccessMode,
-    OUT PHANDLE Handle
-    )
+ObOpenObjectByPointer(IN PVOID Object, IN ULONG HandleAttributes, IN PACCESS_STATE PassedAccessState OPTIONAL,
+                      IN ACCESS_MASK DesiredAccess, IN POBJECT_TYPE ObjectType, IN KPROCESSOR_MODE AccessMode,
+                      OUT PHANDLE Handle)
 
 /*++
 
@@ -918,25 +916,23 @@ Return Value:
 
     PAGED_CODE();
 
-    ObpValidateIrql( "ObOpenObjectByPointer" );
+    ObpValidateIrql("ObOpenObjectByPointer");
 
     //
     //  First increment the pointer count for the object.  This routine
     //  also checks the object types
     //
 
-    Status = ObReferenceObjectByPointer( Object,
-                                         0,
-                                         ObjectType,
-                                         AccessMode );
+    Status = ObReferenceObjectByPointer(Object, 0, ObjectType, AccessMode);
 
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         //  Get the object header for the input object body
         //
 
-        ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
+        ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
 
         //
         //  If the caller did not pass in an access state then
@@ -944,28 +940,29 @@ Return Value:
         //  and the object types generic mapping
         //
 
-        if (!ARGUMENT_PRESENT( PassedAccessState )) {
+        if (!ARGUMENT_PRESENT(PassedAccessState))
+        {
 
-            Status = SeCreateAccessState( &LocalAccessState,
-                                          &AuxData,
-                                          DesiredAccess,
-                                          &ObjectHeader->Type->TypeInfo.GenericMapping );
+            Status = SeCreateAccessState(&LocalAccessState, &AuxData, DesiredAccess,
+                                         &ObjectHeader->Type->TypeInfo.GenericMapping);
 
-            if (!NT_SUCCESS( Status )) {
+            if (!NT_SUCCESS(Status))
+            {
 
-                ObDereferenceObject( Object );
+                ObDereferenceObject(Object);
 
-                return(Status);
+                return (Status);
             }
 
             AccessState = &LocalAccessState;
 
-        //
-        //  Otherwise the caller did specify an access state so
-        //  we use the one passed in.
-        //
-
-        } else {
+            //
+            //  Otherwise the caller did specify an access state so
+            //  we use the one passed in.
+            //
+        }
+        else
+        {
 
             AccessState = PassedAccessState;
         }
@@ -975,16 +972,18 @@ Return Value:
         //  valid for the given object type
         //
 
-        if (ObjectHeader->Type->TypeInfo.InvalidAttributes & HandleAttributes) {
+        if (ObjectHeader->Type->TypeInfo.InvalidAttributes & HandleAttributes)
+        {
 
-            if (AccessState == &LocalAccessState) {
+            if (AccessState == &LocalAccessState)
+            {
 
-                SeDeleteAccessState( AccessState );
+                SeDeleteAccessState(AccessState);
             }
 
-            ObDereferenceObject( Object );
+            ObDereferenceObject(Object);
 
-            return( STATUS_INVALID_PARAMETER );
+            return (STATUS_INVALID_PARAMETER);
         }
 
         //
@@ -992,20 +991,13 @@ Return Value:
         //  the new handle so now create a new handle for the object.
         //
 
-        Status = ObpCreateHandle( ObOpenHandle,
-                                  Object,
-                                  ObjectType,
-                                  AccessState,
-                                  0,
-                                  HandleAttributes,
-                                  NULL,
-                                  AccessMode,
-                                  (PVOID *)NULL,
-                                  &NewHandle );
+        Status = ObpCreateHandle(ObOpenHandle, Object, ObjectType, AccessState, 0, HandleAttributes, NULL, AccessMode,
+                                 (PVOID *)NULL, &NewHandle);
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            ObDereferenceObject( Object );
+            ObDereferenceObject(Object);
         }
     }
 
@@ -1014,11 +1006,13 @@ Return Value:
     //  then set the output variable correctly
     //
 
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
 
         *Handle = NewHandle;
-
-    } else {
+    }
+    else
+    {
 
         *Handle = NULL;
     }
@@ -1027,28 +1021,24 @@ Return Value:
     //  Check if we used our own access state and now need to cleanup
     //
 
-    if (AccessState == &LocalAccessState) {
+    if (AccessState == &LocalAccessState)
+    {
 
-        SeDeleteAccessState( AccessState );
+        SeDeleteAccessState(AccessState);
     }
 
     //
     //  And return to our caller
     //
 
-    return( Status );
+    return (Status);
 }
 
-
+
 NTSTATUS
-ObReferenceObjectByHandle (
-    IN HANDLE Handle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_TYPE ObjectType OPTIONAL,
-    IN KPROCESSOR_MODE AccessMode,
-    OUT PVOID *Object,
-    OUT POBJECT_HANDLE_INFORMATION HandleInformation OPTIONAL
-    )
+ObReferenceObjectByHandle(IN HANDLE Handle, IN ACCESS_MASK DesiredAccess, IN POBJECT_TYPE ObjectType OPTIONAL,
+                          IN KPROCESSOR_MODE AccessMode, OUT PVOID *Object,
+                          OUT POBJECT_HANDLE_INFORMATION HandleInformation OPTIONAL)
 
 /*++
 
@@ -1092,13 +1082,14 @@ Return Value:
 
     ObpValidateIrql("ObReferenceObjectByHandle");
 
-    Thread = PsGetCurrentThread ();
+    Thread = PsGetCurrentThread();
     *Object = NULL;
 
     //
     // Check is this handle is a kernel handle or one of the two builtin pseudo handles
     //
-    if ((LONG)(ULONG_PTR) Handle < 0) {
+    if ((LONG)(ULONG_PTR)Handle < 0)
+    {
         //
         //  If the handle is equal to the current process handle and the object
         //  type is NULL or type process, then attempt to translate a handle to
@@ -1106,19 +1097,22 @@ Return Value:
         //  thread handle.
         //
 
-        if (Handle == NtCurrentProcess()) {
+        if (Handle == NtCurrentProcess())
+        {
 
-            if ((ObjectType == PsProcessType) || (ObjectType == NULL)) {
+            if ((ObjectType == PsProcessType) || (ObjectType == NULL))
+            {
 
                 Process = PsGetCurrentProcessByThread(Thread);
                 GrantedAccess = Process->GrantedAccess;
 
-                if ((SeComputeDeniedAccesses(GrantedAccess, DesiredAccess) == 0) ||
-                    (AccessMode == KernelMode)) {
+                if ((SeComputeDeniedAccesses(GrantedAccess, DesiredAccess) == 0) || (AccessMode == KernelMode))
+                {
 
                     ObjectHeader = OBJECT_TO_OBJECT_HEADER(Process);
 
-                    if (ARGUMENT_PRESENT(HandleInformation)) {
+                    if (ARGUMENT_PRESENT(HandleInformation))
+                    {
 
                         HandleInformation->GrantedAccess = GrantedAccess;
                         HandleInformation->HandleAttributes = 0;
@@ -1127,41 +1121,46 @@ Return Value:
                     ObpIncrPointerCount(ObjectHeader);
                     *Object = Process;
 
-                    ASSERT( *Object != NULL );
+                    ASSERT(*Object != NULL);
 
                     Status = STATUS_SUCCESS;
-
-                } else {
+                }
+                else
+                {
 
                     Status = STATUS_ACCESS_DENIED;
                 }
-
-            } else {
+            }
+            else
+            {
 
                 Status = STATUS_OBJECT_TYPE_MISMATCH;
             }
 
             return Status;
 
-        //
-        //  If the handle is equal to the current thread handle and the object
-        //  type is NULL or type thread, then attempt to translate a handle to
-        //  the current thread. Otherwise, the we'll try and translate the
-        //  handle
-        //
+            //
+            //  If the handle is equal to the current thread handle and the object
+            //  type is NULL or type thread, then attempt to translate a handle to
+            //  the current thread. Otherwise, the we'll try and translate the
+            //  handle
+            //
+        }
+        else if (Handle == NtCurrentThread())
+        {
 
-        } else if (Handle == NtCurrentThread()) {
-
-            if ((ObjectType == PsThreadType) || (ObjectType == NULL)) {
+            if ((ObjectType == PsThreadType) || (ObjectType == NULL))
+            {
 
                 GrantedAccess = Thread->GrantedAccess;
 
-                if ((SeComputeDeniedAccesses(GrantedAccess, DesiredAccess) == 0) ||
-                    (AccessMode == KernelMode)) {
+                if ((SeComputeDeniedAccesses(GrantedAccess, DesiredAccess) == 0) || (AccessMode == KernelMode))
+                {
 
                     ObjectHeader = OBJECT_TO_OBJECT_HEADER(Thread);
 
-                    if (ARGUMENT_PRESENT(HandleInformation)) {
+                    if (ARGUMENT_PRESENT(HandleInformation))
+                    {
 
                         HandleInformation->GrantedAccess = GrantedAccess;
                         HandleInformation->HandleAttributes = 0;
@@ -1170,43 +1169,49 @@ Return Value:
                     ObpIncrPointerCount(ObjectHeader);
                     *Object = Thread;
 
-                    ASSERT( *Object != NULL );
+                    ASSERT(*Object != NULL);
 
                     Status = STATUS_SUCCESS;
-
-                } else {
+                }
+                else
+                {
 
                     Status = STATUS_ACCESS_DENIED;
                 }
-
-            } else {
+            }
+            else
+            {
 
                 Status = STATUS_OBJECT_TYPE_MISMATCH;
             }
 
             return Status;
-
-        } else if (AccessMode == KernelMode) {
+        }
+        else if (AccessMode == KernelMode)
+        {
             //
             //  Make the handle look like a regular handle
             //
 
-            Handle = DecodeKernelHandle( Handle );
+            Handle = DecodeKernelHandle(Handle);
 
             //
             //  The global kernel handle table
             //
 
             HandleTable = ObpKernelHandleTable;
-        } else {
+        }
+        else
+        {
             //
             // The previous mode was user for this kernel handle value. Reject it here.
             //
 
             return STATUS_INVALID_HANDLE;
         }
-
-    } else {
+    }
+    else
+    {
         HandleTable = PsGetCurrentProcessByThread(Thread)->ObjectTable;
     }
 
@@ -1222,37 +1227,42 @@ Return Value:
     //  Translate the specified handle to an object table index.
     //
 
-    ObjectTableEntry = ExMapHandleToPointerEx ( HandleTable, Handle, AccessMode );
+    ObjectTableEntry = ExMapHandleToPointerEx(HandleTable, Handle, AccessMode);
 
     //
     //  Make sure the object table entry really does exist
     //
 
-    if (ObjectTableEntry != NULL) {
+    if (ObjectTableEntry != NULL)
+    {
 
         ObjectHeader = (POBJECT_HEADER)(((ULONG_PTR)(ObjectTableEntry->Object)) & ~OBJ_HANDLE_ATTRIBUTES);
 
-        if ((ObjectHeader->Type == ObjectType) || (ObjectType == NULL)) {
+        if ((ObjectHeader->Type == ObjectType) || (ObjectType == NULL))
+        {
 
-#if i386 
-            if (NtGlobalFlag & FLG_KERNEL_STACK_TRACE_DB) {
+#if i386
+            if (NtGlobalFlag & FLG_KERNEL_STACK_TRACE_DB)
+            {
 
-                if ((AccessMode != KernelMode) || ARGUMENT_PRESENT(HandleInformation)) {
+                if ((AccessMode != KernelMode) || ARGUMENT_PRESENT(HandleInformation))
+                {
 
-                    GrantedAccess = ObpTranslateGrantedAccessIndex( ObjectTableEntry->GrantedAccessIndex );
+                    GrantedAccess = ObpTranslateGrantedAccessIndex(ObjectTableEntry->GrantedAccessIndex);
                 }
-
-            } else {
+            }
+            else
+            {
 
                 GrantedAccess = ObpDecodeGrantedAccess(ObjectTableEntry->GrantedAccess);
             }
 #else
             GrantedAccess = ObpDecodeGrantedAccess(ObjectTableEntry->GrantedAccess);
 
-#endif // i386 
+#endif // i386
 
-            if ((SeComputeDeniedAccesses(GrantedAccess, DesiredAccess) == 0) ||
-                (AccessMode == KernelMode)) {
+            if ((SeComputeDeniedAccesses(GrantedAccess, DesiredAccess) == 0) || (AccessMode == KernelMode))
+            {
 
                 PHANDLE_TABLE_ENTRY_INFO ObjectInfo;
 
@@ -1270,7 +1280,8 @@ Return Value:
                 //  handle.
                 //
 
-                if (ARGUMENT_PRESENT(HandleInformation)) {
+                if (ARGUMENT_PRESENT(HandleInformation))
+                {
 
                     HandleInformation->GrantedAccess = GrantedAccess;
                     HandleInformation->HandleAttributes = ObpGetHandleAttributes(ObjectTableEntry);
@@ -1286,41 +1297,42 @@ Return Value:
                 //  created.
                 //
 
-                if ( (ObjectTableEntry->ObAttributes & OBJ_AUDIT_OBJECT_CLOSE) &&
-                     (ObjectInfo != NULL) &&
-                     (ObjectInfo->AuditMask != 0) &&
-                     (DesiredAccess != 0) &&
-                     (AccessMode != KernelMode)) {
+                if ((ObjectTableEntry->ObAttributes & OBJ_AUDIT_OBJECT_CLOSE) && (ObjectInfo != NULL) &&
+                    (ObjectInfo->AuditMask != 0) && (DesiredAccess != 0) && (AccessMode != KernelMode))
+                {
 
-                      
-                      ObpAuditObjectAccess( Handle, ObjectInfo, &ObjectHeader->Type->Name, DesiredAccess );
+
+                    ObpAuditObjectAccess(Handle, ObjectInfo, &ObjectHeader->Type->Name, DesiredAccess);
                 }
 
                 ObpIncrPointerCount(ObjectHeader);
 
-                ExUnlockHandleTableEntry( HandleTable, ObjectTableEntry );
+                ExUnlockHandleTableEntry(HandleTable, ObjectTableEntry);
 
                 KeLeaveCriticalRegionThread(&Thread->Tcb);
 
                 *Object = &ObjectHeader->Body;
 
-                ASSERT( *Object != NULL );
+                ASSERT(*Object != NULL);
 
                 return STATUS_SUCCESS;
-
-            } else {
+            }
+            else
+            {
 
                 Status = STATUS_ACCESS_DENIED;
             }
-
-        } else {
+        }
+        else
+        {
 
             Status = STATUS_OBJECT_TYPE_MISMATCH;
         }
 
-        ExUnlockHandleTableEntry( HandleTable, ObjectTableEntry );
-
-    } else {
+        ExUnlockHandleTableEntry(HandleTable, ObjectTableEntry);
+    }
+    else
+    {
 
         Status = STATUS_INVALID_HANDLE;
     }
@@ -1331,14 +1343,10 @@ Return Value:
     return Status;
 }
 
-
+
 NTSTATUS
-ObReferenceFileObjectForWrite(
-    IN HANDLE Handle,
-    IN KPROCESSOR_MODE AccessMode,
-    OUT PVOID *FileObject,
-    OUT POBJECT_HANDLE_INFORMATION HandleInformation
-    )
+ObReferenceFileObjectForWrite(IN HANDLE Handle, IN KPROCESSOR_MODE AccessMode, OUT PVOID *FileObject,
+                              OUT POBJECT_HANDLE_INFORMATION HandleInformation)
 
 /*++
 
@@ -1380,35 +1388,41 @@ Return Value:
 
     ObpValidateIrql("ObReferenceFileObjectForWrite");
 
-    Thread = PsGetCurrentThread ();
+    Thread = PsGetCurrentThread();
 
     //
     // Check is this handle is a kernel handle
     //
 
-    if ((LONG)(ULONG_PTR) Handle < 0) {
-        
-        if ((AccessMode == KernelMode) && (Handle != NtCurrentProcess()) && (Handle != NtCurrentThread())) {
-            
+    if ((LONG)(ULONG_PTR)Handle < 0)
+    {
+
+        if ((AccessMode == KernelMode) && (Handle != NtCurrentProcess()) && (Handle != NtCurrentThread()))
+        {
+
             //
             //  Make the handle look like a regular handle
             //
 
-            Handle = DecodeKernelHandle( Handle );
+            Handle = DecodeKernelHandle(Handle);
 
             //
             //  The global kernel handle table
             //
 
             HandleTable = ObpKernelHandleTable;
-        } else {
+        }
+        else
+        {
             //
             // The previous mode was user for this kernel handle value, or it was a builtin handle. Reject it here.
             //
 
             return STATUS_INVALID_HANDLE;
-        } 
-    } else {
+        }
+    }
+    else
+    {
         HandleTable = PsGetCurrentProcessByThread(Thread)->ObjectTable;
     }
 
@@ -1424,24 +1438,28 @@ Return Value:
     //  Translate the specified handle to an object table index.
     //
 
-    ObjectTableEntry = ExMapHandleToPointerEx ( HandleTable, Handle, AccessMode );
+    ObjectTableEntry = ExMapHandleToPointerEx(HandleTable, Handle, AccessMode);
 
     //
     //  Make sure the object table entry really does exist
     //
 
-    if (ObjectTableEntry != NULL) {
+    if (ObjectTableEntry != NULL)
+    {
 
         ObjectHeader = (POBJECT_HEADER)(((ULONG_PTR)(ObjectTableEntry->Object)) & ~OBJ_HANDLE_ATTRIBUTES);
 
-        if (NT_SUCCESS(IoComputeDesiredAccessFileObject((PFILE_OBJECT)&ObjectHeader->Body, &DesiredAccess))) {
+        if (NT_SUCCESS(IoComputeDesiredAccessFileObject((PFILE_OBJECT)&ObjectHeader->Body, &DesiredAccess)))
+        {
 
 #if i386
-            if (NtGlobalFlag & FLG_KERNEL_STACK_TRACE_DB) {
+            if (NtGlobalFlag & FLG_KERNEL_STACK_TRACE_DB)
+            {
 
-                GrantedAccess = ObpTranslateGrantedAccessIndex( ObjectTableEntry->GrantedAccessIndex );
-
-            } else {
+                GrantedAccess = ObpTranslateGrantedAccessIndex(ObjectTableEntry->GrantedAccessIndex);
+            }
+            else
+            {
 
                 GrantedAccess = ObpDecodeGrantedAccess(ObjectTableEntry->GrantedAccess);
             }
@@ -1473,7 +1491,8 @@ Return Value:
             // CREATE_PIPE_INSTANCE access.
             //
 
-            if (SeComputeGrantedAccesses( GrantedAccess, DesiredAccess )) {
+            if (SeComputeGrantedAccesses(GrantedAccess, DesiredAccess))
+            {
 
                 //
                 //  If this object was audited when it was opened, it may
@@ -1485,38 +1504,39 @@ Return Value:
                 //  created.
                 //
 
-                if ( (ObjectTableEntry->ObAttributes & OBJ_AUDIT_OBJECT_CLOSE) &&
-                     (ObjectInfo != NULL) &&
-                     (ObjectInfo->AuditMask != 0) &&
-                     (DesiredAccess != 0) &&
-                     (AccessMode != KernelMode)) {
+                if ((ObjectTableEntry->ObAttributes & OBJ_AUDIT_OBJECT_CLOSE) && (ObjectInfo != NULL) &&
+                    (ObjectInfo->AuditMask != 0) && (DesiredAccess != 0) && (AccessMode != KernelMode))
+                {
 
-                      ObpAuditObjectAccess( Handle, ObjectInfo, &ObjectHeader->Type->Name, DesiredAccess );
+                    ObpAuditObjectAccess(Handle, ObjectInfo, &ObjectHeader->Type->Name, DesiredAccess);
                 }
 
                 ObpIncrPointerCount(ObjectHeader);
-                ExUnlockHandleTableEntry( HandleTable, ObjectTableEntry );
+                ExUnlockHandleTableEntry(HandleTable, ObjectTableEntry);
                 KeLeaveCriticalRegionThread(&Thread->Tcb);
-            
+
                 *FileObject = &ObjectHeader->Body;
-                
-                ASSERT( *FileObject != NULL );
+
+                ASSERT(*FileObject != NULL);
 
                 return STATUS_SUCCESS;
-            
-            } else {
+            }
+            else
+            {
 
                 Status = STATUS_ACCESS_DENIED;
             }
-
-        } else {
+        }
+        else
+        {
 
             Status = STATUS_OBJECT_TYPE_MISMATCH;
         }
 
-        ExUnlockHandleTableEntry( HandleTable, ObjectTableEntry );
-
-    } else {
+        ExUnlockHandleTableEntry(HandleTable, ObjectTableEntry);
+    }
+    else
+    {
 
         Status = STATUS_INVALID_HANDLE;
     }
@@ -1533,14 +1553,9 @@ Return Value:
     return Status;
 }
 
-
-VOID
-ObAuditObjectAccess(
-    IN HANDLE Handle,
-    IN POBJECT_HANDLE_INFORMATION HandleInformation OPTIONAL,
-    IN KPROCESSOR_MODE AccessMode,
-    IN ACCESS_MASK DesiredAccess
-    )
+
+VOID ObAuditObjectAccess(IN HANDLE Handle, IN POBJECT_HANDLE_INFORMATION HandleInformation OPTIONAL,
+                         IN KPROCESSOR_MODE AccessMode, IN ACCESS_MASK DesiredAccess)
 
 /*++
 
@@ -1580,8 +1595,10 @@ Return Value:
     // Exit fast if we have nothing to do.
     //
 
-    if (ARGUMENT_PRESENT(HandleInformation)) {
-        if (!(HandleInformation->HandleAttributes & OBJ_AUDIT_OBJECT_CLOSE)) {
+    if (ARGUMENT_PRESENT(HandleInformation))
+    {
+        if (!(HandleInformation->HandleAttributes & OBJ_AUDIT_OBJECT_CLOSE))
+        {
             return;
         }
     }
@@ -1591,7 +1608,8 @@ Return Value:
     // handles.
     //
 
-    if (AccessMode == KernelMode) {
+    if (AccessMode == KernelMode)
+    {
         return;
     }
 
@@ -1603,16 +1621,17 @@ Return Value:
     //  Translate the specified handle to an object table index.
     //
 
-    CurrentThread = KeGetCurrentThread ();
-    KeEnterCriticalRegionThread (CurrentThread);
+    CurrentThread = KeGetCurrentThread();
+    KeEnterCriticalRegionThread(CurrentThread);
 
-    ObjectTableEntry = ExMapHandleToPointer( HandleTable, Handle );
+    ObjectTableEntry = ExMapHandleToPointer(HandleTable, Handle);
 
     //
     //  Make sure the object table entry really does exist
     //
 
-    if (ObjectTableEntry != NULL) {
+    if (ObjectTableEntry != NULL)
+    {
 
         PHANDLE_TABLE_ENTRY_INFO ObjectInfo;
 
@@ -1633,28 +1652,21 @@ Return Value:
         //  HandleAttributes?
         //
 
-        if ( (ObjectTableEntry->ObAttributes & OBJ_AUDIT_OBJECT_CLOSE) &&
-             (ObjectInfo != NULL) &&
-             (ObjectInfo->AuditMask != 0) &&
-             (DesiredAccess != 0))  {
+        if ((ObjectTableEntry->ObAttributes & OBJ_AUDIT_OBJECT_CLOSE) && (ObjectInfo != NULL) &&
+            (ObjectInfo->AuditMask != 0) && (DesiredAccess != 0))
+        {
 
-              ObpAuditObjectAccess( Handle, ObjectInfo, &ObjectHeader->Type->Name, DesiredAccess );
+            ObpAuditObjectAccess(Handle, ObjectInfo, &ObjectHeader->Type->Name, DesiredAccess);
         }
 
-        ExUnlockHandleTableEntry( HandleTable, ObjectTableEntry );
+        ExUnlockHandleTableEntry(HandleTable, ObjectTableEntry);
     }
-    KeLeaveCriticalRegionThread (CurrentThread);
+    KeLeaveCriticalRegionThread(CurrentThread);
 }
 
 
-
-VOID
-ObpAuditObjectAccess(
-    IN HANDLE Handle,
-    IN PHANDLE_TABLE_ENTRY_INFO ObjectTableEntryInfo,
-    IN PUNICODE_STRING ObjectTypeName,
-    IN ACCESS_MASK DesiredAccess
-    )
+VOID ObpAuditObjectAccess(IN HANDLE Handle, IN PHANDLE_TABLE_ENTRY_INFO ObjectTableEntryInfo,
+                          IN PUNICODE_STRING ObjectTypeName, IN ACCESS_MASK DesiredAccess)
 /*++
 
 Routine Description:
@@ -1692,16 +1704,19 @@ Return Value:
     //  in the ObjectTableEntry.
     //
 
-    while (ObjectTableEntryInfo->AuditMask != 0) {
+    while (ObjectTableEntryInfo->AuditMask != 0)
+    {
 
         t1 = ObjectTableEntryInfo->AuditMask;
         t2 = t1 & ~DesiredAccess;
 
-        if (t2 != t1) {
+        if (t2 != t1)
+        {
 
-            r = InterlockedCompareExchange(&ObjectTableEntryInfo->AuditMask,  t2, t1);
+            r = InterlockedCompareExchange(&ObjectTableEntryInfo->AuditMask, t2, t1);
 
-            if (r == t1) {
+            if (r == t1)
+            {
 
                 //
                 //  AuditMask was == t1, so AuditMask is now == t2
@@ -1715,14 +1730,10 @@ Return Value:
                 // Generate audit here
                 //
 
-                if (BitsToAudit != 0) {
+                if (BitsToAudit != 0)
+                {
 
-                    SeOperationAuditAlarm( NULL,
-                                           Handle,
-                                           ObjectTypeName,
-                                           BitsToAudit,
-                                           NULL
-                                           );
+                    SeOperationAuditAlarm(NULL, Handle, ObjectTypeName, BitsToAudit, NULL);
                 }
 
                 return;
@@ -1731,8 +1742,9 @@ Return Value:
             //
             // else, somebody changed it, go around for another try
             //
-
-        } else {
+        }
+        else
+        {
 
             //
             //  There are no bits in the AuditMask that we
@@ -1744,18 +1756,11 @@ Return Value:
     }
 }
 
-
+
 NTSTATUS
-ObReferenceObjectByName (
-    IN PUNICODE_STRING ObjectName,
-    IN ULONG Attributes,
-    IN PACCESS_STATE AccessState OPTIONAL,
-    IN ACCESS_MASK DesiredAccess OPTIONAL,
-    IN POBJECT_TYPE ObjectType,
-    IN KPROCESSOR_MODE AccessMode,
-    IN OUT PVOID ParseContext OPTIONAL,
-    OUT PVOID *Object
-    )
+ObReferenceObjectByName(IN PUNICODE_STRING ObjectName, IN ULONG Attributes, IN PACCESS_STATE AccessState OPTIONAL,
+                        IN ACCESS_MASK DesiredAccess OPTIONAL, IN POBJECT_TYPE ObjectType,
+                        IN KPROCESSOR_MODE AccessMode, IN OUT PVOID ParseContext OPTIONAL, OUT PVOID *Object)
 
 /*++
 
@@ -1810,7 +1815,8 @@ Return Value:
     //  invalid.
     //
 
-    if (ObjectName == NULL) {
+    if (ObjectName == NULL)
+    {
 
         return STATUS_OBJECT_NAME_INVALID;
     }
@@ -1819,21 +1825,20 @@ Return Value:
     //  Capture the object name.
     //
 
-    Status = ObpCaptureObjectName( AccessMode,
-                                   ObjectName,
-                                   &CapturedObjectName,
-                                   TRUE );
+    Status = ObpCaptureObjectName(AccessMode, ObjectName, &CapturedObjectName, TRUE);
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         //  No buffer has been allocated for a zero length name so no free
         //  needed
         //
 
-        if (CapturedObjectName.Length == 0) {
+        if (CapturedObjectName.Length == 0)
+        {
 
-           return STATUS_OBJECT_NAME_INVALID;
+            return STATUS_OBJECT_NAME_INVALID;
         }
 
         //
@@ -1841,16 +1846,16 @@ Return Value:
         //  state.
         //
 
-        if (!ARGUMENT_PRESENT(AccessState)) {
+        if (!ARGUMENT_PRESENT(AccessState))
+        {
 
             AccessState = &LocalAccessState;
 
-            Status = SeCreateAccessState( &LocalAccessState,
-                                          &AuxData,
-                                          DesiredAccess,
-                                          &ObjectType->TypeInfo.GenericMapping );
+            Status =
+                SeCreateAccessState(&LocalAccessState, &AuxData, DesiredAccess, &ObjectType->TypeInfo.GenericMapping);
 
-            if (!NT_SUCCESS(Status)) {
+            if (!NT_SUCCESS(Status))
+            {
 
                 goto FreeBuffer;
             }
@@ -1860,23 +1865,14 @@ Return Value:
         //  Lookup object by name.
         //
 
-        Status = ObpLookupObjectName( NULL,
-                                      &CapturedObjectName,
-                                      Attributes,
-                                      ObjectType,
-                                      AccessMode,
-                                      ParseContext,
-                                      NULL,
-                                      NULL,
-                                      AccessState,
-                                      &LookupContext,
-                                      &ExistingObject );
+        Status = ObpLookupObjectName(NULL, &CapturedObjectName, Attributes, ObjectType, AccessMode, ParseContext, NULL,
+                                     NULL, AccessState, &LookupContext, &ExistingObject);
 
         //
         //  If the directory is returned locked, then unlock it.
         //
 
-        ObpReleaseLookupContext( &LookupContext );
+        ObpReleaseLookupContext(&LookupContext);
         //
         //  If the lookup was successful, then return the existing
         //  object if access is allowed. Otherwise, return NULL.
@@ -1884,13 +1880,11 @@ Return Value:
 
         *Object = NULL;
 
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
 
-            if (ObpCheckObjectReference( ExistingObject,
-                                         AccessState,
-                                         FALSE,
-                                         AccessMode,
-                                         &Status )) {
+            if (ObpCheckObjectReference(ExistingObject, AccessState, FALSE, AccessMode, &Status))
+            {
 
                 *Object = ExistingObject;
             }
@@ -1901,7 +1895,8 @@ Return Value:
         //  state.
         //
 
-        if (AccessState == &LocalAccessState) {
+        if (AccessState == &LocalAccessState)
+        {
 
             SeDeleteAccessState(AccessState);
         }
@@ -1910,7 +1905,7 @@ Return Value:
         //  Free the object name buffer.
         //
 
-FreeBuffer:
+    FreeBuffer:
 
         ObpFreeObjectNameBuffer(&CapturedObjectName);
     }
@@ -1918,14 +1913,10 @@ FreeBuffer:
     return Status;
 }
 
-
+
 NTSTATUS
-ObReferenceObjectByPointer (
-    IN PVOID Object,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_TYPE ObjectType,
-    IN KPROCESSOR_MODE AccessMode
-    )
+ObReferenceObjectByPointer(IN PVOID Object, IN ACCESS_MASK DesiredAccess, IN POBJECT_TYPE ObjectType,
+                           IN KPROCESSOR_MODE AccessMode)
 
 /*++
 
@@ -1958,7 +1949,7 @@ Return Value:
     //  object header
     //
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
 
     //
     //  If the specified object type does not match and either the caller is
@@ -1966,10 +1957,10 @@ Return Value:
     //  error
     //
 
-    if ((ObjectHeader->Type != ObjectType) && (AccessMode != KernelMode ||
-                                               ObjectType == ObpSymbolicLinkObjectType)) {
+    if ((ObjectHeader->Type != ObjectType) && (AccessMode != KernelMode || ObjectType == ObpSymbolicLinkObjectType))
+    {
 
-        return( STATUS_OBJECT_TYPE_MISMATCH );
+        return (STATUS_OBJECT_TYPE_MISMATCH);
     }
 
     //
@@ -1977,15 +1968,12 @@ Return Value:
     //  our caller
     //
 
-    ObpIncrPointerCount( ObjectHeader );
+    ObpIncrPointerCount(ObjectHeader);
 
-    return( STATUS_SUCCESS );
+    return (STATUS_SUCCESS);
 }
 
-VOID
-ObpDeferObjectDeletion (
-    IN POBJECT_HEADER ObjectHeader
-    )
+VOID ObpDeferObjectDeletion(IN POBJECT_HEADER ObjectHeader)
 {
     PVOID OldValue;
     //
@@ -1993,33 +1981,29 @@ ObpDeferObjectDeletion (
     // transition then we may have to start a worker thread.
     //
 
-    while (1) {
+    while (1)
+    {
         OldValue = ObpRemoveObjectList;
         ObjectHeader->NextToFree = OldValue;
-        if (InterlockedCompareExchangePointer (&ObpRemoveObjectList,
-                                               ObjectHeader,
-                                               OldValue) == OldValue) {
+        if (InterlockedCompareExchangePointer(&ObpRemoveObjectList, ObjectHeader, OldValue) == OldValue)
+        {
             break;
         }
     }
 
-    if (OldValue == NULL) {
+    if (OldValue == NULL)
+    {
         //
         //  If we have to start the worker thread then go ahead
         //  and enqueue the work item
         //
 
-        ExQueueWorkItem( &ObpRemoveObjectWorkItem, CriticalWorkQueue );
+        ExQueueWorkItem(&ObpRemoveObjectWorkItem, CriticalWorkQueue);
     }
-
 }
 
-
-LONG
-FASTCALL
-ObfReferenceObject (
-    IN PVOID Object
-    )
+
+LONG FASTCALL ObfReferenceObject(IN PVOID Object)
 
 /*++
 
@@ -2045,19 +2029,14 @@ Return Value:
     POBJECT_HEADER ObjectHeader;
     LONG RetVal;
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
 
-    RetVal = ObpIncrPointerCount( ObjectHeader );
-    ASSERT (RetVal != 1);
+    RetVal = ObpIncrPointerCount(ObjectHeader);
+    ASSERT(RetVal != 1);
     return RetVal;
 }
 
-LONG
-FASTCALL
-ObReferenceObjectEx (
-    IN PVOID Object,
-    IN ULONG Count
-    )
+LONG FASTCALL ObReferenceObjectEx(IN PVOID Object, IN ULONG Count)
 /*++
 
 Routine Description:
@@ -2078,16 +2057,11 @@ Return Value:
 {
     POBJECT_HEADER ObjectHeader;
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
-    return ObpIncrPointerCountEx (ObjectHeader, Count);
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
+    return ObpIncrPointerCountEx(ObjectHeader, Count);
 }
 
-LONG
-FASTCALL
-ObDereferenceObjectEx (
-    IN PVOID Object,
-    IN ULONG Count
-    )
+LONG FASTCALL ObDereferenceObjectEx(IN PVOID Object, IN ULONG Count)
 /*++
 
 Routine Description:
@@ -2109,21 +2083,19 @@ Return Value:
     POBJECT_HEADER ObjectHeader;
     LONG Result;
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
-    Result = ObpDecrPointerCountEx (ObjectHeader, Count);
-    if (Result == 0) {
-        ObpDeferObjectDeletion (ObjectHeader);
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
+    Result = ObpDecrPointerCountEx(ObjectHeader, Count);
+    if (Result == 0)
+    {
+        ObpDeferObjectDeletion(ObjectHeader);
     }
     return Result;
 }
 
 
-
 BOOLEAN
 FASTCALL
-ObReferenceObjectSafe (
-    IN PVOID Object
-    )
+ObReferenceObjectSafe(IN PVOID Object)
 
 /*++
 
@@ -2147,12 +2119,14 @@ Return Value:
 {
     POBJECT_HEADER ObjectHeader;
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
 
-    if (ObpSafeInterlockedIncrement(&ObjectHeader->PointerCount)) {
+    if (ObpSafeInterlockedIncrement(&ObjectHeader->PointerCount))
+    {
 
 #ifdef POOL_TAGGING
-        if(ObpTraceEnabled) {
+        if (ObpTraceEnabled)
+        {
             ObpPushStackInfo(ObjectHeader, TRUE);
         }
 #endif // POOL_TAGGING
@@ -2164,12 +2138,7 @@ Return Value:
 }
 
 
-
-LONG
-FASTCALL
-ObfDereferenceObject (
-    IN PVOID Object
-    )
+LONG FASTCALL ObfDereferenceObject(IN PVOID Object)
 
 /*++
 
@@ -2200,17 +2169,18 @@ Return Value:
     //  header.
     //
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
 
 #if DBG
     {
         POBJECT_HEADER_NAME_INFO NameInfo;
 
-        NameInfo = OBJECT_HEADER_TO_NAME_INFO( ObjectHeader );
+        NameInfo = OBJECT_HEADER_TO_NAME_INFO(ObjectHeader);
 
-        if (NameInfo) {
+        if (NameInfo)
+        {
 
-            InterlockedDecrement(&NameInfo->DbgDereferenceCount) ;
+            InterlockedDecrement(&NameInfo->DbgDereferenceCount);
         }
     }
 #endif
@@ -2223,9 +2193,10 @@ Return Value:
     ObjectType = ObjectHeader->Type;
 
 
-    Result = ObpDecrPointerCount( ObjectHeader );
+    Result = ObpDecrPointerCount(ObjectHeader);
 
-    if (Result == 0) {
+    if (Result == 0)
+    {
 
         //
         //  Find out the level we're at and the object type
@@ -2240,41 +2211,41 @@ Return Value:
         //  object now.
         //
 
-        if (OldIrql == PASSIVE_LEVEL) {
+        if (OldIrql == PASSIVE_LEVEL)
+        {
 
 #ifdef POOL_TAGGING
-                //
-                // The object is going away, so we deregister it.
-                //
+            //
+            // The object is going away, so we deregister it.
+            //
 
-                if (ObpTraceEnabled && !ObpTraceNoDeregister) {
+            if (ObpTraceEnabled && !ObpTraceNoDeregister)
+            {
 
-                    ObpDeregisterObject( ObjectHeader );
-                }
+                ObpDeregisterObject(ObjectHeader);
+            }
 #endif //POOL_TAGGING
 
-                ObpRemoveObjectRoutine( Object, FALSE );
+            ObpRemoveObjectRoutine(Object, FALSE);
 
-                return Result;
-
-        } else {
+            return Result;
+        }
+        else
+        {
 
             //
             //  Objects can't be deleted from an IRQL above PASSIVE_LEVEL.
             //  So queue the delete operation.
             //
 
-            ObpDeferObjectDeletion (ObjectHeader);
+            ObpDeferObjectDeletion(ObjectHeader);
         }
     }
 
     return Result;
 }
 
-VOID
-ObDereferenceObjectDeferDelete (
-    IN PVOID Object
-    )
+VOID ObDereferenceObjectDeferDelete(IN PVOID Object)
 {
     POBJECT_HEADER ObjectHeader;
     LONG Result;
@@ -2288,14 +2259,15 @@ ObDereferenceObjectDeferDelete (
     //  header.
     //
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
 
 #if DBG
-    NameInfo = OBJECT_HEADER_TO_NAME_INFO( ObjectHeader );
+    NameInfo = OBJECT_HEADER_TO_NAME_INFO(ObjectHeader);
 
-    if (NameInfo) {
+    if (NameInfo)
+    {
 
-        InterlockedDecrement(&NameInfo->DbgDereferenceCount) ;
+        InterlockedDecrement(&NameInfo->DbgDereferenceCount);
     }
 #endif
 
@@ -2304,18 +2276,16 @@ ObDereferenceObjectDeferDelete (
     //  there is extra work to do
     //
 
-    Result = ObpDecrPointerCount( ObjectHeader );
+    Result = ObpDecrPointerCount(ObjectHeader);
 
-    if (Result == 0) {
-        ObpDeferObjectDeletion (ObjectHeader);
+    if (Result == 0)
+    {
+        ObpDeferObjectDeletion(ObjectHeader);
     }
 }
 
-
-VOID
-ObpProcessRemoveObjectQueue (
-    PVOID Parameter
-    )
+
+VOID ObpProcessRemoveObjectQueue(PVOID Parameter)
 
 /*++
 
@@ -2345,39 +2315,37 @@ Return Value:
     // header as the value 1. This will never be an object address
     // as the bottom bits should be clear for an object.
     //
-    while (1) {
-        ObjectHeader = InterlockedExchangePointer (&ObpRemoveObjectList,
-                                                  (PVOID) 1);
-        while (1) {
+    while (1)
+    {
+        ObjectHeader = InterlockedExchangePointer(&ObpRemoveObjectList, (PVOID)1);
+        while (1)
+        {
 #ifdef POOL_TAGGING
-            if (ObpTraceEnabled && !ObpTraceNoDeregister) {
+            if (ObpTraceEnabled && !ObpTraceNoDeregister)
+            {
 
-                ObpDeregisterObject( ObjectHeader );
+                ObpDeregisterObject(ObjectHeader);
             }
 #endif
             NextObject = ObjectHeader->NextToFree;
-            ObpRemoveObjectRoutine( &ObjectHeader->Body, TRUE );
+            ObpRemoveObjectRoutine(&ObjectHeader->Body, TRUE);
             ObjectHeader = NextObject;
-            if (ObjectHeader == NULL || ObjectHeader == (PVOID) 1) {
+            if (ObjectHeader == NULL || ObjectHeader == (PVOID)1)
+            {
                 break;
             }
         }
 
-        if (ObpRemoveObjectList == (PVOID) 1 &&
-            InterlockedCompareExchangePointer (&ObpRemoveObjectList,
-                                               NULL,
-                                               (PVOID) 1) == (PVOID) 1) {
+        if (ObpRemoveObjectList == (PVOID)1 &&
+            InterlockedCompareExchangePointer(&ObpRemoveObjectList, NULL, (PVOID)1) == (PVOID)1)
+        {
             break;
         }
     }
 }
 
-
-VOID
-ObpRemoveObjectRoutine (
-    IN  PVOID   Object,
-    IN  BOOLEAN CalledOnWorkerThread
-    )
+
+VOID ObpRemoveObjectRoutine(IN PVOID Object, IN BOOLEAN CalledOnWorkerThread)
 
 /*++
 
@@ -2408,17 +2376,17 @@ Return Value:
 
     PAGED_CODE();
 
-    ObpValidateIrql( "ObpRemoveObjectRoutine" );
+    ObpValidateIrql("ObpRemoveObjectRoutine");
 
     //
     //  Retrieve an object header from the object body, and also get
     //  the object type, creator and name info if available
     //
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
     ObjectType = ObjectHeader->Type;
-    CreatorInfo = OBJECT_HEADER_TO_CREATOR_INFO( ObjectHeader );
-    NameInfo = OBJECT_HEADER_TO_NAME_INFO( ObjectHeader );
+    CreatorInfo = OBJECT_HEADER_TO_CREATOR_INFO(ObjectHeader);
+    NameInfo = OBJECT_HEADER_TO_NAME_INFO(ObjectHeader);
 
 
     //
@@ -2426,21 +2394,22 @@ Return Value:
     //  for the object type then remove this object from the list
     //
 
-    if (CreatorInfo != NULL && !IsListEmpty( &CreatorInfo->TypeList )) {
+    if (CreatorInfo != NULL && !IsListEmpty(&CreatorInfo->TypeList))
+    {
 
         //
         //  Get exclusive access to the object type object
         //
 
-        ObpEnterObjectTypeMutex( ObjectType );
+        ObpEnterObjectTypeMutex(ObjectType);
 
-        RemoveEntryList( &CreatorInfo->TypeList );
+        RemoveEntryList(&CreatorInfo->TypeList);
 
         //
         //  We are done with the object type object so we can now release it
         //
 
-        ObpLeaveObjectTypeMutex( ObjectType );
+        ObpLeaveObjectTypeMutex(ObjectType);
     }
 
     //
@@ -2448,9 +2417,10 @@ Return Value:
     //  then free the buffer and zero out the name record
     //
 
-    if (NameInfo != NULL && NameInfo->Name.Buffer != NULL) {
+    if (NameInfo != NULL && NameInfo->Name.Buffer != NULL)
+    {
 
-        ExFreePool( NameInfo->Name.Buffer );
+        ExFreePool(NameInfo->Name.Buffer);
 
         NameInfo->Name.Buffer = NULL;
         NameInfo->Name.Length = 0;
@@ -2465,20 +2435,17 @@ Return Value:
     //  to delete the security descritpor.
     //
 
-    if (ObjectHeader->SecurityDescriptor != NULL) {
+    if (ObjectHeader->SecurityDescriptor != NULL)
+    {
 
         KIRQL SaveIrql;
 
-        ObpBeginTypeSpecificCallOut( SaveIrql );
+        ObpBeginTypeSpecificCallOut(SaveIrql);
 
-        Status = (ObjectType->TypeInfo.SecurityProcedure)( Object,
-                                                           DeleteSecurityDescriptor,
-                                                           NULL, NULL, NULL,
-                                                           &ObjectHeader->SecurityDescriptor,
-                                                           0,
-                                                           NULL );
+        Status = (ObjectType->TypeInfo.SecurityProcedure)(Object, DeleteSecurityDescriptor, NULL, NULL, NULL,
+                                                          &ObjectHeader->SecurityDescriptor, 0, NULL);
 
-        ObpEndTypeSpecificCallOut( SaveIrql, "Security", ObjectType, Object );
+        ObpEndTypeSpecificCallOut(SaveIrql, "Security", ObjectType, Object);
     }
 
     //
@@ -2486,20 +2453,22 @@ Return Value:
     //  the routine
     //
 
-    if (ObjectType->TypeInfo.DeleteProcedure) {
+    if (ObjectType->TypeInfo.DeleteProcedure)
+    {
 
         KIRQL SaveIrql;
 
-        ObpBeginTypeSpecificCallOut( SaveIrql );
+        ObpBeginTypeSpecificCallOut(SaveIrql);
 
-        if (!CalledOnWorkerThread) {
+        if (!CalledOnWorkerThread)
+        {
 
             ObjectHeader->Flags |= OB_FLAG_DELETED_INLINE;
         }
 
         (*(ObjectType->TypeInfo.DeleteProcedure))(Object);
 
-        ObpEndTypeSpecificCallOut( SaveIrql, "Delete", ObjectType, Object );
+        ObpEndTypeSpecificCallOut(SaveIrql, "Delete", ObjectType, Object);
     }
 
     //
@@ -2507,14 +2476,11 @@ Return Value:
     //  charges
     //
 
-    ObpFreeObject( Object );
+    ObpFreeObject(Object);
 }
 
-
-VOID
-ObpDeleteNameCheck (
-    IN PVOID Object
-    )
+
+VOID ObpDeleteNameCheck(IN PVOID Object)
 
 /*++
 
@@ -2545,15 +2511,15 @@ Return Value:
 
     PAGED_CODE();
 
-    ObpValidateIrql( "ObpDeleteNameCheck" );
+    ObpValidateIrql("ObpDeleteNameCheck");
 
     //
     //  Translate the object body to an object header also get
     //  the object type and name info if present
     //
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
-    NameInfo = ObpReferenceNameInfo( ObjectHeader );
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
+    NameInfo = ObpReferenceNameInfo(ObjectHeader);
     ObjectType = ObjectHeader->Type;
 
     //
@@ -2561,14 +2527,12 @@ Return Value:
     //  empty name buffer, and is not a permanent object
     //
 
-    if ((ObjectHeader->HandleCount == 0) &&
-        (NameInfo != NULL) &&
-        (NameInfo->Name.Length != 0) &&
-        (!(ObjectHeader->Flags & OB_FLAG_PERMANENT_OBJECT)) &&
-        (NameInfo->Directory != NULL)) {
+    if ((ObjectHeader->HandleCount == 0) && (NameInfo != NULL) && (NameInfo->Name.Length != 0) &&
+        (!(ObjectHeader->Flags & OB_FLAG_PERMANENT_OBJECT)) && (NameInfo->Directory != NULL))
+    {
 
         ObpInitializeLookupContext(&LookupContext);
-        ObpLockLookupContext ( &LookupContext, NameInfo->Directory );
+        ObpLockLookupContext(&LookupContext, NameInfo->Directory);
 
         DirObject = NULL;
 
@@ -2577,11 +2541,8 @@ Return Value:
         //  then is nothing for us to remove
         //
 
-        if (Object == ObpLookupDirectoryEntry( NameInfo->Directory,
-                                               &NameInfo->Name,
-                                               0,
-                                               FALSE,
-                                               &LookupContext )) {
+        if (Object == ObpLookupDirectoryEntry(NameInfo->Directory, &NameInfo->Name, 0, FALSE, &LookupContext))
+        {
 
             //
             //  Now reacquire the lock on the object type and
@@ -2593,10 +2554,10 @@ Return Value:
             //
 
 
-            ObpLockObject( ObjectHeader );
+            ObpLockObject(ObjectHeader);
 
-            if (ObjectHeader->HandleCount == 0 &&
-                (ObjectHeader->Flags & OB_FLAG_PERMANENT_OBJECT) == 0) {
+            if (ObjectHeader->HandleCount == 0 && (ObjectHeader->Flags & OB_FLAG_PERMANENT_OBJECT) == 0)
+            {
 
                 KIRQL SaveIrql;
 
@@ -2604,32 +2565,34 @@ Return Value:
                 //  Delete the directory entry
                 //
 
-                ObpDeleteDirectoryEntry( &LookupContext );
+                ObpDeleteDirectoryEntry(&LookupContext);
 
                 //
                 //  If this is a symbolic link object then we also need to
                 //  delete the symbolic link
                 //
 
-                if (ObjectType == ObpSymbolicLinkObjectType) {
+                if (ObjectType == ObpSymbolicLinkObjectType)
+                {
 
-                    ObpDeleteSymbolicLinkName( (POBJECT_SYMBOLIC_LINK)Object );
+                    ObpDeleteSymbolicLinkName((POBJECT_SYMBOLIC_LINK)Object);
                 }
 
                 DirObject = NameInfo->Directory;
             }
 
-            ObpUnlockObject( ObjectHeader );
+            ObpUnlockObject(ObjectHeader);
         }
 
-        ObpReleaseLookupContext( &LookupContext );
+        ObpReleaseLookupContext(&LookupContext);
 
         //
         //  If there is a directory object for the name then decrement
         //  its reference count for it and for the object
         //
 
-        if (DirObject != NULL) {
+        if (DirObject != NULL)
+        {
 
             //
             //  Dereference the name twice: one because we referenced it to
@@ -2640,19 +2603,19 @@ Return Value:
             ObpDereferenceNameInfo(NameInfo);
             ObpDereferenceNameInfo(NameInfo);
 
-            ObDereferenceObject( Object );
+            ObDereferenceObject(Object);
         }
-
-    } else {
+    }
+    else
+    {
 
         ObpDereferenceNameInfo(NameInfo);
-
     }
 
     return;
 }
 
-
+
 //
 // Thunks to support standard call callers
 //
@@ -2661,10 +2624,7 @@ Return Value:
 #undef ObDereferenceObject
 #endif
 
-LONG
-ObDereferenceObject (
-    IN PVOID Object
-    )
+LONG ObDereferenceObject(IN PVOID Object)
 
 /*++
 
@@ -2684,14 +2644,12 @@ Return Value:
 --*/
 
 {
-    return ObfDereferenceObject (Object) ;
+    return ObfDereferenceObject(Object);
 }
 
 
 BOOLEAN
-ObIsObjectDeletionInline(
-    IN PVOID Object
-    )
+ObIsObjectDeletionInline(IN PVOID Object)
 
 /*++
 
@@ -2713,8 +2671,7 @@ Return Value:
 {
     POBJECT_HEADER ObjectHeader;
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
 
     return ((ObjectHeader->Flags & OB_FLAG_DELETED_INLINE) != 0);
 }
-

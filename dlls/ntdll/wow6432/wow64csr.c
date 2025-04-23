@@ -28,74 +28,50 @@ Revision History:
 #include "ntwow64.h"
 
 NTSTATUS
-CsrClientConnectToServer(
-    IN PWSTR ObjectDirectory,
-    IN ULONG ServerDllIndex,
-    IN PVOID ConnectionInformation,
-    IN OUT PULONG ConnectionInformationLength OPTIONAL,
-    OUT PBOOLEAN CalledFromServer OPTIONAL
-    )
+CsrClientConnectToServer(IN PWSTR ObjectDirectory, IN ULONG ServerDllIndex, IN PVOID ConnectionInformation,
+                         IN OUT PULONG ConnectionInformationLength OPTIONAL, OUT PBOOLEAN CalledFromServer OPTIONAL)
 
 {
-    return NtWow64CsrClientConnectToServer(ObjectDirectory,
-                                           ServerDllIndex,
-                                           ConnectionInformation,
-                                           ConnectionInformationLength,
-                                           CalledFromServer);
+    return NtWow64CsrClientConnectToServer(ObjectDirectory, ServerDllIndex, ConnectionInformation,
+                                           ConnectionInformationLength, CalledFromServer);
 }
 
 NTSTATUS
-CsrNewThread(
-    VOID
-    )
+CsrNewThread(VOID)
 {
     return NtWow64CsrNewThread();
 }
 
 NTSTATUS
-CsrIdentifyAlertableThread( VOID )
+CsrIdentifyAlertableThread(VOID)
 {
     return NtWow64CsrIdentifyAlertableThread();
 }
 
 NTSTATUS
-CsrSetPriorityClass(
-    IN HANDLE ProcessHandle,
-    IN OUT PULONG PriorityClass
-    )
+CsrSetPriorityClass(IN HANDLE ProcessHandle, IN OUT PULONG PriorityClass)
 {
 
-   return NtWow64CsrSetPriorityClass(ProcessHandle, PriorityClass);
-
+    return NtWow64CsrSetPriorityClass(ProcessHandle, PriorityClass);
 }
 
 NTSTATUS
-CsrClientCallServer(
-    IN OUT PCSR_API_MSG m,
-    IN OUT PCSR_CAPTURE_HEADER CaptureBuffer OPTIONAL,
-    IN CSR_API_NUMBER ApiNumber,
-    IN ULONG ArgLength
-    )
+CsrClientCallServer(IN OUT PCSR_API_MSG m, IN OUT PCSR_CAPTURE_HEADER CaptureBuffer OPTIONAL,
+                    IN CSR_API_NUMBER ApiNumber, IN ULONG ArgLength)
 {
 
-    return NtWow64CsrClientCallServer(m,CaptureBuffer,ApiNumber,ArgLength);
+    return NtWow64CsrClientCallServer(m, CaptureBuffer, ApiNumber, ArgLength);
 }
 
 
 PCSR_CAPTURE_HEADER
-CsrAllocateCaptureBuffer(
-    IN ULONG CountMessagePointers,
-    IN ULONG Sizecd
-    )
+CsrAllocateCaptureBuffer(IN ULONG CountMessagePointers, IN ULONG Sizecd)
 {
-   return NtWow64CsrAllocateCaptureBuffer(CountMessagePointers, Sizecd);
+    return NtWow64CsrAllocateCaptureBuffer(CountMessagePointers, Sizecd);
 }
 
 
-VOID
-CsrFreeCaptureBuffer(
-    IN PCSR_CAPTURE_HEADER CaptureBuffer
-    )
+VOID CsrFreeCaptureBuffer(IN PCSR_CAPTURE_HEADER CaptureBuffer)
 
 {
 
@@ -104,69 +80,44 @@ CsrFreeCaptureBuffer(
 
 
 ULONG
-CsrAllocateMessagePointer(
-    IN OUT PCSR_CAPTURE_HEADER CaptureBuffer,
-    IN ULONG Length,
-    OUT PVOID *Pointer
-    )
+CsrAllocateMessagePointer(IN OUT PCSR_CAPTURE_HEADER CaptureBuffer, IN ULONG Length, OUT PVOID *Pointer)
 {
 
-   return NtWow64CsrAllocateMessagePointer(CaptureBuffer, Length, Pointer);
-
+    return NtWow64CsrAllocateMessagePointer(CaptureBuffer, Length, Pointer);
 }
 
 
-VOID
-CsrCaptureMessageBuffer(
-    IN OUT PCSR_CAPTURE_HEADER CaptureBuffer,
-    IN PVOID Buffer OPTIONAL,
-    IN ULONG Length,
-    OUT PVOID *CapturedBuffer
-    )
+VOID CsrCaptureMessageBuffer(IN OUT PCSR_CAPTURE_HEADER CaptureBuffer, IN PVOID Buffer OPTIONAL, IN ULONG Length,
+                             OUT PVOID *CapturedBuffer)
 {
 
-   NtWow64CsrCaptureMessageBuffer(CaptureBuffer,Buffer,Length,CapturedBuffer);
-
+    NtWow64CsrCaptureMessageBuffer(CaptureBuffer, Buffer, Length, CapturedBuffer);
 }
 
-VOID
-CsrCaptureMessageString(
-    IN OUT PCSR_CAPTURE_HEADER CaptureBuffer,
-    IN PCSTR String OPTIONAL,
-    IN ULONG Length,
-    IN ULONG MaximumLength,
-    OUT PSTRING CapturedString
-    )
+VOID CsrCaptureMessageString(IN OUT PCSR_CAPTURE_HEADER CaptureBuffer, IN PCSTR String OPTIONAL, IN ULONG Length,
+                             IN ULONG MaximumLength, OUT PSTRING CapturedString)
 
 {
 
-  NtWow64CsrCaptureMessageString(CaptureBuffer, String, Length, MaximumLength, CapturedString);
-
+    NtWow64CsrCaptureMessageString(CaptureBuffer, String, Length, MaximumLength, CapturedString);
 }
-
 
 
 PLARGE_INTEGER
-CsrCaptureTimeout(
-    IN ULONG MilliSeconds,
-    OUT PLARGE_INTEGER Timeout
-    )
+CsrCaptureTimeout(IN ULONG MilliSeconds, OUT PLARGE_INTEGER Timeout)
 {
-    if (MilliSeconds == -1) {
-        return( NULL );
-        }
-    else {
-        Timeout->QuadPart = Int32x32To64( MilliSeconds, -10000 );
-        return( (PLARGE_INTEGER)Timeout );
-        }
+    if (MilliSeconds == -1)
+    {
+        return (NULL);
+    }
+    else
+    {
+        Timeout->QuadPart = Int32x32To64(MilliSeconds, -10000);
+        return ((PLARGE_INTEGER)Timeout);
+    }
 }
 
-VOID
-CsrProbeForWrite(
-    IN PVOID Address,
-    IN ULONG Length,
-    IN ULONG Alignment
-    )
+VOID CsrProbeForWrite(IN PVOID Address, IN ULONG Length, IN ULONG Alignment)
 
 /*++
 
@@ -201,25 +152,29 @@ Return Value:
     // write accessibility or alignment.
     //
 
-    if (Length != 0) {
+    if (Length != 0)
+    {
 
         //
         // If the structure is not properly aligned, then raise a data
         // misalignment exception.
         //
 
-        ASSERT((Alignment == 1) || (Alignment == 2) ||
-               (Alignment == 4) || (Alignment == 8));
+        ASSERT((Alignment == 1) || (Alignment == 2) || (Alignment == 4) || (Alignment == 8));
         StartAddress = (volatile CHAR *)Address;
 
-        if (((ULONG_PTR)StartAddress & (Alignment - 1)) != 0) {
+        if (((ULONG_PTR)StartAddress & (Alignment - 1)) != 0)
+        {
             RtlRaiseStatus(STATUS_DATATYPE_MISALIGNMENT);
-        } else {
+        }
+        else
+        {
             //
             // BUG, BUG - this should not be necessary once the 386 kernel
             // makes system space inaccessable to user mode.
             //
-            if ((ULONG_PTR)StartAddress > CsrNtSysInfo.MaximumUserModeAddress) {
+            if ((ULONG_PTR)StartAddress > CsrNtSysInfo.MaximumUserModeAddress)
+            {
                 RtlRaiseStatus(STATUS_ACCESS_VIOLATION);
             }
 
@@ -232,12 +187,7 @@ Return Value:
     }
 }
 
-VOID
-CsrProbeForRead(
-    IN PVOID Address,
-    IN ULONG Length,
-    IN ULONG Alignment
-    )
+VOID CsrProbeForRead(IN PVOID Address, IN ULONG Length, IN ULONG Alignment)
 
 /*++
 
@@ -272,20 +222,23 @@ Return Value:
     // read accessibility or alignment.
     //
 
-    if (Length != 0) {
+    if (Length != 0)
+    {
 
         //
         // If the structure is not properly aligned, then raise a data
         // misalignment exception.
         //
 
-        ASSERT((Alignment == 1) || (Alignment == 2) ||
-               (Alignment == 4) || (Alignment == 8));
+        ASSERT((Alignment == 1) || (Alignment == 2) || (Alignment == 4) || (Alignment == 8));
         StartAddress = (volatile CHAR *)Address;
 
-        if (((ULONG_PTR)StartAddress & (Alignment - 1)) != 0) {
+        if (((ULONG_PTR)StartAddress & (Alignment - 1)) != 0)
+        {
             RtlRaiseStatus(STATUS_DATATYPE_MISALIGNMENT);
-        } else {
+        }
+        else
+        {
             Temp = *StartAddress;
             EndAddress = StartAddress + Length - 1;
             Temp = *EndAddress;
@@ -294,19 +247,13 @@ Return Value:
 }
 
 HANDLE
-CsrGetProcessId(
-    VOID
-    )
+CsrGetProcessId(VOID)
 {
-    return NtWow64CsrGetProcessId ();
+    return NtWow64CsrGetProcessId();
 }
 
 
-VOID
-CsrCaptureMessageUnicodeStringInPlace(
-    IN OUT PCSR_CAPTURE_HEADER CaptureBuffer,
-    IN OUT PUNICODE_STRING     String
-    )
+VOID CsrCaptureMessageUnicodeStringInPlace(IN OUT PCSR_CAPTURE_HEADER CaptureBuffer, IN OUT PUNICODE_STRING String)
 /*++
 
 Routine Description:
@@ -341,29 +288,24 @@ Return Value:
 {
     ASSERT(String != NULL);
 
-    CsrCaptureMessageString(
-        CaptureBuffer,
-        (PCSTR)String->Buffer,
-        String->Length,
-        String->MaximumLength,
-        (PSTRING)String
-        );
+    CsrCaptureMessageString(CaptureBuffer, (PCSTR)String->Buffer, String->Length, String->MaximumLength,
+                            (PSTRING)String);
 
     // test > before substraction due to unsignedness
-    if (String->MaximumLength > String->Length) {
-        if ((String->MaximumLength - String->Length) >= sizeof(WCHAR)) {
-            String->Buffer[ String->Length / sizeof(WCHAR) ] = 0;
-            }
+    if (String->MaximumLength > String->Length)
+    {
+        if ((String->MaximumLength - String->Length) >= sizeof(WCHAR))
+        {
+            String->Buffer[String->Length / sizeof(WCHAR)] = 0;
+        }
     }
 }
 
 
 NTSTATUS
-CsrCaptureMessageMultiUnicodeStringsInPlace(
-    IN OUT PCSR_CAPTURE_HEADER* InOutCaptureBuffer,
-    IN ULONG                    NumberOfStringsToCapture,
-    IN const PUNICODE_STRING*   StringsToCapture
-    )
+CsrCaptureMessageMultiUnicodeStringsInPlace(IN OUT PCSR_CAPTURE_HEADER *InOutCaptureBuffer,
+                                            IN ULONG NumberOfStringsToCapture,
+                                            IN const PUNICODE_STRING *StringsToCapture)
 /*++
 
 Routine Description:
@@ -394,34 +336,40 @@ Return Value:
     ULONG i = 0;
     PCSR_CAPTURE_HEADER CaptureBuffer = NULL;
 
-    if (InOutCaptureBuffer == NULL) {
+    if (InOutCaptureBuffer == NULL)
+    {
         Status = STATUS_INVALID_PARAMETER;
         goto Exit;
     }
 
     CaptureBuffer = *InOutCaptureBuffer;
 
-    if (CaptureBuffer == NULL) {
+    if (CaptureBuffer == NULL)
+    {
         Length = 0;
-        for (i = 0 ; i != NumberOfStringsToCapture ; ++i) {
-            if (StringsToCapture[i] != NULL) {
+        for (i = 0; i != NumberOfStringsToCapture; ++i)
+        {
+            if (StringsToCapture[i] != NULL)
+            {
                 Length += StringsToCapture[i]->MaximumLength;
             }
         }
         CaptureBuffer = CsrAllocateCaptureBuffer(NumberOfStringsToCapture, Length);
-        if (CaptureBuffer == NULL) {
+        if (CaptureBuffer == NULL)
+        {
             Status = STATUS_NO_MEMORY;
             goto Exit;
         }
         *InOutCaptureBuffer = CaptureBuffer;
     }
-    for (i = 0 ; i != NumberOfStringsToCapture ; ++i) {
-        if (StringsToCapture[i] != NULL) {
-            CsrCaptureMessageUnicodeStringInPlace(
-                CaptureBuffer,
-                StringsToCapture[i]
-                );
-        } else {
+    for (i = 0; i != NumberOfStringsToCapture; ++i)
+    {
+        if (StringsToCapture[i] != NULL)
+        {
+            CsrCaptureMessageUnicodeStringInPlace(CaptureBuffer, StringsToCapture[i]);
+        }
+        else
+        {
         }
     }
     Status = STATUS_SUCCESS;

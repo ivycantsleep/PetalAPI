@@ -21,15 +21,10 @@
 * 12-1-92 sanfords created
 \***************************************************************************/
 
-FUNCLOG1(LOG_GENERAL,BOOL , WINAPI, SetMessageQueue, int, cMessagesMax)
-BOOL
-WINAPI
-SetMessageQueue(
-    int cMessagesMax)
+FUNCLOG1(LOG_GENERAL, BOOL, WINAPI, SetMessageQueue, int, cMessagesMax)
+BOOL WINAPI SetMessageQueue(int cMessagesMax)
 {
     UNREFERENCED_PARAMETER(cMessagesMax);
 
-    return(TRUE);
+    return (TRUE);
 }
-
-

@@ -21,15 +21,15 @@ Revision History:
 #include "lpcp.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,LpcpInitializePortZone)
-#pragma alloc_text(PAGE,LpcpInitializePortQueue)
-#pragma alloc_text(PAGE,LpcpDestroyPortQueue)
-#pragma alloc_text(PAGE,LpcpExtendPortZone)
-#pragma alloc_text(PAGE,LpcpFreeToPortZone)
-#pragma alloc_text(PAGE,LpcpSaveDataInfoMessage)
-#pragma alloc_text(PAGE,LpcpFreeDataInfoMessage)
-#pragma alloc_text(PAGE,LpcpFindDataInfoMessage)
-#pragma alloc_text(PAGE,LpcDisconnectPort)
+#pragma alloc_text(INIT, LpcpInitializePortZone)
+#pragma alloc_text(PAGE, LpcpInitializePortQueue)
+#pragma alloc_text(PAGE, LpcpDestroyPortQueue)
+#pragma alloc_text(PAGE, LpcpExtendPortZone)
+#pragma alloc_text(PAGE, LpcpFreeToPortZone)
+#pragma alloc_text(PAGE, LpcpSaveDataInfoMessage)
+#pragma alloc_text(PAGE, LpcpFreeDataInfoMessage)
+#pragma alloc_text(PAGE, LpcpFindDataInfoMessage)
+#pragma alloc_text(PAGE, LpcDisconnectPort)
 #endif
 
 #ifdef ALLOC_DATA_PRAGMA
@@ -45,11 +45,9 @@ PAGED_LOOKASIDE_LIST LpcpMessagesLookaside;
 #pragma data_seg()
 #endif // ALLOC_DATA_PRAGMA
 
-
+
 NTSTATUS
-LpcpInitializePortQueue (
-    IN PLPCP_PORT_OBJECT Port
-    )
+LpcpInitializePortQueue(IN PLPCP_PORT_OBJECT Port)
 
 /*++
 
@@ -76,11 +74,10 @@ Return Value:
     //  Allocate space for the port queue
     //
 
-    NonPagedPortQueue = ExAllocatePoolWithTag( NonPagedPool,
-                                               sizeof(LPCP_NONPAGED_PORT_QUEUE),
-                                               'troP' );
+    NonPagedPortQueue = ExAllocatePoolWithTag(NonPagedPool, sizeof(LPCP_NONPAGED_PORT_QUEUE), 'troP');
 
-    if (NonPagedPortQueue == NULL) {
+    if (NonPagedPortQueue == NULL)
+    {
 
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -89,7 +86,7 @@ Return Value:
     //  Initialize the fields in the non paged port queue
     //
 
-    KeInitializeSemaphore( &NonPagedPortQueue->Semaphore, 0, 0x7FFFFFFF );
+    KeInitializeSemaphore(&NonPagedPortQueue->Semaphore, 0, 0x7FFFFFFF);
 
     NonPagedPortQueue->BackPointer = Port;
 
@@ -103,7 +100,7 @@ Return Value:
     //  Initialize the port msg queue to be empty
     //
 
-    InitializeListHead( &Port->MsgQueue.ReceiveHead );
+    InitializeListHead(&Port->MsgQueue.ReceiveHead);
 
     //
     //  And return to our caller
@@ -112,12 +109,8 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
-
-VOID
-LpcpDestroyPortQueue (
-    IN PLPCP_PORT_OBJECT Port,
-    IN BOOLEAN CleanupAndDestroy
-    )
+
+VOID LpcpDestroyPortQueue(IN PLPCP_PORT_OBJECT Port, IN BOOLEAN CleanupAndDestroy)
 
 /*++
 
@@ -157,17 +150,17 @@ Return Value:
 
     LpcpAcquireLpcpLock();
 
-    if ( ((Port->Flags & PORT_TYPE) != UNCONNECTED_COMMUNICATION_PORT)
-            &&
-         (Port->ConnectedPort != NULL) ) {
+    if (((Port->Flags & PORT_TYPE) != UNCONNECTED_COMMUNICATION_PORT) && (Port->ConnectedPort != NULL))
+    {
 
         Port->ConnectedPort->ConnectedPort = NULL;
-        
+
         //
         //  Disconnect the connection port
         //
 
-        if (Port->ConnectedPort->ConnectionPort) {
+        if (Port->ConnectedPort->ConnectionPort)
+        {
 
             ConnectionPort = Port->ConnectedPort->ConnectionPort;
 
@@ -179,7 +172,8 @@ Return Value:
     //  If connection port, then mark name as deleted
     //
 
-    if ((Port->Flags & PORT_TYPE) == SERVER_CONNECTION_PORT) {
+    if ((Port->Flags & PORT_TYPE) == SERVER_CONNECTION_PORT)
+    {
 
         Port->Flags |= PORT_NAME_DELETED;
     }
@@ -194,26 +188,29 @@ Return Value:
     Head = &Port->LpcReplyChainHead;
     Next = Head->Flink;
 
-    while ((Next != NULL) && (Next != Head)) {
+    while ((Next != NULL) && (Next != Head))
+    {
 
-        ThreadWaitingForReply = CONTAINING_RECORD( Next, ETHREAD, LpcReplyChain );
+        ThreadWaitingForReply = CONTAINING_RECORD(Next, ETHREAD, LpcReplyChain);
 
         //
         //  If the thread is exiting, in the location of LpcReplyChain is stored the ExitTime
         //  We'll stop to search through the list.
 
-        if ( ThreadWaitingForReply->LpcExitThreadCalled ) {
-            
+        if (ThreadWaitingForReply->LpcExitThreadCalled)
+        {
+
             break;
         }
 
         Next = Next->Flink;
 
-        RemoveEntryList( &ThreadWaitingForReply->LpcReplyChain );
+        RemoveEntryList(&ThreadWaitingForReply->LpcReplyChain);
 
-        InitializeListHead( &ThreadWaitingForReply->LpcReplyChain );
+        InitializeListHead(&ThreadWaitingForReply->LpcReplyChain);
 
-        if (!KeReadStateSemaphore( &ThreadWaitingForReply->LpcReplySemaphore )) {
+        if (!KeReadStateSemaphore(&ThreadWaitingForReply->LpcReplySemaphore))
+        {
 
             //
             //  Thread is waiting on a message.  Signal the semaphore and free
@@ -222,81 +219,82 @@ Return Value:
 
             Msg = LpcpGetThreadMessage(ThreadWaitingForReply);
 
-            if ( Msg ) {
+            if (Msg)
+            {
 
                 //
                 //  If the message is a connection request and has a section object
                 //  attached, then dereference that section object
                 //
 
-                if ((Msg->Request.u2.s2.Type & ~LPC_KERNELMODE_MESSAGE) == LPC_CONNECTION_REQUEST) {
+                if ((Msg->Request.u2.s2.Type & ~LPC_KERNELMODE_MESSAGE) == LPC_CONNECTION_REQUEST)
+                {
 
                     PLPCP_CONNECTION_MESSAGE ConnectMsg;
-                
+
                     ConnectMsg = (PLPCP_CONNECTION_MESSAGE)(Msg + 1);
 
-                    if ( ConnectMsg->SectionToMap != NULL ) {
+                    if (ConnectMsg->SectionToMap != NULL)
+                    {
 
-                        ObDereferenceObject( ConnectMsg->SectionToMap );
+                        ObDereferenceObject(ConnectMsg->SectionToMap);
                     }
                 }
 
                 ThreadWaitingForReply->LpcReplyMessage = NULL;
 
-                LpcpFreeToPortZone( Msg, LPCP_MUTEX_OWNED );
+                LpcpFreeToPortZone(Msg, LPCP_MUTEX_OWNED);
                 Next = Port->LpcReplyChainHead.Flink; // Lock has been dropped
             }
 
             ThreadWaitingForReply->LpcReplyMessageId = 0;
 
-            KeReleaseSemaphore( &ThreadWaitingForReply->LpcReplySemaphore,
-                                0,
-                                1L,
-                                FALSE );
+            KeReleaseSemaphore(&ThreadWaitingForReply->LpcReplySemaphore, 0, 1L, FALSE);
         }
     }
 
-    InitializeListHead( &Port->LpcReplyChainHead );
+    InitializeListHead(&Port->LpcReplyChainHead);
 
     //
     //  Walk list of messages queued to this port.  Remove each message from
     //  the list and free it.
     //
 
-    while (Port->MsgQueue.ReceiveHead.Flink && !IsListEmpty (&Port->MsgQueue.ReceiveHead)) {
+    while (Port->MsgQueue.ReceiveHead.Flink && !IsListEmpty(&Port->MsgQueue.ReceiveHead))
+    {
 
-        Msg  = CONTAINING_RECORD( Port->MsgQueue.ReceiveHead.Flink, LPCP_MESSAGE, Entry );
+        Msg = CONTAINING_RECORD(Port->MsgQueue.ReceiveHead.Flink, LPCP_MESSAGE, Entry);
 
-        RemoveEntryList (&Msg->Entry);
+        RemoveEntryList(&Msg->Entry);
 
-        InitializeListHead( &Msg->Entry );
+        InitializeListHead(&Msg->Entry);
 
-        LpcpFreeToPortZone( Msg, LPCP_MUTEX_OWNED );
-        
+        LpcpFreeToPortZone(Msg, LPCP_MUTEX_OWNED);
     }
 
     LpcpReleaseLpcpLock();
 
-    if ( ConnectionPort ) {
+    if (ConnectionPort)
+    {
 
-        ObDereferenceObject( ConnectionPort );
+        ObDereferenceObject(ConnectionPort);
     }
 
     //
     //  Check if the caller wants it all to go away
     //
 
-    if ( CleanupAndDestroy ) {
+    if (CleanupAndDestroy)
+    {
 
         //
         //  Free semaphore associated with the queue.
         //
 
-        if (Port->MsgQueue.Semaphore != NULL) {
+        if (Port->MsgQueue.Semaphore != NULL)
+        {
 
-            ExFreePool( CONTAINING_RECORD( Port->MsgQueue.Semaphore,
-                                           LPCP_NONPAGED_PORT_QUEUE,
-                                           Semaphore ));
+            ExFreePool(CONTAINING_RECORD(Port->MsgQueue.Semaphore, LPCP_NONPAGED_PORT_QUEUE, Semaphore));
         }
     }
 
@@ -307,11 +305,9 @@ Return Value:
     return;
 }
 
-
+
 NTSTATUS
-LpcDisconnectPort (
-    IN PVOID Port
-    )
+LpcDisconnectPort(IN PVOID Port)
 
 /*++
 
@@ -330,35 +326,20 @@ Return Value:
 
 --*/
 {
-    LpcpDestroyPortQueue (Port, FALSE);
+    LpcpDestroyPortQueue(Port, FALSE);
     return STATUS_SUCCESS;
 }
 
 
-VOID
-LpcpInitializePortZone (
-    IN ULONG MaxEntrySize
-    )
+VOID LpcpInitializePortZone(IN ULONG MaxEntrySize)
 {
     LpcpMaxMessageSize = MaxEntrySize;
 
-    ExInitializePagedLookasideList( &LpcpMessagesLookaside,
-                                    NULL,
-                                    NULL,
-                                    0,
-                                    MaxEntrySize,
-                                    'McpL',
-                                    32 
-                                    );
+    ExInitializePagedLookasideList(&LpcpMessagesLookaside, NULL, NULL, 0, MaxEntrySize, 'McpL', 32);
 }
 
-
-VOID
-FASTCALL
-LpcpFreeToPortZone (
-    IN PLPCP_MESSAGE Msg,
-    IN ULONG MutexFlags
-    )
+
+VOID FASTCALL LpcpFreeToPortZone(IN PLPCP_MESSAGE Msg, IN ULONG MutexFlags)
 {
     PLPCP_CONNECTION_MESSAGE ConnectMsg;
     PETHREAD RepliedToThread = NULL;
@@ -370,7 +351,8 @@ LpcpFreeToPortZone (
     //  Acquire the global lock if necessary
     //
 
-    if ((MutexFlags & LPCP_MUTEX_OWNED) == 0) {
+    if ((MutexFlags & LPCP_MUTEX_OWNED) == 0)
+    {
 
         LpcpAcquireLpcpLock();
     }
@@ -381,9 +363,10 @@ LpcpFreeToPortZone (
     //  message
     //
 
-    if (!IsListEmpty( &Msg->Entry )) {
-        RemoveEntryList( &Msg->Entry );
-        InitializeListHead( &Msg->Entry );
+    if (!IsListEmpty(&Msg->Entry))
+    {
+        RemoveEntryList(&Msg->Entry);
+        InitializeListHead(&Msg->Entry);
     }
 
     //
@@ -391,7 +374,8 @@ LpcpFreeToPortZone (
     //  to the thread that we should now remove
     //
 
-    if (Msg->RepliedToThread != NULL) {
+    if (Msg->RepliedToThread != NULL)
+    {
         RepliedToThread = Msg->RepliedToThread;
         Msg->RepliedToThread = NULL;
     }
@@ -402,11 +386,13 @@ LpcpFreeToPortZone (
     //  client port field might need to be dereferenced
     //
 
-    if ((Msg->Request.u2.s2.Type & ~LPC_KERNELMODE_MESSAGE) == LPC_CONNECTION_REQUEST) {
+    if ((Msg->Request.u2.s2.Type & ~LPC_KERNELMODE_MESSAGE) == LPC_CONNECTION_REQUEST)
+    {
 
         ConnectMsg = (PLPCP_CONNECTION_MESSAGE)(Msg + 1);
 
-        if (ConnectMsg->ClientPort) {
+        if (ConnectMsg->ClientPort)
+        {
 
             //
             //  Capture a pointer to the client port then null it
@@ -422,34 +408,29 @@ LpcpFreeToPortZone (
 
     LpcpReleaseLpcpLock();
 
-    if ( ClientPort ) {
-        
-        ObDereferenceObject( ClientPort );
+    if (ClientPort)
+    {
+
+        ObDereferenceObject(ClientPort);
     }
 
-    if ( RepliedToThread ) {
+    if (RepliedToThread)
+    {
 
-        ObDereferenceObject( RepliedToThread );
+        ObDereferenceObject(RepliedToThread);
     }
 
     ExFreeToPagedLookasideList(&LpcpMessagesLookaside, Msg);
 
-    if ((MutexFlags & LPCP_MUTEX_OWNED) &&
-        ((MutexFlags & LPCP_MUTEX_RELEASE_ON_RETURN) == 0)) {
+    if ((MutexFlags & LPCP_MUTEX_OWNED) && ((MutexFlags & LPCP_MUTEX_RELEASE_ON_RETURN) == 0))
+    {
 
         LpcpAcquireLpcpLock();
     }
-
 }
 
 
-
-VOID
-LpcpSaveDataInfoMessage (
-    IN PLPCP_PORT_OBJECT Port,
-    IN PLPCP_MESSAGE Msg,
-    IN ULONG MutexFlags
-    )
+VOID LpcpSaveDataInfoMessage(IN PLPCP_PORT_OBJECT Port, IN PLPCP_MESSAGE Msg, IN ULONG MutexFlags)
 
 /*++
 
@@ -479,7 +460,8 @@ Return Value:
     //  Take out the global lock if our caller didn't already.
     //
 
-    if ((MutexFlags & LPCP_MUTEX_OWNED) == 0) {
+    if ((MutexFlags & LPCP_MUTEX_OWNED) == 0)
+    {
         LpcpAcquireLpcpLock();
     }
 
@@ -487,13 +469,16 @@ Return Value:
     //  Make sure we get to the connection port object of this port
     //
 
-    if ((Port->Flags & PORT_TYPE) > UNCONNECTED_COMMUNICATION_PORT) {
+    if ((Port->Flags & PORT_TYPE) > UNCONNECTED_COMMUNICATION_PORT)
+    {
 
         Port = Port->ConnectionPort;
 
-        if (Port == NULL) {
+        if (Port == NULL)
+        {
 
-            if ((MutexFlags & LPCP_MUTEX_OWNED) == 0) {
+            if ((MutexFlags & LPCP_MUTEX_OWNED) == 0)
+            {
                 LpcpReleaseLpcpLock();
             }
 
@@ -501,24 +486,21 @@ Return Value:
         }
     }
 
-    LpcpTrace(( "%s Saving DataInfo Message %lx (%u.%u)  Port: %lx\n",
-                PsGetCurrentProcess()->ImageFileName,
-                Msg,
-                Msg->Request.MessageId,
-                Msg->Request.CallbackId,
-                Port ));
+    LpcpTrace(("%s Saving DataInfo Message %lx (%u.%u)  Port: %lx\n", PsGetCurrentProcess()->ImageFileName, Msg,
+               Msg->Request.MessageId, Msg->Request.CallbackId, Port));
 
     //
     //  Enqueue this message onto the data info chain for the port
     //
 
-    InsertTailList( &Port->LpcDataInfoChainHead, &Msg->Entry );
+    InsertTailList(&Port->LpcDataInfoChainHead, &Msg->Entry);
 
     //
     //  Free the global lock
     //
 
-    if ((MutexFlags & LPCP_MUTEX_OWNED) == 0) {
+    if ((MutexFlags & LPCP_MUTEX_OWNED) == 0)
+    {
         LpcpReleaseLpcpLock();
     }
 
@@ -529,13 +511,8 @@ Return Value:
     return;
 }
 
-
-VOID
-LpcpFreeDataInfoMessage (
-    IN PLPCP_PORT_OBJECT Port,
-    IN ULONG MessageId,
-    IN ULONG CallbackId
-    )
+
+VOID LpcpFreeDataInfoMessage(IN PLPCP_PORT_OBJECT Port, IN ULONG MessageId, IN ULONG CallbackId)
 
 /*++
 
@@ -567,11 +544,13 @@ Return Value:
     //  Make sure we get to the connection port object of this port
     //
 
-    if ((Port->Flags & PORT_TYPE) > UNCONNECTED_COMMUNICATION_PORT) {
+    if ((Port->Flags & PORT_TYPE) > UNCONNECTED_COMMUNICATION_PORT)
+    {
 
         Port = Port->ConnectionPort;
 
-        if (Port == NULL) {
+        if (Port == NULL)
+        {
 
             return;
         }
@@ -584,9 +563,10 @@ Return Value:
     Head = &Port->LpcDataInfoChainHead;
     Next = Head->Flink;
 
-    while (Next != Head) {
+    while (Next != Head)
+    {
 
-        Msg = CONTAINING_RECORD( Next, LPCP_MESSAGE, Entry );
+        Msg = CONTAINING_RECORD(Next, LPCP_MESSAGE, Entry);
 
         //
         //  If this message matches the callers specification then remove
@@ -594,25 +574,22 @@ Return Value:
         //  to our caller
         //
 
-        if ((Msg->Request.MessageId == MessageId) &&
-            (Msg->Request.CallbackId == CallbackId)) {
+        if ((Msg->Request.MessageId == MessageId) && (Msg->Request.CallbackId == CallbackId))
+        {
 
-            LpcpTrace(( "%s Removing DataInfo Message %lx (%u.%u) Port: %lx\n",
-                        PsGetCurrentProcess()->ImageFileName,
-                        Msg,
-                        Msg->Request.MessageId,
-                        Msg->Request.CallbackId,
-                        Port ));
+            LpcpTrace(("%s Removing DataInfo Message %lx (%u.%u) Port: %lx\n", PsGetCurrentProcess()->ImageFileName,
+                       Msg, Msg->Request.MessageId, Msg->Request.CallbackId, Port));
 
-            RemoveEntryList( &Msg->Entry );
+            RemoveEntryList(&Msg->Entry);
 
-            InitializeListHead( &Msg->Entry );
+            InitializeListHead(&Msg->Entry);
 
-            LpcpFreeToPortZone( Msg, LPCP_MUTEX_OWNED );
+            LpcpFreeToPortZone(Msg, LPCP_MUTEX_OWNED);
 
             return;
-
-        } else {
+        }
+        else
+        {
 
             //
             //  Keep on going down the data info chain
@@ -626,22 +603,15 @@ Return Value:
     //  We didn't find a match so just return to our caller
     //
 
-    LpcpTrace(( "%s Unable to find DataInfo Message (%u.%u)  Port: %lx\n",
-                PsGetCurrentProcess()->ImageFileName,
-                MessageId,
-                CallbackId,
-                Port ));
+    LpcpTrace(("%s Unable to find DataInfo Message (%u.%u)  Port: %lx\n", PsGetCurrentProcess()->ImageFileName,
+               MessageId, CallbackId, Port));
 
     return;
 }
 
-
+
 PLPCP_MESSAGE
-LpcpFindDataInfoMessage (
-    IN PLPCP_PORT_OBJECT Port,
-    IN ULONG MessageId,
-    IN ULONG CallbackId
-    )
+LpcpFindDataInfoMessage(IN PLPCP_PORT_OBJECT Port, IN ULONG MessageId, IN ULONG CallbackId)
 
 /*++
 
@@ -675,11 +645,13 @@ Return Value:
     //  Make sure we get to the connection port object of this port
     //
 
-    if ((Port->Flags & PORT_TYPE) > UNCONNECTED_COMMUNICATION_PORT) {
+    if ((Port->Flags & PORT_TYPE) > UNCONNECTED_COMMUNICATION_PORT)
+    {
 
         Port = Port->ConnectionPort;
 
-        if (Port == NULL) {
+        if (Port == NULL)
+        {
 
             return NULL;
         }
@@ -693,23 +665,21 @@ Return Value:
     Head = &Port->LpcDataInfoChainHead;
     Next = Head->Flink;
 
-    while (Next != Head) {
+    while (Next != Head)
+    {
 
-        Msg = CONTAINING_RECORD( Next, LPCP_MESSAGE, Entry );
+        Msg = CONTAINING_RECORD(Next, LPCP_MESSAGE, Entry);
 
-        if ((Msg->Request.MessageId == MessageId) &&
-            (Msg->Request.CallbackId == CallbackId)) {
+        if ((Msg->Request.MessageId == MessageId) && (Msg->Request.CallbackId == CallbackId))
+        {
 
-            LpcpTrace(( "%s Found DataInfo Message %lx (%u.%u)  Port: %lx\n",
-                        PsGetCurrentProcess()->ImageFileName,
-                        Msg,
-                        Msg->Request.MessageId,
-                        Msg->Request.CallbackId,
-                        Port ));
+            LpcpTrace(("%s Found DataInfo Message %lx (%u.%u)  Port: %lx\n", PsGetCurrentProcess()->ImageFileName, Msg,
+                       Msg->Request.MessageId, Msg->Request.CallbackId, Port));
 
             return Msg;
-
-        } else {
+        }
+        else
+        {
 
             Next = Next->Flink;
         }
@@ -719,11 +689,8 @@ Return Value:
     //  We did not find a match so return null to our caller
     //
 
-    LpcpTrace(( "%s Unable to find DataInfo Message (%u.%u)  Port: %lx\n",
-                PsGetCurrentProcess()->ImageFileName,
-                MessageId,
-                CallbackId,
-                Port ));
+    LpcpTrace(("%s Unable to find DataInfo Message (%u.%u)  Port: %lx\n", PsGetCurrentProcess()->ImageFileName,
+               MessageId, CallbackId, Port));
 
     return NULL;
 }

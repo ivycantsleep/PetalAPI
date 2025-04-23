@@ -37,14 +37,12 @@ Revision History:
 #define DLL_EXTENSION L".DLL"
 #define DLL_REDIRECTION_LOCAL_SUFFIX L".Local"
 
-#define INVALID_HANDLE_VALUE ((HANDLE) ((LONG_PTR) -1))
+#define INVALID_HANDLE_VALUE ((HANDLE)((LONG_PTR) - 1))
 
 BOOLEAN LdrpBreakOnExceptions = FALSE;
 
 PLDR_DATA_TABLE_ENTRY
-LdrpAllocateDataTableEntry(
-    IN PVOID DllBase
-    )
+LdrpAllocateDataTableEntry(IN PVOID DllBase)
 
 /*++
 
@@ -71,9 +69,11 @@ Return Value:
     NtHeaders = RtlImageNtHeader(DllBase);
 
     Entry = NULL;
-    if ( NtHeaders ) {
-        Entry = RtlAllocateHeap(LdrpHeap, MAKE_TAG( LDR_TAG ) | HEAP_ZERO_MEMORY, sizeof(*Entry));
-        if ( Entry ) {
+    if (NtHeaders)
+    {
+        Entry = RtlAllocateHeap(LdrpHeap, MAKE_TAG(LDR_TAG) | HEAP_ZERO_MEMORY, sizeof(*Entry));
+        if (Entry)
+        {
             Entry->DllBase = DllBase;
             Entry->SizeOfImage = NtHeaders->OptionalHeader.SizeOfImage;
             Entry->TimeDateStamp = NtHeaders->FileHeader.TimeDateStamp;
@@ -82,28 +82,25 @@ Return Value:
     return Entry;
 }
 
-VOID
-LdrpDeallocateDataTableEntry(
-    IN PLDR_DATA_TABLE_ENTRY Entry
-    )
+VOID LdrpDeallocateDataTableEntry(IN PLDR_DATA_TABLE_ENTRY Entry)
 {
     if (Entry != NULL)
         RtlFreeHeap(LdrpHeap, 0, Entry);
 }
 
-VOID
-LdrpFinalizeAndDeallocateDataTableEntry(
-    IN PLDR_DATA_TABLE_ENTRY Entry
-    )
+VOID LdrpFinalizeAndDeallocateDataTableEntry(IN PLDR_DATA_TABLE_ENTRY Entry)
 {
-    if (Entry != NULL) {
+    if (Entry != NULL)
+    {
         if ((Entry->EntryPointActivationContext != NULL) &&
-            (Entry->EntryPointActivationContext != INVALID_HANDLE_VALUE)) {
+            (Entry->EntryPointActivationContext != INVALID_HANDLE_VALUE))
+        {
             RtlReleaseActivationContext(Entry->EntryPointActivationContext);
             Entry->EntryPointActivationContext = INVALID_HANDLE_VALUE;
         }
 
-        if (Entry->FullDllName.Buffer != NULL) {
+        if (Entry->FullDllName.Buffer != NULL)
+        {
             LdrpFreeUnicodeString(&Entry->FullDllName);
 
             RtlInitEmptyUnicodeString(&Entry->FullDllName, NULL, 0);
@@ -112,15 +109,11 @@ LdrpFinalizeAndDeallocateDataTableEntry(
 
         LdrpDeallocateDataTableEntry(Entry);
     }
-
 }
 
 NTSTATUS
-RtlComputePrivatizedDllName_U(
-    IN PCUNICODE_STRING DllName,
-    IN OUT PUNICODE_STRING NewDllNameUnderImageDir,
-    IN OUT PUNICODE_STRING NewDllNameUnderLocalDir
-    )
+RtlComputePrivatizedDllName_U(IN PCUNICODE_STRING DllName, IN OUT PUNICODE_STRING NewDllNameUnderImageDir,
+                              IN OUT PUNICODE_STRING NewDllNameUnderLocalDir)
 
 /*++
 
@@ -148,13 +141,13 @@ Return Value:
 
 {
     LPWSTR p, pp, pp1, pp2;
-    PWSTR  Dot;
+    PWSTR Dot;
     LPWSTR pFullImageName;
     USHORT cbFullImageNameLength;
     USHORT cbFullImagePathLengthWithTrailingSlash, cbDllFileNameLengthWithTrailingNULL;
     USHORT cbDllNameUnderImageDir, cbDllNameUnderLocalDir;
-    ULONG  cbStringLength;
-    PWSTR  Cursor = NULL;
+    ULONG cbStringLength;
+    PWSTR Cursor = NULL;
     NTSTATUS status = STATUS_SUCCESS;
     LPWSTR pDllNameUnderImageDir = NULL;
     LPWSTR pDllNameUnderLocalDir = NULL;
@@ -164,7 +157,8 @@ Return Value:
     cbFullImageNameLength = NtCurrentPeb()->ProcessParameters->ImagePathName.Length;
     pFullImageName = (PWSTR)NtCurrentPeb()->ProcessParameters->ImagePathName.Buffer;
 
-    if (!(NtCurrentPeb()->ProcessParameters->Flags & RTL_USER_PROC_PARAMS_NORMALIZED)) {
+    if (!(NtCurrentPeb()->ProcessParameters->Flags & RTL_USER_PROC_PARAMS_NORMALIZED))
+    {
         pFullImageName = (PWSTR)((PCHAR)pFullImageName + (ULONG_PTR)(NtCurrentPeb()->ProcessParameters));
     }
 
@@ -173,35 +167,43 @@ Return Value:
     // Find the end of the EXE path (start of its base-name) in pp1.
     // Size1 is number of bytes;
 
-    p = pFullImageName + cbFullImageNameLength/sizeof(WCHAR) - 1; // point to last character of this name
+    p = pFullImageName + cbFullImageNameLength / sizeof(WCHAR) - 1; // point to last character of this name
     pp1 = NULL;
-    while (p != pFullImageName) {
-        if (RTL_IS_PATH_SEPARATOR(*p)) {
+    while (p != pFullImageName)
+    {
+        if (RTL_IS_PATH_SEPARATOR(*p))
+        {
             pp1 = p + 1;
             break;
         }
-        p-- ;
+        p--;
     }
 
     // Find the basename portion of the DLL to be loaded in pp2 and the
     // last '.' character if present in the basename.
     pp2 = DllName->Buffer;
-    Dot = NULL ;
-    if (DllName->Length) {
-        ASSERT(RTL_STRING_IS_NUL_TERMINATED(DllName)); // temporary debugging
-        p = DllName->Buffer + (DllName->Length>>1) - 1; // point to last char
-        while (p != DllName->Buffer) {
-            if (*p == (WCHAR) '.') {
-                if (!Dot) {
-                    Dot = p ;
-                    }
+    Dot = NULL;
+    if (DllName->Length)
+    {
+        ASSERT(RTL_STRING_IS_NUL_TERMINATED(DllName));    // temporary debugging
+        p = DllName->Buffer + (DllName->Length >> 1) - 1; // point to last char
+        while (p != DllName->Buffer)
+        {
+            if (*p == (WCHAR)'.')
+            {
+                if (!Dot)
+                {
+                    Dot = p;
                 }
-            else {
-                if ((*p == (WCHAR) '\\') || (*p == (WCHAR) '/')) {
+            }
+            else
+            {
+                if ((*p == (WCHAR)'\\') || (*p == (WCHAR)'/'))
+                {
                     pp2 = p + 1;
                     break;
-                    }
                 }
+            }
             p--;
         }
     }
@@ -209,13 +211,15 @@ Return Value:
     // Create a fully qualified path to the DLL name (using pp1 and pp2)
 
     // Number of bytes (not including NULL or EXE/process folder)
-    if (((pp1 - pFullImageName) * sizeof(WCHAR)) > ULONG_MAX) {
-            DbgPrint("ntdll: wants more than ULONG_MAX bytes \n");
-            goto Exit;
+    if (((pp1 - pFullImageName) * sizeof(WCHAR)) > ULONG_MAX)
+    {
+        DbgPrint("ntdll: wants more than ULONG_MAX bytes \n");
+        goto Exit;
     }
 
     cbStringLength = (ULONG)((pp1 - pFullImageName) * sizeof(WCHAR));
-    if ( cbStringLength > UNICODE_STRING_MAX_BYTES ) {
+    if (cbStringLength > UNICODE_STRING_MAX_BYTES)
+    {
         status = STATUS_NAME_TOO_LONG;
         goto Exit;
     }
@@ -223,89 +227,99 @@ Return Value:
     cbFullImagePathLengthWithTrailingSlash = (USHORT)cbStringLength;
 
     // Number of bytes in base DLL name (including trailing null char)
-    cbDllFileNameLengthWithTrailingNULL = (USHORT)(DllName->Length + sizeof(WCHAR) - ((pp2 - DllName->Buffer) * sizeof(WCHAR)));
+    cbDllFileNameLengthWithTrailingNULL =
+        (USHORT)(DllName->Length + sizeof(WCHAR) - ((pp2 - DllName->Buffer) * sizeof(WCHAR)));
 
-    cbStringLength = cbFullImagePathLengthWithTrailingSlash
-                     + cbDllFileNameLengthWithTrailingNULL;
+    cbStringLength = cbFullImagePathLengthWithTrailingSlash + cbDllFileNameLengthWithTrailingNULL;
 
     // Allocate room for L".DLL"
     if (Dot == NULL)
-        cbStringLength  += sizeof(DLL_EXTENSION) - sizeof(WCHAR);
+        cbStringLength += sizeof(DLL_EXTENSION) - sizeof(WCHAR);
 
-    if ( cbStringLength > UNICODE_STRING_MAX_BYTES ) {
+    if (cbStringLength > UNICODE_STRING_MAX_BYTES)
+    {
         status = STATUS_NAME_TOO_LONG;
         goto Exit;
     }
 
     cbDllNameUnderImageDir = (USHORT)cbStringLength;
 
-    if (cbDllNameUnderImageDir > NewDllNameUnderImageDir->MaximumLength) {
+    if (cbDllNameUnderImageDir > NewDllNameUnderImageDir->MaximumLength)
+    {
         pDllNameUnderImageDir = (*RtlAllocateStringRoutine)(cbDllNameUnderImageDir);
-        if (pDllNameUnderImageDir == NULL) {
-            status = STATUS_NO_MEMORY ;
+        if (pDllNameUnderImageDir == NULL)
+        {
+            status = STATUS_NO_MEMORY;
             goto Exit;
         }
-    }else
+    }
+    else
         pDllNameUnderImageDir = NewDllNameUnderImageDir->Buffer;
 
     Cursor = pDllNameUnderImageDir;
     RtlCopyMemory(Cursor, pFullImageName, cbFullImagePathLengthWithTrailingSlash);
     Cursor = pDllNameUnderImageDir + cbFullImagePathLengthWithTrailingSlash / sizeof(WCHAR);
 
-    RtlCopyMemory(Cursor, pp2, cbDllFileNameLengthWithTrailingNULL - sizeof(WCHAR)) ;
+    RtlCopyMemory(Cursor, pp2, cbDllFileNameLengthWithTrailingNULL - sizeof(WCHAR));
     Cursor += (cbDllFileNameLengthWithTrailingNULL - sizeof(WCHAR)) / sizeof(WCHAR);
 
-    if (!Dot) {
-            // If there is no '.' in the basename add the ".DLL" to it.
-            //
-            //  The -1 will work just as well as - sizeof(WCHAR) as we are dividing by
-            // sizeof(WCHAR) and it will be rounded down correctly as Size1 and Size2 are
-            // even. The -1 could be more optimal than subtracting sizeof(WCHAR)
-            //
-            RtlCopyMemory(Cursor, DLL_EXTENSION, sizeof(DLL_EXTENSION));
-            cbDllFileNameLengthWithTrailingNULL += sizeof(DLL_EXTENSION) - sizeof(WCHAR) ; // Mark base name as being 8 bytes bigger.
-    } else
+    if (!Dot)
+    {
+        // If there is no '.' in the basename add the ".DLL" to it.
+        //
+        //  The -1 will work just as well as - sizeof(WCHAR) as we are dividing by
+        // sizeof(WCHAR) and it will be rounded down correctly as Size1 and Size2 are
+        // even. The -1 could be more optimal than subtracting sizeof(WCHAR)
+        //
+        RtlCopyMemory(Cursor, DLL_EXTENSION, sizeof(DLL_EXTENSION));
+        cbDllFileNameLengthWithTrailingNULL +=
+            sizeof(DLL_EXTENSION) - sizeof(WCHAR); // Mark base name as being 8 bytes bigger.
+    }
+    else
         *Cursor = L'\0';
 
-    cbStringLength = cbFullImageNameLength
-                + sizeof(DLL_REDIRECTION_LOCAL_SUFFIX) - sizeof(WCHAR) //.local
-                + sizeof(WCHAR) // "\\"
-                + cbDllFileNameLengthWithTrailingNULL;
+    cbStringLength = cbFullImageNameLength + sizeof(DLL_REDIRECTION_LOCAL_SUFFIX) - sizeof(WCHAR) //.local
+                     + sizeof(WCHAR)                                                              // "\\"
+                     + cbDllFileNameLengthWithTrailingNULL;
 
-    if (cbStringLength > UNICODE_STRING_MAX_BYTES) {
+    if (cbStringLength > UNICODE_STRING_MAX_BYTES)
+    {
         status = STATUS_NAME_TOO_LONG;
         goto Exit;
     }
 
     cbDllNameUnderLocalDir = (USHORT)cbStringLength;
 
-    if ( cbDllNameUnderLocalDir > NewDllNameUnderLocalDir->MaximumLength) {
+    if (cbDllNameUnderLocalDir > NewDllNameUnderLocalDir->MaximumLength)
+    {
         pDllNameUnderLocalDir = (RtlAllocateStringRoutine)(cbDllNameUnderLocalDir);
-        if (!pDllNameUnderLocalDir) {
-            status = STATUS_NO_MEMORY ;
+        if (!pDllNameUnderLocalDir)
+        {
+            status = STATUS_NO_MEMORY;
             goto Exit;
         }
-    }else
+    }
+    else
         pDllNameUnderLocalDir = NewDllNameUnderLocalDir->Buffer;
 
     Cursor = pDllNameUnderLocalDir;
     RtlCopyMemory(Cursor, pFullImageName, cbFullImageNameLength);
     Cursor = pDllNameUnderLocalDir + cbFullImageNameLength / sizeof(WCHAR);
 
-    RtlCopyMemory(Cursor, DLL_REDIRECTION_LOCAL_SUFFIX, sizeof(DLL_REDIRECTION_LOCAL_SUFFIX) - sizeof(WCHAR)) ;
+    RtlCopyMemory(Cursor, DLL_REDIRECTION_LOCAL_SUFFIX, sizeof(DLL_REDIRECTION_LOCAL_SUFFIX) - sizeof(WCHAR));
     Cursor += (sizeof(DLL_REDIRECTION_LOCAL_SUFFIX) - sizeof(WCHAR)) / sizeof(WCHAR);
 
     *Cursor = L'\\';
     Cursor += 1;
 
-    RtlCopyMemory(Cursor,
-                  pDllNameUnderImageDir + cbFullImagePathLengthWithTrailingSlash/sizeof(WCHAR),
-                  cbDllFileNameLengthWithTrailingNULL) ;
+    RtlCopyMemory(Cursor, pDllNameUnderImageDir + cbFullImagePathLengthWithTrailingSlash / sizeof(WCHAR),
+                  cbDllFileNameLengthWithTrailingNULL);
 
 
-    NewDllNameUnderImageDir->Buffer = pDllNameUnderImageDir ;
-    if ( pDllNameUnderImageDir != pBuf1) // if memory is not-reallocated, MaximumLength should be untouched
-        NewDllNameUnderImageDir->MaximumLength =  cbFullImagePathLengthWithTrailingSlash + cbDllFileNameLengthWithTrailingNULL;
+    NewDllNameUnderImageDir->Buffer = pDllNameUnderImageDir;
+    if (pDllNameUnderImageDir != pBuf1) // if memory is not-reallocated, MaximumLength should be untouched
+        NewDllNameUnderImageDir->MaximumLength =
+            cbFullImagePathLengthWithTrailingSlash + cbDllFileNameLengthWithTrailingNULL;
     NewDllNameUnderImageDir->Length = (USHORT)(cbDllNameUnderImageDir - sizeof(WCHAR));
 
 
@@ -314,24 +328,22 @@ Return Value:
         NewDllNameUnderLocalDir->MaximumLength = cbDllNameUnderLocalDir;
     NewDllNameUnderLocalDir->Length = (USHORT)(cbDllNameUnderLocalDir - sizeof(WCHAR));
 
-    status = STATUS_SUCCESS ;
+    status = STATUS_SUCCESS;
 
 Exit:
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         if (pDllNameUnderImageDir != pBuf1)
-           (RtlFreeStringRoutine)(pDllNameUnderImageDir);
+            (RtlFreeStringRoutine)(pDllNameUnderImageDir);
         if (pDllNameUnderLocalDir != pBuf2)
-           (RtlFreeStringRoutine)(pDllNameUnderLocalDir);
+            (RtlFreeStringRoutine)(pDllNameUnderLocalDir);
     }
 
     return status;
 }
 
 NTSTATUS
-LdrpAllocateUnicodeString(
-    OUT PUNICODE_STRING StringOut,
-    IN USHORT Length
-    )
+LdrpAllocateUnicodeString(OUT PUNICODE_STRING StringOut, IN USHORT Length)
 /*++
 
 Routine Description:
@@ -359,20 +371,22 @@ Return Value:
 {
     NTSTATUS st = STATUS_INTERNAL_ERROR; // returned if someone messes up and forgets to otherwise set it
 
-    if (StringOut != NULL) {
+    if (StringOut != NULL)
+    {
         StringOut->Length = 0;
         StringOut->MaximumLength = 0;
         StringOut->Buffer = NULL;
     }
 
-    if ((StringOut == NULL) ||
-        ((Length % sizeof(WCHAR)) != 0)) {
+    if ((StringOut == NULL) || ((Length % sizeof(WCHAR)) != 0))
+    {
         st = STATUS_INVALID_PARAMETER;
         goto Exit;
     }
 
     StringOut->Buffer = RtlAllocateHeap(LdrpHeap, 0, Length + sizeof(WCHAR));
-    if (StringOut->Buffer == NULL) {
+    if (StringOut->Buffer == NULL)
+    {
         st = STATUS_NO_MEMORY;
         goto Exit;
     }
@@ -394,10 +408,7 @@ Exit:
 
 
 NTSTATUS
-LdrpCopyUnicodeString(
-    OUT PUNICODE_STRING StringOut,
-    IN PCUNICODE_STRING StringIn
-    )
+LdrpCopyUnicodeString(OUT PUNICODE_STRING StringOut, IN PCUNICODE_STRING StringIn)
 /*++
 
 Routine Description:
@@ -425,14 +436,15 @@ Return Value:
     NTSTATUS st = STATUS_INTERNAL_ERROR;
     ULONG BytesNeeded = 0;
 
-    if (StringOut != NULL) {
+    if (StringOut != NULL)
+    {
         StringOut->Length = 0;
         StringOut->MaximumLength = 0;
         StringOut->Buffer = NULL;
     }
 
-    if ((StringOut == NULL) ||
-        (StringIn == NULL)) {
+    if ((StringOut == NULL) || (StringIn == NULL))
+    {
         st = STATUS_INVALID_PARAMETER;
         goto Exit;
     }
@@ -453,10 +465,7 @@ Exit:
     return st;
 }
 
-VOID
-LdrpFreeUnicodeString(
-    IN OUT PUNICODE_STRING StringIn
-    )
+VOID LdrpFreeUnicodeString(IN OUT PUNICODE_STRING StringIn)
 /*++
 
 Routine Description:
@@ -476,8 +485,10 @@ Return Value:
 --*/
 
 {
-    if (StringIn != NULL) {
-        if (StringIn->Buffer != NULL) {
+    if (StringIn != NULL)
+    {
+        if (StringIn->Buffer != NULL)
+        {
             RtlFreeHeap(LdrpHeap, 0, StringIn->Buffer);
         }
 
@@ -487,15 +498,11 @@ Return Value:
     }
 }
 
-VOID
-LdrpEnsureLoaderLockIsHeld(
-    VOID
-    )
+VOID LdrpEnsureLoaderLockIsHeld(VOID)
 {
     BOOLEAN LoaderLockIsHeld =
         ((LdrpInLdrInit) ||
-         ((LdrpShutdownInProgress) &&
-          (LdrpShutdownThreadId == NtCurrentTeb()->ClientId.UniqueThread)) ||
+         ((LdrpShutdownInProgress) && (LdrpShutdownThreadId == NtCurrentTeb()->ClientId.UniqueThread)) ||
          (LdrpLoaderLock.OwningThread == NtCurrentTeb()->ClientId.UniqueThread));
 
     ASSERT(LoaderLockIsHeld);
@@ -504,11 +511,7 @@ LdrpEnsureLoaderLockIsHeld(
         RtlRaiseStatus(STATUS_NOT_LOCKED);
 }
 
-int
-LdrpGenericExceptionFilter(
-    IN const struct _EXCEPTION_POINTERS *ExceptionPointers,
-    IN PCSTR FunctionName
-    )
+int LdrpGenericExceptionFilter(IN const struct _EXCEPTION_POINTERS *ExceptionPointers, IN PCSTR FunctionName)
 /*++
 
 Routine Description:
@@ -533,41 +536,35 @@ Return Value:
 {
     const ULONG ExceptionCode = ExceptionPointers->ExceptionRecord->ExceptionCode;
 
-    DbgPrintEx(
-        DPFLTR_LDR_ID,
-        LDR_ERROR_DPFLTR,
-        "LDR: exception %08lx thrown within function %s\n"
-        "   Exception record: %p\n"
-        "   Context record: %p\n",
-        ExceptionCode, FunctionName,
-        ExceptionPointers->ExceptionRecord,
-        ExceptionPointers->ContextRecord);
+    DbgPrintEx(DPFLTR_LDR_ID, LDR_ERROR_DPFLTR,
+               "LDR: exception %08lx thrown within function %s\n"
+               "   Exception record: %p\n"
+               "   Context record: %p\n",
+               ExceptionCode, FunctionName, ExceptionPointers->ExceptionRecord, ExceptionPointers->ContextRecord);
 
 #ifdef _X86_
     // It would be nice to have a generic context dumper but right now I'm just trying to
     // debug X86 and this is the quick thing to do.  -mgrier 4/8/2001
-    DbgPrintEx(
-        DPFLTR_LDR_ID,
-        LDR_ERROR_DPFLTR,
-        "   Context->Eip = %p\n"
-        "   Context->Ebp = %p\n"
-        "   Context->Esp = %p\n",
-        ExceptionPointers->ContextRecord->Eip,
-        ExceptionPointers->ContextRecord->Ebp,
-        ExceptionPointers->ContextRecord->Esp);
+    DbgPrintEx(DPFLTR_LDR_ID, LDR_ERROR_DPFLTR,
+               "   Context->Eip = %p\n"
+               "   Context->Ebp = %p\n"
+               "   Context->Esp = %p\n",
+               ExceptionPointers->ContextRecord->Eip, ExceptionPointers->ContextRecord->Ebp,
+               ExceptionPointers->ContextRecord->Esp);
 #endif // _X86_
 
-    if (LdrpBreakOnExceptions) {
+    if (LdrpBreakOnExceptions)
+    {
         char Response[2];
 
-        for (;;) {
+        for (;;)
+        {
             DbgPrint("\n***Exception thrown within loader***\n");
-            DbgPrompt(
-                "Break repeatedly, break Once, Ignore, terminate Process or terminate Thread (boipt)? ",
-                Response,
-                sizeof(Response));
+            DbgPrompt("Break repeatedly, break Once, Ignore, terminate Process or terminate Thread (boipt)? ", Response,
+                      sizeof(Response));
 
-            switch (Response[0]) {
+            switch (Response[0])
+            {
             case 'b':
             case 'B':
             case 'o':
@@ -585,12 +582,12 @@ Return Value:
 
             case 'P':
             case 'p':
-                NtTerminateProcess( NtCurrentProcess(), ExceptionCode);
+                NtTerminateProcess(NtCurrentProcess(), ExceptionCode);
                 break;
 
             case 'T':
             case 't':
-                NtTerminateThread( NtCurrentThread(), ExceptionCode);
+                NtTerminateThread(NtCurrentThread(), ExceptionCode);
                 break;
             }
         }
@@ -598,5 +595,3 @@ Return Value:
 
     return EXCEPTION_EXECUTE_HANDLER;
 }
-
-

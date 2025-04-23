@@ -30,20 +30,11 @@ Revision History:
 //
 
 NTSTATUS
-IopExecuteHardwareProfileChange(
-    IN  HARDWARE_PROFILE_BUS_TYPE   Bus,
-    IN  PWCHAR                    * ProfileSerialNumbers,
-    IN  ULONG                       SerialNumbersCount,
-    OUT PHANDLE                     NewProfile,
-    OUT PBOOLEAN                    ProfileChanged
-    );
+IopExecuteHardwareProfileChange(IN HARDWARE_PROFILE_BUS_TYPE Bus, IN PWCHAR *ProfileSerialNumbers,
+                                IN ULONG SerialNumbersCount, OUT PHANDLE NewProfile, OUT PBOOLEAN ProfileChanged);
 
 NTSTATUS
-IopExecuteHwpDefaultSelect(
-    IN  PCM_HARDWARE_PROFILE_LIST ProfileList,
-    OUT PULONG ProfileIndexToUse,
-    IN  PVOID Context
-    );
+IopExecuteHwpDefaultSelect(IN PCM_HARDWARE_PROFILE_LIST ProfileList, OUT PULONG ProfileIndexToUse, IN PVOID Context);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, IopExecuteHwpDefaultSelect)
@@ -52,29 +43,20 @@ IopExecuteHwpDefaultSelect(
 
 
 NTSTATUS
-IopExecuteHwpDefaultSelect(
-    IN  PCM_HARDWARE_PROFILE_LIST   ProfileList,
-    OUT PULONG                      ProfileIndexToUse,
-    IN  PVOID                       Context
-    )
+IopExecuteHwpDefaultSelect(IN PCM_HARDWARE_PROFILE_LIST ProfileList, OUT PULONG ProfileIndexToUse, IN PVOID Context)
 {
     UNREFERENCED_PARAMETER(ProfileList);
     UNREFERENCED_PARAMETER(Context);
 
-    * ProfileIndexToUse = 0;
+    *ProfileIndexToUse = 0;
 
     return STATUS_SUCCESS;
 }
 
 
 NTSTATUS
-IopExecuteHardwareProfileChange(
-    IN  HARDWARE_PROFILE_BUS_TYPE   Bus,
-    IN  PWCHAR                     *ProfileSerialNumbers,
-    IN  ULONG                       SerialNumbersCount,
-    OUT HANDLE                     *NewProfile,
-    OUT BOOLEAN                    *ProfileChanged
-    )
+IopExecuteHardwareProfileChange(IN HARDWARE_PROFILE_BUS_TYPE Bus, IN PWCHAR *ProfileSerialNumbers,
+                                IN ULONG SerialNumbersCount, OUT HANDLE *NewProfile, OUT BOOLEAN *ProfileChanged)
 /*++
 
 Routine Description:
@@ -108,18 +90,17 @@ Arguments:
 
 --*/
 {
-    NTSTATUS        status = STATUS_SUCCESS;
-    ULONG           len;
-    ULONG           tmplen;
-    ULONG           i, j;
-    PWCHAR          tmpStr;
-    UNICODE_STRING  tmpUStr;
+    NTSTATUS status = STATUS_SUCCESS;
+    ULONG len;
+    ULONG tmplen;
+    ULONG i, j;
+    PWCHAR tmpStr;
+    UNICODE_STRING tmpUStr;
     PUNICODE_STRING sortedSerials = NULL;
 
     PPROFILE_ACPI_DOCKING_STATE dockState = NULL;
 
-    IopDbgPrint((   IOP_TRACE_LEVEL,
-                    "Execute Profile (BusType %x), (SerialNumCount %x)\n", Bus, SerialNumbersCount));
+    IopDbgPrint((IOP_TRACE_LEVEL, "Execute Profile (BusType %x), (SerialNumCount %x)\n", Bus, SerialNumbersCount));
 
     //
     // Sort the list of serial numbers
@@ -127,12 +108,14 @@ Arguments:
     len = sizeof(UNICODE_STRING) * SerialNumbersCount;
     sortedSerials = ExAllocatePool(NonPagedPool, len);
 
-    if (NULL == sortedSerials) {
+    if (NULL == sortedSerials)
+    {
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto Clean;
     }
 
-    for(i=0; i < SerialNumbersCount; i++) {
+    for (i = 0; i < SerialNumbersCount; i++)
+    {
 
         RtlInitUnicodeString(&sortedSerials[i], ProfileSerialNumbers[i]);
     }
@@ -141,16 +124,17 @@ Arguments:
     // I do not anticipate getting more than a few serial numbers, and I am
     // just lazy enough to write this comment and use a bubble sort.
     //
-    for(i = 0; i < SerialNumbersCount; i++) {
-        for(j = 0; j < SerialNumbersCount - 1; j++) {
+    for (i = 0; i < SerialNumbersCount; i++)
+    {
+        for (j = 0; j < SerialNumbersCount - 1; j++)
+        {
 
-            if (0 < RtlCompareUnicodeString(&sortedSerials[j],
-                                            &sortedSerials[j+1],
-                                            FALSE)) {
+            if (0 < RtlCompareUnicodeString(&sortedSerials[j], &sortedSerials[j + 1], FALSE))
+            {
 
                 tmpUStr = sortedSerials[j];
-                sortedSerials[j] = sortedSerials[j+1];
-                sortedSerials[j+1] = tmpUStr;
+                sortedSerials[j] = sortedSerials[j + 1];
+                sortedSerials[j + 1] = tmpUStr;
             }
         }
     }
@@ -159,26 +143,24 @@ Arguments:
     // Construct the DockState ID
     //
     len = 0;
-    for(i=0; i < SerialNumbersCount; i++) {
+    for (i = 0; i < SerialNumbersCount; i++)
+    {
 
         len += sortedSerials[i].Length;
     }
 
     len += sizeof(WCHAR); // NULL termination;
 
-    dockState = (PPROFILE_ACPI_DOCKING_STATE) ExAllocatePool(
-        NonPagedPool,
-        len + sizeof(PROFILE_ACPI_DOCKING_STATE)
-        );
+    dockState = (PPROFILE_ACPI_DOCKING_STATE)ExAllocatePool(NonPagedPool, len + sizeof(PROFILE_ACPI_DOCKING_STATE));
 
-    if (NULL == dockState) {
+    if (NULL == dockState)
+    {
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto Clean;
     }
 
-    for(i = 0, tmpStr = dockState->SerialNumber, tmplen = 0;
-        i < SerialNumbersCount;
-        i++) {
+    for (i = 0, tmpStr = dockState->SerialNumber, tmplen = 0; i < SerialNumbersCount; i++)
+    {
 
         tmplen = sortedSerials[i].Length;
         ASSERT(tmplen <= len - ((PCHAR)tmpStr - (PCHAR)dockState->SerialNumber));
@@ -189,14 +171,16 @@ Arguments:
 
     *(tmpStr++) = L'\0';
 
-    ASSERT(len == (ULONG) ((PCHAR) tmpStr - (PCHAR) dockState->SerialNumber));
-    dockState->SerialLength = (USHORT) len;
+    ASSERT(len == (ULONG)((PCHAR)tmpStr - (PCHAR)dockState->SerialNumber));
+    dockState->SerialLength = (USHORT)len;
 
-    if ((SerialNumbersCount > 1) || (L'\0' !=  dockState->SerialNumber[0])) {
+    if ((SerialNumbersCount > 1) || (L'\0' != dockState->SerialNumber[0]))
+    {
 
         dockState->DockingState = HW_PROFILE_DOCKSTATE_DOCKED;
-
-    } else {
+    }
+    else
+    {
 
         dockState->DockingState = HW_PROFILE_DOCKSTATE_UNDOCKED;
     }
@@ -204,39 +188,35 @@ Arguments:
     //
     // Set the new Profile
     //
-    switch(Bus) {
+    switch (Bus)
+    {
 
-        case HardwareProfileBusTypeACPI:
+    case HardwareProfileBusTypeACPI:
 
-            status = CmSetAcpiHwProfile(
-                dockState,
-                IopExecuteHwpDefaultSelect,
-                NULL,
-                NewProfile,
-                ProfileChanged
-                );
+        status = CmSetAcpiHwProfile(dockState, IopExecuteHwpDefaultSelect, NULL, NewProfile, ProfileChanged);
 
-            ASSERT(NT_SUCCESS(status) || (!(*ProfileChanged)));
-            break;
+        ASSERT(NT_SUCCESS(status) || (!(*ProfileChanged)));
+        break;
 
-        default:
-            *ProfileChanged = FALSE;
-            status = STATUS_NOT_SUPPORTED;
-            goto Clean;
+    default:
+        *ProfileChanged = FALSE;
+        status = STATUS_NOT_SUPPORTED;
+        goto Clean;
     }
 
 Clean:
 
-    if (NULL != sortedSerials) {
+    if (NULL != sortedSerials)
+    {
 
         ExFreePool(sortedSerials);
     }
 
-    if (NULL != dockState) {
+    if (NULL != dockState)
+    {
 
         ExFreePool(dockState);
     }
 
     return status;
 }
-

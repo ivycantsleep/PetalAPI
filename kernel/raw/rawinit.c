@@ -26,22 +26,12 @@ Revision History:
 #include <zwapi.h>
 
 NTSTATUS
-RawInitialize(
-    IN PDRIVER_OBJECT DriverObject,
-    IN PUNICODE_STRING RegistryPath
-    );
+RawInitialize(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath);
 
-VOID
-RawUnload(
-    IN PDRIVER_OBJECT DriverObject
-    );
+VOID RawUnload(IN PDRIVER_OBJECT DriverObject);
 
 NTSTATUS
-RawShutdown (
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    );
-
+RawShutdown(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 
 #ifdef ALLOC_PRAGMA
@@ -53,12 +43,9 @@ PDEVICE_OBJECT RawDeviceCdRomObject;
 PDEVICE_OBJECT RawDeviceTapeObject;
 PDEVICE_OBJECT RawDeviceDiskObject;
 
-
+
 NTSTATUS
-RawInitialize(
-    IN PDRIVER_OBJECT DriverObject,
-    IN PUNICODE_STRING RegistryPath
-    )
+RawInitialize(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 
 /*++
 
@@ -88,15 +75,11 @@ Return Value:
     //  First create a device object for the Disk file system queue
     //
 
-    RtlInitUnicodeString( &NameString, L"\\Device\\RawDisk" );
-    Status = IoCreateDevice( DriverObject,
-                             0L,
-                             &NameString,
-                             FILE_DEVICE_DISK_FILE_SYSTEM,
-                             0,
-                             FALSE,
-                             &RawDeviceDiskObject );
-    if (!NT_SUCCESS( Status )) {
+    RtlInitUnicodeString(&NameString, L"\\Device\\RawDisk");
+    Status =
+        IoCreateDevice(DriverObject, 0L, &NameString, FILE_DEVICE_DISK_FILE_SYSTEM, 0, FALSE, &RawDeviceDiskObject);
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
@@ -105,16 +88,12 @@ Return Value:
     //  Now create one for the CD ROM file system queue
     //
 
-    RtlInitUnicodeString( &NameString, L"\\Device\\RawCdRom" );
-    Status = IoCreateDevice( DriverObject,
-                             0L,
-                             &NameString,
-                             FILE_DEVICE_CD_ROM_FILE_SYSTEM,
-                             0,
-                             FALSE,
-                             &RawDeviceCdRomObject );
-    if (!NT_SUCCESS( Status )) {
-        IoDeleteDevice (RawDeviceDiskObject);
+    RtlInitUnicodeString(&NameString, L"\\Device\\RawCdRom");
+    Status =
+        IoCreateDevice(DriverObject, 0L, &NameString, FILE_DEVICE_CD_ROM_FILE_SYSTEM, 0, FALSE, &RawDeviceCdRomObject);
+    if (!NT_SUCCESS(Status))
+    {
+        IoDeleteDevice(RawDeviceDiskObject);
         return Status;
     }
 
@@ -122,28 +101,25 @@ Return Value:
     //  And now create one for the Tape file system queue
     //
 
-    RtlInitUnicodeString( &NameString, L"\\Device\\RawTape" );
-    Status = IoCreateDevice( DriverObject,
-                             0L,
-                             &NameString,
-                             FILE_DEVICE_TAPE_FILE_SYSTEM,
-                             0,
-                             FALSE,
-                             &RawDeviceTapeObject );
-    if (!NT_SUCCESS( Status )) {
-        IoDeleteDevice (RawDeviceCdRomObject);
-        IoDeleteDevice (RawDeviceDiskObject);
+    RtlInitUnicodeString(&NameString, L"\\Device\\RawTape");
+    Status =
+        IoCreateDevice(DriverObject, 0L, &NameString, FILE_DEVICE_TAPE_FILE_SYSTEM, 0, FALSE, &RawDeviceTapeObject);
+    if (!NT_SUCCESS(Status))
+    {
+        IoDeleteDevice(RawDeviceCdRomObject);
+        IoDeleteDevice(RawDeviceDiskObject);
         return Status;
     }
 
     //
     // Register a shutdown handler to enable us to unregister the file system objects
     //
-    Status = IoRegisterShutdownNotification (RawDeviceTapeObject);
-    if (!NT_SUCCESS( Status )) {
-        IoDeleteDevice (RawDeviceTapeObject);
-        IoDeleteDevice (RawDeviceCdRomObject);
-        IoDeleteDevice (RawDeviceDiskObject);
+    Status = IoRegisterShutdownNotification(RawDeviceTapeObject);
+    if (!NT_SUCCESS(Status))
+    {
+        IoDeleteDevice(RawDeviceTapeObject);
+        IoDeleteDevice(RawDeviceCdRomObject);
+        IoDeleteDevice(RawDeviceDiskObject);
         return Status;
     }
     //
@@ -159,67 +135,58 @@ Return Value:
     //  that only a limited capability is supported by the raw file system.
     //
 
-    DriverObject->MajorFunction[IRP_MJ_CREATE]                   =
-    DriverObject->MajorFunction[IRP_MJ_CLEANUP]                  =
-    DriverObject->MajorFunction[IRP_MJ_CLOSE]                    =
-    DriverObject->MajorFunction[IRP_MJ_READ]                     =
-    DriverObject->MajorFunction[IRP_MJ_WRITE]                    =
-    DriverObject->MajorFunction[IRP_MJ_QUERY_INFORMATION]        =
-    DriverObject->MajorFunction[IRP_MJ_SET_INFORMATION]          =
-    DriverObject->MajorFunction[IRP_MJ_QUERY_VOLUME_INFORMATION] =
-    DriverObject->MajorFunction[IRP_MJ_CLEANUP]                  =
-    DriverObject->MajorFunction[IRP_MJ_FILE_SYSTEM_CONTROL]      =
-    DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL]           =
-    DriverObject->MajorFunction[IRP_MJ_PNP]                      =
+    DriverObject->MajorFunction[IRP_MJ_CREATE] = DriverObject->MajorFunction[IRP_MJ_CLEANUP] =
+        DriverObject->MajorFunction[IRP_MJ_CLOSE] = DriverObject->MajorFunction[IRP_MJ_READ] =
+            DriverObject->MajorFunction[IRP_MJ_WRITE] = DriverObject->MajorFunction[IRP_MJ_QUERY_INFORMATION] =
+                DriverObject->MajorFunction[IRP_MJ_SET_INFORMATION] =
+                    DriverObject->MajorFunction[IRP_MJ_QUERY_VOLUME_INFORMATION] =
+                        DriverObject->MajorFunction[IRP_MJ_CLEANUP] =
+                            DriverObject->MajorFunction[IRP_MJ_FILE_SYSTEM_CONTROL] =
+                                DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] =
+                                    DriverObject->MajorFunction[IRP_MJ_PNP] =
 
-                                                (PDRIVER_DISPATCH)RawDispatch;
-    DriverObject->MajorFunction[IRP_MJ_SHUTDOWN]                 = RawShutdown;
+                                        (PDRIVER_DISPATCH)RawDispatch;
+    DriverObject->MajorFunction[IRP_MJ_SHUTDOWN] = RawShutdown;
 
 
     //
     // Finally, register this file system in the system.
     //
 
-    IoRegisterFileSystem( RawDeviceDiskObject );
-    IoRegisterFileSystem( RawDeviceCdRomObject );
-    IoRegisterFileSystem( RawDeviceTapeObject );
-    ObReferenceObject (RawDeviceDiskObject);
-    ObReferenceObject (RawDeviceCdRomObject);
-    ObReferenceObject (RawDeviceTapeObject);
+    IoRegisterFileSystem(RawDeviceDiskObject);
+    IoRegisterFileSystem(RawDeviceCdRomObject);
+    IoRegisterFileSystem(RawDeviceTapeObject);
+    ObReferenceObject(RawDeviceDiskObject);
+    ObReferenceObject(RawDeviceCdRomObject);
+    ObReferenceObject(RawDeviceTapeObject);
 
     //
     //  And return to our caller
     //
 
-    return( STATUS_SUCCESS );
+    return (STATUS_SUCCESS);
 }
 
 NTSTATUS
-RawShutdown (
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp
-    )
+RawShutdown(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
     //
     // Unregister the file system objects so we can unload
     //
-    IoUnregisterFileSystem (RawDeviceDiskObject);
-    IoUnregisterFileSystem (RawDeviceCdRomObject);
-    IoUnregisterFileSystem (RawDeviceTapeObject);
+    IoUnregisterFileSystem(RawDeviceDiskObject);
+    IoUnregisterFileSystem(RawDeviceCdRomObject);
+    IoUnregisterFileSystem(RawDeviceTapeObject);
 
-    IoDeleteDevice (RawDeviceTapeObject);
-    IoDeleteDevice (RawDeviceCdRomObject);
-    IoDeleteDevice (RawDeviceDiskObject);
+    IoDeleteDevice(RawDeviceTapeObject);
+    IoDeleteDevice(RawDeviceCdRomObject);
+    IoDeleteDevice(RawDeviceDiskObject);
 
-    RawCompleteRequest( Irp, STATUS_SUCCESS );
+    RawCompleteRequest(Irp, STATUS_SUCCESS);
     return STATUS_SUCCESS;
 }
 
 
-VOID
-RawUnload(
-    IN PDRIVER_OBJECT DriverObject
-    )
+VOID RawUnload(IN PDRIVER_OBJECT DriverObject)
 /*++
 
 Routine Description:
@@ -236,7 +203,7 @@ Return Value:
 
 --*/
 {
-    ObDereferenceObject (RawDeviceTapeObject);
-    ObDereferenceObject (RawDeviceCdRomObject);
-    ObDereferenceObject (RawDeviceDiskObject);
+    ObDereferenceObject(RawDeviceTapeObject);
+    ObDereferenceObject(RawDeviceCdRomObject);
+    ObDereferenceObject(RawDeviceDiskObject);
 }

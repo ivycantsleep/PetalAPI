@@ -25,14 +25,8 @@ Revision History:
 #pragma alloc_text(PAGEKD, KdIsThisAKdTrap)
 
 BOOLEAN
-KdpTrap (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PCONTEXT ContextRecord,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN BOOLEAN SecondChance
-    )
+KdpTrap(IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame, IN PEXCEPTION_RECORD ExceptionRecord,
+        IN PCONTEXT ContextRecord, IN KPROCESSOR_MODE PreviousMode, IN BOOLEAN SecondChance)
 
 /*++
 
@@ -78,14 +72,16 @@ Return Value:
     //
 
     if ((ExceptionRecord->ExceptionCode == STATUS_BREAKPOINT) &&
-        (ExceptionRecord->ExceptionInformation[0] != BREAKPOINT_BREAK)) {
+        (ExceptionRecord->ExceptionInformation[0] != BREAKPOINT_BREAK))
+    {
 
         //
         // Switch on the breakpoint code.
         //
 
         OldRip = ContextRecord->Rip;
-        switch (ExceptionRecord->ExceptionInformation[0]) {
+        switch (ExceptionRecord->ExceptionInformation[0])
+        {
 
             //
             // Print a debug string.
@@ -99,14 +95,9 @@ Return Value:
             //
 
         case BREAKPOINT_PRINT:
-            ContextRecord->Rax = KdpPrint((ULONG)ContextRecord->R8,
-                                          (ULONG)ContextRecord->R9,
-                                          (PCHAR)ContextRecord->Rcx,
-                                          (USHORT)ContextRecord->Rdx,
-                                          PreviousMode,
-                                          TrapFrame,
-                                          ExceptionFrame,
-                                          &Completion);
+            ContextRecord->Rax =
+                KdpPrint((ULONG)ContextRecord->R8, (ULONG)ContextRecord->R9, (PCHAR)ContextRecord->Rcx,
+                         (USHORT)ContextRecord->Rdx, PreviousMode, TrapFrame, ExceptionFrame, &Completion);
 
             break;
 
@@ -122,13 +113,9 @@ Return Value:
             //
 
         case BREAKPOINT_PROMPT:
-            ContextRecord->Rax = KdpPrompt((PCHAR)ContextRecord->Rcx,
-                                           (USHORT)ContextRecord->Rdx,
-                                           (PCHAR)ContextRecord->R8,
-                                           (USHORT)ContextRecord->R9,
-                                           PreviousMode,
-                                           TrapFrame,
-                                           ExceptionFrame);
+            ContextRecord->Rax =
+                KdpPrompt((PCHAR)ContextRecord->Rcx, (USHORT)ContextRecord->Rdx, (PCHAR)ContextRecord->R8,
+                          (USHORT)ContextRecord->R9, PreviousMode, TrapFrame, ExceptionFrame);
 
             Completion = TRUE;
             break;
@@ -150,27 +137,18 @@ Return Value:
             //
 
         case BREAKPOINT_LOAD_SYMBOLS:
-            KdpSymbol((PSTRING)ContextRecord->Rcx,
-                      (PKD_SYMBOLS_INFO)ContextRecord->Rdx,
-                      UnloadSymbols,
-                      PreviousMode,
-                      ContextRecord,
-                      TrapFrame,
-                      ExceptionFrame);
+            KdpSymbol((PSTRING)ContextRecord->Rcx, (PKD_SYMBOLS_INFO)ContextRecord->Rdx, UnloadSymbols, PreviousMode,
+                      ContextRecord, TrapFrame, ExceptionFrame);
 
             Completion = TRUE;
             break;
 
         case BREAKPOINT_COMMAND_STRING:
-            KdpCommandString((PSTRING)ContextRecord->Rcx,
-                             (PSTRING)ContextRecord->Rdx,
-                             PreviousMode,
-                             ContextRecord,
-                             TrapFrame,
-                             ExceptionFrame);
+            KdpCommandString((PSTRING)ContextRecord->Rcx, (PSTRING)ContextRecord->Rdx, PreviousMode, ContextRecord,
+                             TrapFrame, ExceptionFrame);
             Completion = TRUE;
             break;
-            
+
             //
             //  Unknown command
             //
@@ -184,34 +162,26 @@ Return Value:
         // past the breakpoint instruction.
         //
 
-        if (ContextRecord->Rip == OldRip) {
+        if (ContextRecord->Rip == OldRip)
+        {
             ContextRecord->Rip += 1;
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // Report state change to the kernel debugger.
         //
 
-        Completion = KdpReport(TrapFrame,
-                               ExceptionFrame,
-                               ExceptionRecord,
-                               ContextRecord,
-                               PreviousMode,
-                               SecondChance);
-
+        Completion = KdpReport(TrapFrame, ExceptionFrame, ExceptionRecord, ContextRecord, PreviousMode, SecondChance);
     }
 
     return Completion;
 }
 
 BOOLEAN
-KdIsThisAKdTrap (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PCONTEXT ContextRecord,
-    IN KPROCESSOR_MODE PreviousMode
-    )
+KdIsThisAKdTrap(IN PEXCEPTION_RECORD ExceptionRecord, IN PCONTEXT ContextRecord, IN KPROCESSOR_MODE PreviousMode)
 
 /*++
 
@@ -238,25 +208,20 @@ Return Value:
 
 {
 
-    if ((ExceptionRecord->ExceptionCode == STATUS_BREAKPOINT) &&
-        (ExceptionRecord->NumberParameters > 0) &&
-        (ExceptionRecord->ExceptionInformation[0] != BREAKPOINT_BREAK)) {
+    if ((ExceptionRecord->ExceptionCode == STATUS_BREAKPOINT) && (ExceptionRecord->NumberParameters > 0) &&
+        (ExceptionRecord->ExceptionInformation[0] != BREAKPOINT_BREAK))
+    {
         return TRUE;
-
-    } else {
+    }
+    else
+    {
         return FALSE;
     }
 }
 
 BOOLEAN
-KdpStub (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PCONTEXT ContextRecord,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN BOOLEAN SecondChance
-    )
+KdpStub(IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame, IN PEXCEPTION_RECORD ExceptionRecord,
+        IN PCONTEXT ContextRecord, IN KPROCESSOR_MODE PreviousMode, IN BOOLEAN SecondChance)
 
 /*++
 
@@ -297,15 +262,16 @@ Return Value:
     // TRUE. Otherwise, return FALSE.
     //
 
-    if ((ExceptionRecord->ExceptionCode == STATUS_BREAKPOINT) &&
-        (ExceptionRecord->NumberParameters > 0) &&
+    if ((ExceptionRecord->ExceptionCode == STATUS_BREAKPOINT) && (ExceptionRecord->NumberParameters > 0) &&
         ((ExceptionRecord->ExceptionInformation[0] == BREAKPOINT_LOAD_SYMBOLS) ||
          (ExceptionRecord->ExceptionInformation[0] == BREAKPOINT_UNLOAD_SYMBOLS) ||
-         (ExceptionRecord->ExceptionInformation[0] == BREAKPOINT_PRINT))) {
+         (ExceptionRecord->ExceptionInformation[0] == BREAKPOINT_PRINT)))
+    {
         ContextRecord->Rip += 1;
         return TRUE;
-
-    } else {
+    }
+    else
+    {
         return FALSE;
     }
 }

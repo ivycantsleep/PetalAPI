@@ -32,9 +32,8 @@ Revision History:
 
 --*/
 
-#include "tsecomm.c"    // Mode dependent macros and routines.
+#include "tsecomm.c" // Mode dependent macros and routines.
 
-
 
 ////////////////////////////////////////////////////////////////
 //                                                            //
@@ -54,12 +53,12 @@ Revision History:
 // (we also substitute SYSTEM for NEANDERTHOL in some tests)
 //
 
-#define FLINTSTONE_INDEX  (0L)
-#define CHILD_INDEX       (1L)
+#define FLINTSTONE_INDEX (0L)
+#define CHILD_INDEX (1L)
 #define NEANDERTHOL_INDEX (2L)
-#define SYSTEM_INDEX      (2L)
-#define WORLD_INDEX       (3L)
-#define GROUP_COUNT       (4L)
+#define SYSTEM_INDEX (2L)
+#define WORLD_INDEX (3L)
+#define GROUP_COUNT (4L)
 #define RESTRICTED_SID_COUNT (2L)
 
 
@@ -67,80 +66,76 @@ Revision History:
 // Definitions related to TokenWithPrivileges
 //
 
-#define UNSOLICITED_INDEX           (0L)
-#define SECURITY_INDEX              (1L)
-#define ASSIGN_PRIMARY_INDEX        (2L)
-#define PRIVILEGE_COUNT             (3L)
+#define UNSOLICITED_INDEX (0L)
+#define SECURITY_INDEX (1L)
+#define ASSIGN_PRIMARY_INDEX (2L)
+#define PRIVILEGE_COUNT (3L)
 
 
-    NTSTATUS Status;
+NTSTATUS Status;
 
-    HANDLE SimpleToken;
-    HANDLE TokenWithGroups;
-    HANDLE TokenWithDefaultOwner;
-    HANDLE TokenWithPrivileges;
-    HANDLE TokenWithDefaultDacl;
+HANDLE SimpleToken;
+HANDLE TokenWithGroups;
+HANDLE TokenWithDefaultOwner;
+HANDLE TokenWithPrivileges;
+HANDLE TokenWithDefaultDacl;
 
-    HANDLE TokenWithRestrictedGroups;
-    HANDLE TokenWithRestrictedPrivileges;
-    HANDLE TokenWithRestrictedSids;
-    HANDLE TokenWithMoreRestrictedSids;
-
-
-    HANDLE Token;
-    HANDLE ProcessToken;
-    HANDLE ImpersonationToken;
-    HANDLE AnonymousToken;
-
-    OBJECT_ATTRIBUTES PrimaryTokenAttributes;
-    PSECURITY_DESCRIPTOR PrimarySecurityDescriptor;
-    SECURITY_QUALITY_OF_SERVICE PrimarySecurityQos;
-
-    OBJECT_ATTRIBUTES ImpersonationTokenAttributes;
-    PSECURITY_DESCRIPTOR ImpersonationSecurityDescriptor;
-    SECURITY_QUALITY_OF_SERVICE ImpersonationSecurityQos;
-
-    OBJECT_ATTRIBUTES AnonymousTokenAttributes;
-    PSECURITY_DESCRIPTOR AnonymousSecurityDescriptor;
-    SECURITY_QUALITY_OF_SERVICE AnonymousSecurityQos;
-
-    ULONG DisabledGroupAttributes;
-    ULONG OptionalGroupAttributes;
-    ULONG NormalGroupAttributes;
-    ULONG OwnerGroupAttributes;
-
-    ULONG LengthAvailable;
-    ULONG CurrentLength;
+HANDLE TokenWithRestrictedGroups;
+HANDLE TokenWithRestrictedPrivileges;
+HANDLE TokenWithRestrictedSids;
+HANDLE TokenWithMoreRestrictedSids;
 
 
-    TIME_FIELDS TempTimeFields = {3000, 1, 1, 1, 1, 1, 1, 1};
-    LARGE_INTEGER NoExpiration;
+HANDLE Token;
+HANDLE ProcessToken;
+HANDLE ImpersonationToken;
+HANDLE AnonymousToken;
 
-    LUID BadAuthenticationId;
-    LUID SystemAuthenticationId = SYSTEM_LUID;
-    LUID OriginalAuthenticationId;
+OBJECT_ATTRIBUTES PrimaryTokenAttributes;
+PSECURITY_DESCRIPTOR PrimarySecurityDescriptor;
+SECURITY_QUALITY_OF_SERVICE PrimarySecurityQos;
 
-    TOKEN_SOURCE TestSource = {"SE: TEST", 0};
+OBJECT_ATTRIBUTES ImpersonationTokenAttributes;
+PSECURITY_DESCRIPTOR ImpersonationSecurityDescriptor;
+SECURITY_QUALITY_OF_SERVICE ImpersonationSecurityQos;
 
-    PSID Owner;
-    PSID Group;
-    PACL Dacl;
+OBJECT_ATTRIBUTES AnonymousTokenAttributes;
+PSECURITY_DESCRIPTOR AnonymousSecurityDescriptor;
+SECURITY_QUALITY_OF_SERVICE AnonymousSecurityQos;
 
-    PSID TempOwner;
-    PSID TempGroup;
-    PACL TempDacl;
+ULONG DisabledGroupAttributes;
+ULONG OptionalGroupAttributes;
+ULONG NormalGroupAttributes;
+ULONG OwnerGroupAttributes;
 
-    UQUAD ThreadStack[256];
-    INITIAL_TEB InitialTeb;
-    NTSTATUS Status;
-    CLIENT_ID ThreadClientId;
-    CONTEXT ThreadContext;
-    HANDLE ThreadHandle;
-    OBJECT_ATTRIBUTES ThreadObja;
+ULONG LengthAvailable;
+ULONG CurrentLength;
 
 
+TIME_FIELDS TempTimeFields = { 3000, 1, 1, 1, 1, 1, 1, 1 };
+LARGE_INTEGER NoExpiration;
 
-
+LUID BadAuthenticationId;
+LUID SystemAuthenticationId = SYSTEM_LUID;
+LUID OriginalAuthenticationId;
+
+TOKEN_SOURCE TestSource = { "SE: TEST", 0 };
+
+PSID Owner;
+PSID Group;
+PACL Dacl;
+
+PSID TempOwner;
+PSID TempGroup;
+PACL TempDacl;
+
+UQUAD ThreadStack[256];
+INITIAL_TEB InitialTeb;
+NTSTATUS Status;
+CLIENT_ID ThreadClientId;
+CONTEXT ThreadContext;
+HANDLE ThreadHandle;
+OBJECT_ATTRIBUTES ThreadObja;
 
 
 ////////////////////////////////////////////////////////////////
@@ -150,11 +145,7 @@ Revision History:
 ////////////////////////////////////////////////////////////////
 
 
-#define TestpPrintLuid(G)                                                     \
-            DbgPrint( "(0x%x, 0x%x)", \
-                         (G).HighPart, (G).LowPart);                         \
-
-
+#define TestpPrintLuid(G) DbgPrint("(0x%x, 0x%x)", (G).HighPart, (G).LowPart);
 
 
 ////////////////////////////////////////////////////////////////
@@ -174,101 +165,68 @@ TestTokenInitialize()
     PTOKEN_PRIVILEGES NewState;
 
 
-    if (!TSeVariableInitialization()) {
+    if (!TSeVariableInitialization())
+    {
         DbgPrint("Se:    Failed to initialize global test variables.\n");
         return FALSE;
     }
 
 
-    DisabledGroupAttributes =  (SE_GROUP_ENABLED_BY_DEFAULT);
+    DisabledGroupAttributes = (SE_GROUP_ENABLED_BY_DEFAULT);
 
-    OptionalGroupAttributes =  (SE_GROUP_ENABLED_BY_DEFAULT |
-                                SE_GROUP_ENABLED
-                                );
-    NormalGroupAttributes =    (SE_GROUP_MANDATORY          |
-                                SE_GROUP_ENABLED_BY_DEFAULT |
-                                SE_GROUP_ENABLED
-                                );
-    OwnerGroupAttributes  =    (SE_GROUP_MANDATORY          |
-                                SE_GROUP_ENABLED_BY_DEFAULT |
-                                SE_GROUP_ENABLED            |
-                                SE_GROUP_OWNER
-                                );
+    OptionalGroupAttributes = (SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_ENABLED);
+    NormalGroupAttributes = (SE_GROUP_MANDATORY | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_ENABLED);
+    OwnerGroupAttributes = (SE_GROUP_MANDATORY | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_ENABLED | SE_GROUP_OWNER);
 
 
-    PrimarySecurityDescriptor =
-        (PSECURITY_DESCRIPTOR)TstAllocatePool( PagedPool, 1024 );
+    PrimarySecurityDescriptor = (PSECURITY_DESCRIPTOR)TstAllocatePool(PagedPool, 1024);
 
-    Status = RtlCreateSecurityDescriptor (
-                 PrimarySecurityDescriptor,
-                 SECURITY_DESCRIPTOR_REVISION1
-                 ); ASSERT(NT_SUCCESS(Status));
-    Status = RtlSetDaclSecurityDescriptor (
-                 PrimarySecurityDescriptor,
-                 TRUE,                  //DaclPresent,
-                 NULL,                  //Dacl OPTIONAL,  // No protection
-                 FALSE                  //DaclDefaulted OPTIONAL
-                 ); ASSERT(NT_SUCCESS(Status));
+    Status = RtlCreateSecurityDescriptor(PrimarySecurityDescriptor, SECURITY_DESCRIPTOR_REVISION1);
+    ASSERT(NT_SUCCESS(Status));
+    Status = RtlSetDaclSecurityDescriptor(PrimarySecurityDescriptor,
+                                          TRUE, //DaclPresent,
+                                          NULL, //Dacl OPTIONAL,  // No protection
+                                          FALSE //DaclDefaulted OPTIONAL
+    );
+    ASSERT(NT_SUCCESS(Status));
 
 
-    InitializeObjectAttributes(
-        &PrimaryTokenAttributes,
-        NULL,
-        OBJ_INHERIT,
-        NULL,
-        PrimarySecurityDescriptor
-        );
+    InitializeObjectAttributes(&PrimaryTokenAttributes, NULL, OBJ_INHERIT, NULL, PrimarySecurityDescriptor);
 
 
-    ImpersonationSecurityDescriptor =
-        (PSECURITY_DESCRIPTOR)TstAllocatePool( PagedPool, 1024 );
+    ImpersonationSecurityDescriptor = (PSECURITY_DESCRIPTOR)TstAllocatePool(PagedPool, 1024);
 
     ImpersonationSecurityQos.Length = (ULONG)sizeof(SECURITY_QUALITY_OF_SERVICE);
     ImpersonationSecurityQos.ImpersonationLevel = SecurityImpersonation;
     ImpersonationSecurityQos.ContextTrackingMode = SECURITY_DYNAMIC_TRACKING;
     ImpersonationSecurityQos.EffectiveOnly = FALSE;
 
-    InitializeObjectAttributes(
-        &ImpersonationTokenAttributes,
-        NULL,
-        OBJ_INHERIT,
-        NULL,
-        NULL
-        );
-    ImpersonationTokenAttributes.SecurityQualityOfService =
-        &ImpersonationSecurityQos;
+    InitializeObjectAttributes(&ImpersonationTokenAttributes, NULL, OBJ_INHERIT, NULL, NULL);
+    ImpersonationTokenAttributes.SecurityQualityOfService = &ImpersonationSecurityQos;
 
 
-    AnonymousSecurityDescriptor =
-        (PSECURITY_DESCRIPTOR)TstAllocatePool( PagedPool, 1024 );
+    AnonymousSecurityDescriptor = (PSECURITY_DESCRIPTOR)TstAllocatePool(PagedPool, 1024);
 
     AnonymousSecurityQos.Length = (ULONG)sizeof(SECURITY_QUALITY_OF_SERVICE);
     AnonymousSecurityQos.ImpersonationLevel = SecurityAnonymous;
     AnonymousSecurityQos.ContextTrackingMode = SECURITY_DYNAMIC_TRACKING;
     AnonymousSecurityQos.EffectiveOnly = FALSE;
 
-    InitializeObjectAttributes(
-        &AnonymousTokenAttributes,
-        NULL,
-        OBJ_INHERIT,
-        NULL,
-        NULL
-        );
-    AnonymousTokenAttributes.SecurityQualityOfService =
-        &AnonymousSecurityQos;
+    InitializeObjectAttributes(&AnonymousTokenAttributes, NULL, OBJ_INHERIT, NULL, NULL);
+    AnonymousTokenAttributes.SecurityQualityOfService = &AnonymousSecurityQos;
 
 
     //
     // Build an ACL for use.
     //
 
-    Dacl        = (PACL)TstAllocatePool( PagedPool, 256 );
+    Dacl = (PACL)TstAllocatePool(PagedPool, 256);
 
-    Dacl->AclRevision=ACL_REVISION;
-    Dacl->Sbz1=0;
-    Dacl->Sbz2=0;
-    Dacl->AclSize=256;
-    Dacl->AceCount=0;
+    Dacl->AclRevision = ACL_REVISION;
+    Dacl->Sbz1 = 0;
+    Dacl->Sbz2 = 0;
+    Dacl->AclSize = 256;
+    Dacl->AceCount = 0;
 
 
     //
@@ -284,7 +242,7 @@ TestTokenInitialize()
     TempTimeFields.Milliseconds = 1;
     TempTimeFields.Weekday = 1;
 
-    RtlTimeFieldsToTime( &TempTimeFields, &NoExpiration );
+    RtlTimeFieldsToTime(&TempTimeFields, &NoExpiration);
 
     //
     // Set up a bad authentication ID
@@ -297,7 +255,7 @@ TestTokenInitialize()
     // Use a token source specific to security test
     //
 
-    NtAllocateLocallyUniqueId( &(TestSource.SourceIdentifier) );
+    NtAllocateLocallyUniqueId(&(TestSource.SourceIdentifier));
 
     //
     // Create a new thread for impersonation tests
@@ -317,11 +275,7 @@ TestTokenInitialize()
     // Initialize thread context and initial TEB.
     //
 
-    RtlInitializeContext(NtCurrentProcess(),
-                         &ThreadContext,
-                         NULL,
-                         (PVOID)TestTokenInitialize,
-                         &ThreadStack[254]);
+    RtlInitializeContext(NtCurrentProcess(), &ThreadContext, NULL, (PVOID)TestTokenInitialize, &ThreadStack[254]);
 
     InitialTeb.StackBase = &ThreadStack[254];
     InitialTeb.StackLimit = &ThreadStack[0];
@@ -330,17 +284,10 @@ TestTokenInitialize()
     // Create a thread in a suspended state.
     //
 
-    Status = NtCreateThread(&ThreadHandle,
-                            THREAD_ALL_ACCESS,
-                            &ThreadObja,
-                            NtCurrentProcess(),
-                            &ThreadClientId,
-                            &ThreadContext,
-                            &InitialTeb,
-                            TRUE);
+    Status = NtCreateThread(&ThreadHandle, THREAD_ALL_ACCESS, &ThreadObja, NtCurrentProcess(), &ThreadClientId,
+                            &ThreadContext, &InitialTeb, TRUE);
 
     ASSERT(NT_SUCCESS(Status));
-
 
 
     //
@@ -351,29 +298,21 @@ TestTokenInitialize()
     // token.
     //
 
-    Status = NtOpenProcessToken(
-                 NtCurrentProcess(),
-                 TOKEN_ALL_ACCESS,
-                 &ProcessToken
-                 );
-    ASSERT( NT_SUCCESS(Status) );
-    Status = NtQueryInformationToken(
-                 ProcessToken,                 // Handle
-                 TokenStatistics,              // TokenInformationClass
-                 &ProcessTokenStatistics,      // TokenInformation
-                 sizeof(TOKEN_STATISTICS),     // TokenInformationLength
-                 &ReturnLength                 // ReturnLength
-                 );
+    Status = NtOpenProcessToken(NtCurrentProcess(), TOKEN_ALL_ACCESS, &ProcessToken);
+    ASSERT(NT_SUCCESS(Status));
+    Status = NtQueryInformationToken(ProcessToken,             // Handle
+                                     TokenStatistics,          // TokenInformationClass
+                                     &ProcessTokenStatistics,  // TokenInformation
+                                     sizeof(TOKEN_STATISTICS), // TokenInformationLength
+                                     &ReturnLength             // ReturnLength
+    );
     ASSERT(NT_SUCCESS(Status));
     OriginalAuthenticationId = ProcessTokenStatistics.AuthenticationId;
 
 
     DbgPrint("Se: enabling AssignPrimary & TCB privileges...\n");
 
-    NewState = (PTOKEN_PRIVILEGES) TstAllocatePool(
-                                    PagedPool,
-                                    200
-                                    );
+    NewState = (PTOKEN_PRIVILEGES)TstAllocatePool(PagedPool, 200);
 
     NewState->PrivilegeCount = 2;
     NewState->Privileges[0].Luid = CreateTokenPrivilege;
@@ -382,20 +321,19 @@ TestTokenInitialize()
     NewState->Privileges[1].Attributes = SE_PRIVILEGE_ENABLED;
 
 
-    Status = NtAdjustPrivilegesToken(
-                 ProcessToken,                     // TokenHandle
-                 FALSE,                            // DisableAllPrivileges
-                 NewState,                         // NewState (OPTIONAL)
-                 0,                                // BufferLength
-                 NULL,                             // PreviousState (OPTIONAL)
-                 &ReturnLength                     // ReturnLength
-                 );
+    Status = NtAdjustPrivilegesToken(ProcessToken, // TokenHandle
+                                     FALSE,        // DisableAllPrivileges
+                                     NewState,     // NewState (OPTIONAL)
+                                     0,            // BufferLength
+                                     NULL,         // PreviousState (OPTIONAL)
+                                     &ReturnLength // ReturnLength
+    );
 
-    if (Status != STATUS_SUCCESS) {
+    if (Status != STATUS_SUCCESS)
+    {
 
-        DbgPrint("Failed to enable TCB and AssignPrimaryToken privilegs: 0x%x\n",Status);
+        DbgPrint("Failed to enable TCB and AssignPrimaryToken privilegs: 0x%x\n", Status);
         return FALSE;
-
     }
 
     DbgPrint("Done.\n");
@@ -403,7 +341,6 @@ TestTokenInitialize()
     return TRUE;
 }
 
-
 
 ////////////////////////////////////////////////////////////////
 //                                                            //
@@ -433,19 +370,13 @@ TestTokenCreate()
 
     DbgPrint("\n");
 
-    GroupIds = (PTOKEN_GROUPS)TstAllocatePool( PagedPool,
-                                               GROUP_IDS_LENGTH
-                                               );
+    GroupIds = (PTOKEN_GROUPS)TstAllocatePool(PagedPool, GROUP_IDS_LENGTH);
 
-    Privileges = (PTOKEN_PRIVILEGES)TstAllocatePool( PagedPool,
-                                                     PRIVILEGES_LENGTH
-                                                     );
+    Privileges = (PTOKEN_PRIVILEGES)TstAllocatePool(PagedPool, PRIVILEGES_LENGTH);
 
-    DefaultDacl.DefaultDacl = (PACL)TstAllocatePool( PagedPool,
-                                                     DEFAULT_DACL_LENGTH
-                                                     );
+    DefaultDacl.DefaultDacl = (PACL)TstAllocatePool(PagedPool, DEFAULT_DACL_LENGTH);
 
-
+
     //
     // Create the simplest token possible
     // (no Groups, explicit Owner, or DefaultDacl)
@@ -460,37 +391,38 @@ TestTokenCreate()
     PrimaryGroup.PrimaryGroup = FlintstoneSid;
 
 
-    Status = NtCreateToken(
-                 &Token,                   // Handle
-                 (TOKEN_ALL_ACCESS),       // DesiredAccess
-                 &PrimaryTokenAttributes,  // ObjectAttributes
-                 TokenPrimary,             // TokenType
-                 &SystemAuthenticationId,   // Authentication LUID
-                 &NoExpiration,            // Expiration Time
-                 &UserId,                  // Owner ID
-                 GroupIds,                 // Group IDs
-                 Privileges,               // Privileges
-                 NULL,                     // Owner
-                 &PrimaryGroup,            // Primary Group
-                 NULL,                     // Default Dacl
-                 &TestSource               // TokenSource
-                 );
+    Status = NtCreateToken(&Token,                  // Handle
+                           (TOKEN_ALL_ACCESS),      // DesiredAccess
+                           &PrimaryTokenAttributes, // ObjectAttributes
+                           TokenPrimary,            // TokenType
+                           &SystemAuthenticationId, // Authentication LUID
+                           &NoExpiration,           // Expiration Time
+                           &UserId,                 // Owner ID
+                           GroupIds,                // Group IDs
+                           Privileges,              // Privileges
+                           NULL,                    // Owner
+                           &PrimaryGroup,           // Primary Group
+                           NULL,                    // Default Dacl
+                           &TestSource              // TokenSource
+    );
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
-        Status = NtDuplicateObject(
-                     NtCurrentProcess(),     // SourceProcessHandle
-                     Token,                  // SourceHandle
-                     NtCurrentProcess(),     // TargetProcessHandle
-                     &SimpleToken,           // TargetHandle
-                     0,                      // DesiredAccess (over-ridden by option)
-                     0,                      // HandleAttributes
-                     DUPLICATE_SAME_ACCESS   // Options
-                     );
+        Status = NtDuplicateObject(NtCurrentProcess(),   // SourceProcessHandle
+                                   Token,                // SourceHandle
+                                   NtCurrentProcess(),   // TargetProcessHandle
+                                   &SimpleToken,         // TargetHandle
+                                   0,                    // DesiredAccess (over-ridden by option)
+                                   0,                    // HandleAttributes
+                                   DUPLICATE_SAME_ACCESS // Options
+        );
         ASSERT(NT_SUCCESS(Status));
         Status = NtClose(Token);
         ASSERT(NT_SUCCESS(Status));
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
@@ -498,7 +430,6 @@ TestTokenCreate()
 
     ASSERT(NT_SUCCESS(Status));
 
-
 
     //
     // Create a token with groups
@@ -508,15 +439,15 @@ TestTokenCreate()
 
     GroupIds->GroupCount = GROUP_COUNT;
 
-    GroupIds->Groups[0].Sid  = FlintstoneSid;
-    GroupIds->Groups[1].Sid       = ChildSid;
+    GroupIds->Groups[0].Sid = FlintstoneSid;
+    GroupIds->Groups[1].Sid = ChildSid;
     GroupIds->Groups[2].Sid = NeandertholSid;
-    GroupIds->Groups[3].Sid       = WorldSid;
+    GroupIds->Groups[3].Sid = WorldSid;
 
-    GroupIds->Groups[FLINTSTONE_INDEX].Attributes  = OwnerGroupAttributes;
-    GroupIds->Groups[CHILD_INDEX].Attributes       = OptionalGroupAttributes;
+    GroupIds->Groups[FLINTSTONE_INDEX].Attributes = OwnerGroupAttributes;
+    GroupIds->Groups[CHILD_INDEX].Attributes = OptionalGroupAttributes;
     GroupIds->Groups[NEANDERTHOL_INDEX].Attributes = OptionalGroupAttributes;
-    GroupIds->Groups[WORLD_INDEX].Attributes       = NormalGroupAttributes;
+    GroupIds->Groups[WORLD_INDEX].Attributes = NormalGroupAttributes;
 
 
     UserId.User.Sid = PebblesSid;
@@ -527,37 +458,38 @@ TestTokenCreate()
     PrimaryGroup.PrimaryGroup = FlintstoneSid;
 
 
-    Status = NtCreateToken(
-                 &Token,                   // Handle
-                 (TOKEN_ALL_ACCESS),       // DesiredAccess
-                 &PrimaryTokenAttributes,  // ObjectAttributes
-                 TokenPrimary,             // TokenType
-                 &OriginalAuthenticationId,   // Authentication LUID
-                 &NoExpiration,            // Expiration Time
-                 &UserId,                  // Owner ID
-                 GroupIds,                 // Group IDs
-                 Privileges,               // Privileges
-                 NULL,                     // Owner
-                 &PrimaryGroup,            // Primary Group
-                 NULL,                     // Default Dacl
-                 &TestSource               // TokenSource
-                 );
+    Status = NtCreateToken(&Token,                    // Handle
+                           (TOKEN_ALL_ACCESS),        // DesiredAccess
+                           &PrimaryTokenAttributes,   // ObjectAttributes
+                           TokenPrimary,              // TokenType
+                           &OriginalAuthenticationId, // Authentication LUID
+                           &NoExpiration,             // Expiration Time
+                           &UserId,                   // Owner ID
+                           GroupIds,                  // Group IDs
+                           Privileges,                // Privileges
+                           NULL,                      // Owner
+                           &PrimaryGroup,             // Primary Group
+                           NULL,                      // Default Dacl
+                           &TestSource                // TokenSource
+    );
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
-        Status = NtDuplicateObject(
-                     NtCurrentProcess(),     // SourceProcessHandle
-                     Token,                  // SourceHandle
-                     NtCurrentProcess(),     // TargetProcessHandle
-                     &TokenWithGroups,       // TargetHandle
-                     0,                      // DesiredAccess (over-ridden by option)
-                     0,                      // HandleAttributes
-                     DUPLICATE_SAME_ACCESS   // Options
-                     );
+        Status = NtDuplicateObject(NtCurrentProcess(),   // SourceProcessHandle
+                                   Token,                // SourceHandle
+                                   NtCurrentProcess(),   // TargetProcessHandle
+                                   &TokenWithGroups,     // TargetHandle
+                                   0,                    // DesiredAccess (over-ridden by option)
+                                   0,                    // HandleAttributes
+                                   DUPLICATE_SAME_ACCESS // Options
+        );
         ASSERT(NT_SUCCESS(Status));
         Status = NtClose(Token);
         ASSERT(NT_SUCCESS(Status));
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
@@ -565,8 +497,6 @@ TestTokenCreate()
 
     ASSERT(NT_SUCCESS(Status));
 
-
-
 
     //
     // Create a token with default owner
@@ -576,15 +506,15 @@ TestTokenCreate()
 
     GroupIds->GroupCount = GROUP_COUNT;
 
-    GroupIds->Groups[FLINTSTONE_INDEX].Sid  = FlintstoneSid;
-    GroupIds->Groups[CHILD_INDEX].Sid       = ChildSid;
+    GroupIds->Groups[FLINTSTONE_INDEX].Sid = FlintstoneSid;
+    GroupIds->Groups[CHILD_INDEX].Sid = ChildSid;
     GroupIds->Groups[NEANDERTHOL_INDEX].Sid = NeandertholSid;
-    GroupIds->Groups[WORLD_INDEX].Sid       = WorldSid;
+    GroupIds->Groups[WORLD_INDEX].Sid = WorldSid;
 
-    GroupIds->Groups[FLINTSTONE_INDEX].Attributes  = OwnerGroupAttributes;
-    GroupIds->Groups[CHILD_INDEX].Attributes       = OptionalGroupAttributes;
+    GroupIds->Groups[FLINTSTONE_INDEX].Attributes = OwnerGroupAttributes;
+    GroupIds->Groups[CHILD_INDEX].Attributes = OptionalGroupAttributes;
     GroupIds->Groups[NEANDERTHOL_INDEX].Attributes = OptionalGroupAttributes;
-    GroupIds->Groups[WORLD_INDEX].Attributes       = NormalGroupAttributes;
+    GroupIds->Groups[WORLD_INDEX].Attributes = NormalGroupAttributes;
 
 
     UserId.User.Sid = PebblesSid;
@@ -597,37 +527,38 @@ TestTokenCreate()
     PrimaryGroup.PrimaryGroup = FlintstoneSid;
 
 
-    Status = NtCreateToken(
-                 &Token,                   // Handle
-                 (TOKEN_ALL_ACCESS),       // DesiredAccess
-                 &PrimaryTokenAttributes,  // ObjectAttributes
-                 TokenPrimary,             // TokenType
-                 &SystemAuthenticationId,   // Authentication LUID
-                 &NoExpiration,            // Expiration Time
-                 &UserId,                  // Owner ID
-                 GroupIds,                 // Group IDs
-                 Privileges,               // Privileges
-                 &Owner,                   // Owner
-                 &PrimaryGroup,            // Primary Group
-                 NULL,                     // Default Dacl
-                 &TestSource               // TokenSource
-                 );
+    Status = NtCreateToken(&Token,                  // Handle
+                           (TOKEN_ALL_ACCESS),      // DesiredAccess
+                           &PrimaryTokenAttributes, // ObjectAttributes
+                           TokenPrimary,            // TokenType
+                           &SystemAuthenticationId, // Authentication LUID
+                           &NoExpiration,           // Expiration Time
+                           &UserId,                 // Owner ID
+                           GroupIds,                // Group IDs
+                           Privileges,              // Privileges
+                           &Owner,                  // Owner
+                           &PrimaryGroup,           // Primary Group
+                           NULL,                    // Default Dacl
+                           &TestSource              // TokenSource
+    );
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
-        Status = NtDuplicateObject(
-                     NtCurrentProcess(),     // SourceProcessHandle
-                     Token,                  // SourceHandle
-                     NtCurrentProcess(),     // TargetProcessHandle
-                     &TokenWithDefaultOwner, // TargetHandle
-                     0,                      // DesiredAccess (over-ridden by option)
-                     0,                      // HandleAttributes
-                     DUPLICATE_SAME_ACCESS   // Options
-                     );
+        Status = NtDuplicateObject(NtCurrentProcess(),     // SourceProcessHandle
+                                   Token,                  // SourceHandle
+                                   NtCurrentProcess(),     // TargetProcessHandle
+                                   &TokenWithDefaultOwner, // TargetHandle
+                                   0,                      // DesiredAccess (over-ridden by option)
+                                   0,                      // HandleAttributes
+                                   DUPLICATE_SAME_ACCESS   // Options
+        );
         ASSERT(NT_SUCCESS(Status));
         Status = NtClose(Token);
         ASSERT(NT_SUCCESS(Status));
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
@@ -635,8 +566,6 @@ TestTokenCreate()
 
     ASSERT(NT_SUCCESS(Status));
 
-
-
 
     //
     // Create a token with default privileges
@@ -646,15 +575,15 @@ TestTokenCreate()
 
     GroupIds->GroupCount = GROUP_COUNT;
 
-    GroupIds->Groups[FLINTSTONE_INDEX].Sid  = FlintstoneSid;
-    GroupIds->Groups[CHILD_INDEX].Sid       = ChildSid;
+    GroupIds->Groups[FLINTSTONE_INDEX].Sid = FlintstoneSid;
+    GroupIds->Groups[CHILD_INDEX].Sid = ChildSid;
     GroupIds->Groups[NEANDERTHOL_INDEX].Sid = NeandertholSid;
-    GroupIds->Groups[WORLD_INDEX].Sid       = WorldSid;
+    GroupIds->Groups[WORLD_INDEX].Sid = WorldSid;
 
-    GroupIds->Groups[FLINTSTONE_INDEX].Attributes  = OwnerGroupAttributes;
-    GroupIds->Groups[CHILD_INDEX].Attributes       = OptionalGroupAttributes;
+    GroupIds->Groups[FLINTSTONE_INDEX].Attributes = OwnerGroupAttributes;
+    GroupIds->Groups[CHILD_INDEX].Attributes = OptionalGroupAttributes;
     GroupIds->Groups[NEANDERTHOL_INDEX].Attributes = OptionalGroupAttributes;
-    GroupIds->Groups[WORLD_INDEX].Attributes       = NormalGroupAttributes;
+    GroupIds->Groups[WORLD_INDEX].Attributes = NormalGroupAttributes;
 
 
     UserId.User.Sid = PebblesSid;
@@ -674,37 +603,38 @@ TestTokenCreate()
     PrimaryGroup.PrimaryGroup = FlintstoneSid;
 
 
-    Status = NtCreateToken(
-                 &Token,                   // Handle
-                 (TOKEN_ALL_ACCESS),       // DesiredAccess
-                 &PrimaryTokenAttributes,  // ObjectAttributes
-                 TokenPrimary,             // TokenType
-                 &OriginalAuthenticationId,   // Authentication LUID
-                 &NoExpiration,            // Expiration Time
-                 &UserId,                  // Owner ID
-                 GroupIds,                 // Group IDs
-                 Privileges,               // Privileges
-                 &Owner,                   // Owner
-                 &PrimaryGroup,            // Primary Group
-                 NULL,                     // Default Dacl
-                 &TestSource               // TokenSource
-                 );
+    Status = NtCreateToken(&Token,                    // Handle
+                           (TOKEN_ALL_ACCESS),        // DesiredAccess
+                           &PrimaryTokenAttributes,   // ObjectAttributes
+                           TokenPrimary,              // TokenType
+                           &OriginalAuthenticationId, // Authentication LUID
+                           &NoExpiration,             // Expiration Time
+                           &UserId,                   // Owner ID
+                           GroupIds,                  // Group IDs
+                           Privileges,                // Privileges
+                           &Owner,                    // Owner
+                           &PrimaryGroup,             // Primary Group
+                           NULL,                      // Default Dacl
+                           &TestSource                // TokenSource
+    );
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
-        Status = NtDuplicateObject(
-                     NtCurrentProcess(),     // SourceProcessHandle
-                     Token,                  // SourceHandle
-                     NtCurrentProcess(),     // TargetProcessHandle
-                     &TokenWithPrivileges,   // TargetHandle
-                     0,                      // DesiredAccess (over-ridden by option)
-                     0,                      // HandleAttributes
-                     DUPLICATE_SAME_ACCESS   // Options
-                     );
+        Status = NtDuplicateObject(NtCurrentProcess(),   // SourceProcessHandle
+                                   Token,                // SourceHandle
+                                   NtCurrentProcess(),   // TargetProcessHandle
+                                   &TokenWithPrivileges, // TargetHandle
+                                   0,                    // DesiredAccess (over-ridden by option)
+                                   0,                    // HandleAttributes
+                                   DUPLICATE_SAME_ACCESS // Options
+        );
         ASSERT(NT_SUCCESS(Status));
         Status = NtClose(Token);
         ASSERT(NT_SUCCESS(Status));
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
@@ -712,8 +642,6 @@ TestTokenCreate()
 
     ASSERT(NT_SUCCESS(Status));
 
-
-
 
     //
     // Create a token with default DACL
@@ -723,15 +651,15 @@ TestTokenCreate()
 
     GroupIds->GroupCount = GROUP_COUNT;
 
-    GroupIds->Groups[FLINTSTONE_INDEX].Sid  = FlintstoneSid;
-    GroupIds->Groups[CHILD_INDEX].Sid       = ChildSid;
+    GroupIds->Groups[FLINTSTONE_INDEX].Sid = FlintstoneSid;
+    GroupIds->Groups[CHILD_INDEX].Sid = ChildSid;
     GroupIds->Groups[NEANDERTHOL_INDEX].Sid = NeandertholSid;
-    GroupIds->Groups[WORLD_INDEX].Sid       = WorldSid;
+    GroupIds->Groups[WORLD_INDEX].Sid = WorldSid;
 
-    GroupIds->Groups[FLINTSTONE_INDEX].Attributes  = OwnerGroupAttributes;
-    GroupIds->Groups[CHILD_INDEX].Attributes       = OptionalGroupAttributes;
+    GroupIds->Groups[FLINTSTONE_INDEX].Attributes = OwnerGroupAttributes;
+    GroupIds->Groups[CHILD_INDEX].Attributes = OptionalGroupAttributes;
     GroupIds->Groups[NEANDERTHOL_INDEX].Attributes = OptionalGroupAttributes;
-    GroupIds->Groups[WORLD_INDEX].Attributes       = NormalGroupAttributes;
+    GroupIds->Groups[WORLD_INDEX].Attributes = NormalGroupAttributes;
 
     UserId.User.Sid = PebblesSid;
     UserId.User.Attributes = 0;
@@ -749,46 +677,47 @@ TestTokenCreate()
 
     PrimaryGroup.PrimaryGroup = FlintstoneSid;
 
-    Status = RtlCreateAcl( DefaultDacl.DefaultDacl, DEFAULT_DACL_LENGTH, ACL_REVISION);
+    Status = RtlCreateAcl(DefaultDacl.DefaultDacl, DEFAULT_DACL_LENGTH, ACL_REVISION);
 
-    ASSERT(NT_SUCCESS(Status) );
+    ASSERT(NT_SUCCESS(Status));
 
-    Status = NtCreateToken(
-                 &Token,                   // Handle
-                 (TOKEN_ALL_ACCESS),       // DesiredAccess
-                 &PrimaryTokenAttributes,  // ObjectAttributes
-                 TokenPrimary,             // TokenType
-                 &SystemAuthenticationId,   // Authentication LUID
-                 &NoExpiration,            // Expiration Time
-                 &UserId,                  // Owner ID
-                 GroupIds,                 // Group IDs
-                 Privileges,               // Privileges
-                 &Owner,                   // Owner
-                 &PrimaryGroup,            // Primary Group
-                 &DefaultDacl,             // Default Dacl
-                 &TestSource               // TokenSource
-                 );
+    Status = NtCreateToken(&Token,                  // Handle
+                           (TOKEN_ALL_ACCESS),      // DesiredAccess
+                           &PrimaryTokenAttributes, // ObjectAttributes
+                           TokenPrimary,            // TokenType
+                           &SystemAuthenticationId, // Authentication LUID
+                           &NoExpiration,           // Expiration Time
+                           &UserId,                 // Owner ID
+                           GroupIds,                // Group IDs
+                           Privileges,              // Privileges
+                           &Owner,                  // Owner
+                           &PrimaryGroup,           // Primary Group
+                           &DefaultDacl,            // Default Dacl
+                           &TestSource              // TokenSource
+    );
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
 
         //
         // Save a copy of this for later use...
         //
 
-        Status = NtDuplicateObject(
-                     NtCurrentProcess(),     // SourceProcessHandle
-                     Token,                  // SourceHandle
-                     NtCurrentProcess(),     // TargetProcessHandle
-                     &TokenWithDefaultDacl,  // TargetHandle
-                     0,                      // DesiredAccess (over-ridden by option)
-                     0,                      // HandleAttributes
-                     DUPLICATE_SAME_ACCESS   // Options
-                     );
+        Status = NtDuplicateObject(NtCurrentProcess(),    // SourceProcessHandle
+                                   Token,                 // SourceHandle
+                                   NtCurrentProcess(),    // TargetProcessHandle
+                                   &TokenWithDefaultDacl, // TargetHandle
+                                   0,                     // DesiredAccess (over-ridden by option)
+                                   0,                     // HandleAttributes
+                                   DUPLICATE_SAME_ACCESS  // Options
+        );
         ASSERT(NT_SUCCESS(Status));
         Status = NtClose(Token);
         ASSERT(NT_SUCCESS(Status));
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
@@ -796,8 +725,6 @@ TestTokenCreate()
 
     ASSERT(NT_SUCCESS(Status));
 
-
-
 
     //
     // Create a token with a null default DACL
@@ -807,15 +734,15 @@ TestTokenCreate()
 
     GroupIds->GroupCount = GROUP_COUNT;
 
-    GroupIds->Groups[FLINTSTONE_INDEX].Sid  = FlintstoneSid;
-    GroupIds->Groups[CHILD_INDEX].Sid       = ChildSid;
+    GroupIds->Groups[FLINTSTONE_INDEX].Sid = FlintstoneSid;
+    GroupIds->Groups[CHILD_INDEX].Sid = ChildSid;
     GroupIds->Groups[NEANDERTHOL_INDEX].Sid = NeandertholSid;
-    GroupIds->Groups[WORLD_INDEX].Sid       = WorldSid;
+    GroupIds->Groups[WORLD_INDEX].Sid = WorldSid;
 
-    GroupIds->Groups[FLINTSTONE_INDEX].Attributes  = OwnerGroupAttributes;
-    GroupIds->Groups[CHILD_INDEX].Attributes       = OptionalGroupAttributes;
+    GroupIds->Groups[FLINTSTONE_INDEX].Attributes = OwnerGroupAttributes;
+    GroupIds->Groups[CHILD_INDEX].Attributes = OptionalGroupAttributes;
     GroupIds->Groups[NEANDERTHOL_INDEX].Attributes = OptionalGroupAttributes;
-    GroupIds->Groups[WORLD_INDEX].Attributes       = NormalGroupAttributes;
+    GroupIds->Groups[WORLD_INDEX].Attributes = NormalGroupAttributes;
 
     UserId.User.Sid = PebblesSid;
     UserId.User.Attributes = 0;
@@ -833,30 +760,32 @@ TestTokenCreate()
 
     PrimaryGroup.PrimaryGroup = FlintstoneSid;
 
-    NullDefaultDacl.DefaultDacl =  NULL;
+    NullDefaultDacl.DefaultDacl = NULL;
 
 
-    Status = NtCreateToken(
-                 &Token,                   // Handle
-                 (TOKEN_ALL_ACCESS),       // DesiredAccess
-                 &PrimaryTokenAttributes,  // ObjectAttributes
-                 TokenPrimary,             // TokenType
-                 &OriginalAuthenticationId,   // Authentication LUID
-                 &NoExpiration,            // Expiration Time
-                 &UserId,                  // Owner ID
-                 GroupIds,                 // Group IDs
-                 Privileges,               // Privileges
-                 &Owner,                   // Owner
-                 &PrimaryGroup,            // Primary Group
-                 &NullDefaultDacl,         // Default Dacl
-                 &TestSource               // TokenSource
-                 );
+    Status = NtCreateToken(&Token,                    // Handle
+                           (TOKEN_ALL_ACCESS),        // DesiredAccess
+                           &PrimaryTokenAttributes,   // ObjectAttributes
+                           TokenPrimary,              // TokenType
+                           &OriginalAuthenticationId, // Authentication LUID
+                           &NoExpiration,             // Expiration Time
+                           &UserId,                   // Owner ID
+                           GroupIds,                  // Group IDs
+                           Privileges,                // Privileges
+                           &Owner,                    // Owner
+                           &PrimaryGroup,             // Primary Group
+                           &NullDefaultDacl,          // Default Dacl
+                           &TestSource                // TokenSource
+    );
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
         Status = NtClose(Token);
         ASSERT(NT_SUCCESS(Status));
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
@@ -864,8 +793,6 @@ TestTokenCreate()
 
     ASSERT(NT_SUCCESS(Status));
 
-
-
 
     //
     // Create an impersonation token, Impersonation level = Impersonation
@@ -875,15 +802,15 @@ TestTokenCreate()
 
     GroupIds->GroupCount = GROUP_COUNT;
 
-    GroupIds->Groups[FLINTSTONE_INDEX].Sid  = FlintstoneSid;
-    GroupIds->Groups[CHILD_INDEX].Sid       = ChildSid;
+    GroupIds->Groups[FLINTSTONE_INDEX].Sid = FlintstoneSid;
+    GroupIds->Groups[CHILD_INDEX].Sid = ChildSid;
     GroupIds->Groups[NEANDERTHOL_INDEX].Sid = NeandertholSid;
-    GroupIds->Groups[WORLD_INDEX].Sid       = WorldSid;
+    GroupIds->Groups[WORLD_INDEX].Sid = WorldSid;
 
-    GroupIds->Groups[FLINTSTONE_INDEX].Attributes  = OwnerGroupAttributes;
-    GroupIds->Groups[CHILD_INDEX].Attributes       = OptionalGroupAttributes;
+    GroupIds->Groups[FLINTSTONE_INDEX].Attributes = OwnerGroupAttributes;
+    GroupIds->Groups[CHILD_INDEX].Attributes = OptionalGroupAttributes;
     GroupIds->Groups[NEANDERTHOL_INDEX].Attributes = OptionalGroupAttributes;
-    GroupIds->Groups[WORLD_INDEX].Attributes       = NormalGroupAttributes;
+    GroupIds->Groups[WORLD_INDEX].Attributes = NormalGroupAttributes;
 
     UserId.User.Sid = PebblesSid;
     UserId.User.Attributes = 0;
@@ -901,41 +828,42 @@ TestTokenCreate()
 
     PrimaryGroup.PrimaryGroup = FlintstoneSid;
 
-    Status = RtlCreateAcl( DefaultDacl.DefaultDacl, DEFAULT_DACL_LENGTH, ACL_REVISION);
+    Status = RtlCreateAcl(DefaultDacl.DefaultDacl, DEFAULT_DACL_LENGTH, ACL_REVISION);
 
-    ASSERT(NT_SUCCESS(Status) );
+    ASSERT(NT_SUCCESS(Status));
 
-    Status = NtCreateToken(
-                 &Token,                   // Handle
-                 (TOKEN_ALL_ACCESS),       // DesiredAccess
-                 &ImpersonationTokenAttributes,  // ObjectAttributes
-                 TokenImpersonation,       // TokenType
-                 &SystemAuthenticationId,   // Authentication LUID
-                 &NoExpiration,            // Expiration Time
-                 &UserId,                  // Owner ID
-                 GroupIds,                 // Group IDs
-                 Privileges,               // Privileges
-                 &Owner,                   // Owner
-                 &PrimaryGroup,            // Primary Group
-                 &DefaultDacl,             // Default Dacl
-                 &TestSource               // TokenSource
-                 );
+    Status = NtCreateToken(&Token,                        // Handle
+                           (TOKEN_ALL_ACCESS),            // DesiredAccess
+                           &ImpersonationTokenAttributes, // ObjectAttributes
+                           TokenImpersonation,            // TokenType
+                           &SystemAuthenticationId,       // Authentication LUID
+                           &NoExpiration,                 // Expiration Time
+                           &UserId,                       // Owner ID
+                           GroupIds,                      // Group IDs
+                           Privileges,                    // Privileges
+                           &Owner,                        // Owner
+                           &PrimaryGroup,                 // Primary Group
+                           &DefaultDacl,                  // Default Dacl
+                           &TestSource                    // TokenSource
+    );
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
-        Status = NtDuplicateObject(
-                     NtCurrentProcess(),     // SourceProcessHandle
-                     Token,                  // SourceHandle
-                     NtCurrentProcess(),     // TargetProcessHandle
-                     &ImpersonationToken,    // TargetHandle
-                     0,                      // DesiredAccess (over-ridden by option)
-                     0,                      // HandleAttributes
-                     DUPLICATE_SAME_ACCESS   // Options
-                     );
+        Status = NtDuplicateObject(NtCurrentProcess(),   // SourceProcessHandle
+                                   Token,                // SourceHandle
+                                   NtCurrentProcess(),   // TargetProcessHandle
+                                   &ImpersonationToken,  // TargetHandle
+                                   0,                    // DesiredAccess (over-ridden by option)
+                                   0,                    // HandleAttributes
+                                   DUPLICATE_SAME_ACCESS // Options
+        );
         ASSERT(NT_SUCCESS(Status));
         Status = NtClose(Token);
         ASSERT(NT_SUCCESS(Status));
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
@@ -943,8 +871,6 @@ TestTokenCreate()
 
     ASSERT(NT_SUCCESS(Status));
 
-
-
 
     //
     // Create an impersonation token, Impersonation level = Anonymous
@@ -954,15 +880,15 @@ TestTokenCreate()
 
     GroupIds->GroupCount = GROUP_COUNT;
 
-    GroupIds->Groups[FLINTSTONE_INDEX].Sid  = FlintstoneSid;
-    GroupIds->Groups[CHILD_INDEX].Sid       = ChildSid;
+    GroupIds->Groups[FLINTSTONE_INDEX].Sid = FlintstoneSid;
+    GroupIds->Groups[CHILD_INDEX].Sid = ChildSid;
     GroupIds->Groups[NEANDERTHOL_INDEX].Sid = NeandertholSid;
-    GroupIds->Groups[WORLD_INDEX].Sid       = WorldSid;
+    GroupIds->Groups[WORLD_INDEX].Sid = WorldSid;
 
-    GroupIds->Groups[FLINTSTONE_INDEX].Attributes  = OwnerGroupAttributes;
-    GroupIds->Groups[CHILD_INDEX].Attributes       = OptionalGroupAttributes;
+    GroupIds->Groups[FLINTSTONE_INDEX].Attributes = OwnerGroupAttributes;
+    GroupIds->Groups[CHILD_INDEX].Attributes = OptionalGroupAttributes;
     GroupIds->Groups[NEANDERTHOL_INDEX].Attributes = OptionalGroupAttributes;
-    GroupIds->Groups[WORLD_INDEX].Attributes       = NormalGroupAttributes;
+    GroupIds->Groups[WORLD_INDEX].Attributes = NormalGroupAttributes;
 
     UserId.User.Sid = PebblesSid;
     UserId.User.Attributes = 0;
@@ -980,41 +906,42 @@ TestTokenCreate()
 
     PrimaryGroup.PrimaryGroup = FlintstoneSid;
 
-    Status = RtlCreateAcl( DefaultDacl.DefaultDacl, DEFAULT_DACL_LENGTH, ACL_REVISION);
+    Status = RtlCreateAcl(DefaultDacl.DefaultDacl, DEFAULT_DACL_LENGTH, ACL_REVISION);
 
-    ASSERT(NT_SUCCESS(Status) );
+    ASSERT(NT_SUCCESS(Status));
 
-    Status = NtCreateToken(
-                 &Token,                     // Handle
-                 (TOKEN_ALL_ACCESS),         // DesiredAccess
-                 &AnonymousTokenAttributes,  // ObjectAttributes
-                 TokenImpersonation,         // TokenType
-                 &OriginalAuthenticationId,     // Authentication LUID
-                 &NoExpiration,              // Expiration Time
-                 &UserId,                    // Owner ID
-                 GroupIds,                   // Group IDs
-                 Privileges,                 // Privileges
-                 &Owner,                     // Owner
-                 &PrimaryGroup,              // Primary Group
-                 &DefaultDacl,               // Default Dacl
-                 &TestSource                 // TokenSource
-                 );
+    Status = NtCreateToken(&Token,                    // Handle
+                           (TOKEN_ALL_ACCESS),        // DesiredAccess
+                           &AnonymousTokenAttributes, // ObjectAttributes
+                           TokenImpersonation,        // TokenType
+                           &OriginalAuthenticationId, // Authentication LUID
+                           &NoExpiration,             // Expiration Time
+                           &UserId,                   // Owner ID
+                           GroupIds,                  // Group IDs
+                           Privileges,                // Privileges
+                           &Owner,                    // Owner
+                           &PrimaryGroup,             // Primary Group
+                           &DefaultDacl,              // Default Dacl
+                           &TestSource                // TokenSource
+    );
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
-        Status = NtDuplicateObject(
-                     NtCurrentProcess(),     // SourceProcessHandle
-                     Token,                  // SourceHandle
-                     NtCurrentProcess(),     // TargetProcessHandle
-                     &AnonymousToken,        // TargetHandle
-                     0,                      // DesiredAccess (over-ridden by option)
-                     0,                      // HandleAttributes
-                     DUPLICATE_SAME_ACCESS   // Options
-                     );
+        Status = NtDuplicateObject(NtCurrentProcess(),   // SourceProcessHandle
+                                   Token,                // SourceHandle
+                                   NtCurrentProcess(),   // TargetProcessHandle
+                                   &AnonymousToken,      // TargetHandle
+                                   0,                    // DesiredAccess (over-ridden by option)
+                                   0,                    // HandleAttributes
+                                   DUPLICATE_SAME_ACCESS // Options
+        );
         ASSERT(NT_SUCCESS(Status));
         Status = NtClose(Token);
         ASSERT(NT_SUCCESS(Status));
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
@@ -1023,7 +950,6 @@ TestTokenCreate()
     ASSERT(NT_SUCCESS(Status));
 
 
-
     //
     // Create the simplest token possible
     // (no Groups, explicit Owner, or DefaultDacl)
@@ -1038,34 +964,32 @@ TestTokenCreate()
     PrimaryGroup.PrimaryGroup = FlintstoneSid;
 
 
-    Status = NtCreateToken(
-                 &Token,                   // Handle
-                 (TOKEN_ALL_ACCESS),       // DesiredAccess
-                 &PrimaryTokenAttributes,  // ObjectAttributes
-                 TokenPrimary,             // TokenType
-                 &BadAuthenticationId,     // Authentication LUID
-                 &NoExpiration,            // Expiration Time
-                 &UserId,                  // Owner ID
-                 GroupIds,                 // Group IDs
-                 Privileges,               // Privileges
-                 NULL,                     // Owner
-                 &PrimaryGroup,            // Primary Group
-                 NULL,                     // Default Dacl
-                 &TestSource               // TokenSource
-                 );
+    Status = NtCreateToken(&Token,                  // Handle
+                           (TOKEN_ALL_ACCESS),      // DesiredAccess
+                           &PrimaryTokenAttributes, // ObjectAttributes
+                           TokenPrimary,            // TokenType
+                           &BadAuthenticationId,    // Authentication LUID
+                           &NoExpiration,           // Expiration Time
+                           &UserId,                 // Owner ID
+                           GroupIds,                // Group IDs
+                           Privileges,              // Privileges
+                           NULL,                    // Owner
+                           &PrimaryGroup,           // Primary Group
+                           NULL,                    // Default Dacl
+                           &TestSource              // TokenSource
+    );
 
-    if (Status == STATUS_NO_SUCH_LOGON_SESSION) {
+    if (Status == STATUS_NO_SUCH_LOGON_SESSION)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Status should be: 0x%lx \n", STATUS_NO_SUCH_LOGON_SESSION);
         CompletionStatus = FALSE;
     }
-
-
-
-
 
 
     //
@@ -1093,74 +1017,68 @@ TestTokenFilter()
 
     DbgPrint("\n");
 
-    GroupIds = (PTOKEN_GROUPS)TstAllocatePool( PagedPool,
-                                               GROUP_IDS_LENGTH
-                                               );
+    GroupIds = (PTOKEN_GROUPS)TstAllocatePool(PagedPool, GROUP_IDS_LENGTH);
 
-    RestrictedGroupIds = (PTOKEN_GROUPS)TstAllocatePool( PagedPool,
-                                                         GROUP_IDS_LENGTH
-                                                         );
+    RestrictedGroupIds = (PTOKEN_GROUPS)TstAllocatePool(PagedPool, GROUP_IDS_LENGTH);
 
-    Privileges = (PTOKEN_PRIVILEGES)TstAllocatePool( PagedPool,
-                                                     PRIVILEGES_LENGTH
-                                                     );
+    Privileges = (PTOKEN_PRIVILEGES)TstAllocatePool(PagedPool, PRIVILEGES_LENGTH);
 
-
-
 
     //
     // Filter a token without doing anything
     //
 
     DbgPrint("Se:     Filter null Token ...                                  ");
-    Status = NtFilterToken(
-                TokenWithGroups,
-                0,                      // no flags
-                NULL,                   // no groups to disable
-                NULL,                   // no privileges to disable
-                NULL,                   // no restricted sids
-                &Token
-                );
-    if (NT_SUCCESS(Status)) {
+    Status = NtFilterToken(TokenWithGroups,
+                           0,    // no flags
+                           NULL, // no groups to disable
+                           NULL, // no privileges to disable
+                           NULL, // no restricted sids
+                           &Token);
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
         NtClose(Token);
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
     }
-
+
     //
     // Filter a token and remove some groups
     //
 
     GroupIds->GroupCount = 2;
 
-    GroupIds->Groups[0].Sid  = FlintstoneSid;
-    GroupIds->Groups[1].Sid       = ChildSid;
+    GroupIds->Groups[0].Sid = FlintstoneSid;
+    GroupIds->Groups[1].Sid = ChildSid;
 
-    GroupIds->Groups[FLINTSTONE_INDEX].Attributes  = SE_GROUP_USE_FOR_DENY_ONLY;
-    GroupIds->Groups[CHILD_INDEX].Attributes       = SE_GROUP_USE_FOR_DENY_ONLY;
+    GroupIds->Groups[FLINTSTONE_INDEX].Attributes = SE_GROUP_USE_FOR_DENY_ONLY;
+    GroupIds->Groups[CHILD_INDEX].Attributes = SE_GROUP_USE_FOR_DENY_ONLY;
 
 
     DbgPrint("Se:     Filter token with disabled groups ...                  ");
-    Status = NtFilterToken(
-                TokenWithGroups,
-                0,                      // no flags
-                GroupIds,               // no groups to disable
-                NULL,                   // no privileges to disable
-                NULL,                   // no restricted sids
-                &TokenWithRestrictedGroups
-                );
-    if (NT_SUCCESS(Status)) {
+    Status = NtFilterToken(TokenWithGroups,
+                           0,        // no flags
+                           GroupIds, // no groups to disable
+                           NULL,     // no privileges to disable
+                           NULL,     // no restricted sids
+                           &TokenWithRestrictedGroups);
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
     }
 
-
+
     //
     // Filter a token and remove some privileges
     //
@@ -1175,23 +1093,24 @@ TestTokenFilter()
 
 
     DbgPrint("Se:     Filter token with disabled privilegs ...               ");
-    Status = NtFilterToken(
-                TokenWithPrivileges,
-                0,                      // no flags
-                NULL,                   // no groups to disable
-                Privileges,             // no privileges to disable
-                NULL,                   // no restricted sids
-                &TokenWithRestrictedPrivileges
-                );
-    if (NT_SUCCESS(Status)) {
+    Status = NtFilterToken(TokenWithPrivileges,
+                           0,          // no flags
+                           NULL,       // no groups to disable
+                           Privileges, // no privileges to disable
+                           NULL,       // no restricted sids
+                           &TokenWithRestrictedPrivileges);
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
     }
 
-
+
     //
     // Filter a restricted token and add some restricted sids
     //
@@ -1200,57 +1119,58 @@ TestTokenFilter()
 
     RestrictedGroupIds->GroupCount = RESTRICTED_SID_COUNT;
 
-    RestrictedGroupIds->Groups[0].Sid  = FlintstoneSid;
-    RestrictedGroupIds->Groups[1].Sid       = ChildSid;
+    RestrictedGroupIds->Groups[0].Sid = FlintstoneSid;
+    RestrictedGroupIds->Groups[1].Sid = ChildSid;
 
-    RestrictedGroupIds->Groups[FLINTSTONE_INDEX].Attributes  = OwnerGroupAttributes;
-    RestrictedGroupIds->Groups[CHILD_INDEX].Attributes       = OptionalGroupAttributes;
-
+    RestrictedGroupIds->Groups[FLINTSTONE_INDEX].Attributes = OwnerGroupAttributes;
+    RestrictedGroupIds->Groups[CHILD_INDEX].Attributes = OptionalGroupAttributes;
 
 
     DbgPrint("Se:     Filter token with restricted sids ...                 ");
-    Status = NtFilterToken(
-                TokenWithGroups,
-                0,                      // no flags
-                NULL,                   // no groups to disable
-                NULL,                   // no privileges to disable
-                RestrictedGroupIds,     // no restricted sids
-                &TokenWithRestrictedSids
-                );
-    if (NT_SUCCESS(Status)) {
+    Status = NtFilterToken(TokenWithGroups,
+                           0,                  // no flags
+                           NULL,               // no groups to disable
+                           NULL,               // no privileges to disable
+                           RestrictedGroupIds, // no restricted sids
+                           &TokenWithRestrictedSids);
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
     }
 
-
+
     //
     // Filter a token and add some restricted sids
     //
 
     RestrictedGroupIds->GroupCount = RESTRICTED_SID_COUNT;
 
-    RestrictedGroupIds->Groups[0].Sid       = NeandertholSid;
-    RestrictedGroupIds->Groups[1].Sid       = WorldSid;
+    RestrictedGroupIds->Groups[0].Sid = NeandertholSid;
+    RestrictedGroupIds->Groups[1].Sid = WorldSid;
 
-    RestrictedGroupIds->Groups[0].Attributes  = OwnerGroupAttributes;
-    RestrictedGroupIds->Groups[1].Attributes       = OptionalGroupAttributes;
+    RestrictedGroupIds->Groups[0].Attributes = OwnerGroupAttributes;
+    RestrictedGroupIds->Groups[1].Attributes = OptionalGroupAttributes;
 
 
     DbgPrint("Se:     Filter token with more restricted sids ...             ");
-    Status = NtFilterToken(
-                TokenWithRestrictedSids,
-                0,                      // no flags
-                NULL,                   // no groups to disable
-                NULL,                   // no privileges to disable
-                RestrictedGroupIds,     // no restricted sids
-                &TokenWithMoreRestrictedSids
-                );
-    if (NT_SUCCESS(Status)) {
+    Status = NtFilterToken(TokenWithRestrictedSids,
+                           0,                  // no flags
+                           NULL,               // no groups to disable
+                           NULL,               // no privileges to disable
+                           RestrictedGroupIds, // no restricted sids
+                           &TokenWithMoreRestrictedSids);
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
@@ -1265,7 +1185,6 @@ TestTokenFilter()
 }
 
 
-
 ////////////////////////////////////////////////////////////////
 //                                                            //
 // Open Primary Token Test                                    //
@@ -1295,25 +1214,24 @@ TestTokenOpenPrimary()
 
     DbgPrint("Se:     Open own process's token ...                           ");
 
-    Status = NtOpenProcessToken(
-                 NtCurrentProcess(),
-                 TOKEN_ALL_ACCESS,
-                 &ProcessToken
-                 );
-    if (NT_SUCCESS(Status)) {
-        Status = NtQueryInformationToken(
-                     ProcessToken,                 // Handle
-                     TokenStatistics,              // TokenInformationClass
-                     &ProcessTokenStatistics,      // TokenInformation
-                     sizeof(TOKEN_STATISTICS),     // TokenInformationLength
-                     &ReturnLength                 // ReturnLength
-                     );
+    Status = NtOpenProcessToken(NtCurrentProcess(), TOKEN_ALL_ACCESS, &ProcessToken);
+    if (NT_SUCCESS(Status))
+    {
+        Status = NtQueryInformationToken(ProcessToken,             // Handle
+                                         TokenStatistics,          // TokenInformationClass
+                                         &ProcessTokenStatistics,  // TokenInformation
+                                         sizeof(TOKEN_STATISTICS), // TokenInformationLength
+                                         &ReturnLength             // ReturnLength
+        );
         ASSERT(NT_SUCCESS(Status));
-        if ( ProcessTokenStatistics.TokenType == TokenPrimary) {
-            if ( RtlEqualLuid( &ProcessTokenStatistics.AuthenticationId,
-                               &OriginalAuthenticationId ) ) {
+        if (ProcessTokenStatistics.TokenType == TokenPrimary)
+        {
+            if (RtlEqualLuid(&ProcessTokenStatistics.AuthenticationId, &OriginalAuthenticationId))
+            {
                 DbgPrint("Succeeded.\n");
-            } else {
+            }
+            else
+            {
                 DbgPrint("********** Failed ************\n");
                 DbgPrint("Unexpected authentication ID value.\n");
                 DbgPrint("Authentication ID is: ");
@@ -1321,12 +1239,12 @@ TestTokenOpenPrimary()
                 DbgPrint("\n");
                 CompletionStatus = FALSE;
             }
-
-        } else {
+        }
+        else
+        {
             DbgPrint("********** Failed ************\n");
             DbgPrint("Token type not TokenPrimary.\n");
-            DbgPrint("Returned token type is: 0x%lx \n",
-                    ProcessTokenStatistics.TokenType);
+            DbgPrint("Returned token type is: 0x%lx \n", ProcessTokenStatistics.TokenType);
             DbgPrint("Authentication ID is: ");
             TestpPrintLuid(ProcessTokenStatistics.AuthenticationId);
             DbgPrint("\n");
@@ -1334,16 +1252,13 @@ TestTokenOpenPrimary()
         }
         Status = NtClose(ProcessToken);
         ASSERT(NT_SUCCESS(Status));
-
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
     }
-
-
-
-
 
 
     //
@@ -1352,49 +1267,45 @@ TestTokenOpenPrimary()
 
     DbgPrint("Se:     Open another process's token ...                       ");
 
-    Status = NtCreateProcess(
-                 &SubProcess,
-                 (GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | DELETE),
-                 NULL,
-                 NtCurrentProcess(),   // ParentProcess
-                 FALSE,                // InheritObjectTable
-                 NULL,                 // SectionHandle,
-                 NULL,                 // DebugPort,
-                 NULL                  // ExceptionPort
-                 );
+    Status = NtCreateProcess(&SubProcess, (GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | DELETE), NULL,
+                             NtCurrentProcess(), // ParentProcess
+                             FALSE,              // InheritObjectTable
+                             NULL,               // SectionHandle,
+                             NULL,               // DebugPort,
+                             NULL                // ExceptionPort
+    );
 
-    Status = NtOpenProcessToken(
-                 SubProcess,
-                 TOKEN_ALL_ACCESS,
-                 &SubProcessToken
-                 );
-    if (NT_SUCCESS(Status)) {
-        Status = NtQueryInformationToken(
-                     SubProcessToken,              // Handle
-                     TokenStatistics,              // TokenInformationClass
-                     &SubProcessTokenStatistics,   // TokenInformation
-                     sizeof(TOKEN_STATISTICS),     // TokenInformationLength
-                     &ReturnLength                 // ReturnLength
-                     );
+    Status = NtOpenProcessToken(SubProcess, TOKEN_ALL_ACCESS, &SubProcessToken);
+    if (NT_SUCCESS(Status))
+    {
+        Status = NtQueryInformationToken(SubProcessToken,            // Handle
+                                         TokenStatistics,            // TokenInformationClass
+                                         &SubProcessTokenStatistics, // TokenInformation
+                                         sizeof(TOKEN_STATISTICS),   // TokenInformationLength
+                                         &ReturnLength               // ReturnLength
+        );
         ASSERT(NT_SUCCESS(Status));
-        if ( SubProcessTokenStatistics.TokenType == TokenPrimary) {
-            if ( RtlEqualLuid( &SubProcessTokenStatistics.AuthenticationId,
-                               &OriginalAuthenticationId ) ) {
-                if ( (ProcessTokenStatistics.TokenId.HighPart ==
-                      SubProcessTokenStatistics.TokenId.HighPart)  &&
-                     (ProcessTokenStatistics.TokenId.LowPart ==
-                      SubProcessTokenStatistics.TokenId.LowPart) ) {
+        if (SubProcessTokenStatistics.TokenType == TokenPrimary)
+        {
+            if (RtlEqualLuid(&SubProcessTokenStatistics.AuthenticationId, &OriginalAuthenticationId))
+            {
+                if ((ProcessTokenStatistics.TokenId.HighPart == SubProcessTokenStatistics.TokenId.HighPart) &&
+                    (ProcessTokenStatistics.TokenId.LowPart == SubProcessTokenStatistics.TokenId.LowPart))
+                {
                     DbgPrint("********** Failed ************\n");
                     DbgPrint("Same token as parent process (token IDs match).\n");
                     DbgPrint("Authentication ID is: ");
                     TestpPrintLuid(SubProcessTokenStatistics.AuthenticationId);
                     DbgPrint("\n");
                     CompletionStatus = FALSE;
-
-                } else {
+                }
+                else
+                {
                     DbgPrint("Succeeded.\n");
                 }
-            } else {
+            }
+            else
+            {
                 DbgPrint("********** Failed ************\n");
                 DbgPrint("Unexpected authentication ID value.\n");
                 DbgPrint("Authentication ID is: ");
@@ -1402,11 +1313,12 @@ TestTokenOpenPrimary()
                 DbgPrint("\n");
                 CompletionStatus = FALSE;
             }
-        } else {
+        }
+        else
+        {
             DbgPrint("********** Failed ************\n");
             DbgPrint("Token type not TokenPrimary.\n");
-            DbgPrint("Returned token type is: 0x%lx \n",
-            SubProcessTokenStatistics.TokenType);
+            DbgPrint("Returned token type is: 0x%lx \n", SubProcessTokenStatistics.TokenType);
             DbgPrint("Authentication ID is: ");
             TestpPrintLuid(SubProcessTokenStatistics.AuthenticationId);
             DbgPrint("\n");
@@ -1414,7 +1326,9 @@ TestTokenOpenPrimary()
         }
         Status = NtClose(SubProcessToken);
         ASSERT(NT_SUCCESS(Status));
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
@@ -1423,7 +1337,7 @@ TestTokenOpenPrimary()
 
     return CompletionStatus;
 }
-
+
 ////////////////////////////////////////////////////////////////
 //                                                            //
 // Query Token Test                                           //
@@ -1453,7 +1367,6 @@ TestTokenQuery()
     DbgPrint("\n");
 
 
-
 #if 0
 
    //
@@ -1484,35 +1397,37 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(!NT_SUCCESS(Status));
 
-#endif  //0
+#endif //0
 
-
-////////////////////////////////////////////////////////////////////////
-//                                                                    //
-//        Query User ID                                               //
-//                                                                    //
-////////////////////////////////////////////////////////////////////////
 
-   //
-   // Query User ID with zero length buffer
-   //
+    ////////////////////////////////////////////////////////////////////////
+    //                                                                    //
+    //        Query User ID                                               //
+    //                                                                    //
+    ////////////////////////////////////////////////////////////////////////
+
+    //
+    // Query User ID with zero length buffer
+    //
 
     DbgPrint("Se:     Query User ID with zero length buffer ...              ");
 
-    Status = NtQueryInformationToken(
-                 SimpleToken,              // Handle
-                 TokenUser,                // TokenInformationClass
-                 UserId,                   // TokenInformation
-                 0,                        // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(SimpleToken,  // Handle
+                                     TokenUser,    // TokenInformationClass
+                                     UserId,       // TokenInformation
+                                     0,            // TokenInformationLength
+                                     &ReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -1521,12 +1436,8 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(!NT_SUCCESS(Status));
 
-
 
-
-    UserId = (PTOKEN_USER)TstAllocatePool( PagedPool,
-                                           ReturnLength
-                                           );
+    UserId = (PTOKEN_USER)TstAllocatePool(PagedPool, ReturnLength);
 
     //
     // Query user SID
@@ -1535,33 +1446,38 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     DbgPrint("Se:     Query token user ...                                   ");
 
-    Status = NtQueryInformationToken(
-                 SimpleToken,              // Handle
-                 TokenUser,                // TokenInformationClass
-                 UserId,                   // TokenInformation
-                 ReturnLength,             // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(SimpleToken,  // Handle
+                                     TokenUser,    // TokenInformationClass
+                                     UserId,       // TokenInformation
+                                     ReturnLength, // TokenInformationLength
+                                     &ReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Check returned value
         //
 
-        if (RtlEqualSid((UserId->User.Sid), PebblesSid) ) {
+        if (RtlEqualSid((UserId->User.Sid), PebblesSid))
+        {
             DbgPrint("Succeeded.\n");
-        } else {
-        DbgPrint("********** Failed ************\n");
-        DbgPrint("Unexpected value returned by query.\n");
-        DbgPrint("Status is: 0x%lx \n", Status);
-        DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
-        CompletionStatus = FALSE;
         }
-    } else {
+        else
+        {
+            DbgPrint("********** Failed ************\n");
+            DbgPrint("Unexpected value returned by query.\n");
+            DbgPrint("Status is: 0x%lx \n", Status);
+            DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
+            CompletionStatus = FALSE;
+        }
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -1570,28 +1486,30 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(NT_SUCCESS(Status));
 
-
-   //
-   // Query with too little buffer
+
+    //
+    // Query with too little buffer
     // (This relies upon the ReturnLength returned from previous call)
-   //
+    //
 
     DbgPrint("Se:     Query user with too small buffer ...                   ");
 
-    Status = NtQueryInformationToken(
-                 SimpleToken,              // Handle
-                 TokenUser,                // TokenInformationClass
-                 UserId,                   // TokenInformation
-                 ReturnLength-1,           // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(SimpleToken,      // Handle
+                                     TokenUser,        // TokenInformationClass
+                                     UserId,           // TokenInformation
+                                     ReturnLength - 1, // TokenInformationLength
+                                     &ReturnLength     // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -1600,33 +1518,35 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(!NT_SUCCESS(Status));
 
-
-////////////////////////////////////////////////////////////////////////
-//                                                                    //
-//        Query Primary Group                                         //
-//                                                                    //
-////////////////////////////////////////////////////////////////////////
 
-   //
-   // Query primary group with zero length buffer
-   //
+    ////////////////////////////////////////////////////////////////////////
+    //                                                                    //
+    //        Query Primary Group                                         //
+    //                                                                    //
+    ////////////////////////////////////////////////////////////////////////
+
+    //
+    // Query primary group with zero length buffer
+    //
 
     DbgPrint("Se:     Query primary group with zero length buffer ...        ");
 
-    Status = NtQueryInformationToken(
-                 SimpleToken,              // Handle
-                 TokenPrimaryGroup,        // TokenInformationClass
-                 PrimaryGroup,             // TokenInformation
-                 0,                        // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(SimpleToken,       // Handle
+                                     TokenPrimaryGroup, // TokenInformationClass
+                                     PrimaryGroup,      // TokenInformation
+                                     0,                 // TokenInformationLength
+                                     &ReturnLength      // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -1635,12 +1555,8 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(!NT_SUCCESS(Status));
 
-
 
-
-    PrimaryGroup = (PTOKEN_PRIMARY_GROUP)TstAllocatePool( PagedPool,
-                                                          ReturnLength
-                                                          );
+    PrimaryGroup = (PTOKEN_PRIMARY_GROUP)TstAllocatePool(PagedPool, ReturnLength);
 
     //
     // Query primary group SID
@@ -1649,33 +1565,38 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     DbgPrint("Se:     Query primary group ...                                ");
 
-    Status = NtQueryInformationToken(
-                 SimpleToken,              // Handle
-                 TokenPrimaryGroup,        // TokenInformationClass
-                 PrimaryGroup,             // TokenInformation
-                 ReturnLength,             // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(SimpleToken,       // Handle
+                                     TokenPrimaryGroup, // TokenInformationClass
+                                     PrimaryGroup,      // TokenInformation
+                                     ReturnLength,      // TokenInformationLength
+                                     &ReturnLength      // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Check returned value
         //
 
-        if (RtlEqualSid( PrimaryGroup->PrimaryGroup, FlintstoneSid) ) {
+        if (RtlEqualSid(PrimaryGroup->PrimaryGroup, FlintstoneSid))
+        {
             DbgPrint("Succeeded.\n");
-        } else {
+        }
+        else
+        {
             DbgPrint("********** Failed ************\n");
             DbgPrint("Unexpected value returned by query.\n");
             DbgPrint("Status is: 0x%lx \n", Status);
             DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
             CompletionStatus = FALSE;
         }
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -1684,28 +1605,30 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(NT_SUCCESS(Status));
 
-
-   //
-   // Query with too little buffer
+
+    //
+    // Query with too little buffer
     // (This relies upon the ReturnLength returned from previous call)
-   //
+    //
 
     DbgPrint("Se:     Query primary group with too small buffer ...          ");
 
-    Status = NtQueryInformationToken(
-                 SimpleToken,              // Handle
-                 TokenPrimaryGroup,        // TokenInformationClass
-                 PrimaryGroup,             // TokenInformation
-                 ReturnLength-1,           // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(SimpleToken,       // Handle
+                                     TokenPrimaryGroup, // TokenInformationClass
+                                     PrimaryGroup,      // TokenInformation
+                                     ReturnLength - 1,  // TokenInformationLength
+                                     &ReturnLength      // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -1715,33 +1638,34 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
     ASSERT(!NT_SUCCESS(Status));
 
 
-
-////////////////////////////////////////////////////////////////////////
-//                                                                    //
-//        Query Groups                                                //
-//                                                                    //
-////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
+    //                                                                    //
+    //        Query Groups                                                //
+    //                                                                    //
+    ////////////////////////////////////////////////////////////////////////
 
-   //
-   // Query groups with zero length buffer
-   //
+    //
+    // Query groups with zero length buffer
+    //
 
     DbgPrint("Se:     Query groups with zero length buffer ...               ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithGroups,          // Handle
-                 TokenGroups,              // TokenInformationClass
-                 GroupIds,                 // TokenInformation
-                 0,                        // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithGroups, // Handle
+                                     TokenGroups,     // TokenInformationClass
+                                     GroupIds,        // TokenInformation
+                                     0,               // TokenInformationLength
+                                     &ReturnLength    // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -1750,12 +1674,8 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(!NT_SUCCESS(Status));
 
-
 
-
-    GroupIds = (PTOKEN_GROUPS)TstAllocatePool( PagedPool,
-                                               ReturnLength
-                                               );
+    GroupIds = (PTOKEN_GROUPS)TstAllocatePool(PagedPool, ReturnLength);
 
     //
     // Query Group SIDs
@@ -1764,18 +1684,18 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     DbgPrint("Se:     Query groups ...                                       ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithGroups,          // Handle
-                 TokenGroups,              // TokenInformationClass
-                 GroupIds,                 // TokenInformation
-                 ReturnLength,             // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithGroups, // Handle
+                                     TokenGroups,     // TokenInformationClass
+                                     GroupIds,        // TokenInformation
+                                     ReturnLength,    // TokenInformationLength
+                                     &ReturnLength    // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Check returned value
@@ -1788,47 +1708,52 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
         ValuesCompare = TRUE;
 
-        if (GroupIds->GroupCount != GROUP_COUNT) {
+        if (GroupIds->GroupCount != GROUP_COUNT)
+        {
             ValuesCompare = FALSE;
         }
 
-        if ( (!RtlEqualSid((GroupIds->Groups[FLINTSTONE_INDEX].Sid),
-                            FlintstoneSid)) ||
-             (GroupIds->Groups[FLINTSTONE_INDEX].Attributes !=
-              OwnerGroupAttributes) ) {
+        if ((!RtlEqualSid((GroupIds->Groups[FLINTSTONE_INDEX].Sid), FlintstoneSid)) ||
+            (GroupIds->Groups[FLINTSTONE_INDEX].Attributes != OwnerGroupAttributes))
+        {
             ValuesCompare = FALSE;
         }
 
-        if ( (!RtlEqualSid((GroupIds->Groups[CHILD_INDEX].Sid), ChildSid)) ||
-             (GroupIds->Groups[CHILD_INDEX].Attributes !=
-              OptionalGroupAttributes) ) {
+        if ((!RtlEqualSid((GroupIds->Groups[CHILD_INDEX].Sid), ChildSid)) ||
+            (GroupIds->Groups[CHILD_INDEX].Attributes != OptionalGroupAttributes))
+        {
             ValuesCompare = FALSE;
         }
 
-        if ( (!RtlEqualSid((GroupIds->Groups[NEANDERTHOL_INDEX].Sid),
-              NeandertholSid)) ||
-             (GroupIds->Groups[NEANDERTHOL_INDEX].Attributes !=
-              OptionalGroupAttributes) ) {
+        if ((!RtlEqualSid((GroupIds->Groups[NEANDERTHOL_INDEX].Sid), NeandertholSid)) ||
+            (GroupIds->Groups[NEANDERTHOL_INDEX].Attributes != OptionalGroupAttributes))
+        {
             ValuesCompare = FALSE;
         }
 
-        if ( (!RtlEqualSid((GroupIds->Groups[WORLD_INDEX].Sid), WorldSid)) ||
-             (GroupIds->Groups[WORLD_INDEX].Attributes != NormalGroupAttributes) ) {
+        if ((!RtlEqualSid((GroupIds->Groups[WORLD_INDEX].Sid), WorldSid)) ||
+            (GroupIds->Groups[WORLD_INDEX].Attributes != NormalGroupAttributes))
+        {
             ValuesCompare = FALSE;
         }
 
 
-        if ( ValuesCompare ) {
+        if (ValuesCompare)
+        {
             DbgPrint("Succeeded.\n");
-        } else {
-        DbgPrint("********** Failed ************\n");
-        DbgPrint("Unexpected value returned by query.\n");
-        DbgPrint("Status is: 0x%lx \n", Status);
-        DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
-        DbgPrint("Returned group count is: 0x%lx \n", GroupIds->GroupCount);
-        CompletionStatus = FALSE;
         }
-    } else {
+        else
+        {
+            DbgPrint("********** Failed ************\n");
+            DbgPrint("Unexpected value returned by query.\n");
+            DbgPrint("Status is: 0x%lx \n", Status);
+            DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
+            DbgPrint("Returned group count is: 0x%lx \n", GroupIds->GroupCount);
+            CompletionStatus = FALSE;
+        }
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -1837,28 +1762,30 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(NT_SUCCESS(Status));
 
-
-   //
-   // Query with too little buffer
+
+    //
+    // Query with too little buffer
     // (This relies upon the ReturnLength returned from previous call)
-   //
+    //
 
     DbgPrint("Se:     Query groups with too small buffer ...                 ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithGroups,          // Handle
-                 TokenGroups,              // TokenInformationClass
-                 GroupIds,                 // TokenInformation
-                 ReturnLength-1,           // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithGroups,  // Handle
+                                     TokenGroups,      // TokenInformationClass
+                                     GroupIds,         // TokenInformation
+                                     ReturnLength - 1, // TokenInformationLength
+                                     &ReturnLength     // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -1867,25 +1794,27 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(!NT_SUCCESS(Status));
 
-   //
-   // Query groups with zero length buffer
-   //
+    //
+    // Query groups with zero length buffer
+    //
 
     DbgPrint("Se:     Query restgroups with zero length buffer ...           ");
-    Status = NtQueryInformationToken(
-                 TokenWithRestrictedGroups,// Handle
-                 TokenGroups,              // TokenInformationClass
-                 GroupIds,                 // TokenInformation
-                 0,                        // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithRestrictedGroups, // Handle
+                                     TokenGroups,               // TokenInformationClass
+                                     GroupIds,                  // TokenInformation
+                                     0,                         // TokenInformationLength
+                                     &ReturnLength              // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -1894,12 +1823,8 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(!NT_SUCCESS(Status));
 
-
 
-
-    GroupIds = (PTOKEN_GROUPS)TstAllocatePool( PagedPool,
-                                               ReturnLength
-                                               );
+    GroupIds = (PTOKEN_GROUPS)TstAllocatePool(PagedPool, ReturnLength);
 
     //
     // Query Group SIDs
@@ -1908,18 +1833,18 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     DbgPrint("Se:     Query rest groups ...                                  ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithRestrictedGroups,// Handle
-                 TokenGroups,              // TokenInformationClass
-                 GroupIds,                 // TokenInformation
-                 ReturnLength,             // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithRestrictedGroups, // Handle
+                                     TokenGroups,               // TokenInformationClass
+                                     GroupIds,                  // TokenInformation
+                                     ReturnLength,              // TokenInformationLength
+                                     &ReturnLength              // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Check returned value
@@ -1932,48 +1857,56 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
         ValuesCompare = TRUE;
 
-        if (GroupIds->GroupCount != GROUP_COUNT) {
+        if (GroupIds->GroupCount != GROUP_COUNT)
+        {
             ValuesCompare = FALSE;
         }
 
-        if ( (!RtlEqualSid((GroupIds->Groups[FLINTSTONE_INDEX].Sid),
-                            FlintstoneSid)) ||
-             (GroupIds->Groups[FLINTSTONE_INDEX].Attributes !=
-              ((OwnerGroupAttributes & ~(SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT)) | SE_GROUP_USE_FOR_DENY_ONLY) ) ) {
+        if ((!RtlEqualSid((GroupIds->Groups[FLINTSTONE_INDEX].Sid), FlintstoneSid)) ||
+            (GroupIds->Groups[FLINTSTONE_INDEX].Attributes !=
+             ((OwnerGroupAttributes & ~(SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT)) | SE_GROUP_USE_FOR_DENY_ONLY)))
+        {
             ValuesCompare = FALSE;
         }
 
-        if ( (!RtlEqualSid((GroupIds->Groups[CHILD_INDEX].Sid), ChildSid)) ||
-             (GroupIds->Groups[CHILD_INDEX].Attributes !=
-                            ((OptionalGroupAttributes & ~(SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT)) | SE_GROUP_USE_FOR_DENY_ONLY)) ) {
+        if ((!RtlEqualSid((GroupIds->Groups[CHILD_INDEX].Sid), ChildSid)) ||
+            (GroupIds->Groups[CHILD_INDEX].Attributes !=
+             ((OptionalGroupAttributes & ~(SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT)) |
+              SE_GROUP_USE_FOR_DENY_ONLY)))
+        {
             ValuesCompare = FALSE;
         }
 
-        if ( (!RtlEqualSid((GroupIds->Groups[NEANDERTHOL_INDEX].Sid),
-              NeandertholSid)) ||
-             (GroupIds->Groups[NEANDERTHOL_INDEX].Attributes !=
-              OptionalGroupAttributes) ) {
+        if ((!RtlEqualSid((GroupIds->Groups[NEANDERTHOL_INDEX].Sid), NeandertholSid)) ||
+            (GroupIds->Groups[NEANDERTHOL_INDEX].Attributes != OptionalGroupAttributes))
+        {
             ValuesCompare = FALSE;
         }
 
-        if ( (!RtlEqualSid((GroupIds->Groups[WORLD_INDEX].Sid), WorldSid)) ||
-             (GroupIds->Groups[WORLD_INDEX].Attributes != NormalGroupAttributes) ) {
+        if ((!RtlEqualSid((GroupIds->Groups[WORLD_INDEX].Sid), WorldSid)) ||
+            (GroupIds->Groups[WORLD_INDEX].Attributes != NormalGroupAttributes))
+        {
             ValuesCompare = FALSE;
         }
 
 
-        if ( ValuesCompare ) {
+        if (ValuesCompare)
+        {
             DbgPrint("Succeeded.\n");
-        } else {
-
-        DbgPrint("********** Failed ************\n");
-        DbgPrint("Unexpected value returned by query.\n");
-        DbgPrint("Status is: 0x%lx \n", Status);
-        DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
-        DbgPrint("Returned group count is: 0x%lx \n", GroupIds->GroupCount);
-        CompletionStatus = FALSE;
         }
-    } else {
+        else
+        {
+
+            DbgPrint("********** Failed ************\n");
+            DbgPrint("Unexpected value returned by query.\n");
+            DbgPrint("Status is: 0x%lx \n", Status);
+            DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
+            DbgPrint("Returned group count is: 0x%lx \n", GroupIds->GroupCount);
+            CompletionStatus = FALSE;
+        }
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -1983,33 +1916,34 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
     ASSERT(NT_SUCCESS(Status));
 
 
-
-////////////////////////////////////////////////////////////////////////
-//                                                                    //
-//        Query RestrictedSids                                        //
-//                                                                    //
-////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
+    //                                                                    //
+    //        Query RestrictedSids                                        //
+    //                                                                    //
+    ////////////////////////////////////////////////////////////////////////
 
-   //
-   // Query groups with zero length buffer
-   //
+    //
+    // Query groups with zero length buffer
+    //
 
     DbgPrint("Se:     Query null restricted with zero length buffer ...      ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithGroups,          // Handle
-                 TokenRestrictedSids,      // TokenInformationClass
-                 RestrictedSids,           // TokenInformation
-                 0,                        // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithGroups,     // Handle
+                                     TokenRestrictedSids, // TokenInformationClass
+                                     RestrictedSids,      // TokenInformation
+                                     0,                   // TokenInformationLength
+                                     &ReturnLength        // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -2018,26 +1952,28 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(!NT_SUCCESS(Status));
 
-   //
-   // Query groups with zero length buffer
-   //
+    //
+    // Query groups with zero length buffer
+    //
 
     DbgPrint("Se:     Query restricted sids with zero length buffer ...      ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithRestrictedSids,  // Handle
-                 TokenRestrictedSids,      // TokenInformationClass
-                 RestrictedSids,           // TokenInformation
-                 0,                        // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithRestrictedSids, // Handle
+                                     TokenRestrictedSids,     // TokenInformationClass
+                                     RestrictedSids,          // TokenInformation
+                                     0,                       // TokenInformationLength
+                                     &ReturnLength            // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -2046,12 +1982,8 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(!NT_SUCCESS(Status));
 
-
 
-
-    RestrictedSids = (PTOKEN_GROUPS)TstAllocatePool( PagedPool,
-                                                     ReturnLength
-                                                     );
+    RestrictedSids = (PTOKEN_GROUPS)TstAllocatePool(PagedPool, ReturnLength);
 
     //
     // Query Group SIDs
@@ -2060,19 +1992,19 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     DbgPrint("Se:     Query restricted sids ...                              ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithRestrictedSids,  // Handle
-                 TokenRestrictedSids,      // TokenInformationClass
-                 RestrictedSids,           // TokenInformation
-                 ReturnLength,             // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithRestrictedSids, // Handle
+                                     TokenRestrictedSids,     // TokenInformationClass
+                                     RestrictedSids,          // TokenInformation
+                                     ReturnLength,            // TokenInformationLength
+                                     &ReturnLength            // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Check returned value
@@ -2083,27 +2015,32 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
         ValuesCompare = TRUE;
 
-        if (RestrictedSids->GroupCount != RESTRICTED_SID_COUNT) {
+        if (RestrictedSids->GroupCount != RESTRICTED_SID_COUNT)
+        {
             ValuesCompare = FALSE;
         }
 
-        if ( (!RtlEqualSid((RestrictedSids->Groups[FLINTSTONE_INDEX].Sid),
-                            FlintstoneSid)) ||
-             (RestrictedSids->Groups[FLINTSTONE_INDEX].Attributes !=
-              (SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY)) ) {
+        if ((!RtlEqualSid((RestrictedSids->Groups[FLINTSTONE_INDEX].Sid), FlintstoneSid)) ||
+            (RestrictedSids->Groups[FLINTSTONE_INDEX].Attributes !=
+             (SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY)))
+        {
             ValuesCompare = FALSE;
         }
 
-        if ( (!RtlEqualSid((RestrictedSids->Groups[CHILD_INDEX].Sid), ChildSid)) ||
-             (RestrictedSids->Groups[CHILD_INDEX].Attributes !=
-              (SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY)) ) {
+        if ((!RtlEqualSid((RestrictedSids->Groups[CHILD_INDEX].Sid), ChildSid)) ||
+            (RestrictedSids->Groups[CHILD_INDEX].Attributes !=
+             (SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY)))
+        {
             ValuesCompare = FALSE;
         }
 
 
-        if ( ValuesCompare ) {
+        if (ValuesCompare)
+        {
             DbgPrint("Succeeded.\n");
-        } else {
+        }
+        else
+        {
             DbgPrint("********** Failed ************\n");
             DbgPrint("Unexpected value returned by query.\n");
             DbgPrint("Status is: 0x%lx \n", Status);
@@ -2111,7 +2048,9 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
             DbgPrint("Returned group count is: 0x%lx \n", RestrictedSids->GroupCount);
             CompletionStatus = FALSE;
         }
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -2121,25 +2060,27 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
     ASSERT(NT_SUCCESS(Status));
 
     //
-   // Query restricted sids with zero length buffer
-   //
+    // Query restricted sids with zero length buffer
+    //
 
     DbgPrint("Se:     Query more restricted sids with zero length buffer ... ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithMoreRestrictedSids,  // Handle
-                 TokenRestrictedSids,      // TokenInformationClass
-                 RestrictedSids,           // TokenInformation
-                 0,                        // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithMoreRestrictedSids, // Handle
+                                     TokenRestrictedSids,         // TokenInformationClass
+                                     RestrictedSids,              // TokenInformation
+                                     0,                           // TokenInformationLength
+                                     &ReturnLength                // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -2148,12 +2089,8 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(!NT_SUCCESS(Status));
 
-
 
-
-    RestrictedSids = (PTOKEN_GROUPS)TstAllocatePool( PagedPool,
-                                                     ReturnLength
-                                                     );
+    RestrictedSids = (PTOKEN_GROUPS)TstAllocatePool(PagedPool, ReturnLength);
 
     //
     // Query Group SIDs
@@ -2162,19 +2099,19 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     DbgPrint("Se:     Query more restricted sids ...                         ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithMoreRestrictedSids,  // Handle
-                 TokenRestrictedSids,      // TokenInformationClass
-                 RestrictedSids,           // TokenInformation
-                 ReturnLength,             // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithMoreRestrictedSids, // Handle
+                                     TokenRestrictedSids,         // TokenInformationClass
+                                     RestrictedSids,              // TokenInformation
+                                     ReturnLength,                // TokenInformationLength
+                                     &ReturnLength                // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Check returned value
@@ -2187,42 +2124,47 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
         ValuesCompare = TRUE;
 
-        if (RestrictedSids->GroupCount != GROUP_COUNT) {
+        if (RestrictedSids->GroupCount != GROUP_COUNT)
+        {
             ValuesCompare = FALSE;
         }
 
-        if ( (!RtlEqualSid((RestrictedSids->Groups[FLINTSTONE_INDEX].Sid),
-                            FlintstoneSid)) ||
-             (RestrictedSids->Groups[FLINTSTONE_INDEX].Attributes !=
-              (SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY)) ) {
+        if ((!RtlEqualSid((RestrictedSids->Groups[FLINTSTONE_INDEX].Sid), FlintstoneSid)) ||
+            (RestrictedSids->Groups[FLINTSTONE_INDEX].Attributes !=
+             (SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY)))
+        {
             ValuesCompare = FALSE;
         }
 
-        if ( (!RtlEqualSid((RestrictedSids->Groups[CHILD_INDEX].Sid), ChildSid)) ||
-             (RestrictedSids->Groups[CHILD_INDEX].Attributes !=
-              (SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY)) ) {
-            ValuesCompare = FALSE;
-        }
-
-
-        if ( (!RtlEqualSid((RestrictedSids->Groups[NEANDERTHOL_INDEX].Sid),
-                            NeandertholSid)) ||
-             (RestrictedSids->Groups[NEANDERTHOL_INDEX].Attributes !=
-              (SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY)) ) {
-            ValuesCompare = FALSE;
-        }
-
-        if ( (!RtlEqualSid((RestrictedSids->Groups[WORLD_INDEX].Sid), WorldSid)) ||
-             (RestrictedSids->Groups[WORLD_INDEX].Attributes !=
-              (SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY)) ) {
+        if ((!RtlEqualSid((RestrictedSids->Groups[CHILD_INDEX].Sid), ChildSid)) ||
+            (RestrictedSids->Groups[CHILD_INDEX].Attributes !=
+             (SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY)))
+        {
             ValuesCompare = FALSE;
         }
 
 
+        if ((!RtlEqualSid((RestrictedSids->Groups[NEANDERTHOL_INDEX].Sid), NeandertholSid)) ||
+            (RestrictedSids->Groups[NEANDERTHOL_INDEX].Attributes !=
+             (SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY)))
+        {
+            ValuesCompare = FALSE;
+        }
 
-        if ( ValuesCompare ) {
+        if ((!RtlEqualSid((RestrictedSids->Groups[WORLD_INDEX].Sid), WorldSid)) ||
+            (RestrictedSids->Groups[WORLD_INDEX].Attributes !=
+             (SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_MANDATORY)))
+        {
+            ValuesCompare = FALSE;
+        }
+
+
+        if (ValuesCompare)
+        {
             DbgPrint("Succeeded.\n");
-        } else {
+        }
+        else
+        {
             DbgPrint("********** Failed ************\n");
             DbgPrint("Unexpected value returned by query.\n");
             DbgPrint("Status is: 0x%lx \n", Status);
@@ -2230,7 +2172,9 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
             DbgPrint("Returned group count is: 0x%lx \n", RestrictedSids->GroupCount);
             CompletionStatus = FALSE;
         }
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -2239,28 +2183,30 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(NT_SUCCESS(Status));
 
-
-   //
-   // Query with too little buffer
+
+    //
+    // Query with too little buffer
     // (This relies upon the ReturnLength returned from previous call)
-   //
+    //
 
     DbgPrint("Se:     Query groups with too small buffer ...                 ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithGroups,          // Handle
-                 TokenGroups,              // TokenInformationClass
-                 GroupIds,                 // TokenInformation
-                 ReturnLength-1,           // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithGroups,  // Handle
+                                     TokenGroups,      // TokenInformationClass
+                                     GroupIds,         // TokenInformation
+                                     ReturnLength - 1, // TokenInformationLength
+                                     &ReturnLength     // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -2269,34 +2215,36 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(!NT_SUCCESS(Status));
 
-
-////////////////////////////////////////////////////////////////////////
-//                                                                    //
-//        Query Privileges                                            //
-//                                                                    //
-////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////
+    //                                                                    //
+    //        Query Privileges                                            //
+    //                                                                    //
+    ////////////////////////////////////////////////////////////////////////
 
 
-   //
-   // Query groups with zero length buffer
-   //
+    //
+    // Query groups with zero length buffer
+    //
 
     DbgPrint("Se:     Query privileges with zero length buffer ...           ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithPrivileges,      // Handle
-                 TokenPrivileges,          // TokenInformationClass
-                 NULL,                     // TokenInformation
-                 0,                        // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithPrivileges, // Handle
+                                     TokenPrivileges,     // TokenInformationClass
+                                     NULL,                // TokenInformation
+                                     0,                   // TokenInformationLength
+                                     &ReturnLength        // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -2305,12 +2253,8 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(!NT_SUCCESS(Status));
 
-
 
-
-    Privileges = (PTOKEN_PRIVILEGES)TstAllocatePool( PagedPool,
-                                                     ReturnLength
-                                                     );
+    Privileges = (PTOKEN_PRIVILEGES)TstAllocatePool(PagedPool, ReturnLength);
 
     //
     // Query privileges
@@ -2319,18 +2263,18 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     DbgPrint("Se:     Query privileges ...                                   ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithPrivileges,      // Handle
-                 TokenPrivileges,          // TokenInformationClass
-                 Privileges,               // TokenInformation
-                 ReturnLength,             // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithPrivileges, // Handle
+                                     TokenPrivileges,     // TokenInformationClass
+                                     Privileges,          // TokenInformation
+                                     ReturnLength,        // TokenInformationLength
+                                     &ReturnLength        // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Check returned value
@@ -2342,39 +2286,45 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
         ValuesCompare = TRUE;
 
-        if (Privileges->PrivilegeCount != PRIVILEGE_COUNT) {
+        if (Privileges->PrivilegeCount != PRIVILEGE_COUNT)
+        {
             ValuesCompare = FALSE;
         }
 
-        if ( !RtlEqualLuid(&Privileges->Privileges[UNSOLICITED_INDEX].Luid,
-               &UnsolicitedInputPrivilege)      ||
-             (Privileges->Privileges[UNSOLICITED_INDEX].Attributes != 0)             ) {
+        if (!RtlEqualLuid(&Privileges->Privileges[UNSOLICITED_INDEX].Luid, &UnsolicitedInputPrivilege) ||
+            (Privileges->Privileges[UNSOLICITED_INDEX].Attributes != 0))
+        {
             ValuesCompare = FALSE;
         }
 
-        if ( !RtlEqualLuid(&Privileges->Privileges[SECURITY_INDEX].Luid,
-               &SecurityPrivilege)             ||
-             (Privileges->Privileges[SECURITY_INDEX].Attributes != 0)             ) {
+        if (!RtlEqualLuid(&Privileges->Privileges[SECURITY_INDEX].Luid, &SecurityPrivilege) ||
+            (Privileges->Privileges[SECURITY_INDEX].Attributes != 0))
+        {
             ValuesCompare = FALSE;
         }
 
-        if ( !RtlEqualLuid(&Privileges->Privileges[ASSIGN_PRIMARY_INDEX].Luid,
-               &AssignPrimaryTokenPrivilege)             ||
-             (Privileges->Privileges[ASSIGN_PRIMARY_INDEX].Attributes != SE_PRIVILEGE_ENABLED)             ) {
+        if (!RtlEqualLuid(&Privileges->Privileges[ASSIGN_PRIMARY_INDEX].Luid, &AssignPrimaryTokenPrivilege) ||
+            (Privileges->Privileges[ASSIGN_PRIMARY_INDEX].Attributes != SE_PRIVILEGE_ENABLED))
+        {
             ValuesCompare = FALSE;
         }
 
 
-        if ( ValuesCompare ) {
+        if (ValuesCompare)
+        {
             DbgPrint("Succeeded.\n");
-        } else {
-        DbgPrint("********** Failed ************\n");
-        DbgPrint("Unexpected value returned by query.\n");
-        DbgPrint("Status is: 0x%lx \n", Status);
-        DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
-        CompletionStatus = FALSE;
         }
-    } else {
+        else
+        {
+            DbgPrint("********** Failed ************\n");
+            DbgPrint("Unexpected value returned by query.\n");
+            DbgPrint("Status is: 0x%lx \n", Status);
+            DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
+            CompletionStatus = FALSE;
+        }
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -2383,28 +2333,30 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(NT_SUCCESS(Status));
 
-
-   //
-   // Query with too little buffer
+
+    //
+    // Query with too little buffer
     // (This relies upon the ReturnLength returned from previous call)
-   //
+    //
 
     DbgPrint("Se:     Query privileges with too small buffer ...             ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithPrivileges,      // Handle
-                 TokenPrivileges,          // TokenInformationClass
-                 Privileges,               // TokenInformation
-                 ReturnLength-1,           // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithPrivileges, // Handle
+                                     TokenPrivileges,     // TokenInformationClass
+                                     Privileges,          // TokenInformation
+                                     ReturnLength - 1,    // TokenInformationLength
+                                     &ReturnLength        // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -2413,27 +2365,29 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(!NT_SUCCESS(Status));
 
-   //
-   // Query groups with zero length buffer
-   //
+    //
+    // Query groups with zero length buffer
+    //
 
     DbgPrint("Se:     Query rest privileges with zero length buffer ...      ");
 
     ReturnLength = 0;
-    Status = NtQueryInformationToken(
-                 TokenWithRestrictedPrivileges,      // Handle
-                 TokenPrivileges,          // TokenInformationClass
-                 NULL,                     // TokenInformation
-                 0,                        // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithRestrictedPrivileges, // Handle
+                                     TokenPrivileges,               // TokenInformationClass
+                                     NULL,                          // TokenInformation
+                                     0,                             // TokenInformationLength
+                                     &ReturnLength                  // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -2442,12 +2396,8 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(!NT_SUCCESS(Status));
 
-
 
-
-    Privileges = (PTOKEN_PRIVILEGES)TstAllocatePool( PagedPool,
-                                                     ReturnLength
-                                                     );
+    Privileges = (PTOKEN_PRIVILEGES)TstAllocatePool(PagedPool, ReturnLength);
 
     //
     // Query privileges
@@ -2456,18 +2406,18 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     DbgPrint("Se:     Query rest privileges ...                              ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithRestrictedPrivileges,      // Handle
-                 TokenPrivileges,          // TokenInformationClass
-                 Privileges,               // TokenInformation
-                 ReturnLength,             // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithRestrictedPrivileges, // Handle
+                                     TokenPrivileges,               // TokenInformationClass
+                                     Privileges,                    // TokenInformation
+                                     ReturnLength,                  // TokenInformationLength
+                                     &ReturnLength                  // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Check returned value
@@ -2477,28 +2427,34 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
         ValuesCompare = TRUE;
 
-        if (Privileges->PrivilegeCount != PRIVILEGE_COUNT - 2) {
+        if (Privileges->PrivilegeCount != PRIVILEGE_COUNT - 2)
+        {
             ValuesCompare = FALSE;
         }
 
 
-        if ( !RtlEqualLuid(&Privileges->Privileges[0].Luid,
-               &AssignPrimaryTokenPrivilege)             ||
-             (Privileges->Privileges[0].Attributes != SE_PRIVILEGE_ENABLED)             ) {
+        if (!RtlEqualLuid(&Privileges->Privileges[0].Luid, &AssignPrimaryTokenPrivilege) ||
+            (Privileges->Privileges[0].Attributes != SE_PRIVILEGE_ENABLED))
+        {
             ValuesCompare = FALSE;
         }
 
 
-        if ( ValuesCompare ) {
+        if (ValuesCompare)
+        {
             DbgPrint("Succeeded.\n");
-        } else {
-        DbgPrint("********** Failed ************\n");
-        DbgPrint("Unexpected value returned by query.\n");
-        DbgPrint("Status is: 0x%lx \n", Status);
-        DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
-        CompletionStatus = FALSE;
         }
-    } else {
+        else
+        {
+            DbgPrint("********** Failed ************\n");
+            DbgPrint("Unexpected value returned by query.\n");
+            DbgPrint("Status is: 0x%lx \n", Status);
+            DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
+            CompletionStatus = FALSE;
+        }
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -2507,33 +2463,35 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(NT_SUCCESS(Status));
 
-
-////////////////////////////////////////////////////////////////////////
-//                                                                    //
-//        Query Owner                                                 //
-//                                                                    //
-////////////////////////////////////////////////////////////////////////
 
-   //
-   // Query Owner of simple token with zero length buffer
-   //
+    ////////////////////////////////////////////////////////////////////////
+    //                                                                    //
+    //        Query Owner                                                 //
+    //                                                                    //
+    ////////////////////////////////////////////////////////////////////////
+
+    //
+    // Query Owner of simple token with zero length buffer
+    //
 
     DbgPrint("Se:     Query Owner of simple token with zero length buffer... ");
 
-    Status = NtQueryInformationToken(
-                 SimpleToken,              // Handle
-                 TokenOwner,               // TokenInformationClass
-                 Owner,                    // TokenInformation
-                 0,                        // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(SimpleToken,  // Handle
+                                     TokenOwner,   // TokenInformationClass
+                                     Owner,        // TokenInformation
+                                     0,            // TokenInformationLength
+                                     &ReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -2542,11 +2500,8 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(!NT_SUCCESS(Status));
 
-
 
-    Owner = (PTOKEN_OWNER)TstAllocatePool( PagedPool,
-                                           ReturnLength
-                                           );
+    Owner = (PTOKEN_OWNER)TstAllocatePool(PagedPool, ReturnLength);
 
     //
     // Query Owner SID
@@ -2555,33 +2510,38 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     DbgPrint("Se:     Query owner of simple token ...                        ");
 
-    Status = NtQueryInformationToken(
-                 SimpleToken,              // Handle
-                 TokenOwner,               // TokenInformationClass
-                 Owner,                    // TokenInformation
-                 ReturnLength,             // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(SimpleToken,  // Handle
+                                     TokenOwner,   // TokenInformationClass
+                                     Owner,        // TokenInformation
+                                     ReturnLength, // TokenInformationLength
+                                     &ReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Check returned value
         //
 
-        if (RtlEqualSid((Owner->Owner), PebblesSid) ) {
+        if (RtlEqualSid((Owner->Owner), PebblesSid))
+        {
             DbgPrint("Succeeded.\n");
-        } else {
-        DbgPrint("********** Failed ************\n");
-        DbgPrint("Unexpected value returned by query.\n");
-        DbgPrint("Status is: 0x%lx \n", Status);
-        DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
-        CompletionStatus = FALSE;
         }
-    } else {
+        else
+        {
+            DbgPrint("********** Failed ************\n");
+            DbgPrint("Unexpected value returned by query.\n");
+            DbgPrint("Status is: 0x%lx \n", Status);
+            DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
+            CompletionStatus = FALSE;
+        }
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -2590,7 +2550,7 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(NT_SUCCESS(Status));
 
-
+
     //
     // Query owner of simple token with too little buffer
     // (This relies upon the ReturnLength returned from previous call)
@@ -2598,20 +2558,22 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     DbgPrint("Se:     Query owner of simple token with too small buffer ...  ");
 
-    Status = NtQueryInformationToken(
-                 SimpleToken,              // Handle
-                 TokenOwner,               // TokenInformationClass
-                 Owner,                    // TokenInformation
-                 ReturnLength-1,           // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(SimpleToken,      // Handle
+                                     TokenOwner,       // TokenInformationClass
+                                     Owner,            // TokenInformation
+                                     ReturnLength - 1, // TokenInformationLength
+                                     &ReturnLength     // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -2627,20 +2589,22 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     DbgPrint("Se:     Query Default Owner of token with zero length buffer...");
 
-    Status = NtQueryInformationToken(
-                 TokenWithDefaultOwner,    // Handle
-                 TokenOwner,               // TokenInformationClass
-                 Owner,                    // TokenInformation
-                 0,                        // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithDefaultOwner, // Handle
+                                     TokenOwner,            // TokenInformationClass
+                                     Owner,                 // TokenInformation
+                                     0,                     // TokenInformationLength
+                                     &ReturnLength          // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -2649,12 +2613,8 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(!NT_SUCCESS(Status));
 
-
 
-
-    Owner = (PTOKEN_OWNER)TstAllocatePool( PagedPool,
-                                           ReturnLength
-                                           );
+    Owner = (PTOKEN_OWNER)TstAllocatePool(PagedPool, ReturnLength);
 
     //
     // Query default owner of token
@@ -2663,33 +2623,38 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     DbgPrint("Se:     Query default owner of token ...                       ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithDefaultOwner,    // Handle
-                 TokenOwner,               // TokenInformationClass
-                 Owner,                    // TokenInformation
-                 ReturnLength,             // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithDefaultOwner, // Handle
+                                     TokenOwner,            // TokenInformationClass
+                                     Owner,                 // TokenInformation
+                                     ReturnLength,          // TokenInformationLength
+                                     &ReturnLength          // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Check returned value
         //
 
-        if (RtlEqualSid((Owner->Owner), FlintstoneSid) ) {
+        if (RtlEqualSid((Owner->Owner), FlintstoneSid))
+        {
             DbgPrint("Succeeded.\n");
-        } else {
-        DbgPrint("********** Failed ************\n");
-        DbgPrint("Unexpected value returned by query.\n");
-        DbgPrint("Status is: 0x%lx \n", Status);
-        DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
-        CompletionStatus = FALSE;
         }
-    } else {
+        else
+        {
+            DbgPrint("********** Failed ************\n");
+            DbgPrint("Unexpected value returned by query.\n");
+            DbgPrint("Status is: 0x%lx \n", Status);
+            DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
+            CompletionStatus = FALSE;
+        }
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -2698,7 +2663,7 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(NT_SUCCESS(Status));
 
-
+
     //
     // Query default owner of token with too little buffer
     // (This relies upon the ReturnLength returned from previous call)
@@ -2706,20 +2671,22 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     DbgPrint("Se:     Query default owner of token with too small buffer ... ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithDefaultOwner,    // Handle
-                 TokenOwner,               // TokenInformationClass
-                 Owner,                    // TokenInformation
-                 ReturnLength-1,           // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithDefaultOwner, // Handle
+                                     TokenOwner,            // TokenInformationClass
+                                     Owner,                 // TokenInformation
+                                     ReturnLength - 1,      // TokenInformationLength
+                                     &ReturnLength          // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -2728,33 +2695,35 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(!NT_SUCCESS(Status));
 
-
-////////////////////////////////////////////////////////////////////////
-//                                                                    //
-//        Query Default Dacl                                          //
-//                                                                    //
-////////////////////////////////////////////////////////////////////////
 
-   //
-   // Query default dacl with zero length buffer
-   //
+    ////////////////////////////////////////////////////////////////////////
+    //                                                                    //
+    //        Query Default Dacl                                          //
+    //                                                                    //
+    ////////////////////////////////////////////////////////////////////////
+
+    //
+    // Query default dacl with zero length buffer
+    //
 
     DbgPrint("Se:     Query default DACL with zero length buffer ...         ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithDefaultDacl,     // Handle
-                 TokenDefaultDacl,         // TokenInformationClass
-                 DefaultDacl,              // TokenInformation
-                 0,                        // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithDefaultDacl, // Handle
+                                     TokenDefaultDacl,     // TokenInformationClass
+                                     DefaultDacl,          // TokenInformation
+                                     0,                    // TokenInformationLength
+                                     &ReturnLength         // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -2763,12 +2732,8 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(!NT_SUCCESS(Status));
 
-
 
-
-    DefaultDacl = (PTOKEN_DEFAULT_DACL)TstAllocatePool( PagedPool,
-                                                        ReturnLength
-                                                        );
+    DefaultDacl = (PTOKEN_DEFAULT_DACL)TstAllocatePool(PagedPool, ReturnLength);
 
     //
     // Query default dacl
@@ -2777,43 +2742,51 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     DbgPrint("Se:     Query default dacl ...                                 ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithDefaultDacl,     // Handle
-                 TokenDefaultDacl,         // TokenInformationClass
-                 DefaultDacl,              // TokenInformation
-                 ReturnLength,             // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithDefaultDacl, // Handle
+                                     TokenDefaultDacl,     // TokenInformationClass
+                                     DefaultDacl,          // TokenInformation
+                                     ReturnLength,         // TokenInformationLength
+                                     &ReturnLength         // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Check returned value
         //
 
-        if (RtlValidAcl(DefaultDacl->DefaultDacl)) {
+        if (RtlValidAcl(DefaultDacl->DefaultDacl))
+        {
 
-            if (DefaultDacl->DefaultDacl->AceCount == 0) {
+            if (DefaultDacl->DefaultDacl->AceCount == 0)
+            {
 
                 DbgPrint("Succeeded.\n");
-            } else {
+            }
+            else
+            {
                 DbgPrint("********** Failed ************\n");
                 DbgPrint("Unexpected value returned by query.\n");
                 DbgPrint("Status is: 0x%lx \n", Status);
                 DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
                 CompletionStatus = FALSE;
             }
-        } else {
+        }
+        else
+        {
             DbgPrint("********** Failed ************\n");
             DbgPrint("Unexpected value returned by query.\n");
             DbgPrint("Status is: 0x%lx \n", Status);
             DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
             CompletionStatus = FALSE;
         }
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -2822,28 +2795,30 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(NT_SUCCESS(Status));
 
-
-   //
-   // Query with too little buffer
-   // (This relies upon the ReturnLength returned from previous call)
-   //
+
+    //
+    // Query with too little buffer
+    // (This relies upon the ReturnLength returned from previous call)
+    //
 
     DbgPrint("Se:     Query default Dacl with too small buffer ...           ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithDefaultDacl,     // Handle
-                 TokenDefaultDacl,         // TokenInformationClass
-                 DefaultDacl,              // TokenInformation
-                 ReturnLength-1,           // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithDefaultDacl, // Handle
+                                     TokenDefaultDacl,     // TokenInformationClass
+                                     DefaultDacl,          // TokenInformation
+                                     ReturnLength - 1,     // TokenInformationLength
+                                     &ReturnLength         // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -2852,27 +2827,29 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(!NT_SUCCESS(Status));
 
-
-   //
-   // Query token with no default dacl
-   //
+
+    //
+    // Query token with no default dacl
+    //
 
     DbgPrint("Se:     Query default dacl from token with none ...            ");
 
-    Status = NtQueryInformationToken(
-                 SimpleToken,                // Handle
-                 TokenDefaultDacl,           // TokenInformationClass
-                 DefaultDacl,                // TokenInformation
-                 sizeof(TOKEN_DEFAULT_DACL), // TokenInformationLength
-                 &ReturnLength               // ReturnLength
-                 );
+    Status = NtQueryInformationToken(SimpleToken,                // Handle
+                                     TokenDefaultDacl,           // TokenInformationClass
+                                     DefaultDacl,                // TokenInformation
+                                     sizeof(TOKEN_DEFAULT_DACL), // TokenInformationLength
+                                     &ReturnLength               // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -2881,41 +2858,46 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(NT_SUCCESS(Status));
 
-
-////////////////////////////////////////////////////////////////////////
-//                                                                    //
-//        Query Token Source                                          //
-//                                                                    //
-////////////////////////////////////////////////////////////////////////
 
-   //
-   // Query Token Source with zero length buffer
-   //
+    ////////////////////////////////////////////////////////////////////////
+    //                                                                    //
+    //        Query Token Source                                          //
+    //                                                                    //
+    ////////////////////////////////////////////////////////////////////////
+
+    //
+    // Query Token Source with zero length buffer
+    //
 
     DbgPrint("Se:     Query Token Source with zero length buffer ...         ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithPrivileges,      // Handle
-                 TokenSource,              // TokenInformationClass
-                 &QueriedSource,           // TokenInformation
-                 0,                        // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithPrivileges, // Handle
+                                     TokenSource,         // TokenInformationClass
+                                     &QueriedSource,      // TokenInformation
+                                     0,                   // TokenInformationLength
+                                     &ReturnLength        // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
-        if (ReturnLength == sizeof(TOKEN_SOURCE)) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
+        if (ReturnLength == sizeof(TOKEN_SOURCE))
+        {
             DbgPrint("Succeeded.\n");
-        } else {
-        DbgPrint("********** Failed ************\n");
-        DbgPrint("Status is: 0x%lx \n", Status);
-        DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
-        DbgPrint("TOKEN_SOURCE data size is 0x%lx \n", sizeof(TOKEN_SOURCE));
-        CompletionStatus = FALSE;
         }
-    } else {
+        else
+        {
+            DbgPrint("********** Failed ************\n");
+            DbgPrint("Status is: 0x%lx \n", Status);
+            DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
+            DbgPrint("TOKEN_SOURCE data size is 0x%lx \n", sizeof(TOKEN_SOURCE));
+            CompletionStatus = FALSE;
+        }
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -2924,7 +2906,6 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(!NT_SUCCESS(Status));
 
-
 
     //
     // Query token source
@@ -2932,18 +2913,18 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     DbgPrint("Se:     Query token source ...                                 ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithPrivileges,      // Handle
-                 TokenSource,              // TokenInformationClass
-                 &QueriedSource,           // TokenInformation
-                 sizeof(TOKEN_SOURCE),     // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithPrivileges,  // Handle
+                                     TokenSource,          // TokenInformationClass
+                                     &QueriedSource,       // TokenInformation
+                                     sizeof(TOKEN_SOURCE), // TokenInformationLength
+                                     &ReturnLength         // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Check returned value against TestSource
@@ -2951,37 +2932,41 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
         ValuesCompare = TRUE;
 
-        if ( (QueriedSource.SourceName[0] != TestSource.SourceName[0]) ||
-             (QueriedSource.SourceName[1] != TestSource.SourceName[1]) ||
-             (QueriedSource.SourceName[2] != TestSource.SourceName[2]) ||
-             (QueriedSource.SourceName[3] != TestSource.SourceName[3]) ||
-             (QueriedSource.SourceName[4] != TestSource.SourceName[4]) ||
-             (QueriedSource.SourceName[5] != TestSource.SourceName[5]) ||
-             (QueriedSource.SourceName[6] != TestSource.SourceName[6]) ||
-             (QueriedSource.SourceName[7] != TestSource.SourceName[7]) ) {
+        if ((QueriedSource.SourceName[0] != TestSource.SourceName[0]) ||
+            (QueriedSource.SourceName[1] != TestSource.SourceName[1]) ||
+            (QueriedSource.SourceName[2] != TestSource.SourceName[2]) ||
+            (QueriedSource.SourceName[3] != TestSource.SourceName[3]) ||
+            (QueriedSource.SourceName[4] != TestSource.SourceName[4]) ||
+            (QueriedSource.SourceName[5] != TestSource.SourceName[5]) ||
+            (QueriedSource.SourceName[6] != TestSource.SourceName[6]) ||
+            (QueriedSource.SourceName[7] != TestSource.SourceName[7]))
+        {
 
             ValuesCompare = FALSE;
-
         }
 
-        if ( !RtlEqualLuid(&QueriedSource.SourceIdentifier,
-               &TestSource.SourceIdentifier)   ) {
+        if (!RtlEqualLuid(&QueriedSource.SourceIdentifier, &TestSource.SourceIdentifier))
+        {
 
             ValuesCompare = FALSE;
-
         }
 
 
-        if ( ValuesCompare ) {
+        if (ValuesCompare)
+        {
             DbgPrint("Succeeded.\n");
-        } else {
-        DbgPrint("********** Failed ************\n");
-        DbgPrint("Unexpected value returned by query.\n");
-        DbgPrint("Status is: 0x%lx \n", Status);
-        DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
-        CompletionStatus = FALSE;
         }
-    } else {
+        else
+        {
+            DbgPrint("********** Failed ************\n");
+            DbgPrint("Unexpected value returned by query.\n");
+            DbgPrint("Status is: 0x%lx \n", Status);
+            DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
+            CompletionStatus = FALSE;
+        }
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -2990,7 +2975,7 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(NT_SUCCESS(Status));
 
-
+
     //
     // Query with too little buffer
     // (This relies upon the ReturnLength returned from previous call)
@@ -2998,20 +2983,22 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     DbgPrint("Se:     Query token source with too small buffer ...           ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithPrivileges,      // Handle
-                 TokenSource,              // TokenInformationClass
-                 &QueriedSource,           // TokenInformation
-                 ReturnLength - 1,         // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithPrivileges, // Handle
+                                     TokenSource,         // TokenInformationClass
+                                     &QueriedSource,      // TokenInformation
+                                     ReturnLength - 1,    // TokenInformationLength
+                                     &ReturnLength        // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -3020,41 +3007,46 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(!NT_SUCCESS(Status));
 
-
-////////////////////////////////////////////////////////////////////////
-//                                                                    //
-//        Query Token Type                                            //
-//                                                                    //
-////////////////////////////////////////////////////////////////////////
 
-   //
-   // Query Token type with zero length buffer
-   //
+    ////////////////////////////////////////////////////////////////////////
+    //                                                                    //
+    //        Query Token Type                                            //
+    //                                                                    //
+    ////////////////////////////////////////////////////////////////////////
+
+    //
+    // Query Token type with zero length buffer
+    //
 
     DbgPrint("Se:     Query Token type with zero length buffer ...           ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithPrivileges,      // Handle
-                 TokenType,                // TokenInformationClass
-                 &QueriedType,             // TokenInformation
-                 0,                        // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithPrivileges, // Handle
+                                     TokenType,           // TokenInformationClass
+                                     &QueriedType,        // TokenInformation
+                                     0,                   // TokenInformationLength
+                                     &ReturnLength        // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
-        if (ReturnLength == sizeof(TOKEN_TYPE)) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
+        if (ReturnLength == sizeof(TOKEN_TYPE))
+        {
             DbgPrint("Succeeded.\n");
-        } else {
-        DbgPrint("********** Failed ************\n");
-        DbgPrint("Status is: 0x%lx \n", Status);
-        DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
-        DbgPrint("TOKEN_TYPE data size is 0x%lx \n", sizeof(TOKEN_TYPE));
-        CompletionStatus = FALSE;
         }
-    } else {
+        else
+        {
+            DbgPrint("********** Failed ************\n");
+            DbgPrint("Status is: 0x%lx \n", Status);
+            DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
+            DbgPrint("TOKEN_TYPE data size is 0x%lx \n", sizeof(TOKEN_TYPE));
+            CompletionStatus = FALSE;
+        }
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -3062,8 +3054,6 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
     }
 
     ASSERT(!NT_SUCCESS(Status));
-
-
 
 
     //
@@ -3072,35 +3062,40 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     DbgPrint("Se:     Query token type ...                                   ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithPrivileges,      // Handle
-                 TokenType,                // TokenInformationClass
-                 &QueriedType,             // TokenInformation
-                 sizeof(TOKEN_TYPE),       // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithPrivileges, // Handle
+                                     TokenType,           // TokenInformationClass
+                                     &QueriedType,        // TokenInformation
+                                     sizeof(TOKEN_TYPE),  // TokenInformationLength
+                                     &ReturnLength        // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Check returned value against TestSource
         //
 
 
-        if ( QueriedType == TokenPrimary ) {
+        if (QueriedType == TokenPrimary)
+        {
             DbgPrint("Succeeded.\n");
-        } else {
-        DbgPrint("********** Failed ************\n");
-        DbgPrint("Unexpected value returned by query.\n");
-        DbgPrint("Status is: 0x%lx \n", Status);
-        DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
-        DbgPrint("Returned token type is: 0x%lx \n", QueriedType);
-        CompletionStatus = FALSE;
         }
-    } else {
+        else
+        {
+            DbgPrint("********** Failed ************\n");
+            DbgPrint("Unexpected value returned by query.\n");
+            DbgPrint("Status is: 0x%lx \n", Status);
+            DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
+            DbgPrint("Returned token type is: 0x%lx \n", QueriedType);
+            CompletionStatus = FALSE;
+        }
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -3109,7 +3104,7 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(NT_SUCCESS(Status));
 
-
+
     //
     // Query with too little buffer
     // (This relies upon the ReturnLength returned from previous call)
@@ -3117,20 +3112,22 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     DbgPrint("Se:     Query token type with too small buffer ...             ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithPrivileges,      // Handle
-                 TokenType,                // TokenInformationClass
-                 &QueriedType,             // TokenInformation
-                 ReturnLength - 1,         // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithPrivileges, // Handle
+                                     TokenType,           // TokenInformationClass
+                                     &QueriedType,        // TokenInformation
+                                     ReturnLength - 1,    // TokenInformationLength
+                                     &ReturnLength        // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -3139,33 +3136,35 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(!NT_SUCCESS(Status));
 
-
-////////////////////////////////////////////////////////////////////////
-//                                                                    //
-//        Query Impersonation Level                                   //
-//                                                                    //
-////////////////////////////////////////////////////////////////////////
 
-   //
-   // Query Impersonation Level of primary token
-   //
+    ////////////////////////////////////////////////////////////////////////
+    //                                                                    //
+    //        Query Impersonation Level                                   //
+    //                                                                    //
+    ////////////////////////////////////////////////////////////////////////
+
+    //
+    // Query Impersonation Level of primary token
+    //
 
     DbgPrint("Se:     Query Impersonation level of primary token ...         ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithPrivileges,                  // Handle
-                 TokenImpersonationLevel,              // TokenInformationClass
-                 &QueriedImpersonationLevel,           // TokenInformation
-                 sizeof(SECURITY_IMPERSONATION_LEVEL), // TokenInformationLength
-                 &ReturnLength                         // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithPrivileges,                  // Handle
+                                     TokenImpersonationLevel,              // TokenInformationClass
+                                     &QueriedImpersonationLevel,           // TokenInformation
+                                     sizeof(SECURITY_IMPERSONATION_LEVEL), // TokenInformationLength
+                                     &ReturnLength                         // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_INVALID_INFO_CLASS) {
+    if (Status == STATUS_INVALID_INFO_CLASS)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -3174,41 +3173,46 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(Status == STATUS_INVALID_INFO_CLASS);
 
-
-////////////////////////////////////////////////////////////////////////
-//                                                                    //
-//        Query Token Statistics                                      //
-//                                                                    //
-////////////////////////////////////////////////////////////////////////
 
-   //
-   // Query Token statistics with zero length buffer
-   //
+    ////////////////////////////////////////////////////////////////////////
+    //                                                                    //
+    //        Query Token Statistics                                      //
+    //                                                                    //
+    ////////////////////////////////////////////////////////////////////////
+
+    //
+    // Query Token statistics with zero length buffer
+    //
 
     DbgPrint("Se:     Query Token statistics with zero length buffer ...     ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithPrivileges,      // Handle
-                 TokenStatistics,          // TokenInformationClass
-                 &QueriedStatistics,       // TokenInformation
-                 0,                        // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithPrivileges, // Handle
+                                     TokenStatistics,     // TokenInformationClass
+                                     &QueriedStatistics,  // TokenInformation
+                                     0,                   // TokenInformationLength
+                                     &ReturnLength        // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
-        if (ReturnLength == sizeof(TOKEN_STATISTICS)) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
+        if (ReturnLength == sizeof(TOKEN_STATISTICS))
+        {
             DbgPrint("Succeeded.\n");
-        } else {
-        DbgPrint("********** Failed ************\n");
-        DbgPrint("Status is: 0x%lx \n", Status);
-        DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
-        DbgPrint("TOKEN_STATISTICS data size is 0x%lx \n", sizeof(TOKEN_STATISTICS));
-        CompletionStatus = FALSE;
         }
-    } else {
+        else
+        {
+            DbgPrint("********** Failed ************\n");
+            DbgPrint("Status is: 0x%lx \n", Status);
+            DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
+            DbgPrint("TOKEN_STATISTICS data size is 0x%lx \n", sizeof(TOKEN_STATISTICS));
+            CompletionStatus = FALSE;
+        }
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -3217,8 +3221,6 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(!NT_SUCCESS(Status));
 
-
-
 
     //
     // Query token statistics
@@ -3226,28 +3228,30 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     DbgPrint("Se:     Query token statistics ...                             ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithPrivileges,      // Handle
-                 TokenStatistics,          // TokenInformationClass
-                 &QueriedStatistics,       // TokenInformation
-                 sizeof(TOKEN_STATISTICS), // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithPrivileges,      // Handle
+                                     TokenStatistics,          // TokenInformationClass
+                                     &QueriedStatistics,       // TokenInformation
+                                     sizeof(TOKEN_STATISTICS), // TokenInformationLength
+                                     &ReturnLength             // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Check returned value against TestSource
         //
 
-        if ( ( QueriedStatistics.TokenType == TokenPrimary) &&
-             ( QueriedStatistics.GroupCount == 4 )          &&
-             ( QueriedStatistics.PrivilegeCount == PRIVILEGE_COUNT) ) {
+        if ((QueriedStatistics.TokenType == TokenPrimary) && (QueriedStatistics.GroupCount == 4) &&
+            (QueriedStatistics.PrivilegeCount == PRIVILEGE_COUNT))
+        {
             DbgPrint("Succeeded.\n");
-        } else {
+        }
+        else
+        {
             DbgPrint("********** Failed ************\n");
             DbgPrint("Unexpected value returned by query.\n");
             DbgPrint("Status is: 0x%lx \n", Status);
@@ -3257,7 +3261,9 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
             DbgPrint("Returned privilege count is: 0x%lx \n", QueriedStatistics.PrivilegeCount);
             CompletionStatus = FALSE;
         }
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -3266,7 +3272,7 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(NT_SUCCESS(Status));
 
-
+
     //
     // Query with too little buffer
     // (This relies upon the ReturnLength returned from previous call)
@@ -3274,20 +3280,22 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     DbgPrint("Se:     Query token statistics with too small buffer ...       ");
 
-    Status = NtQueryInformationToken(
-                 TokenWithPrivileges,      // Handle
-                 TokenStatistics,          // TokenInformationClass
-                 &QueriedStatistics,       // TokenInformation
-                 ReturnLength - 1,         // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithPrivileges, // Handle
+                                     TokenStatistics,     // TokenInformationClass
+                                     &QueriedStatistics,  // TokenInformation
+                                     ReturnLength - 1,    // TokenInformationLength
+                                     &ReturnLength        // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -3297,10 +3305,9 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
     ASSERT(!NT_SUCCESS(Status));
 
 
-
     return CompletionStatus;
 }
-
+
 ////////////////////////////////////////////////////////////////
 //                                                            //
 // Set Token Test                                             //
@@ -3331,26 +3338,28 @@ TestTokenSet()
 
     DbgPrint("\n");
 
-
-   //
-   // Set owner of a token to be an invalid group
-   //
+
+    //
+    // Set owner of a token to be an invalid group
+    //
 
     DbgPrint("Se:     Set default owner to be an invalid group ...           ");
 
     AssignedOwner.Owner = NeandertholSid;
     InformationLength = (ULONG)sizeof(TOKEN_OWNER);
 
-    Status = NtSetInformationToken(
-                 TokenWithGroups,          // Handle
-                 TokenOwner,               // TokenInformationClass
-                 &AssignedOwner,           // TokenInformation
-                 InformationLength         // TokenInformationLength
-                 );
+    Status = NtSetInformationToken(TokenWithGroups,  // Handle
+                                   TokenOwner,       // TokenInformationClass
+                                   &AssignedOwner,   // TokenInformation
+                                   InformationLength // TokenInformationLength
+    );
 
-    if (Status == STATUS_INVALID_OWNER) {
+    if (Status == STATUS_INVALID_OWNER)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("InformationLength is: 0x%lx \n", InformationLength);
@@ -3359,26 +3368,28 @@ TestTokenSet()
 
     ASSERT(Status == STATUS_INVALID_OWNER);
 
-
-   //
-   // Set owner of a token to be an ID not in the token
-   //
+
+    //
+    // Set owner of a token to be an ID not in the token
+    //
 
     DbgPrint("Se:     Set default owner to be an ID not in the token ...     ");
 
     AssignedOwner.Owner = BarneySid;
     InformationLength = (ULONG)sizeof(TOKEN_OWNER);
 
-    Status = NtSetInformationToken(
-                 TokenWithGroups,          // Handle
-                 TokenOwner,               // TokenInformationClass
-                 &AssignedOwner,           // TokenInformation
-                 InformationLength         // TokenInformationLength
-                 );
+    Status = NtSetInformationToken(TokenWithGroups,  // Handle
+                                   TokenOwner,       // TokenInformationClass
+                                   &AssignedOwner,   // TokenInformation
+                                   InformationLength // TokenInformationLength
+    );
 
-    if (Status == STATUS_INVALID_OWNER) {
+    if (Status == STATUS_INVALID_OWNER)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("InformationLength is: 0x%lx \n", InformationLength);
@@ -3387,24 +3398,24 @@ TestTokenSet()
 
     ASSERT(Status == STATUS_INVALID_OWNER);
 
-
-   //
-   // Set owner of a token to be a valid group
-   //
+
+    //
+    // Set owner of a token to be a valid group
+    //
 
     DbgPrint("Se:     Set default owner to be a valid group ...              ");
 
     AssignedOwner.Owner = FlintstoneSid;
     InformationLength = (ULONG)sizeof(TOKEN_OWNER);
 
-    Status = NtSetInformationToken(
-                 TokenWithGroups,          // Handle
-                 TokenOwner,               // TokenInformationClass
-                 &AssignedOwner,           // TokenInformation
-                 InformationLength         // TokenInformationLength
-                 );
+    Status = NtSetInformationToken(TokenWithGroups,  // Handle
+                                   TokenOwner,       // TokenInformationClass
+                                   &AssignedOwner,   // TokenInformation
+                                   InformationLength // TokenInformationLength
+    );
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("InformationLength is: 0x%lx \n", InformationLength);
@@ -3417,18 +3428,18 @@ TestTokenSet()
     // Query the Owner to see that it was set properly
     //
 
-    Status = NtQueryInformationToken(
-                 TokenWithGroups,          // Handle
-                 TokenOwner,               // TokenInformationClass
-                 QueriedOwner,             // TokenInformation
-                 0,                        // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithGroups, // Handle
+                                     TokenOwner,      // TokenInformationClass
+                                     QueriedOwner,    // TokenInformation
+                                     0,               // TokenInformationLength
+                                     &ReturnLength    // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status != STATUS_BUFFER_TOO_SMALL) {
+    if (Status != STATUS_BUFFER_TOO_SMALL)
+    {
         DbgPrint("********** Failed Query of length ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -3437,37 +3448,40 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(!NT_SUCCESS(Status));
 
-    QueriedOwner = (PTOKEN_OWNER)TstAllocatePool( PagedPool,
-                                                  ReturnLength
-                                                  );
+    QueriedOwner = (PTOKEN_OWNER)TstAllocatePool(PagedPool, ReturnLength);
 
-    Status = NtQueryInformationToken(
-                 TokenWithGroups,          // Handle
-                 TokenOwner,               // TokenInformationClass
-                 QueriedOwner,             // TokenInformation
-                 ReturnLength,             // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithGroups, // Handle
+                                     TokenOwner,      // TokenInformationClass
+                                     QueriedOwner,    // TokenInformation
+                                     ReturnLength,    // TokenInformationLength
+                                     &ReturnLength    // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Check returned value
         //
 
-        if (RtlEqualSid((QueriedOwner->Owner), AssignedOwner.Owner) ) {
+        if (RtlEqualSid((QueriedOwner->Owner), AssignedOwner.Owner))
+        {
             DbgPrint("Succeeded.\n");
-        } else {
-        DbgPrint("********** Failed Comparison ************\n");
-        DbgPrint("Unexpected value returned by query.\n");
-        DbgPrint("Status is: 0x%lx \n", Status);
-        DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
-        CompletionStatus = FALSE;
         }
-    } else {
+        else
+        {
+            DbgPrint("********** Failed Comparison ************\n");
+            DbgPrint("Unexpected value returned by query.\n");
+            DbgPrint("Status is: 0x%lx \n", Status);
+            DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
+            CompletionStatus = FALSE;
+        }
+    }
+    else
+    {
         DbgPrint("********** Failed Query Of Value ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -3476,7 +3490,7 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(NT_SUCCESS(Status));
 
-
+
     //
     //  Set Default Dacl
 
@@ -3485,8 +3499,7 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
     // This will be initialized to different sizes for each test.
     //
 
-    AssignedDefaultDacl.DefaultDacl =
-        (PACL)TstAllocatePool( PagedPool, TOO_BIG_ACL_SIZE );
+    AssignedDefaultDacl.DefaultDacl = (PACL)TstAllocatePool(PagedPool, TOO_BIG_ACL_SIZE);
 
 
     //
@@ -3496,52 +3509,54 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
     DbgPrint("Se:     Set original discretionary ACL in token ...            ");
 
     InformationLength = (ULONG)sizeof(TOKEN_DEFAULT_DACL);
-    RtlCreateAcl( AssignedDefaultDacl.DefaultDacl, 200, ACL_REVISION );
+    RtlCreateAcl(AssignedDefaultDacl.DefaultDacl, 200, ACL_REVISION);
 
-    Status = NtQueryInformationToken(
-                 TokenWithGroups,            // Handle
-                 TokenDefaultDacl,           // TokenInformationClass
-                 &QueriedDefaultDacl,        // TokenInformation
-                 0,                          // TokenInformationLength
-                 &ReturnLength               // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithGroups,     // Handle
+                                     TokenDefaultDacl,    // TokenInformationClass
+                                     &QueriedDefaultDacl, // TokenInformation
+                                     0,                   // TokenInformationLength
+                                     &ReturnLength        // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
     ASSERT(Status == STATUS_BUFFER_TOO_SMALL);
 
-    if (ReturnLength != sizeof(TOKEN_DEFAULT_DACL)) {
+    if (ReturnLength != sizeof(TOKEN_DEFAULT_DACL))
+    {
 
         //
         // Wait a minute, this token has a default Dacl
         //
 
-            DbgPrint("******** Failed - token has default dacl *********\n");
-            DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
-            CompletionStatus = FALSE;
+        DbgPrint("******** Failed - token has default dacl *********\n");
+        DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
+        CompletionStatus = FALSE;
+    }
+    else
+    {
 
-    } else {
+        Status = NtSetInformationToken(TokenWithGroups,      // Handle
+                                       TokenDefaultDacl,     // TokenInformationClass
+                                       &AssignedDefaultDacl, // TokenInformation
+                                       InformationLength     // TokenInformationLength
+        );
 
-        Status = NtSetInformationToken(
-                     TokenWithGroups,          // Handle
-                     TokenDefaultDacl,         // TokenInformationClass
-                     &AssignedDefaultDacl,     // TokenInformation
-                     InformationLength         // TokenInformationLength
-                     );
-
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
             DbgPrint("Succeeded.\n");
-        } else {
+        }
+        else
+        {
             DbgPrint("********** Failed ************\n");
             DbgPrint("Status is: 0x%lx \n", Status);
             CompletionStatus = FALSE;
         }
-
     }
 
     ASSERT(NT_SUCCESS(Status));
-
+
     //
     // Replace a discretionary ACL in a token that already has one
     // Make it big to help with future "too big" tests...
@@ -3552,36 +3567,37 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
     // find out how much space is available
     //
 
-    Status = NtQueryInformationToken(
-                 TokenWithGroups,                 // Handle
-                 TokenStatistics,                 // TokenInformationClass
-                 &QueriedStatistics,              // TokenInformation
-                 (ULONG)sizeof(TOKEN_STATISTICS), // TokenInformationLength
-                 &ReturnLength                    // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithGroups,                 // Handle
+                                     TokenStatistics,                 // TokenInformationClass
+                                     &QueriedStatistics,              // TokenInformation
+                                     (ULONG)sizeof(TOKEN_STATISTICS), // TokenInformationLength
+                                     &ReturnLength                    // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
     ASSERT(NT_SUCCESS(Status));
 
-    Status = NtQueryInformationToken(
-                 TokenWithGroups,          // Handle
-                 TokenDefaultDacl,         // TokenInformationClass
-                 &QueriedDefaultDacl,      // TokenInformation
-                 0,                        // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithGroups,     // Handle
+                                     TokenDefaultDacl,    // TokenInformationClass
+                                     &QueriedDefaultDacl, // TokenInformation
+                                     0,                   // TokenInformationLength
+                                     &ReturnLength        // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
     ASSERT(Status == STATUS_BUFFER_TOO_SMALL);
 
 
-    if (ReturnLength > sizeof(TOKEN_STATISTICS)) {
+    if (ReturnLength > sizeof(TOKEN_STATISTICS))
+    {
         CurrentLength = ReturnLength - (ULONG)sizeof(TOKEN_STATISTICS);
-    } else {
+    }
+    else
+    {
         CurrentLength = 0;
     }
 
@@ -3590,54 +3606,53 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
     DbgPrint("Se:     Replace discretionary ACL in token ...                 ");
 
     InformationLength = (ULONG)sizeof(TOKEN_DEFAULT_DACL);
-    RtlCreateAcl( AssignedDefaultDacl.DefaultDacl,
-                  (ULONG)(LengthAvailable - 50),
-                  ACL_REVISION
-                  );
+    RtlCreateAcl(AssignedDefaultDacl.DefaultDacl, (ULONG)(LengthAvailable - 50), ACL_REVISION);
 
-    Status = NtQueryInformationToken(
-                 TokenWithGroups,          // Handle
-                 TokenDefaultDacl,         // TokenInformationClass
-                 &QueriedDefaultDacl,      // TokenInformation
-                 0,                        // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithGroups,     // Handle
+                                     TokenDefaultDacl,    // TokenInformationClass
+                                     &QueriedDefaultDacl, // TokenInformation
+                                     0,                   // TokenInformationLength
+                                     &ReturnLength        // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
 
-    if (!(ReturnLength > sizeof(TOKEN_DEFAULT_DACL))) {
+    if (!(ReturnLength > sizeof(TOKEN_DEFAULT_DACL)))
+    {
 
         //
         // Wait a minute, this token doesn't have a default Dacl
         //
 
-            DbgPrint("******** Failed - No default dacl *********\n");
-            CompletionStatus = FALSE;
+        DbgPrint("******** Failed - No default dacl *********\n");
+        CompletionStatus = FALSE;
+    }
+    else
+    {
 
-    } else {
+        Status = NtSetInformationToken(TokenWithGroups,      // Handle
+                                       TokenDefaultDacl,     // TokenInformationClass
+                                       &AssignedDefaultDacl, // TokenInformation
+                                       InformationLength     // TokenInformationLength
+        );
 
-        Status = NtSetInformationToken(
-                     TokenWithGroups,          // Handle
-                     TokenDefaultDacl,         // TokenInformationClass
-                     &AssignedDefaultDacl,     // TokenInformation
-                     InformationLength         // TokenInformationLength
-                     );
-
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
             DbgPrint("Succeeded.\n");
-        } else {
+        }
+        else
+        {
             DbgPrint("********** Failed ************\n");
             DbgPrint("Status is: 0x%lx \n", Status);
             CompletionStatus = FALSE;
         }
-
     }
 
     ASSERT(NT_SUCCESS(Status));
 
-
+
     //
     // Assign a discretionary ACL that doesn't fit into the dynamic part of the
     // token.
@@ -3648,36 +3663,37 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
     // find out how much space is available
     //
 
-    Status = NtQueryInformationToken(
-                 TokenWithGroups,                 // Handle
-                 TokenStatistics,                 // TokenInformationClass
-                 &QueriedStatistics,              // TokenInformation
-                 (ULONG)sizeof(TOKEN_STATISTICS), // TokenInformationLength
-                 &ReturnLength                    // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithGroups,                 // Handle
+                                     TokenStatistics,                 // TokenInformationClass
+                                     &QueriedStatistics,              // TokenInformation
+                                     (ULONG)sizeof(TOKEN_STATISTICS), // TokenInformationLength
+                                     &ReturnLength                    // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
     ASSERT(NT_SUCCESS(Status));
 
-    Status = NtQueryInformationToken(
-                 TokenWithGroups,          // Handle
-                 TokenDefaultDacl,         // TokenInformationClass
-                 &QueriedDefaultDacl,      // TokenInformation
-                 0,                        // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithGroups,     // Handle
+                                     TokenDefaultDacl,    // TokenInformationClass
+                                     &QueriedDefaultDacl, // TokenInformation
+                                     0,                   // TokenInformationLength
+                                     &ReturnLength        // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
     ASSERT(Status == STATUS_BUFFER_TOO_SMALL);
 
 
-    if (ReturnLength > sizeof(TOKEN_STATISTICS)) {
+    if (ReturnLength > sizeof(TOKEN_STATISTICS))
+    {
         CurrentLength = ReturnLength - (ULONG)sizeof(TOKEN_STATISTICS);
-    } else {
+    }
+    else
+    {
         CurrentLength = 0;
     }
 
@@ -3691,16 +3707,13 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
     // space.
     //
 
-    RtlCreateAcl( AssignedDefaultDacl.DefaultDacl,
-                  TOO_BIG_ACL_SIZE,
-                  ACL_REVISION
-                  );
+    RtlCreateAcl(AssignedDefaultDacl.DefaultDacl, TOO_BIG_ACL_SIZE, ACL_REVISION);
 
-    if (TOO_BIG_ACL_SIZE < LengthAvailable) {
+    if (TOO_BIG_ACL_SIZE < LengthAvailable)
+    {
 
         DbgPrint("********** Failed - Dynamic too big ************\n");
-        DbgPrint("Dynamic available is: 0x%lx \n",
-            QueriedStatistics.DynamicAvailable);
+        DbgPrint("Dynamic available is: 0x%lx \n", QueriedStatistics.DynamicAvailable);
         DbgPrint("Current default Dacl size is: 0x%lx \n", CurrentLength);
         DbgPrint("Big ACL size is: 0x%lx \n", TOO_BIG_ACL_SIZE);
         CompletionStatus = FALSE;
@@ -3709,20 +3722,21 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     InformationLength = (ULONG)sizeof(TOKEN_DEFAULT_DACL);
 
-    Status = NtSetInformationToken(
-                 TokenWithGroups,          // Handle
-                 TokenDefaultDacl,         // TokenInformationClass
-                 &AssignedDefaultDacl,     // TokenInformation
-                 InformationLength         // TokenInformationLength
-                 );
+    Status = NtSetInformationToken(TokenWithGroups,      // Handle
+                                   TokenDefaultDacl,     // TokenInformationClass
+                                   &AssignedDefaultDacl, // TokenInformation
+                                   InformationLength     // TokenInformationLength
+    );
 
-    if (Status == STATUS_ALLOTTED_SPACE_EXCEEDED) {
+    if (Status == STATUS_ALLOTTED_SPACE_EXCEEDED)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
-        DbgPrint("Dynamic available is: 0x%lx \n",
-            QueriedStatistics.DynamicAvailable);
+        DbgPrint("Dynamic available is: 0x%lx \n", QueriedStatistics.DynamicAvailable);
         DbgPrint("Current default Dacl size is: 0x%lx \n", CurrentLength);
         DbgPrint("Big ACL size is: 0x%lx \n", TOO_BIG_ACL_SIZE);
         CompletionStatus = FALSE;
@@ -3730,24 +3744,24 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(Status == STATUS_ALLOTTED_SPACE_EXCEEDED);
 
-
-   //
-   // Set primary group
-   //
+
+    //
+    // Set primary group
+    //
 
     DbgPrint("Se:     Set primary group ...                                  ");
 
     AssignedPrimaryGroup.PrimaryGroup = RubbleSid;
     InformationLength = (ULONG)sizeof(TOKEN_PRIMARY_GROUP);
 
-    Status = NtSetInformationToken(
-                 TokenWithGroups,          // Handle
-                 TokenPrimaryGroup,        // TokenInformationClass
-                 &AssignedPrimaryGroup,    // TokenInformation
-                 InformationLength         // TokenInformationLength
-                 );
+    Status = NtSetInformationToken(TokenWithGroups,       // Handle
+                                   TokenPrimaryGroup,     // TokenInformationClass
+                                   &AssignedPrimaryGroup, // TokenInformation
+                                   InformationLength      // TokenInformationLength
+    );
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("InformationLength is: 0x%lx \n", InformationLength);
@@ -3761,18 +3775,18 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
     // Query the Primary Group to see that it was set properly
     //
 
-    Status = NtQueryInformationToken(
-                 TokenWithGroups,          // Handle
-                 TokenPrimaryGroup,        // TokenInformationClass
-                 QueriedPrimaryGroup,      // TokenInformation
-                 0,                        // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithGroups,     // Handle
+                                     TokenPrimaryGroup,   // TokenInformationClass
+                                     QueriedPrimaryGroup, // TokenInformation
+                                     0,                   // TokenInformationLength
+                                     &ReturnLength        // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status != STATUS_BUFFER_TOO_SMALL) {
+    if (Status != STATUS_BUFFER_TOO_SMALL)
+    {
         DbgPrint("********** Failed Query of length ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -3781,39 +3795,40 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
     ASSERT(!NT_SUCCESS(Status));
 
-    QueriedPrimaryGroup =
-        (PTOKEN_PRIMARY_GROUP)TstAllocatePool( PagedPool,
-                                               ReturnLength
-                                               );
+    QueriedPrimaryGroup = (PTOKEN_PRIMARY_GROUP)TstAllocatePool(PagedPool, ReturnLength);
 
-    Status = NtQueryInformationToken(
-                 TokenWithGroups,          // Handle
-                 TokenPrimaryGroup,        // TokenInformationClass
-                 QueriedPrimaryGroup,      // TokenInformation
-                 ReturnLength,             // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithGroups,     // Handle
+                                     TokenPrimaryGroup,   // TokenInformationClass
+                                     QueriedPrimaryGroup, // TokenInformation
+                                     ReturnLength,        // TokenInformationLength
+                                     &ReturnLength        // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Check returned value
         //
 
-        if (RtlEqualSid((QueriedPrimaryGroup->PrimaryGroup),
-            AssignedPrimaryGroup.PrimaryGroup) ) {
+        if (RtlEqualSid((QueriedPrimaryGroup->PrimaryGroup), AssignedPrimaryGroup.PrimaryGroup))
+        {
             DbgPrint("Succeeded.\n");
-        } else {
-        DbgPrint("********** Failed Comparison ************\n");
-        DbgPrint("Unexpected value returned by query.\n");
-        DbgPrint("Status is: 0x%lx \n", Status);
-        DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
-        CompletionStatus = FALSE;
         }
-    } else {
+        else
+        {
+            DbgPrint("********** Failed Comparison ************\n");
+            DbgPrint("Unexpected value returned by query.\n");
+            DbgPrint("Status is: 0x%lx \n", Status);
+            DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
+            CompletionStatus = FALSE;
+        }
+    }
+    else
+    {
         DbgPrint("********** Failed Query Of Value ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Required return length is: 0x%lx \n", ReturnLength);
@@ -3821,7 +3836,7 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
     }
 
     ASSERT(NT_SUCCESS(Status));
-
+
 
     //
     // Assign a primary group that doesn't fit into the dynamic part of the
@@ -3835,28 +3850,26 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
     // First, find out how much space is available
     //
 
-    Status = NtQueryInformationToken(
-                 TokenWithGroups,                 // Handle
-                 TokenStatistics,                 // TokenInformationClass
-                 &QueriedStatistics,              // TokenInformation
-                 (ULONG)sizeof(TOKEN_STATISTICS), // TokenInformationLength
-                 &ReturnLength                    // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithGroups,                 // Handle
+                                     TokenStatistics,                 // TokenInformationClass
+                                     &QueriedStatistics,              // TokenInformation
+                                     (ULONG)sizeof(TOKEN_STATISTICS), // TokenInformationLength
+                                     &ReturnLength                    // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
     ASSERT(NT_SUCCESS(Status));
 
-    Status = NtQueryInformationToken(
-                 TokenWithGroups,          // Handle
-                 TokenPrimaryGroup,        // TokenInformationClass
-                 QueriedPrimaryGroup,      // TokenInformation
-                 ReturnLength,             // TokenInformationLength
-                 &ReturnLength             // ReturnLength
-                 );
+    Status = NtQueryInformationToken(TokenWithGroups,     // Handle
+                                     TokenPrimaryGroup,   // TokenInformationClass
+                                     QueriedPrimaryGroup, // TokenInformation
+                                     ReturnLength,        // TokenInformationLength
+                                     &ReturnLength        // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
     ASSERT(NT_SUCCESS(Status));
@@ -3869,22 +3882,15 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
     // space.
     //
 
-    TooBigSid = (PSID)TstAllocatePool(
-                          PagedPool,
-                          RtlLengthRequiredSid( TOO_BIG_PRIMARY_GROUP_SIZE )
-                          );
+    TooBigSid = (PSID)TstAllocatePool(PagedPool, RtlLengthRequiredSid(TOO_BIG_PRIMARY_GROUP_SIZE));
 
-    RtlInitializeSid(
-        TooBigSid,
-        &BedrockAuthority,
-        TOO_BIG_PRIMARY_GROUP_SIZE
-        );
+    RtlInitializeSid(TooBigSid, &BedrockAuthority, TOO_BIG_PRIMARY_GROUP_SIZE);
 
-    if ((ULONG) SeLengthSid(TooBigSid) < LengthAvailable) {
+    if ((ULONG)SeLengthSid(TooBigSid) < LengthAvailable)
+    {
 
         DbgPrint("********** Failed - Dynamic too big ************\n");
-        DbgPrint("Dynamic available is: 0x%lx \n",
-            QueriedStatistics.DynamicAvailable);
+        DbgPrint("Dynamic available is: 0x%lx \n", QueriedStatistics.DynamicAvailable);
         DbgPrint("Existing primary group length is: 0x%lx \n", CurrentLength);
         DbgPrint("Big SID size is: 0x%lx \n", SeLengthSid(TooBigSid));
         CompletionStatus = FALSE;
@@ -3894,31 +3900,30 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
     AssignedPrimaryGroup.PrimaryGroup = TooBigSid;
     InformationLength = (ULONG)sizeof(TOKEN_PRIMARY_GROUP);
 
-    Status = NtSetInformationToken(
-                 TokenWithGroups,          // Handle
-                 TokenPrimaryGroup,        // TokenInformationClass
-                 &AssignedPrimaryGroup,    // TokenInformation
-                 InformationLength         // TokenInformationLength
-                 );
+    Status = NtSetInformationToken(TokenWithGroups,       // Handle
+                                   TokenPrimaryGroup,     // TokenInformationClass
+                                   &AssignedPrimaryGroup, // TokenInformation
+                                   InformationLength      // TokenInformationLength
+    );
 
-    if (Status == STATUS_ALLOTTED_SPACE_EXCEEDED) {
+    if (Status == STATUS_ALLOTTED_SPACE_EXCEEDED)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
-        DbgPrint("Dynamic available is: 0x%lx \n",
-            QueriedStatistics.DynamicAvailable);
+        DbgPrint("Dynamic available is: 0x%lx \n", QueriedStatistics.DynamicAvailable);
         DbgPrint("Existing primary group length is: 0x%lx \n", CurrentLength);
         DbgPrint("Big SID size is: 0x%lx \n", SeLengthSid(TooBigSid));
         CompletionStatus = FALSE;
     }
 
 
-
-
     return CompletionStatus;
 }
-
+
 ////////////////////////////////////////////////////////////////
 //                                                            //
 // Adjust Privileges Test                                     //
@@ -3948,30 +3953,15 @@ TestTokenAdjustPrivileges()
 
     DbgPrint("\n");
 
-    PreviousState = (PTOKEN_PRIVILEGES)TstAllocatePool(
-                        PagedPool,
-                        PreviousStateBufferLength
-                        );
+    PreviousState = (PTOKEN_PRIVILEGES)TstAllocatePool(PagedPool, PreviousStateBufferLength);
 
-    PrePrivileges = (PTOKEN_PRIVILEGES)TstAllocatePool(
-                        PagedPool,
-                        PrePrivilegesLength
-                        );
+    PrePrivileges = (PTOKEN_PRIVILEGES)TstAllocatePool(PagedPool, PrePrivilegesLength);
 
-    PostPrivileges = (PTOKEN_PRIVILEGES)TstAllocatePool(
-                        PagedPool,
-                        PostPrivilegesLength
-                        );
+    PostPrivileges = (PTOKEN_PRIVILEGES)TstAllocatePool(PagedPool, PostPrivilegesLength);
 
-    NewState = (PTOKEN_PRIVILEGES)TstAllocatePool(
-                   PagedPool,
-                   NewStateBufferLength
-                   );
+    NewState = (PTOKEN_PRIVILEGES)TstAllocatePool(PagedPool, NewStateBufferLength);
 
 
-
-
-
     //////////////////////////////////////////////////////////////////////
     //                                                                  //
     // Adjust privileges giving no instructions                         //
@@ -3981,31 +3971,31 @@ TestTokenAdjustPrivileges()
 
     DbgPrint("Se:     Adjust privileges with no instructions ...             ");
 
-    Status = NtAdjustPrivilegesToken(
-                 SimpleToken,                      // TokenHandle
-                 FALSE,                            // DisableAllPrivileges
-                 NULL,                             // NewState (OPTIONAL)
-                 0,                                // BufferLength
-                 NULL,                             // PreviousState (OPTIONAL)
-                 &ReturnLength                     // ReturnLength
-                 );
+    Status = NtAdjustPrivilegesToken(SimpleToken,  // TokenHandle
+                                     FALSE,        // DisableAllPrivileges
+                                     NULL,         // NewState (OPTIONAL)
+                                     0,            // BufferLength
+                                     NULL,         // PreviousState (OPTIONAL)
+                                     &ReturnLength // ReturnLength
+    );
 
-    if (Status == STATUS_INVALID_PARAMETER) {
+    if (Status == STATUS_INVALID_PARAMETER)
+    {
 
         DbgPrint("Succeeded. \n");
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_INVALID_PARAMETER);
 
-
+
     //////////////////////////////////////////////////////////////////////
     //                                                                  //
     // Enable privileges in token with no privileges                    //
@@ -4019,31 +4009,31 @@ TestTokenAdjustPrivileges()
 
     DbgPrint("Se:     Enable privilege in token with none ...                ");
 
-    Status = NtAdjustPrivilegesToken(
-                 SimpleToken,                      // TokenHandle
-                 FALSE,                            // DisableAllPrivileges
-                 NewState,                         // NewState (OPTIONAL)
-                 0,                                // BufferLength
-                 NULL,                             // PreviousState (OPTIONAL)
-                 &ReturnLength                     // ReturnLength
-                 );
+    Status = NtAdjustPrivilegesToken(SimpleToken,  // TokenHandle
+                                     FALSE,        // DisableAllPrivileges
+                                     NewState,     // NewState (OPTIONAL)
+                                     0,            // BufferLength
+                                     NULL,         // PreviousState (OPTIONAL)
+                                     &ReturnLength // ReturnLength
+    );
 
-    if (Status == STATUS_NOT_ALL_ASSIGNED) {
+    if (Status == STATUS_NOT_ALL_ASSIGNED)
+    {
 
         DbgPrint("Succeeded. \n");
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_NOT_ALL_ASSIGNED);
 
-
+
     //////////////////////////////////////////////////////////////////////
     //                                                                  //
     //  Enable a privilege that isn't assigned                          //
@@ -4057,86 +4047,79 @@ TestTokenAdjustPrivileges()
     DbgPrint("Se:     Enable unassigned privilege in token with some ...     ");
 
     PrePrivileges->PrivilegeCount = 77;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithPrivileges,        // TokenHandle
-                       TokenPrivileges,            // TokenInformationClass
-                       PrePrivileges,              // TokenInformation
-                       PrePrivilegesLength,        // TokenInformationLength
-                       &IgnoreReturnLength         // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithPrivileges, // TokenHandle
+                                           TokenPrivileges,     // TokenInformationClass
+                                           PrePrivileges,       // TokenInformation
+                                           PrePrivilegesLength, // TokenInformationLength
+                                           &IgnoreReturnLength  // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT( PrePrivileges->PrivilegeCount == PRIVILEGE_COUNT );
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PrePrivileges->PrivilegeCount == PRIVILEGE_COUNT);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    Status = NtAdjustPrivilegesToken(
-                 TokenWithPrivileges,              // TokenHandle
-                 FALSE,                            // DisableAllPrivileges
-                 NewState,                         // NewState (OPTIONAL)
-                 0,                                // BufferLength
-                 NULL,                             // PreviousState (OPTIONAL)
-                 &ReturnLength                     // ReturnLength
-                 );
+    Status = NtAdjustPrivilegesToken(TokenWithPrivileges, // TokenHandle
+                                     FALSE,               // DisableAllPrivileges
+                                     NewState,            // NewState (OPTIONAL)
+                                     0,                   // BufferLength
+                                     NULL,                // PreviousState (OPTIONAL)
+                                     &ReturnLength        // ReturnLength
+    );
 
     PostPrivileges->PrivilegeCount = 88;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithPrivileges,        // TokenHandle
-                       TokenPrivileges,            // TokenInformationClass
-                       PostPrivileges,             // TokenInformation
-                       PostPrivilegesLength,       // TokenInformationLength
-                       &IgnoreReturnLength         // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithPrivileges,  // TokenHandle
+                                           TokenPrivileges,      // TokenInformationClass
+                                           PostPrivileges,       // TokenInformation
+                                           PostPrivilegesLength, // TokenInformationLength
+                                           &IgnoreReturnLength   // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT( PostPrivileges->PrivilegeCount == PRIVILEGE_COUNT );
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PostPrivileges->PrivilegeCount == PRIVILEGE_COUNT);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    if (Status == STATUS_NOT_ALL_ASSIGNED) {
+    if (Status == STATUS_NOT_ALL_ASSIGNED)
+    {
 
-         //
-         // Check the privilege values
-         //
+        //
+        // Check the privilege values
+        //
 
-         if ( (PrePrivileges->Privileges[0].Attributes ==
-               PostPrivileges->Privileges[0].Attributes)    &&
-              (PrePrivileges->Privileges[1].Attributes ==
-               PostPrivileges->Privileges[1].Attributes)    ) {
+        if ((PrePrivileges->Privileges[0].Attributes == PostPrivileges->Privileges[0].Attributes) &&
+            (PrePrivileges->Privileges[1].Attributes == PostPrivileges->Privileges[1].Attributes))
+        {
 
             DbgPrint("Succeeded. \n");
-
-         } else {
+        }
+        else
+        {
 
             DbgPrint("********** Failed Value Check ************\n");
             DbgPrint("Status is: 0x%lx \n", Status);
-            DbgPrint("Before and after privilege 0 state: 0x%lx,  0x%lx \n",
-                    PrePrivileges->Privileges[0].Attributes,
-                    PostPrivileges->Privileges[0].Attributes);
-            DbgPrint("Before and after privilege 1 state: 0x%lx,  0x%lx \n",
-                    PrePrivileges->Privileges[1].Attributes,
-                    PostPrivileges->Privileges[1].Attributes);
+            DbgPrint("Before and after privilege 0 state: 0x%lx,  0x%lx \n", PrePrivileges->Privileges[0].Attributes,
+                     PostPrivileges->Privileges[0].Attributes);
+            DbgPrint("Before and after privilege 1 state: 0x%lx,  0x%lx \n", PrePrivileges->Privileges[1].Attributes,
+                     PostPrivileges->Privileges[1].Attributes);
             DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
             CompletionStatus = FALSE;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_NOT_ALL_ASSIGNED);
 
 
-
-
     //////////////////////////////////////////////////////////////////////
     //                                                                  //
     // Disable All Privileges (which they already are)                  //
@@ -4146,86 +4129,81 @@ DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
     DbgPrint("Se:     Disable already disabled privileges ...                ");
 
     PrePrivileges->PrivilegeCount = 77;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithPrivileges,        // TokenHandle
-                       TokenPrivileges,            // TokenInformationClass
-                       PrePrivileges,              // TokenInformation
-                       PrePrivilegesLength,        // TokenInformationLength
-                       &IgnoreReturnLength         // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithPrivileges, // TokenHandle
+                                           TokenPrivileges,     // TokenInformationClass
+                                           PrePrivileges,       // TokenInformation
+                                           PrePrivilegesLength, // TokenInformationLength
+                                           &IgnoreReturnLength  // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT( PrePrivileges->PrivilegeCount == PRIVILEGE_COUNT );
-    ASSERT( PrePrivileges->Privileges[0].Attributes == 0 );
-    ASSERT( PrePrivileges->Privileges[1].Attributes == 0 );
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PrePrivileges->PrivilegeCount == PRIVILEGE_COUNT);
+    ASSERT(PrePrivileges->Privileges[0].Attributes == 0);
+    ASSERT(PrePrivileges->Privileges[1].Attributes == 0);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    Status = NtAdjustPrivilegesToken(
-                 TokenWithPrivileges,              // TokenHandle
-                 TRUE,                             // DisableAllPrivileges
-                 NULL,                             // NewState (OPTIONAL)
-                 0,                                // BufferLength
-                 NULL,                             // PreviousState (OPTIONAL)
-                 &ReturnLength                     // ReturnLength
-                 );
+    Status = NtAdjustPrivilegesToken(TokenWithPrivileges, // TokenHandle
+                                     TRUE,                // DisableAllPrivileges
+                                     NULL,                // NewState (OPTIONAL)
+                                     0,                   // BufferLength
+                                     NULL,                // PreviousState (OPTIONAL)
+                                     &ReturnLength        // ReturnLength
+    );
 
 
     PostPrivileges->PrivilegeCount = 88;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithPrivileges,        // TokenHandle
-                       TokenPrivileges,            // TokenInformationClass
-                       PostPrivileges,             // TokenInformation
-                       PostPrivilegesLength,       // TokenInformationLength
-                       &IgnoreReturnLength         // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithPrivileges,  // TokenHandle
+                                           TokenPrivileges,      // TokenInformationClass
+                                           PostPrivileges,       // TokenInformation
+                                           PostPrivilegesLength, // TokenInformationLength
+                                           &IgnoreReturnLength   // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT( PostPrivileges->PrivilegeCount == PRIVILEGE_COUNT );
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PostPrivileges->PrivilegeCount == PRIVILEGE_COUNT);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    if (Status == STATUS_SUCCESS) {
+    if (Status == STATUS_SUCCESS)
+    {
 
-         //
-         // Check the privilege values
-         //
+        //
+        // Check the privilege values
+        //
 
-         if ( (PostPrivileges->Privileges[0].Attributes == 0) &&
-              (PostPrivileges->Privileges[1].Attributes == 0)    ) {
+        if ((PostPrivileges->Privileges[0].Attributes == 0) && (PostPrivileges->Privileges[1].Attributes == 0))
+        {
 
             DbgPrint("Succeeded. \n");
-
-         } else {
+        }
+        else
+        {
 
             DbgPrint("********** Failed  Value Check ************\n");
             DbgPrint("Status is: 0x%lx \n", Status);
-            DbgPrint("Before and after privilege 0 state: 0x%lx,  0x%lx \n",
-                    PrePrivileges->Privileges[0].Attributes,
-                    PostPrivileges->Privileges[0].Attributes);
-            DbgPrint("Before and after privilege 1 state: 0x%lx,  0x%lx \n",
-                    PrePrivileges->Privileges[1].Attributes,
-                    PostPrivileges->Privileges[1].Attributes);
+            DbgPrint("Before and after privilege 0 state: 0x%lx,  0x%lx \n", PrePrivileges->Privileges[0].Attributes,
+                     PostPrivileges->Privileges[0].Attributes);
+            DbgPrint("Before and after privilege 1 state: 0x%lx,  0x%lx \n", PrePrivileges->Privileges[1].Attributes,
+                     PostPrivileges->Privileges[1].Attributes);
             DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
             CompletionStatus = FALSE;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_SUCCESS);
 
 
-
     //////////////////////////////////////////////////////////////////////
     //                                                                  //
     // Enable currently disabled privileges                             //
@@ -4235,21 +4213,20 @@ DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
     DbgPrint("Se:     Enable currently disabled privileges ...               ");
 
     PrePrivileges->PrivilegeCount = 77;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithPrivileges,        // TokenHandle
-                       TokenPrivileges,            // TokenInformationClass
-                       PrePrivileges,              // TokenInformation
-                       PrePrivilegesLength,        // TokenInformationLength
-                       &IgnoreReturnLength         // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithPrivileges, // TokenHandle
+                                           TokenPrivileges,     // TokenInformationClass
+                                           PrePrivileges,       // TokenInformation
+                                           PrePrivilegesLength, // TokenInformationLength
+                                           &IgnoreReturnLength  // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT( PrePrivileges->PrivilegeCount == PRIVILEGE_COUNT );
-    ASSERT( PrePrivileges->Privileges[0].Attributes == 0 );
-    ASSERT( PrePrivileges->Privileges[1].Attributes == 0 );
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PrePrivileges->PrivilegeCount == PRIVILEGE_COUNT);
+    ASSERT(PrePrivileges->Privileges[0].Attributes == 0);
+    ASSERT(PrePrivileges->Privileges[1].Attributes == 0);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
     NewState->PrivilegeCount = 2;
     NewState->Privileges[0].Luid = SecurityPrivilege;
@@ -4257,70 +4234,66 @@ DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
     NewState->Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
     NewState->Privileges[1].Attributes = SE_PRIVILEGE_ENABLED;
 
-    Status = NtAdjustPrivilegesToken(
-                 TokenWithPrivileges,              // TokenHandle
-                 FALSE,                            // DisableAllPrivileges
-                 NewState,                         // NewState (OPTIONAL)
-                 0,                                // BufferLength
-                 NULL,                             // PreviousState (OPTIONAL)
-                 &ReturnLength                     // ReturnLength
-                 );
+    Status = NtAdjustPrivilegesToken(TokenWithPrivileges, // TokenHandle
+                                     FALSE,               // DisableAllPrivileges
+                                     NewState,            // NewState (OPTIONAL)
+                                     0,                   // BufferLength
+                                     NULL,                // PreviousState (OPTIONAL)
+                                     &ReturnLength        // ReturnLength
+    );
 
     PostPrivileges->PrivilegeCount = 88;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithPrivileges,        // TokenHandle
-                       TokenPrivileges,            // TokenInformationClass
-                       PostPrivileges,             // TokenInformation
-                       PostPrivilegesLength,       // TokenInformationLength
-                       &IgnoreReturnLength         // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithPrivileges,  // TokenHandle
+                                           TokenPrivileges,      // TokenInformationClass
+                                           PostPrivileges,       // TokenInformation
+                                           PostPrivilegesLength, // TokenInformationLength
+                                           &IgnoreReturnLength   // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT( PostPrivileges->PrivilegeCount == PRIVILEGE_COUNT );
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PostPrivileges->PrivilegeCount == PRIVILEGE_COUNT);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    if (Status == STATUS_SUCCESS) {
+    if (Status == STATUS_SUCCESS)
+    {
 
-         //
-         // Check the privilege values
-         //
+        //
+        // Check the privilege values
+        //
 
-         if ( (PostPrivileges->Privileges[0].Attributes == SE_PRIVILEGE_ENABLED)    &&
-              (PostPrivileges->Privileges[1].Attributes == SE_PRIVILEGE_ENABLED)
-         ) {
+        if ((PostPrivileges->Privileges[0].Attributes == SE_PRIVILEGE_ENABLED) &&
+            (PostPrivileges->Privileges[1].Attributes == SE_PRIVILEGE_ENABLED))
+        {
 
             DbgPrint("Succeeded. \n");
-
-         } else {
+        }
+        else
+        {
 
             DbgPrint("********** Failed  Value Check ************\n");
             DbgPrint("Status is: 0x%lx \n", Status);
-            DbgPrint("Before and after privilege 0 state: 0x%lx,  0x%lx \n",
-                    PrePrivileges->Privileges[0].Attributes,
-                    PostPrivileges->Privileges[0].Attributes);
-            DbgPrint("Before and after privilege 1 state: 0x%lx,  0x%lx \n",
-                    PrePrivileges->Privileges[1].Attributes,
-                    PostPrivileges->Privileges[1].Attributes);
+            DbgPrint("Before and after privilege 0 state: 0x%lx,  0x%lx \n", PrePrivileges->Privileges[0].Attributes,
+                     PostPrivileges->Privileges[0].Attributes);
+            DbgPrint("Before and after privilege 1 state: 0x%lx,  0x%lx \n", PrePrivileges->Privileges[1].Attributes,
+                     PostPrivileges->Privileges[1].Attributes);
             DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
             CompletionStatus = FALSE;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_SUCCESS);
 
 
-
     //////////////////////////////////////////////////////////////////////
     //                                                                  //
     // Disable all enabled privileges                                   //
@@ -4330,83 +4303,78 @@ DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
     DbgPrint("Se:     Disable all enabled privileges ...                     ");
 
     PrePrivileges->PrivilegeCount = 77;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithPrivileges,        // TokenHandle
-                       TokenPrivileges,            // TokenInformationClass
-                       PrePrivileges,              // TokenInformation
-                       PrePrivilegesLength,        // TokenInformationLength
-                       &IgnoreReturnLength         // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithPrivileges, // TokenHandle
+                                           TokenPrivileges,     // TokenInformationClass
+                                           PrePrivileges,       // TokenInformation
+                                           PrePrivilegesLength, // TokenInformationLength
+                                           &IgnoreReturnLength  // ReturnLength
+    );
 
-    ASSERT( PrePrivileges->PrivilegeCount == PRIVILEGE_COUNT );
-    ASSERT( PrePrivileges->Privileges[0].Attributes == SE_PRIVILEGE_ENABLED );
-    ASSERT( PrePrivileges->Privileges[1].Attributes == SE_PRIVILEGE_ENABLED );
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PrePrivileges->PrivilegeCount == PRIVILEGE_COUNT);
+    ASSERT(PrePrivileges->Privileges[0].Attributes == SE_PRIVILEGE_ENABLED);
+    ASSERT(PrePrivileges->Privileges[1].Attributes == SE_PRIVILEGE_ENABLED);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    Status = NtAdjustPrivilegesToken(
-                 TokenWithPrivileges,              // TokenHandle
-                 TRUE,                             // DisableAllPrivileges
-                 NULL,                             // NewState (OPTIONAL)
-                 0,                                // BufferLength
-                 NULL,                             // PreviousState (OPTIONAL)
-                 &ReturnLength                     // ReturnLength
-                 );
+    Status = NtAdjustPrivilegesToken(TokenWithPrivileges, // TokenHandle
+                                     TRUE,                // DisableAllPrivileges
+                                     NULL,                // NewState (OPTIONAL)
+                                     0,                   // BufferLength
+                                     NULL,                // PreviousState (OPTIONAL)
+                                     &ReturnLength        // ReturnLength
+    );
 
 
     PostPrivileges->PrivilegeCount = 88;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithPrivileges,        // TokenHandle
-                       TokenPrivileges,            // TokenInformationClass
-                       PostPrivileges,             // TokenInformation
-                       PostPrivilegesLength,       // TokenInformationLength
-                       &IgnoreReturnLength         // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithPrivileges,  // TokenHandle
+                                           TokenPrivileges,      // TokenInformationClass
+                                           PostPrivileges,       // TokenInformation
+                                           PostPrivilegesLength, // TokenInformationLength
+                                           &IgnoreReturnLength   // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT( PostPrivileges->PrivilegeCount == PRIVILEGE_COUNT );
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PostPrivileges->PrivilegeCount == PRIVILEGE_COUNT);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    if (Status == STATUS_SUCCESS) {
+    if (Status == STATUS_SUCCESS)
+    {
 
-         //
-         // Check the privilege values
-         //
+        //
+        // Check the privilege values
+        //
 
-         if ( (PostPrivileges->Privileges[0].Attributes == 0)    &&
-              (PostPrivileges->Privileges[1].Attributes == 0)    ) {
+        if ((PostPrivileges->Privileges[0].Attributes == 0) && (PostPrivileges->Privileges[1].Attributes == 0))
+        {
 
             DbgPrint("Succeeded. \n");
-
-         } else {
+        }
+        else
+        {
 
             DbgPrint("********** Failed  Value Check ************\n");
             DbgPrint("Status is: 0x%lx \n", Status);
-            DbgPrint("Before and after privilege 0 state: 0x%lx,  0x%lx \n",
-                    PrePrivileges->Privileges[0].Attributes,
-                    PostPrivileges->Privileges[0].Attributes);
-            DbgPrint("Before and after privilege 1 state: 0x%lx,  0x%lx \n",
-                    PrePrivileges->Privileges[1].Attributes,
-                    PostPrivileges->Privileges[1].Attributes);
+            DbgPrint("Before and after privilege 0 state: 0x%lx,  0x%lx \n", PrePrivileges->Privileges[0].Attributes,
+                     PostPrivileges->Privileges[0].Attributes);
+            DbgPrint("Before and after privilege 1 state: 0x%lx,  0x%lx \n", PrePrivileges->Privileges[1].Attributes,
+                     PostPrivileges->Privileges[1].Attributes);
             DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
             CompletionStatus = FALSE;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_SUCCESS);
 
 
-
     //////////////////////////////////////////////////////////////////////
     //                                                                  //
     // Enable privileges requesting previous state with no return       //
@@ -4423,32 +4391,30 @@ DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
     NewState->Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
     NewState->Privileges[1].Attributes = SE_PRIVILEGE_ENABLED;
 
-    Status = NtAdjustPrivilegesToken(
-                 TokenWithPrivileges,              // TokenHandle
-                 FALSE,                            // DisableAllPrivileges
-                 NewState,                         // NewState (OPTIONAL)
-                 0,                                // BufferLength
-                 PreviousState,                    // PreviousState (OPTIONAL)
-                 NULL                              // ReturnLength
-                 );
+    Status = NtAdjustPrivilegesToken(TokenWithPrivileges, // TokenHandle
+                                     FALSE,               // DisableAllPrivileges
+                                     NewState,            // NewState (OPTIONAL)
+                                     0,                   // BufferLength
+                                     PreviousState,       // PreviousState (OPTIONAL)
+                                     NULL                 // ReturnLength
+    );
 
-    if (Status == STATUS_ACCESS_VIOLATION) {
+    if (Status == STATUS_ACCESS_VIOLATION)
+    {
 
         DbgPrint("Succeeded. \n");
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_ACCESS_VIOLATION);
 
 
-
-
     //////////////////////////////////////////////////////////////////////
     //                                                                  //
     // Enable privileges without requesting previous state and          //
@@ -4465,34 +4431,30 @@ DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
     NewState->Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
     NewState->Privileges[1].Attributes = SE_PRIVILEGE_ENABLED;
 
-    Status = NtAdjustPrivilegesToken(
-                 TokenWithPrivileges,              // TokenHandle
-                 FALSE,                            // DisableAllPrivileges
-                 NewState,                         // NewState (OPTIONAL)
-                 0,                                // BufferLength
-                 NULL,                             // PreviousState (OPTIONAL)
-                 NULL                              // ReturnLength
-                 );
+    Status = NtAdjustPrivilegesToken(TokenWithPrivileges, // TokenHandle
+                                     FALSE,               // DisableAllPrivileges
+                                     NewState,            // NewState (OPTIONAL)
+                                     0,                   // BufferLength
+                                     NULL,                // PreviousState (OPTIONAL)
+                                     NULL                 // ReturnLength
+    );
 
-    if (Status == STATUS_SUCCESS) {
+    if (Status == STATUS_SUCCESS)
+    {
 
         DbgPrint("Succeeded. \n");
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_SUCCESS);
 
 
-
-
-
-
     //////////////////////////////////////////////////////////////////////
     //                                                                  //
     // Enable privileges requesting previous state with insufficient    //
@@ -4507,14 +4469,13 @@ DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
     // Establish a known previous state first...
     //
 
-    Status = NtAdjustPrivilegesToken(
-                 TokenWithPrivileges,              // TokenHandle
-                 TRUE,                             // DisableAllPrivileges
-                 NULL,                             // NewState (OPTIONAL)
-                 0,                                // BufferLength
-                 NULL,                             // PreviousState (OPTIONAL)
-                 &ReturnLength                     // ReturnLength
-                 );
+    Status = NtAdjustPrivilegesToken(TokenWithPrivileges, // TokenHandle
+                                     TRUE,                // DisableAllPrivileges
+                                     NULL,                // NewState (OPTIONAL)
+                                     0,                   // BufferLength
+                                     NULL,                // PreviousState (OPTIONAL)
+                                     &ReturnLength        // ReturnLength
+    );
 
     NewState->PrivilegeCount = 2;
     NewState->Privileges[0].Luid = SecurityPrivilege;
@@ -4522,37 +4483,34 @@ DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
     NewState->Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
     NewState->Privileges[1].Attributes = SE_PRIVILEGE_ENABLED;
 
-    Status = NtAdjustPrivilegesToken(
-                 TokenWithPrivileges,              // TokenHandle
-                 FALSE,                            // DisableAllPrivileges
-                 NewState,                         // NewState (OPTIONAL)
-                 0,                                // BufferLength
-                 PreviousState,                    // PreviousState (OPTIONAL)
-                 &ReturnLength                     // ReturnLength
-                 );
+    Status = NtAdjustPrivilegesToken(TokenWithPrivileges, // TokenHandle
+                                     FALSE,               // DisableAllPrivileges
+                                     NewState,            // NewState (OPTIONAL)
+                                     0,                   // BufferLength
+                                     PreviousState,       // PreviousState (OPTIONAL)
+                                     &ReturnLength        // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
 
         DbgPrint("Succeeded. \n");
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_BUFFER_TOO_SMALL);
 
 
-
-
-
     //////////////////////////////////////////////////////////////////////
     //                                                                  //
     // Enable one of the privileges requesting previous state           //
@@ -4562,37 +4520,35 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
     DbgPrint("Se:     Enable one requesting previous state ...               ");
 
     PrePrivileges->PrivilegeCount = 77;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithPrivileges,        // TokenHandle
-                       TokenPrivileges,            // TokenInformationClass
-                       PrePrivileges,              // TokenInformation
-                       PrePrivilegesLength,        // TokenInformationLength
-                       &IgnoreReturnLength         // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithPrivileges, // TokenHandle
+                                           TokenPrivileges,     // TokenInformationClass
+                                           PrePrivileges,       // TokenInformation
+                                           PrePrivilegesLength, // TokenInformationLength
+                                           &IgnoreReturnLength  // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT( PrePrivileges->PrivilegeCount == PRIVILEGE_COUNT );
-    ASSERT( PrePrivileges->Privileges[0].Attributes == 0 );
-    ASSERT( PrePrivileges->Privileges[1].Attributes == 0 );
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PrePrivileges->PrivilegeCount == PRIVILEGE_COUNT);
+    ASSERT(PrePrivileges->Privileges[0].Attributes == 0);
+    ASSERT(PrePrivileges->Privileges[1].Attributes == 0);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
 
     NewState->PrivilegeCount = 1;
     NewState->Privileges[0].Luid = SecurityPrivilege;
     NewState->Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
 
-    Status = NtAdjustPrivilegesToken(
-                 TokenWithPrivileges,              // TokenHandle
-                 FALSE,                            // DisableAllPrivileges
-                 NewState,                         // NewState (OPTIONAL)
-                 PreviousStateBufferLength,        // BufferLength
-                 PreviousState,                    // PreviousState (OPTIONAL)
-                 &ReturnLength                     // ReturnLength
-                 );
+    Status = NtAdjustPrivilegesToken(TokenWithPrivileges,       // TokenHandle
+                                     FALSE,                     // DisableAllPrivileges
+                                     NewState,                  // NewState (OPTIONAL)
+                                     PreviousStateBufferLength, // BufferLength
+                                     PreviousState,             // PreviousState (OPTIONAL)
+                                     &ReturnLength              // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
     ASSERT(NT_SUCCESS(Status));
@@ -4600,63 +4556,58 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
 
     PostPrivileges->PrivilegeCount = 88;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithPrivileges,        // TokenHandle
-                       TokenPrivileges,            // TokenInformationClass
-                       PostPrivileges,             // TokenInformation
-                       PostPrivilegesLength,       // TokenInformationLength
-                       &IgnoreReturnLength         // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithPrivileges,  // TokenHandle
+                                           TokenPrivileges,      // TokenInformationClass
+                                           PostPrivileges,       // TokenInformation
+                                           PostPrivilegesLength, // TokenInformationLength
+                                           &IgnoreReturnLength   // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT( PostPrivileges->PrivilegeCount == PRIVILEGE_COUNT );
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PostPrivileges->PrivilegeCount == PRIVILEGE_COUNT);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    if (Status == STATUS_SUCCESS) {
+    if (Status == STATUS_SUCCESS)
+    {
 
-         //
-         // Check the privilege values
-         //
+        //
+        // Check the privilege values
+        //
 
-         if ( (PostPrivileges->Privileges[SECURITY_INDEX].Attributes ==
-               SE_PRIVILEGE_ENABLED)    &&
-              (PostPrivileges->Privileges[UNSOLICITED_INDEX].Attributes == 0)
-         ) {
+        if ((PostPrivileges->Privileges[SECURITY_INDEX].Attributes == SE_PRIVILEGE_ENABLED) &&
+            (PostPrivileges->Privileges[UNSOLICITED_INDEX].Attributes == 0))
+        {
 
             DbgPrint("Succeeded. \n");
-
-         } else {
+        }
+        else
+        {
 
             DbgPrint("********** Failed  Value Check ************\n");
             DbgPrint("Status is: 0x%lx \n", Status);
-            DbgPrint("Before and after privilege 0 state: 0x%lx,  0x%lx \n",
-                    PrePrivileges->Privileges[0].Attributes,
-                    PostPrivileges->Privileges[0].Attributes);
-            DbgPrint("Before and after privilege 1 state: 0x%lx,  0x%lx \n",
-                    PrePrivileges->Privileges[1].Attributes,
-                    PostPrivileges->Privileges[1].Attributes);
+            DbgPrint("Before and after privilege 0 state: 0x%lx,  0x%lx \n", PrePrivileges->Privileges[0].Attributes,
+                     PostPrivileges->Privileges[0].Attributes);
+            DbgPrint("Before and after privilege 1 state: 0x%lx,  0x%lx \n", PrePrivileges->Privileges[1].Attributes,
+                     PostPrivileges->Privileges[1].Attributes);
             DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
             CompletionStatus = FALSE;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         DbgPrint("Change Count is: 0x%lx \n", PreviousState->PrivilegeCount);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_SUCCESS);
 
 
-
-
     //////////////////////////////////////////////////////////////////////
     //                                                                  //
     // Enable the other privilege requesting previous state             //
@@ -4666,37 +4617,34 @@ DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
     DbgPrint("Se:     Enable one requesting previous state ...               ");
 
     PrePrivileges->PrivilegeCount = 77;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithPrivileges,        // TokenHandle
-                       TokenPrivileges,            // TokenInformationClass
-                       PrePrivileges,              // TokenInformation
-                       PrePrivilegesLength,        // TokenInformationLength
-                       &IgnoreReturnLength         // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithPrivileges, // TokenHandle
+                                           TokenPrivileges,     // TokenInformationClass
+                                           PrePrivileges,       // TokenInformation
+                                           PrePrivilegesLength, // TokenInformationLength
+                                           &IgnoreReturnLength  // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT( PrePrivileges->PrivilegeCount == PRIVILEGE_COUNT );
-    ASSERT( PrePrivileges->Privileges[SECURITY_INDEX].Attributes ==
-            SE_PRIVILEGE_ENABLED );
-    ASSERT( PrePrivileges->Privileges[UNSOLICITED_INDEX].Attributes == 0 );
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PrePrivileges->PrivilegeCount == PRIVILEGE_COUNT);
+    ASSERT(PrePrivileges->Privileges[SECURITY_INDEX].Attributes == SE_PRIVILEGE_ENABLED);
+    ASSERT(PrePrivileges->Privileges[UNSOLICITED_INDEX].Attributes == 0);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
     NewState->PrivilegeCount = 1;
     NewState->Privileges[0].Luid = UnsolicitedInputPrivilege;
     NewState->Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
 
-    Status = NtAdjustPrivilegesToken(
-                 TokenWithPrivileges,              // TokenHandle
-                 FALSE,                            // DisableAllPrivileges
-                 NewState,                         // NewState (OPTIONAL)
-                 PreviousStateBufferLength,        // BufferLength
-                 PreviousState,                    // PreviousState (OPTIONAL)
-                 &ReturnLength                     // ReturnLength
-                 );
+    Status = NtAdjustPrivilegesToken(TokenWithPrivileges,       // TokenHandle
+                                     FALSE,                     // DisableAllPrivileges
+                                     NewState,                  // NewState (OPTIONAL)
+                                     PreviousStateBufferLength, // BufferLength
+                                     PreviousState,             // PreviousState (OPTIONAL)
+                                     &ReturnLength              // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
     ASSERT(NT_SUCCESS(Status));
@@ -4704,63 +4652,58 @@ DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 
 
     PostPrivileges->PrivilegeCount = 88;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithPrivileges,        // TokenHandle
-                       TokenPrivileges,            // TokenInformationClass
-                       PostPrivileges,             // TokenInformation
-                       PostPrivilegesLength,       // TokenInformationLength
-                       &IgnoreReturnLength         // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithPrivileges,  // TokenHandle
+                                           TokenPrivileges,      // TokenInformationClass
+                                           PostPrivileges,       // TokenInformation
+                                           PostPrivilegesLength, // TokenInformationLength
+                                           &IgnoreReturnLength   // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT( PostPrivileges->PrivilegeCount == PRIVILEGE_COUNT );
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PostPrivileges->PrivilegeCount == PRIVILEGE_COUNT);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    if (Status == STATUS_SUCCESS) {
+    if (Status == STATUS_SUCCESS)
+    {
 
-         //
-         // Check the privilege values
-         //
+        //
+        // Check the privilege values
+        //
 
-         if ( (PostPrivileges->Privileges[0].Attributes == SE_PRIVILEGE_ENABLED)    &&
-              (PostPrivileges->Privileges[1].Attributes == SE_PRIVILEGE_ENABLED)
-         ) {
+        if ((PostPrivileges->Privileges[0].Attributes == SE_PRIVILEGE_ENABLED) &&
+            (PostPrivileges->Privileges[1].Attributes == SE_PRIVILEGE_ENABLED))
+        {
 
             DbgPrint("Succeeded. \n");
-
-         } else {
+        }
+        else
+        {
 
             DbgPrint("********** Failed  Value Check ************\n");
             DbgPrint("Status is: 0x%lx \n", Status);
-            DbgPrint("Before and after privilege 0 state: 0x%lx,  0x%lx \n",
-                    PrePrivileges->Privileges[0].Attributes,
-                    PostPrivileges->Privileges[0].Attributes);
-            DbgPrint("Before and after privilege 1 state: 0x%lx,  0x%lx \n",
-                    PrePrivileges->Privileges[1].Attributes,
-                    PostPrivileges->Privileges[1].Attributes);
+            DbgPrint("Before and after privilege 0 state: 0x%lx,  0x%lx \n", PrePrivileges->Privileges[0].Attributes,
+                     PostPrivileges->Privileges[0].Attributes);
+            DbgPrint("Before and after privilege 1 state: 0x%lx,  0x%lx \n", PrePrivileges->Privileges[1].Attributes,
+                     PostPrivileges->Privileges[1].Attributes);
             DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
             CompletionStatus = FALSE;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         DbgPrint("Change Count is: 0x%lx \n", PreviousState->PrivilegeCount);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_SUCCESS);
 
 
-
-
-
     //////////////////////////////////////////////////////////////////////
     //                                                                  //
     // Return privileges to their previous state                        //
@@ -4771,93 +4714,86 @@ DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
     DbgPrint("Se:     Return privileges to previous state ...                ");
 
     PrePrivileges->PrivilegeCount = 77;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithPrivileges,        // TokenHandle
-                       TokenPrivileges,            // TokenInformationClass
-                       PrePrivileges,              // TokenInformation
-                       PrePrivilegesLength,        // TokenInformationLength
-                       &IgnoreReturnLength         // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithPrivileges, // TokenHandle
+                                           TokenPrivileges,     // TokenInformationClass
+                                           PrePrivileges,       // TokenInformation
+                                           PrePrivilegesLength, // TokenInformationLength
+                                           &IgnoreReturnLength  // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT( PrePrivileges->PrivilegeCount == PRIVILEGE_COUNT );
-    ASSERT( PrePrivileges->Privileges[0].Attributes == SE_PRIVILEGE_ENABLED );
-    ASSERT( PrePrivileges->Privileges[1].Attributes == SE_PRIVILEGE_ENABLED );
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PrePrivileges->PrivilegeCount == PRIVILEGE_COUNT);
+    ASSERT(PrePrivileges->Privileges[0].Attributes == SE_PRIVILEGE_ENABLED);
+    ASSERT(PrePrivileges->Privileges[1].Attributes == SE_PRIVILEGE_ENABLED);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    Status = NtAdjustPrivilegesToken(
-                 TokenWithPrivileges,              // TokenHandle
-                 FALSE,                            // DisableAllPrivileges
-                 PreviousState,                    // NewState (OPTIONAL)
-                 0,                                // BufferLength
-                 NULL,                             // PreviousState (OPTIONAL)
-                 &ReturnLength                     // ReturnLength
-                 );
+    Status = NtAdjustPrivilegesToken(TokenWithPrivileges, // TokenHandle
+                                     FALSE,               // DisableAllPrivileges
+                                     PreviousState,       // NewState (OPTIONAL)
+                                     0,                   // BufferLength
+                                     NULL,                // PreviousState (OPTIONAL)
+                                     &ReturnLength        // ReturnLength
+    );
 
     ASSERT(NT_SUCCESS(Status));
     ASSERT(PreviousState->PrivilegeCount == 1);
 
 
     PostPrivileges->PrivilegeCount = 88;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithPrivileges,        // TokenHandle
-                       TokenPrivileges,            // TokenInformationClass
-                       PostPrivileges,             // TokenInformation
-                       PostPrivilegesLength,       // TokenInformationLength
-                       &IgnoreReturnLength         // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithPrivileges,  // TokenHandle
+                                           TokenPrivileges,      // TokenInformationClass
+                                           PostPrivileges,       // TokenInformation
+                                           PostPrivilegesLength, // TokenInformationLength
+                                           &IgnoreReturnLength   // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT( PostPrivileges->PrivilegeCount == PRIVILEGE_COUNT );
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PostPrivileges->PrivilegeCount == PRIVILEGE_COUNT);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    if (Status == STATUS_SUCCESS) {
+    if (Status == STATUS_SUCCESS)
+    {
 
-         //
-         // Check the privilege values
-         //
+        //
+        // Check the privilege values
+        //
 
-         if ( (PostPrivileges->Privileges[SECURITY_INDEX].Attributes ==
-              SE_PRIVILEGE_ENABLED)    &&
-              (PostPrivileges->Privileges[UNSOLICITED_INDEX].Attributes == 0)
-         ) {
+        if ((PostPrivileges->Privileges[SECURITY_INDEX].Attributes == SE_PRIVILEGE_ENABLED) &&
+            (PostPrivileges->Privileges[UNSOLICITED_INDEX].Attributes == 0))
+        {
 
             DbgPrint("Succeeded. \n");
-
-         } else {
+        }
+        else
+        {
 
             DbgPrint("********** Failed  Value Check ************\n");
             DbgPrint("Status is: 0x%lx \n", Status);
-            DbgPrint("Before and after privilege 0 state: 0x%lx,  0x%lx \n",
-                    PrePrivileges->Privileges[0].Attributes,
-                    PostPrivileges->Privileges[0].Attributes);
-            DbgPrint("Before and after privilege 1 state: 0x%lx,  0x%lx \n",
-                    PrePrivileges->Privileges[1].Attributes,
-                    PostPrivileges->Privileges[1].Attributes);
+            DbgPrint("Before and after privilege 0 state: 0x%lx,  0x%lx \n", PrePrivileges->Privileges[0].Attributes,
+                     PostPrivileges->Privileges[0].Attributes);
+            DbgPrint("Before and after privilege 1 state: 0x%lx,  0x%lx \n", PrePrivileges->Privileges[1].Attributes,
+                     PostPrivileges->Privileges[1].Attributes);
             DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
             CompletionStatus = FALSE;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         CompletionStatus = FALSE;
-
     }
 
 
     ASSERT(Status == STATUS_SUCCESS);
 
 
-
-
     ////////////////////////////////////////////////////////////////
     //                                                            //
     // Done with test                                             //
@@ -4865,16 +4801,15 @@ DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
     ////////////////////////////////////////////////////////////////
 
 
-
-    TstDeallocatePool( PreviousState, PreviousStateBufferLength );
-    TstDeallocatePool( NewState, NewStateBufferLength );
-    TstDeallocatePool( PrePrivileges, PrePrivilegesLength );
-    TstDeallocatePool( PostPrivileges, PostPrivilegesLength );
+    TstDeallocatePool(PreviousState, PreviousStateBufferLength);
+    TstDeallocatePool(NewState, NewStateBufferLength);
+    TstDeallocatePool(PrePrivileges, PrePrivilegesLength);
+    TstDeallocatePool(PostPrivileges, PostPrivilegesLength);
 
 
     return CompletionStatus;
 }
-
+
 ////////////////////////////////////////////////////////////////
 //                                                            //
 // Adjust Groups Test                                         //
@@ -4903,30 +4838,15 @@ TestTokenAdjustGroups()
 
     DbgPrint("\n");
 
-    PreviousState = (PTOKEN_GROUPS)TstAllocatePool(
-                        PagedPool,
-                        PreviousStateBufferLength
-                        );
+    PreviousState = (PTOKEN_GROUPS)TstAllocatePool(PagedPool, PreviousStateBufferLength);
 
-    PreGroups = (PTOKEN_GROUPS)TstAllocatePool(
-                        PagedPool,
-                        PreGroupsLength
-                        );
+    PreGroups = (PTOKEN_GROUPS)TstAllocatePool(PagedPool, PreGroupsLength);
 
-    PostGroups = (PTOKEN_GROUPS)TstAllocatePool(
-                        PagedPool,
-                        PostGroupsLength
-                        );
+    PostGroups = (PTOKEN_GROUPS)TstAllocatePool(PagedPool, PostGroupsLength);
 
-    NewState = (PTOKEN_GROUPS)TstAllocatePool(
-                   PagedPool,
-                   NewStateBufferLength
-                   );
+    NewState = (PTOKEN_GROUPS)TstAllocatePool(PagedPool, NewStateBufferLength);
 
 
-
-
-
     //////////////////////////////////////////////////////////////////////
     //                                                                  //
     // Adjust groups giving no instructions                             //
@@ -4936,935 +4856,878 @@ TestTokenAdjustGroups()
 
     DbgPrint("Se:     Adjust groups with no instructions ...                 ");
 
-    Status = NtAdjustGroupsToken(
-                 SimpleToken,                      // TokenHandle
-                 FALSE,                            // ResetToDefault
-                 NULL,                             // NewState (OPTIONAL)
-                 0,                                // BufferLength
-                 NULL,                             // PreviousState (OPTIONAL)
-                 &ReturnLength                     // ReturnLength
-                 );
+    Status = NtAdjustGroupsToken(SimpleToken,  // TokenHandle
+                                 FALSE,        // ResetToDefault
+                                 NULL,         // NewState (OPTIONAL)
+                                 0,            // BufferLength
+                                 NULL,         // PreviousState (OPTIONAL)
+                                 &ReturnLength // ReturnLength
+    );
 
-    if (Status == STATUS_INVALID_PARAMETER) {
+    if (Status == STATUS_INVALID_PARAMETER)
+    {
 
         DbgPrint("Succeeded. \n");
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_INVALID_PARAMETER);
 
-
-/////////////////////////////////////////////////////////////////////////
-//                                                                     //
-//  Disable unknown group                                              //
-//                                                                     //
-/////////////////////////////////////////////////////////////////////////
+
+    /////////////////////////////////////////////////////////////////////////
+    //                                                                     //
+    //  Disable unknown group                                              //
+    //                                                                     //
+    /////////////////////////////////////////////////////////////////////////
 
     DbgPrint("Se:     Disable unknown group ...                              ");
 
     PreGroups->GroupCount = 77;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PreGroups,              // TokenInformation
-                       PreGroupsLength,        // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PreGroups,          // TokenInformation
+                                           PreGroupsLength,    // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    if (IgnoreStatus != STATUS_SUCCESS) {
+    if (IgnoreStatus != STATUS_SUCCESS)
+    {
         DbgPrint(" \n IgnoreStatus = 0x%lx \n", IgnoreStatus);
         DbgPrint(" \n IgnoreReturnLength = 0x%lx \n", IgnoreReturnLength);
     }
 
-    ASSERT(PreGroups->GroupCount == GROUP_COUNT );
-    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes);
-    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes       == OptionalGroupAttributes);
+    ASSERT(PreGroups->GroupCount == GROUP_COUNT);
+    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes);
+    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes == OptionalGroupAttributes);
     ASSERT(PreGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes);
-    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes);
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
     NewState->GroupCount = 1;
     NewState->Groups[0].Sid = RubbleSid;
     NewState->Groups[0].Attributes = DisabledGroupAttributes;
 
-    Status = NtAdjustGroupsToken(
-                 TokenWithGroups,              // TokenHandle
-                 FALSE,                        // ResetToDefault
-                 NewState,                     // NewState (OPTIONAL)
-                 0,                            // BufferLength
-                 NULL,                         // PreviousState (OPTIONAL)
-                 &ReturnLength                 // ReturnLength
-                 );
+    Status = NtAdjustGroupsToken(TokenWithGroups, // TokenHandle
+                                 FALSE,           // ResetToDefault
+                                 NewState,        // NewState (OPTIONAL)
+                                 0,               // BufferLength
+                                 NULL,            // PreviousState (OPTIONAL)
+                                 &ReturnLength    // ReturnLength
+    );
 
     PostGroups->GroupCount = 88;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PostGroups,             // TokenInformation
-                       PostGroupsLength,       // TokenInformationLength
-                       &IgnoreReturnLength         // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PostGroups,         // TokenInformation
+                                           PostGroupsLength,   // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    if (Status == STATUS_NOT_ALL_ASSIGNED) {
+    if (Status == STATUS_NOT_ALL_ASSIGNED)
+    {
 
-         //
-         // Check the group values
-         //
+        //
+        // Check the group values
+        //
 
-         ASSERT( PostGroups->GroupCount == GROUP_COUNT );
-         if ( (PostGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes)    &&
-              (PostGroups->Groups[CHILD_INDEX].Attributes       == OptionalGroupAttributes) &&
-              (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
-              (PostGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes)
-         ) {
+        ASSERT(PostGroups->GroupCount == GROUP_COUNT);
+        if ((PostGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes) &&
+            (PostGroups->Groups[CHILD_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes))
+        {
 
             DbgPrint("Succeeded. \n");
-
-         } else {
+        }
+        else
+        {
 
             DbgPrint("********** Failed  Value Check ************\n");
             DbgPrint("Status is: 0x%lx \n", Status);
 
-            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
-                    PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
+            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n", PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
+                     PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
 
-            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[CHILD_INDEX].Attributes,
-                    PostGroups->Groups[CHILD_INDEX].Attributes);
+            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n", PreGroups->Groups[CHILD_INDEX].Attributes,
+                     PostGroups->Groups[CHILD_INDEX].Attributes);
 
             DbgPrint("Before/after Neanderthol state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[NEANDERTHOL_INDEX].Attributes,
-                    PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
+                     PreGroups->Groups[NEANDERTHOL_INDEX].Attributes, PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
 
-            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[WORLD_INDEX].Attributes,
-                    PostGroups->Groups[WORLD_INDEX].Attributes);
+            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n", PreGroups->Groups[WORLD_INDEX].Attributes,
+                     PostGroups->Groups[WORLD_INDEX].Attributes);
 
             DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
 
             CompletionStatus = FALSE;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_NOT_ALL_ASSIGNED);
 
 
-
-/////////////////////////////////////////////////////////////////////////
-//                                                                     //
-//  Enable unknown group                                               //
-//                                                                     //
-/////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
+    //                                                                     //
+    //  Enable unknown group                                               //
+    //                                                                     //
+    /////////////////////////////////////////////////////////////////////////
 
     DbgPrint("Se:     Enable unknown group ...                               ");
 
     PreGroups->GroupCount = 77;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PreGroups,              // TokenInformation
-                       PreGroupsLength,        // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PreGroups,          // TokenInformation
+                                           PreGroupsLength,    // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(PreGroups->GroupCount == GROUP_COUNT );
-    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes);
-    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes       == OptionalGroupAttributes);
+    ASSERT(PreGroups->GroupCount == GROUP_COUNT);
+    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes);
+    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes == OptionalGroupAttributes);
     ASSERT(PreGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes);
-    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes);
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
     NewState->GroupCount = 1;
     NewState->Groups[0].Sid = RubbleSid;
     NewState->Groups[0].Attributes = OptionalGroupAttributes;
 
-    Status = NtAdjustGroupsToken(
-                 TokenWithGroups,              // TokenHandle
-                 FALSE,                        // ResetToDefault
-                 NewState,                     // NewState (OPTIONAL)
-                 0,                            // BufferLength
-                 NULL,                         // PreviousState (OPTIONAL)
-                 &ReturnLength                 // ReturnLength
-                 );
+    Status = NtAdjustGroupsToken(TokenWithGroups, // TokenHandle
+                                 FALSE,           // ResetToDefault
+                                 NewState,        // NewState (OPTIONAL)
+                                 0,               // BufferLength
+                                 NULL,            // PreviousState (OPTIONAL)
+                                 &ReturnLength    // ReturnLength
+    );
 
     PostGroups->GroupCount = 88;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PostGroups,             // TokenInformation
-                       PostGroupsLength,       // TokenInformationLength
-                       &IgnoreReturnLength         // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PostGroups,         // TokenInformation
+                                           PostGroupsLength,   // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    if (Status == STATUS_NOT_ALL_ASSIGNED) {
+    if (Status == STATUS_NOT_ALL_ASSIGNED)
+    {
 
-         //
-         // Check the group values
-         //
+        //
+        // Check the group values
+        //
 
-         ASSERT( PostGroups->GroupCount == GROUP_COUNT );
-         if ( (PostGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes)    &&
-              (PostGroups->Groups[CHILD_INDEX].Attributes       == OptionalGroupAttributes) &&
-              (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
-              (PostGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes)
-         ) {
+        ASSERT(PostGroups->GroupCount == GROUP_COUNT);
+        if ((PostGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes) &&
+            (PostGroups->Groups[CHILD_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes))
+        {
 
             DbgPrint("Succeeded. \n");
-
-         } else {
+        }
+        else
+        {
 
             DbgPrint("********** Failed  Value Check ************\n");
             DbgPrint("Status is: 0x%lx \n", Status);
 
-            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
-                    PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
+            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n", PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
+                     PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
 
-            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[CHILD_INDEX].Attributes,
-                    PostGroups->Groups[CHILD_INDEX].Attributes);
+            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n", PreGroups->Groups[CHILD_INDEX].Attributes,
+                     PostGroups->Groups[CHILD_INDEX].Attributes);
 
             DbgPrint("Before/after Neanderthol state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[NEANDERTHOL_INDEX].Attributes,
-                    PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
+                     PreGroups->Groups[NEANDERTHOL_INDEX].Attributes, PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
 
-            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[WORLD_INDEX].Attributes,
-                    PostGroups->Groups[WORLD_INDEX].Attributes);
+            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n", PreGroups->Groups[WORLD_INDEX].Attributes,
+                     PostGroups->Groups[WORLD_INDEX].Attributes);
 
             DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
 
             CompletionStatus = FALSE;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_NOT_ALL_ASSIGNED);
 
 
-
-/////////////////////////////////////////////////////////////////////////
-//                                                                     //
-//  Disable mandatory group                                            //
-//                                                                     //
-/////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
+    //                                                                     //
+    //  Disable mandatory group                                            //
+    //                                                                     //
+    /////////////////////////////////////////////////////////////////////////
 
     DbgPrint("Se:     Disable mandatory group ...                            ");
 
     PreGroups->GroupCount = 77;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PreGroups,              // TokenInformation
-                       PreGroupsLength,        // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PreGroups,          // TokenInformation
+                                           PreGroupsLength,    // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(PreGroups->GroupCount == GROUP_COUNT );
-    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes);
-    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes       == OptionalGroupAttributes);
+    ASSERT(PreGroups->GroupCount == GROUP_COUNT);
+    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes);
+    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes == OptionalGroupAttributes);
     ASSERT(PreGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes);
-    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes);
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
     NewState->GroupCount = 1;
     NewState->Groups[0].Sid = WorldSid;
     NewState->Groups[0].Attributes = DisabledGroupAttributes;
 
-    Status = NtAdjustGroupsToken(
-                 TokenWithGroups,              // TokenHandle
-                 FALSE,                        // ResetToDefault
-                 NewState,                     // NewState (OPTIONAL)
-                 0,                            // BufferLength
-                 NULL,                         // PreviousState (OPTIONAL)
-                 &ReturnLength                 // ReturnLength
-                 );
+    Status = NtAdjustGroupsToken(TokenWithGroups, // TokenHandle
+                                 FALSE,           // ResetToDefault
+                                 NewState,        // NewState (OPTIONAL)
+                                 0,               // BufferLength
+                                 NULL,            // PreviousState (OPTIONAL)
+                                 &ReturnLength    // ReturnLength
+    );
 
     PostGroups->GroupCount = 88;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PostGroups,             // TokenInformation
-                       PostGroupsLength,       // TokenInformationLength
-                       &IgnoreReturnLength         // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PostGroups,         // TokenInformation
+                                           PostGroupsLength,   // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    if (Status == STATUS_CANT_DISABLE_MANDATORY) {
+    if (Status == STATUS_CANT_DISABLE_MANDATORY)
+    {
 
-         //
-         // Check the group values
-         //
+        //
+        // Check the group values
+        //
 
-         ASSERT( PostGroups->GroupCount == GROUP_COUNT );
-         if ( (PostGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes)    &&
-              (PostGroups->Groups[CHILD_INDEX].Attributes       == OptionalGroupAttributes) &&
-              (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
-              (PostGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes)
-         ) {
+        ASSERT(PostGroups->GroupCount == GROUP_COUNT);
+        if ((PostGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes) &&
+            (PostGroups->Groups[CHILD_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes))
+        {
 
             DbgPrint("Succeeded. \n");
-
-         } else {
+        }
+        else
+        {
 
             DbgPrint("********** Failed  Value Check ************\n");
             DbgPrint("Status is: 0x%lx \n", Status);
 
-            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
-                    PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
+            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n", PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
+                     PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
 
-            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[CHILD_INDEX].Attributes,
-                    PostGroups->Groups[CHILD_INDEX].Attributes);
+            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n", PreGroups->Groups[CHILD_INDEX].Attributes,
+                     PostGroups->Groups[CHILD_INDEX].Attributes);
 
             DbgPrint("Before/after Neanderthol state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[NEANDERTHOL_INDEX].Attributes,
-                    PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
+                     PreGroups->Groups[NEANDERTHOL_INDEX].Attributes, PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
 
-            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[WORLD_INDEX].Attributes,
-                    PostGroups->Groups[WORLD_INDEX].Attributes);
+            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n", PreGroups->Groups[WORLD_INDEX].Attributes,
+                     PostGroups->Groups[WORLD_INDEX].Attributes);
 
             DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
 
             CompletionStatus = FALSE;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_CANT_DISABLE_MANDATORY);
 
 
-
-
-/////////////////////////////////////////////////////////////////////////
-//                                                                     //
-//  Enable mandatory group                                             //
-//                                                                     //
-/////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
+    //                                                                     //
+    //  Enable mandatory group                                             //
+    //                                                                     //
+    /////////////////////////////////////////////////////////////////////////
 
     DbgPrint("Se:     Enable mandatory group ...                             ");
 
     PreGroups->GroupCount = 77;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PreGroups,              // TokenInformation
-                       PreGroupsLength,        // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PreGroups,          // TokenInformation
+                                           PreGroupsLength,    // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(PreGroups->GroupCount == GROUP_COUNT );
-    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes);
-    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes       == OptionalGroupAttributes);
+    ASSERT(PreGroups->GroupCount == GROUP_COUNT);
+    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes);
+    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes == OptionalGroupAttributes);
     ASSERT(PreGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes);
-    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes);
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
     NewState->GroupCount = 1;
     NewState->Groups[0].Sid = WorldSid;
     NewState->Groups[0].Attributes = OptionalGroupAttributes;
 
-    Status = NtAdjustGroupsToken(
-                 TokenWithGroups,              // TokenHandle
-                 FALSE,                        // ResetToDefault
-                 NewState,                     // NewState (OPTIONAL)
-                 0,                            // BufferLength
-                 NULL,                         // PreviousState (OPTIONAL)
-                 &ReturnLength                 // ReturnLength
-                 );
+    Status = NtAdjustGroupsToken(TokenWithGroups, // TokenHandle
+                                 FALSE,           // ResetToDefault
+                                 NewState,        // NewState (OPTIONAL)
+                                 0,               // BufferLength
+                                 NULL,            // PreviousState (OPTIONAL)
+                                 &ReturnLength    // ReturnLength
+    );
 
     PostGroups->GroupCount = 88;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PostGroups,             // TokenInformation
-                       PostGroupsLength,       // TokenInformationLength
-                       &IgnoreReturnLength         // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PostGroups,         // TokenInformation
+                                           PostGroupsLength,   // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    if (Status == STATUS_SUCCESS) {
+    if (Status == STATUS_SUCCESS)
+    {
 
-         //
-         // Check the group values
-         //
+        //
+        // Check the group values
+        //
 
-         ASSERT( PostGroups->GroupCount == GROUP_COUNT );
-         if ( (PostGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes)    &&
-              (PostGroups->Groups[CHILD_INDEX].Attributes       == OptionalGroupAttributes) &&
-              (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
-              (PostGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes)
-         ) {
+        ASSERT(PostGroups->GroupCount == GROUP_COUNT);
+        if ((PostGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes) &&
+            (PostGroups->Groups[CHILD_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes))
+        {
 
             DbgPrint("Succeeded. \n");
-
-         } else {
+        }
+        else
+        {
 
             DbgPrint("********** Failed  Value Check ************\n");
             DbgPrint("Status is: 0x%lx \n", Status);
 
-            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
-                    PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
+            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n", PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
+                     PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
 
-            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[CHILD_INDEX].Attributes,
-                    PostGroups->Groups[CHILD_INDEX].Attributes);
+            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n", PreGroups->Groups[CHILD_INDEX].Attributes,
+                     PostGroups->Groups[CHILD_INDEX].Attributes);
 
             DbgPrint("Before/after Neanderthol state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[NEANDERTHOL_INDEX].Attributes,
-                    PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
+                     PreGroups->Groups[NEANDERTHOL_INDEX].Attributes, PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
 
-            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[WORLD_INDEX].Attributes,
-                    PostGroups->Groups[WORLD_INDEX].Attributes);
+            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n", PreGroups->Groups[WORLD_INDEX].Attributes,
+                     PostGroups->Groups[WORLD_INDEX].Attributes);
 
             DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
 
             CompletionStatus = FALSE;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_SUCCESS);
 
 
-
-/////////////////////////////////////////////////////////////////////////
-//                                                                     //
-//  Disable optional group                                             //
-//                                                                     //
-/////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
+    //                                                                     //
+    //  Disable optional group                                             //
+    //                                                                     //
+    /////////////////////////////////////////////////////////////////////////
 
     DbgPrint("Se:     Disable optional group ...                             ");
 
     PreGroups->GroupCount = 77;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PreGroups,              // TokenInformation
-                       PreGroupsLength,        // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PreGroups,          // TokenInformation
+                                           PreGroupsLength,    // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(PreGroups->GroupCount == GROUP_COUNT );
-    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes);
-    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes       == OptionalGroupAttributes);
+    ASSERT(PreGroups->GroupCount == GROUP_COUNT);
+    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes);
+    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes == OptionalGroupAttributes);
     ASSERT(PreGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes);
-    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes);
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
     NewState->GroupCount = 1;
     NewState->Groups[0].Sid = ChildSid;
     NewState->Groups[0].Attributes = DisabledGroupAttributes;
 
-    Status = NtAdjustGroupsToken(
-                 TokenWithGroups,              // TokenHandle
-                 FALSE,                        // ResetToDefault
-                 NewState,                     // NewState (OPTIONAL)
-                 0,                            // BufferLength
-                 NULL,                         // PreviousState (OPTIONAL)
-                 &ReturnLength                 // ReturnLength
-                 );
+    Status = NtAdjustGroupsToken(TokenWithGroups, // TokenHandle
+                                 FALSE,           // ResetToDefault
+                                 NewState,        // NewState (OPTIONAL)
+                                 0,               // BufferLength
+                                 NULL,            // PreviousState (OPTIONAL)
+                                 &ReturnLength    // ReturnLength
+    );
 
     PostGroups->GroupCount = 88;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PostGroups,             // TokenInformation
-                       PostGroupsLength,       // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PostGroups,         // TokenInformation
+                                           PostGroupsLength,   // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    if (Status == STATUS_SUCCESS) {
+    if (Status == STATUS_SUCCESS)
+    {
 
-         //
-         // Check the group values
-         //
+        //
+        // Check the group values
+        //
 
-         ASSERT( PostGroups->GroupCount == GROUP_COUNT );
-         if ( (PostGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes)    &&
-              (PostGroups->Groups[CHILD_INDEX].Attributes       == DisabledGroupAttributes) &&
-              (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
-              (PostGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes)
-         ) {
+        ASSERT(PostGroups->GroupCount == GROUP_COUNT);
+        if ((PostGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes) &&
+            (PostGroups->Groups[CHILD_INDEX].Attributes == DisabledGroupAttributes) &&
+            (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes))
+        {
 
             DbgPrint("Succeeded. \n");
-
-         } else {
+        }
+        else
+        {
 
             DbgPrint("********** Failed  Value Check ************\n");
             DbgPrint("Status is: 0x%lx \n", Status);
 
-            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
-                    PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
+            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n", PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
+                     PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
 
-            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[CHILD_INDEX].Attributes,
-                    PostGroups->Groups[CHILD_INDEX].Attributes);
+            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n", PreGroups->Groups[CHILD_INDEX].Attributes,
+                     PostGroups->Groups[CHILD_INDEX].Attributes);
 
             DbgPrint("Before/after Neanderthol state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[NEANDERTHOL_INDEX].Attributes,
-                    PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
+                     PreGroups->Groups[NEANDERTHOL_INDEX].Attributes, PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
 
-            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[WORLD_INDEX].Attributes,
-                    PostGroups->Groups[WORLD_INDEX].Attributes);
+            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n", PreGroups->Groups[WORLD_INDEX].Attributes,
+                     PostGroups->Groups[WORLD_INDEX].Attributes);
 
             DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
 
             CompletionStatus = FALSE;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_SUCCESS);
 
 
-
-/////////////////////////////////////////////////////////////////////////
-//                                                                     //
-//  Disable already disabled group                                     //
-//                                                                     //
-/////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
+    //                                                                     //
+    //  Disable already disabled group                                     //
+    //                                                                     //
+    /////////////////////////////////////////////////////////////////////////
 
     DbgPrint("Se:     Disable already disabled group ...                     ");
 
     PreGroups->GroupCount = 77;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PreGroups,              // TokenInformation
-                       PreGroupsLength,        // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PreGroups,          // TokenInformation
+                                           PreGroupsLength,    // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(PreGroups->GroupCount == GROUP_COUNT );
-    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes);
-    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes       == DisabledGroupAttributes);
+    ASSERT(PreGroups->GroupCount == GROUP_COUNT);
+    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes);
+    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes == DisabledGroupAttributes);
     ASSERT(PreGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes);
-    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes);
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
     NewState->GroupCount = 1;
     NewState->Groups[0].Sid = ChildSid;
     NewState->Groups[0].Attributes = 0;
 
-    Status = NtAdjustGroupsToken(
-                 TokenWithGroups,              // TokenHandle
-                 FALSE,                        // ResetToDefault
-                 NewState,                     // NewState (OPTIONAL)
-                 0,                            // BufferLength
-                 NULL,                         // PreviousState (OPTIONAL)
-                 &ReturnLength                 // ReturnLength
-                 );
+    Status = NtAdjustGroupsToken(TokenWithGroups, // TokenHandle
+                                 FALSE,           // ResetToDefault
+                                 NewState,        // NewState (OPTIONAL)
+                                 0,               // BufferLength
+                                 NULL,            // PreviousState (OPTIONAL)
+                                 &ReturnLength    // ReturnLength
+    );
 
     PostGroups->GroupCount = 88;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PostGroups,             // TokenInformation
-                       PostGroupsLength,       // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PostGroups,         // TokenInformation
+                                           PostGroupsLength,   // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    if (Status == STATUS_SUCCESS) {
+    if (Status == STATUS_SUCCESS)
+    {
 
-         //
-         // Check the group values
-         //
+        //
+        // Check the group values
+        //
 
-         ASSERT( PostGroups->GroupCount == GROUP_COUNT );
-         if ( (PostGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes)    &&
-              (PostGroups->Groups[CHILD_INDEX].Attributes       == DisabledGroupAttributes) &&
-              (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
-              (PostGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes)
-         ) {
+        ASSERT(PostGroups->GroupCount == GROUP_COUNT);
+        if ((PostGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes) &&
+            (PostGroups->Groups[CHILD_INDEX].Attributes == DisabledGroupAttributes) &&
+            (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes))
+        {
 
             DbgPrint("Succeeded. \n");
-
-         } else {
+        }
+        else
+        {
 
             DbgPrint("********** Failed  Value Check ************\n");
             DbgPrint("Status is: 0x%lx \n", Status);
 
-            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
-                    PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
+            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n", PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
+                     PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
 
-            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[CHILD_INDEX].Attributes,
-                    PostGroups->Groups[CHILD_INDEX].Attributes);
+            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n", PreGroups->Groups[CHILD_INDEX].Attributes,
+                     PostGroups->Groups[CHILD_INDEX].Attributes);
 
             DbgPrint("Before/after Neanderthol state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[NEANDERTHOL_INDEX].Attributes,
-                    PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
+                     PreGroups->Groups[NEANDERTHOL_INDEX].Attributes, PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
 
-            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[WORLD_INDEX].Attributes,
-                    PostGroups->Groups[WORLD_INDEX].Attributes);
+            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n", PreGroups->Groups[WORLD_INDEX].Attributes,
+                     PostGroups->Groups[WORLD_INDEX].Attributes);
 
             DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
 
             CompletionStatus = FALSE;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_SUCCESS);
 
 
-
-/////////////////////////////////////////////////////////////////////////
-//                                                                     //
-//  Enable optional group                                              //
-//                                                                     //
-/////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
+    //                                                                     //
+    //  Enable optional group                                              //
+    //                                                                     //
+    /////////////////////////////////////////////////////////////////////////
 
     DbgPrint("Se:     Enable optional group ...                              ");
 
     PreGroups->GroupCount = 77;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PreGroups,              // TokenInformation
-                       PreGroupsLength,        // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PreGroups,          // TokenInformation
+                                           PreGroupsLength,    // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(PreGroups->GroupCount == GROUP_COUNT );
-    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes);
-    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes       == DisabledGroupAttributes);
+    ASSERT(PreGroups->GroupCount == GROUP_COUNT);
+    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes);
+    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes == DisabledGroupAttributes);
     ASSERT(PreGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes);
-    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes);
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
     NewState->GroupCount = 1;
     NewState->Groups[0].Sid = ChildSid;
     NewState->Groups[0].Attributes = SE_GROUP_ENABLED;
 
-    Status = NtAdjustGroupsToken(
-                 TokenWithGroups,              // TokenHandle
-                 FALSE,                        // ResetToDefault
-                 NewState,                     // NewState (OPTIONAL)
-                 0,                            // BufferLength
-                 NULL,                         // PreviousState (OPTIONAL)
-                 &ReturnLength                 // ReturnLength
-                 );
+    Status = NtAdjustGroupsToken(TokenWithGroups, // TokenHandle
+                                 FALSE,           // ResetToDefault
+                                 NewState,        // NewState (OPTIONAL)
+                                 0,               // BufferLength
+                                 NULL,            // PreviousState (OPTIONAL)
+                                 &ReturnLength    // ReturnLength
+    );
 
     PostGroups->GroupCount = 88;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PostGroups,             // TokenInformation
-                       PostGroupsLength,       // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PostGroups,         // TokenInformation
+                                           PostGroupsLength,   // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    if (Status == STATUS_SUCCESS) {
+    if (Status == STATUS_SUCCESS)
+    {
 
-         //
-         // Check the group values
-         //
+        //
+        // Check the group values
+        //
 
-         ASSERT( PostGroups->GroupCount == GROUP_COUNT );
-         if ( (PostGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes)    &&
-              (PostGroups->Groups[CHILD_INDEX].Attributes       == OptionalGroupAttributes) &&
-              (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
-              (PostGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes)
-         ) {
+        ASSERT(PostGroups->GroupCount == GROUP_COUNT);
+        if ((PostGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes) &&
+            (PostGroups->Groups[CHILD_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes))
+        {
 
             DbgPrint("Succeeded. \n");
-
-         } else {
+        }
+        else
+        {
 
             DbgPrint("********** Failed  Value Check ************\n");
             DbgPrint("Status is: 0x%lx \n", Status);
 
-            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
-                    PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
+            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n", PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
+                     PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
 
-            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[CHILD_INDEX].Attributes,
-                    PostGroups->Groups[CHILD_INDEX].Attributes);
+            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n", PreGroups->Groups[CHILD_INDEX].Attributes,
+                     PostGroups->Groups[CHILD_INDEX].Attributes);
 
             DbgPrint("Before/after Neanderthol state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[NEANDERTHOL_INDEX].Attributes,
-                    PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
+                     PreGroups->Groups[NEANDERTHOL_INDEX].Attributes, PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
 
-            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[WORLD_INDEX].Attributes,
-                    PostGroups->Groups[WORLD_INDEX].Attributes);
+            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n", PreGroups->Groups[WORLD_INDEX].Attributes,
+                     PostGroups->Groups[WORLD_INDEX].Attributes);
 
             DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
 
             CompletionStatus = FALSE;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_SUCCESS);
 
 
-
-/////////////////////////////////////////////////////////////////////////
-//                                                                     //
-//  Enable already enabled group                                       //
-//                                                                     //
-/////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
+    //                                                                     //
+    //  Enable already enabled group                                       //
+    //                                                                     //
+    /////////////////////////////////////////////////////////////////////////
 
     DbgPrint("Se:     Enable already enabled group ...                       ");
 
     PreGroups->GroupCount = 77;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PreGroups,              // TokenInformation
-                       PreGroupsLength,        // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PreGroups,          // TokenInformation
+                                           PreGroupsLength,    // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(PreGroups->GroupCount == GROUP_COUNT );
-    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes);
-    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes       == OptionalGroupAttributes);
+    ASSERT(PreGroups->GroupCount == GROUP_COUNT);
+    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes);
+    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes == OptionalGroupAttributes);
     ASSERT(PreGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes);
-    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes);
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
     NewState->GroupCount = 1;
     NewState->Groups[0].Sid = ChildSid;
     NewState->Groups[0].Attributes = SE_GROUP_ENABLED;
 
-    Status = NtAdjustGroupsToken(
-                 TokenWithGroups,              // TokenHandle
-                 FALSE,                        // ResetToDefault
-                 NewState,                     // NewState (OPTIONAL)
-                 0,                            // BufferLength
-                 NULL,                         // PreviousState (OPTIONAL)
-                 &ReturnLength                 // ReturnLength
-                 );
+    Status = NtAdjustGroupsToken(TokenWithGroups, // TokenHandle
+                                 FALSE,           // ResetToDefault
+                                 NewState,        // NewState (OPTIONAL)
+                                 0,               // BufferLength
+                                 NULL,            // PreviousState (OPTIONAL)
+                                 &ReturnLength    // ReturnLength
+    );
 
     PostGroups->GroupCount = 88;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PostGroups,             // TokenInformation
-                       PostGroupsLength,       // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PostGroups,         // TokenInformation
+                                           PostGroupsLength,   // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    if (Status == STATUS_SUCCESS) {
+    if (Status == STATUS_SUCCESS)
+    {
 
-         //
-         // Check the group values
-         //
+        //
+        // Check the group values
+        //
 
-         ASSERT( PostGroups->GroupCount == GROUP_COUNT );
-         if ( (PostGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes)    &&
-              (PostGroups->Groups[CHILD_INDEX].Attributes       == OptionalGroupAttributes) &&
-              (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
-              (PostGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes)
-         ) {
+        ASSERT(PostGroups->GroupCount == GROUP_COUNT);
+        if ((PostGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes) &&
+            (PostGroups->Groups[CHILD_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes))
+        {
 
             DbgPrint("Succeeded. \n");
-
-         } else {
+        }
+        else
+        {
 
             DbgPrint("********** Failed  Value Check ************\n");
             DbgPrint("Status is: 0x%lx \n", Status);
 
-            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
-                    PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
+            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n", PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
+                     PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
 
-            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[CHILD_INDEX].Attributes,
-                    PostGroups->Groups[CHILD_INDEX].Attributes);
+            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n", PreGroups->Groups[CHILD_INDEX].Attributes,
+                     PostGroups->Groups[CHILD_INDEX].Attributes);
 
             DbgPrint("Before/after Neanderthol state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[NEANDERTHOL_INDEX].Attributes,
-                    PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
+                     PreGroups->Groups[NEANDERTHOL_INDEX].Attributes, PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
 
-            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[WORLD_INDEX].Attributes,
-                    PostGroups->Groups[WORLD_INDEX].Attributes);
+            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n", PreGroups->Groups[WORLD_INDEX].Attributes,
+                     PostGroups->Groups[WORLD_INDEX].Attributes);
 
             DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
 
             CompletionStatus = FALSE;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_SUCCESS);
 
 
-
-/////////////////////////////////////////////////////////////////////////
-//                                                                     //
-//  Disable optional and unknown group                                 //
-//                                                                     //
-/////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
+    //                                                                     //
+    //  Disable optional and unknown group                                 //
+    //                                                                     //
+    /////////////////////////////////////////////////////////////////////////
 
     DbgPrint("Se:     Disable optional and unknown group ...                 ");
 
     PreGroups->GroupCount = 77;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PreGroups,              // TokenInformation
-                       PreGroupsLength,        // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PreGroups,          // TokenInformation
+                                           PreGroupsLength,    // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(PreGroups->GroupCount == GROUP_COUNT );
-    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes);
-    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes       == OptionalGroupAttributes);
+    ASSERT(PreGroups->GroupCount == GROUP_COUNT);
+    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes);
+    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes == OptionalGroupAttributes);
     ASSERT(PreGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes);
-    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes);
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
     NewState->GroupCount = 2;
     NewState->Groups[0].Sid = ChildSid;
@@ -5872,111 +5735,103 @@ DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
     NewState->Groups[0].Attributes = DisabledGroupAttributes;
     NewState->Groups[1].Attributes = DisabledGroupAttributes;
 
-    Status = NtAdjustGroupsToken(
-                 TokenWithGroups,              // TokenHandle
-                 FALSE,                        // ResetToDefault
-                 NewState,                     // NewState (OPTIONAL)
-                 0,                            // BufferLength
-                 NULL,                         // PreviousState (OPTIONAL)
-                 &ReturnLength                 // ReturnLength
-                 );
+    Status = NtAdjustGroupsToken(TokenWithGroups, // TokenHandle
+                                 FALSE,           // ResetToDefault
+                                 NewState,        // NewState (OPTIONAL)
+                                 0,               // BufferLength
+                                 NULL,            // PreviousState (OPTIONAL)
+                                 &ReturnLength    // ReturnLength
+    );
 
     PostGroups->GroupCount = 88;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PostGroups,             // TokenInformation
-                       PostGroupsLength,       // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PostGroups,         // TokenInformation
+                                           PostGroupsLength,   // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    if (Status == STATUS_NOT_ALL_ASSIGNED) {
+    if (Status == STATUS_NOT_ALL_ASSIGNED)
+    {
 
-         //
-         // Check the group values
-         //
+        //
+        // Check the group values
+        //
 
-         ASSERT( PostGroups->GroupCount == GROUP_COUNT );
-         if ( (PostGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes)    &&
-              (PostGroups->Groups[CHILD_INDEX].Attributes       == DisabledGroupAttributes) &&
-              (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
-              (PostGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes)
-         ) {
+        ASSERT(PostGroups->GroupCount == GROUP_COUNT);
+        if ((PostGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes) &&
+            (PostGroups->Groups[CHILD_INDEX].Attributes == DisabledGroupAttributes) &&
+            (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes))
+        {
 
             DbgPrint("Succeeded. \n");
-
-         } else {
+        }
+        else
+        {
 
             DbgPrint("********** Failed  Value Check ************\n");
             DbgPrint("Status is: 0x%lx \n", Status);
 
-            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
-                    PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
+            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n", PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
+                     PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
 
-            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[CHILD_INDEX].Attributes,
-                    PostGroups->Groups[CHILD_INDEX].Attributes);
+            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n", PreGroups->Groups[CHILD_INDEX].Attributes,
+                     PostGroups->Groups[CHILD_INDEX].Attributes);
 
             DbgPrint("Before/after Neanderthol state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[NEANDERTHOL_INDEX].Attributes,
-                    PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
+                     PreGroups->Groups[NEANDERTHOL_INDEX].Attributes, PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
 
-            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[WORLD_INDEX].Attributes,
-                    PostGroups->Groups[WORLD_INDEX].Attributes);
+            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n", PreGroups->Groups[WORLD_INDEX].Attributes,
+                     PostGroups->Groups[WORLD_INDEX].Attributes);
 
             DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
 
             CompletionStatus = FALSE;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_NOT_ALL_ASSIGNED);
 
 
-
-
-/////////////////////////////////////////////////////////////////////////
-//                                                                     //
-//  Enable optional and unknown group                                  //
-//                                                                     //
-/////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
+    //                                                                     //
+    //  Enable optional and unknown group                                  //
+    //                                                                     //
+    /////////////////////////////////////////////////////////////////////////
 
     DbgPrint("Se:     Enable optional and unknown group ...                  ");
 
     PreGroups->GroupCount = 77;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PreGroups,              // TokenInformation
-                       PreGroupsLength,        // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PreGroups,          // TokenInformation
+                                           PreGroupsLength,    // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(PreGroups->GroupCount == GROUP_COUNT );
-    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes);
-    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes       == DisabledGroupAttributes);
+    ASSERT(PreGroups->GroupCount == GROUP_COUNT);
+    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes);
+    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes == DisabledGroupAttributes);
     ASSERT(PreGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes);
-    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes);
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
     NewState->GroupCount = 2;
     NewState->Groups[0].Sid = ChildSid;
@@ -5984,111 +5839,103 @@ DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
     NewState->Groups[0].Attributes = OptionalGroupAttributes;
     NewState->Groups[1].Attributes = OptionalGroupAttributes;
 
-    Status = NtAdjustGroupsToken(
-                 TokenWithGroups,              // TokenHandle
-                 FALSE,                        // ResetToDefault
-                 NewState,                     // NewState (OPTIONAL)
-                 0,                            // BufferLength
-                 NULL,                         // PreviousState (OPTIONAL)
-                 &ReturnLength                 // ReturnLength
-                 );
+    Status = NtAdjustGroupsToken(TokenWithGroups, // TokenHandle
+                                 FALSE,           // ResetToDefault
+                                 NewState,        // NewState (OPTIONAL)
+                                 0,               // BufferLength
+                                 NULL,            // PreviousState (OPTIONAL)
+                                 &ReturnLength    // ReturnLength
+    );
 
     PostGroups->GroupCount = 88;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PostGroups,             // TokenInformation
-                       PostGroupsLength,       // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PostGroups,         // TokenInformation
+                                           PostGroupsLength,   // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    if (Status == STATUS_NOT_ALL_ASSIGNED) {
+    if (Status == STATUS_NOT_ALL_ASSIGNED)
+    {
 
-         //
-         // Check the group values
-         //
+        //
+        // Check the group values
+        //
 
-         ASSERT( PostGroups->GroupCount == GROUP_COUNT );
-         if ( (PostGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes)    &&
-              (PostGroups->Groups[CHILD_INDEX].Attributes       == OptionalGroupAttributes) &&
-              (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
-              (PostGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes)
-         ) {
+        ASSERT(PostGroups->GroupCount == GROUP_COUNT);
+        if ((PostGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes) &&
+            (PostGroups->Groups[CHILD_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes))
+        {
 
             DbgPrint("Succeeded. \n");
-
-         } else {
+        }
+        else
+        {
 
             DbgPrint("********** Failed  Value Check ************\n");
             DbgPrint("Status is: 0x%lx \n", Status);
 
-            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
-                    PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
+            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n", PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
+                     PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
 
-            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[CHILD_INDEX].Attributes,
-                    PostGroups->Groups[CHILD_INDEX].Attributes);
+            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n", PreGroups->Groups[CHILD_INDEX].Attributes,
+                     PostGroups->Groups[CHILD_INDEX].Attributes);
 
             DbgPrint("Before/after Neanderthol state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[NEANDERTHOL_INDEX].Attributes,
-                    PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
+                     PreGroups->Groups[NEANDERTHOL_INDEX].Attributes, PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
 
-            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[WORLD_INDEX].Attributes,
-                    PostGroups->Groups[WORLD_INDEX].Attributes);
+            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n", PreGroups->Groups[WORLD_INDEX].Attributes,
+                     PostGroups->Groups[WORLD_INDEX].Attributes);
 
             DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
 
             CompletionStatus = FALSE;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_NOT_ALL_ASSIGNED);
 
 
-
-
-/////////////////////////////////////////////////////////////////////////
-//                                                                     //
-//  Disable optional and mandatory group                               //
-//                                                                     //
-/////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
+    //                                                                     //
+    //  Disable optional and mandatory group                               //
+    //                                                                     //
+    /////////////////////////////////////////////////////////////////////////
 
     DbgPrint("Se:     Disable optional and mandatory group ...               ");
 
     PreGroups->GroupCount = 77;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PreGroups,              // TokenInformation
-                       PreGroupsLength,        // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PreGroups,          // TokenInformation
+                                           PreGroupsLength,    // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(PreGroups->GroupCount == GROUP_COUNT );
-    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes);
-    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes       == OptionalGroupAttributes);
+    ASSERT(PreGroups->GroupCount == GROUP_COUNT);
+    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes);
+    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes == OptionalGroupAttributes);
     ASSERT(PreGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes);
-    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes);
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
     NewState->GroupCount = 2;
     NewState->Groups[0].Sid = ChildSid;
@@ -6096,89 +5943,83 @@ DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
     NewState->Groups[0].Attributes = DisabledGroupAttributes;
     NewState->Groups[1].Attributes = DisabledGroupAttributes;
 
-    Status = NtAdjustGroupsToken(
-                 TokenWithGroups,              // TokenHandle
-                 FALSE,                        // ResetToDefault
-                 NewState,                     // NewState (OPTIONAL)
-                 0,                            // BufferLength
-                 NULL,                         // PreviousState (OPTIONAL)
-                 &ReturnLength                 // ReturnLength
-                 );
+    Status = NtAdjustGroupsToken(TokenWithGroups, // TokenHandle
+                                 FALSE,           // ResetToDefault
+                                 NewState,        // NewState (OPTIONAL)
+                                 0,               // BufferLength
+                                 NULL,            // PreviousState (OPTIONAL)
+                                 &ReturnLength    // ReturnLength
+    );
 
     PostGroups->GroupCount = 88;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PostGroups,             // TokenInformation
-                       PostGroupsLength,       // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PostGroups,         // TokenInformation
+                                           PostGroupsLength,   // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    if (Status == STATUS_CANT_DISABLE_MANDATORY) {
+    if (Status == STATUS_CANT_DISABLE_MANDATORY)
+    {
 
-         //
-         // Check the group values
-         //
+        //
+        // Check the group values
+        //
 
-         ASSERT( PostGroups->GroupCount == GROUP_COUNT );
-         if ( (PostGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes)    &&
-              (PostGroups->Groups[CHILD_INDEX].Attributes       == OptionalGroupAttributes) &&
-              (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
-              (PostGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes)
-         ) {
+        ASSERT(PostGroups->GroupCount == GROUP_COUNT);
+        if ((PostGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes) &&
+            (PostGroups->Groups[CHILD_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes))
+        {
 
             DbgPrint("Succeeded. \n");
-
-         } else {
+        }
+        else
+        {
 
             DbgPrint("********** Failed  Value Check ************\n");
             DbgPrint("Status is: 0x%lx \n", Status);
 
-            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
-                    PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
+            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n", PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
+                     PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
 
-            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[CHILD_INDEX].Attributes,
-                    PostGroups->Groups[CHILD_INDEX].Attributes);
+            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n", PreGroups->Groups[CHILD_INDEX].Attributes,
+                     PostGroups->Groups[CHILD_INDEX].Attributes);
 
             DbgPrint("Before/after Neanderthol state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[NEANDERTHOL_INDEX].Attributes,
-                    PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
+                     PreGroups->Groups[NEANDERTHOL_INDEX].Attributes, PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
 
-            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[WORLD_INDEX].Attributes,
-                    PostGroups->Groups[WORLD_INDEX].Attributes);
+            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n", PreGroups->Groups[WORLD_INDEX].Attributes,
+                     PostGroups->Groups[WORLD_INDEX].Attributes);
 
             DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
 
             CompletionStatus = FALSE;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_CANT_DISABLE_MANDATORY);
 
 
-
-/////////////////////////////////////////////////////////////////////////
-//                                                                     //
-//  Enable optional and mandatory group                                //
-//                                                                     //
-/////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
+    //                                                                     //
+    //  Enable optional and mandatory group                                //
+    //                                                                     //
+    /////////////////////////////////////////////////////////////////////////
 
     DbgPrint("Se:     Enable optional and mandatory group ...                ");
 
@@ -6186,34 +6027,32 @@ DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
     NewState->Groups[0].Sid = ChildSid;
     NewState->Groups[0].Attributes = DisabledGroupAttributes;
 
-    Status = NtAdjustGroupsToken(
-                 TokenWithGroups,              // TokenHandle
-                 FALSE,                        // ResetToDefault
-                 NewState,                     // NewState (OPTIONAL)
-                 0,                            // BufferLength
-                 NULL,                         // PreviousState (OPTIONAL)
-                 &ReturnLength                 // ReturnLength
-                 );
+    Status = NtAdjustGroupsToken(TokenWithGroups, // TokenHandle
+                                 FALSE,           // ResetToDefault
+                                 NewState,        // NewState (OPTIONAL)
+                                 0,               // BufferLength
+                                 NULL,            // PreviousState (OPTIONAL)
+                                 &ReturnLength    // ReturnLength
+    );
     ASSERT(Status == STATUS_SUCCESS);
 
     PreGroups->GroupCount = 77;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PreGroups,              // TokenInformation
-                       PreGroupsLength,        // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PreGroups,          // TokenInformation
+                                           PreGroupsLength,    // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(PreGroups->GroupCount == GROUP_COUNT );
-    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes);
-    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes       == DisabledGroupAttributes);
+    ASSERT(PreGroups->GroupCount == GROUP_COUNT);
+    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes);
+    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes == DisabledGroupAttributes);
     ASSERT(PreGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes);
-    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes);
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
     NewState->GroupCount = 2;
     NewState->Groups[0].Sid = ChildSid;
@@ -6221,226 +6060,211 @@ DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
     NewState->Groups[0].Attributes = OptionalGroupAttributes;
     NewState->Groups[1].Attributes = OptionalGroupAttributes;
 
-    Status = NtAdjustGroupsToken(
-                 TokenWithGroups,              // TokenHandle
-                 FALSE,                        // ResetToDefault
-                 NewState,                     // NewState (OPTIONAL)
-                 0,                            // BufferLength
-                 NULL,                         // PreviousState (OPTIONAL)
-                 &ReturnLength                 // ReturnLength
-                 );
+    Status = NtAdjustGroupsToken(TokenWithGroups, // TokenHandle
+                                 FALSE,           // ResetToDefault
+                                 NewState,        // NewState (OPTIONAL)
+                                 0,               // BufferLength
+                                 NULL,            // PreviousState (OPTIONAL)
+                                 &ReturnLength    // ReturnLength
+    );
 
     PostGroups->GroupCount = 88;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PostGroups,             // TokenInformation
-                       PostGroupsLength,       // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PostGroups,         // TokenInformation
+                                           PostGroupsLength,   // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    if (Status == STATUS_SUCCESS) {
+    if (Status == STATUS_SUCCESS)
+    {
 
-         //
-         // Check the group values
-         //
+        //
+        // Check the group values
+        //
 
-         ASSERT( PostGroups->GroupCount == GROUP_COUNT );
-         if ( (PostGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes)    &&
-              (PostGroups->Groups[CHILD_INDEX].Attributes       == OptionalGroupAttributes) &&
-              (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
-              (PostGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes)
-         ) {
+        ASSERT(PostGroups->GroupCount == GROUP_COUNT);
+        if ((PostGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes) &&
+            (PostGroups->Groups[CHILD_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes))
+        {
 
             DbgPrint("Succeeded. \n");
-
-         } else {
+        }
+        else
+        {
 
             DbgPrint("********** Failed  Value Check ************\n");
             DbgPrint("Status is: 0x%lx \n", Status);
 
-            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
-                    PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
+            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n", PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
+                     PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
 
-            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[CHILD_INDEX].Attributes,
-                    PostGroups->Groups[CHILD_INDEX].Attributes);
+            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n", PreGroups->Groups[CHILD_INDEX].Attributes,
+                     PostGroups->Groups[CHILD_INDEX].Attributes);
 
             DbgPrint("Before/after Neanderthol state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[NEANDERTHOL_INDEX].Attributes,
-                    PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
+                     PreGroups->Groups[NEANDERTHOL_INDEX].Attributes, PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
 
-            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[WORLD_INDEX].Attributes,
-                    PostGroups->Groups[WORLD_INDEX].Attributes);
+            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n", PreGroups->Groups[WORLD_INDEX].Attributes,
+                     PostGroups->Groups[WORLD_INDEX].Attributes);
 
             DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
 
             CompletionStatus = FALSE;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_SUCCESS);
 
 
-
-//////////////////////////////////////////////////////////////////////
-//                                                                  //
-// Disable optional group requesting previous state with            //
-// insufficient buffer                                              //
-//                                                                  //
-//////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////
+    //                                                                  //
+    // Disable optional group requesting previous state with            //
+    // insufficient buffer                                              //
+    //                                                                  //
+    //////////////////////////////////////////////////////////////////////
 
 
     DbgPrint("Se:     Too small buffer for previous state ...                ");
 
 
     PreGroups->GroupCount = 77;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PreGroups,              // TokenInformation
-                       PreGroupsLength,        // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PreGroups,          // TokenInformation
+                                           PreGroupsLength,    // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(PreGroups->GroupCount == GROUP_COUNT );
-    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes);
-    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes       == OptionalGroupAttributes);
+    ASSERT(PreGroups->GroupCount == GROUP_COUNT);
+    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes);
+    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes == OptionalGroupAttributes);
     ASSERT(PreGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes);
-    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes);
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
     NewState->GroupCount = 1;
     NewState->Groups[0].Sid = ChildSid;
     NewState->Groups[0].Attributes = DisabledGroupAttributes;
 
-    Status = NtAdjustGroupsToken(
-                 TokenWithGroups,              // TokenHandle
-                 FALSE,                        // ResetToDefault
-                 NewState,                     // NewState (OPTIONAL)
-                 0,                            // BufferLength
-                 PreviousState,                // PreviousState (OPTIONAL)
-                 &ReturnLength                 // ReturnLength
-                 );
+    Status = NtAdjustGroupsToken(TokenWithGroups, // TokenHandle
+                                 FALSE,           // ResetToDefault
+                                 NewState,        // NewState (OPTIONAL)
+                                 0,               // BufferLength
+                                 PreviousState,   // PreviousState (OPTIONAL)
+                                 &ReturnLength    // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
     PostGroups->GroupCount = 88;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PostGroups,             // TokenInformation
-                       PostGroupsLength,       // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PostGroups,         // TokenInformation
+                                           PostGroupsLength,   // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
 
-         //
-         // Check the group values
-         //
+        //
+        // Check the group values
+        //
 
-         ASSERT( PostGroups->GroupCount == GROUP_COUNT );
-         if ( (PostGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes)    &&
-              (PostGroups->Groups[CHILD_INDEX].Attributes       == OptionalGroupAttributes) &&
-              (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
-              (PostGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes)
-         ) {
+        ASSERT(PostGroups->GroupCount == GROUP_COUNT);
+        if ((PostGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes) &&
+            (PostGroups->Groups[CHILD_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes))
+        {
 
             DbgPrint("Succeeded. \n");
-
-         } else {
+        }
+        else
+        {
 
             DbgPrint("********** Failed  Value Check ************\n");
             DbgPrint("Status is: 0x%lx \n", Status);
 
-            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
-                    PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
+            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n", PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
+                     PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
 
-            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[CHILD_INDEX].Attributes,
-                    PostGroups->Groups[CHILD_INDEX].Attributes);
+            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n", PreGroups->Groups[CHILD_INDEX].Attributes,
+                     PostGroups->Groups[CHILD_INDEX].Attributes);
 
             DbgPrint("Before/after Neanderthol state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[NEANDERTHOL_INDEX].Attributes,
-                    PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
+                     PreGroups->Groups[NEANDERTHOL_INDEX].Attributes, PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
 
-            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[WORLD_INDEX].Attributes,
-                    PostGroups->Groups[WORLD_INDEX].Attributes);
+            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n", PreGroups->Groups[WORLD_INDEX].Attributes,
+                     PostGroups->Groups[WORLD_INDEX].Attributes);
 
             DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
 
             CompletionStatus = FALSE;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_BUFFER_TOO_SMALL);
 
 
-
-
-/////////////////////////////////////////////////////////////////////////
-//                                                                     //
-//  Disable optional requesting previous state                         //
-//                                                                     //
-/////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
+    //                                                                     //
+    //  Disable optional requesting previous state                         //
+    //                                                                     //
+    /////////////////////////////////////////////////////////////////////////
 
     DbgPrint("Se:     Disable optional, requesting previous state ...        ");
 
     PreGroups->GroupCount = 77;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PreGroups,              // TokenInformation
-                       PreGroupsLength,        // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PreGroups,          // TokenInformation
+                                           PreGroupsLength,    // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(PreGroups->GroupCount == GROUP_COUNT );
-    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes);
-    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes       == OptionalGroupAttributes);
+    ASSERT(PreGroups->GroupCount == GROUP_COUNT);
+    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes);
+    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes == OptionalGroupAttributes);
     ASSERT(PreGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes);
-    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes);
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
     NewState->GroupCount = 2;
     NewState->Groups[0].Sid = NeandertholSid;
@@ -6449,545 +6273,506 @@ DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
     NewState->Groups[1].Attributes = DisabledGroupAttributes;
     PreviousState->GroupCount = 99;
 
-    Status = NtAdjustGroupsToken(
-                 TokenWithGroups,              // TokenHandle
-                 FALSE,                        // ResetToDefault
-                 NewState,                     // NewState (OPTIONAL)
-                 PreviousStateBufferLength,    // BufferLength
-                 PreviousState,                // PreviousState (OPTIONAL)
-                 &ReturnLength                 // ReturnLength
-                 );
+    Status = NtAdjustGroupsToken(TokenWithGroups,           // TokenHandle
+                                 FALSE,                     // ResetToDefault
+                                 NewState,                  // NewState (OPTIONAL)
+                                 PreviousStateBufferLength, // BufferLength
+                                 PreviousState,             // PreviousState (OPTIONAL)
+                                 &ReturnLength              // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
     PostGroups->GroupCount = 88;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PostGroups,             // TokenInformation
-                       PostGroupsLength,       // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PostGroups,         // TokenInformation
+                                           PostGroupsLength,   // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    if (Status == STATUS_SUCCESS) {
+    if (Status == STATUS_SUCCESS)
+    {
 
-         //
-         // Check the group values
-         //
+        //
+        // Check the group values
+        //
 
-         ASSERT( PostGroups->GroupCount == GROUP_COUNT );
-         ASSERT( PreviousState->GroupCount == 2 );
-         if ( (PostGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes)    &&
-              (PostGroups->Groups[CHILD_INDEX].Attributes       == DisabledGroupAttributes) &&
-              (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == DisabledGroupAttributes) &&
-              (PostGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes)   &&
-              (PreviousState->Groups[0].Attributes == OptionalGroupAttributes) &&
-              (PreviousState->Groups[1].Attributes == OptionalGroupAttributes)
-         ) {
+        ASSERT(PostGroups->GroupCount == GROUP_COUNT);
+        ASSERT(PreviousState->GroupCount == 2);
+        if ((PostGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes) &&
+            (PostGroups->Groups[CHILD_INDEX].Attributes == DisabledGroupAttributes) &&
+            (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == DisabledGroupAttributes) &&
+            (PostGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes) &&
+            (PreviousState->Groups[0].Attributes == OptionalGroupAttributes) &&
+            (PreviousState->Groups[1].Attributes == OptionalGroupAttributes))
+        {
 
             DbgPrint("Succeeded. \n");
-
-         } else {
+        }
+        else
+        {
 
             DbgPrint("********** Failed  Value Check ************\n");
             DbgPrint("Status is: 0x%lx \n", Status);
 
-            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
-                    PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
+            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n", PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
+                     PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
 
-            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[CHILD_INDEX].Attributes,
-                    PostGroups->Groups[CHILD_INDEX].Attributes);
+            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n", PreGroups->Groups[CHILD_INDEX].Attributes,
+                     PostGroups->Groups[CHILD_INDEX].Attributes);
 
             DbgPrint("Before/after Neanderthol state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[NEANDERTHOL_INDEX].Attributes,
-                    PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
+                     PreGroups->Groups[NEANDERTHOL_INDEX].Attributes, PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
 
-            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[WORLD_INDEX].Attributes,
-                    PostGroups->Groups[WORLD_INDEX].Attributes);
+            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n", PreGroups->Groups[WORLD_INDEX].Attributes,
+                     PostGroups->Groups[WORLD_INDEX].Attributes);
 
             DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
 
             DbgPrint("Previous count is: 0x%lx \n", PreviousState->GroupCount);
-            DbgPrint("Previous state of group 0 is: 0x%lx \n",
-                    PreviousState->Groups[0].Attributes);
-            DbgPrint("Previous state of group 1 is: 0x%lx \n",
-                    PreviousState->Groups[1].Attributes);
+            DbgPrint("Previous state of group 0 is: 0x%lx \n", PreviousState->Groups[0].Attributes);
+            DbgPrint("Previous state of group 1 is: 0x%lx \n", PreviousState->Groups[1].Attributes);
 
 
             CompletionStatus = FALSE;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_SUCCESS);
 
 
-
-/////////////////////////////////////////////////////////////////////////
-//                                                                     //
-//  Return group to previous state                                     //
-//                                                                     //
-/////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
+    //                                                                     //
+    //  Return group to previous state                                     //
+    //                                                                     //
+    /////////////////////////////////////////////////////////////////////////
 
     DbgPrint("Se:     Return to previous state ...                           ");
 
     PreGroups->GroupCount = 77;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PreGroups,              // TokenInformation
-                       PreGroupsLength,        // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PreGroups,          // TokenInformation
+                                           PreGroupsLength,    // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(PreGroups->GroupCount == GROUP_COUNT );
-    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes);
-    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes       == DisabledGroupAttributes);
+    ASSERT(PreGroups->GroupCount == GROUP_COUNT);
+    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes);
+    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes == DisabledGroupAttributes);
     ASSERT(PreGroups->Groups[NEANDERTHOL_INDEX].Attributes == DisabledGroupAttributes);
-    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes);
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    Status = NtAdjustGroupsToken(
-                 TokenWithGroups,              // TokenHandle
-                 FALSE,                        // ResetToDefault
-                 PreviousState,                // NewState (OPTIONAL)
-                 PreviousStateBufferLength,    // BufferLength
-                 PreviousState,                // PreviousState (OPTIONAL)
-                 &ReturnLength                 // ReturnLength
-                 );
+    Status = NtAdjustGroupsToken(TokenWithGroups,           // TokenHandle
+                                 FALSE,                     // ResetToDefault
+                                 PreviousState,             // NewState (OPTIONAL)
+                                 PreviousStateBufferLength, // BufferLength
+                                 PreviousState,             // PreviousState (OPTIONAL)
+                                 &ReturnLength              // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
     PostGroups->GroupCount = 88;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PostGroups,             // TokenInformation
-                       PostGroupsLength,       // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PostGroups,         // TokenInformation
+                                           PostGroupsLength,   // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    if (Status == STATUS_SUCCESS) {
+    if (Status == STATUS_SUCCESS)
+    {
 
-         //
-         // Check the group values
-         //
+        //
+        // Check the group values
+        //
 
-         ASSERT( PostGroups->GroupCount == GROUP_COUNT );
-         if ( (PostGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes)    &&
-              (PostGroups->Groups[CHILD_INDEX].Attributes       == OptionalGroupAttributes) &&
-              (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
-              (PostGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes)   &&
-              (PreviousState->Groups[0].Attributes == DisabledGroupAttributes) &&
-              (PreviousState->Groups[1].Attributes == DisabledGroupAttributes)
-         ) {
+        ASSERT(PostGroups->GroupCount == GROUP_COUNT);
+        if ((PostGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes) &&
+            (PostGroups->Groups[CHILD_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes) &&
+            (PreviousState->Groups[0].Attributes == DisabledGroupAttributes) &&
+            (PreviousState->Groups[1].Attributes == DisabledGroupAttributes))
+        {
 
             DbgPrint("Succeeded. \n");
-
-         } else {
+        }
+        else
+        {
 
             DbgPrint("********** Failed  Value Check ************\n");
             DbgPrint("Status is: 0x%lx \n", Status);
 
-            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
-                    PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
+            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n", PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
+                     PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
 
-            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[CHILD_INDEX].Attributes,
-                    PostGroups->Groups[CHILD_INDEX].Attributes);
+            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n", PreGroups->Groups[CHILD_INDEX].Attributes,
+                     PostGroups->Groups[CHILD_INDEX].Attributes);
 
             DbgPrint("Before/after Neanderthol state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[NEANDERTHOL_INDEX].Attributes,
-                    PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
+                     PreGroups->Groups[NEANDERTHOL_INDEX].Attributes, PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
 
-            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[WORLD_INDEX].Attributes,
-                    PostGroups->Groups[WORLD_INDEX].Attributes);
+            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n", PreGroups->Groups[WORLD_INDEX].Attributes,
+                     PostGroups->Groups[WORLD_INDEX].Attributes);
 
             DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
 
             CompletionStatus = FALSE;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_SUCCESS);
 
 
-
-/////////////////////////////////////////////////////////////////////////
-//                                                                     //
-//  Return to previous state again                                     //
-//                                                                     //
-/////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
+    //                                                                     //
+    //  Return to previous state again                                     //
+    //                                                                     //
+    /////////////////////////////////////////////////////////////////////////
 
     DbgPrint("Se:     Return to previous state again ...                     ");
 
     PreGroups->GroupCount = 77;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PreGroups,              // TokenInformation
-                       PreGroupsLength,        // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PreGroups,          // TokenInformation
+                                           PreGroupsLength,    // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(PreGroups->GroupCount == GROUP_COUNT );
-    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes);
-    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes       == OptionalGroupAttributes);
+    ASSERT(PreGroups->GroupCount == GROUP_COUNT);
+    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes);
+    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes == OptionalGroupAttributes);
     ASSERT(PreGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes);
-    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes);
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    Status = NtAdjustGroupsToken(
-                 TokenWithGroups,              // TokenHandle
-                 FALSE,                        // ResetToDefault
-                 PreviousState,                // NewState (OPTIONAL)
-                 PreviousStateBufferLength,    // BufferLength
-                 PreviousState,                // PreviousState (OPTIONAL)
-                 &ReturnLength                 // ReturnLength
-                 );
+    Status = NtAdjustGroupsToken(TokenWithGroups,           // TokenHandle
+                                 FALSE,                     // ResetToDefault
+                                 PreviousState,             // NewState (OPTIONAL)
+                                 PreviousStateBufferLength, // BufferLength
+                                 PreviousState,             // PreviousState (OPTIONAL)
+                                 &ReturnLength              // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
     PostGroups->GroupCount = 88;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PostGroups,             // TokenInformation
-                       PostGroupsLength,       // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PostGroups,         // TokenInformation
+                                           PostGroupsLength,   // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    if (Status == STATUS_SUCCESS) {
+    if (Status == STATUS_SUCCESS)
+    {
 
-         //
-         // Check the group values
-         //
+        //
+        // Check the group values
+        //
 
-         ASSERT( PostGroups->GroupCount == GROUP_COUNT );
-         if ( (PostGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes)    &&
-              (PostGroups->Groups[CHILD_INDEX].Attributes       == DisabledGroupAttributes) &&
-              (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == DisabledGroupAttributes) &&
-              (PostGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes)   &&
-              (PreviousState->Groups[0].Attributes == OptionalGroupAttributes) &&
-              (PreviousState->Groups[1].Attributes == OptionalGroupAttributes)
-         ) {
+        ASSERT(PostGroups->GroupCount == GROUP_COUNT);
+        if ((PostGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes) &&
+            (PostGroups->Groups[CHILD_INDEX].Attributes == DisabledGroupAttributes) &&
+            (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == DisabledGroupAttributes) &&
+            (PostGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes) &&
+            (PreviousState->Groups[0].Attributes == OptionalGroupAttributes) &&
+            (PreviousState->Groups[1].Attributes == OptionalGroupAttributes))
+        {
 
             DbgPrint("Succeeded. \n");
-
-         } else {
+        }
+        else
+        {
 
             DbgPrint("********** Failed  Value Check ************\n");
             DbgPrint("Status is: 0x%lx \n", Status);
 
-            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
-                    PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
+            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n", PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
+                     PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
 
-            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[CHILD_INDEX].Attributes,
-                    PostGroups->Groups[CHILD_INDEX].Attributes);
+            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n", PreGroups->Groups[CHILD_INDEX].Attributes,
+                     PostGroups->Groups[CHILD_INDEX].Attributes);
 
             DbgPrint("Before/after Neanderthol state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[NEANDERTHOL_INDEX].Attributes,
-                    PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
+                     PreGroups->Groups[NEANDERTHOL_INDEX].Attributes, PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
 
-            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[WORLD_INDEX].Attributes,
-                    PostGroups->Groups[WORLD_INDEX].Attributes);
+            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n", PreGroups->Groups[WORLD_INDEX].Attributes,
+                     PostGroups->Groups[WORLD_INDEX].Attributes);
 
             DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
 
             CompletionStatus = FALSE;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_SUCCESS);
 
 
-
-
-/////////////////////////////////////////////////////////////////////////
-//                                                                     //
-//  Return to default state (capture previous state)                   //
-//                                                                     //
-/////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
+    //                                                                     //
+    //  Return to default state (capture previous state)                   //
+    //                                                                     //
+    /////////////////////////////////////////////////////////////////////////
 
     DbgPrint("Se:     Return to default state (w/previous state) ...         ");
 
     PreGroups->GroupCount = 77;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PreGroups,              // TokenInformation
-                       PreGroupsLength,        // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PreGroups,          // TokenInformation
+                                           PreGroupsLength,    // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(PreGroups->GroupCount == GROUP_COUNT );
-    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes);
-    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes       == DisabledGroupAttributes);
+    ASSERT(PreGroups->GroupCount == GROUP_COUNT);
+    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes);
+    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes == DisabledGroupAttributes);
     ASSERT(PreGroups->Groups[NEANDERTHOL_INDEX].Attributes == DisabledGroupAttributes);
-    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes);
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    Status = NtAdjustGroupsToken(
-                 TokenWithGroups,              // TokenHandle
-                 TRUE,                         // ResetToDefault
-                 NULL,                         // NewState (OPTIONAL)
-                 PreviousStateBufferLength,    // BufferLength
-                 PreviousState,                // PreviousState (OPTIONAL)
-                 &ReturnLength                 // ReturnLength
-                 );
+    Status = NtAdjustGroupsToken(TokenWithGroups,           // TokenHandle
+                                 TRUE,                      // ResetToDefault
+                                 NULL,                      // NewState (OPTIONAL)
+                                 PreviousStateBufferLength, // BufferLength
+                                 PreviousState,             // PreviousState (OPTIONAL)
+                                 &ReturnLength              // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
+    DbgPrint("\n (debug) return length: 0x%lx \n", ReturnLength);
 #endif //TOKEN_DEBUG
 
     PostGroups->GroupCount = 88;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PostGroups,             // TokenInformation
-                       PostGroupsLength,       // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PostGroups,         // TokenInformation
+                                           PostGroupsLength,   // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    if (Status == STATUS_SUCCESS) {
+    if (Status == STATUS_SUCCESS)
+    {
 
-         //
-         // Check the group values
-         //
+        //
+        // Check the group values
+        //
 
-         ASSERT( PostGroups->GroupCount == GROUP_COUNT );
-         if ( (PostGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes)    &&
-              (PostGroups->Groups[CHILD_INDEX].Attributes       == OptionalGroupAttributes) &&
-              (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
-              (PostGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes)   &&
-              (PreviousState->Groups[0].Attributes == DisabledGroupAttributes) &&
-              (PreviousState->Groups[1].Attributes == DisabledGroupAttributes)
-         ) {
+        ASSERT(PostGroups->GroupCount == GROUP_COUNT);
+        if ((PostGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes) &&
+            (PostGroups->Groups[CHILD_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes) &&
+            (PreviousState->Groups[0].Attributes == DisabledGroupAttributes) &&
+            (PreviousState->Groups[1].Attributes == DisabledGroupAttributes))
+        {
 
             DbgPrint("Succeeded. \n");
-
-         } else {
+        }
+        else
+        {
 
             DbgPrint("********** Failed  Value Check ************\n");
             DbgPrint("Status is: 0x%lx \n", Status);
 
-            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
-                    PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
+            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n", PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
+                     PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
 
-            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[CHILD_INDEX].Attributes,
-                    PostGroups->Groups[CHILD_INDEX].Attributes);
+            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n", PreGroups->Groups[CHILD_INDEX].Attributes,
+                     PostGroups->Groups[CHILD_INDEX].Attributes);
 
             DbgPrint("Before/after Neanderthol state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[NEANDERTHOL_INDEX].Attributes,
-                    PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
+                     PreGroups->Groups[NEANDERTHOL_INDEX].Attributes, PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
 
-            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[WORLD_INDEX].Attributes,
-                    PostGroups->Groups[WORLD_INDEX].Attributes);
+            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n", PreGroups->Groups[WORLD_INDEX].Attributes,
+                     PostGroups->Groups[WORLD_INDEX].Attributes);
 
             DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
 
             CompletionStatus = FALSE;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_SUCCESS);
 
 
-
-/////////////////////////////////////////////////////////////////////////
-//                                                                     //
-//  Return to default state  (don't capture previous state)            //
-//                                                                     //
-/////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
+    //                                                                     //
+    //  Return to default state  (don't capture previous state)            //
+    //                                                                     //
+    /////////////////////////////////////////////////////////////////////////
 
     DbgPrint("Se:     Return to default state (no previous state) ...        ");
 
-    Status = NtAdjustGroupsToken(
-                 TokenWithGroups,              // TokenHandle
-                 FALSE,                        // ResetToDefault
-                 PreviousState,                // NewState (OPTIONAL)
-                 0,                            // BufferLength
-                 NULL,                         // PreviousState (OPTIONAL)
-                 &ReturnLength                 // ReturnLength
-                 );
+    Status = NtAdjustGroupsToken(TokenWithGroups, // TokenHandle
+                                 FALSE,           // ResetToDefault
+                                 PreviousState,   // NewState (OPTIONAL)
+                                 0,               // BufferLength
+                                 NULL,            // PreviousState (OPTIONAL)
+                                 &ReturnLength    // ReturnLength
+    );
 
     ASSERT(Status == STATUS_SUCCESS);
 
     PreGroups->GroupCount = 77;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PreGroups,              // TokenInformation
-                       PreGroupsLength,        // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PreGroups,          // TokenInformation
+                                           PreGroupsLength,    // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(PreGroups->GroupCount == GROUP_COUNT );
-    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes);
-    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes       == DisabledGroupAttributes);
+    ASSERT(PreGroups->GroupCount == GROUP_COUNT);
+    ASSERT(PreGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes);
+    ASSERT(PreGroups->Groups[CHILD_INDEX].Attributes == DisabledGroupAttributes);
     ASSERT(PreGroups->Groups[NEANDERTHOL_INDEX].Attributes == DisabledGroupAttributes);
-    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes);
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(PreGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes);
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    Status = NtAdjustGroupsToken(
-                 TokenWithGroups,              // TokenHandle
-                 TRUE,                         // ResetToDefault
-                 NULL,                         // NewState (OPTIONAL)
-                 0,                            // BufferLength
-                 NULL,                         // PreviousState (OPTIONAL)
-                 &ReturnLength                 // ReturnLength
-                 );
+    Status = NtAdjustGroupsToken(TokenWithGroups, // TokenHandle
+                                 TRUE,            // ResetToDefault
+                                 NULL,            // NewState (OPTIONAL)
+                                 0,               // BufferLength
+                                 NULL,            // PreviousState (OPTIONAL)
+                                 &ReturnLength    // ReturnLength
+    );
 
     PostGroups->GroupCount = 88;
-    IgnoreStatus = NtQueryInformationToken(
-                       TokenWithGroups,        // TokenHandle
-                       TokenGroups,            // TokenInformationClass
-                       PostGroups,             // TokenInformation
-                       PostGroupsLength,       // TokenInformationLength
-                       &IgnoreReturnLength     // ReturnLength
-                       );
+    IgnoreStatus = NtQueryInformationToken(TokenWithGroups,    // TokenHandle
+                                           TokenGroups,        // TokenInformationClass
+                                           PostGroups,         // TokenInformation
+                                           PostGroupsLength,   // TokenInformationLength
+                                           &IgnoreReturnLength // ReturnLength
+    );
 #ifdef TOKEN_DEBUG
-DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
+    DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 #endif //TOKEN_DEBUG
 
-    ASSERT(NT_SUCCESS(IgnoreStatus) );
+    ASSERT(NT_SUCCESS(IgnoreStatus));
 
-    if (Status == STATUS_SUCCESS) {
+    if (Status == STATUS_SUCCESS)
+    {
 
-         //
-         // Check the group values
-         //
+        //
+        // Check the group values
+        //
 
-         ASSERT( PostGroups->GroupCount == GROUP_COUNT );
-         if ( (PostGroups->Groups[FLINTSTONE_INDEX].Attributes  == OwnerGroupAttributes)    &&
-              (PostGroups->Groups[CHILD_INDEX].Attributes       == OptionalGroupAttributes) &&
-              (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
-              (PostGroups->Groups[WORLD_INDEX].Attributes       == NormalGroupAttributes)
-         ) {
+        ASSERT(PostGroups->GroupCount == GROUP_COUNT);
+        if ((PostGroups->Groups[FLINTSTONE_INDEX].Attributes == OwnerGroupAttributes) &&
+            (PostGroups->Groups[CHILD_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[NEANDERTHOL_INDEX].Attributes == OptionalGroupAttributes) &&
+            (PostGroups->Groups[WORLD_INDEX].Attributes == NormalGroupAttributes))
+        {
 
             DbgPrint("Succeeded. \n");
-
-         } else {
+        }
+        else
+        {
 
             DbgPrint("********** Failed  Value Check ************\n");
             DbgPrint("Status is: 0x%lx \n", Status);
 
-            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
-                    PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
+            DbgPrint("Before/after Flintstone state: 0x%lx / 0x%lx \n", PreGroups->Groups[FLINTSTONE_INDEX].Attributes,
+                     PostGroups->Groups[FLINTSTONE_INDEX].Attributes);
 
-            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[CHILD_INDEX].Attributes,
-                    PostGroups->Groups[CHILD_INDEX].Attributes);
+            DbgPrint("Before/after Child state: 0x%lx / 0x%lx \n", PreGroups->Groups[CHILD_INDEX].Attributes,
+                     PostGroups->Groups[CHILD_INDEX].Attributes);
 
             DbgPrint("Before/after Neanderthol state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[NEANDERTHOL_INDEX].Attributes,
-                    PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
+                     PreGroups->Groups[NEANDERTHOL_INDEX].Attributes, PostGroups->Groups[NEANDERTHOL_INDEX].Attributes);
 
-            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n",
-                    PreGroups->Groups[WORLD_INDEX].Attributes,
-                    PostGroups->Groups[WORLD_INDEX].Attributes);
+            DbgPrint("Before/after World state: 0x%lx / 0x%lx \n", PreGroups->Groups[WORLD_INDEX].Attributes,
+                     PostGroups->Groups[WORLD_INDEX].Attributes);
 
             DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
 
             CompletionStatus = FALSE;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         DbgPrint("Return Length is: 0x%lx \n", ReturnLength);
         CompletionStatus = FALSE;
-
     }
 
     ASSERT(Status == STATUS_SUCCESS);
 
 
-
-
     ////////////////////////////////////////////////////////////////
     //                                                            //
     // Done with test                                             //
@@ -6995,17 +6780,16 @@ DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
     ////////////////////////////////////////////////////////////////
 
 
-
-    TstDeallocatePool( PreviousState, PreviousStateBufferLength );
-    TstDeallocatePool( NewState, NewStateBufferLength );
-    TstDeallocatePool( PreGroups, PreGroupsLength );
-    TstDeallocatePool( PostGroups, PostGroupsLength );
+    TstDeallocatePool(PreviousState, PreviousStateBufferLength);
+    TstDeallocatePool(NewState, NewStateBufferLength);
+    TstDeallocatePool(PreGroups, PreGroupsLength);
+    TstDeallocatePool(PostGroups, PostGroupsLength);
 
 
     return CompletionStatus;
 }
 
-
+
 ////////////////////////////////////////////////////////////////
 //                                                            //
 // Compare duplicate to original token & display test results //
@@ -7013,14 +6797,8 @@ DbgPrint("\n (debug) ignore return length: 0x%lx \n", IgnoreReturnLength);
 ////////////////////////////////////////////////////////////////
 
 BOOLEAN
-TestpCompareDuplicateToken(
-    IN NTSTATUS Status,
-    IN HANDLE OldToken,
-    IN OBJECT_ATTRIBUTES NewAttributes,
-    IN BOOLEAN EffectiveOnly,
-    IN TOKEN_TYPE NewType,
-    IN HANDLE NewToken
-    )
+TestpCompareDuplicateToken(IN NTSTATUS Status, IN HANDLE OldToken, IN OBJECT_ATTRIBUTES NewAttributes,
+                           IN BOOLEAN EffectiveOnly, IN TOKEN_TYPE NewType, IN HANDLE NewToken)
 
 {
     BOOLEAN CompletionStatus = TRUE;
@@ -7052,7 +6830,8 @@ TestpCompareDuplicateToken(
     // If the status isn't success, don't bother comparing the tokens
     //
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
@@ -7063,76 +6842,79 @@ TestpCompareDuplicateToken(
     // Compare the user IDs
     //
 
-    Status = NtQueryInformationToken(
-                 OldToken,                 // Handle
-                 TokenUser,                // TokenInformationClass
-                 OldUserId,                // TokenInformation
-                 0,                        // TokenInformationLength
-                 &OldReturnLength          // ReturnLength
-                 ); ASSERT(Status == STATUS_BUFFER_TOO_SMALL);
-    OldUserId = (PTOKEN_USER)TstAllocatePool( PagedPool, OldReturnLength );
+    Status = NtQueryInformationToken(OldToken,        // Handle
+                                     TokenUser,       // TokenInformationClass
+                                     OldUserId,       // TokenInformation
+                                     0,               // TokenInformationLength
+                                     &OldReturnLength // ReturnLength
+    );
+    ASSERT(Status == STATUS_BUFFER_TOO_SMALL);
+    OldUserId = (PTOKEN_USER)TstAllocatePool(PagedPool, OldReturnLength);
 
-    Status = NtQueryInformationToken(
-                 OldToken,                 // Handle
-                 TokenUser,                // TokenInformationClass
-                 OldUserId,                // TokenInformation
-                 OldReturnLength,          // TokenInformationLength
-                 &OldReturnLength          // ReturnLength
-                 ); ASSERT(NT_SUCCESS(Status));
-
-
-    Status = NtQueryInformationToken(
-                 NewToken,                 // Handle
-                 TokenUser,                // TokenInformationClass
-                 NewUserId,                // TokenInformation
-                 0,                        // TokenInformationLength
-                 &NewReturnLength          // ReturnLength
-                 ); ASSERT(Status == STATUS_BUFFER_TOO_SMALL);
-
-    NewUserId = (PTOKEN_USER)TstAllocatePool( PagedPool, NewReturnLength );
-
-    Status = NtQueryInformationToken(
-                 NewToken,                 // Handle
-                 TokenUser,                // TokenInformationClass
-                 NewUserId,                // TokenInformation
-                 NewReturnLength,          // TokenInformationLength
-                 &NewReturnLength          // ReturnLength
-                 ); ASSERT(NT_SUCCESS(Status));
+    Status = NtQueryInformationToken(OldToken,        // Handle
+                                     TokenUser,       // TokenInformationClass
+                                     OldUserId,       // TokenInformation
+                                     OldReturnLength, // TokenInformationLength
+                                     &OldReturnLength // ReturnLength
+    );
+    ASSERT(NT_SUCCESS(Status));
 
 
-    if ( !RtlEqualSid(OldUserId->User.Sid, NewUserId->User.Sid) ) {
+    Status = NtQueryInformationToken(NewToken,        // Handle
+                                     TokenUser,       // TokenInformationClass
+                                     NewUserId,       // TokenInformation
+                                     0,               // TokenInformationLength
+                                     &NewReturnLength // ReturnLength
+    );
+    ASSERT(Status == STATUS_BUFFER_TOO_SMALL);
 
-        if (CompletionStatus) {
+    NewUserId = (PTOKEN_USER)TstAllocatePool(PagedPool, NewReturnLength);
+
+    Status = NtQueryInformationToken(NewToken,        // Handle
+                                     TokenUser,       // TokenInformationClass
+                                     NewUserId,       // TokenInformation
+                                     NewReturnLength, // TokenInformationLength
+                                     &NewReturnLength // ReturnLength
+    );
+    ASSERT(NT_SUCCESS(Status));
+
+
+    if (!RtlEqualSid(OldUserId->User.Sid, NewUserId->User.Sid))
+    {
+
+        if (CompletionStatus)
+        {
             DbgPrint("*** Failed Value Comparison ***\n");
         }
         DbgPrint("User IDs don't match.\n");
         CompletionStatus = FALSE;
     }
 
-    TstDeallocatePool( OldUserId, OldReturnLength );
-    TstDeallocatePool( NewUserId, NewReturnLength );
+    TstDeallocatePool(OldUserId, OldReturnLength);
+    TstDeallocatePool(NewUserId, NewReturnLength);
 
 
     //
     // Check the token statistics
     //
 
-    if (CompletionStatus) {
-        Status = NtQueryInformationToken(
-                     OldToken,                        // Handle
-                     TokenStatistics,                 // TokenInformationClass
-                     &OldStatistics,                  // TokenInformation
-                     (ULONG)sizeof(TOKEN_STATISTICS), // TokenInformationLength
-                     &OldReturnLength                 // ReturnLength
-                     ); ASSERT(NT_SUCCESS(Status));
+    if (CompletionStatus)
+    {
+        Status = NtQueryInformationToken(OldToken,                        // Handle
+                                         TokenStatistics,                 // TokenInformationClass
+                                         &OldStatistics,                  // TokenInformation
+                                         (ULONG)sizeof(TOKEN_STATISTICS), // TokenInformationLength
+                                         &OldReturnLength                 // ReturnLength
+        );
+        ASSERT(NT_SUCCESS(Status));
 
-        Status = NtQueryInformationToken(
-                     NewToken,                        // Handle
-                     TokenStatistics,                 // TokenInformationClass
-                     &NewStatistics,                  // TokenInformation
-                     (ULONG)sizeof(TOKEN_STATISTICS), // TokenInformationLength
-                     &NewReturnLength                 // ReturnLength
-                     ); ASSERT(NT_SUCCESS(Status));
+        Status = NtQueryInformationToken(NewToken,                        // Handle
+                                         TokenStatistics,                 // TokenInformationClass
+                                         &NewStatistics,                  // TokenInformation
+                                         (ULONG)sizeof(TOKEN_STATISTICS), // TokenInformationLength
+                                         &NewReturnLength                 // ReturnLength
+        );
+        ASSERT(NT_SUCCESS(Status));
         //
         // Must have:
         //             Different TokenId values
@@ -7154,19 +6936,16 @@ TestpCompareDuplicateToken(
         // Token ID
         //
 
-        if ( (OldStatistics.TokenId.HighPart ==
-              NewStatistics.TokenId.HighPart)    &&
-             (OldStatistics.TokenId.LowPart ==
-              NewStatistics.TokenId.LowPart)  ) {
+        if ((OldStatistics.TokenId.HighPart == NewStatistics.TokenId.HighPart) &&
+            (OldStatistics.TokenId.LowPart == NewStatistics.TokenId.LowPart))
+        {
 
             DbgPrint("*** Failed ***\n");
             DbgPrint("       TokenIds are equal.\n");
-            DbgPrint("       Old TokenId is: (0x%xl, 0x%xl)\n",
-                            OldStatistics.TokenId.HighPart,
-                            OldStatistics.TokenId.LowPart);
-            DbgPrint("       New TokenId is: (0x%xl, 0x%xl)\n",
-                            NewStatistics.TokenId.HighPart,
-                            NewStatistics.TokenId.LowPart);
+            DbgPrint("       Old TokenId is: (0x%xl, 0x%xl)\n", OldStatistics.TokenId.HighPart,
+                     OldStatistics.TokenId.LowPart);
+            DbgPrint("       New TokenId is: (0x%xl, 0x%xl)\n", NewStatistics.TokenId.HighPart,
+                     NewStatistics.TokenId.LowPart);
             DbgPrint("       ");
             CompletionStatus = FALSE;
         }
@@ -7176,8 +6955,8 @@ TestpCompareDuplicateToken(
         // Authentication ID
         //
 
-        if ( !RtlEqualLuid(&OldStatistics.AuthenticationId,
-                           &NewStatistics.AuthenticationId) ) {
+        if (!RtlEqualLuid(&OldStatistics.AuthenticationId, &NewStatistics.AuthenticationId))
+        {
 
             DbgPrint("*** Failed ***\n");
             DbgPrint("       AuthenticationIds are not equal.\n");
@@ -7195,10 +6974,9 @@ TestpCompareDuplicateToken(
         // ExpirationTime
         //
 
-        if ( (OldStatistics.ExpirationTime.HighPart !=
-              NewStatistics.ExpirationTime.HighPart)    ||
-             (OldStatistics.ExpirationTime.LowPart !=
-              NewStatistics.ExpirationTime.LowPart)  ) {
+        if ((OldStatistics.ExpirationTime.HighPart != NewStatistics.ExpirationTime.HighPart) ||
+            (OldStatistics.ExpirationTime.LowPart != NewStatistics.ExpirationTime.LowPart))
+        {
 
             DbgPrint("*** Failed ***\n");
             DbgPrint("       ExpirationTimes differ.\n");
@@ -7210,12 +6988,13 @@ TestpCompareDuplicateToken(
         // TokenType
         //
 
-        if ( OldStatistics.TokenType != NewStatistics.TokenType ) {
+        if (OldStatistics.TokenType != NewStatistics.TokenType)
+        {
 
             DbgPrint("*** Failed ***\n");
             DbgPrint("       Token types are different.\n");
-            DbgPrint("       Old token type is:  0x%lx \n", OldStatistics.TokenType );
-            DbgPrint("       New token type is:  0x%lx \n", NewStatistics.TokenType );
+            DbgPrint("       Old token type is:  0x%lx \n", OldStatistics.TokenType);
+            DbgPrint("       New token type is:  0x%lx \n", NewStatistics.TokenType);
             DbgPrint("       ");
             CompletionStatus = FALSE;
         }
@@ -7224,16 +7003,15 @@ TestpCompareDuplicateToken(
         // ImpersonationLevel
         //
 
-        if (NewStatistics.TokenType = TokenImpersonation) {
-            if ( OldStatistics.ImpersonationLevel !=
-                 NewStatistics.ImpersonationLevel ) {
+        if (NewStatistics.TokenType = TokenImpersonation)
+        {
+            if (OldStatistics.ImpersonationLevel != NewStatistics.ImpersonationLevel)
+            {
 
                 DbgPrint("*** Failed ***\n");
                 DbgPrint("       Impersonation levels are different.\n");
-                DbgPrint("       Old impersonation level  is:  0x%lx \n",
-                                OldStatistics.ImpersonationLevel );
-                DbgPrint("       New impersonation level is:  0x%lx \n",
-                                NewStatistics.ImpersonationLevel );
+                DbgPrint("       Old impersonation level  is:  0x%lx \n", OldStatistics.ImpersonationLevel);
+                DbgPrint("       New impersonation level is:  0x%lx \n", NewStatistics.ImpersonationLevel);
                 DbgPrint("       ");
                 CompletionStatus = FALSE;
             }
@@ -7243,12 +7021,13 @@ TestpCompareDuplicateToken(
         // DynamicCharged
         //
 
-        if ( OldStatistics.DynamicCharged != NewStatistics.DynamicCharged ) {
+        if (OldStatistics.DynamicCharged != NewStatistics.DynamicCharged)
+        {
 
             DbgPrint("*** Failed ***\n");
             DbgPrint("       DynamicCharges are different.\n");
-            DbgPrint("       Old value is:  0x%lx \n", OldStatistics.DynamicCharged );
-            DbgPrint("       New value is:  0x%lx \n", NewStatistics.DynamicCharged );
+            DbgPrint("       Old value is:  0x%lx \n", OldStatistics.DynamicCharged);
+            DbgPrint("       New value is:  0x%lx \n", NewStatistics.DynamicCharged);
             DbgPrint("       ");
             CompletionStatus = FALSE;
         }
@@ -7257,12 +7036,13 @@ TestpCompareDuplicateToken(
         // DynamicAvailable
         //
 
-        if ( OldStatistics.DynamicAvailable != NewStatistics.DynamicAvailable ) {
+        if (OldStatistics.DynamicAvailable != NewStatistics.DynamicAvailable)
+        {
 
             DbgPrint("*** Failed ***\n");
             DbgPrint("       DynamicAvailable are different.\n");
-            DbgPrint("       Old value is:  0x%lx \n", OldStatistics.DynamicAvailable );
-            DbgPrint("       New value is:  0x%lx \n", NewStatistics.DynamicAvailable );
+            DbgPrint("       Old value is:  0x%lx \n", OldStatistics.DynamicAvailable);
+            DbgPrint("       New value is:  0x%lx \n", NewStatistics.DynamicAvailable);
             DbgPrint("       ");
             CompletionStatus = FALSE;
         }
@@ -7272,23 +7052,19 @@ TestpCompareDuplicateToken(
         // ModifiedId
         //
 
-        if ( (NewStatistics.ModifiedId.HighPart !=
-              OldStatistics.ModifiedId.HighPart)   ||
-             (NewStatistics.ModifiedId.LowPart  !=
-              OldStatistics.ModifiedId.LowPart)     ) {
+        if ((NewStatistics.ModifiedId.HighPart != OldStatistics.ModifiedId.HighPart) ||
+            (NewStatistics.ModifiedId.LowPart != OldStatistics.ModifiedId.LowPart))
+        {
 
             DbgPrint("*** Failed ***\n");
             DbgPrint("       ModifiedIds different.\n");
-            DbgPrint("       Old ModifiedId is: (0x%xl, 0x%xl)\n",
-                            OldStatistics.ModifiedId.HighPart,
-                            OldStatistics.ModifiedId.LowPart);
-            DbgPrint("       New ModifiedId is: (0x%xl, 0x%xl)\n",
-                            NewStatistics.ModifiedId.HighPart,
-                            NewStatistics.ModifiedId.LowPart);
+            DbgPrint("       Old ModifiedId is: (0x%xl, 0x%xl)\n", OldStatistics.ModifiedId.HighPart,
+                     OldStatistics.ModifiedId.LowPart);
+            DbgPrint("       New ModifiedId is: (0x%xl, 0x%xl)\n", NewStatistics.ModifiedId.HighPart,
+                     NewStatistics.ModifiedId.LowPart);
             DbgPrint("       ");
             CompletionStatus = FALSE;
         }
-
     }
 
     //
@@ -7325,65 +7101,66 @@ TestpCompareDuplicateToken(
     // Compare the token source
     //
 
-    if (CompletionStatus) {
-        Status = NtQueryInformationToken(
-                     OldToken,                    // Handle
-                     TokenSource,                 // TokenInformationClass
-                     &OldSource,                  // TokenInformation
-                     (ULONG)sizeof(TOKEN_SOURCE), // TokenInformationLength
-                     &OldReturnLength             // ReturnLength
-                     ); ASSERT(NT_SUCCESS(Status));
+    if (CompletionStatus)
+    {
+        Status = NtQueryInformationToken(OldToken,                    // Handle
+                                         TokenSource,                 // TokenInformationClass
+                                         &OldSource,                  // TokenInformation
+                                         (ULONG)sizeof(TOKEN_SOURCE), // TokenInformationLength
+                                         &OldReturnLength             // ReturnLength
+        );
+        ASSERT(NT_SUCCESS(Status));
 
-        Status = NtQueryInformationToken(
-                     NewToken,                    // Handle
-                     TokenSource,                 // TokenInformationClass
-                     &NewSource,                  // TokenInformation
-                     (ULONG)sizeof(TOKEN_SOURCE), // TokenInformationLength
-                     &NewReturnLength             // ReturnLength
-                     ); ASSERT(NT_SUCCESS(Status));
+        Status = NtQueryInformationToken(NewToken,                    // Handle
+                                         TokenSource,                 // TokenInformationClass
+                                         &NewSource,                  // TokenInformation
+                                         (ULONG)sizeof(TOKEN_SOURCE), // TokenInformationLength
+                                         &NewReturnLength             // ReturnLength
+        );
+        ASSERT(NT_SUCCESS(Status));
 
-        if ( (OldSource.SourceIdentifier.HighPart ==
-              NewSource.SourceIdentifier.HighPart)    &&
-             (OldSource.SourceIdentifier.LowPart ==
-              NewSource.SourceIdentifier.LowPart)  ) {
-            if (  (OldSource.SourceName[0] != NewSource.SourceName[0])  ||
-                  (OldSource.SourceName[1] != NewSource.SourceName[1])  ||
-                  (OldSource.SourceName[2] != NewSource.SourceName[2])  ||
-                  (OldSource.SourceName[3] != NewSource.SourceName[3])  ||
-                  (OldSource.SourceName[4] != NewSource.SourceName[4])  ||
-                  (OldSource.SourceName[5] != NewSource.SourceName[5])  ||
-                  (OldSource.SourceName[6] != NewSource.SourceName[6])  ||
-                  (OldSource.SourceName[7] != NewSource.SourceName[7])  ) {
+        if ((OldSource.SourceIdentifier.HighPart == NewSource.SourceIdentifier.HighPart) &&
+            (OldSource.SourceIdentifier.LowPart == NewSource.SourceIdentifier.LowPart))
+        {
+            if ((OldSource.SourceName[0] != NewSource.SourceName[0]) ||
+                (OldSource.SourceName[1] != NewSource.SourceName[1]) ||
+                (OldSource.SourceName[2] != NewSource.SourceName[2]) ||
+                (OldSource.SourceName[3] != NewSource.SourceName[3]) ||
+                (OldSource.SourceName[4] != NewSource.SourceName[4]) ||
+                (OldSource.SourceName[5] != NewSource.SourceName[5]) ||
+                (OldSource.SourceName[6] != NewSource.SourceName[6]) ||
+                (OldSource.SourceName[7] != NewSource.SourceName[7]))
+            {
 
                 DbgPrint("*** Failed Value Comparison ***\n");
                 DbgPrint("       SourceName changed.\n");
                 CompletionStatus = FALSE;
-
             }
-        } else {
+        }
+        else
+        {
 
             DbgPrint("*** Failed Value Comparison ***\n");
             DbgPrint("       SourceIdentifier changed.\n");
-            DbgPrint("       Old SourceIdentifier is: (0x%xl, 0x%xl)\n",
-                            OldSource.SourceIdentifier.HighPart,
-                            OldSource.SourceIdentifier.LowPart);
-            DbgPrint("       New SourceIdentifier is: (0x%xl, 0x%xl)\n",
-                            NewSource.SourceIdentifier.HighPart,
-                            NewSource.SourceIdentifier.LowPart);
+            DbgPrint("       Old SourceIdentifier is: (0x%xl, 0x%xl)\n", OldSource.SourceIdentifier.HighPart,
+                     OldSource.SourceIdentifier.LowPart);
+            DbgPrint("       New SourceIdentifier is: (0x%xl, 0x%xl)\n", NewSource.SourceIdentifier.HighPart,
+                     NewSource.SourceIdentifier.LowPart);
             CompletionStatus = FALSE;
-
         }
     }
 
     ////////////////////////////////// Done /////////////////////////
 
 
-    if (SomeNotCompared) {
+    if (SomeNotCompared)
+    {
         DbgPrint("Incomplete\n");
         DbgPrint("        Some fields not yet compared ...                       ");
     }
 
-    if (CompletionStatus) {
+    if (CompletionStatus)
+    {
 
         DbgPrint("Succeeded. \n");
     }
@@ -7391,7 +7168,7 @@ TestpCompareDuplicateToken(
     return CompletionStatus;
 }
 
-
+
 ////////////////////////////////////////////////////////////////
 //                                                            //
 // Duplicate Token Test                                       //
@@ -7413,7 +7190,6 @@ TestTokenDuplicate()
     SECURITY_QUALITY_OF_SERVICE IdentificationLevel;
 
 
-
     DbgPrint("\n");
 
     //
@@ -7431,16 +7207,9 @@ TestTokenDuplicate()
     IdentificationLevel.EffectiveOnly = FALSE;
 
 
-    InitializeObjectAttributes(
-        &NewAttributes,
-        NULL,
-        OBJ_INHERIT,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&NewAttributes, NULL, OBJ_INHERIT, NULL, NULL);
 
 
-
     ////////////////////////////////////////////////////////////
     //                                                        //
     // Duplicate the simple token                             //
@@ -7453,20 +7222,22 @@ TestTokenDuplicate()
     NewType = TokenImpersonation;
     NewAttributes.SecurityQualityOfService = &ImpersonationLevel;
 
-    Status = NtDuplicateToken(
-                 SimpleToken,             // ExistingTokenHandle
-                 0,                       // DesiredAccess
-                 &NewAttributes,          // ObjectAttributes
-                 EffectiveOnly,           // EffectiveOnly
-                 NewType,                 // TokenType
-                 &NewToken                // NewTokenHandle
-                 );
+    Status = NtDuplicateToken(SimpleToken,    // ExistingTokenHandle
+                              0,              // DesiredAccess
+                              &NewAttributes, // ObjectAttributes
+                              EffectiveOnly,  // EffectiveOnly
+                              NewType,        // TokenType
+                              &NewToken       // NewTokenHandle
+    );
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
-        Status = NtClose( NewToken ); ASSERT(NT_SUCCESS(NewToken));
-
-    } else {
+        Status = NtClose(NewToken);
+        ASSERT(NT_SUCCESS(NewToken));
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
@@ -7474,7 +7245,6 @@ TestTokenDuplicate()
     }
 
 
-
     ////////////////////////////////////////////////////////////
     //                                                        //
     // Duplicate the restricted token                         //
@@ -7487,27 +7257,29 @@ TestTokenDuplicate()
     NewType = TokenImpersonation;
     NewAttributes.SecurityQualityOfService = &ImpersonationLevel;
 
-    Status = NtDuplicateToken(
-                 TokenWithRestrictedSids, // ExistingTokenHandle
-                 0,                       // DesiredAccess
-                 &NewAttributes,          // ObjectAttributes
-                 EffectiveOnly,           // EffectiveOnly
-                 NewType,                 // TokenType
-                 &NewToken                // NewTokenHandle
-                 );
+    Status = NtDuplicateToken(TokenWithRestrictedSids, // ExistingTokenHandle
+                              0,                       // DesiredAccess
+                              &NewAttributes,          // ObjectAttributes
+                              EffectiveOnly,           // EffectiveOnly
+                              NewType,                 // TokenType
+                              &NewToken                // NewTokenHandle
+    );
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
-        Status = NtClose( NewToken ); ASSERT(NT_SUCCESS(NewToken));
-
-    } else {
+        Status = NtClose(NewToken);
+        ASSERT(NT_SUCCESS(NewToken));
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         return FALSE;
     }
 
-
+
     ////////////////////////////////////////////////////////////
     //                                                        //
     // Duplicate the token with restricted groups             //
@@ -7520,27 +7292,29 @@ TestTokenDuplicate()
     NewType = TokenImpersonation;
     NewAttributes.SecurityQualityOfService = &ImpersonationLevel;
 
-    Status = NtDuplicateToken(
-                 TokenWithRestrictedSids, // ExistingTokenHandle
-                 0,                       // DesiredAccess
-                 &NewAttributes,          // ObjectAttributes
-                 EffectiveOnly,           // EffectiveOnly
-                 NewType,                 // TokenType
-                 &NewToken                // NewTokenHandle
-                 );
+    Status = NtDuplicateToken(TokenWithRestrictedSids, // ExistingTokenHandle
+                              0,                       // DesiredAccess
+                              &NewAttributes,          // ObjectAttributes
+                              EffectiveOnly,           // EffectiveOnly
+                              NewType,                 // TokenType
+                              &NewToken                // NewTokenHandle
+    );
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
-        Status = NtClose( NewToken ); ASSERT(NT_SUCCESS(NewToken));
-
-    } else {
+        Status = NtClose(NewToken);
+        ASSERT(NT_SUCCESS(NewToken));
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         return FALSE;
     }
 
-
+
     ////////////////////////////////////////////////////////////
     //                                                        //
     // Duplicate the full impersonation token                 //
@@ -7553,37 +7327,33 @@ TestTokenDuplicate()
     NewType = TokenImpersonation;
     NewAttributes.SecurityQualityOfService = &ImpersonationLevel;
 
-    Status = NtDuplicateToken(
-                 ImpersonationToken,       // ExistingTokenHandle
-                 0,                        // DesiredAccess
-                 &NewAttributes,           // ObjectAttributes
-                 EffectiveOnly,            // EffectiveOnly
-                 NewType,                  // TokenType
-                 &NewToken                 // NewTokenHandle
-                 );
+    Status = NtDuplicateToken(ImpersonationToken, // ExistingTokenHandle
+                              0,                  // DesiredAccess
+                              &NewAttributes,     // ObjectAttributes
+                              EffectiveOnly,      // EffectiveOnly
+                              NewType,            // TokenType
+                              &NewToken           // NewTokenHandle
+    );
     //
     // Check to see that the duplicate is really a duplicate of
     // the original and display the test results.
     //
 
-    if (!TestpCompareDuplicateToken( Status,
-                                     ImpersonationToken,
-                                     NewAttributes,
-                                     EffectiveOnly,
-                                     NewType,
-                                     NewToken ) ) {
+    if (!TestpCompareDuplicateToken(Status, ImpersonationToken, NewAttributes, EffectiveOnly, NewType, NewToken))
+    {
 
         CompletionStatus = FALSE;
     }
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
-        Status = NtClose( NewToken );
+        Status = NtClose(NewToken);
 
         ASSERT(NT_SUCCESS(Status));
     }
 
-
+
     ////////////////////////////////////////////////////////////
     //                                                        //
     // Duplicate the full token, effective only               //
@@ -7596,48 +7366,36 @@ TestTokenDuplicate()
     NewType = TokenImpersonation;
     NewAttributes.SecurityQualityOfService = &ImpersonationLevel;
 
-    Status = NtDuplicateToken(
-                 ImpersonationToken,       // ExistingTokenHandle
-                 0,                        // DesiredAccess
-                 &NewAttributes,           // ObjectAttributes
-                 EffectiveOnly,            // EffectiveOnly
-                 NewType,                  // TokenType
-                 &NewToken                 // NewTokenHandle
-                 );
+    Status = NtDuplicateToken(ImpersonationToken, // ExistingTokenHandle
+                              0,                  // DesiredAccess
+                              &NewAttributes,     // ObjectAttributes
+                              EffectiveOnly,      // EffectiveOnly
+                              NewType,            // TokenType
+                              &NewToken           // NewTokenHandle
+    );
     //
     // Check to see that the duplicate is really a duplicate of
     // the original and display the test results.
     //
 
-    if (!TestpCompareDuplicateToken( Status,
-                                     ImpersonationToken,
-                                     NewAttributes,
-                                     EffectiveOnly,
-                                     NewType,
-                                     NewToken ) ) {
+    if (!TestpCompareDuplicateToken(Status, ImpersonationToken, NewAttributes, EffectiveOnly, NewType, NewToken))
+    {
 
         CompletionStatus = FALSE;
     }
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
-        Status = NtClose( NewToken );
+        Status = NtClose(NewToken);
 
         ASSERT(NT_SUCCESS(Status));
     }
 
 
-
-
-
-
-
-
-
-
     return CompletionStatus;
 }
-
+
 ////////////////////////////////////////////////////////////////
 //                                                            //
 // Assign Primary Token Test                                  //
@@ -7679,52 +7437,39 @@ TestTokenAssignPrimary()
     // Get information about the current token
     //
 
-    Status = NtOpenProcessToken(
-                 NtCurrentProcess(),
-                 TOKEN_ALL_ACCESS,
-                 &ProcessToken
-                 );
-    ASSERT (NT_SUCCESS(Status));
-
-    Status = NtQueryInformationToken(
-                 ProcessToken,                 // Handle
-                 TokenStatistics,              // TokenInformationClass
-                 &OriginalTokenStatistics,     // TokenInformation
-                 sizeof(TOKEN_STATISTICS),     // TokenInformationLength
-                 &ReturnLength                 // ReturnLength
-                 );
+    Status = NtOpenProcessToken(NtCurrentProcess(), TOKEN_ALL_ACCESS, &ProcessToken);
     ASSERT(NT_SUCCESS(Status));
 
+    Status = NtQueryInformationToken(ProcessToken,             // Handle
+                                     TokenStatistics,          // TokenInformationClass
+                                     &OriginalTokenStatistics, // TokenInformation
+                                     sizeof(TOKEN_STATISTICS), // TokenInformationLength
+                                     &ReturnLength             // ReturnLength
+    );
+    ASSERT(NT_SUCCESS(Status));
 
-
 
     //
     // Create a token with default DACL for use
     //
 
-    GroupIds = (PTOKEN_GROUPS)TstAllocatePool( PagedPool,
-                                               GROUP_IDS_LENGTH
-                                               );
+    GroupIds = (PTOKEN_GROUPS)TstAllocatePool(PagedPool, GROUP_IDS_LENGTH);
 
-    Privileges = (PTOKEN_PRIVILEGES)TstAllocatePool( PagedPool,
-                                                     PRIVILEGES_LENGTH
-                                                     );
+    Privileges = (PTOKEN_PRIVILEGES)TstAllocatePool(PagedPool, PRIVILEGES_LENGTH);
 
-    DefaultDacl.DefaultDacl = (PACL)TstAllocatePool( PagedPool,
-                                                     DEFAULT_DACL_LENGTH
-                                                     );
+    DefaultDacl.DefaultDacl = (PACL)TstAllocatePool(PagedPool, DEFAULT_DACL_LENGTH);
 
     GroupIds->GroupCount = GROUP_COUNT;
 
-    GroupIds->Groups[FLINTSTONE_INDEX].Sid  = FlintstoneSid;
-    GroupIds->Groups[CHILD_INDEX].Sid       = ChildSid;
-    GroupIds->Groups[SYSTEM_INDEX].Sid      = LocalSystemSid;
-    GroupIds->Groups[WORLD_INDEX].Sid       = WorldSid;
+    GroupIds->Groups[FLINTSTONE_INDEX].Sid = FlintstoneSid;
+    GroupIds->Groups[CHILD_INDEX].Sid = ChildSid;
+    GroupIds->Groups[SYSTEM_INDEX].Sid = LocalSystemSid;
+    GroupIds->Groups[WORLD_INDEX].Sid = WorldSid;
 
-    GroupIds->Groups[FLINTSTONE_INDEX].Attributes  = OwnerGroupAttributes;
-    GroupIds->Groups[CHILD_INDEX].Attributes       = OptionalGroupAttributes;
-    GroupIds->Groups[SYSTEM_INDEX].Attributes      = OptionalGroupAttributes;
-    GroupIds->Groups[WORLD_INDEX].Attributes       = NormalGroupAttributes;
+    GroupIds->Groups[FLINTSTONE_INDEX].Attributes = OwnerGroupAttributes;
+    GroupIds->Groups[CHILD_INDEX].Attributes = OptionalGroupAttributes;
+    GroupIds->Groups[SYSTEM_INDEX].Attributes = OptionalGroupAttributes;
+    GroupIds->Groups[WORLD_INDEX].Attributes = NormalGroupAttributes;
 
     UserId.User.Sid = PebblesSid;
     UserId.User.Attributes = 0;
@@ -7742,69 +7487,62 @@ TestTokenAssignPrimary()
 
     PrimaryGroup.PrimaryGroup = FlintstoneSid;
 
-    Status = RtlCreateAcl( DefaultDacl.DefaultDacl, DEFAULT_DACL_LENGTH, ACL_REVISION);
+    Status = RtlCreateAcl(DefaultDacl.DefaultDacl, DEFAULT_DACL_LENGTH, ACL_REVISION);
 
-    ASSERT(NT_SUCCESS(Status) );
+    ASSERT(NT_SUCCESS(Status));
 
-    Status = NtCreateToken(
-                 &Token,                   // Handle
-                 (TOKEN_ALL_ACCESS),       // DesiredAccess
-                 &PrimaryTokenAttributes,  // ObjectAttributes
-                 TokenPrimary,             // TokenType
-                 &SystemAuthenticationId,   // Authentication LUID
-                 &NoExpiration,            // Expiration Time
-                 &UserId,                  // Owner ID
-                 GroupIds,                 // Group IDs
-                 Privileges,               // Privileges
-                 &Owner,                   // Owner
-                 &PrimaryGroup,            // Primary Group
-                 &DefaultDacl,             // Default Dacl
-                 &TestSource               // TokenSource
-                 );
+    Status = NtCreateToken(&Token,                  // Handle
+                           (TOKEN_ALL_ACCESS),      // DesiredAccess
+                           &PrimaryTokenAttributes, // ObjectAttributes
+                           TokenPrimary,            // TokenType
+                           &SystemAuthenticationId, // Authentication LUID
+                           &NoExpiration,           // Expiration Time
+                           &UserId,                 // Owner ID
+                           GroupIds,                // Group IDs
+                           Privileges,              // Privileges
+                           &Owner,                  // Owner
+                           &PrimaryGroup,           // Primary Group
+                           &DefaultDacl,            // Default Dacl
+                           &TestSource              // TokenSource
+    );
     ASSERT(NT_SUCCESS(Status));
 
     //
     // Make sure key data is different than what is already on the process.
     //
 
-    Status = NtQueryInformationToken(
-                 Token,                        // Handle
-                 TokenStatistics,              // TokenInformationClass
-                 &NewTokenStatistics,          // TokenInformation
-                 sizeof(TOKEN_STATISTICS),     // TokenInformationLength
-                 &ReturnLength                 // ReturnLength
-                 );
+    Status = NtQueryInformationToken(Token,                    // Handle
+                                     TokenStatistics,          // TokenInformationClass
+                                     &NewTokenStatistics,      // TokenInformation
+                                     sizeof(TOKEN_STATISTICS), // TokenInformationLength
+                                     &ReturnLength             // ReturnLength
+    );
     ASSERT(NT_SUCCESS(Status));
 
-    ASSERT( (OriginalTokenStatistics.TokenId.HighPart !=
-             NewTokenStatistics.TokenId.HighPart)  ||
-            (OriginalTokenStatistics.TokenId.LowPart !=
-             NewTokenStatistics.TokenId.LowPart)        );
+    ASSERT((OriginalTokenStatistics.TokenId.HighPart != NewTokenStatistics.TokenId.HighPart) ||
+           (OriginalTokenStatistics.TokenId.LowPart != NewTokenStatistics.TokenId.LowPart));
 
-
 
     //
     // Assign the new token
     //
 
-    PrimaryTokenInfo.Token  = Token;
+    PrimaryTokenInfo.Token = Token;
     PrimaryTokenInfo.Thread = NtCurrentThread();
-    Status = NtSetInformationProcess(
-                 NtCurrentProcess(),
-                 ProcessAccessToken,
-                 (PVOID)&PrimaryTokenInfo,
-                 (ULONG)sizeof(PROCESS_ACCESS_TOKEN)
-                 );
+    Status = NtSetInformationProcess(NtCurrentProcess(), ProcessAccessToken, (PVOID)&PrimaryTokenInfo,
+                                     (ULONG)sizeof(PROCESS_ACCESS_TOKEN));
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
+    }
+    else
+    {
 
-    } else {
-
-        Status = NtClose( Token );
+        Status = NtClose(Token);
         ASSERT(NT_SUCCESS(Status));
 
 
@@ -7812,23 +7550,18 @@ TestTokenAssignPrimary()
         // Get information about the assigned token
         //
 
-        Status = NtOpenProcessToken(
-                     NtCurrentProcess(),
-                     TOKEN_QUERY | TOKEN_QUERY_SOURCE,
-                     &Token
-                     );
-        ASSERT (NT_SUCCESS(Status));
-
-        Status = NtQueryInformationToken(
-                     Token,                        // Handle
-                     TokenStatistics,              // TokenInformationClass
-                     &AssignedTokenStatistics,     // TokenInformation
-                     sizeof(TOKEN_STATISTICS),     // TokenInformationLength
-                     &ReturnLength                 // ReturnLength
-                     );
+        Status = NtOpenProcessToken(NtCurrentProcess(), TOKEN_QUERY | TOKEN_QUERY_SOURCE, &Token);
         ASSERT(NT_SUCCESS(Status));
 
-        Status = NtClose( Token );
+        Status = NtQueryInformationToken(Token,                    // Handle
+                                         TokenStatistics,          // TokenInformationClass
+                                         &AssignedTokenStatistics, // TokenInformation
+                                         sizeof(TOKEN_STATISTICS), // TokenInformationLength
+                                         &ReturnLength             // ReturnLength
+        );
+        ASSERT(NT_SUCCESS(Status));
+
+        Status = NtClose(Token);
         ASSERT(NT_SUCCESS(Status));
 
 
@@ -7839,25 +7572,22 @@ TestTokenAssignPrimary()
 
         ASSERT(AssignedTokenStatistics.TokenType == TokenPrimary);
 
-        if ( (NewTokenStatistics.TokenId.HighPart ==
-              AssignedTokenStatistics.TokenId.HighPart)  &&
-             (NewTokenStatistics.TokenId.LowPart ==
-              AssignedTokenStatistics.TokenId.LowPart) ) {
+        if ((NewTokenStatistics.TokenId.HighPart == AssignedTokenStatistics.TokenId.HighPart) &&
+            (NewTokenStatistics.TokenId.LowPart == AssignedTokenStatistics.TokenId.LowPart))
+        {
 
             DbgPrint("Succeeded.\n");
+        }
+        else
+        {
 
-        } else {
-
-        DbgPrint("********** Failed ************\n");
-        DbgPrint("Token ID mismatch.\n");
-        DbgPrint("New token ID is:      (0x%lx, 0x%lx) \n",
-                 NewTokenStatistics.TokenId.HighPart,
-                 NewTokenStatistics.TokenId.LowPart);
-        DbgPrint("Assigned token ID is: (0x%lx, 0x%lx) \n",
-                 AssignedTokenStatistics.TokenId.HighPart,
-                 AssignedTokenStatistics.TokenId.LowPart);
-        CompletionStatus = FALSE;
-
+            DbgPrint("********** Failed ************\n");
+            DbgPrint("Token ID mismatch.\n");
+            DbgPrint("New token ID is:      (0x%lx, 0x%lx) \n", NewTokenStatistics.TokenId.HighPart,
+                     NewTokenStatistics.TokenId.LowPart);
+            DbgPrint("Assigned token ID is: (0x%lx, 0x%lx) \n", AssignedTokenStatistics.TokenId.HighPart,
+                     AssignedTokenStatistics.TokenId.LowPart);
+            CompletionStatus = FALSE;
         }
     }
 
@@ -7865,19 +7595,15 @@ TestTokenAssignPrimary()
     // Change back to the original token
     //
 
-    PrimaryTokenInfo.Token  = ProcessToken;
+    PrimaryTokenInfo.Token = ProcessToken;
     PrimaryTokenInfo.Thread = NtCurrentThread();
-    Status = NtSetInformationProcess(
-                 NtCurrentProcess(),
-                 ProcessAccessToken,
-                 (PVOID)&PrimaryTokenInfo,
-                 (ULONG)sizeof(PROCESS_ACCESS_TOKEN)
-                 );
+    Status = NtSetInformationProcess(NtCurrentProcess(), ProcessAccessToken, (PVOID)&PrimaryTokenInfo,
+                                     (ULONG)sizeof(PROCESS_ACCESS_TOKEN));
 
     ASSERT(NT_SUCCESS(Status));
-    Status = NtClose( ProcessToken );
+    Status = NtClose(ProcessToken);
     ASSERT(NT_SUCCESS(Status));
-
+
 
     ////////////////////////////////////////////////////////////
     //                                                        //
@@ -7893,15 +7619,15 @@ TestTokenAssignPrimary()
     //
     GroupIds->GroupCount = GROUP_COUNT;
 
-    GroupIds->Groups[FLINTSTONE_INDEX].Sid  = FlintstoneSid;
-    GroupIds->Groups[CHILD_INDEX].Sid       = ChildSid;
+    GroupIds->Groups[FLINTSTONE_INDEX].Sid = FlintstoneSid;
+    GroupIds->Groups[CHILD_INDEX].Sid = ChildSid;
     GroupIds->Groups[NEANDERTHOL_INDEX].Sid = NeandertholSid;
-    GroupIds->Groups[WORLD_INDEX].Sid       = WorldSid;
+    GroupIds->Groups[WORLD_INDEX].Sid = WorldSid;
 
-    GroupIds->Groups[FLINTSTONE_INDEX].Attributes  = OwnerGroupAttributes;
-    GroupIds->Groups[CHILD_INDEX].Attributes       = OptionalGroupAttributes;
+    GroupIds->Groups[FLINTSTONE_INDEX].Attributes = OwnerGroupAttributes;
+    GroupIds->Groups[CHILD_INDEX].Attributes = OptionalGroupAttributes;
     GroupIds->Groups[NEANDERTHOL_INDEX].Attributes = OptionalGroupAttributes;
-    GroupIds->Groups[WORLD_INDEX].Attributes       = NormalGroupAttributes;
+    GroupIds->Groups[WORLD_INDEX].Attributes = NormalGroupAttributes;
 
     UserId.User.Sid = PebblesSid;
     UserId.User.Attributes = 0;
@@ -7919,59 +7645,55 @@ TestTokenAssignPrimary()
 
     PrimaryGroup.PrimaryGroup = FlintstoneSid;
 
-    Status = RtlCreateAcl( DefaultDacl.DefaultDacl, DEFAULT_DACL_LENGTH, ACL_REVISION);
+    Status = RtlCreateAcl(DefaultDacl.DefaultDacl, DEFAULT_DACL_LENGTH, ACL_REVISION);
 
-    ASSERT(NT_SUCCESS(Status) );
+    ASSERT(NT_SUCCESS(Status));
 
-    Status = NtCreateToken(
-                 &Token,                   // Handle
-                 (TOKEN_ALL_ACCESS),       // DesiredAccess
-                 &ImpersonationTokenAttributes,  // ObjectAttributes
-                 TokenImpersonation,       // TokenType
-                 &OriginalAuthenticationId,   // Authentication LUID
-                 &NoExpiration,            // Expiration Time
-                 &UserId,                  // Owner ID
-                 GroupIds,                 // Group IDs
-                 Privileges,               // Privileges
-                 &Owner,                   // Owner
-                 &PrimaryGroup,            // Primary Group
-                 &DefaultDacl,             // Default Dacl
-                 &TestSource               // TokenSource
-                 );
+    Status = NtCreateToken(&Token,                        // Handle
+                           (TOKEN_ALL_ACCESS),            // DesiredAccess
+                           &ImpersonationTokenAttributes, // ObjectAttributes
+                           TokenImpersonation,            // TokenType
+                           &OriginalAuthenticationId,     // Authentication LUID
+                           &NoExpiration,                 // Expiration Time
+                           &UserId,                       // Owner ID
+                           GroupIds,                      // Group IDs
+                           Privileges,                    // Privileges
+                           &Owner,                        // Owner
+                           &PrimaryGroup,                 // Primary Group
+                           &DefaultDacl,                  // Default Dacl
+                           &TestSource                    // TokenSource
+    );
     ASSERT(NT_SUCCESS(Status));
 
     //
     // Assign the new token
     //
 
-    PrimaryTokenInfo.Token  = Token;
+    PrimaryTokenInfo.Token = Token;
     PrimaryTokenInfo.Thread = NtCurrentThread();
-    Status = NtSetInformationProcess(
-                 NtCurrentProcess(),
-                 ProcessAccessToken,
-                 (PVOID)&PrimaryTokenInfo,
-                 (ULONG)sizeof(PROCESS_ACCESS_TOKEN)
-                 );
+    Status = NtSetInformationProcess(NtCurrentProcess(), ProcessAccessToken, (PVOID)&PrimaryTokenInfo,
+                                     (ULONG)sizeof(PROCESS_ACCESS_TOKEN));
 
-    if (Status == STATUS_BAD_TOKEN_TYPE) {
+    if (Status == STATUS_BAD_TOKEN_TYPE)
+    {
 
         DbgPrint("Succeeded.\n");
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
-
     }
 
-    Status = NtClose( Token );
+    Status = NtClose(Token);
     ASSERT(NT_SUCCESS(Status));
 
 
     return CompletionStatus;
 }
-
+
 ////////////////////////////////////////////////////////////////
 //                                                            //
 // Impersonation Test  (with open test)                       //
@@ -7992,7 +7714,6 @@ TestTokenImpersonation()
     SECURITY_QUALITY_OF_SERVICE ImpersonationLevel;
 
 
-
     DbgPrint("\n");
 
 
@@ -8005,21 +7726,19 @@ TestTokenImpersonation()
     DbgPrint("Se:     Revert to self (specify NULL handle) ...               ");
 
     NewToken = NULL;
-    Status = NtSetInformationThread(
-                 NtCurrentThread(),
-                 ThreadImpersonationToken,
-                 (PVOID)&NewToken,
-                 (ULONG)sizeof(HANDLE)
-                 );
+    Status =
+        NtSetInformationThread(NtCurrentThread(), ThreadImpersonationToken, (PVOID)&NewToken, (ULONG)sizeof(HANDLE));
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
-
     }
 
 
@@ -8033,24 +7752,22 @@ TestTokenImpersonation()
     DbgPrint("Se:     Assigning primary token as impersonation token ...     ");
 
     NewToken = TokenWithGroups;
-    Status = NtSetInformationThread(
-                 NtCurrentThread(),
-                 ThreadImpersonationToken,
-                 (PVOID)&NewToken,
-                 (ULONG)sizeof(HANDLE)
-                 );
+    Status =
+        NtSetInformationThread(NtCurrentThread(), ThreadImpersonationToken, (PVOID)&NewToken, (ULONG)sizeof(HANDLE));
 
-    if (Status == STATUS_BAD_TOKEN_TYPE) {
+    if (Status == STATUS_BAD_TOKEN_TYPE)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
-
     }
 
-
+
     ////////////////////////////////////////////////////////////
     //                                                        //
     // Assign a valid impersonation token                     //
@@ -8060,24 +7777,22 @@ TestTokenImpersonation()
     DbgPrint("Se:     Assign valid impersonation token ...                   ");
 
     NewToken = ImpersonationToken;
-    Status = NtSetInformationThread(
-                 NtCurrentThread(),
-                 ThreadImpersonationToken,
-                 (PVOID)&NewToken,
-                 (ULONG)sizeof(HANDLE)
-                 );
+    Status =
+        NtSetInformationThread(NtCurrentThread(), ThreadImpersonationToken, (PVOID)&NewToken, (ULONG)sizeof(HANDLE));
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
-
     }
 
-
+
     ////////////////////////////////////////////////////////////
     //                                                        //
     // Open the impersonation token                           //
@@ -8087,27 +7802,23 @@ TestTokenImpersonation()
 
     DbgPrint("Se:     Open an impersonation token ...                        ");
 
-    Status = NtOpenThreadToken(
-                 NtCurrentThread(),
-                 TOKEN_ALL_ACCESS,
-                 TRUE,
-                 &OpenedToken
-                 );
+    Status = NtOpenThreadToken(NtCurrentThread(), TOKEN_ALL_ACCESS, TRUE, &OpenedToken);
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
-        Status = NtClose( OpenedToken );
+        Status = NtClose(OpenedToken);
         ASSERT(NT_SUCCESS(Status));
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
-
     }
 
 
-
     ////////////////////////////////////////////////////////////
     //                                                        //
     // Open a non-existent impersonation token                //
@@ -8122,31 +7833,25 @@ TestTokenImpersonation()
     //
 
     NewToken = NULL;
-    Status = NtSetInformationThread(
-                 NtCurrentThread(),
-                 ThreadImpersonationToken,
-                 (PVOID)&NewToken,
-                 (ULONG)sizeof(HANDLE)
-                 );  ASSERT(NT_SUCCESS(Status));
+    Status =
+        NtSetInformationThread(NtCurrentThread(), ThreadImpersonationToken, (PVOID)&NewToken, (ULONG)sizeof(HANDLE));
+    ASSERT(NT_SUCCESS(Status));
 
-    Status = NtOpenThreadToken(
-                 NtCurrentThread(),
-                 TOKEN_ALL_ACCESS,
-                 TRUE,
-                 &OpenedToken
-                 );
+    Status = NtOpenThreadToken(NtCurrentThread(), TOKEN_ALL_ACCESS, TRUE, &OpenedToken);
 
-    if (Status == STATUS_NO_TOKEN) {
+    if (Status == STATUS_NO_TOKEN)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
-
     }
 
-
+
     ////////////////////////////////////////////////////////////
     //                                                        //
     // Open an anonymous   impersonation token                //
@@ -8161,32 +7866,25 @@ TestTokenImpersonation()
     //
 
     NewToken = AnonymousToken;
-    Status = NtSetInformationThread(
-                 ThreadHandle,
-                 ThreadImpersonationToken,
-                 (PVOID)&NewToken,
-                 (ULONG)sizeof(HANDLE)
-                 );  ASSERT(NT_SUCCESS(Status));
+    Status = NtSetInformationThread(ThreadHandle, ThreadImpersonationToken, (PVOID)&NewToken, (ULONG)sizeof(HANDLE));
+    ASSERT(NT_SUCCESS(Status));
 
 
-    Status = NtOpenThreadToken(
-                 ThreadHandle,
-                 TOKEN_ALL_ACCESS,
-                 TRUE,
-                 &OpenedToken
-                 );
+    Status = NtOpenThreadToken(ThreadHandle, TOKEN_ALL_ACCESS, TRUE, &OpenedToken);
 
-    if (Status == STATUS_CANT_OPEN_ANONYMOUS) {
+    if (Status == STATUS_CANT_OPEN_ANONYMOUS)
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
-
     }
 
-
+
     ////////////////////////////////////////////////////////////
     //                                                        //
     // Change the impersonation of a thread                   //
@@ -8197,39 +7895,28 @@ TestTokenImpersonation()
     DbgPrint("Se:     Change the impersonation token ...                     ");
 
     NewToken = NULL;
-    Status = NtSetInformationThread(
-                 ThreadHandle,
-                 ThreadImpersonationToken,
-                 (PVOID)&NewToken,
-                 (ULONG)sizeof(HANDLE)
-                 );  ASSERT(NT_SUCCESS(Status));
+    Status = NtSetInformationThread(ThreadHandle, ThreadImpersonationToken, (PVOID)&NewToken, (ULONG)sizeof(HANDLE));
+    ASSERT(NT_SUCCESS(Status));
 
     NewToken = AnonymousToken;
-    Status = NtSetInformationThread(
-                 ThreadHandle,
-                 ThreadImpersonationToken,
-                 (PVOID)&NewToken,
-                 (ULONG)sizeof(HANDLE)
-                 );  ASSERT(NT_SUCCESS(Status));
+    Status = NtSetInformationThread(ThreadHandle, ThreadImpersonationToken, (PVOID)&NewToken, (ULONG)sizeof(HANDLE));
+    ASSERT(NT_SUCCESS(Status));
 
     NewToken = ImpersonationToken;
-    Status = NtSetInformationThread(
-                 ThreadHandle,
-                 ThreadImpersonationToken,
-                 (PVOID)&NewToken,
-                 (ULONG)sizeof(HANDLE)
-                 );
+    Status = NtSetInformationThread(ThreadHandle, ThreadImpersonationToken, (PVOID)&NewToken, (ULONG)sizeof(HANDLE));
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
-
     }
-
+
     ////////////////////////////////////////////////////////////
     //                                                        //
     // Impersonate a restricted token                         //
@@ -8240,27 +7927,16 @@ TestTokenImpersonation()
     DbgPrint("Se:     Impersonate restricted token ...                      ");
 
     NewToken = NULL;
-    Status = NtSetInformationThread(
-                 NtCurrentThread(),
-                 ThreadImpersonationToken,
-                 (PVOID)&NewToken,
-                 (ULONG)sizeof(HANDLE)
-                 );  ASSERT(NT_SUCCESS(Status));
-
-
+    Status =
+        NtSetInformationThread(NtCurrentThread(), ThreadImpersonationToken, (PVOID)&NewToken, (ULONG)sizeof(HANDLE));
+    ASSERT(NT_SUCCESS(Status));
 
 
     //
     // Initialize variables
     //
 
-    InitializeObjectAttributes(
-        &NewAttributes,
-        NULL,
-        OBJ_INHERIT,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&NewAttributes, NULL, OBJ_INHERIT, NULL, NULL);
 
 
     ImpersonationLevel.Length = (ULONG)sizeof(SECURITY_QUALITY_OF_SERVICE);
@@ -8271,139 +7947,118 @@ TestTokenImpersonation()
     NewAttributes.SecurityQualityOfService = &ImpersonationLevel;
 
 
-    Status = NtDuplicateToken(
-                 TokenWithRestrictedSids, // ExistingTokenHandle
-                 TOKEN_ALL_ACCESS,        // DesiredAccess
-                 &NewAttributes,          // ObjectAttributes
-                 EffectiveOnly,           // EffectiveOnly
-                 NewType,                 // TokenType
-                 &NewToken                // NewTokenHandle
-                 );
+    Status = NtDuplicateToken(TokenWithRestrictedSids, // ExistingTokenHandle
+                              TOKEN_ALL_ACCESS,        // DesiredAccess
+                              &NewAttributes,          // ObjectAttributes
+                              EffectiveOnly,           // EffectiveOnly
+                              NewType,                 // TokenType
+                              &NewToken                // NewTokenHandle
+    );
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
     }
 
-    Status = NtSetInformationThread(
-                 NtCurrentThread(),
-                 ThreadImpersonationToken,
-                 (PVOID)&NewToken,
-                 (ULONG)sizeof(HANDLE)
-                 );  ASSERT(NT_SUCCESS(Status));
+    Status =
+        NtSetInformationThread(NtCurrentThread(), ThreadImpersonationToken, (PVOID)&NewToken, (ULONG)sizeof(HANDLE));
+    ASSERT(NT_SUCCESS(Status));
 
     //
     // Now try to open something, like the process, which should fail
     //
 
-    Status = NtOpenProcessToken(
-                 NtCurrentProcess(),
-                 TOKEN_QUERY | TOKEN_QUERY_SOURCE,
-                 &Token
-                 );
-    if (Status != STATUS_ACCESS_DENIED) {
+    Status = NtOpenProcessToken(NtCurrentProcess(), TOKEN_QUERY | TOKEN_QUERY_SOURCE, &Token);
+    if (Status != STATUS_ACCESS_DENIED)
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
     }
 
-    Status = NtOpenProcessToken(
-                 NtCurrentProcess(),
-                 MAXIMUM_ALLOWED,
-                 &Token
-                 );
-    if (Status != STATUS_ACCESS_DENIED) {
+    Status = NtOpenProcessToken(NtCurrentProcess(), MAXIMUM_ALLOWED, &Token);
+    if (Status != STATUS_ACCESS_DENIED)
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
     }
 
-    Status = NtDuplicateToken(
-                 TokenWithMoreRestrictedSids, // ExistingTokenHandle
-                 TOKEN_ALL_ACCESS,        // DesiredAccess
-                 &NewAttributes,          // ObjectAttributes
-                 EffectiveOnly,           // EffectiveOnly
-                 NewType,                 // TokenType
-                 &NewToken                // NewTokenHandle
-                 );
+    Status = NtDuplicateToken(TokenWithMoreRestrictedSids, // ExistingTokenHandle
+                              TOKEN_ALL_ACCESS,            // DesiredAccess
+                              &NewAttributes,              // ObjectAttributes
+                              EffectiveOnly,               // EffectiveOnly
+                              NewType,                     // TokenType
+                              &NewToken                    // NewTokenHandle
+    );
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
-
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
     }
 
-    Status = NtSetInformationThread(
-                 NtCurrentThread(),
-                 ThreadImpersonationToken,
-                 (PVOID)&NewToken,
-                 (ULONG)sizeof(HANDLE)
-                 );  ASSERT(NT_SUCCESS(Status));
+    Status =
+        NtSetInformationThread(NtCurrentThread(), ThreadImpersonationToken, (PVOID)&NewToken, (ULONG)sizeof(HANDLE));
+    ASSERT(NT_SUCCESS(Status));
 
 
     //
     // Now try to open something, like the process, which should succeed
     //
 
-    Status = NtOpenProcessToken(
-                 NtCurrentProcess(),
-                 TOKEN_QUERY | TOKEN_QUERY_SOURCE,
-                 &Token
-                 );
-    if (Status != STATUS_SUCCESS) {
+    Status = NtOpenProcessToken(NtCurrentProcess(), TOKEN_QUERY | TOKEN_QUERY_SOURCE, &Token);
+    if (Status != STATUS_SUCCESS)
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
     }
 
-    Status = NtOpenProcessToken(
-                 NtCurrentProcess(),
-                 MAXIMUM_ALLOWED,
-                 &Token
-                 );
-    if (Status != STATUS_SUCCESS) {
+    Status = NtOpenProcessToken(NtCurrentProcess(), MAXIMUM_ALLOWED, &Token);
+    if (Status != STATUS_SUCCESS)
+    {
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
     }
 
     NewToken = NULL;
-    Status = NtSetInformationThread(
-                 NtCurrentThread(),
-                 ThreadImpersonationToken,
-                 (PVOID)&NewToken,
-                 (ULONG)sizeof(HANDLE)
-                 );
+    Status =
+        NtSetInformationThread(NtCurrentThread(), ThreadImpersonationToken, (PVOID)&NewToken, (ULONG)sizeof(HANDLE));
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         DbgPrint("Succeeded.\n");
-    } else {
+    }
+    else
+    {
 
         DbgPrint("********** Failed ************\n");
         DbgPrint("Status is: 0x%lx \n", Status);
         CompletionStatus = FALSE;
-
     }
 
-    Status = NtTerminateThread(
-                 ThreadHandle,
-                 (NTSTATUS)0
-                 );
+    Status = NtTerminateThread(ThreadHandle, (NTSTATUS)0);
 
     ASSERT(NT_SUCCESS(Status));
 
     return CompletionStatus;
 }
-
+
 ////////////////////////////////////////////////////////////////
 //                                                            //
 // Main Program Entry                                         //
@@ -8411,7 +8066,7 @@ TestTokenImpersonation()
 ////////////////////////////////////////////////////////////////
 
 BOOLEAN
-CTToken()      // Common Test for Token object
+CTToken() // Common Test for Token object
 {
     BOOLEAN Result = TRUE;
 
@@ -8419,43 +8074,76 @@ CTToken()      // Common Test for Token object
     TestTokenInitialize();
 
     DbgPrint("Se:   Token Creation Test...                                 Test");
-    if (!TestTokenCreate()) { Result = FALSE; }
+    if (!TestTokenCreate())
+    {
+        Result = FALSE;
+    }
 
     DbgPrint("Se:   Token Filtering Test...                                Test");
-    if (!TestTokenFilter()) { Result = FALSE; }
+    if (!TestTokenFilter())
+    {
+        Result = FALSE;
+    }
 
     DbgPrint("Se:   Token Open Test (with primary token)...                Test");
-    if (!TestTokenOpenPrimary()) { Result = FALSE; }
+    if (!TestTokenOpenPrimary())
+    {
+        Result = FALSE;
+    }
 
     DbgPrint("Se:   Token Query Test...                                    Test");
-    if (!TestTokenQuery()) { Result = FALSE; }
+    if (!TestTokenQuery())
+    {
+        Result = FALSE;
+    }
 
     DbgPrint("Se:   Token Set Test...                                      Test");
-    if (!TestTokenSet()) { Result = FALSE; }
+    if (!TestTokenSet())
+    {
+        Result = FALSE;
+    }
 
     DbgPrint("Se:   Token Adjust Privileges Test...                        Test");
-    if (!TestTokenAdjustPrivileges()) {Result = FALSE; }
+    if (!TestTokenAdjustPrivileges())
+    {
+        Result = FALSE;
+    }
 
     DbgPrint("Se:   Token Adjust Group Test...                             Test");
-    if (!TestTokenAdjustGroups()) { Result = FALSE; }
+    if (!TestTokenAdjustGroups())
+    {
+        Result = FALSE;
+    }
 
     DbgPrint("Se:   Token Duplication Test...                              Test");
-    if (!TestTokenDuplicate()) { Result = FALSE; }
+    if (!TestTokenDuplicate())
+    {
+        Result = FALSE;
+    }
 
     DbgPrint("Se:   Primary Token Assignment Test...                       Test");
-    if (!TestTokenAssignPrimary()) { Result = FALSE; }
+    if (!TestTokenAssignPrimary())
+    {
+        Result = FALSE;
+    }
 
     DbgPrint("Se:   Impersonation Test (and impersonation open)...         Test");
-    if (!TestTokenImpersonation()) { Result = FALSE; }
+    if (!TestTokenImpersonation())
+    {
+        Result = FALSE;
+    }
 
 
     DbgPrint("\n");
     DbgPrint("\n");
     DbgPrint("    ********************\n");
     DbgPrint("    **                **\n");
-    if (Result) {
+    if (Result)
+    {
         DbgPrint("Se: ** Test Succeeded **\n");
-    } else {
+    }
+    else
+    {
         DbgPrint("Se: **  Test Failed   **\n");
     }
 
@@ -8466,4 +8154,3 @@ CTToken()      // Common Test for Token object
 
     return Result;
 }
-

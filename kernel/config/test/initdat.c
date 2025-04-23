@@ -24,5 +24,6 @@ Revision History:
 --*/
 
 
-void dummy2(void) {
+void dummy2(void)
+{
 }

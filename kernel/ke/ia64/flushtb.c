@@ -25,39 +25,46 @@ Revision History:
 
 extern KSPIN_LOCK KiTbBroadcastLock;
 
-#define _x256mb (1024*1024*256)
+#define _x256mb (1024 * 1024 * 256)
 
 #define KiFlushSingleTbGlobal(Invalid, Va) __ptcga((__int64)Va, PAGE_SHIFT << 2)
 
 #define KiFlushSingleTbLocal(Invalid, va) __ptcl((__int64)va, PAGE_SHIFT << 2)
 
-#define KiTbSynchronizeGlobal() { __mf(); __isrlz(); }
+#define KiTbSynchronizeGlobal() \
+    {                           \
+        __mf();                 \
+        __isrlz();              \
+    }
 
-#define KiTbSynchronizeLocal() {  __isrlz(); }
+#define KiTbSynchronizeLocal() \
+    {                          \
+        __isrlz();             \
+    }
 
-#define KiFlush2gbTbGlobal(Invalid) \
-  { \
-    __ptcga((__int64)0, 28 << 2); \
-    __ptcg((__int64)_x256mb, 28 << 2); \
-    __ptcg((__int64)_x256mb*2,28 << 2); \
-    __ptcg((__int64)_x256mb*3, 28 << 2); \
-    __ptcg((__int64)_x256mb*4, 28 << 2); \
-    __ptcg((__int64)_x256mb*5, 28 << 2); \
-    __ptcg((__int64)_x256mb*6, 28 << 2); \
-    __ptcg((__int64)_x256mb*7, 28 << 2); \
-  }
+#define KiFlush2gbTbGlobal(Invalid)            \
+    {                                          \
+        __ptcga((__int64)0, 28 << 2);          \
+        __ptcg((__int64)_x256mb, 28 << 2);     \
+        __ptcg((__int64)_x256mb * 2, 28 << 2); \
+        __ptcg((__int64)_x256mb * 3, 28 << 2); \
+        __ptcg((__int64)_x256mb * 4, 28 << 2); \
+        __ptcg((__int64)_x256mb * 5, 28 << 2); \
+        __ptcg((__int64)_x256mb * 6, 28 << 2); \
+        __ptcg((__int64)_x256mb * 7, 28 << 2); \
+    }
 
-#define KiFlush2gbTbLocal(Invalid) \
-  { \
-    __ptcl((__int64)0, 28 << 2); \
-    __ptcl((__int64)_x256mb, 28 << 2); \
-    __ptcl((__int64)_x256mb*2,28 << 2); \
-    __ptcl((__int64)_x256mb*3, 28 << 2); \
-    __ptcl((__int64)_x256mb*4, 28 << 2); \
-    __ptcl((__int64)_x256mb*5, 28 << 2); \
-    __ptcl((__int64)_x256mb*6, 28 << 2); \
-    __ptcl((__int64)_x256mb*7, 28 << 2); \
-  }
+#define KiFlush2gbTbLocal(Invalid)             \
+    {                                          \
+        __ptcl((__int64)0, 28 << 2);           \
+        __ptcl((__int64)_x256mb, 28 << 2);     \
+        __ptcl((__int64)_x256mb * 2, 28 << 2); \
+        __ptcl((__int64)_x256mb * 3, 28 << 2); \
+        __ptcl((__int64)_x256mb * 4, 28 << 2); \
+        __ptcl((__int64)_x256mb * 5, 28 << 2); \
+        __ptcl((__int64)_x256mb * 6, 28 << 2); \
+        __ptcl((__int64)_x256mb * 7, 28 << 2); \
+    }
 
 //
 // flag to perform the IPI based TLB shootdown
@@ -65,69 +72,34 @@ extern KSPIN_LOCK KiTbBroadcastLock;
 
 BOOLEAN KiIpiTbShootdown = TRUE;
 
-VOID
-KiAttachRegion(
-    IN PKPROCESS Process
-    );
+VOID KiAttachRegion(IN PKPROCESS Process);
 
-VOID
-KiDetachRegion(
-    VOID
-    );
+VOID KiDetachRegion(VOID);
 
-
+
 //
 // Define forward referenced prototypes.
 //
 
-VOID
-KiFlushEntireTbTarget (
-    IN PULONG SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    );
+VOID KiFlushEntireTbTarget(IN PULONG SignalDone, IN PVOID Parameter1, IN PVOID Parameter2, IN PVOID Parameter3);
 
-VOID
-KiFlushForwardProgressTbBuffer(
-    KAFFINITY TargetProcessors
-    );
+VOID KiFlushForwardProgressTbBuffer(KAFFINITY TargetProcessors);
 
-VOID
-KiFlushForwardProgressTbBufferLocal(
-    VOID
-    );
+VOID KiFlushForwardProgressTbBufferLocal(VOID);
 
-KiPurgeTranslationCache (
-    ULONGLONG Base,
-    ULONGLONG Stride1,
-    ULONGLONG Stride2,
-    ULONGLONG Count1,
-    ULONGLONG Count2
-    );
+KiPurgeTranslationCache(ULONGLONG Base, ULONGLONG Stride1, ULONGLONG Stride2, ULONGLONG Count1, ULONGLONG Count2);
 
 extern IA64_PTCE_INFO KiIA64PtceInfo;
 
-VOID
-KeFlushCurrentTb (
-    VOID
-    )
+VOID KeFlushCurrentTb(VOID)
 {
-    KiPurgeTranslationCache( 
-        KiIA64PtceInfo.PtceBase, 
-        KiIA64PtceInfo.PtceStrides.Strides1, 
-        KiIA64PtceInfo.PtceStrides.Strides2, 
-        KiIA64PtceInfo.PtceTcCount.Count1, 
-        KiIA64PtceInfo.PtceTcCount.Count2);
+    KiPurgeTranslationCache(KiIA64PtceInfo.PtceBase, KiIA64PtceInfo.PtceStrides.Strides1,
+                            KiIA64PtceInfo.PtceStrides.Strides2, KiIA64PtceInfo.PtceTcCount.Count1,
+                            KiIA64PtceInfo.PtceTcCount.Count2);
 }
 
 
-
-VOID
-KeFlushEntireTb (
-    IN BOOLEAN Invalid,
-    IN BOOLEAN AllProcessors
-    )
+VOID KeFlushEntireTb(IN BOOLEAN Invalid, IN BOOLEAN AllProcessors)
 
 /*++
 
@@ -167,15 +139,13 @@ Return Value:
     KiLockContextSwap(&OldIrql);
     TargetProcessors = KeActiveProcessors & PCR->NotMember;
     KiSetTbFlushTimeStampBusy();
-    if (TargetProcessors != 0) {
-        KiIpiSendPacket(TargetProcessors,
-                        KiFlushEntireTbTarget,
-                        NULL,
-                        NULL,
-                        NULL);
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendPacket(TargetProcessors, KiFlushEntireTbTarget, NULL, NULL, NULL);
     }
 
-    if (PsGetCurrentProcess()->Wow64Process != NULL) {
+    if (PsGetCurrentProcess()->Wow64Process != NULL)
+    {
         KiFlushForwardProgressTbBufferLocal();
     }
 
@@ -200,7 +170,8 @@ Return Value:
 
 #else
 
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
         KiIpiStallOnPacketTargets(TargetProcessors);
     }
 
@@ -213,14 +184,7 @@ Return Value:
 }
 
 
-
-VOID
-KiFlushEntireTbTarget (
-    IN PULONG SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    )
+VOID KiFlushEntireTbTarget(IN PULONG SignalDone, IN PVOID Parameter1, IN PVOID Parameter2, IN PVOID Parameter3)
 
 /*++
 
@@ -267,14 +231,8 @@ Return Value:
 }
 
 #if !defined(NT_UP)
-
-VOID
-KiFlushMultipleTbTarget (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Number,
-    IN PVOID Virtual,
-    IN PVOID Process
-    )
+
+VOID KiFlushMultipleTbTarget(IN PKIPI_CONTEXT SignalDone, IN PVOID Number, IN PVOID Virtual, IN PVOID Process)
 
 /*++
 
@@ -316,24 +274,30 @@ Return Value:
 
     KiFlushForwardProgressTbBufferLocal();
 
-    if (Process == (PKPROCESS)PCR->Pcb) {
+    if (Process == (PKPROCESS)PCR->Pcb)
+    {
         SameProcess = TRUE;
-    } else {
+    }
+    else
+    {
         KiAttachRegion((PKPROCESS)Process);
     }
 
-    for (Index = 0; Index < Limit; Index += 1) {
+    for (Index = 0; Index < Limit; Index += 1)
+    {
         KiFlushSingleTbLocal((BOOLEAN)Invalid, ((PVOID *)(Virtual))[Index]);
     }
 
 #ifdef MI_ALTFLG_FLUSH2G
-    if (((PEPROCESS)Process)->Flags & PS_PROCESS_FLAGS_WOW64_SPLIT_PAGES) {
-        ASSERT (((PEPROCESS)Process)->Wow64Process != NULL);
+    if (((PEPROCESS)Process)->Flags & PS_PROCESS_FLAGS_WOW64_SPLIT_PAGES)
+    {
+        ASSERT(((PEPROCESS)Process)->Wow64Process != NULL);
         KiFlush2gbTbLocal(Invalid);
     }
 #endif
 
-    if (SameProcess != TRUE) {
+    if (SameProcess != TRUE)
+    {
         KiDetachRegion();
     }
 
@@ -344,16 +308,9 @@ Return Value:
     KiTbSynchronizeLocal();
 }
 #endif
-
-VOID
-KeFlushMultipleTb (
-    IN ULONG Number,
-    IN PVOID *Virtual,
-    IN BOOLEAN Invalid,
-    IN BOOLEAN AllProcessors,
-    IN PHARDWARE_PTE *PtePointer OPTIONAL,
-    IN HARDWARE_PTE PteValue
-    )
+
+VOID KeFlushMultipleTb(IN ULONG Number, IN PVOID *Virtual, IN BOOLEAN Invalid, IN BOOLEAN AllProcessors,
+                       IN PHARDWARE_PTE *PtePointer OPTIONAL, IN HARDWARE_PTE PteValue)
 
 /*++
 
@@ -418,8 +375,9 @@ Return Value:
     Wow64Process = Process->Wow64Process;
 
 #ifdef MI_ALTFLG_FLUSH2G
-    if (Process->Flags & PS_PROCESS_FLAGS_WOW64_SPLIT_PAGES) {
-        ASSERT (Wow64Process != NULL);
+    if (Process->Flags & PS_PROCESS_FLAGS_WOW64_SPLIT_PAGES)
+    {
+        ASSERT(Wow64Process != NULL);
         Flush2gb = TRUE;
     }
 #endif
@@ -434,28 +392,30 @@ Return Value:
     TargetProcessors = KeActiveProcessors;
     TargetProcessors &= PCR->NotMember;
 
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
 
         //
         // Acquire a global lock. Only one processor at a time can issue
         // a PTC.G operation.
         //
 
-        if (KiIpiTbShootdown == TRUE) {
+        if (KiIpiTbShootdown == TRUE)
+        {
 
-            for (Index = 0; Index < Number; Index += 1) {
-                if (ARGUMENT_PRESENT(PtePointer)) {
+            for (Index = 0; Index < Number; Index += 1)
+            {
+                if (ARGUMENT_PRESENT(PtePointer))
+                {
                     *PtePointer[Index] = PteValue;
                 }
             }
 
-            KiIpiSendPacket(TargetProcessors,
-                            KiFlushMultipleTbTarget,
-                            (PVOID)(ULONG_PTR)Number,
-                            (PVOID)Virtual,
+            KiIpiSendPacket(TargetProcessors, KiFlushMultipleTbTarget, (PVOID)(ULONG_PTR)Number, (PVOID)Virtual,
                             (PVOID)PsGetCurrentProcess());
 
-            if (Wow64Process != NULL) {
+            if (Wow64Process != NULL)
+            {
                 KiFlushForwardProgressTbBufferLocal();
             }
 
@@ -463,7 +423,8 @@ Return Value:
             // Flush the specified entries from the TB on the current processor.
             //
 
-            for (Index = 0; Index < Number; Index += 1) {
+            for (Index = 0; Index < Number; Index += 1)
+            {
                 KiFlushSingleTbLocal(Invalid, Virtual[Index]);
             }
 
@@ -476,13 +437,16 @@ Return Value:
             KiIpiStallOnPacketTargets(TargetProcessors);
 
             KiTbSynchronizeLocal();
-
-        } else {
+        }
+        else
+        {
 
             KiAcquireSpinLock(&KiTbBroadcastLock);
 
-            for (Index = 0; Index < Number; Index += 1) {
-                if (ARGUMENT_PRESENT(PtePointer)) {
+            for (Index = 0; Index < Number; Index += 1)
+            {
+                if (ARGUMENT_PRESENT(PtePointer))
+                {
                     *PtePointer[Index] = PteValue;
                 }
 
@@ -494,11 +458,13 @@ Return Value:
                 KiFlushSingleTbGlobal(Invalid, Virtual[Index]);
             }
 
-            if (Wow64Process != NULL) {
+            if (Wow64Process != NULL)
+            {
                 KiFlushForwardProgressTbBuffer(TargetProcessors);
             }
 
-            if (Flush2gb == TRUE) {
+            if (Flush2gb == TRUE)
+            {
                 KiFlush2gbTbGlobal(Invalid);
             }
 
@@ -509,14 +475,15 @@ Return Value:
             KiTbSynchronizeGlobal();
 
             KiReleaseSpinLock(&KiTbBroadcastLock);
-
         }
-
     }
-    else {
+    else
+    {
 
-        for (Index = 0; Index < Number; Index += 1) {
-            if (ARGUMENT_PRESENT(PtePointer)) {
+        for (Index = 0; Index < Number; Index += 1)
+        {
+            if (ARGUMENT_PRESENT(PtePointer))
+            {
                 *PtePointer[Index] = PteValue;
             }
 
@@ -528,11 +495,13 @@ Return Value:
             KiFlushSingleTbLocal(Invalid, Virtual[Index]);
         }
 
-        if (Wow64Process != NULL) {
+        if (Wow64Process != NULL)
+        {
             KiFlushForwardProgressTbBufferLocal();
         }
 
-        if (Flush2gb == TRUE) {
+        if (Flush2gb == TRUE)
+        {
             KiFlush2gbTbLocal(Invalid);
         }
 
@@ -543,9 +512,11 @@ Return Value:
 
 #else
 
-    for (Index = 0; Index < Number; Index += 1) {
-        if (ARGUMENT_PRESENT(PtePointer)) {
-           *PtePointer[Index] = PteValue;
+    for (Index = 0; Index < Number; Index += 1)
+    {
+        if (ARGUMENT_PRESENT(PtePointer))
+        {
+            *PtePointer[Index] = PteValue;
         }
 
         //
@@ -556,11 +527,13 @@ Return Value:
         KiFlushSingleTbLocal(Invalid, Virtual[Index]);
     }
 
-    if (Wow64Process != NULL) {
+    if (Wow64Process != NULL)
+    {
         KiFlushForwardProgressTbBufferLocal();
     }
 
-    if (Flush2gb == TRUE) {
+    if (Flush2gb == TRUE)
+    {
         KiFlush2gbTbLocal(Invalid);
     }
 
@@ -574,14 +547,8 @@ Return Value:
 }
 
 #if !defined(NT_UP)
-
-VOID
-KiFlushSingleTbTarget (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Virtual,
-    IN PKPROCESS Process,
-    IN PVOID Parameter3
-    )
+
+VOID KiFlushSingleTbTarget(IN PKIPI_CONTEXT SignalDone, IN PVOID Virtual, IN PKPROCESS Process, IN PVOID Parameter3)
 
 /*++
 
@@ -618,22 +585,27 @@ Return Value:
 
     KiFlushForwardProgressTbBufferLocal();
 
-    if (Process == (PKPROCESS)PCR->Pcb) { 
+    if (Process == (PKPROCESS)PCR->Pcb)
+    {
         SameProcess = TRUE;
-    } else {
+    }
+    else
+    {
         KiAttachRegion((PKPROCESS)Process);
     }
 
     KiFlushSingleTbLocal(TRUE, Virtual);
 
 #ifdef MI_ALTFLG_FLUSH2G
-    if (((PEPROCESS)Process)->Flags & PS_PROCESS_FLAGS_WOW64_SPLIT_PAGES) {
-        ASSERT (((PEPROCESS)Process)->Wow64Process != NULL);
+    if (((PEPROCESS)Process)->Flags & PS_PROCESS_FLAGS_WOW64_SPLIT_PAGES)
+    {
+        ASSERT(((PEPROCESS)Process)->Wow64Process != NULL);
         KiFlush2gbTbLocal(Invalid);
     }
 #endif
 
-    if (SameProcess != TRUE) {
+    if (SameProcess != TRUE)
+    {
         KiDetachRegion();
     }
 
@@ -646,15 +618,10 @@ Return Value:
     return;
 }
 #endif
-
+
 HARDWARE_PTE
-KeFlushSingleTb (
-    IN PVOID Virtual,
-    IN BOOLEAN Invalid,
-    IN BOOLEAN AllProcessors,
-    IN PHARDWARE_PTE PtePointer,
-    IN HARDWARE_PTE PteValue
-    )
+KeFlushSingleTb(IN PVOID Virtual, IN BOOLEAN Invalid, IN BOOLEAN AllProcessors, IN PHARDWARE_PTE PtePointer,
+                IN HARDWARE_PTE PteValue)
 
 /*++
 
@@ -717,8 +684,9 @@ Return Value:
 
 #ifdef MI_ALTFLG_FLUSH2G
 
-    if (Process->Flags & PS_PROCESS_FLAGS_WOW64_SPLIT_PAGES) {
-        ASSERT (((PEPROCESS)Process)->Wow64Process != NULL);
+    if (Process->Flags & PS_PROCESS_FLAGS_WOW64_SPLIT_PAGES)
+    {
+        ASSERT(((PEPROCESS)Process)->Wow64Process != NULL);
         Flush2gb = TRUE;
     }
 #endif
@@ -736,17 +704,17 @@ Return Value:
     TargetProcessors = KeActiveProcessors;
     TargetProcessors &= PCR->NotMember;
 
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
 
-        if (KiIpiTbShootdown == TRUE) {
+        if (KiIpiTbShootdown == TRUE)
+        {
 
-            KiIpiSendPacket(TargetProcessors,
-                            KiFlushSingleTbTarget,
-                            (PVOID)Virtual,
-                            (PVOID)PsGetCurrentProcess(),
+            KiIpiSendPacket(TargetProcessors, KiFlushSingleTbTarget, (PVOID)Virtual, (PVOID)PsGetCurrentProcess(),
                             NULL);
 
-            if (Wow64Process != NULL) {
+            if (Wow64Process != NULL)
+            {
                 KiFlushForwardProgressTbBufferLocal();
             }
 
@@ -759,8 +727,9 @@ Return Value:
             __invalat();
 
             KiIpiStallOnPacketTargets(TargetProcessors);
-
-        } else {
+        }
+        else
+        {
 
             //
             // Flush the specified TB on each processor. Hardware automatically
@@ -771,11 +740,13 @@ Return Value:
 
             KiFlushSingleTbGlobal(Invalid, Virtual);
 
-            if (Wow64Process != NULL) {
+            if (Wow64Process != NULL)
+            {
                 KiFlushForwardProgressTbBuffer(TargetProcessors);
             }
 
-            if (Flush2gb) {
+            if (Flush2gb)
+            {
                 KiFlush2gbTbGlobal(Invalid);
             }
 
@@ -784,7 +755,8 @@ Return Value:
             KiReleaseSpinLock(&KiTbBroadcastLock);
         }
     }
-    else {
+    else
+    {
 
         //
         // Flush the specified TB on the local processor.  No broadcast is
@@ -793,16 +765,17 @@ Return Value:
 
         KiFlushSingleTbLocal(Invalid, Virtual);
 
-        if (Wow64Process != NULL) {
+        if (Wow64Process != NULL)
+        {
             KiFlushForwardProgressTbBufferLocal();
         }
 
-        if (Flush2gb == TRUE) {
+        if (Flush2gb == TRUE)
+        {
             KiFlush2gbTbLocal(Invalid);
         }
 
         KiTbSynchronizeLocal();
-
     }
 
     KiUnlockContextSwap(OldIrql);
@@ -815,11 +788,13 @@ Return Value:
 
     KiFlushSingleTbLocal(Invalid, Virtual);
 
-    if (Wow64Process != NULL) {
+    if (Wow64Process != NULL)
+    {
         KiFlushForwardProgressTbBufferLocal();
     }
 
-    if (Flush2gb == TRUE) {
+    if (Flush2gb == TRUE)
+    {
         KiFlush2gbTbLocal(Invalid);
     }
 
@@ -836,10 +811,7 @@ Return Value:
     return OldPte;
 }
 
-VOID
-KiFlushForwardProgressTbBuffer(
-    KAFFINITY TargetProcessors
-    )
+VOID KiFlushForwardProgressTbBuffer(KAFFINITY TargetProcessors)
 {
     PKPRCB Prcb;
     ULONG BitNumber;
@@ -856,23 +828,25 @@ KiFlushForwardProgressTbBuffer(
     // Flush the ForwardProgressTb buffer on the current processor
     //
 
-    for (i = 0; i < MAXIMUM_FWP_BUFFER_ENTRY; i += 1) {
+    for (i = 0; i < MAXIMUM_FWP_BUFFER_ENTRY; i += 1)
+    {
 
-        Va = (PVOID)PCR->ForwardProgressBuffer[i*2];
-        PointerPte = &PCR->ForwardProgressBuffer[(i*2)+1];
+        Va = (PVOID)PCR->ForwardProgressBuffer[i * 2];
+        PointerPte = &PCR->ForwardProgressBuffer[(i * 2) + 1];
 
-        if (*PointerPte != 0) {
+        if (*PointerPte != 0)
+        {
             *PointerPte = 0;
             KiFlushSingleTbGlobal(Invalid, Va);
         }
-
     }
 
     //
     // Flush the ForwardProgressTb buffer on all the processors
     //
 
-    while (TargetProcessors != 0) {
+    while (TargetProcessors != 0)
+    {
 
         KeFindFirstSetLeftAffinity(TargetProcessors, &BitNumber);
         ClearMember(BitNumber, TargetProcessors);
@@ -882,14 +856,17 @@ KiFlushForwardProgressTbBuffer(
 
         TargetProcess = (PKPROCESS)Pcr->Pcb;
 
-        if (TargetProcess == CurrentProcess) {
+        if (TargetProcess == CurrentProcess)
+        {
 
-            for (i = 0; i < MAXIMUM_FWP_BUFFER_ENTRY; i += 1) {
+            for (i = 0; i < MAXIMUM_FWP_BUFFER_ENTRY; i += 1)
+            {
 
-                Va = (PVOID)Pcr->ForwardProgressBuffer[i*2];
-                PointerPte = &Pcr->ForwardProgressBuffer[(i*2)+1];
+                Va = (PVOID)Pcr->ForwardProgressBuffer[i * 2];
+                PointerPte = &Pcr->ForwardProgressBuffer[(i * 2) + 1];
 
-                if (*PointerPte != 0) {
+                if (*PointerPte != 0)
+                {
                     *PointerPte = 0;
                     KiFlushSingleTbGlobal(Invalid, Va);
                 }
@@ -898,10 +875,7 @@ KiFlushForwardProgressTbBuffer(
     }
 }
 
-VOID
-KiFlushForwardProgressTbBufferLocal(
-    VOID
-    )
+VOID KiFlushForwardProgressTbBufferLocal(VOID)
 {
     ULONG i;
     PVOID Va;
@@ -911,23 +885,21 @@ KiFlushForwardProgressTbBufferLocal(
     // Flush the ForwardProgressTb buffer on the current processor
     //
 
-    for (i = 0; i < MAXIMUM_FWP_BUFFER_ENTRY; i += 1) {
+    for (i = 0; i < MAXIMUM_FWP_BUFFER_ENTRY; i += 1)
+    {
 
-        Va = (PVOID)PCR->ForwardProgressBuffer[i*2];
-        PointerPte = &PCR->ForwardProgressBuffer[(i*2)+1];
+        Va = (PVOID)PCR->ForwardProgressBuffer[i * 2];
+        PointerPte = &PCR->ForwardProgressBuffer[(i * 2) + 1];
 
-        if (*PointerPte != 0) {
+        if (*PointerPte != 0)
+        {
             *PointerPte = 0;
             KiFlushSingleTbLocal(Invalid, Va);
         }
-
     }
 }
-
-VOID
-KeSynchronizeMemoryAccess (
-    VOID
-    )
+
+VOID KeSynchronizeMemoryAccess(VOID)
 
 /*++
 
@@ -957,13 +929,11 @@ Return Value:
 LONG KeTempTimeStamp;
 
 ULONG
-KeReadMbTimeStamp (
-    VOID
-    )
+KeReadMbTimeStamp(VOID)
 {
     //
     // BUGBUG : This needs to be fleshed out with real code.
     //
 
-    return (ULONG) InterlockedIncrement (&KeTempTimeStamp);
+    return (ULONG)InterlockedIncrement(&KeTempTimeStamp);
 }

@@ -43,12 +43,10 @@
  * This prototype is needed in client\globals.h which is included unintentionally
  * from usersrv.h
  */
-typedef LRESULT (APIENTRY *CFNSCSENDMESSAGE)(HWND, UINT, WPARAM, LPARAM,
-        ULONG_PTR, DWORD, BOOL);
+typedef LRESULT(APIENTRY *CFNSCSENDMESSAGE)(HWND, UINT, WPARAM, LPARAM, ULONG_PTR, DWORD, BOOL);
 
 /* Prototype needed by globals.h; used in shutdown logging */
-typedef BOOL (*PFNREPORTEVENT)(HANDLE, WORD, WORD, DWORD, PSID, WORD, DWORD,
-        LPCTSTR *, LPVOID);
+typedef BOOL (*PFNREPORTEVENT)(HANDLE, WORD, WORD, DWORD, PSID, WORD, DWORD, LPCTSTR *, LPVOID);
 
 /***************************************************************************\
 * Typedefs and Macros
@@ -59,18 +57,16 @@ typedef BOOL (*PFNREPORTEVENT)(HANDLE, WORD, WORD, DWORD, PSID, WORD, DWORD,
 *
 \***************************************************************************/
 
-#define MIRRORED_HDC(hdc)     (GetLayout(hdc) & LAYOUT_RTL)
-#define MIRRORED_HWND(hwnd)   (GetWindowLong(hwnd, GWL_EXSTYLE) & WS_EX_LAYOUTRTL)
+#define MIRRORED_HDC(hdc) (GetLayout(hdc) & LAYOUT_RTL)
+#define MIRRORED_HWND(hwnd) (GetWindowLong(hwnd, GWL_EXSTYLE) & WS_EX_LAYOUTRTL)
 
 #if DBG
 
 __inline void DebugUserGlobalUnlock(HANDLE h)
 {
-    UserAssert(
-            "GlobalUnlock on bad handle" &&
-            !(GlobalFlags(h) == GMEM_INVALID_HANDLE));
+    UserAssert("GlobalUnlock on bad handle" && !(GlobalFlags(h) == GMEM_INVALID_HANDLE));
 
-    GlobalUnlock((HANDLE) h);
+    GlobalUnlock((HANDLE)h);
 }
 
 /*
@@ -85,13 +81,11 @@ __inline void DebugUserGlobalUnlock(HANDLE h)
  * Trash incoming handle freed so we can track any invalid access on
  * it after it's been free'd.
  */
-__inline HANDLE DebugUserGlobalFree(HANDLE* ph)
+__inline HANDLE DebugUserGlobalFree(HANDLE *ph)
 {
     HANDLE th;
 
-    UserAssert(
-            "GlobalFree on bad handle" &&
-            !(GlobalFlags(*ph) == GMEM_INVALID_HANDLE));
+    UserAssert("GlobalFree on bad handle" && !(GlobalFlags(*ph) == GMEM_INVALID_HANDLE));
 
     th = GlobalFree(*ph);
 #if defined(_WIN64)
@@ -109,31 +103,31 @@ __inline HANDLE DebugUserGlobalAlloc(UINT uFlags, SIZE_T dwBytes)
     /*
      * Assert that FreeDDElParam and _ClientFreeDDEHandle assumption is correct.
      */
-    if (h != NULL) {
+    if (h != NULL)
+    {
         UserAssert(h > (HANDLE)0xFFFF);
     }
 
     return h;
 }
 
-#define USERGLOBALUNLOCK(h)             DebugUserGlobalUnlock((HANDLE)(h))
-#define UserGlobalFree(h)               DebugUserGlobalFree((HANDLE*)(&h))
-#define UserGlobalAlloc(flags, size)    DebugUserGlobalAlloc(flags, size)
+#define USERGLOBALUNLOCK(h) DebugUserGlobalUnlock((HANDLE)(h))
+#define UserGlobalFree(h) DebugUserGlobalFree((HANDLE *)(&h))
+#define UserGlobalAlloc(flags, size) DebugUserGlobalAlloc(flags, size)
 
 #else
 
-#define USERGLOBALUNLOCK(h)             GlobalUnlock((HANDLE)(h))
-#define UserGlobalFree(h)               GlobalFree((HANDLE)(h))
-#define UserGlobalAlloc(flags, size)    GlobalAlloc(flags, size)
+#define USERGLOBALUNLOCK(h) GlobalUnlock((HANDLE)(h))
+#define UserGlobalFree(h) GlobalFree((HANDLE)(h))
+#define UserGlobalAlloc(flags, size) GlobalAlloc(flags, size)
 #endif
 
-#define USERGLOBALLOCK(h, p)   p = GlobalLock((HANDLE)(h))
-#define UserGlobalReAlloc(pmem, cnt, flags) GlobalReAlloc(pmem,cnt,flags)
-#define UserGlobalSize(pmem)                GlobalSize(pmem)
-#define WOWGLOBALFREE(pmem)                 GlobalFree(pmem)
+#define USERGLOBALLOCK(h, p) p = GlobalLock((HANDLE)(h))
+#define UserGlobalReAlloc(pmem, cnt, flags) GlobalReAlloc(pmem, cnt, flags)
+#define UserGlobalSize(pmem) GlobalSize(pmem)
+#define WOWGLOBALFREE(pmem) GlobalFree(pmem)
 
-#define RESERVED_MSG_BITS   (0xFFFE0000)
-
+#define RESERVED_MSG_BITS (0xFFFE0000)
 
 
 /*
@@ -141,26 +135,25 @@ __inline HANDLE DebugUserGlobalAlloc(UINT uFlags, SIZE_T dwBytes)
  * the bit arrays must be processed
  */
 #define FDEFWINDOWMSG(msg, procname) \
-    ((msg <= (gSharedInfo.procname.maxMsgs)) && \
-            ((gSharedInfo.procname.abMsgs)[msg / 8] & (1 << (msg & 7))))
-#define FWINDOWMSG(msg, fnid) \
+    ((msg <= (gSharedInfo.procname.maxMsgs)) && ((gSharedInfo.procname.abMsgs)[msg / 8] & (1 << (msg & 7))))
+#define FWINDOWMSG(msg, fnid)                                        \
     ((msg <= (gSharedInfo.awmControl[fnid - FNID_START].maxMsgs)) && \
-            ((gSharedInfo.awmControl[fnid - FNID_START].abMsgs)[msg / 8] & (1 << (msg & 7))))
+     ((gSharedInfo.awmControl[fnid - FNID_START].abMsgs)[msg / 8] & (1 << (msg & 7))))
 
-#define CsSendMessage(hwnd, msg, wParam, lParam, xParam, pfn, bAnsi) \
-        (((msg) >= WM_USER) ? \
-            NtUserMessageCall(hwnd, msg, wParam, lParam, xParam, pfn, bAnsi) : \
-            gapfnScSendMessage[MessageTable[msg].iFunction](hwnd, msg, wParam, lParam, xParam, pfn, bAnsi))
+#define CsSendMessage(hwnd, msg, wParam, lParam, xParam, pfn, bAnsi)        \
+    (((msg) >= WM_USER)                                                     \
+         ? NtUserMessageCall(hwnd, msg, wParam, lParam, xParam, pfn, bAnsi) \
+         : gapfnScSendMessage[MessageTable[msg].iFunction](hwnd, msg, wParam, lParam, xParam, pfn, bAnsi))
 
 #define GetWindowProcess(hwnd) NtUserQueryWindow(hwnd, WindowProcess)
 #define GETPROCESSID() (NtCurrentTeb()->ClientId.UniqueProcess)
-#define GETTHREADID()  (NtCurrentTeb()->ClientId.UniqueThread)
+#define GETTHREADID() (NtCurrentTeb()->ClientId.UniqueThread)
 
 /*
  * Macro to mask off uniqueness bits for WOW handles
  */
-#define SAMEWOWHANDLE(h1, h2)  ((BOOL)!(((ULONG_PTR)(h1) ^ (ULONG_PTR)(h2)) & 0xffff))
-#define DIFFWOWHANDLE(h1, h2)  (!SAMEWOWHANDLE(h1, h2))
+#define SAMEWOWHANDLE(h1, h2) ((BOOL) !(((ULONG_PTR)(h1) ^ (ULONG_PTR)(h2)) & 0xffff))
+#define DIFFWOWHANDLE(h1, h2) (!SAMEWOWHANDLE(h1, h2))
 
 /*
  * This macro can check to see if a function pointer is a server side
@@ -173,18 +166,18 @@ __inline HANDLE DebugUserGlobalAlloc(UINT uFlags, SIZE_T dwBytes)
  * are passed as addresses, not function indexes as they are from client to
  * server.
  */
-typedef INT_PTR (WINAPI *GENERICPROC)();
+typedef INT_PTR(WINAPI *GENERICPROC)();
 
 #define CALLPROC(p) ((GENERICPROC)p)
 #define PACTCTXT(pwnd) (pwnd ? pwnd->pActCtx : NULL)
 
-extern PFNWOWDLGPROCEX      pfnWowDlgProcEx;
-extern PFNWOWWNDPROCEX      pfnWowWndProcEx;
+extern PFNWOWDLGPROCEX pfnWowDlgProcEx;
+extern PFNWOWWNDPROCEX pfnWowWndProcEx;
 
-BOOL UserCallDlgProcCheckWow(PACTIVATION_CONTEXT pActCtx, DLGPROC pfn,
-        HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, PVOID pww, INT_PTR * pret);
-LRESULT UserCallWinProcCheckWow(PACTIVATION_CONTEXT pActCtx, WNDPROC pfn,
-        HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, PVOID pww, BOOL fEnableLiteHooks);
+BOOL UserCallDlgProcCheckWow(PACTIVATION_CONTEXT pActCtx, DLGPROC pfn, HWND hwnd, UINT msg, WPARAM wParam,
+                             LPARAM lParam, PVOID pww, INT_PTR *pret);
+LRESULT UserCallWinProcCheckWow(PACTIVATION_CONTEXT pActCtx, WNDPROC pfn, HWND hwnd, UINT msg, WPARAM wParam,
+                                LPARAM lParam, PVOID pww, BOOL fEnableLiteHooks);
 
 
 /***************************************************************************\
@@ -200,10 +193,11 @@ LRESULT UserCallWinProcCheckWow(PACTIVATION_CONTEXT pActCtx, WNDPROC pfn,
 * 27-Apr-2000  jstall     Created
 \***************************************************************************/
 
-__inline BOOL IsMsgOverride(UINT msg, MSGMASK * pmm)
+__inline BOOL IsMsgOverride(UINT msg, MSGMASK *pmm)
 {
     UINT idxMajor = msg / 8;
-    if ((pmm->rgb != NULL) && (idxMajor < pmm->cb)) {
+    if ((pmm->rgb != NULL) && (idxMajor < pmm->cb))
+    {
         return (pmm->rgb[idxMajor] & (1 << (msg & 7)));
     }
 
@@ -211,11 +205,10 @@ __inline BOOL IsMsgOverride(UINT msg, MSGMASK * pmm)
 }
 
 
+#define RevalidateHwnd(hwnd) ((PWND)HMValidateHandleNoSecure(hwnd, TYPE_WINDOW))
 
-#define RevalidateHwnd(hwnd)    ((PWND)HMValidateHandleNoSecure(hwnd, TYPE_WINDOW))
-
-#define VALIDATEHMENU(hmenu)        ((PMENU)HMValidateHandle(hmenu, TYPE_MENU))
-#define VALIDATEHMONITOR(hmonitor)  ((PMONITOR)HMValidateSharedHandle(hmonitor, TYPE_MONITOR))
+#define VALIDATEHMENU(hmenu) ((PMENU)HMValidateHandle(hmenu, TYPE_MENU))
+#define VALIDATEHMONITOR(hmonitor) ((PMONITOR)HMValidateSharedHandle(hmonitor, TYPE_MONITOR))
 
 
 /*
@@ -228,11 +221,14 @@ __inline BOOL IsMsgOverride(UINT msg, MSGMASK * pmm)
  * REBASEPTR converts a random kernel address
  */
 
-#define REBASEALWAYS(p, elem) ((PVOID)((KERNEL_ULONG_PTR)(p) + ((KERNEL_ULONG_PTR)(p)->elem - (KERNEL_ULONG_PTR)(p)->head.pSelf)))
-#define REBASEPTR(obj, p) ((PVOID)((KERNEL_ULONG_PTR)(p) - ((KERNEL_ULONG_PTR)(obj)->head.pSelf - (KERNEL_ULONG_PTR)(obj))))
+#define REBASEALWAYS(p, elem) \
+    ((PVOID)((KERNEL_ULONG_PTR)(p) + ((KERNEL_ULONG_PTR)(p)->elem - (KERNEL_ULONG_PTR)(p)->head.pSelf)))
+#define REBASEPTR(obj, p) \
+    ((PVOID)((KERNEL_ULONG_PTR)(p) - ((KERNEL_ULONG_PTR)(obj)->head.pSelf - (KERNEL_ULONG_PTR)(obj))))
 
-#define REBASE(p, elem) ((KERNEL_ULONG_PTR)((p)->elem) <= (KERNEL_ULONG_PTR)gHighestUserAddress ? \
-        ((PVOID)(KERNEL_ULONG_PTR)(p)->elem) : REBASEALWAYS(p, elem))
+#define REBASE(p, elem)                                                                                            \
+    ((KERNEL_ULONG_PTR)((p)->elem) <= (KERNEL_ULONG_PTR)gHighestUserAddress ? ((PVOID)(KERNEL_ULONG_PTR)(p)->elem) \
+                                                                            : REBASEALWAYS(p, elem))
 #define REBASEPWND(p, elem) ((PWND)REBASE(p, elem))
 
 #ifndef USEREXTS
@@ -245,42 +241,43 @@ PTHREADINFO PtiCurrent(VOID);
  * Checking the BUTTON is for Mavis Beacon.
  */
 
-#define VALIDATECLASSANDSIZE(pwnd, inFNID)                                      \
-    switch ((pwnd)->fnid) {                                                     \
-    case inFNID:                                                                \
-        break;                                                                  \
-                                                                                \
-    case 0:                                                                     \
-        if ((pwnd->cbwndExtra + sizeof(WND)) < (DWORD)(CBFNID(inFNID))) {       \
-            RIPMSG3(RIP_ERROR,                                                  \
-                   "(%#p %lX) needs at least (%ld) window words for this proc", \
-                    pwnd, pwnd->cbwndExtra,                                     \
-                    (DWORD)(CBFNID(inFNID)) - sizeof(WND));                     \
-            return 0;                                                           \
-        }                                                                       \
-                                                                                \
-        if (inFNID == FNID_BUTTON && *((KPULONG_PTR)(pwnd + 1))) {              \
-                                                                                \
-            RIPMSG3(RIP_WARNING, "Window (%#p) fnid = %lX overrides "           \
-                "the extra pointer with %#p\n",                                 \
-                pwnd, inFNID, *((KPULONG_PTR)(pwnd + 1)));                      \
-                                                                                \
-            NtUserSetWindowLongPtr(hwnd, 0, 0, FALSE);                          \
-        }                                                                       \
-                                                                                \
-        NtUserSetWindowFNID(hwnd, inFNID);                                      \
-        break;                                                                  \
-                                                                                \
-    case (inFNID | FNID_CLEANEDUP_BIT):                                         \
-    case (inFNID | FNID_DELETED_BIT):                                           \
-    case (inFNID | FNID_STATUS_BITS):                                           \
-        return 0;                                                               \
-                                                                                \
-    default:                                                                    \
-        RIPMSG3(RIP_WARNING,                                                    \
-              "Window (%#p) not of correct class; fnid = %lX not %lX",          \
-              (pwnd), (DWORD)((pwnd)->fnid), (DWORD)(inFNID));                  \
-        return 0;                                                               \
+#define VALIDATECLASSANDSIZE(pwnd, inFNID)                                                                           \
+    switch ((pwnd)->fnid)                                                                                            \
+    {                                                                                                                \
+    case inFNID:                                                                                                     \
+        break;                                                                                                       \
+                                                                                                                     \
+    case 0:                                                                                                          \
+        if ((pwnd->cbwndExtra + sizeof(WND)) < (DWORD)(CBFNID(inFNID)))                                              \
+        {                                                                                                            \
+            RIPMSG3(RIP_ERROR, "(%#p %lX) needs at least (%ld) window words for this proc", pwnd, pwnd->cbwndExtra,  \
+                    (DWORD)(CBFNID(inFNID)) - sizeof(WND));                                                          \
+            return 0;                                                                                                \
+        }                                                                                                            \
+                                                                                                                     \
+        if (inFNID == FNID_BUTTON && *((KPULONG_PTR)(pwnd + 1)))                                                     \
+        {                                                                                                            \
+                                                                                                                     \
+            RIPMSG3(RIP_WARNING,                                                                                     \
+                    "Window (%#p) fnid = %lX overrides "                                                             \
+                    "the extra pointer with %#p\n",                                                                  \
+                    pwnd, inFNID, *((KPULONG_PTR)(pwnd + 1)));                                                       \
+                                                                                                                     \
+            NtUserSetWindowLongPtr(hwnd, 0, 0, FALSE);                                                               \
+        }                                                                                                            \
+                                                                                                                     \
+        NtUserSetWindowFNID(hwnd, inFNID);                                                                           \
+        break;                                                                                                       \
+                                                                                                                     \
+    case (inFNID | FNID_CLEANEDUP_BIT):                                                                              \
+    case (inFNID | FNID_DELETED_BIT):                                                                                \
+    case (inFNID | FNID_STATUS_BITS):                                                                                \
+        return 0;                                                                                                    \
+                                                                                                                     \
+    default:                                                                                                         \
+        RIPMSG3(RIP_WARNING, "Window (%#p) not of correct class; fnid = %lX not %lX", (pwnd), (DWORD)((pwnd)->fnid), \
+                (DWORD)(inFNID));                                                                                    \
+        return 0;                                                                                                    \
     }
 
 /*
@@ -288,30 +285,36 @@ PTHREADINFO PtiCurrent(VOID);
  * that pwnd and hwnd are existing variables pointing to the control's
  * windows and that fInit exists as a BOOL initialization flag.
  */
-#define INITCONTROLLOOKASIDE(plaType, type, pwnditem, count)                \
-    if (!*((KPULONG_PTR)(pwnd + 1))) {                                      \
-        P ## type pType;                                                    \
-        if (fInit) {                                                        \
-            if (!NT_SUCCESS(InitLookaside(plaType, sizeof(type), count))) { \
-                NtUserSetWindowFNID(hwnd, FNID_CLEANEDUP_BIT);              \
-                NtUserDestroyWindow(hwnd);                                  \
-                return FALSE;                                               \
-            }                                                               \
-            fInit = FALSE;                                                  \
-        }                                                                   \
-        if ((pType = (P ## type)AllocLookasideEntry(plaType))) {            \
-            NtUserSetWindowLongPtr(hwnd, 0, (LONG_PTR)pType, FALSE);        \
-            Lock(&(pType->pwnditem), pwnd);                                 \
-        } else {                                                            \
-            NtUserSetWindowFNID(hwnd, FNID_CLEANEDUP_BIT);                  \
-            NtUserDestroyWindow(hwnd);                                      \
-            return FALSE;                                                   \
-        }                                                                   \
+#define INITCONTROLLOOKASIDE(plaType, type, pwnditem, count)              \
+    if (!*((KPULONG_PTR)(pwnd + 1)))                                      \
+    {                                                                     \
+        P##type pType;                                                    \
+        if (fInit)                                                        \
+        {                                                                 \
+            if (!NT_SUCCESS(InitLookaside(plaType, sizeof(type), count))) \
+            {                                                             \
+                NtUserSetWindowFNID(hwnd, FNID_CLEANEDUP_BIT);            \
+                NtUserDestroyWindow(hwnd);                                \
+                return FALSE;                                             \
+            }                                                             \
+            fInit = FALSE;                                                \
+        }                                                                 \
+        if ((pType = (P##type)AllocLookasideEntry(plaType)))              \
+        {                                                                 \
+            NtUserSetWindowLongPtr(hwnd, 0, (LONG_PTR)pType, FALSE);      \
+            Lock(&(pType->pwnditem), pwnd);                               \
+        }                                                                 \
+        else                                                              \
+        {                                                                 \
+            NtUserSetWindowFNID(hwnd, FNID_CLEANEDUP_BIT);                \
+            NtUserDestroyWindow(hwnd);                                    \
+            return FALSE;                                                 \
+        }                                                                 \
     }
 
 #endif
 
-#define ISREMOTESESSION()   (NtCurrentPeb()->SessionId != USER_SHARED_DATA->ActiveConsoleId)
+#define ISREMOTESESSION() (NtCurrentPeb()->SessionId != USER_SHARED_DATA->ActiveConsoleId)
 
 
 /*
@@ -320,24 +323,25 @@ PTHREADINFO PtiCurrent(VOID);
 #define SetBestStretchMode(hdc, planes, bpp) \
     SetStretchBltMode(hdc, (((planes) * (bpp)) == 1 ? BLACKONWHITE : COLORONCOLOR))
 
-#define BitmapSize(cx, cy, planes, bits) \
-        (BitmapWidth(cx, bits) * (cy) * (planes))
+#define BitmapSize(cx, cy, planes, bits) (BitmapWidth(cx, bits) * (cy) * (planes))
 
-#define BitmapWidth(cx, bpp)  (((((cx)*(bpp)) + 31) & ~31) >> 3)
+#define BitmapWidth(cx, bpp) (((((cx) * (bpp)) + 31) & ~31) >> 3)
 
-#define RGBX(rgb)  RGB(GetBValue(rgb), GetGValue(rgb), GetRValue(rgb))
+#define RGBX(rgb) RGB(GetBValue(rgb), GetGValue(rgb), GetRValue(rgb))
 
 /*
  * Typedefs used for capturing string arguments to be passed
  * to the kernel.
  */
-typedef struct _IN_STRING {
+typedef struct _IN_STRING
+{
     UNICODE_STRING strCapture;
     PUNICODE_STRING pstr;
     BOOL fAllocated;
 } IN_STRING, *PIN_STRING;
 
-typedef struct _LARGE_IN_STRING {
+typedef struct _LARGE_IN_STRING
+{
     LARGE_UNICODE_STRING strCapture;
     PLARGE_UNICODE_STRING pstr;
     BOOL fAllocated;
@@ -347,7 +351,8 @@ typedef struct _LARGE_IN_STRING {
 /*
  * Lookaside definitions
  */
-typedef struct _LOOKASIDE {
+typedef struct _LOOKASIDE
+{
     PVOID LookasideBase;
     PVOID LookasideBounds;
     ZONE_HEADER LookasideZone;
@@ -389,7 +394,8 @@ void FreeLookasideEntry(PLOOKASIDE pla, PVOID pEntry);
 #define Unlock(ppobj) (*ppobj = NULL)
 
 #if !defined(_USERRTL_) && !defined(USEREXTS)
-typedef struct _TL {
+typedef struct _TL
+{
     int iBogus;
 } TL;
 #endif
@@ -406,23 +412,23 @@ typedef struct _TL {
  *        0L to change the state of the button.
  */
 
-#define BUTTONSTATE(pbutn)   (pbutn->buttonState)
+#define BUTTONSTATE(pbutn) (pbutn->buttonState)
 
-#define BST_CHECKMASK       0x0003
-#define BST_INCLICK         0x0010
-#define BST_CAPTURED        0x0020
-#define BST_MOUSE           0x0040
-#define BST_DONTCLICK       0x0080
-#define BST_INBMCLICK       0x0100
+#define BST_CHECKMASK 0x0003
+#define BST_INCLICK 0x0010
+#define BST_CAPTURED 0x0020
+#define BST_MOUSE 0x0040
+#define BST_DONTCLICK 0x0080
+#define BST_INBMCLICK 0x0100
 
-#define PBF_PUSHABLE     0x0001
-#define PBF_DEFAULT      0x0002
+#define PBF_PUSHABLE 0x0001
+#define PBF_DEFAULT 0x0002
 
 /*
  * BNDrawText codes
  */
-#define DBT_TEXT    0x0001
-#define DBT_FOCUS   0x0002
+#define DBT_TEXT 0x0001
+#define DBT_FOCUS 0x0002
 
 
 /***************************************************************************\
@@ -435,32 +441,32 @@ typedef struct _TL {
  * ID numbers (hMenu) for the child controls in the combo box
  */
 #define CBLISTBOXID 1000
-#define CBEDITID    1001
-#define CBBUTTONID  1002
+#define CBEDITID 1001
+#define CBBUTTONID 1002
 
 /*
  * For CBOX.c. BoxType field, we define the following combo box styles. These
  * numbers are the same as the CBS_ style codes as defined in windows.h.
  */
-#define SDROPPABLE      CBS_DROPDOWN
-#define SEDITABLE       CBS_SIMPLE
+#define SDROPPABLE CBS_DROPDOWN
+#define SEDITABLE CBS_SIMPLE
 
 
-#define SSIMPLE         SEDITABLE
-#define SDROPDOWNLIST   SDROPPABLE
-#define SDROPDOWN       (SDROPPABLE | SEDITABLE)
+#define SSIMPLE SEDITABLE
+#define SDROPDOWNLIST SDROPPABLE
+#define SDROPDOWN (SDROPPABLE | SEDITABLE)
 
 
 /*
  * CBOX.OwnerDraw & LBIV.OwnerDraw types
  */
 #define OWNERDRAWFIXED 1
-#define OWNERDRAWVAR   2
+#define OWNERDRAWVAR 2
 
-#define UPPERCASE   1
-#define LOWERCASE   2
+#define UPPERCASE 1
+#define LOWERCASE 2
 
-#define CaretCreate(plb)    ((plb)->fCaret = TRUE)
+#define CaretCreate(plb) ((plb)->fCaret = TRUE)
 
 /*
  * combo.h - Include file for combo boxes.
@@ -470,7 +476,7 @@ typedef struct _TL {
  * This macro is used to isolate the combo box style bits.  Ie if it the combo
  * box is simple, atomic, dropdown, or a dropdown listbox.
  */
-#define COMBOBOXSTYLE(style)   ((LOBYTE(style)) & 3)
+#define COMBOBOXSTYLE(style) ((LOBYTE(style)) & 3)
 
 #define IsComboVisible(pcbox) (!pcbox->fNoRedraw && IsVisible(pcbox->spwnd))
 
@@ -496,63 +502,63 @@ typedef struct _TL {
  * NOTE: Text handle is sized as multiple of this constant
  *       (should be power of 2).
  */
-#define CCHALLOCEXTRA   0x20
+#define CCHALLOCEXTRA 0x20
 
 /* Maximum width in pixels for a line/rectangle */
 
-#define MAXPIXELWIDTH   30000
+#define MAXPIXELWIDTH 30000
 
-#define MAXCLIPENDPOS   32764
+#define MAXCLIPENDPOS 32764
 
 /* Limit multiline edit controls to at most 1024 characters on a single line.
  * We will force a wrap if the user exceeds this limit.
  */
 
-#define MAXLINELENGTH   1024
+#define MAXLINELENGTH 1024
 
 /*
  * Allow an initial maximum of 30000 characters in all edit controls since
  * some apps will run into unsigned problems otherwise.  If apps know about
  * the 64K limit, they can set the limit themselves.
  */
-#define MAXTEXT         30000
+#define MAXTEXT 30000
 
 /*
  * Key modifiers which have been pressed.  Code in KeyDownHandler and
  * CharHandler depend on these exact values.
  */
-#define NONEDOWN   0 /* Neither shift nor control down */
-#define CTRLDOWN   1 /* Control key only down */
-#define SHFTDOWN   2 /* Shift key only down */
-#define SHCTDOWN   3 /* Shift and control keys down = CTRLDOWN + SHFTDOWN */
-#define NOMODIFY   4 /* Neither shift nor control down */
+#define NONEDOWN 0 /* Neither shift nor control down */
+#define CTRLDOWN 1 /* Control key only down */
+#define SHFTDOWN 2 /* Shift key only down */
+#define SHCTDOWN 3 /* Shift and control keys down = CTRLDOWN + SHFTDOWN */
+#define NOMODIFY 4 /* Neither shift nor control down */
 
 
-#define CALLWORDBREAKPROC(proc, pText, iStart, cch, iAction)                \
-    (IsWOWProc(proc) ?                                                      \
-        (* pfnWowEditNextWord)(pText, iStart, cch, iAction, PtrToUlong(proc)) :  \
-        (* proc)(pText, iStart, cch, iAction))
+#define CALLWORDBREAKPROC(proc, pText, iStart, cch, iAction)                                \
+    (IsWOWProc(proc) ? (*pfnWowEditNextWord)(pText, iStart, cch, iAction, PtrToUlong(proc)) \
+                     : (*proc)(pText, iStart, cch, iAction))
 
 /*
  * Types of undo supported in this ped
  */
-#define UNDO_NONE   0  /* We can't undo the last operation. */
-#define UNDO_INSERT 1  /* We can undo the user's insertion of characters */
-#define UNDO_DELETE 2  /* We can undo the user's deletion of characters */
+#define UNDO_NONE 0   /* We can't undo the last operation. */
+#define UNDO_INSERT 1 /* We can undo the user's insertion of characters */
+#define UNDO_DELETE 2 /* We can undo the user's deletion of characters */
 
-typedef struct tagUNDO {
-    UINT    undoType;          /* Current type of undo we support */
-    PBYTE   hDeletedText;      /* Pointer to text which has been deleted (for
+typedef struct tagUNDO
+{
+    UINT undoType;      /* Current type of undo we support */
+    PBYTE hDeletedText; /* Pointer to text which has been deleted (for
                                   undo) -- note, the memory is allocated as fixed
                                 */
-    ICH     ichDeleted;        /* Starting index from which text was deleted */
-    ICH     cchDeleted;        /* Count of deleted characters in buffer */
-    ICH     ichInsStart;       /* Starting index from which text was
+    ICH ichDeleted;     /* Starting index from which text was deleted */
+    ICH cchDeleted;     /* Count of deleted characters in buffer */
+    ICH ichInsStart;    /* Starting index from which text was
                                   inserted */
-    ICH     ichInsEnd;         /* Ending index of inserted text */
+    ICH ichInsEnd;      /* Ending index of inserted text */
 } UNDO, *PUNDO;
 
-#define Pundo(ped)             ((PUNDO)&(ped)->undoType)
+#define Pundo(ped) ((PUNDO) & (ped)->undoType)
 
 /*
  * Length of the buffer for ASCII character width caching: for characters
@@ -563,204 +569,206 @@ typedef struct tagUNDO {
  */
 #define CHAR_WIDTH_BUFFER_LENGTH 128
 
-typedef struct tagED {
-    HANDLE  hText;             /* Block of text we are editing */
-    ICH     cchAlloc;          /* Number of chars we have allocated for hText
+typedef struct tagED
+{
+    HANDLE hText;   /* Block of text we are editing */
+    ICH cchAlloc;   /* Number of chars we have allocated for hText
                                 */
-    ICH     cchTextMax;        /* Max number bytes allowed in edit control
+    ICH cchTextMax; /* Max number bytes allowed in edit control
                                 */
-    ICH     cch;               /* Current number of bytes of actual text
+    ICH cch;        /* Current number of bytes of actual text
                                 */
-    ICH     cLines;            /* Number of lines of text */
+    ICH cLines;     /* Number of lines of text */
 
-    ICH     ichMinSel;         /* Selection extent.  MinSel is first selected
+    ICH ichMinSel;          /* Selection extent.  MinSel is first selected
                                   char */
-    ICH     ichMaxSel;         /* MaxSel is first unselected character */
-    ICH     ichCaret;          /* Caret location. Caret is on left side of
+    ICH ichMaxSel;          /* MaxSel is first unselected character */
+    ICH ichCaret;           /* Caret location. Caret is on left side of
                                   char */
-    ICH     iCaretLine;        /* The line the caret is on. So that if word
+    ICH iCaretLine;         /* The line the caret is on. So that if word
                                 * wrapping, we can tell if the caret is at end
                                 * of a line of at beginning of next line...
                                 */
-    ICH     ichScreenStart;    /* Index of left most character displayed on
+    ICH ichScreenStart;     /* Index of left most character displayed on
                                 * screen for sl ec and index of top most line
                                 * for multiline edit controls
                                 */
-    ICH     ichLinesOnScreen;  /* Number of lines we can display on screen */
-    UINT    xOffset;           /* x (horizontal) scroll position in pixels
+    ICH ichLinesOnScreen;   /* Number of lines we can display on screen */
+    UINT xOffset;           /* x (horizontal) scroll position in pixels
                                 * (for multiline text horizontal scroll bar)
                                 */
-    UINT    charPasswordChar;  /* If non null, display this character instead
+    UINT charPasswordChar;  /* If non null, display this character instead
                                 * of the real text. So that we can implement
                                 * hidden text fields.
                                 */
-    int     cPasswordCharWidth;/* Width of password char */
+    int cPasswordCharWidth; /* Width of password char */
 
-    HWND    hwnd;              /* Window for this edit control */
-    PWND    pwnd;              /* Pointer to window */
-    RECT    rcFmt;             /* Client rectangle */
-    HWND    hwndParent;        /* Parent of this edit control window */
+    HWND hwnd;       /* Window for this edit control */
+    PWND pwnd;       /* Pointer to window */
+    RECT rcFmt;      /* Client rectangle */
+    HWND hwndParent; /* Parent of this edit control window */
 
-                               /* These vars allow us to automatically scroll
+    /* These vars allow us to automatically scroll
                                 * when the user holds the mouse at the bottom
                                 * of the multiline edit control window.
                                 */
-    POINT   ptPrevMouse;       /* Previous point for the mouse for system
+    POINT ptPrevMouse; /* Previous point for the mouse for system
                                 * timer.
                                 */
-    UINT    prevKeys;          /* Previous key state for the mouse */
+    UINT prevKeys;     /* Previous key state for the mouse */
 
 
-    UINT     fSingle       : 1; /* Single line edit control? (or multiline) */
-    UINT     fNoRedraw     : 1; /* Redraw in response to a change? */
-    UINT     fMouseDown    : 1; /* Is mouse button down? when moving mouse */
-    UINT     fFocus        : 1; /* Does ec have the focus ? */
-    UINT     fDirty        : 1; /* Modify flag for the edit control */
-    UINT     fDisabled     : 1; /* Window disabled? */
-    UINT     fNonPropFont  : 1; /* Fixed width font? */
-    UINT     fNonPropDBCS  : 1; /* Non-Propotional DBCS font */
-    UINT     fBorder       : 1; /* Draw a border? */
-    UINT     fAutoVScroll  : 1; /* Automatically scroll vertically */
-    UINT     fAutoHScroll  : 1; /* Automatically scroll horizontally */
-    UINT     fNoHideSel    : 1; /* Hide sel when we lose focus? */
-    UINT     fDBCS         : 1; /* Are we using DBCS font set for editing? */
-    UINT     fFmtLines     : 1; /* For multiline only. Do we insert CR CR LF at
+    UINT fSingle : 1;      /* Single line edit control? (or multiline) */
+    UINT fNoRedraw : 1;    /* Redraw in response to a change? */
+    UINT fMouseDown : 1;   /* Is mouse button down? when moving mouse */
+    UINT fFocus : 1;       /* Does ec have the focus ? */
+    UINT fDirty : 1;       /* Modify flag for the edit control */
+    UINT fDisabled : 1;    /* Window disabled? */
+    UINT fNonPropFont : 1; /* Fixed width font? */
+    UINT fNonPropDBCS : 1; /* Non-Propotional DBCS font */
+    UINT fBorder : 1;      /* Draw a border? */
+    UINT fAutoVScroll : 1; /* Automatically scroll vertically */
+    UINT fAutoHScroll : 1; /* Automatically scroll horizontally */
+    UINT fNoHideSel : 1;   /* Hide sel when we lose focus? */
+    UINT fDBCS : 1;        /* Are we using DBCS font set for editing? */
+    UINT fFmtLines : 1;    /* For multiline only. Do we insert CR CR LF at
                                 * word wrap breaks?
                                 */
-    UINT     fWrap         : 1; /* Do int  wrapping? */
-    UINT     fCalcLines    : 1; /* Recalc ped->chLines array? (recalc line
+    UINT fWrap : 1;        /* Do int  wrapping? */
+    UINT fCalcLines : 1;   /* Recalc ped->chLines array? (recalc line
                                 * breaks?)
                                 */
-    UINT     fEatNextChar  : 1; /* Hack for ALT-NUMPAD stuff with combo boxes.
+    UINT fEatNextChar : 1; /* Hack for ALT-NUMPAD stuff with combo boxes.
                                 * If numlock is up, we want to eat the next
                                 * character generated by the keyboard driver
                                 * if user enter num pad ascii value...
                                 */
-    UINT     fStripCRCRLF  : 1; /* CRCRLFs have been added to text. Strip them
+    UINT fStripCRCRLF : 1; /* CRCRLFs have been added to text. Strip them
                                 * before doing any internal edit control
                                 * stuff
                                 */
-    UINT     fInDialogBox  : 1; /* True if the ml edit control is in a dialog
+    UINT fInDialogBox : 1; /* True if the ml edit control is in a dialog
                                 * box and we have to specially treat TABS and
                                 * ENTER
                                 */
-    UINT     fReadOnly     : 1; /* Is this a read only edit control? Only
+    UINT fReadOnly : 1;    /* Is this a read only edit control? Only
                                 * allow scrolling, selecting and copying.
                                 */
-    UINT     fCaretHidden  : 1; /* This indicates whether the caret is
+    UINT fCaretHidden : 1; /* This indicates whether the caret is
                                 * currently hidden because the width or height
                                 * of the edit control is too small to show it.
                                 */
-    UINT     fTrueType     : 1; /* Is the current font TrueType? */
-    UINT     fAnsi         : 1; /* is the edit control Ansi or unicode */
-    UINT     fWin31Compat  : 1; /* TRUE if created by Windows 3.1 app */
-    UINT     f40Compat     : 1; /* TRUE if created by Windows 4.0 app */
-    UINT     fFlatBorder   : 1; /* Do we have to draw this baby ourself? */
-    UINT     fSawRButtonDown : 1;
-    UINT     fInitialized  : 1; /* If any more bits are needed, then   */
-    UINT     fSwapRoOnUp   : 1; /* Swap reading order on next keyup    */
-    UINT     fAllowRTL     : 1; /* Allow RTL processing                */
-    UINT     fDisplayCtrl  : 1; /* Display unicode control characters  */
-    UINT     fRtoLReading  : 1; /* Right to left reading order         */
+    UINT fTrueType : 1;    /* Is the current font TrueType? */
+    UINT fAnsi : 1;        /* is the edit control Ansi or unicode */
+    UINT fWin31Compat : 1; /* TRUE if created by Windows 3.1 app */
+    UINT f40Compat : 1;    /* TRUE if created by Windows 4.0 app */
+    UINT fFlatBorder : 1;  /* Do we have to draw this baby ourself? */
+    UINT fSawRButtonDown : 1;
+    UINT fInitialized : 1; /* If any more bits are needed, then   */
+    UINT fSwapRoOnUp : 1;  /* Swap reading order on next keyup    */
+    UINT fAllowRTL : 1;    /* Allow RTL processing                */
+    UINT fDisplayCtrl : 1; /* Display unicode control characters  */
+    UINT fRtoLReading : 1; /* Right to left reading order         */
 
-    BOOL    fInsertCompChr  :1; /* means WM_IME_COMPOSITION:CS_INSERTCHAR will come */
-    BOOL    fReplaceCompChr :1; /* means need to replace current composition str. */
-    BOOL    fNoMoveCaret    :1; /* means stick to current caret pos. */
-    BOOL    fResultProcess  :1; /* means now processing result. */
-    BOOL    fKorea          :1; /* for Korea */
-    BOOL    fInReconversion :1; /* In reconversion mode */
-    BOOL    fLShift         :1; /* L-Shift pressed with Ctrl */
+    BOOL fInsertCompChr : 1;  /* means WM_IME_COMPOSITION:CS_INSERTCHAR will come */
+    BOOL fReplaceCompChr : 1; /* means need to replace current composition str. */
+    BOOL fNoMoveCaret : 1;    /* means stick to current caret pos. */
+    BOOL fResultProcess : 1;  /* means now processing result. */
+    BOOL fKorea : 1;          /* for Korea */
+    BOOL fInReconversion : 1; /* In reconversion mode */
+    BOOL fLShift : 1;         /* L-Shift pressed with Ctrl */
 
-    WORD    wImeStatus;        /* current IME status */
+    WORD wImeStatus; /* current IME status */
 
-    WORD    cbChar;            /* count of bytes in the char size (1 or 2 if unicode) */
-    LPICH   chLines;           /* index of the start of each line */
+    WORD cbChar;   /* count of bytes in the char size (1 or 2 if unicode) */
+    LPICH chLines; /* index of the start of each line */
 
-    UINT    format;            /* Left, center, or right justify multiline
+    UINT format;                     /* Left, center, or right justify multiline
                                 * text.
                                 */
-    EDITWORDBREAKPROCA lpfnNextWord;  /* use CALLWORDBREAKPROC macro to call */
+    EDITWORDBREAKPROCA lpfnNextWord; /* use CALLWORDBREAKPROC macro to call */
 
-                               /* Next word function */
-    int     maxPixelWidth;     /* WASICH Width (in pixels) of longest line */
+    /* Next word function */
+    int maxPixelWidth; /* WASICH Width (in pixels) of longest line */
 
-    UNDO;                      /* Undo buffer */
+    UNDO; /* Undo buffer */
 
-    HANDLE  hFont;             /* Handle to the font for this edit control.
+    HANDLE hFont;        /* Handle to the font for this edit control.
                                   Null if system font.
                                 */
-    int     aveCharWidth;      /* Ave width of a character in the hFont */
-    int     lineHeight;        /* Height of a line in the hFont */
-    int     charOverhang;      /* Overhang associated with the hFont */
-    int     cxSysCharWidth;    /* System font ave width */
-    int     cySysCharHeight;   /* System font height */
-    HWND    listboxHwnd;       /* ListBox hwnd. Non null if we are a combo
+    int aveCharWidth;    /* Ave width of a character in the hFont */
+    int lineHeight;      /* Height of a line in the hFont */
+    int charOverhang;    /* Overhang associated with the hFont */
+    int cxSysCharWidth;  /* System font ave width */
+    int cySysCharHeight; /* System font height */
+    HWND listboxHwnd;    /* ListBox hwnd. Non null if we are a combo
                                   box */
-    LPINT   pTabStops;         /* Points to an array of tab stops; First
+    LPINT pTabStops;     /* Points to an array of tab stops; First
                                 * element contains the number of elements in
                                 * the array
                                 */
-    LPINT   charWidthBuffer;
-    BYTE    charSet;           /* Character set for currently selected font
+    LPINT charWidthBuffer;
+    BYTE charSet;         /* Character set for currently selected font
                                 * needed for all versions
                                 */
-    UINT    wMaxNegA;          /* The biggest negative A width, */
-    UINT    wMaxNegAcharPos;   /* and how many characters it can span accross */
-    UINT    wMaxNegC;          /* The biggest negative C width, */
-    UINT    wMaxNegCcharPos;   /* and how many characters it can span accross */
-    UINT    wLeftMargin;       /* Left margin width in pixels. */
-    UINT    wRightMargin;      /* Right margin width in pixels. */
+    UINT wMaxNegA;        /* The biggest negative A width, */
+    UINT wMaxNegAcharPos; /* and how many characters it can span accross */
+    UINT wMaxNegC;        /* The biggest negative C width, */
+    UINT wMaxNegCcharPos; /* and how many characters it can span accross */
+    UINT wLeftMargin;     /* Left margin width in pixels. */
+    UINT wRightMargin;    /* Right margin width in pixels. */
 
-    ICH     ichStartMinSel;
-    ICH     ichStartMaxSel;
+    ICH ichStartMinSel;
+    ICH ichStartMaxSel;
 
     PLPKEDITCALLOUT pLpkEditCallout;
-    HBITMAP hCaretBitmap;      /* Current caret bitmap handle */
-    INT     iCaretOffset;      /* Offset in pixels (for LPK use) */
+    HBITMAP hCaretBitmap; /* Current caret bitmap handle */
+    INT iCaretOffset;     /* Offset in pixels (for LPK use) */
 
-    HANDLE  hInstance;         /* for WOW */
-    UCHAR   seed;              /* used to encode and decode password text */
-    BOOLEAN fEncoded;          /* is the text currently encoded */
-    int     iLockLevel;        /* number of times the text has been locked */
+    HANDLE hInstance; /* for WOW */
+    UCHAR seed;       /* used to encode and decode password text */
+    BOOLEAN fEncoded; /* is the text currently encoded */
+    int iLockLevel;   /* number of times the text has been locked */
 
-    BYTE    DBCSVector[8];     /* DBCS vector table */
-    HIMC    hImcPrev;          /* place to save hImc if we disable IME */
-    POINT   ptScreenBounding;   /* top left corner of edit window in screen */
+    BYTE DBCSVector[8];     /* DBCS vector table */
+    HIMC hImcPrev;          /* place to save hImc if we disable IME */
+    POINT ptScreenBounding; /* top left corner of edit window in screen */
 } ED, *PED, **PPED;
 
-typedef struct tagEDITWND {
+typedef struct tagEDITWND
+{
     WND wnd;
     PED ped;
-} EDITWND, * KPTR_MODIFIER PEDITWND;
+} EDITWND, *KPTR_MODIFIER PEDITWND;
 
 #ifdef FAREAST_CHARSET_BITS
 #error FAREAST_CHARSET_BITS should not be defined
 #endif
-#define FAREAST_CHARSET_BITS   (FS_JISJAPAN | FS_CHINESESIMP | FS_WANSUNG | FS_CHINESETRAD)
+#define FAREAST_CHARSET_BITS (FS_JISJAPAN | FS_CHINESESIMP | FS_WANSUNG | FS_CHINESETRAD)
 
 
 // Language pack specific context menu IDs
 
-#define ID_CNTX_RTL         0x00008000L
+#define ID_CNTX_RTL 0x00008000L
 #define ID_CNTX_DISPLAYCTRL 0x00008001L
-#define ID_CNTX_INSERTCTRL  0x00008013L
-#define ID_CNTX_ZWJ         0x00008002L
-#define ID_CNTX_ZWNJ        0x00008003L
-#define ID_CNTX_LRM         0x00008004L
-#define ID_CNTX_RLM         0x00008005L
-#define ID_CNTX_LRE         0x00008006L
-#define ID_CNTX_RLE         0x00008007L
-#define ID_CNTX_LRO         0x00008008L
-#define ID_CNTX_RLO         0x00008009L
-#define ID_CNTX_PDF         0x0000800AL
-#define ID_CNTX_NADS        0x0000800BL
-#define ID_CNTX_NODS        0x0000800CL
-#define ID_CNTX_ASS         0x0000800DL
-#define ID_CNTX_ISS         0x0000800EL
-#define ID_CNTX_AAFS        0x0000800FL
-#define ID_CNTX_IAFS        0x00008010L
-#define ID_CNTX_RS          0x00008011L
-#define ID_CNTX_US          0x00008012L
+#define ID_CNTX_INSERTCTRL 0x00008013L
+#define ID_CNTX_ZWJ 0x00008002L
+#define ID_CNTX_ZWNJ 0x00008003L
+#define ID_CNTX_LRM 0x00008004L
+#define ID_CNTX_RLM 0x00008005L
+#define ID_CNTX_LRE 0x00008006L
+#define ID_CNTX_RLE 0x00008007L
+#define ID_CNTX_LRO 0x00008008L
+#define ID_CNTX_RLO 0x00008009L
+#define ID_CNTX_PDF 0x0000800AL
+#define ID_CNTX_NADS 0x0000800BL
+#define ID_CNTX_NODS 0x0000800CL
+#define ID_CNTX_ASS 0x0000800DL
+#define ID_CNTX_ISS 0x0000800EL
+#define ID_CNTX_AAFS 0x0000800FL
+#define ID_CNTX_IAFS 0x00008010L
+#define ID_CNTX_RS 0x00008011L
+#define ID_CNTX_US 0x00008012L
 
 /*
  * The following structure is used to store a selection block; In Multiline
@@ -768,21 +776,23 @@ typedef struct tagEDITWND {
  * lines of the block. In Single line edit controls, "StPos" and "EndPos"
  * contain the Starting and Ending character positions of the block;
  */
-typedef struct tagBLOCK {
+typedef struct tagBLOCK
+{
     ICH StPos;
     ICH EndPos;
-}  BLOCK, *LPBLOCK;
+} BLOCK, *LPBLOCK;
 
 /*  The following structure is used to store complete information about a
  *  a strip of text.
  */
-typedef  struct {
-    LPSTR   lpString;
-    ICH     ichString;
-    ICH     nCount;
-    int     XStartPos;
-}  STRIPINFO;
-typedef  STRIPINFO FAR *LPSTRIPINFO;
+typedef struct
+{
+    LPSTR lpString;
+    ICH ichString;
+    ICH nCount;
+    int XStartPos;
+} STRIPINFO;
+typedef STRIPINFO FAR *LPSTRIPINFO;
 
 
 /***************************************************************************\
@@ -791,25 +801,25 @@ typedef  STRIPINFO FAR *LPSTRIPINFO;
 *
 \***************************************************************************/
 
-#define IsLBoxVisible(plb)  (plb->fRedraw && IsVisible(plb->spwnd))
+#define IsLBoxVisible(plb) (plb->fRedraw && IsVisible(plb->spwnd))
 
 /*
  * Number of list box items we allocated whenever we grow the list box
  * structures.
  */
-#define CITEMSALLOC     32
+#define CITEMSALLOC 32
 
 /* Return Values */
-#define EQ        0
-#define PREFIX    1
-#define LT        2
-#define GT        3
+#define EQ 0
+#define PREFIX 1
+#define LT 2
+#define GT 3
 
-#define         SINGLESEL       0
-#define         MULTIPLESEL     1
-#define         EXTENDEDSEL     2
+#define SINGLESEL 0
+#define MULTIPLESEL 1
+#define EXTENDEDSEL 2
 
-#define LBI_ADD     0x0004
+#define LBI_ADD 0x0004
 
 /*
  *  The various bits of wFileDetails field are used as mentioned below:
@@ -825,9 +835,9 @@ typedef  STRIPINFO FAR *LPSTRIPINFO;
 
 #define LBUP_RELEASECAPTURE 0x0001
 #define LBUP_RESETSELECTION 0x0002
-#define LBUP_NOTIFY         0x0004
-#define LBUP_SUCCESS        0x0008
-#define LBUP_SELCHANGE      0x0010
+#define LBUP_NOTIFY 0x0004
+#define LBUP_SUCCESS 0x0008
+#define LBUP_SELCHANGE 0x0010
 
 /*
  * rgpch is set up as follows:  First there are cMac 2 byte pointers to the
@@ -856,12 +866,14 @@ typedef  STRIPINFO FAR *LPSTRIPINFO;
  * made the same as the display state.
  */
 
-typedef struct tagLBItem {
+typedef struct tagLBItem
+{
     LONG offsz;
     ULONG_PTR itemData;
 } LBItem, *lpLBItem;
 
-typedef struct tagLBODItem {
+typedef struct tagLBODItem
+{
     ULONG_PTR itemData;
 } LBODItem, *lpLBODItem;
 
@@ -873,11 +885,13 @@ void LBEvent(PLBIV, UINT, int);
 *
 \***************************************************************************/
 
-typedef struct tagSTAT {
+typedef struct tagSTAT
+{
     PWND spwnd;
-    union {
+    union
+    {
         HANDLE hFont;
-        BOOL   fDeleteIt;
+        BOOL fDeleteIt;
     };
     HANDLE hImage;
     UINT cicur;
@@ -885,25 +899,27 @@ typedef struct tagSTAT {
     UINT fPaintKbdCuesOnly : 1;
 } STAT, *PSTAT;
 
-typedef struct tagSTATWND {
+typedef struct tagSTATWND
+{
     WND wnd;
     PSTAT pstat;
-} STATWND, * KPTR_MODIFIER PSTATWND;
+} STATWND, *KPTR_MODIFIER PSTATWND;
 
 
-typedef struct tagCURSORRESOURCE {
+typedef struct tagCURSORRESOURCE
+{
     WORD xHotspot;
     WORD yHotspot;
     BITMAPINFOHEADER bih;
 } CURSORRESOURCE, *PCURSORRESOURCE;
 
 
-#define NextWordBoundary(p)     ((PBYTE)(p) + ((ULONG_PTR)(p) & 1))
-#define NextDWordBoundary(p)    ((PBYTE)(p) + ((ULONG_PTR)(-(LONG_PTR)(p)) & 3))
+#define NextWordBoundary(p) ((PBYTE)(p) + ((ULONG_PTR)(p) & 1))
+#define NextDWordBoundary(p) ((PBYTE)(p) + ((ULONG_PTR)(-(LONG_PTR)(p)) & 3))
 
 // DDEML stub prototypes
 
-DWORD  Event(PEVENT_PACKET pep);
+DWORD Event(PEVENT_PACKET pep);
 PVOID CsValidateInstance(HANDLE hInst);
 
 /***************************************************************************\
@@ -915,90 +931,71 @@ PVOID CsValidateInstance(HANDLE hInst);
 *
 \***************************************************************************/
 
-BOOL  APIENTRY _FreeResource(HANDLE hResData, HINSTANCE hModule);
+BOOL APIENTRY _FreeResource(HANDLE hResData, HINSTANCE hModule);
 LPSTR APIENTRY _LockResource(HANDLE hResData, HINSTANCE hModule);
-BOOL  APIENTRY _UnlockResource(HANDLE hResData, HINSTANCE hModule);
+BOOL APIENTRY _UnlockResource(HANDLE hResData, HINSTANCE hModule);
 
-#define FINDRESOURCEA(hModule,lpName,lpType)         ((*(pfnFindResourceExA))(hModule, lpType, lpName, 0))
-#define FINDRESOURCEW(hModule,lpName,lpType)         ((*(pfnFindResourceExW))(hModule, lpType, lpName, 0))
-#define FINDRESOURCEEXA(hModule,lpName,lpType,wLang) ((*(pfnFindResourceExA))(hModule, lpType, lpName, wLang))
-#define FINDRESOURCEEXW(hModule,lpName,lpType,wLang) ((*(pfnFindResourceExW))(hModule, lpType, lpName, wLang))
-#define LOADRESOURCE(hModule,hResInfo)               ((*(pfnLoadResource))(hModule, hResInfo))
-#define LOCKRESOURCE(hResData, hModule)              ((*(pfnLockResource))(hResData, hModule))
-#define UNLOCKRESOURCE(hResData, hModule)            ((*(pfnUnlockResource))(hResData, hModule))
-#define FREERESOURCE(hResData, hModule)              ((*(pfnFreeResource))(hResData, hModule))
-#define SIZEOFRESOURCE(hModule,hResInfo)             ((*(pfnSizeofResource))(hModule, hResInfo))
-#define GETEXPWINVER(hModule)                        ((*(pfnGetExpWinVer))((hModule)?(hModule):GetModuleHandle(NULL)))
+#define FINDRESOURCEA(hModule, lpName, lpType) ((*(pfnFindResourceExA))(hModule, lpType, lpName, 0))
+#define FINDRESOURCEW(hModule, lpName, lpType) ((*(pfnFindResourceExW))(hModule, lpType, lpName, 0))
+#define FINDRESOURCEEXA(hModule, lpName, lpType, wLang) ((*(pfnFindResourceExA))(hModule, lpType, lpName, wLang))
+#define FINDRESOURCEEXW(hModule, lpName, lpType, wLang) ((*(pfnFindResourceExW))(hModule, lpType, lpName, wLang))
+#define LOADRESOURCE(hModule, hResInfo) ((*(pfnLoadResource))(hModule, hResInfo))
+#define LOCKRESOURCE(hResData, hModule) ((*(pfnLockResource))(hResData, hModule))
+#define UNLOCKRESOURCE(hResData, hModule) ((*(pfnUnlockResource))(hResData, hModule))
+#define FREERESOURCE(hResData, hModule) ((*(pfnFreeResource))(hResData, hModule))
+#define SIZEOFRESOURCE(hModule, hResInfo) ((*(pfnSizeofResource))(hModule, hResInfo))
+#define GETEXPWINVER(hModule) ((*(pfnGetExpWinVer))((hModule) ? (hModule) : GetModuleHandle(NULL)))
 
 /*
  * Pointers to unaligned-bits.  These are necessary for handling
  * bitmap-info's loaded from file.
  */
-typedef BITMAPINFO       UNALIGNED *UPBITMAPINFO;
+typedef BITMAPINFO UNALIGNED *UPBITMAPINFO;
 typedef BITMAPINFOHEADER UNALIGNED *UPBITMAPINFOHEADER;
 typedef BITMAPCOREHEADER UNALIGNED *UPBITMAPCOREHEADER;
 
-#define CCHFILEMAX      MAX_PATH
+#define CCHFILEMAX MAX_PATH
 
 HANDLE LocalReallocSafe(HANDLE hMem, DWORD dwBytes, DWORD dwFlags, PPED pped);
 
-HLOCAL WINAPI DispatchLocalAlloc(
-    UINT uFlags,
-    UINT uBytes,
-    HANDLE hInstance);
+HLOCAL WINAPI DispatchLocalAlloc(UINT uFlags, UINT uBytes, HANDLE hInstance);
 
-HLOCAL WINAPI DispatchLocalReAlloc(
-    HLOCAL hMem,
-    UINT uBytes,
-    UINT uFlags,
-    HANDLE hInstance,
-    PVOID* ppv);
+HLOCAL WINAPI DispatchLocalReAlloc(HLOCAL hMem, UINT uBytes, UINT uFlags, HANDLE hInstance, PVOID *ppv);
 
-LPVOID WINAPI DispatchLocalLock(
-    HLOCAL hMem,
-    HANDLE hInstance);
+LPVOID WINAPI DispatchLocalLock(HLOCAL hMem, HANDLE hInstance);
 
-BOOL WINAPI DispatchLocalUnlock(
-    HLOCAL hMem,
-    HANDLE hInstance);
+BOOL WINAPI DispatchLocalUnlock(HLOCAL hMem, HANDLE hInstance);
 
-UINT WINAPI DispatchLocalSize(
-    HLOCAL hMem,
-    HANDLE hInstance);
+UINT WINAPI DispatchLocalSize(HLOCAL hMem, HANDLE hInstance);
 
-HLOCAL WINAPI DispatchLocalFree(
-    HLOCAL hMem,
-    HANDLE hInstance);
+HLOCAL WINAPI DispatchLocalFree(HLOCAL hMem, HANDLE hInstance);
 
-#define UserLocalAlloc(uFlag,uBytes) HeapAlloc(pUserHeap, uFlag, (uBytes))
+#define UserLocalAlloc(uFlag, uBytes) HeapAlloc(pUserHeap, uFlag, (uBytes))
 #define UserLocalReAlloc(p, uBytes, uFlags) HeapReAlloc(pUserHeap, uFlags, (LPSTR)(p), (uBytes))
-#define UserLocalFree(p)    HeapFree(pUserHeap, 0, (LPSTR)(p))
-#define UserLocalSize(p)    HeapSize(pUserHeap, 0, (LPSTR)(p))
-#define UserLocalLock(p)    (LPSTR)(p)
+#define UserLocalFree(p) HeapFree(pUserHeap, 0, (LPSTR)(p))
+#define UserLocalSize(p) HeapSize(pUserHeap, 0, (LPSTR)(p))
+#define UserLocalLock(p) (LPSTR)(p)
 #define UserLocalUnlock(p)
-#define UserLocalFlags(p)   0
-#define UserLocalHandle(p)  (HLOCAL)(p)
+#define UserLocalFlags(p) 0
+#define UserLocalHandle(p) (HLOCAL)(p)
 
-LONG TabTextOut(HDC hdc, int x, int y, LPCWSTR lpstring, int nCount,
-        int nTabPositions, CONST INT *lpTabPositions, int iTabOrigin,
-        BOOL fDrawTheText, int iCharset);
-LONG UserLpkTabbedTextOut(HDC hdc, int x, int y, LPCWSTR lpstring,
-        int nCount, int nTabPositions, CONST INT *lpTabPositions,
-        int iTabOrigin, BOOL fDrawTheText, int cxCharWidth,
-        int cyCharHeight, int iCharset);
-void UserLpkPSMTextOut(HDC hdc, int xLeft, int yTop,
-        LPWSTR lpsz, int cch, DWORD dwFlags);
+LONG TabTextOut(HDC hdc, int x, int y, LPCWSTR lpstring, int nCount, int nTabPositions, CONST INT *lpTabPositions,
+                int iTabOrigin, BOOL fDrawTheText, int iCharset);
+LONG UserLpkTabbedTextOut(HDC hdc, int x, int y, LPCWSTR lpstring, int nCount, int nTabPositions,
+                          CONST INT *lpTabPositions, int iTabOrigin, BOOL fDrawTheText, int cxCharWidth,
+                          int cyCharHeight, int iCharset);
+void UserLpkPSMTextOut(HDC hdc, int xLeft, int yTop, LPWSTR lpsz, int cch, DWORD dwFlags);
 void PSMTextOut(HDC hdc, int xLeft, int yTop, LPWSTR lpsz, int cch, DWORD dwFlags);
 void ECUpdateFormat(PED ped, DWORD dwStyle, DWORD dwExStyle);
 
 #ifndef _USERK_
-int  LoadStringOrError(HANDLE, UINT, LPTSTR, int, WORD);
-int  RtlGetIdFromDirectory(PBYTE, BOOL, int, int, DWORD, PDWORD);
+int LoadStringOrError(HANDLE, UINT, LPTSTR, int, WORD);
+int RtlGetIdFromDirectory(PBYTE, BOOL, int, int, DWORD, PDWORD);
 BOOL RtlCaptureAnsiString(PIN_STRING, LPCSTR, BOOL);
 BOOL RtlCaptureLargeAnsiString(PLARGE_IN_STRING, LPCSTR, BOOL);
-LONG BroadcastSystemMessageWorker(DWORD dwFlags, LPDWORD lpdwRecipients, UINT uiMessage,
-        WPARAM wParam, LPARAM lParam, PBSMINFO pBSMInfo, BOOL fAnsi);
-#endif  // !_USERK_
+LONG BroadcastSystemMessageWorker(DWORD dwFlags, LPDWORD lpdwRecipients, UINT uiMessage, WPARAM wParam, LPARAM lParam,
+                                  PBSMINFO pBSMInfo, BOOL fAnsi);
+#endif // !_USERK_
 
 PWND FASTCALL ValidateHwnd(HWND hwnd);
 PWND FASTCALL ValidateHwndNoRip(HWND hwnd);
@@ -1008,25 +1005,25 @@ void ECUnlock(PED ped);
 BOOL ECNcCreate(PED, PWND, LPCREATESTRUCT);
 void ECInvalidateClient(PED ped, BOOL fErase);
 BOOL ECCreate(PED ped, LONG windowStyle);
-void ECWord(PED, ICH, BOOL, ICH*, ICH*);
-ICH  ECFindTab(LPSTR, ICH);
+void ECWord(PED, ICH, BOOL, ICH *, ICH *);
+ICH ECFindTab(LPSTR, ICH);
 void ECNcDestroyHandler(PWND, PED);
 BOOL ECSetText(PED, LPSTR);
 void ECSetPasswordChar(PED, UINT);
-ICH  ECCchInWidth(PED, HDC, LPSTR, ICH, int, BOOL);
+ICH ECCchInWidth(PED, HDC, LPSTR, ICH, int, BOOL);
 void ECEmptyUndo(PUNDO);
 void ECSaveUndo(PUNDO pundoFrom, PUNDO pundoTo, BOOL fClear);
-BOOL ECInsertText(PED, LPSTR, ICH*);
-ICH  ECDeleteText(PED);
+BOOL ECInsertText(PED, LPSTR, ICH *);
+ICH ECDeleteText(PED);
 void ECResetTextInfo(PED ped);
 void ECNotifyParent(PED, int);
 void ECSetEditClip(PED, HDC, BOOL);
-HDC  ECGetEditDC(PED, BOOL);
+HDC ECGetEditDC(PED, BOOL);
 void ECReleaseEditDC(PED, HDC, BOOL);
-ICH  ECGetText(PED, ICH, LPSTR, BOOL);
+ICH ECGetText(PED, ICH, LPSTR, BOOL);
 void ECSetFont(PED, HFONT, BOOL);
 void ECSetMargin(PED, UINT, long, BOOL);
-ICH  ECCopy(PED);
+ICH ECCopy(PED);
 BOOL ECCalcChangeSelection(PED, ICH, ICH, LPBLOCK, LPBLOCK);
 void ECFindXORblks(LPBLOCK, LPBLOCK, LPBLOCK, LPBLOCK);
 BOOL ECIsCharNumeric(PED ped, DWORD keyPress);
@@ -1036,99 +1033,98 @@ BOOL ECIsCharNumeric(PED ped, DWORD keyPress);
  * a single WORD value.
  */
 WORD DbcsCombine(HWND, WORD);
-#define CrackCombinedDbcsLB(c)  ((BYTE)(c))
-#define CrackCombinedDbcsTB(c)  ((c) >> 8)
+#define CrackCombinedDbcsLB(c) ((BYTE)(c))
+#define CrackCombinedDbcsTB(c) ((c) >> 8)
 
-ICH  ECAdjustIch(PED, LPSTR, ICH);
-ICH  ECAdjustIchNext(PED, LPSTR, ICH);
-int  ECGetDBCSVector(PED, HDC, BYTE);
+ICH ECAdjustIch(PED, LPSTR, ICH);
+ICH ECAdjustIchNext(PED, LPSTR, ICH);
+int ECGetDBCSVector(PED, HDC, BYTE);
 BOOL ECIsDBCSLeadByte(PED, BYTE);
 LPSTR ECAnsiNext(PED, LPSTR);
 LPSTR ECAnsiPrev(PED, LPSTR, LPSTR);
-ICH  ECPrevIch(PED, LPSTR, ICH);
-ICH  ECNextIch(PED, LPSTR, ICH);
+ICH ECPrevIch(PED, LPSTR, ICH);
+ICH ECNextIch(PED, LPSTR, ICH);
 
-void ECEnableDisableIME( PED ped );
-void ECImmSetCompositionFont( PED ped );
-void ECImmSetCompositionWindow( PED ped, LONG, LONG );
-void  ECSetCaretHandler(PED ped);
-void  ECInitInsert(PED ped, HKL hkl);
+void ECEnableDisableIME(PED ped);
+void ECImmSetCompositionFont(PED ped);
+void ECImmSetCompositionWindow(PED ped, LONG, LONG);
+void ECSetCaretHandler(PED ped);
+void ECInitInsert(PED ped, HKL hkl);
 LRESULT ECImeComposition(PED ped, WPARAM wParam, LPARAM lParam);
-LRESULT EcImeRequestHandler(PED, WPARAM, LPARAM);  // NT 5.0
-BOOL HanjaKeyHandler(PED ped);  // Korean Support
+LRESULT EcImeRequestHandler(PED, WPARAM, LPARAM); // NT 5.0
+BOOL HanjaKeyHandler(PED ped);                    // Korean Support
 
 void ECInOutReconversionMode(PED ped, BOOL fIn);
 
 
 // ECTabTheTextOut draw codes
-#define ECT_CALC        0
-#define ECT_NORMAL      1
-#define ECT_SELECTED    2
+#define ECT_CALC 0
+#define ECT_NORMAL 1
+#define ECT_SELECTED 2
 
 #define ECGetCaretWidth() (gpsi->uCaretWidth)
 
-UINT ECTabTheTextOut(HDC, int, int, int, int,
-                     LPSTR, int, ICH, PED, int, BOOL, LPSTRIPINFO);
+UINT ECTabTheTextOut(HDC, int, int, int, int, LPSTR, int, ICH, PED, int, BOOL, LPSTRIPINFO);
 HBRUSH ECGetControlBrush(PED, HDC, LONG);
 HBRUSH ECGetBrush(PED ped, HDC hdc);
-int  ECGetModKeys(int);
-void ECSize( PED, LPRECT, BOOL);
+int ECGetModKeys(int);
+void ECSize(PED, LPRECT, BOOL);
 
-ICH  MLInsertText(PED, LPSTR, ICH, BOOL);
-ICH  MLDeleteText(PED);
+ICH MLInsertText(PED, LPSTR, ICH, BOOL);
+ICH MLDeleteText(PED);
 BOOL MLEnsureCaretVisible(PED);
 void MLDrawText(PED, HDC, ICH, ICH, BOOL);
 void MLDrawLine(PED, HDC, int, ICH, int, BOOL);
 void MLPaintABlock(PED, HDC, int, int);
-int  GetBlkEndLine(int, int, BOOL FAR *, int, int);
+int GetBlkEndLine(int, int, BOOL FAR *, int, int);
 void MLBuildchLines(PED, ICH, int, BOOL, PLONG, PLONG);
 void MLShiftchLines(PED, ICH, int);
 BOOL MLInsertchLine(PED, ICH, ICH, BOOL);
-void MLSetCaretPosition(PED,HDC);
+void MLSetCaretPosition(PED, HDC);
 void MLIchToXYPos(PED, HDC, ICH, BOOL, LPPOINT);
-int  MLIchToLine(PED, ICH);
+int MLIchToLine(PED, ICH);
 void MLRepaintChangedSelection(PED, HDC, ICH, ICH);
 void MLMouseMotion(PED, UINT, UINT, LPPOINT);
-ICH  MLLine(PED, ICH);
+ICH MLLine(PED, ICH);
 void MLStripCrCrLf(PED);
-int  MLCalcXOffset(PED, HDC, int);
+int MLCalcXOffset(PED, HDC, int);
 BOOL MLUndo(PED);
 LRESULT MLEditWndProc(HWND, PED, UINT, WPARAM, LPARAM);
 void MLChar(PED, DWORD, int);
 void MLKeyDown(PED, UINT, int);
-ICH  MLPasteText(PED);
+ICH MLPasteText(PED);
 void MLSetSelection(PED, BOOL, ICH, ICH);
 LONG MLCreate(PED, LPCREATESTRUCT);
 BOOL MLInsertCrCrLf(PED);
 void MLSetHandle(PED, HANDLE);
 LONG MLGetLine(PED, ICH, ICH, LPSTR);
-ICH  MLLineIndex(PED, ICH);
+ICH MLLineIndex(PED, ICH);
 void MLSize(PED, BOOL);
 void MLChangeSelection(PED, HDC, ICH, ICH);
 void MLSetRectHandler(PED, LPRECT);
 BOOL MLExpandTabs(PED);
 BOOL MLSetTabStops(PED, int, LPINT);
 LONG MLScroll(PED, BOOL, int, int, BOOL);
-int  MLThumbPosFromPed(PED, BOOL);
+int MLThumbPosFromPed(PED, BOOL);
 void MLUpdateiCaretLine(PED ped);
-ICH  MLLineLength(PED, ICH);
+ICH MLLineLength(PED, ICH);
 void MLReplaceSel(PED, LPSTR);
 
 void SLReplaceSel(PED, LPSTR);
 BOOL SLUndo(PED);
 void SLSetCaretPosition(PED, HDC);
-int  SLIchToLeftXPos(PED, HDC, ICH);
+int SLIchToLeftXPos(PED, HDC, ICH);
 void SLChangeSelection(PED, HDC, ICH, ICH);
 void SLDrawText(PED, HDC, ICH);
 void SLDrawLine(PED, HDC, int, int, ICH, int, BOOL);
-int  SLGetBlkEnd(PED, ICH, ICH, BOOL FAR *);
+int SLGetBlkEnd(PED, ICH, ICH, BOOL FAR *);
 BOOL SLScrollText(PED, HDC);
-void SLSetSelection(PED,ICH, ICH);
-ICH  SLInsertText(PED, LPSTR, ICH);
-ICH  SLPasteText(PED);
+void SLSetSelection(PED, ICH, ICH);
+ICH SLInsertText(PED, LPSTR, ICH);
+ICH SLPasteText(PED);
 void SLChar(PED, DWORD);
 void SLKeyDown(PED, DWORD, int);
-ICH  SLMouseToIch(PED, HDC, LPPOINT);
+ICH SLMouseToIch(PED, HDC, LPPOINT);
 void SLMouseMotion(PED, UINT, UINT, LPPOINT);
 LONG SLCreate(PED, LPCREATESTRUCT);
 void SLPaint(PED, HDC);
@@ -1138,9 +1134,9 @@ LRESULT SLEditWndProc(HWND, PED, UINT, WPARAM, LPARAM);
 LRESULT EditWndProc(PWND, UINT, WPARAM, LPARAM);
 
 #define GETAPPVER() GetClientInfo()->dwExpWinVer
-#define THREAD_HKL()      (KHKL_TO_HKL(GetClientInfo()->hKL))
-#define GETCLIENTTHREADINFO()   (CLIENTTHREADINFO *)KPVOID_TO_PVOID(GetClientInfo()->pClientThreadInfo)
-#define CLIENTTHREADINFO(pci)   (CLIENTTHREADINFO *)KPVOID_TO_PVOID((pci)->pClientThreadInfo)
+#define THREAD_HKL() (KHKL_TO_HKL(GetClientInfo()->hKL))
+#define GETCLIENTTHREADINFO() (CLIENTTHREADINFO *)KPVOID_TO_PVOID(GetClientInfo()->pClientThreadInfo)
+#define CLIENTTHREADINFO(pci) (CLIENTTHREADINFO *)KPVOID_TO_PVOID((pci)->pClientThreadInfo)
 
 
 UINT HelpMenu(HWND hwnd, PPOINT ppt);
@@ -1148,54 +1144,55 @@ UINT HelpMenu(HWND hwnd, PPOINT ppt);
 #define ISDELIMETERA(ch) ((ch == ' ') || (ch == '\t'))
 #define ISDELIMETERW(ch) ((ch == L' ') || (ch == L'\t'))
 
-#define AWCOMPARECHAR(ped,pbyte,awchar) (ped->fAnsi ? (*(PUCHAR)(pbyte) == (UCHAR)(awchar)) : (*(LPWSTR)(pbyte) == (WCHAR)(awchar)))
+#define AWCOMPARECHAR(ped, pbyte, awchar) \
+    (ped->fAnsi ? (*(PUCHAR)(pbyte) == (UCHAR)(awchar)) : (*(LPWSTR)(pbyte) == (WCHAR)(awchar)))
 
 /* Menu that comes up when you press the right mouse button on an edit
  * control
  */
-#define ID_EC_PROPERTY_MENU      1
+#define ID_EC_PROPERTY_MENU 1
 
-#define IDD_MDI_ACTIVATE         9
+#define IDD_MDI_ACTIVATE 9
 
 #ifndef _USERK_
 /*
  * String IDs
  */
-#define STR_ERROR                        0x00000002L
-#define STR_MOREWINDOWS                  0x0000000DL
-#define STR_NOMEMBITMAP                  0x0000000EL
+#define STR_ERROR 0x00000002L
+#define STR_MOREWINDOWS 0x0000000DL
+#define STR_NOMEMBITMAP 0x0000000EL
 
 /*
  * IME specific context menu string
  */
-#define STR_IMEOPEN                 700
-#define STR_IMECLOSE                701
-#define STR_SOFTKBDOPEN             702
-#define STR_SOFTKBDCLOSE            703
-#define STR_RECONVERTSTRING         705
+#define STR_IMEOPEN 700
+#define STR_IMECLOSE 701
+#define STR_SOFTKBDOPEN 702
+#define STR_SOFTKBDCLOSE 703
+#define STR_RECONVERTSTRING 705
 
 /*
  * Shutdown logging strings.
  */
-#define STR_SHUTDOWN_SHUTDOWN       706
-#define STR_SHUTDOWN_POWEROFF       707
-#define STR_SHUTDOWN_REBOOT         708
+#define STR_SHUTDOWN_SHUTDOWN 706
+#define STR_SHUTDOWN_POWEROFF 707
+#define STR_SHUTDOWN_REBOOT 708
 
 /*
  * Misc. strings.
  */
-#define STR_UNKNOWN                 709
+#define STR_UNKNOWN 709
 
 /*
  * ExitWindowsEx warning dlg strings
  */
-#define IDS_EXITWINDOWS_TITLE           710
-#define IDS_SHUTDOWN_REMOTE             711
-#define IDS_SHUTDOWN_REMOTE_OTHERUSERS  712
-#define IDS_SHUTDOWN_OTHERUSERS         713
-#define IDS_RESTART_OTHERUSERS          714
+#define IDS_EXITWINDOWS_TITLE 710
+#define IDS_SHUTDOWN_REMOTE 711
+#define IDS_SHUTDOWN_REMOTE_OTHERUSERS 712
+#define IDS_SHUTDOWN_OTHERUSERS 713
+#define IDS_RESTART_OTHERUSERS 714
 
-#endif  // !_USERK_
+#endif // !_USERK_
 
 
 BOOL InitClientDrawing();
@@ -1209,88 +1206,83 @@ BOOL InitClientDrawing();
 *
 \***************************************************************************/
 
-int InternalScrollWindowEx(HWND hwnd, int dx, int dy, CONST RECT *prcScroll,
-        CONST RECT *prcClip, HRGN hrgnUpdate, LPRECT prcUpdate,
-        UINT dwFlags, DWORD dwTime);
+int InternalScrollWindowEx(HWND hwnd, int dx, int dy, CONST RECT *prcScroll, CONST RECT *prcClip, HRGN hrgnUpdate,
+                           LPRECT prcUpdate, UINT dwFlags, DWORD dwTime);
 
 BOOL IsMetaFile(HDC hdc);
 
 BOOL DrawDiagonal(HDC hdc, LPRECT lprc, HBRUSH hbrTL, HBRUSH hbrBR, UINT flags);
 BOOL FillTriangle(HDC hdc, LPRECT lprc, HBRUSH hbr, UINT flags);
 
-BOOL   _ClientFreeLibrary(HANDLE hmod);
-DWORD  _ClientGetListboxString(PWND pwnd, UINT msg, WPARAM wParam, LPSTR lParam,
-        ULONG_PTR xParam, PROC xpfn);
-LPHLP  HFill(LPCSTR lpszHelp, DWORD ulCommand, ULONG_PTR ulData);
+BOOL _ClientFreeLibrary(HANDLE hmod);
+DWORD _ClientGetListboxString(PWND pwnd, UINT msg, WPARAM wParam, LPSTR lParam, ULONG_PTR xParam, PROC xpfn);
+LPHLP HFill(LPCSTR lpszHelp, DWORD ulCommand, ULONG_PTR ulData);
 BOOL SetVideoTimeout(DWORD dwVideoTimeout);
 
 DWORD _GetWindowLong(PWND pwnd, int index, BOOL bAnsi);
 #ifdef _WIN64
 ULONG_PTR _GetWindowLongPtr(PWND pwnd, int index, BOOL bAnsi);
 #else
-#define _GetWindowLongPtr   _GetWindowLong
+#define _GetWindowLongPtr _GetWindowLong
 #endif
-WORD  _GetWindowWord(PWND pwnd, int index);
+WORD _GetWindowWord(PWND pwnd, int index);
 
-HWND InternalFindWindowExA(HWND hwndParent, HWND hwndChild, LPCSTR pClassName,
-                          LPCSTR pWindowName, DWORD   dwFlag);
-HWND InternalFindWindowExW(HWND hwndParent, HWND hwndChild, LPCTSTR pClassName,
-                          LPCTSTR pWindowName, DWORD   dwFlag);
+HWND InternalFindWindowExA(HWND hwndParent, HWND hwndChild, LPCSTR pClassName, LPCSTR pWindowName, DWORD dwFlag);
+HWND InternalFindWindowExW(HWND hwndParent, HWND hwndChild, LPCTSTR pClassName, LPCTSTR pWindowName, DWORD dwFlag);
 
 
 /*
  * Message thunks.
  */
-#define fnCOPYDATA                      NtUserMessageCall
-#define fnDDEINIT                       NtUserMessageCall
-#define fnDWORD                         NtUserMessageCall
-#define fnNCDESTROY                     NtUserMessageCall
-#define fnDWORDOPTINLPMSG               NtUserMessageCall
-#define fnGETTEXTLENGTHS                NtUserMessageCall
-#define fnGETDBCSTEXTLENGTHS            NtUserMessageCall
-#define fnINLPCREATESTRUCT              NtUserMessageCall
-#define fnINLPCOMPAREITEMSTRUCT         NtUserMessageCall
-#define fnINLPDELETEITEMSTRUCT          NtUserMessageCall
-#define fnINLPDRAWITEMSTRUCT            NtUserMessageCall
-#define fnINLPHELPINFOSTRUCT            NtUserMessageCall
-#define fnINLPHLPSTRUCT                 NtUserMessageCall
-#define fnINLPWINDOWPOS                 NtUserMessageCall
-#define fnINOUTDRAG                     NtUserMessageCall
-#define fnINOUTLPMEASUREITEMSTRUCT      NtUserMessageCall
-#define fnINOUTLPPOINT5                 NtUserMessageCall
-#define fnINOUTLPRECT                   NtUserMessageCall
-#define fnINOUTLPSCROLLINFO             NtUserMessageCall
-#define fnINOUTLPWINDOWPOS              NtUserMessageCall
-#define fnINOUTNCCALCSIZE               NtUserMessageCall
-#define fnINOUTNEXTMENU                 NtUserMessageCall
-#define fnINOUTSTYLECHANGE              NtUserMessageCall
-#define fnOPTOUTLPDWORDOPTOUTLPDWORD    NtUserMessageCall
-#define fnOUTLPRECT                     NtUserMessageCall
-#define fnPOPTINLPUINT                  NtUserMessageCall
-#define fnPOUTLPINT                     NtUserMessageCall
-#define fnSENTDDEMSG                    NtUserMessageCall
-#define fnOUTDWORDINDWORD               NtUserMessageCall
-#define fnINOUTMENUGETOBJECT            NtUserMessageCall
-#define fnINCBOXSTRING                  NtUserMessageCall
-#define fnINCNTOUTSTRING                NtUserMessageCall
-#define fnINCNTOUTSTRINGNULL            NtUserMessageCall
-#define fnINLBOXSTRING                  NtUserMessageCall
-#define fnINLPMDICREATESTRUCT           NtUserMessageCall
-#define fnINSTRING                      NtUserMessageCall
-#define fnINSTRINGNULL                  NtUserMessageCall
-#define fnINWPARAMCHAR                  NtUserMessageCall
-#define fnOUTCBOXSTRING                 NtUserMessageCall
-#define fnOUTLBOXSTRING                 NtUserMessageCall
-#define fnOUTSTRING                     NtUserMessageCall
-#define fnKERNELONLY                    NtUserMessageCall
-#define fnOUTLPCOMBOBOXINFO             NtUserMessageCall
-#define fnOUTLPSCROLLBARINFO            NtUserMessageCall
+#define fnCOPYDATA NtUserMessageCall
+#define fnDDEINIT NtUserMessageCall
+#define fnDWORD NtUserMessageCall
+#define fnNCDESTROY NtUserMessageCall
+#define fnDWORDOPTINLPMSG NtUserMessageCall
+#define fnGETTEXTLENGTHS NtUserMessageCall
+#define fnGETDBCSTEXTLENGTHS NtUserMessageCall
+#define fnINLPCREATESTRUCT NtUserMessageCall
+#define fnINLPCOMPAREITEMSTRUCT NtUserMessageCall
+#define fnINLPDELETEITEMSTRUCT NtUserMessageCall
+#define fnINLPDRAWITEMSTRUCT NtUserMessageCall
+#define fnINLPHELPINFOSTRUCT NtUserMessageCall
+#define fnINLPHLPSTRUCT NtUserMessageCall
+#define fnINLPWINDOWPOS NtUserMessageCall
+#define fnINOUTDRAG NtUserMessageCall
+#define fnINOUTLPMEASUREITEMSTRUCT NtUserMessageCall
+#define fnINOUTLPPOINT5 NtUserMessageCall
+#define fnINOUTLPRECT NtUserMessageCall
+#define fnINOUTLPSCROLLINFO NtUserMessageCall
+#define fnINOUTLPWINDOWPOS NtUserMessageCall
+#define fnINOUTNCCALCSIZE NtUserMessageCall
+#define fnINOUTNEXTMENU NtUserMessageCall
+#define fnINOUTSTYLECHANGE NtUserMessageCall
+#define fnOPTOUTLPDWORDOPTOUTLPDWORD NtUserMessageCall
+#define fnOUTLPRECT NtUserMessageCall
+#define fnPOPTINLPUINT NtUserMessageCall
+#define fnPOUTLPINT NtUserMessageCall
+#define fnSENTDDEMSG NtUserMessageCall
+#define fnOUTDWORDINDWORD NtUserMessageCall
+#define fnINOUTMENUGETOBJECT NtUserMessageCall
+#define fnINCBOXSTRING NtUserMessageCall
+#define fnINCNTOUTSTRING NtUserMessageCall
+#define fnINCNTOUTSTRINGNULL NtUserMessageCall
+#define fnINLBOXSTRING NtUserMessageCall
+#define fnINLPMDICREATESTRUCT NtUserMessageCall
+#define fnINSTRING NtUserMessageCall
+#define fnINSTRINGNULL NtUserMessageCall
+#define fnINWPARAMCHAR NtUserMessageCall
+#define fnOUTCBOXSTRING NtUserMessageCall
+#define fnOUTLBOXSTRING NtUserMessageCall
+#define fnOUTSTRING NtUserMessageCall
+#define fnKERNELONLY NtUserMessageCall
+#define fnOUTLPCOMBOBOXINFO NtUserMessageCall
+#define fnOUTLPSCROLLBARINFO NtUserMessageCall
 
 
-#define MESSAGEPROTO(func) \
-LRESULT CALLBACK fn ## func(                               \
-        HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, \
-        ULONG_PTR xParam, DWORD xpfnWndProc, BOOL bAnsi)
+#define MESSAGEPROTO(func)                                                                                            \
+    LRESULT CALLBACK fn##func(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, ULONG_PTR xParam, DWORD xpfnWndProc, \
+                              BOOL bAnsi)
 
 MESSAGEPROTO(COPYGLOBALDATA);
 MESSAGEPROTO(INDEVICECHANGE);
@@ -1307,17 +1299,12 @@ MESSAGEPROTO(CBGETEDITSEL);
 /*
  * clhook.c
  */
-#define IsHooked(pci, fsHook) \
-    ((fsHook & (pci->fsHooks | pci->pDeskInfo->fsHooks)) != 0)
+#define IsHooked(pci, fsHook) ((fsHook & (pci->fsHooks | pci->pDeskInfo->fsHooks)) != 0)
 
-LRESULT fnHkINLPCWPSTRUCTW(PWND pwnd, UINT message, WPARAM wParam,
-        LPARAM lParam, ULONG_PTR xParam);
-LRESULT fnHkINLPCWPSTRUCTA(PWND pwnd, UINT message, WPARAM wParam,
-        LPARAM lParam, ULONG_PTR xParam);
-LRESULT fnHkINLPCWPRETSTRUCTW(PWND pwnd, UINT message, WPARAM wParam,
-        LPARAM lParam, ULONG_PTR xParam);
-LRESULT fnHkINLPCWPRETSTRUCTA(PWND pwnd, UINT message, WPARAM wParam,
-        LPARAM lParam, ULONG_PTR xParam);
+LRESULT fnHkINLPCWPSTRUCTW(PWND pwnd, UINT message, WPARAM wParam, LPARAM lParam, ULONG_PTR xParam);
+LRESULT fnHkINLPCWPSTRUCTA(PWND pwnd, UINT message, WPARAM wParam, LPARAM lParam, ULONG_PTR xParam);
+LRESULT fnHkINLPCWPRETSTRUCTW(PWND pwnd, UINT message, WPARAM wParam, LPARAM lParam, ULONG_PTR xParam);
+LRESULT fnHkINLPCWPRETSTRUCTA(PWND pwnd, UINT message, WPARAM wParam, LPARAM lParam, ULONG_PTR xParam);
 LRESULT DispatchHookW(int dw, WPARAM wParam, LPARAM lParam, HOOKPROC pfn);
 LRESULT DispatchHookA(int dw, WPARAM wParam, LPARAM lParam, HOOKPROC pfn);
 
@@ -1351,24 +1338,25 @@ LRESULT APIENTRY ImeWndProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT APIENTRY ImeWndProcW(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 #ifdef MESSAGE_PUMP_HOOK
 DWORD APIENTRY RealGetQueueStatus(UINT flags);
-DWORD WINAPI RealMsgWaitForMultipleObjectsEx(DWORD nCount, CONST HANDLE *pHandles,
-        DWORD dwMilliseconds, DWORD dwWakeMask, DWORD dwFlags);
+DWORD WINAPI RealMsgWaitForMultipleObjectsEx(DWORD nCount, CONST HANDLE *pHandles, DWORD dwMilliseconds,
+                                             DWORD dwWakeMask, DWORD dwFlags);
 #endif
 LRESULT APIENTRY RealDefWindowProcA(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT APIENTRY RealDefWindowProcW(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT APIENTRY DispatchDefWindowProcA(PWND pwnd, UINT msg, WPARAM wParam, LPARAM lParam, ULONG_PTR pfn);
 LRESULT APIENTRY DispatchDefWindowProcW(PWND pwnd, UINT msg, WPARAM wParam, LPARAM lParam, ULONG_PTR pfn);
-BOOL    InitUserApiHook(HMODULE hmod, ULONG_PTR offPfnInitUserApiHook);
-BOOL    ClearUserApiHook(HMODULE hmod);
-BOOL    CALLBACK DefaultOWP(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT * pr, void ** pvCookie);
-void    ResetUserApiHook(USERAPIHOOK * puah);
+BOOL InitUserApiHook(HMODULE hmod, ULONG_PTR offPfnInitUserApiHook);
+BOOL ClearUserApiHook(HMODULE hmod);
+BOOL CALLBACK DefaultOWP(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *pr, void **pvCookie);
+void ResetUserApiHook(USERAPIHOOK *puah);
 LRESULT SendMessageWorker(PWND pwnd, UINT message, WPARAM wParam, LPARAM lParam, BOOL fAnsi);
-LRESULT SendMessageTimeoutWorker(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam,
-            UINT fuFlags, UINT uTimeout, PULONG_PTR lpdwResult, BOOL fAnsi);
+LRESULT SendMessageTimeoutWorker(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, UINT fuFlags, UINT uTimeout,
+                                 PULONG_PTR lpdwResult, BOOL fAnsi);
 
 void ClientEmptyClipboard(void);
 VOID GetActiveKeyboardName(LPWSTR lpszName);
-HANDLE OpenKeyboardLayoutFile(LPWSTR lpszKLName, PUINT puFlags, PUINT poffTable, PUINT pKbdInputLocale, OUT OPTIONAL PKBDTABLE_MULTI_INTERNAL pKbdTableMulti);
+HANDLE OpenKeyboardLayoutFile(LPWSTR lpszKLName, PUINT puFlags, PUINT poffTable, PUINT pKbdInputLocale,
+                              OUT OPTIONAL PKBDTABLE_MULTI_INTERNAL pKbdTableMulti);
 VOID LoadPreloadKeyboardLayouts(void);
 void SetWindowState(PWND pwnd, UINT flags);
 void ClearWindowState(PWND pwnd, UINT flags);
@@ -1380,133 +1368,57 @@ HKL LoadKeyboardLayoutWorker(HKL hkl, LPCWSTR lpszKLName, UINT uFlags, BOOL fFai
  * Worker routines called from both the window procs and
  * the callback thunks.
  */
-LRESULT DispatchClientMessage(PWND pwnd, UINT message, WPARAM wParam,
-        LPARAM lParam, ULONG_PTR pfn);
-LRESULT DefWindowProcWorker(PWND pwnd, UINT message, WPARAM wParam,
-        LPARAM lParam, DWORD fAnsi);
-LRESULT RealDefWindowProcWorker(PWND pwnd, UINT message, WPARAM wParam,
-        LPARAM lParam, DWORD fAnsi);
-LRESULT ButtonWndProcWorker(PWND pwnd, UINT msg, WPARAM wParam,
-        LPARAM lParam, DWORD fAnsi);
-LRESULT ListBoxWndProcWorker(PWND pwnd, UINT msg, WPARAM wParam,
-        LPARAM lParam, DWORD fAnsi);
-LRESULT StaticWndProcWorker(PWND pwnd, UINT msg, WPARAM wParam,
-        LPARAM lParam, DWORD fAnsi);
-LRESULT ComboBoxWndProcWorker(PWND pwnd, UINT msg, WPARAM wParam,
-        LPARAM lParam, DWORD fAnsi);
-LRESULT ComboListBoxWndProcWorker(PWND pwnd, UINT msg, WPARAM wParam,
-        LPARAM lParam, DWORD fAnsi);
-LRESULT MDIClientWndProcWorker(PWND pwnd, UINT msg, WPARAM wParam,
-        LPARAM lParam, DWORD fAnsi);
-LRESULT EditWndProcWorker(PWND pwnd, UINT msg, WPARAM wParam,
-        LPARAM lParam, DWORD fAnsi);
-LRESULT DefDlgProcWorker(PWND pwnd, UINT msg, WPARAM wParam,
-        LPARAM lParam, DWORD fAnsi);
-LRESULT ImeWndProcWorker(PWND pwnd, UINT msg, WPARAM wParam,
-        LPARAM lParam, DWORD fAnsi);
+LRESULT DispatchClientMessage(PWND pwnd, UINT message, WPARAM wParam, LPARAM lParam, ULONG_PTR pfn);
+LRESULT DefWindowProcWorker(PWND pwnd, UINT message, WPARAM wParam, LPARAM lParam, DWORD fAnsi);
+LRESULT RealDefWindowProcWorker(PWND pwnd, UINT message, WPARAM wParam, LPARAM lParam, DWORD fAnsi);
+LRESULT ButtonWndProcWorker(PWND pwnd, UINT msg, WPARAM wParam, LPARAM lParam, DWORD fAnsi);
+LRESULT ListBoxWndProcWorker(PWND pwnd, UINT msg, WPARAM wParam, LPARAM lParam, DWORD fAnsi);
+LRESULT StaticWndProcWorker(PWND pwnd, UINT msg, WPARAM wParam, LPARAM lParam, DWORD fAnsi);
+LRESULT ComboBoxWndProcWorker(PWND pwnd, UINT msg, WPARAM wParam, LPARAM lParam, DWORD fAnsi);
+LRESULT ComboListBoxWndProcWorker(PWND pwnd, UINT msg, WPARAM wParam, LPARAM lParam, DWORD fAnsi);
+LRESULT MDIClientWndProcWorker(PWND pwnd, UINT msg, WPARAM wParam, LPARAM lParam, DWORD fAnsi);
+LRESULT EditWndProcWorker(PWND pwnd, UINT msg, WPARAM wParam, LPARAM lParam, DWORD fAnsi);
+LRESULT DefDlgProcWorker(PWND pwnd, UINT msg, WPARAM wParam, LPARAM lParam, DWORD fAnsi);
+LRESULT ImeWndProcWorker(PWND pwnd, UINT msg, WPARAM wParam, LPARAM lParam, DWORD fAnsi);
 
 /*
  * Server Stubs - ntstubs.c
  */
 
-LONG _SetWindowLong(
-    HWND hWnd,
-    int nIndex,
-    LONG dwNewLong,
-    BOOL bAnsi);
+LONG _SetWindowLong(HWND hWnd, int nIndex, LONG dwNewLong, BOOL bAnsi);
 
 #ifdef _WIN64
-LONG_PTR _SetWindowLongPtr(
-    HWND hWnd,
-    int nIndex,
-    LONG_PTR dwNewLong,
-    BOOL bAnsi);
+LONG_PTR _SetWindowLongPtr(HWND hWnd, int nIndex, LONG_PTR dwNewLong, BOOL bAnsi);
 #else
-#define _SetWindowLongPtr   _SetWindowLong
+#define _SetWindowLongPtr _SetWindowLong
 #endif
 
-BOOL _PeekMessage(
-    LPMSG pmsg,
-    HWND hwnd,
-    UINT wMsgFilterMin,
-    UINT wMsgFilterMax,
-    UINT wRemoveMsg,
-    BOOL bAnsi);
+BOOL _PeekMessage(LPMSG pmsg, HWND hwnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg, BOOL bAnsi);
 
-BOOL _DefSetText(
-    HWND hwnd,
-    LPCWSTR pstr,
-    BOOL bAnsi);
+BOOL _DefSetText(HWND hwnd, LPCWSTR pstr, BOOL bAnsi);
 
-HCURSOR _GetCursorFrameInfo(
-    HCURSOR hcur,
-    LPWSTR id,
-    int iFrame,
-    LPDWORD pjifRate,
-    LPINT pccur);
+HCURSOR _GetCursorFrameInfo(HCURSOR hcur, LPWSTR id, int iFrame, LPDWORD pjifRate, LPINT pccur);
 
-HWND _CreateWindowEx(
-    DWORD dwExStyle,
-    LPCTSTR pClassName,
-    LPCTSTR pWindowName,
-    DWORD dwStyle,
-    int x,
-    int y,
-    int nWidth,
-    int nHeight,
-    HWND hwndParent,
-    HMENU hmenu,
-    HANDLE hModule,
-    LPVOID pParam,
-    DWORD dwFlags);
+HWND _CreateWindowEx(DWORD dwExStyle, LPCTSTR pClassName, LPCTSTR pWindowName, DWORD dwStyle, int x, int y, int nWidth,
+                     int nHeight, HWND hwndParent, HMENU hmenu, HANDLE hModule, LPVOID pParam, DWORD dwFlags);
 
-HWND VerNtUserCreateWindowEx(
-    IN DWORD dwExStyle,
-    IN PLARGE_STRING pstrClassName,
-    IN PLARGE_STRING pstrWindowName OPTIONAL,
-    IN DWORD dwStyle,
-    IN int x,
-    IN int y,
-    IN int nWidth,
-    IN int nHeight,
-    IN HWND hwndParent,
-    IN HMENU hmenu,
-    IN HANDLE hModule,
-    IN LPVOID pParam,
-    IN DWORD dwFlags);
+HWND VerNtUserCreateWindowEx(IN DWORD dwExStyle, IN PLARGE_STRING pstrClassName,
+                             IN PLARGE_STRING pstrWindowName OPTIONAL, IN DWORD dwStyle, IN int x, IN int y,
+                             IN int nWidth, IN int nHeight, IN HWND hwndParent, IN HMENU hmenu, IN HANDLE hModule,
+                             IN LPVOID pParam, IN DWORD dwFlags);
 
-HKL _LoadKeyboardLayoutEx(
-    HANDLE hFile,
-    UINT offTable,
-    PKBDTABLE_MULTI_INTERNAL pKbdTableMulti,
-    HKL hkl,
-    LPCWSTR pwszKL,
-    UINT KbdInputLocale,
-    UINT Flags);
+HKL _LoadKeyboardLayoutEx(HANDLE hFile, UINT offTable, PKBDTABLE_MULTI_INTERNAL pKbdTableMulti, HKL hkl, LPCWSTR pwszKL,
+                          UINT KbdInputLocale, UINT Flags);
 
-BOOL _SetCursorIconData(
-    HCURSOR hCursor,
-    PCURSORDATA pcur);
+BOOL _SetCursorIconData(HCURSOR hCursor, PCURSORDATA pcur);
 
-HCURSOR FindExistingCursorIcon(
-    LPWSTR      pszModName,
-    LPCWSTR     pszResName,
-    PCURSORFIND pcfSearch);
+HCURSOR FindExistingCursorIcon(LPWSTR pszModName, LPCWSTR pszResName, PCURSORFIND pcfSearch);
 
-HANDLE CreateLocalMemHandle(
-    HANDLE hMem);
+HANDLE CreateLocalMemHandle(HANDLE hMem);
 
-HANDLE ConvertMemHandle(
-    HANDLE hMem,
-    UINT cbNULL);
+HANDLE ConvertMemHandle(HANDLE hMem, UINT cbNULL);
 
-HHOOK _SetWindowsHookEx(
-    HANDLE hmod,
-    LPTSTR pszLib,
-    DWORD idThread,
-    int nFilterType,
-    PROC pfnFilterProc,
-    DWORD dwFlags);
+HHOOK _SetWindowsHookEx(HANDLE hmod, LPTSTR pszLib, DWORD idThread, int nFilterType, PROC pfnFilterProc, DWORD dwFlags);
 
 #if 0
 DWORD WINAPI ImmGetReconvertTotalSize(
@@ -1524,276 +1436,151 @@ DWORD WINAPI ImmReconversionWorker(
 /*
  * classc.c
  */
-ULONG_PTR _GetClassData(
-    PCLS pcls,
-    PWND pwnd,
-    int index,
-    BOOL bAnsi);
+ULONG_PTR _GetClassData(PCLS pcls, PWND pwnd, int index, BOOL bAnsi);
 
-DWORD _GetClassLong(
-    PWND pwnd,
-    int index,
-    BOOL bAnsi);
+DWORD _GetClassLong(PWND pwnd, int index, BOOL bAnsi);
 
 #ifdef _WIN64
-ULONG_PTR _GetClassLongPtr(
-    PWND pwnd,
-    int index,
-    BOOL bAnsi);
+ULONG_PTR _GetClassLongPtr(PWND pwnd, int index, BOOL bAnsi);
 #else
-#define _GetClassLongPtr    _GetClassLong
+#define _GetClassLongPtr _GetClassLong
 #endif
 
 /*
  * mngrayc.c
  */
-BOOL BitBltSysBmp(
-    HDC hdc,
-    int x,
-    int y,
-    UINT i);
+BOOL BitBltSysBmp(HDC hdc, int x, int y, UINT i);
 
 
 /*
  * clenum.c
  */
-DWORD BuildHwndList(
-    HDESK hdesk,
-    HWND hwndNext,
-    BOOL fEnumChildren,
-    DWORD idThread,
-    HWND **phwndFirst);
+DWORD BuildHwndList(HDESK hdesk, HWND hwndNext, BOOL fEnumChildren, DWORD idThread, HWND **phwndFirst);
 
 /*
  * cltxt.h
  */
-ATOM RegisterClassExWOWA(
-    PWNDCLASSEXA lpWndClass,
-    LPDWORD pdwWOWstuff,
-    WORD fnid,
-    DWORD dwFlags);
+ATOM RegisterClassExWOWA(PWNDCLASSEXA lpWndClass, LPDWORD pdwWOWstuff, WORD fnid, DWORD dwFlags);
 
-ATOM RegisterClassExWOWW(
-    PWNDCLASSEXW lpWndClass,
-    LPDWORD pdwWOWstuff,
-    WORD fnid,
-    DWORD dwFlags);
+ATOM RegisterClassExWOWW(PWNDCLASSEXW lpWndClass, LPDWORD pdwWOWstuff, WORD fnid, DWORD dwFlags);
 
-void CopyLogFontAtoW(
-    PLOGFONTW pdest,
-    PLOGFONTA psrc);
+void CopyLogFontAtoW(PLOGFONTW pdest, PLOGFONTA psrc);
 
-void CopyLogFontWtoA(
-    PLOGFONTA pdest,
-    PLOGFONTW psrc);
+void CopyLogFontWtoA(PLOGFONTA pdest, PLOGFONTW psrc);
 
 /*
  * dlgmgrc.c
  */
-PWND _NextControl(
-    PWND pwndDlg,
-    PWND pwnd,
-    UINT uFlags);
+PWND _NextControl(PWND pwndDlg, PWND pwnd, UINT uFlags);
 
-PWND _PrevControl(
-    PWND pwndDlg,
-    PWND pwnd,
-    UINT uFlags);
+PWND _PrevControl(PWND pwndDlg, PWND pwnd, UINT uFlags);
 
-PWND _GetNextDlgGroupItem(
-    PWND pwndDlg,
-    PWND pwnd,
-    BOOL fPrev);
+PWND _GetNextDlgGroupItem(PWND pwndDlg, PWND pwnd, BOOL fPrev);
 
-PWND _GetNextDlgTabItem(
-    PWND pwndDlg,
-    PWND pwnd,
-    BOOL fPrev);
+PWND _GetNextDlgTabItem(PWND pwndDlg, PWND pwnd, BOOL fPrev);
 
-PWND _GetChildControl(
-    PWND pwndDlg,
-    PWND pwndLevel);
+PWND _GetChildControl(PWND pwndDlg, PWND pwndLevel);
 
 /*
  * winmgrc.c
  */
-BOOL FChildVisible(
-    HWND hwnd);
+BOOL FChildVisible(HWND hwnd);
 
 /*
  * draw.c
  */
-BOOL PaintRect(
-    HWND hwndBrush,
-    HWND hwndPaint,
-    HDC hdc,
-    HBRUSH hbr,
-    LPRECT lprc);
+BOOL PaintRect(HWND hwndBrush, HWND hwndPaint, HDC hdc, HBRUSH hbr, LPRECT lprc);
 
-#define NtUserReleaseDC(hwnd,hdc)  NtUserCallOneParam((ULONG_PTR)(hdc), SFI__RELEASEDC)
-#define NtUserArrangeIconicWindows(hwnd)  (UINT)NtUserCallHwndLock((hwnd), SFI_XXXARRANGEICONICWINDOWS)
-#define NtUserBeginDeferWindowPos(nNumWindows) (HANDLE)NtUserCallOneParam((nNumWindows),SFI__BEGINDEFERWINDOWPOS)
-#define NtUserCreateMenu()   (HMENU)NtUserCallNoParam(SFI__CREATEMENU)
-#define NtUserDestroyCaret() (BOOL)NtUserCallNoParam(SFI_ZZZDESTROYCARET)
-#define NtUserEnableWindow(hwnd, bEnable) (BOOL)NtUserCallHwndParamLock((hwnd), (bEnable),SFI_XXXENABLEWINDOW)
-#define NtUserGetMessagePos() (DWORD)NtUserCallNoParam(SFI__GETMESSAGEPOS)
-#define NtUserKillSystemTimer(hwnd,nIDEvent)  (BOOL)NtUserCallHwndParam((hwnd), (nIDEvent), SFI__KILLSYSTEMTIMER)
-#define NtUserMessageBeep(wType)  (BOOL)NtUserCallOneParam((wType), SFI_XXXMESSAGEBEEP)
-#define NtUserSetWindowContextHelpId(hwnd,id) (BOOL)NtUserCallHwndParam((hwnd), (id), SFI__SETWINDOWCONTEXTHELPID)
-#define NtUserGetWindowContextHelpId(hwnd)   (BOOL)NtUserCallHwnd((hwnd), SFI__GETWINDOWCONTEXTHELPID)
-#define NtUserRedrawFrame(hwnd)   NtUserCallHwndLock((hwnd), SFI_XXXREDRAWFRAME)
-#define NtUserRedrawFrameAndHook(hwnd)  NtUserCallHwndLock((hwnd), SFI_XXXREDRAWFRAMEANDHOOK)
-#define NtUserRedrawTitle(hwnd, wFlags)  NtUserCallHwndParamLock((hwnd), (wFlags), SFI_XXXREDRAWTITLE)
-#define NtUserReleaseCapture()  (BOOL)NtUserCallNoParam(SFI_XXXRELEASECAPTURE)
-#define NtUserSetCaretPos(X,Y)  (BOOL)NtUserCallTwoParam((DWORD)(X), (DWORD)(Y), SFI_ZZZSETCARETPOS)
-#define NtUserSetCursorPos(X, Y)  (BOOL)NtUserCallTwoParam((X), (Y), SFI_ZZZSETCURSORPOS)
-#define NtUserSetForegroundWindow(hwnd)  (BOOL)NtUserCallHwndLock((hwnd), SFI_XXXSTUBSETFOREGROUNDWINDOW)
-#define NtUserSetSysMenu(hwnd)  NtUserCallHwndLock((hwnd), SFI_XXXSETSYSMENU)
-#define NtUserSetVisible(hwnd,fSet)  NtUserCallHwndParam((hwnd), (fSet), SFI_SETVISIBLE)
-#define NtUserShowCursor(bShow)   (int)NtUserCallOneParam((bShow), SFI_ZZZSHOWCURSOR)
+#define NtUserReleaseDC(hwnd, hdc) NtUserCallOneParam((ULONG_PTR)(hdc), SFI__RELEASEDC)
+#define NtUserArrangeIconicWindows(hwnd) (UINT) NtUserCallHwndLock((hwnd), SFI_XXXARRANGEICONICWINDOWS)
+#define NtUserBeginDeferWindowPos(nNumWindows) (HANDLE) NtUserCallOneParam((nNumWindows), SFI__BEGINDEFERWINDOWPOS)
+#define NtUserCreateMenu() (HMENU) NtUserCallNoParam(SFI__CREATEMENU)
+#define NtUserDestroyCaret() (BOOL) NtUserCallNoParam(SFI_ZZZDESTROYCARET)
+#define NtUserEnableWindow(hwnd, bEnable) (BOOL) NtUserCallHwndParamLock((hwnd), (bEnable), SFI_XXXENABLEWINDOW)
+#define NtUserGetMessagePos() (DWORD) NtUserCallNoParam(SFI__GETMESSAGEPOS)
+#define NtUserKillSystemTimer(hwnd, nIDEvent) (BOOL) NtUserCallHwndParam((hwnd), (nIDEvent), SFI__KILLSYSTEMTIMER)
+#define NtUserMessageBeep(wType) (BOOL) NtUserCallOneParam((wType), SFI_XXXMESSAGEBEEP)
+#define NtUserSetWindowContextHelpId(hwnd, id) (BOOL) NtUserCallHwndParam((hwnd), (id), SFI__SETWINDOWCONTEXTHELPID)
+#define NtUserGetWindowContextHelpId(hwnd) (BOOL) NtUserCallHwnd((hwnd), SFI__GETWINDOWCONTEXTHELPID)
+#define NtUserRedrawFrame(hwnd) NtUserCallHwndLock((hwnd), SFI_XXXREDRAWFRAME)
+#define NtUserRedrawFrameAndHook(hwnd) NtUserCallHwndLock((hwnd), SFI_XXXREDRAWFRAMEANDHOOK)
+#define NtUserRedrawTitle(hwnd, wFlags) NtUserCallHwndParamLock((hwnd), (wFlags), SFI_XXXREDRAWTITLE)
+#define NtUserReleaseCapture() (BOOL) NtUserCallNoParam(SFI_XXXRELEASECAPTURE)
+#define NtUserSetCaretPos(X, Y) (BOOL) NtUserCallTwoParam((DWORD)(X), (DWORD)(Y), SFI_ZZZSETCARETPOS)
+#define NtUserSetCursorPos(X, Y) (BOOL) NtUserCallTwoParam((X), (Y), SFI_ZZZSETCURSORPOS)
+#define NtUserSetForegroundWindow(hwnd) (BOOL) NtUserCallHwndLock((hwnd), SFI_XXXSTUBSETFOREGROUNDWINDOW)
+#define NtUserSetSysMenu(hwnd) NtUserCallHwndLock((hwnd), SFI_XXXSETSYSMENU)
+#define NtUserSetVisible(hwnd, fSet) NtUserCallHwndParam((hwnd), (fSet), SFI_SETVISIBLE)
+#define NtUserShowCursor(bShow) (int)NtUserCallOneParam((bShow), SFI_ZZZSHOWCURSOR)
 #define NtUserUpdateClientRect(hwnd) NtUserCallHwndLock((hwnd), SFI_XXXUPDATECLIENTRECT)
 
-#define CreateCaret         NtUserCreateCaret
-#define FillWindow          NtUserFillWindow
-#define GetControlBrush     NtUserGetControlBrush
-#define GetControlColor     NtUserGetControlColor
-#define GetDCEx             NtUserGetDCEx
-#define GetWindowPlacement  NtUserGetWindowPlacement
-#define RedrawWindow        NtUserRedrawWindow
+#define CreateCaret NtUserCreateCaret
+#define FillWindow NtUserFillWindow
+#define GetControlBrush NtUserGetControlBrush
+#define GetControlColor NtUserGetControlColor
+#define GetDCEx NtUserGetDCEx
+#define GetWindowPlacement NtUserGetWindowPlacement
+#define RedrawWindow NtUserRedrawWindow
 
 
 /*
  * dmmnem.c
  */
-int FindMnemChar(
-    LPWSTR lpstr,
-    WCHAR ch,
-    BOOL fFirst,
-    BOOL fPrefix);
+int FindMnemChar(LPWSTR lpstr, WCHAR ch, BOOL fFirst, BOOL fPrefix);
 
 /*
  * clres.c
  */
-BOOL WowGetModuleFileName(
-    HMODULE hModule,
-    LPWSTR pwsz,
-    DWORD  cchMax);
+BOOL WowGetModuleFileName(HMODULE hModule, LPWSTR pwsz, DWORD cchMax);
 
-HICON WowServerLoadCreateCursorIcon(
-    HANDLE hmod,
-    LPTSTR lpModName,
-    DWORD dwExpWinVer,
-    LPCTSTR lpName,
-    DWORD cb,
-    PVOID pcr,
-    LPTSTR lpType,
-    BOOL fClient);
+HICON WowServerLoadCreateCursorIcon(HANDLE hmod, LPTSTR lpModName, DWORD dwExpWinVer, LPCTSTR lpName, DWORD cb,
+                                    PVOID pcr, LPTSTR lpType, BOOL fClient);
 
-HANDLE InternalCopyImage(
-    HANDLE hImage,
-    UINT IMAGE_flag,
-    int cxNew,
-    int cyNew,
-    UINT LR_flags);
+HANDLE InternalCopyImage(HANDLE hImage, UINT IMAGE_flag, int cxNew, int cyNew, UINT LR_flags);
 
-HMENU CreateMenuFromResource(
-    LPBYTE);
+HMENU CreateMenuFromResource(LPBYTE);
 
 /*
  * acons.c
  */
-#define BFT_ICON    0x4349  //  'IC'
-#define BFT_BITMAP  0x4D42  //  'BM'
-#define BFT_CURSOR  0x5450  //  'PT'
+#define BFT_ICON 0x4349   //  'IC'
+#define BFT_BITMAP 0x4D42 //  'BM'
+#define BFT_CURSOR 0x5450 //  'PT'
 
-typedef struct _FILEINFO {
-    LPBYTE  pFileMap;
-    LPBYTE  pFilePtr;
-    LPBYTE  pFileEnd;
+typedef struct _FILEINFO
+{
+    LPBYTE pFileMap;
+    LPBYTE pFilePtr;
+    LPBYTE pFileEnd;
     LPCWSTR pszName;
 } FILEINFO, *PFILEINFO;
 
-HANDLE LoadCursorIconFromFileMap(
-    IN PFILEINFO   pfi,
-    IN OUT LPWSTR *prt,
-    IN DWORD       cxDesired,
-    IN DWORD       cyDesired,
-    IN DWORD       LR_flags,
-    OUT LPBOOL     pfAni);
+HANDLE LoadCursorIconFromFileMap(IN PFILEINFO pfi, IN OUT LPWSTR *prt, IN DWORD cxDesired, IN DWORD cyDesired,
+                                 IN DWORD LR_flags, OUT LPBOOL pfAni);
 
-DWORD GetIcoCurWidth(
-    DWORD cxOrg,
-    BOOL  fIcon,
-    UINT  LR_flags,
-    DWORD cxDesired);
+DWORD GetIcoCurWidth(DWORD cxOrg, BOOL fIcon, UINT LR_flags, DWORD cxDesired);
 
-DWORD GetIcoCurHeight(
-    DWORD cyOrg,
-    BOOL  fIcon,
-    UINT  LR_flags,
-    DWORD cyDesired);
+DWORD GetIcoCurHeight(DWORD cyOrg, BOOL fIcon, UINT LR_flags, DWORD cyDesired);
 
-DWORD GetIcoCurBpp(
-    UINT LR_flags);
+DWORD GetIcoCurBpp(UINT LR_flags);
 
-HICON LoadIcoCur(
-    HINSTANCE hmod,
-    LPCWSTR   lpName,
-    LPWSTR    type,
-    DWORD     cxDesired,
-    DWORD     cyDesired,
-    UINT      LR_flags);
+HICON LoadIcoCur(HINSTANCE hmod, LPCWSTR lpName, LPWSTR type, DWORD cxDesired, DWORD cyDesired, UINT LR_flags);
 
-HANDLE ObjectFromDIBResource(
-    HINSTANCE hmod,
-    LPCWSTR   lpName,
-    LPWSTR    type,
-    DWORD     cxDesired,
-    DWORD     cyDesired,
-    UINT      LR_flags);
+HANDLE ObjectFromDIBResource(HINSTANCE hmod, LPCWSTR lpName, LPWSTR type, DWORD cxDesired, DWORD cyDesired,
+                             UINT LR_flags);
 
-HANDLE RtlLoadObjectFromDIBFile(
-    LPCWSTR lpszName,
-    LPWSTR  type,
-    DWORD   cxDesired,
-    DWORD   cyDesired,
-    UINT    LR_flags);
+HANDLE RtlLoadObjectFromDIBFile(LPCWSTR lpszName, LPWSTR type, DWORD cxDesired, DWORD cyDesired, UINT LR_flags);
 
-HCURSOR LoadCursorOrIconFromFile(
-    LPCWSTR pszFilename,
-    BOOL    fIcon);
+HCURSOR LoadCursorOrIconFromFile(LPCWSTR pszFilename, BOOL fIcon);
 
-HBITMAP ConvertDIBBitmap(
-    UPBITMAPINFOHEADER lpbih,
-    DWORD              cxDesired,
-    DWORD              cyDesired,
-    UINT               flags,
-    LPBITMAPINFOHEADER *lplpbih,
-    LPSTR              *lplpBits);
+HBITMAP ConvertDIBBitmap(UPBITMAPINFOHEADER lpbih, DWORD cxDesired, DWORD cyDesired, UINT flags,
+                         LPBITMAPINFOHEADER *lplpbih, LPSTR *lplpBits);
 
-HICON ConvertDIBIcon(
-    LPBITMAPINFOHEADER lpbih,
-    HINSTANCE          hmod,
-    LPCWSTR            lpName,
-    BOOL               fIcon,
-    DWORD              cxNew,
-    DWORD              cyNew,
-    UINT               LR_flags);
+HICON ConvertDIBIcon(LPBITMAPINFOHEADER lpbih, HINSTANCE hmod, LPCWSTR lpName, BOOL fIcon, DWORD cxNew, DWORD cyNew,
+                     UINT LR_flags);
 
-int SmartStretchDIBits(
-    HDC          hdc,
-    int          xD,
-    int          yD,
-    int          dxD,
-    int          dyD,
-    int          xS,
-    int          yS,
-    int          dxS,
-    int          dyS,
-    LPVOID       lpBits,
-    LPBITMAPINFO lpbi,
-    UINT         wUsage,
-    DWORD        rop);
+int SmartStretchDIBits(HDC hdc, int xD, int yD, int dxD, int dyD, int xS, int yS, int dxS, int dyS, LPVOID lpBits,
+                       LPBITMAPINFO lpbi, UINT wUsage, DWORD rop);
 
 
 /*
@@ -1803,9 +1590,9 @@ int SmartStretchDIBits(
  */
 
 #define OFFSET_SCALE_DPI 000
-#define OFFSET_96_DPI    100
-#define OFFSET_120_DPI   200
-#define OFFSET_160_DPI   300
+#define OFFSET_96_DPI 100
+#define OFFSET_120_DPI 200
+#define OFFSET_160_DPI 300
 
 /*
  * defines the highest resource number so we can do math on the resource
@@ -1818,27 +1605,27 @@ int SmartStretchDIBits(
 /*
  * Parameter for xxxAlterHilite()
  */
-#define HILITEONLY      0x0001
-#define SELONLY         0x0002
-#define HILITEANDSEL    (HILITEONLY + SELONLY)
+#define HILITEONLY 0x0001
+#define SELONLY 0x0002
+#define HILITEANDSEL (HILITEONLY + SELONLY)
 
-#define HILITE     1
+#define HILITE 1
 
 // LATER IanJa: these vary by country!  For US they are VK_OEM_2 VK_OEM_5.
 //       Change lboxctl2.c MapVirtualKey to character - and fix the spelling?
-#define VERKEY_SLASH     0xBF   /* Vertual key for '/' character */
-#define VERKEY_BACKSLASH 0xDC   /* Vertual key for '\' character */
+#define VERKEY_SLASH 0xBF     /* Vertual key for '/' character */
+#define VERKEY_BACKSLASH 0xDC /* Vertual key for '\' character */
 
 /*
  * Procedures for combo boxes.
  */
-LONG  xxxCBCommandHandler(PCBOX, DWORD, HWND);
+LONG xxxCBCommandHandler(PCBOX, DWORD, HWND);
 LRESULT xxxCBMessageItemHandler(PCBOX, UINT, LPVOID);
-int   xxxCBDir(PCBOX, UINT, LPWSTR);
-VOID  xxxCBPaint(PCBOX, HDC);
-VOID  xxxCBCompleteEditWindow(PCBOX pcbox);
-BOOL  xxxCBHideListBoxWindow(PCBOX pcbox, BOOL fNotifyParent, BOOL fSelEndOK);
-VOID  xxxCBShowListBoxWindow(PCBOX pcbox, BOOL fTrack);
+int xxxCBDir(PCBOX, UINT, LPWSTR);
+VOID xxxCBPaint(PCBOX, HDC);
+VOID xxxCBCompleteEditWindow(PCBOX pcbox);
+BOOL xxxCBHideListBoxWindow(PCBOX pcbox, BOOL fNotifyParent, BOOL fSelEndOK);
+VOID xxxCBShowListBoxWindow(PCBOX pcbox, BOOL fTrack);
 void xxxCBPosition(PCBOX pcbox);
 
 /*
@@ -1846,26 +1633,26 @@ void xxxCBPosition(PCBOX pcbox);
  */
 
 /* Initialization code */
-long  CBNcCreateHandler(PCBOX, PWND);
+long CBNcCreateHandler(PCBOX, PWND);
 LRESULT xxxCBCreateHandler(PCBOX, PWND);
 void xxxCBCalcControlRects(PCBOX pcbox, LPRECT lprcList);
 
 /* Destruction code */
-VOID  xxxCBNcDestroyHandler(PWND, PCBOX);
+VOID xxxCBNcDestroyHandler(PWND, PCBOX);
 
 /* Generic often used routines */
-VOID  xxxCBNotifyParent(PCBOX, SHORT);
-VOID  xxxCBUpdateListBoxWindow(PCBOX, BOOL);
+VOID xxxCBNotifyParent(PCBOX, SHORT);
+VOID xxxCBUpdateListBoxWindow(PCBOX, BOOL);
 
 
 /* Helpers' */
-VOID  xxxCBInternalUpdateEditWindow(PCBOX, HDC);
-VOID  xxxCBGetFocusHelper(PCBOX);
-VOID  xxxCBKillFocusHelper(PCBOX);
-VOID  xxxCBInvertStaticWindow(PCBOX,BOOL,HDC);
-VOID  xxxCBSetFontHandler(PCBOX, HANDLE, BOOL);
-VOID  xxxCBSizeHandler(PCBOX);
-LONG  xxxCBSetEditItemHeight(PCBOX pcbox, int editHeight);
+VOID xxxCBInternalUpdateEditWindow(PCBOX, HDC);
+VOID xxxCBGetFocusHelper(PCBOX);
+VOID xxxCBKillFocusHelper(PCBOX);
+VOID xxxCBInvertStaticWindow(PCBOX, BOOL, HDC);
+VOID xxxCBSetFontHandler(PCBOX, HANDLE, BOOL);
+VOID xxxCBSizeHandler(PCBOX);
+LONG xxxCBSetEditItemHeight(PCBOX pcbox, int editHeight);
 
 
 /*
@@ -1874,115 +1661,115 @@ LONG  xxxCBSetEditItemHeight(PCBOX pcbox, int editHeight);
 
 INT xxxFindString(PLBIV, LPWSTR, INT, INT, BOOL);
 
-VOID  InitHStrings(PLBIV);
+VOID InitHStrings(PLBIV);
 
-int   xxxLBInsertItem(PLBIV, LPWSTR, int, UINT);
+int xxxLBInsertItem(PLBIV, LPWSTR, int, UINT);
 
 /*
  * Selection
  */
-BOOL  ISelFromPt(PLBIV, POINT, LPDWORD);
-BOOL  IsSelected(PLBIV, INT, UINT);
+BOOL ISelFromPt(PLBIV, POINT, LPDWORD);
+BOOL IsSelected(PLBIV, INT, UINT);
 VOID LBSetCItemFullMax(PLBIV plb);
 
-VOID  xxxLBSelRange(PLBIV, INT, INT, BOOL);
+VOID xxxLBSelRange(PLBIV, INT, INT, BOOL);
 
 INT xxxLBSetCurSel(PLBIV, INT);
 
 INT LBoxGetSelItems(PLBIV, BOOL, INT, LPINT);
 
-LONG  xxxLBSetSel(PLBIV, BOOL, INT);
+LONG xxxLBSetSel(PLBIV, BOOL, INT);
 
-VOID  xxxSetISelBase(PLBIV, INT);
+VOID xxxSetISelBase(PLBIV, INT);
 
-VOID  SetSelected(PLBIV, INT, BOOL, UINT);
+VOID SetSelected(PLBIV, INT, BOOL, UINT);
 
 
 /*
  * Caret
  */
 void xxxLBSetCaret(PLBIV plb, BOOL fSetCaret);
-VOID  xxxCaretDestroy(PLBIV);
+VOID xxxCaretDestroy(PLBIV);
 
 /*
  * LBox
  */
-LONG  xxxLBCreate(PLBIV, PWND, LPCREATESTRUCT);
-VOID  xxxDestroyLBox(PLBIV, PWND);
-VOID  xxxLBoxDeleteItem(PLBIV, INT);
+LONG xxxLBCreate(PLBIV, PWND, LPCREATESTRUCT);
+VOID xxxDestroyLBox(PLBIV, PWND);
+VOID xxxLBoxDeleteItem(PLBIV, INT);
 
-VOID  xxxLBoxDoDeleteItems(PLBIV);
-VOID  xxxLBoxDrawItem(PLBIV, INT, UINT, UINT, LPRECT);
+VOID xxxLBoxDoDeleteItems(PLBIV);
+VOID xxxLBoxDrawItem(PLBIV, INT, UINT, UINT, LPRECT);
 
 
 /*
  * Scroll
  */
-INT   LBCalcVarITopScrollAmt(PLBIV, INT, INT);
+INT LBCalcVarITopScrollAmt(PLBIV, INT, INT);
 
-VOID  xxxLBoxCtlHScroll(PLBIV, INT, INT);
+VOID xxxLBoxCtlHScroll(PLBIV, INT, INT);
 
-VOID  xxxLBoxCtlHScrollMultiColumn(PLBIV, INT, INT);
+VOID xxxLBoxCtlHScrollMultiColumn(PLBIV, INT, INT);
 
-VOID  xxxLBoxCtlScroll(PLBIV, INT, INT);
+VOID xxxLBoxCtlScroll(PLBIV, INT, INT);
 
-VOID  xxxLBShowHideScrollBars(PLBIV);
+VOID xxxLBShowHideScrollBars(PLBIV);
 
 /*
  * LBoxCtl
  */
 INT xxxLBoxCtlDelete(PLBIV, INT);
 
-VOID  xxxLBoxCtlCharInput(PLBIV, UINT, BOOL);
-VOID  xxxLBoxCtlKeyInput(PLBIV, UINT, UINT);
-VOID  xxxLBPaint(PLBIV, HDC, LPRECT);
+VOID xxxLBoxCtlCharInput(PLBIV, UINT, BOOL);
+VOID xxxLBoxCtlKeyInput(PLBIV, UINT, UINT);
+VOID xxxLBPaint(PLBIV, HDC, LPRECT);
 
 BOOL xxxLBInvalidateRect(PLBIV plb, LPRECT lprc, BOOL fErase);
 /*
  * Miscellaneous
  */
-VOID  xxxAlterHilite(PLBIV, INT, INT, BOOL, INT, BOOL);
+VOID xxxAlterHilite(PLBIV, INT, INT, BOOL, INT, BOOL);
 
 INT CItemInWindow(PLBIV, BOOL);
 
-VOID  xxxCheckRedraw(PLBIV, BOOL, INT);
+VOID xxxCheckRedraw(PLBIV, BOOL, INT);
 
 LPWSTR GetLpszItem(PLBIV, INT);
 
-VOID  xxxInsureVisible(PLBIV, INT, BOOL);
+VOID xxxInsureVisible(PLBIV, INT, BOOL);
 
-VOID  xxxInvertLBItem(PLBIV, INT, BOOL);
+VOID xxxInvertLBItem(PLBIV, INT, BOOL);
 
-VOID  xxxLBBlockHilite(PLBIV, INT, BOOL);
+VOID xxxLBBlockHilite(PLBIV, INT, BOOL);
 
-int   LBGetSetItemHeightHandler(PLBIV plb, UINT message, int item, UINT height);
-VOID  LBDropObjectHandler(PLBIV, PDROPSTRUCT);
+int LBGetSetItemHeightHandler(PLBIV plb, UINT message, int item, UINT height);
+VOID LBDropObjectHandler(PLBIV, PDROPSTRUCT);
 LONG_PTR LBGetItemData(PLBIV, INT);
 
 INT LBGetText(PLBIV, BOOL, BOOL, INT, LPWSTR);
 
-VOID  xxxLBSetFont(PLBIV, HANDLE, BOOL);
+VOID xxxLBSetFont(PLBIV, HANDLE, BOOL);
 int LBSetItemData(PLBIV, INT, LONG_PTR);
 
-BOOL  LBSetTabStops(PLBIV, INT, LPINT);
+BOOL LBSetTabStops(PLBIV, INT, LPINT);
 
-VOID  xxxLBSize(PLBIV, INT, INT);
+VOID xxxLBSize(PLBIV, INT, INT);
 INT LastFullVisible(PLBIV);
 
 INT xxxLbDir(PLBIV, UINT, LPWSTR);
 
 INT xxxLbInsertFile(PLBIV, LPWSTR);
 
-VOID  xxxNewITop(PLBIV, INT);
-VOID  xxxNewITopEx(PLBIV, INT, DWORD);
+VOID xxxNewITop(PLBIV, INT);
+VOID xxxNewITopEx(PLBIV, INT, DWORD);
 
-VOID  xxxNotifyOwner(PLBIV, INT);
+VOID xxxNotifyOwner(PLBIV, INT);
 
-VOID  xxxResetWorld(PLBIV, INT, INT, BOOL);
+VOID xxxResetWorld(PLBIV, INT, INT, BOOL);
 
-VOID  xxxTrackMouse(PLBIV, UINT, POINT);
-BOOL  xxxDlgDirListHelper(PWND, LPWSTR, LPBYTE, int, int, UINT, BOOL);
-BOOL  DlgDirSelectHelper(LPWSTR pFileName, int cbFileName, HWND hwndListBox);
+VOID xxxTrackMouse(PLBIV, UINT, POINT);
+BOOL xxxDlgDirListHelper(PWND, LPWSTR, LPBYTE, int, int, UINT, BOOL);
+BOOL DlgDirSelectHelper(LPWSTR pFileName, int cbFileName, HWND hwndListBox);
 BOOL xxxLBResetContent(PLBIV plb);
 VOID xxxLBSetRedraw(PLBIV plb, BOOL fRedraw);
 int xxxSetLBScrollParms(PLBIV plb, int nCtl);
@@ -1999,21 +1786,21 @@ INT LBPage(PLBIV, INT, BOOL);
 /*
  * Multicolumn listbox
  */
-VOID  LBCalcItemRowsAndColumns(PLBIV);
+VOID LBCalcItemRowsAndColumns(PLBIV);
 
 /*
  * Both multicol and var height
  */
-BOOL  LBGetItemRect(PLBIV, INT, LPRECT);
+BOOL LBGetItemRect(PLBIV, INT, LPRECT);
 
-VOID  LBSetVariableHeightItemHeight(PLBIV, INT, INT);
+VOID LBSetVariableHeightItemHeight(PLBIV, INT, INT);
 
-INT   LBGetVariableHeightItemHeight(PLBIV, INT);
+INT LBGetVariableHeightItemHeight(PLBIV, INT);
 
 /*
  * No-data (lazy evaluation) listbox
  */
-INT  xxxLBSetCount(PLBIV, INT);
+INT xxxLBSetCount(PLBIV, INT);
 
 UINT LBCalcAllocNeeded(PLBIV, INT);
 
@@ -2028,33 +1815,29 @@ LONG xxxLBInitStorage(PLBIV plb, BOOL fAnsi, INT cItems, INT cb);
 *
 \***************************************************************************/
 
-HWND        InternalCreateDialog(HANDLE hmod,
-             LPDLGTEMPLATE lpDlgTemplate, DWORD cb,
-             HWND hwndOwner , DLGPROC pfnWndProc, LPARAM dwInitParam,
-             UINT fFlags);
+HWND InternalCreateDialog(HANDLE hmod, LPDLGTEMPLATE lpDlgTemplate, DWORD cb, HWND hwndOwner, DLGPROC pfnWndProc,
+                          LPARAM dwInitParam, UINT fFlags);
 
-INT_PTR     InternalDialogBox(HANDLE hmod,
-             LPDLGTEMPLATE lpDlgTemplate,
-             HWND hwndOwner , DLGPROC pfnWndProc, LPARAM dwInitParam,
-             UINT fFlags);
+INT_PTR InternalDialogBox(HANDLE hmod, LPDLGTEMPLATE lpDlgTemplate, HWND hwndOwner, DLGPROC pfnWndProc,
+                          LPARAM dwInitParam, UINT fFlags);
 
-PWND        _FindDlgItem(PWND pwndParent, DWORD id);
-PWND        _GetDlgItem(PWND, int);
-long        _GetDialogBaseUnits(VOID);
-PWND        GetParentDialog(PWND pwndDialog);
-VOID        xxxRemoveDefaultButton(PWND pwndDlg, PWND pwndStart);
-VOID        xxxCheckDefPushButton(PWND pwndDlg, HWND hwndOldFocus, HWND hwndNewFocus);
-PWND        xxxGotoNextMnem(PWND pwndDlg, PWND pwndStart, WCHAR ch);
-VOID        DlgSetFocus(HWND hwnd);
-void        RepositionRect(PMONITOR pMonitor, LPRECT lprc, DWORD dwStyle, DWORD dwExStyle);
-BOOL        ValidateDialogPwnd(PWND pwnd);
-PMONITOR    GetDialogMonitor(HWND hwndOwner, DWORD dwFlags);
+PWND _FindDlgItem(PWND pwndParent, DWORD id);
+PWND _GetDlgItem(PWND, int);
+long _GetDialogBaseUnits(VOID);
+PWND GetParentDialog(PWND pwndDialog);
+VOID xxxRemoveDefaultButton(PWND pwndDlg, PWND pwndStart);
+VOID xxxCheckDefPushButton(PWND pwndDlg, HWND hwndOldFocus, HWND hwndNewFocus);
+PWND xxxGotoNextMnem(PWND pwndDlg, PWND pwndStart, WCHAR ch);
+VOID DlgSetFocus(HWND hwnd);
+void RepositionRect(PMONITOR pMonitor, LPRECT lprc, DWORD dwStyle, DWORD dwExStyle);
+BOOL ValidateDialogPwnd(PWND pwnd);
+PMONITOR GetDialogMonitor(HWND hwndOwner, DWORD dwFlags);
 
-HANDLE      GetEditDS(VOID);
-VOID        ReleaseEditDS(HANDLE h);
-VOID        TellWOWThehDlg(HWND hDlg);
+HANDLE GetEditDS(VOID);
+VOID ReleaseEditDS(HANDLE h);
+VOID TellWOWThehDlg(HWND hDlg);
 
-UINT        GetACPCharSet();
+UINT GetACPCharSet();
 
 /***************************************************************************\
 *
@@ -2064,23 +1847,22 @@ UINT        GetACPCharSet();
 // cltxt.h
 BOOL GetMenuItemInfoInternalW(HMENU hMenu, UINT uID, BOOL fByPosition, LPMENUITEMINFOW lpmii);
 
-#define MENUAPI_INSERT  0
-#define MENUAPI_GET     1
-#define MENUAPI_SET     2
+#define MENUAPI_INSERT 0
+#define MENUAPI_GET 1
+#define MENUAPI_SET 2
 
 // clmenu.c
-BOOL InternalInsertMenuItem (HMENU hMenu, UINT uID, BOOL fByPosition, LPCMENUITEMINFO lpmii);
+BOOL InternalInsertMenuItem(HMENU hMenu, UINT uID, BOOL fByPosition, LPCMENUITEMINFO lpmii);
 BOOL ValidateMENUITEMINFO(LPMENUITEMINFOW lpmiiIn, LPMENUITEMINFOW lpmii, DWORD dwAPICode);
 BOOL ValidateMENUINFO(LPCMENUINFO lpmi, DWORD dwAPICode);
 
 
 // ntstubs.c
-BOOL ThunkedMenuItemInfo(HMENU hMenu, UINT  nPosition, BOOL fByPosition,
-                            BOOL fInsert, LPMENUITEMINFOW lpmii, BOOL fAnsi);
+BOOL ThunkedMenuItemInfo(HMENU hMenu, UINT nPosition, BOOL fByPosition, BOOL fInsert, LPMENUITEMINFOW lpmii,
+                         BOOL fAnsi);
 
 // menuc.c
-void SetMenuItemInfoStruct(HMENU hMenu, UINT wFlags, UINT_PTR wIDNew, LPWSTR pwszNew,
-                              LPMENUITEMINFOW pmii);
+void SetMenuItemInfoStruct(HMENU hMenu, UINT wFlags, UINT_PTR wIDNew, LPWSTR pwszNew, LPMENUITEMINFOW pmii);
 
 /***************************************************************************\
 *
@@ -2089,11 +1871,11 @@ void SetMenuItemInfoStruct(HMENU hMenu, UINT wFlags, UINT_PTR wIDNew, LPWSTR pws
 \***************************************************************************/
 
 
-#define WINDOWLIST_PROP_NAME    TEXT("SysBW")
-#define MSGBOX_CALLBACK         TEXT("SysMB")
+#define WINDOWLIST_PROP_NAME TEXT("SysBW")
+#define MSGBOX_CALLBACK TEXT("SysMB")
 
 /* Unicode Right-To-Left mark unicode code point. Look in msgbox.c for more info */
-#define UNICODE_RLM             0x200f
+#define UNICODE_RLM 0x200f
 
 /***************************************************************************\
 *
@@ -2102,65 +1884,70 @@ void SetMenuItemInfoStruct(HMENU hMenu, UINT wFlags, UINT_PTR wIDNew, LPWSTR pws
 \***************************************************************************/
 
 /* maximum number of MDI children windows listed in "Window" menu */
-#define MAXITEMS         10
+#define MAXITEMS 10
 
 /*
  * MDI typedefs
  */
-typedef struct tagSHORTCREATE {
-    int         cy;
-    int         cx;
-    int         y;
-    int         x;
-    LONG        style;
-    HMENU       hMenu;
+typedef struct tagSHORTCREATE
+{
+    int cy;
+    int cx;
+    int y;
+    int x;
+    LONG style;
+    HMENU hMenu;
 } SHORTCREATE, *PSHORTCREATE;
 
-typedef struct tagMDIACTIVATEPOS {
-    int     cx;
-    int     cy;
-    int     cxMin;
-    int     cyMin;
+typedef struct tagMDIACTIVATEPOS
+{
+    int cx;
+    int cy;
+    int cxMin;
+    int cyMin;
 } MDIACTIVATEPOS, *PMDIACTIVATEPOS;
 
-BOOL CreateMDIChild(PSHORTCREATE pcs, LPMDICREATESTRUCT pmcs, DWORD dwExpWinVerAndFlags, HMENU *phSysMenu, PWND pwndParent);
+BOOL CreateMDIChild(PSHORTCREATE pcs, LPMDICREATESTRUCT pmcs, DWORD dwExpWinVerAndFlags, HMENU *phSysMenu,
+                    PWND pwndParent);
 BOOL MDICompleteChildCreation(HWND hwndChild, HMENU hSysMenu, BOOL fVisible, BOOL fDisabled);
 
 /*
  * MDI defines
  */
-#define WS_MDISTYLE     (WS_CHILD | WS_CLIPSIBLINGS | WS_SYSMENU|WS_CAPTION|WS_THICKFRAME|WS_MAXIMIZEBOX|WS_MINIMIZEBOX)
-#define WS_MDICOMMANDS  (WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX)
-#define WS_MDIALLOWED   (WS_MINIMIZE | WS_MAXIMIZE | WS_CLIPCHILDREN | WS_DISABLED | WS_HSCROLL | WS_VSCROLL | 0x0000FFFFL)
+#define WS_MDISTYLE \
+    (WS_CHILD | WS_CLIPSIBLINGS | WS_SYSMENU | WS_CAPTION | WS_THICKFRAME | WS_MAXIMIZEBOX | WS_MINIMIZEBOX)
+#define WS_MDICOMMANDS (WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX)
+#define WS_MDIALLOWED \
+    (WS_MINIMIZE | WS_MAXIMIZE | WS_CLIPCHILDREN | WS_DISABLED | WS_HSCROLL | WS_VSCROLL | 0x0000FFFFL)
 
-#define HAS_SBVERT      0x0100
-#define HAS_SBHORZ      0x0200
-#define OTHERMAXING     0x0400
-#define CALCSCROLL      0x0800
+#define HAS_SBVERT 0x0100
+#define HAS_SBHORZ 0x0200
+#define OTHERMAXING 0x0400
+#define CALCSCROLL 0x0800
 
-#define SCROLLSUPPRESS  0x0003
-#define SCROLLCOUNT     0x00FF
+#define SCROLLSUPPRESS 0x0003
+#define SCROLLCOUNT 0x00FF
 
-#define CKIDS(pmdi)     (pmdi->cKids)
-#define MAXED(pmdi)     (pmdi->hwndMaxedChild)
-#define ACTIVE(pmdi)    (pmdi->hwndActiveChild)
-#define WINDOW(pmdi)    (pmdi->hmenuWindow)
-#define FIRST(pmdi)     (pmdi->idFirstChild)
-#define SCROLL(pmdi)    (pmdi->wScroll)
-#define ITILELEVEL(pmdi)    (pmdi->iChildTileLevel)
-#define HTITLE(pmdi)    (pmdi->pTitle)
+#define CKIDS(pmdi) (pmdi->cKids)
+#define MAXED(pmdi) (pmdi->hwndMaxedChild)
+#define ACTIVE(pmdi) (pmdi->hwndActiveChild)
+#define WINDOW(pmdi) (pmdi->hmenuWindow)
+#define FIRST(pmdi) (pmdi->idFirstChild)
+#define SCROLL(pmdi) (pmdi->wScroll)
+#define ITILELEVEL(pmdi) (pmdi->iChildTileLevel)
+#define HTITLE(pmdi) (pmdi->pTitle)
 
-#define PROP_MDICLIENT  MAKEINTRESOURCE(0x8CAC)
-#define MDIACTIVATE_PROP_NAME   TEXT("MDIA")
+#define PROP_MDICLIENT MAKEINTRESOURCE(0x8CAC)
+#define MDIACTIVATE_PROP_NAME TEXT("MDIA")
 
-PWND  FindPwndChild(PWND pwndMDI, UINT wChildID);
-int   MakeMenuItem(LPWSTR lpOut, PWND pwnd);
-VOID  ModifyMenuItem(PWND pwnd);
-BOOL  MDIAddSysMenu(HMENU hmenuFrame, HWND hwndChild);
-BOOL  MDIRemoveSysMenu(HMENU hMenuFrame, HWND hwndChild);
-VOID  ShiftMenuIDs(PWND pwnd, PWND pwndVictim);
-HMENU MDISetMenu(PWND,BOOL,HMENU,HMENU);
-void  MDIRedrawFrame(HWND hwndChild, BOOL fAdd);
+PWND FindPwndChild(PWND pwndMDI, UINT wChildID);
+int MakeMenuItem(LPWSTR lpOut, PWND pwnd);
+VOID ModifyMenuItem(PWND pwnd);
+BOOL MDIAddSysMenu(HMENU hmenuFrame, HWND hwndChild);
+BOOL MDIRemoveSysMenu(HMENU hMenuFrame, HWND hwndChild);
+VOID ShiftMenuIDs(PWND pwnd, PWND pwndVictim);
+HMENU MDISetMenu(PWND, BOOL, HMENU, HMENU);
+void MDIRedrawFrame(HWND hwndChild, BOOL fAdd);
 
 /*
  * Drag and Drop menus.
@@ -2172,36 +1959,36 @@ void  MDIRedrawFrame(HWND hwndChild, BOOL fAdd);
 /*
  * Prototypes to cast function pointers
  */
-typedef HRESULT (* OLEINITIALIZEPROC)(LPVOID);
-typedef HRESULT (* OLEUNINITIALIZEPROC)(VOID);
-typedef HRESULT (* REGISTERDDPROC)(HWND, LPDROPTARGET);
-typedef HRESULT (* REVOKEDDPROC)(HWND);
-typedef HRESULT (* DODDPROC)(LPDATAOBJECT, LPDROPSOURCE, DWORD, LPDWORD);
+typedef HRESULT (*OLEINITIALIZEPROC)(LPVOID);
+typedef HRESULT (*OLEUNINITIALIZEPROC)(VOID);
+typedef HRESULT (*REGISTERDDPROC)(HWND, LPDROPTARGET);
+typedef HRESULT (*REVOKEDDPROC)(HWND);
+typedef HRESULT (*DODDPROC)(LPDATAOBJECT, LPDROPSOURCE, DWORD, LPDWORD);
 
 /*
  * Internal IDropTarget interface info
  */
 typedef struct tagMNIDROPTARGET
 {
-   IDropTarget idt;                 /* Interal IDropTarget */
-   DWORD dwRefCount;                /* Ref count */
-   IDataObject * pido;              /* IDataObject received at DragEnter */
-   IDropTarget * pidt;              /* Application IDropTarget, if any */
-} MNIDROPTARGET, * PMNIDROPTARGET;
+    IDropTarget idt;   /* Interal IDropTarget */
+    DWORD dwRefCount;  /* Ref count */
+    IDataObject *pido; /* IDataObject received at DragEnter */
+    IDropTarget *pidt; /* Application IDropTarget, if any */
+} MNIDROPTARGET, *PMNIDROPTARGET;
 
 /*
  * OLE procs info (used by LoadOLEOnce GetProcAddress calls)
  */
 typedef struct tagGETPROCINFO
 {
-    FARPROC * ppfn;
+    FARPROC *ppfn;
     LPCSTR lpsz;
 } GETPROCINFO;
 
 /*
  * Special value used by __ClientLoadOLE.
  */
-#define OLEWONTLOAD (HINSTANCE)IntToPtr(0xFFFFFFFF)
+#define OLEWONTLOAD (HINSTANCE) IntToPtr(0xFFFFFFFF)
 
 /*
  * Accelerator table resources list.
@@ -2221,11 +2008,7 @@ typedef struct tagACCELCACHE
 #if defined(_X86_) && !defined(BUILD_WOW6432)
 NTSTATUS
 FASTCALL
-XyCallbackReturn(
-    IN PVOID Buffer,
-    IN ULONG Length,
-    IN NTSTATUS Status
-    );
+XyCallbackReturn(IN PVOID Buffer, IN ULONG Length, IN NTSTATUS Status);
 
 #define UserCallbackReturn XyCallbackReturn
 #else
@@ -2235,24 +2018,26 @@ XyCallbackReturn(
 /*
  * Reader mode support
  */
-typedef LONG (CALLBACK* READERMODEPROC)(LPARAM lParam, int nCode, int dx, int dy);
+typedef LONG(CALLBACK *READERMODEPROC)(LPARAM lParam, int nCode, int dx, int dy);
 
-typedef struct tagREADERMODE {  // rdrm
+typedef struct tagREADERMODE
+{ // rdrm
     UINT cbSize;
     DWORD dwFlags;
     READERMODEPROC pfnReaderModeProc;
     LPARAM lParam;
 } READERMODE, *PREADERMODE, *LPREADERMODE;
 
-#define RDRMODE_VERT    0x00000001
-#define RDRMODE_HORZ    0x00000002
-#define RDRMODE_DIAG    0x00000004
+#define RDRMODE_VERT 0x00000001
+#define RDRMODE_HORZ 0x00000002
+#define RDRMODE_DIAG 0x00000004
 
-#define RDRCODE_START   1
-#define RDRCODE_SCROLL  2
-#define RDRCODE_END     3
+#define RDRCODE_START 1
+#define RDRCODE_SCROLL 2
+#define RDRCODE_END 3
 
-typedef struct tagREADERINFO {
+typedef struct tagREADERINFO
+{
     READERMODE;
     int dx;
     int dy;
@@ -2262,10 +2047,11 @@ typedef struct tagREADERINFO {
     UINT dyBmp;
 } READERINFO, *PREADERINFO;
 
-typedef struct tagREADERWND {
+typedef struct tagREADERWND
+{
     WND wnd;
     PREADERINFO prdr;
-} READERWND, * KPTR_MODIFIER PREADERWND;
+} READERWND, *KPTR_MODIFIER PREADERWND;
 
 BOOL EnterReaderModeHelper(HWND hwnd);
 
@@ -2284,31 +2070,32 @@ BOOL EnterReaderModeHelper(HWND hwnd);
  *
  * Client to Client.
  */
-#define GetDispatchDbcsInfo()          (&(GetClientInfo()->achDbcsCF[0]))
+#define GetDispatchDbcsInfo() (&(GetClientInfo()->achDbcsCF[0]))
 /*
  * Client to Server.
  */
-#define GetForwardDbcsInfo()           (&(GetClientInfo()->achDbcsCF[1]))
+#define GetForwardDbcsInfo() (&(GetClientInfo()->achDbcsCF[1]))
 /*
  * Server to Client.
  */
-#define GetCallBackDbcsInfo()          (&(GetClientInfo()->msgDbcsCB))
+#define GetCallBackDbcsInfo() (&(GetClientInfo()->msgDbcsCB))
 
 /*
  * Macros for DBCS Messaging for Recieve side.
  */
-#define GET_DBCS_MESSAGE_IF_EXIST(_apiName,_pmsg,_wMsgFilterMin,_wMsgFilterMax,bRemoveMsg)  \
-                                                                                            \
-        if (GetCallBackDbcsInfo()->wParam) {                                                \
-            /*                                                                              \
+#define GET_DBCS_MESSAGE_IF_EXIST(_apiName, _pmsg, _wMsgFilterMin, _wMsgFilterMax, bRemoveMsg)                        \
+                                                                                                                      \
+    if (GetCallBackDbcsInfo()->wParam)                                                                                \
+    {                                                                                                                 \
+        /*                                                                              \
              * Check message filter... only WM_CHAR message will be pushed                  \
              * into CLIENTINFO. Then if WM_CHAR is filtered out, we should                  \
              * get message from queue...                                                    \
-             */                                                                             \
-            if ((!(_wMsgFilterMin) && !(_wMsgFilterMax)) ||                                 \
-                ((_wMsgFilterMin) <= WM_CHAR && (_wMsgFilterMax) >= WM_CHAR)) {             \
-                PKERNEL_MSG pmsgDbcs = GetCallBackDbcsInfo();                               \
-                /*                                                                          \
+             */                            \
+        if ((!(_wMsgFilterMin) && !(_wMsgFilterMax)) || ((_wMsgFilterMin) <= WM_CHAR && (_wMsgFilterMax) >= WM_CHAR)) \
+        {                                                                                                             \
+            PKERNEL_MSG pmsgDbcs = GetCallBackDbcsInfo();                                                             \
+            /*                                                                          \
                  * Get pushed message.                                                      \
                  *                                                                          \
                  * Backup current message. this backupped message will be used              \
@@ -2321,129 +2108,150 @@ BOOL EnterReaderModeHelper(HWND hwnd);
                  * pmsg->lParam  = pmsgDbcs->lParam;                                        \
                  * pmsg->time    = pmsgDbcs->time;                                          \
                  * pmsg->pt      = pmsgDbcs->pt;                                            \
-                 */                                                                         \
-                COPY_KERNELMSG_TO_MSG((_pmsg),pmsgDbcs);                                   \
-                /*                                                                          \
+                 */                            \
+            COPY_KERNELMSG_TO_MSG((_pmsg), pmsgDbcs);                                                                 \
+            /*                                                                          \
                  * if we don't want to clear the cached data, just leave it there.          \
-                 */                                                                         \
-                if (bRemoveMsg) {                                                           \
-                    /*                                                                      \
+                 */                            \
+            if (bRemoveMsg)                                                                                           \
+            {                                                                                                         \
+                /*                                                                      \
                      * Invalidate pushed message in CLIENTINFO.                             \
-                     */                                                                     \
-                    pmsgDbcs->wParam = 0;                                                   \
-                }                                                                           \
-                /*                                                                          \
+                     */                            \
+                pmsgDbcs->wParam = 0;                                                                                 \
+            }                                                                                                         \
+            /*                                                                          \
                  * Set return value to TRUE.                                                \
-                 */                                                                         \
-                retval = TRUE;                                                              \
-                /*                                                                          \
+                 */                            \
+            retval = TRUE;                                                                                            \
+            /*                                                                          \
                  * Exit function..                                                          \
-                 */                                                                         \
-                goto Exit ## _apiName;                                                      \
-            }                                                                               \
-        }
+                 */                            \
+            goto Exit##_apiName;                                                                                      \
+        }                                                                                                             \
+    }
 
 /*
  * Macros for DBCS Messaging for Send side.
  */
-#define BUILD_DBCS_MESSAGE_TO_SERVER_FROM_CLIENTA(_msg,_wParam,_RetVal)                     \
-                                                                                            \
-        if (IS_DBCS_ENABLED() && (((_msg) == WM_CHAR) || ((_msg) == EM_SETPASSWORDCHAR))) { \
-            /*                                                                              \
+#define BUILD_DBCS_MESSAGE_TO_SERVER_FROM_CLIENTA(_msg, _wParam, _RetVal)                  \
+                                                                                           \
+    if (IS_DBCS_ENABLED() && (((_msg) == WM_CHAR) || ((_msg) == EM_SETPASSWORDCHAR)))      \
+    {                                                                                      \
+        /*                                                                              \
              * Chech wParam is DBCS character or not.                                       \
-             */                                                                             \
-            if (IS_DBCS_MESSAGE((_wParam))) {                                               \
-                if ((_wParam) & WMCR_IR_DBCSCHAR) {                                         \
-                    /*                                                                      \
+             */ \
+        if (IS_DBCS_MESSAGE((_wParam)))                                                    \
+        {                                                                                  \
+            if ((_wParam) & WMCR_IR_DBCSCHAR)                                              \
+            {                                                                              \
+                /*                                                                      \
                      * This message sent with IR_DBCSCHAR, already aligned for conversion   \
-                     */                                                                     \
-                } else {                                                                    \
-                    /*                                                                      \
+                     */ \
+            }                                                                              \
+            else                                                                           \
+            {                                                                              \
+                /*                                                                      \
                      * Make IR_DBCSCHAR compatible DBCS packed message                      \
-                     */                                                                     \
-                    (_wParam) = MAKEWPARAM(MAKE_IR_DBCSCHAR(LOWORD((_wParam))),0);          \
-                }                                                                           \
-            } else {                                                                        \
-                PBYTE pchDbcsCF = GetForwardDbcsInfo();                                     \
-                /*                                                                          \
+                     */ \
+                (_wParam) = MAKEWPARAM(MAKE_IR_DBCSCHAR(LOWORD((_wParam))), 0);            \
+            }                                                                              \
+        }                                                                                  \
+        else                                                                               \
+        {                                                                                  \
+            PBYTE pchDbcsCF = GetForwardDbcsInfo();                                        \
+            /*                                                                          \
                  * If we have cached Dbcs LeadingByte character, build A Dbcs character     \
                  * with the TrailingByte in wParam...                                       \
-                 */                                                                         \
-                if (*pchDbcsCF) {                                                           \
-                    WORD DbcsLeadChar = (WORD)(*pchDbcsCF);                                 \
-                    /*                                                                      \
+                 */ \
+            if (*pchDbcsCF)                                                                \
+            {                                                                              \
+                WORD DbcsLeadChar = (WORD)(*pchDbcsCF);                                    \
+                /*                                                                      \
                      * HIBYTE(LOWORD(wParam)) = Dbcs LeadingByte.                           \
                      * LOBYTE(LOWORD(wParam)) = Dbcs TrailingByte.                          \
-                     */                                                                     \
-                    (_wParam) |= (DbcsLeadChar << 8);                                       \
-                    /*                                                                      \
+                     */ \
+                (_wParam) |= (DbcsLeadChar << 8);                                          \
+                /*                                                                      \
                      * Invalidate cached data..                                             \
-                     */                                                                     \
-                    *pchDbcsCF = 0;                                                         \
-                } else if (IsDBCSLeadByteEx(THREAD_CODEPAGE(),LOBYTE(LOWORD(_wParam)))) { \
-                    /*                                                                      \
+                     */ \
+                *pchDbcsCF = 0;                                                            \
+            }                                                                              \
+            else if (IsDBCSLeadByteEx(THREAD_CODEPAGE(), LOBYTE(LOWORD(_wParam))))         \
+            {                                                                              \
+                /*                                                                      \
                      * if this is Dbcs LeadByte character, we should wait Dbcs TrailingByte \
                      * to convert this to Unicode. then we cached it here...                \
-                     */                                                                     \
-                    *pchDbcsCF = LOBYTE(LOWORD((_wParam)));                                 \
-                    /*                                                                      \
+                     */ \
+                *pchDbcsCF = LOBYTE(LOWORD((_wParam)));                                    \
+                /*                                                                      \
                      * Right now, we have nothing to do for this, just return with TRUE.    \
-                     */                                                                     \
-                    return((_RetVal));                                                      \
-                }                                                                           \
-            }                                                                               \
-        }
+                     */ \
+                return ((_RetVal));                                                        \
+            }                                                                              \
+        }                                                                                  \
+    }
 
-#define BUILD_DBCS_MESSAGE_TO_CLIENTW_FROM_CLIENTA(_msg,_wParam,_RetVal)                    \
-                                                                                            \
-        if (IS_DBCS_ENABLED() && (((_msg) == WM_CHAR) || ((_msg) == EM_SETPASSWORDCHAR))) { \
-            /*                                                                              \
+#define BUILD_DBCS_MESSAGE_TO_CLIENTW_FROM_CLIENTA(_msg, _wParam, _RetVal)                 \
+                                                                                           \
+    if (IS_DBCS_ENABLED() && (((_msg) == WM_CHAR) || ((_msg) == EM_SETPASSWORDCHAR)))      \
+    {                                                                                      \
+        /*                                                                              \
              * Check wParam is DBCS character or not.                                       \
-             */                                                                             \
-            if (IS_DBCS_MESSAGE((_wParam))) {                                               \
-                if ((_wParam) & WMCR_IR_DBCSCHAR) {                                         \
-                    /*                                                                      \
+             */ \
+        if (IS_DBCS_MESSAGE((_wParam)))                                                    \
+        {                                                                                  \
+            if ((_wParam) & WMCR_IR_DBCSCHAR)                                              \
+            {                                                                              \
+                /*                                                                      \
                      * This message sent with IR_DBCSCHAR, already aligned for conversion   \
-                     */                                                                     \
-                } else {                                                                    \
-                    /*                                                                      \
+                     */ \
+            }                                                                              \
+            else                                                                           \
+            {                                                                              \
+                /*                                                                      \
                      * Make IR_DBCSCHAR compatible DBCS packed message                      \
-                     */                                                                     \
-                    (_wParam) = MAKEWPARAM(MAKE_IR_DBCSCHAR(LOWORD((_wParam))),0);          \
-                }                                                                           \
-            } else {                                                                        \
-                PBYTE pchDbcsCF = GetDispatchDbcsInfo();                                    \
-                /*                                                                          \
+                     */ \
+                (_wParam) = MAKEWPARAM(MAKE_IR_DBCSCHAR(LOWORD((_wParam))), 0);            \
+            }                                                                              \
+        }                                                                                  \
+        else                                                                               \
+        {                                                                                  \
+            PBYTE pchDbcsCF = GetDispatchDbcsInfo();                                       \
+            /*                                                                          \
                  * If we have cached Dbcs LeadingByte character, build A Dbcs character     \
                  * with the TrailingByte in wParam...                                       \
-                 */                                                                         \
-                if (*pchDbcsCF) {                                                           \
-                    WORD DbcsLeadChar = (WORD)(*pchDbcsCF);                                 \
-                    /*                                                                      \
+                 */ \
+            if (*pchDbcsCF)                                                                \
+            {                                                                              \
+                WORD DbcsLeadChar = (WORD)(*pchDbcsCF);                                    \
+                /*                                                                      \
                      * HIBYTE(LOWORD(wParam)) = Dbcs LeadingByte.                           \
                      * LOBYTE(LOWORD(wParam)) = Dbcs TrailingByte.                          \
-                     */                                                                     \
-                    (_wParam) |= (DbcsLeadChar << 8);                                       \
-                    /*                                                                      \
+                     */ \
+                (_wParam) |= (DbcsLeadChar << 8);                                          \
+                /*                                                                      \
                      * Invalidate cached data..                                             \
-                     */                                                                     \
-                    *pchDbcsCF = 0;                                                         \
-                } else if (IsDBCSLeadByteEx(THREAD_CODEPAGE(),LOBYTE(LOWORD(_wParam)))) { \
-                    /*                                                                      \
+                     */ \
+                *pchDbcsCF = 0;                                                            \
+            }                                                                              \
+            else if (IsDBCSLeadByteEx(THREAD_CODEPAGE(), LOBYTE(LOWORD(_wParam))))         \
+            {                                                                              \
+                /*                                                                      \
                      * if this is Dbcs LeadByte character, we should wait Dbcs TrailingByte \
                      * to convert this to Unicode. then we cached it here...                \
-                     */                                                                     \
-                    *pchDbcsCF = LOBYTE(LOWORD((_wParam)));                                 \
-                    /*                                                                      \
+                     */ \
+                *pchDbcsCF = LOBYTE(LOWORD((_wParam)));                                    \
+                /*                                                                      \
                      * Right now, we have nothing to do for this, just return with TRUE.    \
-                     */                                                                     \
-                    return((_RetVal));                                                      \
-                }                                                                           \
-            }                                                                               \
-        }
+                     */ \
+                return ((_RetVal));                                                        \
+            }                                                                              \
+        }                                                                                  \
+    }
 
-#define BUILD_DBCS_MESSAGE_TO_CLIENTA_FROM_SERVER(_pmsg,_dwAnsi,_bIrDbcsFormat,bSaveMsg)    \
-        /*                                                                                  \
+#define BUILD_DBCS_MESSAGE_TO_CLIENTA_FROM_SERVER(_pmsg, _dwAnsi, _bIrDbcsFormat, bSaveMsg)    \
+    /*                                                                                  \
          * _bIrDbcsFormat parameter is only effective WM_CHAR/EM_SETPASSWORDCHAR message    \
          *                                                                                  \
          * (_bIrDbcsFormat == FALSE) dwAnsi has ....                                        \
@@ -2457,279 +2265,303 @@ BOOL EnterReaderModeHelper(HWND hwnd);
          * HIBYTE(LOWORD(_dwAnsi)) = DBCS LeadingByte character.                            \
          * LOBYTE(LOWORD(_dwAnsi)) = DBCS TrailingByte character                            \
          *                           or SBCS character.                                     \
-         */                                                                                 \
-    if (IS_DBCS_ENABLED())                                                 \
-        switch ((_pmsg)->message) {                                                         \
-        case WM_CHAR:                                                                       \
-        case EM_SETPASSWORDCHAR:                                                            \
-            if (IS_DBCS_MESSAGE((_dwAnsi))) {                                               \
+         */     \
+    if (IS_DBCS_ENABLED())                                                                     \
+        switch ((_pmsg)->message)                                                              \
+        {                                                                                      \
+        case WM_CHAR:                                                                          \
+        case EM_SETPASSWORDCHAR:                                                               \
+            if (IS_DBCS_MESSAGE((_dwAnsi)))                                                    \
+            {                                                                                  \
                 /*                                                                          \
                  * This is DBCS character..                                                 \
-                 */                                                                         \
-                if ((_pmsg)->wParam & WMCR_IR_DBCSCHAR) {                                   \
+                 */ \
+                if ((_pmsg)->wParam & WMCR_IR_DBCSCHAR)                                        \
+                {                                                                              \
                     /*                                                                      \
                      * Build IR_DBCSCHAR format message.                                    \
-                     */                                                                     \
-                    if ((_bIrDbcsFormat)) {                                                 \
-                        (_pmsg)->wParam = (WPARAM)(LOWORD((_dwAnsi)));                      \
-                    } else {                                                                \
-                        (_pmsg)->wParam = MAKE_IR_DBCSCHAR(LOWORD((_dwAnsi)));              \
-                    }                                                                       \
-                } else {                                                                    \
-                    PKERNEL_MSG pDbcsMsg = GetCallBackDbcsInfo();                           \
-                    if ((_bIrDbcsFormat)) {                                                 \
+                     */ \
+                    if ((_bIrDbcsFormat))                                                      \
+                    {                                                                          \
+                        (_pmsg)->wParam = (WPARAM)(LOWORD((_dwAnsi)));                         \
+                    }                                                                          \
+                    else                                                                       \
+                    {                                                                          \
+                        (_pmsg)->wParam = MAKE_IR_DBCSCHAR(LOWORD((_dwAnsi)));                 \
+                    }                                                                          \
+                }                                                                              \
+                else                                                                           \
+                {                                                                              \
+                    PKERNEL_MSG pDbcsMsg = GetCallBackDbcsInfo();                              \
+                    if ((_bIrDbcsFormat))                                                      \
+                    {                                                                          \
                         /*                                                                  \
                          * if the format is IR_DBCSCHAR format, adjust it to regular        \
                          * WPARAM format...                                                 \
-                         */                                                                 \
-                        (_dwAnsi) = MAKE_WPARAM_DBCSCHAR((_dwAnsi));                        \
-                    }                                                                       \
-                    if ((bSaveMsg)) {                                                       \
+                         */ \
+                        (_dwAnsi) = MAKE_WPARAM_DBCSCHAR((_dwAnsi));                           \
+                    }                                                                          \
+                    if ((bSaveMsg))                                                            \
+                    {                                                                          \
                         /*                                                                  \
                          * Copy this message to CLIENTINFO for next GetMessage              \
                          * or PeekMesssage() call.                                          \
-                         */                                                                 \
-                        COPY_MSG_TO_KERNELMSG(pDbcsMsg,(_pmsg));                            \
+                         */ \
+                        COPY_MSG_TO_KERNELMSG(pDbcsMsg, (_pmsg));                              \
                         /*                                                                  \
                          * Only Dbcs Trailingbyte is nessesary for pushed message. we'll    \
                          * pass this message when GetMessage/PeekMessage is called at next. \
-                         */                                                                 \
-                        pDbcsMsg->wParam = (WPARAM)(((_dwAnsi) & 0x0000FF00) >> 8);         \
-                    }                                                                       \
+                         */ \
+                        pDbcsMsg->wParam = (WPARAM)(((_dwAnsi) & 0x0000FF00) >> 8);            \
+                    }                                                                          \
                     /*                                                                      \
                      * Return DbcsLeading byte to Apps.                                     \
-                     */                                                                     \
-                    (_pmsg)->wParam =  (WPARAM)((_dwAnsi) & 0x000000FF);                    \
-                }                                                                           \
-            } else {                                                                        \
+                     */ \
+                    (_pmsg)->wParam = (WPARAM)((_dwAnsi) & 0x000000FF);                        \
+                }                                                                              \
+            }                                                                                  \
+            else                                                                               \
+            {                                                                                  \
                 /*                                                                          \
                  * This is single byte character... set it to wParam.                       \
-                 */                                                                         \
-                (_pmsg)->wParam = (WPARAM)((_dwAnsi) & 0x000000FF);                         \
-            }                                                                               \
-            break;                                                                          \
-        case WM_IME_CHAR:                                                                   \
-        case WM_IME_COMPOSITION:                                                            \
+                 */ \
+                (_pmsg)->wParam = (WPARAM)((_dwAnsi) & 0x000000FF);                            \
+            }                                                                                  \
+            break;                                                                             \
+        case WM_IME_CHAR:                                                                      \
+        case WM_IME_COMPOSITION:                                                               \
             /*                                                                              \
              * if the message is not adjusted to IR_DBCSCHAR format yet,                    \
              * Build WM_IME_xxx format message.                                             \
-             */                                                                             \
-            if (!(_bIrDbcsFormat)) {                                                        \
-                (_pmsg)->wParam = MAKE_IR_DBCSCHAR(LOWORD((_dwAnsi)));                      \
-            }                                                                               \
-            break;                                                                          \
-        default:                                                                            \
-            (_pmsg)->wParam = (WPARAM)(_dwAnsi);                                            \
-            break;                                                                          \
-        } /* switch */                                                                      \
-    else                                                                                    \
+             */ \
+            if (!(_bIrDbcsFormat))                                                             \
+            {                                                                                  \
+                (_pmsg)->wParam = MAKE_IR_DBCSCHAR(LOWORD((_dwAnsi)));                         \
+            }                                                                                  \
+            break;                                                                             \
+        default:                                                                               \
+            (_pmsg)->wParam = (WPARAM)(_dwAnsi);                                               \
+            break;                                                                             \
+        } /* switch */                                                                         \
+    else
 
-#define BUILD_DBCS_MESSAGE_TO_CLIENTW_FROM_SERVER(_msg,_wParam)                             \
-                                                                                            \
-        if (((_msg) == WM_CHAR) || ((_msg) == EM_SETPASSWORDCHAR)) {                        \
-            /*                                                                              \
+#define BUILD_DBCS_MESSAGE_TO_CLIENTW_FROM_SERVER(_msg, _wParam)                           \
+                                                                                           \
+    if (((_msg) == WM_CHAR) || ((_msg) == EM_SETPASSWORDCHAR))                             \
+    {                                                                                      \
+        /*                                                                              \
              * Only LOWORD of WPARAM is valid for WM_CHAR....                               \
              * (Mask off DBCS messaging information.)                                       \
-             */                                                                             \
-            (_wParam) &= 0x0000FFFF;                                                        \
-        }
+             */ \
+        (_wParam) &= 0x0000FFFF;                                                           \
+    }
 
-#define BUILD_DBCS_MESSAGE_TO_CLIENTA_FROM_CLIENTW(_hwnd,_msg,_wParam,_lParam,_time,_pt,_bDbcs) \
-                                                                                                \
-        if (IS_DBCS_ENABLED() && (((_msg) == WM_CHAR) || ((_msg) == EM_SETPASSWORDCHAR))) {     \
-            /*                                                                                  \
+#define BUILD_DBCS_MESSAGE_TO_CLIENTA_FROM_CLIENTW(_hwnd, _msg, _wParam, _lParam, _time, _pt, _bDbcs) \
+                                                                                                      \
+    if (IS_DBCS_ENABLED() && (((_msg) == WM_CHAR) || ((_msg) == EM_SETPASSWORDCHAR)))                 \
+    {                                                                                                 \
+        /*                                                                                  \
              * Check this message is DBCS Message or not..                                      \
-             */                                                                                 \
-            if (IS_DBCS_MESSAGE((_wParam))) {                                                   \
-                PKERNEL_MSG pmsgDbcsCB = GetCallBackDbcsInfo();                                 \
-                /*                                                                              \
+             */        \
+        if (IS_DBCS_MESSAGE((_wParam)))                                                               \
+        {                                                                                             \
+            PKERNEL_MSG pmsgDbcsCB = GetCallBackDbcsInfo();                                           \
+            /*                                                                              \
                  * Mark this is DBCS character.                                                 \
-                 */                                                                             \
-                (_bDbcs) = TRUE;                                                                \
-                /*                                                                              \
+                 */        \
+            (_bDbcs) = TRUE;                                                                          \
+            /*                                                                              \
                  * Backup current message. this backupped message will be used                  \
                  * when Apps peek (or get) message from thier WndProc.                          \
                  * (see GetMessageA(), PeekMessageA()...)                                       \
-                 */                                                                             \
-                pmsgDbcsCB->hwnd    = (_hwnd);                                                  \
-                pmsgDbcsCB->message = (_msg);                                                   \
-                pmsgDbcsCB->lParam  = (_lParam);                                                \
-                pmsgDbcsCB->time    = (_time);                                                  \
-                pmsgDbcsCB->pt      = (_pt);                                                    \
-                /*                                                                              \
+                 */        \
+            pmsgDbcsCB->hwnd = (_hwnd);                                                               \
+            pmsgDbcsCB->message = (_msg);                                                             \
+            pmsgDbcsCB->lParam = (_lParam);                                                           \
+            pmsgDbcsCB->time = (_time);                                                               \
+            pmsgDbcsCB->pt = (_pt);                                                                   \
+            /*                                                                              \
                  * DbcsLeadByte will be sent below soon, we just need DbcsTrailByte             \
                  * for further usage..                                                          \
-                 */                                                                             \
-                pmsgDbcsCB->wParam = ((_wParam) & 0x000000FF);                                  \
-                /*                                                                              \
+                 */        \
+            pmsgDbcsCB->wParam = ((_wParam) & 0x000000FF);                                            \
+            /*                                                                              \
                  * Pass the LeadingByte of the DBCS character to an ANSI WndProc.               \
-                 */                                                                             \
-                (_wParam) = ((_wParam) & 0x0000FF00) >> 8;                                      \
-            } else {                                                                            \
-                /*                                                                              \
+                 */        \
+            (_wParam) = ((_wParam) & 0x0000FF00) >> 8;                                                \
+        }                                                                                             \
+        else                                                                                          \
+        {                                                                                             \
+            /*                                                                              \
                  * Validate only BYTE for WM_CHAR.                                              \
-                 */                                                                             \
-                (_wParam) &= 0x000000FF;                                                        \
-            }                                                                                   \
-        }
+                 */        \
+            (_wParam) &= 0x000000FF;                                                                  \
+        }                                                                                             \
+    }
 
-#define DISPATCH_DBCS_MESSAGE_IF_EXIST(_msg,_wParam,_bDbcs,_apiName)                            \
-        /*                                                                                      \
+#define DISPATCH_DBCS_MESSAGE_IF_EXIST(_msg, _wParam, _bDbcs, _apiName)                        \
+    /*                                                                                      \
          * Check we need to send trailing byte or not, if the wParam has Dbcs character         \
-         */                                                                                     \
-        if (IS_DBCS_ENABLED() && (_bDbcs) && (GetCallBackDbcsInfo()->wParam)) {                 \
-            PKERNEL_MSG pmsgDbcsCB = GetCallBackDbcsInfo();                                            \
-            /*                                                                                  \
+         */ \
+    if (IS_DBCS_ENABLED() && (_bDbcs) && (GetCallBackDbcsInfo()->wParam))                      \
+    {                                                                                          \
+        PKERNEL_MSG pmsgDbcsCB = GetCallBackDbcsInfo();                                        \
+        /*                                                                                  \
              * If an app didn't peek (or get) the trailing byte from within                     \
              * WndProc, and then pass the DBCS TrailingByte to the ANSI WndProc here            \
              * pmsgDbcsCB->wParam has DBCS TrailingByte here.. see above..                      \
-             */                                                                                 \
-            (_wParam) = KERNEL_WPARAM_TO_WPARAM(pmsgDbcsCB->wParam);                            \
-            /*                                                                                  \
+             */ \
+        (_wParam) = KERNEL_WPARAM_TO_WPARAM(pmsgDbcsCB->wParam);                               \
+        /*                                                                                  \
              * Invalidate cached message.                                                       \
-             */                                                                                 \
-            pmsgDbcsCB->wParam = 0;                                                             \
-            /*                                                                                  \
+             */ \
+        pmsgDbcsCB->wParam = 0;                                                                \
+        /*                                                                                  \
              * Send it....                                                                      \
-             */                                                                                 \
-            goto _apiName ## Again;                                                             \
-        }
+             */ \
+        goto _apiName##Again;                                                                  \
+    }
 
-#define CalcAnsiStringLengthW(_unicodestring,_unicodeLength,_ansiLength)                        \
-        /*                                                                                      \
+#define CalcAnsiStringLengthW(_unicodestring, _unicodeLength, _ansiLength)                     \
+    /*                                                                                      \
          * Get AnsiStringLength from UnicodeString,UnicodeLength                                \
-         */                                                                                     \
-        {                                                                                       \
-            RtlUnicodeToMultiByteSize((ULONG *)(_ansiLength),                                   \
-                                      (LPWSTR)(_unicodestring),                                 \
-                                      (ULONG)((_unicodeLength)*sizeof(WCHAR)));                 \
-        }
+         */ \
+    {                                                                                          \
+        RtlUnicodeToMultiByteSize((ULONG *)(_ansiLength), (LPWSTR)(_unicodestring),            \
+                                  (ULONG)((_unicodeLength) * sizeof(WCHAR)));                  \
+    }
 
-#define CalcAnsiStringLengthA(_ansistring,_unicodeLength,_ansiLength)                           \
-        /*                                                                                      \
+#define CalcAnsiStringLengthA(_ansistring, _unicodeLength, _ansiLength)                        \
+    /*                                                                                      \
          * Get AnsiStringLength from AnsiString,UnicodeLength                                   \
-         */                                                                                     \
-        {                                                                                       \
-            LPSTR _string = (_ansistring);                                                      \
-            LONG  _length = (LONG)(_unicodeLength);                                             \
-            (*(_ansiLength)) = 0;                                                               \
-            while(*_string && _length) {                                                        \
-                if(IsDBCSLeadByte(*_string)) {                                                  \
-                    (*(_ansiLength)) += 2; _string++;                                           \
-                } else {                                                                        \
-                    (*(_ansiLength))++;                                                         \
-                }                                                                               \
-                _string++; _length--;                                                           \
-            }                                                                                   \
-        }
+         */ \
+    {                                                                                          \
+        LPSTR _string = (_ansistring);                                                         \
+        LONG _length = (LONG)(_unicodeLength);                                                 \
+        (*(_ansiLength)) = 0;                                                                  \
+        while (*_string && _length)                                                            \
+        {                                                                                      \
+            if (IsDBCSLeadByte(*_string))                                                      \
+            {                                                                                  \
+                (*(_ansiLength)) += 2;                                                         \
+                _string++;                                                                     \
+            }                                                                                  \
+            else                                                                               \
+            {                                                                                  \
+                (*(_ansiLength))++;                                                            \
+            }                                                                                  \
+            _string++;                                                                         \
+            _length--;                                                                         \
+        }                                                                                      \
+    }
 
-#define CalcUnicodeStringLengthA(_ansistring,_ansiLength,_unicodeLength)                        \
-        /*                                                                                      \
+#define CalcUnicodeStringLengthA(_ansistring, _ansiLength, _unicodeLength)                                \
+    /*                                                                                      \
          * Get UnicodeLength from AnsiString,AnsiLength                                         \
-         */                                                                                     \
-        {                                                                                       \
-            RtlMultiByteToUnicodeSize((ULONG *)(_unicodeLength),                                \
-                                      (LPSTR)(_ansistring),                                     \
-                                      (ULONG)(_ansiLength));                                    \
-            (*(_unicodeLength)) /= sizeof(WCHAR);                                               \
-        }
+         */            \
+    {                                                                                                     \
+        RtlMultiByteToUnicodeSize((ULONG *)(_unicodeLength), (LPSTR)(_ansistring), (ULONG)(_ansiLength)); \
+        (*(_unicodeLength)) /= sizeof(WCHAR);                                                             \
+    }
 
-#define CalcUnicodeStringLengthW(_unicodestring,_ansiLength,_unicodeLength)                     \
-        /*                                                                                      \
+#define CalcUnicodeStringLengthW(_unicodestring, _ansiLength, _unicodeLength)                  \
+    /*                                                                                      \
          * Get UnicodeLength from UnicodeString,AnsiLength                                      \
-         */                                                                                     \
-        {                                                                                       \
-            LPWSTR _string = (_unicodestring);                                                  \
-            LONG   _length = (LONG)(_ansiLength);                                               \
-            LONG   _charlength;                                                                 \
-            (*(_unicodeLength)) = 0;                                                            \
-            while(*_string && (_length > 0)) {                                                  \
-                CalcAnsiStringLengthW(_string,1,&_charlength);                                  \
-                _length -= _charlength;                                                         \
-                if(_length >= 0) {                                                              \
-                    (*(_unicodeLength))++;                                                      \
-                }                                                                               \
-                _string++;                                                                      \
-            }                                                                                   \
-        }
+         */ \
+    {                                                                                          \
+        LPWSTR _string = (_unicodestring);                                                     \
+        LONG _length = (LONG)(_ansiLength);                                                    \
+        LONG _charlength;                                                                      \
+        (*(_unicodeLength)) = 0;                                                               \
+        while (*_string && (_length > 0))                                                      \
+        {                                                                                      \
+            CalcAnsiStringLengthW(_string, 1, &_charlength);                                   \
+            _length -= _charlength;                                                            \
+            if (_length >= 0)                                                                  \
+            {                                                                                  \
+                (*(_unicodeLength))++;                                                         \
+            }                                                                                  \
+            _string++;                                                                         \
+        }                                                                                      \
+    }
 
 
 /*
  * DBCS function defined in userrtl.lib (see ..\rtl\userrtl.h)
  */
 DWORD UserGetCodePage(HDC hdc);
-BOOL  UserIsFullWidth(DWORD dwCodePage,WCHAR wChar);
-BOOL  UserIsFELineBreak(DWORD dwCodePage,WCHAR wChar);
+BOOL UserIsFullWidth(DWORD dwCodePage, WCHAR wChar);
+BOOL UserIsFELineBreak(DWORD dwCodePage, WCHAR wChar);
 
 
 // FE_IME   // fareast.c
-typedef struct {
-    BOOL (WINAPI* ImmWINNLSEnableIME)(HWND, BOOL);
-    BOOL (WINAPI* ImmWINNLSGetEnableStatus)(HWND);
-    LRESULT (WINAPI* ImmSendIMEMessageExW)(HWND, LPARAM);
-    LRESULT (WINAPI* ImmSendIMEMessageExA)(HWND, LPARAM);
-    BOOL (WINAPI* ImmIMPGetIMEW)(HWND, LPIMEPROW);
-    BOOL (WINAPI* ImmIMPGetIMEA)(HWND, LPIMEPROA);
-    BOOL (WINAPI* ImmIMPQueryIMEW)(LPIMEPROW);
-    BOOL (WINAPI* ImmIMPQueryIMEA)(LPIMEPROA);
-    BOOL (WINAPI* ImmIMPSetIMEW)(HWND, LPIMEPROW);
-    BOOL (WINAPI* ImmIMPSetIMEA)(HWND, LPIMEPROA);
+typedef struct
+{
+    BOOL(WINAPI *ImmWINNLSEnableIME)(HWND, BOOL);
+    BOOL(WINAPI *ImmWINNLSGetEnableStatus)(HWND);
+    LRESULT(WINAPI *ImmSendIMEMessageExW)(HWND, LPARAM);
+    LRESULT(WINAPI *ImmSendIMEMessageExA)(HWND, LPARAM);
+    BOOL(WINAPI *ImmIMPGetIMEW)(HWND, LPIMEPROW);
+    BOOL(WINAPI *ImmIMPGetIMEA)(HWND, LPIMEPROA);
+    BOOL(WINAPI *ImmIMPQueryIMEW)(LPIMEPROW);
+    BOOL(WINAPI *ImmIMPQueryIMEA)(LPIMEPROA);
+    BOOL(WINAPI *ImmIMPSetIMEW)(HWND, LPIMEPROW);
+    BOOL(WINAPI *ImmIMPSetIMEA)(HWND, LPIMEPROA);
 
-    HIMC (WINAPI* ImmAssociateContext)(HWND, HIMC);
-    LRESULT (WINAPI* ImmEscapeA)(HKL, HIMC, UINT, LPVOID);
-    LRESULT (WINAPI* ImmEscapeW)(HKL, HIMC, UINT, LPVOID);
-    LONG (WINAPI* ImmGetCompositionStringA)(HIMC, DWORD, LPVOID, DWORD);
-    LONG (WINAPI* ImmGetCompositionStringW)(HIMC, DWORD, LPVOID, DWORD);
-    BOOL (WINAPI* ImmGetCompositionWindow)(HIMC, LPCOMPOSITIONFORM);
-    HIMC (WINAPI* ImmGetContext)(HWND);
-    HWND (WINAPI* ImmGetDefaultIMEWnd)(HWND);
-    BOOL (WINAPI* ImmIsIME)(HKL);
-    BOOL (WINAPI* ImmReleaseContext)(HWND, HIMC);
+    HIMC(WINAPI *ImmAssociateContext)(HWND, HIMC);
+    LRESULT(WINAPI *ImmEscapeA)(HKL, HIMC, UINT, LPVOID);
+    LRESULT(WINAPI *ImmEscapeW)(HKL, HIMC, UINT, LPVOID);
+    LONG(WINAPI *ImmGetCompositionStringA)(HIMC, DWORD, LPVOID, DWORD);
+    LONG(WINAPI *ImmGetCompositionStringW)(HIMC, DWORD, LPVOID, DWORD);
+    BOOL(WINAPI *ImmGetCompositionWindow)(HIMC, LPCOMPOSITIONFORM);
+    HIMC(WINAPI *ImmGetContext)(HWND);
+    HWND(WINAPI *ImmGetDefaultIMEWnd)(HWND);
+    BOOL(WINAPI *ImmIsIME)(HKL);
+    BOOL(WINAPI *ImmReleaseContext)(HWND, HIMC);
     BOOL (*ImmRegisterClient)(PSHAREDINFO, HINSTANCE);
 
-    BOOL (WINAPI* ImmGetCompositionFontW)(HIMC, LPLOGFONTW);
-    BOOL (WINAPI* ImmGetCompositionFontA)(HIMC, LPLOGFONTA);
-    BOOL (WINAPI* ImmSetCompositionFontW)(HIMC, LPLOGFONTW);
-    BOOL (WINAPI* ImmSetCompositionFontA)(HIMC, LPLOGFONTA);
+    BOOL(WINAPI *ImmGetCompositionFontW)(HIMC, LPLOGFONTW);
+    BOOL(WINAPI *ImmGetCompositionFontA)(HIMC, LPLOGFONTA);
+    BOOL(WINAPI *ImmSetCompositionFontW)(HIMC, LPLOGFONTW);
+    BOOL(WINAPI *ImmSetCompositionFontA)(HIMC, LPLOGFONTA);
 
-    BOOL (WINAPI* ImmSetCompositionWindow)(HIMC, LPCOMPOSITIONFORM);
-    BOOL (WINAPI* ImmNotifyIME)(HIMC, DWORD, DWORD, DWORD);
-    PINPUTCONTEXT (WINAPI* ImmLockIMC)(HIMC);
-    BOOL (WINAPI* ImmUnlockIMC)(HIMC);
-    BOOL (WINAPI* ImmLoadIME)(HKL);
-    BOOL (WINAPI* ImmSetOpenStatus)(HIMC, BOOL);
-    BOOL (WINAPI* ImmFreeLayout)(DWORD);
-    BOOL (WINAPI* ImmActivateLayout)(HKL);
-    BOOL (WINAPI* ImmGetCandidateWindow)(HIMC, DWORD, LPCANDIDATEFORM);
-    BOOL (WINAPI* ImmSetCandidateWindow)(HIMC, LPCANDIDATEFORM);
-    BOOL (WINAPI* ImmConfigureIMEW)(HKL, HWND, DWORD, LPVOID);
-    BOOL (WINAPI* ImmGetConversionStatus)(HIMC, LPDWORD, LPDWORD);
-    BOOL (WINAPI* ImmSetConversionStatus)(HIMC, DWORD, DWORD);
-    BOOL (WINAPI* ImmSetStatusWindowPos)(HIMC, LPPOINT);
-    BOOL (WINAPI* ImmGetImeInfoEx)(PIMEINFOEX, IMEINFOEXCLASS, PVOID);
-    PIMEDPI (WINAPI* ImmLockImeDpi)(HKL);
-    VOID (WINAPI* ImmUnlockImeDpi)(PIMEDPI);
-    BOOL (WINAPI* ImmGetOpenStatus)(HIMC);
+    BOOL(WINAPI *ImmSetCompositionWindow)(HIMC, LPCOMPOSITIONFORM);
+    BOOL(WINAPI *ImmNotifyIME)(HIMC, DWORD, DWORD, DWORD);
+    PINPUTCONTEXT(WINAPI *ImmLockIMC)(HIMC);
+    BOOL(WINAPI *ImmUnlockIMC)(HIMC);
+    BOOL(WINAPI *ImmLoadIME)(HKL);
+    BOOL(WINAPI *ImmSetOpenStatus)(HIMC, BOOL);
+    BOOL(WINAPI *ImmFreeLayout)(DWORD);
+    BOOL(WINAPI *ImmActivateLayout)(HKL);
+    BOOL(WINAPI *ImmGetCandidateWindow)(HIMC, DWORD, LPCANDIDATEFORM);
+    BOOL(WINAPI *ImmSetCandidateWindow)(HIMC, LPCANDIDATEFORM);
+    BOOL(WINAPI *ImmConfigureIMEW)(HKL, HWND, DWORD, LPVOID);
+    BOOL(WINAPI *ImmGetConversionStatus)(HIMC, LPDWORD, LPDWORD);
+    BOOL(WINAPI *ImmSetConversionStatus)(HIMC, DWORD, DWORD);
+    BOOL(WINAPI *ImmSetStatusWindowPos)(HIMC, LPPOINT);
+    BOOL(WINAPI *ImmGetImeInfoEx)(PIMEINFOEX, IMEINFOEXCLASS, PVOID);
+    PIMEDPI(WINAPI *ImmLockImeDpi)(HKL);
+    VOID(WINAPI *ImmUnlockImeDpi)(PIMEDPI);
+    BOOL(WINAPI *ImmGetOpenStatus)(HIMC);
     BOOL (*ImmSetActiveContext)(HWND, HIMC, BOOL);
     BOOL (*ImmTranslateMessage)(HWND, UINT, WPARAM, LPARAM);
     BOOL (*ImmLoadLayout)(HKL, PIMEINFOEX);
-    DWORD (WINAPI* ImmProcessKey)(HWND, HKL, UINT, LPARAM, DWORD);
+    DWORD(WINAPI *ImmProcessKey)(HWND, HKL, UINT, LPARAM, DWORD);
     LRESULT (*ImmPutImeMenuItemsIntoMappedFile)(HIMC);
-    DWORD (WINAPI* ImmGetProperty)(HKL hKL, DWORD dwIndex);
-    BOOL (WINAPI* ImmSetCompositionStringA)(
-        HIMC hImc, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen, LPCVOID lpRead, DWORD dwReadLen);
-    BOOL (WINAPI* ImmSetCompositionStringW)(
-        HIMC hImc, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen, LPCVOID lpRead, DWORD dwReadLen);
-    BOOL (WINAPI* ImmEnumInputContext)(
-        DWORD idThread, IMCENUMPROC lpfn, LPARAM lParam);
-    LRESULT (WINAPI* ImmSystemHandler)(HIMC, WPARAM, LPARAM);
+    DWORD(WINAPI *ImmGetProperty)(HKL hKL, DWORD dwIndex);
+    BOOL(WINAPI *ImmSetCompositionStringA)(HIMC hImc, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen, LPCVOID lpRead,
+                                           DWORD dwReadLen);
+    BOOL(WINAPI *ImmSetCompositionStringW)(HIMC hImc, DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen, LPCVOID lpRead,
+                                           DWORD dwReadLen);
+    BOOL(WINAPI *ImmEnumInputContext)(DWORD idThread, IMCENUMPROC lpfn, LPARAM lParam);
+    LRESULT(WINAPI *ImmSystemHandler)(HIMC, WPARAM, LPARAM);
 
 #ifdef CUAS_ENABLE
     // Cicero
-    HRESULT (WINAPI* CtfImmTIMActivate)(HKL hKL);
-    void (WINAPI* CtfImmRestoreToolbarWnd)(DWORD dwPrevSts);
-    DWORD (WINAPI* CtfImmHideToolbarWnd)(void);
-    LRESULT (WINAPI* CtfImmDispatchDefImeMessage)(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+    HRESULT(WINAPI *CtfImmTIMActivate)(HKL hKL);
+    void(WINAPI *CtfImmRestoreToolbarWnd)(DWORD dwPrevSts);
+    DWORD(WINAPI *CtfImmHideToolbarWnd)(void);
+    LRESULT(WINAPI *CtfImmDispatchDefImeMessage)(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 #endif // CUAS_ENABLE
 } ImmApiEntries;
 
@@ -2739,59 +2571,59 @@ VOID InitializeImmEntryTable(VOID);
 VOID GetImmFileName(PWSTR);
 VOID CliImmInitializeHotKeys(DWORD dwAction, HKL hkl);
 
-#define fpImmAssociateContext       gImmApiEntries.ImmAssociateContext
-#define fpImmEscapeA                gImmApiEntries.ImmEscapeA
-#define fpImmEscapeW                gImmApiEntries.ImmEscapeW
-#define fpImmGetContext             gImmApiEntries.ImmGetContext
-#define fpImmGetCompositionStringA  gImmApiEntries.ImmGetCompositionStringA
-#define fpImmGetCompositionStringW  gImmApiEntries.ImmGetCompositionStringW
-#define fpImmGetCompositionWindow   gImmApiEntries.ImmGetCompositionWindow
-#define fpImmGetDefaultIMEWnd       gImmApiEntries.ImmGetDefaultIMEWnd
-#define fpImmIsIME                  gImmApiEntries.ImmIsIME
-#define fpImmLockIMC                gImmApiEntries.ImmLockIMC
-#define fpImmReleaseContext         gImmApiEntries.ImmReleaseContext
-#define fpImmRegisterClient         gImmApiEntries.ImmRegisterClient
-#define fpImmGetCompositionFontW    gImmApiEntries.ImmGetCompositionFontW
-#define fpImmGetCompositionFontA    gImmApiEntries.ImmGetCompositionFontA
-#define fpImmSetCompositionFontW    gImmApiEntries.ImmSetCompositionFontW
-#define fpImmSetCompositionFontA    gImmApiEntries.ImmSetCompositionFontA
-#define fpImmSetCompositionFont     gImmApiEntries.ImmSetCompositionFont
-#define fpImmSetCompositionWindow   gImmApiEntries.ImmSetCompositionWindow
-#define fpImmNotifyIME              gImmApiEntries.ImmNotifyIME
-#define fpImmUnlockIMC              gImmApiEntries.ImmUnlockIMC
-#define fpImmLoadIME                gImmApiEntries.ImmLoadIME
-#define fpImmSetOpenStatus          gImmApiEntries.ImmSetOpenStatus
-#define fpImmFreeLayout             gImmApiEntries.ImmFreeLayout
-#define fpImmActivateLayout         gImmApiEntries.ImmActivateLayout
-#define fpImmGetCandidateWindow     gImmApiEntries.ImmGetCandidateWindow
-#define fpImmSetCandidateWindow     gImmApiEntries.ImmSetCandidateWindow
-#define fpImmConfigureIMEW          gImmApiEntries.ImmConfigureIMEW
-#define fpImmGetConversionStatus    gImmApiEntries.ImmGetConversionStatus
-#define fpImmSetConversionStatus    gImmApiEntries.ImmSetConversionStatus
-#define fpImmSetStatusWindowPos     gImmApiEntries.ImmSetStatusWindowPos
-#define fpImmGetImeInfoEx           gImmApiEntries.ImmGetImeInfoEx
-#define fpImmLockImeDpi             gImmApiEntries.ImmLockImeDpi
-#define fpImmUnlockImeDpi           gImmApiEntries.ImmUnlockImeDpi
-#define fpImmGetOpenStatus          gImmApiEntries.ImmGetOpenStatus
-#define fpImmSetActiveContext       gImmApiEntries.ImmSetActiveContext
-#define fpImmTranslateMessage       gImmApiEntries.ImmTranslateMessage
-#define fpImmLoadLayout             gImmApiEntries.ImmLoadLayout
-#define fpImmProcessKey             gImmApiEntries.ImmProcessKey
+#define fpImmAssociateContext gImmApiEntries.ImmAssociateContext
+#define fpImmEscapeA gImmApiEntries.ImmEscapeA
+#define fpImmEscapeW gImmApiEntries.ImmEscapeW
+#define fpImmGetContext gImmApiEntries.ImmGetContext
+#define fpImmGetCompositionStringA gImmApiEntries.ImmGetCompositionStringA
+#define fpImmGetCompositionStringW gImmApiEntries.ImmGetCompositionStringW
+#define fpImmGetCompositionWindow gImmApiEntries.ImmGetCompositionWindow
+#define fpImmGetDefaultIMEWnd gImmApiEntries.ImmGetDefaultIMEWnd
+#define fpImmIsIME gImmApiEntries.ImmIsIME
+#define fpImmLockIMC gImmApiEntries.ImmLockIMC
+#define fpImmReleaseContext gImmApiEntries.ImmReleaseContext
+#define fpImmRegisterClient gImmApiEntries.ImmRegisterClient
+#define fpImmGetCompositionFontW gImmApiEntries.ImmGetCompositionFontW
+#define fpImmGetCompositionFontA gImmApiEntries.ImmGetCompositionFontA
+#define fpImmSetCompositionFontW gImmApiEntries.ImmSetCompositionFontW
+#define fpImmSetCompositionFontA gImmApiEntries.ImmSetCompositionFontA
+#define fpImmSetCompositionFont gImmApiEntries.ImmSetCompositionFont
+#define fpImmSetCompositionWindow gImmApiEntries.ImmSetCompositionWindow
+#define fpImmNotifyIME gImmApiEntries.ImmNotifyIME
+#define fpImmUnlockIMC gImmApiEntries.ImmUnlockIMC
+#define fpImmLoadIME gImmApiEntries.ImmLoadIME
+#define fpImmSetOpenStatus gImmApiEntries.ImmSetOpenStatus
+#define fpImmFreeLayout gImmApiEntries.ImmFreeLayout
+#define fpImmActivateLayout gImmApiEntries.ImmActivateLayout
+#define fpImmGetCandidateWindow gImmApiEntries.ImmGetCandidateWindow
+#define fpImmSetCandidateWindow gImmApiEntries.ImmSetCandidateWindow
+#define fpImmConfigureIMEW gImmApiEntries.ImmConfigureIMEW
+#define fpImmGetConversionStatus gImmApiEntries.ImmGetConversionStatus
+#define fpImmSetConversionStatus gImmApiEntries.ImmSetConversionStatus
+#define fpImmSetStatusWindowPos gImmApiEntries.ImmSetStatusWindowPos
+#define fpImmGetImeInfoEx gImmApiEntries.ImmGetImeInfoEx
+#define fpImmLockImeDpi gImmApiEntries.ImmLockImeDpi
+#define fpImmUnlockImeDpi gImmApiEntries.ImmUnlockImeDpi
+#define fpImmGetOpenStatus gImmApiEntries.ImmGetOpenStatus
+#define fpImmSetActiveContext gImmApiEntries.ImmSetActiveContext
+#define fpImmTranslateMessage gImmApiEntries.ImmTranslateMessage
+#define fpImmLoadLayout gImmApiEntries.ImmLoadLayout
+#define fpImmProcessKey gImmApiEntries.ImmProcessKey
 #define fpImmPutImeMenuItemsIntoMappedFile gImmApiEntries.ImmPutImeMenuItemsIntoMappedFile
-#define fpImmGetProperty            gImmApiEntries.ImmGetProperty
-#define fpImmSetCompositionStringA  gImmApiEntries.ImmSetCompositionStringA
-#define fpImmSetCompositionStringW  gImmApiEntries.ImmSetCompositionStringW
-#define fpImmEnumInputContext       gImmApiEntries.ImmEnumInputContext
-#define fpImmSystemHandler          gImmApiEntries.ImmSystemHandler
+#define fpImmGetProperty gImmApiEntries.ImmGetProperty
+#define fpImmSetCompositionStringA gImmApiEntries.ImmSetCompositionStringA
+#define fpImmSetCompositionStringW gImmApiEntries.ImmSetCompositionStringW
+#define fpImmEnumInputContext gImmApiEntries.ImmEnumInputContext
+#define fpImmSystemHandler gImmApiEntries.ImmSystemHandler
 
 BOOL SyncSoftKbdState(HIMC hImc, LPARAM lParam); // imectl.c
 
 #ifdef CUAS_ENABLE
 // Cicero
-#define fpCtfImmTIMActivate            gImmApiEntries.CtfImmTIMActivate
-#define fpCtfImmRestoreToolbarWnd      gImmApiEntries.CtfImmRestoreToolbarWnd
-#define fpCtfImmHideToolbarWnd         gImmApiEntries.CtfImmHideToolbarWnd
-#define fpCtfImmDispatchDefImeMessage  gImmApiEntries.CtfImmDispatchDefImeMessage
+#define fpCtfImmTIMActivate gImmApiEntries.CtfImmTIMActivate
+#define fpCtfImmRestoreToolbarWnd gImmApiEntries.CtfImmRestoreToolbarWnd
+#define fpCtfImmHideToolbarWnd gImmApiEntries.CtfImmHideToolbarWnd
+#define fpCtfImmDispatchDefImeMessage gImmApiEntries.CtfImmDispatchDefImeMessage
 
 #endif // CUAS_ENABLE
 
@@ -2802,14 +2634,12 @@ BOOL SyncSoftKbdState(HIMC hImc, LPARAM lParam); // imectl.c
  * Rebasing functions for shared memory. Need to located after
  * inclusion of globals.h.
  */
-__inline PVOID
-REBASESHAREDPTRALWAYS(KERNEL_PVOID p)
+__inline PVOID REBASESHAREDPTRALWAYS(KERNEL_PVOID p)
 {
     return (PVOID)(((KERNEL_UINT_PTR)p) - gSharedInfo.ulSharedDelta);
 }
 
-__inline PVOID
-REBASESHAREDPTR(KERNEL_PVOID p)
+__inline PVOID REBASESHAREDPTR(KERNEL_PVOID p)
 {
     return (p) ? REBASESHAREDPTRALWAYS(p) : NULL;
 }
@@ -2818,14 +2648,12 @@ REBASESHAREDPTR(KERNEL_PVOID p)
  * Multimonitor macros used in RTL. There are similar definitions
  * in kernel\userk.h
  */
-__inline PDISPLAYINFO
-GetDispInfo(VOID)
+__inline PDISPLAYINFO GetDispInfo(VOID)
 {
     return gSharedInfo.pDispInfo;
 }
 
-__inline PMONITOR
-GetPrimaryMonitor(VOID)
+__inline PMONITOR GetPrimaryMonitor(VOID)
 {
     return REBASESHAREDPTR(GetDispInfo()->pMonitorPrimary);
 }
@@ -2835,8 +2663,7 @@ GetPrimaryMonitor(VOID)
  * UserApiHook functions
  */
 
-__inline BOOL IsInsideUserApiHook(
-    VOID)
+__inline BOOL IsInsideUserApiHook(VOID)
 {
     return (ghmodUserApiHook != NULL) && gfUserApiHook;
 }
@@ -2846,10 +2673,13 @@ __inline BOOL _BeginIfHookedUserApiHook()
     UserAssert(gcCallUserApiHook < MAXLONG);
 
     InterlockedIncrement(&gcCallUserApiHook);
-    if (!IsInsideUserApiHook()) {
+    if (!IsInsideUserApiHook())
+    {
         InterlockedDecrement(&gcCallUserApiHook);
         return FALSE;
-    } else {
+    }
+    else
+    {
         UserAssertMsg0(ghmodUserApiHook != NULL, "Should not reach 0 while outstanding call");
         return TRUE;
     }
@@ -2857,46 +2687,49 @@ __inline BOOL _BeginIfHookedUserApiHook()
 
 VOID _EndUserApiHook(VOID);
 
-__inline BOOL _InsideLoaderLock(
-    VOID)
+__inline BOOL _InsideLoaderLock(VOID)
 {
     return (NtCurrentTeb()->ClientId.UniqueThread ==
             ((PRTL_CRITICAL_SECTION)(NtCurrentPeb()->LoaderLock))->OwningThread);
 }
 
-__inline VOID _AcquireLoaderLock(
-    VOID)
+__inline VOID _AcquireLoaderLock(VOID)
 {
     RtlEnterCriticalSection((PRTL_CRITICAL_SECTION)NtCurrentPeb()->LoaderLock);
 }
 
-__inline VOID _ReleaseLoaderLock(
-    VOID)
+__inline VOID _ReleaseLoaderLock(VOID)
 {
     RtlLeaveCriticalSection((PRTL_CRITICAL_SECTION)NtCurrentPeb()->LoaderLock);
 }
 
-#define BEGIN_USERAPIHOOK()                                                 \
-    {                                                                       \
-        BOOL fInsideHook = IsInsideUserApiHook();                           \
-                                                                            \
-        if (!gfServerProcess && !fInsideHook && TEST_SRVIF(SRVIF_HOOKED)) { \
-            if (!_InsideLoaderLock()) {                                     \
-                NtUserCallNoParam(SFI_XXXLOADUSERAPIHOOK);                  \
-            }                                                               \
-        }                                                                   \
-                                                                            \
-        fInsideHook = _BeginIfHookedUserApiHook();                          \
-        try {                                                               \
+#define BEGIN_USERAPIHOOK()                                               \
+    {                                                                     \
+        BOOL fInsideHook = IsInsideUserApiHook();                         \
+                                                                          \
+        if (!gfServerProcess && !fInsideHook && TEST_SRVIF(SRVIF_HOOKED)) \
+        {                                                                 \
+            if (!_InsideLoaderLock())                                     \
+            {                                                             \
+                NtUserCallNoParam(SFI_XXXLOADUSERAPIHOOK);                \
+            }                                                             \
+        }                                                                 \
+                                                                          \
+        fInsideHook = _BeginIfHookedUserApiHook();                        \
+        try                                                               \
+        {
 
 
-#define END_USERAPIHOOK()               \
-        } finally {                     \
-            if (fInsideHook) {          \
-                _EndUserApiHook();      \
-            }                           \
-        }                               \
-    }                                   \
+#define END_USERAPIHOOK()      \
+    }                          \
+    finally                    \
+    {                          \
+        if (fInsideHook)       \
+        {                      \
+            _EndUserApiHook(); \
+        }                      \
+    }                          \
+    }
 
 
 #ifdef MESSAGE_PUMP_HOOK
@@ -2907,13 +2740,12 @@ __inline BOOL IsInsideMessagePumpHook()
     return gfMessagePumpHook && (pcti != NULL) && (pcti->cMessagePumpHooks > 0);
 }
 
-#define BEGIN_MESSAGEPUMPHOOK()                         \
-    {                                                   \
-        BOOL fInsideHook = IsInsideMessagePumpHook();   \
+#define BEGIN_MESSAGEPUMPHOOK() \
+    {                           \
+        BOOL fInsideHook = IsInsideMessagePumpHook();
 
 
-#define END_MESSAGEPUMPHOOK()           \
-    }                                   \
+#define END_MESSAGEPUMPHOOK() }
 
 #endif // MESSAGE_PUMP_HOOK
 
@@ -2942,22 +2774,23 @@ BOOL GetCurrentProcessName(WCHAR *pszProcessName, int cch);
 BOOL GetUserSid(PTOKEN_USER *ppTokenUser);
 VOID UnloadLogging(HANDLE hEventLog);
 
-#define LOAD_ADVAPI_FN(var, a, err)                                         \
-    if ((var = (void*)GetProcAddress(ghAdvApi, #a)) == NULL) {              \
-        RIPMSG0(RIP_WARNING, "GetProcAddress " #a " failed.");              \
-        UnloadAdvApi32();                                                   \
-        return err;                                                         \
+#define LOAD_ADVAPI_FN(var, a, err)                            \
+    if ((var = (void *)GetProcAddress(ghAdvApi, #a)) == NULL)  \
+    {                                                          \
+        RIPMSG0(RIP_WARNING, "GetProcAddress " #a " failed."); \
+        UnloadAdvApi32();                                      \
+        return err;                                            \
     }
 
 #ifdef _JANUS_
 BOOL InitInstrument(LPDWORD lpEMIControl);
 #endif
 
-#define MAX_ATOM_LEN    256
-LPWSTR ClassNameToVersion (LPCWSTR lpClassName, LPWSTR pClassVerName, LPWSTR* lpDllName,BOOL bIsANSI);
+#define MAX_ATOM_LEN 256
+LPWSTR ClassNameToVersion(LPCWSTR lpClassName, LPWSTR pClassVerName, LPWSTR *lpDllName, BOOL bIsANSI);
 
 
-#define ARRAYSIZE(a)    (sizeof(a)/sizeof(a[0]))
+#define ARRAYSIZE(a) (sizeof(a) / sizeof(a[0]))
 
 #define TEST_DUSER_WMH 0
 
@@ -2967,18 +2800,18 @@ DECLARE_HANDLE(HDCONTEXT);
 
 typedef struct tagINITGADGET
 {
-    DWORD       cbSize;         // Size of structure
-    UINT        nThreadMode;    // Threading model
-    UINT        nMsgMode;       // DirectUser/Core messaging subsystem mode
-    HDCONTEXT   hctxShare;      // Existing context to share with
+    DWORD cbSize;        // Size of structure
+    UINT nThreadMode;    // Threading model
+    UINT nMsgMode;       // DirectUser/Core messaging subsystem mode
+    HDCONTEXT hctxShare; // Existing context to share with
 } INITGADGET;
 
-typedef HDCONTEXT (WINAPI * InitGadgetsProc)(INITGADGET * pInit);
-extern HDCONTEXT g_hctx;        // DirectUser Context
+typedef HDCONTEXT(WINAPI *InitGadgetsProc)(INITGADGET *pInit);
+extern HDCONTEXT g_hctx; // DirectUser Context
 
-#define IGTM_SEPARATE           (2)     // | MT with single thread per context
+#define IGTM_SEPARATE (2) // | MT with single thread per context
 
-#define IGMM_STANDARD           (3)     // | Standard mode on Whistler
+#define IGMM_STANDARD (3) // | Standard mode on Whistler
 
 #endif // TEST_DUSER_WMH
 

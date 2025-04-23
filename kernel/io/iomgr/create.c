@@ -32,21 +32,12 @@ Revision History:
 #pragma alloc_text(PAGE, NtCreateNamedPipeFile)
 #pragma alloc_text(PAGE, NtCreateMailslotFile)
 #endif
-
+
 NTSTATUS
-NtCreateFile(
-    OUT PHANDLE FileHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_ATTRIBUTES ObjectAttributes,
-    OUT PIO_STATUS_BLOCK IoStatusBlock,
-    IN PLARGE_INTEGER AllocationSize OPTIONAL,
-    IN ULONG FileAttributes,
-    IN ULONG ShareAccess,
-    IN ULONG CreateDisposition,
-    IN ULONG CreateOptions,
-    IN PVOID EaBuffer OPTIONAL,
-    IN ULONG EaLength
-    )
+NtCreateFile(OUT PHANDLE FileHandle, IN ACCESS_MASK DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes,
+             OUT PIO_STATUS_BLOCK IoStatusBlock, IN PLARGE_INTEGER AllocationSize OPTIONAL, IN ULONG FileAttributes,
+             IN ULONG ShareAccess, IN ULONG CreateDisposition, IN ULONG CreateOptions, IN PVOID EaBuffer OPTIONAL,
+             IN ULONG EaLength)
 
 /*++
 
@@ -105,39 +96,17 @@ Return Value:
 
     PAGED_CODE();
 
-    return IoCreateFile( FileHandle,
-                         DesiredAccess,
-                         ObjectAttributes,
-                         IoStatusBlock,
-                         AllocationSize,
-                         FileAttributes,
-                         ShareAccess,
-                         CreateDisposition,
-                         CreateOptions,
-                         EaBuffer,
-                         EaLength,
-                         CreateFileTypeNone,
-                         (PVOID)NULL,
-                         0 );
+    return IoCreateFile(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, AllocationSize, FileAttributes,
+                        ShareAccess, CreateDisposition, CreateOptions, EaBuffer, EaLength, CreateFileTypeNone,
+                        (PVOID)NULL, 0);
 }
-
+
 NTSTATUS
-NtCreateNamedPipeFile(
-     OUT PHANDLE FileHandle,
-     IN ULONG DesiredAccess,
-     IN POBJECT_ATTRIBUTES ObjectAttributes,
-     OUT PIO_STATUS_BLOCK IoStatusBlock,
-     IN ULONG ShareAccess,
-     IN ULONG CreateDisposition,
-     IN ULONG CreateOptions,
-     IN ULONG NamedPipeType,
-     IN ULONG ReadMode,
-     IN ULONG CompletionMode,
-     IN ULONG MaximumInstances,
-     IN ULONG InboundQuota,
-     IN ULONG OutboundQuota,
-     IN PLARGE_INTEGER DefaultTimeout OPTIONAL
-     )
+NtCreateNamedPipeFile(OUT PHANDLE FileHandle, IN ULONG DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes,
+                      OUT PIO_STATUS_BLOCK IoStatusBlock, IN ULONG ShareAccess, IN ULONG CreateDisposition,
+                      IN ULONG CreateOptions, IN ULONG NamedPipeType, IN ULONG ReadMode, IN ULONG CompletionMode,
+                      IN ULONG MaximumInstances, IN ULONG InboundQuota, IN ULONG OutboundQuota,
+                      IN PLARGE_INTEGER DefaultTimeout OPTIONAL)
 
 /*++
 
@@ -201,7 +170,8 @@ Return Value:
     // so, then capture it in the named pipe create parameter structure.
     //
 
-    if (ARGUMENT_PRESENT( DefaultTimeout )) {
+    if (ARGUMENT_PRESENT(DefaultTimeout))
+    {
 
         //
         // Indicate that a default timeout period was specified.
@@ -215,13 +185,15 @@ Return Value:
         // of a try...except clause.
         //
 
-        if (KeGetPreviousMode() != KernelMode) {
-            try {
-                ProbeForReadSmallStructure ( DefaultTimeout,
-                                             sizeof( LARGE_INTEGER ),
-                                             sizeof( ULONG ) );
+        if (KeGetPreviousMode() != KernelMode)
+        {
+            try
+            {
+                ProbeForReadSmallStructure(DefaultTimeout, sizeof(LARGE_INTEGER), sizeof(ULONG));
                 namedPipeCreateParameters.DefaultTimeout = *DefaultTimeout;
-            } except(EXCEPTION_EXECUTE_HANDLER) {
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
 
                 //
                 // Something went awry attempting to access the parameter.
@@ -231,7 +203,9 @@ Return Value:
 
                 return GetExceptionCode();
             }
-        } else {
+        }
+        else
+        {
 
             //
             // The caller's mode was kernel so simply store the parameter.
@@ -239,7 +213,9 @@ Return Value:
 
             namedPipeCreateParameters.DefaultTimeout = *DefaultTimeout;
         }
-    } else {
+    }
+    else
+    {
 
         //
         // Indicate that no default timeout period was specified.
@@ -265,33 +241,15 @@ Return Value:
     // file creation code to do the work.
     //
 
-    return IoCreateFile( FileHandle,
-                         DesiredAccess,
-                         ObjectAttributes,
-                         IoStatusBlock,
-                         (PLARGE_INTEGER) NULL,
-                         0L,
-                         ShareAccess,
-                         CreateDisposition,
-                         CreateOptions,
-                         (PVOID) NULL,
-                         0L,
-                         CreateFileTypeNamedPipe,
-                         &namedPipeCreateParameters,
-                         0 );
+    return IoCreateFile(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, (PLARGE_INTEGER)NULL, 0L,
+                        ShareAccess, CreateDisposition, CreateOptions, (PVOID)NULL, 0L, CreateFileTypeNamedPipe,
+                        &namedPipeCreateParameters, 0);
 }
-
+
 NTSTATUS
-NtCreateMailslotFile(
-     OUT PHANDLE FileHandle,
-     IN ULONG DesiredAccess,
-     IN POBJECT_ATTRIBUTES ObjectAttributes,
-     OUT PIO_STATUS_BLOCK IoStatusBlock,
-     ULONG CreateOptions,
-     IN ULONG MailslotQuota,
-     IN ULONG MaximumMessageSize,
-     IN PLARGE_INTEGER ReadTimeout
-     )
+NtCreateMailslotFile(OUT PHANDLE FileHandle, IN ULONG DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes,
+                     OUT PIO_STATUS_BLOCK IoStatusBlock, ULONG CreateOptions, IN ULONG MailslotQuota,
+                     IN ULONG MaximumMessageSize, IN PLARGE_INTEGER ReadTimeout)
 
 /*++
 
@@ -339,7 +297,8 @@ Return Value:
     // so, then capture it in the mailslot create parameter structure.
     //
 
-    if (ARGUMENT_PRESENT( ReadTimeout )) {
+    if (ARGUMENT_PRESENT(ReadTimeout))
+    {
 
         //
         // Indicate that a read timeout period was specified.
@@ -353,13 +312,15 @@ Return Value:
         // of a try...except clause.
         //
 
-        if (KeGetPreviousMode() != KernelMode) {
-            try {
-                ProbeForReadSmallStructure( ReadTimeout,
-                                            sizeof( LARGE_INTEGER ),
-                                            sizeof( ULONG ) );
+        if (KeGetPreviousMode() != KernelMode)
+        {
+            try
+            {
+                ProbeForReadSmallStructure(ReadTimeout, sizeof(LARGE_INTEGER), sizeof(ULONG));
                 mailslotCreateParameters.ReadTimeout = *ReadTimeout;
-            } except(EXCEPTION_EXECUTE_HANDLER) {
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
 
                 //
                 // Something went awry attempting to access the parameter.
@@ -369,7 +330,9 @@ Return Value:
 
                 return GetExceptionCode();
             }
-        } else {
+        }
+        else
+        {
 
             //
             // The caller's mode was kernel so simply store the parameter.
@@ -377,7 +340,9 @@ Return Value:
 
             mailslotCreateParameters.ReadTimeout = *ReadTimeout;
         }
-    } else {
+    }
+    else
+    {
 
         //
         // Indicate that no default timeout period was specified.
@@ -399,18 +364,7 @@ Return Value:
     // file creation code to do the work.
     //
 
-    return IoCreateFile( FileHandle,
-                         DesiredAccess,
-                         ObjectAttributes,
-                         IoStatusBlock,
-                         (PLARGE_INTEGER) NULL,
-                         0L,
-                         FILE_SHARE_READ | FILE_SHARE_WRITE,
-                         FILE_CREATE,
-                         CreateOptions,
-                         (PVOID) NULL,
-                         0L,
-                         CreateFileTypeMailslot,
-                         &mailslotCreateParameters,
-                         0 );
+    return IoCreateFile(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, (PLARGE_INTEGER)NULL, 0L,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_CREATE, CreateOptions, (PVOID)NULL, 0L,
+                        CreateFileTypeMailslot, &mailslotCreateParameters, 0);
 }

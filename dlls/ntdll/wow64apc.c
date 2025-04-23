@@ -32,15 +32,8 @@ extern PVOID Wow64ApcRoutine;
 #endif
 
 
-
-
 #if defined(_WIN64)
-VOID
-RtlpWow64Apc(
-    IN PVOID Argument1,
-    IN PVOID Argument2,
-    IN PVOID Argument3
-    )
+VOID RtlpWow64Apc(IN PVOID Argument1, IN PVOID Argument2, IN PVOID Argument3)
 
 /*++
 
@@ -67,23 +60,15 @@ Return Value:
 {
     if (Wow64ApcRoutine)
     {
-        (*(PPS_APC_ROUTINE) Wow64ApcRoutine) (
-            Argument1,
-            Argument2,
-            Argument3);
+        (*(PPS_APC_ROUTINE)Wow64ApcRoutine)(Argument1, Argument2, Argument3);
     }
 }
 
 #endif
 
 NTSTATUS
-RtlQueueApcWow64Thread(
-    IN HANDLE ThreadHandle,
-    IN PPS_APC_ROUTINE ApcRoutine,
-    IN PVOID ApcArgument1,
-    IN PVOID ApcArgument2,
-    IN PVOID ApcArgument3
-    )
+RtlQueueApcWow64Thread(IN HANDLE ThreadHandle, IN PPS_APC_ROUTINE ApcRoutine, IN PVOID ApcArgument1,
+                       IN PVOID ApcArgument2, IN PVOID ApcArgument3)
 
 /*++
 
@@ -122,16 +107,10 @@ Return Value:
     // Setup the jacket routine inside ntdll
     //
 
-    ApcArgument1 = (PVOID)((ULONG_PTR) ApcArgument1 | 
-                           ((ULONG_PTR) ApcRoutine << 32 ));
+    ApcArgument1 = (PVOID)((ULONG_PTR)ApcArgument1 | ((ULONG_PTR)ApcRoutine << 32));
 
     ApcRoutine = RtlpWow64Apc;
 #endif
 
-    return NtQueueApcThread (
-        ThreadHandle,
-        ApcRoutine,
-        ApcArgument1,
-        ApcArgument2,
-        ApcArgument3);
+    return NtQueueApcThread(ThreadHandle, ApcRoutine, ApcArgument1, ApcArgument2, ApcArgument3);
 }

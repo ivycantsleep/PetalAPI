@@ -39,80 +39,60 @@ Revision History:
 #include "floatem.h"
 
 
-extern LONG
-HalFpEmulate (
-    ULONG   trap_type,
-    BUNDLE  *pBundle,
-    ULONGLONG *pipsr,
-    ULONGLONG *pfpsr,
-    ULONGLONG *pisr,
-    ULONGLONG *ppreds,
-    ULONGLONG *pifs,
-    FP_STATE  *fp_state
-    );
+extern LONG HalFpEmulate(ULONG trap_type, BUNDLE *pBundle, ULONGLONG *pipsr, ULONGLONG *pfpsr, ULONGLONG *pisr,
+                         ULONGLONG *ppreds, ULONGLONG *pifs, FP_STATE *fp_state);
 
 
 #define ALL_FP_REGISTERS_SAVED 0xFFFFFFFFFFFFFFFFi64
 
-int
-fp_emulate (
-    int trap_type,
-    BUNDLE *pbundle,
-    EM_int64_t *pipsr,
-    EM_int64_t *pfpsr,
-    EM_int64_t *pisr,
-    EM_int64_t *ppreds,
-    EM_int64_t *pifs,
-    void *fp_state
-    )
+int fp_emulate(int trap_type, BUNDLE *pbundle, EM_int64_t *pipsr, EM_int64_t *pfpsr, EM_int64_t *pisr,
+               EM_int64_t *ppreds, EM_int64_t *pifs, void *fp_state)
 {
     //
     // Pointer to old Floating point state FLOATING_POINT_STATE
     //
 
-    FLOATING_POINT_STATE     *Ptr0FPState;
-    PKEXCEPTION_FRAME         LocalExceptionFramePtr;
-    PKTRAP_FRAME              LocalTrapFramePtr;
+    FLOATING_POINT_STATE *Ptr0FPState;
+    PKEXCEPTION_FRAME LocalExceptionFramePtr;
+    PKTRAP_FRAME LocalTrapFramePtr;
     FP_STATE FpState;
     KIRQL OldIrql;
     BOOLEAN LessThanAPC;
-    int  Status;
+    int Status;
 
-    Ptr0FPState = (PFLOATING_POINT_STATE) fp_state;
+    Ptr0FPState = (PFLOATING_POINT_STATE)fp_state;
 
-    LocalExceptionFramePtr = (PKEXCEPTION_FRAME) (Ptr0FPState->ExceptionFrame);
-    LocalTrapFramePtr      = (PKTRAP_FRAME)      (Ptr0FPState->TrapFrame);
+    LocalExceptionFramePtr = (PKEXCEPTION_FRAME)(Ptr0FPState->ExceptionFrame);
+    LocalTrapFramePtr = (PKTRAP_FRAME)(Ptr0FPState->TrapFrame);
 
-    FpState.bitmask_low64           = ALL_FP_REGISTERS_SAVED;
-    FpState.bitmask_high64          = ALL_FP_REGISTERS_SAVED;
+    FpState.bitmask_low64 = ALL_FP_REGISTERS_SAVED;
+    FpState.bitmask_high64 = ALL_FP_REGISTERS_SAVED;
 
-    (FLOAT128 *)FpState.fp_state_low_preserved   = &(LocalExceptionFramePtr->FltS0);
-    (FLOAT128 *)FpState.fp_state_low_volatile    = &(LocalTrapFramePtr->FltT0);
-    (FLOAT128 *)FpState.fp_state_high_preserved  = &(LocalExceptionFramePtr->FltS4);
+    (FLOAT128 *)FpState.fp_state_low_preserved = &(LocalExceptionFramePtr->FltS0);
+    (FLOAT128 *)FpState.fp_state_low_volatile = &(LocalTrapFramePtr->FltT0);
+    (FLOAT128 *)FpState.fp_state_high_preserved = &(LocalExceptionFramePtr->FltS4);
 
-    (FLOAT128 *)FpState.fp_state_high_volatile  = (PFLOAT128)GET_HIGH_FLOATING_POINT_REGISTER_SAVEAREA(KeGetCurrentThread()->StackBase);
+    (FLOAT128 *)FpState.fp_state_high_volatile =
+        (PFLOAT128)GET_HIGH_FLOATING_POINT_REGISTER_SAVEAREA(KeGetCurrentThread()->StackBase);
 
-    if (KeGetCurrentIrql() < APC_LEVEL) {
-       LessThanAPC = 1;
-    } else {
-       LessThanAPC = 0;
+    if (KeGetCurrentIrql() < APC_LEVEL)
+    {
+        LessThanAPC = 1;
+    }
+    else
+    {
+        LessThanAPC = 0;
     }
 
-    if (LessThanAPC)  {
-       KeRaiseIrql (APC_LEVEL, &OldIrql);
+    if (LessThanAPC)
+    {
+        KeRaiseIrql(APC_LEVEL, &OldIrql);
     }
 
-    Status = HalFpEmulate(trap_type,
-                          pbundle,
-                          pipsr,
-                          pfpsr,
-                          pisr,
-                          ppreds,
-                          pifs,
-                          &FpState
-                          );
-    if (LessThanAPC) {
-       KeLowerIrql (OldIrql);
+    Status = HalFpEmulate(trap_type, pbundle, pipsr, pfpsr, pisr, ppreds, pifs, &FpState);
+    if (LessThanAPC)
+    {
+        KeLowerIrql(OldIrql);
     }
 
     return Status;

@@ -35,60 +35,55 @@ Revision History:
 //
 // This is the root device extension
 //
-PDEVICE_EXTENSION       RootDeviceExtension;
+PDEVICE_EXTENSION RootDeviceExtension;
 
 //
 // This is the pool that controls the allocations for Device Extensions
 //
-NPAGED_LOOKASIDE_LIST   DeviceExtensionLookAsideList;
+NPAGED_LOOKASIDE_LIST DeviceExtensionLookAsideList;
 
 //
 // This is the list entry for all the surprise removed extensions
 //
-PDEVICE_EXTENSION       AcpiSurpriseRemovedDeviceExtensions[ACPI_MAX_REMOVED_EXTENSIONS];
+PDEVICE_EXTENSION AcpiSurpriseRemovedDeviceExtensions[ACPI_MAX_REMOVED_EXTENSIONS];
 
 //
 // This is the index into the Surprise Removed Index array
 //
-ULONG                   AcpiSurpriseRemovedIndex;
+ULONG AcpiSurpriseRemovedIndex;
 
 //
 // This is the lock that is required when modifying the links between
 // the device extension structures
 //
-KSPIN_LOCK              AcpiDeviceTreeLock;
+KSPIN_LOCK AcpiDeviceTreeLock;
 
 //
 // This is the ulong that will remember which S states are supported by the
 // system. The convention for using this ulong is that we 1 << SupportedState
 // into it
 //
-ULONG                   AcpiSupportedSystemStates;
+ULONG AcpiSupportedSystemStates;
 
 //
 // This is where acpi will store the various overrides
 //
-ULONG                   AcpiOverrideAttributes;
+ULONG AcpiOverrideAttributes;
 
 //
 // This is where acpi will store its registry path
 //
-UNICODE_STRING          AcpiRegistryPath;
+UNICODE_STRING AcpiRegistryPath;
 
 //
 // This is the processor revision string...
 //
-ANSI_STRING             AcpiProcessorString;
+ANSI_STRING AcpiProcessorString;
 
-
+
 NTSTATUS
-ACPIDetectCouldExtensionBeInRelation(
-    IN  PDEVICE_EXTENSION   DeviceExtension,
-    IN  PDEVICE_RELATIONS   DeviceRelations,
-    IN  BOOLEAN             RequireADR,
-    IN  BOOLEAN             RequireHID,
-    OUT PDEVICE_OBJECT      *PdoObject
-    )
+ACPIDetectCouldExtensionBeInRelation(IN PDEVICE_EXTENSION DeviceExtension, IN PDEVICE_RELATIONS DeviceRelations,
+                                     IN BOOLEAN RequireADR, IN BOOLEAN RequireHID, OUT PDEVICE_OBJECT *PdoObject)
 /*++
 
 Routine Description:
@@ -119,60 +114,59 @@ Return Value:
 
 --*/
 {
-    BOOLEAN         match       = FALSE;
-    BOOLEAN         testADR     = FALSE;
-    BOOLEAN         testHID     = FALSE;
-    NTSTATUS        status;
-    UNICODE_STRING  acpiUnicodeID;
-    ULONG           address;
-    ULONG           i;
+    BOOLEAN match = FALSE;
+    BOOLEAN testADR = FALSE;
+    BOOLEAN testHID = FALSE;
+    NTSTATUS status;
+    UNICODE_STRING acpiUnicodeID;
+    ULONG address;
+    ULONG i;
 
     PAGED_CODE();
 
-    ASSERT( PdoObject != NULL);
-    if (PdoObject == NULL) {
+    ASSERT(PdoObject != NULL);
+    if (PdoObject == NULL)
+    {
 
         return STATUS_INVALID_PARAMETER_1;
-
     }
     *PdoObject = NULL;
 
     //
     // Make sure to initialize the UNICODE_STRING
     //
-    RtlZeroMemory( &acpiUnicodeID, sizeof(UNICODE_STRING) );
+    RtlZeroMemory(&acpiUnicodeID, sizeof(UNICODE_STRING));
 
     //
     // Check to see if there is an _ADR present
     //
-    if (RequireADR) {
+    if (RequireADR)
+    {
 
         //
         // Filters must have _ADR's
         //
-        if ( !(DeviceExtension->Flags & DEV_PROP_ADDRESS) ) {
+        if (!(DeviceExtension->Flags & DEV_PROP_ADDRESS))
+        {
 
             return STATUS_OBJECT_NAME_NOT_FOUND;
-
         }
-
     }
 
     //
     // Check to see if there is an _HID present
     //
-    if (RequireHID) {
+    if (RequireHID)
+    {
 
         //
         // Non-Filters require _HID's
         //
-        if (DeviceExtension->DeviceID == NULL ||
-            !(DeviceExtension->Flags & DEV_PROP_HID) ) {
+        if (DeviceExtension->DeviceID == NULL || !(DeviceExtension->Flags & DEV_PROP_HID))
+        {
 
             return STATUS_OBJECT_NAME_NOT_FOUND;
-
         }
-
     }
 
     //
@@ -180,45 +174,38 @@ Return Value:
     // any work to do. This device obviously could be a Pdo child (as opposed
     // to a filter) but it sure isn't at the moment.
     //
-    if (DeviceRelations == NULL || DeviceRelations->Count == 0) {
+    if (DeviceRelations == NULL || DeviceRelations->Count == 0)
+    {
 
         //
         // No match
         //
         return STATUS_SUCCESS;
-
     }
 
     //
     // If we get to this point, and there is an _ADR present, we will test with
     // it. We also obtain the address at this time
     //
-    if ( (DeviceExtension->Flags & DEV_MASK_ADDRESS) ) {
+    if ((DeviceExtension->Flags & DEV_MASK_ADDRESS))
+    {
 
         testADR = TRUE;
-        status = ACPIGetAddressSync(
-            DeviceExtension,
-            &address,
-            NULL
-            );
-
+        status = ACPIGetAddressSync(DeviceExtension, &address, NULL);
     }
 
     //
     // If we get to this point, and there is an _HID present, then we will
     // test with it. We will build the unicode address at this time
     //
-    if ( (DeviceExtension->Flags & DEV_MASK_HID) ) {
+    if ((DeviceExtension->Flags & DEV_MASK_HID))
+    {
 
-        status = ACPIGetPnpIDSyncWide(
-            DeviceExtension,
-            &(acpiUnicodeID.Buffer),
-            &(acpiUnicodeID.Length)
-            );
-        if (!NT_SUCCESS(status)) {
+        status = ACPIGetPnpIDSyncWide(DeviceExtension, &(acpiUnicodeID.Buffer), &(acpiUnicodeID.Length));
+        if (!NT_SUCCESS(status))
+        {
 
             return status;
-
         }
 
         //
@@ -230,13 +217,13 @@ Return Value:
         // Remember to test fora _HID
         //
         testHID = TRUE;
-
     }
 
     //
     // Loop for all the object in the extension
     //
-    for (i = 0; i < DeviceRelations->Count; i++) {
+    for (i = 0; i < DeviceRelations->Count; i++)
+    {
 
         //
         // Assume we don't have a match
@@ -247,24 +234,20 @@ Return Value:
         // Check to see if we match the address
         //
 
-        if (testHID) {
+        if (testHID)
+        {
 
-            status = ACPIMatchHardwareId(
-                DeviceRelations->Objects[i],
-                &acpiUnicodeID,
-                &match
-                );
+            status = ACPIMatchHardwareId(DeviceRelations->Objects[i], &acpiUnicodeID, &match);
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
 
                 //
                 // If we failed, then I guess we can just ignore it and
                 // proceed
                 //
                 continue;
-
             }
-
         }
 
         //
@@ -278,44 +261,41 @@ Return Value:
         // an ADR, then we just continue. But if we have ADR and don't have
         // a match, we might just have a match, so we will try again
         //
-        if (match == FALSE && testADR == FALSE) {
+        if (match == FALSE && testADR == FALSE)
+        {
 
             //
             // Then just continue
             //
             continue;
-
         }
 
         //
         // If there is an ADR, then we must check for that as well
         //
-        if (testADR) {
+        if (testADR)
+        {
 
             match = FALSE;
-            status = ACPIMatchHardwareAddress(
-                DeviceRelations->Objects[i],
-                address,
-                &match
-                );
-            if (!NT_SUCCESS(status)) {
+            status = ACPIMatchHardwareAddress(DeviceRelations->Objects[i], address, &match);
+            if (!NT_SUCCESS(status))
+            {
 
                 //
                 // If we failed, then I guess we
                 continue;
-
             }
 
             //
             // Did we match?
             //
-            if (match == FALSE) {
+            if (match == FALSE)
+            {
 
                 //
                 // Then just continue
                 //
                 continue;
-
             }
 
         } // if (addrObject ... )
@@ -324,21 +304,18 @@ Return Value:
         // At this point, there is no doubt, there is a match
         //
         *PdoObject = DeviceRelations->Objects[i];
-        break ;
+        break;
 
     } // for
 
     //
     // We have exhausted all options --- thus there is no match
     //
-    return STATUS_SUCCESS ;
+    return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-ACPIDetectDockDevices(
-    IN     PDEVICE_EXTENSION   DeviceExtension,
-    IN OUT PDEVICE_RELATIONS   *DeviceRelations
-    )
+ACPIDetectDockDevices(IN PDEVICE_EXTENSION DeviceExtension, IN OUT PDEVICE_RELATIONS *DeviceRelations)
 /*++
 
 Routine Description
@@ -356,27 +333,28 @@ Return Value:
 
 --*/
 {
-    BOOLEAN                 matchFound;
-    EXTENSIONLIST_ENUMDATA  eled ;
-    LONG                    oldReferenceCount;
-    KIRQL                   oldIrql;
-    PDEVICE_OBJECT          tempPdo ;
-    NTSTATUS                status              = STATUS_SUCCESS;
-    PDEVICE_EXTENSION       providerExtension   = NULL;
-    PDEVICE_EXTENSION       targetExtension     = NULL;
-    PDEVICE_RELATIONS       currentRelations    = NULL;
-    PDEVICE_RELATIONS       newRelations        = NULL;
-    PLIST_ENTRY             listEntry           = NULL;
-    ULONG                   i                   = 0;
-    ULONG                   j                   = 0;
-    ULONG                   index               = 0;
-    ULONG                   newRelationSize     = 0;
-    ULONG                   deviceStatus;
+    BOOLEAN matchFound;
+    EXTENSIONLIST_ENUMDATA eled;
+    LONG oldReferenceCount;
+    KIRQL oldIrql;
+    PDEVICE_OBJECT tempPdo;
+    NTSTATUS status = STATUS_SUCCESS;
+    PDEVICE_EXTENSION providerExtension = NULL;
+    PDEVICE_EXTENSION targetExtension = NULL;
+    PDEVICE_RELATIONS currentRelations = NULL;
+    PDEVICE_RELATIONS newRelations = NULL;
+    PLIST_ENTRY listEntry = NULL;
+    ULONG i = 0;
+    ULONG j = 0;
+    ULONG index = 0;
+    ULONG newRelationSize = 0;
+    ULONG deviceStatus;
 
     //
     // Determine the current size of the device relation (if any exists)
     //
-    if (DeviceRelations != NULL && *DeviceRelations != NULL) {
+    if (DeviceRelations != NULL && *DeviceRelations != NULL)
+    {
 
         //
         // We need this value to help us build an MDL. After that is done,
@@ -384,32 +362,27 @@ Return Value:
         //
         currentRelations = (*DeviceRelations);
         newRelationSize = currentRelations->Count;
-
     }
 
-    ACPIExtListSetupEnum(
-        &eled,
-        &(DeviceExtension->ChildDeviceList),
-        &AcpiDeviceTreeLock,
-        SiblingDeviceList,
-        WALKSCHEME_REFERENCE_ENTRIES
-        ) ;
+    ACPIExtListSetupEnum(&eled, &(DeviceExtension->ChildDeviceList), &AcpiDeviceTreeLock, SiblingDeviceList,
+                         WALKSCHEME_REFERENCE_ENTRIES);
 
-    for(providerExtension = ACPIExtListStartEnum(&eled);
-                            ACPIExtListTestElement(&eled, (BOOLEAN) NT_SUCCESS(status));
-        providerExtension = ACPIExtListEnumNext(&eled)) {
+    for (providerExtension = ACPIExtListStartEnum(&eled); ACPIExtListTestElement(&eled, (BOOLEAN)NT_SUCCESS(status));
+         providerExtension = ACPIExtListEnumNext(&eled))
+    {
 
-        if (providerExtension == NULL) {
+        if (providerExtension == NULL)
+        {
 
-            ACPIExtListExitEnumEarly( &eled );
+            ACPIExtListExitEnumEarly(&eled);
             break;
-
         }
 
         //
         // Only profile providers for this walk...
         //
-        if (!(providerExtension->Flags & DEV_PROP_DOCK)) {
+        if (!(providerExtension->Flags & DEV_PROP_DOCK))
+        {
 
             continue;
         }
@@ -417,145 +390,117 @@ Return Value:
         //
         // Is it physically present?
         //
-        status = ACPIGetDevicePresenceSync(
-            providerExtension,
-            (PVOID *) &deviceStatus,
-            NULL
-            );
+        status = ACPIGetDevicePresenceSync(providerExtension, (PVOID *)&deviceStatus, NULL);
 
-        if (!(providerExtension->Flags & DEV_MASK_NOT_PRESENT)) {
+        if (!(providerExtension->Flags & DEV_MASK_NOT_PRESENT))
+        {
 
             //
             // This profile provider should be in the list
             //
-            if (providerExtension->DeviceObject == NULL) {
+            if (providerExtension->DeviceObject == NULL)
+            {
 
                 //
                 // Build it
                 //
-                status = ACPIBuildPdo(
-                    DeviceExtension->DeviceObject->DriverObject,
-                    providerExtension,
-                    DeviceExtension->DeviceObject,
-                    FALSE
-                    );
-                if (!NT_SUCCESS(status)) {
+                status = ACPIBuildPdo(DeviceExtension->DeviceObject->DriverObject, providerExtension,
+                                      DeviceExtension->DeviceObject, FALSE);
+                if (!NT_SUCCESS(status))
+                {
 
-                    ASSERT(providerExtension->DeviceObject == NULL) ;
-
+                    ASSERT(providerExtension->DeviceObject == NULL);
                 }
-
             }
 
-            if (providerExtension->DeviceObject != NULL) {
+            if (providerExtension->DeviceObject != NULL)
+            {
 
-                if (!ACPIExtListIsMemberOfRelation(
-                    providerExtension->DeviceObject,
-                    currentRelations
-                    )) {
+                if (!ACPIExtListIsMemberOfRelation(providerExtension->DeviceObject, currentRelations))
+                {
 
                     newRelationSize++;
-
                 }
-
             }
 
         } // if (providerExtension ... )
-
     }
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // Hmm... Let the world know that this happened
         //
-        ACPIDevPrint( (
-            ACPI_PRINT_FAILURE,
-            providerExtension,
-            "ACPIDetectDockDevices: ACPIBuildPdo = %08lx\n",
-            status
-            ) );
+        ACPIDevPrint((ACPI_PRINT_FAILURE, providerExtension, "ACPIDetectDockDevices: ACPIBuildPdo = %08lx\n", status));
         return status;
-
     }
 
     //
     // At this point, we can see if we need to change the size of the
     // device relations
     //
-    if ( (currentRelations != NULL && newRelationSize == currentRelations->Count) ||
-         (currentRelations == NULL && newRelationSize == 0) ) {
+    if ((currentRelations != NULL && newRelationSize == currentRelations->Count) ||
+        (currentRelations == NULL && newRelationSize == 0))
+    {
 
         //
         // Done
         //
         return STATUS_SUCCESS;
-
     }
 
     //
     // Determine the size of the new relations. Use index as a
     // scratch buffer
     //
-    index = sizeof(DEVICE_RELATIONS) +
-        ( sizeof(PDEVICE_OBJECT) * (newRelationSize - 1) );
+    index = sizeof(DEVICE_RELATIONS) + (sizeof(PDEVICE_OBJECT) * (newRelationSize - 1));
 
     //
     // Allocate the new device relation buffer. Use nonpaged pool since we
     // are at dispatch
     //
-    newRelations = ExAllocatePoolWithTag(
-        NonPagedPool,
-        index,
-        ACPI_DEVICE_POOLTAG
-        );
-    if (newRelations == NULL) {
+    newRelations = ExAllocatePoolWithTag(NonPagedPool, index, ACPI_DEVICE_POOLTAG);
+    if (newRelations == NULL)
+    {
 
         //
         // Return failure
         //
         return STATUS_INSUFFICIENT_RESOURCES;
-
     }
 
     //
     // Initialize DeviceRelations data structure
     //
-    RtlZeroMemory( newRelations, index );
+    RtlZeroMemory(newRelations, index);
 
     //
     // If there are existing relations, we must determine
-    if (currentRelations) {
+    if (currentRelations)
+    {
 
         //
         // Copy old relations, and determine the starting index for the
         // first of the PDOs created by this driver. We will put off freeing
         // the old relations till we are no longer holding the lock
         //
-        RtlCopyMemory(
-            newRelations->Objects,
-            currentRelations->Objects,
-            currentRelations->Count * sizeof(PDEVICE_OBJECT)
-            );
+        RtlCopyMemory(newRelations->Objects, currentRelations->Objects,
+                      currentRelations->Count * sizeof(PDEVICE_OBJECT));
         index = currentRelations->Count;
         j = currentRelations->Count;
-
-    } else {
+    }
+    else
+    {
 
         //
         // There will not be a lot of work to do in this case
         //
         index = j = 0;
-
     }
 
-    ACPIExtListSetupEnum(
-        &eled,
-        &(DeviceExtension->ChildDeviceList),
-        &AcpiDeviceTreeLock,
-        SiblingDeviceList,
-        WALKSCHEME_HOLD_SPINLOCK
-        ) ;
+    ACPIExtListSetupEnum(&eled, &(DeviceExtension->ChildDeviceList), &AcpiDeviceTreeLock, SiblingDeviceList,
+                         WALKSCHEME_HOLD_SPINLOCK);
 
     //
     // We need the spin lock so that we can walk the tree again. This time
@@ -563,31 +508,31 @@ Return Value:
     // to call anything that will at PASSIVE_LEVEL
     //
 
-    for(providerExtension = ACPIExtListStartEnum(&eled);
-                            ACPIExtListTestElement(&eled, (BOOLEAN) (newRelationSize!=index));
-        providerExtension = ACPIExtListEnumNext(&eled)) {
+    for (providerExtension = ACPIExtListStartEnum(&eled);
+         ACPIExtListTestElement(&eled, (BOOLEAN)(newRelationSize != index));
+         providerExtension = ACPIExtListEnumNext(&eled))
+    {
 
         //
         // The only objects that we care about are those that are marked as
         // PDOs and have a physical object associated with them
         //
-        if (!(providerExtension->Flags & DEV_MASK_NOT_PRESENT)     &&
-             (providerExtension->Flags & DEV_PROP_DOCK) &&
-              providerExtension->DeviceObject != NULL ) {
+        if (!(providerExtension->Flags & DEV_MASK_NOT_PRESENT) && (providerExtension->Flags & DEV_PROP_DOCK) &&
+            providerExtension->DeviceObject != NULL)
+        {
 
             //
             // We don't ObReferenceO here because we are still at
             // dispatch level (and for efficiency's sake, we don't
             // want to drop down)
             //
-            newRelations->Objects[index] =
-                providerExtension->PhysicalDeviceObject;
+            newRelations->Objects[index] = providerExtension->PhysicalDeviceObject;
 
             //
             // Update the location for the next object in the
             // relation
             //
-            index++ ;
+            index++;
 
         } // if (providerExtension->Flags ... )
 
@@ -604,52 +549,43 @@ Return Value:
     // We have to reference all of the objects that we added
     //
     index = (currentRelations != NULL ? currentRelations->Count : 0);
-    for (; index < newRelationSize; index++) {
+    for (; index < newRelationSize; index++)
+    {
 
         //
         // Attempt to reference the object
         //
-        status = ObReferenceObjectByPointer(
-            newRelations->Objects[index],
-            0,
-            NULL,
-            KernelMode
-            );
-        if (!NT_SUCCESS(status) ) {
+        status = ObReferenceObjectByPointer(newRelations->Objects[index], 0, NULL, KernelMode);
+        if (!NT_SUCCESS(status))
+        {
 
-            PDEVICE_OBJECT  tempDeviceObject;
+            PDEVICE_OBJECT tempDeviceObject;
 
             //
             // Hmm... Let the world know that this happened
             //
-            ACPIPrint( (
-                ACPI_PRINT_FAILURE,
-                "ACPIDetectDockDevices: ObjReferenceObject(0x%08lx) "
-                "= 0x%08lx\n",
-                newRelations->Objects[index],
-                status
-                ) );
+            ACPIPrint((ACPI_PRINT_FAILURE,
+                       "ACPIDetectDockDevices: ObjReferenceObject(0x%08lx) "
+                       "= 0x%08lx\n",
+                       newRelations->Objects[index], status));
 
             //
             // Swap the bad element for the last one in the chain
             //
             newRelations->Count--;
             tempDeviceObject = newRelations->Objects[newRelations->Count];
-            newRelations->Objects[newRelations->Count] =
-                newRelations->Objects[index];
+            newRelations->Objects[newRelations->Count] = newRelations->Objects[index];
             newRelations->Objects[index] = tempDeviceObject;
-
         }
-
     }
 
     //
     // Free the old device relations (if it is present)
     //
-    if (currentRelations) {
+    if (currentRelations)
+    {
 
-        ExFreePool( *DeviceRelations );
-
+        ExFreePool(*DeviceRelations);
     }
 
     //
@@ -662,11 +598,8 @@ Return Value:
     //
     return STATUS_SUCCESS;
 }
-
-VOID
-ACPIDetectDuplicateADR(
-    IN  PDEVICE_EXTENSION   DeviceExtension
-    )
+
+VOID ACPIDetectDuplicateADR(IN PDEVICE_EXTENSION DeviceExtension)
 /*++
 
 Routine Description:
@@ -685,83 +618,75 @@ Return Value:
 
 --*/
 {
-    BOOLEAN                 resetDeviceAddress = FALSE;
-    EXTENSIONLIST_ENUMDATA  eled;
-    PDEVICE_EXTENSION       childExtension;
-    PDEVICE_EXTENSION       parentExtension = DeviceExtension->ParentExtension;
+    BOOLEAN resetDeviceAddress = FALSE;
+    EXTENSIONLIST_ENUMDATA eled;
+    PDEVICE_EXTENSION childExtension;
+    PDEVICE_EXTENSION parentExtension = DeviceExtension->ParentExtension;
 
     //
     // Is this the root of the device tree?
     //
-    if (parentExtension == NULL) {
+    if (parentExtension == NULL)
+    {
 
         return;
-
     }
 
     //
     // Do we fail to eject a PDO for this device? Or does this device not have
     // an _ADR?
     //
-    if ( (DeviceExtension->Flags & DEV_TYPE_NEVER_PRESENT) ||
-         (DeviceExtension->Flags & DEV_TYPE_NOT_PRESENT) ||
-        !(DeviceExtension->Flags & DEV_MASK_ADDRESS) ) {
+    if ((DeviceExtension->Flags & DEV_TYPE_NEVER_PRESENT) || (DeviceExtension->Flags & DEV_TYPE_NOT_PRESENT) ||
+        !(DeviceExtension->Flags & DEV_MASK_ADDRESS))
+    {
 
         return;
-
     }
 
     //
     // Walk the children --- spinlock is taken
     //
-    ACPIExtListSetupEnum(
-        &eled,
-        &(parentExtension->ChildDeviceList),
-        &AcpiDeviceTreeLock,
-        SiblingDeviceList,
-        WALKSCHEME_HOLD_SPINLOCK
-        );
-    for (childExtension = ACPIExtListStartEnum( &eled );
-                          ACPIExtListTestElement( &eled, TRUE );
-         childExtension = ACPIExtListEnumNext( &eled ) ) {
+    ACPIExtListSetupEnum(&eled, &(parentExtension->ChildDeviceList), &AcpiDeviceTreeLock, SiblingDeviceList,
+                         WALKSCHEME_HOLD_SPINLOCK);
+    for (childExtension = ACPIExtListStartEnum(&eled); ACPIExtListTestElement(&eled, TRUE);
+         childExtension = ACPIExtListEnumNext(&eled))
+    {
 
-        if (childExtension == NULL) {
+        if (childExtension == NULL)
+        {
 
-            ACPIExtListExitEnumEarly( &eled );
+            ACPIExtListExitEnumEarly(&eled);
             break;
-
         }
 
         //
         // If the child and target extension matches, then we are looking
         // at ourselves. This is not a very interesting comparison
         //
-        if (childExtension == DeviceExtension) {
+        if (childExtension == DeviceExtension)
+        {
 
             continue;
-
         }
 
         //
         // Does the child have an _ADR? If not, then its boring to compare
         //
-        if ( (childExtension->Flags & DEV_TYPE_NEVER_PRESENT) ||
-             (childExtension->Flags & DEV_MASK_NOT_PRESENT) ||
-             (childExtension->Flags & DEV_PROP_UNLOADING) ||
-            !(childExtension->Flags & DEV_PROP_ADDRESS) ) {
+        if ((childExtension->Flags & DEV_TYPE_NEVER_PRESENT) || (childExtension->Flags & DEV_MASK_NOT_PRESENT) ||
+            (childExtension->Flags & DEV_PROP_UNLOADING) || !(childExtension->Flags & DEV_PROP_ADDRESS))
+        {
 
             continue;
-
         }
 
         //
         // If we don't have matching ADRs, this is a boring comparison to make
         // also
         //
-        if (childExtension->Address != DeviceExtension->Address) {
+        if (childExtension->Address != DeviceExtension->Address)
+        {
 
             continue;
-
         }
 
         //
@@ -770,12 +695,8 @@ Return Value:
         // we can reset the current device extension address as well, once
         // we have scanned all the siblings
         //
-        ACPIDevPrint( (
-            ACPI_PRINT_FAILURE,
-            DeviceExtension,
-            "ACPIDetectDuplicateADR - matches with %08lx\n",
-            childExtension
-            ) );
+        ACPIDevPrint(
+            (ACPI_PRINT_FAILURE, DeviceExtension, "ACPIDetectDuplicateADR - matches with %08lx\n", childExtension));
         resetDeviceAddress = TRUE;
 
         //
@@ -783,34 +704,21 @@ Return Value:
         // effectively resets the Function Number to -1.
         //
         childExtension->Address |= 0xFFFF;
-        ACPIInternalUpdateFlags(
-            &(childExtension->Flags),
-            DEV_PROP_FIXED_ADDRESS,
-            FALSE
-            );
-
-
+        ACPIInternalUpdateFlags(&(childExtension->Flags), DEV_PROP_FIXED_ADDRESS, FALSE);
     }
 
     //
     // Do we reset the DeviceExtension's address?
     //
-    if (resetDeviceAddress) {
+    if (resetDeviceAddress)
+    {
 
         DeviceExtension->Address |= 0xFFFF;
-        ACPIInternalUpdateFlags(
-            &(DeviceExtension->Flags),
-            DEV_PROP_FIXED_ADDRESS,
-            FALSE
-            );
-
+        ACPIInternalUpdateFlags(&(DeviceExtension->Flags), DEV_PROP_FIXED_ADDRESS, FALSE);
     }
 }
-
-VOID
-ACPIDetectDuplicateHID(
-    IN  PDEVICE_EXTENSION   DeviceExtension
-    )
+
+VOID ACPIDetectDuplicateHID(IN PDEVICE_EXTENSION DeviceExtension)
 /*++
 
 Routine Description:
@@ -830,131 +738,109 @@ Return Value:
 
 --*/
 {
-    EXTENSIONLIST_ENUMDATA  eled;
-    PDEVICE_EXTENSION       childExtension;
-    PDEVICE_EXTENSION       parentExtension = DeviceExtension->ParentExtension;
+    EXTENSIONLIST_ENUMDATA eled;
+    PDEVICE_EXTENSION childExtension;
+    PDEVICE_EXTENSION parentExtension = DeviceExtension->ParentExtension;
 
     //
     // Is this the root of the device tree?
     //
-    if (parentExtension == NULL) {
+    if (parentExtension == NULL)
+    {
 
         return;
-
     }
 
     //
     // Do we fail to eject a PDO for this device? Or does this device not have
     // an _HID?
     //
-    if ( (DeviceExtension->Flags & DEV_TYPE_NEVER_PRESENT) ||
-         (DeviceExtension->Flags & DEV_MASK_NOT_PRESENT) ||
-        !(DeviceExtension->Flags & DEV_MASK_HID) ) {
+    if ((DeviceExtension->Flags & DEV_TYPE_NEVER_PRESENT) || (DeviceExtension->Flags & DEV_MASK_NOT_PRESENT) ||
+        !(DeviceExtension->Flags & DEV_MASK_HID))
+    {
 
         return;
-
     }
 
     //
     // Walk the children --- spinlock is taken
     //
-    ACPIExtListSetupEnum(
-        &eled,
-        &(parentExtension->ChildDeviceList),
-        &AcpiDeviceTreeLock,
-        SiblingDeviceList,
-        WALKSCHEME_HOLD_SPINLOCK
-        );
-    for (childExtension = ACPIExtListStartEnum( &eled );
-                          ACPIExtListTestElement( &eled, TRUE );
-         childExtension = ACPIExtListEnumNext( &eled ) ) {
+    ACPIExtListSetupEnum(&eled, &(parentExtension->ChildDeviceList), &AcpiDeviceTreeLock, SiblingDeviceList,
+                         WALKSCHEME_HOLD_SPINLOCK);
+    for (childExtension = ACPIExtListStartEnum(&eled); ACPIExtListTestElement(&eled, TRUE);
+         childExtension = ACPIExtListEnumNext(&eled))
+    {
 
-        if (childExtension == NULL) {
+        if (childExtension == NULL)
+        {
 
-            ACPIExtListExitEnumEarly( &eled );
+            ACPIExtListExitEnumEarly(&eled);
             break;
-
         }
 
         //
         // If the child and target extension matches, then we are looking
         // at ourselves. This is not a very interesting comparison
         //
-        if (childExtension == DeviceExtension) {
+        if (childExtension == DeviceExtension)
+        {
 
             continue;
-
         }
 
         //
         // Does the child have an _HID? If not, then its boring to compare
         //
-        if ( (childExtension->Flags & DEV_TYPE_NEVER_PRESENT) ||
-             (childExtension->Flags & DEV_MASK_NOT_PRESENT) ||
-             (childExtension->Flags & DEV_PROP_UNLOADING) ||
-            !(childExtension->Flags & DEV_MASK_HID) ) {
+        if ((childExtension->Flags & DEV_TYPE_NEVER_PRESENT) || (childExtension->Flags & DEV_MASK_NOT_PRESENT) ||
+            (childExtension->Flags & DEV_PROP_UNLOADING) || !(childExtension->Flags & DEV_MASK_HID))
+        {
 
             continue;
-
         }
 
         //
         // If we don't have matching HIDs, this is a boring comparison to make
         // also
         //
-        if (!strstr(childExtension->DeviceID, DeviceExtension->DeviceID) ) {
+        if (!strstr(childExtension->DeviceID, DeviceExtension->DeviceID))
+        {
 
             continue;
-
         }
 
         //
         // Work around OSCeola bugs
         //
-        if ( (childExtension->Flags & DEV_MASK_UID) &&
-             (DeviceExtension->Flags & DEV_MASK_UID) ) {
+        if ((childExtension->Flags & DEV_MASK_UID) && (DeviceExtension->Flags & DEV_MASK_UID))
+        {
 
             //
             // Check to see if their UIDs match
             //
-            if (strcmp(childExtension->InstanceID, DeviceExtension->InstanceID) ) {
+            if (strcmp(childExtension->InstanceID, DeviceExtension->InstanceID))
+            {
 
                 continue;
-
             }
 
             //
             // At this point, we are hosed. We have two different devices with the
             // same PNP id, but no UIDs. Very bad
             //
-            ACPIDevPrint( (
-                ACPI_PRINT_CRITICAL,
-                DeviceExtension,
-                "ACPIDetectDuplicateHID - has _UID match with %08lx\n"
-                "\t\tContact the Machine Vendor to get this problem fixed\n",
-                childExtension
-                ) );
+            ACPIDevPrint((ACPI_PRINT_CRITICAL, DeviceExtension,
+                          "ACPIDetectDuplicateHID - has _UID match with %08lx\n"
+                          "\t\tContact the Machine Vendor to get this problem fixed\n",
+                          childExtension));
 
-            KeBugCheckEx(
-                ACPI_BIOS_ERROR,
-                ACPI_REQUIRED_METHOD_NOT_PRESENT,
-                (ULONG_PTR) DeviceExtension,
-                PACKED_UID,
-                1
-                );
-
+            KeBugCheckEx(ACPI_BIOS_ERROR, ACPI_REQUIRED_METHOD_NOT_PRESENT, (ULONG_PTR)DeviceExtension, PACKED_UID, 1);
         }
 
         //
         // At this point, we are hosed. We have two different devices with the
         // same PNP id, but no UIDs. Very bad
         //
-        ACPIDevPrint( (
-            ACPI_PRINT_FAILURE,
-            DeviceExtension,
-            "ACPIDetectDuplicateHID - matches with %08lx\n",
-            childExtension
-            ) );
+        ACPIDevPrint(
+            (ACPI_PRINT_FAILURE, DeviceExtension, "ACPIDetectDuplicateHID - matches with %08lx\n", childExtension));
 
         //KeBugCheckEx(
         //    ACPI_BIOS_ERROR,
@@ -968,88 +854,59 @@ Return Value:
         // Make sure to only muck with the DeviceExtension UID if it doesn't
         // already have one
         //
-        if (!(DeviceExtension->Flags & DEV_MASK_UID) ) {
+        if (!(DeviceExtension->Flags & DEV_MASK_UID))
+        {
 
             //
             // Build a fake instance ID for the device
             //
-            DeviceExtension->InstanceID = ExAllocatePoolWithTag(
-                NonPagedPool,
-                5 * sizeof(UCHAR),
-                ACPI_STRING_POOLTAG
-                );
-            if (DeviceExtension->InstanceID == NULL) {
+            DeviceExtension->InstanceID = ExAllocatePoolWithTag(NonPagedPool, 5 * sizeof(UCHAR), ACPI_STRING_POOLTAG);
+            if (DeviceExtension->InstanceID == NULL)
+            {
 
-                ACPIDevPrint( (
-                    ACPI_PRINT_CRITICAL,
-                    DeviceExtension,
-                    "ACPIDetectDuplicateHID - no memory!\n"
-                    ) );
-                ACPIInternalError( ACPI_DETECT );
-
+                ACPIDevPrint((ACPI_PRINT_CRITICAL, DeviceExtension, "ACPIDetectDuplicateHID - no memory!\n"));
+                ACPIInternalError(ACPI_DETECT);
             }
-            RtlZeroMemory( DeviceExtension->InstanceID, 5 * sizeof(UCHAR) );
-            sprintf( DeviceExtension->InstanceID, "%.4s", & DeviceExtension->AcpiObject->dwNameSeg );
+            RtlZeroMemory(DeviceExtension->InstanceID, 5 * sizeof(UCHAR));
+            sprintf(DeviceExtension->InstanceID, "%.4s", &DeviceExtension->AcpiObject->dwNameSeg);
 
             //
             // Remember that we have a fixed uid
             //
-            ACPIInternalUpdateFlags(
-                &(DeviceExtension->Flags),
-                DEV_PROP_FIXED_UID,
-                FALSE
-                );
-
+            ACPIInternalUpdateFlags(&(DeviceExtension->Flags), DEV_PROP_FIXED_UID, FALSE);
         }
 
         //
         // Make sure to only muck with the ChildExtension UID if it doesn't
         // already have one
         //
-        if (!(childExtension->Flags & DEV_MASK_UID) ) {
+        if (!(childExtension->Flags & DEV_MASK_UID))
+        {
 
             //
             // Build a fake instance ID for the duplicate
             //
-            childExtension->InstanceID = ExAllocatePoolWithTag(
-                NonPagedPool,
-                5 * sizeof(UCHAR),
-                ACPI_STRING_POOLTAG
-                );
-            if (childExtension->InstanceID == NULL) {
+            childExtension->InstanceID = ExAllocatePoolWithTag(NonPagedPool, 5 * sizeof(UCHAR), ACPI_STRING_POOLTAG);
+            if (childExtension->InstanceID == NULL)
+            {
 
-                ACPIDevPrint( (
-                    ACPI_PRINT_CRITICAL,
-                    DeviceExtension,
-                    "ACPIDetectDuplicateHID - no memory!\n"
-                    ) );
-                ACPIInternalError( ACPI_DETECT );
-
+                ACPIDevPrint((ACPI_PRINT_CRITICAL, DeviceExtension, "ACPIDetectDuplicateHID - no memory!\n"));
+                ACPIInternalError(ACPI_DETECT);
             }
-            RtlZeroMemory( childExtension->InstanceID, 5 * sizeof(UCHAR) );
-            sprintf( childExtension->InstanceID, "%.4s", & childExtension->AcpiObject->dwNameSeg );
+            RtlZeroMemory(childExtension->InstanceID, 5 * sizeof(UCHAR));
+            sprintf(childExtension->InstanceID, "%.4s", &childExtension->AcpiObject->dwNameSeg);
 
             //
             // Update the flags for both devices to indicate the fixed UID
             //
-            ACPIInternalUpdateFlags(
-                &(childExtension->Flags),
-                DEV_PROP_FIXED_UID,
-                FALSE
-                );
-
+            ACPIInternalUpdateFlags(&(childExtension->Flags), DEV_PROP_FIXED_UID, FALSE);
         }
-
     }
-
 }
-
+
 NTSTATUS
-ACPIDetectEjectDevices(
-    IN     PDEVICE_EXTENSION   DeviceExtension,
-    IN OUT PDEVICE_RELATIONS   *DeviceRelations,
-    IN     PDEVICE_EXTENSION   AdditionalExtension OPTIONAL
-    )
+ACPIDetectEjectDevices(IN PDEVICE_EXTENSION DeviceExtension, IN OUT PDEVICE_RELATIONS *DeviceRelations,
+                       IN PDEVICE_EXTENSION AdditionalExtension OPTIONAL)
 /*++
 
 Routine Description
@@ -1082,20 +939,20 @@ Return Value:
 
 --*/
 {
-    BOOLEAN                 inRelation;
-    EXTENSIONLIST_ENUMDATA  eled ;
-    LONG                    oldReferenceCount;
-    KIRQL                   oldIrql;
-    NTSTATUS                status;
-    PDEVICE_OBJECT          tempPdo ;
-    PDEVICE_EXTENSION       ejecteeExtension    = NULL;
-    PDEVICE_EXTENSION       targetExtension     = NULL;
-    PDEVICE_RELATIONS       currentRelations    = NULL;
-    PDEVICE_RELATIONS       newRelations        = NULL;
-    PLIST_ENTRY             listEntry           = NULL;
-    ULONG                   i                   = 0;
-    ULONG                   index               = 0;
-    ULONG                   newRelationSize     = 0;
+    BOOLEAN inRelation;
+    EXTENSIONLIST_ENUMDATA eled;
+    LONG oldReferenceCount;
+    KIRQL oldIrql;
+    NTSTATUS status;
+    PDEVICE_OBJECT tempPdo;
+    PDEVICE_EXTENSION ejecteeExtension = NULL;
+    PDEVICE_EXTENSION targetExtension = NULL;
+    PDEVICE_RELATIONS currentRelations = NULL;
+    PDEVICE_RELATIONS newRelations = NULL;
+    PLIST_ENTRY listEntry = NULL;
+    ULONG i = 0;
+    ULONG index = 0;
+    ULONG newRelationSize = 0;
 
     //
     // We might not have resolved all our ejection dependencies, so lets do
@@ -1106,7 +963,8 @@ Return Value:
     //
     // Determine the current size of the device relation (if any exists)
     //
-    if (DeviceRelations != NULL && *DeviceRelations != NULL) {
+    if (DeviceRelations != NULL && *DeviceRelations != NULL)
+    {
 
         //
         // We need this value to help us build an MDL. After that is done,
@@ -1114,160 +972,130 @@ Return Value:
         //
         currentRelations = (*DeviceRelations);
         newRelationSize = currentRelations->Count;
-
     }
 
-    ACPIExtListSetupEnum(
-        &eled,
-        &(DeviceExtension->EjectDeviceHead),
-        &AcpiDeviceTreeLock,
-        EjectDeviceList,
-        WALKSCHEME_REFERENCE_ENTRIES
-        ) ;
+    ACPIExtListSetupEnum(&eled, &(DeviceExtension->EjectDeviceHead), &AcpiDeviceTreeLock, EjectDeviceList,
+                         WALKSCHEME_REFERENCE_ENTRIES);
 
-    for(ejecteeExtension = ACPIExtListStartEnum(&eled);
-                           ACPIExtListTestElement(&eled, TRUE);
-        ejecteeExtension = ACPIExtListEnumNext(&eled)) {
+    for (ejecteeExtension = ACPIExtListStartEnum(&eled); ACPIExtListTestElement(&eled, TRUE);
+         ejecteeExtension = ACPIExtListEnumNext(&eled))
+    {
 
         //
         // Is it physically present?
         //
-        if (!(ejecteeExtension->Flags & DEV_MASK_NOT_PRESENT)      &&
-            !(ejecteeExtension->Flags & DEV_PROP_FAILED_INIT)      &&
-             (ejecteeExtension->PhysicalDeviceObject != NULL) ) {
+        if (!(ejecteeExtension->Flags & DEV_MASK_NOT_PRESENT) && !(ejecteeExtension->Flags & DEV_PROP_FAILED_INIT) &&
+            (ejecteeExtension->PhysicalDeviceObject != NULL))
+        {
 
             //
             // Is there a match between the device relations and the current
             // device extension?
             //
-            status = ACPIDetectCouldExtensionBeInRelation(
-                ejecteeExtension,
-                currentRelations,
-                FALSE,
-                FALSE,
-                &tempPdo
-                ) ;
-            if ( tempPdo == NULL && NT_SUCCESS(status) ) {
+            status = ACPIDetectCouldExtensionBeInRelation(ejecteeExtension, currentRelations, FALSE, FALSE, &tempPdo);
+            if (tempPdo == NULL && NT_SUCCESS(status))
+            {
 
                 //
                 // We are here if we an extension that does not match any
                 // of the hardware represented by the current contents of
                 // the relation.
                 //
-                if (ejecteeExtension->PhysicalDeviceObject != NULL) {
+                if (ejecteeExtension->PhysicalDeviceObject != NULL)
+                {
 
-                    inRelation = ACPIExtListIsMemberOfRelation(
-                        ejecteeExtension->PhysicalDeviceObject,
-                        currentRelations
-                        );
-                    if (inRelation == FALSE) {
+                    inRelation =
+                        ACPIExtListIsMemberOfRelation(ejecteeExtension->PhysicalDeviceObject, currentRelations);
+                    if (inRelation == FALSE)
+                    {
 
                         newRelationSize++;
-
                     }
-
                 }
-
             }
 
         } // if (ejecteeExtension ... )
-
     }
 
     //
     // Do we have an extra device to include in the list?
     //
-    if (ARGUMENT_PRESENT(AdditionalExtension) &&
-        !(AdditionalExtension->Flags & DEV_MASK_NOT_PRESENT) &&
-        (AdditionalExtension->PhysicalDeviceObject != NULL)) {
+    if (ARGUMENT_PRESENT(AdditionalExtension) && !(AdditionalExtension->Flags & DEV_MASK_NOT_PRESENT) &&
+        (AdditionalExtension->PhysicalDeviceObject != NULL))
+    {
 
-        inRelation = ACPIExtListIsMemberOfRelation(
-            AdditionalExtension->PhysicalDeviceObject,
-            currentRelations);
-        if (inRelation == FALSE) {
+        inRelation = ACPIExtListIsMemberOfRelation(AdditionalExtension->PhysicalDeviceObject, currentRelations);
+        if (inRelation == FALSE)
+        {
 
             newRelationSize++;
-
         }
-
     }
 
     //
     // At this point, we can see if we need to change the size of the
     // device relations
     //
-    if ( (currentRelations != NULL && newRelationSize == currentRelations->Count) ||
-         (currentRelations == NULL && newRelationSize == 0) ) {
+    if ((currentRelations != NULL && newRelationSize == currentRelations->Count) ||
+        (currentRelations == NULL && newRelationSize == 0))
+    {
 
         //
         // Done
         //
         return STATUS_SUCCESS;
-
     }
 
     //
     // Determine the size of the new relations. Use index as a
     // scratch buffer
     //
-    index = sizeof(DEVICE_RELATIONS) +
-        ( sizeof(PDEVICE_OBJECT) * (newRelationSize - 1) );
+    index = sizeof(DEVICE_RELATIONS) + (sizeof(PDEVICE_OBJECT) * (newRelationSize - 1));
 
     //
     // Allocate the new device relation buffer. Use nonpaged pool since we
     // are at dispatch
     //
-    newRelations = ExAllocatePoolWithTag(
-        PagedPool,
-        index,
-        ACPI_DEVICE_POOLTAG
-        );
-    if (newRelations == NULL) {
+    newRelations = ExAllocatePoolWithTag(PagedPool, index, ACPI_DEVICE_POOLTAG);
+    if (newRelations == NULL)
+    {
 
         //
         // Return failure
         //
         return STATUS_INSUFFICIENT_RESOURCES;
-
     }
 
     //
     // Initialize DeviceRelations data structure
     //
-    RtlZeroMemory( newRelations, index );
+    RtlZeroMemory(newRelations, index);
 
     //
     // If there are existing relations, we must determine
-    if (currentRelations) {
+    if (currentRelations)
+    {
 
         //
         // Copy old relations, and determine the starting index for the
         // first of the PDOs created by this driver. We will put off freeing
         // the old relations till we are no longer holding the lock
         //
-        RtlCopyMemory(
-            newRelations->Objects,
-            currentRelations->Objects,
-            currentRelations->Count * sizeof(PDEVICE_OBJECT)
-            );
+        RtlCopyMemory(newRelations->Objects, currentRelations->Objects,
+                      currentRelations->Count * sizeof(PDEVICE_OBJECT));
         index = currentRelations->Count;
-
-    } else {
+    }
+    else
+    {
 
         //
         // There will not be a lot of work to do in this case
         //
         index = 0;
-
     }
 
-    ACPIExtListSetupEnum(
-        &eled,
-        &(DeviceExtension->EjectDeviceHead),
-        &AcpiDeviceTreeLock,
-        EjectDeviceList,
-        WALKSCHEME_REFERENCE_ENTRIES
-        ) ;
+    ACPIExtListSetupEnum(&eled, &(DeviceExtension->EjectDeviceHead), &AcpiDeviceTreeLock, EjectDeviceList,
+                         WALKSCHEME_REFERENCE_ENTRIES);
 
     //
     // We need the spin lock so that we can walk the tree again. This time
@@ -1275,24 +1103,25 @@ Return Value:
     // to call anything that will at PASSIVE_LEVEL
     //
 
-    for(ejecteeExtension = ACPIExtListStartEnum(&eled);
-                           ACPIExtListTestElement(&eled, (BOOLEAN) (newRelationSize!=index));
-        ejecteeExtension = ACPIExtListEnumNext(&eled)) {
+    for (ejecteeExtension = ACPIExtListStartEnum(&eled);
+         ACPIExtListTestElement(&eled, (BOOLEAN)(newRelationSize != index));
+         ejecteeExtension = ACPIExtListEnumNext(&eled))
+    {
 
-        if (ejecteeExtension == NULL) {
+        if (ejecteeExtension == NULL)
+        {
 
-            ACPIExtListExitEnumEarly( &eled );
+            ACPIExtListExitEnumEarly(&eled);
             break;
-
         }
 
         //
         // The only objects that we care about are those that are marked as
         // PDOs and have a phsyical object associated with them
         //
-        if (!(ejecteeExtension->Flags & DEV_MASK_NOT_PRESENT)      &&
-            !(ejecteeExtension->Flags & DEV_PROP_DOCK) &&
-             (ejecteeExtension->PhysicalDeviceObject != NULL) ) {
+        if (!(ejecteeExtension->Flags & DEV_MASK_NOT_PRESENT) && !(ejecteeExtension->Flags & DEV_PROP_DOCK) &&
+            (ejecteeExtension->PhysicalDeviceObject != NULL))
+        {
 
             //
             // See if the object is already in the relations. Note that it
@@ -1301,11 +1130,9 @@ Return Value:
             // against those object which were handed to us, not the ones
             // that we added.
             //
-            inRelation = ACPIExtListIsMemberOfRelation(
-                ejecteeExtension->PhysicalDeviceObject,
-                currentRelations
-                );
-            if (inRelation == FALSE) {
+            inRelation = ACPIExtListIsMemberOfRelation(ejecteeExtension->PhysicalDeviceObject, currentRelations);
+            if (inRelation == FALSE)
+            {
 
                 //
                 // We don't ObReferenceO here because we are still at
@@ -1313,9 +1140,7 @@ Return Value:
                 // want to drop down). We also update the location for
                 // the next object in the relation
                 //
-                newRelations->Objects[index++] =
-                    ejecteeExtension->PhysicalDeviceObject;
-
+                newRelations->Objects[index++] = ejecteeExtension->PhysicalDeviceObject;
             }
 
         } // if (ejecteeExtension->Flags ... )
@@ -1325,20 +1150,16 @@ Return Value:
     //
     // Do we have an extra device to include in the list? If so, add it now
     //
-    if (ARGUMENT_PRESENT(AdditionalExtension) &&
-        !(AdditionalExtension->Flags & DEV_MASK_NOT_PRESENT) &&
-        (AdditionalExtension->PhysicalDeviceObject != NULL)) {
+    if (ARGUMENT_PRESENT(AdditionalExtension) && !(AdditionalExtension->Flags & DEV_MASK_NOT_PRESENT) &&
+        (AdditionalExtension->PhysicalDeviceObject != NULL))
+    {
 
-        inRelation = ACPIExtListIsMemberOfRelation(
-            AdditionalExtension->PhysicalDeviceObject,
-            currentRelations);
-        if (inRelation == FALSE) {
+        inRelation = ACPIExtListIsMemberOfRelation(AdditionalExtension->PhysicalDeviceObject, currentRelations);
+        if (inRelation == FALSE)
+        {
 
-            newRelations->Objects[index++] =
-                AdditionalExtension->PhysicalDeviceObject;
-
+            newRelations->Objects[index++] = AdditionalExtension->PhysicalDeviceObject;
         }
-
     }
 
     //
@@ -1352,52 +1173,43 @@ Return Value:
     // We have to reference all of the objects that we added
     //
     index = (currentRelations != NULL ? currentRelations->Count : 0);
-    for (; index < newRelationSize; index++) {
+    for (; index < newRelationSize; index++)
+    {
 
         //
         // Attempt to reference the object
         //
-        status = ObReferenceObjectByPointer(
-            newRelations->Objects[index],
-            0,
-            NULL,
-            KernelMode
-            );
-        if (!NT_SUCCESS(status) ) {
+        status = ObReferenceObjectByPointer(newRelations->Objects[index], 0, NULL, KernelMode);
+        if (!NT_SUCCESS(status))
+        {
 
-            PDEVICE_OBJECT  tempDeviceObject;
+            PDEVICE_OBJECT tempDeviceObject;
 
             //
             // Hmm... Let the world know that this happened
             //
-            ACPIPrint( (
-                ACPI_PRINT_FAILURE,
-                "ACPIDetectEjectDevices: ObjReferenceObject(0x%08lx) "
-                "= 0x%08lx\n",
-                newRelations->Objects[index],
-                status
-                ) );
+            ACPIPrint((ACPI_PRINT_FAILURE,
+                       "ACPIDetectEjectDevices: ObjReferenceObject(0x%08lx) "
+                       "= 0x%08lx\n",
+                       newRelations->Objects[index], status));
 
             //
             // Swap the bad element for the last one in the chain
             //
             newRelations->Count--;
             tempDeviceObject = newRelations->Objects[newRelations->Count];
-            newRelations->Objects[newRelations->Count] =
-                newRelations->Objects[index];
+            newRelations->Objects[newRelations->Count] = newRelations->Objects[index];
             newRelations->Objects[index] = tempDeviceObject;
-
         }
-
     }
 
     //
     // Free the old device relations (if it is present)
     //
-    if (currentRelations) {
+    if (currentRelations)
+    {
 
-        ExFreePool( *DeviceRelations );
-
+        ExFreePool(*DeviceRelations);
     }
 
     //
@@ -1410,12 +1222,9 @@ Return Value:
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-ACPIDetectFilterDevices(
-    IN  PDEVICE_OBJECT      DeviceObject,
-    IN  PDEVICE_RELATIONS   DeviceRelations
-    )
+ACPIDetectFilterDevices(IN PDEVICE_OBJECT DeviceObject, IN PDEVICE_RELATIONS DeviceRelations)
 /*++
 
 Routine Description:
@@ -1435,99 +1244,88 @@ Return Value:
 
 --*/
 {
-    LONG                oldReferenceCount   = 0;
-    KIRQL               oldIrql;
-    NTSTATUS            status;
-    PDEVICE_EXTENSION   deviceExtension     = NULL;
-    PDEVICE_EXTENSION   parentExtension     = ACPIInternalGetDeviceExtension(DeviceObject);
-    PDEVICE_EXTENSION   targetExtension     = NULL;
-    PDEVICE_OBJECT      pdoObject           = NULL;
-    PLIST_ENTRY         listEntry           = NULL;
-    ULONG               deviceStatus;
+    LONG oldReferenceCount = 0;
+    KIRQL oldIrql;
+    NTSTATUS status;
+    PDEVICE_EXTENSION deviceExtension = NULL;
+    PDEVICE_EXTENSION parentExtension = ACPIInternalGetDeviceExtension(DeviceObject);
+    PDEVICE_EXTENSION targetExtension = NULL;
+    PDEVICE_OBJECT pdoObject = NULL;
+    PLIST_ENTRY listEntry = NULL;
+    ULONG deviceStatus;
 
     //
     // Sync with the build surprise removal code...
     //
-    KeAcquireSpinLock( &AcpiDeviceTreeLock, &oldIrql );
+    KeAcquireSpinLock(&AcpiDeviceTreeLock, &oldIrql);
 
     //
     // Do we have missing children?
     //
-    if (parentExtension->Flags & DEV_PROP_REBUILD_CHILDREN) {
+    if (parentExtension->Flags & DEV_PROP_REBUILD_CHILDREN)
+    {
 
-        ACPIInternalUpdateFlags(
-            &(parentExtension->Flags),
-            DEV_PROP_REBUILD_CHILDREN,
-            TRUE
-            );
-        ACPIBuildMissingChildren( parentExtension );
-
+        ACPIInternalUpdateFlags(&(parentExtension->Flags), DEV_PROP_REBUILD_CHILDREN, TRUE);
+        ACPIBuildMissingChildren(parentExtension);
     }
 
     //
     // Done with the sync part
     //
-    KeReleaseSpinLock( &AcpiDeviceTreeLock, oldIrql );
+    KeReleaseSpinLock(&AcpiDeviceTreeLock, oldIrql);
 
     //
     // No matter what, we must make sure that we are synchronized with the
     // build engine.
     //
-    status = ACPIBuildFlushQueue( parentExtension );
-    if (!NT_SUCCESS(status)) {
+    status = ACPIBuildFlushQueue(parentExtension);
+    if (!NT_SUCCESS(status))
+    {
 
-        ACPIDevPrint( (
-            ACPI_PRINT_FAILURE,
-            parentExtension,
-           "ACPIBuildFlushQueue = %08lx\n",
-            status
-            ) );
+        ACPIDevPrint((ACPI_PRINT_FAILURE, parentExtension, "ACPIBuildFlushQueue = %08lx\n", status));
         return status;
-
     }
 
     //
     // We must walk the tree at dispatch level <sigh>
     //
-    KeAcquireSpinLock( &AcpiDeviceTreeLock, &oldIrql );
+    KeAcquireSpinLock(&AcpiDeviceTreeLock, &oldIrql);
 
     //
     // Sanity check
     //
-    if (IsListEmpty( &(parentExtension->ChildDeviceList) ) ) {
+    if (IsListEmpty(&(parentExtension->ChildDeviceList)))
+    {
 
         //
         // We have nothing to do here
         //
-        KeReleaseSpinLock( &AcpiDeviceTreeLock, oldIrql );
+        KeReleaseSpinLock(&AcpiDeviceTreeLock, oldIrql);
         return STATUS_SUCCESS;
-
     }
 
     //
     // Grab the first child
     //
-    deviceExtension = (PDEVICE_EXTENSION) CONTAINING_RECORD(
-        parentExtension->ChildDeviceList.Flink,
-        DEVICE_EXTENSION,
-        SiblingDeviceList
-        );
+    deviceExtension = (PDEVICE_EXTENSION)CONTAINING_RECORD(parentExtension->ChildDeviceList.Flink, DEVICE_EXTENSION,
+                                                           SiblingDeviceList);
 
     //
     // Always update the reference count to make sure that no one will
     // ever delete the node without our knowing it
     //
-    InterlockedIncrement( &(deviceExtension->ReferenceCount) );
+    InterlockedIncrement(&(deviceExtension->ReferenceCount));
 
     //
     // Relinquish the spin lock
     //
-    KeReleaseSpinLock( &AcpiDeviceTreeLock, oldIrql );
+    KeReleaseSpinLock(&AcpiDeviceTreeLock, oldIrql);
 
     //
     // Loop until we get back to the parent
     //
-    while (deviceExtension != NULL) {
+    while (deviceExtension != NULL)
+    {
 
         //
         // Note: Do *NOT* set the NOT_ENUMERATED bit here. We have already
@@ -1538,95 +1336,72 @@ Return Value:
         // Update the device status. Make sure that we call at PASSIVE
         // level, since we will be calling synchronously
         //
-        status = ACPIGetDevicePresenceSync(
-            deviceExtension,
-            (PVOID *) &deviceStatus,
-            NULL
-            );
-        if ( NT_SUCCESS(status) &&
-             !(deviceExtension->Flags & DEV_MASK_NOT_PRESENT) ) {
+        status = ACPIGetDevicePresenceSync(deviceExtension, (PVOID *)&deviceStatus, NULL);
+        if (NT_SUCCESS(status) && !(deviceExtension->Flags & DEV_MASK_NOT_PRESENT))
+        {
 
             //
             // Is there a match between the device relations and the current
             // device extension?
             //
-            status = ACPIDetectFilterMatch(
-                deviceExtension,
-                DeviceRelations,
-                &pdoObject
-                );
-            if (NT_SUCCESS(status) ) {
+            status = ACPIDetectFilterMatch(deviceExtension, DeviceRelations, &pdoObject);
+            if (NT_SUCCESS(status))
+            {
 
-                if (pdoObject != NULL) {
+                if (pdoObject != NULL)
+                {
 
                     //
                     // We have to build a filter object here
                     //
-                    status = ACPIBuildFilter(
-                        DeviceObject->DriverObject,
-                        deviceExtension,
-                        pdoObject
-                        );
-                    if (!NT_SUCCESS(status)) {
+                    status = ACPIBuildFilter(DeviceObject->DriverObject, deviceExtension, pdoObject);
+                    if (!NT_SUCCESS(status))
+                    {
 
-                        ACPIDevPrint( (
-                            ACPI_PRINT_FAILURE,
-                            deviceExtension,
-                           "ACPIDetectFilterDevices = %08lx\n",
-                            status
-                            ) );
-
+                        ACPIDevPrint(
+                            (ACPI_PRINT_FAILURE, deviceExtension, "ACPIDetectFilterDevices = %08lx\n", status));
                     }
-
                 }
-
-            } else {
-
-                ACPIDevPrint( (
-                    ACPI_PRINT_FAILURE,
-                    deviceExtension,
-                    "ACPIDetectFilterMatch = 0x%08lx\n",
-                    status
-                    ) );
-
             }
+            else
+            {
 
+                ACPIDevPrint((ACPI_PRINT_FAILURE, deviceExtension, "ACPIDetectFilterMatch = 0x%08lx\n", status));
+            }
         }
 
         //
         // Reacquire the spin lock
         //
-        KeAcquireSpinLock( &AcpiDeviceTreeLock, &oldIrql );
+        KeAcquireSpinLock(&AcpiDeviceTreeLock, &oldIrql);
 
         //
         // Decrement the reference count on the node
         //
-        oldReferenceCount = InterlockedDecrement(
-            &(deviceExtension->ReferenceCount)
-            );
+        oldReferenceCount = InterlockedDecrement(&(deviceExtension->ReferenceCount));
 
         //
         // Check to see if we have gone all the way around the list
         // list
-        if (deviceExtension->SiblingDeviceList.Flink ==
-            &(parentExtension->ChildDeviceList) ) {
+        if (deviceExtension->SiblingDeviceList.Flink == &(parentExtension->ChildDeviceList))
+        {
 
             //
             // Remove the node, if necessary
             //
-            if (oldReferenceCount == 0) {
+            if (oldReferenceCount == 0)
+            {
 
                 //
                 // Free the memory allocated by the extension
                 //
-                ACPIInitDeleteDeviceExtension( deviceExtension );
-
+                ACPIInitDeleteDeviceExtension(deviceExtension);
             }
 
             //
             // Release the spin lock
             //
-            KeReleaseSpinLock( &AcpiDeviceTreeLock, oldIrql );
+            KeReleaseSpinLock(&AcpiDeviceTreeLock, oldIrql);
 
             //
             // Stop the loop
@@ -1638,51 +1413,42 @@ Return Value:
         //
         // Next element
         //
-        deviceExtension = (PDEVICE_EXTENSION) CONTAINING_RECORD(
-            deviceExtension->SiblingDeviceList.Flink,
-            DEVICE_EXTENSION,
-            SiblingDeviceList
-            );
+        deviceExtension = (PDEVICE_EXTENSION)CONTAINING_RECORD(deviceExtension->SiblingDeviceList.Flink,
+                                                               DEVICE_EXTENSION, SiblingDeviceList);
 
         //
         // Remove the old node, if necessary
         //
-        if (oldReferenceCount == 0) {
+        if (oldReferenceCount == 0)
+        {
 
             //
             // Unlink the extension from the tree
             //
-            listEntry = RemoveTailList(
-                &(deviceExtension->SiblingDeviceList)
-                );
+            listEntry = RemoveTailList(&(deviceExtension->SiblingDeviceList));
 
             //
             // It is not possible for this to point to the parent without
             // having succeeded the previous test
             //
-            targetExtension = CONTAINING_RECORD(
-                listEntry,
-                DEVICE_EXTENSION,
-                SiblingDeviceList
-                );
+            targetExtension = CONTAINING_RECORD(listEntry, DEVICE_EXTENSION, SiblingDeviceList);
 
             //
             // Free the memory allocated for the extension
             //
-            ACPIInitDeleteDeviceExtension( targetExtension );
-
+            ACPIInitDeleteDeviceExtension(targetExtension);
         }
 
         //
         // Increment the reference count on this node so that it too
         // cannot be deleted
         //
-        InterlockedIncrement( &(deviceExtension->ReferenceCount) );
+        InterlockedIncrement(&(deviceExtension->ReferenceCount));
 
         //
         // Now, we release the spin lock
         //
-        KeReleaseSpinLock( &AcpiDeviceTreeLock, oldIrql );
+        KeReleaseSpinLock(&AcpiDeviceTreeLock, oldIrql);
 
     } // while
 
@@ -1691,13 +1457,10 @@ Return Value:
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-ACPIDetectFilterMatch(
-    IN  PDEVICE_EXTENSION   DeviceExtension,
-    IN  PDEVICE_RELATIONS   DeviceRelations,
-    OUT PDEVICE_OBJECT      *PdoObject
-    )
+ACPIDetectFilterMatch(IN PDEVICE_EXTENSION DeviceExtension, IN PDEVICE_RELATIONS DeviceRelations,
+                      OUT PDEVICE_OBJECT *PdoObject)
 /*++
 
 Routine Description:
@@ -1719,15 +1482,15 @@ Return Value:
 
 --*/
 {
-    NTSTATUS    status;
+    NTSTATUS status;
 
     PAGED_CODE();
 
-    ASSERT( PdoObject != NULL);
-    if (PdoObject == NULL) {
+    ASSERT(PdoObject != NULL);
+    if (PdoObject == NULL)
+    {
 
         return STATUS_INVALID_PARAMETER_1;
-
     }
     *PdoObject = NULL;
 
@@ -1736,16 +1499,17 @@ Return Value:
     // first create the device and at any time when there is no device object
     // associated with the extension
     //
-    if ( !(DeviceExtension->Flags & DEV_TYPE_NOT_FOUND) ||
-        (DeviceExtension->Flags & DEV_PROP_DOCK) ||
-         DeviceExtension->DeviceObject != NULL) {
+    if (!(DeviceExtension->Flags & DEV_TYPE_NOT_FOUND) || (DeviceExtension->Flags & DEV_PROP_DOCK) ||
+        DeviceExtension->DeviceObject != NULL)
+    {
 
         ULONG count;
 
         //
         // If we don't have any relations, then we can't match anything
         //
-        if (DeviceRelations == NULL || DeviceRelations->Count == 0) {
+        if (DeviceRelations == NULL || DeviceRelations->Count == 0)
+        {
 
             return STATUS_SUCCESS;
         }
@@ -1754,35 +1518,25 @@ Return Value:
         // Look at all the PDOs in the relation and see if they match what
         // a device object that we are attached to
         //
-        for (count = 0; count < DeviceRelations->Count; count++) {
+        for (count = 0; count < DeviceRelations->Count; count++)
+        {
 
-            if (DeviceExtension->PhysicalDeviceObject == DeviceRelations->Objects[count]) {
+            if (DeviceExtension->PhysicalDeviceObject == DeviceRelations->Objects[count])
+            {
 
                 //
                 // Clear the flag that says that we haven't enumerated
                 // this
                 //
-                ACPIInternalUpdateFlags(
-                    &(DeviceExtension->Flags),
-                    DEV_TYPE_NOT_ENUMERATED,
-                    TRUE
-                    );
-
+                ACPIInternalUpdateFlags(&(DeviceExtension->Flags), DEV_TYPE_NOT_ENUMERATED, TRUE);
             }
-
         }
         return STATUS_SUCCESS;
-
     }
 
-    status = ACPIDetectCouldExtensionBeInRelation(
-        DeviceExtension,
-        DeviceRelations,
-        TRUE,
-        FALSE,
-        PdoObject
-        ) ;
-    if (status == STATUS_OBJECT_NAME_NOT_FOUND) {
+    status = ACPIDetectCouldExtensionBeInRelation(DeviceExtension, DeviceRelations, TRUE, FALSE, PdoObject);
+    if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+    {
 
         //
         // Harmless cleanup, we just checked a node on a non-ACPI bus that
@@ -1790,17 +1544,13 @@ Return Value:
         // own PDO)
         //
         status = STATUS_SUCCESS;
-
     }
 
-    return status ;
+    return status;
 }
-
+
 NTSTATUS
-ACPIDetectPdoDevices(
-    IN  PDEVICE_OBJECT      DeviceObject,
-    IN  PDEVICE_RELATIONS   *DeviceRelations
-    )
+ACPIDetectPdoDevices(IN PDEVICE_OBJECT DeviceObject, IN PDEVICE_RELATIONS *DeviceRelations)
 /*++
 
 Routine Description
@@ -1820,26 +1570,27 @@ Return Value:
 
 --*/
 {
-    BOOLEAN             matchFound;
-    LONG                oldReferenceCount;
-    KIRQL               oldIrql;
-    NTSTATUS            status;
-    PDEVICE_EXTENSION   deviceExtension     = NULL;
-    PDEVICE_EXTENSION   parentExtension     = ACPIInternalGetDeviceExtension(DeviceObject);
-    PDEVICE_EXTENSION   targetExtension     = NULL;
-    PDEVICE_RELATIONS   currentRelations    = NULL;
-    PDEVICE_RELATIONS   newRelations        = NULL;
-    PLIST_ENTRY         listEntry           = NULL;
-    ULONG               i                   = 0;
-    ULONG               j                   = 0;
-    ULONG               index               = 0;
-    ULONG               newRelationSize     = 0;
-    ULONG               deviceStatus;
+    BOOLEAN matchFound;
+    LONG oldReferenceCount;
+    KIRQL oldIrql;
+    NTSTATUS status;
+    PDEVICE_EXTENSION deviceExtension = NULL;
+    PDEVICE_EXTENSION parentExtension = ACPIInternalGetDeviceExtension(DeviceObject);
+    PDEVICE_EXTENSION targetExtension = NULL;
+    PDEVICE_RELATIONS currentRelations = NULL;
+    PDEVICE_RELATIONS newRelations = NULL;
+    PLIST_ENTRY listEntry = NULL;
+    ULONG i = 0;
+    ULONG j = 0;
+    ULONG index = 0;
+    ULONG newRelationSize = 0;
+    ULONG deviceStatus;
 
     //
     // Determine the current size of the device relation (if any exists)
     //
-    if (DeviceRelations != NULL && *DeviceRelations != NULL) {
+    if (DeviceRelations != NULL && *DeviceRelations != NULL)
+    {
 
         //
         // We need this value to help us build an MDL. After that is done,
@@ -1847,95 +1598,82 @@ Return Value:
         //
         currentRelations = (*DeviceRelations);
         newRelationSize = currentRelations->Count;
-
     }
 
     //
     // Sync with the build surprise removal code...
     //
-    KeAcquireSpinLock( &AcpiDeviceTreeLock, &oldIrql );
+    KeAcquireSpinLock(&AcpiDeviceTreeLock, &oldIrql);
 
     //
     // Do we have missing children?
     //
-    if (parentExtension->Flags & DEV_PROP_REBUILD_CHILDREN) {
+    if (parentExtension->Flags & DEV_PROP_REBUILD_CHILDREN)
+    {
 
-        ACPIInternalUpdateFlags(
-            &(parentExtension->Flags),
-            DEV_PROP_REBUILD_CHILDREN,
-            TRUE
-            );
-        ACPIBuildMissingChildren( parentExtension );
-
+        ACPIInternalUpdateFlags(&(parentExtension->Flags), DEV_PROP_REBUILD_CHILDREN, TRUE);
+        ACPIBuildMissingChildren(parentExtension);
     }
 
     //
     // Done with the sync part
     //
-    KeReleaseSpinLock( &AcpiDeviceTreeLock, oldIrql );
+    KeReleaseSpinLock(&AcpiDeviceTreeLock, oldIrql);
     //
     // The first step is to actually try to make sure that we are currently
     // synchronized with the build engine
     //
-    status = ACPIBuildFlushQueue( parentExtension );
-    if (!NT_SUCCESS(status)) {
+    status = ACPIBuildFlushQueue(parentExtension);
+    if (!NT_SUCCESS(status))
+    {
 
-        ACPIDevPrint( (
-            ACPI_PRINT_FAILURE,
-            parentExtension,
-           "ACPIBuildFlushQueue = %08lx\n",
-            status
-            ) );
+        ACPIDevPrint((ACPI_PRINT_FAILURE, parentExtension, "ACPIBuildFlushQueue = %08lx\n", status));
         return status;
-
     }
 
     //
     // We must walk the tree at dispatch level <sigh>
     //
-    KeAcquireSpinLock( &AcpiDeviceTreeLock, &oldIrql );
+    KeAcquireSpinLock(&AcpiDeviceTreeLock, &oldIrql);
 
     //
     // Sanity check
     //
-    if (IsListEmpty( &(parentExtension->ChildDeviceList) ) ) {
+    if (IsListEmpty(&(parentExtension->ChildDeviceList)))
+    {
 
         //
         // We have nothing to do here
         //
-        KeReleaseSpinLock( &AcpiDeviceTreeLock, oldIrql );
+        KeReleaseSpinLock(&AcpiDeviceTreeLock, oldIrql);
 
         //
         // Do we currently have some relations? If so, then we just return
         // those and don't need to add anything to them
         //
-        if (currentRelations) {
+        if (currentRelations)
+        {
 
             return STATUS_SUCCESS;
-
         }
 
         //
         // We still need to return an information context with a count of 0
         //
-        newRelations = ExAllocatePoolWithTag(
-            NonPagedPool,
-            sizeof(DEVICE_RELATIONS),
-            ACPI_DEVICE_POOLTAG
-            );
-        if (newRelations == NULL) {
+        newRelations = ExAllocatePoolWithTag(NonPagedPool, sizeof(DEVICE_RELATIONS), ACPI_DEVICE_POOLTAG);
+        if (newRelations == NULL)
+        {
 
             //
             // Return failure
             //
             return STATUS_INSUFFICIENT_RESOURCES;
-
         }
 
         //
         // Initialize DeviceRelations data structure
         //
-        RtlZeroMemory( newRelations, sizeof(DEVICE_RELATIONS) );
+        RtlZeroMemory(newRelations, sizeof(DEVICE_RELATIONS));
 
         //
         // We don't need to this, but its better to be explicit
@@ -1947,33 +1685,30 @@ Return Value:
         //
         *DeviceRelations = newRelations;
         return STATUS_SUCCESS;
-
     }
 
     //
     // Grab the first child
     //
-    deviceExtension = (PDEVICE_EXTENSION) CONTAINING_RECORD(
-        parentExtension->ChildDeviceList.Flink,
-        DEVICE_EXTENSION,
-        SiblingDeviceList
-        );
+    deviceExtension = (PDEVICE_EXTENSION)CONTAINING_RECORD(parentExtension->ChildDeviceList.Flink, DEVICE_EXTENSION,
+                                                           SiblingDeviceList);
 
     //
     // Always update the reference count to make sure that no one will
     // ever delete the node without our knowing it
     //
-    InterlockedIncrement( &(deviceExtension->ReferenceCount) );
+    InterlockedIncrement(&(deviceExtension->ReferenceCount));
 
     //
     // Relinquish the spin lock
     //
-    KeReleaseSpinLock( &AcpiDeviceTreeLock, oldIrql );
+    KeReleaseSpinLock(&AcpiDeviceTreeLock, oldIrql);
 
     //
     // Loop until we get back to the parent
     //
-    while (deviceExtension != NULL) {
+    while (deviceExtension != NULL)
+    {
 
         //
         // Always consider the device as never having been enumerated.
@@ -1985,65 +1720,50 @@ Return Value:
         // also detected as Filters. Setting this flag twice would defeat that
         // purpose.
         //
-        ACPIInternalUpdateFlags(
-            &(deviceExtension->Flags),
-            DEV_TYPE_NOT_ENUMERATED,
-            FALSE
-            );
+        ACPIInternalUpdateFlags(&(deviceExtension->Flags), DEV_TYPE_NOT_ENUMERATED, FALSE);
 
         //
         // Update the current device status
         //
-        status = ACPIGetDevicePresenceSync(
-            deviceExtension,
-            (PVOID *) &deviceStatus,
-            NULL
-            );
+        status = ACPIGetDevicePresenceSync(deviceExtension, (PVOID *)&deviceStatus, NULL);
 
         //
         // If the device exists
         //
-        if ( NT_SUCCESS(status) &&
-            !(deviceExtension->Flags & DEV_MASK_NOT_PRESENT) ) {
+        if (NT_SUCCESS(status) && !(deviceExtension->Flags & DEV_MASK_NOT_PRESENT))
+        {
 
             //
             // Is there a match between the device relations and the current
             // device extension?
             //
-            matchFound = ACPIDetectPdoMatch(
-                deviceExtension,
-                currentRelations
-                );
-            if (matchFound == FALSE) {
+            matchFound = ACPIDetectPdoMatch(deviceExtension, currentRelations);
+            if (matchFound == FALSE)
+            {
 
                 //
                 // NOTE: we use this here to prevent having to typecase later
                 // on
                 //
-                matchFound =
-                    (parentExtension->Flags & DEV_TYPE_FDO) ? FALSE : TRUE;
+                matchFound = (parentExtension->Flags & DEV_TYPE_FDO) ? FALSE : TRUE;
 
                 //
                 // Build a new PDO
                 //
-                status = ACPIBuildPdo(
-                    DeviceObject->DriverObject,
-                    deviceExtension,
-                    parentExtension->PhysicalDeviceObject,
-                    matchFound
-                    );
-                if (NT_SUCCESS(status)) {
+                status = ACPIBuildPdo(DeviceObject->DriverObject, deviceExtension,
+                                      parentExtension->PhysicalDeviceObject, matchFound);
+                if (NT_SUCCESS(status))
+                {
 
                     //
                     // We have created a device object that we will have to
                     // add into the device relations
                     //
                     newRelationSize += 1;
-
                 }
-
-            } else if (deviceExtension->Flags & DEV_TYPE_PDO &&
-                deviceExtension->DeviceObject != NULL) {
+            }
+            else if (deviceExtension->Flags & DEV_TYPE_PDO && deviceExtension->DeviceObject != NULL)
+            {
 
                 //
                 // Just we because the device_extension matched doesn't mean
@@ -2055,29 +1775,30 @@ Return Value:
                 //      c) the device object is *not* in the device relation
                 //
                 matchFound = FALSE;
-                if (currentRelations != NULL) {
+                if (currentRelations != NULL)
+                {
 
-                    for (index = 0; index < currentRelations->Count; index++) {
+                    for (index = 0; index < currentRelations->Count; index++)
+                    {
 
-                        if (currentRelations->Objects[index] ==
-                            deviceExtension->DeviceObject) {
+                        if (currentRelations->Objects[index] == deviceExtension->DeviceObject)
+                        {
 
                             //
                             // Match found
                             //
                             matchFound = TRUE;
                             break;
-
                         }
 
                     } // for
-
                 }
 
                 //
                 // Did we not find a match?
                 //
-                if (!matchFound) {
+                if (!matchFound)
+                {
 
                     //
                     // We need to make sure that its in the relation
@@ -2088,13 +1809,7 @@ Return Value:
                     // And at the same time, clear the flag that says that
                     // we haven't enumerated this
                     //
-                    ACPIInternalUpdateFlags(
-                        &(deviceExtension->Flags),
-                        DEV_TYPE_NOT_ENUMERATED,
-                        TRUE
-                        );
-
-
+                    ACPIInternalUpdateFlags(&(deviceExtension->Flags), DEV_TYPE_NOT_ENUMERATED, TRUE);
                 }
 
             } // if (ACPIDetectPDOMatch ... )
@@ -2104,37 +1819,35 @@ Return Value:
         //
         // Reacquire the spin lock
         //
-        KeAcquireSpinLock( &AcpiDeviceTreeLock, &oldIrql );
+        KeAcquireSpinLock(&AcpiDeviceTreeLock, &oldIrql);
 
         //
         // Decrement the reference count on the node
         //
-        oldReferenceCount = InterlockedDecrement(
-            &(deviceExtension->ReferenceCount)
-            );
+        oldReferenceCount = InterlockedDecrement(&(deviceExtension->ReferenceCount));
 
         //
         // Check to see if we have gone all the way around the list
         // list
-        if (deviceExtension->SiblingDeviceList.Flink ==
-            &(parentExtension->ChildDeviceList) ) {
+        if (deviceExtension->SiblingDeviceList.Flink == &(parentExtension->ChildDeviceList))
+        {
 
             //
             // Remove the node, if necessary
             //
-            if (oldReferenceCount == 0) {
+            if (oldReferenceCount == 0)
+            {
 
                 //
                 // Free the memory allocated by the extension
                 //
-                ACPIInitDeleteDeviceExtension( deviceExtension );
-
+                ACPIInitDeleteDeviceExtension(deviceExtension);
             }
 
             //
             // Now, we release the spin lock
             //
-            KeReleaseSpinLock( &AcpiDeviceTreeLock, oldIrql );
+            KeReleaseSpinLock(&AcpiDeviceTreeLock, oldIrql);
 
             //
             // Stop the loop
@@ -2146,50 +1859,42 @@ Return Value:
         //
         // Next element
         //
-        deviceExtension = (PDEVICE_EXTENSION) CONTAINING_RECORD(
-            deviceExtension->SiblingDeviceList.Flink,
-            DEVICE_EXTENSION,
-            SiblingDeviceList
-            );
+        deviceExtension = (PDEVICE_EXTENSION)CONTAINING_RECORD(deviceExtension->SiblingDeviceList.Flink,
+                                                               DEVICE_EXTENSION, SiblingDeviceList);
 
         //
         // Remove the old node, if necessary
         //
-        if (oldReferenceCount == 0) {
+        if (oldReferenceCount == 0)
+        {
 
             //
             // Unlink the obsolete extension
             //
-            listEntry = RemoveTailList(
-                &(deviceExtension->SiblingDeviceList)
-                );
+            listEntry = RemoveTailList(&(deviceExtension->SiblingDeviceList));
 
             //
             // It is not possible for this to point to the parent without
             // having succeeded the previous test
             //
-            targetExtension = CONTAINING_RECORD(
-                listEntry,
-                DEVICE_EXTENSION,
-                SiblingDeviceList
-                );
+            targetExtension = CONTAINING_RECORD(listEntry, DEVICE_EXTENSION, SiblingDeviceList);
 
             //
             // Deleted the old extension
             //
-            ACPIInitDeleteDeviceExtension( targetExtension );
+            ACPIInitDeleteDeviceExtension(targetExtension);
         }
 
         //
         // Increment the reference count on this node so that it too
         // cannot be deleted
         //
-        InterlockedIncrement( &(deviceExtension->ReferenceCount) );
+        InterlockedIncrement(&(deviceExtension->ReferenceCount));
 
         //
         // Now, we release the spin lock
         //
-        KeReleaseSpinLock( &AcpiDeviceTreeLock, oldIrql );
+        KeReleaseSpinLock(&AcpiDeviceTreeLock, oldIrql);
 
     } // while
 
@@ -2197,70 +1902,63 @@ Return Value:
     // At this point, we can see if we need to change the size of the
     // device relations
     //
-    if ( (currentRelations && newRelationSize == currentRelations->Count) ||
-         (currentRelations == NULL && newRelationSize == 0) ) {
+    if ((currentRelations && newRelationSize == currentRelations->Count) ||
+        (currentRelations == NULL && newRelationSize == 0))
+    {
 
         //
         // Done
         //
         return STATUS_SUCCESS;
-
     }
 
     //
     // Determine the size of the new relations. Use index as a
     // scratch buffer
     //
-    index = sizeof(DEVICE_RELATIONS) +
-        ( sizeof(PDEVICE_OBJECT) * (newRelationSize - 1) );
+    index = sizeof(DEVICE_RELATIONS) + (sizeof(PDEVICE_OBJECT) * (newRelationSize - 1));
 
     //
     // Allocate the new device relation buffer. Use nonpaged pool since we
     // are at dispatch
     //
-    newRelations = ExAllocatePoolWithTag(
-        NonPagedPool,
-        index,
-        ACPI_DEVICE_POOLTAG
-        );
-    if (newRelations == NULL) {
+    newRelations = ExAllocatePoolWithTag(NonPagedPool, index, ACPI_DEVICE_POOLTAG);
+    if (newRelations == NULL)
+    {
 
         //
         // Return failure
         //
         return STATUS_INSUFFICIENT_RESOURCES;
-
     }
 
     //
     // Initialize DeviceRelations data structure
     //
-    RtlZeroMemory( newRelations, index );
+    RtlZeroMemory(newRelations, index);
 
     //
     // If there are existing relations, we must determine
-    if (currentRelations) {
+    if (currentRelations)
+    {
 
         //
         // Copy old relations, and determine the starting index for the
         // first of the PDOs created by this driver. We will put off freeing
         // the old relations till we are no longer holding the lock
         //
-        RtlCopyMemory(
-            newRelations->Objects,
-            currentRelations->Objects,
-            currentRelations->Count * sizeof(PDEVICE_OBJECT)
-            );
+        RtlCopyMemory(newRelations->Objects, currentRelations->Objects,
+                      currentRelations->Count * sizeof(PDEVICE_OBJECT));
         index = currentRelations->Count;
         j = currentRelations->Count;
-
-    } else {
+    }
+    else
+    {
 
         //
         // There will not be a lot of work to do in this case
         //
         index = j = 0;
-
     }
 
     //
@@ -2268,52 +1966,49 @@ Return Value:
     // we don't need to let it go until we are done since we don't need
     // to call anything that will at PASSIVE_LEVEL
     //
-    KeAcquireSpinLock( &AcpiDeviceTreeLock, &oldIrql );
+    KeAcquireSpinLock(&AcpiDeviceTreeLock, &oldIrql);
 
     //
     // Sanity check
     //
-    if (IsListEmpty( &(parentExtension->ChildDeviceList) ) ) {
+    if (IsListEmpty(&(parentExtension->ChildDeviceList)))
+    {
 
         //
         // We have nothing to do here
         //
-        KeReleaseSpinLock( &AcpiDeviceTreeLock, oldIrql );
-        ExFreePool( newRelations );
+        KeReleaseSpinLock(&AcpiDeviceTreeLock, oldIrql);
+        ExFreePool(newRelations);
         return STATUS_SUCCESS;
-
     }
 
     //
     // Walk the tree one more time and add all PDOs that aren't present in
     // the device relations
     //
-    deviceExtension = (PDEVICE_EXTENSION) CONTAINING_RECORD(
-        parentExtension->ChildDeviceList.Flink,
-        DEVICE_EXTENSION,
-        SiblingDeviceList
-        );
+    deviceExtension = (PDEVICE_EXTENSION)CONTAINING_RECORD(parentExtension->ChildDeviceList.Flink, DEVICE_EXTENSION,
+                                                           SiblingDeviceList);
 
     //
     // Loop until we get back to the parent
     //
-    while (deviceExtension != NULL) {
+    while (deviceExtension != NULL)
+    {
 
         //
         // The only objects that we care about are those that are marked as
         // PDOs and have a phsyical object associated with them
         //
-        if (deviceExtension->Flags & DEV_TYPE_PDO &&
-            deviceExtension->DeviceObject != NULL &&
-            !(deviceExtension->Flags & DEV_MASK_NOT_PRESENT) ) {
+        if (deviceExtension->Flags & DEV_TYPE_PDO && deviceExtension->DeviceObject != NULL &&
+            !(deviceExtension->Flags & DEV_MASK_NOT_PRESENT))
+        {
 
             //
             // We don't ObReferenceO here because we are still at
             // dispatch level (and for efficiency's sake, we don't
             // want to drop down)
             //
-            newRelations->Objects[index] =
-                deviceExtension->DeviceObject;
+            newRelations->Objects[index] = deviceExtension->DeviceObject;
 
             //
             // Update the location for the next object in the
@@ -2325,11 +2020,7 @@ Return Value:
             // And at the same time, clear the flag that says that
             // we haven't enumerated this
             //
-            ACPIInternalUpdateFlags(
-                &(deviceExtension->Flags),
-                DEV_TYPE_NOT_ENUMERATED,
-                TRUE
-                );
+            ACPIInternalUpdateFlags(&(deviceExtension->Flags), DEV_TYPE_NOT_ENUMERATED, TRUE);
 
         } // if (deviceExtension->Flags ... )
 
@@ -2338,20 +2029,20 @@ Return Value:
         // about. As in, don't mess the system by walking past the end
         // of the device relations
         //
-        if (newRelationSize == index) {
+        if (newRelationSize == index)
+        {
 
             //
             // Done
             //
             break;
-
         }
 
         //
         // Check to see if we have gone all the way around the list
         // list
-        if (deviceExtension->SiblingDeviceList.Flink ==
-            &(parentExtension->ChildDeviceList) ) {
+        if (deviceExtension->SiblingDeviceList.Flink == &(parentExtension->ChildDeviceList))
+        {
 
             break;
 
@@ -2360,11 +2051,8 @@ Return Value:
         //
         // Next element
         //
-        deviceExtension = (PDEVICE_EXTENSION) CONTAINING_RECORD(
-            deviceExtension->SiblingDeviceList.Flink,
-            DEVICE_EXTENSION,
-            SiblingDeviceList
-            );
+        deviceExtension = (PDEVICE_EXTENSION)CONTAINING_RECORD(deviceExtension->SiblingDeviceList.Flink,
+                                                               DEVICE_EXTENSION, SiblingDeviceList);
 
     } // while (deviceExtension ... )
 
@@ -2378,58 +2066,49 @@ Return Value:
     //
     // At this point, we are well and truely done with the spinlock
     //
-    KeReleaseSpinLock( &AcpiDeviceTreeLock, oldIrql );
+    KeReleaseSpinLock(&AcpiDeviceTreeLock, oldIrql);
 
     //
     // We have to reference all of the objects that we added
     //
     index = (currentRelations != NULL ? currentRelations->Count : 0);
-    for (; index < newRelationSize; index++) {
+    for (; index < newRelationSize; index++)
+    {
 
         //
         // Attempt to reference the object
         //
-        status = ObReferenceObjectByPointer(
-            newRelations->Objects[index],
-            0,
-            NULL,
-            KernelMode
-            );
-        if (!NT_SUCCESS(status) ) {
+        status = ObReferenceObjectByPointer(newRelations->Objects[index], 0, NULL, KernelMode);
+        if (!NT_SUCCESS(status))
+        {
 
-            PDEVICE_OBJECT  tempDeviceObject;
+            PDEVICE_OBJECT tempDeviceObject;
 
             //
             // Hmm... Let the world know that this happened
             //
-            ACPIPrint( (
-                ACPI_PRINT_FAILURE,
-                "ACPIDetectPdoDevices: ObjReferenceObject(0x%08lx) "
-                "= 0x%08lx\n",
-                newRelations->Objects[index],
-                status
-                ) );
+            ACPIPrint((ACPI_PRINT_FAILURE,
+                       "ACPIDetectPdoDevices: ObjReferenceObject(0x%08lx) "
+                       "= 0x%08lx\n",
+                       newRelations->Objects[index], status));
 
             //
             // Swap the bad element for the last one in the chain
             //
             newRelations->Count--;
             tempDeviceObject = newRelations->Objects[newRelations->Count];
-            newRelations->Objects[newRelations->Count] =
-                newRelations->Objects[index];
+            newRelations->Objects[newRelations->Count] = newRelations->Objects[index];
             newRelations->Objects[index] = tempDeviceObject;
-
         }
-
     }
 
     //
     // Free the old device relations (if it is present)
     //
-    if (currentRelations) {
+    if (currentRelations)
+    {
 
-        ExFreePool( *DeviceRelations );
-
+        ExFreePool(*DeviceRelations);
     }
 
     //
@@ -2442,12 +2121,9 @@ Return Value:
     //
     return STATUS_SUCCESS;
 }
-
+
 BOOLEAN
-ACPIDetectPdoMatch(
-    IN  PDEVICE_EXTENSION   DeviceExtension,
-    IN  PDEVICE_RELATIONS   DeviceRelations
-    )
+ACPIDetectPdoMatch(IN PDEVICE_EXTENSION DeviceExtension, IN PDEVICE_RELATIONS DeviceRelations)
 /*++
 
 Routine Description:
@@ -2471,8 +2147,8 @@ Return Value:
 
 --*/
 {
-    NTSTATUS       status;
-    PDEVICE_OBJECT devicePdoObject = NULL ;
+    NTSTATUS status;
+    PDEVICE_OBJECT devicePdoObject = NULL;
 
     PAGED_CODE();
 
@@ -2481,12 +2157,11 @@ Return Value:
     // first create the device and at any time when there is no device object
     // associated with the extension
     //
-    if (!(DeviceExtension->Flags & DEV_TYPE_NOT_FOUND) ||
-         (DeviceExtension->Flags & DEV_PROP_DOCK)      ||
-         DeviceExtension->DeviceObject != NULL) {
+    if (!(DeviceExtension->Flags & DEV_TYPE_NOT_FOUND) || (DeviceExtension->Flags & DEV_PROP_DOCK) ||
+        DeviceExtension->DeviceObject != NULL)
+    {
 
         return TRUE;
-
     }
 
     //
@@ -2494,14 +2169,7 @@ Return Value:
     // already in the relation. The status will not be successful if the
     // extension could not be in the relation.
     //
-    status = ACPIDetectCouldExtensionBeInRelation(
-        DeviceExtension,
-        DeviceRelations,
-        FALSE,
-        TRUE,
-        &devicePdoObject
-        ) ;
+    status = ACPIDetectCouldExtensionBeInRelation(DeviceExtension, DeviceRelations, FALSE, TRUE, &devicePdoObject);
 
-    return (devicePdoObject||(!NT_SUCCESS(status))) ? TRUE : FALSE ;
+    return (devicePdoObject || (!NT_SUCCESS(status))) ? TRUE : FALSE;
 }
-

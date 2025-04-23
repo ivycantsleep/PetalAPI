@@ -22,11 +22,8 @@ Environment:
 
 #include "pch.h"
 
-
-VOID
-ACPIEnableEnterACPIMode (
-    VOID
-    )
+
+VOID ACPIEnableEnterACPIMode(VOID)
 /*++
 
 Routine Description:
@@ -44,57 +41,41 @@ Return Value:
 --*/
 {
 
-    ULONG   i;
+    ULONG i;
 
-    ASSERTMSG(
-        "ACPIEnableEnterACPIMode: System already in ACPI mode!\n",
-        !(READ_PM1_CONTROL() & PM1_SCI_EN)
-        );
+    ASSERTMSG("ACPIEnableEnterACPIMode: System already in ACPI mode!\n", !(READ_PM1_CONTROL() & PM1_SCI_EN));
 
     //
     // Let the world know about this
     //
-    ACPIPrint( (
-        ACPI_PRINT_LOADING,
-        "ACPIEnableEnterACPIMode: Enabling ACPI\n"
-        ) );
+    ACPIPrint((ACPI_PRINT_LOADING, "ACPIEnableEnterACPIMode: Enabling ACPI\n"));
 
     //
     // Write the magic value to the port
     //
 
-    WRITE_ACPI_REGISTER(SMI_CMD, 0,
-            AcpiInformation->FixedACPIDescTable->acpi_on_value);
+    WRITE_ACPI_REGISTER(SMI_CMD, 0, AcpiInformation->FixedACPIDescTable->acpi_on_value);
 
     //
     // Make sure that we see that PM1 is in fact enabled
     //
-    for (i = 0; ; i++) {
+    for (i = 0;; i++)
+    {
 
-        if ( (READ_PM1_CONTROL() & PM1_SCI_EN) ) {
+        if ((READ_PM1_CONTROL() & PM1_SCI_EN))
+        {
 
             break;
-
         }
-        if (i > 0xFFFFFF) {
+        if (i > 0xFFFFFF)
+        {
 
-            KeBugCheckEx(
-                ACPI_BIOS_ERROR,
-                ACPI_SYSTEM_CANNOT_START_ACPI,
-                6,
-                0,
-                0
-                );
-
+            KeBugCheckEx(ACPI_BIOS_ERROR, ACPI_SYSTEM_CANNOT_START_ACPI, 6, 0, 0);
         }
-
     }
 }
-
-VOID
-ACPIEnableInitializeACPI(
-    IN BOOLEAN ReEnable
-    )
+
+VOID ACPIEnableInitializeACPI(IN BOOLEAN ReEnable)
 /*++
 
 Routine Description:
@@ -131,11 +112,11 @@ Return Value:
     // Read PM1_CTRL, if SCI_EN is already set then this is an ACPI only machine
     // and we do not need to Enable ACPI
     //
-    if ( !(READ_PM1_CONTROL() & PM1_SCI_EN) )   {
+    if (!(READ_PM1_CONTROL() & PM1_SCI_EN))
+    {
 
         AcpiInformation->ACPIOnly = FALSE;
         ACPIEnableEnterACPIMode();
-
     }
 
     //
@@ -145,39 +126,34 @@ Return Value:
     //
     CLEAR_PM1_STATUS_REGISTER();
     contents = (USHORT)(READ_PM1_STATUS() & ~(PM1_BM_STS | PM1_RTC_STS));
-    if (contents)   {
+    if (contents)
+    {
 
         CLEAR_PM1_STATUS_REGISTER();
         contents = (USHORT)(READ_PM1_STATUS() & ~(PM1_BM_STS | PM1_RTC_STS));
-
     }
-    ASSERTMSG(
-        "ACPIEnableInitializeACPI: Cannot clear PM1 Status Register\n",
-        (contents == 0)
-        );
+    ASSERTMSG("ACPIEnableInitializeACPI: Cannot clear PM1 Status Register\n", (contents == 0));
 
     //
     // We determined what the PM1 enable bits are when we processed the FADT.
     // We should now enable those bits
     //
-    WRITE_PM1_ENABLE( AcpiInformation->pm1_en_bits );
-    ASSERTMSG(
-        "ACPIEnableInitializeACPI: Cannot write all PM1 Enable Bits\n",
-        (READ_PM1_ENABLE() == AcpiInformation->pm1_en_bits)
-        );
+    WRITE_PM1_ENABLE(AcpiInformation->pm1_en_bits);
+    ASSERTMSG("ACPIEnableInitializeACPI: Cannot write all PM1 Enable Bits\n",
+              (READ_PM1_ENABLE() == AcpiInformation->pm1_en_bits));
 
     //
     // This is called when we renable ACPI after having woken up from sleep
     // or hibernate
     //
-    if (ReEnable) {
+    if (ReEnable)
+    {
 
         //
         // Re-enable all possible GPE events
         //
         ACPIGpeClearRegisters();
-        ACPIGpeEnableDisableEvents( TRUE );
-
+        ACPIGpeEnableDisableEvents(TRUE);
     }
 
     //
@@ -196,13 +172,10 @@ Return Value:
     // write it back
     //
     contents = (READ_PM1_CONTROL() & ~clearbits);
-    WRITE_PM1_CONTROL ( contents, TRUE, WRITE_REGISTER_A_AND_B );
+    WRITE_PM1_CONTROL(contents, TRUE, WRITE_REGISTER_A_AND_B);
 }
-
-VOID
-ACPIEnablePMInterruptOnly(
-    VOID
-    )
+
+VOID ACPIEnablePMInterruptOnly(VOID)
 /*++
 
 Routine Descrition:
@@ -221,11 +194,9 @@ Return Value:
 {
     WRITE_PM1_ENABLE(AcpiInformation->pm1_en_bits);
 }
-
+
 ULONG
-ACPIEnableQueryFixedEnables (
-    VOID
-    )
+ACPIEnableQueryFixedEnables(VOID)
 /*++
 
 Routine Descrition:
@@ -244,5 +215,3 @@ Return Value:
 {
     return AcpiInformation->pm1_en_bits;
 }
-
-

@@ -23,7 +23,8 @@ Author:
 // including home locations for the first four parameters.
 //
 
-typedef struct _CALL_FRAME {
+typedef struct _CALL_FRAME
+{
     PVOID ReturnAddress;
     PVOID Param1Home;
     PVOID Param2Home;
@@ -34,14 +35,8 @@ typedef struct _CALL_FRAME {
 C_ASSERT((sizeof(CALL_FRAME) % 16) == 8);
 
 
-VOID
-BaseInitializeContext (
-    OUT PCONTEXT Context,
-    IN PVOID Parameter OPTIONAL,
-    IN PVOID InitialPc OPTIONAL,
-    IN PVOID InitialSp OPTIONAL,
-    IN BASE_CONTEXT_TYPE ContextType
-    )
+VOID BaseInitializeContext(OUT PCONTEXT Context, IN PVOID Parameter OPTIONAL, IN PVOID InitialPc OPTIONAL,
+                           IN PVOID InitialSp OPTIONAL, IN BASE_CONTEXT_TYPE ContextType)
 
 /*++
 
@@ -100,23 +95,23 @@ Return Value:
     // Initialize the starting address dependent on the type of startup.
     //
 
-    if (ContextType == BaseContextTypeProcess) {
+    if (ContextType == BaseContextTypeProcess)
+    {
         Context->Rip = (ULONG64)BaseProcessStart;
-
-    } else if (ContextType == BaseContextTypeThread ) {
+    }
+    else if (ContextType == BaseContextTypeThread)
+    {
         Context->Rip = (ULONG64)BaseThreadStart;
-
-    } else {
+    }
+    else
+    {
         Context->Rip = (ULONG64)BaseFiberStart;
     }
 
     return;
 }
 
-VOID
-BaseFiberStart (
-    VOID
-    )
+VOID BaseFiberStart(VOID)
 
 /*++
 
@@ -140,8 +135,7 @@ Return Value:
     PFIBER Fiber;
 
     Fiber = GetCurrentFiber();
-    BaseThreadStart((LPTHREAD_START_ROUTINE)Fiber->FiberContext.Rcx,
-                    (LPVOID)Fiber->FiberContext.Rdx);
+    BaseThreadStart((LPTHREAD_START_ROUTINE)Fiber->FiberContext.Rcx, (LPVOID)Fiber->FiberContext.Rdx);
 
     return;
 }

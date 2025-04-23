@@ -23,15 +23,8 @@ Revision History:
 
 --*/
 
-VOID
-VfRandomInit(
-    VOID
-    );
+VOID VfRandomInit(VOID);
 
 ULONG
 FASTCALL
-VfRandomGetNumber(
-    IN  ULONG   Minimum,
-    IN  ULONG   Maximum
-    );
-
+VfRandomGetNumber(IN ULONG Minimum, IN ULONG Maximum);

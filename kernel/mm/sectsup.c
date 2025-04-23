@@ -23,28 +23,24 @@ Revision History:
 
 #include "mi.h"
 
-VOID
-FASTCALL
-MiRemoveBasedSection (
-    IN PSECTION Section
-    );
+VOID FASTCALL MiRemoveBasedSection(IN PSECTION Section);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,MiSectionInitialization)
-#pragma alloc_text(PAGE,MiRemoveBasedSection)
-#pragma alloc_text(PAGE,MmGetFileNameForSection)
-#pragma alloc_text(PAGE,MmGetFileNameForAddress)
-#pragma alloc_text(PAGE,MiSectionDelete)
-#pragma alloc_text(PAGE,MiInsertBasedSection)
-#pragma alloc_text(PAGE,MiGetEventCounter)
-#pragma alloc_text(PAGE,MiFreeEventCounter)
-#pragma alloc_text(PAGE,MmGetFileObjectForSection)
+#pragma alloc_text(INIT, MiSectionInitialization)
+#pragma alloc_text(PAGE, MiRemoveBasedSection)
+#pragma alloc_text(PAGE, MmGetFileNameForSection)
+#pragma alloc_text(PAGE, MmGetFileNameForAddress)
+#pragma alloc_text(PAGE, MiSectionDelete)
+#pragma alloc_text(PAGE, MiInsertBasedSection)
+#pragma alloc_text(PAGE, MiGetEventCounter)
+#pragma alloc_text(PAGE, MiFreeEventCounter)
+#pragma alloc_text(PAGE, MmGetFileObjectForSection)
 #endif
 
-ULONG   MmUnusedSegmentForceFree;
+ULONG MmUnusedSegmentForceFree;
 
-ULONG   MiSubsectionsProcessed;
-ULONG   MiSubsectionActions;
+ULONG MiSubsectionsProcessed;
+ULONG MiSubsectionActions;
 
 SIZE_T MmSharedCommit = 0;
 extern const ULONG MMCONTROL;
@@ -53,41 +49,29 @@ extern const ULONG MMCONTROL;
 // Define segment dereference thread wait object types.
 //
 
-typedef enum _SEGMENT_DEREFERENCE_OBJECT {
+typedef enum _SEGMENT_DEREFERENCE_OBJECT
+{
     SegmentDereference,
     UsedSegmentCleanup,
     SegMaximumObject
-    } BALANCE_OBJECT;
+} BALANCE_OBJECT;
 
 extern POBJECT_TYPE IoFileObjectType;
 
 #ifdef ALLOC_DATA_PRAGMA
 #pragma const_seg("INITCONST")
 #endif
-const GENERIC_MAPPING MiSectionMapping = {
-    STANDARD_RIGHTS_READ |
-        SECTION_QUERY | SECTION_MAP_READ,
-    STANDARD_RIGHTS_WRITE |
-        SECTION_MAP_WRITE,
-    STANDARD_RIGHTS_EXECUTE |
-        SECTION_MAP_EXECUTE,
-    SECTION_ALL_ACCESS
-};
+const GENERIC_MAPPING MiSectionMapping = { STANDARD_RIGHTS_READ | SECTION_QUERY | SECTION_MAP_READ,
+                                           STANDARD_RIGHTS_WRITE | SECTION_MAP_WRITE,
+                                           STANDARD_RIGHTS_EXECUTE | SECTION_MAP_EXECUTE, SECTION_ALL_ACCESS };
 #ifdef ALLOC_DATA_PRAGMA
 #pragma const_seg()
 #endif
 
-VOID
-MiRemoveUnusedSegments(
-    VOID
-    );
+VOID MiRemoveUnusedSegments(VOID);
 
-
-VOID
-FASTCALL
-MiInsertBasedSection (
-    IN PSECTION Section
-    )
+
+VOID FASTCALL MiInsertBasedSection(IN PSECTION Section)
 
 /*++
 
@@ -113,20 +97,16 @@ Environment:
 {
     PMMADDRESS_NODE *Root;
 
-    ASSERT (Section->Address.EndingVpn >= Section->Address.StartingVpn);
+    ASSERT(Section->Address.EndingVpn >= Section->Address.StartingVpn);
 
     Root = &MmSectionBasedRoot;
 
-    MiInsertNode (&Section->Address, Root);
+    MiInsertNode(&Section->Address, Root);
     return;
 }
 
-
-VOID
-FASTCALL
-MiRemoveBasedSection (
-    IN PSECTION Section
-    )
+
+VOID FASTCALL MiRemoveBasedSection(IN PSECTION Section)
 
 /*++
 
@@ -153,16 +133,13 @@ Environment:
 
     Root = &MmSectionBasedRoot;
 
-    MiRemoveNode (&Section->Address, Root);
+    MiRemoveNode(&Section->Address, Root);
 
     return;
 }
 
-
-VOID
-MiSegmentDelete (
-    PSEGMENT Segment
-    )
+
+VOID MiSegmentDelete(PSEGMENT Segment)
 
 /*++
 
@@ -206,12 +183,13 @@ Return Value:
 
     ControlArea = Segment->ControlArea;
 
-    ASSERT (ControlArea->u.Flags.BeingDeleted == 1);
+    ASSERT(ControlArea->u.Flags.BeingDeleted == 1);
 
-    ASSERT (ControlArea->Segment->WritableUserReferences == 0);
+    ASSERT(ControlArea->Segment->WritableUserReferences == 0);
 
-    LOCK_PFN (OldIrql);
-    if (ControlArea->DereferenceList.Flink != NULL) {
+    LOCK_PFN(OldIrql);
+    if (ControlArea->DereferenceList.Flink != NULL)
+    {
 
         //
         // Remove this from the list of unused segments.  The dereference
@@ -221,22 +199,24 @@ Return Value:
         // for BeingDeleted.
         //
 
-        ExAcquireSpinLockAtDpcLevel (&MmDereferenceSegmentHeader.Lock);
-        RemoveEntryList (&ControlArea->DereferenceList);
+        ExAcquireSpinLockAtDpcLevel(&MmDereferenceSegmentHeader.Lock);
+        RemoveEntryList(&ControlArea->DereferenceList);
 
-        MI_UNUSED_SEGMENTS_REMOVE_CHARGE (ControlArea);
+        MI_UNUSED_SEGMENTS_REMOVE_CHARGE(ControlArea);
 
-        ExReleaseSpinLockFromDpcLevel (&MmDereferenceSegmentHeader.Lock);
+        ExReleaseSpinLockFromDpcLevel(&MmDereferenceSegmentHeader.Lock);
     }
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
-    if ((ControlArea->u.Flags.Image) || (ControlArea->u.Flags.File)) {
+    if ((ControlArea->u.Flags.Image) || (ControlArea->u.Flags.File))
+    {
 
         //
         // Unload kernel debugger symbols if any were loaded.
         //
 
-        if (ControlArea->u.Flags.DebugSymbolsLoaded != 0) {
+        if (ControlArea->u.Flags.DebugSymbolsLoaded != 0)
+        {
 
             //
             //  TEMP TEMP TEMP rip out when debugger converted
@@ -245,21 +225,20 @@ Return Value:
             ANSI_STRING AnsiName;
             NTSTATUS Status;
 
-            Status = RtlUnicodeStringToAnsiString( &AnsiName,
-                                                   (PUNICODE_STRING)&Segment->ControlArea->FilePointer->FileName,
-                                                   TRUE );
+            Status = RtlUnicodeStringToAnsiString(&AnsiName,
+                                                  (PUNICODE_STRING)&Segment->ControlArea->FilePointer->FileName, TRUE);
 
-            if (NT_SUCCESS( Status)) {
-                DbgUnLoadImageSymbols( &AnsiName,
-                                       Segment->BasedAddress,
-                                       (ULONG_PTR)PsGetCurrentProcess());
-                RtlFreeAnsiString( &AnsiName );
+            if (NT_SUCCESS(Status))
+            {
+                DbgUnLoadImageSymbols(&AnsiName, Segment->BasedAddress, (ULONG_PTR)PsGetCurrentProcess());
+                RtlFreeAnsiString(&AnsiName);
             }
-            LOCK_PFN (OldIrql);
+            LOCK_PFN(OldIrql);
             ControlArea->u.Flags.DebugSymbolsLoaded = 0;
         }
-        else {
-            LOCK_PFN (OldIrql);
+        else
+        {
+            LOCK_PFN(OldIrql);
         }
 
         //
@@ -269,10 +248,11 @@ Return Value:
         Event = ControlArea->WaitingForDeletion;
         ControlArea->WaitingForDeletion = NULL;
 
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
 
-        if (Event != NULL) {
-            KeSetEvent (&Event->Event, 0, FALSE);
+        if (Event != NULL)
+        {
+            KeSetEvent(&Event->Event, 0, FALSE);
         }
 
         //
@@ -283,19 +263,22 @@ Return Value:
         // we don't want to dereference the file pointer.
         //
 
-        if (ControlArea->u.Flags.BeingCreated == FALSE) {
+        if (ControlArea->u.Flags.BeingCreated == FALSE)
+        {
 
 #if DBG
-            if (ControlArea->u.Flags.Image == 1) {
-                ASSERT (ControlArea->FilePointer->SectionObjectPointer->ImageSectionObject != (PVOID)ControlArea);
+            if (ControlArea->u.Flags.Image == 1)
+            {
+                ASSERT(ControlArea->FilePointer->SectionObjectPointer->ImageSectionObject != (PVOID)ControlArea);
             }
-            else {
-                ASSERT (ControlArea->FilePointer->SectionObjectPointer->DataSectionObject != (PVOID)ControlArea);
+            else
+            {
+                ASSERT(ControlArea->FilePointer->SectionObjectPointer->DataSectionObject != (PVOID)ControlArea);
             }
 #endif
 
             PERFINFO_SEGMENT_DELETE(ControlArea->FilePointer);
-            ObDereferenceObject (ControlArea->FilePointer);
+            ObDereferenceObject(ControlArea->FilePointer);
         }
 
         //
@@ -303,35 +286,39 @@ Return Value:
         // the total commit count.
         //
 
-        if (ControlArea->u.Flags.Image == 0) {
+        if (ControlArea->u.Flags.Image == 0)
+        {
 
             //
             // This is a mapped data file.  None of the prototype
             // PTEs may be referencing a physical page (valid or transition).
             //
 
-            if (ControlArea->u.Flags.Rom == 0) {
+            if (ControlArea->u.Flags.Rom == 0)
+            {
                 Subsection = (PSUBSECTION)(ControlArea + 1);
             }
-            else {
+            else
+            {
                 Subsection = (PSUBSECTION)((PLARGE_CONTROL_AREA)ControlArea + 1);
             }
 
 #if DBG
-            if (Subsection->SubsectionBase != NULL) {
+            if (Subsection->SubsectionBase != NULL)
+            {
                 PointerPte = Subsection->SubsectionBase;
                 LastPte = PointerPte + Segment->NonExtendedPtes;
 
-                while (PointerPte < LastPte) {
+                while (PointerPte < LastPte)
+                {
 
                     //
                     // Prototype PTEs for segments backed by paging file are
                     // either in demand zero, page file format, or transition.
                     //
 
-                    ASSERT (PointerPte->u.Hard.Valid == 0);
-                    ASSERT ((PointerPte->u.Soft.Prototype == 1) ||
-                            (PointerPte->u.Long == 0));
+                    ASSERT(PointerPte->u.Hard.Valid == 0);
+                    ASSERT((PointerPte->u.Soft.Prototype == 1) || (PointerPte->u.Long == 0));
                     PointerPte += 1;
                 }
             }
@@ -341,58 +328,64 @@ Return Value:
             // Deallocate the control area and subsections.
             //
 
-            ASSERT (ControlArea->u.Flags.GlobalOnlyPerSession == 0);
+            ASSERT(ControlArea->u.Flags.GlobalOnlyPerSession == 0);
 
-            if (ControlArea->FilePointer != NULL) {
+            if (ControlArea->FilePointer != NULL)
+            {
 
-                MappedSubsection = (PMSUBSECTION) Subsection;
+                MappedSubsection = (PMSUBSECTION)Subsection;
 
-                LOCK_PFN (OldIrql);
+                LOCK_PFN(OldIrql);
 
-                while (MappedSubsection != NULL) {
+                while (MappedSubsection != NULL)
+                {
 
-                    if (MappedSubsection->DereferenceList.Flink != NULL) {
+                    if (MappedSubsection->DereferenceList.Flink != NULL)
+                    {
 
                         //
                         // Remove this from the list of unused subsections.
                         //
 
-                        RemoveEntryList (&MappedSubsection->DereferenceList);
+                        RemoveEntryList(&MappedSubsection->DereferenceList);
 
-                        MI_UNUSED_SUBSECTIONS_COUNT_REMOVE (MappedSubsection);
+                        MI_UNUSED_SUBSECTIONS_COUNT_REMOVE(MappedSubsection);
                     }
-                    MappedSubsection = (PMSUBSECTION) MappedSubsection->NextSubsection;
+                    MappedSubsection = (PMSUBSECTION)MappedSubsection->NextSubsection;
                 }
-                UNLOCK_PFN (OldIrql);
+                UNLOCK_PFN(OldIrql);
 
-                if (Subsection->SubsectionBase != NULL) {
-                    ExFreePool (Subsection->SubsectionBase);
+                if (Subsection->SubsectionBase != NULL)
+                {
+                    ExFreePool(Subsection->SubsectionBase);
                 }
             }
 
             Subsection = Subsection->NextSubsection;
 
-            while (Subsection != NULL) {
-                if (Subsection->SubsectionBase != NULL) {
-                    ExFreePool (Subsection->SubsectionBase);
+            while (Subsection != NULL)
+            {
+                if (Subsection->SubsectionBase != NULL)
+                {
+                    ExFreePool(Subsection->SubsectionBase);
                 }
                 NextSubsection = Subsection->NextSubsection;
-                ExFreePool (Subsection);
+                ExFreePool(Subsection);
                 Subsection = NextSubsection;
             }
 
             NumberOfCommittedPages = Segment->NumberOfCommittedPages;
 
-            if (NumberOfCommittedPages != 0) {
-                MiReturnCommitment (NumberOfCommittedPages);
-                MM_TRACK_COMMIT (MM_DBG_COMMIT_RETURN_SEGMENT_DELETE1,
-                                 NumberOfCommittedPages);
+            if (NumberOfCommittedPages != 0)
+            {
+                MiReturnCommitment(NumberOfCommittedPages);
+                MM_TRACK_COMMIT(MM_DBG_COMMIT_RETURN_SEGMENT_DELETE1, NumberOfCommittedPages);
 
-                InterlockedExchangeAddSizeT (&MmSharedCommit, 0-NumberOfCommittedPages);
+                InterlockedExchangeAddSizeT(&MmSharedCommit, 0 - NumberOfCommittedPages);
             }
 
-            ExFreePool (ControlArea);
-            ExFreePool (Segment);
+            ExFreePool(ControlArea);
+            ExFreePool(Segment);
 
             //
             // The file mapped Segment object is now deleted.
@@ -410,32 +403,36 @@ Return Value:
     // file and for deleting transition PTEs.
     //
 
-    if ((ControlArea->u.Flags.GlobalOnlyPerSession == 0) &&
-        (ControlArea->u.Flags.Rom == 0)) {
+    if ((ControlArea->u.Flags.GlobalOnlyPerSession == 0) && (ControlArea->u.Flags.Rom == 0))
+    {
         Subsection = (PSUBSECTION)(ControlArea + 1);
     }
-    else {
+    else
+    {
         Subsection = (PSUBSECTION)((PLARGE_CONTROL_AREA)ControlArea + 1);
     }
 
     PointerPte = Subsection->SubsectionBase;
     LastPte = PointerPte + Segment->NonExtendedPtes;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    MiMakeSystemAddressValidPfn (PointerPte);
+    MiMakeSystemAddressValidPfn(PointerPte);
 
-    while (PointerPte < LastPte) {
+    while (PointerPte < LastPte)
+    {
 
-        if (MiIsPteOnPdeBoundary(PointerPte)) {
+        if (MiIsPteOnPdeBoundary(PointerPte))
+        {
 
             //
             // We are on a page boundary, make sure this PTE is resident.
             //
 
-            if (MmIsAddressValid (PointerPte) == FALSE) {
+            if (MmIsAddressValid(PointerPte) == FALSE)
+            {
 
-                MiMakeSystemAddressValidPfn (PointerPte);
+                MiMakeSystemAddressValidPfn(PointerPte);
             }
         }
 
@@ -446,23 +443,25 @@ Return Value:
         // are either in demand zero, page file format, or transition.
         //
 
-        ASSERT (PteContents.u.Hard.Valid == 0);
+        ASSERT(PteContents.u.Hard.Valid == 0);
 
-        if (PteContents.u.Soft.Prototype == 0) {
+        if (PteContents.u.Soft.Prototype == 0)
+        {
 
-            if (PteContents.u.Soft.Transition == 1) {
+            if (PteContents.u.Soft.Transition == 1)
+            {
 
                 //
                 // Prototype PTE in transition, put the page on the free list.
                 //
 
-                Pfn1 = MI_PFN_ELEMENT (PteContents.u.Trans.PageFrameNumber);
+                Pfn1 = MI_PFN_ELEMENT(PteContents.u.Trans.PageFrameNumber);
 
-                MI_SET_PFN_DELETED (Pfn1);
+                MI_SET_PFN_DELETED(Pfn1);
 
                 PageTableFrameIndex = Pfn1->u4.PteFrame;
-                Pfn2 = MI_PFN_ELEMENT (PageTableFrameIndex);
-                MiDecrementShareCountInline (Pfn2, PageTableFrameIndex);
+                Pfn2 = MI_PFN_ELEMENT(PageTableFrameIndex);
+                MiDecrementShareCountInline(Pfn2, PageTableFrameIndex);
 
                 //
                 // Check the reference count for the page, if the reference
@@ -473,32 +472,34 @@ Return Value:
                 // on the free list.
                 //
 
-                if (Pfn1->u3.e2.ReferenceCount == 0) {
-                    MiUnlinkPageFromList (Pfn1);
-                    MiReleasePageFileSpace (Pfn1->OriginalPte);
-                    MiInsertPageInFreeList (MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE (&PteContents));
+                if (Pfn1->u3.e2.ReferenceCount == 0)
+                {
+                    MiUnlinkPageFromList(Pfn1);
+                    MiReleasePageFileSpace(Pfn1->OriginalPte);
+                    MiInsertPageInFreeList(MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE(&PteContents));
                 }
-
             }
-            else {
+            else
+            {
 
                 //
                 // This is not a prototype PTE, if any paging file
                 // space has been allocated, release it.
                 //
 
-                if (IS_PTE_NOT_DEMAND_ZERO (PteContents)) {
-                    MiReleasePageFileSpace (PteContents);
+                if (IS_PTE_NOT_DEMAND_ZERO(PteContents))
+                {
+                    MiReleasePageFileSpace(PteContents);
                 }
             }
         }
 #if DBG
-        MI_WRITE_INVALID_PTE (PointerPte, ZeroPte);
+        MI_WRITE_INVALID_PTE(PointerPte, ZeroPte);
 #endif
         PointerPte += 1;
     }
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
     //
     // If there have been committed pages in this segment, adjust
@@ -507,31 +508,30 @@ Return Value:
 
     NumberOfCommittedPages = Segment->NumberOfCommittedPages;
 
-    if (NumberOfCommittedPages != 0) {
-        MiReturnCommitment (NumberOfCommittedPages);
+    if (NumberOfCommittedPages != 0)
+    {
+        MiReturnCommitment(NumberOfCommittedPages);
 
-        if (ControlArea->u.Flags.Image) {
-            MM_TRACK_COMMIT (MM_DBG_COMMIT_RETURN_SEGMENT_DELETE2,
-                             NumberOfCommittedPages);
+        if (ControlArea->u.Flags.Image)
+        {
+            MM_TRACK_COMMIT(MM_DBG_COMMIT_RETURN_SEGMENT_DELETE2, NumberOfCommittedPages);
         }
-        else {
-            MM_TRACK_COMMIT (MM_DBG_COMMIT_RETURN_SEGMENT_DELETE3,
-                             NumberOfCommittedPages);
+        else
+        {
+            MM_TRACK_COMMIT(MM_DBG_COMMIT_RETURN_SEGMENT_DELETE3, NumberOfCommittedPages);
         }
 
-        InterlockedExchangeAddSizeT (&MmSharedCommit, 0-NumberOfCommittedPages);
+        InterlockedExchangeAddSizeT(&MmSharedCommit, 0 - NumberOfCommittedPages);
     }
 
-    ExFreePool (ControlArea);
-    ExFreePool (Segment);
+    ExFreePool(ControlArea);
+    ExFreePool(Segment);
 
     return;
 }
-
+
 ULONG
-MmDoesFileHaveUserWritableReferences (
-    IN PSECTION_OBJECT_POINTERS SectionPointer
-    )
+MmDoesFileHaveUserWritableReferences(IN PSECTION_OBJECT_POINTERS SectionPointer)
 
 /*++
 
@@ -575,12 +575,13 @@ Environment:
     ULONG WritableUserReferences;
     PCONTROL_AREA ControlArea;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
     ControlArea = (PCONTROL_AREA)(SectionPointer->DataSectionObject);
 
-    if (ControlArea == NULL) {
-        UNLOCK_PFN (OldIrql);
+    if (ControlArea == NULL)
+    {
+        UNLOCK_PFN(OldIrql);
         return 0;
     }
 
@@ -590,25 +591,21 @@ Environment:
     //
 
     ControlArea->NumberOfMappedViews += 1;
-    MiMakeSystemAddressValidPfn (&ControlArea->Segment->WritableUserReferences);
+    MiMakeSystemAddressValidPfn(&ControlArea->Segment->WritableUserReferences);
     WritableUserReferences = ControlArea->Segment->WritableUserReferences;
-    ASSERT ((LONG)ControlArea->NumberOfMappedViews >= 1);
+    ASSERT((LONG)ControlArea->NumberOfMappedViews >= 1);
     ControlArea->NumberOfMappedViews -= 1;
 
     //
     // This routine will release the PFN lock.
     //
 
-    MiCheckControlArea (ControlArea, NULL, OldIrql);
+    MiCheckControlArea(ControlArea, NULL, OldIrql);
 
     return WritableUserReferences;
 }
-
-VOID
-MiDereferenceControlAreaBySection (
-    IN PCONTROL_AREA ControlArea,
-    IN ULONG UserRef
-    )
+
+VOID MiDereferenceControlAreaBySection(IN PCONTROL_AREA ControlArea, IN ULONG UserRef)
 
 /*++
 
@@ -631,7 +628,7 @@ Return Value:
 {
     KIRQL OldIrql;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
     ControlArea->NumberOfSectionReferences -= 1;
     ControlArea->NumberOfUserReferences -= UserRef;
@@ -641,13 +638,10 @@ Return Value:
     // This routine releases the PFN lock.
     //
 
-    MiCheckControlArea (ControlArea, NULL, OldIrql);
+    MiCheckControlArea(ControlArea, NULL, OldIrql);
 }
-
-VOID
-MiSectionDelete (
-    IN PVOID Object
-    )
+
+VOID MiSectionDelete(IN PVOID Object)
 
 /*++
 
@@ -677,7 +671,8 @@ Return Value:
 
     Section = (PSECTION)Object;
 
-    if (Section->Segment == (PSEGMENT)NULL) {
+    if (Section->Segment == (PSEGMENT)NULL)
+    {
 
         //
         // The section was never initialized, no need to remove
@@ -689,7 +684,8 @@ Return Value:
     UserRef = Section->u.Flags.UserReference;
     ControlArea = Section->Segment->ControlArea;
 
-    if (Section->Address.StartingVpn != 0) {
+    if (Section->Address.StartingVpn != 0)
+    {
 
         //
         // This section is based, remove the base address from the
@@ -700,25 +696,23 @@ Return Value:
         // Get the allocation base mutex.
         //
 
-        ExAcquireFastMutex (&MmSectionBasedMutex);
+        ExAcquireFastMutex(&MmSectionBasedMutex);
 
-        MiRemoveBasedSection (Section);
+        MiRemoveBasedSection(Section);
 
-        ExReleaseFastMutex (&MmSectionBasedMutex);
-
+        ExReleaseFastMutex(&MmSectionBasedMutex);
     }
 
     //
     // Adjust the count of writable user sections for transaction support.
     //
 
-    if ((Section->u.Flags.UserWritable == 1) &&
-        (ControlArea->u.Flags.Image == 0) &&
-        (ControlArea->FilePointer != NULL)) {
+    if ((Section->u.Flags.UserWritable == 1) && (ControlArea->u.Flags.Image == 0) && (ControlArea->FilePointer != NULL))
+    {
 
-        ASSERT (Section->InitialPageProtection & (PAGE_READWRITE|PAGE_EXECUTE_READWRITE));
+        ASSERT(Section->InitialPageProtection & (PAGE_READWRITE | PAGE_EXECUTE_READWRITE));
 
-        InterlockedDecrement ((PLONG)&ControlArea->Segment->WritableUserReferences);
+        InterlockedDecrement((PLONG)&ControlArea->Segment->WritableUserReferences);
     }
 
     //
@@ -727,16 +721,13 @@ Return Value:
     // synchronize upon.
     //
 
-    MiDereferenceControlAreaBySection (ControlArea, UserRef);
+    MiDereferenceControlAreaBySection(ControlArea, UserRef);
 
     return;
 }
 
-
-VOID
-MiDereferenceSegmentThread (
-    IN PVOID StartContext
-    )
+
+VOID MiDereferenceSegmentThread(IN PVOID StartContext)
 
 /*++
 
@@ -769,36 +760,32 @@ Return Value:
     PVOID WaitObjects[SegMaximumObject];
     NTSTATUS Status;
 
-    UNREFERENCED_PARAMETER (StartContext);
+    UNREFERENCED_PARAMETER(StartContext);
 
     //
     // Make this a real time thread.
     //
 
     CurrentThread = PsGetCurrentThread();
-    KeSetPriorityThread (&CurrentThread->Tcb, LOW_REALTIME_PRIORITY + 2);
+    KeSetPriorityThread(&CurrentThread->Tcb, LOW_REALTIME_PRIORITY + 2);
 
     CurrentThread->MemoryMaker = 1;
 
     WaitObjects[SegmentDereference] = (PVOID)&MmDereferenceSegmentHeader.Semaphore;
     WaitObjects[UsedSegmentCleanup] = (PVOID)&MmUnusedSegmentCleanup;
 
-    for (;;) {
+    for (;;)
+    {
 
-        Status = KeWaitForMultipleObjects(SegMaximumObject,
-                                          &WaitObjects[0],
-                                          WaitAny,
-                                          WrVirtualMemory,
-                                          UserMode,
-                                          FALSE,
-                                          NULL,
-                                          &WaitBlockArray[0]);
+        Status = KeWaitForMultipleObjects(SegMaximumObject, &WaitObjects[0], WaitAny, WrVirtualMemory, UserMode, FALSE,
+                                          NULL, &WaitBlockArray[0]);
 
         //
         // Switch on the wait status.
         //
 
-        switch (Status) {
+        switch (Status)
+        {
 
         case SegmentDereference:
 
@@ -807,29 +794,29 @@ Return Value:
             // and remove the entry.
             //
 
-            ExAcquireSpinLock (&MmDereferenceSegmentHeader.Lock, &OldIrql);
+            ExAcquireSpinLock(&MmDereferenceSegmentHeader.Lock, &OldIrql);
 
-            if (IsListEmpty (&MmDereferenceSegmentHeader.ListHead)) {
+            if (IsListEmpty(&MmDereferenceSegmentHeader.ListHead))
+            {
 
                 //
                 // There is nothing in the list, rewait.
                 //
 
-                ExReleaseSpinLock (&MmDereferenceSegmentHeader.Lock, OldIrql);
+                ExReleaseSpinLock(&MmDereferenceSegmentHeader.Lock, OldIrql);
                 break;
             }
 
-            NextEntry = RemoveHeadList (&MmDereferenceSegmentHeader.ListHead);
+            NextEntry = RemoveHeadList(&MmDereferenceSegmentHeader.ListHead);
 
-            ExReleaseSpinLock (&MmDereferenceSegmentHeader.Lock, OldIrql);
+            ExReleaseSpinLock(&MmDereferenceSegmentHeader.Lock, OldIrql);
 
-            ASSERT (KeGetCurrentIrql() < DISPATCH_LEVEL);
+            ASSERT(KeGetCurrentIrql() < DISPATCH_LEVEL);
 
-            ControlArea = CONTAINING_RECORD (NextEntry,
-                                             CONTROL_AREA,
-                                             DereferenceList);
+            ControlArea = CONTAINING_RECORD(NextEntry, CONTROL_AREA, DereferenceList);
 
-            if (ControlArea->Segment != NULL) {
+            if (ControlArea->Segment != NULL)
+            {
 
                 //
                 // This is a control area, delete it after indicating
@@ -838,11 +825,11 @@ Return Value:
 
                 ControlArea->DereferenceList.Flink = NULL;
 
-                ASSERT (ControlArea->u.Flags.FilePointerNull == 1);
-                MiSegmentDelete (ControlArea->Segment);
-
+                ASSERT(ControlArea->u.Flags.FilePointerNull == 1);
+                MiSegmentDelete(ControlArea->Segment);
             }
-            else {
+            else
+            {
 
                 //
                 // This is a request to expand or reduce the paging files.
@@ -850,24 +837,26 @@ Return Value:
 
                 PageExpand = (PMMPAGE_FILE_EXPANSION)ControlArea;
 
-                if (PageExpand->RequestedExpansionSize == MI_CONTRACT_PAGEFILES) {
+                if (PageExpand->RequestedExpansionSize == MI_CONTRACT_PAGEFILES)
+                {
 
                     //
                     // Attempt to reduce the size of the paging files.
                     //
 
-                    ExFreePool (PageExpand);
+                    ExFreePool(PageExpand);
 
-                    MiAttemptPageFileReduction ();
+                    MiAttemptPageFileReduction();
                 }
-                else {
+                else
+                {
 
                     //
                     // Attempt to expand the size of the paging files.
                     //
 
-                    MiExtendPagingFiles (PageExpand);
-                    KeSetEvent (&PageExpand->Event, 0, FALSE);
+                    MiExtendPagingFiles(PageExpand);
+                    KeSetEvent(&PageExpand->Event, 0, FALSE);
                     MiRemoveUnusedSegments();
                 }
             }
@@ -877,7 +866,7 @@ Return Value:
 
             MiRemoveUnusedSegments();
 
-            KeClearEvent (&MmUnusedSegmentCleanup);
+            KeClearEvent(&MmUnusedSegmentCleanup);
 
             break;
 
@@ -892,10 +881,9 @@ Return Value:
     return;
 }
 
-
+
 ULONG
-MiSectionInitialization (
-    )
+MiSectionInitialization()
 
 /*++
 
@@ -937,8 +925,8 @@ Return Value:
     // Initialize the common fields of the Object Type Initializer record
     //
 
-    RtlZeroMemory( &ObjectTypeInitializer, sizeof( ObjectTypeInitializer ) );
-    ObjectTypeInitializer.Length = sizeof( ObjectTypeInitializer );
+    RtlZeroMemory(&ObjectTypeInitializer, sizeof(ObjectTypeInitializer));
+    ObjectTypeInitializer.Length = sizeof(ObjectTypeInitializer);
     ObjectTypeInitializer.InvalidAttributes = OBJ_OPENLINK;
     ObjectTypeInitializer.GenericMapping = MiSectionMapping;
     ObjectTypeInitializer.PoolType = PagedPool;
@@ -948,7 +936,7 @@ Return Value:
     // Initialize string descriptor.
     //
 
-    RtlInitUnicodeString (&TypeName, (const PUSHORT)L"Section");
+    RtlInitUnicodeString(&TypeName, (const PUSHORT)L"Section");
 
     //
     // Create the section object type descriptor
@@ -958,11 +946,9 @@ Return Value:
     ObjectTypeInitializer.DeleteProcedure = MiSectionDelete;
     ObjectTypeInitializer.GenericMapping = MiSectionMapping;
     ObjectTypeInitializer.UseDefaultObject = TRUE;
-    if ( !NT_SUCCESS(ObCreateObjectType(&TypeName,
-                                     &ObjectTypeInitializer,
-                                     (PSECURITY_DESCRIPTOR) NULL,
-                                     &MmSectionObjectType
-                                     )) ) {
+    if (!NT_SUCCESS(
+            ObCreateObjectType(&TypeName, &ObjectTypeInitializer, (PSECURITY_DESCRIPTOR)NULL, &MmSectionObjectType)))
+    {
         return FALSE;
     }
 
@@ -970,46 +956,34 @@ Return Value:
     // Create the Segment dereferencing thread.
     //
 
-    InitializeObjectAttributes( &ObjectAttributes,
-                                NULL,
-                                0,
-                                NULL,
-                                NULL );
+    InitializeObjectAttributes(&ObjectAttributes, NULL, 0, NULL, NULL);
 
-    if ( !NT_SUCCESS(PsCreateSystemThread(
-                    &ThreadHandle,
-                    THREAD_ALL_ACCESS,
-                    &ObjectAttributes,
-                    0,
-                    NULL,
-                    MiDereferenceSegmentThread,
-                    NULL
-                    )) ) {
+    if (!NT_SUCCESS(PsCreateSystemThread(&ThreadHandle, THREAD_ALL_ACCESS, &ObjectAttributes, 0, NULL,
+                                         MiDereferenceSegmentThread, NULL)))
+    {
         return FALSE;
     }
-    ZwClose (ThreadHandle);
+    ZwClose(ThreadHandle);
 
     //
     // Create the permanent section which maps physical memory.
     //
 
-    Segment = (PSEGMENT)ExAllocatePoolWithTag (PagedPool,
-                                               sizeof(SEGMENT),
-                                               'gSmM');
-    if (Segment == NULL) {
+    Segment = (PSEGMENT)ExAllocatePoolWithTag(PagedPool, sizeof(SEGMENT), 'gSmM');
+    if (Segment == NULL)
+    {
         return FALSE;
     }
 
-    ControlArea = ExAllocatePoolWithTag (NonPagedPool,
-                                         (ULONG)sizeof(CONTROL_AREA),
-                                         MMCONTROL);
-    if (ControlArea == NULL) {
-        ExFreePool (Segment);
+    ControlArea = ExAllocatePoolWithTag(NonPagedPool, (ULONG)sizeof(CONTROL_AREA), MMCONTROL);
+    if (ControlArea == NULL)
+    {
+        ExFreePool(Segment);
         return FALSE;
     }
 
-    RtlZeroMemory (Segment, sizeof(SEGMENT));
-    RtlZeroMemory (ControlArea, sizeof(CONTROL_AREA));
+    RtlZeroMemory(Segment, sizeof(SEGMENT));
+    RtlZeroMemory(ControlArea, sizeof(CONTROL_AREA));
 
     ControlArea->Segment = Segment;
     ControlArea->NumberOfSectionReferences = 1;
@@ -1023,27 +997,16 @@ Return Value:
     // which refers to the segment object.
     //
 
-    RtlInitUnicodeString (&SectionName, (const PUSHORT)L"\\Device\\PhysicalMemory");
+    RtlInitUnicodeString(&SectionName, (const PUSHORT)L"\\Device\\PhysicalMemory");
 
-    InitializeObjectAttributes( &ObjectAttributes,
-                                &SectionName,
-                                OBJ_PERMANENT,
-                                NULL,
-                                NULL
-                              );
+    InitializeObjectAttributes(&ObjectAttributes, &SectionName, OBJ_PERMANENT, NULL, NULL);
 
-    Status = ObCreateObject (KernelMode,
-                             MmSectionObjectType,
-                             &ObjectAttributes,
-                             KernelMode,
-                             NULL,
-                             sizeof(SECTION),
-                             sizeof(SECTION),
-                             0,
-                             (PVOID *)&Section);
-    if (!NT_SUCCESS(Status)) {
-        ExFreePool (ControlArea);
-        ExFreePool (Segment);
+    Status = ObCreateObject(KernelMode, MmSectionObjectType, &ObjectAttributes, KernelMode, NULL, sizeof(SECTION),
+                            sizeof(SECTION), 0, (PVOID *)&Section);
+    if (!NT_SUCCESS(Status))
+    {
+        ExFreePool(ControlArea);
+        ExFreePool(Segment);
         return FALSE;
     }
 
@@ -1052,29 +1015,23 @@ Return Value:
     Section->u.LongFlags = 0;
     Section->InitialPageProtection = PAGE_READWRITE;
 
-    Status = ObInsertObject ((PVOID)Section,
-                                    NULL,
-                                    SECTION_MAP_READ,
-                                    0,
-                                    (PVOID *)NULL,
-                                    &Handle);
+    Status = ObInsertObject((PVOID)Section, NULL, SECTION_MAP_READ, 0, (PVOID *)NULL, &Handle);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
         return FALSE;
     }
 
-    if ( !NT_SUCCESS (NtClose ( Handle))) {
+    if (!NT_SUCCESS(NtClose(Handle)))
+    {
         return FALSE;
     }
 
     return TRUE;
 }
-
+
 BOOLEAN
-MmForceSectionClosed (
-    IN PSECTION_OBJECT_POINTERS SectionObjectPointer,
-    IN BOOLEAN DelayClose
-    )
+MmForceSectionClosed(IN PSECTION_OBJECT_POINTERS SectionObjectPointer, IN BOOLEAN DelayClose)
 
 /*++
 
@@ -1117,14 +1074,11 @@ Return Value:
     // or the control area is being deleted, this operation cannot continue.
     //
 
-    state = MiCheckControlAreaStatus (CheckBothSection,
-                                      SectionObjectPointer,
-                                      DelayClose,
-                                      &ControlArea,
-                                      &OldIrql);
+    state = MiCheckControlAreaStatus(CheckBothSection, SectionObjectPointer, DelayClose, &ControlArea, &OldIrql);
 
-    if (ControlArea == NULL) {
-        return (BOOLEAN) state;
+    if (ControlArea == NULL)
+    {
+        return (BOOLEAN)state;
     }
 
     //
@@ -1138,7 +1092,8 @@ Return Value:
     // Note this can only happen for Hydra.
     //
 
-    do {
+    do
+    {
 
         //
         // Set the being deleted flag and up the number of mapped views
@@ -1148,7 +1103,7 @@ Return Value:
         //
 
         ControlArea->u.Flags.BeingDeleted = 1;
-        ASSERT (ControlArea->NumberOfMappedViews == 0);
+        ASSERT(ControlArea->NumberOfMappedViews == 0);
         ControlArea->NumberOfMappedViews = 1;
 
         //
@@ -1156,7 +1111,7 @@ Return Value:
         // deleted, remove all references to the paging file and physical memory.
         //
 
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
 
         //
         // Delete the section by flushing all modified pages back to the section
@@ -1164,29 +1119,21 @@ Return Value:
         // PfnReferenceCount goes to zero.
         //
 
-        MiCleanSection (ControlArea, TRUE);
+        MiCleanSection(ControlArea, TRUE);
 
         //
         // Get the next Hydra control area.
         //
 
-        state = MiCheckControlAreaStatus (CheckBothSection,
-                                          SectionObjectPointer,
-                                          DelayClose,
-                                          &ControlArea,
-                                          &OldIrql);
+        state = MiCheckControlAreaStatus(CheckBothSection, SectionObjectPointer, DelayClose, &ControlArea, &OldIrql);
 
     } while (ControlArea);
 
-    return (BOOLEAN) state;
+    return (BOOLEAN)state;
 }
 
-
-VOID
-MiCleanSection (
-    IN PCONTROL_AREA ControlArea,
-    IN LOGICAL DirtyDataPagesOk
-    )
+
+VOID MiCleanSection(IN PCONTROL_AREA ControlArea, IN LOGICAL DirtyDataPagesOk)
 
 /*++
 
@@ -1251,7 +1198,7 @@ Return Value:
     ULONG First;
     KEVENT IoEvent;
     PFN_NUMBER PageTableFrameIndex;
-    PFN_NUMBER MdlHack[(sizeof(MDL)/sizeof(PFN_NUMBER)) + MM_MAXIMUM_WRITE_CLUSTER];
+    PFN_NUMBER MdlHack[(sizeof(MDL) / sizeof(PFN_NUMBER)) + MM_MAXIMUM_WRITE_CLUSTER];
     ULONG ReflushCount;
     ULONG MaxClusterSize;
 
@@ -1261,22 +1208,25 @@ Return Value:
     MaxClusterSize = MmModifiedWriteClusterSize;
     FirstWritten = NULL;
 
-    ASSERT (ControlArea->FilePointer);
+    ASSERT(ControlArea->FilePointer);
 
-    if ((ControlArea->u.Flags.GlobalOnlyPerSession == 0) &&
-        (ControlArea->u.Flags.Rom == 0)) {
+    if ((ControlArea->u.Flags.GlobalOnlyPerSession == 0) && (ControlArea->u.Flags.Rom == 0))
+    {
         Subsection = (PSUBSECTION)(ControlArea + 1);
     }
-    else {
+    else
+    {
         Subsection = (PSUBSECTION)((PLARGE_CONTROL_AREA)ControlArea + 1);
     }
 
-    if (ControlArea->u.Flags.Image) {
+    if (ControlArea->u.Flags.Image)
+    {
         ImageSection = TRUE;
         PointerPte = Subsection->SubsectionBase;
         LastPte = PointerPte + ControlArea->Segment->NonExtendedPtes;
     }
-    else {
+    else
+    {
 
         //
         // Initializing these are not needed for correctness as they are
@@ -1290,10 +1240,10 @@ Return Value:
 
     Mdl = (PMDL)&MdlHack;
 
-    KeInitializeEvent (&IoEvent, NotificationEvent, FALSE);
+    KeInitializeEvent(&IoEvent, NotificationEvent, FALSE);
 
     LastWritten = NULL;
-    ASSERT (MmModifiedWriteClusterSize == MM_MAXIMUM_WRITE_CLUSTER);
+    ASSERT(MmModifiedWriteClusterSize == MM_MAXIMUM_WRITE_CLUSTER);
     LastPage = NULL;
 
     //
@@ -1309,7 +1259,7 @@ Return Value:
     // file and for deleting transition PTEs.
     //
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
     //
     // Stop the modified page writer from writing pages to this
@@ -1319,7 +1269,8 @@ Return Value:
 
     ControlArea->u.Flags.NoModifiedWriting = 1;
 
-    while (ControlArea->ModifiedWriteCount != 0) {
+    while (ControlArea->ModifiedWriteCount != 0)
+    {
 
         //
         // There is modified page writing in progess.  Set the
@@ -1338,22 +1289,21 @@ Return Value:
         // window where this thread could miss a pulse.
         //
 
-        UNLOCK_PFN_AND_THEN_WAIT (APC_LEVEL);
+        UNLOCK_PFN_AND_THEN_WAIT(APC_LEVEL);
 
-        KeWaitForSingleObject (&MmMappedFileIoComplete,
-                               WrPageOut,
-                               KernelMode,
-                               FALSE,
-                               NULL);
-        KeLowerIrql (OldIrql);
+        KeWaitForSingleObject(&MmMappedFileIoComplete, WrPageOut, KernelMode, FALSE, NULL);
+        KeLowerIrql(OldIrql);
 
-        LOCK_PFN (OldIrql);
+        LOCK_PFN(OldIrql);
     }
 
-    if (ImageSection == FALSE) {
-        while (Subsection->SubsectionBase == NULL) {
+    if (ImageSection == FALSE)
+    {
+        while (Subsection->SubsectionBase == NULL)
+        {
             Subsection = Subsection->NextSubsection;
-            if (Subsection == NULL) {
+            if (Subsection == NULL)
+            {
                 goto alldone;
             }
         }
@@ -1362,23 +1312,27 @@ Return Value:
         LastPte = PointerPte + Subsection->PtesInSubsection;
     }
 
-    for (;;) {
+    for (;;)
+    {
 
-restartchunk:
+    restartchunk:
 
         First = TRUE;
 
-        while (PointerPte < LastPte) {
+        while (PointerPte < LastPte)
+        {
 
-            if ((MiIsPteOnPdeBoundary(PointerPte)) || (First)) {
+            if ((MiIsPteOnPdeBoundary(PointerPte)) || (First))
+            {
 
                 First = FALSE;
 
-                if ((ImageSection) ||
-                    (MiCheckProtoPtePageState(PointerPte, FALSE, &DroppedPfnLock))) {
-                    MiMakeSystemAddressValidPfn (PointerPte);
+                if ((ImageSection) || (MiCheckProtoPtePageState(PointerPte, FALSE, &DroppedPfnLock)))
+                {
+                    MiMakeSystemAddressValidPfn(PointerPte);
                 }
-                else {
+                else
+                {
 
                     //
                     // Paged pool page is not resident, hence no transition or
@@ -1386,7 +1340,8 @@ restartchunk:
                     //
 
                     PointerPte = (PMMPTE)((((ULONG_PTR)PointerPte | PAGE_SIZE - 1)) + 1);
-                    if (LastWritten != NULL) {
+                    if (LastWritten != NULL)
+                    {
                         WriteNow = TRUE;
                     }
                     goto WriteItOut;
@@ -1400,25 +1355,26 @@ restartchunk:
             // are either in demand zero, page file format, or transition.
             //
 
-            if (PteContents.u.Hard.Valid == 1) {
-                KeBugCheckEx (POOL_CORRUPTION_IN_FILE_AREA,
-                              0x0,
-                              (ULONG_PTR)ControlArea,
-                              (ULONG_PTR)PointerPte,
-                              (ULONG_PTR)PteContents.u.Long);
+            if (PteContents.u.Hard.Valid == 1)
+            {
+                KeBugCheckEx(POOL_CORRUPTION_IN_FILE_AREA, 0x0, (ULONG_PTR)ControlArea, (ULONG_PTR)PointerPte,
+                             (ULONG_PTR)PteContents.u.Long);
             }
 
-            if (PteContents.u.Soft.Prototype == 1) {
+            if (PteContents.u.Soft.Prototype == 1)
+            {
 
                 //
                 // This is a normal prototype PTE in mapped file format.
                 //
 
-                if (LastWritten != NULL) {
+                if (LastWritten != NULL)
+                {
                     WriteNow = TRUE;
                 }
             }
-            else if (PteContents.u.Soft.Transition == 1) {
+            else if (PteContents.u.Soft.Transition == 1)
+            {
 
                 //
                 // Prototype PTE in transition, there are 3 possible cases:
@@ -1431,26 +1387,28 @@ restartchunk:
                 //     write the page to the file and free the physical page.
                 //
 
-                Pfn1 = MI_PFN_ELEMENT (PteContents.u.Trans.PageFrameNumber);
+                Pfn1 = MI_PFN_ELEMENT(PteContents.u.Trans.PageFrameNumber);
 
-                if (Pfn1->u3.e2.ReferenceCount != 0) {
-                    if (DelayCount < 20) {
+                if (Pfn1->u3.e2.ReferenceCount != 0)
+                {
+                    if (DelayCount < 20)
+                    {
 
                         //
                         // There must be an I/O in progress on this
                         // page.  Wait for the I/O operation to complete.
                         //
 
-                        UNLOCK_PFN (OldIrql);
+                        UNLOCK_PFN(OldIrql);
 
                         //
                         // Drain the deferred lists as these pages may be
                         // sitting in there right now.
                         //
 
-                        MiDeferredUnlockPages (0);
+                        MiDeferredUnlockPages(0);
 
-                        KeDelayExecutionThread (KernelMode, FALSE, (PLARGE_INTEGER)&MmShortTime);
+                        KeDelayExecutionThread(KernelMode, FALSE, (PLARGE_INTEGER)&MmShortTime);
 
                         DelayCount += 1;
 
@@ -1461,8 +1419,8 @@ restartchunk:
                         // with the write operation in progress.
                         //
 
-                        LOCK_PFN (OldIrql);
-                        MiMakeSystemAddressValidPfn (PointerPte);
+                        LOCK_PFN(OldIrql);
+                        MiMakeSystemAddressValidPfn(PointerPte);
                         continue;
                     }
 #if DBG
@@ -1472,20 +1430,21 @@ restartchunk:
                     // delete the page.
                     //
 
-                    KdPrint(("MM:CLEAN - page number %lx has i/o outstanding\n",
-                          PteContents.u.Trans.PageFrameNumber));
+                    KdPrint(("MM:CLEAN - page number %lx has i/o outstanding\n", PteContents.u.Trans.PageFrameNumber));
 #endif
                 }
 
-                if (Pfn1->OriginalPte.u.Soft.Prototype == 0) {
+                if (Pfn1->OriginalPte.u.Soft.Prototype == 0)
+                {
 
                     //
                     // Paging file reference (case 1).
                     //
 
-                    MI_SET_PFN_DELETED (Pfn1);
+                    MI_SET_PFN_DELETED(Pfn1);
 
-                    if (!ImageSection) {
+                    if (!ImageSection)
+                    {
 
                         //
                         // This is not an image section, it must be a
@@ -1494,10 +1453,11 @@ restartchunk:
                         //
 
                         ControlArea->NumberOfPfnReferences -= 1;
-                        ASSERT ((LONG)ControlArea->NumberOfPfnReferences >= 0);
+                        ASSERT((LONG)ControlArea->NumberOfPfnReferences >= 0);
                     }
 #if DBG
-                    else {
+                    else
+                    {
                         //
                         // This should only happen for images with shared
                         // global subsections.
@@ -1506,8 +1466,8 @@ restartchunk:
 #endif
 
                     PageTableFrameIndex = Pfn1->u4.PteFrame;
-                    Pfn2 = MI_PFN_ELEMENT (PageTableFrameIndex);
-                    MiDecrementShareCountInline (Pfn2, PageTableFrameIndex);
+                    Pfn2 = MI_PFN_ELEMENT(PageTableFrameIndex);
+                    MiDecrementShareCountInline(Pfn2, PageTableFrameIndex);
 
                     //
                     // Check the reference count for the page, if the                               // reference count is zero and the page is not on the
@@ -1517,13 +1477,12 @@ restartchunk:
                     // on the free list.
                     //
 
-                    if ((Pfn1->u3.e2.ReferenceCount == 0) &&
-                         (Pfn1->u3.e1.PageLocation != FreePageList)) {
+                    if ((Pfn1->u3.e2.ReferenceCount == 0) && (Pfn1->u3.e1.PageLocation != FreePageList))
+                    {
 
-                        MiUnlinkPageFromList (Pfn1);
-                        MiReleasePageFileSpace (Pfn1->OriginalPte);
-                        MiInsertPageInFreeList (MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE (&PteContents));
-
+                        MiUnlinkPageFromList(Pfn1);
+                        MiReleasePageFileSpace(Pfn1->OriginalPte);
+                        MiInsertPageInFreeList(MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE(&PteContents));
                     }
                     PointerPte->u.Long = 0;
 
@@ -1532,26 +1491,28 @@ restartchunk:
                     // set the WriteNow flag.
                     //
 
-                    if (LastWritten != NULL) {
+                    if (LastWritten != NULL)
+                    {
                         WriteNow = TRUE;
                     }
-
                 }
-                else {
+                else
+                {
 
-                    if ((Pfn1->u3.e1.Modified == 0) || (ImageSection)) {
+                    if ((Pfn1->u3.e1.Modified == 0) || (ImageSection))
+                    {
 
                         //
                         // Non modified or image file page (case 2).
                         //
 
-                        MI_SET_PFN_DELETED (Pfn1);
+                        MI_SET_PFN_DELETED(Pfn1);
                         ControlArea->NumberOfPfnReferences -= 1;
-                        ASSERT ((LONG)ControlArea->NumberOfPfnReferences >= 0);
+                        ASSERT((LONG)ControlArea->NumberOfPfnReferences >= 0);
 
                         PageTableFrameIndex = Pfn1->u4.PteFrame;
-                        Pfn2 = MI_PFN_ELEMENT (PageTableFrameIndex);
-                        MiDecrementShareCountInline (Pfn2, PageTableFrameIndex);
+                        Pfn2 = MI_PFN_ELEMENT(PageTableFrameIndex);
+                        MiDecrementShareCountInline(Pfn2, PageTableFrameIndex);
 
                         //
                         // Check the reference count for the page, if the
@@ -1562,12 +1523,12 @@ restartchunk:
                         // will be placed on the free list.
                         //
 
-                        if ((Pfn1->u3.e2.ReferenceCount == 0) &&
-                             (Pfn1->u3.e1.PageLocation != FreePageList)) {
+                        if ((Pfn1->u3.e2.ReferenceCount == 0) && (Pfn1->u3.e1.PageLocation != FreePageList))
+                        {
 
-                            MiUnlinkPageFromList (Pfn1);
-                            MiReleasePageFileSpace (Pfn1->OriginalPte);
-                            MiInsertPageInFreeList (MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE (&PteContents));
+                            MiUnlinkPageFromList(Pfn1);
+                            MiReleasePageFileSpace(Pfn1->OriginalPte);
+                            MiInsertPageInFreeList(MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE(&PteContents));
                         }
 
                         PointerPte->u.Long = 0;
@@ -1577,12 +1538,13 @@ restartchunk:
                         // completed, set the WriteNow flag.
                         //
 
-                        if (LastWritten != NULL) {
+                        if (LastWritten != NULL)
+                        {
                             WriteNow = TRUE;
                         }
-
                     }
-                    else {
+                    else
+                    {
 
                         //
                         // Modified page backed by the file (case 3).
@@ -1590,27 +1552,24 @@ restartchunk:
                         // cluster.
                         //
 
-                        if (LastWritten == NULL) {
+                        if (LastWritten == NULL)
+                        {
                             LastPage = (PPFN_NUMBER)(Mdl + 1);
-                            ASSERT (MiGetSubsectionAddress(&Pfn1->OriginalPte) ==
-                                                                Subsection);
+                            ASSERT(MiGetSubsectionAddress(&Pfn1->OriginalPte) == Subsection);
 
                             //
                             // Calculate the offset to read into the file.
                             //  offset = base + ((thispte - basepte) << PAGE_SHIFT)
                             //
 
-                            ASSERT (Subsection->ControlArea->u.Flags.Image == 0);
-                            StartingOffset.QuadPart = MiStartingOffset(
-                                                         Subsection,
-                                                         Pfn1->PteAddress);
+                            ASSERT(Subsection->ControlArea->u.Flags.Image == 0);
+                            StartingOffset.QuadPart = MiStartingOffset(Subsection, Pfn1->PteAddress);
 
-                            MI_INITIALIZE_ZERO_MDL (Mdl);
+                            MI_INITIALIZE_ZERO_MDL(Mdl);
                             Mdl->MdlFlags |= MDL_PAGES_LOCKED;
 
                             Mdl->StartVa = NULL;
-                            Mdl->Size = (CSHORT)(sizeof(MDL) +
-                                       (sizeof(PFN_NUMBER) * MaxClusterSize));
+                            Mdl->Size = (CSHORT)(sizeof(MDL) + (sizeof(PFN_NUMBER) * MaxClusterSize));
                             FirstWritten = PointerPte;
                         }
 
@@ -1622,13 +1581,14 @@ restartchunk:
                         // set the write now flag.
                         //
 
-                        if (Mdl->ByteCount == (PAGE_SIZE * MaxClusterSize)) {
+                        if (Mdl->ByteCount == (PAGE_SIZE * MaxClusterSize))
+                        {
                             WriteNow = TRUE;
                         }
 
-                        MiUnlinkPageFromList (Pfn1);
+                        MiUnlinkPageFromList(Pfn1);
 
-                        MI_SET_MODIFIED (Pfn1, 0, 0x27);
+                        MI_SET_MODIFIED(Pfn1, 0, 0x27);
 
                         //
                         // Up the reference count for the physical page as
@@ -1643,16 +1603,18 @@ restartchunk:
                         // write in progress bit.
                         //
 
-                        *LastPage = MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE (&PteContents);
+                        *LastPage = MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE(&PteContents);
 
                         LastPage += 1;
                     }
                 }
             }
-            else {
+            else
+            {
 
-                if (IS_PTE_NOT_DEMAND_ZERO (PteContents)) {
-                    MiReleasePageFileSpace (PteContents);
+                if (IS_PTE_NOT_DEMAND_ZERO(PteContents))
+                {
+                    MiReleasePageFileSpace(PteContents);
                 }
                 PointerPte->u.Long = 0;
 
@@ -1661,7 +1623,8 @@ restartchunk:
                 // set the WriteNow flag.
                 //
 
-                if (LastWritten != NULL) {
+                if (LastWritten != NULL)
+                {
                     WriteNow = TRUE;
                 }
             }
@@ -1672,24 +1635,22 @@ restartchunk:
             //
 
             PointerPte += 1;
-WriteItOut:
+        WriteItOut:
             DelayCount = 0;
 
-            if ((WriteNow) ||
-                ((PointerPte == LastPte) && (LastWritten != NULL))) {
+            if ((WriteNow) || ((PointerPte == LastPte) && (LastWritten != NULL)))
+            {
 
                 //
                 // Issue the write request.
                 //
 
-                UNLOCK_PFN (OldIrql);
+                UNLOCK_PFN(OldIrql);
 
-                if (DirtyDataPagesOk == FALSE) {
-                    KeBugCheckEx (POOL_CORRUPTION_IN_FILE_AREA,
-                                  0x1,
-                                  (ULONG_PTR)ControlArea,
-                                  (ULONG_PTR)Mdl,
-                                  ControlArea->u.LongFlags);
+                if (DirtyDataPagesOk == FALSE)
+                {
+                    KeBugCheckEx(POOL_CORRUPTION_IN_FILE_AREA, 0x1, (ULONG_PTR)ControlArea, (ULONG_PTR)Mdl,
+                                 ControlArea->u.LongFlags);
                 }
 
                 WriteNow = FALSE;
@@ -1699,54 +1660,50 @@ WriteItOut:
                 // end of file. (segment size).
                 //
 
-                ASSERT (Subsection->ControlArea->u.Flags.Image == 0);
+                ASSERT(Subsection->ControlArea->u.Flags.Image == 0);
 
                 TempOffset = MiEndingOffset(Subsection);
 
-                if (((UINT64)StartingOffset.QuadPart + Mdl->ByteCount) >
-                             (UINT64)TempOffset.QuadPart) {
+                if (((UINT64)StartingOffset.QuadPart + Mdl->ByteCount) > (UINT64)TempOffset.QuadPart)
+                {
 
-                    ASSERT ((ULONG)(TempOffset.QuadPart -
-                                        StartingOffset.QuadPart) >
-                             (Mdl->ByteCount - PAGE_SIZE));
+                    ASSERT((ULONG)(TempOffset.QuadPart - StartingOffset.QuadPart) > (Mdl->ByteCount - PAGE_SIZE));
 
-                    Mdl->ByteCount = (ULONG)(TempOffset.QuadPart -
-                                            StartingOffset.QuadPart);
+                    Mdl->ByteCount = (ULONG)(TempOffset.QuadPart - StartingOffset.QuadPart);
                 }
 
                 ReflushCount = 0;
 
-                while (TRUE) {
+                while (TRUE)
+                {
 
-                    KeClearEvent (&IoEvent);
+                    KeClearEvent(&IoEvent);
 
-                    Status = IoSynchronousPageWrite (ControlArea->FilePointer,
-                                                     Mdl,
-                                                     &StartingOffset,
-                                                     &IoEvent,
-                                                     &IoStatus);
+                    Status =
+                        IoSynchronousPageWrite(ControlArea->FilePointer, Mdl, &StartingOffset, &IoEvent, &IoStatus);
 
-                    if (NT_SUCCESS(Status)) {
+                    if (NT_SUCCESS(Status))
+                    {
 
-                        KeWaitForSingleObject (&IoEvent,
-                                               WrPageOut,
-                                               KernelMode,
-                                               FALSE,
-                                               NULL);
+                        KeWaitForSingleObject(&IoEvent, WrPageOut, KernelMode, FALSE, NULL);
                     }
-                    else {
+                    else
+                    {
                         IoStatus.Status = Status;
                     }
 
-                    if (Mdl->MdlFlags & MDL_MAPPED_TO_SYSTEM_VA) {
-                        MmUnmapLockedPages (Mdl->MappedSystemVa, Mdl);
+                    if (Mdl->MdlFlags & MDL_MAPPED_TO_SYSTEM_VA)
+                    {
+                        MmUnmapLockedPages(Mdl->MappedSystemVa, Mdl);
                     }
 
-                    if (MmIsRetryIoStatus(IoStatus.Status)) {
+                    if (MmIsRetryIoStatus(IoStatus.Status))
+                    {
 
                         ReflushCount -= 1;
-                        if (ReflushCount & MiIoRetryMask) {
-                            KeDelayExecutionThread (KernelMode, FALSE, (PLARGE_INTEGER)&Mm30Milliseconds);
+                        if (ReflushCount & MiIoRetryMask)
+                        {
+                            KeDelayExecutionThread(KernelMode, FALSE, (PLARGE_INTEGER)&Mm30Milliseconds);
                             continue;
                         }
                     }
@@ -1755,9 +1712,10 @@ WriteItOut:
 
                 Page = (PPFN_NUMBER)(Mdl + 1);
 
-                LOCK_PFN (OldIrql);
+                LOCK_PFN(OldIrql);
 
-                if (MiIsPteOnPdeBoundary(PointerPte) == 0) {
+                if (MiIsPteOnPdeBoundary(PointerPte) == 0)
+                {
 
                     //
                     // The next PTE is not in a different page, make
@@ -1765,14 +1723,14 @@ WriteItOut:
                     // I/O was in progress.
                     //
 
-                    MiMakeSystemAddressValidPfn (PointerPte);
+                    MiMakeSystemAddressValidPfn(PointerPte);
                 }
 
-                if (!NT_SUCCESS(IoStatus.Status)) {
+                if (!NT_SUCCESS(IoStatus.Status))
+                {
 
-                    if ((MmIsRetryIoStatus(IoStatus.Status)) &&
-                        (MaxClusterSize != 1) &&
-                        (Mdl->ByteCount > PAGE_SIZE)) {
+                    if ((MmIsRetryIoStatus(IoStatus.Status)) && (MaxClusterSize != 1) && (Mdl->ByteCount > PAGE_SIZE))
+                    {
 
                         //
                         // Retried I/O of a cluster have failed, reissue
@@ -1781,21 +1739,22 @@ WriteItOut:
                         // make forward progress this way.
                         //
 
-                        ASSERT (FirstWritten != NULL);
-                        ASSERT (LastWritten != NULL);
-                        ASSERT (FirstWritten != LastWritten);
+                        ASSERT(FirstWritten != NULL);
+                        ASSERT(LastWritten != NULL);
+                        ASSERT(FirstWritten != LastWritten);
 
                         IoStatus.Information = 0;
 
-                        while (Page < LastPage) {
+                        while (Page < LastPage)
+                        {
 
-                            Pfn2 = MI_PFN_ELEMENT (*Page);
+                            Pfn2 = MI_PFN_ELEMENT(*Page);
 
                             //
                             // Mark the page dirty again so it can be rewritten.
                             //
 
-                            MI_SET_MODIFIED (Pfn2, 1, 0xE);
+                            MI_SET_MODIFIED(Pfn2, 1, 0xE);
 
                             MI_REMOVE_LOCKED_PAGE_CHARGE_AND_DECREF(Pfn2, 21);
                             Page += 1;
@@ -1815,9 +1774,10 @@ WriteItOut:
                 // NOTE that the error status is ignored.
                 //
 
-                while (Page < LastPage) {
+                while (Page < LastPage)
+                {
 
-                    Pfn2 = MI_PFN_ELEMENT (*Page);
+                    Pfn2 = MI_PFN_ELEMENT(*Page);
 
                     //
                     // Make sure the page is still transition.
@@ -1825,18 +1785,20 @@ WriteItOut:
 
                     WrittenPte = Pfn2->PteAddress;
 
-                    MI_REMOVE_LOCKED_PAGE_CHARGE_AND_DECREF (Pfn2, 23);
+                    MI_REMOVE_LOCKED_PAGE_CHARGE_AND_DECREF(Pfn2, 23);
 
-                    if (!MI_IS_PFN_DELETED (Pfn2)) {
+                    if (!MI_IS_PFN_DELETED(Pfn2))
+                    {
 
                         //
                         // Make sure the prototype PTE is
                         // still in the working set.
                         //
 
-                        MiMakeSystemAddressValidPfn (WrittenPte);
+                        MiMakeSystemAddressValidPfn(WrittenPte);
 
-                        if (Pfn2->PteAddress != WrittenPte) {
+                        if (Pfn2->PteAddress != WrittenPte)
+                        {
 
                             //
                             // The PFN lock was released to make the
@@ -1851,16 +1813,16 @@ WriteItOut:
 
                         WrittenContents = *WrittenPte;
 
-                        if ((WrittenContents.u.Soft.Prototype == 0) &&
-                             (WrittenContents.u.Soft.Transition == 1)) {
+                        if ((WrittenContents.u.Soft.Prototype == 0) && (WrittenContents.u.Soft.Transition == 1))
+                        {
 
-                            MI_SET_PFN_DELETED (Pfn2);
+                            MI_SET_PFN_DELETED(Pfn2);
                             ControlArea->NumberOfPfnReferences -= 1;
-                            ASSERT ((LONG)ControlArea->NumberOfPfnReferences >= 0);
+                            ASSERT((LONG)ControlArea->NumberOfPfnReferences >= 0);
 
                             PageTableFrameIndex = Pfn2->u4.PteFrame;
-                            Pfn3 = MI_PFN_ELEMENT (PageTableFrameIndex);
-                            MiDecrementShareCountInline (Pfn3, PageTableFrameIndex);
+                            Pfn3 = MI_PFN_ELEMENT(PageTableFrameIndex);
+                            MiDecrementShareCountInline(Pfn3, PageTableFrameIndex);
 
                             //
                             // Check the reference count for the page,
@@ -1872,12 +1834,12 @@ WriteItOut:
                             // it will be placed on the free list.
                             //
 
-                            if ((Pfn2->u3.e2.ReferenceCount == 0) &&
-                               (Pfn2->u3.e1.PageLocation != FreePageList)) {
+                            if ((Pfn2->u3.e2.ReferenceCount == 0) && (Pfn2->u3.e1.PageLocation != FreePageList))
+                            {
 
-                                MiUnlinkPageFromList (Pfn2);
-                                MiReleasePageFileSpace (Pfn2->OriginalPte);
-                                MiInsertPageInFreeList (*Page);
+                                MiUnlinkPageFromList(Pfn2);
+                                MiReleasePageFileSpace(Pfn2->OriginalPte);
+                                MiInsertPageInFreeList(*Page);
                             }
                         }
                         WrittenPte->u.Long = 0;
@@ -1898,16 +1860,20 @@ WriteItOut:
         // Get the next subsection if any.
         //
 
-        if (Subsection->NextSubsection == NULL) {
+        if (Subsection->NextSubsection == NULL)
+        {
             break;
         }
 
         Subsection = Subsection->NextSubsection;
 
-        if (ImageSection == FALSE) {
-            while (Subsection->SubsectionBase == NULL) {
+        if (ImageSection == FALSE)
+        {
+            while (Subsection->SubsectionBase == NULL)
+            {
                 Subsection = Subsection->NextSubsection;
-                if (Subsection == NULL) {
+                if (Subsection == NULL)
+                {
                     goto alldone;
                 }
             }
@@ -1922,38 +1888,37 @@ alldone:
 
     ControlArea->NumberOfMappedViews = 0;
 
-    ASSERT (ControlArea->NumberOfPfnReferences == 0);
+    ASSERT(ControlArea->NumberOfPfnReferences == 0);
 
-    if (ControlArea->u.Flags.FilePointerNull == 0) {
+    if (ControlArea->u.Flags.FilePointerNull == 0)
+    {
         ControlArea->u.Flags.FilePointerNull = 1;
 
-        if (ControlArea->u.Flags.Image) {
+        if (ControlArea->u.Flags.Image)
+        {
 
-            MiRemoveImageSectionObject (ControlArea->FilePointer, ControlArea);
+            MiRemoveImageSectionObject(ControlArea->FilePointer, ControlArea);
         }
-        else {
+        else
+        {
 
-            ASSERT (((PCONTROL_AREA)(ControlArea->FilePointer->SectionObjectPointer->DataSectionObject)) != NULL);
+            ASSERT(((PCONTROL_AREA)(ControlArea->FilePointer->SectionObjectPointer->DataSectionObject)) != NULL);
             ControlArea->FilePointer->SectionObjectPointer->DataSectionObject = NULL;
-
         }
     }
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
     //
     // Delete the segment structure.
     //
 
-    MiSegmentDelete (ControlArea->Segment);
+    MiSegmentDelete(ControlArea->Segment);
 
     return;
 }
-
+
 NTSTATUS
-MmGetFileNameForSection (
-    IN PSECTION SectionObject,
-    OUT PSTRING FileName
-    )
+MmGetFileNameForSection(IN PSECTION SectionObject, OUT PSTRING FileName)
 
 /*++
 
@@ -1985,40 +1950,36 @@ Environment:
 
 #define xMAX_NAME 1024
 
-    if (SectionObject->u.Flags.Image == 0) {
+    if (SectionObject->u.Flags.Image == 0)
+    {
         return STATUS_SECTION_NOT_IMAGE;
     }
 
-    FileNameInfo = ExAllocatePoolWithTag (PagedPool, xMAX_NAME, '  mM');
+    FileNameInfo = ExAllocatePoolWithTag(PagedPool, xMAX_NAME, '  mM');
 
-    if ( !FileNameInfo ) {
+    if (!FileNameInfo)
+    {
         return STATUS_NO_MEMORY;
     }
 
-    Status = ObQueryNameString(
-                SectionObject->Segment->ControlArea->FilePointer,
-                FileNameInfo,
-                xMAX_NAME,
-                &whocares
-                );
+    Status = ObQueryNameString(SectionObject->Segment->ControlArea->FilePointer, FileNameInfo, xMAX_NAME, &whocares);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         ExFreePool(FileNameInfo);
         return Status;
     }
 
     FileName->Length = 0;
-    FileName->MaximumLength = (USHORT)((FileNameInfo->Name.Length/sizeof(WCHAR)) + 1);
-    FileName->Buffer = ExAllocatePoolWithTag (PagedPool,
-                                              FileName->MaximumLength,
-                                              '  mM');
-    if (!FileName->Buffer) {
+    FileName->MaximumLength = (USHORT)((FileNameInfo->Name.Length / sizeof(WCHAR)) + 1);
+    FileName->Buffer = ExAllocatePoolWithTag(PagedPool, FileName->MaximumLength, '  mM');
+    if (!FileName->Buffer)
+    {
         ExFreePool(FileNameInfo);
         return STATUS_NO_MEMORY;
     }
 
-    RtlUnicodeStringToAnsiString ((PANSI_STRING)FileName,
-                                  &FileNameInfo->Name,FALSE);
+    RtlUnicodeStringToAnsiString((PANSI_STRING)FileName, &FileNameInfo->Name, FALSE);
 
     FileName->Buffer[FileName->Length] = '\0';
     ExFreePool(FileNameInfo);
@@ -2026,12 +1987,9 @@ Environment:
     return STATUS_SUCCESS;
 }
 
-
+
 NTSTATUS
-MmGetFileNameForAddress (
-    IN PVOID ProcessVa,
-    OUT PUNICODE_STRING FileName
-    )
+MmGetFileNameForAddress(IN PVOID ProcessVa, OUT PUNICODE_STRING FileName)
 
 /*++
 
@@ -2064,15 +2022,16 @@ Environment:
     PEPROCESS Process;
     POBJECT_NAME_INFORMATION FileNameInfo;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
     Process = PsGetCurrentProcess();
 
-    LOCK_ADDRESS_SPACE (Process);
+    LOCK_ADDRESS_SPACE(Process);
 
-    Vad = MiLocateAddress (ProcessVa);
+    Vad = MiLocateAddress(ProcessVa);
 
-    if (Vad == NULL) {
+    if (Vad == NULL)
+    {
 
         //
         // No virtual address is allocated at the specified base address,
@@ -2087,14 +2046,16 @@ Environment:
     // Reject private memory.
     //
 
-    if (Vad->u.VadFlags.PrivateMemory == 1) {
+    if (Vad->u.VadFlags.PrivateMemory == 1)
+    {
         Status = STATUS_SECTION_NOT_IMAGE;
         goto ErrorReturn;
     }
 
     ControlArea = Vad->ControlArea;
 
-    if (ControlArea == NULL) {
+    if (ControlArea == NULL)
+    {
         Status = STATUS_SECTION_NOT_IMAGE;
         goto ErrorReturn;
     }
@@ -2103,46 +2064,52 @@ Environment:
     // Reject non-image sections.
     //
 
-    if (ControlArea->u.Flags.Image == 0) {
+    if (ControlArea->u.Flags.Image == 0)
+    {
         Status = STATUS_SECTION_NOT_IMAGE;
         goto ErrorReturn;
     }
 
     FileObject = ControlArea->FilePointer;
 
-    ASSERT (FileObject != NULL);
+    ASSERT(FileObject != NULL);
 
-    ObReferenceObject (FileObject);
+    ObReferenceObject(FileObject);
 
-    UNLOCK_ADDRESS_SPACE (Process);
+    UNLOCK_ADDRESS_SPACE(Process);
 
     //
     // Pick an initial size big enough for most reasonable files.
     //
 
-    BufLen = sizeof (*FileNameInfo) + 1024;
+    BufLen = sizeof(*FileNameInfo) + 1024;
 
-    do {
+    do
+    {
 
-        FileNameInfo = ExAllocatePoolWithTag (PagedPool, BufLen, '  mM');
+        FileNameInfo = ExAllocatePoolWithTag(PagedPool, BufLen, '  mM');
 
-        if (FileNameInfo == NULL) {
+        if (FileNameInfo == NULL)
+        {
             Status = STATUS_NO_MEMORY;
             break;
         }
 
         RetLen = 0;
 
-        Status = ObQueryNameString (FileObject, FileNameInfo, BufLen, &RetLen);
+        Status = ObQueryNameString(FileObject, FileNameInfo, BufLen, &RetLen);
 
-        if (NT_SUCCESS (Status)) {
+        if (NT_SUCCESS(Status))
+        {
             FileName->Length = FileName->MaximumLength = FileNameInfo->Name.Length;
-            FileName->Buffer = (PWCHAR) FileNameInfo;
-            RtlMoveMemory (FileName->Buffer, FileNameInfo->Name.Buffer, FileName->Length);
+            FileName->Buffer = (PWCHAR)FileNameInfo;
+            RtlMoveMemory(FileName->Buffer, FileNameInfo->Name.Buffer, FileName->Length);
         }
-        else {
-            ExFreePool (FileNameInfo);
-            if (RetLen > BufLen) {
+        else
+        {
+            ExFreePool(FileNameInfo);
+            if (RetLen > BufLen)
+            {
                 BufLen = RetLen;
                 continue;
             }
@@ -2151,19 +2118,17 @@ Environment:
 
     } while (TRUE);
 
-    ObDereferenceObject (FileObject);
+    ObDereferenceObject(FileObject);
     return Status;
 
 ErrorReturn:
 
-    UNLOCK_ADDRESS_SPACE (Process);
+    UNLOCK_ADDRESS_SPACE(Process);
     return Status;
 }
-
+
 PFILE_OBJECT
-MmGetFileObjectForSection (
-    IN PVOID Section
-    )
+MmGetFileObjectForSection(IN PVOID Section)
 
 /*++
 
@@ -2191,21 +2156,16 @@ Environment:
 {
     PFILE_OBJECT FileObject;
 
-    ASSERT (KeGetCurrentIrql() == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
-    ASSERT (Section != NULL);
+    ASSERT(Section != NULL);
 
     FileObject = ((PSECTION)Section)->Segment->ControlArea->FilePointer;
 
     return FileObject;
 }
-
-VOID
-MiCheckControlArea (
-    IN PCONTROL_AREA ControlArea,
-    IN PEPROCESS CurrentProcess,
-    IN KIRQL PreviousIrql
-    )
+
+VOID MiCheckControlArea(IN PCONTROL_AREA ControlArea, IN PEPROCESS CurrentProcess, IN KIRQL PreviousIrql)
 
 /*++
 
@@ -2250,14 +2210,16 @@ Environment:
     DereferenceSegment = FALSE;
 
     MM_PFN_LOCK_ASSERT();
-    if ((ControlArea->NumberOfMappedViews == 0) &&
-         (ControlArea->NumberOfSectionReferences == 0)) {
+    if ((ControlArea->NumberOfMappedViews == 0) && (ControlArea->NumberOfSectionReferences == 0))
+    {
 
-        ASSERT (ControlArea->NumberOfUserReferences == 0);
+        ASSERT(ControlArea->NumberOfUserReferences == 0);
 
-        if (ControlArea->FilePointer != (PFILE_OBJECT)NULL) {
+        if (ControlArea->FilePointer != (PFILE_OBJECT)NULL)
+        {
 
-            if (ControlArea->NumberOfPfnReferences == 0) {
+            if (ControlArea->NumberOfPfnReferences == 0)
+            {
 
                 //
                 // There are no views and no physical pages referenced
@@ -2267,29 +2229,33 @@ Environment:
                 ControlArea->u.Flags.BeingDeleted = 1;
                 DereferenceSegment = TRUE;
 
-                ASSERT (ControlArea->u.Flags.FilePointerNull == 0);
+                ASSERT(ControlArea->u.Flags.FilePointerNull == 0);
                 ControlArea->u.Flags.FilePointerNull = 1;
 
-                if (ControlArea->u.Flags.Image) {
+                if (ControlArea->u.Flags.Image)
+                {
 
-                    MiRemoveImageSectionObject (ControlArea->FilePointer, ControlArea);
+                    MiRemoveImageSectionObject(ControlArea->FilePointer, ControlArea);
                 }
-                else {
+                else
+                {
 
-                    ASSERT (((PCONTROL_AREA)(ControlArea->FilePointer->SectionObjectPointer->DataSectionObject)) != NULL);
+                    ASSERT(((PCONTROL_AREA)(ControlArea->FilePointer->SectionObjectPointer->DataSectionObject)) !=
+                           NULL);
                     ControlArea->FilePointer->SectionObjectPointer->DataSectionObject = NULL;
-
                 }
             }
-            else {
+            else
+            {
 
                 //
                 // Insert this segment into the unused segment list (unless
                 // it is already on the list).
                 //
 
-                if (ControlArea->DereferenceList.Flink == NULL) {
-                    MI_INSERT_UNUSED_SEGMENT (ControlArea);
+                if (ControlArea->DereferenceList.Flink == NULL)
+                {
+                    MI_INSERT_UNUSED_SEGMENT(ControlArea);
                 }
 
                 //
@@ -2308,29 +2274,29 @@ Environment:
                 // point back to the file.
                 //
 
-                if (ControlArea->u.Flags.GlobalMemory == 1) {
-                    ASSERT (ControlArea->u.Flags.Image == 1);
+                if (ControlArea->u.Flags.GlobalMemory == 1)
+                {
+                    ASSERT(ControlArea->u.Flags.Image == 1);
 
                     ControlArea->u.Flags.BeingPurged = 1;
                     ControlArea->NumberOfMappedViews = 1;
 
-                    MiPurgeImageSection (ControlArea, CurrentProcess);
+                    MiPurgeImageSection(ControlArea, CurrentProcess);
 
                     ControlArea->u.Flags.BeingPurged = 0;
                     ControlArea->NumberOfMappedViews -= 1;
-                    if ((ControlArea->NumberOfMappedViews == 0) &&
-                        (ControlArea->NumberOfSectionReferences == 0) &&
-                        (ControlArea->NumberOfPfnReferences == 0)) {
+                    if ((ControlArea->NumberOfMappedViews == 0) && (ControlArea->NumberOfSectionReferences == 0) &&
+                        (ControlArea->NumberOfPfnReferences == 0))
+                    {
 
                         ControlArea->u.Flags.BeingDeleted = 1;
                         DereferenceSegment = TRUE;
                         ControlArea->u.Flags.FilePointerNull = 1;
 
-                        MiRemoveImageSectionObject (ControlArea->FilePointer,
-                                                    ControlArea);
-
+                        MiRemoveImageSectionObject(ControlArea->FilePointer, ControlArea);
                     }
-                    else {
+                    else
+                    {
 
                         PurgeEvent = ControlArea->WaitingForDeletion;
                         ControlArea->WaitingForDeletion = NULL;
@@ -2344,14 +2310,15 @@ Environment:
                 // is released.
                 //
 
-                if (DeleteOnClose && !DereferenceSegment) {
+                if (DeleteOnClose && !DereferenceSegment)
+                {
                     ControlArea->NumberOfMappedViews = 1;
                     ControlArea->u.Flags.BeingDeleted = 1;
                 }
             }
-
         }
-        else {
+        else
+        {
 
             //
             // This Segment is backed by a paging file, dereference the
@@ -2363,85 +2330,90 @@ Environment:
             DereferenceSegment = TRUE;
         }
     }
-    else if (ControlArea->WaitingForDeletion != NULL) {
+    else if (ControlArea->WaitingForDeletion != NULL)
+    {
         PurgeEvent = ControlArea->WaitingForDeletion;
         ControlArea->WaitingForDeletion = NULL;
     }
 
-    UNLOCK_PFN (PreviousIrql);
+    UNLOCK_PFN(PreviousIrql);
 
-    if (DereferenceSegment || DeleteOnClose) {
+    if (DereferenceSegment || DeleteOnClose)
+    {
 
         //
         // Release the working set mutex, if it is held as the object
         // management routines may page fault, etc..
         //
 
-        if (CurrentProcess) {
-            UNLOCK_WS_UNSAFE (CurrentProcess);
+        if (CurrentProcess)
+        {
+            UNLOCK_WS_UNSAFE(CurrentProcess);
         }
 
-        ASSERT (ControlArea->Segment->WritableUserReferences == 0);
+        ASSERT(ControlArea->Segment->WritableUserReferences == 0);
 
-        if (DereferenceSegment) {
+        if (DereferenceSegment)
+        {
 
             //
             // Delete the segment.
             //
 
-            MiSegmentDelete (ControlArea->Segment);
-
+            MiSegmentDelete(ControlArea->Segment);
         }
-        else {
+        else
+        {
 
             //
             // The segment should be forced closed now.
             //
 
-            MiCleanSection (ControlArea, TRUE);
+            MiCleanSection(ControlArea, TRUE);
         }
 
-        ASSERT (PurgeEvent == NULL);
+        ASSERT(PurgeEvent == NULL);
 
         //
         // Reacquire the working set lock, if a process was specified.
         //
 
-        if (CurrentProcess) {
-            LOCK_WS_UNSAFE (CurrentProcess);
+        if (CurrentProcess)
+        {
+            LOCK_WS_UNSAFE(CurrentProcess);
         }
-
     }
-    else {
+    else
+    {
 
         //
         // If any threads are waiting for the segment, indicate the
         // the purge operation has completed.
         //
 
-        if (PurgeEvent != NULL) {
-            KeSetEvent (&PurgeEvent->Event, 0, FALSE);
+        if (PurgeEvent != NULL)
+        {
+            KeSetEvent(&PurgeEvent->Event, 0, FALSE);
         }
 
-        PagedPoolPercentInUse = (ULONG)((MmPagedPoolInfo.AllocatedPagedPool * 100) / (MmSizeOfPagedPoolInBytes >> PAGE_SHIFT));
+        PagedPoolPercentInUse =
+            (ULONG)((MmPagedPoolInfo.AllocatedPagedPool * 100) / (MmSizeOfPagedPoolInBytes >> PAGE_SHIFT));
 
-        NonPagedPoolPercentInUse = (ULONG)((MmAllocatedNonPagedPool * 100) / (MmMaximumNonPagedPoolInBytes >> PAGE_SHIFT));
+        NonPagedPoolPercentInUse =
+            (ULONG)((MmAllocatedNonPagedPool * 100) / (MmMaximumNonPagedPoolInBytes >> PAGE_SHIFT));
 
-        if ((PagedPoolPercentInUse > MmConsumedPoolPercentage) ||
-            (NonPagedPoolPercentInUse > MmConsumedPoolPercentage)) {
+        if ((PagedPoolPercentInUse > MmConsumedPoolPercentage) || (NonPagedPoolPercentInUse > MmConsumedPoolPercentage))
+        {
 
-            KeSetEvent (&MmUnusedSegmentCleanup, 0, FALSE);
+            KeSetEvent(&MmUnusedSegmentCleanup, 0, FALSE);
         }
     }
 
     return;
 }
 
-
-VOID
-MiCheckForControlAreaDeletion (
-    IN PCONTROL_AREA ControlArea
-    )
+
+VOID MiCheckForControlAreaDeletion(IN PCONTROL_AREA ControlArea)
 
 /*++
 
@@ -2469,9 +2441,9 @@ Environment:
     KIRQL OldIrql;
 
     MM_PFN_LOCK_ASSERT();
-    if ((ControlArea->NumberOfPfnReferences == 0) &&
-        (ControlArea->NumberOfMappedViews == 0) &&
-        (ControlArea->NumberOfSectionReferences == 0 )) {
+    if ((ControlArea->NumberOfPfnReferences == 0) && (ControlArea->NumberOfMappedViews == 0) &&
+        (ControlArea->NumberOfSectionReferences == 0))
+    {
 
         //
         // This segment is no longer mapped in any address space
@@ -2483,31 +2455,32 @@ Environment:
         //
 
         ControlArea->u.Flags.BeingDeleted = 1;
-        ASSERT (ControlArea->u.Flags.FilePointerNull == 0);
+        ASSERT(ControlArea->u.Flags.FilePointerNull == 0);
         ControlArea->u.Flags.FilePointerNull = 1;
 
-        if (ControlArea->u.Flags.Image) {
+        if (ControlArea->u.Flags.Image)
+        {
 
-            MiRemoveImageSectionObject (ControlArea->FilePointer,
-                                        ControlArea);
+            MiRemoveImageSectionObject(ControlArea->FilePointer, ControlArea);
         }
-        else {
-            ControlArea->FilePointer->SectionObjectPointer->DataSectionObject =
-                                                            NULL;
+        else
+        {
+            ControlArea->FilePointer->SectionObjectPointer->DataSectionObject = NULL;
         }
 
-        ExAcquireSpinLock (&MmDereferenceSegmentHeader.Lock, &OldIrql);
+        ExAcquireSpinLock(&MmDereferenceSegmentHeader.Lock, &OldIrql);
 
-        if (ControlArea->DereferenceList.Flink != NULL) {
+        if (ControlArea->DereferenceList.Flink != NULL)
+        {
 
             //
             // Remove the entry from the unused segment list and put it
             // on the dereference list.
             //
 
-            RemoveEntryList (&ControlArea->DereferenceList);
+            RemoveEntryList(&ControlArea->DereferenceList);
 
-            MI_UNUSED_SEGMENTS_REMOVE_CHARGE (ControlArea);
+            MI_UNUSED_SEGMENTS_REMOVE_CHARGE(ControlArea);
         }
 
         //
@@ -2518,28 +2491,19 @@ Environment:
         // so that commit extensions go to the front for earlier processing.
         //
 
-        InsertTailList (&MmDereferenceSegmentHeader.ListHead,
-                        &ControlArea->DereferenceList);
+        InsertTailList(&MmDereferenceSegmentHeader.ListHead, &ControlArea->DereferenceList);
 
-        ExReleaseSpinLock (&MmDereferenceSegmentHeader.Lock, OldIrql);
+        ExReleaseSpinLock(&MmDereferenceSegmentHeader.Lock, OldIrql);
 
-        KeReleaseSemaphore (&MmDereferenceSegmentHeader.Semaphore,
-                            0L,
-                            1L,
-                            FALSE);
+        KeReleaseSemaphore(&MmDereferenceSegmentHeader.Semaphore, 0L, 1L, FALSE);
     }
     return;
 }
 
-
+
 LOGICAL
-MiCheckControlAreaStatus (
-    IN SECTION_CHECK_TYPE SectionCheckType,
-    IN PSECTION_OBJECT_POINTERS SectionObjectPointers,
-    IN ULONG DelayClose,
-    OUT PCONTROL_AREA *ControlAreaOut,
-    OUT PKIRQL PreviousIrql
-    )
+MiCheckControlAreaStatus(IN SECTION_CHECK_TYPE SectionCheckType, IN PSECTION_OBJECT_POINTERS SectionObjectPointers,
+                         IN ULONG DelayClose, OUT PCONTROL_AREA *ControlAreaOut, OUT PKIRQL PreviousIrql)
 
 /*++
 
@@ -2611,17 +2575,17 @@ Environment:
 
     *ControlAreaOut = NULL;
 
-    do {
+    do
+    {
 
-        SegmentEvent = MiGetEventCounter ();
+        SegmentEvent = MiGetEventCounter();
 
-        if (SegmentEvent != NULL) {
+        if (SegmentEvent != NULL)
+        {
             break;
         }
 
-        KeDelayExecutionThread (KernelMode,
-                                FALSE,
-                                (PLARGE_INTEGER)&MmShortTime);
+        KeDelayExecutionThread(KernelMode, FALSE, (PLARGE_INTEGER)&MmShortTime);
 
     } while (TRUE);
 
@@ -2632,37 +2596,43 @@ Environment:
     // File control blocks live in non-paged pool.
     //
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    if (SectionCheckType != CheckImageSection) {
+    if (SectionCheckType != CheckImageSection)
+    {
         ControlArea = ((PCONTROL_AREA)(SectionObjectPointers->DataSectionObject));
     }
-    else {
+    else
+    {
         ControlArea = ((PCONTROL_AREA)(SectionObjectPointers->ImageSectionObject));
     }
 
-    if (ControlArea == NULL) {
+    if (ControlArea == NULL)
+    {
 
-        if (SectionCheckType != CheckBothSection) {
+        if (SectionCheckType != CheckBothSection)
+        {
 
             //
             // This file no longer has an associated segment.
             //
 
-            UNLOCK_PFN (OldIrql);
-            MiFreeEventCounter (SegmentEvent);
+            UNLOCK_PFN(OldIrql);
+            MiFreeEventCounter(SegmentEvent);
             return TRUE;
         }
-        else {
+        else
+        {
             ControlArea = ((PCONTROL_AREA)(SectionObjectPointers->ImageSectionObject));
-            if (ControlArea == NULL) {
+            if (ControlArea == NULL)
+            {
 
                 //
                 // This file no longer has an associated segment.
                 //
 
-                UNLOCK_PFN (OldIrql);
-                MiFreeEventCounter (SegmentEvent);
+                UNLOCK_PFN(OldIrql);
+                MiFreeEventCounter(SegmentEvent);
                 return TRUE;
             }
         }
@@ -2673,23 +2643,25 @@ Environment:
     //  reference count being non-zero.
     //
 
-    if (SectionCheckType != CheckUserDataSection) {
+    if (SectionCheckType != CheckUserDataSection)
+    {
         SectRef = ControlArea->NumberOfSectionReferences;
     }
-    else {
+    else
+    {
         SectRef = ControlArea->NumberOfUserReferences;
     }
 
-    if ((SectRef != 0) ||
-        (ControlArea->NumberOfMappedViews != 0) ||
-        (ControlArea->u.Flags.BeingCreated)) {
+    if ((SectRef != 0) || (ControlArea->NumberOfMappedViews != 0) || (ControlArea->u.Flags.BeingCreated))
+    {
 
 
         //
         // The segment is currently in use or being created.
         //
 
-        if (DelayClose) {
+        if (DelayClose)
+        {
 
             //
             // The section should be deleted when the reference
@@ -2699,8 +2671,8 @@ Environment:
             ControlArea->u.Flags.DeleteOnClose = 1;
         }
 
-        UNLOCK_PFN (OldIrql);
-        MiFreeEventCounter (SegmentEvent);
+        UNLOCK_PFN(OldIrql);
+        MiFreeEventCounter(SegmentEvent);
         return FALSE;
     }
 
@@ -2710,7 +2682,8 @@ Environment:
     // area and wait on the event.
     //
 
-    if (ControlArea->u.Flags.BeingDeleted) {
+    if (ControlArea->u.Flags.BeingDeleted)
+    {
 
         //
         // The segment object is in the process of being deleted.
@@ -2718,7 +2691,8 @@ Environment:
         // otherwise create and event object to wait upon.
         //
 
-        if (ControlArea->WaitingForDeletion == NULL) {
+        if (ControlArea->WaitingForDeletion == NULL)
+        {
 
             //
             // Create an event and put its address in the control area.
@@ -2728,7 +2702,8 @@ Environment:
             ControlArea->WaitingForDeletion = SegmentEvent;
             IoEvent = SegmentEvent;
         }
-        else {
+        else
+        {
             DeallocateSegmentEvent = TRUE;
             IoEvent = ControlArea->WaitingForDeletion;
 
@@ -2745,15 +2720,11 @@ Environment:
         // Release the mutex and wait for the event.
         //
 
-        CurrentThread = KeGetCurrentThread ();
-        KeEnterCriticalRegionThread (CurrentThread);
+        CurrentThread = KeGetCurrentThread();
+        KeEnterCriticalRegionThread(CurrentThread);
         UNLOCK_PFN_AND_THEN_WAIT(OldIrql);
 
-        KeWaitForSingleObject(&IoEvent->Event,
-                              WrPageOut,
-                              KernelMode,
-                              FALSE,
-                              (PLARGE_INTEGER)NULL);
+        KeWaitForSingleObject(&IoEvent->Event, WrPageOut, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
 
         //
         // Before this event can be set, the control area
@@ -2772,11 +2743,12 @@ Environment:
         ASSERT (IoEvent != ControlArea->WaitingForDeletion);
 #endif
 
-        KeLeaveCriticalRegionThread (CurrentThread);
+        KeLeaveCriticalRegionThread(CurrentThread);
 
-        MiFreeEventCounter (IoEvent);
-        if (DeallocateSegmentEvent == TRUE) {
-            MiFreeEventCounter (SegmentEvent);
+        MiFreeEventCounter(IoEvent);
+        if (DeallocateSegmentEvent == TRUE)
+        {
+            MiFreeEventCounter(SegmentEvent);
         }
         return TRUE;
     }
@@ -2785,8 +2757,8 @@ Environment:
     // Return with the PFN database locked.
     //
 
-    ASSERT (SegmentEvent->RefCount == 1);
-    ASSERT (SegmentEvent->ListEntry.Next == NULL);
+    ASSERT(SegmentEvent->RefCount == 1);
+    ASSERT(SegmentEvent->ListEntry.Next == NULL);
 
     //
     // NO interlock is needed for the RefCount clearing as the event counter
@@ -2797,19 +2769,16 @@ Environment:
     SegmentEvent->RefCount = 0;
 #endif
 
-    InterlockedPushEntrySList (&MmEventCountSListHead,
-                               (PSINGLE_LIST_ENTRY)&SegmentEvent->ListEntry);
+    InterlockedPushEntrySList(&MmEventCountSListHead, (PSINGLE_LIST_ENTRY)&SegmentEvent->ListEntry);
 
     *ControlAreaOut = ControlArea;
     *PreviousIrql = OldIrql;
     return FALSE;
 }
 
-
+
 PEVENT_COUNTER
-MiGetEventCounter (
-    VOID
-    )
+MiGetEventCounter(VOID)
 
 /*++
 
@@ -2837,19 +2806,19 @@ Environment:
     PSINGLE_LIST_ENTRY SingleListEntry;
     PEVENT_COUNTER Support;
 
-    ASSERT (KeGetCurrentIrql() < DISPATCH_LEVEL);
+    ASSERT(KeGetCurrentIrql() < DISPATCH_LEVEL);
 
-    if (ExQueryDepthSList (&MmEventCountSListHead) != 0) {
+    if (ExQueryDepthSList(&MmEventCountSListHead) != 0)
+    {
 
-        SingleListEntry = InterlockedPopEntrySList (&MmEventCountSListHead);
+        SingleListEntry = InterlockedPopEntrySList(&MmEventCountSListHead);
 
-        if (SingleListEntry != NULL) {
-            Support = CONTAINING_RECORD (SingleListEntry,
-                                         EVENT_COUNTER,
-                                         ListEntry);
+        if (SingleListEntry != NULL)
+        {
+            Support = CONTAINING_RECORD(SingleListEntry, EVENT_COUNTER, ListEntry);
 
-            ASSERT (Support->RefCount == 0);
-            KeClearEvent (&Support->Event);
+            ASSERT(Support->RefCount == 0);
+            KeClearEvent(&Support->Event);
             Support->RefCount = 1;
 #if DBG
             Support->ListEntry.Next = NULL;
@@ -2858,14 +2827,13 @@ Environment:
         }
     }
 
-    Support = ExAllocatePoolWithTag (NonPagedPool,
-                                     sizeof(EVENT_COUNTER),
-                                     'xEmM');
-    if (Support == NULL) {
+    Support = ExAllocatePoolWithTag(NonPagedPool, sizeof(EVENT_COUNTER), 'xEmM');
+    if (Support == NULL)
+    {
         return NULL;
     }
 
-    KeInitializeEvent (&Support->Event, NotificationEvent, FALSE);
+    KeInitializeEvent(&Support->Event, NotificationEvent, FALSE);
 
     Support->RefCount = 1;
 #if DBG
@@ -2875,11 +2843,8 @@ Environment:
     return Support;
 }
 
-
-VOID
-MiFreeEventCounter (
-    IN PEVENT_COUNTER Support
-    )
+
+VOID MiFreeEventCounter(IN PEVENT_COUNTER Support)
 
 /*++
 
@@ -2904,10 +2869,10 @@ Environment:
 {
     PSINGLE_LIST_ENTRY SingleListEntry;
 
-    ASSERT (KeGetCurrentIrql() < DISPATCH_LEVEL);
+    ASSERT(KeGetCurrentIrql() < DISPATCH_LEVEL);
 
-    ASSERT (Support->RefCount != 0);
-    ASSERT (Support->ListEntry.Next == NULL);
+    ASSERT(Support->RefCount != 0);
+    ASSERT(Support->ListEntry.Next == NULL);
 
     //
     // An interlock is needed for the RefCount decrement as the event counter
@@ -2915,42 +2880,40 @@ Environment:
     // threads can be running this code without any other serialization.
     //
 
-    if (InterlockedDecrement ((PLONG)&Support->RefCount) == 0) {
+    if (InterlockedDecrement((PLONG)&Support->RefCount) == 0)
+    {
 
-        if (ExQueryDepthSList (&MmEventCountSListHead) < 4) {
-            InterlockedPushEntrySList (&MmEventCountSListHead,
-                                       (PSINGLE_LIST_ENTRY)&Support->ListEntry);
+        if (ExQueryDepthSList(&MmEventCountSListHead) < 4)
+        {
+            InterlockedPushEntrySList(&MmEventCountSListHead, (PSINGLE_LIST_ENTRY)&Support->ListEntry);
             return;
         }
-        ExFreePool (Support);
+        ExFreePool(Support);
     }
 
     //
     // If excess event blocks are stashed then free them now.
     //
 
-    while (ExQueryDepthSList (&MmEventCountSListHead) > 4) {
+    while (ExQueryDepthSList(&MmEventCountSListHead) > 4)
+    {
 
-        SingleListEntry = InterlockedPopEntrySList (&MmEventCountSListHead);
+        SingleListEntry = InterlockedPopEntrySList(&MmEventCountSListHead);
 
-        if (SingleListEntry != NULL) {
-            Support = CONTAINING_RECORD (SingleListEntry,
-                                         EVENT_COUNTER,
-                                         ListEntry);
+        if (SingleListEntry != NULL)
+        {
+            Support = CONTAINING_RECORD(SingleListEntry, EVENT_COUNTER, ListEntry);
 
-            ExFreePool (Support);
+            ExFreePool(Support);
         }
     }
 
     return;
 }
 
-
+
 BOOLEAN
-MmCanFileBeTruncated (
-    IN PSECTION_OBJECT_POINTERS SectionPointer,
-    IN PLARGE_INTEGER NewFileSize
-    )
+MmCanFileBeTruncated(IN PSECTION_OBJECT_POINTERS SectionPointer, IN PLARGE_INTEGER NewFileSize)
 
 /*++
 
@@ -2993,15 +2956,17 @@ Environment:
     //  Capture caller's file size, since we may modify it.
     //
 
-    if (ARGUMENT_PRESENT(NewFileSize)) {
+    if (ARGUMENT_PRESENT(NewFileSize))
+    {
 
         LocalOffset = *NewFileSize;
         NewFileSize = &LocalOffset;
     }
 
-    if (MiCanFileBeTruncatedInternal( SectionPointer, NewFileSize, FALSE, &OldIrql )) {
+    if (MiCanFileBeTruncatedInternal(SectionPointer, NewFileSize, FALSE, &OldIrql))
+    {
 
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
         return TRUE;
     }
 
@@ -3009,12 +2974,8 @@ Environment:
 }
 
 ULONG
-MiCanFileBeTruncatedInternal (
-    IN PSECTION_OBJECT_POINTERS SectionPointer,
-    IN PLARGE_INTEGER NewFileSize OPTIONAL,
-    IN LOGICAL BlockNewViews,
-    OUT PKIRQL PreviousIrql
-    )
+MiCanFileBeTruncatedInternal(IN PSECTION_OBJECT_POINTERS SectionPointer, IN PLARGE_INTEGER NewFileSize OPTIONAL,
+                             IN LOGICAL BlockNewViews, OUT PKIRQL PreviousIrql)
 
 /*++
 
@@ -3065,19 +3026,20 @@ Environment:
     PSUBSECTION Subsection;
     PMAPPED_FILE_SEGMENT Segment;
 
-    if (!MmFlushImageSection (SectionPointer, MmFlushForWrite)) {
+    if (!MmFlushImageSection(SectionPointer, MmFlushForWrite))
+    {
         return FALSE;
     }
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
     ControlArea = (PCONTROL_AREA)(SectionPointer->DataSectionObject);
 
-    if (ControlArea != NULL) {
+    if (ControlArea != NULL)
+    {
 
-        if ((ControlArea->u.Flags.BeingCreated) ||
-            (ControlArea->u.Flags.BeingDeleted) ||
-            (ControlArea->u.Flags.Rom)) {
+        if ((ControlArea->u.Flags.BeingCreated) || (ControlArea->u.Flags.BeingDeleted) || (ControlArea->u.Flags.Rom))
+        {
             goto UnlockAndReturn;
         }
 
@@ -3087,14 +3049,16 @@ Environment:
         //
 
         if ((ControlArea->NumberOfUserReferences != 0) &&
-            ((BlockNewViews == FALSE) || (ControlArea->NumberOfMappedViews != 0))) {
+            ((BlockNewViews == FALSE) || (ControlArea->NumberOfMappedViews != 0)))
+        {
 
             //
             // You cannot truncate the entire section if there is a user
             // reference.
             //
 
-            if (!ARGUMENT_PRESENT(NewFileSize)) {
+            if (!ARGUMENT_PRESENT(NewFileSize))
+            {
                 goto UnlockAndReturn;
             }
 
@@ -3102,30 +3066,35 @@ Environment:
             // Locate last subsection and get total size.
             //
 
-            ASSERT (ControlArea->u.Flags.Image == 0);
-            ASSERT (ControlArea->u.Flags.GlobalOnlyPerSession == 0);
+            ASSERT(ControlArea->u.Flags.Image == 0);
+            ASSERT(ControlArea->u.Flags.GlobalOnlyPerSession == 0);
 
             Subsection = (PSUBSECTION)(ControlArea + 1);
 
-            if (ControlArea->FilePointer != NULL) {
-                Segment = (PMAPPED_FILE_SEGMENT) ControlArea->Segment;
+            if (ControlArea->FilePointer != NULL)
+            {
+                Segment = (PMAPPED_FILE_SEGMENT)ControlArea->Segment;
 
-                if (MmIsAddressValid (Segment)) {
-                    if (Segment->LastSubsectionHint != NULL) {
-                        Subsection = (PSUBSECTION) Segment->LastSubsectionHint;
+                if (MmIsAddressValid(Segment))
+                {
+                    if (Segment->LastSubsectionHint != NULL)
+                    {
+                        Subsection = (PSUBSECTION)Segment->LastSubsectionHint;
                     }
                 }
             }
 
-            while (Subsection->NextSubsection != NULL) {
+            while (Subsection->NextSubsection != NULL)
+            {
                 Subsection = Subsection->NextSubsection;
             }
 
-            ASSERT (Subsection->ControlArea == ControlArea);
+            ASSERT(Subsection->ControlArea == ControlArea);
 
             SegmentSize = MiEndingOffset(Subsection);
 
-            if ((UINT64)NewFileSize->QuadPart < (UINT64)SegmentSize.QuadPart) {
+            if ((UINT64)NewFileSize->QuadPart < (UINT64)SegmentSize.QuadPart)
+            {
                 goto UnlockAndReturn;
             }
 
@@ -3137,7 +3106,8 @@ Environment:
 
             SegmentSize.QuadPart += PAGE_SIZE - 1;
             SegmentSize.LowPart &= ~(PAGE_SIZE - 1);
-            if ((UINT64)NewFileSize->QuadPart < (UINT64)SegmentSize.QuadPart) {
+            if ((UINT64)NewFileSize->QuadPart < (UINT64)SegmentSize.QuadPart)
+            {
                 *NewFileSize = SegmentSize;
             }
         }
@@ -3147,14 +3117,11 @@ Environment:
     return TRUE;
 
 UnlockAndReturn:
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
     return FALSE;
 }
 
-PFILE_OBJECT *
-MmPerfUnusedSegmentsEnumerate (
-    VOID
-    )
+PFILE_OBJECT *MmPerfUnusedSegmentsEnumerate(VOID)
 
 /*++
 
@@ -3190,42 +3157,40 @@ Environment:
     PLIST_ENTRY NextEntry;
     PCONTROL_AREA ControlArea;
 
-    ASSERT (KeGetCurrentIrql () == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
 ReAllocate:
 
     SegmentCount = MmUnusedSegmentCount + 10;
 
-    FileObjects = (PFILE_OBJECT *) ExAllocatePoolWithTag (
-                                            NonPagedPool,
-                                            SegmentCount * sizeof(PFILE_OBJECT),
-                                            '01pM');
+    FileObjects = (PFILE_OBJECT *)ExAllocatePoolWithTag(NonPagedPool, SegmentCount * sizeof(PFILE_OBJECT), '01pM');
 
-    if (FileObjects == NULL) {
+    if (FileObjects == NULL)
+    {
         return NULL;
     }
 
     File = FileObjects;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
     //
     // Leave space for NULL terminator.
     //
 
-    if (SegmentCount - 1 < MmUnusedSegmentCount) {
-        UNLOCK_PFN (OldIrql);
-        ExFreePool (FileObjects);
+    if (SegmentCount - 1 < MmUnusedSegmentCount)
+    {
+        UNLOCK_PFN(OldIrql);
+        ExFreePool(FileObjects);
         goto ReAllocate;
     }
 
-    NextEntry = MmUnusedSegmentList.Flink; 
+    NextEntry = MmUnusedSegmentList.Flink;
 
-    while (NextEntry != &MmUnusedSegmentList) {
+    while (NextEntry != &MmUnusedSegmentList)
+    {
 
-        ControlArea = CONTAINING_RECORD (NextEntry,
-                                         CONTROL_AREA,
-                                         DereferenceList);
+        ControlArea = CONTAINING_RECORD(NextEntry, CONTROL_AREA, DereferenceList);
 
         *File = ControlArea->FilePointer;
         ObReferenceObject(*File);
@@ -3234,7 +3199,7 @@ ReAllocate:
         NextEntry = NextEntry->Flink;
     }
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
     *File = NULL;
 
@@ -3246,11 +3211,8 @@ PMSUBSECTION MiActiveSubsection;
 LOGICAL MiRemoveSubsectionsFirst;
 #endif
 
-
-VOID
-MiRemoveUnusedSegments (
-    VOID
-    )
+
+VOID MiRemoveUnusedSegments(VOID)
 
 /*++
 
@@ -3311,10 +3273,12 @@ Environment:
     // any cache.
     //
 
-    while ((MI_UNUSED_SEGMENTS_SURPLUS()) || (MmUnusedSegmentForceFree != 0)) {
+    while ((MI_UNUSED_SEGMENTS_SURPLUS()) || (MmUnusedSegmentForceFree != 0))
+    {
 
         LoopCount += 1;
-        if ((LoopCount & (64 - 1)) == 0) {
+        if ((LoopCount & (64 - 1)) == 0)
+        {
 
             //
             // Periodically delay so the mapped and modified writers get
@@ -3322,9 +3286,10 @@ Environment:
             // is releasing.
             //
 
-            ExAcquireSpinLock (&MmDereferenceSegmentHeader.Lock, &OldIrql);
+            ExAcquireSpinLock(&MmDereferenceSegmentHeader.Lock, &OldIrql);
 
-            while (!IsListEmpty (&MmDereferenceSegmentHeader.ListHead)) {
+            while (!IsListEmpty(&MmDereferenceSegmentHeader.ListHead))
+            {
 
                 MiSubsectionActions |= 0x8000000;
 
@@ -3335,17 +3300,17 @@ Environment:
 
                 NextEntry = MmDereferenceSegmentHeader.ListHead.Flink;
 
-                ControlArea = CONTAINING_RECORD (NextEntry,
-                                                 CONTROL_AREA,
-                                                 DereferenceList);
+                ControlArea = CONTAINING_RECORD(NextEntry, CONTROL_AREA, DereferenceList);
 
-                if (ControlArea->Segment != NULL) {
+                if (ControlArea->Segment != NULL)
+                {
                     break;
                 }
 
-                PageExpand = (PMMPAGE_FILE_EXPANSION) ControlArea;
+                PageExpand = (PMMPAGE_FILE_EXPANSION)ControlArea;
 
-                if (PageExpand->RequestedExpansionSize == MI_CONTRACT_PAGEFILES) {
+                if (PageExpand->RequestedExpansionSize == MI_CONTRACT_PAGEFILES)
+                {
                     break;
                 }
 
@@ -3354,18 +3319,18 @@ Environment:
                 //
 
                 MiSubsectionActions |= 0x10000000;
-                RemoveEntryList (NextEntry);
-                ExReleaseSpinLock (&MmDereferenceSegmentHeader.Lock, OldIrql);
+                RemoveEntryList(NextEntry);
+                ExReleaseSpinLock(&MmDereferenceSegmentHeader.Lock, OldIrql);
 
-                MiExtendPagingFiles (PageExpand);
-                KeSetEvent (&PageExpand->Event, 0, FALSE);
+                MiExtendPagingFiles(PageExpand);
+                KeSetEvent(&PageExpand->Event, 0, FALSE);
 
-                ExAcquireSpinLock (&MmDereferenceSegmentHeader.Lock, &OldIrql);
+                ExAcquireSpinLock(&MmDereferenceSegmentHeader.Lock, &OldIrql);
             }
 
-            ExReleaseSpinLock (&MmDereferenceSegmentHeader.Lock, OldIrql);
+            ExReleaseSpinLock(&MmDereferenceSegmentHeader.Lock, OldIrql);
 
-            KeDelayExecutionThread (KernelMode, FALSE, (PLARGE_INTEGER)&MmShortTime);
+            KeDelayExecutionThread(KernelMode, FALSE, (PLARGE_INTEGER)&MmShortTime);
         }
 
         //
@@ -3375,10 +3340,10 @@ Environment:
 
         Status = STATUS_SUCCESS;
 
-        LOCK_PFN (OldIrql);
+        LOCK_PFN(OldIrql);
 
-        if ((IsListEmpty(&MmUnusedSegmentList)) &&
-            (IsListEmpty(&MmUnusedSubsectionList))) {
+        if ((IsListEmpty(&MmUnusedSegmentList)) && (IsListEmpty(&MmUnusedSubsectionList)))
+        {
 
             //
             // There is nothing in the list, rewait.
@@ -3386,8 +3351,8 @@ Environment:
 
             ForceFree = MmUnusedSegmentForceFree;
             MmUnusedSegmentForceFree = 0;
-            ASSERT (MmUnusedSegmentCount == 0);
-            UNLOCK_PFN (OldIrql);
+            ASSERT(MmUnusedSegmentCount == 0);
+            UNLOCK_PFN(OldIrql);
 
             //
             // We weren't able to get as many segments or subsections as we
@@ -3397,34 +3362,40 @@ Environment:
             // any at all, then restart our loop.
             //
 
-            if (CcUnmapInactiveViews (50) == TRUE) {
-                LOCK_PFN (OldIrql);
-                if (ForceFree > MmUnusedSegmentForceFree) {
+            if (CcUnmapInactiveViews(50) == TRUE)
+            {
+                LOCK_PFN(OldIrql);
+                if (ForceFree > MmUnusedSegmentForceFree)
+                {
                     MmUnusedSegmentForceFree = ForceFree;
                 }
-                UNLOCK_PFN (OldIrql);
+                UNLOCK_PFN(OldIrql);
                 continue;
             }
 
             break;
         }
 
-        if (MmUnusedSegmentForceFree != 0) {
+        if (MmUnusedSegmentForceFree != 0)
+        {
             MmUnusedSegmentForceFree -= 1;
         }
 
 #if DBG
-        if (MiRemoveSubsectionsFirst == TRUE) {
-            if (!IsListEmpty(&MmUnusedSubsectionList)) {
+        if (MiRemoveSubsectionsFirst == TRUE)
+        {
+            if (!IsListEmpty(&MmUnusedSubsectionList))
+            {
                 goto ProcessSubsectionsFirst;
             }
         }
 #endif
 
-        if (IsListEmpty(&MmUnusedSegmentList)) {
+        if (IsListEmpty(&MmUnusedSegmentList))
+        {
 
 #if DBG
-ProcessSubsectionsFirst:
+        ProcessSubsectionsFirst:
 #endif
 
             //
@@ -3432,24 +3403,22 @@ ProcessSubsectionsFirst:
             // list instead.
             //
 
-            ASSERT (!IsListEmpty(&MmUnusedSubsectionList));
+            ASSERT(!IsListEmpty(&MmUnusedSubsectionList));
 
             MiSubsectionsProcessed += 1;
             NextEntry = RemoveHeadList(&MmUnusedSubsectionList);
 
-            MappedSubsection = CONTAINING_RECORD (NextEntry,
-                                                  MSUBSECTION,
-                                                  DereferenceList);
+            MappedSubsection = CONTAINING_RECORD(NextEntry, MSUBSECTION, DereferenceList);
 
             ControlArea = MappedSubsection->ControlArea;
 
-            ASSERT (ControlArea->u.Flags.Image == 0);
-            ASSERT (ControlArea->u.Flags.PhysicalMemory == 0);
-            ASSERT (ControlArea->FilePointer != NULL);
-            ASSERT (MappedSubsection->NumberOfMappedViews == 0);
-            ASSERT (MappedSubsection->u.SubsectionFlags.SubsectionStatic == 0);
+            ASSERT(ControlArea->u.Flags.Image == 0);
+            ASSERT(ControlArea->u.Flags.PhysicalMemory == 0);
+            ASSERT(ControlArea->FilePointer != NULL);
+            ASSERT(MappedSubsection->NumberOfMappedViews == 0);
+            ASSERT(MappedSubsection->u.SubsectionFlags.SubsectionStatic == 0);
 
-            MI_UNUSED_SUBSECTIONS_COUNT_REMOVE (MappedSubsection);
+            MI_UNUSED_SUBSECTIONS_COUNT_REMOVE(MappedSubsection);
 
             //
             // Set the flink to NULL indicating this subsection
@@ -3458,19 +3427,20 @@ ProcessSubsectionsFirst:
 
             MappedSubsection->DereferenceList.Flink = NULL;
 
-            if (ControlArea->u.Flags.BeingDeleted == 1) {
+            if (ControlArea->u.Flags.BeingDeleted == 1)
+            {
                 MiSubsectionActions |= 0x1;
-                UNLOCK_PFN (OldIrql);
+                UNLOCK_PFN(OldIrql);
                 ConsecutivePagingIOs = 0;
                 continue;
             }
 
-            if (ControlArea->u.Flags.NoModifiedWriting == 1) {
+            if (ControlArea->u.Flags.NoModifiedWriting == 1)
+            {
                 MiSubsectionActions |= 0x2;
-                InsertTailList (&MmUnusedSubsectionList,
-                                &MappedSubsection->DereferenceList);
-                MI_UNUSED_SUBSECTIONS_COUNT_INSERT (MappedSubsection);
-                UNLOCK_PFN (OldIrql);
+                InsertTailList(&MmUnusedSubsectionList, &MappedSubsection->DereferenceList);
+                MI_UNUSED_SUBSECTIONS_COUNT_INSERT(MappedSubsection);
+                UNLOCK_PFN(OldIrql);
                 ConsecutivePagingIOs = 0;
                 continue;
             }
@@ -3500,13 +3470,12 @@ ProcessSubsectionsFirst:
 
             ControlArea->NumberOfMappedViews += 1;
 
-            UNLOCK_PFN (OldIrql);
+            UNLOCK_PFN(OldIrql);
 
-            ASSERT (MappedSubsection->SubsectionBase != NULL);
+            ASSERT(MappedSubsection->SubsectionBase != NULL);
 
             PointerPte = &MappedSubsection->SubsectionBase[0];
-            LastPte = &MappedSubsection->SubsectionBase
-                            [MappedSubsection->PtesInSubsection - 1];
+            LastPte = &MappedSubsection->SubsectionBase[MappedSubsection->PtesInSubsection - 1];
 
             //
             // Preacquire the file to prevent deadlocks with other flushers
@@ -3516,19 +3485,15 @@ ProcessSubsectionsFirst:
             // protection any longer than we need to.
             //
 
-            Status = FsRtlAcquireFileForCcFlushEx (ControlArea->FilePointer);
+            Status = FsRtlAcquireFileForCcFlushEx(ControlArea->FilePointer);
 
-            if (NT_SUCCESS(Status)) {
+            if (NT_SUCCESS(Status))
+            {
 
                 IoSetTopLevelIrp((PIRP)FSRTL_FSP_TOP_LEVEL_IRP);
 
-                Status = MiFlushSectionInternal (PointerPte,
-                                                 LastPte,
-                                                 (PSUBSECTION) MappedSubsection,
-                                                 (PSUBSECTION) MappedSubsection,
-                                                 FALSE,
-                                                 FALSE,
-                                                 &IoStatus);
+                Status = MiFlushSectionInternal(PointerPte, LastPte, (PSUBSECTION)MappedSubsection,
+                                                (PSUBSECTION)MappedSubsection, FALSE, FALSE, &IoStatus);
 
                 IoSetTopLevelIrp((PIRP)NULL);
 
@@ -3536,10 +3501,10 @@ ProcessSubsectionsFirst:
                 //  Now release the file.
                 //
 
-                FsRtlReleaseFileForCcFlush (ControlArea->FilePointer);
+                FsRtlReleaseFileForCcFlush(ControlArea->FilePointer);
             }
 
-            LOCK_PFN (OldIrql);
+            LOCK_PFN(OldIrql);
 
 #if DBG
             MiActiveSubsection = NULL;
@@ -3559,12 +3524,13 @@ ProcessSubsectionsFirst:
             // a reprieve.
             //
 
-            ASSERT (MappedSubsection->u.SubsectionFlags.SubsectionStatic == 0);
+            ASSERT(MappedSubsection->u.SubsectionFlags.SubsectionStatic == 0);
             if ((MappedSubsection->NumberOfMappedViews != 1) ||
                 (MappedSubsection->u2.SubsectionFlags2.SubsectionAccessed == 1) ||
-                (ControlArea->u.Flags.BeingDeleted == 1)) {
+                (ControlArea->u.Flags.BeingDeleted == 1))
+            {
 
-Requeue:
+            Requeue:
                 MappedSubsection->NumberOfMappedViews -= 1;
 
                 MiSubsectionActions |= 0x4;
@@ -3581,27 +3547,27 @@ Requeue:
                 // not get put on the unused subsection list.
                 //
 
-                if ((MappedSubsection->NumberOfMappedViews == 0) &&
-                    (ControlArea->u.Flags.BeingDeleted == 0)) {
+                if ((MappedSubsection->NumberOfMappedViews == 0) && (ControlArea->u.Flags.BeingDeleted == 0))
+                {
 
                     MiSubsectionActions |= 0x8;
-                    ASSERT (MappedSubsection->u2.SubsectionFlags2.SubsectionAccessed == 1);
-                    ASSERT (MappedSubsection->DereferenceList.Flink == NULL);
+                    ASSERT(MappedSubsection->u2.SubsectionFlags2.SubsectionAccessed == 1);
+                    ASSERT(MappedSubsection->DereferenceList.Flink == NULL);
 
-                    InsertTailList (&MmUnusedSubsectionList,
-                                    &MappedSubsection->DereferenceList);
+                    InsertTailList(&MmUnusedSubsectionList, &MappedSubsection->DereferenceList);
 
-                    MI_UNUSED_SUBSECTIONS_COUNT_INSERT (MappedSubsection);
+                    MI_UNUSED_SUBSECTIONS_COUNT_INSERT(MappedSubsection);
                 }
 
                 ControlArea->NumberOfMappedViews -= 1;
-                UNLOCK_PFN (OldIrql);
+                UNLOCK_PFN(OldIrql);
                 continue;
             }
 
-            ASSERT (MappedSubsection->DereferenceList.Flink == NULL);
+            ASSERT(MappedSubsection->DereferenceList.Flink == NULL);
 
-            if (!NT_SUCCESS(Status)) {
+            if (!NT_SUCCESS(Status))
+            {
 
                 MiSubsectionActions |= 0x10;
 
@@ -3619,19 +3585,20 @@ Requeue:
 
                 MappedSubsection->NumberOfMappedViews -= 1;
 
-                InsertTailList (&MmUnusedSubsectionList,
-                                &MappedSubsection->DereferenceList);
+                InsertTailList(&MmUnusedSubsectionList, &MappedSubsection->DereferenceList);
 
-                MI_UNUSED_SUBSECTIONS_COUNT_INSERT (MappedSubsection);
+                MI_UNUSED_SUBSECTIONS_COUNT_INSERT(MappedSubsection);
 
                 ControlArea->NumberOfMappedViews -= 1;
 
-                UNLOCK_PFN (OldIrql);
+                UNLOCK_PFN(OldIrql);
 
-                if (Status == STATUS_FILE_LOCK_CONFLICT) {
+                if (Status == STATUS_FILE_LOCK_CONFLICT)
+                {
                     ConsecutiveFileLockFailures += 1;
                 }
-                else {
+                else
+                {
                     ConsecutiveFileLockFailures = 0;
                 }
 
@@ -3642,8 +3609,9 @@ Requeue:
                 // gives the worker threads a chance to run.
                 //
 
-                if (ConsecutiveFileLockFailures >= 10) {
-                    KeDelayExecutionThread (KernelMode, FALSE, (PLARGE_INTEGER)&MmShortTime);
+                if (ConsecutiveFileLockFailures >= 10)
+                {
+                    KeDelayExecutionThread(KernelMode, FALSE, (PLARGE_INTEGER)&MmShortTime);
                     ConsecutiveFileLockFailures = 0;
                 }
                 continue;
@@ -3665,7 +3633,7 @@ Requeue:
 
             MiSubsectionActions |= 0x20;
 
-            ASSERT (MappedSubsection->NumberOfMappedViews == 1);
+            ASSERT(MappedSubsection->NumberOfMappedViews == 1);
             ProtoPtes = MappedSubsection->SubsectionBase;
             NumberOfPtes = MappedSubsection->PtesInSubsection;
 
@@ -3677,12 +3645,14 @@ Requeue:
             ProtoPtes2 = ProtoPtes;
             LastProtoPte = ProtoPtes + NumberOfPtes;
 
-            while (ProtoPtes2 < LastProtoPte) {
+            while (ProtoPtes2 < LastProtoPte)
+            {
 
-                if ((ProtoPtes2 == ProtoPtes) ||
-                    (MiIsPteOnPdeBoundary (ProtoPtes2))) {
+                if ((ProtoPtes2 == ProtoPtes) || (MiIsPteOnPdeBoundary(ProtoPtes2)))
+                {
 
-                    if (MiCheckProtoPtePageState (ProtoPtes2, TRUE, &DroppedPfnLock) == FALSE) {
+                    if (MiCheckProtoPtePageState(ProtoPtes2, TRUE, &DroppedPfnLock) == FALSE)
+                    {
 
                         //
                         // Skip this chunk as it is paged out and thus, cannot
@@ -3692,7 +3662,8 @@ Requeue:
                         ProtoPtes2 = (PMMPTE)(((ULONG_PTR)ProtoPtes2 | (PAGE_SIZE - 1)) + 1);
                         continue;
                     }
-                    else {
+                    else
+                    {
 
                         //
                         // The prototype PTE page is resident right now - but
@@ -3701,10 +3672,12 @@ Requeue:
                         // must be rechecked.
                         //
 
-                        if (DroppedPfnLock == TRUE) {
+                        if (DroppedPfnLock == TRUE)
+                        {
                             if ((MappedSubsection->NumberOfMappedViews != 1) ||
                                 (MappedSubsection->u2.SubsectionFlags2.SubsectionAccessed == 1) ||
-                                (ControlArea->u.Flags.BeingDeleted == 1)) {
+                                (ControlArea->u.Flags.BeingDeleted == 1))
+                            {
 
                                 MiSubsectionActions |= 0x40;
                                 goto Requeue;
@@ -3714,24 +3687,25 @@ Requeue:
                 }
 
                 PteContents = *ProtoPtes2;
-                if (PteContents.u.Hard.Valid == 1) {
-                    KeBugCheckEx (POOL_CORRUPTION_IN_FILE_AREA,
-                                  0x3,
-                                  (ULONG_PTR)MappedSubsection,
-                                  (ULONG_PTR)ProtoPtes2,
-                                  (ULONG_PTR)PteContents.u.Long);
+                if (PteContents.u.Hard.Valid == 1)
+                {
+                    KeBugCheckEx(POOL_CORRUPTION_IN_FILE_AREA, 0x3, (ULONG_PTR)MappedSubsection, (ULONG_PTR)ProtoPtes2,
+                                 (ULONG_PTR)PteContents.u.Long);
                 }
 
-                if (PteContents.u.Soft.Prototype == 1) {
+                if (PteContents.u.Soft.Prototype == 1)
+                {
                     MiSubsectionActions |= 0x200;
-                    NOTHING;        // This is the expected case.
+                    NOTHING; // This is the expected case.
                 }
-                else if (PteContents.u.Soft.Transition == 1) {
-                    PageFrameIndex = MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE (&PteContents);
-                    Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
-                    ASSERT (Pfn1->OriginalPte.u.Soft.Prototype == 1);
+                else if (PteContents.u.Soft.Transition == 1)
+                {
+                    PageFrameIndex = MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE(&PteContents);
+                    Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
+                    ASSERT(Pfn1->OriginalPte.u.Soft.Prototype == 1);
 
-                    if (Pfn1->u3.e1.Modified == 1) {
+                    if (Pfn1->u3.e1.Modified == 1)
+                    {
 
                         //
                         // An I/O transfer finished after the last view was
@@ -3746,9 +3720,10 @@ Requeue:
                         goto Requeue;
                     }
 
-                    if (Pfn1->u3.e2.ReferenceCount != 0) {
+                    if (Pfn1->u3.e2.ReferenceCount != 0)
+                    {
 
-                        ASSERT (Pfn1->u4.LockCharged == 1);
+                        ASSERT(Pfn1->u4.LockCharged == 1);
 
                         //
                         // A fault is being satisfied for deleted address space,
@@ -3761,13 +3736,12 @@ Requeue:
                     }
                     MiSubsectionActions |= 0x800;
                 }
-                else {
-                    if (PteContents.u.Long != 0) {
-                        KeBugCheckEx (POOL_CORRUPTION_IN_FILE_AREA,
-                                      0x4,
-                                      (ULONG_PTR)MappedSubsection,
-                                      (ULONG_PTR)ProtoPtes2,
-                                      (ULONG_PTR)PteContents.u.Long);
+                else
+                {
+                    if (PteContents.u.Long != 0)
+                    {
+                        KeBugCheckEx(POOL_CORRUPTION_IN_FILE_AREA, 0x4, (ULONG_PTR)MappedSubsection,
+                                     (ULONG_PTR)ProtoPtes2, (ULONG_PTR)PteContents.u.Long);
                     }
 
                     MiSubsectionActions |= 0x1000;
@@ -3785,7 +3759,7 @@ Requeue:
             // prototype pages.
             //
 
-            ASSERT (MappedSubsection->NumberOfMappedViews == 1);
+            ASSERT(MappedSubsection->NumberOfMappedViews == 1);
             MappedSubsection->NumberOfMappedViews = 0;
 
             MappedSubsection->SubsectionBase = NULL;
@@ -3793,12 +3767,14 @@ Requeue:
             MiSubsectionActions |= 0x8000;
             ProtoPtes2 = ProtoPtes;
 
-            while (ProtoPtes2 < LastProtoPte) {
+            while (ProtoPtes2 < LastProtoPte)
+            {
 
-                if ((ProtoPtes2 == ProtoPtes) ||
-                    (MiIsPteOnPdeBoundary (ProtoPtes2))) {
+                if ((ProtoPtes2 == ProtoPtes) || (MiIsPteOnPdeBoundary(ProtoPtes2)))
+                {
 
-                    if (MiCheckProtoPtePageState (ProtoPtes2, TRUE, &DroppedPfnLock) == FALSE) {
+                    if (MiCheckProtoPtePageState(ProtoPtes2, TRUE, &DroppedPfnLock) == FALSE)
+                    {
 
                         //
                         // Skip this chunk as it is paged out and thus, cannot
@@ -3808,7 +3784,8 @@ Requeue:
                         ProtoPtes2 = (PMMPTE)(((ULONG_PTR)ProtoPtes2 | (PAGE_SIZE - 1)) + 1);
                         continue;
                     }
-                    else {
+                    else
+                    {
 
                         //
                         // The prototype PTE page is resident right now - but
@@ -3823,17 +3800,19 @@ Requeue:
 
                 PteContents = *ProtoPtes2;
 
-                ASSERT (PteContents.u.Hard.Valid == 0);
+                ASSERT(PteContents.u.Hard.Valid == 0);
 
-                if (PteContents.u.Soft.Prototype == 1) {
+                if (PteContents.u.Soft.Prototype == 1)
+                {
                     MiSubsectionActions |= 0x10000;
-                    NOTHING;        // This is the expected case.
+                    NOTHING; // This is the expected case.
                 }
-                else if (PteContents.u.Soft.Transition == 1) {
-                    PageFrameIndex = MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE (&PteContents);
-                    Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
-                    ASSERT (Pfn1->OriginalPte.u.Soft.Prototype == 1);
-                    ASSERT (Pfn1->u3.e1.Modified == 0);
+                else if (PteContents.u.Soft.Transition == 1)
+                {
+                    PageFrameIndex = MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE(&PteContents);
+                    Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
+                    ASSERT(Pfn1->OriginalPte.u.Soft.Prototype == 1);
+                    ASSERT(Pfn1->u3.e1.Modified == 0);
 
                     //
                     // If the page is on the standby list, move it to the
@@ -3843,28 +3822,29 @@ Requeue:
                     // is always marked as deleted now.
                     //
 
-                    ASSERT (Pfn1->u3.e2.ReferenceCount == 0);
-                    ASSERT (Pfn1->u4.LockCharged == 0);
+                    ASSERT(Pfn1->u3.e2.ReferenceCount == 0);
+                    ASSERT(Pfn1->u4.LockCharged == 0);
 
-                    MI_SET_PFN_DELETED (Pfn1);
+                    MI_SET_PFN_DELETED(Pfn1);
 
                     ControlArea->NumberOfPfnReferences -= 1;
-                    ASSERT ((LONG)ControlArea->NumberOfPfnReferences >= 0);
+                    ASSERT((LONG)ControlArea->NumberOfPfnReferences >= 0);
 
                     PageTableFrameIndex = Pfn1->u4.PteFrame;
-                    Pfn2 = MI_PFN_ELEMENT (PageTableFrameIndex);
-                    MiDecrementShareCountInline (Pfn2, PageTableFrameIndex);
+                    Pfn2 = MI_PFN_ELEMENT(PageTableFrameIndex);
+                    MiDecrementShareCountInline(Pfn2, PageTableFrameIndex);
 
-                    ASSERT (Pfn1->u3.e1.PageLocation != FreePageList);
+                    ASSERT(Pfn1->u3.e1.PageLocation != FreePageList);
 
-                    MiUnlinkPageFromList (Pfn1);
-                    MiReleasePageFileSpace (Pfn1->OriginalPte);
-                    MiInsertPageInFreeList (PageFrameIndex);
+                    MiUnlinkPageFromList(Pfn1);
+                    MiReleasePageFileSpace(Pfn1->OriginalPte);
+                    MiInsertPageInFreeList(PageFrameIndex);
                     MiSubsectionActions |= 0x20000;
                 }
-                else {
+                else
+                {
                     MiSubsectionActions |= 0x80000;
-                    ASSERT (PteContents.u.Long == 0);
+                    ASSERT(PteContents.u.Long == 0);
                 }
 
                 ProtoPtes2 += 1;
@@ -3879,42 +3859,43 @@ Requeue:
             ControlArea->NumberOfMappedViews -= 1;
 
 #if DBG
-            if ((ControlArea->NumberOfPfnReferences == 0) &&
-                (ControlArea->NumberOfMappedViews == 0) &&
-                (ControlArea->NumberOfSectionReferences == 0 )) {
+            if ((ControlArea->NumberOfPfnReferences == 0) && (ControlArea->NumberOfMappedViews == 0) &&
+                (ControlArea->NumberOfSectionReferences == 0))
+            {
                 MiSubsectionActions |= 0x100000;
             }
 #endif
 
-            MiCheckForControlAreaDeletion (ControlArea);
+            MiCheckForControlAreaDeletion(ControlArea);
 
-            UNLOCK_PFN (OldIrql);
+            UNLOCK_PFN(OldIrql);
 
-            ExFreePool (ProtoPtes);
+            ExFreePool(ProtoPtes);
 
             ConsecutiveFileLockFailures = 0;
 
             continue;
         }
 
-        ASSERT (!IsListEmpty(&MmUnusedSegmentList));
+        ASSERT(!IsListEmpty(&MmUnusedSegmentList));
 
         NextEntry = RemoveHeadList(&MmUnusedSegmentList);
 
-        ControlArea = CONTAINING_RECORD (NextEntry,
-                                         CONTROL_AREA,
-                                         DereferenceList);
+        ControlArea = CONTAINING_RECORD(NextEntry, CONTROL_AREA, DereferenceList);
 
-        MI_UNUSED_SEGMENTS_REMOVE_CHARGE (ControlArea);
+        MI_UNUSED_SEGMENTS_REMOVE_CHARGE(ControlArea);
 
 #if DBG
-        if (ControlArea->u.Flags.BeingDeleted == 0) {
-          if (ControlArea->u.Flags.Image) {
-            ASSERT (((PCONTROL_AREA)(ControlArea->FilePointer->SectionObjectPointer->ImageSectionObject)) != NULL);
-          }
-          else {
-            ASSERT (((PCONTROL_AREA)(ControlArea->FilePointer->SectionObjectPointer->DataSectionObject)) != NULL);
-          }
+        if (ControlArea->u.Flags.BeingDeleted == 0)
+        {
+            if (ControlArea->u.Flags.Image)
+            {
+                ASSERT(((PCONTROL_AREA)(ControlArea->FilePointer->SectionObjectPointer->ImageSectionObject)) != NULL);
+            }
+            else
+            {
+                ASSERT(((PCONTROL_AREA)(ControlArea->FilePointer->SectionObjectPointer->DataSectionObject)) != NULL);
+            }
         }
 #endif
 
@@ -3925,9 +3906,9 @@ Requeue:
 
         ControlArea->DereferenceList.Flink = NULL;
 
-        if ((ControlArea->NumberOfMappedViews == 0) &&
-            (ControlArea->NumberOfSectionReferences == 0) &&
-            (ControlArea->u.Flags.BeingDeleted == 0)) {
+        if ((ControlArea->NumberOfMappedViews == 0) && (ControlArea->NumberOfSectionReferences == 0) &&
+            (ControlArea->u.Flags.BeingDeleted == 0))
+        {
 
             //
             // If there is paging I/O in progress on this
@@ -3939,14 +3920,16 @@ Requeue:
             // spin forever and wedge the system.
             //
 
-            if (ControlArea->ModifiedWriteCount > 0) {
-                MI_INSERT_UNUSED_SEGMENT (ControlArea);
+            if (ControlArea->ModifiedWriteCount > 0)
+            {
+                MI_INSERT_UNUSED_SEGMENT(ControlArea);
 
-                UNLOCK_PFN (OldIrql);
+                UNLOCK_PFN(OldIrql);
 
                 ConsecutivePagingIOs += 1;
-                if (ConsecutivePagingIOs > 10) {
-                    KeDelayExecutionThread (KernelMode, FALSE, (PLARGE_INTEGER)&MmShortTime);
+                if (ConsecutivePagingIOs > 10)
+                {
+                    KeDelayExecutionThread(KernelMode, FALSE, (PLARGE_INTEGER)&MmShortTime);
                     ConsecutivePagingIOs = 0;
                 }
                 continue;
@@ -3966,23 +3949,28 @@ Requeue:
             ControlArea->NumberOfMappedViews = 1;
             ControlArea->u.Flags.Accessed = 0;
 
-            if (ControlArea->u.Flags.Image == 0) {
+            if (ControlArea->u.Flags.Image == 0)
+            {
 
-                ASSERT (ControlArea->u.Flags.GlobalOnlyPerSession == 0);
-                if (ControlArea->u.Flags.Rom == 0) {
+                ASSERT(ControlArea->u.Flags.GlobalOnlyPerSession == 0);
+                if (ControlArea->u.Flags.Rom == 0)
+                {
                     Subsection = (PSUBSECTION)(ControlArea + 1);
                 }
-                else {
+                else
+                {
                     Subsection = (PSUBSECTION)((PLARGE_CONTROL_AREA)ControlArea + 1);
                 }
 
                 MiSubsectionActions |= 0x200000;
 
-                while (Subsection->SubsectionBase == NULL) {
+                while (Subsection->SubsectionBase == NULL)
+                {
 
                     Subsection = Subsection->NextSubsection;
 
-                    if (Subsection == NULL) {
+                    if (Subsection == NULL)
+                    {
 
                         MiSubsectionActions |= 0x400000;
 
@@ -3993,10 +3981,11 @@ Requeue:
                         // accessed it while we weren't holding the PFN lock.
                         //
 
-                        UNLOCK_PFN (OldIrql);
+                        UNLOCK_PFN(OldIrql);
                         goto skip_flush;
                     }
-                    else {
+                    else
+                    {
                         MiSubsectionActions |= 0x800000;
                     }
                 }
@@ -4005,26 +3994,29 @@ Requeue:
                 LastSubsection = Subsection;
                 LastSubsectionWithProtos = Subsection;
 
-                while (LastSubsection->NextSubsection != NULL) {
-                    if (LastSubsection->SubsectionBase != NULL) {
+                while (LastSubsection->NextSubsection != NULL)
+                {
+                    if (LastSubsection->SubsectionBase != NULL)
+                    {
                         LastSubsectionWithProtos = LastSubsection;
                         MiSubsectionActions |= 0x1000000;
                     }
-                    else {
+                    else
+                    {
                         MiSubsectionActions |= 0x2000000;
                     }
                     LastSubsection = LastSubsection->NextSubsection;
                 }
 
-                if (LastSubsection->SubsectionBase == NULL) {
+                if (LastSubsection->SubsectionBase == NULL)
+                {
                     MiSubsectionActions |= 0x4000000;
                     LastSubsection = LastSubsectionWithProtos;
                 }
 
-                UNLOCK_PFN (OldIrql);
+                UNLOCK_PFN(OldIrql);
 
-                LastPte = &LastSubsection->SubsectionBase
-                                [LastSubsection->PtesInSubsection - 1];
+                LastPte = &LastSubsection->SubsectionBase[LastSubsection->PtesInSubsection - 1];
 
                 //
                 // Preacquire the file to prevent deadlocks with other flushers
@@ -4034,31 +4026,27 @@ Requeue:
                 // protection any longer than we need to.
                 //
 
-                Status = FsRtlAcquireFileForCcFlushEx (ControlArea->FilePointer);
+                Status = FsRtlAcquireFileForCcFlushEx(ControlArea->FilePointer);
 
-                if (NT_SUCCESS(Status)) {
+                if (NT_SUCCESS(Status))
+                {
 
-                    IoSetTopLevelIrp ((PIRP)FSRTL_FSP_TOP_LEVEL_IRP);
+                    IoSetTopLevelIrp((PIRP)FSRTL_FSP_TOP_LEVEL_IRP);
 
-                    Status = MiFlushSectionInternal (PointerPte,
-                                                     LastPte,
-                                                     Subsection,
-                                                     LastSubsection,
-                                                     FALSE,
-                                                     FALSE,
-                                                     &IoStatus);
+                    Status = MiFlushSectionInternal(PointerPte, LastPte, Subsection, LastSubsection, FALSE, FALSE,
+                                                    &IoStatus);
 
-                    IoSetTopLevelIrp (NULL);
+                    IoSetTopLevelIrp(NULL);
 
                     //
                     //  Now release the file.
                     //
 
-                    FsRtlReleaseFileForCcFlush (ControlArea->FilePointer);
+                    FsRtlReleaseFileForCcFlush(ControlArea->FilePointer);
                 }
 
-skip_flush:
-                LOCK_PFN (OldIrql);
+            skip_flush:
+                LOCK_PFN(OldIrql);
             }
 
             //
@@ -4075,10 +4063,9 @@ skip_flush:
             // a reprieve.
             //
 
-            if (!((ControlArea->NumberOfMappedViews == 1) &&
-                (ControlArea->u.Flags.Accessed == 0) &&
-                (ControlArea->NumberOfSectionReferences == 0) &&
-                (ControlArea->u.Flags.BeingDeleted == 0))) {
+            if (!((ControlArea->NumberOfMappedViews == 1) && (ControlArea->u.Flags.Accessed == 0) &&
+                  (ControlArea->NumberOfSectionReferences == 0) && (ControlArea->u.Flags.BeingDeleted == 0)))
+            {
 
                 ControlArea->NumberOfMappedViews -= 1;
 
@@ -4099,21 +4086,22 @@ skip_flush:
                 // or reprocess.  Only iff mappedview & sectref = 0.
                 //
 
-                if ((ControlArea->NumberOfMappedViews == 0) &&
-                    (ControlArea->NumberOfSectionReferences == 0) &&
-                    (ControlArea->u.Flags.BeingDeleted == 0)) {
+                if ((ControlArea->NumberOfMappedViews == 0) && (ControlArea->NumberOfSectionReferences == 0) &&
+                    (ControlArea->u.Flags.BeingDeleted == 0))
+                {
 
-                    ASSERT (ControlArea->u.Flags.Accessed == 1);
+                    ASSERT(ControlArea->u.Flags.Accessed == 1);
                     ASSERT(ControlArea->DereferenceList.Flink == NULL);
 
-                    MI_INSERT_UNUSED_SEGMENT (ControlArea);
+                    MI_INSERT_UNUSED_SEGMENT(ControlArea);
                 }
 
-                UNLOCK_PFN (OldIrql);
+                UNLOCK_PFN(OldIrql);
                 continue;
             }
 
-            if (!NT_SUCCESS(Status)) {
+            if (!NT_SUCCESS(Status))
+            {
 
                 //
                 // If the filesystem told us it had to unroll to avoid
@@ -4127,22 +4115,24 @@ skip_flush:
                 // period), so these sections are cleaned regardless.
                 //
 
-                if ((Status == STATUS_FILE_LOCK_CONFLICT) ||
-                    (Status == STATUS_MAPPED_WRITER_COLLISION) ||
-                    (ControlArea->u.Flags.Networked == 0)) {
+                if ((Status == STATUS_FILE_LOCK_CONFLICT) || (Status == STATUS_MAPPED_WRITER_COLLISION) ||
+                    (ControlArea->u.Flags.Networked == 0))
+                {
 
                     ASSERT(ControlArea->DereferenceList.Flink == NULL);
 
                     ControlArea->NumberOfMappedViews -= 1;
 
-                    MI_INSERT_UNUSED_SEGMENT (ControlArea);
+                    MI_INSERT_UNUSED_SEGMENT(ControlArea);
 
-                    UNLOCK_PFN (OldIrql);
+                    UNLOCK_PFN(OldIrql);
 
-                    if (Status == STATUS_FILE_LOCK_CONFLICT) {
+                    if (Status == STATUS_FILE_LOCK_CONFLICT)
+                    {
                         ConsecutiveFileLockFailures += 1;
                     }
-                    else {
+                    else
+                    {
                         ConsecutiveFileLockFailures = 0;
                     }
 
@@ -4153,15 +4143,17 @@ skip_flush:
                     // gives the worker threads a chance to run.
                     //
 
-                    if (ConsecutiveFileLockFailures >= 10) {
-                        KeDelayExecutionThread (KernelMode, FALSE, (PLARGE_INTEGER)&MmShortTime);
+                    if (ConsecutiveFileLockFailures >= 10)
+                    {
+                        KeDelayExecutionThread(KernelMode, FALSE, (PLARGE_INTEGER)&MmShortTime);
                         ConsecutiveFileLockFailures = 0;
                     }
                     continue;
                 }
                 DirtyPagesOk = TRUE;
             }
-            else {
+            else
+            {
                 ConsecutiveFileLockFailures = 0;
                 DirtyPagesOk = FALSE;
             }
@@ -4174,20 +4166,20 @@ skip_flush:
             //
 
             ControlArea->u.Flags.NoModifiedWriting = 1;
-            ASSERT (ControlArea->u.Flags.FilePointerNull == 0);
-            UNLOCK_PFN (OldIrql);
+            ASSERT(ControlArea->u.Flags.FilePointerNull == 0);
+            UNLOCK_PFN(OldIrql);
 
-            MiCleanSection (ControlArea, DirtyPagesOk);
-
+            MiCleanSection(ControlArea, DirtyPagesOk);
         }
-        else {
+        else
+        {
 
             //
             // The segment was not eligible for deletion.  Just leave
             // it off the unused segment list and continue the loop.
             //
 
-            UNLOCK_PFN (OldIrql);
+            UNLOCK_PFN(OldIrql);
             ConsecutivePagingIOs = 0;
         }
     }

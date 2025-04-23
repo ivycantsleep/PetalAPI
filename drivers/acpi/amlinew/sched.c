@@ -9,7 +9,7 @@
 
 #include "pch.h"
 
-#ifdef  LOCKABLE_PRAGMA
+#ifdef LOCKABLE_PRAGMA
 #pragma ACPI_LOCKABLE_DATA
 #pragma ACPI_LOCKABLE_CODE
 #endif
@@ -30,8 +30,7 @@ VOID ExpireTimeSlice(PKDPC pkdpc, PCTXTQ pctxtq, PVOID SysArg1, PVOID SysArg2)
 {
     TRACENAME("EXPIRETIMESLICE")
 
-    ENTER(2, ("ExpireTimeSlice(pkdpc=%x,pctxtq=%x,SysArg1=%x,SysArg2=%x\n",
-              pkdpc, pctxtq, SysArg1, SysArg2));
+    ENTER(2, ("ExpireTimeSlice(pkdpc=%x,pctxtq=%x,SysArg1=%x,SysArg2=%x\n", pkdpc, pctxtq, SysArg1, SysArg2));
 
     DEREF(pkdpc);
     DEREF(SysArg1);
@@ -40,7 +39,7 @@ VOID ExpireTimeSlice(PKDPC pkdpc, PCTXTQ pctxtq, PVOID SysArg1, PVOID SysArg2)
     pctxtq->dwfCtxtQ |= CQF_TIMESLICE_EXPIRED;
 
     EXIT(2, ("ExpireTimeSlice!\n"));
-}       //ExpireTimeSlice
+} //ExpireTimeSlice
 
 /***LP  StartTimeSlice - Timer callback to start a new time slice
  *
@@ -58,8 +57,7 @@ VOID StartTimeSlice(PKDPC pkdpc, PCTXTQ pctxtq, PVOID SysArg1, PVOID SysArg2)
 {
     TRACENAME("STARTTIMESLICE")
 
-    ENTER(2, ("StartTimeSlice(pkdpc=%x,pctxtq=%x,SysArg1=%x,SysArg2=%x\n",
-              pkdpc, pctxtq, SysArg1, SysArg2));
+    ENTER(2, ("StartTimeSlice(pkdpc=%x,pctxtq=%x,SysArg1=%x,SysArg2=%x\n", pkdpc, pctxtq, SysArg1, SysArg2));
 
     DEREF(pkdpc);
     DEREF(SysArg1);
@@ -70,15 +68,14 @@ VOID StartTimeSlice(PKDPC pkdpc, PCTXTQ pctxtq, PVOID SysArg1, PVOID SysArg2)
     //
     ASSERT(pctxtq->plistCtxtQ != NULL);
 
-    if ((pctxtq->plistCtxtQ != NULL) &&
-        !(pctxtq->dwfCtxtQ & CQF_WORKITEM_SCHEDULED))
+    if ((pctxtq->plistCtxtQ != NULL) && !(pctxtq->dwfCtxtQ & CQF_WORKITEM_SCHEDULED))
     {
         OSQueueWorkItem(&pctxtq->WorkItem);
         pctxtq->dwfCtxtQ |= CQF_WORKITEM_SCHEDULED;
     }
 
     EXIT(2, ("StartTimeSlice!\n"));
-}       //StartTimeSlice
+} //StartTimeSlice
 
 /***LP  StartTimeSlicePassive - Start a time slice at PASSIVE_LEVEL
  *
@@ -101,8 +98,7 @@ VOID StartTimeSlicePassive(PCTXTQ pctxtq)
     //
     // Make sure there is something in the queue and no current active context.
     //
-    if ((pctxtq->plistCtxtQ != NULL) && (pctxtq->pkthCurrent == NULL) &&
-        !(pctxtq->dwfCtxtQ & CQF_PAUSED))
+    if ((pctxtq->plistCtxtQ != NULL) && (pctxtq->pkthCurrent == NULL) && !(pctxtq->dwfCtxtQ & CQF_PAUSED))
     {
         DispatchCtxtQueue(pctxtq);
     }
@@ -110,7 +106,7 @@ VOID StartTimeSlicePassive(PCTXTQ pctxtq)
     ReleaseMutex(&pctxtq->mutCtxtQ);
 
     EXIT(2, ("StartTimeSlicePassive!\n"));
-}       //StartTimeSlicePassive
+} //StartTimeSlicePassive
 
 /***LP  DispatchCtxtQueue - Dispatch context from ready queue
  *
@@ -135,7 +131,7 @@ VOID LOCAL DispatchCtxtQueue(PCTXTQ pctxtq)
 
     ASSERT((pctxtq->plistCtxtQ != NULL) && (pctxtq->pkthCurrent == NULL));
 
-    liTimeout.QuadPart = (INT_PTR)(-10000*(INT_PTR)pctxtq->dwmsTimeSliceLength);
+    liTimeout.QuadPart = (INT_PTR)(-10000 * (INT_PTR)pctxtq->dwmsTimeSliceLength);
     pctxtq->dwfCtxtQ &= ~CQF_TIMESLICE_EXPIRED;
     KeSetTimer(&pctxtq->Timer, liTimeout, &pctxtq->DpcExpireTimeSlice);
 
@@ -161,12 +157,12 @@ VOID LOCAL DispatchCtxtQueue(PCTXTQ pctxtq)
         // Our time slice has expired, reschedule another time slice if not
         // already done so.
         //
-        liTimeout.QuadPart = (INT_PTR)(-10000*(INT_PTR)pctxtq->dwmsTimeSliceInterval);
+        liTimeout.QuadPart = (INT_PTR)(-10000 * (INT_PTR)pctxtq->dwmsTimeSliceInterval);
         KeSetTimer(&pctxtq->Timer, liTimeout, &pctxtq->DpcStartTimeSlice);
     }
 
     EXIT(2, ("DispatchCtxtQueue!\n"));
-}       //DispatchCtxtQueue
+} //DispatchCtxtQueue
 
 /***LP  InsertReadyQueue - Insert the context into the ready queue
  *
@@ -189,16 +185,14 @@ NTSTATUS LOCAL InsertReadyQueue(PCTXT pctxt, BOOLEAN fDelayExecute)
     TRACENAME("INSERTREADYQUEUE")
     NTSTATUS rc = STATUS_SUCCESS;
 
-    ENTER(2, ("InsertReadyQueue(pctxt=%x,fDelayExecute=%x)\n",
-              pctxt, fDelayExecute));
+    ENTER(2, ("InsertReadyQueue(pctxt=%x,fDelayExecute=%x)\n", pctxt, fDelayExecute));
 
     CHKDEBUGGERREQ();
 
     //
     // Make sure we do have the spin lock.
     //
-    LOGSCHEDEVENT('INSQ', (ULONG_PTR)pctxt, (ULONG_PTR)
-                  (pctxt->pnctxt? pctxt->pnctxt->pnsObj: pctxt->pnsObj),
+    LOGSCHEDEVENT('INSQ', (ULONG_PTR)pctxt, (ULONG_PTR)(pctxt->pnctxt ? pctxt->pnctxt->pnsObj : pctxt->pnsObj),
                   (ULONG_PTR)pctxt->pbOp);
     //
     // If there is a pending timer, cancel it.
@@ -233,8 +227,7 @@ NTSTATUS LOCAL InsertReadyQueue(PCTXT pctxt, BOOLEAN fDelayExecute)
     // If this context is already running, we are done; otherwise, process it.
     //
     if (!(pctxt->dwfCtxt & CTXTF_TIMER_DISPATCH) &&
-        (!(pctxt->dwfCtxt & CTXTF_RUNNING) ||
-         (pctxt->dwfCtxt & CTXTF_NEST_EVAL)))
+        (!(pctxt->dwfCtxt & CTXTF_RUNNING) || (pctxt->dwfCtxt & CTXTF_NEST_EVAL)))
     {
         if (fDelayExecute)
         {
@@ -246,11 +239,9 @@ NTSTATUS LOCAL InsertReadyQueue(PCTXT pctxt, BOOLEAN fDelayExecute)
             AsyncCallBack(pctxt, AMLISTA_CONTINUE);
             AcquireMutex(&gReadyQueue.mutCtxtQ);
         }
-        else if ((pctxt->dwfCtxt & CTXTF_NEST_EVAL) &&
-                 (gReadyQueue.pkthCurrent == KeGetCurrentThread()))
+        else if ((pctxt->dwfCtxt & CTXTF_NEST_EVAL) && (gReadyQueue.pkthCurrent == KeGetCurrentThread()))
         {
-            LOGSCHEDEVENT('NEST', (ULONG_PTR)pctxt, (ULONG_PTR)
-                          (pctxt->pnctxt? pctxt->pnctxt->pnsObj: pctxt->pnsObj),
+            LOGSCHEDEVENT('NEST', (ULONG_PTR)pctxt, (ULONG_PTR)(pctxt->pnctxt ? pctxt->pnctxt->pnsObj : pctxt->pnsObj),
                           (ULONG_PTR)pctxt->pbOp);
             //
             // Somebody is running a new method on the callout of the current
@@ -260,22 +251,19 @@ NTSTATUS LOCAL InsertReadyQueue(PCTXT pctxt, BOOLEAN fDelayExecute)
             //
             rc = RunContext(pctxt);
         }
-        else if ((gReadyQueue.pkthCurrent == NULL) &&
-                 !(gReadyQueue.dwfCtxtQ & CQF_PAUSED))
-            //
-            // We only execute the method if we are not in paused state.
-            //
+        else if ((gReadyQueue.pkthCurrent == NULL) && !(gReadyQueue.dwfCtxtQ & CQF_PAUSED))
+        //
+        // We only execute the method if we are not in paused state.
+        //
         {
-            LOGSCHEDEVENT('EVAL', (ULONG_PTR)pctxt, (ULONG_PTR)
-                          (pctxt->pnctxt? pctxt->pnctxt->pnsObj: pctxt->pnsObj),
+            LOGSCHEDEVENT('EVAL', (ULONG_PTR)pctxt, (ULONG_PTR)(pctxt->pnctxt ? pctxt->pnctxt->pnsObj : pctxt->pnsObj),
                           (ULONG_PTR)pctxt->pbOp);
             //
             // There is no active context and we can execute it immediately.
             //
             rc = RunContext(pctxt);
 
-            if ((gReadyQueue.plistCtxtQ != NULL) &&
-                !(gReadyQueue.dwfCtxtQ & CQF_WORKITEM_SCHEDULED))
+            if ((gReadyQueue.plistCtxtQ != NULL) && !(gReadyQueue.dwfCtxtQ & CQF_WORKITEM_SCHEDULED))
             {
                 //
                 // If we have more jobs in the queue and we haven't scheduled
@@ -292,8 +280,7 @@ NTSTATUS LOCAL InsertReadyQueue(PCTXT pctxt, BOOLEAN fDelayExecute)
             // Insert the context in the ready queue.
             //
             ASSERT(!(pctxt->dwfCtxt & (CTXTF_IN_READYQ | CTXTF_RUNNING)));
-            LOGSCHEDEVENT('QCTX', (ULONG_PTR)pctxt, (ULONG_PTR)
-                          (pctxt->pnctxt? pctxt->pnctxt->pnsObj: pctxt->pnsObj),
+            LOGSCHEDEVENT('QCTX', (ULONG_PTR)pctxt, (ULONG_PTR)(pctxt->pnctxt ? pctxt->pnctxt->pnsObj : pctxt->pnsObj),
                           (ULONG_PTR)pctxt->pbOp);
             if (!(pctxt->dwfCtxt & CTXTF_IN_READYQ))
             {
@@ -309,7 +296,7 @@ NTSTATUS LOCAL InsertReadyQueue(PCTXT pctxt, BOOLEAN fDelayExecute)
 
     EXIT(2, ("InsertReadyQueue=%x\n", rc));
     return rc;
-}       //InsertReadyQueue
+} //InsertReadyQueue
 
 /***LP  RestartContext - Restart a context
  *
@@ -330,14 +317,12 @@ NTSTATUS LOCAL RestartContext(PCTXT pctxt, BOOLEAN fDelayExecute)
     NTSTATUS rc = STATUS_SUCCESS;
     PRESTART prest;
 
-    ENTER(2, ("RestartContext(pctxt=%x,fDelayExecute=%x)\n",
-              pctxt, fDelayExecute));
+    ENTER(2, ("RestartContext(pctxt=%x,fDelayExecute=%x)\n", pctxt, fDelayExecute));
 
     ASSERT(!(pctxt->dwfCtxt & CTXTF_TIMER_PENDING));
     ASSERT((fDelayExecute == FALSE) || !(pctxt->dwfCtxt & CTXTF_ASYNC_EVAL));
 
-    LOGSCHEDEVENT('REST', (ULONG_PTR)pctxt, (ULONG_PTR)
-                  (pctxt->pnctxt? pctxt->pnctxt->pnsObj: pctxt->pnsObj),
+    LOGSCHEDEVENT('REST', (ULONG_PTR)pctxt, (ULONG_PTR)(pctxt->pnctxt ? pctxt->pnctxt->pnsObj : pctxt->pnsObj),
                   (ULONG_PTR)pctxt->pbOp);
     if (KeGetCurrentIrql() < DISPATCH_LEVEL)
     {
@@ -355,13 +340,12 @@ NTSTATUS LOCAL RestartContext(PCTXT pctxt, BOOLEAN fDelayExecute)
     }
     else
     {
-        rc = AMLI_LOGERR(AMLIERR_FATAL,
-                         ("RestartContext: failed to allocate restart context item"));
+        rc = AMLI_LOGERR(AMLIERR_FATAL, ("RestartContext: failed to allocate restart context item"));
     }
 
     EXIT(2, ("RestartContext=%x\n", rc));
     return rc;
-}       //RestartContext
+} //RestartContext
 
 /***LP  RestartCtxtPassive - Restart context running at PASSIVE_LEVEL
  *
@@ -379,14 +363,13 @@ VOID RestartCtxtPassive(PRESTART prest)
     ENTER(2, ("RestartCtxtPassive(prest=%x)\n", prest));
 
     AcquireMutex(&gReadyQueue.mutCtxtQ);
-    InsertReadyQueue(prest->pctxt,
-                     (BOOLEAN)((prest->pctxt->dwfCtxt & CTXTF_ASYNC_EVAL) == 0));
+    InsertReadyQueue(prest->pctxt, (BOOLEAN)((prest->pctxt->dwfCtxt & CTXTF_ASYNC_EVAL) == 0));
     ReleaseMutex(&gReadyQueue.mutCtxtQ);
 
     FREERESTOBJ(prest);
 
     EXIT(2, ("RestartCtxtPassive!\n"));
-}       //RestartCtxtPassive
+} //RestartCtxtPassive
 
 /***LP  RestartCtxtCallback - Callback to restart a context
  *
@@ -406,8 +389,7 @@ VOID EXPORT RestartCtxtCallback(PCTXTDATA pctxtdata)
 
     ASSERT(pctxt->dwSig == SIG_CTXT);
     LOGSCHEDEVENT('RSCB', (ULONG_PTR)pctxt, 0, 0);
-    RestartContext(pctxt,
-                   (BOOLEAN)((pctxt->dwfCtxt & CTXTF_ASYNC_EVAL) == 0));
+    RestartContext(pctxt, (BOOLEAN)((pctxt->dwfCtxt & CTXTF_ASYNC_EVAL) == 0));
 
     EXIT(2, ("RestartCtxtCallback!\n"));
-}       //RestartCtxtCallback
+} //RestartCtxtCallback

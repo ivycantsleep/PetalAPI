@@ -25,13 +25,10 @@ Revision History:
 #pragma alloc_text(PAGE, NtImpersonateThread)
 #endif //ALLOC_PRAGMA
 
-
+
 NTSTATUS
-NtImpersonateThread(
-    IN HANDLE ServerThreadHandle,
-    IN HANDLE ClientThreadHandle,
-    IN PSECURITY_QUALITY_OF_SERVICE SecurityQos
-    )
+NtImpersonateThread(IN HANDLE ServerThreadHandle, IN HANDLE ClientThreadHandle,
+                    IN PSECURITY_QUALITY_OF_SERVICE SecurityQos)
 
 /*++
 
@@ -81,33 +78,34 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    try {
+    try
+    {
 
-        if (PreviousMode != KernelMode) {
-            ProbeForReadSmallStructure (SecurityQos,
-                                        sizeof (SECURITY_QUALITY_OF_SERVICE),
-                                        sizeof (ULONG));
+        if (PreviousMode != KernelMode)
+        {
+            ProbeForReadSmallStructure(SecurityQos, sizeof(SECURITY_QUALITY_OF_SERVICE), sizeof(ULONG));
         }
         CapturedQos = *SecurityQos;
-
-    } except (ExSystemExceptionFilter ()) {
-        return GetExceptionCode ();
     }
-
+    except(ExSystemExceptionFilter())
+    {
+        return GetExceptionCode();
+    }
 
 
     //
     // Reference the client thread, checking for appropriate access.
     //
 
-    Status = ObReferenceObjectByHandle (ClientThreadHandle,           // Handle
-                                        THREAD_DIRECT_IMPERSONATION,  // DesiredAccess
-                                        PsThreadType,                 // ObjectType
-                                        PreviousMode,                 // AccessMode
-                                        &ClientThread,                // Object
-                                        NULL);                        // GrantedAccess
+    Status = ObReferenceObjectByHandle(ClientThreadHandle,          // Handle
+                                       THREAD_DIRECT_IMPERSONATION, // DesiredAccess
+                                       PsThreadType,                // ObjectType
+                                       PreviousMode,                // AccessMode
+                                       &ClientThread,               // Object
+                                       NULL);                       // GrantedAccess
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
@@ -115,15 +113,16 @@ Return Value:
     // Reference the client thread, checking for appropriate access.
     //
 
-    Status = ObReferenceObjectByHandle (ServerThreadHandle,           // Handle
-                                        THREAD_IMPERSONATE,           // DesiredAccess
-                                        PsThreadType,                 // ObjectType
-                                        PreviousMode,                 // AccessMode
-                                        &ServerThread,                // Object
-                                        NULL);                        // GrantedAccess
+    Status = ObReferenceObjectByHandle(ServerThreadHandle, // Handle
+                                       THREAD_IMPERSONATE, // DesiredAccess
+                                       PsThreadType,       // ObjectType
+                                       PreviousMode,       // AccessMode
+                                       &ServerThread,      // Object
+                                       NULL);              // GrantedAccess
 
-    if (!NT_SUCCESS (Status)) {
-        ObDereferenceObject (ClientThread);
+    if (!NT_SUCCESS(Status))
+    {
+        ObDereferenceObject(ClientThread);
         return Status;
     }
 
@@ -132,14 +131,15 @@ Return Value:
     // Get the client's security context
     //
 
-    Status = SeCreateClientSecurity (ClientThread,             // ClientThread
-                                     &CapturedQos,             // SecurityQos
-                                     FALSE,                    // ServerIsRemote
-                                     &ClientSecurityContext);  // ClientContext
+    Status = SeCreateClientSecurity(ClientThread,            // ClientThread
+                                    &CapturedQos,            // SecurityQos
+                                    FALSE,                   // ServerIsRemote
+                                    &ClientSecurityContext); // ClientContext
 
-    if (!NT_SUCCESS (Status)) {
-        ObDereferenceObject (ServerThread);
-        ObDereferenceObject (ClientThread);
+    if (!NT_SUCCESS(Status))
+    {
+        ObDereferenceObject(ServerThread);
+        ObDereferenceObject(ClientThread);
         return Status;
     }
 
@@ -148,17 +148,17 @@ Return Value:
     // Impersonate the client
     //
 
-    Status = SeImpersonateClientEx (&ClientSecurityContext, ServerThread);
+    Status = SeImpersonateClientEx(&ClientSecurityContext, ServerThread);
 
-    SeDeleteClientSecurity (&ClientSecurityContext);
+    SeDeleteClientSecurity(&ClientSecurityContext);
 
     //
     // Done.
     //
 
 
-    ObDereferenceObject (ServerThread);
-    ObDereferenceObject (ClientThread);
+    ObDereferenceObject(ServerThread);
+    ObDereferenceObject(ClientThread);
 
-    return Status ;
+    return Status;
 }

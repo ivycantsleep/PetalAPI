@@ -26,14 +26,7 @@ Revision History:
 #include "ntrtlp.h"
 
 #if defined(ALLOC_PRAGMA) && defined(NTOS_KERNEL_RUNTIME)
-static
-int
-__cdecl
-ScanHexFormat(
-    IN const WCHAR* Buffer,
-    IN ULONG MaximumLength,
-    IN const WCHAR* Format,
-    ...);
+static int __cdecl ScanHexFormat(IN const WCHAR *Buffer, IN ULONG MaximumLength, IN const WCHAR *Format, ...);
 
 #pragma alloc_text(PAGE, RtlStringFromGUID)
 #pragma alloc_text(PAGE, ScanHexFormat)
@@ -44,14 +37,11 @@ extern const WCHAR GuidFormat[];
 
 #define GUID_STRING_SIZE 38
 
-
+
 NTSYSAPI
 NTSTATUS
 NTAPI
-RtlStringFromGUID(
-    IN REFGUID Guid,
-    OUT PUNICODE_STRING GuidString
-    )
+RtlStringFromGUID(IN REFGUID Guid, OUT PUNICODE_STRING GuidString)
 /*++
 
 Routine Description:
@@ -79,22 +69,17 @@ Return Value:
     RTL_PAGED_CODE();
     GuidString->Length = GUID_STRING_SIZE * sizeof(WCHAR);
     GuidString->MaximumLength = GuidString->Length + sizeof(UNICODE_NULL);
-    if (!(GuidString->Buffer = RtlAllocateStringRoutine(GuidString->MaximumLength))) {
+    if (!(GuidString->Buffer = RtlAllocateStringRoutine(GuidString->MaximumLength)))
+    {
         return STATUS_NO_MEMORY;
     }
-    swprintf(GuidString->Buffer, GuidFormat, Guid->Data1, Guid->Data2, Guid->Data3, Guid->Data4[0], Guid->Data4[1], Guid->Data4[2], Guid->Data4[3], Guid->Data4[4], Guid->Data4[5], Guid->Data4[6], Guid->Data4[7]);
+    swprintf(GuidString->Buffer, GuidFormat, Guid->Data1, Guid->Data2, Guid->Data3, Guid->Data4[0], Guid->Data4[1],
+             Guid->Data4[2], Guid->Data4[3], Guid->Data4[4], Guid->Data4[5], Guid->Data4[6], Guid->Data4[7]);
     return STATUS_SUCCESS;
 }
 
-
-static
-int
-__cdecl
-ScanHexFormat(
-    IN const WCHAR* Buffer,
-    IN ULONG MaximumLength,
-    IN const WCHAR* Format,
-    ...)
+
+static int __cdecl ScanHexFormat(IN const WCHAR *Buffer, IN ULONG MaximumLength, IN const WCHAR *Format, ...)
 /*++
 
 Routine Description:
@@ -123,49 +108,69 @@ Return Value:
 --*/
 {
     va_list ArgList;
-    int     FormatItems;
+    int FormatItems;
 
     va_start(ArgList, Format);
-    for (FormatItems = 0;;) {
-        switch (*Format) {
+    for (FormatItems = 0;;)
+    {
+        switch (*Format)
+        {
         case 0:
             return (MaximumLength && *Buffer) ? -1 : FormatItems;
         case '%':
             Format++;
-            if (*Format != '%') {
-                ULONG   Number;
-                int     Width;
-                int     Long;
-                PVOID   Pointer;
+            if (*Format != '%')
+            {
+                ULONG Number;
+                int Width;
+                int Long;
+                PVOID Pointer;
 
-                for (Long = 0, Width = 0;; Format++) {
-                    if ((*Format >= '0') && (*Format <= '9')) {
+                for (Long = 0, Width = 0;; Format++)
+                {
+                    if ((*Format >= '0') && (*Format <= '9'))
+                    {
                         Width = Width * 10 + *Format - '0';
-                    } else if (*Format == 'l') {
+                    }
+                    else if (*Format == 'l')
+                    {
                         Long++;
-                    } else if ((*Format == 'X') || (*Format == 'x')) {
+                    }
+                    else if ((*Format == 'X') || (*Format == 'x'))
+                    {
                         break;
                     }
                 }
                 Format++;
-                for (Number = 0; Width--; Buffer++, MaximumLength--) {
+                for (Number = 0; Width--; Buffer++, MaximumLength--)
+                {
                     if (!MaximumLength)
                         return -1;
                     Number *= 16;
-                    if ((*Buffer >= '0') && (*Buffer <= '9')) {
+                    if ((*Buffer >= '0') && (*Buffer <= '9'))
+                    {
                         Number += (*Buffer - '0');
-                    } else if ((*Buffer >= 'a') && (*Buffer <= 'f')) {
+                    }
+                    else if ((*Buffer >= 'a') && (*Buffer <= 'f'))
+                    {
                         Number += (*Buffer - 'a' + 10);
-                    } else if ((*Buffer >= 'A') && (*Buffer <= 'F')) {
+                    }
+                    else if ((*Buffer >= 'A') && (*Buffer <= 'F'))
+                    {
                         Number += (*Buffer - 'A' + 10);
-                    } else {
+                    }
+                    else
+                    {
                         return -1;
                     }
                 }
                 Pointer = va_arg(ArgList, PVOID);
-                if (Long) {
+                if (Long)
+                {
                     *(PULONG)Pointer = Number;
-                } else {
+                }
+                else
+                {
                     *(PUSHORT)Pointer = (USHORT)Number;
                 }
                 FormatItems++;
@@ -173,7 +178,8 @@ Return Value:
             }
             /* no break */
         default:
-            if (!MaximumLength || (*Buffer != *Format)) {
+            if (!MaximumLength || (*Buffer != *Format))
+            {
                 return -1;
             }
             Buffer++;
@@ -184,14 +190,11 @@ Return Value:
     }
 }
 
-
+
 NTSYSAPI
 NTSTATUS
 NTAPI
-RtlGUIDFromString(
-    IN PUNICODE_STRING GuidString,
-    OUT GUID* Guid
-    )
+RtlGUIDFromString(IN PUNICODE_STRING GuidString, OUT GUID *Guid)
 /*++
 
 Routine Description:
@@ -214,14 +217,18 @@ Return Value:
 
 --*/
 {
-    USHORT    Data4[8];
-    int       Count;
+    USHORT Data4[8];
+    int Count;
 
     RTL_PAGED_CODE();
-    if (ScanHexFormat(GuidString->Buffer, GuidString->Length / sizeof(WCHAR), GuidFormat, &Guid->Data1, &Guid->Data2, &Guid->Data3, &Data4[0], &Data4[1], &Data4[2], &Data4[3], &Data4[4], &Data4[5], &Data4[6], &Data4[7]) == -1) {
+    if (ScanHexFormat(GuidString->Buffer, GuidString->Length / sizeof(WCHAR), GuidFormat, &Guid->Data1, &Guid->Data2,
+                      &Guid->Data3, &Data4[0], &Data4[1], &Data4[2], &Data4[3], &Data4[4], &Data4[5], &Data4[6],
+                      &Data4[7]) == -1)
+    {
         return STATUS_INVALID_PARAMETER;
     }
-    for (Count = 0; Count < sizeof(Data4)/sizeof(Data4[0]); Count++) {
+    for (Count = 0; Count < sizeof(Data4) / sizeof(Data4[0]); Count++)
+    {
         Guid->Data4[Count] = (UCHAR)Data4[Count];
     }
     return STATUS_SUCCESS;

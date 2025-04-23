@@ -30,51 +30,29 @@ Revision History:
 // macros
 //
 #define IS_DO_PDO(DeviceObject) \
-((DeviceObject->Flags & DO_BUS_ENUMERATED_DEVICE) && (DeviceObject->DeviceObjectExtension->DeviceNode))
+    ((DeviceObject->Flags & DO_BUS_ENUMERATED_DEVICE) && (DeviceObject->DeviceObjectExtension->DeviceNode))
 
 
 //
 // procedures private to notification
 //
 NTSTATUS
-PopEnterNotification(
-    PPOWER_CHANNEL_SUMMARY  PowerChannelSummary,
-    PDEVICE_OBJECT          DeviceObject,
-    PPO_NOTIFY              NotificationFunction,
-    PVOID                   NotificationContext,
-    ULONG                   NotificationType,
-    PDEVICE_POWER_STATE     DeviceState,
-    PVOID                   *NotificationHandle
-    );
+PopEnterNotification(PPOWER_CHANNEL_SUMMARY PowerChannelSummary, PDEVICE_OBJECT DeviceObject,
+                     PPO_NOTIFY NotificationFunction, PVOID NotificationContext, ULONG NotificationType,
+                     PDEVICE_POWER_STATE DeviceState, PVOID *NotificationHandle);
 
 NTSTATUS
-PopBuildPowerChannel(
-    PDEVICE_OBJECT          DeviceObject,
-    PPOWER_CHANNEL_SUMMARY  PowerChannelSummary,
-    ULONG                   RecursionThrottle
-    );
+PopBuildPowerChannel(PDEVICE_OBJECT DeviceObject, PPOWER_CHANNEL_SUMMARY PowerChannelSummary, ULONG RecursionThrottle);
 
 NTSTATUS
-PopCompleteFindIrp(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN PVOID Context
-    );
+PopCompleteFindIrp(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID Context);
 
 NTSTATUS
-PopFindPowerDependencies(
-    PDEVICE_OBJECT          DeviceObject,
-    PPOWER_CHANNEL_SUMMARY  PowerChannelSummary,
-    ULONG                   RecursionThrottle
-    );
+PopFindPowerDependencies(PDEVICE_OBJECT DeviceObject, PPOWER_CHANNEL_SUMMARY PowerChannelSummary,
+                         ULONG RecursionThrottle);
 
 
-VOID
-PopPresentNotify(
-    PDEVICE_OBJECT          DeviceObject,
-    PPOWER_CHANNEL_SUMMARY  PowerChannelSummary,
-    ULONG                   NotificationType
-    );
+VOID PopPresentNotify(PDEVICE_OBJECT DeviceObject, PPOWER_CHANNEL_SUMMARY PowerChannelSummary, ULONG NotificationType);
 
 //
 // Speced (public) entry points
@@ -82,14 +60,8 @@ PopPresentNotify(
 
 NTKERNELAPI
 NTSTATUS
-PoRegisterDeviceNotify (
-    IN PDEVICE_OBJECT   DeviceObject,
-    IN PPO_NOTIFY       NotificationFunction,
-    IN PVOID            NotificationContext,
-    IN ULONG            NotificationType,
-    OUT PDEVICE_POWER_STATE  DeviceState,
-    OUT PVOID           *NotificationHandle
-    )
+PoRegisterDeviceNotify(IN PDEVICE_OBJECT DeviceObject, IN PPO_NOTIFY NotificationFunction, IN PVOID NotificationContext,
+                       IN ULONG NotificationType, OUT PDEVICE_POWER_STATE DeviceState, OUT PVOID *NotificationHandle)
 /*++
 
 Routine Description:
@@ -133,26 +105,24 @@ Return Value:
 
 --*/
 {
-    NTSTATUS        status;
-    PPOWER_CHANNEL_SUMMARY  pchannel;
-    KIRQL            OldIrql;
+    NTSTATUS status;
+    PPOWER_CHANNEL_SUMMARY pchannel;
+    KIRQL OldIrql;
 
     ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
     //
     // return error for nonsense parameters, or DeviceObject not PDO
     //
-    if ( (NotificationFunction == NULL) ||
-         (NotificationType == 0)        ||
-         (NotificationHandle == NULL)   ||
-         (DeviceState == NULL)          ||
-         (DeviceObject == NULL) )
+    if ((NotificationFunction == NULL) || (NotificationType == 0) || (NotificationHandle == NULL) ||
+        (DeviceState == NULL) || (DeviceObject == NULL))
     {
-        return  STATUS_INVALID_PARAMETER;
+        return STATUS_INVALID_PARAMETER;
     }
 
-    if ( ! (IS_DO_PDO(DeviceObject)) ) {
-        return  STATUS_INVALID_PARAMETER;
+    if (!(IS_DO_PDO(DeviceObject)))
+    {
+        return STATUS_INVALID_PARAMETER;
     }
 
     //
@@ -164,22 +134,25 @@ Return Value:
     //
     // if the channel isn't already in place, create it
     //
-    if (!PopGetDope(DeviceObject)) {
-            ExReleaseResourceLite(&PopNotifyLock);
-            return STATUS_INSUFFICIENT_RESOURCES;
+    if (!PopGetDope(DeviceObject))
+    {
+        ExReleaseResourceLite(&PopNotifyLock);
+        return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     pchannel = &(DeviceObject->DeviceObjectExtension->Dope->PowerChannelSummary);
 
 
-    if (pchannel->Signature == 0) {
+    if (pchannel->Signature == 0)
+    {
 
         //
         // we do NOT already have a channel, bug GetDope has
         // inited the notify list and set the signature and owner for us
         //
 
-        if (!NT_SUCCESS(status = PopBuildPowerChannel(DeviceObject, pchannel, 0))) {
+        if (!NT_SUCCESS(status = PopBuildPowerChannel(DeviceObject, pchannel, 0)))
+        {
             ExReleaseResourceLite(&PopNotifyLock);
             return status;
         }
@@ -192,15 +165,8 @@ Return Value:
     // the request PDO, so we just add this notification instance to it
     // and we are done
     //
-    status = PopEnterNotification(
-        pchannel,
-        DeviceObject,
-        NotificationFunction,
-        NotificationContext,
-        NotificationType,
-        DeviceState,
-        NotificationHandle
-        );
+    status = PopEnterNotification(pchannel, DeviceObject, NotificationFunction, NotificationContext, NotificationType,
+                                  DeviceState, NotificationHandle);
     ExReleaseResourceLite(&PopNotifyLock);
     return status;
 }
@@ -208,9 +174,7 @@ Return Value:
 
 NTKERNELAPI
 NTSTATUS
-PoCancelDeviceNotify (
-    IN PVOID            NotificationHandle
-    )
+PoCancelDeviceNotify(IN PVOID NotificationHandle)
 /*++
 
 Routine Description:
@@ -228,7 +192,7 @@ Return Value:
 --*/
 {
     PPOWER_NOTIFY_BLOCK pnb;
-    KIRQL                OldIrql;
+    KIRQL OldIrql;
 
     ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
@@ -241,13 +205,12 @@ Return Value:
     //
     // check for blatant errors
     //
-    if ( (pnb->Signature != (ULONG)POP_PNB_TAG) ||
-         (pnb->RefCount < 0) )
+    if ((pnb->Signature != (ULONG)POP_PNB_TAG) || (pnb->RefCount < 0))
     {
-        ASSERT(0);                          // force a break on a debug build
+        ASSERT(0); // force a break on a debug build
         ExReleaseResourceLite(&PopNotifyLock);
         PopUnlockDopeGlobal(OldIrql);
-        return  STATUS_INVALID_HANDLE;
+        return STATUS_INVALID_HANDLE;
     }
 
     //
@@ -255,7 +218,8 @@ Return Value:
     //
     pnb->RefCount--;
 
-    if (pnb->RefCount == 0) {
+    if (pnb->RefCount == 0)
+    {
 
         //
         // blast it all, just to be paranoid (it's a low freq operation)
@@ -268,12 +232,12 @@ Return Value:
         pnb->NotificationType = 0;
         InitializeListHead(&(pnb->NotifyList));
 
-        if (pnb->Invalidated) {
+        if (pnb->Invalidated)
+        {
             PopInvalidNotifyBlockCount--;
         }
 
         ExFreePool(pnb);
-
     }
 
     PopUnlockDopeGlobal(OldIrql);
@@ -286,15 +250,9 @@ Return Value:
 //
 
 NTSTATUS
-PopEnterNotification(
-    PPOWER_CHANNEL_SUMMARY  PowerChannelSummary,
-    PDEVICE_OBJECT          DeviceObject,
-    PPO_NOTIFY              NotificationFunction,
-    PVOID                   NotificationContext,
-    ULONG                   NotificationType,
-    PDEVICE_POWER_STATE     DeviceState,
-    PVOID                   *NotificationHandle
-    )
+PopEnterNotification(PPOWER_CHANNEL_SUMMARY PowerChannelSummary, PDEVICE_OBJECT DeviceObject,
+                     PPO_NOTIFY NotificationFunction, PVOID NotificationContext, ULONG NotificationType,
+                     PDEVICE_POWER_STATE DeviceState, PVOID *NotificationHandle)
 /*++
 
 Routine Description:
@@ -336,23 +294,21 @@ Return Value:
 
 --*/
 {
-    PLIST_ENTRY     plist;
-    PPOWER_NOTIFY_BLOCK   pnb;
-    KIRQL           oldIrql, oldIrql2;
+    PLIST_ENTRY plist;
+    PPOWER_NOTIFY_BLOCK pnb;
+    KIRQL oldIrql, oldIrql2;
 
     PopLockDopeGlobal(&oldIrql);
 
     //
     // run the notify list looking for an existing instance to use
     //
-    for (plist = PowerChannelSummary->NotifyList.Flink;
-         plist != &(PowerChannelSummary->NotifyList);
+    for (plist = PowerChannelSummary->NotifyList.Flink; plist != &(PowerChannelSummary->NotifyList);
          plist = plist->Flink)
     {
         pnb = CONTAINING_RECORD(plist, POWER_NOTIFY_BLOCK, NotifyList);
-        if ( (pnb->NotificationFunction == NotificationFunction) &&
-             (pnb->NotificationContext == NotificationContext)   &&
-             (pnb->NotificationType == NotificationType) )
+        if ((pnb->NotificationFunction == NotificationFunction) && (pnb->NotificationContext == NotificationContext) &&
+            (pnb->NotificationType == NotificationType))
         {
             //
             // we have found an existing list entry that works for us
@@ -368,7 +324,8 @@ Return Value:
     // didn't find an instance we can use, so make a new one
     //
     pnb = ExAllocatePoolWithTag(NonPagedPool, sizeof(POWER_NOTIFY_BLOCK), POP_PNB_TAG);
-    if (!pnb) {
+    if (!pnb)
+    {
         PopUnlockDopeGlobal(oldIrql);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -389,11 +346,7 @@ Return Value:
 }
 
 NTSTATUS
-PopBuildPowerChannel(
-    PDEVICE_OBJECT          DeviceObject,
-    PPOWER_CHANNEL_SUMMARY  PowerChannelSummary,
-    ULONG                   RecursionThrottle
-    )
+PopBuildPowerChannel(PDEVICE_OBJECT DeviceObject, PPOWER_CHANNEL_SUMMARY PowerChannelSummary, ULONG RecursionThrottle)
 /*++
 
 Routine Description:
@@ -420,28 +373,31 @@ Return Value:
 
 --*/
 {
-    PLIST_ENTRY                     pSourceHead;
-    PPOWER_NOTIFY_SOURCE            pSourceEntry, pEntry;
-    PPOWER_NOTIFY_TARGET            pTargetEntry;
-    KIRQL                           OldIrql;
-    PDEVICE_OBJECT_POWER_EXTENSION  pdope;
-    PLIST_ENTRY                     plink;
+    PLIST_ENTRY pSourceHead;
+    PPOWER_NOTIFY_SOURCE pSourceEntry, pEntry;
+    PPOWER_NOTIFY_TARGET pTargetEntry;
+    KIRQL OldIrql;
+    PDEVICE_OBJECT_POWER_EXTENSION pdope;
+    PLIST_ENTRY plink;
 
 
     //
     // bugcheck if we get all confused
     //
-    if ( ! (IS_DO_PDO(DeviceObject))) {
-        PopInternalAddToDumpFile ( PowerChannelSummary, sizeof(POWER_CHANNEL_SUMMARY), DeviceObject, NULL, NULL, NULL );
+    if (!(IS_DO_PDO(DeviceObject)))
+    {
+        PopInternalAddToDumpFile(PowerChannelSummary, sizeof(POWER_CHANNEL_SUMMARY), DeviceObject, NULL, NULL, NULL);
         KeBugCheckEx(INTERNAL_POWER_ERROR, 2, 1, (ULONG_PTR)DeviceObject, (ULONG_PTR)PowerChannelSummary);
     }
 
-    if (RecursionThrottle > POP_RECURSION_LIMIT) {
+    if (RecursionThrottle > POP_RECURSION_LIMIT)
+    {
         ASSERT(0);
         return STATUS_STACK_OVERFLOW;
     }
 
-    if (!PopGetDope(DeviceObject)) {
+    if (!PopGetDope(DeviceObject))
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -449,15 +405,16 @@ Return Value:
     //
     // allocate entries in case we need them
     //
-    pSourceEntry =
-        ExAllocatePoolWithTag(NonPagedPool, sizeof(POWER_NOTIFY_SOURCE), POP_PNSC_TAG);
+    pSourceEntry = ExAllocatePoolWithTag(NonPagedPool, sizeof(POWER_NOTIFY_SOURCE), POP_PNSC_TAG);
 
-    pTargetEntry =
-        ExAllocatePoolWithTag(NonPagedPool, sizeof(POWER_NOTIFY_TARGET), POP_PNTG_TAG);
+    pTargetEntry = ExAllocatePoolWithTag(NonPagedPool, sizeof(POWER_NOTIFY_TARGET), POP_PNTG_TAG);
 
-    if ((!pSourceEntry) || (!pTargetEntry)) {
-        if (pSourceEntry) ExFreePool(pSourceEntry);
-        if (pTargetEntry) ExFreePool(pTargetEntry);
+    if ((!pSourceEntry) || (!pTargetEntry))
+    {
+        if (pSourceEntry)
+            ExFreePool(pSourceEntry);
+        if (pTargetEntry)
+            ExFreePool(pTargetEntry);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -469,13 +426,12 @@ Return Value:
     pdope = DeviceObject->DeviceObjectExtension->Dope;
     pSourceHead = &(pdope->NotifySourceList);
 
-    for (plink = pSourceHead->Flink;
-         plink != pSourceHead;
-         plink = plink->Flink)
+    for (plink = pSourceHead->Flink; plink != pSourceHead; plink = plink->Flink)
     {
         pEntry = CONTAINING_RECORD(plink, POWER_NOTIFY_SOURCE, List);
 
-        if (pEntry->Target->ChannelSummary == PowerChannelSummary) {
+        if (pEntry->Target->ChannelSummary == PowerChannelSummary)
+        {
             //
             // the supplied device object already points to the supplied
             // channel, so just say we're done.
@@ -505,7 +461,8 @@ Return Value:
     // adjust the counts in the PowerChannelSummary
     //
     PowerChannelSummary->TotalCount++;
-    if (PopGetDoDevicePowerState(DeviceObject->DeviceObjectExtension) == PowerDeviceD0) {
+    if (PopGetDoDevicePowerState(DeviceObject->DeviceObjectExtension) == PowerDeviceD0)
+    {
         PowerChannelSummary->D0Count++;
     }
 
@@ -520,22 +477,15 @@ Return Value:
 
 
 NTSTATUS
-PopCompleteFindIrp(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN PVOID Context
-    )
+PopCompleteFindIrp(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID Context)
 {
     KeSetEvent((PKEVENT)Context, 0, FALSE);
     return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
 NTSTATUS
-PopFindPowerDependencies(
-    PDEVICE_OBJECT          DeviceObject,
-    PPOWER_CHANNEL_SUMMARY  PowerChannelSummary,
-    ULONG                   RecursionThrottle
-    )
+PopFindPowerDependencies(PDEVICE_OBJECT DeviceObject, PPOWER_CHANNEL_SUMMARY PowerChannelSummary,
+                         ULONG RecursionThrottle)
 /*++
 
 Routine Description:
@@ -563,18 +513,19 @@ Return Value:
 
 --*/
 {
-    PDEVICE_RELATIONS   pdr;
-    KEVENT              findevent;
-    ULONG               i;
-    PIRP                irp;
-    PIO_STACK_LOCATION  irpsp;
-    PDEVICE_OBJECT      childDeviceObject;
-    NTSTATUS            status;
+    PDEVICE_RELATIONS pdr;
+    KEVENT findevent;
+    ULONG i;
+    PIRP irp;
+    PIO_STACK_LOCATION irpsp;
+    PDEVICE_OBJECT childDeviceObject;
+    NTSTATUS status;
 
     ASSERT(KeGetCurrentIrql() < DISPATCH_LEVEL);
 
 
-    if (RecursionThrottle > POP_RECURSION_LIMIT) {
+    if (RecursionThrottle > POP_RECURSION_LIMIT)
+    {
         ASSERT(0);
         return STATUS_STACK_OVERFLOW;
     }
@@ -582,12 +533,10 @@ Return Value:
     //
     // allocate and fill an irp to send to the device object
     //
-    irp = IoAllocateIrp(
-        (CCHAR)(DeviceObject->StackSize),
-        TRUE
-        );
+    irp = IoAllocateIrp((CCHAR)(DeviceObject->StackSize), TRUE);
 
-    if (!irp) {
+    if (!irp)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -599,45 +548,35 @@ Return Value:
     irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
     irp->IoStatus.Information = 0;
 
-    IoSetCompletionRoutine(
-        irp,
-        PopCompleteFindIrp,
-        (PVOID)(&findevent),
-        TRUE,
-        TRUE,
-        TRUE
-        );
+    IoSetCompletionRoutine(irp, PopCompleteFindIrp, (PVOID)(&findevent), TRUE, TRUE, TRUE);
 
     KeInitializeEvent(&findevent, SynchronizationEvent, FALSE);
     KeResetEvent(&findevent);
 
     IoCallDriver(DeviceObject, irp);
 
-    KeWaitForSingleObject(
-        &findevent,
-        Executive,
-        KernelMode,
-        FALSE,
-        NULL
-        );
+    KeWaitForSingleObject(&findevent, Executive, KernelMode, FALSE, NULL);
 
     //
     // we have in hand the completed irp, if it worked, it will list
     // device objects that the subject device object has a power relation with
     //
 
-    if (!NT_SUCCESS(irp->IoStatus.Status)) {
+    if (!NT_SUCCESS(irp->IoStatus.Status))
+    {
         return irp->IoStatus.Status;
     }
 
     pdr = (PDEVICE_RELATIONS)(irp->IoStatus.Information);
     IoFreeIrp(irp);
 
-    if (!pdr) {
+    if (!pdr)
+    {
         return STATUS_SUCCESS;
     }
 
-    if (pdr->Count == 0) {
+    if (pdr->Count == 0)
+    {
         ExFreePool(pdr);
         return STATUS_SUCCESS;
     }
@@ -647,22 +586,19 @@ Return Value:
     // (if it's a pdo) or skip the add and simply recurse down (for a !pdo)
     //
     RecursionThrottle++;
-    for (i = 0; i < pdr->Count; i++) {
+    for (i = 0; i < pdr->Count; i++)
+    {
         childDeviceObject = pdr->Objects[i];
-        if (IS_DO_PDO(childDeviceObject)) {
-            status = PopBuildPowerChannel(
-                    childDeviceObject,
-                    PowerChannelSummary,
-                    RecursionThrottle
-                    );
-        } else {
-            status = PopFindPowerDependencies(
-                    childDeviceObject,
-                    PowerChannelSummary,
-                    RecursionThrottle
-                    );
+        if (IS_DO_PDO(childDeviceObject))
+        {
+            status = PopBuildPowerChannel(childDeviceObject, PowerChannelSummary, RecursionThrottle);
         }
-        if (!NT_SUCCESS(status)) {
+        else
+        {
+            status = PopFindPowerDependencies(childDeviceObject, PowerChannelSummary, RecursionThrottle);
+        }
+        if (!NT_SUCCESS(status))
+        {
             goto Exit;
         }
     }
@@ -672,7 +608,8 @@ Exit:
     // regardless of how far we got before we hit any errors,
     // we must deref the device objects in the list and free the list itself
     //
-    for (i = 0; i < pdr->Count; i++) {
+    for (i = 0; i < pdr->Count; i++)
+    {
         ObDereferenceObject(pdr->Objects[i]);
     }
     ExFreePool(pdr);
@@ -680,11 +617,7 @@ Exit:
     return status;
 }
 
-VOID
-PopStateChangeNotify(
-    PDEVICE_OBJECT  DeviceObject,
-    ULONG           NotificationType
-    )
+VOID PopStateChangeNotify(PDEVICE_OBJECT DeviceObject, ULONG NotificationType)
 /*++
 
 Routine Description:
@@ -701,24 +634,27 @@ Return Value:
 
 --*/
 {
-    PPOWER_CHANNEL_SUMMARY  pchannel;
-    PDEVICE_OBJECT_POWER_EXTENSION  Dope;
-    PLIST_ENTRY             pSourceHead;
-    PPOWER_NOTIFY_SOURCE    pSourceEntry;
-    PPOWER_NOTIFY_TARGET    pTargetEntry;
-    PLIST_ENTRY             plink;
-    KIRQL                   oldIrql;
-    KIRQL                   oldIrql2;
+    PPOWER_CHANNEL_SUMMARY pchannel;
+    PDEVICE_OBJECT_POWER_EXTENSION Dope;
+    PLIST_ENTRY pSourceHead;
+    PPOWER_NOTIFY_SOURCE pSourceEntry;
+    PPOWER_NOTIFY_TARGET pTargetEntry;
+    PLIST_ENTRY plink;
+    KIRQL oldIrql;
+    KIRQL oldIrql2;
 
     oldIrql = KeGetCurrentIrql();
 
-    if (oldIrql != PASSIVE_LEVEL) {
+    if (oldIrql != PASSIVE_LEVEL)
+    {
         //
         // caller had BETTER be doing a Power up, and we will use
         // the DopeGlobal local to protect access
         //
         PopLockDopeGlobal(&oldIrql2);
-    } else {
+    }
+    else
+    {
         //
         // caller could be going up or down, we can just grab the resource
         //
@@ -732,9 +668,7 @@ Return Value:
     // run the notify source structures hanging off the dope
     //
     pSourceHead = &(Dope->NotifySourceList);
-    for (plink = pSourceHead->Flink;
-         plink != pSourceHead;
-         plink = plink->Flink)
+    for (plink = pSourceHead->Flink; plink != pSourceHead; plink = plink->Flink)
     {
         pSourceEntry = CONTAINING_RECORD(plink, POWER_NOTIFY_SOURCE, List);
         ASSERT((pSourceEntry->Signature == POP_PNSC_TAG));
@@ -744,43 +678,48 @@ Return Value:
 
         pchannel = pTargetEntry->ChannelSummary;
 
-        if (NotificationType & PO_NOTIFY_D0) {
+        if (NotificationType & PO_NOTIFY_D0)
+        {
             //
             // going to D0
             //
             pchannel->D0Count++;
-            if (pchannel->D0Count == pchannel->TotalCount) {
+            if (pchannel->D0Count == pchannel->TotalCount)
+            {
                 PopPresentNotify(DeviceObject, pchannel, NotificationType);
             }
-        } else if (NotificationType & PO_NOTIFY_TRANSITIONING_FROM_D0) {
+        }
+        else if (NotificationType & PO_NOTIFY_TRANSITIONING_FROM_D0)
+        {
             //
             // dropping from D0
             //
             ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
             pchannel->D0Count--;
-            if (pchannel->D0Count == (pchannel->TotalCount - 1)) {
+            if (pchannel->D0Count == (pchannel->TotalCount - 1))
+            {
                 PopPresentNotify(DeviceObject, pchannel, NotificationType);
             }
-        } else if (NotificationType & PO_NOTIFY_INVALID) {
+        }
+        else if (NotificationType & PO_NOTIFY_INVALID)
+        {
             PopPresentNotify(DeviceObject, pchannel, NotificationType);
         }
     }
 
-    if (oldIrql != PASSIVE_LEVEL) {
+    if (oldIrql != PASSIVE_LEVEL)
+    {
         PopUnlockDopeGlobal(oldIrql2);
-    } else {
+    }
+    else
+    {
         ExReleaseResourceLite(&PopNotifyLock);
     }
 
     return;
 }
 
-VOID
-PopPresentNotify(
-    PDEVICE_OBJECT          DeviceObject,
-    PPOWER_CHANNEL_SUMMARY  PowerChannelSummary,
-    ULONG                   NotificationType
-    )
+VOID PopPresentNotify(PDEVICE_OBJECT DeviceObject, PPOWER_CHANNEL_SUMMARY PowerChannelSummary, ULONG NotificationType)
 /*++
 
 Routine Description:
@@ -802,25 +741,21 @@ Return Value:
 
 --*/
 {
-    PLIST_ENTRY     plisthead;
-    PLIST_ENTRY     plist;
-    PPOWER_NOTIFY_BLOCK   pnb;
+    PLIST_ENTRY plisthead;
+    PLIST_ENTRY plist;
+    PPOWER_NOTIFY_BLOCK pnb;
 
     plisthead = &(PowerChannelSummary->NotifyList);
-    for (plist = plisthead->Flink; plist != plisthead;) {
+    for (plist = plisthead->Flink; plist != plisthead;)
+    {
         pnb = CONTAINING_RECORD(plist, POWER_NOTIFY_BLOCK, NotifyList);
         ASSERT(pnb->Invalidated == FALSE);
-        if ( (NotificationType & PO_NOTIFY_INVALID) ||
-             (pnb->NotificationType & NotificationType) )
+        if ((NotificationType & PO_NOTIFY_INVALID) || (pnb->NotificationType & NotificationType))
         {
-            (pnb->NotificationFunction)(
-                DeviceObject,
-                pnb->NotificationContext,
-                NotificationType,
-                0
-                );
+            (pnb->NotificationFunction)(DeviceObject, pnb->NotificationContext, NotificationType, 0);
         }
-        if (NotificationType & PO_NOTIFY_INVALID) {
+        if (NotificationType & PO_NOTIFY_INVALID)
+        {
             //
             // this pnb is no longer valid, so take it off the list.
             // right now this is all we do.
@@ -831,7 +766,9 @@ Return Value:
             InitializeListHead(&(pnb->NotifyList));
             pnb->Invalidated = TRUE;
             PopInvalidNotifyBlockCount += 1;
-        } else {
+        }
+        else
+        {
             plist = plist->Flink;
         }
     }
@@ -839,10 +776,7 @@ Return Value:
 }
 
 
-VOID
-PopRunDownSourceTargetList(
-    PDEVICE_OBJECT          DeviceObject
-    )
+VOID PopRunDownSourceTargetList(PDEVICE_OBJECT DeviceObject)
 /*++
 
 Routine Description:
@@ -867,15 +801,15 @@ Return Value:
 
 --*/
 {
-    PDEVICE_OBJECT_POWER_EXTENSION  Dope;
-    PDEVOBJ_EXTENSION               Doe;
-    PLIST_ENTRY                     pListHead;
-    PLIST_ENTRY                     plink;
-    PPOWER_NOTIFY_SOURCE            pSourceEntry;
-    PPOWER_NOTIFY_TARGET            pTargetEntry;
-    PPOWER_CHANNEL_SUMMARY          targetchannel;
-    ULONG                           D0Count;
-    KIRQL                           OldIrql;
+    PDEVICE_OBJECT_POWER_EXTENSION Dope;
+    PDEVOBJ_EXTENSION Doe;
+    PLIST_ENTRY pListHead;
+    PLIST_ENTRY plink;
+    PPOWER_NOTIFY_SOURCE pSourceEntry;
+    PPOWER_NOTIFY_TARGET pTargetEntry;
+    PPOWER_CHANNEL_SUMMARY targetchannel;
+    ULONG D0Count;
+    KIRQL OldIrql;
 
     ASSERT(KeGetCurrentIrql() < DISPATCH_LEVEL);
 
@@ -884,14 +818,18 @@ Return Value:
     Dope = DeviceObject->DeviceObjectExtension->Dope;
 
     PopLockIrpSerialList(&OldIrql);
-    if (PopGetDoSystemPowerState(Doe) == PowerDeviceD0) {
+    if (PopGetDoSystemPowerState(Doe) == PowerDeviceD0)
+    {
         D0Count = 1;
-    } else {
+    }
+    else
+    {
         D0Count = 0;
     }
     PopUnlockIrpSerialList(OldIrql);
 
-    if (!Dope) {
+    if (!Dope)
+    {
         return;
     }
 
@@ -899,7 +837,8 @@ Return Value:
     // run all of the source nodes for the device object
     //
     pListHead = &(Dope->NotifySourceList);
-    for (plink = pListHead->Flink; plink != pListHead; ) {
+    for (plink = pListHead->Flink; plink != pListHead;)
+    {
         pSourceEntry = CONTAINING_RECORD(plink, POWER_NOTIFY_SOURCE, List);
         ASSERT((pSourceEntry->Signature == POP_PNSC_TAG));
 
@@ -935,7 +874,8 @@ Return Value:
     // run the target list and shoot down the targets and their source mates
     //
     pListHead = &(Dope->NotifyTargetList);
-    for (plink = pListHead->Flink; plink != pListHead; ) {
+    for (plink = pListHead->Flink; plink != pListHead;)
+    {
         pTargetEntry = CONTAINING_RECORD(plink, POWER_NOTIFY_TARGET, List);
         ASSERT((pTargetEntry->Signature == POP_PNTG_TAG));
 
@@ -968,6 +908,3 @@ Return Value:
     ASSERT(Dope->PowerChannelSummary.NotifyList.Flink == &(Dope->PowerChannelSummary.NotifyList));
     return;
 }
-
-
-

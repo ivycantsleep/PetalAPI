@@ -28,7 +28,8 @@ Revision History:
 // environment variable.
 //
 
-typedef struct _EFI_LOAD_OPTION {
+typedef struct _EFI_LOAD_OPTION
+{
     UINT32 Attributes;
     UINT16 FilePathLength;
     CHAR16 Description[1];
@@ -39,4 +40,3 @@ typedef struct _EFI_LOAD_OPTION {
 #define LOAD_OPTION_ACTIVE 0x00000001
 
 #endif // _EFIBOOT_
-

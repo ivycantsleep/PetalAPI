@@ -30,13 +30,13 @@ Revision History:
 
 #include "heap.h"
 
-#define DPH_INTERNAL_DEBUG      0   // change to 0 or #undef for production code
+#define DPH_INTERNAL_DEBUG 0 // change to 0 or #undef for production code
 
 //
-// Stack trace size. 
+// Stack trace size.
 //
-                                
-#define DPH_MAX_STACK_LENGTH   16
+
+#define DPH_MAX_STACK_LENGTH 16
 
 //
 // Capture stacktraces in any context (x86/alpha, fre/chk). On alpha
@@ -53,7 +53,8 @@ Revision History:
 
 typedef struct _DPH_HEAP_BLOCK DPH_HEAP_BLOCK, *PDPH_HEAP_BLOCK;
 
-struct _DPH_HEAP_BLOCK {
+struct _DPH_HEAP_BLOCK
+{
 
     //
     //  Singly linked list of allocations (pNextAlloc must be
@@ -78,14 +79,14 @@ struct _DPH_HEAP_BLOCK {
     //
 
     PUCHAR pVirtualBlock;
-    SIZE_T  nVirtualBlockSize;
+    SIZE_T nVirtualBlockSize;
 
-    SIZE_T  nVirtualAccessSize;
+    SIZE_T nVirtualAccessSize;
     PUCHAR pUserAllocation;
-    SIZE_T  nUserRequestedSize;
-    SIZE_T  nUserActualSize;
-    PVOID  UserValue;
-    ULONG  UserFlags;
+    SIZE_T nUserRequestedSize;
+    SIZE_T nUserActualSize;
+    PVOID UserValue;
+    ULONG UserFlags;
 
     PRTL_TRACE_BLOCK StackTrace;
 };
@@ -93,22 +94,23 @@ struct _DPH_HEAP_BLOCK {
 
 typedef struct _DPH_HEAP_ROOT DPH_HEAP_ROOT, *PDPH_HEAP_ROOT;
 
-struct _DPH_HEAP_ROOT {
+struct _DPH_HEAP_ROOT
+{
 
     //
     //  Maintain a signature (DPH_HEAP_SIGNATURE) as the
     //  first value in the heap root structure.
     //
 
-    ULONG                 Signature;
-    ULONG                 HeapFlags;
+    ULONG Signature;
+    ULONG HeapFlags;
 
     //
     //  Access to this heap is synchronized with a critical section.
     //
 
     PRTL_CRITICAL_SECTION HeapCritSect;
-    ULONG                 nRemoteLockAcquired;
+    ULONG nRemoteLockAcquired;
 
     //
     //  The "VirtualStorage" list only uses the pVirtualBlock,
@@ -118,10 +120,10 @@ struct _DPH_HEAP_ROOT {
     //  taken from.
     //
 
-    PDPH_HEAP_BLOCK  pVirtualStorageListHead;
-    PDPH_HEAP_BLOCK  pVirtualStorageListTail;
-    ULONG                 nVirtualStorageRanges;
-    SIZE_T                 nVirtualStorageBytes;
+    PDPH_HEAP_BLOCK pVirtualStorageListHead;
+    PDPH_HEAP_BLOCK pVirtualStorageListTail;
+    ULONG nVirtualStorageRanges;
+    SIZE_T nVirtualStorageBytes;
 
     //
     //  The "Busy" list is the list of active heap allocations.
@@ -130,10 +132,10 @@ struct _DPH_HEAP_ROOT {
     //  tend to remain permanent throughout a process's lifetime.
     //
 
-    PDPH_HEAP_BLOCK  pBusyAllocationListHead;
-    PDPH_HEAP_BLOCK  pBusyAllocationListTail;
-    ULONG                 nBusyAllocations;
-    SIZE_T                 nBusyAllocationBytesCommitted;
+    PDPH_HEAP_BLOCK pBusyAllocationListHead;
+    PDPH_HEAP_BLOCK pBusyAllocationListTail;
+    ULONG nBusyAllocations;
+    SIZE_T nBusyAllocationBytesCommitted;
 
     //
     //  The "Free" list is the list of freed heap allocations, stored
@@ -143,10 +145,10 @@ struct _DPH_HEAP_ROOT {
     //  a reference-after-freed bug in an app.
     //
 
-    PDPH_HEAP_BLOCK  pFreeAllocationListHead;
-    PDPH_HEAP_BLOCK  pFreeAllocationListTail;
-    ULONG                 nFreeAllocations;
-    SIZE_T                 nFreeAllocationBytesCommitted;
+    PDPH_HEAP_BLOCK pFreeAllocationListHead;
+    PDPH_HEAP_BLOCK pFreeAllocationListTail;
+    ULONG nFreeAllocations;
+    SIZE_T nFreeAllocationBytesCommitted;
 
     //
     //  The "Available" list is stored in address-sorted order to facilitate
@@ -157,10 +159,10 @@ struct _DPH_HEAP_ROOT {
     //  coalesced available list, new VM is added to the available list.
     //
 
-    PDPH_HEAP_BLOCK  pAvailableAllocationListHead;
-    PDPH_HEAP_BLOCK  pAvailableAllocationListTail;
-    ULONG                 nAvailableAllocations;
-    SIZE_T                 nAvailableAllocationBytesCommitted;
+    PDPH_HEAP_BLOCK pAvailableAllocationListHead;
+    PDPH_HEAP_BLOCK pAvailableAllocationListTail;
+    ULONG nAvailableAllocations;
+    SIZE_T nAvailableAllocationBytesCommitted;
 
     //
     //  The "UnusedNode" list is simply a list of available node
@@ -171,31 +173,31 @@ struct _DPH_HEAP_ROOT {
     //  free list), the node comes from this list if it's not empty.
     //
 
-    PDPH_HEAP_BLOCK  pUnusedNodeListHead;
-    PDPH_HEAP_BLOCK  pUnusedNodeListTail;
-    ULONG                 nUnusedNodes;
+    PDPH_HEAP_BLOCK pUnusedNodeListHead;
+    PDPH_HEAP_BLOCK pUnusedNodeListTail;
+    ULONG nUnusedNodes;
 
-    SIZE_T                 nBusyAllocationBytesAccessible;
+    SIZE_T nBusyAllocationBytesAccessible;
 
     //
     //  Node pools need to be tracked so they can be protected
     //  from app scribbling on them.
     //
 
-    PDPH_HEAP_BLOCK  pNodePoolListHead;
-    PDPH_HEAP_BLOCK  pNodePoolListTail;
-    ULONG                 nNodePools;
-    SIZE_T                 nNodePoolBytes;
+    PDPH_HEAP_BLOCK pNodePoolListHead;
+    PDPH_HEAP_BLOCK pNodePoolListTail;
+    ULONG nNodePools;
+    SIZE_T nNodePoolBytes;
 
     //
     //  Doubly linked list of DPH heaps in process is tracked through this.
     //
 
-    PDPH_HEAP_ROOT        pNextHeapRoot;
-    PDPH_HEAP_ROOT        pPrevHeapRoot;
+    PDPH_HEAP_ROOT pNextHeapRoot;
+    PDPH_HEAP_ROOT pPrevHeapRoot;
 
-    ULONG                 nUnProtectionReferenceCount;
-    ULONG                 InsideAllocateNode;           // only for debugging
+    ULONG nUnProtectionReferenceCount;
+    ULONG InsideAllocateNode; // only for debugging
 
     //
     // These are extra flags used to control page heap behavior.
@@ -203,7 +205,7 @@ struct _DPH_HEAP_ROOT {
     // flags (process wise) is written into this field.
     //
 
-    ULONG                 ExtraFlags;
+    ULONG ExtraFlags;
 
     //
     // Seed for the random generator used to decide from where
@@ -212,7 +214,7 @@ struct _DPH_HEAP_ROOT {
     // with each page heap.
     //
 
-    ULONG                  Seed;
+    ULONG Seed;
 
     //
     // `NormalHeap' is used in case we want to combine verified allocations
@@ -221,13 +223,13 @@ struct _DPH_HEAP_ROOT {
     // be verified at all.
     //
 
-    PVOID                 NormalHeap;
+    PVOID NormalHeap;
 
     //
     // Heap creation stack trace.
     //
 
-    PRTL_TRACE_BLOCK      CreateStackTrace;
+    PRTL_TRACE_BLOCK CreateStackTrace;
 
     //
     // Thread ID of the first thread inside the heap.
@@ -245,24 +247,25 @@ struct _DPH_HEAP_ROOT {
 // flag is set.
 //
 
-#define DPH_NORMAL_BLOCK_START_STAMP_ALLOCATED   0xABCDAAAA
-#define DPH_NORMAL_BLOCK_END_STAMP_ALLOCATED     0xDCBAAAAA
-#define DPH_NORMAL_BLOCK_START_STAMP_FREE        (0xABCDAAAA - 1)
-#define DPH_NORMAL_BLOCK_END_STAMP_FREE          (0xDCBAAAAA - 1)
+#define DPH_NORMAL_BLOCK_START_STAMP_ALLOCATED 0xABCDAAAA
+#define DPH_NORMAL_BLOCK_END_STAMP_ALLOCATED 0xDCBAAAAA
+#define DPH_NORMAL_BLOCK_START_STAMP_FREE (0xABCDAAAA - 1)
+#define DPH_NORMAL_BLOCK_END_STAMP_FREE (0xDCBAAAAA - 1)
 
-#define DPH_PAGE_BLOCK_START_STAMP_ALLOCATED     0xABCDBBBB
-#define DPH_PAGE_BLOCK_END_STAMP_ALLOCATED       0xDCBABBBB
-#define DPH_PAGE_BLOCK_START_STAMP_FREE          (0xABCDBBBB - 1)
-#define DPH_PAGE_BLOCK_END_STAMP_FREE            (0xDCBABBBB - 1)
+#define DPH_PAGE_BLOCK_START_STAMP_ALLOCATED 0xABCDBBBB
+#define DPH_PAGE_BLOCK_END_STAMP_ALLOCATED 0xDCBABBBB
+#define DPH_PAGE_BLOCK_START_STAMP_FREE (0xABCDBBBB - 1)
+#define DPH_PAGE_BLOCK_END_STAMP_FREE (0xDCBABBBB - 1)
 
-#define DPH_NORMAL_BLOCK_SUFFIX 	0xA0
-#define DPH_PAGE_BLOCK_PREFIX 	    0xB0
-#define DPH_PAGE_BLOCK_INFIX 	    0xC0
-#define DPH_PAGE_BLOCK_SUFFIX 	    0xD0
-#define DPH_NORMAL_BLOCK_INFIX 	    0xE0
-#define DPH_FREE_BLOCK_INFIX 	    0xF0
+#define DPH_NORMAL_BLOCK_SUFFIX 0xA0
+#define DPH_PAGE_BLOCK_PREFIX 0xB0
+#define DPH_PAGE_BLOCK_INFIX 0xC0
+#define DPH_PAGE_BLOCK_SUFFIX 0xD0
+#define DPH_NORMAL_BLOCK_INFIX 0xE0
+#define DPH_FREE_BLOCK_INFIX 0xF0
 
-typedef struct _DPH_BLOCK_INFORMATION {
+typedef struct _DPH_BLOCK_INFORMATION
+{
 
     ULONG StartStamp;
 
@@ -270,13 +273,14 @@ typedef struct _DPH_BLOCK_INFORMATION {
     SIZE_T RequestedSize;
     SIZE_T ActualSize;
 
-    union {
+    union
+    {
         LIST_ENTRY FreeQueue;
         USHORT TraceIndex;
     };
 
     PVOID StackTrace;
-    
+
     ULONG EndStamp;
 
     //
@@ -287,22 +291,22 @@ typedef struct _DPH_BLOCK_INFORMATION {
     // that stops working in these conditions.
     //
 
-} DPH_BLOCK_INFORMATION, * PDPH_BLOCK_INFORMATION;
+} DPH_BLOCK_INFORMATION, *PDPH_BLOCK_INFORMATION;
 
 //
 // Error reasons used in debug messages
 //
 
-#define DPH_SUCCESS                           0x0000
-#define DPH_ERROR_CORRUPTED_START_STAMP       0x0001
-#define DPH_ERROR_CORRUPTED_END_STAMP         0x0002
-#define DPH_ERROR_CORRUPTED_HEAP_POINTER      0x0004
-#define DPH_ERROR_CORRUPTED_PREFIX_PATTERN    0x0008
-#define DPH_ERROR_CORRUPTED_SUFFIX_PATTERN    0x0010
-#define DPH_ERROR_RAISED_EXCEPTION            0x0020
-#define DPH_ERROR_NO_NORMAL_HEAP              0x0040
-#define DPH_ERROR_CORRUPTED_INFIX_PATTERN     0x0080
-#define DPH_ERROR_DOUBLE_FREE                 0x0100
+#define DPH_SUCCESS 0x0000
+#define DPH_ERROR_CORRUPTED_START_STAMP 0x0001
+#define DPH_ERROR_CORRUPTED_END_STAMP 0x0002
+#define DPH_ERROR_CORRUPTED_HEAP_POINTER 0x0004
+#define DPH_ERROR_CORRUPTED_PREFIX_PATTERN 0x0008
+#define DPH_ERROR_CORRUPTED_SUFFIX_PATTERN 0x0010
+#define DPH_ERROR_RAISED_EXCEPTION 0x0020
+#define DPH_ERROR_NO_NORMAL_HEAP 0x0040
+#define DPH_ERROR_CORRUPTED_INFIX_PATTERN 0x0080
+#define DPH_ERROR_DOUBLE_FREE 0x0100
 
 
 #endif // DEBUG_PAGE_HEAP

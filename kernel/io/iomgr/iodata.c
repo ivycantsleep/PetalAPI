@@ -20,7 +20,7 @@ Revision History:
 --*/
 
 #include "iomgr.h"
-
+
 //
 // Define the global read/write data for the I/O system.
 //
@@ -235,7 +235,7 @@ POBJECT_TYPE IoDeviceObjectType;
 POBJECT_TYPE IoDriverObjectType;
 POBJECT_TYPE IoDeviceHandlerObjectType;
 POBJECT_TYPE IoFileObjectType;
-ULONG        IoDeviceHandlerObjectSize;
+ULONG IoDeviceHandlerObjectSize;
 
 //
 // The following is a global lock and counters for I/O operations requested
@@ -288,13 +288,13 @@ BOOLEAN IoRemoteBootClient;
 //
 // Counts number of Fs registration/unregistrations
 //
-ULONG   IopFsRegistrationOps;
+ULONG IopFsRegistrationOps;
 
 
 //
 // Reserve IRP allocator for paging reads.
 //
-IOP_RESERVE_IRP_ALLOCATOR  IopReserveIrpAllocator;
+IOP_RESERVE_IRP_ALLOCATOR IopReserveIrpAllocator;
 
 #if defined(REMOTE_BOOT)
 //
@@ -312,7 +312,7 @@ BOOLEAN IoCscInitializationFailed;
 KEVENT IopLinkTrackingPortObject;
 LINK_TRACKING_PACKET IopLinkTrackingPacket;
 
-IOP_IRP_STACK_PROFILER  IopIrpStackProfiler;
+IOP_IRP_STACK_PROFILER IopIrpStackProfiler;
 
 //
 // Function pointers of key IO routines.
@@ -320,13 +320,13 @@ IOP_IRP_STACK_PROFILER  IopIrpStackProfiler;
 // never modified after boot.
 //
 
-#define CACHE_SIZE      128
-UCHAR                   IopPrePadding[CACHE_SIZE] = {0};
-PIO_CALL_DRIVER         pIofCallDriver = 0;
-PIO_COMPLETE_REQUEST    pIofCompleteRequest = 0;
-PIO_ALLOCATE_IRP        pIoAllocateIrp = 0;
-PIO_FREE_IRP            pIoFreeIrp = 0;
-UCHAR                   IopPostPadding[CACHE_SIZE] = {0};
+#define CACHE_SIZE 128
+UCHAR IopPrePadding[CACHE_SIZE] = { 0 };
+PIO_CALL_DRIVER pIofCallDriver = 0;
+PIO_COMPLETE_REQUEST pIofCompleteRequest = 0;
+PIO_ALLOCATE_IRP pIoAllocateIrp = 0;
+PIO_FREE_IRP pIoFreeIrp = 0;
+UCHAR IopPostPadding[CACHE_SIZE] = { 0 };
 
 //*********
 //
@@ -359,51 +359,50 @@ HANDLE IopLinkTrackingServiceEventHandle;
 //           enumerated type is one-based and the array is zero-based.
 //
 
-const UCHAR IopQueryOperationLength[] =
-          {
-            0,
-            0,                                         //  1 FileDirectoryInformation
-            0,                                         //  2 FileFullDirectoryInformation
-            0,                                         //  3 FileBothDirectoryInformation
-            sizeof( FILE_BASIC_INFORMATION ),          //  4 FileBasicInformation
-            sizeof( FILE_STANDARD_INFORMATION ),       //  5 FileStandardInformation
-            sizeof( FILE_INTERNAL_INFORMATION ),       //  6 FileInternalInformation
-            sizeof( FILE_EA_INFORMATION ),             //  7 FileEaInformation
-            sizeof( FILE_ACCESS_INFORMATION ),         //  8 FileAccessInformation
-            sizeof( FILE_NAME_INFORMATION ),           //  9 FileNameInformation
-            0,                                         // 10 FileRenameInformation
-            0,                                         // 11 FileLinkInformation
-            0,                                         // 12 FileNamesInformation
-            0,                                         // 13 FileDispositionInformation
-            sizeof( FILE_POSITION_INFORMATION ),       // 14 FilePositionInformation
-            0,                                         // 15 FileFullEaInformation
-            sizeof( FILE_MODE_INFORMATION ),           // 16 FileModeInformation
-            sizeof( FILE_ALIGNMENT_INFORMATION ),      // 17 FileAlignmentInformation
-            sizeof( FILE_ALL_INFORMATION ),            // 18 FileAllInformation
-            0,                                         // 19 FileAllocationInformation
-            0,                                         // 20 FileEndOfFileInformation
-            sizeof( FILE_NAME_INFORMATION ),           // 21 FileAlternateNameInformation
-            sizeof( FILE_STREAM_INFORMATION ),         // 22 FileStreamInformation
-            sizeof( FILE_PIPE_INFORMATION ),           // 23 FilePipeInformation
-            sizeof( FILE_PIPE_LOCAL_INFORMATION ),     // 24 FilePipeLocalInformation
-            sizeof( FILE_PIPE_REMOTE_INFORMATION ),    // 25 FilePipeRemoteInformation
-            sizeof( FILE_MAILSLOT_QUERY_INFORMATION ), // 26 FileMailslotQueryInformation
-            0,                                         // 27 FileMailslotSetInformation
-            sizeof( FILE_COMPRESSION_INFORMATION ),    // 28 FileCompressionInformation
-            sizeof( FILE_OBJECTID_INFORMATION ),       // 29 FileObjectIdInformation
-            0,                                         // 30 FileCompletionInformation
-            0,                                         // 31 FileMoveClusterInformation
-            sizeof( FILE_QUOTA_INFORMATION ),          // 32 FileQuotaInformation
-            sizeof( FILE_REPARSE_POINT_INFORMATION ),  // 33 FileReparsePointInformation
-            sizeof( FILE_NETWORK_OPEN_INFORMATION),    // 34 FileNetworkOpenInformation
-            sizeof( FILE_ATTRIBUTE_TAG_INFORMATION),   // 35 FileAttributeTagInformation
-            0,                                         // 36 FileTrackingInformation
-            0,                                         // 37 FileIdBothDiretoryInformation
-            0,                                         // 38 FileIdFullDiretoryInformation
-            0,                                         // 39 FileValidDataLengthInformation
-            0,                                         // 40 FileShortNameInformation
-            0xff                                       //    FileMaximumInformation
-          };
+const UCHAR IopQueryOperationLength[] = {
+    0,
+    0,                                       //  1 FileDirectoryInformation
+    0,                                       //  2 FileFullDirectoryInformation
+    0,                                       //  3 FileBothDirectoryInformation
+    sizeof(FILE_BASIC_INFORMATION),          //  4 FileBasicInformation
+    sizeof(FILE_STANDARD_INFORMATION),       //  5 FileStandardInformation
+    sizeof(FILE_INTERNAL_INFORMATION),       //  6 FileInternalInformation
+    sizeof(FILE_EA_INFORMATION),             //  7 FileEaInformation
+    sizeof(FILE_ACCESS_INFORMATION),         //  8 FileAccessInformation
+    sizeof(FILE_NAME_INFORMATION),           //  9 FileNameInformation
+    0,                                       // 10 FileRenameInformation
+    0,                                       // 11 FileLinkInformation
+    0,                                       // 12 FileNamesInformation
+    0,                                       // 13 FileDispositionInformation
+    sizeof(FILE_POSITION_INFORMATION),       // 14 FilePositionInformation
+    0,                                       // 15 FileFullEaInformation
+    sizeof(FILE_MODE_INFORMATION),           // 16 FileModeInformation
+    sizeof(FILE_ALIGNMENT_INFORMATION),      // 17 FileAlignmentInformation
+    sizeof(FILE_ALL_INFORMATION),            // 18 FileAllInformation
+    0,                                       // 19 FileAllocationInformation
+    0,                                       // 20 FileEndOfFileInformation
+    sizeof(FILE_NAME_INFORMATION),           // 21 FileAlternateNameInformation
+    sizeof(FILE_STREAM_INFORMATION),         // 22 FileStreamInformation
+    sizeof(FILE_PIPE_INFORMATION),           // 23 FilePipeInformation
+    sizeof(FILE_PIPE_LOCAL_INFORMATION),     // 24 FilePipeLocalInformation
+    sizeof(FILE_PIPE_REMOTE_INFORMATION),    // 25 FilePipeRemoteInformation
+    sizeof(FILE_MAILSLOT_QUERY_INFORMATION), // 26 FileMailslotQueryInformation
+    0,                                       // 27 FileMailslotSetInformation
+    sizeof(FILE_COMPRESSION_INFORMATION),    // 28 FileCompressionInformation
+    sizeof(FILE_OBJECTID_INFORMATION),       // 29 FileObjectIdInformation
+    0,                                       // 30 FileCompletionInformation
+    0,                                       // 31 FileMoveClusterInformation
+    sizeof(FILE_QUOTA_INFORMATION),          // 32 FileQuotaInformation
+    sizeof(FILE_REPARSE_POINT_INFORMATION),  // 33 FileReparsePointInformation
+    sizeof(FILE_NETWORK_OPEN_INFORMATION),   // 34 FileNetworkOpenInformation
+    sizeof(FILE_ATTRIBUTE_TAG_INFORMATION),  // 35 FileAttributeTagInformation
+    0,                                       // 36 FileTrackingInformation
+    0,                                       // 37 FileIdBothDiretoryInformation
+    0,                                       // 38 FileIdFullDiretoryInformation
+    0,                                       // 39 FileValidDataLengthInformation
+    0,                                       // 40 FileShortNameInformation
+    0xff                                     //    FileMaximumInformation
+};
 
 //
 // The following array specifies the minimum length of the FileInformation
@@ -414,51 +413,50 @@ const UCHAR IopQueryOperationLength[] =
 //           enumerated type is one-based and the array is zero-based.
 //
 
-const UCHAR IopSetOperationLength[] =
-          {
-            0,
-            0,                                            //  1 FileDirectoryInformation
-            0,                                            //  2 FileFullDirectoryInformation
-            0,                                            //  3 FileBothDirectoryInformation
-            sizeof( FILE_BASIC_INFORMATION ),             //  4 FileBasicInformation
-            0,                                            //  5 FileStandardInformation
-            0,                                            //  6 FileInternalInformation
-            0,                                            //  7 FileEaInformation
-            0,                                            //  8 FileAccessInformation
-            0,                                            //  9 FileNameInformation
-            sizeof( FILE_RENAME_INFORMATION ),            // 10 FileRenameInformation
-            sizeof( FILE_LINK_INFORMATION ),              // 11 FileLinkInformation
-            0,                                            // 12 FileNamesInformation
-            sizeof( FILE_DISPOSITION_INFORMATION ),       // 13 FileDispositionInformation
-            sizeof( FILE_POSITION_INFORMATION ),          // 14 FilePositionInformation
-            0,                                            // 15 FileFullEaInformation
-            sizeof( FILE_MODE_INFORMATION ),              // 16 FileModeInformation
-            0,                                            // 17 FileAlignmentInformation
-            0,                                            // 18 FileAllInformation
-            sizeof( FILE_ALLOCATION_INFORMATION ),        // 19 FileAllocationInformation
-            sizeof( FILE_END_OF_FILE_INFORMATION ),       // 20 FileEndOfFileInformation
-            0,                                            // 21 FileAlternateNameInformation
-            0,                                            // 22 FileStreamInformation
-            sizeof( FILE_PIPE_INFORMATION ),              // 23 FilePipeInformation
-            0,                                            // 24 FilePipeLocalInformation
-            sizeof( FILE_PIPE_REMOTE_INFORMATION ),       // 25 FilePipeRemoteInformation
-            0,                                            // 26 FileMailslotQueryInformation
-            sizeof( FILE_MAILSLOT_SET_INFORMATION ),      // 27 FileMailslotSetInformation
-            0,                                            // 28 FileCompressionInformation
-            sizeof( FILE_OBJECTID_INFORMATION ),          // 29 FileObjectIdInformation
-            sizeof( FILE_COMPLETION_INFORMATION ),        // 30 FileCompletionInformation
-            sizeof( FILE_MOVE_CLUSTER_INFORMATION ),      // 31 FileMoveClusterInformation
-            sizeof( FILE_QUOTA_INFORMATION ),             // 32 FileQuotaInformation
-            0,                                            // 33 FileReparsePointInformation
-            0,                                            // 34 FileNetworkOpenInformation
-            0,                                            // 35 FileAttributeTagInformation
-            sizeof( FILE_TRACKING_INFORMATION ),          // 36 FileTrackingInformation
-            0,                                            // 37 FileIdBothDiretoryInformation
-            0,                                            // 38 FileIdFullDiretoryInformation
-            sizeof( FILE_VALID_DATA_LENGTH_INFORMATION ), // 39 FileValidDataLengthInformation
-            sizeof( FILE_NAME_INFORMATION ),              // 40 FileShortNameInformation
-            0xff                                          //    FileMaximumInformation
-          };
+const UCHAR IopSetOperationLength[] = {
+    0,
+    0,                                          //  1 FileDirectoryInformation
+    0,                                          //  2 FileFullDirectoryInformation
+    0,                                          //  3 FileBothDirectoryInformation
+    sizeof(FILE_BASIC_INFORMATION),             //  4 FileBasicInformation
+    0,                                          //  5 FileStandardInformation
+    0,                                          //  6 FileInternalInformation
+    0,                                          //  7 FileEaInformation
+    0,                                          //  8 FileAccessInformation
+    0,                                          //  9 FileNameInformation
+    sizeof(FILE_RENAME_INFORMATION),            // 10 FileRenameInformation
+    sizeof(FILE_LINK_INFORMATION),              // 11 FileLinkInformation
+    0,                                          // 12 FileNamesInformation
+    sizeof(FILE_DISPOSITION_INFORMATION),       // 13 FileDispositionInformation
+    sizeof(FILE_POSITION_INFORMATION),          // 14 FilePositionInformation
+    0,                                          // 15 FileFullEaInformation
+    sizeof(FILE_MODE_INFORMATION),              // 16 FileModeInformation
+    0,                                          // 17 FileAlignmentInformation
+    0,                                          // 18 FileAllInformation
+    sizeof(FILE_ALLOCATION_INFORMATION),        // 19 FileAllocationInformation
+    sizeof(FILE_END_OF_FILE_INFORMATION),       // 20 FileEndOfFileInformation
+    0,                                          // 21 FileAlternateNameInformation
+    0,                                          // 22 FileStreamInformation
+    sizeof(FILE_PIPE_INFORMATION),              // 23 FilePipeInformation
+    0,                                          // 24 FilePipeLocalInformation
+    sizeof(FILE_PIPE_REMOTE_INFORMATION),       // 25 FilePipeRemoteInformation
+    0,                                          // 26 FileMailslotQueryInformation
+    sizeof(FILE_MAILSLOT_SET_INFORMATION),      // 27 FileMailslotSetInformation
+    0,                                          // 28 FileCompressionInformation
+    sizeof(FILE_OBJECTID_INFORMATION),          // 29 FileObjectIdInformation
+    sizeof(FILE_COMPLETION_INFORMATION),        // 30 FileCompletionInformation
+    sizeof(FILE_MOVE_CLUSTER_INFORMATION),      // 31 FileMoveClusterInformation
+    sizeof(FILE_QUOTA_INFORMATION),             // 32 FileQuotaInformation
+    0,                                          // 33 FileReparsePointInformation
+    0,                                          // 34 FileNetworkOpenInformation
+    0,                                          // 35 FileAttributeTagInformation
+    sizeof(FILE_TRACKING_INFORMATION),          // 36 FileTrackingInformation
+    0,                                          // 37 FileIdBothDiretoryInformation
+    0,                                          // 38 FileIdFullDiretoryInformation
+    sizeof(FILE_VALID_DATA_LENGTH_INFORMATION), // 39 FileValidDataLengthInformation
+    sizeof(FILE_NAME_INFORMATION),              // 40 FileShortNameInformation
+    0xff                                        //    FileMaximumInformation
+};
 
 //
 // The following array specifies the alignment requirement of both all query
@@ -469,51 +467,50 @@ const UCHAR IopSetOperationLength[] =
 //           enumerated type is one-based and the array is zero-based.
 //
 
-const UCHAR IopQuerySetAlignmentRequirement[] =
-          {
-            0,
-            sizeof( LONGLONG ), //  1 FileDirectoryInformation
-            sizeof( LONGLONG ), //  2 FileFullDirectoryInformation
-            sizeof( LONGLONG ), //  3 FileBothDirectoryInformation
-            sizeof( LONGLONG ), //  4 FileBasicInformation
-            sizeof( LONGLONG ), //  5 FileStandardInformation
-            sizeof( LONGLONG ), //  6 FileInternalInformation
-            sizeof( LONG ),     //  7 FileEaInformation
-            sizeof( LONG ),     //  8 FileAccessInformation
-            sizeof( LONG ),     //  9 FileNameInformation
-            sizeof( LONG ),     // 10 FileRenameInformation
-            sizeof( LONG ),     // 11 FileLinkInformation
-            sizeof( LONG ),     // 12 FileNamesInformation
-            sizeof( CHAR ),     // 13 FileDispositionInformation
-            sizeof( LONGLONG ), // 14 FilePositionInformation
-            sizeof( LONG ),     // 15 FileFullEaInformation
-            sizeof( LONG ),     // 16 FileModeInformation
-            sizeof( LONG ),     // 17 FileAlignmentInformation
-            sizeof( LONGLONG ), // 18 FileAllInformation
-            sizeof( LONGLONG ), // 19 FileAllocationInformation
-            sizeof( LONGLONG ), // 20 FileEndOfFileInformation
-            sizeof( LONG ),     // 21 FileAlternateNameInformation
-            sizeof( LONGLONG ), // 22 FileStreamInformation
-            sizeof( LONG ),     // 23 FilePipeInformation
-            sizeof( LONG ),     // 24 FilePipeLocalInformation
-            sizeof( LONG ),     // 25 FilePipeRemoteInformation
-            sizeof( LONGLONG ), // 26 FileMailslotQueryInformation
-            sizeof( LONG ),     // 27 FileMailslotSetInformation
-            sizeof( LONGLONG ), // 28 FileCompressionInformation
-            sizeof( LONG ),     // 29 FileObjectIdInformation
-            sizeof( LONG ),     // 30 FileCompletionInformation
-            sizeof( LONG ),     // 31 FileMoveClusterInformation
-            sizeof( LONG ),     // 32 FileQuotaInformation
-            sizeof( LONG ),     // 33 FileReparsePointInformation
-            sizeof( LONGLONG ), // 34 FileNetworkOpenInformation
-            sizeof( LONG ),     // 35 FileAttributeTagInformation
-            sizeof( LONG ),     // 36 FileTrackingInformation
-            sizeof( LONGLONG ), // 37 FileIdBothDiretoryInformation
-            sizeof( LONGLONG ), // 38 FileIdFullDiretoryInformation
-            sizeof( LONGLONG ), // 39 FileValidDataLengthInformation
-            sizeof( LONG ),     // 40 FileShortNameInformation
-            0xff                //    FileMaximumInformation
-          };
+const UCHAR IopQuerySetAlignmentRequirement[] = {
+    0,
+    sizeof(LONGLONG), //  1 FileDirectoryInformation
+    sizeof(LONGLONG), //  2 FileFullDirectoryInformation
+    sizeof(LONGLONG), //  3 FileBothDirectoryInformation
+    sizeof(LONGLONG), //  4 FileBasicInformation
+    sizeof(LONGLONG), //  5 FileStandardInformation
+    sizeof(LONGLONG), //  6 FileInternalInformation
+    sizeof(LONG),     //  7 FileEaInformation
+    sizeof(LONG),     //  8 FileAccessInformation
+    sizeof(LONG),     //  9 FileNameInformation
+    sizeof(LONG),     // 10 FileRenameInformation
+    sizeof(LONG),     // 11 FileLinkInformation
+    sizeof(LONG),     // 12 FileNamesInformation
+    sizeof(CHAR),     // 13 FileDispositionInformation
+    sizeof(LONGLONG), // 14 FilePositionInformation
+    sizeof(LONG),     // 15 FileFullEaInformation
+    sizeof(LONG),     // 16 FileModeInformation
+    sizeof(LONG),     // 17 FileAlignmentInformation
+    sizeof(LONGLONG), // 18 FileAllInformation
+    sizeof(LONGLONG), // 19 FileAllocationInformation
+    sizeof(LONGLONG), // 20 FileEndOfFileInformation
+    sizeof(LONG),     // 21 FileAlternateNameInformation
+    sizeof(LONGLONG), // 22 FileStreamInformation
+    sizeof(LONG),     // 23 FilePipeInformation
+    sizeof(LONG),     // 24 FilePipeLocalInformation
+    sizeof(LONG),     // 25 FilePipeRemoteInformation
+    sizeof(LONGLONG), // 26 FileMailslotQueryInformation
+    sizeof(LONG),     // 27 FileMailslotSetInformation
+    sizeof(LONGLONG), // 28 FileCompressionInformation
+    sizeof(LONG),     // 29 FileObjectIdInformation
+    sizeof(LONG),     // 30 FileCompletionInformation
+    sizeof(LONG),     // 31 FileMoveClusterInformation
+    sizeof(LONG),     // 32 FileQuotaInformation
+    sizeof(LONG),     // 33 FileReparsePointInformation
+    sizeof(LONGLONG), // 34 FileNetworkOpenInformation
+    sizeof(LONG),     // 35 FileAttributeTagInformation
+    sizeof(LONG),     // 36 FileTrackingInformation
+    sizeof(LONGLONG), // 37 FileIdBothDiretoryInformation
+    sizeof(LONGLONG), // 38 FileIdFullDiretoryInformation
+    sizeof(LONGLONG), // 39 FileValidDataLengthInformation
+    sizeof(LONG),     // 40 FileShortNameInformation
+    0xff              //    FileMaximumInformation
+};
 
 //
 // The following array specifies the required access mask for the caller to
@@ -524,51 +521,50 @@ const UCHAR IopQuerySetAlignmentRequirement[] =
 //           enumerated type is one-based and the array is zero-based.
 //
 
-const ULONG IopQueryOperationAccess[] =
-         {
-            0,
-            0,                    //  1 FileDirectoryInformation
-            0,                    //  2 FileFullDirectoryInformation
-            0,                    //  3 FileBothDirectoryInformation
-            FILE_READ_ATTRIBUTES, //  4 FileBasicInformation
-            0,                    //  5 FileStandardInformation
-            0,                    //  6 FileInternalInformation
-            0,                    //  7 FileEaInformation
-            0,                    //  8 FileAccessInformation
-            0,                    //  9 FileNameInformation
-            0,                    // 10 FileRenameInformation
-            0,                    // 11 FileLinkInformation
-            0,                    // 12 FileNamesInformation
-            0,                    // 13 FileDispositionInformation
-            0,                    // 14 FilePositionInformation
-            FILE_READ_EA,         // 15 FileFullEaInformation
-            0,                    // 16 FileModeInformation
-            0,                    // 17 FileAlignmentInformation
-            FILE_READ_ATTRIBUTES, // 18 FileAllInformation
-            0,                    // 19 FileAllocationInformation
-            0,                    // 20 FileEndOfFileInformation
-            0,                    // 21 FileAlternateNameInformation
-            0,                    // 22 FileStreamInformation
-            FILE_READ_ATTRIBUTES, // 23 FilePipeInformation
-            FILE_READ_ATTRIBUTES, // 24 FilePipeLocalInformation
-            FILE_READ_ATTRIBUTES, // 25 FilePipeRemoteInformation
-            0,                    // 26 FileMailslotQueryInformation
-            0,                    // 27 FileMailslotSetInformation
-            0,                    // 28 FileCompressionInformation
-            0,                    // 29 FileObjectIdInformation
-            0,                    // 30 FileCompletionInformation
-            0,                    // 31 FileMoveClusterInformation
-            0,                    // 32 FileQuotaInformation
-            0,                    // 33 FileReparsePointInformation
-            FILE_READ_ATTRIBUTES, // 34 FileNetworkOpenInformation
-            FILE_READ_ATTRIBUTES, // 35 FileAttributeTagInformation
-            0,                    // 36 FileTrackingInformation
-            0,                    // 37 FileIdBothDiretoryInformation
-            0,                    // 38 FileIdFullDiretoryInformation
-            0,                    // 39 FileValidDataLengthInformation
-            0,                    // 40 FileShortNameInformation
-            0xffffffff            //    FileMaximumInformation
-          };
+const ULONG IopQueryOperationAccess[] = {
+    0,
+    0,                    //  1 FileDirectoryInformation
+    0,                    //  2 FileFullDirectoryInformation
+    0,                    //  3 FileBothDirectoryInformation
+    FILE_READ_ATTRIBUTES, //  4 FileBasicInformation
+    0,                    //  5 FileStandardInformation
+    0,                    //  6 FileInternalInformation
+    0,                    //  7 FileEaInformation
+    0,                    //  8 FileAccessInformation
+    0,                    //  9 FileNameInformation
+    0,                    // 10 FileRenameInformation
+    0,                    // 11 FileLinkInformation
+    0,                    // 12 FileNamesInformation
+    0,                    // 13 FileDispositionInformation
+    0,                    // 14 FilePositionInformation
+    FILE_READ_EA,         // 15 FileFullEaInformation
+    0,                    // 16 FileModeInformation
+    0,                    // 17 FileAlignmentInformation
+    FILE_READ_ATTRIBUTES, // 18 FileAllInformation
+    0,                    // 19 FileAllocationInformation
+    0,                    // 20 FileEndOfFileInformation
+    0,                    // 21 FileAlternateNameInformation
+    0,                    // 22 FileStreamInformation
+    FILE_READ_ATTRIBUTES, // 23 FilePipeInformation
+    FILE_READ_ATTRIBUTES, // 24 FilePipeLocalInformation
+    FILE_READ_ATTRIBUTES, // 25 FilePipeRemoteInformation
+    0,                    // 26 FileMailslotQueryInformation
+    0,                    // 27 FileMailslotSetInformation
+    0,                    // 28 FileCompressionInformation
+    0,                    // 29 FileObjectIdInformation
+    0,                    // 30 FileCompletionInformation
+    0,                    // 31 FileMoveClusterInformation
+    0,                    // 32 FileQuotaInformation
+    0,                    // 33 FileReparsePointInformation
+    FILE_READ_ATTRIBUTES, // 34 FileNetworkOpenInformation
+    FILE_READ_ATTRIBUTES, // 35 FileAttributeTagInformation
+    0,                    // 36 FileTrackingInformation
+    0,                    // 37 FileIdBothDiretoryInformation
+    0,                    // 38 FileIdFullDiretoryInformation
+    0,                    // 39 FileValidDataLengthInformation
+    0,                    // 40 FileShortNameInformation
+    0xffffffff            //    FileMaximumInformation
+};
 
 //
 // The following array specifies the required access mask for the caller to
@@ -579,51 +575,50 @@ const ULONG IopQueryOperationAccess[] =
 //           enumerated type is one-based and the array is zero-based.
 //
 
-const ULONG IopSetOperationAccess[] =
-         {
-            0,
-            0,                     //  1 FileDirectoryInformation
-            0,                     //  2 FileFullDirectoryInformation
-            0,                     //  3 FileBothDirectoryInformation
-            FILE_WRITE_ATTRIBUTES, //  4 FileBasicInformation
-            0,                     //  5 FileStandardInformation
-            0,                     //  6 FileInternalInformation
-            0,                     //  7 FileEaInformation
-            0,                     //  8 FileAccessInformation
-            0,                     //  9 FileNameInformation
-            DELETE,                // 10 FileRenameInformation
-            0,                     // 11 FileLinkInformation
-            0,                     // 12 FileNamesInformation
-            DELETE,                // 13 FileDispositionInformation
-            0,                     // 14 FilePositionInformation
-            FILE_WRITE_EA,         // 15 FileFullEaInformation
-            0,                     // 16 FileModeInformation
-            0,                     // 17 FileAlignmentInformation
-            0,                     // 18 FileAllInformation
-            FILE_WRITE_DATA,       // 19 FileAllocationInformation
-            FILE_WRITE_DATA,       // 20 FileEndOfFileInformation
-            0,                     // 21 FileAlternateNameInformation
-            0,                     // 22 FileStreamInformation
-            FILE_WRITE_ATTRIBUTES, // 23 FilePipeInformation
-            0,                     // 24 FilePipeLocalInformation
-            FILE_WRITE_ATTRIBUTES, // 25 FilePipeRemoteInformation
-            0,                     // 26 FileMailslotQueryInformation
-            0,                     // 27 FileMailslotSetInformation
-            0,                     // 28 FileCompressionInformation
-            0,                     // 29 FileObjectIdInformation
-            0,                     // 30 FileCompletionInformation
-            FILE_WRITE_DATA,       // 31 FileMoveClusterInformation
-            0,                     // 32 FileQuotaInformation
-            0,                     // 33 FileReparsePointInformation
-            0,                     // 34 FileNetworkOpenInformation
-            0,                     // 35 FileAttributeTagInformation
-            FILE_WRITE_DATA,       // 36 FileTrackingInformation
-            0,                     // 37 FileIdBothDiretoryInformation
-            0,                     // 38 FileIdFullDiretoryInformation
-            FILE_WRITE_DATA,       // 39 FileValidDataLengthInformation
-            DELETE,                // 40 FileShortNameInformation
-            0xffffffff             //    FileMaximumInformation
-          };
+const ULONG IopSetOperationAccess[] = {
+    0,
+    0,                     //  1 FileDirectoryInformation
+    0,                     //  2 FileFullDirectoryInformation
+    0,                     //  3 FileBothDirectoryInformation
+    FILE_WRITE_ATTRIBUTES, //  4 FileBasicInformation
+    0,                     //  5 FileStandardInformation
+    0,                     //  6 FileInternalInformation
+    0,                     //  7 FileEaInformation
+    0,                     //  8 FileAccessInformation
+    0,                     //  9 FileNameInformation
+    DELETE,                // 10 FileRenameInformation
+    0,                     // 11 FileLinkInformation
+    0,                     // 12 FileNamesInformation
+    DELETE,                // 13 FileDispositionInformation
+    0,                     // 14 FilePositionInformation
+    FILE_WRITE_EA,         // 15 FileFullEaInformation
+    0,                     // 16 FileModeInformation
+    0,                     // 17 FileAlignmentInformation
+    0,                     // 18 FileAllInformation
+    FILE_WRITE_DATA,       // 19 FileAllocationInformation
+    FILE_WRITE_DATA,       // 20 FileEndOfFileInformation
+    0,                     // 21 FileAlternateNameInformation
+    0,                     // 22 FileStreamInformation
+    FILE_WRITE_ATTRIBUTES, // 23 FilePipeInformation
+    0,                     // 24 FilePipeLocalInformation
+    FILE_WRITE_ATTRIBUTES, // 25 FilePipeRemoteInformation
+    0,                     // 26 FileMailslotQueryInformation
+    0,                     // 27 FileMailslotSetInformation
+    0,                     // 28 FileCompressionInformation
+    0,                     // 29 FileObjectIdInformation
+    0,                     // 30 FileCompletionInformation
+    FILE_WRITE_DATA,       // 31 FileMoveClusterInformation
+    0,                     // 32 FileQuotaInformation
+    0,                     // 33 FileReparsePointInformation
+    0,                     // 34 FileNetworkOpenInformation
+    0,                     // 35 FileAttributeTagInformation
+    FILE_WRITE_DATA,       // 36 FileTrackingInformation
+    0,                     // 37 FileIdBothDiretoryInformation
+    0,                     // 38 FileIdFullDiretoryInformation
+    FILE_WRITE_DATA,       // 39 FileValidDataLengthInformation
+    DELETE,                // 40 FileShortNameInformation
+    0xffffffff             //    FileMaximumInformation
+};
 
 //
 // The following array specifies the minimum length of the FsInformation
@@ -634,20 +629,19 @@ const ULONG IopSetOperationAccess[] =
 //           enumerated type is one-based and the array is zero-based.
 //
 
-const UCHAR IopQueryFsOperationLength[] =
-          {
-            0,
-            sizeof( FILE_FS_VOLUME_INFORMATION ),    // 1 FileFsVolumeInformation
-            0,                                       // 2 FileFsLabelInformation
-            sizeof( FILE_FS_SIZE_INFORMATION ),      // 3 FileFsSizeInformation
-            sizeof( FILE_FS_DEVICE_INFORMATION ),    // 4 FileFsDeviceInformation
-            sizeof( FILE_FS_ATTRIBUTE_INFORMATION ), // 5 FileFsAttributeInformation
-            sizeof( FILE_FS_CONTROL_INFORMATION ),   // 6 FileFsControlInformation
-            sizeof( FILE_FS_FULL_SIZE_INFORMATION ), // 7 FileFsFullSizeInformation
-            sizeof( FILE_FS_OBJECTID_INFORMATION ),  // 8 FileFsObjectIdInformation
-            sizeof( FILE_FS_DRIVER_PATH_INFORMATION),// 9 FileFsDriverPathInformation
-            0xff                                     //   FileFsMaximumInformation
-          };
+const UCHAR IopQueryFsOperationLength[] = {
+    0,
+    sizeof(FILE_FS_VOLUME_INFORMATION),      // 1 FileFsVolumeInformation
+    0,                                       // 2 FileFsLabelInformation
+    sizeof(FILE_FS_SIZE_INFORMATION),        // 3 FileFsSizeInformation
+    sizeof(FILE_FS_DEVICE_INFORMATION),      // 4 FileFsDeviceInformation
+    sizeof(FILE_FS_ATTRIBUTE_INFORMATION),   // 5 FileFsAttributeInformation
+    sizeof(FILE_FS_CONTROL_INFORMATION),     // 6 FileFsControlInformation
+    sizeof(FILE_FS_FULL_SIZE_INFORMATION),   // 7 FileFsFullSizeInformation
+    sizeof(FILE_FS_OBJECTID_INFORMATION),    // 8 FileFsObjectIdInformation
+    sizeof(FILE_FS_DRIVER_PATH_INFORMATION), // 9 FileFsDriverPathInformation
+    0xff                                     //   FileFsMaximumInformation
+};
 
 //
 // The following array specifies the minimum length of the FsInformation
@@ -658,20 +652,19 @@ const UCHAR IopQueryFsOperationLength[] =
 //           enumerated type is one-based and the array is zero-based.
 //
 
-const UCHAR IopSetFsOperationLength[] =
-          {
-            0,
-            0,                                     // 1 FileFsVolumeInformation
-            sizeof( FILE_FS_LABEL_INFORMATION ),   // 2 FileFsLabelInformation
-            0,                                     // 3 FileFsSizeInformation
-            0,                                     // 4 FileFsDeviceInformation
-            0,                                     // 5 FileFsAttributeInformation
-            sizeof( FILE_FS_CONTROL_INFORMATION ), // 6 FileFsControlInformation
-            0,                                     // 7 FileFsFullSizeInformation
-            sizeof( FILE_FS_OBJECTID_INFORMATION ),// 8 FileFsObjectIdInformation
-            0,                                     // 9 FileFsDriverPathInformation
-            0xff                                   //   FileFsMaximumInformation
-          };
+const UCHAR IopSetFsOperationLength[] = {
+    0,
+    0,                                    // 1 FileFsVolumeInformation
+    sizeof(FILE_FS_LABEL_INFORMATION),    // 2 FileFsLabelInformation
+    0,                                    // 3 FileFsSizeInformation
+    0,                                    // 4 FileFsDeviceInformation
+    0,                                    // 5 FileFsAttributeInformation
+    sizeof(FILE_FS_CONTROL_INFORMATION),  // 6 FileFsControlInformation
+    0,                                    // 7 FileFsFullSizeInformation
+    sizeof(FILE_FS_OBJECTID_INFORMATION), // 8 FileFsObjectIdInformation
+    0,                                    // 9 FileFsDriverPathInformation
+    0xff                                  //   FileFsMaximumInformation
+};
 
 //
 // The following array specifies the required access mask for the caller to
@@ -682,20 +675,19 @@ const UCHAR IopSetFsOperationLength[] =
 //           enumerated type is one-based and the array is zero-based.
 //
 
-const ULONG IopQueryFsOperationAccess[] =
-         {
-            0,
-            0,              // 1 FileFsVolumeInformation [any access to file or volume]
-            0,              // 2 FileFsLabelInformation [query is invalid]
-            0,              // 3 FileFsSizeInformation [any access to file or volume]
-            0,              // 4 FileFsDeviceInformation [any access to file or volume]
-            0,              // 5 FileFsAttributeInformation [any access to file or vol]
-            FILE_READ_DATA, // 6 FileFsControlInformation [vol read access]
-            0,              // 7 FileFsFullSizeInformation [any access to file or volume]
-            0,              // 8 FileFsObjectIdInformation [any access to file or volume]
-            0,              // 9 FileFsDriverPathInformation [any access to file or volume]
-            0xffffffff      //   FileFsMaximumInformation
-          };
+const ULONG IopQueryFsOperationAccess[] = {
+    0,
+    0,              // 1 FileFsVolumeInformation [any access to file or volume]
+    0,              // 2 FileFsLabelInformation [query is invalid]
+    0,              // 3 FileFsSizeInformation [any access to file or volume]
+    0,              // 4 FileFsDeviceInformation [any access to file or volume]
+    0,              // 5 FileFsAttributeInformation [any access to file or vol]
+    FILE_READ_DATA, // 6 FileFsControlInformation [vol read access]
+    0,              // 7 FileFsFullSizeInformation [any access to file or volume]
+    0,              // 8 FileFsObjectIdInformation [any access to file or volume]
+    0,              // 9 FileFsDriverPathInformation [any access to file or volume]
+    0xffffffff      //   FileFsMaximumInformation
+};
 
 //
 // The following array specifies the required access mask for the caller to
@@ -706,20 +698,19 @@ const ULONG IopQueryFsOperationAccess[] =
 //           enumerated type is one-based and the array is zero-based.
 //
 
-const ULONG IopSetFsOperationAccess[] =
-         {
-            0,
-            0,               // 1 FileFsVolumeInformation [set is invalid]
-            FILE_WRITE_DATA, // 2 FileFsLabelInformation [write access to volume]
-            0,               // 3 FileFsSizeInformation [set is invalid]
-            0,               // 4 FileFsDeviceInformation [set is invalid]
-            0,               // 5 FileFsAttributeInformation [set is invalid]
-            FILE_WRITE_DATA, // 6 FileFsControlInformation [vol write access]
-            0,               // 7 FileFsFullSizeInformation [set is invalid]
-            FILE_WRITE_DATA, // 8 FileFsObjectIdInformation [write access to volume]
-            0,               // 9 FileFsDriverPathInformation [set is invalid]
-            0xffffffff       //   FileFsMaximumInformation
-          };
+const ULONG IopSetFsOperationAccess[] = {
+    0,
+    0,               // 1 FileFsVolumeInformation [set is invalid]
+    FILE_WRITE_DATA, // 2 FileFsLabelInformation [write access to volume]
+    0,               // 3 FileFsSizeInformation [set is invalid]
+    0,               // 4 FileFsDeviceInformation [set is invalid]
+    0,               // 5 FileFsAttributeInformation [set is invalid]
+    FILE_WRITE_DATA, // 6 FileFsControlInformation [vol write access]
+    0,               // 7 FileFsFullSizeInformation [set is invalid]
+    FILE_WRITE_DATA, // 8 FileFsObjectIdInformation [write access to volume]
+    0,               // 9 FileFsDriverPathInformation [set is invalid]
+    0xffffffff       //   FileFsMaximumInformation
+};
 
 //
 // The following array specifies the alignment requirements for all FS query
@@ -730,37 +721,36 @@ const ULONG IopSetFsOperationAccess[] =
 //           enumerated type is one-based and the array is zero-based.
 //
 
-const UCHAR IopQuerySetFsAlignmentRequirement[] =
-         {
-            0,
-            sizeof( LONGLONG ), // 1 FileFsVolumeInformation
-            sizeof( LONG ),     // 2 FileFsLabelInformation
-            sizeof( LONGLONG ), // 3 FileFsSizeInformation
-            sizeof( LONG ),     // 4 FileFsDeviceInformation
-            sizeof( LONG ),     // 5 FileFsAttributeInformation
-            sizeof( LONGLONG ), // 6 FileFsControlInformation
-            sizeof( LONGLONG ), // 7 FileFsFullSizeInformation
-            sizeof( LONGLONG ), // 8 FileFsObjectIdInformation
-            sizeof( LONGLONG ), // 9 FileFsDriverPathInformation
-            0xff                //   FileFsMaximumInformation
-          };
+const UCHAR IopQuerySetFsAlignmentRequirement[] = {
+    0,
+    sizeof(LONGLONG), // 1 FileFsVolumeInformation
+    sizeof(LONG),     // 2 FileFsLabelInformation
+    sizeof(LONGLONG), // 3 FileFsSizeInformation
+    sizeof(LONG),     // 4 FileFsDeviceInformation
+    sizeof(LONG),     // 5 FileFsAttributeInformation
+    sizeof(LONGLONG), // 6 FileFsControlInformation
+    sizeof(LONGLONG), // 7 FileFsFullSizeInformation
+    sizeof(LONGLONG), // 8 FileFsObjectIdInformation
+    sizeof(LONGLONG), // 9 FileFsDriverPathInformation
+    0xff              //   FileFsMaximumInformation
+};
 
 PVOID IopLoaderBlock = NULL;
 
-const WCHAR IopWstrRaw[]                  = L".Raw";
-const WCHAR IopWstrTranslated[]           = L".Translated";
-const WCHAR IopWstrBusRaw[]               = L".Bus.Raw";
-const WCHAR IopWstrBusTranslated[]        = L".Bus.Translated";
-const WCHAR IopWstrOtherDrivers[]         = L"OtherDrivers";
+const WCHAR IopWstrRaw[] = L".Raw";
+const WCHAR IopWstrTranslated[] = L".Translated";
+const WCHAR IopWstrBusRaw[] = L".Bus.Raw";
+const WCHAR IopWstrBusTranslated[] = L".Bus.Translated";
+const WCHAR IopWstrOtherDrivers[] = L"OtherDrivers";
 
-const WCHAR IopWstrAssignedResources[]    = L"AssignedSystemResources";
-const WCHAR IopWstrRequestedResources[]   = L"RequestedSystemResources";
-const WCHAR IopWstrSystemResources[]      = L"Control\\SystemResources";
-const WCHAR IopWstrReservedResources[]    = L"ReservedResources";
-const WCHAR IopWstrAssignmentOrdering[]   = L"AssignmentOrdering";
-const WCHAR IopWstrBusValues[]            = L"BusValues";
-UNICODE_STRING IoArcBootDeviceName  = { 0 };
-UNICODE_STRING IoArcHalDeviceName  = { 0 };
+const WCHAR IopWstrAssignedResources[] = L"AssignedSystemResources";
+const WCHAR IopWstrRequestedResources[] = L"RequestedSystemResources";
+const WCHAR IopWstrSystemResources[] = L"Control\\SystemResources";
+const WCHAR IopWstrReservedResources[] = L"ReservedResources";
+const WCHAR IopWstrAssignmentOrdering[] = L"AssignmentOrdering";
+const WCHAR IopWstrBusValues[] = L"BusValues";
+UNICODE_STRING IoArcBootDeviceName = { 0 };
+UNICODE_STRING IoArcHalDeviceName = { 0 };
 PUCHAR IoLoaderArcBootDeviceName = NULL;
 
 //
@@ -771,10 +761,10 @@ PUCHAR IoLoaderArcBootDeviceName = NULL;
 #pragma const_seg("INITCONST")
 #endif
 
-const WCHAR IopWstrHal[]                  = L"Hardware Abstraction Layer";
-const WCHAR IopWstrSystem[]               = L"System Resources";
-const WCHAR IopWstrPhysicalMemory[]       = L"Physical Memory";
-const WCHAR IopWstrSpecialMemory[]        = L"Reserved";
+const WCHAR IopWstrHal[] = L"Hardware Abstraction Layer";
+const WCHAR IopWstrSystem[] = L"System Resources";
+const WCHAR IopWstrPhysicalMemory[] = L"Physical Memory";
+const WCHAR IopWstrSpecialMemory[] = L"Reserved";
 const WCHAR IopWstrLoaderReservedMemory[] = L"Loader Reserved";
 
 #ifdef ALLOC_DATA_PRAGMA

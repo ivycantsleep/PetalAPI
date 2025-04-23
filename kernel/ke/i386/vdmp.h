@@ -1,10 +1,11 @@
-#define VDM_APP_MODE            0x00000001L
-#define VDM_INTERRUPT_PENDING   0x00000002L
-#define VDM_STATE_CHANGE        0x00000004L
-#define VDM_VIRTUAL_INTERRUPTS  0x00000200L
-#define VDM_PE_MASK             0x80000000L
+#define VDM_APP_MODE 0x00000001L
+#define VDM_INTERRUPT_PENDING 0x00000002L
+#define VDM_STATE_CHANGE 0x00000004L
+#define VDM_VIRTUAL_INTERRUPTS 0x00000200L
+#define VDM_PE_MASK 0x80000000L
 
-typedef enum _VdmEventClass {
+typedef enum _VdmEventClass
+{
     VdmIO,
     VdmStringIO,
     VdmMemAccess,
@@ -14,13 +15,15 @@ typedef enum _VdmEventClass {
     VdmIrq13
 } VDMEVENTCLASS, *PVDMEVENTCLASS;
 
-typedef struct _VdmIoInfo {
+typedef struct _VdmIoInfo
+{
     USHORT PortNumber;
     USHORT Size;
     BOOLEAN Read;
 } VDMIOINFO, *PVDMIOINFO;
 
-typedef struct _VdmStringIoInfo {
+typedef struct _VdmStringIoInfo
+{
     USHORT PortNumber;
     USHORT Size;
     BOOLEAN Read;
@@ -31,11 +34,13 @@ typedef struct _VdmStringIoInfo {
 typedef ULONG VDMBOPINFO;
 typedef NTSTATUS VDMERRORINFO;
 
-typedef struct _VdmEventInfo {
+typedef struct _VdmEventInfo
+{
     ULONG Size;
     VDMEVENTCLASS Event;
     ULONG InstructionSize;
-    union {
+    union
+    {
         VDMIOINFO IoInfo;
         VDMSTRINGIOINFO StringIoInfo;
         VDMBOPINFO BopNumber;
@@ -43,14 +48,16 @@ typedef struct _VdmEventInfo {
     };
 } VDMEVENTINFO, *PVDMEVENTINFO;
 
-typedef struct _Vdm_InterruptHandler {
-    USHORT  CsSelector;
-    ULONG   Eip;
-    USHORT  SsSelector;
-    ULONG   Esp;
+typedef struct _Vdm_InterruptHandler
+{
+    USHORT CsSelector;
+    ULONG Eip;
+    USHORT SsSelector;
+    ULONG Esp;
 } VDM_INTERRUPTHANDLER, *PVDM_INTERRUPTHANDLER;
 
-typedef struct _Vdm_Tib {
+typedef struct _Vdm_Tib
+{
     ULONG Size;
     ULONG Flags;
     VDM_INTERRUPTHANDLER VdmInterruptHandlers[255];
@@ -60,14 +67,13 @@ typedef struct _Vdm_Tib {
 } VDM_TIB, *PVDM_TIB;
 
 NTSTATUS
-NtStartVdmExecution(
-    );
+NtStartVdmExecution();
 
 // Flags that don't belong here
 
-#define SEL_TYPE_READ       0x00000001
-#define SEL_TYPE_WRITE      0x00000002
-#define SEL_TYPE_EXECUTE    0x00000004
-#define SEL_TYPE_BIG        0x00000008
-#define SEL_TYPE_ED         0x00000010
-#define SEL_TYPE_2GIG       0x00000020
+#define SEL_TYPE_READ 0x00000001
+#define SEL_TYPE_WRITE 0x00000002
+#define SEL_TYPE_EXECUTE 0x00000004
+#define SEL_TYPE_BIG 0x00000008
+#define SEL_TYPE_ED 0x00000010
+#define SEL_TYPE_2GIG 0x00000020

@@ -30,13 +30,9 @@ Revision History:
 --*/
 
 #include "ki.h"
-
+
 ULONGLONG
-KiGetRegisterValue (
-    IN ULONG Register,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PKTRAP_FRAME TrapFrame
-    )
+KiGetRegisterValue(IN ULONG Register, IN PKEXCEPTION_FRAME ExceptionFrame, IN PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -67,7 +63,8 @@ Return Value:
     // Dispatch on the register number.
     //
 
-    switch (Register) {
+    switch (Register)
+    {
 
         //
         // Integer register V0.
@@ -522,14 +519,9 @@ Return Value:
         return 0;
     }
 }
-
-VOID
-KiSetRegisterValue (
-    IN ULONG Register,
-    IN ULONGLONG Value,
-    OUT PKEXCEPTION_FRAME ExceptionFrame,
-    OUT PKTRAP_FRAME TrapFrame
-    )
+
+VOID KiSetRegisterValue(IN ULONG Register, IN ULONGLONG Value, OUT PKEXCEPTION_FRAME ExceptionFrame,
+                        OUT PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -562,7 +554,8 @@ Return Value:
     // Dispatch on the register number.
     //
 
-    switch (Register) {
+    switch (Register)
+    {
 
         //
         // Integer register V0.

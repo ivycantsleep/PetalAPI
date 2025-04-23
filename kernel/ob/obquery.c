@@ -30,7 +30,8 @@ Revision History:
 //  the processor mode of the caller.
 //
 
-typedef struct __OBP_SET_HANDLE_ATTRIBUTES {
+typedef struct __OBP_SET_HANDLE_ATTRIBUTES
+{
 
     OBJECT_HANDLE_FLAG_INFORMATION ObjectInformation;
 
@@ -39,31 +40,23 @@ typedef struct __OBP_SET_HANDLE_ATTRIBUTES {
 } OBP_SET_HANDLE_ATTRIBUTES, *POBP_SET_HANDLE_ATTRIBUTES;
 
 BOOLEAN
-ObpSetHandleAttributes (
-    IN OUT PVOID TableEntry,
-    IN ULONG_PTR Parameter
-    );
+ObpSetHandleAttributes(IN OUT PVOID TableEntry, IN ULONG_PTR Parameter);
 
 #if defined(ALLOC_PRAGMA)
-#pragma alloc_text(PAGE,NtQueryObject)
-#pragma alloc_text(PAGE,ObQueryNameString)
-#pragma alloc_text(PAGE,ObQueryTypeName)
-#pragma alloc_text(PAGE,ObQueryTypeInfo)
-#pragma alloc_text(PAGE,ObQueryObjectAuditingByHandle)
-#pragma alloc_text(PAGE,NtSetInformationObject)
-#pragma alloc_text(PAGE,ObpSetHandleAttributes)
-#pragma alloc_text(PAGE,ObSetHandleAttributes)
+#pragma alloc_text(PAGE, NtQueryObject)
+#pragma alloc_text(PAGE, ObQueryNameString)
+#pragma alloc_text(PAGE, ObQueryTypeName)
+#pragma alloc_text(PAGE, ObQueryTypeInfo)
+#pragma alloc_text(PAGE, ObQueryObjectAuditingByHandle)
+#pragma alloc_text(PAGE, NtSetInformationObject)
+#pragma alloc_text(PAGE, ObpSetHandleAttributes)
+#pragma alloc_text(PAGE, ObSetHandleAttributes)
 #endif
 
-
+
 NTSTATUS
-NtQueryObject (
-    IN HANDLE Handle,
-    IN OBJECT_INFORMATION_CLASS ObjectInformationClass,
-    OUT PVOID ObjectInformation,
-    IN ULONG ObjectInformationLength,
-    OUT PULONG ReturnLength OPTIONAL
-    )
+NtQueryObject(IN HANDLE Handle, IN OBJECT_INFORMATION_CLASS ObjectInformationClass, OUT PVOID ObjectInformation,
+              IN ULONG ObjectInformationLength, OUT PULONG ReturnLength OPTIONAL)
 
 /*++
 
@@ -129,21 +122,21 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    if (PreviousMode != KernelMode) {
+    if (PreviousMode != KernelMode)
+    {
 
-        try {
+        try
+        {
 
-            if (ObjectInformationClass != ObjectHandleFlagInformation) {
+            if (ObjectInformationClass != ObjectHandleFlagInformation)
+            {
 
-                ProbeForWrite( ObjectInformation,
-                               ObjectInformationLength,
-                               sizeof( ULONG ));
+                ProbeForWrite(ObjectInformation, ObjectInformationLength, sizeof(ULONG));
+            }
+            else
+            {
 
-            } else {
-
-                ProbeForWrite( ObjectInformation,
-                               ObjectInformationLength,
-                               1 );
+                ProbeForWrite(ObjectInformation, ObjectInformationLength, 1);
             }
 
             //
@@ -154,14 +147,16 @@ Return Value:
             //  our back.
             //
 
-            if (ARGUMENT_PRESENT( ReturnLength )) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
 
-                ProbeForWriteUlong( ReturnLength );
+                ProbeForWriteUlong(ReturnLength);
             }
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
-        } except( EXCEPTION_EXECUTE_HANDLER ) {
-
-            return( GetExceptionCode() );
+            return (GetExceptionCode());
         }
     }
 
@@ -172,26 +167,24 @@ Return Value:
     //  to grab.
     //
 
-    if (ObjectInformationClass != ObjectTypesInformation) {
+    if (ObjectInformationClass != ObjectTypesInformation)
+    {
 
-        Status = ObReferenceObjectByHandle( Handle,
-                                            0,
-                                            NULL,
-                                            PreviousMode,
-                                            &Object,
-                                            &HandleInformation );
+        Status = ObReferenceObjectByHandle(Handle, 0, NULL, PreviousMode, &Object, &HandleInformation);
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            return( Status );
+            return (Status);
         }
 
         GrantedAccess = HandleInformation.GrantedAccess;
 
-        ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
+        ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
         ObjectType = ObjectHeader->Type;
-
-    } else {
+    }
+    else
+    {
 
         GrantedAccess = 0;
         Object = NULL;
@@ -204,7 +197,8 @@ Return Value:
     //  requested
     //
 
-    switch( ObjectInformationClass ) {
+    switch (ObjectInformationClass)
+    {
 
     case ObjectBasicInformation:
 
@@ -214,21 +208,24 @@ Return Value:
         //  of basic information.
         //
 
-        if (ObjectInformationLength != sizeof( OBJECT_BASIC_INFORMATION )) {
+        if (ObjectInformationLength != sizeof(OBJECT_BASIC_INFORMATION))
+        {
 
-            ObDereferenceObject( Object );
+            ObDereferenceObject(Object);
 
-            return( STATUS_INFO_LENGTH_MISMATCH );
+            return (STATUS_INFO_LENGTH_MISMATCH);
         }
 
         ObjectBasicInfo.Attributes = HandleInformation.HandleAttributes;
 
-        if (ObjectHeader->Flags & OB_FLAG_PERMANENT_OBJECT) {
+        if (ObjectHeader->Flags & OB_FLAG_PERMANENT_OBJECT)
+        {
 
             ObjectBasicInfo.Attributes |= OBJ_PERMANENT;
         }
 
-        if (ObjectHeader->Flags & OB_FLAG_EXCLUSIVE_OBJECT) {
+        if (ObjectHeader->Flags & OB_FLAG_EXCLUSIVE_OBJECT)
+        {
 
             ObjectBasicInfo.Attributes |= OBJ_EXCLUSIVE;
         }
@@ -237,27 +234,30 @@ Return Value:
         ObjectBasicInfo.HandleCount = ObjectHeader->HandleCount;
         ObjectBasicInfo.PointerCount = ObjectHeader->PointerCount;
 
-        QuotaInfo = OBJECT_HEADER_TO_QUOTA_INFO( ObjectHeader );
+        QuotaInfo = OBJECT_HEADER_TO_QUOTA_INFO(ObjectHeader);
 
-        if (QuotaInfo != NULL) {
+        if (QuotaInfo != NULL)
+        {
 
             ObjectBasicInfo.PagedPoolCharge = QuotaInfo->PagedPoolCharge;
             ObjectBasicInfo.NonPagedPoolCharge = QuotaInfo->NonPagedPoolCharge;
-
-        } else {
+        }
+        else
+        {
 
             ObjectBasicInfo.PagedPoolCharge = 0;
             ObjectBasicInfo.NonPagedPoolCharge = 0;
         }
 
-        if (ObjectType == ObpSymbolicLinkObjectType) {
+        if (ObjectType == ObpSymbolicLinkObjectType)
+        {
 
             ObjectBasicInfo.CreationTime = ((POBJECT_SYMBOLIC_LINK)Object)->CreationTime;
+        }
+        else
+        {
 
-        } else {
-
-            RtlZeroMemory( &ObjectBasicInfo.CreationTime,
-                           sizeof( ObjectBasicInfo.CreationTime ));
+            RtlZeroMemory(&ObjectBasicInfo.CreationTime, sizeof(ObjectBasicInfo.CreationTime));
         }
 
         //
@@ -266,74 +266,80 @@ Return Value:
         //  name length plus seperators
         //
 
-        NameInfo = ObpReferenceNameInfo( ObjectHeader );
+        NameInfo = ObpReferenceNameInfo(ObjectHeader);
 
-        if ((NameInfo != NULL) && (NameInfo->Directory != NULL)) {
+        if ((NameInfo != NULL) && (NameInfo->Directory != NULL))
+        {
 
             PVOID ReferencedDirectory = NULL;
-        
+
             //
             //  We grab the root directory lock and test again the directory
             //
 
             ObjectDirectory = NameInfo->Directory;
 
-            if (ObjectDirectory) {
+            if (ObjectDirectory)
+            {
 
-                ObfReferenceObject( ObjectDirectory );
+                ObfReferenceObject(ObjectDirectory);
                 ReferencedDirectory = ObjectDirectory;
 
-                NameInfoSize = sizeof( OBJ_NAME_PATH_SEPARATOR ) + NameInfo->Name.Length;
+                NameInfoSize = sizeof(OBJ_NAME_PATH_SEPARATOR) + NameInfo->Name.Length;
 
-                ObpDereferenceNameInfo( NameInfo );
+                ObpDereferenceNameInfo(NameInfo);
                 NameInfo = NULL;
 
-                while (ObjectDirectory) {
+                while (ObjectDirectory)
+                {
 
-                    ObjectDirectoryHeader = OBJECT_TO_OBJECT_HEADER( ObjectDirectory );
-                    NameInfo = ObpReferenceNameInfo( ObjectDirectoryHeader );
+                    ObjectDirectoryHeader = OBJECT_TO_OBJECT_HEADER(ObjectDirectory);
+                    NameInfo = ObpReferenceNameInfo(ObjectDirectoryHeader);
 
-                    if ((NameInfo != NULL) && (NameInfo->Directory != NULL)) {
+                    if ((NameInfo != NULL) && (NameInfo->Directory != NULL))
+                    {
 
-                        NameInfoSize += sizeof( OBJ_NAME_PATH_SEPARATOR ) + NameInfo->Name.Length;
-                        
+                        NameInfoSize += sizeof(OBJ_NAME_PATH_SEPARATOR) + NameInfo->Name.Length;
+
                         ObjectDirectory = NameInfo->Directory;
 
-                        ObfReferenceObject( ObjectDirectory );
-                        
-                        ObpDereferenceNameInfo( NameInfo );
-                        NameInfo = NULL;
-                        ObDereferenceObject( ReferencedDirectory );
-                        ReferencedDirectory = ObjectDirectory;
+                        ObfReferenceObject(ObjectDirectory);
 
-                    } else {
+                        ObpDereferenceNameInfo(NameInfo);
+                        NameInfo = NULL;
+                        ObDereferenceObject(ReferencedDirectory);
+                        ReferencedDirectory = ObjectDirectory;
+                    }
+                    else
+                    {
 
                         break;
                     }
                 }
 
-                if (ReferencedDirectory) {
+                if (ReferencedDirectory)
+                {
 
-                    ObDereferenceObject( ReferencedDirectory );
+                    ObDereferenceObject(ReferencedDirectory);
                 }
 
-                NameInfoSize += sizeof( OBJECT_NAME_INFORMATION ) + sizeof( UNICODE_NULL );
+                NameInfoSize += sizeof(OBJECT_NAME_INFORMATION) + sizeof(UNICODE_NULL);
             }
-
-        } else {
+        }
+        else
+        {
 
             NameInfoSize = 0;
         }
 
-        ObpDereferenceNameInfo( NameInfo );
+        ObpDereferenceNameInfo(NameInfo);
         NameInfo = NULL;
 
         ObjectBasicInfo.NameInfoSize = NameInfoSize;
-        ObjectBasicInfo.TypeInfoSize = ObjectType->Name.Length + sizeof( UNICODE_NULL ) +
-                                        sizeof( OBJECT_TYPE_INFORMATION );
-        
-        if ((GrantedAccess & READ_CONTROL) &&
-            ARGUMENT_PRESENT( ObjectHeader->SecurityDescriptor )) {
+        ObjectBasicInfo.TypeInfoSize = ObjectType->Name.Length + sizeof(UNICODE_NULL) + sizeof(OBJECT_TYPE_INFORMATION);
+
+        if ((GrantedAccess & READ_CONTROL) && ARGUMENT_PRESENT(ObjectHeader->SecurityDescriptor))
+        {
 
             SECURITY_INFORMATION SecurityInformation;
 
@@ -341,23 +347,17 @@ Return Value:
             //  Request a complete security descriptor
             //
 
-            SecurityInformation = OWNER_SECURITY_INFORMATION |
-                                  GROUP_SECURITY_INFORMATION |
-                                  DACL_SECURITY_INFORMATION  |
+            SecurityInformation = OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION |
                                   SACL_SECURITY_INFORMATION;
-            
+
             SecurityDescriptorSize = 0;
 
-            (ObjectType->TypeInfo.SecurityProcedure)( Object,
-                                                      QuerySecurityDescriptor,
-                                                      &SecurityInformation,
-                                                      NULL,
-                                                      &SecurityDescriptorSize,
-                                                      &ObjectHeader->SecurityDescriptor,
-                                                      ObjectType->TypeInfo.PoolType,
-                                                      &ObjectType->TypeInfo.GenericMapping );
-
-        } else {
+            (ObjectType->TypeInfo.SecurityProcedure)(
+                Object, QuerySecurityDescriptor, &SecurityInformation, NULL, &SecurityDescriptorSize,
+                &ObjectHeader->SecurityDescriptor, ObjectType->TypeInfo.PoolType, &ObjectType->TypeInfo.GenericMapping);
+        }
+        else
+        {
 
             SecurityDescriptorSize = 0;
         }
@@ -370,13 +370,15 @@ Return Value:
         //  length
         //
 
-        try {
+        try
+        {
 
-            *(POBJECT_BASIC_INFORMATION) ObjectInformation = ObjectBasicInfo;
+            *(POBJECT_BASIC_INFORMATION)ObjectInformation = ObjectBasicInfo;
 
             TempReturnLength = ObjectInformationLength;
-
-        } except( EXCEPTION_EXECUTE_HANDLER ) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // Fall through, since we cannot undo what we have done.
@@ -391,10 +393,8 @@ Return Value:
         //  Call a local worker routine
         //
 
-        Status = ObQueryNameString( Object,
-                                    (POBJECT_NAME_INFORMATION)ObjectInformation,
-                                    ObjectInformationLength,
-                                    &TempReturnLength );
+        Status = ObQueryNameString(Object, (POBJECT_NAME_INFORMATION)ObjectInformation, ObjectInformationLength,
+                                   &TempReturnLength);
         break;
 
     case ObjectTypeInformation:
@@ -403,15 +403,14 @@ Return Value:
         //  Call a local worker routine
         //
 
-        Status = ObQueryTypeInfo( ObjectType,
-                                  (POBJECT_TYPE_INFORMATION)ObjectInformation,
-                                  ObjectInformationLength,
-                                  &TempReturnLength );
+        Status = ObQueryTypeInfo(ObjectType, (POBJECT_TYPE_INFORMATION)ObjectInformation, ObjectInformationLength,
+                                 &TempReturnLength);
         break;
 
     case ObjectTypesInformation:
 
-        try {
+        try
+        {
 
             //
             //  The first thing we do is set the return length to cover the
@@ -419,7 +418,7 @@ Return Value:
             //  this value will be updated as necessary
             //
 
-            TempReturnLength = sizeof( OBJECT_TYPES_INFORMATION );
+            TempReturnLength = sizeof(OBJECT_TYPES_INFORMATION);
 
             //
             //  Make sure there is enough room to hold the types info record
@@ -428,19 +427,23 @@ Return Value:
 
             TypesInformation = (POBJECT_TYPES_INFORMATION)ObjectInformation;
 
-            if (ObjectInformationLength < sizeof( OBJECT_TYPES_INFORMATION ) ) {
+            if (ObjectInformationLength < sizeof(OBJECT_TYPES_INFORMATION))
+            {
 
                 Status = STATUS_INFO_LENGTH_MISMATCH;
-
-            } else {
+            }
+            else
+            {
 
                 TypesInformation->NumberOfTypes = 0;
 
-                for (i=0; i<OBP_MAX_DEFINED_OBJECT_TYPES; i++) {
+                for (i = 0; i < OBP_MAX_DEFINED_OBJECT_TYPES; i++)
+                {
 
-                    ObjectType = ObpObjectTypes[ i ];
+                    ObjectType = ObpObjectTypes[i];
 
-                    if (ObjectType == NULL) {
+                    if (ObjectType == NULL)
+                    {
 
                         break;
                     }
@@ -455,30 +458,32 @@ Return Value:
             //  free spot
             //
 
-            TypeInfo = (POBJECT_TYPE_INFORMATION)(((PUCHAR)TypesInformation) + ALIGN_UP( sizeof(*TypesInformation), ULONG_PTR ));
+            TypeInfo =
+                (POBJECT_TYPE_INFORMATION)(((PUCHAR)TypesInformation) + ALIGN_UP(sizeof(*TypesInformation), ULONG_PTR));
 
-            for (i=0; i<OBP_MAX_DEFINED_OBJECT_TYPES; i++) {
+            for (i = 0; i < OBP_MAX_DEFINED_OBJECT_TYPES; i++)
+            {
 
-                ObjectType = ObpObjectTypes[ i ];
+                ObjectType = ObpObjectTypes[i];
 
-                if (ObjectType == NULL) {
+                if (ObjectType == NULL)
+                {
 
                     break;
                 }
 
-                Status = ObQueryTypeInfo( ObjectType,
-                                          TypeInfo,
-                                          ObjectInformationLength,
-                                          &TempReturnLength );
+                Status = ObQueryTypeInfo(ObjectType, TypeInfo, ObjectInformationLength, &TempReturnLength);
 
-                if (NT_SUCCESS( Status )) {
+                if (NT_SUCCESS(Status))
+                {
 
-                    TypeInfo = (POBJECT_TYPE_INFORMATION)
-                        ((PCHAR)(TypeInfo+1) + ALIGN_UP( TypeInfo->TypeName.MaximumLength, ULONG_PTR ));
+                    TypeInfo = (POBJECT_TYPE_INFORMATION)((PCHAR)(TypeInfo + 1) +
+                                                          ALIGN_UP(TypeInfo->TypeName.MaximumLength, ULONG_PTR));
                 }
             }
-
-        } except( EXCEPTION_EXECUTE_HANDLER ) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             Status = GetExceptionCode();
         }
@@ -487,7 +492,8 @@ Return Value:
 
     case ObjectHandleFlagInformation:
 
-        try {
+        try
+        {
 
             //
             //  Set the amount of data we are going to return
@@ -502,28 +508,33 @@ Return Value:
             //  set the output based on the flags stored in the handle
             //
 
-            if (ObjectInformationLength < sizeof( OBJECT_HANDLE_FLAG_INFORMATION)) {
+            if (ObjectInformationLength < sizeof(OBJECT_HANDLE_FLAG_INFORMATION))
+            {
 
                 Status = STATUS_INFO_LENGTH_MISMATCH;
-
-            } else {
+            }
+            else
+            {
 
                 HandleFlags->Inherit = FALSE;
 
-                if (HandleInformation.HandleAttributes & OBJ_INHERIT) {
+                if (HandleInformation.HandleAttributes & OBJ_INHERIT)
+                {
 
                     HandleFlags->Inherit = TRUE;
                 }
 
                 HandleFlags->ProtectFromClose = FALSE;
 
-                if (HandleInformation.HandleAttributes & OBJ_PROTECT_CLOSE) {
+                if (HandleInformation.HandleAttributes & OBJ_PROTECT_CLOSE)
+                {
 
                     HandleFlags->ProtectFromClose = TRUE;
                 }
             }
-
-        } except( EXCEPTION_EXECUTE_HANDLER ) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             Status = GetExceptionCode();
         }
@@ -538,9 +549,9 @@ Return Value:
         //  object and return to our user the bad status
         //
 
-        ObDereferenceObject( Object );
+        ObDereferenceObject(Object);
 
-        return( STATUS_INVALID_INFO_CLASS );
+        return (STATUS_INVALID_INFO_CLASS);
     }
 
     //
@@ -548,14 +559,17 @@ Return Value:
     //  our local copy
     //
 
-    try {
+    try
+    {
 
-        if (ARGUMENT_PRESENT( ReturnLength ) ) {
+        if (ARGUMENT_PRESENT(ReturnLength))
+        {
 
             *ReturnLength = TempReturnLength;
         }
-
-    } except( EXCEPTION_EXECUTE_HANDLER ) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         //
         //  Fall through, since we cannot undo what we have done.
@@ -567,20 +581,17 @@ Return Value:
     //  to our caller
     //
 
-    if (Object != NULL) {
+    if (Object != NULL)
+    {
 
-        ObDereferenceObject( Object );
+        ObDereferenceObject(Object);
     }
 
-    return( Status );
+    return (Status);
 }
 
 NTSTATUS
-ObSetHandleAttributes (
-    IN HANDLE Handle,
-    IN POBJECT_HANDLE_FLAG_INFORMATION HandleFlags,
-    IN KPROCESSOR_MODE PreviousMode
-    )
+ObSetHandleAttributes(IN HANDLE Handle, IN POBJECT_HANDLE_FLAG_INFORMATION HandleFlags, IN KPROCESSOR_MODE PreviousMode)
 {
     BOOLEAN AttachedToProcess = FALSE;
     KAPC_STATE ApcState;
@@ -600,13 +611,14 @@ ObSetHandleAttributes (
     //  in kernel mode
     //
 
-    if (IsKernelHandle( Handle, PreviousMode )) {
+    if (IsKernelHandle(Handle, PreviousMode))
+    {
 
         //
         //  Make the handle look like a regular handle
         //
 
-        ObjectHandle = DecodeKernelHandle( Handle );
+        ObjectHandle = DecodeKernelHandle(Handle);
 
         //
         //  The global kernel handle table
@@ -618,12 +630,14 @@ ObSetHandleAttributes (
         //  Go to the system process
         //
 
-        if (PsGetCurrentProcess() != PsInitialSystemProcess) {
-            KeStackAttachProcess (&PsInitialSystemProcess->Pcb, &ApcState);
+        if (PsGetCurrentProcess() != PsInitialSystemProcess)
+        {
+            KeStackAttachProcess(&PsInitialSystemProcess->Pcb, &ApcState);
             AttachedToProcess = TRUE;
         }
-
-    } else {
+    }
+    else
+    {
 
         ObjectTable = ObpGetObjectTable();
         ObjectHandle = Handle;
@@ -634,14 +648,13 @@ ObSetHandleAttributes (
     //  routine will do the actual change
     //
 
-    if (ExChangeHandle( ObjectTable,
-                        ObjectHandle,
-                        ObpSetHandleAttributes,
-                        (ULONG_PTR)&CapturedInformation) ) {
+    if (ExChangeHandle(ObjectTable, ObjectHandle, ObpSetHandleAttributes, (ULONG_PTR)&CapturedInformation))
+    {
 
         Status = STATUS_SUCCESS;
-
-    } else {
+    }
+    else
+    {
 
         Status = STATUS_ACCESS_DENIED;
     }
@@ -651,22 +664,19 @@ ObSetHandleAttributes (
     //  back to our caller
     //
 
-    if (AttachedToProcess) {
+    if (AttachedToProcess)
+    {
         KeUnstackDetachProcess(&ApcState);
         AttachedToProcess = FALSE;
     }
     return Status;
 }
 
-
+
 NTSTATUS
 NTAPI
-NtSetInformationObject (
-    IN HANDLE Handle,
-    IN OBJECT_INFORMATION_CLASS ObjectInformationClass,
-    IN PVOID ObjectInformation,
-    IN ULONG ObjectInformationLength
-    )
+NtSetInformationObject(IN HANDLE Handle, IN OBJECT_INFORMATION_CLASS ObjectInformationClass, IN PVOID ObjectInformation,
+                       IN ULONG ObjectInformationLength)
 
 /*++
 
@@ -705,12 +715,14 @@ Return Value:
     //  Check if the information class and information length are correct.
     //
 
-    if (ObjectInformationClass != ObjectHandleFlagInformation) {
+    if (ObjectInformationClass != ObjectHandleFlagInformation)
+    {
 
         return STATUS_INVALID_INFO_CLASS;
     }
 
-    if (ObjectInformationLength != sizeof(OBJECT_HANDLE_FLAG_INFORMATION)) {
+    if (ObjectInformationLength != sizeof(OBJECT_HANDLE_FLAG_INFORMATION))
+    {
 
         return STATUS_INFO_LENGTH_MISMATCH;
     }
@@ -722,23 +734,24 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    try {
+    try
+    {
 
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
 
             ProbeForRead(ObjectInformation, ObjectInformationLength, 1);
         }
 
         CapturedFlags = *(POBJECT_HANDLE_FLAG_INFORMATION)ObjectInformation;
-
-    } except(ExSystemExceptionFilter()) {
+    }
+    except(ExSystemExceptionFilter())
+    {
 
         return GetExceptionCode();
     }
 
-    Status = ObSetHandleAttributes (Handle,
-                                    &CapturedFlags,
-                                    PreviousMode);
+    Status = ObSetHandleAttributes(Handle, &CapturedFlags, PreviousMode);
 
 
     //
@@ -748,17 +761,13 @@ Return Value:
     return Status;
 }
 
-
+
 #define OBP_MISSING_NAME_LITERAL L"..."
-#define OBP_MISSING_NAME_LITERAL_SIZE (sizeof( OBP_MISSING_NAME_LITERAL ) - sizeof( UNICODE_NULL ))
+#define OBP_MISSING_NAME_LITERAL_SIZE (sizeof(OBP_MISSING_NAME_LITERAL) - sizeof(UNICODE_NULL))
 
 NTSTATUS
-ObQueryNameString (
-    IN PVOID Object,
-    OUT POBJECT_NAME_INFORMATION ObjectNameInfo,
-    IN ULONG Length,
-    OUT PULONG ReturnLength
-    )
+ObQueryNameString(IN PVOID Object, OUT POBJECT_NAME_INFORMATION ObjectNameInfo, IN ULONG Length,
+                  OUT PULONG ReturnLength)
 
 /*++
 
@@ -811,37 +820,38 @@ Return Value:
     //  Get the object header and name info record if it exists
     //
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
-    NameInfo = ObpReferenceNameInfo( ObjectHeader );
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
+    NameInfo = ObpReferenceNameInfo(ObjectHeader);
 
     //
     //  If the object type has a query name callback routine then
     //  that is how we get the name
     //
 
-    if (ObjectHeader->Type->TypeInfo.QueryNameProcedure != NULL) {
+    if (ObjectHeader->Type->TypeInfo.QueryNameProcedure != NULL)
+    {
 
-        try {
+        try
+        {
 
             KIRQL SaveIrql;
 
-            ObpBeginTypeSpecificCallOut( SaveIrql );
-            ObpEndTypeSpecificCallOut( SaveIrql, "Query", ObjectHeader->Type, Object );
+            ObpBeginTypeSpecificCallOut(SaveIrql);
+            ObpEndTypeSpecificCallOut(SaveIrql, "Query", ObjectHeader->Type, Object);
 
-            Status = (*ObjectHeader->Type->TypeInfo.QueryNameProcedure)( Object,
-                                                                         (BOOLEAN)((NameInfo != NULL) && (NameInfo->Name.Length != 0)),
-                                                                         ObjectNameInfo,
-                                                                         Length,
-                                                                         ReturnLength );
-
-        } except( EXCEPTION_EXECUTE_HANDLER ) {
+            Status = (*ObjectHeader->Type->TypeInfo.QueryNameProcedure)(
+                Object, (BOOLEAN)((NameInfo != NULL) && (NameInfo->Name.Length != 0)), ObjectNameInfo, Length,
+                ReturnLength);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             Status = GetExceptionCode();
         }
 
-        ObpDereferenceNameInfo( NameInfo );
+        ObpDereferenceNameInfo(NameInfo);
 
-        return( Status );
+        return (Status);
     }
 
     //
@@ -853,7 +863,8 @@ Return Value:
     //
 
 RETRY:
-    if ((NameInfo == NULL) || (NameInfo->Name.Buffer == NULL)) {
+    if ((NameInfo == NULL) || (NameInfo->Name.Buffer == NULL))
+    {
 
         //
         //  Compute the length of our return buffer, set the output
@@ -861,24 +872,27 @@ RETRY:
         //  enough
         //
 
-        NameInfoSize = sizeof( OBJECT_NAME_INFORMATION );
+        NameInfoSize = sizeof(OBJECT_NAME_INFORMATION);
 
-        try {
+        try
+        {
 
             *ReturnLength = NameInfoSize;
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
-        } except( EXCEPTION_EXECUTE_HANDLER ) {
+            ObpDereferenceNameInfo(NameInfo);
 
-            ObpDereferenceNameInfo( NameInfo );
-
-            return( GetExceptionCode() );
+            return (GetExceptionCode());
         }
 
-        if (Length < NameInfoSize) {
+        if (Length < NameInfoSize)
+        {
 
-            ObpDereferenceNameInfo( NameInfo );
+            ObpDereferenceNameInfo(NameInfo);
 
-            return( STATUS_INFO_LENGTH_MISMATCH );
+            return (STATUS_INFO_LENGTH_MISMATCH);
         }
 
         //
@@ -886,28 +900,31 @@ RETRY:
         //  and then return to our caller
         //
 
-        try {
+        try
+        {
 
             ObjectNameInfo->Name.Length = 0;
             ObjectNameInfo->Name.MaximumLength = 0;
             ObjectNameInfo->Name.Buffer = NULL;
-
-        } except( EXCEPTION_EXECUTE_HANDLER ) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             //  Fall through, since we cannot undo what we have done.
             //
             ObpDereferenceNameInfo(NameInfo);
 
-            return( GetExceptionCode() );
+            return (GetExceptionCode());
         }
 
         ObpDereferenceNameInfo(NameInfo);
 
-        return( STATUS_SUCCESS );
+        return (STATUS_SUCCESS);
     }
 
-    try {
+    try
+    {
 
         //
         //  The object does have a name but now see if this is
@@ -915,11 +932,13 @@ RETRY:
         //  is only the "\" character
         //
 
-        if (Object == ObpRootDirectoryObject) {
+        if (Object == ObpRootDirectoryObject)
+        {
 
-            NameSize = sizeof( OBJ_NAME_PATH_SEPARATOR );
-
-        } else {
+            NameSize = sizeof(OBJ_NAME_PATH_SEPARATOR);
+        }
+        else
+        {
 
             //
             //  The named object is not the root so for every directory
@@ -930,71 +949,77 @@ RETRY:
             //
 
             ObjectDirectory = NameInfo->Directory;
-            
-            if (ObjectDirectory) {
-                
-                ObfReferenceObject( ObjectDirectory );
+
+            if (ObjectDirectory)
+            {
+
+                ObfReferenceObject(ObjectDirectory);
                 ReferencedObject = ObjectDirectory;
             }
-            
-            NameSize = sizeof( OBJ_NAME_PATH_SEPARATOR ) + NameInfo->Name.Length;
 
-            ObpDereferenceNameInfo( NameInfo );
+            NameSize = sizeof(OBJ_NAME_PATH_SEPARATOR) + NameInfo->Name.Length;
+
+            ObpDereferenceNameInfo(NameInfo);
             NameInfo = NULL;
 
             //
             //  While we are not at the root we'll keep moving up
             //
 
-            while ((ObjectDirectory != ObpRootDirectoryObject) && (ObjectDirectory)) {
+            while ((ObjectDirectory != ObpRootDirectoryObject) && (ObjectDirectory))
+            {
 
                 //
                 //  Get the name information for this directory
                 //
 
 
-                ObjectDirectoryHeader = OBJECT_TO_OBJECT_HEADER( ObjectDirectory );
-                NameInfo = ObpReferenceNameInfo( ObjectDirectoryHeader );
+                ObjectDirectoryHeader = OBJECT_TO_OBJECT_HEADER(ObjectDirectory);
+                NameInfo = ObpReferenceNameInfo(ObjectDirectoryHeader);
 
-                if ((NameInfo != NULL) && (NameInfo->Directory != NULL)) {
+                if ((NameInfo != NULL) && (NameInfo->Directory != NULL))
+                {
 
                     //
                     //  This directory has a name so add it to the accumulated
                     //  size and move up the tree
                     //
 
-                    NameSize += sizeof( OBJ_NAME_PATH_SEPARATOR ) + NameInfo->Name.Length;
-                    
+                    NameSize += sizeof(OBJ_NAME_PATH_SEPARATOR) + NameInfo->Name.Length;
+
                     ObjectDirectory = NameInfo->Directory;
 
-                    if (ObjectDirectory) {
+                    if (ObjectDirectory)
+                    {
 
-                        ObfReferenceObject( ObjectDirectory );
+                        ObfReferenceObject(ObjectDirectory);
                     }
-                    
-                    ObpDereferenceNameInfo( NameInfo );
+
+                    ObpDereferenceNameInfo(NameInfo);
                     NameInfo = NULL;
-                    ObDereferenceObject( ReferencedObject );
-                    
+                    ObDereferenceObject(ReferencedObject);
+
                     ReferencedObject = ObjectDirectory;
 
                     //
                     //  UNICODE_STRINGs can only hold MAXUSHORT bytes.
                     //
 
-                    if (NameSize > MAXUSHORT) {
+                    if (NameSize > MAXUSHORT)
+                    {
 
                         break;
                     }
-
-                } else {
+                }
+                else
+                {
 
                     //
                     //  This directory does not have a name so we'll give it
                     //  the "..." name and stop the loop
                     //
 
-                    NameSize += sizeof( OBJ_NAME_PATH_SEPARATOR ) + OBP_MISSING_NAME_LITERAL_SIZE;
+                    NameSize += sizeof(OBJ_NAME_PATH_SEPARATOR) + OBP_MISSING_NAME_LITERAL_SIZE;
                     break;
                 }
             }
@@ -1004,7 +1029,8 @@ RETRY:
         //  UNICODE_STRINGs can only hold MAXUSHORT bytes
         //
 
-        if (NameSize > MAXUSHORT) {
+        if (NameSize > MAXUSHORT)
+        {
 
             Status = STATUS_NAME_TOO_LONG;
             DoFullQuery = FALSE;
@@ -1018,55 +1044,62 @@ RETRY:
         //  structure, plus an ending null character
         //
 
-        NameInfoSize = NameSize + sizeof( OBJECT_NAME_INFORMATION ) + sizeof( UNICODE_NULL );
+        NameInfoSize = NameSize + sizeof(OBJECT_NAME_INFORMATION) + sizeof(UNICODE_NULL);
 
         //
         //  Set the output size and make sure the supplied buffer is large enough
         //  to hold the information
         //
 
-        try {
+        try
+        {
 
             *ReturnLength = NameInfoSize;
-
-        } except( EXCEPTION_EXECUTE_HANDLER ) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             Status = GetExceptionCode();
             DoFullQuery = FALSE;
             leave;
         }
 
-        if (Length < NameInfoSize) {
+        if (Length < NameInfoSize)
+        {
 
             Status = STATUS_INFO_LENGTH_MISMATCH;
             DoFullQuery = FALSE;
             leave;
         }
+    }
+    finally
+    {
 
-    } finally {
-
-        ObpDereferenceNameInfo( NameInfo );
+        ObpDereferenceNameInfo(NameInfo);
         NameInfo = NULL;
 
-        if (ReferencedObject) {
+        if (ReferencedObject)
+        {
 
-            ObDereferenceObject( ReferencedObject );
+            ObDereferenceObject(ReferencedObject);
             ReferencedObject = NULL;
         }
     }
-    
-    if (!DoFullQuery) {
+
+    if (!DoFullQuery)
+    {
 
         return Status;
     }
 
-    NameInfo = ObpReferenceNameInfo( ObjectHeader );
+    NameInfo = ObpReferenceNameInfo(ObjectHeader);
 
     //
     //  Check whether someone else removed the name meanwhile
     //
 
-    if (!NameInfo) {
+    if (!NameInfo)
+    {
 
         //
         //  The name is gone, we need to jump to the code path that handles
@@ -1076,7 +1109,8 @@ RETRY:
         goto RETRY;
     }
 
-    try{
+    try
+    {
 
         //
         //  Set the String buffer to point to the byte right after the
@@ -1087,9 +1121,10 @@ RETRY:
 
         StringBuffer = (PWCH)ObjectNameInfo;
         StringBuffer = (PWCH)((PCH)StringBuffer + NameInfoSize);
-        OriginalBuffer = (PWCH)((PCH)ObjectNameInfo + sizeof( OBJECT_NAME_INFORMATION ));
+        OriginalBuffer = (PWCH)((PCH)ObjectNameInfo + sizeof(OBJECT_NAME_INFORMATION));
 
-        try {
+        try
+        {
 
             //
             //  Terminate the string with a null and backup one unicode
@@ -1105,7 +1140,8 @@ RETRY:
             //  the final "\"
             //
 
-            if (Object != ObpRootDirectoryObject) {
+            if (Object != ObpRootDirectoryObject)
+            {
 
                 //
                 //  Add in the objects name
@@ -1113,7 +1149,7 @@ RETRY:
 
                 String = &NameInfo->Name;
                 StringBuffer = (PWCH)((PCH)StringBuffer - String->Length);
-                RtlCopyMemory( StringBuffer, String->Buffer, String->Length );
+                RtlCopyMemory(StringBuffer, String->Buffer, String->Length);
 
                 //
                 //  While we are not at the root directory we'll keep
@@ -1122,28 +1158,30 @@ RETRY:
 
                 ObjectDirectory = NameInfo->Directory;
 
-                if (ObjectDirectory) {
+                if (ObjectDirectory)
+                {
 
                     //
                     //  Reference the directory for this object to make sure it's
                     //  valid while looking up
                     //
 
-                    ObfReferenceObject( ObjectDirectory );
+                    ObfReferenceObject(ObjectDirectory);
                     ReferencedObject = ObjectDirectory;
                 }
-                
-                ObpDereferenceNameInfo( NameInfo );
+
+                ObpDereferenceNameInfo(NameInfo);
                 NameInfo = NULL;
 
-                while ((ObjectDirectory != ObpRootDirectoryObject) && (ObjectDirectory)) {
+                while ((ObjectDirectory != ObpRootDirectoryObject) && (ObjectDirectory))
+                {
 
                     //
                     //  Get the name information for this directory
                     //
 
-                    ObjectDirectoryHeader = OBJECT_TO_OBJECT_HEADER( ObjectDirectory );
-                    NameInfo = ObpReferenceNameInfo( ObjectDirectoryHeader );
+                    ObjectDirectoryHeader = OBJECT_TO_OBJECT_HEADER(ObjectDirectory);
+                    NameInfo = ObpReferenceNameInfo(ObjectDirectoryHeader);
 
                     //
                     //  Tack on the "\" between the last name we added and
@@ -1157,31 +1195,34 @@ RETRY:
                     //  move up to the next directory.
                     //
 
-                    if ((NameInfo != NULL) && (NameInfo->Directory != NULL)) {
+                    if ((NameInfo != NULL) && (NameInfo->Directory != NULL))
+                    {
 
                         String = &NameInfo->Name;
                         StringBuffer = (PWCH)((PCH)StringBuffer - String->Length);
-                        RtlCopyMemory( StringBuffer, String->Buffer, String->Length );
+                        RtlCopyMemory(StringBuffer, String->Buffer, String->Length);
 
                         ObjectDirectory = NameInfo->Directory;
 
-                        if (ObjectDirectory) {
+                        if (ObjectDirectory)
+                        {
 
-                            ObfReferenceObject( ObjectDirectory );
+                            ObfReferenceObject(ObjectDirectory);
                         }
 
                         //
                         //  Dereference the name info (it must be done before dereferencing the object)
                         //
 
-                        ObpDereferenceNameInfo( NameInfo );
+                        ObpDereferenceNameInfo(NameInfo);
                         NameInfo = NULL;
 
-                        ObDereferenceObject( ReferencedObject );
+                        ObDereferenceObject(ReferencedObject);
 
                         ReferencedObject = ObjectDirectory;
-
-                    } else {
+                    }
+                    else
+                    {
 
                         //
                         //  The directory is nameless so use the "..." for
@@ -1199,22 +1240,22 @@ RETRY:
                         //  \..\ for 2 char length
                         //
 
-                        if (StringBuffer < OriginalBuffer) {
+                        if (StringBuffer < OriginalBuffer)
+                        {
 
                             StringBuffer = OriginalBuffer;
                         }
 
-                        RtlCopyMemory( StringBuffer,
-                                       OBP_MISSING_NAME_LITERAL,
-                                       OBP_MISSING_NAME_LITERAL_SIZE );
+                        RtlCopyMemory(StringBuffer, OBP_MISSING_NAME_LITERAL, OBP_MISSING_NAME_LITERAL_SIZE);
 
                         //
-                        //  Test if we are in the case commented above. If yes, we need to move the 
+                        //  Test if we are in the case commented above. If yes, we need to move the
                         //  current pointer to the next char, so the final assignment for \ a few lines
                         //  below will take effect on the start of the block.
                         //
 
-                        if (StringBuffer == OriginalBuffer) {
+                        if (StringBuffer == OriginalBuffer)
+                        {
 
                             StringBuffer++;
                         }
@@ -1235,7 +1276,7 @@ RETRY:
             BufferLength = (USHORT)((ULONG_PTR)ObjectNameInfo + NameInfoSize - (ULONG_PTR)StringBuffer);
 
             ObjectNameInfo->Name.MaximumLength = (USHORT)BufferLength;
-            ObjectNameInfo->Name.Length = (USHORT)(BufferLength - sizeof( UNICODE_NULL ));
+            ObjectNameInfo->Name.Length = (USHORT)(BufferLength - sizeof(UNICODE_NULL));
             ObjectNameInfo->Name.Buffer = OriginalBuffer;
 
             //
@@ -1244,14 +1285,16 @@ RETRY:
             //  the beginning and adjust the returned size.
             //
 
-            if (OriginalBuffer != StringBuffer) {
+            if (OriginalBuffer != StringBuffer)
+            {
 
                 RtlMoveMemory(OriginalBuffer, StringBuffer, BufferLength);
-                
-                *ReturnLength = BufferLength + sizeof( OBJECT_NAME_INFORMATION );
-            }
 
-        } except( EXCEPTION_EXECUTE_HANDLER ) {
+                *ReturnLength = BufferLength + sizeof(OBJECT_NAME_INFORMATION);
+            }
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             //  Fall through, since we cannot undo what we have done.
@@ -1263,28 +1306,25 @@ RETRY:
         }
 
         Status = STATUS_SUCCESS;
+    }
+    finally
+    {
 
-    } finally {
+        ObpDereferenceNameInfo(NameInfo);
 
-        ObpDereferenceNameInfo( NameInfo );
-        
-        if (ReferencedObject) {
+        if (ReferencedObject)
+        {
 
-            ObDereferenceObject( ReferencedObject );
+            ObDereferenceObject(ReferencedObject);
         }
     }
 
     return Status;
 }
 
-
+
 NTSTATUS
-ObQueryTypeName (
-    IN PVOID Object,
-    PUNICODE_STRING ObjectTypeName,
-    IN ULONG Length,
-    OUT PULONG ReturnLength
-    )
+ObQueryTypeName(IN PVOID Object, PUNICODE_STRING ObjectTypeName, IN ULONG Length, OUT PULONG ReturnLength)
 
 /*++
 
@@ -1333,29 +1373,32 @@ Return Value:
     //  unicode string structure
     //
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
     ObjectType = ObjectHeader->Type;
 
     NameSize = ObjectType->Name.Length;
-    TypeNameSize = NameSize + sizeof( UNICODE_NULL ) + sizeof( UNICODE_STRING );
+    TypeNameSize = NameSize + sizeof(UNICODE_NULL) + sizeof(UNICODE_STRING);
 
     //
     //  Update the number of bytes we need and make sure the output buffer is
     //  large enough
     //
 
-    try {
+    try
+    {
 
         *ReturnLength = TypeNameSize;
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
-    } except( EXCEPTION_EXECUTE_HANDLER ) {
-
-        return( GetExceptionCode() );
+        return (GetExceptionCode());
     }
 
-    if (Length < TypeNameSize) {
+    if (Length < TypeNameSize)
+    {
 
-        return( STATUS_INFO_LENGTH_MISMATCH );
+        return (STATUS_INFO_LENGTH_MISMATCH);
     }
 
     //
@@ -1368,7 +1411,8 @@ Return Value:
 
     String = &ObjectType->Name;
 
-    try {
+    try
+    {
 
         //
         //  Tack on the terminating null character and copy over
@@ -1379,7 +1423,7 @@ Return Value:
 
         StringBuffer = (PWCH)((PCH)StringBuffer - String->Length);
 
-        RtlCopyMemory( StringBuffer, String->Buffer, String->Length );
+        RtlCopyMemory(StringBuffer, String->Buffer, String->Length);
 
         //
         //  Now set the preceding unicode string to have the right
@@ -1387,27 +1431,24 @@ Return Value:
         //
 
         ObjectTypeName->Length = (USHORT)NameSize;
-        ObjectTypeName->MaximumLength = (USHORT)(NameSize+sizeof( UNICODE_NULL ));
+        ObjectTypeName->MaximumLength = (USHORT)(NameSize + sizeof(UNICODE_NULL));
         ObjectTypeName->Buffer = StringBuffer;
-
-    } except( EXCEPTION_EXECUTE_HANDLER ) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         //
         // Fall through, since we cannot undo what we have done.
         //
     }
 
-    return( STATUS_SUCCESS );
+    return (STATUS_SUCCESS);
 }
 
-
+
 NTSTATUS
-ObQueryTypeInfo (
-    IN POBJECT_TYPE ObjectType,
-    OUT POBJECT_TYPE_INFORMATION ObjectTypeInfo,
-    IN ULONG Length,
-    OUT PULONG ReturnLength
-    )
+ObQueryTypeInfo(IN POBJECT_TYPE ObjectType, OUT POBJECT_TYPE_INFORMATION ObjectTypeInfo, IN ULONG Length,
+                OUT PULONG ReturnLength)
 
 /*++
 
@@ -1441,7 +1482,8 @@ Return Value:
 {
     NTSTATUS Status;
 
-    try {
+    try
+    {
 
         //
         //  The total number of bytes needed for this query includes the
@@ -1449,18 +1491,20 @@ Return Value:
         //  rounded up to a ulong boundary
         //
 
-        *ReturnLength += sizeof( *ObjectTypeInfo ) + ALIGN_UP( ObjectType->Name.MaximumLength, ULONG );
+        *ReturnLength += sizeof(*ObjectTypeInfo) + ALIGN_UP(ObjectType->Name.MaximumLength, ULONG);
 
         //
         //  Make sure the buffer is large enough for this information and
         //  then fill in the record
         //
 
-        if (Length < *ReturnLength) {
+        if (Length < *ReturnLength)
+        {
 
             Status = STATUS_INFO_LENGTH_MISMATCH;
-
-        } else {
+        }
+        else
+        {
 
             ObjectTypeInfo->TotalNumberOfObjects = ObjectType->TotalNumberOfObjects;
             ObjectTypeInfo->TotalNumberOfHandles = ObjectType->TotalNumberOfHandles;
@@ -1482,20 +1526,19 @@ Return Value:
             //  could be changing by user
             //
 
-            ObjectTypeInfo->TypeName.Buffer = (PWSTR)(ObjectTypeInfo+1);
+            ObjectTypeInfo->TypeName.Buffer = (PWSTR)(ObjectTypeInfo + 1);
             ObjectTypeInfo->TypeName.Length = ObjectType->Name.Length;
             ObjectTypeInfo->TypeName.MaximumLength = ObjectType->Name.MaximumLength;
 
-            RtlCopyMemory( (PWSTR)(ObjectTypeInfo+1),
-                           ObjectType->Name.Buffer,
-                           ObjectType->Name.Length );
+            RtlCopyMemory((PWSTR)(ObjectTypeInfo + 1), ObjectType->Name.Buffer, ObjectType->Name.Length);
 
-            ((PWSTR)(ObjectTypeInfo+1))[ ObjectType->Name.Length/sizeof(WCHAR) ] = UNICODE_NULL;
+            ((PWSTR)(ObjectTypeInfo + 1))[ObjectType->Name.Length / sizeof(WCHAR)] = UNICODE_NULL;
 
             Status = STATUS_SUCCESS;
         }
-
-    } except( EXCEPTION_EXECUTE_HANDLER ) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         Status = GetExceptionCode();
     }
@@ -1503,12 +1546,9 @@ Return Value:
     return Status;
 }
 
-
+
 NTSTATUS
-ObQueryObjectAuditingByHandle (
-    IN HANDLE Handle,
-    OUT PBOOLEAN GenerateOnClose
-    )
+ObQueryObjectAuditingByHandle(IN HANDLE Handle, OUT PBOOLEAN GenerateOnClose)
 
 /*++
 
@@ -1541,24 +1581,26 @@ Return Value:
 
     PAGED_CODE();
 
-    ObpValidateIrql( "ObQueryObjectAuditingByHandle" );
+    ObpValidateIrql("ObQueryObjectAuditingByHandle");
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
 
     //
     //  For the current process we'll grab its object table and
     //  then get the object table entry
     //
 
-    if (IsKernelHandle( Handle, KeGetPreviousMode() ))  {
+    if (IsKernelHandle(Handle, KeGetPreviousMode()))
+    {
 
-        Handle = DecodeKernelHandle( Handle );
+        Handle = DecodeKernelHandle(Handle);
 
         ObjectTable = ObpKernelHandleTable;
+    }
+    else
+    {
 
-    } else {
-
-        ObjectTable = PsGetCurrentProcessByThread (CurrentThread)->ObjectTable;
+        ObjectTable = PsGetCurrentProcessByThread(CurrentThread)->ObjectTable;
     }
 
     //
@@ -1568,8 +1610,7 @@ Return Value:
 
     KeEnterCriticalRegionThread(&CurrentThread->Tcb);
 
-    ObjectTableEntry = ExMapHandleToPointer( ObjectTable,
-                                             Handle );
+    ObjectTableEntry = ExMapHandleToPointer(ObjectTable, Handle);
 
     //
     //  If we were given a valid handle we'll look at the attributes
@@ -1577,24 +1618,28 @@ Return Value:
     //  an audit on close
     //
 
-    if (ObjectTableEntry != NULL) {
+    if (ObjectTableEntry != NULL)
+    {
 
         CapturedAttributes = ObjectTableEntry->ObAttributes;
 
-        ExUnlockHandleTableEntry( ObjectTable, ObjectTableEntry );
+        ExUnlockHandleTableEntry(ObjectTable, ObjectTableEntry);
 
-        if (CapturedAttributes & OBJ_AUDIT_OBJECT_CLOSE) {
+        if (CapturedAttributes & OBJ_AUDIT_OBJECT_CLOSE)
+        {
 
             *GenerateOnClose = TRUE;
-
-        } else {
+        }
+        else
+        {
 
             *GenerateOnClose = FALSE;
         }
 
         Status = STATUS_SUCCESS;
-
-    } else {
+    }
+    else
+    {
 
         Status = STATUS_INVALID_HANDLE;
     }
@@ -1604,12 +1649,10 @@ Return Value:
     return Status;
 }
 
-
+
 #if DBG
 PUNICODE_STRING
-ObGetObjectName (
-    IN PVOID Object
-    )
+ObGetObjectName(IN PVOID Object)
 
 /*++
 
@@ -1636,35 +1679,34 @@ Return Value:
     //  Translate the input object to a name info structure
     //
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
-    NameInfo = OBJECT_HEADER_TO_NAME_INFO( ObjectHeader );
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
+    NameInfo = OBJECT_HEADER_TO_NAME_INFO(ObjectHeader);
 
     //
     //  If the object has a name then return the address of
     //  the name otherwise return null
     //
 
-    if ((NameInfo != NULL) && (NameInfo->Name.Length != 0)) {
+    if ((NameInfo != NULL) && (NameInfo->Name.Length != 0))
+    {
 
         return &NameInfo->Name;
-
-    } else {
+    }
+    else
+    {
 
         return NULL;
     }
 }
 #endif // DBG
 
-
+
 //
 //  Local support routine
 //
 
 BOOLEAN
-ObpSetHandleAttributes (
-    IN OUT PHANDLE_TABLE_ENTRY ObjectTableEntry,
-    IN ULONG_PTR Parameter
-    )
+ObpSetHandleAttributes(IN OUT PHANDLE_TABLE_ENTRY ObjectTableEntry, IN ULONG_PTR Parameter)
 
 /*++
 
@@ -1702,7 +1744,8 @@ Return Value:
     ObjectHeader = (POBJECT_HEADER)(((ULONG_PTR)(ObjectTableEntry->Object)) & ~OBJ_HANDLE_ATTRIBUTES);
 
     if ((ObjectInformation->ObjectInformation.Inherit) &&
-        ((ObjectHeader->Type->TypeInfo.InvalidAttributes & OBJ_INHERIT) != 0)) {
+        ((ObjectHeader->Type->TypeInfo.InvalidAttributes & OBJ_INHERIT) != 0))
+    {
 
         return FALSE;
     }
@@ -1714,20 +1757,24 @@ Return Value:
     //  used to store the pointer to the object header.
     //
 
-    if (ObjectInformation->ObjectInformation.Inherit) {
+    if (ObjectInformation->ObjectInformation.Inherit)
+    {
 
         ObjectTableEntry->ObAttributes |= OBJ_INHERIT;
-
-    } else {
+    }
+    else
+    {
 
         ObjectTableEntry->ObAttributes &= ~OBJ_INHERIT;
     }
 
-    if (ObjectInformation->ObjectInformation.ProtectFromClose) {
-        
-        ObjectTableEntry->GrantedAccess |= ObpAccessProtectCloseBit;
+    if (ObjectInformation->ObjectInformation.ProtectFromClose)
+    {
 
-    } else {
+        ObjectTableEntry->GrantedAccess |= ObpAccessProtectCloseBit;
+    }
+    else
+    {
 
         ObjectTableEntry->GrantedAccess &= ~ObpAccessProtectCloseBit;
     }
@@ -1738,5 +1785,3 @@ Return Value:
 
     return TRUE;
 }
-
-

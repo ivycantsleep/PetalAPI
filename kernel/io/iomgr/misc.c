@@ -31,10 +31,7 @@ Revision History:
 // Local function prototypes follow
 //
 
-VOID
-IopProcessWorkItem(
-    IN PVOID Parameter
-    );
+VOID IopProcessWorkItem(IN PVOID Parameter);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, NtCancelIoFile)
@@ -45,12 +42,9 @@ IopProcessWorkItem(
 #pragma alloc_text(PAGE, IopProcessWorkItem)
 #endif
 
-
+
 NTSTATUS
-NtCancelIoFile(
-    IN HANDLE FileHandle,
-    OUT PIO_STATUS_BLOCK IoStatusBlock
-    )
+NtCancelIoFile(IN HANDLE FileHandle, OUT PIO_STATUS_BLOCK IoStatusBlock)
 
 /*++
 
@@ -105,7 +99,8 @@ Return Value:
 
     requestorMode = KeGetPreviousModeByThread(&thread->Tcb);
 
-    if (requestorMode != KernelMode) {
+    if (requestorMode != KernelMode)
+    {
 
         //
         // The caller's access mode is user, so probe each of the arguments
@@ -115,15 +110,17 @@ Return Value:
         // dispatcher.
         //
 
-        try {
+        try
+        {
 
             //
             // The IoStatusBlock parameter must be writeable by the caller.
             //
 
-            ProbeForWriteIoStatus( IoStatusBlock );
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+            ProbeForWriteIoStatus(IoStatusBlock);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // An exception was incurred attempting to probe the caller'
@@ -142,14 +139,10 @@ Return Value:
     // access to the file, then it will fail.
     //
 
-    status = ObReferenceObjectByHandle( FileHandle,
-                                        0,
-                                        IoFileObjectType,
-                                        requestorMode,
-                                        (PVOID *) &fileObject,
-                                        NULL );
-    if (!NT_SUCCESS( status )) {
-        return(status);
+    status = ObReferenceObjectByHandle(FileHandle, 0, IoFileObjectType, requestorMode, (PVOID *)&fileObject, NULL);
+    if (!NT_SUCCESS(status))
+    {
+        return (status);
     }
 
     //
@@ -180,12 +173,13 @@ Return Value:
     // has control of the thread for now.
     //
 
-    KeRaiseIrql( APC_LEVEL, &irql );
+    KeRaiseIrql(APC_LEVEL, &irql);
 
     header = &thread->IrpList;
     entry = thread->IrpList.Flink;
 
-    while (header != entry) {
+    while (header != entry)
+    {
 
         //
         // An IRP has been found for this thread.  If the IRP refers to the
@@ -193,10 +187,11 @@ Return Value:
         // was found;  otherwise, simply continue the loop.
         //
 
-        irp = CONTAINING_RECORD( entry, IRP, ThreadListEntry );
-        if (irp->Tail.Overlay.OriginalFileObject == fileObject) {
+        irp = CONTAINING_RECORD(entry, IRP, ThreadListEntry);
+        if (irp->Tail.Overlay.OriginalFileObject == fileObject)
+        {
             found = TRUE;
-            IoCancelIrp( irp );
+            IoCancelIrp(irp);
         }
 
         entry = entry->Flink;
@@ -206,9 +201,10 @@ Return Value:
     // Lower the IRQL back down to what it was on entry to this procedure.
     //
 
-    KeLowerIrql( irql );
+    KeLowerIrql(irql);
 
-    if (found) {
+    if (found)
+    {
 
         LARGE_INTEGER interval;
 
@@ -223,9 +219,10 @@ Return Value:
         // Wait for a while so the canceled requests can complete.
         //
 
-        while (found) {
+        while (found)
+        {
 
-            (VOID) KeDelayExecutionThread( KernelMode, FALSE, &interval );
+            (VOID) KeDelayExecutionThread(KernelMode, FALSE, &interval);
 
             found = FALSE;
 
@@ -234,7 +231,7 @@ Return Value:
             // thread's APC routine.
             //
 
-            KeRaiseIrql( APC_LEVEL, &irql );
+            KeRaiseIrql(APC_LEVEL, &irql);
 
             //
             // Check the IRP list for requests which refer to the specified
@@ -243,7 +240,8 @@ Return Value:
 
             entry = thread->IrpList.Flink;
 
-            while (header != entry) {
+            while (header != entry)
+            {
 
                 //
                 // An IRP has been found for this thread.  If the IRP refers
@@ -251,8 +249,9 @@ Return Value:
                 // was found;  otherwise, simply continue the loop.
                 //
 
-                irp = CONTAINING_RECORD( entry, IRP, ThreadListEntry );
-                if (irp->Tail.Overlay.OriginalFileObject == fileObject) {
+                irp = CONTAINING_RECORD(entry, IRP, ThreadListEntry);
+                if (irp->Tail.Overlay.OriginalFileObject == fileObject)
+                {
                     found = TRUE;
                     break;
                 }
@@ -264,12 +263,12 @@ Return Value:
             // Lower the IRQL back down to what it was on entry to this procedure.
             //
 
-            KeLowerIrql( irql );
-
+            KeLowerIrql(irql);
         }
     }
 
-    try {
+    try
+    {
 
         //
         // Write the status back to the user.
@@ -277,30 +276,28 @@ Return Value:
 
         IoStatusBlock->Status = STATUS_SUCCESS;
         IoStatusBlock->Information = 0L;
-
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         //
         // An exception was incurred attempting to write the caller's
         // I/O status block; however, the service completed sucessfully so
         // just return sucess.
         //
-
     }
 
     //
     // Dereference the file object.
     //
 
-    ObDereferenceObject( fileObject );
+    ObDereferenceObject(fileObject);
 
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-NtDeleteFile(
-    IN POBJECT_ATTRIBUTES ObjectAttributes
-    )
+NtDeleteFile(IN POBJECT_ATTRIBUTES ObjectAttributes)
 
 /*++
 
@@ -339,12 +336,12 @@ Return Value:
     // for open for delete access w/the delete bit set, and then close it.
     //
 
-    RtlZeroMemory( &openPacket, sizeof( OPEN_PACKET ) );
+    RtlZeroMemory(&openPacket, sizeof(OPEN_PACKET));
 
     openPacket.Type = IO_TYPE_OPEN_PACKET;
-    openPacket.Size = sizeof( OPEN_PACKET );
+    openPacket.Size = sizeof(OPEN_PACKET);
     openPacket.CreateOptions = FILE_DELETE_ON_CLOSE;
-    openPacket.ShareAccess = (USHORT) FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
+    openPacket.ShareAccess = (USHORT)FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
     openPacket.Disposition = FILE_OPEN;
     openPacket.DeleteOnly = TRUE;
     openPacket.TraversedMountPoint = FALSE;
@@ -365,13 +362,8 @@ Return Value:
     // be deleted.
     //
 
-    status = ObOpenObjectByName( ObjectAttributes,
-                                 (POBJECT_TYPE) NULL,
-                                 requestorMode,
-                                 NULL,
-                                 DELETE,
-                                 &openPacket,
-                                 &handle );
+    status =
+        ObOpenObjectByName(ObjectAttributes, (POBJECT_TYPE)NULL, requestorMode, NULL, DELETE, &openPacket, &handle);
 
     //
     // The operation is successful if the parse check field of the open packet
@@ -379,18 +371,18 @@ Return Value:
     // status field of the packet is set to success.
     //
 
-    if (openPacket.ParseCheck != OPEN_PACKET_PATTERN) {
+    if (openPacket.ParseCheck != OPEN_PACKET_PATTERN)
+    {
         return status;
-    } else {
+    }
+    else
+    {
         return openPacket.FinalStatus;
     }
 }
-
+
 NTSTATUS
-NtFlushBuffersFile(
-    IN HANDLE FileHandle,
-    OUT PIO_STATUS_BLOCK IoStatusBlock
-    )
+NtFlushBuffersFile(IN HANDLE FileHandle, OUT PIO_STATUS_BLOCK IoStatusBlock)
 
 /*++
 
@@ -429,10 +421,11 @@ Return Value:
     // Get the previous mode;  i.e., the mode of the caller.
     //
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
     requestorMode = KeGetPreviousModeByThread(&CurrentThread->Tcb);
 
-    if (requestorMode != KernelMode) {
+    if (requestorMode != KernelMode)
+    {
 
         //
         // The caller's access mode is not kernel so probe each of the arguments
@@ -442,15 +435,17 @@ Return Value:
         // dispatcher.
         //
 
-        try {
+        try
+        {
 
             //
             // The IoStatusBlock parameter must be writeable by the caller.
             //
 
-            ProbeForWriteIoStatus( IoStatusBlock );
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+            ProbeForWriteIoStatus(IoStatusBlock);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // An exception was incurred attempting to probe the caller's
@@ -459,7 +454,6 @@ Return Value:
             //
 
             return GetExceptionCode();
-
         }
     }
 
@@ -470,13 +464,10 @@ Return Value:
     // access to the file, then it will fail.
     //
 
-    status = ObReferenceObjectByHandle( FileHandle,
-                                        0,
-                                        IoFileObjectType,
-                                        requestorMode,
-                                        (PVOID *) &fileObject,
-                                        &objectHandleInformation );
-    if (!NT_SUCCESS( status )) {
+    status = ObReferenceObjectByHandle(FileHandle, 0, IoFileObjectType, requestorMode, (PVOID *)&fileObject,
+                                       &objectHandleInformation);
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
@@ -489,11 +480,10 @@ Return Value:
     // access code is overlaid with the CREATE_PIPE_INSTANCE access.
     //
 
-    if (SeComputeGrantedAccesses( objectHandleInformation.GrantedAccess,
-                                  (!(fileObject->Flags & FO_NAMED_PIPE) ?
-                                  FILE_APPEND_DATA : 0) |
-                                  FILE_WRITE_DATA ) == 0) {
-        ObDereferenceObject( fileObject );
+    if (SeComputeGrantedAccesses(objectHandleInformation.GrantedAccess,
+                                 (!(fileObject->Flags & FO_NAMED_PIPE) ? FILE_APPEND_DATA : 0) | FILE_WRITE_DATA) == 0)
+    {
+        ObDereferenceObject(fileObject);
         return STATUS_ACCESS_DENIED;
     }
 
@@ -504,22 +494,25 @@ Return Value:
     // operation, then allocate and initialize the local event.
     //
 
-    if (fileObject->Flags & FO_SYNCHRONOUS_IO) {
+    if (fileObject->Flags & FO_SYNCHRONOUS_IO)
+    {
 
         BOOLEAN interrupted;
 
-        if (!IopAcquireFastLock( fileObject )) {
-            status = IopAcquireFileObjectLock( fileObject,
-                                               requestorMode,
-                                               (BOOLEAN) ((fileObject->Flags & FO_ALERTABLE_IO) != 0),
-                                               &interrupted );
-            if (interrupted) {
-                ObDereferenceObject( fileObject );
+        if (!IopAcquireFastLock(fileObject))
+        {
+            status = IopAcquireFileObjectLock(fileObject, requestorMode,
+                                              (BOOLEAN)((fileObject->Flags & FO_ALERTABLE_IO) != 0), &interrupted);
+            if (interrupted)
+            {
+                ObDereferenceObject(fileObject);
                 return status;
             }
         }
         synchronousIo = TRUE;
-    } else {
+    }
+    else
+    {
 
         //
         // This is a synchronous API being invoked for a file that is opened
@@ -528,12 +521,13 @@ Return Value:
         // to the caller.  A local event is used to do this.
         //
 
-        event = ExAllocatePool( NonPagedPool, sizeof( KEVENT ) );
-        if (event == NULL) {
-            ObDereferenceObject( fileObject );
+        event = ExAllocatePool(NonPagedPool, sizeof(KEVENT));
+        if (event == NULL)
+        {
+            ObDereferenceObject(fileObject);
             return STATUS_INSUFFICIENT_RESOURCES;
         }
-        KeInitializeEvent( event, SynchronizationEvent, FALSE );
+        KeInitializeEvent(event, SynchronizationEvent, FALSE);
         synchronousIo = FALSE;
     }
 
@@ -541,32 +535,34 @@ Return Value:
     // Set the file object to the Not-Signaled state.
     //
 
-    KeClearEvent( &fileObject->Event );
+    KeClearEvent(&fileObject->Event);
 
     //
     // Get the address of the target device object.
     //
 
-    deviceObject = IoGetRelatedDeviceObject( fileObject );
+    deviceObject = IoGetRelatedDeviceObject(fileObject);
 
     //
     // Allocate and initialize the I/O Request Packet (IRP) for this operation.
     // The allocation is performed with an exception handler in case the
     // caller does not have enough quota to allocate the packet.
 
-    irp = IoAllocateIrp( deviceObject->StackSize, TRUE );
-    if (!irp) {
+    irp = IoAllocateIrp(deviceObject->StackSize, TRUE);
+    if (!irp)
+    {
 
         //
         // An exception was incurred while attempting to allocate the IRP.
         // Cleanup and return an appropriate error status code.
         //
 
-        if (!(fileObject->Flags & FO_SYNCHRONOUS_IO)) {
-            ExFreePool( event );
+        if (!(fileObject->Flags & FO_SYNCHRONOUS_IO))
+        {
+            ExFreePool(event);
         }
 
-        IopAllocateIrpCleanup( fileObject, (PKEVENT) NULL );
+        IopAllocateIrpCleanup(fileObject, (PKEVENT)NULL);
 
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -578,22 +574,25 @@ Return Value:
     // Fill in the service independent parameters in the IRP.
     //
 
-    if (synchronousIo) {
-        irp->UserEvent = (PKEVENT) NULL;
+    if (synchronousIo)
+    {
+        irp->UserEvent = (PKEVENT)NULL;
         irp->UserIosb = IoStatusBlock;
-    } else {
+    }
+    else
+    {
         irp->UserEvent = event;
         irp->UserIosb = &localIoStatus;
         irp->Flags = IRP_SYNCHRONOUS_API;
     }
-    irp->Overlay.AsynchronousParameters.UserApcRoutine = (PIO_APC_ROUTINE) NULL;
+    irp->Overlay.AsynchronousParameters.UserApcRoutine = (PIO_APC_ROUTINE)NULL;
 
     //
     // Get a pointer to the stack location for the first driver.  This is used
     // to pass the original function codes and parameters.
     //
 
-    irpSp = IoGetNextIrpStackLocation( irp );
+    irpSp = IoGetNextIrpStackLocation(irp);
     irpSp->MajorFunction = IRP_MJ_FLUSH_BUFFERS;
     irpSp->FileObject = fileObject;
 
@@ -602,13 +601,8 @@ Return Value:
     // I/O completion.
     //
 
-    status = IopSynchronousServiceTail( deviceObject,
-                                        irp,
-                                        fileObject,
-                                        FALSE,
-                                        requestorMode,
-                                        synchronousIo,
-                                        OtherTransfer );
+    status =
+        IopSynchronousServiceTail(deviceObject, irp, fileObject, FALSE, requestorMode, synchronousIo, OtherTransfer);
 
     //
     // If the file for this operation was not opened for synchronous I/O, then
@@ -618,24 +612,17 @@ Return Value:
     // operation now.
     //
 
-    if (!synchronousIo) {
+    if (!synchronousIo)
+    {
 
-        status = IopSynchronousApiServiceTail( status,
-                                               event,
-                                               irp,
-                                               requestorMode,
-                                               &localIoStatus,
-                                               IoStatusBlock );
+        status = IopSynchronousApiServiceTail(status, event, irp, requestorMode, &localIoStatus, IoStatusBlock);
     }
 
     return status;
 }
-
+
 NTSTATUS
-NtQueryAttributesFile(
-    IN POBJECT_ATTRIBUTES ObjectAttributes,
-    OUT PFILE_BASIC_INFORMATION FileInformation
-    )
+NtQueryAttributesFile(IN POBJECT_ATTRIBUTES ObjectAttributes, OUT PFILE_BASIC_INFORMATION FileInformation)
 
 /*++
 
@@ -673,19 +660,20 @@ Return Value:
 
     requestorMode = KeGetPreviousMode();
 
-    if (requestorMode != KernelMode) {
+    if (requestorMode != KernelMode)
+    {
 
-        try {
+        try
+        {
 
             //
             // The caller's mode is not kernel, so probe the output buffer.
             //
 
-            ProbeForWriteSmallStructure( FileInformation,
-                                         sizeof( FILE_BASIC_INFORMATION ),
-                                         sizeof( ULONG_PTR ));
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+            ProbeForWriteSmallStructure(FileInformation, sizeof(FILE_BASIC_INFORMATION), sizeof(ULONG_PTR));
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // An exception was incurred while probing the caller's parameters.
@@ -701,13 +689,13 @@ Return Value:
     // query the file's basic attributes, and close the file.
     //
 
-    RtlZeroMemory( &openPacket, sizeof( OPEN_PACKET ) );
+    RtlZeroMemory(&openPacket, sizeof(OPEN_PACKET));
 
     openPacket.Type = IO_TYPE_OPEN_PACKET;
-    openPacket.Size = sizeof( OPEN_PACKET );
-    openPacket.ShareAccess = (USHORT) FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
+    openPacket.Size = sizeof(OPEN_PACKET);
+    openPacket.ShareAccess = (USHORT)FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
     openPacket.Disposition = FILE_OPEN;
-    openPacket.CreateOptions = FILE_OPEN_REPARSE_POINT|FILE_OPEN_FOR_BACKUP_INTENT;
+    openPacket.CreateOptions = FILE_OPEN_REPARSE_POINT | FILE_OPEN_FOR_BACKUP_INTENT;
     openPacket.BasicInformation = FileInformation;
     openPacket.NetworkInformation = &networkInformation;
     openPacket.QueryOnly = TRUE;
@@ -727,13 +715,8 @@ Return Value:
     // the query, and immediately close the file.
     //
 
-    status = ObOpenObjectByName( ObjectAttributes,
-                                 (POBJECT_TYPE) NULL,
-                                 requestorMode,
-                                 NULL,
-                                 FILE_READ_ATTRIBUTES,
-                                 &openPacket,
-                                 &handle );
+    status = ObOpenObjectByName(ObjectAttributes, (POBJECT_TYPE)NULL, requestorMode, NULL, FILE_READ_ATTRIBUTES,
+                                &openPacket, &handle);
 
     //
     // The operation is successful if the parse check field of the open packet
@@ -741,18 +724,18 @@ Return Value:
     // status field of the packet is set to success.
     //
 
-    if (openPacket.ParseCheck != OPEN_PACKET_PATTERN) {
+    if (openPacket.ParseCheck != OPEN_PACKET_PATTERN)
+    {
         return status;
-    } else {
+    }
+    else
+    {
         return openPacket.FinalStatus;
     }
 }
-
+
 NTSTATUS
-NtQueryFullAttributesFile(
-    IN POBJECT_ATTRIBUTES ObjectAttributes,
-    OUT PFILE_NETWORK_OPEN_INFORMATION FileInformation
-    )
+NtQueryFullAttributesFile(IN POBJECT_ATTRIBUTES ObjectAttributes, OUT PFILE_NETWORK_OPEN_INFORMATION FileInformation)
 
 /*++
 
@@ -791,23 +774,25 @@ Return Value:
 
     requestorMode = KeGetPreviousMode();
 
-    if (requestorMode != KernelMode) {
+    if (requestorMode != KernelMode)
+    {
 
-        try {
+        try
+        {
 
             //
             // The caller's mode is not kernel, so probe the output buffer.
             //
 
-            ProbeForWriteSmallStructure( FileInformation,
-                                         sizeof( FILE_NETWORK_OPEN_INFORMATION ),
+            ProbeForWriteSmallStructure(FileInformation, sizeof(FILE_NETWORK_OPEN_INFORMATION),
 #if defined(_X86_)
-                                         sizeof( LONG ));
+                                        sizeof(LONG));
 #else
-                                         sizeof( LONGLONG ));
+                                        sizeof(LONGLONG));
 #endif // defined(_X86_)
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // An exception was incurred while probing the caller's parameters.
@@ -823,20 +808,23 @@ Return Value:
     // query the file's full attributes, and close the file.
     //
 
-    RtlZeroMemory( &openPacket, sizeof( OPEN_PACKET ) );
+    RtlZeroMemory(&openPacket, sizeof(OPEN_PACKET));
 
     openPacket.Type = IO_TYPE_OPEN_PACKET;
-    openPacket.Size = sizeof( OPEN_PACKET );
-    openPacket.ShareAccess = (USHORT) FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
+    openPacket.Size = sizeof(OPEN_PACKET);
+    openPacket.ShareAccess = (USHORT)FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
     openPacket.Disposition = FILE_OPEN;
-    openPacket.CreateOptions = FILE_OPEN_REPARSE_POINT|FILE_OPEN_FOR_BACKUP_INTENT;
+    openPacket.CreateOptions = FILE_OPEN_REPARSE_POINT | FILE_OPEN_FOR_BACKUP_INTENT;
     openPacket.QueryOnly = TRUE;
     openPacket.FullAttributes = TRUE;
     openPacket.TraversedMountPoint = FALSE;
     openPacket.LocalFileObject = &localFileObject;
-    if (requestorMode != KernelMode) {
+    if (requestorMode != KernelMode)
+    {
         openPacket.NetworkInformation = &networkInformation;
-    } else {
+    }
+    else
+    {
         openPacket.NetworkInformation = FileInformation;
     }
 
@@ -853,13 +841,8 @@ Return Value:
     // the query, and immediately close the file.
     //
 
-    status = ObOpenObjectByName( ObjectAttributes,
-                                 (POBJECT_TYPE) NULL,
-                                 requestorMode,
-                                 NULL,
-                                 FILE_READ_ATTRIBUTES,
-                                 &openPacket,
-                                 &handle );
+    status = ObOpenObjectByName(ObjectAttributes, (POBJECT_TYPE)NULL, requestorMode, NULL, FILE_READ_ATTRIBUTES,
+                                &openPacket, &handle);
 
     //
     // The operation is successful if the parse check field of the open packet
@@ -867,26 +850,31 @@ Return Value:
     // status field of the packet is set to success.
     //
 
-    if (openPacket.ParseCheck != OPEN_PACKET_PATTERN) {
+    if (openPacket.ParseCheck != OPEN_PACKET_PATTERN)
+    {
         return status;
-    } else {
+    }
+    else
+    {
         status = openPacket.FinalStatus;
     }
 
-    if (NT_SUCCESS( status )) {
-        if (requestorMode != KernelMode) {
-            try {
+    if (NT_SUCCESS(status))
+    {
+        if (requestorMode != KernelMode)
+        {
+            try
+            {
 
                 //
                 // The query worked, so copy the returned information to the
                 // caller's output buffer.
                 //
 
-                RtlCopyMemory( FileInformation,
-                               &networkInformation,
-                               sizeof( FILE_NETWORK_OPEN_INFORMATION ) );
-
-            } except(EXCEPTION_EXECUTE_HANDLER) {
+                RtlCopyMemory(FileInformation, &networkInformation, sizeof(FILE_NETWORK_OPEN_INFORMATION));
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
                 status = GetExceptionCode();
             }
         }
@@ -896,19 +884,18 @@ Return Value:
 }
 
 PIO_WORKITEM
-IoAllocateWorkItem(
-    PDEVICE_OBJECT DeviceObject
-    )
+IoAllocateWorkItem(PDEVICE_OBJECT DeviceObject)
 {
     PIO_WORKITEM ioWorkItem;
     PWORK_QUEUE_ITEM exWorkItem;
 
     //
     // Allocate a new workitem structure.
-    // 
+    //
 
-    ioWorkItem = ExAllocatePool( NonPagedPool, sizeof( IO_WORKITEM ));
-    if (ioWorkItem != NULL) {
+    ioWorkItem = ExAllocatePool(NonPagedPool, sizeof(IO_WORKITEM));
+    if (ioWorkItem != NULL)
+    {
 
         //
         // Initialize the invariant portions of both ioWorkItem and
@@ -916,22 +903,19 @@ IoAllocateWorkItem(
         //
 
 #if DBG
-        ioWorkItem->Size = sizeof( IO_WORKITEM );
+        ioWorkItem->Size = sizeof(IO_WORKITEM);
 #endif
 
         ioWorkItem->DeviceObject = DeviceObject;
 
         exWorkItem = &ioWorkItem->WorkItem;
-        ExInitializeWorkItem( exWorkItem, IopProcessWorkItem, ioWorkItem );
+        ExInitializeWorkItem(exWorkItem, IopProcessWorkItem, ioWorkItem);
     }
 
     return ioWorkItem;
 }
 
-VOID
-IoFreeWorkItem(
-    PIO_WORKITEM IoWorkItem
-    )
+VOID IoFreeWorkItem(PIO_WORKITEM IoWorkItem)
 
 /*++
 
@@ -952,18 +936,13 @@ Return Value:
 --*/
 
 {
-    ASSERT( IoWorkItem->Size == sizeof( IO_WORKITEM ));
+    ASSERT(IoWorkItem->Size == sizeof(IO_WORKITEM));
 
-    ExFreePool( IoWorkItem );
+    ExFreePool(IoWorkItem);
 }
 
-VOID
-IoQueueWorkItem(
-    IN PIO_WORKITEM IoWorkItem,
-    IN PIO_WORKITEM_ROUTINE WorkerRoutine,
-    IN WORK_QUEUE_TYPE QueueType,
-    IN PVOID Context
-    )
+VOID IoQueueWorkItem(IN PIO_WORKITEM IoWorkItem, IN PIO_WORKITEM_ROUTINE WorkerRoutine, IN WORK_QUEUE_TYPE QueueType,
+                     IN PVOID Context)
 /*++
 
 Routine Description:
@@ -995,14 +974,14 @@ Return Value:
 {
     PWORK_QUEUE_ITEM exWorkItem;
 
-    ASSERT( KeGetCurrentIrql() <= DISPATCH_LEVEL );
-    ASSERT( IoWorkItem->Size == sizeof( IO_WORKITEM ));
+    ASSERT(KeGetCurrentIrql() <= DISPATCH_LEVEL);
+    ASSERT(IoWorkItem->Size == sizeof(IO_WORKITEM));
 
     //
     // Keep a reference on the device object so it doesn't go away.
     //
 
-    ObReferenceObject( IoWorkItem->DeviceObject );
+    ObReferenceObject(IoWorkItem->DeviceObject);
 
     //
     // Initialize the fields in IoWorkItem
@@ -1014,16 +993,13 @@ Return Value:
     //
     // Get a pointer to the ExWorkItem, queue it, and return.
     // IopProcessWorkItem() will perform the dereference.
-    // 
+    //
 
     exWorkItem = &IoWorkItem->WorkItem;
-    ExQueueWorkItem( exWorkItem, QueueType );
+    ExQueueWorkItem(exWorkItem, QueueType);
 }
 
-VOID
-IopProcessWorkItem(
-    IN PVOID Parameter
-    )
+VOID IopProcessWorkItem(IN PVOID Parameter)
 
 /*++
 
@@ -1062,14 +1038,12 @@ Return Value:
     // Call the original worker.
     //
 
-    ioWorkItem->Routine( deviceObject,
-                         ioWorkItem->Context );
+    ioWorkItem->Routine(deviceObject, ioWorkItem->Context);
 
     //
     // Now we can dereference the device object, since its code is no longer
     // being executed for this work item.
     //
 
-    ObDereferenceObject( deviceObject );
+    ObDereferenceObject(deviceObject);
 }
-

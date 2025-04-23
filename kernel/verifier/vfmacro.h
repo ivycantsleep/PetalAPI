@@ -23,5 +23,4 @@ Revision History:
 //
 // This macro takes an array and returns the number of elements in it.
 //
-#define ARRAY_COUNT(array) (sizeof(array)/sizeof(array[0]))
-
+#define ARRAY_COUNT(array) (sizeof(array) / sizeof(array[0]))

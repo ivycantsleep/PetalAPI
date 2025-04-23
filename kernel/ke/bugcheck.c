@@ -28,7 +28,7 @@ Revision History:
 #include <inbv.h>
 #include <hdlsblk.h>
 #include <hdlsterm.h>
-
+
 //
 //
 //
@@ -64,15 +64,9 @@ extern PVOID MmPteCodeEnd;
 // Define forward referenced prototypes.
 //
 
-VOID
-KiScanBugCheckCallbackList (
-    VOID
-    );
+VOID KiScanBugCheckCallbackList(VOID);
 
-VOID
-KiInvokeBugCheckEntryCallbacks (
-    VOID
-    );
+VOID KiInvokeBugCheckEntryCallbacks(VOID);
 
 //
 // Define bug count recursion counter and a context buffer.
@@ -80,77 +74,68 @@ KiInvokeBugCheckEntryCallbacks (
 
 ULONG KeBugCheckCount = 1;
 
-
-VOID
-KeBugCheck (
-    IN ULONG BugCheckCode
-    )
+
+VOID KeBugCheck(IN ULONG BugCheckCode)
 {
-    KeBugCheck2(BugCheckCode,0,0,0,0,NULL);
+    KeBugCheck2(BugCheckCode, 0, 0, 0, 0, NULL);
 }
 
-VOID
-KeBugCheckEx (
-    IN ULONG BugCheckCode,
-    IN ULONG_PTR P1,
-    IN ULONG_PTR P2,
-    IN ULONG_PTR P3,
-    IN ULONG_PTR P4
-    )
+VOID KeBugCheckEx(IN ULONG BugCheckCode, IN ULONG_PTR P1, IN ULONG_PTR P2, IN ULONG_PTR P3, IN ULONG_PTR P4)
 {
-    KeBugCheck2(BugCheckCode,P1,P2,P3,P4,NULL);
+    KeBugCheck2(BugCheckCode, P1, P2, P3, P4, NULL);
 }
 
 ULONG_PTR KiBugCheckData[5];
 PUNICODE_STRING KiBugCheckDriver;
 
 BOOLEAN
-KeGetBugMessageText(
-    IN ULONG MessageId,
-    IN PANSI_STRING ReturnedString OPTIONAL
-    )
+KeGetBugMessageText(IN ULONG MessageId, IN PANSI_STRING ReturnedString OPTIONAL)
 {
-    ULONG   i;
-    PUCHAR  s;
+    ULONG i;
+    PUCHAR s;
     PMESSAGE_RESOURCE_BLOCK MessageBlock;
     PUCHAR Buffer;
     BOOLEAN Result;
 
     Result = FALSE;
-    try {
-        if (KiBugCodeMessages != NULL) {
-            MmMakeKernelResourceSectionWritable ();
+    try
+    {
+        if (KiBugCodeMessages != NULL)
+        {
+            MmMakeKernelResourceSectionWritable();
             MessageBlock = &KiBugCodeMessages->Blocks[0];
-            for (i = KiBugCodeMessages->NumberOfBlocks; i; i -= 1) {
-                if (MessageId >= MessageBlock->LowId &&
-                    MessageId <= MessageBlock->HighId) {
+            for (i = KiBugCodeMessages->NumberOfBlocks; i; i -= 1)
+            {
+                if (MessageId >= MessageBlock->LowId && MessageId <= MessageBlock->HighId)
+                {
 
                     s = (PCHAR)KiBugCodeMessages + MessageBlock->OffsetToEntries;
-                    for (i = MessageId - MessageBlock->LowId; i; i -= 1) {
+                    for (i = MessageId - MessageBlock->LowId; i; i -= 1)
+                    {
                         s += ((PMESSAGE_RESOURCE_ENTRY)s)->Length;
                     }
 
                     Buffer = ((PMESSAGE_RESOURCE_ENTRY)s)->Text;
 
                     i = strlen(Buffer) - 1;
-                    while (i > 0 && (Buffer[i] == '\n'  ||
-                                     Buffer[i] == '\r'  ||
-                                     Buffer[i] == 0
-                                    )
-                          ) {
-                        if (!ARGUMENT_PRESENT( ReturnedString )) {
+                    while (i > 0 && (Buffer[i] == '\n' || Buffer[i] == '\r' || Buffer[i] == 0))
+                    {
+                        if (!ARGUMENT_PRESENT(ReturnedString))
+                        {
                             Buffer[i] = 0;
                         }
                         i -= 1;
                     }
 
-                    if (!ARGUMENT_PRESENT( ReturnedString )) {
+                    if (!ARGUMENT_PRESENT(ReturnedString))
+                    {
                         InbvDisplayString(Buffer);
-                        }
-                    else {
+                    }
+                    else
+                    {
                         ReturnedString->Buffer = Buffer;
-                        ReturnedString->Length = (USHORT)(i+1);
-                        ReturnedString->MaximumLength = (USHORT)(i+1);
+                        ReturnedString->Length = (USHORT)(i + 1);
+                        ReturnedString->MaximumLength = (USHORT)(i + 1);
                     }
                     Result = TRUE;
                     break;
@@ -158,55 +143,54 @@ KeGetBugMessageText(
                 MessageBlock += 1;
             }
         }
-    } except ( EXCEPTION_EXECUTE_HANDLER ) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         ;
     }
 
     return Result;
 }
 
-
 
 PCHAR
-KeBugCheckUnicodeToAnsi(
-    IN PUNICODE_STRING UnicodeString,
-    OUT PCHAR AnsiBuffer,
-    IN ULONG MaxAnsiLength
-    )
+KeBugCheckUnicodeToAnsi(IN PUNICODE_STRING UnicodeString, OUT PCHAR AnsiBuffer, IN ULONG MaxAnsiLength)
 {
     PCHAR Dst;
     PWSTR Src;
     ULONG Length;
 
-    Length = UnicodeString->Length / sizeof( WCHAR );
-    if (Length >= MaxAnsiLength) {
+    Length = UnicodeString->Length / sizeof(WCHAR);
+    if (Length >= MaxAnsiLength)
+    {
         Length = MaxAnsiLength - 1;
-        }
+    }
     Src = UnicodeString->Buffer;
     Dst = AnsiBuffer;
-    while (Length--) {
+    while (Length--)
+    {
         *Dst++ = (UCHAR)*Src++;
-        }
+    }
     *Dst = '\0';
     return AnsiBuffer;
 }
 
-VOID
-KiBugCheckDebugBreak (
-    IN ULONG    BreakStatus
-    )
+VOID KiBugCheckDebugBreak(IN ULONG BreakStatus)
 {
-    do {
+    do
+    {
 
-        try {
+        try
+        {
 
             //
             // Issue a breakpoint
             //
 
-            DbgBreakPointWithStatus (BreakStatus);
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+            DbgBreakPointWithStatus(BreakStatus);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             HEADLESS_RSP_QUERY_INFO Response;
             NTSTATUS Status;
@@ -217,55 +201,42 @@ KiBugCheckDebugBreak (
             // the headless terminal a chance to reboot the system, if there is one.
             //
             Length = sizeof(HEADLESS_RSP_QUERY_INFO);
-            Status = HeadlessDispatch(HeadlessCmdQueryInformation,
-                                      NULL,
-                                      0,
-                                      &Response,
-                                      &Length
-                                     );
+            Status = HeadlessDispatch(HeadlessCmdQueryInformation, NULL, 0, &Response, &Length);
 
-            if (NT_SUCCESS(Status) &&
-                (Response.PortType == HeadlessSerialPort) &&
-                Response.Serial.TerminalAttached) {
+            if (NT_SUCCESS(Status) && (Response.PortType == HeadlessSerialPort) && Response.Serial.TerminalAttached)
+            {
 
-                HeadlessDispatch(HeadlessCmdPutString,
-                                 "\r\n",
-                                 sizeof("\r\n"),
-                                 NULL,
-                                 NULL
-                                );
+                HeadlessDispatch(HeadlessCmdPutString, "\r\n", sizeof("\r\n"), NULL, NULL);
 
-                for (;;) {
+                for (;;)
+                {
                     HeadlessDispatch(HeadlessCmdDoBugCheckProcessing, NULL, 0, NULL, NULL);
                 }
-
             }
 
             //
             // No terminal, or it failed, halt the system
             //
 
-            try {
+            try
+            {
 
                 HalHaltSystem();
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
 
-            } except(EXCEPTION_EXECUTE_HANDLER) {
-
-                for (;;) {
+                for (;;)
+                {
                 }
-
             }
         }
     } while (BreakStatus != DBG_STATUS_BUGCHECK_FIRST);
 }
 
 PVOID
-KiPcToFileHeader(
-    IN PVOID PcValue,
-    OUT PLDR_DATA_TABLE_ENTRY *DataTableEntry,
-    IN LOGICAL DriversOnly,
-    OUT PBOOLEAN InKernelOrHal
-    )
+KiPcToFileHeader(IN PVOID PcValue, OUT PLDR_DATA_TABLE_ENTRY *DataTableEntry, IN LOGICAL DriversOnly,
+                 OUT PBOOLEAN InKernelOrHal)
 
 /*++
 
@@ -310,10 +281,12 @@ Return Value:
     // locate the appropriate entry.
     //
 
-    if (KeLoaderBlock != NULL) {
+    if (KeLoaderBlock != NULL)
+    {
         ModuleListHead = &KeLoaderBlock->LoadOrderListHead;
-
-    } else {
+    }
+    else
+    {
         ModuleListHead = &PsLoadedModuleList;
     }
 
@@ -321,29 +294,33 @@ Return Value:
 
     ReturnBase = NULL;
     Next = ModuleListHead->Flink;
-    if (Next != NULL) {
+    if (Next != NULL)
+    {
         i = 0;
-        while (Next != ModuleListHead) {
-            if (MmIsAddressValid(Next) == FALSE) {
+        while (Next != ModuleListHead)
+        {
+            if (MmIsAddressValid(Next) == FALSE)
+            {
                 return NULL;
             }
             i += 1;
-            if ((i <= 2) && (DriversOnly == TRUE)) {
+            if ((i <= 2) && (DriversOnly == TRUE))
+            {
                 Next = Next->Flink;
                 continue;
             }
 
-            Entry = CONTAINING_RECORD(Next,
-                                      LDR_DATA_TABLE_ENTRY,
-                                      InLoadOrderLinks);
+            Entry = CONTAINING_RECORD(Next, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
             Next = Next->Flink;
             Base = Entry->DllBase;
             Bounds = (ULONG_PTR)Base + Entry->SizeOfImage;
-            if ((ULONG_PTR)PcValue >= (ULONG_PTR)Base && (ULONG_PTR)PcValue < Bounds) {
+            if ((ULONG_PTR)PcValue >= (ULONG_PTR)Base && (ULONG_PTR)PcValue < Bounds)
+            {
                 *DataTableEntry = Entry;
                 ReturnBase = Base;
-                if (i <= 2) {
+                if (i <= 2)
+                {
                     *InKernelOrHal = TRUE;
                 }
                 break;
@@ -355,14 +332,8 @@ Return Value:
 }
 
 
-
-VOID
-KiDumpParameterImages(
-    IN PCHAR Buffer,
-    IN PULONG_PTR BugCheckParameters,
-    IN ULONG NumberOfParameters,
-    IN PKE_BUGCHECK_UNICODE_TO_ANSI UnicodeToAnsiRoutine
-    )
+VOID KiDumpParameterImages(IN PCHAR Buffer, IN PULONG_PTR BugCheckParameters, IN ULONG NumberOfParameters,
+                           IN PKE_BUGCHECK_UNICODE_TO_ANSI UnicodeToAnsiRoutine)
 
 /*++
 
@@ -395,7 +366,7 @@ Return Value:
     ULONG i;
     PLDR_DATA_TABLE_ENTRY DataTableEntry;
     PVOID ImageBase;
-    UCHAR AnsiBuffer[ 32 ];
+    UCHAR AnsiBuffer[32];
     ULONG DateStamp;
     PIMAGE_NT_HEADERS NtHeaders;
     BOOLEAN FirstPrint = TRUE;
@@ -419,22 +390,17 @@ Return Value:
     for (i = 0; i < NumberOfParameters; i += 1)
     {
         DateStamp = 0;
-        ImageBase = KiPcToFileHeader((PVOID) BugCheckParameters[i],
-                                     &DataTableEntry,
-                                     TRUE,
-                                     &InKernelOrHal);
+        ImageBase = KiPcToFileHeader((PVOID)BugCheckParameters[i], &DataTableEntry, TRUE, &InKernelOrHal);
         if (ImageBase == NULL)
         {
-            BugCheckDriver = MmLocateUnloadedDriver ((PVOID)BugCheckParameters[i]);
+            BugCheckDriver = MmLocateUnloadedDriver((PVOID)BugCheckParameters[i]);
             if (BugCheckDriver == NULL)
             {
                 continue;
             }
             DriverName = BugCheckDriver;
             ImageBase = (PVOID)BugCheckParameters[i];
-            (*UnicodeToAnsiRoutine) (BugCheckDriver,
-                                     AnsiBuffer,
-                                     sizeof (AnsiBuffer));
+            (*UnicodeToAnsiRoutine)(BugCheckDriver, AnsiBuffer, sizeof(AnsiBuffer));
         }
         else
         {
@@ -447,17 +413,11 @@ Return Value:
                 }
             }
             DriverName = &DataTableEntry->BaseDllName;
-            (*UnicodeToAnsiRoutine)( DriverName,
-                                     AnsiBuffer,
-                                     sizeof( AnsiBuffer ));
+            (*UnicodeToAnsiRoutine)(DriverName, AnsiBuffer, sizeof(AnsiBuffer));
         }
 
-        sprintf(Buffer, "%s**  %12s - Address %p base at %p, DateStamp %08lx\n",
-                FirstPrint ? "\n*":"*",
-                AnsiBuffer,
-                (PVOID)BugCheckParameters[i],
-                ImageBase,
-                DateStamp);
+        sprintf(Buffer, "%s**  %12s - Address %p base at %p, DateStamp %08lx\n", FirstPrint ? "\n*" : "*", AnsiBuffer,
+                (PVOID)BugCheckParameters[i], ImageBase, DateStamp);
 
         //
         // Only print the string if we are called to print multiple.
@@ -479,18 +439,11 @@ Return Value:
 }
 
 #ifdef _X86_
-#pragma optimize("y", off)      // RtlCaptureContext needs EBP to be correct
+#pragma optimize("y", off) // RtlCaptureContext needs EBP to be correct
 #endif
 
-VOID
-KeBugCheck2 (
-    IN ULONG BugCheckCode,
-    IN ULONG_PTR BugCheckParameter1,
-    IN ULONG_PTR BugCheckParameter2,
-    IN ULONG_PTR BugCheckParameter3,
-    IN ULONG_PTR BugCheckParameter4,
-    IN PVOID SaveDataPage
-    )
+VOID KeBugCheck2(IN ULONG BugCheckCode, IN ULONG_PTR BugCheckParameter1, IN ULONG_PTR BugCheckParameter2,
+                 IN ULONG_PTR BugCheckParameter3, IN ULONG_PTR BugCheckParameter4, IN PVOID SaveDataPage)
 
 /*++
 
@@ -537,7 +490,7 @@ Return Value:
     //
     // Initialization
     //
-    
+
     Reboot = FALSE;
     KiBugCheckDriver = NULL;
 
@@ -545,7 +498,8 @@ Return Value:
     // Try to simulate a power failure for Cluster testing
     //
 
-    if (BugCheckCode == POWER_FAILURE_SIMULATE) {
+    if (BugCheckCode == POWER_FAILURE_SIMULATE)
+    {
         KiScanBugCheckCallbackList();
         HalReturnToFirmware(HalRebootRoutine);
     }
@@ -583,39 +537,40 @@ Return Value:
     //
 
 
-    switch (BugCheckCode) {
+    switch (BugCheckCode)
+    {
 
-        case SYSTEM_THREAD_EXCEPTION_NOT_HANDLED:
-        case KERNEL_MODE_EXCEPTION_NOT_HANDLED:
-        case KMODE_EXCEPTION_NOT_HANDLED:
-            PssMessage = KMODE_EXCEPTION_NOT_HANDLED;
-            break;
+    case SYSTEM_THREAD_EXCEPTION_NOT_HANDLED:
+    case KERNEL_MODE_EXCEPTION_NOT_HANDLED:
+    case KMODE_EXCEPTION_NOT_HANDLED:
+        PssMessage = KMODE_EXCEPTION_NOT_HANDLED;
+        break;
 
-        case DATA_BUS_ERROR:
-        case NO_MORE_SYSTEM_PTES:
-        case INACCESSIBLE_BOOT_DEVICE:
-        case UNEXPECTED_KERNEL_MODE_TRAP:
-        case ACPI_BIOS_ERROR:
-        case ACPI_BIOS_FATAL_ERROR:
-        case FAT_FILE_SYSTEM:
-        case DRIVER_CORRUPTED_EXPOOL:
-        case THREAD_STUCK_IN_DEVICE_DRIVER:
-            PssMessage = BugCheckCode;
-            break;
+    case DATA_BUS_ERROR:
+    case NO_MORE_SYSTEM_PTES:
+    case INACCESSIBLE_BOOT_DEVICE:
+    case UNEXPECTED_KERNEL_MODE_TRAP:
+    case ACPI_BIOS_ERROR:
+    case ACPI_BIOS_FATAL_ERROR:
+    case FAT_FILE_SYSTEM:
+    case DRIVER_CORRUPTED_EXPOOL:
+    case THREAD_STUCK_IN_DEVICE_DRIVER:
+        PssMessage = BugCheckCode;
+        break;
 
-        case DRIVER_CORRUPTED_MMPOOL:
-            PssMessage = DRIVER_CORRUPTED_EXPOOL;
-            break;
+    case DRIVER_CORRUPTED_MMPOOL:
+        PssMessage = DRIVER_CORRUPTED_EXPOOL;
+        break;
 
-        case NTFS_FILE_SYSTEM:
-            PssMessage = FAT_FILE_SYSTEM;
-            break;
+    case NTFS_FILE_SYSTEM:
+        PssMessage = FAT_FILE_SYSTEM;
+        break;
 
-        case STATUS_SYSTEM_IMAGE_BAD_SIGNATURE:
-            PssMessage = BUGCODE_PSS_MESSAGE_SIGNATURE;
-            break;
-        default:
-            PssMessage = BUGCODE_PSS_MESSAGE;
+    case STATUS_SYSTEM_IMAGE_BAD_SIGNATURE:
+        PssMessage = BUGCODE_PSS_MESSAGE_SIGNATURE;
+        break;
+    default:
+        PssMessage = BUGCODE_PSS_MESSAGE;
         break;
     }
 
@@ -631,7 +586,8 @@ Return Value:
     KiBugCheckData[3] = BugCheckParameter3;
     KiBugCheckData[4] = BugCheckParameter4;
 
-    switch (BugCheckCode) {
+    switch (BugCheckCode)
+    {
 
     case FATAL_UNHANDLED_HARD_ERROR:
         //
@@ -648,18 +604,18 @@ Return Value:
         // The last argument is the OemMessage to be printed.
         //
         {
-        PULONG_PTR parameterArray;
+            PULONG_PTR parameterArray;
 
-        hardErrorCalled = TRUE;
+            hardErrorCalled = TRUE;
 
-        HardErrorCaption = (PCHAR)BugCheckParameter3;
-        HardErrorMessage = (PCHAR)BugCheckParameter4;
-        parameterArray = (PULONG_PTR)BugCheckParameter2;
-        KiBugCheckData[0] = (ULONG)BugCheckParameter1;
-        KiBugCheckData[1] = parameterArray[0];
-        KiBugCheckData[2] = parameterArray[1];
-        KiBugCheckData[3] = parameterArray[2];
-        KiBugCheckData[4] = parameterArray[3];
+            HardErrorCaption = (PCHAR)BugCheckParameter3;
+            HardErrorMessage = (PCHAR)BugCheckParameter4;
+            parameterArray = (PULONG_PTR)BugCheckParameter2;
+            KiBugCheckData[0] = (ULONG)BugCheckParameter1;
+            KiBugCheckData[1] = parameterArray[0];
+            KiBugCheckData[2] = parameterArray[1];
+            KiBugCheckData[3] = parameterArray[2];
+            KiBugCheckData[4] = parameterArray[3];
         }
         break;
 
@@ -667,21 +623,23 @@ Return Value:
 
         ExecutionAddress = (PVOID)BugCheckParameter4;
 
-        if (ExecutionAddress >= ExPoolCodeStart && ExecutionAddress < ExPoolCodeEnd) {
+        if (ExecutionAddress >= ExPoolCodeStart && ExecutionAddress < ExPoolCodeEnd)
+        {
             KiBugCheckData[0] = DRIVER_CORRUPTED_EXPOOL;
         }
-        else if (ExecutionAddress >= MmPoolCodeStart && ExecutionAddress < MmPoolCodeEnd) {
+        else if (ExecutionAddress >= MmPoolCodeStart && ExecutionAddress < MmPoolCodeEnd)
+        {
             KiBugCheckData[0] = DRIVER_CORRUPTED_MMPOOL;
         }
-        else if (ExecutionAddress >= MmPteCodeStart && ExecutionAddress < MmPteCodeEnd) {
+        else if (ExecutionAddress >= MmPteCodeStart && ExecutionAddress < MmPteCodeEnd)
+        {
             KiBugCheckData[0] = DRIVER_CORRUPTED_SYSPTES;
         }
-        else {
-            ImageBase = KiPcToFileHeader (ExecutionAddress,
-                                          &DataTableEntry,
-                                          FALSE,
-                                          &InKernelOrHal);
-            if (InKernelOrHal == TRUE) {
+        else
+        {
+            ImageBase = KiPcToFileHeader(ExecutionAddress, &DataTableEntry, FALSE, &InKernelOrHal);
+            if (InKernelOrHal == TRUE)
+            {
 
                 //
                 // The kernel faulted at raised IRQL.  Quite often this
@@ -694,23 +652,24 @@ Return Value:
 
                 VirtualAddress = (PVOID)BugCheckParameter1;
 
-                ImageBase = KiPcToFileHeader (VirtualAddress,
-                                              &DataTableEntry,
-                                              TRUE,
-                                              &InKernelOrHal);
+                ImageBase = KiPcToFileHeader(VirtualAddress, &DataTableEntry, TRUE, &InKernelOrHal);
 
-                if (ImageBase != NULL) {
+                if (ImageBase != NULL)
+                {
                     KiBugCheckDriver = &DataTableEntry->BaseDllName;
                     KiBugCheckData[0] = DRIVER_PORTION_MUST_BE_NONPAGED;
                 }
-                else {
-                    KiBugCheckDriver = MmLocateUnloadedDriver (VirtualAddress);
-                    if (KiBugCheckDriver != NULL) {
+                else
+                {
+                    KiBugCheckDriver = MmLocateUnloadedDriver(VirtualAddress);
+                    if (KiBugCheckDriver != NULL)
+                    {
                         KiBugCheckData[0] = SYSTEM_SCAN_AT_RAISED_IRQL_CAUGHT_IMPROPER_DRIVER_UNLOAD;
                     }
                 }
             }
-            else {
+            else
+            {
                 KiBugCheckData[0] = DRIVER_IRQL_NOT_LESS_OR_EQUAL;
             }
         }
@@ -727,8 +686,9 @@ Return Value:
         // identify the component.
         //
 
-        if (TrapInformation != NULL) {
-            ExecutionAddress = (PVOID) PROGRAM_COUNTER (TrapInformation);
+        if (TrapInformation != NULL)
+        {
+            ExecutionAddress = (PVOID)PROGRAM_COUNTER(TrapInformation);
         }
 
         break;
@@ -754,19 +714,17 @@ Return Value:
         // identify the component.
         //
 
-        if (BugCheckParameter3) {
+        if (BugCheckParameter3)
+        {
 
-            ExecutionAddress = (PVOID)PROGRAM_COUNTER
-                ((PKTRAP_FRAME)BugCheckParameter3);
+            ExecutionAddress = (PVOID)PROGRAM_COUNTER((PKTRAP_FRAME)BugCheckParameter3);
 
             KiBugCheckData[3] = (ULONG_PTR)ExecutionAddress;
 
-            ImageBase = KiPcToFileHeader (ExecutionAddress,
-                                          &DataTableEntry,
-                                          FALSE,
-                                          &InKernelOrHal);
+            ImageBase = KiPcToFileHeader(ExecutionAddress, &DataTableEntry, FALSE, &InKernelOrHal);
         }
-        else {
+        else
+        {
 
             //
             // No trap frame, so no execution address either.
@@ -777,7 +735,8 @@ Return Value:
 
         VirtualAddress = (PVOID)BugCheckParameter1;
 
-        if (MmIsSpecialPoolAddress (VirtualAddress) == TRUE) {
+        if (MmIsSpecialPoolAddress(VirtualAddress) == TRUE)
+        {
 
             //
             // Update the bugcheck number so the administrator gets
@@ -785,26 +744,32 @@ Return Value:
             // the system to locate the corruptor.
             //
 
-            if (MmIsSpecialPoolAddressFree (VirtualAddress) == TRUE) {
-                if (InKernelOrHal == TRUE) {
+            if (MmIsSpecialPoolAddressFree(VirtualAddress) == TRUE)
+            {
+                if (InKernelOrHal == TRUE)
+                {
                     KiBugCheckData[0] = PAGE_FAULT_IN_FREED_SPECIAL_POOL;
                 }
-                else {
+                else
+                {
                     KiBugCheckData[0] = DRIVER_PAGE_FAULT_IN_FREED_SPECIAL_POOL;
                 }
             }
-            else {
-                if (InKernelOrHal == TRUE) {
+            else
+            {
+                if (InKernelOrHal == TRUE)
+                {
                     KiBugCheckData[0] = PAGE_FAULT_BEYOND_END_OF_ALLOCATION;
                 }
-                else {
+                else
+                {
                     KiBugCheckData[0] = DRIVER_PAGE_FAULT_BEYOND_END_OF_ALLOCATION;
                 }
             }
         }
-        else if ((ExecutionAddress == VirtualAddress) &&
-                (MmIsSessionAddress (VirtualAddress) == TRUE) &&
-                ((Thread->Teb == NULL) || (IS_SYSTEM_ADDRESS(Thread->Teb)))) {
+        else if ((ExecutionAddress == VirtualAddress) && (MmIsSessionAddress(VirtualAddress) == TRUE) &&
+                 ((Thread->Teb == NULL) || (IS_SYSTEM_ADDRESS(Thread->Teb))))
+        {
             //
             // This is a driver reference to session space from a
             // worker thread.  Since the system process has no session
@@ -813,9 +778,11 @@ Return Value:
 
             KiBugCheckData[0] = TERMINAL_SERVER_DRIVER_MADE_INCORRECT_MEMORY_REFERENCE;
         }
-        else if (ImageBase == NULL) {
-            KiBugCheckDriver = MmLocateUnloadedDriver (VirtualAddress);
-            if (KiBugCheckDriver != NULL) {
+        else if (ImageBase == NULL)
+        {
+            KiBugCheckDriver = MmLocateUnloadedDriver(VirtualAddress);
+            if (KiBugCheckDriver != NULL)
+            {
                 KiBugCheckData[0] = DRIVER_UNLOADED_WITHOUT_CANCELLING_PENDING_OPERATIONS;
             }
         }
@@ -824,7 +791,7 @@ Return Value:
 
     case THREAD_STUCK_IN_DEVICE_DRIVER:
 
-        KiBugCheckDriver = (PUNICODE_STRING) BugCheckParameter3;
+        KiBugCheckDriver = (PUNICODE_STRING)BugCheckParameter3;
         break;
 
     default:
@@ -833,9 +800,7 @@ Return Value:
 
     if (KiBugCheckDriver)
     {
-        KeBugCheckUnicodeToAnsi(KiBugCheckDriver,
-                                AnsiBuffer,
-                                sizeof(AnsiBuffer));
+        KeBugCheckUnicodeToAnsi(KiBugCheckDriver, AnsiBuffer, sizeof(AnsiBuffer));
     }
     else
     {
@@ -845,15 +810,13 @@ Return Value:
 
         if (ExecutionAddress)
         {
-            KiDumpParameterImages(AnsiBuffer,
-                                  (PULONG_PTR)&ExecutionAddress,
-                                  1,
-                                  KeBugCheckUnicodeToAnsi);
+            KiDumpParameterImages(AnsiBuffer, (PULONG_PTR)&ExecutionAddress, 1, KeBugCheckUnicodeToAnsi);
         }
     }
 
-    if (KdPitchDebugger == FALSE ) {
-        KdDebuggerDataBlock.SavedContext = (ULONG_PTR) &ContextSave;
+    if (KdPitchDebugger == FALSE)
+    {
+        KdDebuggerDataBlock.SavedContext = (ULONG_PTR)&ContextSave;
     }
 
     //
@@ -866,16 +829,12 @@ Return Value:
     // stop.
     //
 
-    if ((BugCheckCode != MANUALLY_INITIATED_CRASH) &&
-        (KdDebuggerEnabled)) {
+    if ((BugCheckCode != MANUALLY_INITIATED_CRASH) && (KdDebuggerEnabled))
+    {
 
         DbgPrint("\n*** Fatal System Error: 0x%08lx\n"
                  "                       (0x%p,0x%p,0x%p,0x%p)\n\n",
-                 (ULONG)KiBugCheckData[0],
-                 KiBugCheckData[1],
-                 KiBugCheckData[2],
-                 KiBugCheckData[3],
-                 KiBugCheckData[4]);
+                 (ULONG)KiBugCheckData[0], KiBugCheckData[1], KiBugCheckData[2], KiBugCheckData[3], KiBugCheckData[4]);
 
         //
         // If the debugger is not actually connected, or the user manually
@@ -887,22 +846,27 @@ Return Value:
         // since the system was booted.
         //
 
-        if (KdDebuggerNotPresent == FALSE) {
+        if (KdDebuggerNotPresent == FALSE)
+        {
 
-            if (KiBugCheckDriver != NULL) {
+            if (KiBugCheckDriver != NULL)
+            {
                 DbgPrint("Driver at fault: %s.\n", AnsiBuffer);
             }
 
-            if (hardErrorCalled != FALSE) {
-                if (HardErrorCaption) {
+            if (hardErrorCalled != FALSE)
+            {
+                if (HardErrorCaption)
+                {
                     DbgPrint(HardErrorCaption);
                 }
-                if (HardErrorMessage) {
+                if (HardErrorMessage)
+                {
                     DbgPrint(HardErrorMessage);
                 }
             }
 
-            KiBugCheckDebugBreak (DBG_STATUS_BUGCHECK_FIRST);
+            KiBugCheckDebugBreak(DBG_STATUS_BUGCHECK_FIRST);
         }
     }
 
@@ -912,13 +876,14 @@ Return Value:
 
     KeDisableInterrupts();
     KeRaiseIrql(HIGH_LEVEL, &OldIrql);
-    
+
 
     //
     // Don't attempt to display message more than once.
     //
 
-    if (InterlockedDecrement (&KeBugCheckCount) == 0) {
+    if (InterlockedDecrement(&KeBugCheckCount) == 0)
+    {
 
 #if !defined(NT_UP)
 
@@ -928,8 +893,9 @@ Return Value:
         //
 
         TargetSet = KeActiveProcessors & ~KeGetCurrentPrcb()->SetMember;
-        if (TargetSet != 0) {
-            KiIpiSend((KAFFINITY) TargetSet, IPI_FREEZE);
+        if (TargetSet != 0)
+        {
+            KiIpiSend((KAFFINITY)TargetSet, IPI_FREEZE);
 
             //
             // Give the other processors one second to flush their data caches.
@@ -956,36 +922,27 @@ Return Value:
 
             HeadlessDispatch(HeadlessCmdStartBugCheck, NULL, 0, NULL, NULL);
 
-            HeadlessDispatch(HeadlessCmdEnableTerminal,
-                 &HeadlessCmd,
-                 sizeof(HEADLESS_CMD_ENABLE_TERMINAL),
-                 NULL,
-                 NULL
-                );
+            HeadlessDispatch(HeadlessCmdEnableTerminal, &HeadlessCmd, sizeof(HEADLESS_CMD_ENABLE_TERMINAL), NULL, NULL);
 
-            HeadlessDispatch(HeadlessCmdSendBlueScreenData,
-                             &HeadlessCmdBlueScreen,
-                             sizeof(HEADLESS_CMD_SEND_BLUE_SCREEN_DATA),
-                             NULL,
-                             NULL
-                            );
-
+            HeadlessDispatch(HeadlessCmdSendBlueScreenData, &HeadlessCmdBlueScreen,
+                             sizeof(HEADLESS_CMD_SEND_BLUE_SCREEN_DATA), NULL, NULL);
         }
 
         //
         // Enable InbvDisplayString calls to make it through to bootvid driver.
         //
 
-        if (InbvIsBootDriverInstalled()) {
+        if (InbvIsBootDriverInstalled())
+        {
 
             InbvAcquireDisplayOwnership();
 
             InbvResetDisplay();
-            InbvSolidColorFill(0,0,639,479,4); // make the screen blue
+            InbvSolidColorFill(0, 0, 639, 479, 4); // make the screen blue
             InbvSetTextColor(15);
             InbvInstallDisplayStringFilter((INBV_DISPLAY_STRING_FILTER)NULL);
-            InbvEnableDisplayString(TRUE);     // enable display string
-            InbvSetScrollRegion(0,0,639,475);  // set to use entire screen
+            InbvEnableDisplayString(TRUE);       // enable display string
+            InbvSetScrollRegion(0, 0, 639, 475); // set to use entire screen
         }
 
         if (!hardErrorCalled)
@@ -995,7 +952,8 @@ Return Value:
             KeGetBugMessageText(BUGCHECK_MESSAGE_INTRO, NULL);
             InbvDisplayString("\n\n");
 
-            if (KiBugCheckDriver) {
+            if (KiBugCheckDriver)
+            {
 
                 //
                 // Output the driver name.
@@ -1003,9 +961,9 @@ Return Value:
 
                 KeGetBugMessageText(BUGCODE_ID_DRIVER, NULL);
 
-                KeBugCheckUnicodeToAnsi (KiBugCheckDriver, Buffer, sizeof (Buffer));
+                KeBugCheckUnicodeToAnsi(KiBugCheckDriver, Buffer, sizeof(Buffer));
                 InbvDisplayString(" ");
-                InbvDisplayString (Buffer);
+                InbvDisplayString(Buffer);
                 InbvDisplayString("\n\n");
             }
 
@@ -1028,47 +986,46 @@ Return Value:
 
             KeGetBugMessageText(BUGCHECK_TECH_INFO, NULL);
 
-            sprintf((char *)Buffer,
-                    "\n\n*** STOP: 0x%08lX (0x%p,0x%p,0x%p,0x%p)\n\n",
-                    (ULONG)KiBugCheckData[0],
-                    (PVOID)KiBugCheckData[1],
-                    (PVOID)KiBugCheckData[2],
-                    (PVOID)KiBugCheckData[3],
+            sprintf((char *)Buffer, "\n\n*** STOP: 0x%08lX (0x%p,0x%p,0x%p,0x%p)\n\n", (ULONG)KiBugCheckData[0],
+                    (PVOID)KiBugCheckData[1], (PVOID)KiBugCheckData[2], (PVOID)KiBugCheckData[3],
                     (PVOID)KiBugCheckData[4]);
 
             InbvDisplayString((char *)Buffer);
 
-            if (KiBugCheckDriver) {
+            if (KiBugCheckDriver)
+            {
                 InbvDisplayString(AnsiBuffer);
             }
 
             if (!KiBugCheckDriver)
             {
-                KiDumpParameterImages(AnsiBuffer,
-                                      &(KiBugCheckData[1]),
-                                      4,
-                                      KeBugCheckUnicodeToAnsi);
+                KiDumpParameterImages(AnsiBuffer, &(KiBugCheckData[1]), 4, KeBugCheckUnicodeToAnsi);
             }
-
-        } else {
-            if (HardErrorCaption) {
+        }
+        else
+        {
+            if (HardErrorCaption)
+            {
                 InbvDisplayString(HardErrorCaption);
             }
-            if (HardErrorMessage) {
+            if (HardErrorMessage)
+            {
                 InbvDisplayString(HardErrorMessage);
             }
         }
 
         KiInvokeBugCheckEntryCallbacks();
-    
+
         //
         // If the debugger is not enabled, attempt to enable it.
         //
 
-        if (KdDebuggerEnabled == FALSE && KdPitchDebugger == FALSE ) {
+        if (KdDebuggerEnabled == FALSE && KdPitchDebugger == FALSE)
+        {
             KdInitSystem(0, NULL);
-
-        } else {
+        }
+        else
+        {
             InbvDisplayString("\n");
         }
 
@@ -1086,14 +1043,15 @@ Return Value:
 
         if (IoIsTriageDumpEnabled())
         {
-            switch (BugCheckCode) {
+            switch (BugCheckCode)
+            {
 
-            //
-            // System thread stores a context record as the 4th parameter.
-            // use that.
-            // Also save the context record in case someone needs to look
-            // at it.
-            //
+                //
+                // System thread stores a context record as the 4th parameter.
+                // use that.
+                // Also save the context record in case someone needs to look
+                // at it.
+                //
 
             case SYSTEM_THREAD_EXCEPTION_NOT_HANDLED:
                 if (BugCheckParameter4)
@@ -1104,14 +1062,14 @@ Return Value:
                 }
                 break;
 
-#if defined (_X86_)
+#if defined(_X86_)
 
-            //
-            // 3rd parameter is a trap frame.
-            //
-            // Build a context record out of that only if it's a kernel mode
-            // failure because esp may be wrong in that case ???.
-            //
+                //
+                // 3rd parameter is a trap frame.
+                //
+                // Build a context record out of that only if it's a kernel mode
+                // failure because esp may be wrong in that case ???.
+                //
 
             case ATTEMPTED_WRITE_TO_READONLY_MEMORY:
             case KERNEL_MODE_EXCEPTION_NOT_HANDLED:
@@ -1119,17 +1077,15 @@ Return Value:
 
                 if (BugCheckParameter3)
                 {
-                    PKTRAP_FRAME Trap = (PKTRAP_FRAME) BugCheckParameter3;
+                    PKTRAP_FRAME Trap = (PKTRAP_FRAME)BugCheckParameter3;
 
-                    if ((Trap->SegCs & 1) ||
-                        (Trap->EFlags & EFLAGS_V86_MASK))
+                    if ((Trap->SegCs & 1) || (Trap->EFlags & EFLAGS_V86_MASK))
                     {
                         ContextSave.Esp = Trap->HardwareEsp;
                     }
                     else
                     {
-                        ContextSave.Esp = (ULONG)Trap +
-                            FIELD_OFFSET(KTRAP_FRAME, HardwareEsp);
+                        ContextSave.Esp = (ULONG)Trap + FIELD_OFFSET(KTRAP_FRAME, HardwareEsp);
                     }
                     if (Trap->EFlags & EFLAGS_V86_MASK)
                     {
@@ -1142,8 +1098,7 @@ Return Value:
                         // The HardwareSegSs contains R3 data selector.
                         //
 
-                        ContextSave.SegSs =
-                            (Trap->HardwareSegSs | 3) & 0xffff;
+                        ContextSave.SegSs = (Trap->HardwareSegSs | 3) & 0xffff;
                     }
                     else
                     {
@@ -1174,7 +1129,7 @@ Return Value:
                 // Extract the address of the spinning code from the thread
                 // object, so the dump is based off this thread.
 
-                Thread = (PKTHREAD) BugCheckParameter1;
+                Thread = (PKTHREAD)BugCheckParameter1;
 
                 if (Thread->State == Running)
                 {
@@ -1184,9 +1139,8 @@ Return Value:
                     // context
                     //
                     ULONG Processor = Thread->NextProcessor;
-                    ASSERT(Processor < (ULONG) KeNumberProcessors);
-                    ContextSave =
-                      KiProcessorBlock[Processor]->ProcessorState.ContextFrame;
+                    ASSERT(Processor < (ULONG)KeNumberProcessors);
+                    ContextSave = KiProcessorBlock[Processor]->ProcessorState.ContextFrame;
                 }
                 else
                 {
@@ -1220,7 +1174,7 @@ Return Value:
                     // Second parameter is the TSS.  If we have a TSS, convert
                     // the context and mark the bugcheck as converted.
 
-                    PKTSS Tss = (PKTSS) BugCheckParameter2;
+                    PKTSS Tss = (PKTSS)BugCheckParameter2;
 
                     if (Tss)
                     {
@@ -1282,7 +1236,7 @@ Return Value:
             // If the DPC stack is active, save that data page as well.
             //
 
-#if defined (_X86_)
+#if defined(_X86_)
             if (KeGetCurrentPrcb()->DpcRoutineActive)
             {
                 IoAddTriageDumpDataBlock(PAGE_ALIGN(KeGetCurrentPrcb()->DpcRoutineActive), PAGE_SIZE);
@@ -1290,14 +1244,8 @@ Return Value:
 #endif
         }
 
-        IoWriteCrashDump((ULONG)KiBugCheckData[0],
-                         KiBugCheckData[1],
-                         KiBugCheckData[2],
-                         KiBugCheckData[3],
-                         KiBugCheckData[4],
-                         &ContextSave,
-                         Thread,
-                         &Reboot);
+        IoWriteCrashDump((ULONG)KiBugCheckData[0], KiBugCheckData[1], KiBugCheckData[2], KiBugCheckData[3],
+                         KiBugCheckData[4], &ContextSave, Thread, &Reboot);
     }
 
     //
@@ -1311,28 +1259,26 @@ Return Value:
     //
     // Reboot the machine if necessary.
     //
-    
-    if (Reboot) {
-        DbgUnLoadImageSymbols (NULL, (PVOID)-1, 0);
-        HalReturnToFirmware (HalRebootRoutine);
+
+    if (Reboot)
+    {
+        DbgUnLoadImageSymbols(NULL, (PVOID)-1, 0);
+        HalReturnToFirmware(HalRebootRoutine);
     }
 
-        
+
     //
     // Attempt to enter the kernel debugger.
     //
-    
-    KiBugCheckDebugBreak (DBG_STATUS_BUGCHECK_SECOND);
+
+    KiBugCheckDebugBreak(DBG_STATUS_BUGCHECK_SECOND);
 }
 #ifdef _X86_
 #pragma optimize("", on)
 #endif
 
-
-VOID
-KeEnterKernelDebugger (
-    VOID
-    )
+
+VOID KeEnterKernelDebugger(VOID)
 
 /*++
 
@@ -1366,22 +1312,23 @@ Return Value:
 #if !defined(i386)
     KeRaiseIrql(HIGH_LEVEL, &OldIrql);
 #endif
-    if (InterlockedDecrement (&KeBugCheckCount) == 0) {
-        if (KdDebuggerEnabled == FALSE) {
-            if ( KdPitchDebugger == FALSE ) {
+    if (InterlockedDecrement(&KeBugCheckCount) == 0)
+    {
+        if (KdDebuggerEnabled == FALSE)
+        {
+            if (KdPitchDebugger == FALSE)
+            {
                 KdInitSystem(0, NULL);
             }
         }
     }
 
-    KiBugCheckDebugBreak (DBG_STATUS_FATAL);
+    KiBugCheckDebugBreak(DBG_STATUS_FATAL);
 }
-
+
 NTKERNELAPI
 BOOLEAN
-KeDeregisterBugCheckCallback (
-    IN PKBUGCHECK_CALLBACK_RECORD CallbackRecord
-    )
+KeDeregisterBugCheckCallback(IN PKBUGCHECK_CALLBACK_RECORD CallbackRecord)
 
 /*++
 
@@ -1419,7 +1366,8 @@ Return Value:
     //
 
     Deregister = FALSE;
-    if (CallbackRecord->State == BufferInserted) {
+    if (CallbackRecord->State == BufferInserted)
+    {
         CallbackRecord->State = BufferEmpty;
         RemoveEntryList(&CallbackRecord->Entry);
         Deregister = TRUE;
@@ -1435,16 +1383,11 @@ Return Value:
     KeLowerIrql(OldIrql);
     return Deregister;
 }
-
+
 NTKERNELAPI
 BOOLEAN
-KeRegisterBugCheckCallback (
-    IN PKBUGCHECK_CALLBACK_RECORD CallbackRecord,
-    IN PKBUGCHECK_CALLBACK_ROUTINE CallbackRoutine,
-    IN PVOID Buffer,
-    IN ULONG Length,
-    IN PUCHAR Component
-    )
+KeRegisterBugCheckCallback(IN PKBUGCHECK_CALLBACK_RECORD CallbackRecord, IN PKBUGCHECK_CALLBACK_ROUTINE CallbackRoutine,
+                           IN PVOID Buffer, IN ULONG Length, IN PUCHAR Component)
 
 /*++
 
@@ -1497,13 +1440,13 @@ Return Value:
     //
 
     Inserted = FALSE;
-    if (CallbackRecord->State == BufferEmpty) {
+    if (CallbackRecord->State == BufferEmpty)
+    {
         CallbackRecord->CallbackRoutine = CallbackRoutine;
         CallbackRecord->Buffer = Buffer;
         CallbackRecord->Length = Length;
         CallbackRecord->Component = Component;
-        CallbackRecord->Checksum =
-            ((ULONG_PTR)CallbackRoutine + (ULONG_PTR)Buffer + Length + (ULONG_PTR)Component);
+        CallbackRecord->Checksum = ((ULONG_PTR)CallbackRoutine + (ULONG_PTR)Buffer + Length + (ULONG_PTR)Component);
 
         CallbackRecord->State = BufferInserted;
         InsertHeadList(&KeBugCheckCallbackListHead, &CallbackRecord->Entry);
@@ -1520,11 +1463,8 @@ Return Value:
     KeLowerIrql(OldIrql);
     return Inserted;
 }
-
-VOID
-KiScanBugCheckCallbackList (
-    VOID
-    )
+
+VOID KiScanBugCheckCallbackList(VOID)
 
 /*++
 
@@ -1565,7 +1505,8 @@ Return Value:
     //
 
     ListHead = &KeBugCheckCallbackListHead;
-    if ((ListHead->Flink != NULL) && (ListHead->Blink != NULL)) {
+    if ((ListHead->Flink != NULL) && (ListHead->Blink != NULL))
+    {
 
         //
         // Scan the bug check callback list.
@@ -1573,7 +1514,8 @@ Return Value:
 
         LastEntry = ListHead;
         NextEntry = ListHead->Flink;
-        while (NextEntry != ListHead) {
+        while (NextEntry != ListHead)
+        {
 
             //
             // The next entry address must be aligned properly, the
@@ -1581,24 +1523,27 @@ Return Value:
             // must have back link to the last entry.
             //
 
-            if (((ULONG_PTR)NextEntry & (sizeof(ULONG_PTR) - 1)) != 0) {
+            if (((ULONG_PTR)NextEntry & (sizeof(ULONG_PTR) - 1)) != 0)
+            {
                 return;
-
-            } else {
-                CallbackRecord = CONTAINING_RECORD(NextEntry,
-                                                   KBUGCHECK_CALLBACK_RECORD,
-                                                   Entry);
+            }
+            else
+            {
+                CallbackRecord = CONTAINING_RECORD(NextEntry, KBUGCHECK_CALLBACK_RECORD, Entry);
 
                 Source = (PUCHAR)CallbackRecord;
-                for (Index = 0; Index < sizeof(KBUGCHECK_CALLBACK_RECORD); Index += 1) {
-                    if (MmIsAddressValid((PVOID)Source) == FALSE) {
+                for (Index = 0; Index < sizeof(KBUGCHECK_CALLBACK_RECORD); Index += 1)
+                {
+                    if (MmIsAddressValid((PVOID)Source) == FALSE)
+                    {
                         return;
                     }
 
                     Source += 1;
                 }
 
-                if (CallbackRecord->Entry.Blink != LastEntry) {
+                if (CallbackRecord->Entry.Blink != LastEntry)
+                {
                     return;
                 }
 
@@ -1612,8 +1557,8 @@ Return Value:
                 Checksum += (ULONG_PTR)CallbackRecord->Buffer;
                 Checksum += CallbackRecord->Length;
                 Checksum += (ULONG_PTR)CallbackRecord->Component;
-                if ((CallbackRecord->State == BufferInserted) &&
-                    (CallbackRecord->Checksum == Checksum)) {
+                if ((CallbackRecord->State == BufferInserted) && (CallbackRecord->Checksum == Checksum))
+                {
 
                     //
                     // Call the specified bug check callback routine and
@@ -1621,13 +1566,14 @@ Return Value:
                     //
 
                     CallbackRecord->State = BufferStarted;
-                    try {
-                        (CallbackRecord->CallbackRoutine)(CallbackRecord->Buffer,
-                                                          CallbackRecord->Length);
+                    try
+                    {
+                        (CallbackRecord->CallbackRoutine)(CallbackRecord->Buffer, CallbackRecord->Length);
 
                         CallbackRecord->State = BufferFinished;
-
-                    } except(EXCEPTION_EXECUTE_HANDLER) {
+                    }
+                    except(EXCEPTION_EXECUTE_HANDLER)
+                    {
                         CallbackRecord->State = BufferIncomplete;
                     }
                 }
@@ -1640,12 +1586,10 @@ Return Value:
 
     return;
 }
-
+
 NTKERNELAPI
 BOOLEAN
-KeDeregisterBugCheckReasonCallback (
-    IN PKBUGCHECK_REASON_CALLBACK_RECORD CallbackRecord
-    )
+KeDeregisterBugCheckReasonCallback(IN PKBUGCHECK_REASON_CALLBACK_RECORD CallbackRecord)
 
 /*++
 
@@ -1683,7 +1627,8 @@ Return Value:
     //
 
     Deregister = FALSE;
-    if (CallbackRecord->State == BufferInserted) {
+    if (CallbackRecord->State == BufferInserted)
+    {
         CallbackRecord->State = BufferEmpty;
         RemoveEntryList(&CallbackRecord->Entry);
         Deregister = TRUE;
@@ -1699,15 +1644,12 @@ Return Value:
     KeLowerIrql(OldIrql);
     return Deregister;
 }
-
+
 NTKERNELAPI
 BOOLEAN
-KeRegisterBugCheckReasonCallback (
-    IN PKBUGCHECK_REASON_CALLBACK_RECORD CallbackRecord,
-    IN PKBUGCHECK_REASON_CALLBACK_ROUTINE CallbackRoutine,
-    IN KBUGCHECK_CALLBACK_REASON Reason,
-    IN PUCHAR Component
-    )
+KeRegisterBugCheckReasonCallback(IN PKBUGCHECK_REASON_CALLBACK_RECORD CallbackRecord,
+                                 IN PKBUGCHECK_REASON_CALLBACK_ROUTINE CallbackRoutine,
+                                 IN KBUGCHECK_CALLBACK_REASON Reason, IN PUCHAR Component)
 
 /*++
 
@@ -1758,16 +1700,15 @@ Return Value:
     //
 
     Inserted = FALSE;
-    if (CallbackRecord->State == BufferEmpty) {
+    if (CallbackRecord->State == BufferEmpty)
+    {
         CallbackRecord->CallbackRoutine = CallbackRoutine;
         CallbackRecord->Reason = Reason;
         CallbackRecord->Component = Component;
-        CallbackRecord->Checksum =
-            ((ULONG_PTR)CallbackRoutine + Reason + (ULONG_PTR)Component);
+        CallbackRecord->Checksum = ((ULONG_PTR)CallbackRoutine + Reason + (ULONG_PTR)Component);
 
         CallbackRecord->State = BufferInserted;
-        InsertHeadList(&KeBugCheckReasonCallbackListHead,
-                       &CallbackRecord->Entry);
+        InsertHeadList(&KeBugCheckReasonCallbackListHead, &CallbackRecord->Entry);
         Inserted = TRUE;
     }
 
@@ -1782,10 +1723,7 @@ Return Value:
     return Inserted;
 }
 
-VOID
-KiInvokeBugCheckEntryCallbacks (
-    VOID
-    )
+VOID KiInvokeBugCheckEntryCallbacks(VOID)
 /*++
 
 Routine Description:
@@ -1833,7 +1771,8 @@ Return Value:
     //
 
     ListHead = &KeBugCheckReasonCallbackListHead;
-    if (ListHead->Flink == NULL || ListHead->Blink == NULL) {
+    if (ListHead->Flink == NULL || ListHead->Blink == NULL)
+    {
         return;
     }
 
@@ -1843,7 +1782,8 @@ Return Value:
 
     LastEntry = ListHead;
     NextEntry = ListHead->Flink;
-    while (NextEntry != ListHead) {
+    while (NextEntry != ListHead)
+    {
 
         //
         // The next entry address must be aligned properly, the
@@ -1851,24 +1791,26 @@ Return Value:
         // must have back link to the last entry.
         //
 
-        if (((ULONG_PTR)NextEntry & (sizeof(ULONG_PTR) - 1)) != 0) {
+        if (((ULONG_PTR)NextEntry & (sizeof(ULONG_PTR) - 1)) != 0)
+        {
             return;
         }
 
-        CallbackRecord = CONTAINING_RECORD(NextEntry,
-                                           KBUGCHECK_REASON_CALLBACK_RECORD,
-                                           Entry);
+        CallbackRecord = CONTAINING_RECORD(NextEntry, KBUGCHECK_REASON_CALLBACK_RECORD, Entry);
 
         Source = (PUCHAR)CallbackRecord;
-        for (Index = 0; Index < sizeof(*CallbackRecord); Index += 1) {
-            if (MmIsAddressValid((PVOID)Source) == FALSE) {
+        for (Index = 0; Index < sizeof(*CallbackRecord); Index += 1)
+        {
+            if (MmIsAddressValid((PVOID)Source) == FALSE)
+            {
                 return;
             }
-            
+
             Source += 1;
         }
 
-        if (CallbackRecord->Entry.Blink != LastEntry) {
+        if (CallbackRecord->Entry.Blink != LastEntry)
+        {
             return;
         }
 
@@ -1884,11 +1826,10 @@ Return Value:
         Checksum = (ULONG_PTR)CallbackRecord->CallbackRoutine;
         Checksum += (ULONG_PTR)CallbackRecord->Reason;
         Checksum += (ULONG_PTR)CallbackRecord->Component;
-        if ((CallbackRecord->State != BufferInserted) ||
-            (CallbackRecord->Checksum != Checksum) ||
+        if ((CallbackRecord->State != BufferInserted) || (CallbackRecord->Checksum != Checksum) ||
             (CallbackRecord->Reason != KbCallbackReserved1) ||
-            MmIsAddressValid((PVOID)(ULONG_PTR)CallbackRecord->
-                             CallbackRoutine) == FALSE) {
+            MmIsAddressValid((PVOID)(ULONG_PTR)CallbackRecord->CallbackRoutine) == FALSE)
+        {
             continue;
         }
 
@@ -1897,12 +1838,13 @@ Return Value:
         // handle any exceptions that occur.
         //
 
-        try {
-            (CallbackRecord->CallbackRoutine)(KbCallbackReserved1,
-                                              CallbackRecord,
-                                              NULL, 0);
+        try
+        {
+            (CallbackRecord->CallbackRoutine)(KbCallbackReserved1, CallbackRecord, NULL, 0);
             CallbackRecord->State = BufferFinished;
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             CallbackRecord->State = BufferIncomplete;
         }
     }

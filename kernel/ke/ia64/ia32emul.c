@@ -32,76 +32,46 @@ Revision History:
 BOOLEAN KiIa32InstructionEmulationDbg = 0;
 #endif
 
-#define KiIa32GetX86Eflags(efl)  efl.Value = __getReg(CV_IA64_AR24)
-#define KiIa32SetX86Eflags(efl)  __setReg(CV_IA64_AR24, efl.Value)
+#define KiIa32GetX86Eflags(efl) efl.Value = __getReg(CV_IA64_AR24)
+#define KiIa32SetX86Eflags(efl) __setReg(CV_IA64_AR24, efl.Value)
 
-#define IA32_GETEFLAGS_CF(efl)    (efl & 0x01UI64)
+#define IA32_GETEFLAGS_CF(efl) (efl & 0x01UI64)
 
 //
 // Ia32 instruction handlers
 //
 
 NTSTATUS
-KiIa32InstructionAdc (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PIA32_INSTRUCTION Instruction
-    );
+KiIa32InstructionAdc(IN PKTRAP_FRAME TrapFrame, IN PIA32_INSTRUCTION Instruction);
 
 NTSTATUS
-KiIa32InstructionAdd (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PIA32_INSTRUCTION Instruction
-    );
+KiIa32InstructionAdd(IN PKTRAP_FRAME TrapFrame, IN PIA32_INSTRUCTION Instruction);
 
 NTSTATUS
-KiIa32InstructionArithmeticBitwiseHelper (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PIA32_INSTRUCTION Instruction
-    );
+KiIa32InstructionArithmeticBitwiseHelper(IN PKTRAP_FRAME TrapFrame, IN PIA32_INSTRUCTION Instruction);
 
 NTSTATUS
-KiIa32InstructionBitTestHelper (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PIA32_INSTRUCTION Instruction
-    );
+KiIa32InstructionBitTestHelper(IN PKTRAP_FRAME TrapFrame, IN PIA32_INSTRUCTION Instruction);
 
 NTSTATUS
-KiIa32InstructionOneParamHelper (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PIA32_INSTRUCTION Instruction
-    );
+KiIa32InstructionOneParamHelper(IN PKTRAP_FRAME TrapFrame, IN PIA32_INSTRUCTION Instruction);
 
 NTSTATUS
-KiIa32InstructionXadd (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PIA32_INSTRUCTION Instruction
-    );
+KiIa32InstructionXadd(IN PKTRAP_FRAME TrapFrame, IN PIA32_INSTRUCTION Instruction);
 
 NTSTATUS
-KiIa32InstructionXchg (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PIA32_INSTRUCTION Instruction
-    );
+KiIa32InstructionXchg(IN PKTRAP_FRAME TrapFrame, IN PIA32_INSTRUCTION Instruction);
 
 NTSTATUS
-KiIa32InstructionCmpXchg (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PIA32_INSTRUCTION Instruction
-    );
+KiIa32InstructionCmpXchg(IN PKTRAP_FRAME TrapFrame, IN PIA32_INSTRUCTION Instruction);
 
 NTSTATUS
-KiIa32InstructionCmpXchg8b (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PIA32_INSTRUCTION Instruction
-    );
+KiIa32InstructionCmpXchg8b(IN PKTRAP_FRAME TrapFrame, IN PIA32_INSTRUCTION Instruction);
 
 NTSTATUS
-KiIa32InstructionMoveSeg (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PIA32_INSTRUCTION Instruction
-    );
+KiIa32InstructionMoveSeg(IN PKTRAP_FRAME TrapFrame, IN PIA32_INSTRUCTION Instruction);
 
-//  
+//
 //   Opcode Ids
 //
 
@@ -127,7 +97,7 @@ typedef enum _IA32_OPCODE
     Ia32_Xchg,
     Ia32_Xor,
     Ia32_MovToSeg,
-    
+
     //
     // This needs always to be the last element
     //
@@ -142,127 +112,80 @@ typedef enum _IA32_OPCODE
 //   NOTE : The following table must be in sync with the above enum.
 //
 
-typedef NTSTATUS (*IA32_INSTRUCTION_HANDLER) (PKTRAP_FRAME, PIA32_INSTRUCTION);
-IA32_INSTRUCTION_HANDLER KiIa32InstructionHandler [] =
-{
-    KiIa32InstructionAdc,
-    KiIa32InstructionAdd,
-    KiIa32InstructionArithmeticBitwiseHelper,
-    KiIa32InstructionBitTestHelper,
-    KiIa32InstructionBitTestHelper,
-    KiIa32InstructionBitTestHelper,
-    KiIa32InstructionBitTestHelper,
-    KiIa32InstructionCmpXchg,
-    KiIa32InstructionCmpXchg8b,
-    KiIa32InstructionOneParamHelper,
-    KiIa32InstructionOneParamHelper,
-    KiIa32InstructionOneParamHelper,
-    KiIa32InstructionOneParamHelper,
-    KiIa32InstructionArithmeticBitwiseHelper,
-    KiIa32InstructionAdc,
-    KiIa32InstructionAdd,
-    KiIa32InstructionXadd,
-    KiIa32InstructionXchg,
-    KiIa32InstructionArithmeticBitwiseHelper,
-    KiIa32InstructionMoveSeg,
-    NULL
-};
+typedef NTSTATUS (*IA32_INSTRUCTION_HANDLER)(PKTRAP_FRAME, PIA32_INSTRUCTION);
+IA32_INSTRUCTION_HANDLER KiIa32InstructionHandler[] = { KiIa32InstructionAdc,
+                                                        KiIa32InstructionAdd,
+                                                        KiIa32InstructionArithmeticBitwiseHelper,
+                                                        KiIa32InstructionBitTestHelper,
+                                                        KiIa32InstructionBitTestHelper,
+                                                        KiIa32InstructionBitTestHelper,
+                                                        KiIa32InstructionBitTestHelper,
+                                                        KiIa32InstructionCmpXchg,
+                                                        KiIa32InstructionCmpXchg8b,
+                                                        KiIa32InstructionOneParamHelper,
+                                                        KiIa32InstructionOneParamHelper,
+                                                        KiIa32InstructionOneParamHelper,
+                                                        KiIa32InstructionOneParamHelper,
+                                                        KiIa32InstructionArithmeticBitwiseHelper,
+                                                        KiIa32InstructionAdc,
+                                                        KiIa32InstructionAdd,
+                                                        KiIa32InstructionXadd,
+                                                        KiIa32InstructionXchg,
+                                                        KiIa32InstructionArithmeticBitwiseHelper,
+                                                        KiIa32InstructionMoveSeg,
+                                                        NULL };
 
 #if DBG
-PCHAR KiIa32InstructionHandlerNames [] =
-{
-    "KiIa32InstructionAdc",
-    "KiIa32InstructionAdd",
-    "KiIa32InstructionAnd",
-    "KiIa32InstructionBt",
-    "KiIa32InstructionBtc",
-    "KiIa32InstructionBtr",
-    "KiIa32InstructionBts",
-    "KiIa32InstructionCmpXchg",
-    "KiIa32InstructionCmpXchg8b",
-    "KiIa32InstructionDec",
-    "KiIa32InstructionInc",
-    "KiIa32InstructionNeg",
-    "KiIa32InstructionNot",
-    "KiIa32InstructionOr",
-    "KiIa32InstructionSbb",
-    "KiIa32InstructionSub",
-    "KiIa32InstructionXadd",
-    "KiIa32InstructionXchg",
-    "KiIa32InstructionXor",
-    "KiIa32InstructionMoveSeg",
-    NULL,
+PCHAR KiIa32InstructionHandlerNames[] = {
+    "KiIa32InstructionAdc", "KiIa32InstructionAdd",     "KiIa32InstructionAnd",
+    "KiIa32InstructionBt",  "KiIa32InstructionBtc",     "KiIa32InstructionBtr",
+    "KiIa32InstructionBts", "KiIa32InstructionCmpXchg", "KiIa32InstructionCmpXchg8b",
+    "KiIa32InstructionDec", "KiIa32InstructionInc",     "KiIa32InstructionNeg",
+    "KiIa32InstructionNot", "KiIa32InstructionOr",      "KiIa32InstructionSbb",
+    "KiIa32InstructionSub", "KiIa32InstructionXadd",    "KiIa32InstructionXchg",
+    "KiIa32InstructionXor", "KiIa32InstructionMoveSeg", NULL,
 };
 #endif
 
 
-IA32_OPCODE_DESCRIPTION OpcodesDescription[] =
-{
+IA32_OPCODE_DESCRIPTION OpcodesDescription[] = {
     //
     //   Adc
     //
 
     // Adc r/m8, imm8
-    {
-        0x80, 0x00, 0x02, 0x11, IA32_PARAM_RM8_IMM8, Ia32_Adc
-    },
+    { 0x80, 0x00, 0x02, 0x11, IA32_PARAM_RM8_IMM8, Ia32_Adc },
     // Adc r/m, imm
-    {
-        0x81, 0x00, 0x02, 0x11, IA32_PARAM_RM_IMM, Ia32_Adc
-    },
+    { 0x81, 0x00, 0x02, 0x11, IA32_PARAM_RM_IMM, Ia32_Adc },
     // Adc r/m, imm8 (sign)
-    {
-        0x83, 0x00, 0x02, 0x11, IA32_PARAM_RM_IMM8SIGN, Ia32_Adc
-    },
+    { 0x83, 0x00, 0x02, 0x11, IA32_PARAM_RM_IMM8SIGN, Ia32_Adc },
     // Adc r/m8, r8
-    {
-        0x10, 0x00, 0x00, 0x01, IA32_PARAM_RM8_R, Ia32_Adc
-    },
+    { 0x10, 0x00, 0x00, 0x01, IA32_PARAM_RM8_R, Ia32_Adc },
     // Adc r/m, r
-    {
-        0x11, 0x00, 0x00, 0x01, IA32_PARAM_RM_R, Ia32_Adc
-    },
+    { 0x11, 0x00, 0x00, 0x01, IA32_PARAM_RM_R, Ia32_Adc },
     // Adc r, r/m8
-    {
-        0x12, 0x00, 0x00, 0x01, IA32_PARAM_R_RM8, Ia32_Adc
-    },
+    { 0x12, 0x00, 0x00, 0x01, IA32_PARAM_R_RM8, Ia32_Adc },
     // Adc r, r/m
-    {
-        0x13, 0x00, 0x00, 0x01, IA32_PARAM_R_RM, Ia32_Adc
-    },
+    { 0x13, 0x00, 0x00, 0x01, IA32_PARAM_R_RM, Ia32_Adc },
 
     //
     //   Add
     //
 
     // Add r/m8, imm8
-    {
-        0x80, 0x00, 0x00, 0x11, IA32_PARAM_RM8_IMM8, Ia32_Add
-    },
+    { 0x80, 0x00, 0x00, 0x11, IA32_PARAM_RM8_IMM8, Ia32_Add },
     // Add r/m, imm
-    {
-        0x81, 0x00, 0x00, 0x11, IA32_PARAM_RM_IMM, Ia32_Add
-    },
+    { 0x81, 0x00, 0x00, 0x11, IA32_PARAM_RM_IMM, Ia32_Add },
     // Add r/m, imm8 (sign)
-    {
-        0x83, 0x00, 0x00, 0x11, IA32_PARAM_RM_IMM8SIGN, Ia32_Add
-    },
+    { 0x83, 0x00, 0x00, 0x11, IA32_PARAM_RM_IMM8SIGN, Ia32_Add },
     // Add r/m8, r8
-    {
-        0x00, 0x00, 0x00, 0x01, IA32_PARAM_RM8_R, Ia32_Add
-    },
+    { 0x00, 0x00, 0x00, 0x01, IA32_PARAM_RM8_R, Ia32_Add },
     // Add r/m, r
-    {
-        0x01, 0x00, 0x00, 0x01, IA32_PARAM_RM_R, Ia32_Add
-    },
+    { 0x01, 0x00, 0x00, 0x01, IA32_PARAM_RM_R, Ia32_Add },
     // Add r, r/m8
-    {
-        0x02, 0x00, 0x00, 0x01, IA32_PARAM_R_RM8, Ia32_Add
-    },
+    { 0x02, 0x00, 0x00, 0x01, IA32_PARAM_R_RM8, Ia32_Add },
     // Add r, r/m
-    {
-        0x03, 0x00, 0x00, 0x01, IA32_PARAM_R_RM, Ia32_Add
-    },
+    { 0x03, 0x00, 0x00, 0x01, IA32_PARAM_R_RM, Ia32_Add },
 
 
     //
@@ -270,33 +193,19 @@ IA32_OPCODE_DESCRIPTION OpcodesDescription[] =
     //
 
     // And r/m8, imm8
-    {
-        0x80, 0x00, 0x04, 0x11, IA32_PARAM_RM8_IMM8, Ia32_And
-    },
+    { 0x80, 0x00, 0x04, 0x11, IA32_PARAM_RM8_IMM8, Ia32_And },
     // And r/m, imm
-    {
-        0x81, 0x00, 0x04, 0x11, IA32_PARAM_RM_IMM, Ia32_And
-    },
+    { 0x81, 0x00, 0x04, 0x11, IA32_PARAM_RM_IMM, Ia32_And },
     // And r/m, imm8
-    {
-        0x83, 0x00, 0x04, 0x11, IA32_PARAM_RM_IMM8SIGN, Ia32_And
-    },
+    { 0x83, 0x00, 0x04, 0x11, IA32_PARAM_RM_IMM8SIGN, Ia32_And },
     // And r/m8, r8
-    {
-        0x20, 0x00, 0x00, 0x01, IA32_PARAM_RM8_R, Ia32_And
-    },
+    { 0x20, 0x00, 0x00, 0x01, IA32_PARAM_RM8_R, Ia32_And },
     // And rm, r
-    {
-        0x21, 0x00, 0x00, 0x01, IA32_PARAM_RM_R, Ia32_And
-    },
+    { 0x21, 0x00, 0x00, 0x01, IA32_PARAM_RM_R, Ia32_And },
     // And r8, r/m8
-    {
-        0x22, 0x00, 0x00, 0x01, IA32_PARAM_R_RM8, Ia32_And
-    },
+    { 0x22, 0x00, 0x00, 0x01, IA32_PARAM_R_RM8, Ia32_And },
     // And r, r/m
-    {
-        0x23, 0x00, 0x00, 0x01, IA32_PARAM_R_RM, Ia32_And
-    },
+    { 0x23, 0x00, 0x00, 0x01, IA32_PARAM_R_RM, Ia32_And },
 
 
     //
@@ -304,105 +213,65 @@ IA32_OPCODE_DESCRIPTION OpcodesDescription[] =
     //
 
     // Or r/m8, imm8
-    {
-        0x80, 0x00, 0x01, 0x11, IA32_PARAM_RM8_IMM8, Ia32_Or
-    },
+    { 0x80, 0x00, 0x01, 0x11, IA32_PARAM_RM8_IMM8, Ia32_Or },
     // Or r/m, imm
-    {
-        0x81, 0x00, 0x01, 0x11, IA32_PARAM_RM_IMM, Ia32_Or
-    },
+    { 0x81, 0x00, 0x01, 0x11, IA32_PARAM_RM_IMM, Ia32_Or },
     // Or r/m, imm8
-    {
-        0x83, 0x00, 0x01, 0x11, IA32_PARAM_RM_IMM8SIGN, Ia32_Or
-    },
+    { 0x83, 0x00, 0x01, 0x11, IA32_PARAM_RM_IMM8SIGN, Ia32_Or },
     // Or r/m8, r8
-    {
-        0x08, 0x00, 0x00, 0x01, IA32_PARAM_RM8_R, Ia32_Or
-    },
+    { 0x08, 0x00, 0x00, 0x01, IA32_PARAM_RM8_R, Ia32_Or },
     // Or rm, r
-    {
-        0x09, 0x00, 0x00, 0x01, IA32_PARAM_RM_R, Ia32_Or
-    },
+    { 0x09, 0x00, 0x00, 0x01, IA32_PARAM_RM_R, Ia32_Or },
     // Or r8, r/m8
-    {
-        0x0a, 0x00, 0x00, 0x01, IA32_PARAM_R_RM8, Ia32_Or
-    },
+    { 0x0a, 0x00, 0x00, 0x01, IA32_PARAM_R_RM8, Ia32_Or },
     // Or r, r/m
-    {
-        0x0b, 0x00, 0x00, 0x01, IA32_PARAM_R_RM, Ia32_Or
-    },
+    { 0x0b, 0x00, 0x00, 0x01, IA32_PARAM_R_RM, Ia32_Or },
 
     //
     // Xor
     //
 
     // Xor r/m8, imm8
-    {
-        0x80, 0x00, 0x06, 0x11, IA32_PARAM_RM8_IMM8, Ia32_Xor
-    },
+    { 0x80, 0x00, 0x06, 0x11, IA32_PARAM_RM8_IMM8, Ia32_Xor },
     // Xor r/m, imm
-    {
-        0x81, 0x00, 0x06, 0x11, IA32_PARAM_RM_IMM, Ia32_Xor
-    },
+    { 0x81, 0x00, 0x06, 0x11, IA32_PARAM_RM_IMM, Ia32_Xor },
     // Xor r/m, imm8
-    {
-        0x83, 0x00, 0x06, 0x11, IA32_PARAM_RM_IMM8SIGN, Ia32_Xor
-    },
+    { 0x83, 0x00, 0x06, 0x11, IA32_PARAM_RM_IMM8SIGN, Ia32_Xor },
     // Xor r/m8, r8
-    {
-        0x30, 0x00, 0x00, 0x01, IA32_PARAM_RM8_R, Ia32_Xor
-    },
+    { 0x30, 0x00, 0x00, 0x01, IA32_PARAM_RM8_R, Ia32_Xor },
     // Xor rm, r
-    {
-        0x31, 0x00, 0x00, 0x01, IA32_PARAM_RM_R, Ia32_Xor
-    },
+    { 0x31, 0x00, 0x00, 0x01, IA32_PARAM_RM_R, Ia32_Xor },
     // Xor r8, r/m8
-    {
-        0x32, 0x00, 0x00, 0x01, IA32_PARAM_R_RM8, Ia32_Xor
-    },
+    { 0x32, 0x00, 0x00, 0x01, IA32_PARAM_R_RM8, Ia32_Xor },
     // Xor r, r/m
-    {
-        0x33, 0x00, 0x00, 0x01, IA32_PARAM_R_RM, Ia32_Xor
-    },
+    { 0x33, 0x00, 0x00, 0x01, IA32_PARAM_R_RM, Ia32_Xor },
 
     //
     // Inc
     //
 
     // Inc r/m8
-    {
-        0xfe, 0x00, 0x00, 0x11, IA32_PARAM_RM8, Ia32_Inc
-    },
+    { 0xfe, 0x00, 0x00, 0x11, IA32_PARAM_RM8, Ia32_Inc },
     // Inc r/m
-    {
-        0xff, 0x00, 0x00, 0x11, IA32_PARAM_RM, Ia32_Inc
-    },
+    { 0xff, 0x00, 0x00, 0x11, IA32_PARAM_RM, Ia32_Inc },
 
     //
     // Dec
     //
 
     // Dec r/m8
-    {
-        0xfe, 0x00, 0x01, 0x11, IA32_PARAM_RM8, Ia32_Dec
-    },
+    { 0xfe, 0x00, 0x01, 0x11, IA32_PARAM_RM8, Ia32_Dec },
     // Dec r/m
-    {
-        0xff, 0x00, 0x01, 0x11, IA32_PARAM_RM, Ia32_Dec
-    },
+    { 0xff, 0x00, 0x01, 0x11, IA32_PARAM_RM, Ia32_Dec },
 
     //
     // Xchg
     //
 
     // Xchg r/m8, r
-    {
-        0x86, 0x00, 0x00, 0x01, IA32_PARAM_RM8_R, Ia32_Xchg
-    },
+    { 0x86, 0x00, 0x00, 0x01, IA32_PARAM_RM8_R, Ia32_Xchg },
     // Xchg r/m, r
-    {
-        0x87, 0x00, 0x00, 0x01, IA32_PARAM_RM_R, Ia32_Xchg
-    },
+    { 0x87, 0x00, 0x00, 0x01, IA32_PARAM_RM_R, Ia32_Xchg },
 
 
     //
@@ -410,35 +279,25 @@ IA32_OPCODE_DESCRIPTION OpcodesDescription[] =
     //
 
     // Cmpxchg r/m8, r
-    {
-        0x0f, 0xb0, 0x00, 0x02, IA32_PARAM_RM8_R, Ia32_Cmpxchg
-    },
+    { 0x0f, 0xb0, 0x00, 0x02, IA32_PARAM_RM8_R, Ia32_Cmpxchg },
     // Cmpxchg r/m, r
-    {
-        0x0f, 0xb1, 0x00, 0x02, IA32_PARAM_RM_R, Ia32_Cmpxchg
-    },
+    { 0x0f, 0xb1, 0x00, 0x02, IA32_PARAM_RM_R, Ia32_Cmpxchg },
 
     //
     // Cmpxchg8b
     //
 
     // Cmpxchg8b m64
-    {
-        0x0f, 0xc7, 0x01, 0x12, IA32_PARAM_RM, Ia32_Cmpxchg8b
-    },
+    { 0x0f, 0xc7, 0x01, 0x12, IA32_PARAM_RM, Ia32_Cmpxchg8b },
 
     //
     // Xadd
     //
 
     // Xadd r/m8, r
-    {
-        0x0f, 0xc0, 0x00, 0x02, IA32_PARAM_RM8_R, Ia32_Xadd
-    },
+    { 0x0f, 0xc0, 0x00, 0x02, IA32_PARAM_RM8_R, Ia32_Xadd },
     // Xadd r/m, r
-    {
-        0x0f, 0xc1, 0x00, 0x02, IA32_PARAM_RM_R, Ia32_Xadd
-    },
+    { 0x0f, 0xc1, 0x00, 0x02, IA32_PARAM_RM_R, Ia32_Xadd },
 
 
     //
@@ -446,171 +305,115 @@ IA32_OPCODE_DESCRIPTION OpcodesDescription[] =
     //
 
     // Neg r/m8
-    {
-        0xf6, 0x00, 0x03, 0x11, IA32_PARAM_RM8, Ia32_Neg
-    },
+    { 0xf6, 0x00, 0x03, 0x11, IA32_PARAM_RM8, Ia32_Neg },
     // Neg r/m
-    {
-        0xf7, 0x00, 0x03, 0x11, IA32_PARAM_RM, Ia32_Neg
-    },
+    { 0xf7, 0x00, 0x03, 0x11, IA32_PARAM_RM, Ia32_Neg },
 
     //
     // Not
     //
 
     // Not r/m8
-    {
-        0xf6, 0x00, 0x02, 0x11, IA32_PARAM_RM8, Ia32_Not
-    },
+    { 0xf6, 0x00, 0x02, 0x11, IA32_PARAM_RM8, Ia32_Not },
     // Not r/m
-    {
-        0xf7, 0x00, 0x02, 0x11, IA32_PARAM_RM, Ia32_Not
-    },
+    { 0xf7, 0x00, 0x02, 0x11, IA32_PARAM_RM, Ia32_Not },
 
     //
     // Bt (Bit Test)
     //
 
     // Bt r/m, r
-    {
-        0x0f, 0xa3, 0x00, 0x02, IA32_PARAM_RM_R, Ia32_Bt
-    },
+    { 0x0f, 0xa3, 0x00, 0x02, IA32_PARAM_RM_R, Ia32_Bt },
     // Bt r/m, imm8
-    {
-        0x0f, 0xba, 0x04, 0x12, IA32_PARAM_RM_IMM8SIGN, Ia32_Bt
-    },
+    { 0x0f, 0xba, 0x04, 0x12, IA32_PARAM_RM_IMM8SIGN, Ia32_Bt },
 
     //
     // Btc
     //
 
     // Btc r/m, r
-    {
-        0x0f, 0xbb, 0x00, 0x02, IA32_PARAM_RM_R, Ia32_Btc
-    },
+    { 0x0f, 0xbb, 0x00, 0x02, IA32_PARAM_RM_R, Ia32_Btc },
     // Btc r/m, imm8
-    {
-        0x0f, 0xba, 0x07, 0x12, IA32_PARAM_RM_IMM8SIGN, Ia32_Btc
-    },
+    { 0x0f, 0xba, 0x07, 0x12, IA32_PARAM_RM_IMM8SIGN, Ia32_Btc },
 
     //
     // Btr
     //
 
     // Btr r/m, r
-    {
-        0x0f, 0xb3, 0x00, 0x02, IA32_PARAM_RM_R, Ia32_Btr
-    },
+    { 0x0f, 0xb3, 0x00, 0x02, IA32_PARAM_RM_R, Ia32_Btr },
     // Btr r/m, imm8
-    {
-        0x0f, 0xba, 0x06, 0x12, IA32_PARAM_RM_IMM8SIGN, Ia32_Btr
-    },
+    { 0x0f, 0xba, 0x06, 0x12, IA32_PARAM_RM_IMM8SIGN, Ia32_Btr },
 
     //
     // Bts
     //
 
     // Bts r/m, r
-    {
-        0x0f, 0xab, 0x00, 0x02, IA32_PARAM_RM_R, Ia32_Bts
-    },
+    { 0x0f, 0xab, 0x00, 0x02, IA32_PARAM_RM_R, Ia32_Bts },
     // Bts r/m, imm8
-    {
-        0x0f, 0xba, 0x05, 0x12, IA32_PARAM_RM_IMM8SIGN, Ia32_Bts
-    },
+    { 0x0f, 0xba, 0x05, 0x12, IA32_PARAM_RM_IMM8SIGN, Ia32_Bts },
 
     //
     //   Sub
     //
 
     // Sub r/m8, imm8
-    {
-        0x80, 0x00, 0x05, 0x11, IA32_PARAM_RM8_IMM8, Ia32_Sub
-    },
+    { 0x80, 0x00, 0x05, 0x11, IA32_PARAM_RM8_IMM8, Ia32_Sub },
     // Sub r/m, imm
-    {
-        0x81, 0x00, 0x05, 0x11, IA32_PARAM_RM_IMM, Ia32_Sub
-    },
+    { 0x81, 0x00, 0x05, 0x11, IA32_PARAM_RM_IMM, Ia32_Sub },
     // Sub r/m, imm8 (sign)
-    {
-        0x83, 0x00, 0x05, 0x11, IA32_PARAM_RM_IMM8SIGN, Ia32_Sub
-    },
+    { 0x83, 0x00, 0x05, 0x11, IA32_PARAM_RM_IMM8SIGN, Ia32_Sub },
     // Sub r/m8, r8
-    {
-        0x28, 0x00, 0x00, 0x01, IA32_PARAM_RM8_R, Ia32_Sub
-    },
+    { 0x28, 0x00, 0x00, 0x01, IA32_PARAM_RM8_R, Ia32_Sub },
     // Sub r/m, r
-    {
-        0x29, 0x00, 0x00, 0x01, IA32_PARAM_RM_R, Ia32_Sub
-    },
+    { 0x29, 0x00, 0x00, 0x01, IA32_PARAM_RM_R, Ia32_Sub },
     // Sub r, r/m8
-    {
-        0x2a, 0x00, 0x00, 0x01, IA32_PARAM_R_RM8, Ia32_Sub
-    },
+    { 0x2a, 0x00, 0x00, 0x01, IA32_PARAM_R_RM8, Ia32_Sub },
     // Sub r, r/m
-    {
-        0x2b, 0x00, 0x00, 0x01, IA32_PARAM_R_RM, Ia32_Sub
-    },
+    { 0x2b, 0x00, 0x00, 0x01, IA32_PARAM_R_RM, Ia32_Sub },
 
     //
     //   Sbb
     //
 
     // Sbb r/m8, imm8
-    {
-        0x80, 0x00, 0x03, 0x11, IA32_PARAM_RM8_IMM8, Ia32_Sbb
-    },
+    { 0x80, 0x00, 0x03, 0x11, IA32_PARAM_RM8_IMM8, Ia32_Sbb },
     // Sbb r/m, imm
-    {
-        0x81, 0x00, 0x03, 0x11, IA32_PARAM_RM_IMM, Ia32_Sbb
-    },
+    { 0x81, 0x00, 0x03, 0x11, IA32_PARAM_RM_IMM, Ia32_Sbb },
     // Sbb r/m, imm8 (sign)
-    {
-        0x83, 0x00, 0x03, 0x11, IA32_PARAM_RM_IMM8SIGN, Ia32_Sbb
-    },
+    { 0x83, 0x00, 0x03, 0x11, IA32_PARAM_RM_IMM8SIGN, Ia32_Sbb },
     // Sbb r/m8, r8
-    {
-        0x18, 0x00, 0x00, 0x01, IA32_PARAM_RM8_R, Ia32_Sbb
-    },
+    { 0x18, 0x00, 0x00, 0x01, IA32_PARAM_RM8_R, Ia32_Sbb },
     // Sbb r/m, r
-    {
-        0x19, 0x00, 0x00, 0x01, IA32_PARAM_RM_R, Ia32_Sbb
-    },
+    { 0x19, 0x00, 0x00, 0x01, IA32_PARAM_RM_R, Ia32_Sbb },
     // Sbb r, r/m8
-    {
-        0x1a, 0x00, 0x00, 0x01, IA32_PARAM_R_RM8, Ia32_Sbb
-    },
+    { 0x1a, 0x00, 0x00, 0x01, IA32_PARAM_R_RM8, Ia32_Sbb },
     // Sbb r, r/m
-    {
-        0x1b, 0x00, 0x00, 0x01, IA32_PARAM_R_RM, Ia32_Sbb
-    },
+    { 0x1b, 0x00, 0x00, 0x01, IA32_PARAM_R_RM, Ia32_Sbb },
 
 
     //
-    //   Mov 
+    //   Mov
     //
 
     // Mov seg-reg, r/m8
-    {
-        0x8e, 0x00, 0x00, 0x01, IA32_PARAM_SEGREG_RM8, Ia32_MovToSeg
-    },
+    { 0x8e, 0x00, 0x00, 0x01, IA32_PARAM_SEGREG_RM8, Ia32_MovToSeg },
 
     // Mov seg-reg, r/m
-    {
-        0x8e, 0x00, 0x00, 0x01, IA32_PARAM_SEGREG_RM, Ia32_MovToSeg
-    },
+    { 0x8e, 0x00, 0x00, 0x01, IA32_PARAM_SEGREG_RM, Ia32_MovToSeg },
 
 };
 
 //
-// Fast mutex that will serialize access to the instruction 
+// Fast mutex that will serialize access to the instruction
 // emulator when the lock prefix is set.
 //
 
 FAST_MUTEX KiIa32MisalignedLockFastMutex;
 
-#define KiIa32AcquireMisalignedLockFastMutex()   ExAcquireFastMutex(&KiIa32MisalignedLockFastMutex)
-#define KiIa32ReleaseMisalignedLockFastMutex()   ExReleaseFastMutex(&KiIa32MisalignedLockFastMutex)
+#define KiIa32AcquireMisalignedLockFastMutex() ExAcquireFastMutex(&KiIa32MisalignedLockFastMutex)
+#define KiIa32ReleaseMisalignedLockFastMutex() ExReleaseFastMutex(&KiIa32MisalignedLockFastMutex)
 
 
 //
@@ -619,25 +422,19 @@ FAST_MUTEX KiIa32MisalignedLockFastMutex;
 // needs of the x86 instruction R/M bits
 //
 
-const ULONG RegOffsetTable[8] = 
-{
-    FIELD_OFFSET(KTRAP_FRAME, IntV0),           // EAX
-    FIELD_OFFSET(KTRAP_FRAME, IntT2),           // ECX
-    FIELD_OFFSET(KTRAP_FRAME, IntT3),           // EDX
-    FIELD_OFFSET(KTRAP_FRAME, IntT4),           // EBX
-    FIELD_OFFSET(KTRAP_FRAME, IntSp),           // ESP
-    FIELD_OFFSET(KTRAP_FRAME, IntTeb),          // EBP
-    FIELD_OFFSET(KTRAP_FRAME, IntT5),           // ESI
-    FIELD_OFFSET(KTRAP_FRAME, IntT6)            // EDI
+const ULONG RegOffsetTable[8] = {
+    FIELD_OFFSET(KTRAP_FRAME, IntV0),  // EAX
+    FIELD_OFFSET(KTRAP_FRAME, IntT2),  // ECX
+    FIELD_OFFSET(KTRAP_FRAME, IntT3),  // EDX
+    FIELD_OFFSET(KTRAP_FRAME, IntT4),  // EBX
+    FIELD_OFFSET(KTRAP_FRAME, IntSp),  // ESP
+    FIELD_OFFSET(KTRAP_FRAME, IntTeb), // EBP
+    FIELD_OFFSET(KTRAP_FRAME, IntT5),  // ESI
+    FIELD_OFFSET(KTRAP_FRAME, IntT6)   // EDI
 };
 
 
-
-
-ULONG_PTR GetX86RegOffset (
-    IN PKTRAP_FRAME TrapFrame,
-    IN ULONG RegisterBase
-    )
+ULONG_PTR GetX86RegOffset(IN PKTRAP_FRAME TrapFrame, IN ULONG RegisterBase)
 
 /*++
 
@@ -662,11 +459,8 @@ Return Value:
     return (ULONG_PTR)((PCHAR)TrapFrame + RegOffsetTable[RegisterBase]);
 }
 
-
-ULONG GetX86Reg (
-    IN PKTRAP_FRAME TrapFrame,
-    IN ULONG RegisterBase
-    )
+
+ULONG GetX86Reg(IN PKTRAP_FRAME TrapFrame, IN ULONG RegisterBase)
 /*++
 
 Routine Description:
@@ -690,11 +484,8 @@ Return Value:
 }
 
 
-
-NTSTATUS 
-KiIa32InitializeLockFastMutex (
-    VOID
-    )
+NTSTATUS
+KiIa32InitializeLockFastMutex(VOID)
 
 /*++
 
@@ -714,18 +505,12 @@ Return Value:
 --*/
 
 {
-    ExInitializeFastMutex (&KiIa32MisalignedLockFastMutex);
+    ExInitializeFastMutex(&KiIa32MisalignedLockFastMutex);
     return STATUS_SUCCESS;
 }
 
-
-LONG
-KiIa32ComputeSIBAddress(
-    IN PKTRAP_FRAME Frame,
-    IN LONG Displacement,
-    IN UCHAR Sib,
-    IN UCHAR ModRm
-    )
+
+LONG KiIa32ComputeSIBAddress(IN PKTRAP_FRAME Frame, IN LONG Displacement, IN UCHAR Sib, IN UCHAR ModRm)
 /*++
 
 Routine Description:
@@ -754,12 +539,12 @@ Return Value:
     LONG Base;
     LONG Index;
     LONG Scale;
-    
+
     //
     // First get the base address that we will be using
     //
 
-    if ((Sib & MI_SIB_BASEMASK) == 5) 
+    if ((Sib & MI_SIB_BASEMASK) == 5)
     {
         //
         // Handle the special case where we don't use EBP for the base
@@ -768,22 +553,25 @@ Return Value:
         //
         // EBP is an implicit reg-base if the Mod is not zero.
         //
-        if ((ModRm >> MI_MODSHIFT) != 0) {
-            Base = GetX86Reg (Frame, IA32_REG_EBP);
-        } else {
+        if ((ModRm >> MI_MODSHIFT) != 0)
+        {
+            Base = GetX86Reg(Frame, IA32_REG_EBP);
+        }
+        else
+        {
             Base = 0;
         }
     }
-    else 
+    else
     {
-        Base = GetX86Reg (Frame, (Sib & MI_SIB_BASEMASK) >> MI_SIB_BASESHIFT);
+        Base = GetX86Reg(Frame, (Sib & MI_SIB_BASEMASK) >> MI_SIB_BASESHIFT);
     }
 
     //
     // Now get the Index
     //
 
-    if ((Sib & MI_SIB_INDEXMASK) == MI_SIB_INDEXNONE) 
+    if ((Sib & MI_SIB_INDEXMASK) == MI_SIB_INDEXNONE)
     {
         //
         // Handle the special case where we don't have an index
@@ -791,9 +579,9 @@ Return Value:
 
         Index = 0;
     }
-    else 
+    else
     {
-        Index = GetX86Reg (Frame, (Sib & MI_SIB_INDEXMASK) >> MI_SIB_INDEXSHIFT);
+        Index = GetX86Reg(Frame, (Sib & MI_SIB_INDEXMASK) >> MI_SIB_INDEXSHIFT);
     }
 
     Scale = 1 << ((Sib & MI_SIB_SSMASK) >> MI_SIB_SSSHIFT);
@@ -801,14 +589,10 @@ Return Value:
     return (Base + (Index * Scale) + Displacement);
 }
 
-
+
 BOOLEAN
-KiIa32Compute32BitEffectiveAddress(
-    IN PKTRAP_FRAME Frame,
-    IN OUT PUCHAR *InstAddr,
-    OUT PUINT_PTR Addr,
-    OUT PBOOLEAN RegisterMode
-    )
+KiIa32Compute32BitEffectiveAddress(IN PKTRAP_FRAME Frame, IN OUT PUCHAR *InstAddr, OUT PUINT_PTR Addr,
+                                   OUT PBOOLEAN RegisterMode)
 
 /*++
 
@@ -842,7 +626,7 @@ Note:
 
 {
 
-    UNALIGNED ULONG * UlongAddress;
+    UNALIGNED ULONG *UlongAddress;
     UCHAR ModRm;
     UCHAR Sib = 0;
     LONG UNALIGNED *DisplacementPtr;
@@ -855,34 +639,34 @@ Note:
 
     LONG Displacement = 0;
 
-    try 
+    try
     {
 
         ModRm = *(*InstAddr)++;
-  
+
         //
         // handle the register case first
         //
 
-        if ((ModRm >> MI_MODSHIFT) == 3) 
+        if ((ModRm >> MI_MODSHIFT) == 3)
         {
-            
+
             //
             // yup, we have a register - the easy case...
             //
 
-            *Addr = GetX86RegOffset (Frame, ModRm & MI_RMMASK);
+            *Addr = GetX86RegOffset(Frame, ModRm & MI_RMMASK);
             *RegisterMode = TRUE;
             return ReturnCode;
         }
-        
+
         *RegisterMode = FALSE;
 
         //
         // See if we have a SIB
         //
 
-        if ((ModRm & MI_RMMASK) == 4) 
+        if ((ModRm & MI_RMMASK) == 4)
         {
             Sib = *(*InstAddr)++;
         }
@@ -891,43 +675,43 @@ Note:
         // Now decode the destination bits
         //
 
-        switch (ModRm >> MI_MODSHIFT) 
+        switch (ModRm >> MI_MODSHIFT)
         {
         case 0:
-            
+
             //
             // We have an indirect through a register
             //
 
-            switch (ModRm & MI_RMMASK) 
+            switch (ModRm & MI_RMMASK)
             {
             case 4:
-                
+
                 //
                 // Deal with the SIB
                 //
 
-                *Addr = KiIa32ComputeSIBAddress (Frame, Displacement, Sib, ModRm);
+                *Addr = KiIa32ComputeSIBAddress(Frame, Displacement, Sib, ModRm);
                 break;
 
             case 5:
-                
+
                 //
                 // We have a 32-bit indirect...
                 //
 
                 UlongAddress = (UNALIGNED ULONG *)*InstAddr;
                 *Addr = *UlongAddress;
-                *InstAddr = (PUCHAR) (UlongAddress + 1);
+                *InstAddr = (PUCHAR)(UlongAddress + 1);
                 break;
-                    
+
             default:
-                
+
                 //
                 // The default case is get the address from the register
                 //
 
-                *Addr = GetX86Reg (Frame, (ModRm & MI_RMMASK));
+                *Addr = GetX86Reg(Frame, (ModRm & MI_RMMASK));
                 break;
             }
             break;
@@ -937,55 +721,55 @@ Note:
             //
             // we have an 8 bit displacement, so grab the next byte
             //
-                
-            Displacement = (signed char) (*(*InstAddr)++);
-            if ((ModRm & MI_RMMASK) == 4) 
+
+            Displacement = (signed char)(*(*InstAddr)++);
+            if ((ModRm & MI_RMMASK) == 4)
             {
                 //
                 // Have a SIB, so do that
                 //
 
-                *Addr = KiIa32ComputeSIBAddress (Frame, Displacement, Sib, ModRm);
+                *Addr = KiIa32ComputeSIBAddress(Frame, Displacement, Sib, ModRm);
             }
-            else 
+            else
             {
                 //
                 // No SIB, life is easy
                 //
-                *Addr = GetX86Reg (Frame, (ModRm & MI_RMMASK)) + Displacement;
+                *Addr = GetX86Reg(Frame, (ModRm & MI_RMMASK)) + Displacement;
             }
             break;
-            
+
         case 2:
             //
             // we have a 32-bit displacement, so grab the next 4 bytes
             //
-            
-            DisplacementPtr = (PLONG) (*InstAddr);
+
+            DisplacementPtr = (PLONG)(*InstAddr);
             Displacement = *DisplacementPtr++;
             *InstAddr = (PUCHAR)DisplacementPtr;
-            
-            if ((ModRm & MI_RMMASK) == 4) 
+
+            if ((ModRm & MI_RMMASK) == 4)
             {
                 //
                 // Have a SIB, so do that
                 //
-                
-                *Addr = KiIa32ComputeSIBAddress (Frame, Displacement, Sib, ModRm);
+
+                *Addr = KiIa32ComputeSIBAddress(Frame, Displacement, Sib, ModRm);
             }
-            else 
+            else
             {
                 //
                 // No SIB, life is easy
                 //
 
-                *Addr = GetX86Reg (Frame, (ModRm & MI_RMMASK)) + Displacement;
+                *Addr = GetX86Reg(Frame, (ModRm & MI_RMMASK)) + Displacement;
             }
             break;
 
-            
+
         default:
-                
+
             //
             // we should have handled case 3 (register access)
             // before getting here...
@@ -995,23 +779,23 @@ Note:
             break;
         }
     }
-    except (EXCEPTION_EXECUTE_HANDLER) 
+    except(EXCEPTION_EXECUTE_HANDLER)
     {
         ReturnCode = FALSE;
 
 #if DBG
         if (KiIa32InstructionEmulationDbg)
         {
-            DbgPrint("KE: KiIa32Compute32BitEffectiveAddress - Exception %lx\n", 
-                     GetExceptionCode());
+            DbgPrint("KE: KiIa32Compute32BitEffectiveAddress - Exception %lx\n", GetExceptionCode());
         }
 #endif
     }
-    
+
     //
     // Make sure the address stays within 4GB range
     //
-    if (ReturnCode == TRUE) {
+    if (ReturnCode == TRUE)
+    {
 
         *Addr = (*Addr & 0x000000007fffffffI64);
     }
@@ -1019,15 +803,11 @@ Note:
     return ReturnCode;
 }
 
-
+
 BOOLEAN
-KiIa32Compute16BitEffectiveAddress (
-    IN PKTRAP_FRAME Frame,
-    IN OUT PUCHAR *InstAddr,
-    OUT PUINT_PTR Addr,
-    OUT PBOOLEAN RegisterMode
-    )
-    
+KiIa32Compute16BitEffectiveAddress(IN PKTRAP_FRAME Frame, IN OUT PUCHAR *InstAddr, OUT PUINT_PTR Addr,
+                                   OUT PBOOLEAN RegisterMode)
+
 /*++
 
 Routine Description:
@@ -1064,9 +844,9 @@ Note:
     USHORT UNALIGNED *Disp16;
     LONG EffectiveAddress = 0;
     BOOLEAN ReturnCode = TRUE;
-    
-    
-    try 
+
+
+    try
     {
         //
         // Read in the Mod/Rm and increment the instruction address
@@ -1085,7 +865,7 @@ Note:
         case 0:
             if ((ModRm & MI_RMMASK) == 6)
             {
-                Disp16 = (USHORT UNALIGNED *) InstAddr;
+                Disp16 = (USHORT UNALIGNED *)InstAddr;
                 *Addr = *Disp16;
                 *InstAddr = (*InstAddr + 2);
                 return ReturnCode;
@@ -1093,7 +873,7 @@ Note:
 
             DisplacementType = IA32_DISP_NONE;
             break;
-        
+
         case 1:
             DisplacementType = IA32_DISP8;
             break;
@@ -1103,7 +883,7 @@ Note:
             break;
 
         case 3:
-            *Addr = GetX86RegOffset (Frame, ModRm & MI_RMMASK);
+            *Addr = GetX86RegOffset(Frame, ModRm & MI_RMMASK);
             *RegisterMode = TRUE;
             return ReturnCode;
         }
@@ -1115,20 +895,16 @@ Note:
         switch (ModRm & MI_RMMASK)
         {
         case 0:
-            EffectiveAddress = (GetX86Reg(Frame, IA32_REG_EBX) & 0xffff) +
-                               (GetX86Reg(Frame, IA32_REG_ESI) & 0xffff) ;
+            EffectiveAddress = (GetX86Reg(Frame, IA32_REG_EBX) & 0xffff) + (GetX86Reg(Frame, IA32_REG_ESI) & 0xffff);
             break;
         case 1:
-            EffectiveAddress = (GetX86Reg(Frame, IA32_REG_EBX) & 0xffff) +
-                               (GetX86Reg(Frame, IA32_REG_EDI) & 0xffff) ;
+            EffectiveAddress = (GetX86Reg(Frame, IA32_REG_EBX) & 0xffff) + (GetX86Reg(Frame, IA32_REG_EDI) & 0xffff);
             break;
         case 2:
-            EffectiveAddress = (GetX86Reg(Frame, IA32_REG_EBP) & 0xffff) +
-                               (GetX86Reg(Frame, IA32_REG_ESI) & 0xffff) ;
+            EffectiveAddress = (GetX86Reg(Frame, IA32_REG_EBP) & 0xffff) + (GetX86Reg(Frame, IA32_REG_ESI) & 0xffff);
             break;
         case 3:
-            EffectiveAddress = (GetX86Reg(Frame, IA32_REG_EBP) & 0xffff) +
-                               (GetX86Reg(Frame, IA32_REG_EDI) & 0xffff) ;
+            EffectiveAddress = (GetX86Reg(Frame, IA32_REG_EBP) & 0xffff) + (GetX86Reg(Frame, IA32_REG_EDI) & 0xffff);
             break;
         case 4:
             EffectiveAddress = (GetX86Reg(Frame, IA32_REG_ESI) & 0xffff);
@@ -1153,24 +929,23 @@ Note:
             switch (DisplacementType)
             {
             case IA32_DISP8:
-                {
-                    EffectiveAddress += (LONG) (**InstAddr);
-                    *InstAddr = *InstAddr + 1;
-                }
-                break;
+            {
+                EffectiveAddress += (LONG)(**InstAddr);
+                *InstAddr = *InstAddr + 1;
+            }
+            break;
 
             case IA32_DISP16:
-                {
-                    Disp16 = (USHORT UNALIGNED *) InstAddr;
-                    EffectiveAddress += (LONG) *Disp16;
-                    *InstAddr = *InstAddr + 2;
-                }
-                break;
+            {
+                Disp16 = (USHORT UNALIGNED *)InstAddr;
+                EffectiveAddress += (LONG)*Disp16;
+                *InstAddr = *InstAddr + 2;
+            }
+            break;
 
             default:
 #if DBG
-                DbgPrint("KE: KiIa32Compute16BitEffectiveAddress - Invalid displacement type %lx\n",
-                         DisplacementType);
+                DbgPrint("KE: KiIa32Compute16BitEffectiveAddress - Invalid displacement type %lx\n", DisplacementType);
 #endif
                 ReturnCode = FALSE;
                 break;
@@ -1179,13 +954,12 @@ Note:
 
         *Addr = EffectiveAddress;
     }
-    except (EXCEPTION_EXECUTE_HANDLER)
+    except(EXCEPTION_EXECUTE_HANDLER)
     {
 #if DBG
         if (KiIa32InstructionEmulationDbg)
         {
-            DbgPrint("KE: KiIa32Compute16BitEffectiveAddress - Exception %lx\n",
-                     GetExceptionCode());
+            DbgPrint("KE: KiIa32Compute16BitEffectiveAddress - Exception %lx\n", GetExceptionCode());
         }
 #endif
         ReturnCode = FALSE;
@@ -1194,7 +968,8 @@ Note:
     //
     // Make sure the address stays within 4GB range
     //
-    if (ReturnCode == TRUE) {
+    if (ReturnCode == TRUE)
+    {
 
         *Addr = (*Addr & 0x000000007fffffffI64);
     }
@@ -1202,14 +977,9 @@ Note:
     return ReturnCode;
 }
 
-
+
 NTSTATUS
-KiIa32UpdateFlags (
-    IN PIA32_INSTRUCTION Instruction,
-    IN ULONGLONG Operand1,
-    IN ULONGLONG Result,
-    IN ULONG Ia32Eflags
-    )
+KiIa32UpdateFlags(IN PIA32_INSTRUCTION Instruction, IN ULONGLONG Operand1, IN ULONGLONG Result, IN ULONG Ia32Eflags)
 
 /*++
 
@@ -1237,7 +1007,7 @@ Return Value:
     ULONGLONG Temp = 0;
     IA32_EFLAGS Eflags = Instruction->Eflags;
 
-    
+
     //
     // Sanitize the destination value.
     //
@@ -1271,7 +1041,7 @@ Return Value:
     if ((Ia32Eflags & IA32_EFLAGS_SF) != 0)
     {
         switch (Instruction->OperandSize)
-        {      
+        {
         case 0xff:
             Temp = 0x80UI64;
             break;
@@ -1311,7 +1081,7 @@ Return Value:
     {
         Eflags.u.af = (((Operand1 ^ Result) >> 4) & 0x01UI64);
     }
-    
+
     //
     // This needs to be the last one as it modifies the 'Result'
     //
@@ -1350,20 +1120,16 @@ Return Value:
     // Sanitize the flags
     //
 
-    Eflags.Value = SANITIZE_AR24_EFLAGS (Eflags.Value, UserMode);
+    Eflags.Value = SANITIZE_AR24_EFLAGS(Eflags.Value, UserMode);
 
     Instruction->Eflags = Eflags;
 
     return STATUS_SUCCESS;
 }
 
-
+
 NTSTATUS
-KiIa32UpdateResult (
-    IN PIA32_INSTRUCTION Instruction,
-    IN PIA32_OPERAND DestinationOperand,
-    IN ULONGLONG Result
-    )
+KiIa32UpdateResult(IN PIA32_INSTRUCTION Instruction, IN PIA32_OPERAND DestinationOperand, IN ULONGLONG Result)
 
 /*++
 
@@ -1395,7 +1161,7 @@ Return Value:
     //  Update results according to operand size
     //
 
-    try 
+    try
     {
         if (DestinationOperand->RegisterMode == FALSE)
         {
@@ -1412,12 +1178,12 @@ Return Value:
             break;
 
         case OPERANDSIZE_TWOBYTES:
-            UshortPtr = (UNALIGNED USHORT *) DestinationOperand->v;
+            UshortPtr = (UNALIGNED USHORT *)DestinationOperand->v;
             *UshortPtr = (USHORT)Result;
             break;
 
         case OPERANDSIZE_FOURBYTES:
-            UlongPtr =(UNALIGNED ULONG *) DestinationOperand->v;
+            UlongPtr = (UNALIGNED ULONG *)DestinationOperand->v;
             *UlongPtr = (ULONG)Result;
             break;
 
@@ -1425,34 +1191,29 @@ Return Value:
 #if DBG
             if (KiIa32InstructionEmulationDbg)
             {
-                DbgPrint("KE: KiIa32UpdateResult() - Invalid operand size  - %lx - %p\n",
-                         Instruction->OperandSize, Instruction);
+                DbgPrint("KE: KiIa32UpdateResult() - Invalid operand size  - %lx - %p\n", Instruction->OperandSize,
+                         Instruction);
             }
 #endif
             NtStatus = STATUS_UNSUCCESSFUL;
             break;
         }
     }
-    except (EXCEPTION_EXECUTE_HANDLER)
+    except(EXCEPTION_EXECUTE_HANDLER)
     {
-        NtStatus = GetExceptionCode ();
+        NtStatus = GetExceptionCode();
 
 #if DBG
-        DbgPrint("KE: KiIa32UpdateResult - Exception %lx - %p\n",
-                 NtStatus, Instruction);
+        DbgPrint("KE: KiIa32UpdateResult - Exception %lx - %p\n", NtStatus, Instruction);
 #endif
     }
 
     return NtStatus;
-
 }
 
-
+
 NTSTATUS
-KiIa32ReadOperand1 (
-    IN PIA32_INSTRUCTION Instruction,
-    OUT PULONGLONG Operand1
-    )
+KiIa32ReadOperand1(IN PIA32_INSTRUCTION Instruction, OUT PULONGLONG Operand1)
 
 /*++
 
@@ -1478,7 +1239,7 @@ Return Value:
     NTSTATUS NtStatus = STATUS_SUCCESS;
 
 
-    try 
+    try
     {
         switch (Instruction->Description->Type)
         {
@@ -1491,13 +1252,13 @@ Return Value:
         case IA32_PARAM_SEGREG_RM:
             if (Instruction->OperandSize == OPERANDSIZE_TWOBYTES)
             {
-                UshortPtr = (UNALIGNED USHORT *) Instruction->Operand1.v;
-                *Operand1 = (ULONGLONG) *UshortPtr;
+                UshortPtr = (UNALIGNED USHORT *)Instruction->Operand1.v;
+                *Operand1 = (ULONGLONG)*UshortPtr;
             }
             else
             {
-                UlongPtr = (UNALIGNED ULONG *) Instruction->Operand1.v;
-                *Operand1 = (ULONGLONG) *UlongPtr;
+                UlongPtr = (UNALIGNED ULONG *)Instruction->Operand1.v;
+                *Operand1 = (ULONGLONG)*UlongPtr;
             }
             break;
 
@@ -1505,39 +1266,35 @@ Return Value:
         case IA32_PARAM_RM8_R:
         case IA32_PARAM_RM8:
         case IA32_PARAM_SEGREG_RM8:
-            *Operand1 = (ULONGLONG) (*(PUCHAR)Instruction->Operand1.v);
+            *Operand1 = (ULONGLONG)(*(PUCHAR)Instruction->Operand1.v);
             break;
 
         default:
 #if DBG
             if (KiIa32InstructionEmulationDbg)
             {
-                DbgPrint("KE: KiIa32ReadRm - Invalid opcode type %lx - %p\n",
-                          Instruction->Description->Type, Instruction);
+                DbgPrint("KE: KiIa32ReadRm - Invalid opcode type %lx - %p\n", Instruction->Description->Type,
+                         Instruction);
             }
             NtStatus = STATUS_UNSUCCESSFUL;
 #endif
             break;
         }
     }
-    except (EXCEPTION_EXECUTE_HANDLER)
+    except(EXCEPTION_EXECUTE_HANDLER)
     {
-        NtStatus = GetExceptionCode ();
+        NtStatus = GetExceptionCode();
 #if DBG
-        DbgPrint("KE: KiIa32ReadOperand1 - Exception %lx - %p\n",
-                 NtStatus, Instruction);
+        DbgPrint("KE: KiIa32ReadOperand1 - Exception %lx - %p\n", NtStatus, Instruction);
 #endif
     }
 
     return NtStatus;
 }
 
-
+
 NTSTATUS
-KiIa32ReadOperand2 (
-    IN PIA32_INSTRUCTION Instruction,
-    OUT PULONGLONG Operand2
-    )
+KiIa32ReadOperand2(IN PIA32_INSTRUCTION Instruction, OUT PULONGLONG Operand2)
 
 /*++
 
@@ -1561,8 +1318,8 @@ Return Value:
     UNALIGNED ULONG *UlongPtr;
     UNALIGNED USHORT *UshortPtr;
     NTSTATUS NtStatus = STATUS_SUCCESS;
-    
-    try 
+
+    try
     {
         switch (Instruction->Description->Type)
         {
@@ -1584,13 +1341,13 @@ Return Value:
         case IA32_PARAM_R_RM:
             if (Instruction->OperandSize == OPERANDSIZE_TWOBYTES)
             {
-                UshortPtr = (UNALIGNED USHORT *) Instruction->Operand2.v;
-                *Operand2 = (ULONGLONG) *UshortPtr;
+                UshortPtr = (UNALIGNED USHORT *)Instruction->Operand2.v;
+                *Operand2 = (ULONGLONG)*UshortPtr;
             }
             else
             {
-                UlongPtr = (UNALIGNED ULONG *) Instruction->Operand2.v;
-                *Operand2 = (ULONGLONG) *UlongPtr;
+                UlongPtr = (UNALIGNED ULONG *)Instruction->Operand2.v;
+                *Operand2 = (ULONGLONG)*UlongPtr;
             }
             break;
 
@@ -1600,34 +1357,30 @@ Return Value:
 
         default:
 #if DBG
-        if (KiIa32InstructionEmulationDbg)
-        {
-            DbgPrint("KE: KiIa32ReadOperand2 - Invalid type %lx - %p\n",
-                      Instruction->Description->Type, Instruction);
-        }
-        NtStatus = STATUS_UNSUCCESSFUL;
+            if (KiIa32InstructionEmulationDbg)
+            {
+                DbgPrint("KE: KiIa32ReadOperand2 - Invalid type %lx - %p\n", Instruction->Description->Type,
+                         Instruction);
+            }
+            NtStatus = STATUS_UNSUCCESSFUL;
 #endif
             break;
         }
     }
-    except (EXCEPTION_EXECUTE_HANDLER)
+    except(EXCEPTION_EXECUTE_HANDLER)
     {
-        NtStatus = GetExceptionCode ();
+        NtStatus = GetExceptionCode();
 #if DBG
-        DbgPrint("KE: KiIa32ReadOperand2 - Exception %lx - %p\n",
-                 NtStatus, Instruction);
+        DbgPrint("KE: KiIa32ReadOperand2 - Exception %lx - %p\n", NtStatus, Instruction);
 #endif
     }
 
     return NtStatus;
 }
 
-
+
 NTSTATUS
-KiIa32InstructionAddWithIncrement (
-    IN PIA32_INSTRUCTION Instruction,
-    IN ULONG Increment
-    )
+KiIa32InstructionAddWithIncrement(IN PIA32_INSTRUCTION Instruction, IN ULONG Increment)
 
 /*++
 
@@ -1656,7 +1409,7 @@ Return Value:
     BOOLEAN Subtract;
     NTSTATUS NtStatus;
 
-    
+
     switch (Instruction->Description->Opcode)
     {
     case Ia32_Add:
@@ -1674,28 +1427,27 @@ Return Value:
         if (KiIa32InstructionEmulationDbg)
         {
             DbgPrint("KE: KiIa32InstructionAddWithIncrement - Invalid opcode %lx - %p\n",
-                      Instruction->Description->Opcode, Instruction);
+                     Instruction->Description->Opcode, Instruction);
         }
 #endif
         return STATUS_UNSUCCESSFUL;
         break;
-
     }
 
-    NtStatus = KiIa32ReadOperand1 (Instruction, &UlongDst);
+    NtStatus = KiIa32ReadOperand1(Instruction, &UlongDst);
 
-    if (NT_SUCCESS (NtStatus))
+    if (NT_SUCCESS(NtStatus))
     {
         Operand1 = UlongDst;
 
-        NtStatus = KiIa32ReadOperand2 (Instruction, &UlongSrc);
+        NtStatus = KiIa32ReadOperand2(Instruction, &UlongSrc);
 
-        if (NT_SUCCESS (NtStatus))
+        if (NT_SUCCESS(NtStatus))
         {
             switch (Instruction->Description->Type)
             {
             case IA32_PARAM_RM_IMM8SIGN:
-                SignImm8 = (char) UlongSrc;
+                SignImm8 = (char)UlongSrc;
                 if (Subtract)
                     UlongDst = (UlongDst - (Increment + SignImm8));
                 else
@@ -1703,7 +1455,7 @@ Return Value:
                 break;
 
             case IA32_PARAM_RM8_IMM8:
-                Imm8 = (UCHAR) UlongSrc;
+                Imm8 = (UCHAR)UlongSrc;
                 if (Subtract)
                     UlongDst = (UlongDst - (Increment + Imm8));
                 else
@@ -1723,25 +1475,17 @@ Return Value:
             //  Update results according to operand size
             //
 
-            NtStatus = KiIa32UpdateResult (
-                           Instruction,
-                           &Instruction->Operand1,
-                           UlongDst
-                           );
+            NtStatus = KiIa32UpdateResult(Instruction, &Instruction->Operand1, UlongDst);
 
             //
             // Eflags update
             //
-  
-            if (NT_SUCCESS (NtStatus))
+
+            if (NT_SUCCESS(NtStatus))
             {
-                KiIa32UpdateFlags (
-                    Instruction,
-                    Operand1,
-                    UlongDst,
-                    (IA32_EFLAGS_CF | IA32_EFLAGS_SF | IA32_EFLAGS_OF | 
-                     IA32_EFLAGS_PF | IA32_EFLAGS_ZF | IA32_EFLAGS_AF)
-                    );
+                KiIa32UpdateFlags(Instruction, Operand1, UlongDst,
+                                  (IA32_EFLAGS_CF | IA32_EFLAGS_SF | IA32_EFLAGS_OF | IA32_EFLAGS_PF | IA32_EFLAGS_ZF |
+                                   IA32_EFLAGS_AF));
             }
         }
     }
@@ -1749,12 +1493,9 @@ Return Value:
     return NtStatus;
 }
 
-
+
 NTSTATUS
-KiIa32InstructionAdc (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PIA32_INSTRUCTION Instruction
-    )
+KiIa32InstructionAdc(IN PKTRAP_FRAME TrapFrame, IN PIA32_INSTRUCTION Instruction)
 
 /*++
 
@@ -1775,19 +1516,14 @@ Return Value:
 --*/
 
 {
-    return KiIa32InstructionAddWithIncrement (
-               Instruction,
-               (ULONG)Instruction->Eflags.u.cf);
+    return KiIa32InstructionAddWithIncrement(Instruction, (ULONG)Instruction->Eflags.u.cf);
 
-    UNREFERENCED_PARAMETER (TrapFrame);
+    UNREFERENCED_PARAMETER(TrapFrame);
 }
 
-
+
 NTSTATUS
-KiIa32InstructionAdd (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PIA32_INSTRUCTION Instruction
-    )
+KiIa32InstructionAdd(IN PKTRAP_FRAME TrapFrame, IN PIA32_INSTRUCTION Instruction)
 
 /*++
 
@@ -1808,19 +1544,14 @@ Return Value:
 --*/
 
 {
-    return KiIa32InstructionAddWithIncrement (
-               Instruction,
-               0);
+    return KiIa32InstructionAddWithIncrement(Instruction, 0);
 
-    UNREFERENCED_PARAMETER (TrapFrame);
+    UNREFERENCED_PARAMETER(TrapFrame);
 }
 
-
+
 NTSTATUS
-KiIa32InstructionArithmeticBitwiseHelper (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PIA32_INSTRUCTION Instruction
-    )
+KiIa32InstructionArithmeticBitwiseHelper(IN PKTRAP_FRAME TrapFrame, IN PIA32_INSTRUCTION Instruction)
 
 /*++
 
@@ -1846,16 +1577,16 @@ Return Value:
     ULONGLONG Operand1;
     NTSTATUS NtStatus;
 
-    
-    NtStatus = KiIa32ReadOperand1 (Instruction, &UlongDst);
 
-    if (NT_SUCCESS (NtStatus))
+    NtStatus = KiIa32ReadOperand1(Instruction, &UlongDst);
+
+    if (NT_SUCCESS(NtStatus))
     {
         Operand1 = UlongDst;
 
-        NtStatus = KiIa32ReadOperand2 (Instruction, &UlongSrc);
+        NtStatus = KiIa32ReadOperand2(Instruction, &UlongSrc);
 
-        if (NT_SUCCESS (NtStatus))
+        if (NT_SUCCESS(NtStatus))
         {
             switch (Instruction->Description->Opcode)
             {
@@ -1872,33 +1603,25 @@ Return Value:
                 break;
 
             default:
-#if DBG      
+#if DBG
                 NtStatus = STATUS_UNSUCCESSFUL;
                 if (KiIa32InstructionEmulationDbg)
                 {
-                    DbgPrint("KE: KiIa32InstructionBitwiseHelper - Invalid operation %lx - %p\n", 
+                    DbgPrint("KE: KiIa32InstructionBitwiseHelper - Invalid operation %lx - %p\n",
                              Instruction->Description->Opcode, Instruction);
                 }
 #endif
                 break;
             }
 
-            if (NT_SUCCESS (NtStatus))
+            if (NT_SUCCESS(NtStatus))
             {
-                NtStatus = KiIa32UpdateResult (
-                               Instruction,
-                               &Instruction->Operand1,
-                               UlongDst
-                               );
+                NtStatus = KiIa32UpdateResult(Instruction, &Instruction->Operand1, UlongDst);
 
-                if (NT_SUCCESS (NtStatus))
+                if (NT_SUCCESS(NtStatus))
                 {
-                    NtStatus = KiIa32UpdateFlags (
-                                   Instruction,
-                                   Operand1,
-                                   UlongDst,
-                                   (IA32_EFLAGS_SF | IA32_EFLAGS_PF | IA32_EFLAGS_ZF)
-                                   );
+                    NtStatus = KiIa32UpdateFlags(Instruction, Operand1, UlongDst,
+                                                 (IA32_EFLAGS_SF | IA32_EFLAGS_PF | IA32_EFLAGS_ZF));
 
                     Instruction->Eflags.u.cf = 0;
                     Instruction->Eflags.u.of = 0;
@@ -1909,15 +1632,12 @@ Return Value:
 
     return NtStatus;
 
-    UNREFERENCED_PARAMETER (TrapFrame);
+    UNREFERENCED_PARAMETER(TrapFrame);
 }
 
-
+
 NTSTATUS
-KiIa32InstructionBitTestHelper (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PIA32_INSTRUCTION Instruction
-    )
+KiIa32InstructionBitTestHelper(IN PKTRAP_FRAME TrapFrame, IN PIA32_INSTRUCTION Instruction)
 
 /*++
 
@@ -1944,10 +1664,9 @@ Return Value:
     NTSTATUS NtStatus;
 
 
+    NtStatus = KiIa32ReadOperand2(Instruction, &UlongSrc);
 
-    NtStatus = KiIa32ReadOperand2 (Instruction, &UlongSrc);
-
-    if (NT_SUCCESS (NtStatus))
+    if (NT_SUCCESS(NtStatus))
     {
         if (Instruction->Operand2.RegisterMode == TRUE)
         {
@@ -1962,14 +1681,14 @@ Return Value:
                 UlongSrc &= 0x1f;
             }
         }
-        
-        NtStatus = KiIa32ReadOperand1 (Instruction, &UlongDst);
 
-        if (NT_SUCCESS (NtStatus))
+        NtStatus = KiIa32ReadOperand1(Instruction, &UlongDst);
+
+        if (NT_SUCCESS(NtStatus))
         {
-        
+
             BitTestResult = (UlongDst & (1 << UlongSrc));
-  
+
             if (BitTestResult)
             {
                 Instruction->Eflags.u.cf = 1;
@@ -1978,7 +1697,7 @@ Return Value:
             {
                 Instruction->Eflags.u.cf = 0;
             }
-        
+
             switch (Instruction->Description->Opcode)
             {
             case Ia32_Btc:
@@ -1994,25 +1713,18 @@ Return Value:
                 break;
             }
 
-            NtStatus = KiIa32UpdateResult (
-                           Instruction,
-                           &Instruction->Operand1,
-                           UlongDst
-                           );
+            NtStatus = KiIa32UpdateResult(Instruction, &Instruction->Operand1, UlongDst);
         }
     }
 
     return NtStatus;
 
-    UNREFERENCED_PARAMETER (TrapFrame);
+    UNREFERENCED_PARAMETER(TrapFrame);
 }
 
-
+
 NTSTATUS
-KiIa32InstructionOneParamHelper (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PIA32_INSTRUCTION Instruction
-    )
+KiIa32InstructionOneParamHelper(IN PKTRAP_FRAME TrapFrame, IN PIA32_INSTRUCTION Instruction)
 
 /*++
 
@@ -2039,13 +1751,10 @@ Return Value:
     ULONGLONG UlongSrc;
     NTSTATUS NtStatus;
 
-    
-    NtStatus = KiIa32ReadOperand1 (
-                   Instruction,
-                   &UlongDst
-                   );
 
-    if (NT_SUCCESS (NtStatus))
+    NtStatus = KiIa32ReadOperand1(Instruction, &UlongDst);
+
+    if (NT_SUCCESS(NtStatus))
     {
 
         UlongSrc = UlongDst;
@@ -2070,21 +1779,16 @@ Return Value:
             break;
         }
 
-        NtStatus = KiIa32UpdateResult (
-                       Instruction,
-                       &Instruction->Operand1,
-                       UlongDst
-                       );
+        NtStatus = KiIa32UpdateResult(Instruction, &Instruction->Operand1, UlongDst);
 
-        if (NT_SUCCESS (NtStatus))
+        if (NT_SUCCESS(NtStatus))
         {
 
             switch (Opcode)
             {
             case Ia32_Inc:
             case Ia32_Dec:
-                FlagsAffected = (IA32_EFLAGS_SF | IA32_EFLAGS_PF | 
-                                 IA32_EFLAGS_ZF);
+                FlagsAffected = (IA32_EFLAGS_SF | IA32_EFLAGS_PF | IA32_EFLAGS_ZF);
 
                 break;
 
@@ -2094,35 +1798,26 @@ Return Value:
                 else
                     Instruction->Eflags.u.cf = 1;
 
-                FlagsAffected = (IA32_EFLAGS_SF | IA32_EFLAGS_PF | 
-                                 IA32_EFLAGS_ZF | IA32_EFLAGS_AF | IA32_EFLAGS_OF);
+                FlagsAffected = (IA32_EFLAGS_SF | IA32_EFLAGS_PF | IA32_EFLAGS_ZF | IA32_EFLAGS_AF | IA32_EFLAGS_OF);
                 break;
             }
 
 
             if (FlagsAffected != 0)
             {
-                NtStatus = KiIa32UpdateFlags (
-                               Instruction,
-                               UlongSrc,
-                               UlongDst,
-                               FlagsAffected
-                               );
+                NtStatus = KiIa32UpdateFlags(Instruction, UlongSrc, UlongDst, FlagsAffected);
             }
         }
     }
 
     return NtStatus;
 
-    UNREFERENCED_PARAMETER (TrapFrame);
+    UNREFERENCED_PARAMETER(TrapFrame);
 }
 
-
+
 NTSTATUS
-KiIa32InstructionXadd (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PIA32_INSTRUCTION Instruction
-    )
+KiIa32InstructionXadd(IN PKTRAP_FRAME TrapFrame, IN PIA32_INSTRUCTION Instruction)
 
 /*++
 
@@ -2149,59 +1844,44 @@ Return Value:
     ULONGLONG Temp;
     NTSTATUS NtStatus;
 
-    
-    NtStatus = KiIa32ReadOperand1 (Instruction, &UlongDst);
 
-    if (NT_SUCCESS (NtStatus))
+    NtStatus = KiIa32ReadOperand1(Instruction, &UlongDst);
+
+    if (NT_SUCCESS(NtStatus))
     {
         Operand1 = UlongDst;
 
-        NtStatus = KiIa32ReadOperand2 (Instruction, &UlongSrc);
+        NtStatus = KiIa32ReadOperand2(Instruction, &UlongSrc);
 
-        if (NT_SUCCESS (NtStatus))
+        if (NT_SUCCESS(NtStatus))
         {
             Temp = UlongDst;
             UlongDst += UlongSrc;
 
-            NtStatus = KiIa32UpdateResult (
-                           Instruction,
-                           &Instruction->Operand1,
-                           UlongDst
-                           );
+            NtStatus = KiIa32UpdateResult(Instruction, &Instruction->Operand1, UlongDst);
 
-            if (NT_SUCCESS (NtStatus))
+            if (NT_SUCCESS(NtStatus))
             {
-                NtStatus = KiIa32UpdateResult (
-                               Instruction,
-                               &Instruction->Operand2,
-                               Temp
-                               );
+                NtStatus = KiIa32UpdateResult(Instruction, &Instruction->Operand2, Temp);
 
-                if (NT_SUCCESS (NtStatus))
+                if (NT_SUCCESS(NtStatus))
                 {
-                    NtStatus = KiIa32UpdateFlags (
-                                   Instruction,
-                                   Operand1,
-                                   UlongDst,
-                                   (IA32_EFLAGS_CF | IA32_EFLAGS_SF | IA32_EFLAGS_PF | 
-                                    IA32_EFLAGS_ZF | IA32_EFLAGS_OF | IA32_EFLAGS_AF)
-                                   );
+                    NtStatus = KiIa32UpdateFlags(Instruction, Operand1, UlongDst,
+                                                 (IA32_EFLAGS_CF | IA32_EFLAGS_SF | IA32_EFLAGS_PF | IA32_EFLAGS_ZF |
+                                                  IA32_EFLAGS_OF | IA32_EFLAGS_AF));
                 }
             }
         }
     }
-    
+
     return NtStatus;
 
-    UNREFERENCED_PARAMETER (TrapFrame);
+    UNREFERENCED_PARAMETER(TrapFrame);
 }
 
-
+
 NTSTATUS
-KiIa32InstructionXchg (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PIA32_INSTRUCTION Instruction
-    )
+KiIa32InstructionXchg(IN PKTRAP_FRAME TrapFrame, IN PIA32_INSTRUCTION Instruction)
 
 /*++
 
@@ -2226,43 +1906,32 @@ Return Value:
     ULONGLONG UlongSrc;
     NTSTATUS NtStatus;
 
-    
-    NtStatus = KiIa32ReadOperand1 (Instruction, &UlongDst);
 
-    if (NT_SUCCESS (NtStatus))
+    NtStatus = KiIa32ReadOperand1(Instruction, &UlongDst);
+
+    if (NT_SUCCESS(NtStatus))
     {
-        NtStatus = KiIa32ReadOperand2 (Instruction, &UlongSrc);
+        NtStatus = KiIa32ReadOperand2(Instruction, &UlongSrc);
 
-        if (NT_SUCCESS (NtStatus))
+        if (NT_SUCCESS(NtStatus))
         {
-            NtStatus = KiIa32UpdateResult (
-                           Instruction,
-                           &Instruction->Operand1,
-                           UlongSrc
-                           );
+            NtStatus = KiIa32UpdateResult(Instruction, &Instruction->Operand1, UlongSrc);
 
-            if (NT_SUCCESS (NtStatus))
+            if (NT_SUCCESS(NtStatus))
             {
-                NtStatus = KiIa32UpdateResult (
-                               Instruction,
-                               &Instruction->Operand2,
-                               UlongDst
-                               );
+                NtStatus = KiIa32UpdateResult(Instruction, &Instruction->Operand2, UlongDst);
             }
         }
     }
-    
+
     return NtStatus;
 
-    UNREFERENCED_PARAMETER (TrapFrame);
+    UNREFERENCED_PARAMETER(TrapFrame);
 }
 
-
+
 NTSTATUS
-KiIa32InstructionCmpXchg (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PIA32_INSTRUCTION Instruction
-    )
+KiIa32InstructionCmpXchg(IN PKTRAP_FRAME TrapFrame, IN PIA32_INSTRUCTION Instruction)
 
 /*++
 
@@ -2290,52 +1959,39 @@ Return Value:
     NTSTATUS NtStatus;
 
 
-    NtStatus = KiIa32ReadOperand1 (Instruction, &UlongDst);
+    NtStatus = KiIa32ReadOperand1(Instruction, &UlongDst);
 
-    if (NT_SUCCESS (NtStatus))
+    if (NT_SUCCESS(NtStatus))
     {
-        NtStatus = KiIa32ReadOperand2 (Instruction, &UlongSrc);
+        NtStatus = KiIa32ReadOperand2(Instruction, &UlongSrc);
 
-        if (NT_SUCCESS (NtStatus))
+        if (NT_SUCCESS(NtStatus))
         {
-            Accumulator = GetX86Reg (TrapFrame, IA32_REG_EAX);
+            Accumulator = GetX86Reg(TrapFrame, IA32_REG_EAX);
             Accumulator &= Instruction->OperandMask;
 
             if (Accumulator == UlongDst)
             {
                 Instruction->Eflags.u.zf = 1;
 
-                NtStatus = KiIa32UpdateResult (
-                               Instruction,
-                               &Instruction->Operand1,
-                               UlongSrc
-                               );
+                NtStatus = KiIa32UpdateResult(Instruction, &Instruction->Operand1, UlongSrc);
             }
             else
             {
                 Instruction->Eflags.u.zf = 0;
 
                 AccumulatorOperand.RegisterMode = TRUE;
-                AccumulatorOperand.v = GetX86RegOffset (TrapFrame, IA32_REG_EAX);
+                AccumulatorOperand.v = GetX86RegOffset(TrapFrame, IA32_REG_EAX);
 
-                NtStatus = KiIa32UpdateResult (
-                               Instruction,
-                               &AccumulatorOperand,
-                               UlongDst
-                               );
+                NtStatus = KiIa32UpdateResult(Instruction, &AccumulatorOperand, UlongDst);
             }
 
 
-            if (NT_SUCCESS (NtStatus))
+            if (NT_SUCCESS(NtStatus))
             {
-                NtStatus = KiIa32UpdateFlags (
-                               Instruction,
-                               UlongDst,
-                               UlongDst,
-                               (IA32_EFLAGS_CF | IA32_EFLAGS_SF | 
-                                IA32_EFLAGS_PF | IA32_EFLAGS_OF | 
-                                IA32_EFLAGS_AF)
-                               );
+                NtStatus = KiIa32UpdateFlags(
+                    Instruction, UlongDst, UlongDst,
+                    (IA32_EFLAGS_CF | IA32_EFLAGS_SF | IA32_EFLAGS_PF | IA32_EFLAGS_OF | IA32_EFLAGS_AF));
             }
         }
     }
@@ -2343,12 +1999,9 @@ Return Value:
     return NtStatus;
 }
 
-
+
 NTSTATUS
-KiIa32InstructionCmpXchg8b (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PIA32_INSTRUCTION Instruction
-    )
+KiIa32InstructionCmpXchg8b(IN PKTRAP_FRAME TrapFrame, IN PIA32_INSTRUCTION Instruction)
 
 /*++
 
@@ -2374,9 +2027,9 @@ Return Value:
     ULONGLONG EdxEax;
 
 
-    EdxEax = GetX86Reg (TrapFrame, IA32_REG_EDX);
+    EdxEax = GetX86Reg(TrapFrame, IA32_REG_EDX);
     EdxEax <<= 32;
-    EdxEax |= GetX86Reg (TrapFrame, IA32_REG_EAX);
+    EdxEax |= GetX86Reg(TrapFrame, IA32_REG_EAX);
 
     UlongDst = (PULONGLONG)Instruction->Operand1.v;
 
@@ -2384,30 +2037,26 @@ Return Value:
     {
         Instruction->Eflags.u.zf = 1;
 
-        *UlongDst = ((((ULONGLONG) GetX86Reg (TrapFrame, IA32_REG_ECX)) << 32) | 
-                      ((ULONGLONG) GetX86Reg (TrapFrame, IA32_REG_EBX)));
-
+        *UlongDst =
+            ((((ULONGLONG)GetX86Reg(TrapFrame, IA32_REG_ECX)) << 32) | ((ULONGLONG)GetX86Reg(TrapFrame, IA32_REG_EBX)));
     }
     else
     {
         Instruction->Eflags.u.zf = 0;
 
-        UlongSrc = (PULONGLONG) GetX86RegOffset (TrapFrame, IA32_REG_EDX);
+        UlongSrc = (PULONGLONG)GetX86RegOffset(TrapFrame, IA32_REG_EDX);
         *UlongSrc = ((*UlongDst) >> 32);
 
-        UlongSrc = (PULONGLONG) GetX86RegOffset (TrapFrame, IA32_REG_EAX);
+        UlongSrc = (PULONGLONG)GetX86RegOffset(TrapFrame, IA32_REG_EAX);
         *UlongSrc = ((*UlongDst) & 0xffffffff);
     }
-    
+
     return STATUS_SUCCESS;
 }
 
-
+
 NTSTATUS
-KiIa32InstructionMoveSeg (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PIA32_INSTRUCTION Instruction
-    )
+KiIa32InstructionMoveSeg(IN PKTRAP_FRAME TrapFrame, IN PIA32_INSTRUCTION Instruction)
 
 /*++
 
@@ -2430,16 +2079,13 @@ Return Value:
 {
     return STATUS_NOT_IMPLEMENTED;
 
-    UNREFERENCED_PARAMETER (TrapFrame);
-    UNREFERENCED_PARAMETER (Instruction);
+    UNREFERENCED_PARAMETER(TrapFrame);
+    UNREFERENCED_PARAMETER(Instruction);
 }
 
-
+
 NTSTATUS
-KiIa32LocateInstruction (
-    IN PKTRAP_FRAME TrapFrame,
-    OUT PIA32_INSTRUCTION Instruction
-    )
+KiIa32LocateInstruction(IN PKTRAP_FRAME TrapFrame, OUT PIA32_INSTRUCTION Instruction)
 
 /*++
 
@@ -2470,16 +2116,16 @@ Return Value:
     ULONG Count;
     NTSTATUS NtStatus = STATUS_SUCCESS;
 
-    
+
     PrefixLoop = TRUE;
 
     while (PrefixLoop)
     {
         try
         {
-            ByteValue = ProbeAndReadUchar ((PUCHAR)Instruction->Eip);
+            ByteValue = ProbeAndReadUchar((PUCHAR)Instruction->Eip);
         }
-        except (EXCEPTION_EXECUTE_HANDLER)
+        except(EXCEPTION_EXECUTE_HANDLER)
         {
             NtStatus = GetExceptionCode();
             break;
@@ -2532,24 +2178,24 @@ Return Value:
         }
     }
 
-    try 
+    try
     {
-        RtlCopyMemory(ByteBuffer, Instruction->Eip, sizeof (ByteBuffer));
+        RtlCopyMemory(ByteBuffer, Instruction->Eip, sizeof(ByteBuffer));
     }
-    except (EXCEPTION_EXECUTE_HANDLER)
+    except(EXCEPTION_EXECUTE_HANDLER)
     {
         NtStatus = GetExceptionCode();
     }
 
-    if (NT_SUCCESS (NtStatus))
+    if (NT_SUCCESS(NtStatus))
     {
         //
         // Locate the opcode
         //
-        
+
         Match = FALSE;
         OpcodeDescription = OpcodesDescription;
-        Count = (sizeof (OpcodesDescription) / sizeof (IA32_OPCODE_DESCRIPTION));
+        Count = (sizeof(OpcodesDescription) / sizeof(IA32_OPCODE_DESCRIPTION));
         while (Count != 0)
         {
             Count--;
@@ -2569,8 +2215,7 @@ Return Value:
                     RegOpcodeByte = &ByteBuffer[1];
                 }
 
-                if ((Match == TRUE) && 
-                    (OpcodeDescription->Count.m.RegOpcode))
+                if ((Match == TRUE) && (OpcodeDescription->Count.m.RegOpcode))
                 {
                     if (OpcodeDescription->Byte3 != ((*RegOpcodeByte & MI_REGMASK) >> MI_REGSHIFT))
                     {
@@ -2591,14 +2236,13 @@ Return Value:
 #if DBG
             if (KiIa32InstructionEmulationDbg)
             {
-                DbgPrint("KE: KiIa32LocateInstruction - Unable to locate instruction %p\n",
-                         Instruction);
+                DbgPrint("KE: KiIa32LocateInstruction - Unable to locate instruction %p\n", Instruction);
             }
 #endif
             NtStatus = STATUS_UNSUCCESSFUL;
         }
 
-        if (NT_SUCCESS (NtStatus))
+        if (NT_SUCCESS(NtStatus))
         {
             Instruction->Description = OpcodeDescription;
             Instruction->Eip += OpcodeDescription->Count.m.Bytes;
@@ -2607,15 +2251,12 @@ Return Value:
 
     return NtStatus;
 
-    UNREFERENCED_PARAMETER (TrapFrame);
+    UNREFERENCED_PARAMETER(TrapFrame);
 }
 
-
+
 NTSTATUS
-KiIa32DecodeInstruction (
-    IN PKTRAP_FRAME TrapFrame,
-    OUT PIA32_INSTRUCTION Instruction
-    )
+KiIa32DecodeInstruction(IN PKTRAP_FRAME TrapFrame, OUT PIA32_INSTRUCTION Instruction)
 
 /*++
 
@@ -2649,7 +2290,8 @@ Return Value:
     // Check instruction pointer validity
     //
 
-    if (TrapFrame->StIIP > MM_MAX_WOW64_ADDRESS) {
+    if (TrapFrame->StIIP > MM_MAX_WOW64_ADDRESS)
+    {
         return STATUS_ACCESS_VIOLATION;
     }
 
@@ -2657,21 +2299,21 @@ Return Value:
     // Initialize the instruction pointer
     //
 
-    Instruction->Eip = (PCHAR) TrapFrame->StIIP;
-    KiIa32GetX86Eflags (Instruction->Eflags);
+    Instruction->Eip = (PCHAR)TrapFrame->StIIP;
+    KiIa32GetX86Eflags(Instruction->Eflags);
 
     //
     // Locate a description for the instruction
     //
 
-    NtStatus = KiIa32LocateInstruction (TrapFrame, Instruction);
+    NtStatus = KiIa32LocateInstruction(TrapFrame, Instruction);
 
-    if (NT_SUCCESS (NtStatus))
+    if (NT_SUCCESS(NtStatus))
     {
         //
         // Let's parse the arguments
         //
-        
+
         InstructionType = Instruction->Description->Type;
         switch (InstructionType)
         {
@@ -2702,7 +2344,7 @@ Return Value:
             break;
 
             break;
-        
+
         case IA32_PARAM_SEGREG_RM:
             Instruction->OperandSize = OPERANDSIZE_TWOBYTES;
             Instruction->OperandMask = 0xffff;
@@ -2713,18 +2355,18 @@ Return Value:
             if (KiIa32InstructionEmulationDbg)
             {
                 DbgPrint("KE: KiIa32DecodeInstruction - Invalid Instruction type %lx, %p\n",
-                          Instruction->Description->Type, Instruction);
+                         Instruction->Description->Type, Instruction);
             }
 #endif
             return STATUS_UNSUCCESSFUL;
             break;
         }
 
-        try 
+        try
         {
-            ModRm = ProbeAndReadUchar ((PUCHAR)Instruction->Eip);
+            ModRm = ProbeAndReadUchar((PUCHAR)Instruction->Eip);
         }
-        except (EXCEPTION_EXECUTE_HANDLER)
+        except(EXCEPTION_EXECUTE_HANDLER)
         {
             return GetExceptionCode();
         }
@@ -2735,21 +2377,13 @@ Return Value:
 
         if (Instruction->Prefix.b.AddressOverride == 0)
         {
-            ReturnCode = KiIa32Compute32BitEffectiveAddress (
-                             TrapFrame,
-                             (PUCHAR *)&Instruction->Eip,
-                             &Instruction->Operand1.v,
-                             &Instruction->Operand1.RegisterMode
-                             );
+            ReturnCode = KiIa32Compute32BitEffectiveAddress(
+                TrapFrame, (PUCHAR *)&Instruction->Eip, &Instruction->Operand1.v, &Instruction->Operand1.RegisterMode);
         }
         else
         {
-            ReturnCode = KiIa32Compute16BitEffectiveAddress (
-                             TrapFrame,
-                             (PUCHAR *)&Instruction->Eip,
-                             &Instruction->Operand1.v,
-                             &Instruction->Operand1.RegisterMode
-                             );
+            ReturnCode = KiIa32Compute16BitEffectiveAddress(
+                TrapFrame, (PUCHAR *)&Instruction->Eip, &Instruction->Operand1.v, &Instruction->Operand1.RegisterMode);
         }
 
         if (ReturnCode != TRUE)
@@ -2763,9 +2397,9 @@ Return Value:
             {
                 Instruction->Operand1.v += (ULONGLONG)NtCurrentTeb32();
             }
-            except (EXCEPTION_EXECUTE_HANDLER)
+            except(EXCEPTION_EXECUTE_HANDLER)
             {
-                NtStatus = GetExceptionCode ();
+                NtStatus = GetExceptionCode();
 #if DBG
                 if (KiIa32InstructionEmulationDbg)
                 {
@@ -2780,40 +2414,40 @@ Return Value:
         // Read in more args
         //
 
-        if (NT_SUCCESS (NtStatus))
+        if (NT_SUCCESS(NtStatus))
         {
             switch (InstructionType)
             {
             case IA32_PARAM_RM8_IMM8:
             case IA32_PARAM_RM_IMM8SIGN:
-                try 
+                try
                 {
-                    Instruction->Operand2.v = (ULONG_PTR) ProbeAndReadUchar ((PUCHAR)Instruction->Eip);
+                    Instruction->Operand2.v = (ULONG_PTR)ProbeAndReadUchar((PUCHAR)Instruction->Eip);
                     Instruction->Eip += 1;
                 }
-                except (EXCEPTION_EXECUTE_HANDLER)
+                except(EXCEPTION_EXECUTE_HANDLER)
                 {
                     NtStatus = GetExceptionCode();
                 }
                 break;
 
             case IA32_PARAM_RM_IMM:
-                try 
+                try
                 {
                     if (Instruction->OperandSize == OPERANDSIZE_TWOBYTES)
                     {
-                        UnalignedUshort = (UNALIGNED USHORT *) Instruction->Eip;
-                        Instruction->Operand2.v = (ULONG_PTR) *UnalignedUshort;
-                        Instruction->Eip += sizeof (USHORT);
+                        UnalignedUshort = (UNALIGNED USHORT *)Instruction->Eip;
+                        Instruction->Operand2.v = (ULONG_PTR)*UnalignedUshort;
+                        Instruction->Eip += sizeof(USHORT);
                     }
                     else
                     {
-                        UnalignedUlong = (UNALIGNED ULONG *) Instruction->Eip;
-                        Instruction->Operand2.v = (ULONG_PTR) *UnalignedUlong;
-                        Instruction->Eip += sizeof (ULONG);
+                        UnalignedUlong = (UNALIGNED ULONG *)Instruction->Eip;
+                        Instruction->Operand2.v = (ULONG_PTR)*UnalignedUlong;
+                        Instruction->Eip += sizeof(ULONG);
                     }
                 }
-                except (EXCEPTION_EXECUTE_HANDLER)
+                except(EXCEPTION_EXECUTE_HANDLER)
                 {
                     NtStatus = GetExceptionCode();
                 }
@@ -2823,9 +2457,7 @@ Return Value:
             case IA32_PARAM_R_RM8:
             case IA32_PARAM_RM_R:
             case IA32_PARAM_R_RM:
-                Instruction->Operand2.v = GetX86RegOffset (
-                                              TrapFrame,
-                                              (ModRm & MI_REGMASK) >> MI_REGSHIFT);
+                Instruction->Operand2.v = GetX86RegOffset(TrapFrame, (ModRm & MI_REGMASK) >> MI_REGSHIFT);
                 Instruction->Operand2.RegisterMode = TRUE;
                 break;
 
@@ -2838,18 +2470,17 @@ Return Value:
             default:
                 NtStatus = STATUS_UNSUCCESSFUL;
 #if DBG
-                DbgPrint("KE: KiIa32DecodeInstruction - Invalid instruction type %lx - %p\n",
-                         InstructionType, Instruction);
+                DbgPrint("KE: KiIa32DecodeInstruction - Invalid instruction type %lx - %p\n", InstructionType,
+                         Instruction);
 #endif
                 break;
-
             }
 
             //
             // Adjust operands order
             //
 
-            if (NT_SUCCESS (NtStatus))
+            if (NT_SUCCESS(NtStatus))
             {
                 switch (InstructionType)
                 {
@@ -2867,12 +2498,9 @@ Return Value:
     return NtStatus;
 }
 
-
+
 NTSTATUS
-KiIa32ExecuteInstruction (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PIA32_INSTRUCTION Instruction
-    )
+KiIa32ExecuteInstruction(IN PKTRAP_FRAME TrapFrame, IN PIA32_INSTRUCTION Instruction)
 
 /*++
 
@@ -2899,37 +2527,29 @@ Return Value:
     if (KiIa32InstructionEmulationDbg)
     {
         DbgPrint("KE: KiIa32ExecuteInstruction - Calling %s %lx, %lx. Instruction = %p\n",
-                 KiIa32InstructionHandlerNames[Instruction->Description->Opcode],
-                 Instruction->Operand1.v,
-                 Instruction->Operand2.v,
-                 Instruction);
+                 KiIa32InstructionHandlerNames[Instruction->Description->Opcode], Instruction->Operand1.v,
+                 Instruction->Operand2.v, Instruction);
     }
 #endif
 
-    NtStatus = KiIa32InstructionHandler[Instruction->Description->Opcode] (
-                   TrapFrame,
-                   Instruction
-                   );
+    NtStatus = KiIa32InstructionHandler[Instruction->Description->Opcode](TrapFrame, Instruction);
 
     //
     //  If all is good...
     //
 
-    if (NT_SUCCESS (NtStatus))
+    if (NT_SUCCESS(NtStatus))
     {
-        TrapFrame->StIIP = (ULONGLONG) Instruction->Eip;
-        KiIa32SetX86Eflags (Instruction->Eflags);
+        TrapFrame->StIIP = (ULONGLONG)Instruction->Eip;
+        KiIa32SetX86Eflags(Instruction->Eflags);
     }
 
     return NtStatus;
 }
 
-
+
 NTSTATUS
-KiIa32EmulateInstruction (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PIA32_INSTRUCTION Instruction
-    )
+KiIa32EmulateInstruction(IN PKTRAP_FRAME TrapFrame, IN PIA32_INSTRUCTION Instruction)
 
 /*++
 
@@ -2959,42 +2579,40 @@ Return Value:
 
     if (Instruction->Prefix.b.Lock)
     {
-        if (ExAcquireRundownProtection (&PsGetCurrentThread()->RundownProtect) == FALSE)
+        if (ExAcquireRundownProtection(&PsGetCurrentThread()->RundownProtect) == FALSE)
         {
             return STATUS_UNSUCCESSFUL;
         }
 
-        KiIa32AcquireMisalignedLockFastMutex ();
+        KiIa32AcquireMisalignedLockFastMutex();
     }
 
     try
     {
-        NtStatus = KiIa32ExecuteInstruction (TrapFrame, Instruction);
+        NtStatus = KiIa32ExecuteInstruction(TrapFrame, Instruction);
     }
-    except (EXCEPTION_EXECUTE_HANDLER)
+    except(EXCEPTION_EXECUTE_HANDLER)
     {
         NtStatus = GetExceptionCode();
     }
-    
+
     //
     //   Release the lock mutex
     //
 
     if (Instruction->Prefix.b.Lock)
     {
-        KiIa32ReleaseMisalignedLockFastMutex ();
+        KiIa32ReleaseMisalignedLockFastMutex();
 
-        ExReleaseRundownProtection (&PsGetCurrentThread()->RundownProtect);
+        ExReleaseRundownProtection(&PsGetCurrentThread()->RundownProtect);
     }
 
     return NtStatus;
 }
 
-
+
 NTSTATUS
-KiIa32InterceptUnalignedLock (
-    IN PKTRAP_FRAME TrapFrame
-    )
+KiIa32InterceptUnalignedLock(IN PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -3017,15 +2635,15 @@ Return Value:
     IA32_INSTRUCTION Instruction;
 
 
-    RtlZeroMemory (&Instruction, sizeof (Instruction));
+    RtlZeroMemory(&Instruction, sizeof(Instruction));
 
     //
     // Decode the faulting instruction
     //
 
-    NtStatus = KiIa32DecodeInstruction (TrapFrame, &Instruction);
+    NtStatus = KiIa32DecodeInstruction(TrapFrame, &Instruction);
 
-    if (NT_SUCCESS (NtStatus))
+    if (NT_SUCCESS(NtStatus))
     {
 
         //
@@ -3041,8 +2659,7 @@ Return Value:
         // Execute the x86 instruction by emulating its behaviour
         //
 
-        NtStatus = KiIa32EmulateInstruction (TrapFrame, &Instruction);
-
+        NtStatus = KiIa32EmulateInstruction(TrapFrame, &Instruction);
     }
 
     if (NtStatus == STATUS_UNSUCCESSFUL)
@@ -3053,11 +2670,9 @@ Return Value:
     return NtStatus;
 }
 
-
+
 NTSTATUS
-KiIa32ValidateInstruction (
-    IN PKTRAP_FRAME TrapFrame
-    )
+KiIa32ValidateInstruction(IN PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -3089,10 +2704,10 @@ Return Value:
     ULONGLONG StIIP;
 
 
-    RtlZeroMemory (&Instruction, sizeof (Instruction));
+    RtlZeroMemory(&Instruction, sizeof(Instruction));
 
     //
-    // Adjust the instruction 
+    // Adjust the instruction
     //
     StIIP = TrapFrame->StIIP;
     TrapFrame->StIIP = TrapFrame->StIIPA;
@@ -3101,9 +2716,9 @@ Return Value:
     // Decode the faulting instruction
     //
 
-    NtStatus = KiIa32DecodeInstruction (TrapFrame, &Instruction);
+    NtStatus = KiIa32DecodeInstruction(TrapFrame, &Instruction);
 
-    if (NT_SUCCESS (NtStatus))
+    if (NT_SUCCESS(NtStatus))
     {
 
         //
@@ -3113,36 +2728,36 @@ Return Value:
         switch (Instruction.Description->Opcode)
         {
         case Ia32_MovToSeg:
+        {
+            //
+            // Validate the stack-selector being loaded
+            //
+
+            NtStatus = KiIa32ReadOperand1(&Instruction, &UlongSrc);
+
+            if (NT_SUCCESS(NtStatus))
             {
+
                 //
-                // Validate the stack-selector being loaded
+                // If not a valid selector value
                 //
 
-                NtStatus = KiIa32ReadOperand1 (&Instruction, &UlongSrc);
-                
-                if (NT_SUCCESS (NtStatus)) {
-                    
-                    //
-                    // If not a valid selector value
-                    //
+                if ((UlongSrc != 0x23) && (UlongSrc != 0x1b) && (UlongSrc != 0x3b))
+                {
 
-                    if ((UlongSrc != 0x23) &&
-                        (UlongSrc != 0x1b) &&
-                        (UlongSrc != 0x3b)) {
-                        
-                        NtStatus = STATUS_ILLEGAL_INSTRUCTION;
-                    }
+                    NtStatus = STATUS_ILLEGAL_INSTRUCTION;
                 }
-
             }
-            break;
+        }
+        break;
 
         default:
             NtStatus = STATUS_ILLEGAL_INSTRUCTION;
             break;
         }
-
-    } else {
+    }
+    else
+    {
         NtStatus = STATUS_ILLEGAL_INSTRUCTION;
     }
 
@@ -3150,7 +2765,8 @@ Return Value:
     // Restore the saved IIP
     //
 
-    if (NT_SUCCESS (NtStatus)) {
+    if (NT_SUCCESS(NtStatus))
+    {
         TrapFrame->StIIP = StIIP;
     }
 

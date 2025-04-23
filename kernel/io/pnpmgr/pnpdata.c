@@ -48,7 +48,7 @@ PIOP_RESERVED_RESOURCES_RECORD IopInitReservedResourceList;
 //
 
 #ifdef ALLOC_DATA_PRAGMA
-#pragma  data_seg()
+#pragma data_seg()
 #endif
 
 //
@@ -168,12 +168,12 @@ ULONG IopMaxDeviceNodeLevel;
 //
 // IopPendingEjects - List of pending eject requests
 //
-LIST_ENTRY  IopPendingEjects;
+LIST_ENTRY IopPendingEjects;
 
 //
 // IopPendingSurpriseRemovals - List of pending surprise removal requests
 //
-LIST_ENTRY  IopPendingSurpriseRemovals;
+LIST_ENTRY IopPendingSurpriseRemovals;
 
 //
 // Warm eject lock - only one warm eject is allowed to occur at a time
@@ -208,12 +208,12 @@ ARBITER_INSTANCE IopRootBusNumberArbiter;
 // initialization.
 //
 
-ERESOURCE  PpRegistryDeviceResource;
+ERESOURCE PpRegistryDeviceResource;
 
 //
 // Table for Legacy Bus information
 //
-LIST_ENTRY  IopLegacyBusInformationTable[MaximumInterfaceType];
+LIST_ENTRY IopLegacyBusInformationTable[MaximumInterfaceType];
 
 //
 // Set to TRUE in the shutdown process.  This prevents us from starting any
@@ -232,7 +232,7 @@ KSEMAPHORE PpRegistrySemaphore;
 
 //DEFINE_GUID(REGSTR_VALUE_LEGACY_DRIVER_CLASS_GUID, 0x8ECC055D, 0x047F, 0x11D1, 0xA5, 0x37, 0x00, 0x00, 0xF8, 0x75, 0x3E, 0xD1);
 
-SYSTEM_HIVE_LIMITS PpSystemHiveLimits = {0};
+SYSTEM_HIVE_LIMITS PpSystemHiveLimits = { 0 };
 BOOLEAN PpSystemHiveTooLarge = FALSE;
 
 //
@@ -241,4 +241,3 @@ BOOLEAN PpSystemHiveTooLarge = FALSE;
 //
 
 BOOLEAN PpCallerInitializesRequestTable = FALSE;
-

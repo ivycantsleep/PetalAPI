@@ -32,10 +32,7 @@ Revision History:
 
 #undef KeEnterCriticalRegion
 
-VOID
-KeEnterCriticalRegion (
-   VOID
-   )
+VOID KeEnterCriticalRegion(VOID)
 
 /*++
 
@@ -71,10 +68,7 @@ Return Value:
 
 #undef KeLeaveCriticalRegion
 
-VOID
-KeLeaveCriticalRegion (
-    VOID
-    )
+VOID KeLeaveCriticalRegion(VOID)
 
 /*++
 
@@ -114,9 +108,7 @@ Return Value:
 }
 
 ULONGLONG
-KeQueryInterruptTime (
-    VOID
-    )
+KeQueryInterruptTime(VOID)
 
 /*++
 
@@ -144,10 +136,7 @@ Return Value:
     return CurrentTime.QuadPart;
 }
 
-VOID
-KeQuerySystemTime (
-    OUT PLARGE_INTEGER CurrentTime
-    )
+VOID KeQuerySystemTime(OUT PLARGE_INTEGER CurrentTime)
 
 /*++
 
@@ -173,10 +162,7 @@ Return Value:
     return;
 }
 
-VOID
-KeQueryTickCount (
-    OUT PLARGE_INTEGER CurrentCount
-    )
+VOID KeQueryTickCount(OUT PLARGE_INTEGER CurrentCount)
 
 /*++
 
@@ -203,9 +189,7 @@ Return Value:
 }
 
 ULONG
-KeQueryTimeIncrement (
-    VOID
-    )
+KeQueryTimeIncrement(VOID)
 
 /*++
 
@@ -230,10 +214,7 @@ Return Value:
     return KeMaximumIncrement;
 }
 
-VOID
-KeEnableInterrupts (
-    IN BOOLEAN Enable
-    )
+VOID KeEnableInterrupts(IN BOOLEAN Enable)
 
 /*++
 
@@ -254,17 +235,15 @@ Return Value:
 
 {
 
-    if (Enable != FALSE) {
+    if (Enable != FALSE)
+    {
         _enable();
     }
 
     return;
 }
 
-VOID
-KeSetDmaIoCoherency (
-    IN ULONG Attributes
-    )
+VOID KeSetDmaIoCoherency(IN ULONG Attributes)
 
 /*++
 
@@ -293,10 +272,7 @@ Return Value:
 
 #pragma alloc_text(INIT, KeSetProfileIrql)
 
-VOID
-KeSetProfileIrql (
-    IN KIRQL ProfileIrql
-    )
+VOID KeSetProfileIrql(IN KIRQL ProfileIrql)
 
 /*++
 
@@ -326,13 +302,8 @@ Return Value:
 
 #endif
 
-VOID
-KeSetSystemTime (
-    IN PLARGE_INTEGER NewTime,
-    OUT PLARGE_INTEGER OldTime,
-    IN BOOLEAN AdjustInterruptTime,
-    IN PLARGE_INTEGER HalTimeToSet OPTIONAL
-    )
+VOID KeSetSystemTime(IN PLARGE_INTEGER NewTime, OUT PLARGE_INTEGER OldTime, IN BOOLEAN AdjustInterruptTime,
+                     IN PLARGE_INTEGER HalTimeToSet OPTIONAL)
 
 /*++
 
@@ -384,7 +355,8 @@ Return Value:
     // to time fields.
     //
 
-    if (ARGUMENT_PRESENT(HalTimeToSet)) {
+    if (ARGUMENT_PRESENT(HalTimeToSet))
+    {
         RtlTimeToTimeFields(HalTimeToSet, &TimeFields);
     }
 
@@ -405,10 +377,11 @@ Return Value:
 
     KiQuerySystemTime(OldTime);
     SharedUserData->SystemTime.High2Time = NewTime->HighPart;
-    SharedUserData->SystemTime.LowPart   = NewTime->LowPart;
+    SharedUserData->SystemTime.LowPart = NewTime->LowPart;
     SharedUserData->SystemTime.High1Time = NewTime->HighPart;
 
-    if (ARGUMENT_PRESENT(HalTimeToSet)) {
+    if (ARGUMENT_PRESENT(HalTimeToSet))
+    {
         ExCmosClockIsSane = HalSetRealTimeClock(&TimeFields);
     }
 
@@ -438,13 +411,14 @@ Return Value:
     //
 
     KeLowerIrql(OldIrql2);
-    if (AdjustInterruptTime) {
+    if (AdjustInterruptTime)
+    {
 
         //
         // Adjust the physical time of the system
         //
 
-        AdjustInterruptTime = KiAdjustInterruptTime (TimeDelta.QuadPart);
+        AdjustInterruptTime = KiAdjustInterruptTime(TimeDelta.QuadPart);
     }
 
     //
@@ -453,7 +427,8 @@ Return Value:
     // system time.
     //
 
-    if (!AdjustInterruptTime) {
+    if (!AdjustInterruptTime)
+    {
 
         //
         // Remove all absolute timers from the timer queue so their due time
@@ -461,13 +436,16 @@ Return Value:
         //
 
         InitializeListHead(&AbsoluteListHead);
-        for (Index = 0; Index < TIMER_TABLE_SIZE; Index += 1) {
+        for (Index = 0; Index < TIMER_TABLE_SIZE; Index += 1)
+        {
             ListHead = &KiTimerTableListHead[Index];
             NextEntry = ListHead->Flink;
-            while (NextEntry != ListHead) {
+            while (NextEntry != ListHead)
+            {
                 Timer = CONTAINING_RECORD(NextEntry, KTIMER, TimerListEntry);
                 NextEntry = NextEntry->Flink;
-                if (Timer->Header.Absolute != FALSE) {
+                if (Timer->Header.Absolute != FALSE)
+                {
                     RemoveEntryList(&Timer->TimerListEntry);
                     InsertTailList(&AbsoluteListHead, &Timer->TimerListEntry);
                 }
@@ -481,11 +459,13 @@ Return Value:
         //
 
         InitializeListHead(&ExpiredListHead);
-        while (AbsoluteListHead.Flink != &AbsoluteListHead) {
+        while (AbsoluteListHead.Flink != &AbsoluteListHead)
+        {
             Timer = CONTAINING_RECORD(AbsoluteListHead.Flink, KTIMER, TimerListEntry);
             KiRemoveTreeTimer(Timer);
             Timer->DueTime.QuadPart -= TimeDelta.QuadPart;
-            if (KiReinsertTreeTimer(Timer, Timer->DueTime) == FALSE) {
+            if (KiReinsertTreeTimer(Timer, Timer->DueTime) == FALSE)
+            {
                 Timer->Header.Inserted = TRUE;
                 InsertTailList(&ExpiredListHead, &Timer->TimerListEntry);
             }
@@ -500,11 +480,11 @@ Return Value:
         //
 
         KiTimerListExpire(&ExpiredListHead, OldIrql1);
-
-    } else {
+    }
+    else
+    {
 
         KiUnlockDispatcherDatabase(OldIrql1);
-
     }
 
 
@@ -518,9 +498,7 @@ Return Value:
 }
 
 BOOLEAN
-KiAdjustInterruptTime (
-    IN LONGLONG TimeDelta
-    )
+KiAdjustInterruptTime(IN LONGLONG TimeDelta)
 
 /*++
 
@@ -548,25 +526,23 @@ Return Value:
     // Time can only be moved forward.
     //
 
-    if (TimeDelta < 0) {
+    if (TimeDelta < 0)
+    {
         return FALSE;
-
-    } else {
+    }
+    else
+    {
         Adjust.KiNumber = KeNumberProcessors;
         Adjust.HalNumber = KeNumberProcessors;
-        Adjust.Adjustment = (ULONGLONG) TimeDelta;
+        Adjust.Adjustment = (ULONGLONG)TimeDelta;
         Adjust.Barrier = 1;
-        KiIpiGenericCall((PKIPI_BROADCAST_WORKER)KiCalibrateTimeAdjustment,
-                         (ULONG_PTR)(&Adjust));
+        KiIpiGenericCall((PKIPI_BROADCAST_WORKER)KiCalibrateTimeAdjustment, (ULONG_PTR)(&Adjust));
 
         return TRUE;
     }
 }
 
-VOID
-KiCalibrateTimeAdjustment (
-    PADJUST_INTERRUPT_TIME_CONTEXT  Adjust
-    )
+VOID KiCalibrateTimeAdjustment(PADJUST_INTERRUPT_TIME_CONTEXT Adjust)
 
 /*++
 
@@ -586,15 +562,15 @@ Return Value:
 
 {
 
-    BOOLEAN             Enable;
-    LARGE_INTEGER       InterruptTime;
-    LARGE_INTEGER       SetTime;
-    LARGE_INTEGER       PerfFreq;
-    ULARGE_INTEGER      li;
-    LARGE_INTEGER       NewTickCount;
-    ULONG               NewTickOffset;
-    ULONG               cl, divisor;
-    LARGE_INTEGER       PerfCount;
+    BOOLEAN Enable;
+    LARGE_INTEGER InterruptTime;
+    LARGE_INTEGER SetTime;
+    LARGE_INTEGER PerfFreq;
+    ULARGE_INTEGER li;
+    LARGE_INTEGER NewTickCount;
+    ULONG NewTickOffset;
+    ULONG cl, divisor;
+    LARGE_INTEGER PerfCount;
 
     //
     // As each processor arrives, subtract one off the remaining processor
@@ -603,7 +579,8 @@ Return Value:
     // counter change.
     //
 
-    if (InterlockedDecrement((PLONG)&Adjust->KiNumber)) {
+    if (InterlockedDecrement((PLONG)&Adjust->KiNumber))
+    {
         Enable = KeDisableInterrupts();
 
         //
@@ -615,7 +592,8 @@ Return Value:
         // freeze.
         //
 
-        do {
+        do
+        {
             KiPollFreezeExecution();
         } while (Adjust->KiNumber != (ULONG)-1);
 
@@ -623,17 +601,19 @@ Return Value:
         // Wait to perform the time set
         //
 
-        while (Adjust->Barrier) ;
-
-    } else {
+        while (Adjust->Barrier)
+            ;
+    }
+    else
+    {
 
         //
         // Set timer expiration dpc to scan the timer queues once for any
         // expired timers.
         //
 
-        KeRemoveQueueDpc (&KiTimerExpireDpc);
-        KeInsertQueueDpc (&KiTimerExpireDpc, (PVOID) TIMER_TABLE_SIZE, NULL);
+        KeRemoveQueueDpc(&KiTimerExpireDpc);
+        KeInsertQueueDpc(&KiTimerExpireDpc, (PVOID)TIMER_TABLE_SIZE, NULL);
 
         //
         // Disable interrupts and indicate that this processor is now
@@ -641,7 +621,7 @@ Return Value:
         //
 
         Enable = KeDisableInterrupts();
-        InterlockedDecrement((PLONG) &Adjust->KiNumber);
+        InterlockedDecrement((PLONG)&Adjust->KiNumber);
 
         //
         // Adjust Interrupt Time.
@@ -649,12 +629,12 @@ Return Value:
 
         InterruptTime.QuadPart = KeQueryInterruptTime() + Adjust->Adjustment;
         SetTime.QuadPart = Adjust->Adjustment;
-        
+
         //
         // Get the current times
         //
 
-        PerfCount = KeQueryPerformanceCounter (&PerfFreq);
+        PerfCount = KeQueryPerformanceCounter(&PerfFreq);
 
         //
         // Compute performance counter for current SetTime
@@ -666,41 +646,22 @@ Return Value:
         // result by 10,000,000 to get new performance counter value.
         //
 
-        li.QuadPart = RtlEnlargedUnsignedMultiply (
-                            (ULONG) SetTime.LowPart,
-                            (ULONG) PerfFreq.LowPart
-                            ).QuadPart;
+        li.QuadPart = RtlEnlargedUnsignedMultiply((ULONG)SetTime.LowPart, (ULONG)PerfFreq.LowPart).QuadPart;
 
         cl = li.LowPart;
-        li.QuadPart = li.HighPart +
-                      RtlEnlargedUnsignedMultiply (
-                            (ULONG) SetTime.LowPart,
-                            (ULONG) PerfFreq.HighPart
-                            ).QuadPart;
+        li.QuadPart =
+            li.HighPart + RtlEnlargedUnsignedMultiply((ULONG)SetTime.LowPart, (ULONG)PerfFreq.HighPart).QuadPart;
 
-        li.QuadPart = li.QuadPart +
-                      RtlEnlargedUnsignedMultiply (
-                            (ULONG) SetTime.HighPart,
-                            (ULONG) PerfFreq.LowPart
-                            ).QuadPart;
+        li.QuadPart =
+            li.QuadPart + RtlEnlargedUnsignedMultiply((ULONG)SetTime.HighPart, (ULONG)PerfFreq.LowPart).QuadPart;
 
         li.HighPart = li.HighPart + SetTime.HighPart * PerfFreq.HighPart;
 
         divisor = 10000000;
-        Adjust->NewCount.HighPart =
-            RtlEnlargedUnsignedDivide (
-                li,
-                divisor,
-                &li.HighPart
-                );
+        Adjust->NewCount.HighPart = RtlEnlargedUnsignedDivide(li, divisor, &li.HighPart);
 
         li.LowPart = cl;
-        Adjust->NewCount.LowPart =
-            RtlEnlargedUnsignedDivide (
-                li,
-                divisor,
-                NULL
-                );
+        Adjust->NewCount.LowPart = RtlEnlargedUnsignedDivide(li, divisor, NULL);
 
         Adjust->NewCount.QuadPart += PerfCount.QuadPart;
 
@@ -708,11 +669,7 @@ Return Value:
         // Compute tick count and tick offset for current InterruptTime
         //
 
-        NewTickCount = RtlExtendedLargeIntegerDivide(
-                            InterruptTime,
-                            KeMaximumIncrement,
-                            &NewTickOffset
-                            );
+        NewTickCount = RtlExtendedLargeIntegerDivide(InterruptTime, KeMaximumIncrement, &NewTickOffset);
 
         //
         // Apply changes to InterruptTime, TickCount, TickOffset, and the
@@ -730,13 +687,13 @@ Return Value:
 #else
 
         KeTickCount.High2Time = NewTickCount.HighPart;
-        KeTickCount.LowPart   = NewTickCount.LowPart;
+        KeTickCount.LowPart = NewTickCount.LowPart;
         KeTickCount.High1Time = NewTickCount.HighPart;
 
 #endif
 
         SharedUserData->InterruptTime.High2Time = InterruptTime.HighPart;
-        SharedUserData->InterruptTime.LowPart   = InterruptTime.LowPart;
+        SharedUserData->InterruptTime.LowPart = InterruptTime.LowPart;
         SharedUserData->InterruptTime.High1Time = InterruptTime.HighPart;
 
         //
@@ -746,19 +703,12 @@ Return Value:
         Adjust->Barrier = 0;
     }
 
-    HalCalibratePerformanceCounter (
-        (LONG volatile *) &Adjust->HalNumber,
-        (ULONGLONG) Adjust->NewCount.QuadPart
-        );
+    HalCalibratePerformanceCounter((LONG volatile *)&Adjust->HalNumber, (ULONGLONG)Adjust->NewCount.QuadPart);
 
     KeEnableInterrupts(Enable);
 }
 
-VOID
-KeSetTimeIncrement (
-    IN ULONG MaximumIncrement,
-    IN ULONG MinimumIncrement
-    )
+VOID KeSetTimeIncrement(IN ULONG MaximumIncrement, IN ULONG MinimumIncrement)
 
 /*++
 
@@ -791,13 +741,7 @@ Return Value:
 }
 
 BOOLEAN
-KeAddSystemServiceTable(
-    IN PULONG_PTR Base,
-    IN PULONG Count OPTIONAL,
-    IN ULONG Limit,
-    IN PUCHAR Number,
-    IN ULONG Index
-    )
+KeAddSystemServiceTable(IN PULONG_PTR Base, IN PULONG Count OPTIONAL, IN ULONG Limit, IN PUCHAR Number, IN ULONG Index)
 
 /*++
 
@@ -841,12 +785,13 @@ Return Value:
     // service table.
     //
 
-    if ((Index > NUMBER_SERVICE_TABLES - 1) ||
-        (KeServiceDescriptorTable[Index].Base != NULL) ||
-        (KeServiceDescriptorTableShadow[Index].Base != NULL)) {
+    if ((Index > NUMBER_SERVICE_TABLES - 1) || (KeServiceDescriptorTable[Index].Base != NULL) ||
+        (KeServiceDescriptorTableShadow[Index].Base != NULL))
+    {
         return FALSE;
-
-    } else {
+    }
+    else
+    {
 
         //
         // If the service table index is equal to the Win32 table, then
@@ -865,21 +810,20 @@ Return Value:
 
 #if defined(_IA64_)
 
-        KeServiceDescriptorTableShadow[Index].TableBaseGpOffset =
-                                        (LONG)(*(Base-1) - (ULONG_PTR)Base);
+        KeServiceDescriptorTableShadow[Index].TableBaseGpOffset = (LONG)(*(Base - 1) - (ULONG_PTR)Base);
 
 #endif
 
         KeServiceDescriptorTableShadow[Index].Number = Number;
-        if (Index != 1) {
+        if (Index != 1)
+        {
             KeServiceDescriptorTable[Index].Base = Base;
             KeServiceDescriptorTable[Index].Count = Count;
             KeServiceDescriptorTable[Index].Limit = Limit;
 
 #if defined(_IA64_)
 
-            KeServiceDescriptorTable[Index].TableBaseGpOffset =
-                                        (LONG)(*(Base-1) - (ULONG_PTR)Base);
+            KeServiceDescriptorTable[Index].TableBaseGpOffset = (LONG)(*(Base - 1) - (ULONG_PTR)Base);
 
 #endif
 
@@ -891,9 +835,7 @@ Return Value:
 }
 
 BOOLEAN
-KeRemoveSystemServiceTable(
-    IN ULONG Index
-    )
+KeRemoveSystemServiceTable(IN ULONG Index)
 
 /*++
 
@@ -919,12 +861,13 @@ Return Value:
     PAGED_CODE();
 
     if ((Index > NUMBER_SERVICE_TABLES - 1) ||
-        ((KeServiceDescriptorTable[Index].Base == NULL) &&
-         (KeServiceDescriptorTableShadow[Index].Base == NULL))) {
+        ((KeServiceDescriptorTable[Index].Base == NULL) && (KeServiceDescriptorTableShadow[Index].Base == NULL)))
+    {
 
         return FALSE;
-
-    } else {
+    }
+    else
+    {
         KeServiceDescriptorTableShadow[Index].Base = NULL;
         KeServiceDescriptorTableShadow[Index].Count = 0;
         KeServiceDescriptorTableShadow[Index].Limit = 0;
@@ -936,7 +879,8 @@ Return Value:
 #endif
 
         KeServiceDescriptorTableShadow[Index].Number = 0;
-        if (Index != 1) {
+        if (Index != 1)
+        {
             KeServiceDescriptorTable[Index].Base = NULL;
             KeServiceDescriptorTable[Index].Count = 0;
             KeServiceDescriptorTable[Index].Limit = 0;
@@ -954,11 +898,7 @@ Return Value:
     }
 }
 
-VOID
-FASTCALL
-KeSetTimeUpdateNotifyRoutine(
-    IN PTIME_UPDATE_NOTIFY_ROUTINE NotifyRoutine
-    )
+VOID FASTCALL KeSetTimeUpdateNotifyRoutine(IN PTIME_UPDATE_NOTIFY_ROUTINE NotifyRoutine)
 
 /*++
 
@@ -987,9 +927,7 @@ Return Value:
 }
 
 KAFFINITY
-KeQueryActiveProcessors(
-    VOID
-    )
+KeQueryActiveProcessors(VOID)
 
 /*++
 
@@ -1011,15 +949,13 @@ Return Value:
 {
     PAGED_CODE();
 
-    return(KeActiveProcessors);
+    return (KeActiveProcessors);
 }
 
 #undef KeIsAttachedProcess
 
 BOOLEAN
-KeIsAttachedProcess(
-    VOID
-    )
+KeIsAttachedProcess(VOID)
 
 /*++
 
@@ -1045,9 +981,7 @@ Return Value:
 #undef KeAreApcsDisabled
 
 BOOLEAN
-KeAreApcsDisabled(
-    VOID
-    )
+KeAreApcsDisabled(VOID)
 
 /*++
 
@@ -1071,9 +1005,7 @@ Return Value:
 }
 
 ULONG
-KeGetRecommendedSharedDataAlignment (
-    VOID
-    )
+KeGetRecommendedSharedDataAlignment(VOID)
 
 /*++
 
@@ -1099,9 +1031,7 @@ Return Value:
 }
 
 PKPRCB
-KeGetPrcb(
-    ULONG ProcessorNumber
-    )
+KeGetPrcb(ULONG ProcessorNumber)
 
 /*++
 
@@ -1126,7 +1056,8 @@ Return Value:
 
     ASSERT(ProcessorNumber < MAXIMUM_PROCESSORS);
 
-    if (ProcessorNumber < (ULONG)KeNumberProcessors) {
+    if (ProcessorNumber < (ULONG)KeNumberProcessors)
+    {
         return KiProcessorBlock[ProcessorNumber];
     }
 
@@ -1134,11 +1065,7 @@ Return Value:
 }
 
 NTSTATUS
-KeCopySafe(
-    VOID UNALIGNED *Destination,
-    CONST VOID UNALIGNED *Source,
-    SIZE_T Length
-    )
+KeCopySafe(VOID UNALIGNED *Destination, CONST VOID UNALIGNED *Source, SIZE_T Length)
 
 /*++
 
@@ -1163,11 +1090,14 @@ Return Value:
 {
     NTSTATUS Status = STATUS_SUCCESS;
 
-    try {
+    try
+    {
         RtlCopyMemory(Destination, Source, Length);
-    } __except(EXCEPTION_EXECUTE_HANDLER) {
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
 
-          Status = _exception_code();
+        Status = _exception_code();
     }
 
     return Status;

@@ -33,21 +33,18 @@ Revision History:
 
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,SeCaptureSubjectContext)
-#pragma alloc_text(PAGE,SeLockSubjectContext)
-#pragma alloc_text(PAGE,SeUnlockSubjectContext)
-#pragma alloc_text(PAGE,SeReleaseSubjectContext)
-#pragma alloc_text(PAGE,SepGetDefaultsSubjectContext)
-#pragma alloc_text(PAGE,SepIdAssignableAsGroup)
-#pragma alloc_text(PAGE,SepValidOwnerSubjectContext)
+#pragma alloc_text(PAGE, SeCaptureSubjectContext)
+#pragma alloc_text(PAGE, SeLockSubjectContext)
+#pragma alloc_text(PAGE, SeUnlockSubjectContext)
+#pragma alloc_text(PAGE, SeReleaseSubjectContext)
+#pragma alloc_text(PAGE, SepGetDefaultsSubjectContext)
+#pragma alloc_text(PAGE, SepIdAssignableAsGroup)
+#pragma alloc_text(PAGE, SepValidOwnerSubjectContext)
 //#pragma alloc_text(PAGE,SeQueryAuthenticationIdSubjectContext)
 #endif
 
-
-VOID
-SeCaptureSubjectContext (
-    OUT PSECURITY_SUBJECT_CONTEXT SubjectContext
-    )
+
+VOID SeCaptureSubjectContext(OUT PSECURITY_SUBJECT_CONTEXT SubjectContext)
 
 /*++
 
@@ -92,31 +89,22 @@ Return Value:
     PAGED_CODE();
 
     CurrentProcess = PsGetCurrentProcess();
-    SubjectContext->ProcessAuditId = PsProcessAuditId( CurrentProcess );
+    SubjectContext->ProcessAuditId = PsProcessAuditId(CurrentProcess);
 
     //
     // Get pointers to primary and impersonation tokens
     //
 
     SubjectContext->ClientToken = PsReferenceImpersonationToken(
-                                      PsGetCurrentThread(),
-                                      &IgnoreCopyOnOpen,
-                                      &IgnoreEffectiveOnly,
-                                      &(SubjectContext->ImpersonationLevel)
-                                      );
+        PsGetCurrentThread(), &IgnoreCopyOnOpen, &IgnoreEffectiveOnly, &(SubjectContext->ImpersonationLevel));
 
     SubjectContext->PrimaryToken = PsReferencePrimaryToken(CurrentProcess);
 
     return;
-
 }
 
 
-
-VOID
-SeLockSubjectContext(
-    IN PSECURITY_SUBJECT_CONTEXT SubjectContext
-    )
+VOID SeLockSubjectContext(IN PSECURITY_SUBJECT_CONTEXT SubjectContext)
 
 /*++
 
@@ -147,7 +135,8 @@ Return Value:
 
     SepAcquireTokenReadLock((PTOKEN)(SubjectContext->PrimaryToken));
 
-    if (ARGUMENT_PRESENT(SubjectContext->ClientToken)) {
+    if (ARGUMENT_PRESENT(SubjectContext->ClientToken))
+    {
 
         SepAcquireTokenReadLock((PTOKEN)(SubjectContext->ClientToken));
     }
@@ -156,11 +145,7 @@ Return Value:
 }
 
 
-
-VOID
-SeUnlockSubjectContext(
-    IN PSECURITY_SUBJECT_CONTEXT SubjectContext
-    )
+VOID SeUnlockSubjectContext(IN PSECURITY_SUBJECT_CONTEXT SubjectContext)
 
 /*++
 
@@ -184,20 +169,15 @@ Return Value:
 
     SepReleaseTokenReadLock((PTOKEN)(SubjectContext->PrimaryToken));
 
-    if (ARGUMENT_PRESENT(SubjectContext->ClientToken)) {
+    if (ARGUMENT_PRESENT(SubjectContext->ClientToken))
+    {
 
         SepReleaseTokenReadLock((PTOKEN)(SubjectContext->ClientToken));
     }
-
-
 }
 
 
-
-VOID
-SeReleaseSubjectContext (
-    IN PSECURITY_SUBJECT_CONTEXT SubjectContext
-    )
+VOID SeReleaseSubjectContext(IN PSECURITY_SUBJECT_CONTEXT SubjectContext)
 
 /*++
 
@@ -221,26 +201,18 @@ Return Value:
 {
     PAGED_CODE();
 
-    PsDereferencePrimaryToken( SubjectContext->PrimaryToken );
+    PsDereferencePrimaryToken(SubjectContext->PrimaryToken);
     SubjectContext->PrimaryToken = NULL;
 
 
-    PsDereferenceImpersonationToken( SubjectContext->ClientToken );
+    PsDereferenceImpersonationToken(SubjectContext->ClientToken);
     SubjectContext->ClientToken = NULL;
 
     return;
-
 }
-
-VOID
-SepGetDefaultsSubjectContext(
-    IN PSECURITY_SUBJECT_CONTEXT SubjectContext,
-    OUT PSID *Owner,
-    OUT PSID *Group,
-    OUT PSID *ServerOwner,
-    OUT PSID *ServerGroup,
-    OUT PACL *Dacl
-    )
+
+VOID SepGetDefaultsSubjectContext(IN PSECURITY_SUBJECT_CONTEXT SubjectContext, OUT PSID *Owner, OUT PSID *Group,
+                                  OUT PSID *ServerOwner, OUT PSID *ServerGroup, OUT PACL *Dacl)
 /*++
 
 Routine Description:
@@ -282,9 +254,12 @@ Return Value:
 
     PAGED_CODE();
 
-    if (ARGUMENT_PRESENT(SubjectContext->ClientToken)) {
+    if (ARGUMENT_PRESENT(SubjectContext->ClientToken))
+    {
         EffectiveToken = (PTOKEN)SubjectContext->ClientToken;
-    } else {
+    }
+    else
+    {
         EffectiveToken = (PTOKEN)SubjectContext->PrimaryToken;
     }
 
@@ -292,7 +267,7 @@ Return Value:
 
     (*Group) = EffectiveToken->PrimaryGroup;
 
-    (*Dacl)  = EffectiveToken->DefaultDacl;
+    (*Dacl) = EffectiveToken->DefaultDacl;
 
     PrimaryToken = (PTOKEN)SubjectContext->PrimaryToken;
 
@@ -303,12 +278,9 @@ Return Value:
     return;
 }
 
-
+
 BOOLEAN
-SepIdAssignableAsGroup(
-    IN PACCESS_TOKEN AToken,
-    IN PSID Group
-    )
+SepIdAssignableAsGroup(IN PACCESS_TOKEN AToken, IN PSID Group)
 /*++
 
 Routine Description:
@@ -347,44 +319,40 @@ Return Value:
     // but we may need to revisit this.
     //
 
-    if (Group == NULL) {
-        return( FALSE );
+    if (Group == NULL)
+    {
+        return (FALSE);
     }
     Index = 0;
 
-    SepAcquireTokenReadLock( Token );
+    SepAcquireTokenReadLock(Token);
 
     //
     //  Walk through the list of user and group IDs looking
     //  for a match to the specified SID.
     //
 
-    while (Index < Token->UserAndGroupCount) {
+    while (Index < Token->UserAndGroupCount)
+    {
 
-        Found = RtlEqualSid(
-                    Group,
-                    Token->UserAndGroups[Index].Sid
-                    );
+        Found = RtlEqualSid(Group, Token->UserAndGroups[Index].Sid);
 
-        if ( Found ) {
+        if (Found)
+        {
             break;
         }
 
         Index += 1;
     }
 
-    SepReleaseTokenReadLock( Token );
+    SepReleaseTokenReadLock(Token);
 
     return Found;
 }
 
-
+
 BOOLEAN
-SepValidOwnerSubjectContext(
-    IN PSECURITY_SUBJECT_CONTEXT SubjectContext,
-    IN PSID Owner,
-    IN BOOLEAN ServerObject
-    )
+SepValidOwnerSubjectContext(IN PSECURITY_SUBJECT_CONTEXT SubjectContext, IN PSID Owner, IN BOOLEAN ServerObject)
 /*++
 
 Routine Description:
@@ -421,17 +389,21 @@ Return Value:
     // whether you have SeRestorePrivilege or not.
     //
 
-    if (Owner == NULL) {
-        return( FALSE );
+    if (Owner == NULL)
+    {
+        return (FALSE);
     }
 
     //
     // Allowable owners come from the primary if it's a server object.
     //
 
-    if (!ServerObject && ARGUMENT_PRESENT(SubjectContext->ClientToken)) {
+    if (!ServerObject && ARGUMENT_PRESENT(SubjectContext->ClientToken))
+    {
         EffectiveToken = (PTOKEN)SubjectContext->ClientToken;
-    } else {
+    }
+    else
+    {
         EffectiveToken = (PTOKEN)SubjectContext->PrimaryToken;
     }
 
@@ -442,18 +414,19 @@ Return Value:
     // object when impersonating at less Identify or Anonymous.
     //
 
-    if (EffectiveToken->TokenType == TokenImpersonation) {
+    if (EffectiveToken->TokenType == TokenImpersonation)
+    {
 
-        if (EffectiveToken->ImpersonationLevel < SecurityImpersonation) {
+        if (EffectiveToken->ImpersonationLevel < SecurityImpersonation)
+        {
 
-            return( FALSE );
-
+            return (FALSE);
         }
     }
 
     Index = 0;
 
-    SepAcquireTokenReadLock( EffectiveToken );
+    SepAcquireTokenReadLock(EffectiveToken);
 
     //
     //  Walk through the list of user and group IDs looking
@@ -464,40 +437,41 @@ Return Value:
     //  owner of a token (NtSetInformationToken).
     //
 
-    while (Index < EffectiveToken->UserAndGroupCount) {
+    while (Index < EffectiveToken->UserAndGroupCount)
+    {
 
 
-        Found = RtlEqualSid(
-                    Owner,
-                    EffectiveToken->UserAndGroups[Index].Sid
-                    );
+        Found = RtlEqualSid(Owner, EffectiveToken->UserAndGroups[Index].Sid);
 
-        if ( Found ) {
+        if (Found)
+        {
 
             //
             // We may return success if the Sid is one that may be assigned
             // as an owner, or if the caller has SeRestorePrivilege
             //
 
-            if ( SepIdAssignableAsOwner(EffectiveToken,Index) ) {
+            if (SepIdAssignableAsOwner(EffectiveToken, Index))
+            {
 
-                SepReleaseTokenReadLock( EffectiveToken );
+                SepReleaseTokenReadLock(EffectiveToken);
                 Rc = TRUE;
                 goto exit;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // Rc is already set to FALSE, just exit.
                 //
 
-                SepReleaseTokenReadLock( EffectiveToken );
+                SepReleaseTokenReadLock(EffectiveToken);
                 goto exit;
 
             } //endif assignable
 
 
-        }  //endif Found
+        } //endif Found
 
 
         Index += 1;
@@ -505,7 +479,7 @@ Return Value:
     } //endwhile
 
 
-    SepReleaseTokenReadLock( EffectiveToken );
+    SepReleaseTokenReadLock(EffectiveToken);
 
 exit:
 
@@ -519,8 +493,9 @@ exit:
     // didn't, so hard wire it to be user-mode here.
     //
 
-    if ( Rc == FALSE ) {
-        Rc = SeSinglePrivilegeCheck( SeRestorePrivilege, UserMode );
+    if (Rc == FALSE)
+    {
+        Rc = SeSinglePrivilegeCheck(SeRestorePrivilege, UserMode);
     }
 
     return Rc;

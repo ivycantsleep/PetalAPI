@@ -27,13 +27,8 @@ Revision History:
 #pragma alloc_text(PAGE, KeUserModeCallback)
 
 NTSTATUS
-KeUserModeCallback (
-    IN ULONG ApiNumber,
-    IN PVOID InputBuffer,
-    IN ULONG InputLength,
-    OUT PVOID *OutputBuffer,
-    IN PULONG OutputLength
-    )
+KeUserModeCallback(IN ULONG ApiNumber, IN PVOID InputBuffer, IN ULONG InputLength, OUT PVOID *OutputBuffer,
+                   IN PULONG OutputLength)
 
 /*++
 
@@ -82,7 +77,8 @@ Return Value:
 
     TrapFrame = KeGetCurrentThread()->TrapFrame;
     OldStack = TrapFrame->Rsp;
-    try {
+    try
+    {
 
         //
         // Compute new user mode stack address, probe for writability, and
@@ -104,13 +100,14 @@ Return Value:
         CalloutFrame->MachineFrame.Rsp = OldStack;
         CalloutFrame->MachineFrame.Rip = TrapFrame->Rip;
 
-    //
-    // If an exception occurs during the probe of the user stack, then
-    // always handle the exception and return the exception code as the
-    // status value.
-    //
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+        //
+        // If an exception occurs during the probe of the user stack, then
+        // always handle the exception and return the exception code as the
+        // status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         return GetExceptionCode();
     }
 
@@ -126,7 +123,8 @@ Return Value:
     // batch must be flushed.
     //
 
-    if (((PTEB)KeGetCurrentThread()->Teb)->GdiBatchCount > 0) {
+    if (((PTEB)KeGetCurrentThread()->Teb)->GdiBatchCount > 0)
+    {
         TrapFrame->Rsp -= 256;
         KeGdiFlushUserBatch();
     }

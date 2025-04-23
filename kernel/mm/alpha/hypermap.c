@@ -27,12 +27,9 @@ Revision History:
 
 #include "mi.h"
 
-
+
 PVOID
-MiMapPageInHyperSpace (
-    IN ULONG PageFrameIndex,
-    IN PKIRQL OldIrql
-    )
+MiMapPageInHyperSpace(IN ULONG PageFrameIndex, IN PKIRQL OldIrql)
 
 /*++
 
@@ -72,9 +69,10 @@ Environment:
     ULONG offset;
 
 #if DBG
-    if (PageFrameIndex == 0) {
+    if (PageFrameIndex == 0)
+    {
         DbgPrint("attempt to map physical page 0 in hyper space\n");
-        KeBugCheck (MEMORY_MANAGEMENT);
+        KeBugCheck(MEMORY_MANAGEMENT);
     }
 #endif //DBG
 
@@ -83,24 +81,25 @@ Environment:
     // KSEG0.
     //
 
-    LOCK_HYPERSPACE (OldIrql);
+    LOCK_HYPERSPACE(OldIrql);
 
-    if (PageFrameIndex < MM_PAGES_IN_KSEG0) {
+    if (PageFrameIndex < MM_PAGES_IN_KSEG0)
+    {
         return (PVOID)(KSEG0_BASE + (PageFrameIndex << PAGE_SHIFT));
     }
 
     PointerPte = MmFirstReservedMappingPte;
-    if (PointerPte->u.Hard.Valid == 1) {
+    if (PointerPte->u.Hard.Valid == 1)
+    {
 
         //
         // All the reserved PTEs have been used, make
         // them all invalid.
         //
 
-        MI_MAKING_MULTIPLE_PTES_INVALID (FALSE);
+        MI_MAKING_MULTIPLE_PTES_INVALID(FALSE);
 
-        RtlZeroMemory (MmFirstReservedMappingPte,
-                       (NUMBER_OF_MAPPING_PTES + 1) * sizeof(MMPTE));
+        RtlZeroMemory(MmFirstReservedMappingPte, (NUMBER_OF_MAPPING_PTES + 1) * sizeof(MMPTE));
 
         //
         // Use the page frame number field of the first PTE as an
@@ -113,7 +112,7 @@ Environment:
         // Flush entire TB only on this processor.
         //
 
-        KeFlushEntireTb (TRUE, FALSE);
+        KeFlushEntireTb(TRUE, FALSE);
     }
 
     //
@@ -133,7 +132,7 @@ Environment:
     //
 
     PointerPte += offset;
-    ASSERT (PointerPte->u.Hard.Valid == 0);
+    ASSERT(PointerPte->u.Hard.Valid == 0);
 
 
     TempPte = ValidPtePte;
@@ -144,13 +143,11 @@ Environment:
     // Return the VA that maps the page.
     //
 
-    return MiGetVirtualAddressMappedByPte (PointerPte);
+    return MiGetVirtualAddressMappedByPte(PointerPte);
 }
-
+
 PVOID
-MiMapPageInHyperSpaceAtDpc (
-    IN ULONG PageFrameIndex
-    )
+MiMapPageInHyperSpaceAtDpc(IN ULONG PageFrameIndex)
 
 /*++
 
@@ -188,9 +185,10 @@ Environment:
     ULONG offset;
 
 #if DBG
-    if (PageFrameIndex == 0) {
+    if (PageFrameIndex == 0)
+    {
         DbgPrint("attempt to map physical page 0 in hyper space\n");
-        KeBugCheck (MEMORY_MANAGEMENT);
+        KeBugCheck(MEMORY_MANAGEMENT);
     }
 #endif //DBG
 
@@ -199,24 +197,25 @@ Environment:
     // KSEG0.
     //
 
-    LOCK_HYPERSPACE_AT_DPC ();
+    LOCK_HYPERSPACE_AT_DPC();
 
-    if (PageFrameIndex < MM_PAGES_IN_KSEG0) {
+    if (PageFrameIndex < MM_PAGES_IN_KSEG0)
+    {
         return (PVOID)(KSEG0_BASE + (PageFrameIndex << PAGE_SHIFT));
     }
 
     PointerPte = MmFirstReservedMappingPte;
-    if (PointerPte->u.Hard.Valid == 1) {
+    if (PointerPte->u.Hard.Valid == 1)
+    {
 
         //
         // All the reserved PTEs have been used, make
         // them all invalid.
         //
 
-        MI_MAKING_MULTIPLE_PTES_INVALID (FALSE);
+        MI_MAKING_MULTIPLE_PTES_INVALID(FALSE);
 
-        RtlZeroMemory (MmFirstReservedMappingPte,
-                       (NUMBER_OF_MAPPING_PTES + 1) * sizeof(MMPTE));
+        RtlZeroMemory(MmFirstReservedMappingPte, (NUMBER_OF_MAPPING_PTES + 1) * sizeof(MMPTE));
 
         //
         // Use the page frame number field of the first PTE as an
@@ -229,7 +228,7 @@ Environment:
         // Flush entire TB only on this processor.
         //
 
-        KeFlushEntireTb (TRUE, FALSE);
+        KeFlushEntireTb(TRUE, FALSE);
     }
 
     //
@@ -249,7 +248,7 @@ Environment:
     //
 
     PointerPte += offset;
-    ASSERT (PointerPte->u.Hard.Valid == 0);
+    ASSERT(PointerPte->u.Hard.Valid == 0);
 
 
     TempPte = ValidPtePte;
@@ -260,14 +259,12 @@ Environment:
     // Return the VA that maps the page.
     //
 
-    return MiGetVirtualAddressMappedByPte (PointerPte);
+    return MiGetVirtualAddressMappedByPte(PointerPte);
 }
 
-
+
 PVOID
-MiMapImageHeaderInHyperSpace (
-    IN ULONG PageFrameIndex
-    )
+MiMapImageHeaderInHyperSpace(IN ULONG PageFrameIndex)
 
 /*++
 
@@ -297,24 +294,27 @@ Environment:
 
 #if DBG
 
-    if (PageFrameIndex == 0) {
+    if (PageFrameIndex == 0)
+    {
         DbgPrint("attempt to map physical page 0 in hyper space\n");
-        KeBugCheck (MEMORY_MANAGEMENT);
+        KeBugCheck(MEMORY_MANAGEMENT);
     }
 
 #endif //DBG
 
-    PointerPte = MiGetPteAddress (IMAGE_MAPPING_PTE);
+    PointerPte = MiGetPteAddress(IMAGE_MAPPING_PTE);
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    while (PointerPte->u.Long != 0) {
+    while (PointerPte->u.Long != 0)
+    {
 
         //
         // If there is no event specified, set one up.
         //
 
-        if (MmWorkingSetList->WaitingForImageMapping == (PKEVENT)NULL) {
+        if (MmWorkingSetList->WaitingForImageMapping == (PKEVENT)NULL)
+        {
 
             //
             // Set the global event into the field and wait for it.
@@ -331,33 +331,27 @@ Environment:
         KeEnterCriticalRegion();
         UNLOCK_PFN_AND_THEN_WAIT(OldIrql);
 
-        KeWaitForSingleObject(MmWorkingSetList->WaitingForImageMapping,
-                              Executive,
-                              KernelMode,
-                              FALSE,
+        KeWaitForSingleObject(MmWorkingSetList->WaitingForImageMapping, Executive, KernelMode, FALSE,
                               (PLARGE_INTEGER)NULL);
         KeLeaveCriticalRegion();
 
-        LOCK_PFN (OldIrql);
+        LOCK_PFN(OldIrql);
     }
 
-    ASSERT (PointerPte->u.Long == 0);
+    ASSERT(PointerPte->u.Long == 0);
 
     TempPte = ValidPtePte;
     TempPte.u.Hard.PageFrameNumber = PageFrameIndex;
 
     *PointerPte = TempPte;
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
-    return (PVOID)MiGetVirtualAddressMappedByPte (PointerPte);
+    return (PVOID)MiGetVirtualAddressMappedByPte(PointerPte);
 }
 
-
-VOID
-MiUnmapImageHeaderInHyperSpace (
-    VOID
-    )
+
+VOID MiUnmapImageHeaderInHyperSpace(VOID)
 
 /*++
 
@@ -390,11 +384,11 @@ Environment:
     KIRQL OldIrql;
     PKEVENT Event;
 
-    PointerPte = MiGetPteAddress (IMAGE_MAPPING_PTE);
+    PointerPte = MiGetPteAddress(IMAGE_MAPPING_PTE);
 
     TempPte.u.Long = 0;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
     //
     // Capture the current state of the event field and clear it out.
@@ -404,30 +398,28 @@ Environment:
 
     MmWorkingSetList->WaitingForImageMapping = (PKEVENT)NULL;
 
-    ASSERT (PointerPte->u.Long != 0);
+    ASSERT(PointerPte->u.Long != 0);
 
-    KeFlushSingleTb (IMAGE_MAPPING_PTE, TRUE, FALSE,
-                     (PHARDWARE_PTE)PointerPte, TempPte.u.Hard);
+    KeFlushSingleTb(IMAGE_MAPPING_PTE, TRUE, FALSE, (PHARDWARE_PTE)PointerPte, TempPte.u.Hard);
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
-    if (Event != (PKEVENT)NULL) {
+    if (Event != (PKEVENT)NULL)
+    {
 
         //
         // If there was an event specified, set the event.
         //
 
-        KePulseEvent (Event, 0, FALSE);
+        KePulseEvent(Event, 0, FALSE);
     }
 
     return;
 }
 
-
+
 PVOID
-MiMapPageToZeroInHyperSpace (
-    IN ULONG PageFrameIndex
-    )
+MiMapPageToZeroInHyperSpace(IN ULONG PageFrameIndex)
 
 /*++
 
@@ -461,9 +453,10 @@ Environment:
     PVOID MappedAddress;
 
 #if DBG
-    if (PageFrameIndex == 0) {
+    if (PageFrameIndex == 0)
+    {
         DbgPrint("attempt to map physical page 0 in hyper space\n");
-        KeBugCheck (MEMORY_MANAGEMENT);
+        KeBugCheck(MEMORY_MANAGEMENT);
     }
 #endif //DBG
 
@@ -472,21 +465,19 @@ Environment:
     // KSEG0.
     //
 
-    if (PageFrameIndex < MM_PAGES_IN_KSEG0) {
+    if (PageFrameIndex < MM_PAGES_IN_KSEG0)
+    {
         return (PVOID)(KSEG0_BASE + (PageFrameIndex << PAGE_SHIFT));
     }
 
     MM_PFN_LOCK_ASSERT();
 
-    PointerPte = MiGetPteAddress (ZEROING_PAGE_PTE);
-    MappedAddress = MiGetVirtualAddressMappedByPte (PointerPte);
+    PointerPte = MiGetPteAddress(ZEROING_PAGE_PTE);
+    MappedAddress = MiGetVirtualAddressMappedByPte(PointerPte);
 
     TempPte.u.Long = 0;
 
-    KeFlushSingleTb (MappedAddress,
-                     TRUE,
-                     FALSE,
-                     (PHARDWARE_PTE)PointerPte, TempPte.u.Hard);
+    KeFlushSingleTb(MappedAddress, TRUE, FALSE, (PHARDWARE_PTE)PointerPte, TempPte.u.Hard);
 
     TempPte = ValidPtePte;
     TempPte.u.Hard.PageFrameNumber = PageFrameIndex;

@@ -16,33 +16,35 @@
 /*
  * Constants.
  */
-#define BPP01_MAXCOLORS     2
-#define BPP04_MAXCOLORS    16
-#define BPP08_MAXCOLORS   256
-#define ICON_DEFAULTDEPTH   8
-#define ICON_MAXWIDTH     256
-#define ICON_MAXHEIGHT    256
+#define BPP01_MAXCOLORS 2
+#define BPP04_MAXCOLORS 16
+#define BPP08_MAXCOLORS 256
+#define ICON_DEFAULTDEPTH 8
+#define ICON_MAXWIDTH 256
+#define ICON_MAXHEIGHT 256
 
-#define RESCLR_BLACK      0x00000000
-#define RESCLR_WHITE      0x00FFFFFF
+#define RESCLR_BLACK 0x00000000
+#define RESCLR_WHITE 0x00FFFFFF
 
-typedef struct {
+typedef struct
+{
     ACCEL accel;
-    WORD  padding;
+    WORD padding;
 } RESOURCE_ACCEL, *PRESOURCE_ACCEL;
 
 /*
  * Bitmap resource IDs
  */
-#define BMR_ICON    1
-#define BMR_BITMAP  2
-#define BMR_CURSOR  3
+#define BMR_ICON 1
+#define BMR_BITMAP 2
+#define BMR_CURSOR 3
 
-typedef struct _OLDCURSOR {
+typedef struct _OLDCURSOR
+{
     BYTE bType;
     BYTE bFormat;
-    WORD xHotSpot;  // 0 for icons
-    WORD yHotSpot;  // 0 for icons
+    WORD xHotSpot; // 0 for icons
+    WORD yHotSpot; // 0 for icons
     WORD cx;
     WORD cy;
     WORD cxBytes;
@@ -54,24 +56,22 @@ typedef OLDCURSOR UNALIGNED *UPOLDCURSOR;
 /*
  * Local Macros.
  */
-#define GETINITDC() \
-    (gfSystemInitialized ? NtUserGetDC(NULL) : CreateDCW(L"DISPLAY", L"", NULL, NULL))
+#define GETINITDC() (gfSystemInitialized ? NtUserGetDC(NULL) : CreateDCW(L"DISPLAY", L"", NULL, NULL))
 
-#define RELEASEINITDC(hdc) \
-    (gfSystemInitialized ? ReleaseDC(NULL, hdc) : DeleteDC(hdc))
+#define RELEASEINITDC(hdc) (gfSystemInitialized ? ReleaseDC(NULL, hdc) : DeleteDC(hdc))
 
-#define ISRIFFFORMAT(p) \
-    (((UNALIGNED RTAG *)(p))->ckID == FOURCC_RIFF)
+#define ISRIFFFORMAT(p) (((UNALIGNED RTAG *)(p))->ckID == FOURCC_RIFF)
 
-#define MR_FAILFOR40    0x01
-#define MR_MONOCHROME   0x02
+#define MR_FAILFOR40 0x01
+#define MR_MONOCHROME 0x02
 
 
-typedef struct tagMAPRES {
-    WORD idDisp;                // display driver ID
-    WORD idUser;                // USER ID
-    BYTE bFlags;                // Flags
-    BYTE bReserved;             // unused
+typedef struct tagMAPRES
+{
+    WORD idDisp;    // display driver ID
+    WORD idUser;    // USER ID
+    BYTE bFlags;    // Flags
+    BYTE bReserved; // unused
 } MAPRES, *LPMAPRES, *PMAPRES;
 
 
@@ -88,10 +88,7 @@ HBITMAP CopyBmp(HBITMAP hbmpOrg, int cxNew, int cyNew, UINT LR_flags);
 * 13-Nov-1995 SanfordS  Added mapping for DEFAULT constants.
 \***************************************************************************/
 
-HANDLE SplFindResource(
-    HINSTANCE hmod,
-    LPCWSTR   lpName,
-    LPCWSTR   lpType)
+HANDLE SplFindResource(HINSTANCE hmod, LPCWSTR lpName, LPCWSTR lpType)
 {
     return FINDRESOURCEW(hmod, lpName, lpType);
 }
@@ -105,13 +102,10 @@ HANDLE SplFindResource(
 * 13-Nov-1995 SanfordS  Added mapping for DEFAULT constants.
 \***************************************************************************/
 
-VOID SplFreeResource(
-    HANDLE    hRes,
-    HINSTANCE hmod,
-    UINT      lrFlags)
+VOID SplFreeResource(HANDLE hRes, HINSTANCE hmod, UINT lrFlags)
 {
-    if (!FREERESOURCE(hRes, hmod) &&
-        ((hmod == hmodUser) || (lrFlags & LR_SHARED))) {
+    if (!FREERESOURCE(hRes, hmod) && ((hmod == hmodUser) || (lrFlags & LR_SHARED)))
+    {
 
         FREERESOURCE(hRes, hmod);
     }
@@ -128,14 +122,13 @@ VOID SplFreeResource(
 * 29-Nov-1995 SanfordS  Created.
 \***********************************************************************/
 
-BOOL WowGetModuleFileName(
-    HMODULE hModule,
-    LPWSTR  pwsz,
-    DWORD   cchMax)
+BOOL WowGetModuleFileName(HMODULE hModule, LPWSTR pwsz, DWORD cchMax)
 {
-    if (!GetModuleFileName(hModule, pwsz, cchMax)) {
+    if (!GetModuleFileName(hModule, pwsz, cchMax))
+    {
 
-        if (cchMax < 10) {
+        if (cchMax < 10)
+        {
             RIPMSG0(RIP_WARNING, "WowGetModuleFileName: exceeded Char-Max");
             return FALSE;
         }
@@ -157,19 +150,20 @@ BOOL WowGetModuleFileName(
 * 29-Nov-1995 Created   SanfordS
 \***********************************************************************/
 
-HMODULE WowGetModuleHandle(
-    LPCWSTR pwsz)
+HMODULE WowGetModuleHandle(LPCWSTR pwsz)
 {
     HMODULE hMod = NULL;
-    DWORD   digit;
+    DWORD digit;
 
-    if (pwsz[0] == TEXT('\001')) {
+    if (pwsz[0] == TEXT('\001'))
+    {
 
         /*
          * Cant seem to link to swscanf without CRT0 problems so just
          * do it by hand.
          */
-        while (*(++pwsz)) {
+        while (*(++pwsz))
+        {
 
             if (*pwsz == TEXT(' '))
                 continue;
@@ -179,11 +173,12 @@ HMODULE WowGetModuleHandle(
             if (digit > 9)
                 digit += (DWORD)(TEXT('0') - TEXT('a') + 10);
 
-            (ULONG_PTR)hMod <<= 4;
-            (ULONG_PTR)hMod += digit;
+            (ULONG_PTR) hMod <<= 4;
+            (ULONG_PTR) hMod += digit;
         }
-
-    } else {
+    }
+    else
+    {
 
         hMod = GetModuleHandle(pwsz);
     }
@@ -201,25 +196,23 @@ HMODULE WowGetModuleHandle(
 
 
 FUNCLOG2(LOG_GENERAL, HACCEL, WINAPI, CreateAcceleratorTableA, LPACCEL, paccel, int, cAccel)
-HACCEL WINAPI CreateAcceleratorTableA(
-    LPACCEL paccel,
-    int     cAccel)
+HACCEL WINAPI CreateAcceleratorTableA(LPACCEL paccel, int cAccel)
 {
-    int     nAccel = cAccel;
+    int nAccel = cAccel;
     LPACCEL pAccelT = paccel;
 
     /*
      * Convert any character keys from ANSI to Unicode.
      */
-    while (nAccel--) {
+    while (nAccel--)
+    {
 
-        if ((pAccelT->fVirt & FVIRTKEY) == 0) {
+        if ((pAccelT->fVirt & FVIRTKEY) == 0)
+        {
 
-            if (!NT_SUCCESS(RtlMultiByteToUnicodeN((LPWSTR)&(pAccelT->key),
-                                                   sizeof(WCHAR),
-                                                   NULL,
-                                                   (LPSTR)&(pAccelT->key),
-                                                   sizeof(CHAR)))) {
+            if (!NT_SUCCESS(RtlMultiByteToUnicodeN((LPWSTR) & (pAccelT->key), sizeof(WCHAR), NULL,
+                                                   (LPSTR) & (pAccelT->key), sizeof(CHAR))))
+            {
                 pAccelT->key = 0xFFFF;
             }
         }
@@ -240,10 +233,7 @@ HACCEL WINAPI CreateAcceleratorTableA(
 
 
 FUNCLOG3(LOG_GENERAL, int, DUMMYCALLINGTYPE, CopyAcceleratorTableA, HACCEL, hacc, LPACCEL, paccel, int, length)
-int CopyAcceleratorTableA(
-    HACCEL hacc,
-    LPACCEL paccel,
-    int length)
+int CopyAcceleratorTableA(HACCEL hacc, LPACCEL paccel, int length)
 {
     int retval;
 
@@ -252,7 +242,8 @@ int CopyAcceleratorTableA(
     /*
      * If we are doing a copy and we succeeded then convert the accelerator
      */
-    if ((paccel != NULL) && (retval > 0)) {
+    if ((paccel != NULL) && (retval > 0))
+    {
 
         /*
          * Translate UNICODE character keys to ANSI
@@ -260,16 +251,16 @@ int CopyAcceleratorTableA(
         int nAccel = retval;
         LPACCEL pAccelT = paccel;
 
-        while (nAccel--) {
-            if ((pAccelT->fVirt & FVIRTKEY) == 0) {
-                if (!NT_SUCCESS(RtlUnicodeToMultiByteN((PCHAR)&(pAccelT->key),
-                                                       sizeof(WCHAR),
-                                                       NULL,
-                                                       (PWSTR)&(pAccelT->key),
-                                                        sizeof(pAccelT->key)))) {
-                        pAccelT->key = 0;
-                    }
+        while (nAccel--)
+        {
+            if ((pAccelT->fVirt & FVIRTKEY) == 0)
+            {
+                if (!NT_SUCCESS(RtlUnicodeToMultiByteN((PCHAR) & (pAccelT->key), sizeof(WCHAR), NULL,
+                                                       (PWSTR) & (pAccelT->key), sizeof(pAccelT->key))))
+                {
+                    pAccelT->key = 0;
                 }
+            }
             pAccelT++;
         }
     }
@@ -289,13 +280,13 @@ int CopyAcceleratorTableA(
 *
 * 01/31/97 GerardoB     Created.
 \***************************************************************************/
-PACCELCACHE * FindAccResource (HACCEL hAccel, PVOID pRes)
+PACCELCACHE *FindAccResource(HACCEL hAccel, PVOID pRes)
 {
-     /************************************
+    /************************************
      * The caller must own gcsAccelCache *
      *************************************/
 
-    PACCELCACHE * ppacNext = &gpac;
+    PACCELCACHE *ppacNext = &gpac;
     PACCELCACHE pac;
 
     /*
@@ -306,9 +297,11 @@ PACCELCACHE * FindAccResource (HACCEL hAccel, PVOID pRes)
     /*
      * Walk the table
      */
-    while (*ppacNext != NULL) {
+    while (*ppacNext != NULL)
+    {
         pac = *ppacNext;
-        if ((pac->pRes == pRes) || (pac->hAccel == hAccel)) {
+        if ((pac->pRes == pRes) || (pac->hAccel == hAccel))
+        {
             /*
             * Found it. Validate this entry before returning.
             */
@@ -331,7 +324,7 @@ PACCELCACHE * FindAccResource (HACCEL hAccel, PVOID pRes)
 *
 * 01/31/97 GerardoB     Created.
 \***************************************************************************/
-void AddAccResource (HACCEL hAccel, PVOID pRes)
+void AddAccResource(HACCEL hAccel, PVOID pRes)
 {
     PACCELCACHE pac;
 
@@ -342,7 +335,8 @@ void AddAccResource (HACCEL hAccel, PVOID pRes)
      * Allocate and initialize a new entry.
      */
     pac = (PACCELCACHE)LocalAlloc(LPTR, sizeof(ACCELCACHE));
-    if (pac != NULL) {
+    if (pac != NULL)
+    {
         pac->dwLockCount = 1;
         pac->hAccel = hAccel;
         pac->pRes = pRes;
@@ -351,10 +345,9 @@ void AddAccResource (HACCEL hAccel, PVOID pRes)
          * Make it the new head of the list
          */
         RtlEnterCriticalSection(&gcsAccelCache);
-            pac->pacNext = gpac;
-            gpac = pac;
+        pac->pacNext = gpac;
+        gpac = pac;
         RtlLeaveCriticalSection(&gcsAccelCache);
-
     }
 }
 /***************************************************************************\
@@ -362,7 +355,7 @@ void AddAccResource (HACCEL hAccel, PVOID pRes)
 *
 * 01/31/97 GerardoB     Created.
 \***************************************************************************/
-BOOL DestroyAcceleratorTable (HACCEL hAccel)
+BOOL DestroyAcceleratorTable(HACCEL hAccel)
 {
     BOOL fUnlocked = TRUE;
     PACCELCACHE *ppacNext, pac;
@@ -371,30 +364,35 @@ BOOL DestroyAcceleratorTable (HACCEL hAccel)
      * If we added this table to our list, decrement the lock count
      */
     RtlEnterCriticalSection(&gcsAccelCache);
-        ppacNext = FindAccResource(hAccel, NULL);
-        if (*ppacNext != NULL) {
-            pac = *ppacNext;
-            /*
+    ppacNext = FindAccResource(hAccel, NULL);
+    if (*ppacNext != NULL)
+    {
+        pac = *ppacNext;
+        /*
              * Found it. Decrement lock count.
              */
-            UserAssert(pac->dwLockCount != 0);
-            fUnlocked = (--pac->dwLockCount == 0);
-            /*
+        UserAssert(pac->dwLockCount != 0);
+        fUnlocked = (--pac->dwLockCount == 0);
+        /*
              * If noboby else wants this around, unlink it and nuke it.
              */
-            if (fUnlocked) {
-                *ppacNext = pac->pacNext;
-                LocalFree(pac);
-            }
+        if (fUnlocked)
+        {
+            *ppacNext = pac->pacNext;
+            LocalFree(pac);
         }
+    }
     RtlLeaveCriticalSection(&gcsAccelCache);
 
     /*
      * If not totally deref'ed, return FALSE (win95 compat).
      */
-    if (fUnlocked) {
+    if (fUnlocked)
+    {
         return NtUserDestroyAcceleratorTable(hAccel);
-    } else {
+    }
+    else
+    {
         return FALSE;
     }
 }
@@ -407,20 +405,21 @@ BOOL DestroyAcceleratorTable (HACCEL hAccel)
 
 #define FACCEL_VALID (FALT | FCONTROL | FNOINVERT | FSHIFT | FVIRTKEY | FLASTKEY)
 
-HANDLE LoadAcc(
-    HINSTANCE hmod,
-    HANDLE    hrl)
+HANDLE LoadAcc(HINSTANCE hmod, HANDLE hrl)
 {
-    PACCELCACHE * ppacNext;
+    PACCELCACHE *ppacNext;
     HANDLE handle = NULL;
 
-    if (hrl != NULL) {
+    if (hrl != NULL)
+    {
 
-        if (hrl = LOADRESOURCE(hmod, hrl)) {
+        if (hrl = LOADRESOURCE(hmod, hrl))
+        {
 
             PRESOURCE_ACCEL paccel;
 
-            if ((paccel = (PRESOURCE_ACCEL)LOCKRESOURCE(hrl, hmod)) != NULL) {
+            if ((paccel = (PRESOURCE_ACCEL)LOCKRESOURCE(hrl, hmod)) != NULL)
+            {
 
                 int nAccel = 0;
                 int i;
@@ -431,23 +430,27 @@ HANDLE LoadAcc(
                  *  same address
                  */
                 RtlEnterCriticalSection(&gcsAccelCache);
-                    ppacNext = FindAccResource(NULL, paccel);
-                    if (*ppacNext != NULL) {
-                        (*ppacNext)->dwLockCount++;
-                        handle = (*ppacNext)->hAccel;
-                    }
+                ppacNext = FindAccResource(NULL, paccel);
+                if (*ppacNext != NULL)
+                {
+                    (*ppacNext)->dwLockCount++;
+                    handle = (*ppacNext)->hAccel;
+                }
                 RtlLeaveCriticalSection(&gcsAccelCache);
                 /*
                  * If we found this table on the global list,
                  *  return the same handle (Win95 compat)
                  */
-                if (handle != NULL) {
+                if (handle != NULL)
+                {
                     goto UnlockAndFree;
                 }
 
-                while (!((paccel[nAccel].accel.fVirt) & FLASTKEY)) {
+                while (!((paccel[nAccel].accel.fVirt) & FLASTKEY))
+                {
 
-                    if (paccel[nAccel].accel.fVirt & ~FACCEL_VALID) {
+                    if (paccel[nAccel].accel.fVirt & ~FACCEL_VALID)
+                    {
                         RIPMSG0(RIP_WARNING, "LoadAcc: Invalid Parameter");
                         goto UnlockAndFree;
                     }
@@ -455,7 +458,8 @@ HANDLE LoadAcc(
                     nAccel++;
                 }
 
-                if (paccel[nAccel].accel.fVirt & ~FACCEL_VALID) {
+                if (paccel[nAccel].accel.fVirt & ~FACCEL_VALID)
+                {
                     RIPMSG0(RIP_WARNING, "LoadAcc: Invalid Parameter");
                     goto UnlockAndFree;
                 }
@@ -466,15 +470,16 @@ HANDLE LoadAcc(
                  * to conform with the public (and internal) ACCEL structure.
                  */
                 paccelT = UserLocalAlloc(0, sizeof(ACCEL) * (nAccel + 1));
-                if (paccelT == NULL) {
+                if (paccelT == NULL)
+                {
                     goto UnlockAndFree;
                 }
-                for (i = 0; i < nAccel + 1; i++) {
+                for (i = 0; i < nAccel + 1; i++)
+                {
                     paccelT[i] = paccel[i].accel;
                 }
 
-                handle = NtUserCreateAcceleratorTable(paccelT,
-                                                      nAccel + 1);
+                handle = NtUserCreateAcceleratorTable(paccelT, nAccel + 1);
 
                 UserLocalFree(paccelT);
 
@@ -482,10 +487,11 @@ HANDLE LoadAcc(
                  * Add this handle/address to the global table so
                  *  we won't load it twice.
                  */
-                if (handle != NULL) {
+                if (handle != NULL)
+                {
                     AddAccResource(handle, paccel);
                 }
-UnlockAndFree:
+            UnlockAndFree:
 
                 UNLOCKRESOURCE(hrl, hmod);
             }
@@ -507,9 +513,7 @@ UnlockAndFree:
 
 
 FUNCLOG2(LOG_GENERAL, HACCEL, WINAPI, LoadAcceleratorsA, HINSTANCE, hmod, LPCSTR, lpAccName)
-HACCEL WINAPI LoadAcceleratorsA(
-    HINSTANCE hmod,
-    LPCSTR    lpAccName)
+HACCEL WINAPI LoadAcceleratorsA(HINSTANCE hmod, LPCSTR lpAccName)
 {
     HANDLE hRes;
 
@@ -520,9 +524,7 @@ HACCEL WINAPI LoadAcceleratorsA(
 
 
 FUNCLOG2(LOG_GENERAL, HACCEL, WINAPI, LoadAcceleratorsW, HINSTANCE, hmod, LPCWSTR, lpAccName)
-HACCEL WINAPI LoadAcceleratorsW(
-    HINSTANCE hmod,
-    LPCWSTR   lpAccName)
+HACCEL WINAPI LoadAcceleratorsW(HINSTANCE hmod, LPCWSTR lpAccName)
 {
     HANDLE hRes;
 
@@ -541,33 +543,22 @@ HACCEL WINAPI LoadAcceleratorsW(
 
 
 FUNCLOG4(LOG_GENERAL, int, WINAPI, LoadStringA, HINSTANCE, hmod, UINT, wID, LPSTR, lpAnsiBuffer, int, cchBufferMax)
-int WINAPI LoadStringA(
-    HINSTANCE hmod,
-    UINT      wID,
-    LPSTR     lpAnsiBuffer,
-    int       cchBufferMax)
+int WINAPI LoadStringA(HINSTANCE hmod, UINT wID, LPSTR lpAnsiBuffer, int cchBufferMax)
 {
-    LPWSTR          lpUniBuffer;
-    INT             cchUnicode;
-    INT             cbAnsi = 0;
+    LPWSTR lpUniBuffer;
+    INT cchUnicode;
+    INT cbAnsi = 0;
 
     /*
      * LoadStringOrError appends a NULL but does not include it in the
      * return count-of-bytes
      */
-    cchUnicode = LoadStringOrError((HANDLE)hmod,
-                                      wID,
-                                      (LPWSTR)&lpUniBuffer,
-                                      0,
-                                      0);
+    cchUnicode = LoadStringOrError((HANDLE)hmod, wID, (LPWSTR)&lpUniBuffer, 0, 0);
 
-    if (cchUnicode) {
+    if (cchUnicode)
+    {
 
-        cbAnsi = WCSToMB(lpUniBuffer,
-                         cchUnicode,
-                         &lpAnsiBuffer,
-                         cchBufferMax - 1,
-                         FALSE);
+        cbAnsi = WCSToMB(lpUniBuffer, cchUnicode, &lpAnsiBuffer, cchBufferMax - 1, FALSE);
 
         cbAnsi = min(cbAnsi, cchBufferMax - 1);
     }
@@ -581,17 +572,9 @@ int WINAPI LoadStringA(
 
 
 FUNCLOG4(LOG_GENERAL, int, WINAPI, LoadStringW, HINSTANCE, hmod, UINT, wID, LPWSTR, lpBuffer, int, cchBufferMax)
-int WINAPI LoadStringW(
-    HINSTANCE hmod,
-    UINT      wID,
-    LPWSTR    lpBuffer,
-    int       cchBufferMax)
+int WINAPI LoadStringW(HINSTANCE hmod, UINT wID, LPWSTR lpBuffer, int cchBufferMax)
 {
-    return LoadStringOrError((HANDLE)hmod,
-                                wID,
-                                lpBuffer,
-                                cchBufferMax,
-                                0);
+    return LoadStringOrError((HANDLE)hmod, wID, lpBuffer, cchBufferMax, 0);
 }
 
 /***************************************************************************\
@@ -601,13 +584,13 @@ int WINAPI LoadStringW(
 *
 \***************************************************************************/
 
-PBYTE SkipIDorString(
-    LPBYTE pb)
+PBYTE SkipIDorString(LPBYTE pb)
 {
     if (*((LPWORD)pb) == 0xFFFF)
         return (pb + 4);
 
-    while (*((PWCHAR)pb)++ != 0);
+    while (*((PWCHAR)pb)++ != 0)
+        ;
 
     return pb;
 }
@@ -621,16 +604,15 @@ PBYTE SkipIDorString(
 * 07-Apr-1991 ScottLu   Created.
 \***************************************************************************/
 
-DWORD GetSizeDialogTemplate(
-    HINSTANCE      hmod,
-    LPCDLGTEMPLATE pdt)
+DWORD GetSizeDialogTemplate(HINSTANCE hmod, LPCDLGTEMPLATE pdt)
 {
-    UINT           cdit;
-    LPBYTE         pb;
-    BOOL           fChicago;
+    UINT cdit;
+    LPBYTE pb;
+    BOOL fChicago;
     LPDLGTEMPLATE2 pdt2;
 
-    if (HIWORD(pdt->style) == 0xFFFF) {
+    if (HIWORD(pdt->style) == 0xFFFF)
+    {
 
         pdt2 = (LPDLGTEMPLATE2)pdt;
         fChicago = TRUE;
@@ -638,14 +620,16 @@ DWORD GetSizeDialogTemplate(
         /*
          * Fail if the app is passing invalid style bits.
          */
-        if (pdt2->style & ~(DS_VALID40 | 0xffff0000)) {
+        if (pdt2->style & ~(DS_VALID40 | 0xffff0000))
+        {
             RIPMSG0(RIP_WARNING, "Bad dialog style bits - please remove");
             return 0;
         }
 
         pb = (LPBYTE)(((LPDLGTEMPLATE2)pdt) + 1);
-
-    } else {
+    }
+    else
+    {
 
         fChicago = FALSE;
 
@@ -654,8 +638,8 @@ DWORD GetSizeDialogTemplate(
          * is a new app ( >= VER40).
          * This is to ensure that we are compatible with Chicago.
          */
-        if ((pdt->style & ~(DS_VALID40 | 0xffff0000)) &&
-                (GETEXPWINVER(hmod) >= VER40)) {
+        if ((pdt->style & ~(DS_VALID40 | 0xffff0000)) && (GETEXPWINVER(hmod) >= VER40))
+        {
 
             /*
              * It's a new app with invalid style bits - fail.
@@ -682,8 +666,9 @@ DWORD GetSizeDialogTemplate(
     /*
      * Skip font type, size and name, adjust to next dword boundary.
      */
-    if ((fChicago ? pdt2->style : pdt->style) & DS_SETFONT) {
-        pb += fChicago ? sizeof(DWORD) + sizeof(WORD): sizeof(WORD);
+    if ((fChicago ? pdt2->style : pdt->style) & DS_SETFONT)
+    {
+        pb += fChicago ? sizeof(DWORD) + sizeof(WORD) : sizeof(WORD);
         pb = SkipIDorString(pb);
     }
     pb = (LPBYTE)(((ULONG_PTR)pb + 3) & ~3);
@@ -693,7 +678,8 @@ DWORD GetSizeDialogTemplate(
      */
     cdit = fChicago ? pdt2->cDlgItems : pdt->cdit;
 
-    while (cdit-- != 0) {
+    while (cdit-- != 0)
+    {
 
         UINT cbCreateParams;
 
@@ -741,48 +727,29 @@ DWORD GetSizeDialogTemplate(
 \***************************************************************************/
 
 
-FUNCLOG5(LOG_GENERAL, INT_PTR, WINAPI, DialogBoxIndirectParamA, HINSTANCE, hmod, LPCDLGTEMPLATEA, lpDlgTemplate, HWND, hwndOwner, DLGPROC, lpDialogFunc, LPARAM, dwInitParam)
-INT_PTR WINAPI DialogBoxIndirectParamA(
-    HINSTANCE       hmod,
-    LPCDLGTEMPLATEA lpDlgTemplate,
-    HWND            hwndOwner,
-    DLGPROC         lpDialogFunc,
-    LPARAM          dwInitParam)
+FUNCLOG5(LOG_GENERAL, INT_PTR, WINAPI, DialogBoxIndirectParamA, HINSTANCE, hmod, LPCDLGTEMPLATEA, lpDlgTemplate, HWND,
+         hwndOwner, DLGPROC, lpDialogFunc, LPARAM, dwInitParam)
+INT_PTR WINAPI DialogBoxIndirectParamA(HINSTANCE hmod, LPCDLGTEMPLATEA lpDlgTemplate, HWND hwndOwner,
+                                       DLGPROC lpDialogFunc, LPARAM dwInitParam)
 {
-    return DialogBoxIndirectParamAorW(hmod,
-                                      (LPCDLGTEMPLATEW)lpDlgTemplate,
-                                      hwndOwner,
-                                      lpDialogFunc,
-                                      dwInitParam,
+    return DialogBoxIndirectParamAorW(hmod, (LPCDLGTEMPLATEW)lpDlgTemplate, hwndOwner, lpDialogFunc, dwInitParam,
                                       SCDLG_ANSI);
 }
 
 
-FUNCLOG5(LOG_GENERAL, INT_PTR, WINAPI, DialogBoxIndirectParamW, HINSTANCE, hmod, LPCDLGTEMPLATEW, lpDlgTemplate, HWND, hwndOwner, DLGPROC, lpDialogFunc, LPARAM, dwInitParam)
-INT_PTR WINAPI DialogBoxIndirectParamW(
-    HINSTANCE       hmod,
-    LPCDLGTEMPLATEW lpDlgTemplate,
-    HWND            hwndOwner,
-    DLGPROC         lpDialogFunc,
-    LPARAM          dwInitParam)
+FUNCLOG5(LOG_GENERAL, INT_PTR, WINAPI, DialogBoxIndirectParamW, HINSTANCE, hmod, LPCDLGTEMPLATEW, lpDlgTemplate, HWND,
+         hwndOwner, DLGPROC, lpDialogFunc, LPARAM, dwInitParam)
+INT_PTR WINAPI DialogBoxIndirectParamW(HINSTANCE hmod, LPCDLGTEMPLATEW lpDlgTemplate, HWND hwndOwner,
+                                       DLGPROC lpDialogFunc, LPARAM dwInitParam)
 {
-    return DialogBoxIndirectParamAorW(hmod,
-                                      lpDlgTemplate,
-                                      hwndOwner,
-                                      lpDialogFunc,
-                                      dwInitParam,
-                                      0);
+    return DialogBoxIndirectParamAorW(hmod, lpDlgTemplate, hwndOwner, lpDialogFunc, dwInitParam, 0);
 }
 
 
-FUNCLOG6(LOG_GENERAL, INT_PTR, WINAPI, DialogBoxIndirectParamAorW, HINSTANCE, hmod, LPCDLGTEMPLATEW, lpDlgTemplate, HWND, hwndOwner, DLGPROC, lpDialogFunc, LPARAM, dwInitParam, UINT, fAnsiFlags)
-INT_PTR WINAPI DialogBoxIndirectParamAorW(
-    HINSTANCE       hmod,
-    LPCDLGTEMPLATEW lpDlgTemplate,
-    HWND            hwndOwner,
-    DLGPROC         lpDialogFunc,
-    LPARAM          dwInitParam,
-    UINT            fAnsiFlags)
+FUNCLOG6(LOG_GENERAL, INT_PTR, WINAPI, DialogBoxIndirectParamAorW, HINSTANCE, hmod, LPCDLGTEMPLATEW, lpDlgTemplate,
+         HWND, hwndOwner, DLGPROC, lpDialogFunc, LPARAM, dwInitParam, UINT, fAnsiFlags)
+INT_PTR WINAPI DialogBoxIndirectParamAorW(HINSTANCE hmod, LPCDLGTEMPLATEW lpDlgTemplate, HWND hwndOwner,
+                                          DLGPROC lpDialogFunc, LPARAM dwInitParam, UINT fAnsiFlags)
 {
     DWORD cb;
 
@@ -791,17 +758,14 @@ INT_PTR WINAPI DialogBoxIndirectParamAorW(
      */
     cb = GetSizeDialogTemplate(hmod, lpDlgTemplate);
 
-    if (!cb) {
+    if (!cb)
+    {
         RIPMSG0(RIP_WARNING, "DialogBoxIndirectParam: Invalid Paramter");
         return -1;
     }
 
-    return InternalDialogBox(hmod,
-                            (LPDLGTEMPLATE)lpDlgTemplate,
-                            hwndOwner,
-                            lpDialogFunc,
-                            dwInitParam,
-                            SCDLG_CLIENT | (fAnsiFlags & (SCDLG_ANSI | SCDLG_16BIT)));
+    return InternalDialogBox(hmod, (LPDLGTEMPLATE)lpDlgTemplate, hwndOwner, lpDialogFunc, dwInitParam,
+                             SCDLG_CLIENT | (fAnsiFlags & (SCDLG_ANSI | SCDLG_16BIT)));
 }
 
 /***************************************************************************\
@@ -815,69 +779,46 @@ INT_PTR WINAPI DialogBoxIndirectParamAorW(
 \***************************************************************************/
 
 
-FUNCLOG5(LOG_GENERAL, HWND, WINAPI, CreateDialogIndirectParamA, HINSTANCE, hmod, LPCDLGTEMPLATEA, lpDlgTemplate, HWND, hwndOwner, DLGPROC, lpDialogFunc, LPARAM, dwInitParam)
-HWND WINAPI CreateDialogIndirectParamA(
-    HINSTANCE       hmod,
-    LPCDLGTEMPLATEA lpDlgTemplate,
-    HWND            hwndOwner,
-    DLGPROC         lpDialogFunc,
-    LPARAM          dwInitParam)
+FUNCLOG5(LOG_GENERAL, HWND, WINAPI, CreateDialogIndirectParamA, HINSTANCE, hmod, LPCDLGTEMPLATEA, lpDlgTemplate, HWND,
+         hwndOwner, DLGPROC, lpDialogFunc, LPARAM, dwInitParam)
+HWND WINAPI CreateDialogIndirectParamA(HINSTANCE hmod, LPCDLGTEMPLATEA lpDlgTemplate, HWND hwndOwner,
+                                       DLGPROC lpDialogFunc, LPARAM dwInitParam)
 {
-    return CreateDialogIndirectParamAorW(hmod,
-                                         (LPCDLGTEMPLATE)lpDlgTemplate,
-                                         hwndOwner,
-                                         lpDialogFunc,
-                                         dwInitParam,
+    return CreateDialogIndirectParamAorW(hmod, (LPCDLGTEMPLATE)lpDlgTemplate, hwndOwner, lpDialogFunc, dwInitParam,
                                          SCDLG_ANSI);
 }
 
 
-FUNCLOG5(LOG_GENERAL, HWND, WINAPI, CreateDialogIndirectParamW, HINSTANCE, hmod, LPCDLGTEMPLATEW, lpDlgTemplate, HWND, hwndOwner, DLGPROC, lpDialogFunc, LPARAM, dwInitParam)
-HWND WINAPI CreateDialogIndirectParamW(
-    HINSTANCE       hmod,
-    LPCDLGTEMPLATEW lpDlgTemplate,
-    HWND            hwndOwner,
-    DLGPROC         lpDialogFunc,
-    LPARAM          dwInitParam)
+FUNCLOG5(LOG_GENERAL, HWND, WINAPI, CreateDialogIndirectParamW, HINSTANCE, hmod, LPCDLGTEMPLATEW, lpDlgTemplate, HWND,
+         hwndOwner, DLGPROC, lpDialogFunc, LPARAM, dwInitParam)
+HWND WINAPI CreateDialogIndirectParamW(HINSTANCE hmod, LPCDLGTEMPLATEW lpDlgTemplate, HWND hwndOwner,
+                                       DLGPROC lpDialogFunc, LPARAM dwInitParam)
 {
-    return CreateDialogIndirectParamAorW(hmod,
-                                         (LPCDLGTEMPLATE)lpDlgTemplate,
-                                         hwndOwner,
-                                         lpDialogFunc,
-                                         dwInitParam,
-                                         0);
+    return CreateDialogIndirectParamAorW(hmod, (LPCDLGTEMPLATE)lpDlgTemplate, hwndOwner, lpDialogFunc, dwInitParam, 0);
 }
 
 
-FUNCLOG6(LOG_GENERAL, HWND, WINAPI, CreateDialogIndirectParamAorW, HANDLE, hmod, LPCDLGTEMPLATE, lpDlgTemplate, HWND, hwndOwner, DLGPROC, lpDialogFunc, LPARAM, dwInitParam, UINT, fAnsi)
-HWND WINAPI CreateDialogIndirectParamAorW(
-    HANDLE         hmod,
-    LPCDLGTEMPLATE lpDlgTemplate,
-    HWND           hwndOwner,
-    DLGPROC        lpDialogFunc,
-    LPARAM         dwInitParam,
-    UINT           fAnsi)
+FUNCLOG6(LOG_GENERAL, HWND, WINAPI, CreateDialogIndirectParamAorW, HANDLE, hmod, LPCDLGTEMPLATE, lpDlgTemplate, HWND,
+         hwndOwner, DLGPROC, lpDialogFunc, LPARAM, dwInitParam, UINT, fAnsi)
+HWND WINAPI CreateDialogIndirectParamAorW(HANDLE hmod, LPCDLGTEMPLATE lpDlgTemplate, HWND hwndOwner,
+                                          DLGPROC lpDialogFunc, LPARAM dwInitParam, UINT fAnsi)
 {
     DWORD cb;
-    HWND  hwndRet;
+    HWND hwndRet;
 
     /*
      * The server routine destroys the menu if it fails.
      */
     cb = GetSizeDialogTemplate(hmod, lpDlgTemplate);
 
-    if (!cb) {
+    if (!cb)
+    {
         RIPMSG0(RIP_WARNING, "CreateDialogIndirect: Invalid Parameter");
         return NULL;
     }
 
-    hwndRet = InternalCreateDialog(hmod,
-                                   (LPDLGTEMPLATE)lpDlgTemplate,
-                                   cb,
-                                   hwndOwner,
-                                   lpDialogFunc,
-                                   dwInitParam,
-                                   SCDLG_CLIENT | (fAnsi & (SCDLG_ANSI|SCDLG_16BIT)));
+    hwndRet = InternalCreateDialog(hmod, (LPDLGTEMPLATE)lpDlgTemplate, cb, hwndOwner, lpDialogFunc, dwInitParam,
+                                   SCDLG_CLIENT | (fAnsi & (SCDLG_ANSI | SCDLG_16BIT)));
 
     return hwndRet;
 }
@@ -893,30 +834,24 @@ HWND WINAPI CreateDialogIndirectParamAorW(
 \***************************************************************************/
 
 
-FUNCLOG5(LOG_GENERAL, INT_PTR, WINAPI, DialogBoxParamA, HINSTANCE, hmod, LPCSTR, lpName, HWND, hwndOwner, DLGPROC, lpDialogFunc, LPARAM, dwInitParam)
-INT_PTR WINAPI DialogBoxParamA(
-    HINSTANCE hmod,
-    LPCSTR    lpName,
-    HWND      hwndOwner,
-    DLGPROC   lpDialogFunc,
-    LPARAM    dwInitParam)
+FUNCLOG5(LOG_GENERAL, INT_PTR, WINAPI, DialogBoxParamA, HINSTANCE, hmod, LPCSTR, lpName, HWND, hwndOwner, DLGPROC,
+         lpDialogFunc, LPARAM, dwInitParam)
+INT_PTR WINAPI DialogBoxParamA(HINSTANCE hmod, LPCSTR lpName, HWND hwndOwner, DLGPROC lpDialogFunc, LPARAM dwInitParam)
 {
     HANDLE h;
-    PVOID  p;
+    PVOID p;
     INT_PTR i = -1;
 
-    if (h = FINDRESOURCEA(hmod, (LPSTR)lpName, (LPSTR)RT_DIALOG)) {
+    if (h = FINDRESOURCEA(hmod, (LPSTR)lpName, (LPSTR)RT_DIALOG))
+    {
 
-        if (h = LOADRESOURCE(hmod, h)) {
+        if (h = LOADRESOURCE(hmod, h))
+        {
 
-            if (p = LOCKRESOURCE(h, hmod)) {
+            if (p = LOCKRESOURCE(h, hmod))
+            {
 
-                i = DialogBoxIndirectParamAorW(hmod,
-                                               p,
-                                               hwndOwner,
-                                               lpDialogFunc,
-                                               dwInitParam,
-                                               SCDLG_ANSI);
+                i = DialogBoxIndirectParamAorW(hmod, p, hwndOwner, lpDialogFunc, dwInitParam, SCDLG_ANSI);
 
                 UNLOCKRESOURCE(h, hmod);
             }
@@ -929,28 +864,21 @@ INT_PTR WINAPI DialogBoxParamA(
 }
 
 
-FUNCLOG5(LOG_GENERAL, INT_PTR, WINAPI, DialogBoxParamW, HINSTANCE, hmod, LPCWSTR, lpName, HWND, hwndOwner, DLGPROC, lpDialogFunc, LPARAM, dwInitParam)
-INT_PTR WINAPI DialogBoxParamW(
-    HINSTANCE hmod,
-    LPCWSTR   lpName,
-    HWND      hwndOwner,
-    DLGPROC   lpDialogFunc,
-    LPARAM    dwInitParam)
+FUNCLOG5(LOG_GENERAL, INT_PTR, WINAPI, DialogBoxParamW, HINSTANCE, hmod, LPCWSTR, lpName, HWND, hwndOwner, DLGPROC,
+         lpDialogFunc, LPARAM, dwInitParam)
+INT_PTR WINAPI DialogBoxParamW(HINSTANCE hmod, LPCWSTR lpName, HWND hwndOwner, DLGPROC lpDialogFunc, LPARAM dwInitParam)
 {
     HANDLE h;
-    PVOID  p;
+    PVOID p;
     INT_PTR i = -1;
 
-    if (h = FINDRESOURCEW(hmod, lpName, RT_DIALOG)) {
+    if (h = FINDRESOURCEW(hmod, lpName, RT_DIALOG))
+    {
 
-        if (p = LoadResource(hmod, h)) {
+        if (p = LoadResource(hmod, h))
+        {
 
-            i = DialogBoxIndirectParamAorW(hmod,
-                                           p,
-                                           hwndOwner,
-                                           lpDialogFunc,
-                                           dwInitParam,
-                                           0);
+            i = DialogBoxIndirectParamAorW(hmod, p, hwndOwner, lpDialogFunc, dwInitParam, 0);
         }
     }
 
@@ -968,29 +896,24 @@ INT_PTR WINAPI DialogBoxParamW(
 \***************************************************************************/
 
 
-FUNCLOG5(LOG_GENERAL, HWND, WINAPI, CreateDialogParamA, HINSTANCE, hmod, LPCSTR, lpName, HWND, hwndOwner, DLGPROC, lpDialogFunc, LPARAM, dwInitParam)
-HWND WINAPI CreateDialogParamA(
-    HINSTANCE hmod,
-    LPCSTR    lpName,
-    HWND      hwndOwner,
-    DLGPROC   lpDialogFunc,
-    LPARAM    dwInitParam)
+FUNCLOG5(LOG_GENERAL, HWND, WINAPI, CreateDialogParamA, HINSTANCE, hmod, LPCSTR, lpName, HWND, hwndOwner, DLGPROC,
+         lpDialogFunc, LPARAM, dwInitParam)
+HWND WINAPI CreateDialogParamA(HINSTANCE hmod, LPCSTR lpName, HWND hwndOwner, DLGPROC lpDialogFunc, LPARAM dwInitParam)
 {
-    HANDLE         h;
+    HANDLE h;
     LPDLGTEMPLATEA p;
-    HWND           hwnd = NULL;
+    HWND hwnd = NULL;
 
-    if (h = FINDRESOURCEA(hmod, lpName, (LPSTR)RT_DIALOG)) {
+    if (h = FINDRESOURCEA(hmod, lpName, (LPSTR)RT_DIALOG))
+    {
 
-        if (h = LOADRESOURCE(hmod, h)) {
+        if (h = LOADRESOURCE(hmod, h))
+        {
 
-            if (p = (LPDLGTEMPLATEA)LOCKRESOURCE(h, hmod)) {
+            if (p = (LPDLGTEMPLATEA)LOCKRESOURCE(h, hmod))
+            {
 
-                hwnd = CreateDialogIndirectParamAorW(hmod,
-                                                     (LPCDLGTEMPLATE)p,
-                                                     hwndOwner,
-                                                     lpDialogFunc,
-                                                     dwInitParam,
+                hwnd = CreateDialogIndirectParamAorW(hmod, (LPCDLGTEMPLATE)p, hwndOwner, lpDialogFunc, dwInitParam,
                                                      SCDLG_ANSI);
 
                 UNLOCKRESOURCE(h, hmod);
@@ -1004,30 +927,24 @@ HWND WINAPI CreateDialogParamA(
 }
 
 
-FUNCLOG5(LOG_GENERAL, HWND, WINAPI, CreateDialogParamW, HINSTANCE, hmod, LPCWSTR, lpName, HWND, hwndOwner, DLGPROC, lpDialogFunc, LPARAM, dwInitParam)
-HWND WINAPI CreateDialogParamW(
-    HINSTANCE hmod,
-    LPCWSTR   lpName,
-    HWND      hwndOwner,
-    DLGPROC   lpDialogFunc,
-    LPARAM    dwInitParam)
+FUNCLOG5(LOG_GENERAL, HWND, WINAPI, CreateDialogParamW, HINSTANCE, hmod, LPCWSTR, lpName, HWND, hwndOwner, DLGPROC,
+         lpDialogFunc, LPARAM, dwInitParam)
+HWND WINAPI CreateDialogParamW(HINSTANCE hmod, LPCWSTR lpName, HWND hwndOwner, DLGPROC lpDialogFunc, LPARAM dwInitParam)
 {
     HANDLE h;
-    PVOID  p;
-    HWND   hwnd = NULL;
+    PVOID p;
+    HWND hwnd = NULL;
 
-    if (h = FINDRESOURCEW(hmod, lpName, RT_DIALOG)) {
+    if (h = FINDRESOURCEW(hmod, lpName, RT_DIALOG))
+    {
 
-        if (h = LOADRESOURCE(hmod, h)) {
+        if (h = LOADRESOURCE(hmod, h))
+        {
 
-            if (p = LOCKRESOURCE(h, hmod)) {
+            if (p = LOCKRESOURCE(h, hmod))
+            {
 
-                hwnd = CreateDialogIndirectParamAorW(hmod,
-                                                     p,
-                                                     hwndOwner,
-                                                     lpDialogFunc,
-                                                     dwInitParam,
-                                                     0);
+                hwnd = CreateDialogIndirectParamAorW(hmod, p, hwndOwner, lpDialogFunc, dwInitParam, 0);
 
                 UNLOCKRESOURCE(h, hmod);
             }
@@ -1049,8 +966,7 @@ HWND WINAPI CreateDialogParamW(
 
 
 FUNCLOG1(LOG_GENERAL, BOOL, WINAPI, DestroyCursor, HCURSOR, hcur)
-BOOL WINAPI DestroyCursor(
-    HCURSOR hcur)
+BOOL WINAPI DestroyCursor(HCURSOR hcur)
 {
     return NtUserDestroyCursor(hcur, CURSOR_CALLFROMCLIENT);
 }
@@ -1061,15 +977,13 @@ BOOL WINAPI DestroyCursor(
 *
 \***************************************************************************/
 
-HICON CreateIcoCur(
-    PCURSORDATA lpi)
+HICON CreateIcoCur(PCURSORDATA lpi)
 {
     HCURSOR hcur;
 
     UserAssert(lpi->hbmColor || lpi->hbmMask);
 
-    hcur = (HCURSOR)NtUserCallOneParam((lpi->CURSORF_flags & CURSORF_GLOBAL),
-                                       SFI__CREATEEMPTYCURSOROBJECT);
+    hcur = (HCURSOR)NtUserCallOneParam((lpi->CURSORF_flags & CURSORF_GLOBAL), SFI__CREATEEMPTYCURSOROBJECT);
 
     if (hcur == NULL)
         return NULL;
@@ -1086,18 +1000,21 @@ HICON CreateIcoCur(
          * we really don't need to assert on the width/height check. Throwing
          * a warning should be good enough.
          */
-        if (bmMask.bmWidth != (LONG)lpi->cx) {
-           RIPMSG1(RIP_WARNING, "Mask width not equal to requested width: lpi %#p", lpi);
+        if (bmMask.bmWidth != (LONG)lpi->cx)
+        {
+            RIPMSG1(RIP_WARNING, "Mask width not equal to requested width: lpi %#p", lpi);
         }
 
-        if (bmMask.bmHeight != (LONG)lpi->cy) {
-           RIPMSG1(RIP_WARNING, "Mask height not equal to requested height: lpi %#p", lpi);
+        if (bmMask.bmHeight != (LONG)lpi->cy)
+        {
+            RIPMSG1(RIP_WARNING, "Mask height not equal to requested height: lpi %#p", lpi);
         }
 
-        if (lpi->hbmColor) {
+        if (lpi->hbmColor)
+        {
             UserAssert(GetObject(KHBITMAP_TO_HBITMAP(lpi->hbmColor), sizeof(BITMAP), &bmColor));
             UserAssert(bmMask.bmHeight == bmColor.bmHeight * 2);
-            UserAssert(bmMask.bmWidth  == bmColor.bmWidth);
+            UserAssert(bmMask.bmWidth == bmColor.bmWidth);
         }
     }
 #endif
@@ -1116,19 +1033,15 @@ HICON CreateIcoCur(
 *
 \***************************************************************************/
 
-HCURSOR CreateIcoCurIndirect(
-    PCURSORDATA pcurCreate,
-    UINT        cPlanes,
-    UINT        cBitsPixel,
-    CONST BYTE  *lpANDbits,
-    CONST BYTE  *lpXORbits)
+HCURSOR CreateIcoCurIndirect(PCURSORDATA pcurCreate, UINT cPlanes, UINT cBitsPixel, CONST BYTE *lpANDbits,
+                             CONST BYTE *lpXORbits)
 {
-    int     cbBits;
+    int cbBits;
     HCURSOR hcurNew;
-    BOOL    bColor;
-    UINT    cx;
-    UINT    cy;
-    LPBYTE  pBits = NULL;
+    BOOL bColor;
+    UINT cx;
+    UINT cy;
+    LPBYTE pBits = NULL;
 
     /*
      * Allocate CURSOR structure.
@@ -1144,13 +1057,15 @@ HCURSOR CreateIcoCurIndirect(
      */
     bColor = (cPlanes | cBitsPixel) > 1;
 
-    if (!bColor) {
+    if (!bColor)
+    {
 
         cbBits = (((pcurCreate->cx + 0x0F) & ~0x0F) >> 3) * pcurCreate->cy;
 
         pBits = (LPBYTE)UserLocalAlloc(HEAP_ZERO_MEMORY, (cbBits * 2));
 
-        if (pBits == NULL) {
+        if (pBits == NULL)
+        {
             NtUserDestroyCursor(hcurNew, CURSOR_ALWAYSDESTROY);
             return NULL;
         }
@@ -1168,7 +1083,8 @@ HCURSOR CreateIcoCurIndirect(
 
     pcurCreate->hbmMask = CreateBitmap(cx, cy, 1, 1, lpANDbits);
 
-    if (pcurCreate->hbmMask == NULL) {
+    if (pcurCreate->hbmMask == NULL)
+    {
 
         /*
          * If this is a COLOR icon/cursor, lpANDBits doesn't need to be
@@ -1178,14 +1094,16 @@ HCURSOR CreateIcoCurIndirect(
          * failed because the caller didn't pass in a double height AND mask
          * (Win95 doesn't have this bug)
          */
-        if (bColor) {
+        if (bColor)
+        {
 
             RIPMSG0(RIP_WARNING, "CreateIcoCurIndirect: Retrying hbmMask creation.");
 
             cbBits = (((pcurCreate->cx + 0x0F) & ~0x0F) >> 3) * pcurCreate->cy;
-            pBits = (LPBYTE)UserLocalAlloc(HEAP_ZERO_MEMORY, cbBits*2);
+            pBits = (LPBYTE)UserLocalAlloc(HEAP_ZERO_MEMORY, cbBits * 2);
 
-            if (pBits == NULL) {
+            if (pBits == NULL)
+            {
                 NtUserDestroyCursor(hcurNew, CURSOR_ALWAYSDESTROY);
                 return NULL;
             }
@@ -1197,7 +1115,8 @@ HCURSOR CreateIcoCurIndirect(
             pBits = NULL;
         }
 
-        if (pcurCreate->hbmMask == NULL) {
+        if (pcurCreate->hbmMask == NULL)
+        {
 
             /*
              * CreateBitmap() failed.  Clean-up and get out of here.
@@ -1215,14 +1134,12 @@ HCURSOR CreateIcoCurIndirect(
      * Create hbmColor or NULL it so that CallOEMCursor doesn't think we are
      * color.
      */
-    if (bColor) {
-        pcurCreate->hbmColor = CreateBitmap(cx,
-                                            cy / 2,
-                                            cPlanes,
-                                            cBitsPixel,
-                                            lpXORbits);
+    if (bColor)
+    {
+        pcurCreate->hbmColor = CreateBitmap(cx, cy / 2, cPlanes, cBitsPixel, lpXORbits);
 
-        if (pcurCreate->hbmColor == NULL) {
+        if (pcurCreate->hbmColor == NULL)
+        {
 
             /*
              * CreateBitmap() failed.  Clean-up and get out of here.
@@ -1233,22 +1150,24 @@ HCURSOR CreateIcoCurIndirect(
         }
 
         pcurCreate->bpp = (cPlanes * cBitsPixel);
-
-    } else {
+    }
+    else
+    {
         pcurCreate->hbmColor = NULL;
-        pcurCreate->bpp      = 1;
+        pcurCreate->bpp = 1;
     }
 
     /*
      * Load contents into the cursor/icon object
      */
-    pcurCreate->cy            = cy;
-    pcurCreate->lpModName     = NULL;
-    pcurCreate->lpName        = NULL;
-    pcurCreate->rt            = 0;
+    pcurCreate->cy = cy;
+    pcurCreate->lpModName = NULL;
+    pcurCreate->lpName = NULL;
+    pcurCreate->rt = 0;
     pcurCreate->CURSORF_flags = 0;
 
-    if (_SetCursorIconData(hcurNew, pcurCreate)) {
+    if (_SetCursorIconData(hcurNew, pcurCreate))
+    {
         if (pBits != NULL)
             UserLocalFree(pBits);
         return hcurNew;
@@ -1277,28 +1196,22 @@ HCURSOR CreateIcoCurIndirect(
 \***************************************************************************/
 
 
-HCURSOR WINAPI CreateCursor(
-    HINSTANCE hModule,
-    int       iXhotspot,
-    int       iYhotspot,
-    int       iWidth,
-    int       iHeight,
-    LPBYTE    lpANDplane,
-    LPBYTE    lpXORplane)
+HCURSOR WINAPI CreateCursor(HINSTANCE hModule, int iXhotspot, int iYhotspot, int iWidth, int iHeight, LPBYTE lpANDplane,
+                            LPBYTE lpXORplane)
 {
     CURSORDATA cur;
     UNREFERENCED_PARAMETER(hModule);
 
-    if ((iXhotspot < 0) || (iXhotspot > iWidth) ||
-        (iYhotspot < 0) || (iYhotspot > iHeight)) {
+    if ((iXhotspot < 0) || (iXhotspot > iWidth) || (iYhotspot < 0) || (iYhotspot > iHeight))
+    {
         return 0;
     }
 
     RtlZeroMemory(&cur, sizeof(cur));
     cur.xHotspot = (SHORT)iXhotspot;
     cur.yHotspot = (SHORT)iYhotspot;
-    cur.cx       = (DWORD)iWidth;
-    cur.cy       = (DWORD)iHeight;
+    cur.cx = (DWORD)iWidth;
+    cur.cy = (DWORD)iHeight;
 
     return CreateIcoCurIndirect(&cur, 1, 1, lpANDplane, lpXORplane);
 }
@@ -1311,14 +1224,8 @@ HCURSOR WINAPI CreateCursor(
 * 01-Aug-1991 IanJa     Init cur.pszModname so DestroyIcon will work
 \***************************************************************************/
 
-HICON WINAPI CreateIcon(
-    HINSTANCE  hModule,
-    int        iWidth,
-    int        iHeight,
-    BYTE       planes,
-    BYTE       bpp,
-    CONST BYTE *lpANDplane,
-    CONST BYTE *lpXORplane)
+HICON WINAPI CreateIcon(HINSTANCE hModule, int iWidth, int iHeight, BYTE planes, BYTE bpp, CONST BYTE *lpANDplane,
+                        CONST BYTE *lpXORplane)
 {
     CURSORDATA cur;
     UNREFERENCED_PARAMETER(hModule);
@@ -1326,8 +1233,8 @@ HICON WINAPI CreateIcon(
     RtlZeroMemory(&cur, sizeof(cur));
     cur.xHotspot = (SHORT)(iWidth / 2);
     cur.yHotspot = (SHORT)(iHeight / 2);
-    cur.cx       = (DWORD)iWidth;
-    cur.cy       = (DWORD)iHeight;
+    cur.cx = (DWORD)iWidth;
+    cur.cy = (DWORD)iHeight;
 
     return CreateIcoCurIndirect(&cur, planes, bpp, lpANDplane, lpXORplane);
 }
@@ -1342,16 +1249,15 @@ HICON WINAPI CreateIcon(
 \***************************************************************************/
 
 FUNCLOG1(LOG_GENERAL, HICON, WINAPI, CreateIconIndirect, PICONINFO, piconinfo)
-HICON WINAPI CreateIconIndirect(
-    PICONINFO piconinfo)
+HICON WINAPI CreateIconIndirect(PICONINFO piconinfo)
 {
-    HCURSOR    hcur;
+    HCURSOR hcur;
     CURSORDATA cur;
-    BITMAP     bmMask;
-    BITMAP     bmColor;
-    HBITMAP    hbmpBits2, hbmpMem;
-    HDC        hdcMem;
-    UINT       LR_flags = LR_DEFAULTCOLOR;
+    BITMAP bmMask;
+    BITMAP bmColor;
+    HBITMAP hbmpBits2, hbmpMem;
+    HDC hdcMem;
+    UINT LR_flags = LR_DEFAULTCOLOR;
 
     /*
      * Make sure the bitmaps are real, and get their dimensions.
@@ -1359,9 +1265,12 @@ HICON WINAPI CreateIconIndirect(
     if (!GetObjectW(piconinfo->hbmMask, sizeof(BITMAP), &bmMask))
         return NULL;
 
-    if (piconinfo->hbmColor != NULL) {
-        if (GetObjectW(piconinfo->hbmColor, sizeof(BITMAP), &bmColor)) {
-            if (bmColor.bmPlanes == 1 && bmColor.bmBitsPixel == 32) {
+    if (piconinfo->hbmColor != NULL)
+    {
+        if (GetObjectW(piconinfo->hbmColor, sizeof(BITMAP), &bmColor))
+        {
+            if (bmColor.bmPlanes == 1 && bmColor.bmBitsPixel == 32)
+            {
                 /*
                  * The color bitmap is a single plane, 32bpp image.  As such,
                  * it might contain an alpha channel, so we have to preserve
@@ -1369,7 +1278,9 @@ HICON WINAPI CreateIconIndirect(
                  */
                 LR_flags |= LR_CREATEREALDIB;
             }
-        } else {
+        }
+        else
+        {
             return NULL;
         }
     }
@@ -1395,17 +1306,20 @@ HICON WINAPI CreateIconIndirect(
     RtlZeroMemory(&cur, sizeof(cur));
     cur.cx = bmMask.bmWidth;
 
-    if (piconinfo->hbmColor == NULL) {
+    if (piconinfo->hbmColor == NULL)
+    {
 
-        cur.cy  = bmMask.bmHeight;
+        cur.cy = bmMask.bmHeight;
         cur.bpp = 1;
-
-    } else {
-        cur.cy       = bmMask.bmHeight * 2;
-        cur.bpp      = (DWORD)(bmColor.bmBitsPixel * bmColor.bmPlanes);
+    }
+    else
+    {
+        cur.cy = bmMask.bmHeight * 2;
+        cur.bpp = (DWORD)(bmColor.bmBitsPixel * bmColor.bmPlanes);
         cur.hbmColor = CopyBmp(piconinfo->hbmColor, 0, 0, LR_flags);
 
-        if (cur.hbmColor == NULL) {
+        if (cur.hbmColor == NULL)
+        {
             RIPMSG0(RIP_WARNING, "CreateIconIndirect: Failed to copy piconinfo->hbmColor");
             goto CleanUp;
         }
@@ -1418,9 +1332,10 @@ HICON WINAPI CreateIconIndirect(
      * nobody is supposed to use it but GDI expects it there when checking the
      * bitmap dimensions (for cursors)
      */
-    cur.hbmMask  =  CreateBitmap(cur.cx, cur.cy, 1, 1, NULL);
+    cur.hbmMask = CreateBitmap(cur.cx, cur.cy, 1, 1, NULL);
 
-    if (cur.hbmMask == NULL) {
+    if (cur.hbmMask == NULL)
+    {
         RIPMSG0(RIP_WARNING, "CreateIconIndirect: Failed to create cur.hbmMask");
         goto CleanUp;
     }
@@ -1428,26 +1343,20 @@ HICON WINAPI CreateIconIndirect(
     RtlEnterCriticalSection(&gcsHdc);
 
 
-    if (hdcMem = CreateCompatibleDC (ghdcBits2)) {
+    if (hdcMem = CreateCompatibleDC(ghdcBits2))
+    {
 
         hbmpMem = SelectObject(hdcMem, KHBITMAP_TO_HBITMAP(cur.hbmMask));
         hbmpBits2 = SelectObject(ghdcBits2, piconinfo->hbmMask);
 
-        BitBlt(hdcMem,
-               0,
-               0,
-               bmMask.bmWidth,
-               bmMask.bmHeight,
-               ghdcBits2,
-               0,
-               0,
-               SRCCOPY);
+        BitBlt(hdcMem, 0, 0, bmMask.bmWidth, bmMask.bmHeight, ghdcBits2, 0, 0, SRCCOPY);
 
         SelectObject(hdcMem, hbmpMem);
         SelectObject(ghdcBits2, hbmpBits2);
-        DeleteDC (hdcMem);
-
-    } else {
+        DeleteDC(hdcMem);
+    }
+    else
+    {
 
         RtlLeaveCriticalSection(&gcsHdc);
         RIPMSG0(RIP_WARNING, "CreateIconIndirect: CreateCompatibleDC failed");
@@ -1459,18 +1368,22 @@ HICON WINAPI CreateIconIndirect(
     /*
      * rt and Hotspot
      */
-    if (piconinfo->fIcon) {
-        cur.rt        = PTR_TO_ID(RT_ICON);
+    if (piconinfo->fIcon)
+    {
+        cur.rt = PTR_TO_ID(RT_ICON);
         cur.xHotspot = (SHORT)(cur.cx / 2);
         cur.yHotspot = (SHORT)(cur.cy / 4);
-    } else {
-        cur.rt        = PTR_TO_ID(RT_CURSOR);
+    }
+    else
+    {
+        cur.rt = PTR_TO_ID(RT_CURSOR);
         cur.xHotspot = ((SHORT)piconinfo->xHotspot);
         cur.yHotspot = ((SHORT)piconinfo->yHotspot);
     }
 
 
-    if (_SetCursorIconData(hcur, &cur)) {
+    if (_SetCursorIconData(hcur, &cur))
+    {
         return hcur;
     }
 
@@ -1478,10 +1391,12 @@ CleanUp:
     /*
      * Note that if this fails, the bitmaps have NOT been made public.
      */
-    if (cur.hbmMask != NULL) {
+    if (cur.hbmMask != NULL)
+    {
         DeleteObject(KHBITMAP_TO_HBITMAP(cur.hbmMask));
     }
-    if (cur.hbmColor != NULL) {
+    if (cur.hbmColor != NULL)
+    {
         DeleteObject(KHBITMAP_TO_HBITMAP(cur.hbmColor));
     }
 
@@ -1499,9 +1414,7 @@ CleanUp:
 
 
 FUNCLOG2(LOG_GENERAL, BOOL, WINAPI, GetIconInfo, HICON, hicon, PICONINFO, piconinfo)
-BOOL WINAPI GetIconInfo(
-    HICON     hicon,
-    PICONINFO piconinfo)
+BOOL WINAPI GetIconInfo(HICON hicon, PICONINFO piconinfo)
 {
     return NtUserGetIconInfo(hicon, piconinfo, NULL, NULL, NULL, FALSE);
 }
@@ -1515,26 +1428,18 @@ BOOL WINAPI GetIconInfo(
 \***************************************************************************/
 
 
-FUNCLOG5(LOG_GENERAL, HCURSOR, WINAPI, GetCursorFrameInfo, HCURSOR, hcur, LPWSTR, lpName, int, iFrame, LPDWORD, pjifRate, LPINT, pccur)
-HCURSOR WINAPI GetCursorFrameInfo(
-    HCURSOR hcur,
-    LPWSTR  lpName,
-    int     iFrame,
-    LPDWORD pjifRate,
-    LPINT   pccur)
+FUNCLOG5(LOG_GENERAL, HCURSOR, WINAPI, GetCursorFrameInfo, HCURSOR, hcur, LPWSTR, lpName, int, iFrame, LPDWORD,
+         pjifRate, LPINT, pccur)
+HCURSOR WINAPI GetCursorFrameInfo(HCURSOR hcur, LPWSTR lpName, int iFrame, LPDWORD pjifRate, LPINT pccur)
 {
     /*
      * Caller wants us to return the version of this cursor that is stored
      * in the display driver.
      */
-    if (hcur == NULL) {
+    if (hcur == NULL)
+    {
 
-        return LoadIcoCur(NULL,
-                          lpName,
-                          RT_CURSOR,
-                          0,
-                          0,
-                          LR_DEFAULTSIZE);
+        return LoadIcoCur(NULL, lpName, RT_CURSOR, 0, 0, LR_DEFAULTSIZE);
     }
 
     return NtUserGetCursorFrameInfo(hcur, iFrame, pjifRate, pccur);
@@ -1550,9 +1455,7 @@ HCURSOR WINAPI GetCursorFrameInfo(
 *
 \***************************************************************************/
 
-BOOL WINAPI _FreeResource(
-    HANDLE    hResData,
-    HINSTANCE hModule)
+BOOL WINAPI _FreeResource(HANDLE hResData, HINSTANCE hModule)
 {
     UNREFERENCED_PARAMETER(hResData);
     UNREFERENCED_PARAMETER(hModule);
@@ -1560,18 +1463,14 @@ BOOL WINAPI _FreeResource(
     return FALSE;
 }
 
-LPSTR WINAPI _LockResource(
-    HANDLE    hResData,
-    HINSTANCE hModule)
+LPSTR WINAPI _LockResource(HANDLE hResData, HINSTANCE hModule)
 {
     UNREFERENCED_PARAMETER(hModule);
 
     return (LPSTR)(hResData);
 }
 
-BOOL WINAPI _UnlockResource(
-    HANDLE    hResData,
-    HINSTANCE hModule)
+BOOL WINAPI _UnlockResource(HANDLE hResData, HINSTANCE hModule)
 {
     UNREFERENCED_PARAMETER(hResData);
     UNREFERENCED_PARAMETER(hModule);
@@ -1590,9 +1489,7 @@ BOOL WINAPI _UnlockResource(
 
 
 FUNCLOG2(LOG_GENERAL, int, WINAPI, LookupIconIdFromDirectory, PBYTE, presbits, BOOL, fIcon)
-int WINAPI LookupIconIdFromDirectory(
-    PBYTE presbits,
-    BOOL  fIcon)
+int WINAPI LookupIconIdFromDirectory(PBYTE presbits, BOOL fIcon)
 {
     return LookupIconIdFromDirectoryEx(presbits, fIcon, 0, 0, 0);
 }
@@ -1604,22 +1501,13 @@ int WINAPI LookupIconIdFromDirectory(
 \***************************************************************************/
 
 
-FUNCLOG5(LOG_GENERAL, int, WINAPI, LookupIconIdFromDirectoryEx, PBYTE, presbits, BOOL, fIcon, int, cxDesired, int, cyDesired, UINT, LR_flags)
-int WINAPI LookupIconIdFromDirectoryEx(
-    PBYTE           presbits,
-    BOOL            fIcon,
-    int             cxDesired,
-    int             cyDesired,
-    UINT            LR_flags)
+FUNCLOG5(LOG_GENERAL, int, WINAPI, LookupIconIdFromDirectoryEx, PBYTE, presbits, BOOL, fIcon, int, cxDesired, int,
+         cyDesired, UINT, LR_flags)
+int WINAPI LookupIconIdFromDirectoryEx(PBYTE presbits, BOOL fIcon, int cxDesired, int cyDesired, UINT LR_flags)
 {
     ConnectIfNecessary(0);
 
-    return RtlGetIdFromDirectory(presbits,
-                                 fIcon,
-                                 cxDesired,
-                                 cyDesired,
-                                 LR_flags,
-                                 NULL);
+    return RtlGetIdFromDirectory(presbits, fIcon, cxDesired, cyDesired, LR_flags, NULL);
 }
 /***************************************************************************\
 * LoadCursorIconFromResource (API)
@@ -1628,28 +1516,18 @@ int WINAPI LookupIconIdFromDirectoryEx(
 *
 * 02-20-1996 GerardoB    Created.
 \***************************************************************************/
-HANDLE LoadCursorIconFromResource(
-    PBYTE   presbits,
-    LPCWSTR lpName,
-    int     cxDesired,
-    int     cyDesired,
-    UINT    LR_flags)
+HANDLE LoadCursorIconFromResource(PBYTE presbits, LPCWSTR lpName, int cxDesired, int cyDesired, UINT LR_flags)
 {
-    BOOL     fAni;
+    BOOL fAni;
     FILEINFO fi;
-    LPWSTR   lpwszRT;
+    LPWSTR lpwszRT;
 
     fi.pFileMap = presbits;
     fi.pFilePtr = fi.pFileMap;
-    fi.pFileEnd = fi.pFileMap + sizeof (RTAG) + ((RTAG *)presbits)->ckSize;
-    fi.pszName  = lpName;
+    fi.pFileEnd = fi.pFileMap + sizeof(RTAG) + ((RTAG *)presbits)->ckSize;
+    fi.pszName = lpName;
 
-    return LoadCursorIconFromFileMap(&fi,
-                                     &lpwszRT,
-                                     cxDesired,
-                                     cyDesired,
-                                     LR_flags,
-                                     &fAni);
+    return LoadCursorIconFromFileMap(&fi, &lpwszRT, cxDesired, cyDesired, LR_flags, &fAni);
 }
 /***************************************************************************\
 * CreateIconFromResource (API)
@@ -1660,20 +1538,11 @@ HANDLE LoadCursorIconFromResource(
 \***************************************************************************/
 
 
-FUNCLOG4(LOG_GENERAL, HICON, WINAPI, CreateIconFromResource, PBYTE, presbits, DWORD, dwResSize, BOOL, fIcon, DWORD, dwVer)
-HICON WINAPI CreateIconFromResource(
-    PBYTE presbits,
-    DWORD dwResSize,
-    BOOL  fIcon,
-    DWORD dwVer)
+FUNCLOG4(LOG_GENERAL, HICON, WINAPI, CreateIconFromResource, PBYTE, presbits, DWORD, dwResSize, BOOL, fIcon, DWORD,
+         dwVer)
+HICON WINAPI CreateIconFromResource(PBYTE presbits, DWORD dwResSize, BOOL fIcon, DWORD dwVer)
 {
-    return CreateIconFromResourceEx(presbits,
-                                    dwResSize,
-                                    fIcon,
-                                    dwVer,
-                                    0,
-                                    0,
-                                    LR_DEFAULTSIZE | LR_SHARED);
+    return CreateIconFromResourceEx(presbits, dwResSize, fIcon, dwVer, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
 }
 
 /***************************************************************************\
@@ -1685,22 +1554,18 @@ HICON WINAPI CreateIconFromResource(
 \***************************************************************************/
 
 
-FUNCLOG7(LOG_GENERAL, HICON, WINAPI, CreateIconFromResourceEx, PBYTE, presbits, DWORD, dwResSize, BOOL, fIcon, DWORD, dwVer, int, cxDesired, int, cyDesired, UINT, LR_flags)
-HICON WINAPI CreateIconFromResourceEx(
-    PBYTE presbits,
-    DWORD dwResSize,
-    BOOL  fIcon,
-    DWORD dwVer,
-    int   cxDesired,
-    int   cyDesired,
-    UINT  LR_flags)
+FUNCLOG7(LOG_GENERAL, HICON, WINAPI, CreateIconFromResourceEx, PBYTE, presbits, DWORD, dwResSize, BOOL, fIcon, DWORD,
+         dwVer, int, cxDesired, int, cyDesired, UINT, LR_flags)
+HICON WINAPI CreateIconFromResourceEx(PBYTE presbits, DWORD dwResSize, BOOL fIcon, DWORD dwVer, int cxDesired,
+                                      int cyDesired, UINT LR_flags)
 {
     UNREFERENCED_PARAMETER(dwResSize);
 
     /*
      * NT Specific code to validate the version.
      */
-    if ((dwVer < 0x00020000) || (dwVer > 0x00030000)) {
+    if ((dwVer < 0x00020000) || (dwVer > 0x00030000))
+    {
         RIPMSG0(RIP_WARNING, "CreateIconFromResourceEx: Invalid Paramter");
         return NULL;
     }
@@ -1709,19 +1574,16 @@ HICON WINAPI CreateIconFromResourceEx(
      * Set desired size of resource based on flags and/or true
      * dimensions passed in.
      */
-    cxDesired = GetIcoCurWidth(cxDesired , fIcon, LR_flags, 0);
+    cxDesired = GetIcoCurWidth(cxDesired, fIcon, LR_flags, 0);
     cyDesired = GetIcoCurHeight(cyDesired, fIcon, LR_flags, 0);
 
-    if (ISRIFFFORMAT(presbits)) {
-        return LoadCursorIconFromResource (presbits, NULL, cxDesired, cyDesired, LR_flags);
-    } else {
-        return ConvertDIBIcon((LPBITMAPINFOHEADER)presbits,
-                              NULL,
-                              NULL,
-                              fIcon,
-                              cxDesired,
-                              cyDesired,
-                              LR_flags);
+    if (ISRIFFFORMAT(presbits))
+    {
+        return LoadCursorIconFromResource(presbits, NULL, cxDesired, cyDesired, LR_flags);
+    }
+    else
+    {
+        return ConvertDIBIcon((LPBITMAPINFOHEADER)presbits, NULL, NULL, fIcon, cxDesired, cyDesired, LR_flags);
     }
 }
 
@@ -1739,35 +1601,27 @@ HICON WINAPI CreateIconFromResourceEx(
 * 17-Apr-1996 ChrisWil  Created
 \***************************************************************************/
 
-HBITMAP Convert1BppToMonoBitmap(
-    HDC     hdcSrc,
-    HBITMAP hbm1Bpp)
+HBITMAP Convert1BppToMonoBitmap(HDC hdcSrc, HBITMAP hbm1Bpp)
 {
     HBITMAP hbmMono = hbm1Bpp;
     HBITMAP hbmDst;
     HBITMAP hbmS;
     HBITMAP hbmD;
-    HDC     hdcDst;
-    BITMAP  bm;
+    HDC hdcDst;
+    BITMAP bm;
 
-    if (hdcDst = CreateCompatibleDC(hdcSrc)) {
+    if (hdcDst = CreateCompatibleDC(hdcSrc))
+    {
 
         GetObject(hbm1Bpp, sizeof(BITMAP), &bm);
 
-        if (hbmDst = CreateBitmap(bm.bmWidth, bm.bmHeight, 1, 1, NULL)) {
+        if (hbmDst = CreateBitmap(bm.bmWidth, bm.bmHeight, 1, 1, NULL))
+        {
 
             hbmS = SelectBitmap(hdcSrc, hbm1Bpp);
             hbmD = SelectBitmap(hdcDst, hbmDst);
 
-            BitBlt(hdcDst,
-                   0,
-                   0,
-                   bm.bmWidth,
-                   bm.bmHeight,
-                   hdcSrc,
-                   0,
-                   0,
-                   SRCCOPY);
+            BitBlt(hdcDst, 0, 0, bm.bmWidth, bm.bmHeight, hdcSrc, 0, 0, SRCCOPY);
 
             SelectBitmap(hdcSrc, hbmS);
             SelectBitmap(hdcDst, hbmD);
@@ -1791,77 +1645,32 @@ HBITMAP Convert1BppToMonoBitmap(
 *
 \***************************************************************************/
 
-HBITMAP CreateScreenBitmap(
-    int    cx,
-    int    cy,
-    UINT   planes,
-    UINT   bpp,
-    LPSTR  lpBits,
-    LPBOOL pf1Bpp)
+HBITMAP CreateScreenBitmap(int cx, int cy, UINT planes, UINT bpp, LPSTR lpBits, LPBOOL pf1Bpp)
 {
-    HDC     hdcScreen;
+    HDC hdcScreen;
     HBITMAP hbm = NULL;
-    DWORD   dwCount;
+    DWORD dwCount;
 
-    static struct {
+    static struct
+    {
         BITMAPINFOHEADER bi;
-        DWORD            ct[16];
-    } dib4Vga = {{sizeof(BITMAPINFOHEADER),
-                  0,
-                  0,
-                  1,
-                  4,
-                  BI_RGB,
-                  0,
-                  0,
-                  0,
-                  16,
-                  0
-                 },
-                 {0x00000000,
-                  0x00800000,
-                  0x00008000,
-                  0x00808000,
-                  0x00000080,
-                  0x00800080,
-                  0x00008080,
-                  0x00C0C0C0,
-                  0x00808080,
-                  0x00FF0000,
-                  0x0000FF00,
-                  0x00FFFF00,
-                  0x000000FF,
-                  0x00FF00FF,
-                  0x0000FFFF,
-                  0x00FFFFFF
-                 }
-                };
+        DWORD ct[16];
+    } dib4Vga = { { sizeof(BITMAPINFOHEADER), 0, 0, 1, 4, BI_RGB, 0, 0, 0, 16, 0 },
+                  { 0x00000000, 0x00800000, 0x00008000, 0x00808000, 0x00000080, 0x00800080, 0x00008080, 0x00C0C0C0,
+                    0x00808080, 0x00FF0000, 0x0000FF00, 0x00FFFF00, 0x000000FF, 0x00FF00FF, 0x0000FFFF, 0x00FFFFFF } };
 
-    static struct {
+    static struct
+    {
         BITMAPINFOHEADER bi;
-        DWORD            ct[2];
-    } dib1Vga = {{sizeof(BITMAPINFOHEADER),
-                  0,
-                  0,
-                  1,
-                  1,
-                  BI_RGB,
-                  0,
-                  0,
-                  0,
-                  2,
-                  0
-                 },
-                 {0x00000000,
-                  0x00FFFFFF
-                 }
-                };
+        DWORD ct[2];
+    } dib1Vga = { { sizeof(BITMAPINFOHEADER), 0, 0, 1, 1, BI_RGB, 0, 0, 0, 2, 0 }, { 0x00000000, 0x00FFFFFF } };
 
 
     /*
      * Create the surface.
      */
-    if (hdcScreen = GETINITDC()) {
+    if (hdcScreen = GETINITDC())
+    {
 
         /*
          * This appears to mess up color to mono conversion by losing all
@@ -1875,34 +1684,33 @@ HBITMAP CreateScreenBitmap(
          * we're going to need to use the CreateDIBitmap() for mono-surfaces.
          * This code-path will do nearest-color, rather than color-matching.
          */
-        if ((bpp == 1) && (planes == 1)) {
+        if ((bpp == 1) && (planes == 1))
+        {
 
-            dib1Vga.bi.biWidth  = cx;
+            dib1Vga.bi.biWidth = cx;
             dib1Vga.bi.biHeight = cy;
 
-            hbm = CreateDIBitmap(hdcScreen,
-                                 (LPBITMAPINFOHEADER)&dib1Vga,
-                                 CBM_CREATEDIB,
-                                 NULL,
-                                 (LPBITMAPINFO)&dib1Vga,
+            hbm = CreateDIBitmap(hdcScreen, (LPBITMAPINFOHEADER)&dib1Vga, CBM_CREATEDIB, NULL, (LPBITMAPINFO)&dib1Vga,
                                  DIB_RGB_COLORS);
 
             *pf1Bpp = TRUE;
+        }
+        else
+        {
 
-        } else {
-
-            if (((planes == 0) || (planes == gpsi->Planes)) &&
-                ((bpp == 0) || (bpp == gpsi->BitsPixel))) {
+            if (((planes == 0) || (planes == gpsi->Planes)) && ((bpp == 0) || (bpp == gpsi->BitsPixel)))
+            {
 
                 hbm = CreateCompatibleBitmap(hdcScreen, cx, cy);
-
-            } else {
+            }
+            else
+            {
 
                 dib4Vga.bi.biBitCount = planes * bpp ? planes * bpp : gpsi->BitCount;
 
-#if 0 // We use to do the dib-section create, but this breaks icons
-      // when they are made public (can't make a dibsection public). So
-      // we now wil create this as a real-dib.
+#if 0 // We use to do the dib-section create, but this breaks icons     \
+      // when they are made public (can't make a dibsection public). So \
+      // we now wil create this as a real-dib.                          \
       //
                 {
                 DWORD dwDummy;
@@ -1918,15 +1726,11 @@ HBITMAP CreateScreenBitmap(
                                        0);
                 }
 #else
-                dib4Vga.bi.biWidth  = cx;
+                dib4Vga.bi.biWidth = cx;
                 dib4Vga.bi.biHeight = cy;
 
-                hbm = CreateDIBitmap(hdcScreen,
-                                     (LPBITMAPINFOHEADER)&dib4Vga,
-                                     CBM_CREATEDIB,
-                                     NULL,
-                                     (LPBITMAPINFO)&dib4Vga,
-                                     DIB_RGB_COLORS);
+                hbm = CreateDIBitmap(hdcScreen, (LPBITMAPINFOHEADER)&dib4Vga, CBM_CREATEDIB, NULL,
+                                     (LPBITMAPINFO)&dib4Vga, DIB_RGB_COLORS);
 #endif
             }
         }
@@ -1934,7 +1738,8 @@ HBITMAP CreateScreenBitmap(
         RELEASEINITDC(hdcScreen);
     }
 
-    if (hbm && lpBits) {
+    if (hbm && lpBits)
+    {
 
         BITMAP bm;
 
@@ -1958,16 +1763,11 @@ HBITMAP CreateScreenBitmap(
 * 05-Sep-1995 ChrisWil  Port/Change for Chicago functionality.
 \***************************************************************************/
 
-HBITMAP LoadBmp(
-    HINSTANCE hmod,
-    LPCWSTR   lpName,
-    int       cxDesired,
-    int       cyDesired,
-    UINT      flags)
+HBITMAP LoadBmp(HINSTANCE hmod, LPCWSTR lpName, int cxDesired, int cyDesired, UINT flags)
 {
     HBITMAP hbmp = NULL;
-    BOOL    fFree = FALSE;
-    BOOL    f1Bpp = FALSE;
+    BOOL fFree = FALSE;
+    BOOL f1Bpp = FALSE;
 
 /***************************************************************************\
 * Bitmap Resource Table
@@ -1982,65 +1782,135 @@ HBITMAP LoadBmp(
 * BOGUS -- give 'em old close buttons, not new cool X's
 *
 \***************************************************************************/
-#define MAX_BMPMAP  32
+#define MAX_BMPMAP 32
 
     CONST static MAPRES MapOemBmp[MAX_BMPMAP] = {
 
-        {OBM_BTNCORNERS , OBI_RADIOMASK      ,               },
-        {OBM_BTSIZE     , OBI_NCGRIP         ,               },
-        {OBM_CHECK      , OBI_MENUCHECK      , MR_MONOCHROME },
-        {OBM_CHECKBOXES , OBI_CHECK          ,               },
-        {OBM_COMBO      , OBI_DNARROW        ,               },
-        {OBM_DNARROW    , OBI_DNARROW        ,               },
-        {OBM_DNARROWD   , OBI_DNARROW_D      ,               },
-        {OBM_DNARROWI   , OBI_DNARROW_I      ,               },
-        {OBM_LFARROW    , OBI_LFARROW        ,               },
-        {OBM_LFARROWD   , OBI_LFARROW_D      ,               },
-        {OBM_LFARROWI   , OBI_LFARROW_I      ,               },
+        {
+            OBM_BTNCORNERS,
+            OBI_RADIOMASK,
+        },
+        {
+            OBM_BTSIZE,
+            OBI_NCGRIP,
+        },
+        { OBM_CHECK, OBI_MENUCHECK, MR_MONOCHROME },
+        {
+            OBM_CHECKBOXES,
+            OBI_CHECK,
+        },
+        {
+            OBM_COMBO,
+            OBI_DNARROW,
+        },
+        {
+            OBM_DNARROW,
+            OBI_DNARROW,
+        },
+        {
+            OBM_DNARROWD,
+            OBI_DNARROW_D,
+        },
+        {
+            OBM_DNARROWI,
+            OBI_DNARROW_I,
+        },
+        {
+            OBM_LFARROW,
+            OBI_LFARROW,
+        },
+        {
+            OBM_LFARROWD,
+            OBI_LFARROW_D,
+        },
+        {
+            OBM_LFARROWI,
+            OBI_LFARROW_I,
+        },
 
         /*
          * Use MONO bitmaps in future once flat/mono controls are worked out.
          */
-        {OBM_OLD_DNARROW, OBI_DNARROW        , MR_FAILFOR40  },
-        {OBM_OLD_LFARROW, OBI_LFARROW        , MR_FAILFOR40  },
-        {OBM_OLD_REDUCE , OBI_REDUCE_MBAR    , MR_FAILFOR40  },
-        {OBM_OLD_RESTORE, OBI_RESTORE_MBAR   , MR_FAILFOR40  },
-        {OBM_OLD_RGARROW, OBI_RGARROW        , MR_FAILFOR40  },
-        {OBM_OLD_UPARROW, OBI_UPARROW        , MR_FAILFOR40  },
-        {OBM_OLD_ZOOM   , OBI_ZOOM           , MR_FAILFOR40  },
+        { OBM_OLD_DNARROW, OBI_DNARROW, MR_FAILFOR40 },
+        { OBM_OLD_LFARROW, OBI_LFARROW, MR_FAILFOR40 },
+        { OBM_OLD_REDUCE, OBI_REDUCE_MBAR, MR_FAILFOR40 },
+        { OBM_OLD_RESTORE, OBI_RESTORE_MBAR, MR_FAILFOR40 },
+        { OBM_OLD_RGARROW, OBI_RGARROW, MR_FAILFOR40 },
+        { OBM_OLD_UPARROW, OBI_UPARROW, MR_FAILFOR40 },
+        { OBM_OLD_ZOOM, OBI_ZOOM, MR_FAILFOR40 },
 
-        {OBM_MNARROW    , OBI_MENUARROW      , MR_MONOCHROME },
-        {OBM_REDUCE     , OBI_REDUCE_MBAR    ,               },
-        {OBM_REDUCED    , OBI_REDUCE_MBAR_D  ,               },
-        {OBM_RESTORE    , OBI_RESTORE_MBAR   ,               },
-        {OBM_RESTORED   , OBI_RESTORE_MBAR_D ,               },
-        {OBM_RGARROW    , OBI_RGARROW        ,               },
-        {OBM_RGARROWD   , OBI_RGARROW_D      ,               },
-        {OBM_RGARROWI   , OBI_RGARROW_I      ,               },
-        {OBM_SIZE       , OBI_NCGRIP         ,               },
-        {OBM_UPARROW    , OBI_UPARROW        ,               },
-        {OBM_UPARROWD   , OBI_UPARROW_D      ,               },
-        {OBM_UPARROWI   , OBI_UPARROW_I      ,               },
-        {OBM_ZOOM       , OBI_ZOOM           ,               },
-        {OBM_ZOOMD      , OBI_ZOOM_D         ,               }
+        { OBM_MNARROW, OBI_MENUARROW, MR_MONOCHROME },
+        {
+            OBM_REDUCE,
+            OBI_REDUCE_MBAR,
+        },
+        {
+            OBM_REDUCED,
+            OBI_REDUCE_MBAR_D,
+        },
+        {
+            OBM_RESTORE,
+            OBI_RESTORE_MBAR,
+        },
+        {
+            OBM_RESTORED,
+            OBI_RESTORE_MBAR_D,
+        },
+        {
+            OBM_RGARROW,
+            OBI_RGARROW,
+        },
+        {
+            OBM_RGARROWD,
+            OBI_RGARROW_D,
+        },
+        {
+            OBM_RGARROWI,
+            OBI_RGARROW_I,
+        },
+        {
+            OBM_SIZE,
+            OBI_NCGRIP,
+        },
+        {
+            OBM_UPARROW,
+            OBI_UPARROW,
+        },
+        {
+            OBM_UPARROWD,
+            OBI_UPARROW_D,
+        },
+        {
+            OBM_UPARROWI,
+            OBI_UPARROW_I,
+        },
+        {
+            OBM_ZOOM,
+            OBI_ZOOM,
+        },
+        {
+            OBM_ZOOMD,
+            OBI_ZOOM_D,
+        }
     };
 
 
     /*
      * If hmod is valid, load the client-side bits.
      */
-    if (hmod == NULL) {
+    if (hmod == NULL)
+    {
 
         HBITMAP hOldBmp;
-        WORD    bm;
-        WORD    wID;
-        BOOL    fCombo;
-        BOOL    fCheckBoxes;
-        int     i;
-        RECT    rc;
-        BOOL    fSysMenu = FALSE;
-        BOOL    fMenu = FALSE;
-        BOOL    fMono = FALSE;
+        WORD bm;
+        WORD wID;
+        BOOL fCombo;
+        BOOL fCheckBoxes;
+        int i;
+        RECT rc;
+        BOOL fSysMenu = FALSE;
+        BOOL fMenu = FALSE;
+        BOOL fMono = FALSE;
 
         hmod = hmodUser;
 
@@ -2050,7 +1920,8 @@ HBITMAP LoadBmp(
          */
         wID = PTR_TO_ID(lpName);
 
-        switch(wID) {
+        switch (wID)
+        {
         case OBM_OLD_CLOSE:
             if (GETAPPVER() >= VER40)
                 goto FailOldLoad;
@@ -2067,68 +1938,70 @@ HBITMAP LoadBmp(
              */
             cxDesired = (SYSMET(CXMENUSIZE) + SYSMET(CXEDGE)) * 2;
             cyDesired = SYSMET(CYMENUSIZE) + (2 * SYSMET(CYEDGE));
-            fSysMenu  = TRUE;
+            fSysMenu = TRUE;
             break;
 
-        case OBM_TRUETYPE: {
+        case OBM_TRUETYPE:
+        {
 
-                PVOID  p;
-                HANDLE h;
-                int    nOffset;
+            PVOID p;
+            HANDLE h;
+            int nOffset;
 
-                /*
+            /*
                  * Offset into resource.
                  */
-                if (gpsi->dmLogPixels == 120) {
-                    nOffset = OFFSET_120_DPI;
-                } else {
-                    nOffset = OFFSET_96_DPI;
-                }
-
-                lpName = (LPWSTR)(MAX_RESOURCE_INDEX -
-                        ((ULONG_PTR)lpName) + nOffset);
-
-                if (h = FINDRESOURCEW(hmod, (LPWSTR)lpName, RT_BITMAP)) {
-
-                    if (h = LOADRESOURCE(hmod, h)) {
-
-                        if (p = LOCKRESOURCE(h, hmod)) {
-
-
-                            hbmp = (HBITMAP)ObjectFromDIBResource(hmod,
-                                                                  lpName,
-                                                                  RT_BITMAP,
-                                                                  cxDesired,
-                                                                  cyDesired,
-                                                                  flags);
-
-                            UNLOCKRESOURCE(h, hmod);
-                        }
-
-                        FREERESOURCE(h, hmod);
-                    }
-                }
-
-                goto LoadBmpDone;
+            if (gpsi->dmLogPixels == 120)
+            {
+                nOffset = OFFSET_120_DPI;
             }
-            break;
+            else
+            {
+                nOffset = OFFSET_96_DPI;
+            }
+
+            lpName = (LPWSTR)(MAX_RESOURCE_INDEX - ((ULONG_PTR)lpName) + nOffset);
+
+            if (h = FINDRESOURCEW(hmod, (LPWSTR)lpName, RT_BITMAP))
+            {
+
+                if (h = LOADRESOURCE(hmod, h))
+                {
+
+                    if (p = LOCKRESOURCE(h, hmod))
+                    {
+
+
+                        hbmp = (HBITMAP)ObjectFromDIBResource(hmod, lpName, RT_BITMAP, cxDesired, cyDesired, flags);
+
+                        UNLOCKRESOURCE(h, hmod);
+                    }
+
+                    FREERESOURCE(h, hmod);
+                }
+            }
+
+            goto LoadBmpDone;
+        }
+        break;
 
         default:
-            fCombo      = (wID == OBM_COMBO);
+            fCombo = (wID == OBM_COMBO);
             fCheckBoxes = (wID == OBM_CHECKBOXES);
 
             /*
              * hard loop to check for mapping.
              */
-            for (i=0; (i < MAX_BMPMAP) && (MapOemBmp[i].idDisp != wID); i++);
+            for (i = 0; (i < MAX_BMPMAP) && (MapOemBmp[i].idDisp != wID); i++)
+                ;
 
             if (i == MAX_BMPMAP)
                 goto LoadForReal;
 
-            if ((MapOemBmp[i].bFlags & MR_FAILFOR40) &&
-                    (GETAPPVER() >= VER40)) {
+            if ((MapOemBmp[i].bFlags & MR_FAILFOR40) && (GETAPPVER() >= VER40))
+            {
 
-FailOldLoad:
+            FailOldLoad:
                 RIPMSG0(RIP_WARNING, "LoadBitmap: old IDs not allowed for 4.0 apps");
                 return NULL;
             }
@@ -2147,10 +2020,13 @@ FailOldLoad:
             if (fMenu)
                 cyDesired += (2 * SYSMET(CYEDGE));
 
-            if (fCheckBoxes) {
+            if (fCheckBoxes)
+            {
                 cxDesired *= NUM_BUTTON_STATES;
                 cyDesired *= NUM_BUTTON_TYPES;
-            } else if (fCombo) {
+            }
+            else if (fCombo)
+            {
                 cxDesired -= (2 * SYSMET(CXEDGE));
                 cyDesired -= (2 * SYSMET(CYEDGE));
             }
@@ -2160,7 +2036,8 @@ FailOldLoad:
         /*
          * Creates DIB section or color compatible.
          */
-        if (fMono) {
+        if (fMono)
+        {
 
             /*
              * Create mono-bitmaps as DIBs on NT.  On Win95 this is
@@ -2174,8 +2051,9 @@ FailOldLoad:
              * foreground/background matching can be performed normally.
              */
             hbmp = CreateScreenBitmap(cxDesired, cyDesired, 1, 1, NULL, &f1Bpp);
-
-        } else {
+        }
+        else
+        {
 
             hbmp = CreateScreenBitmap(cxDesired, cyDesired, 0, 0, NULL, &f1Bpp);
         }
@@ -2185,76 +2063,73 @@ FailOldLoad:
 
         RtlEnterCriticalSection(&gcsHdc);
         hOldBmp = SelectBitmap(ghdcBits2, hbmp);
-        UserAssert(GetBkColor(ghdcBits2) == RGB(255,255,255));
+        UserAssert(GetBkColor(ghdcBits2) == RGB(255, 255, 255));
         UserAssert(GetTextColor(ghdcBits2) == RGB(0, 0, 0));
 
-        rc.top    = 0;
-        rc.left   = 0;
+        rc.top = 0;
+        rc.left = 0;
         rc.bottom = cyDesired;
-        rc.right  = cxDesired;
+        rc.right = cxDesired;
 
-        if (fMono) {
+        if (fMono)
+        {
             PatBlt(ghdcBits2, 0, 0, cxDesired, cyDesired, WHITENESS);
-        } else {
-            FillRect(ghdcBits2,
-                     &rc,
-                     ((fMenu | fSysMenu) ? SYSHBR(MENU) : SYSHBR(WINDOW)));
+        }
+        else
+        {
+            FillRect(ghdcBits2, &rc, ((fMenu | fSysMenu) ? SYSHBR(MENU) : SYSHBR(WINDOW)));
         }
 
-        if (fSysMenu) {
+        if (fSysMenu)
+        {
             int x = SYSMET(CXEDGE);
             int i;
 
             cxDesired /= 2;
 
-            for (i=0; i < 2; i++) {
+            for (i = 0; i < 2; i++)
+            {
 
-                DrawIconEx(ghdcBits2,
-                           x,
-                           SYSMET(CYEDGE),
-                           KHICON_TO_HICON(gpsi->hIconSmWindows),
-                           cxDesired - 2 * SYSMET(CXEDGE),
-                           SYSMET(CYMENUSIZE) - SYSMET(CYEDGE),
-                           0,
-                           NULL,
-                           DI_NORMAL);
+                DrawIconEx(ghdcBits2, x, SYSMET(CYEDGE), KHICON_TO_HICON(gpsi->hIconSmWindows),
+                           cxDesired - 2 * SYSMET(CXEDGE), SYSMET(CYMENUSIZE) - SYSMET(CYEDGE), 0, NULL, DI_NORMAL);
 
                 x += cxDesired;
             }
-
-        } else if (fCombo) {
+        }
+        else if (fCombo)
+        {
 
             /*
              * Revisit when we start using TTF -- that'll take care of
              * this hack.
              */
-            rc.top     = -SYSMET(CYEDGE);
-            rc.bottom +=  SYSMET(CYEDGE);
-            rc.left    = -SYSMET(CXEDGE);
-            rc.right  +=  SYSMET(CXEDGE);
+            rc.top = -SYSMET(CYEDGE);
+            rc.bottom += SYSMET(CYEDGE);
+            rc.left = -SYSMET(CXEDGE);
+            rc.right += SYSMET(CXEDGE);
 
-            DrawFrameControl(ghdcBits2,
-                             &rc,
-                             DFC_SCROLL,
-                             DFCS_SCROLLDOWN);
+            DrawFrameControl(ghdcBits2, &rc, DFC_SCROLL, DFCS_SCROLLDOWN);
+        }
+        else if (fCheckBoxes)
+        {
 
-        } else if (fCheckBoxes) {
-
-            int   wType;
-            int   wState;
-            int   x;
+            int wType;
+            int wState;
+            int x;
             DWORD clrTextSave;
             DWORD clrBkSave;
-            int   y = 0;
+            int y = 0;
 
-            for (wType=0; wType < NUM_BUTTON_TYPES; wType++) {
+            for (wType = 0; wType < NUM_BUTTON_TYPES; wType++)
+            {
 
                 x = 0;
 
                 cxDesired = gpsi->oembmi[bm].cx;
                 cyDesired = gpsi->oembmi[bm].cy;
 
-                if (wType == 1) {
+                if (wType == 1)
+                {
 
                     /*
                      * BOGUS UGLINESS -- will be fixed once the Graphics dudes
@@ -2262,37 +2137,28 @@ FailOldLoad:
                      * REAL
                      */
                     clrTextSave = SetTextColor(ghdcBits2, RESCLR_BLACK);
-                    clrBkSave   = SetBkColor  (ghdcBits2, RESCLR_WHITE);
+                    clrBkSave = SetBkColor(ghdcBits2, RESCLR_WHITE);
 
-                    for (wState = 0; wState < NUM_BUTTON_STATES; wState++) {
+                    for (wState = 0; wState < NUM_BUTTON_STATES; wState++)
+                    {
 
-                        NtUserBitBltSysBmp(ghdcBits2,
-                                           x,
-                                           y,
-                                           cxDesired,
-                                           cyDesired,
-                                           gpsi->oembmi[OBI_RADIOMASK].x,
-                                           gpsi->oembmi[OBI_RADIOMASK].y,
-                                           SRCAND);
+                        NtUserBitBltSysBmp(ghdcBits2, x, y, cxDesired, cyDesired, gpsi->oembmi[OBI_RADIOMASK].x,
+                                           gpsi->oembmi[OBI_RADIOMASK].y, SRCAND);
 
-                        NtUserBitBltSysBmp(ghdcBits2,
-                                           x,
-                                           y,
-                                           cxDesired,
-                                           cyDesired,
-                                           gpsi->oembmi[bm].x,
-                                           gpsi->oembmi[bm].y,
-                                           SRCINVERT);
+                        NtUserBitBltSysBmp(ghdcBits2, x, y, cxDesired, cyDesired, gpsi->oembmi[bm].x,
+                                           gpsi->oembmi[bm].y, SRCINVERT);
                         x += cxDesired;
                         bm++;
                     }
 
                     SetTextColor(ghdcBits2, clrTextSave);
                     SetBkColor(ghdcBits2, clrBkSave);
+                }
+                else
+                {
 
-                } else {
-
-                    for (wState=0; wState < NUM_BUTTON_STATES; wState++) {
+                    for (wState = 0; wState < NUM_BUTTON_STATES; wState++)
+                    {
 
                         BitBltSysBmp(ghdcBits2, x, y, bm);
                         x += cxDesired;
@@ -2307,8 +2173,9 @@ FailOldLoad:
 
                 y += cyDesired;
             }
-
-        } else {
+        }
+        else
+        {
 
             BitBltSysBmp(ghdcBits2, 0, fMenu ? SYSMET(CYEDGE) : 0, bm);
         }
@@ -2324,17 +2191,13 @@ FailOldLoad:
             hbmp = Convert1BppToMonoBitmap(ghdcBits2, hbmp);
 
         RtlLeaveCriticalSection(&gcsHdc);
+    }
+    else
+    {
 
-    } else {
+    LoadForReal:
 
-LoadForReal:
-
-        hbmp = (HBITMAP)ObjectFromDIBResource(hmod,
-                                              lpName,
-                                              RT_BITMAP,
-                                              cxDesired,
-                                              cyDesired,
-                                              flags);
+        hbmp = (HBITMAP)ObjectFromDIBResource(hmod, lpName, RT_BITMAP, cxDesired, cyDesired, flags);
     }
 
 LoadBmpDone:
@@ -2353,11 +2216,9 @@ LoadBmpDone:
 
 
 FUNCLOG2(LOG_GENERAL, HBITMAP, WINAPI, LoadBitmapA, HINSTANCE, hmod, LPCSTR, lpName)
-HBITMAP WINAPI LoadBitmapA(
-    HINSTANCE hmod,
-    LPCSTR    lpName)
+HBITMAP WINAPI LoadBitmapA(HINSTANCE hmod, LPCSTR lpName)
 {
-    LPWSTR  lpUniName;
+    LPWSTR lpUniName;
     HBITMAP hRet;
 
     if (ID(lpName))
@@ -2375,9 +2236,7 @@ HBITMAP WINAPI LoadBitmapA(
 
 
 FUNCLOG2(LOG_GENERAL, HBITMAP, WINAPI, LoadBitmapW, HINSTANCE, hmod, LPCWSTR, lpName)
-HBITMAP WINAPI LoadBitmapW(
-    HINSTANCE hmod,
-    LPCWSTR   lpName)
+HBITMAP WINAPI LoadBitmapW(HINSTANCE hmod, LPCWSTR lpName)
 {
     return LoadBmp(hmod, lpName, 0, 0, 0);
 }
@@ -2394,12 +2253,10 @@ HBITMAP WINAPI LoadBitmapW(
 
 
 FUNCLOG2(LOG_GENERAL, HCURSOR, WINAPI, LoadCursorA, HINSTANCE, hmod, LPCSTR, lpName)
-HCURSOR WINAPI LoadCursorA(
-    HINSTANCE hmod,
-    LPCSTR    lpName)
+HCURSOR WINAPI LoadCursorA(HINSTANCE hmod, LPCSTR lpName)
 {
     HCURSOR hRet;
-    LPWSTR  lpUniName;
+    LPWSTR lpUniName;
 
     if (ID(lpName))
         return LoadCursorW(hmod, (LPWSTR)lpName);
@@ -2416,18 +2273,10 @@ HCURSOR WINAPI LoadCursorA(
 
 
 FUNCLOG2(LOG_GENERAL, HCURSOR, WINAPI, LoadCursorW, HINSTANCE, hmod, LPCWSTR, lpName)
-HCURSOR WINAPI LoadCursorW(
-    HINSTANCE hmod,
-    LPCWSTR   lpName)
+HCURSOR WINAPI LoadCursorW(HINSTANCE hmod, LPCWSTR lpName)
 {
 
-    return LoadIcoCur(hmod,
-                      lpName,
-                      RT_CURSOR,
-                      0,
-                      0,
-                      LR_DEFAULTSIZE | LR_SHARED);
-
+    return LoadIcoCur(hmod, lpName, RT_CURSOR, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
 }
 
 /***************************************************************************\
@@ -2442,11 +2291,9 @@ HCURSOR WINAPI LoadCursorW(
 
 
 FUNCLOG2(LOG_GENERAL, HICON, WINAPI, LoadIconA, HINSTANCE, hmod, LPCSTR, lpName)
-HICON WINAPI LoadIconA(
-    HINSTANCE hmod,
-    LPCSTR    lpName)
+HICON WINAPI LoadIconA(HINSTANCE hmod, LPCSTR lpName)
 {
-    HICON  hRet;
+    HICON hRet;
     LPWSTR lpUniName;
 
     if (ID(lpName))
@@ -2464,16 +2311,9 @@ HICON WINAPI LoadIconA(
 
 
 FUNCLOG2(LOG_GENERAL, HICON, WINAPI, LoadIconW, HINSTANCE, hmod, LPCWSTR, lpName)
-HICON WINAPI LoadIconW(
-    HINSTANCE hmod,
-    LPCWSTR   lpName)
+HICON WINAPI LoadIconW(HINSTANCE hmod, LPCWSTR lpName)
 {
-    return LoadIcoCur(hmod,
-                      lpName,
-                      RT_ICON,
-                      0,
-                      0,
-                      LR_DEFAULTSIZE | LR_SHARED);
+    return LoadIcoCur(hmod, lpName, RT_ICON, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
 }
 
 /***************************************************************************\
@@ -2486,25 +2326,15 @@ HICON WINAPI LoadIconW(
 \***************************************************************************/
 
 
-FUNCLOG6(LOG_GENERAL, HANDLE, WINAPI, LoadImageA, HINSTANCE, hmod, LPCSTR, lpName, UINT, type, int, cxDesired, int, cyDesired, UINT, flags)
-HANDLE WINAPI LoadImageA(
-    HINSTANCE hmod,
-    LPCSTR    lpName,
-    UINT      type,
-    int       cxDesired,
-    int       cyDesired,
-    UINT      flags)
+FUNCLOG6(LOG_GENERAL, HANDLE, WINAPI, LoadImageA, HINSTANCE, hmod, LPCSTR, lpName, UINT, type, int, cxDesired, int,
+         cyDesired, UINT, flags)
+HANDLE WINAPI LoadImageA(HINSTANCE hmod, LPCSTR lpName, UINT type, int cxDesired, int cyDesired, UINT flags)
 {
     LPWSTR lpUniName;
     HANDLE hRet;
 
     if (ID(lpName))
-        return LoadImageW(hmod,
-                          (LPCWSTR)lpName,
-                          type,
-                          cxDesired,
-                          cyDesired,
-                          flags);
+        return LoadImageW(hmod, (LPCWSTR)lpName, type, cxDesired, cyDesired, flags);
 
     if (!MBToWCS(lpName, -1, &lpUniName, -1, TRUE))
         return NULL;
@@ -2517,14 +2347,9 @@ HANDLE WINAPI LoadImageA(
 }
 
 
-FUNCLOG6(LOG_GENERAL, HANDLE, WINAPI, LoadImageW, HINSTANCE, hmod, LPCWSTR, lpName, UINT, IMAGE_code, int, cxDesired, int, cyDesired, UINT, flags)
-HANDLE WINAPI LoadImageW(
-    HINSTANCE hmod,
-    LPCWSTR   lpName,
-    UINT      IMAGE_code,
-    int       cxDesired,
-    int       cyDesired,
-    UINT      flags)
+FUNCLOG6(LOG_GENERAL, HANDLE, WINAPI, LoadImageW, HINSTANCE, hmod, LPCWSTR, lpName, UINT, IMAGE_code, int, cxDesired,
+         int, cyDesired, UINT, flags)
+HANDLE WINAPI LoadImageW(HINSTANCE hmod, LPCWSTR lpName, UINT IMAGE_code, int cxDesired, int cyDesired, UINT flags)
 {
     /*
      * If we specified LR_LOADFROMFILE, then we can tweak the
@@ -2533,7 +2358,8 @@ HANDLE WINAPI LoadImageW(
     if (flags & LR_LOADFROMFILE)
         flags &= ~LR_SHARED;
 
-    switch (IMAGE_code) {
+    switch (IMAGE_code)
+    {
     case IMAGE_BITMAP:
         return (HANDLE)LoadBmp(hmod, lpName, cxDesired, cyDesired, flags);
 
@@ -2552,16 +2378,13 @@ HANDLE WINAPI LoadImageW(
          * Windows95 behavior.
          */
 
-        if (!hmod && GETEXPWINVER(NULL) < VER40) {
+        if (!hmod && GETEXPWINVER(NULL) < VER40)
+        {
             flags |= LR_SHARED;
         }
 
-        return (HANDLE)LoadIcoCur(hmod,
-                                  lpName,
-                                  ((IMAGE_code == IMAGE_ICON) ? RT_ICON : RT_CURSOR),
-                                  cxDesired,
-                                  cyDesired,
-                                  flags);
+        return (HANDLE)LoadIcoCur(hmod, lpName, ((IMAGE_code == IMAGE_ICON) ? RT_ICON : RT_CURSOR), cxDesired,
+                                  cyDesired, flags);
 
     default:
         RIPMSG0(RIP_WARNING, "LoadImage: invalid IMAGE_code");
@@ -2577,32 +2400,23 @@ HANDLE WINAPI LoadImageW(
 *
 \***************************************************************************/
 
-UINT GetIconIdEx(
-    HINSTANCE hmod,
-    HANDLE    hrsd,
-    LPCWSTR   lpszType,
-    DWORD     cxDesired,
-    DWORD     cyDesired,
-    UINT      LR_flags)
+UINT GetIconIdEx(HINSTANCE hmod, HANDLE hrsd, LPCWSTR lpszType, DWORD cxDesired, DWORD cyDesired, UINT LR_flags)
 {
-    int         idIcon = 0;
+    int idIcon = 0;
     LPNEWHEADER lpnh;
 
-    if (lpnh = (LPNEWHEADER)LOCKRESOURCE(hrsd, hmod)) {
+    if (lpnh = (LPNEWHEADER)LOCKRESOURCE(hrsd, hmod))
+    {
 
         /*
          * Do a sanity check on this data structure.  Otherwise we'll GP FAULT
          * when extracting an icon from a corrupted area.  Fix for B#9290.
          * SANKAR, 08/13/91
          */
-        if ((lpnh->Reserved == 0) &&
-            ((lpnh->ResType == IMAGE_ICON) || (lpnh->ResType == IMAGE_CURSOR))) {
+        if ((lpnh->Reserved == 0) && ((lpnh->ResType == IMAGE_ICON) || (lpnh->ResType == IMAGE_CURSOR)))
+        {
 
-            idIcon = LookupIconIdFromDirectoryEx((PBYTE)lpnh,
-                                                 (lpszType == RT_ICON),
-                                                 cxDesired,
-                                                 cyDesired,
-                                                 LR_flags);
+            idIcon = LookupIconIdFromDirectoryEx((PBYTE)lpnh, (lpszType == RT_ICON), cxDesired, cyDesired, LR_flags);
         }
 
         UNLOCKRESOURCE(hrsd, hmod);
@@ -2619,20 +2433,15 @@ UINT GetIconIdEx(
 *
 \***************************************************************************/
 
-HANDLE LoadDIB(
-    HINSTANCE hmod,
-    LPCWSTR   lpName,
-    LPWSTR    type,
-    DWORD     cxDesired,
-    DWORD     cyDesired,
-    UINT      LR_flags)
+HANDLE LoadDIB(HINSTANCE hmod, LPCWSTR lpName, LPWSTR type, DWORD cxDesired, DWORD cyDesired, UINT LR_flags)
 {
-    HANDLE  hDir;
-    UINT    idIcon;
-    LPWSTR  lpszGroupType;
-    HANDLE  hRes = NULL;
+    HANDLE hDir;
+    UINT idIcon;
+    LPWSTR lpszGroupType;
+    HANDLE hRes = NULL;
 
-    switch (PTR_TO_ID(type)) {
+    switch (PTR_TO_ID(type))
+    {
 
     case PTR_TO_ID(RT_ICON):
     case PTR_TO_ID(RT_CURSOR):
@@ -2648,9 +2457,11 @@ HANDLE LoadDIB(
          * Note that obsolete mapping of lpName in LoadIcoCur prevents
          * win4.0 apps from getting here.
          */
-        if (hmod == hmodUser) {
+        if (hmod == hmodUser)
+        {
 
-            switch ((ULONG_PTR)lpName) {
+            switch ((ULONG_PTR)lpName)
+            {
             case OCR_SIZE:
                 lpName = (LPCWSTR)OCR_SIZEALL_DEFAULT;
                 break;
@@ -2665,22 +2476,20 @@ HANDLE LoadDIB(
          * individual image resources we must choose from.
          * Locate the directory
          */
-        if (hDir = SplFindResource(hmod, lpName, (LPCWSTR)lpszGroupType)) {
+        if (hDir = SplFindResource(hmod, lpName, (LPCWSTR)lpszGroupType))
+        {
 
             /*
              * Load the directory.
              */
-            if (hDir = LOADRESOURCE(hmod, hDir)) {
+            if (hDir = LOADRESOURCE(hmod, hDir))
+            {
 
                 /*
                  * Get the name of the best individual image.
                  */
-                if (idIcon = GetIconIdEx(hmod,
-                                         hDir,
-                                         type,
-                                         cxDesired,
-                                         cyDesired,
-                                         LR_flags)) {
+                if (idIcon = GetIconIdEx(hmod, hDir, type, cxDesired, cyDesired, LR_flags))
+                {
 
                     /*
                      * NOTE: Don't free the directory resource!!! - ChipA.
@@ -2701,13 +2510,14 @@ HANDLE LoadDIB(
                  */
                 SplFreeResource(hDir, hmod, LR_flags);
             }
-        } else {
+        }
+        else
+        {
             /*
              * Failed to load a regular icon\cursor.
              * Try to load an animated icon/cursor with the same name
              */
-            hRes = SplFindResource(hmod, lpName,
-                    PTR_TO_ID(type) == PTR_TO_ID(RT_CURSOR) ? RT_ANICURSOR : RT_ANIICON);
+            hRes = SplFindResource(hmod, lpName, PTR_TO_ID(type) == PTR_TO_ID(RT_CURSOR) ? RT_ANICURSOR : RT_ANIICON);
         }
         break;
 
@@ -2732,33 +2542,27 @@ HANDLE LoadDIB(
 *
 \***************************************************************************/
 
-HICON LoadIcoCur(
-    HINSTANCE hmod,
-    LPCWSTR   pszResName,
-    LPWSTR    type,
-    DWORD     cxDesired,
-    DWORD     cyDesired,
-    UINT      LR_flags)
+HICON LoadIcoCur(HINSTANCE hmod, LPCWSTR pszResName, LPWSTR type, DWORD cxDesired, DWORD cyDesired, UINT LR_flags)
 {
-    HICON     hico;
-    LPWSTR    pszModName;
-    WCHAR     achModName[MAX_PATH];
+    HICON hico;
+    LPWSTR pszModName;
+    WCHAR achModName[MAX_PATH];
 
     ConnectIfNecessary(0);
 
     /*
      * Setup module name and handles for lookup.
      */
-    if (hmod == NULL)  {
+    if (hmod == NULL)
+    {
 
         hmod = hmodUser;
         pszModName = szUSER32;
+    }
+    else
+    {
 
-    } else {
-
-        WowGetModuleFileName(hmod,
-                             achModName,
-                             sizeof(achModName) / sizeof(WCHAR));
+        WowGetModuleFileName(hmod, achModName, sizeof(achModName) / sizeof(WCHAR));
 
         pszModName = achModName;
     }
@@ -2769,44 +2573,42 @@ HICON LoadIcoCur(
     /*
      * Setup defaults.
      */
-    if ((hmod == hmodUser) && !IS_PTR(pszResName)) {
+    if ((hmod == hmodUser) && !IS_PTR(pszResName))
+    {
 
-        int      imapMax;
+        int imapMax;
         LPMAPRES lpMapRes;
 
         /*
          * Map some old OEM IDs for people.
          */
-        if (type == RT_ICON) {
+        if (type == RT_ICON)
+        {
 
-            static MAPRES MapOemOic[] = {
-                {OCR_ICOCUR, OIC_WINLOGO, MR_FAILFOR40}
-            };
+            static MAPRES MapOemOic[] = { { OCR_ICOCUR, OIC_WINLOGO, MR_FAILFOR40 } };
 
             lpMapRes = MapOemOic;
-            imapMax  = 1;
+            imapMax = 1;
+        }
+        else
+        {
 
-        } else {
-
-            static MAPRES MapOemOcr[] = {
-                {OCR_ICON, OCR_ICON, MR_FAILFOR40},
-                {OCR_SIZE, OCR_SIZE, MR_FAILFOR40}
-            };
+            static MAPRES MapOemOcr[] = { { OCR_ICON, OCR_ICON, MR_FAILFOR40 }, { OCR_SIZE, OCR_SIZE, MR_FAILFOR40 } };
 
             lpMapRes = MapOemOcr;
-            imapMax  = 2;
+            imapMax = 2;
         }
 
-        while (--imapMax >= 0) {
+        while (--imapMax >= 0)
+        {
 
-            if (lpMapRes->idDisp == PTR_TO_ID(pszResName)) {
+            if (lpMapRes->idDisp == PTR_TO_ID(pszResName))
+            {
 
-                if ((lpMapRes->bFlags & MR_FAILFOR40) &&
-                    GETAPPVER() >= VER40) {
+                if ((lpMapRes->bFlags & MR_FAILFOR40) && GETAPPVER() >= VER40)
+                {
 
-                    RIPMSG1(RIP_WARNING,
-                          "LoadIcoCur: Old ID 0x%x not allowed for 4.0 apps",
-                          PTR_TO_ID(pszResName));
+                    RIPMSG1(RIP_WARNING, "LoadIcoCur: Old ID 0x%x not allowed for 4.0 apps", PTR_TO_ID(pszResName));
 
                     return NULL;
                 }
@@ -2822,14 +2624,15 @@ HICON LoadIcoCur(
     /*
      * Determine size of requested object.
      */
-    cxDesired = GetIcoCurWidth(cxDesired , (type == RT_ICON), LR_flags, 0);
+    cxDesired = GetIcoCurWidth(cxDesired, (type == RT_ICON), LR_flags, 0);
     cyDesired = GetIcoCurHeight(cyDesired, (type == RT_ICON), LR_flags, 0);
 
     /*
      * See if this is a cached icon/cursor, and grab it if we have one
      * already.
      */
-    if (LR_flags & LR_SHARED) {
+    if (LR_flags & LR_SHARED)
+    {
 
         CURSORFIND cfSearch;
 
@@ -2844,18 +2647,20 @@ HICON LoadIcoCur(
          * no source-cursor to lookup.  Find something respectable.
          */
         cfSearch.hcur = (HCURSOR)NULL;
-        cfSearch.rt   = PtrToUlong(type);
+        cfSearch.rt = PtrToUlong(type);
 
-        if (hmod == hmodUser) {
+        if (hmod == hmodUser)
+        {
 
-            cfSearch.cx  = 0;
-            cfSearch.cy  = 0;
+            cfSearch.cx = 0;
+            cfSearch.cy = 0;
             cfSearch.bpp = 0;
+        }
+        else
+        {
 
-        } else {
-
-            cfSearch.cx  = cxDesired;
-            cfSearch.cy  = cyDesired;
+            cfSearch.cx = cxDesired;
+            cfSearch.cy = cyDesired;
 
 /*
  * On NT we have a more strict cache-lookup.  By passing in (zero), we
@@ -2885,15 +2690,11 @@ HICON LoadIcoCur(
      * A cheezier alternative is to just call CopyImage on what we
      * found.
      */
-    if (hmod == hmodUser) {
-        hico = FindExistingCursorIcon(NULL,
-                                      szUSER,
-                                      type,
-                                      pszResName,
-                                      0,
-                                      0,
-                                      0);
-        if (hico != NULL) {
+    if (hmod == hmodUser)
+    {
+        hico = FindExistingCursorIcon(NULL, szUSER, type, pszResName, 0, 0, 0);
+        if (hico != NULL)
+        {
             /*
              * Find out where the original came from and load it.
              * This may require some redesign to remember the
@@ -2905,12 +2706,7 @@ HICON LoadIcoCur(
     }
 #endif
 
-    hico = (HICON)ObjectFromDIBResource(hmod,
-                                        pszResName,
-                                        type,
-                                        cxDesired,
-                                        cyDesired,
-                                        LR_flags);
+    hico = (HICON)ObjectFromDIBResource(hmod, pszResName, type, cxDesired, cyDesired, LR_flags);
 
 IcoCurFound:
 
@@ -2922,30 +2718,25 @@ IcoCurFound:
 *
 *
 \***************************************************************************/
-HANDLE ObjectFromDIBResource(
-    HINSTANCE hmod,
-    LPCWSTR   lpName,
-    LPWSTR    type,
-    DWORD     cxDesired,
-    DWORD     cyDesired,
-    UINT      LR_flags)
+HANDLE ObjectFromDIBResource(HINSTANCE hmod, LPCWSTR lpName, LPWSTR type, DWORD cxDesired, DWORD cyDesired,
+                             UINT LR_flags)
 {
-    HANDLE  hObj = NULL;
+    HANDLE hObj = NULL;
 
-    if (LR_flags & LR_LOADFROMFILE) {
+    if (LR_flags & LR_LOADFROMFILE)
+    {
 
-        hObj = RtlLoadObjectFromDIBFile(lpName,
-                                        type,
-                                        cxDesired,
-                                        cyDesired,
-                                        LR_flags);
-    } else {
+        hObj = RtlLoadObjectFromDIBFile(lpName, type, cxDesired, cyDesired, LR_flags);
+    }
+    else
+    {
 
         HANDLE hdib;
 
         hdib = LoadDIB(hmod, lpName, type, cxDesired, cyDesired, LR_flags);
 
-        if (hdib != NULL) {
+        if (hdib != NULL)
+        {
 
             LPBITMAPINFOHEADER lpbih;
 
@@ -2956,19 +2747,16 @@ HANDLE ObjectFromDIBResource(
              * hot-spot.  Be careful in assuming you have a real
              * dib in this case.
              */
-            if(lpbih = (LPBITMAPINFOHEADER)LOCKRESOURCE(hdib, hmod)) {
+            if (lpbih = (LPBITMAPINFOHEADER)LOCKRESOURCE(hdib, hmod))
+            {
 
-                switch (PTR_TO_ID(type)) {
+                switch (PTR_TO_ID(type))
+                {
                 case PTR_TO_ID(RT_BITMAP):
                     /*
                      * Create a physical bitmap from the DIB.
                      */
-                    hObj = ConvertDIBBitmap(lpbih,
-                                            cxDesired,
-                                            cyDesired,
-                                            LR_flags,
-                                            NULL,
-                                            NULL);
+                    hObj = ConvertDIBBitmap(lpbih, cxDesired, cyDesired, LR_flags, NULL, NULL);
                     break;
 
                 case PTR_TO_ID(RT_ICON):
@@ -2978,19 +2766,16 @@ HANDLE ObjectFromDIBResource(
                     /*
                      * Animated icon\cursors resources use the RIFF format
                      */
-                    if (ISRIFFFORMAT(lpbih)) {
-                        hObj = LoadCursorIconFromResource ((PBYTE)lpbih, lpName, cxDesired, cyDesired, LR_flags);
-                    } else {
+                    if (ISRIFFFORMAT(lpbih))
+                    {
+                        hObj = LoadCursorIconFromResource((PBYTE)lpbih, lpName, cxDesired, cyDesired, LR_flags);
+                    }
+                    else
+                    {
                         /*
                          * Create the object from the DIB.
                          */
-                        hObj = ConvertDIBIcon(lpbih,
-                                              hmod,
-                                              lpName,
-                                              (type == RT_ICON),
-                                              cxDesired,
-                                              cyDesired,
-                                              LR_flags);
+                        hObj = ConvertDIBIcon(lpbih, hmod, lpName, (type == RT_ICON), cxDesired, cyDesired, LR_flags);
                     }
                     break;
                 }
@@ -3025,21 +2810,12 @@ HANDLE ObjectFromDIBResource(
 *
 \***************************************************************************/
 
-HBITMAP BitmapFromDIB(
-    int          cxNew,
-    int          cyNew,
-    WORD         bPlanesNew,
-    WORD         bBitsPixelNew,
-    UINT         LR_flags,
-    int          cxOld,
-    int          cyOld,
-    LPSTR        lpBits,
-    LPBITMAPINFO lpbi,
-    HPALETTE     hpal)
+HBITMAP BitmapFromDIB(int cxNew, int cyNew, WORD bPlanesNew, WORD bBitsPixelNew, UINT LR_flags, int cxOld, int cyOld,
+                      LPSTR lpBits, LPBITMAPINFO lpbi, HPALETTE hpal)
 {
     HBITMAP hbmpNew = NULL;
-    BOOL    fStretch;
-    BOOL    f1Bpp = FALSE;
+    BOOL fStretch;
+    BOOL f1Bpp = FALSE;
 
     RtlEnterCriticalSection(&gcsHdc);
 
@@ -3055,11 +2831,12 @@ HBITMAP BitmapFromDIB(
      * If LR_flags indicate DIB-Section, then return that as the
      * bitmap handle.
      */
-    if (LR_flags & (LR_CREATEDIBSECTION | LR_CREATEREALDIB)) {
+    if (LR_flags & (LR_CREATEDIBSECTION | LR_CREATEREALDIB))
+    {
 
-        int   cxTemp;
-        int   cyTemp;
-        BOOL  fOldFormat;
+        int cxTemp;
+        int cyTemp;
+        BOOL fOldFormat;
         LPVOID dwDummy;
         DWORD dwTemp;
 
@@ -3067,71 +2844,66 @@ HBITMAP BitmapFromDIB(
 
         fOldFormat = ((WORD)lpbi->bmiHeader.biSize == sizeof(BITMAPCOREHEADER));
 
-        if (fOldFormat) {
+        if (fOldFormat)
+        {
 
             cxTemp = lpbch->bcWidth;
             cyTemp = lpbch->bcHeight;
 
-            lpbch->bcWidth  = (WORD)cxNew;
+            lpbch->bcWidth = (WORD)cxNew;
             lpbch->bcHeight = (WORD)cyNew;
-
-        } else {
+        }
+        else
+        {
 
             cxTemp = lpbi->bmiHeader.biWidth;
             cyTemp = lpbi->bmiHeader.biHeight;
             dwTemp = lpbi->bmiHeader.biCompression;
 
-            lpbi->bmiHeader.biWidth  = cxNew;
+            lpbi->bmiHeader.biWidth = cxNew;
             lpbi->bmiHeader.biHeight = cyNew;
 
             if (dwTemp != BI_BITFIELDS)
                 lpbi->bmiHeader.biCompression = BI_RGB;
         }
 
-        if (LR_flags & LR_CREATEREALDIB) {
-            hbmpNew = CreateDIBitmap(ghdcBits2,
-                                     (LPBITMAPINFOHEADER)lpbi,
-                                     CBM_CREATEDIB,
-                                     NULL,
-                                     lpbi,
-                                     DIB_RGB_COLORS);
-        } else {
-            hbmpNew = CreateDIBSection(ghdcBits2,
-                                       lpbi,
-                                       DIB_RGB_COLORS,
-                                       &dwDummy,
-                                       0,
-                                       0);
+        if (LR_flags & LR_CREATEREALDIB)
+        {
+            hbmpNew = CreateDIBitmap(ghdcBits2, (LPBITMAPINFOHEADER)lpbi, CBM_CREATEDIB, NULL, lpbi, DIB_RGB_COLORS);
+        }
+        else
+        {
+            hbmpNew = CreateDIBSection(ghdcBits2, lpbi, DIB_RGB_COLORS, &dwDummy, 0, 0);
         }
 
-        if (fOldFormat) {
-            lpbch->bcWidth  = (WORD)cxTemp;
+        if (fOldFormat)
+        {
+            lpbch->bcWidth = (WORD)cxTemp;
             lpbch->bcHeight = (WORD)cyTemp;
-        } else {
-            lpbi->bmiHeader.biWidth       = cxTemp;
-            lpbi->bmiHeader.biHeight      = cyTemp;
+        }
+        else
+        {
+            lpbi->bmiHeader.biWidth = cxTemp;
+            lpbi->bmiHeader.biHeight = cyTemp;
             lpbi->bmiHeader.biCompression = dwTemp;
         }
 #undef lpbch
     }
 
-    if (hbmpNew == NULL) {
+    if (hbmpNew == NULL)
+    {
 
-        hbmpNew = CreateScreenBitmap(cxNew,
-                                     cyNew,
-                                     bPlanesNew,
-                                     bBitsPixelNew,
-                                     NULL,
-                                     &f1Bpp);
+        hbmpNew = CreateScreenBitmap(cxNew, cyNew, bPlanesNew, bBitsPixelNew, NULL, &f1Bpp);
     }
 
-    if (hbmpNew) {
+    if (hbmpNew)
+    {
 
-        int     nStretchMode;
-        DWORD   rgbBk;
-        DWORD   rgbText;
+        int nStretchMode;
+        DWORD rgbBk;
+        DWORD rgbText;
         HBITMAP hbmpT;
-        BOOL    fFail;
+        BOOL fFail;
 
         /*
          * We need to select in appropriate bitmap immediately!  That way,
@@ -3143,19 +2915,19 @@ HBITMAP BitmapFromDIB(
         /*
          * Setup for stretching
          */
-        if (fStretch) {
-            nStretchMode = SetBestStretchMode(ghdcBits2,
-                                              bPlanesNew,
-                                              bBitsPixelNew);
+        if (fStretch)
+        {
+            nStretchMode = SetBestStretchMode(ghdcBits2, bPlanesNew, bBitsPixelNew);
         }
 
-        rgbBk   = SetBkColor(ghdcBits2, RESCLR_WHITE);
+        rgbBk = SetBkColor(ghdcBits2, RESCLR_WHITE);
         rgbText = SetTextColor(ghdcBits2, RESCLR_BLACK);
 
         /*
          * Realize the palette.
          */
-        if (hpal) {
+        if (hpal)
+        {
 #if DBG
             UserAssert(TEST_PUSIF(PUSIF_PALETTEDISPLAY));
 #endif // DBG
@@ -3164,36 +2936,23 @@ HBITMAP BitmapFromDIB(
             RealizePalette(ghdcBits2);
         }
 
-        if (fStretch) {
+        if (fStretch)
+        {
 
-            fFail = SmartStretchDIBits(ghdcBits2,
-                               0,
-                               0,
-                               cxNew,
-                               cyNew,
-                               0,
-                               0,
-                               cxOld,
-                               cyOld,
-                               lpBits,
-                               lpbi,
-                               DIB_RGB_COLORS,
-                               SRCCOPY) <= 0;
-        } else {
+            fFail = SmartStretchDIBits(ghdcBits2, 0, 0, cxNew, cyNew, 0, 0, cxOld, cyOld, lpBits, lpbi, DIB_RGB_COLORS,
+                                       SRCCOPY) <= 0;
+        }
+        else
+        {
 
-            fFail = SetDIBits(ghdcBits2,
-                      hbmpNew,
-                      0,
-                      cyNew,
-                      lpBits,
-                      lpbi,
-                      DIB_RGB_COLORS) <= 0;
+            fFail = SetDIBits(ghdcBits2, hbmpNew, 0, cyNew, lpBits, lpbi, DIB_RGB_COLORS) <= 0;
         }
 
         /*
          * Unrealize the palette
          */
-        if (hpal) {
+        if (hpal)
+        {
             SelectPalette(ghdcBits2, hpal, TRUE);
             RealizePalette(ghdcBits2);
         }
@@ -3216,7 +2975,8 @@ HBITMAP BitmapFromDIB(
          * traps and will return failure from the GDI call.
          */
 
-        if (fFail) {
+        if (fFail)
+        {
             DeleteObject(hbmpNew);
             hbmpNew = NULL;
         }
@@ -3240,38 +3000,45 @@ HBITMAP BitmapFromDIB(
 * Aug-01-2000 DwayneN - Fixed high color support
 \***************************************************************************/
 
-DWORD HowManyColors(
-    IN  UPBITMAPINFOHEADER upbih,
-    IN  BOOL               fOldFormat,
-    OUT OPTIONAL LPBYTE    *ppColorTable)
+DWORD HowManyColors(IN UPBITMAPINFOHEADER upbih, IN BOOL fOldFormat, OUT OPTIONAL LPBYTE *ppColorTable)
 {
 #define upbch ((UPBITMAPCOREHEADER)upbih)
 
-    if (fOldFormat) {
-        if (ppColorTable != NULL) {
+    if (fOldFormat)
+    {
+        if (ppColorTable != NULL)
+        {
             *ppColorTable = (LPBYTE)(upbch + 1);
         }
         if (upbch->bcBitCount <= 8)
             return (1 << upbch->bcBitCount);
-    } else {
-        if (ppColorTable != NULL) {
+    }
+    else
+    {
+        if (ppColorTable != NULL)
+        {
             *ppColorTable = (LPBYTE)(upbih + 1);
         }
 
-        if (upbih->biClrUsed) {
+        if (upbih->biClrUsed)
+        {
             /*
              * If the bitmap header explicitly provides the number of colors
              * in the color table, use it.
              */
             return (DWORD)upbih->biClrUsed;
-        } else if (upbih->biBitCount <= 8) {
+        }
+        else if (upbih->biBitCount <= 8)
+        {
             /*
              * If the bitmap header describes a pallete-bassed bitmap
              * (8bpp or less) then the color table must be big enough
              * to hold all palette indecies.
              */
             return (1 << upbih->biBitCount);
-        } else {
+        }
+        else
+        {
             /*
              * Finally, if the bitmap header describes a highcolor+ bitmap
              * (anything over 8bpp, but typically 16bpp, 24bpp, or 32bpp)
@@ -3288,9 +3055,12 @@ DWORD HowManyColors(
              * 32bpp.  24bpp bitmaps are always "XBGR" and consume a 32-bit
              * entry in the form of an RGBQUAD.
              */
-            if (upbih->biCompression == BI_BITFIELDS) {
-                if ((upbih->biBitCount != 16) && (upbih->biBitCount != 32)) {
-                    RIPMSG1(RIP_WARNING, "HowManyColors: biCompression==BI_BITFIELDS on a %dbpp bitmap!", upbih->biBitCount);
+            if (upbih->biCompression == BI_BITFIELDS)
+            {
+                if ((upbih->biBitCount != 16) && (upbih->biBitCount != 32))
+                {
+                    RIPMSG1(RIP_WARNING, "HowManyColors: biCompression==BI_BITFIELDS on a %dbpp bitmap!",
+                            upbih->biBitCount);
                 }
 
                 return 3;
@@ -3315,14 +3085,12 @@ DWORD HowManyColors(
 *
 \***************************************************************************/
 
-VOID ChangeDibColors(
-    IN LPBITMAPINFOHEADER lpbih,
-    IN UINT               LR_flags)
+VOID ChangeDibColors(IN LPBITMAPINFOHEADER lpbih, IN UINT LR_flags)
 {
     LPDWORD lpColorTable;
-    DWORD  rgb;
-    UINT   iColor;
-    UINT   cColors;
+    DWORD rgb;
+    UINT iColor;
+    UINT cColors;
 
     cColors = HowManyColors(lpbih, FALSE, &(LPBYTE)lpColorTable);
 
@@ -3336,7 +3104,8 @@ VOID ChangeDibColors(
     /*
      * LR_MONOCHROME is the only option that handles PM dibs.
      */
-    if (LR_flags & LR_MONOCHROME) {
+    if (LR_flags & LR_MONOCHROME)
+    {
         /*
          * LR_MONOCHROME is the only option that handles PM dibs.
          *
@@ -3350,14 +3119,17 @@ VOID ChangeDibColors(
         lpbih->biCompression = 0;
         lpColorTable[0] = RESCLR_BLACK;
         lpColorTable[1] = RESCLR_WHITE;
-    } else if (LR_flags & LR_LOADTRANSPARENT) {
+    }
+    else if (LR_flags & LR_LOADTRANSPARENT)
+    {
 
         LPBYTE pb;
 
         /*
          * No color table!  Do nothing.
          */
-        if (cColors == 0) {
+        if (cColors == 0)
+        {
             RIPMSG0(RIP_WARNING, "ChangeDibColors: DIB doesn't have a color table");
             return;
         }
@@ -3376,7 +3148,8 @@ VOID ChangeDibColors(
              */
             iColor = (UINT)(pb[0] == 0 ? pb[2] : pb[1]);
 
-        switch (cColors) {
+        switch (cColors)
+        {
         case BPP01_MAXCOLORS:
             iColor &= 0x01;
             break;
@@ -3393,16 +3166,19 @@ VOID ChangeDibColors(
         rgb = (LR_flags & LR_LOADMAP3DCOLORS ? SYSRGB(3DFACE) : SYSRGB(WINDOW));
 
         lpColorTable[iColor] = RGBX(rgb);
-
-    } else  if (LR_flags & LR_LOADMAP3DCOLORS) {
+    }
+    else if (LR_flags & LR_LOADMAP3DCOLORS)
+    {
 
         /*
          * Fix up the color table, mapping shades of grey to the current
          * 3D colors.
          */
-        for (iColor = 0; iColor < cColors; iColor++) {
+        for (iColor = 0; iColor < cColors; iColor++)
+        {
 
-            switch (*lpColorTable & 0x00FFFFFF) {
+            switch (*lpColorTable & 0x00FFFFFF)
+            {
 
             case RGBX(RGB(223, 223, 223)):
                 rgb = SYSRGB(3DLIGHT);
@@ -3418,7 +3194,7 @@ VOID ChangeDibColors(
                 /*
                  * NOTE: byte-order is different in DIBs than in RGBs
                  */
-ChangeColor:
+            ChangeColor:
                 *lpColorTable = RGBX(rgb);
                 break;
             }
@@ -3456,33 +3232,29 @@ ChangeColor:
 * 5-Oct-1994 SanfordS   Recreated
 \***************************************************************************/
 
-HICON ConvertDIBIcon(
-    LPBITMAPINFOHEADER lpbih,
-    HINSTANCE          hmod,
-    LPCWSTR            lpName,
-    BOOL               fIcon,
-    DWORD              cxNew,
-    DWORD              cyNew,
-    UINT               LR_flags)
+HICON ConvertDIBIcon(LPBITMAPINFOHEADER lpbih, HINSTANCE hmod, LPCWSTR lpName, BOOL fIcon, DWORD cxNew, DWORD cyNew,
+                     UINT LR_flags)
 {
     LPBITMAPINFOHEADER lpbihNew = NULL;
-    LPSTR              lpBitsNextMask = NULL;
-    HICON              hicoNew = NULL;
-    BOOL               fOldFormat = FALSE;
-    CURSORDATA         cur;
-    WCHAR              achModName[MAX_PATH];
+    LPSTR lpBitsNextMask = NULL;
+    HICON hicoNew = NULL;
+    BOOL fOldFormat = FALSE;
+    CURSORDATA cur;
+    WCHAR achModName[MAX_PATH];
 
     /*
      * Because Icons/Cursors always get public bitmaps, we cannot use
      * LR_CREATEDIBSECTION on them.
      */
-    if (LR_flags & LR_CREATEDIBSECTION) {
+    if (LR_flags & LR_CREATEDIBSECTION)
+    {
         LR_flags = (LR_flags & ~LR_CREATEDIBSECTION) | LR_CREATEREALDIB;
     }
 
     RtlZeroMemory(&cur, sizeof(cur));
 
-    if (!fIcon) {
+    if (!fIcon)
+    {
         /*
          * Cursors have an extra two words preceeding the BITMAPINFOHEADER
          * indicating the hot-spot.  After doing the increments, the
@@ -3496,7 +3268,8 @@ HICON ConvertDIBIcon(
      * If the color bitmap is a single plane, 32bpp image, it might
      * contain an alpha channel, so we have to preserve it as a DIB.
      */
-    if (lpbih->biPlanes == 1 && lpbih->biBitCount == 32) {
+    if (lpbih->biPlanes == 1 && lpbih->biBitCount == 32)
+    {
         LR_flags |= LR_CREATEREALDIB;
     }
 
@@ -3506,32 +3279,31 @@ HICON ConvertDIBIcon(
      * pertains to them.
      * The AND mask is always monochrome.
      */
-    lpBitsNextMask = NULL;  // not passing lpBits in.
-    cur.hbmColor = ConvertDIBBitmap(lpbih,
-                                    cxNew,
-                                    cyNew,
-                                    LR_flags,
-                                    &lpbihNew,
-                                    &lpBitsNextMask);
+    lpBitsNextMask = NULL; // not passing lpBits in.
+    cur.hbmColor = ConvertDIBBitmap(lpbih, cxNew, cyNew, LR_flags, &lpbihNew, &lpBitsNextMask);
     if (cur.hbmColor == NULL)
         return NULL;
 
-    if (hmod == NULL) {
+    if (hmod == NULL)
+    {
         cur.lpModName = NULL;
-    } else {
+    }
+    else
+    {
         cur.CURSORF_flags = CURSORF_FROMRESOURCE;
-        if (hmod == hmodUser) {
-            cur.lpModName     = szUSER32;
-        } else  {
-            WowGetModuleFileName(hmod,
-                              achModName,
-                              sizeof(achModName) / sizeof(WCHAR));
+        if (hmod == hmodUser)
+        {
+            cur.lpModName = szUSER32;
+        }
+        else
+        {
+            WowGetModuleFileName(hmod, achModName, sizeof(achModName) / sizeof(WCHAR));
             cur.lpModName = achModName;
         }
     }
-    cur.rt     = (fIcon ? PTR_TO_ID(RT_ICON) : PTR_TO_ID(RT_CURSOR));
+    cur.rt = (fIcon ? PTR_TO_ID(RT_ICON) : PTR_TO_ID(RT_CURSOR));
     cur.lpName = (LPWSTR)lpName;
-    cur.bpp    = lpbihNew->biBitCount * lpbihNew->biPlanes;
+    cur.bpp = lpbihNew->biBitCount * lpbihNew->biPlanes;
 
     if (cxNew == 0)
         cxNew = lpbihNew->biWidth;
@@ -3539,15 +3311,14 @@ HICON ConvertDIBIcon(
     if (cyNew == 0)
         cyNew = lpbihNew->biHeight / 2;
 
-    if (!fIcon) {
+    if (!fIcon)
+    {
 
-        cur.xHotspot = MultDiv(cur.xHotspot,
-                               cxNew,
-                               lpbihNew->biWidth);
-        cur.yHotspot = MultDiv(cur.yHotspot,
-                               cyNew,
-                               lpbihNew->biHeight / 2);
-    } else {
+        cur.xHotspot = MultDiv(cur.xHotspot, cxNew, lpbihNew->biWidth);
+        cur.yHotspot = MultDiv(cur.yHotspot, cyNew, lpbihNew->biHeight / 2);
+    }
+    else
+    {
 
         /*
          * For an icon the hot spot is the center of the icon
@@ -3561,25 +3332,20 @@ HICON ConvertDIBIcon(
      */
     ChangeDibColors(lpbihNew, LR_MONOCHROME);
 
-    if (lpBitsNextMask != NULL) {
-        cur.hbmMask = BitmapFromDIB(cxNew,
-                                    cyNew * 2,
-                                    1,
-                                    1,
-                                    0,
-                                    lpbihNew->biWidth,
-                                    lpbihNew->biHeight,
-                                    lpBitsNextMask,
-                                    (LPBITMAPINFO)lpbihNew,
-                                    NULL);
+    if (lpBitsNextMask != NULL)
+    {
+        cur.hbmMask = BitmapFromDIB(cxNew, cyNew * 2, 1, 1, 0, lpbihNew->biWidth, lpbihNew->biHeight, lpBitsNextMask,
+                                    (LPBITMAPINFO)lpbihNew, NULL);
 
-        if (cur.hbmMask == NULL) {
+        if (cur.hbmMask == NULL)
+        {
             DeleteObject(KHBITMAP_TO_HBITMAP(cur.hbmColor));
             UserLocalFree(lpbihNew);
             return NULL;
         }
-
-    } else {
+    }
+    else
+    {
         cur.hbmMask = cur.hbmColor;
         cur.hbmColor = NULL;
     }
@@ -3612,14 +3378,13 @@ HICON ConvertDIBIcon(
 *
 \***************************************************************************/
 
-BOOL TrulyMonochrome(
-    LPVOID lpColorTable,
-    BOOL   fOldFormat)
+BOOL TrulyMonochrome(LPVOID lpColorTable, BOOL fOldFormat)
 {
-    #define lpRGB  ((UNALIGNED LONG *)lpColorTable)
-    #define lpRGBw ((UNALIGNED WORD *)lpColorTable)
+#define lpRGB ((UNALIGNED LONG *)lpColorTable)
+#define lpRGBw ((UNALIGNED WORD *)lpColorTable)
 
-    if (fOldFormat) {
+    if (fOldFormat)
+    {
 
         /*
          * Honey - its triplets.
@@ -3628,8 +3393,9 @@ BOOL TrulyMonochrome(
             return (lpRGBw[1] == 0xFF00) && (lpRGBw[2] == 0xFFFF);
         else if (lpRGBw[0] == 0xFFFF)
             return (lpRGBw[1] == 0x00FF) && (lpRGBw[2] == 0x0000);
-
-    } else {
+    }
+    else
+    {
 
         /*
          * Honey - its quadruplets!
@@ -3640,8 +3406,8 @@ BOOL TrulyMonochrome(
             return (lpRGB[1] == RESCLR_BLACK);
     }
 
-    #undef lpRGB
-    #undef lpRGBw
+#undef lpRGB
+#undef lpRGBw
 
     return FALSE;
 }
@@ -3668,31 +3434,30 @@ BOOL TrulyMonochrome(
 * 22-Oct-1995 SanfordS  Revised
 \***************************************************************************/
 
-LPBITMAPINFOHEADER CopyDibHdr(
-    IN  UPBITMAPINFOHEADER upbih,
-    OUT LPSTR             *lplpBits,
-    OUT LPBOOL             lpfMono)
+LPBITMAPINFOHEADER CopyDibHdr(IN UPBITMAPINFOHEADER upbih, OUT LPSTR *lplpBits, OUT LPBOOL lpfMono)
 {
 
 #define upbch ((UPBITMAPCOREHEADER)upbih)
-    DWORD              cColors;
-    DWORD              cMinColors;
-    DWORD              i;
+    DWORD cColors;
+    DWORD cMinColors;
+    DWORD i;
     LPBITMAPINFOHEADER lpbihNew;
-    DWORD              cbAlloc;
-    LPBYTE             lpColorTable;
-    struct  {
-        BITMAPINFOHEADER   bih;
-        DWORD              rgb[256];
-        DWORD              dwBuffer;
+    DWORD cbAlloc;
+    LPBYTE lpColorTable;
+    struct
+    {
+        BITMAPINFOHEADER bih;
+        DWORD rgb[256];
+        DWORD dwBuffer;
     } Fake;
 
-    switch (upbih->biSize) {
+    switch (upbih->biSize)
+    {
     case sizeof(BITMAPINFOHEADER):
         /*
          * Cool.  No conversion needed.
          */
-        cColors   = HowManyColors(upbih, FALSE, &lpColorTable);
+        cColors = HowManyColors(upbih, FALSE, &lpColorTable);
         *lplpBits = (LPSTR)(((LPDWORD)lpColorTable) + cColors);
         break;
 
@@ -3700,61 +3465,54 @@ LPBITMAPINFOHEADER CopyDibHdr(
         /*
          * Convert the BITMAPCOREHEADER to a BITMAPINFOHEADER
          */
-        Fake.bih.biSize          = sizeof(BITMAPINFOHEADER);
-        Fake.bih.biWidth         = upbch->bcWidth;
-        Fake.bih.biHeight        = upbch->bcHeight;
-        Fake.bih.biPlanes        = upbch->bcPlanes;
-        Fake.bih.biBitCount      = upbch->bcBitCount;
-        Fake.bih.biCompression   =
-        Fake.bih.biXPelsPerMeter =
-        Fake.bih.biYPelsPerMeter =
-        Fake.bih.biClrImportant  = 0;
-        Fake.bih.biClrUsed       = cColors = HowManyColors(upbih, TRUE, &lpColorTable);
-        Fake.bih.biSizeImage     = BitmapWidth(Fake.bih.biWidth, Fake.bih.biBitCount) * Fake.bih.biHeight;
+        Fake.bih.biSize = sizeof(BITMAPINFOHEADER);
+        Fake.bih.biWidth = upbch->bcWidth;
+        Fake.bih.biHeight = upbch->bcHeight;
+        Fake.bih.biPlanes = upbch->bcPlanes;
+        Fake.bih.biBitCount = upbch->bcBitCount;
+        Fake.bih.biCompression = Fake.bih.biXPelsPerMeter = Fake.bih.biYPelsPerMeter = Fake.bih.biClrImportant = 0;
+        Fake.bih.biClrUsed = cColors = HowManyColors(upbih, TRUE, &lpColorTable);
+        Fake.bih.biSizeImage = BitmapWidth(Fake.bih.biWidth, Fake.bih.biBitCount) * Fake.bih.biHeight;
 
         /*
          * Copy and convert tripplet color table to rgbQuad color table.
          */
-        for (i = 0; i < cColors; i++, lpColorTable += 3) {
+        for (i = 0; i < cColors; i++, lpColorTable += 3)
+        {
 
-            Fake.rgb[i] = lpColorTable[0]        +
-                          (lpColorTable[1] << 8) +
-                          (lpColorTable[2] << 16);
+            Fake.rgb[i] = lpColorTable[0] + (lpColorTable[1] << 8) + (lpColorTable[2] << 16);
         }
 
-        Fake.rgb[i] = *(DWORD UNALIGNED *)lpColorTable;  // For LR_LOADTRANSPARENT
-        upbih       = (UPBITMAPINFOHEADER)&Fake;
-        *lplpBits   = lpColorTable;
+        Fake.rgb[i] = *(DWORD UNALIGNED *)lpColorTable; // For LR_LOADTRANSPARENT
+        upbih = (UPBITMAPINFOHEADER)&Fake;
+        *lplpBits = lpColorTable;
         break;
 
     default:
 
 #define upOldIcoCur ((UPOLDCURSOR)upbih)
 
-        if (upOldIcoCur->bType == BMR_ICON ||
-                upOldIcoCur->bType == BMR_CURSOR) {
+        if (upOldIcoCur->bType == BMR_ICON || upOldIcoCur->bType == BMR_CURSOR)
+        {
             /*
              * Convert OLDICON/OLDCURSOR header to BITMAPINFHEADER
              */
             RIPMSG0(RIP_WARNING, "USER32:Converting a OLD header. - email sanfords if you see this");
-            Fake.bih.biSize          = sizeof(BITMAPINFOHEADER);
-            Fake.bih.biWidth         = upOldIcoCur->cx;
-            Fake.bih.biHeight        = upOldIcoCur->cy * 2;
-            Fake.bih.biPlanes        =
-            Fake.bih.biBitCount      = 1;
-            Fake.bih.biCompression   =
-            Fake.bih.biXPelsPerMeter =
-            Fake.bih.biYPelsPerMeter =
-            Fake.bih.biClrImportant  = 0;
-            Fake.bih.biClrUsed       = cColors = BPP01_MAXCOLORS;
-            Fake.bih.biSizeImage     = BitmapWidth(upOldIcoCur->cx, 1) * upOldIcoCur->cy;
-            Fake.rgb[0]              = RESCLR_BLACK;
-            Fake.rgb[1]              = RESCLR_WHITE;
-            upbih                    = (LPBITMAPINFOHEADER)&Fake;
-            *lplpBits                = upOldIcoCur->abBitmap;
-            Fake.rgb[2]              = *((LPDWORD)*lplpBits);  // For LR_LOADTRANSPARENT
-
-        } else {
+            Fake.bih.biSize = sizeof(BITMAPINFOHEADER);
+            Fake.bih.biWidth = upOldIcoCur->cx;
+            Fake.bih.biHeight = upOldIcoCur->cy * 2;
+            Fake.bih.biPlanes = Fake.bih.biBitCount = 1;
+            Fake.bih.biCompression = Fake.bih.biXPelsPerMeter = Fake.bih.biYPelsPerMeter = Fake.bih.biClrImportant = 0;
+            Fake.bih.biClrUsed = cColors = BPP01_MAXCOLORS;
+            Fake.bih.biSizeImage = BitmapWidth(upOldIcoCur->cx, 1) * upOldIcoCur->cy;
+            Fake.rgb[0] = RESCLR_BLACK;
+            Fake.rgb[1] = RESCLR_WHITE;
+            upbih = (LPBITMAPINFOHEADER)&Fake;
+            *lplpBits = upOldIcoCur->abBitmap;
+            Fake.rgb[2] = *((LPDWORD)*lplpBits); // For LR_LOADTRANSPARENT
+        }
+        else
+        {
 
             RIPMSG0(RIP_WARNING, "ConvertDIBBitmap: not a valid format");
             return NULL;
@@ -3765,8 +3523,7 @@ LPBITMAPINFOHEADER CopyDibHdr(
         break;
     }
 
-    *lpfMono = (cColors == BPP01_MAXCOLORS) &&
-            TrulyMonochrome((LPBYTE)upbih + sizeof(BITMAPINFOHEADER), FALSE);
+    *lpfMono = (cColors == BPP01_MAXCOLORS) && TrulyMonochrome((LPBYTE)upbih + sizeof(BITMAPINFOHEADER), FALSE);
 
     /*
      * Note: We have to allocate at least 2 color entries so that we have
@@ -3788,14 +3545,14 @@ LPBITMAPINFOHEADER CopyDibHdr(
 
     cbAlloc = sizeof(BITMAPINFOHEADER) + (cMinColors * sizeof(RGBQUAD));
 
-    if (lpbihNew = UserLocalAlloc(0, cbAlloc)) {
+    if (lpbihNew = UserLocalAlloc(0, cbAlloc))
+    {
         RtlCopyMemory(lpbihNew, upbih, cbAlloc);
     }
 
     return lpbihNew;
 
 #undef upbch
-
 }
 
 /***************************************************************************\
@@ -3817,27 +3574,23 @@ LPBITMAPINFOHEADER CopyDibHdr(
 * 04-Oct-1995 SanfordS  Recreated.
 \***************************************************************************/
 
-HBITMAP ConvertDIBBitmap(
-    IN  UPBITMAPINFOHEADER           upbih,
-    IN  DWORD                        cxDesired,
-    IN  DWORD                        cyDesired,
-    IN  UINT                         LR_flags,
-    OUT OPTIONAL LPBITMAPINFOHEADER *lplpbih,
-    IN OUT OPTIONAL LPSTR           *lplpBits)
+HBITMAP ConvertDIBBitmap(IN UPBITMAPINFOHEADER upbih, IN DWORD cxDesired, IN DWORD cyDesired, IN UINT LR_flags,
+                         OUT OPTIONAL LPBITMAPINFOHEADER *lplpbih, IN OUT OPTIONAL LPSTR *lplpBits)
 {
     LPBITMAPINFOHEADER lpbihNew;
-    BOOL               fMono, fMonoGiven;
-    BYTE               bPlanesDesired;
-    BYTE               bppDesired;
-    LPSTR              lpBits;
-    HBITMAP            hBmpRet;
+    BOOL fMono, fMonoGiven;
+    BYTE bPlanesDesired;
+    BYTE bppDesired;
+    LPSTR lpBits;
+    HBITMAP hBmpRet;
 
     /*
      * Make a copy of the DIB-Header.  This returns a pointer
      * which was allocated, so it must be freed later.
      * The also converts the header to BITMAPINFOHEADER format.
      */
-    if ((lpbihNew = CopyDibHdr(upbih, &lpBits, &fMono)) == NULL) {
+    if ((lpbihNew = CopyDibHdr(upbih, &lpBits, &fMono)) == NULL)
+    {
         return NULL;
     }
 
@@ -3845,21 +3598,26 @@ HBITMAP ConvertDIBBitmap(
      * When loading a DIB file, we may need to use a different
      * bits pointer.  See RtlRes.c/RtlLoadObjectFromDIBFile.
      */
-    if (lplpBits && *lplpBits) {
+    if (lplpBits && *lplpBits)
+    {
         lpBits = *lplpBits;
     }
 
     fMonoGiven = fMono;
 
-    if (!fMono) {
+    if (!fMono)
+    {
 
         if (LR_flags & (LR_LOADTRANSPARENT | LR_LOADMAP3DCOLORS))
             ChangeDibColors(lpbihNew, LR_flags & ~LR_MONOCHROME);
 
-        if (LR_flags & LR_CREATEREALDIB) {
-            bPlanesDesired = (BYTE) lpbihNew->biPlanes;
-            bppDesired = (BYTE) lpbihNew->biBitCount;
-        } else {
+        if (LR_flags & LR_CREATEREALDIB)
+        {
+            bPlanesDesired = (BYTE)lpbihNew->biPlanes;
+            bppDesired = (BYTE)lpbihNew->biBitCount;
+        }
+        else
+        {
             bPlanesDesired = gpsi->Planes;
             bppDesired = gpsi->BitsPixel;
         }
@@ -3867,15 +3625,16 @@ HBITMAP ConvertDIBBitmap(
         fMono = LR_flags & LR_MONOCHROME;
     }
 
-    if (fMono) {
-        bPlanesDesired =
-        bppDesired     = 1;
+    if (fMono)
+    {
+        bPlanesDesired = bppDesired = 1;
     }
 
     /*
      * HACK area
      */
-    if (lplpbih != NULL) {
+    if (lplpbih != NULL)
+    {
 
         /*
          * pass back the translated/copied header
@@ -3914,17 +3673,19 @@ HBITMAP ConvertDIBBitmap(
          * header reflects the dimensions of the XOR mask that immediately
          * follows the color mask.
          */
-        if (fMonoGiven) {
+        if (fMonoGiven)
+        {
 
             *lplpBits = NULL;
 
             if (cyDesired)
-                cyDesired <<= 1;    // mono icon bitmaps are double high.
-
-        } else {
+                cyDesired <<= 1; // mono icon bitmaps are double high.
+        }
+        else
+        {
 
             UserAssert(!(lpbihNew->biHeight & 1));
-            lpbihNew->biHeight >>= 1;  // color icon headers are off by 2
+            lpbihNew->biHeight >>= 1; // color icon headers are off by 2
 
             /*
              * Gross calculation!  We subtract the XOR part of the mask
@@ -3932,10 +3693,9 @@ HBITMAP ConvertDIBBitmap(
              * The first half of this is garbage, but for icons its not
              * used.  This may be a bug for cursor use of icons.
              */
-            *lplpBits = lpBits +
-                    (BitmapWidth(lpbihNew->biWidth, lpbihNew->biBitCount) -
-                    BitmapWidth(lpbihNew->biWidth, 1)) *
-                    lpbihNew->biHeight;
+            *lplpBits =
+                lpBits + (BitmapWidth(lpbihNew->biWidth, lpbihNew->biBitCount) - BitmapWidth(lpbihNew->biWidth, 1)) *
+                             lpbihNew->biHeight;
         }
     }
 
@@ -3945,21 +3705,16 @@ HBITMAP ConvertDIBBitmap(
     if (cyDesired == 0)
         cyDesired = lpbihNew->biHeight;
 
-    hBmpRet = BitmapFromDIB(cxDesired,
-                            cyDesired,
-                            bPlanesDesired,
-                            bppDesired,
-                            LR_flags,
-                            lpbihNew->biWidth,
-                            lpbihNew->biHeight,
-                            lpBits,
-                            (LPBITMAPINFO)lpbihNew,
-                            NULL);
+    hBmpRet = BitmapFromDIB(cxDesired, cyDesired, bPlanesDesired, bppDesired, LR_flags, lpbihNew->biWidth,
+                            lpbihNew->biHeight, lpBits, (LPBITMAPINFO)lpbihNew, NULL);
 
-    if (lplpbih == NULL || hBmpRet == NULL) {
+    if (lplpbih == NULL || hBmpRet == NULL)
+    {
         UserLocalFree(lpbihNew);
-    } else if (!fMonoGiven) {
-        lpbihNew->biHeight <<= 1;   // restore header for next mask
+    }
+    else if (!fMonoGiven)
+    {
+        lpbihNew->biHeight <<= 1; // restore header for next mask
     }
 
     return hBmpRet;
@@ -3976,10 +3731,7 @@ HBITMAP ConvertDIBBitmap(
 *
 \***************************************************************************/
 
-UINT MyAbs(
-    int valueHave,
-    int valueWant,
-    BOOL fPunish)
+UINT MyAbs(int valueHave, int valueWant, BOOL fPunish)
 {
     int diff = (valueHave - valueWant);
 
@@ -3998,8 +3750,7 @@ UINT MyAbs(
 *
 \***************************************************************************/
 
-UINT Magnitude(
-    int nValue)
+UINT Magnitude(int nValue)
 {
     if (nValue < 4)
         return 1;
@@ -4024,15 +3775,21 @@ UINT GetResourceBpp(LPRESDIR lprd, BOOL fIcon)
 {
     UINT bpp = 0;
 
-    if (fIcon) {
-        if (lprd->Icon.ColorCount != 0) {
+    if (fIcon)
+    {
+        if (lprd->Icon.ColorCount != 0)
+        {
             bpp = Magnitude(lprd->Icon.ColorCount);
             TAGMSG2(DBGTAG_Icon, "GetResourceBpp: icon color count = %d, bpp = %d", lprd->Icon.ColorCount, bpp);
-        } else {
+        }
+        else
+        {
             bpp = lprd->BitCount;
             TAGMSG1(DBGTAG_Icon, "GetResourceBpp: icon bpp = %d", bpp);
         }
-    } else {
+    }
+    else
+    {
         /*
          * NTRAID#NTBUG9-360375-2001/04/05-dwaynen  
          * This seems really suspicious to me.
@@ -4051,8 +3808,9 @@ UINT GetResourceBpp(LPRESDIR lprd, BOOL fIcon)
     /*
      * Nothing has 0 bpp.
      */
-    if(bpp == 0) {
-    	bpp = ICON_DEFAULTDEPTH;
+    if (bpp == 0)
+    {
+        bpp = ICON_DEFAULTDEPTH;
         TAGMSG1(DBGTAG_Icon, "GetResourceBpp: icon color depth unknown!  Assuming %d!", bpp);
     }
 
@@ -4110,23 +3868,19 @@ UINT GetResourceBpp(LPRESDIR lprd, BOOL fIcon)
 *
 \***************************************************************************/
 
-UINT MatchImage(
-    LPRESDIR lprd,
-    LPINT    lpcxWant,
-    LPINT    lpcyWant,
-    UINT     bppWant,
-    BOOL     fIcon)
+UINT MatchImage(LPRESDIR lprd, LPINT lpcxWant, LPINT lpcyWant, UINT bppWant, BOOL fIcon)
 {
     UINT bppNew;
-    int  cxNew;
-    int  cyNew;
+    int cxNew;
+    int cyNew;
     UINT score;
 
     cxNew = lprd->Icon.Width;
     cyNew = lprd->Icon.Height;
-	bppNew = GetResourceBpp(lprd, fIcon);
+    bppNew = GetResourceBpp(lprd, fIcon);
 
-    if (!fIcon) {
+    if (!fIcon)
+    {
         /*
          * NTRAID#NTBUG9-360375-2001/04/05-dwaynen  
          *
@@ -4143,33 +3897,35 @@ UINT MatchImage(
     /*
      * 0 really means maximum size (256) or colors (256).
      */
-    if (!cxNew) {
+    if (!cxNew)
+    {
         cxNew = ICON_MAXWIDTH;
         TAGMSG1(DBGTAG_Icon, "MatchImage: icon width unknown!  Assuming %d!", cxNew);
     }
 
-    if (!*lpcxWant) {
+    if (!*lpcxWant)
+    {
         *lpcxWant = cxNew;
     }
 
-    if (!cyNew) {
+    if (!cyNew)
+    {
         cyNew = ICON_MAXHEIGHT;
         TAGMSG1(DBGTAG_Icon, "MatchImage: icon height unknown!  Assuming %d!", cyNew);
     }
 
-    if (!*lpcyWant) {
+    if (!*lpcyWant)
+    {
         *lpcyWant = cyNew;
     }
 
-	/*
+    /*
      * Here are the rules for our "match" formula:
      *      (1) A close size match is much preferable to a color match
      *      (2) Bigger icons are better than smaller
      *      (3) The smaller the difference in bit depths the better
      */
-    score = 2*MyAbs(bppNew, bppWant, FALSE) +
-            MyAbs(cxNew, *lpcxWant, TRUE) +
-            MyAbs(cyNew, *lpcyWant, TRUE);
+    score = 2 * MyAbs(bppNew, bppWant, FALSE) + MyAbs(cxNew, *lpcxWant, TRUE) + MyAbs(cyNew, *lpcyWant, TRUE);
 
     TAGMSG4(DBGTAG_Icon, "MatchImage: Candidate Summary: cx=%d, cy=%d, bpp=%d, score=%d", cxNew, cyNew, bppNew, score);
 
@@ -4194,13 +3950,7 @@ UINT MatchImage(
 *
 \***************************************************************************/
 
-UINT GetBestImage(
-    LPRESDIR lprd,
-    UINT     uCount,
-    int      cxDesired,
-    int      cyDesired,
-    UINT     bppDesired,
-    BOOL     fIcon)
+UINT GetBestImage(LPRESDIR lprd, UINT uCount, int cxDesired, int cyDesired, UINT bppDesired, BOOL fIcon)
 {
     UINT i;
     UINT iBest = 0;
@@ -4210,12 +3960,14 @@ UINT GetBestImage(
     UINT bppCandidate;
 
     TAGMSG0(DBGTAG_Icon, "GetBestImage: Icon dir has %d candidates.");
-    TAGMSG4(DBGTAG_Icon, "GetBestImage: Looking for cx=%d, cy=%d, bpp=%d, fIcon=%s", cxDesired, cyDesired, bppDesired, fIcon ? "TRUE" : "FALSE");
+    TAGMSG4(DBGTAG_Icon, "GetBestImage: Looking for cx=%d, cy=%d, bpp=%d, fIcon=%s", cxDesired, cyDesired, bppDesired,
+            fIcon ? "TRUE" : "FALSE");
 
     /*
      * If the bpp was not specified, grab the primary monitor's color depth.
      */
-    if (bppDesired == 0) {
+    if (bppDesired == 0)
+    {
         bppDesired = (UINT)gpsi->BitCount;
         TAGMSG1(DBGTAG_Icon, "GetBestImage: Using screen bpp=%d", bppDesired);
     }
@@ -4261,7 +4013,8 @@ UINT GetBestImage(
      * size to what we want preferring bigger over smaller, then an image
      * with the right color format
      */
-    for (i = 0; i < uCount; i++, lprd++) {
+    for (i = 0; i < uCount; i++, lprd++)
+    {
         TAGMSG1(DBGTAG_Icon, "GetBestImage: Checking candidate %d...", i);
         bppCandidate = GetResourceBpp(lprd, fIcon);
 
@@ -4272,25 +4025,31 @@ UINT GetBestImage(
 
         TAGMSG0(DBGTAG_Icon, "---------------------------------------------");
 
-        if (score == 0) {
+        if (score == 0)
+        {
             /*
              * We've found an exact match!
              */
             TAGMSG1(DBGTAG_Icon, "GetBestImage: Found exact match: candidate=%d", i);
             iBest = i;
             break;
-        } else if (score < scoreBest) {
+        }
+        else if (score < scoreBest)
+        {
             /*
              * We've found a better match than the current alternative.
              */
             scoreBest = score;
             iBest = i;
             bppBest = bppCandidate;
-        } else if (score == scoreBest) {
+        }
+        else if (score == scoreBest)
+        {
             /*
              * Tie breaker: choose the higher color depth.  If that fails, choose first one.
              */
-            if (bppBest < bppCandidate) {
+            if (bppBest < bppCandidate)
+            {
                 iBest = i;
                 bppBest = bppCandidate;
             }
@@ -4309,17 +4068,18 @@ UINT GetBestImage(
 *
 \***************************************************************************/
 
-_inline DWORD GetIcoCurWidth(
-    DWORD cxOrg,
-    BOOL  fIcon,
-    UINT  lrFlags,
-    DWORD cxDes)
+_inline DWORD GetIcoCurWidth(DWORD cxOrg, BOOL fIcon, UINT lrFlags, DWORD cxDes)
 {
-    if (cxOrg) {
+    if (cxOrg)
+    {
         return cxOrg;
-    } else if (lrFlags & LR_DEFAULTSIZE) {
+    }
+    else if (lrFlags & LR_DEFAULTSIZE)
+    {
         return (fIcon ? SYSMET(CXICON) : SYSMET(CXCURSOR));
-    } else {
+    }
+    else
+    {
         return cxDes;
     }
 }
@@ -4331,17 +4091,18 @@ _inline DWORD GetIcoCurWidth(
 *
 \***************************************************************************/
 
-_inline DWORD GetIcoCurHeight(
-    DWORD cyOrg,
-    BOOL  fIcon,
-    UINT  lrFlags,
-    DWORD cyDes)
+_inline DWORD GetIcoCurHeight(DWORD cyOrg, BOOL fIcon, UINT lrFlags, DWORD cyDes)
 {
-    if (cyOrg) {
+    if (cyOrg)
+    {
         return cyOrg;
-    } else if (lrFlags & LR_DEFAULTSIZE) {
+    }
+    else if (lrFlags & LR_DEFAULTSIZE)
+    {
         return (fIcon ? SYSMET(CYICON) : SYSMET(CYCURSOR));
-    } else {
+    }
+    else
+    {
         return cyDes;
     }
 }
@@ -4353,19 +4114,21 @@ _inline DWORD GetIcoCurHeight(
 *
 \***************************************************************************/
 
-_inline DWORD GetIcoCurBpp(
-    UINT lrFlags)
+_inline DWORD GetIcoCurBpp(UINT lrFlags)
 {
-    if (lrFlags & LR_MONOCHROME) {
+    if (lrFlags & LR_MONOCHROME)
+    {
 
 #if DBG
-        if (lrFlags & LR_VGACOLOR) {
+        if (lrFlags & LR_VGACOLOR)
+        {
             RIPMSG0(RIP_WARNING, "lrFlags has both MONOCHROME and VGACOLOR; assuming MONOCHROME");
         }
 #endif
         return 1;
-
-    } else if (TEST_PUSIF(PUSIF_PALETTEDISPLAY) || (lrFlags & LR_VGACOLOR)) {
+    }
+    else if (TEST_PUSIF(PUSIF_PALETTEDISPLAY) || (lrFlags & LR_VGACOLOR))
+    {
         /*
          * dwaynen - 1/12/2001
          * Note: This used to also check the SM_SAMEDISPLAYFORMAT metric.  If
@@ -4379,7 +4142,9 @@ _inline DWORD GetIcoCurBpp(
          */
 
         return 4;
-    } else {
+    }
+    else
+    {
         return 0;
     }
 }
@@ -4392,13 +4157,9 @@ _inline DWORD GetIcoCurBpp(
 *
 \***************************************************************************/
 
-HANDLE WOWFindResourceExWCover(
-    HANDLE  hmod,
-    LPCWSTR rt,
-    LPCWSTR lpUniName,
-    WORD    LangId)
+HANDLE WOWFindResourceExWCover(HANDLE hmod, LPCWSTR rt, LPCWSTR lpUniName, WORD LangId)
 {
-    LPSTR  lpAnsiName;
+    LPSTR lpAnsiName;
     HANDLE hRes;
 
     if (ID(lpUniName))
@@ -4423,18 +4184,15 @@ HANDLE WOWFindResourceExWCover(
 *
 \***************************************************************************/
 
-HBITMAP WOWLoadBitmapA(
-    HINSTANCE hmod,
-    LPCSTR    lpName,
-    LPBYTE    pResData,
-    DWORD     cbResData)
+HBITMAP WOWLoadBitmapA(HINSTANCE hmod, LPCSTR lpName, LPBYTE pResData, DWORD cbResData)
 {
-    LPWSTR  lpUniName;
+    LPWSTR lpUniName;
     HBITMAP hRet;
 
     UNREFERENCED_PARAMETER(cbResData);
 
-    if (pResData == NULL) {
+    if (pResData == NULL)
+    {
 
         if (ID(lpName))
             return LoadBmp(hmod, (LPCWSTR)lpName, 0, 0, 0);
@@ -4445,15 +4203,11 @@ HBITMAP WOWLoadBitmapA(
         hRet = LoadBmp(hmod, lpUniName, 0, 0, 0);
 
         UserLocalFree(lpUniName);
+    }
+    else
+    {
 
-    } else {
-
-        hRet = ConvertDIBBitmap((LPBITMAPINFOHEADER)pResData,
-                                0,
-                                0,
-                                LR_DEFAULTSIZE,
-                                NULL,
-                                NULL);
+        hRet = ConvertDIBBitmap((LPBITMAPINFOHEADER)pResData, 0, 0, LR_DEFAULTSIZE, NULL, NULL);
     }
 
     return hRet;
@@ -4465,19 +4219,12 @@ HBITMAP WOWLoadBitmapA(
 *
 \***************************************************************************/
 
-HICON WowServerLoadCreateCursorIcon(
-    HANDLE  hmod,
-    LPWSTR  pszModName,
-    DWORD   dwExpWinVer,
-    LPCWSTR lpName,
-    DWORD   cb,
-    PVOID   pResData,
-    LPWSTR  type,
-    BOOL    fClient)
+HICON WowServerLoadCreateCursorIcon(HANDLE hmod, LPWSTR pszModName, DWORD dwExpWinVer, LPCWSTR lpName, DWORD cb,
+                                    PVOID pResData, LPWSTR type, BOOL fClient)
 {
     HICON hRet;
-    BOOL  fIcon = (type == RT_ICON);
-    UINT  LR_Flags = LR_SHARED;
+    BOOL fIcon = (type == RT_ICON);
+    UINT LR_Flags = LR_SHARED;
 
     UNREFERENCED_PARAMETER(pszModName);
     UNREFERENCED_PARAMETER(dwExpWinVer);
@@ -4487,23 +4234,16 @@ HICON WowServerLoadCreateCursorIcon(
     if (!fIcon)
         LR_Flags |= LR_MONOCHROME;
 
-    if (pResData == NULL) {
+    if (pResData == NULL)
+    {
 
-        hRet = LoadIcoCur(hmod,
-                          lpName,
-                          type,
-                          0,
-                          0,
-                          LR_Flags | LR_DEFAULTSIZE);
+        hRet = LoadIcoCur(hmod, lpName, type, 0, 0, LR_Flags | LR_DEFAULTSIZE);
+    }
+    else
+    {
 
-    } else {
-
-        hRet = ConvertDIBIcon((LPBITMAPINFOHEADER)pResData,
-                              hmod,
-                              lpName,
-                              fIcon,
-                              GetIcoCurWidth(0 , fIcon, LR_DEFAULTSIZE, 0),
-                              GetIcoCurHeight(0, fIcon, LR_DEFAULTSIZE, 0),
+        hRet = ConvertDIBIcon((LPBITMAPINFOHEADER)pResData, hmod, lpName, fIcon,
+                              GetIcoCurWidth(0, fIcon, LR_DEFAULTSIZE, 0), GetIcoCurHeight(0, fIcon, LR_DEFAULTSIZE, 0),
                               LR_Flags);
     }
 
@@ -4515,19 +4255,16 @@ HICON WowServerLoadCreateCursorIcon(
 *
 *
 \***************************************************************************/
-HMENU WowServerLoadCreateMenu(
-    HANDLE hMod,
-    LPCSTR lpName,
-    CONST  LPMENUTEMPLATE pmt,
-    DWORD  cb,
-    BOOL   fCallClient)
+HMENU WowServerLoadCreateMenu(HANDLE hMod, LPCSTR lpName, CONST LPMENUTEMPLATE pmt, DWORD cb, BOOL fCallClient)
 {
     UNREFERENCED_PARAMETER(cb);
     UNREFERENCED_PARAMETER(fCallClient);
 
-    if (pmt == NULL) {
+    if (pmt == NULL)
+    {
         return LoadMenuA(hMod, lpName);
-    } else
+    }
+    else
         return CreateMenuFromResource(pmt);
 }
 
@@ -4544,16 +4281,14 @@ HMENU WowServerLoadCreateMenu(
 * 03-Nov-1995 SanfordS  Created.
 \***********************************************************************/
 
-PVOID DIBFromBitmap(
-    HBITMAP hbmp,
-    HDC     hdc)
+PVOID DIBFromBitmap(HBITMAP hbmp, HDC hdc)
 {
-    BITMAP             bmp;
+    BITMAP bmp;
     LPBITMAPINFOHEADER lpbi;
-    DWORD              cbBits;
-    DWORD              cbPalette;
-    DWORD              cbTotal;
-    WORD               cBits;
+    DWORD cbBits;
+    DWORD cbPalette;
+    DWORD cbTotal;
+    WORD cBits;
 
     UserAssert(hbmp);
     UserAssert(hdc);
@@ -4573,14 +4308,16 @@ TrySmallerDIB:
     else
         cbPalette = 3 * sizeof(RGBQUAD);
 
-    cbTotal  = sizeof(BITMAPINFOHEADER) + cbPalette + cbBits;
+    cbTotal = sizeof(BITMAPINFOHEADER) + cbPalette + cbBits;
     lpbi = (LPBITMAPINFOHEADER)UserLocalAlloc(HEAP_ZERO_MEMORY, cbTotal);
-    if (lpbi == NULL) {
+    if (lpbi == NULL)
+    {
 
         /*
          * Try a smaller DIB, if we can.  We can't if the DIB is mono.
          */
-        switch (cBits) {
+        switch (cBits)
+        {
         case 4:
             cBits = 1;
             break;
@@ -4602,7 +4339,7 @@ TrySmallerDIB:
             break;
 
         default:
-            return NULL;   // 1 or wierd.
+            return NULL; // 1 or wierd.
         }
 
         RIPMSG1(RIP_WARNING, "Not enough memory to create large color DIB, trying %d bpp.", cBits);
@@ -4610,24 +4347,19 @@ TrySmallerDIB:
     }
 
     RtlZeroMemory(lpbi, sizeof(BITMAPINFOHEADER));
-    lpbi->biSize        = sizeof(BITMAPINFOHEADER);
-    lpbi->biWidth       = bmp.bmWidth;
-    lpbi->biHeight      = bmp.bmHeight;
-    lpbi->biPlanes      = 1;
-    lpbi->biBitCount    = cBits;
+    lpbi->biSize = sizeof(BITMAPINFOHEADER);
+    lpbi->biWidth = bmp.bmWidth;
+    lpbi->biHeight = bmp.bmHeight;
+    lpbi->biPlanes = 1;
+    lpbi->biBitCount = cBits;
 
     /*
      * Get old bitmap's DIB bits, using the current DC.
      */
-    GetDIBits(hdc,
-              hbmp,
-              0,
-              lpbi->biHeight,
-              ((LPSTR)lpbi) + lpbi->biSize + cbPalette,
-              (LPBITMAPINFO)lpbi,
+    GetDIBits(hdc, hbmp, 0, lpbi->biHeight, ((LPSTR)lpbi) + lpbi->biSize + cbPalette, (LPBITMAPINFO)lpbi,
               DIB_RGB_COLORS);
 
-    lpbi->biClrUsed   = cbPalette / sizeof(RGBQUAD);
+    lpbi->biClrUsed = cbPalette / sizeof(RGBQUAD);
     lpbi->biSizeImage = cbBits;
 
     return lpbi;
@@ -4642,20 +4374,17 @@ TrySmallerDIB:
 * 03-Nov-1995 SanfordS  Created.
 \***************************************************************************/
 
-HBITMAP CopyBmp(
-    HBITMAP hbmpOrg,
-    int     cxNew,
-    int     cyNew,
-    UINT    LR_flags)
+HBITMAP CopyBmp(HBITMAP hbmpOrg, int cxNew, int cyNew, UINT LR_flags)
 {
     HBITMAP hbmNew = NULL;
     LPBITMAPINFOHEADER pdib;
 
     RtlEnterCriticalSection(&gcsHdc);
 
-    if (pdib = DIBFromBitmap(hbmpOrg, ghdcBits2)) {
+    if (pdib = DIBFromBitmap(hbmpOrg, ghdcBits2))
+    {
 
-#if 0  // Win-9x comments this code out
+#if 0 // Win-9x comments this code out
         if (LR_flags & LR_COPYRETURNORG) {
 
             DWORD bpp = GetIcoCurBpp(LR_flags);
@@ -4701,14 +4430,10 @@ HBITMAP CopyBmp(
 * 12-Mar-1996 ChrisWil  Created.
 \***********************************************************************/
 
-HICON CopyImageFromRes(
-    LPWSTR      pszModName,
-    LPWSTR      pszResName,
-    PCURSORFIND pcfSearch,
-    UINT        LR_flags)
+HICON CopyImageFromRes(LPWSTR pszModName, LPWSTR pszResName, PCURSORFIND pcfSearch, UINT LR_flags)
 {
     HINSTANCE hmod;
-    HICON     hicoDst = NULL;
+    HICON hicoDst = NULL;
 
     /*
      * Override the search-criteria if this is the user-module.  By
@@ -4717,10 +4442,11 @@ HICON CopyImageFromRes(
      */
     hmod = (pszModName ? WowGetModuleHandle(pszModName) : hmodUser);
 
-    if (hmod == hmodUser) {
+    if (hmod == hmodUser)
+    {
 
-        pcfSearch->cx  = 0;
-        pcfSearch->cy  = 0;
+        pcfSearch->cx = 0;
+        pcfSearch->cy = 0;
         pcfSearch->bpp = 0;
 
         pszModName = szUSER32;
@@ -4730,14 +4456,11 @@ HICON CopyImageFromRes(
      * If a resource has been found with this name/bpp, then attempt
      * to load the resource with the desired dimensions.
      */
-    if (FindExistingCursorIcon(pszModName, pszResName, pcfSearch)) {
+    if (FindExistingCursorIcon(pszModName, pszResName, pcfSearch))
+    {
 
-        hicoDst = LoadIcoCur(hmod,
-                             pszResName,
-                             (LPWSTR)ULongToPtr( pcfSearch->rt ),
-                             pcfSearch->cx,
-                             pcfSearch->cy,
-                             LR_flags);
+        hicoDst =
+            LoadIcoCur(hmod, pszResName, (LPWSTR)ULongToPtr(pcfSearch->rt), pcfSearch->cx, pcfSearch->cy, LR_flags);
     }
 
     return hicoDst;
@@ -4758,26 +4481,21 @@ HICON CopyImageFromRes(
 * 12-Mar-1996 ChrisWil  Added lookup for existing icon/cursor.
 \***********************************************************************/
 
-HICON CopyIcoCur(
-    HICON hicoSrc,
-    BOOL  fIcon,
-    int   cxNew,
-    int   cyNew,
-    UINT  LR_flags)
+HICON CopyIcoCur(HICON hicoSrc, BOOL fIcon, int cxNew, int cyNew, UINT LR_flags)
 {
-    HBITMAP        hbmMaskNew;
-    HBITMAP        hbmColorNew;
-    int            cx;
-    int            cy;
-    DWORD          bpp;
-    DWORD          bppDesired;
-    HICON          hicoDst = NULL;
-    ICONINFO       ii;
-    CURSORDATA     cur;
+    HBITMAP hbmMaskNew;
+    HBITMAP hbmColorNew;
+    int cx;
+    int cy;
+    DWORD bpp;
+    DWORD bppDesired;
+    HICON hicoDst = NULL;
+    ICONINFO ii;
+    CURSORDATA cur;
     UNICODE_STRING strModName;
     UNICODE_STRING strResName;
-    WCHAR          awszModName[MAX_PATH];
-    WCHAR          awszResName[MAX_PATH];
+    WCHAR awszModName[MAX_PATH];
+    WCHAR awszResName[MAX_PATH];
 
     /*
      * Extract needed info from existing icon/cursor from the kernel
@@ -4793,24 +4511,20 @@ HICON CopyIcoCur(
     /*
      * Setup unicode-strings for calls to kernel-side.
      */
-    strModName.Length        = 0;
+    strModName.Length = 0;
     strModName.MaximumLength = MAX_PATH;
-    strModName.Buffer        = awszModName;
+    strModName.Buffer = awszModName;
 
-    strResName.Length        = 0;
+    strResName.Length = 0;
     strResName.MaximumLength = MAX_PATH;
-    strResName.Buffer        = awszResName;
+    strResName.Buffer = awszResName;
 
     /*
      * Note: this creates copies of hbmMask and hbmColor that need to be
      * freed before we leave.
      */
-    if (!NtUserGetIconInfo(hicoSrc,
-                           &ii,
-                           &strModName,
-                           &strResName,
-                           &bpp,
-                           TRUE)) {
+    if (!NtUserGetIconInfo(hicoSrc, &ii, &strModName, &strResName, &bpp, TRUE))
+    {
 
         return NULL;
     }
@@ -4818,19 +4532,20 @@ HICON CopyIcoCur(
     cxNew = GetIcoCurWidth(cxNew, fIcon, LR_flags, cx);
     cyNew = GetIcoCurHeight(cyNew, fIcon, LR_flags, cy);
 
-    if (LR_flags & LR_COPYFROMRESOURCE) {
+    if (LR_flags & LR_COPYFROMRESOURCE)
+    {
 
         CURSORFIND cfSearch;
-        LPWSTR     pszModName;
+        LPWSTR pszModName;
 
         /*
          * Setup the search criteria.
          */
         cfSearch.hcur = hicoSrc;
-        cfSearch.rt   = PtrToUlong((fIcon ? RT_ICON : RT_CURSOR));
-        cfSearch.cx   = cxNew;
-        cfSearch.cy   = cyNew;
-        cfSearch.bpp  = bpp;
+        cfSearch.rt = PtrToUlong((fIcon ? RT_ICON : RT_CURSOR));
+        cfSearch.cx = cxNew;
+        cfSearch.cy = cyNew;
+        cfSearch.bpp = bpp;
 
         /*
          * Copy the image.  This performs a lookup for the hicoSrc.  If
@@ -4841,10 +4556,7 @@ HICON CopyIcoCur(
          */
         pszModName = (strModName.Length ? strModName.Buffer : NULL);
 
-        hicoDst = CopyImageFromRes(pszModName,
-                                   strResName.Buffer,
-                                   &cfSearch,
-                                   LR_flags);
+        hicoDst = CopyImageFromRes(pszModName, strResName.Buffer, &cfSearch, LR_flags);
 
         if (hicoDst)
             goto CleanupExit;
@@ -4852,9 +4564,8 @@ HICON CopyIcoCur(
 
     bppDesired = GetIcoCurBpp(LR_flags);
 
-    if ((cxNew != cx) ||
-        (cyNew != cy) ||
-        ((bpp != 1) && (bppDesired != 0) && (bppDesired != bpp))) {
+    if ((cxNew != cx) || (cyNew != cy) || ((bpp != 1) && (bppDesired != 0) && (bppDesired != bpp)))
+    {
 
         /*
          * Since we have to stretch or maybe fixup the colors just get
@@ -4867,11 +4578,13 @@ HICON CopyIcoCur(
 
         hbmColorNew = NULL;
 
-        if (ii.hbmColor) {
+        if (ii.hbmColor)
+        {
 
             hbmColorNew = CopyBmp(ii.hbmColor, cxNew, cyNew, LR_flags);
 
-            if (hbmColorNew == NULL) {
+            if (hbmColorNew == NULL)
+            {
                 DeleteObject(hbmMaskNew);
                 goto CleanupExit;
             }
@@ -4883,7 +4596,8 @@ HICON CopyIcoCur(
         DeleteObject(ii.hbmMask);
         ii.hbmMask = hbmMaskNew;
 
-        if (ii.hbmColor && (ii.hbmColor != hbmColorNew)) {
+        if (ii.hbmColor && (ii.hbmColor != hbmColorNew))
+        {
             DeleteObject(ii.hbmColor);
             ii.hbmColor = hbmColorNew;
         }
@@ -4896,12 +4610,13 @@ HICON CopyIcoCur(
 
         if (cyNew != cy)
             ii.yHotspot = MultDiv(ii.yHotspot, cyNew, cy);
-
-    } else if (LR_flags & LR_COPYRETURNORG) {
+    }
+    else if (LR_flags & LR_COPYRETURNORG)
+    {
 
         hicoDst = hicoSrc;
 
-CleanupExit:
+    CleanupExit:
 
         /*
          * Free up the bitmaps which were created by GetIconInfo().
@@ -4924,18 +4639,19 @@ CleanupExit:
         goto CleanupExit;
 
     RtlZeroMemory(&cur, sizeof(cur));
-    cur.lpName    = strResName.Length ? strResName.Buffer : NULL;
+    cur.lpName = strResName.Length ? strResName.Buffer : NULL;
     cur.lpModName = strModName.Length ? strModName.Buffer : NULL;
-    cur.rt        = ii.fIcon ? PTR_TO_ID(RT_ICON) : PTR_TO_ID(RT_CURSOR);
-    cur.bpp       = bpp;
-    cur.cx        = cxNew;
-    cur.cy        = cyNew * 2;
-    cur.xHotspot  = (short)ii.xHotspot;
-    cur.yHotspot  = (short)ii.yHotspot;
-    cur.hbmMask   = ii.hbmMask;
-    cur.hbmColor  = ii.hbmColor;
+    cur.rt = ii.fIcon ? PTR_TO_ID(RT_ICON) : PTR_TO_ID(RT_CURSOR);
+    cur.bpp = bpp;
+    cur.cx = cxNew;
+    cur.cy = cyNew * 2;
+    cur.xHotspot = (short)ii.xHotspot;
+    cur.yHotspot = (short)ii.yHotspot;
+    cur.hbmMask = ii.hbmMask;
+    cur.hbmColor = ii.hbmColor;
 
-    if (!_SetCursorIconData(hicoDst, &cur)) {
+    if (!_SetCursorIconData(hicoDst, &cur))
+    {
         NtUserDestroyCursor(hicoDst, CURSOR_ALWAYSDESTROY);
         return NULL;
     }
@@ -4963,15 +4679,12 @@ Exit:
 \***********************************************************************/
 
 
-FUNCLOG5(LOG_GENERAL, HANDLE, WINAPI, CopyImage, HANDLE, hImage, UINT, IMAGE_flag, int, cxNew, int, cyNew, UINT, LR_flags)
-HANDLE WINAPI CopyImage(
-    HANDLE hImage,
-    UINT   IMAGE_flag,
-    int    cxNew,
-    int    cyNew,
-    UINT   LR_flags)
+FUNCLOG5(LOG_GENERAL, HANDLE, WINAPI, CopyImage, HANDLE, hImage, UINT, IMAGE_flag, int, cxNew, int, cyNew, UINT,
+         LR_flags)
+HANDLE WINAPI CopyImage(HANDLE hImage, UINT IMAGE_flag, int cxNew, int cyNew, UINT LR_flags)
 {
-    if (LR_flags & ~LR_VALID) {
+    if (LR_flags & ~LR_VALID)
+    {
         RIPERR0(ERROR_INVALID_PARAMETER, RIP_WARNING, "CopyImage: bad LR_flags.");
         return NULL;
     }
@@ -4986,17 +4699,14 @@ HANDLE WINAPI CopyImage(
 *
 \***********************************************************************/
 
-HANDLE InternalCopyImage(
-    HANDLE hImage,
-    UINT   IMAGE_flag,
-    int    cxNew,
-    int    cyNew,
-    UINT   LR_flags)
+HANDLE InternalCopyImage(HANDLE hImage, UINT IMAGE_flag, int cxNew, int cyNew, UINT LR_flags)
 {
-    switch (IMAGE_flag) {
+    switch (IMAGE_flag)
+    {
 
     case IMAGE_BITMAP:
-        if (GetObjectType(hImage) != OBJ_BITMAP) {
+        if (GetObjectType(hImage) != OBJ_BITMAP)
+        {
             RIPMSG0(RIP_ERROR, "CopyImage: invalid bitmap");
             return NULL;
         }
@@ -5006,11 +4716,7 @@ HANDLE InternalCopyImage(
     case IMAGE_CURSOR:
     case IMAGE_ICON:
 
-        return CopyIcoCur(hImage,
-                          (IMAGE_flag == IMAGE_ICON),
-                          cxNew,
-                          cyNew,
-                          LR_flags);
+        return CopyIcoCur(hImage, (IMAGE_flag == IMAGE_ICON), cxNew, cyNew, LR_flags);
     }
 
     RIPERR0(ERROR_INVALID_PARAMETER, RIP_WARNING, "CopyImage: bad IMAGE_flag.");
@@ -5026,19 +4732,13 @@ HANDLE InternalCopyImage(
 * 16-Nov-1995 SanfordS  Now uses LookupIconIdFromDirectoryEx
 \***************************************************************************/
 
-int RtlGetIdFromDirectory(
-    PBYTE  presbits,
-    BOOL   fIcon,
-    int    cxDesired,
-    int    cyDesired,
-    DWORD  LR_flags,
-    PDWORD pdwResSize)
+int RtlGetIdFromDirectory(PBYTE presbits, BOOL fIcon, int cxDesired, int cyDesired, DWORD LR_flags, PDWORD pdwResSize)
 {
     LPNEWHEADER lpnh;
-    LPRESDIR    lprsd;
-    UINT        iImage;
-    UINT        cImage;
-    UINT        bpp;
+    LPRESDIR lprsd;
+    UINT iImage;
+    UINT cImage;
+    UINT bpp;
 
     /*
      * Make sure this is pointing to valid resource bits.
@@ -5061,7 +4761,7 @@ int RtlGetIdFromDirectory(
      * that's appropriate.
      */
     cImage = lpnh->ResCount;
-    lprsd  = (LPRESDIR)(lpnh + 1);
+    lprsd = (LPRESDIR)(lpnh + 1);
 
     iImage = GetBestImage(lprsd, cImage, cxDesired, cyDesired, bpp, fIcon);
 

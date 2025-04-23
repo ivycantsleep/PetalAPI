@@ -21,19 +21,14 @@ Revision History:
 #include "lpcp.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,NtQueryInformationPort)
+#pragma alloc_text(PAGE, NtQueryInformationPort)
 #endif
 
-
+
 NTSTATUS
 NTAPI
-NtQueryInformationPort (
-    IN HANDLE PortHandle OPTIONAL,
-    IN PORT_INFORMATION_CLASS PortInformationClass,
-    OUT PVOID PortInformation,
-    IN ULONG Length,
-    OUT PULONG ReturnLength OPTIONAL
-    )
+NtQueryInformationPort(IN HANDLE PortHandle OPTIONAL, IN PORT_INFORMATION_CLASS PortInformationClass,
+                       OUT PVOID PortInformation, IN ULONG Length, OUT PULONG ReturnLength OPTIONAL)
 
 /*++
 
@@ -71,7 +66,7 @@ Return Value:
 
     PAGED_CODE();
 
-    UNREFERENCED_PARAMETER ( PortInformationClass );
+    UNREFERENCED_PARAMETER(PortInformationClass);
 
     //
     //  Get previous processor mode and probe output argument if necessary.
@@ -79,22 +74,24 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    if (PreviousMode != KernelMode) {
+    if (PreviousMode != KernelMode)
+    {
 
-        try {
+        try
+        {
 
-            ProbeForWrite( PortInformation,
-                           Length,
-                           sizeof( ULONG ));
+            ProbeForWrite(PortInformation, Length, sizeof(ULONG));
 
-            if (ARGUMENT_PRESENT( ReturnLength )) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
 
-                ProbeForWriteUlong( ReturnLength );
+                ProbeForWriteUlong(ReturnLength);
             }
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
-        } except( EXCEPTION_EXECUTE_HANDLER ) {
-
-            return( GetExceptionCode() );
+            return (GetExceptionCode());
         }
     }
 
@@ -103,44 +100,40 @@ Return Value:
     //  success if we got a good reference and an error otherwise.
     //
 
-    if (ARGUMENT_PRESENT( PortHandle )) {
+    if (ARGUMENT_PRESENT(PortHandle))
+    {
 
-        Status = ObReferenceObjectByHandle( PortHandle,
-                                            GENERIC_READ,
-                                            LpcPortObjectType,
-                                            PreviousMode,
-                                            &PortObject,
-                                            NULL );
+        Status =
+            ObReferenceObjectByHandle(PortHandle, GENERIC_READ, LpcPortObjectType, PreviousMode, &PortObject, NULL);
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
 
             //
-            //  It might be a waitable port object. 
+            //  It might be a waitable port object.
             //  Let's try again as this object type
             //
 
-            Status = ObReferenceObjectByHandle( PortHandle,
-                                                GENERIC_READ,
-                                                LpcWaitablePortObjectType,
-                                                PreviousMode,
-                                                &PortObject,
-                                                NULL );
+            Status = ObReferenceObjectByHandle(PortHandle, GENERIC_READ, LpcWaitablePortObjectType, PreviousMode,
+                                               &PortObject, NULL);
 
             //
             //  If this one fails too we'll return that status
             //
 
-            if (!NT_SUCCESS( Status )) {
+            if (!NT_SUCCESS(Status))
+            {
 
-                return( Status );
+                return (Status);
             }
         }
 
-        ObDereferenceObject( PortObject );
+        ObDereferenceObject(PortObject);
 
         return STATUS_SUCCESS;
-
-    } else {
+    }
+    else
+    {
 
         return STATUS_INVALID_INFO_CLASS;
     }

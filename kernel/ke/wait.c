@@ -53,31 +53,35 @@ Revision History:
 // status of USER_APC.
 //
 
-#define TestForAlertPending(Alertable) \
-    if (Alertable) { \
-        if (Thread->Alerted[WaitMode] != FALSE) { \
-            Thread->Alerted[WaitMode] = FALSE; \
-            WaitStatus = STATUS_ALERTED; \
-            break; \
-        } else if ((WaitMode != KernelMode) && \
-                  (IsListEmpty(&Thread->ApcState.ApcListHead[UserMode])) == FALSE) { \
-            Thread->ApcState.UserApcPending = TRUE; \
-            WaitStatus = STATUS_USER_APC; \
-            break; \
-        } else if (Thread->Alerted[KernelMode] != FALSE) { \
-            Thread->Alerted[KernelMode] = FALSE; \
-            WaitStatus = STATUS_ALERTED; \
-            break; \
-        } \
-    } else if ((WaitMode != KernelMode) && (Thread->ApcState.UserApcPending)) { \
-        WaitStatus = STATUS_USER_APC; \
-        break; \
+#define TestForAlertPending(Alertable)                                                                        \
+    if (Alertable)                                                                                            \
+    {                                                                                                         \
+        if (Thread->Alerted[WaitMode] != FALSE)                                                               \
+        {                                                                                                     \
+            Thread->Alerted[WaitMode] = FALSE;                                                                \
+            WaitStatus = STATUS_ALERTED;                                                                      \
+            break;                                                                                            \
+        }                                                                                                     \
+        else if ((WaitMode != KernelMode) && (IsListEmpty(&Thread->ApcState.ApcListHead[UserMode])) == FALSE) \
+        {                                                                                                     \
+            Thread->ApcState.UserApcPending = TRUE;                                                           \
+            WaitStatus = STATUS_USER_APC;                                                                     \
+            break;                                                                                            \
+        }                                                                                                     \
+        else if (Thread->Alerted[KernelMode] != FALSE)                                                        \
+        {                                                                                                     \
+            Thread->Alerted[KernelMode] = FALSE;                                                              \
+            WaitStatus = STATUS_ALERTED;                                                                      \
+            break;                                                                                            \
+        }                                                                                                     \
+    }                                                                                                         \
+    else if ((WaitMode != KernelMode) && (Thread->ApcState.UserApcPending))                                   \
+    {                                                                                                         \
+        WaitStatus = STATUS_USER_APC;                                                                         \
+        break;                                                                                                \
     }
 
-VOID
-KiAdjustQuantumThread (
-    IN PKTHREAD Thread
-    )
+VOID KiAdjustQuantumThread(IN PKTHREAD Thread)
 
 /*++
 
@@ -103,27 +107,32 @@ Return Value:
     PKTHREAD NewThread;
     SCHAR ThreadPriority;
 
-    if ((Thread->Priority < LOW_REALTIME_PRIORITY) &&
-        (Thread->BasePriority < TIME_CRITICAL_PRIORITY_BOUND)) {
+    if ((Thread->Priority < LOW_REALTIME_PRIORITY) && (Thread->BasePriority < TIME_CRITICAL_PRIORITY_BOUND))
+    {
         Thread->Quantum -= WAIT_QUANTUM_DECREMENT;
-        if (Thread->Quantum <= 0) {
+        if (Thread->Quantum <= 0)
+        {
             Process = Thread->ApcState.Process;
             Thread->Quantum = Process->ThreadQuantum;
             ThreadPriority = Thread->Priority - (Thread->PriorityDecrement + 1);
-            if (ThreadPriority < Thread->BasePriority) {
+            if (ThreadPriority < Thread->BasePriority)
+            {
                 ThreadPriority = Thread->BasePriority;
             }
 
             Thread->PriorityDecrement = 0;
-            if (ThreadPriority != Thread->Priority) {
+            if (ThreadPriority != Thread->Priority)
+            {
                 KiSetPriorityThread(Thread, ThreadPriority);
-
-            } else {
+            }
+            else
+            {
                 Prcb = KeGetCurrentPrcb();
-                if (Prcb->NextThread == NULL) {
-                    NewThread = KiFindReadyThread(Thread->NextProcessor,
-                                                  ThreadPriority);
-                    if (NewThread != NULL) {
+                if (Prcb->NextThread == NULL)
+                {
+                    NewThread = KiFindReadyThread(Thread->NextProcessor, ThreadPriority);
+                    if (NewThread != NULL)
+                    {
                         NewThread->State = Standby;
                         Prcb->NextThread = NewThread;
                     }
@@ -146,25 +155,21 @@ Return Value:
 //      executed inside the dispatcher lock.
 //
 
-#define InitializeDelayExecution()                                          \
-    Thread->WaitBlockList = WaitBlock;                                      \
-    Thread->WaitStatus = 0;                                                 \
-    WaitBlock->NextWaitBlock = WaitBlock;                                   \
-    Timer->Header.WaitListHead.Flink = &WaitBlock->WaitListEntry;           \
-    Timer->Header.WaitListHead.Blink = &WaitBlock->WaitListEntry;           \
-    Thread->Alertable = Alertable;                                          \
-    Thread->WaitMode = WaitMode;                                            \
-    Thread->WaitReason = DelayExecution;                                    \
-    Thread->WaitListEntry.Flink = NULL;                                     \
-    StackSwappable = KiIsKernelStackSwappable(WaitMode, Thread);            \
+#define InitializeDelayExecution()                                \
+    Thread->WaitBlockList = WaitBlock;                            \
+    Thread->WaitStatus = 0;                                       \
+    WaitBlock->NextWaitBlock = WaitBlock;                         \
+    Timer->Header.WaitListHead.Flink = &WaitBlock->WaitListEntry; \
+    Timer->Header.WaitListHead.Blink = &WaitBlock->WaitListEntry; \
+    Thread->Alertable = Alertable;                                \
+    Thread->WaitMode = WaitMode;                                  \
+    Thread->WaitReason = DelayExecution;                          \
+    Thread->WaitListEntry.Flink = NULL;                           \
+    StackSwappable = KiIsKernelStackSwappable(WaitMode, Thread);  \
     Thread->WaitTime = KiQueryLowTickCount()
-        
+
 NTSTATUS
-KeDelayExecutionThread (
-    IN KPROCESSOR_MODE WaitMode,
-    IN BOOLEAN Alertable,
-    IN PLARGE_INTEGER Interval
-    )
+KeDelayExecutionThread(IN KPROCESSOR_MODE WaitMode, IN BOOLEAN Alertable, IN PLARGE_INTEGER Interval)
 
 /*++
 
@@ -222,7 +227,8 @@ Return Value:
     // thread local variables, and lock the dispatcher database.
     //
 
-    if (Thread->WaitNext == FALSE) {
+    if (Thread->WaitNext == FALSE)
+    {
         goto WaitStart;
     }
 
@@ -237,7 +243,8 @@ Return Value:
     // the loop.
     //
 
-    do {
+    do
+    {
 
         //
         // Test to determine if a kernel APC is pending.
@@ -250,7 +257,8 @@ Return Value:
         // N.B. that this can only happen in a multiprocessor system.
         //
 
-        if (Thread->ApcState.KernelApcPending && (Thread->WaitIrql < APC_LEVEL)) {
+        if (Thread->ApcState.KernelApcPending && (Thread->WaitIrql < APC_LEVEL))
+        {
 
             //
             // Unlock the dispatcher database and lower IRQL to its previous
@@ -259,8 +267,9 @@ Return Value:
             //
 
             KiUnlockDispatcherDatabase(Thread->WaitIrql);
-
-        } else {
+        }
+        else
+        {
 
             //
             // Test for alert pending.
@@ -277,7 +286,8 @@ Return Value:
             //      wait type, and the wait list entry link pointers.
             //
 
-            if (KiInsertTreeTimer(Timer, *Interval) == FALSE) {
+            if (KiInsertTreeTimer(Timer, *Interval) == FALSE)
+            {
 
                 //
                 // If the thread is not a realtime thread, then drop the
@@ -286,8 +296,10 @@ Return Value:
 
                 Prcb = KeGetCurrentPrcb();
                 Priority = Thread->Priority;
-                if (Priority < LOW_REALTIME_PRIORITY) {
-                    if (Priority != Thread->BasePriority) {
+                if (Priority < LOW_REALTIME_PRIORITY)
+                {
+                    if (Priority != Thread->BasePriority)
+                    {
                         Thread->PriorityDecrement = 0;
                         KiSetPriorityThread(Thread, Thread->BasePriority);
                     }
@@ -298,9 +310,9 @@ Return Value:
                 // robin the thread with other threads at the same priority.
                 //
 
-                if (Prcb->NextThread == NULL) {
-                    Prcb->NextThread = KiFindReadyThread(Thread->NextProcessor,
-                                                         Thread->Priority);
+                if (Prcb->NextThread == NULL)
+                {
+                    Prcb->NextThread = KiFindReadyThread(Thread->NextProcessor, Thread->Priority);
                 }
 
                 //
@@ -308,7 +320,8 @@ Return Value:
                 // switch immediately to the selected thread.
                 //
 
-                if (Prcb->NextThread != NULL) {
+                if (Prcb->NextThread != NULL)
+                {
 
                     //
                     // Give the current thread a new quantum and switch
@@ -328,14 +341,14 @@ Return Value:
                     //
 
                     Thread->State = Ready;
-                    InsertTailList(&KiDispatcherReadyListHead[Thread->Priority],
-                                   &Thread->WaitListEntry);
+                    InsertTailList(&KiDispatcherReadyListHead[Thread->Priority], &Thread->WaitListEntry);
 
                     SetMember(Thread->Priority, KiReadySummary);
                     WaitStatus = (NTSTATUS)KiSwapThread();
                     goto WaitComplete;
-
-                } else {
+                }
+                else
+                {
                     WaitStatus = STATUS_SUCCESS;
                     break;
                 }
@@ -349,7 +362,8 @@ Return Value:
             //
 
             Queue = Thread->Queue;
-            if (Queue != NULL) {
+            if (Queue != NULL)
+            {
                 KiActivateWaiterQueue(Queue);
             }
 
@@ -360,7 +374,8 @@ Return Value:
             //
 
             Thread->State = Waiting;
-            if (StackSwappable != FALSE) {
+            if (StackSwappable != FALSE)
+            {
                 InsertTailList(&KiWaitListHead, &Thread->WaitListEntry);
             }
 
@@ -381,8 +396,10 @@ Return Value:
 
         WaitComplete:
 
-            if (WaitStatus != STATUS_KERNEL_APC) {
-                if (WaitStatus == STATUS_TIMEOUT) {
+            if (WaitStatus != STATUS_KERNEL_APC)
+            {
+                if (WaitStatus == STATUS_TIMEOUT)
+                {
                     WaitStatus = STATUS_SUCCESS;
                 }
 
@@ -393,9 +410,7 @@ Return Value:
             // Reduce the time remaining before the time delay expires.
             //
 
-            Interval = KiComputeWaitInterval(OriginalTime,
-                                             &DueTime,
-                                             &NewTime);
+            Interval = KiComputeWaitInterval(OriginalTime, &DueTime, &NewTime);
         }
 
         //
@@ -403,7 +418,7 @@ Return Value:
         // and lock the dispatcher database.
         //
 
-WaitStart:
+    WaitStart:
 
 #if defined(NT_UP)
 
@@ -441,28 +456,21 @@ WaitStart:
 //      executed inside the dispatcher lock.
 //
 
-#define InitializeWaitMultiple()                                            \
-    Thread->WaitBlockList = WaitBlockArray;                                 \
-    Thread->WaitStatus = 0;                                                 \
-    InitializeListHead(&Timer->Header.WaitListHead);                        \
-    Thread->Alertable = Alertable;                                          \
-    Thread->WaitMode = WaitMode;                                            \
-    Thread->WaitReason = (UCHAR)WaitReason;                                 \
-    Thread->WaitListEntry.Flink = NULL;                                     \
-    StackSwappable = KiIsKernelStackSwappable(WaitMode, Thread);            \
-    Thread->WaitTime= KiQueryLowTickCount()
+#define InitializeWaitMultiple()                                 \
+    Thread->WaitBlockList = WaitBlockArray;                      \
+    Thread->WaitStatus = 0;                                      \
+    InitializeListHead(&Timer->Header.WaitListHead);             \
+    Thread->Alertable = Alertable;                               \
+    Thread->WaitMode = WaitMode;                                 \
+    Thread->WaitReason = (UCHAR)WaitReason;                      \
+    Thread->WaitListEntry.Flink = NULL;                          \
+    StackSwappable = KiIsKernelStackSwappable(WaitMode, Thread); \
+    Thread->WaitTime = KiQueryLowTickCount()
 
 NTSTATUS
-KeWaitForMultipleObjects (
-    IN ULONG Count,
-    IN PVOID Object[],
-    IN WAIT_TYPE WaitType,
-    IN KWAIT_REASON WaitReason,
-    IN KPROCESSOR_MODE WaitMode,
-    IN BOOLEAN Alertable,
-    IN PLARGE_INTEGER Timeout OPTIONAL,
-    IN PKWAIT_BLOCK WaitBlockArray OPTIONAL
-    )
+KeWaitForMultipleObjects(IN ULONG Count, IN PVOID Object[], IN WAIT_TYPE WaitType, IN KWAIT_REASON WaitReason,
+                         IN KPROCESSOR_MODE WaitMode, IN BOOLEAN Alertable, IN PLARGE_INTEGER Timeout OPTIONAL,
+                         IN PKWAIT_BLOCK WaitBlockArray OPTIONAL)
 
 /*++
 
@@ -546,13 +554,17 @@ Return Value:
     // limits, then bug check.
     //
 
-    if (ARGUMENT_PRESENT(WaitBlockArray)) {
-        if (Count > MAXIMUM_WAIT_OBJECTS) {
+    if (ARGUMENT_PRESENT(WaitBlockArray))
+    {
+        if (Count > MAXIMUM_WAIT_OBJECTS)
+        {
             KeBugCheck(MAXIMUM_WAIT_OBJECTS_EXCEEDED);
         }
-
-    } else {
-        if (Count > THREAD_WAIT_OBJECTS) {
+    }
+    else
+    {
+        if (Count > THREAD_WAIT_OBJECTS)
+        {
             KeBugCheck(MAXIMUM_WAIT_OBJECTS_EXCEEDED);
         }
 
@@ -565,7 +577,8 @@ Return Value:
     // thread local variables, and lock the dispatcher database.
     //
 
-    if (Thread->WaitNext == FALSE) {
+    if (Thread->WaitNext == FALSE)
+    {
         goto WaitStart;
     }
 
@@ -580,7 +593,8 @@ Return Value:
     // the loop.
     //
 
-    do {
+    do
+    {
 
         //
         // Test to determine if a kernel APC is pending.
@@ -593,7 +607,8 @@ Return Value:
         // N.B. that this can only happen in a multiprocessor system.
         //
 
-        if (Thread->ApcState.KernelApcPending && (Thread->WaitIrql < APC_LEVEL)) {
+        if (Thread->ApcState.KernelApcPending && (Thread->WaitIrql < APC_LEVEL))
+        {
 
             //
             // Unlock the dispatcher database and lower IRQL to its previous
@@ -602,8 +617,9 @@ Return Value:
             //
 
             KiUnlockDispatcherDatabase(Thread->WaitIrql);
-
-        } else {
+        }
+        else
+        {
 
             //
             // Construct wait blocks and check to determine if the wait is
@@ -613,7 +629,8 @@ Return Value:
             //
 
             WaitSatisfied = TRUE;
-            for (Index = 0; Index < Count; Index += 1) {
+            for (Index = 0; Index < Count; Index += 1)
+            {
 
                 //
                 // Test if wait can be satisfied immediately.
@@ -623,7 +640,8 @@ Return Value:
 
                 ASSERT(Objectx->Header.Type != QueueObject);
 
-                if (WaitType == WaitAny) {
+                if (WaitType == WaitAny)
+                {
 
                     //
                     // If the object is a mutant object and the mutant object
@@ -633,32 +651,37 @@ Return Value:
                     // the owner of the mutant object, then satisfy the wait.
                     //
 
-                    if (Objectx->Header.Type == MutantObject) {
-                        if ((Objectx->Header.SignalState > 0) ||
-                            (Thread == Objectx->OwnerThread)) {
-                            if (Objectx->Header.SignalState != MINLONG) {
+                    if (Objectx->Header.Type == MutantObject)
+                    {
+                        if ((Objectx->Header.SignalState > 0) || (Thread == Objectx->OwnerThread))
+                        {
+                            if (Objectx->Header.SignalState != MINLONG)
+                            {
                                 KiWaitSatisfyMutant(Objectx, Thread);
                                 WaitStatus = (NTSTATUS)(Index | Thread->WaitStatus);
                                 goto NoWait;
-
-                            } else {
+                            }
+                            else
+                            {
                                 KiUnlockDispatcherDatabase(Thread->WaitIrql);
                                 ExRaiseStatus(STATUS_MUTANT_LIMIT_EXCEEDED);
                             }
                         }
 
-                    //
-                    // If the signal state is greater than zero, then satisfy
-                    // the wait.
-                    //
-
-                    } else if (Objectx->Header.SignalState > 0) {
+                        //
+                        // If the signal state is greater than zero, then satisfy
+                        // the wait.
+                        //
+                    }
+                    else if (Objectx->Header.SignalState > 0)
+                    {
                         KiWaitSatisfyOther(Objectx);
                         WaitStatus = (NTSTATUS)(Index);
                         goto NoWait;
                     }
-
-                } else {
+                }
+                else
+                {
 
                     //
                     // If the object is a mutant object and the mutant object
@@ -669,23 +692,25 @@ Return Value:
                     // wait cannot be satisfied.
                     //
 
-                    if (Objectx->Header.Type == MutantObject) {
-                        if ((Thread == Objectx->OwnerThread) &&
-                            (Objectx->Header.SignalState == MINLONG)) {
+                    if (Objectx->Header.Type == MutantObject)
+                    {
+                        if ((Thread == Objectx->OwnerThread) && (Objectx->Header.SignalState == MINLONG))
+                        {
                             KiUnlockDispatcherDatabase(Thread->WaitIrql);
                             ExRaiseStatus(STATUS_MUTANT_LIMIT_EXCEEDED);
-
-                        } else if ((Objectx->Header.SignalState <= 0) &&
-                                  (Thread != Objectx->OwnerThread)) {
+                        }
+                        else if ((Objectx->Header.SignalState <= 0) && (Thread != Objectx->OwnerThread))
+                        {
                             WaitSatisfied = FALSE;
                         }
 
-                    //
-                    // If the signal state is less than or equal to zero, then
-                    // the wait cannot be satisfied.
-                    //
-
-                    } else if (Objectx->Header.SignalState <= 0) {
+                        //
+                        // If the signal state is less than or equal to zero, then
+                        // the wait cannot be satisfied.
+                        //
+                    }
+                    else if (Objectx->Header.SignalState <= 0)
+                    {
                         WaitSatisfied = FALSE;
                     }
                 }
@@ -707,7 +732,8 @@ Return Value:
             // wait can be satisfied immediately.
             //
 
-            if ((WaitType == WaitAll) && (WaitSatisfied)) {
+            if ((WaitType == WaitAll) && (WaitSatisfied))
+            {
                 WaitBlock->NextWaitBlock = &WaitBlockArray[0];
                 KiWaitSatisfyAll(WaitBlock);
                 WaitStatus = (NTSTATUS)Thread->WaitStatus;
@@ -725,14 +751,16 @@ Return Value:
             // a timeout value is specified.
             //
 
-            if (ARGUMENT_PRESENT(Timeout)) {
+            if (ARGUMENT_PRESENT(Timeout))
+            {
 
                 //
                 // If the timeout value is zero, then return immediately without
                 // waiting.
                 //
 
-                if (!(Timeout->LowPart | Timeout->HighPart)) {
+                if (!(Timeout->LowPart | Timeout->HighPart))
+                {
                     WaitStatus = (NTSTATUS)(STATUS_TIMEOUT);
                     goto NoWait;
                 }
@@ -750,7 +778,8 @@ Return Value:
 
                 WaitBlock->NextWaitBlock = WaitTimer;
                 WaitBlock = WaitTimer;
-                if (KiInsertTreeTimer(Timer, *Timeout) == FALSE) {
+                if (KiInsertTreeTimer(Timer, *Timeout) == FALSE)
+                {
                     WaitStatus = (NTSTATUS)STATUS_TIMEOUT;
                     goto NoWait;
                 }
@@ -769,7 +798,8 @@ Return Value:
             //
 
             WaitBlock = &WaitBlockArray[0];
-            do {
+            do
+            {
                 Objectx = (PKMUTANT)WaitBlock->Object;
                 InsertTailList(&Objectx->Header.WaitListHead, &WaitBlock->WaitListEntry);
                 WaitBlock = WaitBlock->NextWaitBlock;
@@ -781,7 +811,8 @@ Return Value:
             //
 
             Queue = Thread->Queue;
-            if (Queue != NULL) {
+            if (Queue != NULL)
+            {
                 KiActivateWaiterQueue(Queue);
             }
 
@@ -791,7 +822,8 @@ Return Value:
             //
 
             Thread->State = Waiting;
-            if (StackSwappable != FALSE) {
+            if (StackSwappable != FALSE)
+            {
                 InsertTailList(&KiWaitListHead, &Thread->WaitListEntry);
             }
 
@@ -810,19 +842,19 @@ Return Value:
             // then return the wait status.
             //
 
-            if (WaitStatus != STATUS_KERNEL_APC) {
+            if (WaitStatus != STATUS_KERNEL_APC)
+            {
                 return WaitStatus;
             }
 
-            if (ARGUMENT_PRESENT(Timeout)) {
+            if (ARGUMENT_PRESENT(Timeout))
+            {
 
                 //
                 // Reduce the amount of time remaining before timeout occurs.
                 //
 
-                Timeout = KiComputeWaitInterval(OriginalTime,
-                                                &DueTime,
-                                                &NewTime);
+                Timeout = KiComputeWaitInterval(OriginalTime, &DueTime, &NewTime);
             }
         }
 
@@ -831,7 +863,7 @@ Return Value:
         // and lock the dispatcher database.
         //
 
-WaitStart:
+    WaitStart:
 
 #if defined(NT_UP)
 
@@ -889,35 +921,33 @@ NoWait:
 //      executed inside the dispatcher lock.
 //
 
-#define InitializeWaitSingle()                                              \
-    Thread->WaitBlockList = WaitBlock;                                      \
-    WaitBlock->Object = Object;                                             \
-    WaitBlock->WaitKey = (CSHORT)(STATUS_SUCCESS);                          \
-    WaitBlock->WaitType = WaitAny;                                          \
-    Thread->WaitStatus = 0;                                                 \
-    if (ARGUMENT_PRESENT(Timeout)) {                                        \
-        WaitBlock->NextWaitBlock = WaitTimer;                               \
-        WaitTimer->NextWaitBlock = WaitBlock;                               \
-        Timer->Header.WaitListHead.Flink = &WaitTimer->WaitListEntry;       \
-        Timer->Header.WaitListHead.Blink = &WaitTimer->WaitListEntry;       \
-    } else {                                                                \
-        WaitBlock->NextWaitBlock = WaitBlock;                               \
-    }                                                                       \
-    Thread->Alertable = Alertable;                                          \
-    Thread->WaitMode = WaitMode;                                            \
-    Thread->WaitReason = (UCHAR)WaitReason;                                 \
-    Thread->WaitListEntry.Flink = NULL;                                     \
-    StackSwappable = KiIsKernelStackSwappable(WaitMode, Thread);            \
-    Thread->WaitTime= KiQueryLowTickCount()
+#define InitializeWaitSingle()                                        \
+    Thread->WaitBlockList = WaitBlock;                                \
+    WaitBlock->Object = Object;                                       \
+    WaitBlock->WaitKey = (CSHORT)(STATUS_SUCCESS);                    \
+    WaitBlock->WaitType = WaitAny;                                    \
+    Thread->WaitStatus = 0;                                           \
+    if (ARGUMENT_PRESENT(Timeout))                                    \
+    {                                                                 \
+        WaitBlock->NextWaitBlock = WaitTimer;                         \
+        WaitTimer->NextWaitBlock = WaitBlock;                         \
+        Timer->Header.WaitListHead.Flink = &WaitTimer->WaitListEntry; \
+        Timer->Header.WaitListHead.Blink = &WaitTimer->WaitListEntry; \
+    }                                                                 \
+    else                                                              \
+    {                                                                 \
+        WaitBlock->NextWaitBlock = WaitBlock;                         \
+    }                                                                 \
+    Thread->Alertable = Alertable;                                    \
+    Thread->WaitMode = WaitMode;                                      \
+    Thread->WaitReason = (UCHAR)WaitReason;                           \
+    Thread->WaitListEntry.Flink = NULL;                               \
+    StackSwappable = KiIsKernelStackSwappable(WaitMode, Thread);      \
+    Thread->WaitTime = KiQueryLowTickCount()
 
 NTSTATUS
-KeWaitForSingleObject (
-    IN PVOID Object,
-    IN KWAIT_REASON WaitReason,
-    IN KPROCESSOR_MODE WaitMode,
-    IN BOOLEAN Alertable,
-    IN PLARGE_INTEGER Timeout OPTIONAL
-    )
+KeWaitForSingleObject(IN PVOID Object, IN KWAIT_REASON WaitReason, IN KPROCESSOR_MODE WaitMode, IN BOOLEAN Alertable,
+                      IN PLARGE_INTEGER Timeout OPTIONAL)
 
 /*++
 
@@ -1000,7 +1030,8 @@ Return Value:
     // thread local variables, and lock the dispatcher database.
     //
 
-    if (Thread->WaitNext == FALSE) {
+    if (Thread->WaitNext == FALSE)
+    {
         goto WaitStart;
     }
 
@@ -1015,7 +1046,8 @@ Return Value:
     // the loop.
     //
 
-    do {
+    do
+    {
 
         //
         // Test to determine if a kernel APC is pending.
@@ -1028,7 +1060,8 @@ Return Value:
         // N.B. that this can only happen in a multiprocessor system.
         //
 
-        if (Thread->ApcState.KernelApcPending && (Thread->WaitIrql < APC_LEVEL)) {
+        if (Thread->ApcState.KernelApcPending && (Thread->WaitIrql < APC_LEVEL))
+        {
 
             //
             // Unlock the dispatcher database and lower IRQL to its previous
@@ -1037,8 +1070,9 @@ Return Value:
             //
 
             KiUnlockDispatcherDatabase(Thread->WaitIrql);
-
-        } else {
+        }
+        else
+        {
 
             //
             // If the object is a mutant object and the mutant object has been
@@ -1050,25 +1084,29 @@ Return Value:
 
             ASSERT(Objectx->Header.Type != QueueObject);
 
-            if (Objectx->Header.Type == MutantObject) {
-                if ((Objectx->Header.SignalState > 0) ||
-                    (Thread == Objectx->OwnerThread)) {
-                    if (Objectx->Header.SignalState != MINLONG) {
+            if (Objectx->Header.Type == MutantObject)
+            {
+                if ((Objectx->Header.SignalState > 0) || (Thread == Objectx->OwnerThread))
+                {
+                    if (Objectx->Header.SignalState != MINLONG)
+                    {
                         KiWaitSatisfyMutant(Objectx, Thread);
                         WaitStatus = (NTSTATUS)(Thread->WaitStatus);
                         goto NoWait;
-
-                    } else {
+                    }
+                    else
+                    {
                         KiUnlockDispatcherDatabase(Thread->WaitIrql);
                         ExRaiseStatus(STATUS_MUTANT_LIMIT_EXCEEDED);
                     }
                 }
 
-            //
-            // If the signal state is greater than zero, then satisfy the wait.
-            //
-
-            } else if (Objectx->Header.SignalState > 0) {
+                //
+                // If the signal state is greater than zero, then satisfy the wait.
+                //
+            }
+            else if (Objectx->Header.SignalState > 0)
+            {
                 KiWaitSatisfyOther(Objectx);
                 WaitStatus = (NTSTATUS)(0);
                 goto NoWait;
@@ -1089,14 +1127,16 @@ Return Value:
             // a timeout value is specified.
             //
 
-            if (ARGUMENT_PRESENT(Timeout)) {
+            if (ARGUMENT_PRESENT(Timeout))
+            {
 
                 //
                 // If the timeout value is zero, then return immediately without
                 // waiting.
                 //
 
-                if (!(Timeout->LowPart | Timeout->HighPart)) {
+                if (!(Timeout->LowPart | Timeout->HighPart))
+                {
                     WaitStatus = (NTSTATUS)(STATUS_TIMEOUT);
                     goto NoWait;
                 }
@@ -1110,7 +1150,8 @@ Return Value:
                 //      wait type, and the wait list entry link pointers.
                 //
 
-                if (KiInsertTreeTimer(Timer, *Timeout) == FALSE) {
+                if (KiInsertTreeTimer(Timer, *Timeout) == FALSE)
+                {
                     WaitStatus = (NTSTATUS)STATUS_TIMEOUT;
                     goto NoWait;
                 }
@@ -1130,7 +1171,8 @@ Return Value:
             //
 
             Queue = Thread->Queue;
-            if (Queue != NULL) {
+            if (Queue != NULL)
+            {
                 KiActivateWaiterQueue(Queue);
             }
 
@@ -1140,7 +1182,8 @@ Return Value:
             //
 
             Thread->State = Waiting;
-            if (StackSwappable != FALSE) {
+            if (StackSwappable != FALSE)
+            {
                 InsertTailList(&KiWaitListHead, &Thread->WaitListEntry);
             }
 
@@ -1159,19 +1202,19 @@ Return Value:
             // then return wait status.
             //
 
-            if (WaitStatus != STATUS_KERNEL_APC) {
+            if (WaitStatus != STATUS_KERNEL_APC)
+            {
                 return WaitStatus;
             }
 
-            if (ARGUMENT_PRESENT(Timeout)) {
+            if (ARGUMENT_PRESENT(Timeout))
+            {
 
                 //
                 // Reduce the amount of time remaining before timeout occurs.
                 //
 
-                Timeout = KiComputeWaitInterval(OriginalTime,
-                                                &DueTime,
-                                                &NewTime);
+                Timeout = KiComputeWaitInterval(OriginalTime, &DueTime, &NewTime);
             }
         }
 
@@ -1180,7 +1223,7 @@ Return Value:
         // and lock the dispatcher database.
         //
 
-WaitStart:
+    WaitStart:
 
 #if defined(NT_UP)
 
@@ -1228,11 +1271,7 @@ NoWait:
 }
 
 NTSTATUS
-KiSetServerWaitClientEvent (
-    IN PKEVENT ServerEvent,
-    IN PKEVENT ClientEvent,
-    IN ULONG WaitMode
-    )
+KiSetServerWaitClientEvent(IN PKEVENT ServerEvent, IN PKEVENT ClientEvent, IN ULONG WaitMode)
 
 /*++
 
@@ -1268,20 +1307,12 @@ Return Value:
     //
 
     KeSetEvent(ServerEvent, EVENT_INCREMENT, TRUE);
-    return KeWaitForSingleObject(ClientEvent,
-                                 WrEventPair,
-                                 (KPROCESSOR_MODE)WaitMode,
-                                 FALSE,
-                                 NULL);
+    return KeWaitForSingleObject(ClientEvent, WrEventPair, (KPROCESSOR_MODE)WaitMode, FALSE, NULL);
 }
 
 PLARGE_INTEGER
 FASTCALL
-KiComputeWaitInterval (
-    IN PLARGE_INTEGER OriginalTime,
-    IN PLARGE_INTEGER DueTime,
-    IN OUT PLARGE_INTEGER NewTime
-    )
+KiComputeWaitInterval(IN PLARGE_INTEGER OriginalTime, IN PLARGE_INTEGER DueTime, IN OUT PLARGE_INTEGER NewTime)
 
 /*++
 
@@ -1313,10 +1344,12 @@ Return Value:
     // the time delay expires.
     //
 
-    if (OriginalTime->QuadPart >= 0) {
+    if (OriginalTime->QuadPart >= 0)
+    {
         return OriginalTime;
-
-    } else {
+    }
+    else
+    {
         KiQueryInterruptTime(NewTime);
         NewTime->QuadPart -= DueTime->QuadPart;
         return NewTime;

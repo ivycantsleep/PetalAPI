@@ -29,14 +29,8 @@ Revision History:
 
 #endif
 
-VOID
-RtlInitializeContext(
-    IN HANDLE Process,
-    OUT PCONTEXT Context,
-    IN PVOID Parameter OPTIONAL,
-    IN PVOID InitialPc OPTIONAL,
-    IN PVOID InitialSp OPTIONAL
-    )
+VOID RtlInitializeContext(IN HANDLE Process, OUT PCONTEXT Context, IN PVOID Parameter OPTIONAL,
+                          IN PVOID InitialPc OPTIONAL, IN PVOID InitialSp OPTIONAL)
 
 /*++
 
@@ -71,7 +65,8 @@ Return Value:
     // Check stack alignment.
     //
 
-    if (((ULONG64)InitialSp & 0xf) != 0) {
+    if (((ULONG64)InitialSp & 0xf) != 0)
+    {
         RtlRaiseStatus(STATUS_BAD_INITIAL_STACK);
     }
 
@@ -174,15 +169,8 @@ Return Value:
 }
 
 NTSTATUS
-RtlRemoteCall(
-    HANDLE Process,
-    HANDLE Thread,
-    PVOID CallSite,
-    ULONG ArgumentCount,
-    PULONG_PTR Arguments,
-    BOOLEAN PassContext,
-    BOOLEAN AlreadySuspended
-    )
+RtlRemoteCall(HANDLE Process, HANDLE Thread, PVOID CallSite, ULONG ArgumentCount, PULONG_PTR Arguments,
+              BOOLEAN PassContext, BOOLEAN AlreadySuspended)
 
 /*++
 
@@ -232,7 +220,8 @@ Return Value:
     // Check if too many arguments are specified.
     //
 
-    if (ArgumentCount > 4) {
+    if (ArgumentCount > 4)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -241,9 +230,11 @@ Return Value:
     // current state.
     //
 
-    if (AlreadySuspended == FALSE) {
+    if (AlreadySuspended == FALSE)
+    {
         Status = NtSuspendThread(Thread, NULL);
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             return Status;
         }
     }
@@ -254,15 +245,18 @@ Return Value:
 
     Context.ContextFlags = CONTEXT_FULL;
     Status = NtGetContextThread(Thread, &Context);
-    if (!NT_SUCCESS(Status)) {
-        if (AlreadySuspended == FALSE) {
+    if (!NT_SUCCESS(Status))
+    {
+        if (AlreadySuspended == FALSE)
+        {
             NtResumeThread(Thread, NULL);
         }
 
         return Status;
     }
 
-    if (AlreadySuspended != FALSE) {
+    if (AlreadySuspended != FALSE)
+    {
         Context.Rax = STATUS_ALERTED;
     }
 
@@ -271,19 +265,17 @@ Return Value:
     //
 
     NewSp = Context.Rsp - sizeof(CONTEXT);
-	Status = NtWriteVirtualMemory(Process,
-				                  (PVOID)NewSp,
-				                  &Context,
-				                  sizeof(CONTEXT),
-				                  NULL);
+    Status = NtWriteVirtualMemory(Process, (PVOID)NewSp, &Context, sizeof(CONTEXT), NULL);
 
-	if (!NT_SUCCESS(Status)) {
-        if (AlreadySuspended == FALSE) {
+    if (!NT_SUCCESS(Status))
+    {
+        if (AlreadySuspended == FALSE)
+        {
             NtResumeThread(Thread, NULL);
         }
 
-	    return Status;
-	}
+        return Status;
+    }
 
     //
     // Pass the parameters to the target thread via the nonvolatile registers
@@ -291,14 +283,18 @@ Return Value:
     //
 
     Context.Rsp = NewSp;
-    if (PassContext != FALSE) {
+    if (PassContext != FALSE)
+    {
         Context.R11 = NewSp;
-        for (Index = 0; Index < ArgumentCount; Index += 1) {
+        for (Index = 0; Index < ArgumentCount; Index += 1)
+        {
             (&Context.R12)[Index] = Arguments[Index];
         }
-
-    } else {
-        for (Index = 0; Index < ArgumentCount; Index += 1) {
+    }
+    else
+    {
+        for (Index = 0; Index < ArgumentCount; Index += 1)
+        {
             (&Context.R11)[Index] = Arguments[Index];
         }
     }
@@ -310,7 +306,8 @@ Return Value:
 
     Context.Rip = (ULONG64)CallSite;
     Status = NtSetContextThread(Thread, &Context);
-    if (AlreadySuspended == FALSE) {
+    if (AlreadySuspended == FALSE)
+    {
         NtResumeThread(Thread, NULL);
     }
 

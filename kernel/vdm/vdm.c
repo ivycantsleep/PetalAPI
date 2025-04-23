@@ -19,7 +19,7 @@ Revision History:
 --*/
 
 
-#if defined (_X86_)
+#if defined(_X86_)
 #include "vdmp.h"
 #endif
 #include <ntos.h>
@@ -30,12 +30,12 @@ Revision History:
 #include <fsrtl.h>
 
 
-typedef struct _QueryDirPoolData {
-    KEVENT         kevent;
+typedef struct _QueryDirPoolData
+{
+    KEVENT kevent;
     UNICODE_STRING FileName;
-    WCHAR          FileNameBuf[1];
+    WCHAR FileNameBuf[1];
 } QDIR_POOLDATA, *PQDIR_POOLDATA;
-
 
 
 #ifdef ALLOC_PRAGMA
@@ -49,10 +49,7 @@ typedef struct _QueryDirPoolData {
 #endif
 
 NTSTATUS
-NtVdmControl(
-    IN VDMSERVICECLASS Service,
-    IN OUT PVOID ServiceData
-    )
+NtVdmControl(IN VDMSERVICECLASS Service, IN OUT PVOID ServiceData)
 /*++
 
 Routine Description:
@@ -74,12 +71,12 @@ Return Value:
     PAGED_CODE();
 
 
-    if (Service == VdmQueryDir) {
+    if (Service == VdmQueryDir)
+    {
         return VdmQueryDirectoryFile(ServiceData);
-        }
+    }
 
     return STATUS_NOT_IMPLEMENTED;
-
 }
 #endif
 
@@ -87,9 +84,7 @@ Return Value:
 extern POBJECT_TYPE IoFileObjectType;
 
 NTSTATUS
-VdmQueryDirectoryFile(
-    PVDMQUERYDIRINFO pVdmQueryDir
-    )
+VdmQueryDirectoryFile(PVDMQUERYDIRINFO pVdmQueryDir)
 
 /*++
     This VDM specific service allows vdm to restart searches at a specified
@@ -119,9 +114,9 @@ Arguments: PVDMQUERYDIRINFO pVdmQueryDir
 --*/
 
 {
-    KIRQL    irql;
+    KIRQL irql;
     NTSTATUS status;
-    PKEVENT  Event;
+    PKEVENT Event;
 
     HANDLE FileHandle;
     IO_STATUS_BLOCK IoStatusBlock;
@@ -148,18 +143,19 @@ Arguments: PVDMQUERYDIRINFO pVdmQueryDir
     // accordingly
     //
 
-    try {
+    try
+    {
 
         //
         // Copy out the callers service data into local variables
         //
-        ProbeForRead( pVdmQueryDir, sizeof(VDMQUERYDIRINFO), sizeof(ULONG));
+        ProbeForRead(pVdmQueryDir, sizeof(VDMQUERYDIRINFO), sizeof(ULONG));
 
-        FileHandle      = pVdmQueryDir->FileHandle;
+        FileHandle = pVdmQueryDir->FileHandle;
         FileInformation = pVdmQueryDir->FileInformation;
-        Length          = pVdmQueryDir->Length;
-        FileIndex       = pVdmQueryDir->FileIndex;
-        pFileNameSrc    = pVdmQueryDir->FileName;
+        Length = pVdmQueryDir->Length;
+        FileIndex = pVdmQueryDir->FileIndex;
+        pFileNameSrc = pVdmQueryDir->FileName;
 
         //
         // Ensure that we have a valid file name string
@@ -168,23 +164,24 @@ Arguments: PVDMQUERYDIRINFO pVdmQueryDir
         //
         // check for pVdmQueryDir->Filename validity first
         //
-        if (NULL == pFileNameSrc) {
-           return(STATUS_INVALID_PARAMETER);
+        if (NULL == pFileNameSrc)
+        {
+            return (STATUS_INVALID_PARAMETER);
         }
 
         FileName = ProbeAndReadUnicodeString(pFileNameSrc);
-        if (!FileName.Length ||
-            FileName.Length > MAXIMUM_FILENAME_LENGTH<<1) {
-            return(STATUS_INVALID_PARAMETER);
+        if (!FileName.Length || FileName.Length > MAXIMUM_FILENAME_LENGTH << 1)
+        {
+            return (STATUS_INVALID_PARAMETER);
         }
 
-        ProbeForRead(FileName.Buffer, FileName.Length, sizeof( UCHAR ));
+        ProbeForRead(FileName.Buffer, FileName.Length, sizeof(UCHAR));
 
         //
         // The FileInformation buffer must be writeable by the caller.
         //
 
-        ProbeForWrite( FileInformation, Length, sizeof( ULONG ) );
+        ProbeForWrite(FileInformation, Length, sizeof(ULONG));
 
         //
         // Ensure that the caller's supplied buffer is at least large enough
@@ -192,10 +189,10 @@ Arguments: PVDMQUERYDIRINFO pVdmQueryDir
         // query.
         //
 
-        if (Length < sizeof(FILE_BOTH_DIR_INFORMATION)) {
+        if (Length < sizeof(FILE_BOTH_DIR_INFORMATION))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
-
 
 
         //
@@ -203,10 +200,8 @@ Arguments: PVDMQUERYDIRINFO pVdmQueryDir
         // the file name, and the kevent used to wait for io.
         //
 
-        QDirPoolData = (PQDIR_POOLDATA) ExAllocatePoolWithQuotaTag(
-                                           NonPagedPool,
-                                           sizeof(QDIR_POOLDATA) + FileName.Length,
-                                           ' MDV');
+        QDirPoolData =
+            (PQDIR_POOLDATA)ExAllocatePoolWithQuotaTag(NonPagedPool, sizeof(QDIR_POOLDATA) + FileName.Length, ' MDV');
 
         //
         // Capture the file name string into the nonpaged pool block.
@@ -215,14 +210,13 @@ Arguments: PVDMQUERYDIRINFO pVdmQueryDir
         QDirPoolData->FileName.Length = FileName.Length;
         QDirPoolData->FileName.MaximumLength = FileName.Length;
         QDirPoolData->FileName.Buffer = QDirPoolData->FileNameBuf;
-        RtlCopyMemory( QDirPoolData->FileNameBuf,
-                       FileName.Buffer,
-                       FileName.Length );
+        RtlCopyMemory(QDirPoolData->FileNameBuf, FileName.Buffer, FileName.Length);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
-
-    } except(EXCEPTION_EXECUTE_HANDLER) {
-
-        if (QDirPoolData) {
+        if (QDirPoolData)
+        {
             ExFreePool(QDirPoolData);
         }
 
@@ -236,14 +230,12 @@ Arguments: PVDMQUERYDIRINFO pVdmQueryDir
     // access to the file, then it will fail.
     //
 
-    status = ObReferenceObjectByHandle( FileHandle,
-                                        FILE_LIST_DIRECTORY,
-                                        IoFileObjectType,
-                                        UserMode,
-                                        (PVOID *) &fileObject,
-                                        (POBJECT_HANDLE_INFORMATION) NULL );
-    if (!NT_SUCCESS( status )) {
-        if (QDirPoolData) {
+    status = ObReferenceObjectByHandle(FileHandle, FILE_LIST_DIRECTORY, IoFileObjectType, UserMode,
+                                       (PVOID *)&fileObject, (POBJECT_HANDLE_INFORMATION)NULL);
+    if (!NT_SUCCESS(status))
+    {
+        if (QDirPoolData)
+        {
             ExFreePool(QDirPoolData);
         }
         return status;
@@ -266,29 +258,31 @@ Arguments: PVDMQUERYDIRINFO pVdmQueryDir
     // Set the file object to the Not-Signaled state.
     //
 
-    KeClearEvent( &fileObject->Event );
+    KeClearEvent(&fileObject->Event);
 
     //
     // Get the address of the target device object.
     //
 
-    DeviceObject = IoGetRelatedDeviceObject( fileObject );
+    DeviceObject = IoGetRelatedDeviceObject(fileObject);
 
     //
     // Allocate and initialize the I/O Request Packet (IRP) for this operation.
     // The allocation is performed with an exception handler in case the
     // caller does not have enough quota to allocate the packet.
 
-    irp = IoAllocateIrp( DeviceObject->StackSize, TRUE );
-    if (!irp) {
+    irp = IoAllocateIrp(DeviceObject->StackSize, TRUE);
+    if (!irp)
+    {
 
         //
         // An IRP could not be allocated.  Cleanup and return an appropriate
         // error status code.
         //
 
-        ObDereferenceObject( fileObject );
-        if (QDirPoolData) {
+        ObDereferenceObject(fileObject);
+        if (QDirPoolData)
+        {
             ExFreePool(QDirPoolData);
         }
 
@@ -306,7 +300,7 @@ Arguments: PVDMQUERYDIRINFO pVdmQueryDir
     irp->UserEvent = Event;
 
     irp->Overlay.AsynchronousParameters.UserApcRoutine = NULL;
-    irp->AssociatedIrp.SystemBuffer = (PVOID) NULL;
+    irp->AssociatedIrp.SystemBuffer = (PVOID)NULL;
     SystemBuffer = NULL;
 
 
@@ -320,7 +314,7 @@ Arguments: PVDMQUERYDIRINFO pVdmQueryDir
     // used to pass the function codes and parameters.
     //
 
-    irpSp = IoGetNextIrpStackLocation( irp );
+    irpSp = IoGetNextIrpStackLocation(irp);
     irpSp->MajorFunction = IRP_MJ_DIRECTORY_CONTROL;
     irpSp->MinorFunction = IRP_MN_QUERY_DIRECTORY;
     irpSp->FileObject = fileObject;
@@ -335,9 +329,12 @@ Arguments: PVDMQUERYDIRINFO pVdmQueryDir
     irpSp->Parameters.QueryDirectory.FileInformationClass = FileBothDirectoryInformation;
     irpSp->Parameters.QueryDirectory.FileIndex = FileIndex;
 
-    if (QDirPoolData->FileName.Length) {
+    if (QDirPoolData->FileName.Length)
+    {
         irpSp->Parameters.QueryDirectory.FileName = (PSTRING)&QDirPoolData->FileName;
-    } else {
+    }
+    else
+    {
         irpSp->Parameters.QueryDirectory.FileName = NULL;
     }
 
@@ -353,7 +350,8 @@ Arguments: PVDMQUERYDIRINFO pVdmQueryDir
     // locked down using it.
     //
 
-    if (DeviceObject->Flags & DO_BUFFERED_IO) {
+    if (DeviceObject->Flags & DO_BUFFERED_IO)
+    {
 
         //
         // The file system wants buffered I/O.  Pass the address of the
@@ -363,35 +361,35 @@ Arguments: PVDMQUERYDIRINFO pVdmQueryDir
         //
 
 
-        try {
+        try
+        {
 
             //
             // Allocate the intermediary system buffer from nonpaged pool and
             // charge quota for it.
             //
 
-            SystemBuffer = ExAllocatePoolWithQuotaTag( NonPagedPool,
-                                                       Length,
-                                                       ' MDV' );
+            SystemBuffer = ExAllocatePoolWithQuotaTag(NonPagedPool, Length, ' MDV');
 
             irp->AssociatedIrp.SystemBuffer = SystemBuffer;
-
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             IoFreeIrp(irp);
 
-            ObDereferenceObject( fileObject );
+            ObDereferenceObject(fileObject);
 
-            if (QDirPoolData) {
+            if (QDirPoolData)
+            {
                 ExFreePool(QDirPoolData);
             }
 
             return GetExceptionCode();
         }
-
-
-    } else if (DeviceObject->Flags & DO_DIRECT_IO) {
+    }
+    else if (DeviceObject->Flags & DO_DIRECT_IO)
+    {
 
         //
         // This is a direct I/O operation.  Allocate an MDL and invoke the
@@ -400,9 +398,10 @@ Arguments: PVDMQUERYDIRINFO pVdmQueryDir
         // operation fails.
         //
 
-        mdl = (PMDL) NULL;
+        mdl = (PMDL)NULL;
 
-        try {
+        try
+        {
 
             //
             // Allocate an MDL, charging quota for it, and hang it off of the
@@ -411,30 +410,35 @@ Arguments: PVDMQUERYDIRINFO pVdmQueryDir
             // those pages.
             //
 
-            mdl = IoAllocateMdl( FileInformation, Length, FALSE, TRUE, irp );
-            if (mdl == NULL) {
-                ExRaiseStatus( STATUS_INSUFFICIENT_RESOURCES );
+            mdl = IoAllocateMdl(FileInformation, Length, FALSE, TRUE, irp);
+            if (mdl == NULL)
+            {
+                ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
             }
-            MmProbeAndLockPages( mdl, UserMode, IoWriteAccess );
+            MmProbeAndLockPages(mdl, UserMode, IoWriteAccess);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
-        } except(EXCEPTION_EXECUTE_HANDLER) {
-
-            if (irp->MdlAddress != NULL) {
-                 IoFreeMdl( irp->MdlAddress );
+            if (irp->MdlAddress != NULL)
+            {
+                IoFreeMdl(irp->MdlAddress);
             }
 
             IoFreeIrp(irp);
 
-            ObDereferenceObject( fileObject );
+            ObDereferenceObject(fileObject);
 
-            if (QDirPoolData) {
+            if (QDirPoolData)
+            {
                 ExFreePool(QDirPoolData);
             }
 
             return GetExceptionCode();
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // Pass the address of the user's buffer so the driver has access to
@@ -442,7 +446,6 @@ Arguments: PVDMQUERYDIRINFO pVdmQueryDir
         //
 
         irp->UserBuffer = FileInformation;
-
     }
 
 
@@ -450,10 +453,9 @@ Arguments: PVDMQUERYDIRINFO pVdmQueryDir
     // Insert the packet at the head of the IRP list for the thread.
     //
 
-    KeRaiseIrql( APC_LEVEL, &irql );
-    InsertHeadList( &irp->Tail.Overlay.Thread->IrpList,
-                    &irp->ThreadListEntry );
-    KeLowerIrql( irql );
+    KeRaiseIrql(APC_LEVEL, &irql);
+    InsertHeadList(&irp->Tail.Overlay.Thread->IrpList, &irp->ThreadListEntry);
+    KeLowerIrql(irql);
 
 
     //
@@ -462,26 +464,24 @@ Arguments: PVDMQUERYDIRINFO pVdmQueryDir
 
     status = IoCallDriver(DeviceObject, irp);
 
-    if (status == STATUS_PENDING) {
-        status = KeWaitForSingleObject(
-                     Event,
-                     UserRequest,
-                     UserMode,
-                     FALSE,
-                     NULL );
+    if (status == STATUS_PENDING)
+    {
+        status = KeWaitForSingleObject(Event, UserRequest, UserMode, FALSE, NULL);
     }
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         status = IoStatusBlock.Status;
-        if (NT_SUCCESS(status) || status == STATUS_BUFFER_OVERFLOW) {
-            if (SystemBuffer) {
-                try {
-                    RtlCopyMemory( FileInformation,
-                                   SystemBuffer,
-                                   IoStatusBlock.Information
-                                   );
-
-                } except(EXCEPTION_EXECUTE_HANDLER) {
+        if (NT_SUCCESS(status) || status == STATUS_BUFFER_OVERFLOW)
+        {
+            if (SystemBuffer)
+            {
+                try
+                {
+                    RtlCopyMemory(FileInformation, SystemBuffer, IoStatusBlock.Information);
+                }
+                except(EXCEPTION_EXECUTE_HANDLER)
+                {
                     status = GetExceptionCode();
                 }
             }
@@ -492,11 +492,13 @@ Arguments: PVDMQUERYDIRINFO pVdmQueryDir
     //
     // Cleanup any memory allocated
     //
-    if (QDirPoolData) {
+    if (QDirPoolData)
+    {
         ExFreePool(QDirPoolData);
     }
 
-    if (SystemBuffer) {
+    if (SystemBuffer)
+    {
         ExFreePool(SystemBuffer);
     }
 

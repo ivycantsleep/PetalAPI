@@ -25,13 +25,9 @@ Revision History:
 
 #include "ki.h"
 
-VOID
-KiLowerIrqlSpecial(KIRQL);
+VOID KiLowerIrqlSpecial(KIRQL);
 
-VOID
-KiDispatchSoftwareInterrupt (
-    KIRQL Irql
-    )
+VOID KiDispatchSoftwareInterrupt(KIRQL Irql)
 
 /*++
 
@@ -61,7 +57,8 @@ Notes:
 
     KiLowerIrqlSpecial(Irql); // set IRQL
 
-    if (Irql == APC_LEVEL) {
+    if (Irql == APC_LEVEL)
+    {
 
         PCR->ApcInterrupt = 0;
 
@@ -71,11 +68,12 @@ Notes:
         // Dispatch APC Interrupt via direct call to KiDeliverApc
         //
 
-        KiDeliverApc(KernelMode,NULL,NULL);
+        KiDeliverApc(KernelMode, NULL, NULL);
 
         _disable();
-
-    } else {
+    }
+    else
+    {
 
         PCR->DispatchInterrupt = 0;
 
@@ -88,14 +86,10 @@ Notes:
         KiDispatchInterrupt();
 
         _disable();
-
     }
 }
 
-VOID
-KiCheckForSoftwareInterrupt (
-    KIRQL RequestIrql
-    )
+VOID KiCheckForSoftwareInterrupt(KIRQL RequestIrql)
 
 /*++
 
@@ -122,28 +116,35 @@ Notes:
 
     InterruptState = KeDisableInterrupts();
 
-    if (RequestIrql == APC_LEVEL) {
+    if (RequestIrql == APC_LEVEL)
+    {
 
         //
         // Dispatch only DPC requests
         //
 
-        while (PCR->DispatchInterrupt) {
+        while (PCR->DispatchInterrupt)
+        {
             KiDispatchSoftwareInterrupt(DISPATCH_LEVEL);
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // Dispatch either APC or DPC
         //
 
-        while (PCR->SoftwareInterruptPending) {
+        while (PCR->SoftwareInterruptPending)
+        {
             KIRQL Irql;
 
-            if (PCR->DispatchInterrupt) {
+            if (PCR->DispatchInterrupt)
+            {
                 Irql = DISPATCH_LEVEL;
-            } else {
+            }
+            else
+            {
                 Irql = APC_LEVEL;
             }
             KiDispatchSoftwareInterrupt(Irql);
@@ -158,11 +159,8 @@ Notes:
     KiLowerIrqlSpecial(RequestIrql);
     KeEnableInterrupts(InterruptState);
 }
-
-VOID
-KiRequestSoftwareInterrupt (
-    KIRQL RequestIrql
-    )
+
+VOID KiRequestSoftwareInterrupt(KIRQL RequestIrql)
 
 /*++
 
@@ -189,11 +187,11 @@ Return Value:
         KeBugCheckEx(INVALID_SOFTWARE_INTERRUPT, RequestIrql, 0, 0, 0);
 #endif
 
-    ((PUCHAR)&PCR->SoftwareInterruptPending)[RequestIrql-APC_LEVEL] = 1;
+    ((PUCHAR)&PCR->SoftwareInterruptPending)[RequestIrql - APC_LEVEL] = 1;
 
     Irql = KeGetCurrentIrql();
-    if (Irql < RequestIrql) {
-        KeLowerIrql (Irql);
+    if (Irql < RequestIrql)
+    {
+        KeLowerIrql(Irql);
     }
 }
-

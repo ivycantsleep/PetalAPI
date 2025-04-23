@@ -39,65 +39,60 @@ Revision History:
 
 #include "cmp.h"
 
-VOID
-CmpSystemHiveHysteresisWorker(
-    IN PVOID WorkItem
-    );
+VOID CmpSystemHiveHysteresisWorker(IN PVOID WorkItem);
 
-VOID
-CmpRaiseSelfHealWarningWorker(
-    IN PVOID Arg
-    );
+VOID CmpRaiseSelfHealWarningWorker(IN PVOID Arg);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,CmpClaimGlobalQuota)
-#pragma alloc_text(PAGE,CmpReleaseGlobalQuota)
-#pragma alloc_text(PAGE,CmpSetGlobalQuotaAllowed)
-#pragma alloc_text(PAGE,CmpQuotaWarningWorker)
-#pragma alloc_text(PAGE,CmQueryRegistryQuotaInformation)
-#pragma alloc_text(PAGE,CmSetRegistryQuotaInformation)
-#pragma alloc_text(PAGE,CmpCanGrowSystemHive)
-#pragma alloc_text(PAGE,CmpSystemQuotaWarningWorker)
-#pragma alloc_text(INIT,CmpComputeGlobalQuotaAllowed)
-#pragma alloc_text(PAGE,CmpSystemHiveHysteresisWorker)
-#pragma alloc_text(PAGE,CmpUpdateSystemHiveHysteresis)
-#pragma alloc_text(PAGE,CmRegisterSystemHiveLimitCallback)
-#pragma alloc_text(PAGE,CmpRaiseSelfHealWarning)
-#pragma alloc_text(PAGE,CmpRaiseSelfHealWarningForSystemHives)
-#pragma alloc_text(PAGE,CmpRaiseSelfHealWarningWorker)
+#pragma alloc_text(PAGE, CmpClaimGlobalQuota)
+#pragma alloc_text(PAGE, CmpReleaseGlobalQuota)
+#pragma alloc_text(PAGE, CmpSetGlobalQuotaAllowed)
+#pragma alloc_text(PAGE, CmpQuotaWarningWorker)
+#pragma alloc_text(PAGE, CmQueryRegistryQuotaInformation)
+#pragma alloc_text(PAGE, CmSetRegistryQuotaInformation)
+#pragma alloc_text(PAGE, CmpCanGrowSystemHive)
+#pragma alloc_text(PAGE, CmpSystemQuotaWarningWorker)
+#pragma alloc_text(INIT, CmpComputeGlobalQuotaAllowed)
+#pragma alloc_text(PAGE, CmpSystemHiveHysteresisWorker)
+#pragma alloc_text(PAGE, CmpUpdateSystemHiveHysteresis)
+#pragma alloc_text(PAGE, CmRegisterSystemHiveLimitCallback)
+#pragma alloc_text(PAGE, CmpRaiseSelfHealWarning)
+#pragma alloc_text(PAGE, CmpRaiseSelfHealWarningForSystemHives)
+#pragma alloc_text(PAGE, CmpRaiseSelfHealWarningWorker)
 #endif
 
 //
 // Registry control values
 //
-#define CM_DEFAULT_RATIO            (3)
-#define CM_LIMIT_RATIO(x)           ((x / 10) * 8)
-#define CM_MINIMUM_GLOBAL_QUOTA     (16 *1024 * 1024)
+#define CM_DEFAULT_RATIO (3)
+#define CM_LIMIT_RATIO(x) ((x / 10) * 8)
+#define CM_MINIMUM_GLOBAL_QUOTA (16 * 1024 * 1024)
 
 //
 // Percent of used registry quota that triggers a hard error
 // warning popup.
 //
-#define CM_REGISTRY_WARNING_LEVEL   (95)
+#define CM_REGISTRY_WARNING_LEVEL (95)
 
 //
 // System hive hard quota limit
 //
-// For an x86 3GB system we set the limit at 12MB for now. Needs some MM changes before we 
+// For an x86 3GB system we set the limit at 12MB for now. Needs some MM changes before we
 // bump this up.
 // For an x86 non-3GB system, we set the limit at 1/4 of physical memory
 // For IA-64 we set the limit at 32MB
 //
 
-#define _200MB (200 *1024 * 1024) 
+#define _200MB (200 * 1024 * 1024)
 
 #if defined(_X86_)
-#define CM_SYSTEM_HIVE_LIMIT_SIZE       (MmVirtualBias ? (12 * 1024 * 1024) : (min(MmNumberOfPhysicalPages / 4, _200MB >> PAGE_SHIFT) * PAGE_SIZE))
+#define CM_SYSTEM_HIVE_LIMIT_SIZE \
+    (MmVirtualBias ? (12 * 1024 * 1024) : (min(MmNumberOfPhysicalPages / 4, _200MB >> PAGE_SHIFT) * PAGE_SIZE))
 #else
-#define CM_SYSTEM_HIVE_LIMIT_SIZE       (32 * 1024 * 1024)
+#define CM_SYSTEM_HIVE_LIMIT_SIZE (32 * 1024 * 1024)
 #endif
 
-#define CM_SYSTEM_HIVE_WARNING_SIZE     ((CM_SYSTEM_HIVE_LIMIT_SIZE*9)/10)
+#define CM_SYSTEM_HIVE_WARNING_SIZE ((CM_SYSTEM_HIVE_LIMIT_SIZE * 9) / 10)
 
 
 extern ULONG CmRegistrySizeLimit;
@@ -111,13 +106,13 @@ extern ULONG MmSizeOfPagedPoolInBytes;
 // Set to largest positive number for use in boot.  Will be set down
 // based on pool and explicit registry values.
 //
-extern ULONG   CmpGlobalQuota;
-extern ULONG   CmpGlobalQuotaAllowed;
+extern ULONG CmpGlobalQuota;
+extern ULONG CmpGlobalQuotaAllowed;
 
 //
 // Mark that will trigger the low-on-quota popup
 //
-extern ULONG   CmpGlobalQuotaWarning;
+extern ULONG CmpGlobalQuotaWarning;
 
 //
 // Indicate whether the popup has been triggered yet or not.
@@ -129,15 +124,12 @@ extern BOOLEAN CmpSystemQuotaWarningPopupDisplayed;
 //
 // GQ actually in use
 //
-extern ULONG   CmpGlobalQuotaUsed;
+extern ULONG CmpGlobalQuotaUsed;
 
-extern  HIVE_LIST_ENTRY CmpMachineHiveList[];
+extern HIVE_LIST_ENTRY CmpMachineHiveList[];
 
 
-VOID
-CmQueryRegistryQuotaInformation(
-    IN PSYSTEM_REGISTRY_QUOTA_INFORMATION RegistryQuotaInformation
-    )
+VOID CmQueryRegistryQuotaInformation(IN PSYSTEM_REGISTRY_QUOTA_INFORMATION RegistryQuotaInformation)
 
 /*++
 
@@ -157,16 +149,13 @@ Return Value:
 --*/
 
 {
-    RegistryQuotaInformation->RegistryQuotaAllowed  = CmpGlobalQuota;
-    RegistryQuotaInformation->RegistryQuotaUsed     = CmpGlobalQuotaUsed;
-    RegistryQuotaInformation->PagedPoolSize         = MmSizeOfPagedPoolInBytes;
+    RegistryQuotaInformation->RegistryQuotaAllowed = CmpGlobalQuota;
+    RegistryQuotaInformation->RegistryQuotaUsed = CmpGlobalQuotaUsed;
+    RegistryQuotaInformation->PagedPoolSize = MmSizeOfPagedPoolInBytes;
 }
 
-
-VOID
-CmSetRegistryQuotaInformation(
-    IN PSYSTEM_REGISTRY_QUOTA_INFORMATION RegistryQuotaInformation
-    )
+
+VOID CmSetRegistryQuotaInformation(IN PSYSTEM_REGISTRY_QUOTA_INFORMATION RegistryQuotaInformation)
 
 /*++
 
@@ -192,10 +181,12 @@ Return Value:
     //
     // Sanity checks against insane values
     //
-    if (CmpGlobalQuota > CM_WRAP_LIMIT) {
+    if (CmpGlobalQuota > CM_WRAP_LIMIT)
+    {
         CmpGlobalQuota = CM_WRAP_LIMIT;
     }
-    if (CmpGlobalQuota < CM_MINIMUM_GLOBAL_QUOTA) {
+    if (CmpGlobalQuota < CM_MINIMUM_GLOBAL_QUOTA)
+    {
         CmpGlobalQuota = CM_MINIMUM_GLOBAL_QUOTA;
     }
 
@@ -207,10 +198,7 @@ Return Value:
     CmpGlobalQuotaAllowed = CmpGlobalQuota;
 }
 
-VOID
-CmpQuotaWarningWorker(
-    IN PVOID WorkItem
-    )
+VOID CmpQuotaWarningWorker(IN PVOID WorkItem)
 
 /*++
 
@@ -236,19 +224,12 @@ Return Value:
 
     ExFreePool(WorkItem);
 
-    Status = ExRaiseHardError(STATUS_REGISTRY_QUOTA_LIMIT,
-                              0,
-                              0,
-                              NULL,
-                              OptionOk,
-                              &Response);
+    Status = ExRaiseHardError(STATUS_REGISTRY_QUOTA_LIMIT, 0, 0, NULL, OptionOk, &Response);
 }
 
-
+
 BOOLEAN
-CmpClaimGlobalQuota(
-    IN ULONG    Size
-    )
+CmpClaimGlobalQuota(IN ULONG Size)
 /*++
 
 Routine Description:
@@ -316,11 +297,8 @@ Return Value:
     return TRUE;
 }
 
-
-VOID
-CmpReleaseGlobalQuota(
-    IN ULONG    Size
-    )
+
+VOID CmpReleaseGlobalQuota(IN ULONG Size)
 /*++
 
 Routine Description:
@@ -337,18 +315,16 @@ Return Value:
 
 --*/
 {
-    if (Size > CmpGlobalQuotaUsed) {
-        CM_BUGCHECK(REGISTRY_ERROR,QUOTA_ERROR,1,0,0);
+    if (Size > CmpGlobalQuotaUsed)
+    {
+        CM_BUGCHECK(REGISTRY_ERROR, QUOTA_ERROR, 1, 0, 0);
     }
 
     CmpGlobalQuotaUsed -= Size;
 }
 
-
-VOID
-CmpComputeGlobalQuotaAllowed(
-    VOID
-    )
+
+VOID CmpComputeGlobalQuotaAllowed(VOID)
 
 /*++
 
@@ -365,38 +341,39 @@ Return Value:
 --*/
 
 {
-    ULONG   PagedLimit;
+    ULONG PagedLimit;
 
     PagedLimit = CM_LIMIT_RATIO(MmSizeOfPagedPoolInBytes);
 
-    if ((CmRegistrySizeLimitLength != 4) ||
-        (CmRegistrySizeLimitType != REG_DWORD) ||
-        (CmRegistrySizeLimit == 0))
+    if ((CmRegistrySizeLimitLength != 4) || (CmRegistrySizeLimitType != REG_DWORD) || (CmRegistrySizeLimit == 0))
     {
         //
         // If no value at all, or value of wrong type, or set to
         // zero, use internally computed default
         //
         CmpGlobalQuota = MmSizeOfPagedPoolInBytes / CM_DEFAULT_RATIO;
-
-    } else if (CmRegistrySizeLimit >= PagedLimit) {
+    }
+    else if (CmRegistrySizeLimit >= PagedLimit)
+    {
         //
         // If more than computed upper bound, use computed upper bound
         //
         CmpGlobalQuota = PagedLimit;
-
-    } else {
+    }
+    else
+    {
         //
         // Use the set size
         //
         CmpGlobalQuota = CmRegistrySizeLimit;
-
     }
 
-    if (CmpGlobalQuota > CM_WRAP_LIMIT) {
+    if (CmpGlobalQuota > CM_WRAP_LIMIT)
+    {
         CmpGlobalQuota = CM_WRAP_LIMIT;
     }
-    if (CmpGlobalQuota < CM_MINIMUM_GLOBAL_QUOTA) {
+    if (CmpGlobalQuota < CM_MINIMUM_GLOBAL_QUOTA)
+    {
         CmpGlobalQuota = CM_MINIMUM_GLOBAL_QUOTA;
     }
 
@@ -405,11 +382,8 @@ Return Value:
     return;
 }
 
-
-VOID
-CmpSetGlobalQuotaAllowed(
-    VOID
-    )
+
+VOID CmpSetGlobalQuotaAllowed(VOID)
 /*++
 
 Routine Description:
@@ -425,15 +399,12 @@ Return Value:
 
 --*/
 {
-     CmpGlobalQuotaAllowed = CmpGlobalQuota;
+    CmpGlobalQuotaAllowed = CmpGlobalQuota;
 }
 
 
 BOOLEAN
-CmpCanGrowSystemHive(
-                     IN PHHIVE  Hive,
-                     IN ULONG   NewLength
-                     )
+CmpCanGrowSystemHive(IN PHHIVE Hive, IN ULONG NewLength)
 
 /*++
 
@@ -448,14 +419,15 @@ Return Value:
 
 --*/
 {
-    PCMHIVE             CmHive;
-    PWORK_QUEUE_ITEM    WorkItem;
+    PCMHIVE CmHive;
+    PWORK_QUEUE_ITEM WorkItem;
 
     PAGED_CODE();
 
-    CmHive = (PCMHIVE)CONTAINING_RECORD(Hive,CMHIVE,Hive);
-    
-    if( CmHive != CmpMachineHiveList[SYSTEM_HIVE_INDEX].CmHive ) {
+    CmHive = (PCMHIVE)CONTAINING_RECORD(Hive, CMHIVE, Hive);
+
+    if (CmHive != CmpMachineHiveList[SYSTEM_HIVE_INDEX].CmHive)
+    {
         //
         // not the system hive, bail out
         //
@@ -464,40 +436,34 @@ Return Value:
 
     // account for the header.
     NewLength += HBLOCK_SIZE;
-    if( NewLength > CM_SYSTEM_HIVE_LIMIT_SIZE ) {
+    if (NewLength > CM_SYSTEM_HIVE_LIMIT_SIZE)
+    {
         //
         // this is bad; we may not be able to boot next time !!!
         //
         return FALSE;
     }
 
-    if( (NewLength > CM_SYSTEM_HIVE_WARNING_SIZE) && 
-        (!CmpSystemQuotaWarningPopupDisplayed) &&
-        (ExReadyForErrors)
-      ) {
+    if ((NewLength > CM_SYSTEM_HIVE_WARNING_SIZE) && (!CmpSystemQuotaWarningPopupDisplayed) && (ExReadyForErrors))
+    {
         //
         // we're above the warning level, queue work item to display popup
         //
         WorkItem = ExAllocatePool(NonPagedPool, sizeof(WORK_QUEUE_ITEM));
-        if (WorkItem != NULL) {
+        if (WorkItem != NULL)
+        {
 
             CmpSystemQuotaWarningPopupDisplayed = TRUE;
-            ExInitializeWorkItem(WorkItem,
-                                 CmpSystemQuotaWarningWorker,
-                                 WorkItem);
+            ExInitializeWorkItem(WorkItem, CmpSystemQuotaWarningWorker, WorkItem);
             ExQueueWorkItem(WorkItem, DelayedWorkQueue);
         }
-
     }
 
     return TRUE;
 }
 
 
-VOID
-CmpSystemQuotaWarningWorker(
-    IN PVOID WorkItem
-    )
+VOID CmpSystemQuotaWarningWorker(IN PVOID WorkItem)
 
 /*++
 
@@ -523,29 +489,21 @@ Return Value:
 
     ExFreePool(WorkItem);
 
-    Status = ExRaiseHardError(STATUS_REGISTRY_QUOTA_LIMIT,
-                              0,
-                              0,
-                              NULL,
-                              OptionOk,
-                              &Response);
+    Status = ExRaiseHardError(STATUS_REGISTRY_QUOTA_LIMIT, 0, 0, NULL, OptionOk, &Response);
 }
 
 //
-// Pnp private API 
+// Pnp private API
 //
-ULONG                       CmpSystemHiveHysteresisLow = 0;
-ULONG                       CmpSystemHiveHysteresisHigh = 0;
-PVOID                       CmpSystemHiveHysteresisContext = NULL;
-PCM_HYSTERESIS_CALLBACK     CmpSystemHiveHysteresisCallback = NULL;
-ULONG                       CmpSystemHiveHysteresisHitRatio = 0;
-BOOLEAN                     CmpSystemHiveHysteresisLowSeen = FALSE;
-BOOLEAN                     CmpSystemHiveHysteresisHighSeen = FALSE;
+ULONG CmpSystemHiveHysteresisLow = 0;
+ULONG CmpSystemHiveHysteresisHigh = 0;
+PVOID CmpSystemHiveHysteresisContext = NULL;
+PCM_HYSTERESIS_CALLBACK CmpSystemHiveHysteresisCallback = NULL;
+ULONG CmpSystemHiveHysteresisHitRatio = 0;
+BOOLEAN CmpSystemHiveHysteresisLowSeen = FALSE;
+BOOLEAN CmpSystemHiveHysteresisHighSeen = FALSE;
 
-VOID
-CmpSystemHiveHysteresisWorker(
-    IN PVOID WorkItem
-    )
+VOID CmpSystemHiveHysteresisWorker(IN PVOID WorkItem)
 
 /*++
 
@@ -565,41 +523,39 @@ Return Value:
 --*/
 
 {
-    PCM_HYSTERESIS_CALLBACK   Callback;
+    PCM_HYSTERESIS_CALLBACK Callback;
 
     ExFreePool(WorkItem);
 
     Callback = CmpSystemHiveHysteresisCallback;
 
-    if( Callback ) {
-        (*Callback)(CmpSystemHiveHysteresisContext,CmpSystemHiveHysteresisHitRatio);
+    if (Callback)
+    {
+        (*Callback)(CmpSystemHiveHysteresisContext, CmpSystemHiveHysteresisHitRatio);
     }
 }
 
 
-VOID
-CmpUpdateSystemHiveHysteresis(  PHHIVE  Hive,
-                                ULONG   NewLength,
-                                ULONG   OldLength
-                                )
+VOID CmpUpdateSystemHiveHysteresis(PHHIVE Hive, ULONG NewLength, ULONG OldLength)
 {
-    PCMHIVE             CmHive;
-    PWORK_QUEUE_ITEM    WorkItem;
-    ULONG               CurrentRatio;
-    BOOLEAN             DoWorkItem = FALSE;
+    PCMHIVE CmHive;
+    PWORK_QUEUE_ITEM WorkItem;
+    ULONG CurrentRatio;
+    BOOLEAN DoWorkItem = FALSE;
 
     PAGED_CODE();
 
-    CmHive = (PCMHIVE)CONTAINING_RECORD(Hive,CMHIVE,Hive);
-    
-    if( (!CmpSystemHiveHysteresisCallback) || (CmHive != CmpMachineHiveList[SYSTEM_HIVE_INDEX].CmHive) ) {
+    CmHive = (PCMHIVE)CONTAINING_RECORD(Hive, CMHIVE, Hive);
+
+    if ((!CmpSystemHiveHysteresisCallback) || (CmHive != CmpMachineHiveList[SYSTEM_HIVE_INDEX].CmHive))
+    {
         //
         // not the system hive, bail out
         //
         return;
     }
 
-    ASSERT( NewLength != OldLength );
+    ASSERT(NewLength != OldLength);
 
     //
     // compute current ratio; acount for the header first
@@ -608,16 +564,19 @@ CmpUpdateSystemHiveHysteresis(  PHHIVE  Hive,
     CurrentRatio *= 100;
     CurrentRatio /= CM_SYSTEM_HIVE_LIMIT_SIZE;
 
-    if( NewLength > OldLength ) {
+    if (NewLength > OldLength)
+    {
         //
         // hive is growing
         //
-        if( (CmpSystemHiveHysteresisHighSeen == FALSE) && (CurrentRatio > CmpSystemHiveHysteresisHigh) ) {
+        if ((CmpSystemHiveHysteresisHighSeen == FALSE) && (CurrentRatio > CmpSystemHiveHysteresisHigh))
+        {
             //
             // we reached high; see if low has already been hit and queue work item
             //
             CmpSystemHiveHysteresisHighSeen = TRUE;
-            if( TRUE == CmpSystemHiveHysteresisLowSeen ) {
+            if (TRUE == CmpSystemHiveHysteresisLowSeen)
+            {
                 //
                 // low to high; queue workitem
                 //
@@ -625,16 +584,20 @@ CmpUpdateSystemHiveHysteresis(  PHHIVE  Hive,
                 DoWorkItem = TRUE;
             }
         }
-    } else {
+    }
+    else
+    {
         //
         // hive is shrinking
         //
-        if( (FALSE == CmpSystemHiveHysteresisLowSeen) && (CurrentRatio < CmpSystemHiveHysteresisLow ) ) {
+        if ((FALSE == CmpSystemHiveHysteresisLowSeen) && (CurrentRatio < CmpSystemHiveHysteresisLow))
+        {
             //
             // we reached low; see if low has been hit and queue work item
             //
             CmpSystemHiveHysteresisLowSeen = TRUE;
-            if( TRUE == CmpSystemHiveHysteresisHighSeen ) {
+            if (TRUE == CmpSystemHiveHysteresisHighSeen)
+            {
                 //
                 // high to low; queue workitem
                 //
@@ -644,15 +607,15 @@ CmpUpdateSystemHiveHysteresis(  PHHIVE  Hive,
         }
     }
 
-    if( DoWorkItem ) {
-        ASSERT( CmpSystemHiveHysteresisLowSeen && CmpSystemHiveHysteresisHighSeen );
+    if (DoWorkItem)
+    {
+        ASSERT(CmpSystemHiveHysteresisLowSeen && CmpSystemHiveHysteresisHighSeen);
 
         WorkItem = ExAllocatePool(NonPagedPool, sizeof(WORK_QUEUE_ITEM));
-        if (WorkItem != NULL) {
+        if (WorkItem != NULL)
+        {
 
-            ExInitializeWorkItem(WorkItem,
-                                 CmpSystemHiveHysteresisWorker,
-                                 WorkItem);
+            ExInitializeWorkItem(WorkItem, CmpSystemHiveHysteresisWorker, WorkItem);
             ExQueueWorkItem(WorkItem, DelayedWorkQueue);
         }
         //
@@ -664,12 +627,7 @@ CmpUpdateSystemHiveHysteresis(  PHHIVE  Hive,
 }
 
 ULONG
-CmRegisterSystemHiveLimitCallback(
-                                ULONG Low,
-                                ULONG High,
-                                PVOID Ref,
-                                PCM_HYSTERESIS_CALLBACK Callback
-                                )
+CmRegisterSystemHiveLimitCallback(ULONG Low, ULONG High, PVOID Ref, PCM_HYSTERESIS_CALLBACK Callback)
 /*++
 
 Routine Description:
@@ -694,23 +652,27 @@ Return Value:
 
 --*/
 {
-    ULONG               Length;
+    ULONG Length;
 
     PAGED_CODE();
 
-    if( CmpMachineHiveList[SYSTEM_HIVE_INDEX].CmHive ) {
+    if (CmpMachineHiveList[SYSTEM_HIVE_INDEX].CmHive)
+    {
         Length = CmpMachineHiveList[SYSTEM_HIVE_INDEX].CmHive->Hive.BaseBlock->Length + HBLOCK_SIZE;
 
         Length *= 100;
         Length /= CM_SYSTEM_HIVE_LIMIT_SIZE;
-    } else {
+    }
+    else
+    {
         Length = 0;
     }
 
     //
     // allow only one call per system uptime.
     //
-    if( CmpSystemHiveHysteresisCallback == NULL ) {
+    if (CmpSystemHiveHysteresisCallback == NULL)
+    {
         CmpSystemHiveHysteresisLow = Low;
         CmpSystemHiveHysteresisHigh = High;
         CmpSystemHiveHysteresisContext = Ref;
@@ -718,14 +680,20 @@ Return Value:
         //
         // set state vars
         //
-        if( Length <= Low ) {
+        if (Length <= Low)
+        {
             CmpSystemHiveHysteresisLowSeen = TRUE;
-        } else {
+        }
+        else
+        {
             CmpSystemHiveHysteresisLowSeen = FALSE;
         }
-        if( Length >= High) {
+        if (Length >= High)
+        {
             CmpSystemHiveHysteresisHighSeen = TRUE;
-        } else {
+        }
+        else
+        {
             CmpSystemHiveHysteresisHighSeen = FALSE;
         }
     }
@@ -733,42 +701,32 @@ Return Value:
 }
 
 
-VOID 
-CmpHysteresisTest(PVOID Ref, ULONG Level)
+VOID CmpHysteresisTest(PVOID Ref, ULONG Level)
 {
-    UNREFERENCED_PARAMETER (Ref);
+    UNREFERENCED_PARAMETER(Ref);
 
-    DbgPrint("CmpHysteresisTest called with level = %lu \n",Level);
+    DbgPrint("CmpHysteresisTest called with level = %lu \n", Level);
 }
 
 
-typedef struct {
-    PWORK_QUEUE_ITEM    WorkItem;
-    UNICODE_STRING      HiveName;
+typedef struct
+{
+    PWORK_QUEUE_ITEM WorkItem;
+    UNICODE_STRING HiveName;
     //
     // variable length; name goes here
     //
 } CM_SELF_HEAL_WORK_ITEM_PARAMETER, *PCM_SELF_HEAL_WORK_ITEM_PARAMETER;
 
-VOID
-CmpRaiseSelfHealWarningWorker(
-    IN PVOID Arg
-    )
+VOID CmpRaiseSelfHealWarningWorker(IN PVOID Arg)
 {
-    PVOID                               ErrorParameters;
-    ULONG                               ErrorResponse;
-    PCM_SELF_HEAL_WORK_ITEM_PARAMETER   Param;
+    PVOID ErrorParameters;
+    ULONG ErrorResponse;
+    PCM_SELF_HEAL_WORK_ITEM_PARAMETER Param;
 
     Param = (PCM_SELF_HEAL_WORK_ITEM_PARAMETER)Arg;
     ErrorParameters = &(Param->HiveName);
-    ExRaiseHardError(
-        STATUS_REGISTRY_RECOVERED,
-        1,
-        1,
-        (PULONG_PTR)&ErrorParameters,
-        OptionOk,
-        &ErrorResponse
-        );
+    ExRaiseHardError(STATUS_REGISTRY_RECOVERED, 1, 1, (PULONG_PTR)&ErrorParameters, OptionOk, &ErrorResponse);
 
     //
     // free what we have allocated
@@ -777,10 +735,7 @@ CmpRaiseSelfHealWarningWorker(
     ExFreePool(Param);
 }
 
-VOID 
-CmpRaiseSelfHealWarning( 
-                        IN PUNICODE_STRING  HiveName
-                        )
+VOID CmpRaiseSelfHealWarning(IN PUNICODE_STRING HiveName)
 /*++
 
 Routine Description:
@@ -798,7 +753,7 @@ Return Value:
 
 --*/
 {
-    PCM_SELF_HEAL_WORK_ITEM_PARAMETER   Param;
+    PCM_SELF_HEAL_WORK_ITEM_PARAMETER Param;
 
     PAGED_CODE();
 
@@ -806,24 +761,25 @@ Return Value:
     // we're above the warning level, queue work item to display popup
     //
     Param = ExAllocatePool(NonPagedPool, sizeof(CM_SELF_HEAL_WORK_ITEM_PARAMETER) + HiveName->Length);
-    if( Param ) {
+    if (Param)
+    {
         Param->WorkItem = ExAllocatePool(NonPagedPool, sizeof(WORK_QUEUE_ITEM));
-        if(Param->WorkItem != NULL) {
+        if (Param->WorkItem != NULL)
+        {
             Param->HiveName.Length = Param->HiveName.MaximumLength = HiveName->Length;
             Param->HiveName.Buffer = (PWSTR)(((PUCHAR)Param) + sizeof(CM_SELF_HEAL_WORK_ITEM_PARAMETER));
-            RtlCopyMemory(Param->HiveName.Buffer,HiveName->Buffer,HiveName->Length);
-            ExInitializeWorkItem(Param->WorkItem,
-                                 CmpRaiseSelfHealWarningWorker,
-                                 Param);
+            RtlCopyMemory(Param->HiveName.Buffer, HiveName->Buffer, HiveName->Length);
+            ExInitializeWorkItem(Param->WorkItem, CmpRaiseSelfHealWarningWorker, Param);
             ExQueueWorkItem(Param->WorkItem, DelayedWorkQueue);
-        } else {
+        }
+        else
+        {
             ExFreePool(Param);
         }
     }
 }
 
-VOID 
-CmpRaiseSelfHealWarningForSystemHives( )
+VOID CmpRaiseSelfHealWarningForSystemHives()
 /*++
 
 Routine Description:
@@ -841,19 +797,18 @@ Return Value:
 
 --*/
 {
-    ULONG           i;
-    UNICODE_STRING  Name;
+    ULONG i;
+    UNICODE_STRING Name;
 
     PAGED_CODE();
 
-	for (i = 0; i < CM_NUMBER_OF_MACHINE_HIVES; i++) {
-        if( !(CmpMachineHiveList[i].Flags & HIVE_VOLATILE) && (((PHHIVE)(CmpMachineHiveList[i].CmHive2))->BaseBlock->BootType & HBOOT_SELFHEAL) ) {
-            RtlInitUnicodeString(
-                &Name,
-                CmpMachineHiveList[i].Name
-                );
-            CmpRaiseSelfHealWarning( &Name );
+    for (i = 0; i < CM_NUMBER_OF_MACHINE_HIVES; i++)
+    {
+        if (!(CmpMachineHiveList[i].Flags & HIVE_VOLATILE) &&
+            (((PHHIVE)(CmpMachineHiveList[i].CmHive2))->BaseBlock->BootType & HBOOT_SELFHEAL))
+        {
+            RtlInitUnicodeString(&Name, CmpMachineHiveList[i].Name);
+            CmpRaiseSelfHealWarning(&Name);
         }
     }
-
 }

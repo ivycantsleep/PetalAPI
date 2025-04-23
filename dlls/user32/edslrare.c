@@ -24,9 +24,8 @@
 * History:
 \***************************************************************************/
 
-LONG SLCreate(
-    PED ped,
-    LPCREATESTRUCT lpCreateStruct) //!!! CREATESTRUCT AorW and in other routines
+LONG SLCreate(PED ped,
+              LPCREATESTRUCT lpCreateStruct) //!!! CREATESTRUCT AorW and in other routines
 {
     LPSTR lpWindowText;
     LONG windowStyle = ped->pwnd->style;
@@ -64,9 +63,8 @@ LONG SLCreate(
     else
         lpWindowText = (LPSTR)lpCreateStruct->lpszName;
 
-    if ((lpWindowText != NULL)
-            && !IsEmptyString(lpWindowText, ped->fAnsi)
-            && !ECSetText(ped, lpWindowText)) {
+    if ((lpWindowText != NULL) && !IsEmptyString(lpWindowText, ped->fAnsi) && !ECSetText(ped, lpWindowText))
+    {
         return (-1);
     }
 
@@ -84,8 +82,7 @@ LONG SLCreate(
 * History:
 \***************************************************************************/
 
-BOOL SLUndo(
-    PED ped)
+BOOL SLUndo(PED ped)
 {
     PBYTE hDeletedText = ped->hDeletedText;
     BOOL fDelete = (BOOL)(ped->undoType & UNDO_DELETE);
@@ -93,7 +90,8 @@ BOOL SLUndo(
     ICH ichDeleted = ped->ichDeleted;
     BOOL fUpdate = FALSE;
 
-    if (ped->undoType == UNDO_NONE) {
+    if (ped->undoType == UNDO_NONE)
+    {
 
         /*
          * No undo...
@@ -106,7 +104,8 @@ BOOL SLUndo(
     ped->ichDeleted = (ICH)-1;
     ped->undoType &= ~UNDO_DELETE;
 
-    if (ped->undoType == UNDO_INSERT) {
+    if (ped->undoType == UNDO_INSERT)
+    {
         ped->undoType = UNDO_NONE;
 
         /*
@@ -131,7 +130,8 @@ BOOL SLUndo(
          * we insert the deleted chars. This results in Bug #6610.
          * Fix for Bug #6610 -- SANKAR -- 04/19/91 --
          */
-        if (ECDeleteText(ped)) {
+        if (ECDeleteText(ped))
+        {
 
             /*
              * Text was deleted -- flag for update and clear selection
@@ -142,7 +142,8 @@ BOOL SLUndo(
 #endif
     }
 
-    if (fDelete) {
+    if (fDelete)
+    {
         HWND hwndSave = ped->hwnd; // Used for validation.
 
         /*
@@ -157,7 +158,8 @@ BOOL SLUndo(
         fUpdate = TRUE;
     }
 
-    if (fUpdate) {
+    if (fUpdate)
+    {
         /*
          * If we have something to update, send EN_UPDATE before and
          * EN_CHANGE after the actual update.
@@ -165,17 +167,18 @@ BOOL SLUndo(
          */
         ECNotifyParent(ped, EN_UPDATE);
 
-        if (FChildVisible(ped->hwnd)) {
-// JimA changed this to ECInvalidateClient(ped, FALSE) Nov 1994
-//            GetClientRect(ped->hwnd, &rcEdit);
-//            if (ped->fBorder && rcEdit.right - rcEdit.left && rcEdit.bottom - rcEdit.top) {
-//
-//                /*
-//                 * Don't invalidate the border so that we avoid flicker
-//                 */
-//                InflateRect(&rcEdit, -1, -1);
-//            }
-//            NtUserInvalidateRect(ped->hwnd, &rcEdit, FALSE);
+        if (FChildVisible(ped->hwnd))
+        {
+            // JimA changed this to ECInvalidateClient(ped, FALSE) Nov 1994
+            //            GetClientRect(ped->hwnd, &rcEdit);
+            //            if (ped->fBorder && rcEdit.right - rcEdit.left && rcEdit.bottom - rcEdit.top) {
+            //
+            //                /*
+            //                 * Don't invalidate the border so that we avoid flicker
+            //                 */
+            //                InflateRect(&rcEdit, -1, -1);
+            //            }
+            //            NtUserInvalidateRect(ped->hwnd, &rcEdit, FALSE);
             ECInvalidateClient(ped, FALSE);
         }
 

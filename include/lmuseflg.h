@@ -34,9 +34,9 @@ Revision History:
 // Definition for NetWkstaTransportDel and NetUseDel deletion force levels
 //
 
-#define USE_NOFORCE             0
-#define USE_FORCE               1
-#define USE_LOTS_OF_FORCE       2
+#define USE_NOFORCE 0
+#define USE_FORCE 1
+#define USE_LOTS_OF_FORCE 2
 
 
 #endif // _LMUSEFLG_

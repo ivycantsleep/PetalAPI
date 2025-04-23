@@ -23,14 +23,9 @@ Revision History:
 --*/
 
 #include "ki.h"
-
 
-VOID
-KeFlushIoBuffers (
-    IN PMDL Mdl,
-    IN BOOLEAN ReadOperation,
-    IN BOOLEAN DmaOperation
-    )
+
+VOID KeFlushIoBuffers(IN PMDL Mdl, IN BOOLEAN ReadOperation, IN BOOLEAN DmaOperation)
 /*++
 
 Routine Description:
@@ -55,13 +50,13 @@ Return Value:
 
 --*/
 {
-    KIRQL  OldIrql;
-    ULONG  Length, PartialLength, Offset;
-    PFN_NUMBER  PageFrameIndex;
+    KIRQL OldIrql;
+    ULONG Length, PartialLength, Offset;
+    PFN_NUMBER PageFrameIndex;
     PPFN_NUMBER Page;
     PVOID CurrentVAddress = 0;
 
-    ASSERT(KeGetCurrentIrql() <=  KiSynchIrql);
+    ASSERT(KeGetCurrentIrql() <= KiSynchIrql);
 
     //
     // If the operation is a DMA operation, then check if the flush
@@ -71,28 +66,35 @@ Return Value:
     // read.
     //
 
-    if (DmaOperation != FALSE) {
-        if (ReadOperation != FALSE ) {
+    if (DmaOperation != FALSE)
+    {
+        if (ReadOperation != FALSE)
+        {
 
-        //
-        // Yes, it is a DMA operation, and yes, it is a read. IA64
-        // I-Caches DO snoop for DMA cycles.
-        //
+            //
+            // Yes, it is a DMA operation, and yes, it is a read. IA64
+            // I-Caches DO snoop for DMA cycles.
+            //
             return;
-        } else {
-             //
-             // It is a DMA Write operation
-             //
-             __mf();
-             return;
         }
-
-    } else if ((Mdl->MdlFlags & MDL_IO_PAGE_READ) == 0) {
+        else
+        {
+            //
+            // It is a DMA Write operation
+            //
+            __mf();
+            return;
+        }
+    }
+    else if ((Mdl->MdlFlags & MDL_IO_PAGE_READ) == 0)
+    {
         //
         // It is a PIO operation and it is not Page in operation
         //
         return;
-    } else if (ReadOperation != FALSE) {
+    }
+    else if (ReadOperation != FALSE)
+    {
 
         //
         // It is a PIO operation, it is Read operation and is Page in
@@ -113,49 +115,44 @@ Return Value:
 
         Length = Mdl->ByteCount;
 
-        if ( !Length ) {
+        if (!Length)
+        {
             return;
         }
         Offset = Mdl->ByteOffset;
         PartialLength = PAGE_SIZE - Offset;
-        if (PartialLength > Length) {
+        if (PartialLength > Length)
+        {
             PartialLength = Length;
         }
 
         Page = (PPFN_NUMBER)(Mdl + 1);
         PageFrameIndex = *Page;
-        CurrentVAddress = ((PVOID)(KSEG3_BASE
-                          | ((ULONG_PTR)(PageFrameIndex) << PAGE_SHIFT)
-                          | Offset));
+        CurrentVAddress = ((PVOID)(KSEG3_BASE | ((ULONG_PTR)(PageFrameIndex) << PAGE_SHIFT) | Offset));
 
         //
         // Region 4 maps 1:1 Virtual address to physical address
         //
 
-        HalSweepIcacheRange (
-            CurrentVAddress,
-            PartialLength
-            );
+        HalSweepIcacheRange(CurrentVAddress, PartialLength);
 
         Page++;
         Length -= PartialLength;
 
-        if (Length) {
+        if (Length)
+        {
             PartialLength = PAGE_SIZE;
-            do {
+            do
+            {
                 PageFrameIndex = *Page;
-                CurrentVAddress = ((PVOID)(KSEG3_BASE
-                    | ((ULONG_PTR)(PageFrameIndex) << PAGE_SHIFT)
-                    | Offset));
+                CurrentVAddress = ((PVOID)(KSEG3_BASE | ((ULONG_PTR)(PageFrameIndex) << PAGE_SHIFT) | Offset));
 
-                if (PartialLength > Length) {
+                if (PartialLength > Length)
+                {
                     PartialLength = Length;
                 }
 
-                HalSweepIcacheRange (
-                    CurrentVAddress,
-                    PartialLength
-                    );
+                HalSweepIcacheRange(CurrentVAddress, PartialLength);
 
                 Page++;
 
@@ -163,18 +160,18 @@ Return Value:
             } while (Length != 0);
         }
 
-    //
-    // Synchronize the Instruction Prefetch pipe in the local processor.
-    //
+        //
+        // Synchronize the Instruction Prefetch pipe in the local processor.
+        //
 
-    __synci();
-    __isrlz();
+        __synci();
+        __isrlz();
 
-    //
-    // Lower IRQL to its previous level and return.
-    //
-   
-    KeLowerIrql(OldIrql);
-    return;
+        //
+        // Lower IRQL to its previous level and return.
+        //
+
+        KeLowerIrql(OldIrql);
+        return;
     }
 }

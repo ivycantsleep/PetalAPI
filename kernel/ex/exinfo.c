@@ -34,12 +34,7 @@ Revision History:
 #pragma const_seg("PAGECONST")
 #endif
 
-VOID
-ExpCheckSystemInformation (
-    PVOID       Context,
-    PVOID       InformationClass,
-    PVOID       Argument2
-    )
+VOID ExpCheckSystemInformation(PVOID Context, PVOID InformationClass, PVOID Argument2)
 /*++
 
 Routine Description:
@@ -60,18 +55,16 @@ Return Value:
 
 --*/
 {
-	PAGED_CODE();
+    PAGED_CODE();
 
-	if (InterlockedIncrement(&ExpCheckSystemInfoBusy) == 1) {
-		ExQueueWorkItem (&ExpCheckSystemInfoWorkItem, DelayedWorkQueue);
-	}
+    if (InterlockedIncrement(&ExpCheckSystemInfoBusy) == 1)
+    {
+        ExQueueWorkItem(&ExpCheckSystemInfoWorkItem, DelayedWorkQueue);
+    }
 }
 
 
-VOID
-ExpCheckSystemInfoWork (
-    IN PVOID Context
-    )
+VOID ExpCheckSystemInfoWork(IN PVOID Context)
 /*++
 
 Routine Description:
@@ -85,184 +78,151 @@ Return Value:
 
 --*/
 {
-    static struct {
-        SYSTEM_INFORMATION_CLASS         InformationLevel;
-        ULONG                            BufferSize;
-    } const RegistryInformation[] = {
-        SystemBasicInformation,          sizeof (SYSTEM_BASIC_INFORMATION),
-        SystemPowerInformation,          sizeof (SYSTEM_POWER_INFORMATION),
-        SystemProcessorSpeedInformation, sizeof (SYSTEM_PROCESSOR_SPEED_INFORMATION),
-        0,                               0
-    };
+    static struct
+    {
+        SYSTEM_INFORMATION_CLASS InformationLevel;
+        ULONG BufferSize;
+    } const RegistryInformation[] = { SystemBasicInformation,
+                                      sizeof(SYSTEM_BASIC_INFORMATION),
+                                      SystemPowerInformation,
+                                      sizeof(SYSTEM_POWER_INFORMATION),
+                                      SystemProcessorSpeedInformation,
+                                      sizeof(SYSTEM_PROCESSOR_SPEED_INFORMATION),
+                                      0,
+                                      0 };
 
-    struct {
-        KEY_VALUE_PARTIAL_INFORMATION   Key;
-        union {
+    struct
+    {
+        KEY_VALUE_PARTIAL_INFORMATION Key;
+        union
+        {
             SYSTEM_BASIC_INFORMATION BasicInformation;
             SYSTEM_POWER_INFORMATION PowerSettings;
-            SYSTEM_PROCESSOR_SPEED_INFORMATION  ProcessorSpeed;
+            SYSTEM_PROCESSOR_SPEED_INFORMATION ProcessorSpeed;
         };
     } RegistryBuffer, QueryBuffer;
 
-    ULONG               Index, BufferSize, disposition, length;
-    NTSTATUS            Status;
-    OBJECT_ATTRIBUTES   objectAttributes;
-    UNICODE_STRING      unicodeString, ValueString;
-    HANDLE              CurrentControlSet, SystemInformation, LevelInformation;
-    LARGE_INTEGER       Interval;
-    WCHAR               wstr[10];
+    ULONG Index, BufferSize, disposition, length;
+    NTSTATUS Status;
+    OBJECT_ATTRIBUTES objectAttributes;
+    UNICODE_STRING unicodeString, ValueString;
+    HANDLE CurrentControlSet, SystemInformation, LevelInformation;
+    LARGE_INTEGER Interval;
+    WCHAR wstr[10];
 
     PAGED_CODE();
 
-    RtlInitUnicodeString (&ValueString,  ExpWstrSystemInformationValue);
+    RtlInitUnicodeString(&ValueString, ExpWstrSystemInformationValue);
 
     //
     // Open CurrentControlSet
     //
 
-    InitializeObjectAttributes( &objectAttributes,
-                                &CmRegistryMachineSystemCurrentControlSet,
-                                OBJ_CASE_INSENSITIVE,
-                                NULL,
-                                NULL );
+    InitializeObjectAttributes(&objectAttributes, &CmRegistryMachineSystemCurrentControlSet, OBJ_CASE_INSENSITIVE, NULL,
+                               NULL);
 
-    Status = NtOpenKey (&CurrentControlSet,
-                        KEY_READ | KEY_WRITE,
-                        &objectAttributes );
+    Status = NtOpenKey(&CurrentControlSet, KEY_READ | KEY_WRITE, &objectAttributes);
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Open SystemInformation
         //
 
-        RtlInitUnicodeString( &unicodeString, ExpWstrSystemInformation );
-        InitializeObjectAttributes( &objectAttributes,
-                                    &unicodeString,
-                                    OBJ_CASE_INSENSITIVE,
-                                    CurrentControlSet,
-                                    NULL );
+        RtlInitUnicodeString(&unicodeString, ExpWstrSystemInformation);
+        InitializeObjectAttributes(&objectAttributes, &unicodeString, OBJ_CASE_INSENSITIVE, CurrentControlSet, NULL);
 
-        Status = NtCreateKey ( &SystemInformation,
-                               KEY_READ | KEY_WRITE,
-                               &objectAttributes,
-                               0,
-                               NULL,
-                               REG_OPTION_VOLATILE,
-                               &disposition );
+        Status = NtCreateKey(&SystemInformation, KEY_READ | KEY_WRITE, &objectAttributes, 0, NULL, REG_OPTION_VOLATILE,
+                             &disposition);
 
-        NtClose (CurrentControlSet);
+        NtClose(CurrentControlSet);
     }
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         ExpCheckSystemInfoBusy = 0;
-        return ;
+        return;
     }
 
     //
     // Loop and check SystemInformation data in registry
     //
 
-    do {
+    do
+    {
         //
         // For now just check each SystemInformation level and update
         // any level which is out of date
         //
 
-        for (Index=0; RegistryInformation[Index].BufferSize; Index++) {
+        for (Index = 0; RegistryInformation[Index].BufferSize; Index++)
+        {
 
             //
             // Initialize registry data buffer
             //
 
             BufferSize = RegistryInformation[Index].BufferSize;
-            RtlZeroMemory (RegistryBuffer.Key.Data, BufferSize);
+            RtlZeroMemory(RegistryBuffer.Key.Data, BufferSize);
 
             //
             // Open appropiate SystemInformation level key
             //
 
-            swprintf (wstr, L"%d", RegistryInformation[Index].InformationLevel);
-            RtlInitUnicodeString (&unicodeString, wstr);
-            InitializeObjectAttributes( &objectAttributes,
-                                        &unicodeString,
-                                        OBJ_CASE_INSENSITIVE,
-                                        SystemInformation,
-                                        NULL );
+            swprintf(wstr, L"%d", RegistryInformation[Index].InformationLevel);
+            RtlInitUnicodeString(&unicodeString, wstr);
+            InitializeObjectAttributes(&objectAttributes, &unicodeString, OBJ_CASE_INSENSITIVE, SystemInformation,
+                                       NULL);
 
-            Status = NtCreateKey ( &LevelInformation,
-                                   KEY_READ | KEY_WRITE,
-                                   &objectAttributes,
-                                   0,
-                                   NULL,
-                                   REG_OPTION_VOLATILE,
-                                   &disposition );
+            Status = NtCreateKey(&LevelInformation, KEY_READ | KEY_WRITE, &objectAttributes, 0, NULL,
+                                 REG_OPTION_VOLATILE, &disposition);
 
             //
             // If key opened, read current data value from the registry
             //
 
-            if (NT_SUCCESS(Status)) {
-                NtQueryValueKey (
-                    LevelInformation,
-                    &ValueString,
-                    KeyValuePartialInformation,
-                    &RegistryBuffer.Key,
-                    sizeof (RegistryBuffer),
-                    &length
-                    );
+            if (NT_SUCCESS(Status))
+            {
+                NtQueryValueKey(LevelInformation, &ValueString, KeyValuePartialInformation, &RegistryBuffer.Key,
+                                sizeof(RegistryBuffer), &length);
             }
 
             //
             // Query current SystemInformation data
             //
 
-            Status = NtQuerySystemInformation (
-                            RegistryInformation[Index].InformationLevel,
-                            &QueryBuffer.Key.Data,
-                            BufferSize,
-                            NULL
-                        );
+            Status = NtQuerySystemInformation(RegistryInformation[Index].InformationLevel, &QueryBuffer.Key.Data,
+                                              BufferSize, NULL);
 
             //
             // Check if current SystemInformation matches the registry
             // information
             //
 
-            if (NT_SUCCESS(Status)  &&
-                !RtlEqualMemory (RegistryBuffer.Key.Data,
-                                 QueryBuffer.Key.Data,
-                                 BufferSize) ) {
+            if (NT_SUCCESS(Status) && !RtlEqualMemory(RegistryBuffer.Key.Data, QueryBuffer.Key.Data, BufferSize))
+            {
 
                 //
                 // Did not match - update registry to current SystemInfomration
                 //
 
-                Status = NtSetValueKey (
-                            LevelInformation,
-                            &ValueString,
-                            0L,
-                            REG_BINARY,
-                            QueryBuffer.Key.Data,
-                            BufferSize
-                            );
+                Status =
+                    NtSetValueKey(LevelInformation, &ValueString, 0L, REG_BINARY, QueryBuffer.Key.Data, BufferSize);
 
                 //
                 // Make notificant that this information level has changed
                 //
 
-                ExNotifyCallback (
-                    ExCbSetSystemInformation,
-                    (PVOID) RegistryInformation[Index].InformationLevel,
-                    (PVOID) NULL
-                );
+                ExNotifyCallback(ExCbSetSystemInformation, (PVOID)RegistryInformation[Index].InformationLevel,
+                                 (PVOID)NULL);
             }
 
             //
             // Close this InformatiobLevel and check the next one
             //
 
-            NtClose (LevelInformation);
+            NtClose(LevelInformation);
         }
 
     } while (InterlockedDecrement(&ExpCheckSystemInfoBusy));
@@ -271,7 +231,7 @@ Return Value:
     // Cleanup
     //
 
-    NtClose (SystemInformation);
+    NtClose(SystemInformation);
 }
 
-#endif  // _PNP_POWER_
+#endif // _PNP_POWER_

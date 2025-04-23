@@ -26,17 +26,10 @@ Revision History:
 
 #include "ki.h"
 
-VOID
-KiSaveHigherFPVolatile (
-    PFLOAT128 SaveArea
-    );
+VOID KiSaveHigherFPVolatile(PFLOAT128 SaveArea);
 
-
-VOID
-KiRestoreProcessorState (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame
-    )
+
+VOID KiRestoreProcessorState(IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame)
 
 /*++
 
@@ -70,10 +63,7 @@ Return Value:
     //
 
     Prcb = KeGetCurrentPrcb();
-    KeContextToKframes(TrapFrame,
-                       ExceptionFrame,
-                       &Prcb->ProcessorState.ContextFrame,
-                       CONTEXT_FULL,
+    KeContextToKframes(TrapFrame, ExceptionFrame, &Prcb->ProcessorState.ContextFrame, CONTEXT_FULL,
                        (KPROCESSOR_MODE)TrapFrame->PreviousMode);
 
     KiRestoreProcessorControlState(&Prcb->ProcessorState);
@@ -81,12 +71,8 @@ Return Value:
 
     return;
 }
-
-VOID
-KiSaveProcessorState (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame
-    )
+
+VOID KiSaveProcessorState(IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame)
 
 /*++
 
@@ -120,13 +106,12 @@ Return Value:
     //
 
     Prcb = KeGetCurrentPrcb();
-    if (KeGetCurrentThread()->Teb) {
+    if (KeGetCurrentThread()->Teb)
+    {
         KiSaveHigherFPVolatile((PFLOAT128)GET_HIGH_FLOATING_POINT_REGISTER_SAVEAREA(KeGetCurrentThread()->StackBase));
     }
     Prcb->ProcessorState.ContextFrame.ContextFlags = CONTEXT_FULL;
-    KeContextFromKframes(TrapFrame,
-                         ExceptionFrame,
-                         &Prcb->ProcessorState.ContextFrame);
+    KeContextFromKframes(TrapFrame, ExceptionFrame, &Prcb->ProcessorState.ContextFrame);
 
     //
     // Save ISR in special registers
@@ -143,12 +128,9 @@ Return Value:
 
     return;
 }
-
+
 BOOLEAN
-KiIpiServiceRoutine (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame
-    )
+KiIpiServiceRoutine(IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame)
 
 /*++
 
@@ -186,7 +168,8 @@ Return Value:
     // If freeze is requested, then freeze target execution.
     //
 
-    if ((RequestSummary & IPI_FREEZE) != 0) {
+    if ((RequestSummary & IPI_FREEZE) != 0)
+    {
         KiFreezeTargetExecution(TrapFrame, ExceptionFrame);
     }
 
@@ -196,11 +179,9 @@ Return Value:
     return TRUE;
 #endif // !defined(NT_UP)
 }
-
+
 ULONG
-KiIpiProcessRequests (
-    VOID
-    )
+KiIpiProcessRequests(VOID)
 
 /*++
 
@@ -233,23 +214,24 @@ Return Value:
     // parameter.
     //
 
-    SignalDone = (PKPRCB)( (ULONG_PTR)Prcb->SignalDone & ~(ULONG_PTR)1 );
+    SignalDone = (PKPRCB)((ULONG_PTR)Prcb->SignalDone & ~(ULONG_PTR)1);
 
-    if (SignalDone != 0) {
-     
+    if (SignalDone != 0)
+    {
+
         Prcb->SignalDone = 0;
 
-        (*SignalDone->WorkerRoutine) ((PKIPI_CONTEXT)SignalDone,
-                                      SignalDone->CurrentPacket[0], 
-                                      SignalDone->CurrentPacket[1], 
-                                      SignalDone->CurrentPacket[2]);
+        (*SignalDone->WorkerRoutine)((PKIPI_CONTEXT)SignalDone, SignalDone->CurrentPacket[0],
+                                     SignalDone->CurrentPacket[1], SignalDone->CurrentPacket[2]);
+    }
 
-    } 
-
-    if ((RequestSummary & IPI_APC) != 0) {
-        KiRequestSoftwareInterrupt (APC_LEVEL);
-    } else if ((RequestSummary & IPI_DPC) != 0) {
-        KiRequestSoftwareInterrupt (DISPATCH_LEVEL);
+    if ((RequestSummary & IPI_APC) != 0)
+    {
+        KiRequestSoftwareInterrupt(APC_LEVEL);
+    }
+    else if ((RequestSummary & IPI_DPC) != 0)
+    {
+        KiRequestSoftwareInterrupt(DISPATCH_LEVEL);
     }
 
     return RequestSummary;
@@ -257,13 +239,9 @@ Return Value:
     return 0;
 #endif // !defined(NT_UP)
 }
-
 
-VOID
-KiIpiSend (
-    IN KAFFINITY TargetProcessors,
-    IN KIPI_REQUEST IpiRequest
-    )
+
+VOID KiIpiSend(IN KAFFINITY TargetProcessors, IN KIPI_REQUEST IpiRequest)
 
 /*++
 
@@ -299,40 +277,35 @@ Return Value:
     NextProcessors = TargetProcessors;
     Next = 0;
 
-    while (NextProcessors != 0) {
+    while (NextProcessors != 0)
+    {
 
-        if ((NextProcessors & 1) != 0) {
+        if ((NextProcessors & 1) != 0)
+        {
 
-            do {
-            
+            do
+            {
+
                 RequestSummary = KiProcessorBlock[Next]->RequestSummary;
 
-            } while(InterlockedCompareExchange(
-                (PLONG) &KiProcessorBlock[Next]->RequestSummary, 
-                (LONG) (RequestSummary | IpiRequest),
-                (LONG) RequestSummary) != (LONG) RequestSummary);  
+            } while (InterlockedCompareExchange((PLONG)&KiProcessorBlock[Next]->RequestSummary,
+                                                (LONG)(RequestSummary | IpiRequest),
+                                                (LONG)RequestSummary) != (LONG)RequestSummary);
         }
 
         NextProcessors = NextProcessors >> 1;
-        
-        Next = Next + 1;
 
+        Next = Next + 1;
     }
-    HalRequestIpi (TargetProcessors);
+    HalRequestIpi(TargetProcessors);
 #endif
 
     return;
 }
 
-
-VOID
-KiIpiSendPacket (
-    IN KAFFINITY TargetProcessors,
-    IN PKIPI_WORKER WorkerFunction,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    )
+
+VOID KiIpiSendPacket(IN KAFFINITY TargetProcessors, IN PKIPI_WORKER WorkerFunction, IN PVOID Parameter1,
+                     IN PVOID Parameter2, IN PVOID Parameter3)
 
 /*++
 
@@ -371,19 +344,22 @@ Return Value:
 
     //
     // synchronize memory access
-    // 
+    //
 
     __mf();
-    
+
     //
     // The low order bit of the packet address is set if there is
     // exactly one target recipient. Otherwise, the low order bit
     // of the packet address is clear.
     //
 
-    if (((TargetProcessors) & ((TargetProcessors) - 1)) == 0) {
+    if (((TargetProcessors) & ((TargetProcessors)-1)) == 0)
+    {
         (ULONG_PTR) Prcb |= 0x1;
-    } else {
+    }
+    else
+    {
         Prcb->PacketBarrier = 1;
     }
 
@@ -395,22 +371,21 @@ Return Value:
     NextProcessors = TargetProcessors;
     Next = 0;
 
-    while (NextProcessors != 0) {
+    while (NextProcessors != 0)
+    {
 
-        if ((NextProcessors & 1) != 0) {
-            
-            while(InterlockedCompareExchangePointer(
-                (PVOID)&KiProcessorBlock[Next]->SignalDone, 
-                (PVOID)Prcb,
-                (PVOID)0) != (PVOID)0);
+        if ((NextProcessors & 1) != 0)
+        {
 
+            while (InterlockedCompareExchangePointer((PVOID)&KiProcessorBlock[Next]->SignalDone, (PVOID)Prcb,
+                                                     (PVOID)0) != (PVOID)0)
+                ;
         }
-            
-        NextProcessors = NextProcessors >> 1;
-        
-        Next = Next + 1;
 
+        NextProcessors = NextProcessors >> 1;
+
+        Next = Next + 1;
     }
-    HalRequestIpi (TargetProcessors);
-#endif    
+    HalRequestIpi(TargetProcessors);
+#endif
 }

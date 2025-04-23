@@ -34,30 +34,23 @@ Revision History:
 #include <stdlib.h>
 #include <string.h>
 
-#define WORK_SIZE   1024
+#define WORK_SIZE 1024
 
 void __cdecl main(int argc, char *);
 void processargs();
 
 void print(PUNICODE_STRING);
 
-void
-Delete(
-    HANDLE  Handle
-    );
+void Delete(HANDLE Handle);
 
-UNICODE_STRING  WorkName;
-WCHAR           workbuffer[WORK_SIZE];
+UNICODE_STRING WorkName;
+WCHAR workbuffer[WORK_SIZE];
 
-void
-__cdecl main(
-    int argc,
-    char *argv[]
-    )
+void __cdecl main(int argc, char *argv[])
 {
     NTSTATUS status;
     OBJECT_ATTRIBUTES ObjectAttributes;
-    HANDLE          BaseHandle;
+    HANDLE BaseHandle;
 
     //
     // Process args
@@ -76,21 +69,12 @@ __cdecl main(
 
     printf("regtest3: starting\n");
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &WorkName,
-        0,
-        (HANDLE)NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&ObjectAttributes, &WorkName, 0, (HANDLE)NULL, NULL);
     ObjectAttributes.Attributes |= OBJ_CASE_INSENSITIVE;
 
-    status = NtOpenKey(
-                &BaseHandle,
-                DELETE | KEY_ENUMERATE_SUB_KEYS,
-                &ObjectAttributes
-                );
-    if (!NT_SUCCESS(status)) {
+    status = NtOpenKey(&BaseHandle, DELETE | KEY_ENUMERATE_SUB_KEYS, &ObjectAttributes);
+    if (!NT_SUCCESS(status))
+    {
         printf("regtest3: t0: %08lx\n", status);
         exit(1);
     }
@@ -98,21 +82,18 @@ __cdecl main(
     Delete(BaseHandle);
 }
 
-
-void
-Delete(
-    HANDLE  Handle
-    )
+
+void Delete(HANDLE Handle)
 {
-    NTSTATUS    status;
+    NTSTATUS status;
     PKEY_BASIC_INFORMATION KeyInformation;
     OBJECT_ATTRIBUTES ObjectAttributes;
-    ULONG   NamePos;
-    ULONG   index;
-    STRING  enumname;
-    HANDLE  WorkHandle;
-    ULONG   ResultLength;
-    static  char buffer[WORK_SIZE];
+    ULONG NamePos;
+    ULONG index;
+    STRING enumname;
+    HANDLE WorkHandle;
+    ULONG ResultLength;
+    static char buffer[WORK_SIZE];
 
     KeyInformation = (PKEY_BASIC_INFORMATION)buffer;
     NamePos = WorkName.Length;
@@ -122,28 +103,23 @@ Delete(
     //
 
     index = 0;
-    do {
+    do
+    {
 
         RtlZeroMemory(KeyInformation, WORK_SIZE);
-        status = NtEnumerateKey(
-                    Handle,
-                    index,
-                    KeyBasicInformation,
-                    KeyInformation,
-                    WORK_SIZE,
-                    &ResultLength
-                    );
+        status = NtEnumerateKey(Handle, index, KeyBasicInformation, KeyInformation, WORK_SIZE, &ResultLength);
 
-        if (status == STATUS_NO_MORE_ENTRIES) {
+        if (status == STATUS_NO_MORE_ENTRIES)
+        {
 
             WorkName.Length = NamePos;
             break;
-
-        } else if (!NT_SUCCESS(status)) {
+        }
+        else if (!NT_SUCCESS(status))
+        {
 
             printf("regtest3: dump1: status = %08lx\n", status);
             exit(1);
-
         }
 
         enumname.Buffer = &(KeyInformation->Name[0]);
@@ -152,23 +128,16 @@ Delete(
 
         RtlAppendStringToString((PSTRING)&WorkName, (PSTRING)&enumname);
 
-        InitializeObjectAttributes(
-            &ObjectAttributes,
-            &enumname,
-            OBJ_CASE_INSENSITIVE,
-            Handle,
-            NULL
-            );
+        InitializeObjectAttributes(&ObjectAttributes, &enumname, OBJ_CASE_INSENSITIVE, Handle, NULL);
 
-        status = NtOpenKey(
-                    &WorkHandle,
-                    DELETE | KEY_ENUMERATE_SUB_KEYS,
-                    &ObjectAttributes
-                    );
-        if (!NT_SUCCESS(status)) {
-            printf("regtest3: couldn't delete %wZ: %08lx\n", &enumname,status);
+        status = NtOpenKey(&WorkHandle, DELETE | KEY_ENUMERATE_SUB_KEYS, &ObjectAttributes);
+        if (!NT_SUCCESS(status))
+        {
+            printf("regtest3: couldn't delete %wZ: %08lx\n", &enumname, status);
             index++;
-        } else {
+        }
+        else
+        {
             Delete(WorkHandle);
             NtClose(WorkHandle);
         }
@@ -183,36 +152,24 @@ Delete(
     //
 
     NtDeleteKey(Handle);
-    NtClose(Handle);        // Force it to actually go away
+    NtClose(Handle); // Force it to actually go away
     return;
 }
 
-
-void
-processargs(
-    int argc,
-    char *argv[]
-    )
+
+void processargs(int argc, char *argv[])
 {
     ANSI_STRING temp;
 
-    if ( (argc != 2) )
+    if ((argc != 2))
     {
-        printf("Usage: %s <KeyPath>\n",
-                argv[0]);
+        printf("Usage: %s <KeyPath>\n", argv[0]);
         exit(1);
     }
 
-    RtlInitAnsiString(
-        &temp,
-        argv[1]
-        );
+    RtlInitAnsiString(&temp, argv[1]);
 
-    RtlAnsiStringToUnicodeString(
-        &WorkName,
-        &temp,
-        TRUE
-        );
+    RtlAnsiStringToUnicodeString(&WorkName, &temp, TRUE);
 
     return;
 }

@@ -31,7 +31,7 @@ Revision History:
 #include "kdp.h"
 
 #if ACCASM && !defined(_MSC_VER)
-long asm(const char *,...);
+long asm(const char *, ...);
 #pragma intrinsic(asm)
 #endif
 
@@ -40,160 +40,81 @@ long asm(const char *,...);
 // from the sdktools depot.  Once the internal sdktools
 // ntdbg.h is updated from ntdbg.w this can be removed.
 #ifndef DBGKD_CACHING_UNKNOWN
-#define DBGKD_CACHING_UNKNOWN        0
-#define DBGKD_CACHING_CACHED         1
-#define DBGKD_CACHING_UNCACHED       2
+#define DBGKD_CACHING_UNKNOWN 0
+#define DBGKD_CACHING_CACHED 1
+#define DBGKD_CACHING_UNCACHED 2
 #define DBGKD_CACHING_WRITE_COMBINED 3
 #endif
 
 BOOLEAN KdpContextSent;
 
-LARGE_INTEGER KdpQueryPerformanceCounter (
-    IN PKTRAP_FRAME TrapFrame
-    );
+LARGE_INTEGER KdpQueryPerformanceCounter(IN PKTRAP_FRAME TrapFrame);
 
 extern LARGE_INTEGER Magic10000;
-#define SHIFT10000   13
-#define Convert100nsToMilliseconds(LARGE_INTEGER) (                         \
-    RtlExtendedMagicDivide( (LARGE_INTEGER), Magic10000, SHIFT10000 )       \
-    )
+#define SHIFT10000 13
+#define Convert100nsToMilliseconds(LARGE_INTEGER) (RtlExtendedMagicDivide((LARGE_INTEGER), Magic10000, SHIFT10000))
 
 //
 // Define forward referenced function prototypes.
 //
 
-VOID
-KdpProcessInternalBreakpoint (
-    ULONG BreakpointNumber
-    );
+VOID KdpProcessInternalBreakpoint(ULONG BreakpointNumber);
 
-VOID
-KdpGetVersion(
-    IN PDBGKD_MANIPULATE_STATE64 m
-    );
+VOID KdpGetVersion(IN PDBGKD_MANIPULATE_STATE64 m);
 
 NTSTATUS
-KdpNotSupported(
-    IN PDBGKD_MANIPULATE_STATE64 m
-    );
+KdpNotSupported(IN PDBGKD_MANIPULATE_STATE64 m);
 
-VOID
-KdpCauseBugCheck(
-    IN PDBGKD_MANIPULATE_STATE64 m
-    );
+VOID KdpCauseBugCheck(IN PDBGKD_MANIPULATE_STATE64 m);
 
 NTSTATUS
-KdpWriteBreakPointEx(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    );
+KdpWriteBreakPointEx(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context);
 
-VOID
-KdpRestoreBreakPointEx(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    );
+VOID KdpRestoreBreakPointEx(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context);
 
-VOID
-KdpSearchMemory(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    );
+VOID KdpSearchMemory(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context);
 
 ULONG
-KdpSearchHammingDistance (
-    ULONG_PTR Left,
-    ULONG_PTR Right
-    );
+KdpSearchHammingDistance(ULONG_PTR Left, ULONG_PTR Right);
 
 LOGICAL
-KdpSearchPhysicalPage (
-    IN PFN_NUMBER PageFrameIndex,
-    ULONG_PTR RangeStart,
-    ULONG_PTR RangeEnd,
-    ULONG Flags
-    );
+KdpSearchPhysicalPage(IN PFN_NUMBER PageFrameIndex, ULONG_PTR RangeStart, ULONG_PTR RangeEnd, ULONG Flags);
 
 LOGICAL
-KdpSearchPhysicalMemoryRequested (
-    VOID
-    );
+KdpSearchPhysicalMemoryRequested(VOID);
 
 LOGICAL
-KdpSearchPhysicalPageRange (
-    VOID
-    );
+KdpSearchPhysicalPageRange(VOID);
 
-VOID
-KdpFillMemory(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    );
+VOID KdpFillMemory(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context);
 
-VOID
-KdpQueryMemory(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PCONTEXT Context
-    );
+VOID KdpQueryMemory(IN PDBGKD_MANIPULATE_STATE64 m, IN PCONTEXT Context);
 
 
 #if i386
-VOID
-InternalBreakpointCheck (
-    PKDPC Dpc,
-    PVOID DeferredContext,
-    PVOID SystemArgument1,
-    PVOID SystemArgument2
-    );
+VOID InternalBreakpointCheck(PKDPC Dpc, PVOID DeferredContext, PVOID SystemArgument1, PVOID SystemArgument2);
 
-VOID
-KdGetInternalBreakpoint(
-    IN PDBGKD_MANIPULATE_STATE64 m
-    );
+VOID KdGetInternalBreakpoint(IN PDBGKD_MANIPULATE_STATE64 m);
 
-long
-SymNumFor(
-    ULONG_PTR pc
-    );
+long SymNumFor(ULONG_PTR pc);
 
-void PotentialNewSymbol (ULONG_PTR pc);
+void PotentialNewSymbol(ULONG_PTR pc);
 
 void DumpTraceData(PSTRING MessageData);
 
 BOOLEAN
-TraceDataRecordCallInfo(
-    ULONG InstructionsTraced,
-    LONG CallLevelChange,
-    ULONG_PTR pc
-    );
+TraceDataRecordCallInfo(ULONG InstructionsTraced, LONG CallLevelChange, ULONG_PTR pc);
 
 BOOLEAN
-SkippingWhichBP (
-    PVOID thread,
-    PULONG BPNum
-    );
+SkippingWhichBP(PVOID thread, PULONG BPNum);
 
 ULONG_PTR
-KdpGetReturnAddress(
-    IN PCONTEXT ContextRecord
-    );
+KdpGetReturnAddress(IN PCONTEXT ContextRecord);
 
 ULONG_PTR
-KdpGetCallNextOffset (
-    ULONG_PTR Pc,
-    IN PCONTEXT ContextRecord
-    );
+KdpGetCallNextOffset(ULONG_PTR Pc, IN PCONTEXT ContextRecord);
 
-LONG
-KdpLevelChange (
-    ULONG_PTR Pc,
-    PCONTEXT ContextRecord,
-    IN OUT PBOOLEAN SpecialCall
-    );
+LONG KdpLevelChange(ULONG_PTR Pc, PCONTEXT ContextRecord, IN OUT PBOOLEAN SpecialCall);
 
 #endif // i386
 
@@ -270,16 +191,12 @@ KdpLevelChange (
 //
 // This variable has a count for each time KdDisableDebugger has been called.
 //
-LONG KdDisableCount = 0 ;
-BOOLEAN KdPreviouslyEnabled = FALSE ;
+LONG KdDisableCount = 0;
+BOOLEAN KdPreviouslyEnabled = FALSE;
 
-
+
 #if DBG
-VOID
-KdpDprintf(
-    IN PCHAR f,
-    ...
-    )
+VOID KdpDprintf(IN PCHAR f, ...)
 /*++
 
 Routine Description:
@@ -297,8 +214,8 @@ Return Value:
 
 --*/
 {
-    char    buf[100];
-    STRING  Output;
+    char buf[100];
+    STRING Output;
     va_list mark;
 
     va_start(mark, f);
@@ -306,17 +223,14 @@ Return Value:
     va_end(mark);
 
     Output.Buffer = buf;
-    Output.Length = (USHORT) strlen(Output.Buffer);
+    Output.Length = (USHORT)strlen(Output.Buffer);
     KdpPrintString(&Output);
 }
 #endif // DBG
 
-
+
 BOOLEAN
-KdEnterDebugger(
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame
-    )
+KdEnterDebugger(IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame)
 
 /*++
 
@@ -353,10 +267,13 @@ Return Value:
     //            but not if called from KdSetOwedBreakpoints()
     //
 
-    if (TrapFrame) {
-        KdTimerStop = KdpQueryPerformanceCounter (TrapFrame);
+    if (TrapFrame)
+    {
+        KdTimerStop = KdpQueryPerformanceCounter(TrapFrame);
         KdTimerDifference.QuadPart = KdTimerStop.QuadPart - KdTimerStart.QuadPart;
-    } else {
+    }
+    else
+    {
         KdTimerStop.QuadPart = 0;
     }
 
@@ -373,15 +290,18 @@ Return Value:
 
 #if DBG
 
-    if ((KiFreezeFlag & FREEZE_BACKUP) != 0) {
+    if ((KiFreezeFlag & FREEZE_BACKUP) != 0)
+    {
         DPRINT(("FreezeLock was jammed!  Backup SpinLock was used!\n"));
     }
 
-    if ((KiFreezeFlag & FREEZE_SKIPPED_PROCESSOR) != 0) {
+    if ((KiFreezeFlag & FREEZE_SKIPPED_PROCESSOR) != 0)
+    {
         DPRINT(("Some processors not frozen in debugger!\n"));
     }
 
-    if (KdpPortLocked == FALSE) {
+    if (KdpPortLocked == FALSE)
+    {
         DPRINT(("Port lock was not acquired!\n"));
     }
 
@@ -389,11 +309,8 @@ Return Value:
 
     return Enable;
 }
-
-VOID
-KdExitDebugger(
-    IN BOOLEAN Enable
-    )
+
+VOID KdExitDebugger(IN BOOLEAN Enable)
 
 /*++
 
@@ -423,7 +340,8 @@ Return Value:
     //
 
     KdRestore(FALSE);
-    if (KdpPortLocked) {
+    if (KdpPortLocked)
+    {
         KdpPortUnlock();
     }
 
@@ -434,9 +352,12 @@ Return Value:
     // Query the performance counter, then don't do it here either.
     //
 
-    if (KdTimerStop.QuadPart == 0) {
+    if (KdTimerStop.QuadPart == 0)
+    {
         KdTimerStart = KdTimerStop;
-    } else {
+    }
+    else
+    {
         KdTimerStart = KeQueryPerformanceCounter(NULL);
     }
 
@@ -444,7 +365,8 @@ Return Value:
     // Process a time slip
     //
 
-    if (!PoHiberInProgress) {
+    if (!PoHiberInProgress)
+    {
 
         Pending = InterlockedIncrement(&KdpTimeSlipPending);
 
@@ -452,7 +374,8 @@ Return Value:
         // If there's wasn't a time slip pending, queue the DPC to handle it
         //
 
-        if (Pending == 1) {
+        if (Pending == 1)
+        {
             InterlockedIncrement(&KdpTimeSlipPending);
             KeInsertQueueDpc(&KdpTimeSlipDpc, NULL, NULL);
         }
@@ -461,11 +384,8 @@ Return Value:
     return;
 }
 
-
-VOID
-KdUpdateTimeSlipEvent(
-    PVOID Event
-    )
+
+VOID KdUpdateTimeSlipEvent(PVOID Event)
 
 /*++
 
@@ -494,7 +414,8 @@ Return Value:
     // Remember the new event if there is one.
     //
 
-    if (KdpTimeSlipEvent != NULL) {
+    if (KdpTimeSlipEvent != NULL)
+    {
         ObDereferenceObject(KdpTimeSlipEvent);
     }
 
@@ -502,14 +423,8 @@ Return Value:
 
     KeReleaseSpinLock(&KdpTimeSlipEventLock, OldIrql);
 }
-
-VOID
-KdpTimeSlipDpcRoutine (
-    PKDPC Dpc,
-    PVOID DeferredContext,
-    PVOID SystemArgument1,
-    PVOID SystemArgument2
-    )
+
+VOID KdpTimeSlipDpcRoutine(PKDPC Dpc, PVOID DeferredContext, PVOID SystemArgument1, PVOID SystemArgument2)
 {
     LONG OldCount, NewCount, j;
 
@@ -520,7 +435,8 @@ KdpTimeSlipDpcRoutine (
     //
 
     j = KdpTimeSlipPending;
-    do {
+    do
+    {
         OldCount = j;
         NewCount = OldCount > 1 ? 1 : 0;
 
@@ -532,18 +448,16 @@ KdpTimeSlipDpcRoutine (
     // If new count is non-zero, then process a time slip now
     //
 
-    if (NewCount) {
+    if (NewCount)
+    {
         ExQueueWorkItem(&KdpTimeSlipWorkItem, DelayedWorkQueue);
     }
 }
-
-VOID
-KdpTimeSlipWork (
-    IN PVOID Context
-    )
+
+VOID KdpTimeSlipWork(IN PVOID Context)
 {
-    KIRQL               OldIrql;
-    LARGE_INTEGER       DueTime;
+    KIRQL OldIrql;
+    LARGE_INTEGER DueTime;
 
     //
     // Update time from the real time clock.
@@ -551,8 +465,9 @@ KdpTimeSlipWork (
     // tying up a worker thread.
     //
 
-    if (ExAcquireTimeRefreshLock(FALSE)) {
-        ExUpdateSystemTimeFromCmos (FALSE, 0);
+    if (ExAcquireTimeRefreshLock(FALSE))
+    {
+        ExUpdateSystemTimeFromCmos(FALSE, 0);
         ExReleaseTimeRefreshLock();
 
         //
@@ -560,8 +475,9 @@ KdpTimeSlipWork (
         //
 
         KeAcquireSpinLock(&KdpTimeSlipEventLock, &OldIrql);
-        if (KdpTimeSlipEvent) {
-            KeSetEvent (KdpTimeSlipEvent, 0, FALSE);
+        if (KdpTimeSlipEvent)
+        {
+            KeSetEvent(KdpTimeSlipEvent, 0, FALSE);
         }
         KeReleaseSpinLock(&KdpTimeSlipEventLock, OldIrql);
 
@@ -570,10 +486,10 @@ KdpTimeSlipWork (
         //
 
         DueTime.QuadPart = -1800000000;
-        KeSetTimer (&KdpTimeSlipTimer, DueTime, &KdpTimeSlipDpc);
+        KeSetTimer(&KdpTimeSlipTimer, DueTime, &KdpTimeSlipDpc);
     }
 }
-
+
 #if i386
 
 #if 0
@@ -582,13 +498,7 @@ KdpTimeSlipWork (
 #define INTBP_PRINT(Args)
 #endif
 
-VOID
-InternalBreakpointCheck (
-    PKDPC Dpc,
-    PVOID DeferredContext,
-    PVOID SystemArgument1,
-    PVOID SystemArgument2
-    )
+VOID InternalBreakpointCheck(PKDPC Dpc, PVOID DeferredContext, PVOID SystemArgument1, PVOID SystemArgument2)
 {
     LARGE_INTEGER dueTime;
     ULONG i;
@@ -601,21 +511,20 @@ InternalBreakpointCheck (
     dueTime.LowPart = (ULONG)(-1 * 10 * 1000 * 1000);
     dueTime.HighPart = -1;
 
-    KeSetTimer(
-        &InternalBreakpointTimer,
-        dueTime,
-        &InternalBreakpointCheckDpc
-        );
+    KeSetTimer(&InternalBreakpointTimer, dueTime, &InternalBreakpointCheckDpc);
 
-    for ( i = 0 ; i < KdpNumInternalBreakpoints; i++ ) {
-        if ( !(KdpInternalBPs[i].Flags & DBGKD_INTERNAL_BP_FLAG_INVALID) &&
-             (KdpInternalBPs[i].Flags & DBGKD_INTERNAL_BP_FLAG_COUNTONLY) ) {
+    for (i = 0; i < KdpNumInternalBreakpoints; i++)
+    {
+        if (!(KdpInternalBPs[i].Flags & DBGKD_INTERNAL_BP_FLAG_INVALID) &&
+            (KdpInternalBPs[i].Flags & DBGKD_INTERNAL_BP_FLAG_COUNTONLY))
+        {
 
             PDBGKD_INTERNAL_BREAKPOINT b = KdpInternalBPs + i;
             ULONG callsThisPeriod;
 
             callsThisPeriod = b->Calls - b->CallsLastCheck;
-            if ( callsThisPeriod > b->MaxCallsPerPeriod ) {
+            if (callsThisPeriod > b->MaxCallsPerPeriod)
+            {
                 b->MaxCallsPerPeriod = callsThisPeriod;
             }
             b->CallsLastCheck = b->Calls;
@@ -626,11 +535,8 @@ InternalBreakpointCheck (
 
 } // InternalBreakpointCheck
 
-
-VOID
-KdSetInternalBreakpoint (
-    IN PDBGKD_MANIPULATE_STATE64 m
-    )
+
+VOID KdSetInternalBreakpoint(IN PDBGKD_MANIPULATE_STATE64 m)
 
 /*++
 
@@ -654,34 +560,41 @@ Return Value:
     PDBGKD_INTERNAL_BREAKPOINT bp = NULL;
     ULONG savedFlags;
 
-    for ( i = 0 ; i < KdpNumInternalBreakpoints; i++ ) {
-        if ( KdpInternalBPs[i].Addr ==
-                            m->u.SetInternalBreakpoint.BreakpointAddress ) {
+    for (i = 0; i < KdpNumInternalBreakpoints; i++)
+    {
+        if (KdpInternalBPs[i].Addr == m->u.SetInternalBreakpoint.BreakpointAddress)
+        {
             bp = &KdpInternalBPs[i];
             break;
         }
     }
 
-    if ( !bp ) {
-        for ( i = 0; i < KdpNumInternalBreakpoints; i++ ) {
-            if ( KdpInternalBPs[i].Flags & DBGKD_INTERNAL_BP_FLAG_INVALID ) {
+    if (!bp)
+    {
+        for (i = 0; i < KdpNumInternalBreakpoints; i++)
+        {
+            if (KdpInternalBPs[i].Flags & DBGKD_INTERNAL_BP_FLAG_INVALID)
+            {
                 bp = &KdpInternalBPs[i];
                 break;
             }
         }
     }
 
-    if ( !bp ) {
-        if ( KdpNumInternalBreakpoints >= DBGKD_MAX_INTERNAL_BREAKPOINTS ) {
+    if (!bp)
+    {
+        if (KdpNumInternalBreakpoints >= DBGKD_MAX_INTERNAL_BREAKPOINTS)
+        {
             return; // no space.  Probably should report error.
         }
         bp = &KdpInternalBPs[KdpNumInternalBreakpoints++];
         bp->Flags |= DBGKD_INTERNAL_BP_FLAG_INVALID; // force initialization
     }
 
-    if ( bp->Flags & DBGKD_INTERNAL_BP_FLAG_INVALID ) {
-        if ( m->u.SetInternalBreakpoint.Flags &
-                                        DBGKD_INTERNAL_BP_FLAG_INVALID ) {
+    if (bp->Flags & DBGKD_INTERNAL_BP_FLAG_INVALID)
+    {
+        if (m->u.SetInternalBreakpoint.Flags & DBGKD_INTERNAL_BP_FLAG_INVALID)
+        {
             return; // tried clearing a non-existant BP.  Ignore the request
         }
         bp->Calls = bp->MaxInstructions = bp->TotalInstructions = 0;
@@ -695,11 +608,11 @@ Return Value:
     bp->Flags = m->u.SetInternalBreakpoint.Flags; // this could possibly invalidate the BP
     bp->Addr = m->u.SetInternalBreakpoint.BreakpointAddress;
 
-    if ( bp->Flags & (DBGKD_INTERNAL_BP_FLAG_INVALID |
-                      DBGKD_INTERNAL_BP_FLAG_SUSPENDED) ) {
+    if (bp->Flags & (DBGKD_INTERNAL_BP_FLAG_INVALID | DBGKD_INTERNAL_BP_FLAG_SUSPENDED))
+    {
 
-        if ( (bp->Flags & DBGKD_INTERNAL_BP_FLAG_INVALID) &&
-             (bp->Thread != 0) ) {
+        if ((bp->Flags & DBGKD_INTERNAL_BP_FLAG_INVALID) && (bp->Thread != 0))
+        {
             // The breakpoint is active; defer its deletion
             bp->Flags &= ~DBGKD_INTERNAL_BP_FLAG_INVALID;
             bp->Flags |= DBGKD_INTERNAL_BP_FLAG_DYING;
@@ -707,8 +620,9 @@ Return Value:
 
         // This is really a CLEAR bp request.
 
-        if ( bp->Handle != 0 ) {
-            KdpDeleteBreakpoint( bp->Handle );
+        if (bp->Handle != 0)
+        {
+            KdpDeleteBreakpoint(bp->Handle);
         }
         bp->Handle = 0;
 
@@ -717,28 +631,24 @@ Return Value:
 
     // now set the real breakpoint and remember its handle.
 
-    if ( savedFlags & (DBGKD_INTERNAL_BP_FLAG_INVALID |
-                       DBGKD_INTERNAL_BP_FLAG_SUSPENDED) ) {
+    if (savedFlags & (DBGKD_INTERNAL_BP_FLAG_INVALID | DBGKD_INTERNAL_BP_FLAG_SUSPENDED))
+    {
         // breakpoint was invalid; activate it now
-        bp->Handle = KdpAddBreakpoint( (PVOID)bp->Addr );
+        bp->Handle = KdpAddBreakpoint((PVOID)bp->Addr);
 
-        INTBP_PRINT(("Added intbp %d of %d at %I64x, flags %x, handle %x\n",
-                     (ULONG)(bp - KdpInternalBPs), KdpNumInternalBreakpoints,
-                     bp->Addr, bp->Flags, bp->Handle));
+        INTBP_PRINT(("Added intbp %d of %d at %I64x, flags %x, handle %x\n", (ULONG)(bp - KdpInternalBPs),
+                     KdpNumInternalBreakpoints, bp->Addr, bp->Flags, bp->Handle));
     }
 
-    if ( BreakpointsSuspended ) {
-        KdpSuspendBreakpoint( bp->Handle );
+    if (BreakpointsSuspended)
+    {
+        KdpSuspendBreakpoint(bp->Handle);
     }
 
 } // KdSetInternalBreakpoint
-
+
 NTSTATUS
-KdGetTraceInformation(
-    PVOID SystemInformation,
-    ULONG SystemInformationLength,
-    PULONG ReturnLength
-    )
+KdGetTraceInformation(PVOID SystemInformation, ULONG SystemInformationLength, PULONG ReturnLength)
 
 /*++
 
@@ -767,14 +677,17 @@ Return Value:
     ULONG i = 0;
     PDBGKD_GET_INTERNAL_BREAKPOINT64 outPtr;
 
-    for ( i = 0; i < KdpNumInternalBreakpoints; i++ ) {
-        if ( !(KdpInternalBPs[i].Flags & DBGKD_INTERNAL_BP_FLAG_INVALID) ) {
+    for (i = 0; i < KdpNumInternalBreakpoints; i++)
+    {
+        if (!(KdpInternalBPs[i].Flags & DBGKD_INTERNAL_BP_FLAG_INVALID))
+        {
             numEntries++;
         }
     }
 
     *ReturnLength = numEntries * sizeof(DBGKD_GET_INTERNAL_BREAKPOINT64);
-    if ( *ReturnLength > SystemInformationLength ) {
+    if (*ReturnLength > SystemInformationLength)
+    {
         return STATUS_INFO_LENGTH_MISMATCH;
     }
 
@@ -783,8 +696,10 @@ Return Value:
     //
 
     outPtr = (PDBGKD_GET_INTERNAL_BREAKPOINT64)SystemInformation;
-    for ( i = 0; i < KdpNumInternalBreakpoints; i++ ) {
-        if ( !(KdpInternalBPs[i].Flags & DBGKD_INTERNAL_BP_FLAG_INVALID) ) {
+    for (i = 0; i < KdpNumInternalBreakpoints; i++)
+    {
+        if (!(KdpInternalBPs[i].Flags & DBGKD_INTERNAL_BP_FLAG_INVALID))
+        {
             outPtr->BreakpointAddress = KdpInternalBPs[i].Addr;
             outPtr->Flags = KdpInternalBPs[i].Flags;
             outPtr->Calls = KdpInternalBPs[i].Calls;
@@ -799,11 +714,8 @@ Return Value:
     return STATUS_SUCCESS;
 
 } // KdGetTraceInformation
-
-VOID
-KdGetInternalBreakpoint(
-    IN PDBGKD_MANIPULATE_STATE64 m
-    )
+
+VOID KdGetInternalBreakpoint(IN PDBGKD_MANIPULATE_STATE64 m)
 
 /*++
 
@@ -830,17 +742,18 @@ Return Value:
     messageHeader.Length = sizeof(*m);
     messageHeader.Buffer = (PCHAR)m;
 
-    for ( i = 0; i < KdpNumInternalBreakpoints; i++ ) {
-        if ( !(KdpInternalBPs[i].Flags & (DBGKD_INTERNAL_BP_FLAG_INVALID |
-                                          DBGKD_INTERNAL_BP_FLAG_SUSPENDED)) &&
-             (KdpInternalBPs[i].Addr ==
-                        m->u.GetInternalBreakpoint.BreakpointAddress) ) {
+    for (i = 0; i < KdpNumInternalBreakpoints; i++)
+    {
+        if (!(KdpInternalBPs[i].Flags & (DBGKD_INTERNAL_BP_FLAG_INVALID | DBGKD_INTERNAL_BP_FLAG_SUSPENDED)) &&
+            (KdpInternalBPs[i].Addr == m->u.GetInternalBreakpoint.BreakpointAddress))
+        {
             bp = &KdpInternalBPs[i];
             break;
         }
     }
 
-    if ( !bp ) {
+    if (!bp)
+    {
         m->u.GetInternalBreakpoint.Flags = DBGKD_INTERNAL_BP_FLAG_INVALID;
         m->u.GetInternalBreakpoint.Calls = 0;
         m->u.GetInternalBreakpoint.MaxCallsPerPeriod = 0;
@@ -848,7 +761,9 @@ Return Value:
         m->u.GetInternalBreakpoint.MaxInstructions = 0;
         m->u.GetInternalBreakpoint.TotalInstructions = 0;
         m->ReturnStatus = STATUS_UNSUCCESSFUL;
-    } else {
+    }
+    else
+    {
         m->u.GetInternalBreakpoint.Flags = bp->Flags;
         m->u.GetInternalBreakpoint.Calls = bp->Calls;
         m->u.GetInternalBreakpoint.MaxCallsPerPeriod = bp->MaxCallsPerPeriod;
@@ -860,24 +775,16 @@ Return Value:
 
     m->ApiNumber = DbgKdGetInternalBreakPointApi;
 
-    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE,
-                 &messageHeader,
-                 NULL,
-                 &KdpContext
-                 );
+    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &messageHeader, NULL, &KdpContext);
 
     return;
 
 } // KdGetInternalBreakpoint
 #endif // i386
-
+
 KCONTINUE_STATUS
-KdpSendWaitContinue (
-    IN ULONG OutPacketType,
-    IN PSTRING OutMessageHeader,
-    IN PSTRING OutMessageData OPTIONAL,
-    IN OUT PCONTEXT ContextRecord
-    )
+KdpSendWaitContinue(IN ULONG OutPacketType, IN PSTRING OutMessageHeader, IN PSTRING OutMessageData OPTIONAL,
+                    IN OUT PCONTEXT ContextRecord)
 
 /*++
 
@@ -938,12 +845,7 @@ ResendPacket:
     // here any time we see a breakin sequence.
     //
 
-    KdSendPacket(
-        OutPacketType,
-        OutMessageHeader,
-        OutMessageData,
-        &KdpContext
-        );
+    KdSendPacket(OutPacketType, OutMessageHeader, OutMessageData, &KdpContext);
 
     //
     // After sending packet, if there is no response from debugger
@@ -952,26 +854,25 @@ ResendPacket:
     // reporting exception, the KdSendPacket will never stop.
     //
 
-    if (KdDebuggerNotPresent) {
+    if (KdDebuggerNotPresent)
+    {
         return ContinueSuccess;
     }
 
-    while (TRUE) {
+    while (TRUE)
+    {
 
         //
         // Wait for State Manipulate Packet without timeout.
         //
 
-        do {
+        do
+        {
 
-            ReturnCode = KdReceivePacket(
-                            PACKET_TYPE_KD_STATE_MANIPULATE,
-                            &MessageHeader,
-                            &MessageData,
-                            &Length,
-                            &KdpContext
-                            );
-            if (ReturnCode == (USHORT)KDP_PACKET_RESEND) {
+            ReturnCode =
+                KdReceivePacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, &MessageData, &Length, &KdpContext);
+            if (ReturnCode == (USHORT)KDP_PACKET_RESEND)
+            {
                 goto ResendPacket;
             }
         } while (ReturnCode == KDP_PACKET_TIMEOUT);
@@ -980,10 +881,11 @@ ResendPacket:
         // Switch on the return message API number.
         //
 
-        switch (ManipulateState.ApiNumber) {
+        switch (ManipulateState.ApiNumber)
+        {
 
         case DbgKdReadVirtualMemoryApi:
-            KdpReadVirtualMemory(&ManipulateState,&MessageData,ContextRecord);
+            KdpReadVirtualMemory(&ManipulateState, &MessageData, ContextRecord);
             break;
 #if 0
         case DbgKdReadVirtualMemory64Api:
@@ -991,7 +893,7 @@ ResendPacket:
             break;
 #endif
         case DbgKdWriteVirtualMemoryApi:
-            KdpWriteVirtualMemory(&ManipulateState,&MessageData,ContextRecord);
+            KdpWriteVirtualMemory(&ManipulateState, &MessageData, ContextRecord);
             break;
 #if 0
         case DbgKdWriteVirtualMemory64Api:
@@ -1000,86 +902,92 @@ ResendPacket:
 #endif
 
         case DbgKdCheckLowMemoryApi:
-            KdpCheckLowMemory (&ManipulateState);
+            KdpCheckLowMemory(&ManipulateState);
             break;
 
         case DbgKdReadPhysicalMemoryApi:
-            KdpReadPhysicalMemory(&ManipulateState,&MessageData,ContextRecord);
+            KdpReadPhysicalMemory(&ManipulateState, &MessageData, ContextRecord);
             break;
 
         case DbgKdWritePhysicalMemoryApi:
-            KdpWritePhysicalMemory(&ManipulateState,&MessageData,ContextRecord);
+            KdpWritePhysicalMemory(&ManipulateState, &MessageData, ContextRecord);
             break;
 
         case DbgKdGetContextApi:
-            KdpGetContext(&ManipulateState,&MessageData,ContextRecord);
+            KdpGetContext(&ManipulateState, &MessageData, ContextRecord);
             break;
 
         case DbgKdSetContextApi:
-            KdpSetContext(&ManipulateState,&MessageData,ContextRecord);
+            KdpSetContext(&ManipulateState, &MessageData, ContextRecord);
             break;
 
         case DbgKdWriteBreakPointApi:
-            KdpWriteBreakpoint(&ManipulateState,&MessageData,ContextRecord);
+            KdpWriteBreakpoint(&ManipulateState, &MessageData, ContextRecord);
             break;
 
         case DbgKdRestoreBreakPointApi:
-            KdpRestoreBreakpoint(&ManipulateState,&MessageData,ContextRecord);
+            KdpRestoreBreakpoint(&ManipulateState, &MessageData, ContextRecord);
             break;
 
         case DbgKdReadControlSpaceApi:
-            KdpReadControlSpace(&ManipulateState,&MessageData,ContextRecord);
+            KdpReadControlSpace(&ManipulateState, &MessageData, ContextRecord);
             break;
 
         case DbgKdWriteControlSpaceApi:
-            KdpWriteControlSpace(&ManipulateState,&MessageData,ContextRecord);
+            KdpWriteControlSpace(&ManipulateState, &MessageData, ContextRecord);
             break;
 
         case DbgKdReadIoSpaceApi:
-            KdpReadIoSpace(&ManipulateState,&MessageData,ContextRecord);
+            KdpReadIoSpace(&ManipulateState, &MessageData, ContextRecord);
             break;
 
         case DbgKdWriteIoSpaceApi:
-            KdpWriteIoSpace(&ManipulateState,&MessageData,ContextRecord);
+            KdpWriteIoSpace(&ManipulateState, &MessageData, ContextRecord);
             break;
 
         case DbgKdReadIoSpaceExtendedApi:
-            KdpReadIoSpaceExtended(&ManipulateState,&MessageData,ContextRecord);
+            KdpReadIoSpaceExtended(&ManipulateState, &MessageData, ContextRecord);
             break;
 
         case DbgKdWriteIoSpaceExtendedApi:
-            KdpWriteIoSpaceExtended(&ManipulateState,&MessageData,ContextRecord);
+            KdpWriteIoSpaceExtended(&ManipulateState, &MessageData, ContextRecord);
             break;
 
         case DbgKdReadMachineSpecificRegister:
-            KdpReadMachineSpecificRegister(&ManipulateState,&MessageData,ContextRecord);
+            KdpReadMachineSpecificRegister(&ManipulateState, &MessageData, ContextRecord);
             break;
 
         case DbgKdWriteMachineSpecificRegister:
-            KdpWriteMachineSpecificRegister(&ManipulateState,&MessageData,ContextRecord);
+            KdpWriteMachineSpecificRegister(&ManipulateState, &MessageData, ContextRecord);
             break;
 
         case DbgKdGetBusDataApi:
-            KdpGetBusData(&ManipulateState,&MessageData,ContextRecord);
+            KdpGetBusData(&ManipulateState, &MessageData, ContextRecord);
             break;
 
         case DbgKdSetBusDataApi:
-            KdpSetBusData(&ManipulateState,&MessageData,ContextRecord);
+            KdpSetBusData(&ManipulateState, &MessageData, ContextRecord);
             break;
 
         case DbgKdContinueApi:
-            if (NT_SUCCESS(ManipulateState.u.Continue.ContinueStatus) != FALSE) {
+            if (NT_SUCCESS(ManipulateState.u.Continue.ContinueStatus) != FALSE)
+            {
                 return ContinueSuccess;
-            } else {
+            }
+            else
+            {
                 return ContinueError;
             }
             break;
 
         case DbgKdContinueApi2:
-            if (NT_SUCCESS(ManipulateState.u.Continue2.ContinueStatus) != FALSE) {
-                KdpGetStateChange(&ManipulateState,ContextRecord);
+            if (NT_SUCCESS(ManipulateState.u.Continue2.ContinueStatus) != FALSE)
+            {
+                KdpGetStateChange(&ManipulateState, ContextRecord);
                 return ContinueSuccess;
-            } else {
+            }
+            else
+            {
                 return ContinueError;
             }
             break;
@@ -1090,7 +998,7 @@ ResendPacket:
 
 #if defined(i386)
         case DbgKdSetSpecialCallApi:
-            KdSetSpecialCall(&ManipulateState,ContextRecord);
+            KdSetSpecialCall(&ManipulateState, ContextRecord);
             break;
 
         case DbgKdClearSpecialCallsApi:
@@ -1124,10 +1032,9 @@ ResendPacket:
             break;
 
         case DbgKdWriteBreakPointExApi:
-            Status = KdpWriteBreakPointEx(&ManipulateState,
-                                          &MessageData,
-                                          ContextRecord);
-            if (Status) {
+            Status = KdpWriteBreakPointEx(&ManipulateState, &MessageData, ContextRecord);
+            if (Status)
+            {
                 ManipulateState.ApiNumber = DbgKdContinueApi;
                 ManipulateState.u.Continue.ContinueStatus = Status;
                 return ContinueError;
@@ -1135,7 +1042,7 @@ ResendPacket:
             break;
 
         case DbgKdRestoreBreakPointExApi:
-            KdpRestoreBreakPointEx(&ManipulateState,&MessageData,ContextRecord);
+            KdpRestoreBreakPointEx(&ManipulateState, &MessageData, ContextRecord);
             break;
 
         case DbgKdSwitchProcessor:
@@ -1151,11 +1058,11 @@ ResendPacket:
         case DbgKdFillMemoryApi:
             KdpFillMemory(&ManipulateState, &MessageData, ContextRecord);
             break;
-            
+
         case DbgKdQueryMemoryApi:
             KdpQueryMemory(&ManipulateState, ContextRecord);
             break;
-            
+
             //
             // Invalid message.
             //
@@ -1168,13 +1075,8 @@ ResendPacket:
         }
     }
 }
-
-VOID
-KdpReadVirtualMemory(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    )
+
+VOID KdpReadVirtualMemory(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context)
 
 /*++
 
@@ -1207,7 +1109,8 @@ Return Value:
     //
 
     Length = m->u.ReadMemory.TransferCount;
-    if (Length > (PACKET_MAX_SIZE - sizeof(DBGKD_MANIPULATE_STATE64))) {
+    if (Length > (PACKET_MAX_SIZE - sizeof(DBGKD_MANIPULATE_STATE64)))
+    {
         Length = PACKET_MAX_SIZE - sizeof(DBGKD_MANIPULATE_STATE64);
     }
 
@@ -1215,13 +1118,8 @@ Return Value:
     // Move the data to the destination buffer.
     //
 
-    m->ReturnStatus =
-        KdpCopyMemoryChunks(m->u.ReadMemory.TargetBaseAddress,
-                            AdditionalData->Buffer,
-                            Length,
-                            0,
-                            MMDBG_COPY_UNSAFE,
-                            &Length);
+    m->ReturnStatus = KdpCopyMemoryChunks(m->u.ReadMemory.TargetBaseAddress, AdditionalData->Buffer, Length, 0,
+                                          MMDBG_COPY_UNSAFE, &Length);
 
     //
     // Set the actual number of bytes read, initialize the message header,
@@ -1233,20 +1131,12 @@ Return Value:
 
     MessageHeader.Length = sizeof(DBGKD_MANIPULATE_STATE64);
     MessageHeader.Buffer = (PCHAR)m;
-    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE,
-                 &MessageHeader,
-                 AdditionalData,
-                 &KdpContext);
+    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, AdditionalData, &KdpContext);
 
     return;
 }
-
-VOID
-KdpWriteVirtualMemory(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    )
+
+VOID KdpWriteVirtualMemory(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context)
 
 /*++
 
@@ -1279,12 +1169,8 @@ Return Value:
     //
 
     m->ReturnStatus =
-        KdpCopyMemoryChunks(m->u.WriteMemory.TargetBaseAddress,
-                            AdditionalData->Buffer,
-                            AdditionalData->Length,
-                            0,
-                            MMDBG_COPY_WRITE | MMDBG_COPY_UNSAFE,
-                            &m->u.WriteMemory.ActualBytesWritten);
+        KdpCopyMemoryChunks(m->u.WriteMemory.TargetBaseAddress, AdditionalData->Buffer, AdditionalData->Length, 0,
+                            MMDBG_COPY_WRITE | MMDBG_COPY_UNSAFE, &m->u.WriteMemory.ActualBytesWritten);
 
     //
     // Set the actual number of bytes written, initialize the message header,
@@ -1293,20 +1179,12 @@ Return Value:
 
     MessageHeader.Length = sizeof(DBGKD_MANIPULATE_STATE64);
     MessageHeader.Buffer = (PCHAR)m;
-    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE,
-                 &MessageHeader,
-                 NULL,
-                 &KdpContext);
+    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, NULL, &KdpContext);
 
     return;
 }
-
-VOID
-KdpGetContext(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    )
+
+VOID KdpGetContext(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context)
 
 /*++
 
@@ -1339,36 +1217,30 @@ Return Value:
 
     ASSERT(AdditionalData->Length == 0);
 
-    if (m->Processor >= (USHORT)KeNumberProcessors) {
+    if (m->Processor >= (USHORT)KeNumberProcessors)
+    {
         m->ReturnStatus = STATUS_UNSUCCESSFUL;
-    } else {
+    }
+    else
+    {
         m->ReturnStatus = STATUS_SUCCESS;
         AdditionalData->Length = sizeof(CONTEXT);
-        if (m->Processor == (USHORT)KeGetCurrentPrcb()->Number) {
+        if (m->Processor == (USHORT)KeGetCurrentPrcb()->Number)
+        {
             KdpQuickMoveMemory(AdditionalData->Buffer, (PCHAR)Context, sizeof(CONTEXT));
-        } else {
+        }
+        else
+        {
             KdpQuickMoveMemory(AdditionalData->Buffer,
-                          (PCHAR)&KiProcessorBlock[m->Processor]->ProcessorState.ContextFrame,
-                          sizeof(CONTEXT)
-                         );
+                               (PCHAR)&KiProcessorBlock[m->Processor]->ProcessorState.ContextFrame, sizeof(CONTEXT));
         }
         KdpContextSent = TRUE;
     }
 
-    KdSendPacket(
-        PACKET_TYPE_KD_STATE_MANIPULATE,
-        &MessageHeader,
-        AdditionalData,
-        &KdpContext
-        );
+    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, AdditionalData, &KdpContext);
 }
 
-VOID
-KdpSetContext(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    )
+VOID KdpSetContext(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context)
 
 /*++
 
@@ -1401,35 +1273,28 @@ Return Value:
 
     ASSERT(AdditionalData->Length == sizeof(CONTEXT));
 
-    if ((m->Processor >= (USHORT)KeNumberProcessors) ||
-        (KdpContextSent == FALSE)) {
+    if ((m->Processor >= (USHORT)KeNumberProcessors) || (KdpContextSent == FALSE))
+    {
         m->ReturnStatus = STATUS_UNSUCCESSFUL;
-    } else {
+    }
+    else
+    {
         m->ReturnStatus = STATUS_SUCCESS;
-        if (m->Processor == (USHORT)KeGetCurrentPrcb()->Number) {
+        if (m->Processor == (USHORT)KeGetCurrentPrcb()->Number)
+        {
             KdpQuickMoveMemory((PCHAR)Context, AdditionalData->Buffer, sizeof(CONTEXT));
-        } else {
+        }
+        else
+        {
             KdpQuickMoveMemory((PCHAR)&KiProcessorBlock[m->Processor]->ProcessorState.ContextFrame,
-                          AdditionalData->Buffer,
-                          sizeof(CONTEXT)
-                         );
+                               AdditionalData->Buffer, sizeof(CONTEXT));
         }
     }
 
-    KdSendPacket(
-        PACKET_TYPE_KD_STATE_MANIPULATE,
-        &MessageHeader,
-        NULL,
-        &KdpContext
-        );
+    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, NULL, &KdpContext);
 }
 
-VOID
-KdpWriteBreakpoint(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    )
+VOID KdpWriteBreakpoint(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context)
 
 /*++
 
@@ -1463,26 +1328,19 @@ Return Value:
     ASSERT(AdditionalData->Length == 0);
 
     a->BreakPointHandle = KdpAddBreakpoint((PVOID)a->BreakPointAddress);
-    if (a->BreakPointHandle != 0) {
+    if (a->BreakPointHandle != 0)
+    {
         m->ReturnStatus = STATUS_SUCCESS;
-    } else {
+    }
+    else
+    {
         m->ReturnStatus = STATUS_UNSUCCESSFUL;
     }
-    KdSendPacket(
-        PACKET_TYPE_KD_STATE_MANIPULATE,
-        &MessageHeader,
-        NULL,
-        &KdpContext
-        );
+    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, NULL, &KdpContext);
     UNREFERENCED_PARAMETER(Context);
 }
 
-VOID
-KdpRestoreBreakpoint(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    )
+VOID KdpRestoreBreakpoint(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context)
 
 /*++
 
@@ -1514,34 +1372,30 @@ Return Value:
     MessageHeader.Buffer = (PCHAR)m;
 
     ASSERT(AdditionalData->Length == 0);
-    if (KdpDeleteBreakpoint(a->BreakPointHandle)) {
+    if (KdpDeleteBreakpoint(a->BreakPointHandle))
+    {
         m->ReturnStatus = STATUS_SUCCESS;
-    } else {
+    }
+    else
+    {
         m->ReturnStatus = STATUS_UNSUCCESSFUL;
     }
-    KdSendPacket(
-        PACKET_TYPE_KD_STATE_MANIPULATE,
-        &MessageHeader,
-        NULL,
-        &KdpContext
-        );
+    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, NULL, &KdpContext);
     UNREFERENCED_PARAMETER(Context);
 }
 
 #if defined(_X86_)
 
-long
-SymNumFor(
-    ULONG pc
-    )
+long SymNumFor(ULONG pc)
 {
     ULONG index;
 
-    for (index = 0; index < NumTraceDataSyms; index++) {
-        if ((TraceDataSyms[index].SymMin <= pc) &&
-            (TraceDataSyms[index].SymMax > pc)) return(index);
+    for (index = 0; index < NumTraceDataSyms; index++)
+    {
+        if ((TraceDataSyms[index].SymMin <= pc) && (TraceDataSyms[index].SymMax > pc))
+            return (index);
     }
-    return(-1);
+    return (-1);
 }
 
 #if 0
@@ -1552,10 +1406,10 @@ SymNumFor(
 
 BOOLEAN TraceDataBufferFilled = FALSE;
 
-void PotentialNewSymbol (ULONG pc)
+void PotentialNewSymbol(ULONG pc)
 {
-    if (!TraceDataBufferFilled &&
-        -1 != SymNumFor(pc)) {     // we've already seen this one
+    if (!TraceDataBufferFilled && -1 != SymNumFor(pc))
+    { // we've already seen this one
         TRACE_PRINT(("PNS %x repeat %d\n", pc, SymNumFor(pc)));
         return;
     }
@@ -1565,15 +1419,15 @@ void PotentialNewSymbol (ULONG pc)
     // OK, we've got to start up a TraceDataRecord
     TraceDataBuffer[TraceDataBufferPosition].s.LevelChange = 0;
 
-    if (-1 != SymNumFor(pc)) {
+    if (-1 != SymNumFor(pc))
+    {
         int sym = SymNumFor(pc);
-        TraceDataBuffer[TraceDataBufferPosition].s.SymbolNumber = (UCHAR) sym;
+        TraceDataBuffer[TraceDataBufferPosition].s.SymbolNumber = (UCHAR)sym;
         KdpCurrentSymbolStart = TraceDataSyms[sym].SymMin;
         KdpCurrentSymbolEnd = TraceDataSyms[sym].SymMax;
 
-        TRACE_PRINT(("PNS %x repeat %d at %d\n",
-                     pc, sym, TraceDataBufferPosition));
-        return;  // we've already seen this one
+        TRACE_PRINT(("PNS %x repeat %d at %d\n", pc, sym, TraceDataBufferPosition));
+        return; // we've already seen this one
     }
 
     TraceDataSyms[NextTraceDataSym].SymMin = KdpCurrentSymbolStart;
@@ -1584,32 +1438,26 @@ void PotentialNewSymbol (ULONG pc)
     // Bump the "next" pointer, wrapping if necessary.  Also bump the
     // "valid" pointer if we need to.
     NextTraceDataSym = (NextTraceDataSym + 1) % 256;
-    if (NumTraceDataSyms < NextTraceDataSym) {
+    if (NumTraceDataSyms < NextTraceDataSym)
+    {
         NumTraceDataSyms = NextTraceDataSym;
     }
 
-    TRACE_PRINT(("PNS %x in %x - %x, next %d, num %d\n", pc,
-                 KdpCurrentSymbolStart, KdpCurrentSymbolEnd,
+    TRACE_PRINT(("PNS %x in %x - %x, next %d, num %d\n", pc, KdpCurrentSymbolStart, KdpCurrentSymbolEnd,
                  NextTraceDataSym, NumTraceDataSyms));
 }
 
 void DumpTraceData(PSTRING MessageData)
 {
     TraceDataBuffer[0].LongNumber = TraceDataBufferPosition;
-    MessageData->Length =
-        (USHORT)(sizeof(TraceDataBuffer[0]) * TraceDataBufferPosition);
+    MessageData->Length = (USHORT)(sizeof(TraceDataBuffer[0]) * TraceDataBufferPosition);
     MessageData->Buffer = (PVOID)TraceDataBuffer;
-    TRACE_PRINT(("DumpTraceData returns %d records\n",
-                 TraceDataBufferPosition));
+    TRACE_PRINT(("DumpTraceData returns %d records\n", TraceDataBufferPosition));
     TraceDataBufferPosition = 1;
 }
 
 BOOLEAN
-TraceDataRecordCallInfo(
-    ULONG InstructionsTraced,
-    LONG CallLevelChange,
-    ULONG pc
-    )
+TraceDataRecordCallInfo(ULONG InstructionsTraced, LONG CallLevelChange, ULONG pc)
 {
     // We've just exited a symbol scope.  The InstructionsTraced number goes
     // with the old scope, the CallLevelChange goes with the new, and the
@@ -1617,52 +1465,48 @@ TraceDataRecordCallInfo(
 
     long SymNum = SymNumFor(pc);
 
-    if (KdpNextCallLevelChange != 0) {
-        TraceDataBuffer[TraceDataBufferPosition].s.LevelChange =
-                                                (char) KdpNextCallLevelChange;
+    if (KdpNextCallLevelChange != 0)
+    {
+        TraceDataBuffer[TraceDataBufferPosition].s.LevelChange = (char)KdpNextCallLevelChange;
         KdpNextCallLevelChange = 0;
     }
 
 
-    if (InstructionsTraced >= TRACE_DATA_INSTRUCTIONS_BIG) {
-       TraceDataBuffer[TraceDataBufferPosition].s.Instructions =
-           TRACE_DATA_INSTRUCTIONS_BIG;
-       TraceDataBuffer[TraceDataBufferPosition+1].LongNumber =
-           InstructionsTraced;
-       TraceDataBufferPosition += 2;
-    } else {
-       TraceDataBuffer[TraceDataBufferPosition].s.Instructions =
-           (unsigned short)InstructionsTraced;
-       TraceDataBufferPosition++;
+    if (InstructionsTraced >= TRACE_DATA_INSTRUCTIONS_BIG)
+    {
+        TraceDataBuffer[TraceDataBufferPosition].s.Instructions = TRACE_DATA_INSTRUCTIONS_BIG;
+        TraceDataBuffer[TraceDataBufferPosition + 1].LongNumber = InstructionsTraced;
+        TraceDataBufferPosition += 2;
+    }
+    else
+    {
+        TraceDataBuffer[TraceDataBufferPosition].s.Instructions = (unsigned short)InstructionsTraced;
+        TraceDataBufferPosition++;
     }
 
-    if ((TraceDataBufferPosition + 2 >= TRACE_DATA_BUFFER_MAX_SIZE) ||
-        (-1 == SymNum)) {
-        if (TraceDataBufferPosition +2 >= TRACE_DATA_BUFFER_MAX_SIZE) {
+    if ((TraceDataBufferPosition + 2 >= TRACE_DATA_BUFFER_MAX_SIZE) || (-1 == SymNum))
+    {
+        if (TraceDataBufferPosition + 2 >= TRACE_DATA_BUFFER_MAX_SIZE)
+        {
             TraceDataBufferFilled = TRUE;
         }
-       KdpNextCallLevelChange = CallLevelChange;
-       TRACE_PRINT(("TDRCI nosym %x, lc %d, pos %d\n", pc, CallLevelChange,
-                    TraceDataBufferPosition));
-       return FALSE;
+        KdpNextCallLevelChange = CallLevelChange;
+        TRACE_PRINT(("TDRCI nosym %x, lc %d, pos %d\n", pc, CallLevelChange, TraceDataBufferPosition));
+        return FALSE;
     }
 
-    TraceDataBuffer[TraceDataBufferPosition].s.LevelChange =(char)CallLevelChange;
-    TraceDataBuffer[TraceDataBufferPosition].s.SymbolNumber = (UCHAR) SymNum;
+    TraceDataBuffer[TraceDataBufferPosition].s.LevelChange = (char)CallLevelChange;
+    TraceDataBuffer[TraceDataBufferPosition].s.SymbolNumber = (UCHAR)SymNum;
     KdpCurrentSymbolStart = TraceDataSyms[SymNum].SymMin;
     KdpCurrentSymbolEnd = TraceDataSyms[SymNum].SymMax;
 
-    TRACE_PRINT(("TDRCI sym %d for %x, %x - %x, lc %d, pos %d\n", SymNum, pc,
-                 KdpCurrentSymbolStart, KdpCurrentSymbolEnd, CallLevelChange,
-                 TraceDataBufferPosition));
+    TRACE_PRINT(("TDRCI sym %d for %x, %x - %x, lc %d, pos %d\n", SymNum, pc, KdpCurrentSymbolStart,
+                 KdpCurrentSymbolEnd, CallLevelChange, TraceDataBufferPosition));
     return TRUE;
 }
 
 BOOLEAN
-SkippingWhichBP (
-    PVOID thread,
-    PULONG BPNum
-    )
+SkippingWhichBP(PVOID thread, PULONG BPNum)
 
 /*
  * Return TRUE iff the pc corresponds to an internal breakpoint
@@ -1673,50 +1517,40 @@ SkippingWhichBP (
 {
     ULONG index;
 
-    if (!IntBPsSkipping) return FALSE;
+    if (!IntBPsSkipping)
+        return FALSE;
 
-    for (index = 0; index < KdpNumInternalBreakpoints; index++) {
-        if (!(KdpInternalBPs[index].Flags & DBGKD_INTERNAL_BP_FLAG_INVALID) &&
-            (KdpInternalBPs[index].Thread == thread)) {
+    for (index = 0; index < KdpNumInternalBreakpoints; index++)
+    {
+        if (!(KdpInternalBPs[index].Flags & DBGKD_INTERNAL_BP_FLAG_INVALID) && (KdpInternalBPs[index].Thread == thread))
+        {
             *BPNum = index;
             return TRUE;
         }
     }
     return FALSE; // didn't match any
 }
-
-
-NTSTATUS
-KdQuerySpecialCalls (
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    ULONG Length,
-    PULONG RequiredLength
-    )
-{
-    *RequiredLength = sizeof(DBGKD_MANIPULATE_STATE64) +
-                        (sizeof(ULONG) * KdNumberOfSpecialCalls);
 
-    if ( Length < *RequiredLength ) {
+
+NTSTATUS
+KdQuerySpecialCalls(IN PDBGKD_MANIPULATE_STATE64 m, ULONG Length, PULONG RequiredLength)
+{
+    *RequiredLength = sizeof(DBGKD_MANIPULATE_STATE64) + (sizeof(ULONG) * KdNumberOfSpecialCalls);
+
+    if (Length < *RequiredLength)
+    {
         return STATUS_INFO_LENGTH_MISMATCH;
     }
 
     m->u.QuerySpecialCalls.NumberOfSpecialCalls = KdNumberOfSpecialCalls;
-    KdpQuickMoveMemory(
-        (PCHAR)(m + 1),
-        (PCHAR)KdSpecialCalls,
-        sizeof(ULONG) * KdNumberOfSpecialCalls
-        );
+    KdpQuickMoveMemory((PCHAR)(m + 1), (PCHAR)KdSpecialCalls, sizeof(ULONG) * KdNumberOfSpecialCalls);
 
     return STATUS_SUCCESS;
 
 } // KdQuerySpecialCalls
 
-
-VOID
-KdSetSpecialCall (
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PCONTEXT ContextRecord
-    )
+
+VOID KdSetSpecialCall(IN PDBGKD_MANIPULATE_STATE64 m, IN PCONTEXT ContextRecord)
 
 /*++
 
@@ -1736,7 +1570,8 @@ Return Value:
 --*/
 
 {
-    if ( KdNumberOfSpecialCalls >= DBGKD_MAX_SPECIAL_CALLS ) {
+    if (KdNumberOfSpecialCalls >= DBGKD_MAX_SPECIAL_CALLS)
+    {
         return; // too bad
     }
 
@@ -1745,17 +1580,15 @@ Return Value:
     NextTraceDataSym = 0;
     NumTraceDataSyms = 0;
     KdpNextCallLevelChange = 0;
-    if (ContextRecord && !InstrCountInternal) {
+    if (ContextRecord && !InstrCountInternal)
+    {
         InitialSP = ContextRecord->Esp;
     }
 
 } // KdSetSpecialCall
 
-
-VOID
-KdClearSpecialCalls (
-    VOID
-    )
+
+VOID KdClearSpecialCalls(VOID)
 
 /*++
 
@@ -1781,20 +1614,19 @@ Return Value:
 
 } // KdClearSpecialCalls
 
-
+
 BOOLEAN
-KdpCheckTracePoint(
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN OUT PCONTEXT ContextRecord
-    )
+KdpCheckTracePoint(IN PEXCEPTION_RECORD ExceptionRecord, IN OUT PCONTEXT ContextRecord)
 {
     ULONG pc = (ULONG)CONTEXT_TO_PROGRAM_COUNTER(ContextRecord);
     LONG BpNum;
     ULONG SkippedBPNum;
     BOOLEAN AfterSC = FALSE;
 
-    if (ExceptionRecord->ExceptionCode == STATUS_SINGLE_STEP) {
-        if (WatchStepOverSuspended) {
+    if (ExceptionRecord->ExceptionCode == STATUS_SINGLE_STEP)
+    {
+        if (WatchStepOverSuspended)
+        {
             //
             //  For background, see the comment below where WSOThread is
             //  wrong.  We've now stepped over the breakpoint in the non-traced
@@ -1805,10 +1637,11 @@ KdpCheckTracePoint(
             WatchStepOverHandle = KdpAddBreakpoint((PVOID)WatchStepOverBreakAddr);
             WatchStepOverSuspended = FALSE;
             ContextRecord->EFlags &= ~0x100L; /* clear trace flag */
-            return TRUE; // resume non-traced thread at full speed
+            return TRUE;                      // resume non-traced thread at full speed
         }
 
-        if ((!SymbolRecorded) && (KdpCurrentSymbolStart != 0) && (KdpCurrentSymbolEnd != 0)) {
+        if ((!SymbolRecorded) && (KdpCurrentSymbolStart != 0) && (KdpCurrentSymbolEnd != 0))
+        {
             //
             //  We need to use oldpc here, because this may have been
             //  a 1 instruction call.  We've ALREADY executed the instruction
@@ -1821,8 +1654,8 @@ KdpCheckTracePoint(
             SymbolRecorded = TRUE;
         }
 
-        if (!InstrCountInternal &&
-            SkippingWhichBP((PVOID)KeGetCurrentThread(),&SkippedBPNum)) {
+        if (!InstrCountInternal && SkippingWhichBP((PVOID)KeGetCurrentThread(), &SkippedBPNum))
+        {
 
             //
             //  We just single-stepped over a temporarily removed internal
@@ -1832,21 +1665,20 @@ KdpCheckTracePoint(
             //      regular execution.
             //
 
-            if (KdpInternalBPs[SkippedBPNum].Flags &
-                DBGKD_INTERNAL_BP_FLAG_COUNTONLY) {
+            if (KdpInternalBPs[SkippedBPNum].Flags & DBGKD_INTERNAL_BP_FLAG_COUNTONLY)
+            {
 
-                IntBPsSkipping --;
+                IntBPsSkipping--;
 
                 KdpRestoreAllBreakpoints();
 
-                ContextRecord->EFlags &= ~0x100L;  // Clear trace flag
+                ContextRecord->EFlags &= ~0x100L; // Clear trace flag
                 KdpInternalBPs[SkippedBPNum].Thread = 0;
 
-                if (KdpInternalBPs[SkippedBPNum].Flags &
-                        DBGKD_INTERNAL_BP_FLAG_DYING) {
+                if (KdpInternalBPs[SkippedBPNum].Flags & DBGKD_INTERNAL_BP_FLAG_DYING)
+                {
                     KdpDeleteBreakpoint(KdpInternalBPs[SkippedBPNum].Handle);
-                    KdpInternalBPs[SkippedBPNum].Flags |=
-                            DBGKD_INTERNAL_BP_FLAG_INVALID; // bye, bye
+                    KdpInternalBPs[SkippedBPNum].Flags |= DBGKD_INTERNAL_BP_FLAG_INVALID; // bye, bye
                 }
 
                 return TRUE;
@@ -1862,25 +1694,27 @@ KdpCheckTracePoint(
             //
 
             KdpCurrentSymbolEnd = 0;
-            KdpCurrentSymbolStart = (ULONG_PTR) KdpInternalBPs[SkippedBPNum].ReturnAddress;
+            KdpCurrentSymbolStart = (ULONG_PTR)KdpInternalBPs[SkippedBPNum].ReturnAddress;
 
             ContextRecord->EFlags |= 0x100L; /* Trace on. */
             InitialSP = ContextRecord->Esp;
 
-            InstructionsTraced = 1;  /* Count the initial call instruction. */
+            InstructionsTraced = 1; /* Count the initial call instruction. */
             InstrCountInternal = TRUE;
         }
 
     } /* if single step */
-    else if (ExceptionRecord->ExceptionCode == STATUS_BREAKPOINT) {
-        if (WatchStepOver && pc == WatchStepOverBreakAddr) {
+    else if (ExceptionRecord->ExceptionCode == STATUS_BREAKPOINT)
+    {
+        if (WatchStepOver && pc == WatchStepOverBreakAddr)
+        {
             //
             //  This is a breakpoint after completion of a "special call"
             //
 
-            if ((WSOThread != (PVOID)KeGetCurrentThread()) ||
-                (WSOEsp + 0x20 < ContextRecord->Esp) ||
-                (ContextRecord->Esp + 0x20 < WSOEsp)) {
+            if ((WSOThread != (PVOID)KeGetCurrentThread()) || (WSOEsp + 0x20 < ContextRecord->Esp) ||
+                (ContextRecord->Esp + 0x20 < WSOEsp))
+            {
                 //
                 //  Here's the story up to this point: the traced thread
                 //  cruised along until it it a special call.  The tracer
@@ -1909,7 +1743,7 @@ KdpCheckTracePoint(
                 WatchStepOverSuspended = TRUE;
                 KdpDeleteBreakpoint(WatchStepOverHandle);
                 ContextRecord->EFlags |= 0x100L; // Set trace flag
-                return TRUE; // single step "non-traced" thread
+                return TRUE;                     // single step "non-traced" thread
             }
 
             //
@@ -1920,20 +1754,23 @@ KdpCheckTracePoint(
             WatchStepOver = FALSE;
             KdpDeleteBreakpoint(WatchStepOverHandle);
             ContextRecord->EFlags |= 0x100L; // back to single step mode
-            AfterSC = TRUE; // put us into the regular watchStep code
+            AfterSC = TRUE;                  // put us into the regular watchStep code
+        }
+        else
+        {
 
-        } else {
-
-            for ( BpNum = 0; BpNum < (LONG) KdpNumInternalBreakpoints; BpNum++ ) {
-                if ( !(KdpInternalBPs[BpNum].Flags &
-                       (DBGKD_INTERNAL_BP_FLAG_INVALID |
-                        DBGKD_INTERNAL_BP_FLAG_SUSPENDED) ) &&
-                     ((ULONG_PTR)KdpInternalBPs[BpNum].Addr == pc) ) {
+            for (BpNum = 0; BpNum < (LONG)KdpNumInternalBreakpoints; BpNum++)
+            {
+                if (!(KdpInternalBPs[BpNum].Flags &
+                      (DBGKD_INTERNAL_BP_FLAG_INVALID | DBGKD_INTERNAL_BP_FLAG_SUSPENDED)) &&
+                    ((ULONG_PTR)KdpInternalBPs[BpNum].Addr == pc))
+                {
                     break;
                 }
             }
 
-            if ( BpNum < (LONG) KdpNumInternalBreakpoints ) {
+            if (BpNum < (LONG)KdpNumInternalBreakpoints)
+            {
 
                 //
                 //  This is an internal monitoring breakpoint.
@@ -1943,31 +1780,30 @@ KdpCheckTracePoint(
                 //  a COUNTONLY breakpoint.
                 //
 
-                KdpProcessInternalBreakpoint( BpNum );
+                KdpProcessInternalBreakpoint(BpNum);
                 KdpInternalBPs[BpNum].Thread = (PVOID)KeGetCurrentThread();
-                IntBPsSkipping ++;
+                IntBPsSkipping++;
 
                 KdpSuspendAllBreakpoints();
 
-                ContextRecord->EFlags |= 0x100L;  // Set trace flag
-                if (!(KdpInternalBPs[BpNum].Flags &
-                        DBGKD_INTERNAL_BP_FLAG_COUNTONLY)) {
-                    KdpInternalBPs[BpNum].ReturnAddress =
-                                    KdpGetReturnAddress( ContextRecord );
+                ContextRecord->EFlags |= 0x100L; // Set trace flag
+                if (!(KdpInternalBPs[BpNum].Flags & DBGKD_INTERNAL_BP_FLAG_COUNTONLY))
+                {
+                    KdpInternalBPs[BpNum].ReturnAddress = KdpGetReturnAddress(ContextRecord);
                 }
                 return TRUE;
             }
         }
     } /* if breakpoint */
 
-//  if (AfterSC) {
-//      DPRINT(( "1: KdpCurrentSymbolStart %x  KdpCurrentSymbolEnd %x\n", KdpCurrentSymbolStart, KdpCurrentSymbolEnd ));
-//  }
+    //  if (AfterSC) {
+    //      DPRINT(( "1: KdpCurrentSymbolStart %x  KdpCurrentSymbolEnd %x\n", KdpCurrentSymbolStart, KdpCurrentSymbolEnd ));
+    //  }
 
-    if ((AfterSC || ExceptionRecord->ExceptionCode == STATUS_SINGLE_STEP) &&
-        KdpCurrentSymbolStart != 0 &&
+    if ((AfterSC || ExceptionRecord->ExceptionCode == STATUS_SINGLE_STEP) && KdpCurrentSymbolStart != 0 &&
         ((KdpCurrentSymbolEnd == 0 && ContextRecord->Esp <= InitialSP) ||
-         (KdpCurrentSymbolStart <= pc && pc < KdpCurrentSymbolEnd))) {
+         (KdpCurrentSymbolStart <= pc && pc < KdpCurrentSymbolEnd)))
+    {
         ULONG lc;
         BOOLEAN IsSpecialCall;
 
@@ -1977,7 +1813,7 @@ KdpCheckTracePoint(
         //  instruction changes the call level.
         //
 
-        lc = KdpLevelChange( pc, ContextRecord, &IsSpecialCall );
+        lc = KdpLevelChange(pc, ContextRecord, &IsSpecialCall);
         InstructionsTraced++;
         CallLevelChange += lc;
 
@@ -1986,9 +1822,10 @@ KdpCheckTracePoint(
         //  cannot trace through since it may swap contexts
         //
 
-        if (IsSpecialCall) {
+        if (IsSpecialCall)
+        {
 
-//  DPRINT( ("2: pc=%x, level change %d\n", pc, lc) );
+            //  DPRINT( ("2: pc=%x, level change %d\n", pc, lc) );
 
             //
             //  We are about to transfer to a special call routine.  Since we
@@ -2003,7 +1840,8 @@ KdpCheckTracePoint(
             //  instruction.  We need to undo this except for the magic -1 call.
             //
 
-            if (lc != -1) {
+            if (lc != -1)
+            {
                 CallLevelChange -= lc;
             }
 
@@ -2012,15 +1850,15 @@ KdpCheckTracePoint(
             //
 
             WatchStepOver = TRUE;
-            WatchStepOverBreakAddr = KdpGetCallNextOffset( pc, ContextRecord );
-            WSOThread = (PVOID)KeGetCurrentThread( );
+            WatchStepOverBreakAddr = KdpGetCallNextOffset(pc, ContextRecord);
+            WSOThread = (PVOID)KeGetCurrentThread();
             WSOEsp = ContextRecord->Esp;
 
             //
             //  Establish the breakpoint
             //
 
-            WatchStepOverHandle = KdpAddBreakpoint( (PVOID)WatchStepOverBreakAddr );
+            WatchStepOverHandle = KdpAddBreakpoint((PVOID)WatchStepOverBreakAddr);
 
 
             //
@@ -2038,13 +1876,13 @@ KdpCheckTracePoint(
         //  the remote debugger.
         //
 
-        ContextRecord->EFlags |= 0x100L;  // Set trace flag
+        ContextRecord->EFlags |= 0x100L; // Set trace flag
 
         return TRUE;
     }
 
-    if ((AfterSC || (ExceptionRecord->ExceptionCode == STATUS_SINGLE_STEP)) &&
-        (KdpCurrentSymbolStart != 0)) {
+    if ((AfterSC || (ExceptionRecord->ExceptionCode == STATUS_SINGLE_STEP)) && (KdpCurrentSymbolStart != 0))
+    {
         //
         // We're WatchTracing, but have just changed symbol range.
         // Fill in the call record and return to the debugger if
@@ -2056,24 +1894,28 @@ KdpCheckTracePoint(
 
         InstructionsTraced++; // don't forget to count the call/ret instruction.
 
-//  if (AfterSC) {
-//      DPRINT(( "3: InstrCountInternal: %x\n", InstrCountInternal ));
-//  }
+        //  if (AfterSC) {
+        //      DPRINT(( "3: InstrCountInternal: %x\n", InstrCountInternal ));
+        //  }
 
-        if (InstrCountInternal) {
+        if (InstrCountInternal)
+        {
 
             // We've just finished processing a non-COUNTONLY breakpoint.
             // Record the appropriate data and resume full speed execution.
 
-            if (SkippingWhichBP((PVOID)KeGetCurrentThread(),&SkippedBPNum)) {
+            if (SkippingWhichBP((PVOID)KeGetCurrentThread(), &SkippedBPNum))
+            {
 
                 KdpInternalBPs[SkippedBPNum].Calls++;
 
 
-                if (KdpInternalBPs[SkippedBPNum].MinInstructions > InstructionsTraced) {
+                if (KdpInternalBPs[SkippedBPNum].MinInstructions > InstructionsTraced)
+                {
                     KdpInternalBPs[SkippedBPNum].MinInstructions = InstructionsTraced;
                 }
-                if (KdpInternalBPs[SkippedBPNum].MaxInstructions < InstructionsTraced) {
+                if (KdpInternalBPs[SkippedBPNum].MaxInstructions < InstructionsTraced)
+                {
                     KdpInternalBPs[SkippedBPNum].MaxInstructions = InstructionsTraced;
                 }
                 KdpInternalBPs[SkippedBPNum].TotalInstructions += InstructionsTraced;
@@ -2083,21 +1925,21 @@ KdpCheckTracePoint(
                 IntBPsSkipping--;
                 KdpRestoreAllBreakpoints();
 
-                if (KdpInternalBPs[SkippedBPNum].Flags &
-                    DBGKD_INTERNAL_BP_FLAG_DYING) {
+                if (KdpInternalBPs[SkippedBPNum].Flags & DBGKD_INTERNAL_BP_FLAG_DYING)
+                {
                     KdpDeleteBreakpoint(KdpInternalBPs[SkippedBPNum].Handle);
-                    KdpInternalBPs[SkippedBPNum].Flags |=
-                        DBGKD_INTERNAL_BP_FLAG_INVALID; // bye, bye
+                    KdpInternalBPs[SkippedBPNum].Flags |= DBGKD_INTERNAL_BP_FLAG_INVALID; // bye, bye
                 }
             }
 
             KdpCurrentSymbolStart = 0;
             InstrCountInternal = FALSE;
             ContextRecord->EFlags &= ~0x100L; // clear trace flag
-            return TRUE; // Back to normal execution.
+            return TRUE;                      // Back to normal execution.
         }
 
-        if (TraceDataRecordCallInfo( InstructionsTraced, CallLevelChange, pc)) {
+        if (TraceDataRecordCallInfo(InstructionsTraced, CallLevelChange, pc))
+        {
 
             //
             //  Everything was cool internally.  We can keep executing without
@@ -2109,7 +1951,7 @@ KdpCheckTracePoint(
             //  the pc.
             //
 
-            lc = KdpLevelChange( pc, ContextRecord, &IsSpecialCall );
+            lc = KdpLevelChange(pc, ContextRecord, &IsSpecialCall);
             InstructionsTraced = 0;
             CallLevelChange = lc;
 
@@ -2118,9 +1960,10 @@ KdpCheckTracePoint(
             //  cannot trace through since it may swap contexts
             //
 
-            if (IsSpecialCall) {
+            if (IsSpecialCall)
+            {
 
-//  DPRINT(( "4: pc=%x, level change %d\n", pc, lc));
+                //  DPRINT(( "4: pc=%x, level change %d\n", pc, lc));
 
                 //
                 //  We are about to transfer to a special call routine.  Since we
@@ -2135,7 +1978,8 @@ KdpCheckTracePoint(
                 //  instruction.  We need to undo this except for the magic -1 call.
                 //
 
-                if (lc != -1) {
+                if (lc != -1)
+                {
                     CallLevelChange -= lc;
                 }
 
@@ -2150,8 +1994,7 @@ KdpCheckTracePoint(
                 //  Establish the breakpoint
                 //
 
-                WatchStepOverHandle =
-                    KdpAddBreakpoint( (PVOID)KdpGetCallNextOffset( pc, ContextRecord ));
+                WatchStepOverHandle = KdpAddBreakpoint((PVOID)KdpGetCallNextOffset(pc, ContextRecord));
 
                 //
                 //  Resume execution with the trace flag set.  Avoid going over the wire to
@@ -2163,18 +2006,19 @@ KdpCheckTracePoint(
             }
 
             ContextRecord->EFlags |= 0x100L; // Set trace flag
-            return TRUE; // Off we go
+            return TRUE;                     // Off we go
         }
 
-        lc = KdpLevelChange( pc, ContextRecord, &IsSpecialCall );
+        lc = KdpLevelChange(pc, ContextRecord, &IsSpecialCall);
         InstructionsTraced = 0;
         CallLevelChange = lc;
 
         // We need to go back to the remote debugger.  Just fall through.
 
-        if ((lc != 0) && IsSpecialCall) {
+        if ((lc != 0) && IsSpecialCall)
+        {
             // We're hosed
-            DPRINT(( "Special call on first entry to symbol scope @ %x\n", pc ));
+            DPRINT(("Special call on first entry to symbol scope @ %x\n", pc));
         }
     }
 
@@ -2186,18 +2030,13 @@ KdpCheckTracePoint(
 
 #endif // defined(_X86_)
 
-VOID
-KdpSetCommonState(
-    IN ULONG NewState,
-    IN PCONTEXT ContextRecord,
-    OUT PDBGKD_ANY_WAIT_STATE_CHANGE WaitStateChange
-    )
+VOID KdpSetCommonState(IN ULONG NewState, IN PCONTEXT ContextRecord, OUT PDBGKD_ANY_WAIT_STATE_CHANGE WaitStateChange)
 {
     BOOLEAN DeletedBps;
     PCHAR PcMemory;
     ULONG InstrCount;
     PUCHAR InstrStream;
-    
+
     WaitStateChange->NewState = NewState;
     WaitStateChange->ProcessorLevel = KeProcessorLevel;
     WaitStateChange->Processor = (USHORT)KeGetCurrentPrcb()->Number;
@@ -2206,9 +2045,8 @@ KdpSetCommonState(
     PcMemory = (PCHAR)CONTEXT_TO_PROGRAM_COUNTER(ContextRecord);
     WaitStateChange->ProgramCounter = (ULONG64)(LONG64)(LONG_PTR)PcMemory;
 
-    RtlZeroMemory(&WaitStateChange->AnyControlReport,
-                  sizeof(WaitStateChange->AnyControlReport));
-    
+    RtlZeroMemory(&WaitStateChange->AnyControlReport, sizeof(WaitStateChange->AnyControlReport));
+
     //
     // Copy instruction stream immediately following location of event.
     //
@@ -2223,17 +2061,14 @@ KdpSetCommonState(
     // without them.
     //
 
-    if (KdpDeleteBreakpointRange(PcMemory, PcMemory + InstrCount - 1)) {
+    if (KdpDeleteBreakpointRange(PcMemory, PcMemory + InstrCount - 1))
+    {
         KdpCopyFromPtr(InstrStream, PcMemory, InstrCount, &InstrCount);
     }
 }
 
 BOOLEAN
-KdpSwitchProcessor (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN OUT PCONTEXT ContextRecord,
-    IN BOOLEAN SecondChance
-    )
+KdpSwitchProcessor(IN PEXCEPTION_RECORD ExceptionRecord, IN OUT PCONTEXT ContextRecord, IN BOOLEAN SecondChance)
 {
     BOOLEAN Status;
 
@@ -2247,11 +2082,7 @@ KdpSwitchProcessor (
     // Process state change for this processor
     //
 
-    Status = KdpReportExceptionStateChange (
-                ExceptionRecord,
-                ContextRecord,
-                SecondChance
-                );
+    Status = KdpReportExceptionStateChange(ExceptionRecord, ContextRecord, SecondChance);
 
     //
     // Restore port state and return status
@@ -2262,11 +2093,8 @@ KdpSwitchProcessor (
 }
 
 BOOLEAN
-KdpReportExceptionStateChange (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN OUT PCONTEXT ContextRecord,
-    IN BOOLEAN SecondChance
-    )
+KdpReportExceptionStateChange(IN PEXCEPTION_RECORD ExceptionRecord, IN OUT PCONTEXT ContextRecord,
+                              IN BOOLEAN SecondChance)
 
 /*++
 
@@ -2298,35 +2126,32 @@ Return Value:
     KCONTINUE_STATUS Status;
 
 #if i386
-    if (KdpCheckTracePoint(ExceptionRecord,ContextRecord)) return TRUE;
+    if (KdpCheckTracePoint(ExceptionRecord, ContextRecord))
+        return TRUE;
 #endif
 
-    do {
+    do
+    {
 
         //
         // Construct the wait state change message and message descriptor.
         //
 
-        KdpSetCommonState(DbgKdExceptionStateChange, ContextRecord,
-                          &WaitStateChange);
-        
-        if (sizeof(EXCEPTION_RECORD) ==
-            sizeof(WaitStateChange.u.Exception.ExceptionRecord)) {
-            KdpQuickMoveMemory((PCHAR)&WaitStateChange.u.Exception.ExceptionRecord,
-                               (PCHAR)ExceptionRecord,
+        KdpSetCommonState(DbgKdExceptionStateChange, ContextRecord, &WaitStateChange);
+
+        if (sizeof(EXCEPTION_RECORD) == sizeof(WaitStateChange.u.Exception.ExceptionRecord))
+        {
+            KdpQuickMoveMemory((PCHAR)&WaitStateChange.u.Exception.ExceptionRecord, (PCHAR)ExceptionRecord,
                                sizeof(EXCEPTION_RECORD));
-        } else {
-            ExceptionRecord32To64((PEXCEPTION_RECORD32)ExceptionRecord,
-                                  &WaitStateChange.u.Exception.ExceptionRecord);
+        }
+        else
+        {
+            ExceptionRecord32To64((PEXCEPTION_RECORD32)ExceptionRecord, &WaitStateChange.u.Exception.ExceptionRecord);
         }
 
         WaitStateChange.u.Exception.FirstChance = !SecondChance;
 
-        KdpSetStateChange(&WaitStateChange,
-                          ExceptionRecord,
-                          ContextRecord,
-                          SecondChance
-                          );
+        KdpSetStateChange(&WaitStateChange, ExceptionRecord, ContextRecord, SecondChance);
 
         MessageHeader.Length = sizeof(WaitStateChange);
         MessageHeader.Buffer = (PCHAR)&WaitStateChange;
@@ -2346,26 +2171,17 @@ Return Value:
         // wait for answer.
         //
 
-        Status = KdpSendWaitContinue(
-                    PACKET_TYPE_KD_STATE_CHANGE64,
-                    &MessageHeader,
-                    &MessageData,
-                    ContextRecord
-                    );
+        Status = KdpSendWaitContinue(PACKET_TYPE_KD_STATE_CHANGE64, &MessageHeader, &MessageData, ContextRecord);
 
-    } while (Status == ContinueProcessorReselected) ;
+    } while (Status == ContinueProcessorReselected);
 
-    return (BOOLEAN) Status;
+    return (BOOLEAN)Status;
 }
 
-
+
 BOOLEAN
-KdpReportLoadSymbolsStateChange (
-    IN PSTRING PathName,
-    IN PKD_SYMBOLS_INFO SymbolInfo,
-    IN BOOLEAN UnloadSymbols,
-    IN OUT PCONTEXT ContextRecord
-    )
+KdpReportLoadSymbolsStateChange(IN PSTRING PathName, IN PKD_SYMBOLS_INFO SymbolInfo, IN BOOLEAN UnloadSymbols,
+                                IN OUT PCONTEXT ContextRecord)
 
 /*++
 
@@ -2404,32 +2220,33 @@ Return Value:
     DBGKD_ANY_WAIT_STATE_CHANGE WaitStateChange;
     KCONTINUE_STATUS Status;
 
-    do {
+    do
+    {
 
         //
         // Construct the wait state change message and message descriptor.
         //
 
-        KdpSetCommonState(DbgKdLoadSymbolsStateChange, ContextRecord,
-                          &WaitStateChange);
+        KdpSetCommonState(DbgKdLoadSymbolsStateChange, ContextRecord, &WaitStateChange);
         KdpSetContextState(&WaitStateChange, ContextRecord);
         WaitStateChange.u.LoadSymbols.UnloadSymbols = UnloadSymbols;
         WaitStateChange.u.LoadSymbols.BaseOfDll = (ULONG64)SymbolInfo->BaseOfDll;
-        WaitStateChange.u.LoadSymbols.ProcessId = (ULONG) SymbolInfo->ProcessId;
+        WaitStateChange.u.LoadSymbols.ProcessId = (ULONG)SymbolInfo->ProcessId;
         WaitStateChange.u.LoadSymbols.CheckSum = SymbolInfo->CheckSum;
         WaitStateChange.u.LoadSymbols.SizeOfImage = SymbolInfo->SizeOfImage;
-        if (ARGUMENT_PRESENT( PathName )) {
-            KdpCopyFromPtr(KdpPathBuffer,
-                           PathName->Buffer,
-                           PathName->Length,
+        if (ARGUMENT_PRESENT(PathName))
+        {
+            KdpCopyFromPtr(KdpPathBuffer, PathName->Buffer, PathName->Length,
                            &WaitStateChange.u.LoadSymbols.PathNameLength);
             WaitStateChange.u.LoadSymbols.PathNameLength++;
 
             MessageData.Buffer = KdpPathBuffer;
             MessageData.Length = (USHORT)WaitStateChange.u.LoadSymbols.PathNameLength;
-            MessageData.Buffer[MessageData.Length-1] = '\0';
+            MessageData.Buffer[MessageData.Length - 1] = '\0';
             AdditionalData = &MessageData;
-        } else {
+        }
+        else
+        {
             WaitStateChange.u.LoadSymbols.PathNameLength = 0;
             AdditionalData = NULL;
         }
@@ -2442,25 +2259,15 @@ Return Value:
         // for the reply.
         //
 
-        Status = KdpSendWaitContinue(
-                    PACKET_TYPE_KD_STATE_CHANGE64,
-                    &MessageHeader,
-                    AdditionalData,
-                    ContextRecord
-                    );
+        Status = KdpSendWaitContinue(PACKET_TYPE_KD_STATE_CHANGE64, &MessageHeader, AdditionalData, ContextRecord);
 
     } while (Status == ContinueProcessorReselected);
 
-    return (BOOLEAN) Status;
+    return (BOOLEAN)Status;
 }
 
-
-VOID
-KdpReportCommandStringStateChange (
-    IN PSTRING Name,
-    IN PSTRING Command,
-    IN OUT PCONTEXT ContextRecord
-    )
+
+VOID KdpReportCommandStringStateChange(IN PSTRING Name, IN PSTRING Command, IN OUT PCONTEXT ContextRecord)
 
 /*++
 
@@ -2491,17 +2298,16 @@ Return Value:
     KCONTINUE_STATUS Status;
     ULONG Length, Copied;
 
-    do {
+    do
+    {
 
         //
         // Construct the wait state change message and message descriptor.
         //
 
-        KdpSetCommonState(DbgKdCommandStringStateChange, ContextRecord,
-                          &WaitStateChange);
+        KdpSetCommonState(DbgKdCommandStringStateChange, ContextRecord, &WaitStateChange);
         KdpSetContextState(&WaitStateChange, ContextRecord);
-        RtlZeroMemory(&WaitStateChange.u.CommandString,
-                      sizeof(WaitStateChange.u.CommandString));
+        RtlZeroMemory(&WaitStateChange.u.CommandString, sizeof(WaitStateChange.u.CommandString));
 
         //
         // Transfer the string data into the message buffer.
@@ -2511,27 +2317,29 @@ Return Value:
 
         MessageData.Buffer = KdpMessageBuffer;
 
-        if (Name->Length > 127) {
+        if (Name->Length > 127)
+        {
             Length = 127;
-        } else {
+        }
+        else
+        {
             Length = Name->Length;
         }
-        
+
         KdpCopyFromPtr(MessageData.Buffer, Name->Buffer, Length, &Copied);
         MessageData.Length = (USHORT)Copied + 1;
         MessageData.Buffer[MessageData.Length - 1] = '\0';
 
-        Length = PACKET_MAX_SIZE - sizeof(WaitStateChange) -
-            MessageData.Length;
-        if (Command->Length < Length) {
+        Length = PACKET_MAX_SIZE - sizeof(WaitStateChange) - MessageData.Length;
+        if (Command->Length < Length)
+        {
             Length = Command->Length;
         }
-        KdpCopyFromPtr(MessageData.Buffer + MessageData.Length,
-                       Command->Buffer, Length, &Copied);
+        KdpCopyFromPtr(MessageData.Buffer + MessageData.Length, Command->Buffer, Length, &Copied);
         Length = Copied + 1;
         MessageData.Length += (USHORT)Length;
         MessageData.Buffer[MessageData.Length - 1] = '\0';
-        
+
         MessageHeader.Length = sizeof(WaitStateChange);
         MessageHeader.Buffer = (PCHAR)&WaitStateChange;
 
@@ -2540,23 +2348,13 @@ Return Value:
         // for the reply.
         //
 
-        Status = KdpSendWaitContinue(
-                    PACKET_TYPE_KD_STATE_CHANGE64,
-                    &MessageHeader,
-                    &MessageData,
-                    ContextRecord
-                    );
+        Status = KdpSendWaitContinue(PACKET_TYPE_KD_STATE_CHANGE64, &MessageHeader, &MessageData, ContextRecord);
 
     } while (Status == ContinueProcessorReselected);
 }
 
-
-VOID
-KdpReadPhysicalMemory(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    )
+
+VOID KdpReadPhysicalMemory(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context)
 
 /*++
 
@@ -2599,9 +2397,12 @@ Return Value:
     // Trim transfer count to fit in a single message
     //
 
-    if (a->TransferCount > (PACKET_MAX_SIZE - sizeof(DBGKD_MANIPULATE_STATE64))) {
+    if (a->TransferCount > (PACKET_MAX_SIZE - sizeof(DBGKD_MANIPULATE_STATE64)))
+    {
         Length = PACKET_MAX_SIZE - sizeof(DBGKD_MANIPULATE_STATE64);
-    } else {
+    }
+    else
+    {
         Length = a->TransferCount;
     }
 
@@ -2618,7 +2419,7 @@ Return Value:
     //
 
     MmFlags = MMDBG_COPY_PHYSICAL | MMDBG_COPY_UNSAFE;
-    switch(a->ActualBytesRead)
+    switch (a->ActualBytesRead)
     {
     case DBGKD_CACHING_CACHED:
         MmFlags |= MMDBG_COPY_CACHED;
@@ -2630,35 +2431,18 @@ Return Value:
         MmFlags |= MMDBG_COPY_WRITE_COMBINED;
         break;
     }
-    
-    m->ReturnStatus =
-        KdpCopyMemoryChunks(a->TargetBaseAddress,
-                            AdditionalData->Buffer,
-                            Length,
-                            0,
-                            MmFlags,
-                            &Length);
+
+    m->ReturnStatus = KdpCopyMemoryChunks(a->TargetBaseAddress, AdditionalData->Buffer, Length, 0, MmFlags, &Length);
 
     AdditionalData->Length = (USHORT)Length;
     a->ActualBytesRead = Length;
 
-    KdSendPacket(
-        PACKET_TYPE_KD_STATE_MANIPULATE,
-        &MessageHeader,
-        AdditionalData,
-        &KdpContext
-        );
+    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, AdditionalData, &KdpContext);
     UNREFERENCED_PARAMETER(Context);
 }
 
 
-
-VOID
-KdpWritePhysicalMemory(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    )
+VOID KdpWritePhysicalMemory(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context)
 
 /*++
 
@@ -2692,7 +2476,7 @@ Return Value:
 
     // See ReadPhysical for an explanation of the ActualBytes usage.
     MmFlags = MMDBG_COPY_PHYSICAL | MMDBG_COPY_WRITE | MMDBG_COPY_UNSAFE;
-    switch(a->ActualBytesWritten)
+    switch (a->ActualBytesWritten)
     {
     case DBGKD_CACHING_CACHED:
         MmFlags |= MMDBG_COPY_CACHED;
@@ -2705,29 +2489,14 @@ Return Value:
         break;
     }
 
-    m->ReturnStatus =
-        KdpCopyMemoryChunks(a->TargetBaseAddress,
-                            AdditionalData->Buffer,
-                            a->TransferCount,
-                            0,
-                            MmFlags,
-                            &a->ActualBytesWritten);
+    m->ReturnStatus = KdpCopyMemoryChunks(a->TargetBaseAddress, AdditionalData->Buffer, a->TransferCount, 0, MmFlags,
+                                          &a->ActualBytesWritten);
 
-    KdSendPacket(
-        PACKET_TYPE_KD_STATE_MANIPULATE,
-        &MessageHeader,
-        NULL,
-        &KdpContext
-        );
+    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, NULL, &KdpContext);
     UNREFERENCED_PARAMETER(Context);
 }
 
-VOID
-KdpReadControlSpace(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    )
+VOID KdpReadControlSpace(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context)
 
 /*++
 
@@ -2761,35 +2530,26 @@ Return Value:
 
     ASSERT(AdditionalData->Length == 0);
 
-    if (a->TransferCount > (PACKET_MAX_SIZE - sizeof(DBGKD_MANIPULATE_STATE64))) {
+    if (a->TransferCount > (PACKET_MAX_SIZE - sizeof(DBGKD_MANIPULATE_STATE64)))
+    {
         Length = PACKET_MAX_SIZE - sizeof(DBGKD_MANIPULATE_STATE64);
-    } else {
+    }
+    else
+    {
         Length = a->TransferCount;
     }
 
-    m->ReturnStatus = KdpSysReadControlSpace(m->Processor,
-                                             a->TargetBaseAddress,
-                                             AdditionalData->Buffer,
-                                             Length, &Length);
+    m->ReturnStatus =
+        KdpSysReadControlSpace(m->Processor, a->TargetBaseAddress, AdditionalData->Buffer, Length, &Length);
 
     AdditionalData->Length = (USHORT)Length;
     a->ActualBytesRead = Length;
 
-    KdSendPacket(
-        PACKET_TYPE_KD_STATE_MANIPULATE,
-        &MessageHeader,
-        AdditionalData,
-        &KdpContext
-        );
+    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, AdditionalData, &KdpContext);
     UNREFERENCED_PARAMETER(Context);
 }
 
-VOID
-KdpWriteControlSpace(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    )
+VOID KdpWriteControlSpace(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context)
 
 /*++
 
@@ -2821,29 +2581,16 @@ Return Value:
     MessageHeader.Length = sizeof(*m);
     MessageHeader.Buffer = (PCHAR)m;
 
-    m->ReturnStatus = KdpSysWriteControlSpace(m->Processor,
-                                              a->TargetBaseAddress,
-                                              AdditionalData->Buffer,
-                                              AdditionalData->Length,
-                                              &Length);
+    m->ReturnStatus = KdpSysWriteControlSpace(m->Processor, a->TargetBaseAddress, AdditionalData->Buffer,
+                                              AdditionalData->Length, &Length);
 
     a->ActualBytesWritten = Length;
 
-    KdSendPacket(
-        PACKET_TYPE_KD_STATE_MANIPULATE,
-        &MessageHeader,
-        AdditionalData,
-        &KdpContext
-        );
+    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, AdditionalData, &KdpContext);
     UNREFERENCED_PARAMETER(Context);
 }
 
-VOID
-KdpReadIoSpace(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    )
+VOID KdpReadIoSpace(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context)
 
 /*++
 
@@ -2881,24 +2628,13 @@ Return Value:
     // do not leave unset bytes.
     a->DataValue = 0;
 
-    m->ReturnStatus = KdpSysReadIoSpace(Isa, 0, 1, a->IoAddress,
-                                        &a->DataValue, a->DataSize, &Length);
+    m->ReturnStatus = KdpSysReadIoSpace(Isa, 0, 1, a->IoAddress, &a->DataValue, a->DataSize, &Length);
 
-    KdSendPacket(
-        PACKET_TYPE_KD_STATE_MANIPULATE,
-        &MessageHeader,
-        NULL,
-        &KdpContext
-        );
+    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, NULL, &KdpContext);
     UNREFERENCED_PARAMETER(Context);
 }
 
-VOID
-KdpWriteIoSpace(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    )
+VOID KdpWriteIoSpace(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context)
 
 /*++
 
@@ -2932,24 +2668,13 @@ Return Value:
 
     ASSERT(AdditionalData->Length == 0);
 
-    m->ReturnStatus = KdpSysWriteIoSpace(Isa, 0, 1, a->IoAddress,
-                                         &a->DataValue, a->DataSize, &Length);
+    m->ReturnStatus = KdpSysWriteIoSpace(Isa, 0, 1, a->IoAddress, &a->DataValue, a->DataSize, &Length);
 
-    KdSendPacket(
-        PACKET_TYPE_KD_STATE_MANIPULATE,
-        &MessageHeader,
-        NULL,
-        &KdpContext
-        );
+    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, NULL, &KdpContext);
     UNREFERENCED_PARAMETER(Context);
 }
 
-VOID
-KdpReadIoSpaceExtended(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    )
+VOID KdpReadIoSpaceExtended(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context)
 
 /*++
 
@@ -2987,25 +2712,14 @@ Return Value:
     // do not leave unset bytes.
     a->DataValue = 0;
 
-    m->ReturnStatus = KdpSysReadIoSpace(a->InterfaceType, a->BusNumber,
-                                        a->AddressSpace, a->IoAddress,
-                                        &a->DataValue, a->DataSize, &Length);
+    m->ReturnStatus = KdpSysReadIoSpace(a->InterfaceType, a->BusNumber, a->AddressSpace, a->IoAddress, &a->DataValue,
+                                        a->DataSize, &Length);
 
-    KdSendPacket(
-        PACKET_TYPE_KD_STATE_MANIPULATE,
-        &MessageHeader,
-        NULL,
-        &KdpContext
-        );
+    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, NULL, &KdpContext);
     UNREFERENCED_PARAMETER(Context);
 }
 
-VOID
-KdpWriteIoSpaceExtended(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    )
+VOID KdpWriteIoSpaceExtended(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context)
 
 /*++
 
@@ -3039,25 +2753,14 @@ Return Value:
 
     ASSERT(AdditionalData->Length == 0);
 
-    m->ReturnStatus = KdpSysWriteIoSpace(a->InterfaceType, a->BusNumber,
-                                         a->AddressSpace, a->IoAddress,
-                                         &a->DataValue, a->DataSize, &Length);
+    m->ReturnStatus = KdpSysWriteIoSpace(a->InterfaceType, a->BusNumber, a->AddressSpace, a->IoAddress, &a->DataValue,
+                                         a->DataSize, &Length);
 
-    KdSendPacket(
-        PACKET_TYPE_KD_STATE_MANIPULATE,
-        &MessageHeader,
-        NULL,
-        &KdpContext
-        );
+    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, NULL, &KdpContext);
     UNREFERENCED_PARAMETER(Context);
 }
 
-VOID
-KdpReadMachineSpecificRegister(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    )
+VOID KdpReadMachineSpecificRegister(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context)
 
 /*++
 
@@ -3092,24 +2795,14 @@ Return Value:
 
     m->ReturnStatus = KdpSysReadMsr(a->Msr, &l.QuadPart);
 
-    a->DataValueLow  = l.LowPart;
+    a->DataValueLow = l.LowPart;
     a->DataValueHigh = l.HighPart;
 
-    KdSendPacket(
-        PACKET_TYPE_KD_STATE_MANIPULATE,
-        &MessageHeader,
-        NULL,
-        &KdpContext
-        );
+    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, NULL, &KdpContext);
     UNREFERENCED_PARAMETER(Context);
 }
 
-VOID
-KdpWriteMachineSpecificRegister(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    )
+VOID KdpWriteMachineSpecificRegister(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context)
 
 /*++
 
@@ -3147,21 +2840,11 @@ Return Value:
 
     m->ReturnStatus = KdpSysWriteMsr(a->Msr, &l.QuadPart);
 
-    KdSendPacket(
-        PACKET_TYPE_KD_STATE_MANIPULATE,
-        &MessageHeader,
-        NULL,
-        &KdpContext
-        );
+    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, NULL, &KdpContext);
     UNREFERENCED_PARAMETER(Context);
 }
 
-VOID
-KdpGetBusData (
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    )
+VOID KdpGetBusData(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context)
 
 /*++
 
@@ -3199,34 +2882,25 @@ Return Value:
     // Trim length to fit in a single message
     //
 
-    if (a->Length > (PACKET_MAX_SIZE - sizeof(DBGKD_MANIPULATE_STATE64))) {
+    if (a->Length > (PACKET_MAX_SIZE - sizeof(DBGKD_MANIPULATE_STATE64)))
+    {
         Length = PACKET_MAX_SIZE - sizeof(DBGKD_MANIPULATE_STATE64);
-    } else {
+    }
+    else
+    {
         Length = a->Length;
     }
 
-    m->ReturnStatus = KdpSysReadBusData(a->BusDataType, a->BusNumber,
-                                        a->SlotNumber, a->Offset,
-                                        AdditionalData->Buffer,
+    m->ReturnStatus = KdpSysReadBusData(a->BusDataType, a->BusNumber, a->SlotNumber, a->Offset, AdditionalData->Buffer,
                                         Length, &Length);
 
     a->Length = Length;
     AdditionalData->Length = (USHORT)Length;
 
-    KdSendPacket(
-        PACKET_TYPE_KD_STATE_MANIPULATE,
-        &MessageHeader,
-        AdditionalData,
-        &KdpContext
-        );
+    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, AdditionalData, &KdpContext);
 }
 
-VOID
-KdpSetBusData (
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    )
+VOID KdpSetBusData(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context)
 
 /*++
 
@@ -3258,32 +2932,21 @@ Return Value:
     MessageHeader.Length = sizeof(*m);
     MessageHeader.Buffer = (PCHAR)m;
 
-    m->ReturnStatus = KdpSysWriteBusData(a->BusDataType, a->BusNumber,
-                                         a->SlotNumber, a->Offset,
-                                         AdditionalData->Buffer,
+    m->ReturnStatus = KdpSysWriteBusData(a->BusDataType, a->BusNumber, a->SlotNumber, a->Offset, AdditionalData->Buffer,
                                          a->Length, &Length);
 
     a->Length = Length;
 
-    KdSendPacket(
-        PACKET_TYPE_KD_STATE_MANIPULATE,
-        &MessageHeader,
-        NULL,
-        &KdpContext
-        );
+    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, NULL, &KdpContext);
 }
 
 
-
 #if i386
-VOID
-KdpProcessInternalBreakpoint (
-    ULONG BreakpointNumber
-    )
+VOID KdpProcessInternalBreakpoint(ULONG BreakpointNumber)
 {
-    if ( !(KdpInternalBPs[BreakpointNumber].Flags &
-           DBGKD_INTERNAL_BP_FLAG_COUNTONLY) ) {
-        return;     // We only deal with COUNTONLY breakpoints
+    if (!(KdpInternalBPs[BreakpointNumber].Flags & DBGKD_INTERNAL_BP_FLAG_COUNTONLY))
+    {
+        return; // We only deal with COUNTONLY breakpoints
     }
 
     //
@@ -3291,13 +2954,10 @@ KdpProcessInternalBreakpoint (
     // kicked off.
     //
 
-    if ( !BreakPointTimerStarted ) { // ok, maybe there's a prettier way to do this.
-        KeInitializeDpc(
-            &InternalBreakpointCheckDpc,
-            &InternalBreakpointCheck,
-            NULL
-            );
-        KeInitializeTimer( &InternalBreakpointTimer );
+    if (!BreakPointTimerStarted)
+    { // ok, maybe there's a prettier way to do this.
+        KeInitializeDpc(&InternalBreakpointCheckDpc, &InternalBreakpointCheck, NULL);
+        KeInitializeTimer(&InternalBreakpointTimer);
         // KeSetTimer can only be called at <= DISPATCH_LEVEL
         // so just queue the timer DPC routine directly for
         // the initial check.
@@ -3310,11 +2970,8 @@ KdpProcessInternalBreakpoint (
 } // KdpProcessInternalBreakpoint
 #endif
 
-
-VOID
-KdpGetVersion(
-    IN PDBGKD_MANIPULATE_STATE64 m
-    )
+
+VOID KdpGetVersion(IN PDBGKD_MANIPULATE_STATE64 m)
 
 /*++
 
@@ -3350,20 +3007,14 @@ Return Value:
     m->ReturnStatus = STATUS_SUCCESS;
     m->ApiNumber = DbgKdGetVersionApi;
 
-    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE,
-                 &messageHeader,
-                 NULL,
-                 &KdpContext
-                 );
+    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &messageHeader, NULL, &KdpContext);
 
     return;
 } // KdGetVersion
 
-
+
 NTSTATUS
-KdpNotSupported(
-    IN PDBGKD_MANIPULATE_STATE64 m
-    )
+KdpNotSupported(IN PDBGKD_MANIPULATE_STATE64 m)
 
 /*++
 
@@ -3382,7 +3033,7 @@ Return Value:
 --*/
 
 {
-    STRING          MessageHeader;
+    STRING MessageHeader;
 
     //
     // setup packet
@@ -3394,12 +3045,7 @@ Return Value:
     //
     // send back our response
     //
-    KdSendPacket(
-        PACKET_TYPE_KD_STATE_MANIPULATE,
-        &MessageHeader,
-        NULL,
-        &KdpContext
-        );
+    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, NULL, &KdpContext);
 
     //
     // return the caller's continue status value.  if this is a non-zero
@@ -3408,11 +3054,8 @@ Return Value:
     return 0;
 } // KdpNotSupported
 
-
-VOID
-KdpCauseBugCheck(
-    IN PDBGKD_MANIPULATE_STATE64 m
-    )
+
+VOID KdpCauseBugCheck(IN PDBGKD_MANIPULATE_STATE64 m)
 
 /*++
 
@@ -3432,17 +3075,13 @@ Return Value:
 
 {
 
-    KeBugCheckEx( MANUALLY_INITIATED_CRASH, 0, 0, 0, 0 );
+    KeBugCheckEx(MANUALLY_INITIATED_CRASH, 0, 0, 0, 0);
 
 } // KdCauseBugCheck
 
-
+
 NTSTATUS
-KdpWriteBreakPointEx(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    )
+KdpWriteBreakPointEx(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context)
 
 /*++
 
@@ -3476,12 +3115,12 @@ Return Value:
 --*/
 
 {
-    PDBGKD_BREAKPOINTEX       a = &m->u.BreakPointEx;
+    PDBGKD_BREAKPOINTEX a = &m->u.BreakPointEx;
     PDBGKD_WRITE_BREAKPOINT64 b;
-    STRING                    MessageHeader;
-    ULONG                     i;
-    ULONG                     Size;
-    DBGKD_WRITE_BREAKPOINT64  BpBuf[BREAKPOINT_TABLE_SIZE];
+    STRING MessageHeader;
+    ULONG i;
+    ULONG Size;
+    DBGKD_WRITE_BREAKPOINT64 BpBuf[BREAKPOINT_TABLE_SIZE];
 
 
     MessageHeader.Length = sizeof(*m);
@@ -3490,23 +3129,14 @@ Return Value:
     //
     // verify that the packet size is correct
     //
-    if (AdditionalData->Length !=
-        a->BreakPointCount * sizeof(DBGKD_WRITE_BREAKPOINT64))
+    if (AdditionalData->Length != a->BreakPointCount * sizeof(DBGKD_WRITE_BREAKPOINT64))
     {
         m->ReturnStatus = STATUS_UNSUCCESSFUL;
-        KdSendPacket(
-            PACKET_TYPE_KD_STATE_MANIPULATE,
-            &MessageHeader,
-            AdditionalData,
-            &KdpContext
-            );
+        KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, AdditionalData, &KdpContext);
         return m->ReturnStatus;
     }
 
-    KdpCopyFromPtr(BpBuf,
-                   AdditionalData->Buffer,
-                   a->BreakPointCount * sizeof(DBGKD_WRITE_BREAKPOINT64),
-                   &Size);
+    KdpCopyFromPtr(BpBuf, AdditionalData->Buffer, a->BreakPointCount * sizeof(DBGKD_WRITE_BREAKPOINT64), &Size);
 
     if (Size == a->BreakPointCount * sizeof(DBGKD_WRITE_BREAKPOINT64))
     {
@@ -3515,12 +3145,7 @@ Return Value:
     else
     {
         m->ReturnStatus = STATUS_UNSUCCESSFUL;
-        KdSendPacket(
-            PACKET_TYPE_KD_STATE_MANIPULATE,
-            &MessageHeader,
-            AdditionalData,
-            &KdpContext
-            );
+        KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, AdditionalData, &KdpContext);
         return m->ReturnStatus;
     }
 
@@ -3529,9 +3154,12 @@ Return Value:
     // clear any breakpoint that has a non-zero handle
     //
     b = BpBuf;
-    for (i=0; i<a->BreakPointCount; i++,b++) {
-        if (b->BreakPointHandle) {
-            if (!KdpDeleteBreakpoint(b->BreakPointHandle)) {
+    for (i = 0; i < a->BreakPointCount; i++, b++)
+    {
+        if (b->BreakPointHandle)
+        {
+            if (!KdpDeleteBreakpoint(b->BreakPointHandle))
+            {
                 m->ReturnStatus = STATUS_UNSUCCESSFUL;
             }
             b->BreakPointHandle = 0;
@@ -3543,10 +3171,13 @@ Return Value:
     // add any new breakpoints that have a non-zero address
     //
     b = BpBuf;
-    for (i=0; i<a->BreakPointCount; i++,b++) {
-        if (b->BreakPointAddress) {
-            b->BreakPointHandle = KdpAddBreakpoint( (PVOID)b->BreakPointAddress );
-            if (!b->BreakPointHandle) {
+    for (i = 0; i < a->BreakPointCount; i++, b++)
+    {
+        if (b->BreakPointAddress)
+        {
+            b->BreakPointHandle = KdpAddBreakpoint((PVOID)b->BreakPointAddress);
+            if (!b->BreakPointHandle)
+            {
                 m->ReturnStatus = STATUS_UNSUCCESSFUL;
             }
         }
@@ -3556,17 +3187,9 @@ Return Value:
     // send back our response
     //
 
-    KdpCopyToPtr(AdditionalData->Buffer,
-                 BpBuf,
-                 a->BreakPointCount * sizeof(DBGKD_WRITE_BREAKPOINT64),
-                 &Size);
+    KdpCopyToPtr(AdditionalData->Buffer, BpBuf, a->BreakPointCount * sizeof(DBGKD_WRITE_BREAKPOINT64), &Size);
 
-    KdSendPacket(
-        PACKET_TYPE_KD_STATE_MANIPULATE,
-        &MessageHeader,
-        AdditionalData,
-        &KdpContext
-        );
+    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, AdditionalData, &KdpContext);
 
     //
     // return the caller's continue status value.  if this is a non-zero
@@ -3575,13 +3198,8 @@ Return Value:
     return a->ContinueStatus;
 }
 
-
-VOID
-KdpRestoreBreakPointEx(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    )
+
+VOID KdpRestoreBreakPointEx(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context)
 
 /*++
 
@@ -3605,12 +3223,12 @@ Return Value:
 --*/
 
 {
-    PDBGKD_BREAKPOINTEX         a = &m->u.BreakPointEx;
-    PDBGKD_RESTORE_BREAKPOINT   b;
-    STRING                      MessageHeader;
-    ULONG                       i;
-    ULONG                       Size;
-    DBGKD_RESTORE_BREAKPOINT    BpBuf[BREAKPOINT_TABLE_SIZE];
+    PDBGKD_BREAKPOINTEX a = &m->u.BreakPointEx;
+    PDBGKD_RESTORE_BREAKPOINT b;
+    STRING MessageHeader;
+    ULONG i;
+    ULONG Size;
+    DBGKD_RESTORE_BREAKPOINT BpBuf[BREAKPOINT_TABLE_SIZE];
 
 
     MessageHeader.Length = sizeof(*m);
@@ -3619,19 +3237,15 @@ Return Value:
     //
     // verify that the packet size is correct
     //
-    if (AdditionalData->Length !=
-                       a->BreakPointCount*sizeof(DBGKD_RESTORE_BREAKPOINT))
+    if (AdditionalData->Length != a->BreakPointCount * sizeof(DBGKD_RESTORE_BREAKPOINT))
     {
         m->ReturnStatus = STATUS_UNSUCCESSFUL;
     }
     else
     {
-        KdpCopyFromPtr(BpBuf,
-                       AdditionalData->Buffer,
-                       a->BreakPointCount * sizeof(DBGKD_RESTORE_BREAKPOINT),
-                       &Size);
+        KdpCopyFromPtr(BpBuf, AdditionalData->Buffer, a->BreakPointCount * sizeof(DBGKD_RESTORE_BREAKPOINT), &Size);
 
-        if (Size == a->BreakPointCount*sizeof(DBGKD_RESTORE_BREAKPOINT))
+        if (Size == a->BreakPointCount * sizeof(DBGKD_RESTORE_BREAKPOINT))
         {
             m->ReturnStatus = STATUS_SUCCESS;
 
@@ -3640,8 +3254,10 @@ Return Value:
             // clear any breakpoint that has a non-zero handle
             //
             b = BpBuf;
-            for (i=0; i<a->BreakPointCount; i++,b++) {
-                if (!KdpDeleteBreakpoint(b->BreakPointHandle)) {
+            for (i = 0; i < a->BreakPointCount; i++, b++)
+            {
+                if (!KdpDeleteBreakpoint(b->BreakPointHandle))
+                {
                     m->ReturnStatus = STATUS_UNSUCCESSFUL;
                 }
             }
@@ -3655,18 +3271,10 @@ Return Value:
     //
     // send back our response
     //
-    KdSendPacket(
-        PACKET_TYPE_KD_STATE_MANIPULATE,
-        &MessageHeader,
-        AdditionalData,
-        &KdpContext
-        );
+    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, AdditionalData, &KdpContext);
 }
 
-VOID
-KdDisableDebugger(
-    VOID
-    )
+VOID KdDisableDebugger(VOID)
 /*++
 
 Routine Description:
@@ -3684,30 +3292,29 @@ Return Value:
 --*/
 
 {
-    KIRQL oldIrql ;
+    KIRQL oldIrql;
 
-    KeRaiseIrql(DISPATCH_LEVEL, &oldIrql) ;
+    KeRaiseIrql(DISPATCH_LEVEL, &oldIrql);
     KdpPortLock();
 
-    if (!KdDisableCount) {
+    if (!KdDisableCount)
+    {
 
-        KdPreviouslyEnabled = KdDebuggerEnabled && (!KdPitchDebugger) ;
-        if (KdDebuggerEnabled) {
+        KdPreviouslyEnabled = KdDebuggerEnabled && (!KdPitchDebugger);
+        if (KdDebuggerEnabled)
+        {
 
-            KdpSuspendAllBreakpoints() ;
+            KdpSuspendAllBreakpoints();
             KiDebugRoutine = KdpStub;
-            KdDebuggerEnabled = FALSE ;
+            KdDebuggerEnabled = FALSE;
         }
     }
-    KdDisableCount++ ;
+    KdDisableCount++;
     KdpPortUnlock();
     KeLowerIrql(oldIrql);
 }
 
-VOID
-KdEnableDebugger(
-   VOID
-   )
+VOID KdEnableDebugger(VOID)
 /*++
 
 Routine Description:
@@ -3725,37 +3332,34 @@ Return Value:
 
 --*/
 {
-    KIRQL oldIrql ;
+    KIRQL oldIrql;
 
-    KeRaiseIrql(DISPATCH_LEVEL, &oldIrql) ;
+    KeRaiseIrql(DISPATCH_LEVEL, &oldIrql);
     KdpPortLock();
 
-    ASSERT(KdDisableCount > 0) ;
-    KdDisableCount-- ;
+    ASSERT(KdDisableCount > 0);
+    KdDisableCount--;
 
-    if (!KdDisableCount) {
-        if (KdPreviouslyEnabled) {
+    if (!KdDisableCount)
+    {
+        if (KdPreviouslyEnabled)
+        {
 
             //
             // Ugly HACKHACK - Make sure the timers aren't reset.
             //
-            PoHiberInProgress = TRUE ;
+            PoHiberInProgress = TRUE;
             KdInitSystem(0, NULL);
             KdpRestoreAllBreakpoints();
-            PoHiberInProgress = FALSE ;
+            PoHiberInProgress = FALSE;
         }
     }
     KdpPortUnlock();
     KeLowerIrql(oldIrql);
 }
 
-
-VOID
-KdpSearchMemory(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    )
+
+VOID KdpSearchMemory(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context)
 
 /*++
 
@@ -3810,10 +3414,13 @@ Return Value:
     // Do a fast search for the beginning of the pattern
     //
 
-    if (PatternLength > 3) {
+    if (PatternLength > 3)
+    {
         FirstWordMask[0] = 0xffffffff;
-    } else {
-        FirstWordMask[0] = 0xffffffff >> (8*(4-PatternLength));
+    }
+    else
+    {
+        FirstWordMask[0] = 0xffffffff >> (8 * (4 - PatternLength));
     }
 
     FirstWordMask[1] = FirstWordMask[0] << 8;
@@ -3821,16 +3428,14 @@ Return Value:
     FirstWordMask[3] = FirstWordMask[2] << 8;
 
     FirstWordPattern[0] = 0;
-    KdpQuickMoveMemory((PVOID)FirstWordPattern,
-                       Pattern,
-                       PatternLength < 5 ? PatternLength : 4);
+    KdpQuickMoveMemory((PVOID)FirstWordPattern, Pattern, PatternLength < 5 ? PatternLength : 4);
 
     FirstWordPattern[1] = FirstWordPattern[0] << 8;
     FirstWordPattern[2] = FirstWordPattern[1] << 8;
     FirstWordPattern[3] = FirstWordPattern[2] << 8;
 
 
-/*
+    /*
 {
     int i;
     for (i = 0; i < (int)PatternLength; i++) {
@@ -3843,90 +3448,97 @@ Return Value:
 */
 
 
-
     //
     // Get starting mask
     //
 
-    MaskIndex = (ULONG) (StartAddress & 3);
+    MaskIndex = (ULONG)(StartAddress & 3);
     StartAddress = StartAddress & ~3;
 
-    while (StartAddress < EndAddress) {
+    while (StartAddress < EndAddress)
+    {
 
         // Get the current data DWORD.  StartAddress is
         // properly aligned and we only need the one DWORD
         // so we can directly call MmDbgCopyMemory.
-        if (!NT_SUCCESS(MmDbgCopyMemory(StartAddress, &Data, 4,
-                                        MMDBG_COPY_UNSAFE))) {
-//KdpDprintf("\n%08x: Inaccessible\n", StartAddress);
+        if (!NT_SUCCESS(MmDbgCopyMemory(StartAddress, &Data, 4, MMDBG_COPY_UNSAFE)))
+        {
+            //KdpDprintf("\n%08x: Inaccessible\n", StartAddress);
             StartAddress += 4;
             MaskIndex = 0;
             continue;
         }
-        
+
         //
         // search for a match in each of the 4 starting positions
         //
 
-//KdpDprintf("\n%08x: %08x ", StartAddress, Data);
+        //KdpDprintf("\n%08x: %08x ", StartAddress, Data);
 
-        for ( ; MaskIndex < 4; MaskIndex++) {
-//KdpDprintf(" %d", MaskIndex);
+        for (; MaskIndex < 4; MaskIndex++)
+        {
+            //KdpDprintf(" %d", MaskIndex);
 
-            if ( (Data & FirstWordMask[MaskIndex]) == FirstWordPattern[MaskIndex]) {
+            if ((Data & FirstWordMask[MaskIndex]) == FirstWordPattern[MaskIndex])
+            {
 
                 //
                 // first word matched
                 //
 
-                if ( (4-MaskIndex) >= PatternLength ) {
+                if ((4 - MaskIndex) >= PatternLength)
+                {
 
                     //
                     // string is all in this word; good match
                     //
-//KdpDprintf(" %d hit, complete\n", MaskIndex);
+                    //KdpDprintf(" %d hit, complete\n", MaskIndex);
 
                     m->u.SearchMemory.FoundAddress = StartAddress + MaskIndex;
                     m->ReturnStatus = STATUS_SUCCESS;
                     goto done;
-
-                } else {
+                }
+                else
+                {
 
                     //
                     // string is longer; see if tail matches
                     //
-//KdpDprintf(" %d hit, check tail\n", MaskIndex);
+                    //KdpDprintf(" %d hit, check tail\n", MaskIndex);
 
                     PatternTail = Pattern + 4 - MaskIndex;
                     DataTail = StartAddress + 4;
                     TailLength = PatternLength - 4 + MaskIndex;
 
-//KdpDprintf("Pattern == %08x\n", Pattern);
-//KdpDprintf("PatternTail == %08x\n", PatternTail);
-//KdpDprintf("DataTail == %08x\n", DataTail);
+                    //KdpDprintf("Pattern == %08x\n", Pattern);
+                    //KdpDprintf("PatternTail == %08x\n", PatternTail);
+                    //KdpDprintf("DataTail == %08x\n", DataTail);
 
-                    while (TailLength) {
-                        if (!NT_SUCCESS(MmDbgCopyMemory(DataTail,
-                                                        &DataTailVal,
-                                                        1,
-                                                        MMDBG_COPY_UNSAFE))) {
-//KdpDprintf("Tail %08x: Inaccessible\n", DataTail);
+                    while (TailLength)
+                    {
+                        if (!NT_SUCCESS(MmDbgCopyMemory(DataTail, &DataTailVal, 1, MMDBG_COPY_UNSAFE)))
+                        {
+                            //KdpDprintf("Tail %08x: Inaccessible\n", DataTail);
                             break;
                         }
 
-//KdpDprintf("D: %02x  P: %02x\n", DataTailVal, *PatternTail);
+                        //KdpDprintf("D: %02x  P: %02x\n", DataTailVal, *PatternTail);
 
-                        if (DataTailVal != *PatternTail) {
-//KdpDprintf("Tail failed at %08x\n", DataTail);
+                        if (DataTailVal != *PatternTail)
+                        {
+                            //KdpDprintf("Tail failed at %08x\n", DataTail);
                             break;
-                        } else {
+                        }
+                        else
+                        {
                             DataTail++;
                             PatternTail++;
                             TailLength--;
                         }
                     }
 
-                    if (TailLength == 0) {
+                    if (TailLength == 0)
+                    {
 
                         //
                         // A winner
@@ -3935,7 +3547,6 @@ Return Value:
                         m->u.SearchMemory.FoundAddress = StartAddress + MaskIndex;
                         m->ReturnStatus = STATUS_SUCCESS;
                         goto done;
-
                     }
                 }
             }
@@ -3946,24 +3557,15 @@ Return Value:
     }
 
 done:
-//KdpDprintf("\n");
+    //KdpDprintf("\n");
     MessageHeader.Length = sizeof(*m);
     MessageHeader.Buffer = (PCHAR)m;
 
-    KdSendPacket(
-        PACKET_TYPE_KD_STATE_MANIPULATE,
-        &MessageHeader,
-        NULL,
-        &KdpContext
-        );
-
+    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, NULL, &KdpContext);
 }
 
 
-VOID
-KdpCheckLowMemory(
-    IN PDBGKD_MANIPULATE_STATE64 Message
-    )
+VOID KdpCheckLowMemory(IN PDBGKD_MANIPULATE_STATE64 Message)
 
 /*++
 
@@ -3997,27 +3599,17 @@ Description:
     // Acknowledge the packet received.
     //
 
-    KdSendPacket (
-        PACKET_TYPE_KD_STATE_MANIPULATE,
-        &MessageHeader,
-        NULL,
-        &KdpContext
-        );
+    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, NULL, &KdpContext);
 }
 
 
-
 //
 // !search support routines
 //
 
 
-
 ULONG
-KdpSearchHammingDistance (
-    ULONG_PTR Left,
-    ULONG_PTR Right
-    )
+KdpSearchHammingDistance(ULONG_PTR Left, ULONG_PTR Right)
 /*++
 
 Routine Description:
@@ -4050,9 +3642,11 @@ Environment:
     Value = Left ^ Right;
     Distance = 0;
 
-    for (Index = 0; Index < 8 * sizeof(ULONG_PTR); Index++) {
+    for (Index = 0; Index < 8 * sizeof(ULONG_PTR); Index++)
+    {
 
-        if ((Value & (ULONG_PTR)0x01)) {
+        if ((Value & (ULONG_PTR)0x01))
+        {
 
             Distance += 1;
         }
@@ -4064,14 +3658,8 @@ Environment:
 }
 
 
-
 LOGICAL
-KdpSearchPhysicalPage (
-    IN PFN_NUMBER PageFrameIndex,
-    ULONG_PTR RangeStart,
-    ULONG_PTR RangeEnd,
-    ULONG Flags
-    )
+KdpSearchPhysicalPage(IN PFN_NUMBER PageFrameIndex, ULONG_PTR RangeStart, ULONG_PTR RangeEnd, ULONG Flags)
 /*++
 
 Routine Description:
@@ -4112,7 +3700,8 @@ Environment:
 
     Status = FALSE;
 
-    if (KdpSearchPfnValue) {
+    if (KdpSearchPfnValue)
+    {
 
         HARDWARE_PTE PteValue;
 
@@ -4120,25 +3709,28 @@ Environment:
         // We need to search for a PFN
         //
 
-        for (Index = 0; Index < PAGE_SIZE; Index += sizeof(HARDWARE_PTE)) {
+        for (Index = 0; Index < PAGE_SIZE; Index += sizeof(HARDWARE_PTE))
+        {
 
-            CopyStatus = MmDbgCopyMemory ((ULONG64)(Pa.QuadPart) + Index,
-                                          &PteValue,
-                                          sizeof PteValue,
-                                          MMDBG_COPY_PHYSICAL | MMDBG_COPY_UNSAFE);
+            CopyStatus = MmDbgCopyMemory((ULONG64)(Pa.QuadPart) + Index, &PteValue, sizeof PteValue,
+                                         MMDBG_COPY_PHYSICAL | MMDBG_COPY_UNSAFE);
 
-            if (NT_SUCCESS(CopyStatus)) {
+            if (NT_SUCCESS(CopyStatus))
+            {
 
-                if (PteValue.PageFrameNumber == RangeStart) {
+                if (PteValue.PageFrameNumber == RangeStart)
+                {
 
-                    if (KdpSearchPageHitIndex < SEARCH_PAGE_HIT_DATABASE_SIZE) {
+                    if (KdpSearchPageHitIndex < SEARCH_PAGE_HIT_DATABASE_SIZE)
+                    {
 
                         KdpSearchPageHits[KdpSearchPageHitIndex] = PageFrameIndex;
                         KdpSearchPageHitOffsets[KdpSearchPageHitIndex] = Index;
                         KdpSearchPageHitIndex += 1;
                     }
 
-                    if ((Flags & KDP_SEARCH_ALL_OFFSETS_IN_PAGE) == 0) {
+                    if ((Flags & KDP_SEARCH_ALL_OFFSETS_IN_PAGE) == 0)
+                    {
                         Status = TRUE;
                         break;
                     }
@@ -4146,34 +3738,37 @@ Environment:
             }
         }
     }
-    else {
+    else
+    {
 
         ULONG_PTR Value;
 
         //
         // We need to search for an address pattern
         //
-        
-        for (Index = 0; Index < PAGE_SIZE; Index += sizeof(ULONG_PTR)) {
 
-            CopyStatus = MmDbgCopyMemory ((ULONG64)(Pa.QuadPart) + Index,
-                                          &Value,
-                                          sizeof Value,
-                                          MMDBG_COPY_PHYSICAL | MMDBG_COPY_UNSAFE);
+        for (Index = 0; Index < PAGE_SIZE; Index += sizeof(ULONG_PTR))
+        {
 
-            if (NT_SUCCESS(CopyStatus)) {
+            CopyStatus = MmDbgCopyMemory((ULONG64)(Pa.QuadPart) + Index, &Value, sizeof Value,
+                                         MMDBG_COPY_PHYSICAL | MMDBG_COPY_UNSAFE);
 
-                if ((Value >= RangeStart && Value <= RangeEnd) ||
-                    (KdpSearchHammingDistance(Value, RangeStart) == 1)) {
+            if (NT_SUCCESS(CopyStatus))
+            {
 
-                    if (KdpSearchPageHitIndex < SEARCH_PAGE_HIT_DATABASE_SIZE) {
+                if ((Value >= RangeStart && Value <= RangeEnd) || (KdpSearchHammingDistance(Value, RangeStart) == 1))
+                {
+
+                    if (KdpSearchPageHitIndex < SEARCH_PAGE_HIT_DATABASE_SIZE)
+                    {
                         KdpSearchPageHits[KdpSearchPageHitIndex] = PageFrameIndex;
                         KdpSearchPageHitOffsets[KdpSearchPageHitIndex] = Index;
 
                         KdpSearchPageHitIndex += 1;
                     }
 
-                    if ((Flags & KDP_SEARCH_ALL_OFFSETS_IN_PAGE) == 0) {
+                    if ((Flags & KDP_SEARCH_ALL_OFFSETS_IN_PAGE) == 0)
+                    {
                         Status = TRUE;
                         break;
                     }
@@ -4186,11 +3781,8 @@ Environment:
 }
 
 
-
 LOGICAL
-KdpSearchPhysicalMemoryRequested (
-    VOID
-    )
+KdpSearchPhysicalMemoryRequested(VOID)
 /*++
 
 Routine Description:
@@ -4214,23 +3806,21 @@ Environment:
 
 --*/
 {
-    if (KdpSearchInProgress) {
+    if (KdpSearchInProgress)
+    {
 
         return TRUE;
     }
-    else {
+    else
+    {
 
         return FALSE;
     }
-
 }
 
 
-
 LOGICAL
-KdpSearchPhysicalPageRange (
-    VOID
-    )
+KdpSearchPhysicalPageRange(VOID)
 /*++
 
 Routine Description:
@@ -4270,7 +3860,8 @@ Environment:
     // to TRUE if a search is requested.
     //
 
-    if (!KdpSearchInProgress) {
+    if (!KdpSearchInProgress)
+    {
 
         return FALSE;
     }
@@ -4284,33 +3875,24 @@ Environment:
     // a page.
     //
 
-    if (KdpSearchEndPageFrame == KdpSearchStartPageFrame) {
+    if (KdpSearchEndPageFrame == KdpSearchStartPageFrame)
+    {
 
         KdpSearchEndPageFrame += 1;
 
         Flags |= KDP_SEARCH_ALL_OFFSETS_IN_PAGE;
     }
 
-    for (CurrentFrame = KdpSearchStartPageFrame;
-         CurrentFrame < KdpSearchEndPageFrame;
-         CurrentFrame += 1) {
+    for (CurrentFrame = KdpSearchStartPageFrame; CurrentFrame < KdpSearchEndPageFrame; CurrentFrame += 1)
+    {
 
-        KdpSearchPhysicalPage (CurrentFrame,
-                              KdpSearchAddressRangeStart,
-                              KdpSearchAddressRangeEnd,
-                              Flags);
-
+        KdpSearchPhysicalPage(CurrentFrame, KdpSearchAddressRangeStart, KdpSearchAddressRangeEnd, Flags);
     }
 
     return TRUE;
 }
 
-VOID
-KdpFillMemory(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    )
+VOID KdpFillMemory(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context)
 
 /*++
 
@@ -4342,27 +3924,32 @@ Return Value:
     ULONG Filled = 0;
     ULONG ChunkFlags = MMDBG_COPY_WRITE | MMDBG_COPY_UNSAFE;
 
-    if (m->u.FillMemory.Flags & DBGKD_FILL_MEMORY_PHYSICAL) {
+    if (m->u.FillMemory.Flags & DBGKD_FILL_MEMORY_PHYSICAL)
+    {
         ChunkFlags |= MMDBG_COPY_PHYSICAL;
-    } else if (!(m->u.FillMemory.Flags & DBGKD_FILL_MEMORY_VIRTUAL)) {
+    }
+    else if (!(m->u.FillMemory.Flags & DBGKD_FILL_MEMORY_VIRTUAL))
+    {
         Status = STATUS_INVALID_PARAMETER;
     }
 
-    if (NT_SUCCESS(Status)) {
-        
+    if (NT_SUCCESS(Status))
+    {
+
         ULONG64 Address = m->u.FillMemory.Address;
-        
-        while (Length-- > 0) {
+
+        while (Length-- > 0)
+        {
             ULONG Done;
 
-            if (!NT_SUCCESS(Status =
-                            KdpCopyMemoryChunks(Address, Pat, 1, 0,
-                                                ChunkFlags, &Done))) {
+            if (!NT_SUCCESS(Status = KdpCopyMemoryChunks(Address, Pat, 1, 0, ChunkFlags, &Done)))
+            {
                 break;
             }
 
             Address++;
-            if (++Pat == PatEnd) {
+            if (++Pat == PatEnd)
+            {
                 Pat = Pattern;
             }
             Filled++;
@@ -4371,28 +3958,18 @@ Return Value:
         // If nothing was filled return an error, otherwise
         // consider it a success.
         Status = Filled > 0 ? STATUS_SUCCESS : Status;
-        
     }
-        
+
     m->ReturnStatus = Status;
     m->u.FillMemory.Length = Filled;
-    
+
     MessageHeader.Length = sizeof(*m);
     MessageHeader.Buffer = (PCHAR)m;
 
-    KdSendPacket(
-        PACKET_TYPE_KD_STATE_MANIPULATE,
-        &MessageHeader,
-        NULL,
-        &KdpContext
-        );
+    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, NULL, &KdpContext);
 }
 
-VOID
-KdpQueryMemory(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PCONTEXT Context
-    )
+VOID KdpQueryMemory(IN PDBGKD_MANIPULATE_STATE64 m, IN PCONTEXT Context)
 
 /*++
 
@@ -4416,50 +3993,46 @@ Return Value:
     STRING MessageHeader;
     NTSTATUS Status = STATUS_SUCCESS;
 
-    if (m->u.QueryMemory.AddressSpace == DBGKD_QUERY_MEMORY_VIRTUAL) {
+    if (m->u.QueryMemory.AddressSpace == DBGKD_QUERY_MEMORY_VIRTUAL)
+    {
 
         PVOID Addr = (PVOID)(ULONG_PTR)m->u.QueryMemory.Address;
 
         //
         // Right now all we check for is user/session/kernel.
         //
-        
-        if (Addr < MM_HIGHEST_USER_ADDRESS) {
+
+        if (Addr < MM_HIGHEST_USER_ADDRESS)
+        {
             m->u.QueryMemory.AddressSpace = DBGKD_QUERY_MEMORY_PROCESS;
-        } else if (MmIsSessionAddress(Addr)) {
+        }
+        else if (MmIsSessionAddress(Addr))
+        {
             m->u.QueryMemory.AddressSpace = DBGKD_QUERY_MEMORY_SESSION;
-        } else {
+        }
+        else
+        {
             m->u.QueryMemory.AddressSpace = DBGKD_QUERY_MEMORY_KERNEL;
         }
 
         // Always return the most permissive flags.
-        m->u.QueryMemory.Flags =
-            DBGKD_QUERY_MEMORY_READ |
-            DBGKD_QUERY_MEMORY_WRITE |
-            DBGKD_QUERY_MEMORY_EXECUTE;
-    
-    } else {
+        m->u.QueryMemory.Flags = DBGKD_QUERY_MEMORY_READ | DBGKD_QUERY_MEMORY_WRITE | DBGKD_QUERY_MEMORY_EXECUTE;
+    }
+    else
+    {
         Status = STATUS_INVALID_PARAMETER;
     }
-    
+
     m->ReturnStatus = Status;
     m->u.QueryMemory.Reserved = 0;
-    
+
     MessageHeader.Length = sizeof(*m);
     MessageHeader.Buffer = (PCHAR)m;
 
-    KdSendPacket(
-        PACKET_TYPE_KD_STATE_MANIPULATE,
-        &MessageHeader,
-        NULL,
-        &KdpContext
-        );
+    KdSendPacket(PACKET_TYPE_KD_STATE_MANIPULATE, &MessageHeader, NULL, &KdpContext);
 }
 
-VOID
-KdpSysGetVersion(
-    PDBGKD_GET_VERSION64 Version
-    )
+VOID KdpSysGetVersion(PDBGKD_GET_VERSION64 Version)
 
 /*++
 
@@ -4485,15 +4058,8 @@ Return Value:
 }
 
 NTSTATUS
-KdpSysReadBusData(
-    BUS_DATA_TYPE BusDataType,
-    ULONG BusNumber,
-    ULONG SlotNumber,
-    ULONG Address,
-    PVOID Buffer,
-    ULONG Request,
-    PULONG Actual
-    )
+KdpSysReadBusData(BUS_DATA_TYPE BusDataType, ULONG BusNumber, ULONG SlotNumber, ULONG Address, PVOID Buffer,
+                  ULONG Request, PULONG Actual)
 
 /*++
 
@@ -4524,21 +4090,13 @@ Return Value:
 --*/
 
 {
-    *Actual = HalGetBusDataByOffset(BusDataType, BusNumber, SlotNumber,
-                                    Buffer, Address, Request);
+    *Actual = HalGetBusDataByOffset(BusDataType, BusNumber, SlotNumber, Buffer, Address, Request);
     return *Actual == Request ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
 }
 
 NTSTATUS
-KdpSysWriteBusData(
-    BUS_DATA_TYPE BusDataType,
-    ULONG BusNumber,
-    ULONG SlotNumber,
-    ULONG Address,
-    PVOID Buffer,
-    ULONG Request,
-    PULONG Actual
-    )
+KdpSysWriteBusData(BUS_DATA_TYPE BusDataType, ULONG BusNumber, ULONG SlotNumber, ULONG Address, PVOID Buffer,
+                   ULONG Request, PULONG Actual)
 
 /*++
 
@@ -4569,23 +4127,13 @@ Return Value:
 --*/
 
 {
-    *Actual = HalSetBusDataByOffset(BusDataType, BusNumber, SlotNumber,
-                                    Buffer, Address, Request);
+    *Actual = HalSetBusDataByOffset(BusDataType, BusNumber, SlotNumber, Buffer, Address, Request);
     return *Actual == Request ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
 }
 
 
-
-
-
-
-
-
-
 NTSTATUS
-KdpSysCheckLowMemory(
-    VOID
-    )
+KdpSysCheckLowMemory(VOID)
 
 /*++
 
@@ -4617,7 +4165,8 @@ Description:
 
     Status = STATUS_SUCCESS;
 
-    if (KdpSearchPhysicalMemoryRequested()) {
+    if (KdpSearchPhysicalMemoryRequested())
+    {
 
         //
         // This is a !search kd extension call.
@@ -4625,7 +4174,8 @@ Description:
 
         KdpSearchPhysicalPageRange();
     }
-    else {
+    else
+    {
 
         //
         // Check low physical memory on machines with more than 4GB.
@@ -4633,10 +4183,12 @@ Description:
 
         Page = 0;
 
-        do {
+        do
+        {
 
-            if (! MmDbgIsLowMemOk (Page, &NextPage, &CorruptionOffset)) {
-                Status = (NTSTATUS) Page;
+            if (!MmDbgIsLowMemOk(Page, &NextPage, &CorruptionOffset))
+            {
+                Status = (NTSTATUS)Page;
                 break;
             }
 
@@ -4654,31 +4206,26 @@ Description:
 //
 //----------------------------------------------------------------------------
 
-VOID
-KdpSendTraceData(
-    PSTRING Data
-    )
+VOID KdpSendTraceData(PSTRING Data)
 {
     ULONG Length;
     STRING MessageData;
     STRING MessageHeader;
     DBGKD_TRACE_IO TraceIo;
-    
+
     //
     // Move the output string to the message buffer.
     //
 
-    KdpCopyFromPtr(KdpMessageBuffer,
-                   Data->Buffer,
-                   Data->Length,
-                   &Length);
+    KdpCopyFromPtr(KdpMessageBuffer, Data->Buffer, Data->Length, &Length);
 
     //
     // If the total message length is greater than the maximum packet size,
     // then truncate the output string.
     //
 
-    if ((sizeof(TraceIo) + Length) > PACKET_MAX_SIZE) {
+    if ((sizeof(TraceIo) + Length) > PACKET_MAX_SIZE)
+    {
         Length = PACKET_MAX_SIZE - sizeof(TraceIo);
     }
 
@@ -4704,31 +4251,26 @@ KdpSendTraceData(
     // Send packet to the kernel debugger on the host machine.
     //
 
-    KdSendPacket(
-        PACKET_TYPE_KD_TRACE_IO,
-        &MessageHeader,
-        &MessageData,
-        &KdpContext
-        );
+    KdSendPacket(PACKET_TYPE_KD_TRACE_IO, &MessageHeader, &MessageData, &KdpContext);
 }
 
-VOID
-KdReportTraceData(
-    IN struct _WMI_BUFFER_HEADER* Buffer,
-    IN PVOID Context
-    )
+VOID KdReportTraceData(IN struct _WMI_BUFFER_HEADER *Buffer, IN PVOID Context)
 {
     BOOLEAN Enable;
     STRING Data;
 
     Data.Buffer = (PCHAR)Buffer;
-    if (Buffer->Wnode.BufferSize > 0xffff) {
+    if (Buffer->Wnode.BufferSize > 0xffff)
+    {
         Data.Length = 0xffff;
-    } else {
+    }
+    else
+    {
         Data.Length = (USHORT)Buffer->Wnode.BufferSize;
     }
-    
-    if (KdDebuggerNotPresent == FALSE) {
+
+    if (KdDebuggerNotPresent == FALSE)
+    {
         Enable = KdEnterDebugger(NULL, NULL);
 
         KdpSendTraceData(&Data);
@@ -4744,18 +4286,17 @@ KdReportTraceData(
 //----------------------------------------------------------------------------
 
 NTSTATUS
-KdPowerTransition(
-    DEVICE_POWER_STATE newDeviceState
-    )
+KdPowerTransition(DEVICE_POWER_STATE newDeviceState)
 {
     NTSTATUS status = STATUS_SUCCESS;
 
-    switch(newDeviceState) {
-    
+    switch (newDeviceState)
+    {
+
     case PowerDeviceD0:
         KdD0Transition();
         break;
-        
+
     case PowerDeviceD3:
         KdD3Transition();
         break;
@@ -4764,5 +4305,5 @@ KdPowerTransition(
         status = STATUS_INVALID_PARAMETER_1;
     }
 
-    return status;        
-}    
+    return status;
+}

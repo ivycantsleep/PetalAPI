@@ -22,64 +22,57 @@ Revision History:
 #include "apcompat.h"
 #include <wow64t.h>
 
-BOOL
-IsThisARootDirectory(
-    HANDLE RootHandle,
-    PUNICODE_STRING FileName OPTIONAL
-    )
+BOOL IsThisARootDirectory(HANDLE RootHandle, PUNICODE_STRING FileName OPTIONAL)
 {
     PFILE_NAME_INFORMATION FileNameInfo;
-    WCHAR Buffer[MAX_PATH+sizeof(FileNameInfo)];
+    WCHAR Buffer[MAX_PATH + sizeof(FileNameInfo)];
     IO_STATUS_BLOCK IoStatusBlock;
     NTSTATUS Status;
     BOOL rv;
 
     OBJECT_ATTRIBUTES Attributes;
     HANDLE LinkHandle;
-    WCHAR LinkValueBuffer[2*MAX_PATH];
+    WCHAR LinkValueBuffer[2 * MAX_PATH];
     UNICODE_STRING LinkValue;
     ULONG ReturnedLength;
 
     rv = FALSE;
 
     FileNameInfo = (PFILE_NAME_INFORMATION)Buffer;
-    if (RootHandle == NULL) {
+    if (RootHandle == NULL)
+    {
         Status = STATUS_INVALID_HANDLE;
-    } else {
-        Status = NtQueryInformationFile (RootHandle,
-                                         &IoStatusBlock,
-                                         FileNameInfo,
-                                         sizeof(Buffer),
-                                         FileNameInformation);
+    }
+    else
+    {
+        Status = NtQueryInformationFile(RootHandle, &IoStatusBlock, FileNameInfo, sizeof(Buffer), FileNameInformation);
     }
 
-    if (NT_SUCCESS (Status)) {
-        if ( FileNameInfo->FileName[(FileNameInfo->FileNameLength>>1)-1] == (WCHAR)'\\' ) {
+    if (NT_SUCCESS(Status))
+    {
+        if (FileNameInfo->FileName[(FileNameInfo->FileNameLength >> 1) - 1] == (WCHAR)'\\')
+        {
             rv = TRUE;
         }
     }
 
-    if ( !rv ) {
+    if (!rv)
+    {
 
         //
         // See if this is a dos substed drive (or) redirected net drive
         //
 
-        if (ARGUMENT_PRESENT (FileName)) {
+        if (ARGUMENT_PRESENT(FileName))
+        {
 
             FileName->Length = FileName->Length - sizeof((WCHAR)'\\');
 
-            InitializeObjectAttributes( &Attributes,
-                                        FileName,
-                                        OBJ_CASE_INSENSITIVE,
-                                        NULL,
-                                        NULL
-                                      );
-            Status = NtOpenSymbolicLinkObject (&LinkHandle,
-                                               SYMBOLIC_LINK_QUERY,
-                                               &Attributes);
+            InitializeObjectAttributes(&Attributes, FileName, OBJ_CASE_INSENSITIVE, NULL, NULL);
+            Status = NtOpenSymbolicLinkObject(&LinkHandle, SYMBOLIC_LINK_QUERY, &Attributes);
             FileName->Length = FileName->Length + sizeof((WCHAR)'\\');
-            if (NT_SUCCESS (Status)) {
+            if (NT_SUCCESS(Status))
+            {
 
                 //
                 // Now query the link and see if there is a redirection
@@ -89,29 +82,21 @@ IsThisARootDirectory(
                 LinkValue.Length = 0;
                 LinkValue.MaximumLength = (USHORT)(sizeof(LinkValueBuffer));
                 ReturnedLength = 0;
-                Status = NtQuerySymbolicLinkObject( LinkHandle,
-                                                    &LinkValue,
-                                                    &ReturnedLength
-                                                  );
-                NtClose( LinkHandle );
+                Status = NtQuerySymbolicLinkObject(LinkHandle, &LinkValue, &ReturnedLength);
+                NtClose(LinkHandle);
 
-                if ( NT_SUCCESS(Status) ) {
+                if (NT_SUCCESS(Status))
+                {
                     rv = TRUE;
                 }
             }
-
         }
     }
     return rv;
 }
 
 
-UINT
-APIENTRY
-GetSystemDirectoryA(
-    LPSTR lpBuffer,
-    UINT uSize
-    )
+UINT APIENTRY GetSystemDirectoryA(LPSTR lpBuffer, UINT uSize)
 
 /*++
 
@@ -128,12 +113,12 @@ Routine Description:
     PUNICODE_STRING WindowsSystemDirectory = &BaseWindowsSystemDirectory;
 
 #ifdef WX86
-    if (NtCurrentTeb()->Wx86Thread.UseKnownWx86Dll) {
+    if (NtCurrentTeb()->Wx86Thread.UseKnownWx86Dll)
+    {
         NtCurrentTeb()->Wx86Thread.UseKnownWx86Dll = FALSE;
         WindowsSystemDirectory = &BaseWindowsSys32x86Directory;
-        }
+    }
 #endif
-
 
 
     // BaseWindowsSystemDirectory.Length contains the byte
@@ -143,39 +128,31 @@ Routine Description:
     // This is correct in SBCS environment. However in DBCS
     // environment, it's definitely WRONG.
 
-    Status = RtlUnicodeToMultiByteSize(&cbAnsiString,
-                                       WindowsSystemDirectory->Buffer,
-                                       WindowsSystemDirectory->MaximumLength
-                                       );
-    if ( !NT_SUCCESS(Status) ) {
+    Status =
+        RtlUnicodeToMultiByteSize(&cbAnsiString, WindowsSystemDirectory->Buffer, WindowsSystemDirectory->MaximumLength);
+    if (!NT_SUCCESS(Status))
+    {
         return 0;
-        }
+    }
 
-    if ( (USHORT)uSize < (USHORT)cbAnsiString ) {
+    if ((USHORT)uSize < (USHORT)cbAnsiString)
+    {
         return cbAnsiString;
-        }
+    }
 
     AnsiString.MaximumLength = (USHORT)(uSize);
     AnsiString.Buffer = lpBuffer;
 
-    Status = BasepUnicodeStringTo8BitString(
-                &AnsiString,
-                WindowsSystemDirectory,
-                FALSE
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = BasepUnicodeStringTo8BitString(&AnsiString, WindowsSystemDirectory, FALSE);
+    if (!NT_SUCCESS(Status))
+    {
         return 0;
-        }
+    }
     return AnsiString.Length;
 }
 
 
-UINT
-APIENTRY
-GetSystemDirectoryW(
-    LPWSTR lpBuffer,
-    UINT uSize
-    )
+UINT APIENTRY GetSystemDirectoryW(LPWSTR lpBuffer, UINT uSize)
 
 /*++
 
@@ -214,30 +191,23 @@ Return Value:
     PUNICODE_STRING WindowsSystemDirectory = &BaseWindowsSystemDirectory;
 
 #ifdef WX86
-    if (NtCurrentTeb()->Wx86Thread.UseKnownWx86Dll) {
+    if (NtCurrentTeb()->Wx86Thread.UseKnownWx86Dll)
+    {
         NtCurrentTeb()->Wx86Thread.UseKnownWx86Dll = FALSE;
         WindowsSystemDirectory = &BaseWindowsSys32x86Directory;
-        }
+    }
 #endif
 
-    if ( uSize*2 < WindowsSystemDirectory->MaximumLength ) {
-        return WindowsSystemDirectory->MaximumLength/2;
-        }
-    RtlMoveMemory(
-        lpBuffer,
-        WindowsSystemDirectory->Buffer,
-        WindowsSystemDirectory->Length
-        );
-    lpBuffer[(WindowsSystemDirectory->Length>>1)] = UNICODE_NULL;
-    return WindowsSystemDirectory->Length/2;
+    if (uSize * 2 < WindowsSystemDirectory->MaximumLength)
+    {
+        return WindowsSystemDirectory->MaximumLength / 2;
+    }
+    RtlMoveMemory(lpBuffer, WindowsSystemDirectory->Buffer, WindowsSystemDirectory->Length);
+    lpBuffer[(WindowsSystemDirectory->Length >> 1)] = UNICODE_NULL;
+    return WindowsSystemDirectory->Length / 2;
 }
 
-UINT
-APIENTRY
-GetSystemWindowsDirectoryA(
-    LPSTR lpBuffer,
-    UINT uSize
-    )
+UINT APIENTRY GetSystemWindowsDirectoryA(LPSTR lpBuffer, UINT uSize)
 
 /*++
 
@@ -259,37 +229,29 @@ Routine Description:
     // This is correct in SBCS environment. However in DBCS
     // environment, it's definitely WRONG.
 
-    Status = RtlUnicodeToMultiByteSize( &cbAnsiString,
-                               BaseWindowsDirectory.Buffer,
-                               BaseWindowsDirectory.MaximumLength);
-    if ( !NT_SUCCESS(Status) ) {
+    Status = RtlUnicodeToMultiByteSize(&cbAnsiString, BaseWindowsDirectory.Buffer, BaseWindowsDirectory.MaximumLength);
+    if (!NT_SUCCESS(Status))
+    {
         return 0;
-        }
+    }
 
-    if ( (USHORT)uSize < (USHORT)cbAnsiString ) {
+    if ((USHORT)uSize < (USHORT)cbAnsiString)
+    {
         return cbAnsiString;
-        }
+    }
 
     AnsiString.MaximumLength = (USHORT)(uSize);
     AnsiString.Buffer = lpBuffer;
 
-    Status = BasepUnicodeStringTo8BitString(
-                &AnsiString,
-                &BaseWindowsDirectory,
-                FALSE
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = BasepUnicodeStringTo8BitString(&AnsiString, &BaseWindowsDirectory, FALSE);
+    if (!NT_SUCCESS(Status))
+    {
         return 0;
-        }
+    }
     return AnsiString.Length;
 }
 
-UINT
-APIENTRY
-GetSystemWindowsDirectoryW(
-    LPWSTR lpBuffer,
-    UINT uSize
-    )
+UINT APIENTRY GetSystemWindowsDirectoryW(LPWSTR lpBuffer, UINT uSize)
 
 /*++
 
@@ -318,24 +280,16 @@ Return Value:
 
 {
 
-    if ( uSize*2 < BaseWindowsDirectory.MaximumLength ) {
-        return BaseWindowsDirectory.MaximumLength/2;
-        }
-    RtlMoveMemory(
-        lpBuffer,
-        BaseWindowsDirectory.Buffer,
-        BaseWindowsDirectory.Length
-        );
-    lpBuffer[(BaseWindowsDirectory.Length>>1)] = UNICODE_NULL;
-    return BaseWindowsDirectory.Length/2;
+    if (uSize * 2 < BaseWindowsDirectory.MaximumLength)
+    {
+        return BaseWindowsDirectory.MaximumLength / 2;
+    }
+    RtlMoveMemory(lpBuffer, BaseWindowsDirectory.Buffer, BaseWindowsDirectory.Length);
+    lpBuffer[(BaseWindowsDirectory.Length >> 1)] = UNICODE_NULL;
+    return BaseWindowsDirectory.Length / 2;
 }
 
-UINT
-APIENTRY
-GetSystemWow64DirectoryA(
-    LPSTR lpBuffer,
-    UINT uSize
-    )
+UINT APIENTRY GetSystemWow64DirectoryA(LPSTR lpBuffer, UINT uSize)
 
 /*++
 
@@ -362,62 +316,57 @@ Return Value:
 
 --*/
 {
-#if ! defined(BUILD_WOW6432) && ! defined(_WIN64)
+#if !defined(BUILD_WOW6432) && !defined(_WIN64)
 
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 
-  return 0;
+    return 0;
 
 #else // BUILD_WOW6432 || _WIN64
 
-  const CHAR syswowdir[] = "\\" WOW64_SYSTEM_DIRECTORY;
-  UINT Available, Needed;
+    const CHAR syswowdir[] = "\\" WOW64_SYSTEM_DIRECTORY;
+    UINT Available, Needed;
 
-  if (uSize < sizeof(syswowdir)) {
+    if (uSize < sizeof(syswowdir))
+    {
 
-    // We don't even have enough room to hold the syswow64
-    // subdirectory component, much less the whole path.  Pass in a
-    // zero length so that we get back the length needed.
-    Available = 0;
+        // We don't even have enough room to hold the syswow64
+        // subdirectory component, much less the whole path.  Pass in a
+        // zero length so that we get back the length needed.
+        Available = 0;
+    }
+    else
+    {
 
-  } else {
+        // We might have enough room; decrement the size passed in by the
+        // amount of overhead we'll use.
+        Available = uSize - sizeof(syswowdir) + 1 /* NULL compensation */;
+    }
 
-    // We might have enough room; decrement the size passed in by the
-    // amount of overhead we'll use.
-    Available = uSize - sizeof(syswowdir) + 1 /* NULL compensation */;
+    Needed = GetSystemWindowsDirectoryA(lpBuffer, Available);
 
-  }
+    if (Needed == 0)
+    {
 
-  Needed = GetSystemWindowsDirectoryA(lpBuffer, Available);
+        // The call failed -- just return zero.
+        return 0;
+    }
 
-  if (Needed == 0) {
+    if (Needed <= Available)
+    {
 
-    // The call failed -- just return zero.
-    return 0;
+        // We had enough buffer space, even with our overhead; we can go
+        // ahead and tack on the syswow64 directory name.
 
-  }
+        RtlMoveMemory(lpBuffer + Needed, syswowdir, sizeof(syswowdir));
+    }
 
-  if (Needed <= Available) {
-
-    // We had enough buffer space, even with our overhead; we can go
-    // ahead and tack on the syswow64 directory name.
-
-    RtlMoveMemory(lpBuffer + Needed,
-          syswowdir,
-          sizeof(syswowdir));
-  }
-
-  return (Needed + sizeof(syswowdir) - 1);
+    return (Needed + sizeof(syswowdir) - 1);
 
 #endif // BUILD_WOW6432 || _WIN64
 }
 
-UINT
-APIENTRY
-GetSystemWow64DirectoryW(
-    LPWSTR lpBuffer,
-    UINT uSize
-    )
+UINT APIENTRY GetSystemWow64DirectoryW(LPWSTR lpBuffer, UINT uSize)
 
 /*++
 
@@ -444,64 +393,59 @@ Return Value:
 
 --*/
 {
-#if ! defined(BUILD_WOW6432) && ! defined(_WIN64)
+#if !defined(BUILD_WOW6432) && !defined(_WIN64)
 
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 
-  return 0;
+    return 0;
 
 #else // BUILD_WOW6432 || _WIN64
 
-  const WCHAR syswowdir[] = L"\\" WOW64_SYSTEM_DIRECTORY_U;
-  UINT Available, Needed;
-  const UINT SysWCharSize = sizeof(syswowdir) / sizeof(WCHAR);
+    const WCHAR syswowdir[] = L"\\" WOW64_SYSTEM_DIRECTORY_U;
+    UINT Available, Needed;
+    const UINT SysWCharSize = sizeof(syswowdir) / sizeof(WCHAR);
 
-  if (uSize < SysWCharSize) {
+    if (uSize < SysWCharSize)
+    {
 
-    // We don't even have enough room to hold the syswow64
-    // subdirectory component, much less the whole path.  Pass in a
-    // zero length so that we get back the length needed.
-    Available = 0;
+        // We don't even have enough room to hold the syswow64
+        // subdirectory component, much less the whole path.  Pass in a
+        // zero length so that we get back the length needed.
+        Available = 0;
+    }
+    else
+    {
 
-  } else {
+        // We might have enough room; decrement the size passed in by the
+        // amount of overhead we'll use.
+        Available = uSize - SysWCharSize + 1 /* NULL compensation */;
+    }
 
-    // We might have enough room; decrement the size passed in by the
-    // amount of overhead we'll use.
-    Available = uSize - SysWCharSize + 1 /* NULL compensation */;
+    Needed = GetSystemWindowsDirectoryW(lpBuffer, Available);
 
-  }
+    if (Needed == 0)
+    {
 
-  Needed = GetSystemWindowsDirectoryW(lpBuffer, Available);
+        // The call failed -- just return zero.
+        return 0;
+    }
 
-  if (Needed == 0) {
+    if (Needed <= Available)
+    {
 
-    // The call failed -- just return zero.
-    return 0;
+        // We had enough buffer space, even with our overhead; we can go
+        // ahead and tack on the syswow64 directory name.
 
-  }
+        RtlMoveMemory(lpBuffer + Needed, syswowdir, sizeof(syswowdir));
+    }
 
-  if (Needed <= Available) {
-
-    // We had enough buffer space, even with our overhead; we can go
-    // ahead and tack on the syswow64 directory name.
-
-    RtlMoveMemory(lpBuffer + Needed,
-          syswowdir,
-          sizeof(syswowdir));
-  }
-
-  return (Needed + SysWCharSize - 1);
+    return (Needed + SysWCharSize - 1);
 
 #endif // BUILD_WOW6432 || _WIN64
 }
 
 
-UINT
-APIENTRY
-GetWindowsDirectoryA(
-    LPSTR lpBuffer,
-    UINT uSize
-    )
+UINT APIENTRY GetWindowsDirectoryA(LPSTR lpBuffer, UINT uSize)
 
 /*++
 
@@ -512,28 +456,25 @@ Routine Description:
 
 {
 
-    if (gpTermsrvGetWindowsDirectoryA) {
+    if (gpTermsrvGetWindowsDirectoryA)
+    {
 
         //
         //  If Terminal Server get the Per User Windows Directory
         //
 
         UINT retval;
-        if (retval = gpTermsrvGetWindowsDirectoryA(lpBuffer, uSize)) {
+        if (retval = gpTermsrvGetWindowsDirectoryA(lpBuffer, uSize))
+        {
             return retval;
         }
     }
 
 
-    return GetSystemWindowsDirectoryA(lpBuffer,uSize);
+    return GetSystemWindowsDirectoryA(lpBuffer, uSize);
 }
 
-UINT
-APIENTRY
-GetWindowsDirectoryW(
-    LPWSTR lpBuffer,
-    UINT uSize
-    )
+UINT APIENTRY GetWindowsDirectoryW(LPWSTR lpBuffer, UINT uSize)
 
 /*++
 
@@ -570,28 +511,24 @@ Return Value:
 --*/
 
 {
-    if (gpTermsrvGetWindowsDirectoryW) {
+    if (gpTermsrvGetWindowsDirectoryW)
+    {
         //
         //  If Terminal Server get the Per User Windows Directory
         //
 
         UINT retval;
-        if (retval = gpTermsrvGetWindowsDirectoryW(lpBuffer, uSize)) {
+        if (retval = gpTermsrvGetWindowsDirectoryW(lpBuffer, uSize))
+        {
             return retval;
         }
     }
 
-    return GetSystemWindowsDirectoryW(lpBuffer,uSize);
-
+    return GetSystemWindowsDirectoryW(lpBuffer, uSize);
 }
 
 
-
-UINT
-APIENTRY
-GetDriveTypeA(
-    LPCSTR lpRootPathName
-    )
+UINT APIENTRY GetDriveTypeA(LPCSTR lpRootPathName)
 
 /*++
 
@@ -605,26 +542,25 @@ Routine Description:
     PUNICODE_STRING Unicode;
     LPCWSTR lpRootPathName_U;
 
-    if (ARGUMENT_PRESENT(lpRootPathName)) {
-        Unicode = Basep8BitStringToStaticUnicodeString( lpRootPathName );
-        if (Unicode == NULL) {
+    if (ARGUMENT_PRESENT(lpRootPathName))
+    {
+        Unicode = Basep8BitStringToStaticUnicodeString(lpRootPathName);
+        if (Unicode == NULL)
+        {
             return 1;
         }
 
         lpRootPathName_U = (LPCWSTR)Unicode->Buffer;
-        }
-    else {
+    }
+    else
+    {
         lpRootPathName_U = NULL;
-        }
+    }
 
     return GetDriveTypeW(lpRootPathName_U);
 }
 
-UINT
-APIENTRY
-GetDriveTypeW(
-    LPCWSTR lpRootPathName
-    )
+UINT APIENTRY GetDriveTypeW(LPCWSTR lpRootPathName)
 
 /*++
 
@@ -681,87 +617,85 @@ Return Value:
     PROCESS_DEVICEMAP_INFORMATION ProcessDeviceMapInfo;
     WCHAR volumeName[MAX_PATH];
 
-    if (!ARGUMENT_PRESENT(lpRootPathName)) {
+    if (!ARGUMENT_PRESENT(lpRootPathName))
+    {
         n = RtlGetCurrentDirectory_U(sizeof(DefaultPath), DefaultPath);
         RootPathName = DefaultPath;
-        if (n > (3 * sizeof(WCHAR))) {
-            RootPathName[3]=UNICODE_NULL;
-            }
+        if (n > (3 * sizeof(WCHAR)))
+        {
+            RootPathName[3] = UNICODE_NULL;
         }
-    else
-    if (lpRootPathName == (PWSTR)IntToPtr(0xFFFFFFFF)) {
+    }
+    else if (lpRootPathName == (PWSTR)IntToPtr(0xFFFFFFFF))
+    {
         //
         // Hack to be compatible with undocumented feature of old
         // implementation.
         //
 
         return 0;
-        }
-    else {
+    }
+    else
+    {
         //
         // If input string is just C: then convert to C:\ so it does
         // not default to current directory which may or may not be
         // at the root.
         //
         RootPathName = (PWSTR)lpRootPathName;
-        if (wcslen( RootPathName ) == 2) {
-            wch = RtlUpcaseUnicodeChar( *RootPathName );
-            if (wch >= (WCHAR)'A' &&
-                wch <= (WCHAR)'Z' &&
-                RootPathName[1] == (WCHAR)':'
-               ) {
+        if (wcslen(RootPathName) == 2)
+        {
+            wch = RtlUpcaseUnicodeChar(*RootPathName);
+            if (wch >= (WCHAR)'A' && wch <= (WCHAR)'Z' && RootPathName[1] == (WCHAR)':')
+            {
                 RootPathName = wcscpy(DefaultPath, lpRootPathName);
                 RootPathName[2] = (WCHAR)'\\';
                 RootPathName[3] = UNICODE_NULL;
-                }
             }
         }
+    }
 
     //
     // If input string is of the form C:\ then look in the drive letter
     // cache maintained by the kernel to see if the drive type is already
     // known.
     //
-    wch = RtlUpcaseUnicodeChar( *RootPathName );
-    if (wch >= (WCHAR)'A' &&
-        wch <= (WCHAR)'Z' &&
-        RootPathName[1]==(WCHAR)':' &&
-        RootPathName[2]==(WCHAR)'\\' &&
-        RootPathName[3]==UNICODE_NULL
-       ) {
-        Status = NtQueryInformationProcess( NtCurrentProcess(),
-                                            ProcessDeviceMap,
-                                            &ProcessDeviceMapInfo.Query,
-                                            sizeof( ProcessDeviceMapInfo.Query ),
-                                            NULL
-                                          );
-        if (!NT_SUCCESS( Status )) {
-            RtlZeroMemory( &ProcessDeviceMapInfo, sizeof( ProcessDeviceMapInfo ) );
-            }
+    wch = RtlUpcaseUnicodeChar(*RootPathName);
+    if (wch >= (WCHAR)'A' && wch <= (WCHAR)'Z' && RootPathName[1] == (WCHAR)':' && RootPathName[2] == (WCHAR)'\\' &&
+        RootPathName[3] == UNICODE_NULL)
+    {
+        Status = NtQueryInformationProcess(NtCurrentProcess(), ProcessDeviceMap, &ProcessDeviceMapInfo.Query,
+                                           sizeof(ProcessDeviceMapInfo.Query), NULL);
+        if (!NT_SUCCESS(Status))
+        {
+            RtlZeroMemory(&ProcessDeviceMapInfo, sizeof(ProcessDeviceMapInfo));
+        }
 
         DriveNumber = wch - (WCHAR)'A';
-        if (ProcessDeviceMapInfo.Query.DriveMap & (1 << DriveNumber)) {
-            switch ( ProcessDeviceMapInfo.Query.DriveType[ DriveNumber ] ) {
-                case DOSDEVICE_DRIVE_UNKNOWN:
-                    return DRIVE_UNKNOWN;
+        if (ProcessDeviceMapInfo.Query.DriveMap & (1 << DriveNumber))
+        {
+            switch (ProcessDeviceMapInfo.Query.DriveType[DriveNumber])
+            {
+            case DOSDEVICE_DRIVE_UNKNOWN:
+                return DRIVE_UNKNOWN;
 
-                case DOSDEVICE_DRIVE_REMOVABLE:
-                    return DRIVE_REMOVABLE;
+            case DOSDEVICE_DRIVE_REMOVABLE:
+                return DRIVE_REMOVABLE;
 
-                case DOSDEVICE_DRIVE_FIXED:
-                    return DRIVE_FIXED;
+            case DOSDEVICE_DRIVE_FIXED:
+                return DRIVE_FIXED;
 
-                case DOSDEVICE_DRIVE_REMOTE:
-                    return DRIVE_REMOTE;
+            case DOSDEVICE_DRIVE_REMOTE:
+                return DRIVE_REMOTE;
 
-                case DOSDEVICE_DRIVE_CDROM:
-                    return DRIVE_CDROM;
+            case DOSDEVICE_DRIVE_CDROM:
+                return DRIVE_CDROM;
 
-                case DOSDEVICE_DRIVE_RAMDISK:
-                    return DRIVE_RAMDISK;
-                }
+            case DOSDEVICE_DRIVE_RAMDISK:
+                return DRIVE_RAMDISK;
             }
         }
+    }
 
 
     //
@@ -776,47 +710,36 @@ Return Value:
     // the RtlGetCurrentDirectory logic is wrong, so throw it away.
     //
 
-    if (!ARGUMENT_PRESENT(lpRootPathName)) {
+    if (!ARGUMENT_PRESENT(lpRootPathName))
+    {
         RootPathName = L"\\";
-        }
+    }
 
-    TranslationStatus = RtlDosPathNameToNtPathName_U( RootPathName,
-                                                      &FileName,
-                                                      NULL,
-                                                      NULL
-                                                    );
-    if (!TranslationStatus) {
+    TranslationStatus = RtlDosPathNameToNtPathName_U(RootPathName, &FileName, NULL, NULL);
+    if (!TranslationStatus)
+    {
         return DRIVE_NO_ROOT_DIR;
-        }
+    }
     FreeBuffer = FileName.Buffer;
 
     //
     // Check to make sure a root was specified
     //
 
-    if (FileName.Buffer[(FileName.Length >> 1)-1] != '\\') {
-        RtlFreeHeap(RtlProcessHeap(), 0,FreeBuffer);
+    if (FileName.Buffer[(FileName.Length >> 1) - 1] != '\\')
+    {
+        RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
         return DRIVE_NO_ROOT_DIR;
-        }
+    }
 
     FileName.Length -= 2;
-    InitializeObjectAttributes( &Obja,
-                                &FileName,
-                                OBJ_CASE_INSENSITIVE,
-                                NULL,
-                                NULL
-                              );
+    InitializeObjectAttributes(&Obja, &FileName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
     //
     // Open the file
     //
-    Status = NtOpenFile( &Handle,
-                         (ACCESS_MASK)FILE_READ_ATTRIBUTES | SYNCHRONIZE,
-                         &Obja,
-                         &IoStatusBlock,
-                         FILE_SHARE_READ | FILE_SHARE_WRITE,
-                         FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE
-                       );
+    Status = NtOpenFile(&Handle, (ACCESS_MASK)FILE_READ_ATTRIBUTES | SYNCHRONIZE, &Obja, &IoStatusBlock,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE);
 
     //
     //
@@ -824,128 +747,110 @@ Return Value:
     // of them, bypass this
     //
 
-    if ( Status == STATUS_FILE_IS_A_DIRECTORY ) {
+    if (Status == STATUS_FILE_IS_A_DIRECTORY)
+    {
 
-        if (BasepGetVolumeNameFromReparsePoint(lpRootPathName, volumeName,
-                                               MAX_PATH, NULL)) {
+        if (BasepGetVolumeNameFromReparsePoint(lpRootPathName, volumeName, MAX_PATH, NULL))
+        {
 
             RtlInitUnicodeString(&volumeNameString, volumeName);
 
             volumeNameString.Buffer[1] = '?';
             volumeNameString.Length -= sizeof(WCHAR);
 
-            InitializeObjectAttributes( &Obja,
-                                        &volumeNameString,
-                                        OBJ_CASE_INSENSITIVE,
-                                        NULL,
-                                        NULL
-                                      );
-
-            }
-
-            Status = NtOpenFile(
-                        &Handle,
-                        (ACCESS_MASK)FILE_READ_ATTRIBUTES | SYNCHRONIZE,
-                        &Obja,
-                        &IoStatusBlock,
-                        FILE_SHARE_READ | FILE_SHARE_WRITE,
-                        FILE_SYNCHRONOUS_IO_NONALERT
-                        );
+            InitializeObjectAttributes(&Obja, &volumeNameString, OBJ_CASE_INSENSITIVE, NULL, NULL);
         }
 
-    else {
+        Status = NtOpenFile(&Handle, (ACCESS_MASK)FILE_READ_ATTRIBUTES | SYNCHRONIZE, &Obja, &IoStatusBlock,
+                            FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT);
+    }
+
+    else
+    {
 
         //
         // check for substed drives another way just in case
         //
 
         FileName.Length = FileName.Length + sizeof((WCHAR)'\\');
-        if (!IsThisARootDirectory(NULL,&FileName) ) {
+        if (!IsThisARootDirectory(NULL, &FileName))
+        {
             FileName.Length = FileName.Length - sizeof((WCHAR)'\\');
-            if (NT_SUCCESS(Status)) {
+            if (NT_SUCCESS(Status))
+            {
                 NtClose(Handle);
-                }
-            Status = NtOpenFile(
-                        &Handle,
-                        (ACCESS_MASK)FILE_READ_ATTRIBUTES | SYNCHRONIZE,
-                        &Obja,
-                        &IoStatusBlock,
-                        FILE_SHARE_READ | FILE_SHARE_WRITE,
-                        FILE_SYNCHRONOUS_IO_NONALERT
-                        );
             }
+            Status = NtOpenFile(&Handle, (ACCESS_MASK)FILE_READ_ATTRIBUTES | SYNCHRONIZE, &Obja, &IoStatusBlock,
+                                FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT);
         }
-    RtlFreeHeap( RtlProcessHeap(), 0, FreeBuffer );
-    if (!NT_SUCCESS( Status )) {
+    }
+    RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
+    if (!NT_SUCCESS(Status))
+    {
         return DRIVE_NO_ROOT_DIR;
-        }
+    }
 
     //
     // Determine if this is a network or disk file system. If it
     // is a disk file system determine if this is removable or not
     //
 
-    Status = NtQueryVolumeInformationFile( Handle,
-                                           &IoStatusBlock,
-                                           &DeviceInfo,
-                                           sizeof(DeviceInfo),
-                                           FileFsDeviceInformation
-                                         );
-    if (!NT_SUCCESS( Status )) {
+    Status =
+        NtQueryVolumeInformationFile(Handle, &IoStatusBlock, &DeviceInfo, sizeof(DeviceInfo), FileFsDeviceInformation);
+    if (!NT_SUCCESS(Status))
+    {
         ReturnValue = DRIVE_UNKNOWN;
-        }
-    else
-    if (DeviceInfo.Characteristics & FILE_REMOTE_DEVICE) {
+    }
+    else if (DeviceInfo.Characteristics & FILE_REMOTE_DEVICE)
+    {
         ReturnValue = DRIVE_REMOTE;
-        }
-    else {
-        switch (DeviceInfo.DeviceType) {
+    }
+    else
+    {
+        switch (DeviceInfo.DeviceType)
+        {
 
-            case FILE_DEVICE_NETWORK:
-            case FILE_DEVICE_NETWORK_FILE_SYSTEM:
-                ReturnValue = DRIVE_REMOTE;
-                break;
+        case FILE_DEVICE_NETWORK:
+        case FILE_DEVICE_NETWORK_FILE_SYSTEM:
+            ReturnValue = DRIVE_REMOTE;
+            break;
 
-            case FILE_DEVICE_CD_ROM:
-            case FILE_DEVICE_CD_ROM_FILE_SYSTEM:
-                ReturnValue = DRIVE_CDROM;
-                break;
+        case FILE_DEVICE_CD_ROM:
+        case FILE_DEVICE_CD_ROM_FILE_SYSTEM:
+            ReturnValue = DRIVE_CDROM;
+            break;
 
-            case FILE_DEVICE_VIRTUAL_DISK:
-                ReturnValue = DRIVE_RAMDISK;
-                break;
+        case FILE_DEVICE_VIRTUAL_DISK:
+            ReturnValue = DRIVE_RAMDISK;
+            break;
 
-            case FILE_DEVICE_DISK:
-            case FILE_DEVICE_DISK_FILE_SYSTEM:
+        case FILE_DEVICE_DISK:
+        case FILE_DEVICE_DISK_FILE_SYSTEM:
 
-                if ( DeviceInfo.Characteristics & FILE_REMOVABLE_MEDIA ) {
-                    ReturnValue = DRIVE_REMOVABLE;
-                    }
-                else {
-                    ReturnValue = DRIVE_FIXED;
-                    }
-                break;
-
-            default:
-                ReturnValue = DRIVE_UNKNOWN;
-                break;
+            if (DeviceInfo.Characteristics & FILE_REMOVABLE_MEDIA)
+            {
+                ReturnValue = DRIVE_REMOVABLE;
             }
-        }
+            else
+            {
+                ReturnValue = DRIVE_FIXED;
+            }
+            break;
 
-    NtClose( Handle );
+        default:
+            ReturnValue = DRIVE_UNKNOWN;
+            break;
+        }
+    }
+
+    NtClose(Handle);
     return ReturnValue;
 }
 
 DWORD
 APIENTRY
-SearchPathA(
-    LPCSTR lpPath,
-    LPCSTR lpFileName,
-    LPCSTR lpExtension,
-    DWORD nBufferLength,
-    LPSTR lpBuffer,
-    LPSTR *lpFilePart
-    )
+SearchPathA(LPCSTR lpPath, LPCSTR lpFileName, LPCSTR lpExtension, DWORD nBufferLength, LPSTR lpBuffer,
+            LPSTR *lpFilePart)
 
 /*++
 
@@ -968,54 +873,60 @@ Routine Description:
     PWSTR FilePart;
     PWSTR *FilePartPtr;
 
-    if ( ARGUMENT_PRESENT(lpFilePart) ) {
+    if (ARGUMENT_PRESENT(lpFilePart))
+    {
         FilePartPtr = &FilePart;
-        }
-    else {
+    }
+    else
+    {
         FilePartPtr = NULL;
-        }
+    }
 
-    Unicode = Basep8BitStringToStaticUnicodeString( lpFileName );
-    if (Unicode == NULL) {
+    Unicode = Basep8BitStringToStaticUnicodeString(lpFileName);
+    if (Unicode == NULL)
+    {
         return 0;
     }
 
-    if ( ARGUMENT_PRESENT(lpExtension) ) {
+    if (ARGUMENT_PRESENT(lpExtension))
+    {
 
-        if (!Basep8BitStringToDynamicUnicodeString( &xlpExtension, lpExtension )) {
+        if (!Basep8BitStringToDynamicUnicodeString(&xlpExtension, lpExtension))
+        {
             return 0;
         }
-
-    } else {
+    }
+    else
+    {
         xlpExtension.Buffer = NULL;
     }
 
-    if ( ARGUMENT_PRESENT(lpPath) ) {
+    if (ARGUMENT_PRESENT(lpPath))
+    {
 
-        if (!Basep8BitStringToDynamicUnicodeString( &xlpPath, lpPath )) {
-            if ( ARGUMENT_PRESENT(lpExtension) ) {
+        if (!Basep8BitStringToDynamicUnicodeString(&xlpPath, lpPath))
+        {
+            if (ARGUMENT_PRESENT(lpExtension))
+            {
                 RtlFreeUnicodeString(&xlpExtension);
             }
             return 0;
         }
-    } else {
+    }
+    else
+    {
         xlpPath.Buffer = NULL;
     }
 
-    xlpBuffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), nBufferLength<<1);
-    if ( !xlpBuffer ) {
+    xlpBuffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), nBufferLength << 1);
+    if (!xlpBuffer)
+    {
         BaseSetLastNTError(STATUS_NO_MEMORY);
         ReturnValue = 0;
         goto bail0;
-        }
-    ReturnValue = SearchPathW(
-                    xlpPath.Buffer,
-                    Unicode->Buffer,
-                    xlpExtension.Buffer,
-                    nBufferLength,
-                    xlpBuffer,
-                    FilePartPtr
-                    );
+    }
+    ReturnValue =
+        SearchPathW(xlpPath.Buffer, Unicode->Buffer, xlpExtension.Buffer, nBufferLength, xlpBuffer, FilePartPtr);
     //
     // === DBCS modification note [takaok] ===
     //
@@ -1027,45 +938,42 @@ Routine Description:
     // This means SearchPathW never returns value which is equal to nBufferLength.
     //
 
-    if ( ReturnValue > nBufferLength ) {
+    if (ReturnValue > nBufferLength)
+    {
         //
         // To know the ansi buffer size needed, we should get all of
         // unicode string.
         //
-        RtlFreeHeap(RtlProcessHeap(), 0,xlpBuffer);
-        xlpBuffer = RtlAllocateHeap(RtlProcessHeap(),
-                                    MAKE_TAG( TMP_TAG ),
-                                    ReturnValue * sizeof(WCHAR));
-        if ( !xlpBuffer ) {
+        RtlFreeHeap(RtlProcessHeap(), 0, xlpBuffer);
+        xlpBuffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), ReturnValue * sizeof(WCHAR));
+        if (!xlpBuffer)
+        {
             BaseSetLastNTError(STATUS_NO_MEMORY);
             goto bail0;
         }
-        ReturnValue = SearchPathW(
-                        xlpPath.Buffer,
-                        Unicode->Buffer,
-                        xlpExtension.Buffer,
-                        ReturnValue,
-                        xlpBuffer,
-                        FilePartPtr
-                        );
-        if ( ReturnValue > 0 ) {
+        ReturnValue =
+            SearchPathW(xlpPath.Buffer, Unicode->Buffer, xlpExtension.Buffer, ReturnValue, xlpBuffer, FilePartPtr);
+        if (ReturnValue > 0)
+        {
             //
             // We called SearchPathW with the enough size of buffer.
             // So, ReturnValue is the size of the path not including the
             // terminating null character.
             //
-            Status = RtlUnicodeToMultiByteSize( &ReturnValue,
-                                       xlpBuffer,
-                                       ReturnValue * sizeof(WCHAR));
-            if ( !NT_SUCCESS(Status) ) {
+            Status = RtlUnicodeToMultiByteSize(&ReturnValue, xlpBuffer, ReturnValue * sizeof(WCHAR));
+            if (!NT_SUCCESS(Status))
+            {
                 BaseSetLastNTError(Status);
                 ReturnValue = 0;
             }
-            else {
+            else
+            {
                 ReturnValue += 1;
             }
         }
-    } else if ( ReturnValue > 0 ) {
+    }
+    else if (ReturnValue > 0)
+    {
 
         INT AnsiByteCount;
 
@@ -1076,32 +984,31 @@ Routine Description:
         // ReturnValue   : unicode character count not including null terminator
         // AnsiByteCount : ansi byte count not including null terminator
         //
-        Status = RtlUnicodeToMultiByteSize( &AnsiByteCount,
-                                   xlpBuffer,
-                                   ReturnValue * sizeof(WCHAR) );
+        Status = RtlUnicodeToMultiByteSize(&AnsiByteCount, xlpBuffer, ReturnValue * sizeof(WCHAR));
 
-        if ( !NT_SUCCESS(Status) ) {
+        if (!NT_SUCCESS(Status))
+        {
             BaseSetLastNTError(Status);
             ReturnValue = 0;
-            }
-        else {
-            if ( AnsiByteCount < (INT)nBufferLength ) {
-            //
-            // The string (including null terminator) fits to the buffer
-            //
-                Status = RtlUnicodeToMultiByteN ( lpBuffer,
-                                                  nBufferLength - 1,
-                                                  &AnsiByteCount,
-                                                  xlpBuffer,
-                                                  ReturnValue * sizeof(WCHAR)
-                                                );
-                if ( !NT_SUCCESS(Status) ) {
+        }
+        else
+        {
+            if (AnsiByteCount < (INT)nBufferLength)
+            {
+                //
+                // The string (including null terminator) fits to the buffer
+                //
+                Status = RtlUnicodeToMultiByteN(lpBuffer, nBufferLength - 1, &AnsiByteCount, xlpBuffer,
+                                                ReturnValue * sizeof(WCHAR));
+                if (!NT_SUCCESS(Status))
+                {
                     BaseSetLastNTError(Status);
                     ReturnValue = 0;
                 }
-                else {
+                else
+                {
 
-                    lpBuffer[ AnsiByteCount ] = '\0';
+                    lpBuffer[AnsiByteCount] = '\0';
 
                     //
                     // The return value is the byte count copied to the buffer
@@ -1110,192 +1017,173 @@ Routine Description:
                     ReturnValue = AnsiByteCount;
 
 
-                    if ( ARGUMENT_PRESENT(lpFilePart) ) {
-                        if ( FilePart == NULL ) {
+                    if (ARGUMENT_PRESENT(lpFilePart))
+                    {
+                        if (FilePart == NULL)
+                        {
                             *lpFilePart = NULL;
-                        } else {
+                        }
+                        else
+                        {
 
                             INT PrefixLength;
 
                             PrefixLength = (INT)(FilePart - xlpBuffer);
-                            Status = RtlUnicodeToMultiByteSize( &PrefixLength,
-                                                       xlpBuffer,
-                                                       PrefixLength * sizeof(WCHAR));
-                            if ( !NT_SUCCESS(Status) ) {
+                            Status = RtlUnicodeToMultiByteSize(&PrefixLength, xlpBuffer, PrefixLength * sizeof(WCHAR));
+                            if (!NT_SUCCESS(Status))
+                            {
                                 BaseSetLastNTError(Status);
                                 ReturnValue = 0;
                             }
-                            else {
+                            else
+                            {
                                 *lpFilePart = lpBuffer + PrefixLength;
                             }
                         }
                     }
                 }
-
-            } else {
-            //
-            // We should return the size of the buffer required to
-            // hold the path. The size should include the
-            // terminating null character.
-            //
+            }
+            else
+            {
+                //
+                // We should return the size of the buffer required to
+                // hold the path. The size should include the
+                // terminating null character.
+                //
                 ReturnValue = AnsiByteCount + 1;
-
             }
         }
     }
 
-    RtlFreeHeap(RtlProcessHeap(), 0,xlpBuffer);
+    RtlFreeHeap(RtlProcessHeap(), 0, xlpBuffer);
 bail0:
-    if ( ARGUMENT_PRESENT(lpExtension) ) {
+    if (ARGUMENT_PRESENT(lpExtension))
+    {
         RtlFreeUnicodeString(&xlpExtension);
-        }
+    }
 
-    if ( ARGUMENT_PRESENT(lpPath) ) {
+    if (ARGUMENT_PRESENT(lpPath))
+    {
         RtlFreeUnicodeString(&xlpPath);
-        }
+    }
     return ReturnValue;
 }
-
 
 
 #ifdef WX86
 
 ULONG
-GetFullPathNameWithWx86Override(
-    PCWSTR lpFileName,
-    ULONG nBufferLength,
-    PWSTR lpBuffer,
-    PWSTR *lpFilePart
-    )
+GetFullPathNameWithWx86Override(PCWSTR lpFileName, ULONG nBufferLength, PWSTR lpBuffer, PWSTR *lpFilePart)
 {
     UNICODE_STRING FullPathName, PathUnicode, Wx86PathName;
     PUNICODE_STRING FoundFileName;
     RTL_PATH_TYPE PathType;
     PWSTR FilePart;
     ULONG Length, LengthPath;
-    ULONG  PathNameLength;
+    ULONG PathNameLength;
 
     FullPathName.Buffer = NULL;
     Wx86PathName.Buffer = NULL;
 
-    if (lpFilePart) {
+    if (lpFilePart)
+    {
         *lpFilePart = NULL;
-        }
+    }
 
     FullPathName.MaximumLength = (USHORT)(MAX_PATH * sizeof(WCHAR)) + sizeof(WCHAR);
     FullPathName.Length = 0;
-    FullPathName.Buffer = RtlAllocateHeap(RtlProcessHeap(),
-                                          MAKE_TAG( TMP_TAG ),
-                                          FullPathName.MaximumLength
-                                          );
-    if (!FullPathName.Buffer) {
+    FullPathName.Buffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), FullPathName.MaximumLength);
+    if (!FullPathName.Buffer)
+    {
         PathNameLength = 0;
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
         goto WDOExitCleanup;
-        }
+    }
 
     FoundFileName = &FullPathName;
-    PathNameLength = RtlGetFullPathName_U(lpFileName,
-                                          FullPathName.MaximumLength,
-                                          FullPathName.Buffer,
-                                          &FilePart
-                                          );
+    PathNameLength = RtlGetFullPathName_U(lpFileName, FullPathName.MaximumLength, FullPathName.Buffer, &FilePart);
 
-    if (!PathNameLength || PathNameLength >= FullPathName.MaximumLength) {
+    if (!PathNameLength || PathNameLength >= FullPathName.MaximumLength)
+    {
         PathNameLength = 0;
         goto WDOExitCleanup;
-        }
+    }
 
     FullPathName.Length = (USHORT)PathNameLength;
 
 
     PathUnicode = FullPathName;
-    PathUnicode.Length = (USHORT)((ULONG_PTR)FilePart -
-                                  (ULONG_PTR)FullPathName.Buffer);
+    PathUnicode.Length = (USHORT)((ULONG_PTR)FilePart - (ULONG_PTR)FullPathName.Buffer);
 
     PathUnicode.Length -= sizeof(WCHAR);
-    if (!RtlEqualUnicodeString(&PathUnicode, &BaseWindowsSystemDirectory, TRUE)) {
+    if (!RtlEqualUnicodeString(&PathUnicode, &BaseWindowsSystemDirectory, TRUE))
+    {
         goto WDOExitCleanup;
-        }
+    }
 
 
-    Wx86PathName.MaximumLength = BaseWindowsSys32x86Directory.Length +
-                                 FullPathName.Length - PathUnicode.Length +
-                                 2*sizeof(WCHAR);
+    Wx86PathName.MaximumLength =
+        BaseWindowsSys32x86Directory.Length + FullPathName.Length - PathUnicode.Length + 2 * sizeof(WCHAR);
     Wx86PathName.Length = 0;
-    Wx86PathName.Buffer = RtlAllocateHeap(RtlProcessHeap(),
-                                          MAKE_TAG( TMP_TAG ),
-                                          Wx86PathName.MaximumLength
-                                          );
+    Wx86PathName.Buffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), Wx86PathName.MaximumLength);
 
-    if (!Wx86PathName.Buffer) {
+    if (!Wx86PathName.Buffer)
+    {
         goto WDOExitCleanup;
-        }
+    }
 
     RtlCopyUnicodeString(&Wx86PathName, &BaseWindowsSys32x86Directory);
     Length = Wx86PathName.Length + sizeof(WCHAR);
-    RtlAppendUnicodeToString (&Wx86PathName, FilePart - 1);
-    if (RtlDoesFileExists_U(Wx86PathName.Buffer)) {
+    RtlAppendUnicodeToString(&Wx86PathName, FilePart - 1);
+    if (RtlDoesFileExists_U(Wx86PathName.Buffer))
+    {
         FoundFileName = &Wx86PathName;
-        FilePart = Wx86PathName.Buffer + Length/sizeof(WCHAR);
-        }
-
+        FilePart = Wx86PathName.Buffer + Length / sizeof(WCHAR);
+    }
 
 
 WDOExitCleanup:
 
-    if (PathNameLength) {
-        if (FoundFileName->Length >= nBufferLength) {
+    if (PathNameLength)
+    {
+        if (FoundFileName->Length >= nBufferLength)
+        {
             PathNameLength = FoundFileName->Length + sizeof(WCHAR);
-            }
-        else {
-            RtlMoveMemory(lpBuffer,
-                          FoundFileName->Buffer,
-                          FoundFileName->Length + sizeof(WCHAR)
-                          );
+        }
+        else
+        {
+            RtlMoveMemory(lpBuffer, FoundFileName->Buffer, FoundFileName->Length + sizeof(WCHAR));
 
             PathNameLength = FoundFileName->Length;
             Length = (ULONG)(FilePart - FoundFileName->Buffer);
 
-            if (lpFilePart) {
-                *lpFilePart = lpBuffer + Length/sizeof(WCHAR);
-                }
+            if (lpFilePart)
+            {
+                *lpFilePart = lpBuffer + Length / sizeof(WCHAR);
             }
         }
+    }
 
 
-    if (FullPathName.Buffer) {
+    if (FullPathName.Buffer)
+    {
         RtlFreeHeap(RtlProcessHeap(), 0, FullPathName.Buffer);
-        }
+    }
 
-    if (Wx86PathName.Buffer) {
+    if (Wx86PathName.Buffer)
+    {
         RtlFreeHeap(RtlProcessHeap(), 0, Wx86PathName.Buffer);
-        }
+    }
 
     return PathNameLength;
-
 }
 #endif
 
 
-
-
-
-
-
-
-
-
 DWORD
 APIENTRY
-SearchPathW(
-    LPCWSTR lpPath,
-    LPCWSTR lpFileName,
-    LPCWSTR lpExtension,
-    DWORD nBufferLength,
-    LPWSTR lpBuffer,
-    LPWSTR *lpFilePart
-    )
+SearchPathW(LPCWSTR lpPath, LPCWSTR lpFileName, LPCWSTR lpExtension, DWORD nBufferLength, LPWSTR lpBuffer,
+            LPWSTR *lpFilePart)
 
 /*++
 
@@ -1389,39 +1277,45 @@ Return Value:
     // search
     //
 
-    while ((FileName.Length >= sizeof(WCHAR)) &&
-           (FileName.Buffer[(FileName.Length / sizeof(WCHAR)) - 1] == L' '))
+    while ((FileName.Length >= sizeof(WCHAR)) && (FileName.Buffer[(FileName.Length / sizeof(WCHAR)) - 1] == L' '))
         FileName.Length -= sizeof(WCHAR);
 
-    if (FileName.Length == 0) {
+    if (FileName.Length == 0)
+    {
         SetLastError(ERROR_INVALID_PARAMETER);
         goto Exit;
     }
 
     RtlInitUnicodeString(&DefaultExtension, lpExtension);
 
-    if ( !ARGUMENT_PRESENT(lpPath) ) {
+    if (!ARGUMENT_PRESENT(lpPath))
+    {
         SIZE_T Cch;
 
         Path.Buffer = BaseComputeProcessSearchPath();
-        if (Path.Buffer == NULL) {
+        if (Path.Buffer == NULL)
+        {
             SetLastError(ERROR_NOT_ENOUGH_MEMORY);
             goto Exit;
         }
 
         Cch = lstrlenW(Path.Buffer);
 
-        if (Cch > UNICODE_STRING_MAX_CHARS) {
+        if (Cch > UNICODE_STRING_MAX_CHARS)
+        {
             SetLastError(ERROR_FILENAME_EXCED_RANGE);
             goto Exit;
         }
 
-        Path.Length = (USHORT) (Cch * sizeof(WCHAR));
+        Path.Length = (USHORT)(Cch * sizeof(WCHAR));
         Path.MaximumLength = Path.Length;
         SearchPathFlags |= RTL_DOS_SEARCH_PATH_FLAG_APPLY_ISOLATION_REDIRECTION;
-    } else {
+    }
+    else
+    {
         Status = RtlInitUnicodeStringEx(&Path, lpPath);
-        if (NT_ERROR(Status)) {
+        if (NT_ERROR(Status))
+        {
             BaseSetLastNTError(Status);
             goto Exit;
         }
@@ -1429,40 +1323,41 @@ Return Value:
 
     CallersBuffer.Length = 0;
 
-    if (nBufferLength > UNICODE_STRING_MAX_CHARS) {
+    if (nBufferLength > UNICODE_STRING_MAX_CHARS)
+    {
         CallersBuffer.MaximumLength = UNICODE_STRING_MAX_BYTES;
-    } else {
-        CallersBuffer.MaximumLength = (USHORT) (nBufferLength * sizeof(WCHAR));
+    }
+    else
+    {
+        CallersBuffer.MaximumLength = (USHORT)(nBufferLength * sizeof(WCHAR));
     }
     CallersBuffer.Buffer = lpBuffer;
 
-    Status = RtlDosSearchPath_Ustr(
-        SearchPathFlags,
-        &Path,
-        &FileName,
-        &DefaultExtension,
-        &CallersBuffer,
-        NULL,               // dynamicstring
-        NULL,               // fullfilenameout
-        &FilePartPrefixCch,
-        &BytesRequired);
-    if (NT_ERROR(Status)) {
+    Status = RtlDosSearchPath_Ustr(SearchPathFlags, &Path, &FileName, &DefaultExtension, &CallersBuffer,
+                                   NULL, // dynamicstring
+                                   NULL, // fullfilenameout
+                                   &FilePartPrefixCch, &BytesRequired);
+    if (NT_ERROR(Status))
+    {
 
 #if DBG
         // Don't bother with debug spew for the two common expected cases.
-        if ((Status != STATUS_NO_SUCH_FILE) && (Status != STATUS_BUFFER_TOO_SMALL)) {
+        if ((Status != STATUS_NO_SUCH_FILE) && (Status != STATUS_BUFFER_TOO_SMALL))
+        {
             DbgPrint("%s on file %wZ failed; NTSTATUS = %08lx\n", __FUNCTION__, &FileName, Status);
             DbgPrint("   Path = %wZ\n", &Path);
         }
 #endif // DBG
 
-        if (Status == STATUS_BUFFER_TOO_SMALL) {
+        if (Status == STATUS_BUFFER_TOO_SMALL)
+        {
             SIZE_T CchRequired = BytesRequired / sizeof(WCHAR);
-            if (CchRequired > 0xffffffff) {
+            if (CchRequired > 0xffffffff)
+            {
                 SetLastError(ERROR_FILENAME_EXCED_RANGE);
                 goto Exit;
             }
-            dwReturnValue = (DWORD) CchRequired;
+            dwReturnValue = (DWORD)CchRequired;
             goto Exit;
         }
 
@@ -1473,25 +1368,23 @@ Return Value:
     }
 
 #ifdef WX86
-    if (UseKnownWx86Dll) {
+    if (UseKnownWx86Dll)
+    {
         WCHAR TempBuffer[MAX_PATH];
 
         RtlCopyMemory(TempBuffer, lpBuffer, CallersBuffer.Length);
         TempBuffer[CallersBuffer.Length / sizeof(WCHAR)] = UNICODE_NULL;
 
-        dwReturnValue = GetFullPathNameWithWx86Override(
-                 TempBuffer,
-                 nBufferLength,
-                 lpBuffer,
-                 lpFilePart
-                 );
+        dwReturnValue = GetFullPathNameWithWx86Override(TempBuffer, nBufferLength, lpBuffer, lpFilePart);
         goto Exit;
-
-    } else if (lpFilePart != NULL) {
+    }
+    else if (lpFilePart != NULL)
+    {
         *lpFilePart = lpBuffer + FilePartPrefixCch;
     }
 #else
-    if (lpFilePart != NULL) {
+    if (lpFilePart != NULL)
+    {
         *lpFilePart = lpBuffer + FilePartPrefixCch;
     }
 #endif // WX86
@@ -1508,10 +1401,7 @@ Exit:
 
 DWORD
 APIENTRY
-GetTempPathA(
-    DWORD nBufferLength,
-    LPSTR lpBuffer
-    )
+GetTempPathA(DWORD nBufferLength, LPSTR lpBuffer)
 
 /*++
 
@@ -1525,23 +1415,20 @@ Routine Description:
     ANSI_STRING AnsiString;
     UNICODE_STRING UnicodeString;
     NTSTATUS Status;
-    ULONG  cbAnsiString;
+    ULONG cbAnsiString;
 
-    UnicodeString.MaximumLength = (USHORT)((nBufferLength<<1)+sizeof(UNICODE_NULL));
-    UnicodeString.Buffer = RtlAllocateHeap(
-                                RtlProcessHeap(), MAKE_TAG( TMP_TAG ),
-                                UnicodeString.MaximumLength
-                                );
-    if ( !UnicodeString.Buffer ) {
+    UnicodeString.MaximumLength = (USHORT)((nBufferLength << 1) + sizeof(UNICODE_NULL));
+    UnicodeString.Buffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), UnicodeString.MaximumLength);
+    if (!UnicodeString.Buffer)
+    {
         BaseSetLastNTError(STATUS_NO_MEMORY);
         return 0;
-        }
-    UnicodeString.Length = (USHORT)GetTempPathW(
-                                        (DWORD)(UnicodeString.MaximumLength-sizeof(UNICODE_NULL))/2,
-                                        UnicodeString.Buffer
-                                        )*2;
-    if ( UnicodeString.Length > (USHORT)(UnicodeString.MaximumLength-sizeof(UNICODE_NULL)) ) {
-        RtlFreeHeap(RtlProcessHeap(), 0,UnicodeString.Buffer);
+    }
+    UnicodeString.Length =
+        (USHORT)GetTempPathW((DWORD)(UnicodeString.MaximumLength - sizeof(UNICODE_NULL)) / 2, UnicodeString.Buffer) * 2;
+    if (UnicodeString.Length > (USHORT)(UnicodeString.MaximumLength - sizeof(UNICODE_NULL)))
+    {
+        RtlFreeHeap(RtlProcessHeap(), 0, UnicodeString.Buffer);
 
         //
         // given buffer size is too small.
@@ -1551,47 +1438,43 @@ Routine Description:
         // otherwise we can't figure out the exact length
         // of corresponding ansi string (cbAnsiString).
 
-        UnicodeString.Buffer = RtlAllocateHeap ( RtlProcessHeap(),
-                                                 MAKE_TAG( TMP_TAG ),
-                                                 UnicodeString.Length+ sizeof(UNICODE_NULL));
-        if ( !UnicodeString.Buffer ) {
+        UnicodeString.Buffer =
+            RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), UnicodeString.Length + sizeof(UNICODE_NULL));
+        if (!UnicodeString.Buffer)
+        {
             BaseSetLastNTError(STATUS_NO_MEMORY);
             return 0;
-            }
+        }
 
-        UnicodeString.Length = (USHORT)GetTempPathW(
-                                     (DWORD)(UnicodeString.Length)/2,
-                                     UnicodeString.Buffer) * 2;
-        Status = RtlUnicodeToMultiByteSize( &cbAnsiString,
-                                            UnicodeString.Buffer,
-                                            UnicodeString.Length );
-        if ( !NT_SUCCESS(Status) ) {
+        UnicodeString.Length = (USHORT)GetTempPathW((DWORD)(UnicodeString.Length) / 2, UnicodeString.Buffer) * 2;
+        Status = RtlUnicodeToMultiByteSize(&cbAnsiString, UnicodeString.Buffer, UnicodeString.Length);
+        if (!NT_SUCCESS(Status))
+        {
             RtlFreeHeap(RtlProcessHeap(), 0, UnicodeString.Buffer);
             BaseSetLastNTError(Status);
             return 0;
-            }
-        else if ( nBufferLength <= cbAnsiString ) {
+        }
+        else if (nBufferLength <= cbAnsiString)
+        {
             RtlFreeHeap(RtlProcessHeap(), 0, UnicodeString.Buffer);
             return cbAnsiString + sizeof(ANSI_NULL);
-            }
         }
+    }
     AnsiString.Buffer = lpBuffer;
-    AnsiString.MaximumLength = (USHORT)(nBufferLength+1);
-    Status = BasepUnicodeStringTo8BitString(&AnsiString,&UnicodeString,FALSE);
-    RtlFreeHeap(RtlProcessHeap(), 0,UnicodeString.Buffer);
-    if ( !NT_SUCCESS(Status) ) {
+    AnsiString.MaximumLength = (USHORT)(nBufferLength + 1);
+    Status = BasepUnicodeStringTo8BitString(&AnsiString, &UnicodeString, FALSE);
+    RtlFreeHeap(RtlProcessHeap(), 0, UnicodeString.Buffer);
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return 0;
-        }
+    }
     return AnsiString.Length;
 }
 
 DWORD
 APIENTRY
-GetTempPathW(
-    DWORD nBufferLength,
-    LPWSTR lpBuffer
-    )
+GetTempPathW(DWORD nBufferLength, LPWSTR lpBuffer)
 /*++
 
 Routine Description:
@@ -1622,11 +1505,7 @@ Return Value:
 
 DWORD
 APIENTRY
-BasepGetTempPathW(
-    ULONG  Flags,
-    DWORD nBufferLength,
-    LPWSTR lpBuffer
-    )
+BasepGetTempPathW(ULONG Flags, DWORD nBufferLength, LPWSTR lpBuffer)
 
 /*++
 
@@ -1664,9 +1543,8 @@ Return Value:
     LPWSTR Name;
     ULONG Position;
 
-    if (
-        (Flags & ~BASEP_GET_TEMP_PATH_PRESERVE_TEB) != 0
-        ) {
+    if ((Flags & ~BASEP_GET_TEMP_PATH_PRESERVE_TEB) != 0)
+    {
         BaseSetLastNTError(STATUS_INVALID_PARAMETER_1);
         return 0;
     }
@@ -1675,10 +1553,11 @@ Return Value:
     // Some apps don't work with the new long path for the temp directory
     //
 
-    if (APPCOMPATFLAG(KACF_GETTEMPPATH)) {
+    if (APPCOMPATFLAG(KACF_GETTEMPPATH))
+    {
 
-        #define OLD_TEMP_PATH       L"c:\\temp\\"
-        #define OLD_TEMP_PATH_SIZE  (sizeof(OLD_TEMP_PATH) / sizeof(WCHAR))
+#define OLD_TEMP_PATH L"c:\\temp\\"
+#define OLD_TEMP_PATH_SIZE (sizeof(OLD_TEMP_PATH) / sizeof(WCHAR))
 
         BOOL bRet;
 
@@ -1687,7 +1566,8 @@ Return Value:
         // the desired size.
         //
 
-        if (nBufferLength < OLD_TEMP_PATH_SIZE) {
+        if (nBufferLength < OLD_TEMP_PATH_SIZE)
+        {
             return OLD_TEMP_PATH_SIZE;
         }
 
@@ -1701,7 +1581,8 @@ Return Value:
 
         bRet = CreateDirectoryW(lpBuffer, NULL);
 
-        if (!bRet) {
+        if (!bRet)
+        {
 
             if (GetLastError() != ERROR_ALREADY_EXISTS)
                 return 0;
@@ -1712,87 +1593,94 @@ Return Value:
 
     nBufferLength *= 2;
     EnvironmentValue = NtCurrentTeb()->StaticUnicodeString;
-    if (Flags & BASEP_GET_TEMP_PATH_PRESERVE_TEB) {
-        EnvironmentValue.Buffer = (PWSTR)RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), EnvironmentValue.MaximumLength);
-        if (EnvironmentValue.Buffer == NULL) {
+    if (Flags & BASEP_GET_TEMP_PATH_PRESERVE_TEB)
+    {
+        EnvironmentValue.Buffer =
+            (PWSTR)RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), EnvironmentValue.MaximumLength);
+        if (EnvironmentValue.Buffer == NULL)
+        {
             BaseSetLastNTError(STATUS_NO_MEMORY);
             return 0;
         }
     }
-    __try {
+    __try
+    {
 
         AddTrailingSlash = FALSE;
 
-        Status = RtlQueryEnvironmentVariable_U(NULL,&BaseTmpVariableName,&EnvironmentValue);
-        if ( !NT_SUCCESS(Status) ) {
-            Status = RtlQueryEnvironmentVariable_U(NULL,&BaseTempVariableName,&EnvironmentValue);
-            if ( !NT_SUCCESS(Status) ) {
-                Status = RtlQueryEnvironmentVariable_U(NULL,&BaseUserProfileVariableName,&EnvironmentValue);
-                }
+        Status = RtlQueryEnvironmentVariable_U(NULL, &BaseTmpVariableName, &EnvironmentValue);
+        if (!NT_SUCCESS(Status))
+        {
+            Status = RtlQueryEnvironmentVariable_U(NULL, &BaseTempVariableName, &EnvironmentValue);
+            if (!NT_SUCCESS(Status))
+            {
+                Status = RtlQueryEnvironmentVariable_U(NULL, &BaseUserProfileVariableName, &EnvironmentValue);
             }
+        }
 
-        if ( NT_SUCCESS(Status) ) {
+        if (NT_SUCCESS(Status))
+        {
             Name = EnvironmentValue.Buffer;
-            if ( Name[(EnvironmentValue.Length>>1)-1] != (WCHAR)'\\' ) {
+            if (Name[(EnvironmentValue.Length >> 1) - 1] != (WCHAR)'\\')
+            {
                 AddTrailingSlash = TRUE;
-                }
             }
-        else {
+        }
+        else
+        {
             Name = BaseWindowsDirectory.Buffer;
-            if ( Name[(BaseWindowsDirectory.Length>>1)-1] != (WCHAR)'\\' ) {
+            if (Name[(BaseWindowsDirectory.Length >> 1) - 1] != (WCHAR)'\\')
+            {
                 AddTrailingSlash = TRUE;
-                }
             }
+        }
 
-        Length = RtlGetFullPathName_U(
-                    Name,
-                    nBufferLength,
-                    lpBuffer,
-                    NULL
-                    );
-        Position = Length>>1;
+        Length = RtlGetFullPathName_U(Name, nBufferLength, lpBuffer, NULL);
+        Position = Length >> 1;
 
         //
         // Make sure there is room for a trailing back slash
         //
 
-        if ( Length && Length < nBufferLength ) {
-            if ( lpBuffer[Position-1] != '\\' ) {
-                if ( Length+sizeof((WCHAR)'\\') < nBufferLength ) {
+        if (Length && Length < nBufferLength)
+        {
+            if (lpBuffer[Position - 1] != '\\')
+            {
+                if (Length + sizeof((WCHAR)'\\') < nBufferLength)
+                {
                     lpBuffer[Position] = (WCHAR)'\\';
-                    lpBuffer[Position+1] = UNICODE_NULL;
-                    return (Length+sizeof((WCHAR)'\\'))/2;
-                    }
-                else {
-                    return (Length+sizeof((WCHAR)'\\')+sizeof(UNICODE_NULL))/2;
-                    }
+                    lpBuffer[Position + 1] = UNICODE_NULL;
+                    return (Length + sizeof((WCHAR)'\\')) / 2;
                 }
-            else {
-                return Length/2;
+                else
+                {
+                    return (Length + sizeof((WCHAR)'\\') + sizeof(UNICODE_NULL)) / 2;
                 }
             }
-        else {
-            if ( AddTrailingSlash ) {
+            else
+            {
+                return Length / 2;
+            }
+        }
+        else
+        {
+            if (AddTrailingSlash)
+            {
                 Length += sizeof((WCHAR)'\\');
-                }
-            return Length/2;
             }
+            return Length / 2;
+        }
     }
-    __finally {
-        if (Flags & BASEP_GET_TEMP_PATH_PRESERVE_TEB) {
+    __finally
+    {
+        if (Flags & BASEP_GET_TEMP_PATH_PRESERVE_TEB)
+        {
             RtlFreeHeap(RtlProcessHeap(), 0, EnvironmentValue.Buffer);
         }
     }
 }
 
-UINT
-APIENTRY
-GetTempFileNameA(
-    LPCSTR lpPathName,
-    LPCSTR lpPrefixString,
-    UINT uUnique,
-    LPSTR lpTempFileName
-    )
+UINT APIENTRY GetTempFileNameA(LPCSTR lpPathName, LPCSTR lpPrefixString, UINT uUnique, LPSTR lpTempFileName)
 
 /*++
 
@@ -1809,55 +1697,48 @@ Routine Description:
     UINT ReturnValue;
     UNICODE_STRING UnicodeResult;
 
-    Unicode = Basep8BitStringToStaticUnicodeString( lpPathName );
-    if (Unicode == NULL) {
+    Unicode = Basep8BitStringToStaticUnicodeString(lpPathName);
+    if (Unicode == NULL)
+    {
         return 0;
     }
 
-    if (!Basep8BitStringToDynamicUnicodeString( &UnicodePrefix, lpPrefixString )) {
+    if (!Basep8BitStringToDynamicUnicodeString(&UnicodePrefix, lpPrefixString))
+    {
         return 0;
     }
 
-    UnicodeResult.MaximumLength = (USHORT)((MAX_PATH<<1)+sizeof(UNICODE_NULL));
-    UnicodeResult.Buffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), UnicodeResult.MaximumLength);
-    if ( !UnicodeResult.Buffer ) {
+    UnicodeResult.MaximumLength = (USHORT)((MAX_PATH << 1) + sizeof(UNICODE_NULL));
+    UnicodeResult.Buffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), UnicodeResult.MaximumLength);
+    if (!UnicodeResult.Buffer)
+    {
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
         RtlFreeUnicodeString(&UnicodePrefix);
         return 0;
-        }
+    }
 
-    ReturnValue = GetTempFileNameW(
-                    Unicode->Buffer,
-                    UnicodePrefix.Buffer,
-                    uUnique,
-                    UnicodeResult.Buffer
-                    );
-    if ( ReturnValue ) {
+    ReturnValue = GetTempFileNameW(Unicode->Buffer, UnicodePrefix.Buffer, uUnique, UnicodeResult.Buffer);
+    if (ReturnValue)
+    {
         ANSI_STRING AnsiString;
 
-        RtlInitUnicodeString(&UnicodeResult,UnicodeResult.Buffer);
+        RtlInitUnicodeString(&UnicodeResult, UnicodeResult.Buffer);
         AnsiString.Buffer = lpTempFileName;
-        AnsiString.MaximumLength = MAX_PATH+1;
-        Status = BasepUnicodeStringTo8BitString(&AnsiString,&UnicodeResult,FALSE);
-        if ( !NT_SUCCESS(Status) ) {
+        AnsiString.MaximumLength = MAX_PATH + 1;
+        Status = BasepUnicodeStringTo8BitString(&AnsiString, &UnicodeResult, FALSE);
+        if (!NT_SUCCESS(Status))
+        {
             BaseSetLastNTError(Status);
             ReturnValue = 0;
-            }
         }
+    }
     RtlFreeUnicodeString(&UnicodePrefix);
-    RtlFreeHeap(RtlProcessHeap(), 0,UnicodeResult.Buffer);
+    RtlFreeHeap(RtlProcessHeap(), 0, UnicodeResult.Buffer);
 
     return ReturnValue;
 }
 
-UINT
-APIENTRY
-GetTempFileNameW(
-    LPCWSTR lpPathName,
-    LPCWSTR lpPrefixString,
-    UINT uUnique,
-    LPWSTR lpTempFileName
-    )
+UINT APIENTRY GetTempFileNameW(LPCWSTR lpPathName, LPCWSTR lpPrefixString, UINT uUnique, LPWSTR lpTempFileName)
 
 /*++
 
@@ -1914,7 +1795,7 @@ Return Value:
     BASE_API_MSG m;
     PBASE_GETTEMPFILE_MSG a = &m.u.GetTempFile;
 #endif
-    LPWSTR p,savedp;
+    LPWSTR p, savedp;
     ULONG Length;
     HANDLE FileHandle;
     ULONG PassCount;
@@ -1929,38 +1810,41 @@ Return Value:
 #endif
 
     PassCount = 0;
-    RtlInitUnicodeString(&UnicodePath,lpPathName);
+    RtlInitUnicodeString(&UnicodePath, lpPathName);
     Length = UnicodePath.Length;
 
-    RtlMoveMemory(lpTempFileName,lpPathName,UnicodePath.MaximumLength);
-    if ( !Length || lpTempFileName[(Length>>1)-1] != (WCHAR)'\\' ) {
-        lpTempFileName[Length>>1] = (WCHAR)'\\';
+    RtlMoveMemory(lpTempFileName, lpPathName, UnicodePath.MaximumLength);
+    if (!Length || lpTempFileName[(Length >> 1) - 1] != (WCHAR)'\\')
+    {
+        lpTempFileName[Length >> 1] = (WCHAR)'\\';
         Length += sizeof(UNICODE_NULL);
-        }
+    }
 
-    lpTempFileName[(Length>>1)-1] = UNICODE_NULL;
+    lpTempFileName[(Length >> 1) - 1] = UNICODE_NULL;
     i = GetFileAttributesW(lpTempFileName);
-    if (i == 0xFFFFFFFF) {
-        lpTempFileName[(Length>>1)-1] = (WCHAR)'\\';
-        lpTempFileName[(Length>>1)] = UNICODE_NULL;
+    if (i == 0xFFFFFFFF)
+    {
+        lpTempFileName[(Length >> 1) - 1] = (WCHAR)'\\';
+        lpTempFileName[(Length >> 1)] = UNICODE_NULL;
         i = GetFileAttributesW(lpTempFileName);
-        lpTempFileName[(Length>>1)-1] = UNICODE_NULL;
-        }
-    if ( (i == 0xFFFFFFFF) ||
-         !(i & FILE_ATTRIBUTE_DIRECTORY) ) {
+        lpTempFileName[(Length >> 1) - 1] = UNICODE_NULL;
+    }
+    if ((i == 0xFFFFFFFF) || !(i & FILE_ATTRIBUTE_DIRECTORY))
+    {
         SetLastError(ERROR_DIRECTORY);
         return FALSE;
-        }
-    lpTempFileName[(Length>>1)-1] = (WCHAR)'\\';
+    }
+    lpTempFileName[(Length >> 1) - 1] = (WCHAR)'\\';
 
-    RtlInitUnicodeString(&UnicodePrefix,lpPrefixString);
-    if ( UnicodePrefix.Length > (USHORT)6 ) {
+    RtlInitUnicodeString(&UnicodePrefix, lpPrefixString);
+    if (UnicodePrefix.Length > (USHORT)6)
+    {
         UnicodePrefix.Length = (USHORT)6;
-        }
-    p = &lpTempFileName[Length>>1];
+    }
+    p = &lpTempFileName[Length >> 1];
     Length = UnicodePrefix.Length;
-    RtlMoveMemory(p,lpPrefixString,Length);
-    p += (Length>>1);
+    RtlMoveMemory(p, lpPrefixString, Length);
+    p += (Length >> 1);
     savedp = p;
     //
     // If uUnique is not specified, then get one
@@ -1970,90 +1854,89 @@ Return Value:
 
 try_again:
     p = savedp;
-    if ( !uUnique ) {
+    if (!uUnique)
+    {
 
 #if defined(BUILD_WOW6432)
         uNewUnique = CsrBasepGetTempFile();
-        if ( uNewUnique == 0 ) {
+        if (uNewUnique == 0)
+        {
 #else
-        CsrClientCallServer( (PCSR_API_MSG)&m,
-                             NULL,
-                             CSR_MAKE_API_NUMBER( BASESRV_SERVERDLL_INDEX,
-                                                  BasepGetTempFile
-                                                ),
-                             sizeof( *a )
-                           );
+        CsrClientCallServer((PCSR_API_MSG)&m, NULL, CSR_MAKE_API_NUMBER(BASESRV_SERVERDLL_INDEX, BasepGetTempFile),
+                            sizeof(*a));
         a->uUnique = (UINT)m.ReturnValue;
-        if ( m.ReturnValue == 0 ) {
+        if (m.ReturnValue == 0)
+        {
 #endif
 
             PassCount++;
-            if ( PassCount & 0xffff0000 ) {
+            if (PassCount & 0xffff0000)
+            {
                 return 0;
-                }
-            goto try_again;
             }
+            goto try_again;
         }
-    else {
+    }
+    else
+    {
 #if defined(BUILD_WOW6432)
         uNewUnique = uUnique;
 #else
         a->uUnique = uUnique;
 #endif
-        }
+    }
 
     //
     // Convert the unique value to a 4 byte character string
     //
 
 #if defined(BUILD_WOW6432)
-    RtlIntegerToChar ((ULONG) uNewUnique,16,5,UniqueAsAnsi);
+    RtlIntegerToChar((ULONG)uNewUnique, 16, 5, UniqueAsAnsi);
 #else
-    RtlIntegerToChar ((ULONG) a->uUnique,16,5,UniqueAsAnsi);
+    RtlIntegerToChar((ULONG)a->uUnique, 16, 5, UniqueAsAnsi);
 #endif
     c = UniqueAsAnsi;
-    for(i=0;i<4;i++){
+    for (i = 0; i < 4; i++)
+    {
         *p = RtlAnsiCharToUnicodeChar(&c);
-        if ( *p == UNICODE_NULL ) {
+        if (*p == UNICODE_NULL)
+        {
             break;
-            }
-        p++;
         }
-    RtlMoveMemory(p,BaseDotTmpSuffixName.Buffer,BaseDotTmpSuffixName.MaximumLength);
+        p++;
+    }
+    RtlMoveMemory(p, BaseDotTmpSuffixName.Buffer, BaseDotTmpSuffixName.MaximumLength);
 
-    if ( !uUnique ) {
+    if (!uUnique)
+    {
 
         //
         // test for resulting name being a device (prefix com, uUnique 1-9...
         //
 
-        if ( RtlIsDosDeviceName_U(lpTempFileName) ) {
+        if (RtlIsDosDeviceName_U(lpTempFileName))
+        {
             PassCount++;
-            if ( PassCount & 0xffff0000 ) {
+            if (PassCount & 0xffff0000)
+            {
                 SetLastError(ERROR_INVALID_NAME);
                 return 0;
-                }
-            goto try_again;
             }
+            goto try_again;
+        }
 
-        FileHandle = CreateFileW(
-                        lpTempFileName,
-                        GENERIC_READ,
-                        0,
-                        NULL,
-                        CREATE_NEW,
-                        FILE_ATTRIBUTE_NORMAL,
-                        NULL
-                        );
+        FileHandle = CreateFileW(lpTempFileName, GENERIC_READ, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
         //
         // If the create worked, then we are ok. Just close the file.
         // Otherwise, try again.
         //
 
-        if ( FileHandle != INVALID_HANDLE_VALUE ) {
+        if (FileHandle != INVALID_HANDLE_VALUE)
+        {
             NtClose(FileHandle);
-            }
-        else {
+        }
+        else
+        {
 
             //
             // FIXFIX This test should be inverted when time permits
@@ -2065,39 +1948,40 @@ try_again:
             //
 
             LastError = GetLastError();
-            switch (LastError) {
-                case ERROR_INVALID_PARAMETER     :
-                case ERROR_WRITE_PROTECT         :
-                case ERROR_FILE_NOT_FOUND        :
-                case ERROR_BAD_PATHNAME          :
-                case ERROR_INVALID_NAME          :
-                case ERROR_PATH_NOT_FOUND        :
-                case ERROR_NETWORK_ACCESS_DENIED :
-                case ERROR_DISK_CORRUPT          :
-                case ERROR_FILE_CORRUPT          :
-                case ERROR_DISK_FULL             :
+            switch (LastError)
+            {
+            case ERROR_INVALID_PARAMETER:
+            case ERROR_WRITE_PROTECT:
+            case ERROR_FILE_NOT_FOUND:
+            case ERROR_BAD_PATHNAME:
+            case ERROR_INVALID_NAME:
+            case ERROR_PATH_NOT_FOUND:
+            case ERROR_NETWORK_ACCESS_DENIED:
+            case ERROR_DISK_CORRUPT:
+            case ERROR_FILE_CORRUPT:
+            case ERROR_DISK_FULL:
+                return 0;
+            case ERROR_ACCESS_DENIED:
+                // It's possible for us to hit this if there's a
+                // directory with the name we're trying; in that
+                // case, we can usefully continue.
+                // CreateFile() uses BaseSetLastNTError() to set
+                // LastStatusValue to the actual NT error in the
+                // TEB; we just need to check it, and only abort
+                // if it's not a directory.
+                // This was bug #397477.
+                if (NtCurrentTeb()->LastStatusValue != STATUS_FILE_IS_A_DIRECTORY)
                     return 0;
-                case ERROR_ACCESS_DENIED         :
-                    // It's possible for us to hit this if there's a
-                    // directory with the name we're trying; in that
-                    // case, we can usefully continue.
-                    // CreateFile() uses BaseSetLastNTError() to set
-                    // LastStatusValue to the actual NT error in the
-                    // TEB; we just need to check it, and only abort
-                    // if it's not a directory.
-                    // This was bug #397477.
-                    if (NtCurrentTeb()->LastStatusValue
-                        != STATUS_FILE_IS_A_DIRECTORY)
-                        return 0;
-                }
+            }
 
             PassCount++;
-            if ( PassCount & 0xffff0000 ) {
+            if (PassCount & 0xffff0000)
+            {
                 return 0;
-                }
-            goto try_again;
             }
+            goto try_again;
         }
+    }
 #if defined(BUILD_WOW6432)
     return uNewUnique;
 #else
@@ -2105,15 +1989,8 @@ try_again:
 #endif
 }
 
-BOOL
-APIENTRY
-GetDiskFreeSpaceA(
-    LPCSTR lpRootPathName,
-    LPDWORD lpSectorsPerCluster,
-    LPDWORD lpBytesPerSector,
-    LPDWORD lpNumberOfFreeClusters,
-    LPDWORD lpTotalNumberOfClusters
-    )
+BOOL APIENTRY GetDiskFreeSpaceA(LPCSTR lpRootPathName, LPDWORD lpSectorsPerCluster, LPDWORD lpBytesPerSector,
+                                LPDWORD lpNumberOfFreeClusters, LPDWORD lpTotalNumberOfClusters)
 
 /*++
 
@@ -2126,50 +2003,44 @@ Routine Description:
 {
     PUNICODE_STRING Unicode;
 
-    if (!ARGUMENT_PRESENT( lpRootPathName )) {
+    if (!ARGUMENT_PRESENT(lpRootPathName))
+    {
         lpRootPathName = "\\";
     }
 
-    Unicode = Basep8BitStringToStaticUnicodeString( lpRootPathName );
-    if (Unicode == NULL) {
+    Unicode = Basep8BitStringToStaticUnicodeString(lpRootPathName);
+    if (Unicode == NULL)
+    {
         return FALSE;
     }
 
-    return ( GetDiskFreeSpaceW(
-                (LPCWSTR)Unicode->Buffer,
-                lpSectorsPerCluster,
-                lpBytesPerSector,
-                lpNumberOfFreeClusters,
-                lpTotalNumberOfClusters
-                )
-            );
+    return (GetDiskFreeSpaceW((LPCWSTR)Unicode->Buffer, lpSectorsPerCluster, lpBytesPerSector, lpNumberOfFreeClusters,
+                              lpTotalNumberOfClusters));
 }
 
-BOOL
-APIENTRY
-GetDiskFreeSpaceW(
-    LPCWSTR lpRootPathName,
-    LPDWORD lpSectorsPerCluster,
-    LPDWORD lpBytesPerSector,
-    LPDWORD lpNumberOfFreeClusters,
-    LPDWORD lpTotalNumberOfClusters
-    )
+BOOL APIENTRY GetDiskFreeSpaceW(LPCWSTR lpRootPathName, LPDWORD lpSectorsPerCluster, LPDWORD lpBytesPerSector,
+                                LPDWORD lpNumberOfFreeClusters, LPDWORD lpTotalNumberOfClusters)
 
-#define MAKE2GFRIENDLY(lpOut, dwSize)                                           \
-                                                                                \
-    if (!bAppHack) {                                                            \
-        *lpOut =  dwSize;                                                       \
-    } else {                                                                    \
-        dwTemp = SizeInfo.SectorsPerAllocationUnit * SizeInfo.BytesPerSector;   \
-                                                                                \
-        if (0x7FFFFFFF / dwTemp < dwSize) {                                     \
-                                                                                \
-            *lpOut = 0x7FFFFFFF / dwTemp;                                       \
-        } else {                                                                \
-            *lpOut =  dwSize;                                                   \
-        }                                                                       \
+#define MAKE2GFRIENDLY(lpOut, dwSize)                                         \
+                                                                              \
+    if (!bAppHack)                                                            \
+    {                                                                         \
+        *lpOut = dwSize;                                                      \
+    }                                                                         \
+    else                                                                      \
+    {                                                                         \
+        dwTemp = SizeInfo.SectorsPerAllocationUnit * SizeInfo.BytesPerSector; \
+                                                                              \
+        if (0x7FFFFFFF / dwTemp < dwSize)                                     \
+        {                                                                     \
+                                                                              \
+            *lpOut = 0x7FFFFFFF / dwTemp;                                     \
+        }                                                                     \
+        else                                                                  \
+        {                                                                     \
+            *lpOut = dwSize;                                                  \
+        }                                                                     \
     }
-
 
 
 /*++
@@ -2217,48 +2088,35 @@ Return Value:
     FILE_FS_SIZE_INFORMATION SizeInfo;
     WCHAR DefaultPath[2];
     DWORD dwTemp;
-    BOOL  bAppHack;
+    BOOL bAppHack;
 
     DefaultPath[0] = (WCHAR)'\\';
     DefaultPath[1] = UNICODE_NULL;
 
-    TranslationStatus = RtlDosPathNameToNtPathName_U(
-                            ARGUMENT_PRESENT(lpRootPathName) ? lpRootPathName : DefaultPath,
-                            &FileName,
-                            NULL,
-                            NULL
-                            );
+    TranslationStatus = RtlDosPathNameToNtPathName_U(ARGUMENT_PRESENT(lpRootPathName) ? lpRootPathName : DefaultPath,
+                                                     &FileName, NULL, NULL);
 
-    if ( !TranslationStatus ) {
+    if (!TranslationStatus)
+    {
         SetLastError(ERROR_PATH_NOT_FOUND);
         return FALSE;
-        }
+    }
 
     FreeBuffer = FileName.Buffer;
 
-    InitializeObjectAttributes(
-        &Obja,
-        &FileName,
-        OBJ_CASE_INSENSITIVE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&Obja, &FileName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
     //
     // Open the file
     //
 
-    Status = NtOpenFile(
-                &Handle,
-                (ACCESS_MASK)FILE_LIST_DIRECTORY | SYNCHRONIZE,
-                &Obja,
-                &IoStatusBlock,
-                FILE_SHARE_READ | FILE_SHARE_WRITE,
-                FILE_SYNCHRONOUS_IO_NONALERT | FILE_DIRECTORY_FILE | FILE_OPEN_FOR_FREE_SPACE_QUERY
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = NtOpenFile(&Handle, (ACCESS_MASK)FILE_LIST_DIRECTORY | SYNCHRONIZE, &Obja, &IoStatusBlock,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE,
+                        FILE_SYNCHRONOUS_IO_NONALERT | FILE_DIRECTORY_FILE | FILE_OPEN_FOR_FREE_SPACE_QUERY);
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
-        RtlFreeHeap(RtlProcessHeap(), 0,FreeBuffer);
+        RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
 
         //
         // Prior releases of NT where these parameters were not optional
@@ -2268,40 +2126,39 @@ Return Value:
         // can still treat an unformatted volume as a zero size volume.
         //
 
-        if (ARGUMENT_PRESENT( lpBytesPerSector )) {
+        if (ARGUMENT_PRESENT(lpBytesPerSector))
+        {
             *lpBytesPerSector = 0;
-            }
-        return FALSE;
         }
+        return FALSE;
+    }
 
-    RtlFreeHeap(RtlProcessHeap(), 0,FreeBuffer);
+    RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
 
     //
     // Determine the size parameters of the volume.
     //
 
-    Status = NtQueryVolumeInformationFile(
-                Handle,
-                &IoStatusBlock,
-                &SizeInfo,
-                sizeof(SizeInfo),
-                FileFsSizeInformation
-                );
+    Status = NtQueryVolumeInformationFile(Handle, &IoStatusBlock, &SizeInfo, sizeof(SizeInfo), FileFsSizeInformation);
     NtClose(Handle);
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 
     //
     // See if the calling process needs hack to work with HDD > 2GB
     // 2GB is 0x80000000 bytes and some apps treat that as a signed LONG.
     //
 
-    if (APPCOMPATFLAG(KACF_GETDISKFREESPACE)) {
+    if (APPCOMPATFLAG(KACF_GETDISKFREESPACE))
+    {
 
         bAppHack = TRUE;
-    } else {
+    }
+    else
+    {
         bAppHack = FALSE;
     }
 
@@ -2309,69 +2166,60 @@ Return Value:
     // Deal with 64 bit sizes
     //
 
-    if ( SizeInfo.TotalAllocationUnits.HighPart ) {
+    if (SizeInfo.TotalAllocationUnits.HighPart)
+    {
         SizeInfo.TotalAllocationUnits.LowPart = (ULONG)-1;
-        }
-    if ( SizeInfo.AvailableAllocationUnits.HighPart ) {
+    }
+    if (SizeInfo.AvailableAllocationUnits.HighPart)
+    {
         SizeInfo.AvailableAllocationUnits.LowPart = (ULONG)-1;
-        }
+    }
 
-    if (ARGUMENT_PRESENT( lpSectorsPerCluster )) {
+    if (ARGUMENT_PRESENT(lpSectorsPerCluster))
+    {
         *lpSectorsPerCluster = SizeInfo.SectorsPerAllocationUnit;
-        }
-    if (ARGUMENT_PRESENT( lpBytesPerSector )) {
+    }
+    if (ARGUMENT_PRESENT(lpBytesPerSector))
+    {
         *lpBytesPerSector = SizeInfo.BytesPerSector;
-        }
-    if (ARGUMENT_PRESENT( lpNumberOfFreeClusters )) {
+    }
+    if (ARGUMENT_PRESENT(lpNumberOfFreeClusters))
+    {
         MAKE2GFRIENDLY(lpNumberOfFreeClusters, SizeInfo.AvailableAllocationUnits.LowPart);
-        }
-    if (ARGUMENT_PRESENT( lpTotalNumberOfClusters )) {
+    }
+    if (ARGUMENT_PRESENT(lpTotalNumberOfClusters))
+    {
         MAKE2GFRIENDLY(lpTotalNumberOfClusters, SizeInfo.TotalAllocationUnits.LowPart);
-        }
+    }
 
     return TRUE;
 }
 
 WINBASEAPI
-BOOL
-WINAPI
-GetDiskFreeSpaceExA(
-    LPCSTR lpDirectoryName,
-    PULARGE_INTEGER lpFreeBytesAvailableToCaller,
-    PULARGE_INTEGER lpTotalNumberOfBytes,
-    PULARGE_INTEGER lpTotalNumberOfFreeBytes
-    )
+BOOL WINAPI GetDiskFreeSpaceExA(LPCSTR lpDirectoryName, PULARGE_INTEGER lpFreeBytesAvailableToCaller,
+                                PULARGE_INTEGER lpTotalNumberOfBytes, PULARGE_INTEGER lpTotalNumberOfFreeBytes)
 {
     PUNICODE_STRING Unicode;
 
-    if (!ARGUMENT_PRESENT( lpDirectoryName )) {
+    if (!ARGUMENT_PRESENT(lpDirectoryName))
+    {
         lpDirectoryName = "\\";
     }
 
-    Unicode = Basep8BitStringToStaticUnicodeString( lpDirectoryName );
-    if (Unicode == NULL) {
+    Unicode = Basep8BitStringToStaticUnicodeString(lpDirectoryName);
+    if (Unicode == NULL)
+    {
         return FALSE;
     }
 
-    return ( GetDiskFreeSpaceExW(
-                (LPCWSTR)Unicode->Buffer,
-                lpFreeBytesAvailableToCaller,
-                lpTotalNumberOfBytes,
-                lpTotalNumberOfFreeBytes
-                )
-            );
+    return (GetDiskFreeSpaceExW((LPCWSTR)Unicode->Buffer, lpFreeBytesAvailableToCaller, lpTotalNumberOfBytes,
+                                lpTotalNumberOfFreeBytes));
 }
 
 
 WINBASEAPI
-BOOL
-WINAPI
-GetDiskFreeSpaceExW(
-    LPCWSTR lpDirectoryName,
-    PULARGE_INTEGER lpFreeBytesAvailableToCaller,
-    PULARGE_INTEGER lpTotalNumberOfBytes,
-    PULARGE_INTEGER lpTotalNumberOfFreeBytes
-    )
+BOOL WINAPI GetDiskFreeSpaceExW(LPCWSTR lpDirectoryName, PULARGE_INTEGER lpFreeBytesAvailableToCaller,
+                                PULARGE_INTEGER lpTotalNumberOfBytes, PULARGE_INTEGER lpTotalNumberOfFreeBytes)
 {
     NTSTATUS Status;
     OBJECT_ATTRIBUTES Obja;
@@ -2380,7 +2228,8 @@ GetDiskFreeSpaceExW(
     IO_STATUS_BLOCK IoStatusBlock;
     BOOLEAN TranslationStatus;
     PVOID FreeBuffer;
-    union {
+    union
+    {
         FILE_FS_SIZE_INFORMATION Normal;
         FILE_FS_FULL_SIZE_INFORMATION Full;
     } SizeInfo;
@@ -2393,85 +2242,69 @@ GetDiskFreeSpaceExW(
     DefaultPath[0] = (WCHAR)'\\';
     DefaultPath[1] = UNICODE_NULL;
 
-    TranslationStatus = RtlDosPathNameToNtPathName_U(
-                            ARGUMENT_PRESENT(lpDirectoryName) ? lpDirectoryName : DefaultPath,
-                            &FileName,
-                            NULL,
-                            NULL
-                            );
+    TranslationStatus = RtlDosPathNameToNtPathName_U(ARGUMENT_PRESENT(lpDirectoryName) ? lpDirectoryName : DefaultPath,
+                                                     &FileName, NULL, NULL);
 
-    if ( !TranslationStatus ) {
+    if (!TranslationStatus)
+    {
         SetLastError(ERROR_PATH_NOT_FOUND);
         return FALSE;
-        }
+    }
 
     FreeBuffer = FileName.Buffer;
 
-    InitializeObjectAttributes(
-        &Obja,
-        &FileName,
-        OBJ_CASE_INSENSITIVE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&Obja, &FileName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
     //
     // Open the file
     //
 
-    Status = NtOpenFile(
-                &Handle,
-                (ACCESS_MASK)FILE_LIST_DIRECTORY | SYNCHRONIZE,
-                &Obja,
-                &IoStatusBlock,
-                FILE_SHARE_READ | FILE_SHARE_WRITE,
-                FILE_SYNCHRONOUS_IO_NONALERT | FILE_DIRECTORY_FILE | FILE_OPEN_FOR_FREE_SPACE_QUERY
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = NtOpenFile(&Handle, (ACCESS_MASK)FILE_LIST_DIRECTORY | SYNCHRONIZE, &Obja, &IoStatusBlock,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE,
+                        FILE_SYNCHRONOUS_IO_NONALERT | FILE_DIRECTORY_FILE | FILE_OPEN_FOR_FREE_SPACE_QUERY);
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
-        if ( GetLastError() == ERROR_FILE_NOT_FOUND ) {
+        if (GetLastError() == ERROR_FILE_NOT_FOUND)
+        {
             SetLastError(ERROR_PATH_NOT_FOUND);
-            }
-        RtlFreeHeap(RtlProcessHeap(), 0,FreeBuffer);
-        return FALSE;
         }
+        RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
+        return FALSE;
+    }
 
-    RtlFreeHeap(RtlProcessHeap(), 0,FreeBuffer);
+    RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
 
     //
     // If the caller wants the volume total then try to get a full
     // file size.
     //
 
-    if ( ARGUMENT_PRESENT(lpTotalNumberOfFreeBytes) ) {
+    if (ARGUMENT_PRESENT(lpTotalNumberOfFreeBytes))
+    {
 
-        Status = NtQueryVolumeInformationFile(
-                    Handle,
-                    &IoStatusBlock,
-                    &SizeInfo,
-                    sizeof(SizeInfo.Full),
-                    FileFsFullSizeInformation
-                    );
+        Status = NtQueryVolumeInformationFile(Handle, &IoStatusBlock, &SizeInfo, sizeof(SizeInfo.Full),
+                                              FileFsFullSizeInformation);
 
-        if ( NT_SUCCESS(Status) ) {
+        if (NT_SUCCESS(Status))
+        {
 
             NtClose(Handle);
 
-            BytesPerAllocationUnit.QuadPart =
-                SizeInfo.Full.BytesPerSector * SizeInfo.Full.SectorsPerAllocationUnit;
+            BytesPerAllocationUnit.QuadPart = SizeInfo.Full.BytesPerSector * SizeInfo.Full.SectorsPerAllocationUnit;
 
-            if ( ARGUMENT_PRESENT(lpFreeBytesAvailableToCaller) ) {
+            if (ARGUMENT_PRESENT(lpFreeBytesAvailableToCaller))
+            {
                 lpFreeBytesAvailableToCaller->QuadPart =
-                    BytesPerAllocationUnit.QuadPart *
-                    SizeInfo.Full.CallerAvailableAllocationUnits.QuadPart;
-                }
-            if ( ARGUMENT_PRESENT(lpTotalNumberOfBytes) ) {
+                    BytesPerAllocationUnit.QuadPart * SizeInfo.Full.CallerAvailableAllocationUnits.QuadPart;
+            }
+            if (ARGUMENT_PRESENT(lpTotalNumberOfBytes))
+            {
                 lpTotalNumberOfBytes->QuadPart =
                     BytesPerAllocationUnit.QuadPart * SizeInfo.Full.TotalAllocationUnits.QuadPart;
-                }
+            }
             lpTotalNumberOfFreeBytes->QuadPart =
-                BytesPerAllocationUnit.QuadPart *
-                SizeInfo.Full.ActualAvailableAllocationUnits.QuadPart;
+                BytesPerAllocationUnit.QuadPart * SizeInfo.Full.ActualAvailableAllocationUnits.QuadPart;
 
             return TRUE;
         }
@@ -2481,53 +2314,41 @@ GetDiskFreeSpaceExW(
     // Determine the size parameters of the volume.
     //
 
-    Status = NtQueryVolumeInformationFile(
-                Handle,
-                &IoStatusBlock,
-                &SizeInfo,
-                sizeof(SizeInfo.Normal),
-                FileFsSizeInformation
-                );
+    Status =
+        NtQueryVolumeInformationFile(Handle, &IoStatusBlock, &SizeInfo, sizeof(SizeInfo.Normal), FileFsSizeInformation);
     NtClose(Handle);
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 
-    BytesPerAllocationUnit.QuadPart =
-        SizeInfo.Normal.BytesPerSector * SizeInfo.Normal.SectorsPerAllocationUnit;
+    BytesPerAllocationUnit.QuadPart = SizeInfo.Normal.BytesPerSector * SizeInfo.Normal.SectorsPerAllocationUnit;
 
     FreeBytesAvailableToCaller.QuadPart =
         BytesPerAllocationUnit.QuadPart * SizeInfo.Normal.AvailableAllocationUnits.QuadPart;
 
-    TotalNumberOfBytes.QuadPart =
-        BytesPerAllocationUnit.QuadPart * SizeInfo.Normal.TotalAllocationUnits.QuadPart;
+    TotalNumberOfBytes.QuadPart = BytesPerAllocationUnit.QuadPart * SizeInfo.Normal.TotalAllocationUnits.QuadPart;
 
-    if ( ARGUMENT_PRESENT(lpFreeBytesAvailableToCaller) ) {
+    if (ARGUMENT_PRESENT(lpFreeBytesAvailableToCaller))
+    {
         lpFreeBytesAvailableToCaller->QuadPart = FreeBytesAvailableToCaller.QuadPart;
-        }
-    if ( ARGUMENT_PRESENT(lpTotalNumberOfBytes) ) {
+    }
+    if (ARGUMENT_PRESENT(lpTotalNumberOfBytes))
+    {
         lpTotalNumberOfBytes->QuadPart = TotalNumberOfBytes.QuadPart;
-        }
-    if ( ARGUMENT_PRESENT(lpTotalNumberOfFreeBytes) ) {
+    }
+    if (ARGUMENT_PRESENT(lpTotalNumberOfFreeBytes))
+    {
         lpTotalNumberOfFreeBytes->QuadPart = FreeBytesAvailableToCaller.QuadPart;
-        }
+    }
 
     return TRUE;
 }
 
-BOOL
-APIENTRY
-GetVolumeInformationA(
-    LPCSTR lpRootPathName,
-    LPSTR lpVolumeNameBuffer,
-    DWORD nVolumeNameSize,
-    LPDWORD lpVolumeSerialNumber,
-    LPDWORD lpMaximumComponentLength,
-    LPDWORD lpFileSystemFlags,
-    LPSTR lpFileSystemNameBuffer,
-    DWORD nFileSystemNameSize
-    )
+BOOL APIENTRY GetVolumeInformationA(LPCSTR lpRootPathName, LPSTR lpVolumeNameBuffer, DWORD nVolumeNameSize,
+                                    LPDWORD lpVolumeSerialNumber, LPDWORD lpMaximumComponentLength,
+                                    LPDWORD lpFileSystemFlags, LPSTR lpFileSystemNameBuffer, DWORD nFileSystemNameSize)
 
 /*++
 
@@ -2546,12 +2367,14 @@ Routine Description:
     ANSI_STRING AnsiFileSystemName;
     BOOL ReturnValue;
 
-    if (!ARGUMENT_PRESENT( lpRootPathName )) {
+    if (!ARGUMENT_PRESENT(lpRootPathName))
+    {
         lpRootPathName = "\\";
     }
 
-    Unicode = Basep8BitStringToStaticUnicodeString( lpRootPathName );
-    if (Unicode == NULL) {
+    Unicode = Basep8BitStringToStaticUnicodeString(lpRootPathName);
+    if (Unicode == NULL)
+    {
         return FALSE;
     }
 
@@ -2560,111 +2383,90 @@ Routine Description:
     UnicodeVolumeName.MaximumLength = 0;
     UnicodeFileSystemName.MaximumLength = 0;
     AnsiVolumeName.Buffer = lpVolumeNameBuffer;
-    AnsiVolumeName.MaximumLength = (USHORT)(nVolumeNameSize+1);
+    AnsiVolumeName.MaximumLength = (USHORT)(nVolumeNameSize + 1);
     AnsiFileSystemName.Buffer = lpFileSystemNameBuffer;
-    AnsiFileSystemName.MaximumLength = (USHORT)(nFileSystemNameSize+1);
+    AnsiFileSystemName.MaximumLength = (USHORT)(nFileSystemNameSize + 1);
 
-    try {
-        if ( ARGUMENT_PRESENT(lpVolumeNameBuffer) ) {
+    try
+    {
+        if (ARGUMENT_PRESENT(lpVolumeNameBuffer))
+        {
             UnicodeVolumeName.MaximumLength = AnsiVolumeName.MaximumLength << 1;
-            UnicodeVolumeName.Buffer = RtlAllocateHeap(
-                                            RtlProcessHeap(), MAKE_TAG( TMP_TAG ),
-                                            UnicodeVolumeName.MaximumLength
-                                            );
+            UnicodeVolumeName.Buffer =
+                RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), UnicodeVolumeName.MaximumLength);
 
-            if ( !UnicodeVolumeName.Buffer ) {
+            if (!UnicodeVolumeName.Buffer)
+            {
                 SetLastError(ERROR_NOT_ENOUGH_MEMORY);
                 return FALSE;
-                }
             }
+        }
 
-        if ( ARGUMENT_PRESENT(lpFileSystemNameBuffer) ) {
+        if (ARGUMENT_PRESENT(lpFileSystemNameBuffer))
+        {
             UnicodeFileSystemName.MaximumLength = AnsiFileSystemName.MaximumLength << 1;
-            UnicodeFileSystemName.Buffer = RtlAllocateHeap(
-                                                RtlProcessHeap(), MAKE_TAG( TMP_TAG ),
-                                                UnicodeFileSystemName.MaximumLength
-                                                );
+            UnicodeFileSystemName.Buffer =
+                RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), UnicodeFileSystemName.MaximumLength);
 
-            if ( !UnicodeFileSystemName.Buffer ) {
+            if (!UnicodeFileSystemName.Buffer)
+            {
                 SetLastError(ERROR_NOT_ENOUGH_MEMORY);
                 return FALSE;
+            }
+        }
+
+        ReturnValue = GetVolumeInformationW((LPCWSTR)Unicode->Buffer, UnicodeVolumeName.Buffer, nVolumeNameSize,
+                                            lpVolumeSerialNumber, lpMaximumComponentLength, lpFileSystemFlags,
+                                            UnicodeFileSystemName.Buffer, nFileSystemNameSize);
+
+        if (ReturnValue)
+        {
+
+            if (ARGUMENT_PRESENT(lpVolumeNameBuffer))
+            {
+                RtlInitUnicodeString(&UnicodeVolumeName, UnicodeVolumeName.Buffer);
+
+                Status = BasepUnicodeStringTo8BitString(&AnsiVolumeName, &UnicodeVolumeName, FALSE);
+
+                if (!NT_SUCCESS(Status))
+                {
+                    BaseSetLastNTError(Status);
+                    return FALSE;
                 }
             }
 
-        ReturnValue = GetVolumeInformationW(
-                            (LPCWSTR)Unicode->Buffer,
-                            UnicodeVolumeName.Buffer,
-                            nVolumeNameSize,
-                            lpVolumeSerialNumber,
-                            lpMaximumComponentLength,
-                            lpFileSystemFlags,
-                            UnicodeFileSystemName.Buffer,
-                            nFileSystemNameSize
-                            );
+            if (ARGUMENT_PRESENT(lpFileSystemNameBuffer))
+            {
+                RtlInitUnicodeString(&UnicodeFileSystemName, UnicodeFileSystemName.Buffer);
 
-        if ( ReturnValue ) {
+                Status = BasepUnicodeStringTo8BitString(&AnsiFileSystemName, &UnicodeFileSystemName, FALSE);
 
-            if ( ARGUMENT_PRESENT(lpVolumeNameBuffer) ) {
-                RtlInitUnicodeString(
-                    &UnicodeVolumeName,
-                    UnicodeVolumeName.Buffer
-                    );
-
-                Status = BasepUnicodeStringTo8BitString(
-                            &AnsiVolumeName,
-                            &UnicodeVolumeName,
-                            FALSE
-                            );
-
-                if ( !NT_SUCCESS(Status) ) {
+                if (!NT_SUCCESS(Status))
+                {
                     BaseSetLastNTError(Status);
                     return FALSE;
-                    }
-                }
-
-            if ( ARGUMENT_PRESENT(lpFileSystemNameBuffer) ) {
-                RtlInitUnicodeString(
-                    &UnicodeFileSystemName,
-                    UnicodeFileSystemName.Buffer
-                    );
-
-                Status = BasepUnicodeStringTo8BitString(
-                            &AnsiFileSystemName,
-                            &UnicodeFileSystemName,
-                            FALSE
-                            );
-
-                if ( !NT_SUCCESS(Status) ) {
-                    BaseSetLastNTError(Status);
-                    return FALSE;
-                    }
                 }
             }
         }
-    finally {
-        if ( UnicodeVolumeName.Buffer ) {
-            RtlFreeHeap(RtlProcessHeap(), 0,UnicodeVolumeName.Buffer);
-            }
-        if ( UnicodeFileSystemName.Buffer ) {
-            RtlFreeHeap(RtlProcessHeap(), 0,UnicodeFileSystemName.Buffer);
-            }
+    }
+    finally
+    {
+        if (UnicodeVolumeName.Buffer)
+        {
+            RtlFreeHeap(RtlProcessHeap(), 0, UnicodeVolumeName.Buffer);
         }
+        if (UnicodeFileSystemName.Buffer)
+        {
+            RtlFreeHeap(RtlProcessHeap(), 0, UnicodeFileSystemName.Buffer);
+        }
+    }
 
     return ReturnValue;
 }
 
-BOOL
-APIENTRY
-GetVolumeInformationW(
-    LPCWSTR lpRootPathName,
-    LPWSTR lpVolumeNameBuffer,
-    DWORD nVolumeNameSize,
-    LPDWORD lpVolumeSerialNumber,
-    LPDWORD lpMaximumComponentLength,
-    LPDWORD lpFileSystemFlags,
-    LPWSTR lpFileSystemNameBuffer,
-    DWORD nFileSystemNameSize
-    )
+BOOL APIENTRY GetVolumeInformationW(LPCWSTR lpRootPathName, LPWSTR lpVolumeNameBuffer, DWORD nVolumeNameSize,
+                                    LPDWORD lpVolumeSerialNumber, LPDWORD lpMaximumComponentLength,
+                                    LPDWORD lpFileSystemFlags, LPWSTR lpFileSystemNameBuffer, DWORD nFileSystemNameSize)
 
 /*++
 
@@ -2753,17 +2555,14 @@ Return Value:
     nVolumeNameSize *= 2;
     nFileSystemNameSize *= 2;
 
-    TranslationStatus = RtlDosPathNameToNtPathName_U(
-                            ARGUMENT_PRESENT(lpRootPathName) ? lpRootPathName : DefaultPath,
-                            &FileName,
-                            NULL,
-                            NULL
-                            );
+    TranslationStatus = RtlDosPathNameToNtPathName_U(ARGUMENT_PRESENT(lpRootPathName) ? lpRootPathName : DefaultPath,
+                                                     &FileName, NULL, NULL);
 
-    if ( !TranslationStatus ) {
+    if (!TranslationStatus)
+    {
         SetLastError(ERROR_PATH_NOT_FOUND);
         return FALSE;
-        }
+    }
 
     FreeBuffer = FileName.Buffer;
 
@@ -2771,19 +2570,14 @@ Return Value:
     // Check to make sure a root was specified
     //
 
-    if ( FileName.Buffer[(FileName.Length >> 1)-1] != '\\' ) {
-        RtlFreeHeap(RtlProcessHeap(), 0,FreeBuffer);
+    if (FileName.Buffer[(FileName.Length >> 1) - 1] != '\\')
+    {
+        RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
         BaseSetLastNTError(STATUS_OBJECT_NAME_INVALID);
         return FALSE;
-        }
+    }
 
-    InitializeObjectAttributes(
-        &Obja,
-        &FileName,
-        OBJ_CASE_INSENSITIVE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&Obja, &FileName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
     AttributeInfo = NULL;
     VolumeInfo = NULL;
@@ -2798,169 +2592,176 @@ Return Value:
     HardErrorValue64 = NtCurrentTeb64()->HardErrorsAreDisabled;
     NtCurrentTeb64()->HardErrorsAreDisabled = 1;
 #endif
-    Status = NtOpenFile(
-                &Handle,
-                (ACCESS_MASK)FILE_LIST_DIRECTORY | SYNCHRONIZE,
-                &Obja,
-                &IoStatusBlock,
-                FILE_SHARE_READ | FILE_SHARE_WRITE,
-                FILE_SYNCHRONOUS_IO_NONALERT | FILE_DIRECTORY_FILE | FILE_OPEN_FOR_BACKUP_INTENT
-                );
+    Status = NtOpenFile(&Handle, (ACCESS_MASK)FILE_LIST_DIRECTORY | SYNCHRONIZE, &Obja, &IoStatusBlock,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE,
+                        FILE_SYNCHRONOUS_IO_NONALERT | FILE_DIRECTORY_FILE | FILE_OPEN_FOR_BACKUP_INTENT);
     Teb->HardErrorsAreDisabled = HardErrorValue;
 #if defined(BUILD_WOW6432)
     NtCurrentTeb64()->HardErrorsAreDisabled = HardErrorValue64;
 #endif
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
-        RtlFreeHeap(RtlProcessHeap(), 0,FreeBuffer);
+        RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
         return FALSE;
-        }
+    }
 
-    if ( !IsThisARootDirectory(Handle,&FileName) ) {
+    if (!IsThisARootDirectory(Handle, &FileName))
+    {
         NtClose(Handle);
         SetLastError(ERROR_DIR_NOT_ROOT);
-        RtlFreeHeap(RtlProcessHeap(), 0,FreeBuffer);
+        RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
         return FALSE;
+    }
+    RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
+
+    if (ARGUMENT_PRESENT(lpVolumeNameBuffer) || ARGUMENT_PRESENT(lpVolumeSerialNumber))
+    {
+        if (ARGUMENT_PRESENT(lpVolumeNameBuffer))
+        {
+            VolumeInfoLength = sizeof(*VolumeInfo) + nVolumeNameSize;
         }
-    RtlFreeHeap(RtlProcessHeap(), 0,FreeBuffer);
+        else
+        {
+            VolumeInfoLength = sizeof(*VolumeInfo) + MAX_PATH;
+        }
+        VolumeInfo = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), VolumeInfoLength);
 
-    if ( ARGUMENT_PRESENT(lpVolumeNameBuffer) ||
-         ARGUMENT_PRESENT(lpVolumeSerialNumber) ) {
-        if ( ARGUMENT_PRESENT(lpVolumeNameBuffer) ) {
-            VolumeInfoLength = sizeof(*VolumeInfo)+nVolumeNameSize;
-            }
-        else {
-            VolumeInfoLength = sizeof(*VolumeInfo)+MAX_PATH;
-            }
-        VolumeInfo = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), VolumeInfoLength);
-
-        if ( !VolumeInfo ) {
+        if (!VolumeInfo)
+        {
             NtClose(Handle);
             BaseSetLastNTError(STATUS_NO_MEMORY);
             return FALSE;
-            }
         }
+    }
 
-    if ( ARGUMENT_PRESENT(lpFileSystemNameBuffer) ||
-         ARGUMENT_PRESENT(lpMaximumComponentLength) ||
-         ARGUMENT_PRESENT(lpFileSystemFlags) ) {
-        if ( ARGUMENT_PRESENT(lpFileSystemNameBuffer) ) {
+    if (ARGUMENT_PRESENT(lpFileSystemNameBuffer) || ARGUMENT_PRESENT(lpMaximumComponentLength) ||
+        ARGUMENT_PRESENT(lpFileSystemFlags))
+    {
+        if (ARGUMENT_PRESENT(lpFileSystemNameBuffer))
+        {
             AttributeInfoLength = sizeof(*AttributeInfo) + nFileSystemNameSize;
-            }
-        else {
+        }
+        else
+        {
             AttributeInfoLength = sizeof(*AttributeInfo) + MAX_PATH;
-            }
-        AttributeInfo = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), AttributeInfoLength);
-        if ( !AttributeInfo ) {
+        }
+        AttributeInfo = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), AttributeInfoLength);
+        if (!AttributeInfo)
+        {
             NtClose(Handle);
-            if ( VolumeInfo ) {
-                RtlFreeHeap(RtlProcessHeap(), 0,VolumeInfo);
-                }
+            if (VolumeInfo)
+            {
+                RtlFreeHeap(RtlProcessHeap(), 0, VolumeInfo);
+            }
             BaseSetLastNTError(STATUS_NO_MEMORY);
             return FALSE;
+        }
+    }
+
+    try
+    {
+        if (VolumeInfo)
+        {
+            Status = NtQueryVolumeInformationFile(Handle, &IoStatusBlock, VolumeInfo, VolumeInfoLength,
+                                                  FileFsVolumeInformation);
+            if (!NT_SUCCESS(Status))
+            {
+                BaseSetLastNTError(Status);
+                rv = FALSE;
+                goto finally_exit;
             }
         }
 
-    try {
-        if ( VolumeInfo ) {
-            Status = NtQueryVolumeInformationFile(
-                        Handle,
-                        &IoStatusBlock,
-                        VolumeInfo,
-                        VolumeInfoLength,
-                        FileFsVolumeInformation
-                        );
-            if ( !NT_SUCCESS(Status) ) {
+        if (AttributeInfo)
+        {
+            Status = NtQueryVolumeInformationFile(Handle, &IoStatusBlock, AttributeInfo, AttributeInfoLength,
+                                                  FileFsAttributeInformation);
+            if (!NT_SUCCESS(Status))
+            {
                 BaseSetLastNTError(Status);
                 rv = FALSE;
                 goto finally_exit;
-                }
             }
+        }
+        try
+        {
 
-        if ( AttributeInfo ) {
-            Status = NtQueryVolumeInformationFile(
-                        Handle,
-                        &IoStatusBlock,
-                        AttributeInfo,
-                        AttributeInfoLength,
-                        FileFsAttributeInformation
-                        );
-            if ( !NT_SUCCESS(Status) ) {
-                BaseSetLastNTError(Status);
-                rv = FALSE;
-                goto finally_exit;
-                }
-            }
-        try {
-
-            if ( ARGUMENT_PRESENT(lpVolumeNameBuffer) ) {
-                if ( VolumeInfo->VolumeLabelLength >= nVolumeNameSize ) {
+            if (ARGUMENT_PRESENT(lpVolumeNameBuffer))
+            {
+                if (VolumeInfo->VolumeLabelLength >= nVolumeNameSize)
+                {
                     SetLastError(ERROR_BAD_LENGTH);
                     rv = FALSE;
                     goto finally_exit;
-                    }
-                else {
-                    RtlMoveMemory( lpVolumeNameBuffer,
-                                   VolumeInfo->VolumeLabel,
-                                   VolumeInfo->VolumeLabelLength );
+                }
+                else
+                {
+                    RtlMoveMemory(lpVolumeNameBuffer, VolumeInfo->VolumeLabel, VolumeInfo->VolumeLabelLength);
 
                     *(lpVolumeNameBuffer + (VolumeInfo->VolumeLabelLength >> 1)) = UNICODE_NULL;
-                    }
                 }
+            }
 
-            if ( ARGUMENT_PRESENT(lpVolumeSerialNumber) ) {
+            if (ARGUMENT_PRESENT(lpVolumeSerialNumber))
+            {
                 *lpVolumeSerialNumber = VolumeInfo->VolumeSerialNumber;
-                }
+            }
 
-            if ( ARGUMENT_PRESENT(lpFileSystemNameBuffer) ) {
+            if (ARGUMENT_PRESENT(lpFileSystemNameBuffer))
+            {
 
-                if ( AttributeInfo->FileSystemNameLength >= nFileSystemNameSize ) {
+                if (AttributeInfo->FileSystemNameLength >= nFileSystemNameSize)
+                {
                     SetLastError(ERROR_BAD_LENGTH);
                     rv = FALSE;
                     goto finally_exit;
-                    }
-                else {
-                    RtlMoveMemory( lpFileSystemNameBuffer,
-                                   AttributeInfo->FileSystemName,
-                                   AttributeInfo->FileSystemNameLength );
+                }
+                else
+                {
+                    RtlMoveMemory(lpFileSystemNameBuffer, AttributeInfo->FileSystemName,
+                                  AttributeInfo->FileSystemNameLength);
 
                     *(lpFileSystemNameBuffer + (AttributeInfo->FileSystemNameLength >> 1)) = UNICODE_NULL;
-                    }
-                }
-
-            if ( ARGUMENT_PRESENT(lpMaximumComponentLength) ) {
-                *lpMaximumComponentLength = AttributeInfo->MaximumComponentNameLength;
-                }
-
-            if ( ARGUMENT_PRESENT(lpFileSystemFlags) ) {
-                *lpFileSystemFlags = AttributeInfo->FileSystemAttributes;
                 }
             }
-        except (EXCEPTION_EXECUTE_HANDLER) {
+
+            if (ARGUMENT_PRESENT(lpMaximumComponentLength))
+            {
+                *lpMaximumComponentLength = AttributeInfo->MaximumComponentNameLength;
+            }
+
+            if (ARGUMENT_PRESENT(lpFileSystemFlags))
+            {
+                *lpFileSystemFlags = AttributeInfo->FileSystemAttributes;
+            }
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             BaseSetLastNTError(STATUS_ACCESS_VIOLATION);
             return FALSE;
-            }
+        }
         rv = TRUE;
-finally_exit:;
-        }
-    finally {
+    finally_exit:;
+    }
+    finally
+    {
         NtClose(Handle);
-        if ( VolumeInfo ) {
-            RtlFreeHeap(RtlProcessHeap(), 0,VolumeInfo);
-            }
-        if ( AttributeInfo ) {
-            RtlFreeHeap(RtlProcessHeap(), 0,AttributeInfo);
-            }
+        if (VolumeInfo)
+        {
+            RtlFreeHeap(RtlProcessHeap(), 0, VolumeInfo);
         }
+        if (AttributeInfo)
+        {
+            RtlFreeHeap(RtlProcessHeap(), 0, AttributeInfo);
+        }
+    }
     return rv;
 }
 
 DWORD
 APIENTRY
-GetLogicalDriveStringsA(
-    DWORD nBufferLength,
-    LPSTR lpBuffer
-    )
+GetLogicalDriveStringsA(DWORD nBufferLength, LPSTR lpBuffer)
 {
     ULONG DriveMap;
     ANSI_STRING RootName;
@@ -2978,38 +2779,40 @@ GetLogicalDriveStringsA(
 
     RtlInitAnsiString(&RootName, szDrive);
     DriveMap = GetLogicalDrives();
-    for ( i=0; i<26; i++ ) {
-        RootName.Buffer[0] = (CHAR)((CHAR)i+'A');
-        if (DriveMap & (1 << i) ) {
+    for (i = 0; i < 26; i++)
+    {
+        RootName.Buffer[0] = (CHAR)((CHAR)i + 'A');
+        if (DriveMap & (1 << i))
+        {
 
             BytesNeeded += RootName.MaximumLength;
-            if ( BytesNeeded < (USHORT)BytesLeft ) {
-                RtlMoveMemory(Dst,RootName.Buffer,RootName.MaximumLength);
+            if (BytesNeeded < (USHORT)BytesLeft)
+            {
+                RtlMoveMemory(Dst, RootName.Buffer, RootName.MaximumLength);
                 Dst += RootName.MaximumLength;
                 *Dst = '\0';
-                }
-            else {
+            }
+            else
+            {
                 WeFailed = TRUE;
-                }
             }
         }
+    }
 
-    if ( WeFailed ) {
+    if (WeFailed)
+    {
         BytesNeeded++;
-        }
+    }
     //
     // Need to handle network uses;
     //
 
-    return( BytesNeeded );
+    return (BytesNeeded);
 }
 
 DWORD
 APIENTRY
-GetLogicalDriveStringsW(
-    DWORD nBufferLength,
-    LPWSTR lpBuffer
-    )
+GetLogicalDriveStringsW(DWORD nBufferLength, LPWSTR lpBuffer)
 {
     ULONG DriveMap;
     UNICODE_STRING RootName;
@@ -3020,7 +2823,7 @@ GetLogicalDriveStringsW(
     BOOL WeFailed;
     WCHAR wszDrive[] = L"A:\\";
 
-    nBufferLength = nBufferLength*2;
+    nBufferLength = nBufferLength * 2;
     BytesNeeded = 0;
     BytesLeft = nBufferLength;
     Dst = (PUCHAR)lpBuffer;
@@ -3029,76 +2832,76 @@ GetLogicalDriveStringsW(
     RtlInitUnicodeString(&RootName, wszDrive);
 
     DriveMap = GetLogicalDrives();
-    for ( i=0; i<26; i++ ) {
-        RootName.Buffer[0] = (WCHAR)((CHAR)i+'A');
-        if (DriveMap & (1 << i) ) {
+    for (i = 0; i < 26; i++)
+    {
+        RootName.Buffer[0] = (WCHAR)((CHAR)i + 'A');
+        if (DriveMap & (1 << i))
+        {
 
             BytesNeeded += RootName.MaximumLength;
-            if ( BytesNeeded < (USHORT)BytesLeft ) {
-                RtlMoveMemory(Dst,RootName.Buffer,RootName.MaximumLength);
+            if (BytesNeeded < (USHORT)BytesLeft)
+            {
+                RtlMoveMemory(Dst, RootName.Buffer, RootName.MaximumLength);
                 Dst += RootName.MaximumLength;
                 *(PWSTR)Dst = UNICODE_NULL;
-                }
-            else {
+            }
+            else
+            {
                 WeFailed = TRUE;
-                }
             }
         }
+    }
 
-    if ( WeFailed ) {
+    if (WeFailed)
+    {
         BytesNeeded += 2;
-        }
+    }
 
     //
     // Need to handle network uses;
     //
 
-    return( BytesNeeded/2 );
+    return (BytesNeeded / 2);
 }
 
-BOOL
-WINAPI
-SetVolumeLabelA(
-    LPCSTR lpRootPathName,
-    LPCSTR lpVolumeName
-    )
+BOOL WINAPI SetVolumeLabelA(LPCSTR lpRootPathName, LPCSTR lpVolumeName)
 {
     PUNICODE_STRING Unicode;
     UNICODE_STRING UnicodeVolumeName;
     BOOL ReturnValue;
 
-    if (!ARGUMENT_PRESENT( lpRootPathName )) {
+    if (!ARGUMENT_PRESENT(lpRootPathName))
+    {
         lpRootPathName = "\\";
     }
 
-    Unicode = Basep8BitStringToStaticUnicodeString( lpRootPathName );
+    Unicode = Basep8BitStringToStaticUnicodeString(lpRootPathName);
 
-    if (Unicode == NULL) {
+    if (Unicode == NULL)
+    {
         return FALSE;
-        }
+    }
 
-    if ( ARGUMENT_PRESENT(lpVolumeName) ) {
-        if (!Basep8BitStringToDynamicUnicodeString( &UnicodeVolumeName, lpVolumeName )) {
+    if (ARGUMENT_PRESENT(lpVolumeName))
+    {
+        if (!Basep8BitStringToDynamicUnicodeString(&UnicodeVolumeName, lpVolumeName))
+        {
             return FALSE;
         }
-
-    } else {
+    }
+    else
+    {
         UnicodeVolumeName.Buffer = NULL;
     }
 
-    ReturnValue = SetVolumeLabelW((LPCWSTR)Unicode->Buffer,(LPCWSTR)UnicodeVolumeName.Buffer);
+    ReturnValue = SetVolumeLabelW((LPCWSTR)Unicode->Buffer, (LPCWSTR)UnicodeVolumeName.Buffer);
 
     RtlFreeUnicodeString(&UnicodeVolumeName);
 
     return ReturnValue;
 }
 
-BOOL
-WINAPI
-SetVolumeLabelW(
-    LPCWSTR lpRootPathName,
-    LPCWSTR lpVolumeName
-    )
+BOOL WINAPI SetVolumeLabelW(LPCWSTR lpRootPathName, LPCWSTR lpVolumeName)
 {
     NTSTATUS Status;
     OBJECT_ATTRIBUTES Obja;
@@ -3119,38 +2922,43 @@ SetVolumeLabelW(
     DefaultPath[0] = (WCHAR)'\\';
     DefaultPath[1] = UNICODE_NULL;
 
-    if ( ARGUMENT_PRESENT(lpVolumeName) ) {
-        RtlInitUnicodeString(&LabelName,lpVolumeName);
-        }
-    else {
+    if (ARGUMENT_PRESENT(lpVolumeName))
+    {
+        RtlInitUnicodeString(&LabelName, lpVolumeName);
+    }
+    else
+    {
         LabelName.Length = 0;
         LabelName.MaximumLength = 0;
         LabelName.Buffer = NULL;
-        }
+    }
 
-    if (ARGUMENT_PRESENT(lpRootPathName)) {
-        if (GetVolumeNameForVolumeMountPointW(lpRootPathName, volumeName,
-                                              MAX_PATH)) {
+    if (ARGUMENT_PRESENT(lpRootPathName))
+    {
+        if (GetVolumeNameForVolumeMountPointW(lpRootPathName, volumeName, MAX_PATH))
+        {
 
             usingVolumeName = TRUE;
-        } else {
+        }
+        else
+        {
             usingVolumeName = FALSE;
         }
-    } else {
+    }
+    else
+    {
         usingVolumeName = FALSE;
     }
 
     TranslationStatus = RtlDosPathNameToNtPathName_U(
-                            usingVolumeName ? volumeName : (ARGUMENT_PRESENT(lpRootPathName) ? lpRootPathName : DefaultPath),
-                            &FileName,
-                            NULL,
-                            NULL
-                            );
+        usingVolumeName ? volumeName : (ARGUMENT_PRESENT(lpRootPathName) ? lpRootPathName : DefaultPath), &FileName,
+        NULL, NULL);
 
-    if ( !TranslationStatus ) {
+    if (!TranslationStatus)
+    {
         SetLastError(ERROR_PATH_NOT_FOUND);
         return FALSE;
-        }
+    }
 
     FreeBuffer = FileName.Buffer;
 
@@ -3158,44 +2966,35 @@ SetVolumeLabelW(
     // Check to make sure a root was specified
     //
 
-    if ( FileName.Buffer[(FileName.Length >> 1)-1] != '\\' ) {
-        RtlFreeHeap(RtlProcessHeap(), 0,FreeBuffer);
+    if (FileName.Buffer[(FileName.Length >> 1) - 1] != '\\')
+    {
+        RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
         BaseSetLastNTError(STATUS_OBJECT_NAME_INVALID);
         return FALSE;
-        }
+    }
 
-    InitializeObjectAttributes(
-        &Obja,
-        &FileName,
-        OBJ_CASE_INSENSITIVE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&Obja, &FileName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
     //
     // Open the file
     //
 
-    Status = NtOpenFile(
-                &Handle,
-                (ACCESS_MASK)FILE_WRITE_DATA | SYNCHRONIZE,
-                &Obja,
-                &IoStatusBlock,
-                FILE_SHARE_READ | FILE_SHARE_WRITE,
-                FILE_SYNCHRONOUS_IO_NONALERT
-                );
-    if ( !NT_SUCCESS(Status) ) {
-        RtlFreeHeap(RtlProcessHeap(), 0,FreeBuffer);
+    Status = NtOpenFile(&Handle, (ACCESS_MASK)FILE_WRITE_DATA | SYNCHRONIZE, &Obja, &IoStatusBlock,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT);
+    if (!NT_SUCCESS(Status))
+    {
+        RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 
-    if ( !IsThisARootDirectory(Handle,NULL) ) {
-        RtlFreeHeap(RtlProcessHeap(), 0,FreeBuffer);
+    if (!IsThisARootDirectory(Handle, NULL))
+    {
+        RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
         NtClose(Handle);
         SetLastError(ERROR_DIR_NOT_ROOT);
         return FALSE;
-        }
+    }
 
     NtClose(Handle);
 
@@ -3205,31 +3004,20 @@ SetVolumeLabelW(
 
     FileName.Length -= 2;
 
-    InitializeObjectAttributes(
-        &Obja,
-        &FileName,
-        OBJ_CASE_INSENSITIVE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&Obja, &FileName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
     //
     // Open the volume
     //
 
-    Status = NtOpenFile(
-                &Handle,
-                (ACCESS_MASK)FILE_WRITE_DATA | SYNCHRONIZE,
-                &Obja,
-                &IoStatusBlock,
-                FILE_SHARE_READ | FILE_SHARE_WRITE,
-                FILE_SYNCHRONOUS_IO_NONALERT
-                );
-    RtlFreeHeap(RtlProcessHeap(), 0,FreeBuffer);
-    if ( !NT_SUCCESS(Status) ) {
+    Status = NtOpenFile(&Handle, (ACCESS_MASK)FILE_WRITE_DATA | SYNCHRONIZE, &Obja, &IoStatusBlock,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT);
+    RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 
     //
     // Set the volume label
@@ -3237,7 +3025,8 @@ SetVolumeLabelW(
 
     LabelInformation = NULL;
 
-    try {
+    try
+    {
 
         rv = TRUE;
 
@@ -3247,56 +3036,47 @@ SetVolumeLabelW(
         // of the label and the structure (not including the extra wchar)
         //
 
-        if ( LabelName.Length ) {
+        if (LabelName.Length)
+        {
             LabelInfoLength = sizeof(*LabelInformation) + LabelName.Length - sizeof(WCHAR);
-            }
-        else {
+        }
+        else
+        {
             LabelInfoLength = sizeof(*LabelInformation);
-            }
+        }
 
-        LabelInformation = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), LabelInfoLength);
-        if ( LabelInformation ) {
-            RtlCopyMemory(
-                LabelInformation->VolumeLabel,
-                LabelName.Buffer,
-                LabelName.Length
-                );
+        LabelInformation = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), LabelInfoLength);
+        if (LabelInformation)
+        {
+            RtlCopyMemory(LabelInformation->VolumeLabel, LabelName.Buffer, LabelName.Length);
             LabelInformation->VolumeLabelLength = LabelName.Length;
-            Status = NtSetVolumeInformationFile(
-                        Handle,
-                        &IoStatusBlock,
-                        (PVOID) LabelInformation,
-                        LabelInfoLength,
-                        FileFsLabelInformation
-                        );
-            if ( !NT_SUCCESS(Status) ) {
+            Status = NtSetVolumeInformationFile(Handle, &IoStatusBlock, (PVOID)LabelInformation, LabelInfoLength,
+                                                FileFsLabelInformation);
+            if (!NT_SUCCESS(Status))
+            {
                 rv = FALSE;
                 BaseSetLastNTError(Status);
-                }
             }
-        else {
+        }
+        else
+        {
             rv = FALSE;
             BaseSetLastNTError(STATUS_NO_MEMORY);
-            }
         }
-    finally {
+    }
+    finally
+    {
         NtClose(Handle);
-        if ( LabelInformation ) {
-            RtlFreeHeap(RtlProcessHeap(), 0,LabelInformation);
-            }
+        if (LabelInformation)
+        {
+            RtlFreeHeap(RtlProcessHeap(), 0, LabelInformation);
         }
+    }
     return rv;
 }
 
-BOOL
-APIENTRY
-CheckNameLegalDOS8Dot3A(
-    IN LPCSTR lpName,
-    OUT LPSTR lpOemName OPTIONAL,
-    IN DWORD OemNameSize OPTIONAL,
-    OUT PBOOL pbNameContainsSpaces OPTIONAL,
-    OUT PBOOL pbNameLegal
-    )
+BOOL APIENTRY CheckNameLegalDOS8Dot3A(IN LPCSTR lpName, OUT LPSTR lpOemName OPTIONAL, IN DWORD OemNameSize OPTIONAL,
+                                      OUT PBOOL pbNameContainsSpaces OPTIONAL, OUT PBOOL pbNameLegal)
 /*++
 
     ANSI thunk to IsNameLegalDOS8Dot3W
@@ -3309,43 +3089,31 @@ CheckNameLegalDOS8Dot3A(
     NTSTATUS Status;
     BOOL Result;
 
-    if( (lpName == NULL) || (pbNameLegal == NULL) ||
-        ((lpOemName == NULL) && (OemNameSize != 0)) ||
-        (OemNameSize > MAXUSHORT)
-      ) {
-        SetLastError( ERROR_INVALID_PARAMETER );
+    if ((lpName == NULL) || (pbNameLegal == NULL) || ((lpOemName == NULL) && (OemNameSize != 0)) ||
+        (OemNameSize > MAXUSHORT))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
-    pUnicodeStr = Basep8BitStringToStaticUnicodeString( lpName );
+    pUnicodeStr = Basep8BitStringToStaticUnicodeString(lpName);
 
-    if( pUnicodeStr == NULL ) {
+    if (pUnicodeStr == NULL)
+    {
         //
         // LastError already set by Basep8BitStringToStaticUnicodeString
         //
         return FALSE;
     }
 
-    Result = CheckNameLegalDOS8Dot3W(
-                (LPCWSTR)(pUnicodeStr->Buffer),
-                lpOemName,
-                OemNameSize,
-                pbNameContainsSpaces,
-                pbNameLegal
-                );
+    Result = CheckNameLegalDOS8Dot3W((LPCWSTR)(pUnicodeStr->Buffer), lpOemName, OemNameSize, pbNameContainsSpaces,
+                                     pbNameLegal);
 
     return Result;
 }
 
-BOOL
-APIENTRY
-CheckNameLegalDOS8Dot3W(
-    IN LPCWSTR lpName,
-    OUT LPSTR lpOemName OPTIONAL,
-    IN DWORD OemNameSize OPTIONAL,
-    OUT PBOOL pbNameContainsSpaces OPTIONAL,
-    OUT PBOOL pbNameLegal
-    )
+BOOL APIENTRY CheckNameLegalDOS8Dot3W(IN LPCWSTR lpName, OUT LPSTR lpOemName OPTIONAL, IN DWORD OemNameSize OPTIONAL,
+                                      OUT PBOOL pbNameContainsSpaces OPTIONAL, OUT PBOOL pbNameLegal)
 
 /*++
 
@@ -3402,15 +3170,15 @@ Return Value:
     UCHAR OemBuffer[BASEP_LOCAL_OEM_BUFFER_SIZE];
     BOOLEAN SpacesInName, Result;
 
-    if( (lpName == NULL) || (pbNameLegal == NULL) ||
-        ((lpOemName == NULL) && (OemNameSize != 0)) ||
-        (OemNameSize > MAXUSHORT)
-      ) {
-        SetLastError( ERROR_INVALID_PARAMETER );
+    if ((lpName == NULL) || (pbNameLegal == NULL) || ((lpOemName == NULL) && (OemNameSize != 0)) ||
+        (OemNameSize > MAXUSHORT))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
-    if( lpOemName != NULL ) {
+    if (lpOemName != NULL)
+    {
         //
         // Use a local buffer so that RtlIsNameLegalDOS8Dot3 will not fail
         // due to insufficent OemName buffer size
@@ -3420,32 +3188,33 @@ Return Value:
         OemStr.Buffer = OemBuffer;
         pOemStr = &OemStr;
     }
-    else {
+    else
+    {
         pOemStr = NULL;
     }
 
-    RtlInitUnicodeString( &UnicodeStr, lpName );
+    RtlInitUnicodeString(&UnicodeStr, lpName);
 
-    Result = RtlIsNameLegalDOS8Dot3(
-                &UnicodeStr,
-                pOemStr,
-                &SpacesInName
-                );
+    Result = RtlIsNameLegalDOS8Dot3(&UnicodeStr, pOemStr, &SpacesInName);
 
-    if( Result != FALSE ) {
+    if (Result != FALSE)
+    {
 
-        if( pOemStr != NULL ) {
+        if (pOemStr != NULL)
+        {
 
-            if( OemNameSize < (OemStr.Length + sizeof(ANSI_NULL)) ) {
+            if (OemNameSize < (OemStr.Length + sizeof(ANSI_NULL)))
+            {
 
-                SetLastError( ERROR_INSUFFICIENT_BUFFER );
+                SetLastError(ERROR_INSUFFICIENT_BUFFER);
                 return FALSE;
             }
-            RtlCopyMemory( lpOemName, OemStr.Buffer, OemStr.Length );
-            lpOemName[OemStr.Length/sizeof(ANSI_NULL)] = ANSI_NULL;
+            RtlCopyMemory(lpOemName, OemStr.Buffer, OemStr.Length);
+            lpOemName[OemStr.Length / sizeof(ANSI_NULL)] = ANSI_NULL;
         }
 
-        if( pbNameContainsSpaces != NULL ) {
+        if (pbNameContainsSpaces != NULL)
+        {
             *pbNameContainsSpaces = SpacesInName;
         }
     }

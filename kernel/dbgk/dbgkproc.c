@@ -33,9 +33,7 @@ Revision History:
 #endif
 
 BOOLEAN
-DbgkpSuspendProcess (
-    VOID
-    )
+DbgkpSuspendProcess(VOID)
 
 /*++
 
@@ -64,7 +62,8 @@ Return Value:
     // Freeze the execution of all threads in the current process, but
     // the calling thread. If we are in the process of being deleted don't do this.
     //
-    if ((PsGetCurrentProcess()->Flags&PS_PROCESS_FLAGS_PROCESS_DELETE) == 0) {
+    if ((PsGetCurrentProcess()->Flags & PS_PROCESS_FLAGS_PROCESS_DELETE) == 0)
+    {
         KeFreezeAllThreads();
         return TRUE;
     }
@@ -72,10 +71,7 @@ Return Value:
     return FALSE;
 }
 
-VOID
-DbgkpResumeProcess (
-    VOID
-    )
+VOID DbgkpResumeProcess(VOID)
 
 /*++
 
@@ -112,9 +108,7 @@ Return Value:
 }
 
 HANDLE
-DbgkpSectionToFileHandle(
-    IN PVOID SectionObject
-    )
+DbgkpSectionToFileHandle(IN PVOID SectionObject)
 
 /*++
 
@@ -150,46 +144,36 @@ Return Value:
     PAGED_CODE();
 
     Status = MmGetFileNameForSection(SectionObject, (PSTRING)&FileName);
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         return NULL;
-        }
+    }
 
-    Status = RtlAnsiStringToUnicodeString(&UnicodeFileName,&FileName,TRUE);
+    Status = RtlAnsiStringToUnicodeString(&UnicodeFileName, &FileName, TRUE);
     ExFreePool(FileName.Buffer);
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         return NULL;
-        }
+    }
 
-    InitializeObjectAttributes(
-        &Obja,
-        &UnicodeFileName,
-        OBJ_CASE_INSENSITIVE | OBJ_FORCE_ACCESS_CHECK | OBJ_KERNEL_HANDLE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&Obja, &UnicodeFileName,
+                               OBJ_CASE_INSENSITIVE | OBJ_FORCE_ACCESS_CHECK | OBJ_KERNEL_HANDLE, NULL, NULL);
 
-    Status = ZwOpenFile(
-                &Handle,
-                (ACCESS_MASK)(GENERIC_READ | SYNCHRONIZE),
-                &Obja,
-                &IoStatusBlock,
-                FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
-                FILE_SYNCHRONOUS_IO_NONALERT
-                );
+    Status = ZwOpenFile(&Handle, (ACCESS_MASK)(GENERIC_READ | SYNCHRONIZE), &Obja, &IoStatusBlock,
+                        FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT);
     RtlFreeUnicodeString(&UnicodeFileName);
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         return NULL;
-        }
-    else {
+    }
+    else
+    {
         return Handle;
-        }
+    }
 }
 
 
-VOID
-DbgkCreateThread(
-    PVOID StartAddress
-    )
+VOID DbgkCreateThread(PVOID StartAddress)
 
 /*++
 
@@ -232,10 +216,11 @@ Return Value:
 
     PAGED_CODE();
 
-    Thread = PsGetCurrentThread ();
-    Process = PsGetCurrentProcessByThread (Thread);
+    Thread = PsGetCurrentThread();
+    Process = PsGetCurrentProcessByThread(Thread);
 
-    if (PsImageNotifyEnabled && !Process->Pcb.UserTime) {
+    if (PsImageNotifyEnabled && !Process->Pcb.UserTime)
+    {
         IMAGE_INFO ImageInfo;
         PIMAGE_NT_HEADERS NtHeaders;
         ANSI_STRING FileName;
@@ -250,32 +235,37 @@ Return Value:
         ImageInfo.ImageBase = Process->SectionBaseAddress;
         ImageInfo.ImageSize = 0;
 
-        try {
-            NtHeaders = RtlImageNtHeader (Process->SectionBaseAddress);
-    
-            if (NtHeaders) {
+        try
+        {
+            NtHeaders = RtlImageNtHeader(Process->SectionBaseAddress);
+
+            if (NtHeaders)
+            {
                 ImageInfo.ImageSize = NtHeaders->OptionalHeader.SizeOfImage;
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             ImageInfo.ImageSize = 0;
         }
         ImageInfo.ImageSelector = 0;
         ImageInfo.ImageSectionNumber = 0;
 
         pUnicodeFileName = NULL;
-        Status = MmGetFileNameForSection (Process->SectionObject, (PSTRING)&FileName);
-        if (NT_SUCCESS (Status)) {
-            Status = RtlAnsiStringToUnicodeString (&UnicodeFileName, &FileName,TRUE);
-            ExFreePool (FileName.Buffer);
-            if (NT_SUCCESS (Status)) {
+        Status = MmGetFileNameForSection(Process->SectionObject, (PSTRING)&FileName);
+        if (NT_SUCCESS(Status))
+        {
+            Status = RtlAnsiStringToUnicodeString(&UnicodeFileName, &FileName, TRUE);
+            ExFreePool(FileName.Buffer);
+            if (NT_SUCCESS(Status))
+            {
                 pUnicodeFileName = &UnicodeFileName;
             }
         }
-        PsCallImageNotifyRoutines (pUnicodeFileName,
-                                   Process->UniqueProcessId,
-                                   &ImageInfo);
-        if (pUnicodeFileName != NULL) {
-            RtlFreeUnicodeString (pUnicodeFileName);
+        PsCallImageNotifyRoutines(pUnicodeFileName, Process->UniqueProcessId, &ImageInfo);
+        if (pUnicodeFileName != NULL)
+        {
+            RtlFreeUnicodeString(pUnicodeFileName);
         }
 
         //
@@ -286,29 +276,31 @@ Return Value:
         ImageInfo.ImageBase = PsSystemDllBase;
         ImageInfo.ImageSize = 0;
 
-        try {
-            NtHeaders = RtlImageNtHeader (PsSystemDllBase);
-            if ( NtHeaders ) {
+        try
+        {
+            NtHeaders = RtlImageNtHeader(PsSystemDllBase);
+            if (NtHeaders)
+            {
                 ImageInfo.ImageSize = NtHeaders->OptionalHeader.SizeOfImage;
             }
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             ImageInfo.ImageSize = 0;
         }
 
         ImageInfo.ImageSelector = 0;
         ImageInfo.ImageSectionNumber = 0;
 
-        RtlInitUnicodeString (&UnicodeFileName,
-                              L"\\SystemRoot\\System32\\ntdll.dll");
-        PsCallImageNotifyRoutines (&UnicodeFileName,
-                                   Process->UniqueProcessId,
-                                   &ImageInfo);
+        RtlInitUnicodeString(&UnicodeFileName, L"\\SystemRoot\\System32\\ntdll.dll");
+        PsCallImageNotifyRoutines(&UnicodeFileName, Process->UniqueProcessId, &ImageInfo);
     }
 
 
     Port = Process->DebugPort;
 
-    if (Port == NULL) {
+    if (Port == NULL)
+    {
         return;
     }
 
@@ -318,11 +310,13 @@ Return Value:
     // accumulated some time, so set reported to true
     //
 
-    if (Process->Pcb.UserTime) {
-        PS_SET_BITS (&Process->Flags, PS_PROCESS_FLAGS_CREATE_REPORTED);
+    if (Process->Pcb.UserTime)
+    {
+        PS_SET_BITS(&Process->Flags, PS_PROCESS_FLAGS_CREATE_REPORTED);
     }
 
-    if ((PS_TEST_SET_BITS (&Process->Flags, PS_PROCESS_FLAGS_CREATE_REPORTED)&PS_PROCESS_FLAGS_CREATE_REPORTED) == 0) {
+    if ((PS_TEST_SET_BITS(&Process->Flags, PS_PROCESS_FLAGS_CREATE_REPORTED) & PS_PROCESS_FLAGS_CREATE_REPORTED) == 0)
+    {
 
         //
         // This is a create process
@@ -333,35 +327,37 @@ Return Value:
 
         CreateProcessArgs = &m.u.CreateProcessInfo;
         CreateProcessArgs->SubSystemKey = 0;
-        CreateProcessArgs->FileHandle = DbgkpSectionToFileHandle(
-                                            Process->SectionObject
-                                            );
+        CreateProcessArgs->FileHandle = DbgkpSectionToFileHandle(Process->SectionObject);
         CreateProcessArgs->BaseOfImage = Process->SectionBaseAddress;
         CreateThreadArgs->StartAddress = NULL;
         CreateProcessArgs->DebugInfoFileOffset = 0;
         CreateProcessArgs->DebugInfoSize = 0;
 
-        try {
+        try
+        {
             NtHeaders = RtlImageNtHeader(Process->SectionBaseAddress);
-            if ( NtHeaders ) {
-                CreateThreadArgs->StartAddress = (PVOID)(
-                    NtHeaders->OptionalHeader.ImageBase +
-                    NtHeaders->OptionalHeader.AddressOfEntryPoint);
+            if (NtHeaders)
+            {
+                CreateThreadArgs->StartAddress =
+                    (PVOID)(NtHeaders->OptionalHeader.ImageBase + NtHeaders->OptionalHeader.AddressOfEntryPoint);
 
                 CreateProcessArgs->DebugInfoFileOffset = NtHeaders->FileHeader.PointerToSymbolTable;
                 CreateProcessArgs->DebugInfoSize = NtHeaders->FileHeader.NumberOfSymbols;
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             CreateThreadArgs->StartAddress = NULL;
             CreateProcessArgs->DebugInfoFileOffset = 0;
             CreateProcessArgs->DebugInfoSize = 0;
         }
 
-        DBGKM_FORMAT_API_MSG(m,DbgKmCreateProcessApi,sizeof(*CreateProcessArgs));
+        DBGKM_FORMAT_API_MSG(m, DbgKmCreateProcessApi, sizeof(*CreateProcessArgs));
 
-        DbgkpSendApiMessage(&m,FALSE);
+        DbgkpSendApiMessage(&m, FALSE);
 
-        if (CreateProcessArgs->FileHandle != NULL) {
+        if (CreateProcessArgs->FileHandle != NULL)
+        {
             ObCloseHandle(CreateProcessArgs->FileHandle, KernelMode);
         }
 
@@ -371,9 +367,11 @@ Return Value:
         LoadDllArgs->DebugInfoSize = 0;
 
         Teb = NULL;
-        try {
+        try
+        {
             NtHeaders = RtlImageNtHeader(PsSystemDllBase);
-            if ( NtHeaders ) {
+            if (NtHeaders)
+            {
                 LoadDllArgs->DebugInfoFileOffset = NtHeaders->FileHeader.PointerToSymbolTable;
                 LoadDllArgs->DebugInfoSize = NtHeaders->FileHeader.NumberOfSymbols;
             }
@@ -383,14 +381,15 @@ Return Value:
             // as ntdll isn't loaded yet and it can't load itself.
             //
             Teb = Thread->Tcb.Teb;
-            if (Teb != NULL) {
+            if (Teb != NULL)
+            {
                 Teb->NtTib.ArbitraryUserPointer = Teb->StaticUnicodeBuffer;
-                wcsncpy (Teb->StaticUnicodeBuffer,
-                         L"ntdll.dll",
-                         sizeof (Teb->StaticUnicodeBuffer) / sizeof (Teb->StaticUnicodeBuffer[0]));
+                wcsncpy(Teb->StaticUnicodeBuffer, L"ntdll.dll",
+                        sizeof(Teb->StaticUnicodeBuffer) / sizeof(Teb->StaticUnicodeBuffer[0]));
             }
-            
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             LoadDllArgs->DebugInfoFileOffset = 0;
             LoadDllArgs->DebugInfoSize = 0;
         }
@@ -399,57 +398,50 @@ Return Value:
         // Send load dll section for NT dll !
         //
 
-        InitializeObjectAttributes(
-            &Obja,
-            (PUNICODE_STRING)&PsNtDllPathName,
-            OBJ_CASE_INSENSITIVE | OBJ_FORCE_ACCESS_CHECK | OBJ_KERNEL_HANDLE,
-            NULL,
-            NULL
-            );
+        InitializeObjectAttributes(&Obja, (PUNICODE_STRING)&PsNtDllPathName,
+                                   OBJ_CASE_INSENSITIVE | OBJ_FORCE_ACCESS_CHECK | OBJ_KERNEL_HANDLE, NULL, NULL);
 
-        Status = ZwOpenFile(
-                    &LoadDllArgs->FileHandle,
-                    (ACCESS_MASK)(GENERIC_READ | SYNCHRONIZE),
-                    &Obja,
-                    &IoStatusBlock,
-                    FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
-                    FILE_SYNCHRONOUS_IO_NONALERT
-                    );
+        Status = ZwOpenFile(&LoadDllArgs->FileHandle, (ACCESS_MASK)(GENERIC_READ | SYNCHRONIZE), &Obja, &IoStatusBlock,
+                            FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT);
 
-        if (!NT_SUCCESS (Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             LoadDllArgs->FileHandle = NULL;
         }
 
-        DBGKM_FORMAT_API_MSG(m,DbgKmLoadDllApi,sizeof(*LoadDllArgs));
-        DbgkpSendApiMessage(&m,TRUE);
+        DBGKM_FORMAT_API_MSG(m, DbgKmLoadDllApi, sizeof(*LoadDllArgs));
+        DbgkpSendApiMessage(&m, TRUE);
 
-        if (LoadDllArgs->FileHandle != NULL) {
+        if (LoadDllArgs->FileHandle != NULL)
+        {
             ObCloseHandle(LoadDllArgs->FileHandle, KernelMode);
         }
 
-        if (Teb != NULL) {
-            try {
+        if (Teb != NULL)
+        {
+            try
+            {
                 Teb->NtTib.ArbitraryUserPointer = NULL;
-            } except(EXCEPTION_EXECUTE_HANDLER) {
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
             }
         }
-
-    } else {
+    }
+    else
+    {
 
         CreateThreadArgs = &m.u.CreateThread;
         CreateThreadArgs->SubSystemKey = 0;
         CreateThreadArgs->StartAddress = StartAddress;
 
-        DBGKM_FORMAT_API_MSG (m,DbgKmCreateThreadApi,sizeof(*CreateThreadArgs));
+        DBGKM_FORMAT_API_MSG(m, DbgKmCreateThreadApi, sizeof(*CreateThreadArgs));
 
-        DbgkpSendApiMessage (&m,TRUE);
+        DbgkpSendApiMessage(&m, TRUE);
     }
 }
 
-VOID
-DbgkExitThread(
-    NTSTATUS ExitStatus
-    )
+VOID DbgkExitThread(NTSTATUS ExitStatus)
 
 /*++
 
@@ -482,38 +474,41 @@ Return Value:
     PAGED_CODE();
 
     Process = PsGetCurrentProcess();
-    if (PsGetCurrentThread()->CrossThreadFlags&PS_CROSS_THREAD_FLAGS_HIDEFROMDBG) {
+    if (PsGetCurrentThread()->CrossThreadFlags & PS_CROSS_THREAD_FLAGS_HIDEFROMDBG)
+    {
         Port = NULL;
-    } else {
+    }
+    else
+    {
         Port = Process->DebugPort;
     }
 
-    if ( !Port ) {
+    if (!Port)
+    {
         return;
     }
 
-    if (PsGetCurrentThread()->CrossThreadFlags&PS_CROSS_THREAD_FLAGS_DEADTHREAD) {
+    if (PsGetCurrentThread()->CrossThreadFlags & PS_CROSS_THREAD_FLAGS_DEADTHREAD)
+    {
         return;
     }
 
     args = &m.u.ExitThread;
     args->ExitStatus = ExitStatus;
 
-    DBGKM_FORMAT_API_MSG(m,DbgKmExitThreadApi,sizeof(*args));
+    DBGKM_FORMAT_API_MSG(m, DbgKmExitThreadApi, sizeof(*args));
 
     Frozen = DbgkpSuspendProcess();
 
-    DbgkpSendApiMessage(&m,FALSE);
+    DbgkpSendApiMessage(&m, FALSE);
 
-    if (Frozen) {
+    if (Frozen)
+    {
         DbgkpResumeProcess();
     }
 }
 
-VOID
-DbgkExitProcess(
-    NTSTATUS ExitStatus
-    )
+VOID DbgkExitProcess(NTSTATUS ExitStatus)
 
 /*++
 
@@ -543,17 +538,22 @@ Return Value:
 
     Process = PsGetCurrentProcess();
 
-    if (PsGetCurrentThread()->CrossThreadFlags&PS_CROSS_THREAD_FLAGS_HIDEFROMDBG) {
+    if (PsGetCurrentThread()->CrossThreadFlags & PS_CROSS_THREAD_FLAGS_HIDEFROMDBG)
+    {
         Port = NULL;
-    } else {
+    }
+    else
+    {
         Port = Process->DebugPort;
     }
 
-    if ( !Port ) {
+    if (!Port)
+    {
         return;
     }
 
-    if (PsGetCurrentThread()->CrossThreadFlags&PS_CROSS_THREAD_FLAGS_DEADTHREAD) {
+    if (PsGetCurrentThread()->CrossThreadFlags & PS_CROSS_THREAD_FLAGS_DEADTHREAD)
+    {
         return;
     }
 
@@ -567,19 +567,12 @@ Return Value:
     args = &m.u.ExitProcess;
     args->ExitStatus = ExitStatus;
 
-    DBGKM_FORMAT_API_MSG(m,DbgKmExitProcessApi,sizeof(*args));
+    DBGKM_FORMAT_API_MSG(m, DbgKmExitProcessApi, sizeof(*args));
 
-    DbgkpSendApiMessage(&m,FALSE);
-
+    DbgkpSendApiMessage(&m, FALSE);
 }
 
-VOID
-DbgkMapViewOfSection(
-    IN PVOID SectionObject,
-    IN PVOID BaseAddress,
-    IN ULONG SectionOffset,
-    IN ULONG_PTR ViewSize
-    )
+VOID DbgkMapViewOfSection(IN PVOID SectionObject, IN PVOID BaseAddress, IN ULONG SectionOffset, IN ULONG_PTR ViewSize)
 
 /*++
 
@@ -618,22 +611,27 @@ Return Value:
 
     PAGED_CODE();
 
-    UNREFERENCED_PARAMETER (SectionOffset);
-    UNREFERENCED_PARAMETER (ViewSize);
+    UNREFERENCED_PARAMETER(SectionOffset);
+    UNREFERENCED_PARAMETER(ViewSize);
 
-    if ( KeGetPreviousMode() == KernelMode ) {
+    if (KeGetPreviousMode() == KernelMode)
+    {
         return;
     }
 
     Process = PsGetCurrentProcess();
 
-    if (PsGetCurrentThread()->CrossThreadFlags&PS_CROSS_THREAD_FLAGS_HIDEFROMDBG) {
+    if (PsGetCurrentThread()->CrossThreadFlags & PS_CROSS_THREAD_FLAGS_HIDEFROMDBG)
+    {
         Port = NULL;
-    } else {
+    }
+    else
+    {
         Port = Process->DebugPort;
     }
 
-    if ( !Port ) {
+    if (!Port)
+    {
         return;
     }
 
@@ -643,30 +641,31 @@ Return Value:
     LoadDllArgs->DebugInfoFileOffset = 0;
     LoadDllArgs->DebugInfoSize = 0;
 
-    try {
+    try
+    {
         NtHeaders = RtlImageNtHeader(BaseAddress);
-        if ( NtHeaders ) {
+        if (NtHeaders)
+        {
             LoadDllArgs->DebugInfoFileOffset = NtHeaders->FileHeader.PointerToSymbolTable;
             LoadDllArgs->DebugInfoSize = NtHeaders->FileHeader.NumberOfSymbols;
-            }
         }
-    except(EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         LoadDllArgs->DebugInfoFileOffset = 0;
         LoadDllArgs->DebugInfoSize = 0;
     }
 
-    DBGKM_FORMAT_API_MSG(m,DbgKmLoadDllApi,sizeof(*LoadDllArgs));
+    DBGKM_FORMAT_API_MSG(m, DbgKmLoadDllApi, sizeof(*LoadDllArgs));
 
-    DbgkpSendApiMessage(&m,TRUE);
-    if (LoadDllArgs->FileHandle != NULL) {
+    DbgkpSendApiMessage(&m, TRUE);
+    if (LoadDllArgs->FileHandle != NULL)
+    {
         ObCloseHandle(LoadDllArgs->FileHandle, KernelMode);
     }
 }
 
-VOID
-DbgkUnMapViewOfSection(
-    IN PVOID BaseAddress
-    )
+VOID DbgkUnMapViewOfSection(IN PVOID BaseAddress)
 
 /*++
 
@@ -698,24 +697,29 @@ Return Value:
 
     Process = PsGetCurrentProcess();
 
-    if ( KeGetPreviousMode() == KernelMode ) {
+    if (KeGetPreviousMode() == KernelMode)
+    {
         return;
     }
 
-    if (PsGetCurrentThread()->CrossThreadFlags&PS_CROSS_THREAD_FLAGS_HIDEFROMDBG) {
+    if (PsGetCurrentThread()->CrossThreadFlags & PS_CROSS_THREAD_FLAGS_HIDEFROMDBG)
+    {
         Port = NULL;
-    } else {
+    }
+    else
+    {
         Port = Process->DebugPort;
     }
 
-    if ( !Port ) {
+    if (!Port)
+    {
         return;
     }
 
     UnloadDllArgs = &m.u.UnloadDll;
     UnloadDllArgs->BaseAddress = BaseAddress;
 
-    DBGKM_FORMAT_API_MSG(m,DbgKmUnloadDllApi,sizeof(*UnloadDllArgs));
+    DBGKM_FORMAT_API_MSG(m, DbgKmUnloadDllApi, sizeof(*UnloadDllArgs));
 
-    DbgkpSendApiMessage(&m,TRUE);
+    DbgkpSendApiMessage(&m, TRUE);
 }

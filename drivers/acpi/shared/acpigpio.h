@@ -24,21 +24,11 @@ Revision History:
 #ifndef _ACPIGPIO_H_
 #define _ACPIGPIO_H_
 
-    UCHAR
-    ACPIReadGpeStatusRegister (
-        ULONG                   Register
-        );
+UCHAR
+ACPIReadGpeStatusRegister(ULONG Register);
 
-    VOID
-    ACPIWriteGpeStatusRegister (
-        ULONG                   Register,
-        UCHAR                   Value
-        );
+VOID ACPIWriteGpeStatusRegister(ULONG Register, UCHAR Value);
 
-    VOID
-    ACPIWriteGpeEnableRegister (
-        ULONG                   Register,
-        UCHAR                   Value
-        );
+VOID ACPIWriteGpeEnableRegister(ULONG Register, UCHAR Value);
 
 #endif

@@ -27,27 +27,28 @@
  * Broadcast-sends the given message to all top-level windows of szClass
  * except to hwndSkip.
  */
-VOID SendRegisterMessageToClass(
-ATOM atomClass,
-UINT msg,
-GATOM ga,
-HWND hwndFrom,
-BOOL fPost)
+VOID SendRegisterMessageToClass(ATOM atomClass, UINT msg, GATOM ga, HWND hwndFrom, BOOL fPost)
 {
     HWND hwnd;
     PWND pwnd;
     PCLS pcls;
 
     hwnd = GetWindow(GetDesktopWindow(), GW_CHILD);
-    while (hwnd != NULL) {
-        pwnd=ValidateHwndNoRip(hwnd);
-        if (pwnd) {
+    while (hwnd != NULL)
+    {
+        pwnd = ValidateHwndNoRip(hwnd);
+        if (pwnd)
+        {
             pcls = (PCLS)REBASEALWAYS(pwnd, pcls);
-            if (pcls->atomClassName == atomClass) {
+            if (pcls->atomClassName == atomClass)
+            {
                 IncGlobalAtomCount(ga); // receiver frees
-                if (fPost) {
+                if (fPost)
+                {
                     PostMessage(hwnd, msg, (WPARAM)ga, (LPARAM)hwndFrom);
-                } else {
+                }
+                else
+                {
                     SendMessage(hwnd, msg, (WPARAM)ga, (LPARAM)hwndFrom);
                 }
             }
@@ -65,33 +66,24 @@ BOOL fPost)
  * and send Unregistration messages to avoid invalid source window
  * errors.
  */
-VOID RegisterService(
-BOOL fRegister,
-GATOM gaApp,
-HWND hwndListen)
+VOID RegisterService(BOOL fRegister, GATOM gaApp, HWND hwndListen)
 {
     CheckDDECritOut;
 
     /*
      * Send notification to each DDEML32 listening window.
      */
-    SendRegisterMessageToClass(gpsi->atomSysClass[ICLS_DDEMLMOTHER], fRegister ? UM_REGISTER : UM_UNREGISTER,
-            gaApp, hwndListen, (GetAppCompatFlags2(VERMAX) & GACF2_DDENOASYNCREG) ? FALSE: fRegister);
+    SendRegisterMessageToClass(gpsi->atomSysClass[ICLS_DDEMLMOTHER], fRegister ? UM_REGISTER : UM_UNREGISTER, gaApp,
+                               hwndListen, (GetAppCompatFlags2(VERMAX) & GACF2_DDENOASYNCREG) ? FALSE : fRegister);
     /*
      * Send notification to each DDEML16 listening window.
      */
-    SendRegisterMessageToClass(gpsi->atomSysClass[ICLS_DDEML16BIT], fRegister ? UM_REGISTER : UM_UNREGISTER,
-            gaApp, hwndListen, (GetAppCompatFlags2(VERMAX) & GACF2_DDENOASYNCREG) ? FALSE : fRegister);
+    SendRegisterMessageToClass(gpsi->atomSysClass[ICLS_DDEML16BIT], fRegister ? UM_REGISTER : UM_UNREGISTER, gaApp,
+                               hwndListen, (GetAppCompatFlags2(VERMAX) & GACF2_DDENOASYNCREG) ? FALSE : fRegister);
 }
 
 
-
-
-LRESULT ProcessRegistrationMessage(
-HWND hwnd,
-UINT msg,
-WPARAM wParam,
-LPARAM lParam)
+LRESULT ProcessRegistrationMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     PCL_INSTANCE_INFO pcii;
     LRESULT lRet = 0;
@@ -105,38 +97,32 @@ LPARAM lParam)
     lParam = (LPARAM)HMValidateHandleNoRip((HWND)lParam, TYPE_WINDOW);
     lParam = (LPARAM)PtoH((PVOID)lParam);
 
-    if (lParam == 0) {
-        return(0);
+    if (lParam == 0)
+    {
+        return (0);
     }
 
     EnterDDECrit;
 
     pcii = (PCL_INSTANCE_INFO)GetWindowLongPtr(hwnd, GWLP_INSTANCE_INFO);
-    if (pcii != NULL &&
-            !((msg == UM_REGISTER) && (pcii->afCmd & CBF_SKIP_REGISTRATIONS)) &&
-            !((msg == UM_UNREGISTER) && (pcii->afCmd & CBF_SKIP_UNREGISTRATIONS))) {
+    if (pcii != NULL && !((msg == UM_REGISTER) && (pcii->afCmd & CBF_SKIP_REGISTRATIONS)) &&
+        !((msg == UM_UNREGISTER) && (pcii->afCmd & CBF_SKIP_UNREGISTRATIONS)))
+    {
 
         LATOM la, lais;
 
         la = GlobalToLocalAtom((GATOM)wParam);
         lais = MakeInstSpecificAtom(la, (HWND)lParam);
 
-        DoCallback(pcii,
-                (WORD)((msg == UM_REGISTER) ? XTYP_REGISTER : XTYP_UNREGISTER),
-                0,
-                (HCONV)0L,
-                (HSZ)NORMAL_HSZ_FROM_LATOM(la),
-                INST_SPECIFIC_HSZ_FROM_LATOM(lais),
-                (HDDEDATA)0L,
-                0L,
-                0L);
+        DoCallback(pcii, (WORD)((msg == UM_REGISTER) ? XTYP_REGISTER : XTYP_UNREGISTER), 0, (HCONV)0L,
+                   (HSZ)NORMAL_HSZ_FROM_LATOM(la), INST_SPECIFIC_HSZ_FROM_LATOM(lais), (HDDEDATA)0L, 0L, 0L);
 
         DeleteAtom(la);
         DeleteAtom(lais);
         lRet = 1;
     }
 
-    GlobalDeleteAtom((ATOM)wParam);  // receiver frees
+    GlobalDeleteAtom((ATOM)wParam); // receiver frees
     LeaveDDECrit;
-    return(1);
+    return (1);
 }

@@ -22,10 +22,7 @@ Revision History:
 
 #include "mi.h"
 
-VOID
-MiSetModifyBit (
-    IN PMMPFN Pfn
-    )
+VOID MiSetModifyBit(IN PMMPFN Pfn)
 
 /*++
 
@@ -56,15 +53,16 @@ Environment:
     // as the contents are now worthless.
     //
 
-    MI_SET_MODIFIED (Pfn, 1, 0x16);
+    MI_SET_MODIFIED(Pfn, 1, 0x16);
 
-    if (Pfn->OriginalPte.u.Soft.Prototype == 0) {
+    if (Pfn->OriginalPte.u.Soft.Prototype == 0)
+    {
 
         //
         // This page is in page file format, deallocate the page file space.
         //
 
-        MiReleasePageFileSpace (Pfn->OriginalPte);
+        MiReleasePageFileSpace(Pfn->OriginalPte);
 
         //
         // Change original PTE to indicate no page file space is reserved,
@@ -78,12 +76,10 @@ Environment:
 
     return;
 }
-
+
 ULONG
 FASTCALL
-MiDetermineUserGlobalPteMask (
-    IN PMMPTE Pte
-    )
+MiDetermineUserGlobalPteMask(IN PMMPTE Pte)
 
 /*++
 
@@ -121,17 +117,22 @@ Environment:
     Mask.u.Hard.Valid = 1;
     Mask.u.Hard.Accessed = 1;
 
-    if (Pte <= MiHighestUserPte) {
+    if (Pte <= MiHighestUserPte)
+    {
         Mask.u.Hard.Owner = 1;
-    } else if ((Pte < MiGetPteAddress (PTE_BASE)) ||
-        (Pte >= MiGetPteAddress (MM_SYSTEM_CACHE_WORKING_SET))) {
-            if (MI_IS_SESSION_PTE (Pte) == FALSE) {
-#if defined (_X86PAE_)
-              if ((Pte < (PMMPTE)PDE_BASE) || (Pte > (PMMPTE)PDE_TOP))
+    }
+    else if ((Pte < MiGetPteAddress(PTE_BASE)) || (Pte >= MiGetPteAddress(MM_SYSTEM_CACHE_WORKING_SET)))
+    {
+        if (MI_IS_SESSION_PTE(Pte) == FALSE)
+        {
+#if defined(_X86PAE_)
+            if ((Pte < (PMMPTE)PDE_BASE) || (Pte > (PMMPTE)PDE_TOP))
 #endif
                 Mask.u.Long |= MmPteGlobal.u.Long;
-            }
-    } else if ((Pte >= MiGetPdeAddress (NULL)) && (Pte <= MiHighestUserPde)) {
+        }
+    }
+    else if ((Pte >= MiGetPdeAddress(NULL)) && (Pte <= MiHighestUserPde))
+    {
         Mask.u.Hard.Owner = 1;
     }
 

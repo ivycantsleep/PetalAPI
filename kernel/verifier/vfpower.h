@@ -25,69 +25,30 @@ Revision History:
 
 --*/
 
-VOID
-VfPowerInit(
-    VOID
-    );
+VOID VfPowerInit(VOID);
 
-VOID
-FASTCALL
-VfPowerVerifyNewRequest(
-    IN PIOV_REQUEST_PACKET  IovPacket,
-    IN PDEVICE_OBJECT       DeviceObject,
-    IN PIO_STACK_LOCATION   IrpLastSp           OPTIONAL,
-    IN PIO_STACK_LOCATION   IrpSp,
-    IN PIOV_STACK_LOCATION  StackLocationData,
-    IN PVOID                CallerAddress       OPTIONAL
-    );
+VOID FASTCALL VfPowerVerifyNewRequest(IN PIOV_REQUEST_PACKET IovPacket, IN PDEVICE_OBJECT DeviceObject,
+                                      IN PIO_STACK_LOCATION IrpLastSp OPTIONAL, IN PIO_STACK_LOCATION IrpSp,
+                                      IN PIOV_STACK_LOCATION StackLocationData, IN PVOID CallerAddress OPTIONAL);
 
-VOID
-FASTCALL
-VfPowerVerifyIrpStackDownward(
-    IN PIOV_REQUEST_PACKET  IovPacket,
-    IN PDEVICE_OBJECT       DeviceObject,
-    IN PIO_STACK_LOCATION   IrpLastSp                   OPTIONAL,
-    IN PIO_STACK_LOCATION   IrpSp,
-    IN PIOV_STACK_LOCATION  RequestHeadLocationData,
-    IN PIOV_STACK_LOCATION  StackLocationData,
-    IN PVOID                CallerAddress               OPTIONAL
-    );
+VOID FASTCALL VfPowerVerifyIrpStackDownward(IN PIOV_REQUEST_PACKET IovPacket, IN PDEVICE_OBJECT DeviceObject,
+                                            IN PIO_STACK_LOCATION IrpLastSp OPTIONAL, IN PIO_STACK_LOCATION IrpSp,
+                                            IN PIOV_STACK_LOCATION RequestHeadLocationData,
+                                            IN PIOV_STACK_LOCATION StackLocationData, IN PVOID CallerAddress OPTIONAL);
 
-VOID
-FASTCALL
-VfPowerVerifyIrpStackUpward(
-    IN PIOV_REQUEST_PACKET  IovPacket,
-    IN PIO_STACK_LOCATION   IrpSp,
-    IN PIOV_STACK_LOCATION  RequestHeadLocationData,
-    IN PIOV_STACK_LOCATION  StackLocationData,
-    IN BOOLEAN              IsNewlyCompleted,
-    IN BOOLEAN              RequestFinalized
-    );
+VOID FASTCALL VfPowerVerifyIrpStackUpward(IN PIOV_REQUEST_PACKET IovPacket, IN PIO_STACK_LOCATION IrpSp,
+                                          IN PIOV_STACK_LOCATION RequestHeadLocationData,
+                                          IN PIOV_STACK_LOCATION StackLocationData, IN BOOLEAN IsNewlyCompleted,
+                                          IN BOOLEAN RequestFinalized);
 
-VOID
-FASTCALL
-VfPowerDumpIrpStack(
-    IN PIO_STACK_LOCATION IrpSp
-    );
+VOID FASTCALL VfPowerDumpIrpStack(IN PIO_STACK_LOCATION IrpSp);
 
 BOOLEAN
 FASTCALL
-VfPowerIsSystemRestrictedIrp(
-    IN PIO_STACK_LOCATION IrpSp
-    );
+VfPowerIsSystemRestrictedIrp(IN PIO_STACK_LOCATION IrpSp);
 
 BOOLEAN
 FASTCALL
-VfPowerAdvanceIrpStatus(
-    IN     PIO_STACK_LOCATION   IrpSp,
-    IN     NTSTATUS             OriginalStatus,
-    IN OUT NTSTATUS             *StatusToAdvance
-    );
+VfPowerAdvanceIrpStatus(IN PIO_STACK_LOCATION IrpSp, IN NTSTATUS OriginalStatus, IN OUT NTSTATUS *StatusToAdvance);
 
-VOID
-FASTCALL
-VfPowerTestStartedPdoStack(
-    IN PDEVICE_OBJECT   PhysicalDeviceObject
-    );
-
-
+VOID FASTCALL VfPowerTestStartedPdoStack(IN PDEVICE_OBJECT PhysicalDeviceObject);

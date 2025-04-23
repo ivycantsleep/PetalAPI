@@ -24,31 +24,17 @@ Revision History:
 #ifndef _PNPCVRT_
 #define _PNPCVRT_
 
-VOID
-PpBiosResourcesSetToDisabled (
-    IN OUT PUCHAR BiosData,
-    OUT    PULONG Length
-    );
+VOID PpBiosResourcesSetToDisabled(IN OUT PUCHAR BiosData, OUT PULONG Length);
 
-#define PPCONVERTFLAG_SET_RESTART_LCPRI               0x00000001
-#define PPCONVERTFLAG_FORCE_FIXED_IO_16BIT_DECODE     0x00000002
+#define PPCONVERTFLAG_SET_RESTART_LCPRI 0x00000001
+#define PPCONVERTFLAG_FORCE_FIXED_IO_16BIT_DECODE 0x00000002
 
 NTSTATUS
-PpBiosResourcesToNtResources (
-    IN ULONG BusNumber,
-    IN ULONG SlotNumber,
-    IN OUT PUCHAR *BiosData,
-    IN ULONG ConvertFlags,
-    OUT PIO_RESOURCE_REQUIREMENTS_LIST *ReturnedList,
-    OUT PULONG ReturnedLength
-    );
+PpBiosResourcesToNtResources(IN ULONG BusNumber, IN ULONG SlotNumber, IN OUT PUCHAR *BiosData, IN ULONG ConvertFlags,
+                             OUT PIO_RESOURCE_REQUIREMENTS_LIST *ReturnedList, OUT PULONG ReturnedLength);
 
 NTSTATUS
-PpCmResourcesToBiosResources (
-    IN PCM_RESOURCE_LIST CmResources,
-    IN PUCHAR BiosRequirements,
-    IN PUCHAR *BiosResources,
-    IN PULONG Length
-    );
+PpCmResourcesToBiosResources(IN PCM_RESOURCE_LIST CmResources, IN PUCHAR BiosRequirements, IN PUCHAR *BiosResources,
+                             IN PULONG Length);
 
 #endif // _PNPCVRT_

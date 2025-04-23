@@ -26,9 +26,7 @@ Revision History:
 #define DumpPool(x, y)
 
 BOOLEAN
-ExTest (
-    VOID
-    );
+ExTest(VOID);
 
 PTESTFCN TestFunction = ExTest;
 
@@ -67,10 +65,9 @@ USHORT TestMutant = 4;
 USHORT TestException = 0;
 
 #endif // MIPS
-
+
 BOOLEAN
-DoEventTest(
-    )
+DoEventTest()
 {
     ULONG DesiredAccess = EVENT_ALL_ACCESS;
     EVENT_BASIC_INFORMATION EventInformation;
@@ -105,9 +102,9 @@ DoEventTest(
     // Create event 1.
     //
 
-    Status = ZwCreateEvent(&Handle1c, DesiredAccess, &Object1Attributes,
-                           NotificationEvent, TRUE);
-    if (Status < 0) {
+    Status = ZwCreateEvent(&Handle1c, DesiredAccess, &Object1Attributes, NotificationEvent, TRUE);
+    if (Status < 0)
+    {
         DbgPrint(" Event test - create event 1 failed, status = %lx\n", Status);
     }
 
@@ -116,7 +113,8 @@ DoEventTest(
     //
 
     Status = ZwOpenEvent(&Handle1, DesiredAccess, &Object1Attributes);
-    if (Status < 0) {
+    if (Status < 0)
+    {
         DbgPrint(" Event test - open event 1 failed, status = %lx\n", Status);
     }
 
@@ -126,19 +124,22 @@ DoEventTest(
 
     EventInformation.EventState = 0;
     Length = 0;
-    Status = ZwQueryEvent(Handle1, EventBasicInformation,
-                          (PVOID)&EventInformation, sizeof(EVENT_BASIC_INFORMATION),
+    Status = ZwQueryEvent(Handle1, EventBasicInformation, (PVOID)&EventInformation, sizeof(EVENT_BASIC_INFORMATION),
                           &Length);
-    if (Status < 0) {
+    if (Status < 0)
+    {
         DbgPrint(" Event test - query event 1 failed, status = %lx\n", Status);
     }
-    if (EventInformation.EventType != NotificationEvent) {
+    if (EventInformation.EventType != NotificationEvent)
+    {
         DbgPrint(" Event test - query event 1 wrong event type\n");
     }
-    if (EventInformation.EventState == 0) {
+    if (EventInformation.EventState == 0)
+    {
         DbgPrint(" Event test - query event 1 current state wrong\n");
     }
-    if (Length != sizeof(EVENT_BASIC_INFORMATION)) {
+    if (Length != sizeof(EVENT_BASIC_INFORMATION))
+    {
         DbgPrint(" Event test - query event 1 return length wrong\n");
     }
 
@@ -148,10 +149,12 @@ DoEventTest(
 
     State = 0;
     Status = ZwPulseEvent(Handle1, &State);
-    if (Status < 0) {
+    if (Status < 0)
+    {
         DbgPrint(" Event test - pulse event 1 failed, status = %lx\n", Status);
     }
-    if (State == 0) {
+    if (State == 0)
+    {
         DbgPrint(" Event test - pulse event 1 previous state wrong\n");
     }
 
@@ -161,10 +164,12 @@ DoEventTest(
 
     State = 1;
     Status = ZwSetEvent(Handle1, &State);
-    if (Status < 0) {
+    if (Status < 0)
+    {
         DbgPrint(" Event test - set event 1 failed, status = %lx\n", Status);
     }
-    if (State == 1) {
+    if (State == 1)
+    {
         DbgPrint(" Event test - set event 1 previous state wrong\n");
     }
 
@@ -173,7 +178,8 @@ DoEventTest(
     //
 
     Status = ZwWaitForSingleObject(Handle1, FALSE, NULL);
-    if (Status < 0) {
+    if (Status < 0)
+    {
         DbgPrint(" Event test - wait event 1 failed\n");
     }
 
@@ -183,10 +189,12 @@ DoEventTest(
 
     State = 0;
     Status = ZwResetEvent(Handle1, &State);
-    if (Status < 0) {
+    if (Status < 0)
+    {
         DbgPrint(" Event test - reset event 1 failed, status = %lx\n", Status);
     }
-    if (State == 0) {
+    if (State == 0)
+    {
         DbgPrint(" Event test - reset event 1 previous state wrong\n");
     }
 
@@ -194,9 +202,9 @@ DoEventTest(
     // Create event 2.
     //
 
-    Status = ZwCreateEvent(&Handle2c, DesiredAccess, &Object2Attributes,
-                           NotificationEvent, FALSE);
-    if (Status < 0) {
+    Status = ZwCreateEvent(&Handle2c, DesiredAccess, &Object2Attributes, NotificationEvent, FALSE);
+    if (Status < 0)
+    {
         DbgPrint(" Event test - create event 2 failed, status = %lx\n", Status);
     }
 
@@ -205,7 +213,8 @@ DoEventTest(
     //
 
     Status = ZwOpenEvent(&Handle2, DesiredAccess, &Object2Attributes);
-    if (Status < 0) {
+    if (Status < 0)
+    {
         DbgPrint(" Event test - open event 2 failed, status = %lx\n", Status);
     }
 
@@ -215,19 +224,22 @@ DoEventTest(
 
     EventInformation.EventState = 1;
     Length = 0;
-    Status = ZwQueryEvent(Handle2, EventBasicInformation,
-                          (PVOID)&EventInformation, sizeof(EVENT_BASIC_INFORMATION),
+    Status = ZwQueryEvent(Handle2, EventBasicInformation, (PVOID)&EventInformation, sizeof(EVENT_BASIC_INFORMATION),
                           &Length);
-    if (Status < 0) {
+    if (Status < 0)
+    {
         DbgPrint(" Event test - query event 2 failed, status = %lx\n", Status);
     }
-    if (EventInformation.EventType != NotificationEvent) {
+    if (EventInformation.EventType != NotificationEvent)
+    {
         DbgPrint(" Event test - query event 2 wrong event type\n");
     }
-    if (EventInformation.EventState == 1) {
+    if (EventInformation.EventState == 1)
+    {
         DbgPrint(" Event test - query event 2 current state wrong\n");
     }
-    if (Length != sizeof(EVENT_BASIC_INFORMATION)) {
+    if (Length != sizeof(EVENT_BASIC_INFORMATION))
+    {
         DbgPrint(" Event test - query event 2 return length wrong\n");
     }
 
@@ -237,10 +249,12 @@ DoEventTest(
 
     State = 1;
     Status = ZwPulseEvent(Handle2, &State);
-    if (Status < 0) {
+    if (Status < 0)
+    {
         DbgPrint(" Event test - pulse event 2 failed, status = %lx\n", Status);
     }
-    if (State == 1) {
+    if (State == 1)
+    {
         DbgPrint(" Event test - pulse event 2 previous state wrong\n");
     }
 
@@ -250,10 +264,12 @@ DoEventTest(
 
     State = 1;
     Status = ZwSetEvent(Handle2, &State);
-    if (Status < 0) {
+    if (Status < 0)
+    {
         DbgPrint(" Event test - set event 2 failed, status = %lx\n", Status);
     }
-    if (State == 1) {
+    if (State == 1)
+    {
         DbgPrint(" Event test - set event 2 previous state wrong\n");
     }
 
@@ -262,7 +278,8 @@ DoEventTest(
     //
 
     Status = ZwWaitForSingleObject(Handle2, FALSE, NULL);
-    if (Status < 0) {
+    if (Status < 0)
+    {
         DbgPrint(" Event test - wait event 2 failed\n");
     }
 
@@ -272,10 +289,12 @@ DoEventTest(
 
     State = 0;
     Status = ZwResetEvent(Handle2, &State);
-    if (Status < 0) {
+    if (Status < 0)
+    {
         DbgPrint(" Event test - reset event 2 failed, status = %lx\n", Status);
     }
-    if (State == 0) {
+    if (State == 0)
+    {
         DbgPrint(" Event test - reset event 2 previous state wrong\n");
     }
 
@@ -284,19 +303,23 @@ DoEventTest(
     //
 
     Status = NtClose(Handle1);
-    if (Status < 0) {
+    if (Status < 0)
+    {
         DbgPrint(" Event test - event 1 close failed, status = %lx\n", Status);
     }
     Status = NtClose(Handle1c);
-    if (Status < 0) {
+    if (Status < 0)
+    {
         DbgPrint(" Event test - event 1c close failed, status = %lx\n", Status);
     }
     Status = NtClose(Handle2);
-    if (Status < 0) {
+    if (Status < 0)
+    {
         DbgPrint(" Event test - event 2 close failed, status = %lx\n", Status);
     }
     Status = NtClose(Handle2c);
-    if (Status < 0) {
+    if (Status < 0)
+    {
         DbgPrint(" Event test - event 2c close failed, status = %lx\n", Status);
     }
 
@@ -307,13 +330,12 @@ DoEventTest(
     DbgPrint(" ** End of Event Test **\n");
     return TRUE;
 }
-
+
 BOOLEAN
-DoExceptionTest(
-    )
+DoExceptionTest()
 
 {
-#ifndef  i386
+#ifndef i386
     NTSTATUS Status;
 
     //
@@ -334,7 +356,8 @@ DoExceptionTest(
     //
 
     Status = ZwQuerySystemTime((PLARGE_INTEGER)NULL);
-    if (Status != STATUS_ACCESS_VIOLATION) {
+    if (Status != STATUS_ACCESS_VIOLATION)
+    {
         DbgPrint(" Exception test - NtQuerySystemTime failed, status = %lx\n", Status);
     }
 
@@ -343,7 +366,8 @@ DoExceptionTest(
     //
 
     Status = ZwSetSystemTime((PLARGE_INTEGER)NULL, (PLARGE_INTEGER)NULL);
-    if (Status != STATUS_ACCESS_VIOLATION) {
+    if (Status != STATUS_ACCESS_VIOLATION)
+    {
         DbgPrint(" Exception test - NtSetSystemTime failed, status = %lx\n", Status);
     }
 
@@ -354,13 +378,12 @@ DoExceptionTest(
     DbgPrint(" ** End of System Service Exception Test **\n");
 #else
     DbgPrint(" ** Skip System Service Exception Test for 386 **\n");
-#endif  // i386
+#endif // i386
     return TRUE;
 }
-
+
 BOOLEAN
-DoMutantTest(
-    )
+DoMutantTest()
 {
 
     LONG Count;
@@ -389,18 +412,17 @@ DoMutantTest(
 
     RtlInitUnicodeString(&Name1, L"\\Mutant1");
     RtlInitUnicodeString(&Name2, L"\\Mutant2");
-    InitializeObjectAttributes(&Object1Attributes,&Name1,0,NULL,NULL);
-    InitializeObjectAttributes(&Object2Attributes,&Name2,0,NULL,NULL);
+    InitializeObjectAttributes(&Object1Attributes, &Name1, 0, NULL, NULL);
+    InitializeObjectAttributes(&Object2Attributes, &Name2, 0, NULL, NULL);
 
     //
     // Create mutant 1.
     //
 
-    Status = ZwCreateMutant(&Handle1c, DesiredAccess, &Object1Attributes,
-                            FALSE);
-    if (Status < 0) {
-        DbgPrint(" Mutant test - create mutant 1 failed, status = %lx\n",
-                Status);
+    Status = ZwCreateMutant(&Handle1c, DesiredAccess, &Object1Attributes, FALSE);
+    if (Status < 0)
+    {
+        DbgPrint(" Mutant test - create mutant 1 failed, status = %lx\n", Status);
     }
 
     //
@@ -408,9 +430,9 @@ DoMutantTest(
     //
 
     Status = ZwOpenMutant(&Handle1, DesiredAccess, &Object1Attributes);
-    if (Status < 0) {
-        DbgPrint(" Mutant test - open mutant 1 failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Mutant test - open mutant 1 failed, status = %lx\n", Status);
     }
 
     //
@@ -420,20 +442,22 @@ DoMutantTest(
     MutantInformation.CurrentCount = 10;
     MutantInformation.AbandonedState = TRUE;
     Length = 0;
-    Status = ZwQueryMutant(Handle1, MutantBasicInformation,
-                           (PVOID)&MutantInformation,
-                           sizeof(MUTANT_BASIC_INFORMATION), &Length);
-    if (Status < 0) {
-        DbgPrint(" Mutant test - query mutant 1 failed, status = %lx\n",
-                Status);
+    Status = ZwQueryMutant(Handle1, MutantBasicInformation, (PVOID)&MutantInformation, sizeof(MUTANT_BASIC_INFORMATION),
+                           &Length);
+    if (Status < 0)
+    {
+        DbgPrint(" Mutant test - query mutant 1 failed, status = %lx\n", Status);
     }
-    if (MutantInformation.CurrentCount != 1) {
+    if (MutantInformation.CurrentCount != 1)
+    {
         DbgPrint(" Mutant test - query mutant 1 current count wrong\n");
     }
-    if (MutantInformation.AbandonedState != FALSE) {
+    if (MutantInformation.AbandonedState != FALSE)
+    {
         DbgPrint(" Mutant test - query mutant 1 abandoned state wrong\n");
     }
-    if (Length != sizeof(MUTANT_BASIC_INFORMATION)) {
+    if (Length != sizeof(MUTANT_BASIC_INFORMATION))
+    {
         DbgPrint(" Mutant test - query mutant 1 return length wrong\n");
     }
 
@@ -442,9 +466,9 @@ DoMutantTest(
     //
 
     Status = ZwWaitForSingleObject(Handle1, FALSE, NULL);
-    if (Status < 0) {
-        DbgPrint(" Mutant test - wait mutant 1 failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Mutant test - wait mutant 1 failed, status = %lx\n", Status);
     }
 
     //
@@ -453,11 +477,12 @@ DoMutantTest(
 
     Count = 100;
     Status = ZwReleaseMutant(Handle1, &Count);
-    if (Status < 0) {
-        DbgPrint(" Mutant test - release mutant 1 failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Mutant test - release mutant 1 failed, status = %lx\n", Status);
     }
-    if (Count != 0) {
+    if (Count != 0)
+    {
         DbgPrint(" Mutant test - release mutant 1 previous count wrong\n");
     }
 
@@ -465,11 +490,10 @@ DoMutantTest(
     // Create mutant 2.
     //
 
-    Status = ZwCreateMutant(&Handle2c, DesiredAccess, &Object2Attributes,
-                            FALSE);
-    if (Status < 0) {
-        DbgPrint(" Mutant test - create mutant 2 failed, status = %lx\n",
-                Status);
+    Status = ZwCreateMutant(&Handle2c, DesiredAccess, &Object2Attributes, FALSE);
+    if (Status < 0)
+    {
+        DbgPrint(" Mutant test - create mutant 2 failed, status = %lx\n", Status);
     }
 
     //
@@ -477,9 +501,9 @@ DoMutantTest(
     //
 
     Status = ZwOpenMutant(&Handle2, DesiredAccess, &Object2Attributes);
-    if (Status < 0) {
-        DbgPrint(" Mutant test - open mutant 2 failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Mutant test - open mutant 2 failed, status = %lx\n", Status);
     }
 
     //
@@ -487,9 +511,9 @@ DoMutantTest(
     //
 
     Status = ZwWaitForSingleObject(Handle2, FALSE, NULL);
-    if (Status < 0) {
-        DbgPrint(" Mutant test - wait mutant 2 failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Mutant test - wait mutant 2 failed, status = %lx\n", Status);
     }
 
     //
@@ -499,20 +523,22 @@ DoMutantTest(
     MutantInformation.CurrentCount = 20;
     MutantInformation.AbandonedState = TRUE;
     Length = 0;
-    Status = ZwQueryMutant(Handle2, MutantBasicInformation,
-                          (PVOID)&MutantInformation,
-                          sizeof(MUTANT_BASIC_INFORMATION), &Length);
-    if (Status < 0) {
-        DbgPrint(" Mutant test - query mutant 2 failed, status = %lx\n",
-                Status);
+    Status = ZwQueryMutant(Handle2, MutantBasicInformation, (PVOID)&MutantInformation, sizeof(MUTANT_BASIC_INFORMATION),
+                           &Length);
+    if (Status < 0)
+    {
+        DbgPrint(" Mutant test - query mutant 2 failed, status = %lx\n", Status);
     }
-    if (MutantInformation.CurrentCount != 0) {
+    if (MutantInformation.CurrentCount != 0)
+    {
         DbgPrint(" Mutant test - query mutant 2 current count wrong\n");
     }
-    if (MutantInformation.AbandonedState != FALSE) {
+    if (MutantInformation.AbandonedState != FALSE)
+    {
         DbgPrint(" Mutant test - query mutant 2 abandoned state wrong\n");
     }
-    if (Length != sizeof(MUTANT_BASIC_INFORMATION)) {
+    if (Length != sizeof(MUTANT_BASIC_INFORMATION))
+    {
         DbgPrint(" Mutant test - query mutant 2 return length wrong\n");
     }
 
@@ -521,9 +547,9 @@ DoMutantTest(
     //
 
     Status = ZwWaitForSingleObject(Handle2, FALSE, NULL);
-    if (Status < 0) {
-        DbgPrint(" Mutant test - wait mutant 2 failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Mutant test - wait mutant 2 failed, status = %lx\n", Status);
     }
 
     //
@@ -532,11 +558,12 @@ DoMutantTest(
 
     Count = 100;
     Status = ZwReleaseMutant(Handle2, &Count);
-    if (Status < 0) {
-        DbgPrint(" Mutant test - release mutant 2 failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Mutant test - release mutant 2 failed, status = %lx\n", Status);
     }
-    if (Count != - 1) {
+    if (Count != -1)
+    {
         DbgPrint(" Mutant test - release mutant 2 previous count wrong\n");
     }
 
@@ -546,11 +573,12 @@ DoMutantTest(
 
     Count = 100;
     Status = ZwReleaseMutant(Handle2, &Count);
-    if (Status < 0) {
-        DbgPrint(" Mutant test - release mutant 2 failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Mutant test - release mutant 2 failed, status = %lx\n", Status);
     }
-    if (Count != 0) {
+    if (Count != 0)
+    {
         DbgPrint(" Mutant test - release mutant 2 previous count wrong\n");
     }
 
@@ -559,24 +587,24 @@ DoMutantTest(
     //
 
     Status = NtClose(Handle1);
-    if (Status < 0) {
-        DbgPrint(" Mutant test - mutant 1 close failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Mutant test - mutant 1 close failed, status = %lx\n", Status);
     }
     Status = NtClose(Handle1c);
-    if (Status < 0) {
-        DbgPrint(" Mutant test - mutant 1c close failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Mutant test - mutant 1c close failed, status = %lx\n", Status);
     }
     Status = NtClose(Handle2);
-    if (Status < 0) {
-        DbgPrint(" Mutant test - mutant 2 close failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Mutant test - mutant 2 close failed, status = %lx\n", Status);
     }
     Status = NtClose(Handle2c);
-    if (Status < 0) {
-        DbgPrint(" Mutant test - mutant 2c close failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Mutant test - mutant 2c close failed, status = %lx\n", Status);
     }
 
     //
@@ -586,10 +614,9 @@ DoMutantTest(
     DbgPrint(" ** End of Mutant Test **\n");
     return TRUE;
 }
-
+
 BOOLEAN
-DoSemaphoreTest(
-    )
+DoSemaphoreTest()
 {
 
     LONG Count;
@@ -618,18 +645,17 @@ DoSemaphoreTest(
 
     RtlInitUnicodeString(&Name1, L"\\Semaphore1");
     RtlInitUnicodeString(&Name2, L"\\Semaphore2");
-    InitializeObjectAttributes(&Object1Attributes,&Name1,0,NULL,NULL);
-    InitializeObjectAttributes(&Object2Attributes,&Name2,0,NULL,NULL);
+    InitializeObjectAttributes(&Object1Attributes, &Name1, 0, NULL, NULL);
+    InitializeObjectAttributes(&Object2Attributes, &Name2, 0, NULL, NULL);
 
     //
     // Create semaphore 1.
     //
 
-    Status = ZwCreateSemaphore(&Handle1c, DesiredAccess, &Object1Attributes,
-                               0, 10);
-    if (Status < 0) {
-        DbgPrint(" Semaphore test - create semaphore 1 failed, status = %lx\n",
-                Status);
+    Status = ZwCreateSemaphore(&Handle1c, DesiredAccess, &Object1Attributes, 0, 10);
+    if (Status < 0)
+    {
+        DbgPrint(" Semaphore test - create semaphore 1 failed, status = %lx\n", Status);
     }
 
     //
@@ -637,9 +663,9 @@ DoSemaphoreTest(
     //
 
     Status = ZwOpenSemaphore(&Handle1, DesiredAccess, &Object1Attributes);
-    if (Status < 0) {
-        DbgPrint(" Semaphore test - open semaphore 1 failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Semaphore test - open semaphore 1 failed, status = %lx\n", Status);
     }
 
     //
@@ -649,20 +675,22 @@ DoSemaphoreTest(
     SemaphoreInformation.CurrentCount = 10;
     SemaphoreInformation.MaximumCount = 0;
     Length = 0;
-    Status = ZwQuerySemaphore(Handle1, SemaphoreBasicInformation,
-                          (PVOID)&SemaphoreInformation,
-                          sizeof(SEMAPHORE_BASIC_INFORMATION), &Length);
-    if (Status < 0) {
-        DbgPrint(" Semaphore test - query semaphore 1 failed, status = %lx\n",
-                Status);
+    Status = ZwQuerySemaphore(Handle1, SemaphoreBasicInformation, (PVOID)&SemaphoreInformation,
+                              sizeof(SEMAPHORE_BASIC_INFORMATION), &Length);
+    if (Status < 0)
+    {
+        DbgPrint(" Semaphore test - query semaphore 1 failed, status = %lx\n", Status);
     }
-    if (SemaphoreInformation.CurrentCount != 0) {
+    if (SemaphoreInformation.CurrentCount != 0)
+    {
         DbgPrint(" Semaphore test - query semaphore 1 current count wrong\n");
     }
-    if (SemaphoreInformation.MaximumCount != 10) {
+    if (SemaphoreInformation.MaximumCount != 10)
+    {
         DbgPrint(" Semaphore test - query semaphore 1 maximum count wrong\n");
     }
-    if (Length != sizeof(SEMAPHORE_BASIC_INFORMATION)) {
+    if (Length != sizeof(SEMAPHORE_BASIC_INFORMATION))
+    {
         DbgPrint(" Semaphore test - query semaphore 1 return length wrong\n");
     }
 
@@ -672,11 +700,12 @@ DoSemaphoreTest(
 
     Count = 100;
     Status = ZwReleaseSemaphore(Handle1, 2, &Count);
-    if (Status < 0) {
-        DbgPrint(" Semaphore test - release semaphore 1 failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Semaphore test - release semaphore 1 failed, status = %lx\n", Status);
     }
-    if (Count != 0) {
+    if (Count != 0)
+    {
         DbgPrint(" Semaphore test - release semaphore 1 previous count wrong\n");
     }
 
@@ -686,11 +715,12 @@ DoSemaphoreTest(
 
     Count = 100;
     Status = ZwReleaseSemaphore(Handle1, 5, &Count);
-    if (Status < 0) {
-        DbgPrint(" Semaphore test - release semaphore 1 failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Semaphore test - release semaphore 1 failed, status = %lx\n", Status);
     }
-    if (Count != 2) {
+    if (Count != 2)
+    {
         DbgPrint(" Semaphore test - release semaphore 1 previous count wrong\n");
     }
 
@@ -698,11 +728,10 @@ DoSemaphoreTest(
     // Create semaphore 2.
     //
 
-    Status = ZwCreateSemaphore(&Handle2c, DesiredAccess, &Object2Attributes,
-                               5, 20);
-    if (Status < 0) {
-        DbgPrint(" Semaphore test - create semaphore 2 failed, status = %lx\n",
-                Status);
+    Status = ZwCreateSemaphore(&Handle2c, DesiredAccess, &Object2Attributes, 5, 20);
+    if (Status < 0)
+    {
+        DbgPrint(" Semaphore test - create semaphore 2 failed, status = %lx\n", Status);
     }
 
     //
@@ -710,9 +739,9 @@ DoSemaphoreTest(
     //
 
     Status = ZwOpenSemaphore(&Handle2, DesiredAccess, &Object2Attributes);
-    if (Status < 0) {
-        DbgPrint(" Semaphore test - open semaphore 2 failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Semaphore test - open semaphore 2 failed, status = %lx\n", Status);
     }
 
     //
@@ -722,20 +751,22 @@ DoSemaphoreTest(
     SemaphoreInformation.CurrentCount = 20;
     SemaphoreInformation.MaximumCount = 5;
     Length = 0;
-    Status = ZwQuerySemaphore(Handle2, SemaphoreBasicInformation,
-                          (PVOID)&SemaphoreInformation,
-                          sizeof(SEMAPHORE_BASIC_INFORMATION), &Length);
-    if (Status < 0) {
-        DbgPrint(" Semaphore test - query semaphore 2 failed, status = %lx\n",
-                Status);
+    Status = ZwQuerySemaphore(Handle2, SemaphoreBasicInformation, (PVOID)&SemaphoreInformation,
+                              sizeof(SEMAPHORE_BASIC_INFORMATION), &Length);
+    if (Status < 0)
+    {
+        DbgPrint(" Semaphore test - query semaphore 2 failed, status = %lx\n", Status);
     }
-    if (SemaphoreInformation.CurrentCount != 5) {
+    if (SemaphoreInformation.CurrentCount != 5)
+    {
         DbgPrint(" Semaphore test - query semaphore 2 current count wrong\n");
     }
-    if (SemaphoreInformation.MaximumCount != 20) {
+    if (SemaphoreInformation.MaximumCount != 20)
+    {
         DbgPrint(" Semaphore test - query semaphore 2 maximum count wrong\n");
     }
-    if (Length != sizeof(SEMAPHORE_BASIC_INFORMATION)) {
+    if (Length != sizeof(SEMAPHORE_BASIC_INFORMATION))
+    {
         DbgPrint(" Semaphore test - query semaphore 2 return length wrong\n");
     }
 
@@ -745,11 +776,12 @@ DoSemaphoreTest(
 
     Count = 100;
     Status = ZwReleaseSemaphore(Handle2, 3, &Count);
-    if (Status < 0) {
-        DbgPrint(" Semaphore test - release semaphore 2 failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Semaphore test - release semaphore 2 failed, status = %lx\n", Status);
     }
-    if (Count != 5) {
+    if (Count != 5)
+    {
         DbgPrint(" Semaphore test - release semaphore 2 previous count wrong\n");
     }
 
@@ -759,11 +791,12 @@ DoSemaphoreTest(
 
     Count = 100;
     Status = ZwReleaseSemaphore(Handle2, 5, &Count);
-    if (Status < 0) {
-        DbgPrint(" Semaphore test - release semaphore 2 failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Semaphore test - release semaphore 2 failed, status = %lx\n", Status);
     }
-    if (Count != 8) {
+    if (Count != 8)
+    {
         DbgPrint(" Semaphore test - release semaphore 2 previous count wrong\n");
     }
 
@@ -772,24 +805,24 @@ DoSemaphoreTest(
     //
 
     Status = NtClose(Handle1);
-    if (Status < 0) {
-        DbgPrint(" Semaphore test - semaphore 1 close failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Semaphore test - semaphore 1 close failed, status = %lx\n", Status);
     }
     Status = NtClose(Handle1c);
-    if (Status < 0) {
-        DbgPrint(" Semaphore test - semaphore 1c close failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Semaphore test - semaphore 1c close failed, status = %lx\n", Status);
     }
     Status = NtClose(Handle2);
-    if (Status < 0) {
-        DbgPrint(" Semaphore test - semaphore 2 close failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Semaphore test - semaphore 2 close failed, status = %lx\n", Status);
     }
     Status = NtClose(Handle2c);
-    if (Status < 0) {
-        DbgPrint(" Semaphore test - semaphore 2c close failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Semaphore test - semaphore 2c close failed, status = %lx\n", Status);
     }
 
     //
@@ -799,23 +832,17 @@ DoSemaphoreTest(
     DbgPrint(" ** End of Semaphore Test **\n");
     return TRUE;
 }
-
-VOID
-TimerApcRoutine (
-    IN PVOID TimerContext,
-    IN ULONG TimerLowValue,
-    IN LONG TimerHighValue
-    )
+
+VOID TimerApcRoutine(IN PVOID TimerContext, IN ULONG TimerLowValue, IN LONG TimerHighValue)
 
 {
 
     *((PBOOLEAN)TimerContext) = TRUE;
     return;
 }
-
+
 BOOLEAN
-DoTimerTest (
-    )
+DoTimerTest()
 
 {
 
@@ -848,17 +875,17 @@ DoTimerTest (
 
     RtlInitUnicodeString(&Name1, L"\\Timer1");
     RtlInitUnicodeString(&Name2, L"\\Timer2");
-    InitializeObjectAttributes(&Object1Attributes,&Name1,0,NULL,NULL);
-    InitializeObjectAttributes(&Object2Attributes,&Name2,0,NULL,NULL);
+    InitializeObjectAttributes(&Object1Attributes, &Name1, 0, NULL, NULL);
+    InitializeObjectAttributes(&Object2Attributes, &Name2, 0, NULL, NULL);
 
     //
     // Create timer 1.
     //
 
     Status = ZwCreateTimer(&Handle1c, DesiredAccess, &Object1Attributes);
-    if (!NT_SUCCESS(Status)) {
-        DbgPrint(" Timer test - create timer 1 failed, status = %lx\n",
-                Status);
+    if (!NT_SUCCESS(Status))
+    {
+        DbgPrint(" Timer test - create timer 1 failed, status = %lx\n", Status);
     }
 
     //
@@ -866,9 +893,9 @@ DoTimerTest (
     //
 
     Status = ZwOpenTimer(&Handle1, DesiredAccess, &Object1Attributes);
-    if (Status < 0) {
-        DbgPrint(" Timer test - open timer 1 failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Timer test - open timer 1 failed, status = %lx\n", Status);
     }
 
     //
@@ -877,17 +904,18 @@ DoTimerTest (
 
     TimerInformation.TimerState = TRUE;
     Length = 0;
-    Status = ZwQueryTimer(Handle1, TimerBasicInformation,
-                          (PVOID)&TimerInformation,
-                          sizeof(TIMER_BASIC_INFORMATION), &Length);
-    if (Status < 0) {
-        DbgPrint(" Timer test - query timer 1 failed, status = %lx\n",
-                Status);
+    Status = ZwQueryTimer(Handle1, TimerBasicInformation, (PVOID)&TimerInformation, sizeof(TIMER_BASIC_INFORMATION),
+                          &Length);
+    if (Status < 0)
+    {
+        DbgPrint(" Timer test - query timer 1 failed, status = %lx\n", Status);
     }
-    if (TimerInformation.TimerState) {
+    if (TimerInformation.TimerState)
+    {
         DbgPrint(" Timer test - query timer 1 state wrong\n");
     }
-    if (Length != sizeof(TIMER_BASIC_INFORMATION)) {
+    if (Length != sizeof(TIMER_BASIC_INFORMATION))
+    {
         DbgPrint(" Timer test - query timer 1 return length wrong\n");
     }
 
@@ -899,20 +927,22 @@ DoTimerTest (
     DueTime.HighPart = -1;
     PreviousState = TRUE;
     Status = ZwSetTimer(Handle1, &DueTime, NULL, NULL, &PreviousState);
-    if (!NT_SUCCESS(Status)) {
-        DbgPrint(" Timer test - set timer 1 failed, status = %lx\n",
-                Status);
+    if (!NT_SUCCESS(Status))
+    {
+        DbgPrint(" Timer test - set timer 1 failed, status = %lx\n", Status);
     }
-    if (PreviousState) {
+    if (PreviousState)
+    {
         DbgPrint(" Timer test - set timer 1 previous state wrong\n");
     }
     CurrentState = TRUE;
     Status = ZwCancelTimer(Handle1, &CurrentState);
-    if (!NT_SUCCESS(Status)) {
-        DbgPrint(" Timer test - cancel timer 1 failed, status = %lx\n",
-                Status);
+    if (!NT_SUCCESS(Status))
+    {
+        DbgPrint(" Timer test - cancel timer 1 failed, status = %lx\n", Status);
     }
-    if (CurrentState) {
+    if (CurrentState)
+    {
         DbgPrint(" Timer test - cancel timer 1 current state wrong\n");
     }
 
@@ -924,25 +954,27 @@ DoTimerTest (
     DueTime.HighPart = -1;
     PreviousState = TRUE;
     Status = ZwSetTimer(Handle1, &DueTime, NULL, NULL, &PreviousState);
-    if (!NT_SUCCESS(Status)) {
-        DbgPrint(" Timer test - set timer 1 failed, status = %lx\n",
-                Status);
+    if (!NT_SUCCESS(Status))
+    {
+        DbgPrint(" Timer test - set timer 1 failed, status = %lx\n", Status);
     }
-    if (PreviousState) {
+    if (PreviousState)
+    {
         DbgPrint(" Timer test - set timer 1 previous state wrong\n");
     }
     Status = ZwWaitForSingleObject(Handle1, FALSE, NULL);
-    if (!NT_SUCCESS(Status)) {
-        DbgPrint(" Timer test - wait timer 1 failed, status = %lx\n",
-                Status);
+    if (!NT_SUCCESS(Status))
+    {
+        DbgPrint(" Timer test - wait timer 1 failed, status = %lx\n", Status);
     }
     CurrentState = FALSE;
     Status = ZwCancelTimer(Handle1, &CurrentState);
-    if (!NT_SUCCESS(Status)) {
-        DbgPrint(" Timer test - cancel timer 1 failed, status = %lx\n",
-                Status);
+    if (!NT_SUCCESS(Status))
+    {
+        DbgPrint(" Timer test - cancel timer 1 failed, status = %lx\n", Status);
     }
-    if (!CurrentState) {
+    if (!CurrentState)
+    {
         DbgPrint(" Timer test - cancel timer 1 current state wrong\n");
     }
 
@@ -954,25 +986,27 @@ DoTimerTest (
     DueTime.LowPart = -100000;
     DueTime.HighPart = -1;
     PreviousState = FALSE;
-    Status = ZwSetTimer(Handle1, &DueTime, TimerApcRoutine, &ApcHappened,
-                        &PreviousState);
-    if (!NT_SUCCESS(Status)) {
-        DbgPrint(" Timer test - set timer 1 failed, status = %lx\n",
-                Status);
+    Status = ZwSetTimer(Handle1, &DueTime, TimerApcRoutine, &ApcHappened, &PreviousState);
+    if (!NT_SUCCESS(Status))
+    {
+        DbgPrint(" Timer test - set timer 1 failed, status = %lx\n", Status);
     }
-    if (!PreviousState) {
+    if (!PreviousState)
+    {
         DbgPrint(" Timer test - set timer 1 previous state wrong\n");
     }
     CurrentState = TRUE;
     Status = ZwCancelTimer(Handle1, &CurrentState);
-    if (!NT_SUCCESS(Status)) {
-        DbgPrint(" Timer test - cancel timer 1 failed, status = %lx\n",
-                Status);
+    if (!NT_SUCCESS(Status))
+    {
+        DbgPrint(" Timer test - cancel timer 1 failed, status = %lx\n", Status);
     }
-    if (CurrentState) {
+    if (CurrentState)
+    {
         DbgPrint(" Timer test - cancel timer 1 current state wrong\n");
     }
-    if (ApcHappened) {
+    if (ApcHappened)
+    {
         DbgPrint(" Timer test - cancel timer 1 APC happened state wrong\n");
     }
 
@@ -985,42 +1019,44 @@ DoTimerTest (
     DueTime.LowPart = -100000;
     DueTime.HighPart = -1;
     PreviousState = TRUE;
-    Status = ZwSetTimer(Handle1, &DueTime, TimerApcRoutine, &ApcHappened,
-                        &PreviousState);
-    if (!NT_SUCCESS(Status)) {
-        DbgPrint(" Timer test - set timer 1 failed, status = %lx\n",
-                Status);
+    Status = ZwSetTimer(Handle1, &DueTime, TimerApcRoutine, &ApcHappened, &PreviousState);
+    if (!NT_SUCCESS(Status))
+    {
+        DbgPrint(" Timer test - set timer 1 failed, status = %lx\n", Status);
     }
-    if (PreviousState) {
+    if (PreviousState)
+    {
         DbgPrint(" Timer test - set timer 1 previous state wrong\n");
     }
     DueTime.LowPart = -5;
     DueTime.HighPart = -1;
     PreviousState = TRUE;
-    Status = ZwSetTimer(Handle1, &DueTime, TimerApcRoutine, &ApcHappened,
-                        &PreviousState);
-    if (!NT_SUCCESS(Status)) {
-        DbgPrint(" Timer test - set timer 1 failed, status = %lx\n",
-                Status);
+    Status = ZwSetTimer(Handle1, &DueTime, TimerApcRoutine, &ApcHappened, &PreviousState);
+    if (!NT_SUCCESS(Status))
+    {
+        DbgPrint(" Timer test - set timer 1 failed, status = %lx\n", Status);
     }
-    if (PreviousState) {
+    if (PreviousState)
+    {
         DbgPrint(" Timer test - set timer 1 previous state wrong\n");
     }
     Status = ZwWaitForSingleObject(Handle1, FALSE, NULL);
-    if (!NT_SUCCESS(Status)) {
-        DbgPrint(" Timer test - wait timer 1 failed, status = %lx\n",
-                Status);
+    if (!NT_SUCCESS(Status))
+    {
+        DbgPrint(" Timer test - wait timer 1 failed, status = %lx\n", Status);
     }
     CurrentState = FALSE;
     Status = ZwCancelTimer(Handle1, &CurrentState);
-    if (!NT_SUCCESS(Status)) {
-        DbgPrint(" Timer test - cancel timer 1 failed, status = %lx\n",
-                Status);
+    if (!NT_SUCCESS(Status))
+    {
+        DbgPrint(" Timer test - cancel timer 1 failed, status = %lx\n", Status);
     }
-    if (!CurrentState) {
+    if (!CurrentState)
+    {
         DbgPrint(" Timer test - cancel timer 1 current state wrong\n");
     }
-    if (!ApcHappened) {
+    if (!ApcHappened)
+    {
         DbgPrint(" Timer test - cancel timer 1 APC happened state wrong\n");
     }
 
@@ -1029,9 +1065,9 @@ DoTimerTest (
     //
 
     Status = ZwCreateTimer(&Handle2c, DesiredAccess, &Object2Attributes);
-    if (Status < 0) {
-        DbgPrint(" Timer test - create timer 2 failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Timer test - create timer 2 failed, status = %lx\n", Status);
     }
 
     //
@@ -1039,9 +1075,9 @@ DoTimerTest (
     //
 
     Status = ZwOpenTimer(&Handle2, DesiredAccess, &Object2Attributes);
-    if (Status < 0) {
-        DbgPrint(" Timer test - open timer 2 failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Timer test - open timer 2 failed, status = %lx\n", Status);
     }
 
     //
@@ -1050,17 +1086,18 @@ DoTimerTest (
 
     TimerInformation.TimerState = TRUE;
     Length = 0;
-    Status = ZwQueryTimer(Handle2, TimerBasicInformation,
-                          (PVOID)&TimerInformation,
-                          sizeof(TIMER_BASIC_INFORMATION), &Length);
-    if (Status < 0) {
-        DbgPrint(" Timer test - query timer 2 failed, status = %lx\n",
-                Status);
+    Status = ZwQueryTimer(Handle2, TimerBasicInformation, (PVOID)&TimerInformation, sizeof(TIMER_BASIC_INFORMATION),
+                          &Length);
+    if (Status < 0)
+    {
+        DbgPrint(" Timer test - query timer 2 failed, status = %lx\n", Status);
     }
-    if (TimerInformation.TimerState) {
+    if (TimerInformation.TimerState)
+    {
         DbgPrint(" Timer test - query timer 2 state wrong\n");
     }
-    if (Length != sizeof(TIMER_BASIC_INFORMATION)) {
+    if (Length != sizeof(TIMER_BASIC_INFORMATION))
+    {
         DbgPrint(" Timer test - query timer 2 return length wrong\n");
     }
 
@@ -1069,24 +1106,24 @@ DoTimerTest (
     //
 
     Status = NtClose(Handle1);
-    if (Status < 0) {
-        DbgPrint(" Timer test - timer 1 close failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Timer test - timer 1 close failed, status = %lx\n", Status);
     }
     Status = NtClose(Handle1c);
-    if (Status < 0) {
-        DbgPrint(" Timer test - timer 1c close failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Timer test - timer 1c close failed, status = %lx\n", Status);
     }
     Status = NtClose(Handle2);
-    if (Status < 0) {
-        DbgPrint(" Timer test - timer 2 close failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Timer test - timer 2 close failed, status = %lx\n", Status);
     }
     Status = NtClose(Handle2c);
-    if (Status < 0) {
-        DbgPrint(" Timer test - timer 2c close failed, status = %lx\n",
-                Status);
+    if (Status < 0)
+    {
+        DbgPrint(" Timer test - timer 2c close failed, status = %lx\n", Status);
     }
 
     //
@@ -1096,168 +1133,162 @@ DoTimerTest (
     DbgPrint(" ** End of Timer Test **\n");
     return TRUE;
 }
-
+
 BOOLEAN
-TestDupHandle1(
-    IN PVOID HandleTableEntry
-    )
+TestDupHandle1(IN PVOID HandleTableEntry)
 {
-    DbgPrint( "Dupping %lx\n", HandleTableEntry );
-    return( TRUE );
+    DbgPrint("Dupping %lx\n", HandleTableEntry);
+    return (TRUE);
 }
-
+
 BOOLEAN
-TestDupHandle4(
-    IN PVOID HandleTableEntry
-    )
+TestDupHandle4(IN PVOID HandleTableEntry)
 {
     PULONG p = (PULONG)HandleTableEntry;
     ULONG i;
 
-    if (!((*p>>4) % 4)) {
-        return( FALSE );
-        }
+    if (!((*p >> 4) % 4))
+    {
+        return (FALSE);
+    }
 
-    DbgPrint( "Dupping " );
-    for (i=0; i<4; i++) {
-        DbgPrint( "  %lx", *p++ );
-        }
-    DbgPrint( "\n" );
-    return( TRUE );
+    DbgPrint("Dupping ");
+    for (i = 0; i < 4; i++)
+    {
+        DbgPrint("  %lx", *p++);
+    }
+    DbgPrint("\n");
+    return (TRUE);
 }
-
-BOOLEAN
-TestEnumHandle1(
-    IN PVOID HandleTableEntry,
-    IN PVOID EnumParameter
-    )
-{
-    if (EnumParameter == HandleTableEntry) {
-        return( TRUE );
-        }
-    else {
-        return( FALSE );
-        }
-}
-
-BOOLEAN
-TestEnumHandle4(
-    IN PVOID HandleTableEntry,
-    IN PVOID EnumParameter
-    )
-{
-    if (EnumParameter == (PVOID)*(PULONG)HandleTableEntry) {
-        return( TRUE );
-        }
-    else {
-        return( FALSE );
-        }
-}
-
-#define HANDLE_TEST_SIZE    30
 
 BOOLEAN
-DoHandleTest( void )
+TestEnumHandle1(IN PVOID HandleTableEntry, IN PVOID EnumParameter)
+{
+    if (EnumParameter == HandleTableEntry)
+    {
+        return (TRUE);
+    }
+    else
+    {
+        return (FALSE);
+    }
+}
+
+BOOLEAN
+TestEnumHandle4(IN PVOID HandleTableEntry, IN PVOID EnumParameter)
+{
+    if (EnumParameter == (PVOID) * (PULONG)HandleTableEntry)
+    {
+        return (TRUE);
+    }
+    else
+    {
+        return (FALSE);
+    }
+}
+
+#define HANDLE_TEST_SIZE 30
+
+BOOLEAN
+DoHandleTest(void)
 {
     PVOID HandleTable1;
     PVOID HandleTable4;
     PVOID HandleTable1a;
     PVOID HandleTable4a;
-    HANDLE HandlesForTable1[ HANDLE_TEST_SIZE ];
-    HANDLE HandlesForTable4[ HANDLE_TEST_SIZE ];
+    HANDLE HandlesForTable1[HANDLE_TEST_SIZE];
+    HANDLE HandlesForTable4[HANDLE_TEST_SIZE];
     HANDLE h;
     PULONG HandleValue;
     BOOLEAN LockFlag;
     ULONG i, v[4];
 
-    HandleTable1 = ExCreateHandleTable( (PEPROCESS)NULL, 0L, 0L, 0L, MUTEX_LEVEL_PS_CID_TABLE, FALSE );
-    HandleTable4 = ExCreateHandleTable( (PEPROCESS)NULL, 16L, 8L, 2L, MUTEX_LEVEL_OB_TABLE, TRUE );
+    HandleTable1 = ExCreateHandleTable((PEPROCESS)NULL, 0L, 0L, 0L, MUTEX_LEVEL_PS_CID_TABLE, FALSE);
+    HandleTable4 = ExCreateHandleTable((PEPROCESS)NULL, 16L, 8L, 2L, MUTEX_LEVEL_OB_TABLE, TRUE);
 
-    ExDumpHandleTable( (PEPROCESS)NULL, HandleTable1, NULL );
-    ExDumpHandleTable( (PEPROCESS)NULL, HandleTable4, NULL );
+    ExDumpHandleTable((PEPROCESS)NULL, HandleTable1, NULL);
+    ExDumpHandleTable((PEPROCESS)NULL, HandleTable4, NULL);
 
-    for (i=0; i<HANDLE_TEST_SIZE; i++) {
-        v[0] = (i+1) << 4;
-        v[1] = (i+1) << 3;
-        v[2] = (i+1) << 2;
-        v[3] = (i+1) << 1;
+    for (i = 0; i < HANDLE_TEST_SIZE; i++)
+    {
+        v[0] = (i + 1) << 4;
+        v[1] = (i + 1) << 3;
+        v[2] = (i + 1) << 2;
+        v[3] = (i + 1) << 1;
 
-        HandlesForTable1[ i ] = ExCreateHandle( HandleTable1, (PVOID)(v[0]) );
-        DbgPrint( "HandleTable1: %lx => %lx\n", HandlesForTable1[ i ], v[0] );
-        HandlesForTable4[ i ] = ExCreateHandle( HandleTable4, (PVOID)(&v[0]) );
-        DbgPrint( "HandleTable4: %lx => %lx\n", HandlesForTable4[ i ], v[0] );
+        HandlesForTable1[i] = ExCreateHandle(HandleTable1, (PVOID)(v[0]));
+        DbgPrint("HandleTable1: %lx => %lx\n", HandlesForTable1[i], v[0]);
+        HandlesForTable4[i] = ExCreateHandle(HandleTable4, (PVOID)(&v[0]));
+        DbgPrint("HandleTable4: %lx => %lx\n", HandlesForTable4[i], v[0]);
+    }
+
+    ExDumpHandleTable(HandleTable1, NULL, NULL);
+    ExDumpHandleTable(HandleTable4, NULL, NULL);
+
+    for (i = 0; i <= HANDLE_TEST_SIZE; i++)
+    {
+        v[0] = (i + 1) << 4;
+        v[1] = (i + 1) << 3;
+        v[2] = (i + 1) << 2;
+        v[3] = (i + 1) << 1;
+
+        if (ExEnumHandleTable(HandleTable1, TestEnumHandle1, (PVOID)(v[0]), &h))
+        {
+            DbgPrint("HandleTable1: Found: %lx <= %lx\n", v[0], h);
+        }
+        else
+        {
+            DbgPrint("HandleTable1: %lx not found\n", v[0]);
         }
 
-    ExDumpHandleTable( HandleTable1, NULL, NULL );
-    ExDumpHandleTable( HandleTable4, NULL, NULL );
-
-    for (i=0; i<=HANDLE_TEST_SIZE; i++) {
-        v[0] = (i+1) << 4;
-        v[1] = (i+1) << 3;
-        v[2] = (i+1) << 2;
-        v[3] = (i+1) << 1;
-
-        if (ExEnumHandleTable( HandleTable1, TestEnumHandle1, (PVOID)(v[0]), &h )) {
-            DbgPrint( "HandleTable1: Found: %lx <= %lx\n", v[0], h );
-            }
-        else {
-            DbgPrint( "HandleTable1: %lx not found\n", v[0] );
-            }
-
-        if (ExEnumHandleTable( HandleTable4, TestEnumHandle4, (PVOID)(v[0]), &h )) {
-            DbgPrint( "HandleTable4: Found: %lx <= %lx\n", v[0], h );
-            }
-        else {
-            DbgPrint( "HandleTable4: %lx not found\n", v[0] );
-            }
+        if (ExEnumHandleTable(HandleTable4, TestEnumHandle4, (PVOID)(v[0]), &h))
+        {
+            DbgPrint("HandleTable4: Found: %lx <= %lx\n", v[0], h);
         }
-
-    for (i=0; i<HANDLE_TEST_SIZE; i++) {
-        LockFlag = ExMapHandleToPointer( HandleTable1,
-                                         HandlesForTable1[ i ],
-                                         (PVOID)&HandleValue
-                                       );
-
-        DbgPrint( "HandleTable1: %lx => %lx\n",
-                 HandlesForTable1[ i ], HandleValue
-               );
-        ExUnlockHandleTable( HandleTable1, LockFlag );
-
-        LockFlag = ExMapHandleToPointer( HandleTable4,
-                                         HandlesForTable4[ i ],
-                                         (PVOID)&HandleValue
-                                       );
-        DbgPrint( "HandleTable4: %lx => %lx\n",
-                 HandlesForTable4[ i ], *HandleValue
-               );
-        ExUnlockHandleTable( HandleTable4, LockFlag );
+        else
+        {
+            DbgPrint("HandleTable4: %lx not found\n", v[0]);
         }
+    }
 
-    HandleTable1a = ExDupHandleTable( (PEPROCESS)NULL, HandleTable1, TestDupHandle1 );
-    HandleTable4a = ExDupHandleTable( (PEPROCESS)NULL, HandleTable4, TestDupHandle4 );
+    for (i = 0; i < HANDLE_TEST_SIZE; i++)
+    {
+        LockFlag = ExMapHandleToPointer(HandleTable1, HandlesForTable1[i], (PVOID)&HandleValue);
 
-    ExDumpHandleTable( HandleTable1a, NULL, NULL );
-    ExDumpHandleTable( HandleTable4a, NULL, NULL );
+        DbgPrint("HandleTable1: %lx => %lx\n", HandlesForTable1[i], HandleValue);
+        ExUnlockHandleTable(HandleTable1, LockFlag);
 
-    for (i=0; i<HANDLE_TEST_SIZE; i++) {
-        ExDestroyHandle( HandleTable1, HandlesForTable1[ i ] );
-        ExDestroyHandle( HandleTable4, HandlesForTable4[ i ] );
-        }
+        LockFlag = ExMapHandleToPointer(HandleTable4, HandlesForTable4[i], (PVOID)&HandleValue);
+        DbgPrint("HandleTable4: %lx => %lx\n", HandlesForTable4[i], *HandleValue);
+        ExUnlockHandleTable(HandleTable4, LockFlag);
+    }
 
-    ExDumpHandleTable( HandleTable1, NULL, NULL );
-    ExDumpHandleTable( HandleTable4, NULL, NULL );
+    HandleTable1a = ExDupHandleTable((PEPROCESS)NULL, HandleTable1, TestDupHandle1);
+    HandleTable4a = ExDupHandleTable((PEPROCESS)NULL, HandleTable4, TestDupHandle4);
 
-    ExDestroyHandleTable( HandleTable1, NULL );
-    ExDestroyHandleTable( HandleTable4, NULL );
+    ExDumpHandleTable(HandleTable1a, NULL, NULL);
+    ExDumpHandleTable(HandleTable4a, NULL, NULL);
 
-    ExDestroyHandleTable( HandleTable1a, NULL );
-    ExDestroyHandleTable( HandleTable4a, NULL );
+    for (i = 0; i < HANDLE_TEST_SIZE; i++)
+    {
+        ExDestroyHandle(HandleTable1, HandlesForTable1[i]);
+        ExDestroyHandle(HandleTable4, HandlesForTable4[i]);
+    }
 
-    return( TRUE );
+    ExDumpHandleTable(HandleTable1, NULL, NULL);
+    ExDumpHandleTable(HandleTable4, NULL, NULL);
+
+    ExDestroyHandleTable(HandleTable1, NULL);
+    ExDestroyHandleTable(HandleTable4, NULL);
+
+    ExDestroyHandleTable(HandleTable1a, NULL);
+    ExDestroyHandleTable(HandleTable4a, NULL);
+
+    return (TRUE);
 }
-
+
 BOOLEAN
-DoInfoTest( void )
+DoInfoTest(void)
 {
     BOOLEAN Result = FALSE;
     NTSTATUS Status;
@@ -1266,43 +1297,29 @@ DoInfoTest( void )
     ULONG ReturnedLength;
 
     DbgPrint(" ** Start of System Information Test **\n");
-    Status = ZwQuerySystemInformation( SystemBasicInformation,
-                                       (PVOID)&BasicInfo,
-                                       sizeof( BasicInfo ),
-                                       &ReturnedLength
-                                     );
-    if (NT_SUCCESS( Status )) {
-        DbgPrint( "NtQuerySystemInformation returns:\n" );
-        DbgPrint( "    Number of Processors: %ld\n",
-                 BasicInfo.NumberOfProcessors
-               );
-        DbgPrint( "    OEM Machine Id: %lx\n",
-                 BasicInfo.OemMachineId
-               );
-        DbgPrint( "    Timer Resolution: %ld microseconds\n",
-                 BasicInfo.TimerResolutionInMicroSeconds
-               );
-        DbgPrint( "    Page Size: %ld   Allocation Granularity: %ld\n",
-                 BasicInfo.PageSize,
-                 BasicInfo.AllocationGranularity
-               );
-        DbgPrint( "    User Mode Address Range: 0x%08lx <-> 0x%08lx\n",
-                 BasicInfo.MinimumUserModeAddress,
-                 BasicInfo.MaximumUserModeAddress
-               );
-        }
-    else {
-        DbgPrint( "NtQuerySystemInformation failed.  Status == %X\n",
-                 Status
-               );
-        }
+    Status = ZwQuerySystemInformation(SystemBasicInformation, (PVOID)&BasicInfo, sizeof(BasicInfo), &ReturnedLength);
+    if (NT_SUCCESS(Status))
+    {
+        DbgPrint("NtQuerySystemInformation returns:\n");
+        DbgPrint("    Number of Processors: %ld\n", BasicInfo.NumberOfProcessors);
+        DbgPrint("    OEM Machine Id: %lx\n", BasicInfo.OemMachineId);
+        DbgPrint("    Timer Resolution: %ld microseconds\n", BasicInfo.TimerResolutionInMicroSeconds);
+        DbgPrint("    Page Size: %ld   Allocation Granularity: %ld\n", BasicInfo.PageSize,
+                 BasicInfo.AllocationGranularity);
+        DbgPrint("    User Mode Address Range: 0x%08lx <-> 0x%08lx\n", BasicInfo.MinimumUserModeAddress,
+                 BasicInfo.MaximumUserModeAddress);
+    }
+    else
+    {
+        DbgPrint("NtQuerySystemInformation failed.  Status == %X\n", Status);
+    }
 
     DbgPrint(" ** End of System Information Test **\n");
-    return( Result );
+    return (Result);
 }
-
+
 BOOLEAN
-DoLuidTest( void )
+DoLuidTest(void)
 {
     BOOLEAN Result = TRUE;
     NTSTATUS Status;
@@ -1319,130 +1336,143 @@ DoLuidTest( void )
     DbgPrint(" ** Start of Locally Unique ID Test **\n");
 
 
+    Status = ZwAllocateLocallyUniqueId(&FirstLuid);
 
-    Status = ZwAllocateLocallyUniqueId( &FirstLuid );
-
-    if (!NT_SUCCESS( Status )) {
-        DbgPrint( "First Luid Allocation Error.\n" );
+    if (!NT_SUCCESS(Status))
+    {
+        DbgPrint("First Luid Allocation Error.\n");
         Result = FALSE;
     }
 
-    if (LiLeqZero( FirstLuid )) {
-        DbgPrint( "First Luid Allocation Failed - Bad Value.\n" );
+    if (LiLeqZero(FirstLuid))
+    {
+        DbgPrint("First Luid Allocation Failed - Bad Value.\n");
         Result = FALSE;
     }
 
 
+    if (Result)
+    {
 
-    if (Result) {
+        Status = ZwAllocateLocallyUniqueId(&SecondLuid);
 
-        Status = ZwAllocateLocallyUniqueId( &SecondLuid );
-
-        if (!NT_SUCCESS( Status )) {
-            DbgPrint( "Second Luid Allocation Error.\n" );
+        if (!NT_SUCCESS(Status))
+        {
+            DbgPrint("Second Luid Allocation Error.\n");
             Result = FALSE;
         }
 
-        if (LiLeqZero( SecondLuid )) {
-            DbgPrint( "Second Luid Allocation Failed - Bad Value.\n" );
+        if (LiLeqZero(SecondLuid))
+        {
+            DbgPrint("Second Luid Allocation Failed - Bad Value.\n");
             Result = FALSE;
         }
 
-        if (LiLeq( FirstLuid, SecondLuid )) {
-            DbgPrint( "Second Luid Allocation Failed - Not larger than first value.\n" );
+        if (LiLeq(FirstLuid, SecondLuid))
+        {
+            DbgPrint("Second Luid Allocation Failed - Not larger than first value.\n");
             Result = FALSE;
         }
-
     }
 
 
     DbgPrint(" ** End of Locally Unique ID Test **\n");
-    return( Result );
+    return (Result);
 }
-
-char MemoryTestBuffer1[ 128 ];
+
+char MemoryTestBuffer1[128];
 char TestString1[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 char TestString2[] = "123456789012345678901234567890123456789012345678901234567890";
-char MemoryTestBuffer2[ 128 ];
+char MemoryTestBuffer2[128];
 
 BOOLEAN
-DoMemoryTest( void )
+DoMemoryTest(void)
 {
-    LONG i,j,k;
+    LONG i, j, k;
     BOOLEAN Result;
 
     DbgPrint(" ** Start of Memory Test **\n");
 
     Result = TRUE;
-    strcpy( MemoryTestBuffer1, TestString1 );
-    for (i=15; i>=0; i--) {
+    strcpy(MemoryTestBuffer1, TestString1);
+    for (i = 15; i >= 0; i--)
+    {
         MemoryTestBuffer1[16] = 0xFF;
-        RtlZeroMemory( &MemoryTestBuffer1[i], 16-i );
-        if (strncmp( MemoryTestBuffer1, TestString1, i ) || MemoryTestBuffer1[i] || !MemoryTestBuffer1[16]) {
-            DbgPrint( "*** failed *** - RtlZeroMemory( %s, %ld )\n",
-                     MemoryTestBuffer1, 16-i );
+        RtlZeroMemory(&MemoryTestBuffer1[i], 16 - i);
+        if (strncmp(MemoryTestBuffer1, TestString1, i) || MemoryTestBuffer1[i] || !MemoryTestBuffer1[16])
+        {
+            DbgPrint("*** failed *** - RtlZeroMemory( %s, %ld )\n", MemoryTestBuffer1, 16 - i);
             Result = FALSE;
-            }
         }
+    }
 
-    for (k = 0; k < 8; k++) {
-        DbgPrint("k = %d, j = ",k);
-        for (j = 0; j < 8; j++) {
-            DbgPrint(" %d ",j);
-            for (i=0; i<26; i++) {
-                RtlZeroMemory( MemoryTestBuffer1, (ULONG)sizeof( MemoryTestBuffer1 ) );
-                RtlMoveMemory( &MemoryTestBuffer1[j], &TestString2[k], i );
-                if (strncmp( &MemoryTestBuffer1[j], &TestString2[k], i ) || MemoryTestBuffer1[j+i]) {
-                    DbgPrint( "*** failed *** - RtlMoveMemory( %s, %s, %ld )\n",
-                             &MemoryTestBuffer1[j], TestString2, i );
+    for (k = 0; k < 8; k++)
+    {
+        DbgPrint("k = %d, j = ", k);
+        for (j = 0; j < 8; j++)
+        {
+            DbgPrint(" %d ", j);
+            for (i = 0; i < 26; i++)
+            {
+                RtlZeroMemory(MemoryTestBuffer1, (ULONG)sizeof(MemoryTestBuffer1));
+                RtlMoveMemory(&MemoryTestBuffer1[j], &TestString2[k], i);
+                if (strncmp(&MemoryTestBuffer1[j], &TestString2[k], i) || MemoryTestBuffer1[j + i])
+                {
+                    DbgPrint("*** failed *** - RtlMoveMemory( %s, %s, %ld )\n", &MemoryTestBuffer1[j], TestString2, i);
                     Result = FALSE;
-                    }
                 }
             }
-        DbgPrint("\n");
         }
+        DbgPrint("\n");
+    }
 
-    for (k = 0; k < 8; k++) {
-        DbgPrint("k = %d, j = ",k);
-        for (j = 0; j < 8; j++) {
-            DbgPrint(" %d ",j);
-            for (i=0; i<26; i++) {
-                RtlZeroMemory( MemoryTestBuffer2, (ULONG)sizeof( MemoryTestBuffer2 ) );
-                RtlMoveMemory( &MemoryTestBuffer2[j], &TestString2[k], i );
-                if (strncmp( &MemoryTestBuffer2[j], &TestString2[k], i ) || MemoryTestBuffer2[j+i]) {
-                    DbgPrint( "*** failed *** - RtlMoveMemory( %s, %s, %ld )\n",
-                             &MemoryTestBuffer2[j], TestString2, i );
+    for (k = 0; k < 8; k++)
+    {
+        DbgPrint("k = %d, j = ", k);
+        for (j = 0; j < 8; j++)
+        {
+            DbgPrint(" %d ", j);
+            for (i = 0; i < 26; i++)
+            {
+                RtlZeroMemory(MemoryTestBuffer2, (ULONG)sizeof(MemoryTestBuffer2));
+                RtlMoveMemory(&MemoryTestBuffer2[j], &TestString2[k], i);
+                if (strncmp(&MemoryTestBuffer2[j], &TestString2[k], i) || MemoryTestBuffer2[j + i])
+                {
+                    DbgPrint("*** failed *** - RtlMoveMemory( %s, %s, %ld )\n", &MemoryTestBuffer2[j], TestString2, i);
                     Result = FALSE;
-                    }
                 }
             }
-        DbgPrint("\n");
         }
+        DbgPrint("\n");
+    }
 
-    for (k = 0; k < 8; k++) {
-        DbgPrint("k = %d, j = ",k);
-        for (j = 0; j < 8; j++) {
-            DbgPrint(" %d ",j);
-            for (i=0; i<26; i++) {
-                strcpy( MemoryTestBuffer1, TestString1 );
-                RtlMoveMemory( &MemoryTestBuffer1[j], &MemoryTestBuffer1[k], i );
-                if (strncmp( &MemoryTestBuffer1[j], &TestString1[k], i )) {
-                    DbgPrint( "*** failed *** - RtlMoveMemory( %s, %s, %ld )\n",
-                             &MemoryTestBuffer2[j], TestString2, i );
+    for (k = 0; k < 8; k++)
+    {
+        DbgPrint("k = %d, j = ", k);
+        for (j = 0; j < 8; j++)
+        {
+            DbgPrint(" %d ", j);
+            for (i = 0; i < 26; i++)
+            {
+                strcpy(MemoryTestBuffer1, TestString1);
+                RtlMoveMemory(&MemoryTestBuffer1[j], &MemoryTestBuffer1[k], i);
+                if (strncmp(&MemoryTestBuffer1[j], &TestString1[k], i))
+                {
+                    DbgPrint("*** failed *** - RtlMoveMemory( %s, %s, %ld )\n", &MemoryTestBuffer2[j], TestString2, i);
                     Result = FALSE;
-                    }
                 }
             }
-        DbgPrint("\n");
         }
+        DbgPrint("\n");
+    }
 
     DbgPrint(" ** End of Memory Test **\n");
 
-    return( Result );
+    return (Result);
 }
-
+
 BOOLEAN
-DoPartyTest( void )
+DoPartyTest(void)
 {
     BOOLEAN Result = TRUE;
     NTSTATUS Status;
@@ -1451,122 +1481,117 @@ DoPartyTest( void )
 
     DbgPrint(" ** Start of Party By Number Test **\n");
 
-    NtPartyByNumber( 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 );
-    InitializeObjectAttributes( &ObjectAttributes, NULL, 0, NULL, NULL );
-    Status = ZwCreateEvent( &Handle,
-                            EVENT_ALL_ACCESS,
-                            &ObjectAttributes, NotificationEvent ,TRUE);
-    NtPartyByNumber( PARTY_DUMP_OBJECT_BY_HANDLE, Handle, NULL );
-    ZwClose( Handle );
-    NtPartyByNumber( PARTY_DUMP_OBJECT_BY_HANDLE, Handle, NULL );
+    NtPartyByNumber(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11);
+    InitializeObjectAttributes(&ObjectAttributes, NULL, 0, NULL, NULL);
+    Status = ZwCreateEvent(&Handle, EVENT_ALL_ACCESS, &ObjectAttributes, NotificationEvent, TRUE);
+    NtPartyByNumber(PARTY_DUMP_OBJECT_BY_HANDLE, Handle, NULL);
+    ZwClose(Handle);
+    NtPartyByNumber(PARTY_DUMP_OBJECT_BY_HANDLE, Handle, NULL);
 
     DbgPrint(" ** End of Party By Number Test **\n");
-    return( Result );
+    return (Result);
 }
-
+
 BOOLEAN
-DoPoolTest( void )
+DoPoolTest(void)
 {
-    PVOID p,p0,p1,p2,p3;
+    PVOID p, p0, p1, p2, p3;
 
-    p = ExAllocatePool(NonPagedPool,4000L);
-    DumpPool("After 4000 byte Allocation",NonPagedPool);
-    p = ExAllocatePool(NonPagedPool,2000L);
-    DumpPool("After 2000 byte Allocation",NonPagedPool);
-    p = ExAllocatePool(NonPagedPool,2000L);
-    DumpPool("After 2000 byte Allocation",NonPagedPool);
+    p = ExAllocatePool(NonPagedPool, 4000L);
+    DumpPool("After 4000 byte Allocation", NonPagedPool);
+    p = ExAllocatePool(NonPagedPool, 2000L);
+    DumpPool("After 2000 byte Allocation", NonPagedPool);
+    p = ExAllocatePool(NonPagedPool, 2000L);
+    DumpPool("After 2000 byte Allocation", NonPagedPool);
 
-    p0 = ExAllocatePool(NonPagedPool,24L);
-    DumpPool("After 24 byte Allocation p0",NonPagedPool);
-    p1 = ExAllocatePool(NonPagedPool,24L);
-    DumpPool("After 24 byte Allocation p1",NonPagedPool);
-    p2 = ExAllocatePool(NonPagedPool,24L);
-    DumpPool("After 24 byte Allocation p2",NonPagedPool);
-    p3 = ExAllocatePool(NonPagedPool,24L);
-    DumpPool("After 24 byte Allocation p3",NonPagedPool);
+    p0 = ExAllocatePool(NonPagedPool, 24L);
+    DumpPool("After 24 byte Allocation p0", NonPagedPool);
+    p1 = ExAllocatePool(NonPagedPool, 24L);
+    DumpPool("After 24 byte Allocation p1", NonPagedPool);
+    p2 = ExAllocatePool(NonPagedPool, 24L);
+    DumpPool("After 24 byte Allocation p2", NonPagedPool);
+    p3 = ExAllocatePool(NonPagedPool, 24L);
+    DumpPool("After 24 byte Allocation p3", NonPagedPool);
 
     ExFreePool(p1);
-    DumpPool("After 24 byte Deallocation p1",NonPagedPool);
+    DumpPool("After 24 byte Deallocation p1", NonPagedPool);
     ExFreePool(p3);
-    DumpPool("After 24 byte Deallocation p3",NonPagedPool);
+    DumpPool("After 24 byte Deallocation p3", NonPagedPool);
     ExFreePool(p2);
-    DumpPool("After 24 byte Deallocation p2",NonPagedPool);
+    DumpPool("After 24 byte Deallocation p2", NonPagedPool);
     ExFreePool(p0);
-    DumpPool("After 24 byte Deallocation p0",NonPagedPool);
+    DumpPool("After 24 byte Deallocation p0", NonPagedPool);
 
-    p0 = ExAllocatePool(NonPagedPool,120L);
-    DumpPool("After 120 byte Allocation p0",NonPagedPool);
-    p1 = ExAllocatePool(NonPagedPool,24L);
-    DumpPool("After 24 byte Allocation p1",NonPagedPool);
+    p0 = ExAllocatePool(NonPagedPool, 120L);
+    DumpPool("After 120 byte Allocation p0", NonPagedPool);
+    p1 = ExAllocatePool(NonPagedPool, 24L);
+    DumpPool("After 24 byte Allocation p1", NonPagedPool);
     ExFreePool(p1);
-    DumpPool("After 24 byte Deallocation p1",NonPagedPool);
+    DumpPool("After 24 byte Deallocation p1", NonPagedPool);
     ExFreePool(p0);
-    DumpPool("After 120 byte Deallocation p0",NonPagedPool);
+    DumpPool("After 120 byte Deallocation p0", NonPagedPool);
 
-    return( TRUE );
+    return (TRUE);
 }
-
+
 BOOLEAN
-DoZoneTest( void )
+DoZoneTest(void)
 {
-    PULONG p1,p2;
+    PULONG p1, p2;
     PZONE_HEADER z;
     NTSTATUS st;
     PVOID b1, b2, b3, b4, b5;
 
-    z = ExAllocatePool(NonPagedPool,(ULONG)sizeof(ZONE_HEADER));
-    p1 = ExAllocatePool(NonPagedPool,2048L);
-    p2 = ExAllocatePool(NonPagedPool,1024L);
-    st = ExInitializeZone(z,512L,p1,2048L);
+    z = ExAllocatePool(NonPagedPool, (ULONG)sizeof(ZONE_HEADER));
+    p1 = ExAllocatePool(NonPagedPool, 2048L);
+    p2 = ExAllocatePool(NonPagedPool, 1024L);
+    st = ExInitializeZone(z, 512L, p1, 2048L);
     ExDumpZone(z);
 
     b1 = ExAllocateFromZone(z);
-    DbgPrint("b1 = 0x%lx\n",b1);
+    DbgPrint("b1 = 0x%lx\n", b1);
     ExDumpZone(z);
 
     b2 = ExAllocateFromZone(z);
-    DbgPrint("b2 = 0x%lx\n",b2);
+    DbgPrint("b2 = 0x%lx\n", b2);
     ExDumpZone(z);
 
     b3 = ExAllocateFromZone(z);
-    DbgPrint("b3 = 0x%lx\n",b3);
+    DbgPrint("b3 = 0x%lx\n", b3);
     ExDumpZone(z);
 
     b4 = ExAllocateFromZone(z);
-    DbgPrint("b4 = 0x%lx\n",b4);
+    DbgPrint("b4 = 0x%lx\n", b4);
     ExDumpZone(z);
 
     b5 = ExAllocateFromZone(z);
-    DbgPrint("b5 = 0x%lx\n",b5);
+    DbgPrint("b5 = 0x%lx\n", b5);
     ExDumpZone(z);
 
-    ExFreeToZone(z,b4);
+    ExFreeToZone(z, b4);
     ExDumpZone(z);
 
-    ExFreeToZone(z,b3);
+    ExFreeToZone(z, b3);
     ExDumpZone(z);
 
-    ExFreeToZone(z,b2);
+    ExFreeToZone(z, b2);
     ExDumpZone(z);
 
-    ExFreeToZone(z,b1);
+    ExFreeToZone(z, b1);
     ExDumpZone(z);
 
-    st = ExExtendZone(z,p2,1024L);
+    st = ExExtendZone(z, p2, 1024L);
     ExDumpZone(z);
 
-    return( TRUE );
+    return (TRUE);
 }
-
+
 ERESOURCE Resource;
 ULONG ResourceCount;
 KSEMAPHORE ResourceSemaphore;
-PVOID ExDumpResource( IN PERESOURCE Resource );
+PVOID ExDumpResource(IN PERESOURCE Resource);
 
-VOID
-Reader (
-    IN PVOID StartContext
-    )
+VOID Reader(IN PVOID StartContext)
 {
     LARGE_INTEGER Time;
 
@@ -1574,27 +1599,29 @@ Reader (
 
     DbgPrint("Starting Reader %lx...\n", StartContext);
 
-    Time.LowPart = -(1+(ULONG)StartContext);
+    Time.LowPart = -(1 + (ULONG)StartContext);
     Time.HighPart = -1;
 
-    while (TRUE) {
+    while (TRUE)
+    {
 
-        (VOID)ExAcquireResourceShared(&Resource,TRUE);
+        (VOID) ExAcquireResourceShared(&Resource, TRUE);
 
         DbgPrint("%lx with shared access\n", StartContext);
 
-        if (ResourceCount >= 10) {
+        if (ResourceCount >= 10)
+        {
             ExReleaseResourceLite(&Resource);
             break;
         }
 
-        KeDelayExecutionThread ( KernelMode, FALSE, &Time);
+        KeDelayExecutionThread(KernelMode, FALSE, &Time);
 
         ExReleaseResourceLite(&Resource);
 
         DbgPrint("%lx released shared access\n", StartContext);
 
-        KeDelayExecutionThread ( KernelMode, FALSE, &Time);
+        KeDelayExecutionThread(KernelMode, FALSE, &Time);
     }
 
     DbgPrint("Reader %lx exiting\n", StartContext);
@@ -1602,10 +1629,7 @@ Reader (
     KeReleaseSemaphore(&ResourceSemaphore, 0, 1, FALSE);
 }
 
-VOID
-Writer (
-    IN PVOID StartContext
-    )
+VOID Writer(IN PVOID StartContext)
 {
     LARGE_INTEGER Time;
 
@@ -1613,28 +1637,30 @@ Writer (
 
     DbgPrint("Starting Writer %lx...\n", StartContext);
 
-    Time.LowPart = -(1+(ULONG)StartContext);
+    Time.LowPart = -(1 + (ULONG)StartContext);
     Time.HighPart = -1;
 
-    while (TRUE) {
+    while (TRUE)
+    {
 
-        (VOID)ExAcquireResourceExclusive(&Resource,TRUE);
+        (VOID) ExAcquireResourceExclusive(&Resource, TRUE);
 
         DbgPrint("%lx with Exclusive access\n", StartContext);
 
         ResourceCount += 1;
-        if (ResourceCount >= 10) {
+        if (ResourceCount >= 10)
+        {
             ExReleaseResourceLite(&Resource);
             break;
         }
 
-        KeDelayExecutionThread ( KernelMode, FALSE, &Time);
+        KeDelayExecutionThread(KernelMode, FALSE, &Time);
 
         ExReleaseResourceLite(&Resource);
 
         DbgPrint("%lx released Exclusive access\n", StartContext);
 
-        KeDelayExecutionThread ( KernelMode, FALSE, &Time);
+        KeDelayExecutionThread(KernelMode, FALSE, &Time);
     }
 
     DbgPrint("Writer %lx exiting\n", StartContext);
@@ -1642,10 +1668,7 @@ Writer (
     KeReleaseSemaphore(&ResourceSemaphore, 0, 1, FALSE);
 }
 
-VOID
-ReaderTurnedWriter (
-    IN PVOID StartContext
-    )
+VOID ReaderTurnedWriter(IN PVOID StartContext)
 {
     LARGE_INTEGER Time;
 
@@ -1653,39 +1676,43 @@ ReaderTurnedWriter (
 
     DbgPrint("Starting Reader turned Writer %lx\n", StartContext);
 
-    Time.LowPart = -(1+(ULONG)StartContext);
+    Time.LowPart = -(1 + (ULONG)StartContext);
     Time.HighPart = -1;
 
-    while (TRUE) {
+    while (TRUE)
+    {
 
-        (VOID)ExAcquireResourceShared(&Resource,TRUE);
+        (VOID) ExAcquireResourceShared(&Resource, TRUE);
 
         DbgPrint("%lx with shared access\n", StartContext);
 
-        if (ResourceCount >= 10) {
+        if (ResourceCount >= 10)
+        {
             ExReleaseResourceLite(&Resource);
             break;
         }
 
-        KeDelayExecutionThread ( KernelMode, FALSE, &Time);
+        KeDelayExecutionThread(KernelMode, FALSE, &Time);
 
         ExConvertSharedToExclusive(&Resource);
 
         DbgPrint("%lx Shared turned Exclusive access\n", StartContext);
 
         ResourceCount += 1;
-        if (ResourceCount >= 10) {
+        if (ResourceCount >= 10)
+        {
             ExReleaseResourceLite(&Resource);
             break;
         }
 
-        KeDelayExecutionThread ( KernelMode, FALSE, &Time);
+        KeDelayExecutionThread(KernelMode, FALSE, &Time);
 
         ExConvertExclusiveToShared(&Resource);
 
         DbgPrint("%lx Exclusive turned Shared access\n", StartContext);
 
-        if (ResourceCount >= 10) {
+        if (ResourceCount >= 10)
+        {
             ExReleaseResourceLite(&Resource);
             break;
         }
@@ -1694,7 +1721,7 @@ ReaderTurnedWriter (
 
         DbgPrint("%lx release Shared access\n", StartContext);
 
-        KeDelayExecutionThread ( KernelMode, FALSE, &Time);
+        KeDelayExecutionThread(KernelMode, FALSE, &Time);
     }
 
     DbgPrint("Reader turned Writer %lx exiting\n", StartContext);
@@ -1703,7 +1730,7 @@ ReaderTurnedWriter (
 }
 
 BOOLEAN
-DoResourceTest( void )
+DoResourceTest(void)
 {
     HANDLE Handles[32];
     ULONG i;
@@ -1715,70 +1742,51 @@ DoResourceTest( void )
 
     KeInitializeSemaphore(&ResourceSemaphore, 0, MAXLONG);
 
-    for (i = 0; i < 4; i += 1) {
+    for (i = 0; i < 4; i += 1)
+    {
 
-        if (!NT_SUCCESS(PsCreateSystemThread(&Handles[i],
-                                          0,
-                                          NULL,
-                                          0,
-                                          NULL,
-                                          Reader,
-                                          (PVOID)i))) {
+        if (!NT_SUCCESS(PsCreateSystemThread(&Handles[i], 0, NULL, 0, NULL, Reader, (PVOID)i)))
+        {
 
             DbgPrint("Create system thread error %8lx\n", i);
         }
-
     }
 
-    for (i = 4; i < 6; i += 1) {
+    for (i = 4; i < 6; i += 1)
+    {
 
-        if (!NT_SUCCESS(PsCreateSystemThread(&Handles[i],
-                                          0,
-                                          NULL,
-                                          0,
-                                          NULL,
-                                          Writer,
-                                          (PVOID)i))) {
+        if (!NT_SUCCESS(PsCreateSystemThread(&Handles[i], 0, NULL, 0, NULL, Writer, (PVOID)i)))
+        {
 
             DbgPrint("Create system thread error %8lx\n", i);
         }
-
     }
 
-    for (i = 6; i < 8; i += 1) {
+    for (i = 6; i < 8; i += 1)
+    {
 
-        if (!NT_SUCCESS(PsCreateSystemThread(&Handles[i],
-                                          0,
-                                          NULL,
-                                          0,
-                                          NULL,
-                                          ReaderTurnedWriter,
-                                          (PVOID)i))) {
+        if (!NT_SUCCESS(PsCreateSystemThread(&Handles[i], 0, NULL, 0, NULL, ReaderTurnedWriter, (PVOID)i)))
+        {
 
             DbgPrint("Create system thread error %8lx\n", i);
         }
-
     }
 
     DbgPrint("DoResourceTest wait for everyone to complete...\n");
 
-    for (i = 0; i < 8; i += 1) {
+    for (i = 0; i < 8; i += 1)
+    {
 
-        KeWaitForSingleObject( &ResourceSemaphore,
-                               Executive,
-                               KernelMode,
-                               FALSE,
-                               NULL);
-
+        KeWaitForSingleObject(&ResourceSemaphore, Executive, KernelMode, FALSE, NULL);
     }
 
     DbgPrint("DoResourceTest Done\n");
 
-    return( TRUE );
+    return (TRUE);
 }
-
+
 BOOLEAN
-DoBitMapTest( void )
+DoBitMapTest(void)
 {
     ULONG Size;
     PRTL_BITMAP BitMap;
@@ -1789,9 +1797,9 @@ DoBitMapTest( void )
     //  First create a new bitmap
     //
 
-    Size = sizeof(RTL_BITMAP) + (((2048*8 + 31) / 32) * 4);
-    BitMap = (PRTL_BITMAP)(ExAllocatePool( NonPagedPool, Size ));
-    RtlInitializeBitMap( BitMap, (PULONG)(BitMap+1), 2048*8 );
+    Size = sizeof(RTL_BITMAP) + (((2048 * 8 + 31) / 32) * 4);
+    BitMap = (PRTL_BITMAP)(ExAllocatePool(NonPagedPool, Size));
+    RtlInitializeBitMap(BitMap, (PULONG)(BitMap + 1), 2048 * 8);
 
     //
     //  >>>> Test setting bits
@@ -1801,26 +1809,22 @@ DoBitMapTest( void )
     //  Now clear all bits
     //
 
-    RtlClearAllBits( BitMap );
+    RtlClearAllBits(BitMap);
 
     //
     //  Now set some bit patterns, and test them
     //
 
-    RtlSetBits( BitMap,   0,  1 );
-    RtlSetBits( BitMap,  63,  1 );
-    RtlSetBits( BitMap,  65, 30 );
-    RtlSetBits( BitMap, 127,  2 );
-    RtlSetBits( BitMap, 191, 34 );
+    RtlSetBits(BitMap, 0, 1);
+    RtlSetBits(BitMap, 63, 1);
+    RtlSetBits(BitMap, 65, 30);
+    RtlSetBits(BitMap, 127, 2);
+    RtlSetBits(BitMap, 191, 34);
 
-    if ((BitMap->Buffer[0] != 0x00000001) ||
-        (BitMap->Buffer[1] != 0x80000000) ||
-        (BitMap->Buffer[2] != 0x7ffffffe) ||
-        (BitMap->Buffer[3] != 0x80000000) ||
-        (BitMap->Buffer[4] != 0x00000001) ||
-        (BitMap->Buffer[5] != 0x80000000) ||
-        (BitMap->Buffer[6] != 0xffffffff) ||
-        (BitMap->Buffer[7] != 0x00000001)) {
+    if ((BitMap->Buffer[0] != 0x00000001) || (BitMap->Buffer[1] != 0x80000000) || (BitMap->Buffer[2] != 0x7ffffffe) ||
+        (BitMap->Buffer[3] != 0x80000000) || (BitMap->Buffer[4] != 0x00000001) || (BitMap->Buffer[5] != 0x80000000) ||
+        (BitMap->Buffer[6] != 0xffffffff) || (BitMap->Buffer[7] != 0x00000001))
+    {
 
         DbgPrint("RtlSetBits Error\n");
         return FALSE;
@@ -1830,101 +1834,117 @@ DoBitMapTest( void )
     //  Now test some RtlFindClearBitsAndSet
     //
 
-    RtlSetAllBits( BitMap );
+    RtlSetAllBits(BitMap);
 
-    RtlClearBits( BitMap, 0 +  10*32,  1 );
-    RtlClearBits( BitMap, 5 +  11*32,  1 );
-    RtlClearBits( BitMap, 7 +  12*32,  1 );
+    RtlClearBits(BitMap, 0 + 10 * 32, 1);
+    RtlClearBits(BitMap, 5 + 11 * 32, 1);
+    RtlClearBits(BitMap, 7 + 12 * 32, 1);
 
-    RtlClearBits( BitMap, 0 +  13*32,  9 );
-    RtlClearBits( BitMap, 4 +  14*32,  9 );
-    RtlClearBits( BitMap, 7 +  15*32,  9 );
+    RtlClearBits(BitMap, 0 + 13 * 32, 9);
+    RtlClearBits(BitMap, 4 + 14 * 32, 9);
+    RtlClearBits(BitMap, 7 + 15 * 32, 9);
 
-    RtlClearBits( BitMap, 0 +  16*32, 10 );
-    RtlClearBits( BitMap, 4 +  17*32, 10 );
-    RtlClearBits( BitMap, 6 +  18*32, 10 );
-    RtlClearBits( BitMap, 7 +  19*32, 10 );
+    RtlClearBits(BitMap, 0 + 16 * 32, 10);
+    RtlClearBits(BitMap, 4 + 17 * 32, 10);
+    RtlClearBits(BitMap, 6 + 18 * 32, 10);
+    RtlClearBits(BitMap, 7 + 19 * 32, 10);
 
-    RtlClearBits( BitMap, 0 + 110*32, 14 );
-    RtlClearBits( BitMap, 1 + 111*32, 14 );
-    RtlClearBits( BitMap, 2 + 112*32, 14 );
+    RtlClearBits(BitMap, 0 + 110 * 32, 14);
+    RtlClearBits(BitMap, 1 + 111 * 32, 14);
+    RtlClearBits(BitMap, 2 + 112 * 32, 14);
 
-    RtlClearBits( BitMap, 0 + 113*32, 15 );
-    RtlClearBits( BitMap, 1 + 114*32, 15 );
-    RtlClearBits( BitMap, 2 + 115*32, 15 );
+    RtlClearBits(BitMap, 0 + 113 * 32, 15);
+    RtlClearBits(BitMap, 1 + 114 * 32, 15);
+    RtlClearBits(BitMap, 2 + 115 * 32, 15);
 
-//    {
-//        ULONG i;
-//        for (i = 0; i < 16; i++) {
-//            DbgPrint("%2d: %08lx\n", i, BitMap->Buffer[i]);
-//        }
-//    }
+    //    {
+    //        ULONG i;
+    //        for (i = 0; i < 16; i++) {
+    //            DbgPrint("%2d: %08lx\n", i, BitMap->Buffer[i]);
+    //        }
+    //    }
 
-    if (RtlFindClearBitsAndSet( BitMap, 15, 0) != 0 + 113*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 15, 0) != 0 + 113 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error  0 + 113*32\n");
         return FALSE;
     }
-    if (RtlFindClearBitsAndSet( BitMap, 15, 0) != 1 + 114*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 15, 0) != 1 + 114 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error  1 + 114*32\n");
         return FALSE;
     }
-    if (RtlFindClearBitsAndSet( BitMap, 15, 0) != 2 + 115*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 15, 0) != 2 + 115 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error  2 + 115*32\n");
         return FALSE;
     }
 
-    if (RtlFindClearBitsAndSet( BitMap, 14, 0) != 0 + 110*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 14, 0) != 0 + 110 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error  0 + 110*32\n");
         return FALSE;
     }
-    if (RtlFindClearBitsAndSet( BitMap, 14, 0) != 1 + 111*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 14, 0) != 1 + 111 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error  1 + 111*32\n");
         return FALSE;
     }
-    if (RtlFindClearBitsAndSet( BitMap, 14, 0) != 2 + 112*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 14, 0) != 2 + 112 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error  2 + 112*32\n");
         return FALSE;
     }
 
-    if (RtlFindClearBitsAndSet( BitMap, 10, 0) != 0 + 16*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 10, 0) != 0 + 16 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error  0 + 16*32\n");
         return FALSE;
     }
-    if (RtlFindClearBitsAndSet( BitMap, 10, 0) != 4 + 17*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 10, 0) != 4 + 17 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error  4 + 17*32\n");
         return FALSE;
     }
-    if (RtlFindClearBitsAndSet( BitMap, 10, 0) != 6 + 18*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 10, 0) != 6 + 18 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error  6 + 18*32\n");
         return FALSE;
     }
-    if (RtlFindClearBitsAndSet( BitMap, 10, 0) != 7 + 19*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 10, 0) != 7 + 19 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error  7 + 19*32\n");
         return FALSE;
     }
 
-    if (RtlFindClearBitsAndSet( BitMap, 9, 0) != 0 + 13*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 9, 0) != 0 + 13 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error 0 + 13*32\n");
         return FALSE;
     }
-    if (RtlFindClearBitsAndSet( BitMap, 9, 0) != 4 + 14*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 9, 0) != 4 + 14 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error 4 + 14*32\n");
         return FALSE;
     }
-    if (RtlFindClearBitsAndSet( BitMap, 9, 0) != 7 + 15*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 9, 0) != 7 + 15 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error 7 + 15*32\n");
         return FALSE;
     }
 
-    if (RtlFindClearBitsAndSet( BitMap, 1, 0) != 0 + 10*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 1, 0) != 0 + 10 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error 0 + 10*32\n");
         return FALSE;
     }
-    if (RtlFindClearBitsAndSet( BitMap, 1, 0) != 5 + 11*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 1, 0) != 5 + 11 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error 5 + 11*32\n");
         return FALSE;
     }
-    if (RtlFindClearBitsAndSet( BitMap, 1, 0) != 7 + 12*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 1, 0) != 7 + 12 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error 7 + 12*32\n");
         return FALSE;
     }
@@ -1933,101 +1953,117 @@ DoBitMapTest( void )
     //  Now test some RtlFindClearBitsAndSet
     //
 
-    RtlSetAllBits( BitMap );
+    RtlSetAllBits(BitMap);
 
-    RtlClearBits( BitMap, 0 +  0*32,  1 );
-    RtlClearBits( BitMap, 5 +  1*32,  1 );
-    RtlClearBits( BitMap, 7 +  2*32,  1 );
+    RtlClearBits(BitMap, 0 + 0 * 32, 1);
+    RtlClearBits(BitMap, 5 + 1 * 32, 1);
+    RtlClearBits(BitMap, 7 + 2 * 32, 1);
 
-    RtlClearBits( BitMap, 0 +  3*32,  9 );
-    RtlClearBits( BitMap, 4 +  4*32,  9 );
-    RtlClearBits( BitMap, 7 +  5*32,  9 );
+    RtlClearBits(BitMap, 0 + 3 * 32, 9);
+    RtlClearBits(BitMap, 4 + 4 * 32, 9);
+    RtlClearBits(BitMap, 7 + 5 * 32, 9);
 
-    RtlClearBits( BitMap, 0 +  6*32, 10 );
-    RtlClearBits( BitMap, 4 +  7*32, 10 );
-    RtlClearBits( BitMap, 6 +  8*32, 10 );
-    RtlClearBits( BitMap, 7 +  9*32, 10 );
+    RtlClearBits(BitMap, 0 + 6 * 32, 10);
+    RtlClearBits(BitMap, 4 + 7 * 32, 10);
+    RtlClearBits(BitMap, 6 + 8 * 32, 10);
+    RtlClearBits(BitMap, 7 + 9 * 32, 10);
 
-    RtlClearBits( BitMap, 0 + 10*32, 14 );
-    RtlClearBits( BitMap, 1 + 11*32, 14 );
-    RtlClearBits( BitMap, 2 + 12*32, 14 );
+    RtlClearBits(BitMap, 0 + 10 * 32, 14);
+    RtlClearBits(BitMap, 1 + 11 * 32, 14);
+    RtlClearBits(BitMap, 2 + 12 * 32, 14);
 
-    RtlClearBits( BitMap, 0 + 13*32, 15 );
-    RtlClearBits( BitMap, 1 + 14*32, 15 );
-    RtlClearBits( BitMap, 2 + 15*32, 15 );
+    RtlClearBits(BitMap, 0 + 13 * 32, 15);
+    RtlClearBits(BitMap, 1 + 14 * 32, 15);
+    RtlClearBits(BitMap, 2 + 15 * 32, 15);
 
-//    {
-//        ULONG i;
-//        for (i = 0; i < 16; i++) {
-//            DbgPrint("%2d: %08lx\n", i, BitMap->Buffer[i]);
-//        }
-//    }
+    //    {
+    //        ULONG i;
+    //        for (i = 0; i < 16; i++) {
+    //            DbgPrint("%2d: %08lx\n", i, BitMap->Buffer[i]);
+    //        }
+    //    }
 
-    if (RtlFindClearBitsAndSet( BitMap, 15, 0) != 0 + 13*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 15, 0) != 0 + 13 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error  0 + 13*32\n");
         return FALSE;
     }
-    if (RtlFindClearBitsAndSet( BitMap, 15, 0) != 1 + 14*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 15, 0) != 1 + 14 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error  1 + 14*32\n");
         return FALSE;
     }
-    if (RtlFindClearBitsAndSet( BitMap, 15, 0) != 2 + 15*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 15, 0) != 2 + 15 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error  2 + 15*32\n");
         return FALSE;
     }
 
-    if (RtlFindClearBitsAndSet( BitMap, 14, 0) != 0 + 10*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 14, 0) != 0 + 10 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error  0 + 10*32\n");
         return FALSE;
     }
-    if (RtlFindClearBitsAndSet( BitMap, 14, 0) != 1 + 11*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 14, 0) != 1 + 11 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error  1 + 11*32\n");
         return FALSE;
     }
-    if (RtlFindClearBitsAndSet( BitMap, 14, 0) != 2 + 12*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 14, 0) != 2 + 12 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error  2 + 12*32\n");
         return FALSE;
     }
 
-    if (RtlFindClearBitsAndSet( BitMap, 10, 0) != 0 + 6*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 10, 0) != 0 + 6 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error  0 + 6*32\n");
         return FALSE;
     }
-    if (RtlFindClearBitsAndSet( BitMap, 10, 0) != 4 + 7*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 10, 0) != 4 + 7 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error  4 + 7*32\n");
         return FALSE;
     }
-    if (RtlFindClearBitsAndSet( BitMap, 10, 0) != 6 + 8*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 10, 0) != 6 + 8 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error  6 + 8*32\n");
         return FALSE;
     }
-    if (RtlFindClearBitsAndSet( BitMap, 10, 0) != 7 + 9*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 10, 0) != 7 + 9 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error  7 + 9*32\n");
         return FALSE;
     }
 
-    if (RtlFindClearBitsAndSet( BitMap, 9, 0) != 0 + 3*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 9, 0) != 0 + 3 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error 0 + 3*32\n");
         return FALSE;
     }
-    if (RtlFindClearBitsAndSet( BitMap, 9, 0) != 4 + 4*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 9, 0) != 4 + 4 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error 4 + 4*32\n");
         return FALSE;
     }
-    if (RtlFindClearBitsAndSet( BitMap, 9, 0) != 7 + 5*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 9, 0) != 7 + 5 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error 7 + 5*32\n");
         return FALSE;
     }
 
-    if (RtlFindClearBitsAndSet( BitMap, 1, 0) != 0 + 0*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 1, 0) != 0 + 0 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error 0 + 0*32\n");
         return FALSE;
     }
-    if (RtlFindClearBitsAndSet( BitMap, 1, 0) != 5 + 1*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 1, 0) != 5 + 1 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error 5 + 1*32\n");
         return FALSE;
     }
-    if (RtlFindClearBitsAndSet( BitMap, 1, 0) != 7 + 2*32) {
+    if (RtlFindClearBitsAndSet(BitMap, 1, 0) != 7 + 2 * 32)
+    {
         DbgPrint("RtlFindClearBitsAndSet Error 7 + 2*32\n");
         return FALSE;
     }
@@ -2040,26 +2076,23 @@ DoBitMapTest( void )
     //  Now clear all bits
     //
 
-    RtlSetAllBits( BitMap );
+    RtlSetAllBits(BitMap);
 
     //
     //  Now set some bit patterns, and test them
     //
 
-    RtlClearBits( BitMap,   0,  1 );
-    RtlClearBits( BitMap,  63,  1 );
-    RtlClearBits( BitMap,  65, 30 );
-    RtlClearBits( BitMap, 127,  2 );
-    RtlClearBits( BitMap, 191, 34 );
+    RtlClearBits(BitMap, 0, 1);
+    RtlClearBits(BitMap, 63, 1);
+    RtlClearBits(BitMap, 65, 30);
+    RtlClearBits(BitMap, 127, 2);
+    RtlClearBits(BitMap, 191, 34);
 
-    if ((BitMap->Buffer[0] != ~0x00000001) ||
-        (BitMap->Buffer[1] != ~0x80000000) ||
-        (BitMap->Buffer[2] != ~0x7ffffffe) ||
-        (BitMap->Buffer[3] != ~0x80000000) ||
-        (BitMap->Buffer[4] != ~0x00000001) ||
-        (BitMap->Buffer[5] != ~0x80000000) ||
-        (BitMap->Buffer[6] != ~0xffffffff) ||
-        (BitMap->Buffer[7] != ~0x00000001)) {
+    if ((BitMap->Buffer[0] != ~0x00000001) || (BitMap->Buffer[1] != ~0x80000000) ||
+        (BitMap->Buffer[2] != ~0x7ffffffe) || (BitMap->Buffer[3] != ~0x80000000) ||
+        (BitMap->Buffer[4] != ~0x00000001) || (BitMap->Buffer[5] != ~0x80000000) ||
+        (BitMap->Buffer[6] != ~0xffffffff) || (BitMap->Buffer[7] != ~0x00000001))
+    {
 
         DbgPrint("RtlClearBits Error\n");
         return FALSE;
@@ -2069,101 +2102,118 @@ DoBitMapTest( void )
     //  Now test some RtlFindSetBitsAndClear
     //
 
-    RtlClearAllBits( BitMap );
+    RtlClearAllBits(BitMap);
 
-    RtlSetBits( BitMap, 0 +  0*32,  1 );
-    RtlSetBits( BitMap, 5 +  1*32,  1 );
-    RtlSetBits( BitMap, 7 +  2*32,  1 );
+    RtlSetBits(BitMap, 0 + 0 * 32, 1);
+    RtlSetBits(BitMap, 5 + 1 * 32, 1);
+    RtlSetBits(BitMap, 7 + 2 * 32, 1);
 
-    RtlSetBits( BitMap, 0 +  3*32,  9 );
-    RtlSetBits( BitMap, 4 +  4*32,  9 );
-    RtlSetBits( BitMap, 7 +  5*32,  9 );
+    RtlSetBits(BitMap, 0 + 3 * 32, 9);
+    RtlSetBits(BitMap, 4 + 4 * 32, 9);
+    RtlSetBits(BitMap, 7 + 5 * 32, 9);
 
-    RtlSetBits( BitMap, 0 +  6*32, 10 );
-    RtlSetBits( BitMap, 4 +  7*32, 10 );
-    RtlSetBits( BitMap, 6 +  8*32, 10 );
-    RtlSetBits( BitMap, 7 +  9*32, 10 );
+    RtlSetBits(BitMap, 0 + 6 * 32, 10);
+    RtlSetBits(BitMap, 4 + 7 * 32, 10);
+    RtlSetBits(BitMap, 6 + 8 * 32, 10);
+    RtlSetBits(BitMap, 7 + 9 * 32, 10);
 
-    RtlSetBits( BitMap, 0 + 10*32, 14 );
-    RtlSetBits( BitMap, 1 + 11*32, 14 );
-    RtlSetBits( BitMap, 2 + 12*32, 14 );
+    RtlSetBits(BitMap, 0 + 10 * 32, 14);
+    RtlSetBits(BitMap, 1 + 11 * 32, 14);
+    RtlSetBits(BitMap, 2 + 12 * 32, 14);
 
-    RtlSetBits( BitMap, 0 + 13*32, 15 );
-    RtlSetBits( BitMap, 1 + 14*32, 15 );
-    RtlSetBits( BitMap, 2 + 15*32, 15 );
+    RtlSetBits(BitMap, 0 + 13 * 32, 15);
+    RtlSetBits(BitMap, 1 + 14 * 32, 15);
+    RtlSetBits(BitMap, 2 + 15 * 32, 15);
 
     {
         ULONG i;
-        for (i = 0; i < 16; i++) {
+        for (i = 0; i < 16; i++)
+        {
             DbgPrint("%2d: %08lx\n", i, BitMap->Buffer[i]);
         }
     }
 
-    if (RtlFindSetBitsAndClear( BitMap, 15, 0) != 0 + 13*32) {
+    if (RtlFindSetBitsAndClear(BitMap, 15, 0) != 0 + 13 * 32)
+    {
         DbgPrint("RtlFindSetBitsAndClear Error  0 + 13*32\n");
         return FALSE;
     }
-    if (RtlFindSetBitsAndClear( BitMap, 15, 0) != 1 + 14*32) {
+    if (RtlFindSetBitsAndClear(BitMap, 15, 0) != 1 + 14 * 32)
+    {
         DbgPrint("RtlFindSetBitsAndClear Error  1 + 14*32\n");
         return FALSE;
     }
-    if (RtlFindSetBitsAndClear( BitMap, 15, 0) != 2 + 15*32) {
+    if (RtlFindSetBitsAndClear(BitMap, 15, 0) != 2 + 15 * 32)
+    {
         DbgPrint("RtlFindSetBitsAndClear Error  2 + 15*32\n");
         return FALSE;
     }
 
-    if (RtlFindSetBitsAndClear( BitMap, 14, 0) != 0 + 10*32) {
+    if (RtlFindSetBitsAndClear(BitMap, 14, 0) != 0 + 10 * 32)
+    {
         DbgPrint("RtlFindSetBitsAndClear Error  0 + 10*32\n");
         return FALSE;
     }
-    if (RtlFindSetBitsAndClear( BitMap, 14, 0) != 1 + 11*32) {
+    if (RtlFindSetBitsAndClear(BitMap, 14, 0) != 1 + 11 * 32)
+    {
         DbgPrint("RtlFindSetBitsAndClear Error  1 + 11*32\n");
         return FALSE;
     }
-    if (RtlFindSetBitsAndClear( BitMap, 14, 0) != 2 + 12*32) {
+    if (RtlFindSetBitsAndClear(BitMap, 14, 0) != 2 + 12 * 32)
+    {
         DbgPrint("RtlFindSetBitsAndClear Error  2 + 12*32\n");
         return FALSE;
     }
 
-    if (RtlFindSetBitsAndClear( BitMap, 10, 0) != 0 + 6*32) {
+    if (RtlFindSetBitsAndClear(BitMap, 10, 0) != 0 + 6 * 32)
+    {
         DbgPrint("RtlFindSetBitsAndClear Error  0 + 6*32\n");
         return FALSE;
     }
-    if (RtlFindSetBitsAndClear( BitMap, 10, 0) != 4 + 7*32) {
+    if (RtlFindSetBitsAndClear(BitMap, 10, 0) != 4 + 7 * 32)
+    {
         DbgPrint("RtlFindSetBitsAndClear Error  4 + 7*32\n");
         return FALSE;
     }
-    if (RtlFindSetBitsAndClear( BitMap, 10, 0) != 6 + 8*32) {
+    if (RtlFindSetBitsAndClear(BitMap, 10, 0) != 6 + 8 * 32)
+    {
         DbgPrint("RtlFindSetBitsAndClear Error  6 + 8*32\n");
         return FALSE;
     }
-    if (RtlFindSetBitsAndClear( BitMap, 10, 0) != 7 + 9*32) {
+    if (RtlFindSetBitsAndClear(BitMap, 10, 0) != 7 + 9 * 32)
+    {
         DbgPrint("RtlFindSetBitsAndClear Error  7 + 9*32\n");
         return FALSE;
     }
 
-    if (RtlFindSetBitsAndClear( BitMap, 9, 0) != 0 + 3*32) {
+    if (RtlFindSetBitsAndClear(BitMap, 9, 0) != 0 + 3 * 32)
+    {
         DbgPrint("RtlFindSetBitsAndClear Error 0 + 3*32\n");
         return FALSE;
     }
-    if (RtlFindSetBitsAndClear( BitMap, 9, 0) != 4 + 4*32) {
+    if (RtlFindSetBitsAndClear(BitMap, 9, 0) != 4 + 4 * 32)
+    {
         DbgPrint("RtlFindSetBitsAndClear Error 4 + 4*32\n");
         return FALSE;
     }
-    if (RtlFindSetBitsAndClear( BitMap, 9, 0) != 7 + 5*32) {
+    if (RtlFindSetBitsAndClear(BitMap, 9, 0) != 7 + 5 * 32)
+    {
         DbgPrint("RtlFindSetBitsAndClear Error 7 + 5*32\n");
         return FALSE;
     }
 
-    if (RtlFindSetBitsAndClear( BitMap, 1, 0) != 0 + 0*32) {
+    if (RtlFindSetBitsAndClear(BitMap, 1, 0) != 0 + 0 * 32)
+    {
         DbgPrint("RtlFindSetBitsAndClear Error 0 + 0*32\n");
         return FALSE;
     }
-    if (RtlFindSetBitsAndClear( BitMap, 1, 0) != 5 + 1*32) {
+    if (RtlFindSetBitsAndClear(BitMap, 1, 0) != 5 + 1 * 32)
+    {
         DbgPrint("RtlFindSetBitsAndClear Error 5 + 1*32\n");
         return FALSE;
     }
-    if (RtlFindSetBitsAndClear( BitMap, 1, 0) != 7 + 2*32) {
+    if (RtlFindSetBitsAndClear(BitMap, 1, 0) != 7 + 2 * 32)
+    {
         DbgPrint("RtlFindSetBitsAndClear Error 7 + 2*32\n");
         return FALSE;
     }
@@ -2172,85 +2222,72 @@ DoBitMapTest( void )
 
     return TRUE;
 }
-
+
 BOOLEAN
-ExTest (
-    VOID
-    )
+ExTest(VOID)
 
 {
 
     USHORT i;
 
-    DbgPrint( "In extest\n" );
-    for (i=1; i<16; i++) {
+    DbgPrint("In extest\n");
+    for (i = 1; i < 16; i++)
+    {
         if (i == TestEvent)
             DoEventTest();
-        else
-        if (i == TestHandle)
+        else if (i == TestHandle)
             DoHandleTest();
-        else
-        if (i == TestInfo)
+        else if (i == TestInfo)
             DoInfoTest();
-        else
-        if (i == TestLuid) {
+        else if (i == TestLuid)
+        {
             DoLuidTest();
-            }
-        else
-        if (i == TestMemory) {
-            DoMemoryTest();
-            }
-        else
-        if (i == TestParty)
-            DoPartyTest();
-        else
-        if (i == TestPool)
-            DoPoolTest();
-        else
-        if (i == TestResource)
-            DoResourceTest();
-        else
-        if (i == TestBitMap)
-            DoBitMapTest();
-        else
-        if (i == TestSemaphore)
-            DoSemaphoreTest();
-        else
-        if (i == TestTimer)
-            DoTimerTest();
-        else
-        if (i == TestZone)
-            DoZoneTest();
-        else
-        if (i == TestMutant)
-            DoMutantTest();
-        else
-        if (i == TestException)
-            DoExceptionTest();
         }
+        else if (i == TestMemory)
+        {
+            DoMemoryTest();
+        }
+        else if (i == TestParty)
+            DoPartyTest();
+        else if (i == TestPool)
+            DoPoolTest();
+        else if (i == TestResource)
+            DoResourceTest();
+        else if (i == TestBitMap)
+            DoBitMapTest();
+        else if (i == TestSemaphore)
+            DoSemaphoreTest();
+        else if (i == TestTimer)
+            DoTimerTest();
+        else if (i == TestZone)
+            DoZoneTest();
+        else if (i == TestMutant)
+            DoMutantTest();
+        else if (i == TestException)
+            DoExceptionTest();
+    }
 
-    TestFunction = NULL;    // Invoke the CLI
+    TestFunction = NULL; // Invoke the CLI
     return TRUE;
 }
 #ifndef MIPS
-
-int
-_CDECL
-main(
-    int argc,
-    char *argv[]
-    )
+
+int _CDECL main(int argc, char *argv[])
 {
 #ifdef SIMULATOR
     char c, *s;
     USHORT i;
 
     i = 1;
-    if (argc > 1 ) {
-        while (--argc) {
+    if (argc > 1)
+    {
+        while (--argc)
+        {
             s = *++argv;
-            while ((c = *s++) != '\0') {
-                switch (c) {
+            while ((c = *s++) != '\0')
+            {
+                switch (c)
+                {
                 case 'B':
                 case 'b':
                     TestBitMap = i++;
@@ -2317,45 +2354,47 @@ main(
                     break;
 
                 default:
-                    DbgPrint( "tex: invalid test code - '%s'", *argv );
+                    DbgPrint("tex: invalid test code - '%s'", *argv);
                     break;
                 }
             }
         }
-    } else {
-        if (!strcmp( "DAVEC", szVerUser )) {
+    }
+    else
+    {
+        if (!strcmp("DAVEC", szVerUser))
+        {
             TestEvent = 1;
             TestSemaphore = 2;
             TestTimer = 3;
             TestMutant = 4;
             TestException = 5;
         }
-        else
-        if (!strcmp( "MARKL", szVerUser )) {
+        else if (!strcmp("MARKL", szVerUser))
+        {
             TestPool = 1;
             TestZone = 2;
         }
-        else
-        if (!strcmp( "STEVEWO", szVerUser )) {
+        else if (!strcmp("STEVEWO", szVerUser))
+        {
             TestInfo = 1;
             TestParty = 2;
             TestMemory = 3;
             TestHandle = 4;
         }
-        else
-        if (!strcmp( "GARYKI", szVerUser )) {
+        else if (!strcmp("GARYKI", szVerUser))
+        {
             TestResource = 1;
             TestMemory = 2;
             TestBitMap = 3;
         }
-        else
-        if (!strcmp( "JIMK", szVerUser )) {
+        else if (!strcmp("JIMK", szVerUser))
+        {
             TestLuid = 1;
         }
-        else {
-            DbgPrint( "*** Warning *** - %s is an unauthorized user of tex\n",
-                     szVerUser
-                   );
+        else
+        {
+            DbgPrint("*** Warning *** - %s is an unauthorized user of tex\n", szVerUser);
         }
     }
 #else
@@ -2371,9 +2410,8 @@ main(
     return 0;
 }
 #endif // MIPS
-
-void
-oops()
+
+void oops()
 {
     ExTimerRundown();
 }

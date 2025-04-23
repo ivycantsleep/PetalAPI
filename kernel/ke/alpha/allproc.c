@@ -28,7 +28,7 @@ Revision History:
 
 
 #include "ki.h"
-
+
 #ifdef ALLOC_PRAGMA
 
 #pragma alloc_text(INIT, KeStartAllProcessors)
@@ -72,10 +72,8 @@ KNODE KiNodeInit[MAXIMUM_CCNUMA_NODES];
 
 #if defined(_AXP64_)
 
-#define IS_KSEG_ADDRESS(v)                                      \
-    (((v) >= KSEG43_BASE) &&                                    \
-     ((v) < KSEG43_LIMIT) &&                                    \
-     (KSEG_PFN(v) < ((KSEG2_BASE - KSEG0_BASE) >> PAGE_SHIFT)))
+#define IS_KSEG_ADDRESS(v) \
+    (((v) >= KSEG43_BASE) && ((v) < KSEG43_LIMIT) && (KSEG_PFN(v) < ((KSEG2_BASE - KSEG0_BASE) >> PAGE_SHIFT)))
 
 #define KSEG_PFN(v) ((ULONG)(((v) - KSEG43_BASE) >> PAGE_SHIFT))
 #define KSEG0_ADDRESS(v) (KSEG0_BASE | ((v) - KSEG43_BASE))
@@ -92,15 +90,9 @@ KNODE KiNodeInit[MAXIMUM_CCNUMA_NODES];
 // Define forward referenced prototypes.
 //
 
-VOID
-KiStartProcessor (
-    IN PLOADER_PARAMETER_BLOCK Loaderblock
-    );
-
-VOID
-KeStartAllProcessors(
-    VOID
-    )
+VOID KiStartProcessor(IN PLOADER_PARAMETER_BLOCK Loaderblock);
+
+VOID KeStartAllProcessors(VOID)
 
 /*++
 
@@ -145,8 +137,10 @@ Return Value:
     // processors which belong to each node.
     //
 
-    if (KeNumberNodes > 1) {
-        for (NodeNumber = 0; NodeNumber < KeNumberNodes; NodeNumber++) {
+    if (KeNumberNodes > 1)
+    {
+        for (NodeNumber = 0; NodeNumber < KeNumberNodes; NodeNumber++)
+        {
 
             Node = KeNodeBlock[NodeNumber];
 
@@ -155,17 +149,17 @@ Return Value:
             // what Node Color to use for page coloring.
             //
 
-            Status = KiQueryNodeAffinity(NodeNumber,
-                                         &Node->ProcessorMask);
+            Status = KiQueryNodeAffinity(NodeNumber, &Node->ProcessorMask);
 
-            if (!NT_SUCCESS(Status)) {
-                DbgPrint(
-                    "KE/HAL: NUMA Hal failed to return info for Node %i.\n",
-                    NodeNumber);
+            if (!NT_SUCCESS(Status))
+            {
+                DbgPrint("KE/HAL: NUMA Hal failed to return info for Node %i.\n", NodeNumber);
                 DbgPrint("KE/HAL: Reverting to non NUMA configuration.\n");
                 ASSERT(NT_SUCCESS(Status));
                 KeNumberNodes = 1;
-            } else {
+            }
+            else
+            {
 
                 //
                 // In the unlikely event that processor 0 is not
@@ -173,7 +167,8 @@ Return Value:
                 // fix it.
                 //
 
-                if (Node->ProcessorMask & 1) {
+                if (Node->ProcessorMask & 1)
+                {
                     KeGetCurrentPrcb()->ParentNode = Node;
                 }
             }
@@ -188,7 +183,8 @@ Return Value:
     // of supported processors.
     //
 
-    if (KeRegisteredProcessors > MAXIMUM_PROCESSORS) {
+    if (KeRegisteredProcessors > MAXIMUM_PROCESSORS)
+    {
         KeRegisteredProcessors = MAXIMUM_PROCESSORS;
     }
 
@@ -202,20 +198,24 @@ Return Value:
     ProcessorState.ContextFrame.IntA0 = (ULONGLONG)(LONG_PTR)KeLoaderBlock;
     ProcessorState.ContextFrame.Fir = (ULONGLONG)(LONG_PTR)KiStartProcessor;
     Number = 1;
-    while (Number < KeRegisteredProcessors) {
+    while (Number < KeRegisteredProcessors)
+    {
 
 #if defined(KE_MULTINODE)
 
         NewProcessorAffinity = 1 << Number;
 
-        for (NodeNumber = 0; NodeNumber < KeNumberNodes; NodeNumber++) {
+        for (NodeNumber = 0; NodeNumber < KeNumberNodes; NodeNumber++)
+        {
             Node = KeNodeBlock[NodeNumber];
-            if (Node->ProcessorMask & NewProcessorAffinity) {
+            if (Node->ProcessorMask & NewProcessorAffinity)
+            {
                 break;
             }
         }
 
-        if (NodeNumber == KeNumberNodes) {
+        if (NodeNumber == KeNumberNodes)
+        {
 
             //
             // This should only happen when we're about to ask
@@ -244,9 +244,11 @@ Return Value:
 
         SpecialPoolState = MmSetSpecialPool(FALSE);
         MemoryBlock1 = (ULONG_PTR)ExAllocatePool(NonPagedPool, BLOCK1_SIZE);
-        if (IS_KSEG_ADDRESS(MemoryBlock1) == FALSE) {
+        if (IS_KSEG_ADDRESS(MemoryBlock1) == FALSE)
+        {
             MmSetSpecialPool(SpecialPoolState);
-            if ((PVOID)MemoryBlock1 != NULL) {
+            if ((PVOID)MemoryBlock1 != NULL)
+            {
                 ExFreePool((PVOID)MemoryBlock1);
             }
 
@@ -254,10 +256,12 @@ Return Value:
         }
 
         MemoryBlock2 = (ULONG_PTR)ExAllocatePool(NonPagedPool, BLOCK2_SIZE);
-        if (IS_KSEG_ADDRESS(MemoryBlock2) == FALSE) {
+        if (IS_KSEG_ADDRESS(MemoryBlock2) == FALSE)
+        {
             MmSetSpecialPool(SpecialPoolState);
             ExFreePool((PVOID)MemoryBlock1);
-            if ((PVOID)MemoryBlock2 != NULL) {
+            if ((PVOID)MemoryBlock2 != NULL)
+            {
                 ExFreePool((PVOID)MemoryBlock2);
             }
 
@@ -277,25 +281,21 @@ Return Value:
         // Set address of interrupt stack in loader parameter block.
         //
 
-        KeLoaderBlock->u.Alpha.PanicStack =
-                        KSEG0_ADDRESS(MemoryBlock1 + (1 * KERNEL_STACK_SIZE));
+        KeLoaderBlock->u.Alpha.PanicStack = KSEG0_ADDRESS(MemoryBlock1 + (1 * KERNEL_STACK_SIZE));
 
         //
         // Set address of idle thread kernel stack in loader parameter block.
         //
 
-        KeLoaderBlock->KernelStack =
-                        KSEG0_ADDRESS(MemoryBlock1 + (2 * KERNEL_STACK_SIZE));
+        KeLoaderBlock->KernelStack = KSEG0_ADDRESS(MemoryBlock1 + (2 * KERNEL_STACK_SIZE));
 
-        ProcessorState.ContextFrame.IntSp =
-                            (ULONGLONG)(LONG_PTR)KeLoaderBlock->KernelStack;
+        ProcessorState.ContextFrame.IntSp = (ULONGLONG)(LONG_PTR)KeLoaderBlock->KernelStack;
 
         //
         // Set address of panic stack in loader parameter block.
         //
 
-        KeLoaderBlock->u.Alpha.DpcStack =
-                        KSEG0_ADDRESS(MemoryBlock1 + (3 * KERNEL_STACK_SIZE));
+        KeLoaderBlock->u.Alpha.DpcStack = KSEG0_ADDRESS(MemoryBlock1 + (3 * KERNEL_STACK_SIZE));
 
         //
         // Set the page frame of the PCR page in the loader parameter block.
@@ -309,10 +309,8 @@ Return Value:
         // loader parameter block.
         //
 
-        KeLoaderBlock->Prcb = KSEG0_ADDRESS((MemoryBlock2  + 63) & ~63);
-        KeLoaderBlock->Thread = KeLoaderBlock->Prcb +
-                                ROUND_UP(KPRCB) +
-                                ROUND_UP(KNODE);
+        KeLoaderBlock->Prcb = KSEG0_ADDRESS((MemoryBlock2 + 63) & ~63);
+        KeLoaderBlock->Thread = KeLoaderBlock->Prcb + ROUND_UP(KPRCB) + ROUND_UP(KNODE);
 
 #if defined(KE_MULTINODE)
 
@@ -321,7 +319,8 @@ Return Value:
         // space allocated for KNODE as the KNODE.
         //
 
-        if (KeNodeBlock[NodeNumber] == &KiNodeInit[NodeNumber]) {
+        if (KeNodeBlock[NodeNumber] == &KiNodeInit[NodeNumber])
+        {
             Node = (PKNODE)(KeLoaderBlock->Prcb + ROUND_UP(KPRCB));
             *Node = KiNodeInit[NodeNumber];
             KeNodeBlock[NodeNumber] = Node;
@@ -342,12 +341,14 @@ Return Value:
         //
 
         Started = HalStartNextProcessor(KeLoaderBlock, &ProcessorState);
-        if (Started == FALSE) {
+        if (Started == FALSE)
+        {
             ExFreePool((PVOID)MemoryBlock1);
             ExFreePool((PVOID)MemoryBlock2);
             break;
-
-        } else {
+        }
+        else
+        {
 
             //
             // Wait until boot is finished on the target processor before
@@ -358,7 +359,8 @@ Return Value:
 
             Prcb = (PKPRCB)(KeLoaderBlock->Prcb);
             RestartBlock = Prcb->RestartBlock;
-            while (RestartBlock->BootStatus.BootFinished == 0) {
+            while (RestartBlock->BootStatus.BootFinished == 0)
+            {
                 KiMb();
             }
         }
@@ -382,12 +384,9 @@ Return Value:
     KiAdjustInterruptTime(0);
     return;
 }
-
+
 #if !defined(NT_UP)
-VOID
-KiAllProcessorsStarted(
-    VOID
-    )
+VOID KiAllProcessorsStarted(VOID)
 
 /*++
 
@@ -416,8 +415,10 @@ Return Value:
     // used during initialization.
     //
 
-    for (i = 0; i < KeNumberNodes; i++) {
-        if (KeNodeBlock[i] == &KiNodeInit[i]) {
+    for (i = 0; i < KeNumberNodes; i++)
+    {
+        if (KeNodeBlock[i] == &KiNodeInit[i])
+        {
 
             //
             // No processor started on this node so no new node
@@ -427,22 +428,23 @@ Return Value:
             // structure for the node.
             //
 
-            KeNodeBlock[i] = ExAllocatePoolWithTag(NonPagedPool,
-                                                   sizeof(KNODE),
-                                                   '  eK');
-            if (KeNodeBlock[i]) {
+            KeNodeBlock[i] = ExAllocatePoolWithTag(NonPagedPool, sizeof(KNODE), '  eK');
+            if (KeNodeBlock[i])
+            {
                 *KeNodeBlock[i] = KiNodeInit[i];
             }
         }
     }
 
-    for (i = KeNumberNodes; i < MAXIMUM_CCNUMA_NODES; i++) {
+    for (i = KeNumberNodes; i < MAXIMUM_CCNUMA_NODES; i++)
+    {
         KeNodeBlock[i] = NULL;
     }
 
 #endif
 
-    if (KeNumberNodes == 1) {
+    if (KeNumberNodes == 1)
+    {
 
         //
         // For Non NUMA machines, Node 0 gets all processors.

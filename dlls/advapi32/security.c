@@ -27,7 +27,7 @@ Revision History:
 
 #define LSADEFINED
 
-
+
 /////////////////////////////////////////////////////////////////////////////
 //                                                                         //
 //               Private Routine Prototypes                                //
@@ -35,28 +35,18 @@ Revision History:
 /////////////////////////////////////////////////////////////////////////////
 
 
-VOID
-SepFormatAccountSid(
-    PSID iSid,
-    LPWSTR OutputBuffer
-    );
+VOID SepFormatAccountSid(PSID iSid, LPWSTR OutputBuffer);
 
 
-
 /////////////////////////////////////////////////////////////////////////////
 //                                                                         //
 //               Exported Routines                                         //
 //                                                                         //
 /////////////////////////////////////////////////////////////////////////////
 
-
-BOOL
-APIENTRY
-DuplicateToken(
-    HANDLE ExistingTokenHandle,
-    SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
-    PHANDLE DuplicateTokenHandle
-    )
+
+BOOL APIENTRY DuplicateToken(HANDLE ExistingTokenHandle, SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
+                             PHANDLE DuplicateTokenHandle)
 
 /*++
 
@@ -86,25 +76,13 @@ Return Value:
 --*/
 
 {
-    return( DuplicateTokenEx( ExistingTokenHandle,
-                              TOKEN_IMPERSONATE | TOKEN_QUERY,
-                              NULL,
-                              ImpersonationLevel,
-                              TokenImpersonation,
-                              DuplicateTokenHandle
-                              ) );
-
+    return (DuplicateTokenEx(ExistingTokenHandle, TOKEN_IMPERSONATE | TOKEN_QUERY, NULL, ImpersonationLevel,
+                             TokenImpersonation, DuplicateTokenHandle));
 }
 
-BOOL
-APIENTRY
-DuplicateTokenEx(
-    HANDLE hExistingToken,
-    DWORD dwDesiredAccess,
-    LPSECURITY_ATTRIBUTES lpTokenAttributes,
-    SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
-    TOKEN_TYPE TokenType,
-    PHANDLE phNewToken)
+BOOL APIENTRY DuplicateTokenEx(HANDLE hExistingToken, DWORD dwDesiredAccess, LPSECURITY_ATTRIBUTES lpTokenAttributes,
+                               SECURITY_IMPERSONATION_LEVEL ImpersonationLevel, TOKEN_TYPE TokenType,
+                               PHANDLE phNewToken)
 /*++
 
     Routine Description:
@@ -144,7 +122,7 @@ DuplicateTokenEx(
     NTSTATUS Status;
     ULONG Attributes;
 
-    SecurityQualityOfService.Length = sizeof( SECURITY_QUALITY_OF_SERVICE  );
+    SecurityQualityOfService.Length = sizeof(SECURITY_QUALITY_OF_SERVICE);
     SecurityQualityOfService.ImpersonationLevel = ImpersonationLevel;
     SecurityQualityOfService.ContextTrackingMode = SECURITY_DYNAMIC_TRACKING;
     SecurityQualityOfService.EffectiveOnly = FALSE;
@@ -167,43 +145,23 @@ DuplicateTokenEx(
         Attributes = 0;
     }
 
-    InitializeObjectAttributes(
-        &ObjA,
-        NULL,
-        Attributes,
-        NULL,
-        SecurityDescriptor
-        );
+    InitializeObjectAttributes(&ObjA, NULL, Attributes, NULL, SecurityDescriptor);
 
     ObjA.SecurityQualityOfService = &SecurityQualityOfService;
 
-    Status = NtDuplicateToken(
-                 hExistingToken,
-                 dwDesiredAccess,
-                 &ObjA,
-                 FALSE,
-                 TokenType,
-                 phNewToken
-                 );
+    Status = NtDuplicateToken(hExistingToken, dwDesiredAccess, &ObjA, FALSE, TokenType, phNewToken);
 
-    if ( !NT_SUCCESS( Status ) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
-    return( TRUE );
-
+    return (TRUE);
 }
 
 
-
-
-
-BOOL
-APIENTRY
-AllocateLocallyUniqueId(
-    PLUID Luid
-    )
+BOOL APIENTRY AllocateLocallyUniqueId(PLUID Luid)
 /*++
 
 Routine Description:
@@ -221,32 +179,23 @@ Return Value:
 
 --*/
 
-{   NTSTATUS Status;
+{
+    NTSTATUS Status;
 
-    Status = NtAllocateLocallyUniqueId( Luid );
-    if ( !NT_SUCCESS( Status )) {
-        BaseSetLastNTError( Status );
-        return( FALSE );
+    Status = NtAllocateLocallyUniqueId(Luid);
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        return (FALSE);
     }
 
-    return( TRUE );
+    return (TRUE);
 }
 
 
-
-
-BOOL
-APIENTRY
-AccessCheck (
-    PSECURITY_DESCRIPTOR pSecurityDescriptor,
-    HANDLE ClientToken,
-    DWORD DesiredAccess,
-    PGENERIC_MAPPING GenericMapping,
-    PPRIVILEGE_SET PrivilegeSet,
-    LPDWORD PrivilegeSetLength,
-    LPDWORD GrantedAccess,
-    LPBOOL AccessStatus
-    )
+BOOL APIENTRY AccessCheck(PSECURITY_DESCRIPTOR pSecurityDescriptor, HANDLE ClientToken, DWORD DesiredAccess,
+                          PGENERIC_MAPPING GenericMapping, PPRIVILEGE_SET PrivilegeSet, LPDWORD PrivilegeSetLength,
+                          LPDWORD GrantedAccess, LPBOOL AccessStatus)
 /*++
 
 Routine Description:
@@ -296,26 +245,20 @@ Return Value:
     NTSTATUS Status;
     NTSTATUS RealStatus;
 
-    Status = NtAccessCheck (
-                pSecurityDescriptor,
-                ClientToken,
-                DesiredAccess,
-                GenericMapping,
-                PrivilegeSet,
-                PrivilegeSetLength,
-                GrantedAccess,
-                &RealStatus
-                );
+    Status = NtAccessCheck(pSecurityDescriptor, ClientToken, DesiredAccess, GenericMapping, PrivilegeSet,
+                           PrivilegeSetLength, GrantedAccess, &RealStatus);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
-    if ( !NT_SUCCESS( RealStatus ) ) {
-        BaseSetLastNTError( RealStatus );
+    if (!NT_SUCCESS(RealStatus))
+    {
+        BaseSetLastNTError(RealStatus);
         *AccessStatus = FALSE;
-        return( TRUE );
+        return (TRUE);
     }
 
     *AccessStatus = TRUE;
@@ -323,23 +266,10 @@ Return Value:
 }
 
 
-
-
-BOOL
-APIENTRY
-AccessCheckByType (
-    PSECURITY_DESCRIPTOR pSecurityDescriptor,
-    PSID PrincipalSelfSid,
-    HANDLE ClientToken,
-    DWORD DesiredAccess,
-    POBJECT_TYPE_LIST ObjectTypeList,
-    DWORD ObjectTypeListLength,
-    PGENERIC_MAPPING GenericMapping,
-    PPRIVILEGE_SET PrivilegeSet,
-    LPDWORD PrivilegeSetLength,
-    LPDWORD GrantedAccess,
-    LPBOOL AccessStatus
-    )
+BOOL APIENTRY AccessCheckByType(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID PrincipalSelfSid, HANDLE ClientToken,
+                                DWORD DesiredAccess, POBJECT_TYPE_LIST ObjectTypeList, DWORD ObjectTypeListLength,
+                                PGENERIC_MAPPING GenericMapping, PPRIVILEGE_SET PrivilegeSet,
+                                LPDWORD PrivilegeSetLength, LPDWORD GrantedAccess, LPBOOL AccessStatus)
 /*++
 
 Routine Description:
@@ -402,29 +332,21 @@ Return Value:
     NTSTATUS Status;
     NTSTATUS RealStatus;
 
-    Status = NtAccessCheckByType (
-                pSecurityDescriptor,
-                PrincipalSelfSid,
-                ClientToken,
-                DesiredAccess,
-                ObjectTypeList,
-                ObjectTypeListLength,
-                GenericMapping,
-                PrivilegeSet,
-                PrivilegeSetLength,
-                GrantedAccess,
-                &RealStatus
-                );
+    Status = NtAccessCheckByType(pSecurityDescriptor, PrincipalSelfSid, ClientToken, DesiredAccess, ObjectTypeList,
+                                 ObjectTypeListLength, GenericMapping, PrivilegeSet, PrivilegeSetLength, GrantedAccess,
+                                 &RealStatus);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
-    if ( !NT_SUCCESS( RealStatus ) ) {
-        BaseSetLastNTError( RealStatus );
+    if (!NT_SUCCESS(RealStatus))
+    {
+        BaseSetLastNTError(RealStatus);
         *AccessStatus = FALSE;
-        return( TRUE );
+        return (TRUE);
     }
 
     *AccessStatus = TRUE;
@@ -432,23 +354,11 @@ Return Value:
 }
 
 
-
-
-BOOL
-APIENTRY
-AccessCheckByTypeResultList (
-    PSECURITY_DESCRIPTOR pSecurityDescriptor,
-    PSID PrincipalSelfSid,
-    HANDLE ClientToken,
-    DWORD DesiredAccess,
-    POBJECT_TYPE_LIST ObjectTypeList,
-    DWORD ObjectTypeListLength,
-    PGENERIC_MAPPING GenericMapping,
-    PPRIVILEGE_SET PrivilegeSet,
-    LPDWORD PrivilegeSetLength,
-    LPDWORD GrantedAccessList,
-    LPDWORD AccessStatusList
-    )
+BOOL APIENTRY AccessCheckByTypeResultList(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID PrincipalSelfSid,
+                                          HANDLE ClientToken, DWORD DesiredAccess, POBJECT_TYPE_LIST ObjectTypeList,
+                                          DWORD ObjectTypeListLength, PGENERIC_MAPPING GenericMapping,
+                                          PPRIVILEGE_SET PrivilegeSet, LPDWORD PrivilegeSetLength,
+                                          LPDWORD GrantedAccessList, LPDWORD AccessStatusList)
 /*++
 
 Routine Description:
@@ -512,23 +422,14 @@ Return Value:
     NTSTATUS RealStatus;
     ULONG i;
 
-    ASSERT (sizeof(NTSTATUS) == sizeof(DWORD) );
+    ASSERT(sizeof(NTSTATUS) == sizeof(DWORD));
 
-    Status = NtAccessCheckByTypeResultList (
-                pSecurityDescriptor,
-                PrincipalSelfSid,
-                ClientToken,
-                DesiredAccess,
-                ObjectTypeList,
-                ObjectTypeListLength,
-                GenericMapping,
-                PrivilegeSet,
-                PrivilegeSetLength,
-                GrantedAccessList,
-                (PNTSTATUS)AccessStatusList
-                );
+    Status = NtAccessCheckByTypeResultList(pSecurityDescriptor, PrincipalSelfSid, ClientToken, DesiredAccess,
+                                           ObjectTypeList, ObjectTypeListLength, GenericMapping, PrivilegeSet,
+                                           PrivilegeSetLength, GrantedAccessList, (PNTSTATUS)AccessStatusList);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -537,11 +438,15 @@ Return Value:
     // Loop converting the array of NT status codes to WIN status codes.
     //
 
-    for ( i=0; i<ObjectTypeListLength; i++ ) {
-        if ( AccessStatusList[i] == STATUS_SUCCESS ) {
+    for (i = 0; i < ObjectTypeListLength; i++)
+    {
+        if (AccessStatusList[i] == STATUS_SUCCESS)
+        {
             AccessStatusList[i] = NO_ERROR;
-        } else {
-            AccessStatusList[i] = RtlNtStatusToDosError( AccessStatusList[i] );
+        }
+        else
+        {
+            AccessStatusList[i] = RtlNtStatusToDosError(AccessStatusList[i]);
         }
     }
 
@@ -549,15 +454,7 @@ Return Value:
 }
 
 
-
-
-BOOL
-APIENTRY
-OpenProcessToken (
-    HANDLE ProcessHandle,
-    DWORD DesiredAccess,
-    PHANDLE TokenHandle
-    )
+BOOL APIENTRY OpenProcessToken(HANDLE ProcessHandle, DWORD DesiredAccess, PHANDLE TokenHandle)
 /*++
 
 Routine Description:
@@ -586,13 +483,10 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = NtOpenProcessToken (
-        ProcessHandle,
-        DesiredAccess,
-        TokenHandle
-        );
+    Status = NtOpenProcessToken(ProcessHandle, DesiredAccess, TokenHandle);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -601,16 +495,7 @@ Return Value:
 }
 
 
-
-
-BOOL
-APIENTRY
-OpenThreadToken (
-    HANDLE ThreadHandle,
-    DWORD DesiredAccess,
-    BOOL OpenAsSelf,
-    PHANDLE TokenHandle
-    )
+BOOL APIENTRY OpenThreadToken(HANDLE ThreadHandle, DWORD DesiredAccess, BOOL OpenAsSelf, PHANDLE TokenHandle)
 /*++
 
 
@@ -654,14 +539,10 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = NtOpenThreadToken (
-        ThreadHandle,
-        DesiredAccess,
-        (BOOLEAN)OpenAsSelf,
-        TokenHandle
-        );
+    Status = NtOpenThreadToken(ThreadHandle, DesiredAccess, (BOOLEAN)OpenAsSelf, TokenHandle);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -669,15 +550,8 @@ Return Value:
     return TRUE;
 }
 
-BOOL
-APIENTRY
-GetTokenInformation (
-    HANDLE TokenHandle,
-    TOKEN_INFORMATION_CLASS TokenInformationClass,
-    PVOID TokenInformation,
-    DWORD TokenInformationLength,
-    PDWORD ReturnLength
-    )
+BOOL APIENTRY GetTokenInformation(HANDLE TokenHandle, TOKEN_INFORMATION_CLASS TokenInformationClass,
+                                  PVOID TokenInformation, DWORD TokenInformationLength, PDWORD ReturnLength)
 /*++
 
 
@@ -758,15 +632,11 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = NtQueryInformationToken (
-        TokenHandle,
-        TokenInformationClass,
-        TokenInformation,
-        TokenInformationLength,
-        ReturnLength
-        );
+    Status = NtQueryInformationToken(TokenHandle, TokenInformationClass, TokenInformation, TokenInformationLength,
+                                     ReturnLength);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -775,16 +645,8 @@ Return Value:
 }
 
 
-
-
-BOOL
-APIENTRY
-SetTokenInformation (
-    HANDLE TokenHandle,
-    TOKEN_INFORMATION_CLASS TokenInformationClass,
-    PVOID TokenInformation,
-    DWORD TokenInformationLength
-    )
+BOOL APIENTRY SetTokenInformation(HANDLE TokenHandle, TOKEN_INFORMATION_CLASS TokenInformationClass,
+                                  PVOID TokenInformation, DWORD TokenInformationLength)
 /*++
 
 
@@ -858,14 +720,10 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = NtSetInformationToken (
-        TokenHandle,
-        TokenInformationClass,
-        TokenInformation,
-        TokenInformationLength
-        );
+    Status = NtSetInformationToken(TokenHandle, TokenInformationClass, TokenInformation, TokenInformationLength);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -874,17 +732,8 @@ Return Value:
 }
 
 
-
-BOOL
-APIENTRY
-AdjustTokenPrivileges (
-    HANDLE TokenHandle,
-    BOOL DisableAllPrivileges,
-    PTOKEN_PRIVILEGES NewState,
-    DWORD BufferLength,
-    PTOKEN_PRIVILEGES PreviousState,
-    PDWORD ReturnLength
-    )
+BOOL APIENTRY AdjustTokenPrivileges(HANDLE TokenHandle, BOOL DisableAllPrivileges, PTOKEN_PRIVILEGES NewState,
+                                    DWORD BufferLength, PTOKEN_PRIVILEGES PreviousState, PDWORD ReturnLength)
 /*++
 
 
@@ -950,14 +799,8 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = NtAdjustPrivilegesToken (
-        TokenHandle,
-        (BOOLEAN)DisableAllPrivileges,
-        NewState,
-        BufferLength,
-        PreviousState,
-        ReturnLength
-        );
+    Status = NtAdjustPrivilegesToken(TokenHandle, (BOOLEAN)DisableAllPrivileges, NewState, BufferLength, PreviousState,
+                                     ReturnLength);
 
     //
     // We need to set last error even for success because that
@@ -969,7 +812,8 @@ Return Value:
     BaseSetLastNTError(Status);
 
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         return FALSE;
     }
 
@@ -977,18 +821,8 @@ Return Value:
 }
 
 
-
-
-BOOL
-APIENTRY
-AdjustTokenGroups (
-    HANDLE TokenHandle,
-    BOOL ResetToDefault,
-    PTOKEN_GROUPS NewState,
-    DWORD BufferLength,
-    PTOKEN_GROUPS PreviousState,
-    PDWORD ReturnLength
-    )
+BOOL APIENTRY AdjustTokenGroups(HANDLE TokenHandle, BOOL ResetToDefault, PTOKEN_GROUPS NewState, DWORD BufferLength,
+                                PTOKEN_GROUPS PreviousState, PDWORD ReturnLength)
 /*++
 
 
@@ -1057,14 +891,8 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = NtAdjustGroupsToken (
-        TokenHandle,
-        (BOOLEAN)ResetToDefault,
-        NewState,
-        BufferLength,
-        PreviousState,
-        ReturnLength
-        );
+    Status =
+        NtAdjustGroupsToken(TokenHandle, (BOOLEAN)ResetToDefault, NewState, BufferLength, PreviousState, ReturnLength);
 
     //
     // We need to set last error even for success because that
@@ -1076,25 +904,16 @@ Return Value:
     BaseSetLastNTError(Status);
 
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         return FALSE;
     }
 
     return TRUE;
-
 }
 
 
-
-
-
-BOOL
-APIENTRY
-PrivilegeCheck (
-    HANDLE ClientToken,
-    PPRIVILEGE_SET RequiredPrivileges,
-    LPBOOL pfResult
-    )
+BOOL APIENTRY PrivilegeCheck(HANDLE ClientToken, PPRIVILEGE_SET RequiredPrivileges, LPBOOL pfResult)
 /*++
 
 Routine Description:
@@ -1137,15 +956,12 @@ Return Value:
     NTSTATUS Status;
     BOOLEAN Result;
 
-    Status = NtPrivilegeCheck (
-                ClientToken,
-                RequiredPrivileges,
-                &Result
-                );
+    Status = NtPrivilegeCheck(ClientToken, RequiredPrivileges, &Result);
 
     *pfResult = Result;
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -1154,22 +970,10 @@ Return Value:
 }
 
 
-
-BOOL
-APIENTRY
-AccessCheckAndAuditAlarmW(
-    LPCWSTR SubsystemName,
-    PVOID HandleId,
-    LPWSTR ObjectTypeName,
-    LPWSTR ObjectName,
-    PSECURITY_DESCRIPTOR SecurityDescriptor,
-    DWORD DesiredAccess,
-    PGENERIC_MAPPING GenericMapping,
-    BOOL ObjectCreation,
-    LPDWORD GrantedAccess,
-    LPBOOL AccessStatus,
-    LPBOOL pfGenerateOnClose
-    )
+BOOL APIENTRY AccessCheckAndAuditAlarmW(LPCWSTR SubsystemName, PVOID HandleId, LPWSTR ObjectTypeName, LPWSTR ObjectName,
+                                        PSECURITY_DESCRIPTOR SecurityDescriptor, DWORD DesiredAccess,
+                                        PGENERIC_MAPPING GenericMapping, BOOL ObjectCreation, LPDWORD GrantedAccess,
+                                        LPBOOL AccessStatus, LPBOOL pfGenerateOnClose)
 /*++
 
 Routine Description:
@@ -1241,73 +1045,42 @@ Return Value:
     UNICODE_STRING Object;
 
 
-    RtlInitUnicodeString(
-        &Subsystem,
-        SubsystemName
-        );
+    RtlInitUnicodeString(&Subsystem, SubsystemName);
 
-    RtlInitUnicodeString(
-        &ObjectType,
-        ObjectTypeName
-        );
+    RtlInitUnicodeString(&ObjectType, ObjectTypeName);
 
-    RtlInitUnicodeString(
-        &Object,
-        ObjectName
-        );
+    RtlInitUnicodeString(&Object, ObjectName);
 
-    Status = NtAccessCheckAndAuditAlarm (
-                &Subsystem,
-                HandleId,
-                &ObjectType,
-                &Object,
-                SecurityDescriptor,
-                DesiredAccess,
-                GenericMapping,
-                (BOOLEAN)ObjectCreation,
-                GrantedAccess,
-                &RealAccessStatus,
-                &GenerateOnClose
-                );
+    Status = NtAccessCheckAndAuditAlarm(&Subsystem, HandleId, &ObjectType, &Object, SecurityDescriptor, DesiredAccess,
+                                        GenericMapping, (BOOLEAN)ObjectCreation, GrantedAccess, &RealAccessStatus,
+                                        &GenerateOnClose);
 
 
     *pfGenerateOnClose = (BOOL)GenerateOnClose;
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
-    if ( !NT_SUCCESS( RealAccessStatus )) {
+    if (!NT_SUCCESS(RealAccessStatus))
+    {
         *AccessStatus = FALSE;
-        BaseSetLastNTError( RealAccessStatus );
-        return( TRUE );
+        BaseSetLastNTError(RealAccessStatus);
+        return (TRUE);
     }
 
     *AccessStatus = TRUE;
     return TRUE;
 }
 
-BOOL
-APIENTRY
-AccessCheckByTypeAndAuditAlarmW (
-    LPCWSTR SubsystemName,
-    LPVOID HandleId,
-    LPCWSTR ObjectTypeName,
-    LPCWSTR ObjectName,
-    PSECURITY_DESCRIPTOR SecurityDescriptor,
-    PSID PrincipalSelfSid,
-    DWORD DesiredAccess,
-    AUDIT_EVENT_TYPE AuditType,
-    DWORD Flags,
-    POBJECT_TYPE_LIST ObjectTypeList,
-    DWORD ObjectTypeListLength,
-    PGENERIC_MAPPING GenericMapping,
-    BOOL ObjectCreation,
-    LPDWORD GrantedAccess,
-    LPBOOL AccessStatus,
-    LPBOOL pfGenerateOnClose
-    )
+BOOL APIENTRY AccessCheckByTypeAndAuditAlarmW(LPCWSTR SubsystemName, LPVOID HandleId, LPCWSTR ObjectTypeName,
+                                              LPCWSTR ObjectName, PSECURITY_DESCRIPTOR SecurityDescriptor,
+                                              PSID PrincipalSelfSid, DWORD DesiredAccess, AUDIT_EVENT_TYPE AuditType,
+                                              DWORD Flags, POBJECT_TYPE_LIST ObjectTypeList, DWORD ObjectTypeListLength,
+                                              PGENERIC_MAPPING GenericMapping, BOOL ObjectCreation,
+                                              LPDWORD GrantedAccess, LPBOOL AccessStatus, LPBOOL pfGenerateOnClose)
 /*++
 
 Routine Description:
@@ -1400,52 +1173,31 @@ Return Value:
     UNICODE_STRING ObjectType;
     UNICODE_STRING Object;
 
-    RtlInitUnicodeString(
-        &Subsystem,
-        SubsystemName
-        );
+    RtlInitUnicodeString(&Subsystem, SubsystemName);
 
-    RtlInitUnicodeString(
-        &ObjectType,
-        ObjectTypeName
-        );
+    RtlInitUnicodeString(&ObjectType, ObjectTypeName);
 
-    RtlInitUnicodeString(
-        &Object,
-        ObjectName
-        );
+    RtlInitUnicodeString(&Object, ObjectName);
 
-    Status = NtAccessCheckByTypeAndAuditAlarm (
-                &Subsystem,
-                HandleId,
-                &ObjectType,
-                &Object,
-                SecurityDescriptor,
-                PrincipalSelfSid,
-                DesiredAccess,
-                AuditType,
-                Flags,
-                ObjectTypeList,
-                ObjectTypeListLength,
-                GenericMapping,
-                (BOOLEAN)ObjectCreation,
-                GrantedAccess,
-                &RealAccessStatus,
-                &GenerateOnClose
-                );
+    Status = NtAccessCheckByTypeAndAuditAlarm(&Subsystem, HandleId, &ObjectType, &Object, SecurityDescriptor,
+                                              PrincipalSelfSid, DesiredAccess, AuditType, Flags, ObjectTypeList,
+                                              ObjectTypeListLength, GenericMapping, (BOOLEAN)ObjectCreation,
+                                              GrantedAccess, &RealAccessStatus, &GenerateOnClose);
 
 
     *pfGenerateOnClose = (BOOL)GenerateOnClose;
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
-    if ( !NT_SUCCESS( RealAccessStatus )) {
+    if (!NT_SUCCESS(RealAccessStatus))
+    {
         *AccessStatus = FALSE;
-        BaseSetLastNTError( RealAccessStatus );
-        return( TRUE );
+        BaseSetLastNTError(RealAccessStatus);
+        return (TRUE);
     }
 
     *AccessStatus = TRUE;
@@ -1453,26 +1205,11 @@ Return Value:
 }
 
 
-BOOL
-APIENTRY
-AccessCheckByTypeResultListAndAuditAlarmW (
-    LPCWSTR SubsystemName,
-    LPVOID HandleId,
-    LPCWSTR ObjectTypeName,
-    LPCWSTR ObjectName,
-    PSECURITY_DESCRIPTOR SecurityDescriptor,
-    PSID PrincipalSelfSid,
-    DWORD DesiredAccess,
-    AUDIT_EVENT_TYPE AuditType,
-    DWORD Flags,
-    POBJECT_TYPE_LIST ObjectTypeList,
-    DWORD ObjectTypeListLength,
-    PGENERIC_MAPPING GenericMapping,
-    BOOL ObjectCreation,
-    LPDWORD GrantedAccessList,
-    LPDWORD AccessStatusList,
-    LPBOOL pfGenerateOnClose
-    )
+BOOL APIENTRY AccessCheckByTypeResultListAndAuditAlarmW(
+    LPCWSTR SubsystemName, LPVOID HandleId, LPCWSTR ObjectTypeName, LPCWSTR ObjectName,
+    PSECURITY_DESCRIPTOR SecurityDescriptor, PSID PrincipalSelfSid, DWORD DesiredAccess, AUDIT_EVENT_TYPE AuditType,
+    DWORD Flags, POBJECT_TYPE_LIST ObjectTypeList, DWORD ObjectTypeListLength, PGENERIC_MAPPING GenericMapping,
+    BOOL ObjectCreation, LPDWORD GrantedAccessList, LPDWORD AccessStatusList, LPBOOL pfGenerateOnClose)
 /*++
 
 Routine Description:
@@ -1565,44 +1302,22 @@ Return Value:
     ULONG i;
 
 
-    RtlInitUnicodeString(
-        &Subsystem,
-        SubsystemName
-        );
+    RtlInitUnicodeString(&Subsystem, SubsystemName);
 
-    RtlInitUnicodeString(
-        &ObjectType,
-        ObjectTypeName
-        );
+    RtlInitUnicodeString(&ObjectType, ObjectTypeName);
 
-    RtlInitUnicodeString(
-        &Object,
-        ObjectName
-        );
+    RtlInitUnicodeString(&Object, ObjectName);
 
-    Status = NtAccessCheckByTypeResultListAndAuditAlarm (
-                &Subsystem,
-                HandleId,
-                &ObjectType,
-                &Object,
-                SecurityDescriptor,
-                PrincipalSelfSid,
-                DesiredAccess,
-                AuditType,
-                Flags,
-                ObjectTypeList,
-                ObjectTypeListLength,
-                GenericMapping,
-                (BOOLEAN)ObjectCreation,
-                GrantedAccessList,
-                AccessStatusList,
-                &GenerateOnClose
-                );
+    Status = NtAccessCheckByTypeResultListAndAuditAlarm(
+        &Subsystem, HandleId, &ObjectType, &Object, SecurityDescriptor, PrincipalSelfSid, DesiredAccess, AuditType,
+        Flags, ObjectTypeList, ObjectTypeListLength, GenericMapping, (BOOLEAN)ObjectCreation, GrantedAccessList,
+        AccessStatusList, &GenerateOnClose);
 
 
     *pfGenerateOnClose = (BOOL)GenerateOnClose;
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -1611,11 +1326,15 @@ Return Value:
     // Loop converting the array of NT status codes to WIN status codes.
     //
 
-    for ( i=0; i<ObjectTypeListLength; i++ ) {
-        if ( AccessStatusList[i] == STATUS_SUCCESS ) {
+    for (i = 0; i < ObjectTypeListLength; i++)
+    {
+        if (AccessStatusList[i] == STATUS_SUCCESS)
+        {
             AccessStatusList[i] = NO_ERROR;
-        } else {
-            AccessStatusList[i] = RtlNtStatusToDosError( AccessStatusList[i] );
+        }
+        else
+        {
+            AccessStatusList[i] = RtlNtStatusToDosError(AccessStatusList[i]);
         }
     }
 
@@ -1623,27 +1342,11 @@ Return Value:
 }
 
 
-BOOL
-APIENTRY
-AccessCheckByTypeResultListAndAuditAlarmByHandleW (
-    LPCWSTR SubsystemName,
-    LPVOID HandleId,
-    HANDLE ClientToken,
-    LPCWSTR ObjectTypeName,
-    LPCWSTR ObjectName,
-    PSECURITY_DESCRIPTOR SecurityDescriptor,
-    PSID PrincipalSelfSid,
-    DWORD DesiredAccess,
-    AUDIT_EVENT_TYPE AuditType,
-    DWORD Flags,
-    POBJECT_TYPE_LIST ObjectTypeList,
-    DWORD ObjectTypeListLength,
-    PGENERIC_MAPPING GenericMapping,
-    BOOL ObjectCreation,
-    LPDWORD GrantedAccessList,
-    LPDWORD AccessStatusList,
-    LPBOOL pfGenerateOnClose
-    )
+BOOL APIENTRY AccessCheckByTypeResultListAndAuditAlarmByHandleW(
+    LPCWSTR SubsystemName, LPVOID HandleId, HANDLE ClientToken, LPCWSTR ObjectTypeName, LPCWSTR ObjectName,
+    PSECURITY_DESCRIPTOR SecurityDescriptor, PSID PrincipalSelfSid, DWORD DesiredAccess, AUDIT_EVENT_TYPE AuditType,
+    DWORD Flags, POBJECT_TYPE_LIST ObjectTypeList, DWORD ObjectTypeListLength, PGENERIC_MAPPING GenericMapping,
+    BOOL ObjectCreation, LPDWORD GrantedAccessList, LPDWORD AccessStatusList, LPBOOL pfGenerateOnClose)
 /*++
 
 Routine Description:
@@ -1741,45 +1444,22 @@ Return Value:
     ULONG i;
 
 
-    RtlInitUnicodeString(
-        &Subsystem,
-        SubsystemName
-        );
+    RtlInitUnicodeString(&Subsystem, SubsystemName);
 
-    RtlInitUnicodeString(
-        &ObjectType,
-        ObjectTypeName
-        );
+    RtlInitUnicodeString(&ObjectType, ObjectTypeName);
 
-    RtlInitUnicodeString(
-        &Object,
-        ObjectName
-        );
+    RtlInitUnicodeString(&Object, ObjectName);
 
-    Status = NtAccessCheckByTypeResultListAndAuditAlarmByHandle (
-                &Subsystem,
-                HandleId,
-                ClientToken,
-                &ObjectType,
-                &Object,
-                SecurityDescriptor,
-                PrincipalSelfSid,
-                DesiredAccess,
-                AuditType,
-                Flags,
-                ObjectTypeList,
-                ObjectTypeListLength,
-                GenericMapping,
-                (BOOLEAN)ObjectCreation,
-                GrantedAccessList,
-                AccessStatusList,
-                &GenerateOnClose
-                );
+    Status = NtAccessCheckByTypeResultListAndAuditAlarmByHandle(
+        &Subsystem, HandleId, ClientToken, &ObjectType, &Object, SecurityDescriptor, PrincipalSelfSid, DesiredAccess,
+        AuditType, Flags, ObjectTypeList, ObjectTypeListLength, GenericMapping, (BOOLEAN)ObjectCreation,
+        GrantedAccessList, AccessStatusList, &GenerateOnClose);
 
 
     *pfGenerateOnClose = (BOOL)GenerateOnClose;
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -1788,11 +1468,15 @@ Return Value:
     // Loop converting the array of NT status codes to WIN status codes.
     //
 
-    for ( i=0; i<ObjectTypeListLength; i++ ) {
-        if ( AccessStatusList[i] == STATUS_SUCCESS ) {
+    for (i = 0; i < ObjectTypeListLength; i++)
+    {
+        if (AccessStatusList[i] == STATUS_SUCCESS)
+        {
             AccessStatusList[i] = NO_ERROR;
-        } else {
-            AccessStatusList[i] = RtlNtStatusToDosError( AccessStatusList[i] );
+        }
+        else
+        {
+            AccessStatusList[i] = RtlNtStatusToDosError(AccessStatusList[i]);
         }
     }
 
@@ -1800,21 +1484,10 @@ Return Value:
 }
 
 
-BOOL
-APIENTRY
-AccessCheckAndAuditAlarmA (
-    LPCSTR SubsystemName,
-    PVOID HandleId,
-    LPSTR ObjectTypeName,
-    LPSTR ObjectName,
-    PSECURITY_DESCRIPTOR SecurityDescriptor,
-    DWORD DesiredAccess,
-    PGENERIC_MAPPING GenericMapping,
-    BOOL ObjectCreation,
-    LPDWORD GrantedAccess,
-    LPBOOL AccessStatus,
-    LPBOOL pfGenerateOnClose
-    )
+BOOL APIENTRY AccessCheckAndAuditAlarmA(LPCSTR SubsystemName, PVOID HandleId, LPSTR ObjectTypeName, LPSTR ObjectName,
+                                        PSECURITY_DESCRIPTOR SecurityDescriptor, DWORD DesiredAccess,
+                                        PGENERIC_MAPPING GenericMapping, BOOL ObjectCreation, LPDWORD GrantedAccess,
+                                        LPBOOL AccessStatus, LPBOOL pfGenerateOnClose)
 /*++
 
 Routine Description:
@@ -1834,23 +1507,24 @@ Routine Description:
     ObjectNameW = &NtCurrentTeb()->StaticUnicodeString;
 
 
-    RtlInitAnsiString(&AnsiString,SubsystemName);
-    Status = RtlAnsiStringToUnicodeString(&SubsystemNameW,&AnsiString,TRUE);
+    RtlInitAnsiString(&AnsiString, SubsystemName);
+    Status = RtlAnsiStringToUnicodeString(&SubsystemNameW, &AnsiString, TRUE);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
 
+    RtlInitAnsiString(&AnsiString, ObjectTypeName);
+    Status = RtlAnsiStringToUnicodeString(&ObjectTypeNameW, &AnsiString, TRUE);
 
-    RtlInitAnsiString(&AnsiString,ObjectTypeName);
-    Status = RtlAnsiStringToUnicodeString(&ObjectTypeNameW,&AnsiString,TRUE);
+    if (!NT_SUCCESS(Status))
+    {
 
-    if ( !NT_SUCCESS(Status) ) {
-
-        RtlFreeUnicodeString( &SubsystemNameW );
+        RtlFreeUnicodeString(&SubsystemNameW);
 
         BaseSetLastNTError(Status);
         return FALSE;
@@ -1862,60 +1536,37 @@ Routine Description:
     // do it, since we've got the space in the TEB available.
     //
 
-    RtlInitAnsiString(&AnsiString,ObjectName);
-    Status = RtlAnsiStringToUnicodeString(ObjectNameW,&AnsiString,FALSE);
+    RtlInitAnsiString(&AnsiString, ObjectName);
+    Status = RtlAnsiStringToUnicodeString(ObjectNameW, &AnsiString, FALSE);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        RtlFreeUnicodeString( &SubsystemNameW );
-        RtlFreeUnicodeString( &ObjectTypeNameW );
+        RtlFreeUnicodeString(&SubsystemNameW);
+        RtlFreeUnicodeString(&ObjectTypeNameW);
 
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
 
-    RVal =  AccessCheckAndAuditAlarmW (
-                (LPCWSTR)SubsystemNameW.Buffer,
-                HandleId,
-                ObjectTypeNameW.Buffer,
-                ObjectNameW->Buffer,
-                SecurityDescriptor,
-                DesiredAccess,
-                GenericMapping,
-                ObjectCreation,
-                GrantedAccess,
-                AccessStatus,
-                pfGenerateOnClose
-                );
+    RVal = AccessCheckAndAuditAlarmW((LPCWSTR)SubsystemNameW.Buffer, HandleId, ObjectTypeNameW.Buffer,
+                                     ObjectNameW->Buffer, SecurityDescriptor, DesiredAccess, GenericMapping,
+                                     ObjectCreation, GrantedAccess, AccessStatus, pfGenerateOnClose);
 
 
-    RtlFreeUnicodeString( &SubsystemNameW );
-    RtlFreeUnicodeString( &ObjectTypeNameW );
+    RtlFreeUnicodeString(&SubsystemNameW);
+    RtlFreeUnicodeString(&ObjectTypeNameW);
 
-    return( RVal );
+    return (RVal);
 }
 
-BOOL
-APIENTRY
-AccessCheckByTypeAndAuditAlarmA (
-    LPCSTR SubsystemName,
-    PVOID HandleId,
-    LPCSTR ObjectTypeName,
-    LPCSTR ObjectName,
-    PSECURITY_DESCRIPTOR SecurityDescriptor,
-    PSID PrincipalSelfSid,
-    DWORD DesiredAccess,
-    AUDIT_EVENT_TYPE AuditType,
-    DWORD Flags,
-    POBJECT_TYPE_LIST ObjectTypeList,
-    DWORD ObjectTypeListLength,
-    PGENERIC_MAPPING GenericMapping,
-    BOOL ObjectCreation,
-    LPDWORD GrantedAccess,
-    LPBOOL AccessStatus,
-    LPBOOL pfGenerateOnClose
-    )
+BOOL APIENTRY AccessCheckByTypeAndAuditAlarmA(LPCSTR SubsystemName, PVOID HandleId, LPCSTR ObjectTypeName,
+                                              LPCSTR ObjectName, PSECURITY_DESCRIPTOR SecurityDescriptor,
+                                              PSID PrincipalSelfSid, DWORD DesiredAccess, AUDIT_EVENT_TYPE AuditType,
+                                              DWORD Flags, POBJECT_TYPE_LIST ObjectTypeList, DWORD ObjectTypeListLength,
+                                              PGENERIC_MAPPING GenericMapping, BOOL ObjectCreation,
+                                              LPDWORD GrantedAccess, LPBOOL AccessStatus, LPBOOL pfGenerateOnClose)
 /*++
 
 Routine Description:
@@ -1936,23 +1587,24 @@ Routine Description:
     ObjectNameW = &NtCurrentTeb()->StaticUnicodeString;
 
 
-    RtlInitAnsiString(&AnsiString,SubsystemName);
-    Status = RtlAnsiStringToUnicodeString(&SubsystemNameW,&AnsiString,TRUE);
+    RtlInitAnsiString(&AnsiString, SubsystemName);
+    Status = RtlAnsiStringToUnicodeString(&SubsystemNameW, &AnsiString, TRUE);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
 
+    RtlInitAnsiString(&AnsiString, ObjectTypeName);
+    Status = RtlAnsiStringToUnicodeString(&ObjectTypeNameW, &AnsiString, TRUE);
 
-    RtlInitAnsiString(&AnsiString,ObjectTypeName);
-    Status = RtlAnsiStringToUnicodeString(&ObjectTypeNameW,&AnsiString,TRUE);
+    if (!NT_SUCCESS(Status))
+    {
 
-    if ( !NT_SUCCESS(Status) ) {
-
-        RtlFreeUnicodeString( &SubsystemNameW );
+        RtlFreeUnicodeString(&SubsystemNameW);
 
         BaseSetLastNTError(Status);
         return FALSE;
@@ -1964,66 +1616,38 @@ Routine Description:
     // do it, since we've got the space in the TEB available.
     //
 
-    RtlInitAnsiString(&AnsiString,ObjectName);
-    Status = RtlAnsiStringToUnicodeString(ObjectNameW,&AnsiString,FALSE);
+    RtlInitAnsiString(&AnsiString, ObjectName);
+    Status = RtlAnsiStringToUnicodeString(ObjectNameW, &AnsiString, FALSE);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        RtlFreeUnicodeString( &SubsystemNameW );
-        RtlFreeUnicodeString( &ObjectTypeNameW );
+        RtlFreeUnicodeString(&SubsystemNameW);
+        RtlFreeUnicodeString(&ObjectTypeNameW);
 
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
 
-    RVal =  AccessCheckByTypeAndAuditAlarmW (
-                (LPCWSTR)SubsystemNameW.Buffer,
-                HandleId,
-                ObjectTypeNameW.Buffer,
-                ObjectNameW->Buffer,
-                SecurityDescriptor,
-                PrincipalSelfSid,
-                DesiredAccess,
-                AuditType,
-                Flags,
-                ObjectTypeList,
-                ObjectTypeListLength,
-                GenericMapping,
-                ObjectCreation,
-                GrantedAccess,
-                AccessStatus,
-                pfGenerateOnClose
-                );
+    RVal = AccessCheckByTypeAndAuditAlarmW((LPCWSTR)SubsystemNameW.Buffer, HandleId, ObjectTypeNameW.Buffer,
+                                           ObjectNameW->Buffer, SecurityDescriptor, PrincipalSelfSid, DesiredAccess,
+                                           AuditType, Flags, ObjectTypeList, ObjectTypeListLength, GenericMapping,
+                                           ObjectCreation, GrantedAccess, AccessStatus, pfGenerateOnClose);
 
 
-    RtlFreeUnicodeString( &SubsystemNameW );
-    RtlFreeUnicodeString( &ObjectTypeNameW );
+    RtlFreeUnicodeString(&SubsystemNameW);
+    RtlFreeUnicodeString(&ObjectTypeNameW);
 
-    return( RVal );
+    return (RVal);
 }
 
 WINADVAPI
-BOOL
-WINAPI
-AccessCheckByTypeResultListAndAuditAlarmA (
-    LPCSTR SubsystemName,
-    LPVOID HandleId,
-    LPCSTR ObjectTypeName,
-    LPCSTR ObjectName,
-    PSECURITY_DESCRIPTOR SecurityDescriptor,
-    PSID PrincipalSelfSid,
-    DWORD DesiredAccess,
-    AUDIT_EVENT_TYPE AuditType,
-    DWORD Flags,
-    POBJECT_TYPE_LIST ObjectTypeList,
-    DWORD ObjectTypeListLength,
-    PGENERIC_MAPPING GenericMapping,
-    BOOL ObjectCreation,
-    LPDWORD GrantedAccess,
-    LPDWORD AccessStatusList,
-    LPBOOL pfGenerateOnClose
-    )
+BOOL WINAPI AccessCheckByTypeResultListAndAuditAlarmA(
+    LPCSTR SubsystemName, LPVOID HandleId, LPCSTR ObjectTypeName, LPCSTR ObjectName,
+    PSECURITY_DESCRIPTOR SecurityDescriptor, PSID PrincipalSelfSid, DWORD DesiredAccess, AUDIT_EVENT_TYPE AuditType,
+    DWORD Flags, POBJECT_TYPE_LIST ObjectTypeList, DWORD ObjectTypeListLength, PGENERIC_MAPPING GenericMapping,
+    BOOL ObjectCreation, LPDWORD GrantedAccess, LPDWORD AccessStatusList, LPBOOL pfGenerateOnClose)
 /*++
 
 Routine Description:
@@ -2044,23 +1668,24 @@ Routine Description:
     ObjectNameW = &NtCurrentTeb()->StaticUnicodeString;
 
 
-    RtlInitAnsiString(&AnsiString,SubsystemName);
-    Status = RtlAnsiStringToUnicodeString(&SubsystemNameW,&AnsiString,TRUE);
+    RtlInitAnsiString(&AnsiString, SubsystemName);
+    Status = RtlAnsiStringToUnicodeString(&SubsystemNameW, &AnsiString, TRUE);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
 
+    RtlInitAnsiString(&AnsiString, ObjectTypeName);
+    Status = RtlAnsiStringToUnicodeString(&ObjectTypeNameW, &AnsiString, TRUE);
 
-    RtlInitAnsiString(&AnsiString,ObjectTypeName);
-    Status = RtlAnsiStringToUnicodeString(&ObjectTypeNameW,&AnsiString,TRUE);
+    if (!NT_SUCCESS(Status))
+    {
 
-    if ( !NT_SUCCESS(Status) ) {
-
-        RtlFreeUnicodeString( &SubsystemNameW );
+        RtlFreeUnicodeString(&SubsystemNameW);
 
         BaseSetLastNTError(Status);
         return FALSE;
@@ -2072,67 +1697,38 @@ Routine Description:
     // do it, since we've got the space in the TEB available.
     //
 
-    RtlInitAnsiString(&AnsiString,ObjectName);
-    Status = RtlAnsiStringToUnicodeString(ObjectNameW,&AnsiString,FALSE);
+    RtlInitAnsiString(&AnsiString, ObjectName);
+    Status = RtlAnsiStringToUnicodeString(ObjectNameW, &AnsiString, FALSE);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        RtlFreeUnicodeString( &SubsystemNameW );
-        RtlFreeUnicodeString( &ObjectTypeNameW );
+        RtlFreeUnicodeString(&SubsystemNameW);
+        RtlFreeUnicodeString(&ObjectTypeNameW);
 
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
 
-    RVal =  AccessCheckByTypeResultListAndAuditAlarmW (
-                (LPCWSTR)SubsystemNameW.Buffer,
-                HandleId,
-                ObjectTypeNameW.Buffer,
-                ObjectNameW->Buffer,
-                SecurityDescriptor,
-                PrincipalSelfSid,
-                DesiredAccess,
-                AuditType,
-                Flags,
-                ObjectTypeList,
-                ObjectTypeListLength,
-                GenericMapping,
-                ObjectCreation,
-                GrantedAccess,
-                AccessStatusList,
-                pfGenerateOnClose
-                );
+    RVal = AccessCheckByTypeResultListAndAuditAlarmW(
+        (LPCWSTR)SubsystemNameW.Buffer, HandleId, ObjectTypeNameW.Buffer, ObjectNameW->Buffer, SecurityDescriptor,
+        PrincipalSelfSid, DesiredAccess, AuditType, Flags, ObjectTypeList, ObjectTypeListLength, GenericMapping,
+        ObjectCreation, GrantedAccess, AccessStatusList, pfGenerateOnClose);
 
-    RtlFreeUnicodeString( &SubsystemNameW );
-    RtlFreeUnicodeString( &ObjectTypeNameW );
+    RtlFreeUnicodeString(&SubsystemNameW);
+    RtlFreeUnicodeString(&ObjectTypeNameW);
 
-    return( RVal );
+    return (RVal);
 }
 
 
 WINADVAPI
-BOOL
-WINAPI
-AccessCheckByTypeResultListAndAuditAlarmByHandleA (
-    LPCSTR SubsystemName,
-    LPVOID HandleId,
-    HANDLE ClientToken,
-    LPCSTR ObjectTypeName,
-    LPCSTR ObjectName,
-    PSECURITY_DESCRIPTOR SecurityDescriptor,
-    PSID PrincipalSelfSid,
-    DWORD DesiredAccess,
-    AUDIT_EVENT_TYPE AuditType,
-    DWORD Flags,
-    POBJECT_TYPE_LIST ObjectTypeList,
-    DWORD ObjectTypeListLength,
-    PGENERIC_MAPPING GenericMapping,
-    BOOL ObjectCreation,
-    LPDWORD GrantedAccess,
-    LPDWORD AccessStatusList,
-    LPBOOL pfGenerateOnClose
-    )
+BOOL WINAPI AccessCheckByTypeResultListAndAuditAlarmByHandleA(
+    LPCSTR SubsystemName, LPVOID HandleId, HANDLE ClientToken, LPCSTR ObjectTypeName, LPCSTR ObjectName,
+    PSECURITY_DESCRIPTOR SecurityDescriptor, PSID PrincipalSelfSid, DWORD DesiredAccess, AUDIT_EVENT_TYPE AuditType,
+    DWORD Flags, POBJECT_TYPE_LIST ObjectTypeList, DWORD ObjectTypeListLength, PGENERIC_MAPPING GenericMapping,
+    BOOL ObjectCreation, LPDWORD GrantedAccess, LPDWORD AccessStatusList, LPBOOL pfGenerateOnClose)
 /*++
 
 Routine Description:
@@ -2153,23 +1749,24 @@ Routine Description:
     ObjectNameW = &NtCurrentTeb()->StaticUnicodeString;
 
 
-    RtlInitAnsiString(&AnsiString,SubsystemName);
-    Status = RtlAnsiStringToUnicodeString(&SubsystemNameW,&AnsiString,TRUE);
+    RtlInitAnsiString(&AnsiString, SubsystemName);
+    Status = RtlAnsiStringToUnicodeString(&SubsystemNameW, &AnsiString, TRUE);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
 
+    RtlInitAnsiString(&AnsiString, ObjectTypeName);
+    Status = RtlAnsiStringToUnicodeString(&ObjectTypeNameW, &AnsiString, TRUE);
 
-    RtlInitAnsiString(&AnsiString,ObjectTypeName);
-    Status = RtlAnsiStringToUnicodeString(&ObjectTypeNameW,&AnsiString,TRUE);
+    if (!NT_SUCCESS(Status))
+    {
 
-    if ( !NT_SUCCESS(Status) ) {
-
-        RtlFreeUnicodeString( &SubsystemNameW );
+        RtlFreeUnicodeString(&SubsystemNameW);
 
         BaseSetLastNTError(Status);
         return FALSE;
@@ -2181,61 +1778,35 @@ Routine Description:
     // do it, since we've got the space in the TEB available.
     //
 
-    RtlInitAnsiString(&AnsiString,ObjectName);
-    Status = RtlAnsiStringToUnicodeString(ObjectNameW,&AnsiString,FALSE);
+    RtlInitAnsiString(&AnsiString, ObjectName);
+    Status = RtlAnsiStringToUnicodeString(ObjectNameW, &AnsiString, FALSE);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        RtlFreeUnicodeString( &SubsystemNameW );
-        RtlFreeUnicodeString( &ObjectTypeNameW );
+        RtlFreeUnicodeString(&SubsystemNameW);
+        RtlFreeUnicodeString(&ObjectTypeNameW);
 
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
 
-    RVal =  AccessCheckByTypeResultListAndAuditAlarmByHandleW (
-                (LPCWSTR)SubsystemNameW.Buffer,
-                HandleId,
-                ClientToken,
-                ObjectTypeNameW.Buffer,
-                ObjectNameW->Buffer,
-                SecurityDescriptor,
-                PrincipalSelfSid,
-                DesiredAccess,
-                AuditType,
-                Flags,
-                ObjectTypeList,
-                ObjectTypeListLength,
-                GenericMapping,
-                ObjectCreation,
-                GrantedAccess,
-                AccessStatusList,
-                pfGenerateOnClose
-                );
+    RVal = AccessCheckByTypeResultListAndAuditAlarmByHandleW(
+        (LPCWSTR)SubsystemNameW.Buffer, HandleId, ClientToken, ObjectTypeNameW.Buffer, ObjectNameW->Buffer,
+        SecurityDescriptor, PrincipalSelfSid, DesiredAccess, AuditType, Flags, ObjectTypeList, ObjectTypeListLength,
+        GenericMapping, ObjectCreation, GrantedAccess, AccessStatusList, pfGenerateOnClose);
 
-    RtlFreeUnicodeString( &SubsystemNameW );
-    RtlFreeUnicodeString( &ObjectTypeNameW );
+    RtlFreeUnicodeString(&SubsystemNameW);
+    RtlFreeUnicodeString(&ObjectTypeNameW);
 
-    return( RVal );
+    return (RVal);
 }
 
-BOOL
-APIENTRY
-ObjectOpenAuditAlarmA (
-    LPCSTR SubsystemName,
-    PVOID HandleId,
-    LPSTR ObjectTypeName,
-    LPSTR ObjectName,
-    PSECURITY_DESCRIPTOR pSecurityDescriptor,
-    HANDLE ClientToken,
-    DWORD DesiredAccess,
-    DWORD GrantedAccess,
-    PPRIVILEGE_SET Privileges OPTIONAL,
-    BOOL ObjectCreation,
-    BOOL AccessGranted,
-    LPBOOL GenerateOnClose
-    )
+BOOL APIENTRY ObjectOpenAuditAlarmA(LPCSTR SubsystemName, PVOID HandleId, LPSTR ObjectTypeName, LPSTR ObjectName,
+                                    PSECURITY_DESCRIPTOR pSecurityDescriptor, HANDLE ClientToken, DWORD DesiredAccess,
+                                    DWORD GrantedAccess, PPRIVILEGE_SET Privileges OPTIONAL, BOOL ObjectCreation,
+                                    BOOL AccessGranted, LPBOOL GenerateOnClose)
 /*++
 
 Routine Description:
@@ -2255,23 +1826,24 @@ Routine Description:
     ObjectNameW = &NtCurrentTeb()->StaticUnicodeString;
 
 
-    RtlInitAnsiString(&AnsiString,SubsystemName);
-    Status = RtlAnsiStringToUnicodeString(&SubsystemNameW,&AnsiString,TRUE);
+    RtlInitAnsiString(&AnsiString, SubsystemName);
+    Status = RtlAnsiStringToUnicodeString(&SubsystemNameW, &AnsiString, TRUE);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
 
+    RtlInitAnsiString(&AnsiString, ObjectTypeName);
+    Status = RtlAnsiStringToUnicodeString(&ObjectTypeNameW, &AnsiString, TRUE);
 
-    RtlInitAnsiString(&AnsiString,ObjectTypeName);
-    Status = RtlAnsiStringToUnicodeString(&ObjectTypeNameW,&AnsiString,TRUE);
+    if (!NT_SUCCESS(Status))
+    {
 
-    if ( !NT_SUCCESS(Status) ) {
-
-        RtlFreeUnicodeString( &SubsystemNameW );
+        RtlFreeUnicodeString(&SubsystemNameW);
 
         BaseSetLastNTError(Status);
         return FALSE;
@@ -2283,58 +1855,34 @@ Routine Description:
     // do it, since we've got the space in the TEB available.
     //
 
-    RtlInitAnsiString(&AnsiString,ObjectName);
-    Status = RtlAnsiStringToUnicodeString(ObjectNameW,&AnsiString,FALSE);
+    RtlInitAnsiString(&AnsiString, ObjectName);
+    Status = RtlAnsiStringToUnicodeString(ObjectNameW, &AnsiString, FALSE);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        RtlFreeUnicodeString( &SubsystemNameW );
-        RtlFreeUnicodeString( &ObjectTypeNameW );
+        RtlFreeUnicodeString(&SubsystemNameW);
+        RtlFreeUnicodeString(&ObjectTypeNameW);
 
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
-    RVal = ObjectOpenAuditAlarmW (
-               (LPCWSTR)SubsystemNameW.Buffer,
-               HandleId,
-               ObjectTypeNameW.Buffer,
-               ObjectNameW->Buffer,
-               pSecurityDescriptor,
-               ClientToken,
-               DesiredAccess,
-               GrantedAccess,
-               Privileges,
-               ObjectCreation,
-               AccessGranted,
-               GenerateOnClose
-               );
+    RVal = ObjectOpenAuditAlarmW((LPCWSTR)SubsystemNameW.Buffer, HandleId, ObjectTypeNameW.Buffer, ObjectNameW->Buffer,
+                                 pSecurityDescriptor, ClientToken, DesiredAccess, GrantedAccess, Privileges,
+                                 ObjectCreation, AccessGranted, GenerateOnClose);
 
-    RtlFreeUnicodeString( &SubsystemNameW );
-    RtlFreeUnicodeString( &ObjectTypeNameW );
+    RtlFreeUnicodeString(&SubsystemNameW);
+    RtlFreeUnicodeString(&ObjectTypeNameW);
 
-    return( RVal );
-
+    return (RVal);
 }
 
 
-
-BOOL
-APIENTRY
-ObjectOpenAuditAlarmW (
-    LPCWSTR SubsystemName,
-    PVOID HandleId,
-    LPWSTR ObjectTypeName,
-    LPWSTR ObjectName,
-    PSECURITY_DESCRIPTOR pSecurityDescriptor,
-    HANDLE ClientToken,
-    DWORD DesiredAccess,
-    DWORD GrantedAccess,
-    PPRIVILEGE_SET Privileges OPTIONAL,
-    BOOL ObjectCreation,
-    BOOL AccessGranted,
-    LPBOOL GenerateOnClose
-    )
+BOOL APIENTRY ObjectOpenAuditAlarmW(LPCWSTR SubsystemName, PVOID HandleId, LPWSTR ObjectTypeName, LPWSTR ObjectName,
+                                    PSECURITY_DESCRIPTOR pSecurityDescriptor, HANDLE ClientToken, DWORD DesiredAccess,
+                                    DWORD GrantedAccess, PPRIVILEGE_SET Privileges OPTIONAL, BOOL ObjectCreation,
+                                    BOOL AccessGranted, LPBOOL GenerateOnClose)
 /*++
 
     Routine Description:
@@ -2414,37 +1962,18 @@ Return Value:
     UNICODE_STRING Object;
 
 
-    RtlInitUnicodeString(
-        &Subsystem,
-        SubsystemName
-        );
+    RtlInitUnicodeString(&Subsystem, SubsystemName);
 
-    RtlInitUnicodeString(
-        &ObjectType,
-        ObjectTypeName
-        );
+    RtlInitUnicodeString(&ObjectType, ObjectTypeName);
 
-    RtlInitUnicodeString(
-        &Object,
-        ObjectName
-        );
+    RtlInitUnicodeString(&Object, ObjectName);
 
-    Status = NtOpenObjectAuditAlarm (
-                &Subsystem,
-                &HandleId,
-                &ObjectType,
-                &Object,
-                pSecurityDescriptor,
-                ClientToken,
-                DesiredAccess,
-                GrantedAccess,
-                Privileges,
-                (BOOLEAN)ObjectCreation,
-                (BOOLEAN)AccessGranted,
-                (PBOOLEAN)GenerateOnClose
-                );
+    Status = NtOpenObjectAuditAlarm(&Subsystem, &HandleId, &ObjectType, &Object, pSecurityDescriptor, ClientToken,
+                                    DesiredAccess, GrantedAccess, Privileges, (BOOLEAN)ObjectCreation,
+                                    (BOOLEAN)AccessGranted, (PBOOLEAN)GenerateOnClose);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -2453,17 +1982,8 @@ Return Value:
 }
 
 
-
-BOOL
-APIENTRY
-ObjectPrivilegeAuditAlarmA (
-    LPCSTR SubsystemName,
-    PVOID HandleId,
-    HANDLE ClientToken,
-    DWORD DesiredAccess,
-    PPRIVILEGE_SET Privileges,
-    BOOL AccessGranted
-    )
+BOOL APIENTRY ObjectPrivilegeAuditAlarmA(LPCSTR SubsystemName, PVOID HandleId, HANDLE ClientToken, DWORD DesiredAccess,
+                                         PPRIVILEGE_SET Privileges, BOOL AccessGranted)
 /*++
 
 Routine Description:
@@ -2484,40 +2004,25 @@ Routine Description:
     // do it, since we've got the space in the TEB available.
     //
 
-    RtlInitAnsiString(&AnsiString,SubsystemName);
-    Status = RtlAnsiStringToUnicodeString(SubsystemNameW,&AnsiString,FALSE);
+    RtlInitAnsiString(&AnsiString, SubsystemName);
+    Status = RtlAnsiStringToUnicodeString(SubsystemNameW, &AnsiString, FALSE);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
-    RVal = ObjectPrivilegeAuditAlarmW (
-                (LPCWSTR)SubsystemNameW->Buffer,
-                HandleId,
-                ClientToken,
-                DesiredAccess,
-                Privileges,
-                AccessGranted
-                );
+    RVal = ObjectPrivilegeAuditAlarmW((LPCWSTR)SubsystemNameW->Buffer, HandleId, ClientToken, DesiredAccess, Privileges,
+                                      AccessGranted);
 
-    return( RVal );
+    return (RVal);
 }
 
 
-
-
-BOOL
-APIENTRY
-ObjectPrivilegeAuditAlarmW (
-    LPCWSTR SubsystemName,
-    PVOID HandleId,
-    HANDLE ClientToken,
-    DWORD DesiredAccess,
-    PPRIVILEGE_SET Privileges,
-    BOOL AccessGranted
-    )
+BOOL APIENTRY ObjectPrivilegeAuditAlarmW(LPCWSTR SubsystemName, PVOID HandleId, HANDLE ClientToken, DWORD DesiredAccess,
+                                         PPRIVILEGE_SET Privileges, BOOL AccessGranted)
 /*++
 
 Routine Description:
@@ -2572,21 +2077,13 @@ Return value:
     NTSTATUS Status;
     UNICODE_STRING Subsystem;
 
-    RtlInitUnicodeString(
-        &Subsystem,
-        SubsystemName
-        );
+    RtlInitUnicodeString(&Subsystem, SubsystemName);
 
-    Status = NtPrivilegeObjectAuditAlarm (
-        &Subsystem,
-        HandleId,
-        ClientToken,
-        DesiredAccess,
-        Privileges,
-        (BOOLEAN)AccessGranted
-        );
+    Status = NtPrivilegeObjectAuditAlarm(&Subsystem, HandleId, ClientToken, DesiredAccess, Privileges,
+                                         (BOOLEAN)AccessGranted);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -2595,13 +2092,7 @@ Return value:
 }
 
 
-BOOL
-APIENTRY
-ObjectCloseAuditAlarmA (
-    LPCSTR SubsystemName,
-    PVOID HandleId,
-    BOOL GenerateOnClose
-    )
+BOOL APIENTRY ObjectCloseAuditAlarmA(LPCSTR SubsystemName, PVOID HandleId, BOOL GenerateOnClose)
 /*++
 
 Routine Description:
@@ -2621,31 +2112,20 @@ Routine Description:
     // do it, since we've got the space in the TEB available.
     //
 
-    RtlInitAnsiString(&AnsiString,SubsystemName);
-    Status = RtlAnsiStringToUnicodeString(SubsystemNameW,&AnsiString,FALSE);
+    RtlInitAnsiString(&AnsiString, SubsystemName);
+    Status = RtlAnsiStringToUnicodeString(SubsystemNameW, &AnsiString, FALSE);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
-    return ObjectCloseAuditAlarmW (
-               (LPCWSTR)SubsystemNameW->Buffer,
-               HandleId,
-               GenerateOnClose
-               );
-
-
+    return ObjectCloseAuditAlarmW((LPCWSTR)SubsystemNameW->Buffer, HandleId, GenerateOnClose);
 }
 
-BOOL
-APIENTRY
-ObjectCloseAuditAlarmW (
-    LPCWSTR SubsystemName,
-    PVOID HandleId,
-    BOOL GenerateOnClose
-    )
+BOOL APIENTRY ObjectCloseAuditAlarmW(LPCWSTR SubsystemName, PVOID HandleId, BOOL GenerateOnClose)
 /*++
 
 Routine Description:
@@ -2686,15 +2166,12 @@ Return value:
     NTSTATUS Status;
     UNICODE_STRING Subsystem;
 
-    RtlInitUnicodeString( &Subsystem, SubsystemName );
+    RtlInitUnicodeString(&Subsystem, SubsystemName);
 
-    Status = NtCloseObjectAuditAlarm (
-        &Subsystem,
-        HandleId,
-        (BOOLEAN)GenerateOnClose
-        );
+    Status = NtCloseObjectAuditAlarm(&Subsystem, HandleId, (BOOLEAN)GenerateOnClose);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -2703,13 +2180,7 @@ Return value:
 }
 
 
-BOOL
-APIENTRY
-ObjectDeleteAuditAlarmA (
-    LPCSTR SubsystemName,
-    PVOID HandleId,
-    BOOL GenerateOnClose
-    )
+BOOL APIENTRY ObjectDeleteAuditAlarmA(LPCSTR SubsystemName, PVOID HandleId, BOOL GenerateOnClose)
 /*++
 
 Routine Description:
@@ -2729,31 +2200,20 @@ Routine Description:
     // do it, since we've got the space in the TEB available.
     //
 
-    RtlInitAnsiString(&AnsiString,SubsystemName);
-    Status = RtlAnsiStringToUnicodeString(SubsystemNameW,&AnsiString,FALSE);
+    RtlInitAnsiString(&AnsiString, SubsystemName);
+    Status = RtlAnsiStringToUnicodeString(SubsystemNameW, &AnsiString, FALSE);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
-    return ObjectDeleteAuditAlarmW (
-               (LPCWSTR)SubsystemNameW->Buffer,
-               HandleId,
-               GenerateOnClose
-               );
-
-
+    return ObjectDeleteAuditAlarmW((LPCWSTR)SubsystemNameW->Buffer, HandleId, GenerateOnClose);
 }
 
-BOOL
-APIENTRY
-ObjectDeleteAuditAlarmW (
-    LPCWSTR SubsystemName,
-    PVOID HandleId,
-    BOOL GenerateOnClose
-    )
+BOOL APIENTRY ObjectDeleteAuditAlarmW(LPCWSTR SubsystemName, PVOID HandleId, BOOL GenerateOnClose)
 /*++
 
 Routine Description:
@@ -2794,15 +2254,12 @@ Return value:
     NTSTATUS Status;
     UNICODE_STRING Subsystem;
 
-    RtlInitUnicodeString( &Subsystem, SubsystemName );
+    RtlInitUnicodeString(&Subsystem, SubsystemName);
 
-    Status = NtDeleteObjectAuditAlarm (
-        &Subsystem,
-        HandleId,
-        (BOOLEAN)GenerateOnClose
-        );
+    Status = NtDeleteObjectAuditAlarm(&Subsystem, HandleId, (BOOLEAN)GenerateOnClose);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -2811,16 +2268,8 @@ Return value:
 }
 
 
-
-BOOL
-APIENTRY
-PrivilegedServiceAuditAlarmA (
-    LPCSTR SubsystemName,
-    LPCSTR ServiceName,
-    HANDLE ClientToken,
-    PPRIVILEGE_SET Privileges,
-    BOOL AccessGranted
-    )
+BOOL APIENTRY PrivilegedServiceAuditAlarmA(LPCSTR SubsystemName, LPCSTR ServiceName, HANDLE ClientToken,
+                                           PPRIVILEGE_SET Privileges, BOOL AccessGranted)
 /*++
 
 Routine Description:
@@ -2831,7 +2280,7 @@ Routine Description:
 {
     PUNICODE_STRING ServiceNameW;
     UNICODE_STRING SubsystemNameW;
-    ANSI_STRING  AnsiString;
+    ANSI_STRING AnsiString;
     NTSTATUS Status;
     BOOL RVal;
 
@@ -2842,47 +2291,36 @@ Routine Description:
     // do it, since we've got the space in the TEB available.
     //
 
-    RtlInitAnsiString(&AnsiString,ServiceName);
-    Status = RtlAnsiStringToUnicodeString(ServiceNameW,&AnsiString,FALSE);
+    RtlInitAnsiString(&AnsiString, ServiceName);
+    Status = RtlAnsiStringToUnicodeString(ServiceNameW, &AnsiString, FALSE);
 
-    if ( !NT_SUCCESS(Status) ) {
-
-        BaseSetLastNTError(Status);
-        return FALSE;
-    }
-
-    RtlInitAnsiString(&AnsiString,SubsystemName);
-    Status = RtlAnsiStringToUnicodeString(&SubsystemNameW,&AnsiString,TRUE);
-
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
-    RVal =  PrivilegedServiceAuditAlarmW (
-                (LPCWSTR)SubsystemNameW.Buffer,
-                (LPCWSTR)ServiceNameW->Buffer,
-                ClientToken,
-                Privileges,
-                AccessGranted
-                );
+    RtlInitAnsiString(&AnsiString, SubsystemName);
+    Status = RtlAnsiStringToUnicodeString(&SubsystemNameW, &AnsiString, TRUE);
 
-    RtlFreeUnicodeString( &SubsystemNameW );
+    if (!NT_SUCCESS(Status))
+    {
 
-    return( RVal );
+        BaseSetLastNTError(Status);
+        return FALSE;
+    }
 
+    RVal = PrivilegedServiceAuditAlarmW((LPCWSTR)SubsystemNameW.Buffer, (LPCWSTR)ServiceNameW->Buffer, ClientToken,
+                                        Privileges, AccessGranted);
+
+    RtlFreeUnicodeString(&SubsystemNameW);
+
+    return (RVal);
 }
 
-BOOL
-APIENTRY
-PrivilegedServiceAuditAlarmW (
-    LPCWSTR SubsystemName,
-    LPCWSTR ServiceName,
-    HANDLE ClientToken,
-    PPRIVILEGE_SET Privileges,
-    BOOL AccessGranted
-    )
+BOOL APIENTRY PrivilegedServiceAuditAlarmW(LPCWSTR SubsystemName, LPCWSTR ServiceName, HANDLE ClientToken,
+                                           PPRIVILEGE_SET Privileges, BOOL AccessGranted)
 /*++
 
 Routine Description:
@@ -2937,19 +2375,14 @@ Return value:
     UNICODE_STRING Subsystem;
     UNICODE_STRING Service;
 
-    RtlInitUnicodeString( &Subsystem, SubsystemName );
+    RtlInitUnicodeString(&Subsystem, SubsystemName);
 
-    RtlInitUnicodeString( &Service, ServiceName );
+    RtlInitUnicodeString(&Service, ServiceName);
 
-    Status = NtPrivilegedServiceAuditAlarm (
-        &Subsystem,
-        &Service,
-        ClientToken,
-        Privileges,
-        (BOOLEAN)AccessGranted
-        );
+    Status = NtPrivilegedServiceAuditAlarm(&Subsystem, &Service, ClientToken, Privileges, (BOOLEAN)AccessGranted);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -2958,13 +2391,7 @@ Return value:
 }
 
 
-
-
-BOOL
-APIENTRY
-IsValidSid (
-    PSID pSid
-    )
+BOOL APIENTRY IsValidSid(PSID pSid)
 /*++
 
 Routine Description:
@@ -2981,25 +2408,17 @@ Return Value:
 
 --*/
 {
-    if ( !RtlValidSid ( pSid ) ) {
+    if (!RtlValidSid(pSid))
+    {
         SetLastError(ERROR_INVALID_SID);
         return FALSE;
     }
 
     return TRUE;
-
-
 }
 
 
-
-
-BOOL
-APIENTRY
-EqualSid (
-    PSID pSid1,
-    PSID pSid2
-    )
+BOOL APIENTRY EqualSid(PSID pSid1, PSID pSid2)
 /*++
 
 Routine Description:
@@ -3019,21 +2438,11 @@ Return Value:
 --*/
 {
     SetLastError(0);
-    return (BOOL) RtlEqualSid (
-                    pSid1,
-                    pSid2
-                    );
+    return (BOOL)RtlEqualSid(pSid1, pSid2);
 }
 
 
-
-
-BOOL
-APIENTRY
-EqualPrefixSid (
-    PSID pSid1,
-    PSID pSid2
-    )
+BOOL APIENTRY EqualPrefixSid(PSID pSid1, PSID pSid2)
 /*++
 
 Routine Description:
@@ -3056,20 +2465,13 @@ Return Value:
 --*/
 {
     SetLastError(0);
-    return (BOOL) RtlEqualPrefixSid (
-                    pSid1,
-                    pSid2
-                    );
+    return (BOOL)RtlEqualPrefixSid(pSid1, pSid2);
 }
-
-
 
 
 DWORD
 APIENTRY
-GetSidLengthRequired (
-    UCHAR nSubAuthorityCount
-    )
+GetSidLengthRequired(UCHAR nSubAuthorityCount)
 /*++
 
 Routine Description:
@@ -3088,20 +2490,11 @@ Return Value:
 
 --*/
 {
-    return RtlLengthRequiredSid (
-                nSubAuthorityCount
-                );
+    return RtlLengthRequiredSid(nSubAuthorityCount);
 }
 
 
-
-BOOL
-APIENTRY
-InitializeSid (
-    PSID Sid,
-    PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
-    BYTE nSubAuthorityCount
-    )
+BOOL APIENTRY InitializeSid(PSID Sid, PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority, BYTE nSubAuthorityCount)
 
 /*++
 
@@ -3129,27 +2522,21 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlInitializeSid (
-                Sid,
-                pIdentifierAuthority,
-                nSubAuthorityCount
-                );
+    Status = RtlInitializeSid(Sid, pIdentifierAuthority, nSubAuthorityCount);
 
-    if ( !NT_SUCCESS( Status )) {
-        BaseSetLastNTError( Status );
-        return( FALSE );
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        return (FALSE);
     }
 
-    return( TRUE );
+    return (TRUE);
 }
-
 
 
 PVOID
 APIENTRY
-FreeSid(
-    PSID pSid
-    )
+FreeSid(PSID pSid)
 
 /*++
 
@@ -3170,26 +2557,14 @@ Return Value:
 
 --*/
 {
-    return(RtlFreeSid( pSid ));
+    return (RtlFreeSid(pSid));
 }
 
 
-
-BOOL
-APIENTRY
-AllocateAndInitializeSid (
-    PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
-    BYTE nSubAuthorityCount,
-    DWORD nSubAuthority0,
-    DWORD nSubAuthority1,
-    DWORD nSubAuthority2,
-    DWORD nSubAuthority3,
-    DWORD nSubAuthority4,
-    DWORD nSubAuthority5,
-    DWORD nSubAuthority6,
-    DWORD nSubAuthority7,
-    PSID *pSid
-    )
+BOOL APIENTRY AllocateAndInitializeSid(PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority, BYTE nSubAuthorityCount,
+                                       DWORD nSubAuthority0, DWORD nSubAuthority1, DWORD nSubAuthority2,
+                                       DWORD nSubAuthority3, DWORD nSubAuthority4, DWORD nSubAuthority5,
+                                       DWORD nSubAuthority6, DWORD nSubAuthority7, PSID *pSid)
 
 /*++
 
@@ -3231,35 +2606,23 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlAllocateAndInitializeSid (
-                 pIdentifierAuthority,
-                 (UCHAR)nSubAuthorityCount,
-                 (ULONG)nSubAuthority0,
-                 (ULONG)nSubAuthority1,
-                 (ULONG)nSubAuthority2,
-                 (ULONG)nSubAuthority3,
-                 (ULONG)nSubAuthority4,
-                 (ULONG)nSubAuthority5,
-                 (ULONG)nSubAuthority6,
-                 (ULONG)nSubAuthority7,
-                 pSid
-                 );
+    Status = RtlAllocateAndInitializeSid(pIdentifierAuthority, (UCHAR)nSubAuthorityCount, (ULONG)nSubAuthority0,
+                                         (ULONG)nSubAuthority1, (ULONG)nSubAuthority2, (ULONG)nSubAuthority3,
+                                         (ULONG)nSubAuthority4, (ULONG)nSubAuthority5, (ULONG)nSubAuthority6,
+                                         (ULONG)nSubAuthority7, pSid);
 
-    if ( !NT_SUCCESS( Status )) {
-        BaseSetLastNTError( Status );
-        return( FALSE );
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        return (FALSE);
     }
 
-    return( TRUE );
+    return (TRUE);
 }
 
 
-
-
 PSID_IDENTIFIER_AUTHORITY
-GetSidIdentifierAuthority (
-    PSID pSid
-    )
+GetSidIdentifierAuthority(PSID pSid)
 /*++
 
 Routine Description:
@@ -3277,19 +2640,12 @@ Return Value:
 --*/
 {
     SetLastError(0);
-    return RtlIdentifierAuthoritySid (
-               pSid
-               );
+    return RtlIdentifierAuthoritySid(pSid);
 }
 
 
-
-
 PDWORD
-GetSidSubAuthority (
-    PSID pSid,
-    DWORD nSubAuthority
-    )
+GetSidSubAuthority(PSID pSid, DWORD nSubAuthority)
 /*++
 
 Routine Description:
@@ -3312,16 +2668,11 @@ Return Value:
 --*/
 {
     SetLastError(0);
-    return RtlSubAuthoritySid (
-               pSid,
-               nSubAuthority
-               );
+    return RtlSubAuthoritySid(pSid, nSubAuthority);
 }
 
 PUCHAR
-GetSidSubAuthorityCount (
-    PSID pSid
-    )
+GetSidSubAuthorityCount(PSID pSid)
 /*++
 
 Routine Description:
@@ -3341,18 +2692,13 @@ Return Value:
 --*/
 {
     SetLastError(0);
-    return RtlSubAuthorityCountSid (
-               pSid
-               );
+    return RtlSubAuthorityCountSid(pSid);
 }
-
 
 
 DWORD
 APIENTRY
-GetLengthSid (
-    PSID pSid
-    )
+GetLengthSid(PSID pSid)
 /*++
 
 Routine Description:
@@ -3371,20 +2717,11 @@ Return Value:
 --*/
 {
     SetLastError(0);
-    return RtlLengthSid (
-                pSid
-                );
+    return RtlLengthSid(pSid);
 }
 
 
-
-BOOL
-APIENTRY
-CopySid (
-    DWORD nDestinationSidLength,
-    PSID pDestinationSid,
-    PSID pSourceSid
-    )
+BOOL APIENTRY CopySid(DWORD nDestinationSidLength, PSID pDestinationSid, PSID pSourceSid)
 /*++
 
 Routine Description:
@@ -3411,13 +2748,10 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlCopySid (
-                nDestinationSidLength,
-                pDestinationSid,
-                pSourceSid
-                );
+    Status = RtlCopySid(nDestinationSidLength, pDestinationSid, pSourceSid);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -3426,14 +2760,7 @@ Return Value:
 }
 
 
-
-
-BOOL
-APIENTRY
-AreAllAccessesGranted (
-    DWORD GrantedAccess,
-    DWORD DesiredAccess
-    )
+BOOL APIENTRY AreAllAccessesGranted(DWORD GrantedAccess, DWORD DesiredAccess)
 /*++
 
 Routine Description:
@@ -3455,21 +2782,11 @@ Return Value:
 
 --*/
 {
-    return (BOOL) RtlAreAllAccessesGranted (
-        GrantedAccess,
-        DesiredAccess
-        );
+    return (BOOL)RtlAreAllAccessesGranted(GrantedAccess, DesiredAccess);
 }
 
 
-
-
-BOOL
-APIENTRY
-AreAnyAccessesGranted (
-    DWORD GrantedAccess,
-    DWORD DesiredAccess
-    )
+BOOL APIENTRY AreAnyAccessesGranted(DWORD GrantedAccess, DWORD DesiredAccess)
 /*++
 
 Routine Description:
@@ -3492,21 +2809,11 @@ Return Value:
 
 --*/
 {
-    return (BOOL) RtlAreAnyAccessesGranted (
-        GrantedAccess,
-        DesiredAccess
-        );
+    return (BOOL)RtlAreAnyAccessesGranted(GrantedAccess, DesiredAccess);
 }
 
 
-
-
-VOID
-APIENTRY
-MapGenericMask (
-    PDWORD AccessMask,
-    PGENERIC_MAPPING GenericMapping
-    )
+VOID APIENTRY MapGenericMask(PDWORD AccessMask, PGENERIC_MAPPING GenericMapping)
 /*++
 
 Routine Description:
@@ -3532,19 +2839,11 @@ Return Value:
 
 --*/
 {
-    RtlMapGenericMask (
-        AccessMask,
-        GenericMapping
-        );
+    RtlMapGenericMask(AccessMask, GenericMapping);
 }
 
 
-
-BOOL
-APIENTRY
-IsValidAcl (
-    PACL pAcl
-    )
+BOOL APIENTRY IsValidAcl(PACL pAcl)
 /*++
 
 Routine Description:
@@ -3566,7 +2865,8 @@ Return Value:
 
 --*/
 {
-    if ( !RtlValidAcl( pAcl ) ) {
+    if (!RtlValidAcl(pAcl))
+    {
         SetLastError(ERROR_INVALID_ACL);
         return FALSE;
     }
@@ -3574,15 +2874,7 @@ Return Value:
 }
 
 
-
-
-BOOL
-APIENTRY
-InitializeAcl (
-    PACL pAcl,
-    DWORD nAclLength,
-    DWORD dwAclRevision
-    )
+BOOL APIENTRY InitializeAcl(PACL pAcl, DWORD nAclLength, DWORD dwAclRevision)
 /*++
 
 Routine Description:
@@ -3609,13 +2901,10 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlCreateAcl (
-                pAcl,
-                nAclLength,
-                dwAclRevision
-                );
+    Status = RtlCreateAcl(pAcl, nAclLength, dwAclRevision);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -3624,15 +2913,8 @@ Return Value:
 }
 
 
-
-BOOL
-APIENTRY
-GetAclInformation (
-    PACL pAcl,
-    PVOID pAclInformation,
-    DWORD nAclInformationLength,
-    ACL_INFORMATION_CLASS dwAclInformationClass
-    )
+BOOL APIENTRY GetAclInformation(PACL pAcl, PVOID pAclInformation, DWORD nAclInformationLength,
+                                ACL_INFORMATION_CLASS dwAclInformationClass)
 /*++
 
 Routine Description:
@@ -3662,14 +2944,10 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlQueryInformationAcl (
-                pAcl,
-                pAclInformation,
-                nAclInformationLength,
-                dwAclInformationClass
-                );
+    Status = RtlQueryInformationAcl(pAcl, pAclInformation, nAclInformationLength, dwAclInformationClass);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -3678,16 +2956,8 @@ Return Value:
 }
 
 
-
-
-BOOL
-APIENTRY
-SetAclInformation (
-    PACL pAcl,
-    PVOID pAclInformation,
-    DWORD nAclInformationLength,
-    ACL_INFORMATION_CLASS dwAclInformationClass
-    )
+BOOL APIENTRY SetAclInformation(PACL pAcl, PVOID pAclInformation, DWORD nAclInformationLength,
+                                ACL_INFORMATION_CLASS dwAclInformationClass)
 /*++
 
 Routine Description:
@@ -3717,14 +2987,10 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlSetInformationAcl (
-                pAcl,
-                pAclInformation,
-                nAclInformationLength,
-                dwAclInformationClass
-                );
+    Status = RtlSetInformationAcl(pAcl, pAclInformation, nAclInformationLength, dwAclInformationClass);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -3732,15 +2998,7 @@ Return Value:
     return TRUE;
 }
 
-BOOL
-APIENTRY
-AddAce (
-    PACL pAcl,
-    DWORD dwAceRevision,
-    DWORD dwStartingAceIndex,
-    PVOID pAceList,
-    DWORD nAceListLength
-    )
+BOOL APIENTRY AddAce(PACL pAcl, DWORD dwAceRevision, DWORD dwStartingAceIndex, PVOID pAceList, DWORD nAceListLength)
 /*++
 
 Routine Description:
@@ -3773,15 +3031,10 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlAddAce (
-        pAcl,
-        dwAceRevision,
-        dwStartingAceIndex,
-        pAceList,
-        nAceListLength
-        );
+    Status = RtlAddAce(pAcl, dwAceRevision, dwStartingAceIndex, pAceList, nAceListLength);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -3789,12 +3042,7 @@ Return Value:
     return TRUE;
 }
 
-BOOL
-APIENTRY
-DeleteAce (
-    PACL pAcl,
-    DWORD dwAceIndex
-    )
+BOOL APIENTRY DeleteAce(PACL pAcl, DWORD dwAceIndex)
 /*++
 
 Routine Description:
@@ -3816,12 +3064,10 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlDeleteAce (
-                pAcl,
-                dwAceIndex
-                );
+    Status = RtlDeleteAce(pAcl, dwAceIndex);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -3829,13 +3075,7 @@ Return Value:
     return TRUE;
 }
 
-BOOL
-APIENTRY
-GetAce (
-    PACL pAcl,
-    DWORD dwAceIndex,
-    PVOID *pAce
-    )
+BOOL APIENTRY GetAce(PACL pAcl, DWORD dwAceIndex, PVOID *pAce)
 /*++
 
 Routine Description:
@@ -3860,13 +3100,10 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlGetAce (
-                pAcl,
-                dwAceIndex,
-                pAce
-                );
+    Status = RtlGetAce(pAcl, dwAceIndex, pAce);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -3874,14 +3111,7 @@ Return Value:
     return TRUE;
 }
 
-BOOL
-APIENTRY
-AddAccessAllowedAce (
-    PACL pAcl,
-    DWORD dwAceRevision,
-    DWORD AccessMask,
-    PSID pSid
-    )
+BOOL APIENTRY AddAccessAllowedAce(PACL pAcl, DWORD dwAceRevision, DWORD AccessMask, PSID pSid)
 /*++
 
 Routine Description:
@@ -3911,14 +3141,10 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlAddAccessAllowedAce (
-                pAcl,
-                dwAceRevision,
-                AccessMask,
-                pSid
-                );
+    Status = RtlAddAccessAllowedAce(pAcl, dwAceRevision, AccessMask, pSid);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -3926,15 +3152,7 @@ Return Value:
     return TRUE;
 }
 
-BOOL
-APIENTRY
-AddAccessAllowedAceEx (
-    PACL pAcl,
-    DWORD dwAceRevision,
-    DWORD AceFlags,
-    DWORD AccessMask,
-    PSID pSid
-    )
+BOOL APIENTRY AddAccessAllowedAceEx(PACL pAcl, DWORD dwAceRevision, DWORD AceFlags, DWORD AccessMask, PSID pSid)
 /*++
 
 Routine Description:
@@ -3966,18 +3184,16 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlAddAccessAllowedAceEx (
-                pAcl,
-                dwAceRevision,
-                AceFlags,
-                AccessMask,
-                pSid
-                );
+    Status = RtlAddAccessAllowedAceEx(pAcl, dwAceRevision, AceFlags, AccessMask, pSid);
 
-    if ( !NT_SUCCESS(Status) ) {
-        if ( Status == STATUS_INVALID_PARAMETER ) {
-            SetLastError( ERROR_INVALID_FLAGS );
-        } else {
+    if (!NT_SUCCESS(Status))
+    {
+        if (Status == STATUS_INVALID_PARAMETER)
+        {
+            SetLastError(ERROR_INVALID_FLAGS);
+        }
+        else
+        {
             BaseSetLastNTError(Status);
         }
         return FALSE;
@@ -3987,15 +3203,7 @@ Return Value:
 }
 
 
-
-BOOL
-APIENTRY
-AddAccessDeniedAce (
-    PACL pAcl,
-    DWORD dwAceRevision,
-    DWORD AccessMask,
-    PSID pSid
-    )
+BOOL APIENTRY AddAccessDeniedAce(PACL pAcl, DWORD dwAceRevision, DWORD AccessMask, PSID pSid)
 /*++
 
 Routine Description:
@@ -4027,14 +3235,10 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlAddAccessDeniedAce (
-                pAcl,
-                dwAceRevision,
-                AccessMask,
-                pSid
-                );
+    Status = RtlAddAccessDeniedAce(pAcl, dwAceRevision, AccessMask, pSid);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -4043,16 +3247,7 @@ Return Value:
 }
 
 
-
-BOOL
-APIENTRY
-AddAccessDeniedAceEx (
-    PACL pAcl,
-    DWORD dwAceRevision,
-    DWORD AceFlags,
-    DWORD AccessMask,
-    PSID pSid
-    )
+BOOL APIENTRY AddAccessDeniedAceEx(PACL pAcl, DWORD dwAceRevision, DWORD AceFlags, DWORD AccessMask, PSID pSid)
 /*++
 
 Routine Description:
@@ -4086,18 +3281,16 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlAddAccessDeniedAceEx (
-                pAcl,
-                dwAceRevision,
-                AceFlags,
-                AccessMask,
-                pSid
-                );
+    Status = RtlAddAccessDeniedAceEx(pAcl, dwAceRevision, AceFlags, AccessMask, pSid);
 
-    if ( !NT_SUCCESS(Status) ) {
-        if ( Status == STATUS_INVALID_PARAMETER ) {
-            SetLastError( ERROR_INVALID_FLAGS );
-        } else {
+    if (!NT_SUCCESS(Status))
+    {
+        if (Status == STATUS_INVALID_PARAMETER)
+        {
+            SetLastError(ERROR_INVALID_FLAGS);
+        }
+        else
+        {
             BaseSetLastNTError(Status);
         }
         return FALSE;
@@ -4107,18 +3300,8 @@ Return Value:
 }
 
 
-
-
-BOOL
-APIENTRY
-AddAuditAccessAce(
-    PACL pAcl,
-    DWORD dwAceRevision,
-    DWORD dwAccessMask,
-    PSID pSid,
-    BOOL bAuditSuccess,
-    BOOL bAuditFailure
-    )
+BOOL APIENTRY AddAuditAccessAce(PACL pAcl, DWORD dwAceRevision, DWORD dwAccessMask, PSID pSid, BOOL bAuditSuccess,
+                                BOOL bAuditFailure)
 /*++
 
 Routine Description:
@@ -4159,16 +3342,11 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status =  RtlAddAuditAccessAce (
-                pAcl,
-                dwAceRevision,
-                dwAccessMask,
-                pSid,
-                (BOOLEAN)bAuditSuccess,
-                (BOOLEAN)bAuditFailure
-                );
+    Status =
+        RtlAddAuditAccessAce(pAcl, dwAceRevision, dwAccessMask, pSid, (BOOLEAN)bAuditSuccess, (BOOLEAN)bAuditFailure);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -4176,17 +3354,8 @@ Return Value:
     return TRUE;
 }
 
-BOOL
-APIENTRY
-AddAuditAccessAceEx(
-    PACL pAcl,
-    DWORD dwAceRevision,
-    DWORD AceFlags,
-    DWORD dwAccessMask,
-    PSID pSid,
-    BOOL bAuditSuccess,
-    BOOL bAuditFailure
-    )
+BOOL APIENTRY AddAuditAccessAceEx(PACL pAcl, DWORD dwAceRevision, DWORD AceFlags, DWORD dwAccessMask, PSID pSid,
+                                  BOOL bAuditSuccess, BOOL bAuditFailure)
 /*++
 
 Routine Description:
@@ -4229,20 +3398,17 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status =  RtlAddAuditAccessAceEx (
-                pAcl,
-                dwAceRevision,
-                AceFlags,
-                dwAccessMask,
-                pSid,
-                (BOOLEAN)bAuditSuccess,
-                (BOOLEAN)bAuditFailure
-                );
+    Status = RtlAddAuditAccessAceEx(pAcl, dwAceRevision, AceFlags, dwAccessMask, pSid, (BOOLEAN)bAuditSuccess,
+                                    (BOOLEAN)bAuditFailure);
 
-    if ( !NT_SUCCESS(Status) ) {
-        if ( Status == STATUS_INVALID_PARAMETER ) {
-            SetLastError( ERROR_INVALID_FLAGS );
-        } else {
+    if (!NT_SUCCESS(Status))
+    {
+        if (Status == STATUS_INVALID_PARAMETER)
+        {
+            SetLastError(ERROR_INVALID_FLAGS);
+        }
+        else
+        {
             BaseSetLastNTError(Status);
         }
         return FALSE;
@@ -4252,17 +3418,8 @@ Return Value:
 }
 
 
-BOOL
-APIENTRY
-AddAccessAllowedObjectAce (
-    PACL pAcl,
-    DWORD dwAceRevision,
-    DWORD AceFlags,
-    DWORD AccessMask,
-    GUID *ObjectTypeGuid,
-    GUID *InheritedObjectTypeGuid,
-    PSID pSid
-    )
+BOOL APIENTRY AddAccessAllowedObjectAce(PACL pAcl, DWORD dwAceRevision, DWORD AceFlags, DWORD AccessMask,
+                                        GUID *ObjectTypeGuid, GUID *InheritedObjectTypeGuid, PSID pSid)
 /*++
 
 Routine Description:
@@ -4300,20 +3457,17 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlAddAccessAllowedObjectAce (
-                pAcl,
-                dwAceRevision,
-                AceFlags,
-                AccessMask,
-                ObjectTypeGuid,
-                InheritedObjectTypeGuid,
-                pSid
-                );
+    Status = RtlAddAccessAllowedObjectAce(pAcl, dwAceRevision, AceFlags, AccessMask, ObjectTypeGuid,
+                                          InheritedObjectTypeGuid, pSid);
 
-    if ( !NT_SUCCESS(Status) ) {
-        if ( Status == STATUS_INVALID_PARAMETER ) {
-            SetLastError( ERROR_INVALID_FLAGS );
-        } else {
+    if (!NT_SUCCESS(Status))
+    {
+        if (Status == STATUS_INVALID_PARAMETER)
+        {
+            SetLastError(ERROR_INVALID_FLAGS);
+        }
+        else
+        {
             BaseSetLastNTError(Status);
         }
         return FALSE;
@@ -4322,17 +3476,8 @@ Return Value:
     return TRUE;
 }
 
-BOOL
-APIENTRY
-AddAccessDeniedObjectAce (
-    PACL pAcl,
-    DWORD dwAceRevision,
-    DWORD AceFlags,
-    DWORD AccessMask,
-    GUID *ObjectTypeGuid,
-    GUID *InheritedObjectTypeGuid,
-    PSID pSid
-    )
+BOOL APIENTRY AddAccessDeniedObjectAce(PACL pAcl, DWORD dwAceRevision, DWORD AceFlags, DWORD AccessMask,
+                                       GUID *ObjectTypeGuid, GUID *InheritedObjectTypeGuid, PSID pSid)
 /*++
 
 Routine Description:
@@ -4370,20 +3515,17 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlAddAccessDeniedObjectAce (
-                pAcl,
-                dwAceRevision,
-                AceFlags,
-                AccessMask,
-                ObjectTypeGuid,
-                InheritedObjectTypeGuid,
-                pSid
-                );
+    Status = RtlAddAccessDeniedObjectAce(pAcl, dwAceRevision, AceFlags, AccessMask, ObjectTypeGuid,
+                                         InheritedObjectTypeGuid, pSid);
 
-    if ( !NT_SUCCESS(Status) ) {
-        if ( Status == STATUS_INVALID_PARAMETER ) {
-            SetLastError( ERROR_INVALID_FLAGS );
-        } else {
+    if (!NT_SUCCESS(Status))
+    {
+        if (Status == STATUS_INVALID_PARAMETER)
+        {
+            SetLastError(ERROR_INVALID_FLAGS);
+        }
+        else
+        {
             BaseSetLastNTError(Status);
         }
         return FALSE;
@@ -4392,19 +3534,9 @@ Return Value:
     return TRUE;
 }
 
-BOOL
-APIENTRY
-AddAuditAccessObjectAce(
-    PACL pAcl,
-    DWORD dwAceRevision,
-    DWORD AceFlags,
-    DWORD dwAccessMask,
-    GUID *ObjectTypeGuid,
-    GUID *InheritedObjectTypeGuid,
-    PSID pSid,
-    BOOL bAuditSuccess,
-    BOOL bAuditFailure
-    )
+BOOL APIENTRY AddAuditAccessObjectAce(PACL pAcl, DWORD dwAceRevision, DWORD AceFlags, DWORD dwAccessMask,
+                                      GUID *ObjectTypeGuid, GUID *InheritedObjectTypeGuid, PSID pSid,
+                                      BOOL bAuditSuccess, BOOL bAuditFailure)
 /*++
 
 Routine Description:
@@ -4454,22 +3586,17 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status =  RtlAddAuditAccessObjectAce (
-                pAcl,
-                dwAceRevision,
-                AceFlags,
-                dwAccessMask,
-                ObjectTypeGuid,
-                InheritedObjectTypeGuid,
-                pSid,
-                (BOOLEAN)bAuditSuccess,
-                (BOOLEAN)bAuditFailure
-                );
+    Status = RtlAddAuditAccessObjectAce(pAcl, dwAceRevision, AceFlags, dwAccessMask, ObjectTypeGuid,
+                                        InheritedObjectTypeGuid, pSid, (BOOLEAN)bAuditSuccess, (BOOLEAN)bAuditFailure);
 
-    if ( !NT_SUCCESS(Status) ) {
-        if ( Status == STATUS_INVALID_PARAMETER ) {
-            SetLastError( ERROR_INVALID_FLAGS );
-        } else {
+    if (!NT_SUCCESS(Status))
+    {
+        if (Status == STATUS_INVALID_PARAMETER)
+        {
+            SetLastError(ERROR_INVALID_FLAGS);
+        }
+        else
+        {
             BaseSetLastNTError(Status);
         }
         return FALSE;
@@ -4479,14 +3606,7 @@ Return Value:
 }
 
 
-
-
-BOOL
-APIENTRY
-FindFirstFreeAce (
-    PACL pAcl,
-    PVOID *pAce
-    )
+BOOL APIENTRY FindFirstFreeAce(PACL pAcl, PVOID *pAce)
 /*++
 
 Routine Description:
@@ -4509,19 +3629,15 @@ Return Value:
 
 --*/
 {
-    if ( !RtlFirstFreeAce( pAcl, pAce ) ) {
+    if (!RtlFirstFreeAce(pAcl, pAce))
+    {
         SetLastError(ERROR_INVALID_ACL);
         return FALSE;
     }
     return TRUE;
 }
 
-BOOL
-APIENTRY
-InitializeSecurityDescriptor (
-    PSECURITY_DESCRIPTOR pSecurityDescriptor,
-    DWORD dwRevision
-    )
+BOOL APIENTRY InitializeSecurityDescriptor(PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD dwRevision)
 /*++
 
 Routine Description:
@@ -4549,12 +3665,10 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlCreateSecurityDescriptor (
-                pSecurityDescriptor,
-                dwRevision
-                );
+    Status = RtlCreateSecurityDescriptor(pSecurityDescriptor, dwRevision);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -4563,13 +3677,7 @@ Return Value:
 }
 
 
-
-
-BOOL
-APIENTRY
-IsValidSecurityDescriptor (
-    PSECURITY_DESCRIPTOR pSecurityDescriptor
-    )
+BOOL APIENTRY IsValidSecurityDescriptor(PSECURITY_DESCRIPTOR pSecurityDescriptor)
 /*++
 
 Routine Description:
@@ -4590,22 +3698,19 @@ Return Value:
 
 --*/
 {
-    if (!RtlValidSecurityDescriptor ( pSecurityDescriptor )) {
-        BaseSetLastNTError( STATUS_INVALID_SECURITY_DESCR );
-        return( FALSE );
+    if (!RtlValidSecurityDescriptor(pSecurityDescriptor))
+    {
+        BaseSetLastNTError(STATUS_INVALID_SECURITY_DESCR);
+        return (FALSE);
     }
 
-    return( TRUE );
+    return (TRUE);
 }
-
-
 
 
 DWORD
 APIENTRY
-GetSecurityDescriptorLength (
-    PSECURITY_DESCRIPTOR pSecurityDescriptor
-    )
+GetSecurityDescriptorLength(PSECURITY_DESCRIPTOR pSecurityDescriptor)
 /*++
 
 Routine Description:
@@ -4632,22 +3737,12 @@ Return Value:
 
 --*/
 {
-    return RtlLengthSecurityDescriptor (
-        pSecurityDescriptor
-        );
+    return RtlLengthSecurityDescriptor(pSecurityDescriptor);
 }
 
 
-
-
-
-BOOL
-APIENTRY
-GetSecurityDescriptorControl (
-    PSECURITY_DESCRIPTOR pSecurityDescriptor,
-    PSECURITY_DESCRIPTOR_CONTROL pControl,
-    LPDWORD lpdwRevision
-    )
+BOOL APIENTRY GetSecurityDescriptorControl(PSECURITY_DESCRIPTOR pSecurityDescriptor,
+                                           PSECURITY_DESCRIPTOR_CONTROL pControl, LPDWORD lpdwRevision)
 /*++
 
 Routine Description:
@@ -4673,13 +3768,10 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlGetControlSecurityDescriptor (
-                pSecurityDescriptor,
-                pControl,
-                lpdwRevision
-                );
+    Status = RtlGetControlSecurityDescriptor(pSecurityDescriptor, pControl, lpdwRevision);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -4687,13 +3779,9 @@ Return Value:
     return TRUE;
 }
 
-BOOL
-APIENTRY
-SetSecurityDescriptorControl (
-    PSECURITY_DESCRIPTOR pSecurityDescriptor,
-    SECURITY_DESCRIPTOR_CONTROL ControlBitsOfInterest,
-    SECURITY_DESCRIPTOR_CONTROL ControlBitsToSet
-    )
+BOOL APIENTRY SetSecurityDescriptorControl(PSECURITY_DESCRIPTOR pSecurityDescriptor,
+                                           SECURITY_DESCRIPTOR_CONTROL ControlBitsOfInterest,
+                                           SECURITY_DESCRIPTOR_CONTROL ControlBitsToSet)
 /*++
 
 Routine Description:
@@ -4745,12 +3833,10 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlSetControlSecurityDescriptor (
-                pSecurityDescriptor,
-                ControlBitsOfInterest,
-                ControlBitsToSet );
+    Status = RtlSetControlSecurityDescriptor(pSecurityDescriptor, ControlBitsOfInterest, ControlBitsToSet);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -4759,16 +3845,8 @@ Return Value:
 }
 
 
-
-
-BOOL
-APIENTRY
-SetSecurityDescriptorDacl (
-    PSECURITY_DESCRIPTOR pSecurityDescriptor,
-    BOOL bDaclPresent,
-    PACL pDacl OPTIONAL,
-    BOOL bDaclDefaulted OPTIONAL
-    )
+BOOL APIENTRY SetSecurityDescriptorDacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, BOOL bDaclPresent,
+                                        PACL pDacl OPTIONAL, BOOL bDaclDefaulted OPTIONAL)
 /*++
 
 Routine Description:
@@ -4810,14 +3888,10 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlSetDaclSecurityDescriptor (
-        pSecurityDescriptor,
-        (BOOLEAN)bDaclPresent,
-        pDacl,
-        (BOOLEAN)bDaclDefaulted
-        );
+    Status = RtlSetDaclSecurityDescriptor(pSecurityDescriptor, (BOOLEAN)bDaclPresent, pDacl, (BOOLEAN)bDaclDefaulted);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -4826,15 +3900,8 @@ Return Value:
 }
 
 
-
-BOOL
-APIENTRY
-GetSecurityDescriptorDacl (
-    PSECURITY_DESCRIPTOR pSecurityDescriptor,
-    LPBOOL lpbDaclPresent,
-    PACL *pDacl,
-    LPBOOL lpbDaclDefaulted
-    )
+BOOL APIENTRY GetSecurityDescriptorDacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, LPBOOL lpbDaclPresent, PACL *pDacl,
+                                        LPBOOL lpbDaclDefaulted)
 /*++
 
 Routine Description:
@@ -4874,17 +3941,15 @@ Return Value:
     NTSTATUS Status;
     BOOLEAN DaclPresent, DaclDefaulted;
 
-    Status = RtlGetDaclSecurityDescriptor (
-        pSecurityDescriptor,
-        &DaclPresent,
-        pDacl,
-        &DaclDefaulted
-        );
+    Status = RtlGetDaclSecurityDescriptor(pSecurityDescriptor, &DaclPresent, pDacl, &DaclDefaulted);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-    } else {
+    }
+    else
+    {
         *lpbDaclPresent = (BOOL)DaclPresent;
         *lpbDaclDefaulted = (BOOL)DaclDefaulted;
     }
@@ -4893,16 +3958,8 @@ Return Value:
 }
 
 
-
-
-BOOL
-APIENTRY
-SetSecurityDescriptorSacl (
-    PSECURITY_DESCRIPTOR pSecurityDescriptor,
-    BOOL bSaclPresent,
-    PACL pSacl OPTIONAL,
-    BOOL bSaclDefaulted
-    )
+BOOL APIENTRY SetSecurityDescriptorSacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, BOOL bSaclPresent,
+                                        PACL pSacl OPTIONAL, BOOL bSaclDefaulted)
 /*++
 
 Routine Description:
@@ -4943,14 +4000,10 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlSetSaclSecurityDescriptor (
-                pSecurityDescriptor,
-                (BOOLEAN)bSaclPresent,
-                pSacl,
-                (BOOLEAN)bSaclDefaulted
-                );
+    Status = RtlSetSaclSecurityDescriptor(pSecurityDescriptor, (BOOLEAN)bSaclPresent, pSacl, (BOOLEAN)bSaclDefaulted);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -4959,16 +4012,8 @@ Return Value:
 }
 
 
-
-
-BOOL
-APIENTRY
-GetSecurityDescriptorSacl (
-    PSECURITY_DESCRIPTOR pSecurityDescriptor,
-    LPBOOL lpbSaclPresent,
-    PACL *pSacl,
-    LPBOOL lpbSaclDefaulted
-    )
+BOOL APIENTRY GetSecurityDescriptorSacl(PSECURITY_DESCRIPTOR pSecurityDescriptor, LPBOOL lpbSaclPresent, PACL *pSacl,
+                                        LPBOOL lpbSaclDefaulted)
 /*++
 
 Routine Description:
@@ -5007,17 +4052,15 @@ Return Value:
     NTSTATUS Status;
     BOOLEAN SaclPresent, SaclDefaulted;
 
-    Status = RtlGetSaclSecurityDescriptor (
-        pSecurityDescriptor,
-        &SaclPresent,
-        pSacl,
-        &SaclDefaulted
-        );
+    Status = RtlGetSaclSecurityDescriptor(pSecurityDescriptor, &SaclPresent, pSacl, &SaclDefaulted);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-    } else {
+    }
+    else
+    {
         *lpbSaclPresent = (BOOL)SaclPresent;
         *lpbSaclDefaulted = (BOOL)SaclDefaulted;
     }
@@ -5026,15 +4069,8 @@ Return Value:
 }
 
 
-
-
-BOOL
-APIENTRY
-SetSecurityDescriptorOwner (
-    PSECURITY_DESCRIPTOR pSecurityDescriptor,
-    PSID pOwner OPTIONAL,
-    BOOL bOwnerDefaulted OPTIONAL
-    )
+BOOL APIENTRY SetSecurityDescriptorOwner(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID pOwner OPTIONAL,
+                                         BOOL bOwnerDefaulted OPTIONAL)
 /*++
 
 Routine Description:
@@ -5071,13 +4107,10 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlSetOwnerSecurityDescriptor (
-        pSecurityDescriptor,
-        pOwner,
-        (BOOLEAN)bOwnerDefaulted
-        );
+    Status = RtlSetOwnerSecurityDescriptor(pSecurityDescriptor, pOwner, (BOOLEAN)bOwnerDefaulted);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -5085,13 +4118,8 @@ Return Value:
     return TRUE;
 }
 
-BOOL
-APIENTRY
-GetSecurityDescriptorOwner (
-    PSECURITY_DESCRIPTOR pSecurityDescriptor,
-    PSID *pOwner,
-    LPBOOL lpbOwnerDefaulted
-    )
+BOOL APIENTRY GetSecurityDescriptorOwner(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID *pOwner,
+                                         LPBOOL lpbOwnerDefaulted)
 /*++
 
 Routine Description:
@@ -5125,16 +4153,15 @@ Return Value:
     NTSTATUS Status;
     BOOLEAN OwnerDefaulted;
 
-    Status = RtlGetOwnerSecurityDescriptor (
-        pSecurityDescriptor,
-        pOwner,
-        &OwnerDefaulted
-        );
+    Status = RtlGetOwnerSecurityDescriptor(pSecurityDescriptor, pOwner, &OwnerDefaulted);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-    } else {
+    }
+    else
+    {
         *lpbOwnerDefaulted = (BOOL)OwnerDefaulted;
     }
 
@@ -5142,15 +4169,8 @@ Return Value:
 }
 
 
-
-
-BOOL
-APIENTRY
-SetSecurityDescriptorGroup (
-    PSECURITY_DESCRIPTOR pSecurityDescriptor,
-    PSID pGroup OPTIONAL,
-    BOOL bGroupDefaulted OPTIONAL
-    )
+BOOL APIENTRY SetSecurityDescriptorGroup(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID pGroup OPTIONAL,
+                                         BOOL bGroupDefaulted OPTIONAL)
 /*++
 
 Routine Description:
@@ -5187,13 +4207,10 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlSetGroupSecurityDescriptor (
-        pSecurityDescriptor,
-        pGroup,
-        (BOOLEAN)bGroupDefaulted
-        );
+    Status = RtlSetGroupSecurityDescriptor(pSecurityDescriptor, pGroup, (BOOLEAN)bGroupDefaulted);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -5202,15 +4219,8 @@ Return Value:
 }
 
 
-
-
-BOOL
-APIENTRY
-GetSecurityDescriptorGroup (
-    PSECURITY_DESCRIPTOR pSecurityDescriptor,
-    PSID *pGroup,
-    LPBOOL lpbGroupDefaulted
-    )
+BOOL APIENTRY GetSecurityDescriptorGroup(PSECURITY_DESCRIPTOR pSecurityDescriptor, PSID *pGroup,
+                                         LPBOOL lpbGroupDefaulted)
 /*++
 
 Routine Description:
@@ -5244,16 +4254,15 @@ Return Value:
     NTSTATUS Status;
     BOOLEAN GroupDefaulted;
 
-    Status = RtlGetGroupSecurityDescriptor (
-        pSecurityDescriptor,
-        pGroup,
-        &GroupDefaulted
-        );
+    Status = RtlGetGroupSecurityDescriptor(pSecurityDescriptor, pGroup, &GroupDefaulted);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-    } else {
+    }
+    else
+    {
         *lpbGroupDefaulted = GroupDefaulted;
     }
 
@@ -5261,18 +4270,10 @@ Return Value:
 }
 
 
-
-
-BOOL
-APIENTRY
-CreatePrivateObjectSecurity (
-    PSECURITY_DESCRIPTOR ParentDescriptor OPTIONAL,
-    PSECURITY_DESCRIPTOR CreatorDescriptor OPTIONAL,
-    PSECURITY_DESCRIPTOR * NewDescriptor,
-    BOOL IsDirectoryObject,
-    HANDLE Token,
-    PGENERIC_MAPPING GenericMapping
-    )
+BOOL APIENTRY CreatePrivateObjectSecurity(PSECURITY_DESCRIPTOR ParentDescriptor OPTIONAL,
+                                          PSECURITY_DESCRIPTOR CreatorDescriptor OPTIONAL,
+                                          PSECURITY_DESCRIPTOR *NewDescriptor, BOOL IsDirectoryObject, HANDLE Token,
+                                          PGENERIC_MAPPING GenericMapping)
 /*++
 
 Routine Description:
@@ -5328,16 +4329,11 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlNewSecurityObject (
-        ParentDescriptor,
-        CreatorDescriptor,
-        NewDescriptor,
-        (BOOLEAN)IsDirectoryObject,
-        Token,
-        GenericMapping
-        );
+    Status = RtlNewSecurityObject(ParentDescriptor, CreatorDescriptor, NewDescriptor, (BOOLEAN)IsDirectoryObject, Token,
+                                  GenericMapping);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -5346,17 +4342,10 @@ Return Value:
 }
 
 
-
-BOOL
-APIENTRY
-ConvertToAutoInheritPrivateObjectSecurity(
-    PSECURITY_DESCRIPTOR ParentDescriptor OPTIONAL,
-    PSECURITY_DESCRIPTOR CurrentSecurityDescriptor,
-    PSECURITY_DESCRIPTOR *NewSecurityDescriptor,
-    GUID *ObjectType,
-    BOOLEAN IsDirectoryObject,
-    PGENERIC_MAPPING GenericMapping
-    )
+BOOL APIENTRY ConvertToAutoInheritPrivateObjectSecurity(PSECURITY_DESCRIPTOR ParentDescriptor OPTIONAL,
+                                                        PSECURITY_DESCRIPTOR CurrentSecurityDescriptor,
+                                                        PSECURITY_DESCRIPTOR *NewSecurityDescriptor, GUID *ObjectType,
+                                                        BOOLEAN IsDirectoryObject, PGENERIC_MAPPING GenericMapping)
 /*++
 
 Routine Description:
@@ -5449,15 +4438,11 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlConvertToAutoInheritSecurityObject(
-                ParentDescriptor,
-                CurrentSecurityDescriptor,
-                NewSecurityDescriptor,
-                ObjectType,
-                IsDirectoryObject,
-                GenericMapping ) ;
+    Status = RtlConvertToAutoInheritSecurityObject(ParentDescriptor, CurrentSecurityDescriptor, NewSecurityDescriptor,
+                                                   ObjectType, IsDirectoryObject, GenericMapping);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -5466,20 +4451,10 @@ Return Value:
 }
 
 
-
-
-BOOL
-APIENTRY
-CreatePrivateObjectSecurityEx (
-    PSECURITY_DESCRIPTOR ParentDescriptor,
-    PSECURITY_DESCRIPTOR CreatorDescriptor,
-    PSECURITY_DESCRIPTOR * NewDescriptor,
-    GUID *ObjectType,
-    BOOL IsContainerObject,
-    ULONG AutoInheritFlags,
-    HANDLE Token,
-    PGENERIC_MAPPING GenericMapping
-    )
+BOOL APIENTRY CreatePrivateObjectSecurityEx(PSECURITY_DESCRIPTOR ParentDescriptor,
+                                            PSECURITY_DESCRIPTOR CreatorDescriptor, PSECURITY_DESCRIPTOR *NewDescriptor,
+                                            GUID *ObjectType, BOOL IsContainerObject, ULONG AutoInheritFlags,
+                                            HANDLE Token, PGENERIC_MAPPING GenericMapping)
 /*++
 
 Routine Description:
@@ -5578,18 +4553,11 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlNewSecurityObjectEx (
-        ParentDescriptor,
-        CreatorDescriptor,
-        NewDescriptor,
-        ObjectType,
-        (BOOLEAN)IsContainerObject,
-        AutoInheritFlags,
-        Token,
-        GenericMapping
-        );
+    Status = RtlNewSecurityObjectEx(ParentDescriptor, CreatorDescriptor, NewDescriptor, ObjectType,
+                                    (BOOLEAN)IsContainerObject, AutoInheritFlags, Token, GenericMapping);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -5598,20 +4566,12 @@ Return Value:
 }
 
 
-
-BOOL
-APIENTRY
-CreatePrivateObjectSecurityWithMultipleInheritance (
-    PSECURITY_DESCRIPTOR ParentDescriptor,
-    PSECURITY_DESCRIPTOR CreatorDescriptor,
-    PSECURITY_DESCRIPTOR * NewDescriptor,
-    GUID **ObjectTypes,
-    ULONG GuidCount,
-    BOOL IsContainerObject,
-    ULONG AutoInheritFlags,
-    HANDLE Token,
-    PGENERIC_MAPPING GenericMapping
-    )
+BOOL APIENTRY CreatePrivateObjectSecurityWithMultipleInheritance(PSECURITY_DESCRIPTOR ParentDescriptor,
+                                                                 PSECURITY_DESCRIPTOR CreatorDescriptor,
+                                                                 PSECURITY_DESCRIPTOR *NewDescriptor,
+                                                                 GUID **ObjectTypes, ULONG GuidCount,
+                                                                 BOOL IsContainerObject, ULONG AutoInheritFlags,
+                                                                 HANDLE Token, PGENERIC_MAPPING GenericMapping)
 /*++
 
 Routine Description:
@@ -5712,19 +4672,12 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlNewSecurityObjectWithMultipleInheritance (
-        ParentDescriptor,
-        CreatorDescriptor,
-        NewDescriptor,
-        ObjectTypes,
-        GuidCount,
-        (BOOLEAN)IsContainerObject,
-        AutoInheritFlags,
-        Token,
-        GenericMapping
-        );
+    Status = RtlNewSecurityObjectWithMultipleInheritance(ParentDescriptor, CreatorDescriptor, NewDescriptor,
+                                                         ObjectTypes, GuidCount, (BOOLEAN)IsContainerObject,
+                                                         AutoInheritFlags, Token, GenericMapping);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -5733,17 +4686,10 @@ Return Value:
 }
 
 
-
-
-BOOL
-APIENTRY
-SetPrivateObjectSecurity (
-    SECURITY_INFORMATION SecurityInformation,
-    PSECURITY_DESCRIPTOR ModificationDescriptor,
-    PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor,
-    PGENERIC_MAPPING GenericMapping,
-    HANDLE Token OPTIONAL
-    )
+BOOL APIENTRY SetPrivateObjectSecurity(SECURITY_INFORMATION SecurityInformation,
+                                       PSECURITY_DESCRIPTOR ModificationDescriptor,
+                                       PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor, PGENERIC_MAPPING GenericMapping,
+                                       HANDLE Token OPTIONAL)
 /*++
 
 Routine Description:
@@ -5797,15 +4743,11 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlSetSecurityObject (
-        SecurityInformation,
-        ModificationDescriptor,
-        ObjectsSecurityDescriptor,
-        GenericMapping,
-        Token
-        );
+    Status = RtlSetSecurityObject(SecurityInformation, ModificationDescriptor, ObjectsSecurityDescriptor,
+                                  GenericMapping, Token);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -5814,18 +4756,10 @@ Return Value:
 }
 
 
-
-
-BOOL
-APIENTRY
-SetPrivateObjectSecurityEx (
-    SECURITY_INFORMATION SecurityInformation,
-    PSECURITY_DESCRIPTOR ModificationDescriptor,
-    PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor,
-    ULONG AutoInheritFlags,
-    PGENERIC_MAPPING GenericMapping,
-    HANDLE Token OPTIONAL
-    )
+BOOL APIENTRY SetPrivateObjectSecurityEx(SECURITY_INFORMATION SecurityInformation,
+                                         PSECURITY_DESCRIPTOR ModificationDescriptor,
+                                         PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor, ULONG AutoInheritFlags,
+                                         PGENERIC_MAPPING GenericMapping, HANDLE Token OPTIONAL)
 /*++
 
 Routine Description:
@@ -5899,16 +4833,11 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlSetSecurityObjectEx (
-        SecurityInformation,
-        ModificationDescriptor,
-        ObjectsSecurityDescriptor,
-        AutoInheritFlags,
-        GenericMapping,
-        Token
-        );
+    Status = RtlSetSecurityObjectEx(SecurityInformation, ModificationDescriptor, ObjectsSecurityDescriptor,
+                                    AutoInheritFlags, GenericMapping, Token);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -5917,17 +4846,9 @@ Return Value:
 }
 
 
-
-
-BOOL
-APIENTRY
-GetPrivateObjectSecurity (
-    PSECURITY_DESCRIPTOR ObjectDescriptor,
-    SECURITY_INFORMATION SecurityInformation,
-    PSECURITY_DESCRIPTOR ResultantDescriptor,
-    DWORD DescriptorLength,
-    PDWORD ReturnLength
-    )
+BOOL APIENTRY GetPrivateObjectSecurity(PSECURITY_DESCRIPTOR ObjectDescriptor, SECURITY_INFORMATION SecurityInformation,
+                                       PSECURITY_DESCRIPTOR ResultantDescriptor, DWORD DescriptorLength,
+                                       PDWORD ReturnLength)
 /*++
 
 Routine Description:
@@ -5974,15 +4895,11 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlQuerySecurityObject (
-         ObjectDescriptor,
-         SecurityInformation,
-         ResultantDescriptor,
-         DescriptorLength,
-         ReturnLength
-         );
+    Status = RtlQuerySecurityObject(ObjectDescriptor, SecurityInformation, ResultantDescriptor, DescriptorLength,
+                                    ReturnLength);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -5991,13 +4908,7 @@ Return Value:
 }
 
 
-
-
-BOOL
-APIENTRY
-DestroyPrivateObjectSecurity (
-    PSECURITY_DESCRIPTOR * ObjectDescriptor
-    )
+BOOL APIENTRY DestroyPrivateObjectSecurity(PSECURITY_DESCRIPTOR *ObjectDescriptor)
 /*++
 
 Routine Description:
@@ -6025,11 +4936,10 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlDeleteSecurityObject (
-        ObjectDescriptor
-        );
+    Status = RtlDeleteSecurityObject(ObjectDescriptor);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -6038,15 +4948,8 @@ Return Value:
 }
 
 
-
-
-BOOL
-APIENTRY
-MakeSelfRelativeSD (
-    PSECURITY_DESCRIPTOR pAbsoluteSecurityDescriptor,
-    PSECURITY_DESCRIPTOR pSelfRelativeSecurityDescriptor,
-    LPDWORD lpdwBufferLength
-    )
+BOOL APIENTRY MakeSelfRelativeSD(PSECURITY_DESCRIPTOR pAbsoluteSecurityDescriptor,
+                                 PSECURITY_DESCRIPTOR pSelfRelativeSecurityDescriptor, LPDWORD lpdwBufferLength)
 /*++
 
 Routine Description:
@@ -6077,13 +4980,11 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlAbsoluteToSelfRelativeSD (
-                pAbsoluteSecurityDescriptor,
-                pSelfRelativeSecurityDescriptor,
-                lpdwBufferLength
-                );
+    Status =
+        RtlAbsoluteToSelfRelativeSD(pAbsoluteSecurityDescriptor, pSelfRelativeSecurityDescriptor, lpdwBufferLength);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -6091,21 +4992,11 @@ Return Value:
     return TRUE;
 }
 
-BOOL
-APIENTRY
-MakeAbsoluteSD (
-    PSECURITY_DESCRIPTOR pSelfRelativeSecurityDescriptor,
-    PSECURITY_DESCRIPTOR pAbsoluteSecurityDescriptor,
-    LPDWORD lpdwAbsoluteSecurityDescriptorSize,
-    PACL pDacl,
-    LPDWORD lpdwDaclSize,
-    PACL pSacl,
-    LPDWORD lpdwSaclSize,
-    PSID pOwner,
-    LPDWORD lpdwOwnerSize,
-    PSID pPrimaryGroup,
-    LPDWORD lpdwPrimaryGroupSize
-    )
+BOOL APIENTRY MakeAbsoluteSD(PSECURITY_DESCRIPTOR pSelfRelativeSecurityDescriptor,
+                             PSECURITY_DESCRIPTOR pAbsoluteSecurityDescriptor,
+                             LPDWORD lpdwAbsoluteSecurityDescriptorSize, PACL pDacl, LPDWORD lpdwDaclSize, PACL pSacl,
+                             LPDWORD lpdwSaclSize, PSID pOwner, LPDWORD lpdwOwnerSize, PSID pPrimaryGroup,
+                             LPDWORD lpdwPrimaryGroupSize)
 /*++
 
 Routine Description:
@@ -6167,21 +5058,12 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlSelfRelativeToAbsoluteSD (
-                pSelfRelativeSecurityDescriptor,
-                pAbsoluteSecurityDescriptor,
-                lpdwAbsoluteSecurityDescriptorSize,
-                pDacl,
-                lpdwDaclSize,
-                pSacl,
-                lpdwSaclSize,
-                pOwner,
-                lpdwOwnerSize,
-                pPrimaryGroup,
-                lpdwPrimaryGroupSize
-                );
+    Status = RtlSelfRelativeToAbsoluteSD(pSelfRelativeSecurityDescriptor, pAbsoluteSecurityDescriptor,
+                                         lpdwAbsoluteSecurityDescriptorSize, pDacl, lpdwDaclSize, pSacl, lpdwSaclSize,
+                                         pOwner, lpdwOwnerSize, pPrimaryGroup, lpdwPrimaryGroupSize);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -6189,12 +5071,8 @@ Return Value:
     return TRUE;
 }
 
-
-VOID
-SetSecurityAccessMask(
-    IN SECURITY_INFORMATION SecurityInformation,
-    OUT LPDWORD DesiredAccess
-    )
+
+VOID SetSecurityAccessMask(IN SECURITY_INFORMATION SecurityInformation, OUT LPDWORD DesiredAccess)
 
 /*++
 
@@ -6230,29 +5108,26 @@ Return Value:
 
     (*DesiredAccess) = 0;
 
-    if ((SecurityInformation & OWNER_SECURITY_INFORMATION) ||
-        (SecurityInformation & GROUP_SECURITY_INFORMATION)   ) {
+    if ((SecurityInformation & OWNER_SECURITY_INFORMATION) || (SecurityInformation & GROUP_SECURITY_INFORMATION))
+    {
         (*DesiredAccess) |= WRITE_OWNER;
     }
 
-    if (SecurityInformation & DACL_SECURITY_INFORMATION) {
+    if (SecurityInformation & DACL_SECURITY_INFORMATION)
+    {
         (*DesiredAccess) |= WRITE_DAC;
     }
 
-    if (SecurityInformation & SACL_SECURITY_INFORMATION) {
+    if (SecurityInformation & SACL_SECURITY_INFORMATION)
+    {
         (*DesiredAccess) |= ACCESS_SYSTEM_SECURITY;
     }
 
     return;
-
 }
 
-
-VOID
-QuerySecurityAccessMask(
-    IN SECURITY_INFORMATION SecurityInformation,
-    OUT LPDWORD DesiredAccess
-    )
+
+VOID QuerySecurityAccessMask(IN SECURITY_INFORMATION SecurityInformation, OUT LPDWORD DesiredAccess)
 
 /*++
 
@@ -6288,27 +5163,22 @@ Return Value:
 
     (*DesiredAccess) = 0;
 
-    if ((SecurityInformation & OWNER_SECURITY_INFORMATION) ||
-        (SecurityInformation & GROUP_SECURITY_INFORMATION) ||
-        (SecurityInformation & DACL_SECURITY_INFORMATION)) {
+    if ((SecurityInformation & OWNER_SECURITY_INFORMATION) || (SecurityInformation & GROUP_SECURITY_INFORMATION) ||
+        (SecurityInformation & DACL_SECURITY_INFORMATION))
+    {
         (*DesiredAccess) |= READ_CONTROL;
     }
 
-    if ((SecurityInformation & SACL_SECURITY_INFORMATION)) {
+    if ((SecurityInformation & SACL_SECURITY_INFORMATION))
+    {
         (*DesiredAccess) |= ACCESS_SYSTEM_SECURITY;
     }
 
     return;
-
 }
 
-BOOL
-APIENTRY
-SetFileSecurityW(
-    LPCWSTR lpFileName,
-    SECURITY_INFORMATION SecurityInformation,
-    PSECURITY_DESCRIPTOR pSecurityDescriptor
-    )
+BOOL APIENTRY SetFileSecurityW(LPCWSTR lpFileName, SECURITY_INFORMATION SecurityInformation,
+                               PSECURITY_DESCRIPTOR pSecurityDescriptor)
 
 /*++
 
@@ -6360,104 +5230,75 @@ Return Value:
     PVOID FreeBuffer;
 
 
-    SetSecurityAccessMask(
-        SecurityInformation,
-        &DesiredAccess
-        );
+    SetSecurityAccessMask(SecurityInformation, &DesiredAccess);
 
-    TranslationStatus = RtlDosPathNameToNtPathName_U(
-                            lpFileName,
-                            &FileName,
-                            NULL,
-                            &RelativeName
-                            );
+    TranslationStatus = RtlDosPathNameToNtPathName_U(lpFileName, &FileName, NULL, &RelativeName);
 
-    if ( !TranslationStatus ) {
+    if (!TranslationStatus)
+    {
         BaseSetLastNTError(STATUS_OBJECT_NAME_INVALID);
         return FALSE;
-        }
+    }
 
     FreeBuffer = FileName.Buffer;
 
-    if ( RelativeName.RelativeName.Length ) {
+    if (RelativeName.RelativeName.Length)
+    {
         FileName = *(PUNICODE_STRING)&RelativeName.RelativeName;
-        }
-    else {
+    }
+    else
+    {
         RelativeName.ContainingDirectory = NULL;
-        }
+    }
 
-    InitializeObjectAttributes(
-        &Obja,
-        &FileName,
-        OBJ_CASE_INSENSITIVE,
-        RelativeName.ContainingDirectory,
-        NULL
-        );
+    InitializeObjectAttributes(&Obja, &FileName, OBJ_CASE_INSENSITIVE, RelativeName.ContainingDirectory, NULL);
 
     //
     // Notice that FILE_OPEN_REPARSE_POINT inhibits the reparse behavior. Thus, the
     // security will always be set, as before, in the file denoted by the name.
     //
 
-    Status = NtOpenFile(
-                 &FileHandle,
-                 DesiredAccess,
-                 &Obja,
-                 &IoStatusBlock,
-                 FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                 FILE_OPEN_REPARSE_POINT
-                 );
+    Status = NtOpenFile(&FileHandle, DesiredAccess, &Obja, &IoStatusBlock,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_OPEN_REPARSE_POINT);
 
     //
     // Back-level file systems may not support the FILE_OPEN_REPARSE_POINT
     // flag. We treat this case explicitly.
     //
 
-    if ( Status == STATUS_INVALID_PARAMETER ) {
+    if (Status == STATUS_INVALID_PARAMETER)
+    {
         //
         // Open without inhibiting the reparse behavior.
         //
 
-        Status = NtOpenFile(
-                     &FileHandle,
-                     DesiredAccess,
-                     &Obja,
-                     &IoStatusBlock,
-                     FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                     0
-                     );
-        }
+        Status = NtOpenFile(&FileHandle, DesiredAccess, &Obja, &IoStatusBlock,
+                            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, 0);
+    }
 
     RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
 
-    if ( !NT_SUCCESS( Status ) ) {
-        BaseSetLastNTError( Status );
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 
-    Status = NtSetSecurityObject(
-                FileHandle,
-                SecurityInformation,
-                pSecurityDescriptor
-                );
+    Status = NtSetSecurityObject(FileHandle, SecurityInformation, pSecurityDescriptor);
 
     NtClose(FileHandle);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 
     return TRUE;
 }
 
-BOOL
-APIENTRY
-SetFileSecurityA(
-    LPCSTR lpFileName,
-    SECURITY_INFORMATION SecurityInformation,
-    PSECURITY_DESCRIPTOR pSecurityDescriptor
-    )
+BOOL APIENTRY SetFileSecurityA(LPCSTR lpFileName, SECURITY_INFORMATION SecurityInformation,
+                               PSECURITY_DESCRIPTOR pSecurityDescriptor)
 
 /*++
 
@@ -6474,32 +5315,25 @@ Routine Description:
     NTSTATUS Status;
 
     Unicode = &NtCurrentTeb()->StaticUnicodeString;
-    RtlInitAnsiString(&AnsiString,lpFileName);
-    if (AreFileApisANSI()) {
-        Status = RtlAnsiStringToUnicodeString(Unicode,&AnsiString,FALSE);
-    } else {
-        Status = RtlOemStringToUnicodeString(Unicode,&AnsiString,FALSE);
+    RtlInitAnsiString(&AnsiString, lpFileName);
+    if (AreFileApisANSI())
+    {
+        Status = RtlAnsiStringToUnicodeString(Unicode, &AnsiString, FALSE);
     }
-    if ( !NT_SUCCESS(Status) ) {
+    else
+    {
+        Status = RtlOemStringToUnicodeString(Unicode, &AnsiString, FALSE);
+    }
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
-    return ( SetFileSecurityW( (LPCWSTR)Unicode->Buffer,
-                               SecurityInformation,
-                               pSecurityDescriptor
-                        )
-           );
+    }
+    return (SetFileSecurityW((LPCWSTR)Unicode->Buffer, SecurityInformation, pSecurityDescriptor));
 }
 
-BOOL
-APIENTRY
-GetFileSecurityW(
-    LPCWSTR lpFileName,
-    SECURITY_INFORMATION RequestedInformation,
-    PSECURITY_DESCRIPTOR pSecurityDescriptor,
-    DWORD nLength,
-    LPDWORD lpnLengthNeeded
-    )
+BOOL APIENTRY GetFileSecurityW(LPCWSTR lpFileName, SECURITY_INFORMATION RequestedInformation,
+                               PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength, LPDWORD lpnLengthNeeded)
 
 /*++
 
@@ -6554,105 +5388,72 @@ Return Value:
     IO_STATUS_BLOCK IoStatusBlock;
     PVOID FreeBuffer;
 
-    QuerySecurityAccessMask(
-        RequestedInformation,
-        &DesiredAccess
-        );
+    QuerySecurityAccessMask(RequestedInformation, &DesiredAccess);
 
-    TranslationStatus = RtlDosPathNameToNtPathName_U(
-                            lpFileName,
-                            &FileName,
-                            NULL,
-                            &RelativeName
-                            );
+    TranslationStatus = RtlDosPathNameToNtPathName_U(lpFileName, &FileName, NULL, &RelativeName);
 
-    if ( !TranslationStatus ) {
+    if (!TranslationStatus)
+    {
         BaseSetLastNTError(STATUS_OBJECT_NAME_INVALID);
         return FALSE;
-        }
+    }
 
     FreeBuffer = FileName.Buffer;
 
-    if ( RelativeName.RelativeName.Length ) {
+    if (RelativeName.RelativeName.Length)
+    {
         FileName = *(PUNICODE_STRING)&RelativeName.RelativeName;
-        }
-    else {
+    }
+    else
+    {
         RelativeName.ContainingDirectory = NULL;
-        }
+    }
 
-    InitializeObjectAttributes(
-        &Obja,
-        &FileName,
-        OBJ_CASE_INSENSITIVE,
-        RelativeName.ContainingDirectory,
-        NULL
-        );
+    InitializeObjectAttributes(&Obja, &FileName, OBJ_CASE_INSENSITIVE, RelativeName.ContainingDirectory, NULL);
 
     //
     // Notice that FILE_OPEN_REPARSE_POINT inhibits the reparse behavior. Thus, the
     // security will always be set, as before, in the file denoted by the name.
     //
 
-    Status = NtOpenFile(
-                 &FileHandle,
-                 DesiredAccess,
-                 &Obja,
-                 &IoStatusBlock,
-                 FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                 FILE_OPEN_REPARSE_POINT
-                 );
+    Status = NtOpenFile(&FileHandle, DesiredAccess, &Obja, &IoStatusBlock,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_OPEN_REPARSE_POINT);
 
     //
     // Back-level file systems may not support the FILE_OPEN_REPARSE_POINT
     // flag. We treat this case explicitly.
     //
 
-    if ( Status == STATUS_INVALID_PARAMETER ) {
+    if (Status == STATUS_INVALID_PARAMETER)
+    {
         //
         // Open without inhibiting the reparse behavior.
         //
 
-        Status = NtOpenFile(
-                     &FileHandle,
-                     DesiredAccess,
-                     &Obja,
-                     &IoStatusBlock,
-                     FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                     0
-                     );
-        }
+        Status = NtOpenFile(&FileHandle, DesiredAccess, &Obja, &IoStatusBlock,
+                            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, 0);
+    }
 
     RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
 
-    if (NT_SUCCESS(Status)) {
-        Status = NtQuerySecurityObject(
-                     FileHandle,
-                     RequestedInformation,
-                     pSecurityDescriptor,
-                     nLength,
-                     lpnLengthNeeded
-                     );
+    if (NT_SUCCESS(Status))
+    {
+        Status = NtQuerySecurityObject(FileHandle, RequestedInformation, pSecurityDescriptor, nLength, lpnLengthNeeded);
         NtClose(FileHandle);
     }
 
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 
     return TRUE;
 }
 
-BOOL
-APIENTRY
-GetFileSecurityA(
-    LPCSTR lpFileName,
-    SECURITY_INFORMATION RequestedInformation,
-    PSECURITY_DESCRIPTOR pSecurityDescriptor,
-    DWORD nLength,
-    LPDWORD lpnLengthNeeded
-    )
+BOOL APIENTRY GetFileSecurityA(LPCSTR lpFileName, SECURITY_INFORMATION RequestedInformation,
+                               PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength, LPDWORD lpnLengthNeeded)
 
 /*++
 
@@ -6670,35 +5471,27 @@ Routine Description:
 
     Unicode = &NtCurrentTeb()->StaticUnicodeString;
 
-    RtlInitAnsiString(&AnsiString,lpFileName);
-    if (AreFileApisANSI()) {
-        Status = RtlAnsiStringToUnicodeString(Unicode,&AnsiString,FALSE);
-    } else {
-        Status = RtlOemStringToUnicodeString(Unicode,&AnsiString,FALSE);
+    RtlInitAnsiString(&AnsiString, lpFileName);
+    if (AreFileApisANSI())
+    {
+        Status = RtlAnsiStringToUnicodeString(Unicode, &AnsiString, FALSE);
     }
-    if ( !NT_SUCCESS(Status) ) {
+    else
+    {
+        Status = RtlOemStringToUnicodeString(Unicode, &AnsiString, FALSE);
+    }
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
-    return ( GetFileSecurityW( (LPCWSTR)Unicode->Buffer,
-                               RequestedInformation,
-                               pSecurityDescriptor,
-                               nLength,
-                               lpnLengthNeeded
-                        )
-           );
+    }
+    return (GetFileSecurityW((LPCWSTR)Unicode->Buffer, RequestedInformation, pSecurityDescriptor, nLength,
+                             lpnLengthNeeded));
 }
 
 
-
-
-BOOL
-APIENTRY
-SetKernelObjectSecurity (
-    HANDLE Handle,
-    SECURITY_INFORMATION SecurityInformation,
-    PSECURITY_DESCRIPTOR SecurityDescriptor
-    )
+BOOL APIENTRY SetKernelObjectSecurity(HANDLE Handle, SECURITY_INFORMATION SecurityInformation,
+                                      PSECURITY_DESCRIPTOR SecurityDescriptor)
 /*++
 
 Routine Description:
@@ -6736,13 +5529,10 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = NtSetSecurityObject(
-                 Handle,
-                 SecurityInformation,
-                 SecurityDescriptor
-                 );
+    Status = NtSetSecurityObject(Handle, SecurityInformation, SecurityDescriptor);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -6751,17 +5541,8 @@ Return Value:
 }
 
 
-
-
-BOOL
-APIENTRY
-GetKernelObjectSecurity (
-    HANDLE Handle,
-    SECURITY_INFORMATION RequestedInformation,
-    PSECURITY_DESCRIPTOR pSecurityDescriptor,
-    DWORD nLength,
-    LPDWORD lpnLengthNeeded
-    )
+BOOL APIENTRY GetKernelObjectSecurity(HANDLE Handle, SECURITY_INFORMATION RequestedInformation,
+                                      PSECURITY_DESCRIPTOR pSecurityDescriptor, DWORD nLength, LPDWORD lpnLengthNeeded)
 /*++
 
 Routine Description:
@@ -6807,29 +5588,19 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = NtQuerySecurityObject(
-                 Handle,
-                 RequestedInformation,
-                 pSecurityDescriptor,
-                 nLength,
-                 lpnLengthNeeded
-                 );
+    Status = NtQuerySecurityObject(Handle, RequestedInformation, pSecurityDescriptor, nLength, lpnLengthNeeded);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
     return TRUE;
-
 }
 
 
-BOOL
-APIENTRY
-ImpersonateNamedPipeClient(
-    IN HANDLE hNamedPipe
-    )
+BOOL APIENTRY ImpersonateNamedPipeClient(IN HANDLE hNamedPipe)
 /*++
 
 Routine Description:
@@ -6852,20 +5623,10 @@ Return Value:
     NTSTATUS Status;
     IO_STATUS_BLOCK IoStatusBlock;
 
-    Status =  NtFsControlFile(
-                  hNamedPipe,
-                  NULL,
-                  NULL,
-                  NULL,
-                  &IoStatusBlock,
-                  FSCTL_PIPE_IMPERSONATE,
-                  NULL,
-                  0,
-                  NULL,
-                  0
-                 );
+    Status = NtFsControlFile(hNamedPipe, NULL, NULL, NULL, &IoStatusBlock, FSCTL_PIPE_IMPERSONATE, NULL, 0, NULL, 0);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -6873,11 +5634,7 @@ Return Value:
     return TRUE;
 }
 
-BOOL
-APIENTRY
-ImpersonateSelf(
-    SECURITY_IMPERSONATION_LEVEL ImpersonationLevel
-    )
+BOOL APIENTRY ImpersonateSelf(SECURITY_IMPERSONATION_LEVEL ImpersonationLevel)
 
 /*++
 
@@ -6908,25 +5665,19 @@ Return Value:
 
     NTSTATUS Status;
 
-    Status = RtlImpersonateSelf( ImpersonationLevel );
+    Status = RtlImpersonateSelf(ImpersonationLevel);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
     return TRUE;
-
-
 }
 
 
-
-BOOL
-APIENTRY
-RevertToSelf (
-    VOID
-    )
+BOOL APIENTRY RevertToSelf(VOID)
 /*++
 
 Routine Description:
@@ -6949,30 +5700,20 @@ Return Value:
     NTSTATUS Status;
 
     NewToken = NULL;
-    Status = NtSetInformationThread(
-                 NtCurrentThread(),
-                 ThreadImpersonationToken,
-                 (PVOID)&NewToken,
-                 (ULONG)sizeof(HANDLE)
-                 );
+    Status =
+        NtSetInformationThread(NtCurrentThread(), ThreadImpersonationToken, (PVOID)&NewToken, (ULONG)sizeof(HANDLE));
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
     return TRUE;
-
 }
 
 
-
-BOOL
-APIENTRY
-SetThreadToken (
-    PHANDLE Thread,
-    HANDLE Token
-    )
+BOOL APIENTRY SetThreadToken(PHANDLE Thread, HANDLE Token)
 /*++
 
 Routine Description:
@@ -7000,40 +5741,30 @@ Return Value:
     NTSTATUS Status;
     HANDLE TargetThread;
 
-    if (ARGUMENT_PRESENT(Thread)) {
+    if (ARGUMENT_PRESENT(Thread))
+    {
         TargetThread = (*Thread);
-    } else {
+    }
+    else
+    {
         TargetThread = NtCurrentThread();
     }
 
 
-    Status = NtSetInformationThread(
-                 TargetThread,
-                 ThreadImpersonationToken,
-                 (PVOID)&Token,
-                 (ULONG)sizeof(HANDLE)
-                 );
+    Status = NtSetInformationThread(TargetThread, ThreadImpersonationToken, (PVOID)&Token, (ULONG)sizeof(HANDLE));
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
     return TRUE;
-
 }
 
-BOOL
-LookupAccountNameInternal(
-    LPCWSTR lpSystemName,
-    LPCWSTR lpAccountName,
-    PSID Sid,
-    LPDWORD cbSid,
-    LPWSTR ReferencedDomainName,
-    LPDWORD cbReferencedDomainName,
-    PSID_NAME_USE peUse,
-    BOOL fUnicode
-    )
+BOOL LookupAccountNameInternal(LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSID Sid, LPDWORD cbSid,
+                               LPWSTR ReferencedDomainName, LPDWORD cbReferencedDomainName, PSID_NAME_USE peUse,
+                               BOOL fUnicode)
 
 /*++
 
@@ -7105,13 +5836,7 @@ Return Value:
     // Set up the object attributes prior to opening the LSA.
     //
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        NULL,
-        0L,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&ObjectAttributes, NULL, 0L, NULL, NULL);
 
     //
     // The InitializeObjectAttributes macro presently stores NULL for
@@ -7121,8 +5846,9 @@ Return Value:
 
     ObjectAttributes.SecurityQualityOfService = &SecurityQualityOfService;
 
-    if ( ARGUMENT_PRESENT( lpSystemName )) {
-        RtlInitUnicodeString( &SystemName, lpSystemName );
+    if (ARGUMENT_PRESENT(lpSystemName))
+    {
+        RtlInitUnicodeString(&SystemName, lpSystemName);
         pSystemName = &SystemName;
     }
 
@@ -7131,43 +5857,35 @@ Return Value:
     // starting point for the Name Lookup operation.
     //
 
-    Status = LsaOpenPolicy(
-                 pSystemName,
-                 &ObjectAttributes,
-                 POLICY_LOOKUP_NAMES,
-                 &PolicyHandle
-                 );
+    Status = LsaOpenPolicy(pSystemName, &ObjectAttributes, POLICY_LOOKUP_NAMES, &PolicyHandle);
 
-    if ( !NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        BaseSetLastNTError( Status );
-        return( FALSE );
+        BaseSetLastNTError(Status);
+        return (FALSE);
     }
 
-    RtlInitUnicodeString( &Name, lpAccountName );
+    RtlInitUnicodeString(&Name, lpAccountName);
 
     //
     // Attempt to translate the Name to a Sid.
     //
 
-    Status = LsaLookupNames2(
-                 PolicyHandle,
-                 0, // Flags
-                 1,
-                 &Name,
-                 &ReferencedDomains,
-                 &TranslatedSid
-                 );
+    Status = LsaLookupNames2(PolicyHandle,
+                             0, // Flags
+                             1, &Name, &ReferencedDomains, &TranslatedSid);
 
 #if DBG
-//
-// This code is useful for tracking down components that call Lookup code
-// before the system is initialized
-//
+    //
+    // This code is useful for tracking down components that call Lookup code
+    // before the system is initialized
+    //
     // ASSERT( Status != STATUS_INVALID_SERVER_STATE );
-    if ( Status == STATUS_INVALID_SERVER_STATE ) {
+    if (Status == STATUS_INVALID_SERVER_STATE)
+    {
 
-        DbgPrint( "Process: %lu, Thread: %lu\n", GetCurrentProcessId(), GetCurrentThreadId() );
+        DbgPrint("Process: %lu, Thread: %lu\n", GetCurrentProcessId(), GetCurrentThreadId());
     }
 #endif
 
@@ -7175,8 +5893,8 @@ Return Value:
     // Close the Policy Handle,  which is not needed after here.
     //
 
-    TmpStatus = LsaClose( PolicyHandle );
-//    ASSERT( NT_SUCCESS( TmpStatus ));
+    TmpStatus = LsaClose(PolicyHandle);
+    //    ASSERT( NT_SUCCESS( TmpStatus ));
 
     //
     // If an error was returned, check specifically for STATUS_NONE_MAPPED.
@@ -7185,25 +5903,29 @@ Return Value:
     // LsaLookupNames() frees these structures prior to exit.
     //
 
-    if ( !NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        if (Status == STATUS_NONE_MAPPED) {
+        if (Status == STATUS_NONE_MAPPED)
+        {
 
-            if (ReferencedDomains != NULL) {
+            if (ReferencedDomains != NULL)
+            {
 
-                TmpStatus = LsaFreeMemory( ReferencedDomains );
-                ASSERT( NT_SUCCESS( TmpStatus ));
+                TmpStatus = LsaFreeMemory(ReferencedDomains);
+                ASSERT(NT_SUCCESS(TmpStatus));
             }
 
-            if (TranslatedSid != NULL) {
+            if (TranslatedSid != NULL)
+            {
 
-                TmpStatus = LsaFreeMemory( TranslatedSid );
-                ASSERT( NT_SUCCESS( TmpStatus ));
+                TmpStatus = LsaFreeMemory(TranslatedSid);
+                ASSERT(NT_SUCCESS(TmpStatus));
             }
         }
 
-        BaseSetLastNTError( Status );
-        return( FALSE );
+        BaseSetLastNTError(Status);
+        return (FALSE);
     }
 
     //
@@ -7211,22 +5933,24 @@ Return Value:
     // one Referenced Domain and its DomainIndex should be zero.
     //
 
-    ASSERT ( TranslatedSid->DomainIndex == 0 );
-    ASSERT ( ReferencedDomains != NULL);
-    ASSERT ( ReferencedDomains->Domains != NULL );
+    ASSERT(TranslatedSid->DomainIndex == 0);
+    ASSERT(ReferencedDomains != NULL);
+    ASSERT(ReferencedDomains->Domains != NULL);
 
     //
     // Calculate the lengths of the returned Sid and Domain Name (in Wide
     // Characters, excluding null).
     //
-    if ( !fUnicode ) {
-        RtlUnicodeToMultiByteSize(&ReturnedDomainNameSize,
-                                  ReferencedDomains->Domains->Name.Buffer,
+    if (!fUnicode)
+    {
+        RtlUnicodeToMultiByteSize(&ReturnedDomainNameSize, ReferencedDomains->Domains->Name.Buffer,
                                   ReferencedDomains->Domains->Name.Length);
-    } else {
+    }
+    else
+    {
         ReturnedDomainNameSize = (ReferencedDomains->Domains->Name.Length / sizeof(WCHAR));
     }
-    SidLengthRequired = RtlLengthSid( TranslatedSid->Sid );
+    SidLengthRequired = RtlLengthSid(TranslatedSid->Sid);
 
     //
     // Check if buffer sizes are too small.  For the returned domain,
@@ -7234,9 +5958,8 @@ Return Value:
     // terminator that will be appended to the returned name.
     //
 
-    if ( (SidLengthRequired > *cbSid) ||
-         (ReturnedDomainNameSize + 1 > *cbReferencedDomainName)
-       ) {
+    if ((SidLengthRequired > *cbSid) || (ReturnedDomainNameSize + 1 > *cbReferencedDomainName))
+    {
 
         //
         // One or both buffers are too small.  Return sizes required for
@@ -7245,15 +5968,16 @@ Return Value:
 
         *cbSid = SidLengthRequired;
         *cbReferencedDomainName = ReturnedDomainNameSize + 1;
-        BaseSetLastNTError( STATUS_BUFFER_TOO_SMALL );
+        BaseSetLastNTError(STATUS_BUFFER_TOO_SMALL);
         Rc = FALSE;
-
-    } else {
+    }
+    else
+    {
 
         //
-        // The provided buffers are large enough. 
+        // The provided buffers are large enough.
         //
-        CopySid( *cbSid, Sid, TranslatedSid->Sid );
+        CopySid(*cbSid, Sid, TranslatedSid->Sid);
 
         //
         // Copy the Domain Name into the return buffer and NULL terminate it.
@@ -7266,18 +5990,20 @@ Return Value:
         // Watch for overflow of 16-bit name length
         //
 
-        if (*cbReferencedDomainName < (DWORD) 32767) {
+        if (*cbReferencedDomainName < (DWORD)32767)
+        {
 
             TmpString.MaximumLength = (USHORT)((*cbReferencedDomainName) * sizeof(WCHAR));
+        }
+        else
+        {
 
-        } else {
-
-            TmpString.MaximumLength = (USHORT) 65534;
+            TmpString.MaximumLength = (USHORT)65534;
         }
 
-        RtlCopyUnicodeString( &TmpString, &ReferencedDomains->Domains->Name );
+        RtlCopyUnicodeString(&TmpString, &ReferencedDomains->Domains->Name);
 
-        TmpString.Buffer[TmpString.Length/sizeof(WCHAR)] = (WCHAR) 0;
+        TmpString.Buffer[TmpString.Length / sizeof(WCHAR)] = (WCHAR)0;
 
         //
         // Copy the Sid Use field.
@@ -7300,34 +6026,26 @@ Return Value:
     // function.
     //
 
-    if (ReferencedDomains !=  NULL) {
+    if (ReferencedDomains != NULL)
+    {
 
-        Status = LsaFreeMemory( ReferencedDomains );
-        ASSERT( NT_SUCCESS( Status ));
+        Status = LsaFreeMemory(ReferencedDomains);
+        ASSERT(NT_SUCCESS(Status));
     }
 
-    if (TranslatedSid != NULL) {
+    if (TranslatedSid != NULL)
+    {
 
-        Status = LsaFreeMemory( TranslatedSid );
-        ASSERT( NT_SUCCESS( Status ));
+        Status = LsaFreeMemory(TranslatedSid);
+        ASSERT(NT_SUCCESS(Status));
     }
 
-    return( Rc );
+    return (Rc);
 }
 
 
-
-BOOL
-APIENTRY
-LookupAccountNameA(
-    LPCSTR lpSystemName,
-    LPCSTR lpAccountName,
-    PSID Sid,
-    LPDWORD cbSid,
-    LPSTR ReferencedDomainName,
-    LPDWORD cbReferencedDomainName,
-    PSID_NAME_USE peUse
-    )
+BOOL APIENTRY LookupAccountNameA(LPCSTR lpSystemName, LPCSTR lpAccountName, PSID Sid, LPDWORD cbSid,
+                                 LPSTR ReferencedDomainName, LPDWORD cbReferencedDomainName, PSID_NAME_USE peUse)
 
 /*++
 
@@ -7371,7 +6089,7 @@ Return Value:
 {
     UNICODE_STRING Unicode;
     UNICODE_STRING TmpUnicode;
-    ANSI_STRING  AnsiString;
+    ANSI_STRING AnsiString;
     PWSTR WReferencedDomainName = NULL;
     UNICODE_STRING SystemName;
     PWSTR pSystemName = NULL;
@@ -7397,10 +6115,11 @@ Return Value:
     // LookupAccountNameW.
     //
 
-    RtlInitAnsiString( &AnsiString, lpAccountName );
-    Status = RtlAnsiStringToUnicodeString( &Unicode, &AnsiString, TRUE );
+    RtlInitAnsiString(&AnsiString, lpAccountName);
+    Status = RtlAnsiStringToUnicodeString(&Unicode, &AnsiString, TRUE);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         rc = FALSE;
     }
@@ -7411,14 +6130,13 @@ Return Value:
     // intermediate conversion to a WCHAR string.
     //
 
-    if (rc) {
+    if (rc)
+    {
 
-        WReferencedDomainName = LocalAlloc(
-                                    LMEM_FIXED,
-                                    sizeof(WCHAR) * (*cbReferencedDomainName)
-                                    );
+        WReferencedDomainName = LocalAlloc(LMEM_FIXED, sizeof(WCHAR) * (*cbReferencedDomainName));
 
-        if (WReferencedDomainName == NULL) {
+        if (WReferencedDomainName == NULL)
+        {
 
             Status = STATUS_NO_MEMORY;
             rc = FALSE;
@@ -7429,14 +6147,17 @@ Return Value:
     // If the target system name is non NULL, convert it to Unicode
     //
 
-    if (rc) {
+    if (rc)
+    {
 
-        if ( ARGUMENT_PRESENT( lpSystemName ) ) {
+        if (ARGUMENT_PRESENT(lpSystemName))
+        {
 
-            RtlInitAnsiString( &AnsiString, lpSystemName );
-            Status = RtlAnsiStringToUnicodeString( &SystemName, &AnsiString, TRUE );
+            RtlInitAnsiString(&AnsiString, lpSystemName);
+            Status = RtlAnsiStringToUnicodeString(&SystemName, &AnsiString, TRUE);
 
-            if (!NT_SUCCESS(Status)) {
+            if (!NT_SUCCESS(Status))
+            {
 
                 rc = FALSE;
             }
@@ -7449,23 +6170,19 @@ Return Value:
     // Lookup the Account Sid and obtain its Unicode Account Name.
     //
 
-    if (rc) {
+    if (rc)
+    {
 
-        rc = LookupAccountNameInternal(
-                 (LPCWSTR)pSystemName,
-                 (LPCWSTR)Unicode.Buffer,
-                 Sid,
-                 cbSid,
-                 WReferencedDomainName,
-                 cbReferencedDomainName,
-                 peUse,
-                 FALSE          // not unicode
-                 );
+        rc = LookupAccountNameInternal((LPCWSTR)pSystemName, (LPCWSTR)Unicode.Buffer, Sid, cbSid, WReferencedDomainName,
+                                       cbReferencedDomainName, peUse,
+                                       FALSE // not unicode
+        );
     }
 
-    if ( SystemName.Buffer != NULL ) {
+    if (SystemName.Buffer != NULL)
+    {
 
-        RtlFreeUnicodeString( &SystemName );
+        RtlFreeUnicodeString(&SystemName);
     }
 
     //
@@ -7473,69 +6190,65 @@ Return Value:
     // back to a null-terminated CHAR string.
     //
 
-    if (rc) {
+    if (rc)
+    {
 
-        RtlInitUnicodeString( &TmpUnicode, WReferencedDomainName );
+        RtlInitUnicodeString(&TmpUnicode, WReferencedDomainName);
         AnsiString.Buffer = ReferencedDomainName;
 
         //
         // Watch for 16-bit overflow of MaximumLength
         //
 
-        if (cbInitReferencedDomainName <= (DWORD) 65535) {
+        if (cbInitReferencedDomainName <= (DWORD)65535)
+        {
 
-            AnsiString.MaximumLength = (USHORT) cbInitReferencedDomainName;
+            AnsiString.MaximumLength = (USHORT)cbInitReferencedDomainName;
+        }
+        else
+        {
 
-        } else {
-
-            AnsiString.MaximumLength = (USHORT) 65535;
+            AnsiString.MaximumLength = (USHORT)65535;
         }
 
-        Status = RtlUnicodeStringToAnsiString( &AnsiString, &TmpUnicode, FALSE );
+        Status = RtlUnicodeStringToAnsiString(&AnsiString, &TmpUnicode, FALSE);
 
-        if ( NT_SUCCESS( Status )) {
+        if (NT_SUCCESS(Status))
+        {
 
             ReferencedDomainName[AnsiString.Length] = 0;
-
-        } else {
+        }
+        else
+        {
 
             rc = FALSE;
         }
     }
 
-    if ( WReferencedDomainName != NULL) {
+    if (WReferencedDomainName != NULL)
+    {
 
-        LocalFree( WReferencedDomainName );
+        LocalFree(WReferencedDomainName);
     }
 
-    if (Unicode.Buffer != NULL) {
+    if (Unicode.Buffer != NULL)
+    {
 
         RtlFreeUnicodeString(&Unicode);
     }
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        BaseSetLastNTError( Status );
+        BaseSetLastNTError(Status);
     }
 
-    return( rc );
+    return (rc);
 }
 
 
-
-
-
-BOOL
-APIENTRY
-LookupAccountNameW(
-    LPCWSTR lpSystemName,
-    LPCWSTR lpAccountName,
-    PSID Sid,
-    LPDWORD cbSid,
-    LPWSTR ReferencedDomainName,
-    LPDWORD cbReferencedDomainName,
-    PSID_NAME_USE peUse
-    )
+BOOL APIENTRY LookupAccountNameW(LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSID Sid, LPDWORD cbSid,
+                                 LPWSTR ReferencedDomainName, LPDWORD cbReferencedDomainName, PSID_NAME_USE peUse)
 
 /*++
 
@@ -7578,31 +6291,16 @@ Return Value:
 --*/
 
 {
-    return(LookupAccountNameInternal( lpSystemName,
-                                      lpAccountName,
-                                      Sid,
-                                      cbSid,
-                                      ReferencedDomainName,
-                                      cbReferencedDomainName,
-                                      peUse,
-                                      TRUE              // Unicode
-                                    ) );
-
+    return (LookupAccountNameInternal(lpSystemName, lpAccountName, Sid, cbSid, ReferencedDomainName,
+                                      cbReferencedDomainName, peUse,
+                                      TRUE // Unicode
+                                      ));
 }
 
-
-BOOL
-APIENTRY
-LookupAccountSidInternal(
-    LPCWSTR lpSystemName,
-    PSID lpSid,
-    LPWSTR lpName,
-    LPDWORD cbName,
-    LPWSTR lpReferencedDomainName,
-    LPDWORD cbReferencedDomainName,
-    PSID_NAME_USE peUse,
-    BOOL fUnicode
-    )
+
+BOOL APIENTRY LookupAccountSidInternal(LPCWSTR lpSystemName, PSID lpSid, LPWSTR lpName, LPDWORD cbName,
+                                       LPWSTR lpReferencedDomainName, LPDWORD cbReferencedDomainName,
+                                       PSID_NAME_USE peUse, BOOL fUnicode)
 
 /*++
 
@@ -7677,13 +6375,7 @@ Return Value:
     // Set up the object attributes prior to opening the LSA.
     //
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        NULL,
-        0L,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&ObjectAttributes, NULL, 0L, NULL, NULL);
 
     //
     // The InitializeObjectAttributes macro presently stores NULL for
@@ -7693,44 +6385,36 @@ Return Value:
 
     ObjectAttributes.SecurityQualityOfService = &SecurityQualityOfService;
 
-    if ( ARGUMENT_PRESENT( lpSystemName )) {
-        RtlInitUnicodeString( &SystemName, lpSystemName );
+    if (ARGUMENT_PRESENT(lpSystemName))
+    {
+        RtlInitUnicodeString(&SystemName, lpSystemName);
         pSystemName = &SystemName;
     }
 
-    Status = LsaOpenPolicy(
-                 pSystemName,
-                 &ObjectAttributes,
-                 POLICY_LOOKUP_NAMES,
-                 &PolicyHandle
-                 );
+    Status = LsaOpenPolicy(pSystemName, &ObjectAttributes, POLICY_LOOKUP_NAMES, &PolicyHandle);
 
-    if ( !NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        BaseSetLastNTError( Status );
-        return( FALSE );
+        BaseSetLastNTError(Status);
+        return (FALSE);
     }
 
-    Status = LsaLookupSids(
-                 PolicyHandle,
-                 1,
-                 &lpSid,
-                 &ReferencedDomains,
-                 &Names
-                 );
+    Status = LsaLookupSids(PolicyHandle, 1, &lpSid, &ReferencedDomains, &Names);
 #if DBG
-//
-// This code is useful for tracking down components that call Lookup code
-// before the system is initialized
-//
+    //
+    // This code is useful for tracking down components that call Lookup code
+    // before the system is initialized
+    //
     // ASSERT( Status != STATUS_INVALID_SERVER_STATE );
-    if ( Status == STATUS_INVALID_SERVER_STATE ) {
+    if (Status == STATUS_INVALID_SERVER_STATE)
+    {
 
-        DbgPrint( "Process: %lu, Thread: %lu\n", GetCurrentProcessId(), GetCurrentThreadId() );
+        DbgPrint("Process: %lu, Thread: %lu\n", GetCurrentProcessId(), GetCurrentThreadId());
     }
 #endif
 
-    TmpStatus = LsaClose( PolicyHandle );
+    TmpStatus = LsaClose(PolicyHandle);
 
 
     //
@@ -7740,25 +6424,29 @@ Return Value:
     // frees these structures prior to exit.
     //
 
-    if ( !NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        if (Status == STATUS_NONE_MAPPED) {
+        if (Status == STATUS_NONE_MAPPED)
+        {
 
-            if (ReferencedDomains != NULL) {
+            if (ReferencedDomains != NULL)
+            {
 
-                TmpStatus = LsaFreeMemory( ReferencedDomains );
-                ASSERT( NT_SUCCESS( TmpStatus ));
+                TmpStatus = LsaFreeMemory(ReferencedDomains);
+                ASSERT(NT_SUCCESS(TmpStatus));
             }
 
-            if (Names != NULL) {
+            if (Names != NULL)
+            {
 
-                TmpStatus = LsaFreeMemory( Names );
-                ASSERT( NT_SUCCESS( TmpStatus ));
+                TmpStatus = LsaFreeMemory(Names);
+                ASSERT(NT_SUCCESS(TmpStatus));
             }
         }
 
-        BaseSetLastNTError( Status );
-        return( FALSE );
+        BaseSetLastNTError(Status);
+        return (FALSE);
     }
 
     //
@@ -7770,18 +6458,17 @@ Return Value:
     ASSERT(ReferencedDomains != NULL);
     ASSERT(ReferencedDomains->Domains != NULL);
 
-    if ( ! fUnicode ) {
+    if (!fUnicode)
+    {
 
-        RtlUnicodeToMultiByteSize(&ReturnedNameSize,
-                                  Names->Name.Buffer,
-                                  Names->Name.Length);
+        RtlUnicodeToMultiByteSize(&ReturnedNameSize, Names->Name.Buffer, Names->Name.Length);
 
 
-        RtlUnicodeToMultiByteSize(&ReturnedDomainNameSize,
-                                  ReferencedDomains->Domains->Name.Buffer,
+        RtlUnicodeToMultiByteSize(&ReturnedDomainNameSize, ReferencedDomains->Domains->Name.Buffer,
                                   ReferencedDomains->Domains->Name.Length);
-
-    } else {
+    }
+    else
+    {
         ReturnedNameSize = (Names->Name.Length / sizeof(WCHAR));
         ReturnedDomainNameSize = (ReferencedDomains->Domains->Name.Length / sizeof(WCHAR));
     }
@@ -7793,8 +6480,8 @@ Return Value:
     // terminator that will be appended to the returned names.
     //
 
-    if ((ReturnedNameSize + 1 > *cbName) ||
-        (ReturnedDomainNameSize + 1 > *cbReferencedDomainName)) {
+    if ((ReturnedNameSize + 1 > *cbName) || (ReturnedDomainNameSize + 1 > *cbReferencedDomainName))
+    {
 
         //
         // One or both buffers are too small.  Return sizes required for
@@ -7803,10 +6490,11 @@ Return Value:
 
         *cbReferencedDomainName = ReturnedDomainNameSize + 1;
         *cbName = ReturnedNameSize + 1;
-        BaseSetLastNTError( STATUS_BUFFER_TOO_SMALL );
+        BaseSetLastNTError(STATUS_BUFFER_TOO_SMALL);
         Rc = FALSE;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Both buffers are of sufficient size.  Copy in the Name
@@ -7821,19 +6509,22 @@ Return Value:
         // 16 bits if necessary.
         //
 
-        if (*cbName <= 32766) {
+        if (*cbName <= 32766)
+        {
 
             TmpString.MaximumLength = (USHORT)((*cbName) * sizeof(WCHAR));
+        }
+        else
+        {
 
-        } else {
-
-            TmpString.MaximumLength = (USHORT) 65532;
+            TmpString.MaximumLength = (USHORT)65532;
         }
 
-        if ((*cbName) > 0) {
+        if ((*cbName) > 0)
+        {
 
-            RtlCopyUnicodeString( &TmpString, &Names->Name );
-            TmpString.Buffer[TmpString.Length/sizeof(WCHAR)] = (WCHAR) 0;
+            RtlCopyUnicodeString(&TmpString, &Names->Name);
+            TmpString.Buffer[TmpString.Length / sizeof(WCHAR)] = (WCHAR)0;
         }
 
         //
@@ -7848,17 +6539,19 @@ Return Value:
         // 16 bits if necessary.
         //
 
-        if (*cbReferencedDomainName <= 32767) {
+        if (*cbReferencedDomainName <= 32767)
+        {
 
             TmpString.MaximumLength = (USHORT)((*cbReferencedDomainName) * sizeof(WCHAR));
+        }
+        else
+        {
 
-        } else {
-
-            TmpString.MaximumLength = (USHORT) 65534;
+            TmpString.MaximumLength = (USHORT)65534;
         }
 
-        RtlCopyUnicodeString( &TmpString, &ReferencedDomains->Domains->Name );
-        TmpString.Buffer[TmpString.Length/sizeof(WCHAR)] = (WCHAR) 0;
+        RtlCopyUnicodeString(&TmpString, &ReferencedDomains->Domains->Name);
+        TmpString.Buffer[TmpString.Length / sizeof(WCHAR)] = (WCHAR)0;
 
         //
         // Return the sizes (in Wide Characters, excluding the terminating
@@ -7879,34 +6572,26 @@ Return Value:
     // If necessary, free output buffers returned by LsaLookupSids
     //
 
-    if (Names != NULL) {
+    if (Names != NULL)
+    {
 
-        Status = LsaFreeMemory( Names );
-        ASSERT( NT_SUCCESS( Status ));
+        Status = LsaFreeMemory(Names);
+        ASSERT(NT_SUCCESS(Status));
     }
 
-    if (ReferencedDomains != NULL) {
+    if (ReferencedDomains != NULL)
+    {
 
-        Status = LsaFreeMemory( ReferencedDomains );
-        ASSERT( NT_SUCCESS( Status ));
+        Status = LsaFreeMemory(ReferencedDomains);
+        ASSERT(NT_SUCCESS(Status));
     }
 
-    return(Rc);
+    return (Rc);
 }
 
 
-
-BOOL
-APIENTRY
-LookupAccountSidA(
-    LPCSTR lpSystemName,
-    PSID lpSid,
-    LPSTR lpName,
-    LPDWORD cbName,
-    LPSTR lpReferencedDomainName,
-    LPDWORD cbReferencedDomainName,
-    PSID_NAME_USE peUse
-    )
+BOOL APIENTRY LookupAccountSidA(LPCSTR lpSystemName, PSID lpSid, LPSTR lpName, LPDWORD cbName,
+                                LPSTR lpReferencedDomainName, LPDWORD cbReferencedDomainName, PSID_NAME_USE peUse)
 /*++
 
 Routine Description:
@@ -7977,63 +6662,62 @@ Return Value:
     // intermediate conversion to WCHAR strings.
     //
 
-    if ( *cbName > 0 ) {
-        WName = LocalAlloc( LMEM_FIXED, (*cbName) * sizeof(WCHAR));
+    if (*cbName > 0)
+    {
+        WName = LocalAlloc(LMEM_FIXED, (*cbName) * sizeof(WCHAR));
 
-        if ( !WName )
+        if (!WName)
         {
-            SetLastError( ERROR_OUTOFMEMORY );
-            return FALSE ;
+            SetLastError(ERROR_OUTOFMEMORY);
+            return FALSE;
         }
     }
 
-    if ( *cbReferencedDomainName > 0 ) {
-        WReferencedDomainName =
-            LocalAlloc( LMEM_FIXED, (*cbReferencedDomainName) * sizeof(WCHAR));
+    if (*cbReferencedDomainName > 0)
+    {
+        WReferencedDomainName = LocalAlloc(LMEM_FIXED, (*cbReferencedDomainName) * sizeof(WCHAR));
 
-        if ( !WReferencedDomainName )
+        if (!WReferencedDomainName)
         {
-            if ( WName )
+            if (WName)
             {
-                LocalFree( WName );
+                LocalFree(WName);
             }
 
-            SetLastError( ERROR_OUTOFMEMORY );
+            SetLastError(ERROR_OUTOFMEMORY);
 
-            return FALSE ;
+            return FALSE;
         }
     }
 
-    if ( ARGUMENT_PRESENT( lpSystemName ) ) {
+    if (ARGUMENT_PRESENT(lpSystemName))
+    {
 
-        RtlInitAnsiString( &AnsiString, lpSystemName );
-        RtlAnsiStringToUnicodeString( &SystemName, &AnsiString, TRUE );
+        RtlInitAnsiString(&AnsiString, lpSystemName);
+        RtlAnsiStringToUnicodeString(&SystemName, &AnsiString, TRUE);
         pSystemName = SystemName.Buffer;
     }
 
-    BoolStatus = LookupAccountSidInternal(
-                     (LPCWSTR)pSystemName,
-                     lpSid,
-                     WName,
-                     cbName,
-                     WReferencedDomainName,
-                     cbReferencedDomainName,
-                     peUse,
-                     FALSE              // not unicode
-                     );
+    BoolStatus = LookupAccountSidInternal((LPCWSTR)pSystemName, lpSid, WName, cbName, WReferencedDomainName,
+                                          cbReferencedDomainName, peUse,
+                                          FALSE // not unicode
+    );
 
-    if ( ARGUMENT_PRESENT( lpSystemName ) ) {
-        RtlFreeUnicodeString( &SystemName );
+    if (ARGUMENT_PRESENT(lpSystemName))
+    {
+        RtlFreeUnicodeString(&SystemName);
     }
 
-    if ( BoolStatus ) {
+    if (BoolStatus)
+    {
 
         //
         // Copy the Name and DomainName information into the passed CHAR
         // buffers.
         //
 
-        if ( ARGUMENT_PRESENT(lpName) ) {
+        if (ARGUMENT_PRESENT(lpName))
+        {
 
             AnsiString.Buffer = lpName;
 
@@ -8042,24 +6726,25 @@ Return Value:
             // 16 bits if necessary.
             //
 
-            if (cbInitName <= (DWORD) 65535) {
+            if (cbInitName <= (DWORD)65535)
+            {
 
-                AnsiString.MaximumLength = (USHORT) cbInitName;
+                AnsiString.MaximumLength = (USHORT)cbInitName;
+            }
+            else
+            {
 
-            } else {
-
-                AnsiString.MaximumLength = (USHORT) 65535;
+                AnsiString.MaximumLength = (USHORT)65535;
             }
 
-            RtlInitUnicodeString( &UnicodeString, WName );
-            Status = RtlUnicodeStringToAnsiString( &AnsiString,
-                                                   &UnicodeString,
-                                                   FALSE );
+            RtlInitUnicodeString(&UnicodeString, WName);
+            Status = RtlUnicodeStringToAnsiString(&AnsiString, &UnicodeString, FALSE);
             ASSERT(NT_SUCCESS(Status));
             AnsiString.Buffer[AnsiString.Length] = 0;
         }
 
-        if ( ARGUMENT_PRESENT(lpReferencedDomainName) ) {
+        if (ARGUMENT_PRESENT(lpReferencedDomainName))
+        {
 
             AnsiString.Buffer = lpReferencedDomainName;
 
@@ -8068,49 +6753,39 @@ Return Value:
             // 16 bits if necessary.
             //
 
-            if (cbInitReferencedDomainName <= (DWORD) 65535) {
+            if (cbInitReferencedDomainName <= (DWORD)65535)
+            {
 
-                AnsiString.MaximumLength = (USHORT) cbInitReferencedDomainName;
+                AnsiString.MaximumLength = (USHORT)cbInitReferencedDomainName;
+            }
+            else
+            {
 
-            } else {
-
-                AnsiString.MaximumLength = (USHORT) 65535;
+                AnsiString.MaximumLength = (USHORT)65535;
             }
 
-            RtlInitUnicodeString( &UnicodeString, WReferencedDomainName );
-            Status = RtlUnicodeStringToAnsiString( &AnsiString,
-                                                   &UnicodeString,
-                                                   FALSE );
+            RtlInitUnicodeString(&UnicodeString, WReferencedDomainName);
+            Status = RtlUnicodeStringToAnsiString(&AnsiString, &UnicodeString, FALSE);
             ASSERT(NT_SUCCESS(Status));
             AnsiString.Buffer[AnsiString.Length] = 0;
         }
-
     }
 
-    if (ARGUMENT_PRESENT(WName)) {
-        LocalFree( WName );
+    if (ARGUMENT_PRESENT(WName))
+    {
+        LocalFree(WName);
     }
-    if (ARGUMENT_PRESENT(WReferencedDomainName)) {
-        LocalFree( WReferencedDomainName );
+    if (ARGUMENT_PRESENT(WReferencedDomainName))
+    {
+        LocalFree(WReferencedDomainName);
     }
 
-    return( BoolStatus );
+    return (BoolStatus);
 }
 
 
-
-
-BOOL
-APIENTRY
-LookupAccountSidW(
-    LPCWSTR lpSystemName,
-    PSID lpSid,
-    LPWSTR lpName,
-    LPDWORD cbName,
-    LPWSTR lpReferencedDomainName,
-    LPDWORD cbReferencedDomainName,
-    PSID_NAME_USE peUse
-    )
+BOOL APIENTRY LookupAccountSidW(LPCWSTR lpSystemName, PSID lpSid, LPWSTR lpName, LPDWORD cbName,
+                                LPWSTR lpReferencedDomainName, LPDWORD cbReferencedDomainName, PSID_NAME_USE peUse)
 
 /*++
 
@@ -8158,26 +6833,14 @@ Return Value:
 --*/
 
 {
-    return(LookupAccountSidInternal(
-                lpSystemName,
-                lpSid,
-                lpName,
-                cbName,
-                lpReferencedDomainName,
-                cbReferencedDomainName,
-                peUse,
-                TRUE                    // Unicode
-                ));
+    return (LookupAccountSidInternal(lpSystemName, lpSid, lpName, cbName, lpReferencedDomainName,
+                                     cbReferencedDomainName, peUse,
+                                     TRUE // Unicode
+                                     ));
 }
 
-
-BOOL
-APIENTRY
-LookupPrivilegeValueA(
-    LPCSTR lpSystemName,
-    LPCSTR lpName,
-    PLUID lpLuid
-    )
+
+BOOL APIENTRY LookupPrivilegeValueA(LPCSTR lpSystemName, LPCSTR lpName, PLUID lpLuid)
 /*++
 
 Routine Description:
@@ -8197,49 +6860,40 @@ Return Value:
     ANSI_STRING ASystemName, AName;
     BOOL bool;
 
-    RtlInitAnsiString( &ASystemName, lpSystemName );
-    RtlInitAnsiString( &AName, lpName );
+    RtlInitAnsiString(&ASystemName, lpSystemName);
+    RtlInitAnsiString(&AName, lpName);
 
     USystemName.Buffer = NULL;
     UName.Buffer = NULL;
 
-    Status = RtlAnsiStringToUnicodeString( &USystemName, &ASystemName, TRUE );
-    if (NT_SUCCESS(Status)) {
+    Status = RtlAnsiStringToUnicodeString(&USystemName, &ASystemName, TRUE);
+    if (NT_SUCCESS(Status))
+    {
 
-        Status = RtlAnsiStringToUnicodeString( &UName, &AName, TRUE );
-        if (NT_SUCCESS(Status)) {
+        Status = RtlAnsiStringToUnicodeString(&UName, &AName, TRUE);
+        if (NT_SUCCESS(Status))
+        {
 
 
-            bool = LookupPrivilegeValueW( (LPCWSTR)USystemName.Buffer,
-                                          (LPCWSTR)UName.Buffer,
-                                          lpLuid
-                                          );
+            bool = LookupPrivilegeValueW((LPCWSTR)USystemName.Buffer, (LPCWSTR)UName.Buffer, lpLuid);
 
-            RtlFreeUnicodeString( &UName );
+            RtlFreeUnicodeString(&UName);
         }
 
-        RtlFreeUnicodeString( &USystemName );
+        RtlFreeUnicodeString(&USystemName);
     }
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        BaseSetLastNTError( Status );
-        return( FALSE );
-
+        BaseSetLastNTError(Status);
+        return (FALSE);
     }
 
-    return(bool);
-
-
+    return (bool);
 }
-
-BOOL
-APIENTRY
-LookupPrivilegeValueW(
-    LPCWSTR lpSystemName,
-    LPCWSTR lpName,
-    PLUID  lpLuid
-    )
+
+BOOL APIENTRY LookupPrivilegeValueW(LPCWSTR lpSystemName, LPCWSTR lpName, PLUID lpLuid)
 
 /*++
 
@@ -8269,19 +6923,17 @@ Return Value:
 
 --*/
 {
-    NTSTATUS                    Status,
-                                TmpStatus;
+    NTSTATUS Status, TmpStatus;
 
-    LSA_HANDLE                  PolicyHandle;
+    LSA_HANDLE PolicyHandle;
 
-    OBJECT_ATTRIBUTES           ObjectAttributes;
+    OBJECT_ATTRIBUTES ObjectAttributes;
 
     SECURITY_QUALITY_OF_SERVICE SecurityQualityOfService;
 
-    UNICODE_STRING              USystemName,
-                                UName;
+    UNICODE_STRING USystemName, UName;
 
-    PUNICODE_STRING             SystemName = NULL;
+    PUNICODE_STRING SystemName = NULL;
 
 
     SecurityQualityOfService.Length = sizeof(SECURITY_QUALITY_OF_SERVICE);
@@ -8293,55 +6945,44 @@ Return Value:
     // Set up the object attributes prior to opening the LSA.
     //
 
-    InitializeObjectAttributes( &ObjectAttributes, NULL, 0L, NULL, NULL );
+    InitializeObjectAttributes(&ObjectAttributes, NULL, 0L, NULL, NULL);
     ObjectAttributes.SecurityQualityOfService = &SecurityQualityOfService;
 
 
-    if ( ARGUMENT_PRESENT( lpSystemName )) {
-        RtlInitUnicodeString( &USystemName, lpSystemName );
+    if (ARGUMENT_PRESENT(lpSystemName))
+    {
+        RtlInitUnicodeString(&USystemName, lpSystemName);
         SystemName = &USystemName;
     }
 
-    Status = LsaOpenPolicy(
-                 SystemName,
-                 &ObjectAttributes,
-                 POLICY_LOOKUP_NAMES,
-                 &PolicyHandle
-                 );
+    Status = LsaOpenPolicy(SystemName, &ObjectAttributes, POLICY_LOOKUP_NAMES, &PolicyHandle);
 
-    if ( !NT_SUCCESS( Status )) {
-        BaseSetLastNTError( Status );
-        return( FALSE );
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        return (FALSE);
     }
 
 
+    RtlInitUnicodeString(&UName, lpName);
+    Status = LsaLookupPrivilegeValue(PolicyHandle, &UName, lpLuid);
 
-    RtlInitUnicodeString( &UName, lpName );
-    Status = LsaLookupPrivilegeValue( PolicyHandle, &UName, lpLuid );
-
-    TmpStatus = LsaClose( PolicyHandle );
-//    ASSERT( NT_SUCCESS( TmpStatus ));
+    TmpStatus = LsaClose(PolicyHandle);
+    //    ASSERT( NT_SUCCESS( TmpStatus ));
 
 
-    if ( !NT_SUCCESS( Status )) {
-        BaseSetLastNTError( Status );
-        return( FALSE );
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        return (FALSE);
     }
 
 
-    return(TRUE);
+    return (TRUE);
 }
 
 
-
-BOOL
-APIENTRY
-LookupPrivilegeNameA(
-    LPCSTR   lpSystemName,
-    PLUID   lpLuid,
-    LPSTR   lpName,
-    LPDWORD cchName
-    )
+BOOL APIENTRY LookupPrivilegeNameA(LPCSTR lpSystemName, PLUID lpLuid, LPSTR lpName, LPDWORD cchName)
 /*++
 
 Routine Description:
@@ -8356,45 +6997,48 @@ Return Value:
 
 --*/
 {
-    NTSTATUS       Status;
+    NTSTATUS Status;
 
-    ANSI_STRING    AnsiName;
-    LPWSTR         UnicodeBuffer;
+    ANSI_STRING AnsiName;
+    LPWSTR UnicodeBuffer;
     UNICODE_STRING UnicodeString;
 
-    ANSI_STRING    AnsiSystemName;
+    ANSI_STRING AnsiSystemName;
     UNICODE_STRING UnicodeSystemName;
-    DWORD          LengthRequired;
+    DWORD LengthRequired;
 
     //
     // Convert the passed SystemName to Unicode.  Let the Rtl function
     // allocate the memory we need.
     //
 
-    RtlInitAnsiString( &AnsiSystemName, lpSystemName );
-    Status = RtlAnsiStringToUnicodeString( &UnicodeSystemName, &AnsiSystemName, TRUE );
+    RtlInitAnsiString(&AnsiSystemName, lpSystemName);
+    Status = RtlAnsiStringToUnicodeString(&UnicodeSystemName, &AnsiSystemName, TRUE);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        BaseSetLastNTError( Status );
-        return( FALSE );
+        BaseSetLastNTError(Status);
+        return (FALSE);
     }
 
     //
     // Make sure we don't exceed the limits of a unicode string.
     //
 
-    if (*cchName > 0xFFFC) {
+    if (*cchName > 0xFFFC)
+    {
         *cchName = 0xFFFC;
     }
 
-    UnicodeBuffer = RtlAllocateHeap( RtlProcessHeap(), 0, *cchName * sizeof(WCHAR) );
+    UnicodeBuffer = RtlAllocateHeap(RtlProcessHeap(), 0, *cchName * sizeof(WCHAR));
 
-    if (UnicodeBuffer == NULL) {
+    if (UnicodeBuffer == NULL)
+    {
 
-        RtlFreeUnicodeString( &UnicodeSystemName );
-        BaseSetLastNTError( STATUS_NO_MEMORY );
-        return( FALSE );
+        RtlFreeUnicodeString(&UnicodeSystemName);
+        BaseSetLastNTError(STATUS_NO_MEMORY);
+        return (FALSE);
     }
 
     //
@@ -8404,16 +7048,13 @@ Return Value:
 
     LengthRequired = *cchName;
 
-    if (!LookupPrivilegeNameW( (LPCWSTR)UnicodeSystemName.Buffer,
-                               lpLuid,
-                               UnicodeBuffer,
-                               &LengthRequired
-                               )) {
+    if (!LookupPrivilegeNameW((LPCWSTR)UnicodeSystemName.Buffer, lpLuid, UnicodeBuffer, &LengthRequired))
+    {
 
-        RtlFreeHeap( RtlProcessHeap(), 0, UnicodeBuffer );
-        RtlFreeUnicodeString( &UnicodeSystemName );
+        RtlFreeHeap(RtlProcessHeap(), 0, UnicodeBuffer);
+        RtlFreeUnicodeString(&UnicodeSystemName);
         *cchName = LengthRequired;
-        return(FALSE);
+        return (FALSE);
     }
 
     //
@@ -8428,26 +7069,18 @@ Return Value:
 
     Status = RtlUnicodeStringToAnsiString(&AnsiName, &UnicodeString, FALSE);
 
-    ASSERT( NT_SUCCESS( Status ));
+    ASSERT(NT_SUCCESS(Status));
 
     *cchName = AnsiName.Length;
 
-    RtlFreeHeap( RtlProcessHeap(), 0, UnicodeBuffer );
-    RtlFreeUnicodeString( &UnicodeSystemName );
+    RtlFreeHeap(RtlProcessHeap(), 0, UnicodeBuffer);
+    RtlFreeUnicodeString(&UnicodeSystemName);
 
-    return(TRUE);
+    return (TRUE);
 }
 
 
-
-BOOL
-APIENTRY
-LookupPrivilegeNameW(
-    LPCWSTR  lpSystemName,
-    PLUID   lpLuid,
-    LPWSTR  lpName,
-    LPDWORD cchName
-    )
+BOOL APIENTRY LookupPrivilegeNameW(LPCWSTR lpSystemName, PLUID lpLuid, LPWSTR lpName, LPDWORD cchName)
 /*++
 
 Routine Description:
@@ -8483,14 +7116,12 @@ Return Value:
 
 --*/
 {
-    NTSTATUS                    Status,
-                                TmpStatus;
-    LSA_HANDLE                  PolicyHandle;
-    OBJECT_ATTRIBUTES           ObjectAttributes;
+    NTSTATUS Status, TmpStatus;
+    LSA_HANDLE PolicyHandle;
+    OBJECT_ATTRIBUTES ObjectAttributes;
     SECURITY_QUALITY_OF_SERVICE SecurityQualityOfService;
-    UNICODE_STRING              USystemName;
-    PUNICODE_STRING             SystemName,
-                                UName;
+    UNICODE_STRING USystemName;
+    PUNICODE_STRING SystemName, UName;
 
 
     SecurityQualityOfService.Length = sizeof(SECURITY_QUALITY_OF_SERVICE);
@@ -8502,73 +7133,66 @@ Return Value:
     // Set up the object attributes prior to opening the LSA.
     //
 
-    InitializeObjectAttributes( &ObjectAttributes, NULL, 0L, NULL, NULL );
+    InitializeObjectAttributes(&ObjectAttributes, NULL, 0L, NULL, NULL);
     ObjectAttributes.SecurityQualityOfService = &SecurityQualityOfService;
 
 
     SystemName = NULL;
-    if ( ARGUMENT_PRESENT( lpSystemName )) {
-        RtlInitUnicodeString( &USystemName, lpSystemName );
+    if (ARGUMENT_PRESENT(lpSystemName))
+    {
+        RtlInitUnicodeString(&USystemName, lpSystemName);
         SystemName = &USystemName;
     }
 
-    Status = LsaOpenPolicy(
-                 SystemName,
-                 &ObjectAttributes,
-                 POLICY_LOOKUP_NAMES,
-                 &PolicyHandle
-                 );
+    Status = LsaOpenPolicy(SystemName, &ObjectAttributes, POLICY_LOOKUP_NAMES, &PolicyHandle);
 
-    if ( !NT_SUCCESS( Status )) {
-        BaseSetLastNTError( Status );
-        return( FALSE );
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        return (FALSE);
     }
 
 
     UName = NULL;
-    Status = LsaLookupPrivilegeName( PolicyHandle,lpLuid, &UName );
+    Status = LsaLookupPrivilegeName(PolicyHandle, lpLuid, &UName);
 
-    if (NT_SUCCESS(Status) ) {
+    if (NT_SUCCESS(Status))
+    {
 
-        if ((DWORD)UName->Length + sizeof( WCHAR) > (*cchName) * sizeof( WCHAR )) {
+        if ((DWORD)UName->Length + sizeof(WCHAR) > (*cchName) * sizeof(WCHAR))
+        {
             Status = STATUS_BUFFER_TOO_SMALL;
-            (*cchName) = ( UName->Length + sizeof( WCHAR) ) / sizeof( WCHAR );
+            (*cchName) = (UName->Length + sizeof(WCHAR)) / sizeof(WCHAR);
+        }
+        else
+        {
 
-        } else {
-
-            RtlMoveMemory( lpName, UName->Buffer, UName->Length );
-            lpName[UName->Length/sizeof(WCHAR)] = 0;  // NULL terminate it
-            (*cchName) = UName->Length / sizeof( WCHAR );
+            RtlMoveMemory(lpName, UName->Buffer, UName->Length);
+            lpName[UName->Length / sizeof(WCHAR)] = 0; // NULL terminate it
+            (*cchName) = UName->Length / sizeof(WCHAR);
         }
 
-        LsaFreeMemory( UName->Buffer );
-        LsaFreeMemory( UName );
+        LsaFreeMemory(UName->Buffer);
+        LsaFreeMemory(UName);
     }
 
-    TmpStatus = LsaClose( PolicyHandle );
-//    ASSERT( NT_SUCCESS( TmpStatus ));
+    TmpStatus = LsaClose(PolicyHandle);
+    //    ASSERT( NT_SUCCESS( TmpStatus ));
 
 
-    if ( !NT_SUCCESS( Status )) {
-        BaseSetLastNTError( Status );
-        return( FALSE );
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        return (FALSE);
     }
 
 
-    return(TRUE);
+    return (TRUE);
 }
 
 
-
-BOOL
-APIENTRY
-LookupPrivilegeDisplayNameA(
-    LPCSTR   lpSystemName,
-    LPCSTR   lpName,
-    LPSTR   lpDisplayName,
-    LPDWORD cchDisplayName,
-    LPDWORD lpLanguageId
-    )
+BOOL APIENTRY LookupPrivilegeDisplayNameA(LPCSTR lpSystemName, LPCSTR lpName, LPSTR lpDisplayName,
+                                          LPDWORD cchDisplayName, LPDWORD lpLanguageId)
 
 /*++
 
@@ -8584,65 +7208,66 @@ Return Value:
 
 --*/
 {
-    NTSTATUS                Status;
+    NTSTATUS Status;
 
-    UNICODE_STRING          UnicodeSystemName;
-    UNICODE_STRING          UnicodeString;
-    UNICODE_STRING          UnicodeName;
+    UNICODE_STRING UnicodeSystemName;
+    UNICODE_STRING UnicodeString;
+    UNICODE_STRING UnicodeName;
 
-    ANSI_STRING             AnsiSystemName;
-    ANSI_STRING             AnsiDisplayName;
-    ANSI_STRING             AnsiName;
+    ANSI_STRING AnsiSystemName;
+    ANSI_STRING AnsiDisplayName;
+    ANSI_STRING AnsiName;
 
-    LPWSTR                  UnicodeBuffer;
-    DWORD                   RequiredLength;
+    LPWSTR UnicodeBuffer;
+    DWORD RequiredLength;
 
 
-    RtlInitAnsiString( &AnsiSystemName, lpSystemName );
-    Status = RtlAnsiStringToUnicodeString( &UnicodeSystemName, &AnsiSystemName, TRUE );
+    RtlInitAnsiString(&AnsiSystemName, lpSystemName);
+    Status = RtlAnsiStringToUnicodeString(&UnicodeSystemName, &AnsiSystemName, TRUE);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        BaseSetLastNTError( Status );
-        return( FALSE );
+        BaseSetLastNTError(Status);
+        return (FALSE);
     }
 
     //
     // Make sure we don't exceed that limits of a unicode string.
     //
 
-    if (*cchDisplayName > 0xFFFC) {
+    if (*cchDisplayName > 0xFFFC)
+    {
         *cchDisplayName = 0xFFFC;
     }
 
-    UnicodeBuffer =  RtlAllocateHeap( RtlProcessHeap(), 0, *cchDisplayName * sizeof(WCHAR));
+    UnicodeBuffer = RtlAllocateHeap(RtlProcessHeap(), 0, *cchDisplayName * sizeof(WCHAR));
 
-    if (UnicodeBuffer == NULL) {
+    if (UnicodeBuffer == NULL)
+    {
 
-        RtlFreeUnicodeString( &UnicodeSystemName );
-        BaseSetLastNTError( STATUS_NO_MEMORY );
-        return( FALSE );
+        RtlFreeUnicodeString(&UnicodeSystemName);
+        BaseSetLastNTError(STATUS_NO_MEMORY);
+        return (FALSE);
     }
 
-    RtlInitAnsiString( &AnsiName, lpName );
-    Status = RtlAnsiStringToUnicodeString( &UnicodeName, &AnsiName, TRUE );
+    RtlInitAnsiString(&AnsiName, lpName);
+    Status = RtlAnsiStringToUnicodeString(&UnicodeName, &AnsiName, TRUE);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        RtlFreeUnicodeString( &UnicodeSystemName );
-        RtlFreeHeap( RtlProcessHeap(), 0, UnicodeBuffer );
-        BaseSetLastNTError( Status );
-        return( FALSE );
+        RtlFreeUnicodeString(&UnicodeSystemName);
+        RtlFreeHeap(RtlProcessHeap(), 0, UnicodeBuffer);
+        BaseSetLastNTError(Status);
+        return (FALSE);
     }
 
     RequiredLength = *cchDisplayName;
 
-    if (! LookupPrivilegeDisplayNameW( (LPCWSTR)UnicodeSystemName.Buffer,
-                                       (LPCWSTR)UnicodeName.Buffer,
-                                       UnicodeBuffer,
-                                       &RequiredLength,
-                                       lpLanguageId
-                                       )) {
+    if (!LookupPrivilegeDisplayNameW((LPCWSTR)UnicodeSystemName.Buffer, (LPCWSTR)UnicodeName.Buffer, UnicodeBuffer,
+                                     &RequiredLength, lpLanguageId))
+    {
 
         //
         // No need to set last error here, we can assume the W routine did so.
@@ -8650,46 +7275,38 @@ Return Value:
 
         *cchDisplayName = RequiredLength;
 
-        RtlFreeUnicodeString( &UnicodeSystemName );
-        RtlFreeUnicodeString( &UnicodeName );
-        RtlFreeHeap( RtlProcessHeap(), 0, UnicodeBuffer );
-        return( FALSE );
+        RtlFreeUnicodeString(&UnicodeSystemName);
+        RtlFreeUnicodeString(&UnicodeName);
+        RtlFreeHeap(RtlProcessHeap(), 0, UnicodeBuffer);
+        return (FALSE);
     }
 
     //
     // Now convert back to ANSI for the caller
     //
 
-    RtlInitUnicodeString( &UnicodeString, UnicodeBuffer );
+    RtlInitUnicodeString(&UnicodeString, UnicodeBuffer);
 
     AnsiDisplayName.Buffer = lpDisplayName;
     AnsiDisplayName.Length = 0;
     AnsiDisplayName.MaximumLength = (USHORT)(*cchDisplayName);
 
-    Status = RtlUnicodeStringToAnsiString( &AnsiDisplayName, &UnicodeString, FALSE );
+    Status = RtlUnicodeStringToAnsiString(&AnsiDisplayName, &UnicodeString, FALSE);
 
-    ASSERT( NT_SUCCESS( Status ));
+    ASSERT(NT_SUCCESS(Status));
 
     *cchDisplayName = AnsiDisplayName.Length;
 
-    RtlFreeUnicodeString( &UnicodeSystemName );
-    RtlFreeUnicodeString( &UnicodeName );
-    RtlFreeHeap( RtlProcessHeap(), 0, UnicodeBuffer );
+    RtlFreeUnicodeString(&UnicodeSystemName);
+    RtlFreeUnicodeString(&UnicodeName);
+    RtlFreeHeap(RtlProcessHeap(), 0, UnicodeBuffer);
 
-    return( TRUE );
+    return (TRUE);
 }
 
 
-
-BOOL
-APIENTRY
-LookupPrivilegeDisplayNameW(
-    LPCWSTR  lpSystemName,
-    LPCWSTR  lpName,
-    LPWSTR  lpDisplayName,
-    LPDWORD cchDisplayName,
-    LPDWORD lpLanguageId
-    )
+BOOL APIENTRY LookupPrivilegeDisplayNameW(LPCWSTR lpSystemName, LPCWSTR lpName, LPWSTR lpDisplayName,
+                                          LPDWORD cchDisplayName, LPDWORD lpLanguageId)
 
 /*++
 
@@ -8725,22 +7342,19 @@ Return Value:
 --*/
 
 {
-    NTSTATUS                    Status,
-                                TmpStatus;
+    NTSTATUS Status, TmpStatus;
 
-    LSA_HANDLE                  PolicyHandle;
+    LSA_HANDLE PolicyHandle;
 
-    OBJECT_ATTRIBUTES           ObjectAttributes;
+    OBJECT_ATTRIBUTES ObjectAttributes;
 
     SECURITY_QUALITY_OF_SERVICE SecurityQualityOfService;
 
-    UNICODE_STRING              USystemName,
-                                UName;
+    UNICODE_STRING USystemName, UName;
 
-    PUNICODE_STRING             SystemName,
-                                UDisplayName;
+    PUNICODE_STRING SystemName, UDisplayName;
 
-    SHORT                       LanguageId;
+    SHORT LanguageId;
 
 
     SecurityQualityOfService.Length = sizeof(SECURITY_QUALITY_OF_SERVICE);
@@ -8752,78 +7366,67 @@ Return Value:
     // Set up the object attributes prior to opening the LSA.
     //
 
-    InitializeObjectAttributes( &ObjectAttributes, NULL, 0L, NULL, NULL );
+    InitializeObjectAttributes(&ObjectAttributes, NULL, 0L, NULL, NULL);
     ObjectAttributes.SecurityQualityOfService = &SecurityQualityOfService;
 
 
     SystemName = NULL;
-    if ( ARGUMENT_PRESENT( lpSystemName )) {
-        RtlInitUnicodeString( &USystemName, lpSystemName );
+    if (ARGUMENT_PRESENT(lpSystemName))
+    {
+        RtlInitUnicodeString(&USystemName, lpSystemName);
         SystemName = &USystemName;
     }
 
-    Status = LsaOpenPolicy(
-                 SystemName,
-                 &ObjectAttributes,
-                 POLICY_LOOKUP_NAMES,
-                 &PolicyHandle
-                 );
+    Status = LsaOpenPolicy(SystemName, &ObjectAttributes, POLICY_LOOKUP_NAMES, &PolicyHandle);
 
-    if ( !NT_SUCCESS( Status )) {
-        BaseSetLastNTError( Status );
-        return( FALSE );
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        return (FALSE);
     }
 
-    RtlInitUnicodeString( &UName, lpName );
+    RtlInitUnicodeString(&UName, lpName);
 
 
     UDisplayName = NULL;
-    Status = LsaLookupPrivilegeDisplayName( PolicyHandle,
-                                            &UName,
-                                            &UDisplayName,
-                                            &LanguageId
-                                            );
+    Status = LsaLookupPrivilegeDisplayName(PolicyHandle, &UName, &UDisplayName, &LanguageId);
     (*lpLanguageId) = LanguageId;
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
-        if (UDisplayName->Length + sizeof(WCHAR) > (*cchDisplayName) * sizeof(WCHAR)) {
+        if (UDisplayName->Length + sizeof(WCHAR) > (*cchDisplayName) * sizeof(WCHAR))
+        {
             Status = STATUS_BUFFER_TOO_SMALL;
-            (*cchDisplayName) = (UDisplayName->Length + sizeof( WCHAR )) / sizeof( WCHAR );
+            (*cchDisplayName) = (UDisplayName->Length + sizeof(WCHAR)) / sizeof(WCHAR);
+        }
+        else
+        {
 
-        } else {
-
-            RtlMoveMemory( lpDisplayName,
-                           UDisplayName->Buffer,
-                           UDisplayName->Length
-                           );
-            lpDisplayName[UDisplayName->Length/sizeof(WCHAR)] = 0;  // Null terminate it.
-            (*cchDisplayName) = UDisplayName->Length / sizeof( WCHAR );
+            RtlMoveMemory(lpDisplayName, UDisplayName->Buffer, UDisplayName->Length);
+            lpDisplayName[UDisplayName->Length / sizeof(WCHAR)] = 0; // Null terminate it.
+            (*cchDisplayName) = UDisplayName->Length / sizeof(WCHAR);
         }
 
-        LsaFreeMemory( UDisplayName->Buffer );
-        LsaFreeMemory( UDisplayName );
-
+        LsaFreeMemory(UDisplayName->Buffer);
+        LsaFreeMemory(UDisplayName);
     }
-    TmpStatus = LsaClose( PolicyHandle );
-//    ASSERT( NT_SUCCESS( TmpStatus ));
+    TmpStatus = LsaClose(PolicyHandle);
+    //    ASSERT( NT_SUCCESS( TmpStatus ));
 
 
-    if ( !NT_SUCCESS( Status )) {
-        BaseSetLastNTError( Status );
-        return( FALSE );
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        return (FALSE);
     }
 
 
-    return(TRUE);
+    return (TRUE);
 }
 
-
-BOOL
-APIENTRY
-ImpersonateAnonymousToken(
-    IN HANDLE ThreadHandle
-    )
+
+BOOL APIENTRY ImpersonateAnonymousToken(IN HANDLE ThreadHandle)
 /*++
 
 Routine Description:
@@ -8846,34 +7449,27 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = NtImpersonateAnonymousToken(
-                ThreadHandle
-                );
+    Status = NtImpersonateAnonymousToken(ThreadHandle);
 
-    if ( !NT_SUCCESS( Status )) {
-        BaseSetLastNTError( Status );
-        return( FALSE );
-
-    } else {
-        return( TRUE );
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        return (FALSE);
+    }
+    else
+    {
+        return (TRUE);
     }
 }
 
 
-
-
-
 /////////////////////////////////////////////////////////////////////////////
 //                                                                         //
 //               Private Routines                                          //
 //                                                                         //
 /////////////////////////////////////////////////////////////////////////////
 
-VOID
-SepFormatAccountSid(
-    PSID Sid,
-    LPWSTR OutputBuffer
-    )
+VOID SepFormatAccountSid(PSID Sid, LPWSTR OutputBuffer)
 {
     UCHAR Buffer[128];
     UCHAR TmpBuffer[128];
@@ -8892,7 +7488,7 @@ SepFormatAccountSid(
     // for w-char strings.
     //
 
-    iSid = (PISID) Sid;
+    iSid = (PISID)Sid;
 
     OutputString.Buffer = OutputBuffer;
     OutputString.MaximumLength = 127;
@@ -8901,56 +7497,45 @@ SepFormatAccountSid(
     TmpBuffer[0] = 0;
 
     AccountName.MaximumLength = 127;
-    AccountName.Length = (USHORT)((GetLengthSid( Sid ) > MAXUSHORT) ? MAXUSHORT : GetLengthSid( Sid ));
+    AccountName.Length = (USHORT)((GetLengthSid(Sid) > MAXUSHORT) ? MAXUSHORT : GetLengthSid(Sid));
     AccountName.Buffer = Buffer;
 
-    sprintf(TmpBuffer, "S-%u-", (USHORT)iSid->Revision );
+    sprintf(TmpBuffer, "S-%u-", (USHORT)iSid->Revision);
     lstrcpy(Buffer, TmpBuffer);
 
-    if (  (iSid->IdentifierAuthority.Value[0] != 0)  ||
-          (iSid->IdentifierAuthority.Value[1] != 0)     ){
-        sprintf(TmpBuffer, "0x%02hx%02hx%02hx%02hx%02hx%02hx",
-                    (USHORT)iSid->IdentifierAuthority.Value[0],
-                    (USHORT)iSid->IdentifierAuthority.Value[1],
-                    (USHORT)iSid->IdentifierAuthority.Value[2],
-                    (USHORT)iSid->IdentifierAuthority.Value[3],
-                    (USHORT)iSid->IdentifierAuthority.Value[4],
-                    (USHORT)iSid->IdentifierAuthority.Value[5] );
+    if ((iSid->IdentifierAuthority.Value[0] != 0) || (iSid->IdentifierAuthority.Value[1] != 0))
+    {
+        sprintf(TmpBuffer, "0x%02hx%02hx%02hx%02hx%02hx%02hx", (USHORT)iSid->IdentifierAuthority.Value[0],
+                (USHORT)iSid->IdentifierAuthority.Value[1], (USHORT)iSid->IdentifierAuthority.Value[2],
+                (USHORT)iSid->IdentifierAuthority.Value[3], (USHORT)iSid->IdentifierAuthority.Value[4],
+                (USHORT)iSid->IdentifierAuthority.Value[5]);
         lstrcat(Buffer, TmpBuffer);
-    } else {
-        Tmp = (ULONG)iSid->IdentifierAuthority.Value[5]          +
-              (ULONG)(iSid->IdentifierAuthority.Value[4] <<  8)  +
-              (ULONG)(iSid->IdentifierAuthority.Value[3] << 16)  +
-              (ULONG)(iSid->IdentifierAuthority.Value[2] << 24);
+    }
+    else
+    {
+        Tmp = (ULONG)iSid->IdentifierAuthority.Value[5] + (ULONG)(iSid->IdentifierAuthority.Value[4] << 8) +
+              (ULONG)(iSid->IdentifierAuthority.Value[3] << 16) + (ULONG)(iSid->IdentifierAuthority.Value[2] << 24);
         sprintf(TmpBuffer, "%lu", Tmp);
         lstrcat(Buffer, TmpBuffer);
     }
 
-    for (i=0;i<iSid->SubAuthorityCount ;i++ ) {
+    for (i = 0; i < iSid->SubAuthorityCount; i++)
+    {
         sprintf(TmpBuffer, "-%lu", iSid->SubAuthority[i]);
         lstrcat(Buffer, TmpBuffer);
     }
 
-    Status = RtlAnsiStringToUnicodeString( &OutputString, &AccountName, FALSE );
+    Status = RtlAnsiStringToUnicodeString(&OutputString, &AccountName, FALSE);
 
-    ASSERT( NT_SUCCESS( Status ));
+    ASSERT(NT_SUCCESS(Status));
 
     return;
 }
 
-BOOL
-APIENTRY
-CreateRestrictedToken(
-    IN HANDLE ExistingTokenHandle,
-    IN DWORD Flags,
-    IN DWORD DisableSidCount,
-    IN PSID_AND_ATTRIBUTES SidsToDisable OPTIONAL,
-    IN DWORD DeletePrivilegeCount,
-    IN PLUID_AND_ATTRIBUTES PrivilegesToDelete OPTIONAL,
-    IN DWORD RestrictedSidCount,
-    IN PSID_AND_ATTRIBUTES SidsToRestrict OPTIONAL,
-    OUT PHANDLE NewTokenHandle
-    )
+BOOL APIENTRY CreateRestrictedToken(IN HANDLE ExistingTokenHandle, IN DWORD Flags, IN DWORD DisableSidCount,
+                                    IN PSID_AND_ATTRIBUTES SidsToDisable OPTIONAL, IN DWORD DeletePrivilegeCount,
+                                    IN PLUID_AND_ATTRIBUTES PrivilegesToDelete OPTIONAL, IN DWORD RestrictedSidCount,
+                                    IN PSID_AND_ATTRIBUTES SidsToRestrict OPTIONAL, OUT PHANDLE NewTokenHandle)
 {
     NTSTATUS Status;
     PTOKEN_GROUPS DisabledSids = NULL;
@@ -8961,97 +7546,85 @@ CreateRestrictedToken(
     // Convert the input parameters into the native NT format
     //
 
-    if (DisableSidCount != 0) {
-        if (SidsToDisable == NULL) {
+    if (DisableSidCount != 0)
+    {
+        if (SidsToDisable == NULL)
+        {
             Status = STATUS_INVALID_PARAMETER;
             goto Cleanup;
         }
-        DisabledSids = (PTOKEN_GROUPS) LocalAlloc(0,sizeof(TOKEN_GROUPS) +
-                                        (DisableSidCount - 1) * sizeof(SID_AND_ATTRIBUTES) );
+        DisabledSids =
+            (PTOKEN_GROUPS)LocalAlloc(0, sizeof(TOKEN_GROUPS) + (DisableSidCount - 1) * sizeof(SID_AND_ATTRIBUTES));
         if (DisabledSids == NULL)
         {
             Status = STATUS_INSUFFICIENT_RESOURCES;
             goto Cleanup;
         }
         DisabledSids->GroupCount = DisableSidCount;
-        RtlCopyMemory(
-            DisabledSids->Groups,
-            SidsToDisable,
-            DisableSidCount * sizeof(SID_AND_ATTRIBUTES)
-            );
+        RtlCopyMemory(DisabledSids->Groups, SidsToDisable, DisableSidCount * sizeof(SID_AND_ATTRIBUTES));
     }
 
-    if (DeletePrivilegeCount != 0) {
-        if (PrivilegesToDelete == NULL) {
+    if (DeletePrivilegeCount != 0)
+    {
+        if (PrivilegesToDelete == NULL)
+        {
             Status = STATUS_INVALID_PARAMETER;
             goto Cleanup;
         }
-        DeletedPrivileges = (PTOKEN_PRIVILEGES) LocalAlloc(0,sizeof(TOKEN_PRIVILEGES) +
-                                        (DeletePrivilegeCount - 1) * sizeof(LUID_AND_ATTRIBUTES) );
+        DeletedPrivileges = (PTOKEN_PRIVILEGES)LocalAlloc(
+            0, sizeof(TOKEN_PRIVILEGES) + (DeletePrivilegeCount - 1) * sizeof(LUID_AND_ATTRIBUTES));
         if (DeletedPrivileges == NULL)
         {
             Status = STATUS_INSUFFICIENT_RESOURCES;
             goto Cleanup;
         }
         DeletedPrivileges->PrivilegeCount = DeletePrivilegeCount;
-        RtlCopyMemory(
-            DeletedPrivileges->Privileges,
-            PrivilegesToDelete,
-            DeletePrivilegeCount * sizeof(LUID_AND_ATTRIBUTES)
-            );
+        RtlCopyMemory(DeletedPrivileges->Privileges, PrivilegesToDelete,
+                      DeletePrivilegeCount * sizeof(LUID_AND_ATTRIBUTES));
     }
 
-    if (RestrictedSidCount != 0) {
-        if (SidsToRestrict == NULL) {
+    if (RestrictedSidCount != 0)
+    {
+        if (SidsToRestrict == NULL)
+        {
             Status = STATUS_INVALID_PARAMETER;
             goto Cleanup;
         }
-        RestrictedSids = (PTOKEN_GROUPS) LocalAlloc(0,sizeof(TOKEN_GROUPS) +
-                                        (RestrictedSidCount - 1) * sizeof(SID_AND_ATTRIBUTES) );
+        RestrictedSids =
+            (PTOKEN_GROUPS)LocalAlloc(0, sizeof(TOKEN_GROUPS) + (RestrictedSidCount - 1) * sizeof(SID_AND_ATTRIBUTES));
         if (RestrictedSids == NULL)
         {
             Status = STATUS_INSUFFICIENT_RESOURCES;
             goto Cleanup;
         }
         RestrictedSids->GroupCount = RestrictedSidCount;
-        RtlCopyMemory(
-            RestrictedSids->Groups,
-            SidsToRestrict,
-            RestrictedSidCount * sizeof(SID_AND_ATTRIBUTES)
-            );
+        RtlCopyMemory(RestrictedSids->Groups, SidsToRestrict, RestrictedSidCount * sizeof(SID_AND_ATTRIBUTES));
     }
 
-    Status = NtFilterToken(
-                ExistingTokenHandle,
-                Flags,
-                DisabledSids,
-                DeletedPrivileges,
-                RestrictedSids,
-                NewTokenHandle
-                );
+    Status = NtFilterToken(ExistingTokenHandle, Flags, DisabledSids, DeletedPrivileges, RestrictedSids, NewTokenHandle);
 
 Cleanup:
-    if (DisabledSids != NULL) {
+    if (DisabledSids != NULL)
+    {
         LocalFree(DisabledSids);
     }
-    if (DeletedPrivileges != NULL) {
+    if (DeletedPrivileges != NULL)
+    {
         LocalFree(DeletedPrivileges);
     }
-    if (RestrictedSids != NULL) {
+    if (RestrictedSids != NULL)
+    {
         LocalFree(RestrictedSids);
     }
-    if (!NT_SUCCESS(Status)) {
-        BaseSetLastNTError( Status );
-        return(FALSE);
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        return (FALSE);
     }
-    return(TRUE);
+    return (TRUE);
 }
 
-BOOL
-APIENTRY
-IsTokenRestricted(
-    IN HANDLE TokenHandle
-    )
+BOOL APIENTRY IsTokenRestricted(IN HANDLE TokenHandle)
 {
     PTOKEN_GROUPS RestrictedSids = NULL;
     ULONG ReturnLength;
@@ -9059,33 +7632,21 @@ IsTokenRestricted(
     BOOL Result = FALSE;
 
 
-    Status = NtQueryInformationToken(
-                TokenHandle,
-                TokenRestrictedSids,
-                NULL,
-                0,
-                &ReturnLength
-                );
+    Status = NtQueryInformationToken(TokenHandle, TokenRestrictedSids, NULL, 0, &ReturnLength);
     if (Status != STATUS_BUFFER_TOO_SMALL)
     {
         BaseSetLastNTError(Status);
-        return(FALSE);
+        return (FALSE);
     }
 
-    RestrictedSids = (PTOKEN_GROUPS) LocalAlloc(0, ReturnLength);
+    RestrictedSids = (PTOKEN_GROUPS)LocalAlloc(0, ReturnLength);
     if (RestrictedSids == NULL)
     {
         SetLastError(ERROR_OUTOFMEMORY);
-        return(FALSE);
+        return (FALSE);
     }
 
-    Status = NtQueryInformationToken(
-                TokenHandle,
-                TokenRestrictedSids,
-                RestrictedSids,
-                ReturnLength,
-                &ReturnLength
-                );
+    Status = NtQueryInformationToken(TokenHandle, TokenRestrictedSids, RestrictedSids, ReturnLength, &ReturnLength);
     if (NT_SUCCESS(Status))
     {
         if (RestrictedSids->GroupCount != 0)
@@ -9098,17 +7659,11 @@ IsTokenRestricted(
         BaseSetLastNTError(Status);
     }
     LocalFree(RestrictedSids);
-    return(Result);
+    return (Result);
 }
 
 
-BOOL
-APIENTRY
-CheckTokenMembership(
-    IN HANDLE TokenHandle OPTIONAL,
-    IN PSID SidToCheck,
-    OUT PBOOL IsMember
-    )
+BOOL APIENTRY CheckTokenMembership(IN HANDLE TokenHandle OPTIONAL, IN PSID SidToCheck, OUT PBOOL IsMember)
 /*++
 
 Routine Description:
@@ -9143,19 +7698,16 @@ Return Value:
     NTSTATUS Status = STATUS_SUCCESS;
     PISECURITY_DESCRIPTOR SecDesc = NULL;
     ULONG SecurityDescriptorSize;
-    GENERIC_MAPPING GenericMapping = {
-        STANDARD_RIGHTS_READ,
-        STANDARD_RIGHTS_EXECUTE,
-        STANDARD_RIGHTS_WRITE,
-        STANDARD_RIGHTS_ALL };
+    GENERIC_MAPPING GenericMapping = { STANDARD_RIGHTS_READ, STANDARD_RIGHTS_EXECUTE, STANDARD_RIGHTS_WRITE,
+                                       STANDARD_RIGHTS_ALL };
     //
     // The size of the privilege set needs to contain the set itself plus
     // any privileges that may be used. The privileges that are used
     // are SeTakeOwnership and SeSecurity, plus one for good measure
     //
 
-    BYTE PrivilegeSetBuffer[sizeof(PRIVILEGE_SET) + 3*sizeof(LUID_AND_ATTRIBUTES)];
-    PPRIVILEGE_SET PrivilegeSet = (PPRIVILEGE_SET) PrivilegeSetBuffer;
+    BYTE PrivilegeSetBuffer[sizeof(PRIVILEGE_SET) + 3 * sizeof(LUID_AND_ATTRIBUTES)];
+    PPRIVILEGE_SET PrivilegeSet = (PPRIVILEGE_SET)PrivilegeSetBuffer;
     ULONG PrivilegeSetLength = sizeof(PrivilegeSetBuffer);
     ACCESS_MASK AccessGranted = 0;
     NTSTATUS AccessStatus = 0;
@@ -9175,12 +7727,9 @@ Return Value:
     }
     else
     {
-        Status = NtOpenThreadToken(
-                    NtCurrentThread(),
-                    TOKEN_QUERY,
-                    FALSE,              // don't open as self
-                    &EffectiveToken
-                    );
+        Status = NtOpenThreadToken(NtCurrentThread(), TOKEN_QUERY,
+                                   FALSE, // don't open as self
+                                   &EffectiveToken);
 
         //
         // if there is no thread token, try the process token
@@ -9188,11 +7737,7 @@ Return Value:
 
         if (Status == STATUS_NO_TOKEN)
         {
-            Status = NtOpenProcessToken(
-                        NtCurrentProcess(),
-                        TOKEN_QUERY | TOKEN_DUPLICATE,
-                        &ProcessToken
-                        );
+            Status = NtOpenProcessToken(NtCurrentProcess(), TOKEN_QUERY | TOKEN_DUPLICATE, &ProcessToken);
             //
             // If we have a process token, we need to convert it to an
             // impersonation token
@@ -9201,16 +7746,12 @@ Return Value:
             if (NT_SUCCESS(Status))
             {
                 BOOL Result;
-                Result = DuplicateToken(
-                            ProcessToken,
-                            SecurityImpersonation,
-                            &EffectiveToken
-                            );
+                Result = DuplicateToken(ProcessToken, SecurityImpersonation, &EffectiveToken);
 
                 CloseHandle(ProcessToken);
                 if (!Result)
                 {
-                    return(FALSE);
+                    return (FALSE);
                 }
             }
         }
@@ -9219,7 +7760,6 @@ Return Value:
         {
             goto Cleanup;
         }
-
     }
 
     //
@@ -9233,54 +7773,32 @@ Return Value:
     // ths SID.
     //
 
-    SecurityDescriptorSize = sizeof(SECURITY_DESCRIPTOR) +
-                                sizeof(ACCESS_ALLOWED_ACE) +
-                                sizeof(ACL) +
-                                3 * RtlLengthSid(SidToCheck);
+    SecurityDescriptorSize =
+        sizeof(SECURITY_DESCRIPTOR) + sizeof(ACCESS_ALLOWED_ACE) + sizeof(ACL) + 3 * RtlLengthSid(SidToCheck);
 
-    SecDesc = (PISECURITY_DESCRIPTOR) LocalAlloc(LMEM_ZEROINIT, SecurityDescriptorSize );
+    SecDesc = (PISECURITY_DESCRIPTOR)LocalAlloc(LMEM_ZEROINIT, SecurityDescriptorSize);
     if (SecDesc == NULL)
     {
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto Cleanup;
     }
-    Dacl = (PACL) (SecDesc + 1);
+    Dacl = (PACL)(SecDesc + 1);
 
-    RtlCreateSecurityDescriptor(
-        SecDesc,
-        SECURITY_DESCRIPTOR_REVISION
-        );
+    RtlCreateSecurityDescriptor(SecDesc, SECURITY_DESCRIPTOR_REVISION);
 
     //
     // Fill in fields of security descriptor
     //
 
-    RtlSetOwnerSecurityDescriptor(
-        SecDesc,
-        SidToCheck,
-        FALSE
-        );
-    RtlSetGroupSecurityDescriptor(
-        SecDesc,
-        SidToCheck,
-        FALSE
-        );
+    RtlSetOwnerSecurityDescriptor(SecDesc, SidToCheck, FALSE);
+    RtlSetGroupSecurityDescriptor(SecDesc, SidToCheck, FALSE);
 
-    Status = RtlCreateAcl(
-                Dacl,
-                SecurityDescriptorSize - sizeof(SECURITY_DESCRIPTOR),
-                ACL_REVISION
-                );
+    Status = RtlCreateAcl(Dacl, SecurityDescriptorSize - sizeof(SECURITY_DESCRIPTOR), ACL_REVISION);
     if (!NT_SUCCESS(Status))
     {
         goto Cleanup;
     }
-    Status = RtlAddAccessAllowedAce(
-                Dacl,
-                ACL_REVISION,
-                MEMBER_ACCESS,
-                SidToCheck
-                );
+    Status = RtlAddAccessAllowedAce(Dacl, ACL_REVISION, MEMBER_ACCESS, SidToCheck);
 
     if (!NT_SUCCESS(Status))
     {
@@ -9291,27 +7809,18 @@ Return Value:
     // Set the DACL on the security descriptor
     //
 
-    Status = RtlSetDaclSecurityDescriptor(
-                SecDesc,
-                TRUE,   // DACL present
-                Dacl,
-                FALSE   // not defaulted
-                );
+    Status = RtlSetDaclSecurityDescriptor(SecDesc,
+                                          TRUE, // DACL present
+                                          Dacl,
+                                          FALSE // not defaulted
+    );
     if (!NT_SUCCESS(Status))
     {
         goto Cleanup;
     }
 
-    Status = NtAccessCheck(
-                SecDesc,
-                EffectiveToken,
-                MEMBER_ACCESS,
-                &GenericMapping,
-                PrivilegeSet,
-                &PrivilegeSetLength,
-                &AccessGranted,
-                &AccessStatus
-                );
+    Status = NtAccessCheck(SecDesc, EffectiveToken, MEMBER_ACCESS, &GenericMapping, PrivilegeSet, &PrivilegeSetLength,
+                           &AccessGranted, &AccessStatus);
     if (!NT_SUCCESS(Status))
     {
         goto Cleanup;
@@ -9328,8 +7837,6 @@ Return Value:
     }
 
 
-
-
 Cleanup:
     if (!ARGUMENT_PRESENT(TokenHandle) && (EffectiveToken != NULL))
     {
@@ -9344,20 +7851,15 @@ Cleanup:
     if (!NT_SUCCESS(Status))
     {
         BaseSetLastNTError(Status);
-        return(FALSE);
+        return (FALSE);
     }
     else
     {
-        return(TRUE);
+        return (TRUE);
     }
 }
 
-BOOL
-APIENTRY
-MakeAbsoluteSD2 (
-    PSECURITY_DESCRIPTOR pSelfRelativeSecurityDescriptor,
-    LPDWORD lpdwBufferSize
-    )
+BOOL APIENTRY MakeAbsoluteSD2(PSECURITY_DESCRIPTOR pSelfRelativeSecurityDescriptor, LPDWORD lpdwBufferSize)
 /*++
 
 Routine Description:
@@ -9382,10 +7884,7 @@ Return Value:
 {
     NTSTATUS Status;
 
-    Status = RtlSelfRelativeToAbsoluteSD2 (
-                pSelfRelativeSecurityDescriptor,
-                lpdwBufferSize
-                );
+    Status = RtlSelfRelativeToAbsoluteSD2(pSelfRelativeSecurityDescriptor, lpdwBufferSize);
 
     //
     // MakeAbsoluteSD2() has the same prototype as
@@ -9393,7 +7892,8 @@ Return Value:
     // returns the same parameter order if the caller passes invalid parameter.
     //
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -9403,14 +7903,9 @@ Return Value:
 } // MakeAbsoluteSD2()
 
 
-
-
 DWORD
 APIENTRY
-GetSecurityDescriptorRMControl(
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    OUT PUCHAR RMControl
-    )
+GetSecurityDescriptorRMControl(IN PSECURITY_DESCRIPTOR SecurityDescriptor, OUT PUCHAR RMControl)
 /*++
 
 Routine Description:
@@ -9437,10 +7932,7 @@ Return Value:
 {
     BOOLEAN Result;
 
-    Result = RtlGetSecurityDescriptorRMControl(
-                 SecurityDescriptor,
-                 RMControl
-                 );
+    Result = RtlGetSecurityDescriptorRMControl(SecurityDescriptor, RMControl);
 
     if (FALSE == Result)
     {
@@ -9452,10 +7944,7 @@ Return Value:
 
 DWORD
 APIENTRY
-SetSecurityDescriptorRMControl(
-    IN OUT PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN PUCHAR RMControl OPTIONAL
-    )
+SetSecurityDescriptorRMControl(IN OUT PSECURITY_DESCRIPTOR SecurityDescriptor, IN PUCHAR RMControl OPTIONAL)
 
 
 /*++
@@ -9480,10 +7969,7 @@ Return Value: ERROR_SUCCESS
 --*/
 
 {
-    RtlSetSecurityDescriptorRMControl(
-        SecurityDescriptor,
-        RMControl
-        );
+    RtlSetSecurityDescriptorRMControl(SecurityDescriptor, RMControl);
 
     return ERROR_SUCCESS;
 }
@@ -9493,109 +7979,94 @@ Return Value: ERROR_SUCCESS
 // Datatypes for identifying and constructing well known sids
 //
 //
-// N.B When adding a new well known security principal, all that is 
+// N.B When adding a new well known security principal, all that is
 // necessary is to update one of the domain tables below. For example,
 // if adding a new domain group, add an entry to AccountDomainSids
 // with the new RID and the new WELL_KNOWN_SID_TYPE enumeration.
 //
 
-#define NELEMENTS(x)  sizeof(x)/sizeof((x)[0])
+#define NELEMENTS(x) sizeof(x) / sizeof((x)[0])
 
-typedef struct 
+typedef struct
 {
-    ULONG               Rid;
+    ULONG Rid;
     WELL_KNOWN_SID_TYPE Type;
 
 } WELL_KNOWN_RID_ARRAY;
 
-WELL_KNOWN_RID_ARRAY NullAuthoritySids[] = 
-{
-    {SECURITY_NULL_RID, WinNullSid}
+WELL_KNOWN_RID_ARRAY NullAuthoritySids[] = { { SECURITY_NULL_RID, WinNullSid } };
+
+WELL_KNOWN_RID_ARRAY WorldAuthoritySids[] = { { SECURITY_WORLD_RID, WinWorldSid } };
+
+WELL_KNOWN_RID_ARRAY LocalAuthoritySids[] = { { SECURITY_LOCAL_RID, WinLocalSid } };
+
+WELL_KNOWN_RID_ARRAY CreatorOwnerAuthoritySids[] = { { SECURITY_CREATOR_OWNER_RID, WinCreatorOwnerSid },
+                                                     { SECURITY_CREATOR_GROUP_RID, WinCreatorGroupSid },
+                                                     { SECURITY_CREATOR_OWNER_SERVER_RID, WinCreatorOwnerServerSid },
+                                                     { SECURITY_CREATOR_GROUP_SERVER_RID, WinCreatorGroupServerSid } };
+
+WELL_KNOWN_RID_ARRAY NtAuthoritySids[] = {
+    { SECURITY_DIALUP_RID, WinDialupSid },
+    { SECURITY_NETWORK_RID, WinNetworkSid },
+    { SECURITY_BATCH_RID, WinBatchSid },
+    { SECURITY_INTERACTIVE_RID, WinInteractiveSid },
+    { SECURITY_SERVICE_RID, WinServiceSid },
+    { SECURITY_ANONYMOUS_LOGON_RID, WinAnonymousSid },
+    { SECURITY_PROXY_RID, WinProxySid },
+    { SECURITY_ENTERPRISE_CONTROLLERS_RID, WinEnterpriseControllersSid },
+    { SECURITY_PRINCIPAL_SELF_RID, WinSelfSid },
+    { SECURITY_AUTHENTICATED_USER_RID, WinAuthenticatedUserSid },
+    { SECURITY_RESTRICTED_CODE_RID, WinRestrictedCodeSid },
+    { SECURITY_TERMINAL_SERVER_RID, WinTerminalServerSid },
+    { SECURITY_REMOTE_LOGON_RID, WinRemoteLogonIdSid },
+    //
+    // N.B. The Logon IDs SID is special in that it has three subauth's.
+    // IsWellKnownSid() special cases this, CreateWellKnownSid doesn't accept
+    // WinLogonIdsSid
+    //
+    //    {SECURITY_LOGON_IDS_RID, WinLogonIdsSid},
+    { SECURITY_LOCAL_SYSTEM_RID, WinLocalSystemSid },
+    { SECURITY_LOCAL_SERVICE_RID, WinLocalServiceSid },
+    { SECURITY_NETWORK_SERVICE_RID, WinNetworkServiceSid },
+    { SECURITY_BUILTIN_DOMAIN_RID, WinBuiltinDomainSid },
 };
 
-WELL_KNOWN_RID_ARRAY WorldAuthoritySids[] =
-{
-    {SECURITY_WORLD_RID, WinWorldSid}
+WELL_KNOWN_RID_ARRAY BuiltinDomainSids[] = {
+    { DOMAIN_ALIAS_RID_ADMINS, WinBuiltinAdministratorsSid },
+    { DOMAIN_ALIAS_RID_USERS, WinBuiltinUsersSid },
+    { DOMAIN_ALIAS_RID_GUESTS, WinBuiltinGuestsSid },
+    { DOMAIN_ALIAS_RID_POWER_USERS, WinBuiltinPowerUsersSid },
+    { DOMAIN_ALIAS_RID_ACCOUNT_OPS, WinBuiltinAccountOperatorsSid },
+    { DOMAIN_ALIAS_RID_SYSTEM_OPS, WinBuiltinSystemOperatorsSid },
+    { DOMAIN_ALIAS_RID_PRINT_OPS, WinBuiltinPrintOperatorsSid },
+    { DOMAIN_ALIAS_RID_BACKUP_OPS, WinBuiltinBackupOperatorsSid },
+    { DOMAIN_ALIAS_RID_REPLICATOR, WinBuiltinReplicatorSid },
+    { DOMAIN_ALIAS_RID_PREW2KCOMPACCESS, WinBuiltinPreWindows2000CompatibleAccessSid },
+    { DOMAIN_ALIAS_RID_REMOTE_DESKTOP_USERS, WinBuiltinRemoteDesktopUsersSid },
+    { DOMAIN_ALIAS_RID_NETWORK_CONFIGURATION_OPS, WinBuiltinNetworkConfigurationOperatorsSid },
 };
 
-WELL_KNOWN_RID_ARRAY LocalAuthoritySids[] =
-{
-    {SECURITY_LOCAL_RID, WinLocalSid}
+WELL_KNOWN_RID_ARRAY AccountDomainSids[] = {
+    { DOMAIN_USER_RID_ADMIN, WinAccountAdministratorSid },
+    { DOMAIN_USER_RID_GUEST, WinAccountGuestSid },
+    { DOMAIN_USER_RID_KRBTGT, WinAccountKrbtgtSid },
+    { DOMAIN_GROUP_RID_ADMINS, WinAccountDomainAdminsSid },
+    { DOMAIN_GROUP_RID_USERS, WinAccountDomainUsersSid },
+    { DOMAIN_GROUP_RID_GUESTS, WinAccountDomainGuestsSid },
+    { DOMAIN_GROUP_RID_COMPUTERS, WinAccountComputersSid },
+    { DOMAIN_GROUP_RID_CONTROLLERS, WinAccountControllersSid },
+    { DOMAIN_GROUP_RID_CERT_ADMINS, WinAccountCertAdminsSid },
+    { DOMAIN_GROUP_RID_SCHEMA_ADMINS, WinAccountSchemaAdminsSid },
+    { DOMAIN_GROUP_RID_ENTERPRISE_ADMINS, WinAccountEnterpriseAdminsSid },
+    { DOMAIN_GROUP_RID_POLICY_ADMINS, WinAccountPolicyAdminsSid },
+    { DOMAIN_ALIAS_RID_RAS_SERVERS, WinAccountRasAndIasServersSid },
 };
 
-WELL_KNOWN_RID_ARRAY CreatorOwnerAuthoritySids[] =
-{
-    {SECURITY_CREATOR_OWNER_RID, WinCreatorOwnerSid},
-    {SECURITY_CREATOR_GROUP_RID, WinCreatorGroupSid},
-    {SECURITY_CREATOR_OWNER_SERVER_RID, WinCreatorOwnerServerSid},
-    {SECURITY_CREATOR_GROUP_SERVER_RID, WinCreatorGroupServerSid}
-};
-
-WELL_KNOWN_RID_ARRAY NtAuthoritySids[] =
-{
-    {SECURITY_DIALUP_RID, WinDialupSid},
-    {SECURITY_NETWORK_RID, WinNetworkSid},
-    {SECURITY_BATCH_RID, WinBatchSid},
-    {SECURITY_INTERACTIVE_RID, WinInteractiveSid},
-    {SECURITY_SERVICE_RID, WinServiceSid},
-    {SECURITY_ANONYMOUS_LOGON_RID, WinAnonymousSid},
-    {SECURITY_PROXY_RID, WinProxySid},
-    {SECURITY_ENTERPRISE_CONTROLLERS_RID, WinEnterpriseControllersSid},
-    {SECURITY_PRINCIPAL_SELF_RID, WinSelfSid},
-    {SECURITY_AUTHENTICATED_USER_RID, WinAuthenticatedUserSid},
-    {SECURITY_RESTRICTED_CODE_RID, WinRestrictedCodeSid},
-    {SECURITY_TERMINAL_SERVER_RID, WinTerminalServerSid},
-    {SECURITY_REMOTE_LOGON_RID, WinRemoteLogonIdSid},
-//
-// N.B. The Logon IDs SID is special in that it has three subauth's.
-// IsWellKnownSid() special cases this, CreateWellKnownSid doesn't accept
-// WinLogonIdsSid
-//
-//    {SECURITY_LOGON_IDS_RID, WinLogonIdsSid},
-    {SECURITY_LOCAL_SYSTEM_RID, WinLocalSystemSid},
-    {SECURITY_LOCAL_SERVICE_RID, WinLocalServiceSid},
-    {SECURITY_NETWORK_SERVICE_RID, WinNetworkServiceSid},
-    {SECURITY_BUILTIN_DOMAIN_RID, WinBuiltinDomainSid},
-};
-
-WELL_KNOWN_RID_ARRAY BuiltinDomainSids[] =
-{
-    {DOMAIN_ALIAS_RID_ADMINS, WinBuiltinAdministratorsSid},
-    {DOMAIN_ALIAS_RID_USERS, WinBuiltinUsersSid},
-    {DOMAIN_ALIAS_RID_GUESTS, WinBuiltinGuestsSid},
-    {DOMAIN_ALIAS_RID_POWER_USERS, WinBuiltinPowerUsersSid},
-    {DOMAIN_ALIAS_RID_ACCOUNT_OPS, WinBuiltinAccountOperatorsSid},
-    {DOMAIN_ALIAS_RID_SYSTEM_OPS, WinBuiltinSystemOperatorsSid},
-    {DOMAIN_ALIAS_RID_PRINT_OPS, WinBuiltinPrintOperatorsSid},
-    {DOMAIN_ALIAS_RID_BACKUP_OPS, WinBuiltinBackupOperatorsSid},
-    {DOMAIN_ALIAS_RID_REPLICATOR, WinBuiltinReplicatorSid},
-    {DOMAIN_ALIAS_RID_PREW2KCOMPACCESS, WinBuiltinPreWindows2000CompatibleAccessSid},
-    {DOMAIN_ALIAS_RID_REMOTE_DESKTOP_USERS, WinBuiltinRemoteDesktopUsersSid},
-    {DOMAIN_ALIAS_RID_NETWORK_CONFIGURATION_OPS, WinBuiltinNetworkConfigurationOperatorsSid},
-};
-
-WELL_KNOWN_RID_ARRAY AccountDomainSids[] =
-{
-    {DOMAIN_USER_RID_ADMIN, WinAccountAdministratorSid},
-    {DOMAIN_USER_RID_GUEST, WinAccountGuestSid},
-    {DOMAIN_USER_RID_KRBTGT, WinAccountKrbtgtSid},
-    {DOMAIN_GROUP_RID_ADMINS, WinAccountDomainAdminsSid},
-    {DOMAIN_GROUP_RID_USERS, WinAccountDomainUsersSid},
-    {DOMAIN_GROUP_RID_GUESTS, WinAccountDomainGuestsSid},
-    {DOMAIN_GROUP_RID_COMPUTERS, WinAccountComputersSid},
-    {DOMAIN_GROUP_RID_CONTROLLERS, WinAccountControllersSid},
-    {DOMAIN_GROUP_RID_CERT_ADMINS, WinAccountCertAdminsSid},
-    {DOMAIN_GROUP_RID_SCHEMA_ADMINS, WinAccountSchemaAdminsSid},
-    {DOMAIN_GROUP_RID_ENTERPRISE_ADMINS, WinAccountEnterpriseAdminsSid},
-    {DOMAIN_GROUP_RID_POLICY_ADMINS, WinAccountPolicyAdminsSid},
-    {DOMAIN_ALIAS_RID_RAS_SERVERS, WinAccountRasAndIasServersSid},
-};
-
-typedef struct 
+typedef struct
 {
     SID_IDENTIFIER_AUTHORITY Authority;
-    WELL_KNOWN_RID_ARRAY*    WellKnownRids;
-    ULONG                    Count;
+    WELL_KNOWN_RID_ARRAY *WellKnownRids;
+    ULONG Count;
 
 } WELL_KNOWN_AUTHORITIES_TYPE;
 
@@ -9605,35 +8076,29 @@ typedef struct
 // to change the ordering.
 //
 
-#define AUTHORITY_INDEX_START          0
-#define NULL_AUTHORITY_INDEX           0
-#define WORLD_AUTHORITY_INDEX          1
-#define LOCAL_AUTHORITY_INDEX          2
-#define CREATOR_OWNER_AUTHORITY_INDEX  3
-#define NT_AUTHORITY_INDEX             4
-#define AUTHORITY_INDEX_SENTINEL       5
+#define AUTHORITY_INDEX_START 0
+#define NULL_AUTHORITY_INDEX 0
+#define WORLD_AUTHORITY_INDEX 1
+#define LOCAL_AUTHORITY_INDEX 2
+#define CREATOR_OWNER_AUTHORITY_INDEX 3
+#define NT_AUTHORITY_INDEX 4
+#define AUTHORITY_INDEX_SENTINEL 5
 
-#define BUILTIN_DOMAIN_INDEX           5
-#define ACCOUNT_DOMAIN_INDEX           6
-                                
-WELL_KNOWN_AUTHORITIES_TYPE KnownAuthoritiesAndDomains[] = 
-{
-    {SECURITY_NULL_SID_AUTHORITY, NullAuthoritySids, NELEMENTS(NullAuthoritySids)},
-    {SECURITY_WORLD_SID_AUTHORITY, WorldAuthoritySids, NELEMENTS(WorldAuthoritySids)},
-    {SECURITY_LOCAL_SID_AUTHORITY, LocalAuthoritySids, NELEMENTS(LocalAuthoritySids)},
-    {SECURITY_CREATOR_SID_AUTHORITY, CreatorOwnerAuthoritySids, NELEMENTS(CreatorOwnerAuthoritySids)},
-    {SECURITY_NT_AUTHORITY, NtAuthoritySids, NELEMENTS(NtAuthoritySids)},
-    {SECURITY_NT_AUTHORITY, BuiltinDomainSids, NELEMENTS(BuiltinDomainSids)},
-    {SECURITY_NT_AUTHORITY, AccountDomainSids, NELEMENTS(AccountDomainSids)},
+#define BUILTIN_DOMAIN_INDEX 5
+#define ACCOUNT_DOMAIN_INDEX 6
+
+WELL_KNOWN_AUTHORITIES_TYPE KnownAuthoritiesAndDomains[] = {
+    { SECURITY_NULL_SID_AUTHORITY, NullAuthoritySids, NELEMENTS(NullAuthoritySids) },
+    { SECURITY_WORLD_SID_AUTHORITY, WorldAuthoritySids, NELEMENTS(WorldAuthoritySids) },
+    { SECURITY_LOCAL_SID_AUTHORITY, LocalAuthoritySids, NELEMENTS(LocalAuthoritySids) },
+    { SECURITY_CREATOR_SID_AUTHORITY, CreatorOwnerAuthoritySids, NELEMENTS(CreatorOwnerAuthoritySids) },
+    { SECURITY_NT_AUTHORITY, NtAuthoritySids, NELEMENTS(NtAuthoritySids) },
+    { SECURITY_NT_AUTHORITY, BuiltinDomainSids, NELEMENTS(BuiltinDomainSids) },
+    { SECURITY_NT_AUTHORITY, AccountDomainSids, NELEMENTS(AccountDomainSids) },
 };
 
 WINADVAPI
-BOOL
-WINAPI
-IsWellKnownSid (
-    IN  PSID pSid,
-    IN  WELL_KNOWN_SID_TYPE WellKnownSidType
-    )
+BOOL WINAPI IsWellKnownSid(IN PSID pSid, IN WELL_KNOWN_SID_TYPE WellKnownSidType)
 /*++
 
 Routine Description:
@@ -9665,99 +8130,108 @@ Return Values
     UCHAR SubAuthCount = 0;
     ULONG RidArrayCount;
 
-#define IS_EQUAL_AUTHORITY(x, y) \
-    RtlEqualMemory((x),(y),sizeof(SID_IDENTIFIER_AUTHORITY))
+#define IS_EQUAL_AUTHORITY(x, y) RtlEqualMemory((x), (y), sizeof(SID_IDENTIFIER_AUTHORITY))
 
     //
     // Guard against bad parameters
     //
-    if (!RtlValidSid(pSid)) {
+    if (!RtlValidSid(pSid))
+    {
         return FALSE;
     }
 
     pAuthority = GetSidIdentifierAuthority(pSid);
-    if (NULL == pAuthority) {
+    if (NULL == pAuthority)
+    {
         return FALSE;
     }
 
     SubAuthCount = *RtlSubAuthorityCountSid(pSid);
-    if (SubAuthCount == 0) {
+    if (SubAuthCount == 0)
+    {
 
         //
         // Only one such known sid -- the Nt Authority domain sid has no
         // sub auth's
         //
-        if ( IS_EQUAL_AUTHORITY(pAuthority, 
-                  &KnownAuthoritiesAndDomains[NT_AUTHORITY_INDEX].Authority) ) {
+        if (IS_EQUAL_AUTHORITY(pAuthority, &KnownAuthoritiesAndDomains[NT_AUTHORITY_INDEX].Authority))
+        {
             fFound = TRUE;
             Type = WinNtAuthoritySid;
         }
-
-    } else if (SubAuthCount == 1) {
+    }
+    else if (SubAuthCount == 1)
+    {
 
         //
         // Try the known authorities that aren't domains
         //
 
-        for ( i = AUTHORITY_INDEX_START; i < AUTHORITY_INDEX_SENTINEL; i++) {
-            if  (IS_EQUAL_AUTHORITY(pAuthority, 
-                                   &KnownAuthoritiesAndDomains[i].Authority)) {
+        for (i = AUTHORITY_INDEX_START; i < AUTHORITY_INDEX_SENTINEL; i++)
+        {
+            if (IS_EQUAL_AUTHORITY(pAuthority, &KnownAuthoritiesAndDomains[i].Authority))
+            {
                 RidArray = KnownAuthoritiesAndDomains[i].WellKnownRids;
                 RidArrayCount = KnownAuthoritiesAndDomains[i].Count;
                 break;
             }
         }
-
-    } else if (SubAuthCount > 1) {
+    }
+    else if (SubAuthCount > 1)
+    {
 
         //
         // Try the domains (builtin and account)
         //
-        if ( IS_EQUAL_AUTHORITY(pAuthority, 
-                  &KnownAuthoritiesAndDomains[NT_AUTHORITY_INDEX].Authority) ) {
+        if (IS_EQUAL_AUTHORITY(pAuthority, &KnownAuthoritiesAndDomains[NT_AUTHORITY_INDEX].Authority))
+        {
 
             ULONG FirstSubAuth = *RtlSubAuthoritySid(pSid, 0);
-    
-            if  ( (FirstSubAuth == SECURITY_BUILTIN_DOMAIN_RID)
-             &&   (SubAuthCount == 2)  ) {
+
+            if ((FirstSubAuth == SECURITY_BUILTIN_DOMAIN_RID) && (SubAuthCount == 2))
+            {
 
                 // Builtin domain sids always have 2 sub auth's: the builtin
                 // RID and the principal RID
                 RidArray = BuiltinDomainSids;
                 RidArrayCount = NELEMENTS(BuiltinDomainSids);
+            }
+            else if ((FirstSubAuth == SECURITY_NT_NON_UNIQUE) &&
+                     (SubAuthCount == SECURITY_NT_NON_UNIQUE_SUB_AUTH_COUNT + 2))
+            {
 
-            } else if ((FirstSubAuth == SECURITY_NT_NON_UNIQUE)
-                    && (SubAuthCount == SECURITY_NT_NON_UNIQUE_SUB_AUTH_COUNT+2)){
-
-                // These account domains have 
+                // These account domains have
                 // 1 subauth for the SECURITY_NT_NON_UNIQUE,
                 // 1 for the principal and
                 // SECURITY_NT_NON_UNIQUE_SUB_AUTH_COUNT for the domain portion
                 RidArray = AccountDomainSids;
                 RidArrayCount = NELEMENTS(AccountDomainSids);
-
-            } else if  ( (FirstSubAuth == SECURITY_LOGON_IDS_RID)
-                    &&   (SubAuthCount == SECURITY_LOGON_IDS_RID_COUNT)) {
+            }
+            else if ((FirstSubAuth == SECURITY_LOGON_IDS_RID) && (SubAuthCount == SECURITY_LOGON_IDS_RID_COUNT))
+            {
                 //
                 // This is the special LogonId sid S-1-5-5-X-Y
                 //
                 fFound = TRUE;
                 Type = WinLogonIdsSid;
             }
-        }                    
+        }
     }
 
     //
     // If we matched for authority or domain, try to match RID
     //
-    if ( RidArray ) {
+    if (RidArray)
+    {
 
         ULONG Rid;
         ASSERT(SubAuthCount > 0);
 
         Rid = *RtlSubAuthoritySid(pSid, SubAuthCount - 1);
-        for (i = 0; i < RidArrayCount; i++) {
-            if (Rid == RidArray[i].Rid) {
+        for (i = 0; i < RidArrayCount; i++)
+        {
+            if (Rid == RidArray[i].Rid)
+            {
                 fFound = TRUE;
                 Type = RidArray[i].Type;
                 break;
@@ -9765,26 +8239,22 @@ Return Values
         }
     }
 
-    if (fFound && (Type == WellKnownSidType)) {
+    if (fFound && (Type == WellKnownSidType))
+    {
         fFound = TRUE;
-    } else {
+    }
+    else
+    {
         fFound = FALSE;
     }
 
     return fFound;
-
 }
 
 
 WINADVAPI
-BOOL
-WINAPI
-CreateWellKnownSid(
-    IN WELL_KNOWN_SID_TYPE WellKnownSidType,
-    IN PSID pDomainSid  OPTIONAL,
-    OUT PSID pSid,
-    IN OUT DWORD *cbSid
-    )
+BOOL WINAPI CreateWellKnownSid(IN WELL_KNOWN_SID_TYPE WellKnownSidType, IN PSID pDomainSid OPTIONAL, OUT PSID pSid,
+                               IN OUT DWORD *cbSid)
 /*++
 
 Routine Description:
@@ -9817,51 +8287,60 @@ Return Values
  --*/
 {
 
-    BOOL  fFound = FALSE;
+    BOOL fFound = FALSE;
     ULONG Rid;
     ULONG i, j;
     ULONG SizeRequired;
     NTSTATUS Status;
     UCHAR SubAuthCount;
 
-    if (pDomainSid && !RtlValidSid(pDomainSid)) {
+    if (pDomainSid && !RtlValidSid(pDomainSid))
+    {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
-    if (IsBadWritePtr(cbSid, sizeof(*cbSid))) {
+    if (IsBadWritePtr(cbSid, sizeof(*cbSid)))
+    {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
     // special case -- can't create this one
-    if (WinLogonIdsSid == WellKnownSidType) {
+    if (WinLogonIdsSid == WellKnownSidType)
+    {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
     //
     // Find the requested type
     //
-    for (i = 0; i < NELEMENTS(KnownAuthoritiesAndDomains); i++) {
-        for (j = 0; j < KnownAuthoritiesAndDomains[i].Count; j++) {
-            if (WellKnownSidType == KnownAuthoritiesAndDomains[i].WellKnownRids[j].Type){
+    for (i = 0; i < NELEMENTS(KnownAuthoritiesAndDomains); i++)
+    {
+        for (j = 0; j < KnownAuthoritiesAndDomains[i].Count; j++)
+        {
+            if (WellKnownSidType == KnownAuthoritiesAndDomains[i].WellKnownRids[j].Type)
+            {
                 Rid = KnownAuthoritiesAndDomains[i].WellKnownRids[j].Rid;
                 fFound = TRUE;
                 break;
             }
         }
-        if (fFound) {
+        if (fFound)
+        {
             break;
         }
     }
 
     // special case since the NtAuthority domain doesn't have any sub auth's
-    if (!fFound && (WellKnownSidType == WinNtAuthoritySid)) {
+    if (!fFound && (WellKnownSidType == WinNtAuthoritySid))
+    {
         i = NT_AUTHORITY_INDEX;
         fFound = TRUE;
     }
 
-    if (!fFound) {
+    if (!fFound)
+    {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
@@ -9869,50 +8348,58 @@ Return Values
     //
     // Determine how much space we need
     //
-    switch (i) {
-        case NULL_AUTHORITY_INDEX:
-        case WORLD_AUTHORITY_INDEX:
-        case LOCAL_AUTHORITY_INDEX:
-        case CREATOR_OWNER_AUTHORITY_INDEX:
-        case NT_AUTHORITY_INDEX:
-            if (WellKnownSidType == WinNtAuthoritySid) {
-                SubAuthCount = 0;
-            } else {
-                SubAuthCount = 1;
-            }
-            break;
-        case BUILTIN_DOMAIN_INDEX:
-            SubAuthCount = 2;
-            break;
-        case ACCOUNT_DOMAIN_INDEX:
-            if (NULL == pDomainSid) {
-                SetLastError(ERROR_INVALID_PARAMETER);
-                return FALSE;
-            }
-            SubAuthCount = *RtlSubAuthorityCountSid(pDomainSid);
-            if (SubAuthCount == SID_MAX_SUB_AUTHORITIES) {
-                SetLastError(ERROR_INVALID_PARAMETER);
-                return FALSE;
-            }
-            // Add for the RID
-            SubAuthCount++;
-            break;
-        default:
-            ASSERT(!"Invalid index");
+    switch (i)
+    {
+    case NULL_AUTHORITY_INDEX:
+    case WORLD_AUTHORITY_INDEX:
+    case LOCAL_AUTHORITY_INDEX:
+    case CREATOR_OWNER_AUTHORITY_INDEX:
+    case NT_AUTHORITY_INDEX:
+        if (WellKnownSidType == WinNtAuthoritySid)
+        {
+            SubAuthCount = 0;
+        }
+        else
+        {
+            SubAuthCount = 1;
+        }
+        break;
+    case BUILTIN_DOMAIN_INDEX:
+        SubAuthCount = 2;
+        break;
+    case ACCOUNT_DOMAIN_INDEX:
+        if (NULL == pDomainSid)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+        SubAuthCount = *RtlSubAuthorityCountSid(pDomainSid);
+        if (SubAuthCount == SID_MAX_SUB_AUTHORITIES)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return FALSE;
+        }
+        // Add for the RID
+        SubAuthCount++;
+        break;
+    default:
+        ASSERT(!"Invalid index");
     }
 
     //
     // Make sure we have enough space
     //
     SizeRequired = GetSidLengthRequired(SubAuthCount);
-    if (*cbSid < SizeRequired) {
+    if (*cbSid < SizeRequired)
+    {
         *cbSid = SizeRequired;
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return FALSE;
     }
     *cbSid = SizeRequired;
 
-    if (IsBadWritePtr(pSid, SizeRequired)) {
+    if (IsBadWritePtr(pSid, SizeRequired))
+    {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
@@ -9920,38 +8407,39 @@ Return Values
     //
     // Fill the sid in
     //
-    switch (i) {
-    
-        case ACCOUNT_DOMAIN_INDEX:
-            Status = RtlCopySid(*cbSid, pSid, pDomainSid);
-            if (NT_SUCCESS(Status)) {
-                (*RtlSubAuthorityCountSid(pSid))++;
-            }
-            break;
+    switch (i)
+    {
 
-        case BUILTIN_DOMAIN_INDEX:
-        case NULL_AUTHORITY_INDEX:
-        case WORLD_AUTHORITY_INDEX:
-        case LOCAL_AUTHORITY_INDEX:
-        case CREATOR_OWNER_AUTHORITY_INDEX:
-        case NT_AUTHORITY_INDEX:
-    
-            Status = RtlInitializeSid(pSid,
-                                     &KnownAuthoritiesAndDomains[i].Authority,
-                                     SubAuthCount);
+    case ACCOUNT_DOMAIN_INDEX:
+        Status = RtlCopySid(*cbSid, pSid, pDomainSid);
+        if (NT_SUCCESS(Status))
+        {
+            (*RtlSubAuthorityCountSid(pSid))++;
+        }
+        break;
 
-            if (NT_SUCCESS(Status) && (i == BUILTIN_DOMAIN_INDEX)) {
-                ASSERT(SubAuthCount > 1);
-                *RtlSubAuthoritySid(pSid, 0) = SECURITY_BUILTIN_DOMAIN_RID;
-            }
-    
-            break;
+    case BUILTIN_DOMAIN_INDEX:
+    case NULL_AUTHORITY_INDEX:
+    case WORLD_AUTHORITY_INDEX:
+    case LOCAL_AUTHORITY_INDEX:
+    case CREATOR_OWNER_AUTHORITY_INDEX:
+    case NT_AUTHORITY_INDEX:
+
+        Status = RtlInitializeSid(pSid, &KnownAuthoritiesAndDomains[i].Authority, SubAuthCount);
+
+        if (NT_SUCCESS(Status) && (i == BUILTIN_DOMAIN_INDEX))
+        {
+            ASSERT(SubAuthCount > 1);
+            *RtlSubAuthoritySid(pSid, 0) = SECURITY_BUILTIN_DOMAIN_RID;
+        }
+
+        break;
     default:
         ASSERT(!"Invalid index");
-
     }
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -9959,22 +8447,16 @@ Return Values
     //
     // Append the Rid
     //
-    if (SubAuthCount > 0) {
-        *RtlSubAuthoritySid(pSid, SubAuthCount-1) = Rid;
+    if (SubAuthCount > 0)
+    {
+        *RtlSubAuthoritySid(pSid, SubAuthCount - 1) = Rid;
     }
 
     return TRUE;
-
 }
 
 WINADVAPI
-BOOL
-WINAPI
-GetWindowsAccountDomainSid(
-    IN PSID pSid,
-    IN OUT PSID pDomainSid OPTIONAL,
-    OUT DWORD* cbDomainSid
-    )
+BOOL WINAPI GetWindowsAccountDomainSid(IN PSID pSid, IN OUT PSID pDomainSid OPTIONAL, OUT DWORD *cbDomainSid)
 /*++
 
 Routine Description:
@@ -10010,76 +8492,76 @@ Return Values
     ULONG SizeRequired;
     UCHAR SubAuthCount;
     UCHAR DomainSubAuthCount = 0;
-    BOOL  fRecognized = FALSE;
+    BOOL fRecognized = FALSE;
     ULONG i;
 
-    if (!RtlValidSid(pSid)) {
+    if (!RtlValidSid(pSid))
+    {
         SetLastError(ERROR_INVALID_SID);
         return FALSE;
     }
 
-    if (cbDomainSid == NULL) {
+    if (cbDomainSid == NULL)
+    {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
-    if ( IS_EQUAL_AUTHORITY(RtlIdentifierAuthoritySid(pSid), 
-              &KnownAuthoritiesAndDomains[NT_AUTHORITY_INDEX].Authority)) {
+    if (IS_EQUAL_AUTHORITY(RtlIdentifierAuthoritySid(pSid), &KnownAuthoritiesAndDomains[NT_AUTHORITY_INDEX].Authority))
+    {
 
         SubAuthCount = *RtlSubAuthorityCountSid(pSid);
-        if (SubAuthCount > SECURITY_NT_NON_UNIQUE_SUB_AUTH_COUNT) {
+        if (SubAuthCount > SECURITY_NT_NON_UNIQUE_SUB_AUTH_COUNT)
+        {
             ULONG FirstSubAuth;
             FirstSubAuth = *RtlSubAuthoritySid(pSid, 0);
-            if ( (SECURITY_NT_NON_UNIQUE == FirstSubAuth) ) {
+            if ((SECURITY_NT_NON_UNIQUE == FirstSubAuth))
+            {
                 // This is an NT Account Domain
-                DomainSubAuthCount = SECURITY_NT_NON_UNIQUE_SUB_AUTH_COUNT+1;
+                DomainSubAuthCount = SECURITY_NT_NON_UNIQUE_SUB_AUTH_COUNT + 1;
                 fRecognized = TRUE;
             }
         }
     }
 
-    if (!fRecognized) {
+    if (!fRecognized)
+    {
         SetLastError(ERROR_NON_ACCOUNT_SID);
         return FALSE;
     }
 
     SizeRequired = RtlLengthRequiredSid(DomainSubAuthCount);
-    if (*cbDomainSid < SizeRequired) {
+    if (*cbDomainSid < SizeRequired)
+    {
         *cbDomainSid = SizeRequired;
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return FALSE;
     }
     *cbDomainSid = SizeRequired;
 
-    if (IsBadWritePtr(pDomainSid, SizeRequired)) {
+    if (IsBadWritePtr(pDomainSid, SizeRequired))
+    {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
-    Status = RtlInitializeSid(pDomainSid,
-                              RtlIdentifierAuthoritySid(pSid),
-                              DomainSubAuthCount);
-    if (!NT_SUCCESS(Status)) {
+    Status = RtlInitializeSid(pDomainSid, RtlIdentifierAuthoritySid(pSid), DomainSubAuthCount);
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
-    for (i = 0; i < DomainSubAuthCount; i++) {
-        *RtlSubAuthoritySid(pDomainSid, i) = *RtlSubAuthoritySid(pSid,i);
+    for (i = 0; i < DomainSubAuthCount; i++)
+    {
+        *RtlSubAuthoritySid(pDomainSid, i) = *RtlSubAuthoritySid(pSid, i);
     }
 
     return TRUE;
-
 }
 
 WINADVAPI
-BOOL
-WINAPI
-EqualDomainSid(
-    IN PSID pSid1,
-    IN PSID pSid2,
-    OUT BOOL *pfEqual
-    )
+BOOL WINAPI EqualDomainSid(IN PSID pSid1, IN PSID pSid2, OUT BOOL *pfEqual)
 /*++
 
 Routine Description:
@@ -10122,67 +8604,77 @@ Return Values
     SID *ISid2 = pSid2;
 
     BYTE Buffer1[SECURITY_MAX_SID_SIZE];
-    PSID BuiltinDomainSid = (PSID) Buffer1;
+    PSID BuiltinDomainSid = (PSID)Buffer1;
 
     BYTE Buffer2[SECURITY_MAX_SID_SIZE];
-    PSID pDomainSid1 = (PSID) Buffer2;
+    PSID pDomainSid1 = (PSID)Buffer2;
 
     BYTE Buffer3[SECURITY_MAX_SID_SIZE];
-    PSID pDomainSid2 = (PSID) Buffer3;
+    PSID pDomainSid2 = (PSID)Buffer3;
 
     ULONG Size;
 
-    if ( !RtlValidSid(pSid1) || !RtlValidSid(pSid2) ) {
+    if (!RtlValidSid(pSid1) || !RtlValidSid(pSid2))
+    {
         SetLastError(ERROR_INVALID_SID);
         return FALSE;
     }
 
-    if (NULL == pfEqual) {
+    if (NULL == pfEqual)
+    {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
-    if ( ISid1->Revision != ISid2->Revision ) {
+    if (ISid1->Revision != ISid2->Revision)
+    {
         SetLastError(ERROR_REVISION_MISMATCH);
         return FALSE;
     }
 
     // Create the builtin SID
     Size = sizeof(Buffer1);
-    if (!CreateWellKnownSid(WinBuiltinDomainSid, NULL, BuiltinDomainSid, &Size)) {
+    if (!CreateWellKnownSid(WinBuiltinDomainSid, NULL, BuiltinDomainSid, &Size))
+    {
         // LastError is set
         return FALSE;
     }
 
     // Extract the first SID's domain portion if any
     Size = sizeof(Buffer2);
-    if (!GetWindowsAccountDomainSid(pSid1, pDomainSid1, &Size)) {
+    if (!GetWindowsAccountDomainSid(pSid1, pDomainSid1, &Size))
+    {
         // The SID is not an account domain SID -- try for builtin
         pDomainSid1 = NULL;
-        if ( (IS_EQUAL_AUTHORITY(RtlIdentifierAuthoritySid(pSid1), &KnownAuthoritiesAndDomains[NT_AUTHORITY_INDEX].Authority))
-          && (*RtlSubAuthorityCountSid(pSid1) > 0)
-          && (*RtlSubAuthoritySid(pSid1, 0) == SECURITY_BUILTIN_DOMAIN_RID)) {
-                pDomainSid1 = BuiltinDomainSid;
+        if ((IS_EQUAL_AUTHORITY(RtlIdentifierAuthoritySid(pSid1),
+                                &KnownAuthoritiesAndDomains[NT_AUTHORITY_INDEX].Authority)) &&
+            (*RtlSubAuthorityCountSid(pSid1) > 0) && (*RtlSubAuthoritySid(pSid1, 0) == SECURITY_BUILTIN_DOMAIN_RID))
+        {
+            pDomainSid1 = BuiltinDomainSid;
         }
     }
 
-    if (NULL == pDomainSid1) {
+    if (NULL == pDomainSid1)
+    {
         SetLastError(ERROR_NON_DOMAIN_SID);
         return FALSE;
     }
 
     Size = sizeof(Buffer3);
-    if (!GetWindowsAccountDomainSid(pSid2, pDomainSid2, &Size)) {
+    if (!GetWindowsAccountDomainSid(pSid2, pDomainSid2, &Size))
+    {
         // The SID is not an account domain SID -- try for builtin
         pDomainSid2 = NULL;
-        if ( (IS_EQUAL_AUTHORITY(RtlIdentifierAuthoritySid(pSid2), &KnownAuthoritiesAndDomains[NT_AUTHORITY_INDEX].Authority))
-          && (*RtlSubAuthorityCountSid(pSid2) > 0)
-          && (*RtlSubAuthoritySid(pSid2, 0) == SECURITY_BUILTIN_DOMAIN_RID)) {
-                pDomainSid2 = BuiltinDomainSid;
+        if ((IS_EQUAL_AUTHORITY(RtlIdentifierAuthoritySid(pSid2),
+                                &KnownAuthoritiesAndDomains[NT_AUTHORITY_INDEX].Authority)) &&
+            (*RtlSubAuthorityCountSid(pSid2) > 0) && (*RtlSubAuthoritySid(pSid2, 0) == SECURITY_BUILTIN_DOMAIN_RID))
+        {
+            pDomainSid2 = BuiltinDomainSid;
         }
     }
 
-    if (NULL == pDomainSid2) {
+    if (NULL == pDomainSid2)
+    {
         SetLastError(ERROR_NON_DOMAIN_SID);
         return FALSE;
     }
@@ -10190,5 +8682,4 @@ Return Values
     *pfEqual = EqualSid(pDomainSid1, pDomainSid2);
 
     return TRUE;
-
 }

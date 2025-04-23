@@ -31,14 +31,15 @@ Revision History:
 //
 // Data structure for each entry in the device reference table.
 //
-typedef struct _DEVICE_REFERENCE {
-    PDEVICE_OBJECT  DeviceObject;   // PDO
+typedef struct _DEVICE_REFERENCE
+{
+    PDEVICE_OBJECT DeviceObject;    // PDO
     PUNICODE_STRING DeviceInstance; // Pointer to instance path for the devnode for the PDO
 } DEVICE_REFERENCE, *PDEVICE_REFERENCE;
 
 #ifdef POOL_TAGGING
 #undef ExAllocatePool
-#define ExAllocatePool(a,b) ExAllocatePoolWithTag(a,b,'uspP')
+#define ExAllocatePool(a, b) ExAllocatePoolWithTag(a, b, 'uspP')
 #endif
 
 #define PpLogEvent(s, r, st, d, ds)
@@ -48,7 +49,7 @@ typedef struct _DEVICE_REFERENCE {
 //
 
 #ifdef ALLOC_DATA_PRAGMA
-#pragma  data_seg()
+#pragma data_seg()
 #endif
 
 //
@@ -85,40 +86,21 @@ FAST_MUTEX PpBusTypeGuidLock;
 // Prototype of internal functions
 //
 
-VOID
-IopDisableDevice(
-    IN PDEVICE_NODE DeviceNode
-    );
+VOID IopDisableDevice(IN PDEVICE_NODE DeviceNode);
 
 BOOLEAN
-IopDeleteKeyRecursiveCallback(
-    IN HANDLE KeyHandle,
-    IN PUNICODE_STRING KeyName,
-    IN OUT PVOID Context
-    );
+IopDeleteKeyRecursiveCallback(IN HANDLE KeyHandle, IN PUNICODE_STRING KeyName, IN OUT PVOID Context);
 
 NTSTATUS
-PipGenerateMadeupNodeName (
-    IN  PUNICODE_STRING ServiceKeyName,
-    OUT PUNICODE_STRING MadeupNodeName
-    );
+PipGenerateMadeupNodeName(IN PUNICODE_STRING ServiceKeyName, OUT PUNICODE_STRING MadeupNodeName);
 
 RTL_GENERIC_COMPARE_RESULTS
 NTAPI
-PiCompareInstancePath (
-    PRTL_GENERIC_TABLE Table,
-    PVOID FirstStruct,
-    PVOID SecondStruct
-    );
+PiCompareInstancePath(PRTL_GENERIC_TABLE Table, PVOID FirstStruct, PVOID SecondStruct);
 
 ULONG
-PiFixupID(
-    IN PWCHAR ID,
-    IN ULONG MaxIDLength,
-    IN BOOLEAN Multi,
-    IN ULONG AllowedSeparators,
-    IN PUNICODE_STRING LogString OPTIONAL
-    );
+PiFixupID(IN PWCHAR ID, IN ULONG MaxIDLength, IN BOOLEAN Multi, IN ULONG AllowedSeparators,
+          IN PUNICODE_STRING LogString OPTIONAL);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, PpInitializeDeviceReferenceTable)
@@ -178,15 +160,10 @@ PiFixupID(
 
 #endif
 #endif
-
+
 NTSTATUS
-PipCreateMadeupNode(
-    IN PUNICODE_STRING ServiceKeyName,
-    OUT PHANDLE ReturnedHandle,
-    OUT PUNICODE_STRING KeyName,
-    OUT PULONG InstanceNumber,
-    IN BOOLEAN ResourceOwned
-    )
+PipCreateMadeupNode(IN PUNICODE_STRING ServiceKeyName, OUT PHANDLE ReturnedHandle, OUT PUNICODE_STRING KeyName,
+                    OUT PULONG InstanceNumber, IN BOOLEAN ResourceOwned)
 
 /*++
 
@@ -238,7 +215,8 @@ Return Value:
     BOOLEAN releaseResource = FALSE;
     BOOLEAN successful;
 
-    if (!ResourceOwned) {
+    if (!ResourceOwned)
+    {
         PiLockPnpRegistry(FALSE);
         releaseResource = TRUE;
     }
@@ -247,13 +225,11 @@ Return Value:
     // Open LocalMachine\System\CurrentControlSet\Enum\Root
     //
 
-    status = IopOpenRegistryKeyEx( &enumRootHandle,
-                                   NULL,
-                                   &CmRegistryMachineSystemCurrentControlSetEnumRootName,
-                                   KEY_ALL_ACCESS
-                                   );
+    status = IopOpenRegistryKeyEx(&enumRootHandle, NULL, &CmRegistryMachineSystemCurrentControlSetEnumRootName,
+                                  KEY_ALL_ACCESS);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto local_exit0;
     }
 
@@ -261,9 +237,9 @@ Return Value:
     // Generate the LEGACY_<ServiceKeyName> device id name from the
     // ServiceKeyName.
     //
-    status = PipGenerateMadeupNodeName( ServiceKeyName,
-                                        &unicodeKeyName);
-    if (!NT_SUCCESS(status)) {
+    status = PipGenerateMadeupNodeName(ServiceKeyName, &unicodeKeyName);
+    if (!NT_SUCCESS(status))
+    {
         ZwClose(enumRootHandle);
         goto local_exit0;
     }
@@ -273,15 +249,11 @@ Return Value:
     // System\Enum\Root\LEGACY_<ServiceKeyName>
     //
 
-    status = IopCreateRegistryKeyEx( &handle,
-                                     enumRootHandle,
-                                     &unicodeKeyName,
-                                     KEY_ALL_ACCESS,
-                                     REG_OPTION_NON_VOLATILE,
-                                     NULL
-                                     );
+    status =
+        IopCreateRegistryKeyEx(&handle, enumRootHandle, &unicodeKeyName, KEY_ALL_ACCESS, REG_OPTION_NON_VOLATILE, NULL);
     ZwClose(enumRootHandle);
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         RtlFreeUnicodeString(&unicodeKeyName);
         goto local_exit0;
     }
@@ -289,31 +261,18 @@ Return Value:
     instance = 1;
 
     PiWstrToUnicodeString(&unicodeValueName, REGSTR_VALUE_NEXT_INSTANCE);
-    status = ZwSetValueKey(
-                handle,
-                &unicodeValueName,
-                TITLE_INDEX_VALUE,
-                REG_DWORD,
-                &instance,
-                sizeof(instance)
-                );
+    status = ZwSetValueKey(handle, &unicodeValueName, TITLE_INDEX_VALUE, REG_DWORD, &instance, sizeof(instance));
 
     instance--;
     *InstanceNumber = instance;
     PiUlongToInstanceKeyUnicodeString(&unicodeInstanceName,
                                       unicodeBuffer + sizeof(WCHAR), // reserve first WCHAR space
-                                      20 - sizeof(WCHAR),
-                                      instance
-                                      );
-    status = IopCreateRegistryKeyEx( ReturnedHandle,
-                                     handle,
-                                     &unicodeInstanceName,
-                                     KEY_ALL_ACCESS,
-                                     REG_OPTION_NON_VOLATILE,
-                                     &disposition
-                                     );
+                                      20 - sizeof(WCHAR), instance);
+    status = IopCreateRegistryKeyEx(ReturnedHandle, handle, &unicodeInstanceName, KEY_ALL_ACCESS,
+                                    REG_OPTION_NON_VOLATILE, &disposition);
     ZwClose(handle);
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         RtlFreeUnicodeString(&unicodeKeyName);
         goto local_exit0;
     }
@@ -330,21 +289,25 @@ Return Value:
     PiWstrToUnicodeString(&tmpKeyName, L"\\");
     successful = PipConcatenateUnicodeStrings(&unicodeString, &tmpKeyName, &unicodeKeyName);
     RtlFreeUnicodeString(&unicodeKeyName);
-    if (!successful) {
+    if (!successful)
+    {
         goto local_exit0;
     }
     successful = PipConcatenateUnicodeStrings(&tmpKeyName, &rootKeyName, &unicodeString);
     RtlFreeUnicodeString(&unicodeString);
-    if (!successful) {
+    if (!successful)
+    {
         goto local_exit0;
     }
     successful = PipConcatenateUnicodeStrings(KeyName, &tmpKeyName, &unicodeInstanceName);
-    if (!successful) {
+    if (!successful)
+    {
         RtlFreeUnicodeString(&tmpKeyName);
         goto local_exit0;
     }
 
-    if (disposition == REG_CREATED_NEW_KEY) {
+    if (disposition == REG_CREATED_NEW_KEY)
+    {
 
         //
         // Create all the default value entry for the newly created key.
@@ -358,42 +321,26 @@ Return Value:
         //
 
         PiWstrToUnicodeString(&unicodeValueName, REGSTR_KEY_CONTROL);
-        status = IopCreateRegistryKeyEx( &handle,
-                                         *ReturnedHandle,
-                                         &unicodeValueName,
-                                         KEY_ALL_ACCESS,
-                                         REG_OPTION_VOLATILE,
-                                         NULL
-                                         );
-        if (NT_SUCCESS(status)) {
+        status = IopCreateRegistryKeyEx(&handle, *ReturnedHandle, &unicodeValueName, KEY_ALL_ACCESS,
+                                        REG_OPTION_VOLATILE, NULL);
+        if (NT_SUCCESS(status))
+        {
             PiWstrToUnicodeString(&unicodeValueName, REGSTR_VALUE_NEWLY_CREATED);
             tmpValue = 0;
-            ZwSetValueKey(handle,
-                          &unicodeValueName,
-                          TITLE_INDEX_VALUE,
-                          REG_DWORD,
-                          &tmpValue,
-                          sizeof(tmpValue)
-                          );
+            ZwSetValueKey(handle, &unicodeValueName, TITLE_INDEX_VALUE, REG_DWORD, &tmpValue, sizeof(tmpValue));
             ZwClose(handle);
         }
 
         handle = *ReturnedHandle;
 
         PiWstrToUnicodeString(&unicodeValueName, REGSTR_VALUE_SERVICE);
-        p = (PWSTR)ExAllocatePool(PagedPool,
-                                  ServiceKeyName->Length + sizeof(UNICODE_NULL));
-        if(p) {
+        p = (PWSTR)ExAllocatePool(PagedPool, ServiceKeyName->Length + sizeof(UNICODE_NULL));
+        if (p)
+        {
             RtlCopyMemory(p, ServiceKeyName->Buffer, ServiceKeyName->Length);
-            p[ServiceKeyName->Length / sizeof (WCHAR)] = UNICODE_NULL;
-            ZwSetValueKey(
-                        handle,
-                        &unicodeValueName,
-                        TITLE_INDEX_VALUE,
-                        REG_SZ,
-                        p,
-                        ServiceKeyName->Length + sizeof(UNICODE_NULL)
-                        );
+            p[ServiceKeyName->Length / sizeof(WCHAR)] = UNICODE_NULL;
+            ZwSetValueKey(handle, &unicodeValueName, TITLE_INDEX_VALUE, REG_SZ, p,
+                          ServiceKeyName->Length + sizeof(UNICODE_NULL));
             //
             // We'll keep the null-terminated service name buffer around for a while,
             // because we may need it later on for the DeviceDesc in case the service
@@ -404,45 +351,19 @@ Return Value:
 
         PiWstrToUnicodeString(&unicodeValueName, REGSTR_VALUE_LEGACY);
         tmpValue = 1;
-        ZwSetValueKey(
-                    handle,
-                    &unicodeValueName,
-                    TITLE_INDEX_VALUE,
-                    REG_DWORD,
-                    &tmpValue,
-                    sizeof(tmpValue)
-                    );
+        ZwSetValueKey(handle, &unicodeValueName, TITLE_INDEX_VALUE, REG_DWORD, &tmpValue, sizeof(tmpValue));
 
         PiWstrToUnicodeString(&unicodeValueName, REGSTR_VALUE_CONFIG_FLAGS);
         tmpValue = 0;
-        ZwSetValueKey(
-                    handle,
-                    &unicodeValueName,
-                    TITLE_INDEX_VALUE,
-                    REG_DWORD,
-                    &tmpValue,
-                    sizeof(tmpValue)
-                    );
+        ZwSetValueKey(handle, &unicodeValueName, TITLE_INDEX_VALUE, REG_DWORD, &tmpValue, sizeof(tmpValue));
 
         PiWstrToUnicodeString(&unicodeValueName, REGSTR_VALUE_CLASS);
-        ZwSetValueKey(
-                    handle,
-                    &unicodeValueName,
-                    TITLE_INDEX_VALUE,
-                    REG_SZ,
-                    REGSTR_VALUE_LEGACY_DRIVER,
-                    sizeof(REGSTR_VALUE_LEGACY_DRIVER)
-                    );
+        ZwSetValueKey(handle, &unicodeValueName, TITLE_INDEX_VALUE, REG_SZ, REGSTR_VALUE_LEGACY_DRIVER,
+                      sizeof(REGSTR_VALUE_LEGACY_DRIVER));
 
         PiWstrToUnicodeString(&unicodeValueName, REGSTR_VALUE_CLASSGUID);
-        ZwSetValueKey(
-                    handle,
-                    &unicodeValueName,
-                    TITLE_INDEX_VALUE,
-                    REG_SZ,
-                    (PVOID)&REGSTR_VALUE_LEGACY_DRIVER_CLASS_GUID,
-                    sizeof(REGSTR_VALUE_LEGACY_DRIVER_CLASS_GUID)
-                    );
+        ZwSetValueKey(handle, &unicodeValueName, TITLE_INDEX_VALUE, REG_SZ,
+                      (PVOID)&REGSTR_VALUE_LEGACY_DRIVER_CLASS_GUID, sizeof(REGSTR_VALUE_LEGACY_DRIVER_CLASS_GUID));
 
 
         //
@@ -451,31 +372,26 @@ Return Value:
         // name is used.
         //
 
-        status = PipOpenServiceEnumKeys(ServiceKeyName,
-                                        KEY_READ,
-                                        &handle,
-                                        NULL,
-                                        FALSE
-                                        );
-        if (NT_SUCCESS(status)) {
+        status = PipOpenServiceEnumKeys(ServiceKeyName, KEY_READ, &handle, NULL, FALSE);
+        if (NT_SUCCESS(status))
+        {
 
             keyValueInformation = NULL;
             unicodeString.Length = 0;
-            status = IopGetRegistryValue(handle,
-                                         REGSTR_VALUE_DISPLAY_NAME,
-                                         &keyValueInformation
-                                        );
-            if (NT_SUCCESS(status)) {
-                if (keyValueInformation->Type == REG_SZ) {
-                    if (keyValueInformation->DataLength > sizeof(UNICODE_NULL)) {
-                        IopRegistryDataToUnicodeString(&unicodeString,
-                                                       (PWSTR)KEY_VALUE_DATA(keyValueInformation),
-                                                       keyValueInformation->DataLength
-                                                       );
+            status = IopGetRegistryValue(handle, REGSTR_VALUE_DISPLAY_NAME, &keyValueInformation);
+            if (NT_SUCCESS(status))
+            {
+                if (keyValueInformation->Type == REG_SZ)
+                {
+                    if (keyValueInformation->DataLength > sizeof(UNICODE_NULL))
+                    {
+                        IopRegistryDataToUnicodeString(&unicodeString, (PWSTR)KEY_VALUE_DATA(keyValueInformation),
+                                                       keyValueInformation->DataLength);
                     }
                 }
             }
-            if ((unicodeString.Length == 0) && p) {
+            if ((unicodeString.Length == 0) && p)
+            {
 
                 //
                 // No DisplayName--use the service key name.
@@ -486,23 +402,21 @@ Return Value:
                 unicodeString.Buffer = p;
             }
 
-            if(unicodeString.Length) {
+            if (unicodeString.Length)
+            {
                 PiWstrToUnicodeString(&unicodeValueName, REGSTR_VALUE_DEVICE_DESC);
-                ZwSetValueKey(*ReturnedHandle,
-                              &unicodeValueName,
-                              TITLE_INDEX_VALUE,
-                              REG_SZ,
-                              unicodeString.Buffer,
-                              unicodeString.Length + sizeof(UNICODE_NULL)
-                              );
+                ZwSetValueKey(*ReturnedHandle, &unicodeValueName, TITLE_INDEX_VALUE, REG_SZ, unicodeString.Buffer,
+                              unicodeString.Length + sizeof(UNICODE_NULL));
             }
-            if (keyValueInformation) {
+            if (keyValueInformation)
+            {
                 ExFreePool(keyValueInformation);
             }
             ZwClose(handle);
         }
 
-        if(p) {
+        if (p)
+        {
             ExFreePool(p);
         }
     }
@@ -515,13 +429,15 @@ Return Value:
     PiUnlockPnpRegistry();
     releaseResource = FALSE;
 
-    status = PpDeviceRegistration( KeyName, TRUE, NULL );
+    status = PpDeviceRegistration(KeyName, TRUE, NULL);
 
-    if (ResourceOwned) {
+    if (ResourceOwned)
+    {
         PiLockPnpRegistry(FALSE);
     }
     RtlFreeUnicodeString(&tmpKeyName);
-    if (!NT_SUCCESS( status )) {
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // There is no registry key for the ServiceKeyName information.
@@ -531,17 +447,15 @@ Return Value:
         RtlFreeUnicodeString(KeyName);
     }
 local_exit0:
-    if (releaseResource) {
+    if (releaseResource)
+    {
         PiUnlockPnpRegistry();
     }
     return status;
 }
-
+
 NTSTATUS
-PipGenerateMadeupNodeName (
-    IN  PUNICODE_STRING ServiceKeyName,
-    OUT PUNICODE_STRING MadeupNodeName
-    )
+PipGenerateMadeupNodeName(IN PUNICODE_STRING ServiceKeyName, OUT PUNICODE_STRING MadeupNodeName)
 
 /*++
 
@@ -590,14 +504,16 @@ Return Value:
 
     p = ServiceKeyName->Buffer;
     BufferEnd = (PWCHAR)((PUCHAR)p + ServiceKeyName->Length);
-    while(p != BufferEnd) {
-        if ((*p < L' ') || (*p > (WCHAR)0x7F) || (*p == L',')) {
+    while (p != BufferEnd)
+    {
+        if ((*p < L' ') || (*p > (WCHAR)0x7F) || (*p == L','))
+        {
             //
             // Each "invalid" character will be replaced with a '*' character
             // (size already accounted for in calculated length), plus one
             // character for each nibble of each byte in the invalid character.
             //
-            length += 2*sizeof(WCHAR)*sizeof(WCHAR);
+            length += 2 * sizeof(WCHAR) * sizeof(WCHAR);
         }
         p++;
     }
@@ -607,7 +523,8 @@ Return Value:
     // LEGACY_<ServiceKeyName> string.
     //
     buffer = (PWSTR)ExAllocatePool(PagedPool, length);
-    if (!buffer) {
+    if (!buffer)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -617,19 +534,22 @@ Return Value:
 
     RtlCopyMemory(buffer, REGSTR_KEY_MADEUP, sizeof(REGSTR_KEY_MADEUP));
 
-    q = buffer + (sizeof(REGSTR_KEY_MADEUP) - sizeof(UNICODE_NULL))/sizeof(WCHAR);
+    q = buffer + (sizeof(REGSTR_KEY_MADEUP) - sizeof(UNICODE_NULL)) / sizeof(WCHAR);
 
     p = ServiceKeyName->Buffer;
     BufferEnd = (PWCHAR)((PUCHAR)p + ServiceKeyName->Length);
-    while(p != BufferEnd) {
-        if (*p == L' ') {
+    while (p != BufferEnd)
+    {
+        if (*p == L' ')
+        {
             //
             // replace ' ' with '_'
             //
             *q = L'_';
             q++;
-
-        } else if ((*p < L' ')  || (*p > (WCHAR)0x7F) || (*p == L',')) {
+        }
+        else if ((*p < L' ') || (*p > (WCHAR)0x7F) || (*p == L','))
+        {
             //
             // replace invalid characters with '*' plus a character string
             // representation of the hexadecimal digits.
@@ -639,13 +559,15 @@ Return Value:
             *q = L'*';
             q++;
 
-            for (i = 1; i <= 2*sizeof(WCHAR); i++) {
-                nibble = ((USHORT)((*p) >> (0x10 - 4*i)) & 0xF);
+            for (i = 1; i <= 2 * sizeof(WCHAR); i++)
+            {
+                nibble = ((USHORT)((*p) >> (0x10 - 4 * i)) & 0xF);
                 *q = nibble > 9 ? (nibble - 10 + L'A') : (nibble + L'0');
                 q++;
             }
-
-        } else {
+        }
+        else
+        {
             //
             // copy the existing character.
             //
@@ -668,7 +590,8 @@ Return Value:
     // this point, there should be absolutely no reason that it wouldn't be.
     //
 
-    if (!PiFixupID(MadeupNodeName->Buffer, MAX_DEVICE_ID_LEN, FALSE, 0, NULL)) {
+    if (!PiFixupID(MadeupNodeName->Buffer, MAX_DEVICE_ID_LEN, FALSE, 0, NULL))
+    {
         ASSERT(0);
         RtlFreeUnicodeString(MadeupNodeName);
         return STATUS_INVALID_PARAMETER;
@@ -676,13 +599,10 @@ Return Value:
 
     return STATUS_SUCCESS;
 }
-
+
 BOOLEAN
-PipConcatenateUnicodeStrings (
-    OUT PUNICODE_STRING Destination,
-    IN  PUNICODE_STRING String1,
-    IN  PUNICODE_STRING String2  OPTIONAL
-    )
+PipConcatenateUnicodeStrings(OUT PUNICODE_STRING Destination, IN PUNICODE_STRING String1,
+                             IN PUNICODE_STRING String2 OPTIONAL)
 
 /*++
 
@@ -714,34 +634,29 @@ Return Value:
     PWSTR buffer;
 
     length = String1->Length + sizeof(UNICODE_NULL);
-    if (ARGUMENT_PRESENT(String2)) {
+    if (ARGUMENT_PRESENT(String2))
+    {
         length += String2->Length;
     }
     buffer = (PWSTR)ExAllocatePool(PagedPool, length);
-    if (!buffer) {
+    if (!buffer)
+    {
         return FALSE;
     }
     Destination->Buffer = buffer;
     Destination->Length = (USHORT)length - sizeof(UNICODE_NULL);
     Destination->MaximumLength = (USHORT)length;
-    RtlCopyMemory (buffer, String1->Buffer, String1->Length);
-    if(ARGUMENT_PRESENT(String2)) {
-        RtlCopyMemory((PUCHAR)buffer + String1->Length,
-                      String2->Buffer,
-                      String2->Length
-                     );
+    RtlCopyMemory(buffer, String1->Buffer, String1->Length);
+    if (ARGUMENT_PRESENT(String2))
+    {
+        RtlCopyMemory((PUCHAR)buffer + String1->Length, String2->Buffer, String2->Length);
     }
     buffer[length / sizeof(WCHAR) - 1] = UNICODE_NULL;
     return TRUE;
 }
-
+
 NTSTATUS
-IopPrepareDriverLoading (
-    IN PUNICODE_STRING KeyName,
-    IN HANDLE KeyHandle,
-    IN PVOID ImageBase,
-    IN BOOLEAN IsFilter
-    )
+IopPrepareDriverLoading(IN PUNICODE_STRING KeyName, IN HANDLE KeyHandle, IN PVOID ImageBase, IN BOOLEAN IsFilter)
 
 /*++
 
@@ -778,12 +693,14 @@ Return Value:
 
     header = RtlImageNtHeader(ImageBase);
     status = STATUS_SUCCESS;
-    IsPlugPlayDriver = (header &&
-                        (header->OptionalHeader.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_WDM_DRIVER))? TRUE : FALSE;
+    IsPlugPlayDriver =
+        (header && (header->OptionalHeader.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_WDM_DRIVER)) ? TRUE : FALSE;
 
-    if (!IopIsAnyDeviceInstanceEnabled(KeyName, KeyHandle, (BOOLEAN)(IsPlugPlayDriver ? FALSE : TRUE))) {
+    if (!IopIsAnyDeviceInstanceEnabled(KeyName, KeyHandle, (BOOLEAN)(IsPlugPlayDriver ? FALSE : TRUE)))
+    {
 
-        if (!IsPlugPlayDriver) {
+        if (!IsPlugPlayDriver)
+        {
 
             PiLockPnpRegistry(FALSE);
 
@@ -792,14 +709,10 @@ Return Value:
             //
 
             PiWstrToUnicodeString(&unicodeKeyName, REGSTR_KEY_ENUM);
-            status = IopCreateRegistryKeyEx( &serviceEnumHandle,
-                                             KeyHandle,
-                                             &unicodeKeyName,
-                                             KEY_ALL_ACCESS,
-                                             REG_OPTION_VOLATILE,
-                                             NULL
-                                             );
-            if (NT_SUCCESS(status)) {
+            status = IopCreateRegistryKeyEx(&serviceEnumHandle, KeyHandle, &unicodeKeyName, KEY_ALL_ACCESS,
+                                            REG_OPTION_VOLATILE, NULL);
+            if (NT_SUCCESS(status))
+            {
 
                 //
                 // Find out how many device instances listed in the ServiceName's
@@ -807,42 +720,38 @@ Return Value:
                 //
 
                 count = 0;
-                status = IopGetRegistryValue ( serviceEnumHandle,
-                                               REGSTR_VALUE_COUNT,
-                                               &keyValueInformation);
-                if (NT_SUCCESS(status)) {
+                status = IopGetRegistryValue(serviceEnumHandle, REGSTR_VALUE_COUNT, &keyValueInformation);
+                if (NT_SUCCESS(status))
+                {
 
-                    if (    keyValueInformation->Type == REG_DWORD &&
-                            keyValueInformation->DataLength >= sizeof(ULONG)) {
+                    if (keyValueInformation->Type == REG_DWORD && keyValueInformation->DataLength >= sizeof(ULONG))
+                    {
 
                         count = *(PULONG)KEY_VALUE_DATA(keyValueInformation);
-
                     }
 
                     ExFreePool(keyValueInformation);
-
                 }
-                if (    NT_SUCCESS(status) ||
-                        status == STATUS_OBJECT_PATH_NOT_FOUND ||
-                        status == STATUS_OBJECT_NAME_NOT_FOUND) {
+                if (NT_SUCCESS(status) || status == STATUS_OBJECT_PATH_NOT_FOUND ||
+                    status == STATUS_OBJECT_NAME_NOT_FOUND)
+                {
 
-                    if (count) {
+                    if (count)
+                    {
 
                         status = STATUS_PLUGPLAY_NO_DEVICE;
-
-                    } else {
+                    }
+                    else
+                    {
 
                         //
                         // If there is no Enum key or instance under Enum for the
                         // legacy driver we will create a madeup node for it.
                         //
 
-                        status = PipCreateMadeupNode(   KeyName,
-                                                        &sysEnumXxxHandle,
-                                                        &unicodeKeyName,
-                                                        &tmp,
-                                                        TRUE);
-                        if (NT_SUCCESS(status)) {
+                        status = PipCreateMadeupNode(KeyName, &sysEnumXxxHandle, &unicodeKeyName, &tmp, TRUE);
+                        if (NT_SUCCESS(status))
+                        {
 
                             RtlFreeUnicodeString(&unicodeKeyName);
 
@@ -851,24 +760,15 @@ Return Value:
                             //
 
                             PiWstrToUnicodeString(&unicodeValueName, REGSTR_KEY_CONTROL);
-                            status = IopCreateRegistryKeyEx( &controlHandle,
-                                                             sysEnumXxxHandle,
-                                                             &unicodeValueName,
-                                                             KEY_ALL_ACCESS,
-                                                             REG_OPTION_VOLATILE,
-                                                             NULL
-                                                             );
-                            if (NT_SUCCESS(status)) {
+                            status = IopCreateRegistryKeyEx(&controlHandle, sysEnumXxxHandle, &unicodeValueName,
+                                                            KEY_ALL_ACCESS, REG_OPTION_VOLATILE, NULL);
+                            if (NT_SUCCESS(status))
+                            {
 
                                 PiWstrToUnicodeString(&unicodeValueName, REGSTR_VAL_ACTIVESERVICE);
-                                ZwSetValueKey(  controlHandle,
-                                                &unicodeValueName,
-                                                TITLE_INDEX_VALUE,
-                                                REG_SZ,
-                                                KeyName->Buffer,
-                                                KeyName->Length + sizeof(UNICODE_NULL));
+                                ZwSetValueKey(controlHandle, &unicodeValueName, TITLE_INDEX_VALUE, REG_SZ,
+                                              KeyName->Buffer, KeyName->Length + sizeof(UNICODE_NULL));
                                 ZwClose(controlHandle);
-
                             }
                             count++;
                             //
@@ -876,20 +776,12 @@ Return Value:
                             //
 
                             PiWstrToUnicodeString(&unicodeValueName, REGSTR_VALUE_COUNT);
-                            ZwSetValueKey(  serviceEnumHandle,
-                                            &unicodeValueName,
-                                            TITLE_INDEX_VALUE,
-                                            REG_DWORD,
-                                            &count,
-                                            sizeof(count));
+                            ZwSetValueKey(serviceEnumHandle, &unicodeValueName, TITLE_INDEX_VALUE, REG_DWORD, &count,
+                                          sizeof(count));
 
                             PiWstrToUnicodeString(&unicodeValueName, REGSTR_VALUE_NEXT_INSTANCE);
-                            ZwSetValueKey(  serviceEnumHandle,
-                                            &unicodeValueName,
-                                            TITLE_INDEX_VALUE,
-                                            REG_DWORD,
-                                            &count,
-                                            sizeof(count));
+                            ZwSetValueKey(serviceEnumHandle, &unicodeValueName, TITLE_INDEX_VALUE, REG_DWORD, &count,
+                                          sizeof(count));
 
                             ZwClose(sysEnumXxxHandle);
                             status = STATUS_SUCCESS;
@@ -903,20 +795,16 @@ Return Value:
             PiUnlockPnpRegistry();
         }
     }
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         RtlZeroMemory(&blockedDriverGuid, sizeof(GUID));
 
-        status = PpCheckInDriverDatabase(
-            KeyName,
-            KeyHandle,
-            ImageBase,
-            header->OptionalHeader.SizeOfImage,
-            IsFilter,
-            &blockedDriverGuid);
+        status = PpCheckInDriverDatabase(KeyName, KeyHandle, ImageBase, header->OptionalHeader.SizeOfImage, IsFilter,
+                                         &blockedDriverGuid);
 
-        if (status == STATUS_DRIVER_BLOCKED ||
-            status == STATUS_DRIVER_BLOCKED_CRITICAL) {
+        if (status == STATUS_DRIVER_BLOCKED || status == STATUS_DRIVER_BLOCKED_CRITICAL)
+        {
             //
             // Notify the user-mode Plug and Play manager that a driver was just
             // blocked.
@@ -927,16 +815,12 @@ Return Value:
 
     return status;
 }
-
+
 NTSTATUS
-PipServiceInstanceToDeviceInstance (
-    IN  HANDLE ServiceKeyHandle OPTIONAL,
-    IN  PUNICODE_STRING ServiceKeyName OPTIONAL,
-    IN  ULONG ServiceInstanceOrdinal,
-    OUT PUNICODE_STRING DeviceInstanceRegistryPath OPTIONAL,
-    OUT PHANDLE DeviceInstanceHandle OPTIONAL,
-    IN  ACCESS_MASK DesiredAccess
-    )
+PipServiceInstanceToDeviceInstance(IN HANDLE ServiceKeyHandle OPTIONAL, IN PUNICODE_STRING ServiceKeyName OPTIONAL,
+                                   IN ULONG ServiceInstanceOrdinal,
+                                   OUT PUNICODE_STRING DeviceInstanceRegistryPath OPTIONAL,
+                                   OUT PHANDLE DeviceInstanceHandle OPTIONAL, IN ACCESS_MASK DesiredAccess)
 
 /*++
 
@@ -991,25 +875,20 @@ Return Value:
     //
     // Open registry ServiceKeyName\Enum branch
     //
-    if(ARGUMENT_PRESENT(ServiceKeyHandle)) {
+    if (ARGUMENT_PRESENT(ServiceKeyHandle))
+    {
 
         PiWstrToUnicodeString(&unicodeKeyName, REGSTR_KEY_ENUM);
-        status = IopOpenRegistryKeyEx( &handle,
-                                       ServiceKeyHandle,
-                                       &unicodeKeyName,
-                                       KEY_READ
-                                       );
-    } else {
+        status = IopOpenRegistryKeyEx(&handle, ServiceKeyHandle, &unicodeKeyName, KEY_READ);
+    }
+    else
+    {
 
-        status = PipOpenServiceEnumKeys(ServiceKeyName,
-                                        KEY_READ,
-                                        NULL,
-                                        &handle,
-                                        FALSE
-                                       );
+        status = PipOpenServiceEnumKeys(ServiceKeyName, KEY_READ, NULL, &handle, FALSE);
     }
 
-    if (!NT_SUCCESS( status )) {
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // There is no registry key for the ServiceKeyName\Enum information.
@@ -1024,28 +903,31 @@ Return Value:
     //
 
     swprintf(unicodeBuffer, REGSTR_VALUE_STANDARD_ULONG_FORMAT, ServiceInstanceOrdinal);
-    status = IopGetRegistryValue ( handle,
-                                   unicodeBuffer,
-                                   &keyValueInformation
-                                   );
+    status = IopGetRegistryValue(handle, unicodeBuffer, &keyValueInformation);
 
     ZwClose(handle);
-    if (!NT_SUCCESS( status )) {
+    if (!NT_SUCCESS(status))
+    {
         return status;
-    } else {
-        if(keyValueInformation->Type == REG_SZ) {
-            IopRegistryDataToUnicodeString(&unicodeKeyName,
-                                           (PWSTR)KEY_VALUE_DATA(keyValueInformation),
-                                           keyValueInformation->DataLength
-                                          );
-            if(!unicodeKeyName.Length) {
+    }
+    else
+    {
+        if (keyValueInformation->Type == REG_SZ)
+        {
+            IopRegistryDataToUnicodeString(&unicodeKeyName, (PWSTR)KEY_VALUE_DATA(keyValueInformation),
+                                           keyValueInformation->DataLength);
+            if (!unicodeKeyName.Length)
+            {
                 status = STATUS_OBJECT_PATH_NOT_FOUND;
             }
-        } else {
+        }
+        else
+        {
             status = STATUS_INVALID_PLUGPLAY_DEVICE_PATH;
         }
 
-        if(!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             goto PrepareForReturn;
         }
     }
@@ -1055,25 +937,20 @@ Return Value:
     // key under HKLM\System\CurrentControlSet\Enum
     //
 
-    if (ARGUMENT_PRESENT(DeviceInstanceHandle)) {
+    if (ARGUMENT_PRESENT(DeviceInstanceHandle))
+    {
 
-        status = IopOpenRegistryKeyEx( &handle,
-                                       NULL,
-                                       &CmRegistryMachineSystemCurrentControlSetEnumName,
-                                       KEY_READ
-                                       );
+        status = IopOpenRegistryKeyEx(&handle, NULL, &CmRegistryMachineSystemCurrentControlSetEnumName, KEY_READ);
 
-        if (NT_SUCCESS( status )) {
+        if (NT_SUCCESS(status))
+        {
 
-            status = IopOpenRegistryKeyEx( DeviceInstanceHandle,
-                                           handle,
-                                           &unicodeKeyName,
-                                           DesiredAccess
-                                           );
+            status = IopOpenRegistryKeyEx(DeviceInstanceHandle, handle, &unicodeKeyName, DesiredAccess);
             ZwClose(handle);
         }
 
-        if (!NT_SUCCESS( status )) {
+        if (!NT_SUCCESS(status))
+        {
             goto PrepareForReturn;
         }
     }
@@ -1082,13 +959,14 @@ Return Value:
     // If the DeviceInstanceRegistryPath argument was specified, then store a
     // copy of the device instance path in the supplied unicode string variable.
     //
-    if (ARGUMENT_PRESENT(DeviceInstanceRegistryPath)) {
+    if (ARGUMENT_PRESENT(DeviceInstanceRegistryPath))
+    {
 
-        if (!PipConcatenateUnicodeStrings(DeviceInstanceRegistryPath,
-                                          &unicodeKeyName,
-                                          NULL)) {
+        if (!PipConcatenateUnicodeStrings(DeviceInstanceRegistryPath, &unicodeKeyName, NULL))
+        {
 
-            if(ARGUMENT_PRESENT(DeviceInstanceHandle)) {
+            if (ARGUMENT_PRESENT(DeviceInstanceHandle))
+            {
                 ZwClose(*DeviceInstanceHandle);
             }
             status = STATUS_INSUFFICIENT_RESOURCES;
@@ -1100,14 +978,10 @@ PrepareForReturn:
     ExFreePool(keyValueInformation);
     return status;
 }
-
+
 NTSTATUS
-IopOpenRegistryKeyEx(
-    OUT PHANDLE Handle,
-    IN HANDLE BaseHandle OPTIONAL,
-    IN PUNICODE_STRING KeyName,
-    IN ACCESS_MASK DesiredAccess
-    )
+IopOpenRegistryKeyEx(OUT PHANDLE Handle, IN HANDLE BaseHandle OPTIONAL, IN PUNICODE_STRING KeyName,
+                     IN ACCESS_MASK DesiredAccess)
 
 /*++
 
@@ -1141,27 +1015,17 @@ Return Value:
 
     PAGED_CODE();
 
-    InitializeObjectAttributes( &objectAttributes,
-                                KeyName,
-                                OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-                                BaseHandle,
-                                (PSECURITY_DESCRIPTOR) NULL
-                                );
+    InitializeObjectAttributes(&objectAttributes, KeyName, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, BaseHandle,
+                               (PSECURITY_DESCRIPTOR)NULL);
     //
     // Simply attempt to open the path, as specified.
     //
-    return ZwOpenKey( Handle, DesiredAccess, &objectAttributes );
+    return ZwOpenKey(Handle, DesiredAccess, &objectAttributes);
 }
-
+
 NTSTATUS
-IopCreateRegistryKeyEx(
-    OUT PHANDLE Handle,
-    IN HANDLE BaseHandle OPTIONAL,
-    IN PUNICODE_STRING KeyName,
-    IN ACCESS_MASK DesiredAccess,
-    IN ULONG CreateOptions,
-    OUT PULONG Disposition OPTIONAL
-    )
+IopCreateRegistryKeyEx(OUT PHANDLE Handle, IN HANDLE BaseHandle OPTIONAL, IN PUNICODE_STRING KeyName,
+                       IN ACCESS_MASK DesiredAccess, IN ULONG CreateOptions, OUT PULONG Disposition OPTIONAL)
 
 /*++
 
@@ -1215,27 +1079,18 @@ Return Value:
 
     PAGED_CODE();
 
-    InitializeObjectAttributes( &objectAttributes,
-                                KeyName,
-                                OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-                                BaseHandle,
-                                (PSECURITY_DESCRIPTOR) NULL
-                                );
+    InitializeObjectAttributes(&objectAttributes, KeyName, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, BaseHandle,
+                               (PSECURITY_DESCRIPTOR)NULL);
     //
     // Attempt to create the path as specified. We have to try it this
     // way first, because it allows us to create a key without a BaseHandle
     // (if only the last component of the registry path is not present).
     //
-    status = ZwCreateKey(&(handles[keyHandleIndex]),
-                         DesiredAccess,
-                         &objectAttributes,
-                         0,
-                         (PUNICODE_STRING) NULL,
-                         CreateOptions,
-                         &disposition
-                         );
+    status = ZwCreateKey(&(handles[keyHandleIndex]), DesiredAccess, &objectAttributes, 0, (PUNICODE_STRING)NULL,
+                         CreateOptions, &disposition);
 
-    if (status == STATUS_OBJECT_NAME_NOT_FOUND && ARGUMENT_PRESENT(BaseHandle)) {
+    if (status == STATUS_OBJECT_NAME_NOT_FOUND && ARGUMENT_PRESENT(BaseHandle))
+    {
         //
         // If we get to here, then there must be more than one element of the
         // registry path that does not currently exist.  We will now parse the
@@ -1249,27 +1104,30 @@ Return Value:
         pathEndPtr = (PWCHAR)((PCHAR)pathBeginPtr + KeyName->Length);
         status = STATUS_SUCCESS;
 
-        while(continueParsing) {
+        while (continueParsing)
+        {
             //
             // There's more to do, so close the previous base handle (if necessary),
             // and replace it with the current key handle.
             //
-            if(closeBaseHandle > 1) {
+            if (closeBaseHandle > 1)
+            {
                 ZwClose(handles[baseHandleIndex]);
             }
             baseHandleIndex = keyHandleIndex;
-            keyHandleIndex = (keyHandleIndex + 1) & 1;  // toggle between 0 and 1.
+            keyHandleIndex = (keyHandleIndex + 1) & 1; // toggle between 0 and 1.
             handles[keyHandleIndex] = NULL;
 
             //
             // Extract next component out of the specified registry path.
             //
-            for (pathCurPtr = pathBeginPtr;
-                ((pathCurPtr < pathEndPtr) && (*pathCurPtr != OBJ_NAME_PATH_SEPARATOR));
-                pathCurPtr++);
+            for (pathCurPtr = pathBeginPtr; ((pathCurPtr < pathEndPtr) && (*pathCurPtr != OBJ_NAME_PATH_SEPARATOR));
+                 pathCurPtr++)
+                ;
 
             pathComponentLength = (ULONG)((PCHAR)pathCurPtr - (PCHAR)pathBeginPtr);
-            if (pathComponentLength != 0) {
+            if (pathComponentLength != 0)
+            {
                 //
                 // Then we have a non-empty path component (key name).  Attempt
                 // to create this key.
@@ -1277,32 +1135,27 @@ Return Value:
                 unicodeString.Buffer = pathBeginPtr;
                 unicodeString.Length = unicodeString.MaximumLength = (USHORT)pathComponentLength;
 
-                InitializeObjectAttributes(&objectAttributes,
-                                           &unicodeString,
-                                           OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-                                           handles[baseHandleIndex],
-                                           (PSECURITY_DESCRIPTOR) NULL
-                                          );
-                status = ZwCreateKey(&(handles[keyHandleIndex]),
-                                     DesiredAccess,
-                                     &objectAttributes,
-                                     0,
-                                     (PUNICODE_STRING) NULL,
-                                     CreateOptions,
-                                     &disposition
-                                    );
-                if(NT_SUCCESS(status)) {
+                InitializeObjectAttributes(&objectAttributes, &unicodeString, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
+                                           handles[baseHandleIndex], (PSECURITY_DESCRIPTOR)NULL);
+                status = ZwCreateKey(&(handles[keyHandleIndex]), DesiredAccess, &objectAttributes, 0,
+                                     (PUNICODE_STRING)NULL, CreateOptions, &disposition);
+                if (NT_SUCCESS(status))
+                {
                     //
                     // Increment the closeBaseHandle value, which basically tells us whether
                     // the BaseHandle passed in has been 'shifted out' of our way, so that
                     // we should start closing our base handles when we're finished with them.
                     //
                     closeBaseHandle++;
-                } else {
+                }
+                else
+                {
                     continueParsing = FALSE;
                     continue;
                 }
-            } else {
+            }
+            else
+            {
                 //
                 // Either a path separator ('\') was included at the beginning of
                 // the path, or we hit 2 consecutive separators.
@@ -1312,8 +1165,8 @@ Return Value:
                 continue;
             }
 
-            if((pathCurPtr == pathEndPtr) ||
-               ((pathBeginPtr = pathCurPtr + 1) == pathEndPtr)) {
+            if ((pathCurPtr == pathEndPtr) || ((pathBeginPtr = pathCurPtr + 1) == pathEndPtr))
+            {
                 //
                 // Then we've reached the end of the path
                 //
@@ -1321,30 +1174,29 @@ Return Value:
             }
         }
 
-        if(closeBaseHandle > 1) {
+        if (closeBaseHandle > 1)
+        {
             ZwClose(handles[baseHandleIndex]);
         }
     }
 
-    if(NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         *Handle = handles[keyHandleIndex];
 
-        if(ARGUMENT_PRESENT(Disposition)) {
+        if (ARGUMENT_PRESENT(Disposition))
+        {
             *Disposition = disposition;
         }
     }
 
     return status;
 }
-
+
 NTSTATUS
-PipOpenServiceEnumKeys (
-    IN PUNICODE_STRING ServiceKeyName,
-    IN ACCESS_MASK DesiredAccess,
-    OUT PHANDLE ServiceHandle OPTIONAL,
-    OUT PHANDLE ServiceEnumHandle OPTIONAL,
-    IN BOOLEAN CreateEnum
-    )
+PipOpenServiceEnumKeys(IN PUNICODE_STRING ServiceKeyName, IN ACCESS_MASK DesiredAccess,
+                       OUT PHANDLE ServiceHandle OPTIONAL, OUT PHANDLE ServiceEnumHandle OPTIONAL,
+                       IN BOOLEAN CreateEnum)
 
 /*++
 
@@ -1389,13 +1241,10 @@ Return Value:
     // Open System\CurrentControlSet\Services
     //
 
-    status = IopOpenRegistryKeyEx( &handle,
-                                   NULL,
-                                   &CmRegistryMachineSystemCurrentControlSetServices,
-                                   DesiredAccess
-                                   );
+    status = IopOpenRegistryKeyEx(&handle, NULL, &CmRegistryMachineSystemCurrentControlSetServices, DesiredAccess);
 
-    if (!NT_SUCCESS( status )) {
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
@@ -1403,14 +1252,11 @@ Return Value:
     // Open the registry ServiceKeyName key.
     //
 
-    status = IopOpenRegistryKeyEx( &serviceHandle,
-                                   handle,
-                                   ServiceKeyName,
-                                   DesiredAccess
-                                   );
+    status = IopOpenRegistryKeyEx(&serviceHandle, handle, ServiceKeyName, DesiredAccess);
 
     ZwClose(handle);
-    if (!NT_SUCCESS( status )) {
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // There is no registry key for the ServiceKeyName information.
@@ -1419,7 +1265,8 @@ Return Value:
         return status;
     }
 
-    if (ARGUMENT_PRESENT(ServiceEnumHandle) || CreateEnum) {
+    if (ARGUMENT_PRESENT(ServiceEnumHandle) || CreateEnum)
+    {
 
         //
         // Open registry ServiceKeyName\Enum branch if caller wants
@@ -1428,24 +1275,18 @@ Return Value:
 
         PiWstrToUnicodeString(&enumName, REGSTR_KEY_ENUM);
 
-        if (CreateEnum) {
-            status = IopCreateRegistryKeyEx( &enumHandle,
-                                             serviceHandle,
-                                             &enumName,
-                                             DesiredAccess,
-                                             REG_OPTION_VOLATILE,
-                                             NULL
-                                             );
-        } else {
-            status = IopOpenRegistryKeyEx( &enumHandle,
-                                           serviceHandle,
-                                           &enumName,
-                                           DesiredAccess
-                                           );
-
+        if (CreateEnum)
+        {
+            status =
+                IopCreateRegistryKeyEx(&enumHandle, serviceHandle, &enumName, DesiredAccess, REG_OPTION_VOLATILE, NULL);
+        }
+        else
+        {
+            status = IopOpenRegistryKeyEx(&enumHandle, serviceHandle, &enumName, DesiredAccess);
         }
 
-        if (!NT_SUCCESS( status )) {
+        if (!NT_SUCCESS(status))
+        {
 
             //
             // There is no registry key for the ServiceKeyName\Enum information.
@@ -1454,9 +1295,12 @@ Return Value:
             ZwClose(serviceHandle);
             return status;
         }
-        if (ARGUMENT_PRESENT(ServiceEnumHandle)) {
+        if (ARGUMENT_PRESENT(ServiceEnumHandle))
+        {
             *ServiceEnumHandle = enumHandle;
-        } else {
+        }
+        else
+        {
             ZwClose(enumHandle);
         }
     }
@@ -1466,20 +1310,20 @@ Return Value:
     // we close it.
     //
 
-    if (ARGUMENT_PRESENT(ServiceHandle)) {
+    if (ARGUMENT_PRESENT(ServiceHandle))
+    {
         *ServiceHandle = serviceHandle;
-    } else {
+    }
+    else
+    {
         ZwClose(serviceHandle);
     }
 
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-IopGetDeviceInstanceCsConfigFlags(
-    IN PUNICODE_STRING DeviceInstance,
-    OUT PULONG CsConfigFlags
-    )
+IopGetDeviceInstanceCsConfigFlags(IN PUNICODE_STRING DeviceInstance, OUT PULONG CsConfigFlags)
 
 /*++
 
@@ -1509,13 +1353,11 @@ Return Value:
 
     *CsConfigFlags = 0;
 
-    status = IopOpenRegistryKeyEx( &handle1,
-                                   NULL,
-                                   &CmRegistryMachineSystemCurrentControlSetHardwareProfilesCurrent,
-                                   KEY_READ
-                                   );
+    status = IopOpenRegistryKeyEx(&handle1, NULL, &CmRegistryMachineSystemCurrentControlSetHardwareProfilesCurrent,
+                                  KEY_READ);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         return status;
     }
@@ -1528,58 +1370,47 @@ Return Value:
     //
 
     PiWstrToUnicodeString(&tempUnicodeString, REGSTR_PATH_CURRENTCONTROLSET);
-    status = IopOpenRegistryKeyEx( &handle2,
-                                   handle1,
-                                   &tempUnicodeString,
-                                   KEY_READ
-                                   );
+    status = IopOpenRegistryKeyEx(&handle2, handle1, &tempUnicodeString, KEY_READ);
     ZwClose(handle1);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         return status;
     }
 
     PiWstrToUnicodeString(&tempUnicodeString, REGSTR_KEY_ENUM);
 
-    status = IopOpenRegistryKeyEx( &handle1,
-                                   handle2,
-                                   &tempUnicodeString,
-                                   KEY_READ
-                                   );
+    status = IopOpenRegistryKeyEx(&handle1, handle2, &tempUnicodeString, KEY_READ);
 
     ZwClose(handle2);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         return status;
     }
 
 
-    status = IopOpenRegistryKeyEx( &handle2,
-                                   handle1,
-                                   DeviceInstance,
-                                   KEY_READ
-                                   );
+    status = IopOpenRegistryKeyEx(&handle2, handle1, DeviceInstance, KEY_READ);
 
     ZwClose(handle1);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         return status;
     }
 
 
-    status = IopGetRegistryValue( handle2,
-                                  REGSTR_VALUE_CSCONFIG_FLAGS,
-                                  &keyValueInformation
-                                  );
+    status = IopGetRegistryValue(handle2, REGSTR_VALUE_CSCONFIG_FLAGS, &keyValueInformation);
 
     ZwClose(handle2);
 
-    if (NT_SUCCESS(status)) {
-        if ((keyValueInformation->Type == REG_DWORD) &&
-            (keyValueInformation->DataLength >= sizeof(ULONG))) {
+    if (NT_SUCCESS(status))
+    {
+        if ((keyValueInformation->Type == REG_DWORD) && (keyValueInformation->DataLength >= sizeof(ULONG)))
+        {
 
             *CsConfigFlags = *(PULONG)KEY_VALUE_DATA(keyValueInformation);
         }
@@ -1588,13 +1419,9 @@ Return Value:
 
     return status;
 }
-
+
 NTSTATUS
-PipGetServiceInstanceCsConfigFlags(
-    IN PUNICODE_STRING ServiceKeyName,
-    IN ULONG Instance,
-    OUT PULONG CsConfigFlags
-    )
+PipGetServiceInstanceCsConfigFlags(IN PUNICODE_STRING ServiceKeyName, IN ULONG Instance, OUT PULONG CsConfigFlags)
 
 /*++
 
@@ -1628,20 +1455,14 @@ Return Value:
 
     *CsConfigFlags = 0;
 
-    status = IopOpenCurrentHwProfileDeviceInstanceKey(&handle,
-                                                      ServiceKeyName,
-                                                      Instance,
-                                                      KEY_READ,
-                                                      FALSE
-                                                     );
-    if(NT_SUCCESS(status)) {
-        status = IopGetRegistryValue(handle,
-                                     REGSTR_VALUE_CSCONFIG_FLAGS,
-                                     &keyValueInformation
-                                    );
-        if(NT_SUCCESS(status)) {
-            if((keyValueInformation->Type == REG_DWORD) &&
-               (keyValueInformation->DataLength >= sizeof(ULONG))) {
+    status = IopOpenCurrentHwProfileDeviceInstanceKey(&handle, ServiceKeyName, Instance, KEY_READ, FALSE);
+    if (NT_SUCCESS(status))
+    {
+        status = IopGetRegistryValue(handle, REGSTR_VALUE_CSCONFIG_FLAGS, &keyValueInformation);
+        if (NT_SUCCESS(status))
+        {
+            if ((keyValueInformation->Type == REG_DWORD) && (keyValueInformation->DataLength >= sizeof(ULONG)))
+            {
                 *CsConfigFlags = *(PULONG)KEY_VALUE_DATA(keyValueInformation);
             }
             ExFreePool(keyValueInformation);
@@ -1650,15 +1471,10 @@ Return Value:
     }
     return status;
 }
-
+
 NTSTATUS
-IopOpenCurrentHwProfileDeviceInstanceKey(
-    OUT PHANDLE Handle,
-    IN  PUNICODE_STRING ServiceKeyName,
-    IN  ULONG Instance,
-    IN  ACCESS_MASK DesiredAccess,
-    IN  BOOLEAN Create
-    )
+IopOpenCurrentHwProfileDeviceInstanceKey(OUT PHANDLE Handle, IN PUNICODE_STRING ServiceKeyName, IN ULONG Instance,
+                                         IN ACCESS_MASK DesiredAccess, IN BOOLEAN Create)
 
 /*++
 
@@ -1696,23 +1512,20 @@ Return Value:
     // See if we can open current hardware profile
     //
 
-    if (Create) {
-        status = IopCreateRegistryKeyEx( &profileHandle,
-                                         NULL,
-                                         &CmRegistryMachineSystemCurrentControlSetHardwareProfilesCurrent,
-                                         KEY_READ,
-                                         REG_OPTION_NON_VOLATILE,
-                                         NULL
-                                         );
-    } else {
-        status = IopOpenRegistryKeyEx( &profileHandle,
-                                       NULL,
-                                       &CmRegistryMachineSystemCurrentControlSetHardwareProfilesCurrent,
-                                       KEY_READ
-                                       );
+    if (Create)
+    {
+        status = IopCreateRegistryKeyEx(&profileHandle, NULL,
+                                        &CmRegistryMachineSystemCurrentControlSetHardwareProfilesCurrent, KEY_READ,
+                                        REG_OPTION_NON_VOLATILE, NULL);
+    }
+    else
+    {
+        status = IopOpenRegistryKeyEx(&profileHandle, NULL,
+                                      &CmRegistryMachineSystemCurrentControlSetHardwareProfilesCurrent, KEY_READ);
     }
 
-    if(NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         //
         // Now, we must open the System\CCS\Enum key under this.
         //
@@ -1721,59 +1534,40 @@ Return Value:
         //
 
         PiWstrToUnicodeString(&tempUnicodeString, REGSTR_PATH_CURRENTCONTROLSET);
-        status = IopOpenRegistryKeyEx( &tmpHandle,
-                                       profileHandle,
-                                       &tempUnicodeString,
-                                       DesiredAccess
-                                       );
+        status = IopOpenRegistryKeyEx(&tmpHandle, profileHandle, &tempUnicodeString, DesiredAccess);
         ZwClose(profileHandle);
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             return status;
         }
 
         PiWstrToUnicodeString(&tempUnicodeString, REGSTR_KEY_ENUM);
 
-        if (Create) {
-            status = IopCreateRegistryKeyEx( &profileEnumHandle,
-                                             tmpHandle,
-                                             &tempUnicodeString,
-                                             KEY_READ,
-                                             REG_OPTION_NON_VOLATILE,
-                                             NULL
-                                             );
-        } else {
-            status = IopOpenRegistryKeyEx( &profileEnumHandle,
-                                           tmpHandle,
-                                           &tempUnicodeString,
-                                           KEY_READ
-                                           );
+        if (Create)
+        {
+            status = IopCreateRegistryKeyEx(&profileEnumHandle, tmpHandle, &tempUnicodeString, KEY_READ,
+                                            REG_OPTION_NON_VOLATILE, NULL);
+        }
+        else
+        {
+            status = IopOpenRegistryKeyEx(&profileEnumHandle, tmpHandle, &tempUnicodeString, KEY_READ);
         }
 
         ZwClose(tmpHandle);
-        if(NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
 
-            status = PipServiceInstanceToDeviceInstance(NULL,
-                                                        ServiceKeyName,
-                                                        Instance,
-                                                        &tempUnicodeString,
-                                                        NULL,
-                                                        0
-                                                       );
-            if (NT_SUCCESS(status)) {
-                if (Create) {
-                    status = IopCreateRegistryKeyEx( Handle,
-                                                     profileEnumHandle,
-                                                     &tempUnicodeString,
-                                                     DesiredAccess,
-                                                     REG_OPTION_NON_VOLATILE,
-                                                     NULL
-                                                     );
-                } else {
-                    status = IopOpenRegistryKeyEx( Handle,
-                                                   profileEnumHandle,
-                                                   &tempUnicodeString,
-                                                   DesiredAccess
-                                                   );
+            status = PipServiceInstanceToDeviceInstance(NULL, ServiceKeyName, Instance, &tempUnicodeString, NULL, 0);
+            if (NT_SUCCESS(status))
+            {
+                if (Create)
+                {
+                    status = IopCreateRegistryKeyEx(Handle, profileEnumHandle, &tempUnicodeString, DesiredAccess,
+                                                    REG_OPTION_NON_VOLATILE, NULL);
+                }
+                else
+                {
+                    status = IopOpenRegistryKeyEx(Handle, profileEnumHandle, &tempUnicodeString, DesiredAccess);
                 }
                 RtlFreeUnicodeString(&tempUnicodeString);
             }
@@ -1782,16 +1576,11 @@ Return Value:
     }
     return status;
 }
-
+
 NTSTATUS
-PipApplyFunctionToSubKeys(
-    IN     HANDLE BaseHandle OPTIONAL,
-    IN     PUNICODE_STRING KeyName OPTIONAL,
-    IN     ACCESS_MASK DesiredAccess,
-    IN     ULONG Flags,
-    IN     PIOP_SUBKEY_CALLBACK_ROUTINE SubKeyCallbackRoutine,
-    IN OUT PVOID Context
-    )
+PipApplyFunctionToSubKeys(IN HANDLE BaseHandle OPTIONAL, IN PUNICODE_STRING KeyName OPTIONAL,
+                          IN ACCESS_MASK DesiredAccess, IN ULONG Flags,
+                          IN PIOP_SUBKEY_CALLBACK_ROUTINE SubKeyCallbackRoutine, IN OUT PVOID Context)
 
 /*++
 
@@ -1871,20 +1660,21 @@ Return Value:
     ULONG KeyInformationLength = sizeof(KEY_BASIC_INFORMATION) + (20 * sizeof(WCHAR));
     UNICODE_STRING SubKeyName;
 
-    if(ARGUMENT_PRESENT(KeyName)) {
+    if (ARGUMENT_PRESENT(KeyName))
+    {
 
-        Status = IopOpenRegistryKeyEx( &Handle,
-                                       BaseHandle,
-                                       KeyName,
-                                       KEY_READ
-                                       );
-        if(!NT_SUCCESS(Status)) {
+        Status = IopOpenRegistryKeyEx(&Handle, BaseHandle, KeyName, KEY_READ);
+        if (!NT_SUCCESS(Status))
+        {
             return Status;
-        } else {
+        }
+        else
+        {
             CloseHandle = TRUE;
         }
-
-    } else {
+    }
+    else
+    {
 
         Handle = BaseHandle;
     }
@@ -1895,30 +1685,27 @@ Return Value:
     i = 0;
     SubKeyHandle = NULL;
 
-    for ( ; ; ) {
+    for (;;)
+    {
 
-        if (!KeyInformation) {
+        if (!KeyInformation)
+        {
 
-            KeyInformation = (PKEY_BASIC_INFORMATION)ExAllocatePool(PagedPool,
-                                                                    KeyInformationLength
-                                                                   );
-            if (!KeyInformation) {
+            KeyInformation = (PKEY_BASIC_INFORMATION)ExAllocatePool(PagedPool, KeyInformationLength);
+            if (!KeyInformation)
+            {
                 Status = STATUS_INSUFFICIENT_RESOURCES;
                 break;
             }
         }
 
-        Status = ZwEnumerateKey(Handle,
-                                i,
-                                KeyBasicInformation,
-                                KeyInformation,
-                                KeyInformationLength,
-                                &RequiredBufferLength
-                               );
+        Status =
+            ZwEnumerateKey(Handle, i, KeyBasicInformation, KeyInformation, KeyInformationLength, &RequiredBufferLength);
 
-        if (!NT_SUCCESS(Status)) {
-            if (Status == STATUS_BUFFER_OVERFLOW ||
-                Status == STATUS_BUFFER_TOO_SMALL) {
+        if (!NT_SUCCESS(Status))
+        {
+            if (Status == STATUS_BUFFER_OVERFLOW || Status == STATUS_BUFFER_TOO_SMALL)
+            {
                 //
                 // Try again with larger buffer.
                 //
@@ -1926,10 +1713,12 @@ Return Value:
                 KeyInformation = NULL;
                 KeyInformationLength = RequiredBufferLength;
                 continue;
+            }
+            else
+            {
 
-            } else {
-
-                if (Status == STATUS_NO_MORE_ENTRIES) {
+                if (Status == STATUS_NO_MORE_ENTRIES)
+                {
                     //
                     // No more subkeys.
                     //
@@ -1952,19 +1741,20 @@ Return Value:
         //
         // If DesiredAccess is non-zero, open a handle to this subkey.
         //
-        if (DesiredAccess) {
-            Status = IopOpenRegistryKeyEx( &SubKeyHandle,
-                                           Handle,
-                                           &SubKeyName,
-                                           DesiredAccess
-                                           );
-            if (!NT_SUCCESS(Status)) {
+        if (DesiredAccess)
+        {
+            Status = IopOpenRegistryKeyEx(&SubKeyHandle, Handle, &SubKeyName, DesiredAccess);
+            if (!NT_SUCCESS(Status))
+            {
                 //
                 // This is a non-critical error.
                 //
-                if(Flags & FUNCTIONSUBKEY_FLAG_IGNORE_NON_CRITICAL_ERRORS) {
+                if (Flags & FUNCTIONSUBKEY_FLAG_IGNORE_NON_CRITICAL_ERRORS)
+                {
                     goto ContinueWithNextSubKey;
-                } else {
+                }
+                else
+                {
                     break;
                 }
             }
@@ -1975,9 +1765,10 @@ Return Value:
         //
         ContinueEnumeration = SubKeyCallbackRoutine(SubKeyHandle, &SubKeyName, Context);
 
-        if (DesiredAccess) {
-            if (ContinueEnumeration &&
-                (Flags & FUNCTIONSUBKEY_FLAG_DELETE_SUBKEYS)) {
+        if (DesiredAccess)
+        {
+            if (ContinueEnumeration && (Flags & FUNCTIONSUBKEY_FLAG_DELETE_SUBKEYS))
+            {
                 //
                 // Delete the key when asked to, only if the callback routine
                 // was successful, otherwise we may not be able to.
@@ -1987,17 +1778,18 @@ Return Value:
             ZwClose(SubKeyHandle);
         }
 
-        if(!ContinueEnumeration) {
+        if (!ContinueEnumeration)
+        {
             //
             // Enumeration has been aborted.
             //
             Status = STATUS_SUCCESS;
             break;
-
         }
 
-ContinueWithNextSubKey:
-        if (!(Flags & FUNCTIONSUBKEY_FLAG_DELETE_SUBKEYS)) {
+    ContinueWithNextSubKey:
+        if (!(Flags & FUNCTIONSUBKEY_FLAG_DELETE_SUBKEYS))
+        {
             //
             // Only increment the enumeration index for non-deleted subkeys
             //
@@ -2005,23 +1797,22 @@ ContinueWithNextSubKey:
         }
     }
 
-    if(KeyInformation) {
+    if (KeyInformation)
+    {
         ExFreePool(KeyInformation);
     }
 
-    if(CloseHandle) {
+    if (CloseHandle)
+    {
         ZwClose(Handle);
     }
 
     return Status;
 }
-
+
 NTSTATUS
-PipRegMultiSzToUnicodeStrings(
-    IN  PKEY_VALUE_FULL_INFORMATION KeyValueInformation,
-    OUT PUNICODE_STRING *UnicodeStringList,
-    OUT PULONG UnicodeStringCount
-    )
+PipRegMultiSzToUnicodeStrings(IN PKEY_VALUE_FULL_INFORMATION KeyValueInformation,
+                              OUT PUNICODE_STRING *UnicodeStringList, OUT PULONG UnicodeStringCount)
 
 /*++
 
@@ -2063,7 +1854,8 @@ Returns:
     //
     // First, make sure this is really a REG_MULTI_SZ value.
     //
-    if(KeyValueInformation->Type != REG_MULTI_SZ) {
+    if (KeyValueInformation->Type != REG_MULTI_SZ)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -2074,21 +1866,26 @@ Returns:
     StringCount = 0;
     p = (PWCHAR)KEY_VALUE_DATA(KeyValueInformation);
     BufferEnd = (PWCHAR)((PUCHAR)p + KeyValueInformation->DataLength);
-    while(p != BufferEnd) {
-        if(!*p) {
+    while (p != BufferEnd)
+    {
+        if (!*p)
+        {
             StringCount++;
-            if(((p + 1) == BufferEnd) || !*(p + 1)) {
+            if (((p + 1) == BufferEnd) || !*(p + 1))
+            {
                 break;
             }
         }
         p++;
     }
-    if(p == BufferEnd) {
+    if (p == BufferEnd)
+    {
         StringCount++;
     }
 
     *UnicodeStringList = ExAllocatePool(PagedPool, sizeof(UNICODE_STRING) * StringCount);
-    if(!(*UnicodeStringList)) {
+    if (!(*UnicodeStringList))
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -2097,12 +1894,15 @@ Returns:
     //
     i = 0;
     StringStart = p = (PWCHAR)KEY_VALUE_DATA(KeyValueInformation);
-    while(p != BufferEnd) {
-        if(!*p) {
+    while (p != BufferEnd)
+    {
+        if (!*p)
+        {
             StringLength = (ULONG)((PUCHAR)p - (PUCHAR)StringStart) + sizeof(UNICODE_NULL);
             (*UnicodeStringList)[i].Buffer = ExAllocatePool(PagedPool, StringLength);
 
-            if(!((*UnicodeStringList)[i].Buffer)) {
+            if (!((*UnicodeStringList)[i].Buffer))
+            {
                 PipFreeUnicodeStringList(*UnicodeStringList, i);
                 return STATUS_INSUFFICIENT_RESOURCES;
             }
@@ -2110,53 +1910,50 @@ Returns:
             RtlCopyMemory((*UnicodeStringList)[i].Buffer, StringStart, StringLength);
 
             (*UnicodeStringList)[i].Length =
-                ((*UnicodeStringList)[i].MaximumLength = (USHORT)StringLength)
-                - sizeof(UNICODE_NULL);
+                ((*UnicodeStringList)[i].MaximumLength = (USHORT)StringLength) - sizeof(UNICODE_NULL);
 
             i++;
 
-            if(((p + 1) == BufferEnd) || !*(p + 1)) {
+            if (((p + 1) == BufferEnd) || !*(p + 1))
+            {
                 break;
-            } else {
+            }
+            else
+            {
                 StringStart = p + 1;
             }
         }
         p++;
     }
-    if(p == BufferEnd) {
+    if (p == BufferEnd)
+    {
         StringLength = (ULONG)((PUCHAR)p - (PUCHAR)StringStart);
-        (*UnicodeStringList)[i].Buffer = ExAllocatePool(PagedPool,
-                                                        StringLength + sizeof(UNICODE_NULL)
-                                                       );
-        if(!((*UnicodeStringList)[i].Buffer)) {
+        (*UnicodeStringList)[i].Buffer = ExAllocatePool(PagedPool, StringLength + sizeof(UNICODE_NULL));
+        if (!((*UnicodeStringList)[i].Buffer))
+        {
             PipFreeUnicodeStringList(*UnicodeStringList, i);
             return STATUS_INSUFFICIENT_RESOURCES;
         }
-        if(StringLength) {
+        if (StringLength)
+        {
             RtlCopyMemory((*UnicodeStringList)[i].Buffer, StringStart, StringLength);
         }
         (*UnicodeStringList)[i].Buffer[CB_TO_CWC(StringLength)] = UNICODE_NULL;
 
         (*UnicodeStringList)[i].MaximumLength =
-                ((*UnicodeStringList)[i].Length = (USHORT)StringLength)
-                + sizeof(UNICODE_NULL);
+            ((*UnicodeStringList)[i].Length = (USHORT)StringLength) + sizeof(UNICODE_NULL);
     }
 
     *UnicodeStringCount = StringCount;
 
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-PipApplyFunctionToServiceInstances(
-    IN     HANDLE ServiceKeyHandle OPTIONAL,
-    IN     PUNICODE_STRING ServiceKeyName OPTIONAL,
-    IN     ACCESS_MASK DesiredAccess,
-    IN     BOOLEAN IgnoreNonCriticalErrors,
-    IN     PIOP_SUBKEY_CALLBACK_ROUTINE DevInstCallbackRoutine,
-    IN OUT PVOID Context,
-    OUT    PULONG ServiceInstanceOrdinal OPTIONAL
-    )
+PipApplyFunctionToServiceInstances(IN HANDLE ServiceKeyHandle OPTIONAL, IN PUNICODE_STRING ServiceKeyName OPTIONAL,
+                                   IN ACCESS_MASK DesiredAccess, IN BOOLEAN IgnoreNonCriticalErrors,
+                                   IN PIOP_SUBKEY_CALLBACK_ROUTINE DevInstCallbackRoutine, IN OUT PVOID Context,
+                                   OUT PULONG ServiceInstanceOrdinal OPTIONAL)
 
 /*++
 
@@ -2236,22 +2033,17 @@ Return Value:
     // First, open up the volatile Enum subkey under the specified service entry.
     //
 
-    if(ARGUMENT_PRESENT(ServiceKeyHandle)) {
+    if (ARGUMENT_PRESENT(ServiceKeyHandle))
+    {
         PiWstrToUnicodeString(&TempUnicodeString, REGSTR_KEY_ENUM);
-        Status = IopOpenRegistryKeyEx( &ServiceEnumHandle,
-                                       ServiceKeyHandle,
-                                       &TempUnicodeString,
-                                       KEY_READ
-                                       );
-    } else {
-        Status = PipOpenServiceEnumKeys(ServiceKeyName,
-                                        KEY_READ,
-                                        NULL,
-                                        &ServiceEnumHandle,
-                                        FALSE
-                                       );
+        Status = IopOpenRegistryKeyEx(&ServiceEnumHandle, ServiceKeyHandle, &TempUnicodeString, KEY_READ);
     }
-    if(!NT_SUCCESS(Status)) {
+    else
+    {
+        Status = PipOpenServiceEnumKeys(ServiceKeyName, KEY_READ, NULL, &ServiceEnumHandle, FALSE);
+    }
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
@@ -2259,25 +2051,25 @@ Return Value:
     // Find out how many instances are referenced in the service's Enum key.
     //
 
-    ServiceInstanceCount = 0;   // assume none.
+    ServiceInstanceCount = 0; // assume none.
 
-    Status = IopGetRegistryValue(ServiceEnumHandle,
-                                 REGSTR_VALUE_COUNT,
-                                 &KeyValueInformation
-                                );
-    if (NT_SUCCESS(Status)) {
+    Status = IopGetRegistryValue(ServiceEnumHandle, REGSTR_VALUE_COUNT, &KeyValueInformation);
+    if (NT_SUCCESS(Status))
+    {
 
-        if((KeyValueInformation->Type == REG_DWORD) &&
-           (KeyValueInformation->DataLength >= sizeof(ULONG))) {
+        if ((KeyValueInformation->Type == REG_DWORD) && (KeyValueInformation->DataLength >= sizeof(ULONG)))
+        {
 
             ServiceInstanceCount = *(PULONG)KEY_VALUE_DATA(KeyValueInformation);
-
         }
         ExFreePool(KeyValueInformation);
-
-    } else if (Status != STATUS_OBJECT_NAME_NOT_FOUND) {
+    }
+    else if (Status != STATUS_OBJECT_NAME_NOT_FOUND)
+    {
         goto PrepareForReturn;
-    } else {
+    }
+    else
+    {
         //
         // If 'Count' value entry not found, consider this to mean there are simply
         // no device instance controlled by this service.
@@ -2290,65 +2082,67 @@ Return Value:
     // for the corresponding device instance.
     //
 
-    if (ServiceInstanceCount) {
+    if (ServiceInstanceCount)
+    {
 
-        if (DesiredAccess) {
-            Status = IopOpenRegistryKeyEx( &SystemEnumHandle,
-                                           NULL,
-                                           &CmRegistryMachineSystemCurrentControlSetEnumName,
-                                           KEY_READ
-                                           );
-            if(!NT_SUCCESS(Status)) {
+        if (DesiredAccess)
+        {
+            Status = IopOpenRegistryKeyEx(&SystemEnumHandle, NULL, &CmRegistryMachineSystemCurrentControlSetEnumName,
+                                          KEY_READ);
+            if (!NT_SUCCESS(Status))
+            {
                 goto PrepareForReturn;
             }
-        } else {
+        }
+        else
+        {
             //
             // Set DeviceInstanceHandle to NULL, since we won't be opening up the
             // device instance keys.
             //
             DeviceInstanceHandle = NULL;
         }
-        KeyValueInformation = (PKEY_VALUE_FULL_INFORMATION)ExAllocatePool(
-                                                              PagedPool,
-                                                              PNP_SCRATCH_BUFFER_SIZE);
-        if (!KeyValueInformation) {
+        KeyValueInformation = (PKEY_VALUE_FULL_INFORMATION)ExAllocatePool(PagedPool, PNP_SCRATCH_BUFFER_SIZE);
+        if (!KeyValueInformation)
+        {
             Status = STATUS_INSUFFICIENT_RESOURCES;
             goto PrepareForReturn;
         }
 
-        for (i = 0; ; i++) {
+        for (i = 0;; i++)
+        {
 
-            Status = ZwEnumerateValueKey(
-                            ServiceEnumHandle,
-                            i,
-                            KeyValueFullInformation,
-                            KeyValueInformation,
-                            PNP_SCRATCH_BUFFER_SIZE,
-                            &junk
-                            );
+            Status = ZwEnumerateValueKey(ServiceEnumHandle, i, KeyValueFullInformation, KeyValueInformation,
+                                         PNP_SCRATCH_BUFFER_SIZE, &junk);
 
-            if (!NT_SUCCESS (Status)) {
-                if (Status == STATUS_NO_MORE_ENTRIES) {
+            if (!NT_SUCCESS(Status))
+            {
+                if (Status == STATUS_NO_MORE_ENTRIES)
+                {
                     Status = STATUS_SUCCESS;
                     break;
-                } else if (IgnoreNonCriticalErrors) {
+                }
+                else if (IgnoreNonCriticalErrors)
+                {
                     continue;
-                } else {
+                }
+                else
+                {
                     break;
                 }
             }
 
-            if (KeyValueInformation->Type != REG_SZ) {
+            if (KeyValueInformation->Type != REG_SZ)
+            {
                 continue;
             }
 
             ContinueEnumeration = TRUE;
             TempUnicodeString.Length = 0;
-            IopRegistryDataToUnicodeString(&TempUnicodeString,
-                                           (PWSTR)KEY_VALUE_DATA(KeyValueInformation),
-                                           KeyValueInformation->DataLength
-                                           );
-            if (TempUnicodeString.Length) {
+            IopRegistryDataToUnicodeString(&TempUnicodeString, (PWSTR)KEY_VALUE_DATA(KeyValueInformation),
+                                           KeyValueInformation->DataLength);
+            if (TempUnicodeString.Length)
+            {
 
                 //
                 // We have retrieved a (non-empty) string for this service instance.
@@ -2356,43 +2150,49 @@ Return Value:
                 // parameter, we will attempt to open up the corresponding device
                 // instance key under HKLM\System\Enum.
                 //
-                if (DesiredAccess) {
-                    Status = IopOpenRegistryKeyEx( &DeviceInstanceHandle,
-                                                   SystemEnumHandle,
-                                                   &TempUnicodeString,
-                                                   DesiredAccess
-                                                   );
+                if (DesiredAccess)
+                {
+                    Status = IopOpenRegistryKeyEx(&DeviceInstanceHandle, SystemEnumHandle, &TempUnicodeString,
+                                                  DesiredAccess);
                 }
 
-                if (NT_SUCCESS(Status)) {
+                if (NT_SUCCESS(Status))
+                {
                     //
                     // Invoke the specified callback routine for this device instance.
                     //
-                    ContinueEnumeration = DevInstCallbackRoutine(DeviceInstanceHandle,
-                                                                 &TempUnicodeString,
-                                                                 Context
-                                                                );
-                    if (DesiredAccess) {
+                    ContinueEnumeration = DevInstCallbackRoutine(DeviceInstanceHandle, &TempUnicodeString, Context);
+                    if (DesiredAccess)
+                    {
                         ZwClose(DeviceInstanceHandle);
                     }
-                } else if (IgnoreNonCriticalErrors) {
+                }
+                else if (IgnoreNonCriticalErrors)
+                {
                     continue;
-                } else {
+                }
+                else
+                {
                     break;
                 }
-            } else {
+            }
+            else
+            {
                 continue;
             }
-            if (!ContinueEnumeration) {
+            if (!ContinueEnumeration)
+            {
                 break;
             }
         }
 
-        if (ARGUMENT_PRESENT(ServiceInstanceOrdinal)) {
+        if (ARGUMENT_PRESENT(ServiceInstanceOrdinal))
+        {
             *ServiceInstanceOrdinal = i;
         }
 
-        if (DesiredAccess) {
+        if (DesiredAccess)
+        {
             ZwClose(SystemEnumHandle);
         }
         ExFreePool(KeyValueInformation);
@@ -2405,14 +2205,10 @@ PrepareForReturn:
 
     return Status;
 }
-
+
 BOOLEAN
-PipIsDuplicatedDevices(
-    IN PCM_RESOURCE_LIST Configuration1,
-    IN PCM_RESOURCE_LIST Configuration2,
-    IN PHAL_BUS_INFORMATION BusInfo1 OPTIONAL,
-    IN PHAL_BUS_INFORMATION BusInfo2 OPTIONAL
-    )
+PipIsDuplicatedDevices(IN PCM_RESOURCE_LIST Configuration1, IN PCM_RESOURCE_LIST Configuration2,
+                       IN PHAL_BUS_INFORMATION BusInfo1 OPTIONAL, IN PHAL_BUS_INFORMATION BusInfo2 OPTIONAL)
 
 /*++
 
@@ -2452,7 +2248,8 @@ Return Value:
     //
 
     if ((ARGUMENT_PRESENT(BusInfo1) && !ARGUMENT_PRESENT(BusInfo2)) ||
-        (!ARGUMENT_PRESENT(BusInfo1) && ARGUMENT_PRESENT(BusInfo2))) {
+        (!ARGUMENT_PRESENT(BusInfo1) && ARGUMENT_PRESENT(BusInfo2)))
+    {
 
         //
         // Unable to determine.
@@ -2466,7 +2263,8 @@ Return Value:
     // Currently, we *only* check the Io ports.
     //
 
-    if (Configuration1->Count == 0 || Configuration2->Count == 0) {
+    if (Configuration1->Count == 0 || Configuration2->Count == 0)
+    {
 
         //
         // If any one of the configuration data is empty, we assume
@@ -2481,21 +2279,19 @@ RedoScan:
     list1 = &(Configuration1->List[0].PartialResourceList);
     list2 = &(Configuration2->List[0].PartialResourceList);
 
-    for(i = 0, descriptor1 = list1->PartialDescriptors;
-        i < list1->Count;
-        i++, descriptor1++) {
+    for (i = 0, descriptor1 = list1->PartialDescriptors; i < list1->Count; i++, descriptor1++)
+    {
 
         //
         // If this is an i/o port or a memory range then look for a match
         // in the other list.
         //
 
-        if((descriptor1->Type == CmResourceTypePort) ||
-           (descriptor1->Type == CmResourceTypeMemory)) {
+        if ((descriptor1->Type == CmResourceTypePort) || (descriptor1->Type == CmResourceTypeMemory))
+        {
 
-            for(j = 0, descriptor2 = list2->PartialDescriptors;
-                j < list2->Count;
-                j++, descriptor2++) {
+            for (j = 0, descriptor2 = list2->PartialDescriptors; j < list2->Count; j++, descriptor2++)
+            {
 
                 //
                 // If the types match then check to see if both addresses
@@ -2503,7 +2299,8 @@ RedoScan:
                 // and translate the ranges first.
                 //
 
-                if(descriptor1->Type == descriptor2->Type) {
+                if (descriptor1->Type == descriptor2->Type)
+                {
 
                     PHYSICAL_ADDRESS range1, range1Translated;
                     PHYSICAL_ADDRESS range2, range2Translated;
@@ -2512,34 +2309,22 @@ RedoScan:
                     range1 = descriptor1->u.Generic.Start;
                     range2 = descriptor2->u.Generic.Start;
 
-                    if((range1.QuadPart == 0) ||
-                       (BusInfo1 == NULL) ||
-                       (HalTranslateBusAddress(
-                            BusInfo1->BusType,
-                            BusInfo1->BusNumber,
-                            range1,
-                            &range1IoSpace,
-                            &range1Translated) == FALSE)) {
+                    if ((range1.QuadPart == 0) || (BusInfo1 == NULL) ||
+                        (HalTranslateBusAddress(BusInfo1->BusType, BusInfo1->BusNumber, range1, &range1IoSpace,
+                                                &range1Translated) == FALSE))
+                    {
 
                         range1Translated = range1;
-                        range1IoSpace =
-                            (descriptor1->Type == CmResourceTypePort) ? TRUE :
-                                                                        FALSE;
+                        range1IoSpace = (descriptor1->Type == CmResourceTypePort) ? TRUE : FALSE;
                     }
 
-                    if((range2.QuadPart == 0) ||
-                       (BusInfo2 == NULL) ||
-                       (HalTranslateBusAddress(
-                            BusInfo2->BusType,
-                            BusInfo2->BusNumber,
-                            range2,
-                            &range2IoSpace,
-                            &range2Translated) == FALSE)) {
+                    if ((range2.QuadPart == 0) || (BusInfo2 == NULL) ||
+                        (HalTranslateBusAddress(BusInfo2->BusType, BusInfo2->BusNumber, range2, &range2IoSpace,
+                                                &range2Translated) == FALSE))
+                    {
 
                         range2Translated = range2;
-                        range2IoSpace =
-                            (descriptor2->Type == CmResourceTypePort) ? TRUE :
-                                                                        FALSE;
+                        range2IoSpace = (descriptor2->Type == CmResourceTypePort) ? TRUE : FALSE;
                     }
 
                     //
@@ -2548,8 +2333,8 @@ RedoScan:
                     // range
                     //
 
-                    if((range1Translated.QuadPart == range2Translated.QuadPart) &&
-                       (range1IoSpace == range2IoSpace)) {
+                    if ((range1Translated.QuadPart == range2Translated.QuadPart) && (range1IoSpace == range2IoSpace))
+                    {
 
                         break;
                     }
@@ -2561,7 +2346,8 @@ RedoScan:
             // finding a match then these are not duplicates.
             //
 
-            if(j == list2->Count) {
+            if (j == list2->Count)
+            {
                 return FALSE;
             }
         }
@@ -2572,9 +2358,10 @@ RedoScan:
     // sure that every resource in list 2 exists in list 1.
     //
 
-    if(pass == 0) {
+    if (pass == 0)
+    {
 
-        PVOID tmp ;
+        PVOID tmp;
 
         tmp = Configuration2;
         Configuration2 = Configuration1;
@@ -2591,12 +2378,8 @@ RedoScan:
 
     return TRUE;
 }
-
-VOID
-PipFreeUnicodeStringList(
-    IN PUNICODE_STRING UnicodeStringList,
-    IN ULONG StringCount
-    )
+
+VOID PipFreeUnicodeStringList(IN PUNICODE_STRING UnicodeStringList, IN ULONG StringCount)
 
 /*++
 
@@ -2623,21 +2406,21 @@ Returns:
 {
     ULONG i;
 
-    if(UnicodeStringList) {
-        for(i = 0; i < StringCount; i++) {
-            if(UnicodeStringList[i].Buffer) {
+    if (UnicodeStringList)
+    {
+        for (i = 0; i < StringCount; i++)
+        {
+            if (UnicodeStringList[i].Buffer)
+            {
                 ExFreePool(UnicodeStringList[i].Buffer);
             }
         }
         ExFreePool(UnicodeStringList);
     }
 }
-
+
 NTSTATUS
-IopDriverLoadingFailed(
-    IN HANDLE ServiceHandle OPTIONAL,
-    IN PUNICODE_STRING ServiceName OPTIONAL
-    )
+IopDriverLoadingFailed(IN HANDLE ServiceHandle OPTIONAL, IN PUNICODE_STRING ServiceName OPTIONAL)
 
 /*++
 
@@ -2676,23 +2459,18 @@ Returns:
     // Open registry ServiceKeyName\Enum branch
     //
 
-    if (!ARGUMENT_PRESENT(ServiceHandle)) {
-        status = PipOpenServiceEnumKeys(ServiceName,
-                                        KEY_READ,
-                                        &ServiceHandle,
-                                        &serviceEnumHandle,
-                                        FALSE
-                                        );
+    if (!ARGUMENT_PRESENT(ServiceHandle))
+    {
+        status = PipOpenServiceEnumKeys(ServiceName, KEY_READ, &ServiceHandle, &serviceEnumHandle, FALSE);
         closeHandle = TRUE;
-    } else {
-        PiWstrToUnicodeString(&unicodeValueName, REGSTR_KEY_ENUM);
-        status = IopOpenRegistryKeyEx( &serviceEnumHandle,
-                                       ServiceHandle,
-                                       &unicodeValueName,
-                                       KEY_READ
-                                       );
     }
-    if (!NT_SUCCESS( status )) {
+    else
+    {
+        PiWstrToUnicodeString(&unicodeValueName, REGSTR_KEY_ENUM);
+        status = IopOpenRegistryKeyEx(&serviceEnumHandle, ServiceHandle, &unicodeValueName, KEY_READ);
+    }
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // No Service Enum key? no device instance.  Return FALSE.
@@ -2707,36 +2485,30 @@ Returns:
 
     PiWstrToUnicodeString(&unicodeValueName, L"INITSTARTFAILED");
     deviceFlags = 1;
-    ZwSetValueKey(
-                serviceEnumHandle,
-                &unicodeValueName,
-                TITLE_INDEX_VALUE,
-                REG_DWORD,
-                &deviceFlags,
-                sizeof(deviceFlags)
-                );
+    ZwSetValueKey(serviceEnumHandle, &unicodeValueName, TITLE_INDEX_VALUE, REG_DWORD, &deviceFlags,
+                  sizeof(deviceFlags));
 
     //
     // Find out how many device instances listed in the ServiceName's
     // Enum key.
     //
 
-    status = IopGetRegistryValue ( serviceEnumHandle,
-                                   REGSTR_VALUE_COUNT,
-                                   &keyValueInformation
-                                   );
+    status = IopGetRegistryValue(serviceEnumHandle, REGSTR_VALUE_COUNT, &keyValueInformation);
     count = 0;
-    if (NT_SUCCESS(status)) {
-        if ((keyValueInformation->Type == REG_DWORD) &&
-            (keyValueInformation->DataLength >= sizeof(ULONG))) {
+    if (NT_SUCCESS(status))
+    {
+        if ((keyValueInformation->Type == REG_DWORD) && (keyValueInformation->DataLength >= sizeof(ULONG)))
+        {
 
             count = *(PULONG)KEY_VALUE_DATA(keyValueInformation);
         }
         ExFreePool(keyValueInformation);
     }
-    if (count == 0) {
+    if (count == 0)
+    {
         ZwClose(serviceEnumHandle);
-        if (closeHandle) {
+        if (closeHandle)
+        {
             ZwClose(ServiceHandle);
         }
         return status;
@@ -2747,11 +2519,8 @@ Returns:
     // from its AttachedComponents value name.
     //
 
-    status = IopOpenRegistryKeyEx( &sysEnumHandle,
-                                   NULL,
-                                   &CmRegistryMachineSystemCurrentControlSetEnumName,
-                                   KEY_ALL_ACCESS
-                                   );
+    status =
+        IopOpenRegistryKeyEx(&sysEnumHandle, NULL, &CmRegistryMachineSystemCurrentControlSetEnumName, KEY_ALL_ACCESS);
 
     //
     // Walk through each registered device instance to mark its Problem and
@@ -2759,18 +2528,14 @@ Returns:
     //
 
     newCount = count;
-    for (i = 0; i < count; i++) {
+    for (i = 0; i < count; i++)
+    {
         deletePdo = FALSE;
-        status = PipServiceInstanceToDeviceInstance (
-                     ServiceHandle,
-                     ServiceName,
-                     i,
-                     &deviceInstanceName,
-                     &handle,
-                     KEY_ALL_ACCESS
-                     );
+        status = PipServiceInstanceToDeviceInstance(ServiceHandle, ServiceName, i, &deviceInstanceName, &handle,
+                                                    KEY_ALL_ACCESS);
 
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
 
             PDEVICE_OBJECT deviceObject;
             PDEVICE_NODE deviceNode;
@@ -2781,15 +2546,17 @@ Returns:
             //
 
             deviceObject = IopDeviceObjectFromDeviceInstance(&deviceInstanceName);
-            if (deviceObject) {
+            if (deviceObject)
+            {
                 deviceNode = (PDEVICE_NODE)deviceObject->DeviceObjectExtension->DeviceNode;
-                if (deviceNode) {
+                if (deviceNode)
+                {
 
                     IopReleaseDeviceResources(deviceNode, TRUE);
 
                     if ((deviceNode->Flags & DNF_MADEUP) &&
-                        ((deviceNode->State == DeviceNodeStarted) ||
-                        (deviceNode->State == DeviceNodeStartPostWork))) {
+                        ((deviceNode->State == DeviceNodeStarted) || (deviceNode->State == DeviceNodeStartPostWork)))
+                    {
 
                         //
                         // Now mark this one deleted.
@@ -2801,36 +2568,33 @@ Returns:
                         deletePdo = TRUE;
                     }
                 }
-                ObDereferenceObject(deviceObject);  // added via IopDeviceObjectFromDeviceInstance
+                ObDereferenceObject(deviceObject); // added via IopDeviceObjectFromDeviceInstance
             }
 
             PiLockPnpRegistry(FALSE);
 
             PiWstrToUnicodeString(&unicodeValueName, REGSTR_KEY_CONTROL);
             controlHandle = NULL;
-            status = IopOpenRegistryKeyEx( &controlHandle,
-                                           handle,
-                                           &unicodeValueName,
-                                           KEY_ALL_ACCESS
-                                           );
-            if (NT_SUCCESS(status)) {
+            status = IopOpenRegistryKeyEx(&controlHandle, handle, &unicodeValueName, KEY_ALL_ACCESS);
+            if (NT_SUCCESS(status))
+            {
 
-                status = IopGetRegistryValue(controlHandle,
-                                             REGSTR_VALUE_NEWLY_CREATED,
-                                             &keyValueInformation);
-                if (NT_SUCCESS(status)) {
+                status = IopGetRegistryValue(controlHandle, REGSTR_VALUE_NEWLY_CREATED, &keyValueInformation);
+                if (NT_SUCCESS(status))
+                {
                     ExFreePool(keyValueInformation);
                 }
-                if ((status != STATUS_OBJECT_NAME_NOT_FOUND) &&
-                    (status != STATUS_OBJECT_PATH_NOT_FOUND)) {
+                if ((status != STATUS_OBJECT_NAME_NOT_FOUND) && (status != STATUS_OBJECT_PATH_NOT_FOUND))
+                {
 
                     //
                     // Remove the instance value name from service enum key
                     //
 
                     PiUlongToUnicodeString(&unicodeValueName, unicodeBuffer, 20, i);
-                    status = ZwDeleteValueKey (serviceEnumHandle, &unicodeValueName);
-                    if (NT_SUCCESS(status)) {
+                    status = ZwDeleteValueKey(serviceEnumHandle, &unicodeValueName);
+                    if (NT_SUCCESS(status))
+                    {
 
                         //
                         // If we can successfaully remove the instance value entry
@@ -2849,16 +2613,14 @@ Returns:
                         // We also want to delete the ROOT\LEGACY_<driver> key
                         //
 
-                        if (sysEnumHandle) {
+                        if (sysEnumHandle)
+                        {
                             deviceInstanceName.Length -= 5 * sizeof(WCHAR);
-                            deviceInstanceName.Buffer[deviceInstanceName.Length / sizeof(WCHAR)] =
-                                                 UNICODE_NULL;
-                            status = IopOpenRegistryKeyEx( &devInstHandle,
-                                                           sysEnumHandle,
-                                                           &deviceInstanceName,
-                                                           KEY_ALL_ACCESS
-                                                           );
-                            if (NT_SUCCESS(status)) {
+                            deviceInstanceName.Buffer[deviceInstanceName.Length / sizeof(WCHAR)] = UNICODE_NULL;
+                            status = IopOpenRegistryKeyEx(&devInstHandle, sysEnumHandle, &deviceInstanceName,
+                                                          KEY_ALL_ACCESS);
+                            if (NT_SUCCESS(status))
+                            {
                                 ZwDeleteKey(devInstHandle);
                                 ZwClose(devInstHandle);
                             }
@@ -2868,7 +2630,8 @@ Returns:
                         // If there is a PDO for this device, remove it
                         //
 
-                        if (deletePdo) {
+                        if (deletePdo)
+                        {
                             IoDeleteDevice(deviceObject);
                         }
 
@@ -2887,7 +2650,8 @@ Returns:
             // Reset Control\ActiveService value name.
             //
 
-            if (controlHandle) {
+            if (controlHandle)
+            {
                 PiWstrToUnicodeString(&unicodeValueName, REGSTR_VAL_ACTIVESERVICE);
                 ZwDeleteValueKey(controlHandle, &unicodeValueName);
                 ZwClose(controlHandle);
@@ -2905,21 +2669,23 @@ Returns:
     // value entries and rearrange the instance value entries under service enum key.
     //
 
-    if (newCount != count) {
+    if (newCount != count)
+    {
 
         PiLockPnpRegistry(FALSE);
 
-        if (newCount != 0) {
+        if (newCount != 0)
+        {
             j = 0;
             i = 0;
-            while (i < count) {
+            while (i < count)
+            {
                 PiUlongToUnicodeString(&unicodeValueName, unicodeBuffer, 20, i);
-                status = IopGetRegistryValue(serviceEnumHandle,
-                                             unicodeValueName.Buffer,
-                                             &keyValueInformation
-                                             );
-                if (NT_SUCCESS(status)) {
-                    if (i != j) {
+                status = IopGetRegistryValue(serviceEnumHandle, unicodeValueName.Buffer, &keyValueInformation);
+                if (NT_SUCCESS(status))
+                {
+                    if (i != j)
+                    {
 
                         //
                         // Need to change the instance i to instance j
@@ -2928,13 +2694,8 @@ Returns:
                         ZwDeleteValueKey(serviceEnumHandle, &unicodeValueName);
 
                         PiUlongToUnicodeString(&unicodeValueName, unicodeBuffer, 20, j);
-                        ZwSetValueKey (serviceEnumHandle,
-                                       &unicodeValueName,
-                                       TITLE_INDEX_VALUE,
-                                       REG_SZ,
-                                       (PVOID)KEY_VALUE_DATA(keyValueInformation),
-                                       keyValueInformation->DataLength
-                                       );
+                        ZwSetValueKey(serviceEnumHandle, &unicodeValueName, TITLE_INDEX_VALUE, REG_SZ,
+                                      (PVOID)KEY_VALUE_DATA(keyValueInformation), keyValueInformation->DataLength);
                     }
                     ExFreePool(keyValueInformation);
                     j++;
@@ -2947,42 +2708,29 @@ Returns:
         // Don't forget to update the "Count=" and "NextInstance=" value entries
         //
 
-        PiWstrToUnicodeString( &unicodeValueName, REGSTR_VALUE_COUNT);
+        PiWstrToUnicodeString(&unicodeValueName, REGSTR_VALUE_COUNT);
 
-        ZwSetValueKey(serviceEnumHandle,
-                      &unicodeValueName,
-                      TITLE_INDEX_VALUE,
-                      REG_DWORD,
-                      &newCount,
-                      sizeof (newCount)
-                      );
-        PiWstrToUnicodeString( &unicodeValueName, REGSTR_VALUE_NEXT_INSTANCE);
+        ZwSetValueKey(serviceEnumHandle, &unicodeValueName, TITLE_INDEX_VALUE, REG_DWORD, &newCount, sizeof(newCount));
+        PiWstrToUnicodeString(&unicodeValueName, REGSTR_VALUE_NEXT_INSTANCE);
 
-        ZwSetValueKey(serviceEnumHandle,
-                      &unicodeValueName,
-                      TITLE_INDEX_VALUE,
-                      REG_DWORD,
-                      &newCount,
-                      sizeof (newCount)
-                      );
+        ZwSetValueKey(serviceEnumHandle, &unicodeValueName, TITLE_INDEX_VALUE, REG_DWORD, &newCount, sizeof(newCount));
 
         PiUnlockPnpRegistry();
     }
     ZwClose(serviceEnumHandle);
-    if (closeHandle) {
+    if (closeHandle)
+    {
         ZwClose(ServiceHandle);
     }
-    if (sysEnumHandle) {
+    if (sysEnumHandle)
+    {
         ZwClose(sysEnumHandle);
     }
 
     return STATUS_SUCCESS;
 }
-
-VOID
-IopDisableDevice(
-    IN PDEVICE_NODE DeviceNode
-    )
+
+VOID IopDisableDevice(IN PDEVICE_NODE DeviceNode)
 
 /*++
 
@@ -3010,20 +2758,23 @@ Returns:
     // the boot config if possible.
     //
 
-    status = IopRemoveDevice (DeviceNode->PhysicalDeviceObject, IRP_MN_QUERY_REMOVE_DEVICE);
+    status = IopRemoveDevice(DeviceNode->PhysicalDeviceObject, IRP_MN_QUERY_REMOVE_DEVICE);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
-        status = IopRemoveDevice (DeviceNode->PhysicalDeviceObject, IRP_MN_REMOVE_DEVICE);
+        status = IopRemoveDevice(DeviceNode->PhysicalDeviceObject, IRP_MN_REMOVE_DEVICE);
         ASSERT(NT_SUCCESS(status));
         IopReleaseDeviceResources(DeviceNode, TRUE);
+    }
+    else
+    {
 
-    } else {
-
-        IopRemoveDevice (DeviceNode->PhysicalDeviceObject, IRP_MN_CANCEL_REMOVE_DEVICE);
+        IopRemoveDevice(DeviceNode->PhysicalDeviceObject, IRP_MN_CANCEL_REMOVE_DEVICE);
     }
 
-    if (PipDoesDevNodeHaveProblem(DeviceNode)) {
+    if (PipDoesDevNodeHaveProblem(DeviceNode))
+    {
         ASSERT(PipIsDevNodeProblem(DeviceNode, CM_PROB_NOT_CONFIGURED) ||
                PipIsDevNodeProblem(DeviceNode, CM_PROB_FAILED_INSTALL) ||
                PipIsDevNodeProblem(DeviceNode, CM_PROB_REINSTALL));
@@ -3033,13 +2784,10 @@ Returns:
 
     PipSetDevNodeProblem(DeviceNode, CM_PROB_DISABLED);
 }
-
+
 BOOLEAN
-IopIsAnyDeviceInstanceEnabled(
-    IN PUNICODE_STRING ServiceKeyName,
-    IN HANDLE ServiceHandle OPTIONAL,
-    IN BOOLEAN LegacyIncluded
-    )
+IopIsAnyDeviceInstanceEnabled(IN PUNICODE_STRING ServiceKeyName, IN HANDLE ServiceHandle OPTIONAL,
+                              IN BOOLEAN LegacyIncluded)
 
 /*++
 
@@ -3078,23 +2826,18 @@ Returns:
     // Open registry ServiceKeyName\Enum branch
     //
 
-    if (!ARGUMENT_PRESENT(ServiceHandle)) {
-        status = PipOpenServiceEnumKeys(ServiceKeyName,
-                                        KEY_READ,
-                                        &ServiceHandle,
-                                        &serviceEnumHandle,
-                                        FALSE
-                                        );
+    if (!ARGUMENT_PRESENT(ServiceHandle))
+    {
+        status = PipOpenServiceEnumKeys(ServiceKeyName, KEY_READ, &ServiceHandle, &serviceEnumHandle, FALSE);
         closeHandle = TRUE;
-    } else {
-        PiWstrToUnicodeString(&unicodeName, REGSTR_KEY_ENUM);
-        status = IopOpenRegistryKeyEx( &serviceEnumHandle,
-                                       ServiceHandle,
-                                       &unicodeName,
-                                       KEY_READ
-                                       );
     }
-    if (!NT_SUCCESS( status )) {
+    else
+    {
+        PiWstrToUnicodeString(&unicodeName, REGSTR_KEY_ENUM);
+        status = IopOpenRegistryKeyEx(&serviceEnumHandle, ServiceHandle, &unicodeName, KEY_READ);
+    }
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // No Service Enum key? no device instance.  Return FALSE.
@@ -3108,22 +2851,22 @@ Returns:
     // Enum key.
     //
 
-    status = IopGetRegistryValue ( serviceEnumHandle,
-                                   REGSTR_VALUE_COUNT,
-                                   &keyValueInformation
-                                   );
+    status = IopGetRegistryValue(serviceEnumHandle, REGSTR_VALUE_COUNT, &keyValueInformation);
     ZwClose(serviceEnumHandle);
     count = 0;
-    if (NT_SUCCESS(status)) {
-        if ((keyValueInformation->Type == REG_DWORD) &&
-            (keyValueInformation->DataLength >= sizeof(ULONG))) {
+    if (NT_SUCCESS(status))
+    {
+        if ((keyValueInformation->Type == REG_DWORD) && (keyValueInformation->DataLength >= sizeof(ULONG)))
+        {
 
             count = *(PULONG)KEY_VALUE_DATA(keyValueInformation);
         }
         ExFreePool(keyValueInformation);
     }
-    if (count == 0) {
-        if (closeHandle) {
+    if (count == 0)
+    {
+        if (closeHandle)
+        {
             ZwClose(ServiceHandle);
         }
         return FALSE;
@@ -3134,35 +2877,35 @@ Returns:
     //
 
     enabled = FALSE;
-    for (i = 0; i < count; i++) {
+    for (i = 0; i < count; i++)
+    {
 
         //
         // Get device instance handle.  If it fails, we will skip this device
         // instance.
         //
 
-        status = PipServiceInstanceToDeviceInstance (
-                     ServiceHandle,
-                     NULL,
-                     i,
-                     &instancePath,
-                     &handle,
-                     KEY_ALL_ACCESS
-                     );
-        if (!NT_SUCCESS(status)) {
+        status = PipServiceInstanceToDeviceInstance(ServiceHandle, NULL, i, &instancePath, &handle, KEY_ALL_ACCESS);
+        if (!NT_SUCCESS(status))
+        {
             continue;
         }
 
         physicalDeviceObject = IopDeviceObjectFromDeviceInstance(&instancePath);
         ExFreePool(instancePath.Buffer);
-        if (physicalDeviceObject) {
+        if (physicalDeviceObject)
+        {
             deviceNode = (PDEVICE_NODE)physicalDeviceObject->DeviceObjectExtension->DeviceNode;
-            if (deviceNode && (PipIsDevNodeProblem(deviceNode, CM_PROB_DISABLED) || PipIsDevNodeProblem(deviceNode, CM_PROB_HARDWARE_DISABLED))) {
+            if (deviceNode && (PipIsDevNodeProblem(deviceNode, CM_PROB_DISABLED) ||
+                               PipIsDevNodeProblem(deviceNode, CM_PROB_HARDWARE_DISABLED)))
+            {
                 ZwClose(handle);
                 ObDereferenceObject(physicalDeviceObject);
                 continue;
             }
-        } else {
+        }
+        else
+        {
             deviceNode = NULL;
         }
 
@@ -3172,19 +2915,19 @@ Returns:
         //
 
         deviceFlags = 0;
-        status = IopGetRegistryValue(handle,
-                                     REGSTR_VALUE_CONFIG_FLAGS,
-                                     &keyValueInformation);
-        if (NT_SUCCESS(status)) {
-            if ((keyValueInformation->Type == REG_DWORD) &&
-                (keyValueInformation->DataLength >= sizeof(ULONG))) {
+        status = IopGetRegistryValue(handle, REGSTR_VALUE_CONFIG_FLAGS, &keyValueInformation);
+        if (NT_SUCCESS(status))
+        {
+            if ((keyValueInformation->Type == REG_DWORD) && (keyValueInformation->DataLength >= sizeof(ULONG)))
+            {
 
                 deviceFlags = *(PULONG)KEY_VALUE_DATA(keyValueInformation);
             }
             ExFreePool(keyValueInformation);
         }
 
-        if (deviceFlags & CONFIGFLAG_DISABLED) {
+        if (deviceFlags & CONFIGFLAG_DISABLED)
+        {
 
             //
             // Convert this flag into the hardware profile-specific version, so it'll
@@ -3192,15 +2935,14 @@ Returns:
             //
 
             deviceFlags = CSCONFIGFLAG_DISABLED;
+        }
+        else
+        {
 
-        } else {
+            status = PipGetServiceInstanceCsConfigFlags(ServiceKeyName, i, &deviceFlags);
 
-            status = PipGetServiceInstanceCsConfigFlags( ServiceKeyName,
-                                                         i,
-                                                         &deviceFlags
-                                                         );
-
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 deviceFlags = 0;
             }
         }
@@ -3210,14 +2952,17 @@ Returns:
         // hardware profile), then mark the devnode as DNF_DISABLED.
         //
 
-        if ((deviceFlags & CSCONFIGFLAG_DISABLED) || (deviceFlags & CSCONFIGFLAG_DO_NOT_START)) {
+        if ((deviceFlags & CSCONFIGFLAG_DISABLED) || (deviceFlags & CSCONFIGFLAG_DO_NOT_START))
+        {
 
-            if (deviceNode) {
+            if (deviceNode)
+            {
                 IopDisableDevice(deviceNode);
             }
         }
 
-        if (physicalDeviceObject) {
+        if (physicalDeviceObject)
+        {
             ObDereferenceObject(physicalDeviceObject);
         }
 
@@ -3226,7 +2971,8 @@ Returns:
         // indicate if the driver is successfully started.
         //
 
-        if (!(deviceFlags & (CSCONFIGFLAG_DISABLED | CSCONFIGFLAG_DO_NOT_CREATE | CSCONFIGFLAG_DO_NOT_START))) {
+        if (!(deviceFlags & (CSCONFIGFLAG_DISABLED | CSCONFIGFLAG_DO_NOT_CREATE | CSCONFIGFLAG_DO_NOT_START)))
+        {
 
             ULONG legacy;
 
@@ -3234,7 +2980,8 @@ Returns:
             // Check should legacy instance key be counted as an enabled device
             //
 
-            if (LegacyIncluded == FALSE) {
+            if (LegacyIncluded == FALSE)
+            {
 
                 //
                 // The legacy variable must be initialized to zero.  Because the device
@@ -3243,45 +2990,36 @@ Returns:
                 //
 
                 legacy = 0;
-                status = IopGetRegistryValue(handle,
-                                             REGSTR_VALUE_LEGACY,
-                                             &keyValueInformation
-                                             );
-                if (NT_SUCCESS(status)) {
-                    if ((keyValueInformation->Type == REG_DWORD) &&
-                        (keyValueInformation->DataLength >= sizeof(ULONG))) {
+                status = IopGetRegistryValue(handle, REGSTR_VALUE_LEGACY, &keyValueInformation);
+                if (NT_SUCCESS(status))
+                {
+                    if ((keyValueInformation->Type == REG_DWORD) && (keyValueInformation->DataLength >= sizeof(ULONG)))
+                    {
                         legacy = *(PULONG)KEY_VALUE_DATA(keyValueInformation);
                     }
                     ExFreePool(keyValueInformation);
                 }
-            } else {
+            }
+            else
+            {
                 legacy = 0;
             }
 
-            if (legacy == 0) {
+            if (legacy == 0)
+            {
 
                 //
                 // Mark that the driver has at least a device instance to work with.
                 //
 
                 PiWstrToUnicodeString(&unicodeName, REGSTR_KEY_CONTROL);
-                status = IopCreateRegistryKeyEx( &controlHandle,
-                                                 handle,
-                                                 &unicodeName,
-                                                 KEY_ALL_ACCESS,
-                                                 REG_OPTION_VOLATILE,
-                                                 NULL
-                                                 );
-                if (NT_SUCCESS(status)) {
+                status = IopCreateRegistryKeyEx(&controlHandle, handle, &unicodeName, KEY_ALL_ACCESS,
+                                                REG_OPTION_VOLATILE, NULL);
+                if (NT_SUCCESS(status))
+                {
                     PiWstrToUnicodeString(&unicodeName, REGSTR_VAL_ACTIVESERVICE);
-                    ZwSetValueKey(
-                                controlHandle,
-                                &unicodeName,
-                                TITLE_INDEX_VALUE,
-                                REG_SZ,
-                                ServiceKeyName->Buffer,
-                                ServiceKeyName->Length + sizeof(UNICODE_NULL)
-                                );
+                    ZwSetValueKey(controlHandle, &unicodeName, TITLE_INDEX_VALUE, REG_SZ, ServiceKeyName->Buffer,
+                                  ServiceKeyName->Length + sizeof(UNICODE_NULL));
 
                     ZwClose(controlHandle);
                 }
@@ -3291,18 +3029,16 @@ Returns:
         ZwClose(handle);
     }
 
-    if (closeHandle) {
+    if (closeHandle)
+    {
         ZwClose(ServiceHandle);
     }
     return enabled;
 }
-
+
 BOOLEAN
-IopIsDeviceInstanceEnabled(
-    IN HANDLE DeviceInstanceHandle      OPTIONAL,
-    IN PUNICODE_STRING DeviceInstance,
-    IN BOOLEAN DisableIfEnabled
-    )
+IopIsDeviceInstanceEnabled(IN HANDLE DeviceInstanceHandle OPTIONAL, IN PUNICODE_STRING DeviceInstance,
+                           IN BOOLEAN DisableIfEnabled)
 
 /*++
 
@@ -3341,24 +3077,19 @@ Returns:
     // Open registry ServiceKeyName\Enum branch
     //
 
-    if (!ARGUMENT_PRESENT(DeviceInstanceHandle)) {
-        status = IopOpenRegistryKeyEx( &handle,
-                                       NULL,
-                                       &CmRegistryMachineSystemCurrentControlSetEnumName,
-                                       KEY_READ
-                                       );
+    if (!ARGUMENT_PRESENT(DeviceInstanceHandle))
+    {
+        status = IopOpenRegistryKeyEx(&handle, NULL, &CmRegistryMachineSystemCurrentControlSetEnumName, KEY_READ);
 
-        if (NT_SUCCESS( status )) {
+        if (NT_SUCCESS(status))
+        {
 
-            status = IopOpenRegistryKeyEx( &DeviceInstanceHandle,
-                                           handle,
-                                           DeviceInstance,
-                                           KEY_READ
-                                           );
+            status = IopOpenRegistryKeyEx(&DeviceInstanceHandle, handle, DeviceInstance, KEY_READ);
             ZwClose(handle);
         }
 
-        if (!NT_SUCCESS( status )) {
+        if (!NT_SUCCESS(status))
+        {
             return FALSE;
         }
         closeHandle = TRUE;
@@ -3371,9 +3102,12 @@ Returns:
     //
 
     deviceObject = IopDeviceObjectFromDeviceInstance(DeviceInstance);
-    if (deviceObject) {
+    if (deviceObject)
+    {
         deviceNode = (PDEVICE_NODE)deviceObject->DeviceObjectExtension->DeviceNode;
-        if (deviceNode && (PipIsDevNodeProblem(deviceNode, CM_PROB_DISABLED) || PipIsDevNodeProblem(deviceNode, CM_PROB_HARDWARE_DISABLED))) {
+        if (deviceNode && (PipIsDevNodeProblem(deviceNode, CM_PROB_DISABLED) ||
+                           PipIsDevNodeProblem(deviceNode, CM_PROB_HARDWARE_DISABLED)))
+        {
             enabled = FALSE;
             goto exit;
         }
@@ -3385,29 +3119,27 @@ Returns:
     //
 
     deviceFlags = 0;
-    status = IopGetRegistryValue(DeviceInstanceHandle,
-                                 REGSTR_VALUE_CONFIG_FLAGS,
-                                 &keyValueInformation);
-    if (NT_SUCCESS(status)) {
-        if ((keyValueInformation->Type == REG_DWORD) &&
-            (keyValueInformation->DataLength >= sizeof(ULONG))) {
+    status = IopGetRegistryValue(DeviceInstanceHandle, REGSTR_VALUE_CONFIG_FLAGS, &keyValueInformation);
+    if (NT_SUCCESS(status))
+    {
+        if ((keyValueInformation->Type == REG_DWORD) && (keyValueInformation->DataLength >= sizeof(ULONG)))
+        {
             deviceFlags = *(PULONG)KEY_VALUE_DATA(keyValueInformation);
         }
         ExFreePool(keyValueInformation);
     }
-    if (!(deviceFlags & CONFIGFLAG_DISABLED)) {
+    if (!(deviceFlags & CONFIGFLAG_DISABLED))
+    {
         enabled = TRUE;
 
         //
         // See if we can open current hardware profile
         //
-        status = IopOpenRegistryKeyEx( &handle1,
-                                       NULL,
-                                       &CmRegistryMachineSystemCurrentControlSetHardwareProfilesCurrent,
-                                       KEY_READ
-                                       );
+        status = IopOpenRegistryKeyEx(&handle1, NULL, &CmRegistryMachineSystemCurrentControlSetHardwareProfilesCurrent,
+                                      KEY_READ);
 
-        if (NT_SUCCESS(status) && DeviceInstance != NULL) {
+        if (NT_SUCCESS(status) && DeviceInstance != NULL)
+        {
 
             //
             // Now, we must open the System\CCS\Enum key under this.
@@ -3417,45 +3149,35 @@ Returns:
             //
 
             PiWstrToUnicodeString(&unicodeString, REGSTR_PATH_CURRENTCONTROLSET);
-            status = IopOpenRegistryKeyEx( &handle,
-                                           handle1,
-                                           &unicodeString,
-                                           KEY_READ
-                                           );
+            status = IopOpenRegistryKeyEx(&handle, handle1, &unicodeString, KEY_READ);
             ZwClose(handle1);
-            if (NT_SUCCESS(status)) {
+            if (NT_SUCCESS(status))
+            {
                 PiWstrToUnicodeString(&unicodeString, REGSTR_KEY_ENUM);
-                status = IopOpenRegistryKeyEx( &handle1,
-                                               handle,
-                                               &unicodeString,
-                                               KEY_READ
-                                               );
+                status = IopOpenRegistryKeyEx(&handle1, handle, &unicodeString, KEY_READ);
                 ZwClose(handle);
-                if (NT_SUCCESS(status)) {
-                    status = IopOpenRegistryKeyEx( &handle,
-                                                   handle1,
-                                                   DeviceInstance,
-                                                   KEY_READ
-                                                   );
+                if (NT_SUCCESS(status))
+                {
+                    status = IopOpenRegistryKeyEx(&handle, handle1, DeviceInstance, KEY_READ);
                     ZwClose(handle1);
-                    if (NT_SUCCESS(status)) {
-                        status = IopGetRegistryValue(
-                                        handle,
-                                        REGSTR_VALUE_CSCONFIG_FLAGS,
-                                        &keyValueInformation
-                                        );
-                        if (NT_SUCCESS(status)) {
-                            if((keyValueInformation->Type == REG_DWORD) &&
-                               (keyValueInformation->DataLength >= sizeof(ULONG))) {
-                               deviceFlags = *(PULONG)KEY_VALUE_DATA(keyValueInformation);
+                    if (NT_SUCCESS(status))
+                    {
+                        status = IopGetRegistryValue(handle, REGSTR_VALUE_CSCONFIG_FLAGS, &keyValueInformation);
+                        if (NT_SUCCESS(status))
+                        {
+                            if ((keyValueInformation->Type == REG_DWORD) &&
+                                (keyValueInformation->DataLength >= sizeof(ULONG)))
+                            {
+                                deviceFlags = *(PULONG)KEY_VALUE_DATA(keyValueInformation);
                             }
                             ExFreePool(keyValueInformation);
                         }
                         ZwClose(handle);
-                        if (NT_SUCCESS(status)) {
-                            if ((deviceFlags & CSCONFIGFLAG_DISABLED) ||
-                                (deviceFlags & CSCONFIGFLAG_DO_NOT_CREATE) ||
-                                (deviceFlags & CSCONFIGFLAG_DO_NOT_START)) {
+                        if (NT_SUCCESS(status))
+                        {
+                            if ((deviceFlags & CSCONFIGFLAG_DISABLED) || (deviceFlags & CSCONFIGFLAG_DO_NOT_CREATE) ||
+                                (deviceFlags & CSCONFIGFLAG_DO_NOT_START))
+                            {
                                 enabled = FALSE;
                             }
                         }
@@ -3463,7 +3185,9 @@ Returns:
                 }
             }
         }
-    } else {
+    }
+    else
+    {
         enabled = FALSE;
     }
 
@@ -3472,23 +3196,24 @@ Returns:
     // disable the device.
     //
 
-    if (enabled == FALSE && deviceNode && DisableIfEnabled) {
+    if (enabled == FALSE && deviceNode && DisableIfEnabled)
+    {
         IopDisableDevice(deviceNode);
     }
 exit:
-    if (deviceObject) {
+    if (deviceObject)
+    {
         ObDereferenceObject(deviceObject);
     }
-    if (closeHandle) {
+    if (closeHandle)
+    {
         ZwClose(DeviceInstanceHandle);
     }
     return enabled;
 }
-
+
 ULONG
-IopDetermineResourceListSize(
-    IN PCM_RESOURCE_LIST ResourceList
-    )
+IopDetermineResourceListSize(IN PCM_RESOURCE_LIST ResourceList)
 
 /*++
 
@@ -3512,38 +3237,37 @@ Return Value:
     PCM_FULL_RESOURCE_DESCRIPTOR fullResourceDesc;
     PCM_PARTIAL_RESOURCE_DESCRIPTOR partialDescriptor;
 
-    if (!ResourceList) {
+    if (!ResourceList)
+    {
         totalSize = 0;
-    } else {
+    }
+    else
+    {
         totalSize = FIELD_OFFSET(CM_RESOURCE_LIST, List);
         fullResourceDesc = &ResourceList->List[0];
-        for (i = 0; i < ResourceList->Count; i++) {
-            listSize = FIELD_OFFSET(CM_FULL_RESOURCE_DESCRIPTOR,
-                                    PartialResourceList) +
-                       FIELD_OFFSET(CM_PARTIAL_RESOURCE_LIST,
-                                    PartialDescriptors);
+        for (i = 0; i < ResourceList->Count; i++)
+        {
+            listSize = FIELD_OFFSET(CM_FULL_RESOURCE_DESCRIPTOR, PartialResourceList) +
+                       FIELD_OFFSET(CM_PARTIAL_RESOURCE_LIST, PartialDescriptors);
             partialDescriptor = &fullResourceDesc->PartialResourceList.PartialDescriptors[0];
-            for (j = 0; j < fullResourceDesc->PartialResourceList.Count; j++) {
+            for (j = 0; j < fullResourceDesc->PartialResourceList.Count; j++)
+            {
                 descriptorSize = sizeof(CM_PARTIAL_RESOURCE_DESCRIPTOR);
-                if (partialDescriptor->Type == CmResourceTypeDeviceSpecific) {
+                if (partialDescriptor->Type == CmResourceTypeDeviceSpecific)
+                {
                     descriptorSize += partialDescriptor->u.DeviceSpecificData.DataSize;
                 }
                 listSize += descriptorSize;
-                partialDescriptor = (PCM_PARTIAL_RESOURCE_DESCRIPTOR)
-                                        ((PUCHAR)partialDescriptor + descriptorSize);
+                partialDescriptor = (PCM_PARTIAL_RESOURCE_DESCRIPTOR)((PUCHAR)partialDescriptor + descriptorSize);
             }
             totalSize += listSize;
-            fullResourceDesc = (PCM_FULL_RESOURCE_DESCRIPTOR)
-                                      ((PUCHAR)fullResourceDesc + listSize);
+            fullResourceDesc = (PCM_FULL_RESOURCE_DESCRIPTOR)((PUCHAR)fullResourceDesc + listSize);
         }
     }
     return totalSize;
 }
 
-VOID
-PpInitializeDeviceReferenceTable(
-    VOID
-    )
+VOID PpInitializeDeviceReferenceTable(VOID)
 
 /*++
 
@@ -3564,20 +3288,13 @@ Return Value:
 
 {
     ExInitializeFastMutex(&PpDeviceReferenceTableLock);
-    RtlInitializeGenericTable(  &PpDeviceReferenceTable,
-                                PiCompareInstancePath,
-                                PiAllocateGenericTableEntry,
-                                PiFreeGenericTableEntry,
-                                NULL);
+    RtlInitializeGenericTable(&PpDeviceReferenceTable, PiCompareInstancePath, PiAllocateGenericTableEntry,
+                              PiFreeGenericTableEntry, NULL);
 }
 
 RTL_GENERIC_COMPARE_RESULTS
 NTAPI
-PiCompareInstancePath(
-    IN  PRTL_GENERIC_TABLE          Table,
-    IN  PVOID                       FirstStruct,
-    IN  PVOID                       SecondStruct
-    )
+PiCompareInstancePath(IN PRTL_GENERIC_TABLE Table, IN PVOID FirstStruct, IN PVOID SecondStruct)
 
 /*++
 
@@ -3602,15 +3319,18 @@ Return Value:
 {
     PUNICODE_STRING lhs = ((PDEVICE_REFERENCE)FirstStruct)->DeviceInstance;
     PUNICODE_STRING rhs = ((PDEVICE_REFERENCE)SecondStruct)->DeviceInstance;
-    LONG            result;
+    LONG result;
 
     PAGED_CODE();
 
     result = RtlCompareUnicodeString(lhs, rhs, TRUE);
-    if (result < 0) {
+    if (result < 0)
+    {
 
         return GenericLessThan;
-    } else if (result > 0) {
+    }
+    else if (result > 0)
+    {
 
         return GenericGreaterThan;
     }
@@ -3619,10 +3339,7 @@ Return Value:
 
 PVOID
 NTAPI
-PiAllocateGenericTableEntry(
-    IN  PRTL_GENERIC_TABLE          Table,
-    IN  CLONG                       ByteSize
-    )
+PiAllocateGenericTableEntry(IN PRTL_GENERIC_TABLE Table, IN CLONG ByteSize)
 
 /*++
 
@@ -3648,12 +3365,7 @@ Return Value:
     return ExAllocatePool(PagedPool | POOL_COLD_ALLOCATION, ByteSize);
 }
 
-VOID
-NTAPI
-PiFreeGenericTableEntry(
-    IN  PRTL_GENERIC_TABLE          Table,
-    IN  PVOID                       Buffer
-    )
+VOID NTAPI PiFreeGenericTableEntry(IN PRTL_GENERIC_TABLE Table, IN PVOID Buffer)
 
 /*++
 
@@ -3681,10 +3393,7 @@ Return Value:
 }
 
 NTSTATUS
-IopMapDeviceObjectToDeviceInstance(
-    IN PDEVICE_OBJECT   DeviceObject,
-    IN PUNICODE_STRING  DeviceInstance
-    )
+IopMapDeviceObjectToDeviceInstance(IN PDEVICE_OBJECT DeviceObject, IN PUNICODE_STRING DeviceInstance)
 /*++
 
 Routine Description:
@@ -3708,8 +3417,8 @@ Return Value:
 --*/
 
 {
-    NTSTATUS    status;
-    HANDLE      hEnum, hInstance, hControl;
+    NTSTATUS status;
+    HANDLE hEnum, hInstance, hControl;
     UNICODE_STRING unicodeKeyName;
     DEVICE_REFERENCE deviceReference;
 #if DBG
@@ -3719,27 +3428,30 @@ Return Value:
 #if DBG
     oldDeviceObject = IopDeviceObjectFromDeviceInstance(DeviceInstance);
     ASSERT(!oldDeviceObject);
-    if (oldDeviceObject) {
+    if (oldDeviceObject)
+    {
 
         ObDereferenceObject(oldDeviceObject);
     }
 #endif
 
-    deviceReference.DeviceObject    = DeviceObject;
-    deviceReference.DeviceInstance  = DeviceInstance;
+    deviceReference.DeviceObject = DeviceObject;
+    deviceReference.DeviceInstance = DeviceInstance;
     ExAcquireFastMutex(&PpDeviceReferenceTableLock);
-    if (RtlInsertElementGenericTable(&PpDeviceReferenceTable,
-                                     (PVOID)&deviceReference,
-                                     (CLONG)sizeof(DEVICE_REFERENCE),
-                                     NULL)) {
+    if (RtlInsertElementGenericTable(&PpDeviceReferenceTable, (PVOID)&deviceReference, (CLONG)sizeof(DEVICE_REFERENCE),
+                                     NULL))
+    {
         status = STATUS_SUCCESS;
-    } else {
+    }
+    else
+    {
 
         status = STATUS_UNSUCCESSFUL;
     }
     ExReleaseFastMutex(&PpDeviceReferenceTableLock);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         //
         // Create the volatile Control subkey for this device instance,
         // since user-mode depends on it to be present for non-phantom
@@ -3749,24 +3461,17 @@ Return Value:
         // Remove dependence on the presence of volatile Control subkey
         // for present devices.
         //
-        status = IopOpenRegistryKeyEx(&hEnum,
-                                      NULL,
-                                      &CmRegistryMachineSystemCurrentControlSetEnumName,
-                                      KEY_READ);
-        if (NT_SUCCESS(status)) {
-            status = IopOpenRegistryKeyEx(&hInstance,
-                                          hEnum,
-                                          DeviceInstance,
-                                          KEY_ALL_ACCESS);
-            if (NT_SUCCESS(status)) {
+        status = IopOpenRegistryKeyEx(&hEnum, NULL, &CmRegistryMachineSystemCurrentControlSetEnumName, KEY_READ);
+        if (NT_SUCCESS(status))
+        {
+            status = IopOpenRegistryKeyEx(&hInstance, hEnum, DeviceInstance, KEY_ALL_ACCESS);
+            if (NT_SUCCESS(status))
+            {
                 PiWstrToUnicodeString(&unicodeKeyName, REGSTR_KEY_CONTROL);
-                status = IopCreateRegistryKeyEx(&hControl,
-                                                hInstance,
-                                                &unicodeKeyName,
-                                                KEY_ALL_ACCESS,
-                                                REG_OPTION_VOLATILE,
-                                                NULL);
-                if (NT_SUCCESS(status)) {
+                status = IopCreateRegistryKeyEx(&hControl, hInstance, &unicodeKeyName, KEY_ALL_ACCESS,
+                                                REG_OPTION_VOLATILE, NULL);
+                if (NT_SUCCESS(status))
+                {
                     ZwClose(hControl);
                 }
                 ZwClose(hInstance);
@@ -3788,9 +3493,7 @@ Return Value:
 }
 
 PDEVICE_OBJECT
-IopDeviceObjectFromDeviceInstance(
-    IN PUNICODE_STRING  DeviceInstance
-    )
+IopDeviceObjectFromDeviceInstance(IN PUNICODE_STRING DeviceInstance)
 
 /*++
 
@@ -3812,36 +3515,42 @@ Returns:
 --*/
 
 {
-    DEVICE_REFERENCE    key;
-    PDEVICE_REFERENCE   deviceReference;
-    PDEVICE_OBJECT      deviceObject;
-    PDEVICE_NODE        deviceNode;
+    DEVICE_REFERENCE key;
+    PDEVICE_REFERENCE deviceReference;
+    PDEVICE_OBJECT deviceObject;
+    PDEVICE_NODE deviceNode;
 
     PAGED_CODE();
     //
     // Look-up the DO in our table.
     //
-    deviceObject        = NULL;
-    key.DeviceObject    = NULL;
-    key.DeviceInstance  = DeviceInstance;
+    deviceObject = NULL;
+    key.DeviceObject = NULL;
+    key.DeviceInstance = DeviceInstance;
     ExAcquireFastMutex(&PpDeviceReferenceTableLock);
 
     deviceReference = RtlLookupElementGenericTable(&PpDeviceReferenceTable, (PVOID)&key);
-    if (deviceReference) {
+    if (deviceReference)
+    {
 
         deviceObject = deviceReference->DeviceObject;
         ASSERT(deviceObject);
-        if (deviceObject) {
+        if (deviceObject)
+        {
 
             ASSERT(deviceObject->Type == IO_TYPE_DEVICE);
-            if (deviceObject->Type != IO_TYPE_DEVICE) {
+            if (deviceObject->Type != IO_TYPE_DEVICE)
+            {
 
                 deviceObject = NULL;
-            } else {
+            }
+            else
+            {
 
                 deviceNode = (PDEVICE_NODE)deviceObject->DeviceObjectExtension->DeviceNode;
                 ASSERT(deviceNode && (deviceNode->PhysicalDeviceObject == deviceObject));
-                if (!deviceNode || deviceNode->PhysicalDeviceObject != deviceObject) {
+                if (!deviceNode || deviceNode->PhysicalDeviceObject != deviceObject)
+                {
 
                     deviceObject = NULL;
                 }
@@ -3851,7 +3560,8 @@ Returns:
     //
     // Take a reference if we found the device object.
     //
-    if (deviceObject) {
+    if (deviceObject)
+    {
 
         ObReferenceObject(deviceObject);
     }
@@ -3862,11 +3572,8 @@ Returns:
 }
 
 NTSTATUS
-IopDeviceObjectToDeviceInstance (
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PHANDLE DeviceInstanceHandle,
-    IN  ACCESS_MASK DesiredAccess
-    )
+IopDeviceObjectToDeviceInstance(IN PDEVICE_OBJECT DeviceObject, IN PHANDLE DeviceInstanceHandle,
+                                IN ACCESS_MASK DesiredAccess)
 
 /*++
 
@@ -3899,35 +3606,29 @@ Returns:
 
     PAGED_CODE();
 
-    status = IopOpenRegistryKeyEx( &handle,
-                                   NULL,
-                                   &CmRegistryMachineSystemCurrentControlSetEnumName,
-                                   KEY_READ
-                                   );
+    status = IopOpenRegistryKeyEx(&handle, NULL, &CmRegistryMachineSystemCurrentControlSetEnumName, KEY_READ);
 
-    if (!NT_SUCCESS( status )) {
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
-    deviceNode = (PDEVICE_NODE) DeviceObject->DeviceObjectExtension->DeviceNode;
-    if (deviceNode && (deviceNode->InstancePath.Length != 0)) {
-        status = IopOpenRegistryKeyEx( DeviceInstanceHandle,
-                                       handle,
-                                       &deviceNode->InstancePath,
-                                       DesiredAccess
-                                       );
-    } else {
+    deviceNode = (PDEVICE_NODE)DeviceObject->DeviceObjectExtension->DeviceNode;
+    if (deviceNode && (deviceNode->InstancePath.Length != 0))
+    {
+        status = IopOpenRegistryKeyEx(DeviceInstanceHandle, handle, &deviceNode->InstancePath, DesiredAccess);
+    }
+    else
+    {
         status = STATUS_INVALID_DEVICE_REQUEST;
     }
     ZwClose(handle);
 
     return status;
 }
-
+
 NTSTATUS
-IopCleanupDeviceRegistryValues (
-    IN PUNICODE_STRING InstancePath
-    )
+IopCleanupDeviceRegistryValues(IN PUNICODE_STRING InstancePath)
 
 /*++
 
@@ -3950,10 +3651,10 @@ Return Value:
 --*/
 
 {
-    DEVICE_REFERENCE    key;
-    NTSTATUS            status;
+    DEVICE_REFERENCE key;
+    NTSTATUS status;
 #if DBG
-    PDEVICE_OBJECT      deviceObject;
+    PDEVICE_OBJECT deviceObject;
 #endif
 
     PAGED_CODE();
@@ -3961,8 +3662,8 @@ Return Value:
     //
     // Delete the mapping between this instance path and corresponding DO.
     //
-    key.DeviceObject         = NULL;
-    key.DeviceInstance       = InstancePath;
+    key.DeviceObject = NULL;
+    key.DeviceInstance = InstancePath;
 
     ExAcquireFastMutex(&PpDeviceReferenceTableLock);
     RtlDeleteElementGenericTable(&PpDeviceReferenceTable, (PVOID)&key);
@@ -3970,7 +3671,8 @@ Return Value:
 #if DBG
     deviceObject = IopDeviceObjectFromDeviceInstance(InstancePath);
     ASSERT(!deviceObject);
-    if (deviceObject) {
+    if (deviceObject)
+    {
 
         ObDereferenceObject(deviceObject);
     }
@@ -3980,19 +3682,14 @@ Return Value:
     // Deregister the device from its controlling service's service enum key
     //
 
-    status = PiDeviceRegistration( InstancePath, FALSE, NULL );
+    status = PiDeviceRegistration(InstancePath, FALSE, NULL);
 
     return status;
 }
-
+
 NTSTATUS
-IopGetDeviceResourcesFromRegistry (
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG ResourceType,
-    IN ULONG Preference,
-    OUT PVOID *Resource,
-    OUT PULONG Length
-    )
+IopGetDeviceResourcesFromRegistry(IN PDEVICE_OBJECT DeviceObject, IN ULONG ResourceType, IN ULONG Preference,
+                                  OUT PVOID *Resource, OUT PULONG Length)
 
 /*++
 
@@ -4037,32 +3734,34 @@ Return Value:
     //
 
     status = IopDeviceObjectToDeviceInstance(DeviceObject, &handlex, KEY_READ);
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
-    if (ResourceType == QUERY_RESOURCE_LIST) {
+    if (ResourceType == QUERY_RESOURCE_LIST)
+    {
 
         //
         // Caller is asking for CM_RESOURCE_LIST
         //
 
-        if (Preference & REGISTRY_ALLOC_CONFIG) {
+        if (Preference & REGISTRY_ALLOC_CONFIG)
+        {
 
             //
             // Try alloc config first
             //
 
             PiWstrToUnicodeString(&unicodeName, REGSTR_KEY_CONTROL);
-            status = IopOpenRegistryKeyEx( &handle,
-                                           handlex,
-                                           &unicodeName,
-                                           KEY_READ
-                                           );
-            if (NT_SUCCESS(status)) {
-                status = PipReadDeviceConfiguration (handle, REGISTRY_ALLOC_CONFIG, (PCM_RESOURCE_LIST *)Resource, Length);
+            status = IopOpenRegistryKeyEx(&handle, handlex, &unicodeName, KEY_READ);
+            if (NT_SUCCESS(status))
+            {
+                status =
+                    PipReadDeviceConfiguration(handle, REGISTRY_ALLOC_CONFIG, (PCM_RESOURCE_LIST *)Resource, Length);
                 ZwClose(handle);
-                if (NT_SUCCESS(status)) {
+                if (NT_SUCCESS(status))
+                {
                     ZwClose(handlex);
                     return status;
                 }
@@ -4070,93 +3769,94 @@ Return Value:
         }
 
         handle = NULL;
-        if (Preference & REGISTRY_FORCED_CONFIG) {
+        if (Preference & REGISTRY_FORCED_CONFIG)
+        {
 
             PiWstrToUnicodeString(&unicodeName, REGSTR_KEY_LOG_CONF);
-            status = IopOpenRegistryKeyEx( &handle,
-                                           handlex,
-                                           &unicodeName,
-                                           KEY_READ
-                                           );
-            if (NT_SUCCESS(status)) {
-                status = PipReadDeviceConfiguration (handle, REGISTRY_FORCED_CONFIG, (PCM_RESOURCE_LIST *)Resource, Length);
-                if (NT_SUCCESS(status)) {
+            status = IopOpenRegistryKeyEx(&handle, handlex, &unicodeName, KEY_READ);
+            if (NT_SUCCESS(status))
+            {
+                status =
+                    PipReadDeviceConfiguration(handle, REGISTRY_FORCED_CONFIG, (PCM_RESOURCE_LIST *)Resource, Length);
+                if (NT_SUCCESS(status))
+                {
                     ZwClose(handle);
                     ZwClose(handlex);
                     return status;
                 }
-            } else {
+            }
+            else
+            {
                 ZwClose(handlex);
                 return status;
             }
         }
-        if (Preference & REGISTRY_BOOT_CONFIG) {
+        if (Preference & REGISTRY_BOOT_CONFIG)
+        {
 
             //
             // Try alloc config first
             //
 
-            if (handle == NULL) {
+            if (handle == NULL)
+            {
                 PiWstrToUnicodeString(&unicodeName, REGSTR_KEY_LOG_CONF);
-                status = IopOpenRegistryKeyEx( &handle,
-                                               handlex,
-                                               &unicodeName,
-                                               KEY_READ
-                                               );
-                if (!NT_SUCCESS(status)) {
+                status = IopOpenRegistryKeyEx(&handle, handlex, &unicodeName, KEY_READ);
+                if (!NT_SUCCESS(status))
+                {
                     ZwClose(handlex);
                     return status;
                 }
             }
-            status = PipReadDeviceConfiguration( handle,
-                                                 REGISTRY_BOOT_CONFIG,
-                                                 (PCM_RESOURCE_LIST *)Resource,
-                                                 Length);
+            status = PipReadDeviceConfiguration(handle, REGISTRY_BOOT_CONFIG, (PCM_RESOURCE_LIST *)Resource, Length);
         }
-        if (handle) {
+        if (handle)
+        {
             ZwClose(handle);
         }
-    } else {
+    }
+    else
+    {
 
         PiWstrToUnicodeString(&unicodeName, REGSTR_KEY_LOG_CONF);
-        status = IopOpenRegistryKeyEx( &handle,
-                                       handlex,
-                                       &unicodeName,
-                                       KEY_READ
-                                       );
-        if (NT_SUCCESS(status)) {
+        status = IopOpenRegistryKeyEx(&handle, handlex, &unicodeName, KEY_READ);
+        if (NT_SUCCESS(status))
+        {
 
-            if (Preference & REGISTRY_OVERRIDE_CONFIGVECTOR) {
+            if (Preference & REGISTRY_OVERRIDE_CONFIGVECTOR)
+            {
                 valueName = REGSTR_VALUE_OVERRIDE_CONFIG_VECTOR;
-            } else if (Preference & REGISTRY_BASIC_CONFIGVECTOR) {
+            }
+            else if (Preference & REGISTRY_BASIC_CONFIGVECTOR)
+            {
                 valueName = REGSTR_VALUE_BASIC_CONFIG_VECTOR;
             }
-            if (valueName) {
+            if (valueName)
+            {
 
                 //
                 // Try to read device's configuration vector
                 //
 
-                status = IopGetRegistryValue (handle,
-                                              valueName,
-                                              &keyValueInformation);
-                if (NT_SUCCESS(status)) {
+                status = IopGetRegistryValue(handle, valueName, &keyValueInformation);
+                if (NT_SUCCESS(status))
+                {
 
                     //
                     // Try to read what caller wants.
                     //
 
                     if ((keyValueInformation->Type == REG_RESOURCE_REQUIREMENTS_LIST) &&
-                        (keyValueInformation->DataLength != 0)) {
+                        (keyValueInformation->DataLength != 0))
+                    {
 
-                        *Resource = ExAllocatePool(PagedPool,
-                                                   keyValueInformation->DataLength);
-                        if (*Resource) {
+                        *Resource = ExAllocatePool(PagedPool, keyValueInformation->DataLength);
+                        if (*Resource)
+                        {
                             PIO_RESOURCE_REQUIREMENTS_LIST ioResource;
 
                             *Length = keyValueInformation->DataLength;
-                            RtlCopyMemory(*Resource,
-                                          KEY_VALUE_DATA(keyValueInformation),
+                            RtlCopyMemory(*Resource, KEY_VALUE_DATA(keyValueInformation),
                                           keyValueInformation->DataLength);
 
                             //
@@ -4165,11 +3865,14 @@ Return Value:
                             //
 
                             ioResource = *Resource;
-                            if (ioResource->InterfaceType == InterfaceTypeUndefined) {
+                            if (ioResource->InterfaceType == InterfaceTypeUndefined)
+                            {
                                 ioResource->BusNumber = 0;
                                 ioResource->InterfaceType = PnpDefaultInterfaceType;
                             }
-                        } else {
+                        }
+                        else
+                        {
                             status = STATUS_INVALID_PARAMETER_2;
                         }
                     }
@@ -4182,14 +3885,9 @@ Return Value:
     ZwClose(handlex);
     return status;
 }
-
+
 NTSTATUS
-PipReadDeviceConfiguration (
-    IN HANDLE Handle,
-    IN ULONG Flags,
-    OUT PCM_RESOURCE_LIST *CmResource,
-    OUT PULONG Length
-    )
+PipReadDeviceConfiguration(IN HANDLE Handle, IN ULONG Flags, OUT PCM_RESOURCE_LIST *CmResource, OUT PULONG Length)
 
 /*++
 
@@ -4215,13 +3913,20 @@ Return Value:
     *CmResource = NULL;
     *Length = 0;
 
-    if (Flags == REGISTRY_ALLOC_CONFIG) {
+    if (Flags == REGISTRY_ALLOC_CONFIG)
+    {
         valueName = REGSTR_VALUE_ALLOC_CONFIG;
-    } else if (Flags == REGISTRY_FORCED_CONFIG) {
+    }
+    else if (Flags == REGISTRY_FORCED_CONFIG)
+    {
         valueName = REGSTR_VALUE_FORCED_CONFIG;
-    } else if (Flags == REGISTRY_BOOT_CONFIG) {
+    }
+    else if (Flags == REGISTRY_BOOT_CONFIG)
+    {
         valueName = REGSTR_VALUE_BOOT_CONFIG;
-    } else {
+    }
+    else
+    {
         return STATUS_INVALID_PARAMETER_2;
     }
 
@@ -4229,31 +3934,32 @@ Return Value:
     // Read the registry value of the desired value name
     //
 
-    status = IopGetRegistryValue (Handle,
-                                  valueName,
-                                  &keyValueInformation);
-    if (NT_SUCCESS(status)) {
+    status = IopGetRegistryValue(Handle, valueName, &keyValueInformation);
+    if (NT_SUCCESS(status))
+    {
 
         //
         // Try to read what caller wants.
         //
 
-        if ((keyValueInformation->Type == REG_RESOURCE_LIST) &&
-            (keyValueInformation->DataLength != 0)) {
-            *CmResource = ExAllocatePool(PagedPool,
-                                         keyValueInformation->DataLength);
-            if (*CmResource) {
-                if (*CmResource) {
+        if ((keyValueInformation->Type == REG_RESOURCE_LIST) && (keyValueInformation->DataLength != 0))
+        {
+            *CmResource = ExAllocatePool(PagedPool, keyValueInformation->DataLength);
+            if (*CmResource)
+            {
+                if (*CmResource)
+                {
                     *Length = keyValueInformation->DataLength;
-                    RtlCopyMemory(*CmResource,
-                                  KEY_VALUE_DATA(keyValueInformation),
-                                  keyValueInformation->DataLength);
-                } else {
+                    RtlCopyMemory(*CmResource, KEY_VALUE_DATA(keyValueInformation), keyValueInformation->DataLength);
+                }
+                else
+                {
                     status = STATUS_INSUFFICIENT_RESOURCES;
                 }
             }
             ExFreePool(keyValueInformation);
-            if (*CmResource) {
+            if (*CmResource)
+            {
                 PCM_RESOURCE_LIST resourceList;
                 PCM_FULL_RESOURCE_DESCRIPTOR cmFullDesc;
                 PCM_PARTIAL_RESOURCE_DESCRIPTOR cmPartDesc;
@@ -4266,38 +3972,40 @@ Return Value:
 
                 resourceList = *CmResource;
                 cmFullDesc = &resourceList->List[0];
-                for (j = 0; j < resourceList->Count; j++) {
-                    if (cmFullDesc->InterfaceType == InterfaceTypeUndefined) {
+                for (j = 0; j < resourceList->Count; j++)
+                {
+                    if (cmFullDesc->InterfaceType == InterfaceTypeUndefined)
+                    {
                         cmFullDesc->BusNumber = 0;
                         cmFullDesc->InterfaceType = PnpDefaultInterfaceType;
                     }
                     cmPartDesc = &cmFullDesc->PartialResourceList.PartialDescriptors[0];
-                    for (k = 0; k < cmFullDesc->PartialResourceList.Count; k++) {
+                    for (k = 0; k < cmFullDesc->PartialResourceList.Count; k++)
+                    {
                         size = 0;
-                        switch (cmPartDesc->Type) {
+                        switch (cmPartDesc->Type)
+                        {
                         case CmResourceTypeDeviceSpecific:
-                             size = cmPartDesc->u.DeviceSpecificData.DataSize;
-                             break;
+                            size = cmPartDesc->u.DeviceSpecificData.DataSize;
+                            break;
                         }
                         cmPartDesc++;
-                        cmPartDesc = (PCM_PARTIAL_RESOURCE_DESCRIPTOR) ((PUCHAR)cmPartDesc + size);
+                        cmPartDesc = (PCM_PARTIAL_RESOURCE_DESCRIPTOR)((PUCHAR)cmPartDesc + size);
                     }
                     cmFullDesc = (PCM_FULL_RESOURCE_DESCRIPTOR)cmPartDesc;
                 }
             }
-        } else if (keyValueInformation->Type != REG_RESOURCE_LIST) {
+        }
+        else if (keyValueInformation->Type != REG_RESOURCE_LIST)
+        {
             status = STATUS_UNSUCCESSFUL;
         }
     }
     return status;
 }
-
+
 PIO_RESOURCE_REQUIREMENTS_LIST
-IopCmResourcesToIoResources(
-    IN ULONG SlotNumber,
-    IN PCM_RESOURCE_LIST CmResourceList,
-    IN ULONG Priority
-    )
+IopCmResourcesToIoResources(IN ULONG SlotNumber, IN PCM_RESOURCE_LIST CmResourceList, IN ULONG Priority)
 
 /*++
 
@@ -4331,24 +4039,28 @@ Return Value:
     //
 
     cmFullDesc = &CmResourceList->List[0];
-    for (i = 0; i < CmResourceList->Count; i++) {
+    for (i = 0; i < CmResourceList->Count; i++)
+    {
         count += cmFullDesc->PartialResourceList.Count;
         cmPartDesc = &cmFullDesc->PartialResourceList.PartialDescriptors[0];
-        for (j = 0; j < cmFullDesc->PartialResourceList.Count; j++) {
+        for (j = 0; j < cmFullDesc->PartialResourceList.Count; j++)
+        {
             size = 0;
-            switch (cmPartDesc->Type) {
+            switch (cmPartDesc->Type)
+            {
             case CmResourceTypeDeviceSpecific:
-                 size = cmPartDesc->u.DeviceSpecificData.DataSize;
-                 count--;
-                 break;
+                size = cmPartDesc->u.DeviceSpecificData.DataSize;
+                count--;
+                break;
             }
             cmPartDesc++;
-            cmPartDesc = (PCM_PARTIAL_RESOURCE_DESCRIPTOR) ((PUCHAR)cmPartDesc + size);
+            cmPartDesc = (PCM_PARTIAL_RESOURCE_DESCRIPTOR)((PUCHAR)cmPartDesc + size);
         }
         cmFullDesc = (PCM_FULL_RESOURCE_DESCRIPTOR)cmPartDesc;
     }
 
-    if (count == 0) {
+    if (count == 0)
+    {
         return NULL;
     }
 
@@ -4362,13 +4074,11 @@ Return Value:
     // Allocate heap space for IO RESOURCE REQUIREMENTS LIST
     //
 
-    count++;           // add one for CmResourceTypeConfigData
+    count++; // add one for CmResourceTypeConfigData
     ioResReqList = (PIO_RESOURCE_REQUIREMENTS_LIST)ExAllocatePool(
-                       PagedPool,
-                       sizeof(IO_RESOURCE_REQUIREMENTS_LIST) +
-                           count * sizeof(IO_RESOURCE_DESCRIPTOR)
-                       );
-    if (!ioResReqList) {
+        PagedPool, sizeof(IO_RESOURCE_REQUIREMENTS_LIST) + count * sizeof(IO_RESOURCE_DESCRIPTOR));
+    if (!ioResReqList)
+    {
         return NULL;
     }
 
@@ -4402,8 +4112,10 @@ Return Value:
     ioDesc++;
 
     cmFullDesc = &CmResourceList->List[0];
-    for (i = 0; i < CmResourceList->Count; i++) {
-        if (i != 0) {
+    for (i = 0; i < CmResourceList->Count; i++)
+    {
+        if (i != 0)
+        {
 
             //
             // Set up descriptor to remember the InterfaceType and BusNumber.
@@ -4415,9 +4127,12 @@ Return Value:
             ioDesc->Flags = 0;
             ioDesc->Spare1 = 0;
             ioDesc->Spare2 = 0;
-            if (cmFullDesc->InterfaceType == InterfaceTypeUndefined) {
+            if (cmFullDesc->InterfaceType == InterfaceTypeUndefined)
+            {
                 ioDesc->u.DevicePrivate.Data[0] = PnpDefaultInterfaceType;
-            } else {
+            }
+            else
+            {
                 ioDesc->u.DevicePrivate.Data[0] = cmFullDesc->InterfaceType;
             }
             ioDesc->u.DevicePrivate.Data[1] = cmFullDesc->BusNumber;
@@ -4425,7 +4140,8 @@ Return Value:
             ioDesc++;
         }
         cmPartDesc = &cmFullDesc->PartialResourceList.PartialDescriptors[0];
-        for (j = 0; j < cmFullDesc->PartialResourceList.Count; j++) {
+        for (j = 0; j < cmFullDesc->PartialResourceList.Count; j++)
+        {
             ioDesc->Option = IO_RESOURCE_PREFERRED;
             ioDesc->Type = cmPartDesc->Type;
             ioDesc->ShareDisposition = cmPartDesc->ShareDisposition;
@@ -4434,71 +4150,65 @@ Return Value:
             ioDesc->Spare2 = 0;
 
             size = 0;
-            switch (cmPartDesc->Type) {
+            switch (cmPartDesc->Type)
+            {
             case CmResourceTypePort:
-                 ioDesc->u.Port.MinimumAddress = cmPartDesc->u.Port.Start;
-                 ioDesc->u.Port.MaximumAddress.QuadPart = cmPartDesc->u.Port.Start.QuadPart +
-                                                             cmPartDesc->u.Port.Length - 1;
-                 ioDesc->u.Port.Alignment = 1;
-                 ioDesc->u.Port.Length = cmPartDesc->u.Port.Length;
-                 ioDesc++;
-                 break;
+                ioDesc->u.Port.MinimumAddress = cmPartDesc->u.Port.Start;
+                ioDesc->u.Port.MaximumAddress.QuadPart =
+                    cmPartDesc->u.Port.Start.QuadPart + cmPartDesc->u.Port.Length - 1;
+                ioDesc->u.Port.Alignment = 1;
+                ioDesc->u.Port.Length = cmPartDesc->u.Port.Length;
+                ioDesc++;
+                break;
             case CmResourceTypeInterrupt:
 #if defined(_X86_)
-                ioDesc->u.Interrupt.MinimumVector = ioDesc->u.Interrupt.MaximumVector =
-                   cmPartDesc->u.Interrupt.Level;
+                ioDesc->u.Interrupt.MinimumVector = ioDesc->u.Interrupt.MaximumVector = cmPartDesc->u.Interrupt.Level;
 #else
-                 ioDesc->u.Interrupt.MinimumVector = ioDesc->u.Interrupt.MaximumVector =
-                    cmPartDesc->u.Interrupt.Vector;
+                ioDesc->u.Interrupt.MinimumVector = ioDesc->u.Interrupt.MaximumVector = cmPartDesc->u.Interrupt.Vector;
 #endif
-                 ioDesc++;
-                 break;
+                ioDesc++;
+                break;
             case CmResourceTypeMemory:
-                 ioDesc->u.Memory.MinimumAddress = cmPartDesc->u.Memory.Start;
-                 ioDesc->u.Memory.MaximumAddress.QuadPart = cmPartDesc->u.Memory.Start.QuadPart +
-                                                               cmPartDesc->u.Memory.Length - 1;
-                 ioDesc->u.Memory.Alignment = 1;
-                 ioDesc->u.Memory.Length = cmPartDesc->u.Memory.Length;
-                 ioDesc++;
-                 break;
+                ioDesc->u.Memory.MinimumAddress = cmPartDesc->u.Memory.Start;
+                ioDesc->u.Memory.MaximumAddress.QuadPart =
+                    cmPartDesc->u.Memory.Start.QuadPart + cmPartDesc->u.Memory.Length - 1;
+                ioDesc->u.Memory.Alignment = 1;
+                ioDesc->u.Memory.Length = cmPartDesc->u.Memory.Length;
+                ioDesc++;
+                break;
             case CmResourceTypeDma:
-                 ioDesc->u.Dma.MinimumChannel = cmPartDesc->u.Dma.Channel;
-                 ioDesc->u.Dma.MaximumChannel = cmPartDesc->u.Dma.Channel;
-                 ioDesc++;
-                 break;
+                ioDesc->u.Dma.MinimumChannel = cmPartDesc->u.Dma.Channel;
+                ioDesc->u.Dma.MaximumChannel = cmPartDesc->u.Dma.Channel;
+                ioDesc++;
+                break;
             case CmResourceTypeDeviceSpecific:
-                 size = cmPartDesc->u.DeviceSpecificData.DataSize;
-                 break;
+                size = cmPartDesc->u.DeviceSpecificData.DataSize;
+                break;
             case CmResourceTypeBusNumber:
-                 ioDesc->u.BusNumber.MinBusNumber = cmPartDesc->u.BusNumber.Start;
-                 ioDesc->u.BusNumber.MaxBusNumber = cmPartDesc->u.BusNumber.Start +
-                                                    cmPartDesc->u.BusNumber.Length - 1;
-                 ioDesc->u.BusNumber.Length = cmPartDesc->u.BusNumber.Length;
-                 ioDesc++;
-                 break;
+                ioDesc->u.BusNumber.MinBusNumber = cmPartDesc->u.BusNumber.Start;
+                ioDesc->u.BusNumber.MaxBusNumber = cmPartDesc->u.BusNumber.Start + cmPartDesc->u.BusNumber.Length - 1;
+                ioDesc->u.BusNumber.Length = cmPartDesc->u.BusNumber.Length;
+                ioDesc++;
+                break;
             default:
-                 ioDesc->u.DevicePrivate.Data[0] = cmPartDesc->u.DevicePrivate.Data[0];
-                 ioDesc->u.DevicePrivate.Data[1] = cmPartDesc->u.DevicePrivate.Data[1];
-                 ioDesc->u.DevicePrivate.Data[2] = cmPartDesc->u.DevicePrivate.Data[2];
-                 ioDesc++;
-                 break;
+                ioDesc->u.DevicePrivate.Data[0] = cmPartDesc->u.DevicePrivate.Data[0];
+                ioDesc->u.DevicePrivate.Data[1] = cmPartDesc->u.DevicePrivate.Data[1];
+                ioDesc->u.DevicePrivate.Data[2] = cmPartDesc->u.DevicePrivate.Data[2];
+                ioDesc++;
+                break;
             }
             cmPartDesc++;
-            cmPartDesc = (PCM_PARTIAL_RESOURCE_DESCRIPTOR) ((PUCHAR)cmPartDesc + size);
+            cmPartDesc = (PCM_PARTIAL_RESOURCE_DESCRIPTOR)((PUCHAR)cmPartDesc + size);
         }
         cmFullDesc = (PCM_FULL_RESOURCE_DESCRIPTOR)cmPartDesc;
     }
     ioResReqList->ListSize = (ULONG)((ULONG_PTR)ioDesc - (ULONG_PTR)ioResReqList);
     return ioResReqList;
 }
-
+
 NTSTATUS
-IopFilterResourceRequirementsList(
-    IN PIO_RESOURCE_REQUIREMENTS_LIST IoList,
-    IN PCM_RESOURCE_LIST CmList,
-    IN OUT PIO_RESOURCE_REQUIREMENTS_LIST *FilteredList,
-    OUT PBOOLEAN ExactMatch
-    )
+IopFilterResourceRequirementsList(IN PIO_RESOURCE_REQUIREMENTS_LIST IoList, IN PCM_RESOURCE_LIST CmList,
+                                  IN OUT PIO_RESOURCE_REQUIREMENTS_LIST *FilteredList, OUT PBOOLEAN ExactMatch)
 
 /*++
 
@@ -4545,9 +4255,11 @@ Return Value:
     // If no, we will convert CmList/BootConfig to an IoResourceRequirementsList
     //
 
-    if (IoList == NULL || IoList->AlternativeLists == 0) {
-        if (CmList && CmList->Count != 0) {
-            *FilteredList = IopCmResourcesToIoResources (0, CmList, LCPRI_BOOTCONFIG);
+    if (IoList == NULL || IoList->AlternativeLists == 0)
+    {
+        if (CmList && CmList->Count != 0)
+        {
+            *FilteredList = IopCmResourcesToIoResources(0, CmList, LCPRI_BOOTCONFIG);
         }
         return STATUS_SUCCESS;
     }
@@ -4556,8 +4268,9 @@ Return Value:
     // Make a copy of the Io Resource Requirements List
     //
 
-    ioList = (PIO_RESOURCE_REQUIREMENTS_LIST) ExAllocatePool(PagedPool, IoList->ListSize);
-    if (ioList == NULL) {
+    ioList = (PIO_RESOURCE_REQUIREMENTS_LIST)ExAllocatePool(PagedPool, IoList->ListSize);
+    if (ioList == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -4567,7 +4280,8 @@ Return Value:
     // If there is no BootConfig, simply return the copy of the input Io list.
     //
 
-    if (CmList == NULL || CmList->Count == 0) {
+    if (CmList == NULL || CmList->Count == 0)
+    {
         *FilteredList = ioList;
         return STATUS_SUCCESS;
     }
@@ -4577,38 +4291,42 @@ Return Value:
     //
 
     cmFullDesc = &CmList->List[0];
-    for (i = 0; i < CmList->Count; i++) {
+    for (i = 0; i < CmList->Count; i++)
+    {
         cmDescriptorCount += cmFullDesc->PartialResourceList.Count;
         cmDescriptor = &cmFullDesc->PartialResourceList.PartialDescriptors[0];
-        for (j = 0; j < cmFullDesc->PartialResourceList.Count; j++) {
+        for (j = 0; j < cmFullDesc->PartialResourceList.Count; j++)
+        {
             size = 0;
-            switch (cmDescriptor->Type) {
+            switch (cmDescriptor->Type)
+            {
             case CmResourceTypeConfigData:
             case CmResourceTypeDevicePrivate:
-                 cmDescriptorCount--;
-                 break;
+                cmDescriptorCount--;
+                break;
             case CmResourceTypeDeviceSpecific:
-                 size = cmDescriptor->u.DeviceSpecificData.DataSize;
-                 cmDescriptorCount--;
-                 break;
+                size = cmDescriptor->u.DeviceSpecificData.DataSize;
+                cmDescriptorCount--;
+                break;
             default:
 
-                 //
-                 // Invalid cmresource list.  Ignore it and use io resources
-                 //
+                //
+                // Invalid cmresource list.  Ignore it and use io resources
+                //
 
-                 if (cmDescriptor->Type == CmResourceTypeNull ||
-                     cmDescriptor->Type >= CmResourceTypeMaximum) {
-                     cmDescriptorCount--;
-                 }
+                if (cmDescriptor->Type == CmResourceTypeNull || cmDescriptor->Type >= CmResourceTypeMaximum)
+                {
+                    cmDescriptorCount--;
+                }
             }
             cmDescriptor++;
-            cmDescriptor = (PCM_PARTIAL_RESOURCE_DESCRIPTOR) ((PUCHAR)cmDescriptor + size);
+            cmDescriptor = (PCM_PARTIAL_RESOURCE_DESCRIPTOR)((PUCHAR)cmDescriptor + size);
         }
         cmFullDesc = (PCM_FULL_RESOURCE_DESCRIPTOR)cmDescriptor;
     }
 
-    if (cmDescriptorCount == 0) {
+    if (cmDescriptorCount == 0)
+    {
         *FilteredList = ioList;
         return STATUS_SUCCESS;
     }
@@ -4621,21 +4339,25 @@ Return Value:
 
     ioResourceList = ioList->List;
     k = ioList->AlternativeLists;
-    while (--k >= 0) {
+    while (--k >= 0)
+    {
         ioResourceDescriptor = ioResourceList->Descriptors;
         ioResourceDescriptorEnd = ioResourceDescriptor + ioResourceList->Count;
-        while (ioResourceDescriptor < ioResourceDescriptorEnd) {
+        while (ioResourceDescriptor < ioResourceDescriptorEnd)
+        {
             ioResourceDescriptor->Spare1 = 0;
             ioResourceDescriptor++;
         }
-        ioResourceList = (PIO_RESOURCE_LIST) ioResourceDescriptorEnd;
+        ioResourceList = (PIO_RESOURCE_LIST)ioResourceDescriptorEnd;
     }
 
     ioResourceList = ioList->List;
     k = alternativeLists = ioList->AlternativeLists;
-    while (--k >= 0) {
+    while (--k >= 0)
+    {
         version = ioResourceList->Version;
-        if (version == 0xffff) {  // Convert bogus version to valid number
+        if (version == 0xffff)
+        { // Convert bogus version to valid number
             version = 1;
         }
 
@@ -4650,13 +4372,14 @@ Return Value:
         ioResourceDescriptor = ioResourceList->Descriptors;
         ioResourceDescriptorEnd = ioResourceDescriptor + ioResourceList->Count;
 
-        if (ioResourceDescriptor == ioResourceDescriptorEnd) {
+        if (ioResourceDescriptor == ioResourceDescriptorEnd)
+        {
 
             //
             // An alternative list with zero descriptor count
             //
 
-            ioResourceList->Version = 0xffff;  // Mark it as invalid
+            ioResourceList->Version = 0xffff; // Mark it as invalid
             ioList->AlternativeLists--;
             continue;
         }
@@ -4669,19 +4392,22 @@ Return Value:
         //
 
         cmFullDesc = &CmList->List[0];
-        for (i = 0; i < CmList->Count; i++) {
+        for (i = 0; i < CmList->Count; i++)
+        {
             cmDescriptor = &cmFullDesc->PartialResourceList.PartialDescriptors[0];
-            for (j = 0; j < cmFullDesc->PartialResourceList.Count; j++) {
+            for (j = 0; j < cmFullDesc->PartialResourceList.Count; j++)
+            {
                 size = 0;
-                switch (cmDescriptor->Type) {
+                switch (cmDescriptor->Type)
+                {
                 case CmResourceTypeDevicePrivate:
-                     break;
+                    break;
                 case CmResourceTypeDeviceSpecific:
-                     size = cmDescriptor->u.DeviceSpecificData.DataSize;
-                     break;
+                    size = cmDescriptor->u.DeviceSpecificData.DataSize;
+                    break;
                 default:
-                    if (cmDescriptor->Type == CmResourceTypeNull ||
-                        cmDescriptor->Type >= CmResourceTypeMaximum) {
+                    if (cmDescriptor->Type == CmResourceTypeNull || cmDescriptor->Type >= CmResourceTypeMaximum)
+                    {
                         break;
                     }
 
@@ -4689,28 +4415,32 @@ Return Value:
                     // Check CmDescriptor against current Io Alternative list
                     //
 
-                    for (phase = 0; phase < 2; phase++) {
+                    for (phase = 0; phase < 2; phase++)
+                    {
                         ioResourceDescriptor = ioResourceList->Descriptors;
-                        while (ioResourceDescriptor < ioResourceDescriptorEnd) {
+                        while (ioResourceDescriptor < ioResourceDescriptorEnd)
+                        {
                             if ((ioResourceDescriptor->Type == cmDescriptor->Type) &&
-                                (ioResourceDescriptor->Spare1 == 0)) {
+                                (ioResourceDescriptor->Spare1 == 0))
+                            {
                                 ULONGLONG min1, max1, min2, max2;
                                 ULONG len1 = 1, len2 = 1, align1, align2;
                                 UCHAR share1, share2;
 
                                 share2 = ioResourceDescriptor->ShareDisposition;
                                 share1 = cmDescriptor->ShareDisposition;
-                                if ((share1 == CmResourceShareUndetermined) ||
-                                    (share1 > CmResourceShareShared)) {
+                                if ((share1 == CmResourceShareUndetermined) || (share1 > CmResourceShareShared))
+                                {
                                     share1 = share2;
                                 }
-                                if ((share2 == CmResourceShareUndetermined) ||
-                                    (share2 > CmResourceShareShared)) {
+                                if ((share2 == CmResourceShareUndetermined) || (share2 > CmResourceShareShared))
+                                {
                                     share2 = share1;
                                 }
                                 align1 = align2 = 1;
 
-                                switch (cmDescriptor->Type) {
+                                switch (cmDescriptor->Type)
+                                {
                                 case CmResourceTypePort:
                                 case CmResourceTypeMemory:
                                     min1 = cmDescriptor->u.Port.Start.QuadPart;
@@ -4727,7 +4457,7 @@ Return Value:
                                     max2 = ioResourceDescriptor->u.Interrupt.MaximumVector;
                                     break;
                                 case CmResourceTypeDma:
-                                    min1 = max1 =cmDescriptor->u.Dma.Channel;
+                                    min1 = max1 = cmDescriptor->u.Dma.Channel;
                                     min2 = ioResourceDescriptor->u.Dma.MinimumChannel;
                                     max2 = ioResourceDescriptor->u.Dma.MaximumChannel;
                                     break;
@@ -4743,29 +4473,37 @@ Return Value:
                                     ASSERT(0);
                                     break;
                                 }
-                                if (phase == 0) {
-                                    if (share1 == share2 && min2 == min1 && max2 >= max1 && len2 >= len1) {
+                                if (phase == 0)
+                                {
+                                    if (share1 == share2 && min2 == min1 && max2 >= max1 && len2 >= len1)
+                                    {
 
                                         //
                                         // For phase 0 match, we want near exact match...
                                         //
 
-                                        if (max2 != max1) {
+                                        if (max2 != max1)
+                                        {
                                             exactMatch = FALSE;
                                         }
                                         ioResourceList->Version++;
                                         ioResourceDescriptor->Spare1 = 0x80;
-                                        if (ioResourceDescriptor->Option & IO_RESOURCE_ALTERNATIVE) {
+                                        if (ioResourceDescriptor->Option & IO_RESOURCE_ALTERNATIVE)
+                                        {
                                             PIO_RESOURCE_DESCRIPTOR ioDesc;
 
                                             ioDesc = ioResourceDescriptor;
                                             ioDesc--;
-                                            while (ioDesc >= ioResourceList->Descriptors) {
+                                            while (ioDesc >= ioResourceList->Descriptors)
+                                            {
                                                 ioDesc->Type = CmResourceTypeNull;
                                                 ioResourceList->Count--;
-                                                if (ioDesc->Option == IO_RESOURCE_ALTERNATIVE) {
+                                                if (ioDesc->Option == IO_RESOURCE_ALTERNATIVE)
+                                                {
                                                     ioDesc--;
-                                                } else {
+                                                }
+                                                else
+                                                {
                                                     break;
                                                 }
                                             }
@@ -4773,33 +4511,45 @@ Return Value:
                                         ioResourceDescriptor->Option = IO_RESOURCE_PREFERRED;
                                         ioResourceDescriptor->Flags = cmDescriptor->Flags;
                                         if (ioResourceDescriptor->Type == CmResourceTypePort ||
-                                            ioResourceDescriptor->Type == CmResourceTypeMemory) {
+                                            ioResourceDescriptor->Type == CmResourceTypeMemory)
+                                        {
                                             ioResourceDescriptor->u.Port.MinimumAddress.QuadPart = min1;
                                             ioResourceDescriptor->u.Port.MaximumAddress.QuadPart = min1 + len2 - 1;
                                             ioResourceDescriptor->u.Port.Alignment = 1;
-                                        } else if (ioResourceDescriptor->Type == CmResourceTypeBusNumber) {
+                                        }
+                                        else if (ioResourceDescriptor->Type == CmResourceTypeBusNumber)
+                                        {
                                             ioResourceDescriptor->u.BusNumber.MinBusNumber = (ULONG)min1;
                                             ioResourceDescriptor->u.BusNumber.MaxBusNumber = (ULONG)(min1 + len2 - 1);
                                         }
                                         ioResourceDescriptor++;
-                                        while (ioResourceDescriptor < ioResourceDescriptorEnd) {
-                                            if (ioResourceDescriptor->Option & IO_RESOURCE_ALTERNATIVE) {
+                                        while (ioResourceDescriptor < ioResourceDescriptorEnd)
+                                        {
+                                            if (ioResourceDescriptor->Option & IO_RESOURCE_ALTERNATIVE)
+                                            {
                                                 ioResourceDescriptor->Type = CmResourceTypeNull;
                                                 ioResourceDescriptor++;
                                                 ioResourceList->Count--;
-                                            } else {
+                                            }
+                                            else
+                                            {
                                                 break;
                                             }
                                         }
-                                        phase = 1;   // skip phase 1
+                                        phase = 1; // skip phase 1
                                         break;
-                                    } else {
+                                    }
+                                    else
+                                    {
                                         ioResourceDescriptor++;
                                     }
-                                } else {
+                                }
+                                else
+                                {
                                     exactMatch = FALSE;
                                     if (share1 == share2 && min2 <= min1 && max2 >= max1 && len2 >= len1 &&
-                                        (min1 & (align2 - 1)) == 0) {
+                                        (min1 & (align2 - 1)) == 0)
+                                    {
 
                                         //
                                         // Io range covers Cm range ... Change the Io range to what is specified
@@ -4807,7 +4557,8 @@ Return Value:
                                         //
                                         //
 
-                                        switch (cmDescriptor->Type) {
+                                        switch (cmDescriptor->Type)
+                                        {
                                         case CmResourceTypePort:
                                         case CmResourceTypeMemory:
                                             ioResourceDescriptor->u.Port.MinimumAddress.QuadPart = min1;
@@ -4826,38 +4577,51 @@ Return Value:
                                         ioResourceList->Version++;
                                         ioResourceDescriptor->Spare1 = 0x80;
                                         ioResourceDescriptor->Flags = cmDescriptor->Flags;
-                                        if (ioResourceDescriptor->Option & IO_RESOURCE_ALTERNATIVE) {
+                                        if (ioResourceDescriptor->Option & IO_RESOURCE_ALTERNATIVE)
+                                        {
                                             PIO_RESOURCE_DESCRIPTOR ioDesc;
 
                                             ioDesc = ioResourceDescriptor;
                                             ioDesc--;
-                                            while (ioDesc >= ioResourceList->Descriptors) {
+                                            while (ioDesc >= ioResourceList->Descriptors)
+                                            {
                                                 ioDesc->Type = CmResourceTypeNull;
                                                 ioResourceList->Count--;
-                                                if (ioDesc->Option == IO_RESOURCE_ALTERNATIVE) {
+                                                if (ioDesc->Option == IO_RESOURCE_ALTERNATIVE)
+                                                {
                                                     ioDesc--;
-                                                } else {
+                                                }
+                                                else
+                                                {
                                                     break;
                                                 }
                                             }
                                         }
                                         ioResourceDescriptor->Option = IO_RESOURCE_PREFERRED;
                                         ioResourceDescriptor++;
-                                        while (ioResourceDescriptor < ioResourceDescriptorEnd) {
-                                            if (ioResourceDescriptor->Option & IO_RESOURCE_ALTERNATIVE) {
+                                        while (ioResourceDescriptor < ioResourceDescriptorEnd)
+                                        {
+                                            if (ioResourceDescriptor->Option & IO_RESOURCE_ALTERNATIVE)
+                                            {
                                                 ioResourceDescriptor->Type = CmResourceTypeNull;
                                                 ioResourceList->Count--;
                                                 ioResourceDescriptor++;
-                                            } else {
+                                            }
+                                            else
+                                            {
                                                 break;
                                             }
                                         }
                                         break;
-                                    } else {
+                                    }
+                                    else
+                                    {
                                         ioResourceDescriptor++;
                                     }
                                 }
-                            } else {
+                            }
+                            else
+                            {
                                 ioResourceDescriptor++;
                             }
                         } // Don't add any instruction after this ...
@@ -4869,7 +4633,7 @@ Return Value:
                 //
 
                 cmDescriptor++;
-                cmDescriptor = (PCM_PARTIAL_RESOURCE_DESCRIPTOR) ((PUCHAR)cmDescriptor + size);
+                cmDescriptor = (PCM_PARTIAL_RESOURCE_DESCRIPTOR)((PUCHAR)cmDescriptor + size);
             }
 
             //
@@ -4879,7 +4643,8 @@ Return Value:
             cmFullDesc = (PCM_FULL_RESOURCE_DESCRIPTOR)cmDescriptor;
         }
 
-        if (ioResourceList->Version != (USHORT)cmDescriptorCount) {
+        if (ioResourceList->Version != (USHORT)cmDescriptorCount)
+        {
 
             //
             // If the current alternative list does not cover all the boot config
@@ -4888,22 +4653,31 @@ Return Value:
 
             ioResourceList->Version = 0xffff;
             ioList->AlternativeLists--;
-        } else {
+        }
+        else
+        {
             if ((ioResourceList->Count == cmDescriptorCount) ||
                 (ioResourceList->Count == (cmDescriptorCount + 1) &&
-                 ioResourceList->Descriptors[0].Type == CmResourceTypeConfigData)) {
-                if (selectedResourceList) {
+                 ioResourceList->Descriptors[0].Type == CmResourceTypeConfigData))
+            {
+                if (selectedResourceList)
+                {
                     ioResourceList->Version = 0xffff;
                     ioList->AlternativeLists--;
-                } else {
+                }
+                else
+                {
                     selectedResourceList = ioResourceList;
                     ioResourceDescriptorCount += ioResourceList->Count;
                     ioResourceList->Version = version;
-                    if (exactMatch) {
+                    if (exactMatch)
+                    {
                         *ExactMatch = TRUE;
                     }
                 }
-            } else {
+            }
+            else
+            {
                 ioResourceDescriptorCount += ioResourceList->Count;
                 ioResourceList->Version = version;
             }
@@ -4914,15 +4688,16 @@ Return Value:
         // Move to next Io alternative list.
         //
 
-        ioResourceList = (PIO_RESOURCE_LIST) ioResourceDescriptorEnd;
+        ioResourceList = (PIO_RESOURCE_LIST)ioResourceDescriptorEnd;
     }
 
     //
     // If there is not any valid alternative, convert CmList to Io list.
     //
 
-    if (ioList->AlternativeLists == 0) {
-         *FilteredList = IopCmResourcesToIoResources (0, CmList, LCPRI_BOOTCONFIG);
+    if (ioList->AlternativeLists == 0)
+    {
+        *FilteredList = IopCmResourcesToIoResources(0, CmList, LCPRI_BOOTCONFIG);
         ExFreePool(ioList);
         return STATUS_SUCCESS;
     }
@@ -4932,11 +4707,11 @@ Return Value:
     // and rebuild a new list.
     //
 
-    size = sizeof(IO_RESOURCE_REQUIREMENTS_LIST) +
-               sizeof(IO_RESOURCE_LIST) * (ioList->AlternativeLists - 1) +
-               sizeof(IO_RESOURCE_DESCRIPTOR) * (ioResourceDescriptorCount);
-    newList = (PIO_RESOURCE_REQUIREMENTS_LIST) ExAllocatePool(PagedPool, size);
-    if (newList == NULL) {
+    size = sizeof(IO_RESOURCE_REQUIREMENTS_LIST) + sizeof(IO_RESOURCE_LIST) * (ioList->AlternativeLists - 1) +
+           sizeof(IO_RESOURCE_DESCRIPTOR) * (ioResourceDescriptorCount);
+    newList = (PIO_RESOURCE_REQUIREMENTS_LIST)ExAllocatePool(PagedPool, size);
+    if (newList == NULL)
+    {
         ExFreePool(ioList);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -4949,16 +4724,19 @@ Return Value:
     newList->InterfaceType = CmList->List->InterfaceType;
     newList->BusNumber = CmList->List->BusNumber;
     newList->SlotNumber = ioList->SlotNumber;
-    if (ioList->AlternativeLists > 1) {
+    if (ioList->AlternativeLists > 1)
+    {
         *ExactMatch = FALSE;
     }
     newList->AlternativeLists = ioList->AlternativeLists;
     ioResourceList = ioList->List;
     newIoResourceList = newList->List;
-    while (--alternativeLists >= 0) {
+    while (--alternativeLists >= 0)
+    {
         ioResourceDescriptor = ioResourceList->Descriptors;
         ioResourceDescriptorEnd = ioResourceDescriptor + ioResourceList->Count;
-        if (ioResourceList->Version == 0xffff) {
+        if (ioResourceList->Version == 0xffff)
+        {
             ioResourceList = (PIO_RESOURCE_LIST)ioResourceDescriptorEnd;
             continue;
         }
@@ -4966,7 +4744,8 @@ Return Value:
         newIoResourceList->Revision = ioResourceList->Revision;
 
         newIoResourceDescriptor = newIoResourceList->Descriptors;
-        if (ioResourceDescriptor->Type != CmResourceTypeConfigData) {
+        if (ioResourceDescriptor->Type != CmResourceTypeConfigData)
+        {
             newIoResourceDescriptor->Option = IO_RESOURCE_PREFERRED;
             newIoResourceDescriptor->Type = CmResourceTypeConfigData;
             newIoResourceDescriptor->ShareDisposition = CmResourceShareShared;
@@ -4976,13 +4755,17 @@ Return Value:
             newIoResourceDescriptor->u.ConfigData.Priority = LCPRI_BOOTCONFIG;
             configDataDescriptor = newIoResourceDescriptor;
             newIoResourceDescriptor++;
-        } else {
+        }
+        else
+        {
             newList->ListSize -= sizeof(IO_RESOURCE_DESCRIPTOR);
             configDataDescriptor = newIoResourceDescriptor;
         }
 
-        while (ioResourceDescriptor < ioResourceDescriptorEnd) {
-            if (ioResourceDescriptor->Type != CmResourceTypeNull) {
+        while (ioResourceDescriptor < ioResourceDescriptorEnd)
+        {
+            if (ioResourceDescriptor->Type != CmResourceTypeNull)
+            {
                 *newIoResourceDescriptor = *ioResourceDescriptor;
                 newIoResourceDescriptor++;
             }
@@ -4991,15 +4774,15 @@ Return Value:
         newIoResourceList->Count = (ULONG)(newIoResourceDescriptor - newIoResourceList->Descriptors);
 
         //if (newIoResourceList->Count == (cmDescriptorCount + 1)) {
-        configDataDescriptor->u.ConfigData.Priority =  LCPRI_BOOTCONFIG;
+        configDataDescriptor->u.ConfigData.Priority = LCPRI_BOOTCONFIG;
         //}
 
         //
         // Move to next Io alternative list.
         //
 
-        newIoResourceList = (PIO_RESOURCE_LIST) newIoResourceDescriptor;
-        ioResourceList = (PIO_RESOURCE_LIST) ioResourceDescriptorEnd;
+        newIoResourceList = (PIO_RESOURCE_LIST)newIoResourceDescriptor;
+        ioResourceList = (PIO_RESOURCE_LIST)ioResourceDescriptorEnd;
     }
     ASSERT((PUCHAR)newIoResourceList == ((PUCHAR)newList + newList->ListSize));
 
@@ -5007,13 +4790,11 @@ Return Value:
     ExFreePool(ioList);
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-IopMergeFilteredResourceRequirementsList (
-    IN PIO_RESOURCE_REQUIREMENTS_LIST IoList1,
-    IN PIO_RESOURCE_REQUIREMENTS_LIST IoList2,
-    IN OUT PIO_RESOURCE_REQUIREMENTS_LIST *MergedList
-    )
+IopMergeFilteredResourceRequirementsList(IN PIO_RESOURCE_REQUIREMENTS_LIST IoList1,
+                                         IN PIO_RESOURCE_REQUIREMENTS_LIST IoList2,
+                                         IN OUT PIO_RESOURCE_REQUIREMENTS_LIST *MergedList)
 
 /*++
 
@@ -5051,19 +4832,24 @@ Return Value:
     // them is empty.
     //
 
-    if ((IoList1 == NULL || IoList1->AlternativeLists == 0) &&
-        (IoList2 == NULL || IoList2->AlternativeLists == 0)) {
+    if ((IoList1 == NULL || IoList1->AlternativeLists == 0) && (IoList2 == NULL || IoList2->AlternativeLists == 0))
+    {
         return status;
     }
     ioList = NULL;
-    if (IoList1 == NULL || IoList1->AlternativeLists == 0) {
+    if (IoList1 == NULL || IoList1->AlternativeLists == 0)
+    {
         ioList = IoList2;
-    } else if (IoList2 == NULL || IoList2->AlternativeLists == 0) {
+    }
+    else if (IoList2 == NULL || IoList2->AlternativeLists == 0)
+    {
         ioList = IoList1;
     }
-    if (ioList) {
-        newList = (PIO_RESOURCE_REQUIREMENTS_LIST) ExAllocatePool(PagedPool, ioList->ListSize);
-        if (newList == NULL) {
+    if (ioList)
+    {
+        newList = (PIO_RESOURCE_REQUIREMENTS_LIST)ExAllocatePool(PagedPool, ioList->ListSize);
+        if (newList == NULL)
+        {
             return STATUS_INSUFFICIENT_RESOURCES;
         }
         RtlCopyMemory(newList, ioList, ioList->ListSize);
@@ -5076,33 +4862,23 @@ Return Value:
     //
 
     size = IoList1->ListSize + IoList2->ListSize - FIELD_OFFSET(IO_RESOURCE_REQUIREMENTS_LIST, List);
-    newList = (PIO_RESOURCE_REQUIREMENTS_LIST) ExAllocatePool(
-                          PagedPool,
-                          size
-                          );
-    if (newList == NULL) {
+    newList = (PIO_RESOURCE_REQUIREMENTS_LIST)ExAllocatePool(PagedPool, size);
+    if (newList == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
     p = (PUCHAR)newList;
     RtlCopyMemory(p, IoList1, IoList1->ListSize);
     p += IoList1->ListSize;
-    RtlCopyMemory(p,
-                  &IoList2->List[0],
-                  size - IoList1->ListSize
-                  );
+    RtlCopyMemory(p, &IoList2->List[0], size - IoList1->ListSize);
     newList->ListSize = size;
     newList->AlternativeLists += IoList2->AlternativeLists;
     *MergedList = newList;
     return status;
-
 }
-
+
 NTSTATUS
-IopMergeCmResourceLists (
-    IN PCM_RESOURCE_LIST List1,
-    IN PCM_RESOURCE_LIST List2,
-    IN OUT PCM_RESOURCE_LIST *MergedList
-    )
+IopMergeCmResourceLists(IN PCM_RESOURCE_LIST List1, IN PCM_RESOURCE_LIST List2, IN OUT PCM_RESOURCE_LIST *MergedList)
 
 /*++
 
@@ -5140,21 +4916,26 @@ Return Value:
     // them is empty.
     //
 
-    if ((List1 == NULL || List1->Count == 0) &&
-        (List2 == NULL || List2->Count == 0)) {
+    if ((List1 == NULL || List1->Count == 0) && (List2 == NULL || List2->Count == 0))
+    {
         return status;
     }
 
     cmList = NULL;
-    if (List1 == NULL || List1->Count == 0) {
+    if (List1 == NULL || List1->Count == 0)
+    {
         cmList = List2;
-    } else if (List2 == NULL || List2->Count == 0) {
+    }
+    else if (List2 == NULL || List2->Count == 0)
+    {
         cmList = List1;
     }
-    if (cmList) {
-        size =  IopDetermineResourceListSize(cmList);
-        newList = (PCM_RESOURCE_LIST) ExAllocatePool(PagedPool, size);
-        if (newList == NULL) {
+    if (cmList)
+    {
+        size = IopDetermineResourceListSize(cmList);
+        newList = (PCM_RESOURCE_LIST)ExAllocatePool(PagedPool, size);
+        if (newList == NULL)
+        {
             return STATUS_INSUFFICIENT_RESOURCES;
         }
         RtlCopyMemory(newList, cmList, size);
@@ -5166,33 +4947,25 @@ Return Value:
     // Do real work...
     //
 
-    size1 =  IopDetermineResourceListSize(List1);
-    size2 =  IopDetermineResourceListSize(List2);
+    size1 = IopDetermineResourceListSize(List1);
+    size2 = IopDetermineResourceListSize(List2);
     size = size1 + size2;
-    newList = (PCM_RESOURCE_LIST) ExAllocatePool(
-                          PagedPool,
-                          size
-                          );
-    if (newList == NULL) {
+    newList = (PCM_RESOURCE_LIST)ExAllocatePool(PagedPool, size);
+    if (newList == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
     p = (PUCHAR)newList;
     RtlCopyMemory(p, List1, size1);
     p += size1;
-    RtlCopyMemory(p,
-                  &List2->List[0],
-                  size2 - FIELD_OFFSET(CM_RESOURCE_LIST, List)
-                  );
+    RtlCopyMemory(p, &List2->List[0], size2 - FIELD_OFFSET(CM_RESOURCE_LIST, List));
     newList->Count = List1->Count + List2->Count;
     *MergedList = newList;
     return status;
-
 }
-
+
 BOOLEAN
-IopIsLegacyDriver (
-    IN PDRIVER_OBJECT DriverObject
-    )
+IopIsLegacyDriver(IN PDRIVER_OBJECT DriverObject)
 
 /*++
 
@@ -5218,7 +4991,8 @@ Return Value:
     // If AddDevice entry is not empty it is a wdm driver
     //
 
-    if (DriverObject->DriverExtension->AddDevice) {
+    if (DriverObject->DriverExtension->AddDevice)
+    {
         return FALSE;
     }
 
@@ -5226,17 +5000,17 @@ Return Value:
     // Else if LEGACY flag is set in the driver object, it's a legacy driver.
     //
 
-    if (DriverObject->Flags & DRVO_LEGACY_DRIVER) {
+    if (DriverObject->Flags & DRVO_LEGACY_DRIVER)
+    {
         return TRUE;
-    } else {
+    }
+    else
+    {
         return FALSE;
     }
 }
-
-VOID
-IopDeleteLegacyKey(
-    IN PDRIVER_OBJECT DriverObject
-    )
+
+VOID IopDeleteLegacyKey(IN PDRIVER_OBJECT DriverObject)
 
 /*++
 
@@ -5271,28 +5045,20 @@ Return Value:
 
     PiLockPnpRegistry(FALSE);
 
-    status = IopOpenRegistryKeyEx( &enumHandle,
-                                   NULL,
-                                   &CmRegistryMachineSystemCurrentControlSetEnumName,
-                                   KEY_ALL_ACCESS
-                                   );
+    status = IopOpenRegistryKeyEx(&enumHandle, NULL, &CmRegistryMachineSystemCurrentControlSetEnumName, KEY_ALL_ACCESS);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto exit;
     }
 
-    status = PipGenerateMadeupNodeName( serviceName,
-                                        &deviceName
-                                        );
-    if (!NT_SUCCESS(status)) {
+    status = PipGenerateMadeupNodeName(serviceName, &deviceName);
+    if (!NT_SUCCESS(status))
+    {
         goto exit;
     }
 
-    length = _snwprintf(buffer,
-                        sizeof(buffer) / sizeof(WCHAR),
-                        L"%s\\%s",
-                        REGSTR_KEY_ROOTENUM,
-                        deviceName.Buffer);
+    length = _snwprintf(buffer, sizeof(buffer) / sizeof(WCHAR), L"%s\\%s", REGSTR_KEY_ROOTENUM, deviceName.Buffer);
 
     RtlFreeUnicodeString(&deviceName);
 
@@ -5303,64 +5069,56 @@ Return Value:
 
     RtlUpcaseUnicodeString(&deviceName, &deviceName, FALSE);
 
-    status = IopOpenRegistryKeyEx( &handle1,
-                                   enumHandle,
-                                   &deviceName,
-                                   KEY_ALL_ACCESS
-                                   );
+    status = IopOpenRegistryKeyEx(&handle1, enumHandle, &deviceName, KEY_ALL_ACCESS);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
-        deviceName.Buffer[deviceName.Length / sizeof(WCHAR)] =
-                   OBJ_NAME_PATH_SEPARATOR;
+        deviceName.Buffer[deviceName.Length / sizeof(WCHAR)] = OBJ_NAME_PATH_SEPARATOR;
         deviceName.Length += sizeof(WCHAR);
-        PiUlongToInstanceKeyUnicodeString(
-                                &instanceName,
-                                buffer + deviceName.Length / sizeof(WCHAR),
-                                sizeof(buffer) - deviceName.Length,
-                                0
-                                );
+        PiUlongToInstanceKeyUnicodeString(&instanceName, buffer + deviceName.Length / sizeof(WCHAR),
+                                          sizeof(buffer) - deviceName.Length, 0);
         deviceName.Length += instanceName.Length;
 
         //
         // deviceName is now the full InstancePath (ROOT\LEGACY_service\0000)
         // and instancePath points to the instance ID (0000)
         //
-        status = IopOpenRegistryKeyEx( &handle,
-                                       handle1,
-                                       &instanceName,
-                                       KEY_ALL_ACCESS
-                                       );
-        if (NT_SUCCESS(status)) {
+        status = IopOpenRegistryKeyEx(&handle, handle1, &instanceName, KEY_ALL_ACCESS);
+        if (NT_SUCCESS(status))
+        {
             legacy = 1;
-            status = IopGetRegistryValue (handle,
-                                          REGSTR_VALUE_LEGACY,
-                                          &keyValueInformation);
-            if (NT_SUCCESS(status)) {
-                if ((keyValueInformation->Type == REG_DWORD) &&
-                    (keyValueInformation->DataLength >= sizeof(ULONG))) {
+            status = IopGetRegistryValue(handle, REGSTR_VALUE_LEGACY, &keyValueInformation);
+            if (NT_SUCCESS(status))
+            {
+                if ((keyValueInformation->Type == REG_DWORD) && (keyValueInformation->DataLength >= sizeof(ULONG)))
+                {
                     legacy = *(PULONG)KEY_VALUE_DATA(keyValueInformation);
                 }
                 ExFreePool(keyValueInformation);
             }
-            if (legacy != 0) {
+            if (legacy != 0)
+            {
 
                 //
                 // We also want to delete the madeup device node
                 //
                 deletedPDO = FALSE;
                 deviceObject = IopDeviceObjectFromDeviceInstance(&deviceName);
-                if (deviceObject) {
+                if (deviceObject)
+                {
 
                     PDEVICE_NODE devNodex, devNodey;
 
                     deviceNode = (PDEVICE_NODE)deviceObject->DeviceObjectExtension->DeviceNode;
-                    if (deviceNode != NULL && (deviceNode->Flags & DNF_MADEUP)) {
+                    if (deviceNode != NULL && (deviceNode->Flags & DNF_MADEUP))
+                    {
 
                         //
                         // Now mark this one deleted.
                         //
-                        if (!PipDoesDevNodeHaveProblem(deviceNode)) {
+                        if (!PipDoesDevNodeHaveProblem(deviceNode))
+                        {
 
                             PipSetDevNodeState(deviceNode, DeviceNodeRemoved, NULL);
                             PipSetDevNodeProblem(deviceNode, CM_PROB_DEVICE_NOT_THERE);
@@ -5372,36 +5130,31 @@ Return Value:
 
                         IopReleaseDeviceResources(deviceNode, FALSE);
                         devNodex = deviceNode;
-                        while (devNodex) {
+                        while (devNodex)
+                        {
                             devNodey = devNodex;
                             devNodex = (PDEVICE_NODE)devNodey->OverUsed2.NextResourceDeviceNode;
                             devNodey->OverUsed2.NextResourceDeviceNode = NULL;
                             devNodey->OverUsed1.LegacyDeviceNode = NULL;
                         }
 
-                        deviceNode->Flags &= ~DNF_MADEUP;  // remove its boot config if any
+                        deviceNode->Flags &= ~DNF_MADEUP; // remove its boot config if any
                         IoDeleteDevice(deviceObject);
                         deletedPDO = TRUE;
                     }
-                    ObDereferenceObject(deviceObject);  // added via IopDeviceObjectFromDeviceInstance
+                    ObDereferenceObject(deviceObject); // added via IopDeviceObjectFromDeviceInstance
                 }
 
                 PiWstrToUnicodeString(&unicodeName, REGSTR_KEY_CONTROL);
-                status = IopOpenRegistryKeyEx( &handlex,
-                                               handle,
-                                               &unicodeName,
-                                               KEY_ALL_ACCESS
-                                               );
-                if (NT_SUCCESS(status)) {
+                status = IopOpenRegistryKeyEx(&handlex, handle, &unicodeName, KEY_ALL_ACCESS);
+                if (NT_SUCCESS(status))
+                {
                     ZwDeleteKey(handlex);
                 }
                 PiWstrToUnicodeString(&unicodeName, REGSTR_KEY_LOG_CONF);
-                status = IopOpenRegistryKeyEx( &handlex,
-                                               handle,
-                                               &unicodeName,
-                                               KEY_ALL_ACCESS
-                                               );
-                if (NT_SUCCESS(status)) {
+                status = IopOpenRegistryKeyEx(&handlex, handle, &unicodeName, KEY_ALL_ACCESS);
+                if (NT_SUCCESS(status))
+                {
                     ZwDeleteKey(handlex);
                 }
 
@@ -5412,33 +5165,38 @@ Return Value:
                 // delete it.  Because, it also cleans up related value names in other
                 // keys.
                 //
-                if (deletedPDO) {
+                if (deletedPDO)
+                {
 
                     IopCleanupDeviceRegistryValues(&deviceName);
                 }
                 ZwDeleteKey(handle);
                 ZwDeleteKey(handle1);
-            } else {
+            }
+            else
+            {
                 ZwClose(handle);
                 ZwClose(handle1);
                 ZwClose(enumHandle);
             }
-        } else {
+        }
+        else
+        {
             ZwClose(handle1);
             ZwClose(enumHandle);
         }
-    } else {
+    }
+    else
+    {
         ZwClose(enumHandle);
     }
 exit:
     PiUnlockPnpRegistry();
     return;
 }
-
+
 NTSTATUS
-IopQueryAndSaveDeviceNodeCapabilities (
-    IN PDEVICE_NODE DeviceNode
-    )
+IopQueryAndSaveDeviceNodeCapabilities(IN PDEVICE_NODE DeviceNode)
 
 /*++
 
@@ -5470,19 +5228,17 @@ Return Value:
     //
 
     status = PipQueryDeviceCapabilities(DeviceNode, &capabilities);
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         return status;
     }
 
-    return IopSaveDeviceCapabilities(DeviceNode,&capabilities);
+    return IopSaveDeviceCapabilities(DeviceNode, &capabilities);
 }
-
+
 NTSTATUS
-IopSaveDeviceCapabilities (
-    IN PDEVICE_NODE DeviceNode,
-    IN PDEVICE_CAPABILITIES Capabilities
-    )
+IopSaveDeviceCapabilities(IN PDEVICE_NODE DeviceNode, IN PDEVICE_CAPABILITIES Capabilities)
 
 /*++
 
@@ -5518,12 +5274,14 @@ Return Value:
     // Open the device instance key
     //
     status = IopDeviceObjectToDeviceInstance(DeviceNode->PhysicalDeviceObject, &handle, KEY_ALL_ACCESS);
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         return status;
     }
 
-    if (DeviceNode->Flags & DNF_HAS_BOOT_CONFIG) {
+    if (DeviceNode->Flags & DNF_HAS_BOOT_CONFIG)
+    {
         Capabilities->SurpriseRemovalOK = 0;
     }
     //
@@ -5531,49 +5289,30 @@ Return Value:
     // public structure, so it shouldn't ever change, but paranoia is a good
     // thing...
     //
-    ASSERT((FIELD_OFFSET(DEVICE_CAPABILITIES, Address) -
-            FIELD_OFFSET(DEVICE_CAPABILITIES, Version) -
-            FIELD_SIZE  (DEVICE_CAPABILITIES, Version)) == sizeof(ULONG));
+    ASSERT((FIELD_OFFSET(DEVICE_CAPABILITIES, Address) - FIELD_OFFSET(DEVICE_CAPABILITIES, Version) -
+            FIELD_SIZE(DEVICE_CAPABILITIES, Version)) == sizeof(ULONG));
 
-    DeviceNode->CapabilityFlags =
-        *((PULONG) (((PUCHAR) Capabilities) +
-        FIELD_OFFSET(DEVICE_CAPABILITIES, Version) +
-        FIELD_SIZE(DEVICE_CAPABILITIES, Version)));
+    DeviceNode->CapabilityFlags = *((PULONG)(((PUCHAR)Capabilities) + FIELD_OFFSET(DEVICE_CAPABILITIES, Version) +
+                                             FIELD_SIZE(DEVICE_CAPABILITIES, Version)));
 
-    value =    (Capabilities->LockSupported)          |
-               (Capabilities->EjectSupported    << 1) |
-               (Capabilities->WarmEjectSupported<< 1) |
-               (Capabilities->Removable         << 2) |
-               (Capabilities->DockDevice        << 3) |
-               (Capabilities->UniqueID          << 4) |
-               (Capabilities->SilentInstall     << 5) |
-               (Capabilities->RawDeviceOK       << 6) |
-               (Capabilities->SurpriseRemovalOK << 7) |
-               (Capabilities->HardwareDisabled  << 8) |
-               (Capabilities->NonDynamic        << 9);
+    value = (Capabilities->LockSupported) | (Capabilities->EjectSupported << 1) |
+            (Capabilities->WarmEjectSupported << 1) | (Capabilities->Removable << 2) | (Capabilities->DockDevice << 3) |
+            (Capabilities->UniqueID << 4) | (Capabilities->SilentInstall << 5) | (Capabilities->RawDeviceOK << 6) |
+            (Capabilities->SurpriseRemovalOK << 7) | (Capabilities->HardwareDisabled << 8) |
+            (Capabilities->NonDynamic << 9);
 
     PiWstrToUnicodeString(&unicodeName, REGSTR_VALUE_CAPABILITIES);
-    status = ZwSetValueKey(
-                  handle,
-                  &unicodeName,
-                  TITLE_INDEX_VALUE,
-                  REG_DWORD,
-                  &value,
-                  sizeof(value)
-                  );
+    status = ZwSetValueKey(handle, &unicodeName, TITLE_INDEX_VALUE, REG_DWORD, &value, sizeof(value));
 
     PiWstrToUnicodeString(&unicodeName, REGSTR_VALUE_UI_NUMBER);
     value = Capabilities->UINumber;
-    if(value != (ULONG)-1) {
+    if (value != (ULONG)-1)
+    {
 
-        ZwSetValueKey(handle,
-                      &unicodeName,
-                      TITLE_INDEX_VALUE,
-                      REG_DWORD,
-                      &value,
-                      sizeof(value)
-                      );
-    } else {
+        ZwSetValueKey(handle, &unicodeName, TITLE_INDEX_VALUE, REG_DWORD, &value, sizeof(value));
+    }
+    else
+    {
 
         ZwDeleteValueKey(handle, &unicodeName);
     }
@@ -5582,24 +5321,22 @@ Return Value:
 
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-IopRestartDeviceNode(
-    IN PDEVICE_NODE DeviceNode
-    )
+IopRestartDeviceNode(IN PDEVICE_NODE DeviceNode)
 {
     PAGED_CODE();
 
     PpDevNodeLockTree(PPL_TREEOP_BLOCK_READS_FROM_ALLOW);
 
-    ASSERT(DeviceNode->State == DeviceNodeRemoved ||
-           DeviceNode->State == DeviceNodeInitialized );
+    ASSERT(DeviceNode->State == DeviceNodeRemoved || DeviceNode->State == DeviceNodeInitialized);
 
     ASSERT(!PipDoesDevNodeHaveProblem(DeviceNode));
 
     ASSERT(DeviceNode->Flags & DNF_ENUMERATED);
 
-    if (!(DeviceNode->Flags & DNF_ENUMERATED)) {
+    if (!(DeviceNode->Flags & DNF_ENUMERATED))
+    {
 
         PpDevNodeUnlockTree(PPL_TREEOP_BLOCK_READS_FROM_ALLOW);
         return STATUS_UNSUCCESSFUL;
@@ -5610,11 +5347,13 @@ IopRestartDeviceNode(
 
 #if DBG_SCOPE
     DeviceNode->FailureStatus = 0;
-    if (DeviceNode->PreviousResourceList) {
+    if (DeviceNode->PreviousResourceList)
+    {
         ExFreePool(DeviceNode->PreviousResourceList);
         DeviceNode->PreviousResourceList = NULL;
     }
-    if (DeviceNode->PreviousResourceRequirements) {
+    if (DeviceNode->PreviousResourceRequirements)
+    {
         ExFreePool(DeviceNode->PreviousResourceRequirements);
         DeviceNode->PreviousResourceRequirements = NULL;
     }
@@ -5632,30 +5371,30 @@ IopRestartDeviceNode(
     // remove.
     //
 
-    if (DeviceNode->State != DeviceNodeUninitialized) {
+    if (DeviceNode->State != DeviceNodeUninitialized)
+    {
 
-        DeviceNode->Flags &= ~(DNF_NO_RESOURCE_REQUIRED |
-                               DNF_RESOURCE_REQUIREMENTS_CHANGED);
+        DeviceNode->Flags &= ~(DNF_NO_RESOURCE_REQUIRED | DNF_RESOURCE_REQUIREMENTS_CHANGED);
 
-        if (DeviceNode->ServiceName.Length != 0) {
+        if (DeviceNode->ServiceName.Length != 0)
+        {
             ExFreePool(DeviceNode->ServiceName.Buffer);
             PiWstrToUnicodeString(&DeviceNode->ServiceName, NULL);
         }
 
-        if (DeviceNode->ResourceRequirements != NULL) {
+        if (DeviceNode->ResourceRequirements != NULL)
+        {
             ExFreePool(DeviceNode->ResourceRequirements);
             DeviceNode->ResourceRequirements = NULL;
             DeviceNode->Flags &= ~DNF_RESOURCE_REQUIREMENTS_NEED_FILTERED;
         }
     }
 
-    ASSERT(DeviceNode->ServiceName.Length == 0 &&
-           DeviceNode->ServiceName.MaximumLength == 0 &&
+    ASSERT(DeviceNode->ServiceName.Length == 0 && DeviceNode->ServiceName.MaximumLength == 0 &&
            DeviceNode->ServiceName.Buffer == NULL);
 
-    ASSERT(!(DeviceNode->Flags &
-           ~(DNF_MADEUP | DNF_ENUMERATED | DNF_HAS_BOOT_CONFIG | DNF_IDS_QUERIED |
-             DNF_BOOT_CONFIG_RESERVED | DNF_NO_RESOURCE_REQUIRED)));
+    ASSERT(!(DeviceNode->Flags & ~(DNF_MADEUP | DNF_ENUMERATED | DNF_HAS_BOOT_CONFIG | DNF_IDS_QUERIED |
+                                   DNF_BOOT_CONFIG_RESERVED | DNF_NO_RESOURCE_REQUIRED)));
 
     PipSetDevNodeState(DeviceNode, DeviceNodeUninitialized, NULL);
 
@@ -5663,13 +5402,9 @@ IopRestartDeviceNode(
 
     return STATUS_SUCCESS;
 }
-
+
 BOOLEAN
-IopDeleteKeyRecursiveCallback(
-    IN HANDLE KeyHandle,
-    IN PUNICODE_STRING KeyName,
-    IN OUT PVOID Context
-    )
+IopDeleteKeyRecursiveCallback(IN HANDLE KeyHandle, IN PUNICODE_STRING KeyName, IN OUT PVOID Context)
 /*++
 
 Routine Description:
@@ -5707,24 +5442,17 @@ Return Value:
     //
     // delete any subkeys, recursively if necessary
     //
-    status = PipApplyFunctionToSubKeys(
-        KeyHandle,
-        NULL,
-        KEY_ALL_ACCESS,
-        FUNCTIONSUBKEY_FLAG_IGNORE_NON_CRITICAL_ERRORS |
-        FUNCTIONSUBKEY_FLAG_DELETE_SUBKEYS,
-        IopDeleteKeyRecursiveCallback,
-        Context);
+    status =
+        PipApplyFunctionToSubKeys(KeyHandle, NULL, KEY_ALL_ACCESS,
+                                  FUNCTIONSUBKEY_FLAG_IGNORE_NON_CRITICAL_ERRORS | FUNCTIONSUBKEY_FLAG_DELETE_SUBKEYS,
+                                  IopDeleteKeyRecursiveCallback, Context);
 
     *((NTSTATUS *)Context) = status;
     return (BOOLEAN)NT_SUCCESS(status);
 }
-
+
 NTSTATUS
-IopDeleteKeyRecursive(
-    IN HANDLE ParentKey OPTIONAL,
-    IN PWCHAR KeyName
-    )
+IopDeleteKeyRecursive(IN HANDLE ParentKey OPTIONAL, IN PWCHAR KeyName)
 /*++
 
 Routine Description:
@@ -5744,9 +5472,9 @@ Return Value:
 
 --*/
 {
-    NTSTATUS       status = STATUS_SUCCESS;
-    BOOLEAN        result;
-    HANDLE         hKey;
+    NTSTATUS status = STATUS_SUCCESS;
+    BOOLEAN result;
+    HANDLE hKey;
     UNICODE_STRING unicodeKeyName;
 
     PAGED_CODE();
@@ -5755,19 +5483,15 @@ Return Value:
     // Attempt to open the key name we were given
     //
     RtlInitUnicodeString(&unicodeKeyName, KeyName);
-    status = IopOpenRegistryKeyEx( &hKey,
-                                   ParentKey,
-                                   &unicodeKeyName,
-                                   KEY_ALL_ACCESS
-                                   );
-    if (NT_SUCCESS(status)) {
+    status = IopOpenRegistryKeyEx(&hKey, ParentKey, &unicodeKeyName, KEY_ALL_ACCESS);
+    if (NT_SUCCESS(status))
+    {
         //
         // Recusively delete all subkeys
         //
-        result = IopDeleteKeyRecursiveCallback(hKey,
-                                               &unicodeKeyName,
-                                               (PVOID)&status);
-        if (result) {
+        result = IopDeleteKeyRecursiveCallback(hKey, &unicodeKeyName, (PVOID)&status);
+        if (result)
+        {
             //
             // It is safe to delete this key
             //
@@ -5778,14 +5502,10 @@ Return Value:
 
     return status;
 }
-
+
 BOOLEAN
-PiRegSzToString(
-    IN  PWCHAR RegSzData,
-    IN  ULONG  RegSzLength,
-    OUT PULONG StringLength  OPTIONAL,
-    OUT PWSTR  *CopiedString OPTIONAL
-    )
+PiRegSzToString(IN PWCHAR RegSzData, IN ULONG RegSzLength, OUT PULONG StringLength OPTIONAL,
+                OUT PWSTR *CopiedString OPTIONAL)
 
 /*++
 
@@ -5836,29 +5556,34 @@ Return Value:
     //
     endOfRegSzData = (curPos = RegSzData) + CB_TO_CWC(RegSzLength);
 
-    while ((curPos < endOfRegSzData) && *curPos) {
+    while ((curPos < endOfRegSzData) && *curPos)
+    {
         curPos++;
     }
 
     actualStringLength = (ULONG)((PUCHAR)curPos - (PUCHAR)RegSzData);
 
-    if (ARGUMENT_PRESENT(StringLength)) {
+    if (ARGUMENT_PRESENT(StringLength))
+    {
         *StringLength = (ULONG)((PUCHAR)curPos - (PUCHAR)RegSzData);
     }
 
-    if (ARGUMENT_PRESENT(CopiedString)) {
+    if (ARGUMENT_PRESENT(CopiedString))
+    {
         //
         // Allocate memory for the string (+ terminating NULL)
         //
         *CopiedString = (PWSTR)ExAllocatePool(PagedPool, actualStringLength + sizeof(UNICODE_NULL));
-        if (*CopiedString == NULL) {
+        if (*CopiedString == NULL)
+        {
             return FALSE;
         }
 
         //
         // Copy the string and NULL-terminate it.
         //
-        if (actualStringLength) {
+        if (actualStringLength)
+        {
             RtlCopyMemory(*CopiedString, RegSzData, actualStringLength);
         }
 
@@ -5869,11 +5594,7 @@ Return Value:
 }
 
 ULONG
-IopDebugPrint (
-    IN ULONG    Level,
-    IN PCHAR    Format,
-    ...
-    )
+IopDebugPrint(IN ULONG Level, IN PCHAR Format, ...)
 {
     va_list ap;
 
@@ -5888,41 +5609,41 @@ IopDebugPrint (
 
 
 PCHAR
-PpConvertMultiSzWstrToStr(
-    IN PWCHAR Source,
-    IN ULONG Length
-    )
+PpConvertMultiSzWstrToStr(IN PWCHAR Source, IN ULONG Length)
 {
     NTSTATUS status;
-    PWCHAR  s, sourceEnd;
-    PCHAR   dest, d;
+    PWCHAR s, sourceEnd;
+    PCHAR dest, d;
     ANSI_STRING ansiString;
     UNICODE_STRING unicodeString;
 
     PAGED_CODE();
 
-    if (Length <= 2) {
+    if (Length <= 2)
+    {
 
         return NULL;
     }
 
 #if DBG
-    for (s = Source; *s != UNICODE_NULL; s += wcslen(s) + 1) {
+    for (s = Source; *s != UNICODE_NULL; s += wcslen(s) + 1)
+    {
     }
     ASSERT(Length == (ULONG)(s - Source) + 1);
 #endif
 
     dest = ExAllocatePool(PagedPool, Length * sizeof(CHAR));
-    if (dest) {
+    if (dest)
+    {
 
         s = Source;
-        for (sourceEnd = s + Length, d = dest;
-             s < sourceEnd && *s != UNICODE_NULL;
-             s += wcslen(s) + 1) {
+        for (sourceEnd = s + Length, d = dest; s < sourceEnd && *s != UNICODE_NULL; s += wcslen(s) + 1)
+        {
 
             RtlInitUnicodeString(&unicodeString, s);
             status = RtlUnicodeStringToAnsiString(&ansiString, &unicodeString, TRUE);
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
 
                 ExFreePool(dest);
                 return NULL;
@@ -5931,7 +5652,8 @@ PpConvertMultiSzWstrToStr(
             d += ansiString.Length + 1;
             RtlFreeAnsiString(&ansiString);
         }
-        if (s < sourceEnd) {
+        if (s < sourceEnd)
+        {
 
             *d = '\0';
         }
@@ -5942,10 +5664,7 @@ PpConvertMultiSzWstrToStr(
 
 
 PWCHAR
-PpConvertMultiSzStrToWstr(
-    IN PCHAR Source,
-    IN ULONG Length
-    )
+PpConvertMultiSzStrToWstr(IN PCHAR Source, IN ULONG Length)
 {
     NTSTATUS status;
     PCHAR s, sourceEnd;
@@ -5955,28 +5674,31 @@ PpConvertMultiSzStrToWstr(
 
     PAGED_CODE();
 
-    if (Length <= 2) {
+    if (Length <= 2)
+    {
 
         return NULL;
     }
 
 #if DBG
-    for (s = Source; *s != '\0'; s += strlen(s) + 1) {
+    for (s = Source; *s != '\0'; s += strlen(s) + 1)
+    {
     }
     ASSERT(Length == (ULONG)(s - Source) + 1);
 #endif
 
     dest = ExAllocatePool(PagedPool, Length * sizeof(WCHAR));
-    if (dest) {
+    if (dest)
+    {
 
         s = Source;
-        for (sourceEnd = s + Length, d = dest;
-             s < sourceEnd && *s != '\0';
-             s += strlen(s) + 1) {
+        for (sourceEnd = s + Length, d = dest; s < sourceEnd && *s != '\0'; s += strlen(s) + 1)
+        {
 
             RtlInitAnsiString(&ansiString, s);
             status = RtlAnsiStringToUnicodeString(&unicodeString, &ansiString, TRUE);
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
 
                 ExFreePool(dest);
                 return NULL;
@@ -5985,7 +5707,8 @@ PpConvertMultiSzStrToWstr(
             d += (unicodeString.Length + sizeof(UNICODE_NULL)) / sizeof(WCHAR);
             RtlFreeUnicodeString(&unicodeString);
         }
-        if (s < sourceEnd) {
+        if (s < sourceEnd)
+        {
 
             *d = UNICODE_NULL;
         }
@@ -5995,39 +5718,27 @@ PpConvertMultiSzStrToWstr(
 }
 
 
-VOID
-PpSystemHiveLimitCallback(
-    PSYSTEM_HIVE_LIMITS HiveLimits,
-    ULONG Level
-    )
+VOID PpSystemHiveLimitCallback(PSYSTEM_HIVE_LIMITS HiveLimits, ULONG Level)
 {
     PAGED_CODE();
 
-    if (Level >= HiveLimits->High) {
+    if (Level >= HiveLimits->High)
+    {
 
         PpSystemHiveTooLarge = TRUE;
-
-    } else {
+    }
+    else
+    {
 
         ASSERT(Level <= HiveLimits->Low);
         PpSystemHiveTooLarge = FALSE;
         PpResetProblemDevices(IopRootDeviceNode, CM_PROB_REGISTRY_TOO_LARGE);
-        PipRequestDeviceAction(
-            IopRootDeviceNode->PhysicalDeviceObject,
-            RestartEnumeration,
-            FALSE,
-            0,
-            NULL,
-            NULL
-            );
-
+        PipRequestDeviceAction(IopRootDeviceNode->PhysicalDeviceObject, RestartEnumeration, FALSE, 0, NULL, NULL);
     }
 }
 
 NTSTATUS
-PpBusTypeGuidInitialize(
-    VOID
-    )
+PpBusTypeGuidInitialize(VOID)
 
 /*++
 
@@ -6050,7 +5761,8 @@ Return Value:
 
     PpBusTypeGuidCountMax = 16;
     PpBusTypeGuidArray = ExAllocatePool(PagedPool, sizeof(GUID) * PpBusTypeGuidCountMax);
-    if (PpBusTypeGuidArray == NULL) {
+    if (PpBusTypeGuidArray == NULL)
+    {
 
         PpBusTypeGuidCountMax = 0;
         return STATUS_INSUFFICIENT_RESOURCES;
@@ -6063,9 +5775,7 @@ Return Value:
 }
 
 USHORT
-PpBusTypeGuidGetIndex(
-    IN LPGUID BusTypeGuid
-    )
+PpBusTypeGuidGetIndex(IN LPGUID BusTypeGuid)
 
 /*++
 
@@ -6093,9 +5803,11 @@ Return Value:
     //
     // First look it up.
     //
-    for (i = 0; i < PpBusTypeGuidCount; i++) {
+    for (i = 0; i < PpBusTypeGuidCount; i++)
+    {
 
-        if (IopCompareGuid(BusTypeGuid, &PpBusTypeGuidArray[i])) {
+        if (IopCompareGuid(BusTypeGuid, &PpBusTypeGuidArray[i]))
+        {
 
             break;
         }
@@ -6103,17 +5815,20 @@ Return Value:
     //
     // If the GUID is not in the table, add it.
     //
-    if (i == PpBusTypeGuidCount) {
+    if (i == PpBusTypeGuidCount)
+    {
         //
         // Grow the table if needed.
-        // 
-        if (i == PpBusTypeGuidCountMax) {
-            //  
-            // We grow the table one entry at a time. This should not be a 
+        //
+        if (i == PpBusTypeGuidCountMax)
+        {
+            //
+            // We grow the table one entry at a time. This should not be a
             // problem since this should not happen often.
             //
-            p  = ExAllocatePool(PagedPool, (i + 1) * sizeof(GUID));
-            if (p) {
+            p = ExAllocatePool(PagedPool, (i + 1) * sizeof(GUID));
+            if (p)
+            {
                 //
                 // Copy the old table.
                 //
@@ -6122,13 +5837,15 @@ Return Value:
                 // Update global data.
                 //
                 PpBusTypeGuidCountMax++;
-                if (PpBusTypeGuidArray) {
+                if (PpBusTypeGuidArray)
+                {
 
                     ExFreePool(PpBusTypeGuidArray);
                 }
                 PpBusTypeGuidArray = p;
-
-            } else {
+            }
+            else
+            {
                 //
                 // Return invalid index on failure.
                 //
@@ -6138,7 +5855,8 @@ Return Value:
         //
         // Copy the new entry on success.
         //
-        if (i != (ULONG)-1) {
+        if (i != (ULONG)-1)
+        {
             //
             // Copy the new entry.
             //
@@ -6156,10 +5874,7 @@ Return Value:
 }
 
 NTSTATUS
-PpBusTypeGuidGet(
-    IN USHORT Index,
-    IN OUT LPGUID BusTypeGuid
-    )
+PpBusTypeGuidGet(IN USHORT Index, IN OUT LPGUID BusTypeGuid)
 
 /*++
 
@@ -6186,11 +5901,14 @@ Return Value:
 
     ExAcquireFastMutex(&PpBusTypeGuidLock);
 
-    if (Index < PpBusTypeGuidCount) {
+    if (Index < PpBusTypeGuidCount)
+    {
 
         RtlCopyMemory(BusTypeGuid, &PpBusTypeGuidArray[Index], sizeof(GUID));
         status = STATUS_SUCCESS;
-    } else {
+    }
+    else
+    {
 
         status = STATUS_OBJECT_NAME_NOT_FOUND;
     }
@@ -6201,13 +5919,8 @@ Return Value:
 }
 
 ULONG
-PiFixupID(
-    IN PWCHAR ID,
-    IN ULONG MaxIDLength,
-    IN BOOLEAN Multi,
-    IN ULONG AllowedSeparators,
-    IN PUNICODE_STRING LogString OPTIONAL
-    )
+PiFixupID(IN PWCHAR ID, IN ULONG MaxIDLength, IN BOOLEAN Multi, IN ULONG AllowedSeparators,
+          IN PUNICODE_STRING LogString OPTIONAL)
 
 /*++
 
@@ -6250,11 +5963,14 @@ Return Value:
     //
     separators = 0;
     lastNull = NULL;
-    for(p = ID, pMax = p + MaxIDLength; p < pMax; p++) {
+    for (p = ID, pMax = p + MaxIDLength; p < pMax; p++)
+    {
 
-        if(*p == UNICODE_NULL) {
+        if (*p == UNICODE_NULL)
+        {
 
-            if(Multi == FALSE || (lastNull && p == lastNull + 1)) {
+            if (Multi == FALSE || (lastNull && p == lastNull + 1))
+            {
 
                 break;
             }
@@ -6262,30 +5978,32 @@ Return Value:
             lastNull = p;
             continue;
         }
-        if (*p == L' ') {
+        if (*p == L' ')
+        {
 
             *p = L'_';
-        } else if ((*p < L' ')  || (*p > (WCHAR)0x7F) || (*p == L',')) {
+        }
+        else if ((*p < L' ') || (*p > (WCHAR)0x7F) || (*p == L','))
+        {
 
-            IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL,
-                         "PiFixupID: ID at %p has invalid character %02X\n",
-                         ID,
-                         *p));
+            IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL, "PiFixupID: ID at %p has invalid character %02X\n", ID, *p));
 
-            if(LogString) {
+            if (LogString)
+            {
 
                 PiWstrToUnicodeString(&reason, L"invalid character");
                 PpLogEvent(LogString, &reason, STATUS_PNP_INVALID_ID, p, sizeof(WCHAR));
             }
 
             return 0;
-        } else if ((*p == OBJ_NAME_PATH_SEPARATOR && ++separators > AllowedSeparators)) {
+        }
+        else if ((*p == OBJ_NAME_PATH_SEPARATOR && ++separators > AllowedSeparators))
+        {
 
-            IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL,
-                         "PiFixupID: ID at %p has too many (%d) separators\n",
-                         ID,
-                         separators));
-            if(LogString) {
+            IopDbgPrint(
+                (IOP_ENUMERATION_ERROR_LEVEL, "PiFixupID: ID at %p has too many (%d) separators\n", ID, separators));
+            if (LogString)
+            {
 
                 PiWstrToUnicodeString(&reason, L"too many separators");
                 PpLogEvent(LogString, &reason, STATUS_PNP_INVALID_ID, &separators, sizeof(ULONG));
@@ -6293,13 +6011,14 @@ Return Value:
             return 0;
         }
     }
-    if(p >= pMax || (AllowedSeparators != (ULONG)-1 && separators != AllowedSeparators)) {
+    if (p >= pMax || (AllowedSeparators != (ULONG)-1 && separators != AllowedSeparators))
+    {
 
         IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL,
-                     "PiFixupID: ID at %p not terminated, or too long or has invalid number (%d) of separators\n",
-                     ID,
+                     "PiFixupID: ID at %p not terminated, or too long or has invalid number (%d) of separators\n", ID,
                      separators));
-        if(LogString) {
+        if (LogString)
+        {
 
             PiWstrToUnicodeString(&reason, L"not terminated, too long or invalid number of separators");
             PpLogEvent(LogString, &reason, STATUS_PNP_INVALID_ID, NULL, 0);
@@ -6311,11 +6030,7 @@ Return Value:
 }
 
 NTSTATUS
-PpQueryDeviceID(
-    IN PDEVICE_NODE DeviceNode,
-    OUT PWCHAR *BusID,
-    OUT PWCHAR *DeviceID
-    )
+PpQueryDeviceID(IN PDEVICE_NODE DeviceNode, OUT PWCHAR *BusID, OUT PWCHAR *DeviceID)
 
 /*++
 
@@ -6347,10 +6062,11 @@ Return Value:
     PAGED_CODE();
 
     *BusID = NULL;
-    *DeviceID= NULL;
+    *DeviceID = NULL;
 
     status = PpQueryID(DeviceNode, BusQueryDeviceID, &id, &idLength);
-    if(NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         ASSERT(id && idLength);
 
@@ -6361,8 +6077,9 @@ Return Value:
 
         *separator = UNICODE_NULL;
         *DeviceID = separator + 1;
-
-    } else {
+    }
+    else
+    {
 
         ASSERT(id == NULL && idLength == 0);
     }
@@ -6371,12 +6088,7 @@ Return Value:
 }
 
 NTSTATUS
-PpQueryID(
-    IN PDEVICE_NODE DeviceNode,
-    IN BUS_QUERY_ID_TYPE IDType,
-    OUT PWCHAR *ID,
-    OUT PULONG IDLength
-    )
+PpQueryID(IN PDEVICE_NODE DeviceNode, IN BUS_QUERY_ID_TYPE IDType, OUT PWCHAR *ID, OUT PULONG IDLength)
 
 /*++
 
@@ -6408,75 +6120,82 @@ Return Value:
 
     PAGED_CODE();
 
-    ASSERT(IDType == BusQueryDeviceID || IDType == BusQueryInstanceID || 
-          IDType == BusQueryHardwareIDs || IDType == BusQueryCompatibleIDs);
+    ASSERT(IDType == BusQueryDeviceID || IDType == BusQueryInstanceID || IDType == BusQueryHardwareIDs ||
+           IDType == BusQueryCompatibleIDs);
 
     *IDLength = 0;
     status = PpIrpQueryID(DeviceNode->PhysicalDeviceObject, IDType, ID);
-    if(NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
-        switch(IDType) {
+        switch (IDType)
+        {
 
-            case BusQueryDeviceID:
+        case BusQueryDeviceID:
 
-                *IDLength = PiFixupID(*ID, MAX_DEVICE_ID_LEN, FALSE, 1, &DeviceNode->Parent->ServiceName);
-                break;
+            *IDLength = PiFixupID(*ID, MAX_DEVICE_ID_LEN, FALSE, 1, &DeviceNode->Parent->ServiceName);
+            break;
 
-            case BusQueryInstanceID:
+        case BusQueryInstanceID:
 
-                *IDLength = PiFixupID(*ID, MAX_DEVICE_ID_LEN, FALSE, 0, &DeviceNode->Parent->ServiceName);
-                break;
+            *IDLength = PiFixupID(*ID, MAX_DEVICE_ID_LEN, FALSE, 0, &DeviceNode->Parent->ServiceName);
+            break;
 
-            case BusQueryHardwareIDs:
-            case BusQueryCompatibleIDs:
+        case BusQueryHardwareIDs:
+        case BusQueryCompatibleIDs:
 
-                *IDLength = PiFixupID(*ID, MAX_DEVICE_ID_LEN, TRUE, (ULONG)-1, &DeviceNode->Parent->ServiceName);
-                break;
+            *IDLength = PiFixupID(*ID, MAX_DEVICE_ID_LEN, TRUE, (ULONG)-1, &DeviceNode->Parent->ServiceName);
+            break;
 
-            default:
+        default:
 
-                *IDLength = 0;
-                break;
+            *IDLength = 0;
+            break;
         }
         (*IDLength) *= sizeof(WCHAR);
-        if(*IDLength == 0) {
+        if (*IDLength == 0)
+        {
 
             status = STATUS_PNP_INVALID_ID;
         }
     }
 
-    if(!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
-        if (status == STATUS_PNP_INVALID_ID || IDType == BusQueryDeviceID) {
+        if (status == STATUS_PNP_INVALID_ID || IDType == BusQueryDeviceID)
+        {
 
             PipSetDevNodeProblem(DeviceNode, CM_PROB_INVALID_DATA);
-            if ((DeviceNode->Parent->Flags & DNF_CHILD_WITH_INVALID_ID) == 0) {
+            if ((DeviceNode->Parent->Flags & DNF_CHILD_WITH_INVALID_ID) == 0)
+            {
 
                 DeviceNode->Parent->Flags |= DNF_CHILD_WITH_INVALID_ID;
                 PpSetInvalidIDEvent(&DeviceNode->Parent->InstancePath);
             }
         }
-        if (status == STATUS_PNP_INVALID_ID) {
+        if (status == STATUS_PNP_INVALID_ID)
+        {
 
-            IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL,
-                         "PpQueryID: Bogus ID returned by %wZ\n",
+            IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL, "PpQueryID: Bogus ID returned by %wZ\n",
                          &DeviceNode->Parent->ServiceName));
             ASSERT(status != STATUS_PNP_INVALID_ID);
-
-        } else if (IDType == BusQueryDeviceID) {
+        }
+        else if (IDType == BusQueryDeviceID)
+        {
             //
             // DeviceID is not optional.
             //
             PiWstrToUnicodeString(&reason, L"failed IRP_MN_QUERY_ID-BusQueryDeviceID");
             PpLogEvent(&DeviceNode->Parent->ServiceName, &reason, status, NULL, 0);
 
-            IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL,
-                         "PpIrpQueryID: Failed by %wZ, status = %x\n",
+            IopDbgPrint((IOP_ENUMERATION_ERROR_LEVEL, "PpIrpQueryID: Failed by %wZ, status = %x\n",
                          &DeviceNode->Parent->ServiceName, status));
             ASSERT(IDType != BusQueryDeviceID);
         }
 
-        if(*ID) {
+        if (*ID)
+        {
 
             ExFreePool(*ID);
             *ID = NULL;
@@ -6486,4 +6205,3 @@ Return Value:
 
     return status;
 }
-

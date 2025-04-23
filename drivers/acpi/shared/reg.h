@@ -29,38 +29,18 @@ Revision History:
 #ifndef _REG_H_
 #define _REG_H_
 
-    PUCHAR
-    ACPIRegLocalCopyString(
-        IN  PUCHAR  Destination,
-        IN  PUCHAR  Source,
-        IN  ULONG   MaxLength
-        );
+PUCHAR
+ACPIRegLocalCopyString(IN PUCHAR Destination, IN PUCHAR Source, IN ULONG MaxLength);
 
-    VOID
-    ACPIRegDumpAcpiTable (
-        PSZ                     pszName,
-        PVOID                   Table,
-        ULONG                   Length,
-        PDESCRIPTION_HEADER     Header
-        );
+VOID ACPIRegDumpAcpiTable(PSZ pszName, PVOID Table, ULONG Length, PDESCRIPTION_HEADER Header);
 
-    VOID
-    ACPIRegDumpAcpiTables(
-        VOID
-        );
+VOID ACPIRegDumpAcpiTables(VOID);
 
-    NTSTATUS
-    ACPIRegReadEntireAcpiTable (
-        IN  HANDLE  RevisionKey,
-        IN  PVOID   *Table,
-        IN  BOOLEAN MemoryMapped
-        );
+NTSTATUS
+ACPIRegReadEntireAcpiTable(IN HANDLE RevisionKey, IN PVOID *Table, IN BOOLEAN MemoryMapped);
 
-    BOOLEAN
-    ACPIRegReadAMLRegistryEntry(
-        IN  PVOID   *Table,
-        IN  BOOLEAN Memorymapped
-        );
+BOOLEAN
+ACPIRegReadAMLRegistryEntry(IN PVOID *Table, IN BOOLEAN Memorymapped);
 
 
 #endif

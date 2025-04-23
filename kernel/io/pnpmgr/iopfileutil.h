@@ -20,7 +20,8 @@ Revision History:
 
 --*/
 
-typedef struct {
+typedef struct
+{
 
     LIST_ENTRY Link;
     UNICODE_STRING Directory;
@@ -29,13 +30,5 @@ typedef struct {
 } DIRWALK_ENTRY, *PDIRWALK_ENTRY;
 
 NTSTATUS
-IopFileUtilWalkDirectoryTreeHelper(
-    IN      PUNICODE_STRING  Directory,
-    IN      ULONG            Flags,
-    IN      DIRWALK_CALLBACK CallbackFunction,
-    IN      PVOID            Context,
-    IN      PUCHAR           Buffer,
-    IN      ULONG            BufferSize,
-    IN OUT  PLIST_ENTRY      DirList
-    );
-
+IopFileUtilWalkDirectoryTreeHelper(IN PUNICODE_STRING Directory, IN ULONG Flags, IN DIRWALK_CALLBACK CallbackFunction,
+                                   IN PVOID Context, IN PUCHAR Buffer, IN ULONG BufferSize, IN OUT PLIST_ENTRY DirList);

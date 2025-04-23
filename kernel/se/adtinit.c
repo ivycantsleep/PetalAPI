@@ -28,19 +28,16 @@ Revision History:
 
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,SepAdtValidateAuditBounds)
-#pragma alloc_text(PAGE,SepAdtInitializeBounds)
-#pragma alloc_text(INIT,SepAdtInitializeCrashOnFail)
-#pragma alloc_text(INIT,SepAdtInitializePrivilegeAuditing)
-#pragma alloc_text(INIT,SepAdtInitializeAuditingOptions)
+#pragma alloc_text(PAGE, SepAdtValidateAuditBounds)
+#pragma alloc_text(PAGE, SepAdtInitializeBounds)
+#pragma alloc_text(INIT, SepAdtInitializeCrashOnFail)
+#pragma alloc_text(INIT, SepAdtInitializePrivilegeAuditing)
+#pragma alloc_text(INIT, SepAdtInitializeAuditingOptions)
 #endif
 
-
+
 BOOLEAN
-SepAdtValidateAuditBounds(
-    ULONG Upper,
-    ULONG Lower
-    )
+SepAdtValidateAuditBounds(ULONG Upper, ULONG Lower)
 
 /*++
 
@@ -67,26 +64,26 @@ Return Value:
 {
     PAGED_CODE();
 
-    if ( Lower >= Upper ) {
-        return( FALSE );
+    if (Lower >= Upper)
+    {
+        return (FALSE);
     }
 
-    if ( Lower < 16 ) {
-        return( FALSE );
+    if (Lower < 16)
+    {
+        return (FALSE);
     }
 
-    if ( (Upper - Lower) < 16 ) {
-        return( FALSE );
+    if ((Upper - Lower) < 16)
+    {
+        return (FALSE);
     }
 
-    return( TRUE );
+    return (TRUE);
 }
 
-
-VOID
-SepAdtInitializeBounds(
-    VOID
-    )
+
+VOID SepAdtInitializeBounds(VOID)
 
 /*++
 
@@ -123,23 +120,14 @@ Return Value:
     // Get the high and low water marks out of the registry.
     //
 
-    RtlInitUnicodeString( &KeyName, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Lsa");
+    RtlInitUnicodeString(&KeyName, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Lsa");
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &KeyName,
-        OBJ_CASE_INSENSITIVE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&ObjectAttributes, &KeyName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    Status = NtOpenKey(
-                 &KeyHandle,
-                 KEY_QUERY_VALUE,
-                 &ObjectAttributes
-                 );
+    Status = NtOpenKey(&KeyHandle, KEY_QUERY_VALUE, &ObjectAttributes);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
         //
         // Didn't work, take the defaults
@@ -148,49 +136,46 @@ Return Value:
         return;
     }
 
-    RtlInitUnicodeString( &ValueName, L"Bounds");
+    RtlInitUnicodeString(&ValueName, L"Bounds");
 
-    Length = sizeof( KEY_VALUE_PARTIAL_INFORMATION ) - sizeof( UCHAR ) + sizeof( SEP_AUDIT_BOUNDS );
+    Length = sizeof(KEY_VALUE_PARTIAL_INFORMATION) - sizeof(UCHAR) + sizeof(SEP_AUDIT_BOUNDS);
 
-    KeyValueInformation = ExAllocatePool( PagedPool, Length );
+    KeyValueInformation = ExAllocatePool(PagedPool, Length);
 
-    if ( KeyValueInformation == NULL ) {
+    if (KeyValueInformation == NULL)
+    {
 
-        NtClose( KeyHandle );
+        NtClose(KeyHandle);
         return;
     }
 
-    Status = NtQueryValueKey(
-                 KeyHandle,
-                 &ValueName,
-                 KeyValuePartialInformation,
-                 (PVOID)KeyValueInformation,
-                 Length,
-                 &Length
-                 );
+    Status =
+        NtQueryValueKey(KeyHandle, &ValueName, KeyValuePartialInformation, (PVOID)KeyValueInformation, Length, &Length);
 
-    NtClose( KeyHandle );
+    NtClose(KeyHandle);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        ExFreePool( KeyValueInformation );
+        ExFreePool(KeyValueInformation);
         return;
     }
 
 
-    AuditBounds = (PSEP_AUDIT_BOUNDS) &KeyValueInformation->Data;
+    AuditBounds = (PSEP_AUDIT_BOUNDS)&KeyValueInformation->Data;
 
     //
     // Sanity check what we got back
     //
 
-    if(!SepAdtValidateAuditBounds( AuditBounds->UpperBound, AuditBounds->LowerBound )) {
+    if (!SepAdtValidateAuditBounds(AuditBounds->UpperBound, AuditBounds->LowerBound))
+    {
 
         //
         // The values we got back are not to our liking.  Use the defaults.
         //
 
-        ExFreePool( KeyValueInformation );
+        ExFreePool(KeyValueInformation);
         return;
     }
 
@@ -201,17 +186,14 @@ Return Value:
     SepAdtMaxListLength = AuditBounds->UpperBound;
     SepAdtMinListLength = AuditBounds->LowerBound;
 
-    ExFreePool( KeyValueInformation );
+    ExFreePool(KeyValueInformation);
 
     return;
 }
 
 
-
 NTSTATUS
-SepAdtInitializeCrashOnFail(
-    VOID
-    )
+SepAdtInitializeCrashOnFail(VOID)
 
 /*++
 
@@ -248,35 +230,21 @@ Return Value:
     // Check the value of the CrashOnAudit flag in the registry.
     //
 
-    RtlInitUnicodeString( &KeyName, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Lsa");
+    RtlInitUnicodeString(&KeyName, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Lsa");
 
-    InitializeObjectAttributes( &Obja,
-                                &KeyName,
-                                OBJ_CASE_INSENSITIVE,
-                                NULL,
-                                NULL
-                                );
+    InitializeObjectAttributes(&Obja, &KeyName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    Status = NtOpenKey(
-                 &KeyHandle,
-                 KEY_QUERY_VALUE | KEY_SET_VALUE,
-                 &Obja
-                 );
+    Status = NtOpenKey(&KeyHandle, KEY_QUERY_VALUE | KEY_SET_VALUE, &Obja);
 
-    if (Status == STATUS_OBJECT_NAME_NOT_FOUND) {
-        return( STATUS_SUCCESS );
+    if (Status == STATUS_OBJECT_NAME_NOT_FOUND)
+    {
+        return (STATUS_SUCCESS);
     }
 
-    RtlInitUnicodeString( &ValueName, CRASH_ON_AUDIT_FAIL_VALUE );
+    RtlInitUnicodeString(&ValueName, CRASH_ON_AUDIT_FAIL_VALUE);
 
-    Status = NtQueryValueKey(
-                 KeyHandle,
-                 &ValueName,
-                 KeyValuePartialInformation,
-                 KeyInfo,
-                 sizeof(KeyInfo),
-                 &ResultLength
-                 );
+    Status =
+        NtQueryValueKey(KeyHandle, &ValueName, KeyValuePartialInformation, KeyInfo, sizeof(KeyInfo), &ResultLength);
 
     TmpStatus = NtClose(KeyHandle);
     ASSERT(NT_SUCCESS(TmpStatus));
@@ -285,22 +253,22 @@ Return Value:
     // If the key isn't there, don't turn on CrashOnFail.
     //
 
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
 
         pKeyInfo = (PKEY_VALUE_PARTIAL_INFORMATION)KeyInfo;
-        if ((UCHAR) *(pKeyInfo->Data) == LSAP_CRASH_ON_AUDIT_FAIL) {
+        if ((UCHAR) * (pKeyInfo->Data) == LSAP_CRASH_ON_AUDIT_FAIL)
+        {
             SepCrashOnAuditFail = TRUE;
         }
     }
 
-    return( STATUS_SUCCESS );
+    return (STATUS_SUCCESS);
 }
 
-
+
 BOOLEAN
-SepAdtInitializePrivilegeAuditing(
-    VOID
-    )
+SepAdtInitializePrivilegeAuditing(VOID)
 
 /*++
 
@@ -337,66 +305,53 @@ Return Value:
     // Query the registry to set up the privilege auditing filter.
     //
 
-    RtlInitUnicodeString( &KeyName, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Lsa");
+    RtlInitUnicodeString(&KeyName, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Lsa");
 
-    InitializeObjectAttributes( &Obja,
-                                &KeyName,
-                                OBJ_CASE_INSENSITIVE,
-                                NULL,
-                                NULL
-                                );
+    InitializeObjectAttributes(&Obja, &KeyName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    Status = NtOpenKey(
-                 &KeyHandle,
-                 KEY_QUERY_VALUE | KEY_SET_VALUE,
-                 &Obja
-                 );
+    Status = NtOpenKey(&KeyHandle, KEY_QUERY_VALUE | KEY_SET_VALUE, &Obja);
 
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        if (Status == STATUS_OBJECT_NAME_NOT_FOUND) {
+        if (Status == STATUS_OBJECT_NAME_NOT_FOUND)
+        {
 
-            return ( SepInitializePrivilegeFilter( FALSE ));
+            return (SepInitializePrivilegeFilter(FALSE));
+        }
+        else
+        {
 
-        } else {
-
-            return( FALSE );
+            return (FALSE);
         }
     }
 
-    RtlInitUnicodeString( &ValueName, FULL_PRIVILEGE_AUDITING );
+    RtlInitUnicodeString(&ValueName, FULL_PRIVILEGE_AUDITING);
 
-    Status = NtQueryValueKey(
-                 KeyHandle,
-                 &ValueName,
-                 KeyValuePartialInformation,
-                 KeyInfo,
-                 sizeof(KeyInfo),
-                 &ResultLength
-                 );
+    Status =
+        NtQueryValueKey(KeyHandle, &ValueName, KeyValuePartialInformation, KeyInfo, sizeof(KeyInfo), &ResultLength);
 
     TmpStatus = NtClose(KeyHandle);
     ASSERT(NT_SUCCESS(TmpStatus));
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
         Verbose = FALSE;
-
-    } else {
+    }
+    else
+    {
 
         pKeyInfo = (PKEY_VALUE_PARTIAL_INFORMATION)KeyInfo;
-        Verbose = (BOOLEAN) *(pKeyInfo->Data);
+        Verbose = (BOOLEAN) * (pKeyInfo->Data);
     }
 
-    return ( SepInitializePrivilegeFilter( Verbose ));
+    return (SepInitializePrivilegeFilter(Verbose));
 }
 
-
-VOID
-SepAdtInitializeAuditingOptions(
-    VOID
-    )
+
+VOID SepAdtInitializeAuditingOptions(VOID)
 
 /*++
 
@@ -428,44 +383,31 @@ Return Value:
     PAGED_CODE();
 
     //
-    // Query the registry 
+    // Query the registry
     //
-    RtlInitUnicodeString( &KeyName, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Lsa\\AuditingOptions");
+    RtlInitUnicodeString(&KeyName, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Lsa\\AuditingOptions");
 
-    InitializeObjectAttributes( &Obja,
-                                &KeyName,
-                                OBJ_CASE_INSENSITIVE,
-                                NULL,
-                                NULL
-                                );
+    InitializeObjectAttributes(&Obja, &KeyName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    Status = NtOpenKey(
-                 &KeyHandle,
-                 KEY_QUERY_VALUE,
-                 &Obja
-                 );
+    Status = NtOpenKey(&KeyHandle, KEY_QUERY_VALUE, &Obja);
 
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
         goto Cleanup;
     }
 
-    RtlInitUnicodeString( &ValueName, L"DoNotAuditCloseObjectEvents" );
+    RtlInitUnicodeString(&ValueName, L"DoNotAuditCloseObjectEvents");
 
-    Status = NtQueryValueKey(
-                 KeyHandle,
-                 &ValueName,
-                 KeyValuePartialInformation,
-                 KeyInfo,
-                 sizeof(KeyInfo),
-                 &ResultLength
-                 );
+    Status =
+        NtQueryValueKey(KeyHandle, &ValueName, KeyValuePartialInformation, KeyInfo, sizeof(KeyInfo), &ResultLength);
 
     TmpStatus = NtClose(KeyHandle);
     ASSERT(NT_SUCCESS(TmpStatus));
 
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
         //
         // we check for the presence of this value, its value does not matter
         //

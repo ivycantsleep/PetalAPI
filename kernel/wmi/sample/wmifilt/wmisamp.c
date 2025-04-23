@@ -38,91 +38,42 @@ Revision History:
 #define FilterDateTime L"19940525133015.000000-300"
 
 NTSTATUS
-FilterFunctionControl(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG GuidIndex,
-    IN WMIENABLEDISABLECONTROL Function,
-    IN BOOLEAN Enable
-    );
+FilterFunctionControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG GuidIndex,
+                      IN WMIENABLEDISABLECONTROL Function, IN BOOLEAN Enable);
 
 NTSTATUS
-FilterExecuteWmiMethod(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG GuidIndex,
-    IN ULONG InstanceIndex,
-    IN ULONG MethodId,
-    IN ULONG InBufferSize,
-    IN ULONG OutBufferSize,
-    IN PUCHAR Buffer
-    );
+FilterExecuteWmiMethod(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG GuidIndex, IN ULONG InstanceIndex,
+                       IN ULONG MethodId, IN ULONG InBufferSize, IN ULONG OutBufferSize, IN PUCHAR Buffer);
 
 NTSTATUS
-FilterSetWmiDataItem(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG InstanceIndex,
-    IN ULONG GuidIndex,
-    IN ULONG DataItemId,
-    IN ULONG BufferSize,
-    IN PUCHAR Buffer
-    );
+FilterSetWmiDataItem(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG InstanceIndex, IN ULONG GuidIndex,
+                     IN ULONG DataItemId, IN ULONG BufferSize, IN PUCHAR Buffer);
 
 NTSTATUS
-FilterSetWmiDataBlock(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG GuidIndex,
-    IN ULONG InstanceIndex,
-    IN ULONG BufferSize,
-    IN PUCHAR Buffer
-    );
+FilterSetWmiDataBlock(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG GuidIndex, IN ULONG InstanceIndex,
+                      IN ULONG BufferSize, IN PUCHAR Buffer);
 
 NTSTATUS
-FilterQueryWmiDataBlock(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG GuidIndex,
-    IN ULONG InstanceIndex,
-    IN ULONG InstanceCount,
-    IN OUT PULONG InstanceLengthArray,
-    IN ULONG BufferAvail,
-    OUT PUCHAR Buffer
-    );
+FilterQueryWmiDataBlock(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG GuidIndex, IN ULONG InstanceIndex,
+                        IN ULONG InstanceCount, IN OUT PULONG InstanceLengthArray, IN ULONG BufferAvail,
+                        OUT PUCHAR Buffer);
 
 NTSTATUS
-FilterQueryWmiRegInfo(
-    IN PDEVICE_OBJECT DeviceObject,
-    OUT ULONG *RegFlags,
-    OUT PUNICODE_STRING InstanceName,
-    OUT PUNICODE_STRING *RegistryPath,
-    OUT PUNICODE_STRING MofResourceName,
-    OUT PDEVICE_OBJECT *Pdo
-    );
+FilterQueryWmiRegInfo(IN PDEVICE_OBJECT DeviceObject, OUT ULONG *RegFlags, OUT PUNICODE_STRING InstanceName,
+                      OUT PUNICODE_STRING *RegistryPath, OUT PUNICODE_STRING MofResourceName, OUT PDEVICE_OBJECT *Pdo);
 
-void FilterSetEc1(
-    struct DEVICE_EXTENSION * devExt,
-    PUCHAR Buffer,
-    ULONG Length,
-    ULONG Index
-    );
+void FilterSetEc1(struct DEVICE_EXTENSION *devExt, PUCHAR Buffer, ULONG Length, ULONG Index);
 
-void FilterSetEc2(
-    struct DEVICE_EXTENSION * devExt,
-    PUCHAR Buffer,
-    ULONG Length,
-    ULONG Index
-    );
+void FilterSetEc2(struct DEVICE_EXTENSION *devExt, PUCHAR Buffer, ULONG Length, ULONG Index);
 
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,FilterQueryWmiRegInfo)
-#pragma alloc_text(PAGE,FilterQueryWmiDataBlock)
-#pragma alloc_text(PAGE,FilterSetWmiDataBlock)
-#pragma alloc_text(PAGE,FilterSetWmiDataItem)
-#pragma alloc_text(PAGE,FilterExecuteWmiMethod)
-#pragma alloc_text(PAGE,FilterFunctionControl)
+#pragma alloc_text(PAGE, FilterQueryWmiRegInfo)
+#pragma alloc_text(PAGE, FilterQueryWmiDataBlock)
+#pragma alloc_text(PAGE, FilterSetWmiDataBlock)
+#pragma alloc_text(PAGE, FilterSetWmiDataItem)
+#pragma alloc_text(PAGE, FilterExecuteWmiMethod)
+#pragma alloc_text(PAGE, FilterFunctionControl)
 #endif
 
 
@@ -140,15 +91,14 @@ void FilterSetEc2(
 // sets of binary mof data buffers a "dynamic" composite mof would be created.
 
 #ifdef ALLOC_DATA_PRAGMA
-   #pragma data_seg("PAGED")
+#pragma data_seg("PAGED")
 #endif
 
-UCHAR FilterBinaryMofData[] =
-{
-    #include "filter.x"
+UCHAR FilterBinaryMofData[] = {
+#include "filter.x"
 };
 #ifdef ALLOC_DATA_PRAGMA
-   #pragma data_seg()
+#pragma data_seg()
 #endif
 #endif
 
@@ -165,18 +115,18 @@ UCHAR FilterBinaryMofData[] =
 #define FilterClass5 4
 #define FilterClass6 5
 #define FilterClass7 6
-#define FilterGetSetData   7
-#define FilterFireEvent    8
-#define FilterEventClass1  9
-#define FilterEventClass2  10
-#define FilterEventClass3  11
-#define FilterEventClass4  12
-#define FilterEventClass5  13
-#define FilterEventClass6  14
-#define FilterEventClass7  15
-#define FilterEventReferenceClass  16
-#define FilterIrpCount  17
-#define BinaryMofGuid   18
+#define FilterGetSetData 7
+#define FilterFireEvent 8
+#define FilterEventClass1 9
+#define FilterEventClass2 10
+#define FilterEventClass3 11
+#define FilterEventClass4 12
+#define FilterEventClass5 13
+#define FilterEventClass6 14
+#define FilterEventClass7 15
+#define FilterEventReferenceClass 16
+#define FilterIrpCount 17
+#define BinaryMofGuid 18
 
 GUID FilterClass1Guid = Vendor_SampleClass1Guid;
 GUID FilterClass2Guid = Vendor_SampleClass2Guid;
@@ -185,138 +135,69 @@ GUID FilterClass4Guid = Vendor_SampleClass4Guid;
 GUID FilterClass5Guid = Vendor_SampleClass5Guid;
 GUID FilterClass6Guid = Vendor_SampleClass6Guid;
 GUID FilterClass7Guid = Vendor_SampleClass7Guid;
-GUID FilterGetSetDataGuid =   Vendor_GetSetDataGuid;
-GUID FilterFireEventGuid =    Vendor_FireEventGuid;
-GUID FilterEventClass1Guid =  Vendor_EventClass1Guid;
-GUID FilterEventClass2Guid =  Vendor_EventClass2Guid;
-GUID FilterEventClass3Guid =  Vendor_EventClass3Guid;
-GUID FilterEventClass4Guid =  Vendor_EventClass4Guid;
-GUID FilterEventClass5Guid =  Vendor_EventClass5Guid;
-GUID FilterEventClass6Guid =  Vendor_EventClass6Guid;
-GUID FilterEventClass7Guid =  Vendor_EventClass7Guid;
+GUID FilterGetSetDataGuid = Vendor_GetSetDataGuid;
+GUID FilterFireEventGuid = Vendor_FireEventGuid;
+GUID FilterEventClass1Guid = Vendor_EventClass1Guid;
+GUID FilterEventClass2Guid = Vendor_EventClass2Guid;
+GUID FilterEventClass3Guid = Vendor_EventClass3Guid;
+GUID FilterEventClass4Guid = Vendor_EventClass4Guid;
+GUID FilterEventClass5Guid = Vendor_EventClass5Guid;
+GUID FilterEventClass6Guid = Vendor_EventClass6Guid;
+GUID FilterEventClass7Guid = Vendor_EventClass7Guid;
 GUID FilterEventReferenceClassGuid = Vendor_EventReferenceClassGuid;
 GUID FilterIrpCountGuid = Vendor_IrpCounterGuid;
-GUID FilterBinaryMofGuid =         BINARY_MOF_GUID;
+GUID FilterBinaryMofGuid = BINARY_MOF_GUID;
 
-WMIGUIDREGINFO FilterGuidList[] =
-{
-    {
-        &FilterClass1Guid,            // Guid
-        1,                               // # of instances in each device
-        WMIREG_FLAG_EXPENSIVE            // Flag as expensive to collect
-    },
+WMIGUIDREGINFO FilterGuidList[] = { {
+                                        &FilterClass1Guid,    // Guid
+                                        1,                    // # of instances in each device
+                                        WMIREG_FLAG_EXPENSIVE // Flag as expensive to collect
+                                    },
 
-    {
-        &FilterClass2Guid,
-        1,
-        0
-    },
+                                    { &FilterClass2Guid, 1, 0 },
 
-    {
-        &FilterClass3Guid,
-        1,
-        0
-    },
+                                    { &FilterClass3Guid, 1, 0 },
 
-    {
-        &FilterClass4Guid,
-        1,
-        0
-    },
+                                    { &FilterClass4Guid, 1, 0 },
 
-    {
-        &FilterClass5Guid,
-        1,
-        0
-    },
+                                    { &FilterClass5Guid, 1, 0 },
 
-    {
-        &FilterClass6Guid,
-        1,
-        0
-    },
+                                    { &FilterClass6Guid, 1, 0 },
 
-    {
-        &FilterClass7Guid,
-        1,
-        0
-    },
+                                    { &FilterClass7Guid, 1, 0 },
 
-    {
-        &FilterGetSetDataGuid,
-        1,
-        0
-    },
+                                    { &FilterGetSetDataGuid, 1, 0 },
 
-    {
-        &FilterFireEventGuid,
-        1,
-        0
-    },
+                                    { &FilterFireEventGuid, 1, 0 },
 
-    {
-        &FilterEventClass1Guid,
-        1,
-        WMIREG_FLAG_EVENT_ONLY_GUID            // Flag as an event
-    },
+                                    {
+                                        &FilterEventClass1Guid, 1,
+                                        WMIREG_FLAG_EVENT_ONLY_GUID // Flag as an event
+                                    },
 
-    {
-        &FilterEventClass2Guid,
-        1,
-        WMIREG_FLAG_EVENT_ONLY_GUID
-    },
+                                    { &FilterEventClass2Guid, 1, WMIREG_FLAG_EVENT_ONLY_GUID },
 
-    {
-        &FilterEventClass3Guid,
-        1,
-        WMIREG_FLAG_EVENT_ONLY_GUID
-    },
+                                    { &FilterEventClass3Guid, 1, WMIREG_FLAG_EVENT_ONLY_GUID },
 
-    {
-        &FilterEventClass4Guid,
-        1,
-        WMIREG_FLAG_EVENT_ONLY_GUID
-    },
+                                    { &FilterEventClass4Guid, 1, WMIREG_FLAG_EVENT_ONLY_GUID },
 
-    {
-        &FilterEventClass5Guid,
-        1,
-        WMIREG_FLAG_EVENT_ONLY_GUID
-    },
+                                    { &FilterEventClass5Guid, 1, WMIREG_FLAG_EVENT_ONLY_GUID },
 
-    {
-        &FilterEventClass6Guid,
-        1,
-        WMIREG_FLAG_EVENT_ONLY_GUID
-    },
+                                    { &FilterEventClass6Guid, 1, WMIREG_FLAG_EVENT_ONLY_GUID },
 
-    {
-        &FilterEventClass7Guid,
-        1,
-        WMIREG_FLAG_EVENT_ONLY_GUID
-    },
+                                    { &FilterEventClass7Guid, 1, WMIREG_FLAG_EVENT_ONLY_GUID },
 
-    {
-        &FilterEventReferenceClassGuid,
-        1,
-        WMIREG_FLAG_EVENT_ONLY_GUID
-    },
+                                    { &FilterEventReferenceClassGuid, 1, WMIREG_FLAG_EVENT_ONLY_GUID },
 
-    {
-        &FilterIrpCountGuid,
-        1,
-        0
-    },
+                                    { &FilterIrpCountGuid, 1, 0 },
 
-    {
-        &FilterBinaryMofGuid,
-        1,
+                                    { &FilterBinaryMofGuid, 1,
 #ifdef USE_BINARY_MOF_QUERY
-        0
+                                      0
 #else
-        WMIREG_FLAG_REMOVE_GUID
+                                      WMIREG_FLAG_REMOVE_GUID
 #endif
-    }
+                                    }
 
 };
 
@@ -328,11 +209,7 @@ WMIGUIDREGINFO FilterGuidList[] =
 //
 UNICODE_STRING FilterRegistryPath;
 
-NTSTATUS VA_SystemControl(
-    struct DEVICE_EXTENSION *devExt,
-    PIRP irp,
-    PBOOLEAN passIrpDown
-    )
+NTSTATUS VA_SystemControl(struct DEVICE_EXTENSION *devExt, PIRP irp, PBOOLEAN passIrpDown)
 /*++
 
 Routine Description:
@@ -364,58 +241,53 @@ Return Value:
     // that is targetted for this device then WmiSystemControl will callback
     // at the appropriate callback routine.
     //
-    status = WmiSystemControl(wmilibContext,
-                              devExt->filterDevObj,
-                              irp,
-                              &disposition);
+    status = WmiSystemControl(wmilibContext, devExt->filterDevObj, irp, &disposition);
 
-    switch(disposition)
+    switch (disposition)
     {
-        case IrpProcessed:
-        {
-            //
-            // This irp has been processed and may be completed or pending.
-            *passIrpDown = FALSE;
-            break;
-        }
-
-        case IrpNotCompleted:
-        {
-            //
-            // This irp has not been completed, but has been fully processed.
-            // we will complete it now.
-            *passIrpDown = FALSE;
-            IoCompleteRequest(irp, IO_NO_INCREMENT);
-            break;
-        }
-
-        case IrpForward:
-        case IrpNotWmi:
-        {
-            //
-            // This irp is either not a WMI irp or is a WMI irp targetted
-            // at a device lower in the stack.
-            *passIrpDown = TRUE;
-            break;
-        }
-
-        default:
-        {
-            //
-            // We really should never get here, but if we do just forward....
-            ASSERT(FALSE);
-            *passIrpDown = TRUE;
-            break;
-        }
+    case IrpProcessed:
+    {
+        //
+        // This irp has been processed and may be completed or pending.
+        *passIrpDown = FALSE;
+        break;
     }
 
-    return(status);
+    case IrpNotCompleted:
+    {
+        //
+        // This irp has not been completed, but has been fully processed.
+        // we will complete it now.
+        *passIrpDown = FALSE;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+        break;
+    }
+
+    case IrpForward:
+    case IrpNotWmi:
+    {
+        //
+        // This irp is either not a WMI irp or is a WMI irp targetted
+        // at a device lower in the stack.
+        *passIrpDown = TRUE;
+        break;
+    }
+
+    default:
+    {
+        //
+        // We really should never get here, but if we do just forward....
+        ASSERT(FALSE);
+        *passIrpDown = TRUE;
+        break;
+    }
+    }
+
+    return (status);
 }
 
 NTSTATUS
-FilterInitializeWmiDataBlocks(
-    IN struct DEVICE_EXTENSION *devExt
-    )
+FilterInitializeWmiDataBlocks(IN struct DEVICE_EXTENSION *devExt)
 /*++
 Routine Description:
     This routine is called to create a new instance of the device
@@ -457,31 +329,23 @@ Return Value:
     {
         Ec1 = (PEC1)Ec;
         memset(Ec1, i, sizeof(EC1));
-        memcpy(Ec1->Xdatetime, FilterDateTime, 25*sizeof(WCHAR));
+        memcpy(Ec1->Xdatetime, FilterDateTime, 25 * sizeof(WCHAR));
 
         ASSERT(devExt->Ec1[i] == NULL);
-        FilterSetEc1(devExt,
-                      (PUCHAR)Ec1,
-                      sizeof(EC1),
-                      i);
+        FilterSetEc1(devExt, (PUCHAR)Ec1, sizeof(EC1), i);
 
 
         Ec2 = (PEC2)Ec;
         memset(Ec2, i, sizeof(EC2));
-        memcpy(Ec2->Xdatetime, FilterDateTime, 25*sizeof(WCHAR));
+        memcpy(Ec2->Xdatetime, FilterDateTime, 25 * sizeof(WCHAR));
 
         ASSERT(devExt->Ec2[i] == NULL);
-        FilterSetEc2(devExt,
-                      (PUCHAR)Ec2,
-                      sizeof(EC2),
-                      i);
+        FilterSetEc2(devExt, (PUCHAR)Ec2, sizeof(EC2), i);
     }
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }
 
-void FilterWmiCleanup(
-    struct DEVICE_EXTENSION *devExt
-    )
+void FilterWmiCleanup(struct DEVICE_EXTENSION *devExt)
 {
     ULONG i;
 
@@ -502,14 +366,8 @@ void FilterWmiCleanup(
 }
 
 NTSTATUS
-FilterQueryWmiRegInfo(
-    IN PDEVICE_OBJECT DeviceObject,
-    OUT ULONG *RegFlags,
-    OUT PUNICODE_STRING InstanceName,
-    OUT PUNICODE_STRING *RegistryPath,
-    OUT PUNICODE_STRING MofResourceName,
-    OUT PDEVICE_OBJECT *Pdo
-    )
+FilterQueryWmiRegInfo(IN PDEVICE_OBJECT DeviceObject, OUT ULONG *RegFlags, OUT PUNICODE_STRING InstanceName,
+                      OUT PUNICODE_STRING *RegistryPath, OUT PUNICODE_STRING MofResourceName, OUT PDEVICE_OBJECT *Pdo)
 /*++
 
 Routine Description:
@@ -555,7 +413,7 @@ Return Value:
 
 --*/
 {
-    struct DEVICE_EXTENSION * devExt = DeviceObject->DeviceExtension;
+    struct DEVICE_EXTENSION *devExt = DeviceObject->DeviceExtension;
 
     //
     // Return the registry path for this driver. This is required so WMI
@@ -581,42 +439,25 @@ Return Value:
     *RegFlags = WMIREG_FLAG_INSTANCE_PDO;
     *Pdo = devExt->physicalDevObj;
 
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }
 
 
-ULONG FilterGetEc1(
-    struct DEVICE_EXTENSION * devExt,
-    PUCHAR Buffer,
-    ULONG Index
-    )
+ULONG FilterGetEc1(struct DEVICE_EXTENSION *devExt, PUCHAR Buffer, ULONG Index)
 {
-    RtlCopyMemory(Buffer,
-                  devExt->Ec1[Index],
-                  devExt->Ec1Length[Index]);
+    RtlCopyMemory(Buffer, devExt->Ec1[Index], devExt->Ec1Length[Index]);
 
-    return(devExt->Ec1Length[Index]);
+    return (devExt->Ec1Length[Index]);
 }
 
-ULONG FilterGetActualEc1(
-    struct DEVICE_EXTENSION * devExt,
-    PUCHAR Buffer,
-    ULONG Index
-    )
+ULONG FilterGetActualEc1(struct DEVICE_EXTENSION *devExt, PUCHAR Buffer, ULONG Index)
 {
-    RtlCopyMemory(Buffer,
-                  devExt->Ec1[Index],
-                  devExt->Ec1ActualLength[Index]);
+    RtlCopyMemory(Buffer, devExt->Ec1[Index], devExt->Ec1ActualLength[Index]);
 
-    return(devExt->Ec1ActualLength[Index]);
+    return (devExt->Ec1ActualLength[Index]);
 }
 
-void FilterSetEc1(
-    struct DEVICE_EXTENSION * devExt,
-    PUCHAR Buffer,
-    ULONG Length,
-    ULONG Index
-    )
+void FilterSetEc1(struct DEVICE_EXTENSION *devExt, PUCHAR Buffer, ULONG Length, ULONG Index)
 {
     PEC1 New;
     ULONG NewLength;
@@ -633,45 +474,26 @@ void FilterSetEc1(
         devExt->Ec1[Index] = New;
         devExt->Ec1Length[Index] = NewLength;
         devExt->Ec1ActualLength[Index] = Length;
-        RtlCopyMemory(New,
-                  Buffer,
-                  Length);
+        RtlCopyMemory(New, Buffer, Length);
     }
 }
 
 
-ULONG FilterGetEc2(
-    struct DEVICE_EXTENSION * devExt,
-    PUCHAR Buffer,
-    ULONG Index
-    )
+ULONG FilterGetEc2(struct DEVICE_EXTENSION *devExt, PUCHAR Buffer, ULONG Index)
 {
-    RtlCopyMemory(Buffer,
-                  devExt->Ec2[Index],
-                  devExt->Ec2Length[Index]);
+    RtlCopyMemory(Buffer, devExt->Ec2[Index], devExt->Ec2Length[Index]);
 
-    return(devExt->Ec2Length[Index]);
+    return (devExt->Ec2Length[Index]);
 }
 
-ULONG FilterGetActualEc2(
-    struct DEVICE_EXTENSION * devExt,
-    PUCHAR Buffer,
-    ULONG Index
-    )
+ULONG FilterGetActualEc2(struct DEVICE_EXTENSION *devExt, PUCHAR Buffer, ULONG Index)
 {
-    RtlCopyMemory(Buffer,
-                  devExt->Ec2[Index],
-                  devExt->Ec2ActualLength[Index]);
+    RtlCopyMemory(Buffer, devExt->Ec2[Index], devExt->Ec2ActualLength[Index]);
 
-    return(devExt->Ec2ActualLength[Index]);
+    return (devExt->Ec2ActualLength[Index]);
 }
 
-void FilterSetEc2(
-    struct DEVICE_EXTENSION * devExt,
-    PUCHAR Buffer,
-    ULONG Length,
-    ULONG Index
-    )
+void FilterSetEc2(struct DEVICE_EXTENSION *devExt, PUCHAR Buffer, ULONG Length, ULONG Index)
 {
     PEC2 New;
     ULONG NewLength;
@@ -688,23 +510,14 @@ void FilterSetEc2(
         devExt->Ec2[Index] = New;
         devExt->Ec2Length[Index] = NewLength;
         devExt->Ec2ActualLength[Index] = Length;
-        RtlCopyMemory(New,
-                  Buffer,
-                  Length);
+        RtlCopyMemory(New, Buffer, Length);
     }
 }
 
 NTSTATUS
-FilterQueryWmiDataBlock(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG GuidIndex,
-    IN ULONG InstanceIndex,
-    IN ULONG InstanceCount,
-    IN OUT PULONG InstanceLengthArray,
-    IN ULONG BufferAvail,
-    OUT PUCHAR Buffer
-    )
+FilterQueryWmiDataBlock(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG GuidIndex, IN ULONG InstanceIndex,
+                        IN ULONG InstanceCount, IN OUT PULONG InstanceLengthArray, IN ULONG BufferAvail,
+                        OUT PUCHAR Buffer)
 /*++
 
 Routine Description:
@@ -747,227 +560,245 @@ Return Value:
 --*/
 {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
-    struct DEVICE_EXTENSION * devExt = DeviceObject->DeviceExtension;
+    struct DEVICE_EXTENSION *devExt = DeviceObject->DeviceExtension;
     ULONG sizeNeeded;
     ULONG i;
     ULONG LastInstanceIndex;
     ULONG sizeUsed, vlSize;
 
-    switch(GuidIndex)
+    switch (GuidIndex)
     {
-        case FilterEventReferenceClass:
-        case FilterClass1:
-        case FilterClass2:
+    case FilterEventReferenceClass:
+    case FilterClass1:
+    case FilterClass2:
+    {
+        // plain EC1
+        sizeNeeded = devExt->Ec1Length[0];
+        if (BufferAvail < sizeNeeded)
         {
-            // plain EC1
-            sizeNeeded = devExt->Ec1Length[0];
-            if (BufferAvail < sizeNeeded)
-            {
-                status = STATUS_BUFFER_TOO_SMALL;
-            } else {
-                *InstanceLengthArray = sizeNeeded;
-                FilterGetEc1(devExt, Buffer, 0);
-                status = STATUS_SUCCESS;
-            }
-            break;
+            status = STATUS_BUFFER_TOO_SMALL;
+        }
+        else
+        {
+            *InstanceLengthArray = sizeNeeded;
+            FilterGetEc1(devExt, Buffer, 0);
+            status = STATUS_SUCCESS;
+        }
+        break;
+    }
+
+    case FilterClass3:
+    {
+        // fixed array of EC1
+        sizeNeeded = 0;
+        for (i = 0; i < 4; i++)
+        {
+            //
+            // Each embedded class in an array of embedded classes
+            // must be naturally aligned, and any padding between
+            // the embedded classes must be included in the calculation
+            // of the size of buffer needed to fufill the request.
+            // Since the largest element in the embedded structure is
+            // 8 bytes we pad the structure size out to 8 bytes.
+            sizeNeeded += (devExt->Ec1Length[i] + 7) & ~7;
         }
 
-        case FilterClass3:
+        if (BufferAvail < sizeNeeded)
         {
-            // fixed array of EC1
-            sizeNeeded = 0;
+            status = STATUS_BUFFER_TOO_SMALL;
+        }
+        else
+        {
+            *InstanceLengthArray = sizeNeeded;
             for (i = 0; i < 4; i++)
             {
                 //
-                // Each embedded class in an array of embedded classes
-                // must be naturally aligned, and any padding between
-                // the embedded classes must be included in the calculation
-                // of the size of buffer needed to fufill the request.
-                // Since the largest element in the embedded structure is
-                // 8 bytes we pad the structure size out to 8 bytes.
-                sizeNeeded += (devExt->Ec1Length[i] + 7) & ~7;
+                // Copy each embedded class from storage into the
+                // output buffer. Note that we make sure that each
+                // embedded class begins on a natural alignment, in
+                // this case an 8 byte boundry
+                sizeUsed = FilterGetEc1(devExt, Buffer, i);
+                Buffer += (sizeUsed + 7) & ~7;
             }
+            status = STATUS_SUCCESS;
+        }
+        break;
+    }
 
-            if (BufferAvail < sizeNeeded)
-            {
-                status = STATUS_BUFFER_TOO_SMALL;
-            } else {
-                *InstanceLengthArray = sizeNeeded;
-                for (i = 0; i < 4; i++)
-                {
-                    //
-                    // Copy each embedded class from storage into the
-                    // output buffer. Note that we make sure that each
-                    // embedded class begins on a natural alignment, in
-                    // this case an 8 byte boundry
-                    sizeUsed = FilterGetEc1(devExt, Buffer, i);
-                    Buffer += (sizeUsed+7) & ~7;
-                }
-                status = STATUS_SUCCESS;
-            }
-            break;
+    case FilterClass4:
+    {
+        // variable array of EC1
+
+        //
+        // Account for the size of the ULONG plus padding so that the
+        // embedded classes start on an 8 byte boundry
+        sizeNeeded = (sizeof(ULONG) + 7) & ~7;
+
+        vlSize = devExt->Ec1Count;
+
+        for (i = 0; i < vlSize; i++)
+        {
+            sizeNeeded += (devExt->Ec1Length[i] + 7) & ~7;
         }
 
-        case FilterClass4:
+        if (BufferAvail < sizeNeeded)
         {
-            // variable array of EC1
-
-            //
-            // Account for the size of the ULONG plus padding so that the
-            // embedded classes start on an 8 byte boundry
-            sizeNeeded = (sizeof(ULONG) + 7) & ~7;
-
-            vlSize = devExt->Ec1Count;
-
+            status = STATUS_BUFFER_TOO_SMALL;
+        }
+        else
+        {
+            *InstanceLengthArray = sizeNeeded;
+            *((PULONG)Buffer) = vlSize;
+            Buffer += (sizeof(ULONG) + 7) & ~7;
             for (i = 0; i < vlSize; i++)
             {
-                sizeNeeded += (devExt->Ec1Length[i] + 7) &~7;
+                sizeUsed = FilterGetEc1(devExt, Buffer, i);
+                Buffer += (sizeUsed + 7) & ~7;
             }
+            status = STATUS_SUCCESS;
+        }
+        break;
+    }
 
-            if (BufferAvail < sizeNeeded)
-            {
-                status = STATUS_BUFFER_TOO_SMALL;
-            } else {
-                *InstanceLengthArray = sizeNeeded;
-                *((PULONG)Buffer) = vlSize;
-                Buffer += (sizeof(ULONG) + 7) & ~7;
-                for (i = 0; i < vlSize; i++)
-                {
-                    sizeUsed = FilterGetEc1(devExt, Buffer, i);
-                    Buffer += (sizeUsed+7) & ~7;
-                }
-                status = STATUS_SUCCESS;
-            }
-            break;
+    case FilterClass5:
+    {
+        // plain EC2
+        sizeNeeded = devExt->Ec2Length[0];
+        if (BufferAvail < sizeNeeded)
+        {
+            status = STATUS_BUFFER_TOO_SMALL;
+        }
+        else
+        {
+            *InstanceLengthArray = sizeNeeded;
+            FilterGetEc2(devExt, Buffer, 0);
+            status = STATUS_SUCCESS;
+        }
+        break;
+    }
+
+    case FilterClass6:
+    {
+        // fixed array EC2
+        sizeNeeded = 0;
+        for (i = 0; i < 4; i++)
+        {
+            sizeNeeded += (devExt->Ec2Length[i] + 7) & ~7;
         }
 
-        case FilterClass5:
+        if (BufferAvail < sizeNeeded)
         {
-            // plain EC2
-            sizeNeeded = devExt->Ec2Length[0];
-            if (BufferAvail < sizeNeeded)
-            {
-                status = STATUS_BUFFER_TOO_SMALL;
-            } else {
-                *InstanceLengthArray = sizeNeeded;
-                FilterGetEc2(devExt, Buffer, 0);
-                status = STATUS_SUCCESS;
-            }
-            break;
+            status = STATUS_BUFFER_TOO_SMALL;
         }
-
-        case FilterClass6:
+        else
         {
-            // fixed array EC2
-            sizeNeeded = 0;
+            *InstanceLengthArray = sizeNeeded;
             for (i = 0; i < 4; i++)
             {
-                sizeNeeded += (devExt->Ec2Length[i] + 7) & ~7;
+                sizeUsed = FilterGetEc2(devExt, Buffer, i);
+                Buffer += (sizeUsed + 7) & ~7;
             }
+            status = STATUS_SUCCESS;
+        }
+        break;
+    }
 
-            if (BufferAvail < sizeNeeded)
-            {
-                status = STATUS_BUFFER_TOO_SMALL;
-            } else {
-                *InstanceLengthArray = sizeNeeded;
-                for (i = 0; i < 4; i++)
-                {
-                    sizeUsed = FilterGetEc2(devExt, Buffer, i);
-                    Buffer += (sizeUsed + 7) & ~7;
-                }
-                status = STATUS_SUCCESS;
-            }
-            break;
+    case FilterClass7:
+    {
+        // VL array EC2
+
+
+        sizeNeeded = (sizeof(ULONG) + 7) & ~7;
+
+        vlSize = devExt->Ec2Count;
+        for (i = 0; i < vlSize; i++)
+        {
+            sizeNeeded += devExt->Ec2Length[i];
         }
 
-        case FilterClass7:
+        if (BufferAvail < sizeNeeded)
         {
-            // VL array EC2
-
-
-            sizeNeeded = (sizeof(ULONG) + 7) & ~7;
-
-            vlSize = devExt->Ec2Count;
+            status = STATUS_BUFFER_TOO_SMALL;
+        }
+        else
+        {
+            *InstanceLengthArray = sizeNeeded;
+            *((PULONG)Buffer) = vlSize;
+            Buffer += (sizeof(ULONG) + 7) & ~7;
             for (i = 0; i < vlSize; i++)
             {
-                sizeNeeded += devExt->Ec2Length[i];
+                sizeUsed = FilterGetEc2(devExt, Buffer, i);
+                Buffer += (sizeUsed + 7) & ~7;
             }
-
-            if (BufferAvail < sizeNeeded)
-            {
-                status = STATUS_BUFFER_TOO_SMALL;
-            } else {
-                *InstanceLengthArray = sizeNeeded;
-                *((PULONG)Buffer) = vlSize;
-                Buffer += (sizeof(ULONG)+7) & ~7;
-                for (i = 0; i < vlSize; i++)
-                {
-                    sizeUsed = FilterGetEc2(devExt, Buffer, i);
-                    Buffer += (sizeUsed + 7) & ~7;
-                }
-                status = STATUS_SUCCESS;
-            }
-            break;
+            status = STATUS_SUCCESS;
         }
+        break;
+    }
 
-        case FilterIrpCount:
+    case FilterIrpCount:
+    {
+        sizeNeeded = sizeof(Vendor_IrpCounter);
+        if (BufferAvail >= sizeNeeded)
         {
-            sizeNeeded = sizeof(Vendor_IrpCounter);
-            if (BufferAvail >= sizeNeeded)
-            {
-                PVendor_IrpCounter IrpCounter = (PVendor_IrpCounter)Buffer;
+            PVendor_IrpCounter IrpCounter = (PVendor_IrpCounter)Buffer;
 
-                IrpCounter->TotalIrpCount = devExt->TotalIrpCount;
-                IrpCounter->TotalIrpRate = devExt->TotalIrpCount;
-                IrpCounter->WmiIrpCount = devExt->WmiIrpCount;
-                *InstanceLengthArray = sizeNeeded;
-                status = STATUS_SUCCESS;
-            } else {
-                status = STATUS_BUFFER_TOO_SMALL;
-            }
-            break;
+            IrpCounter->TotalIrpCount = devExt->TotalIrpCount;
+            IrpCounter->TotalIrpRate = devExt->TotalIrpCount;
+            IrpCounter->WmiIrpCount = devExt->WmiIrpCount;
+            *InstanceLengthArray = sizeNeeded;
+            status = STATUS_SUCCESS;
         }
-        
-        case FilterFireEvent:
-        case FilterGetSetData:
+        else
         {
-            //
-            // Method classes do not have any data within them, but must
-            // repond successfully to queries so that WMI method operation
-            // work successfully.
-            sizeNeeded = sizeof(USHORT);
-            if (BufferAvail < sizeNeeded)
-            {
-                status = STATUS_BUFFER_TOO_SMALL;
-            } else {
-                *InstanceLengthArray = sizeNeeded;
-                status = STATUS_SUCCESS;
-            }
-            break;
+            status = STATUS_BUFFER_TOO_SMALL;
         }
+        break;
+    }
+
+    case FilterFireEvent:
+    case FilterGetSetData:
+    {
+        //
+        // Method classes do not have any data within them, but must
+        // repond successfully to queries so that WMI method operation
+        // work successfully.
+        sizeNeeded = sizeof(USHORT);
+        if (BufferAvail < sizeNeeded)
+        {
+            status = STATUS_BUFFER_TOO_SMALL;
+        }
+        else
+        {
+            *InstanceLengthArray = sizeNeeded;
+            status = STATUS_SUCCESS;
+        }
+        break;
+    }
 
 #ifdef USE_BINARY_MOF_QUERY
-        case BinaryMofGuid:
-        {
-            sizeNeeded = sizeof(FilterBinaryMofData);
+    case BinaryMofGuid:
+    {
+        sizeNeeded = sizeof(FilterBinaryMofData);
 
-            if (BufferAvail < sizeNeeded)
-            {
-                status = STATUS_BUFFER_TOO_SMALL;
-            } else {
-                RtlCopyMemory(Buffer, FilterBinaryMofData, sizeNeeded);
-                *InstanceLengthArray = sizeNeeded;
-                status = STATUS_SUCCESS;
-            }
-            break;
+        if (BufferAvail < sizeNeeded)
+        {
+            status = STATUS_BUFFER_TOO_SMALL;
         }
+        else
+        {
+            RtlCopyMemory(Buffer, FilterBinaryMofData, sizeNeeded);
+            *InstanceLengthArray = sizeNeeded;
+            status = STATUS_SUCCESS;
+        }
+        break;
+    }
 #endif
 
-        default:
-        {
-            status = STATUS_WMI_GUID_NOT_FOUND;
-            break;
-        }
+    default:
+    {
+        status = STATUS_WMI_GUID_NOT_FOUND;
+        break;
+    }
     }
 
     //
@@ -976,14 +807,9 @@ Return Value:
     // needed to return all of the data. If there was enough room then
     // status is STATUS_SUCCESS and sizeNeeded is the actual number of bytes
     // being returned.
-    status = WmiCompleteRequest(
-                                     DeviceObject,
-                                     Irp,
-                                     status,
-                                     sizeNeeded,
-                                     IO_NO_INCREMENT);
+    status = WmiCompleteRequest(DeviceObject, Irp, status, sizeNeeded, IO_NO_INCREMENT);
 
-    return(status);
+    return (status);
 }
 
 
@@ -993,15 +819,10 @@ Return Value:
 // you use sizeof(EC1), but WMI may pass a data block that is the exact
 // size of the data without padding.
 //
-#define EC1Size (FIELD_OFFSET(EC1, Xdatetime) + 25*sizeof(WCHAR))
+#define EC1Size (FIELD_OFFSET(EC1, Xdatetime) + 25 * sizeof(WCHAR))
 
-NTSTATUS FilterSetEc1Worker(
-    struct DEVICE_EXTENSION * devExt,
-    ULONG BufferSize,
-    ULONG Index,
-    PUCHAR Buffer,
-    PULONG BufferUsed
-    )
+NTSTATUS FilterSetEc1Worker(struct DEVICE_EXTENSION *devExt, ULONG BufferSize, ULONG Index, PUCHAR Buffer,
+                            PULONG BufferUsed)
 {
     ULONG blockLen;
     NTSTATUS status;
@@ -1012,16 +833,15 @@ NTSTATUS FilterSetEc1Worker(
     {
         blockLen = sizeof(EC1);
 
-		FilterSetEc1(devExt,
-                            Buffer,
-                            blockLen,
-                            Index);
-		*BufferUsed = (blockLen+7) & ~7;
-		status = STATUS_SUCCESS;
-    } else {
+        FilterSetEc1(devExt, Buffer, blockLen, Index);
+        *BufferUsed = (blockLen + 7) & ~7;
+        status = STATUS_SUCCESS;
+    }
+    else
+    {
         status = STATUS_INVALID_PARAMETER_MIX;
     }
-    return(status);
+    return (status);
 }
 
 //
@@ -1030,15 +850,10 @@ NTSTATUS FilterSetEc1Worker(
 // you use sizeof(EC2), but WMI may pass a data block that is the exact
 // size of the data without padding.
 //
-#define EC2Size (FIELD_OFFSET(EC2, Xdatetime) + 25*sizeof(WCHAR))
+#define EC2Size (FIELD_OFFSET(EC2, Xdatetime) + 25 * sizeof(WCHAR))
 
-NTSTATUS FilterSetEc2Worker(
-    struct DEVICE_EXTENSION * devExt,
-    ULONG BufferSize,
-    ULONG Index,
-    PUCHAR Buffer,
-    PULONG BufferUsed
-    )
+NTSTATUS FilterSetEc2Worker(struct DEVICE_EXTENSION *devExt, ULONG BufferSize, ULONG Index, PUCHAR Buffer,
+                            PULONG BufferUsed)
 {
     ULONG blockLen;
     NTSTATUS status;
@@ -1050,29 +865,21 @@ NTSTATUS FilterSetEc2Worker(
     {
         blockLen = sizeof(EC2);
 
-		FilterSetEc2(devExt,
-                            Buffer,
-                            blockLen,
-                            Index);
-		*BufferUsed = (blockLen+7) & ~7;
-		status = STATUS_SUCCESS;
-    } else {
+        FilterSetEc2(devExt, Buffer, blockLen, Index);
+        *BufferUsed = (blockLen + 7) & ~7;
+        status = STATUS_SUCCESS;
+    }
+    else
+    {
         status = STATUS_INVALID_PARAMETER_MIX;
     }
-    return(status);
+    return (status);
 }
 
 
-
 NTSTATUS
-FilterSetWmiDataBlock(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG GuidIndex,
-    IN ULONG InstanceIndex,
-    IN ULONG BufferSize,
-    IN PUCHAR Buffer
-    )
+FilterSetWmiDataBlock(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG GuidIndex, IN ULONG InstanceIndex,
+                      IN ULONG BufferSize, IN PUCHAR Buffer)
 /*++
 
 Routine Description:
@@ -1106,176 +913,140 @@ Return Value:
 {
     NTSTATUS status;
     ULONG bufferUsed;
-    struct DEVICE_EXTENSION * devExt = DeviceObject->DeviceExtension;
+    struct DEVICE_EXTENSION *devExt = DeviceObject->DeviceExtension;
     ULONG i;
     ULONG vlSize;
 
 
-    switch(GuidIndex)
+    switch (GuidIndex)
     {
-        case FilterClass1:
-        case FilterClass2:
-        {
-            // plain EC1
-            status = FilterSetEc1Worker(devExt,
-                                         BufferSize,
-                                         0,
-                                         Buffer,
-                                         &bufferUsed);
-            break;
-        }
-
-        case FilterClass3:
-        {
-            // fixed array of EC1
-
-            for (i = 0, status = STATUS_SUCCESS;
-                 (i < 4) && NT_SUCCESS(status); i++)
-            {
-                status = FilterSetEc1Worker(devExt,
-                                             BufferSize,
-                                             i,
-                                             Buffer,
-                                             &bufferUsed);
-                Buffer += bufferUsed;
-                BufferSize -= bufferUsed;
-            }
-            break;
-        }
-
-        case FilterClass4:
-        {
-            // variable array of EC1
-
-            if (BufferSize >= ((sizeof(ULONG) +7) & ~7))
-            {
-                vlSize = *((PULONG)Buffer);
-                Buffer += ((sizeof(ULONG) +7) & ~7);
-
-                if ((vlSize >= 1) && (vlSize <= 4))
-                {
-                    for (i = 0, status = STATUS_SUCCESS;
-                         (i < vlSize) && NT_SUCCESS(status); i++)
-                    {
-                        status = FilterSetEc1Worker(devExt,
-                                             BufferSize,
-                                                 i,
-                                             Buffer,
-                                                 &bufferUsed);
-                        Buffer += bufferUsed;
-                        BufferSize -= bufferUsed;
-                    }
-                    if (NT_SUCCESS(status))
-                    {
-                        devExt->Ec1Count = vlSize;
-                    }
-                } else {
-                    KdPrint(("SetEc1 only up to [4] allowed, not %d\n",
-                            vlSize));
-                    status = STATUS_INVALID_PARAMETER_MIX;
-                }
-            } else {
-                KdPrint(("SetEc1 size too small\n"));
-                status = STATUS_INVALID_PARAMETER_MIX;
-            }
-
-            break;
-        }
-
-        case FilterClass5:
-        {
-            // plain EC2
-            status = FilterSetEc2Worker(devExt,
-                                         BufferSize,
-                                             0,
-                                         Buffer,
-                                         &bufferUsed);
-            break;
-        }
-
-        case FilterClass6:
-        {
-            // fixed array EC2
-            for (i = 0, status = STATUS_SUCCESS;
-                 (i < 4) && NT_SUCCESS(status); i++)
-            {
-                status = FilterSetEc2Worker(devExt,
-                                             BufferSize,
-                                                 i,
-                                             Buffer,
-                                             &bufferUsed);
-                Buffer += bufferUsed;
-                BufferSize -= bufferUsed;
-            }
-            break;
-        }
-
-        case FilterClass7:
-        {
-            // VL array EC2
-            if (BufferSize >= sizeof(ULONG))
-            {
-                vlSize = *((PULONG)Buffer);
-                Buffer += (sizeof(ULONG) +7) & ~7;
-                if ((vlSize >= 1) && (vlSize <= 4))
-                {
-                    for (i = 0, status = STATUS_SUCCESS;
-                         (i < vlSize) && NT_SUCCESS(status); i++)
-                    {
-                        status = FilterSetEc2Worker(devExt,
-                                             BufferSize,
-                                                 i,
-                                             Buffer,
-                                             &bufferUsed);
-                        Buffer += bufferUsed;
-                        BufferSize -= bufferUsed;
-                    }
-                    if (NT_SUCCESS(status))
-                    {
-                        devExt->Ec1Count = vlSize;
-                    }
-                } else {
-                    KdPrint(("SetEc2 only up to [4] allowed, not %d\n",
-                            vlSize));
-                    status = STATUS_INVALID_PARAMETER_MIX;
-                }
-            } else {
-                KdPrint(("SetEc2 size too small\n"));
-                status = STATUS_INVALID_PARAMETER_MIX;
-            }
-
-            break;
-        }
-
-        default:
-        {
-            status = STATUS_WMI_GUID_NOT_FOUND;
-            break;
-        }
+    case FilterClass1:
+    case FilterClass2:
+    {
+        // plain EC1
+        status = FilterSetEc1Worker(devExt, BufferSize, 0, Buffer, &bufferUsed);
+        break;
     }
 
-    status = WmiCompleteRequest(
-                                     DeviceObject,
-                                     Irp,
-                                     status,
-                                     0,
-                                     IO_NO_INCREMENT);
+    case FilterClass3:
+    {
+        // fixed array of EC1
 
-    return(status);
+        for (i = 0, status = STATUS_SUCCESS; (i < 4) && NT_SUCCESS(status); i++)
+        {
+            status = FilterSetEc1Worker(devExt, BufferSize, i, Buffer, &bufferUsed);
+            Buffer += bufferUsed;
+            BufferSize -= bufferUsed;
+        }
+        break;
+    }
 
+    case FilterClass4:
+    {
+        // variable array of EC1
 
+        if (BufferSize >= ((sizeof(ULONG) + 7) & ~7))
+        {
+            vlSize = *((PULONG)Buffer);
+            Buffer += ((sizeof(ULONG) + 7) & ~7);
+
+            if ((vlSize >= 1) && (vlSize <= 4))
+            {
+                for (i = 0, status = STATUS_SUCCESS; (i < vlSize) && NT_SUCCESS(status); i++)
+                {
+                    status = FilterSetEc1Worker(devExt, BufferSize, i, Buffer, &bufferUsed);
+                    Buffer += bufferUsed;
+                    BufferSize -= bufferUsed;
+                }
+                if (NT_SUCCESS(status))
+                {
+                    devExt->Ec1Count = vlSize;
+                }
+            }
+            else
+            {
+                KdPrint(("SetEc1 only up to [4] allowed, not %d\n", vlSize));
+                status = STATUS_INVALID_PARAMETER_MIX;
+            }
+        }
+        else
+        {
+            KdPrint(("SetEc1 size too small\n"));
+            status = STATUS_INVALID_PARAMETER_MIX;
+        }
+
+        break;
+    }
+
+    case FilterClass5:
+    {
+        // plain EC2
+        status = FilterSetEc2Worker(devExt, BufferSize, 0, Buffer, &bufferUsed);
+        break;
+    }
+
+    case FilterClass6:
+    {
+        // fixed array EC2
+        for (i = 0, status = STATUS_SUCCESS; (i < 4) && NT_SUCCESS(status); i++)
+        {
+            status = FilterSetEc2Worker(devExt, BufferSize, i, Buffer, &bufferUsed);
+            Buffer += bufferUsed;
+            BufferSize -= bufferUsed;
+        }
+        break;
+    }
+
+    case FilterClass7:
+    {
+        // VL array EC2
+        if (BufferSize >= sizeof(ULONG))
+        {
+            vlSize = *((PULONG)Buffer);
+            Buffer += (sizeof(ULONG) + 7) & ~7;
+            if ((vlSize >= 1) && (vlSize <= 4))
+            {
+                for (i = 0, status = STATUS_SUCCESS; (i < vlSize) && NT_SUCCESS(status); i++)
+                {
+                    status = FilterSetEc2Worker(devExt, BufferSize, i, Buffer, &bufferUsed);
+                    Buffer += bufferUsed;
+                    BufferSize -= bufferUsed;
+                }
+                if (NT_SUCCESS(status))
+                {
+                    devExt->Ec1Count = vlSize;
+                }
+            }
+            else
+            {
+                KdPrint(("SetEc2 only up to [4] allowed, not %d\n", vlSize));
+                status = STATUS_INVALID_PARAMETER_MIX;
+            }
+        }
+        else
+        {
+            KdPrint(("SetEc2 size too small\n"));
+            status = STATUS_INVALID_PARAMETER_MIX;
+        }
+
+        break;
+    }
+
+    default:
+    {
+        status = STATUS_WMI_GUID_NOT_FOUND;
+        break;
+    }
+    }
+
+    status = WmiCompleteRequest(DeviceObject, Irp, status, 0, IO_NO_INCREMENT);
+
+    return (status);
 }
 
 NTSTATUS
-FilterSetWmiDataItem(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG GuidIndex,
-    IN ULONG InstanceIndex,
-    IN ULONG DataItemId,
-    IN ULONG BufferSize,
-    IN PUCHAR Buffer
-    )
+FilterSetWmiDataItem(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG GuidIndex, IN ULONG InstanceIndex,
+                     IN ULONG DataItemId, IN ULONG BufferSize, IN PUCHAR Buffer)
 /*++
 
 Routine Description:
@@ -1310,54 +1081,48 @@ Return Value:
 --*/
 {
     NTSTATUS status;
-    struct DEVICE_EXTENSION * devExt = DeviceObject->DeviceExtension;
+    struct DEVICE_EXTENSION *devExt = DeviceObject->DeviceExtension;
     ULONG sizeNeeded = 0;
 
-    switch(GuidIndex)
+    switch (GuidIndex)
     {
-        case FilterClass1:
-        case FilterClass2:
-        case FilterClass3:
-        case FilterClass4:
-        case FilterClass5:
-        case FilterClass6:
-        case FilterClass7:
-        {
-            status = STATUS_INVALID_DEVICE_REQUEST;
-            break;
-        }
-
-        case FilterFireEvent:
-        case FilterGetSetData:
-        {
-            status = STATUS_WMI_READ_ONLY;
-            break;
-        }
-
-        default:
-        {
-            status = STATUS_WMI_GUID_NOT_FOUND;
-            break;
-        }
+    case FilterClass1:
+    case FilterClass2:
+    case FilterClass3:
+    case FilterClass4:
+    case FilterClass5:
+    case FilterClass6:
+    case FilterClass7:
+    {
+        status = STATUS_INVALID_DEVICE_REQUEST;
+        break;
     }
 
-    status = WmiCompleteRequest(
-                                     DeviceObject,
-                                     Irp,
-                                     status,
-                                     sizeNeeded,
-                                     IO_NO_INCREMENT);
+    case FilterFireEvent:
+    case FilterGetSetData:
+    {
+        status = STATUS_WMI_READ_ONLY;
+        break;
+    }
 
-    return(status);
+    default:
+    {
+        status = STATUS_WMI_GUID_NOT_FOUND;
+        break;
+    }
+    }
+
+    status = WmiCompleteRequest(DeviceObject, Irp, status, sizeNeeded, IO_NO_INCREMENT);
+
+    return (status);
 }
 
 
-NTSTATUS FilterDoFireEvent(
-    struct DEVICE_EXTENSION * devExt,
-    ULONG WnodeType,  // 0 - AllData, 1 - Single Instance
-    ULONG DataType,   // 1,2,5,8 is guid id
-    ULONG BlockIndex  // 0 - 3 is block index containing data
-    )
+NTSTATUS FilterDoFireEvent(struct DEVICE_EXTENSION *devExt,
+                           ULONG WnodeType, // 0 - AllData, 1 - Single Instance
+                           ULONG DataType,  // 1,2,5,8 is guid id
+                           ULONG BlockIndex // 0 - 3 is block index containing data
+)
 {
     PWNODE_HEADER Wnode;
     PWNODE_ALL_DATA WnodeAD;
@@ -1372,55 +1137,54 @@ NTSTATUS FilterDoFireEvent(
 
     if (BlockIndex > 3)
     {
-        return(STATUS_INVALID_PARAMETER_MIX);
+        return (STATUS_INVALID_PARAMETER_MIX);
     }
 
-    switch(DataType)
+    switch (DataType)
     {
-        case 1:
-        {
-            // EC1
-            dataSize = devExt->Ec1Length[BlockIndex];
-            dataPtr = (PUCHAR)devExt->Ec1[BlockIndex];
-            Guid = &FilterEventClass1Guid;
-            break;
-        }
-
-        case 2:
-        {
-            // EC1 (embedded)
-            dataSize = devExt->Ec1Length[BlockIndex];
-            dataPtr = (PUCHAR)devExt->Ec1[BlockIndex];
-            Guid = &FilterEventClass2Guid;
-            break;
-        }
-
-        case 5:
-        {
-            // EC2 (embedded)
-            dataSize = devExt->Ec2Length[BlockIndex];
-            dataPtr = (PUCHAR)devExt->Ec2[BlockIndex];
-            Guid = &FilterEventClass5Guid;
-            break;
-        }
-
-        case 8:
-        {
-            isEventRef = TRUE;
-            Guid = &FilterEventReferenceClassGuid;
-            break;
-        }
-
-        default:
-        {
-            return(STATUS_INVALID_PARAMETER_MIX);
-        }
+    case 1:
+    {
+        // EC1
+        dataSize = devExt->Ec1Length[BlockIndex];
+        dataPtr = (PUCHAR)devExt->Ec1[BlockIndex];
+        Guid = &FilterEventClass1Guid;
+        break;
     }
 
-    if (isEventRef) {
-        Wnode = ExAllocatePoolWithTag(NonPagedPool,
-                                      sizeof(WNODE_EVENT_REFERENCE),
-                                      FILTER_TAG);
+    case 2:
+    {
+        // EC1 (embedded)
+        dataSize = devExt->Ec1Length[BlockIndex];
+        dataPtr = (PUCHAR)devExt->Ec1[BlockIndex];
+        Guid = &FilterEventClass2Guid;
+        break;
+    }
+
+    case 5:
+    {
+        // EC2 (embedded)
+        dataSize = devExt->Ec2Length[BlockIndex];
+        dataPtr = (PUCHAR)devExt->Ec2[BlockIndex];
+        Guid = &FilterEventClass5Guid;
+        break;
+    }
+
+    case 8:
+    {
+        isEventRef = TRUE;
+        Guid = &FilterEventReferenceClassGuid;
+        break;
+    }
+
+    default:
+    {
+        return (STATUS_INVALID_PARAMETER_MIX);
+    }
+    }
+
+    if (isEventRef)
+    {
+        Wnode = ExAllocatePoolWithTag(NonPagedPool, sizeof(WNODE_EVENT_REFERENCE), FILTER_TAG);
         if (Wnode != NULL)
         {
             PWNODE_EVENT_REFERENCE WnodeER;
@@ -1433,8 +1197,7 @@ NTSTATUS FilterDoFireEvent(
             // header to specify an event reference with static instance
             // names.
             //
-            Wnode->Flags = WNODE_FLAG_EVENT_REFERENCE |
-                           WNODE_FLAG_STATIC_INSTANCE_NAMES;
+            Wnode->Flags = WNODE_FLAG_EVENT_REFERENCE | WNODE_FLAG_STATIC_INSTANCE_NAMES;
 
             WnodeER = (PWNODE_EVENT_REFERENCE)Wnode;
 
@@ -1453,56 +1216,50 @@ NTSTATUS FilterDoFireEvent(
             // names we would have to setup the instance name as text.
             WnodeER->TargetInstanceIndex = 0;
             dataPtr = NULL;
-        } else {
-            return(STATUS_INSUFFICIENT_RESOURCES);
         }
-    } else if (WnodeType == 0)
+        else
+        {
+            return (STATUS_INSUFFICIENT_RESOURCES);
+        }
+    }
+    else if (WnodeType == 0)
     {
-        sizeNeeded = FIELD_OFFSET(WNODE_ALL_DATA,
-                                  OffsetInstanceDataAndLength) + dataSize;
-        Wnode = ExAllocatePoolWithTag(NonPagedPool,
-                                      sizeNeeded,
-                                      FILTER_TAG);
+        sizeNeeded = FIELD_OFFSET(WNODE_ALL_DATA, OffsetInstanceDataAndLength) + dataSize;
+        Wnode = ExAllocatePoolWithTag(NonPagedPool, sizeNeeded, FILTER_TAG);
 
         if (Wnode == NULL)
         {
-            return(STATUS_INSUFFICIENT_RESOURCES);
+            return (STATUS_INSUFFICIENT_RESOURCES);
         }
 
-        Wnode->Flags =  WNODE_FLAG_ALL_DATA |
-                         WNODE_FLAG_FIXED_INSTANCE_SIZE |
-                        WNODE_FLAG_EVENT_ITEM |
-                        WNODE_FLAG_STATIC_INSTANCE_NAMES;
+        Wnode->Flags = WNODE_FLAG_ALL_DATA | WNODE_FLAG_FIXED_INSTANCE_SIZE | WNODE_FLAG_EVENT_ITEM |
+                       WNODE_FLAG_STATIC_INSTANCE_NAMES;
         WnodeAD = (PWNODE_ALL_DATA)Wnode;
-        WnodeAD->DataBlockOffset = FIELD_OFFSET(WNODE_ALL_DATA,
-                                                OffsetInstanceDataAndLength);
+        WnodeAD->DataBlockOffset = FIELD_OFFSET(WNODE_ALL_DATA, OffsetInstanceDataAndLength);
         WnodeAD->InstanceCount = 1;
         WnodeAD->FixedInstanceSize = dataSize;
         WnodeDataPtr = (PUCHAR)Wnode + WnodeAD->DataBlockOffset;
-
-    } else if (WnodeType == 1) {
-        sizeNeeded = FIELD_OFFSET(WNODE_SINGLE_INSTANCE,
-                                  VariableData) + dataSize;
-        Wnode = ExAllocatePoolWithTag(NonPagedPool,
-                                      sizeNeeded,
-                                      FILTER_TAG);
+    }
+    else if (WnodeType == 1)
+    {
+        sizeNeeded = FIELD_OFFSET(WNODE_SINGLE_INSTANCE, VariableData) + dataSize;
+        Wnode = ExAllocatePoolWithTag(NonPagedPool, sizeNeeded, FILTER_TAG);
 
         if (Wnode == NULL)
         {
-            return(STATUS_INSUFFICIENT_RESOURCES);
+            return (STATUS_INSUFFICIENT_RESOURCES);
         }
 
-        Wnode->Flags =  WNODE_FLAG_SINGLE_INSTANCE |
-                        WNODE_FLAG_EVENT_ITEM |
-                        WNODE_FLAG_STATIC_INSTANCE_NAMES;
+        Wnode->Flags = WNODE_FLAG_SINGLE_INSTANCE | WNODE_FLAG_EVENT_ITEM | WNODE_FLAG_STATIC_INSTANCE_NAMES;
         WnodeSI = (PWNODE_SINGLE_INSTANCE)Wnode;
-        WnodeSI->DataBlockOffset = FIELD_OFFSET(WNODE_SINGLE_INSTANCE,
-                                                VariableData);
+        WnodeSI->DataBlockOffset = FIELD_OFFSET(WNODE_SINGLE_INSTANCE, VariableData);
         WnodeSI->InstanceIndex = 0;
         WnodeSI->SizeDataBlock = dataSize;
         WnodeDataPtr = (PUCHAR)Wnode + WnodeSI->DataBlockOffset;
-    } else {
-        return(STATUS_INVALID_PARAMETER_MIX);
+    }
+    else
+    {
+        return (STATUS_INVALID_PARAMETER_MIX);
     }
 
 
@@ -1522,24 +1279,16 @@ NTSTATUS FilterDoFireEvent(
     // If IoWMIWriteEvent succeeds then WMI will free the event buffer. If
     // it fails then the caller frees the event buffer.
     //
-    if (! NT_SUCCESS(status))
+    if (!NT_SUCCESS(status))
     {
         ExFreePool(Wnode);
     }
-    return(status);
+    return (status);
 }
 
 NTSTATUS
-FilterExecuteWmiMethod(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG GuidIndex,
-    IN ULONG InstanceIndex,
-    IN ULONG MethodId,
-    IN ULONG InBufferSize,
-    IN ULONG OutBufferSize,
-    IN PUCHAR Buffer
-    )
+FilterExecuteWmiMethod(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG GuidIndex, IN ULONG InstanceIndex,
+                       IN ULONG MethodId, IN ULONG InBufferSize, IN ULONG OutBufferSize, IN PUCHAR Buffer)
 /*++
 
 Routine Description:
@@ -1579,7 +1328,7 @@ Return Value:
 {
     ULONG sizeNeeded = 0;
     NTSTATUS status;
-    struct DEVICE_EXTENSION * devExt = DeviceObject->DeviceExtension;
+    struct DEVICE_EXTENSION *devExt = DeviceObject->DeviceExtension;
     ULONG bufferUsed;
     ULONG blockIndex;
     ULONG UlongPadSize = (sizeof(ULONG) + 7) & ~7;
@@ -1587,189 +1336,186 @@ Return Value:
 
     if (GuidIndex == FilterGetSetData)
     {
-        switch(MethodId)
+        switch (MethodId)
         {
-            case SetEC1:
-            case SetEC1AsEc:
+        case SetEC1:
+        case SetEC1AsEc:
+        {
+            // SetEc1
+
+            if (InBufferSize < UlongPadSize)
             {
-                // SetEc1
-
-                if (InBufferSize < UlongPadSize)
-                {
-                    status = STATUS_INVALID_PARAMETER_MIX;
-                    sizeNeeded = 0;
-                    break;
-                } else {
-                    blockIndex = *((PULONG)Buffer);
-                    if (blockIndex > 3)
-                    {
-                        status = STATUS_INVALID_PARAMETER_MIX;
-                        break;
-                    }
-                    Buffer += UlongPadSize;
-                    InBufferSize -= UlongPadSize;
-                }
-
-                status = FilterSetEc1Worker(devExt,
-                                         InBufferSize,
-                                             blockIndex,
-                                         Buffer,
-                                         &bufferUsed);
+                status = STATUS_INVALID_PARAMETER_MIX;
                 sizeNeeded = 0;
                 break;
             }
-
-            case SetEC2:
-            case SetEC2AsEc:
+            else
             {
-                // SetEc2
-
-                if (InBufferSize < UlongPadSize)
+                blockIndex = *((PULONG)Buffer);
+                if (blockIndex > 3)
                 {
                     status = STATUS_INVALID_PARAMETER_MIX;
-                    sizeNeeded = 0;
                     break;
-                } else {
-                    blockIndex = *((PULONG)Buffer);
-                    if (blockIndex > 3)
-                    {
-                        status = STATUS_INVALID_PARAMETER_MIX;
-                        break;
-                    }
-                    Buffer += UlongPadSize;
-                    InBufferSize -= UlongPadSize;
                 }
-
-                status = FilterSetEc2Worker(devExt,
-                                         InBufferSize,
-                                             blockIndex,
-                                         Buffer,
-                                         &bufferUsed);
-                sizeNeeded = 0;
-                break;
+                Buffer += UlongPadSize;
+                InBufferSize -= UlongPadSize;
             }
 
-            case GetEC1:
-            case GetEC1AsEc:
-            {
-                // GetEc1
-
-                if (InBufferSize != sizeof(ULONG))
-                {
-                    status = STATUS_INVALID_PARAMETER_MIX;
-                    sizeNeeded = 0;
-                    break;
-                } else {
-                    blockIndex = *((PULONG)Buffer);
-                    if (blockIndex > 3)
-                    {
-                        status = STATUS_INVALID_PARAMETER_MIX;
-                        break;
-                    }
-                }
-
-                sizeNeeded = devExt->Ec1ActualLength[blockIndex];
-                if (OutBufferSize < sizeNeeded)
-                {
-                    status = STATUS_BUFFER_TOO_SMALL;
-                } else {
-                    FilterGetActualEc1(devExt, Buffer, blockIndex);
-                    status = STATUS_SUCCESS;
-                }
-                break;
-            }
-
-            case GetEC2:
-            case GetEC2AsEc:
-            {
-                // GetEc2
-                if (InBufferSize != sizeof(ULONG))
-                {
-                    status = STATUS_INVALID_PARAMETER_MIX;
-                    sizeNeeded = 0;
-                    break;
-                } else {
-                    blockIndex = *((PULONG)Buffer);
-                    if (blockIndex > 3)
-                    {
-                        status = STATUS_INVALID_PARAMETER_MIX;
-                        break;
-                    }
-                }
-
-                sizeNeeded = devExt->Ec2ActualLength[blockIndex];
-                if (OutBufferSize < sizeNeeded)
-                {
-                    status = STATUS_BUFFER_TOO_SMALL;
-                } else {
-                    FilterGetActualEc2(devExt, Buffer, blockIndex);
-                    status = STATUS_SUCCESS;
-                }
-                break;
-            }
-
-            case DisableSampleClass7:
-            {
-                //
-                // Mark the guid for FilterClass7 as not available and then
-                // call WMI to inform it that the guid list has changed. WMI
-                // will send a new IRP_MN_REGINFO which would cause the
-                // QueryWmiRegInfo callback to be called and the new
-                // guid list would be returned and the registration updated.
-                FilterGuidList[FilterClass7].Flags |= WMIREG_FLAG_REMOVE_GUID;
-                status = IoWMIRegistrationControl(devExt->filterDevObj,
-                                         WMIREG_ACTION_UPDATE_GUIDS);
-                sizeNeeded = 0;
-                break;
-            }
-
-            case UnregisterFromWmi:
-            {
-                //
-                // We must wait until AFTER the irp is completed before
-                // calling IoWMIRegistrationControl to unregister. Since
-                // that api will block until all WMI irps sent to the
-                // device are completed we would become deadlocked.
-
-                IoWMIRegistrationControl(devExt->filterDevObj,
-                                         WMIREG_ACTION_BLOCK_IRPS);
-
-                status = WmiCompleteRequest(
-                                     DeviceObject,
-                                     Irp,
-                                     STATUS_SUCCESS,
-                                     0,
-                                     IO_NO_INCREMENT);
-
-                IoWMIRegistrationControl(devExt->filterDevObj,
-                                         WMIREG_ACTION_DEREGISTER);
-                return(status);
-            }
-
-            case EnableSampleClass7:
-            {
-                //
-                // Mark the guid for FilterClass7 as available and then
-                // call WMI to inform it that the guid list has changed. WMI
-                // will send a new IRP_MN_REGINFO which would cause the
-                // QueryWmiRegInfo callback to be called and the new
-                // guid list would be returned and the registration updated.
-                FilterGuidList[FilterClass7].Flags &= ~WMIREG_FLAG_REMOVE_GUID;
-                status = IoWMIRegistrationControl(devExt->filterDevObj,
-                                         WMIREG_ACTION_UPDATE_GUIDS);
-                sizeNeeded = 0;
-                break;
-            }
-
-            default:
-            {
-                status = STATUS_WMI_ITEMID_NOT_FOUND;
-            }
+            status = FilterSetEc1Worker(devExt, InBufferSize, blockIndex, Buffer, &bufferUsed);
+            sizeNeeded = 0;
+            break;
         }
-    } else if (GuidIndex == FilterFireEvent) {
+
+        case SetEC2:
+        case SetEC2AsEc:
+        {
+            // SetEc2
+
+            if (InBufferSize < UlongPadSize)
+            {
+                status = STATUS_INVALID_PARAMETER_MIX;
+                sizeNeeded = 0;
+                break;
+            }
+            else
+            {
+                blockIndex = *((PULONG)Buffer);
+                if (blockIndex > 3)
+                {
+                    status = STATUS_INVALID_PARAMETER_MIX;
+                    break;
+                }
+                Buffer += UlongPadSize;
+                InBufferSize -= UlongPadSize;
+            }
+
+            status = FilterSetEc2Worker(devExt, InBufferSize, blockIndex, Buffer, &bufferUsed);
+            sizeNeeded = 0;
+            break;
+        }
+
+        case GetEC1:
+        case GetEC1AsEc:
+        {
+            // GetEc1
+
+            if (InBufferSize != sizeof(ULONG))
+            {
+                status = STATUS_INVALID_PARAMETER_MIX;
+                sizeNeeded = 0;
+                break;
+            }
+            else
+            {
+                blockIndex = *((PULONG)Buffer);
+                if (blockIndex > 3)
+                {
+                    status = STATUS_INVALID_PARAMETER_MIX;
+                    break;
+                }
+            }
+
+            sizeNeeded = devExt->Ec1ActualLength[blockIndex];
+            if (OutBufferSize < sizeNeeded)
+            {
+                status = STATUS_BUFFER_TOO_SMALL;
+            }
+            else
+            {
+                FilterGetActualEc1(devExt, Buffer, blockIndex);
+                status = STATUS_SUCCESS;
+            }
+            break;
+        }
+
+        case GetEC2:
+        case GetEC2AsEc:
+        {
+            // GetEc2
+            if (InBufferSize != sizeof(ULONG))
+            {
+                status = STATUS_INVALID_PARAMETER_MIX;
+                sizeNeeded = 0;
+                break;
+            }
+            else
+            {
+                blockIndex = *((PULONG)Buffer);
+                if (blockIndex > 3)
+                {
+                    status = STATUS_INVALID_PARAMETER_MIX;
+                    break;
+                }
+            }
+
+            sizeNeeded = devExt->Ec2ActualLength[blockIndex];
+            if (OutBufferSize < sizeNeeded)
+            {
+                status = STATUS_BUFFER_TOO_SMALL;
+            }
+            else
+            {
+                FilterGetActualEc2(devExt, Buffer, blockIndex);
+                status = STATUS_SUCCESS;
+            }
+            break;
+        }
+
+        case DisableSampleClass7:
+        {
+            //
+            // Mark the guid for FilterClass7 as not available and then
+            // call WMI to inform it that the guid list has changed. WMI
+            // will send a new IRP_MN_REGINFO which would cause the
+            // QueryWmiRegInfo callback to be called and the new
+            // guid list would be returned and the registration updated.
+            FilterGuidList[FilterClass7].Flags |= WMIREG_FLAG_REMOVE_GUID;
+            status = IoWMIRegistrationControl(devExt->filterDevObj, WMIREG_ACTION_UPDATE_GUIDS);
+            sizeNeeded = 0;
+            break;
+        }
+
+        case UnregisterFromWmi:
+        {
+            //
+            // We must wait until AFTER the irp is completed before
+            // calling IoWMIRegistrationControl to unregister. Since
+            // that api will block until all WMI irps sent to the
+            // device are completed we would become deadlocked.
+
+            IoWMIRegistrationControl(devExt->filterDevObj, WMIREG_ACTION_BLOCK_IRPS);
+
+            status = WmiCompleteRequest(DeviceObject, Irp, STATUS_SUCCESS, 0, IO_NO_INCREMENT);
+
+            IoWMIRegistrationControl(devExt->filterDevObj, WMIREG_ACTION_DEREGISTER);
+            return (status);
+        }
+
+        case EnableSampleClass7:
+        {
+            //
+            // Mark the guid for FilterClass7 as available and then
+            // call WMI to inform it that the guid list has changed. WMI
+            // will send a new IRP_MN_REGINFO which would cause the
+            // QueryWmiRegInfo callback to be called and the new
+            // guid list would be returned and the registration updated.
+            FilterGuidList[FilterClass7].Flags &= ~WMIREG_FLAG_REMOVE_GUID;
+            status = IoWMIRegistrationControl(devExt->filterDevObj, WMIREG_ACTION_UPDATE_GUIDS);
+            sizeNeeded = 0;
+            break;
+        }
+
+        default:
+        {
+            status = STATUS_WMI_ITEMID_NOT_FOUND;
+        }
+        }
+    }
+    else if (GuidIndex == FilterFireEvent)
+    {
         if (MethodId == FireEvent)
         {
-            if (InBufferSize == 3*sizeof(ULONG))
+            if (InBufferSize == 3 * sizeof(ULONG))
             {
                 ULONG wnodeType;
                 ULONG dataType;
@@ -1784,41 +1530,33 @@ Return Value:
                 blockIndex = *(PULONG)Buffer;
                 Buffer += sizeof(ULONG);
 
-                status = FilterDoFireEvent(devExt,
-                                 wnodeType,
-                                 dataType,
-                                 blockIndex);
+                status = FilterDoFireEvent(devExt, wnodeType, dataType, blockIndex);
 
                 sizeNeeded = 0;
-
-            } else {
+            }
+            else
+            {
                 status = STATUS_INVALID_PARAMETER_MIX;
             }
-        } else {
+        }
+        else
+        {
             status = STATUS_WMI_ITEMID_NOT_FOUND;
         }
-    } else  {
+    }
+    else
+    {
         status = STATUS_WMI_GUID_NOT_FOUND;
     }
 
-    status = WmiCompleteRequest(
-                                     DeviceObject,
-                                     Irp,
-                                     status,
-                                     sizeNeeded,
-                                     IO_NO_INCREMENT);
+    status = WmiCompleteRequest(DeviceObject, Irp, status, sizeNeeded, IO_NO_INCREMENT);
 
-    return(status);
+    return (status);
 }
 
 NTSTATUS
-FilterFunctionControl(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG GuidIndex,
-    IN WMIENABLEDISABLECONTROL Function,
-    IN BOOLEAN Enable
-    )
+FilterFunctionControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG GuidIndex,
+                      IN WMIENABLEDISABLECONTROL Function, IN BOOLEAN Enable)
 /*++
 
 Routine Description:
@@ -1854,13 +1592,7 @@ Return Value:
 {
     NTSTATUS status;
 
-    status = WmiCompleteRequest(
-                                     DeviceObject,
-                                     Irp,
-                                     STATUS_SUCCESS,
-                                     0,
-                                     IO_NO_INCREMENT);
-    return(status);
+    status = WmiCompleteRequest(DeviceObject, Irp, STATUS_SUCCESS, 0, IO_NO_INCREMENT);
+    return (status);
 }
-
 

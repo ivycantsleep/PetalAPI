@@ -19,33 +19,33 @@ Revision History:
 --*/
 #include "chkreg.h"
 
-extern ULONG   TotalKeyNode;
-extern ULONG   TotalKeyValue;
-extern ULONG   TotalKeyIndex;
-extern ULONG   TotalKeySecurity;
-extern ULONG   TotalValueIndex;
-extern ULONG   TotalUnknown;
+extern ULONG TotalKeyNode;
+extern ULONG TotalKeyValue;
+extern ULONG TotalKeyIndex;
+extern ULONG TotalKeySecurity;
+extern ULONG TotalValueIndex;
+extern ULONG TotalUnknown;
 
-extern ULONG   CountKeyNode;
-extern ULONG   CountKeyValue;
-extern ULONG   CountKeyIndex;
-extern ULONG   CountKeySecurity;
-extern ULONG   CountValueIndex;
-extern ULONG   CountUnknown;
+extern ULONG CountKeyNode;
+extern ULONG CountKeyValue;
+extern ULONG CountKeyIndex;
+extern ULONG CountKeySecurity;
+extern ULONG CountValueIndex;
+extern ULONG CountUnknown;
 
-extern ULONG    TotalFree; 
-extern ULONG    FreeCount; 
-extern ULONG    TotalUsed;
+extern ULONG TotalFree;
+extern ULONG FreeCount;
+extern ULONG TotalUsed;
 
-extern PUCHAR  Base;
+extern PUCHAR Base;
 extern FILE *OutputFile;
 
 extern HCELL_INDEX RootCell;
-extern PHBIN   FirstBin;
-extern PHBIN   MaxBin;
-extern ULONG   HiveLength;
+extern PHBIN FirstBin;
+extern PHBIN MaxBin;
+extern ULONG HiveLength;
 
-extern LONG    BinIndex;
+extern LONG BinIndex;
 extern BOOLEAN FixHive;
 extern BOOLEAN SpaceUsage;
 extern BOOLEAN CompactHive;
@@ -63,50 +63,42 @@ ULONG UsedDisplayCount[HHIVE_FREE_DISPLAY_SIZE];
 BOOLEAN ChkAllocatedCell(HCELL_INDEX Cell);
 
 CCHAR ChkRegFindFirstSetLeft[256] = {
-        0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
-        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
-        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
-        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
-        6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-        6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-        6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-        6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-        7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-        7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-        7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-        7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-        7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-        7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-        7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-        7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7};
+    0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5,
+    5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+    6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+    6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+    7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+    7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+    7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7
+};
 
-#define ComputeFreeIndex(Index, Size)                                   \
-    {                                                                   \
-        Index = (Size >> HHIVE_FREE_DISPLAY_SHIFT) - 1;                 \
-        if (Index >= HHIVE_LINEAR_INDEX ) {                             \
-                                                                        \
+#define ComputeFreeIndex(Index, Size)                                            \
+    {                                                                            \
+        Index = (Size >> HHIVE_FREE_DISPLAY_SHIFT) - 1;                          \
+        if (Index >= HHIVE_LINEAR_INDEX)                                         \
+        {                                                                        \
+                                                                                 \
             /*                                                          \
             ** Too big for the linear lists, compute the exponential    \
             ** list.                                                    \
-            */                                                          \
-                                                                        \
-            if (Index > 255) {                                          \
+            */       \
+                                                                                 \
+            if (Index > 255)                                                     \
+            {                                                                    \
                 /*                                                      \
                 ** Too big for all the lists, use the last index.       \
-                */                                                      \
-                Index = HHIVE_FREE_DISPLAY_SIZE-1;                      \
-            } else {                                                    \
-                Index = ChkRegFindFirstSetLeft[Index] +                 \
-                        HHIVE_FREE_DISPLAY_BIAS;                        \
-            }                                                           \
-        }                                                               \
+                */       \
+                Index = HHIVE_FREE_DISPLAY_SIZE - 1;                             \
+            }                                                                    \
+            else                                                                 \
+            {                                                                    \
+                Index = ChkRegFindFirstSetLeft[Index] + HHIVE_FREE_DISPLAY_BIAS; \
+            }                                                                    \
+        }                                                                        \
     }
 
-BOOLEAN 
-ChkBinHeader(PHBIN Bin, 
-             ULONG FileOffset, 
-             ULONG Index
-             )
+BOOLEAN
+ChkBinHeader(PHBIN Bin, ULONG FileOffset, ULONG Index)
 /*++
 
 Routine Description:
@@ -139,22 +131,27 @@ Return Value:
 --*/
 {
     BOOLEAN bRez = TRUE;
-    PHCELL       p;
+    PHCELL p;
 
     p = (PHCELL)((PUCHAR)Bin + sizeof(HBIN));
 
-    if(Bin->Size > (HiveLength - FileOffset)) {
+    if (Bin->Size > (HiveLength - FileOffset))
+    {
         bRez = FALSE;
-        fprintf(stderr, "Size too big (%lu) in Bin header of Bin (%lu)\n",Bin->Size,Index);
-        if(FixHive) {
-        // 
-        // REPAIR: set the actual size to HiveLength-FileOffset
-        //
-            Bin->Size = HiveLength-FileOffset;
-            p->Size = Bin->Size -sizeof(HBIN);
+        fprintf(stderr, "Size too big (%lu) in Bin header of Bin (%lu)\n", Bin->Size, Index);
+        if (FixHive)
+        {
+            //
+            // REPAIR: set the actual size to HiveLength-FileOffset
+            //
+            Bin->Size = HiveLength - FileOffset;
+            p->Size = Bin->Size - sizeof(HBIN);
             bRez = TRUE;
-        } else {
-            if(CompactHive) {
+        }
+        else
+        {
+            if (CompactHive)
+            {
                 // any attempt to compact a corrupted hive will fail
                 CompactHive = FALSE;
                 fprintf(stderr, "Run chkreg /R to fix.\n");
@@ -162,19 +159,24 @@ Return Value:
         }
     }
 
-    if((Bin->Size < HBLOCK_SIZE) || ((Bin->Size % HBLOCK_SIZE) != 0)) {
+    if ((Bin->Size < HBLOCK_SIZE) || ((Bin->Size % HBLOCK_SIZE) != 0))
+    {
         bRez = FALSE;
-        fprintf(stderr, "Size too small (%lu) in Bin header of Bin (%lu)\n",Bin->Size,Index);
-        if(FixHive) {
-        // 
-        // REPAIR: set the actual size to minimmum possible size HBLOCK_SIZE
-        //
+        fprintf(stderr, "Size too small (%lu) in Bin header of Bin (%lu)\n", Bin->Size, Index);
+        if (FixHive)
+        {
+            //
+            // REPAIR: set the actual size to minimmum possible size HBLOCK_SIZE
+            //
             Bin->Size = HBLOCK_SIZE;
-            p->Size = Bin->Size -sizeof(HBIN);
+            p->Size = Bin->Size - sizeof(HBIN);
 
             bRez = TRUE;
-        } else {
-            if(CompactHive) {
+        }
+        else
+        {
+            if (CompactHive)
+            {
                 // any attempt to compact a corrupted hive will fail
                 CompactHive = FALSE;
                 fprintf(stderr, "Run chkreg /R to fix.\n");
@@ -182,17 +184,22 @@ Return Value:
         }
     }
 
-    if(Bin->Signature != HBIN_SIGNATURE) {
+    if (Bin->Signature != HBIN_SIGNATURE)
+    {
         bRez = FALSE;
-        fprintf(stderr, "Invalid signature (%lx) in Bin header of Bin (%lu)\n",Bin->Signature,Index);
-        if(FixHive) {
-        // 
-        // REPAIR: reset the bin signature
-        //
+        fprintf(stderr, "Invalid signature (%lx) in Bin header of Bin (%lu)\n", Bin->Signature, Index);
+        if (FixHive)
+        {
+            //
+            // REPAIR: reset the bin signature
+            //
             Bin->Signature = HBIN_SIGNATURE;
             bRez = TRUE;
-        } else {
-            if(CompactHive) {
+        }
+        else
+        {
+            if (CompactHive)
+            {
                 // any attempt to compact a corrupted hive will fail
                 CompactHive = FALSE;
                 fprintf(stderr, "Run chkreg /R to fix.\n");
@@ -200,17 +207,23 @@ Return Value:
         }
     }
 
-    if(Bin->FileOffset != FileOffset) {
+    if (Bin->FileOffset != FileOffset)
+    {
         bRez = FALSE;
-        fprintf(stderr, "Actual FileOffset [%lx] and Bin FileOffset [%lx]  do not match in Bin (%lu); Size = (%lx)\n",FileOffset,Bin->FileOffset,Index,Bin->Size);
-        if(FixHive) {
-        // 
-        // REPAIR: reset the bin FileOffset
-        //
+        fprintf(stderr, "Actual FileOffset [%lx] and Bin FileOffset [%lx]  do not match in Bin (%lu); Size = (%lx)\n",
+                FileOffset, Bin->FileOffset, Index, Bin->Size);
+        if (FixHive)
+        {
+            //
+            // REPAIR: reset the bin FileOffset
+            //
             Bin->FileOffset = FileOffset;
             bRez = TRUE;
-        } else {
-            if(CompactHive) {
+        }
+        else
+        {
+            if (CompactHive)
+            {
                 // any attempt to compact a corrupted hive will fail
                 CompactHive = FALSE;
                 fprintf(stderr, "Run chkreg /R to fix.\n");
@@ -223,12 +236,7 @@ Return Value:
 
 
 BOOLEAN
-ChkBin(
-    PHBIN   Bin,
-    ULONG   IndexBin,
-    ULONG   Starting,
-    double  *Rate
-    )
+ChkBin(PHBIN Bin, ULONG IndexBin, ULONG Starting, double *Rate)
 /*++
 
 Routine Description:
@@ -263,41 +271,45 @@ Return Value:
 
 --*/
 {
-    ULONG   freespace = 0L;
-    ULONG   allocated = 0L;
+    ULONG freespace = 0L;
+    ULONG allocated = 0L;
     BOOLEAN bRez = TRUE;
     HCELL_INDEX cellindex;
-    PHCELL       p;
-    ULONG        Size;
-    ULONG        Index;
-    double       TmpRate;
+    PHCELL p;
+    ULONG Size;
+    ULONG Index;
+    double TmpRate;
 
     p = (PHCELL)((PUCHAR)Bin + sizeof(HBIN));
 
-    while (p < (PHCELL)((PUCHAR)Bin + Bin->Size)) {
-        
+    while (p < (PHCELL)((PUCHAR)Bin + Bin->Size))
+    {
+
         cellindex = (HCELL_INDEX)((PUCHAR)p - Base);
-        
-        if (p->Size >= 0) {
+
+        if (p->Size >= 0)
+        {
             //
             // It is a free cell.
             //
             Size = (ULONG)p->Size;
 
-            if ( (Size > Bin->Size)        ||
-                 ( (PHCELL)(Size + (PUCHAR)p) >
-                   (PHCELL)((PUCHAR)Bin + Bin->Size) )
-               ) {
+            if ((Size > Bin->Size) || ((PHCELL)(Size + (PUCHAR)p) > (PHCELL)((PUCHAR)Bin + Bin->Size)))
+            {
                 bRez = FALSE;
-                fprintf(stderr, "Impossible cell size in free cell (%lu) in Bin header of Bin (%lu)\n",Size,IndexBin);
-                if(FixHive) {
-                // 
-                // REPAIR: set the cell size to the largest possible hereon (ie. Bin + Bin->Size - p ); reset the Size too!!!
-                //
+                fprintf(stderr, "Impossible cell size in free cell (%lu) in Bin header of Bin (%lu)\n", Size, IndexBin);
+                if (FixHive)
+                {
+                    //
+                    // REPAIR: set the cell size to the largest possible hereon (ie. Bin + Bin->Size - p ); reset the Size too!!!
+                    //
                     bRez = TRUE;
                     p->Size = (ULONG)((PUCHAR)Bin + Bin->Size - (PUCHAR)p);
-                } else {
-                    if(CompactHive) {
+                }
+                else
+                {
+                    if (CompactHive)
+                    {
                         // any attempt to compact a corrupted hive will fail
                         CompactHive = FALSE;
                         fprintf(stderr, "Run chkreg /R to fix.\n");
@@ -306,47 +318,52 @@ Return Value:
             }
             freespace += Size;
 
-            TotalFree  += Size;
+            TotalFree += Size;
             FreeCount++;
 
-            if( SpaceUsage ) {
-            // only if we are interested in the usage map
+            if (SpaceUsage)
+            {
+                // only if we are interested in the usage map
                 // store the length of this free cell
                 ComputeFreeIndex(Index, Size);
                 BinFreeDisplaySize[Index] += Size;
                 // and increment the count of free cells of this particular size
                 BinFreeDisplayCount[Index]++;
             }
-
-        }else{
+        }
+        else
+        {
             //
             // It is used cell.  Check for signature
             //
             UCHAR *C;
             USHORT Sig;
-            int i,j;
+            int i, j;
 
             // All used cells are leak candidates
             AddCellToUnknownList(cellindex);
 
             Size = (ULONG)(p->Size * -1);
 
-            if ( (Size > Bin->Size)        ||
-                 ( (PHCELL)(Size + (PUCHAR)p) >
-                   (PHCELL)((PUCHAR)Bin + Bin->Size) )
-               ) {
+            if ((Size > Bin->Size) || ((PHCELL)(Size + (PUCHAR)p) > (PHCELL)((PUCHAR)Bin + Bin->Size)))
+            {
                 bRez = FALSE;
-                fprintf(stderr, "Impossible cell size in allocated cell (%lu) in Bin header of Bin (%lu)\n",Size,IndexBin);
-                if(FixHive) {
-                // 
-                // REPAIR: set the cell size to the largest possible hereon (ie. Bin + Bin->Size - p ); reset the Size too!!!
-                //
+                fprintf(stderr, "Impossible cell size in allocated cell (%lu) in Bin header of Bin (%lu)\n", Size,
+                        IndexBin);
+                if (FixHive)
+                {
+                    //
+                    // REPAIR: set the cell size to the largest possible hereon (ie. Bin + Bin->Size - p ); reset the Size too!!!
+                    //
                     bRez = TRUE;
                     p->Size = (LONG)((PUCHAR)Bin + Bin->Size - (PUCHAR)p);
                     // it's a used cell, remember ?
                     p->Size *= -1;
-                } else {
-                    if(CompactHive) {
+                }
+                else
+                {
+                    if (CompactHive)
+                    {
                         // any attempt to compact a corrupted hive will fail
                         CompactHive = FALSE;
                         fprintf(stderr, "Run chkreg /R to fix.\n");
@@ -356,77 +373,79 @@ Return Value:
 
             allocated += Size;
 
-            if( SpaceUsage ) {
-            // only if we are interested in the usage map
+            if (SpaceUsage)
+            {
+                // only if we are interested in the usage map
                 // store the length of this used cell
                 ComputeFreeIndex(Index, Size);
                 BinUsedDisplaySize[Index] += Size;
                 // and increment the count of used cells of this particular size
                 BinUsedDisplayCount[Index]++;
             }
-            
-            TotalUsed=TotalUsed+Size;
-            C= (UCHAR *) &(p->u.NewCell.u.UserData);
-            Sig=(USHORT) p->u.NewCell.u.UserData;
 
-            switch(Sig){
-                case CM_LINK_NODE_SIGNATURE:
-                    printf("Link Node !\n");
-                    TotalKeyNode=TotalKeyNode+Size;
-                    CountKeyNode++;
-                    break;
-                case CM_KEY_NODE_SIGNATURE:
-                    {
-                        PCM_KEY_NODE    Pcan;
-                        TotalKeyNode=TotalKeyNode+Size;
-                        CountKeyNode++;
+            TotalUsed = TotalUsed + Size;
+            C = (UCHAR *)&(p->u.NewCell.u.UserData);
+            Sig = (USHORT)p->u.NewCell.u.UserData;
 
-                        Pcan = (PCM_KEY_NODE)C; 
+            switch (Sig)
+            {
+            case CM_LINK_NODE_SIGNATURE:
+                printf("Link Node !\n");
+                TotalKeyNode = TotalKeyNode + Size;
+                CountKeyNode++;
+                break;
+            case CM_KEY_NODE_SIGNATURE:
+            {
+                PCM_KEY_NODE Pcan;
+                TotalKeyNode = TotalKeyNode + Size;
+                CountKeyNode++;
 
-                        if(Pcan->ValueList.Count){
-                            PHCELL TmpP;
-                            
-                            TmpP = (PHCELL) (Starting + Pcan->ValueList.List);
-                            TotalValueIndex=TotalValueIndex - TmpP->Size;
-                            CountValueIndex++;
-                        }
+                Pcan = (PCM_KEY_NODE)C;
 
-                    }
-                    break;
-                case CM_KEY_VALUE_SIGNATURE:
-                    TotalKeyValue=TotalKeyValue+Size;
-                    CountKeyValue++;
-                    break;
-                case CM_KEY_FAST_LEAF:
-                case CM_KEY_HASH_LEAF:
-                case CM_KEY_INDEX_LEAF:
-                case CM_KEY_INDEX_ROOT:
-                    TotalKeyIndex=TotalKeyIndex+Size;
-                    CountKeyIndex++;
-                    break;
-                case CM_KEY_SECURITY_SIGNATURE:
-                    TotalKeySecurity=TotalKeySecurity+Size;
-                    CountKeySecurity++;
-                    break;
-                default:
-                    //
-                    // No signature, it can be data or index cells.
-                    // Or there must be some registry leak here.
-                    //
-                    TotalUnknown=TotalUnknown+Size;
-                    CountUnknown++;
-                    break;
+                if (Pcan->ValueList.Count)
+                {
+                    PHCELL TmpP;
+
+                    TmpP = (PHCELL)(Starting + Pcan->ValueList.List);
+                    TotalValueIndex = TotalValueIndex - TmpP->Size;
+                    CountValueIndex++;
+                }
+            }
+            break;
+            case CM_KEY_VALUE_SIGNATURE:
+                TotalKeyValue = TotalKeyValue + Size;
+                CountKeyValue++;
+                break;
+            case CM_KEY_FAST_LEAF:
+            case CM_KEY_HASH_LEAF:
+            case CM_KEY_INDEX_LEAF:
+            case CM_KEY_INDEX_ROOT:
+                TotalKeyIndex = TotalKeyIndex + Size;
+                CountKeyIndex++;
+                break;
+            case CM_KEY_SECURITY_SIGNATURE:
+                TotalKeySecurity = TotalKeySecurity + Size;
+                CountKeySecurity++;
+                break;
+            default:
+                //
+                // No signature, it can be data or index cells.
+                // Or there must be some registry leak here.
+                //
+                TotalUnknown = TotalUnknown + Size;
+                CountUnknown++;
+                break;
             }
         }
 
         p = (PHCELL)((PUCHAR)p + Size);
     }
 
-            
-    *Rate = TmpRate = (double)(((double)allocated)/((double)(allocated+freespace)));
+
+    *Rate = TmpRate = (double)(((double)allocated) / ((double)(allocated + freespace)));
     TmpRate *= 100.00;
-    fprintf(OutputFile,"Bin [%5lu], usage %.2f%%\r",IndexBin,(float)TmpRate);        
-    
+    fprintf(OutputFile, "Bin [%5lu], usage %.2f%%\r", IndexBin, (float)TmpRate);
+
     return bRez;
 }
 
@@ -455,30 +474,34 @@ Return Value:
 {
 
     ULONG Starting;
-    PHBIN        Bin = FirstBin;
-    LONG         Index;
-    ULONG        FileOffset;
-    double       Rate,RateTotal = 0.0;
-    BOOLEAN      bRez = TRUE;
+    PHBIN Bin = FirstBin;
+    LONG Index;
+    ULONG FileOffset;
+    double Rate, RateTotal = 0.0;
+    BOOLEAN bRez = TRUE;
 
     int i;
 
-    Starting=(ULONG) Bin;
-    Index=0;
+    Starting = (ULONG)Bin;
+    Index = 0;
     FileOffset = 0;
 
-    for(i=0;i<HHIVE_FREE_DISPLAY_SIZE;i++) {
+    for (i = 0; i < HHIVE_FREE_DISPLAY_SIZE; i++)
+    {
         FreeDisplaySize[i] = 0;
         FreeDisplayCount[i] = 0;
         UsedDisplaySize[i] = 0;
         UsedDisplayCount[i] = 0;
     }
 
-    while(Bin < MaxBin){
+    while (Bin < MaxBin)
+    {
 
-        if( SpaceUsage ) {
-        // only if we are interested in the usage map
-            for(i=0;i<HHIVE_FREE_DISPLAY_SIZE;i++) {
+        if (SpaceUsage)
+        {
+            // only if we are interested in the usage map
+            for (i = 0; i < HHIVE_FREE_DISPLAY_SIZE; i++)
+            {
                 BinFreeDisplaySize[i] = 0;
                 BinFreeDisplayCount[i] = 0;
                 BinUsedDisplaySize[i] = 0;
@@ -486,22 +509,29 @@ Return Value:
             }
         }
 
-        bRez = (bRez && ChkBinHeader(Bin,FileOffset,Index));
+        bRez = (bRez && ChkBinHeader(Bin, FileOffset, Index));
 
-        bRez = (bRez && ChkBin(Bin,Index,Starting,&Rate));
-        
+        bRez = (bRez && ChkBin(Bin, Index, Starting, &Rate));
+
         RateTotal += Rate;
-        
-        if( SpaceUsage ) {
-        // only if we are interested in the usage map
-            if( BinIndex == Index ) {
-            // summary wanted for this particular bin
-                fprintf(OutputFile,"\nBin[%5lu] Display Map: Free Cells, Free Size\t Used Cells, Used Size\n",(ULONG)Index);
-                for(i=0;i<HHIVE_FREE_DISPLAY_SIZE;i++) {
-                    fprintf(OutputFile,"Display[%2d]         : %8lu  , %8lu  \t %8lu  , %8lu  \n",i,BinFreeDisplayCount[i],BinFreeDisplaySize[i],BinUsedDisplayCount[i],BinUsedDisplaySize[i]);
+
+        if (SpaceUsage)
+        {
+            // only if we are interested in the usage map
+            if (BinIndex == Index)
+            {
+                // summary wanted for this particular bin
+                fprintf(OutputFile, "\nBin[%5lu] Display Map: Free Cells, Free Size\t Used Cells, Used Size\n",
+                        (ULONG)Index);
+                for (i = 0; i < HHIVE_FREE_DISPLAY_SIZE; i++)
+                {
+                    fprintf(OutputFile, "Display[%2d]         : %8lu  , %8lu  \t %8lu  , %8lu  \n", i,
+                            BinFreeDisplayCount[i], BinFreeDisplaySize[i], BinUsedDisplayCount[i],
+                            BinUsedDisplaySize[i]);
                 }
             }
-            for(i=0;i<HHIVE_FREE_DISPLAY_SIZE;i++) {
+            for (i = 0; i < HHIVE_FREE_DISPLAY_SIZE; i++)
+            {
                 FreeDisplaySize[i] += BinFreeDisplaySize[i];
                 FreeDisplayCount[i] += BinFreeDisplayCount[i];
                 UsedDisplaySize[i] += BinUsedDisplaySize[i];
@@ -509,7 +539,8 @@ Return Value:
             }
         }
 
-        if( Bin<MaxBin) {
+        if (Bin < MaxBin)
+        {
             FileOffset += Bin->Size;
         }
 
@@ -517,20 +548,24 @@ Return Value:
 
         Index++;
     }
-    
+
     RateTotal *= 100.00;
     RateTotal /= (double)Index;
-    
-    fprintf(OutputFile,"Number of Bins in hive: %lu                              \n",Index);        
-    fprintf(OutputFile,"Total Hive space usage: %.2f%%                            \n",(float)RateTotal);        
-    
-    if( SpaceUsage ) {
-    // only if we are interested in the usage map
-        if( BinIndex == -1 ) {
+
+    fprintf(OutputFile, "Number of Bins in hive: %lu                              \n", Index);
+    fprintf(OutputFile, "Total Hive space usage: %.2f%%                            \n", (float)RateTotal);
+
+    if (SpaceUsage)
+    {
+        // only if we are interested in the usage map
+        if (BinIndex == -1)
+        {
             // space usage display per entire hive
-            fprintf(OutputFile,"\nHive Display Map: Free Cells, Free Size\t\t Used Cells, Used Size\n");
-            for(i=0;i<HHIVE_FREE_DISPLAY_SIZE;i++) {
-                fprintf(OutputFile,"Display[%2d]     : %8lu  , %8lu  \t %8lu  , %8lu  \n",i,FreeDisplayCount[i],FreeDisplaySize[i],UsedDisplayCount[i],UsedDisplaySize[i]);
+            fprintf(OutputFile, "\nHive Display Map: Free Cells, Free Size\t\t Used Cells, Used Size\n");
+            for (i = 0; i < HHIVE_FREE_DISPLAY_SIZE; i++)
+            {
+                fprintf(OutputFile, "Display[%2d]     : %8lu  , %8lu  \t %8lu  , %8lu  \n", i, FreeDisplayCount[i],
+                        FreeDisplaySize[i], UsedDisplayCount[i], UsedDisplaySize[i]);
             }
         }
     }
@@ -539,9 +574,7 @@ Return Value:
 }
 
 ULONG
-ComputeHeaderCheckSum(
-    PHBASE_BLOCK    BaseBlock
-    )
+ComputeHeaderCheckSum(PHBASE_BLOCK BaseBlock)
 /*++
 
 Routine Description:
@@ -558,25 +591,27 @@ Return Value:
 
 --*/
 {
-    ULONG   sum;
-    ULONG   i;
+    ULONG sum;
+    ULONG i;
 
     sum = 0;
-    for (i = 0; i < 127; i++) {
+    for (i = 0; i < 127; i++)
+    {
         sum ^= ((PULONG)BaseBlock)[i];
     }
-    if (sum == (ULONG)-1) {
+    if (sum == (ULONG)-1)
+    {
         sum = (ULONG)-2;
     }
-    if (sum == 0) {
+    if (sum == 0)
+    {
         sum = 1;
     }
     return sum;
 }
 
 BOOLEAN
-ChkBaseBlock(PHBASE_BLOCK BaseBlock,
-             DWORD dwFileSize)
+ChkBaseBlock(PHBASE_BLOCK BaseBlock, DWORD dwFileSize)
 /*++
 
 Routine Description:
@@ -604,17 +639,22 @@ Return Value:
 {
     BOOLEAN bRez = TRUE;
     ULONG CheckSum;
-    
-    if(BaseBlock->Signature != HBASE_BLOCK_SIGNATURE) {
-        fprintf(stderr, "Fatal: Invalid Base Block signature (0x%lx)",BaseBlock->Signature);
+
+    if (BaseBlock->Signature != HBASE_BLOCK_SIGNATURE)
+    {
+        fprintf(stderr, "Fatal: Invalid Base Block signature (0x%lx)", BaseBlock->Signature);
         bRez = FALSE;
-        if(FixHive) {
-        // 
-        // REPAIR: reset the signature
-        //
+        if (FixHive)
+        {
+            //
+            // REPAIR: reset the signature
+            //
             fprintf(stderr, " ... unable to fix");
-        } else {
-            if(CompactHive) {
+        }
+        else
+        {
+            if (CompactHive)
+            {
                 // any attempt to compact a corrupted hive will fail
                 CompactHive = FALSE;
             }
@@ -622,16 +662,21 @@ Return Value:
         fprintf(stderr, "\n");
     }
 
-    if(BaseBlock->Major != HSYS_MAJOR) {
+    if (BaseBlock->Major != HSYS_MAJOR)
+    {
         bRez = FALSE;
-        fprintf(stderr, "Fatal: Invalid hive file Major version (%lu)",BaseBlock->Major);
-        if(FixHive) {
-        // 
-        // Fatal: unable to fix this
-        //
+        fprintf(stderr, "Fatal: Invalid hive file Major version (%lu)", BaseBlock->Major);
+        if (FixHive)
+        {
+            //
+            // Fatal: unable to fix this
+            //
             fprintf(stderr, " ... unable to fix");
-        } else {
-            if(CompactHive) {
+        }
+        else
+        {
+            if (CompactHive)
+            {
                 // any attempt to compact a corrupted hive will fail
                 CompactHive = FALSE;
             }
@@ -639,16 +684,21 @@ Return Value:
         fprintf(stderr, "\n");
     }
 
-    if(BaseBlock->Minor > HSYS_MINOR_SUPPORTED) {
+    if (BaseBlock->Minor > HSYS_MINOR_SUPPORTED)
+    {
         bRez = FALSE;
-        fprintf(stderr, "Fatal: Invalid hive file Minor version (%lu)",BaseBlock->Minor);
-        if(FixHive) {
-        // 
-        // Fatal: unable to fix this
-        //
+        fprintf(stderr, "Fatal: Invalid hive file Minor version (%lu)", BaseBlock->Minor);
+        if (FixHive)
+        {
+            //
+            // Fatal: unable to fix this
+            //
             fprintf(stderr, " ... unable to fix");
-        } else {
-            if(CompactHive) {
+        }
+        else
+        {
+            if (CompactHive)
+            {
                 // any attempt to compact a corrupted hive will fail
                 CompactHive = FALSE;
             }
@@ -656,16 +706,21 @@ Return Value:
         fprintf(stderr, "\n");
     }
 
-    if(BaseBlock->Format != HBASE_FORMAT_MEMORY) {
+    if (BaseBlock->Format != HBASE_FORMAT_MEMORY)
+    {
         bRez = FALSE;
-        fprintf(stderr, "Fatal: Invalid hive memory format (%lu)",BaseBlock->Format);
-        if(FixHive) {
-        // 
-        // Fatal: unable to fix this
-        //
+        fprintf(stderr, "Fatal: Invalid hive memory format (%lu)", BaseBlock->Format);
+        if (FixHive)
+        {
+            //
+            // Fatal: unable to fix this
+            //
             fprintf(stderr, " ... unable to fix");
-        } else {
-            if(CompactHive) {
+        }
+        else
+        {
+            if (CompactHive)
+            {
                 // any attempt to compact a corrupted hive will fail
                 CompactHive = FALSE;
             }
@@ -673,16 +728,21 @@ Return Value:
         fprintf(stderr, "\n");
     }
 
-    if((BaseBlock->Length + HBLOCK_SIZE) > dwFileSize) {
-        fprintf(stderr, "Fatal: Invalid Hive file Length (%lu)",BaseBlock->Length);
+    if ((BaseBlock->Length + HBLOCK_SIZE) > dwFileSize)
+    {
+        fprintf(stderr, "Fatal: Invalid Hive file Length (%lu)", BaseBlock->Length);
         bRez = FALSE;
-        if(FixHive) {
-        // 
-        // REPAIR: unable to fix this
-        //
+        if (FixHive)
+        {
+            //
+            // REPAIR: unable to fix this
+            //
             fprintf(stderr, " ... unable to fix");
-        } else {
-            if(CompactHive) {
+        }
+        else
+        {
+            if (CompactHive)
+            {
                 // any attempt to compact a corrupted hive will fail
                 CompactHive = FALSE;
             }
@@ -690,25 +750,31 @@ Return Value:
         fprintf(stderr, "\n");
     }
 
-    if(!bRez) {
+    if (!bRez)
+    {
         //
         // Fatal Base Block corruption; no point to continue.
         //
         return bRez;
     }
 
-    if(BaseBlock->Sequence1 != BaseBlock->Sequence2) {
-        fprintf(stderr, "Sequence numbers do not match (%lu,%lu)",BaseBlock->Sequence1,BaseBlock->Sequence2);
+    if (BaseBlock->Sequence1 != BaseBlock->Sequence2)
+    {
+        fprintf(stderr, "Sequence numbers do not match (%lu,%lu)", BaseBlock->Sequence1, BaseBlock->Sequence2);
         bRez = FALSE;
-        if(FixHive) {
-        // 
-        // REPAIR: enforce Sequence2 to Sequence1
-        //
+        if (FixHive)
+        {
+            //
+            // REPAIR: enforce Sequence2 to Sequence1
+            //
             bRez = TRUE;
             BaseBlock->Sequence2 = BaseBlock->Sequence1;
             fprintf(stderr, " ... fixed");
-        } else {
-            if(CompactHive) {
+        }
+        else
+        {
+            if (CompactHive)
+            {
                 // any attempt to compact a corrupted hive will fail
                 CompactHive = FALSE;
                 fprintf(stderr, "\nRun chkreg /R to fix.");
@@ -718,18 +784,23 @@ Return Value:
     }
 
     CheckSum = ComputeHeaderCheckSum(BaseBlock);
-    if(BaseBlock->CheckSum != CheckSum) {
-        fprintf(stderr, "Invalid Base Block CheckSum (0x%lx)",BaseBlock->CheckSum);
+    if (BaseBlock->CheckSum != CheckSum)
+    {
+        fprintf(stderr, "Invalid Base Block CheckSum (0x%lx)", BaseBlock->CheckSum);
         bRez = FALSE;
-        if(FixHive) {
-        // 
-        // REPAIR: reset the signature
-        //
+        if (FixHive)
+        {
+            //
+            // REPAIR: reset the signature
+            //
             bRez = TRUE;
             BaseBlock->CheckSum = CheckSum;
             fprintf(stderr, " ... fixed");
-        } else {
-            if(CompactHive) {
+        }
+        else
+        {
+            if (CompactHive)
+            {
                 // any attempt to compact a corrupted hive will fail
                 CompactHive = FALSE;
                 fprintf(stderr, "\nRun chkreg /R to fix.");
@@ -742,7 +813,7 @@ Return Value:
 }
 
 BOOLEAN
-ChkSecurityDescriptors( )
+ChkSecurityDescriptors()
 /*++
 
 Routine Description:
@@ -772,26 +843,33 @@ Return Value:
     // check/fix the root cell (is allocated?)
     ChkAllocatedCell(RootCell);
 
-    RootNode = (PCM_KEY_NODE) GetCell(RootCell);
+    RootNode = (PCM_KEY_NODE)GetCell(RootCell);
     ListAnchor = NextCell = RootNode->Security;
 
-    do {
+    do
+    {
         // is the next cell allocated?
         ChkAllocatedCell(NextCell);
-        
-        SecurityCell = (PCM_KEY_SECURITY) GetCell(NextCell);
-        
-        if (SecurityCell->Signature != CM_KEY_SECURITY_SIGNATURE) {
+
+        SecurityCell = (PCM_KEY_SECURITY)GetCell(NextCell);
+
+        if (SecurityCell->Signature != CM_KEY_SECURITY_SIGNATURE)
+        {
             bRez = FALSE;
-            fprintf(stderr, "Fatal: Invalid signature (0x%lx) in Security cell 0x%lx ",SecurityCell->Signature,NextCell);
-            if(FixHive) {
-            // 
-            // REPAIR: 
-            // FATAL: Mismatched signature cannot be fixed. Unable to fix this. 
-            //
+            fprintf(stderr, "Fatal: Invalid signature (0x%lx) in Security cell 0x%lx ", SecurityCell->Signature,
+                    NextCell);
+            if (FixHive)
+            {
+                //
+                // REPAIR:
+                // FATAL: Mismatched signature cannot be fixed. Unable to fix this.
+                //
                 fprintf(stderr, " ... unable to fix");
-            } else {
-                if(CompactHive) {
+            }
+            else
+            {
+                if (CompactHive)
+                {
                     // any attempt to compact a corrupted hive will fail
                     CompactHive = FALSE;
                 }
@@ -800,22 +878,28 @@ Return Value:
             return bRez;
         }
 
-        if (NextCell != ListAnchor) {
+        if (NextCell != ListAnchor)
+        {
             //
             // Check to make sure that our Blink points to where we just
             // came from.
             //
-            if (SecurityCell->Blink != LastCell) {
-                fprintf(stderr, "Invalid backward link in security cell (0x%lx)",NextCell);
-                if(FixHive) {
-                // 
-                // REPAIR: reset the link
-                //
+            if (SecurityCell->Blink != LastCell)
+            {
+                fprintf(stderr, "Invalid backward link in security cell (0x%lx)", NextCell);
+                if (FixHive)
+                {
+                    //
+                    // REPAIR: reset the link
+                    //
                     SecurityCell->Blink = LastCell;
                     fprintf(stderr, " ... fixed");
-                } else {
+                }
+                else
+                {
                     bRez = FALSE;
-                    if(CompactHive) {
+                    if (CompactHive)
+                    {
                         // any attempt to compact a corrupted hive will fail
                         CompactHive = FALSE;
                         fprintf(stderr, "\nRun chkreg /R to fix.");
@@ -825,38 +909,46 @@ Return Value:
             }
         }
 
-        if (!RtlValidSecurityDescriptor(&SecurityCell->Descriptor)) {
+        if (!RtlValidSecurityDescriptor(&SecurityCell->Descriptor))
+        {
             bRez = FALSE;
-            fprintf(stderr, "Invalid security descriptor in Security cell 0x%lx ",NextCell);
-            if(FixHive) {
-            // 
-            // REPAIR: remove the cell from the list and delete it!
-            //
-                PCM_KEY_SECURITY Before = (PCM_KEY_SECURITY) GetCell(SecurityCell->Blink);
-                PCM_KEY_SECURITY After = (PCM_KEY_SECURITY) GetCell(SecurityCell->Flink);
-                if( Before != After ) {
-                // make sure the list will not remain empty
-                    Before->Flink =  SecurityCell->Flink;
+            fprintf(stderr, "Invalid security descriptor in Security cell 0x%lx ", NextCell);
+            if (FixHive)
+            {
+                //
+                // REPAIR: remove the cell from the list and delete it!
+                //
+                PCM_KEY_SECURITY Before = (PCM_KEY_SECURITY)GetCell(SecurityCell->Blink);
+                PCM_KEY_SECURITY After = (PCM_KEY_SECURITY)GetCell(SecurityCell->Flink);
+                if (Before != After)
+                {
+                    // make sure the list will not remain empty
+                    Before->Flink = SecurityCell->Flink;
                     After->Blink = SecurityCell->Blink;
-                } 
+                }
                 FreeCell(NextCell);
                 NextCell = SecurityCell->Flink;
                 fprintf(stderr, " ... deleted");
-            } else {
+            }
+            else
+            {
                 bRez = FALSE;
-                if(CompactHive) {
+                if (CompactHive)
+                {
                     // any attempt to compact a corrupted hive will fail
                     CompactHive = FALSE;
                     fprintf(stderr, "\nRun chkreg /R to fix.");
                 }
             }
             fprintf(stderr, "\n");
-        } else {
-        // validate the next one
+        }
+        else
+        {
+            // validate the next one
             LastCell = NextCell;
             NextCell = SecurityCell->Flink;
         }
-    } while ( NextCell != ListAnchor );
+    } while (NextCell != ListAnchor);
 
     return bRez;
 }
@@ -888,32 +980,35 @@ Return Value:
     HCELL_INDEX NextCell;
     BOOLEAN bRez = TRUE;
 
-    RootNode = (PCM_KEY_NODE) GetCell(RootCell);
+    RootNode = (PCM_KEY_NODE)GetCell(RootCell);
     ListAnchor = NextCell = RootNode->Security;
 
-    do {
-      
-        if( NextCell == Security) {
-        // found it!
+    do
+    {
+
+        if (NextCell == Security)
+        {
+            // found it!
             return bRez;
         }
 
-        SecurityCell = (PCM_KEY_SECURITY) GetCell(NextCell);
+        SecurityCell = (PCM_KEY_SECURITY)GetCell(NextCell);
 
         NextCell = SecurityCell->Flink;
-    } while ( NextCell != ListAnchor );
+    } while (NextCell != ListAnchor);
 
-    // cell not found; try to fix it 
+    // cell not found; try to fix it
     bRez = FALSE;
-    fprintf(stderr, "Security Cell (0x%lx) not in security descriptors list",Security);
-    if(FixHive) {
-    // 
-    // REPAIR: Add the security cell at the begining of the list
-    //
+    fprintf(stderr, "Security Cell (0x%lx) not in security descriptors list", Security);
+    if (FixHive)
+    {
+        //
+        // REPAIR: Add the security cell at the begining of the list
+        //
         bRez = TRUE;
-        SecurityCell = (PCM_KEY_SECURITY) GetCell(ListAnchor);
-        SecurityCellCurrent = (PCM_KEY_SECURITY) GetCell(Security);
-        SecurityCellAfter = (PCM_KEY_SECURITY) GetCell(SecurityCell->Flink);
+        SecurityCell = (PCM_KEY_SECURITY)GetCell(ListAnchor);
+        SecurityCellCurrent = (PCM_KEY_SECURITY)GetCell(Security);
+        SecurityCellAfter = (PCM_KEY_SECURITY)GetCell(SecurityCell->Flink);
 
         // restore the connections
         SecurityCellCurrent->Flink = SecurityCell->Flink;
@@ -921,8 +1016,11 @@ Return Value:
         SecurityCell->Flink = Security;
         SecurityCellAfter->Blink = Security;
         fprintf(stderr, " ... security cell added to the list");
-    } else {
-        if(CompactHive) {
+    }
+    else
+    {
+        if (CompactHive)
+        {
             // any attempt to compact a corrupted hive will fail
             CompactHive = FALSE;
             fprintf(stderr, "\nRun chkreg /R to fix.");

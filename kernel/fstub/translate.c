@@ -43,74 +43,46 @@ Revision History:
 // structure linking the entries together.  Current contains a pointer to each
 // entry in turn.
 //
-#define FOR_ALL_IN_LIST(Type, Head, Current)                            \
-    for((Current) = CONTAINING_RECORD((Head)->Flink, Type, ListEntry);  \
-       (Head) != &(Current)->ListEntry;                                 \
-       (Current) = CONTAINING_RECORD((Current)->ListEntry.Flink,        \
-                                     Type,                              \
-                                     ListEntry)                         \
-       )
+#define FOR_ALL_IN_LIST(Type, Head, Current)                                                             \
+    for ((Current) = CONTAINING_RECORD((Head)->Flink, Type, ListEntry); (Head) != &(Current)->ListEntry; \
+         (Current) = CONTAINING_RECORD((Current)->ListEntry.Flink, Type, ListEntry))
 //
 // Similar to the above only iteration is over an array of length _Size.
 //
-#define FOR_ALL_IN_ARRAY(_Array, _Size, _Current)                       \
-    for ( (_Current) = (_Array);                                        \
-          (_Current) < (_Array) + (_Size);                              \
-          (_Current)++ )
+#define FOR_ALL_IN_ARRAY(_Array, _Size, _Current) \
+    for ((_Current) = (_Array); (_Current) < (_Array) + (_Size); (_Current)++)
 
 //
 // As above only iteration begins with the entry _Current
 //
-#define FOR_REST_IN_ARRAY(_Array, _Size, _Current)                      \
-    for ( ;                                                             \
-          (_Current) < (_Array) + (_Size);                              \
-          (_Current)++ )
+#define FOR_REST_IN_ARRAY(_Array, _Size, _Current) for (; (_Current) < (_Array) + (_Size); (_Current)++)
 
 #define HAL_IRQ_TRANSLATOR_VERSION 0
 
 NTSTATUS
-FstubTranslateResource(
-    IN  PVOID Context,
-    IN  PCM_PARTIAL_RESOURCE_DESCRIPTOR Source,
-    IN  RESOURCE_TRANSLATION_DIRECTION Direction,
-    IN  ULONG AlternativesCount OPTIONAL,
-    IN  IO_RESOURCE_DESCRIPTOR Alternatives[] OPTIONAL,
-    IN  PDEVICE_OBJECT PhysicalDeviceObject,
-    OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR Target
-    );
+FstubTranslateResource(IN PVOID Context, IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Source,
+                       IN RESOURCE_TRANSLATION_DIRECTION Direction, IN ULONG AlternativesCount OPTIONAL,
+                       IN IO_RESOURCE_DESCRIPTOR Alternatives[] OPTIONAL, IN PDEVICE_OBJECT PhysicalDeviceObject,
+                       OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR Target);
 
 NTSTATUS
-FstubTranslateRequirement (
-    IN  PVOID Context,
-    IN  PIO_RESOURCE_DESCRIPTOR Source,
-    IN  PDEVICE_OBJECT PhysicalDeviceObject,
-    OUT PULONG TargetCount,
-    OUT PIO_RESOURCE_DESCRIPTOR *Target
-    );
+FstubTranslateRequirement(IN PVOID Context, IN PIO_RESOURCE_DESCRIPTOR Source, IN PDEVICE_OBJECT PhysicalDeviceObject,
+                          OUT PULONG TargetCount, OUT PIO_RESOURCE_DESCRIPTOR *Target);
 
-VOID
-FstubTranslatorNull(
-    IN PVOID Context
-    );
+VOID FstubTranslatorNull(IN PVOID Context);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,xHalGetInterruptTranslator)
-#pragma alloc_text(PAGE,FstubTranslateResource)
-#pragma alloc_text(PAGE,FstubTranslateRequirement)
-#pragma alloc_text(PAGE,FstubTranslatorNull)
+#pragma alloc_text(PAGE, xHalGetInterruptTranslator)
+#pragma alloc_text(PAGE, FstubTranslateResource)
+#pragma alloc_text(PAGE, FstubTranslateRequirement)
+#pragma alloc_text(PAGE, FstubTranslatorNull)
 #endif
 
-
+
 NTSTATUS
-xHalGetInterruptTranslator(
-	IN INTERFACE_TYPE ParentInterfaceType,
-	IN ULONG ParentBusNumber,
-	IN INTERFACE_TYPE BridgeInterfaceType,
-	IN USHORT Size,
-	IN USHORT Version,
-	OUT PTRANSLATOR_INTERFACE Translator,
-	OUT PULONG BridgeBusNumber
-	)
+xHalGetInterruptTranslator(IN INTERFACE_TYPE ParentInterfaceType, IN ULONG ParentBusNumber,
+                           IN INTERFACE_TYPE BridgeInterfaceType, IN USHORT Size, IN USHORT Version,
+                           OUT PTRANSLATOR_INTERFACE Translator, OUT PULONG BridgeBusNumber)
 /*++
 
 Routine Description:
@@ -153,29 +125,33 @@ Return Value:
     UNREFERENCED_PARAMETER(ParentBusNumber);
 
     ASSERT(Version == HAL_IRQ_TRANSLATOR_VERSION);
-    ASSERT(Size >= sizeof (TRANSLATOR_INTERFACE));
+    ASSERT(Size >= sizeof(TRANSLATOR_INTERFACE));
 
-    switch (BridgeInterfaceType) {
+    switch (BridgeInterfaceType)
+    {
     case Eisa:
     case Isa:
     case MicroChannel:
-    case InterfaceTypeUndefined:    // special "IDE" cookie
+    case InterfaceTypeUndefined: // special "IDE" cookie
 
         //
         // Pass back an interface for an IRQ translator.
         //
-        RtlZeroMemory(Translator, sizeof (TRANSLATOR_INTERFACE));
+        RtlZeroMemory(Translator, sizeof(TRANSLATOR_INTERFACE));
 
-        Translator->Size = sizeof (TRANSLATOR_INTERFACE);
+        Translator->Size = sizeof(TRANSLATOR_INTERFACE);
         Translator->Version = HAL_IRQ_TRANSLATOR_VERSION;
         Translator->InterfaceReference = &FstubTranslatorNull;
         Translator->InterfaceDereference = &FstubTranslatorNull;
         Translator->TranslateResources = &FstubTranslateResource;
         Translator->TranslateResourceRequirements = &FstubTranslateRequirement;
 
-        if (BridgeInterfaceType == InterfaceTypeUndefined) {
+        if (BridgeInterfaceType == InterfaceTypeUndefined)
+        {
             Translator->Context = (PVOID)Isa;
-        } else {
+        }
+        else
+        {
             Translator->Context = (PVOID)BridgeInterfaceType;
         }
 
@@ -185,17 +161,12 @@ Return Value:
         return STATUS_NOT_IMPLEMENTED;
     }
 }
-
+
 NTSTATUS
-FstubTranslateResource(
-    IN  PVOID Context,
-    IN  PCM_PARTIAL_RESOURCE_DESCRIPTOR Source,
-    IN  RESOURCE_TRANSLATION_DIRECTION Direction,
-    IN  ULONG AlternativesCount OPTIONAL,
-    IN  IO_RESOURCE_DESCRIPTOR Alternatives[] OPTIONAL,
-    IN  PDEVICE_OBJECT PhysicalDeviceObject,
-    OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR Target
-    )
+FstubTranslateResource(IN PVOID Context, IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Source,
+                       IN RESOURCE_TRANSLATION_DIRECTION Direction, IN ULONG AlternativesCount OPTIONAL,
+                       IN IO_RESOURCE_DESCRIPTOR Alternatives[] OPTIONAL, IN PDEVICE_OBJECT PhysicalDeviceObject,
+                       OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR Target)
 {
     NTSTATUS status;
     ULONG affinity, currentVector, translatedVector;
@@ -211,7 +182,8 @@ FstubTranslateResource(
 
     *Target = *Source;
 
-    switch (Direction) {
+    switch (Direction)
+    {
     case TranslateChildToParent:
 
         //
@@ -219,14 +191,10 @@ FstubTranslateResource(
         // ISA.
         //
 
-        Target->u.Interrupt.Vector = HalGetInterruptVector(
-                                         (INTERFACE_TYPE)(ULONG_PTR)Context,
-                                         0,     // assume bus 0
-                                         Source->u.Interrupt.Vector,
-                                         Source->u.Interrupt.Vector,
-                                         &irql,
-                                         &affinity
-                                         );
+        Target->u.Interrupt.Vector =
+            HalGetInterruptVector((INTERFACE_TYPE)(ULONG_PTR)Context,
+                                  0, // assume bus 0
+                                  Source->u.Interrupt.Vector, Source->u.Interrupt.Vector, &irql, &affinity);
 
         Target->u.Interrupt.Level = irql;
         Target->u.Interrupt.Affinity = affinity;
@@ -242,26 +210,23 @@ FstubTranslateResource(
         // just translated
         //
 
-        FOR_ALL_IN_ARRAY(Alternatives, AlternativesCount, currentAlternative) {
+        FOR_ALL_IN_ARRAY(Alternatives, AlternativesCount, currentAlternative)
+        {
 
             ASSERT(currentAlternative->Type == CmResourceTypeInterrupt);
 
             currentVector = currentAlternative->u.Interrupt.MinimumVector;
 
-            while (currentVector <=
-                       currentAlternative->u.Interrupt.MaximumVector) {
+            while (currentVector <= currentAlternative->u.Interrupt.MaximumVector)
+            {
 
                 translatedVector = HalGetInterruptVector((INTERFACE_TYPE)(ULONG_PTR)Context,
                                                          0, // assume bus 0
-                                                         currentVector,
-                                                         currentVector,
-                                                         &irql,
-                                                         &affinity
-                                                        );
+                                                         currentVector, currentVector, &irql, &affinity);
 
 
-
-                if (translatedVector == Source->u.Interrupt.Vector) {
+                if (translatedVector == Source->u.Interrupt.Vector)
+                {
 
                     //
                     // We found our vector - fill in the target and return
@@ -275,7 +240,6 @@ FstubTranslateResource(
 
                 currentVector++;
             }
-
         }
 
         status = STATUS_UNSUCCESSFUL;
@@ -286,13 +250,8 @@ FstubTranslateResource(
     return status;
 }
 NTSTATUS
-FstubTranslateRequirement (
-    IN  PVOID Context,
-    IN  PIO_RESOURCE_DESCRIPTOR Source,
-    IN  PDEVICE_OBJECT PhysicalDeviceObject,
-    OUT PULONG TargetCount,
-    OUT PIO_RESOURCE_DESCRIPTOR *Target
-    )
+FstubTranslateRequirement(IN PVOID Context, IN PIO_RESOURCE_DESCRIPTOR Source, IN PDEVICE_OBJECT PhysicalDeviceObject,
+                          OUT PULONG TargetCount, OUT PIO_RESOURCE_DESCRIPTOR *Target)
 {
     ULONG affinity;
     KIRQL irql;
@@ -300,12 +259,10 @@ FstubTranslateRequirement (
     PAGED_CODE();
     ASSERT(Source->Type == CmResourceTypeInterrupt);
 
-    *Target = ExAllocatePoolWithTag(PagedPool,
-                                    sizeof(IO_RESOURCE_DESCRIPTOR),
-                                    'btsF'
-                                    );
+    *Target = ExAllocatePoolWithTag(PagedPool, sizeof(IO_RESOURCE_DESCRIPTOR), 'btsF');
 
-    if (!*Target) {
+    if (!*Target)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -318,38 +275,23 @@ FstubTranslateRequirement (
     **Target = *Source;
 
     (*Target)->u.Interrupt.MinimumVector =
-        HalGetInterruptVector(
-            (INTERFACE_TYPE)(ULONG_PTR)Context,
-            0,     // assume bus 0 
-            Source->u.Interrupt.MinimumVector,
-            Source->u.Interrupt.MinimumVector,
-            &irql,
-            &affinity
-            );
+        HalGetInterruptVector((INTERFACE_TYPE)(ULONG_PTR)Context,
+                              0, // assume bus 0
+                              Source->u.Interrupt.MinimumVector, Source->u.Interrupt.MinimumVector, &irql, &affinity);
 
 
     (*Target)->u.Interrupt.MaximumVector =
-        HalGetInterruptVector(
-            (INTERFACE_TYPE)(ULONG_PTR)Context,
-            0,     // assume bus 0
-            Source->u.Interrupt.MaximumVector,
-            Source->u.Interrupt.MaximumVector,
-            &irql,
-            &affinity
-            );
+        HalGetInterruptVector((INTERFACE_TYPE)(ULONG_PTR)Context,
+                              0, // assume bus 0
+                              Source->u.Interrupt.MaximumVector, Source->u.Interrupt.MaximumVector, &irql, &affinity);
 
 
     return STATUS_TRANSLATION_COMPLETE;
 }
 
-VOID
-FstubTranslatorNull(
-    IN PVOID Context
-    )
+VOID FstubTranslatorNull(IN PVOID Context)
 {
     PAGED_CODE();
     return;
 }
 #endif // NO_LEGACY_DRIVERS
-
-

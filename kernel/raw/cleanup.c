@@ -25,13 +25,9 @@ Revision History:
 #pragma alloc_text(PAGE, RawCleanup)
 #endif
 
-
+
 NTSTATUS
-RawCleanup (
-    IN PVCB Vcb,
-    IN PIRP Irp,
-    IN PIO_STACK_LOCATION IrpSp
-    )
+RawCleanup(IN PVCB Vcb, IN PIRP Irp, IN PIO_STACK_LOCATION IrpSp)
 
 /*++
 
@@ -63,18 +59,14 @@ Return Value:
     //  share access.
     //
 
-    Status = KeWaitForSingleObject( &Vcb->Mutex,
-                                   Executive,
-                                   KernelMode,
-                                   FALSE,
-                                   (PLARGE_INTEGER) NULL );
-    ASSERT( NT_SUCCESS( Status ) );
+    Status = KeWaitForSingleObject(&Vcb->Mutex, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
+    ASSERT(NT_SUCCESS(Status));
 
-    IoRemoveShareAccess( IrpSp->FileObject, &Vcb->ShareAccess );
+    IoRemoveShareAccess(IrpSp->FileObject, &Vcb->ShareAccess);
 
-    (VOID)KeReleaseMutex( &Vcb->Mutex, FALSE );
+    (VOID) KeReleaseMutex(&Vcb->Mutex, FALSE);
 
-    RawCompleteRequest( Irp, STATUS_SUCCESS );
+    RawCompleteRequest(Irp, STATUS_SUCCESS);
 
     return STATUS_SUCCESS;
 }

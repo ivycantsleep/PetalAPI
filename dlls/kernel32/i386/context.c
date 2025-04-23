@@ -27,27 +27,27 @@ extern PVOID BasepLockPrefixTable;
 // Specify address of kernel32 lock prefixes
 //
 IMAGE_LOAD_CONFIG_DIRECTORY _load_config_used = {
-    0,                              // Reserved
-    0,                              // Reserved
-    0,                              // Reserved
-    0,                              // Reserved
-    0,                              // GlobalFlagsClear
-    0,                              // GlobalFlagsSet
-    0,                              // CriticalSectionTimeout (milliseconds)
-    0,                              // DeCommitFreeBlockThreshold
-    0,                              // DeCommitTotalFreeThreshold
-    (ULONG) &BasepLockPrefixTable,  // LockPrefixTable
-    0, 0, 0, 0, 0, 0, 0             // Reserved
+    0,                            // Reserved
+    0,                            // Reserved
+    0,                            // Reserved
+    0,                            // Reserved
+    0,                            // GlobalFlagsClear
+    0,                            // GlobalFlagsSet
+    0,                            // CriticalSectionTimeout (milliseconds)
+    0,                            // DeCommitFreeBlockThreshold
+    0,                            // DeCommitTotalFreeThreshold
+    (ULONG)&BasepLockPrefixTable, // LockPrefixTable
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0 // Reserved
 };
 
-VOID
-BaseInitializeContext(
-    OUT PCONTEXT Context,
-    IN PVOID Parameter OPTIONAL,
-    IN PVOID InitialPc OPTIONAL,
-    IN PVOID InitialSp OPTIONAL,
-    IN BASE_CONTEXT_TYPE ContextType
-    )
+VOID BaseInitializeContext(OUT PCONTEXT Context, IN PVOID Parameter OPTIONAL, IN PVOID InitialPc OPTIONAL,
+                           IN PVOID InitialSp OPTIONAL, IN BASE_CONTEXT_TYPE ContextType)
 
 /*++
 
@@ -101,17 +101,20 @@ Return Value:
     // Always start the thread at the thread start thunk.
     //
 
-    Context->Esp = (ULONG) InitialSp;
+    Context->Esp = (ULONG)InitialSp;
 
-    if ( ContextType == BaseContextTypeThread ) {
-        Context->Eip = (ULONG) BaseThreadStartThunk;
-        }
-    else if ( ContextType == BaseContextTypeFiber ) {
-        Context->Eip = (ULONG) BaseFiberStart;
-        }
-    else {
-        Context->Eip = (ULONG) BaseProcessStartThunk;
-        }
+    if (ContextType == BaseContextTypeThread)
+    {
+        Context->Eip = (ULONG)BaseThreadStartThunk;
+    }
+    else if (ContextType == BaseContextTypeFiber)
+    {
+        Context->Eip = (ULONG)BaseFiberStart;
+    }
+    else
+    {
+        Context->Eip = (ULONG)BaseProcessStartThunk;
+    }
     //
     // add code to check alignment and raise exception...
     //
@@ -119,11 +122,8 @@ Return Value:
     Context->ContextFlags = CONTEXT_FULL;
     Context->Esp -= sizeof(Parameter); // Reserve room for ret address
 }
-
-VOID
-BaseFiberStart(
-    VOID
-    )
+
+VOID BaseFiberStart(VOID)
 
 /*++
 
@@ -147,6 +147,5 @@ Return Value:
     PFIBER Fiber;
 
     Fiber = GetCurrentFiber();
-    BaseThreadStart( (LPTHREAD_START_ROUTINE)Fiber->FiberContext.Eax,
-                     (LPVOID)Fiber->FiberContext.Ebx );
+    BaseThreadStart((LPTHREAD_START_ROUTINE)Fiber->FiberContext.Eax, (LPVOID)Fiber->FiberContext.Ebx);
 }

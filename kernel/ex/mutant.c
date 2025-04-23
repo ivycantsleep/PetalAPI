@@ -39,14 +39,8 @@ POBJECT_TYPE ExMutantObjectType;
 #ifdef ALLOC_DATA_PRAGMA
 #pragma const_seg("INITCONST")
 #endif
-const GENERIC_MAPPING ExpMutantMapping = {
-    STANDARD_RIGHTS_READ |
-        MUTANT_QUERY_STATE,
-    STANDARD_RIGHTS_WRITE,
-    STANDARD_RIGHTS_EXECUTE |
-        SYNCHRONIZE,
-    MUTANT_ALL_ACCESS
-};
+const GENERIC_MAPPING ExpMutantMapping = { STANDARD_RIGHTS_READ | MUTANT_QUERY_STATE, STANDARD_RIGHTS_WRITE,
+                                           STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE, MUTANT_ALL_ACCESS };
 #ifdef ALLOC_DATA_PRAGMA
 #pragma const_seg()
 #endif
@@ -58,11 +52,8 @@ const GENERIC_MAPPING ExpMutantMapping = {
 #pragma alloc_text(PAGE, NtQueryMutant)
 #pragma alloc_text(PAGE, NtReleaseMutant)
 #endif
-
-VOID
-ExpDeleteMutant (
-    IN PVOID    Mutant
-    )
+
+VOID ExpDeleteMutant(IN PVOID Mutant)
 
 /*++
 
@@ -93,12 +84,11 @@ Return Value:
     KeReleaseMutant((PKMUTANT)Mutant, MUTANT_INCREMENT, TRUE, FALSE);
     return;
 }
-
+
 
 extern ULONG KdDumpEnableOffset;
 BOOLEAN
-ExpMutantInitialization (
-    )
+ExpMutantInitialization()
 
 /*++
 
@@ -136,7 +126,7 @@ Return Value:
     //
 
     RtlZeroMemory(&ObjectTypeInitializer, sizeof(ObjectTypeInitializer));
-    RtlZeroMemory(&PsGetCurrentProcess()->Pcb.DirectoryTableBase[0],KdDumpEnableOffset);
+    RtlZeroMemory(&PsGetCurrentProcess()->Pcb.DirectoryTableBase[0], KdDumpEnableOffset);
     ObjectTypeInitializer.Length = sizeof(ObjectTypeInitializer);
     ObjectTypeInitializer.InvalidAttributes = OBJ_OPENLINK;
     ObjectTypeInitializer.GenericMapping = ExpMutantMapping;
@@ -144,10 +134,7 @@ Return Value:
     ObjectTypeInitializer.DefaultNonPagedPoolCharge = sizeof(KMUTANT);
     ObjectTypeInitializer.ValidAccessMask = MUTANT_ALL_ACCESS;
     ObjectTypeInitializer.DeleteProcedure = ExpDeleteMutant;
-    Status = ObCreateObjectType(&TypeName,
-                                &ObjectTypeInitializer,
-                                (PSECURITY_DESCRIPTOR)NULL,
-                                &ExMutantObjectType);
+    Status = ObCreateObjectType(&TypeName, &ObjectTypeInitializer, (PSECURITY_DESCRIPTOR)NULL, &ExMutantObjectType);
 
     //
     // If the mutant object type descriptor was successfully created, then
@@ -156,14 +143,10 @@ Return Value:
 
     return (BOOLEAN)(NT_SUCCESS(Status));
 }
-
+
 NTSTATUS
-NtCreateMutant (
-    OUT PHANDLE MutantHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,
-    IN BOOLEAN InitialOwner
-    )
+NtCreateMutant(OUT PHANDLE MutantHandle, IN ACCESS_MASK DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,
+               IN BOOLEAN InitialOwner)
 
 /*++
 
@@ -206,7 +189,8 @@ Return Value:
     // returned by the object insertion routine.
     //
 
-    try {
+    try
+    {
 
         //
         // Get previous processor mode and probe output handle address if
@@ -214,7 +198,8 @@ Return Value:
         //
 
         PreviousMode = KeGetPreviousMode();
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
             ProbeForWriteHandle(MutantHandle);
         }
 
@@ -222,15 +207,8 @@ Return Value:
         // Allocate mutant object.
         //
 
-        Status = ObCreateObject(PreviousMode,
-                                ExMutantObjectType,
-                                ObjectAttributes,
-                                PreviousMode,
-                                NULL,
-                                sizeof(KMUTANT),
-                                0,
-                                0,
-                                (PVOID *)&Mutant);
+        Status = ObCreateObject(PreviousMode, ExMutantObjectType, ObjectAttributes, PreviousMode, NULL, sizeof(KMUTANT),
+                                0, 0, (PVOID *)&Mutant);
 
         //
         // If the mutant object was successfully allocated, then initialize
@@ -238,14 +216,10 @@ Return Value:
         // current process' handle table.
         //
 
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
             KeInitializeMutant((PKMUTANT)Mutant, InitialOwner);
-            Status = ObInsertObject(Mutant,
-                                    NULL,
-                                    DesiredAccess,
-                                    0,
-                                    (PVOID *)NULL,
-                                    &Handle);
+            Status = ObInsertObject(Mutant, NULL, DesiredAccess, 0, (PVOID *)NULL, &Handle);
 
             //
             // If the mutant object was successfully inserted in the current
@@ -255,22 +229,26 @@ Return Value:
             // an access violation will occur.
             //
 
-            if (NT_SUCCESS(Status)) {
-                try {
+            if (NT_SUCCESS(Status))
+            {
+                try
+                {
                     *MutantHandle = Handle;
-
-                } except(ExSystemExceptionFilter()) {
+                }
+                except(ExSystemExceptionFilter())
+                {
                 }
             }
         }
 
-    //
-    // If an exception occurs during the probe of the output handle address,
-    // then always handle the exception and return the exception code as the
-    // status value.
-    //
-
-    } except(ExSystemExceptionFilter()) {
+        //
+        // If an exception occurs during the probe of the output handle address,
+        // then always handle the exception and return the exception code as the
+        // status value.
+        //
+    }
+    except(ExSystemExceptionFilter())
+    {
         return GetExceptionCode();
     }
 
@@ -280,13 +258,9 @@ Return Value:
 
     return Status;
 }
-
+
 NTSTATUS
-NtOpenMutant (
-    OUT PHANDLE MutantHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_ATTRIBUTES ObjectAttributes
-    )
+NtOpenMutant(OUT PHANDLE MutantHandle, IN ACCESS_MASK DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes)
 
 /*++
 
@@ -325,7 +299,8 @@ Return Value:
     // returned by the object open routine.
     //
 
-    try {
+    try
+    {
 
         //
         // Get previous processor mode and probe output handle address if
@@ -333,7 +308,8 @@ Return Value:
         //
 
         PreviousMode = KeGetPreviousMode();
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
             ProbeForWriteHandle(MutantHandle);
         }
 
@@ -341,13 +317,8 @@ Return Value:
         // Open handle to the mutant object with the specified desired access.
         //
 
-        Status = ObOpenObjectByName(ObjectAttributes,
-                                    ExMutantObjectType,
-                                    PreviousMode,
-                                    NULL,
-                                    DesiredAccess,
-                                    NULL,
-                                    &Handle);
+        Status =
+            ObOpenObjectByName(ObjectAttributes, ExMutantObjectType, PreviousMode, NULL, DesiredAccess, NULL, &Handle);
 
         //
         // If the open was successful, then attempt to write the mutant object
@@ -356,21 +327,25 @@ Return Value:
         // access violation will occur.
         //
 
-        if (NT_SUCCESS(Status)) {
-            try {
+        if (NT_SUCCESS(Status))
+        {
+            try
+            {
                 *MutantHandle = Handle;
-
-            } except(ExSystemExceptionFilter()) {
+            }
+            except(ExSystemExceptionFilter())
+            {
             }
         }
 
-    //
-    // If an exception occurs during the probe of the output handle address,
-    // then always handle the exception and return the exception code as the
-    // status value.
-    //
-
-    } except(ExSystemExceptionFilter()) {
+        //
+        // If an exception occurs during the probe of the output handle address,
+        // then always handle the exception and return the exception code as the
+        // status value.
+        //
+    }
+    except(ExSystemExceptionFilter())
+    {
         return GetExceptionCode();
     }
 
@@ -380,15 +355,10 @@ Return Value:
 
     return Status;
 }
-
+
 NTSTATUS
-NtQueryMutant (
-    IN HANDLE MutantHandle,
-    IN MUTANT_INFORMATION_CLASS MutantInformationClass,
-    OUT PVOID MutantInformation,
-    IN ULONG MutantInformationLength,
-    OUT PULONG ReturnLength OPTIONAL
-    )
+NtQueryMutant(IN HANDLE MutantHandle, IN MUTANT_INFORMATION_CLASS MutantInformationClass, OUT PVOID MutantInformation,
+              IN ULONG MutantInformationLength, OUT PULONG ReturnLength OPTIONAL)
 
 /*++
 
@@ -436,19 +406,20 @@ Return Value:
     // routine.
     //
 
-    try {
+    try
+    {
 
         //
         // Get previous processor mode and probe output arguments if necessary.
         //
 
         PreviousMode = KeGetPreviousMode();
-        if (PreviousMode != KernelMode) {
-            ProbeForWriteSmallStructure(MutantInformation,
-                                        sizeof(MUTANT_BASIC_INFORMATION),
-                                        sizeof(ULONG));
+        if (PreviousMode != KernelMode)
+        {
+            ProbeForWriteSmallStructure(MutantInformation, sizeof(MUTANT_BASIC_INFORMATION), sizeof(ULONG));
 
-            if (ARGUMENT_PRESENT(ReturnLength)) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 ProbeForWriteUlong(ReturnLength);
             }
         }
@@ -457,11 +428,13 @@ Return Value:
         // Check argument validity.
         //
 
-        if (MutantInformationClass != MutantBasicInformation) {
+        if (MutantInformationClass != MutantBasicInformation)
+        {
             return STATUS_INVALID_INFO_CLASS;
         }
 
-        if (MutantInformationLength != sizeof(MUTANT_BASIC_INFORMATION)) {
+        if (MutantInformationLength != sizeof(MUTANT_BASIC_INFORMATION))
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
@@ -469,11 +442,7 @@ Return Value:
         // Reference mutant object by handle.
         //
 
-        Status = ObReferenceObjectByHandle(MutantHandle,
-                                           MUTANT_QUERY_STATE,
-                                           ExMutantObjectType,
-                                           PreviousMode,
-                                           &Mutant,
+        Status = ObReferenceObjectByHandle(MutantHandle, MUTANT_QUERY_STATE, ExMutantObjectType, PreviousMode, &Mutant,
                                            NULL);
 
         //
@@ -486,32 +455,36 @@ Return Value:
         // access violation will occur.
         //
 
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
             Count = KeReadStateMutant((PKMUTANT)Mutant);
             Abandoned = ((PKMUTANT)Mutant)->Abandoned;
-            OwnedByCaller = (BOOLEAN)((((PKMUTANT)Mutant)->OwnerThread ==
-                                                         KeGetCurrentThread()));
+            OwnedByCaller = (BOOLEAN)((((PKMUTANT)Mutant)->OwnerThread == KeGetCurrentThread()));
 
             ObDereferenceObject(Mutant);
-            try {
+            try
+            {
                 ((PMUTANT_BASIC_INFORMATION)MutantInformation)->CurrentCount = Count;
                 ((PMUTANT_BASIC_INFORMATION)MutantInformation)->OwnedByCaller = OwnedByCaller;
                 ((PMUTANT_BASIC_INFORMATION)MutantInformation)->AbandonedState = Abandoned;
-                if (ARGUMENT_PRESENT(ReturnLength)) {
+                if (ARGUMENT_PRESENT(ReturnLength))
+                {
                     *ReturnLength = sizeof(MUTANT_BASIC_INFORMATION);
                 }
-
-            } except(ExSystemExceptionFilter()) {
+            }
+            except(ExSystemExceptionFilter())
+            {
             }
         }
 
-    //
-    // If an exception occurs during the probe of the output arguments, then
-    // always handle the exception and return the exception code as the status
-    // value.
-    //
-
-    } except(ExSystemExceptionFilter()) {
+        //
+        // If an exception occurs during the probe of the output arguments, then
+        // always handle the exception and return the exception code as the status
+        // value.
+        //
+    }
+    except(ExSystemExceptionFilter())
+    {
         return GetExceptionCode();
     }
 
@@ -521,12 +494,9 @@ Return Value:
 
     return Status;
 }
-
+
 NTSTATUS
-NtReleaseMutant (
-    IN HANDLE MutantHandle,
-    OUT PLONG PreviousCount OPTIONAL
-    )
+NtReleaseMutant(IN HANDLE MutantHandle, OUT PLONG PreviousCount OPTIONAL)
 
 /*++
 
@@ -562,7 +532,8 @@ Return Value:
     // object by handle routine.
     //
 
-    try {
+    try
+    {
 
         //
         // Get previous processor mode and probe previous count address
@@ -570,7 +541,8 @@ Return Value:
         //
 
         PreviousMode = KeGetPreviousMode();
-        if ((PreviousMode != KernelMode) && (ARGUMENT_PRESENT(PreviousCount))) {
+        if ((PreviousMode != KernelMode) && (ARGUMENT_PRESENT(PreviousCount)))
+        {
             ProbeForWriteLong(PreviousCount);
         }
 
@@ -581,12 +553,7 @@ Return Value:
         // owner can release a mutant object.
         //
 
-        Status = ObReferenceObjectByHandle(MutantHandle,
-                                           0,
-                                           ExMutantObjectType,
-                                           PreviousMode,
-                                           &Mutant,
-                                           NULL);
+        Status = ObReferenceObjectByHandle(MutantHandle, 0, ExMutantObjectType, PreviousMode, &Mutant, NULL);
 
         //
         // If the reference was successful, then release the mutant object. If
@@ -598,39 +565,46 @@ Return Value:
         // count value, an access violation will occur.
         //
 
-        if (NT_SUCCESS(Status)) {
-            try {
+        if (NT_SUCCESS(Status))
+        {
+            try
+            {
                 PERFINFO_DECLARE_OBJECT(Mutant);
                 Count = KeReleaseMutant((PKMUTANT)Mutant, MUTANT_INCREMENT, FALSE, FALSE);
                 ObDereferenceObject(Mutant);
-                if (ARGUMENT_PRESENT(PreviousCount)) {
-                    try {
+                if (ARGUMENT_PRESENT(PreviousCount))
+                {
+                    try
+                    {
                         *PreviousCount = Count;
-
-                    } except(ExSystemExceptionFilter()) {
+                    }
+                    except(ExSystemExceptionFilter())
+                    {
                     }
                 }
 
-            //
-            // If an exception occurs because the caller is not the owner of
-            // the mutant object, then always handle the exception, dereference
-            // the mutant object, and return the exception code as the status
-            // value.
-            //
-
-            } except(ExSystemExceptionFilter()) {
+                //
+                // If an exception occurs because the caller is not the owner of
+                // the mutant object, then always handle the exception, dereference
+                // the mutant object, and return the exception code as the status
+                // value.
+                //
+            }
+            except(ExSystemExceptionFilter())
+            {
                 ObDereferenceObject(Mutant);
                 return GetExceptionCode();
             }
         }
 
-    //
-    // If an exception occurs during the probe of the previous count, then
-    // always handle the exception and return the exception code as the status
-    // value.
-    //
-
-    } except(ExSystemExceptionFilter()) {
+        //
+        // If an exception occurs during the probe of the previous count, then
+        // always handle the exception and return the exception code as the status
+        // value.
+        //
+    }
+    except(ExSystemExceptionFilter())
+    {
         return GetExceptionCode();
     }
 

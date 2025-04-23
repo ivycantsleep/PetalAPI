@@ -44,17 +44,16 @@ Revision History:
 #include "ntrtlp.h"
 
 #if defined(ALLOC_PRAGMA) && defined(NTOS_KERNEL_RUNTIME)
-#pragma alloc_text(PAGE,RtlpNtOpenKey)
-#pragma alloc_text(PAGE,RtlpNtCreateKey)
-#pragma alloc_text(PAGE,RtlpNtQueryValueKey)
-#pragma alloc_text(PAGE,RtlpNtSetValueKey)
-#pragma alloc_text(PAGE,RtlpNtMakeTemporaryKey)
-#pragma alloc_text(PAGE,RtlpNtEnumerateSubKey)
+#pragma alloc_text(PAGE, RtlpNtOpenKey)
+#pragma alloc_text(PAGE, RtlpNtCreateKey)
+#pragma alloc_text(PAGE, RtlpNtQueryValueKey)
+#pragma alloc_text(PAGE, RtlpNtSetValueKey)
+#pragma alloc_text(PAGE, RtlpNtMakeTemporaryKey)
+#pragma alloc_text(PAGE, RtlpNtEnumerateSubKey)
 #endif
 
 #define REG_INVALID_ATTRIBUTES (OBJ_EXCLUSIVE | OBJ_PERMANENT)
 
-
 
 //
 // Temporary Registry User APIs.
@@ -65,14 +64,10 @@ Revision History:
 // hence require to be system services.
 //
 
-
+
 NTSTATUS
-RtlpNtOpenKey(
-    OUT PHANDLE KeyHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_ATTRIBUTES ObjectAttributes,
-    IN ULONG Options
-    )
+RtlpNtOpenKey(OUT PHANDLE KeyHandle, IN ACCESS_MASK DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes,
+              IN ULONG Options)
 
 /*++
 
@@ -122,28 +117,20 @@ Return Value:
 {
     RTL_PAGED_CODE();
 
-    if (ARGUMENT_PRESENT(ObjectAttributes)) {
+    if (ARGUMENT_PRESENT(ObjectAttributes))
+    {
         ObjectAttributes->Attributes &= ~(REG_INVALID_ATTRIBUTES);
     }
 
-    return( NtOpenKey( KeyHandle,
-                       DesiredAccess,
-                       ObjectAttributes
-                       ) );
+    return (NtOpenKey(KeyHandle, DesiredAccess, ObjectAttributes));
 
-    DBG_UNREFERENCED_PARAMETER( Options );
+    DBG_UNREFERENCED_PARAMETER(Options);
 }
 
 
 NTSTATUS
-RtlpNtCreateKey(
-    OUT PHANDLE KeyHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_ATTRIBUTES ObjectAttributes,
-    IN ULONG Options,
-    IN PUNICODE_STRING Provider,
-    OUT OPTIONAL PULONG Disposition
-    )
+RtlpNtCreateKey(OUT PHANDLE KeyHandle, IN ACCESS_MASK DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes,
+                IN ULONG Options, IN PUNICODE_STRING Provider, OUT OPTIONAL PULONG Disposition)
 
 /*++
 
@@ -202,34 +189,26 @@ Return Value:
 {
     RTL_PAGED_CODE();
 
-    if (ARGUMENT_PRESENT(ObjectAttributes)) {
+    if (ARGUMENT_PRESENT(ObjectAttributes))
+    {
         ObjectAttributes->Attributes &= ~(REG_INVALID_ATTRIBUTES);
     }
 
 
-    return(NtCreateKey( KeyHandle,
-                        DesiredAccess,
-                        ObjectAttributes,
-                        0,                          //TitleIndex
-                        NULL,                       //Class OPTIONAL,
-                        REG_OPTION_NON_VOLATILE,    //CreateOptions,
-                        Disposition
-                        ) );
+    return (NtCreateKey(KeyHandle, DesiredAccess, ObjectAttributes,
+                        0,                       //TitleIndex
+                        NULL,                    //Class OPTIONAL,
+                        REG_OPTION_NON_VOLATILE, //CreateOptions,
+                        Disposition));
 
-    DBG_UNREFERENCED_PARAMETER( Options );
-    DBG_UNREFERENCED_PARAMETER( Provider );
+    DBG_UNREFERENCED_PARAMETER(Options);
+    DBG_UNREFERENCED_PARAMETER(Provider);
 }
 
 
-
 NTSTATUS
-RtlpNtQueryValueKey(
-    IN HANDLE KeyHandle,
-    OUT OPTIONAL PULONG KeyValueType,
-    OUT OPTIONAL PVOID KeyValue,
-    IN OUT OPTIONAL PULONG KeyValueLength,
-    OUT OPTIONAL PLARGE_INTEGER LastWriteTime
-    )
+RtlpNtQueryValueKey(IN HANDLE KeyHandle, OUT OPTIONAL PULONG KeyValueType, OUT OPTIONAL PVOID KeyValue,
+                    IN OUT OPTIONAL PULONG KeyValueLength, OUT OPTIONAL PLARGE_INTEGER LastWriteTime)
 
 /*++
 
@@ -306,13 +285,15 @@ Return Value:
     //
 
     ValueLength = 0;
-    if (ARGUMENT_PRESENT(KeyValueLength)) {
+    if (ARGUMENT_PRESENT(KeyValueLength))
+    {
         ValueLength = *KeyValueLength;
     }
 
     ValueLength += FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data);
     ValueInformation = RtlAllocateHeap(RtlProcessHeap(), 0, ValueLength);
-    if (ValueInformation == NULL) {
+    if (ValueInformation == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -321,19 +302,16 @@ Return Value:
     //
 
     NullName.Length = 0;
-    Status = NtQueryValueKey(KeyHandle,
-                             &NullName,
-                             KeyValuePartialInformation,
-                             ValueInformation,
-                             ValueLength,
-                             &ValueLength);
+    Status =
+        NtQueryValueKey(KeyHandle, &NullName, KeyValuePartialInformation, ValueInformation, ValueLength, &ValueLength);
 
     //
     // Temporary hack to allow query of "" attribute when it hasn't
     // yet been set.
     //
 
-    if (Status == STATUS_OBJECT_NAME_NOT_FOUND) {
+    if (Status == STATUS_OBJECT_NAME_NOT_FOUND)
+    {
         Status = STATUS_SUCCESS;
         ValueInformation->DataLength = 0;
         ValueInformation->Type = 0;
@@ -343,12 +321,15 @@ Return Value:
     // If requested return the key value length and the key type.
     //
 
-    if (NT_SUCCESS(Status) || (Status == STATUS_BUFFER_OVERFLOW)) {
-        if (ARGUMENT_PRESENT(KeyValueLength)) {
+    if (NT_SUCCESS(Status) || (Status == STATUS_BUFFER_OVERFLOW))
+    {
+        if (ARGUMENT_PRESENT(KeyValueLength))
+        {
             *KeyValueLength = ValueInformation->DataLength;
         }
 
-        if (ARGUMENT_PRESENT(KeyValueType)) {
+        if (ARGUMENT_PRESENT(KeyValueType))
+        {
             *KeyValueType = ValueInformation->Type;
         }
     }
@@ -358,23 +339,17 @@ Return Value:
     // return the key value information.
     //
 
-    if (NT_SUCCESS(Status) && ARGUMENT_PRESENT(KeyValue)) {
-        RtlCopyMemory(KeyValue,
-                      &ValueInformation->Data[0],
-                      ValueInformation->DataLength);
+    if (NT_SUCCESS(Status) && ARGUMENT_PRESENT(KeyValue))
+    {
+        RtlCopyMemory(KeyValue, &ValueInformation->Data[0], ValueInformation->DataLength);
     }
 
     RtlFreeHeap(RtlProcessHeap(), 0, ValueInformation);
     return Status;
 }
-
+
 NTSTATUS
-RtlpNtSetValueKey(
-    IN HANDLE KeyHandle,
-    IN ULONG KeyValueType,
-    IN OPTIONAL PVOID KeyValue,
-    IN ULONG KeyValueLength
-    )
+RtlpNtSetValueKey(IN HANDLE KeyHandle, IN ULONG KeyValueType, IN OPTIONAL PVOID KeyValue, IN ULONG KeyValueLength)
 
 /*++
 
@@ -415,21 +390,15 @@ Return Value:
 
     RTL_PAGED_CODE();
 
-    return( NtSetValueKey( KeyHandle,
-                           &NullName,       // ValueName
-                           0,               // TitleIndex
-                           KeyValueType,
-                           KeyValue,
-                           KeyValueLength
-                           ) );
+    return (NtSetValueKey(KeyHandle,
+                          &NullName, // ValueName
+                          0,         // TitleIndex
+                          KeyValueType, KeyValue, KeyValueLength));
 }
 
 
-
 NTSTATUS
-RtlpNtMakeTemporaryKey(
-    IN HANDLE KeyHandle
-    )
+RtlpNtMakeTemporaryKey(IN HANDLE KeyHandle)
 
 /*++
 
@@ -457,17 +426,13 @@ Return Value:
 {
     RTL_PAGED_CODE();
 
-    return( NtDeleteKey(KeyHandle) );
+    return (NtDeleteKey(KeyHandle));
 }
 
-
+
 NTSTATUS
-RtlpNtEnumerateSubKey(
-    IN HANDLE KeyHandle,
-    OUT PUNICODE_STRING SubKeyName,
-    IN ULONG Index,
-    OUT PLARGE_INTEGER LastWriteTime
-    )
+RtlpNtEnumerateSubKey(IN HANDLE KeyHandle, OUT PUNICODE_STRING SubKeyName, IN ULONG Index,
+                      OUT PLARGE_INTEGER LastWriteTime)
 
 /*++
 
@@ -517,37 +482,33 @@ Return Value:
     RTL_PAGED_CODE();
 
     LocalBufferLength = 0;
-    if (SubKeyName->MaximumLength > 0) {
+    if (SubKeyName->MaximumLength > 0)
+    {
 
-        LocalBufferLength = SubKeyName->MaximumLength +
-                            FIELD_OFFSET(KEY_BASIC_INFORMATION, Name);
-        KeyInformation = RtlAllocateHeap( RtlProcessHeap(), 0,
-                                          LocalBufferLength
-                                          );
-        if (KeyInformation == NULL) {
-            return(STATUS_NO_MEMORY);
+        LocalBufferLength = SubKeyName->MaximumLength + FIELD_OFFSET(KEY_BASIC_INFORMATION, Name);
+        KeyInformation = RtlAllocateHeap(RtlProcessHeap(), 0, LocalBufferLength);
+        if (KeyInformation == NULL)
+        {
+            return (STATUS_NO_MEMORY);
         }
     }
 
-    Status = NtEnumerateKey( KeyHandle,
-                             Index,
-                             KeyBasicInformation,    //KeyInformationClass
-                             (PVOID)KeyInformation,
-                             LocalBufferLength,
-                             &ResultLength
-                             );
+    Status = NtEnumerateKey(KeyHandle, Index,
+                            KeyBasicInformation, //KeyInformationClass
+                            (PVOID)KeyInformation, LocalBufferLength, &ResultLength);
 
-    if (NT_SUCCESS(Status) && (KeyInformation != NULL)) {
+    if (NT_SUCCESS(Status) && (KeyInformation != NULL))
+    {
 
-        if ( SubKeyName->MaximumLength >= KeyInformation->NameLength) {
+        if (SubKeyName->MaximumLength >= KeyInformation->NameLength)
+        {
 
             SubKeyName->Length = (USHORT)KeyInformation->NameLength;
 
-            RtlCopyMemory( SubKeyName->Buffer,
-                           &KeyInformation->Name[0],
-                           SubKeyName->Length
-                           );
-        } else {
+            RtlCopyMemory(SubKeyName->Buffer, &KeyInformation->Name[0], SubKeyName->Length);
+        }
+        else
+        {
             Status = STATUS_BUFFER_OVERFLOW;
         }
     }
@@ -556,9 +517,9 @@ Return Value:
     // Return the length required if we failed due to a small buffer
     //
 
-    if (Status == STATUS_BUFFER_OVERFLOW) {
-        SubKeyName->Length = (USHORT)(ResultLength -
-                                      FIELD_OFFSET(KEY_BASIC_INFORMATION, Name));
+    if (Status == STATUS_BUFFER_OVERFLOW)
+    {
+        SubKeyName->Length = (USHORT)(ResultLength - FIELD_OFFSET(KEY_BASIC_INFORMATION, Name));
     }
 
 
@@ -566,16 +527,14 @@ Return Value:
     // Free up any memory we allocated
     //
 
-    if (KeyInformation != NULL) {
+    if (KeyInformation != NULL)
+    {
 
-        RtlFreeHeap( RtlProcessHeap(), 0,
-                     KeyInformation
-                     );
+        RtlFreeHeap(RtlProcessHeap(), 0, KeyInformation);
     }
 
 
-    return(Status);
+    return (Status);
 
-    DBG_UNREFERENCED_PARAMETER( LastWriteTime );
-
+    DBG_UNREFERENCED_PARAMETER(LastWriteTime);
 }

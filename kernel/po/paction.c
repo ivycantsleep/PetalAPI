@@ -26,34 +26,15 @@ Revision History:
 // Interal prototypes
 //
 
-VOID
-PopPromoteActionFlag (
-    OUT PUCHAR      Updates,
-    IN ULONG        UpdateFlag,
-    IN ULONG        Flags,
-    IN BOOLEAN      Set,
-    IN ULONG        FlagBit
-    );
+VOID PopPromoteActionFlag(OUT PUCHAR Updates, IN ULONG UpdateFlag, IN ULONG Flags, IN BOOLEAN Set, IN ULONG FlagBit);
 
 NTSTATUS
-PopIssueActionRequest (
-    IN BOOLEAN              Promote,
-    IN POWER_ACTION         Action,
-    IN SYSTEM_POWER_STATE   PowerState,
-    IN ULONG                Flags
-    );
+PopIssueActionRequest(IN BOOLEAN Promote, IN POWER_ACTION Action, IN SYSTEM_POWER_STATE PowerState, IN ULONG Flags);
 
-VOID
-PopCompleteAction (
-    PPOP_ACTION_TRIGGER     Trigger,
-    NTSTATUS                Status
-    );
+VOID PopCompleteAction(PPOP_ACTION_TRIGGER Trigger, NTSTATUS Status);
 
 NTSTATUS
-PopDispatchStateCallout(
-    IN PKWIN32_POWERSTATE_PARAMETERS Parms,
-    IN PULONG SessionId  OPTIONAL
-    );
+PopDispatchStateCallout(IN PKWIN32_POWERSTATE_PARAMETERS Parms, IN PULONG SessionId OPTIONAL);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, PoShutdownBugCheck)
@@ -69,15 +50,9 @@ PopDispatchStateCallout(
 #endif
 
 
-VOID
-PoShutdownBugCheck (
-    IN BOOLEAN  AllowCrashDump,
-    IN ULONG    BugCheckCode,
-    IN ULONG_PTR BugCheckParameter1,
-    IN ULONG_PTR BugCheckParameter2,
-    IN ULONG_PTR BugCheckParameter3,
-    IN ULONG_PTR BugCheckParameter4
-    )
+VOID PoShutdownBugCheck(IN BOOLEAN AllowCrashDump, IN ULONG BugCheckCode, IN ULONG_PTR BugCheckParameter1,
+                        IN ULONG_PTR BugCheckParameter2, IN ULONG_PTR BugCheckParameter3,
+                        IN ULONG_PTR BugCheckParameter4)
 /*++
 
 Routine Description:
@@ -97,7 +72,7 @@ Return Value:
 
 --*/
 {
-    POP_SHUTDOWN_BUG_CHECK          BugCode;
+    POP_SHUTDOWN_BUG_CHECK BugCode;
 
 
     //
@@ -105,8 +80,9 @@ Return Value:
     // the current crash dump state
     //
 
-    if (!AllowCrashDump) {
-        IoConfigureCrashDump (CrashDumpDisable);
+    if (!AllowCrashDump)
+    {
+        IoConfigureCrashDump(CrashDumpDisable);
     }
 
     //
@@ -124,30 +100,17 @@ Return Value:
     // Initiate a critical shutdown event
     //
 
-    ZwInitiatePowerAction (
-        PowerActionShutdown,
-        PowerSystemSleeping3,
-        POWER_ACTION_OVERRIDE_APPS | POWER_ACTION_DISABLE_WAKES | POWER_ACTION_CRITICAL,
-        FALSE
-        );
+    ZwInitiatePowerAction(PowerActionShutdown, PowerSystemSleeping3,
+                          POWER_ACTION_OVERRIDE_APPS | POWER_ACTION_DISABLE_WAKES | POWER_ACTION_CRITICAL, FALSE);
 
     //
     // Should not return, but just in case...
     //
 
-    KeBugCheckEx (
-        BugCheckCode,
-        BugCheckParameter1,
-        BugCheckParameter2,
-        BugCheckParameter3,
-        BugCheckParameter4
-        );
+    KeBugCheckEx(BugCheckCode, BugCheckParameter1, BugCheckParameter2, BugCheckParameter3, BugCheckParameter4);
 }
 
-VOID
-PopCriticalShutdown (
-    POP_POLICY_DEVICE_TYPE  Type
-    )
+VOID PopCriticalShutdown(POP_POLICY_DEVICE_TYPE Type)
 /*++
 
 Routine Description:
@@ -168,55 +131,43 @@ Return Value:
 
 --*/
 {
-    POP_ACTION_TRIGGER      Trigger;
-    POWER_ACTION_POLICY     Action;
+    POP_ACTION_TRIGGER Trigger;
+    POWER_ACTION_POLICY Action;
 
     ASSERT_POLICY_LOCK_OWNED();
 
-    PoPrint (PO_ERROR, ("PopCriticalShutdown: type %x\n", Type));
+    PoPrint(PO_ERROR, ("PopCriticalShutdown: type %x\n", Type));
 
     //
     // Go directly to setting the power state
     //
 
-    RtlZeroMemory (&Action, sizeof(Action));
+    RtlZeroMemory(&Action, sizeof(Action));
     Action.Action = PowerActionShutdownOff;
-    Action.Flags  = POWER_ACTION_OVERRIDE_APPS |
-                    POWER_ACTION_DISABLE_WAKES |
-                    POWER_ACTION_CRITICAL;
+    Action.Flags = POWER_ACTION_OVERRIDE_APPS | POWER_ACTION_DISABLE_WAKES | POWER_ACTION_CRITICAL;
 
-    RtlZeroMemory (&Trigger, sizeof(Trigger));
-    Trigger.Type  = Type;
+    RtlZeroMemory(&Trigger, sizeof(Trigger));
+    Trigger.Type = Type;
     Trigger.Flags = PO_TRG_SET;
 
-    try {
+    try
+    {
 
         //
         // The substitution policy and LightestState do not matter here as
         // the action restricts this to a shutdown.
         //
-        PopSetPowerAction(
-            &Trigger,
-            0,
-            &Action,
-            PowerSystemHibernate,
-            SubstituteLightestOverallDownwardBounded
-            );
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-        ASSERT (!GetExceptionCode());
+        PopSetPowerAction(&Trigger, 0, &Action, PowerSystemHibernate, SubstituteLightestOverallDownwardBounded);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        ASSERT(!GetExceptionCode());
     }
 }
 
 
-VOID
-PopSetPowerAction(
-    IN PPOP_ACTION_TRIGGER      Trigger,
-    IN ULONG                    UserNotify,
-    IN PPOWER_ACTION_POLICY     ActionPolicy,
-    IN SYSTEM_POWER_STATE       LightestState,
-    IN POP_SUBSTITUTION_POLICY  SubstitutionPolicy
-    )
+VOID PopSetPowerAction(IN PPOP_ACTION_TRIGGER Trigger, IN ULONG UserNotify, IN PPOWER_ACTION_POLICY ActionPolicy,
+                       IN SYSTEM_POWER_STATE LightestState, IN POP_SUBSTITUTION_POLICY SubstitutionPolicy)
 /*++
 
 Routine Description:
@@ -249,49 +200,47 @@ Return Value:
 
 --*/
 {
-    UCHAR           Updates;
-    ULONG           i, Flags;
-    BOOLEAN         Pending;
-    BOOLEAN         Disabled;
-    POWER_ACTION    Action;
+    UCHAR Updates;
+    ULONG i, Flags;
+    BOOLEAN Pending;
+    BOOLEAN Disabled;
+    POWER_ACTION Action;
 
     ASSERT_POLICY_LOCK_OWNED();
 
-    if (PERFINFO_IS_GROUP_ON(PERF_POWER)) {
+    if (PERFINFO_IS_GROUP_ON(PERF_POWER))
+    {
         PERFINFO_SET_POWER_ACTION LogEntry;
 
-        LogEntry.PowerAction = (ULONG) ActionPolicy->Action;
-        LogEntry.LightestState = (ULONG) LightestState;
+        LogEntry.PowerAction = (ULONG)ActionPolicy->Action;
+        LogEntry.LightestState = (ULONG)LightestState;
         LogEntry.Trigger = Trigger;
 
-        PerfInfoLogBytes(PERFINFO_LOG_TYPE_SET_POWER_ACTION,
-                         &LogEntry,
-                         sizeof(LogEntry));
+        PerfInfoLogBytes(PERFINFO_LOG_TYPE_SET_POWER_ACTION, &LogEntry, sizeof(LogEntry));
     }
 
     //
     // If the trigger isn't set, then we're done
     //
 
-    if (!(Trigger->Flags & PO_TRG_SET)) {
-        PopCompleteAction (Trigger, STATUS_SUCCESS);
-        return ;
+    if (!(Trigger->Flags & PO_TRG_SET))
+    {
+        PopCompleteAction(Trigger, STATUS_SUCCESS);
+        return;
     }
 
-    PoPrint (PO_PACT, ("PopSetPowerAction: %s, Flags %x, Min=%s\n",
-                        PopPowerActionString(ActionPolicy->Action),
-                        ActionPolicy->Flags,
-                        PopSystemStateString(LightestState)
-                        ));
+    PoPrint(PO_PACT, ("PopSetPowerAction: %s, Flags %x, Min=%s\n", PopPowerActionString(ActionPolicy->Action),
+                      ActionPolicy->Flags, PopSystemStateString(LightestState)));
 
     //
     // Round request to system capabilities
     //
     PopVerifySystemPowerState(&LightestState, SubstitutionPolicy);
-    Disabled = PopVerifyPowerActionPolicy (ActionPolicy);
-    if (Disabled) {
-        PopCompleteAction (Trigger, STATUS_NOT_SUPPORTED);
-        return ;
+    Disabled = PopVerifyPowerActionPolicy(ActionPolicy);
+    if (Disabled)
+    {
+        PopCompleteAction(Trigger, STATUS_NOT_SUPPORTED);
+        return;
     }
 
     //
@@ -299,7 +248,8 @@ Return Value:
     //
 
     Pending = FALSE;
-    if (!(Trigger->Flags & PO_TRG_SYSTEM)) {
+    if (!(Trigger->Flags & PO_TRG_SYSTEM))
+    {
         Trigger->Flags |= PO_TRG_SYSTEM;
         Action = ActionPolicy->Action;
         Flags = ActionPolicy->Flags;
@@ -308,7 +258,8 @@ Return Value:
         // If state is idle, then clear residue values
         //
 
-        if (PopAction.State == PO_ACT_IDLE) {
+        if (PopAction.State == PO_ACT_IDLE)
+        {
 
             PopResetActionDefaults();
         }
@@ -318,7 +269,8 @@ Return Value:
         // current action
         //
 
-        if (Action != PowerActionNone) {
+        if (Action != PowerActionNone)
+        {
             Updates = 0;
 
             //
@@ -329,15 +281,17 @@ Return Value:
             // power policy.
             //
 
-            if (Action == PowerActionWarmEject) {
+            if (Action == PowerActionWarmEject)
+            {
 
-                ASSERT (LightestState <= PowerSystemHibernate);
+                ASSERT(LightestState <= PowerSystemHibernate);
                 Flags |= POWER_ACTION_LIGHTEST_FIRST;
             }
 
-            if (Action == PowerActionHibernate) {
+            if (Action == PowerActionHibernate)
+            {
 
-                ASSERT (LightestState <= PowerSystemHibernate);
+                ASSERT(LightestState <= PowerSystemHibernate);
                 LightestState = PowerSystemHibernate;
             }
 
@@ -345,26 +299,28 @@ Return Value:
             // Is this action is as good as the current action?
             //
 
-            if ( PopCompareActions(Action, PopAction.Action) >= 0) {
+            if (PopCompareActions(Action, PopAction.Action) >= 0)
+            {
                 //
                 // allow the absence of query_allowed, ui_allowed.
                 //
 
-                PopPromoteActionFlag (&Updates, PO_PM_USER, Flags, FALSE, POWER_ACTION_QUERY_ALLOWED);
-                PopPromoteActionFlag (&Updates, PO_PM_USER, Flags, FALSE, POWER_ACTION_UI_ALLOWED);
+                PopPromoteActionFlag(&Updates, PO_PM_USER, Flags, FALSE, POWER_ACTION_QUERY_ALLOWED);
+                PopPromoteActionFlag(&Updates, PO_PM_USER, Flags, FALSE, POWER_ACTION_UI_ALLOWED);
 
                 //
                 // Always favor the deepest sleep first, and restart if we
                 // switch.
                 //
-                PopPromoteActionFlag (&Updates, PO_PM_SETSTATE, Flags, FALSE, POWER_ACTION_LIGHTEST_FIRST);
+                PopPromoteActionFlag(&Updates, PO_PM_SETSTATE, Flags, FALSE, POWER_ACTION_LIGHTEST_FIRST);
 
                 //
                 // If this is a sleep action, then make sure Lightest is at least whatever
                 // the current policy is set for
                 //
 
-                if (Action == PowerActionSleep  &&  LightestState < PopPolicy->MinSleep) {
+                if (Action == PowerActionSleep && LightestState < PopPolicy->MinSleep)
+                {
                     LightestState = PopPolicy->MinSleep;
                 }
 
@@ -373,7 +329,8 @@ Return Value:
                 // specified by the current action, promote it.
                 //
 
-                if (LightestState > PopAction.LightestState) {
+                if (LightestState > PopAction.LightestState)
+                {
                     PopAction.LightestState = LightestState;
                     Updates |= PO_PM_SETSTATE;
                 }
@@ -383,8 +340,8 @@ Return Value:
             // Promote the critical & override_apps flags
             //
 
-            PopPromoteActionFlag (&Updates, PO_PM_USER, Flags, TRUE, POWER_ACTION_OVERRIDE_APPS);
-            PopPromoteActionFlag (&Updates, PO_PM_USER | PO_PM_SETSTATE, Flags, TRUE, POWER_ACTION_CRITICAL);
+            PopPromoteActionFlag(&Updates, PO_PM_USER, Flags, TRUE, POWER_ACTION_OVERRIDE_APPS);
+            PopPromoteActionFlag(&Updates, PO_PM_USER | PO_PM_SETSTATE, Flags, TRUE, POWER_ACTION_CRITICAL);
 
             //
             // Promote disable_wake flag.  No updates are needed for this - it will be
@@ -392,13 +349,14 @@ Return Value:
             // user mode
             //
 
-            PopPromoteActionFlag (&Updates, 0, Flags, TRUE, POWER_ACTION_DISABLE_WAKES);
+            PopPromoteActionFlag(&Updates, 0, Flags, TRUE, POWER_ACTION_DISABLE_WAKES);
 
             //
             // If the new action is more agressive then the old action, promote it
             //
 
-            if ( PopCompareActions(Action, PopAction.Action) > 0) {
+            if (PopCompareActions(Action, PopAction.Action) > 0)
+            {
 
                 //
                 // If we are promoting, the old action certainly cannot be a
@@ -423,7 +381,8 @@ Return Value:
                 // power-down menu.
                 //
 
-                if (PopCompareActions(Action, PowerActionHibernate) >= 0) {
+                if (PopCompareActions(Action, PowerActionHibernate) >= 0)
+                {
 
                     Updates |= PO_PM_REISSUE;
                 }
@@ -432,7 +391,8 @@ Return Value:
                 PopAction.Action = Action;
             }
 
-            if (Action == PowerActionHibernate) {
+            if (Action == PowerActionHibernate)
+            {
 
                 Action = PowerActionSleep;
             }
@@ -441,7 +401,8 @@ Return Value:
             // PopAction.Action may be explicitely set to PowerActionHibernate
             // by NtSetSystemPowerState during a wake.
             //
-            if (PopAction.Action == PowerActionHibernate) {
+            if (PopAction.Action == PowerActionHibernate)
+            {
 
                 PopAction.Action = PowerActionSleep;
             }
@@ -450,10 +411,12 @@ Return Value:
             // If the current action was updated, then get a worker
             //
 
-            if (Updates) {
+            if (Updates)
+            {
 
                 Pending = TRUE;
-                if (PopAction.State == PO_ACT_IDLE  ||  PopAction.State == PO_ACT_NEW_REQUEST) {
+                if (PopAction.State == PO_ACT_IDLE || PopAction.State == PO_ACT_NEW_REQUEST)
+                {
 
                     //
                     // New request
@@ -461,16 +424,17 @@ Return Value:
 
                     PopAction.State = PO_ACT_NEW_REQUEST;
                     PopAction.Status = STATUS_SUCCESS;
-                    PopGetPolicyWorker (PO_WORKER_ACTION_NORMAL);
-
-                } else {
+                    PopGetPolicyWorker(PO_WORKER_ACTION_NORMAL);
+                }
+                else
+                {
 
                     //
                     // Something outstanding.  Promote it.
                     //
 
                     PopAction.Updates |= Updates;
-                    PopGetPolicyWorker (PO_WORKER_ACTION_PROMOTE);
+                    PopGetPolicyWorker(PO_WORKER_ACTION_PROMOTE);
                 }
             }
         }
@@ -481,58 +445,66 @@ Return Value:
     // If user events haven't been handled, do it now
     //
 
-    if (!(Trigger->Flags & PO_TRG_USER)) {
+    if (!(Trigger->Flags & PO_TRG_USER))
+    {
         Trigger->Flags |= PO_TRG_USER;
 
         //
         // If there's an eventcode for the action, dispatch it
         //
 
-        if (ActionPolicy->EventCode) {
+        if (ActionPolicy->EventCode)
+        {
             // if event code already queued, drop it
-            for (i=0; i < POP_MAX_EVENT_CODES; i++) {
-                if (PopEventCode[i] == ActionPolicy->EventCode) {
+            for (i = 0; i < POP_MAX_EVENT_CODES; i++)
+            {
+                if (PopEventCode[i] == ActionPolicy->EventCode)
+                {
                     break;
                 }
             }
 
-            if (i >= POP_MAX_EVENT_CODES) {
+            if (i >= POP_MAX_EVENT_CODES)
+            {
                 // not queued, add it
-                for (i=0; i < POP_MAX_EVENT_CODES; i++) {
-                    if (!PopEventCode[i]) {
+                for (i = 0; i < POP_MAX_EVENT_CODES; i++)
+                {
+                    if (!PopEventCode[i])
+                    {
                         PopEventCode[i] = ActionPolicy->EventCode;
                         UserNotify |= PO_NOTIFY_EVENT_CODES;
                         break;
                     }
                 }
 
-                if (i >= POP_MAX_EVENT_CODES) {
-                    PoPrint (PO_WARN, ("PopAction: dropped user event %x\n", ActionPolicy->EventCode));
+                if (i >= POP_MAX_EVENT_CODES)
+                {
+                    PoPrint(PO_WARN, ("PopAction: dropped user event %x\n", ActionPolicy->EventCode));
                 }
             }
         }
 
-        PopSetNotificationWork (UserNotify);
+        PopSetNotificationWork(UserNotify);
     }
 
     //
     // If sync request, queue it or complete it
     //
 
-    if (Trigger->Flags & PO_TRG_SYNC) {
-        if (Pending) {
-            InsertTailList (&PopActionWaiters, &Trigger->Wait->Link);
-        } else {
-            PopCompleteAction (Trigger, STATUS_SUCCESS);
+    if (Trigger->Flags & PO_TRG_SYNC)
+    {
+        if (Pending)
+        {
+            InsertTailList(&PopActionWaiters, &Trigger->Wait->Link);
+        }
+        else
+        {
+            PopCompleteAction(Trigger, STATUS_SUCCESS);
         }
     }
 }
 
-LONG
-PopCompareActions(
-    IN POWER_ACTION     FutureAction,
-    IN POWER_ACTION     CurrentAction
-    )
+LONG PopCompareActions(IN POWER_ACTION FutureAction, IN POWER_ACTION CurrentAction)
 /*++
 
 Routine Description:
@@ -565,20 +537,24 @@ Return Value:
     // sleeping may be induced by critically low power). So we "insert"
     // PowerActionWarmEject right before PowerActionSleep.
     //
-    if (FutureAction == PowerActionWarmEject) {
+    if (FutureAction == PowerActionWarmEject)
+    {
 
         FutureAction = PowerActionSleep;
-
-    } else if (FutureAction >= PowerActionSleep) {
+    }
+    else if (FutureAction >= PowerActionSleep)
+    {
 
         FutureAction++;
     }
 
-    if (CurrentAction == PowerActionWarmEject) {
+    if (CurrentAction == PowerActionWarmEject)
+    {
 
         CurrentAction = PowerActionSleep;
-
-    } else if (CurrentAction >= PowerActionSleep) {
+    }
+    else if (CurrentAction >= PowerActionSleep)
+    {
 
         CurrentAction++;
     }
@@ -586,14 +562,7 @@ Return Value:
     return (FutureAction - CurrentAction);
 }
 
-VOID
-PopPromoteActionFlag (
-    OUT PUCHAR      Updates,
-    IN ULONG        UpdateFlag,
-    IN ULONG        Flags,
-    IN BOOLEAN      Set,
-    IN ULONG        FlagBit
-    )
+VOID PopPromoteActionFlag(OUT PUCHAR Updates, IN ULONG UpdateFlag, IN ULONG Flags, IN BOOLEAN Set, IN ULONG FlagBit)
 /*++
 
 Routine Description:
@@ -624,8 +593,8 @@ Return Value:
 
 --*/
 {
-    ULONG   New, Current;
-    ULONG   Mask;
+    ULONG New, Current;
+    ULONG Mask;
 
     Mask = Set ? 0 : FlagBit;
     New = (Flags & FlagBit) ^ Mask;
@@ -636,17 +605,16 @@ Return Value:
     // PoAction.Flags then update it
     //
 
-    if (New & ~Current) {
+    if (New & ~Current)
+    {
         PopAction.Flags = (PopAction.Flags | New) & ~Mask;
-        *Updates |= (UCHAR) UpdateFlag;
+        *Updates |= (UCHAR)UpdateFlag;
     }
 }
 
 
 ULONG
-PopPolicyWorkerAction (
-    VOID
-    )
+PopPolicyWorkerAction(VOID)
 /*++
 
 Routine Description:
@@ -667,24 +635,25 @@ Return Value:
 
 --*/
 {
-    POWER_ACTION            Action;
-    SYSTEM_POWER_STATE      LightestState;
-    ULONG                   Flags;
-    NTSTATUS                Status;
-    PLIST_ENTRY             Link;
-    PPOP_TRIGGER_WAIT       SyncRequest;
+    POWER_ACTION Action;
+    SYSTEM_POWER_STATE LightestState;
+    ULONG Flags;
+    NTSTATUS Status;
+    PLIST_ENTRY Link;
+    PPOP_TRIGGER_WAIT SyncRequest;
 
 
-    PopAcquirePolicyLock ();
+    PopAcquirePolicyLock();
 
-    if (PopAction.State == PO_ACT_NEW_REQUEST) {
+    if (PopAction.State == PO_ACT_NEW_REQUEST)
+    {
         //
         // We'll handle this update
         //
 
-        Action        = PopAction.Action;
+        Action = PopAction.Action;
         LightestState = PopAction.LightestState;
-        Flags         = PopAction.Flags;
+        Flags = PopAction.Flags;
 
         PopAction.State = PO_ACT_CALLOUT;
 
@@ -692,26 +661,26 @@ Return Value:
         // Perform callout
         //
 
-        Status = PopIssueActionRequest (FALSE, Action, LightestState, Flags);
+        Status = PopIssueActionRequest(FALSE, Action, LightestState, Flags);
 
         //
         // Clear switch triggers
         //
 
-        PopResetSwitchTriggers ();
+        PopResetSwitchTriggers();
 
         //
         // If the system was sleeping
         //
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            PoPrint (PO_WARN | PO_PACT,
-                     ("PopPolicyWorkerAction: action request %d failed %08lx\n", Action, Status));
-
+            PoPrint(PO_WARN | PO_PACT, ("PopPolicyWorkerAction: action request %d failed %08lx\n", Action, Status));
         }
 
-        if (PopAction.Updates & PO_PM_REISSUE) {
+        if (PopAction.Updates & PO_PM_REISSUE)
+        {
 
             //
             // There's a new outstanding request.  Claim it.
@@ -719,47 +688,51 @@ Return Value:
 
             PopAction.Updates &= ~PO_PM_REISSUE;
             PopAction.State = PO_ACT_NEW_REQUEST;
-            PopGetPolicyWorker (PO_WORKER_ACTION_NORMAL);
-
-        } else {
+            PopGetPolicyWorker(PO_WORKER_ACTION_NORMAL);
+        }
+        else
+        {
 
             //
             // All power actions are complete.
             //
-            if (PERFINFO_IS_GROUP_ON(PERF_POWER)) {
+            if (PERFINFO_IS_GROUP_ON(PERF_POWER))
+            {
                 PERFINFO_SET_POWER_ACTION_RET LogEntry;
 
                 LogEntry.Trigger = (PVOID)Action;
                 LogEntry.Status = Status;
 
-                PerfInfoLogBytes(PERFINFO_LOG_TYPE_SET_POWER_ACTION_RET,
-                                 &LogEntry,
-                                 sizeof(LogEntry));
+                PerfInfoLogBytes(PERFINFO_LOG_TYPE_SET_POWER_ACTION_RET, &LogEntry, sizeof(LogEntry));
             }
 
             PopAction.Status = Status;
             PopAction.State = PO_ACT_IDLE;
 
 
-            if (IsListEmpty(&PopActionWaiters)) {
+            if (IsListEmpty(&PopActionWaiters))
+            {
 
                 //
                 // If there was an error and no one is waiting for it, issue a notify
                 //
 
-                if (!NT_SUCCESS(Status)) {
-                    PopSetNotificationWork (PO_NOTIFY_STATE_FAILURE);
+                if (!NT_SUCCESS(Status))
+                {
+                    PopSetNotificationWork(PO_NOTIFY_STATE_FAILURE);
                 }
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // Free any synchronous waiters
                 //
 
-                for (Link = PopActionWaiters.Flink; Link != &PopActionWaiters; Link = Link->Flink) {
-                    SyncRequest = CONTAINING_RECORD (Link, POP_TRIGGER_WAIT, Link);
-                    PopCompleteAction (SyncRequest->Trigger, Status);
+                for (Link = PopActionWaiters.Flink; Link != &PopActionWaiters; Link = Link->Flink)
+                {
+                    SyncRequest = CONTAINING_RECORD(Link, POP_TRIGGER_WAIT, Link);
+                    PopCompleteAction(SyncRequest->Trigger, Status);
                 }
             }
 
@@ -767,37 +740,31 @@ Return Value:
             // Let promotion worker check for anything else
             //
 
-            PopGetPolicyWorker (PO_WORKER_ACTION_PROMOTE);
-
+            PopGetPolicyWorker(PO_WORKER_ACTION_PROMOTE);
         }
     }
 
-    PopReleasePolicyLock (FALSE);
+    PopReleasePolicyLock(FALSE);
     return 0;
 }
 
-VOID
-PopCompleteAction (
-    PPOP_ACTION_TRIGGER     Trigger,
-    NTSTATUS                Status
-    )
+VOID PopCompleteAction(PPOP_ACTION_TRIGGER Trigger, NTSTATUS Status)
 {
-    PPOP_TRIGGER_WAIT       SyncRequest;
+    PPOP_TRIGGER_WAIT SyncRequest;
 
-    if (Trigger->Flags & PO_TRG_SYNC) {
+    if (Trigger->Flags & PO_TRG_SYNC)
+    {
         Trigger->Flags &= ~PO_TRG_SYNC;
 
         SyncRequest = Trigger->Wait;
         SyncRequest->Status = Status;
-        KeSetEvent (&SyncRequest->Event, 0, FALSE);
+        KeSetEvent(&SyncRequest->Event, 0, FALSE);
     }
 }
 
 
 ULONG
-PopPolicyWorkerActionPromote (
-    VOID
-    )
+PopPolicyWorkerActionPromote(VOID)
 /*++
 
 Routine Description:
@@ -825,102 +792,101 @@ Return Value:
 
 --*/
 {
-    ULONG                   Updates;
-    NTSTATUS                Status;
+    ULONG Updates;
+    NTSTATUS Status;
 
-    PopAcquirePolicyLock ();
+    PopAcquirePolicyLock();
 
-    if (PopAction.Updates) {
+    if (PopAction.Updates)
+    {
 
         //
         // Get update info
         //
 
-        Updates  = PopAction.Updates;
+        Updates = PopAction.Updates;
 
         //
         // Handle based on state of original request worker
         //
 
-        switch (PopAction.State) {
-            case PO_ACT_IDLE:
+        switch (PopAction.State)
+        {
+        case PO_ACT_IDLE:
 
+            //
+            // Normal worker is no longer in progress, this is no
+            // longer a promotion. If the updates have PO_PM_REISSUE
+            // then turn this into a new request, else the promotion can
+            // be skipped as the original operation completion
+            // was good enough
+            //
+
+            if (Updates & PO_PM_REISSUE)
+            {
+                PopAction.State = PO_ACT_NEW_REQUEST;
+                PopGetPolicyWorker(PO_WORKER_ACTION_NORMAL);
+            }
+            else
+            {
+                Updates = 0;
+            }
+
+            break;
+
+        case PO_ACT_SET_SYSTEM_STATE:
+
+            //
+            // If reissue or setstate is set, abort the current operation.
+            //
+
+            if (Updates & (PO_PM_REISSUE | PO_PM_SETSTATE))
+            {
+                PopRestartSetSystemState();
+            }
+            break;
+
+        case PO_ACT_CALLOUT:
+
+            //
+            // Worker is in the callout.  Call again to issue the promotion
+            //
+
+            Status = PopIssueActionRequest(TRUE, PopAction.Action, PopAction.LightestState, PopAction.Flags);
+
+            if (NT_SUCCESS(Status))
+            {
                 //
-                // Normal worker is no longer in progress, this is no
-                // longer a promotion. If the updates have PO_PM_REISSUE
-                // then turn this into a new request, else the promotion can
-                // be skipped as the original operation completion
-                // was good enough
+                // Promotion worked, clear the updates we performed
                 //
 
-                if (Updates & PO_PM_REISSUE) {
-                    PopAction.State = PO_ACT_NEW_REQUEST;
-                    PopGetPolicyWorker (PO_WORKER_ACTION_NORMAL);
-                } else {
-                    Updates = 0;
+                PopAction.Updates &= ~Updates;
+            }
+            else
+            {
+                //
+                // If the state has changed, test again else do nothing
+                // (the original worker thread will recheck on exit)
+                //
+
+                if (PopAction.State != PO_ACT_CALLOUT)
+                {
+                    PopGetPolicyWorker(PO_WORKER_ACTION_PROMOTE);
                 }
+            }
+            break;
 
-                break;
-
-            case PO_ACT_SET_SYSTEM_STATE:
-
-                //
-                // If reissue or setstate is set, abort the current operation.
-                //
-
-                if (Updates & (PO_PM_REISSUE | PO_PM_SETSTATE)) {
-                    PopRestartSetSystemState ();
-                }
-                break;
-
-            case PO_ACT_CALLOUT:
-
-                //
-                // Worker is in the callout.  Call again to issue the promotion
-                //
-
-                Status = PopIssueActionRequest (
-                                TRUE,
-                                PopAction.Action,
-                                PopAction.LightestState,
-                                PopAction.Flags
-                                );
-
-                if (NT_SUCCESS(Status)) {
-                    //
-                    // Promotion worked, clear the updates we performed
-                    //
-
-                    PopAction.Updates &= ~Updates;
-
-                } else {
-                    //
-                    // If the state has changed, test again else do nothing
-                    // (the original worker thread will recheck on exit)
-                    //
-
-                    if (PopAction.State != PO_ACT_CALLOUT) {
-                        PopGetPolicyWorker (PO_WORKER_ACTION_PROMOTE);
-                    }
-                }
-                break;
-
-            default:
-                PoPrint (PO_ERROR, ("PopAction: invalid state %d\n", PopAction.State));
+        default:
+            PoPrint(PO_ERROR, ("PopAction: invalid state %d\n", PopAction.State));
         }
     }
 
-    PopReleasePolicyLock (FALSE);
+    PopReleasePolicyLock(FALSE);
     return 0;
 }
 
 NTSTATUS
-PopIssueActionRequest (
-    IN BOOLEAN              Promote,
-    IN POWER_ACTION         Action,
-    IN SYSTEM_POWER_STATE   LightestState,
-    IN ULONG                Flags
-    )
+PopIssueActionRequest(IN BOOLEAN Promote, IN POWER_ACTION Action, IN SYSTEM_POWER_STATE LightestState, IN ULONG Flags)
 /*++
 
 Routine Description:
@@ -945,9 +911,9 @@ Return Value:
 
 --*/
 {
-    BOOLEAN         DirectCall;
-    NTSTATUS        Status;
-    ULONG           Console;
+    BOOLEAN DirectCall;
+    NTSTATUS Status;
+    ULONG Console;
 
 
     //
@@ -962,9 +928,8 @@ Return Value:
     //
 
     if ((Flags & POWER_ACTION_CRITICAL) &&
-        (Action == PowerActionShutdownReset ||
-         Action == PowerActionShutdown      ||
-         Action == PowerActionShutdownOff)) {
+        (Action == PowerActionShutdownReset || Action == PowerActionShutdown || Action == PowerActionShutdownOff))
+    {
 
         DirectCall = TRUE;
     }
@@ -973,7 +938,8 @@ Return Value:
     // If this is a direct call, then drop any reissue flag
     //
 
-    if (DirectCall) {
+    if (DirectCall)
+    {
         PopAction.Updates &= ~PO_PM_REISSUE;
     }
 
@@ -982,7 +948,8 @@ Return Value:
     // the flags as well
     //
 
-    if (PopPolicy->WinLogonFlags & WINLOGON_LOCK_ON_SLEEP) {
+    if (PopPolicy->WinLogonFlags & WINLOGON_LOCK_ON_SLEEP)
+    {
         Flags |= POWER_ACTION_LOCK_CONSOLE;
     }
 
@@ -990,25 +957,25 @@ Return Value:
     // Debug
     //
 
-    PoPrint (PO_PACT, ("PowerAction: %s%s, Min=%s, Flags %x\n",
-                        Promote ? "Promote, " : "",
-                        PopPowerActionString(Action),
-                        PopSystemStateString(LightestState),
-                        Flags
-                        ));
+    PoPrint(PO_PACT, ("PowerAction: %s%s, Min=%s, Flags %x\n", Promote ? "Promote, " : "", PopPowerActionString(Action),
+                      PopSystemStateString(LightestState), Flags));
 
-    if (DirectCall) {
-        PoPrint (PO_PACT, ("PowerAction: Setting with direct call\n"));
+    if (DirectCall)
+    {
+        PoPrint(PO_PACT, ("PowerAction: Setting with direct call\n"));
     }
 
     //
     // Drop lock while performing callout to dispatch request
     //
 
-    PopReleasePolicyLock (FALSE);
-    if (DirectCall) {
-        Status = ZwSetSystemPowerState (Action, LightestState, Flags);
-    } else {
+    PopReleasePolicyLock(FALSE);
+    if (DirectCall)
+    {
+        Status = ZwSetSystemPowerState(Action, LightestState, Flags);
+    }
+    else
+    {
 
         WIN32_POWERSTATE_PARAMETERS Parms;
         Parms.Promotion = Promote;
@@ -1017,12 +984,13 @@ Return Value:
         Parms.Flags = Flags;
         Parms.fQueryDenied = FALSE;
 
-        
-        if (!Promote) {
-            
+
+        if (!Promote)
+        {
+
             //
             // we want to deliver some messages to only the console session.
-            // lets find out active console session here, and ask that active console win2k 
+            // lets find out active console session here, and ask that active console win2k
             // to block the  console switch while we are in power switch
             //
 
@@ -1030,11 +998,13 @@ Return Value:
             ShortSleep.QuadPart = -10 * 1000 * 10; // 10 milliseconds
 
             Console = -1;
-            while (Console == -1) {
+            while (Console == -1)
+            {
 
                 Console = SharedUserData->ActiveConsoleId;
 
-                if (Console != -1) {
+                if (Console != -1)
+                {
 
                     //
                     // lets ask this console session, not to switch console,
@@ -1043,17 +1013,18 @@ Return Value:
                     Parms.PowerStateTask = PowerState_BlockSessionSwitch;
                     Status = PopDispatchStateCallout(&Parms, &Console);
 
-                    if (Status == STATUS_CTX_NOT_CONSOLE) {
+                    if (Status == STATUS_CTX_NOT_CONSOLE)
+                    {
 
                         //
                         // we failed to block status switch
                         // loop again
                         Console = -1;
                     }
-
                 }
 
-                if (Console == -1) {
+                if (Console == -1)
+                {
                     //
                     // we are in session switch, wait till we get a valid active console session
                     //
@@ -1068,12 +1039,14 @@ Return Value:
         Parms.PowerStateTask = PowerState_Init;
         Status = PopDispatchStateCallout(&Parms, NULL);
 
-        if (!Promote && NT_SUCCESS(Status)) {
+        if (!Promote && NT_SUCCESS(Status))
+        {
 
             Parms.PowerStateTask = PowerState_QueryApps;
             Status = PopDispatchStateCallout(&Parms, NULL);
 
-            if (!NT_SUCCESS(Status) || Parms.fQueryDenied) {
+            if (!NT_SUCCESS(Status) || Parms.fQueryDenied)
+            {
 
                 //
                 // ISSUE-2000/11/28-jamesca:
@@ -1086,8 +1059,9 @@ Return Value:
                 //
                 Parms.PowerStateTask = PowerState_QueryFailed;
                 PopDispatchStateCallout(&Parms, NULL);
-
-            } else {
+            }
+            else
+            {
 
                 Parms.PowerStateTask = PowerState_SuspendApps;
                 PopDispatchStateCallout(&Parms, NULL);
@@ -1100,31 +1074,25 @@ Return Value:
 
                 Parms.PowerStateTask = PowerState_ResumeApps;
                 PopDispatchStateCallout(&Parms, NULL);
-
             }
-
         }
 
-        if (!Promote) {
-            
+        if (!Promote)
+        {
+
             //
             // we are done with power callouts, now its ok if active console session switches
             //
             Parms.PowerStateTask = PowerState_UnBlockSessionSwitch;
             PopDispatchStateCallout(&Parms, &Console);
-
         }
-
     }
 
-    PopAcquirePolicyLock ();
+    PopAcquirePolicyLock();
     return Status;
 }
 
-VOID
-PopResetActionDefaults(
-    VOID
-    )
+VOID PopResetActionDefaults(VOID)
 /*++
 
 Routine Description:
@@ -1142,33 +1110,25 @@ Return Value:
 
 --*/
 {
-    PopAction.Updates       = 0;
-    PopAction.Shutdown      = FALSE;
-    PopAction.Action        = PowerActionNone;
+    PopAction.Updates = 0;
+    PopAction.Shutdown = FALSE;
+    PopAction.Action = PowerActionNone;
     PopAction.LightestState = PowerSystemUnspecified;
-    PopAction.Status        = STATUS_SUCCESS;
-    PopAction.IrpMinor      = 0;
-    PopAction.SystemState   = PowerSystemUnspecified;
+    PopAction.Status = STATUS_SUCCESS;
+    PopAction.IrpMinor = 0;
+    PopAction.SystemState = PowerSystemUnspecified;
 
     //
     // When we promote a power action (say from idle), various flags must be
     // agreed upon by both actions to stay around. We must set those flags
     // here otherwise they can never be set after promoting (idle).
     //
-    PopAction.Flags = (
-       POWER_ACTION_QUERY_ALLOWED |
-       POWER_ACTION_UI_ALLOWED |
-       POWER_ACTION_LIGHTEST_FIRST
-       );
+    PopAction.Flags = (POWER_ACTION_QUERY_ALLOWED | POWER_ACTION_UI_ALLOWED | POWER_ACTION_LIGHTEST_FIRST);
 }
 
-VOID
-PopActionRetrieveInitialState(
-    IN OUT  PSYSTEM_POWER_STATE  LightestSystemState,
-    OUT     PSYSTEM_POWER_STATE  DeepestSystemState,
-    OUT     PSYSTEM_POWER_STATE  InitialSystemState,
-    OUT     PBOOLEAN             QueryDevices
-    )
+VOID PopActionRetrieveInitialState(IN OUT PSYSTEM_POWER_STATE LightestSystemState,
+                                   OUT PSYSTEM_POWER_STATE DeepestSystemState,
+                                   OUT PSYSTEM_POWER_STATE InitialSystemState, OUT PBOOLEAN QueryDevices)
 /*++
 
 Routine Description:
@@ -1199,17 +1159,18 @@ Return Value:
     // Check if the action is a shutdown.  If so, map it to the appropiate
     // system shutdown state
     //
-    if ((PopAction.Action == PowerActionShutdown) ||
-        (PopAction.Action == PowerActionShutdownReset) ||
-        (PopAction.Action == PowerActionShutdownOff)) {
+    if ((PopAction.Action == PowerActionShutdown) || (PopAction.Action == PowerActionShutdownReset) ||
+        (PopAction.Action == PowerActionShutdownOff))
+    {
 
         //
         // This is a shutdown.  The lightest we can do is S5.
         //
         *LightestSystemState = PowerSystemShutdown;
-        *DeepestSystemState  = PowerSystemShutdown;
-
-    } else if (PopAction.Action == PowerActionWarmEject) {
+        *DeepestSystemState = PowerSystemShutdown;
+    }
+    else if (PopAction.Action == PowerActionWarmEject)
+    {
 
         //
         // Warm Ejects have an implicit policy of either S1-S4 or S4-S4.
@@ -1217,9 +1178,10 @@ Return Value:
         // and the deepest is always a hibernate.
         //
         *DeepestSystemState = PowerSystemHibernate;
-        PopVerifySystemPowerState (DeepestSystemState, SubstituteLightenSleep);
-
-    } else {
+        PopVerifySystemPowerState(DeepestSystemState, SubstituteLightenSleep);
+    }
+    else
+    {
 
         //
         // This a sleep request. Min is current set to the best the hardware
@@ -1232,16 +1194,19 @@ Return Value:
         // we get here.
         //
 
-        if (PopAttributes[POP_LOW_LATENCY_ATTRIBUTE].Count &&
-            (PopPolicy->MaxSleep >= PopPolicy->ReducedLatencySleep)) {
+        if (PopAttributes[POP_LOW_LATENCY_ATTRIBUTE].Count && (PopPolicy->MaxSleep >= PopPolicy->ReducedLatencySleep))
+        {
 
             *DeepestSystemState = PopPolicy->ReducedLatencySleep;
-        } else {
+        }
+        else
+        {
 
             *DeepestSystemState = PopPolicy->MaxSleep;
         }
 
-        if (PopPolicy->MinSleep > *LightestSystemState) {
+        if (PopPolicy->MinSleep > *LightestSystemState)
+        {
 
             *LightestSystemState = PopPolicy->MinSleep;
         }
@@ -1252,7 +1217,8 @@ Return Value:
     // max state, then raise the max to allow it
     //
 
-    if (*LightestSystemState > *DeepestSystemState) {
+    if (*LightestSystemState > *DeepestSystemState)
+    {
         *DeepestSystemState = *LightestSystemState;
     }
 
@@ -1262,8 +1228,8 @@ Return Value:
 
     *QueryDevices = TRUE;
 
-    if ((PopAction.Flags & POWER_ACTION_CRITICAL) &&
-        *LightestSystemState == *DeepestSystemState) {
+    if ((PopAction.Flags & POWER_ACTION_CRITICAL) && *LightestSystemState == *DeepestSystemState)
+    {
 
         *QueryDevices = FALSE;
     }
@@ -1271,22 +1237,21 @@ Return Value:
     //
     // Pick the appropriate initial state.
     //
-    if (PopAction.Flags & POWER_ACTION_LIGHTEST_FIRST) {
+    if (PopAction.Flags & POWER_ACTION_LIGHTEST_FIRST)
+    {
 
         *InitialSystemState = *LightestSystemState;
-
-    } else {
+    }
+    else
+    {
 
         *InitialSystemState = *DeepestSystemState;
     }
 }
 
-
+
 NTSTATUS
-PopDispatchStateCallout(
-    IN PKWIN32_POWERSTATE_PARAMETERS Parms,
-    IN PULONG SessionId  OPTIONAL
-    )
+PopDispatchStateCallout(IN PKWIN32_POWERSTATE_PARAMETERS Parms, IN PULONG SessionId OPTIONAL)
 /*++
 
 Routine Description:
@@ -1316,7 +1281,8 @@ Note:
     PVOID OpaqueSession;
     KAPC_STATE ApcState;
 
-    if (PERFINFO_IS_GROUP_ON(PERF_POWER)) {
+    if (PERFINFO_IS_GROUP_ON(PERF_POWER))
+    {
         PERFINFO_PO_SESSION_CALLOUT LogEntry;
 
         LogEntry.SystemAction = Parms->SystemAction;
@@ -1324,12 +1290,11 @@ Note:
         LogEntry.Flags = Parms->Flags;
         LogEntry.PowerStateTask = Parms->PowerStateTask;
 
-        PerfInfoLogBytes(PERFINFO_LOG_TYPE_PO_SESSION_CALLOUT,
-                         &LogEntry,
-                         sizeof(LogEntry));
+        PerfInfoLogBytes(PERFINFO_LOG_TYPE_PO_SESSION_CALLOUT, &LogEntry, sizeof(LogEntry));
     }
 
-    if (ARGUMENT_PRESENT(SessionId)) {
+    if (ARGUMENT_PRESENT(SessionId))
+    {
         //
         // Dispatch only to the specified session.
         //
@@ -1337,24 +1302,28 @@ Note:
         ASSERT(*SessionId != (ULONG)-1);
 
         if ((PsGetCurrentProcess()->Flags & PS_PROCESS_FLAGS_IN_SESSION) &&
-            (*SessionId == PsGetCurrentProcessSessionId())) {
+            (*SessionId == PsGetCurrentProcessSessionId()))
+        {
             //
             // If the call is from a user mode process, and we are asked to call
             // the current session, call directly.
             //
             CallStatus = PopStateCallout((PVOID)Parms);
-
-        } else {
+        }
+        else
+        {
             //
             // Attach to the specified session.
             //
             OpaqueSession = MmGetSessionById(*SessionId);
-            if (OpaqueSession) {
+            if (OpaqueSession)
+            {
 
                 Status = MmAttachSession(OpaqueSession, &ApcState);
                 ASSERT(NT_SUCCESS(Status));
 
-                if (NT_SUCCESS(Status)) {
+                if (NT_SUCCESS(Status))
+                {
                     CallStatus = PopStateCallout((PVOID)Parms);
                     Status = MmDetachSession(OpaqueSession, &ApcState);
                     ASSERT(NT_SUCCESS(Status));
@@ -1364,38 +1333,48 @@ Note:
                 ASSERT(NT_SUCCESS(Status));
             }
         }
-
-    } else {
+    }
+    else
+    {
         //
         // Should be dispatched to all sessions.
         //
-        for (OpaqueSession = MmGetNextSession(NULL);
-             OpaqueSession != NULL;
-             OpaqueSession = MmGetNextSession(OpaqueSession)) {
+        for (OpaqueSession = MmGetNextSession(NULL); OpaqueSession != NULL;
+             OpaqueSession = MmGetNextSession(OpaqueSession))
+        {
 
             if ((PsGetCurrentProcess()->Flags & PS_PROCESS_FLAGS_IN_SESSION) &&
-                (MmGetSessionId(OpaqueSession) == PsGetCurrentProcessSessionId())) {
+                (MmGetSessionId(OpaqueSession) == PsGetCurrentProcessSessionId()))
+            {
                 //
                 // If the call is from a user mode process, and we are asked to
                 // call the current session, call directly.
                 //
-                if (MmGetSessionId(OpaqueSession) == 0) {
+                if (MmGetSessionId(OpaqueSession) == 0)
+                {
                     CallStatus = PopStateCallout((PVOID)Parms);
-                } else {
+                }
+                else
+                {
                     PopStateCallout((PVOID)Parms);
                 }
-
-            } else {
+            }
+            else
+            {
                 //
                 // Attach to the specified session.
                 //
                 Status = MmAttachSession(OpaqueSession, &ApcState);
                 ASSERT(NT_SUCCESS(Status));
 
-                if (NT_SUCCESS(Status)) {
-                    if (MmGetSessionId(OpaqueSession) == 0) {
+                if (NT_SUCCESS(Status))
+                {
+                    if (MmGetSessionId(OpaqueSession) == 0)
+                    {
                         CallStatus = PopStateCallout((PVOID)Parms);
-                    } else {
+                    }
+                    else
+                    {
                         PopStateCallout((PVOID)Parms);
                     }
 
@@ -1406,15 +1385,14 @@ Note:
         }
     }
 
-    if (PERFINFO_IS_GROUP_ON(PERF_POWER)) {
+    if (PERFINFO_IS_GROUP_ON(PERF_POWER))
+    {
         PERFINFO_PO_SESSION_CALLOUT_RET LogEntry;
 
         LogEntry.Status = CallStatus;
 
-        PerfInfoLogBytes(PERFINFO_LOG_TYPE_PO_SESSION_CALLOUT_RET,
-                         &LogEntry,
-                         sizeof(LogEntry));
+        PerfInfoLogBytes(PERFINFO_LOG_TYPE_PO_SESSION_CALLOUT_RET, &LogEntry, sizeof(LogEntry));
     }
 
-    return(CallStatus);
+    return (CallStatus);
 }

@@ -33,68 +33,28 @@ extern ULONG IoDeviceNodeTreeSequence;
 // Internal prototypes
 //
 
-VOID
-PopSleepDeviceList (
-    IN PPOP_DEVICE_SYS_STATE    DevState,
-    IN PPO_NOTIFY_ORDER_LEVEL   Level
-    );
+VOID PopSleepDeviceList(IN PPOP_DEVICE_SYS_STATE DevState, IN PPO_NOTIFY_ORDER_LEVEL Level);
 
-VOID
-PopWakeDeviceList (
-    IN PPOP_DEVICE_SYS_STATE    DevState,
-    IN PPO_NOTIFY_ORDER_LEVEL   Level
-    );
+VOID PopWakeDeviceList(IN PPOP_DEVICE_SYS_STATE DevState, IN PPO_NOTIFY_ORDER_LEVEL Level);
 
-VOID
-PopNotifyDevice (
-    IN PPOP_DEVICE_SYS_STATE    DevState,
-    IN PPO_DEVICE_NOTIFY        Notify
-    );
+VOID PopNotifyDevice(IN PPOP_DEVICE_SYS_STATE DevState, IN PPO_DEVICE_NOTIFY Notify);
 
-VOID
-PopWaitForSystemPowerIrp (
-    IN PPOP_DEVICE_SYS_STATE    DevState,
-    IN BOOLEAN                  WaitForAll
-    );
+VOID PopWaitForSystemPowerIrp(IN PPOP_DEVICE_SYS_STATE DevState, IN BOOLEAN WaitForAll);
 
 NTSTATUS
-PopCompleteSystemPowerIrp (
-    IN PDEVICE_OBJECT       DeviceObject,
-    IN PIRP                 Irp,
-    IN PVOID                Context
-    );
+PopCompleteSystemPowerIrp(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID Context);
 
 BOOLEAN
-PopCheckSystemPowerIrpStatus  (
-    IN PPOP_DEVICE_SYS_STATE    DevState,
-    IN PIRP                     Irp,
-    IN BOOLEAN                  AllowTestFailure
-    );
+PopCheckSystemPowerIrpStatus(IN PPOP_DEVICE_SYS_STATE DevState, IN PIRP Irp, IN BOOLEAN AllowTestFailure);
 
-VOID
-PopDumpSystemIrp (
-    IN PUCHAR                   Desc,
-    IN PPOP_DEVICE_POWER_IRP    PowerIrp
-    );
+VOID PopDumpSystemIrp(IN PUCHAR Desc, IN PPOP_DEVICE_POWER_IRP PowerIrp);
 
-VOID
-PopResetChildCount(
-    IN PLIST_ENTRY ListHead
-    );
+VOID PopResetChildCount(IN PLIST_ENTRY ListHead);
 
-VOID
-PopSetupListForWake(
-    IN PPO_NOTIFY_ORDER_LEVEL Level,
-    IN PLIST_ENTRY ListHead
-    );
+VOID PopSetupListForWake(IN PPO_NOTIFY_ORDER_LEVEL Level, IN PLIST_ENTRY ListHead);
 
-VOID
-PopWakeSystemTimeout(
-    IN struct _KDPC *Dpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    );
+VOID PopWakeSystemTimeout(IN struct _KDPC *Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1,
+                          IN PVOID SystemArgument2);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGELK, PopSetDevicesSystemState)
@@ -114,15 +74,13 @@ PopWakeSystemTimeout(
 #pragma alloc_text(PAGE, PopAllocateDevState)
 #endif
 
-ULONG PopCurrentLevel=0;
+ULONG PopCurrentLevel = 0;
 LONG PopWakeTimer = 1;
 KTIMER PopWakeTimeoutTimer;
-KDPC   PopWakeTimeoutDpc;
+KDPC PopWakeTimeoutDpc;
 
 NTSTATUS
-PopSetDevicesSystemState (
-    IN BOOLEAN  Wake
-    )
+PopSetDevicesSystemState(IN BOOLEAN Wake)
 /*++
 
 Routine Description:
@@ -150,18 +108,18 @@ Return Value:
 
 --*/
 {
-    LONG                        i;
-    NTSTATUS                    Status;
-    PLIST_ENTRY                 ListHead;
-    BOOLEAN                     NotifyGdi;
-    BOOLEAN                     DidIoMmShutdown = FALSE;
-    PPO_DEVICE_NOTIFY           NotifyDevice;
-    PLIST_ENTRY                 Link;
-    PPOP_DEVICE_POWER_IRP       PowerIrp;
-    POWER_ACTION                powerOperation;
-    PPOP_DEVICE_SYS_STATE       DevState;
+    LONG i;
+    NTSTATUS Status;
+    PLIST_ENTRY ListHead;
+    BOOLEAN NotifyGdi;
+    BOOLEAN DidIoMmShutdown = FALSE;
+    PPO_DEVICE_NOTIFY NotifyDevice;
+    PLIST_ENTRY Link;
+    PPOP_DEVICE_POWER_IRP PowerIrp;
+    POWER_ACTION powerOperation;
+    PPOP_DEVICE_SYS_STATE DevState;
 
-    ASSERT(PopAction.DevState );
+    ASSERT(PopAction.DevState);
     DevState = PopAction.DevState;
 
     //
@@ -178,17 +136,16 @@ Return Value:
     DevState->Waking = Wake;
     NotifyGdi = FALSE;
 
-    if (PERFINFO_IS_GROUP_ON(PERF_POWER)) {
+    if (PERFINFO_IS_GROUP_ON(PERF_POWER))
+    {
         PERFINFO_SET_DEVICES_STATE LogEntry;
 
-        LogEntry.SystemState = (ULONG) DevState->SystemState;
+        LogEntry.SystemState = (ULONG)DevState->SystemState;
         LogEntry.IrpMinor = PopAction.IrpMinor;
         LogEntry.Waking = Wake;
         LogEntry.Shutdown = PopAction.Shutdown;
 
-        PerfInfoLogBytes(PERFINFO_LOG_TYPE_SET_DEVICES_STATE,
-                         &LogEntry,
-                         sizeof(LogEntry));
+        PerfInfoLogBytes(PERFINFO_LOG_TYPE_SET_DEVICES_STATE, &LogEntry, sizeof(LogEntry));
     }
 
 
@@ -197,8 +154,8 @@ Return Value:
     // notify gdi of the set power operation
     //
 
-    if (PopAction.IrpMinor == IRP_MN_SET_POWER  &&
-        AnyBitsSet (PopFullWake, PO_FULL_WAKE_STATUS | PO_GDI_STATUS)) {
+    if (PopAction.IrpMinor == IRP_MN_SET_POWER && AnyBitsSet(PopFullWake, PO_FULL_WAKE_STATUS | PO_GDI_STATUS))
+    {
 
         NotifyGdi = TRUE;
     }
@@ -210,9 +167,11 @@ Return Value:
     // shutdown
     //
 
-    if (PopAction.Shutdown) {
+    if (PopAction.Shutdown)
+    {
         DevState->IgnoreNotImplemented = TRUE;
-        if (PopAction.IrpMinor == IRP_MN_SET_POWER) {
+        if (PopAction.IrpMinor == IRP_MN_SET_POWER)
+        {
             DevState->IgnoreErrors = TRUE;
         }
     }
@@ -222,27 +181,32 @@ Return Value:
     // serialized before here
     //
 
-    ASSERT (DevState->Thread == KeGetCurrentThread());
+    ASSERT(DevState->Thread == KeGetCurrentThread());
 
     //
     // Notify all devices.
     //
 
-    if (!Wake) {
+    if (!Wake)
+    {
 
         //
         // If it's time to update the device list, then do so
         //
 
-        if (DevState->GetNewDeviceList) {
+        if (DevState->GetNewDeviceList)
+        {
             DevState->GetNewDeviceList = FALSE;
-            IoFreePoDeviceNotifyList (&DevState->Order);
-            DevState->Status = IoBuildPoDeviceNotifyList (&DevState->Order);
-        } else {
+            IoFreePoDeviceNotifyList(&DevState->Order);
+            DevState->Status = IoBuildPoDeviceNotifyList(&DevState->Order);
+        }
+        else
+        {
             //
             // Reset the active child count of each notification
             //
-            for (i=0;i<=PO_ORDER_MAXIMUM;i++) {
+            for (i = 0; i <= PO_ORDER_MAXIMUM; i++)
+            {
                 PopResetChildCount(&DevState->Order.OrderLevel[i].WaitSleep);
                 PopResetChildCount(&DevState->Order.OrderLevel[i].ReadySleep);
                 PopResetChildCount(&DevState->Order.OrderLevel[i].ReadyS0);
@@ -251,7 +215,8 @@ Return Value:
             }
         }
 
-        if (NT_SUCCESS(DevState->Status)) {
+        if (NT_SUCCESS(DevState->Status))
+        {
 
             //
             // Notify all devices of operation in forward order.  Wait between each level.
@@ -259,19 +224,22 @@ Return Value:
 
             DidIoMmShutdown = FALSE;
 
-            for (i=PO_ORDER_MAXIMUM; i >= 0; i--) {
+            for (i = PO_ORDER_MAXIMUM; i >= 0; i--)
+            {
 
                 //
                 // Notify this list
                 //
-                if (DevState->Order.OrderLevel[i].DeviceCount) {
+                if (DevState->Order.OrderLevel[i].DeviceCount)
+                {
 
-                    if ((NotifyGdi) &&
-                        (i <= PO_ORDER_GDI_NOTIFICATION)) {
+                    if ((NotifyGdi) && (i <= PO_ORDER_GDI_NOTIFICATION))
+                    {
 
                         NotifyGdi = FALSE;
-                        InterlockedExchange (&PopFullWake, 0);
-                        if (PopEventCallout) {
+                        InterlockedExchange(&PopFullWake, 0);
+                        if (PopEventCallout)
+                        {
 
                             //
                             // Turn off the special system irp dispatcher here
@@ -280,7 +248,7 @@ Return Value:
                             //
 
                             PopSystemIrpDispatchWorker(TRUE);
-                            PopEventCalloutDispatch (PsW32GdiOff, DevState->SystemState);
+                            PopEventCalloutDispatch(PsW32GdiOff, DevState->SystemState);
                         }
                     }
 
@@ -290,9 +258,8 @@ Return Value:
                     // and MM to free up all resources on the paging
                     // path (which we should no longer need).
                     //
-                    if (PopAction.Shutdown &&
-                        !DidIoMmShutdown   &&
-                        (i < PO_ORDER_PAGABLE)) {
+                    if (PopAction.Shutdown && !DidIoMmShutdown && (i < PO_ORDER_PAGABLE))
+                    {
 
                         // ISSUE-2000/03/14-earhart: shutdown
                         // filesystems here.
@@ -330,7 +297,8 @@ Return Value:
                     // Remove the warm eject node if we might have gotten here
                     // without a query.
                     //
-                    if (PopAction.Flags & POWER_ACTION_CRITICAL) {
+                    if (PopAction.Flags & POWER_ACTION_CRITICAL)
+                    {
 
                         *DevState->Order.WarmEjectPdoPointer = NULL;
                     }
@@ -340,31 +308,27 @@ Return Value:
                     //
 
                     PopCurrentLevel = i;
-                    PopSleepDeviceList (DevState, &DevState->Order.OrderLevel[i]);
-                    PopWaitForSystemPowerIrp (DevState, TRUE);
+                    PopSleepDeviceList(DevState, &DevState->Order.OrderLevel[i]);
+                    PopWaitForSystemPowerIrp(DevState, TRUE);
                 }
 
                 //
                 // If there's been an error, stop and issue wakes to all devices
                 //
 
-                if (!NT_SUCCESS(DevState->Status)) {
+                if (!NT_SUCCESS(DevState->Status))
+                {
                     Wake = TRUE;
-                    if ((DevState->FailedDevice != NULL) &&
-                        (PopAction.NextSystemState == PowerSystemWorking)) {
+                    if ((DevState->FailedDevice != NULL) && (PopAction.NextSystemState == PowerSystemWorking))
+                    {
 
-                        powerOperation = PopMapInternalActionToIrpAction(
-                            PopAction.Action,
-                            DevState->SystemState,
-                            FALSE
-                            );
+                        powerOperation =
+                            PopMapInternalActionToIrpAction(PopAction.Action, DevState->SystemState, FALSE);
 
                         IoNotifyPowerOperationVetoed(
                             powerOperation,
-                            (powerOperation == PowerActionWarmEject) ?
-                                *DevState->Order.WarmEjectPdoPointer : NULL,
-                            DevState->FailedDevice
-                            );
+                            (powerOperation == PowerActionWarmEject) ? *DevState->Order.WarmEjectPdoPointer : NULL,
+                            DevState->FailedDevice);
                     }
                     break;
                 }
@@ -375,8 +339,9 @@ Return Value:
         // them to sleep.  Useful for test automation.
         //
 
-        if ((PopSimulate & POP_WAKE_DEVICE_AFTER_SLEEP) && (PopAction.IrpMinor == IRP_MN_SET_POWER)) {
-            DbgPrint ("po: POP_WAKE_DEVICE_AFTER_SLEEP enabled.\n");
+        if ((PopSimulate & POP_WAKE_DEVICE_AFTER_SLEEP) && (PopAction.IrpMinor == IRP_MN_SET_POWER))
+        {
+            DbgPrint("po: POP_WAKE_DEVICE_AFTER_SLEEP enabled.\n");
             Wake = TRUE;
             DevState->Status = STATUS_UNSUCCESSFUL;
         }
@@ -387,10 +352,11 @@ Return Value:
     // Just in case we somehow managed to not shutdown paging
     // before, we'll make sure we do it here.
     //
-    if (PopAction.Shutdown && !DidIoMmShutdown) {
-//        ExShutdownSystem(1);
-//        IoShutdownSystem(1);
-//        MmShutdownSystem(1);
+    if (PopAction.Shutdown && !DidIoMmShutdown)
+    {
+        //        ExShutdownSystem(1);
+        //        IoShutdownSystem(1);
+        //        MmShutdownSystem(1);
         DidIoMmShutdown = TRUE;
     }
 
@@ -400,29 +366,26 @@ Return Value:
     // them through the driver stack to determine where the failure is.
     //
 
-    while ((PopSimulate & POP_LOOP_ON_FAILED_DRIVERS) &&
-           !IsListEmpty(&PopAction.DevState->Head.Failed)) {
+    while ((PopSimulate & POP_LOOP_ON_FAILED_DRIVERS) && !IsListEmpty(&PopAction.DevState->Head.Failed))
+    {
 
         Link = PopAction.DevState->Head.Failed.Flink;
         RemoveEntryList(Link);
 
-        PowerIrp = CONTAINING_RECORD (Link, POP_DEVICE_POWER_IRP, Failed);
-        PopDumpSystemIrp ("Retry", PowerIrp);
+        PowerIrp = CONTAINING_RECORD(Link, POP_DEVICE_POWER_IRP, Failed);
+        PopDumpSystemIrp("Retry", PowerIrp);
 
-        IoFreeIrp (PowerIrp->Irp);
+        IoFreeIrp(PowerIrp->Irp);
         NotifyDevice = PowerIrp->Notify;
 
         PowerIrp->Irp = NULL;
         PowerIrp->Notify = NULL;
 
-        PushEntryList (
-            &PopAction.DevState->Head.Free,
-            &PowerIrp->Free
-            );
+        PushEntryList(&PopAction.DevState->Head.Free, &PowerIrp->Free);
 
-        DbgBreakPoint ();
-        PopNotifyDevice (DevState, NotifyDevice);
-        PopWaitForSystemPowerIrp (DevState, TRUE);
+        DbgBreakPoint();
+        PopNotifyDevice(DevState, NotifyDevice);
+        PopWaitForSystemPowerIrp(DevState, TRUE);
     }
 
     //
@@ -431,7 +394,8 @@ Return Value:
     //
 
     DevState->Waking = Wake;
-    if (DevState->Waking) {
+    if (DevState->Waking)
+    {
 
         DevState->IgnoreErrors = TRUE;
         DevState->IrpMinor = IRP_MN_SET_POWER;
@@ -443,12 +407,14 @@ Return Value:
         KeInitializeTimer(&PopWakeTimeoutTimer);
         KeInitializeDpc(&PopWakeTimeoutDpc, PopWakeSystemTimeout, NULL);
 
-        for (i=0; i <= PO_ORDER_MAXIMUM; i++) {
+        for (i = 0; i <= PO_ORDER_MAXIMUM; i++)
+        {
             PopCurrentLevel = i;
-            PopWakeDeviceList (DevState, &DevState->Order.OrderLevel[i]);
+            PopWakeDeviceList(DevState, &DevState->Order.OrderLevel[i]);
 
-            PopWaitForSystemPowerIrp (DevState, TRUE);
-            if (PopSimulate & POP_WAKE_DEADMAN) {
+            PopWaitForSystemPowerIrp(DevState, TRUE);
+            if (PopSimulate & POP_WAKE_DEADMAN)
+            {
                 KeCancelTimer(&PopWakeTimeoutTimer);
             }
         }
@@ -462,14 +428,13 @@ Return Value:
     // Done
     //
 
-    if (PERFINFO_IS_GROUP_ON(PERF_POWER)) {
+    if (PERFINFO_IS_GROUP_ON(PERF_POWER))
+    {
         PERFINFO_SET_DEVICES_STATE_RET LogEntry;
 
         LogEntry.Status = DevState->Status;
 
-        PerfInfoLogBytes(PERFINFO_LOG_TYPE_SET_DEVICES_STATE_RET,
-                         &LogEntry,
-                         sizeof(LogEntry));
+        PerfInfoLogBytes(PERFINFO_LOG_TYPE_SET_DEVICES_STATE_RET, &LogEntry, sizeof(LogEntry));
     }
 
 
@@ -477,11 +442,7 @@ Return Value:
 }
 
 
-
-VOID
-PopReportDevState (
-    IN BOOLEAN                  LogErrors
-    )
+VOID PopReportDevState(IN BOOLEAN LogErrors)
 /*++
 
 Routine Description:
@@ -498,73 +459,66 @@ Return Value:
 
 --*/
 {
-    PIRP                        Irp;
-    PLIST_ENTRY                 Link;
-    PPOP_DEVICE_POWER_IRP       PowerIrp;
-    PUCHAR                      IrpType;
-    PIO_ERROR_LOG_PACKET        ErrLog;
+    PIRP Irp;
+    PLIST_ENTRY Link;
+    PPOP_DEVICE_POWER_IRP PowerIrp;
+    PUCHAR IrpType;
+    PIO_ERROR_LOG_PACKET ErrLog;
 
-    if (!PopAction.DevState) {
-        return ;
+    if (!PopAction.DevState)
+    {
+        return;
     }
 
     //
     // Cleanup any irps on the failed list
     //
 
-    while (!IsListEmpty(&PopAction.DevState->Head.Failed)) {
+    while (!IsListEmpty(&PopAction.DevState->Head.Failed))
+    {
         Link = PopAction.DevState->Head.Failed.Flink;
         RemoveEntryList(Link);
 
-        PowerIrp = CONTAINING_RECORD (Link, POP_DEVICE_POWER_IRP, Failed);
+        PowerIrp = CONTAINING_RECORD(Link, POP_DEVICE_POWER_IRP, Failed);
         Irp = PowerIrp->Irp;
 
-        PopDumpSystemIrp (
-            LogErrors ? "Abort" : "fyi",
-            PowerIrp
-            );
+        PopDumpSystemIrp(LogErrors ? "Abort" : "fyi", PowerIrp);
 
-        if (LogErrors) {
-            ErrLog = IoAllocateErrorLogEntry (
-                            PowerIrp->Notify->TargetDevice->DriverObject,
-                            ERROR_LOG_MAXIMUM_SIZE
-                            );
+        if (LogErrors)
+        {
+            ErrLog = IoAllocateErrorLogEntry(PowerIrp->Notify->TargetDevice->DriverObject, ERROR_LOG_MAXIMUM_SIZE);
 
-            if (ErrLog) {
-                RtlZeroMemory (ErrLog, sizeof (*ErrLog));
+            if (ErrLog)
+            {
+                RtlZeroMemory(ErrLog, sizeof(*ErrLog));
                 ErrLog->FinalStatus = Irp->IoStatus.Status;
                 ErrLog->DeviceOffset.QuadPart = Irp->IoStatus.Information;
                 ErrLog->MajorFunctionCode = IRP_MJ_POWER;
                 ErrLog->UniqueErrorValue = (PopAction.DevState->IrpMinor << 16) | PopAction.DevState->SystemState;
                 ErrLog->ErrorCode = IO_SYSTEM_SLEEP_FAILED;
-                IoWriteErrorLogEntry (ErrLog);
+                IoWriteErrorLogEntry(ErrLog);
             }
         }
 
-        IoFreeIrp (Irp);
+        IoFreeIrp(Irp);
         PowerIrp->Irp = NULL;
         PowerIrp->Notify = NULL;
 
-        PushEntryList (
-            &PopAction.DevState->Head.Free,
-            &PowerIrp->Free
-            );
+        PushEntryList(&PopAction.DevState->Head.Free, &PowerIrp->Free);
     }
 
     //
     // Errors have been purged, we can now allocate a new device notification list if needed
     //
 
-    if (PopAction.DevState->Order.DevNodeSequence != IoDeviceNodeTreeSequence) {
+    if (PopAction.DevState->Order.DevNodeSequence != IoDeviceNodeTreeSequence)
+    {
         PopAction.DevState->GetNewDeviceList = TRUE;
     }
 }
 
-
-VOID
-PopAllocateDevState(
-    VOID
-    )
+
+VOID PopAllocateDevState(VOID)
 /*++
 
 Routine Description:
@@ -583,7 +537,7 @@ Return Value:
 --*/
 
 {
-    PPOP_DEVICE_SYS_STATE       DevState;
+    PPOP_DEVICE_SYS_STATE DevState;
     ULONG i;
 
     PAGED_CODE();
@@ -594,38 +548,36 @@ Return Value:
     // Allocate a device state structure
     //
 
-    DevState = (PPOP_DEVICE_SYS_STATE) ExAllocatePoolWithTag(NonPagedPool,
-                                                             sizeof (POP_DEVICE_SYS_STATE),
-                                                             POP_PDSS_TAG);
-    if (!DevState) {
+    DevState = (PPOP_DEVICE_SYS_STATE)ExAllocatePoolWithTag(NonPagedPool, sizeof(POP_DEVICE_SYS_STATE), POP_PDSS_TAG);
+    if (!DevState)
+    {
         PopAction.DevState = NULL;
         return;
     }
 
-    RtlZeroMemory (DevState, sizeof(POP_DEVICE_SYS_STATE));
+    RtlZeroMemory(DevState, sizeof(POP_DEVICE_SYS_STATE));
     DevState->Thread = KeGetCurrentThread();
     DevState->GetNewDeviceList = TRUE;
 
-    KeInitializeSpinLock (&DevState->SpinLock);
-    KeInitializeEvent (&DevState->Event, SynchronizationEvent, FALSE);
+    KeInitializeSpinLock(&DevState->SpinLock);
+    KeInitializeEvent(&DevState->Event, SynchronizationEvent, FALSE);
 
     DevState->Head.Free.Next = NULL;
-    InitializeListHead (&DevState->Head.Pending);
-    InitializeListHead (&DevState->Head.Complete);
-    InitializeListHead (&DevState->Head.Abort);
-    InitializeListHead (&DevState->Head.Failed);
-    InitializeListHead (&DevState->PresentIrpQueue);
+    InitializeListHead(&DevState->Head.Pending);
+    InitializeListHead(&DevState->Head.Complete);
+    InitializeListHead(&DevState->Head.Abort);
+    InitializeListHead(&DevState->Head.Failed);
+    InitializeListHead(&DevState->PresentIrpQueue);
 
-    for (i=0; i < MAX_SYSTEM_POWER_IRPS; i++) {
+    for (i = 0; i < MAX_SYSTEM_POWER_IRPS; i++)
+    {
         DevState->PowerIrpState[i].Irp = NULL;
-        PushEntryList (&DevState->Head.Free,
-                       &DevState->PowerIrpState[i].Free);
+        PushEntryList(&DevState->Head.Free, &DevState->PowerIrpState[i].Free);
     }
 
-    for (i=0; i <= PO_ORDER_MAXIMUM; i++) {
-        KeInitializeEvent(&DevState->Order.OrderLevel[i].LevelReady,
-                          NotificationEvent,
-                          FALSE);
+    for (i = 0; i <= PO_ORDER_MAXIMUM; i++)
+    {
+        KeInitializeEvent(&DevState->Order.OrderLevel[i].LevelReady, NotificationEvent, FALSE);
         InitializeListHead(&DevState->Order.OrderLevel[i].WaitSleep);
         InitializeListHead(&DevState->Order.OrderLevel[i].ReadySleep);
         InitializeListHead(&DevState->Order.OrderLevel[i].Pending);
@@ -635,13 +587,9 @@ Return Value:
     }
 
     PopAction.DevState = DevState;
-
 }
 
-VOID
-PopCleanupDevState (
-    VOID
-    )
+VOID PopCleanupDevState(VOID)
 /*++
 
 Routine Description:
@@ -663,34 +611,28 @@ Return Value:
     // are done
     //
 
-    PopSystemIrpDispatchWorker (TRUE);
+    PopSystemIrpDispatchWorker(TRUE);
 
     //
     // Verify all lists are empty
     //
-    ASSERT(IsListEmpty(&PopAction.DevState->Head.Pending)  &&
-           IsListEmpty(&PopAction.DevState->Head.Complete) &&
-           IsListEmpty(&PopAction.DevState->Head.Abort)    &&
-           IsListEmpty(&PopAction.DevState->Head.Failed)   &&
+    ASSERT(IsListEmpty(&PopAction.DevState->Head.Pending) && IsListEmpty(&PopAction.DevState->Head.Complete) &&
+           IsListEmpty(&PopAction.DevState->Head.Abort) && IsListEmpty(&PopAction.DevState->Head.Failed) &&
            IsListEmpty(&PopAction.DevState->PresentIrpQueue));
 
-    ExFreePool (PopAction.DevState);
+    ExFreePool(PopAction.DevState);
     PopAction.DevState = NULL;
 }
 
 
-#define STATE_DONE_WAITING          0
-#define STATE_COMPLETE_IRPS         1
-#define STATE_PRESENT_PAGABLE_IRPS  2
-#define STATE_CHECK_CANCEL          3
-#define STATE_WAIT_NOW              4
+#define STATE_DONE_WAITING 0
+#define STATE_COMPLETE_IRPS 1
+#define STATE_PRESENT_PAGABLE_IRPS 2
+#define STATE_CHECK_CANCEL 3
+#define STATE_WAIT_NOW 4
 
 
-VOID
-PopWaitForSystemPowerIrp (
-    IN PPOP_DEVICE_SYS_STATE    DevState,
-    IN BOOLEAN                  WaitForAll
-    )
+VOID PopWaitForSystemPowerIrp(IN PPOP_DEVICE_SYS_STATE DevState, IN BOOLEAN WaitForAll)
 /*++
 
 Routine Description:
@@ -711,306 +653,292 @@ Return Value:
 
 --*/
 {
-    KIRQL                   OldIrql;
-    ULONG                   State;
-    BOOLEAN                 IrpCompleted;
-    BOOLEAN                 NotImplemented;
-    PIRP                    Irp;
-    PLIST_ENTRY             Link;
-    PPOP_DEVICE_POWER_IRP   PowerIrp;
-    PPO_DEVICE_NOTIFY       Notify;
-    NTSTATUS                Status;
-    LARGE_INTEGER           Timeout;
+    KIRQL OldIrql;
+    ULONG State;
+    BOOLEAN IrpCompleted;
+    BOOLEAN NotImplemented;
+    PIRP Irp;
+    PLIST_ENTRY Link;
+    PPOP_DEVICE_POWER_IRP PowerIrp;
+    PPO_DEVICE_NOTIFY Notify;
+    NTSTATUS Status;
+    LARGE_INTEGER Timeout;
 
     IrpCompleted = FALSE;
-    KeAcquireSpinLock (&DevState->SpinLock, &OldIrql);
+    KeAcquireSpinLock(&DevState->SpinLock, &OldIrql);
 
     //
     // Signal completion function that we are waiting
     //
 
     State = STATE_COMPLETE_IRPS;
-    while (State != STATE_DONE_WAITING) {
-        switch (State) {
-            case STATE_COMPLETE_IRPS:
+    while (State != STATE_DONE_WAITING)
+    {
+        switch (State)
+        {
+        case STATE_COMPLETE_IRPS:
+            //
+            // Assume we're going to advance to the next state
+            //
+
+            State += 1;
+
+            //
+            // If there arn't any irps on the complete list, move to the
+            // next state
+            //
+
+            if (IsListEmpty(&DevState->Head.Complete))
+            {
+                break;
+            }
+
+            //
+            // Handle the completed irps
+            //
+
+            IrpCompleted = TRUE;
+            while (!IsListEmpty(&DevState->Head.Complete))
+            {
+                Link = DevState->Head.Complete.Flink;
+                RemoveEntryList(Link);
+
+                PowerIrp = CONTAINING_RECORD(Link, POP_DEVICE_POWER_IRP, Complete);
+                Notify = PowerIrp->Notify;
+                PowerIrp->Complete.Flink = NULL;
+                Irp = PowerIrp->Irp;
+
                 //
-                // Assume we're going to advance to the next state
+                // Verify the device driver called PoStartNextPowerIrp
                 //
 
-                State += 1;
-
-                //
-                // If there arn't any irps on the complete list, move to the
-                // next state
-                //
-
-                if (IsListEmpty(&DevState->Head.Complete)) {
-                    break;
+                if ((Notify->TargetDevice->DeviceObjectExtension->PowerFlags & POPF_SYSTEM_ACTIVE) ||
+                    (Notify->DeviceObject->DeviceObjectExtension->PowerFlags & POPF_SYSTEM_ACTIVE))
+                {
+                    PDEVICE_OBJECT DeviceObject = Notify->DeviceObject;
+                    KeReleaseSpinLock(&DevState->SpinLock, OldIrql);
+                    PopDumpSystemIrp("SYS STATE", PowerIrp);
+                    PopInternalAddToDumpFile(NULL, 0, DeviceObject, NULL, NULL, NULL);
+                    PopInternalAddToDumpFile(NULL, 0, Notify->TargetDevice, NULL, NULL, NULL);
+                    KeBugCheckEx(DRIVER_POWER_STATE_FAILURE, 0x500, DEVICE_SYSTEM_STATE_HUNG,
+                                 (ULONG_PTR)Notify->TargetDevice, (ULONG_PTR)DeviceObject);
                 }
 
                 //
-                // Handle the completed irps
+                // If success, or cancelled, or not implemented that's OK, then
+                // the irp is complete
                 //
 
-                IrpCompleted = TRUE;
-                while (!IsListEmpty(&DevState->Head.Complete)) {
-                    Link = DevState->Head.Complete.Flink;
+                if (PopCheckSystemPowerIrpStatus(DevState, Irp, TRUE))
+                {
+                    //
+                    // See if IRP is failure being allowed for testing
+                    //
+
+                    if (!PopCheckSystemPowerIrpStatus(DevState, Irp, FALSE))
+                    {
+                        KeReleaseSpinLock(&DevState->SpinLock, OldIrql);
+                        PopDumpSystemIrp("ignored", PowerIrp);
+                        KeAcquireSpinLock(&DevState->SpinLock, &OldIrql);
+                    }
+
+                    //
+                    // Request is complete, free it
+                    //
+
+                    IoFreeIrp(Irp);
+
+                    PowerIrp->Irp = NULL;
+                    PowerIrp->Notify = NULL;
+                    PushEntryList(&DevState->Head.Free, &PowerIrp->Free);
+                }
+                else
+                {
+
+                    //
+                    // Some sort of error.  Keep track of the failure
+                    //
+
+                    ASSERT(!DevState->Waking);
+                    InsertTailList(&DevState->Head.Failed, &PowerIrp->Failed);
+                }
+            }
+            break;
+
+        case STATE_PRESENT_PAGABLE_IRPS:
+            //
+            // Assume we're going to advance to the next state
+            //
+
+            State += 1;
+
+            //
+            // If the last device that a system irp was sent to was pagable,
+            // we use a thread to present them to the driver so it can page.
+            //
+
+            if (!(PopCallSystemState & PO_CALL_NON_PAGED))
+            {
+                KeReleaseSpinLock(&DevState->SpinLock, OldIrql);
+                PopSystemIrpDispatchWorker(FALSE);
+                KeAcquireSpinLock(&DevState->SpinLock, &OldIrql);
+            }
+
+            break;
+
+
+        case STATE_CHECK_CANCEL:
+            //
+            // Assume we're going to advance to the next state
+            //
+
+            State += 1;
+
+            //
+            // If there's no error or we've already canceled move to the state
+            //
+
+            if (NT_SUCCESS(DevState->Status) || DevState->Cancelled || DevState->Waking)
+            {
+
+                break;
+            }
+
+            //
+            // First time the error has been seen.  Cancel anything outstanding.
+            // Build list of all pending irps
+            //
+
+            DevState->Cancelled = TRUE;
+            for (Link = DevState->Head.Pending.Flink; Link != &DevState->Head.Pending; Link = Link->Flink)
+            {
+
+                PowerIrp = CONTAINING_RECORD(Link, POP_DEVICE_POWER_IRP, Pending);
+                InsertTailList(&DevState->Head.Abort, &PowerIrp->Abort);
+            }
+
+            //
+            // Drop completion lock and cancel irps on abort list
+            //
+
+            KeReleaseSpinLock(&DevState->SpinLock, OldIrql);
+
+            for (Link = DevState->Head.Abort.Flink; Link != &DevState->Head.Abort; Link = Link->Flink)
+            {
+
+                PowerIrp = CONTAINING_RECORD(Link, POP_DEVICE_POWER_IRP, Abort);
+                IoCancelIrp(PowerIrp->Irp);
+            }
+
+            KeAcquireSpinLock(&DevState->SpinLock, &OldIrql);
+            InitializeListHead(&DevState->Head.Abort);
+
+            //
+            // After canceling check for more completed irps
+            //
+
+            State = STATE_COMPLETE_IRPS;
+            break;
+
+        case STATE_WAIT_NOW:
+            //
+            // Check for wait condition
+            //
+
+            if ((!WaitForAll && IrpCompleted) || IsListEmpty(&DevState->Head.Pending))
+            {
+
+                //
+                // Done. After waiting, verify there's at least struct on the
+                // free list. If not, recycle something off the failured list
+                //
+
+                if (!DevState->Head.Free.Next && !IsListEmpty(&DevState->Head.Failed))
+                {
+                    Link = DevState->Head.Failed.Blink;
+                    PowerIrp = CONTAINING_RECORD(Link, POP_DEVICE_POWER_IRP, Failed);
+
                     RemoveEntryList(Link);
+                    PowerIrp->Failed.Flink = NULL;
+                    PowerIrp->Irp = NULL;
+                    PowerIrp->Notify = NULL;
 
-                    PowerIrp = CONTAINING_RECORD (Link, POP_DEVICE_POWER_IRP, Complete);
-                    Notify = PowerIrp->Notify;
-                    PowerIrp->Complete.Flink = NULL;
-                    Irp = PowerIrp->Irp;
-
-                    //
-                    // Verify the device driver called PoStartNextPowerIrp
-                    //
-
-                    if ((Notify->TargetDevice->DeviceObjectExtension->PowerFlags & POPF_SYSTEM_ACTIVE) ||
-                        (Notify->DeviceObject->DeviceObjectExtension->PowerFlags & POPF_SYSTEM_ACTIVE)) {
-                        PDEVICE_OBJECT DeviceObject = Notify->DeviceObject;
-                        KeReleaseSpinLock (&DevState->SpinLock, OldIrql);
-                        PopDumpSystemIrp  ("SYS STATE", PowerIrp);
-                        PopInternalAddToDumpFile ( NULL, 0, DeviceObject, NULL, NULL, NULL );
-                        PopInternalAddToDumpFile ( NULL, 0, Notify->TargetDevice, NULL, NULL, NULL );
-                        KeBugCheckEx (
-                            DRIVER_POWER_STATE_FAILURE,
-                            0x500,
-                            DEVICE_SYSTEM_STATE_HUNG,
-                            (ULONG_PTR) Notify->TargetDevice,
-                            (ULONG_PTR) DeviceObject );
-                    }
-
-                    //
-                    // If success, or cancelled, or not implemented that's OK, then
-                    // the irp is complete
-                    //
-
-                    if (PopCheckSystemPowerIrpStatus(DevState, Irp, TRUE)) {
-                        //
-                        // See if IRP is failure being allowed for testing
-                        //
-
-                        if (!PopCheckSystemPowerIrpStatus(DevState, Irp, FALSE)) {
-                            KeReleaseSpinLock (&DevState->SpinLock, OldIrql);
-                            PopDumpSystemIrp  ("ignored", PowerIrp);
-                            KeAcquireSpinLock (&DevState->SpinLock, &OldIrql);
-                        }
-
-                        //
-                        // Request is complete, free it
-                        //
-
-                        IoFreeIrp (Irp);
-
-                        PowerIrp->Irp = NULL;
-                        PowerIrp->Notify = NULL;
-                        PushEntryList (
-                            &DevState->Head.Free,
-                            &PowerIrp->Free
-                            );
-
-                    } else {
-
-                        //
-                        // Some sort of error.  Keep track of the failure
-                        //
-
-                        ASSERT (!DevState->Waking);
-                        InsertTailList(&DevState->Head.Failed, &PowerIrp->Failed);
-                    }
+                    PushEntryList(&DevState->Head.Free, &PowerIrp->Free);
                 }
+
+                State = STATE_DONE_WAITING;
                 break;
+            }
 
-            case STATE_PRESENT_PAGABLE_IRPS:
-                //
-                // Assume we're going to advance to the next state
-                //
+            //
+            // Signal completion function that we are waiting
+            //
 
-                State += 1;
+            DevState->WaitAll = TRUE;
+            DevState->WaitAny = !WaitForAll;
 
-                //
-                // If the last device that a system irp was sent to was pagable,
-                // we use a thread to present them to the driver so it can page.
-                //
+            //
+            // Drop locks and wait for event to be signalled
+            //
 
-                if (!(PopCallSystemState & PO_CALL_NON_PAGED)) {
-                    KeReleaseSpinLock (&DevState->SpinLock, OldIrql);
-                    PopSystemIrpDispatchWorker (FALSE);
-                    KeAcquireSpinLock (&DevState->SpinLock, &OldIrql);
+            KeClearEvent(&DevState->Event);
+            KeReleaseSpinLock(&DevState->SpinLock, OldIrql);
+
+            Timeout.QuadPart = DevState->Cancelled ? POP_ACTION_CANCEL_TIMEOUT : POP_ACTION_TIMEOUT;
+            Timeout.QuadPart = Timeout.QuadPart * US2SEC * US2TIME * -1;
+
+            Status = KeWaitForSingleObject(&DevState->Event, Suspended, KernelMode, FALSE, &Timeout);
+
+            KeAcquireSpinLock(&DevState->SpinLock, &OldIrql);
+
+            //
+            // No longer waiting
+            //
+
+            DevState->WaitAll = FALSE;
+            DevState->WaitAny = FALSE;
+
+            //
+            // If this is a timeout, then dump all the pending irps
+            //
+
+            if (Status == STATUS_TIMEOUT)
+            {
+
+                for (Link = DevState->Head.Pending.Flink; Link != &DevState->Head.Pending; Link = Link->Flink)
+                {
+
+                    PowerIrp = CONTAINING_RECORD(Link, POP_DEVICE_POWER_IRP, Pending);
+                    InsertTailList(&DevState->Head.Abort, &PowerIrp->Abort);
                 }
 
-                break;
+                KeReleaseSpinLock(&DevState->SpinLock, OldIrql);
 
+                for (Link = DevState->Head.Abort.Flink; Link != &DevState->Head.Abort; Link = Link->Flink)
+                {
 
-            case STATE_CHECK_CANCEL:
-                //
-                // Assume we're going to advance to the next state
-                //
-
-                State += 1;
-
-                //
-                // If there's no error or we've already canceled move to the state
-                //
-
-                if (NT_SUCCESS(DevState->Status)  ||
-                    DevState->Cancelled ||
-                    DevState->Waking) {
-
-                    break;
+                    PowerIrp = CONTAINING_RECORD(Link, POP_DEVICE_POWER_IRP, Abort);
+                    PopDumpSystemIrp("Waiting on", PowerIrp);
                 }
 
-                //
-                // First time the error has been seen.  Cancel anything outstanding.
-                // Build list of all pending irps
-                //
+                KeAcquireSpinLock(&DevState->SpinLock, &OldIrql);
+                InitializeListHead(&DevState->Head.Abort);
+            }
 
-                DevState->Cancelled = TRUE;
-                for (Link  = DevState->Head.Pending.Flink;
-                     Link != &DevState->Head.Pending;
-                     Link  = Link->Flink) {
+            //
+            // Check for completed irps
+            //
 
-                    PowerIrp = CONTAINING_RECORD (Link, POP_DEVICE_POWER_IRP, Pending);
-                    InsertTailList (&DevState->Head.Abort, &PowerIrp->Abort);
-                }
-
-                //
-                // Drop completion lock and cancel irps on abort list
-                //
-
-                KeReleaseSpinLock (&DevState->SpinLock, OldIrql);
-
-                for (Link  = DevState->Head.Abort.Flink;
-                     Link != &DevState->Head.Abort;
-                     Link  = Link->Flink) {
-
-                    PowerIrp = CONTAINING_RECORD (Link, POP_DEVICE_POWER_IRP, Abort);
-                    IoCancelIrp (PowerIrp->Irp);
-                }
-
-                KeAcquireSpinLock (&DevState->SpinLock, &OldIrql);
-                InitializeListHead (&DevState->Head.Abort);
-
-                //
-                // After canceling check for more completed irps
-                //
-
-                State = STATE_COMPLETE_IRPS;
-                break;
-
-            case STATE_WAIT_NOW:
-                //
-                // Check for wait condition
-                //
-
-                if ((!WaitForAll && IrpCompleted) || IsListEmpty(&DevState->Head.Pending)) {
-
-                    //
-                    // Done. After waiting, verify there's at least struct on the
-                    // free list. If not, recycle something off the failured list
-                    //
-
-                    if (!DevState->Head.Free.Next  &&  !IsListEmpty(&DevState->Head.Failed)) {
-                        Link = DevState->Head.Failed.Blink;
-                        PowerIrp = CONTAINING_RECORD (Link, POP_DEVICE_POWER_IRP, Failed);
-
-                        RemoveEntryList(Link);
-                        PowerIrp->Failed.Flink = NULL;
-                        PowerIrp->Irp = NULL;
-                        PowerIrp->Notify = NULL;
-
-                        PushEntryList (
-                            &DevState->Head.Free,
-                            &PowerIrp->Free
-                            );
-                    }
-
-                    State = STATE_DONE_WAITING;
-                    break;
-                }
-
-                //
-                // Signal completion function that we are waiting
-                //
-
-                DevState->WaitAll = TRUE;
-                DevState->WaitAny = !WaitForAll;
-
-                //
-                // Drop locks and wait for event to be signalled
-                //
-
-                KeClearEvent  (&DevState->Event);
-                KeReleaseSpinLock (&DevState->SpinLock, OldIrql);
-
-                Timeout.QuadPart = DevState->Cancelled ?
-                    POP_ACTION_CANCEL_TIMEOUT : POP_ACTION_TIMEOUT;
-                Timeout.QuadPart = Timeout.QuadPart * US2SEC * US2TIME * -1;
-
-                Status = KeWaitForSingleObject (
-                            &DevState->Event,
-                            Suspended,
-                            KernelMode,
-                            FALSE,
-                            &Timeout
-                            );
-
-                KeAcquireSpinLock (&DevState->SpinLock, &OldIrql);
-
-                //
-                // No longer waiting
-                //
-
-                DevState->WaitAll = FALSE;
-                DevState->WaitAny = FALSE;
-
-                //
-                // If this is a timeout, then dump all the pending irps
-                //
-
-                if (Status == STATUS_TIMEOUT) {
-
-                    for (Link  = DevState->Head.Pending.Flink;
-                         Link != &DevState->Head.Pending;
-                         Link  = Link->Flink) {
-
-                        PowerIrp = CONTAINING_RECORD (Link, POP_DEVICE_POWER_IRP, Pending);
-                        InsertTailList (&DevState->Head.Abort, &PowerIrp->Abort);
-                    }
-
-                    KeReleaseSpinLock (&DevState->SpinLock, OldIrql);
-
-                    for (Link  = DevState->Head.Abort.Flink;
-                         Link != &DevState->Head.Abort;
-                         Link  = Link->Flink) {
-
-                        PowerIrp = CONTAINING_RECORD (Link, POP_DEVICE_POWER_IRP, Abort);
-                        PopDumpSystemIrp  ("Waiting on", PowerIrp);
-                    }
-
-                    KeAcquireSpinLock (&DevState->SpinLock, &OldIrql);
-                    InitializeListHead (&DevState->Head.Abort);
-                }
-
-                //
-                // Check for completed irps
-                //
-
-                State = STATE_COMPLETE_IRPS;
-                break;
+            State = STATE_COMPLETE_IRPS;
+            break;
         }
     }
 
-    KeReleaseSpinLock (&DevState->SpinLock, OldIrql);
+    KeReleaseSpinLock(&DevState->SpinLock, OldIrql);
 }
 
 
-VOID
-PopSleepDeviceList (
-    IN PPOP_DEVICE_SYS_STATE    DevState,
-    IN PPO_NOTIFY_ORDER_LEVEL   Level
-    )
+VOID PopSleepDeviceList(IN PPOP_DEVICE_SYS_STATE DevState, IN PPO_NOTIFY_ORDER_LEVEL Level)
 /*++
 
 Routine Description:
@@ -1029,9 +957,9 @@ Return Value:
 
 --*/
 {
-    PPO_DEVICE_NOTIFY       NotifyDevice;
-    PLIST_ENTRY             Link;
-    KIRQL                   OldIrql;
+    PPO_DEVICE_NOTIFY NotifyDevice;
+    PLIST_ENTRY Link;
+    KIRQL OldIrql;
 
     ASSERT(!DevState->Waking);
     ASSERT(IsListEmpty(&Level->Pending));
@@ -1042,22 +970,30 @@ Return Value:
     // Move any devices from the completed list back to their correct spots.
     //
     Link = Level->ReadyS0.Flink;
-    while (Link != &Level->ReadyS0) {
-        NotifyDevice = CONTAINING_RECORD (Link, PO_DEVICE_NOTIFY, Link);
+    while (Link != &Level->ReadyS0)
+    {
+        NotifyDevice = CONTAINING_RECORD(Link, PO_DEVICE_NOTIFY, Link);
         Link = NotifyDevice->Link.Flink;
-        if (NotifyDevice->ChildCount) {
+        if (NotifyDevice->ChildCount)
+        {
             InsertHeadList(&Level->WaitSleep, Link);
-        } else {
+        }
+        else
+        {
             ASSERT(NotifyDevice->ActiveChild == 0);
             InsertHeadList(&Level->ReadySleep, Link);
         }
     }
-    while (!IsListEmpty(&Level->Complete)) {
+    while (!IsListEmpty(&Level->Complete))
+    {
         Link = RemoveHeadList(&Level->Complete);
-        NotifyDevice = CONTAINING_RECORD (Link, PO_DEVICE_NOTIFY, Link);
-        if (NotifyDevice->ChildCount) {
+        NotifyDevice = CONTAINING_RECORD(Link, PO_DEVICE_NOTIFY, Link);
+        if (NotifyDevice->ChildCount)
+        {
             InsertHeadList(&Level->WaitSleep, Link);
-        } else {
+        }
+        else
+        {
             ASSERT(NotifyDevice->ActiveChild == 0);
             InsertHeadList(&Level->ReadySleep, Link);
         }
@@ -1068,20 +1004,23 @@ Return Value:
 
     KeAcquireSpinLock(&DevState->SpinLock, &OldIrql);
 
-    while ((Level->ActiveCount) &&
-           (NT_SUCCESS(DevState->Status))) {
+    while ((Level->ActiveCount) && (NT_SUCCESS(DevState->Status)))
+    {
 
-        if (!IsListEmpty(&Level->ReadySleep)) {
+        if (!IsListEmpty(&Level->ReadySleep))
+        {
             Link = RemoveHeadList(&Level->ReadySleep);
             InsertTailList(&Level->Pending, Link);
             KeReleaseSpinLock(&DevState->SpinLock, OldIrql);
-            NotifyDevice = CONTAINING_RECORD (Link, PO_DEVICE_NOTIFY, Link);
+            NotifyDevice = CONTAINING_RECORD(Link, PO_DEVICE_NOTIFY, Link);
             ASSERT(NotifyDevice->ActiveChild == 0);
             PopNotifyDevice(DevState, NotifyDevice);
-        } else {
+        }
+        else
+        {
 
-            if ((Level->ActiveCount) &&
-                (NT_SUCCESS(DevState->Status))) {
+            if ((Level->ActiveCount) && (NT_SUCCESS(DevState->Status)))
+            {
 
                 //
                 // No devices are ready to receive IRPs yet, so wait for
@@ -1091,7 +1030,6 @@ Return Value:
                 KeReleaseSpinLock(&DevState->SpinLock, OldIrql);
                 PopWaitForSystemPowerIrp(DevState, FALSE);
             }
-
         }
 
         KeAcquireSpinLock(&DevState->SpinLock, &OldIrql);
@@ -1099,11 +1037,8 @@ Return Value:
     KeReleaseSpinLock(&DevState->SpinLock, OldIrql);
 }
 
-
-VOID
-PopResetChildCount(
-    IN PLIST_ENTRY ListHead
-    )
+
+VOID PopResetChildCount(IN PLIST_ENTRY ListHead)
 /*++
 
 Routine Description:
@@ -1123,25 +1058,20 @@ Return Value:
 --*/
 
 {
-    PPO_DEVICE_NOTIFY       Notify;
-    PLIST_ENTRY             Link;
+    PPO_DEVICE_NOTIFY Notify;
+    PLIST_ENTRY Link;
 
     Link = ListHead->Flink;
-    while (Link != ListHead) {
-        Notify = CONTAINING_RECORD (Link, PO_DEVICE_NOTIFY, Link);
+    while (Link != ListHead)
+    {
+        Notify = CONTAINING_RECORD(Link, PO_DEVICE_NOTIFY, Link);
         Link = Link->Flink;
         Notify->ActiveChild = Notify->ChildCount;
     }
-
-
 }
 
-
-VOID
-PopSetupListForWake(
-    IN PPO_NOTIFY_ORDER_LEVEL Level,
-    IN PLIST_ENTRY ListHead
-    )
+
+VOID PopSetupListForWake(IN PPO_NOTIFY_ORDER_LEVEL Level, IN PLIST_ENTRY ListHead)
 /*++
 
 Routine Description:
@@ -1162,35 +1092,34 @@ Return Value:
 --*/
 
 {
-    PPO_DEVICE_NOTIFY       NotifyDevice;
-    PPO_DEVICE_NOTIFY       ParentNotify;
-    PLIST_ENTRY             Link;
+    PPO_DEVICE_NOTIFY NotifyDevice;
+    PPO_DEVICE_NOTIFY ParentNotify;
+    PLIST_ENTRY Link;
 
     Link = ListHead->Flink;
-    while (Link != ListHead) {
-        NotifyDevice = CONTAINING_RECORD (Link, PO_DEVICE_NOTIFY, Link);
+    while (Link != ListHead)
+    {
+        NotifyDevice = CONTAINING_RECORD(Link, PO_DEVICE_NOTIFY, Link);
         Link = NotifyDevice->Link.Flink;
-        if (NotifyDevice->WakeNeeded) {
+        if (NotifyDevice->WakeNeeded)
+        {
             --Level->ActiveCount;
             RemoveEntryList(&NotifyDevice->Link);
             ParentNotify = IoGetPoNotifyParent(NotifyDevice);
-            if ((ParentNotify==NULL) ||
-                (!ParentNotify->WakeNeeded)) {
+            if ((ParentNotify == NULL) || (!ParentNotify->WakeNeeded))
+            {
                 InsertTailList(&Level->ReadyS0, &NotifyDevice->Link);
-            } else {
+            }
+            else
+            {
                 InsertTailList(&Level->WaitS0, &NotifyDevice->Link);
             }
         }
     }
-
 }
 
-
-VOID
-PopWakeDeviceList(
-    IN PPOP_DEVICE_SYS_STATE    DevState,
-    IN PPO_NOTIFY_ORDER_LEVEL   Level
-    )
+
+VOID PopWakeDeviceList(IN PPOP_DEVICE_SYS_STATE DevState, IN PPO_NOTIFY_ORDER_LEVEL Level)
 /*++
 
 Routine Description:
@@ -1211,10 +1140,10 @@ Return Value:
 --*/
 
 {
-    PPO_DEVICE_NOTIFY       NotifyDevice;
-    PPO_DEVICE_NOTIFY       ParentNotify;
-    PLIST_ENTRY             Link;
-    KIRQL                   OldIrql;
+    PPO_DEVICE_NOTIFY NotifyDevice;
+    PPO_DEVICE_NOTIFY ParentNotify;
+    PLIST_ENTRY Link;
+    KIRQL OldIrql;
 
     ASSERT(DevState->Waking);
     ASSERT(IsListEmpty(&Level->Pending));
@@ -1229,30 +1158,33 @@ Return Value:
     PopSetupListForWake(Level, &Level->ReadySleep);
     PopSetupListForWake(Level, &Level->Complete);
 
-    ASSERT((Level->DeviceCount == 0) ||
-           (Level->ActiveCount == Level->DeviceCount) ||
-           !IsListEmpty(&Level->ReadyS0));
+    ASSERT((Level->DeviceCount == 0) || (Level->ActiveCount == Level->DeviceCount) || !IsListEmpty(&Level->ReadyS0));
 
     KeAcquireSpinLock(&DevState->SpinLock, &OldIrql);
 
-    while (Level->ActiveCount < Level->DeviceCount) {
+    while (Level->ActiveCount < Level->DeviceCount)
+    {
 
-        if (!IsListEmpty(&Level->ReadyS0)) {
+        if (!IsListEmpty(&Level->ReadyS0))
+        {
             Link = RemoveHeadList(&Level->ReadyS0);
-            InsertTailList(&Level->Pending,Link);
+            InsertTailList(&Level->Pending, Link);
             KeReleaseSpinLock(&DevState->SpinLock, OldIrql);
-            NotifyDevice = CONTAINING_RECORD (Link, PO_DEVICE_NOTIFY, Link);
+            NotifyDevice = CONTAINING_RECORD(Link, PO_DEVICE_NOTIFY, Link);
 
             //
             // Set the timer to go off if we are not done by the timeout period
             //
-            if (PopSimulate & POP_WAKE_DEADMAN) {
+            if (PopSimulate & POP_WAKE_DEADMAN)
+            {
                 LARGE_INTEGER DueTime;
                 DueTime.QuadPart = (LONGLONG)PopWakeTimer * -1 * 1000 * 1000 * 10;
                 KeSetTimer(&PopWakeTimeoutTimer, DueTime, &PopWakeTimeoutDpc);
             }
             PopNotifyDevice(DevState, NotifyDevice);
-        } else {
+        }
+        else
+        {
 
             //
             // No devices are ready to receive IRPs yet, so wait for
@@ -1267,15 +1199,9 @@ Return Value:
     KeReleaseSpinLock(&DevState->SpinLock, OldIrql);
 
     ASSERT(Level->ActiveCount == Level->DeviceCount);
-
 }
 
-VOID
-PopLogNotifyDevice (
-    IN PDEVICE_OBJECT   TargetDevice,
-    IN OPTIONAL PPO_DEVICE_NOTIFY Notify,
-    IN PIRP             Irp
-    )
+VOID PopLogNotifyDevice(IN PDEVICE_OBJECT TargetDevice, IN OPTIONAL PPO_DEVICE_NOTIFY Notify, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -1314,7 +1240,7 @@ Return Value:
     //
 
     StackBufferSize = sizeof(StackBuffer);
-    LogEntry = (PVOID) StackBuffer;
+    LogEntry = (PVOID)StackBuffer;
     IrpSp = IoGetNextIrpStackLocation(Irp);
 
     //
@@ -1322,7 +1248,8 @@ Return Value:
     // part of the LogEntry structure.
     //
 
-    if (StackBufferSize < sizeof(PERFINFO_PO_NOTIFY_DEVICE)) {
+    if (StackBufferSize < sizeof(PERFINFO_PO_NOTIFY_DEVICE))
+    {
         ASSERT(FALSE);
         return;
     }
@@ -1335,12 +1262,14 @@ Return Value:
     LogEntry->DriverStart = TargetDevice->DriverObject->DriverStart;
     LogEntry->MajorFunction = IrpSp->MajorFunction;
     LogEntry->MinorFunction = IrpSp->MinorFunction;
-    LogEntry->Type          = IrpSp->Parameters.Power.Type;
-    LogEntry->State         = IrpSp->Parameters.Power.State;
+    LogEntry->Type = IrpSp->Parameters.Power.Type;
+    LogEntry->State = IrpSp->Parameters.Power.State;
 
-    if (Notify) {
+    if (Notify)
+    {
         LogEntry->OrderLevel = Notify->OrderLevel;
-        if (Notify->DeviceName) {
+        if (Notify->DeviceName)
+        {
 
             //
             // Determine what the maximum device name length (excluding NUL) we
@@ -1358,7 +1287,8 @@ Return Value:
             DeviceNameLength = wcslen(Notify->DeviceName);
             CopyLength = DeviceNameLength;
 
-            if (CopyLength > MaxDeviceNameLength) {
+            if (CopyLength > MaxDeviceNameLength)
+            {
                 CopyLength = MaxDeviceNameLength;
             }
 
@@ -1368,10 +1298,10 @@ Return Value:
             // of the name.
             //
 
-            wcscpy(LogEntry->DeviceName,
-                   Notify->DeviceName + DeviceNameLength - CopyLength);
-
-        } else {
+            wcscpy(LogEntry->DeviceName, Notify->DeviceName + DeviceNameLength - CopyLength);
+        }
+        else
+        {
 
             //
             // There is no device name.
@@ -1380,7 +1310,9 @@ Return Value:
             CopyLength = 0;
             LogEntry->DeviceName[CopyLength] = 0;
         }
-    } else {
+    }
+    else
+    {
         LogEntry->OrderLevel = 0;
         CopyLength = 0;
         LogEntry->DeviceName[CopyLength] = 0;
@@ -1399,9 +1331,7 @@ Return Value:
     LogEntrySize = sizeof(PERFINFO_PO_NOTIFY_DEVICE);
     LogEntrySize += CopyLength * sizeof(WCHAR);
 
-    PerfInfoLogBytes(PERFINFO_LOG_TYPE_PO_NOTIFY_DEVICE,
-                     LogEntry,
-                     LogEntrySize);
+    PerfInfoLogBytes(PERFINFO_LOG_TYPE_PO_NOTIFY_DEVICE, LogEntry, LogEntrySize);
 
     //
     // We are done.
@@ -1410,11 +1340,7 @@ Return Value:
     return;
 }
 
-VOID
-PopNotifyDevice (
-    IN PPOP_DEVICE_SYS_STATE    DevState,
-    IN PPO_DEVICE_NOTIFY        Notify
-    )
+VOID PopNotifyDevice(IN PPOP_DEVICE_SYS_STATE DevState, IN PPO_DEVICE_NOTIFY Notify)
 /*++
 
 Routine Description:
@@ -1425,14 +1351,14 @@ Return Value:
 
 --*/
 {
-    PPOP_DEVICE_POWER_IRP   PowerIrp;
-    PSINGLE_LIST_ENTRY      Entry;
-    PIO_STACK_LOCATION      IrpSp;
-    PIRP                    Irp;
-    ULONG                   SysCall;
-    KIRQL                   OldIrql;
-    PDEVICE_OBJECT          *WarmEjectDevice;
-    POWER_ACTION            IrpAction;
+    PPOP_DEVICE_POWER_IRP PowerIrp;
+    PSINGLE_LIST_ENTRY Entry;
+    PIO_STACK_LOCATION IrpSp;
+    PIRP Irp;
+    ULONG SysCall;
+    KIRQL OldIrql;
+    PDEVICE_OBJECT *WarmEjectDevice;
+    POWER_ACTION IrpAction;
 
     //
     // Set the SysCall state to match our notify current state
@@ -1440,11 +1366,13 @@ Return Value:
 
     ASSERT(PopCurrentLevel == Notify->OrderLevel);
     SysCall = PO_CALL_SYSDEV_QUEUE;
-    if (!(Notify->OrderLevel & PO_ORDER_PAGABLE)) {
+    if (!(Notify->OrderLevel & PO_ORDER_PAGABLE))
+    {
         SysCall |= PO_CALL_NON_PAGED;
     }
 
-    if (PopCallSystemState != SysCall) {
+    if (PopCallSystemState != SysCall)
+    {
         PopLockWorkerQueue(&OldIrql);
         PopCallSystemState = SysCall;
         PopUnlockWorkerQueue(OldIrql);
@@ -1457,29 +1385,34 @@ Return Value:
     PowerIrp = NULL;
     Irp = NULL;
 
-    for (; ;) {
+    for (;;)
+    {
         Entry = PopEntryList(&DevState->Head.Free);
-        if (Entry) {
+        if (Entry)
+        {
             break;
         }
 
-        PopWaitForSystemPowerIrp (DevState, FALSE);
+        PopWaitForSystemPowerIrp(DevState, FALSE);
     }
 
     PowerIrp = CONTAINING_RECORD(Entry, POP_DEVICE_POWER_IRP, Free);
 
-    for (; ;) {
-        Irp = IoAllocateIrp ((CHAR) Notify->TargetDevice->StackSize, FALSE);
-        if (Irp) {
+    for (;;)
+    {
+        Irp = IoAllocateIrp((CHAR)Notify->TargetDevice->StackSize, FALSE);
+        if (Irp)
+        {
             break;
         }
 
-        PopWaitForSystemPowerIrp (DevState, FALSE);
+        PopWaitForSystemPowerIrp(DevState, FALSE);
     }
 
     SPECIALIRP_WATERMARK_IRP(Irp, IRP_SYSTEM_RESTRICTED);
 
-    if (!DevState->Waking) {
+    if (!DevState->Waking)
+    {
 
         //
         // If the device node list changed, then restart. This could have
@@ -1487,7 +1420,8 @@ Return Value:
         // queries for sleep states.
         //
 
-        if (DevState->Order.DevNodeSequence != IoDeviceNodeTreeSequence) {
+        if (DevState->Order.DevNodeSequence != IoDeviceNodeTreeSequence)
+        {
 
             PopRestartSetSystemState();
         }
@@ -1496,17 +1430,20 @@ Return Value:
         // If there's been some sort of error, then abort
         //
 
-        if (!NT_SUCCESS(DevState->Status)) {
-            PushEntryList (&DevState->Head.Free, &PowerIrp->Free);
-            IoFreeIrp (Irp);
-            return ;            // abort
+        if (!NT_SUCCESS(DevState->Status))
+        {
+            PushEntryList(&DevState->Head.Free, &PowerIrp->Free);
+            IoFreeIrp(Irp);
+            return; // abort
         }
 
         //
         // Mark notify as needing wake.
         //
         Notify->WakeNeeded = TRUE;
-    } else {
+    }
+    else
+    {
         Notify->WakeNeeded = FALSE;
     }
 
@@ -1517,17 +1454,13 @@ Return Value:
     PowerIrp->Irp = Irp;
     PowerIrp->Notify = Notify;
 
-    ExInterlockedInsertTailList (
-        &DevState->Head.Pending,
-        &PowerIrp->Pending,
-        &DevState->SpinLock
-        );
+    ExInterlockedInsertTailList(&DevState->Head.Pending, &PowerIrp->Pending, &DevState->SpinLock);
 
     //
     // Setup irp
     //
 
-    Irp->IoStatus.Status = STATUS_NOT_SUPPORTED ;
+    Irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
     Irp->IoStatus.Information = 0;
     IrpSp = IoGetNextIrpStackLocation(Irp);
     IrpSp->MajorFunction = IRP_MJ_POWER;
@@ -1547,33 +1480,32 @@ Return Value:
     // PowerActionHibernate if the sleep state is S4.
     //
 
-    IrpAction = PopMapInternalActionToIrpAction (
-        PopAction.Action,
-        DevState->SystemState,
-        (BOOLEAN) (DevState->Waking || (*WarmEjectDevice != Notify->DeviceObject))
-        );
+    IrpAction =
+        PopMapInternalActionToIrpAction(PopAction.Action, DevState->SystemState,
+                                        (BOOLEAN)(DevState->Waking || (*WarmEjectDevice != Notify->DeviceObject)));
 
     //
     // If we are sending a set power to the devnode to be warm ejected,
     // zero out the warm eject device field to signify we have handled to
     // requested operation.
     //
-    if ((IrpAction == PowerActionWarmEject) &&
-        (*WarmEjectDevice == Notify->DeviceObject) &&
-        (DevState->IrpMinor == IRP_MN_SET_POWER)) {
+    if ((IrpAction == PowerActionWarmEject) && (*WarmEjectDevice == Notify->DeviceObject) &&
+        (DevState->IrpMinor == IRP_MN_SET_POWER))
+    {
 
         *WarmEjectDevice = NULL;
     }
 
     IrpSp->Parameters.Power.ShutdownType = IrpAction;
 
-    IoSetCompletionRoutine (Irp, PopCompleteSystemPowerIrp, PowerIrp, TRUE, TRUE, TRUE);
+    IoSetCompletionRoutine(Irp, PopCompleteSystemPowerIrp, PowerIrp, TRUE, TRUE, TRUE);
 
     //
     // Log the call.
     //
 
-    if (PERFINFO_IS_GROUP_ON(PERF_POWER)) {
+    if (PERFINFO_IS_GROUP_ON(PERF_POWER))
+    {
         PopLogNotifyDevice(Notify->TargetDevice, Notify, Irp);
     }
 
@@ -1581,15 +1513,11 @@ Return Value:
     // Give it to the driver, and continue
     //
 
-    PoCallDriver (Notify->TargetDevice, Irp);
+    PoCallDriver(Notify->TargetDevice, Irp);
 }
 
 NTSTATUS
-PopCompleteSystemPowerIrp (
-    IN PDEVICE_OBJECT       DeviceObject,
-    IN PIRP                 Irp,
-    IN PVOID                Context
-    )
+PopCompleteSystemPowerIrp(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -1611,17 +1539,17 @@ Return Value:
 
 --*/
 {
-    PPOP_DEVICE_POWER_IRP   PowerIrp;
-    PPOP_DEVICE_SYS_STATE   DevState;
-    KIRQL                   OldIrql;
-    BOOLEAN                 SetEvent;
-    NTSTATUS                Status;
-    PIO_STACK_LOCATION      IrpSp, IrpSp2;
-    PPO_DEVICE_NOTIFY       Notify;
-    PPO_DEVICE_NOTIFY       ParentNotify;
-    PPO_NOTIFY_ORDER_LEVEL  Order;
+    PPOP_DEVICE_POWER_IRP PowerIrp;
+    PPOP_DEVICE_SYS_STATE DevState;
+    KIRQL OldIrql;
+    BOOLEAN SetEvent;
+    NTSTATUS Status;
+    PIO_STACK_LOCATION IrpSp, IrpSp2;
+    PPO_DEVICE_NOTIFY Notify;
+    PPO_DEVICE_NOTIFY ParentNotify;
+    PPO_NOTIFY_ORDER_LEVEL Order;
 
-    PowerIrp = (PPOP_DEVICE_POWER_IRP) Context;
+    PowerIrp = (PPOP_DEVICE_POWER_IRP)Context;
     DevState = PopAction.DevState;
 
     SetEvent = FALSE;
@@ -1630,38 +1558,40 @@ Return Value:
     // Log the completion.
     //
 
-    if (PERFINFO_IS_GROUP_ON(PERF_POWER)) {
+    if (PERFINFO_IS_GROUP_ON(PERF_POWER))
+    {
         PERFINFO_PO_NOTIFY_DEVICE_COMPLETE LogEntry;
         LogEntry.Irp = Irp;
         LogEntry.Status = Irp->IoStatus.Status;
-        PerfInfoLogBytes(PERFINFO_LOG_TYPE_PO_NOTIFY_DEVICE_COMPLETE,
-                         &LogEntry,
-                         sizeof(LogEntry));
+        PerfInfoLogBytes(PERFINFO_LOG_TYPE_PO_NOTIFY_DEVICE_COMPLETE, &LogEntry, sizeof(LogEntry));
     }
 
-    KeAcquireSpinLock (&DevState->SpinLock, &OldIrql);
+    KeAcquireSpinLock(&DevState->SpinLock, &OldIrql);
 
     //
     // Move irp from pending queue to complete queue
     //
 
-    RemoveEntryList (&PowerIrp->Pending);
+    RemoveEntryList(&PowerIrp->Pending);
     PowerIrp->Pending.Flink = NULL;
-    InsertTailList (&DevState->Head.Complete, &PowerIrp->Complete);
+    InsertTailList(&DevState->Head.Complete, &PowerIrp->Complete);
 
     //
     // Move notify from pending queue to the appropriate queue
     // depending on whether we are sleeping or waking.
     //
-    Notify=PowerIrp->Notify;
+    Notify = PowerIrp->Notify;
     ASSERT(Notify->OrderLevel == PopCurrentLevel);
     Order = &DevState->Order.OrderLevel[Notify->OrderLevel];
     RemoveEntryList(&Notify->Link);
     InsertTailList(&Order->Complete, &Notify->Link);
-    if (DevState->Waking) {
+    if (DevState->Waking)
+    {
         ++Order->ActiveCount;
         IoMovePoNotifyChildren(Notify, &DevState->Order);
-    } else {
+    }
+    else
+    {
 
         //
         // We will only decrement the parent's active count if the IRP was
@@ -1669,15 +1599,18 @@ Return Value:
         // get put on the ReadySleep list even though its child has failed
         // the query/set irp.
         //
-        if (NT_SUCCESS(Irp->IoStatus.Status) || DevState->IgnoreErrors) {
+        if (NT_SUCCESS(Irp->IoStatus.Status) || DevState->IgnoreErrors)
+        {
             --Order->ActiveCount;
             ParentNotify = IoGetPoNotifyParent(Notify);
-            if (ParentNotify) {
+            if (ParentNotify)
+            {
                 ASSERT(ParentNotify->ActiveChild > 0);
-                if (--ParentNotify->ActiveChild == 0) {
+                if (--ParentNotify->ActiveChild == 0)
+                {
                     RemoveEntryList(&ParentNotify->Link);
                     InsertTailList(&DevState->Order.OrderLevel[ParentNotify->OrderLevel].ReadySleep,
-                               &ParentNotify->Link);
+                                   &ParentNotify->Link);
                 }
             }
         }
@@ -1688,8 +1621,8 @@ Return Value:
     // If there is a wait all, then check for empty pending queue
     //
 
-    if ((DevState->WaitAny) ||
-        (DevState->WaitAll && IsListEmpty(&DevState->Head.Pending))) {
+    if ((DevState->WaitAny) || (DevState->WaitAll && IsListEmpty(&DevState->Head.Pending)))
+    {
         SetEvent = TRUE;
     }
 
@@ -1698,8 +1631,8 @@ Return Value:
     // the current operation
     //
 
-    if (!PopCheckSystemPowerIrpStatus(DevState, Irp, TRUE)  &&
-        NT_SUCCESS(DevState->Status)) {
+    if (!PopCheckSystemPowerIrpStatus(DevState, Irp, TRUE) && NT_SUCCESS(DevState->Status))
+    {
 
         //
         // We need to set the failed device here. If we are warm ejecting
@@ -1710,37 +1643,33 @@ Return Value:
         // devnode only if failed device is currently NULL.
         //
 
-        if ((PopAction.Action != PowerActionWarmEject) ||
-            (DevState->FailedDevice == NULL) ||
-            (PowerIrp->Notify->DeviceObject != *DevState->Order.WarmEjectPdoPointer)) {
+        if ((PopAction.Action != PowerActionWarmEject) || (DevState->FailedDevice == NULL) ||
+            (PowerIrp->Notify->DeviceObject != *DevState->Order.WarmEjectPdoPointer))
+        {
 
             DevState->FailedDevice = PowerIrp->Notify->DeviceObject;
         }
 
         DevState->Status = Irp->IoStatus.Status;
-        SetEvent = TRUE;        // wake to cancel pending irps
+        SetEvent = TRUE; // wake to cancel pending irps
     }
 
-    KeReleaseSpinLock (&DevState->SpinLock, OldIrql);
+    KeReleaseSpinLock(&DevState->SpinLock, OldIrql);
 
-    if (SetEvent) {
-        KeSetEvent (&DevState->Event, IO_NO_INCREMENT, FALSE);
+    if (SetEvent)
+    {
+        KeSetEvent(&DevState->Event, IO_NO_INCREMENT, FALSE);
     }
 
     return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
 
-
 BOOLEAN
-PopCheckSystemPowerIrpStatus  (
-    IN PPOP_DEVICE_SYS_STATE    DevState,
-    IN PIRP                     Irp,
-    IN BOOLEAN                  AllowTestFailure
-    )
+PopCheckSystemPowerIrpStatus(IN PPOP_DEVICE_SYS_STATE DevState, IN PIRP Irp, IN BOOLEAN AllowTestFailure)
 // return FALSE if irp is some sort of unallowed error
 {
-    NTSTATUS    Status;
+    NTSTATUS Status;
 
 
     Status = Irp->IoStatus.Status;
@@ -1749,7 +1678,8 @@ PopCheckSystemPowerIrpStatus  (
     // If Status is sucess, then no problem
     //
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         return TRUE;
     }
 
@@ -1757,7 +1687,8 @@ PopCheckSystemPowerIrpStatus  (
     // If errors are allowed, or it's a cancelled request no problem
     //
 
-    if (DevState->IgnoreErrors || Status == STATUS_CANCELLED) {
+    if (DevState->IgnoreErrors || Status == STATUS_CANCELLED)
+    {
         return TRUE;
     }
 
@@ -1766,7 +1697,8 @@ PopCheckSystemPowerIrpStatus  (
     // request and if such a condition is allowed
     //
 
-    if (Status == STATUS_NOT_SUPPORTED && DevState->IgnoreNotImplemented) {
+    if (Status == STATUS_NOT_SUPPORTED && DevState->IgnoreNotImplemented)
+    {
         return TRUE;
     }
 
@@ -1774,9 +1706,8 @@ PopCheckSystemPowerIrpStatus  (
     // For testing purposes, optionally let through unsupported device drivers
     //
 
-    if (Status == STATUS_NOT_SUPPORTED &&
-        AllowTestFailure &&
-        (PopSimulate & POP_IGNORE_UNSUPPORTED_DRIVERS)) {
+    if (Status == STATUS_NOT_SUPPORTED && AllowTestFailure && (PopSimulate & POP_IGNORE_UNSUPPORTED_DRIVERS))
+    {
 
         return TRUE;
     }
@@ -1789,10 +1720,7 @@ PopCheckSystemPowerIrpStatus  (
 }
 
 
-VOID
-PopRestartSetSystemState (
-    VOID
-    )
+VOID PopRestartSetSystemState(VOID)
 /*++
 
 Routine Description:
@@ -1809,26 +1737,23 @@ Return Value:
 
 --*/
 {
-    KIRQL       OldIrql;
+    KIRQL OldIrql;
 
-    KeAcquireSpinLock (&PopAction.DevState->SpinLock, &OldIrql);
-    if (!PopAction.Shutdown  &&  NT_SUCCESS(PopAction.DevState->Status)) {
+    KeAcquireSpinLock(&PopAction.DevState->SpinLock, &OldIrql);
+    if (!PopAction.Shutdown && NT_SUCCESS(PopAction.DevState->Status))
+    {
         PopAction.DevState->Status = STATUS_CANCELLED;
     }
-    KeReleaseSpinLock (&PopAction.DevState->SpinLock, OldIrql);
-    KeSetEvent (&PopAction.DevState->Event, IO_NO_INCREMENT, FALSE);
+    KeReleaseSpinLock(&PopAction.DevState->SpinLock, OldIrql);
+    KeSetEvent(&PopAction.DevState->Event, IO_NO_INCREMENT, FALSE);
 }
 
 
-VOID
-PopDumpSystemIrp (
-    IN PUCHAR                   Desc,
-    IN PPOP_DEVICE_POWER_IRP    PowerIrp
-    )
+VOID PopDumpSystemIrp(IN PUCHAR Desc, IN PPOP_DEVICE_POWER_IRP PowerIrp)
 {
-    PUCHAR              Testing;
-    PUCHAR              IrpType;
-    PPO_DEVICE_NOTIFY   Notify;
+    PUCHAR Testing;
+    PUCHAR IrpType;
+    PPO_DEVICE_NOTIFY Notify;
 
     Notify = PowerIrp->Notify;
 
@@ -1836,42 +1761,46 @@ PopDumpSystemIrp (
     // Dump errors to debugger
     //
 
-    switch (PopAction.DevState->IrpMinor) {
-        case IRP_MN_QUERY_POWER:    IrpType = "QueryPower";     break;
-        case IRP_MN_SET_POWER:      IrpType = "SetPower";       break;
-        default:                    IrpType = "?";              break;
+    switch (PopAction.DevState->IrpMinor)
+    {
+    case IRP_MN_QUERY_POWER:
+        IrpType = "QueryPower";
+        break;
+    case IRP_MN_SET_POWER:
+        IrpType = "SetPower";
+        break;
+    default:
+        IrpType = "?";
+        break;
     }
 
-    DbgPrint ("%s: ", Desc);
+    DbgPrint("%s: ", Desc);
 
-    if (Notify->DriverName) {
-        DbgPrint ("%ws ", Notify->DriverName);
-    } else {
-        DbgPrint ("%x ", Notify->TargetDevice->DriverObject);
+    if (Notify->DriverName)
+    {
+        DbgPrint("%ws ", Notify->DriverName);
+    }
+    else
+    {
+        DbgPrint("%x ", Notify->TargetDevice->DriverObject);
     }
 
-    if (Notify->DeviceName) {
-        DbgPrint ("%ws ", Notify->DeviceName);
-    } else {
-        DbgPrint ("%x ", Notify->TargetDevice);
+    if (Notify->DeviceName)
+    {
+        DbgPrint("%ws ", Notify->DeviceName);
+    }
+    else
+    {
+        DbgPrint("%x ", Notify->TargetDevice);
     }
 
-    DbgPrint ("irp (%x) %s-%s status %x\n",
-        PowerIrp->Irp,
-        IrpType,
-        PopSystemStateString(PopAction.DevState->SystemState),
-        PowerIrp->Irp->IoStatus.Status
-        );
+    DbgPrint("irp (%x) %s-%s status %x\n", PowerIrp->Irp, IrpType,
+             PopSystemStateString(PopAction.DevState->SystemState), PowerIrp->Irp->IoStatus.Status);
 }
 
-
-VOID
-PopWakeSystemTimeout(
-    IN struct _KDPC *Dpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    )
+
+VOID PopWakeSystemTimeout(IN struct _KDPC *Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1,
+                          IN PVOID SystemArgument2)
 /*++
 
 Routine Description:
@@ -1888,10 +1817,12 @@ Return Value:
 --*/
 
 {
-    try {
+    try
+    {
         DbgBreakPoint();
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         ;
     }
-
 }

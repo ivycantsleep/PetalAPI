@@ -6,11 +6,7 @@
 #include "psapi.h"
 
 
-BOOL
-WINAPI
-EmptyWorkingSet(
-    HANDLE hProcess
-    )
+BOOL WINAPI EmptyWorkingSet(HANDLE hProcess)
 {
     NTSTATUS Status;
     QUOTA_LIMITS QuotaLimits;
@@ -18,57 +14,42 @@ EmptyWorkingSet(
 
     GetSystemInfo(&SystemInfo);
 
-    Status = NtQueryInformationProcess(hProcess,
-                                       ProcessQuotaLimits,
-                                       &QuotaLimits,
-                                       sizeof(QuotaLimits),
-                                       NULL);
+    Status = NtQueryInformationProcess(hProcess, ProcessQuotaLimits, &QuotaLimits, sizeof(QuotaLimits), NULL);
 
-    if ( !NT_SUCCESS(Status) ) {
-        SetLastError( RtlNtStatusToDosError( Status ) );
-        return(FALSE);
-        }
+    if (!NT_SUCCESS(Status))
+    {
+        SetLastError(RtlNtStatusToDosError(Status));
+        return (FALSE);
+    }
 
     // The following signals a desire to empty the working set
 
     QuotaLimits.MinimumWorkingSetSize = (SIZE_T)-1;
     QuotaLimits.MaximumWorkingSetSize = (SIZE_T)-1;
 
-    Status = NtSetInformationProcess(hProcess,
-                                     ProcessQuotaLimits,
-                                     &QuotaLimits,
-                                     sizeof(QuotaLimits));
+    Status = NtSetInformationProcess(hProcess, ProcessQuotaLimits, &QuotaLimits, sizeof(QuotaLimits));
 
-    if ( !NT_SUCCESS(Status) && Status != STATUS_PRIVILEGE_NOT_HELD ) {
-        SetLastError( RtlNtStatusToDosError( Status ) );
-        return(FALSE);
-        }
+    if (!NT_SUCCESS(Status) && Status != STATUS_PRIVILEGE_NOT_HELD)
+    {
+        SetLastError(RtlNtStatusToDosError(Status));
+        return (FALSE);
+    }
 
-    return(TRUE);
+    return (TRUE);
 }
 
 
-BOOL
-WINAPI
-QueryWorkingSet(
-    HANDLE hProcess,
-    PVOID pv,
-    DWORD cb
-    )
+BOOL WINAPI QueryWorkingSet(HANDLE hProcess, PVOID pv, DWORD cb)
 {
     NTSTATUS Status;
 
-    Status = NtQueryVirtualMemory(hProcess,
-                                  NULL,
-                                  MemoryWorkingSetInformation,
-                                  pv,
-                                  cb,
-                                  NULL);
+    Status = NtQueryVirtualMemory(hProcess, NULL, MemoryWorkingSetInformation, pv, cb, NULL);
 
-    if ( !NT_SUCCESS(Status) ) {
-        SetLastError( RtlNtStatusToDosError( Status ) );
-        return(FALSE);
-        }
+    if (!NT_SUCCESS(Status))
+    {
+        SetLastError(RtlNtStatusToDosError(Status));
+        return (FALSE);
+    }
 
-    return(TRUE);
+    return (TRUE);
 }

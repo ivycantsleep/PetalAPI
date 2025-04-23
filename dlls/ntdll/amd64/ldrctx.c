@@ -25,11 +25,7 @@ Revision History:
 #include <ntos.h>
 #include <ldrp.h>
 
-VOID
-LdrpRelocateStartContext (
-    IN PCONTEXT Context,
-    IN LONG_PTR Diff
-    )
+VOID LdrpRelocateStartContext(IN PCONTEXT Context, IN LONG_PTR Diff)
 /*++
 
 Routine Description:
@@ -53,10 +49,7 @@ Return Value:
     Context->Rax += Diff;
 }
 
-VOID
-LdrpCorReplaceStartContext (
-    IN PCONTEXT Context
-    )
+VOID LdrpCorReplaceStartContext(IN PCONTEXT Context)
 /*++
 
 Routine Description:
@@ -75,4 +68,3 @@ Return Value:
 {
     Context->Rax = (ULONG64)CorExeMain;
 }
-

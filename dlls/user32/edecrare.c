@@ -22,10 +22,10 @@ extern LOOKASIDE EditLookaside;
 /*
  * Those two macros assume PED can be referred as "ped."
  */
-#define GetCharABCWidthsAorW    ((ped)->fAnsi ? GetCharABCWidthsA : GetCharABCWidthsW)
-#define GetCharWidthAorW        ((ped)->fAnsi ? GetCharWidthA : GetCharWidthW)
+#define GetCharABCWidthsAorW ((ped)->fAnsi ? GetCharABCWidthsA : GetCharABCWidthsW)
+#define GetCharWidthAorW ((ped)->fAnsi ? GetCharWidthA : GetCharWidthW)
 
-#define umin(a, b)  ((unsigned)(a) < (unsigned)(b) ? (unsigned)(a) : (unsigned)(b))
+#define umin(a, b) ((unsigned)(a) < (unsigned)(b) ? (unsigned)(a) : (unsigned)(b))
 
 typedef BOOL (*PFNABCWIDTHS)(HDC, UINT, UINT, LPABC);
 typedef BOOL (*PFNCHARWIDTH)(HDC, UINT, UINT, LPINT);
@@ -36,9 +36,9 @@ typedef BOOL (*PFNCHARWIDTH)(HDC, UINT, UINT, LPINT);
 *                       negative A or C widths.
 *
 \***************************************************************************/
-DWORD GetMaxOverlapChars( void )
+DWORD GetMaxOverlapChars(void)
 {
-    return (DWORD) MAKELONG( gpsi->wMaxLeftOverlapChars, gpsi->wMaxRightOverlapChars ) ;
+    return (DWORD)MAKELONG(gpsi->wMaxLeftOverlapChars, gpsi->wMaxRightOverlapChars);
 }
 
 /***************************************************************************\
@@ -46,15 +46,17 @@ DWORD GetMaxOverlapChars( void )
 *  ECSetMargin()
 *
 \***************************************************************************/
-void ECSetMargin(PED ped, UINT  wFlags, long lMarginValues, BOOL fRedraw)
+void ECSetMargin(PED ped, UINT wFlags, long lMarginValues, BOOL fRedraw)
 {
     BOOL fUseFontInfo = FALSE;
     UINT wValue, wOldLeftMargin, wOldRightMargin;
 
 
-    if (wFlags & EC_LEFTMARGIN)  /* Set the left margin */ {
+    if (wFlags & EC_LEFTMARGIN) /* Set the left margin */
+    {
 
-        if ((int) (wValue = (int)(short)LOWORD(lMarginValues)) < 0) {
+        if ((int)(wValue = (int)(short)LOWORD(lMarginValues)) < 0)
+        {
             fUseFontInfo = TRUE;
             wValue = min((ped->aveCharWidth / 2), (int)ped->wMaxNegA);
         }
@@ -64,9 +66,11 @@ void ECSetMargin(PED ped, UINT  wFlags, long lMarginValues, BOOL fRedraw)
         ped->wLeftMargin = wValue;
     }
 
-    if (wFlags & EC_RIGHTMARGIN)  /* Set the Right margin */ {
+    if (wFlags & EC_RIGHTMARGIN) /* Set the Right margin */
+    {
 
-        if ((int) (wValue = (int)(short)HIWORD(lMarginValues)) < 0) {
+        if ((int)(wValue = (int)(short)HIWORD(lMarginValues)) < 0)
+        {
             fUseFontInfo = TRUE;
             wValue = min((ped->aveCharWidth / 2), (int)ped->wMaxNegC);
         }
@@ -76,16 +80,20 @@ void ECSetMargin(PED ped, UINT  wFlags, long lMarginValues, BOOL fRedraw)
         ped->wRightMargin = wValue;
     }
 
-    if (fUseFontInfo) {
-        if (ped->rcFmt.right - ped->rcFmt.left < 2 * ped->aveCharWidth) {
+    if (fUseFontInfo)
+    {
+        if (ped->rcFmt.right - ped->rcFmt.left < 2 * ped->aveCharWidth)
+        {
             RIPMSG0(RIP_WARNING, "ECSetMargin: rcFmt is too narrow for EC_USEFONTINFO");
 
-            if (wFlags & EC_LEFTMARGIN)  /* Reset the left margin */ {
+            if (wFlags & EC_LEFTMARGIN) /* Reset the left margin */
+            {
                 ped->rcFmt.left += wOldLeftMargin - ped->wLeftMargin;
                 ped->wLeftMargin = wOldLeftMargin;
             }
 
-            if (wFlags & EC_RIGHTMARGIN)  /* Reset the Right margin */ {
+            if (wFlags & EC_RIGHTMARGIN) /* Reset the Right margin */
+            {
                 ped->rcFmt.right -= wOldRightMargin - ped->wRightMargin;
                 ped->wRightMargin = wOldRightMargin;
             }
@@ -94,8 +102,9 @@ void ECSetMargin(PED ped, UINT  wFlags, long lMarginValues, BOOL fRedraw)
         }
     }
 
-//    NtUserInvalidateRect(ped->hwnd, NULL, TRUE);
-    if (fRedraw) {
+    //    NtUserInvalidateRect(ped->hwnd, NULL, TRUE);
+    if (fRedraw)
+    {
         ECInvalidateClient(ped, TRUE);
     }
 }
@@ -111,56 +120,67 @@ void ECCalcMarginForDBCSFont(PED ped, BOOL fRedraw)
     if (!ped->fTrueType)
         return;
 
-    if (!ped->fSingle) {
+    if (!ped->fSingle)
+    {
         // wMaxNegA came from ABC CharWidth.
-        if (ped->wMaxNegA != 0) {
-            ECSetMargin(ped, EC_LEFTMARGIN | EC_RIGHTMARGIN,
-                    MAKELONG(EC_USEFONTINFO, EC_USEFONTINFO),fRedraw);
+        if (ped->wMaxNegA != 0)
+        {
+            ECSetMargin(ped, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(EC_USEFONTINFO, EC_USEFONTINFO), fRedraw);
         }
-    } else {
-        int    iMaxNegA = 0, iMaxNegC = 0;
-        int    i;
-        PVOID  lpBuffer;
-        LPABC  lpABCBuff;
-        ABC    ABCInfo;
-        HFONT  hOldFont;
-        HDC    hdc = NtUserGetDC(ped->hwnd);
+    }
+    else
+    {
+        int iMaxNegA = 0, iMaxNegC = 0;
+        int i;
+        PVOID lpBuffer;
+        LPABC lpABCBuff;
+        ABC ABCInfo;
+        HFONT hOldFont;
+        HDC hdc = NtUserGetDC(ped->hwnd);
 
-        if (!ped->hFont || !(hOldFont = SelectFont(hdc, ped->hFont))) {
+        if (!ped->hFont || !(hOldFont = SelectFont(hdc, ped->hFont)))
+        {
             ReleaseDC(ped->hwnd, hdc);
             return;
         }
 
-        if (lpBuffer = UserLocalAlloc(0,sizeof(ABC) * 256)) {
+        if (lpBuffer = UserLocalAlloc(0, sizeof(ABC) * 256))
+        {
             lpABCBuff = lpBuffer;
             GetCharABCWidthsAorW(hdc, 0, 255, lpABCBuff);
-        } else {
+        }
+        else
+        {
             lpABCBuff = &ABCInfo;
             GetCharABCWidthsAorW(hdc, 0, 0, lpABCBuff);
         }
 
         i = 0;
-        while (TRUE) {
+        while (TRUE)
+        {
             iMaxNegA = min(iMaxNegA, lpABCBuff->abcA);
             iMaxNegC = min(iMaxNegC, lpABCBuff->abcC);
             if (++i == 256)
                 break;
-            if (lpBuffer) {
+            if (lpBuffer)
+            {
                 lpABCBuff++;
-            } else {
+            }
+            else
+            {
                 GetCharABCWidthsAorW(hdc, i, i, lpABCBuff);
             }
         }
 
         SelectFont(hdc, hOldFont);
 
-        if (lpBuffer) UserLocalFree(lpBuffer);
+        if (lpBuffer)
+            UserLocalFree(lpBuffer);
 
         ReleaseDC(ped->hwnd, hdc);
 
         if ((iMaxNegA != 0) || (iMaxNegC != 0))
-           ECSetMargin(ped, EC_LEFTMARGIN | EC_RIGHTMARGIN,
-                    MAKELONG((UINT)(-iMaxNegC), (UINT)(-iMaxNegA)),fRedraw);
+            ECSetMargin(ped, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG((UINT)(-iMaxNegC), (UINT)(-iMaxNegA)), fRedraw);
     }
 
     return;
@@ -184,21 +204,22 @@ CONST WCHAR AveCharWidthData[] = L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRS
 //
 int UserGetCharDimensionsEx(HDC hDC, HFONT hfont, LPTEXTMETRIC lptm, LPINT lpcy)
 {
-    int         cxWidth;
-    TEXTMETRIC  tm;
-    LOGFONTW    lf;
-    WCHAR       wchFaceName[LF_FACESIZE];
+    int cxWidth;
+    TEXTMETRIC tm;
+    LOGFONTW lf;
+    WCHAR wchFaceName[LF_FACESIZE];
 
     //
     // Is this font vertical font ??
     //
     wchFaceName[0] = 0;
     GetTextFaceW(hDC, LF_FACESIZE, wchFaceName);
-    if (wchFaceName[0] != L'@') {
+    if (wchFaceName[0] != L'@')
+    {
         //
         // if not call GDI...
         //
-        return(GdiGetCharDimensions(hDC, lptm, lpcy));
+        return (GdiGetCharDimensions(hDC, lptm, lpcy));
     }
 
     if (!lptm)
@@ -212,14 +233,20 @@ int UserGetCharDimensionsEx(HDC hDC, HFONT hfont, LPTEXTMETRIC lptm, LPINT lpcy)
     //   If this bit is clear the font is a fixed pitch font.
     // Note very carefully that those meanings are the opposite of what the constant name implies.
     //
-    if (!(lptm->tmPitchAndFamily & TMPF_FIXED_PITCH)) { // If !variable_width font
+    if (!(lptm->tmPitchAndFamily & TMPF_FIXED_PITCH))
+    { // If !variable_width font
         // This is fixed pitch font....
         cxWidth = lptm->tmAveCharWidth;
-    } else {
+    }
+    else
+    {
         // This is variable pitch font...
-        if (hfont && GetObjectW(hfont, sizeof(LOGFONTW), &lf) && (lf.lfEscapement != 0)) {
+        if (hfont && GetObjectW(hfont, sizeof(LOGFONTW), &lf) && (lf.lfEscapement != 0))
+        {
             cxWidth = lptm->tmAveCharWidth;
-        } else {
+        }
+        else
+        {
             SIZE size;
             GetTextExtentPointW(hDC, AveCharWidthData, 52, &size);
             cxWidth = ((size.cx / 26) + 1) / 2;
@@ -229,7 +256,7 @@ int UserGetCharDimensionsEx(HDC hDC, HFONT hfont, LPTEXTMETRIC lptm, LPINT lpcy)
     if (lpcy)
         *lpcy = lptm->tmHeight;
 
-    return(cxWidth);
+    return (cxWidth);
 }
 
 /***************************************************************************\
@@ -244,15 +271,12 @@ int UserGetCharDimensionsEx(HDC hDC, HFONT hfont, LPTEXTMETRIC lptm, LPINT lpcy)
 * History:
 \***************************************************************************/
 
-ICH ECGetText(
-    PED ped,
-    ICH maxCchToCopy,
-    LPSTR lpBuffer,
-    BOOL fNullTerminate)
+ICH ECGetText(PED ped, ICH maxCchToCopy, LPSTR lpBuffer, BOOL fNullTerminate)
 {
     PSTR pText;
 
-    if (maxCchToCopy) {
+    if (maxCchToCopy)
+    {
 
         /*
          * Zero terminator takes the extra byte
@@ -270,7 +294,7 @@ ICH ECGetText(
             *(((LPWSTR)lpBuffer) + maxCchToCopy) = 0;
 
         pText = ECLock(ped);
-        RtlCopyMemory(lpBuffer, pText, maxCchToCopy*ped->cbChar);
+        RtlCopyMemory(lpBuffer, pText, maxCchToCopy * ped->cbChar);
         ECUnlock(ped);
     }
 
@@ -283,10 +307,7 @@ ICH ECGetText(
 * History:
 \***************************************************************************/
 
-BOOL ECNcCreate(
-    PED ped,
-    PWND pwnd,
-    LPCREATESTRUCT lpCreateStruct)
+BOOL ECNcCreate(PED ped, PWND pwnd, LPCREATESTRUCT lpCreateStruct)
 {
     HWND hwnd = HWq(pwnd);
     BOOL fAnsi;
@@ -339,8 +360,10 @@ BOOL ECNcCreate(
     if (TestWF(pwnd, WFDISABLED))
         ped->fDisabled = TRUE;
 
-    if (TestWF(pwnd, EFREADONLY)) {
-        if (!ped->fWin31Compat) {
+    if (TestWF(pwnd, EFREADONLY))
+    {
+        if (!ped->fWin31Compat)
+        {
             /*
              * BACKWARD COMPATIBILITY HACK
              *
@@ -348,8 +371,9 @@ BOOL ECNcCreate(
              * style here for all Win3.0 apps (this style is new for Win3.1).
              * Fix for Bug #12982 -- SANKAR -- 01/24/92 --
              */
-             ClearWindowState(pwnd, EFREADONLY);
-        } else
+            ClearWindowState(pwnd, EFREADONLY);
+        }
+        else
             ped->fReadOnly = TRUE;
     }
 
@@ -360,11 +384,12 @@ BOOL ECNcCreate(
      * Multiline will allocate in the local ds but the app may free this and
      * allocate storage elsewhere...
      */
-    ped->hText = LOCALALLOC(LHND, CCHALLOCEXTRA*ped->cbChar, ped->hInstance);
-    if (!ped->hText) {
+    ped->hText = LOCALALLOC(LHND, CCHALLOCEXTRA * ped->cbChar, ped->hInstance);
+    if (!ped->hText)
+    {
         FreeLookasideEntry(&EditLookaside, ped);
         NtUserSetWindowFNID(hwnd, FNID_CLEANEDUP_BIT); /* No ped for this window */
-        return FALSE; /* If no_memory error */
+        return FALSE;                                  /* If no_memory error */
     }
 
     ped->cchAlloc = CCHALLOCEXTRA;
@@ -375,8 +400,7 @@ BOOL ECNcCreate(
 
     ped->wImeStatus = 0;
 
-    return (BOOL)DefWindowProcWorker(pwnd, WM_NCCREATE, 0,
-            (LPARAM)lpCreateStruct, fAnsi);
+    return (BOOL)DefWindowProcWorker(pwnd, WM_NCCREATE, 0, (LPARAM)lpCreateStruct, fAnsi);
 }
 
 /***************************************************************************\
@@ -385,9 +409,7 @@ BOOL ECNcCreate(
 * History:
 \***************************************************************************/
 
-BOOL ECCreate(
-    PED ped,
-    LONG windowStyle)
+BOOL ECCreate(PED ped, LONG windowStyle)
 {
     HDC hdc;
 
@@ -423,9 +445,11 @@ BOOL ECCreate(
     // EC_INSERT_COMPOSITION_CHARACTER: ECCreate() - call ECInitInsert()
     ECInitInsert(ped, THREAD_HKL());
 
-    if(ped->pLpkEditCallout = fpLpkEditControl) {
+    if (ped->pLpkEditCallout = fpLpkEditControl)
+    {
         return ped->pLpkEditCallout->EditCreate(ped, HW(ped->pwnd));
-    } else
+    }
+    else
         return TRUE;
 }
 
@@ -437,16 +461,15 @@ BOOL ECCreate(
 * History:
 \***************************************************************************/
 
-void ECNcDestroyHandler(
-    PWND pwnd,
-    PED ped)
+void ECNcDestroyHandler(PWND pwnd, PED ped)
 {
     PWND pwndParent;
 
     /*
      * ped could be NULL if WM_NCCREATE failed to create it...
      */
-    if (ped) {
+    if (ped)
+    {
 
         /*
          * Free the text buffer (always present?)
@@ -468,7 +491,8 @@ void ECNcDestroyHandler(
         /*
          * Free line start array (if present)
          */
-        if (ped->chLines) {
+        if (ped->chLines)
+        {
             UserLocalFree(ped->chLines);
         }
 
@@ -481,7 +505,8 @@ void ECNcDestroyHandler(
         /*
          * Free the cursor bitmap
          */
-        if (ped->pLpkEditCallout && ped->hCaretBitmap) {
+        if (ped->pLpkEditCallout && ped->hCaretBitmap)
+        {
             DeleteObject(ped->hCaretBitmap);
         }
 
@@ -500,9 +525,10 @@ void ECNcDestroyHandler(
      * If we're part of a combo box, let it know we're gone
      */
     pwndParent = REBASEPWND(pwnd, spwndParent);
-    if (pwndParent && GETFNID(pwndParent) == FNID_COMBOBOX) {
-        ComboBoxWndProcWorker(pwndParent, WM_PARENTNOTIFY,
-                MAKELONG(WM_DESTROY, PTR_TO_ID(pwnd->spmenu)), (LPARAM)HWq(pwnd), FALSE);
+    if (pwndParent && GETFNID(pwndParent) == FNID_COMBOBOX)
+    {
+        ComboBoxWndProcWorker(pwndParent, WM_PARENTNOTIFY, MAKELONG(WM_DESTROY, PTR_TO_ID(pwnd->spmenu)),
+                              (LPARAM)HWq(pwnd), FALSE);
     }
 }
 
@@ -514,16 +540,15 @@ void ECNcDestroyHandler(
 * History:
 \***************************************************************************/
 
-void ECSetPasswordChar(
-    PED ped,
-    UINT pwchar)
+void ECSetPasswordChar(PED ped, UINT pwchar)
 {
     HDC hdc;
     SIZE size;
 
     ped->charPasswordChar = pwchar;
 
-    if (pwchar) {
+    if (pwchar)
+    {
         hdc = ECGetEditDC(ped, TRUE);
         if (ped->fAnsi)
             GetTextExtentPointA(hdc, (LPSTR)&pwchar, 1, &size);
@@ -553,36 +578,34 @@ void ECSetPasswordChar(
 *
 * Note: not used if LPK installed
 \***************************************************************************/
-BOOL   GetNegABCwidthInfo(
-    PED ped,
-    HDC hdc)
+BOOL GetNegABCwidthInfo(PED ped, HDC hdc)
 {
     LPABC lpABCbuff;
-    int   i;
-    int   CharWidthBuff[CHAR_WIDTH_BUFFER_LENGTH]; // Local char width buffer.
-    int   iOverhang;
+    int i;
+    int CharWidthBuff[CHAR_WIDTH_BUFFER_LENGTH]; // Local char width buffer.
+    int iOverhang;
 
-    if (!GetCharABCWidthsA(hdc, 0, CHAR_WIDTH_BUFFER_LENGTH-1, (LPABC)ped->charWidthBuffer)) {
+    if (!GetCharABCWidthsA(hdc, 0, CHAR_WIDTH_BUFFER_LENGTH - 1, (LPABC)ped->charWidthBuffer))
+    {
         RIPMSG0(RIP_WARNING, "GetNegABCwidthInfo: GetCharABCWidthsA Failed");
         return FALSE;
     }
 
-   // The (A+B+C) returned for some fonts (eg: Lucida Caligraphy) does not
-   // equal the actual advanced width returned by GetCharWidths() minus overhang.
-   // This is due to font bugs. So, we adjust the 'B' width so that this
-   // discrepancy is removed.
-   // Fix for Bug #2932 --sankar-- 02/17/93
-   iOverhang = ped->charOverhang;
-   GetCharWidthA(hdc, 0, CHAR_WIDTH_BUFFER_LENGTH-1, (LPINT)CharWidthBuff);
-   lpABCbuff = (LPABC)ped->charWidthBuffer;
-   for(i = 0; i < CHAR_WIDTH_BUFFER_LENGTH; i++) {
-        lpABCbuff->abcB = CharWidthBuff[i] - iOverhang
-                - lpABCbuff->abcA
-                - lpABCbuff->abcC;
+    // The (A+B+C) returned for some fonts (eg: Lucida Caligraphy) does not
+    // equal the actual advanced width returned by GetCharWidths() minus overhang.
+    // This is due to font bugs. So, we adjust the 'B' width so that this
+    // discrepancy is removed.
+    // Fix for Bug #2932 --sankar-- 02/17/93
+    iOverhang = ped->charOverhang;
+    GetCharWidthA(hdc, 0, CHAR_WIDTH_BUFFER_LENGTH - 1, (LPINT)CharWidthBuff);
+    lpABCbuff = (LPABC)ped->charWidthBuffer;
+    for (i = 0; i < CHAR_WIDTH_BUFFER_LENGTH; i++)
+    {
+        lpABCbuff->abcB = CharWidthBuff[i] - iOverhang - lpABCbuff->abcA - lpABCbuff->abcC;
         lpABCbuff++;
-   }
+    }
 
-   return(TRUE);
+    return (TRUE);
 }
 
 /***************************************************************************\
@@ -595,12 +618,9 @@ BOOL   GetNegABCwidthInfo(
 *
 \***************************************************************************/
 
-void ECSize(
-    PED ped,
-    LPRECT lprc,
-    BOOL fRedraw)
+void ECSize(PED ped, LPRECT lprc, BOOL fRedraw)
 {
-    RECT    rc;
+    RECT rc;
 
     /*
      *  BiDi VB32 Creates an Edit Control and immediately sends a WM_SIZE
@@ -608,33 +628,36 @@ void ECSize(
      *  in turn causes a divide by zero exception below. This check for
      *  ped->lineHeight will pick it up safely. [samera] 3/5/97
      */
-    if(ped->lineHeight == 0)
+    if (ped->lineHeight == 0)
         return;
 
     // assume that we won't be able to display the caret
     ped->fCaretHidden = TRUE;
 
 
-    if ( lprc )
+    if (lprc)
         CopyRect(&rc, lprc);
     else
         _GetClientRect(ped->pwnd, &rc);
 
-    if (!(rc.right - rc.left) || !(rc.bottom - rc.top)) {
+    if (!(rc.right - rc.left) || !(rc.bottom - rc.top))
+    {
         if (ped->rcFmt.right - ped->rcFmt.left)
             return;
 
-        rc.left     = 0;
-        rc.top      = 0;
-        rc.right    = ped->aveCharWidth * 10;
-        rc.bottom   = ped->lineHeight;
+        rc.left = 0;
+        rc.top = 0;
+        rc.right = ped->aveCharWidth * 10;
+        rc.bottom = ped->lineHeight;
     }
 
-    if (!lprc) {
+    if (!lprc)
+    {
         // subtract the margins from the given rectangle --
         // make sure that this rectangle is big enough to have these margins.
-        if ((rc.right - rc.left) > (int)(ped->wLeftMargin + ped->wRightMargin)) {
-            rc.left  += ped->wLeftMargin;
+        if ((rc.right - rc.left) > (int)(ped->wLeftMargin + ped->wRightMargin))
+        {
+            rc.left += ped->wLeftMargin;
             rc.right -= ped->wRightMargin;
         }
     }
@@ -644,7 +667,8 @@ void ECSize(
     // For 3.1 compatibility, don't subtract out vertical borders unless
     // there is room.
     //
-    if (ped->fBorder) {
+    if (ped->fBorder)
+    {
         int cxBorder = SYSMET(CXBORDER);
         int cyBorder = SYSMET(CYBORDER);
 
@@ -654,15 +678,15 @@ void ECSize(
             cyBorder *= 2;
         }
 
-        if (rc.bottom < rc.top + ped->lineHeight + 2*cyBorder)
+        if (rc.bottom < rc.top + ped->lineHeight + 2 * cyBorder)
             cyBorder = 0;
 
         InflateRect(&rc, -cxBorder, -cyBorder);
     }
 
     // Is the resulting rectangle too small?  Don't change it then.
-    if ((!ped->fSingle) && ((rc.right - rc.left < (int) ped->aveCharWidth) ||
-        ((rc.bottom - rc.top) / ped->lineHeight == 0)))
+    if ((!ped->fSingle) &&
+        ((rc.right - rc.left < (int)ped->aveCharWidth) || ((rc.bottom - rc.top) / ped->lineHeight == 0)))
         return;
 
     // now, we know we're safe to display the caret
@@ -675,7 +699,8 @@ void ECSize(
     else
         MLSize(ped, fRedraw);
 
-    if (fRedraw) {
+    if (fRedraw)
+    {
         NtUserInvalidateRect(ped->hwnd, NULL, TRUE);
         // UpdateWindow31(ped->hwnd);    Evaluates to NOP in Chicago - Johnl
     }
@@ -689,7 +714,8 @@ void ECSize(
     // restored from maximized window and client area is out
     // of screen, the window will not be redrawn.
     //
-    if (ped->fFocus && fpImmIsIME(THREAD_HKL())) {
+    if (ped->fFocus && fpImmIsIME(THREAD_HKL()))
+    {
         POINT pt;
 
         NtUserGetCaretPos(&pt);
@@ -706,29 +732,28 @@ void ECSize(
 *  in is NULL, assume the system font.
 *
 \***************************************************************************/
-void   ECSetFont(
-    PED ped,
-    HFONT hfont,
-    BOOL fRedraw)
+void ECSetFont(PED ped, HFONT hfont, BOOL fRedraw)
 {
-    short  i;
-    TEXTMETRIC      TextMetrics;
-    HDC             hdc;
-    HFONT           hOldFont=NULL;
-    UINT            wBuffSize;
-    LPINT           lpCharWidthBuff;
-    DWORD           dwMaxOverlapChars;
-    CHWIDTHINFO     cwi;
-    UINT            uExtracharPos;
+    short i;
+    TEXTMETRIC TextMetrics;
+    HDC hdc;
+    HFONT hOldFont = NULL;
+    UINT wBuffSize;
+    LPINT lpCharWidthBuff;
+    DWORD dwMaxOverlapChars;
+    CHWIDTHINFO cwi;
+    UINT uExtracharPos;
 
     hdc = NtUserGetDC(ped->hwnd);
 
-    if (ped->hFont = hfont) {
+    if (ped->hFont = hfont)
+    {
         //
         // Since the default font is the system font, no need to select it in
         // if that's what the user wants.
         //
-        if (!(hOldFont = SelectObject(hdc, hfont))) {
+        if (!(hOldFont = SelectObject(hdc, hfont)))
+        {
             hfont = ped->hFont = NULL;
         }
 
@@ -745,9 +770,11 @@ void   ECSetFont(
         /*
          * This might fail when people uses network fonts (or bad fonts).
          */
-        if (ped->aveCharWidth == 0) {
+        if (ped->aveCharWidth == 0)
+        {
             RIPMSG0(RIP_WARNING, "ECSetFont: GdiGetCharDimensions failed");
-            if (hOldFont != NULL) {
+            if (hOldFont != NULL)
+            {
                 SelectObject(hdc, hOldFont);
             }
 
@@ -760,7 +787,9 @@ void   ECSetFont(
             ECSetFont(ped, NULL, fRedraw);
             return;
         }
-    } else {
+    }
+    else
+    {
         ped->aveCharWidth = gpsi->cxSysFontChar;
         ped->lineHeight = gpsi->cySysFontChar;
         TextMetrics = gpsi->tmSysFont;
@@ -787,14 +816,18 @@ void   ECSetFont(
     // Check for a TrueType font
     // Older app OZWIN chokes if we allocate a bigger buffer for TrueType fonts
     // So, for apps older than 4.0, no special treatment for TrueType fonts.
-    if (ped->f40Compat && (TextMetrics.tmPitchAndFamily & TMPF_TRUETYPE)) {
+    if (ped->f40Compat && (TextMetrics.tmPitchAndFamily & TMPF_TRUETYPE))
+    {
         ped->fTrueType = GetCharWidthInfo(hdc, &cwi);
 #if DBG
-        if (!ped->fTrueType) {
+        if (!ped->fTrueType)
+        {
             RIPMSG0(RIP_WARNING, "ECSetFont: GetCharWidthInfo Failed");
         }
 #endif
-    } else {
+    }
+    else
+    {
         ped->fTrueType = FALSE;
     }
 
@@ -809,10 +842,11 @@ void   ECSetFont(
     // function so that it returns 0 or 1, because I would like to set ped->fDBCS
     // bit field here.
     //
-    ped->fDBCS = ECGetDBCSVector(ped,hdc,TextMetrics.tmCharSet);
+    ped->fDBCS = ECGetDBCSVector(ped, hdc, TextMetrics.tmCharSet);
     ped->charSet = TextMetrics.tmCharSet;
 
-    if (ped->fDBCS) {
+    if (ped->fDBCS)
+    {
         //
         // Free the character width buffer if ped->fDBCS.
         //
@@ -820,7 +854,8 @@ void   ECSetFont(
         // GetTextExtentPoint call (because the graphic engine has a cache buffer).
         // See editec.c/ECTabTheTextOut().
         //
-        if (ped->charWidthBuffer) {
+        if (ped->charWidthBuffer)
+        {
             LocalFree(ped->charWidthBuffer);
             ped->charWidthBuffer = NULL;
         }
@@ -831,14 +866,17 @@ void   ECSetFont(
         // TextMetrics.tmMaxCharWidth = FullWidthChar width
         // ped->aveCharWidth          = HalfWidthChar width
         //
-        if (ped->fNonPropFont &&
-            ((ped->aveCharWidth * 2) == TextMetrics.tmMaxCharWidth)) {
+        if (ped->fNonPropFont && ((ped->aveCharWidth * 2) == TextMetrics.tmMaxCharWidth))
+        {
             ped->fNonPropDBCS = TRUE;
-        } else {
+        }
+        else
+        {
             ped->fNonPropDBCS = FALSE;
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // Since the font has changed, let us obtain and save the character width
@@ -847,26 +885,33 @@ void   ECSetFont(
         // First left us find out if the maximum chars that can overlap due to
         // negative widths. Since we can't access USER globals, we make a call here.
         //
-        if (!(ped->fSingle || ped->pLpkEditCallout)) {  // Is this a multiline edit control with no LPK present?
+        if (!(ped->fSingle || ped->pLpkEditCallout))
+        { // Is this a multiline edit control with no LPK present?
             //
             // For multiline edit controls, we maintain a buffer that contains
             // the character width information.
             //
-            wBuffSize = (ped->fTrueType) ? (CHAR_WIDTH_BUFFER_LENGTH * sizeof(ABC)) :
-                                           (CHAR_WIDTH_BUFFER_LENGTH * sizeof(int));
+            wBuffSize =
+                (ped->fTrueType) ? (CHAR_WIDTH_BUFFER_LENGTH * sizeof(ABC)) : (CHAR_WIDTH_BUFFER_LENGTH * sizeof(int));
 
-            if (ped->charWidthBuffer) { /* If buffer already present */
+            if (ped->charWidthBuffer)
+            { /* If buffer already present */
                 lpCharWidthBuff = ped->charWidthBuffer;
                 ped->charWidthBuffer = UserLocalReAlloc(lpCharWidthBuff, wBuffSize, HEAP_ZERO_MEMORY);
-                if (ped->charWidthBuffer == NULL) {
+                if (ped->charWidthBuffer == NULL)
+                {
                     UserLocalFree((HANDLE)lpCharWidthBuff);
                 }
-            } else {
+            }
+            else
+            {
                 ped->charWidthBuffer = UserLocalAlloc(HEAP_ZERO_MEMORY, wBuffSize);
             }
 
-            if (ped->charWidthBuffer != NULL) {
-                if (ped->fTrueType) {
+            if (ped->charWidthBuffer != NULL)
+            {
+                if (ped->fTrueType)
+                {
                     ped->fTrueType = GetNegABCwidthInfo(ped, hdc);
                 }
 
@@ -874,16 +919,20 @@ void   ECSetFont(
                  * It is possible that the above attempts could have failed and reset
                  * the value of fTrueType. So, let us check that value again.
                  */
-                if (!ped->fTrueType) {
-                    if (!GetCharWidthA(hdc, 0, CHAR_WIDTH_BUFFER_LENGTH-1, ped->charWidthBuffer)) {
+                if (!ped->fTrueType)
+                {
+                    if (!GetCharWidthA(hdc, 0, CHAR_WIDTH_BUFFER_LENGTH - 1, ped->charWidthBuffer))
+                    {
                         UserLocalFree((HANDLE)ped->charWidthBuffer);
-                        ped->charWidthBuffer=NULL;
-                    } else {
+                        ped->charWidthBuffer = NULL;
+                    }
+                    else
+                    {
                         /*
                          * We need to subtract out the overhang associated with
                          * each character since GetCharWidth includes it...
                          */
-                        for (i=0;i < CHAR_WIDTH_BUFFER_LENGTH;i++)
+                        for (i = 0; i < CHAR_WIDTH_BUFFER_LENGTH; i++)
                             ped->charWidthBuffer[i] -= ped->charOverhang;
                     }
                 }
@@ -896,7 +945,8 @@ void   ECSetFont(
          * Calculate MaxNeg A C metrics
          */
         dwMaxOverlapChars = GetMaxOverlapChars();
-        if (ped->fTrueType) {
+        if (ped->fTrueType)
+        {
             if (cwi.lMaxNegA < 0)
                 ped->wMaxNegA = -cwi.lMaxNegA;
             else
@@ -905,52 +955,62 @@ void   ECSetFont(
                 ped->wMaxNegC = -cwi.lMaxNegC;
             else
                 ped->wMaxNegC = 0;
-            if (cwi.lMinWidthD != 0) {
+            if (cwi.lMinWidthD != 0)
+            {
                 ped->wMaxNegAcharPos = (ped->wMaxNegA + cwi.lMinWidthD - 1) / cwi.lMinWidthD;
                 ped->wMaxNegCcharPos = (ped->wMaxNegC + cwi.lMinWidthD - 1) / cwi.lMinWidthD;
-                if (ped->wMaxNegA + ped->wMaxNegC > (UINT)cwi.lMinWidthD) {
+                if (ped->wMaxNegA + ped->wMaxNegC > (UINT)cwi.lMinWidthD)
+                {
                     uExtracharPos = (ped->wMaxNegA + ped->wMaxNegC - 1) / cwi.lMinWidthD;
                     ped->wMaxNegAcharPos += uExtracharPos;
                     ped->wMaxNegCcharPos += uExtracharPos;
                 }
-            } else {
-                ped->wMaxNegAcharPos = LOWORD(dwMaxOverlapChars);     // Left
-                ped->wMaxNegCcharPos = HIWORD(dwMaxOverlapChars);     // Right
             }
-
-        } else if (ped->charOverhang != 0) {
+            else
+            {
+                ped->wMaxNegAcharPos = LOWORD(dwMaxOverlapChars); // Left
+                ped->wMaxNegCcharPos = HIWORD(dwMaxOverlapChars); // Right
+            }
+        }
+        else if (ped->charOverhang != 0)
+        {
             /*
              * Some bitmaps fonts (i.e., italic) have under/overhangs;
              *  this is pretty much like having negative A and C widths.
              */
             ped->wMaxNegA = ped->wMaxNegC = ped->charOverhang;
-            ped->wMaxNegAcharPos = LOWORD(dwMaxOverlapChars);     // Left
-            ped->wMaxNegCcharPos = HIWORD(dwMaxOverlapChars);     // Right
+            ped->wMaxNegAcharPos = LOWORD(dwMaxOverlapChars); // Left
+            ped->wMaxNegCcharPos = HIWORD(dwMaxOverlapChars); // Right
         }
     } /* if (ped->fDBCS) */
 
-    if (!hfont) {
+    if (!hfont)
+    {
         //
         // We are getting the stats for the system font so update the system
         // font fields in the ed structure since we use these when calculating
         // some spacing.
         //
         ped->cxSysCharWidth = ped->aveCharWidth;
-        ped->cySysCharHeight= ped->lineHeight;
-    } else if (hOldFont)
+        ped->cySysCharHeight = ped->lineHeight;
+    }
+    else if (hOldFont)
         SelectObject(hdc, hOldFont);
 
-    if (ped->fFocus) {
+    if (ped->fFocus)
+    {
         //
         // Update the caret.
         //
         NtUserHideCaret(ped->hwnd);
         NtUserDestroyCaret();
 
-        if (ped->pLpkEditCallout) {
-            ped->pLpkEditCallout->EditCreateCaret (ped, hdc, ECGetCaretWidth(), ped->lineHeight, 0);
+        if (ped->pLpkEditCallout)
+        {
+            ped->pLpkEditCallout->EditCreateCaret(ped, hdc, ECGetCaretWidth(), ped->lineHeight, 0);
         }
-        else {
+        else
+        {
             NtUserCreateCaret(ped->hwnd, (HBITMAP)NULL, ECGetCaretWidth(), ped->lineHeight);
         }
         NtUserShowCaret(ped->hwnd);
@@ -973,19 +1033,21 @@ void   ECSetFont(
     //
 
     if (ped->fTrueType && (GETAPPVER() >= VER40))
-        if (ped->fDBCS) {
+        if (ped->fDBCS)
+        {
             // For DBCS TrueType Font, we calc margin from ABC width.
             ECCalcMarginForDBCSFont(ped, fRedraw);
-        } else {
-            ECSetMargin(ped, EC_LEFTMARGIN | EC_RIGHTMARGIN,
-                        MAKELONG(EC_USEFONTINFO, EC_USEFONTINFO), fRedraw);
+        }
+        else
+        {
+            ECSetMargin(ped, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(EC_USEFONTINFO, EC_USEFONTINFO), fRedraw);
         }
 
     //
     // We need to calc maxPixelWidth when font changes.
     // If the word-wrap is ON, then this is done in MLSize() called later.
     //
-    if((!ped->fSingle) && (!ped->fWrap))
+    if ((!ped->fSingle) && (!ped->fWrap))
         MLBuildchLines(ped, 0, 0, FALSE, NULL, NULL);
 
     //
@@ -993,11 +1055,11 @@ void   ECSetFont(
     //
     ECSize(ped, NULL, fRedraw);
 
-    if ( ped->fFocus && fpImmIsIME(THREAD_HKL()) ) {
-        ECImmSetCompositionFont( ped );
+    if (ped->fFocus && fpImmIsIME(THREAD_HKL()))
+    {
+        ECImmSetCompositionFont(ped);
     }
 }
-
 
 
 /***************************************************************************\
@@ -1008,17 +1070,18 @@ void   ECSetFont(
 *  For multiline and singleline edit controls with the ES_NUMBER style.
 *
 \***************************************************************************/
-BOOL ECIsCharNumeric(
-    PED ped,
-    DWORD keyPress)
+BOOL ECIsCharNumeric(PED ped, DWORD keyPress)
 {
     WORD wCharType;
 
-    if (ped->fAnsi) {
+    if (ped->fAnsi)
+    {
         char ch = (char)keyPress;
         LCID lcid = (LCID)((ULONG_PTR)THREAD_HKL() & 0xFFFF);
         GetStringTypeA(lcid, CT_CTYPE1, &ch, 1, &wCharType);
-    } else {
+    }
+    else
+    {
         WCHAR wch = (WCHAR)keyPress;
         GetStringTypeW(CT_CTYPE1, &wch, 1, &wCharType);
     }
@@ -1035,39 +1098,44 @@ BOOL ECIsCharNumeric(
 *  04/15/96 by takaok       Ported to NT 4.0
 *
 \***************************************************************************/
-VOID ECEnableDisableIME( PED ped )
+VOID ECEnableDisableIME(PED ped)
 {
-    if ( ped->fReadOnly || ped->charPasswordChar ) {
-    //
-    // IME should be disabled
-    //
+    if (ped->fReadOnly || ped->charPasswordChar)
+    {
+        //
+        // IME should be disabled
+        //
         HIMC hImc;
-        hImc = fpImmGetContext( ped->hwnd );
+        hImc = fpImmGetContext(ped->hwnd);
 
-        if ( hImc != NULL_HIMC ) {
-            fpImmReleaseContext( ped->hwnd, hImc );
-            ped->hImcPrev = fpImmAssociateContext( ped->hwnd, NULL_HIMC );
+        if (hImc != NULL_HIMC)
+        {
+            fpImmReleaseContext(ped->hwnd, hImc);
+            ped->hImcPrev = fpImmAssociateContext(ped->hwnd, NULL_HIMC);
         }
-
-    } else {
-    //
-    // IME should be enabled
-    //
-        if ( ped->hImcPrev != NULL_HIMC ) {
-            ped->hImcPrev = fpImmAssociateContext( ped->hwnd, ped->hImcPrev );
+    }
+    else
+    {
+        //
+        // IME should be enabled
+        //
+        if (ped->hImcPrev != NULL_HIMC)
+        {
+            ped->hImcPrev = fpImmAssociateContext(ped->hwnd, ped->hImcPrev);
 
             //
             // Font and the caret position might be changed while
             // IME was being disabled. Set those now if the window
             // has the focus.
             //
-            if ( ped->fFocus ) {
+            if (ped->fFocus)
+            {
                 POINT pt;
 
-                ECImmSetCompositionFont( ped );
+                ECImmSetCompositionFont(ped);
 
-                NtUserGetCaretPos( &pt );
-                ECImmSetCompositionWindow( ped, pt.x, pt.y  );
+                NtUserGetCaretPos(&pt);
+                ECImmSetCompositionWindow(ped, pt.x, pt.y);
             }
         }
     }
@@ -1083,22 +1151,26 @@ VOID ECEnableDisableIME( PED ped )
 *  xx/xx/95 by kazum        Ported to NT-J 3.51
 *  04/15/96 by takaok       Ported to NT 4.0
 \***************************************************************************/
-VOID ECImmSetCompositionWindow( PED ped, LONG x, LONG y )
+VOID ECImmSetCompositionWindow(PED ped, LONG x, LONG y)
 {
     COMPOSITIONFORM cf;
     COMPOSITIONFORM cft;
     RECT rcScreenWindow;
     HIMC hImc;
 
-    hImc = fpImmGetContext( ped->hwnd );
-    if ( hImc != NULL_HIMC ) {
+    hImc = fpImmGetContext(ped->hwnd);
+    if (hImc != NULL_HIMC)
+    {
 
-        if ( ped->fFocus ) {
-            GetWindowRect( ped->hwnd, &rcScreenWindow);
+        if (ped->fFocus)
+        {
+            GetWindowRect(ped->hwnd, &rcScreenWindow);
             // assuming RECT.left is the first and and RECT.top is the second field
-            MapWindowPoints( ped->hwnd, HWND_DESKTOP, (LPPOINT)&rcScreenWindow, 2);
-            if (ped->fInReconversion) {
-                DWORD dwPoint = (DWORD)(ped->fAnsi ? SendMessageA : SendMessageW)(ped->hwnd, EM_POSFROMCHAR, ped->ichMinSel, 0);
+            MapWindowPoints(ped->hwnd, HWND_DESKTOP, (LPPOINT)&rcScreenWindow, 2);
+            if (ped->fInReconversion)
+            {
+                DWORD dwPoint =
+                    (DWORD)(ped->fAnsi ? SendMessageA : SendMessageW)(ped->hwnd, EM_POSFROMCHAR, ped->ichMinSel, 0);
 
                 x = GET_X_LPARAM(dwPoint);
                 y = GET_Y_LPARAM(dwPoint);
@@ -1108,7 +1180,8 @@ VOID ECImmSetCompositionWindow( PED ped, LONG x, LONG y )
             //
             // The window currently has the focus.
             //
-            if (ped->fSingle) {
+            if (ped->fSingle)
+            {
                 //
                 // Single line edit control.
                 //
@@ -1116,8 +1189,9 @@ VOID ECImmSetCompositionWindow( PED ped, LONG x, LONG y )
                 cf.ptCurrentPos.x = x;
                 cf.ptCurrentPos.y = y;
                 SetRectEmpty(&cf.rcArea);
-
-            } else {
+            }
+            else
+            {
                 //
                 // Multi line edit control.
                 //
@@ -1126,17 +1200,17 @@ VOID ECImmSetCompositionWindow( PED ped, LONG x, LONG y )
                 cf.ptCurrentPos.y = y;
                 cf.rcArea = ped->rcFmt;
             }
-            fpImmGetCompositionWindow( hImc, &cft );
-            if ( (!RtlEqualMemory(&cf,&cft,sizeof(COMPOSITIONFORM))) ||
-                 (ped->ptScreenBounding.x != rcScreenWindow.left)    ||
-                 (ped->ptScreenBounding.y  != rcScreenWindow.top) ) {
+            fpImmGetCompositionWindow(hImc, &cft);
+            if ((!RtlEqualMemory(&cf, &cft, sizeof(COMPOSITIONFORM))) ||
+                (ped->ptScreenBounding.x != rcScreenWindow.left) || (ped->ptScreenBounding.y != rcScreenWindow.top))
+            {
 
                 ped->ptScreenBounding.x = rcScreenWindow.left;
                 ped->ptScreenBounding.y = rcScreenWindow.top;
-                fpImmSetCompositionWindow( hImc, &cf );
+                fpImmSetCompositionWindow(hImc, &cf);
             }
         }
-        fpImmReleaseContext( ped->hwnd, hImc );
+        fpImmReleaseContext(ped->hwnd, hImc);
     }
 }
 
@@ -1148,24 +1222,24 @@ VOID ECImmSetCompositionWindow( PED ped, LONG x, LONG y )
 *  xx/xx/95 by kazum        Ported to NT-J 3.51
 *  04/15/96 by takaok       Ported to NT 4.0
 \***************************************************************************/
-VOID  ECImmSetCompositionFont( PED ped )
+VOID ECImmSetCompositionFont(PED ped)
 {
     HIMC hImc;
     LOGFONTW lf;
 
-    if ( (hImc = fpImmGetContext( ped->hwnd )) != NULL_HIMC ) {
+    if ((hImc = fpImmGetContext(ped->hwnd)) != NULL_HIMC)
+    {
 
-        if (ped->hFont) {
-            GetObjectW( ped->hFont,
-                        sizeof(LOGFONTW),
-                        (LPLOGFONTW)&lf);
-        } else {
-            GetObjectW( GetStockObject(SYSTEM_FONT),
-                        sizeof(LOGFONTW),
-                        (LPLOGFONTW)&lf);
+        if (ped->hFont)
+        {
+            GetObjectW(ped->hFont, sizeof(LOGFONTW), (LPLOGFONTW)&lf);
         }
-        fpImmSetCompositionFontW( hImc, &lf );
-        fpImmReleaseContext( ped->hwnd, hImc );
+        else
+        {
+            GetObjectW(GetStockObject(SYSTEM_FONT), sizeof(LOGFONTW), (LPLOGFONTW)&lf);
+        }
+        fpImmSetCompositionFontW(hImc, &lf);
+        fpImmReleaseContext(ped->hwnd, hImc);
     }
 }
 
@@ -1181,15 +1255,17 @@ VOID  ECImmSetCompositionFont( PED ped )
 *
 *  04/15/96 by takaok       Created
 \***************************************************************************/
-VOID ECInitInsert( PED ped, HKL hkl )
+VOID ECInitInsert(PED ped, HKL hkl)
 {
     ped->fKorea = FALSE;
     ped->fInsertCompChr = FALSE;
     ped->fNoMoveCaret = FALSE;
     ped->fResultProcess = FALSE;
 
-    if ( fpImmIsIME(hkl) ) {
-        if (  PRIMARYLANGID(LOWORD(HandleToUlong(hkl))) == LANG_KOREAN ) {
+    if (fpImmIsIME(hkl))
+    {
+        if (PRIMARYLANGID(LOWORD(HandleToUlong(hkl))) == LANG_KOREAN)
+        {
 
             ped->fKorea = TRUE;
         }
@@ -1199,7 +1275,8 @@ VOID ECInitInsert( PED ped, HKL hkl )
         // For now, we can safely assume that only Korean IMEs
         // set CS_INSERTCHAR.
         //
-        if ( ped->fKorea ) {
+        if (ped->fKorea)
+        {
             ped->fInsertCompChr = TRUE;
         }
     }
@@ -1208,9 +1285,10 @@ VOID ECInitInsert( PED ped, HKL hkl )
     // if we had a composition character, the shape of caret
     // is changed. We need to reset the caret shape.
     //
-    if ( ped->fReplaceCompChr ) {
+    if (ped->fReplaceCompChr)
+    {
         ped->fReplaceCompChr = FALSE;
-        ECSetCaretHandler( ped );
+        ECSetCaretHandler(ped);
     }
 }
 
@@ -1225,47 +1303,47 @@ VOID ECInitInsert( PED ped, HKL hkl )
 
 void ECSetCaretHandler(PED ped)
 {
-    HDC     hdc;
-    SIZE    size;
-    PSTR    pText;
+    HDC hdc;
+    SIZE size;
+    PSTR pText;
 
-//    if (!ped->fInsertCompChr || ped->fReadOnly)
-//        return;
+    //    if (!ped->fInsertCompChr || ped->fReadOnly)
+    //        return;
 
     // In any case destroy caret beforehand otherwise SetCaretPos()
     // will get crazy.. win95d-B#992,B#2370
     //
-    if (ped->fFocus) {
+    if (ped->fFocus)
+    {
 
         NtUserHideCaret(ped->hwnd);
         DestroyCaret();
-        if ( ped->fReplaceCompChr ) {
+        if (ped->fReplaceCompChr)
+        {
 
-            hdc = ECGetEditDC(ped, TRUE );
+            hdc = ECGetEditDC(ped, TRUE);
             pText = ECLock(ped);
 
-            if ( ped->fAnsi)
-                 GetTextExtentPointA(hdc, pText + ped->ichCaret, 2, &size);
+            if (ped->fAnsi)
+                GetTextExtentPointA(hdc, pText + ped->ichCaret, 2, &size);
             else
-                 GetTextExtentPointW(hdc, (LPWSTR)pText + ped->ichCaret, 1, &size);
+                GetTextExtentPointW(hdc, (LPWSTR)pText + ped->ichCaret, 1, &size);
 
             ECUnlock(ped);
             ECReleaseEditDC(ped, hdc, TRUE);
 
             CreateCaret(ped->hwnd, (HBITMAP)NULL, size.cx, ped->lineHeight);
         }
-        else {
-            CreateCaret(ped->hwnd,
-                        (HBITMAP)NULL,
-                        (ped->cxSysCharWidth > ped->aveCharWidth ? 1 : 2),
-                        ped->lineHeight);
+        else
+        {
+            CreateCaret(ped->hwnd, (HBITMAP)NULL, (ped->cxSysCharWidth > ped->aveCharWidth ? 1 : 2), ped->lineHeight);
         }
 
-        hdc = ECGetEditDC(ped, TRUE );
-        if ( ped->fSingle )
-            SLSetCaretPosition( ped, hdc );
+        hdc = ECGetEditDC(ped, TRUE);
+        if (ped->fSingle)
+            SLSetCaretPosition(ped, hdc);
         else
-            MLSetCaretPosition( ped, hdc );
+            MLSetCaretPosition(ped, hdc);
         ECReleaseEditDC(ped, hdc, TRUE);
         NtUserShowCaret(ped->hwnd);
     }
@@ -1283,7 +1361,7 @@ void ECSetCaretHandler(PED ped)
 
 extern void MLReplaceSel(PED, LPSTR);
 
-#define GET_COMPOSITION_STRING  (ped->fAnsi ? fpImmGetCompositionStringA : fpImmGetCompositionStringW)
+#define GET_COMPOSITION_STRING (ped->fAnsi ? fpImmGetCompositionStringA : fpImmGetCompositionStringW)
 
 BOOL FAR PASCAL ECResultStrHandler(PED ped)
 {
@@ -1291,16 +1369,18 @@ BOOL FAR PASCAL ECResultStrHandler(PED ped)
     LPSTR lpStr;
     LONG dwLen;
 
-    ped->fInsertCompChr = FALSE;    // clear the state
+    ped->fInsertCompChr = FALSE; // clear the state
     ped->fNoMoveCaret = FALSE;
 
-    if ((himc = fpImmGetContext(ped->hwnd)) == 0) {
+    if ((himc = fpImmGetContext(ped->hwnd)) == 0)
+    {
         return FALSE;
     }
 
     dwLen = GET_COMPOSITION_STRING(himc, GCS_RESULTSTR, NULL, 0);
 
-    if (dwLen == 0) {
+    if (dwLen == 0)
+    {
         fpImmReleaseContext(ped->hwnd, himc);
         return FALSE;
     }
@@ -1309,16 +1389,20 @@ BOOL FAR PASCAL ECResultStrHandler(PED ped)
     dwLen += ped->cbChar;
 
     lpStr = (LPSTR)UserGlobalAlloc(GPTR, dwLen);
-    if (lpStr == NULL) {
+    if (lpStr == NULL)
+    {
         fpImmReleaseContext(ped->hwnd, himc);
         return FALSE;
     }
 
     GET_COMPOSITION_STRING(himc, GCS_RESULTSTR, lpStr, dwLen);
 
-    if (ped->fSingle) {
+    if (ped->fSingle)
+    {
         SLReplaceSel(ped, lpStr);
-    } else {
+    }
+    else
+    {
         MLReplaceSel(ped, lpStr);
     }
 
@@ -1345,12 +1429,15 @@ LRESULT ECImeComposition(PED ped, WPARAM wParam, LPARAM lParam)
     HIMC hImc;
     BYTE TextBuf[4];
 
-    if (!ped->fInsertCompChr) {
-        if (lParam & GCS_RESULTSTR) {
+    if (!ped->fInsertCompChr)
+    {
+        if (lParam & GCS_RESULTSTR)
+        {
             ECInOutReconversionMode(ped, FALSE);
 
-            if (ped->wImeStatus & EIMES_GETCOMPSTRATONCE) {
-ResultAtOnce:
+            if (ped->wImeStatus & EIMES_GETCOMPSTRATONCE)
+            {
+            ResultAtOnce:
                 ECResultStrHandler(ped);
                 lParam &= ~GCS_RESULTSTR;
             }
@@ -1360,19 +1447,21 @@ ResultAtOnce:
 
     // In case of Ansi edit control, the length of minimum composition string
     // is 2. Check here maximum byte of edit control.
-    if( ped->fAnsi && ped->cchTextMax == 1 ) {
+    if (ped->fAnsi && ped->cchTextMax == 1)
+    {
         HIMC hImc;
 
-        hImc = fpImmGetContext( ped->hwnd );
+        hImc = fpImmGetContext(ped->hwnd);
         fpImmNotifyIME(hImc, NI_COMPOSITIONSTR, CPS_CANCEL, 0L);
-        fpImmReleaseContext( ped->hwnd, hImc );
+        fpImmReleaseContext(ped->hwnd, hImc);
         NtUserMessageBeep(MB_ICONEXCLAMATION);
         return lReturn;
     }
 
     // Don't move this after CS_NOMOVECARET check.
     // In case if skip the message, fNoMoveCaret should not be set.
-    if ((lParam & CS_INSERTCHAR) && ped->fResultProcess) {
+    if ((lParam & CS_INSERTCHAR) && ped->fResultProcess)
+    {
 
         // Now we're in result processing. GCS_RESULTSTR ends up
         // to WM_IME_CHAR and WM_CHAR. Since WM_CHAR is posted,
@@ -1380,7 +1469,7 @@ ResultAtOnce:
         // message. This composition character should be handled
         // after the WM_CHAR message(s).
         //
-        if(ped->fAnsi)
+        if (ped->fAnsi)
             PostMessageA(ped->hwnd, WM_IME_COMPOSITION, wParam, lParam);
         else
             PostMessageW(ped->hwnd, WM_IME_COMPOSITION, wParam, lParam);
@@ -1405,14 +1494,17 @@ ResultAtOnce:
         ped->fNoMoveCaret=FALSE;
 #endif
 
-    if (lParam & GCS_RESULTSTR) {
+    if (lParam & GCS_RESULTSTR)
+    {
 
-        if (ped->wImeStatus & EIMES_GETCOMPSTRATONCE) {
+        if (ped->wImeStatus & EIMES_GETCOMPSTRATONCE)
+        {
             goto ResultAtOnce;
         }
 
-        ped->fResultProcess=TRUE;
-        if ( ped->fReplaceCompChr ) {
+        ped->fResultProcess = TRUE;
+        if (ped->fReplaceCompChr)
+        {
             //
             // we have a DBCS character to be replaced.
             // let's delete it before inserting the new one.
@@ -1421,98 +1513,117 @@ ResultAtOnce:
             ped->fReplaceCompChr = FALSE;
             ped->ichMaxSel = min(ped->ichCaret + ich, ped->cch);
             ped->ichMinSel = ped->ichCaret;
-            if ( ECDeleteText( ped ) > 0 ) {
-                if ( ped->fSingle ) {
+            if (ECDeleteText(ped) > 0)
+            {
+                if (ped->fSingle)
+                {
                     //
                     // Update the display
                     //
                     ECNotifyParent(ped, EN_UPDATE);
-                    hdc = ECGetEditDC(ped,FALSE);
+                    hdc = ECGetEditDC(ped, FALSE);
                     SLDrawText(ped, hdc, 0);
-                    ECReleaseEditDC(ped,hdc,FALSE);
+                    ECReleaseEditDC(ped, hdc, FALSE);
                     //
                     // Tell parent our text contents changed.
                     //
                     ECNotifyParent(ped, EN_CHANGE);
                 }
             }
-            ECSetCaretHandler( ped );
+            ECSetCaretHandler(ped);
         }
-
-    } else if(lParam & CS_INSERTCHAR) {
+    }
+    else if (lParam & CS_INSERTCHAR)
+    {
 
         //
         // If we are in the middle of a mousedown command, don't do anything.
         //
-        if (ped->fMouseDown) {
+        if (ped->fMouseDown)
+        {
             return lReturn;
         }
 
         //
         // We can safely assume that interimm character is always DBCS.
         //
-        ich = ( ped->fAnsi ) ? 2 : 1;
+        ich = (ped->fAnsi) ? 2 : 1;
 
-        if ( ped->fReplaceCompChr ) {
+        if (ped->fReplaceCompChr)
+        {
             //
             // we have a character to be replaced.
             // let's delete it before inserting the new one.
             // when we have a composition characters, the
             // caret is placed before the composition character.
             //
-            ped->ichMaxSel = min(ped->ichCaret+ich, ped->cch);
+            ped->ichMaxSel = min(ped->ichCaret + ich, ped->cch);
             ped->ichMinSel = ped->ichCaret;
         }
 
         //
         // let's delete current selected text or composition character
         //
-        if ( ped->fSingle ) {
-            if ( ECDeleteText( ped ) > 0 ) {
+        if (ped->fSingle)
+        {
+            if (ECDeleteText(ped) > 0)
+            {
                 fSLTextUpdated = TRUE;
             }
-        } else {
-            MLDeleteText( ped );
+        }
+        else
+        {
+            MLDeleteText(ped);
         }
 
         //
         // When the composition charcter is canceled, IME may give us NULL wParam,
         // with CS_INSERTCHAR flag on. We shouldn't insert a NULL character.
         //
-        if ( wParam != 0 ) {
+        if (wParam != 0)
+        {
 
-            if ( ped->fAnsi ) {
+            if (ped->fAnsi)
+            {
                 TextBuf[0] = HIBYTE(LOWORD(wParam)); // leading byte
                 TextBuf[1] = LOBYTE(LOWORD(wParam)); // trailing byte
                 TextBuf[2] = '\0';
-            } else {
+            }
+            else
+            {
                 TextBuf[0] = LOBYTE(LOWORD(wParam));
                 TextBuf[1] = HIBYTE(LOWORD(wParam));
                 TextBuf[2] = '\0';
                 TextBuf[3] = '\0';
             }
 
-            if ( ped->fSingle ) {
+            if (ped->fSingle)
+            {
 
-                iResult = SLInsertText( ped, (LPSTR)TextBuf, ich );
-                if (iResult == 0) {
+                iResult = SLInsertText(ped, (LPSTR)TextBuf, ich);
+                if (iResult == 0)
+                {
                     /*
                      * Couldn't insert the text, for e.g. the text exceeded the limit.
                      */
                     NtUserMessageBeep(0);
-                } else if (iResult > 0) {
+                }
+                else if (iResult > 0)
+                {
                     /*
                      * Remember we need to update the text.
                      */
                     fSLTextUpdated = TRUE;
                 }
+            }
+            else
+            {
 
-            } else {
-
-                iResult = MLInsertText( ped, (LPSTR)TextBuf, ich, TRUE);
+                iResult = MLInsertText(ped, (LPSTR)TextBuf, ich, TRUE);
             }
 
-            if ( iResult > 0 ) {
+            if (iResult > 0)
+            {
                 //
                 // ped->fReplaceCompChr will be reset:
                 //
@@ -1535,9 +1646,11 @@ ResultAtOnce:
                 // Caret should be placed BEFORE the composition
                 // character.
                 //
-                ped->ichCaret = max( 0, (INT)(ped->ichCaret - ich));
-                ECSetCaretHandler( ped );
-            } else {
+                ped->ichCaret = max(0, (INT)(ped->ichCaret - ich));
+                ECSetCaretHandler(ped);
+            }
+            else
+            {
 
                 //
                 // We failed to insert a character. We might run out
@@ -1549,14 +1662,16 @@ ResultAtOnce:
                 fpImmReleaseContext(ped->hwnd, hImc);
 
                 ped->fReplaceCompChr = FALSE;
-                ECSetCaretHandler( ped );
+                ECSetCaretHandler(ped);
             }
-        } else {
+        }
+        else
+        {
             //
             // the composition character is canceled.
             //
             ped->fReplaceCompChr = FALSE;
-            ECSetCaretHandler( ped );
+            ECSetCaretHandler(ped);
         }
 
         //
@@ -1564,30 +1679,34 @@ ResultAtOnce:
         // because the composition character has
         // not been finalized.
         //
-        if ( fSLTextUpdated ) {
+        if (fSLTextUpdated)
+        {
 
             //
             // Update the display
             //
             ECNotifyParent(ped, EN_UPDATE);
 
-            hdc = ECGetEditDC(ped,FALSE);
+            hdc = ECGetEditDC(ped, FALSE);
 
-            if ( ped->fReplaceCompChr ) {
+            if (ped->fReplaceCompChr)
+            {
                 //
                 // move back the caret to the original position
                 // temporarily so that our new block cursor can
                 // be located within the visible area of window.
                 //
-                ped->ichCaret = min( ped->cch, ped->ichCaret + ich);
+                ped->ichCaret = min(ped->cch, ped->ichCaret + ich);
                 SLScrollText(ped, hdc);
-                ped->ichCaret = max( 0, (INT)(ped->ichCaret - ich));
-            } else {
+                ped->ichCaret = max(0, (INT)(ped->ichCaret - ich));
+            }
+            else
+            {
                 SLScrollText(ped, hdc);
             }
             SLDrawText(ped, hdc, 0);
 
-            ECReleaseEditDC(ped,hdc,FALSE);
+            ECReleaseEditDC(ped, hdc, FALSE);
 
             //
             // Tell parent our text contents changed.
@@ -1601,7 +1720,7 @@ ResultAtOnce:
 }
 
 
-#ifdef LATER    // fyi: window 98 equiv.
+#ifdef LATER // fyi: window 98 equiv.
 LRESULT ECImeComposition(PED ped, WPARAM wParam, LPARAM lParam)
 {
     INT ich;
@@ -1614,19 +1733,21 @@ LRESULT ECImeComposition(PED ped, WPARAM wParam, LPARAM lParam)
 
     // In case of Ansi edit control, the length of minimum composition string
     // is 2. Check here maximum byte of edit control.
-    if( ped->fAnsi && ped->cchTextMax == 1 ) {
+    if (ped->fAnsi && ped->cchTextMax == 1)
+    {
         HIMC hImc;
 
-        hImc = fpImmGetContext( ped->hwnd );
+        hImc = fpImmGetContext(ped->hwnd);
         fpImmNotifyIME(hImc, NI_COMPOSITIONSTR, CPS_CANCEL, 0L);
-        fpImmReleaseContext( ped->hwnd, hImc );
+        fpImmReleaseContext(ped->hwnd, hImc);
         MessageBeep(MB_ICONEXCLAMATION);
         return lReturn;
     }
 
     // Don't move this after CS_NOMOVECARET check.
     // In case if skip the message, fNoMoveCaret should not be set.
-    if ((lParam & CS_INSERTCHAR) && ped->fResultProcess) {
+    if ((lParam & CS_INSERTCHAR) && ped->fResultProcess)
+    {
 
         // Now we're in result processing. GCS_RESULTSTR ends up
         // to WM_IME_CHAR and WM_CHAR. Since WM_CHAR is posted,
@@ -1641,10 +1762,12 @@ LRESULT ECImeComposition(PED ped, WPARAM wParam, LPARAM lParam)
 
     ped->fNoMoveCaret = (lParam & CS_NOMOVECARET) != 0;
 
-    if (lParam & GCS_RESULTSTR) {
+    if (lParam & GCS_RESULTSTR)
+    {
         ECInOutReconversionMode(ped, FALSE);
 
-        if (ped->wImeStatus & EIMS_GETCOMPSTRATONCE) {
+        if (ped->wImeStatus & EIMS_GETCOMPSTRATONCE)
+        {
             ECGetCompStrAtOnce(ped);
 
             goto PassToDefaultWindowProc;
@@ -1653,14 +1776,16 @@ LRESULT ECImeComposition(PED ped, WPARAM wParam, LPARAM lParam)
         // Getting into result processing
         ped->fResultProcess = TRUE;
     }
-    else if (lParam & CS_INSERTCHAR) {
+    else if (lParam & CS_INSERTCHAR)
+    {
         ped->fInsertCompChr = TRUE; // Process this composition character.
 
         (ped->fSingleLine ? SLChar : MLChar)(ped, wParam, 0);
 
-        if (ped->fInsretCompChr) {
-            ped->fReplaceCompChr = TRUE;    // The next character will replace this.
-            ped->fInsertCompChr = FALSE;    // Clear the state for the next character.
+        if (ped->fInsretCompChr)
+        {
+            ped->fReplaceCompChr = TRUE; // The next character will replace this.
+            ped->fInsertCompChr = FALSE; // Clear the state for the next character.
         }
 
         ECSetCaretHandler(ped);
@@ -1681,37 +1806,43 @@ PassToDefaultWindowProc:
 *
 * History: July 15,1996 takaok  ported from NT 3.51
 \***************************************************************************/
-BOOL HanjaKeyHandler( PED ped )
+BOOL HanjaKeyHandler(PED ped)
 {
     BOOL changeSelection = FALSE;
 
-    if (ped->fKorea && !ped->fReadOnly) {
+    if (ped->fKorea && !ped->fReadOnly)
+    {
         ICH oldCaret = ped->ichCaret;
 
         if (ped->fReplaceCompChr)
-                return FALSE;
+            return FALSE;
 
         if (ped->ichMinSel < ped->ichMaxSel)
             ped->ichCaret = ped->ichMinSel;
 
-        if (!ped->cch || ped->cch == ped->ichCaret) {
+        if (!ped->cch || ped->cch == ped->ichCaret)
+        {
             ped->ichCaret = oldCaret;
             NtUserMessageBeep(MB_ICONEXCLAMATION);
             return FALSE;
         }
 
-        if (ped->fAnsi) {
-            if (fpImmEscapeA(THREAD_HKL(), fpImmGetContext(ped->hwnd),
-                IME_ESC_HANJA_MODE, (ECLock(ped) + ped->ichCaret * ped->cbChar))) {
+        if (ped->fAnsi)
+        {
+            if (fpImmEscapeA(THREAD_HKL(), fpImmGetContext(ped->hwnd), IME_ESC_HANJA_MODE,
+                             (ECLock(ped) + ped->ichCaret * ped->cbChar)))
+            {
                 changeSelection = TRUE;
             }
             else
                 ped->ichCaret = oldCaret;
             ECUnlock(ped);
         }
-        else {
-            if (fpImmEscapeW(THREAD_HKL(), fpImmGetContext(ped->hwnd),
-                IME_ESC_HANJA_MODE, (ECLock(ped) + ped->ichCaret * ped->cbChar))) {
+        else
+        {
+            if (fpImmEscapeW(THREAD_HKL(), fpImmGetContext(ped->hwnd), IME_ESC_HANJA_MODE,
+                             (ECLock(ped) + ped->ichCaret * ped->cbChar)))
+            {
                 changeSelection = TRUE;
             }
             else
@@ -1744,10 +1875,13 @@ ICH EcImeGetDocFeedMin(PED ped, LPSTR lpstr)
         return ped->ichMinSel;
 
 
-    if (ped->ichMinSel > MAX_ECDOCFEED) {
+    if (ped->ichMinSel > MAX_ECDOCFEED)
+    {
         ich = ped->ichMinSel - MAX_ECDOCFEED;
         ich = ECAdjustIch(ped, lpstr, ich);
-    } else {
+    }
+    else
+    {
         ich = 0;
     }
 
@@ -1762,10 +1896,13 @@ ICH EcImeGetDocFeedMax(PED ped, LPSTR lpstr)
         return ped->ichMinSel;
 
 
-    if ((ped->cch - ped->ichMaxSel) > MAX_ECDOCFEED) {
+    if ((ped->cch - ped->ichMaxSel) > MAX_ECDOCFEED)
+    {
         ich = ped->ichMaxSel + MAX_ECDOCFEED;
         ich = ECAdjustIch(ped, lpstr, ich);
-    } else {
+    }
+    else
+    {
         ich = ped->cch;
     }
 
@@ -1778,7 +1915,8 @@ LRESULT EcImeRequestHandler(PED ped, WPARAM dwSubMsg, LPARAM lParam)
 {
     LRESULT lreturn = 0L;
 
-    switch (dwSubMsg) {
+    switch (dwSubMsg)
+    {
     case IMR_CONFIRMRECONVERTSTRING:
 
 #if !defined(CUAS_ENABLE)
@@ -1793,18 +1931,23 @@ LRESULT EcImeRequestHandler(PED ped, WPARAM dwSubMsg, LPARAM lParam)
         //
         // CHECK VERSION of the structure
         //
-        if (lParam && ((LPRECONVERTSTRING)lParam)->dwVersion != 0) {
+        if (lParam && ((LPRECONVERTSTRING)lParam)->dwVersion != 0)
+        {
             RIPMSG1(RIP_WARNING, "EcImeRequestHandler: RECONVERTSTRING dwVersion is not expected.",
-                ((LPRECONVERTSTRING)lParam)->dwVersion);
+                    ((LPRECONVERTSTRING)lParam)->dwVersion);
             return 0L;
         }
 
-        if (lParam && ped && ped->fFocus && ped->hText && fpImmIsIME(THREAD_HKL())) {
+        if (lParam && ped && ped->fFocus && ped->hText && fpImmIsIME(THREAD_HKL()))
+        {
             LPVOID lpSrc;
             lpSrc = ECLock(ped);
-            if (lpSrc == NULL) {
+            if (lpSrc == NULL)
+            {
                 RIPMSG0(RIP_WARNING, "EcImeRequestHandler: LOCALLOCK(ped) failed.");
-            } else {
+            }
+            else
+            {
                 LPRECONVERTSTRING lpRCS = (LPRECONVERTSTRING)lParam;
                 ICH ichStart;
                 ICH ichEnd;
@@ -1814,17 +1957,20 @@ LRESULT EcImeRequestHandler(PED ped, WPARAM dwSubMsg, LPARAM lParam)
                 ichEnd = EcImeGetDocFeedMax(ped, lpSrc);
                 UserAssert(ichEnd >= ichStart);
 
-                cchLen = ichEnd - ichStart;    // holds character count.
+                cchLen = ichEnd - ichStart; // holds character count.
 
                 ECUnlock(ped);
 
-                if (lpRCS->dwStrLen != cchLen) {
+                if (lpRCS->dwStrLen != cchLen)
+                {
                     RIPMSG0(RIP_WARNING, "EcImeRequestHandler: the given string length is not expected.");
-                } else {
+                }
+                else
+                {
                     ICH ichSelStart;
                     ICH ichSelEnd;
 
-                    ichSelStart = ichStart + (lpRCS->dwCompStrOffset  / ped->cbChar);
+                    ichSelStart = ichStart + (lpRCS->dwCompStrOffset / ped->cbChar);
                     ichSelEnd = ichSelStart + lpRCS->dwCompStrLen;
 
 
@@ -1841,15 +1987,17 @@ LRESULT EcImeRequestHandler(PED ped, WPARAM dwSubMsg, LPARAM lParam)
         //
         // CHECK VERSION of the structure
         //
-        if (lParam && ((LPRECONVERTSTRING)lParam)->dwVersion != 0) {
+        if (lParam && ((LPRECONVERTSTRING)lParam)->dwVersion != 0)
+        {
             RIPMSG1(RIP_WARNING, "EcImeRequestHandler: RECONVERTSTRING dwVersion is not expected.",
-                ((LPRECONVERTSTRING)lParam)->dwVersion);
+                    ((LPRECONVERTSTRING)lParam)->dwVersion);
             return 0L;
         }
 
-        if (ped && ped->fFocus && ped->hText && fpImmIsIME(THREAD_HKL())) {
+        if (ped && ped->fFocus && ped->hText && fpImmIsIME(THREAD_HKL()))
+        {
 #if !defined(CUAS_ENABLE)
-            UINT cchLen = ped->ichMaxSel - ped->ichMinSel;    // holds character count.
+            UINT cchLen = ped->ichMaxSel - ped->ichMinSel; // holds character count.
 #else
             ICH ichStart;
             ICH ichEnd;
@@ -1857,7 +2005,8 @@ LRESULT EcImeRequestHandler(PED ped, WPARAM dwSubMsg, LPARAM lParam)
             UINT cchSelLen;
             LPVOID lpSrc;
             lpSrc = ECLock(ped);
-            if (lpSrc == NULL) {
+            if (lpSrc == NULL)
+            {
                 RIPMSG0(RIP_WARNING, "EcImeRequestHandler: LOCALLOCK(ped) failed.");
                 return 0L;
             }
@@ -1866,11 +2015,12 @@ LRESULT EcImeRequestHandler(PED ped, WPARAM dwSubMsg, LPARAM lParam)
             ichEnd = EcImeGetDocFeedMax(ped, lpSrc);
             UserAssert(ichEnd >= ichStart);
 
-            cchLen = ichEnd - ichStart;    // holds character count.
-            cchSelLen = ped->ichMaxSel - ped->ichMinSel;    // holds character count.
+            cchLen = ichEnd - ichStart;                  // holds character count.
+            cchSelLen = ped->ichMaxSel - ped->ichMinSel; // holds character count.
 #endif
 
-            if (cchLen == 0) {
+            if (cchLen == 0)
+            {
 #if defined(CUAS_ENABLE)
                 ECUnlock(ped);
 #endif
@@ -1882,7 +2032,8 @@ LRESULT EcImeRequestHandler(PED ped, WPARAM dwSubMsg, LPARAM lParam)
             UserAssert(ped->cbChar == sizeof(BYTE) || ped->cbChar == sizeof(WCHAR));
 
             // This Edit Control has selection.
-            if (lParam == 0) {
+            if (lParam == 0)
+            {
                 //
                 // IME just want to get required size for buffer.
                 // cchLen + 1 is needed to reserve room for trailing L'\0'.
@@ -1892,8 +2043,9 @@ LRESULT EcImeRequestHandler(PED ped, WPARAM dwSubMsg, LPARAM lParam)
 #if defined(CUAS_ENABLE)
                 ECUnlock(ped);
 #endif
-
-            } else {
+            }
+            else
+            {
                 LPRECONVERTSTRING lpRCS = (LPRECONVERTSTRING)lParam;
 #if !defined(CUAS_ENABLE)
                 LPVOID lpSrc;
@@ -1903,45 +2055,43 @@ LRESULT EcImeRequestHandler(PED ped, WPARAM dwSubMsg, LPARAM lParam)
                 // check buffer size
                 // if the given buffer is smaller than actual needed size,
                 // shrink our size to fit the buffer
-                if ((INT)lpRCS->dwSize <= sizeof(RECONVERTSTRING) + cchLen * ped->cbChar) {
+                if ((INT)lpRCS->dwSize <= sizeof(RECONVERTSTRING) + cchLen * ped->cbChar)
+                {
                     RIPMSG0(RIP_WARNING, "EcImeRequest: ERR09");
                     cchLen = (lpRCS->dwSize - sizeof(RECONVERTSTRING)) / ped->cbChar - ped->cbChar;
                 }
 
                 lpRCS->dwStrOffset = sizeof(RECONVERTSTRING); // buffer begins just after RECONVERTSTRING
 #if !defined(CUAS_ENABLE)
-                lpRCS->dwCompStrOffset =
-                lpRCS->dwTargetStrOffset = 0;
-                lpRCS->dwStrLen =
-                lpRCS->dwCompStrLen =
-                lpRCS->dwTargetStrLen = cchLen; // StrLen means TCHAR count
+                lpRCS->dwCompStrOffset = lpRCS->dwTargetStrOffset = 0;
+                lpRCS->dwStrLen = lpRCS->dwCompStrLen = lpRCS->dwTargetStrLen = cchLen; // StrLen means TCHAR count
 
                 lpSrc = ECLock(ped);
-                if (lpSrc == NULL) {
+                if (lpSrc == NULL)
+                {
                     RIPMSG0(RIP_WARNING, "EcImeRequestHandler: LOCALLOCK(ped) failed.");
-                } else
+                }
+                else
 #else
-                lpRCS->dwCompStrOffset =
-                lpRCS->dwTargetStrOffset = (ped->ichMinSel - ichStart) * ped->cbChar; // BYTE count offset
-                lpRCS->dwStrLen = cchLen; // TCHAR count
-                lpRCS->dwCompStrLen = 
-                lpRCS->dwTargetStrLen = cchSelLen; // TCHAR count
+                lpRCS->dwCompStrOffset = lpRCS->dwTargetStrOffset =
+                    (ped->ichMinSel - ichStart) * ped->cbChar;           // BYTE count offset
+                lpRCS->dwStrLen = cchLen;                                // TCHAR count
+                lpRCS->dwCompStrLen = lpRCS->dwTargetStrLen = cchSelLen; // TCHAR count
 #endif
                 {
 #if !defined(CUAS_ENABLE)
-                    RtlCopyMemory(lpDest,
-                                  (LPBYTE)lpSrc + ped->ichMinSel * ped->cbChar,
-                                  cchLen * ped->cbChar);
+                    RtlCopyMemory(lpDest, (LPBYTE)lpSrc + ped->ichMinSel * ped->cbChar, cchLen * ped->cbChar);
 #else
-                    RtlCopyMemory(lpDest,
-                                  (LPBYTE)lpSrc + ichStart * ped->cbChar,
-                                  cchLen * ped->cbChar);
+                    RtlCopyMemory(lpDest, (LPBYTE)lpSrc + ichStart * ped->cbChar, cchLen * ped->cbChar);
 #endif
                     // Null-Terminate the string
-                    if (ped->fAnsi) {
+                    if (ped->fAnsi)
+                    {
                         LPBYTE psz = (LPBYTE)lpDest;
                         psz[cchLen] = '\0';
-                    } else {
+                    }
+                    else
+                    {
                         LPWSTR pwsz = (LPWSTR)lpDest;
                         pwsz[cchLen] = L'\0';
                     }
@@ -1953,7 +2103,6 @@ LRESULT EcImeRequestHandler(PED ped, WPARAM dwSubMsg, LPARAM lParam)
                     ECImmSetCompositionWindow(ped, 0, 0);
                 }
             }
-
         }
         break;
     }

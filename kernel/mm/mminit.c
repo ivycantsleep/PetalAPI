@@ -45,84 +45,50 @@ LIST_ENTRY MmProtectedPteList;
 KSPIN_LOCK MmProtectedPteLock;
 LOGICAL MmPagedPoolMaximumDesired = FALSE;
 
-#if defined (_MI_DEBUG_SUB)
+#if defined(_MI_DEBUG_SUB)
 ULONG MiTrackSubs = 0x2000; // Set to nonzero to enable subsection tracking code.
 LONG MiSubsectionIndex;
 PMI_SUB_TRACES MiSubsectionTraces;
 #endif
 
-#if defined (_MI_DEBUG_DIRTY)
+#if defined(_MI_DEBUG_DIRTY)
 ULONG MiTrackDirtys = 0x10000; // Set to nonzero to enable subsection tracking code.
 LONG MiDirtyIndex;
 PMI_DIRTY_TRACES MiDirtyTraces;
 #endif
 
-#if defined (_MI_DEBUG_DATA)
+#if defined(_MI_DEBUG_DATA)
 ULONG MiTrackData = 0x10000; // Set to nonzero to enable data tracking code.
 LONG MiDataIndex;
 PMI_DATA_TRACES MiDataTraces;
 #endif
 
-VOID
-MiMapBBTMemory (
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    );
+VOID MiMapBBTMemory(IN PLOADER_PARAMETER_BLOCK LoaderBlock);
 
-VOID
-MiEnablePagingTheExecutive(
-    VOID
-    );
+VOID MiEnablePagingTheExecutive(VOID);
 
-VOID
-MiEnablePagingOfDriverAtInit (
-    IN PMMPTE PointerPte,
-    IN PMMPTE LastPte
-    );
+VOID MiEnablePagingOfDriverAtInit(IN PMMPTE PointerPte, IN PMMPTE LastPte);
 
-VOID
-MiBuildPagedPool (
-    );
+VOID MiBuildPagedPool();
 
-VOID
-MiWriteProtectSystemImage (
-    IN PVOID DllBase
-    );
+VOID MiWriteProtectSystemImage(IN PVOID DllBase);
 
-VOID
-MiInitializePfnTracing (
-    VOID
-    );
+VOID MiInitializePfnTracing(VOID);
 
 PFN_NUMBER
-MiPagesInLoaderBlock (
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock,
-    IN PBOOLEAN IncludeType
-    );
+MiPagesInLoaderBlock(IN PLOADER_PARAMETER_BLOCK LoaderBlock, IN PBOOLEAN IncludeType);
 
 #ifndef NO_POOL_CHECKS
-VOID
-MiInitializeSpecialPoolCriteria (
-    IN VOID
-    );
+VOID MiInitializeSpecialPoolCriteria(IN VOID);
 #endif
 
 #ifdef _MI_MESSAGE_SERVER
-VOID
-MiInitializeMessageQueue (
-    VOID
-    );
+VOID MiInitializeMessageQueue(VOID);
 #endif
 
-static
-VOID
-MiMemoryLicense (
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    );
+static VOID MiMemoryLicense(IN PLOADER_PARAMETER_BLOCK LoaderBlock);
 
-VOID
-MiInitializeCacheOverrides (
-    VOID
-    );
+VOID MiInitializeCacheOverrides(VOID);
 
 //
 // The thresholds can be overridden by the registry.
@@ -135,31 +101,26 @@ PKEVENT MiLowMemoryEvent;
 PKEVENT MiHighMemoryEvent;
 
 NTSTATUS
-MiCreateMemoryEvent (
-    IN PUNICODE_STRING EventName,
-    OUT PKEVENT *Event
-    );
+MiCreateMemoryEvent(IN PUNICODE_STRING EventName, OUT PKEVENT *Event);
 
 LOGICAL
-MiInitializeMemoryEvents (
-    VOID
-    );
+MiInitializeMemoryEvents(VOID);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,MmInitSystem)
-#pragma alloc_text(INIT,MiMapBBTMemory)
-#pragma alloc_text(INIT,MmInitializeMemoryLimits)
-#pragma alloc_text(INIT,MmFreeLoaderBlock)
-#pragma alloc_text(INIT,MiBuildPagedPool)
-#pragma alloc_text(INIT,MiFindInitializationCode)
-#pragma alloc_text(INIT,MiEnablePagingTheExecutive)
-#pragma alloc_text(INIT,MiEnablePagingOfDriverAtInit)
-#pragma alloc_text(INIT,MiPagesInLoaderBlock)
-#pragma alloc_text(INIT,MiCreateMemoryEvent)
-#pragma alloc_text(INIT,MiInitializeMemoryEvents)
-#pragma alloc_text(INIT,MiInitializeCacheOverrides)
-#pragma alloc_text(INIT,MiMemoryLicense)
-#pragma alloc_text(PAGELK,MiFreeInitializationCode)
+#pragma alloc_text(INIT, MmInitSystem)
+#pragma alloc_text(INIT, MiMapBBTMemory)
+#pragma alloc_text(INIT, MmInitializeMemoryLimits)
+#pragma alloc_text(INIT, MmFreeLoaderBlock)
+#pragma alloc_text(INIT, MiBuildPagedPool)
+#pragma alloc_text(INIT, MiFindInitializationCode)
+#pragma alloc_text(INIT, MiEnablePagingTheExecutive)
+#pragma alloc_text(INIT, MiEnablePagingOfDriverAtInit)
+#pragma alloc_text(INIT, MiPagesInLoaderBlock)
+#pragma alloc_text(INIT, MiCreateMemoryEvent)
+#pragma alloc_text(INIT, MiInitializeMemoryEvents)
+#pragma alloc_text(INIT, MiInitializeCacheOverrides)
+#pragma alloc_text(INIT, MiMemoryLicense)
+#pragma alloc_text(PAGELK, MiFreeInitializationCode)
 #endif
 
 //
@@ -191,11 +152,11 @@ KTIMER MiModifiedPageWriterTimer;
 // based on a 4k page size.  Hence 12mb with 4k page is 3072.
 //
 
-#define MM_SMALL_SYSTEM ((13*1024*1024) / 4096)
+#define MM_SMALL_SYSTEM ((13 * 1024 * 1024) / 4096)
 
-#define MM_MEDIUM_SYSTEM ((19*1024*1024) / 4096)
+#define MM_MEDIUM_SYSTEM ((19 * 1024 * 1024) / 4096)
 
-#define MM_MIN_INITIAL_PAGED_POOL ((32*1024*1024) >> PAGE_SHIFT)
+#define MM_MIN_INITIAL_PAGED_POOL ((32 * 1024 * 1024) >> PAGE_SHIFT)
 
 #define MM_DEFAULT_IO_LOCK_LIMIT (2 * 1024 * 1024)
 
@@ -225,7 +186,7 @@ extern ULONG MiVerifyAllDrivers;
 LIST_ENTRY MmLoadedUserImageList;
 PPAGE_FAULT_NOTIFY_ROUTINE MmPageFaultNotifyRoutine;
 
-#if defined (_WIN64)
+#if defined(_WIN64)
 #define MM_ALLOCATION_FRAGMENT (64 * 1024 * 1024)
 #else
 #define MM_ALLOCATION_FRAGMENT (64 * 1024)
@@ -237,13 +198,11 @@ PPAGE_FAULT_NOTIFY_ROUTINE MmPageFaultNotifyRoutine;
 
 SIZE_T MmAllocationFragment;
 
-
+
 #if defined(MI_MULTINODE)
 
 HALNUMAPAGETONODE
-MiNonNumaPageToNodeColor (
-    IN PFN_NUMBER PageFrameIndex
-    )
+MiNonNumaPageToNodeColor(IN PFN_NUMBER PageFrameIndex)
 
 /*++
 
@@ -262,7 +221,7 @@ Return Value:
 --*/
 
 {
-    UNREFERENCED_PARAMETER (PageFrameIndex);
+    UNREFERENCED_PARAMETER(PageFrameIndex);
 
     return 0;
 }
@@ -276,12 +235,8 @@ Return Value:
 
 PHALNUMAPAGETONODE MmPageToNode = MiNonNumaPageToNodeColor;
 
-
-VOID
-MiDetermineNode (
-    IN PFN_NUMBER PageFrameIndex,
-    IN PMMPFN Pfn
-    )
+
+VOID MiDetermineNode(IN PFN_NUMBER PageFrameIndex, IN PMMPFN Pfn)
 
 /*++
 
@@ -316,23 +271,20 @@ Environment:
 {
     ULONG Temp;
 
-    ASSERT (Pfn == MI_PFN_ELEMENT(PageFrameIndex));
+    ASSERT(Pfn == MI_PFN_ELEMENT(PageFrameIndex));
 
-    Temp = MmPageToNode (PageFrameIndex);
+    Temp = MmPageToNode(PageFrameIndex);
 
-    ASSERT (Temp < MAXIMUM_CCNUMA_NODES);
+    ASSERT(Temp < MAXIMUM_CCNUMA_NODES);
 
     Pfn->u3.e1.PageColor = Temp;
 }
 
 #endif
 
-
+
 BOOLEAN
-MmInitSystem (
-    IN ULONG Phase,
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+MmInitSystem(IN ULONG Phase, IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 
 /*++
 
@@ -422,7 +374,8 @@ Environment:
     // Make sure structure alignment is okay.
     //
 
-    if (Phase == 0) {
+    if (Phase == 0)
+    {
         MmThrottleTop = 450;
         MmThrottleBottom = 127;
 
@@ -445,12 +398,12 @@ Environment:
 
 #endif
 
-        MiHighestUserPte = MiGetPteAddress (MmHighestUserAddress);
-        MiHighestUserPde = MiGetPdeAddress (MmHighestUserAddress);
+        MiHighestUserPte = MiGetPteAddress(MmHighestUserAddress);
+        MiHighestUserPde = MiGetPdeAddress(MmHighestUserAddress);
 
 #if (_MI_PAGING_LEVELS >= 4)
-        MiHighestUserPpe = MiGetPpeAddress (MmHighestUserAddress);
-        MiHighestUserPxe = MiGetPxeAddress (MmHighestUserAddress);
+        MiHighestUserPpe = MiGetPpeAddress(MmHighestUserAddress);
+        MiHighestUserPxe = MiGetPxeAddress(MmHighestUserAddress);
 #endif
 
 #if defined(_X86_) || defined(_AMD64_)
@@ -458,10 +411,9 @@ Environment:
         MmBootImageSize = LoaderBlock->Extension->LoaderPagesSpanned;
         MmBootImageSize *= PAGE_SIZE;
 
-        MmBootImageSize = MI_ROUND_TO_SIZE (MmBootImageSize,
-                                            MM_VA_MAPPED_BY_PDE);
+        MmBootImageSize = MI_ROUND_TO_SIZE(MmBootImageSize, MM_VA_MAPPED_BY_PDE);
 
-        ASSERT ((MmBootImageSize % MM_VA_MAPPED_BY_PDE) == 0);
+        ASSERT((MmBootImageSize % MM_VA_MAPPED_BY_PDE) == 0);
 #endif
 
 #if defined(_X86_)
@@ -474,32 +426,34 @@ Environment:
 
         DefaultSystemViewSize = MM_SYSTEM_VIEW_SIZE;
         MmSessionSize = MI_SESSION_SPACE_DEFAULT_TOTAL_SIZE;
-        SessionEnd = (ULONG_PTR) MM_SESSION_SPACE_DEFAULT_END;
+        SessionEnd = (ULONG_PTR)MM_SESSION_SPACE_DEFAULT_END;
 
-#define MM_MB_MAPPED_BY_PDE (MM_VA_MAPPED_BY_PDE / (1024*1024))
+#define MM_MB_MAPPED_BY_PDE (MM_VA_MAPPED_BY_PDE / (1024 * 1024))
 
         //
         // A PDE of virtual space is the minimum system view size allowed.
         //
 
-        if (MmSystemViewSize < (MM_VA_MAPPED_BY_PDE / (1024*1024))) {
+        if (MmSystemViewSize < (MM_VA_MAPPED_BY_PDE / (1024 * 1024)))
+        {
             MmSystemViewSize = DefaultSystemViewSize;
         }
-        else {
+        else
+        {
 
             //
             // The view size has been specified (in megabytes) by the registry.
             // Validate it.
             //
 
-            if (MmVirtualBias == 0) {
+            if (MmVirtualBias == 0)
+            {
 
                 //
                 // Round the system view size (in megabytes) to a PDE multiple.
                 //
 
-                MmSystemViewSize = MI_ROUND_TO_SIZE (MmSystemViewSize,
-                                                     MM_MB_MAPPED_BY_PDE);
+                MmSystemViewSize = MI_ROUND_TO_SIZE(MmSystemViewSize, MM_MB_MAPPED_BY_PDE);
 
                 //
                 // NT64 locates system views just after systemwide paged pool,
@@ -513,7 +467,7 @@ Environment:
                 // session space size.
                 //
 
-                SystemViewMax = (MI_SESSION_SPACE_MAXIMUM_TOTAL_SIZE) / (1024*1024);
+                SystemViewMax = (MI_SESSION_SPACE_MAXIMUM_TOTAL_SIZE) / (1024 * 1024);
 
 #if !defined(_WIN64)
 
@@ -522,7 +476,7 @@ Environment:
                 // the standard default session layout.
                 //
 
-                SystemViewMax -= (MmSessionSize / (1024*1024));
+                SystemViewMax -= (MmSessionSize / (1024 * 1024));
 #endif
 
                 //
@@ -530,15 +484,16 @@ Environment:
                 // as requesting the maximum.
                 //
 
-                if ((MmSystemViewSize > SystemViewMax) ||
-                    (MmSystemViewSize == 0)) {
+                if ((MmSystemViewSize > SystemViewMax) || (MmSystemViewSize == 0))
+                {
 
                     MmSystemViewSize = SystemViewMax;
                 }
 
-                MmSystemViewSize *= (1024*1024);
+                MmSystemViewSize *= (1024 * 1024);
             }
-            else {
+            else
+            {
                 MmSystemViewSize = DefaultSystemViewSize;
             }
         }
@@ -555,12 +510,15 @@ Environment:
         // A PDE of virtual space is the minimum size allowed for each type.
         //
 
-        if (MmVirtualBias == 0) {
+        if (MmVirtualBias == 0)
+        {
 
-            if (MmSessionImageSize < MM_MB_MAPPED_BY_PDE) {
+            if (MmSessionImageSize < MM_MB_MAPPED_BY_PDE)
+            {
                 MmSessionImageSize = MI_SESSION_DEFAULT_IMAGE_SIZE;
             }
-            else {
+            else
+            {
 
                 //
                 // The Hydra image size has been specified (in megabytes)
@@ -569,22 +527,23 @@ Environment:
                 // Round it to a PDE multiple and validate it.
                 //
 
-                MmSessionImageSize = MI_ROUND_TO_SIZE (MmSessionImageSize,
-                                                        MM_MB_MAPPED_BY_PDE);
+                MmSessionImageSize = MI_ROUND_TO_SIZE(MmSessionImageSize, MM_MB_MAPPED_BY_PDE);
 
-                HydraImageMax = (MI_SESSION_SPACE_MAXIMUM_TOTAL_SIZE - HydraSpaceUsedForSystemViews - (MmSessionSize - MI_SESSION_DEFAULT_IMAGE_SIZE)) / (1024*1024);
+                HydraImageMax = (MI_SESSION_SPACE_MAXIMUM_TOTAL_SIZE - HydraSpaceUsedForSystemViews -
+                                 (MmSessionSize - MI_SESSION_DEFAULT_IMAGE_SIZE)) /
+                                (1024 * 1024);
 
                 //
                 // Note a view size of -1 will be rounded to zero.
                 // Treat -1 as requesting the maximum.
                 //
 
-                if ((MmSessionImageSize > HydraImageMax) ||
-                    (MmSessionImageSize == 0)) {
+                if ((MmSessionImageSize > HydraImageMax) || (MmSessionImageSize == 0))
+                {
                     MmSessionImageSize = HydraImageMax;
                 }
 
-                MmSessionImageSize *= (1024*1024);
+                MmSessionImageSize *= (1024 * 1024);
                 MmSessionSize -= MI_SESSION_DEFAULT_IMAGE_SIZE;
                 MmSessionSize += MmSessionImageSize;
             }
@@ -598,10 +557,12 @@ Environment:
             // virtually below it.
             //
 
-            if (MmSessionViewSize < MM_MB_MAPPED_BY_PDE) {
+            if (MmSessionViewSize < MM_MB_MAPPED_BY_PDE)
+            {
                 MmSessionViewSize = MI_SESSION_DEFAULT_VIEW_SIZE;
             }
-            else {
+            else
+            {
 
                 //
                 // The Hydra view size has been specified (in megabytes)
@@ -610,27 +571,29 @@ Environment:
                 // Round the Hydra view size to a PDE multiple.
                 //
 
-                MmSessionViewSize = MI_ROUND_TO_SIZE (MmSessionViewSize,
-                                                      MM_MB_MAPPED_BY_PDE);
+                MmSessionViewSize = MI_ROUND_TO_SIZE(MmSessionViewSize, MM_MB_MAPPED_BY_PDE);
 
-                HydraViewMax = (MI_SESSION_SPACE_MAXIMUM_TOTAL_SIZE - HydraSpaceUsedForSystemViews - (MmSessionSize - MI_SESSION_DEFAULT_VIEW_SIZE)) / (1024*1024);
+                HydraViewMax = (MI_SESSION_SPACE_MAXIMUM_TOTAL_SIZE - HydraSpaceUsedForSystemViews -
+                                (MmSessionSize - MI_SESSION_DEFAULT_VIEW_SIZE)) /
+                               (1024 * 1024);
 
                 //
                 // Note a view size of -1 will be rounded to zero.
                 // Treat -1 as requesting the maximum.
                 //
 
-                if ((MmSessionViewSize > HydraViewMax) ||
-                    (MmSessionViewSize == 0)) {
+                if ((MmSessionViewSize > HydraViewMax) || (MmSessionViewSize == 0))
+                {
                     MmSessionViewSize = HydraViewMax;
                 }
 
-                MmSessionViewSize *= (1024*1024);
+                MmSessionViewSize *= (1024 * 1024);
                 MmSessionSize -= MI_SESSION_DEFAULT_VIEW_SIZE;
                 MmSessionSize += MmSessionViewSize;
             }
 
-            MiSessionViewStart = SessionEnd - MmSessionImageSize - MI_SESSION_SPACE_WS_SIZE - MI_SESSION_SPACE_STRUCT_SIZE - MmSessionViewSize;
+            MiSessionViewStart = SessionEnd - MmSessionImageSize - MI_SESSION_SPACE_WS_SIZE -
+                                 MI_SESSION_SPACE_STRUCT_SIZE - MmSessionViewSize;
 
             //
             // The session view start and size has been established.
@@ -641,7 +604,8 @@ Environment:
 
             MiSessionPoolEnd = MiSessionViewStart;
 
-            if (MmSessionPoolSize < MM_MB_MAPPED_BY_PDE) {
+            if (MmSessionPoolSize < MM_MB_MAPPED_BY_PDE)
+            {
 
 #if !defined(_WIN64)
 
@@ -653,23 +617,27 @@ Environment:
                 // booted /3GB, try for an additional 16mb now.
                 //
 
-                if ((MmSessionPoolSize == 0) && (MmProductType != 0x00690057)) {
+                if ((MmSessionPoolSize == 0) && (MmProductType != 0x00690057))
+                {
 
                     HydraPoolMax = MI_SESSION_SPACE_MAXIMUM_TOTAL_SIZE - HydraSpaceUsedForSystemViews - MmSessionSize;
-                    if (HydraPoolMax >= 2 * MI_SESSION_DEFAULT_POOL_SIZE) {
+                    if (HydraPoolMax >= 2 * MI_SESSION_DEFAULT_POOL_SIZE)
+                    {
                         MmSessionPoolSize = 2 * MI_SESSION_DEFAULT_POOL_SIZE;
                         MmSessionSize -= MI_SESSION_DEFAULT_POOL_SIZE;
                         MmSessionSize += MmSessionPoolSize;
                     }
-                    else {
+                    else
+                    {
                         MmSessionPoolSize = MI_SESSION_DEFAULT_POOL_SIZE;
                     }
                 }
                 else
 #endif
-                MmSessionPoolSize = MI_SESSION_DEFAULT_POOL_SIZE;
+                    MmSessionPoolSize = MI_SESSION_DEFAULT_POOL_SIZE;
             }
-            else {
+            else
+            {
 
                 //
                 // The Hydra pool size has been specified (in megabytes)
@@ -678,31 +646,32 @@ Environment:
                 // Round the Hydra pool size to a PDE multiple.
                 //
 
-                MmSessionPoolSize = MI_ROUND_TO_SIZE (MmSessionPoolSize,
-                                                      MM_MB_MAPPED_BY_PDE);
+                MmSessionPoolSize = MI_ROUND_TO_SIZE(MmSessionPoolSize, MM_MB_MAPPED_BY_PDE);
 
-                HydraPoolMax = (MI_SESSION_SPACE_MAXIMUM_TOTAL_SIZE - HydraSpaceUsedForSystemViews - (MmSessionSize - MI_SESSION_DEFAULT_POOL_SIZE)) / (1024*1024);
+                HydraPoolMax = (MI_SESSION_SPACE_MAXIMUM_TOTAL_SIZE - HydraSpaceUsedForSystemViews -
+                                (MmSessionSize - MI_SESSION_DEFAULT_POOL_SIZE)) /
+                               (1024 * 1024);
 
                 //
                 // Note a view size of -1 will be rounded to zero.
                 // Treat -1 as requesting the maximum.
                 //
 
-                if ((MmSessionPoolSize > HydraPoolMax) ||
-                    (MmSessionPoolSize == 0)) {
+                if ((MmSessionPoolSize > HydraPoolMax) || (MmSessionPoolSize == 0))
+                {
                     MmSessionPoolSize = HydraPoolMax;
                 }
 
-                MmSessionPoolSize *= (1024*1024);
+                MmSessionPoolSize *= (1024 * 1024);
                 MmSessionSize -= MI_SESSION_DEFAULT_POOL_SIZE;
                 MmSessionSize += MmSessionPoolSize;
             }
 
             MiSessionPoolStart = MiSessionPoolEnd - MmSessionPoolSize;
 
-            MmSessionBase = (ULONG_PTR) MiSessionPoolStart;
+            MmSessionBase = (ULONG_PTR)MiSessionPoolStart;
 
-#if defined (_WIN64)
+#if defined(_WIN64)
 
             //
             // Session special pool immediately follows session regular pool
@@ -711,24 +680,25 @@ Environment:
             //
 
             if ((MmVerifyDriverBufferLength != (ULONG)-1) ||
-                ((MmSpecialPoolTag != 0) && (MmSpecialPoolTag != (ULONG)-1))) {
+                ((MmSpecialPoolTag != 0) && (MmSpecialPoolTag != (ULONG)-1)))
+            {
 
                 MmSessionSize = MI_SESSION_SPACE_MAXIMUM_TOTAL_SIZE;
-                MmSessionSpecialPoolEnd = (PVOID) MiSessionPoolStart;
+                MmSessionSpecialPoolEnd = (PVOID)MiSessionPoolStart;
                 MmSessionBase = MM_SESSION_SPACE_DEFAULT;
-                MmSessionSpecialPoolStart = (PVOID) MmSessionBase;
+                MmSessionSpecialPoolStart = (PVOID)MmSessionBase;
             }
 #endif
 
-            ASSERT (MmSessionBase + MmSessionSize == SessionEnd);
+            ASSERT(MmSessionBase + MmSessionSize == SessionEnd);
             MiSessionSpaceEnd = SessionEnd;
             MiSessionSpacePageTables = (ULONG)(MmSessionSize / MM_VA_MAPPED_BY_PDE);
-#if !defined (_WIN64)
+#if !defined(_WIN64)
             MiSystemViewStart = MmSessionBase - MmSystemViewSize;
 #endif
-
         }
-        else {
+        else
+        {
 
             //
             // When booted /3GB, no size overrides are allowed due to the
@@ -757,7 +727,7 @@ Environment:
 
 #if defined(_X86_)
 
-	    //
+        //
         // If boot.ini specified a sane number of MB that the administrator
         // wants to use for user virtual address space then use it.
         //
@@ -765,27 +735,31 @@ Environment:
         UserVaLimit = 0;
         ReducedUserVaOption = strstr(LoaderBlock->LoadOptions, "USERVA");
 
-        if (ReducedUserVaOption != NULL) {
+        if (ReducedUserVaOption != NULL)
+        {
 
-            ReducedUserVaOption = strstr(ReducedUserVaOption,"=");
+            ReducedUserVaOption = strstr(ReducedUserVaOption, "=");
 
-            if (ReducedUserVaOption != NULL) {
+            if (ReducedUserVaOption != NULL)
+            {
 
-                UserVaLimit = atol(ReducedUserVaOption+1);
+                UserVaLimit = atol(ReducedUserVaOption + 1);
 
-                UserVaLimit = MI_ROUND_TO_SIZE (UserVaLimit, ((MM_VA_MAPPED_BY_PDE) / (1024*1024)));
-	        }
+                UserVaLimit = MI_ROUND_TO_SIZE(UserVaLimit, ((MM_VA_MAPPED_BY_PDE) / (1024 * 1024)));
+            }
 
-	        //
-	        // Ignore the USERVA switch if the limit is too small.
-	        //
+            //
+            // Ignore the USERVA switch if the limit is too small.
+            //
 
-	        if (UserVaLimit <= (2048 + 16)) {
-		        UserVaLimit = 0;
-	        }
+            if (UserVaLimit <= (2048 + 16))
+            {
+                UserVaLimit = 0;
+            }
         }
 
-        if (MmVirtualBias != 0) {
+        if (MmVirtualBias != 0)
+        {
 
             //
             // If the size of the boot image (likely due to a large registry)
@@ -794,9 +768,10 @@ Environment:
             // performance) but more importantly, allows the system to boot.
             //
 
-            if (MmBootImageSize > 16 * 1024 * 1024) {
+            if (MmBootImageSize > 16 * 1024 * 1024)
+            {
                 MmPagedPoolStart = (PVOID)((PCHAR)MmPagedPoolStart + (MmBootImageSize - 16 * 1024 * 1024));
-                ASSERT (((ULONG_PTR)MmPagedPoolStart % MM_VA_MAPPED_BY_PDE) == 0);
+                ASSERT(((ULONG_PTR)MmPagedPoolStart % MM_VA_MAPPED_BY_PDE) == 0);
             }
 
             //
@@ -808,7 +783,8 @@ Environment:
             // allow 3gb of user address space, then set the user probe address
             // and the maximum system cache size.
 
-	        if ((UserVaLimit > 2048) && (UserVaLimit < 3072)) {
+            if ((UserVaLimit > 2048) && (UserVaLimit < 3072))
+            {
 
                 //
                 // Use any space between the maximum user virtual address
@@ -818,18 +794,20 @@ Environment:
                 //
 
                 UserVaLimit -= 2048;
-                UserVaLimit *= (1024*1024);
+                UserVaLimit *= (1024 * 1024);
 
                 //
                 // Don't let the user specify a value which would cause us to
                 // prematurely overwrite portions of the kernel & loader block.
                 //
 
-                if (UserVaLimit < MmBootImageSize) {
+                if (UserVaLimit < MmBootImageSize)
+                {
                     UserVaLimit = MmBootImageSize;
                 }
             }
-            else {
+            else
+            {
                 UserVaLimit = 0x40000000;
             }
 
@@ -838,13 +816,14 @@ Environment:
             MmUserProbeAddress += UserVaLimit;
             MiMaximumWorkingSet += UserVaLimit >> PAGE_SHIFT;
 
-            if (UserVaLimit != 0x40000000) {
+            if (UserVaLimit != 0x40000000)
+            {
                 MiUseMaximumSystemSpace = (ULONG_PTR)MmSystemRangeStart;
                 MiUseMaximumSystemSpaceEnd = 0xC0000000;
             }
 
-	        MiHighestUserPte = MiGetPteAddress (MmHighestUserAddress);
-            MiHighestUserPde = MiGetPdeAddress (MmHighestUserAddress);
+            MiHighestUserPte = MiGetPteAddress(MmHighestUserAddress);
+            MiHighestUserPde = MiGetPdeAddress(MmHighestUserAddress);
 
             //
             // Moving to 3GB means moving session space to just above
@@ -859,9 +838,9 @@ Environment:
             //                 |              \/                    |
             //                 |                                    |
             //                 +------------------------------------+
-	        //		       | Session space (Hydra).		    |
+            //		       | Session space (Hydra).		    |
             //                 +------------------------------------+
-	        //		       | Systemwide global mapped views.    |
+            //		       | Systemwide global mapped views.    |
             //                 +------------------------------------+
             //                 |                                    |
             //                 |               ^                    |
@@ -885,8 +864,7 @@ Environment:
 
             MaximumSystemCacheSize -= MmSystemViewSize >> PAGE_SHIFT;
 
-            MmSessionBase = (ULONG_PTR)(MM_SYSTEM_CACHE_START +
-                                  (MaximumSystemCacheSize << PAGE_SHIFT));
+            MmSessionBase = (ULONG_PTR)(MM_SYSTEM_CACHE_START + (MaximumSystemCacheSize << PAGE_SHIFT));
 
             MiSystemViewStart = MmSessionBase + MmSessionSize;
 
@@ -899,33 +877,34 @@ Environment:
 
             MiSessionImageEnd = MiSessionSpaceEnd;
             MiSessionImageStart = MiSessionImageEnd - MmSessionImageSize;
-	}
-	else if ((UserVaLimit >= 64) && (UserVaLimit < 2048)) {
+        }
+        else if ((UserVaLimit >= 64) && (UserVaLimit < 2048))
+        {
 
-	    //
-	    // Convert input MB to bytes.
-	    //
+            //
+            // Convert input MB to bytes.
+            //
 
-	    UserVaLimit *= (1024*1024);
-	    ReductionInBytes = 0x80000000 - UserVaLimit;
+            UserVaLimit *= (1024 * 1024);
+            ReductionInBytes = 0x80000000 - UserVaLimit;
 
-	    MmHighestUserAddress = ((PCHAR)MmHighestUserAddress - ReductionInBytes);
-	    MmSystemRangeStart = ((PCHAR)MmSystemRangeStart - ReductionInBytes);
-	    MmUserProbeAddress -= ReductionInBytes;
-	    MiMaximumWorkingSet -= ReductionInBytes >> PAGE_SHIFT;
+            MmHighestUserAddress = ((PCHAR)MmHighestUserAddress - ReductionInBytes);
+            MmSystemRangeStart = ((PCHAR)MmSystemRangeStart - ReductionInBytes);
+            MmUserProbeAddress -= ReductionInBytes;
+            MiMaximumWorkingSet -= ReductionInBytes >> PAGE_SHIFT;
 
-	    MiUseMaximumSystemSpace = (ULONG_PTR)MmSystemRangeStart;
-	    MiUseMaximumSystemSpaceEnd = (ULONG_PTR)MiUseMaximumSystemSpace + ReductionInBytes;
+            MiUseMaximumSystemSpace = (ULONG_PTR)MmSystemRangeStart;
+            MiUseMaximumSystemSpaceEnd = (ULONG_PTR)MiUseMaximumSystemSpace + ReductionInBytes;
 
-	    MmHighSectionBase = (PVOID)((PCHAR)MmHighSectionBase - ReductionInBytes);
+            MmHighSectionBase = (PVOID)((PCHAR)MmHighSectionBase - ReductionInBytes);
 
-	    MiHighestUserPte = MiGetPteAddress (MmHighestUserAddress);
-	    MiHighestUserPde = MiGetPdeAddress (MmHighestUserAddress);
-	}
+            MiHighestUserPte = MiGetPteAddress(MmHighestUserAddress);
+            MiHighestUserPde = MiGetPdeAddress(MmHighestUserAddress);
+        }
 
 #else
 
-#if !defined (_WIN64)
+#if !defined(_WIN64)
         MaximumSystemCacheSize -= (MmSystemViewSize >> PAGE_SHIFT);
 #endif
 
@@ -935,27 +914,30 @@ Environment:
         // Initialize some global session variables.
         //
 
-        MmSessionSpace = (PMM_SESSION_SPACE)((ULONG_PTR)MmSessionBase + MmSessionSize - MmSessionImageSize - MI_SESSION_SPACE_STRUCT_SIZE);
+        MmSessionSpace = (PMM_SESSION_SPACE)((ULONG_PTR)MmSessionBase + MmSessionSize - MmSessionImageSize -
+                                             MI_SESSION_SPACE_STRUCT_SIZE);
 
-        MiSessionImagePteStart = MiGetPteAddress ((PVOID) MiSessionImageStart);
-        MiSessionImagePteEnd = MiGetPteAddress ((PVOID) MiSessionImageEnd);
+        MiSessionImagePteStart = MiGetPteAddress((PVOID)MiSessionImageStart);
+        MiSessionImagePteEnd = MiGetPteAddress((PVOID)MiSessionImageEnd);
 
-        MiSessionBasePte = MiGetPteAddress ((PVOID)MmSessionBase);
+        MiSessionBasePte = MiGetPteAddress((PVOID)MmSessionBase);
 
         MiSessionSpaceWs = MiSessionViewStart + MmSessionViewSize;
 
-        MiSessionLastPte = MiGetPteAddress ((PVOID)MiSessionSpaceEnd);
+        MiSessionLastPte = MiGetPteAddress((PVOID)MiSessionSpaceEnd);
 
 #if DBG
         //
         // A few sanity checks to ensure things are as they should be.
         //
 
-        if ((sizeof(CONTROL_AREA) % 8) != 0) {
+        if ((sizeof(CONTROL_AREA) % 8) != 0)
+        {
             DbgPrint("control area list is not a quadword sized structure\n");
         }
 
-        if ((sizeof(SUBSECTION) % 8) != 0) {
+        if ((sizeof(SUBSECTION) % 8) != 0)
+        {
             DbgPrint("subsection list is not a quadword sized structure\n");
         }
 
@@ -966,51 +948,46 @@ Environment:
         //
 
         PointerPte = (PMMPTE)MmPagedPoolStart;
-        Pointer.u.Long = MiProtoAddressForPte (PointerPte);
+        Pointer.u.Long = MiProtoAddressForPte(PointerPte);
         TempPte = Pointer;
         PointerPde = MiPteToProto(&TempPte);
-        if (PointerPte != PointerPde) {
-            DbgPrint("unable to map start of paged pool as prototype PTE %p %p\n",
-                     PointerPde,
-                     PointerPte);
+        if (PointerPte != PointerPde)
+        {
+            DbgPrint("unable to map start of paged pool as prototype PTE %p %p\n", PointerPde, PointerPte);
         }
 
-        PointerPte =
-                (PMMPTE)((ULONG_PTR)MM_NONPAGED_POOL_END & ~((1 << PTE_SHIFT) - 1));
+        PointerPte = (PMMPTE)((ULONG_PTR)MM_NONPAGED_POOL_END & ~((1 << PTE_SHIFT) - 1));
 
-        Pointer.u.Long = MiProtoAddressForPte (PointerPte);
+        Pointer.u.Long = MiProtoAddressForPte(PointerPte);
         TempPte = Pointer;
         PointerPde = MiPteToProto(&TempPte);
-        if (PointerPte != PointerPde) {
-            DbgPrint("unable to map end of nonpaged pool as prototype PTE %p %p\n",
-                     PointerPde,
-                     PointerPte);
+        if (PointerPte != PointerPde)
+        {
+            DbgPrint("unable to map end of nonpaged pool as prototype PTE %p %p\n", PointerPde, PointerPte);
         }
 
-        PointerPte = (PMMPTE)(((ULONG_PTR)NON_PAGED_SYSTEM_END -
-                        0x37000 + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1));
+        PointerPte = (PMMPTE)(((ULONG_PTR)NON_PAGED_SYSTEM_END - 0x37000 + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1));
 
-        for (j = 0; j < 20; j += 1) {
-            Pointer.u.Long = MiProtoAddressForPte (PointerPte);
+        for (j = 0; j < 20; j += 1)
+        {
+            Pointer.u.Long = MiProtoAddressForPte(PointerPte);
             TempPte = Pointer;
             PointerPde = MiPteToProto(&TempPte);
-            if (PointerPte != PointerPde) {
-                DbgPrint("unable to map end of nonpaged pool as prototype PTE %p %p\n",
-                         PointerPde,
-                         PointerPte);
+            if (PointerPte != PointerPde)
+            {
+                DbgPrint("unable to map end of nonpaged pool as prototype PTE %p %p\n", PointerPde, PointerPte);
             }
 
             PointerPte += 1;
         }
 
         PointerPte = (PMMPTE)(((ULONG_PTR)MM_NONPAGED_POOL_END - 0x133448) & ~(ULONG_PTR)7);
-        Pointer.u.Long = MiGetSubsectionAddressForPte (PointerPte);
+        Pointer.u.Long = MiGetSubsectionAddressForPte(PointerPte);
         TempPte = Pointer;
         PointerPde = (PMMPTE)MiGetSubsectionAddress(&TempPte);
-        if (PointerPte != PointerPde) {
-            DbgPrint("unable to map end of nonpaged pool as section PTE %p %p\n",
-                     PointerPde,
-                     PointerPte);
+        if (PointerPte != PointerPde)
+        {
+            DbgPrint("unable to map end of nonpaged pool as section PTE %p %p\n", PointerPde, PointerPte);
 
             MiFormatPte(&TempPte);
         }
@@ -1021,67 +998,63 @@ Environment:
 
 #endif
 
-        if (MmEnforceWriteProtection) {
+        if (MmEnforceWriteProtection)
+        {
             MiPteStr[0] = (CHAR)1;
         }
 
-        InitializeListHead (&MmLoadedUserImageList);
-        InitializeListHead (&MmLockConflictList);
-        InitializeListHead (&MmProtectedPteList);
+        InitializeListHead(&MmLoadedUserImageList);
+        InitializeListHead(&MmLockConflictList);
+        InitializeListHead(&MmProtectedPteList);
 
-        KeInitializeSpinLock (&MmProtectedPteLock);
+        KeInitializeSpinLock(&MmProtectedPteLock);
 
-        MmCriticalSectionTimeout.QuadPart = Int32x32To64(
-                                                 MmCritsectTimeoutSeconds,
-                                                -10000000);
+        MmCriticalSectionTimeout.QuadPart = Int32x32To64(MmCritsectTimeoutSeconds, -10000000);
 
         //
         // Initialize System Address Space creation mutex.
         //
 
-        ExInitializeFastMutex (&MmSectionCommitMutex);
-        ExInitializeFastMutex (&MmSectionBasedMutex);
-        ExInitializeFastMutex (&MmDynamicMemoryMutex);
+        ExInitializeFastMutex(&MmSectionCommitMutex);
+        ExInitializeFastMutex(&MmSectionBasedMutex);
+        ExInitializeFastMutex(&MmDynamicMemoryMutex);
 
-        KeInitializeMutant (&MmSystemLoadLock, FALSE);
+        KeInitializeMutant(&MmSystemLoadLock, FALSE);
 
-        KeInitializeEvent (&MmAvailablePagesEvent, NotificationEvent, TRUE);
-        KeInitializeEvent (&MmAvailablePagesEventMedium, NotificationEvent, TRUE);
-        KeInitializeEvent (&MmAvailablePagesEventHigh, NotificationEvent, TRUE);
-        KeInitializeEvent (&MmMappedFileIoComplete, NotificationEvent, FALSE);
+        KeInitializeEvent(&MmAvailablePagesEvent, NotificationEvent, TRUE);
+        KeInitializeEvent(&MmAvailablePagesEventMedium, NotificationEvent, TRUE);
+        KeInitializeEvent(&MmAvailablePagesEventHigh, NotificationEvent, TRUE);
+        KeInitializeEvent(&MmMappedFileIoComplete, NotificationEvent, FALSE);
 
-        KeInitializeEvent (&MmZeroingPageEvent, SynchronizationEvent, FALSE);
-        KeInitializeEvent (&MmCollidedFlushEvent, NotificationEvent, FALSE);
-        KeInitializeEvent (&MmCollidedLockEvent, NotificationEvent, FALSE);
-        KeInitializeEvent (&MiMappedPagesTooOldEvent, NotificationEvent, FALSE);
+        KeInitializeEvent(&MmZeroingPageEvent, SynchronizationEvent, FALSE);
+        KeInitializeEvent(&MmCollidedFlushEvent, NotificationEvent, FALSE);
+        KeInitializeEvent(&MmCollidedLockEvent, NotificationEvent, FALSE);
+        KeInitializeEvent(&MiMappedPagesTooOldEvent, NotificationEvent, FALSE);
 
-        KeInitializeDpc (&MiModifiedPageWriterTimerDpc,
-                         MiModifiedPageWriterTimerDispatch,
-                         NULL);
+        KeInitializeDpc(&MiModifiedPageWriterTimerDpc, MiModifiedPageWriterTimerDispatch, NULL);
 
-        KeInitializeTimerEx (&MiModifiedPageWriterTimer, SynchronizationTimer);
+        KeInitializeTimerEx(&MiModifiedPageWriterTimer, SynchronizationTimer);
 
-        MiModifiedPageLife.QuadPart = Int32x32To64(
-                                                 MmModifiedPageLifeInSeconds,
-                                                -10000000);
+        MiModifiedPageLife.QuadPart = Int32x32To64(MmModifiedPageLifeInSeconds, -10000000);
 
-        InitializeListHead (&MmWorkingSetExpansionHead.ListHead);
+        InitializeListHead(&MmWorkingSetExpansionHead.ListHead);
 
-        InitializeSListHead (&MmDeadStackSListHead);
+        InitializeSListHead(&MmDeadStackSListHead);
 
-        InitializeSListHead (&MmEventCountSListHead);
+        InitializeSListHead(&MmEventCountSListHead);
 
-        InitializeSListHead (&MmInPageSupportSListHead);
+        InitializeSListHead(&MmInPageSupportSListHead);
 
         MmZeroingPageThreadActive = FALSE;
 
-        MiMemoryLicense (LoaderBlock);
+        MiMemoryLicense(LoaderBlock);
 
         //
         // include all memory types ...
         //
 
-        for (i = 0; i < LoaderMaximum; i += 1) {
+        for (i = 0; i < LoaderMaximum; i += 1)
+        {
             IncludeType[i] = TRUE;
         }
 
@@ -1098,9 +1071,9 @@ Environment:
         // Compute number of pages in the system.
         //
 
-        NumberOfPages = MiPagesInLoaderBlock (LoaderBlock, IncludeType);
+        NumberOfPages = MiPagesInLoaderBlock(LoaderBlock, IncludeType);
 
-#if defined (_MI_MORE_THAN_4GB_)
+#if defined(_MI_MORE_THAN_4GB_)
         Mm64BitPhysicalAddress = TRUE;
 #endif
 
@@ -1109,7 +1082,8 @@ Environment:
         // other options that track corruption regardless of registry settings.
         //
 
-        if (strstr(LoaderBlock->LoadOptions, SAFEBOOT_LOAD_OPTION_A)) {
+        if (strstr(LoaderBlock->LoadOptions, SAFEBOOT_LOAD_OPTION_A))
+        {
             MmVerifyDriverBufferLength = (ULONG)-1;
             MiVerifyAllDrivers = 0;
             MmVerifyDriverLevel = 0;
@@ -1121,20 +1095,22 @@ Environment:
             MmTrackLockedPages = FALSE;
             MmTrackPtes = 0;
 
-#if defined (_WIN64)
+#if defined(_WIN64)
             MmSessionSpecialPoolEnd = NULL;
             MmSessionSpecialPoolStart = NULL;
 #endif
             SharedUserData->SafeBootMode = TRUE;
         }
-        else {
-            MiTriageSystem (LoaderBlock);
+        else
+        {
+            MiTriageSystem(LoaderBlock);
         }
 
         SystemPteMultiplier = 0;
 
-        if (MmNumberOfSystemPtes == 0) {
-#if defined (_WIN64)
+        if (MmNumberOfSystemPtes == 0)
+        {
+#if defined(_WIN64)
 
             //
             // 64-bit NT is not constrained by virtual address space.  No
@@ -1147,36 +1123,44 @@ Environment:
             // on the PTE_PER_PAGE.
             //
 
-            if (ExpMultiUserTS == TRUE) {
+            if (ExpMultiUserTS == TRUE)
+            {
                 SystemPteMultiplier = 32;
             }
-            else {
+            else
+            {
                 SystemPteMultiplier = 16;
             }
-            if (NumberOfPages < 0x8000) {
+            if (NumberOfPages < 0x8000)
+            {
                 SystemPteMultiplier >>= 1;
             }
 #else
-            if (NumberOfPages < MM_MEDIUM_SYSTEM) {
+            if (NumberOfPages < MM_MEDIUM_SYSTEM)
+            {
                 MmNumberOfSystemPtes = MM_MINIMUM_SYSTEM_PTES;
             }
-            else {
+            else
+            {
                 MmNumberOfSystemPtes = MM_DEFAULT_SYSTEM_PTES;
-                if (NumberOfPages > 8192) {
+                if (NumberOfPages > 8192)
+                {
                     MmNumberOfSystemPtes += MmNumberOfSystemPtes;
 
                     //
                     // Any reasonable Hydra machine gets the maximum.
                     //
 
-                    if (ExpMultiUserTS == TRUE) {
+                    if (ExpMultiUserTS == TRUE)
+                    {
                         MmNumberOfSystemPtes = MM_MAXIMUM_SYSTEM_PTES;
                     }
                 }
             }
 #endif
         }
-        else if (MmNumberOfSystemPtes == (ULONG)-1) {
+        else if (MmNumberOfSystemPtes == (ULONG)-1)
+        {
 
             //
             // This registry setting indicates the maximum number of
@@ -1186,48 +1170,57 @@ Environment:
 
             MiRequestedSystemPtes = MmNumberOfSystemPtes;
 
-#if defined (_WIN64)
+#if defined(_WIN64)
             SystemPteMultiplier = 256;
 #else
             MmNumberOfSystemPtes = MM_MAXIMUM_SYSTEM_PTES;
 #endif
         }
 
-        if (SystemPteMultiplier != 0) {
-            if (NumberOfPages * SystemPteMultiplier > MM_MAXIMUM_SYSTEM_PTES) {
+        if (SystemPteMultiplier != 0)
+        {
+            if (NumberOfPages * SystemPteMultiplier > MM_MAXIMUM_SYSTEM_PTES)
+            {
                 MmNumberOfSystemPtes = MM_MAXIMUM_SYSTEM_PTES;
             }
-            else {
+            else
+            {
                 MmNumberOfSystemPtes = (ULONG)(NumberOfPages * SystemPteMultiplier);
             }
         }
 
-        if (MmNumberOfSystemPtes > MM_MAXIMUM_SYSTEM_PTES)  {
+        if (MmNumberOfSystemPtes > MM_MAXIMUM_SYSTEM_PTES)
+        {
             MmNumberOfSystemPtes = MM_MAXIMUM_SYSTEM_PTES;
         }
 
-        if (MmNumberOfSystemPtes < MM_MINIMUM_SYSTEM_PTES) {
+        if (MmNumberOfSystemPtes < MM_MINIMUM_SYSTEM_PTES)
+        {
             MmNumberOfSystemPtes = MM_MINIMUM_SYSTEM_PTES;
         }
 
-        if (MmHeapSegmentReserve == 0) {
+        if (MmHeapSegmentReserve == 0)
+        {
             MmHeapSegmentReserve = 1024 * 1024;
         }
 
-        if (MmHeapSegmentCommit == 0) {
+        if (MmHeapSegmentCommit == 0)
+        {
             MmHeapSegmentCommit = PAGE_SIZE * 2;
         }
 
-        if (MmHeapDeCommitTotalFreeThreshold == 0) {
+        if (MmHeapDeCommitTotalFreeThreshold == 0)
+        {
             MmHeapDeCommitTotalFreeThreshold = 64 * 1024;
         }
 
-        if (MmHeapDeCommitFreeBlockThreshold == 0) {
+        if (MmHeapDeCommitFreeBlockThreshold == 0)
+        {
             MmHeapDeCommitFreeBlockThreshold = PAGE_SIZE;
         }
 
 #ifndef NO_POOL_CHECKS
-        MiInitializeSpecialPoolCriteria ();
+        MiInitializeSpecialPoolCriteria();
 #endif
 
         //
@@ -1236,8 +1229,8 @@ Environment:
         // for their allocations.
         //
 
-        if ((MmVerifyDriverBufferLength != (ULONG)-1) ||
-            ((MmSpecialPoolTag != 0) && (MmSpecialPoolTag != (ULONG)-1))) {
+        if ((MmVerifyDriverBufferLength != (ULONG)-1) || ((MmSpecialPoolTag != 0) && (MmSpecialPoolTag != (ULONG)-1)))
+        {
             MmNumberOfSystemPtes += MM_SPECIAL_POOL_PTES;
         }
 
@@ -1270,21 +1263,23 @@ Environment:
         //     the Mm APIs which check this key and the key is ignored in
         //     this case as it doesn't provide any sign extension help and
         //     therefore we don't allow it to burn up any valuable VA space
-	//     which could cause a collision.
-	//
+        //     which could cause a collision.
+        //
 
-        if (MmVirtualBias == 0) {
+        if (MmVirtualBias == 0)
+        {
             MmAllocationPreference = 0;
         }
 #endif
 
-        if (MmAllocationPreference != 0) {
+        if (MmAllocationPreference != 0)
+        {
             MmAllocationPreference = MEM_TOP_DOWN;
         }
 
-        ExInitializeResourceLite (&MmSystemWsLock);
+        ExInitializeResourceLite(&MmSystemWsLock);
 
-        MiInitializeDriverVerifierList (LoaderBlock);
+        MiInitializeDriverVerifierList(LoaderBlock);
 
         //
         // Set the initial commit page limit high enough so initial pool
@@ -1301,21 +1296,25 @@ Environment:
         // registry entry is treated as the number of 1K chunks.
         //
 
-        if (MmAllocationFragment == 0) {
+        if (MmAllocationFragment == 0)
+        {
             AutosizingFragment = TRUE;
             MmAllocationFragment = MM_ALLOCATION_FRAGMENT;
-#if !defined (_WIN64)
-            if (NumberOfPages < 64 * 1024) {
+#if !defined(_WIN64)
+            if (NumberOfPages < 64 * 1024)
+            {
                 MmAllocationFragment = MM_ALLOCATION_FRAGMENT / 4;
             }
-            else if (NumberOfPages < 256 * 1024) {
+            else if (NumberOfPages < 256 * 1024)
+            {
                 MmAllocationFragment = MM_ALLOCATION_FRAGMENT / 2;
             }
 #endif
         }
-	else {
+        else
+        {
 
-	    //
+            //
             // Convert the registry entry from 1K chunks into bytes.
             // Then round it to a PAGE_SIZE multiple.  Finally bound it
             // reasonably.
@@ -1323,45 +1322,44 @@ Environment:
 
             AutosizingFragment = FALSE;
             MmAllocationFragment *= 1024;
-            MmAllocationFragment = ROUND_TO_PAGES (MmAllocationFragment);
+            MmAllocationFragment = ROUND_TO_PAGES(MmAllocationFragment);
 
-            if (MmAllocationFragment > MM_ALLOCATION_FRAGMENT) {
+            if (MmAllocationFragment > MM_ALLOCATION_FRAGMENT)
+            {
                 MmAllocationFragment = MM_ALLOCATION_FRAGMENT;
             }
-            else if (MmAllocationFragment < PAGE_SIZE) {
+            else if (MmAllocationFragment < PAGE_SIZE)
+            {
                 MmAllocationFragment = PAGE_SIZE;
             }
         }
 
-        MiInitializeIoTrackers ();
+        MiInitializeIoTrackers();
 
-        MiInitializeCacheOverrides ();
+        MiInitializeCacheOverrides();
 
         //
         // Initialize the machine dependent portion of the hardware.
         //
 
-        MiInitMachineDependent (LoaderBlock);
+        MiInitMachineDependent(LoaderBlock);
 
-        MmPhysicalMemoryBlock = MmInitializeMemoryLimits (LoaderBlock,
-                                                          IncludeType,
-                                                          NULL);
+        MmPhysicalMemoryBlock = MmInitializeMemoryLimits(LoaderBlock, IncludeType, NULL);
 
-        if (MmPhysicalMemoryBlock == NULL) {
-            KeBugCheckEx (INSTALL_MORE_MEMORY,
-                          MmNumberOfPhysicalPages,
-                          MmLowestPhysicalPage,
-                          MmHighestPhysicalPage,
-                          0x100);
+        if (MmPhysicalMemoryBlock == NULL)
+        {
+            KeBugCheckEx(INSTALL_MORE_MEMORY, MmNumberOfPhysicalPages, MmLowestPhysicalPage, MmHighestPhysicalPage,
+                         0x100);
         }
 
 #if defined(_X86_)
-        MiReportPhysicalMemory ();
+        MiReportPhysicalMemory();
 #endif
 
-#if defined (_MI_MORE_THAN_4GB_)
-        if (MiNoLowMemory != 0) {
-            MiRemoveLowPages (0);
+#if defined(_MI_MORE_THAN_4GB_)
+        if (MiNoLowMemory != 0)
+        {
+            MiRemoveLowPages(0);
         }
 #endif
 
@@ -1370,18 +1368,18 @@ Environment:
         // segment dereferencing thread.
         //
 
-        KeInitializeSpinLock (&MmDereferenceSegmentHeader.Lock);
-        InitializeListHead (&MmDereferenceSegmentHeader.ListHead);
-        KeInitializeSemaphore (&MmDereferenceSegmentHeader.Semaphore, 0, MAXLONG);
+        KeInitializeSpinLock(&MmDereferenceSegmentHeader.Lock);
+        InitializeListHead(&MmDereferenceSegmentHeader.ListHead);
+        KeInitializeSemaphore(&MmDereferenceSegmentHeader.Semaphore, 0, MAXLONG);
 
-        InitializeListHead (&MmUnusedSegmentList);
-        InitializeListHead (&MmUnusedSubsectionList);
-        KeInitializeEvent (&MmUnusedSegmentCleanup, NotificationEvent, FALSE);
+        InitializeListHead(&MmUnusedSegmentList);
+        InitializeListHead(&MmUnusedSubsectionList);
+        KeInitializeEvent(&MmUnusedSegmentCleanup, NotificationEvent, FALSE);
 
 
-        MiInitializeCommitment ();
+        MiInitializeCommitment();
 
-        MiInitializePfnTracing ();
+        MiInitializePfnTracing();
 
 #if defined(_X86_)
 
@@ -1393,20 +1391,22 @@ Environment:
         //
         // This is not done until after machine dependent initialization runs
         // as that initialization relies on the original meaning of VirtualBias.
-	//
-	// Note if the system is booted with both /3GB & /USERVA, then system
+        //
+        // Note if the system is booted with both /3GB & /USERVA, then system
         // PTEs will be allocated below virtual 3GB and that will end up being
         // the lowest system address the process creation needs to duplicate.
         //
 
-        if (MmVirtualBias != 0) {
+        if (MmVirtualBias != 0)
+        {
             MmVirtualBias = (ULONG_PTR)MmSessionBase - CODE_START;
         }
 #endif
 
-        if (MmMirroring & MM_MIRRORING_ENABLED) {
+        if (MmMirroring & MM_MIRRORING_ENABLED)
+        {
 
-#if defined (_WIN64)
+#if defined(_WIN64)
 
             //
             // All page frame numbers must fit in 32 bits because the bitmap
@@ -1416,30 +1416,29 @@ Environment:
             // must reinitialize them anyway.
             //
 
-            if (MmHighestPossiblePhysicalPage + 1 < _4gb) {
+            if (MmHighestPossiblePhysicalPage + 1 < _4gb)
+            {
 #endif
 
-                MiCreateBitMap (&MiMirrorBitMap,
-                                MmHighestPossiblePhysicalPage + 1,
-                                NonPagedPool);
+                MiCreateBitMap(&MiMirrorBitMap, MmHighestPossiblePhysicalPage + 1, NonPagedPool);
 
-                if (MiMirrorBitMap != NULL) {
-                    MiCreateBitMap (&MiMirrorBitMap2,
-                                    MmHighestPossiblePhysicalPage + 1,
-                                    NonPagedPool);
+                if (MiMirrorBitMap != NULL)
+                {
+                    MiCreateBitMap(&MiMirrorBitMap2, MmHighestPossiblePhysicalPage + 1, NonPagedPool);
 
-                    if (MiMirrorBitMap2 == NULL) {
-                        MiRemoveBitMap (&MiMirrorBitMap);
+                    if (MiMirrorBitMap2 == NULL)
+                    {
+                        MiRemoveBitMap(&MiMirrorBitMap);
                     }
                 }
-#if defined (_WIN64)
+#if defined(_WIN64)
             }
 #endif
         }
 
-#if !defined (_WIN64)
-        if ((AutosizingFragment == TRUE) &&
-            (NumberOfPages >= 256 * 1024)) {
+#if !defined(_WIN64)
+        if ((AutosizingFragment == TRUE) && (NumberOfPages >= 256 * 1024))
+        {
 
             //
             // This is a system with at least 1GB of RAM.  Presumably it
@@ -1451,14 +1450,15 @@ Environment:
         }
 #endif
 
-        MiReloadBootLoadedDrivers (LoaderBlock);
+        MiReloadBootLoadedDrivers(LoaderBlock);
 
-#if defined (_MI_MORE_THAN_4GB_)
-        if (MiNoLowMemory != 0) {
-            MiRemoveLowPages (1);
+#if defined(_MI_MORE_THAN_4GB_)
+        if (MiNoLowMemory != 0)
+        {
+            MiRemoveLowPages(1);
         }
 #endif
-        MiInitializeVerifyingComponents (LoaderBlock);
+        MiInitializeVerifyingComponents(LoaderBlock);
 
         //
         // Setup the system size as small, medium, or large depending
@@ -1479,7 +1479,8 @@ Environment:
         // >= 64 is large for server
         //
 
-        if (MmNumberOfPhysicalPages <= MM_SMALL_SYSTEM) {
+        if (MmNumberOfPhysicalPages <= MM_SMALL_SYSTEM)
+        {
             MmSystemSize = MmSmallSystem;
             MmMaximumDeadKernelStacks = 0;
             MmModifiedPageMinimum = 40;
@@ -1489,7 +1490,8 @@ Environment:
             MmReadClusterSize = 2;
             MmInPageSupportMinimum = 2;
         }
-        else if (MmNumberOfPhysicalPages <= MM_MEDIUM_SYSTEM) {
+        else if (MmNumberOfPhysicalPages <= MM_MEDIUM_SYSTEM)
+        {
             MmSystemSize = MmSmallSystem;
             MmMaximumDeadKernelStacks = 2;
             MmModifiedPageMinimum = 80;
@@ -1501,7 +1503,8 @@ Environment:
             MmReadClusterSize = 4;
             MmInPageSupportMinimum = 3;
         }
-        else {
+        else
+        {
             MmSystemSize = MmMediumSystem;
             MmMaximumDeadKernelStacks = 5;
             MmModifiedPageMinimum = 150;
@@ -1514,56 +1517,66 @@ Environment:
             MmInPageSupportMinimum = 4;
         }
 
-        if (MmNumberOfPhysicalPages < ((24*1024*1024)/PAGE_SIZE)) {
+        if (MmNumberOfPhysicalPages < ((24 * 1024 * 1024) / PAGE_SIZE))
+        {
             MmSystemCacheWsMinimum = 32;
         }
 
-        if (MmNumberOfPhysicalPages >= ((32*1024*1024)/PAGE_SIZE)) {
+        if (MmNumberOfPhysicalPages >= ((32 * 1024 * 1024) / PAGE_SIZE))
+        {
 
             //
             // If we are on a workstation, 32Mb and above are considered
             // large systems.
             //
 
-            if (MmProductType == 0x00690057) {
+            if (MmProductType == 0x00690057)
+            {
                 MmSystemSize = MmLargeSystem;
-
             }
-            else {
+            else
+            {
 
                 //
                 // For servers, 64Mb and greater is a large system
                 //
 
-                if (MmNumberOfPhysicalPages >= ((64*1024*1024)/PAGE_SIZE)) {
+                if (MmNumberOfPhysicalPages >= ((64 * 1024 * 1024) / PAGE_SIZE))
+                {
                     MmSystemSize = MmLargeSystem;
                 }
             }
         }
 
-        if (MmNumberOfPhysicalPages > ((33*1024*1024)/PAGE_SIZE)) {
+        if (MmNumberOfPhysicalPages > ((33 * 1024 * 1024) / PAGE_SIZE))
+        {
             MmModifiedPageMinimum = 400;
             MmModifiedPageMaximum = 800;
             MmSystemCacheWsMinimum += 500;
             MmSystemCacheWsMaximum += 900;
             MmInPageSupportMinimum += 4;
         }
-        if (MmNumberOfPhysicalPages > ((220*1024*1024)/PAGE_SIZE)) {  // bump max cache size a bit more
-            if ( (LONG)MmSystemCacheWsMinimum < (LONG)((24*1024*1024) >> PAGE_SHIFT)  &&
-                 (LONG)MmSystemCacheWsMaximum < (LONG)((24*1024*1024) >> PAGE_SHIFT)){
-                MmSystemCacheWsMaximum =  ((24*1024*1024) >> PAGE_SHIFT);
+        if (MmNumberOfPhysicalPages > ((220 * 1024 * 1024) / PAGE_SIZE))
+        { // bump max cache size a bit more
+            if ((LONG)MmSystemCacheWsMinimum < (LONG)((24 * 1024 * 1024) >> PAGE_SHIFT) &&
+                (LONG)MmSystemCacheWsMaximum < (LONG)((24 * 1024 * 1024) >> PAGE_SHIFT))
+            {
+                MmSystemCacheWsMaximum = ((24 * 1024 * 1024) >> PAGE_SHIFT);
             }
-            ASSERT ((LONG)MmSystemCacheWsMaximum > (LONG)MmSystemCacheWsMinimum);
-        } 
-        else if (MmNumberOfPhysicalPages > ((110*1024*1024)/PAGE_SIZE)) {  // bump max cache size a bit
-            if ( (LONG)MmSystemCacheWsMinimum < (LONG)((16*1024*1024) >> PAGE_SHIFT)  &&
-                 (LONG)MmSystemCacheWsMaximum < (LONG)((16*1024*1024) >> PAGE_SHIFT)){
-                MmSystemCacheWsMaximum =  ((16*1024*1024) >> PAGE_SHIFT);
+            ASSERT((LONG)MmSystemCacheWsMaximum > (LONG)MmSystemCacheWsMinimum);
+        }
+        else if (MmNumberOfPhysicalPages > ((110 * 1024 * 1024) / PAGE_SIZE))
+        { // bump max cache size a bit
+            if ((LONG)MmSystemCacheWsMinimum < (LONG)((16 * 1024 * 1024) >> PAGE_SHIFT) &&
+                (LONG)MmSystemCacheWsMaximum < (LONG)((16 * 1024 * 1024) >> PAGE_SHIFT))
+            {
+                MmSystemCacheWsMaximum = ((16 * 1024 * 1024) >> PAGE_SHIFT);
             }
-            ASSERT ((LONG)MmSystemCacheWsMaximum > (LONG)MmSystemCacheWsMinimum);
+            ASSERT((LONG)MmSystemCacheWsMaximum > (LONG)MmSystemCacheWsMinimum);
         }
 
-        if (NT_SUCCESS (MmIsVerifierEnabled (&VerifierFlags))) {
+        if (NT_SUCCESS(MmIsVerifierEnabled(&VerifierFlags)))
+        {
 
             //
             // The verifier is enabled so don't defer any MDL unlocks because
@@ -1573,69 +1586,74 @@ Environment:
 
             DeferredMdlEntries = 0;
         }
-        else if (MmNumberOfPhysicalPages > ((255*1024*1024)/PAGE_SIZE)) {
+        else if (MmNumberOfPhysicalPages > ((255 * 1024 * 1024) / PAGE_SIZE))
+        {
             DeferredMdlEntries = 32;
         }
-        else if (MmNumberOfPhysicalPages > ((127*1024*1024)/PAGE_SIZE)) {
+        else if (MmNumberOfPhysicalPages > ((127 * 1024 * 1024) / PAGE_SIZE))
+        {
             DeferredMdlEntries = 8;
         }
-        else {
+        else
+        {
             DeferredMdlEntries = 4;
         }
 
 #if defined(MI_MULTINODE)
-        for (i = 0; i < KeNumberNodes; i += 1) {
+        for (i = 0; i < KeNumberNodes; i += 1)
+        {
 
-            InitializeSListHead (&KeNodeBlock[i]->PfnDereferenceSListHead);
+            InitializeSListHead(&KeNodeBlock[i]->PfnDereferenceSListHead);
             KeNodeBlock[i]->PfnDeferredList = NULL;
 
-            for (j = 0; j < DeferredMdlEntries; j += 1) {
+            for (j = 0; j < DeferredMdlEntries; j += 1)
+            {
 
-                SingleListEntry = ExAllocatePoolWithTag (NonPagedPool,
-                                             sizeof(MI_PFN_DEREFERENCE_CHUNK),
-                                             'mDmM');
-        
-                if (SingleListEntry != NULL) {
-                    InterlockedPushEntrySList (&KeNodeBlock[i]->PfnDereferenceSListHead,
-                                               SingleListEntry);
+                SingleListEntry = ExAllocatePoolWithTag(NonPagedPool, sizeof(MI_PFN_DEREFERENCE_CHUNK), 'mDmM');
+
+                if (SingleListEntry != NULL)
+                {
+                    InterlockedPushEntrySList(&KeNodeBlock[i]->PfnDereferenceSListHead, SingleListEntry);
                 }
             }
         }
 #else
-        InitializeSListHead (&MmPfnDereferenceSListHead);
+        InitializeSListHead(&MmPfnDereferenceSListHead);
 
-        for (j = 0; j < DeferredMdlEntries; j += 1) {
-            SingleListEntry = ExAllocatePoolWithTag (NonPagedPool,
-                                             sizeof(MI_PFN_DEREFERENCE_CHUNK),
-                                             'mDmM');
-        
-            if (SingleListEntry != NULL) {
-                InterlockedPushEntrySList (&MmPfnDereferenceSListHead,
-                                           SingleListEntry);
+        for (j = 0; j < DeferredMdlEntries; j += 1)
+        {
+            SingleListEntry = ExAllocatePoolWithTag(NonPagedPool, sizeof(MI_PFN_DEREFERENCE_CHUNK), 'mDmM');
+
+            if (SingleListEntry != NULL)
+            {
+                InterlockedPushEntrySList(&MmPfnDereferenceSListHead, SingleListEntry);
             }
         }
 #endif
-        
-        ASSERT (SharedUserData->NumberOfPhysicalPages == 0);
 
-        SharedUserData->NumberOfPhysicalPages = (ULONG) MmNumberOfPhysicalPages;
+        ASSERT(SharedUserData->NumberOfPhysicalPages == 0);
+
+        SharedUserData->NumberOfPhysicalPages = (ULONG)MmNumberOfPhysicalPages;
 
         //
         // Determine if we are on an AS system (Winnt is not AS).
         //
 
-        if (MmProductType == 0x00690057) {
+        if (MmProductType == 0x00690057)
+        {
             SharedUserData->NtProductType = NtProductWinNt;
             MmProductType = 0;
             MmThrottleTop = 250;
             MmThrottleBottom = 30;
-
         }
-        else {
-            if (MmProductType == 0x0061004c) {
+        else
+        {
+            if (MmProductType == 0x0061004c)
+            {
                 SharedUserData->NtProductType = NtProductLanManNt;
             }
-            else {
+            else
+            {
                 SharedUserData->NtProductType = NtProductServer;
             }
 
@@ -1646,7 +1664,7 @@ Environment:
             MmInPageSupportMinimum += 8;
         }
 
-        MiAdjustWorkingSetManagerParameters ((LOGICAL)(MmProductType == 0 ? TRUE : FALSE));
+        MiAdjustWorkingSetManagerParameters((LOGICAL)(MmProductType == 0 ? TRUE : FALSE));
 
         //
         // Set the ResidentAvailablePages to the number of available
@@ -1670,7 +1688,8 @@ Environment:
         MmResidentAvailablePages -= MmSystemCacheWsMinimum;
         MmResidentAvailableAtInit = MmResidentAvailablePages;
 
-        if (MmResidentAvailablePages < 0) {
+        if (MmResidentAvailablePages < 0)
+        {
 #if DBG
             DbgPrint("system cache working set too big\n");
 #endif
@@ -1681,23 +1700,23 @@ Environment:
         // Initialize spin lock for allowing working set expansion.
         //
 
-        KeInitializeSpinLock (&MmExpansionLock);
+        KeInitializeSpinLock(&MmExpansionLock);
 
-        ExInitializeFastMutex (&MmPageFileCreationLock);
+        ExInitializeFastMutex(&MmPageFileCreationLock);
 
         //
         // Initialize resource for extending sections.
         //
 
-        ExInitializeResourceLite (&MmSectionExtendResource);
-        ExInitializeResourceLite (&MmSectionExtendSetResource);
+        ExInitializeResourceLite(&MmSectionExtendResource);
+        ExInitializeResourceLite(&MmSectionExtendSetResource);
 
         //
         // Build the system cache structures.
         //
 
-        StartPde = MiGetPdeAddress (MmSystemCacheWorkingSetList);
-        PointerPte = MiGetPteAddress (MmSystemCacheWorkingSetList);
+        StartPde = MiGetPdeAddress(MmSystemCacheWorkingSetList);
+        PointerPte = MiGetPteAddress(MmSystemCacheWorkingSetList);
 
 #if (_MI_PAGING_LEVELS >= 3)
 
@@ -1706,45 +1725,41 @@ Environment:
 #if (_MI_PAGING_LEVELS >= 4)
         StartPxe = MiGetPdeAddress(StartPde);
 
-        if (StartPxe->u.Hard.Valid == 0) {
+        if (StartPxe->u.Hard.Valid == 0)
+        {
 
             //
             // Map in a page directory parent page for the system cache working
             // set.  Note that we only populate one page table for this.
             //
 
-            DirectoryFrameIndex = MiRemoveAnyPage(
-                MI_GET_PAGE_COLOR_FROM_PTE (StartPxe));
+            DirectoryFrameIndex = MiRemoveAnyPage(MI_GET_PAGE_COLOR_FROM_PTE(StartPxe));
             TempPte.u.Hard.PageFrameNumber = DirectoryFrameIndex;
             *StartPxe = TempPte;
 
-            MiInitializePfn (DirectoryFrameIndex, StartPxe, 1);
+            MiInitializePfn(DirectoryFrameIndex, StartPxe, 1);
 
-            MiFillMemoryPte (MiGetVirtualAddressMappedByPte(StartPxe),
-                             PAGE_SIZE,
-                             ZeroKernelPte.u.Long);
+            MiFillMemoryPte(MiGetVirtualAddressMappedByPte(StartPxe), PAGE_SIZE, ZeroKernelPte.u.Long);
         }
 #endif
 
         StartPpe = MiGetPteAddress(StartPde);
 
-        if (StartPpe->u.Hard.Valid == 0) {
+        if (StartPpe->u.Hard.Valid == 0)
+        {
 
             //
             // Map in a page directory page for the system cache working set.
             // Note that we only populate one page table for this.
             //
 
-            DirectoryFrameIndex = MiRemoveAnyPage(
-                MI_GET_PAGE_COLOR_FROM_PTE (StartPpe));
+            DirectoryFrameIndex = MiRemoveAnyPage(MI_GET_PAGE_COLOR_FROM_PTE(StartPpe));
             TempPte.u.Hard.PageFrameNumber = DirectoryFrameIndex;
             *StartPpe = TempPte;
 
-            MiInitializePfn (DirectoryFrameIndex, StartPpe, 1);
+            MiInitializePfn(DirectoryFrameIndex, StartPpe, 1);
 
-            MiFillMemoryPte (MiGetVirtualAddressMappedByPte(StartPpe),
-                             PAGE_SIZE,
-                             ZeroKernelPte.u.Long);
+            MiFillMemoryPte(MiGetVirtualAddressMappedByPte(StartPpe), PAGE_SIZE, ZeroKernelPte.u.Long);
         }
 
 #if (_MI_PAGING_LEVELS >= 4)
@@ -1754,34 +1769,31 @@ Environment:
         // page table page with the system cache working set list.
         //
 
-        ASSERT (StartPde->u.Hard.Valid == 1);
+        ASSERT(StartPde->u.Hard.Valid == 1);
 #else
 
         //
         // Map in a page table page.
         //
 
-        ASSERT (StartPde->u.Hard.Valid == 0);
+        ASSERT(StartPde->u.Hard.Valid == 0);
 
-        PageFrameIndex = MiRemoveAnyPage(
-                                MI_GET_PAGE_COLOR_FROM_PTE (StartPde));
+        PageFrameIndex = MiRemoveAnyPage(MI_GET_PAGE_COLOR_FROM_PTE(StartPde));
         TempPte.u.Hard.PageFrameNumber = PageFrameIndex;
-        MI_WRITE_VALID_PTE (StartPde, TempPte);
+        MI_WRITE_VALID_PTE(StartPde, TempPte);
 
-        MiInitializePfn (PageFrameIndex, StartPde, 1);
+        MiInitializePfn(PageFrameIndex, StartPde, 1);
 
-        MiFillMemoryPte (MiGetVirtualAddressMappedByPte (StartPde),
-                         PAGE_SIZE,
-                         ZeroKernelPte.u.Long);
+        MiFillMemoryPte(MiGetVirtualAddressMappedByPte(StartPde), PAGE_SIZE, ZeroKernelPte.u.Long);
 #endif
 
         StartPpe = MiGetPpeAddress(MmSystemCacheStart);
         StartPde = MiGetPdeAddress(MmSystemCacheStart);
-        PointerPte = MiGetVirtualAddressMappedByPte (StartPde);
+        PointerPte = MiGetVirtualAddressMappedByPte(StartPde);
 
 #else
 #if !defined(_X86PAE_)
-        ASSERT ((StartPde + 1) == MiGetPdeAddress (MmSystemCacheStart));
+        ASSERT((StartPde + 1) == MiGetPdeAddress(MmSystemCacheStart));
 #endif
 #endif
 
@@ -1797,35 +1809,37 @@ Environment:
 
         i = (MmNumberOfPhysicalPages + 65) / 1024;
 
-        if (i >= 4) {
+        if (i >= 4)
+        {
 
             //
             // System has at least 4032 pages.  Make the system
             // cache 128mb + 64mb for each additional 1024 pages.
             //
 
-            MmSizeOfSystemCacheInPages = (PFN_COUNT)(
-                            ((128*1024*1024) >> PAGE_SHIFT) +
-                            ((i - 4) * ((64*1024*1024) >> PAGE_SHIFT)));
-            if (MmSizeOfSystemCacheInPages > MaximumSystemCacheSizeTotal) {
+            MmSizeOfSystemCacheInPages =
+                (PFN_COUNT)(((128 * 1024 * 1024) >> PAGE_SHIFT) + ((i - 4) * ((64 * 1024 * 1024) >> PAGE_SHIFT)));
+            if (MmSizeOfSystemCacheInPages > MaximumSystemCacheSizeTotal)
+            {
                 MmSizeOfSystemCacheInPages = MaximumSystemCacheSizeTotal;
             }
         }
 
-        MmSystemCacheEnd = (PVOID)(((PCHAR)MmSystemCacheStart +
-                    MmSizeOfSystemCacheInPages * PAGE_SIZE) - 1);
+        MmSystemCacheEnd = (PVOID)(((PCHAR)MmSystemCacheStart + MmSizeOfSystemCacheInPages * PAGE_SIZE) - 1);
 
 #if defined(_X86_)
-        if (MmSizeOfSystemCacheInPages > MaximumSystemCacheSize) {
-            ASSERT (MiMaximumSystemCacheSizeExtra != 0);
-            MmSystemCacheEnd = (PVOID)(((PCHAR)MmSystemCacheStart +
-                        MaximumSystemCacheSize * PAGE_SIZE) - 1);
+        if (MmSizeOfSystemCacheInPages > MaximumSystemCacheSize)
+        {
+            ASSERT(MiMaximumSystemCacheSizeExtra != 0);
+            MmSystemCacheEnd = (PVOID)(((PCHAR)MmSystemCacheStart + MaximumSystemCacheSize * PAGE_SIZE) - 1);
 
             MiSystemCacheStartExtra = (PVOID)MiExtraResourceStart;
             MiSystemCacheEndExtra = (PVOID)(((PCHAR)MiSystemCacheStartExtra +
-                        (MmSizeOfSystemCacheInPages - MaximumSystemCacheSize) * PAGE_SIZE) - 1);
+                                             (MmSizeOfSystemCacheInPages - MaximumSystemCacheSize) * PAGE_SIZE) -
+                                            1);
         }
-        else {
+        else
+        {
             MiSystemCacheStartExtra = MmSystemCacheStart;
             MiSystemCacheEndExtra = MmSystemCacheEnd;
         }
@@ -1837,25 +1851,29 @@ Environment:
 
 #if (_MI_PAGING_LEVELS >= 4)
         StartPxe = MiGetPxeAddress(MmSystemCacheStart);
-        if (StartPxe->u.Hard.Valid == 0) {
+        if (StartPxe->u.Hard.Valid == 0)
+        {
             FirstPxe = TRUE;
             FirstPpe = TRUE;
         }
-        else {
+        else
+        {
             FirstPxe = FALSE;
             FirstPpe = (StartPpe->u.Hard.Valid == 0) ? TRUE : FALSE;
         }
 #elif (_MI_PAGING_LEVELS >= 3)
         FirstPpe = (StartPpe->u.Hard.Valid == 0) ? TRUE : FALSE;
 #else
-        DirectoryFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE (MiGetPteAddress(PDE_BASE));
+        DirectoryFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE(MiGetPteAddress(PDE_BASE));
 #endif
 
-        LOCK_PFN (OldIrql);
-        while (StartPde <= EndPde) {
+        LOCK_PFN(OldIrql);
+        while (StartPde <= EndPde)
+        {
 
 #if (_MI_PAGING_LEVELS >= 4)
-            if (FirstPxe == TRUE || MiIsPteOnPpeBoundary(StartPde)) {
+            if (FirstPxe == TRUE || MiIsPteOnPpeBoundary(StartPde))
+            {
                 FirstPxe = FALSE;
                 StartPxe = MiGetPdeAddress(StartPde);
 
@@ -1863,23 +1881,19 @@ Environment:
                 // Map in a page directory page.
                 //
 
-                DirectoryFrameIndex = MiRemoveAnyPage(
-                                        MI_GET_PAGE_COLOR_FROM_PTE (StartPxe));
+                DirectoryFrameIndex = MiRemoveAnyPage(MI_GET_PAGE_COLOR_FROM_PTE(StartPxe));
                 TempPte.u.Hard.PageFrameNumber = DirectoryFrameIndex;
-                MI_WRITE_VALID_PTE (StartPxe, TempPte);
+                MI_WRITE_VALID_PTE(StartPxe, TempPte);
 
-                MiInitializePfn (DirectoryFrameIndex,
-                                 StartPxe,
-                                 1);
+                MiInitializePfn(DirectoryFrameIndex, StartPxe, 1);
 
-                MiFillMemoryPte (MiGetVirtualAddressMappedByPte(StartPxe),
-                                 PAGE_SIZE,
-                                 ZeroKernelPte.u.Long);
+                MiFillMemoryPte(MiGetVirtualAddressMappedByPte(StartPxe), PAGE_SIZE, ZeroKernelPte.u.Long);
             }
 #endif
 
 #if (_MI_PAGING_LEVELS >= 3)
-            if (FirstPpe == TRUE || MiIsPteOnPdeBoundary(StartPde)) {
+            if (FirstPpe == TRUE || MiIsPteOnPdeBoundary(StartPde))
+            {
                 FirstPpe = FALSE;
                 StartPpe = MiGetPteAddress(StartPde);
 
@@ -1887,70 +1901,64 @@ Environment:
                 // Map in a page directory page.
                 //
 
-                DirectoryFrameIndex = MiRemoveAnyPage(
-                                        MI_GET_PAGE_COLOR_FROM_PTE (StartPpe));
+                DirectoryFrameIndex = MiRemoveAnyPage(MI_GET_PAGE_COLOR_FROM_PTE(StartPpe));
                 TempPte.u.Hard.PageFrameNumber = DirectoryFrameIndex;
-                MI_WRITE_VALID_PTE (StartPpe, TempPte);
+                MI_WRITE_VALID_PTE(StartPpe, TempPte);
 
-                MiInitializePfn (DirectoryFrameIndex,
-                                 StartPpe,
-                                 1);
+                MiInitializePfn(DirectoryFrameIndex, StartPpe, 1);
 
-                MiFillMemoryPte (MiGetVirtualAddressMappedByPte(StartPpe),
-                                 PAGE_SIZE,
-                                 ZeroKernelPte.u.Long);
+                MiFillMemoryPte(MiGetVirtualAddressMappedByPte(StartPpe), PAGE_SIZE, ZeroKernelPte.u.Long);
             }
 #endif
 
-            ASSERT (StartPde->u.Hard.Valid == 0);
+            ASSERT(StartPde->u.Hard.Valid == 0);
 
             //
             // Map in a page table page.
             //
 
-            PageFrameIndex = MiRemoveAnyPage(
-                                    MI_GET_PAGE_COLOR_FROM_PTE (StartPde));
+            PageFrameIndex = MiRemoveAnyPage(MI_GET_PAGE_COLOR_FROM_PTE(StartPde));
             TempPte.u.Hard.PageFrameNumber = PageFrameIndex;
-            MI_WRITE_VALID_PTE (StartPde, TempPte);
+            MI_WRITE_VALID_PTE(StartPde, TempPte);
 
-            MiInitializePfn (PageFrameIndex, StartPde, 1);
+            MiInitializePfn(PageFrameIndex, StartPde, 1);
 
-            MiFillMemoryPte (MiGetVirtualAddressMappedByPte(StartPde),
-                             PAGE_SIZE,
-                             ZeroKernelPte.u.Long);
+            MiFillMemoryPte(MiGetVirtualAddressMappedByPte(StartPde), PAGE_SIZE, ZeroKernelPte.u.Long);
 
             StartPde += 1;
         }
 
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
 
         //
         // Initialize the system cache.  Only set the large system cache if
         // we have a large amount of physical memory.
         //
 
-        if (MmLargeSystemCache != 0 && MmNumberOfPhysicalPages > 0x7FF0) {
-            if ((MmAvailablePages >
-                    MmSystemCacheWsMaximum + ((64*1024*1024) >> PAGE_SHIFT))) {
-                MmSystemCacheWsMaximum =
-                            MmAvailablePages - ((32*1024*1024) >> PAGE_SHIFT);
-                ASSERT ((LONG)MmSystemCacheWsMaximum > (LONG)MmSystemCacheWsMinimum);
+        if (MmLargeSystemCache != 0 && MmNumberOfPhysicalPages > 0x7FF0)
+        {
+            if ((MmAvailablePages > MmSystemCacheWsMaximum + ((64 * 1024 * 1024) >> PAGE_SHIFT)))
+            {
+                MmSystemCacheWsMaximum = MmAvailablePages - ((32 * 1024 * 1024) >> PAGE_SHIFT);
+                ASSERT((LONG)MmSystemCacheWsMaximum > (LONG)MmSystemCacheWsMinimum);
             }
         }
 
-        if (MmSystemCacheWsMaximum > (MM_MAXIMUM_WORKING_SET - 5)) {
+        if (MmSystemCacheWsMaximum > (MM_MAXIMUM_WORKING_SET - 5))
+        {
             MmSystemCacheWsMaximum = MM_MAXIMUM_WORKING_SET - 5;
         }
 
-        if (MmSystemCacheWsMaximum > MmSizeOfSystemCacheInPages) {
+        if (MmSystemCacheWsMaximum > MmSizeOfSystemCacheInPages)
+        {
             MmSystemCacheWsMaximum = MmSizeOfSystemCacheInPages;
-            if ((MmSystemCacheWsMinimum + 500) > MmSystemCacheWsMaximum) {
+            if ((MmSystemCacheWsMinimum + 500) > MmSystemCacheWsMaximum)
+            {
                 MmSystemCacheWsMinimum = MmSystemCacheWsMaximum - 500;
             }
         }
 
-        MiInitializeSystemCache ((ULONG)MmSystemCacheWsMinimum,
-                                 (ULONG)MmSystemCacheWsMaximum);
+        MiInitializeSystemCache((ULONG)MmSystemCacheWsMinimum, (ULONG)MmSystemCacheWsMaximum);
 
         MmAttemptForCantExtend.Segment = NULL;
         MmAttemptForCantExtend.RequestedExpansionSize = 1;
@@ -1958,9 +1966,7 @@ Environment:
         MmAttemptForCantExtend.InProgress = FALSE;
         MmAttemptForCantExtend.PageFileNumber = MI_EXTEND_ANY_PAGEFILE;
 
-        KeInitializeEvent (&MmAttemptForCantExtend.Event,
-                           NotificationEvent,
-                           FALSE);
+        KeInitializeEvent(&MmAttemptForCantExtend.Event, NotificationEvent, FALSE);
 
         //
         // Now that we have booted far enough, replace the temporary
@@ -1971,7 +1977,8 @@ Environment:
 
         MmTotalCommitLimit = MmAvailablePages;
 
-        if (MmTotalCommitLimit > 1024) {
+        if (MmTotalCommitLimit > 1024)
+        {
             MmTotalCommitLimit -= 1024;
         }
 
@@ -1984,7 +1991,8 @@ Environment:
 
         MmMaximumWorkingSetSize = (WSLE_NUMBER)(MmAvailablePages - 512);
 
-        if (MmMaximumWorkingSetSize > (MM_MAXIMUM_WORKING_SET - 5)) {
+        if (MmMaximumWorkingSetSize > (MM_MAXIMUM_WORKING_SET - 5))
+        {
             MmMaximumWorkingSetSize = MM_MAXIMUM_WORKING_SET - 5;
         }
 
@@ -1992,20 +2000,21 @@ Environment:
         // Create the modified page writer event.
         //
 
-        KeInitializeEvent (&MmModifiedPageWriterEvent, NotificationEvent, FALSE);
+        KeInitializeEvent(&MmModifiedPageWriterEvent, NotificationEvent, FALSE);
 
         //
         // Build paged pool.
         //
 
-        MiBuildPagedPool ();
+        MiBuildPagedPool();
 
         //
         // Initialize the loaded module list.  This cannot be done until
         // paged pool has been built.
         //
 
-        if (MiInitializeLoadedModuleList (LoaderBlock) == FALSE) {
+        if (MiInitializeLoadedModuleList(LoaderBlock) == FALSE)
+        {
 #if DBG
             DbgPrint("Loaded module list initialization failed\n");
 #endif
@@ -2018,118 +2027,124 @@ Environment:
         // can fail.
         //
 
-        if (MmConsumedPoolPercentage == 0) {
+        if (MmConsumedPoolPercentage == 0)
+        {
             MmConsumedPoolPercentage = 80;
         }
-        else if (MmConsumedPoolPercentage < 5) {
+        else if (MmConsumedPoolPercentage < 5)
+        {
             MmConsumedPoolPercentage = 5;
         }
-        else if (MmConsumedPoolPercentage > 100) {
+        else if (MmConsumedPoolPercentage > 100)
+        {
             MmConsumedPoolPercentage = 100;
         }
-    
+
         //
         // Add more system PTEs if this is a large memory system.
         // Note that 64 bit systems can determine the right value at the
         // beginning since there is no virtual address space crunch.
         //
 
-#if !defined (_WIN64)
-        if (MmNumberOfPhysicalPages > ((127*1024*1024) >> PAGE_SHIFT)) {
+#if !defined(_WIN64)
+        if (MmNumberOfPhysicalPages > ((127 * 1024 * 1024) >> PAGE_SHIFT))
+        {
 
             PMMPTE StartingPte;
 
-            PointerPde = MiGetPdeAddress ((PCHAR)MmPagedPoolEnd + 1);
-            StartingPte = MiGetPteAddress ((PCHAR)MmPagedPoolEnd + 1);
+            PointerPde = MiGetPdeAddress((PCHAR)MmPagedPoolEnd + 1);
+            StartingPte = MiGetPteAddress((PCHAR)MmPagedPoolEnd + 1);
             j = 0;
 
             TempPte = ValidKernelPde;
-            LOCK_PFN (OldIrql);
-            while (PointerPde->u.Hard.Valid == 0) {
+            LOCK_PFN(OldIrql);
+            while (PointerPde->u.Hard.Valid == 0)
+            {
 
-                MiChargeCommitmentCantExpand (1, TRUE);
-                MM_TRACK_COMMIT (MM_DBG_COMMIT_EXTRA_SYSTEM_PTES, 1);
+                MiChargeCommitmentCantExpand(1, TRUE);
+                MM_TRACK_COMMIT(MM_DBG_COMMIT_EXTRA_SYSTEM_PTES, 1);
 
-                PageFrameIndex = MiRemoveZeroPage (
-                                    MI_GET_PAGE_COLOR_FROM_PTE (PointerPde));
+                PageFrameIndex = MiRemoveZeroPage(MI_GET_PAGE_COLOR_FROM_PTE(PointerPde));
                 TempPte.u.Hard.PageFrameNumber = PageFrameIndex;
-                MI_WRITE_VALID_PTE (PointerPde, TempPte);
-                MiInitializePfn (PageFrameIndex, PointerPde, 1);
+                MI_WRITE_VALID_PTE(PointerPde, TempPte);
+                MiInitializePfn(PageFrameIndex, PointerPde, 1);
                 PointerPde += 1;
                 StartingPte += PAGE_SIZE / sizeof(MMPTE);
                 j += PAGE_SIZE / sizeof(MMPTE);
             }
 
-            UNLOCK_PFN (OldIrql);
+            UNLOCK_PFN(OldIrql);
 
-            if (j != 0) {
-                StartingPte = MiGetPteAddress ((PCHAR)MmPagedPoolEnd + 1);
-                MmNonPagedSystemStart = MiGetVirtualAddressMappedByPte (StartingPte);
+            if (j != 0)
+            {
+                StartingPte = MiGetPteAddress((PCHAR)MmPagedPoolEnd + 1);
+                MmNonPagedSystemStart = MiGetVirtualAddressMappedByPte(StartingPte);
                 MmNumberOfSystemPtes += j;
-                MiAddSystemPtes (StartingPte, j, SystemPteSpace);
-                MiIncrementSystemPtes (j);
+                MiAddSystemPtes(StartingPte, j, SystemPteSpace);
+                MiIncrementSystemPtes(j);
             }
         }
 #endif
 
-#if defined (_MI_DEBUG_SUB)
-        if (MiTrackSubs != 0) {
-            MiSubsectionTraces = ExAllocatePoolWithTag (NonPagedPool,
-                                   MiTrackSubs * sizeof (MI_SUB_TRACES),
-                                   'tCmM');
+#if defined(_MI_DEBUG_SUB)
+        if (MiTrackSubs != 0)
+        {
+            MiSubsectionTraces = ExAllocatePoolWithTag(NonPagedPool, MiTrackSubs * sizeof(MI_SUB_TRACES), 'tCmM');
         }
 #endif
 
-#if defined (_MI_DEBUG_DIRTY)
-        if (MiTrackDirtys != 0) {
-            MiDirtyTraces = ExAllocatePoolWithTag (NonPagedPool,
-                                   MiTrackDirtys * sizeof (MI_DIRTY_TRACES),
-                                   'tCmM');
+#if defined(_MI_DEBUG_DIRTY)
+        if (MiTrackDirtys != 0)
+        {
+            MiDirtyTraces = ExAllocatePoolWithTag(NonPagedPool, MiTrackDirtys * sizeof(MI_DIRTY_TRACES), 'tCmM');
         }
 #endif
 
-#if defined (_MI_DEBUG_DATA)
-        if (MiTrackData != 0) {
-            MiDataTraces = ExAllocatePoolWithTag (NonPagedPool,
-                                   MiTrackData * sizeof (MI_DATA_TRACES),
-                                   'tCmM');
+#if defined(_MI_DEBUG_DATA)
+        if (MiTrackData != 0)
+        {
+            MiDataTraces = ExAllocatePoolWithTag(NonPagedPool, MiTrackData * sizeof(MI_DATA_TRACES), 'tCmM');
         }
 #endif
 
 #if DBG
-        if (MmDebug & MM_DBG_DUMP_BOOT_PTES) {
-            MiDumpValidAddresses ();
-            MiDumpPfn ();
+        if (MmDebug & MM_DBG_DUMP_BOOT_PTES)
+        {
+            MiDumpValidAddresses();
+            MiDumpPfn();
         }
 #endif
 
         MmPageFaultNotifyRoutine = NULL;
 
 #ifdef _MI_MESSAGE_SERVER
-        MiInitializeMessageQueue ();
+        MiInitializeMessageQueue();
 #endif
 
         return TRUE;
     }
 
-    if (Phase == 1) {
+    if (Phase == 1)
+    {
 
 #if DBG
         MmDebug |= MM_DBG_CHECK_PFN_LOCK;
 #endif
 
 #if defined(_X86_) || defined(_AMD64_)
-        MiInitMachineDependent (LoaderBlock);
+        MiInitMachineDependent(LoaderBlock);
 #endif
         MiMapBBTMemory(LoaderBlock);
 
-        if (!MiSectionInitialization ()) {
+        if (!MiSectionInitialization())
+        {
             return FALSE;
         }
 
-        Process = PsGetCurrentProcess ();
-        if (Process->PhysicalVadList.Flink == NULL) {
-            InitializeListHead (&Process->PhysicalVadList);
+        Process = PsGetCurrentProcess();
+        if (Process->PhysicalVadList.Flink == NULL)
+        {
+            InitializeListHead(&Process->PhysicalVadList);
         }
 
 #if defined(MM_SHARED_USER_DATA_VA)
@@ -2142,35 +2157,32 @@ Environment:
         // the PTE can be checked without having to special case this.
         //
 
-        MmSharedUserDataPte = ExAllocatePoolWithTag (PagedPool,
-                                                     sizeof(MMPTE),
-                                                     '  mM');
+        MmSharedUserDataPte = ExAllocatePoolWithTag(PagedPool, sizeof(MMPTE), '  mM');
 
-        if (MmSharedUserDataPte == NULL) {
+        if (MmSharedUserDataPte == NULL)
+        {
             return FALSE;
         }
 
-        PointerPte = MiGetPteAddress ((PVOID)KI_USER_SHARED_DATA);
-        ASSERT (PointerPte->u.Hard.Valid == 1);
-        PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE (PointerPte);
+        PointerPte = MiGetPteAddress((PVOID)KI_USER_SHARED_DATA);
+        ASSERT(PointerPte->u.Hard.Valid == 1);
+        PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE(PointerPte);
 
-        MI_MAKE_VALID_PTE (TempPte,
-                           PageFrameIndex,
-                           MM_READONLY,
-                           PointerPte);
+        MI_MAKE_VALID_PTE(TempPte, PageFrameIndex, MM_READONLY, PointerPte);
 
         *MmSharedUserDataPte = TempPte;
 
-        Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+        Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
 
-        LOCK_PFN (OldIrql);
+        LOCK_PFN(OldIrql);
 
         Pfn1->OriginalPte.u.Long = MM_DEMAND_ZERO_WRITE_PTE;
 
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
 
 #ifdef _X86_
-        if (MmHighestUserAddress < (PVOID) MM_SHARED_USER_DATA_VA) {
+        if (MmHighestUserAddress < (PVOID)MM_SHARED_USER_DATA_VA)
+        {
 
             //
             // Install the PTE mapping now as faults will not because the
@@ -2183,51 +2195,46 @@ Environment:
             // Make the mapping user accessible.
             //
 
-            ASSERT (MmSharedUserDataPte->u.Hard.Owner == 0);
+            ASSERT(MmSharedUserDataPte->u.Hard.Owner == 0);
             MmSharedUserDataPte->u.Hard.Owner = 1;
 
-            PointerPde = MiGetPdeAddress (MM_SHARED_USER_DATA_VA);
-            ASSERT (PointerPde->u.Hard.Owner == 0);
+            PointerPde = MiGetPdeAddress(MM_SHARED_USER_DATA_VA);
+            ASSERT(PointerPde->u.Hard.Owner == 0);
             PointerPde->u.Hard.Owner = 1;
 
-            ASSERT (MiUseMaximumSystemSpace != 0);
-            PointerPte = MiGetPteAddress (MM_SHARED_USER_DATA_VA);
-            ASSERT (PointerPte->u.Hard.Valid == 0);
-            MI_WRITE_VALID_PTE (PointerPte, *MmSharedUserDataPte);
+            ASSERT(MiUseMaximumSystemSpace != 0);
+            PointerPte = MiGetPteAddress(MM_SHARED_USER_DATA_VA);
+            ASSERT(PointerPte->u.Hard.Valid == 0);
+            MI_WRITE_VALID_PTE(PointerPte, *MmSharedUserDataPte);
         }
 #endif
 
 #endif
 
-        MiSessionWideInitializeAddresses ();
-        MiInitializeSessionWsSupport ();
-        MiInitializeSessionIds ();
+        MiSessionWideInitializeAddresses();
+        MiInitializeSessionWsSupport();
+        MiInitializeSessionIds();
 
         //
         // Start the modified page writer.
         //
 
-        InitializeObjectAttributes (&ObjectAttributes, NULL, 0, NULL, NULL);
+        InitializeObjectAttributes(&ObjectAttributes, NULL, 0, NULL, NULL);
 
-        if (!NT_SUCCESS(PsCreateSystemThread(
-                        &ThreadHandle,
-                        THREAD_ALL_ACCESS,
-                        &ObjectAttributes,
-                        0L,
-                        NULL,
-                        MiModifiedPageWriter,
-                        NULL
-                        ))) {
+        if (!NT_SUCCESS(PsCreateSystemThread(&ThreadHandle, THREAD_ALL_ACCESS, &ObjectAttributes, 0L, NULL,
+                                             MiModifiedPageWriter, NULL)))
+        {
             return FALSE;
         }
-        ZwClose (ThreadHandle);
+        ZwClose(ThreadHandle);
 
         //
         // Initialize the low and high memory events.  This must be done
         // before starting the working set manager.
         //
 
-        if (MiInitializeMemoryEvents () == FALSE) {
+        if (MiInitializeMemoryEvents() == FALSE)
+        {
             return FALSE;
         }
 
@@ -2238,86 +2245,70 @@ Environment:
         // set management and requires two threads.
         //
 
-        KeInitializeEvent (&MmWorkingSetManagerEvent,
-                           SynchronizationEvent,
-                           FALSE);
+        KeInitializeEvent(&MmWorkingSetManagerEvent, SynchronizationEvent, FALSE);
 
-        InitializeObjectAttributes (&ObjectAttributes, NULL, 0, NULL, NULL);
+        InitializeObjectAttributes(&ObjectAttributes, NULL, 0, NULL, NULL);
 
-        if (!NT_SUCCESS(PsCreateSystemThread(
-                        &ThreadHandle,
-                        THREAD_ALL_ACCESS,
-                        &ObjectAttributes,
-                        0L,
-                        NULL,
-                        KeBalanceSetManager,
-                        NULL
-                        ))) {
+        if (!NT_SUCCESS(PsCreateSystemThread(&ThreadHandle, THREAD_ALL_ACCESS, &ObjectAttributes, 0L, NULL,
+                                             KeBalanceSetManager, NULL)))
+        {
 
             return FALSE;
         }
-        ZwClose (ThreadHandle);
+        ZwClose(ThreadHandle);
 
-        if (!NT_SUCCESS(PsCreateSystemThread(
-                        &ThreadHandle,
-                        THREAD_ALL_ACCESS,
-                        &ObjectAttributes,
-                        0L,
-                        NULL,
-                        KeSwapProcessOrStack,
-                        NULL
-                        ))) {
+        if (!NT_SUCCESS(PsCreateSystemThread(&ThreadHandle, THREAD_ALL_ACCESS, &ObjectAttributes, 0L, NULL,
+                                             KeSwapProcessOrStack, NULL)))
+        {
 
             return FALSE;
         }
-        ZwClose (ThreadHandle);
+        ZwClose(ThreadHandle);
 
 #ifndef NO_POOL_CHECKS
-        MiInitializeSpecialPoolCriteria ();
+        MiInitializeSpecialPoolCriteria();
 #endif
 
 #if defined(_X86_)
-        MiEnableKernelVerifier ();
+        MiEnableKernelVerifier();
 #endif
 
-        ExAcquireResourceExclusiveLite (&PsLoadedModuleResource, TRUE);
+        ExAcquireResourceExclusiveLite(&PsLoadedModuleResource, TRUE);
 
         NextEntry = PsLoadedModuleList.Flink;
 
-        for ( ; NextEntry != &PsLoadedModuleList; NextEntry = NextEntry->Flink) {
+        for (; NextEntry != &PsLoadedModuleList; NextEntry = NextEntry->Flink)
+        {
 
-            DataTableEntry = CONTAINING_RECORD(NextEntry,
-                                               KLDR_DATA_TABLE_ENTRY,
-                                               InLoadOrderLinks);
+            DataTableEntry = CONTAINING_RECORD(NextEntry, KLDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
             NtHeaders = RtlImageNtHeader(DataTableEntry->DllBase);
 
             if ((NtHeaders->OptionalHeader.MajorOperatingSystemVersion >= 5) &&
-                (NtHeaders->OptionalHeader.MajorImageVersion >= 5)) {
+                (NtHeaders->OptionalHeader.MajorImageVersion >= 5))
+            {
                 DataTableEntry->Flags |= LDRP_ENTRY_NATIVE;
             }
 
-            MiWriteProtectSystemImage (DataTableEntry->DllBase);
+            MiWriteProtectSystemImage(DataTableEntry->DllBase);
         }
-        ExReleaseResourceLite (&PsLoadedModuleResource);
+        ExReleaseResourceLite(&PsLoadedModuleResource);
 
-        InterlockedDecrement (&MiTrimInProgressCount);
+        InterlockedDecrement(&MiTrimInProgressCount);
 
         return TRUE;
     }
 
-    if (Phase == 2) {
+    if (Phase == 2)
+    {
         MiEnablePagingTheExecutive();
         return TRUE;
     }
 
     return FALSE;
 }
-
-VOID
-MiMapBBTMemory (
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+
+VOID MiMapBBTMemory(IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 
 /*++
 
@@ -2353,7 +2344,8 @@ Environment:
     PMMPTE LastPde;
     MMPTE TempPte;
 
-    if (BBTPagesToReserve <= 0) {
+    if (BBTPagesToReserve <= 0)
+    {
         return;
     }
 
@@ -2363,11 +2355,10 @@ Environment:
 
     NumberOfPages = (BBTPagesToReserve + (PTE_PER_PAGE - 1)) & ~(PTE_PER_PAGE - 1);
 
-    PointerPte = MiReserveAlignedSystemPtes ((ULONG)NumberOfPages,
-                                             SystemPteSpace,
-                                             MM_VA_MAPPED_BY_PDE);
+    PointerPte = MiReserveAlignedSystemPtes((ULONG)NumberOfPages, SystemPteSpace, MM_VA_MAPPED_BY_PDE);
 
-    if (PointerPte == NULL) {
+    if (PointerPte == NULL)
+    {
         BBTPagesToReserve = 0;
         return;
     }
@@ -2376,55 +2367,59 @@ Environment:
     // Allow user access to the buffer.
     //
 
-    PointerPde = MiGetPteAddress (PointerPte);
-    LastPde = MiGetPteAddress (PointerPte + NumberOfPages);
+    PointerPde = MiGetPteAddress(PointerPte);
+    LastPde = MiGetPteAddress(PointerPte + NumberOfPages);
 
-    ASSERT (LastPde != PointerPde);
+    ASSERT(LastPde != PointerPde);
 
-    do {
+    do
+    {
         TempPte = *PointerPde;
         TempPte.u.Long |= MM_PTE_OWNER_MASK;
-        MI_WRITE_VALID_PTE (PointerPde, TempPte);
+        MI_WRITE_VALID_PTE(PointerPde, TempPte);
         PointerPde += 1;
     } while (PointerPde < LastPde);
 
-    KeFlushEntireTb (TRUE, TRUE);
+    KeFlushEntireTb(TRUE, TRUE);
 
-    Va = MiGetVirtualAddressMappedByPte (PointerPte);
+    Va = MiGetVirtualAddressMappedByPte(PointerPte);
 
     TempPte = ValidUserPte;
     NumberOfPagesMapped = 0;
 
     NextMd = LoaderBlock->MemoryDescriptorListHead.Flink;
 
-    while (NextMd != &LoaderBlock->MemoryDescriptorListHead) {
+    while (NextMd != &LoaderBlock->MemoryDescriptorListHead)
+    {
 
-        MemoryDescriptor = CONTAINING_RECORD(NextMd,
-                                             MEMORY_ALLOCATION_DESCRIPTOR,
-                                             ListEntry);
+        MemoryDescriptor = CONTAINING_RECORD(NextMd, MEMORY_ALLOCATION_DESCRIPTOR, ListEntry);
 
-        if (MemoryDescriptor->MemoryType == LoaderBBTMemory) {
+        if (MemoryDescriptor->MemoryType == LoaderBBTMemory)
+        {
 
             PageFrameIndex = MemoryDescriptor->BasePage;
             NumberOfPages = MemoryDescriptor->PageCount;
 
-            if (NumberOfPagesMapped + NumberOfPages > BBTPagesToReserve) {
+            if (NumberOfPagesMapped + NumberOfPages > BBTPagesToReserve)
+            {
                 NumberOfPages = BBTPagesToReserve - NumberOfPagesMapped;
             }
 
             NumberOfPagesMapped += NumberOfPages;
 
-            do {
+            do
+            {
 
                 TempPte.u.Hard.PageFrameNumber = PageFrameIndex;
-                MI_WRITE_VALID_PTE (PointerPte, TempPte);
+                MI_WRITE_VALID_PTE(PointerPte, TempPte);
 
                 PointerPte += 1;
                 PageFrameIndex += 1;
                 NumberOfPages -= 1;
             } while (NumberOfPages);
 
-            if (NumberOfPagesMapped == BBTPagesToReserve) {
+            if (NumberOfPagesMapped == BBTPagesToReserve)
+            {
                 break;
             }
         }
@@ -2438,7 +2433,8 @@ Environment:
     // Tell BBT_Init how many pages were allocated.
     //
 
-    if (NumberOfPagesMapped < BBTPagesToReserve) {
+    if (NumberOfPagesMapped < BBTPagesToReserve)
+    {
         BBTPagesToReserve = (ULONG)NumberOfPagesMapped;
     }
     *(PULONG)Va = BBTPagesToReserve;
@@ -2453,13 +2449,10 @@ Environment:
     PERFINFO_MMINIT_START();
 }
 
-
+
 PPHYSICAL_MEMORY_DESCRIPTOR
-MmInitializeMemoryLimits (
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock,
-    IN PBOOLEAN IncludeType,
-    IN OUT PPHYSICAL_MEMORY_DESCRIPTOR InputMemory OPTIONAL
-    )
+MmInitializeMemoryLimits(IN PLOADER_PARAMETER_BLOCK LoaderBlock, IN PBOOLEAN IncludeType,
+                         IN OUT PPHYSICAL_MEMORY_DESCRIPTOR InputMemory OPTIONAL)
 
 /*++
 
@@ -2502,10 +2495,12 @@ Environment:
 
     InitialAllocation = 0;
 
-    if (ARGUMENT_PRESENT (InputMemory)) {
+    if (ARGUMENT_PRESENT(InputMemory))
+    {
         Memory = InputMemory;
     }
-    else {
+    else
+    {
 
         //
         // The caller wants us to allocate the return result buffer.  Size it
@@ -2517,19 +2512,19 @@ Environment:
 
         NextMd = LoaderBlock->MemoryDescriptorListHead.Flink;
 
-        while (NextMd != &LoaderBlock->MemoryDescriptorListHead) {
+        while (NextMd != &LoaderBlock->MemoryDescriptorListHead)
+        {
             InitialAllocation += 1;
-            MemoryDescriptor = CONTAINING_RECORD(NextMd,
-                                                 MEMORY_ALLOCATION_DESCRIPTOR,
-                                                 ListEntry);
+            MemoryDescriptor = CONTAINING_RECORD(NextMd, MEMORY_ALLOCATION_DESCRIPTOR, ListEntry);
             NextMd = MemoryDescriptor->ListEntry.Flink;
         }
 
-        Memory = ExAllocatePoolWithTag (NonPagedPool,
-                                        sizeof(PHYSICAL_MEMORY_DESCRIPTOR) + sizeof(PHYSICAL_MEMORY_RUN) * (InitialAllocation - 1),
-                                        'lMmM');
+        Memory = ExAllocatePoolWithTag(
+            NonPagedPool, sizeof(PHYSICAL_MEMORY_DESCRIPTOR) + sizeof(PHYSICAL_MEMORY_RUN) * (InitialAllocation - 1),
+            'lMmM');
 
-        if (Memory == NULL) {
+        if (Memory == NULL)
+        {
             return NULL;
         }
 
@@ -2542,18 +2537,17 @@ Environment:
 
     i = 0;
     TotalPages = 0;
-    NextPage = (PFN_NUMBER) -1;
+    NextPage = (PFN_NUMBER)-1;
 
     NextMd = LoaderBlock->MemoryDescriptorListHead.Flink;
 
-    while (NextMd != &LoaderBlock->MemoryDescriptorListHead) {
+    while (NextMd != &LoaderBlock->MemoryDescriptorListHead)
+    {
 
-        MemoryDescriptor = CONTAINING_RECORD(NextMd,
-                                             MEMORY_ALLOCATION_DESCRIPTOR,
-                                             ListEntry);
+        MemoryDescriptor = CONTAINING_RECORD(NextMd, MEMORY_ALLOCATION_DESCRIPTOR, ListEntry);
 
-        if (MemoryDescriptor->MemoryType < LoaderMaximum &&
-            IncludeType [MemoryDescriptor->MemoryType]) {
+        if (MemoryDescriptor->MemoryType < LoaderMaximum && IncludeType[MemoryDescriptor->MemoryType])
+        {
 
             TotalPages += MemoryDescriptor->PageCount;
 
@@ -2561,12 +2555,14 @@ Environment:
             // Merge runs whenever possible.
             //
 
-            if (MemoryDescriptor->BasePage == NextPage) {
-                ASSERT (MemoryDescriptor->PageCount != 0);
+            if (MemoryDescriptor->BasePage == NextPage)
+            {
+                ASSERT(MemoryDescriptor->PageCount != 0);
                 Memory->Run[i - 1].PageCount += MemoryDescriptor->PageCount;
                 NextPage += MemoryDescriptor->PageCount;
             }
-            else {
+            else
+            {
                 Memory->Run[i].BasePage = MemoryDescriptor->BasePage;
                 Memory->Run[i].PageCount = MemoryDescriptor->PageCount;
                 NextPage = Memory->Run[i].BasePage + Memory->Run[i].PageCount;
@@ -2576,9 +2572,10 @@ Environment:
         NextMd = MemoryDescriptor->ListEntry.Flink;
     }
 
-    ASSERT (i <= Memory->NumberOfRuns);
+    ASSERT(i <= Memory->NumberOfRuns);
 
-    if (i == 0) {
+    if (i == 0)
+    {
 
         //
         // Don't bother shrinking this as the caller will be freeing it
@@ -2588,23 +2585,23 @@ Environment:
         Memory->Run[i].BasePage = 0;
         Memory->Run[i].PageCount = 0;
     }
-    else if (!ARGUMENT_PRESENT (InputMemory)) {
+    else if (!ARGUMENT_PRESENT(InputMemory))
+    {
 
         //
         // Shrink the buffer (if possible) now that the final size is known.
         //
 
-        if (InitialAllocation > i) {
-            Memory2 = ExAllocatePoolWithTag (NonPagedPool,
-                                             sizeof(PHYSICAL_MEMORY_DESCRIPTOR) + sizeof(PHYSICAL_MEMORY_RUN) * (i - 1),
-                                            'lMmM');
+        if (InitialAllocation > i)
+        {
+            Memory2 = ExAllocatePoolWithTag(
+                NonPagedPool, sizeof(PHYSICAL_MEMORY_DESCRIPTOR) + sizeof(PHYSICAL_MEMORY_RUN) * (i - 1), 'lMmM');
 
-            if (Memory2 != NULL) {
-                RtlCopyMemory (Memory2->Run,
-                               Memory->Run,
-                               sizeof(PHYSICAL_MEMORY_RUN) * i);
+            if (Memory2 != NULL)
+            {
+                RtlCopyMemory(Memory2->Run, Memory->Run, sizeof(PHYSICAL_MEMORY_RUN) * i);
 
-                ExFreePool (Memory);
+                ExFreePool(Memory);
                 Memory = Memory2;
             }
         }
@@ -2616,12 +2613,9 @@ Environment:
     return Memory;
 }
 
-
+
 PFN_NUMBER
-MiPagesInLoaderBlock (
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock,
-    IN PBOOLEAN IncludeType
-    )
+MiPagesInLoaderBlock(IN PLOADER_PARAMETER_BLOCK LoaderBlock, IN PBOOLEAN IncludeType)
 
 /*++
 
@@ -2659,14 +2653,13 @@ Environment:
 
     NextMd = LoaderBlock->MemoryDescriptorListHead.Flink;
 
-    while (NextMd != &LoaderBlock->MemoryDescriptorListHead) {
+    while (NextMd != &LoaderBlock->MemoryDescriptorListHead)
+    {
 
-        MemoryDescriptor = CONTAINING_RECORD(NextMd,
-                                             MEMORY_ALLOCATION_DESCRIPTOR,
-                                             ListEntry);
+        MemoryDescriptor = CONTAINING_RECORD(NextMd, MEMORY_ALLOCATION_DESCRIPTOR, ListEntry);
 
-        if (MemoryDescriptor->MemoryType < LoaderMaximum &&
-            IncludeType [MemoryDescriptor->MemoryType]) {
+        if (MemoryDescriptor->MemoryType < LoaderMaximum && IncludeType[MemoryDescriptor->MemoryType])
+        {
 
             TotalPages += MemoryDescriptor->PageCount;
         }
@@ -2676,12 +2669,8 @@ Environment:
     return TotalPages;
 }
 
-
-static
-VOID
-MiMemoryLicense (
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+
+static VOID MiMemoryLicense(IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 
 /*++
 
@@ -2723,7 +2712,8 @@ Environment:
     // 3gb switch, then use all available physical memory.
     //
 
-    if (ExVerifySuite(DataCenter) == TRUE) {
+    if (ExVerifySuite(DataCenter) == TRUE)
+    {
 
         //
         // Note MmVirtualBias has not yet been initialized at the time of the
@@ -2736,7 +2726,8 @@ Environment:
         VirtualBias = 0;
 #endif
 
-        if (VirtualBias == 0) {
+        if (VirtualBias == 0)
+        {
 
             //
             // Limit the maximum physical memory to the amount we have
@@ -2745,7 +2736,8 @@ Environment:
 
             TotalPagesAllowed = MI_DTC_MAX_PAGES;
         }
-        else {
+        else
+        {
 
             //
             // The system is booting /3gb, so don't use more than 16gb of
@@ -2756,8 +2748,8 @@ Environment:
             TotalPagesAllowed = MI_DTC_BOOTED_3GB_MAX_PAGES;
         }
     }
-    else if ((MmProductType != 0x00690057) &&
-             (ExVerifySuite(Enterprise) == TRUE)) {
+    else if ((MmProductType != 0x00690057) && (ExVerifySuite(Enterprise) == TRUE))
+    {
 
         //
         // Enforce the Advanced Server physical memory limit.
@@ -2766,7 +2758,8 @@ Environment:
 
         TotalPagesAllowed = MI_ADS_MAX_PAGES;
     }
-    else if (ExVerifySuite(Blade) == TRUE) {
+    else if (ExVerifySuite(Blade) == TRUE)
+    {
 
         //
         // Enforce the Blade physical memory limit.
@@ -2782,24 +2775,24 @@ Environment:
 
     PageCount = 0;
     NextMd = LoaderBlock->MemoryDescriptorListHead.Flink;
-    while (NextMd != &LoaderBlock->MemoryDescriptorListHead) {
+    while (NextMd != &LoaderBlock->MemoryDescriptorListHead)
+    {
 
-        MemoryDescriptor = CONTAINING_RECORD(NextMd,
-                                             MEMORY_ALLOCATION_DESCRIPTOR,
-                                             ListEntry);
+        MemoryDescriptor = CONTAINING_RECORD(NextMd, MEMORY_ALLOCATION_DESCRIPTOR, ListEntry);
 
         if ((MemoryDescriptor->MemoryType == LoaderFirmwarePermanent) ||
-            (MemoryDescriptor->MemoryType == LoaderBBTMemory) ||
-            (MemoryDescriptor->MemoryType == LoaderBad) ||
-            (MemoryDescriptor->MemoryType == LoaderSpecialMemory)) {
+            (MemoryDescriptor->MemoryType == LoaderBBTMemory) || (MemoryDescriptor->MemoryType == LoaderBad) ||
+            (MemoryDescriptor->MemoryType == LoaderSpecialMemory))
+        {
 
-                NextMd = MemoryDescriptor->ListEntry.Flink;
-                continue;
+            NextMd = MemoryDescriptor->ListEntry.Flink;
+            continue;
         }
 
         PageCount += MemoryDescriptor->PageCount;
 
-        if (PageCount <= TotalPagesAllowed) {
+        if (PageCount <= TotalPagesAllowed)
+        {
             NextMd = MemoryDescriptor->ListEntry.Flink;
             continue;
         }
@@ -2808,7 +2801,8 @@ Environment:
         // This descriptor needs to be removed or truncated.
         //
 
-        if (PageCount - MemoryDescriptor->PageCount >= TotalPagesAllowed) {
+        if (PageCount - MemoryDescriptor->PageCount >= TotalPagesAllowed)
+        {
 
             //
             // Completely remove this descriptor.
@@ -2819,15 +2813,16 @@ Environment:
             // sorted in ascending order.
             //
 
-            RemoveEntryList (NextMd);
+            RemoveEntryList(NextMd);
         }
-        else {
+        else
+        {
 
             //
             // Truncate this descriptor.
             //
 
-            ASSERT (PageCount - MemoryDescriptor->PageCount < TotalPagesAllowed);
+            ASSERT(PageCount - MemoryDescriptor->PageCount < TotalPagesAllowed);
             MemoryDescriptor->PageCount -= (ULONG)(PageCount - TotalPagesAllowed);
             PageCount = TotalPagesAllowed;
         }
@@ -2838,11 +2833,8 @@ Environment:
     return;
 }
 
-
-VOID
-MmFreeLoaderBlock (
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+
+VOID MmFreeLoaderBlock(IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 
 /*++
 
@@ -2879,19 +2871,17 @@ Environment:
     i = 0;
     NextMd = LoaderBlock->MemoryDescriptorListHead.Flink;
 
-    while (NextMd != &LoaderBlock->MemoryDescriptorListHead) {
+    while (NextMd != &LoaderBlock->MemoryDescriptorListHead)
+    {
         i += 1;
-        MemoryDescriptor = CONTAINING_RECORD(NextMd,
-                                             MEMORY_ALLOCATION_DESCRIPTOR,
-                                             ListEntry);
+        MemoryDescriptor = CONTAINING_RECORD(NextMd, MEMORY_ALLOCATION_DESCRIPTOR, ListEntry);
         NextMd = MemoryDescriptor->ListEntry.Flink;
     }
 
-    RunBase = ExAllocatePoolWithTag (NonPagedPool,
-                                     sizeof(PHYSICAL_MEMORY_RUN) * i,
-                                     'lMmM');
+    RunBase = ExAllocatePoolWithTag(NonPagedPool, sizeof(PHYSICAL_MEMORY_RUN) * i, 'lMmM');
 
-    if (RunBase == NULL) {
+    if (RunBase == NULL)
+    {
         return;
     }
 
@@ -2905,33 +2895,33 @@ Environment:
 
     NextMd = LoaderBlock->MemoryDescriptorListHead.Flink;
 
-    while (NextMd != &LoaderBlock->MemoryDescriptorListHead) {
+    while (NextMd != &LoaderBlock->MemoryDescriptorListHead)
+    {
 
-        MemoryDescriptor = CONTAINING_RECORD(NextMd,
-                                             MEMORY_ALLOCATION_DESCRIPTOR,
-                                             ListEntry);
+        MemoryDescriptor = CONTAINING_RECORD(NextMd, MEMORY_ALLOCATION_DESCRIPTOR, ListEntry);
 
 
-        switch (MemoryDescriptor->MemoryType) {
-            case LoaderOsloaderHeap:
-            case LoaderRegistryData:
-            case LoaderNlsData:
+        switch (MemoryDescriptor->MemoryType)
+        {
+        case LoaderOsloaderHeap:
+        case LoaderRegistryData:
+        case LoaderNlsData:
             //case LoaderMemoryData:  //this has page table and other stuff.
 
-                //
-                // Capture the data to temporary storage so we won't
-                // free memory we are referencing.
-                //
+            //
+            // Capture the data to temporary storage so we won't
+            // free memory we are referencing.
+            //
 
-                Runs->BasePage = MemoryDescriptor->BasePage;
-                Runs->PageCount = MemoryDescriptor->PageCount;
-                Runs += 1;
+            Runs->BasePage = MemoryDescriptor->BasePage;
+            Runs->PageCount = MemoryDescriptor->PageCount;
+            Runs += 1;
 
-                break;
+            break;
 
-            default:
+        default:
 
-                break;
+            break;
         }
 
         NextMd = MemoryDescriptor->ListEntry.Flink;
@@ -2939,17 +2929,21 @@ Environment:
 
     PagesFreed = 0;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    if (Runs != RunBase) {
+    if (Runs != RunBase)
+    {
         Runs -= 1;
-        do {
+        do
+        {
             i = (ULONG)Runs->PageCount;
             NextPhysicalPage = Runs->BasePage;
 
-#if defined (_MI_MORE_THAN_4GB_)
-            if (MiNoLowMemory != 0) {
-                if (NextPhysicalPage < MiNoLowMemory) {
+#if defined(_MI_MORE_THAN_4GB_)
+            if (MiNoLowMemory != 0)
+            {
+                if (NextPhysicalPage < MiNoLowMemory)
+                {
 
                     //
                     // Don't free this run as it is below the memory threshold
@@ -2962,37 +2956,41 @@ Environment:
             }
 #endif
 
-            Pfn1 = MI_PFN_ELEMENT (NextPhysicalPage);
+            Pfn1 = MI_PFN_ELEMENT(NextPhysicalPage);
             PagesFreed += i;
-            while (i != 0) {
+            while (i != 0)
+            {
 
-                if (Pfn1->u3.e2.ReferenceCount == 0) {
-                    if (Pfn1->u1.Flink == 0) {
+                if (Pfn1->u3.e2.ReferenceCount == 0)
+                {
+                    if (Pfn1->u1.Flink == 0)
+                    {
 
                         //
                         // Set the PTE address to the physical page for
                         // virtual address alignment checking.
                         //
 
-                        Pfn1->PteAddress =
-                                   (PMMPTE)(NextPhysicalPage << PTE_SHIFT);
+                        Pfn1->PteAddress = (PMMPTE)(NextPhysicalPage << PTE_SHIFT);
 
-                        MiDetermineNode (NextPhysicalPage, Pfn1);
+                        MiDetermineNode(NextPhysicalPage, Pfn1);
 
-                        MiInsertPageInFreeList (NextPhysicalPage);
+                        MiInsertPageInFreeList(NextPhysicalPage);
                     }
                 }
-                else {
+                else
+                {
 
-                    if (NextPhysicalPage != 0) {
+                    if (NextPhysicalPage != 0)
+                    {
                         //
                         // Remove PTE and insert into the free list.  If it is
                         // a physical address within the PFN database, the PTE
                         // element does not exist and therefore cannot be updated.
                         //
 
-                        if (!MI_IS_PHYSICAL_ADDRESS (
-                                MiGetVirtualAddressMappedByPte (Pfn1->PteAddress))) {
+                        if (!MI_IS_PHYSICAL_ADDRESS(MiGetVirtualAddressMappedByPte(Pfn1->PteAddress)))
+                        {
 
                             //
                             // Not a physical address.
@@ -3001,8 +2999,8 @@ Environment:
                             *(Pfn1->PteAddress) = ZeroPte;
                         }
 
-                        MI_SET_PFN_DELETED (Pfn1);
-                        MiDecrementShareCountOnly (NextPhysicalPage);
+                        MI_SET_PFN_DELETED(Pfn1);
+                        MiDecrementShareCountOnly(NextPhysicalPage);
                     }
                 }
 
@@ -3019,14 +3017,16 @@ Environment:
     // excluded the ranges just freed, add them back in now.
     //
 
-    if (PagesFreed != 0) {
-        InterlockedExchangeAddSizeT (&MmTotalCommitLimitMaximum, PagesFreed);
-        InterlockedExchangeAddSizeT (&MmTotalCommitLimit, PagesFreed);
+    if (PagesFreed != 0)
+    {
+        InterlockedExchangeAddSizeT(&MmTotalCommitLimitMaximum, PagesFreed);
+        InterlockedExchangeAddSizeT(&MmTotalCommitLimit, PagesFreed);
     }
 
 #if defined(_X86_)
 
-    if (MmVirtualBias != 0) {
+    if (MmVirtualBias != 0)
+    {
 
         //
         // If the kernel has been biased to allow for 3gb of user address space,
@@ -3041,24 +3041,22 @@ Environment:
 
         Pde = MiGetPdeAddress((PVOID)KSEG0_BASE);
 
-        for (i = 0; i < NumberOfPdes; i += 1) {
-            MI_WRITE_INVALID_PTE (Pde, ZeroKernelPte);
+        for (i = 0; i < NumberOfPdes; i += 1)
+        {
+            MI_WRITE_INVALID_PTE(Pde, ZeroKernelPte);
             Pde += 1;
         }
     }
 
 #endif
 
-    KeFlushEntireTb (TRUE, TRUE);
-    UNLOCK_PFN (OldIrql);
-    ExFreePool (RunBase);
+    KeFlushEntireTb(TRUE, TRUE);
+    UNLOCK_PFN(OldIrql);
+    ExFreePool(RunBase);
     return;
 }
-
-VOID
-MiBuildPagedPool (
-    VOID
-    )
+
+VOID MiBuildPagedPool(VOID)
 
 /*++
 
@@ -3117,8 +3115,9 @@ Environment:
 
     PointerPte = MiGetPteAddress(PDE_BASE);
 
-    for (i = 0 ; i < PD_PER_SYSTEM; i += 1) {
-        MmSystemPageDirectory[i] = MI_GET_PAGE_FRAME_FROM_PTE (PointerPte);
+    for (i = 0; i < PD_PER_SYSTEM; i += 1)
+    {
+        MmSystemPageDirectory[i] = MI_GET_PAGE_FRAME_FROM_PTE(PointerPte);
         Pfn1 = MI_PFN_ELEMENT(MmSystemPageDirectory[i]);
         Pfn1->OriginalPte.u.Long = MM_DEMAND_ZERO_WRITE_PTE;
         PointerPte += 1;
@@ -3128,29 +3127,32 @@ Environment:
     // Was not mapped physically, map it virtually in system space.
     //
 
-    PointerPte = MiReserveSystemPtes (PD_PER_SYSTEM, SystemPteSpace);
+    PointerPte = MiReserveSystemPtes(PD_PER_SYSTEM, SystemPteSpace);
 
-    if (PointerPte == NULL) {
-        MiIssueNoPtesBugcheck (PD_PER_SYSTEM, SystemPteSpace);
+    if (PointerPte == NULL)
+    {
+        MiIssueNoPtesBugcheck(PD_PER_SYSTEM, SystemPteSpace);
     }
 
-    MmSystemPagePtes = (PMMPTE)MiGetVirtualAddressMappedByPte (PointerPte);
+    MmSystemPagePtes = (PMMPTE)MiGetVirtualAddressMappedByPte(PointerPte);
 
     TempPte = ValidKernelPde;
 
-    for (i = 0 ; i < PD_PER_SYSTEM; i += 1) {
+    for (i = 0; i < PD_PER_SYSTEM; i += 1)
+    {
         TempPte.u.Hard.PageFrameNumber = MmSystemPageDirectory[i];
-        MI_WRITE_VALID_PTE (PointerPte, TempPte);
+        MI_WRITE_VALID_PTE(PointerPte, TempPte);
         PointerPte += 1;
     }
 
 #endif
 
-    if (MmPagedPoolMaximumDesired == TRUE) {
-        MmSizeOfPagedPoolInBytes =
-                    ((PCHAR)MmNonPagedSystemStart - (PCHAR)MmPagedPoolStart);
+    if (MmPagedPoolMaximumDesired == TRUE)
+    {
+        MmSizeOfPagedPoolInBytes = ((PCHAR)MmNonPagedSystemStart - (PCHAR)MmPagedPoolStart);
     }
-    else if (MmSizeOfPagedPoolInBytes == 0) {
+    else if (MmSizeOfPagedPoolInBytes == 0)
+    {
 
         //
         // A size of 0 means size the pool based on physical memory.
@@ -3162,39 +3164,43 @@ Environment:
 #endif
     }
 
-    if (MmIsThisAnNtAsSystem()) {
-        if ((MmNumberOfPhysicalPages > ((24*1024*1024) >> PAGE_SHIFT)) &&
-            (MmSizeOfPagedPoolInBytes < MM_MINIMUM_PAGED_POOL_NTAS)) {
+    if (MmIsThisAnNtAsSystem())
+    {
+        if ((MmNumberOfPhysicalPages > ((24 * 1024 * 1024) >> PAGE_SHIFT)) &&
+            (MmSizeOfPagedPoolInBytes < MM_MINIMUM_PAGED_POOL_NTAS))
+        {
 
             MmSizeOfPagedPoolInBytes = MM_MINIMUM_PAGED_POOL_NTAS;
         }
     }
 
-    if (MmSizeOfPagedPoolInBytes >
-              (ULONG_PTR)((PCHAR)MmNonPagedSystemStart - (PCHAR)MmPagedPoolStart)) {
-        MmSizeOfPagedPoolInBytes =
-                    ((PCHAR)MmNonPagedSystemStart - (PCHAR)MmPagedPoolStart);
+    if (MmSizeOfPagedPoolInBytes > (ULONG_PTR)((PCHAR)MmNonPagedSystemStart - (PCHAR)MmPagedPoolStart))
+    {
+        MmSizeOfPagedPoolInBytes = ((PCHAR)MmNonPagedSystemStart - (PCHAR)MmPagedPoolStart);
     }
 
     Size = BYTES_TO_PAGES(MmSizeOfPagedPoolInBytes);
 
-    if (Size < MM_MIN_INITIAL_PAGED_POOL) {
+    if (Size < MM_MIN_INITIAL_PAGED_POOL)
+    {
         Size = MM_MIN_INITIAL_PAGED_POOL;
     }
 
-    if (Size > (MM_MAX_PAGED_POOL >> PAGE_SHIFT)) {
+    if (Size > (MM_MAX_PAGED_POOL >> PAGE_SHIFT))
+    {
         Size = MM_MAX_PAGED_POOL >> PAGE_SHIFT;
     }
 
-#if defined (_WIN64)
+#if defined(_WIN64)
 
     //
     // NT64 places system mapped views directly after paged pool.  Ensure
     // enough VA space is available.
     //
 
-    if (Size + (MmSystemViewSize >> PAGE_SHIFT) > (MM_MAX_PAGED_POOL >> PAGE_SHIFT)) {
-        ASSERT (MmSizeOfPagedPoolInBytes > 2 * MmSystemViewSize);
+    if (Size + (MmSystemViewSize >> PAGE_SHIFT) > (MM_MAX_PAGED_POOL >> PAGE_SHIFT))
+    {
+        ASSERT(MmSizeOfPagedPoolInBytes > 2 * MmSystemViewSize);
         MmSizeOfPagedPoolInBytes -= MmSystemViewSize;
         Size = BYTES_TO_PAGES(MmSizeOfPagedPoolInBytes);
     }
@@ -3215,46 +3221,48 @@ Environment:
     // feature if not enough physical memory is present to do it.
     //
 
-    if (MmDisablePagingExecutive & MM_PAGED_POOL_LOCKED_DOWN) {
+    if (MmDisablePagingExecutive & MM_PAGED_POOL_LOCKED_DOWN)
+    {
 
         Size = MmSizeOfPagedPoolInBytes / PAGE_SIZE;
 
-        if ((MI_NONPAGABLE_MEMORY_AVAILABLE() < 2048) ||
-            (MmAvailablePages < 2048)) {
-                Size = 0;
+        if ((MI_NONPAGABLE_MEMORY_AVAILABLE() < 2048) || (MmAvailablePages < 2048))
+        {
+            Size = 0;
         }
-        else {
-            if ((SPFN_NUMBER)(Size) > MI_NONPAGABLE_MEMORY_AVAILABLE() - 2048) {
+        else
+        {
+            if ((SPFN_NUMBER)(Size) > MI_NONPAGABLE_MEMORY_AVAILABLE() - 2048)
+            {
                 Size = (MI_NONPAGABLE_MEMORY_AVAILABLE() - 2048);
             }
 
-            if (Size > MmAvailablePages - 2048) {
+            if (Size > MmAvailablePages - 2048)
+            {
                 Size = MmAvailablePages - 2048;
             }
         }
 
         Size = ((Size * PAGE_SIZE) / MM_VA_MAPPED_BY_PDE) * MM_VA_MAPPED_BY_PDE;
 
-        if ((((Size / 5) * 4) >= MmSizeOfPagedPoolInBytes) &&
-            (Size >= MM_MIN_INITIAL_PAGED_POOL)) {
+        if ((((Size / 5) * 4) >= MmSizeOfPagedPoolInBytes) && (Size >= MM_MIN_INITIAL_PAGED_POOL))
+        {
 
             MmSizeOfPagedPoolInBytes = Size;
         }
-        else {
+        else
+        {
             MmDisablePagingExecutive &= ~MM_PAGED_POOL_LOCKED_DOWN;
         }
 
         Size = MmSizeOfPagedPoolInBytes >> PAGE_SHIFT;
     }
 
-    ASSERT ((MmSizeOfPagedPoolInBytes + (PCHAR)MmPagedPoolStart) <=
-            (PCHAR)MmNonPagedSystemStart);
+    ASSERT((MmSizeOfPagedPoolInBytes + (PCHAR)MmPagedPoolStart) <= (PCHAR)MmNonPagedSystemStart);
 
-    ASSERT64 ((MmSizeOfPagedPoolInBytes + (PCHAR)MmPagedPoolStart + MmSystemViewSize) <=
-              (PCHAR)MmNonPagedSystemStart);
+    ASSERT64((MmSizeOfPagedPoolInBytes + (PCHAR)MmPagedPoolStart + MmSystemViewSize) <= (PCHAR)MmNonPagedSystemStart);
 
-    MmPagedPoolEnd = (PVOID)(((PUCHAR)MmPagedPoolStart +
-                            MmSizeOfPagedPoolInBytes) - 1);
+    MmPagedPoolEnd = (PVOID)(((PUCHAR)MmPagedPoolStart + MmSizeOfPagedPoolInBytes) - 1);
 
     MmPageAlignedPoolBase[PagedPool] = MmPagedPoolStart;
 
@@ -3262,7 +3270,7 @@ Environment:
     // Build page table page for paged pool.
     //
 
-    PointerPde = MiGetPdeAddress (MmPagedPoolStart);
+    PointerPde = MiGetPdeAddress(MmPagedPoolStart);
 
     TempPte = ValidKernelPde;
 
@@ -3274,37 +3282,36 @@ Environment:
     //
 
     LastVa = (PVOID)((PCHAR)MmPagedPoolEnd + MmSystemViewSize);
-    PointerPpe = MiGetPpeAddress (MmPagedPoolStart);
-    PointerPpeEnd = MiGetPpeAddress (LastVa);
+    PointerPpe = MiGetPpeAddress(MmPagedPoolStart);
+    PointerPpeEnd = MiGetPpeAddress(LastVa);
 
     MiSystemViewStart = (ULONG_PTR)MmPagedPoolEnd + 1;
 
-    PointerPde = MiGetPdeAddress (MmPagedPoolEnd) + 1;
-    LastPde = MiGetPdeAddress (LastVa);
+    PointerPde = MiGetPdeAddress(MmPagedPoolEnd) + 1;
+    LastPde = MiGetPdeAddress(LastVa);
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
 #if (_MI_PAGING_LEVELS >= 4)
-    PointerPxe = MiGetPxeAddress (MmPagedPoolStart);
-    PointerPxeEnd = MiGetPxeAddress (LastVa);
+    PointerPxe = MiGetPxeAddress(MmPagedPoolStart);
+    PointerPxeEnd = MiGetPxeAddress(LastVa);
 
-    while (PointerPxe <= PointerPxeEnd) {
+    while (PointerPxe <= PointerPxeEnd)
+    {
 
-        if (PointerPxe->u.Hard.Valid == 0) {
-            PageFrameIndex = MiRemoveAnyPage(
-                                     MI_GET_PAGE_COLOR_FROM_PTE (PointerPxe));
+        if (PointerPxe->u.Hard.Valid == 0)
+        {
+            PageFrameIndex = MiRemoveAnyPage(MI_GET_PAGE_COLOR_FROM_PTE(PointerPxe));
             TempPte.u.Hard.PageFrameNumber = PageFrameIndex;
-            MI_WRITE_VALID_PTE (PointerPxe, TempPte);
+            MI_WRITE_VALID_PTE(PointerPxe, TempPte);
 
-            MiInitializePfn (PageFrameIndex, PointerPxe, 1);
+            MiInitializePfn(PageFrameIndex, PointerPxe, 1);
 
             //
             // Make all entries no access since the PDEs may not fill the page.
             //
 
-            MiFillMemoryPte (MiGetVirtualAddressMappedByPte (PointerPxe),
-                             PAGE_SIZE,
-                             MM_KERNEL_NOACCESS_PTE);
+            MiFillMemoryPte(MiGetVirtualAddressMappedByPte(PointerPxe), PAGE_SIZE, MM_KERNEL_NOACCESS_PTE);
 
             MmResidentAvailablePages -= 1;
             AdditionalCommittedPages += 1;
@@ -3314,23 +3321,22 @@ Environment:
     }
 #endif
 
-    while (PointerPpe <= PointerPpeEnd) {
+    while (PointerPpe <= PointerPpeEnd)
+    {
 
-        if (PointerPpe->u.Hard.Valid == 0) {
-            PageFrameIndex = MiRemoveAnyPage(
-                                     MI_GET_PAGE_COLOR_FROM_PTE (PointerPpe));
+        if (PointerPpe->u.Hard.Valid == 0)
+        {
+            PageFrameIndex = MiRemoveAnyPage(MI_GET_PAGE_COLOR_FROM_PTE(PointerPpe));
             TempPte.u.Hard.PageFrameNumber = PageFrameIndex;
-            MI_WRITE_VALID_PTE (PointerPpe, TempPte);
+            MI_WRITE_VALID_PTE(PointerPpe, TempPte);
 
-            MiInitializePfn (PageFrameIndex, PointerPpe, 1);
+            MiInitializePfn(PageFrameIndex, PointerPpe, 1);
 
             //
             // Make all entries no access since the PDEs may not fill the page.
             //
 
-            MiFillMemoryPte (MiGetVirtualAddressMappedByPte (PointerPpe),
-                             PAGE_SIZE,
-                             MM_KERNEL_NOACCESS_PTE);
+            MiFillMemoryPte(MiGetVirtualAddressMappedByPte(PointerPpe), PAGE_SIZE, MM_KERNEL_NOACCESS_PTE);
 
             MmResidentAvailablePages -= 1;
             AdditionalCommittedPages += 1;
@@ -3346,63 +3352,56 @@ Environment:
     MmResidentAvailablePages -= (LastPde - PointerPde + 1);
     AdditionalCommittedPages += (LastPde - PointerPde + 1);
 
-    while (PointerPde <= LastPde) {
+    while (PointerPde <= LastPde)
+    {
 
-        ASSERT (PointerPde->u.Hard.Valid == 0);
+        ASSERT(PointerPde->u.Hard.Valid == 0);
 
-        PageFrameIndex = MiRemoveAnyPage(
-                            MI_GET_PAGE_COLOR_FROM_PTE (PointerPde));
+        PageFrameIndex = MiRemoveAnyPage(MI_GET_PAGE_COLOR_FROM_PTE(PointerPde));
         TempPte.u.Hard.PageFrameNumber = PageFrameIndex;
-        MI_WRITE_VALID_PTE (PointerPde, TempPte);
+        MI_WRITE_VALID_PTE(PointerPde, TempPte);
 
-        MiInitializePfn (PageFrameIndex, PointerPde, 1);
+        MiInitializePfn(PageFrameIndex, PointerPde, 1);
 
-        MiFillMemoryPte (MiGetVirtualAddressMappedByPte (PointerPde),
-                        PAGE_SIZE,
-                        ZeroKernelPte.u.Long);
+        MiFillMemoryPte(MiGetVirtualAddressMappedByPte(PointerPde), PAGE_SIZE, ZeroKernelPte.u.Long);
 
         PointerPde += 1;
     }
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
-    PointerPde = MiGetPdeAddress (MmPagedPoolStart);
+    PointerPde = MiGetPdeAddress(MmPagedPoolStart);
 
 #endif
 
-    PointerPte = MiGetPteAddress (MmPagedPoolStart);
+    PointerPte = MiGetPteAddress(MmPagedPoolStart);
     MmPagedPoolInfo.FirstPteForPagedPool = PointerPte;
-    MmPagedPoolInfo.LastPteForPagedPool = MiGetPteAddress (MmPagedPoolEnd);
+    MmPagedPoolInfo.LastPteForPagedPool = MiGetPteAddress(MmPagedPoolEnd);
 
-    MiFillMemoryPte (PointerPde,
-                     sizeof(MMPTE) *
-                         (1 + MiGetPdeAddress (MmPagedPoolEnd) - PointerPde),
-                     MM_KERNEL_NOACCESS_PTE);
+    MiFillMemoryPte(PointerPde, sizeof(MMPTE) * (1 + MiGetPdeAddress(MmPagedPoolEnd) - PointerPde),
+                    MM_KERNEL_NOACCESS_PTE);
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
     //
     // Map in a page table page.
     //
 
-    PageFrameIndex = MiRemoveAnyPage(
-                            MI_GET_PAGE_COLOR_FROM_PTE (PointerPde));
+    PageFrameIndex = MiRemoveAnyPage(MI_GET_PAGE_COLOR_FROM_PTE(PointerPde));
     TempPte.u.Hard.PageFrameNumber = PageFrameIndex;
-    MI_WRITE_VALID_PTE (PointerPde, TempPte);
+    MI_WRITE_VALID_PTE(PointerPde, TempPte);
 
 #if (_MI_PAGING_LEVELS >= 3)
-    ContainingFrame = MI_GET_PAGE_FRAME_FROM_PTE(MiGetPpeAddress (MmPagedPoolStart));
+    ContainingFrame = MI_GET_PAGE_FRAME_FROM_PTE(MiGetPpeAddress(MmPagedPoolStart));
 #else
     ContainingFrame = MmSystemPageDirectory[(PointerPde - MiGetPdeAddress(0)) / PDE_PER_PAGE];
 #endif
 
-    MiInitializePfnForOtherProcess (PageFrameIndex,
-                                    PointerPde,
-                                    ContainingFrame);
+    MiInitializePfnForOtherProcess(PageFrameIndex, PointerPde, ContainingFrame);
 
-    MiFillMemoryPte (PointerPte, PAGE_SIZE, MM_KERNEL_NOACCESS_PTE);
+    MiFillMemoryPte(PointerPte, PAGE_SIZE, MM_KERNEL_NOACCESS_PTE);
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
     MmPagedPoolInfo.NextPdeForPagedPoolExpansion = PointerPde + 1;
 
@@ -3410,51 +3409,53 @@ Environment:
     // Build bitmaps for paged pool.
     //
 
-    MiCreateBitMap (&MmPagedPoolInfo.PagedPoolAllocationMap, Size, NonPagedPool);
-    RtlSetAllBits (MmPagedPoolInfo.PagedPoolAllocationMap);
+    MiCreateBitMap(&MmPagedPoolInfo.PagedPoolAllocationMap, Size, NonPagedPool);
+    RtlSetAllBits(MmPagedPoolInfo.PagedPoolAllocationMap);
 
     //
     // Indicate first page worth of PTEs are available.
     //
 
-    RtlClearBits (MmPagedPoolInfo.PagedPoolAllocationMap, 0, PTE_PER_PAGE);
+    RtlClearBits(MmPagedPoolInfo.PagedPoolAllocationMap, 0, PTE_PER_PAGE);
 
-    MiCreateBitMap (&MmPagedPoolInfo.EndOfPagedPoolBitmap, Size, NonPagedPool);
-    RtlClearAllBits (MmPagedPoolInfo.EndOfPagedPoolBitmap);
+    MiCreateBitMap(&MmPagedPoolInfo.EndOfPagedPoolBitmap, Size, NonPagedPool);
+    RtlClearAllBits(MmPagedPoolInfo.EndOfPagedPoolBitmap);
 
     //
     // If verifier is present then build the verifier paged pool bitmap.
     //
 
-    if (MmVerifyDriverBufferLength != (ULONG)-1) {
-        MiCreateBitMap (&VerifierLargePagedPoolMap, Size, NonPagedPool);
-        RtlClearAllBits (VerifierLargePagedPoolMap);
+    if (MmVerifyDriverBufferLength != (ULONG)-1)
+    {
+        MiCreateBitMap(&VerifierLargePagedPoolMap, Size, NonPagedPool);
+        RtlClearAllBits(VerifierLargePagedPoolMap);
     }
 
     //
     // Initialize paged pool.
     //
 
-    InitializePool (PagedPool, 0L);
+    InitializePool(PagedPool, 0L);
 
     //
     // If paged pool is really nonpagable then allocate the memory now.
     //
 
-    if (MmDisablePagingExecutive & MM_PAGED_POOL_LOCKED_DOWN) {
+    if (MmDisablePagingExecutive & MM_PAGED_POOL_LOCKED_DOWN)
+    {
 
-        PointerPde = MiGetPdeAddress (MmPagedPoolStart);
+        PointerPde = MiGetPdeAddress(MmPagedPoolStart);
         PointerPde += 1;
-        LastPde = MiGetPdeAddress (MmPagedPoolEnd);
+        LastPde = MiGetPdeAddress(MmPagedPoolEnd);
         TempPte = ValidKernelPde;
 
-        PointerPte = MiGetPteAddress (MmPagedPoolStart);
-        LastPte = MiGetPteAddress (MmPagedPoolEnd);
+        PointerPte = MiGetPteAddress(MmPagedPoolStart);
+        LastPte = MiGetPteAddress(MmPagedPoolEnd);
 
-        ASSERT (MmPagedPoolCommit == 0);
+        ASSERT(MmPagedPoolCommit == 0);
         MmPagedPoolCommit = (ULONG)(LastPte - PointerPte + 1);
 
-        ASSERT (MmPagedPoolInfo.PagedPoolCommit == 0);
+        ASSERT(MmPagedPoolInfo.PagedPoolCommit == 0);
         MmPagedPoolInfo.PagedPoolCommit = MmPagedPoolCommit;
 
 #if DBG
@@ -3462,19 +3463,21 @@ Environment:
         // Ensure no paged pool has been allocated yet.
         //
 
-        for (i = 0; i < PTE_PER_PAGE; i += 1) {
-            ASSERT (!RtlCheckBit (MmPagedPoolInfo.PagedPoolAllocationMap, i));
+        for (i = 0; i < PTE_PER_PAGE; i += 1)
+        {
+            ASSERT(!RtlCheckBit(MmPagedPoolInfo.PagedPoolAllocationMap, i));
         }
 
-        while (i < MmSizeOfPagedPoolInBytes / PAGE_SIZE) {
-            ASSERT (RtlCheckBit (MmPagedPoolInfo.PagedPoolAllocationMap, i));
+        while (i < MmSizeOfPagedPoolInBytes / PAGE_SIZE)
+        {
+            ASSERT(RtlCheckBit(MmPagedPoolInfo.PagedPoolAllocationMap, i));
             i += 1;
         }
 #endif
 
-        RtlClearAllBits (MmPagedPoolInfo.PagedPoolAllocationMap);
+        RtlClearAllBits(MmPagedPoolInfo.PagedPoolAllocationMap);
 
-        LOCK_PFN (OldIrql);
+        LOCK_PFN(OldIrql);
 
         //
         // Map in the page table pages.
@@ -3483,28 +3486,24 @@ Environment:
         MmResidentAvailablePages -= (LastPde - PointerPde + 1);
         AdditionalCommittedPages += (LastPde - PointerPde + 1);
 
-        while (PointerPde <= LastPde) {
+        while (PointerPde <= LastPde)
+        {
 
-            ASSERT (PointerPde->u.Hard.Valid == 0);
+            ASSERT(PointerPde->u.Hard.Valid == 0);
 
-            PageFrameIndex = MiRemoveAnyPage(
-                                    MI_GET_PAGE_COLOR_FROM_PTE (PointerPde));
+            PageFrameIndex = MiRemoveAnyPage(MI_GET_PAGE_COLOR_FROM_PTE(PointerPde));
             TempPte.u.Hard.PageFrameNumber = PageFrameIndex;
-            MI_WRITE_VALID_PTE (PointerPde, TempPte);
+            MI_WRITE_VALID_PTE(PointerPde, TempPte);
 
 #if (_MI_PAGING_LEVELS >= 3)
-            ContainingFrame = MI_GET_PAGE_FRAME_FROM_PTE(MiGetPteAddress (PointerPde));
+            ContainingFrame = MI_GET_PAGE_FRAME_FROM_PTE(MiGetPteAddress(PointerPde));
 #else
             ContainingFrame = MmSystemPageDirectory[(PointerPde - MiGetPdeAddress(0)) / PDE_PER_PAGE];
 #endif
 
-            MiInitializePfnForOtherProcess (PageFrameIndex,
-                                            MiGetPteAddress (PointerPde),
-                                            ContainingFrame);
+            MiInitializePfnForOtherProcess(PageFrameIndex, MiGetPteAddress(PointerPde), ContainingFrame);
 
-            MiFillMemoryPte (MiGetVirtualAddressMappedByPte (PointerPde),
-                             PAGE_SIZE,
-                             MM_KERNEL_NOACCESS_PTE);
+            MiFillMemoryPte(MiGetVirtualAddressMappedByPte(PointerPde), PAGE_SIZE, MM_KERNEL_NOACCESS_PTE);
 
             PointerPde += 1;
         }
@@ -3512,28 +3511,28 @@ Environment:
         MmPagedPoolInfo.NextPdeForPagedPoolExpansion = PointerPde;
 
         TempPte = ValidKernelPte;
-        MI_SET_PTE_DIRTY (TempPte);
+        MI_SET_PTE_DIRTY(TempPte);
 
-        ASSERT (MmAvailablePages > (PFN_COUNT)(LastPte - PointerPte + 1));
-        ASSERT (MmResidentAvailablePages > (SPFN_NUMBER)(LastPte - PointerPte + 1));
+        ASSERT(MmAvailablePages > (PFN_COUNT)(LastPte - PointerPte + 1));
+        ASSERT(MmResidentAvailablePages > (SPFN_NUMBER)(LastPte - PointerPte + 1));
         MmResidentAvailablePages -= (LastPte - PointerPte + 1);
         AdditionalCommittedPages += (LastPte - PointerPte + 1);
 
-        while (PointerPte <= LastPte) {
+        while (PointerPte <= LastPte)
+        {
 
-            ASSERT (PointerPte->u.Hard.Valid == 0);
+            ASSERT(PointerPte->u.Hard.Valid == 0);
 
-            PageFrameIndex = MiRemoveAnyPage(
-                                    MI_GET_PAGE_COLOR_FROM_PTE (PointerPte));
+            PageFrameIndex = MiRemoveAnyPage(MI_GET_PAGE_COLOR_FROM_PTE(PointerPte));
             TempPte.u.Hard.PageFrameNumber = PageFrameIndex;
-            MI_WRITE_VALID_PTE (PointerPte, TempPte);
+            MI_WRITE_VALID_PTE(PointerPte, TempPte);
 
-            MiInitializePfn (PageFrameIndex, PointerPte, 1);
+            MiInitializePfn(PageFrameIndex, PointerPte, 1);
 
             PointerPte += 1;
         }
 
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
     }
 
     //
@@ -3541,25 +3540,21 @@ Environment:
     // page count must be atomically incremented.
     //
 
-    InterlockedExchangeAddSizeT (&MmTotalCommittedPages, AdditionalCommittedPages);
+    InterlockedExchangeAddSizeT(&MmTotalCommittedPages, AdditionalCommittedPages);
 
-    MiInitializeSpecialPool (NonPagedPool);
+    MiInitializeSpecialPool(NonPagedPool);
 
     //
     // Allow mapping of views into system space.
     //
 
-    MiInitializeSystemSpaceMap (NULL);
+    MiInitializeSystemSpaceMap(NULL);
 
     return;
 }
 
-
-VOID
-MiFindInitializationCode (
-    OUT PVOID *StartVa,
-    OUT PVOID *EndVa
-    )
+
+VOID MiFindInitializationCode(OUT PVOID *StartVa, OUT PVOID *EndVa)
 
 /*++
 
@@ -3617,17 +3612,17 @@ Environment:
     // contains this routine.
     //
 
-    CurrentThread = KeGetCurrentThread ();
-    KeEnterCriticalRegionThread (CurrentThread);
-    ExAcquireResourceExclusiveLite (&PsLoadedModuleResource, TRUE);
+    CurrentThread = KeGetCurrentThread();
+    KeEnterCriticalRegionThread(CurrentThread);
+    ExAcquireResourceExclusiveLite(&PsLoadedModuleResource, TRUE);
     Next = PsLoadedModuleList.Flink;
 
-    while (Next != &PsLoadedModuleList) {
-        LdrDataTableEntry = CONTAINING_RECORD (Next,
-                                               KLDR_DATA_TABLE_ENTRY,
-                                               InLoadOrderLinks);
+    while (Next != &PsLoadedModuleList)
+    {
+        LdrDataTableEntry = CONTAINING_RECORD(Next, KLDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
-        if (LdrDataTableEntry->SectionPointer != NULL) {
+        if (LdrDataTableEntry->SectionPointer != NULL)
+        {
 
             //
             // This entry was loaded by MmLoadSystemImage so it's already
@@ -3641,10 +3636,8 @@ Environment:
         CurrentBase = (PVOID)LdrDataTableEntry->DllBase;
         NtHeader = RtlImageNtHeader(CurrentBase);
 
-        SectionTableEntry = (PIMAGE_SECTION_HEADER)((PCHAR)NtHeader +
-                                sizeof(ULONG) +
-                                sizeof(IMAGE_FILE_HEADER) +
-                                NtHeader->FileHeader.SizeOfOptionalHeader);
+        SectionTableEntry = (PIMAGE_SECTION_HEADER)((PCHAR)NtHeader + sizeof(ULONG) + sizeof(IMAGE_FILE_HEADER) +
+                                                    NtHeader->FileHeader.SizeOfOptionalHeader);
 
         //
         // From the image header, locate the sections named 'INIT',
@@ -3655,13 +3648,13 @@ Environment:
         i = NtHeader->FileHeader.NumberOfSections;
 
         InitStart = NULL;
-        while (i > 0) {
+        while (i > 0)
+        {
 
 #if DBG
-            if ((*(PULONG)SectionTableEntry->Name == 'tini') ||
-                (*(PULONG)SectionTableEntry->Name == 'egap')) {
-                DbgPrint("driver %wZ has lower case sections (init or pagexxx)\n",
-                    &LdrDataTableEntry->FullDllName);
+            if ((*(PULONG)SectionTableEntry->Name == 'tini') || (*(PULONG)SectionTableEntry->Name == 'egap'))
+            {
+                DbgPrint("driver %wZ has lower case sections (init or pagexxx)\n", &LdrDataTableEntry->FullDllName);
             }
 #endif
 
@@ -3674,58 +3667,64 @@ Environment:
             //
 
             if ((*(PULONG)SectionTableEntry->Name == 'TINI') ||
-                ((SectionTableEntry->Characteristics & IMAGE_SCN_MEM_DISCARDABLE) != 0)) {
+                ((SectionTableEntry->Characteristics & IMAGE_SCN_MEM_DISCARDABLE) != 0))
+            {
                 DiscardSection = TRUE;
             }
-            else if ((*(PULONG)SectionTableEntry->Name == 'EGAP') &&
-                     (SectionTableEntry->Name[4] == 'V') &&
-                     (SectionTableEntry->Name[5] == 'R') &&
-                     (SectionTableEntry->Name[6] == 'F')) {
+            else if ((*(PULONG)SectionTableEntry->Name == 'EGAP') && (SectionTableEntry->Name[4] == 'V') &&
+                     (SectionTableEntry->Name[5] == 'R') && (SectionTableEntry->Name[6] == 'F'))
+            {
 
                 //
                 // Discard PAGEVRF* if no drivers are being instrumented.
                 //
 
-                if (MmVerifyDriverBufferLength == (ULONG)-1) {
+                if (MmVerifyDriverBufferLength == (ULONG)-1)
+                {
                     DiscardSection = TRUE;
                 }
             }
-            else if ((*(PULONG)SectionTableEntry->Name == 'EGAP') &&
-                (*(PULONG)&SectionTableEntry->Name[4] == 'CEPS')) {
+            else if ((*(PULONG)SectionTableEntry->Name == 'EGAP') && (*(PULONG)&SectionTableEntry->Name[4] == 'CEPS'))
+            {
 
                 //
                 // Discard PAGESPEC special pool code if it's not enabled.
                 //
 
-                if (MiSpecialPoolFirstPte == NULL) {
+                if (MiSpecialPoolFirstPte == NULL)
+                {
                     DiscardSection = TRUE;
                 }
             }
 
-            if (DiscardSection == TRUE) {
+            if (DiscardSection == TRUE)
+            {
 
                 InitStart = (PVOID)((PCHAR)CurrentBase + SectionTableEntry->VirtualAddress);
                 InitEnd = (PVOID)((PCHAR)InitStart + SectionTableEntry->SizeOfRawData - 1);
-                InitEnd = (PVOID)((PCHAR)PAGE_ALIGN ((PCHAR)InitEnd +
-                        (NtHeader->OptionalHeader.SectionAlignment - 1)) - 1);
-                InitStart = (PVOID)ROUND_TO_PAGES (InitStart);
+                InitEnd =
+                    (PVOID)((PCHAR)PAGE_ALIGN((PCHAR)InitEnd + (NtHeader->OptionalHeader.SectionAlignment - 1)) - 1);
+                InitStart = (PVOID)ROUND_TO_PAGES(InitStart);
 
                 //
                 // Check if more sections are discardable after this one so
                 // even small INIT sections can be discarded.
                 //
 
-                if (i == 1) {
+                if (i == 1)
+                {
                     LastDiscard = SectionTableEntry;
                 }
-                else {
+                else
+                {
                     LastDiscard = NULL;
-                    do {
+                    do
+                    {
                         i -= 1;
                         SectionTableEntry += 1;
 
-                        if ((SectionTableEntry->Characteristics &
-                             IMAGE_SCN_MEM_DISCARDABLE) != 0) {
+                        if ((SectionTableEntry->Characteristics & IMAGE_SCN_MEM_DISCARDABLE) != 0)
+                        {
 
                             //
                             // Discard this too.
@@ -3733,16 +3732,17 @@ Environment:
 
                             LastDiscard = SectionTableEntry;
                         }
-                        else {
+                        else
+                        {
                             break;
                         }
                     } while (i > 1);
                 }
 
-                if (LastDiscard) {
-                    InitEnd = (PVOID)(((PCHAR)CurrentBase +
-                                       LastDiscard->VirtualAddress) +
-                                      (LastDiscard->SizeOfRawData - 1));
+                if (LastDiscard)
+                {
+                    InitEnd =
+                        (PVOID)(((PCHAR)CurrentBase + LastDiscard->VirtualAddress) + (LastDiscard->SizeOfRawData - 1));
 
                     //
                     // If this isn't the last section in the driver then the
@@ -3750,34 +3750,37 @@ Environment:
                     // section is not rounded down, but all others must be.
                     //
 
-                    if (i != 1) {
-                        InitEnd = (PVOID)((PCHAR)PAGE_ALIGN ((PCHAR)InitEnd +
-                                                             (NtHeader->OptionalHeader.SectionAlignment - 1)) - 1);
+                    if (i != 1)
+                    {
+                        InitEnd = (PVOID)((PCHAR)PAGE_ALIGN((PCHAR)InitEnd +
+                                                            (NtHeader->OptionalHeader.SectionAlignment - 1)) -
+                                          1);
                     }
                 }
 
-                if (InitEnd > (PVOID)((PCHAR)CurrentBase +
-                                      LdrDataTableEntry->SizeOfImage)) {
-                    InitEnd = (PVOID)(((ULONG_PTR)CurrentBase +
-                                       (LdrDataTableEntry->SizeOfImage - 1)) |
-                                      (PAGE_SIZE - 1));
+                if (InitEnd > (PVOID)((PCHAR)CurrentBase + LdrDataTableEntry->SizeOfImage))
+                {
+                    InitEnd =
+                        (PVOID)(((ULONG_PTR)CurrentBase + (LdrDataTableEntry->SizeOfImage - 1)) | (PAGE_SIZE - 1));
                 }
 
-                if (InitStart <= InitEnd) {
-                    if ((MiFindInitializationCodeAddress >= InitStart) &&
-                        (MiFindInitializationCodeAddress <= InitEnd)) {
+                if (InitStart <= InitEnd)
+                {
+                    if ((MiFindInitializationCodeAddress >= InitStart) && (MiFindInitializationCodeAddress <= InitEnd))
+                    {
 
                         //
                         // This init section is in the kernel, don't free it
                         // now as it would free this code!
                         //
 
-                        ASSERT (*StartVa == NULL);
+                        ASSERT(*StartVa == NULL);
                         *StartVa = InitStart;
                         *EndVa = InitEnd;
                     }
-                    else {
-                        MiFreeInitializationCode (InitStart, InitEnd);
+                    else
+                    {
+                        MiFreeInitializationCode(InitStart, InitEnd);
                     }
                 }
             }
@@ -3786,17 +3789,13 @@ Environment:
         }
         Next = Next->Flink;
     }
-    ExReleaseResourceLite (&PsLoadedModuleResource);
-    KeLeaveCriticalRegionThread (CurrentThread);
+    ExReleaseResourceLite(&PsLoadedModuleResource);
+    KeLeaveCriticalRegionThread(CurrentThread);
     return;
 }
 
-
-VOID
-MiFreeInitializationCode (
-    IN PVOID StartVa,
-    IN PVOID EndVa
-    )
+
+VOID MiFreeInitializationCode(IN PVOID StartVa, IN PVOID EndVa)
 
 /*++
 
@@ -3829,8 +3828,9 @@ Environment:
 
     ASSERT(ExPageLockHandle);
 
-#if defined (_MI_MORE_THAN_4GB_)
-    if (MiNoLowMemory != 0) {
+#if defined(_MI_MORE_THAN_4GB_)
+    if (MiNoLowMemory != 0)
+    {
 
         //
         // Don't free this range as the kernel is always below the memory
@@ -3844,35 +3844,34 @@ Environment:
     PagesFreed = 0;
     MmLockPagableSectionByHandle(ExPageLockHandle);
 
-    if (MI_IS_PHYSICAL_ADDRESS(StartVa)) {
-        LOCK_PFN (OldIrql);
-        while (StartVa < EndVa) {
+    if (MI_IS_PHYSICAL_ADDRESS(StartVa))
+    {
+        LOCK_PFN(OldIrql);
+        while (StartVa < EndVa)
+        {
 
             //
             // On certain architectures (e.g., MIPS) virtual addresses
             // may be physical and hence have no corresponding PTE.
             //
 
-            PageFrameIndex = MI_CONVERT_PHYSICAL_TO_PFN (StartVa);
+            PageFrameIndex = MI_CONVERT_PHYSICAL_TO_PFN(StartVa);
 
-            Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+            Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
             Pfn1->u2.ShareCount = 0;
             Pfn1->u3.e2.ReferenceCount = 0;
-            MI_SET_PFN_DELETED (Pfn1);
-            MiInsertPageInFreeList (PageFrameIndex);
+            MI_SET_PFN_DELETED(Pfn1);
+            MiInsertPageInFreeList(PageFrameIndex);
             StartVa = (PVOID)((PUCHAR)StartVa + PAGE_SIZE);
             PagesFreed += 1;
         }
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
     }
-    else {
-        PointerPte = MiGetPteAddress (StartVa);
-        PagesFreed = MiDeleteSystemPagableVm (PointerPte,
-                                 (PFN_NUMBER) (1 + MiGetPteAddress (EndVa) -
-                                     PointerPte),
-                                 ZeroKernelPte,
-                                 FALSE,
-                                 NULL);
+    else
+    {
+        PointerPte = MiGetPteAddress(StartVa);
+        PagesFreed = MiDeleteSystemPagableVm(PointerPte, (PFN_NUMBER)(1 + MiGetPteAddress(EndVa) - PointerPte),
+                                             ZeroKernelPte, FALSE, NULL);
     }
     MmUnlockPagableImageSection(ExPageLockHandle);
 
@@ -3881,7 +3880,8 @@ Environment:
     // excluded the ranges just freed, add them back in now.
     //
 
-    if (PagesFreed != 0) {
+    if (PagesFreed != 0)
+    {
 
         //
         // Since systemwide commitment was determined early in Phase 0
@@ -3891,18 +3891,15 @@ Environment:
         // loaded drivers.
         //
 
-        InterlockedExchangeAddSizeT (&MmTotalCommitLimitMaximum, PagesFreed);
-        InterlockedExchangeAddSizeT (&MmTotalCommitLimit, PagesFreed);
+        InterlockedExchangeAddSizeT(&MmTotalCommitLimitMaximum, PagesFreed);
+        InterlockedExchangeAddSizeT(&MmTotalCommitLimit, PagesFreed);
     }
 
     return;
 }
 
-
-VOID
-MiEnablePagingTheExecutive (
-    VOID
-    )
+
+VOID MiEnablePagingTheExecutive(VOID)
 
 /*++
 
@@ -3955,12 +3952,14 @@ Environment:
     // this is a diskless remote boot client.
     //
 
-    if (MmDisablePagingExecutive & MM_SYSTEM_CODE_LOCKED_DOWN) {
+    if (MmDisablePagingExecutive & MM_SYSTEM_CODE_LOCKED_DOWN)
+    {
         return;
     }
 
 #if defined(REMOTE_BOOT)
-    if (IoRemoteBootClient && IoCscInitializationFailed) {
+    if (IoRemoteBootClient && IoCscInitializationFailed)
+    {
         return;
     }
 #endif
@@ -3978,20 +3977,20 @@ Environment:
     // contains this routine.
     //
 
-    CurrentThread = PsGetCurrentThread ();
-    CurrentProcess = PsGetCurrentProcessByThread (CurrentThread);
+    CurrentThread = PsGetCurrentThread();
+    CurrentProcess = PsGetCurrentProcessByThread(CurrentThread);
 
-    KeEnterCriticalRegionThread (&CurrentThread->Tcb);
-    ExAcquireResourceExclusiveLite (&PsLoadedModuleResource, TRUE);
+    KeEnterCriticalRegionThread(&CurrentThread->Tcb);
+    ExAcquireResourceExclusiveLite(&PsLoadedModuleResource, TRUE);
     Next = PsLoadedModuleList.Flink;
 
-    while (Next != &PsLoadedModuleList) {
+    while (Next != &PsLoadedModuleList)
+    {
 
-        LdrDataTableEntry = CONTAINING_RECORD (Next,
-                                               KLDR_DATA_TABLE_ENTRY,
-                                               InLoadOrderLinks);
+        LdrDataTableEntry = CONTAINING_RECORD(Next, KLDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
-        if (LdrDataTableEntry->SectionPointer != NULL) {
+        if (LdrDataTableEntry->SectionPointer != NULL)
+        {
 
             //
             // This entry was loaded by MmLoadSystemImage so it's already paged.
@@ -4003,7 +4002,8 @@ Environment:
 
         CurrentBase = (PVOID)LdrDataTableEntry->DllBase;
 
-        if (MI_IS_PHYSICAL_ADDRESS (CurrentBase)) {
+        if (MI_IS_PHYSICAL_ADDRESS(CurrentBase))
+        {
 
             //
             // Mapped physically, can't be paged.
@@ -4013,15 +4013,13 @@ Environment:
             continue;
         }
 
-        NtHeader = RtlImageNtHeader (CurrentBase);
+        NtHeader = RtlImageNtHeader(CurrentBase);
 
-restart:
+    restart:
 
         StartSectionTableEntry = NULL;
-        SectionTableEntry = (PIMAGE_SECTION_HEADER)((PCHAR)NtHeader +
-                                sizeof(ULONG) +
-                                sizeof(IMAGE_FILE_HEADER) +
-                                NtHeader->FileHeader.SizeOfOptionalHeader);
+        SectionTableEntry = (PIMAGE_SECTION_HEADER)((PCHAR)NtHeader + sizeof(ULONG) + sizeof(IMAGE_FILE_HEADER) +
+                                                    NtHeader->FileHeader.SizeOfOptionalHeader);
 
         //
         // From the image header, locate the section named 'PAGE' or '.edata'.
@@ -4031,12 +4029,13 @@ restart:
 
         PointerPte = NULL;
 
-        while (i > 0) {
+        while (i > 0)
+        {
 
             SectionBaseAddress = SECTION_BASE_ADDRESS(SectionTableEntry);
 
-            if ((PUCHAR)SectionBaseAddress ==
-                            ((PUCHAR)CurrentBase + SectionTableEntry->VirtualAddress)) {
+            if ((PUCHAR)SectionBaseAddress == ((PUCHAR)CurrentBase + SectionTableEntry->VirtualAddress))
+            {
                 AlreadyLockedOnce = TRUE;
 
                 //
@@ -4046,36 +4045,37 @@ restart:
                 // then include it in the chunk to be paged.
                 //
 
-                SectionLockCountPointer = SECTION_LOCK_COUNT_POINTER (SectionTableEntry);
+                SectionLockCountPointer = SECTION_LOCK_COUNT_POINTER(SectionTableEntry);
 
-                if (*SectionLockCountPointer == 0) {
+                if (*SectionLockCountPointer == 0)
+                {
 
-                    SubsectionStartPte = MiGetPteAddress ((PVOID)(ROUND_TO_PAGES (
-                                  (ULONG_PTR)CurrentBase +
-                                  SectionTableEntry->VirtualAddress)));
+                    SubsectionStartPte = MiGetPteAddress(
+                        (PVOID)(ROUND_TO_PAGES((ULONG_PTR)CurrentBase + SectionTableEntry->VirtualAddress)));
 
-                    SubsectionLastPte = MiGetPteAddress ((PVOID)((ULONG_PTR)CurrentBase +
-                                 SectionTableEntry->VirtualAddress +
-                                 (NtHeader->OptionalHeader.SectionAlignment - 1) +
-                                 SectionTableEntry->SizeOfRawData -
-                                 PAGE_SIZE));
+                    SubsectionLastPte =
+                        MiGetPteAddress((PVOID)((ULONG_PTR)CurrentBase + SectionTableEntry->VirtualAddress +
+                                                (NtHeader->OptionalHeader.SectionAlignment - 1) +
+                                                SectionTableEntry->SizeOfRawData - PAGE_SIZE));
 
-                    if (SubsectionLastPte >= SubsectionStartPte) {
+                    if (SubsectionLastPte >= SubsectionStartPte)
+                    {
                         AlreadyLockedOnce = FALSE;
                     }
                 }
             }
-            else {
+            else
+            {
                 AlreadyLockedOnce = FALSE;
             }
 
-            PageSection = ((*(PULONG)SectionTableEntry->Name == 'EGAP') ||
-                          (*(PULONG)SectionTableEntry->Name == 'ade.')) &&
-                           (AlreadyLockedOnce == FALSE);
+            PageSection =
+                ((*(PULONG)SectionTableEntry->Name == 'EGAP') || (*(PULONG)SectionTableEntry->Name == 'ade.')) &&
+                (AlreadyLockedOnce == FALSE);
 
-            if (*(PULONG)SectionTableEntry->Name == 'EGAP' &&
-                SectionTableEntry->Name[4] == 'K'  &&
-                SectionTableEntry->Name[5] == 'D') {
+            if (*(PULONG)SectionTableEntry->Name == 'EGAP' && SectionTableEntry->Name[4] == 'K' &&
+                SectionTableEntry->Name[5] == 'D')
+            {
 
                 //
                 // Only pageout PAGEKD if KdPitchDebugger is TRUE.
@@ -4084,80 +4084,84 @@ restart:
                 PageSection = KdPitchDebugger;
             }
 
-            if ((*(PULONG)SectionTableEntry->Name == 'EGAP') &&
-                     (SectionTableEntry->Name[4] == 'V') &&
-                     (SectionTableEntry->Name[5] == 'R') &&
-                     (SectionTableEntry->Name[6] == 'F')) {
+            if ((*(PULONG)SectionTableEntry->Name == 'EGAP') && (SectionTableEntry->Name[4] == 'V') &&
+                (SectionTableEntry->Name[5] == 'R') && (SectionTableEntry->Name[6] == 'F'))
+            {
 
                 //
                 // Pageout PAGEVRF* if no drivers are being instrumented.
                 //
 
-                if (MmVerifyDriverBufferLength != (ULONG)-1) {
+                if (MmVerifyDriverBufferLength != (ULONG)-1)
+                {
                     PageSection = FALSE;
                 }
             }
 
-            if ((*(PULONG)SectionTableEntry->Name == 'EGAP') &&
-                (*(PULONG)&SectionTableEntry->Name[4] == 'CEPS')) {
+            if ((*(PULONG)SectionTableEntry->Name == 'EGAP') && (*(PULONG)&SectionTableEntry->Name[4] == 'CEPS'))
+            {
 
                 //
                 // Pageout PAGESPEC special pool code if it's not enabled.
                 //
 
-                if (MiSpecialPoolFirstPte != NULL) {
+                if (MiSpecialPoolFirstPte != NULL)
+                {
                     PageSection = FALSE;
                 }
             }
 
-            if (PageSection) {
+            if (PageSection)
+            {
 
-                 //
-                 // This section is pagable, save away the start and end.
-                 //
+                //
+                // This section is pagable, save away the start and end.
+                //
 
-                 if (PointerPte == NULL) {
+                if (PointerPte == NULL)
+                {
 
-                     //
-                     // Previous section was NOT pagable, get the start address.
-                     //
+                    //
+                    // Previous section was NOT pagable, get the start address.
+                    //
 
-                     ASSERT (StartSectionTableEntry == NULL);
-                     StartSectionTableEntry = SectionTableEntry;
-                     PointerPte = MiGetPteAddress ((PVOID)(ROUND_TO_PAGES (
-                                  (ULONG_PTR)CurrentBase +
-                                  SectionTableEntry->VirtualAddress)));
-                 }
-                 LastPte = MiGetPteAddress ((PVOID)((ULONG_PTR)CurrentBase +
-                             SectionTableEntry->VirtualAddress +
-                             (NtHeader->OptionalHeader.SectionAlignment - 1) +
-                             SectionTableEntry->SizeOfRawData -
-                             PAGE_SIZE));
+                    ASSERT(StartSectionTableEntry == NULL);
+                    StartSectionTableEntry = SectionTableEntry;
+                    PointerPte = MiGetPteAddress(
+                        (PVOID)(ROUND_TO_PAGES((ULONG_PTR)CurrentBase + SectionTableEntry->VirtualAddress)));
+                }
+                LastPte = MiGetPteAddress((PVOID)((ULONG_PTR)CurrentBase + SectionTableEntry->VirtualAddress +
+                                                  (NtHeader->OptionalHeader.SectionAlignment - 1) +
+                                                  SectionTableEntry->SizeOfRawData - PAGE_SIZE));
             }
-            else {
+            else
+            {
 
                 //
                 // This section is not pagable, if the previous section was
                 // pagable, enable it.
                 //
 
-                if (PointerPte != NULL) {
+                if (PointerPte != NULL)
+                {
 
-                    ASSERT (StartSectionTableEntry != NULL);
-                    LOCK_SYSTEM_WS (OldIrqlWs, CurrentThread);
-                    LOCK_PFN (OldIrql);
+                    ASSERT(StartSectionTableEntry != NULL);
+                    LOCK_SYSTEM_WS(OldIrqlWs, CurrentThread);
+                    LOCK_PFN(OldIrql);
 
-                    StartVa = PAGE_ALIGN (StartSectionTableEntry);
-                    while (StartVa < (PVOID) SectionTableEntry) {
-                        Waited = MiMakeSystemAddressValidPfnSystemWs (StartVa);
-                        if (Waited != 0) {
+                    StartVa = PAGE_ALIGN(StartSectionTableEntry);
+                    while (StartVa < (PVOID)SectionTableEntry)
+                    {
+                        Waited = MiMakeSystemAddressValidPfnSystemWs(StartVa);
+                        if (Waited != 0)
+                        {
 
                             //
                             // Restart at the top as the locks were released.
                             //
 
-                            UNLOCK_PFN (OldIrql);
-                            UNLOCK_SYSTEM_WS (OldIrqlWs);
+                            UNLOCK_PFN(OldIrql);
+                            UNLOCK_SYSTEM_WS(OldIrqlWs);
                             goto restart;
                         }
                         StartVa = (PVOID)((PCHAR)StartVa + PAGE_SIZE);
@@ -4169,13 +4173,15 @@ restart:
                     // after we checked above.
                     //
 
-                    while (StartSectionTableEntry < SectionTableEntry) {
+                    while (StartSectionTableEntry < SectionTableEntry)
+                    {
                         SectionBaseAddress = SECTION_BASE_ADDRESS(StartSectionTableEntry);
 
-                        SectionLockCountPointer = SECTION_LOCK_COUNT_POINTER (StartSectionTableEntry);
+                        SectionLockCountPointer = SECTION_LOCK_COUNT_POINTER(StartSectionTableEntry);
                         if (((PUCHAR)SectionBaseAddress ==
-                                        ((PUCHAR)CurrentBase + StartSectionTableEntry->VirtualAddress)) &&
-                        (*SectionLockCountPointer != 0)) {
+                             ((PUCHAR)CurrentBase + StartSectionTableEntry->VirtualAddress)) &&
+                            (*SectionLockCountPointer != 0))
+                        {
 
                             //
                             // Restart at the top as the section has been
@@ -4183,17 +4189,17 @@ restart:
                             // checked above.
                             //
 
-                            UNLOCK_PFN (OldIrql);
-                            UNLOCK_SYSTEM_WS (OldIrqlWs);
+                            UNLOCK_PFN(OldIrql);
+                            UNLOCK_SYSTEM_WS(OldIrqlWs);
                             goto restart;
                         }
                         StartSectionTableEntry += 1;
                     }
 
-                    MiEnablePagingOfDriverAtInit (PointerPte, LastPte);
+                    MiEnablePagingOfDriverAtInit(PointerPte, LastPte);
 
-                    UNLOCK_PFN (OldIrql);
-                    UNLOCK_SYSTEM_WS (OldIrqlWs);
+                    UNLOCK_PFN(OldIrql);
+                    UNLOCK_SYSTEM_WS(OldIrqlWs);
 
                     PointerPte = NULL;
                     StartSectionTableEntry = NULL;
@@ -4203,22 +4209,25 @@ restart:
             SectionTableEntry += 1;
         }
 
-        if (PointerPte != NULL) {
-            ASSERT (StartSectionTableEntry != NULL);
-            LOCK_SYSTEM_WS (OldIrqlWs, CurrentThread);
-            LOCK_PFN (OldIrql);
+        if (PointerPte != NULL)
+        {
+            ASSERT(StartSectionTableEntry != NULL);
+            LOCK_SYSTEM_WS(OldIrqlWs, CurrentThread);
+            LOCK_PFN(OldIrql);
 
-            StartVa = PAGE_ALIGN (StartSectionTableEntry);
-            while (StartVa < (PVOID) SectionTableEntry) {
-                Waited = MiMakeSystemAddressValidPfnSystemWs (StartVa);
-                if (Waited != 0) {
+            StartVa = PAGE_ALIGN(StartSectionTableEntry);
+            while (StartVa < (PVOID)SectionTableEntry)
+            {
+                Waited = MiMakeSystemAddressValidPfnSystemWs(StartVa);
+                if (Waited != 0)
+                {
 
                     //
                     // Restart at the top as the locks were released.
                     //
 
-                    UNLOCK_PFN (OldIrql);
-                    UNLOCK_SYSTEM_WS (OldIrqlWs);
+                    UNLOCK_PFN(OldIrql);
+                    UNLOCK_SYSTEM_WS(OldIrqlWs);
                     goto restart;
                 }
                 StartVa = (PVOID)((PCHAR)StartVa + PAGE_SIZE);
@@ -4230,13 +4239,14 @@ restart:
             // after we checked above.
             //
 
-            while (StartSectionTableEntry < SectionTableEntry) {
+            while (StartSectionTableEntry < SectionTableEntry)
+            {
                 SectionBaseAddress = SECTION_BASE_ADDRESS(StartSectionTableEntry);
 
-                SectionLockCountPointer = SECTION_LOCK_COUNT_POINTER (StartSectionTableEntry);
-                if (((PUCHAR)SectionBaseAddress ==
-                                ((PUCHAR)CurrentBase + StartSectionTableEntry->VirtualAddress)) &&
-                (*SectionLockCountPointer != 0)) {
+                SectionLockCountPointer = SECTION_LOCK_COUNT_POINTER(StartSectionTableEntry);
+                if (((PUCHAR)SectionBaseAddress == ((PUCHAR)CurrentBase + StartSectionTableEntry->VirtualAddress)) &&
+                    (*SectionLockCountPointer != 0))
+                {
 
                     //
                     // Restart at the top as the section has been
@@ -4244,33 +4254,29 @@ restart:
                     // checked above.
                     //
 
-                    UNLOCK_PFN (OldIrql);
-                    UNLOCK_SYSTEM_WS (OldIrqlWs);
+                    UNLOCK_PFN(OldIrql);
+                    UNLOCK_SYSTEM_WS(OldIrqlWs);
                     goto restart;
                 }
                 StartSectionTableEntry += 1;
             }
-            MiEnablePagingOfDriverAtInit (PointerPte, LastPte);
+            MiEnablePagingOfDriverAtInit(PointerPte, LastPte);
 
-            UNLOCK_PFN (OldIrql);
-            UNLOCK_SYSTEM_WS (OldIrqlWs);
+            UNLOCK_PFN(OldIrql);
+            UNLOCK_SYSTEM_WS(OldIrqlWs);
         }
 
         Next = Next->Flink;
     }
 
-    ExReleaseResourceLite (&PsLoadedModuleResource);
-    KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+    ExReleaseResourceLite(&PsLoadedModuleResource);
+    KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
 
     return;
 }
 
-
-VOID
-MiEnablePagingOfDriverAtInit (
-    IN PMMPTE PointerPte,
-    IN PMMPTE LastPte
-    )
+
+VOID MiEnablePagingOfDriverAtInit(IN PMMPTE PointerPte, IN PMMPTE LastPte)
 
 /*++
 
@@ -4303,10 +4309,11 @@ Environment:
 
     MM_PFN_LOCK_ASSERT();
 
-    Base = MiGetVirtualAddressMappedByPte (PointerPte);
-    SessionAddress = MI_IS_SESSION_PTE (PointerPte);
+    Base = MiGetVirtualAddressMappedByPte(PointerPte);
+    SessionAddress = MI_IS_SESSION_PTE(PointerPte);
 
-    while (PointerPte <= LastPte) {
+    while (PointerPte <= LastPte)
+    {
 
         //
         // The PTE must be carefully checked as drivers may call MmPageEntire
@@ -4316,42 +4323,40 @@ Environment:
         // applied.
         //
 
-        if (PointerPte->u.Hard.Valid == 1) {
-            PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE (PointerPte);
-            Pfn = MI_PFN_ELEMENT (PageFrameIndex);
-            ASSERT (Pfn->u2.ShareCount == 1);
+        if (PointerPte->u.Hard.Valid == 1)
+        {
+            PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE(PointerPte);
+            Pfn = MI_PFN_ELEMENT(PageFrameIndex);
+            ASSERT(Pfn->u2.ShareCount == 1);
 
-            if (Pfn->u1.WsIndex == 0) {
+            if (Pfn->u1.WsIndex == 0)
+            {
 
                 //
                 // Set the working set index to zero.  This allows page table
                 // pages to be brought back in with the proper WSINDEX.
                 //
 
-                MI_ZERO_WSINDEX (Pfn);
+                MI_ZERO_WSINDEX(Pfn);
 
                 //
                 // Original PTE may need to be set for drivers loaded via
                 // ntldr.
                 //
 
-                if (Pfn->OriginalPte.u.Long == 0) {
+                if (Pfn->OriginalPte.u.Long == 0)
+                {
                     Pfn->OriginalPte.u.Long = MM_KERNEL_DEMAND_ZERO_PTE;
                     Pfn->OriginalPte.u.Soft.Protection |= MM_EXECUTE;
                 }
 
-                MI_SET_MODIFIED (Pfn, 1, 0x11);
+                MI_SET_MODIFIED(Pfn, 1, 0x11);
 
                 TempPte = *PointerPte;
 
-                MI_MAKE_VALID_PTE_TRANSITION (TempPte,
-                                              Pfn->OriginalPte.u.Soft.Protection);
+                MI_MAKE_VALID_PTE_TRANSITION(TempPte, Pfn->OriginalPte.u.Soft.Protection);
 
-                KeFlushSingleTb (Base,
-                                 TRUE,
-                                 TRUE,
-                                 (PHARDWARE_PTE)PointerPte,
-                                 TempPte.u.Flush);
+                KeFlushSingleTb(Base, TRUE, TRUE, (PHARDWARE_PTE)PointerPte, TempPte.u.Flush);
 
                 //
                 // Flush the translation buffer and decrement the number of valid
@@ -4360,12 +4365,13 @@ Environment:
                 // page is in transition.
                 //
 
-                MiDecrementShareCount (PageFrameIndex);
+                MiDecrementShareCount(PageFrameIndex);
 
                 MmResidentAvailablePages += 1;
                 MmTotalSystemCodePages += 1;
             }
-            else {
+            else
+            {
 
                 //
                 // This would need to be taken out of the WSLEs so skip it for
@@ -4373,19 +4379,19 @@ Environment:
                 // run into memory pressure.
                 //
             }
-
         }
         Base = (PVOID)((PCHAR)Base + PAGE_SIZE);
         PointerPte += 1;
     }
 
-    if (SessionAddress == TRUE) {
+    if (SessionAddress == TRUE)
+    {
 
         //
         // Session space has no ASN - flush the entire TB.
         //
 
-        MI_FLUSH_ENTIRE_SESSION_TB (TRUE, TRUE);
+        MI_FLUSH_ENTIRE_SESSION_TB(TRUE, TRUE);
     }
 
     return;
@@ -4393,9 +4399,7 @@ Environment:
 
 
 MM_SYSTEMSIZE
-MmQuerySystemSize(
-    VOID
-    )
+MmQuerySystemSize(VOID)
 {
     //
     // 12Mb  is small
@@ -4407,19 +4411,13 @@ MmQuerySystemSize(
 
 NTKERNELAPI
 BOOLEAN
-MmIsThisAnNtAsSystem(
-    VOID
-    )
+MmIsThisAnNtAsSystem(VOID)
 {
     return (BOOLEAN)MmProductType;
 }
 
 NTKERNELAPI
-VOID
-FASTCALL
-MmSetPageFaultNotifyRoutine(
-    PPAGE_FAULT_NOTIFY_ROUTINE NotifyRoutine
-    )
+VOID FASTCALL MmSetPageFaultNotifyRoutine(PPAGE_FAULT_NOTIFY_ROUTINE NotifyRoutine)
 {
     MmPageFaultNotifyRoutine = NotifyRoutine;
 }
@@ -4431,49 +4429,48 @@ KSPIN_LOCK MiMessageLock;
 KEVENT MiMessageEvent;
 ULONG MiMessageCount;
 
-VOID
-MiInitializeMessageQueue (
-    VOID
-    )
+VOID MiInitializeMessageQueue(VOID)
 {
     MiMessageCount = 0;
-    InitializeListHead (&MiMessageInfoListHead);
-    KeInitializeSpinLock (&MiMessageLock);
+    InitializeListHead(&MiMessageInfoListHead);
+    KeInitializeSpinLock(&MiMessageLock);
 
     //
     // Use a synchronization event so the event's signal state is
     // auto cleared on a successful wait.
     //
 
-    KeInitializeEvent (&MiMessageEvent, SynchronizationEvent, FALSE);
+    KeInitializeEvent(&MiMessageEvent, SynchronizationEvent, FALSE);
 }
 
 LOGICAL
-MiQueueMessage (
-    IN PVOID Message
-    )
+MiQueueMessage(IN PVOID Message)
 {
     KIRQL OldIrql;
     LOGICAL Enqueued;
 
     Enqueued = TRUE;
-    ExAcquireSpinLock (&MiMessageLock, &OldIrql);
+    ExAcquireSpinLock(&MiMessageLock, &OldIrql);
 
-    if (MiMessageCount <= 500) {
-        InsertTailList (&MiMessageInfoListHead, (PLIST_ENTRY)Message);
+    if (MiMessageCount <= 500)
+    {
+        InsertTailList(&MiMessageInfoListHead, (PLIST_ENTRY)Message);
         MiMessageCount += 1;
     }
-    else {
+    else
+    {
         Enqueued = FALSE;
     }
 
-    ExReleaseSpinLock (&MiMessageLock, OldIrql);
+    ExReleaseSpinLock(&MiMessageLock, OldIrql);
 
-    if (Enqueued == TRUE) {
-        KeSetEvent (&MiMessageEvent, 0, FALSE);
+    if (Enqueued == TRUE)
+    {
+        KeSetEvent(&MiMessageEvent, 0, FALSE);
     }
-    else {
-        ExFreePool (Message);
+    else
+    {
+        ExFreePool(Message);
     }
 
     return Enqueued;
@@ -4484,9 +4481,7 @@ MiQueueMessage (
 //
 
 PVOID
-MiRemoveMessage (
-    VOID
-    )
+MiRemoveMessage(VOID)
 {
     PVOID Message;
     KIRQL OldIrql;
@@ -4498,32 +4493,32 @@ MiRemoveMessage (
     // N.B.  waiting with a timeout and return so caller can support unload.
     //
 
-    Status = KeWaitForSingleObject (&MiMessageEvent,
-                                    WrVirtualMemory,
-                                    KernelMode,
-                                    FALSE,
-                                    (PLARGE_INTEGER) &MmTwentySeconds);
+    Status =
+        KeWaitForSingleObject(&MiMessageEvent, WrVirtualMemory, KernelMode, FALSE, (PLARGE_INTEGER)&MmTwentySeconds);
 
-    if (Status != STATUS_TIMEOUT) {
+    if (Status != STATUS_TIMEOUT)
+    {
 
-        ExAcquireSpinLock (&MiMessageLock, &OldIrql);
+        ExAcquireSpinLock(&MiMessageLock, &OldIrql);
 
-        if (!IsListEmpty (&MiMessageInfoListHead)) {
+        if (!IsListEmpty(&MiMessageInfoListHead))
+        {
 
             Message = (PVOID)RemoveHeadList(&MiMessageInfoListHead);
             MiMessageCount -= 1;
 
-            if (!IsListEmpty (&MiMessageInfoListHead)) {
+            if (!IsListEmpty(&MiMessageInfoListHead))
+            {
 
                 //
                 // The list still contains entries so undo the event autoreset.
                 //
 
-                KeSetEvent (&MiMessageEvent, 0, FALSE);
+                KeSetEvent(&MiMessageEvent, 0, FALSE);
             }
         }
 
-        ExReleaseSpinLock (&MiMessageLock, OldIrql);
+        ExReleaseSpinLock(&MiMessageLock, OldIrql);
     }
 
     return Message;
@@ -4531,12 +4526,10 @@ MiRemoveMessage (
 
 #endif
 
-#define CONSTANT_UNICODE_STRING(s)   { sizeof( s ) - sizeof( WCHAR ), sizeof( s ), s }
+#define CONSTANT_UNICODE_STRING(s) { sizeof(s) - sizeof(WCHAR), sizeof(s), s }
 
 LOGICAL
-MiInitializeMemoryEvents (
-    VOID
-    )
+MiInitializeMemoryEvents(VOID)
 {
     KIRQL OldIrql;
     NTSTATUS Status;
@@ -4553,10 +4546,12 @@ MiInitializeMemoryEvents (
     // signaled when they shouldn't, but that's not fatal).
     //
 
-    if (MmLowMemoryThreshold != 0) {
+    if (MmLowMemoryThreshold != 0)
+    {
         MmLowMemoryThreshold *= ((1024 * 1024) / PAGE_SIZE);
     }
-    else {
+    else
+    {
 
         //
         // Scale the threshold so on servers the low threshold is
@@ -4565,45 +4560,53 @@ MiInitializeMemoryEvents (
 
         MmLowMemoryThreshold = MmPlentyFreePages;
 
-        if (MmNumberOfPhysicalPages > 0x40000) {
+        if (MmNumberOfPhysicalPages > 0x40000)
+        {
             MmLowMemoryThreshold = (32 * 1024 * 1024) / PAGE_SIZE;
             MmLowMemoryThreshold += ((MmNumberOfPhysicalPages - 0x40000) >> 7);
         }
-        else if (MmNumberOfPhysicalPages > 0x8000) {
+        else if (MmNumberOfPhysicalPages > 0x8000)
+        {
             MmLowMemoryThreshold += ((MmNumberOfPhysicalPages - 0x8000) >> 5);
         }
 
-        if (MmLowMemoryThreshold > (64 * 1024 * 1024) / PAGE_SIZE) {
+        if (MmLowMemoryThreshold > (64 * 1024 * 1024) / PAGE_SIZE)
+        {
             MmLowMemoryThreshold = (64 * 1024 * 1024) / PAGE_SIZE;
         }
     }
 
-    if (MmHighMemoryThreshold != 0) {
+    if (MmHighMemoryThreshold != 0)
+    {
         MmHighMemoryThreshold *= ((1024 * 1024) / PAGE_SIZE);
     }
-    else {
+    else
+    {
         MmHighMemoryThreshold = 3 * MmLowMemoryThreshold;
-        ASSERT (MmHighMemoryThreshold > MmLowMemoryThreshold);
+        ASSERT(MmHighMemoryThreshold > MmLowMemoryThreshold);
     }
 
-    if (MmHighMemoryThreshold < MmLowMemoryThreshold) {
+    if (MmHighMemoryThreshold < MmLowMemoryThreshold)
+    {
         MmHighMemoryThreshold = MmLowMemoryThreshold;
     }
 
-    Status = MiCreateMemoryEvent (&LowMem, &MiLowMemoryEvent);
+    Status = MiCreateMemoryEvent(&LowMem, &MiLowMemoryEvent);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 #if DBG
-        DbgPrint ("MM: Memory event initialization failed %x\n", Status);
+        DbgPrint("MM: Memory event initialization failed %x\n", Status);
 #endif
         return FALSE;
     }
 
-    Status = MiCreateMemoryEvent (&HighMem, &MiHighMemoryEvent);
+    Status = MiCreateMemoryEvent(&HighMem, &MiHighMemoryEvent);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 #if DBG
-        DbgPrint ("MM: Memory event initialization failed %x\n", Status);
+        DbgPrint("MM: Memory event initialization failed %x\n", Status);
 #endif
         return FALSE;
     }
@@ -4612,11 +4615,11 @@ MiInitializeMemoryEvents (
     // Initialize the event values.
     //
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    MiNotifyMemoryEvents ();
+    MiNotifyMemoryEvents();
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
     return TRUE;
 }
@@ -4624,10 +4627,7 @@ MiInitializeMemoryEvents (
 extern POBJECT_TYPE ExEventObjectType;
 
 NTSTATUS
-MiCreateMemoryEvent (
-    IN PUNICODE_STRING EventName,
-    OUT PKEVENT *Event
-    )
+MiCreateMemoryEvent(IN PUNICODE_STRING EventName, OUT PKEVENT *Event)
 {
     PACL Dacl;
     HANDLE EventHandle;
@@ -4636,148 +4636,133 @@ MiCreateMemoryEvent (
     OBJECT_ATTRIBUTES ObjectAttributes;
     SECURITY_DESCRIPTOR SecurityDescriptor;
 
-    Status = RtlCreateSecurityDescriptor (&SecurityDescriptor,
-                                          SECURITY_DESCRIPTOR_REVISION);
+    Status = RtlCreateSecurityDescriptor(&SecurityDescriptor, SECURITY_DESCRIPTOR_REVISION);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
-    DaclLength = sizeof (ACL) + sizeof (ACCESS_ALLOWED_ACE) * 3 +
-                 RtlLengthSid (SeLocalSystemSid) +
-                 RtlLengthSid (SeAliasAdminsSid) +
-                 RtlLengthSid (SeWorldSid);
+    DaclLength = sizeof(ACL) + sizeof(ACCESS_ALLOWED_ACE) * 3 + RtlLengthSid(SeLocalSystemSid) +
+                 RtlLengthSid(SeAliasAdminsSid) + RtlLengthSid(SeWorldSid);
 
-    Dacl = ExAllocatePoolWithTag (PagedPool, DaclLength, 'lcaD');
+    Dacl = ExAllocatePoolWithTag(PagedPool, DaclLength, 'lcaD');
 
-    if (Dacl == NULL) {
+    if (Dacl == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    Status = RtlCreateAcl (Dacl, DaclLength, ACL_REVISION);
+    Status = RtlCreateAcl(Dacl, DaclLength, ACL_REVISION);
 
-    if (!NT_SUCCESS (Status)) {
-        ExFreePool (Dacl);
+    if (!NT_SUCCESS(Status))
+    {
+        ExFreePool(Dacl);
         return Status;
     }
 
-    Status = RtlAddAccessAllowedAce (Dacl,
-                                     ACL_REVISION,
-                                     EVENT_ALL_ACCESS,
-                                     SeAliasAdminsSid);
+    Status = RtlAddAccessAllowedAce(Dacl, ACL_REVISION, EVENT_ALL_ACCESS, SeAliasAdminsSid);
 
-    if (!NT_SUCCESS (Status)) {
-        ExFreePool (Dacl);
+    if (!NT_SUCCESS(Status))
+    {
+        ExFreePool(Dacl);
         return Status;
     }
 
-    Status = RtlAddAccessAllowedAce (Dacl,
-                                     ACL_REVISION,
-                                     EVENT_ALL_ACCESS,
-                                     SeLocalSystemSid);
+    Status = RtlAddAccessAllowedAce(Dacl, ACL_REVISION, EVENT_ALL_ACCESS, SeLocalSystemSid);
 
-    if (!NT_SUCCESS (Status)) {
-        ExFreePool (Dacl);
+    if (!NT_SUCCESS(Status))
+    {
+        ExFreePool(Dacl);
         return Status;
     }
 
-    Status = RtlAddAccessAllowedAce (Dacl,
-                                     ACL_REVISION,
-                                     SYNCHRONIZE|EVENT_QUERY_STATE|READ_CONTROL,
-                                     SeWorldSid);
+    Status = RtlAddAccessAllowedAce(Dacl, ACL_REVISION, SYNCHRONIZE | EVENT_QUERY_STATE | READ_CONTROL, SeWorldSid);
 
-    if (!NT_SUCCESS (Status)) {
-        ExFreePool (Dacl);
+    if (!NT_SUCCESS(Status))
+    {
+        ExFreePool(Dacl);
         return Status;
     }
-  
-    Status = RtlSetDaclSecurityDescriptor (&SecurityDescriptor,
-                                           TRUE,
-                                           Dacl,
-                                           FALSE);
 
-    if (!NT_SUCCESS (Status)) {
-        ExFreePool (Dacl);
+    Status = RtlSetDaclSecurityDescriptor(&SecurityDescriptor, TRUE, Dacl, FALSE);
+
+    if (!NT_SUCCESS(Status))
+    {
+        ExFreePool(Dacl);
         return Status;
     }
-  
-    InitializeObjectAttributes (&ObjectAttributes,
-                                EventName,
-                                OBJ_KERNEL_HANDLE | OBJ_PERMANENT,
-                                NULL,
-                                &SecurityDescriptor);
 
-    Status = ZwCreateEvent (&EventHandle,
-                            EVENT_ALL_ACCESS,
-                            &ObjectAttributes,
-                            NotificationEvent,
-                            FALSE);
+    InitializeObjectAttributes(&ObjectAttributes, EventName, OBJ_KERNEL_HANDLE | OBJ_PERMANENT, NULL,
+                               &SecurityDescriptor);
 
-    ExFreePool (Dacl);
+    Status = ZwCreateEvent(&EventHandle, EVENT_ALL_ACCESS, &ObjectAttributes, NotificationEvent, FALSE);
 
-    if (NT_SUCCESS (Status)) {
-        Status = ObReferenceObjectByHandle (EventHandle,
-                                            EVENT_MODIFY_STATE,
-                                            ExEventObjectType,
-                                            KernelMode,
-                                            (PVOID *)Event,
-                                            NULL);
+    ExFreePool(Dacl);
+
+    if (NT_SUCCESS(Status))
+    {
+        Status = ObReferenceObjectByHandle(EventHandle, EVENT_MODIFY_STATE, ExEventObjectType, KernelMode,
+                                           (PVOID *)Event, NULL);
     }
 
-    ZwClose (EventHandle);
+    ZwClose(EventHandle);
 
     return Status;
 }
 
-VOID
-MiNotifyMemoryEvents (
-    VOID
-    )
+VOID MiNotifyMemoryEvents(VOID)
 // PFN lock is held.
 {
-    if (MmAvailablePages <= MmLowMemoryThreshold) {
+    if (MmAvailablePages <= MmLowMemoryThreshold)
+    {
 
-        if (KeReadStateEvent (MiHighMemoryEvent) != 0) {
-            KeClearEvent (MiHighMemoryEvent);
+        if (KeReadStateEvent(MiHighMemoryEvent) != 0)
+        {
+            KeClearEvent(MiHighMemoryEvent);
         }
 
-        if (KeReadStateEvent (MiLowMemoryEvent) == 0) {
-            KeSetEvent (MiLowMemoryEvent, 0, FALSE);
+        if (KeReadStateEvent(MiLowMemoryEvent) == 0)
+        {
+            KeSetEvent(MiLowMemoryEvent, 0, FALSE);
         }
     }
-    else if (MmAvailablePages < MmHighMemoryThreshold) {
+    else if (MmAvailablePages < MmHighMemoryThreshold)
+    {
 
         //
         // Gray zone, make sure both events are cleared.
         //
 
-        if (KeReadStateEvent (MiHighMemoryEvent) != 0) {
-            KeClearEvent (MiHighMemoryEvent);
+        if (KeReadStateEvent(MiHighMemoryEvent) != 0)
+        {
+            KeClearEvent(MiHighMemoryEvent);
         }
 
-        if (KeReadStateEvent (MiLowMemoryEvent) != 0) {
-            KeClearEvent (MiLowMemoryEvent);
+        if (KeReadStateEvent(MiLowMemoryEvent) != 0)
+        {
+            KeClearEvent(MiLowMemoryEvent);
         }
     }
-    else {
-        if (KeReadStateEvent (MiHighMemoryEvent) == 0) {
-            KeSetEvent (MiHighMemoryEvent, 0, FALSE);
+    else
+    {
+        if (KeReadStateEvent(MiHighMemoryEvent) == 0)
+        {
+            KeSetEvent(MiHighMemoryEvent, 0, FALSE);
         }
 
-        if (KeReadStateEvent (MiLowMemoryEvent) != 0) {
-            KeClearEvent (MiLowMemoryEvent);
+        if (KeReadStateEvent(MiLowMemoryEvent) != 0)
+        {
+            KeClearEvent(MiLowMemoryEvent);
         }
     }
 
     return;
 }
 
-VOID
-MiInitializeCacheOverrides (
-    VOID
-    )
+VOID MiInitializeCacheOverrides(VOID)
 {
-#if defined (_WIN64)
+#if defined(_WIN64)
 
     ULONG NumberOfBytes;
     NTSTATUS Status;
@@ -4787,12 +4772,10 @@ MiInitializeCacheOverrides (
     // Gather platform information from the HAL.
     //
 
-    Status = HalQuerySystemInformation (HalPlatformInformation, 
-                                        sizeof (Information),
-                                        &Information,
-                                        &NumberOfBytes);
+    Status = HalQuerySystemInformation(HalPlatformInformation, sizeof(Information), &Information, &NumberOfBytes);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return;
     }
 
@@ -4803,8 +4786,9 @@ MiInitializeCacheOverrides (
     // should be.
     //
 
-    if (Information.PlatformFlags & HAL_PLATFORM_DISABLE_UC_MAIN_MEMORY) {
-          MI_SET_CACHETYPE_TRANSLATION (MmNonCached, 0, MiCached);
+    if (Information.PlatformFlags & HAL_PLATFORM_DISABLE_UC_MAIN_MEMORY)
+    {
+        MI_SET_CACHETYPE_TRANSLATION(MmNonCached, 0, MiCached);
     }
 #endif
 

@@ -31,4 +31,3 @@ Revision History:
 // moved to somewhere like cm.h so the entire kernel can use it.
 //
 #define CM_REGISTRY_MACHINE(x) L"\\Registry\\Machine\\"##x
-

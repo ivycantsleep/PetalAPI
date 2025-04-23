@@ -76,13 +76,9 @@ Revision History:
 extern unsigned long *BBTBuffer;
 
 
-VOID
-_declspec(naked)
-__stdcall
-_CAP_Start_Profiling(
+VOID _declspec(naked) __stdcall _CAP_Start_Profiling(
 
-    PVOID current,
-    PVOID child)
+    PVOID current, PVOID child)
 
 /*++
 
@@ -180,10 +176,7 @@ Arguments:
 }
 
 
-VOID
-_declspec(naked)
-__stdcall
-_CAP_End_Profiling(
+VOID _declspec(naked) __stdcall _CAP_End_Profiling(
 
     PVOID current)
 
@@ -275,12 +268,10 @@ Arguments:
     }
 }
 
-VOID CAPKComment(char* Format, ...);
+VOID CAPKComment(char *Format, ...);
 
 
-VOID
-__stdcall
-_CAP_ThreadID( VOID )
+VOID __stdcall _CAP_ThreadID(VOID)
 
 /*++
 
@@ -297,16 +288,16 @@ Routine description:
 
 {
     PEPROCESS Process;
-    PKTHREAD  Thread;
-    PETHREAD  EThread;
-    char*     buf;
-    int       callcnt;
-    ULONG*    cpuptr;
-    ULONG     recsize;
-    ULONG     RetAddr[7];
+    PKTHREAD Thread;
+    PETHREAD EThread;
+    char *buf;
+    int callcnt;
+    ULONG *cpuptr;
+    ULONG recsize;
+    ULONG RetAddr[7];
 
 
-    if( !BBTBuffer || !BBTBuffer[0] )
+    if (!BBTBuffer || !BBTBuffer[0])
         goto fail;
 
     _asm {
@@ -318,43 +309,46 @@ Routine description:
     }
 
     cpuptr = BBTBuffer + callcnt + 2;
-    if( !(*cpuptr) || *(ULONG*)(*cpuptr) >= *(cpuptr+1) )
+    if (!(*cpuptr) || *(ULONG *)(*cpuptr) >= *(cpuptr + 1))
         goto fail;
 
     // if trapframe, count call-frames to determine record size
-    EThread = CONTAINING_RECORD(Thread,ETHREAD,Tcb);
-    if( (BBTBuffer[1] & 2) && EThread->Tcb.PreviousMode != KernelMode ) {
+    EThread = CONTAINING_RECORD(Thread, ETHREAD, Tcb);
+    if ((BBTBuffer[1] & 2) && EThread->Tcb.PreviousMode != KernelMode)
+    {
 
-        PTEB  Teb;
-        ULONG*    FramePtr;
+        PTEB Teb;
+        ULONG *FramePtr;
 
         recsize = CAPTIDSIZE;
-        FramePtr = (ULONG*)EThread->Tcb.TrapFrame;  // get trap frame
+        FramePtr = (ULONG *)EThread->Tcb.TrapFrame; // get trap frame
         Teb = EThread->Tcb.Teb;
-        if( FramePtr && Teb ) {
+        if (FramePtr && Teb)
+        {
 
-            ULONG* StackBase = (ULONG*)Teb->NtTib.StackBase;
-            ULONG* StackLimit = (ULONG*)Teb->NtTib.StackLimit;
+            ULONG *StackBase = (ULONG *)Teb->NtTib.StackBase;
+            ULONG *StackLimit = (ULONG *)Teb->NtTib.StackLimit;
 
             // first retadr is last thing pushed
-            RetAddr[0] = *(ULONG*)(EThread->Tcb.TrapFrame->HardwareEsp);
+            RetAddr[0] = *(ULONG *)(EThread->Tcb.TrapFrame->HardwareEsp);
 
             // count frames that have a null next frame (may have valid retadr)
-            FramePtr = (ULONG*)((PKTRAP_FRAME)FramePtr)->Ebp;  // get stack frame
-            for( callcnt=1; callcnt<7 && FramePtr<StackBase
-                                      && FramePtr>StackLimit
-                                      && *(FramePtr);
-                 FramePtr = (ULONG*)*(FramePtr)) {
+            FramePtr = (ULONG *)((PKTRAP_FRAME)FramePtr)->Ebp; // get stack frame
+            for (callcnt = 1; callcnt < 7 && FramePtr < StackBase && FramePtr > StackLimit && *(FramePtr);
+                 FramePtr = (ULONG *)*(FramePtr))
+            {
 
-                RetAddr[callcnt++] = *(FramePtr+1);
+                RetAddr[callcnt++] = *(FramePtr + 1);
             }
 
-            recsize += (callcnt<<2);
+            recsize += (callcnt << 2);
         }
-    } else {
+    }
+    else
+    {
 
         recsize = CAPTIDSIZE;
-        callcnt=0;
+        callcnt = 0;
     }
 
     _asm {
@@ -374,31 +368,28 @@ Routine description:
     }
 
     // initialize CapThreadID record (type 14)
-    *((short*)buf) = (short)14;
+    *((short *)buf) = (short)14;
 
     // insert data length (excluding 4byte header)
-    *((short*)(buf+2)) = (short)(recsize-4);
+    *((short *)(buf + 2)) = (short)(recsize - 4);
 
     // insert Pid & Tid
-    *((ULONG*)(buf+4)) = (ULONG)EThread->Cid.UniqueProcess;
-    *((ULONG*)(buf+8)) = (ULONG)EThread->Cid.UniqueThread;
+    *((ULONG *)(buf + 4)) = (ULONG)EThread->Cid.UniqueProcess;
+    *((ULONG *)(buf + 8)) = (ULONG)EThread->Cid.UniqueThread;
 
     // insert ImageFile name
-    Process = CONTAINING_RECORD(Thread->ApcState.Process,EPROCESS,Pcb);
-    memcpy(buf+12, Process->ImageFileName, 16 );
+    Process = CONTAINING_RECORD(Thread->ApcState.Process, EPROCESS, Pcb);
+    memcpy(buf + 12, Process->ImageFileName, 16);
 
     // insert optional user call stack data
-    if( recsize > CAPTIDSIZE && callcnt )
-        memcpy( buf+28, RetAddr, callcnt<<2 );
+    if (recsize > CAPTIDSIZE && callcnt)
+        memcpy(buf + 28, RetAddr, callcnt << 2);
 
-    fail:
-    ;
+fail:;
 }
 
 
-VOID
-__stdcall
-_CAP_SetCPU( VOID )
+VOID __stdcall _CAP_SetCPU(VOID)
 
 /*++
 
@@ -411,11 +402,11 @@ Routine description:
 --*/
 
 {
-    ULONG* cpuptr;
-    ULONG  cpu;
-    PTEB   Teb;
+    ULONG *cpuptr;
+    ULONG cpu;
+    PTEB Teb;
 
-    if( !BBTBuffer || !BBTBuffer[0] )
+    if (!BBTBuffer || !BBTBuffer[0])
         goto fail;
 
     _asm {
@@ -425,31 +416,27 @@ Routine description:
     }
 
     cpuptr = BBTBuffer + cpu + 2;
-    if( !(*cpuptr) || *(ULONG*)(*cpuptr) >= *(cpuptr+1) )
+    if (!(*cpuptr) || *(ULONG *)(*cpuptr) >= *(cpuptr + 1))
         goto fail;
 
-    if( !(Teb = NtCurrentTeb()) )
+    if (!(Teb = NtCurrentTeb()))
         goto fail;
 
-    try {
+    try
+    {
         Teb->Spare3 = cpu;
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         NOTHING;
     }
-    fail:
-    ;
+fail:;
 }
 
 
+VOID _declspec(naked) __stdcall _CAP_Log_1Int(
 
-
-VOID
-_declspec(naked)
-__stdcall
-_CAP_Log_1Int(
-
-    ULONG code,
-    ULONG data)
+    ULONG code, ULONG data)
 
 /*++
 
@@ -528,10 +515,7 @@ Arguments:
 
 
 #ifdef FOOBAR
-VOID
-_declspec(naked)
-__stdcall
-_CAP_LogRetries(
+VOID _declspec(naked) __stdcall _CAP_LogRetries(
 
     ULONG retries)
 
@@ -600,8 +584,7 @@ Arguments:
 #endif
 
 NTSTATUS
-NtSetPMC (
-    IN ULONG PMC)
+NtSetPMC(IN ULONG PMC)
 
 /*++
 
@@ -617,12 +600,13 @@ Arguments:
 --*/
 
 {
-    if( PMC == -1 )
+    if (PMC == -1)
         return 0;
 
     WRMSR(0x186, PMC);
 
-    if( PMC & 0x10000 ) {
+    if (PMC & 0x10000)
+    {
         _asm {
 
         _emit  0Fh
@@ -649,12 +633,7 @@ Arguments:
 //
 
 
-VOID
-_declspec(naked)
-__stdcall
-_CAP_Start_Profiling(
-    PVOID current,
-    PVOID child)
+VOID _declspec(naked) __stdcall _CAP_Start_Profiling(PVOID current, PVOID child)
 
 /*++
 
@@ -753,11 +732,7 @@ Arguments:
 }
 
 
-VOID
-_declspec(naked)
-__stdcall
-_CAP_End_Profiling(
-    PVOID current)
+VOID _declspec(naked) __stdcall _CAP_End_Profiling(PVOID current)
 
 /*++
 
@@ -855,10 +830,9 @@ Arguments:
 // (method for getting BBTBuffer address & cpu ifdef'ed for kernel & user)
 //
 
-VOID
-CAPKComment(
+VOID CAPKComment(
 
-    char* Format, ...)
+    char *Format, ...)
 
 /*++
 
@@ -874,17 +848,17 @@ Arguments:
 
 {
     va_list arglist;
-    UCHAR   Buffer[512];
+    UCHAR Buffer[512];
     int cb, insize, outsize;
-    char*   buf;
-    char*   data;
-    ULONG   BufEnd;
-    ULONG   FreePtr;
+    char *buf;
+    char *data;
+    ULONG BufEnd;
+    ULONG FreePtr;
 #ifndef NTOS_KERNEL_RUNTIME
-    ULONG* BBTBuffer = NtCurrentTeb()->ReservedForPerf;
+    ULONG *BBTBuffer = NtCurrentTeb()->ReservedForPerf;
 #endif
 
-    if( !BBTBuffer || !BBTBuffer[0] )
+    if (!BBTBuffer || !BBTBuffer[0])
         goto fail;
 
     _asm {
@@ -932,15 +906,16 @@ Arguments:
 
     va_end(arglist);
 
-    if (cb == -1) {             // detect buffer overflow
+    if (cb == -1)
+    { // detect buffer overflow
         cb = sizeof(Buffer);
         Buffer[sizeof(Buffer) - 1] = '\n';
     }
 
     data = &Buffer[0];
-    insize = strlen(data);             // save insize for data copy
-    outsize = ((insize+7) & 0xfffffffc);  // pad outsize to DWORD boundary
-                                       // +4 to account for hdr, +3 to pad
+    insize = strlen(data);                 // save insize for data copy
+    outsize = ((insize + 7) & 0xfffffffc); // pad outsize to DWORD boundary
+                                           // +4 to account for hdr, +3 to pad
 
     _asm {
 
@@ -960,19 +935,19 @@ Arguments:
     outsize -= 4;
 
     // initialize CapkComment record (type 13)
-    *((short*)(buf)) = (short)13;
+    *((short *)(buf)) = (short)13;
 
     // insert size
-    *((short*)(buf+2)) = (short)outsize;
+    *((short *)(buf + 2)) = (short)outsize;
 
     // insert sprintf data
-    memcpy(buf+4, data, insize );
+    memcpy(buf + 4, data, insize);
 
     // if had to pad, add null terminator to string
-    if( outsize > insize )
-        *(buf+4+insize) = 0;
+    if (outsize > insize)
+        *(buf + 4 + insize) = 0;
 
-  fail:
+fail:
     return;
 }
 
@@ -981,11 +956,11 @@ Arguments:
 // Constants for CAPKControl
 //
 
-#define CAPKStart   1
-#define CAPKStop    2
-#define CAPKResume  3
-#define MAXDUMMY    30
-#define CAPK0       4
+#define CAPKStart 1
+#define CAPKStop 2
+#define CAPKResume 3
+#define MAXDUMMY 30
+#define CAPK0 4
 
 
 int CAPKControl(
@@ -1017,64 +992,69 @@ Return value:
     ULONG cpus;
     ULONG percpusize;
     ULONG pwords;
-    ULONG* ptr1;
+    ULONG *ptr1;
 
 
 #ifdef NTOS_KERNEL_RUNTIME
     cpus = KeNumberProcessors;
 #else
-    ULONG* BBTBuffer= NtCurrentTeb()->ReservedForPerf;
+    ULONG *BBTBuffer = NtCurrentTeb()->ReservedForPerf;
 
     cpus = NtCurrentPeb()->NumberOfProcessors;
 #endif
 
 
-    if( !BBTBuffer || !(BBTBuffer[0]) )
+    if (!BBTBuffer || !(BBTBuffer[0]))
         return 0;
 
     pwords = CAPK0 + cpus;
-    percpusize = ((BBTBuffer[0]*1024) - pwords)/cpus;  // in DWORDs
+    percpusize = ((BBTBuffer[0] * 1024) - pwords) / cpus; // in DWORDs
 
 
-    if(opcode == CAPKStart) {        // start
+    if (opcode == CAPKStart)
+    { // start
 
         ULONG j;
 
 
         // clear freeptr ptrs (including final ptr)
-        for( i=0; i<cpus+1; i++ )
-            BBTBuffer[2+i] = 0;
+        for (i = 0; i < cpus + 1; i++)
+            BBTBuffer[2 + i] = 0;
 
         // initialize each freeptr to next dword
         // (and log dummy records to calibrate overhead)
-        for( i=0, ptr1 = BBTBuffer+pwords; i<cpus; i++, ptr1+=percpusize) {
+        for (i = 0, ptr1 = BBTBuffer + pwords; i < cpus; i++, ptr1 += percpusize)
+        {
 
-            *ptr1 = (ULONG)(ptr1+1);
+            *ptr1 = (ULONG)(ptr1 + 1);
 
-//            for( j=0; j<MAXDUMMY; j++ ) {
-//
-//                _CAP_Start_Profiling(ptr, NULL);
-//                _CAP_End_Profiling(ptr);
-//
-//            }
+            //            for( j=0; j<MAXDUMMY; j++ ) {
+            //
+            //                _CAP_Start_Profiling(ptr, NULL);
+            //                _CAP_End_Profiling(ptr);
+            //
+            //            }
         }
         // set up freeptr ptrs (including final ptr)
-        for(i=0, ptr1=BBTBuffer+pwords; i<cpus+1; i++, ptr1+=percpusize)
-            BBTBuffer[2+i] = (ULONG)ptr1;
+        for (i = 0, ptr1 = BBTBuffer + pwords; i < cpus + 1; i++, ptr1 += percpusize)
+            BBTBuffer[2 + i] = (ULONG)ptr1;
+    }
+    else if (opcode == CAPKStop)
+    { // stop
 
-    } else if( opcode == CAPKStop ) {  // stop
-
-        for(i=0; i<cpus+1; i++)
-            BBTBuffer[2+i] = 0;
-
-    } else if( opcode == CAPKResume ) { //resume
+        for (i = 0; i < cpus + 1; i++)
+            BBTBuffer[2 + i] = 0;
+    }
+    else if (opcode == CAPKResume)
+    { //resume
 
         // set up freeptr ptrs (including final ptr)
-        for(i=0, ptr1=BBTBuffer+pwords; i<cpus+1; i++, ptr1+=percpusize)
-            BBTBuffer[2+i] = (ULONG)ptr1;
-
-    } else {
-        return 0;                      // invalid opcode
+        for (i = 0, ptr1 = BBTBuffer + pwords; i < cpus + 1; i++, ptr1 += percpusize)
+            BBTBuffer[2 + i] = (ULONG)ptr1;
+    }
+    else
+    {
+        return 0; // invalid opcode
     }
     return 1;
 }

@@ -32,16 +32,15 @@ Revision History:
 
 #define MAXIMUM_DPC_LIST_SIZE 16
 
-typedef struct _DPC_ENTRY {
+typedef struct _DPC_ENTRY
+{
     PRKDPC Dpc;
     PKDEFERRED_ROUTINE Routine;
     PVOID Context;
 } DPC_ENTRY, *PDPC_ENTRY;
 
 PRKTHREAD
-KiQuantumEnd (
-    VOID
-    )
+KiQuantumEnd(VOID)
 
 /*++
 
@@ -87,7 +86,8 @@ Return Value:
     // quantum and priority.
     //
 
-    if (Thread->Quantum <= 0) {
+    if (Thread->Quantum <= 0)
+    {
 
         //
         // If quantum runout is disabled for the thread's process and
@@ -98,11 +98,12 @@ Return Value:
         //
 
         Process = Thread->ApcState.Process;
-        if ((Process->DisableQuantum != FALSE) &&
-            (Thread->Priority >= LOW_REALTIME_PRIORITY)) {
+        if ((Process->DisableQuantum != FALSE) && (Thread->Priority >= LOW_REALTIME_PRIORITY))
+        {
             Thread->Quantum = MAXCHAR;
-
-        } else {
+        }
+        else
+        {
             Thread->Quantum = Process->ThreadQuantum;
 
             //
@@ -112,15 +113,18 @@ Return Value:
             //
 
             Priority = Thread->Priority;
-            if (Priority < LOW_REALTIME_PRIORITY) {
+            if (Priority < LOW_REALTIME_PRIORITY)
+            {
                 NewPriority = Priority - Thread->PriorityDecrement - 1;
-                if (NewPriority < Thread->BasePriority) {
+                if (NewPriority < Thread->BasePriority)
+                {
                     NewPriority = Thread->BasePriority;
                 }
 
                 Thread->PriorityDecrement = 0;
-
-            } else {
+            }
+            else
+            {
                 NewPriority = Priority;
             }
 
@@ -131,19 +135,24 @@ Return Value:
             // at the current level.
             //
 
-            if (Priority != NewPriority) {
+            if (Priority != NewPriority)
+            {
                 KiSetPriorityThread(Thread, NewPriority);
-
-            } else {
-                if (Prcb->NextThread == NULL) {
+            }
+            else
+            {
+                if (Prcb->NextThread == NULL)
+                {
                     NextThread = KiFindReadyThread(Thread->NextProcessor, Priority);
 
-                    if (NextThread != NULL) {
+                    if (NextThread != NULL)
+                    {
                         NextThread->State = Standby;
                         Prcb->NextThread = NextThread;
                     }
-
-                } else {
+                }
+                else
+                {
                     Thread->Preempted = FALSE;
                 }
             }
@@ -157,7 +166,8 @@ Return Value:
     //
 
     NextThread = Prcb->NextThread;
-    if (NextThread == NULL) {
+    if (NextThread == NULL)
+    {
         KiUnlockDispatcherDatabase(OldIrql);
     }
 
@@ -166,10 +176,7 @@ Return Value:
 
 #if DBG
 
-VOID
-KiCheckTimerTable (
-    IN ULARGE_INTEGER CurrentTime
-    )
+VOID KiCheckTimerTable(IN ULARGE_INTEGER CurrentTime)
 
 {
 
@@ -186,19 +193,22 @@ KiCheckTimerTable (
 
     KeRaiseIrql(HIGH_LEVEL, &OldIrql);
     Index = 0;
-    do {
+    do
+    {
         ListHead = &KiTimerTableListHead[Index];
         NextEntry = ListHead->Flink;
-        while (NextEntry != ListHead) {
+        while (NextEntry != ListHead)
+        {
             Timer = CONTAINING_RECORD(NextEntry, KTIMER, TimerListEntry);
             NextEntry = NextEntry->Flink;
-            if (Timer->DueTime.QuadPart <= CurrentTime.QuadPart) {
+            if (Timer->DueTime.QuadPart <= CurrentTime.QuadPart)
+            {
                 DbgBreakPoint();
             }
         }
 
         Index += 1;
-    } while(Index < TIMER_TABLE_SIZE);
+    } while (Index < TIMER_TABLE_SIZE);
 
     //
     // Lower IRQL to the previous level.
@@ -210,13 +220,7 @@ KiCheckTimerTable (
 
 #endif
 
-VOID
-KiTimerExpiration (
-    IN PKDPC TimerDpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    )
+VOID KiTimerExpiration(IN PKDPC TimerDpc, IN PVOID DeferredContext, IN PVOID SystemArgument1, IN PVOID SystemArgument2)
 
 /*++
 
@@ -272,23 +276,28 @@ Return Value:
     //
 
     HandLimit = (LONG)KiQueryLowTickCount();
-    if (((ULONG)(HandLimit - PtrToLong(SystemArgument1))) >= TIMER_TABLE_SIZE) {
-        Index = - 1;
+    if (((ULONG)(HandLimit - PtrToLong(SystemArgument1))) >= TIMER_TABLE_SIZE)
+    {
+        Index = -1;
         HandLimit = TIMER_TABLE_SIZE - 1;
-
-    } else {
+    }
+    else
+    {
         Index = (PtrToLong(SystemArgument1) - 1) & (TIMER_TABLE_SIZE - 1);
         HandLimit &= (TIMER_TABLE_SIZE - 1);
     }
 
     InitializeListHead(&ExpiredListHead);
-    do {
+    do
+    {
         Index = (Index + 1) & (TIMER_TABLE_SIZE - 1);
         ListHead = &KiTimerTableListHead[Index];
         NextEntry = ListHead->Flink;
-        while (NextEntry != ListHead) {
+        while (NextEntry != ListHead)
+        {
             Timer = CONTAINING_RECORD(NextEntry, KTIMER, TimerListEntry);
-            if (Timer->DueTime.QuadPart <= CurrentTime.QuadPart) {
+            if (Timer->DueTime.QuadPart <= CurrentTime.QuadPart)
+            {
 
                 //
                 // The next timer in the current timer list has expired.
@@ -299,17 +308,19 @@ Return Value:
                 RemoveEntryList(&Timer->TimerListEntry);
                 InsertTailList(&ExpiredListHead, &Timer->TimerListEntry);
                 NextEntry = ListHead->Flink;
-
-            } else {
+            }
+            else
+            {
                 break;
             }
         }
 
-    } while(Index != HandLimit);
+    } while (Index != HandLimit);
 
 #if DBG
 
-    if ((PtrToUlong(SystemArgument2) == 0) && (KeNumberProcessors == 1)) {
+    if ((PtrToUlong(SystemArgument2) == 0) && (KeNumberProcessors == 1))
+    {
         KiCheckTimerTable(CurrentTime);
     }
 
@@ -326,12 +337,7 @@ Return Value:
     return;
 }
 
-VOID
-FASTCALL
-KiTimerListExpire (
-    IN PLIST_ENTRY ExpiredListHead,
-    IN KIRQL OldIrql
-    )
+VOID FASTCALL KiTimerListExpire(IN PLIST_ENTRY ExpiredListHead, IN KIRQL OldIrql)
 
 /*++
 
@@ -370,7 +376,6 @@ Return Value:
     LARGE_INTEGER TimeStamp;
     PERFINFO_DPC_INFORMATION DpcInfo;
 
-    
 
     //
     // Capture the timer expiration time.
@@ -386,22 +391,24 @@ Return Value:
 
 RestartScan:
     Count = 0;
-    while (ExpiredListHead->Flink != ExpiredListHead) {
+    while (ExpiredListHead->Flink != ExpiredListHead)
+    {
         Timer = CONTAINING_RECORD(ExpiredListHead->Flink, KTIMER, TimerListEntry);
         KiRemoveTreeTimer(Timer);
         Timer->Header.SignalState = 1;
 
         //
         // Capture the DPC and Period fields from the timer object. Once we have
-        // called KiWaitTest, we must not touch the KTIMER again (unless it is 
+        // called KiWaitTest, we must not touch the KTIMER again (unless it is
         // periodic). A thread may allocate a KTIMER on its local stack and wait
         // on it. KiWaitTest will cause that thread to immediately start running.
         // If it returns, the KTIMER will be corrupted.
-        // 
+        //
 
         Dpc = Timer->Dpc;
         Period = Timer->Period;
-        if (IsListEmpty(&Timer->Header.WaitListHead) == FALSE) {
+        if (IsListEmpty(&Timer->Header.WaitListHead) == FALSE)
+        {
             KiWaitTest(Timer, TIMER_EXPIRE_INCREMENT);
         }
 
@@ -415,13 +422,16 @@ RestartScan:
         //      insertion is retried.
         //
 
-        if (Period != 0) {
-            Interval.QuadPart = Int32x32To64(Period, - 10 * 1000);
-            do {
+        if (Period != 0)
+        {
+            Interval.QuadPart = Int32x32To64(Period, -10 * 1000);
+            do
+            {
             } while (KiInsertTreeTimer(Timer, Interval) == FALSE);
         }
 
-        if (Dpc != NULL) {
+        if (Dpc != NULL)
+        {
 
             //
             // If the DPC is explicitly targeted to another processor, then
@@ -435,30 +445,31 @@ RestartScan:
             DpcList[Count].Routine = Dpc->DeferredRoutine;
             DpcList[Count].Context = Dpc->DeferredContext;
             Count += 1;
-            if (Count == MAXIMUM_DPC_LIST_SIZE) {
+            if (Count == MAXIMUM_DPC_LIST_SIZE)
+            {
                 break;
             }
 
 #else
 
             if ((Dpc->Number >= MAXIMUM_PROCESSORS) &&
-                (((ULONG)Dpc->Number - MAXIMUM_PROCESSORS) != (ULONG)KeGetCurrentProcessorNumber())) {
-                KeInsertQueueDpc(Dpc,
-                                 ULongToPtr(SystemTime.LowPart),
-                                 ULongToPtr(SystemTime.HighPart));
-
-            } else {
+                (((ULONG)Dpc->Number - MAXIMUM_PROCESSORS) != (ULONG)KeGetCurrentProcessorNumber()))
+            {
+                KeInsertQueueDpc(Dpc, ULongToPtr(SystemTime.LowPart), ULongToPtr(SystemTime.HighPart));
+            }
+            else
+            {
                 DpcList[Count].Dpc = Dpc;
                 DpcList[Count].Routine = Dpc->DeferredRoutine;
                 DpcList[Count].Context = Dpc->DeferredContext;
                 Count += 1;
-                if (Count == MAXIMUM_DPC_LIST_SIZE) {
+                if (Count == MAXIMUM_DPC_LIST_SIZE)
+                {
                     break;
                 }
             }
 
 #endif
-
         }
     }
 
@@ -466,18 +477,23 @@ RestartScan:
     // Unlock the dispacher database and process DPC list entries.
     //
 
-    if (Count != 0) {
+    if (Count != 0)
+    {
         KiUnlockDispatcherDatabase(DISPATCH_LEVEL);
 
-        if (PERFINFO_IS_GROUP_ON(PERF_DPC)) {
+        if (PERFINFO_IS_GROUP_ON(PERF_DPC))
+        {
             PerfLogging = TRUE;
             PerfTimeStamp(TimeStamp);
-        } else {
+        }
+        else
+        {
             PerfLogging = FALSE;
         }
-        
+
         Index = 0;
-        do {
+        do
+        {
 
 #if DBG && defined(i386)
 
@@ -491,23 +507,20 @@ RestartScan:
 
 #endif
 
-            (DpcList[Index].Routine)(DpcList[Index].Dpc,
-                                     DpcList[Index].Context,
-                                     ULongToPtr(SystemTime.LowPart),
+            (DpcList[Index].Routine)(DpcList[Index].Dpc, DpcList[Index].Context, ULongToPtr(SystemTime.LowPart),
                                      ULongToPtr(SystemTime.HighPart));
 
-            if (PerfLogging != FALSE) {
+            if (PerfLogging != FALSE)
+            {
                 DpcInfo.InitialTime = TimeStamp.QuadPart;
                 DpcInfo.DpcRoutine = DpcList[Index].Routine;
-                
-                PerfInfoLogBytes(PERFINFO_LOG_TYPE_TIMERDPC,
-                            (PVOID) &DpcInfo,
-                            sizeof(DpcInfo));
+
+                PerfInfoLogBytes(PERFINFO_LOG_TYPE_TIMERDPC, (PVOID)&DpcInfo, sizeof(DpcInfo));
 
                 //
                 // Get time for next iteration
                 //
-                
+
                 PerfTimeStamp(TimeStamp);
             }
 
@@ -520,14 +533,16 @@ RestartScan:
         // the DPC List was full, then process any remaining entries.
         //
 
-        if (Count == MAXIMUM_DPC_LIST_SIZE) {
+        if (Count == MAXIMUM_DPC_LIST_SIZE)
+        {
             KiLockDispatcherDatabase(&OldIrql1);
             goto RestartScan;
         }
 
         KeLowerIrql(OldIrql);
-
-    } else {
+    }
+    else
+    {
         KiUnlockDispatcherDatabase(OldIrql);
     }
 

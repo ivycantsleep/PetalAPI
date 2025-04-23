@@ -95,11 +95,7 @@ Revision History:
 
 
 NTKERNELAPI
-VOID
-FASTCALL
-ExfAcquirePushLockExclusive (
-     IN PEX_PUSH_LOCK PushLock
-     )
+VOID FASTCALL ExfAcquirePushLockExclusive(IN PEX_PUSH_LOCK PushLock)
 /*++
 
 Routine Description:
@@ -120,59 +116,54 @@ Return Value:
     EX_PUSH_LOCK_WAIT_BLOCK WaitBlock;
 
     OldValue = *PushLock;
-    while (1) {
+    while (1)
+    {
         //
         // If the lock is already held exclusively/shared or there are waiters then
         // we need to wait.
         //
-        if (OldValue.Value == 0) {
+        if (OldValue.Value == 0)
+        {
             NewValue.Value = OldValue.Value + EX_PUSH_LOCK_EXCLUSIVE;
-            NewValue.Ptr = InterlockedCompareExchangePointer (&PushLock->Ptr,
-                                                              NewValue.Ptr,
-                                                              OldValue.Ptr);
-            if (NewValue.Ptr == OldValue.Ptr) {
+            NewValue.Ptr = InterlockedCompareExchangePointer(&PushLock->Ptr, NewValue.Ptr, OldValue.Ptr);
+            if (NewValue.Ptr == OldValue.Ptr)
+            {
                 break;
             }
-        } else {
-            KeInitializeEvent (&WaitBlock.WakeEvent, SynchronizationEvent, FALSE);
+        }
+        else
+        {
+            KeInitializeEvent(&WaitBlock.WakeEvent, SynchronizationEvent, FALSE);
             WaitBlock.Exclusive = TRUE;
             //
             // Move the sharecount to our wait block if need be.
             //
-            if (OldValue.Waiting) {
-                WaitBlock.Next = (PEX_PUSH_LOCK_WAIT_BLOCK)
-                                     (OldValue.Value - EX_PUSH_LOCK_WAITING);
+            if (OldValue.Waiting)
+            {
+                WaitBlock.Next = (PEX_PUSH_LOCK_WAIT_BLOCK)(OldValue.Value - EX_PUSH_LOCK_WAITING);
                 WaitBlock.ShareCount = 0;
-            } else {
-                WaitBlock.Next = NULL;
-                WaitBlock.ShareCount = (ULONG) OldValue.Shared;
             }
-            NewValue.Ptr = ((PUCHAR) &WaitBlock) + EX_PUSH_LOCK_WAITING;
-            ASSERT ((NewValue.Value & EX_PUSH_LOCK_WAITING) != 0);
-            NewValue.Ptr = InterlockedCompareExchangePointer (&PushLock->Ptr,
-                                                              NewValue.Ptr,
-                                                              OldValue.Ptr);
-            if (NewValue.Ptr == OldValue.Ptr) {
-                KeWaitForSingleObject (&WaitBlock.WakeEvent,
-                                       Executive,
-                                       KernelMode,
-                                       FALSE,
-                                       NULL);
-                ASSERT ((WaitBlock.ShareCount == 0) && (WaitBlock.Next == NULL));
+            else
+            {
+                WaitBlock.Next = NULL;
+                WaitBlock.ShareCount = (ULONG)OldValue.Shared;
+            }
+            NewValue.Ptr = ((PUCHAR)&WaitBlock) + EX_PUSH_LOCK_WAITING;
+            ASSERT((NewValue.Value & EX_PUSH_LOCK_WAITING) != 0);
+            NewValue.Ptr = InterlockedCompareExchangePointer(&PushLock->Ptr, NewValue.Ptr, OldValue.Ptr);
+            if (NewValue.Ptr == OldValue.Ptr)
+            {
+                KeWaitForSingleObject(&WaitBlock.WakeEvent, Executive, KernelMode, FALSE, NULL);
+                ASSERT((WaitBlock.ShareCount == 0) && (WaitBlock.Next == NULL));
                 break;
             }
-
         }
         OldValue = NewValue;
     }
 }
 
 NTKERNELAPI
-VOID
-FASTCALL
-ExfAcquirePushLockShared (
-     IN PEX_PUSH_LOCK PushLock
-     )
+VOID FASTCALL ExfAcquirePushLockShared(IN PEX_PUSH_LOCK PushLock)
 /*++
 
 Routine Description:
@@ -193,49 +184,48 @@ Return Value:
     EX_PUSH_LOCK_WAIT_BLOCK WaitBlock;
 
     OldValue = *PushLock;
-    while (1) {
+    while (1)
+    {
         //
         // If the lock is already held exclusively or there are waiters then we need to wait
         //
-        if (OldValue.Exclusive || OldValue.Waiting) {
-            KeInitializeEvent (&WaitBlock.WakeEvent, SynchronizationEvent, FALSE);
+        if (OldValue.Exclusive || OldValue.Waiting)
+        {
+            KeInitializeEvent(&WaitBlock.WakeEvent, SynchronizationEvent, FALSE);
             WaitBlock.Exclusive = 0;
             WaitBlock.ShareCount = 0;
             //
             // Chain the next block to us if there is one.
             //
-            if (OldValue.Waiting) {
-                WaitBlock.Next = (PEX_PUSH_LOCK_WAIT_BLOCK)
-                                     (OldValue.Value - EX_PUSH_LOCK_WAITING);
-            } else {
+            if (OldValue.Waiting)
+            {
+                WaitBlock.Next = (PEX_PUSH_LOCK_WAIT_BLOCK)(OldValue.Value - EX_PUSH_LOCK_WAITING);
+            }
+            else
+            {
                 WaitBlock.Next = NULL;
             }
-            NewValue.Ptr = ((PUCHAR) &WaitBlock) + EX_PUSH_LOCK_WAITING;
-            ASSERT ((NewValue.Value & EX_PUSH_LOCK_WAITING) != 0);
-            NewValue.Ptr = InterlockedCompareExchangePointer (&PushLock->Ptr,
-                                                              NewValue.Ptr,
-                                                              OldValue.Ptr);
-            if (NewValue.Ptr == OldValue.Ptr) {
-                KeWaitForSingleObject (&WaitBlock.WakeEvent,
-                                       Executive,
-                                       KernelMode,
-                                       FALSE,
-                                       NULL);
+            NewValue.Ptr = ((PUCHAR)&WaitBlock) + EX_PUSH_LOCK_WAITING;
+            ASSERT((NewValue.Value & EX_PUSH_LOCK_WAITING) != 0);
+            NewValue.Ptr = InterlockedCompareExchangePointer(&PushLock->Ptr, NewValue.Ptr, OldValue.Ptr);
+            if (NewValue.Ptr == OldValue.Ptr)
+            {
+                KeWaitForSingleObject(&WaitBlock.WakeEvent, Executive, KernelMode, FALSE, NULL);
 
-                ASSERT (WaitBlock.ShareCount == 0);
+                ASSERT(WaitBlock.ShareCount == 0);
                 break;
             }
-
-        } else {
+        }
+        else
+        {
             //
             // We only have shared accessors at the moment. We can just update the lock to include this thread.
             //
             NewValue.Value = OldValue.Value + EX_PUSH_LOCK_SHARE_INC;
-            ASSERT (!(NewValue.Waiting || NewValue.Exclusive));
-            NewValue.Ptr = InterlockedCompareExchangePointer (&PushLock->Ptr,
-                                                              NewValue.Ptr,
-                                                              OldValue.Ptr);
-            if (NewValue.Ptr == OldValue.Ptr) {
+            ASSERT(!(NewValue.Waiting || NewValue.Exclusive));
+            NewValue.Ptr = InterlockedCompareExchangePointer(&PushLock->Ptr, NewValue.Ptr, OldValue.Ptr);
+            if (NewValue.Ptr == OldValue.Ptr)
+            {
                 break;
             }
         }
@@ -244,11 +234,7 @@ Return Value:
 }
 
 NTKERNELAPI
-VOID
-FASTCALL
-ExfReleasePushLock (
-     IN PEX_PUSH_LOCK PushLock
-     )
+VOID FASTCALL ExfReleasePushLock(IN PEX_PUSH_LOCK PushLock)
 /*++
 
 Routine Description:
@@ -270,43 +256,46 @@ Return Value:
     ULONG ShareCount;
 
     OldValue = *PushLock;
-    while (1) {
-        if (!OldValue.Waiting) {
+    while (1)
+    {
+        if (!OldValue.Waiting)
+        {
             //
             // Either we hold the lock exclusive or shared but not both.
             //
-            ASSERT (OldValue.Exclusive ^ (OldValue.Shared > 0));
+            ASSERT(OldValue.Exclusive ^ (OldValue.Shared > 0));
 
             //
             // We must hold the lock exclusive or shared. We make the assuption that
             // the exclusive bit is just below the share count here.
             //
-            NewValue.Value = (OldValue.Value - EX_PUSH_LOCK_EXCLUSIVE) &
-                             ~EX_PUSH_LOCK_EXCLUSIVE;
-            NewValue.Ptr = InterlockedCompareExchangePointer (&PushLock->Ptr,
-                                                              NewValue.Ptr,
-                                                              OldValue.Ptr);
-            if (NewValue.Ptr == OldValue.Ptr) {
+            NewValue.Value = (OldValue.Value - EX_PUSH_LOCK_EXCLUSIVE) & ~EX_PUSH_LOCK_EXCLUSIVE;
+            NewValue.Ptr = InterlockedCompareExchangePointer(&PushLock->Ptr, NewValue.Ptr, OldValue.Ptr);
+            if (NewValue.Ptr == OldValue.Ptr)
+            {
                 break;
             }
             //
             // Either we gained a new waiter or another shared owner arrived or left
             //
-            ASSERT (NewValue.Waiting || (NewValue.Shared > 0 && !NewValue.Exclusive));
+            ASSERT(NewValue.Waiting || (NewValue.Shared > 0 && !NewValue.Exclusive));
             OldValue = NewValue;
-        } else {
+        }
+        else
+        {
             //
             // There are waiters chained to the lock. We have to release the share count,
             // last exclusive or last chain of shared waiters.
             //
-            WaitBlock = (PEX_PUSH_LOCK_WAIT_BLOCK) 
-                           (OldValue.Value - EX_PUSH_LOCK_WAITING);
+            WaitBlock = (PEX_PUSH_LOCK_WAIT_BLOCK)(OldValue.Value - EX_PUSH_LOCK_WAITING);
 
             ReleaseWaitList = WaitBlock;
             Previous = NULL;
             ShareCount = 0;
-            do {
-                if (WaitBlock->Exclusive) {
+            do
+            {
+                if (WaitBlock->Exclusive)
+                {
                     //
                     // This is an exclusive waiter. If this was the first exclusive waited to a shared acquire
                     // then it will have the saved share count. If we acquired the lock shared then the count
@@ -314,8 +303,10 @@ Return Value:
                     // accessor then exit. A later shared release thread will wake the exclusive
                     // waiter.
                     //
-                    if (WaitBlock->ShareCount != 0) {
-                        if (InterlockedDecrement ((PLONG)&WaitBlock->ShareCount) != 0) {
+                    if (WaitBlock->ShareCount != 0)
+                    {
+                        if (InterlockedDecrement((PLONG)&WaitBlock->ShareCount) != 0)
+                        {
                             return;
                         }
                     }
@@ -323,7 +314,9 @@ Return Value:
                     // Reset count of share acquires waiting.
                     //
                     ShareCount = 0;
-                } else {
+                }
+                else
+                {
                     //
                     // This is a shared waiter. Record the number of these to update the head or the
                     // previous exclusive waiter.
@@ -331,19 +324,24 @@ Return Value:
                     ShareCount++;
                 }
                 NextWaitBlock = WaitBlock->Next;
-                if (NextWaitBlock != NULL) {
-                    if (NextWaitBlock->Exclusive) {
+                if (NextWaitBlock != NULL)
+                {
+                    if (NextWaitBlock->Exclusive)
+                    {
                         //
                         // The next block is exclusive. This may be the entry to free.
                         //
                         Previous = WaitBlock;
                         ReleaseWaitList = NextWaitBlock;
-                    } else {
+                    }
+                    else
+                    {
                         //
                         // The next block is shared. If the chain start is exclusive then skip to this one
                         // as the exclusive isn't the thread we will wake up.
                         //
-                        if (ReleaseWaitList->Exclusive) {
+                        if (ReleaseWaitList->Exclusive)
+                        {
                             Previous = WaitBlock;
                             ReleaseWaitList = NextWaitBlock;
                         }
@@ -356,47 +354,50 @@ Return Value:
             //
             // If our release chain is everything then we have to update the header
             //
-            if (Previous == NULL) {
+            if (Previous == NULL)
+            {
                 NewValue.Value = 0;
                 NewValue.Exclusive = ReleaseWaitList->Exclusive;
                 NewValue.Shared = ShareCount;
-                ASSERT (((ShareCount > 0) ^ (ReleaseWaitList->Exclusive)) && !NewValue.Waiting);
+                ASSERT(((ShareCount > 0) ^ (ReleaseWaitList->Exclusive)) && !NewValue.Waiting);
 
-                NewValue.Ptr = InterlockedCompareExchangePointer (&PushLock->Ptr,
-                                                                  NewValue.Ptr,
-                                                                  OldValue.Ptr);
-                if (NewValue.Ptr != OldValue.Ptr) {
+                NewValue.Ptr = InterlockedCompareExchangePointer(&PushLock->Ptr, NewValue.Ptr, OldValue.Ptr);
+                if (NewValue.Ptr != OldValue.Ptr)
+                {
                     //
                     // We are releasing so we could have only gained another waiter
                     //
-                    ASSERT (NewValue.Waiting);
+                    ASSERT(NewValue.Waiting);
                     OldValue = NewValue;
                     continue;
                 }
-            } else {
+            }
+            else
+            {
                 //
                 // Truncate the chain at this position and save the share count for all the shared owners to
                 // decrement later.
                 //
                 Previous->Next = NULL;
-                ASSERT (Previous->ShareCount == 0);
+                ASSERT(Previous->ShareCount == 0);
                 Previous->ShareCount = ShareCount;
                 //
                 // We are either releasing multiple share accessors or a single exclusive
                 //
-                ASSERT ((ShareCount > 0) ^ ReleaseWaitList->Exclusive);
+                ASSERT((ShareCount > 0) ^ ReleaseWaitList->Exclusive);
             }
             //
             // Release the chain of threads we located.
             //
-            do {
+            do
+            {
                 NextWaitBlock = ReleaseWaitList->Next;
                 //
                 // All the chain should have the same type (Exclusive/Shared).
                 //
-                ASSERT (NextWaitBlock == NULL || (ReleaseWaitList->Exclusive == NextWaitBlock->Exclusive));
-                ASSERT (!ReleaseWaitList->Exclusive || (ReleaseWaitList->ShareCount == 0));
-                KeSetEventBoostPriority (&ReleaseWaitList->WakeEvent, NULL);
+                ASSERT(NextWaitBlock == NULL || (ReleaseWaitList->Exclusive == NextWaitBlock->Exclusive));
+                ASSERT(!ReleaseWaitList->Exclusive || (ReleaseWaitList->ShareCount == 0));
+                KeSetEventBoostPriority(&ReleaseWaitList->WakeEvent, NULL);
                 ReleaseWaitList = NextWaitBlock;
             } while (ReleaseWaitList != NULL);
             break;
@@ -405,12 +406,7 @@ Return Value:
 }
 
 NTKERNELAPI
-VOID
-FASTCALL
-ExBlockPushLock (
-     IN PEX_PUSH_LOCK PushLock,
-     IN PEX_PUSH_LOCK_WAIT_BLOCK WaitBlock
-     )
+VOID FASTCALL ExBlockPushLock(IN PEX_PUSH_LOCK PushLock, IN PEX_PUSH_LOCK_WAIT_BLOCK WaitBlock)
 /*++
 
 Routine Description:
@@ -431,20 +427,20 @@ Return Value:
     EX_PUSH_LOCK OldValue, NewValue;
 
     //
-    // Push the wait block on the list. 
+    // Push the wait block on the list.
     //
-    KeInitializeEvent (&WaitBlock->WakeEvent, SynchronizationEvent, FALSE);
+    KeInitializeEvent(&WaitBlock->WakeEvent, SynchronizationEvent, FALSE);
 
     OldValue = *PushLock;
-    while (1) {
+    while (1)
+    {
         //
         // Chain the next block to us if there is one.
         //
         WaitBlock->Next = OldValue.Ptr;
-        NewValue.Ptr = InterlockedCompareExchangePointer (&PushLock->Ptr,
-                                                          WaitBlock,
-                                                          OldValue.Ptr);
-        if (NewValue.Ptr == OldValue.Ptr) {
+        NewValue.Ptr = InterlockedCompareExchangePointer(&PushLock->Ptr, WaitBlock, OldValue.Ptr);
+        if (NewValue.Ptr == OldValue.Ptr)
+        {
             return;
         }
         OldValue = NewValue;
@@ -452,12 +448,7 @@ Return Value:
 }
 
 NTKERNELAPI
-VOID
-FASTCALL
-ExfUnblockPushLock (
-     IN PEX_PUSH_LOCK PushLock,
-     IN PEX_PUSH_LOCK_WAIT_BLOCK WaitBlock OPTIONAL
-     )
+VOID FASTCALL ExfUnblockPushLock(IN PEX_PUSH_LOCK PushLock, IN PEX_PUSH_LOCK_WAIT_BLOCK WaitBlock OPTIONAL)
 /*++
 
 Routine Description:
@@ -477,36 +468,34 @@ Return Value:
 {
     EX_PUSH_LOCK OldValue;
     PEX_PUSH_LOCK_WAIT_BLOCK tWaitBlock;
-    BOOLEAN FoundOurBlock=FALSE;
+    BOOLEAN FoundOurBlock = FALSE;
 
     //
     // Pop the entire chain and wake them all up.
     //
-    OldValue.Ptr = InterlockedExchangePointer (&PushLock->Ptr,
-                                               NULL);
-    while (OldValue.Ptr != NULL) {
+    OldValue.Ptr = InterlockedExchangePointer(&PushLock->Ptr, NULL);
+    while (OldValue.Ptr != NULL)
+    {
         tWaitBlock = OldValue.Ptr;
         OldValue.Ptr = tWaitBlock->Next;
-        if (tWaitBlock == WaitBlock) {
+        if (tWaitBlock == WaitBlock)
+        {
             FoundOurBlock = TRUE;
-        } else{
-            KeSetEvent (&tWaitBlock->WakeEvent, 0, FALSE);
+        }
+        else
+        {
+            KeSetEvent(&tWaitBlock->WakeEvent, 0, FALSE);
         }
     }
-    if (WaitBlock != NULL && !FoundOurBlock) {
-        KeWaitForSingleObject (&WaitBlock->WakeEvent,
-                               Executive,
-                               KernelMode,
-                               FALSE,
-                               NULL);
+    if (WaitBlock != NULL && !FoundOurBlock)
+    {
+        KeWaitForSingleObject(&WaitBlock->WakeEvent, Executive, KernelMode, FALSE, NULL);
     }
 }
 
 NTKERNELAPI
 PEX_PUSH_LOCK_CACHE_AWARE
-ExAllocateCacheAwarePushLock (
-     VOID
-     )
+ExAllocateCacheAwarePushLock(VOID)
 /*++
 
 Routine Description:
@@ -527,63 +516,62 @@ Return Value:
     PEX_PUSH_LOCK_CACHE_AWARE_PADDED PaddedPushLock;
     ULONG i, j;
 
-    PushLockCacheAware = ExAllocatePoolWithTag (PagedPool,
-                                                sizeof (EX_PUSH_LOCK_CACHE_AWARE),
-                                                'pclP');
-    if (PushLockCacheAware != NULL) {
+    PushLockCacheAware = ExAllocatePoolWithTag(PagedPool, sizeof(EX_PUSH_LOCK_CACHE_AWARE), 'pclP');
+    if (PushLockCacheAware != NULL)
+    {
         //
         // If we are a non-numa machine then allocate the padded push locks as a single block
         //
-        if (KeNumberNodes == 1) {
-            PaddedPushLock = ExAllocatePoolWithTag (PagedPool,
-                                                    sizeof (EX_PUSH_LOCK_CACHE_AWARE_PADDED)*
-                                                       EX_PUSH_LOCK_FANNED_COUNT,
-                                                    'lclP');
-            if (PaddedPushLock == NULL) {
-                ExFreePool (PushLockCacheAware);
+        if (KeNumberNodes == 1)
+        {
+            PaddedPushLock = ExAllocatePoolWithTag(
+                PagedPool, sizeof(EX_PUSH_LOCK_CACHE_AWARE_PADDED) * EX_PUSH_LOCK_FANNED_COUNT, 'lclP');
+            if (PaddedPushLock == NULL)
+            {
+                ExFreePool(PushLockCacheAware);
                 return NULL;
             }
-            for (i = 0; i < EX_PUSH_LOCK_FANNED_COUNT; i++) {
+            for (i = 0; i < EX_PUSH_LOCK_FANNED_COUNT; i++)
+            {
                 PaddedPushLock->Single = TRUE;
-                ExInitializePushLock (&PaddedPushLock->Lock);
+                ExInitializePushLock(&PaddedPushLock->Lock);
                 PushLockCacheAware->Locks[i] = &PaddedPushLock->Lock;
                 PaddedPushLock++;
             }
-        } else {
+        }
+        else
+        {
             //
             // Allocate a different block for each lock and set affinity
             // so the allocation comes from that nodes memory.
             //
-            for (i = 0; i < EX_PUSH_LOCK_FANNED_COUNT; i++) {
+            for (i = 0; i < EX_PUSH_LOCK_FANNED_COUNT; i++)
+            {
                 KeSetSystemAffinityThread(AFFINITY_MASK(i % KeNumberProcessors));
-                PaddedPushLock = ExAllocatePoolWithTag (PagedPool,
-                                                        sizeof (EX_PUSH_LOCK_CACHE_AWARE_PADDED),
-                                                        'lclP');
-                if (PaddedPushLock == NULL) {
-                    for (j = 0; j < i; j++) {
-                        ExFreePool (PushLockCacheAware->Locks[j]);
+                PaddedPushLock = ExAllocatePoolWithTag(PagedPool, sizeof(EX_PUSH_LOCK_CACHE_AWARE_PADDED), 'lclP');
+                if (PaddedPushLock == NULL)
+                {
+                    for (j = 0; j < i; j++)
+                    {
+                        ExFreePool(PushLockCacheAware->Locks[j]);
                     }
-                    KeRevertToUserAffinityThread ();
+                    KeRevertToUserAffinityThread();
 
-                    ExFreePool (PushLockCacheAware);
+                    ExFreePool(PushLockCacheAware);
                     return NULL;
                 }
                 PaddedPushLock->Single = FALSE;
-                ExInitializePushLock (&PaddedPushLock->Lock);
+                ExInitializePushLock(&PaddedPushLock->Lock);
                 PushLockCacheAware->Locks[i] = &PaddedPushLock->Lock;
             }
-            KeRevertToUserAffinityThread ();
+            KeRevertToUserAffinityThread();
         }
-        
     }
     return PushLockCacheAware;
 }
 
 NTKERNELAPI
-VOID
-ExFreeCacheAwarePushLock (
-     PEX_PUSH_LOCK_CACHE_AWARE PushLock     
-     )
+VOID ExFreeCacheAwarePushLock(PEX_PUSH_LOCK_CACHE_AWARE PushLock)
 /*++
 
 Routine Description:
@@ -602,22 +590,23 @@ Return Value:
 {
     ULONG i;
 
-    if (!CONTAINING_RECORD (PushLock->Locks[0], EX_PUSH_LOCK_CACHE_AWARE_PADDED, Lock)->Single) {
-        for (i = 0; i < EX_PUSH_LOCK_FANNED_COUNT; i++) {
-            ExFreePool (PushLock->Locks[i]);
+    if (!CONTAINING_RECORD(PushLock->Locks[0], EX_PUSH_LOCK_CACHE_AWARE_PADDED, Lock)->Single)
+    {
+        for (i = 0; i < EX_PUSH_LOCK_FANNED_COUNT; i++)
+        {
+            ExFreePool(PushLock->Locks[i]);
         }
-    } else {
-        ExFreePool (PushLock->Locks[0]);
     }
-    ExFreePool (PushLock);
+    else
+    {
+        ExFreePool(PushLock->Locks[0]);
+    }
+    ExFreePool(PushLock);
 }
 
 
 NTKERNELAPI
-VOID
-ExAcquireCacheAwarePushLockExclusive (
-     IN PEX_PUSH_LOCK_CACHE_AWARE PushLock
-     )
+VOID ExAcquireCacheAwarePushLockExclusive(IN PEX_PUSH_LOCK_CACHE_AWARE PushLock)
 /*++
 
 Routine Description:
@@ -643,25 +632,26 @@ Return Value:
     // There is no deadlock here. A->B->C does not deadlock with A->C->B.
     //
     Start = &PushLock->Locks[1];
-    End   = &PushLock->Locks[EX_PUSH_LOCK_FANNED_COUNT - 1];
+    End = &PushLock->Locks[EX_PUSH_LOCK_FANNED_COUNT - 1];
 
-    ExAcquirePushLockExclusive (PushLock->Locks[0]);
+    ExAcquirePushLockExclusive(PushLock->Locks[0]);
 
-    while (Start <= End) {
-        if (ExTryAcquirePushLockExclusive (*Start)) {
+    while (Start <= End)
+    {
+        if (ExTryAcquirePushLockExclusive(*Start))
+        {
             Start++;
-        } else {
-            ExAcquirePushLockExclusive (*End);
+        }
+        else
+        {
+            ExAcquirePushLockExclusive(*End);
             End--;
         }
     }
 }
 
 NTKERNELAPI
-VOID
-ExReleaseCacheAwarePushLockExclusive (
-     IN PEX_PUSH_LOCK_CACHE_AWARE PushLock
-     )
+VOID ExReleaseCacheAwarePushLockExclusive(IN PEX_PUSH_LOCK_CACHE_AWARE PushLock)
 /*++
 
 Routine Description:
@@ -682,10 +672,9 @@ Return Value:
     //
     // Release the locks in order
     //
-    End   = &PushLock->Locks[EX_PUSH_LOCK_FANNED_COUNT];
-    for (Start = &PushLock->Locks[0];
-         Start < End;
-         Start++) {
-        ExReleasePushLockExclusive (*Start);
+    End = &PushLock->Locks[EX_PUSH_LOCK_FANNED_COUNT];
+    for (Start = &PushLock->Locks[0]; Start < End; Start++)
+    {
+        ExReleasePushLockExclusive(*Start);
     }
 }

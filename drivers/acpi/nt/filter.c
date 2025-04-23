@@ -26,7 +26,7 @@ Revision History:
 
 #include "pch.h"
 
-extern ACPI_INTERFACE_STANDARD  ACPIInterfaceTable;
+extern ACPI_INTERFACE_STANDARD ACPIInterfaceTable;
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, ACPIFilterIrpDeviceUsageNotification)
@@ -40,12 +40,8 @@ extern ACPI_INTERFACE_STANDARD  ACPIInterfaceTable;
 #pragma alloc_text(PAGE, ACPIFilterIrpStartDeviceWorker)
 #pragma alloc_text(PAGE, ACPIFilterIrpStopDevice)
 #endif
-
-VOID
-ACPIFilterFastIoDetachCallback(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PDEVICE_OBJECT  LowerDeviceObject
-    )
+
+VOID ACPIFilterFastIoDetachCallback(IN PDEVICE_OBJECT DeviceObject, IN PDEVICE_OBJECT LowerDeviceObject)
 /*++
 
 Routine Description:
@@ -62,29 +58,24 @@ Return Value:
 
 --*/
 {
-    PDEVICE_EXTENSION   deviceExtension;
+    PDEVICE_EXTENSION deviceExtension;
 
     //
     // Get the device extension that is attached to this device
     //
-    deviceExtension = ACPIInternalGetDeviceExtension( DeviceObject );
+    deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
 
-    ACPIDevPrint( (
-        ACPI_PRINT_REMOVE,
-        deviceExtension,
-        "ACPIFilterFastIoDetachCallBack invoked\n"
-        ) );
+    ACPIDevPrint((ACPI_PRINT_REMOVE, deviceExtension, "ACPIFilterFastIoDetachCallBack invoked\n"));
 
-    if ( (deviceExtension->Flags & (DEV_TYPE_FILTER | DEV_TYPE_PDO)) !=
-         DEV_TYPE_FILTER) {
+    if ((deviceExtension->Flags & (DEV_TYPE_FILTER | DEV_TYPE_PDO)) != DEV_TYPE_FILTER)
+    {
 
         //
         // This case should only occur if we were called for our FDO leaving.
         // In no other cases should any device objects be below ours.
         //
-        ASSERT(deviceExtension->Flags & DEV_TYPE_FDO) ;
+        ASSERT(deviceExtension->Flags & DEV_TYPE_FDO);
         return;
-
     }
 
     //
@@ -92,24 +83,21 @@ Return Value:
     // except in the context of a remove IRP.
     //
     ASSERT(deviceExtension->DeviceState == Stopped);
-    deviceExtension->DeviceState = Removed ;
+    deviceExtension->DeviceState = Removed;
 
     //
     // Delete all the children of this device
     //
-    ACPIInitDeleteChildDeviceList( deviceExtension );
+    ACPIInitDeleteChildDeviceList(deviceExtension);
 
     //
     // Reset this extension to the default values
     //
-    ACPIInitResetDeviceExtension( deviceExtension );
+    ACPIInitResetDeviceExtension(deviceExtension);
 }
-
+
 NTSTATUS
-ACPIFilterIrpDeviceUsageNotification(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIFilterIrpDeviceUsageNotification(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -128,59 +116,42 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status;
-    PDEVICE_EXTENSION   deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
+    NTSTATUS status;
+    PDEVICE_EXTENSION deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
 
     PAGED_CODE();
 
     //
     // Copy the stack location...
     //
-    IoCopyCurrentIrpStackLocationToNext( Irp );
+    IoCopyCurrentIrpStackLocationToNext(Irp);
 
     //
     // Set the completion event to be called...
     //
-    IoSetCompletionRoutine(
-        Irp,
-        ACPIFilterIrpDeviceUsageNotificationCompletion,
-        NULL,
-        TRUE,
-        TRUE,
-        TRUE
-        );
+    IoSetCompletionRoutine(Irp, ACPIFilterIrpDeviceUsageNotificationCompletion, NULL, TRUE, TRUE, TRUE);
 
     //
     // We have a callback routine --- so we need to make sure to
     // increment the ref count since we will handle it later
     //
-    InterlockedIncrement( &(deviceExtension->OutstandingIrpCount) );
+    InterlockedIncrement(&(deviceExtension->OutstandingIrpCount));
 
     //
     // Pass the IRP along
     //
-    status = IoCallDriver( deviceExtension->TargetDeviceObject, Irp );
+    status = IoCallDriver(deviceExtension->TargetDeviceObject, Irp);
 
     //
     // Done
     //
-    ACPIDevPrint( (
-        ACPI_PRINT_IRP,
-        deviceExtension,
-        "(0x%08lx): %s = 0x%08lx\n",
-        Irp,
-        ACPIDebugGetIrpText(IRP_MJ_PNP, IRP_MN_DEVICE_USAGE_NOTIFICATION),
-        status
-        ) );
+    ACPIDevPrint((ACPI_PRINT_IRP, deviceExtension, "(0x%08lx): %s = 0x%08lx\n", Irp,
+                  ACPIDebugGetIrpText(IRP_MJ_PNP, IRP_MN_DEVICE_USAGE_NOTIFICATION), status));
     return status;
 }
-
+
 NTSTATUS
-ACPIFilterIrpDeviceUsageNotificationCompletion (
-    IN  PDEVICE_OBJECT   DeviceObject,
-    IN  PIRP             Irp,
-    IN  PVOID            Context
-    )
+ACPIFilterIrpDeviceUsageNotificationCompletion(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -201,17 +172,18 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status;
-    PDEVICE_EXTENSION   deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
-    PIO_STACK_LOCATION  irpSp           = IoGetCurrentIrpStackLocation (Irp);
+    NTSTATUS status;
+    PDEVICE_EXTENSION deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
+    PIO_STACK_LOCATION irpSp = IoGetCurrentIrpStackLocation(Irp);
 
     //
     // Since we aren't returning STATUS_MORE_PROCESSING_REQUIRED and
     // synchronizing this IRP, we must migrate upwards the pending bit...
     //
-    if (Irp->PendingReturned) {
+    if (Irp->PendingReturned)
+    {
 
-        IoMarkIrpPending( Irp );
+        IoMarkIrpPending(Irp);
     }
 
     //
@@ -219,72 +191,60 @@ Return Value:
     //
     status = Irp->IoStatus.Status;
 
-    ACPIDevPrint( (
-        ACPI_PRINT_IRP,
-        deviceExtension,
-        "(%#08lx): %s = %#08lx (processing)\n",
-        Irp,
-        ACPIDebugGetIrpText(IRP_MJ_PNP, IRP_MN_DEVICE_USAGE_NOTIFICATION),
-        status
-        ) );
+    ACPIDevPrint((ACPI_PRINT_IRP, deviceExtension, "(%#08lx): %s = %#08lx (processing)\n", Irp,
+                  ACPIDebugGetIrpText(IRP_MJ_PNP, IRP_MN_DEVICE_USAGE_NOTIFICATION), status));
 
     //
     // Did we succeed the request?
     //
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         //
         // Do we care about the usage type?
         //
-        if (irpSp->Parameters.UsageNotification.Type ==
-            DeviceUsageTypeHibernation) {
+        if (irpSp->Parameters.UsageNotification.Type == DeviceUsageTypeHibernation)
+        {
 
             //
             // Yes --- then perform the addition or subtraction required
             //
-            IoAdjustPagingPathCount(
-                &(deviceExtension->HibernatePathCount),
-                irpSp->Parameters.UsageNotification.InPath
-                );
-
+            IoAdjustPagingPathCount(&(deviceExtension->HibernatePathCount), irpSp->Parameters.UsageNotification.InPath);
         }
-
     }
 
     //
     // No matter what happens, we need to see if the DO_POWER_PAGABLE bit
     // is still set. If it isn't, then we need to clear it out
     //
-    if ( (deviceExtension->Flags & DEV_TYPE_FILTER) ) {
+    if ((deviceExtension->Flags & DEV_TYPE_FILTER))
+    {
 
-        if ( (deviceExtension->TargetDeviceObject->Flags & DO_POWER_PAGABLE) ) {
+        if ((deviceExtension->TargetDeviceObject->Flags & DO_POWER_PAGABLE))
+        {
 
             deviceExtension->DeviceObject->Flags |= DO_POWER_PAGABLE;
-
-        } else {
+        }
+        else
+        {
 
             deviceExtension->DeviceObject->Flags &= ~DO_POWER_PAGABLE;
-
         }
-
     }
 
     //
     // Remove our reference
     //
-    ACPIInternalDecrementIrpReferenceCount( deviceExtension );
+    ACPIInternalDecrementIrpReferenceCount(deviceExtension);
 
     //
     // Done
     //
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-ACPIFilterIrpEject(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIFilterIrpEject(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -305,23 +265,12 @@ Return Value:
 {
     PAGED_CODE();
 
-    return ACPIIrpSetPagableCompletionRoutineAndForward(
-        DeviceObject,
-        Irp,
-        ACPIBusAndFilterIrpEject,
-        NULL,
-        FALSE,
-        TRUE,
-        FALSE,
-        FALSE
-        );
+    return ACPIIrpSetPagableCompletionRoutineAndForward(DeviceObject, Irp, ACPIBusAndFilterIrpEject, NULL, FALSE, TRUE,
+                                                        FALSE, FALSE);
 }
-
+
 NTSTATUS
-ACPIFilterIrpQueryCapabilities(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIFilterIrpQueryCapabilities(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -342,23 +291,12 @@ Return Value:
 {
     PAGED_CODE();
 
-    return ACPIIrpSetPagableCompletionRoutineAndForward(
-        DeviceObject,
-        Irp,
-        ACPIBusAndFilterIrpQueryCapabilities,
-        NULL,
-        TRUE,
-        TRUE,
-        FALSE,
-        FALSE
-        );
+    return ACPIIrpSetPagableCompletionRoutineAndForward(DeviceObject, Irp, ACPIBusAndFilterIrpQueryCapabilities, NULL,
+                                                        TRUE, TRUE, FALSE, FALSE);
 }
-
+
 NTSTATUS
-ACPIFilterIrpQueryDeviceRelations(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIFilterIrpQueryDeviceRelations(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -377,14 +315,14 @@ Return Value:
 
 --*/
 {
-    BOOLEAN             filterRelations = FALSE;
-    KEVENT              queryEvent;
-    NTSTATUS            status;
-    PDEVICE_EXTENSION   deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
-    PDEVICE_RELATIONS   deviceRelations;
-    PIO_STACK_LOCATION  irpStack        = IoGetCurrentIrpStackLocation( Irp );
-    UCHAR               minorFunction   = irpStack->MinorFunction;
-    NTSTATUS            detectStatus;
+    BOOLEAN filterRelations = FALSE;
+    KEVENT queryEvent;
+    NTSTATUS status;
+    PDEVICE_EXTENSION deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
+    PDEVICE_RELATIONS deviceRelations;
+    PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
+    UCHAR minorFunction = irpStack->MinorFunction;
+    NTSTATUS detectStatus;
 
     PAGED_CODE();
 
@@ -396,167 +334,133 @@ Return Value:
     //
     // We can't ignore any device relations that have already been given.
     //
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
-        deviceRelations = (PDEVICE_RELATIONS) Irp->IoStatus.Information;
-
-    } else {
+        deviceRelations = (PDEVICE_RELATIONS)Irp->IoStatus.Information;
+    }
+    else
+    {
 
         deviceRelations = NULL;
     }
 
-    switch(irpStack->Parameters.QueryDeviceRelations.Type) {
+    switch (irpStack->Parameters.QueryDeviceRelations.Type)
+    {
 
-        case BusRelations:
+    case BusRelations:
 
-            //
-            // Remember that we have to filter the relations
-            //
-            filterRelations = TRUE;
-            status = ACPIRootIrpQueryBusRelations(
-                DeviceObject,
-                Irp,
-                &deviceRelations
-                );
-            break ;
+        //
+        // Remember that we have to filter the relations
+        //
+        filterRelations = TRUE;
+        status = ACPIRootIrpQueryBusRelations(DeviceObject, Irp, &deviceRelations);
+        break;
 
-        case EjectionRelations:
+    case EjectionRelations:
 
-            status = ACPIBusAndFilterIrpQueryEjectRelations(
-                DeviceObject,
-                Irp,
-                &deviceRelations
-                );
-            break ;
+        status = ACPIBusAndFilterIrpQueryEjectRelations(DeviceObject, Irp, &deviceRelations);
+        break;
 
-        default:
-            status = STATUS_NOT_SUPPORTED ;
-            break ;
+    default:
+        status = STATUS_NOT_SUPPORTED;
+        break;
     }
 
-    if (status != STATUS_NOT_SUPPORTED) {
+    if (status != STATUS_NOT_SUPPORTED)
+    {
 
         //
         // Pass the IRP status along
         //
         Irp->IoStatus.Status = status;
-
     }
 
-    ACPIDevPrint( (
-        ACPI_PRINT_IRP,
-        deviceExtension,
-        "(%#08lx): %s (d) = %#08lx\n",
-        Irp,
-        ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction),
-        status
-        ) );
+    ACPIDevPrint((ACPI_PRINT_IRP, deviceExtension, "(%#08lx): %s (d) = %#08lx\n", Irp,
+                  ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction), status));
 
     //
     // If we failed, then we cannot simply pass the irp along
     //
-    if (!NT_SUCCESS(status) && status != STATUS_NOT_SUPPORTED) {
+    if (!NT_SUCCESS(status) && status != STATUS_NOT_SUPPORTED)
+    {
 
-        IoCompleteRequest( Irp, IO_NO_INCREMENT );
+        IoCompleteRequest(Irp, IO_NO_INCREMENT);
         return status;
-
     }
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
-        Irp->IoStatus.Information = (ULONG_PTR) deviceRelations;
-
-    } else if (status != STATUS_NOT_SUPPORTED) {
+        Irp->IoStatus.Information = (ULONG_PTR)deviceRelations;
+    }
+    else if (status != STATUS_NOT_SUPPORTED)
+    {
 
         //
         // If we haven't succeed the irp, then we can also fail it
         //
-        Irp->IoStatus.Information = (ULONG_PTR) NULL;
+        Irp->IoStatus.Information = (ULONG_PTR)NULL;
     }
 
     //
     // Initialize an event so that we can block
     //
-    KeInitializeEvent( &queryEvent, SynchronizationEvent, FALSE );
+    KeInitializeEvent(&queryEvent, SynchronizationEvent, FALSE);
 
     //
     // If we succeeded, then we must set a completion routine so that we
     // can do some post-processing
     //
-    IoCopyCurrentIrpStackLocationToNext( Irp );
-    IoSetCompletionRoutine(
-        Irp,
-        ACPIRootIrpCompleteRoutine,
-        &queryEvent,
-        TRUE,
-        TRUE,
-        TRUE
-        );
+    IoCopyCurrentIrpStackLocationToNext(Irp);
+    IoSetCompletionRoutine(Irp, ACPIRootIrpCompleteRoutine, &queryEvent, TRUE, TRUE, TRUE);
 
     //
     // Pass the irp along
     //
-    status = IoCallDriver( deviceExtension->TargetDeviceObject, Irp );
+    status = IoCallDriver(deviceExtension->TargetDeviceObject, Irp);
 
     //
     // Wait for it to come back...
     //
-    if (status == STATUS_PENDING) {
+    if (status == STATUS_PENDING)
+    {
 
-        KeWaitForSingleObject(
-            &queryEvent,
-            Executive,
-            KernelMode,
-            FALSE,
-            NULL
-            );
+        KeWaitForSingleObject(&queryEvent, Executive, KernelMode, FALSE, NULL);
 
         //
         // Grab the 'real' status
         //
         status = Irp->IoStatus.Status;
-
     }
 
     //
     // If we succeeded, then we should try to load the filters
     //
-    if (NT_SUCCESS(status) && filterRelations) {
+    if (NT_SUCCESS(status) && filterRelations)
+    {
 
         //
         // Grab the device relations
         //
-        detectStatus = ACPIDetectFilterDevices(
-            DeviceObject,
-            (PDEVICE_RELATIONS) Irp->IoStatus.Information
-            );
-        ACPIDevPrint( (
-            ACPI_PRINT_IRP,
-            deviceExtension,
-            "(0x%08lx): %s (u) = %#08lx\n",
-            Irp,
-            ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction),
-            detectStatus
-            ) );
-
+        detectStatus = ACPIDetectFilterDevices(DeviceObject, (PDEVICE_RELATIONS)Irp->IoStatus.Information);
+        ACPIDevPrint((ACPI_PRINT_IRP, deviceExtension, "(0x%08lx): %s (u) = %#08lx\n", Irp,
+                      ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction), detectStatus));
     }
 
     //
     // Done with the IRP
     //
-    IoCompleteRequest( Irp, IO_NO_INCREMENT );
+    IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
     //
     // Done
     //
     return status;
 }
-
+
 NTSTATUS
-ACPIFilterIrpQueryPnpDeviceState(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIFilterIrpQueryPnpDeviceState(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -577,23 +481,12 @@ Return Value:
 {
     PAGED_CODE();
 
-    return ACPIIrpSetPagableCompletionRoutineAndForward(
-        DeviceObject,
-        Irp,
-        ACPIBusAndFilterIrpQueryPnpDeviceState,
-        NULL,
-        TRUE,
-        TRUE,
-        FALSE,
-        FALSE
-        );
+    return ACPIIrpSetPagableCompletionRoutineAndForward(DeviceObject, Irp, ACPIBusAndFilterIrpQueryPnpDeviceState, NULL,
+                                                        TRUE, TRUE, FALSE, FALSE);
 }
-
+
 NTSTATUS
-ACPIFilterIrpQueryPower(
-    IN PDEVICE_OBJECT   DeviceObject,
-    IN PIRP             Irp
-    )
+ACPIFilterIrpQueryPower(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -611,33 +504,33 @@ Return Value:
 
 --*/
 {
-    PDEVICE_EXTENSION   deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
-    PIO_STACK_LOCATION  irpSp           = IoGetCurrentIrpStackLocation( Irp );
-    PNSOBJ              acpiObject;
-    PNSOBJ              ejectObject;
-    SYSTEM_POWER_STATE  systemState;
-    ULONG               packedEJx;
+    PDEVICE_EXTENSION deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
+    PIO_STACK_LOCATION irpSp = IoGetCurrentIrpStackLocation(Irp);
+    PNSOBJ acpiObject;
+    PNSOBJ ejectObject;
+    SYSTEM_POWER_STATE systemState;
+    ULONG packedEJx;
 
     //
     // Get the Current stack location to determine if we are a system
     // irp or a device irp. We ignore device irps here and any system
     // irp that isn't of type PowerActionWarmEject
     //
-    if (irpSp->Parameters.Power.Type != SystemPowerState) {
+    if (irpSp->Parameters.Power.Type != SystemPowerState)
+    {
 
         //
         // We don't handle this irp
         //
         return ACPIDispatchForwardPowerIrp(DeviceObject, Irp);
-
     }
-    if (irpSp->Parameters.Power.ShutdownType != PowerActionWarmEject) {
+    if (irpSp->Parameters.Power.ShutdownType != PowerActionWarmEject)
+    {
 
         //
         // No eject work - forward along the IRP.
         //
         return ACPIDispatchForwardPowerIrp(DeviceObject, Irp);
-
     }
 
     //
@@ -648,9 +541,10 @@ Return Value:
     //
     // Restrict power states if a warm eject has been queued.
     //
-    acpiObject = deviceExtension->AcpiObject ;
+    acpiObject = deviceExtension->AcpiObject;
 
-    if (ACPIDockIsDockDevice(acpiObject)) {
+    if (ACPIDockIsDockDevice(acpiObject))
+    {
 
         //
         // Don't touch this device, the profile provider manages eject
@@ -659,39 +553,46 @@ Return Value:
         return ACPIDispatchForwardPowerIrp(DeviceObject, Irp);
     }
 
-    switch (systemState) {
-        case PowerSystemSleeping1: packedEJx = PACKED_EJ1; break;
-        case PowerSystemSleeping2: packedEJx = PACKED_EJ2; break;
-        case PowerSystemSleeping3: packedEJx = PACKED_EJ3; break;
-        case PowerSystemHibernate: packedEJx = PACKED_EJ4; break;
-        default: return ACPIDispatchPowerIrpFailure( DeviceObject, Irp );
+    switch (systemState)
+    {
+    case PowerSystemSleeping1:
+        packedEJx = PACKED_EJ1;
+        break;
+    case PowerSystemSleeping2:
+        packedEJx = PACKED_EJ2;
+        break;
+    case PowerSystemSleeping3:
+        packedEJx = PACKED_EJ3;
+        break;
+    case PowerSystemHibernate:
+        packedEJx = PACKED_EJ4;
+        break;
+    default:
+        return ACPIDispatchPowerIrpFailure(DeviceObject, Irp);
     }
 
     //
     // Does the appropriate object exist for this device?
     //
-    ejectObject = ACPIAmliGetNamedChild( acpiObject, packedEJx) ;
-    if (ejectObject == NULL) {
+    ejectObject = ACPIAmliGetNamedChild(acpiObject, packedEJx);
+    if (ejectObject == NULL)
+    {
 
         //
         // Fail the request, as we cannot eject in this case.
         //
-        return ACPIDispatchPowerIrpFailure( DeviceObject, Irp );
-
+        return ACPIDispatchPowerIrpFailure(DeviceObject, Irp);
     }
 
     //
     // Mark the irp as succeeded and pass it down
     //
     Irp->IoStatus.Status = STATUS_SUCCESS;
-    return ACPIDispatchForwardPowerIrp( DeviceObject, Irp );
+    return ACPIDispatchForwardPowerIrp(DeviceObject, Irp);
 }
-
+
 NTSTATUS
-ACPIFilterIrpQueryId(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIFilterIrpQueryId(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -721,10 +622,10 @@ Return Value:
 
 --*/
 {
-    BUS_QUERY_ID_TYPE   type;
-    NTSTATUS            status;
-    PDEVICE_EXTENSION   deviceExtension;
-    PIO_STACK_LOCATION  irpStack = IoGetCurrentIrpStackLocation( Irp );
+    BUS_QUERY_ID_TYPE type;
+    NTSTATUS status;
+    PDEVICE_EXTENSION deviceExtension;
+    PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
 
     PAGED_CODE();
 
@@ -732,14 +633,14 @@ Return Value:
     // Get the device extension. We need to make a decision based upon
     // wether or not the device is marked as a PCI Bar Target...
     //
-    deviceExtension = ACPIInternalGetDeviceExtension( DeviceObject );
-    if (!(deviceExtension->Flags & DEV_CAP_PCI_BAR_TARGET)) {
+    deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
+    if (!(deviceExtension->Flags & DEV_CAP_PCI_BAR_TARGET))
+    {
 
         //
         // Let the underlying PDO handle the request...
         //
-        return ACPIDispatchForwardIrp( DeviceObject, Irp );
-
+        return ACPIDispatchForwardIrp(DeviceObject, Irp);
     }
 
     //
@@ -748,29 +649,24 @@ Return Value:
     // then let the PDO handle it...
     //
     type = irpStack->Parameters.QueryId.IdType;
-    if (type != BusQueryDeviceID &&
-        type != BusQueryCompatibleIDs &&
-        type != BusQueryHardwareIDs) {
+    if (type != BusQueryDeviceID && type != BusQueryCompatibleIDs && type != BusQueryHardwareIDs)
+    {
 
         //
         // Let the underlying PDO handle the request...
         //
-        return ACPIDispatchForwardIrp( DeviceObject, Irp );
-
+        return ACPIDispatchForwardIrp(DeviceObject, Irp);
     }
 
     //
     // At this point we have to handle the QueryID request ourselves and
     // not let the PDO see it.
     //
-    return ACPIBusIrpQueryId( DeviceObject, Irp );
+    return ACPIBusIrpQueryId(DeviceObject, Irp);
 }
-
+
 NTSTATUS
-ACPIFilterIrpQueryInterface(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIFilterIrpQueryInterface(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -789,42 +685,34 @@ Return Value:
 
 --*/
 {
-    CM_RESOURCE_TYPE    resource;
-    GUID                *interfaceType;
-    NTSTATUS            status          = STATUS_NOT_SUPPORTED;
-    PDEVICE_EXTENSION   deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
-    PIO_STACK_LOCATION  irpStack        = IoGetCurrentIrpStackLocation( Irp );
-    ULONG               count;
+    CM_RESOURCE_TYPE resource;
+    GUID *interfaceType;
+    NTSTATUS status = STATUS_NOT_SUPPORTED;
+    PDEVICE_EXTENSION deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
+    PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
+    ULONG count;
 
     PAGED_CODE();
 
     //
     // Obtain the info we will need from the irp
     //
-    resource = (CM_RESOURCE_TYPE)
-        PtrToUlong(irpStack->Parameters.QueryInterface.InterfaceSpecificData);
-    interfaceType = (LPGUID) irpStack->Parameters.QueryInterface.InterfaceType;
+    resource = (CM_RESOURCE_TYPE)PtrToUlong(irpStack->Parameters.QueryInterface.InterfaceSpecificData);
+    interfaceType = (LPGUID)irpStack->Parameters.QueryInterface.InterfaceType;
 
 #if DBG
     {
-        NTSTATUS        status2;
-        UNICODE_STRING  guidString;
+        NTSTATUS status2;
+        UNICODE_STRING guidString;
 
-        status2 = RtlStringFromGUID( interfaceType, &guidString );
-        if (NT_SUCCESS(status2)) {
+        status2 = RtlStringFromGUID(interfaceType, &guidString);
+        if (NT_SUCCESS(status2))
+        {
 
-            ACPIDevPrint( (
-                ACPI_PRINT_IRP,
-                deviceExtension,
-                "(0x%08lx): %s - Res %x Type = %wZ\n",
-                Irp,
-                ACPIDebugGetIrpText(IRP_MJ_PNP, irpStack->MinorFunction),
-                resource,
-                &guidString
-                ) );
+            ACPIDevPrint((ACPI_PRINT_IRP, deviceExtension, "(0x%08lx): %s - Res %x Type = %wZ\n", Irp,
+                          ACPIDebugGetIrpText(IRP_MJ_PNP, irpStack->MinorFunction), resource, &guidString));
 
-            RtlFreeUnicodeString( &guidString );
-
+            RtlFreeUnicodeString(&guidString);
         }
     }
 #endif
@@ -833,40 +721,36 @@ Return Value:
     // *Only* Handle the Guids that we know about. Do Not Ever touch
     // any other GUID
     //
-    if (CompareGuid(interfaceType, (PVOID) &GUID_ACPI_INTERFACE_STANDARD)) {
+    if (CompareGuid(interfaceType, (PVOID)&GUID_ACPI_INTERFACE_STANDARD))
+    {
 
-        PACPI_INTERFACE_STANDARD    interfaceDestination;
+        PACPI_INTERFACE_STANDARD interfaceDestination;
 
         //
         // Only copy up to current size of the ACPI_INTERFACE structure
         //
-        if (irpStack->Parameters.QueryInterface.Size >
-            sizeof (ACPI_INTERFACE_STANDARD) ) {
+        if (irpStack->Parameters.QueryInterface.Size > sizeof(ACPI_INTERFACE_STANDARD))
+        {
 
-            count = sizeof (ACPI_INTERFACE_STANDARD);
-
-        } else {
+            count = sizeof(ACPI_INTERFACE_STANDARD);
+        }
+        else
+        {
 
             count = irpStack->Parameters.QueryInterface.Size;
-
         }
 
         //
         // Find where we will store the interface
         //
-        interfaceDestination = (PACPI_INTERFACE_STANDARD)
-            irpStack->Parameters.QueryInterface.Interface;
+        interfaceDestination = (PACPI_INTERFACE_STANDARD)irpStack->Parameters.QueryInterface.Interface;
 
         //
         // Copy from the global table to the caller's table, using size
         // specified.  Give caller only what was asked for, for
         // backwards compatibility.
         //
-        RtlCopyMemory (
-            interfaceDestination,
-            &ACPIInterfaceTable,
-            count
-            );
+        RtlCopyMemory(interfaceDestination, &ACPIInterfaceTable, count);
 
         //
         // Make sure that we can give the user back the correct context. To do
@@ -874,19 +758,20 @@ Return Value:
         // is at least more than that is required to store a pointer at the
         // correct place in the structure
         //
-        if (count > (FIELD_OFFSET(ACPI_INTERFACE_STANDARD, Context) + sizeof(PVOID) ) ) {
+        if (count > (FIELD_OFFSET(ACPI_INTERFACE_STANDARD, Context) + sizeof(PVOID)))
+        {
 
             interfaceDestination->Context = DeviceObject;
-
         }
 
         //
         // Done with the irp
         //
         status = STATUS_SUCCESS;
-
-    } else if (CompareGuid(interfaceType, (PVOID) &GUID_TRANSLATOR_INTERFACE_STANDARD) &&
-                   (resource == CmResourceTypeInterrupt)) {
+    }
+    else if (CompareGuid(interfaceType, (PVOID)&GUID_TRANSLATOR_INTERFACE_STANDARD) &&
+             (resource == CmResourceTypeInterrupt))
+    {
 
         //
         // Smash any interface that has already been reported because we
@@ -901,20 +786,22 @@ Return Value:
         // EFN: Remove this HACKHACK on Alpha
         //
 #ifndef _ALPHA_
-        if (IsPciBus(DeviceObject)) {
+        if (IsPciBus(DeviceObject))
+        {
             SmashInterfaceQuery(Irp);
         }
 #endif // _ALPHA_
-
     }
 
-    if (status != STATUS_NOT_SUPPORTED) {
+    if (status != STATUS_NOT_SUPPORTED)
+    {
 
         Irp->IoStatus.Status = status;
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 
-            IoCompleteRequest( Irp, IO_NO_INCREMENT );
+            IoCompleteRequest(Irp, IO_NO_INCREMENT);
             return status;
         }
     }
@@ -922,14 +809,11 @@ Return Value:
     //
     // Send the irp along
     //
-    return ACPIDispatchForwardIrp( DeviceObject, Irp );
+    return ACPIDispatchForwardIrp(DeviceObject, Irp);
 }
-
+
 NTSTATUS
-ACPIFilterIrpRemoveDevice(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIFilterIrpRemoveDevice(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -947,49 +831,49 @@ Return Value:
 
 --*/
 {
-    LONG                oldReferenceCount;
-    KIRQL               oldIrql;
-    NTSTATUS            status;
-    PDEVICE_EXTENSION   deviceExtension;
-    PDEVICE_OBJECT      targetObject;
-    PIO_STACK_LOCATION  irpStack        = IoGetCurrentIrpStackLocation( Irp );
-    UCHAR               minorFunction   = irpStack->MinorFunction;
-    KEVENT              removeEvent ;
-    ACPI_DEVICE_STATE   incomingState ;
-    BOOLEAN             pciDevice;
+    LONG oldReferenceCount;
+    KIRQL oldIrql;
+    NTSTATUS status;
+    PDEVICE_EXTENSION deviceExtension;
+    PDEVICE_OBJECT targetObject;
+    PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
+    UCHAR minorFunction = irpStack->MinorFunction;
+    KEVENT removeEvent;
+    ACPI_DEVICE_STATE incomingState;
+    BOOLEAN pciDevice;
 
     //
     // Get the current extension
     //
-    deviceExtension = ACPIInternalGetDeviceExtension( DeviceObject );
+    deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
 
     //
     // All IRPs we own should already have been processed at this point, and
     // the outstanding irp count should be exactly one. Similarly, the
     // device extension reference count should be at least one.
     //
-    ASSERT(deviceExtension->OutstandingIrpCount == 1) ;
-    ASSERT(deviceExtension->ReferenceCount > 0) ;
+    ASSERT(deviceExtension->OutstandingIrpCount == 1);
+    ASSERT(deviceExtension->ReferenceCount > 0);
 
-    incomingState = deviceExtension->DeviceState ;
-    if (incomingState != SurpriseRemoved) {
+    incomingState = deviceExtension->DeviceState;
+    if (incomingState != SurpriseRemoved)
+    {
 
-        if ( IsPciBusExtension(deviceExtension) ) {
+        if (IsPciBusExtension(deviceExtension))
+        {
 
             //
             // If this is PCI bridge, then we
             // may have _REG methods to evaluate.
             //
             EnableDisableRegions(deviceExtension->AcpiObject, FALSE);
-
-         }
-
+        }
     }
 
     //
     // Dereference any outstanding interfaces
     //
-    ACPIDeleteFilterInterfaceReferences( deviceExtension );
+    ACPIDeleteFilterInterfaceReferences(deviceExtension);
 
     //
     // Increment the ref count by one so the node doesn't go away while the
@@ -1008,58 +892,39 @@ Return Value:
     //
     // Initialize an event so that we can block
     //
-    KeInitializeEvent( &removeEvent, SynchronizationEvent, FALSE );
+    KeInitializeEvent(&removeEvent, SynchronizationEvent, FALSE);
 
     //
     // If we succeeded, then we must set a completion routine so that we
     // can do some post-processing
     //
-    IoCopyCurrentIrpStackLocationToNext( Irp );
-    IoSetCompletionRoutine(
-        Irp,
-        ACPIRootIrpCompleteRoutine,
-        &removeEvent,
-        TRUE,
-        TRUE,
-        TRUE
-        );
-    status = IoCallDriver( deviceExtension->TargetDeviceObject, Irp );
+    IoCopyCurrentIrpStackLocationToNext(Irp);
+    IoSetCompletionRoutine(Irp, ACPIRootIrpCompleteRoutine, &removeEvent, TRUE, TRUE, TRUE);
+    status = IoCallDriver(deviceExtension->TargetDeviceObject, Irp);
 
     //
     // Wait for it to come back...
     //
-    if (status == STATUS_PENDING) {
+    if (status == STATUS_PENDING)
+    {
 
-        KeWaitForSingleObject(
-            &removeEvent,
-            Executive,
-            KernelMode,
-            FALSE,
-            NULL
-            );
+        KeWaitForSingleObject(&removeEvent, Executive, KernelMode, FALSE, NULL);
 
         //
         // Grab the 'real' status
         //
         status = Irp->IoStatus.Status;
-
     }
 
-    ACPIDevPrint( (
-        ACPI_PRINT_REMOVE,
-        deviceExtension,
-        "(%#08lx): %s (pre) = %#08lx\n",
-        Irp,
-        ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction),
-        status
-        ) );
-    if (!NT_SUCCESS(status)) {
+    ACPIDevPrint((ACPI_PRINT_REMOVE, deviceExtension, "(%#08lx): %s (pre) = %#08lx\n", Irp,
+                  ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction), status));
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // I guess someone can fail the request..
         //
         goto ACPIFilterIrpRemoveDeviceExit;
-
     }
 
     //
@@ -1072,17 +937,17 @@ Return Value:
     //      object is attached to our extension while we are finishing up a
     //      remove IRP.
     //
-    if (incomingState != SurpriseRemoved) {
+    if (incomingState != SurpriseRemoved)
+    {
 
-        ACPIInitStopDevice( deviceExtension, TRUE );
-
+        ACPIInitStopDevice(deviceExtension, TRUE);
     }
 
     //
     // Has our ACPI namespace entry left? See if the reference count drops to
     // zero when we release it.
     //
-    KeAcquireSpinLock( &AcpiDeviceTreeLock, &oldIrql );
+    KeAcquireSpinLock(&AcpiDeviceTreeLock, &oldIrql);
 
     oldReferenceCount = InterlockedDecrement(&deviceExtension->ReferenceCount);
 
@@ -1090,46 +955,42 @@ Return Value:
     // This might be zero if the table entry in ACPI has been removed, the node
     // under us deleted itself, and now we ourselves have left.
     //
-    ASSERT(oldReferenceCount >= 0) ;
+    ASSERT(oldReferenceCount >= 0);
 
     //
     // Do we get to delete the node?
     //
-    if (oldReferenceCount == 0) {
+    if (oldReferenceCount == 0)
+    {
 
         //
         // We should already have detached, deleted, and changed state.
         //
-        ASSERT(deviceExtension->DeviceState == Removed) ;
+        ASSERT(deviceExtension->DeviceState == Removed);
 
         //
         // Delete the extension. Bye bye.
         //
-        ACPIInitDeleteDeviceExtension( deviceExtension );
-
+        ACPIInitDeleteDeviceExtension(deviceExtension);
     }
 
     //
     // Done with the lock
     //
-    KeReleaseSpinLock( &AcpiDeviceTreeLock, oldIrql );
+    KeReleaseSpinLock(&AcpiDeviceTreeLock, oldIrql);
 
 ACPIFilterIrpRemoveDeviceExit:
 
     //
     // Use PDO's return result. If he fails, we do too.
     //
-    status = Irp->IoStatus.Status ;
-    IoCompleteRequest(Irp, IO_NO_INCREMENT) ;
+    status = Irp->IoStatus.Status;
+    IoCompleteRequest(Irp, IO_NO_INCREMENT);
     return status;
-
 }
-
+
 NTSTATUS
-ACPIFilterIrpSetLock(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIFilterIrpSetLock(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -1150,23 +1011,12 @@ Return Value:
 {
     PAGED_CODE();
 
-    return ACPIIrpSetPagableCompletionRoutineAndForward(
-        DeviceObject,
-        Irp,
-        ACPIBusAndFilterIrpSetLock,
-        NULL,
-        TRUE,
-        TRUE,
-        FALSE,
-        FALSE
-        );
+    return ACPIIrpSetPagableCompletionRoutineAndForward(DeviceObject, Irp, ACPIBusAndFilterIrpSetLock, NULL, TRUE, TRUE,
+                                                        FALSE, FALSE);
 }
-
+
 NTSTATUS
-ACPIFilterIrpSetPower (
-    IN PDEVICE_OBJECT   DeviceObject,
-    IN PIRP             Irp
-    )
+ACPIFilterIrpSetPower(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -1184,28 +1034,26 @@ Return value:
 
 --*/
 {
-    DEVICE_POWER_STATE  deviceState;
-    NTSTATUS            status;
-    PDEVICE_EXTENSION   deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
-    PIO_STACK_LOCATION  irpStack        = IoGetCurrentIrpStackLocation( Irp );
-    PNSOBJ              regMethod       = NULL;
+    DEVICE_POWER_STATE deviceState;
+    NTSTATUS status;
+    PDEVICE_EXTENSION deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
+    PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
+    PNSOBJ regMethod = NULL;
 
     //
     // What we do depends on wether or not we want to power on or off
     // the device
     //
-    if (irpStack->Parameters.Power.Type == SystemPowerState) {
+    if (irpStack->Parameters.Power.Type == SystemPowerState)
+    {
 
-        if (irpStack->Parameters.Power.ShutdownType != PowerActionWarmEject) {
+        if (irpStack->Parameters.Power.ShutdownType != PowerActionWarmEject)
+        {
 
             //
             // Send the irp along
             //
-            return ACPIDispatchForwardPowerIrp(
-                DeviceObject,
-                Irp
-                );
-
+            return ACPIDispatchForwardPowerIrp(DeviceObject, Irp);
         }
 
         //
@@ -1221,51 +1069,43 @@ Return value:
         // this basically means that we must return STATUS_PENDING from
         // this case, reguardless of the actual status
         //
-        IoMarkIrpPending( Irp );
+        IoMarkIrpPending(Irp);
 
         //
         // This counts as setting a completion routine
         //
-        InterlockedIncrement( &(deviceExtension->OutstandingIrpCount) );
+        InterlockedIncrement(&(deviceExtension->OutstandingIrpCount));
 
         //
         // We must handle the request before the Pdo sees it. After we
         // are done, we can forward the irp along
         //
-        status = ACPIDeviceIrpWarmEjectRequest(
-            deviceExtension,
-            Irp,
-            ACPIDeviceIrpForwardRequest,
-            FALSE
-            );
+        status = ACPIDeviceIrpWarmEjectRequest(deviceExtension, Irp, ACPIDeviceIrpForwardRequest, FALSE);
 
         //
         // If we got back STATUS_MORE_PROCESSING_REQUIRED, then that is
         // just an alias for STATUS_PENDING, so we make that change now
         //
-        if (status == STATUS_MORE_PROCESSING_REQUIRED) {
+        if (status == STATUS_MORE_PROCESSING_REQUIRED)
+        {
 
             status = STATUS_PENDING;
-
         }
         return status;
-
     }
 
     //
     // Does this object have a reg method?
     //
-    if (!(deviceExtension->Flags & DEV_PROP_NO_OBJECT) ) {
+    if (!(deviceExtension->Flags & DEV_PROP_NO_OBJECT))
+    {
 
-        regMethod = ACPIAmliGetNamedChild(
-            deviceExtension->AcpiObject,
-            PACKED_REG
-            );
-
+        regMethod = ACPIAmliGetNamedChild(deviceExtension->AcpiObject, PACKED_REG);
     }
 
     deviceState = irpStack->Parameters.Power.State.DeviceState;
-    if (deviceState == PowerDeviceD0) {
+    if (deviceState == PowerDeviceD0)
+    {
 
         //
         // We are going to some work on this Irp, so mark it as being
@@ -1279,12 +1119,12 @@ Return value:
         // this basically means that we must return STATUS_PENDING from
         // this case, reguardless of the actual status
         //
-        IoMarkIrpPending( Irp );
+        IoMarkIrpPending(Irp);
 
         //
         // This counts as setting a completion routine
         //
-        InterlockedIncrement( &(deviceExtension->OutstandingIrpCount) );
+        InterlockedIncrement(&(deviceExtension->OutstandingIrpCount));
 
         //
         // we must only do the _REG method stuff if one actually
@@ -1296,23 +1136,20 @@ Return value:
         // are done, we can forward the irp along
         //
         status = ACPIDeviceIrpDeviceRequest(
-            DeviceObject,
-            Irp,
-            (regMethod ? ACPIDeviceIrpDelayedDeviceOnRequest :
-                         ACPIDeviceIrpForwardRequest)
-            );
+            DeviceObject, Irp, (regMethod ? ACPIDeviceIrpDelayedDeviceOnRequest : ACPIDeviceIrpForwardRequest));
 
         //
         // If we got back STATUS_MORE_PROCESSING_REQUIRED, then that is
         // just an alias for STATUS_PENDING, so we make that change now
         //
-        if (status == STATUS_MORE_PROCESSING_REQUIRED) {
+        if (status == STATUS_MORE_PROCESSING_REQUIRED)
+        {
 
             status = STATUS_PENDING;
-
         }
-
-    } else if (regMethod) {
+    }
+    else if (regMethod)
+    {
 
         //
         // We are going to some work on this Irp, so mark it as being
@@ -1326,84 +1163,70 @@ Return value:
         // this basically means that we must return STATUS_PENDING from
         // this case, reguardless of the actual status
         //
-        IoMarkIrpPending( Irp );
+        IoMarkIrpPending(Irp);
 
         //
         // This counts as setting a completion routine
         //
-        InterlockedIncrement( &(deviceExtension->OutstandingIrpCount) );
+        InterlockedIncrement(&(deviceExtension->OutstandingIrpCount));
 
         //
         // We must handle the request and the turn off the _REG methods before
         // the Pdo sees it. After we are done, we can set a completion routine
         // so that we can then power off the device
         //
-        status = ACPIBuildRegOffRequest(
-            DeviceObject,
-            Irp,
-            ACPIDeviceIrpDelayedDeviceOffRequest
-            );
+        status = ACPIBuildRegOffRequest(DeviceObject, Irp, ACPIDeviceIrpDelayedDeviceOffRequest);
 
         //
         // If we got back STATUS_MORE_PROCESSING_REQUIRED, then that is
         // just an alias for STATUS_PENDING, so we make that change now
         //
-        if (status == STATUS_MORE_PROCESSING_REQUIRED) {
+        if (status == STATUS_MORE_PROCESSING_REQUIRED)
+        {
 
             status = STATUS_PENDING;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // Increment the OutstandingIrpCount since a completion routine
         // counts for this purpose
         //
-        InterlockedIncrement( (&deviceExtension->OutstandingIrpCount) );
+        InterlockedIncrement((&deviceExtension->OutstandingIrpCount));
 
         //
         // Forward the power irp to target device
         //
-        IoCopyCurrentIrpStackLocationToNext( Irp );
+        IoCopyCurrentIrpStackLocationToNext(Irp);
 
         //
         // We want the completion routine to fire. We cannot call
         // ACPIDispatchForwardPowerIrp here because we set this completion
         // routine
         //
-        IoSetCompletionRoutine(
-            Irp,
-            ACPIDeviceIrpDeviceFilterRequest,
-            ACPIDeviceIrpCompleteRequest,
-            TRUE,
-            TRUE,
-            TRUE
-            );
+        IoSetCompletionRoutine(Irp, ACPIDeviceIrpDeviceFilterRequest, ACPIDeviceIrpCompleteRequest, TRUE, TRUE, TRUE);
 
         //
         // Start the next power irp
         //
-        PoStartNextPowerIrp( Irp );
+        PoStartNextPowerIrp(Irp);
 
         //
         // Let the person below us execute. Note: we can't block at
         // any time within this code path.
         //
-        ASSERT( deviceExtension->TargetDeviceObject != NULL);
-        PoCallDriver( deviceExtension->TargetDeviceObject, Irp );
+        ASSERT(deviceExtension->TargetDeviceObject != NULL);
+        PoCallDriver(deviceExtension->TargetDeviceObject, Irp);
         status = STATUS_PENDING;
-
     }
 
     return status;
 }
-
+
 NTSTATUS
-ACPIFilterIrpStartDevice(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIFilterIrpStartDevice(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -1420,57 +1243,41 @@ Return Value:
     NTSTATUS
 --*/
 {
-    NTSTATUS                    status;
-    PDEVICE_EXTENSION           deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
-    PIO_STACK_LOCATION          irpStack        = IoGetCurrentIrpStackLocation( Irp );
-    UCHAR                       minorFunction   = irpStack->MinorFunction;
+    NTSTATUS status;
+    PDEVICE_EXTENSION deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
+    PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
+    UCHAR minorFunction = irpStack->MinorFunction;
 
     PAGED_CODE();
 
     //
     // Print that we got a start
     //
-    ACPIDevPrint( (
-        ACPI_PRINT_IRP,
-        deviceExtension,
-        "(0x%08lx): %s = %#08lx (enter)\n",
-        Irp,
-        ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction),
-        Irp->IoStatus.Status
-        ) );
+    ACPIDevPrint((ACPI_PRINT_IRP, deviceExtension, "(0x%08lx): %s = %#08lx (enter)\n", Irp,
+                  ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction), Irp->IoStatus.Status));
 
     //
     // Start the filter
     //
-    status = ACPIInitStartDevice(
-        DeviceObject,
-        irpStack->Parameters.StartDevice.AllocatedResources,
-        ACPIFilterIrpStartDeviceCompletion,
-        Irp,
-        Irp
-        );
+    status = ACPIInitStartDevice(DeviceObject, irpStack->Parameters.StartDevice.AllocatedResources,
+                                 ACPIFilterIrpStartDeviceCompletion, Irp, Irp);
 
     //
     // This IRP is completed later.  So return STATUS_PENDING.
     //
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         return STATUS_PENDING;
-
-    } else {
+    }
+    else
+    {
 
         return status;
-
     }
-
 }
-
-VOID
-ACPIFilterIrpStartDeviceCompletion(
-    IN  PDEVICE_EXTENSION   DeviceExtension,
-    IN  PVOID               Context,
-    IN  NTSTATUS            Status
-    )
+
+VOID ACPIFilterIrpStartDeviceCompletion(IN PDEVICE_EXTENSION DeviceExtension, IN PVOID Context, IN NTSTATUS Status)
 /*++
 
 Routine Description:
@@ -1494,42 +1301,33 @@ Return Value:
 
 --*/
 {
-    PIRP                irp         = (PIRP) Context;
+    PIRP irp = (PIRP)Context;
     PWORK_QUEUE_CONTEXT workContext = &(DeviceExtension->Filter.WorkContext);
 
     irp->IoStatus.Status = Status;
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         DeviceExtension->DeviceState = Started;
+    }
+    else
+    {
 
-    } else {
-
-        IoCompleteRequest( irp, IO_NO_INCREMENT );
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
         return;
-
     }
 
     //
     // We can't run EnableDisableRegions at DPC level,
     // so queue a worker item.
     //
-    ExInitializeWorkItem(
-          &(workContext->Item),
-          ACPIFilterIrpStartDeviceWorker,
-          workContext
-          );
+    ExInitializeWorkItem(&(workContext->Item), ACPIFilterIrpStartDeviceWorker, workContext);
     workContext->DeviceObject = DeviceExtension->DeviceObject;
     workContext->Irp = irp;
-    ExQueueWorkItem(
-          &(workContext->Item),
-          DelayedWorkQueue
-          );
+    ExQueueWorkItem(&(workContext->Item), DelayedWorkQueue);
 }
-
-VOID
-ACPIFilterIrpStartDeviceWorker(
-    IN  PVOID   Context
-    )
+
+VOID ACPIFilterIrpStartDeviceWorker(IN PVOID Context)
 /*++
 
 Routine Description:
@@ -1552,167 +1350,132 @@ Return Value:
 
 --*/
 {
-    KEVENT              event;
-    NTSTATUS            status;
-    PDEVICE_EXTENSION   deviceExtension;
-    PDEVICE_OBJECT      deviceObject;
-    PIRP                irp;
-    PIO_STACK_LOCATION  irpStack;
-    PWORK_QUEUE_CONTEXT workContext = (PWORK_QUEUE_CONTEXT) Context;
-    UCHAR               minorFunction;
+    KEVENT event;
+    NTSTATUS status;
+    PDEVICE_EXTENSION deviceExtension;
+    PDEVICE_OBJECT deviceObject;
+    PIRP irp;
+    PIO_STACK_LOCATION irpStack;
+    PWORK_QUEUE_CONTEXT workContext = (PWORK_QUEUE_CONTEXT)Context;
+    UCHAR minorFunction;
 
     PAGED_CODE();
 
     //
     // Grab the parameters that we need out of the Context
     //
-    deviceObject    = workContext->DeviceObject;
-    deviceExtension = ACPIInternalGetDeviceExtension( deviceObject );
-    irp             = workContext->Irp;
-    irpStack        = IoGetCurrentIrpStackLocation( irp );
-    minorFunction   = irpStack->MinorFunction;
-    status          = irp->IoStatus.Status;
+    deviceObject = workContext->DeviceObject;
+    deviceExtension = ACPIInternalGetDeviceExtension(deviceObject);
+    irp = workContext->Irp;
+    irpStack = IoGetCurrentIrpStackLocation(irp);
+    minorFunction = irpStack->MinorFunction;
+    status = irp->IoStatus.Status;
 
     //
     // Setup the event so that we are notified of when this is done. This is
     // a cheap mechanism to ensure that we will always run the completion
     // code at PASSIVE_LEVEL
     //
-    KeInitializeEvent( &event, SynchronizationEvent, FALSE );
+    KeInitializeEvent(&event, SynchronizationEvent, FALSE);
 
     //
     // Copy the stack location
     //
-    IoCopyCurrentIrpStackLocationToNext( irp );
+    IoCopyCurrentIrpStackLocationToNext(irp);
 
     //
     // We want our completion routine to fire...
     //  (we reuse the one from the Root since the same things must be done)
     //
-    IoSetCompletionRoutine(
-        irp,
-        ACPIRootIrpCompleteRoutine,
-        &event,
-        TRUE,
-        TRUE,
-        TRUE
-        );
+    IoSetCompletionRoutine(irp, ACPIRootIrpCompleteRoutine, &event, TRUE, TRUE, TRUE);
 
-    ACPIDevPrint( (
-        ACPI_PRINT_IRP,
-        deviceExtension,
-        "(%#08lx): %s = %#08lx (forwarding)\n",
-        irp,
-        ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction),
-        status
-        ) );
+    ACPIDevPrint((ACPI_PRINT_IRP, deviceExtension, "(%#08lx): %s = %#08lx (forwarding)\n", irp,
+                  ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction), status));
 
 
     //
     // Let the IRP execute
     //
-    status = IoCallDriver( deviceExtension->TargetDeviceObject, irp );
-    if (status == STATUS_PENDING) {
+    status = IoCallDriver(deviceExtension->TargetDeviceObject, irp);
+    if (status == STATUS_PENDING)
+    {
 
         //
         // Wait for it
         //
-        KeWaitForSingleObject(
-            &event,
-            Executive,
-            KernelMode,
-            FALSE,
-            NULL
-            );
+        KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
 
         //
         // Grab the 'real' status
         //
         status = irp->IoStatus.Status;
-
     }
 
     //
     // What happened?
     //
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
-        ACPIDevPrint( (
-            ACPI_PRINT_FAILURE,
-            deviceExtension,
-            "(%#08lx): %s = %#08lx (failed)\n",
-            irp,
-            ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction),
-            status
-            ) );
+        ACPIDevPrint((ACPI_PRINT_FAILURE, deviceExtension, "(%#08lx): %s = %#08lx (failed)\n", irp,
+                      ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction), status));
         //
         // Failure
         //
         goto ACPIFilterIrpStartDeviceWorkerExit;
-
     }
 
     //
     // Set the interfaces
     //
-    ACPIInitBusInterfaces( deviceObject );
+    ACPIInitBusInterfaces(deviceObject);
 
     //
     // Determine if this is a PCI device or bus or not...
     //
-    status = ACPIInternalIsPci( deviceObject );
-    if (!NT_SUCCESS(status)) {
+    status = ACPIInternalIsPci(deviceObject);
+    if (!NT_SUCCESS(status))
+    {
 
-        ACPIDevPrint( (
-            ACPI_PRINT_FAILURE,
-            deviceExtension,
-            " - failed ACPIInternalIsPciDevice = %#08lx\n",
-            status
-            ) );
+        ACPIDevPrint((ACPI_PRINT_FAILURE, deviceExtension, " - failed ACPIInternalIsPciDevice = %#08lx\n", status));
 
         //
         // Failure
         //
         goto ACPIFilterIrpStartDeviceWorkerExit;
-
     }
 
     //
     // If this is a PCI bus, we have set the PCI bus flag
     //
-    if ( ( deviceExtension->Flags & DEV_CAP_PCI) ) {
+    if ((deviceExtension->Flags & DEV_CAP_PCI))
+    {
 
         //
         // Run all _REG methods under this device.
         //
         EnableDisableRegions(deviceExtension->AcpiObject, TRUE);
-
     }
 
     //
     // If we are a PCI bus or a PCI device, we must consider wether or
     // not we own setting or clearing the PCI PME pin
     //
-    if ( (deviceExtension->Flags & DEV_MASK_PCI) ) {
+    if ((deviceExtension->Flags & DEV_MASK_PCI))
+    {
 
-        ACPIWakeInitializePciDevice(
-            deviceObject
-            );
-
+        ACPIWakeInitializePciDevice(deviceObject);
     }
 
 ACPIFilterIrpStartDeviceWorkerExit:
     //
     // Done with the irp
     //
-    IoCompleteRequest( irp, IO_NO_INCREMENT );
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
 }
-
+
 NTSTATUS
-ACPIFilterIrpStopDevice(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIFilterIrpStopDevice(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -1730,24 +1493,25 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status;
-    PDEVICE_EXTENSION   deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
+    NTSTATUS status;
+    PDEVICE_EXTENSION deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
 
     PAGED_CODE();
 
     //
     // Note: we can only stop a device from within the Inactive state...
     //
-    if (deviceExtension->DeviceState != Inactive) {
+    if (deviceExtension->DeviceState != Inactive)
+    {
 
-        ASSERT( deviceExtension->DeviceState == Inactive );
+        ASSERT(deviceExtension->DeviceState == Inactive);
         Irp->IoStatus.Status = status = STATUS_INVALID_DEVICE_REQUEST;
-        IoCompleteRequest( Irp, IO_NO_INCREMENT );
+        IoCompleteRequest(Irp, IO_NO_INCREMENT);
         goto ACPIFilterIrpStopDeviceExit;
-
     }
 
-    if (IsPciBus(deviceExtension->DeviceObject)) {
+    if (IsPciBus(deviceExtension->DeviceObject))
+    {
 
         //
         // If this is PCI bridge, then we
@@ -1760,52 +1524,35 @@ Return Value:
     //
     // Copy the stack location...
     //
-    IoCopyCurrentIrpStackLocationToNext( Irp );
+    IoCopyCurrentIrpStackLocationToNext(Irp);
 
     //
     // Set the completion event to be called...
     //
-    IoSetCompletionRoutine(
-        Irp,
-        ACPIFilterIrpStopDeviceCompletion,
-        NULL,
-        TRUE,
-        TRUE,
-        TRUE
-        );
+    IoSetCompletionRoutine(Irp, ACPIFilterIrpStopDeviceCompletion, NULL, TRUE, TRUE, TRUE);
 
     //
     // We have a callback routine --- so we need to make sure to
     // increment the ref count since we will handle it later
     //
-    InterlockedIncrement( &(deviceExtension->OutstandingIrpCount) );
+    InterlockedIncrement(&(deviceExtension->OutstandingIrpCount));
 
     //
     // Send the request along
     //
-    status = IoCallDriver( deviceExtension->TargetDeviceObject, Irp );
+    status = IoCallDriver(deviceExtension->TargetDeviceObject, Irp);
 
 ACPIFilterIrpStopDeviceExit:
     //
     // done
     //
-    ACPIDevPrint( (
-        ACPI_PRINT_IRP,
-        deviceExtension,
-        "(%#08lx): %s = %#08lx (forwarding)\n",
-        Irp,
-        ACPIDebugGetIrpText(IRP_MJ_PNP, IRP_MN_STOP_DEVICE),
-        status
-        ) );
+    ACPIDevPrint((ACPI_PRINT_IRP, deviceExtension, "(%#08lx): %s = %#08lx (forwarding)\n", Irp,
+                  ACPIDebugGetIrpText(IRP_MJ_PNP, IRP_MN_STOP_DEVICE), status));
     return status;
 }
-
+
 NTSTATUS
-ACPIFilterIrpStopDeviceCompletion(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp,
-    IN  PVOID           Context
-    )
+ACPIFilterIrpStopDeviceCompletion(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -1824,30 +1571,25 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status          = Irp->IoStatus.Status;
-    PDEVICE_EXTENSION   deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
-    PIO_STACK_LOCATION  irpStack        = IoGetCurrentIrpStackLocation( Irp );
+    NTSTATUS status = Irp->IoStatus.Status;
+    PDEVICE_EXTENSION deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
+    PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
 
-    ACPIDevPrint( (
-        ACPI_PRINT_IRP,
-        deviceExtension,
-        "(%#08lx): %s = %#08lx (processing)\n",
-        Irp,
-        ACPIDebugGetIrpText(IRP_MJ_PNP, IRP_MN_STOP_DEVICE),
-        status
-        ) );
+    ACPIDevPrint((ACPI_PRINT_IRP, deviceExtension, "(%#08lx): %s = %#08lx (processing)\n", Irp,
+                  ACPIDebugGetIrpText(IRP_MJ_PNP, IRP_MN_STOP_DEVICE), status));
 
     //
     // Migrate the pending bit as we are not returning
     // STATUS_MORE_PROCESSING_REQUIRED
     //
-    if (Irp->PendingReturned) {
+    if (Irp->PendingReturned)
+    {
 
-        IoMarkIrpPending( Irp );
-
+        IoMarkIrpPending(Irp);
     }
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         //
         // Set the device as 'Stopped'
@@ -1857,26 +1599,22 @@ Return Value:
         //
         // Attempt to stop the device (if possible)
         //
-        ACPIInitStopDevice( deviceExtension, FALSE );
-
+        ACPIInitStopDevice(deviceExtension, FALSE);
     }
 
     //
     // Decrement our reference count
     //
-    ACPIInternalDecrementIrpReferenceCount( deviceExtension );
+    ACPIInternalDecrementIrpReferenceCount(deviceExtension);
 
     //
     // Done
     //
-    return STATUS_SUCCESS ;
+    return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-ACPIFilterIrpSurpriseRemoval(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+ACPIFilterIrpSurpriseRemoval(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -1894,27 +1632,27 @@ Return Value:
 
 --*/
 {
-    KIRQL               oldIrql;
-    NTSTATUS            status;
-    PDEVICE_EXTENSION   deviceExtension;
-    PDEVICE_OBJECT      targetObject;
-    PIO_STACK_LOCATION  irpStack        = IoGetCurrentIrpStackLocation( Irp );
-    UCHAR               minorFunction   = irpStack->MinorFunction;
-    KEVENT              surpriseRemoveEvent;
+    KIRQL oldIrql;
+    NTSTATUS status;
+    PDEVICE_EXTENSION deviceExtension;
+    PDEVICE_OBJECT targetObject;
+    PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
+    UCHAR minorFunction = irpStack->MinorFunction;
+    KEVENT surpriseRemoveEvent;
 
     //
     // Get the current extension.
     //
-    deviceExtension = ACPIInternalGetDeviceExtension( DeviceObject );
+    deviceExtension = ACPIInternalGetDeviceExtension(DeviceObject);
 
     //
     // If the device is really gone, then consider it stopped
     //
-    if ( !ACPIInternalIsReportedMissing(deviceExtension) ) {
+    if (!ACPIInternalIsReportedMissing(deviceExtension))
+    {
 
         deviceExtension->DeviceState = Inactive;
-        return ACPIFilterIrpStopDevice( DeviceObject, Irp );
-
+        return ACPIFilterIrpStopDevice(DeviceObject, Irp);
     }
 
     //
@@ -1922,17 +1660,17 @@ Return Value:
     // the outstanding irp count should be exactly one. Similarly, the
     // device extension reference count should be at least one.
     //
-    ASSERT(deviceExtension->OutstandingIrpCount == 1) ;
-    ASSERT(deviceExtension->ReferenceCount > 0) ;
+    ASSERT(deviceExtension->OutstandingIrpCount == 1);
+    ASSERT(deviceExtension->ReferenceCount > 0);
 
-    if (IsPciBus(deviceExtension->DeviceObject)) {
+    if (IsPciBus(deviceExtension->DeviceObject))
+    {
 
         //
         // If this is PCI bridge, then we
         // may have _REG methods to evaluate.
         //
         EnableDisableRegions(deviceExtension->AcpiObject, FALSE);
-
     }
 
     //
@@ -1943,67 +1681,48 @@ Return Value:
     //
     // Initialize an event so that we can block
     //
-    KeInitializeEvent( &surpriseRemoveEvent, SynchronizationEvent, FALSE );
+    KeInitializeEvent(&surpriseRemoveEvent, SynchronizationEvent, FALSE);
 
     //
     // If we succeeded, then we must set a completion routine so that we
     // can do some post-processing
     //
-    IoCopyCurrentIrpStackLocationToNext( Irp );
-    IoSetCompletionRoutine(
-        Irp,
-        ACPIRootIrpCompleteRoutine,
-        &surpriseRemoveEvent,
-        TRUE,
-        TRUE,
-        TRUE
-        );
-    status = IoCallDriver( deviceExtension->TargetDeviceObject, Irp );
+    IoCopyCurrentIrpStackLocationToNext(Irp);
+    IoSetCompletionRoutine(Irp, ACPIRootIrpCompleteRoutine, &surpriseRemoveEvent, TRUE, TRUE, TRUE);
+    status = IoCallDriver(deviceExtension->TargetDeviceObject, Irp);
 
     //
     // Wait for it to come back...
     //
-    if (status == STATUS_PENDING) {
+    if (status == STATUS_PENDING)
+    {
 
-        KeWaitForSingleObject(
-            &surpriseRemoveEvent,
-            Executive,
-            KernelMode,
-            FALSE,
-            NULL
-            );
+        KeWaitForSingleObject(&surpriseRemoveEvent, Executive, KernelMode, FALSE, NULL);
 
         //
         // Grab the 'real' status
         //
         status = Irp->IoStatus.Status;
-
     }
 
-    ACPIDevPrint( (
-        ACPI_PRINT_REMOVE,
-        deviceExtension,
-        "(%#08lx): %s (pre) = %#08lx\n",
-        Irp,
-        ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction),
-        status
-        ) );
+    ACPIDevPrint((ACPI_PRINT_REMOVE, deviceExtension, "(%#08lx): %s (pre) = %#08lx\n", Irp,
+                  ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction), status));
 
     //
     // Do nothing if other's aborted (ie, PDO doesn't support IRP.) Later, I
     // should check on the way down, as it is much more likely that the FDO
     // will not support this attempt.
     //
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         goto ACPIFilterIrpSurpriseRemovalExit;
-
     }
 
     //
     // Attempt to stop the device (if possible)
     //
-    ACPIInitStopDevice( deviceExtension, TRUE );
+    ACPIInitStopDevice(deviceExtension, TRUE);
 
     //
     // There are far better places to do this
@@ -2028,21 +1747,13 @@ Return Value:
     ACPIBuildSurpriseRemovedExtension(deviceExtension);
 
 ACPIFilterIrpSurpriseRemovalExit:
-    ACPIDevPrint( (
-        ACPI_PRINT_REMOVE,
-        deviceExtension,
-        "(%#08lx): %s (post) = %#08lx\n",
-        Irp,
-        ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction),
-        status
-        ) );
+    ACPIDevPrint((ACPI_PRINT_REMOVE, deviceExtension, "(%#08lx): %s (post) = %#08lx\n", Irp,
+                  ACPIDebugGetIrpText(IRP_MJ_PNP, minorFunction), status));
 
     //
     // Done with the request
     //
-    Irp->IoStatus.Status = status ;
-    IoCompleteRequest( Irp, IO_NO_INCREMENT );
-    return status ;
+    Irp->IoStatus.Status = status;
+    IoCompleteRequest(Irp, IO_NO_INCREMENT);
+    return status;
 }
-
-

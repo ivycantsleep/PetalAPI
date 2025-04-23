@@ -25,13 +25,13 @@ Revision History:
 #include "ntrtlp.h"
 #include <stdio.h>
 
-extern PUSHORT  NlsUnicodeToMbOemData;
-extern PUSHORT  NlsOemToUnicodeData;
-extern PCH      NlsUnicodeToOemData;
-extern PUSHORT  NlsMbOemCodePageTables;
-extern BOOLEAN  NlsMbOemCodePageTag;
-extern const PUSHORT  NlsOemLeadByteInfo;
-extern USHORT   OemDefaultChar;
+extern PUSHORT NlsUnicodeToMbOemData;
+extern PUSHORT NlsOemToUnicodeData;
+extern PCH NlsUnicodeToOemData;
+extern PUSHORT NlsMbOemCodePageTables;
+extern BOOLEAN NlsMbOemCodePageTag;
+extern const PUSHORT NlsOemLeadByteInfo;
+extern USHORT OemDefaultChar;
 
 //
 //  A condensed table of legal fat character values
@@ -40,24 +40,13 @@ extern USHORT   OemDefaultChar;
 #if defined(ALLOC_DATA_PRAGMA) && defined(NTOS_KERNEL_RUNTIME)
 #pragma const_seg("PAGECONST")
 #endif
-const
-ULONG RtlFatIllegalTable[] = { 0xffffffff,
-                               0xfc009c04,
-                               0x38000000,
-                               0x10000000 };
+const ULONG RtlFatIllegalTable[] = { 0xffffffff, 0xfc009c04, 0x38000000, 0x10000000 };
 
 WCHAR
-GetNextWchar (
-    IN PUNICODE_STRING Name,
-    IN PULONG CurrentIndex,
-    IN BOOLEAN SkipDots,
-    IN BOOLEAN AllowExtendedCharacters
-    );
+GetNextWchar(IN PUNICODE_STRING Name, IN PULONG CurrentIndex, IN BOOLEAN SkipDots, IN BOOLEAN AllowExtendedCharacters);
 
 USHORT
-RtlComputeLfnChecksum (
-    PUNICODE_STRING Name
-    );
+RtlComputeLfnChecksum(PUNICODE_STRING Name);
 
 //
 //  BOOLEAN
@@ -66,27 +55,19 @@ RtlComputeLfnChecksum (
 //  );
 //
 
-#define IsDbcsCharacter(WC) (             \
-    ((WC) > 127) &&                       \
-    (HIBYTE(NlsUnicodeToMbOemData[(WC)])) \
-)
+#define IsDbcsCharacter(WC) (((WC) > 127) && (HIBYTE(NlsUnicodeToMbOemData[(WC)])))
 
 #if defined(ALLOC_PRAGMA) && defined(NTOS_KERNEL_RUNTIME)
-#pragma alloc_text(PAGE,RtlGenerate8dot3Name)
-#pragma alloc_text(PAGE,GetNextWchar)
-#pragma alloc_text(PAGE,RtlComputeLfnChecksum)
-#pragma alloc_text(PAGE,RtlIsNameLegalDOS8Dot3)
-#pragma alloc_text(PAGE,RtlIsValidOemCharacter)
+#pragma alloc_text(PAGE, RtlGenerate8dot3Name)
+#pragma alloc_text(PAGE, GetNextWchar)
+#pragma alloc_text(PAGE, RtlComputeLfnChecksum)
+#pragma alloc_text(PAGE, RtlIsNameLegalDOS8Dot3)
+#pragma alloc_text(PAGE, RtlIsValidOemCharacter)
 #endif
 
-
-VOID
-RtlGenerate8dot3Name (
-    IN PUNICODE_STRING Name,
-    IN BOOLEAN AllowExtendedCharacters,
-    IN OUT PGENERATE_NAME_CONTEXT Context,
-    OUT PUNICODE_STRING Name8dot3
-    )
+
+VOID RtlGenerate8dot3Name(IN PUNICODE_STRING Name, IN BOOLEAN AllowExtendedCharacters,
+                          IN OUT PGENERATE_NAME_CONTEXT Context, OUT PUNICODE_STRING Name8dot3)
 
 /*++
 
@@ -140,7 +121,8 @@ Return Value:
     //  initialize the context fields.
     //
 
-    if (Context->NameLength == 0) {
+    if (Context->NameLength == 0)
+    {
 
         ULONG LastDotIndex;
 
@@ -159,13 +141,14 @@ Return Value:
         CurrentIndex = 0;
         SkipDots = ((Name->Length > 0) && (Name->Buffer[0] == L'.'));
 
-        while ((wc = GetNextWchar( Name,
-                                   &CurrentIndex,
-                                   SkipDots,
-                                   AllowExtendedCharacters )) != 0) {
+        while ((wc = GetNextWchar(Name, &CurrentIndex, SkipDots, AllowExtendedCharacters)) != 0)
+        {
 
             SkipDots = FALSE;
-            if (wc == L'.') { LastDotIndex = CurrentIndex; }
+            if (wc == L'.')
+            {
+                LastDotIndex = CurrentIndex;
+            }
         }
 
         //
@@ -173,7 +156,8 @@ Return Value:
         //  then there really isn't an extension, so reset LastDotIndex.
         //
 
-        if (LastDotIndex == Name->Length/sizeof(WCHAR)) {
+        if (LastDotIndex == Name->Length / sizeof(WCHAR))
+        {
 
             LastDotIndex = MAXULONG;
         }
@@ -194,9 +178,9 @@ Return Value:
         OemLength = 0;
         Context->NameLength = 0;
 
-        while ((wc = GetNextWchar( Name, &CurrentIndex, TRUE, AllowExtendedCharacters)) &&
-               (CurrentIndex < LastDotIndex) &&
-               (Context->NameLength < 6)) {
+        while ((wc = GetNextWchar(Name, &CurrentIndex, TRUE, AllowExtendedCharacters)) &&
+               (CurrentIndex < LastDotIndex) && (Context->NameLength < 6))
+        {
 
             //
             //  If we are on a multi-byte code page we have to be careful
@@ -207,11 +191,15 @@ Return Value:
             //  are on.
             //
 
-            if (DbcsAware) {
+            if (DbcsAware)
+            {
 
                 OemLength += IsDbcsCharacter(wc) ? 2 : 1;
 
-                if (OemLength > 6) { break; }
+                if (OemLength > 6)
+                {
+                    break;
+                }
             }
 
             //
@@ -227,20 +215,21 @@ Return Value:
         //  to make the short name space less sparse.
         //
 
-        if ((DbcsAware ? OemLength : Context->NameLength) <= 2) {
+        if ((DbcsAware ? OemLength : Context->NameLength) <= 2)
+        {
 
             USHORT Checksum;
             WCHAR Nibble;
 
-            Checksum =
-            Context->Checksum = RtlComputeLfnChecksum( Name );
+            Checksum = Context->Checksum = RtlComputeLfnChecksum(Name);
 
-            for (i = 0; i < 4; i++, Checksum >>= 4) {
+            for (i = 0; i < 4; i++, Checksum >>= 4)
+            {
 
                 Nibble = Checksum & 0xf;
                 Nibble += Nibble <= 9 ? '0' : 'A' - 10;
 
-                Context->NameBuffer[ Context->NameLength + i ] = Nibble;
+                Context->NameBuffer[Context->NameLength + i] = Nibble;
             }
 
             Context->NameLength += 4;
@@ -253,7 +242,8 @@ Return Value:
         //  have located the last dot in the name
         //
 
-        if (LastDotIndex != MAXULONG) {
+        if (LastDotIndex != MAXULONG)
+        {
 
             //
             //  Put in the "."
@@ -273,14 +263,19 @@ Return Value:
             OemLength = 1;
             Context->ExtensionLength = 1;
 
-            while ((wc = GetNextWchar( Name, &LastDotIndex, TRUE, AllowExtendedCharacters)) &&
-                   (Context->ExtensionLength < 4)) {
+            while ((wc = GetNextWchar(Name, &LastDotIndex, TRUE, AllowExtendedCharacters)) &&
+                   (Context->ExtensionLength < 4))
+            {
 
-                if (DbcsAware) {
+                if (DbcsAware)
+                {
 
                     OemLength += IsDbcsCharacter(wc) ? 2 : 1;
 
-                    if (OemLength > 4) { break; }
+                    if (OemLength > 4)
+                    {
+                        break;
+                    }
                 }
 
                 Context->ExtensionBuffer[Context->ExtensionLength++] = wc;
@@ -292,12 +287,14 @@ Return Value:
             //  to a ~ is user has selected safe extensions.
             //
 
-            if (wc && FsRtlSafeExtensions) {
+            if (wc && FsRtlSafeExtensions)
+            {
 
                 Context->ExtensionBuffer[Context->ExtensionLength - 1] = L'~';
             }
-
-        } else {
+        }
+        else
+        {
 
             Context->ExtensionLength = 0;
         }
@@ -315,7 +312,8 @@ Return Value:
     //  many collisions and we should alter our basis if possible
     //
 
-    if ((Context->LastIndexValue > 4) && !Context->ChecksumInserted) {
+    if ((Context->LastIndexValue > 4) && !Context->ChecksumInserted)
+    {
 
         USHORT Checksum;
         WCHAR Nibble;
@@ -333,28 +331,30 @@ Return Value:
 
         ULONG DbcsBias;
 
-        if (DbcsAware) {
+        if (DbcsAware)
+        {
 
-              DbcsBias = ((IsDbcsCharacter(Context->NameBuffer[0]) ? 1 : 0) |
-                          (IsDbcsCharacter(Context->NameBuffer[1]) ? 1 : 0));
+            DbcsBias =
+                ((IsDbcsCharacter(Context->NameBuffer[0]) ? 1 : 0) | (IsDbcsCharacter(Context->NameBuffer[1]) ? 1 : 0));
+        }
+        else
+        {
 
-        } else {
-
-              DbcsBias = 0;
+            DbcsBias = 0;
         }
 
-        Checksum =
-        Context->Checksum = RtlComputeLfnChecksum( Name );
+        Checksum = Context->Checksum = RtlComputeLfnChecksum(Name);
 
-        for (i = (2-DbcsBias); i < (6-DbcsBias); i++, Checksum >>= 4) {
+        for (i = (2 - DbcsBias); i < (6 - DbcsBias); i++, Checksum >>= 4)
+        {
 
             Nibble = Checksum & 0xf;
             Nibble += Nibble <= 9 ? '0' : 'A' - 10;
 
-            Context->NameBuffer[ i ] = Nibble;
+            Context->NameBuffer[i] = Nibble;
         }
 
-        Context->NameLength = (UCHAR)(6-DbcsBias);
+        Context->NameLength = (UCHAR)(6 - DbcsBias);
         Context->LastIndexValue = 1;
         Context->ChecksumInserted = TRUE;
     }
@@ -366,11 +366,11 @@ Return Value:
     //  We also want to remember is we are about to rollover in base 10.
     //
 
-    for (IndexLength = 1, i = Context->LastIndexValue;
-         (IndexLength <= 7) && (i > 0);
-         IndexLength += 1, i /= 10) {
+    for (IndexLength = 1, i = Context->LastIndexValue; (IndexLength <= 7) && (i > 0); IndexLength += 1, i /= 10)
+    {
 
-        if ((IndexBuffer[ 8 - IndexLength] = (WCHAR)(L'0' + (i % 10))) != L'9') {
+        if ((IndexBuffer[8 - IndexLength] = (WCHAR)(L'0' + (i % 10))) != L'9')
+        {
 
             IndexAll9s = FALSE;
         }
@@ -380,22 +380,22 @@ Return Value:
     //  And tack on the preceding dash
     //
 
-    IndexBuffer[ 8 - IndexLength ] = L'~';
+    IndexBuffer[8 - IndexLength] = L'~';
 
     //
     //  At this point everything is set up to copy to the output buffer.  First
     //  copy over the name and then only copy the index and extension if they exist
     //
 
-    if (Context->NameLength != 0) {
+    if (Context->NameLength != 0)
+    {
 
-        RtlCopyMemory( &Name8dot3->Buffer[0],
-                       &Context->NameBuffer[0],
-                       Context->NameLength * 2 );
+        RtlCopyMemory(&Name8dot3->Buffer[0], &Context->NameBuffer[0], Context->NameLength * 2);
 
         Name8dot3->Length = (USHORT)(Context->NameLength * 2);
-
-    } else {
+    }
+    else
+    {
 
         Name8dot3->Length = 0;
     }
@@ -404,23 +404,21 @@ Return Value:
     //  Now do the index.
     //
 
-    RtlCopyMemory( &Name8dot3->Buffer[ Name8dot3->Length/2 ],
-                   &IndexBuffer[ 8 - IndexLength ],
-                   IndexLength * 2 );
+    RtlCopyMemory(&Name8dot3->Buffer[Name8dot3->Length / 2], &IndexBuffer[8 - IndexLength], IndexLength * 2);
 
-    Name8dot3->Length += (USHORT) (IndexLength * 2);
+    Name8dot3->Length += (USHORT)(IndexLength * 2);
 
     //
     //  Now conditionally do the extension
     //
 
-    if (Context->ExtensionLength != 0) {
+    if (Context->ExtensionLength != 0)
+    {
 
-        RtlCopyMemory( &Name8dot3->Buffer[ Name8dot3->Length/2 ],
-                       &Context->ExtensionBuffer[0],
-                       Context->ExtensionLength * 2 );
+        RtlCopyMemory(&Name8dot3->Buffer[Name8dot3->Length / 2], &Context->ExtensionBuffer[0],
+                      Context->ExtensionLength * 2);
 
-        Name8dot3->Length += (USHORT) (Context->ExtensionLength * 2);
+        Name8dot3->Length += (USHORT)(Context->ExtensionLength * 2);
     }
 
     //
@@ -429,22 +427,27 @@ Return Value:
     //  Context->NameLength so that is will be correct for next time.
     //
 
-    if (IndexAll9s) {
+    if (IndexAll9s)
+    {
 
-        if (DbcsAware) {
+        if (DbcsAware)
+        {
 
-            for (i = 0, OemLength = 0; i < Context->NameLength; i++) {
+            for (i = 0, OemLength = 0; i < Context->NameLength; i++)
+            {
 
                 OemLength += IsDbcsCharacter(Context->NameBuffer[i]) ? 2 : 1;
 
-                if (OemLength > 8 - (IndexLength + 1)) {
+                if (OemLength > 8 - (IndexLength + 1))
+                {
                     break;
                 }
             }
 
             Context->NameLength = (UCHAR)i;
-
-        } else {
+        }
+        else
+        {
 
             Context->NameLength -= 1;
         }
@@ -457,11 +460,9 @@ Return Value:
     return;
 }
 
-
+
 BOOLEAN
-RtlIsValidOemCharacter (
-    IN PWCHAR Char
-)
+RtlIsValidOemCharacter(IN PWCHAR Char)
 
 /*++
 
@@ -489,12 +490,14 @@ Return Value:
     //  First try to make a round trip from Unicode->Oem->Unicode.
     //
 
-    if (!NlsMbOemCodePageTag) {
+    if (!NlsMbOemCodePageTag)
+    {
 
         UniTmp = (WCHAR)NLS_UPCASE(NlsOemToUnicodeData[(UCHAR)NlsUnicodeToOemData[*Char]]);
         OemChar = NlsUnicodeToOemData[UniTmp];
-
-    } else {
+    }
+    else
+    {
 
         //
         // Convert to OEM and back to Unicode before upper casing
@@ -502,9 +505,10 @@ Return Value:
         // upper cased properly.
         //
 
-        OemChar = NlsUnicodeToMbOemData[ *Char ];
+        OemChar = NlsUnicodeToMbOemData[*Char];
 
-        if (NlsOemLeadByteInfo[HIBYTE(OemChar)]) {
+        if (NlsOemLeadByteInfo[HIBYTE(OemChar)])
+        {
 
             USHORT Entry;
 
@@ -514,9 +518,10 @@ Return Value:
             //
 
             Entry = NlsOemLeadByteInfo[HIBYTE(OemChar)];
-            UniTmp = (WCHAR)NlsMbOemCodePageTables[ Entry + LOBYTE(OemChar) ];
-
-        } else {
+            UniTmp = (WCHAR)NlsMbOemCodePageTables[Entry + LOBYTE(OemChar)];
+        }
+        else
+        {
 
             //
             // Single byte character.
@@ -538,29 +543,26 @@ Return Value:
     //  mapping for this UNICODE character.
     //
 
-    if (OemChar == OemDefaultChar) {
+    if (OemChar == OemDefaultChar)
+    {
 
         return FALSE;
-
-    } else {
+    }
+    else
+    {
 
         *Char = UniTmp;
         return TRUE;
     }
 }
 
-
+
 //
 //  Local support routine
 //
 
 WCHAR
-GetNextWchar (
-    IN PUNICODE_STRING Name,
-    IN PULONG CurrentIndex,
-    IN BOOLEAN SkipDots,
-    IN BOOLEAN AllowExtendedCharacters
-    )
+GetNextWchar(IN PUNICODE_STRING Name, IN PULONG CurrentIndex, IN BOOLEAN SkipDots, IN BOOLEAN AllowExtendedCharacters)
 
 /*++
 
@@ -611,7 +613,8 @@ Return Value:
     //  return or until we exhaust the name buffer
     //
 
-    while (*CurrentIndex < (ULONG)(Name->Length/2)) {
+    while (*CurrentIndex < (ULONG)(Name->Length / 2))
+    {
 
         //
         //  Get the next character in the buffer
@@ -624,19 +627,21 @@ Return Value:
         //  If the character is to be skipped over then reset wc to 0
         //
 
-        if ((wc <= L' ') ||
-            ((wc >= 127) && (!AllowExtendedCharacters || !RtlIsValidOemCharacter(&wc))) ||
-            ((wc == L'.') && SkipDots)) {
+        if ((wc <= L' ') || ((wc >= 127) && (!AllowExtendedCharacters || !RtlIsValidOemCharacter(&wc))) ||
+            ((wc == L'.') && SkipDots))
+        {
 
             wc = 0;
-
-        } else {
+        }
+        else
+        {
 
             //
             //  We have a character to return, but first translate the character is necessary
             //
 
-            if ((wc < 0x80) && (RtlFatIllegalTable[wc/32] & (1 << (wc%32)))) {
+            if ((wc < 0x80) && (RtlFatIllegalTable[wc / 32] & (1 << (wc % 32))))
+            {
 
                 wc = L'_';
             }
@@ -645,7 +650,8 @@ Return Value:
             //  Do an a-z upcase.
             //
 
-            if ((wc >= L'a') && (wc <= L'z')) {
+            if ((wc >= L'a') && (wc <= L'z'))
+            {
 
                 wc -= L'a' - L'A';
             }
@@ -663,15 +669,13 @@ Return Value:
     return wc;
 }
 
-
+
 //
 //  Internal support routine
 //
 
 USHORT
-RtlComputeLfnChecksum (
-    PUNICODE_STRING Name
-    )
+RtlComputeLfnChecksum(PUNICODE_STRING Name)
 
 /*++
 
@@ -696,7 +700,8 @@ Return Value:
 
     RTL_PAGED_CODE();
 
-    if (Name->Length == sizeof(WCHAR)) {
+    if (Name->Length == sizeof(WCHAR))
+    {
 
         return Name->Buffer[0];
     }
@@ -708,32 +713,29 @@ Return Value:
     //  a good range even if all the characters are < 0x00ff.
     //
 
-    for (i=2; i < Name->Length / sizeof(WCHAR); i+=2) {
+    for (i = 2; i < Name->Length / sizeof(WCHAR); i += 2)
+    {
 
-        Checksum = (Checksum & 1 ? 0x8000 : 0) +
-                   (Checksum >> 1) +
-                   (Name->Buffer[i] << 8);
+        Checksum = (Checksum & 1 ? 0x8000 : 0) + (Checksum >> 1) + (Name->Buffer[i] << 8);
 
         //
         //  Be carefull to not walk off the end of the string.
         //
 
-        if (i+1 < Name->Length / sizeof(WCHAR)) {
+        if (i + 1 < Name->Length / sizeof(WCHAR))
+        {
 
-            Checksum += Name->Buffer[i+1] & 0xffff;
+            Checksum += Name->Buffer[i + 1] & 0xffff;
         }
     }
 
     return Checksum;
 }
 
-
+
 BOOLEAN
-RtlIsNameLegalDOS8Dot3 (
-    IN PUNICODE_STRING Name,
-    IN OUT POEM_STRING OemName OPTIONAL,
-    OUT PBOOLEAN NameContainsSpaces OPTIONAL
-    )
+RtlIsNameLegalDOS8Dot3(IN PUNICODE_STRING Name, IN OUT POEM_STRING OemName OPTIONAL,
+                       OUT PBOOLEAN NameContainsSpaces OPTIONAL)
 /*++
 
 Routine Description:
@@ -784,7 +786,8 @@ Return Value:
     //  If the name is more than 12 chars, bail.
     //
 
-    if (Name->Length > 12*sizeof(WCHAR)) {
+    if (Name->Length > 12 * sizeof(WCHAR))
+    {
         return FALSE;
     }
 
@@ -793,7 +796,8 @@ Return Value:
     //  return FALSE.
     //
 
-    if (!ARGUMENT_PRESENT(OemName)) {
+    if (!ARGUMENT_PRESENT(OemName))
+    {
 
         OemName = &LocalOemName;
 
@@ -802,7 +806,8 @@ Return Value:
         OemName->MaximumLength = 12;
     }
 
-    if (!NT_SUCCESS(RtlUpcaseUnicodeStringToCountedOemString(OemName, Name, FALSE))) {
+    if (!NT_SUCCESS(RtlUpcaseUnicodeStringToCountedOemString(OemName, Name, FALSE)))
+    {
         return FALSE;
     }
 
@@ -811,9 +816,11 @@ Return Value:
     //
 
     if (((OemName->Length == 1) && (OemName->Buffer[0] == '.')) ||
-        ((OemName->Length == 2) && (OemName->Buffer[0] == '.') && (OemName->Buffer[1] == '.'))) {
+        ((OemName->Length == 2) && (OemName->Buffer[0] == '.') && (OemName->Buffer[1] == '.')))
+    {
 
-        if (ARGUMENT_PRESENT(NameContainsSpaces)) {
+        if (ARGUMENT_PRESENT(NameContainsSpaces))
+        {
             *NameContainsSpaces = FALSE;
         }
         return TRUE;
@@ -824,15 +831,17 @@ Return Value:
     //  illegal characters and/or incorrect syntax.
     //
 
-    for ( Index = 0; Index < OemName->Length; Index += 1 ) {
+    for (Index = 0; Index < OemName->Length; Index += 1)
+    {
 
-        Char = OemName->Buffer[ Index ];
+        Char = OemName->Buffer[Index];
 
         //
         //  Skip over and Dbcs chacters
         //
 
-        if (NlsMbOemCodePageTag && NlsOemLeadByteInfo[Char]) {
+        if (NlsMbOemCodePageTag && NlsOemLeadByteInfo[Char])
+        {
 
             //
             //  1) if we're looking at base part ( !ExtensionPresent ) and the 8th byte
@@ -843,8 +852,8 @@ Return Value:
             //     byte range, it's error
             //
 
-            if ((!ExtensionPresent && (Index >= 7)) ||
-                (Index == (ULONG)(OemName->Length - 1))) {
+            if ((!ExtensionPresent && (Index >= 7)) || (Index == (ULONG)(OemName->Length - 1)))
+            {
                 return FALSE;
             }
 
@@ -857,8 +866,8 @@ Return Value:
         //  Make sure this character is legal.
         //
 
-        if ((Char < 0x80) &&
-            (RtlFatIllegalTable[Char/32] & (1 << (Char%32)))) {
+        if ((Char < 0x80) && (RtlFatIllegalTable[Char / 32] & (1 << (Char % 32))))
+        {
             return FALSE;
         }
 
@@ -866,11 +875,13 @@ Return Value:
         //  Remember if there was a space.
         //
 
-        if (Char == ' ') {
+        if (Char == ' ')
+        {
             SpacesPresent = TRUE;
         }
 
-        if (Char == '.') {
+        if (Char == '.')
+        {
 
             //
             //  We stepped onto a period.  We require the following things:
@@ -881,10 +892,9 @@ Return Value:
             //      - There can't be more than 3 bytes following
             //
 
-            if (ExtensionPresent ||
-                (Index == 0) ||
-                (OemName->Buffer[Index - 1] == ' ') ||
-                (OemName->Length - (Index + 1) > 3)) {
+            if (ExtensionPresent || (Index == 0) || (OemName->Buffer[Index - 1] == ' ') ||
+                (OemName->Length - (Index + 1) > 3))
+            {
 
                 return FALSE;
             }
@@ -896,18 +906,24 @@ Return Value:
         //  The base part of the name can't be more than 8 characters long.
         //
 
-        if ((Index >= 8) && !ExtensionPresent) { return FALSE; }
+        if ((Index >= 8) && !ExtensionPresent)
+        {
+            return FALSE;
+        }
     }
 
     //
     //  The name cannot end in a space or a period.
     //
 
-    if ((Char == ' ') || (Char == '.')) { return FALSE; }
+    if ((Char == ' ') || (Char == '.'))
+    {
+        return FALSE;
+    }
 
-    if (ARGUMENT_PRESENT(NameContainsSpaces)) {
+    if (ARGUMENT_PRESENT(NameContainsSpaces))
+    {
         *NameContainsSpaces = SpacesPresent;
     }
     return TRUE;
 }
-

@@ -22,13 +22,11 @@ Revision History:
 #include "nt.h"
 #include "ntrtlp.h"
 
-
+
 #undef RtlUshortByteSwap
 USHORT
 FASTCALL
-RtlUshortByteSwap(
-    IN USHORT Source
-    )
+RtlUshortByteSwap(IN USHORT Source)
 
 /*++
 
@@ -49,19 +47,16 @@ Return Value:
 {
     USHORT swapped;
 
-    swapped = ((Source) << (8 * 1)) |
-              ((Source) >> (8 * 1));
+    swapped = ((Source) << (8 * 1)) | ((Source) >> (8 * 1));
 
     return swapped;
 }
 
-
+
 #undef RtlUlongByteSwap
 ULONG
 FASTCALL
-RtlUlongByteSwap(
-    IN ULONG Source
-    )
+RtlUlongByteSwap(IN ULONG Source)
 
 /*++
 
@@ -82,21 +77,17 @@ Return Value:
 {
     ULONG swapped;
 
-    swapped = ((Source)              << (8 * 3)) |
-              ((Source & 0x0000FF00) << (8 * 1)) |
-              ((Source & 0x00FF0000) >> (8 * 1)) |
-              ((Source)              >> (8 * 3));
+    swapped = ((Source) << (8 * 3)) | ((Source & 0x0000FF00) << (8 * 1)) | ((Source & 0x00FF0000) >> (8 * 1)) |
+              ((Source) >> (8 * 3));
 
     return swapped;
 }
 
-
+
 #undef RtlUlonglongByteSwap
 ULONGLONG
 FASTCALL
-RtlUlonglongByteSwap(
-    IN ULONGLONG Source
-    )
+RtlUlonglongByteSwap(IN ULONGLONG Source)
 
 /*++
 
@@ -117,16 +108,10 @@ Return Value:
 {
     ULONGLONG swapped;
 
-    swapped = ((Source)                      << (8 * 7)) |
-              ((Source & 0x000000000000FF00) << (8 * 5)) |
-              ((Source & 0x0000000000FF0000) << (8 * 3)) |
-              ((Source & 0x00000000FF000000) << (8 * 1)) |
-              ((Source & 0x000000FF00000000) >> (8 * 1)) |
-              ((Source & 0x0000FF0000000000) >> (8 * 3)) |
-              ((Source & 0x00FF000000000000) >> (8 * 5)) |
-              ((Source)                      >> (8 * 7));
+    swapped = ((Source) << (8 * 7)) | ((Source & 0x000000000000FF00) << (8 * 5)) |
+              ((Source & 0x0000000000FF0000) << (8 * 3)) | ((Source & 0x00000000FF000000) << (8 * 1)) |
+              ((Source & 0x000000FF00000000) >> (8 * 1)) | ((Source & 0x0000FF0000000000) >> (8 * 3)) |
+              ((Source & 0x00FF000000000000) >> (8 * 5)) | ((Source) >> (8 * 7));
 
     return swapped;
 }
-
-

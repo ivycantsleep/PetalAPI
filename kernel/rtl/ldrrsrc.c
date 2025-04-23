@@ -21,38 +21,36 @@ Revision History:
 #include "ntrtlp.h"
 
 #if defined(ALLOC_PRAGMA) && defined(NTOS_KERNEL_RUNTIME)
-#pragma alloc_text(PAGE,LdrAccessResource)
-#pragma alloc_text(PAGE,LdrpAccessResourceData)
-#pragma alloc_text(PAGE,LdrpAccessResourceDataNoMultipleLanguage)
-#pragma alloc_text(PAGE,LdrFindEntryForAddress)
-#pragma alloc_text(PAGE,LdrFindResource_U)
-#pragma alloc_text(PAGE,LdrFindResourceEx_U)
-#pragma alloc_text(PAGE,LdrFindResourceDirectory_U)
-#pragma alloc_text(PAGE,LdrpCompareResourceNames_U)
-#pragma alloc_text(PAGE,LdrpSearchResourceSection_U)
-#pragma alloc_text(PAGE,LdrEnumResources)
+#pragma alloc_text(PAGE, LdrAccessResource)
+#pragma alloc_text(PAGE, LdrpAccessResourceData)
+#pragma alloc_text(PAGE, LdrpAccessResourceDataNoMultipleLanguage)
+#pragma alloc_text(PAGE, LdrFindEntryForAddress)
+#pragma alloc_text(PAGE, LdrFindResource_U)
+#pragma alloc_text(PAGE, LdrFindResourceEx_U)
+#pragma alloc_text(PAGE, LdrFindResourceDirectory_U)
+#pragma alloc_text(PAGE, LdrpCompareResourceNames_U)
+#pragma alloc_text(PAGE, LdrpSearchResourceSection_U)
+#pragma alloc_text(PAGE, LdrEnumResources)
 #endif
 
 #define USE_RC_CHECKSUM
 
 // winuser.h
 #define IS_INTRESOURCE(_r) (((ULONG_PTR)(_r) >> 16) == 0)
-#define RT_VERSION                         16
-#define RT_MANIFEST                        24
-#define CREATEPROCESS_MANIFEST_RESOURCE_ID  1
+#define RT_VERSION 16
+#define RT_MANIFEST 24
+#define CREATEPROCESS_MANIFEST_RESOURCE_ID 1
 #define ISOLATIONAWARE_MANIFEST_RESOURCE_ID 2
 #define MINIMUM_RESERVED_MANIFEST_RESOURCE_ID 1
 #define MAXIMUM_RESERVED_MANIFEST_RESOURCE_ID 16
 
-#define LDRP_MIN(x,y) (((x)<(y)) ? (x) : (y))
+#define LDRP_MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-#define DPFLTR_LEVEL_STATUS(x) ((NT_SUCCESS(x) \
-                                    || (x) == STATUS_OBJECT_NAME_NOT_FOUND    \
-                                    || (x) == STATUS_RESOURCE_DATA_NOT_FOUND  \
-                                    || (x) == STATUS_RESOURCE_TYPE_NOT_FOUND  \
-                                    || (x) == STATUS_RESOURCE_NAME_NOT_FOUND  \
-                                    ) \
-                                ? DPFLTR_TRACE_LEVEL : DPFLTR_ERROR_LEVEL)
+#define DPFLTR_LEVEL_STATUS(x)                                                                         \
+    ((NT_SUCCESS(x) || (x) == STATUS_OBJECT_NAME_NOT_FOUND || (x) == STATUS_RESOURCE_DATA_NOT_FOUND || \
+      (x) == STATUS_RESOURCE_TYPE_NOT_FOUND || (x) == STATUS_RESOURCE_NAME_NOT_FOUND)                  \
+         ? DPFLTR_TRACE_LEVEL                                                                          \
+         : DPFLTR_ERROR_LEVEL)
 
 #ifndef NTOS_KERNEL_RUNTIME
 #include <md5.h>
@@ -60,30 +58,30 @@ Revision History:
 //
 // The size in byte of the resource MD5 checksum.  16 bytes = 128 bits.
 //
-#define RESOURCE_CHECKSUM_SIZE          16
+#define RESOURCE_CHECKSUM_SIZE 16
 //
 // The registry key path which stores the file version information for MUI files.
 //
-#define REG_MUI_PATH                    L"Software\\Microsoft\\Windows\\CurrentVersion"
-#define REG_MUI_RC_PATH                 L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Nls\\MUILanguages\\RC" 
-#define MUI_MUILANGUAGES_KEY_NAME       L"MUILanguages"
-#define MUI_FILE_VERSION_KEY_NAME       L"FileVersions"
+#define REG_MUI_PATH L"Software\\Microsoft\\Windows\\CurrentVersion"
+#define REG_MUI_RC_PATH L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Nls\\MUILanguages\\RC"
+#define MUI_MUILANGUAGES_KEY_NAME L"MUILanguages"
+#define MUI_FILE_VERSION_KEY_NAME L"FileVersions"
 
-#define MUI_ALTERNATE_VERSION_KEY       L"MUIVer"
-#define MUI_RC_CHECKSUM_DISABLE_KEY     L"ChecksumDisable"
+#define MUI_ALTERNATE_VERSION_KEY L"MUIVer"
+#define MUI_RC_CHECKSUM_DISABLE_KEY L"ChecksumDisable"
 
 PALT_RESOURCE_MODULE AlternateResourceModules;
 ULONG AlternateResourceModuleCount;
 ULONG AltResMemBlockCount;
 LANGID UILangId, InstallLangId;
 
-#define DWORD_ALIGNMENT(x) (((x)+3) & ~3)
-#define  MEMBLOCKSIZE 16
-#define  RESMODSIZE sizeof(ALT_RESOURCE_MODULE)
+#define DWORD_ALIGNMENT(x) (((x) + 3) & ~3)
+#define MEMBLOCKSIZE 16
+#define RESMODSIZE sizeof(ALT_RESOURCE_MODULE)
 
 #define uint32 unsigned int
 
-#define ENG_US_LANGID  MAKELANGID( LANG_ENGLISH, SUBLANG_ENGLISH_US )
+#define ENG_US_LANGID MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US)
 
 #endif
 
@@ -92,12 +90,8 @@ LANGID UILangId, InstallLangId;
 __declspec(naked)
 #endif
 NTSTATUS
-LdrAccessResource(
-    IN PVOID DllHandle,
-    IN const IMAGE_RESOURCE_DATA_ENTRY* ResourceDataEntry,
-    OUT PVOID *Address OPTIONAL,
-    OUT PULONG Size OPTIONAL
-    )
+LdrAccessResource(IN PVOID DllHandle, IN const IMAGE_RESOURCE_DATA_ENTRY *ResourceDataEntry,
+                  OUT PVOID *Address OPTIONAL, OUT PULONG Size OPTIONAL)
 
 /*++
 
@@ -131,10 +125,10 @@ Return Value:
 {
 #if defined(_X86_) && !defined(BLDR_KERNEL_RUNTIME) && !defined(NTOS_KERNEL_RUNTIME)
     __asm {
-        push [esp+0x10]       // Size
-        push [esp+0x10]       // Address
-        push [esp+0x10]       // ResourceDataEntry
-        push [esp+0x10]       // DllHandle
+        push [esp+0x10] // Size
+        push [esp+0x10] // Address
+        push [esp+0x10] // ResourceDataEntry
+        push [esp+0x10] // DllHandle
         call LdrpAccessResourceData
         ret  16
     }
@@ -143,15 +137,10 @@ Return Value:
     NTSTATUS Status;
     RTL_PAGED_CODE();
 
-    Status =
-        LdrpAccessResourceData(
-          DllHandle,
-          ResourceDataEntry,
-          Address,
-          Size
-          );
+    Status = LdrpAccessResourceData(DllHandle, ResourceDataEntry, Address, Size);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         KdPrintEx((DPFLTR_LDR_ID, DPFLTR_LEVEL_STATUS(Status), "LDR: %s() exiting 0x%08lx\n", __FUNCTION__, Status));
     }
     return Status;
@@ -159,12 +148,8 @@ Return Value:
 }
 
 NTSTATUS
-LdrpAccessResourceDataNoMultipleLanguage(
-    IN PVOID DllHandle,
-    IN const IMAGE_RESOURCE_DATA_ENTRY* ResourceDataEntry,
-    OUT PVOID *Address OPTIONAL,
-    OUT PULONG Size OPTIONAL
-    )
+LdrpAccessResourceDataNoMultipleLanguage(IN PVOID DllHandle, IN const IMAGE_RESOURCE_DATA_ENTRY *ResourceDataEntry,
+                                         OUT PVOID *Address OPTIONAL, OUT PULONG Size OPTIONAL)
 
 /*++
 
@@ -208,32 +193,41 @@ Return Value:
 
     RTL_PAGED_CODE();
 
-    try {
-        ResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)
-            RtlImageDirectoryEntryToData(DllHandle,
-                                         TRUE,
-                                         IMAGE_DIRECTORY_ENTRY_RESOURCE,
-                                         &ResourceSize
-                                         );
-        if (!ResourceDirectory) {
+    try
+    {
+        ResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)RtlImageDirectoryEntryToData(
+            DllHandle, TRUE, IMAGE_DIRECTORY_ENTRY_RESOURCE, &ResourceSize);
+        if (!ResourceDirectory)
+        {
             return STATUS_RESOURCE_DATA_NOT_FOUND;
         }
 
-        if (LDR_IS_DATAFILE(DllHandle)) {
+        if (LDR_IS_DATAFILE(DllHandle))
+        {
             ULONG ResourceRVA;
             DllHandle = LDR_DATAFILE_TO_VIEW(DllHandle);
-            NtHeaders = RtlImageNtHeader( DllHandle );
-            if (NtHeaders->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC) {
-                ResourceRVA=((PIMAGE_NT_HEADERS32)NtHeaders)->OptionalHeader.DataDirectory[ IMAGE_DIRECTORY_ENTRY_RESOURCE ].VirtualAddress;
-            } else if (NtHeaders->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC) {
-                ResourceRVA=((PIMAGE_NT_HEADERS64)NtHeaders)->OptionalHeader.DataDirectory[ IMAGE_DIRECTORY_ENTRY_RESOURCE ].VirtualAddress;
-            } else {
+            NtHeaders = RtlImageNtHeader(DllHandle);
+            if (NtHeaders->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
+            {
+                ResourceRVA = ((PIMAGE_NT_HEADERS32)NtHeaders)
+                                  ->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE]
+                                  .VirtualAddress;
+            }
+            else if (NtHeaders->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+            {
+                ResourceRVA = ((PIMAGE_NT_HEADERS64)NtHeaders)
+                                  ->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE]
+                                  .VirtualAddress;
+            }
+            else
+            {
                 ResourceRVA = 0;
             }
 
-            if (!ResourceRVA) {
+            if (!ResourceRVA)
+            {
                 return STATUS_RESOURCE_DATA_NOT_FOUND;
-                }
+            }
 
             VirtualAddressOffset = (ULONG_PTR)DllHandle + ResourceRVA - (ULONG_PTR)ResourceDirectory;
 
@@ -243,46 +237,51 @@ Return Value:
             // we've got to adjust the RVA in the ResourceDataEntry
             // to point to the correct place in the non-VA data file.
             //
-            NtSection = RtlSectionTableFromVirtualAddress( NtHeaders, DllHandle, ResourceRVA);
+            NtSection = RtlSectionTableFromVirtualAddress(NtHeaders, DllHandle, ResourceRVA);
 
-            if (!NtSection) {
+            if (!NtSection)
+            {
                 return STATUS_RESOURCE_DATA_NOT_FOUND;
             }
 
-            if ( ResourceDataEntry->OffsetToData > NtSection->Misc.VirtualSize ) {
+            if (ResourceDataEntry->OffsetToData > NtSection->Misc.VirtualSize)
+            {
                 ULONG rva;
 
                 rva = NtSection->VirtualAddress;
-                NtSection = RtlSectionTableFromVirtualAddress(NtHeaders,
-                                                             DllHandle,
-                                                             ResourceDataEntry->OffsetToData
-                                                             );
-                if (!NtSection) {
+                NtSection = RtlSectionTableFromVirtualAddress(NtHeaders, DllHandle, ResourceDataEntry->OffsetToData);
+                if (!NtSection)
+                {
                     return STATUS_RESOURCE_DATA_NOT_FOUND;
                 }
                 VirtualAddressOffset +=
-                        ((ULONG_PTR)NtSection->VirtualAddress - rva) -
-                        ((ULONG_PTR)RtlAddressInSectionTable ( NtHeaders, DllHandle, NtSection->VirtualAddress ) - (ULONG_PTR)ResourceDirectory);
+                    ((ULONG_PTR)NtSection->VirtualAddress - rva) -
+                    ((ULONG_PTR)RtlAddressInSectionTable(NtHeaders, DllHandle, NtSection->VirtualAddress) -
+                     (ULONG_PTR)ResourceDirectory);
             }
-        } else {
+        }
+        else
+        {
             VirtualAddressOffset = 0;
         }
 
-        if (ARGUMENT_PRESENT( Address )) {
-            *Address = (PVOID)( (PCHAR)DllHandle +
-                                (ResourceDataEntry->OffsetToData - VirtualAddressOffset)
-                              );
+        if (ARGUMENT_PRESENT(Address))
+        {
+            *Address = (PVOID)((PCHAR)DllHandle + (ResourceDataEntry->OffsetToData - VirtualAddressOffset));
         }
 
-        if (ARGUMENT_PRESENT( Size )) {
+        if (ARGUMENT_PRESENT(Size))
+        {
             *Size = ResourceDataEntry->Size;
         }
-
-    }    except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
     }
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         KdPrintEx((DPFLTR_LDR_ID, DPFLTR_LEVEL_STATUS(Status), "LDR: %s() exiting 0x%08lx\n", __FUNCTION__, Status));
     }
     return Status;
@@ -290,12 +289,8 @@ Return Value:
 
 
 NTSTATUS
-LdrpAccessResourceData(
-    IN PVOID DllHandle,
-    IN const IMAGE_RESOURCE_DATA_ENTRY* ResourceDataEntry,
-    OUT PVOID *Address OPTIONAL,
-    OUT PULONG Size OPTIONAL
-    )
+LdrpAccessResourceData(IN PVOID DllHandle, IN const IMAGE_RESOURCE_DATA_ENTRY *ResourceDataEntry,
+                       OUT PVOID *Address OPTIONAL, OUT PULONG Size OPTIONAL)
 
 /*++
 
@@ -336,76 +331,75 @@ Return Value:
     RTL_PAGED_CODE();
 
 #ifndef NTOS_KERNEL_RUNTIME
-    ResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)
-        RtlImageDirectoryEntryToData(DllHandle,
-                                     TRUE,
-                                     IMAGE_DIRECTORY_ENTRY_RESOURCE,
-                                     &ResourceSize
-                                     );
-    if (!ResourceDirectory) {
+    ResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)RtlImageDirectoryEntryToData(
+        DllHandle, TRUE, IMAGE_DIRECTORY_ENTRY_RESOURCE, &ResourceSize);
+    if (!ResourceDirectory)
+    {
         Status = STATUS_RESOURCE_DATA_NOT_FOUND;
         goto Exit;
     }
 
-    if ((ULONG_PTR)ResourceDataEntry < (ULONG_PTR) ResourceDirectory ){
-        DllHandle = LdrLoadAlternateResourceModule (DllHandle, NULL);
-    } else{
+    if ((ULONG_PTR)ResourceDataEntry < (ULONG_PTR)ResourceDirectory)
+    {
+        DllHandle = LdrLoadAlternateResourceModule(DllHandle, NULL);
+    }
+    else
+    {
         NtHeaders = RtlImageNtHeader(LDR_DATAFILE_TO_VIEW(DllHandle));
-        if (NtHeaders) {
+        if (NtHeaders)
+        {
             // Find the bounds of the image so we can see if this resource entry is in an alternate
             // resource dll.
 
             ULONG_PTR ImageStart = (ULONG_PTR)LDR_DATAFILE_TO_VIEW(DllHandle);
             SIZE_T ImageSize = 0;
 
-            if (LDR_IS_DATAFILE(DllHandle)) {
+            if (LDR_IS_DATAFILE(DllHandle))
+            {
                 // mapped as datafile.  Ask mm for the size
                 NTSTATUS Status;
                 MEMORY_BASIC_INFORMATION MemInfo;
 
-                Status = NtQueryVirtualMemory(
-                            NtCurrentProcess(),
-                            (PVOID) ImageStart,
-                            MemoryBasicInformation,
-                            &MemInfo,
-                            sizeof(MemInfo),
-                            NULL
-                            );
+                Status = NtQueryVirtualMemory(NtCurrentProcess(), (PVOID)ImageStart, MemoryBasicInformation, &MemInfo,
+                                              sizeof(MemInfo), NULL);
 
-                if ( !NT_SUCCESS(Status) ) {
+                if (!NT_SUCCESS(Status))
+                {
                     ImageSize = 0;
-                } else {
+                }
+                else
+                {
                     ImageSize = MemInfo.RegionSize;
                 }
-            } else {
+            }
+            else
+            {
                 ImageSize = ((PIMAGE_NT_HEADERS32)NtHeaders)->OptionalHeader.SizeOfImage;
             }
 
-            if (!(((ULONG_PTR)ResourceDataEntry >= ImageStart) && ((ULONG_PTR)ResourceDataEntry < (ImageStart + ImageSize)))) {
+            if (!(((ULONG_PTR)ResourceDataEntry >= ImageStart) &&
+                  ((ULONG_PTR)ResourceDataEntry < (ImageStart + ImageSize))))
+            {
                 // Doesn't fall within the specified image.  Must be an alternate dll.
-                DllHandle = LdrLoadAlternateResourceModule (DllHandle, NULL);
+                DllHandle = LdrLoadAlternateResourceModule(DllHandle, NULL);
             }
         }
     }
 
-    if (!DllHandle){
+    if (!DllHandle)
+    {
         Status = STATUS_RESOURCE_DATA_NOT_FOUND;
         goto Exit;
     }
 #endif
 
-    Status =
-        LdrpAccessResourceDataNoMultipleLanguage(
-            DllHandle,
-            ResourceDataEntry,
-            Address,
-            Size
-            );
+    Status = LdrpAccessResourceDataNoMultipleLanguage(DllHandle, ResourceDataEntry, Address, Size);
 
 #ifndef NTOS_KERNEL_RUNTIME
 Exit:
 #endif
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         KdPrintEx((DPFLTR_LDR_ID, DPFLTR_LEVEL_STATUS(Status), "LDR: %s() exiting 0x%08lx\n", __FUNCTION__, Status));
     }
     return Status;
@@ -413,10 +407,7 @@ Exit:
 
 
 NTSTATUS
-LdrFindEntryForAddress(
-    IN PVOID Address,
-    OUT PLDR_DATA_TABLE_ENTRY *TableEntry
-    )
+LdrFindEntryForAddress(IN PVOID Address, OUT PLDR_DATA_TABLE_ENTRY *TableEntry)
 /*++
 
 Routine Description:
@@ -447,66 +438,68 @@ Return Value:
     NTSTATUS Status;
 
     Ldr = NtCurrentPeb()->Ldr;
-    if (Ldr == NULL) {
+    if (Ldr == NULL)
+    {
         Status = STATUS_NO_MORE_ENTRIES;
         goto Exit;
-        }
+    }
 
-    Entry = (PLDR_DATA_TABLE_ENTRY) Ldr->EntryInProgress;
-    if (Entry != NULL) {
-        NtHeaders = RtlImageNtHeader( Entry->DllBase );
-        if (NtHeaders != NULL) {
+    Entry = (PLDR_DATA_TABLE_ENTRY)Ldr->EntryInProgress;
+    if (Entry != NULL)
+    {
+        NtHeaders = RtlImageNtHeader(Entry->DllBase);
+        if (NtHeaders != NULL)
+        {
             ImageBase = (PVOID)Entry->DllBase;
 
-            EndOfImage = (PVOID)
-                ((ULONG_PTR)ImageBase + NtHeaders->OptionalHeader.SizeOfImage);
+            EndOfImage = (PVOID)((ULONG_PTR)ImageBase + NtHeaders->OptionalHeader.SizeOfImage);
 
-            if ((ULONG_PTR)Address >= (ULONG_PTR)ImageBase && (ULONG_PTR)Address < (ULONG_PTR)EndOfImage) {
+            if ((ULONG_PTR)Address >= (ULONG_PTR)ImageBase && (ULONG_PTR)Address < (ULONG_PTR)EndOfImage)
+            {
                 *TableEntry = Entry;
                 Status = STATUS_SUCCESS;
                 goto Exit;
-                }
             }
         }
+    }
 
     Head = &Ldr->InMemoryOrderModuleList;
     Next = Head->Flink;
-    while ( Next != Head ) {
-        Entry = CONTAINING_RECORD( Next, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks );
+    while (Next != Head)
+    {
+        Entry = CONTAINING_RECORD(Next, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
 
-        NtHeaders = RtlImageNtHeader( Entry->DllBase );
-        if (NtHeaders != NULL) {
+        NtHeaders = RtlImageNtHeader(Entry->DllBase);
+        if (NtHeaders != NULL)
+        {
             ImageBase = (PVOID)Entry->DllBase;
 
-            EndOfImage = (PVOID)
-                ((ULONG_PTR)ImageBase + NtHeaders->OptionalHeader.SizeOfImage);
+            EndOfImage = (PVOID)((ULONG_PTR)ImageBase + NtHeaders->OptionalHeader.SizeOfImage);
 
-            if ((ULONG_PTR)Address >= (ULONG_PTR)ImageBase && (ULONG_PTR)Address < (ULONG_PTR)EndOfImage) {
+            if ((ULONG_PTR)Address >= (ULONG_PTR)ImageBase && (ULONG_PTR)Address < (ULONG_PTR)EndOfImage)
+            {
                 *TableEntry = Entry;
                 Status = STATUS_SUCCESS;
                 goto Exit;
-                }
             }
+        }
 
         Next = Next->Flink;
-        }
+    }
 
     Status = STATUS_NO_MORE_ENTRIES;
 Exit:
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         KdPrintEx((DPFLTR_LDR_ID, DPFLTR_LEVEL_STATUS(Status), "LDR: %s() exiting 0x%08lx\n", __FUNCTION__, Status));
     }
-    return( Status );
+    return (Status);
 }
 
 
 NTSTATUS
-LdrFindResource_U(
-    IN PVOID DllHandle,
-    IN const ULONG_PTR* ResourceIdPath,
-    IN ULONG ResourceIdPathLength,
-    OUT PIMAGE_RESOURCE_DATA_ENTRY *ResourceDataEntry
-    )
+LdrFindResource_U(IN PVOID DllHandle, IN const ULONG_PTR *ResourceIdPath, IN ULONG ResourceIdPathLength,
+                  OUT PIMAGE_RESOURCE_DATA_ENTRY *ResourceDataEntry)
 
 /*++
 
@@ -544,23 +537,14 @@ Return Value:
 {
     RTL_PAGED_CODE();
 
-    return LdrpSearchResourceSection_U(
-      DllHandle,
-      ResourceIdPath,
-      ResourceIdPathLength,
-      0,                // Look for a leaf node, ineaxt lang match
-      (PVOID *)ResourceDataEntry
-      );
+    return LdrpSearchResourceSection_U(DllHandle, ResourceIdPath, ResourceIdPathLength,
+                                       0, // Look for a leaf node, ineaxt lang match
+                                       (PVOID *)ResourceDataEntry);
 }
 
 NTSTATUS
-LdrFindResourceEx_U(
-    IN ULONG Flags,
-    IN PVOID DllHandle,
-    IN const ULONG_PTR* ResourceIdPath,
-    IN ULONG ResourceIdPathLength,
-    OUT PIMAGE_RESOURCE_DATA_ENTRY *ResourceDataEntry
-    )
+LdrFindResourceEx_U(IN ULONG Flags, IN PVOID DllHandle, IN const ULONG_PTR *ResourceIdPath,
+                    IN ULONG ResourceIdPathLength, OUT PIMAGE_RESOURCE_DATA_ENTRY *ResourceDataEntry)
 
 /*++
 
@@ -611,24 +595,14 @@ Return Value:
 {
     RTL_PAGED_CODE();
 
-    return LdrpSearchResourceSection_U(
-      DllHandle,
-      ResourceIdPath,
-      ResourceIdPathLength,
-      Flags,
-      (PVOID *)ResourceDataEntry
-      );
+    return LdrpSearchResourceSection_U(DllHandle, ResourceIdPath, ResourceIdPathLength, Flags,
+                                       (PVOID *)ResourceDataEntry);
 }
 
 
-
 NTSTATUS
-LdrFindResourceDirectory_U(
-    IN PVOID DllHandle,
-    IN const ULONG_PTR* ResourceIdPath,
-    IN ULONG ResourceIdPathLength,
-    OUT PIMAGE_RESOURCE_DIRECTORY *ResourceDirectory
-    )
+LdrFindResourceDirectory_U(IN PVOID DllHandle, IN const ULONG_PTR *ResourceIdPath, IN ULONG ResourceIdPathLength,
+                           OUT PIMAGE_RESOURCE_DIRECTORY *ResourceDirectory)
 
 /*++
 
@@ -666,52 +640,46 @@ Return Value:
 {
     RTL_PAGED_CODE();
 
-    return LdrpSearchResourceSection_U(
-      DllHandle,
-      ResourceIdPath,
-      ResourceIdPathLength,
-      LDRP_FIND_RESOURCE_DIRECTORY,                 // Look for a directory node
-      (PVOID *)ResourceDirectory
-      );
+    return LdrpSearchResourceSection_U(DllHandle, ResourceIdPath, ResourceIdPathLength,
+                                       LDRP_FIND_RESOURCE_DIRECTORY, // Look for a directory node
+                                       (PVOID *)ResourceDirectory);
 }
 
 
-LONG
-LdrpCompareResourceNames_U(
-    IN ULONG_PTR ResourceName,
-    IN const IMAGE_RESOURCE_DIRECTORY* ResourceDirectory,
-    IN const IMAGE_RESOURCE_DIRECTORY_ENTRY* ResourceDirectoryEntry
-    )
+LONG LdrpCompareResourceNames_U(IN ULONG_PTR ResourceName, IN const IMAGE_RESOURCE_DIRECTORY *ResourceDirectory,
+                                IN const IMAGE_RESOURCE_DIRECTORY_ENTRY *ResourceDirectoryEntry)
 {
     LONG li;
     PIMAGE_RESOURCE_DIR_STRING_U ResourceNameString;
 
-    if (ResourceName & LDR_RESOURCE_ID_NAME_MASK) {
-        if (!ResourceDirectoryEntry->NameIsString) {
-            return( -1 );
-            }
-
-        ResourceNameString = (PIMAGE_RESOURCE_DIR_STRING_U)
-            ((PCHAR)ResourceDirectory + ResourceDirectoryEntry->NameOffset);
-
-        li = wcsncmp( (LPWSTR)ResourceName,
-            ResourceNameString->NameString,
-            ResourceNameString->Length
-          );
-
-        if (!li && wcslen((PWSTR)ResourceName) != ResourceNameString->Length) {
-       return( 1 );
-       }
-
-   return(li);
+    if (ResourceName & LDR_RESOURCE_ID_NAME_MASK)
+    {
+        if (!ResourceDirectoryEntry->NameIsString)
+        {
+            return (-1);
         }
-    else {
-        if (ResourceDirectoryEntry->NameIsString) {
-            return( 1 );
-            }
 
-        return( (ULONG)(ResourceName - ResourceDirectoryEntry->Name) );
+        ResourceNameString =
+            (PIMAGE_RESOURCE_DIR_STRING_U)((PCHAR)ResourceDirectory + ResourceDirectoryEntry->NameOffset);
+
+        li = wcsncmp((LPWSTR)ResourceName, ResourceNameString->NameString, ResourceNameString->Length);
+
+        if (!li && wcslen((PWSTR)ResourceName) != ResourceNameString->Length)
+        {
+            return (1);
         }
+
+        return (li);
+    }
+    else
+    {
+        if (ResourceDirectoryEntry->NameIsString)
+        {
+            return (1);
+        }
+
+        return ((ULONG)(ResourceName - ResourceDirectoryEntry->Name));
+    }
 }
 
 // Language ids are 16bits so any value with any bits
@@ -720,16 +688,11 @@ LdrpCompareResourceNames_U(
 // The value used is actually 0xFFFF regardless of 32bit or 64bit,
 // I guess assuming this is not an actual langid, which it isn't,
 // due to the relatively small number of languages, around 70.
-#define  USE_FIRSTAVAILABLE_LANGID   (0xFFFFFFFF & ~LDR_RESOURCE_ID_NAME_MASK)
+#define USE_FIRSTAVAILABLE_LANGID (0xFFFFFFFF & ~LDR_RESOURCE_ID_NAME_MASK)
 
 NTSTATUS
-LdrpSearchResourceSection_U(
-    IN PVOID DllHandle,
-    IN const ULONG_PTR* ResourceIdPath,
-    IN ULONG ResourceIdPathLength,
-    IN ULONG Flags,
-    OUT PVOID *ResourceDirectoryOrData
-    )
+LdrpSearchResourceSection_U(IN PVOID DllHandle, IN const ULONG_PTR *ResourceIdPath, IN ULONG ResourceIdPathLength,
+                            IN ULONG Flags, OUT PVOID *ResourceDirectoryOrData)
 
 /*++
 
@@ -800,7 +763,7 @@ Return Value:
     ULONG_PTR ResourceIdRetry;
     ULONG RetryCount;
     LANGID NewLangId;
-    const ULONG_PTR* IdPath = ResourceIdPath;
+    const ULONG_PTR *IdPath = ResourceIdPath;
     ULONG IdPathLength = ResourceIdPathLength;
     BOOLEAN fIsNeutral = FALSE;
     LANGID GivenLanguage;
@@ -812,15 +775,13 @@ Return Value:
 
     RTL_PAGED_CODE();
 
-    try {
-        TopResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)
-            RtlImageDirectoryEntryToData(DllHandle,
-                                         TRUE,
-                                         IMAGE_DIRECTORY_ENTRY_RESOURCE,
-                                         &size
-                                         );
-        if (!TopResourceDirectory) {
-            return( STATUS_RESOURCE_DATA_NOT_FOUND );
+    try
+    {
+        TopResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)RtlImageDirectoryEntryToData(
+            DllHandle, TRUE, IMAGE_DIRECTORY_ENTRY_RESOURCE, &size);
+        if (!TopResourceDirectory)
+        {
+            return (STATUS_RESOURCE_DATA_NOT_FOUND);
         }
 
         ResourceDirectory = TopResourceDirectory;
@@ -828,7 +789,8 @@ Return Value:
         RetryCount = 0;
         ResourceEntry = NULL;
         LanguageResourceDirectory = NULL;
-        while (ResourceDirectory != NULL && ResourceIdPathLength--) {
+        while (ResourceDirectory != NULL && ResourceIdPathLength--)
+        {
             //
             // If search path includes a language id, then attempt to
             // match the following language ids in this order:
@@ -854,321 +816,332 @@ Return Value:
             //   (14) use US English lang id
             //   (15) use any lang id that matches requested info
             //
-            if (ResourceIdPathLength == 0 && IdPathLength == 3) {
+            if (ResourceIdPathLength == 0 && IdPathLength == 3)
+            {
                 LanguageResourceDirectory = ResourceDirectory;
-                }
+            }
 
-            if (LanguageResourceDirectory != NULL) {
-                GivenLanguage = (LANGID)IdPath[ 2 ];
-                fIsNeutral = (PRIMARYLANGID( GivenLanguage ) == LANG_NEUTRAL);
-TryNextLangId:
-                switch( RetryCount++ ) {
+            if (LanguageResourceDirectory != NULL)
+            {
+                GivenLanguage = (LANGID)IdPath[2];
+                fIsNeutral = (PRIMARYLANGID(GivenLanguage) == LANG_NEUTRAL);
+            TryNextLangId:
+                switch (RetryCount++)
+                {
 #ifdef NTOS_KERNEL_RUNTIME
-                    case 0:     // Use given language id
-                        NewLangId = GivenLanguage;
-                        break;
+                case 0: // Use given language id
+                    NewLangId = GivenLanguage;
+                    break;
 
-                    case 1:     // Use primary language of given language id
-                        NewLangId = PRIMARYLANGID( GivenLanguage );
-                        break;
+                case 1: // Use primary language of given language id
+                    NewLangId = PRIMARYLANGID(GivenLanguage);
+                    break;
 
-                    case 2:     // Use id 0  (neutral resource)
-                        NewLangId = 0;
-                        break;
+                case 2: // Use id 0  (neutral resource)
+                    NewLangId = 0;
+                    break;
 
-                    case 3:     // Use user's default UI language
-                        NewLangId = (LANGID)ResourceIdRetry;
-                        break;
+                case 3: // Use user's default UI language
+                    NewLangId = (LANGID)ResourceIdRetry;
+                    break;
 
-                    case 4:     // Use native UI language
-                        if ( !fIsNeutral ) {
-                            // Stop looking - Not in the neutral case
-                            goto ReturnFailure;
-                            break;
-                        }
-                        NewLangId = PsInstallUILanguageId;
-                        break;
-
-                    case 5:     // Use default system locale
-                        NewLangId = LANGIDFROMLCID(PsDefaultSystemLocaleId);
-                        break;
-
-                    case 6:
-                        // Use US English language
-                        NewLangId = MAKELANGID( LANG_ENGLISH, SUBLANG_ENGLISH_US );
-                        break;
-
-                    case 7:     // Take any lang id that matches
-                        NewLangId = USE_FIRSTAVAILABLE_LANGID;
-                        break;
-
-#else
-                    case 0:     // Use given language id
-                        NewLangId = GivenLanguage;
-                        break;
-
-                    case 1:     // Use primary language of given language id
-                        if ( Flags & LDR_FIND_RESOURCE_LANGUAGE_EXACT) {
-                            //
-                            //  Did not find an exact language match.
-                            //  Stop looking.
-                            //
-                            goto ReturnFailure;
-                        }
-                        NewLangId = PRIMARYLANGID( GivenLanguage );
-                        break;
-
-                    case 2:     // Use id 0  (neutral resource)
-                        NewLangId = 0;
-                        break;
-
-                    case 3:     
-                        
-                        if ( !fIsNeutral ) {
-                            // Stop looking - Not in the neutral case
-                            NewLangId = (LANGID)ResourceIdRetry;
-                            break;
-                        }
-                        // Use thread langid if caller is a console app
-                        if (NtCurrentPeb()->ProcessParameters->ConsoleHandle)
-                        {
-                            NewLangId = LANGIDFROMLCID(NtCurrentTeb()->CurrentLocale);
-                        }
-                        else
-                        {
-                            NewLangId = (LANGID)ResourceIdRetry;
-                        }
-                        break;
-
-                    case 4:     // Use user's default UI language
-                        if (!UILangId || NtCurrentTeb()->ImpersonationLocale){
-                            Status = NtQueryDefaultUILanguage( &UILangId );
-                            if (!NT_SUCCESS( Status )) {
-                                //
-                                // Failed reading key.  Skip this lookup.
-                                //
-                                NewLangId = (LANGID)ResourceIdRetry;
-                                break;
-                            }
-                        }
-
-                        if (NtCurrentPeb()->ProcessParameters->ConsoleHandle &&
-                            LANGIDFROMLCID(NtCurrentTeb()->CurrentLocale) != UILangId)
-                        {
-                            NewLangId = (LANGID)ResourceIdRetry;
-                            break;
-                        }
-
-                        NewLangId = UILangId;
-
-                        //
-                        // Arabic/Hebrew MUI files may contain resources with LANG ID different than 401/40d.
-                        // e.g. Comdlg32.dll has two sets of Arabic/Hebrew resources one mirrored (401/40d)
-                        // and one flipped (801/80d).
-                        //
-                        if( !fIsNeutral &&
-                            ((PRIMARYLANGID (GivenLanguage) == LANG_ARABIC) || (PRIMARYLANGID (GivenLanguage) == LANG_HEBREW)) &&
-                            (PRIMARYLANGID (GivenLanguage) == PRIMARYLANGID (NewLangId))
-                          ) {
-                            NewLangId = GivenLanguage;
-                        }
-
-                        //
-                        // Bug #246044 WeiWu 12/07/00
-                        // BiDi modules use version block FileDescription field to store LRM markers, 
-                        // LDR_FIND_RESOURCE_LANGUAGE_REDIRECT_VERSION will allow lpk.dll to get version resource from MUI alternative modules.
-                        //
-                        if ((IdPath[0] != RT_VERSION) ||
-                            (Flags & LDR_FIND_RESOURCE_LANGUAGE_REDIRECT_VERSION)) {                          
-                            //
-                            //  Load alternate resource dll when:
-                            //      1. language is neutral
-                            //         or 
-                            //         Given language is not tried.
-                            //      and
-                            //      2. the resource to load is not a version info.
-                            //
-                            AltResourceDllHandle=LdrLoadAlternateResourceModule(
-                                                    DllHandle,
-                                                    NULL);
-
-                            if (!AltResourceDllHandle){
-                                //
-                                //  Alternate resource dll not available.
-                                //  Skip this lookup.
-                                //
-                                NewLangId = (LANGID)ResourceIdRetry;
-                                break;
-
-                            }
-
-                            //
-                            //  Map to alternate resource dll and search
-                            //  it instead.
-                            //
-
-                            UIResourceIdPath[0]=IdPath[0];
-                            UIResourceIdPath[1]=IdPath[1];
-                            UIResourceIdPath[2]=NewLangId;
-
-                            Status = LdrpSearchResourceSection_U(
-                                        AltResourceDllHandle,
-                                        UIResourceIdPath,
-                                        3,
-                                        Flags | LDR_FIND_RESOURCE_LANGUAGE_EXACT,
-                                        (PVOID *)ResourceDirectoryOrData
-                                        );
-
-                            if (NT_SUCCESS(Status)){
-                                //
-                                // We sucessfully found alternate resource,
-                                // return it.
-                                //
-                                return Status;
-                            }
-
-
-                        }
-                        //
-                        //  Caller does not want alternate resource, or
-                        //  alternate resource not found.
-                        //
-                        NewLangId = (LANGID)ResourceIdRetry;
-                        break;
-
-                    case 5:     // Use langid of the thread locale if caller is a Windows app and thread locale is different from user locale
-                        if ( !fIsNeutral ) {
-                            // Stop looking - Not in the neutral case
-                            goto ReturnFailure;
-                            break;
-                        }
-
-                        if (!NtCurrentPeb()->ProcessParameters->ConsoleHandle && NtCurrentTeb()){
-                            Status = NtQueryDefaultLocale(
-                                        TRUE,
-                                        &DefaultThreadLocale
-                                        );
-                            if (NT_SUCCESS( Status ) &&
-                                DefaultThreadLocale !=
-                                NtCurrentTeb()->CurrentLocale) {
-                                //
-                                // Thread locale is different from
-                                // default locale.
-                                //
-                                NewLangId = LANGIDFROMLCID(NtCurrentTeb()->CurrentLocale);
-                                break;
-                            }
-                        }
-
-
-                        NewLangId = (LANGID)ResourceIdRetry;
-                        break;
-
-                    case 6:   // UI language from the executable resource
-
-                        if (!UILangId){
-                            NewLangId = (LANGID)ResourceIdRetry;
-                        } else {
-                            NewLangId = UILangId;
-                        }
-                        break;
-
-                    case 7:   // Parimary lang of UI language from the executable resource
-
-                        if (!UILangId){
-                            NewLangId = (LANGID)ResourceIdRetry;
-                        } else {
-                            NewLangId = PRIMARYLANGID( (LANGID) UILangId );
-                        }
-                        break;
-
-                    case 8:   // Use install -native- language
-                        //
-                        // Thread locale is the same as the user locale, then let's
-                        // try loading the native (install) ui language resources.
-                        //
-                        if (!InstallLangId){
-                            Status = NtQueryInstallUILanguage(&InstallLangId);
-                            if (!NT_SUCCESS( Status )) {
-                                //
-                                // Failed reading key.  Skip this lookup.
-                                //
-                                NewLangId = (LANGID)ResourceIdRetry;
-                                break;
-
-                            }
-                        }
-
-                        NewLangId = InstallLangId;
-                        break;
-
-                    case 9:     // Use lang id from locale in TEB
-                        if (SUBLANGID( GivenLanguage ) == SUBLANG_SYS_DEFAULT) {
-                            // Skip over all USER locale options
-                            DefaultThreadLocale = 0;
-                            RetryCount += 2;
-                            break;
-                        }
-
-                        if (NtCurrentTeb() != NULL) {
-                            NewLangId = LANGIDFROMLCID(NtCurrentTeb()->CurrentLocale);
-                        }
-                        break;
-
-                    case 10:     // Use User's default locale
-                        Status = NtQueryDefaultLocale( TRUE, &DefaultThreadLocale );
-                        if (NT_SUCCESS( Status )) {
-                            NewLangId = LANGIDFROMLCID(DefaultThreadLocale);
-                            break;
-                            }
-
-                        RetryCount++;
-                        break;
-
-                    case 11:     // Use primary language of User's default locale
-                        NewLangId = PRIMARYLANGID( (LANGID)ResourceIdRetry );
-                        break;
-
-                    case 12:     // Use System default locale
-                        Status = NtQueryDefaultLocale( FALSE, &DefaultSystemLocale );
-                        if (!NT_SUCCESS( Status )) {
-                            RetryCount++;
-                            break;
-                        }
-                        if (DefaultSystemLocale != DefaultThreadLocale) {
-                            NewLangId = LANGIDFROMLCID(DefaultSystemLocale);
-                            break;
-                        }
-
-                        RetryCount += 2;
-                        // fall through
-
-                    case 14:     // Use US English language
-                        NewLangId = MAKELANGID( LANG_ENGLISH, SUBLANG_ENGLISH_US );
-                        break;
-
-                    case 13:     // Use primary language of System default locale
-                        NewLangId = PRIMARYLANGID( (LANGID)ResourceIdRetry );
-                        break;
-
-                    case 15:     // Take any lang id that matches
-                        NewLangId = USE_FIRSTAVAILABLE_LANGID;
-                        break;
-#endif
-                    default:    // No lang ids to match
+                case 4: // Use native UI language
+                    if (!fIsNeutral)
+                    {
+                        // Stop looking - Not in the neutral case
                         goto ReturnFailure;
                         break;
+                    }
+                    NewLangId = PsInstallUILanguageId;
+                    break;
+
+                case 5: // Use default system locale
+                    NewLangId = LANGIDFROMLCID(PsDefaultSystemLocaleId);
+                    break;
+
+                case 6:
+                    // Use US English language
+                    NewLangId = MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US);
+                    break;
+
+                case 7: // Take any lang id that matches
+                    NewLangId = USE_FIRSTAVAILABLE_LANGID;
+                    break;
+
+#else
+                case 0: // Use given language id
+                    NewLangId = GivenLanguage;
+                    break;
+
+                case 1: // Use primary language of given language id
+                    if (Flags & LDR_FIND_RESOURCE_LANGUAGE_EXACT)
+                    {
+                        //
+                        //  Did not find an exact language match.
+                        //  Stop looking.
+                        //
+                        goto ReturnFailure;
+                    }
+                    NewLangId = PRIMARYLANGID(GivenLanguage);
+                    break;
+
+                case 2: // Use id 0  (neutral resource)
+                    NewLangId = 0;
+                    break;
+
+                case 3:
+
+                    if (!fIsNeutral)
+                    {
+                        // Stop looking - Not in the neutral case
+                        NewLangId = (LANGID)ResourceIdRetry;
+                        break;
+                    }
+                    // Use thread langid if caller is a console app
+                    if (NtCurrentPeb()->ProcessParameters->ConsoleHandle)
+                    {
+                        NewLangId = LANGIDFROMLCID(NtCurrentTeb()->CurrentLocale);
+                    }
+                    else
+                    {
+                        NewLangId = (LANGID)ResourceIdRetry;
+                    }
+                    break;
+
+                case 4: // Use user's default UI language
+                    if (!UILangId || NtCurrentTeb()->ImpersonationLocale)
+                    {
+                        Status = NtQueryDefaultUILanguage(&UILangId);
+                        if (!NT_SUCCESS(Status))
+                        {
+                            //
+                            // Failed reading key.  Skip this lookup.
+                            //
+                            NewLangId = (LANGID)ResourceIdRetry;
+                            break;
+                        }
+                    }
+
+                    if (NtCurrentPeb()->ProcessParameters->ConsoleHandle &&
+                        LANGIDFROMLCID(NtCurrentTeb()->CurrentLocale) != UILangId)
+                    {
+                        NewLangId = (LANGID)ResourceIdRetry;
+                        break;
+                    }
+
+                    NewLangId = UILangId;
+
+                    //
+                    // Arabic/Hebrew MUI files may contain resources with LANG ID different than 401/40d.
+                    // e.g. Comdlg32.dll has two sets of Arabic/Hebrew resources one mirrored (401/40d)
+                    // and one flipped (801/80d).
+                    //
+                    if (!fIsNeutral &&
+                        ((PRIMARYLANGID(GivenLanguage) == LANG_ARABIC) ||
+                         (PRIMARYLANGID(GivenLanguage) == LANG_HEBREW)) &&
+                        (PRIMARYLANGID(GivenLanguage) == PRIMARYLANGID(NewLangId)))
+                    {
+                        NewLangId = GivenLanguage;
+                    }
+
+                    //
+                    // Bug #246044 WeiWu 12/07/00
+                    // BiDi modules use version block FileDescription field to store LRM markers,
+                    // LDR_FIND_RESOURCE_LANGUAGE_REDIRECT_VERSION will allow lpk.dll to get version resource from MUI alternative modules.
+                    //
+                    if ((IdPath[0] != RT_VERSION) || (Flags & LDR_FIND_RESOURCE_LANGUAGE_REDIRECT_VERSION))
+                    {
+                        //
+                        //  Load alternate resource dll when:
+                        //      1. language is neutral
+                        //         or
+                        //         Given language is not tried.
+                        //      and
+                        //      2. the resource to load is not a version info.
+                        //
+                        AltResourceDllHandle = LdrLoadAlternateResourceModule(DllHandle, NULL);
+
+                        if (!AltResourceDllHandle)
+                        {
+                            //
+                            //  Alternate resource dll not available.
+                            //  Skip this lookup.
+                            //
+                            NewLangId = (LANGID)ResourceIdRetry;
+                            break;
+                        }
+
+                        //
+                        //  Map to alternate resource dll and search
+                        //  it instead.
+                        //
+
+                        UIResourceIdPath[0] = IdPath[0];
+                        UIResourceIdPath[1] = IdPath[1];
+                        UIResourceIdPath[2] = NewLangId;
+
+                        Status = LdrpSearchResourceSection_U(AltResourceDllHandle, UIResourceIdPath, 3,
+                                                             Flags | LDR_FIND_RESOURCE_LANGUAGE_EXACT,
+                                                             (PVOID *)ResourceDirectoryOrData);
+
+                        if (NT_SUCCESS(Status))
+                        {
+                            //
+                            // We sucessfully found alternate resource,
+                            // return it.
+                            //
+                            return Status;
+                        }
+                    }
+                    //
+                    //  Caller does not want alternate resource, or
+                    //  alternate resource not found.
+                    //
+                    NewLangId = (LANGID)ResourceIdRetry;
+                    break;
+
+                case 5: // Use langid of the thread locale if caller is a Windows app and thread locale is different from user locale
+                    if (!fIsNeutral)
+                    {
+                        // Stop looking - Not in the neutral case
+                        goto ReturnFailure;
+                        break;
+                    }
+
+                    if (!NtCurrentPeb()->ProcessParameters->ConsoleHandle && NtCurrentTeb())
+                    {
+                        Status = NtQueryDefaultLocale(TRUE, &DefaultThreadLocale);
+                        if (NT_SUCCESS(Status) && DefaultThreadLocale != NtCurrentTeb()->CurrentLocale)
+                        {
+                            //
+                            // Thread locale is different from
+                            // default locale.
+                            //
+                            NewLangId = LANGIDFROMLCID(NtCurrentTeb()->CurrentLocale);
+                            break;
+                        }
+                    }
+
+
+                    NewLangId = (LANGID)ResourceIdRetry;
+                    break;
+
+                case 6: // UI language from the executable resource
+
+                    if (!UILangId)
+                    {
+                        NewLangId = (LANGID)ResourceIdRetry;
+                    }
+                    else
+                    {
+                        NewLangId = UILangId;
+                    }
+                    break;
+
+                case 7: // Parimary lang of UI language from the executable resource
+
+                    if (!UILangId)
+                    {
+                        NewLangId = (LANGID)ResourceIdRetry;
+                    }
+                    else
+                    {
+                        NewLangId = PRIMARYLANGID((LANGID)UILangId);
+                    }
+                    break;
+
+                case 8: // Use install -native- language
+                    //
+                    // Thread locale is the same as the user locale, then let's
+                    // try loading the native (install) ui language resources.
+                    //
+                    if (!InstallLangId)
+                    {
+                        Status = NtQueryInstallUILanguage(&InstallLangId);
+                        if (!NT_SUCCESS(Status))
+                        {
+                            //
+                            // Failed reading key.  Skip this lookup.
+                            //
+                            NewLangId = (LANGID)ResourceIdRetry;
+                            break;
+                        }
+                    }
+
+                    NewLangId = InstallLangId;
+                    break;
+
+                case 9: // Use lang id from locale in TEB
+                    if (SUBLANGID(GivenLanguage) == SUBLANG_SYS_DEFAULT)
+                    {
+                        // Skip over all USER locale options
+                        DefaultThreadLocale = 0;
+                        RetryCount += 2;
+                        break;
+                    }
+
+                    if (NtCurrentTeb() != NULL)
+                    {
+                        NewLangId = LANGIDFROMLCID(NtCurrentTeb()->CurrentLocale);
+                    }
+                    break;
+
+                case 10: // Use User's default locale
+                    Status = NtQueryDefaultLocale(TRUE, &DefaultThreadLocale);
+                    if (NT_SUCCESS(Status))
+                    {
+                        NewLangId = LANGIDFROMLCID(DefaultThreadLocale);
+                        break;
+                    }
+
+                    RetryCount++;
+                    break;
+
+                case 11: // Use primary language of User's default locale
+                    NewLangId = PRIMARYLANGID((LANGID)ResourceIdRetry);
+                    break;
+
+                case 12: // Use System default locale
+                    Status = NtQueryDefaultLocale(FALSE, &DefaultSystemLocale);
+                    if (!NT_SUCCESS(Status))
+                    {
+                        RetryCount++;
+                        break;
+                    }
+                    if (DefaultSystemLocale != DefaultThreadLocale)
+                    {
+                        NewLangId = LANGIDFROMLCID(DefaultSystemLocale);
+                        break;
+                    }
+
+                    RetryCount += 2;
+                    // fall through
+
+                case 14: // Use US English language
+                    NewLangId = MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US);
+                    break;
+
+                case 13: // Use primary language of System default locale
+                    NewLangId = PRIMARYLANGID((LANGID)ResourceIdRetry);
+                    break;
+
+                case 15: // Take any lang id that matches
+                    NewLangId = USE_FIRSTAVAILABLE_LANGID;
+                    break;
+#endif
+                default: // No lang ids to match
+                    goto ReturnFailure;
+                    break;
                 }
 
                 //
                 // If looking for a specific language id and same as the
                 // one we just looked up, then skip it.
                 //
-                if (NewLangId != USE_FIRSTAVAILABLE_LANGID &&
-                    NewLangId == ResourceIdRetry
-                   ) {
+                if (NewLangId != USE_FIRSTAVAILABLE_LANGID && NewLangId == ResourceIdRetry)
+                {
                     goto TryNextLangId;
-                    }
+                }
 
                 //
                 // Try this new language Id
@@ -1176,152 +1149,161 @@ TryNextLangId:
                 ResourceIdRetry = (ULONG_PTR)NewLangId;
                 ResourceIdPath = &ResourceIdRetry;
                 ResourceDirectory = LanguageResourceDirectory;
-                }
+            }
 
             n = ResourceDirectory->NumberOfNamedEntries;
-            ResourceDirEntLow = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(ResourceDirectory+1);
-            if (!(*ResourceIdPath & LDR_RESOURCE_ID_NAME_MASK)) {
+            ResourceDirEntLow = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(ResourceDirectory + 1);
+            if (!(*ResourceIdPath & LDR_RESOURCE_ID_NAME_MASK))
+            {
                 ResourceDirEntLow += n;
                 n = ResourceDirectory->NumberOfIdEntries;
-                }
+            }
 
-            if (!n) {
+            if (!n)
+            {
                 ResourceDirectory = NULL;
                 goto NotFound;
-                }
+            }
 
-            if (LanguageResourceDirectory != NULL &&
-                *ResourceIdPath == USE_FIRSTAVAILABLE_LANGID
-               ) {
+            if (LanguageResourceDirectory != NULL && *ResourceIdPath == USE_FIRSTAVAILABLE_LANGID)
+            {
                 ResourceDirectory = NULL;
                 ResourceIdRetry = ResourceDirEntLow->Name;
-                ResourceEntry = (PIMAGE_RESOURCE_DATA_ENTRY)
-                    ((PCHAR)TopResourceDirectory +
-                            ResourceDirEntLow->OffsetToData
-                    );
+                ResourceEntry =
+                    (PIMAGE_RESOURCE_DATA_ENTRY)((PCHAR)TopResourceDirectory + ResourceDirEntLow->OffsetToData);
 
                 break;
-                }
+            }
 
             ResourceDirectory = NULL;
             ResourceDirEntHigh = ResourceDirEntLow + n - 1;
-            while (ResourceDirEntLow <= ResourceDirEntHigh) {
-                if ((half = (n >> 1)) != 0) {
+            while (ResourceDirEntLow <= ResourceDirEntHigh)
+            {
+                if ((half = (n >> 1)) != 0)
+                {
                     ResourceDirEntMiddle = ResourceDirEntLow;
-                    if (*(PUCHAR)&n & 1) {
+                    if (*(PUCHAR)&n & 1)
+                    {
                         ResourceDirEntMiddle += half;
-                        }
-                    else {
+                    }
+                    else
+                    {
                         ResourceDirEntMiddle += half - 1;
+                    }
+                    dir = LdrpCompareResourceNames_U(*ResourceIdPath, TopResourceDirectory, ResourceDirEntMiddle);
+                    if (!dir)
+                    {
+                        if (ResourceDirEntMiddle->DataIsDirectory)
+                        {
+                            ResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)((PCHAR)TopResourceDirectory +
+                                                                            ResourceDirEntMiddle->OffsetToDirectory);
                         }
-                    dir = LdrpCompareResourceNames_U( *ResourceIdPath,
-                                                      TopResourceDirectory,
-                                                      ResourceDirEntMiddle
-                                                    );
-                    if (!dir) {
-                        if (ResourceDirEntMiddle->DataIsDirectory) {
-                            ResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)
-                    ((PCHAR)TopResourceDirectory +
-                                    ResourceDirEntMiddle->OffsetToDirectory
-                                );
-                            }
-                        else {
+                        else
+                        {
                             ResourceDirectory = NULL;
-                            ResourceEntry = (PIMAGE_RESOURCE_DATA_ENTRY)
-                                ((PCHAR)TopResourceDirectory +
-                  ResourceDirEntMiddle->OffsetToData
-                                );
-                            }
+                            ResourceEntry = (PIMAGE_RESOURCE_DATA_ENTRY)((PCHAR)TopResourceDirectory +
+                                                                         ResourceDirEntMiddle->OffsetToData);
+                        }
 
                         break;
-                        }
-                    else {
-                        if (dir < 0) {
+                    }
+                    else
+                    {
+                        if (dir < 0)
+                        {
                             ResourceDirEntHigh = ResourceDirEntMiddle - 1;
-                            if (*(PUCHAR)&n & 1) {
+                            if (*(PUCHAR)&n & 1)
+                            {
                                 n = half;
-                                }
-                            else {
-                                n = half - 1;
-                                }
                             }
-                        else {
+                            else
+                            {
+                                n = half - 1;
+                            }
+                        }
+                        else
+                        {
                             ResourceDirEntLow = ResourceDirEntMiddle + 1;
                             n = half;
+                        }
+                    }
+                }
+                else
+                {
+                    if (n != 0)
+                    {
+                        dir = LdrpCompareResourceNames_U(*ResourceIdPath, TopResourceDirectory, ResourceDirEntLow);
+                        if (!dir)
+                        {
+                            if (ResourceDirEntLow->DataIsDirectory)
+                            {
+                                ResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)((PCHAR)TopResourceDirectory +
+                                                                                ResourceDirEntLow->OffsetToDirectory);
+                            }
+                            else
+                            {
+                                ResourceEntry = (PIMAGE_RESOURCE_DATA_ENTRY)((PCHAR)TopResourceDirectory +
+                                                                             ResourceDirEntLow->OffsetToData);
                             }
                         }
                     }
-                else {
-                    if (n != 0) {
-                        dir = LdrpCompareResourceNames_U( *ResourceIdPath,
-                          TopResourceDirectory,
-                                                          ResourceDirEntLow
-                                                        );
-                        if (!dir) {
-                            if (ResourceDirEntLow->DataIsDirectory) {
-                                ResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)
-                                    ((PCHAR)TopResourceDirectory +
-                                        ResourceDirEntLow->OffsetToDirectory
-                                    );
-                                }
-                            else {
-                                ResourceEntry = (PIMAGE_RESOURCE_DATA_ENTRY)
-                                    ((PCHAR)TopResourceDirectory +
-                      ResourceDirEntLow->OffsetToData
-                                    );
-                                }
-                            }
-                        }
 
                     break;
-                    }
                 }
+            }
 
             ResourceIdPath++;
-            }
+        }
 
-        if (ResourceEntry != NULL && !(Flags & LDRP_FIND_RESOURCE_DIRECTORY)) {
+        if (ResourceEntry != NULL && !(Flags & LDRP_FIND_RESOURCE_DIRECTORY))
+        {
             *ResourceDirectoryOrData = (PVOID)ResourceEntry;
             Status = STATUS_SUCCESS;
-            }
-        else
-        if (ResourceDirectory != NULL && (Flags & LDRP_FIND_RESOURCE_DIRECTORY)) {
+        }
+        else if (ResourceDirectory != NULL && (Flags & LDRP_FIND_RESOURCE_DIRECTORY))
+        {
             *ResourceDirectoryOrData = (PVOID)ResourceDirectory;
             Status = STATUS_SUCCESS;
+        }
+        else
+        {
+        NotFound:
+            switch (IdPathLength - ResourceIdPathLength)
+            {
+            case 3:
+                Status = STATUS_RESOURCE_LANG_NOT_FOUND;
+                break;
+            case 2:
+                Status = STATUS_RESOURCE_NAME_NOT_FOUND;
+                break;
+            case 1:
+                Status = STATUS_RESOURCE_TYPE_NOT_FOUND;
+                break;
+            default:
+                Status = STATUS_INVALID_PARAMETER;
+                break;
             }
-        else {
-NotFound:
-            switch( IdPathLength - ResourceIdPathLength) {
-                case 3:     Status = STATUS_RESOURCE_LANG_NOT_FOUND; break;
-                case 2:     Status = STATUS_RESOURCE_NAME_NOT_FOUND; break;
-                case 1:     Status = STATUS_RESOURCE_TYPE_NOT_FOUND; break;
-                default:    Status = STATUS_INVALID_PARAMETER; break;
-                }
-            }
+        }
 
-        if (Status == STATUS_RESOURCE_LANG_NOT_FOUND &&
-            LanguageResourceDirectory != NULL
-           ) {
+        if (Status == STATUS_RESOURCE_LANG_NOT_FOUND && LanguageResourceDirectory != NULL)
+        {
             ResourceEntry = NULL;
             goto TryNextLangId;
-ReturnFailure: ;
+        ReturnFailure:;
             Status = STATUS_RESOURCE_LANG_NOT_FOUND;
-            }
         }
-    except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
-        }
+    }
 
     return Status;
 }
 
 #ifndef NTOS_KERNEL_RUNTIME // { {
 
-VOID
-NTAPI
-LdrDestroyOutOfProcessImage(
-    IN OUT PLDR_OUT_OF_PROCESS_IMAGE Image
-    )
+VOID NTAPI LdrDestroyOutOfProcessImage(IN OUT PLDR_OUT_OF_PROCESS_IMAGE Image)
 /*++
 
 Routine Description:
@@ -1347,12 +1329,8 @@ Return Value:
 
 NTSTATUS
 NTAPI
-LdrCreateOutOfProcessImage(
-    IN ULONG                      Flags,
-    IN HANDLE                     ProcessHandle,
-    IN PVOID                      DllHandle,
-    OUT PLDR_OUT_OF_PROCESS_IMAGE Image
-    )
+LdrCreateOutOfProcessImage(IN ULONG Flags, IN HANDLE ProcessHandle, IN PVOID DllHandle,
+                           OUT PLDR_OUT_OF_PROCESS_IMAGE Image)
 /*++
 
 Routine Description:
@@ -1389,28 +1367,20 @@ Return Value:
 
 --*/
 {
-    PUCHAR               RemoteAddress = NULL;
-    PRTL_BUFFER          Buffer = NULL;
-    PIMAGE_DOS_HEADER    DosHeader = NULL;
-    SIZE_T               Headers32Offset = 0;
-    PIMAGE_NT_HEADERS32  Headers32 = NULL;
-    SIZE_T               BytesRead = 0;
-    SIZE_T               BytesToRead = 0;
-    SIZE_T               Offset = 0;
-    SIZE_T               InitialReadSize = 4096;
-                     C_ASSERT(PAGE_SIZE >= 4096);
-    NTSTATUS             Status = STATUS_SUCCESS;
+    PUCHAR RemoteAddress = NULL;
+    PRTL_BUFFER Buffer = NULL;
+    PIMAGE_DOS_HEADER DosHeader = NULL;
+    SIZE_T Headers32Offset = 0;
+    PIMAGE_NT_HEADERS32 Headers32 = NULL;
+    SIZE_T BytesRead = 0;
+    SIZE_T BytesToRead = 0;
+    SIZE_T Offset = 0;
+    SIZE_T InitialReadSize = 4096;
+    C_ASSERT(PAGE_SIZE >= 4096);
+    NTSTATUS Status = STATUS_SUCCESS;
 
-    KdPrintEx((
-        DPFLTR_LDR_ID,
-        DPFLTR_TRACE_LEVEL,
-        "LDR: %s(%lx, %p, %p, %p) beginning\n",
-        __FUNCTION__,
-        Flags,
-        ProcessHandle,
-        DllHandle,
-        Image
-        ));
+    KdPrintEx((DPFLTR_LDR_ID, DPFLTR_TRACE_LEVEL, "LDR: %s(%lx, %p, %p, %p) beginning\n", __FUNCTION__, Flags,
+               ProcessHandle, DllHandle, Image));
 
     // if this assertion triggers, you probably passed a handle instead of a base address
     ASSERT(((ULONG_PTR)DllHandle) >= 0xffff);
@@ -1421,12 +1391,14 @@ Return Value:
     // the code in ntdll.dll reformating it, we leave it to our caller to know
     // if they are in that path.
 #if !defined(_WIN64) && !defined(BUILD_WOW6432)
-    if ((Flags & LDR_DLL_MAPPED_AS_MASK) == LDR_DLL_MAPPED_AS_UNFORMATED_IMAGE) {
+    if ((Flags & LDR_DLL_MAPPED_AS_MASK) == LDR_DLL_MAPPED_AS_UNFORMATED_IMAGE)
+    {
         Flags = (Flags & ~LDR_DLL_MAPPED_AS_MASK) | LDR_DLL_MAPPED_AS_IMAGE;
     }
 #endif
 
-    if (LDR_IS_DATAFILE(DllHandle)) {
+    if (LDR_IS_DATAFILE(DllHandle))
+    {
         DllHandle = LDR_DATAFILE_TO_VIEW(DllHandle);
         ASSERT((Flags & LDR_DLL_MAPPED_AS_MASK) == 0 || (Flags & LDR_DLL_MAPPED_AS_MASK) == LDR_DLL_MAPPED_AS_DATA);
         Flags |= LDR_DLL_MAPPED_AS_DATA;
@@ -1440,7 +1412,8 @@ Return Value:
     Buffer = &Image->HeadersBuffer;
     RtlInitBuffer(Buffer, Image->PreallocatedHeadersBuffer, sizeof(Image->PreallocatedHeadersBuffer));
 
-    if (ProcessHandle == NtCurrentProcess()) {
+    if (ProcessHandle == NtCurrentProcess())
+    {
         Status = STATUS_SUCCESS;
         goto Exit;
     }
@@ -1453,105 +1426,130 @@ Return Value:
     // smaller than 4k, we should be able to read 4k
     //
     BytesToRead = InitialReadSize;
-    if (!NT_SUCCESS(Status = RtlEnsureBufferSize(0, Buffer, Offset + BytesToRead))) {
+    if (!NT_SUCCESS(Status = RtlEnsureBufferSize(0, Buffer, Offset + BytesToRead)))
+    {
         goto Exit;
     }
-    Status = NtReadVirtualMemory(ProcessHandle, RemoteAddress + Offset, Buffer->Buffer + Offset, BytesToRead, &BytesRead);
-    if (Status == STATUS_PARTIAL_COPY && BytesRead != 0) {
+    Status =
+        NtReadVirtualMemory(ProcessHandle, RemoteAddress + Offset, Buffer->Buffer + Offset, BytesToRead, &BytesRead);
+    if (Status == STATUS_PARTIAL_COPY && BytesRead != 0)
+    {
         InitialReadSize = BytesRead;
     }
-    else if (!NT_SUCCESS(Status)) {
+    else if (!NT_SUCCESS(Status))
+    {
         KdPrintEx((DPFLTR_LDR_ID, DPFLTR_ERROR_LEVEL, "LDR: %s(): NtReadVirtualMemory failed.\n", __FUNCTION__));
         goto Exit;
     }
 
     BytesToRead = sizeof(*DosHeader);
-    if (Offset + BytesToRead > InitialReadSize) {
-        if (!NT_SUCCESS(Status = RtlEnsureBufferSize(0, Buffer, Offset + BytesToRead))) {
+    if (Offset + BytesToRead > InitialReadSize)
+    {
+        if (!NT_SUCCESS(Status = RtlEnsureBufferSize(0, Buffer, Offset + BytesToRead)))
+        {
             goto Exit;
         }
-        if (!NT_SUCCESS(Status = NtReadVirtualMemory(ProcessHandle, RemoteAddress + Offset, Buffer->Buffer + Offset, BytesToRead, &BytesRead))) {
+        if (!NT_SUCCESS(Status = NtReadVirtualMemory(ProcessHandle, RemoteAddress + Offset, Buffer->Buffer + Offset,
+                                                     BytesToRead, &BytesRead)))
+        {
             KdPrintEx((DPFLTR_LDR_ID, DPFLTR_ERROR_LEVEL, "LDR: %s(): NtReadVirtualMemory failed.\n", __FUNCTION__));
             goto Exit;
         }
-        if (BytesToRead != BytesRead) {
+        if (BytesToRead != BytesRead)
+        {
             goto ReadTruncated;
         }
     }
     DosHeader = (PIMAGE_DOS_HEADER)Buffer->Buffer;
-    if (DosHeader->e_magic != IMAGE_DOS_SIGNATURE) {
+    if (DosHeader->e_magic != IMAGE_DOS_SIGNATURE)
+    {
         goto InvalidImageFormat;
     }
 
-    if (DosHeader->e_lfanew >= RTLP_IMAGE_MAX_DOS_HEADER) {
+    if (DosHeader->e_lfanew >= RTLP_IMAGE_MAX_DOS_HEADER)
+    {
         goto InvalidImageFormat;
     }
 
     Offset += DosHeader->e_lfanew;
 
-    BytesToRead =  RTL_SIZEOF_THROUGH_FIELD(IMAGE_NT_HEADERS32, FileHeader);
+    BytesToRead = RTL_SIZEOF_THROUGH_FIELD(IMAGE_NT_HEADERS32, FileHeader);
     {
-        C_ASSERT(RTL_SIZEOF_THROUGH_FIELD(IMAGE_NT_HEADERS32, FileHeader)
-            == RTL_SIZEOF_THROUGH_FIELD(IMAGE_NT_HEADERS64, FileHeader));
+        C_ASSERT(RTL_SIZEOF_THROUGH_FIELD(IMAGE_NT_HEADERS32, FileHeader) ==
+                 RTL_SIZEOF_THROUGH_FIELD(IMAGE_NT_HEADERS64, FileHeader));
     }
-    if (Offset + BytesToRead > InitialReadSize) {
-        if (!NT_SUCCESS(Status = RtlEnsureBufferSize(0, Buffer, Offset + BytesToRead))) {
+    if (Offset + BytesToRead > InitialReadSize)
+    {
+        if (!NT_SUCCESS(Status = RtlEnsureBufferSize(0, Buffer, Offset + BytesToRead)))
+        {
             goto Exit;
         }
-        if (!NT_SUCCESS(Status = NtReadVirtualMemory(ProcessHandle, RemoteAddress + Offset, Buffer->Buffer + Offset, BytesToRead, &BytesRead))) {
+        if (!NT_SUCCESS(Status = NtReadVirtualMemory(ProcessHandle, RemoteAddress + Offset, Buffer->Buffer + Offset,
+                                                     BytesToRead, &BytesRead)))
+        {
             goto Exit;
         }
-        if (BytesToRead != BytesRead) {
+        if (BytesToRead != BytesRead)
+        {
             goto ReadTruncated;
         }
     }
     Headers32Offset = Offset;
     Headers32 = (PIMAGE_NT_HEADERS32)(Buffer->Buffer + Headers32Offset); // correct for 64bit too
-    if (Headers32->Signature != IMAGE_NT_SIGNATURE) {
+    if (Headers32->Signature != IMAGE_NT_SIGNATURE)
+    {
         goto InvalidImageFormat;
     }
 
     Offset += BytesToRead;
-    BytesToRead = Headers32->FileHeader.SizeOfOptionalHeader
-        + Headers32->FileHeader.NumberOfSections * IMAGE_SIZEOF_SECTION_HEADER;
+    BytesToRead = Headers32->FileHeader.SizeOfOptionalHeader +
+                  Headers32->FileHeader.NumberOfSections * IMAGE_SIZEOF_SECTION_HEADER;
 
-    if (Offset + BytesToRead > InitialReadSize) {
-        if (!NT_SUCCESS(Status = RtlEnsureBufferSize(0, Buffer, Offset + BytesToRead))) {
+    if (Offset + BytesToRead > InitialReadSize)
+    {
+        if (!NT_SUCCESS(Status = RtlEnsureBufferSize(0, Buffer, Offset + BytesToRead)))
+        {
             goto Exit;
         }
-        if (!NT_SUCCESS(Status = NtReadVirtualMemory(ProcessHandle, RemoteAddress + Offset, Buffer->Buffer + Offset, BytesToRead, &BytesRead))) {
+        if (!NT_SUCCESS(Status = NtReadVirtualMemory(ProcessHandle, RemoteAddress + Offset, Buffer->Buffer + Offset,
+                                                     BytesToRead, &BytesRead)))
+        {
             goto Exit;
         }
-        if (BytesToRead != BytesRead) {
+        if (BytesToRead != BytesRead)
+        {
             goto ReadTruncated;
         }
     }
     Headers32 = (PIMAGE_NT_HEADERS32)(Buffer->Buffer + Headers32Offset); // correct for 64bit too
-    if (Headers32->OptionalHeader.Magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC
-        && Headers32->OptionalHeader.Magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC
-        ) {
+    if (Headers32->OptionalHeader.Magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC &&
+        Headers32->OptionalHeader.Magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+    {
         goto InvalidImageFormat;
     }
 #if defined(_WIN64) || defined(BUILD_WOW6432)
-#define NATIVE_PAGE_SIZE  0x2000
-    if ((Image->Flags & LDR_DLL_MAPPED_AS_MASK) == LDR_DLL_MAPPED_AS_UNFORMATED_IMAGE) {
-        PIMAGE_NT_HEADERS64  Headers64 = (PIMAGE_NT_HEADERS64)Headers32;
+#define NATIVE_PAGE_SIZE 0x2000
+    if ((Image->Flags & LDR_DLL_MAPPED_AS_MASK) == LDR_DLL_MAPPED_AS_UNFORMATED_IMAGE)
+    {
+        PIMAGE_NT_HEADERS64 Headers64 = (PIMAGE_NT_HEADERS64)Headers32;
 
         // This test is copied from ntdll.dll's conditionall call to LdrpWx86FormatVirtualImage.
-        if (
-              Headers32->FileHeader.Machine == IMAGE_FILE_MACHINE_I386
-           && Headers32->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC
-           && Headers32->OptionalHeader.SectionAlignment < NATIVE_PAGE_SIZE
-           ) {
+        if (Headers32->FileHeader.Machine == IMAGE_FILE_MACHINE_I386 &&
+            Headers32->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC &&
+            Headers32->OptionalHeader.SectionAlignment < NATIVE_PAGE_SIZE)
+        {
             Image->Flags = (Image->Flags & ~LDR_DLL_MAPPED_AS_MASK) | LDR_DLL_MAPPED_AS_DATA;
-        } else {
+        }
+        else
+        {
             Image->Flags = (Image->Flags & ~LDR_DLL_MAPPED_AS_MASK) | LDR_DLL_MAPPED_AS_IMAGE;
         }
     }
 #endif
     Status = STATUS_SUCCESS;
 Exit:
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         LdrDestroyOutOfProcessImage(Image);
     }
     KdPrintEx((DPFLTR_LDR_ID, DPFLTR_LEVEL_STATUS(Status), "LDR: %s() exiting 0x%08lx\n", __FUNCTION__, Status));
@@ -1568,13 +1566,8 @@ InvalidImageFormat:
 
 NTSTATUS
 NTAPI
-LdrFindCreateProcessManifest(
-    IN ULONG                         Flags,
-    IN OUT PLDR_OUT_OF_PROCESS_IMAGE Image,
-    IN const ULONG_PTR*              IdPath,
-    IN ULONG                         IdPathLength,
-    OUT PIMAGE_RESOURCE_DATA_ENTRY   OutDataEntry
-    )
+LdrFindCreateProcessManifest(IN ULONG Flags, IN OUT PLDR_OUT_OF_PROCESS_IMAGE Image, IN const ULONG_PTR *IdPath,
+                             IN ULONG IdPathLength, OUT PIMAGE_RESOURCE_DATA_ENTRY OutDataEntry)
 /*++
 
 Routine Description:
@@ -1607,8 +1600,8 @@ Return Value:
 --*/
 {
     NTSTATUS Status = STATUS_SUCCESS;
-    SIZE_T   BytesRead = 0;
-    SIZE_T   BytesToRead = 0;
+    SIZE_T BytesRead = 0;
+    SIZE_T BytesToRead = 0;
 #if DBG
     ULONG Line = __LINE__;
 #endif
@@ -1618,24 +1611,20 @@ Return Value:
     C_ASSERT(ISOLATIONAWARE_MANIFEST_RESOURCE_ID == 2);
 
 #if DBG
-    KdPrintEx((
-        DPFLTR_LDR_ID,
-        DPFLTR_TRACE_LEVEL,
-        "LDR: %s(0x%lx, %p, %p[%Id, %Id, %Id], %lu, %p) beginning\n",
-        __FUNCTION__,
-        Flags,
-        Image,
-        IdPath,
-        // 3 is the usual number, type, id/name, language
-        (IdPath != NULL && IdPathLength > 0) ? IdPath[0] : 0,
-        (IdPath != NULL && IdPathLength > 1) ? IdPath[1] : 0,
-        (IdPath != NULL && IdPathLength > 2) ? IdPath[2] : 0,
-        IdPathLength,
-        OutDataEntry
-        ));
+    KdPrintEx((DPFLTR_LDR_ID, DPFLTR_TRACE_LEVEL, "LDR: %s(0x%lx, %p, %p[%Id, %Id, %Id], %lu, %p) beginning\n",
+               __FUNCTION__, Flags, Image, IdPath,
+               // 3 is the usual number, type, id/name, language
+               (IdPath != NULL && IdPathLength > 0) ? IdPath[0] : 0,
+               (IdPath != NULL && IdPathLength > 1) ? IdPath[1] : 0,
+               (IdPath != NULL && IdPathLength > 2) ? IdPath[2] : 0, IdPathLength, OutDataEntry));
 #endif
 
-#define LDRP_CHECK_PARAMETER(x) if (!(x)) { ASSERT(x); return STATUS_INVALID_PARAMETER; }
+#define LDRP_CHECK_PARAMETER(x)          \
+    if (!(x))                            \
+    {                                    \
+        ASSERT(x);                       \
+        return STATUS_INVALID_PARAMETER; \
+    }
     LDRP_CHECK_PARAMETER(Image != NULL);
     LDRP_CHECK_PARAMETER(Image->DllHandle != NULL);
     LDRP_CHECK_PARAMETER(Image->ProcessHandle != NULL);
@@ -1647,23 +1636,19 @@ Return Value:
 
     // not all flags are implemented (only image vs. data is)
     LDRP_CHECK_PARAMETER((Flags & LDR_FIND_RESOURCE_LANGUAGE_EXACT) == 0);
-    LDRP_CHECK_PARAMETER((Flags & LDRP_FIND_RESOURCE_DIRECTORY   ) == 0);
+    LDRP_CHECK_PARAMETER((Flags & LDRP_FIND_RESOURCE_DIRECTORY) == 0);
 
     RtlZeroMemory(OutDataEntry, sizeof(OutDataEntry));
 
-    if (Image->ProcessHandle == NtCurrentProcess()) {
-        PVOID  DirectoryOrData = NULL;
+    if (Image->ProcessHandle == NtCurrentProcess())
+    {
+        PVOID DirectoryOrData = NULL;
 
         Status = LdrpSearchResourceSection_U(
-            (Image->Flags & LDR_DLL_MAPPED_AS_DATA)
-                ? LDR_VIEW_TO_DATAFILE(Image->DllHandle)
-                : Image->DllHandle,
-            IdPath,
-            IdPathLength,
-            Flags,            
-            &DirectoryOrData
-            );
-        if (NT_SUCCESS(Status) && DirectoryOrData != NULL && OutDataEntry != NULL) {
+            (Image->Flags & LDR_DLL_MAPPED_AS_DATA) ? LDR_VIEW_TO_DATAFILE(Image->DllHandle) : Image->DllHandle, IdPath,
+            IdPathLength, Flags, &DirectoryOrData);
+        if (NT_SUCCESS(Status) && DirectoryOrData != NULL && OutDataEntry != NULL)
+        {
             *OutDataEntry = *(PIMAGE_RESOURCE_DATA_ENTRY)DirectoryOrData;
         }
         goto Exit;
@@ -1675,56 +1660,53 @@ Return Value:
     //
     // And we only handle numbers, not strings/names.
     //
-    LDRP_CHECK_PARAMETER(IdPathLength == 3); // type, id/name, langid
-    LDRP_CHECK_PARAMETER(IdPath[0] != 0); // type
+    LDRP_CHECK_PARAMETER(IdPathLength == 3);                                                 // type, id/name, langid
+    LDRP_CHECK_PARAMETER(IdPath[0] != 0);                                                    // type
     LDRP_CHECK_PARAMETER(IdPath[1] == 0 || IdPath[1] == CREATEPROCESS_MANIFEST_RESOURCE_ID); // just find first id
-    LDRP_CHECK_PARAMETER(IdPath[2] == 0); // first langid
+    LDRP_CHECK_PARAMETER(IdPath[2] == 0);                                                    // first langid
 
     // no strings/names, just numbers
     LDRP_CHECK_PARAMETER(IS_INTRESOURCE(IdPath[0]));
     LDRP_CHECK_PARAMETER(IS_INTRESOURCE(IdPath[1]));
     LDRP_CHECK_PARAMETER(IS_INTRESOURCE(IdPath[2]));
 
-    __try {
+    __try
+    {
         USHORT n = 0;
         USHORT half = 0;
-        LONG   dir = 0;
+        LONG dir = 0;
 
-        SIZE_T                        TopDirectorySize = 0;
-        ULONG                         Size = 0;
-        PIMAGE_RESOURCE_DIRECTORY     Directory = NULL;
-        PIMAGE_RESOURCE_DIRECTORY     RemoteDirectoryAddress = NULL;
-        UCHAR                         DirectoryBuffer[
-                                          sizeof(IMAGE_RESOURCE_DIRECTORY)
-                                          + sizeof(IMAGE_RESOURCE_DIRECTORY_ENTRY)
-                                          ];
-        PIMAGE_RESOURCE_DIRECTORY     TopDirectory = NULL;
-        PIMAGE_RESOURCE_DIRECTORY     RemoteTopDirectoryAddress = NULL;
-        RTL_BUFFER                    TopDirectoryBuffer = {0};
-        UCHAR                         TopStaticDirectoryBuffer[256];
+        SIZE_T TopDirectorySize = 0;
+        ULONG Size = 0;
+        PIMAGE_RESOURCE_DIRECTORY Directory = NULL;
+        PIMAGE_RESOURCE_DIRECTORY RemoteDirectoryAddress = NULL;
+        UCHAR DirectoryBuffer[sizeof(IMAGE_RESOURCE_DIRECTORY) + sizeof(IMAGE_RESOURCE_DIRECTORY_ENTRY)];
+        PIMAGE_RESOURCE_DIRECTORY TopDirectory = NULL;
+        PIMAGE_RESOURCE_DIRECTORY RemoteTopDirectoryAddress = NULL;
+        RTL_BUFFER TopDirectoryBuffer = { 0 };
+        UCHAR TopStaticDirectoryBuffer[256];
         C_ASSERT(sizeof(TopStaticDirectoryBuffer) >= sizeof(*RemoteTopDirectoryAddress));
 
-        IMAGE_RESOURCE_DATA_ENTRY     DataEntry;
-        PIMAGE_RESOURCE_DATA_ENTRY    RemoteDataEntryAddress = NULL;
+        IMAGE_RESOURCE_DATA_ENTRY DataEntry;
+        PIMAGE_RESOURCE_DATA_ENTRY RemoteDataEntryAddress = NULL;
 
         PIMAGE_RESOURCE_DIRECTORY_ENTRY DirectoryEntry = NULL;
 
         PIMAGE_RESOURCE_DIRECTORY_ENTRY DirEntLow = NULL;
         PIMAGE_RESOURCE_DIRECTORY_ENTRY DirEntMiddle = NULL;
         PIMAGE_RESOURCE_DIRECTORY_ENTRY DirEntHigh = NULL;
-        __try {
+        __try
+        {
             RtlInitBuffer(&TopDirectoryBuffer, TopStaticDirectoryBuffer, sizeof(TopStaticDirectoryBuffer));
             Status = RtlEnsureBufferSize(0, &TopDirectoryBuffer, TopDirectoryBuffer.StaticSize);
             ASSERT(NT_SUCCESS(Status));
 
-            RemoteTopDirectoryAddress = (PIMAGE_RESOURCE_DIRECTORY)
-                RtlImageDirectoryEntryToData(Image->HeadersBuffer.Buffer,
-                                            (Image->Flags & LDR_DLL_MAPPED_AS_DATA) ? FALSE : TRUE,
-                                             IMAGE_DIRECTORY_ENTRY_RESOURCE,
-                                             &Size
-                                             );
+            RemoteTopDirectoryAddress = (PIMAGE_RESOURCE_DIRECTORY)RtlImageDirectoryEntryToData(
+                Image->HeadersBuffer.Buffer, (Image->Flags & LDR_DLL_MAPPED_AS_DATA) ? FALSE : TRUE,
+                IMAGE_DIRECTORY_ENTRY_RESOURCE, &Size);
 
-            if (RemoteTopDirectoryAddress == NULL) {
+            if (RemoteTopDirectoryAddress == NULL)
+            {
                 Status = STATUS_RESOURCE_DATA_NOT_FOUND;
                 goto Exit;
             }
@@ -1732,16 +1714,17 @@ Return Value:
             // rebase..
             //
             RemoteTopDirectoryAddress =
-                (PIMAGE_RESOURCE_DIRECTORY)
-                (((PUCHAR)Image->DllHandle)
-                + (((PUCHAR)RemoteTopDirectoryAddress)
-                - ((PUCHAR)Image->HeadersBuffer.Buffer)));
+                (PIMAGE_RESOURCE_DIRECTORY)(((PUCHAR)Image->DllHandle) + (((PUCHAR)RemoteTopDirectoryAddress) -
+                                                                          ((PUCHAR)Image->HeadersBuffer.Buffer)));
 
-            Status = NtReadVirtualMemory(Image->ProcessHandle, RemoteTopDirectoryAddress, TopDirectoryBuffer.Buffer, TopDirectoryBuffer.Size, &BytesRead);
-            if (Status == STATUS_PARTIAL_COPY && BytesRead >= sizeof(*TopDirectory)) {
+            Status = NtReadVirtualMemory(Image->ProcessHandle, RemoteTopDirectoryAddress, TopDirectoryBuffer.Buffer,
+                                         TopDirectoryBuffer.Size, &BytesRead);
+            if (Status == STATUS_PARTIAL_COPY && BytesRead >= sizeof(*TopDirectory))
+            {
                 // nothing
             }
-            else if (!NT_SUCCESS(Status)) {
+            else if (!NT_SUCCESS(Status))
+            {
                 goto Exit;
             }
 
@@ -1754,21 +1737,22 @@ Return Value:
             // don't optimize away reading of the named ones, even though we never
             // search them)
             //
-            TopDirectorySize = sizeof(*TopDirectory)
-                + (TopDirectory->NumberOfIdEntries + TopDirectory->NumberOfNamedEntries)
-                   * sizeof(IMAGE_RESOURCE_DIRECTORY_ENTRY);
+            TopDirectorySize =
+                sizeof(*TopDirectory) + (TopDirectory->NumberOfIdEntries + TopDirectory->NumberOfNamedEntries) *
+                                            sizeof(IMAGE_RESOURCE_DIRECTORY_ENTRY);
 
             //
             // now check the result of NtReadVirtualMemory again, if our guess was
             // big enough, but the read was not, error
             //
-            if (TopDirectorySize <= TopDirectoryBuffer.Size
-                && BytesRead < TopDirectorySize) {
+            if (TopDirectorySize <= TopDirectoryBuffer.Size && BytesRead < TopDirectorySize)
+            {
                 // REVIEW STATUS_PARTIAL_COPY is only a warning. Is it a strong enough return value?
                 // Should we return STATUS_INVALID_IMAGE_FORMAT or STATUS_ACCESS_DENIED instead?
                 // There are other places in this file where we propogate STATUS_PARTIAL_COPY, if
                 // zero bytes are actually read.
-                if (Status == STATUS_PARTIAL_COPY) {
+                if (Status == STATUS_PARTIAL_COPY)
+                {
                     goto Exit;
                 }
 #if DBG
@@ -1780,31 +1764,32 @@ Return Value:
             //
             // if our initial guessed size was too small, read the correct size
             //
-            if (TopDirectorySize > TopDirectoryBuffer.Size) {
-                KdPrintEx((
-                    DPFLTR_LDR_ID,
-                    DPFLTR_ERROR_LEVEL, // otherwise we'll never see it
-                    "LDR: %s(): %Id was not enough of a preread for a resource directory, %Id required.\n",
-                    __FUNCTION__,
-                    TopDirectoryBuffer.Size,
-                    TopDirectorySize
-                    ));
+            if (TopDirectorySize > TopDirectoryBuffer.Size)
+            {
+                KdPrintEx((DPFLTR_LDR_ID,
+                           DPFLTR_ERROR_LEVEL, // otherwise we'll never see it
+                           "LDR: %s(): %Id was not enough of a preread for a resource directory, %Id required.\n",
+                           __FUNCTION__, TopDirectoryBuffer.Size, TopDirectorySize));
                 Status = RtlEnsureBufferSize(0, &TopDirectoryBuffer, TopDirectorySize);
-                if (!NT_SUCCESS(Status)) {
+                if (!NT_SUCCESS(Status))
+                {
                     goto Exit;
                 }
-                Status = NtReadVirtualMemory(Image->ProcessHandle, RemoteTopDirectoryAddress, TopDirectoryBuffer.Buffer, TopDirectoryBuffer.Size, &BytesRead);
-                if (!NT_SUCCESS(Status)) {
+                Status = NtReadVirtualMemory(Image->ProcessHandle, RemoteTopDirectoryAddress, TopDirectoryBuffer.Buffer,
+                                             TopDirectoryBuffer.Size, &BytesRead);
+                if (!NT_SUCCESS(Status))
+                {
                     goto Exit;
                 }
-                if (BytesRead != TopDirectoryBuffer.Size) {
+                if (BytesRead != TopDirectoryBuffer.Size)
+                {
 #if DBG
                     Line = __LINE__;
 #endif
                     goto ReadTruncated;
                 }
 
-                TopDirectory = (PIMAGE_RESOURCE_DIRECTORY) TopDirectoryBuffer.Buffer;
+                TopDirectory = (PIMAGE_RESOURCE_DIRECTORY)TopDirectoryBuffer.Buffer;
             }
 
             // point to start of named entries
@@ -1814,8 +1799,9 @@ Return Value:
             DirEntLow += TopDirectory->NumberOfNamedEntries;
 
             n = TopDirectory->NumberOfIdEntries;
-            
-            if (n == 0) {
+
+            if (n == 0)
+            {
                 Status = STATUS_RESOURCE_TYPE_NOT_FOUND;
                 goto Exit;
             }
@@ -1823,33 +1809,40 @@ Return Value:
             DirectoryEntry = NULL;
             Directory = NULL;
             DirEntHigh = DirEntLow + n - 1;
-            while (DirEntLow <= DirEntHigh) {
-                if ((half = (n >> 1)) != 0) {
+            while (DirEntLow <= DirEntHigh)
+            {
+                if ((half = (n >> 1)) != 0)
+                {
                     DirEntMiddle = DirEntLow;
-                    if (n & 1) {
+                    if (n & 1)
+                    {
                         DirEntMiddle += half;
                     }
-                    else {
+                    else
+                    {
                         DirEntMiddle += half - 1;
                     }
-                    if (DirEntMiddle->NameIsString) {
-                        KdPrintEx((DPFLTR_LDR_ID, DPFLTR_ERROR_LEVEL, "LDR: No strings expected in %s().\n", __FUNCTION__));
+                    if (DirEntMiddle->NameIsString)
+                    {
+                        KdPrintEx(
+                            (DPFLTR_LDR_ID, DPFLTR_ERROR_LEVEL, "LDR: No strings expected in %s().\n", __FUNCTION__));
                         ASSERT(FALSE);
                         Status = STATUS_INVALID_PARAMETER;
                         goto Exit;
                     }
-                    dir = LdrpCompareResourceNames_U( *IdPath,
-                                                      TopDirectory,
-                                                      DirEntMiddle
-                                                    );
-                    if (dir == 0) {
-                        if (DirEntMiddle->DataIsDirectory) {
-                            Directory = (PIMAGE_RESOURCE_DIRECTORY)
-                                    (((PCHAR)TopDirectory)
-                                        + DirEntMiddle->OffsetToDirectory);
+                    dir = LdrpCompareResourceNames_U(*IdPath, TopDirectory, DirEntMiddle);
+                    if (dir == 0)
+                    {
+                        if (DirEntMiddle->DataIsDirectory)
+                        {
+                            Directory =
+                                (PIMAGE_RESOURCE_DIRECTORY)(((PCHAR)TopDirectory) + DirEntMiddle->OffsetToDirectory);
                         }
-                        else {
-                            KdPrintEx((DPFLTR_LDR_ID, DPFLTR_ERROR_LEVEL, "LDR: %s(): First id in resource path is expected to be a directory.\n", __FUNCTION__));
+                        else
+                        {
+                            KdPrintEx((DPFLTR_LDR_ID, DPFLTR_ERROR_LEVEL,
+                                       "LDR: %s(): First id in resource path is expected to be a directory.\n",
+                                       __FUNCTION__));
                             Status = STATUS_INVALID_PARAMETER;
                             goto Exit;
                             /* This is what you do if we allow specifying the id and language,
@@ -1862,41 +1855,51 @@ Return Value:
                         }
                         break;
                     }
-                    else {
-                        if (dir < 0) {
+                    else
+                    {
+                        if (dir < 0)
+                        {
                             DirEntHigh = DirEntMiddle - 1;
-                            if (n & 1) {
+                            if (n & 1)
+                            {
                                 n = half;
                             }
-                            else {
+                            else
+                            {
                                 n = half - 1;
                             }
                         }
-                        else {
+                        else
+                        {
                             DirEntLow = DirEntMiddle + 1;
                             n = half;
                         }
                     }
                 }
-                else {
-                    if (n != 0) {
-                        if (DirEntLow->NameIsString) {
-                            KdPrintEx((DPFLTR_LDR_ID, DPFLTR_ERROR_LEVEL, "LDR: %s() No strings expected.\n", __FUNCTION__));
+                else
+                {
+                    if (n != 0)
+                    {
+                        if (DirEntLow->NameIsString)
+                        {
+                            KdPrintEx(
+                                (DPFLTR_LDR_ID, DPFLTR_ERROR_LEVEL, "LDR: %s() No strings expected.\n", __FUNCTION__));
                             Status = STATUS_INVALID_PARAMETER;
                             goto Exit;
                         }
-                        dir = LdrpCompareResourceNames_U( *IdPath,
-                                                  TopDirectory,
-                                                  DirEntLow
-                                                 );
-                        if (dir == 0) {
-                            if (DirEntLow->DataIsDirectory) {
-                                Directory = (PIMAGE_RESOURCE_DIRECTORY)
-                                        (((PCHAR)TopDirectory)
-                                            + DirEntLow->OffsetToDirectory);
+                        dir = LdrpCompareResourceNames_U(*IdPath, TopDirectory, DirEntLow);
+                        if (dir == 0)
+                        {
+                            if (DirEntLow->DataIsDirectory)
+                            {
+                                Directory =
+                                    (PIMAGE_RESOURCE_DIRECTORY)(((PCHAR)TopDirectory) + DirEntLow->OffsetToDirectory);
                             }
-                            else {
-                                KdPrintEx((DPFLTR_LDR_ID, DPFLTR_ERROR_LEVEL, "LDR: %s() First id in resource path is expected to be a directory", __FUNCTION__));
+                            else
+                            {
+                                KdPrintEx((DPFLTR_LDR_ID, DPFLTR_ERROR_LEVEL,
+                                           "LDR: %s() First id in resource path is expected to be a directory",
+                                           __FUNCTION__));
                                 Status = STATUS_INVALID_PARAMETER;
                                 goto Exit;
                                 /*
@@ -1913,7 +1916,8 @@ Return Value:
             //
             // ok, now we have found address of the type's name/id directory (or not)
             //
-            if (Directory == NULL) {
+            if (Directory == NULL)
+            {
                 Status = STATUS_RESOURCE_TYPE_NOT_FOUND;
                 goto Exit;
             }
@@ -1923,39 +1927,39 @@ Return Value:
             // it found the local address, change this to an offset and apply
             // to the remote address ("rebase")
             //
-            RemoteDirectoryAddress =
-                (PIMAGE_RESOURCE_DIRECTORY)(
-                  ((ULONG_PTR)RemoteTopDirectoryAddress)
-                + ((ULONG_PTR)Directory)
-                - ((ULONG_PTR)TopDirectory));
+            RemoteDirectoryAddress = (PIMAGE_RESOURCE_DIRECTORY)(((ULONG_PTR)RemoteTopDirectoryAddress) +
+                                                                 ((ULONG_PTR)Directory) - ((ULONG_PTR)TopDirectory));
 
             //
             // Now do the read of both the directory and the first entry.
             //
             Directory = (PIMAGE_RESOURCE_DIRECTORY)&DirectoryBuffer;
-            Status = NtReadVirtualMemory(Image->ProcessHandle, RemoteDirectoryAddress, Directory, sizeof(DirectoryBuffer), &BytesRead);
-            if (!NT_SUCCESS(Status)) {
+            Status = NtReadVirtualMemory(Image->ProcessHandle, RemoteDirectoryAddress, Directory,
+                                         sizeof(DirectoryBuffer), &BytesRead);
+            if (!NT_SUCCESS(Status))
+            {
                 KdPrintEx((DPFLTR_LDR_ID, DPFLTR_ERROR_LEVEL, "LDR: %s() NtReadVirtualMemory failed.", __FUNCTION__));
                 goto Exit;
             }
-            if (BytesRead != sizeof(DirectoryBuffer)) {
+            if (BytesRead != sizeof(DirectoryBuffer))
+            {
 #if DBG
                 Line = __LINE__;
 #endif
                 goto ReadTruncated;
             }
-            if ((Directory->NumberOfNamedEntries + Directory->NumberOfIdEntries) == 0) {
+            if ((Directory->NumberOfNamedEntries + Directory->NumberOfIdEntries) == 0)
+            {
                 Status = STATUS_RESOURCE_NAME_NOT_FOUND;
                 goto Exit;
             }
 
-            if (IdPath[1] == CREATEPROCESS_MANIFEST_RESOURCE_ID && Directory->NumberOfNamedEntries != 0) {
-                KdPrintEx((
-                    DPFLTR_LDR_ID,
-                    DPFLTR_ERROR_LEVEL,
-                    "LDR: %s() caller asked for id==1 but there are named entries we are not bothering to skip.\n",
-                    __FUNCTION__
-                    ));
+            if (IdPath[1] == CREATEPROCESS_MANIFEST_RESOURCE_ID && Directory->NumberOfNamedEntries != 0)
+            {
+                KdPrintEx(
+                    (DPFLTR_LDR_ID, DPFLTR_ERROR_LEVEL,
+                     "LDR: %s() caller asked for id==1 but there are named entries we are not bothering to skip.\n",
+                     __FUNCTION__));
                 Status = STATUS_RESOURCE_NAME_NOT_FOUND;
                 goto Exit;
             }
@@ -1964,8 +1968,10 @@ Return Value:
             // grab the entry for the first id
             //
             DirectoryEntry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(Directory + 1);
-            if (!DirectoryEntry->DataIsDirectory) {
-                KdPrintEx((DPFLTR_LDR_ID, DPFLTR_ERROR_LEVEL, "LDR: Second level of resource directory is expected to be a directory\n"));
+            if (!DirectoryEntry->DataIsDirectory)
+            {
+                KdPrintEx((DPFLTR_LDR_ID, DPFLTR_ERROR_LEVEL,
+                           "LDR: Second level of resource directory is expected to be a directory\n"));
                 Status = STATUS_INVALID_IMAGE_FORMAT; // REVIEW too strong?
                 goto Exit;
             }
@@ -1973,15 +1979,12 @@ Return Value:
             //
             // If there is more than one entry, ensure no conflicts.
             //
-            if (Directory->NumberOfIdEntries > 1
-                && DirectoryEntry->Id >= MINIMUM_RESERVED_MANIFEST_RESOURCE_ID
-                && DirectoryEntry->Id <= MAXIMUM_RESERVED_MANIFEST_RESOURCE_ID
-                ) {
-                PIMAGE_RESOURCE_DIRECTORY_ENTRY  RemoteDirectoryEntryPointer;
-                IMAGE_RESOURCE_DIRECTORY_ENTRY   DirectoryEntries[
-                                                    MAXIMUM_RESERVED_MANIFEST_RESOURCE_ID
-                                                    - MINIMUM_RESERVED_MANIFEST_RESOURCE_ID
-                                                    + 1];
+            if (Directory->NumberOfIdEntries > 1 && DirectoryEntry->Id >= MINIMUM_RESERVED_MANIFEST_RESOURCE_ID &&
+                DirectoryEntry->Id <= MAXIMUM_RESERVED_MANIFEST_RESOURCE_ID)
+            {
+                PIMAGE_RESOURCE_DIRECTORY_ENTRY RemoteDirectoryEntryPointer;
+                IMAGE_RESOURCE_DIRECTORY_ENTRY
+                    DirectoryEntries[MAXIMUM_RESERVED_MANIFEST_RESOURCE_ID - MINIMUM_RESERVED_MANIFEST_RESOURCE_ID + 1];
                 ULONG ResourceId;
                 ULONG NumberOfEntriesToCheck;
                 ULONG CountOfReservedManifestIds;
@@ -1994,12 +1997,16 @@ Return Value:
                 BytesToRead = sizeof(IMAGE_RESOURCE_DIRECTORY_ENTRY) * NumberOfEntriesToCheck;
                 ASSERT(BytesToRead <= sizeof(DirectoryEntries));
 
-                Status = NtReadVirtualMemory(Image->ProcessHandle, RemoteDirectoryEntryPointer, &DirectoryEntries, BytesToRead, &BytesRead);
-                if (!NT_SUCCESS(Status)) {
-                    KdPrintEx((DPFLTR_LDR_ID, DPFLTR_ERROR_LEVEL, "LDR: %s() NtReadVirtualMemory failed.", __FUNCTION__));
+                Status = NtReadVirtualMemory(Image->ProcessHandle, RemoteDirectoryEntryPointer, &DirectoryEntries,
+                                             BytesToRead, &BytesRead);
+                if (!NT_SUCCESS(Status))
+                {
+                    KdPrintEx(
+                        (DPFLTR_LDR_ID, DPFLTR_ERROR_LEVEL, "LDR: %s() NtReadVirtualMemory failed.", __FUNCTION__));
                     goto Exit;
                 }
-                if (BytesRead != BytesToRead) {
+                if (BytesRead != BytesToRead)
+                {
 #if DBG
                     Line = __LINE__;
 #endif
@@ -2009,21 +2016,19 @@ Return Value:
                 CountOfReservedManifestIds = 0;
 
                 for (ResourceId = MINIMUM_RESERVED_MANIFEST_RESOURCE_ID;
-                     ResourceId != MINIMUM_RESERVED_MANIFEST_RESOURCE_ID + NumberOfEntriesToCheck;
-                     ResourceId += 1
-                    ) {
-                    if (DirectoryEntries[ResourceId - MINIMUM_RESERVED_MANIFEST_RESOURCE_ID].Id >= MINIMUM_RESERVED_MANIFEST_RESOURCE_ID
-                        && DirectoryEntries[ResourceId - MINIMUM_RESERVED_MANIFEST_RESOURCE_ID].Id <= MAXIMUM_RESERVED_MANIFEST_RESOURCE_ID
-                        ) {
+                     ResourceId != MINIMUM_RESERVED_MANIFEST_RESOURCE_ID + NumberOfEntriesToCheck; ResourceId += 1)
+                {
+                    if (DirectoryEntries[ResourceId - MINIMUM_RESERVED_MANIFEST_RESOURCE_ID].Id >=
+                            MINIMUM_RESERVED_MANIFEST_RESOURCE_ID &&
+                        DirectoryEntries[ResourceId - MINIMUM_RESERVED_MANIFEST_RESOURCE_ID].Id <=
+                            MAXIMUM_RESERVED_MANIFEST_RESOURCE_ID)
+                    {
                         CountOfReservedManifestIds += 1;
-                        if (CountOfReservedManifestIds > 1) {
+                        if (CountOfReservedManifestIds > 1)
+                        {
 #if DBG
-                            DbgPrintEx(
-                                DPFLTR_LDR_ID,
-                                DPFLTR_ERROR_LEVEL,
-                                "LDR: %s() multiple reserved manifest resource ids present\n",
-                                __FUNCTION__
-                                );
+                            DbgPrintEx(DPFLTR_LDR_ID, DPFLTR_ERROR_LEVEL,
+                                       "LDR: %s() multiple reserved manifest resource ids present\n", __FUNCTION__);
 #endif
                             Status = STATUS_INVALID_PARAMETER;
                             goto Exit;
@@ -2032,7 +2037,9 @@ Return Value:
                 }
             }
 
-            if (IdPath[1] == CREATEPROCESS_MANIFEST_RESOURCE_ID && DirectoryEntry->Id != CREATEPROCESS_MANIFEST_RESOURCE_ID) {
+            if (IdPath[1] == CREATEPROCESS_MANIFEST_RESOURCE_ID &&
+                DirectoryEntry->Id != CREATEPROCESS_MANIFEST_RESOURCE_ID)
+            {
                 Status = STATUS_RESOURCE_NAME_NOT_FOUND;
                 goto Exit;
             }
@@ -2041,22 +2048,24 @@ Return Value:
             // now get address of langid directory
             //
             RemoteDirectoryAddress =
-                (PIMAGE_RESOURCE_DIRECTORY)(
-                  ((ULONG_PTR)RemoteTopDirectoryAddress)
-                + DirectoryEntry->OffsetToDirectory);
+                (PIMAGE_RESOURCE_DIRECTORY)(((ULONG_PTR)RemoteTopDirectoryAddress) + DirectoryEntry->OffsetToDirectory);
 
             //
             // now read the langid directory and its first entry
             //
-            Status = NtReadVirtualMemory(Image->ProcessHandle, RemoteDirectoryAddress, Directory, sizeof(DirectoryBuffer), &BytesRead);
-            if (!NT_SUCCESS(Status)) {
+            Status = NtReadVirtualMemory(Image->ProcessHandle, RemoteDirectoryAddress, Directory,
+                                         sizeof(DirectoryBuffer), &BytesRead);
+            if (!NT_SUCCESS(Status))
+            {
                 KdPrintEx((DPFLTR_LDR_ID, DPFLTR_ERROR_LEVEL, "LDR: %s() NtReadVirtualMemory failed.", __FUNCTION__));
                 goto Exit;
             }
-            if (BytesRead != sizeof(DirectoryBuffer)) {
+            if (BytesRead != sizeof(DirectoryBuffer))
+            {
                 goto ReadTruncated;
             }
-            if ((Directory->NumberOfNamedEntries + Directory->NumberOfIdEntries) == 0) {
+            if ((Directory->NumberOfNamedEntries + Directory->NumberOfIdEntries) == 0)
+            {
                 Status = STATUS_RESOURCE_LANG_NOT_FOUND;
                 goto Exit;
             }
@@ -2064,36 +2073,41 @@ Return Value:
             //
             // look at the langid directory's first entry
             //
-            if (DirectoryEntry->DataIsDirectory) {
-                KdPrintEx((DPFLTR_LDR_ID, DPFLTR_ERROR_LEVEL, "LDR: Third level of resource directory is not expected to be a directory\n"));
+            if (DirectoryEntry->DataIsDirectory)
+            {
+                KdPrintEx((DPFLTR_LDR_ID, DPFLTR_ERROR_LEVEL,
+                           "LDR: Third level of resource directory is not expected to be a directory\n"));
                 Status = STATUS_INVALID_IMAGE_FORMAT; // REVIEW too strong?
                 goto Exit;
             }
             RemoteDataEntryAddress =
-                (PIMAGE_RESOURCE_DATA_ENTRY)(
-                  ((ULONG_PTR)RemoteTopDirectoryAddress)
-                + DirectoryEntry->OffsetToData);
+                (PIMAGE_RESOURCE_DATA_ENTRY)(((ULONG_PTR)RemoteTopDirectoryAddress) + DirectoryEntry->OffsetToData);
 
             //
             // read the data entry
             //
-            Status = NtReadVirtualMemory(Image->ProcessHandle, RemoteDataEntryAddress, &DataEntry, sizeof(DataEntry), &BytesRead);
-            if (!NT_SUCCESS(Status)) {
+            Status = NtReadVirtualMemory(Image->ProcessHandle, RemoteDataEntryAddress, &DataEntry, sizeof(DataEntry),
+                                         &BytesRead);
+            if (!NT_SUCCESS(Status))
+            {
                 KdPrintEx((DPFLTR_LDR_ID, DPFLTR_ERROR_LEVEL, "LDR: %s() NtReadVirtualMemory failed.", __FUNCTION__));
                 goto Exit;
             }
-            if (BytesRead != sizeof(DataEntry)) {
+            if (BytesRead != sizeof(DataEntry))
+            {
                 goto ReadTruncated;
             }
 
             *OutDataEntry = DataEntry;
             Status = STATUS_SUCCESS;
         }
-        __finally {
+        __finally
+        {
             RtlFreeBuffer(&TopDirectoryBuffer);
         }
     }
-    __except (EXCEPTION_EXECUTE_HANDLER) {
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
     }
 Exit:
@@ -2102,39 +2116,26 @@ Exit:
     // Fix/raid dcpromo, msiexec, etc..
     // DPFLTR_LEVEL_STATUS filters all forms of resource not found.
     //
-    if (DPFLTR_LEVEL_STATUS(Status) == DPFLTR_ERROR_LEVEL) {
-        KdPrintEx((
-            DPFLTR_LDR_ID,
-            DPFLTR_LEVEL_STATUS(Status),
-            "LDR: %s(0x%lx, %p, %p[%Id, %Id, %Id], %lu, %p) failed %08x\n",
-            __FUNCTION__,
-            Flags,
-            Image,
-            IdPath,
-            // 3 is the usual number, type, id/name, language
-            (IdPath != NULL && IdPathLength > 0) ? IdPath[0] : 0,
-            (IdPath != NULL && IdPathLength > 1) ? IdPath[1] : 0,
-            (IdPath != NULL && IdPathLength > 2) ? IdPath[2] : 0,
-            IdPathLength,
-            OutDataEntry,
-            Status
-            ));
-        KdPrintEx((
-            DPFLTR_LDR_ID,
-            DPFLTR_LEVEL_STATUS(Status),
-            "LDR: %s() returning Status:0x%lx IMAGE_RESOURCE_DATA_ENTRY:{OffsetToData=%#lx, Size=%#lx}\n",
-            __FUNCTION__,
-            Status,
-            (OutDataEntry != NULL) ? OutDataEntry->OffsetToData : 0,
-            (OutDataEntry != NULL) ? OutDataEntry->Size : 0
-            ));
+    if (DPFLTR_LEVEL_STATUS(Status) == DPFLTR_ERROR_LEVEL)
+    {
+        KdPrintEx((DPFLTR_LDR_ID, DPFLTR_LEVEL_STATUS(Status),
+                   "LDR: %s(0x%lx, %p, %p[%Id, %Id, %Id], %lu, %p) failed %08x\n", __FUNCTION__, Flags, Image, IdPath,
+                   // 3 is the usual number, type, id/name, language
+                   (IdPath != NULL && IdPathLength > 0) ? IdPath[0] : 0,
+                   (IdPath != NULL && IdPathLength > 1) ? IdPath[1] : 0,
+                   (IdPath != NULL && IdPathLength > 2) ? IdPath[2] : 0, IdPathLength, OutDataEntry, Status));
+        KdPrintEx((DPFLTR_LDR_ID, DPFLTR_LEVEL_STATUS(Status),
+                   "LDR: %s() returning Status:0x%lx IMAGE_RESOURCE_DATA_ENTRY:{OffsetToData=%#lx, Size=%#lx}\n",
+                   __FUNCTION__, Status, (OutDataEntry != NULL) ? OutDataEntry->OffsetToData : 0,
+                   (OutDataEntry != NULL) ? OutDataEntry->Size : 0));
     }
 #endif
     return Status;
 
 ReadTruncated:
 #if DBG
-    DbgPrintEx(DPFLTR_LDR_ID, DPFLTR_ERROR_LEVEL,
+    DbgPrintEx(
+        DPFLTR_LDR_ID, DPFLTR_ERROR_LEVEL,
         "LDR: %s(): Line %lu NtReadVirtualMemory() succeeded, but returned too few bytes (0x%Ix out of 0x%Ix).\n",
         __FUNCTION__, Line, BytesRead, BytesToRead);
 #endif
@@ -2144,13 +2145,10 @@ ReadTruncated:
 
 NTSTATUS
 NTAPI
-LdrAccessOutOfProcessResource(
-    IN ULONG                            Flags,
-    IN OUT PLDR_OUT_OF_PROCESS_IMAGE    Image, // currently only IN
-    IN const IMAGE_RESOURCE_DATA_ENTRY* DataEntry,
-    OUT PVOID*                          Address OPTIONAL,
-    OUT PULONG                          Size OPTIONAL
-    )
+LdrAccessOutOfProcessResource(IN ULONG Flags,
+                              IN OUT PLDR_OUT_OF_PROCESS_IMAGE Image, // currently only IN
+                              IN const IMAGE_RESOURCE_DATA_ENTRY *DataEntry, OUT PVOID *Address OPTIONAL,
+                              OUT PULONG Size OPTIONAL)
 /*++
 
 Routine Description:
@@ -2184,36 +2182,28 @@ Return Value:
     ASSERT(Image->ProcessHandle != NULL);
     ASSERT(Image->HeadersBuffer.Buffer != NULL);
 
-    if (Image->ProcessHandle != NtCurrentProcess()) {
+    if (Image->ProcessHandle != NtCurrentProcess())
+    {
 
-        Status = LdrpAccessResourceDataNoMultipleLanguage(
-            (Image->Flags & LDR_DLL_MAPPED_AS_DATA)
-                ? LDR_VIEW_TO_DATAFILE(Image->HeadersBuffer.Buffer)
-                : Image->HeadersBuffer.Buffer,
-            DataEntry,
-            Address,
-            Size
-            );
+        Status = LdrpAccessResourceDataNoMultipleLanguage((Image->Flags & LDR_DLL_MAPPED_AS_DATA)
+                                                              ? LDR_VIEW_TO_DATAFILE(Image->HeadersBuffer.Buffer)
+                                                              : Image->HeadersBuffer.Buffer,
+                                                          DataEntry, Address, Size);
 
         //
         // rebase..
         //
-        if (NT_SUCCESS(Status) && Address != NULL && *Address != NULL) {
-            *Address =
-                (((PUCHAR)Image->DllHandle)
-                + (((PUCHAR)*Address)
-                - ((PUCHAR)Image->HeadersBuffer.Buffer)));
+        if (NT_SUCCESS(Status) && Address != NULL && *Address != NULL)
+        {
+            *Address = (((PUCHAR)Image->DllHandle) + (((PUCHAR)*Address) - ((PUCHAR)Image->HeadersBuffer.Buffer)));
         }
-    } else {
+    }
+    else
+    {
 
         Status = LdrpAccessResourceDataNoMultipleLanguage(
-            (Image->Flags & LDR_DLL_MAPPED_AS_DATA)
-                ? LDR_VIEW_TO_DATAFILE(Image->DllHandle)
-                : Image->DllHandle,
-            DataEntry,
-            Address,
-            Size
-            );
+            (Image->Flags & LDR_DLL_MAPPED_AS_DATA) ? LDR_VIEW_TO_DATAFILE(Image->DllHandle) : Image->DllHandle,
+            DataEntry, Address, Size);
     }
 
     KdPrintEx((DPFLTR_LDR_ID, DPFLTR_LEVEL_STATUS(Status), "LDR: %s() exiting 0x%08lx\n", __FUNCTION__, Status));
@@ -2223,13 +2213,8 @@ Return Value:
 #endif // } }
 
 NTSTATUS
-LdrEnumResources(
-    IN PVOID DllHandle,
-    IN const ULONG_PTR* ResourceIdPath,
-    IN ULONG ResourceIdPathLength,
-    IN OUT PULONG NumberOfResources,
-    OUT PLDR_ENUM_RESOURCE_ENTRY Resources OPTIONAL
-    )
+LdrEnumResources(IN PVOID DllHandle, IN const ULONG_PTR *ResourceIdPath, IN ULONG ResourceIdPathLength,
+                 IN OUT PULONG NumberOfResources, OUT PLDR_ENUM_RESOURCE_ENTRY Resources OPTIONAL)
 {
     NTSTATUS Status;
     PIMAGE_RESOURCE_DIRECTORY TopResourceDirectory;
@@ -2255,146 +2240,157 @@ LdrEnumResources(
     ULONG Size;
 
     ResourceIndex = 0;
-    if (!ARGUMENT_PRESENT( Resources )) {
+    if (!ARGUMENT_PRESENT(Resources))
+    {
         MaxResourceIndex = 0;
-        }
-    else {
+    }
+    else
+    {
         MaxResourceIndex = *NumberOfResources;
-        }
+    }
     *NumberOfResources = 0;
 
-    TopResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)
-        RtlImageDirectoryEntryToData( DllHandle,
-                                      TRUE,
-                                      IMAGE_DIRECTORY_ENTRY_RESOURCE,
-                                      &Size
-                                    );
-    if (!TopResourceDirectory) {
+    TopResourceDirectory =
+        (PIMAGE_RESOURCE_DIRECTORY)RtlImageDirectoryEntryToData(DllHandle, TRUE, IMAGE_DIRECTORY_ENTRY_RESOURCE, &Size);
+    if (!TopResourceDirectory)
+    {
         return STATUS_RESOURCE_DATA_NOT_FOUND;
-        }
+    }
 
     TypeResourceDirectory = TopResourceDirectory;
-    TypeResourceDirectoryEntry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(TypeResourceDirectory+1);
-    NumberOfTypeDirectoryEntries = TypeResourceDirectory->NumberOfNamedEntries +
-                                   TypeResourceDirectory->NumberOfIdEntries;
+    TypeResourceDirectoryEntry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(TypeResourceDirectory + 1);
+    NumberOfTypeDirectoryEntries =
+        TypeResourceDirectory->NumberOfNamedEntries + TypeResourceDirectory->NumberOfIdEntries;
     TypeDirectoryIndex = 0;
     Status = STATUS_SUCCESS;
-    for (TypeDirectoryIndex=0;
-         TypeDirectoryIndex<NumberOfTypeDirectoryEntries;
-         TypeDirectoryIndex++, TypeResourceDirectoryEntry++
-        ) {
-        if (ResourceIdPathLength > 0) {
-            ScanTypeDirectory = LdrpCompareResourceNames_U( ResourceIdPath[ 0 ],
-                                                            TopResourceDirectory,
-                                                            TypeResourceDirectoryEntry
-                                                          ) == 0;
-            }
-        else {
+    for (TypeDirectoryIndex = 0; TypeDirectoryIndex < NumberOfTypeDirectoryEntries;
+         TypeDirectoryIndex++, TypeResourceDirectoryEntry++)
+    {
+        if (ResourceIdPathLength > 0)
+        {
+            ScanTypeDirectory =
+                LdrpCompareResourceNames_U(ResourceIdPath[0], TopResourceDirectory, TypeResourceDirectoryEntry) == 0;
+        }
+        else
+        {
             ScanTypeDirectory = TRUE;
-            }
-        if (ScanTypeDirectory) {
-            if (!TypeResourceDirectoryEntry->DataIsDirectory) {
+        }
+        if (ScanTypeDirectory)
+        {
+            if (!TypeResourceDirectoryEntry->DataIsDirectory)
+            {
                 return STATUS_INVALID_IMAGE_FORMAT;
-                }
-            if (TypeResourceDirectoryEntry->NameIsString) {
-                ResourceNameString = (PIMAGE_RESOURCE_DIR_STRING_U)
-                    ((PCHAR)TopResourceDirectory + TypeResourceDirectoryEntry->NameOffset);
+            }
+            if (TypeResourceDirectoryEntry->NameIsString)
+            {
+                ResourceNameString = (PIMAGE_RESOURCE_DIR_STRING_U)((PCHAR)TopResourceDirectory +
+                                                                    TypeResourceDirectoryEntry->NameOffset);
 
                 TypeResourceNameOrId = (ULONG_PTR)ResourceNameString;
-                }
-            else {
+            }
+            else
+            {
                 TypeResourceNameOrId = (ULONG_PTR)TypeResourceDirectoryEntry->Id;
+            }
+
+            NameResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)((PCHAR)TopResourceDirectory +
+                                                                TypeResourceDirectoryEntry->OffsetToDirectory);
+            NameResourceDirectoryEntry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(NameResourceDirectory + 1);
+            NumberOfNameDirectoryEntries =
+                NameResourceDirectory->NumberOfNamedEntries + NameResourceDirectory->NumberOfIdEntries;
+            for (NameDirectoryIndex = 0; NameDirectoryIndex < NumberOfNameDirectoryEntries;
+                 NameDirectoryIndex++, NameResourceDirectoryEntry++)
+            {
+                if (ResourceIdPathLength > 1)
+                {
+                    ScanNameDirectory = LdrpCompareResourceNames_U(ResourceIdPath[1], TopResourceDirectory,
+                                                                   NameResourceDirectoryEntry) == 0;
                 }
-
-            NameResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)
-                ((PCHAR)TopResourceDirectory + TypeResourceDirectoryEntry->OffsetToDirectory);
-            NameResourceDirectoryEntry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(NameResourceDirectory+1);
-            NumberOfNameDirectoryEntries = NameResourceDirectory->NumberOfNamedEntries +
-                                           NameResourceDirectory->NumberOfIdEntries;
-            for (NameDirectoryIndex=0;
-                 NameDirectoryIndex<NumberOfNameDirectoryEntries;
-                 NameDirectoryIndex++, NameResourceDirectoryEntry++
-                ) {
-                if (ResourceIdPathLength > 1) {
-                    ScanNameDirectory = LdrpCompareResourceNames_U( ResourceIdPath[ 1 ],
-                                                                    TopResourceDirectory,
-                                                                    NameResourceDirectoryEntry
-                                                                  ) == 0;
-                    }
-                else {
+                else
+                {
                     ScanNameDirectory = TRUE;
-                    }
-                if (ScanNameDirectory) {
-                    if (!NameResourceDirectoryEntry->DataIsDirectory) {
+                }
+                if (ScanNameDirectory)
+                {
+                    if (!NameResourceDirectoryEntry->DataIsDirectory)
+                    {
                         return STATUS_INVALID_IMAGE_FORMAT;
-                        }
+                    }
 
-                    if (NameResourceDirectoryEntry->NameIsString) {
-                        ResourceNameString = (PIMAGE_RESOURCE_DIR_STRING_U)
-                            ((PCHAR)TopResourceDirectory + NameResourceDirectoryEntry->NameOffset);
+                    if (NameResourceDirectoryEntry->NameIsString)
+                    {
+                        ResourceNameString = (PIMAGE_RESOURCE_DIR_STRING_U)((PCHAR)TopResourceDirectory +
+                                                                            NameResourceDirectoryEntry->NameOffset);
 
                         NameResourceNameOrId = (ULONG_PTR)ResourceNameString;
-                        }
-                    else {
+                    }
+                    else
+                    {
                         NameResourceNameOrId = (ULONG_PTR)NameResourceDirectoryEntry->Id;
-                        }
+                    }
 
-                    LangResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)
-                        ((PCHAR)TopResourceDirectory + NameResourceDirectoryEntry->OffsetToDirectory);
+                    LangResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)((PCHAR)TopResourceDirectory +
+                                                                        NameResourceDirectoryEntry->OffsetToDirectory);
 
-                    LangResourceDirectoryEntry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(LangResourceDirectory+1);
-                    NumberOfLangDirectoryEntries = LangResourceDirectory->NumberOfNamedEntries +
-                                                   LangResourceDirectory->NumberOfIdEntries;
+                    LangResourceDirectoryEntry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(LangResourceDirectory + 1);
+                    NumberOfLangDirectoryEntries =
+                        LangResourceDirectory->NumberOfNamedEntries + LangResourceDirectory->NumberOfIdEntries;
                     LangDirectoryIndex = 0;
-                    for (LangDirectoryIndex=0;
-                         LangDirectoryIndex<NumberOfLangDirectoryEntries;
-                         LangDirectoryIndex++, LangResourceDirectoryEntry++
-                        ) {
-                        if (ResourceIdPathLength > 2) {
-                            ReturnThisResource = LdrpCompareResourceNames_U( ResourceIdPath[ 2 ],
-                                                                             TopResourceDirectory,
-                                                                             LangResourceDirectoryEntry
-                                                                           ) == 0;
-                            }
-                        else {
+                    for (LangDirectoryIndex = 0; LangDirectoryIndex < NumberOfLangDirectoryEntries;
+                         LangDirectoryIndex++, LangResourceDirectoryEntry++)
+                    {
+                        if (ResourceIdPathLength > 2)
+                        {
+                            ReturnThisResource = LdrpCompareResourceNames_U(ResourceIdPath[2], TopResourceDirectory,
+                                                                            LangResourceDirectoryEntry) == 0;
+                        }
+                        else
+                        {
                             ReturnThisResource = TRUE;
-                            }
-                        if (ReturnThisResource) {
-                            if (LangResourceDirectoryEntry->DataIsDirectory) {
+                        }
+                        if (ReturnThisResource)
+                        {
+                            if (LangResourceDirectoryEntry->DataIsDirectory)
+                            {
                                 return STATUS_INVALID_IMAGE_FORMAT;
-                                }
+                            }
 
-                            if (LangResourceDirectoryEntry->NameIsString) {
-                                ResourceNameString = (PIMAGE_RESOURCE_DIR_STRING_U)
-                                    ((PCHAR)TopResourceDirectory + LangResourceDirectoryEntry->NameOffset);
+                            if (LangResourceDirectoryEntry->NameIsString)
+                            {
+                                ResourceNameString =
+                                    (PIMAGE_RESOURCE_DIR_STRING_U)((PCHAR)TopResourceDirectory +
+                                                                   LangResourceDirectoryEntry->NameOffset);
 
                                 LangResourceNameOrId = (ULONG_PTR)ResourceNameString;
-                                }
-                            else {
+                            }
+                            else
+                            {
                                 LangResourceNameOrId = (ULONG_PTR)LangResourceDirectoryEntry->Id;
-                                }
+                            }
 
-                            ResourceDataEntry = (PIMAGE_RESOURCE_DATA_ENTRY)
-                                    ((PCHAR)TopResourceDirectory + LangResourceDirectoryEntry->OffsetToData);
+                            ResourceDataEntry = (PIMAGE_RESOURCE_DATA_ENTRY)((PCHAR)TopResourceDirectory +
+                                                                             LangResourceDirectoryEntry->OffsetToData);
 
-                            ResourceInfo = &Resources[ ResourceIndex++ ];
-                            if (ResourceIndex <= MaxResourceIndex) {
-                                ResourceInfo->Path[ 0 ].NameOrId = TypeResourceNameOrId;
-                                ResourceInfo->Path[ 1 ].NameOrId = NameResourceNameOrId;
-                                ResourceInfo->Path[ 2 ].NameOrId = LangResourceNameOrId;
+                            ResourceInfo = &Resources[ResourceIndex++];
+                            if (ResourceIndex <= MaxResourceIndex)
+                            {
+                                ResourceInfo->Path[0].NameOrId = TypeResourceNameOrId;
+                                ResourceInfo->Path[1].NameOrId = NameResourceNameOrId;
+                                ResourceInfo->Path[2].NameOrId = LangResourceNameOrId;
                                 ResourceInfo->Data = (PVOID)((ULONG_PTR)DllHandle + ResourceDataEntry->OffsetToData);
                                 ResourceInfo->Size = ResourceDataEntry->Size;
                                 ResourceInfo->Reserved = 0;
-                                }
-                            else {
+                            }
+                            else
+                            {
                                 Status = STATUS_INFO_LENGTH_MISMATCH;
-                                }
                             }
                         }
                     }
                 }
             }
         }
+    }
 
     *NumberOfResources = ResourceIndex;
     return Status;
@@ -2403,9 +2399,7 @@ LdrEnumResources(
 #ifndef NTOS_KERNEL_RUNTIME
 
 BOOLEAN
-LdrAlternateResourcesEnabled(
-    VOID
-    )
+LdrAlternateResourcesEnabled(VOID)
 
 /*++
 
@@ -2427,41 +2421,44 @@ Return Value:
 {
     NTSTATUS Status;
 
-    if (!UILangId || NtCurrentTeb()->ImpersonationLocale){
-        Status = NtQueryDefaultUILanguage( &UILangId );
+    if (!UILangId || NtCurrentTeb()->ImpersonationLocale)
+    {
+        Status = NtQueryDefaultUILanguage(&UILangId);
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
             //
             //  Failed to get UI LangID.  AltResource not enabled.
             //
             return FALSE;
-            }
         }
+    }
 
-    if (!InstallLangId){
-        Status = NtQueryInstallUILanguage( &InstallLangId);
+    if (!InstallLangId)
+    {
+        Status = NtQueryInstallUILanguage(&InstallLangId);
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
             //
             //  Failed to get Intall LangID.  AltResource not enabled.
             //
             return FALSE;
-            }
         }
+    }
 
-    if (UILangId == InstallLangId) {
+    if (UILangId == InstallLangId)
+    {
         //
         //  UI Lang matches Installed Lang. AltResource not enabled.
         //
         return FALSE;
-        }
+    }
     return TRUE;
 }
 
 PVOID
-LdrGetAlternateResourceModuleHandle(
-    IN PVOID Module
-    )
+LdrGetAlternateResourceModuleHandle(IN PVOID Module)
 /*++
 
 Routine Description:
@@ -2482,11 +2479,10 @@ Return Value:
 {
     ULONG ModuleIndex;
 
-    for (ModuleIndex = 0;
-         ModuleIndex < AlternateResourceModuleCount;
-         ModuleIndex++ ){
-        if (AlternateResourceModules[ModuleIndex].ModuleBase ==
-            Module){
+    for (ModuleIndex = 0; ModuleIndex < AlternateResourceModuleCount; ModuleIndex++)
+    {
+        if (AlternateResourceModules[ModuleIndex].ModuleBase == Module)
+        {
             return AlternateResourceModules[ModuleIndex].AlternateModule;
         }
     }
@@ -2494,11 +2490,7 @@ Return Value:
 }
 
 BOOLEAN
-LdrpGetFileVersion(
-    IN  PVOID      ImageBase,
-    IN  LANGID     LangId,
-    OUT PULONGLONG Version
-    )
+LdrpGetFileVersion(IN PVOID ImageBase, IN LANGID LangId, OUT PULONGLONG Version)
 
 /*++
 
@@ -2529,26 +2521,27 @@ Return Value:
 
     typedef struct tagVS_FIXEDFILEINFO
     {
-        LONG   dwSignature;            /* e.g. 0xfeef04bd */
-        LONG   dwStrucVersion;         /* e.g. 0x00000042 = "0.42" */
-        LONG   dwFileVersionMS;        /* e.g. 0x00030075 = "3.75" */
-        LONG   dwFileVersionLS;        /* e.g. 0x00000031 = "0.31" */
-        LONG   dwProductVersionMS;     /* e.g. 0x00030010 = "3.10" */
-        LONG   dwProductVersionLS;     /* e.g. 0x00000031 = "0.31" */
-        LONG   dwFileFlagsMask;        /* = 0x3F for version "0.42" */
-        LONG   dwFileFlags;            /* e.g. VFF_DEBUG | VFF_PRERELEASE */
-        LONG   dwFileOS;               /* e.g. VOS_DOS_WINDOWS16 */
-        LONG   dwFileType;             /* e.g. VFT_DRIVER */
-        LONG   dwFileSubtype;          /* e.g. VFT2_DRV_KEYBOARD */
-        LONG   dwFileDateMS;           /* e.g. 0 */
-        LONG   dwFileDateLS;           /* e.g. 0 */
+        LONG dwSignature;        /* e.g. 0xfeef04bd */
+        LONG dwStrucVersion;     /* e.g. 0x00000042 = "0.42" */
+        LONG dwFileVersionMS;    /* e.g. 0x00030075 = "3.75" */
+        LONG dwFileVersionLS;    /* e.g. 0x00000031 = "0.31" */
+        LONG dwProductVersionMS; /* e.g. 0x00030010 = "3.10" */
+        LONG dwProductVersionLS; /* e.g. 0x00000031 = "0.31" */
+        LONG dwFileFlagsMask;    /* = 0x3F for version "0.42" */
+        LONG dwFileFlags;        /* e.g. VFF_DEBUG | VFF_PRERELEASE */
+        LONG dwFileOS;           /* e.g. VOS_DOS_WINDOWS16 */
+        LONG dwFileType;         /* e.g. VFT_DRIVER */
+        LONG dwFileSubtype;      /* e.g. VFT2_DRV_KEYBOARD */
+        LONG dwFileDateMS;       /* e.g. 0 */
+        LONG dwFileDateLS;       /* e.g. 0 */
     } VS_FIXEDFILEINFO;
 
-    struct {
+    struct
+    {
         USHORT TotalSize;
         USHORT DataSize;
         USHORT Type;
-        WCHAR Name[16];              // L"VS_VERSION_INFO" + unicode null terminator
+        WCHAR Name[16]; // L"VS_VERSION_INFO" + unicode null terminator
         VS_FIXEDFILEINFO FixedFileInfo;
     } *Resource;
 
@@ -2559,47 +2552,50 @@ Return Value:
     IdPath[1] = 1;
     IdPath[2] = LangId;
 
-    try {
-        Status = LdrpSearchResourceSection_U(
-                    ImageBase,
-                    IdPath,
-                    3,
-                    LDR_FIND_RESOURCE_LANGUAGE_EXACT,
-                    &DataEntry);
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+    try
+    {
+        Status = LdrpSearchResourceSection_U(ImageBase, IdPath, 3, LDR_FIND_RESOURCE_LANGUAGE_EXACT, &DataEntry);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = STATUS_UNSUCCESSFUL;
     }
 
-    if(!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return FALSE;
     }
 
-    try {
-        Status = LdrpAccessResourceData(
-                    ImageBase,
-                    DataEntry,
-                    &Resource,
-                    &ResourceSize);
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+    try
+    {
+        Status = LdrpAccessResourceData(ImageBase, DataEntry, &Resource, &ResourceSize);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = STATUS_UNSUCCESSFUL;
     }
 
-    if(!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return FALSE;
     }
 
-    try {
-        if((ResourceSize >= sizeof(*Resource))
-            && !_wcsicmp(Resource->Name,L"VS_VERSION_INFO")) {
+    try
+    {
+        if ((ResourceSize >= sizeof(*Resource)) && !_wcsicmp(Resource->Name, L"VS_VERSION_INFO"))
+        {
 
-            *Version = ((ULONGLONG)Resource->FixedFileInfo.dwFileVersionMS << 32)
-                     | (ULONGLONG)Resource->FixedFileInfo.dwFileVersionLS;
-
-        } else {
+            *Version = ((ULONGLONG)Resource->FixedFileInfo.dwFileVersionMS << 32) |
+                       (ULONGLONG)Resource->FixedFileInfo.dwFileVersionLS;
+        }
+        else
+        {
             DbgPrint(("LDR: Warning: invalid version resource\n"));
             return FALSE;
         }
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         DbgPrint(("LDR: Exception encountered processing bogus version resource\n"));
         return FALSE;
     }
@@ -2607,10 +2603,7 @@ Return Value:
 }
 
 BOOLEAN
-LdrpGetResourceChecksum(
-    IN PVOID Module,
-    OUT unsigned char** ppMD5Checksum
-    )
+LdrpGetResourceChecksum(IN PVOID Module, OUT unsigned char **ppMD5Checksum)
 {
     NTSTATUS Status;
     ULONG_PTR IdPath[3];
@@ -2622,28 +2615,28 @@ LdrpGetResourceChecksum(
 
     typedef struct tagVS_FIXEDFILEINFO
     {
-        LONG   dwSignature;            /* e.g. 0xfeef04bd */
-        LONG   dwStrucVersion;         /* e.g. 0x00000042 = "0.42" */
-        LONG   dwFileVersionMS;        /* e.g. 0x00030075 = "3.75" */
-        LONG   dwFileVersionLS;        /* e.g. 0x00000031 = "0.31" */
-        LONG   dwProductVersionMS;     /* e.g. 0x00030010 = "3.10" */
-        LONG   dwProductVersionLS;     /* e.g. 0x00000031 = "0.31" */
-        LONG   dwFileFlagsMask;        /* = 0x3F for version "0.42" */
-        LONG   dwFileFlags;            /* e.g. VFF_DEBUG | VFF_PRERELEASE */
-        LONG   dwFileOS;               /* e.g. VOS_DOS_WINDOWS16 */
-        LONG   dwFileType;             /* e.g. VFT_DRIVER */
-        LONG   dwFileSubtype;          /* e.g. VFT2_DRV_KEYBOARD */
-        LONG   dwFileDateMS;           /* e.g. 0 */
-        LONG   dwFileDateLS;           /* e.g. 0 */
+        LONG dwSignature;        /* e.g. 0xfeef04bd */
+        LONG dwStrucVersion;     /* e.g. 0x00000042 = "0.42" */
+        LONG dwFileVersionMS;    /* e.g. 0x00030075 = "3.75" */
+        LONG dwFileVersionLS;    /* e.g. 0x00000031 = "0.31" */
+        LONG dwProductVersionMS; /* e.g. 0x00030010 = "3.10" */
+        LONG dwProductVersionLS; /* e.g. 0x00000031 = "0.31" */
+        LONG dwFileFlagsMask;    /* = 0x3F for version "0.42" */
+        LONG dwFileFlags;        /* e.g. VFF_DEBUG | VFF_PRERELEASE */
+        LONG dwFileOS;           /* e.g. VOS_DOS_WINDOWS16 */
+        LONG dwFileType;         /* e.g. VFT_DRIVER */
+        LONG dwFileSubtype;      /* e.g. VFT2_DRV_KEYBOARD */
+        LONG dwFileDateMS;       /* e.g. 0 */
+        LONG dwFileDateLS;       /* e.g. 0 */
     } VS_FIXEDFILEINFO;
 
-    struct 
+    struct
     {
         USHORT TotalSize;
         USHORT DataSize;
         USHORT Type;
-        WCHAR Name[16];              // L"VS_VERSION_INFO" + unicode null terminator
-        // Note that the previous 4 members has 16*2 + 3*2 = 38 bytes. 
+        WCHAR Name[16]; // L"VS_VERSION_INFO" + unicode null terminator
+        // Note that the previous 4 members has 16*2 + 3*2 = 38 bytes.
         // So that compiler will silently add a 2 bytes padding to make
         // FixedFileInfo to align in DWORD boundary.
         VS_FIXEDFILEINFO FixedFileInfo;
@@ -2659,7 +2652,7 @@ LdrpGetResourceChecksum(
         // WORD value;
     } VERBLOCK;
     VERBLOCK *pVerBlock;
-    
+
     IdPath[0] = RT_VERSION;
     IdPath[1] = 1;
     IdPath[2] = 0;
@@ -2667,14 +2660,15 @@ LdrpGetResourceChecksum(
     //
     // find the version resource data entry
     //
-    try 
+    try
     {
-        Status = LdrFindResource_U(Module,IdPath,3,&DataEntry);
-    } except(EXCEPTION_EXECUTE_HANDLER) 
+        Status = LdrFindResource_U(Module, IdPath, 3, &DataEntry);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
     {
         Status = STATUS_UNSUCCESSFUL;
     }
-    if(!NT_SUCCESS(Status)) 
+    if (!NT_SUCCESS(Status))
     {
         return (FALSE);
     }
@@ -2682,32 +2676,30 @@ LdrpGetResourceChecksum(
     //
     // Access the version resource data.
     //
-    try 
+    try
     {
-        Status = LdrpAccessResourceData(
-                    Module,
-                    DataEntry,
-                    &Resource,
-                    &ResourceSize);
-    } except(EXCEPTION_EXECUTE_HANDLER) 
+        Status = LdrpAccessResourceData(Module, DataEntry, &Resource, &ResourceSize);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
     {
         Status = STATUS_UNSUCCESSFUL;
     }
 
-    if(!NT_SUCCESS(Status)) 
+    if (!NT_SUCCESS(Status))
     {
         return FALSE;
     }
 
-    try 
+    try
     {
-        if((ResourceSize < sizeof(*Resource))
-            || _wcsicmp(Resource->Name,L"VS_VERSION_INFO") != 0) 
+        if ((ResourceSize < sizeof(*Resource)) || _wcsicmp(Resource->Name, L"VS_VERSION_INFO") != 0)
         {
             DbgPrint(("LDR: Warning: invalid version resource\n"));
             return FALSE;
         }
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         DbgPrint(("LDR: Exception encountered processing bogus version resource\n"));
         return FALSE;
     }
@@ -2717,43 +2709,41 @@ LdrpGetResourceChecksum(
     //
     // Get the beginning address of the children of the version information.
     //
-    pVerBlock = (VERBLOCK*)(Resource + 1);
+    pVerBlock = (VERBLOCK *)(Resource + 1);
     while (ResourceSize > 0)
-    {        
+    {
         if (wcscmp(pVerBlock->szKey, L"VarFileInfo") == 0)
         {
             //
             // Find VarFileInfo block. Search the ResourceChecksum block.
-            // 
+            //
             VarFileInfoSize = pVerBlock->wTotalLen;
-            BlockLen =DWORD_ALIGNMENT(sizeof(*pVerBlock) -1 + sizeof(L"VarFileInfo"));
+            BlockLen = DWORD_ALIGNMENT(sizeof(*pVerBlock) - 1 + sizeof(L"VarFileInfo"));
             VarFileInfoSize -= BlockLen;
-            pVerBlock = (VERBLOCK*)((unsigned char*)pVerBlock + BlockLen);
+            pVerBlock = (VERBLOCK *)((unsigned char *)pVerBlock + BlockLen);
             while (VarFileInfoSize > 0)
             {
                 if (wcscmp(pVerBlock->szKey, L"ResourceChecksum") == 0)
                 {
-                    *ppMD5Checksum = (unsigned char*)DWORD_ALIGNMENT((UINT_PTR)(pVerBlock->szKey) + sizeof(L"ResourceChecksum"));
+                    *ppMD5Checksum =
+                        (unsigned char *)DWORD_ALIGNMENT((UINT_PTR)(pVerBlock->szKey) + sizeof(L"ResourceChecksum"));
                     return (TRUE);
                 }
                 BlockLen = DWORD_ALIGNMENT(pVerBlock->wTotalLen);
-                pVerBlock = (VERBLOCK*)((unsigned char*)pVerBlock + BlockLen);
+                pVerBlock = (VERBLOCK *)((unsigned char *)pVerBlock + BlockLen);
                 VarFileInfoSize -= BlockLen;
             }
             return (FALSE);
         }
         BlockLen = DWORD_ALIGNMENT(pVerBlock->wTotalLen);
-        pVerBlock = (VERBLOCK*)((unsigned char*)pVerBlock + BlockLen);
+        pVerBlock = (VERBLOCK *)((unsigned char *)pVerBlock + BlockLen);
         ResourceSize -= BlockLen;
     }
-    return (FALSE); 
+    return (FALSE);
 }
 
 BOOLEAN
-LdrpCalcResourceChecksum(
-    IN PVOID Module,
-    OUT unsigned char* MD5Checksum
-    )
+LdrpCalcResourceChecksum(IN PVOID Module, OUT unsigned char *MD5Checksum)
 /*++
 Rountine Description:
     Enumerate resources in the specified module, and generate a MD5 checksum.
@@ -2763,18 +2753,18 @@ Rountine Description:
     PIMAGE_RESOURCE_DIRECTORY TopDirectory;
 
     // The resource type directory.
-    PIMAGE_RESOURCE_DIRECTORY TypeDirectory; 
+    PIMAGE_RESOURCE_DIRECTORY TypeDirectory;
     // The resource name directory.
-    PIMAGE_RESOURCE_DIRECTORY NameDirectory; 
+    PIMAGE_RESOURCE_DIRECTORY NameDirectory;
     // The resource language directory.
-    PIMAGE_RESOURCE_DIRECTORY LangDirectory; 
-    
+    PIMAGE_RESOURCE_DIRECTORY LangDirectory;
+
     PIMAGE_RESOURCE_DIRECTORY_ENTRY TypeDirectoryEntry;
     PIMAGE_RESOURCE_DIRECTORY_ENTRY NameDirectoryEntry;
     PIMAGE_RESOURCE_DIRECTORY_ENTRY LangDirectoryEntry;
 
     PIMAGE_RESOURCE_DATA_ENTRY ResourceDataEntry;
-    
+
     ULONG Size;
     ULONG NumTypeDirectoryEntries;
     ULONG NumNameDirectoryEntries;
@@ -2788,7 +2778,7 @@ Rountine Description:
     LANGID ChecksumLangID;
     ULONGLONG Version;
 
-    try 
+    try
     {
         MD5_CTX ChecksumContext;
         //
@@ -2805,43 +2795,38 @@ Rountine Description:
                 ChecksumLangID = InstallLangId;
             }
         }
-        
+
         MD5Init(&ChecksumContext);
 
         //
         // TopDirectory is our reference point to directory offsets.
         //
-        TopDirectory = (PIMAGE_RESOURCE_DIRECTORY)
-            RtlImageDirectoryEntryToData( Module,
-                                          TRUE,
-                                          IMAGE_DIRECTORY_ENTRY_RESOURCE,
-                                          &Size
-                                        );
-        if (!TopDirectory) 
+        TopDirectory = (PIMAGE_RESOURCE_DIRECTORY)RtlImageDirectoryEntryToData(Module, TRUE,
+                                                                               IMAGE_DIRECTORY_ENTRY_RESOURCE, &Size);
+        if (!TopDirectory)
         {
             return (FALSE);
         }
 
         //
-        // Point to the children of the TopResourceDirecotry. 
+        // Point to the children of the TopResourceDirecotry.
         // This is the beginning of the type resource directory.
         //
-        TypeDirectoryEntry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(TopDirectory+1);
+        TypeDirectoryEntry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(TopDirectory + 1);
 
         //
         // Get the total number of the types (named resource types + ID resource types)
         //
-        NumTypeDirectoryEntries = TopDirectory->NumberOfNamedEntries +
-                                       TopDirectory->NumberOfIdEntries;
-        for (i=0; i<NumTypeDirectoryEntries; i++, TypeDirectoryEntry++) 
+        NumTypeDirectoryEntries = TopDirectory->NumberOfNamedEntries + TopDirectory->NumberOfIdEntries;
+        for (i = 0; i < NumTypeDirectoryEntries; i++, TypeDirectoryEntry++)
         {
-            if (!TypeDirectoryEntry->NameIsString) 
+            if (!TypeDirectoryEntry->NameIsString)
             {
                 // If the directory type is an ID, check if this is a version info.
                 if (TypeDirectoryEntry->Id == RT_VERSION)
                 {
                     //
-                    // If this is a version info, just skip it. 
+                    // If this is a version info, just skip it.
                     // When calculation checksum for resources, version info should not be
                     // included, since they will always be updated when a new version
                     // of the file is created.
@@ -2849,72 +2834,62 @@ Rountine Description:
                     continue;
                 }
             }
-        
-            NameDirectory = (PIMAGE_RESOURCE_DIRECTORY)
-                ((PCHAR)TopDirectory + TypeDirectoryEntry->OffsetToDirectory);
-                    
+
+            NameDirectory = (PIMAGE_RESOURCE_DIRECTORY)((PCHAR)TopDirectory + TypeDirectoryEntry->OffsetToDirectory);
+
             //
             // Point to the children of this TypeResourceDirecotry.
             // This will be the beginning of the name resource directory.
             //
-            NameDirectoryEntry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(NameDirectory+1);
+            NameDirectoryEntry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(NameDirectory + 1);
 
             //
             // Get the total number of the names for the specified type (named resource + ID resource)
             //
-            NumNameDirectoryEntries = NameDirectory->NumberOfNamedEntries +
-                                           NameDirectory->NumberOfIdEntries;
-            for (j=0; j<NumNameDirectoryEntries; j++, NameDirectoryEntry++ ) 
-            {   
-                LangDirectory = (PIMAGE_RESOURCE_DIRECTORY)
-                    ((PCHAR)TopDirectory + NameDirectoryEntry->OffsetToDirectory);
+            NumNameDirectoryEntries = NameDirectory->NumberOfNamedEntries + NameDirectory->NumberOfIdEntries;
+            for (j = 0; j < NumNameDirectoryEntries; j++, NameDirectoryEntry++)
+            {
+                LangDirectory =
+                    (PIMAGE_RESOURCE_DIRECTORY)((PCHAR)TopDirectory + NameDirectoryEntry->OffsetToDirectory);
 
-                LangDirectoryEntry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(LangDirectory+1);
-                NumLangDirectoryEntries = LangDirectory->NumberOfNamedEntries +
-                                               LangDirectory->NumberOfIdEntries;
-                for (k=0; k<NumLangDirectoryEntries; k++, LangDirectoryEntry++) 
+                LangDirectoryEntry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(LangDirectory + 1);
+                NumLangDirectoryEntries = LangDirectory->NumberOfNamedEntries + LangDirectory->NumberOfIdEntries;
+                for (k = 0; k < NumLangDirectoryEntries; k++, LangDirectoryEntry++)
                 {
                     NTSTATUS Status;
                     // we caculate RC only based of English language.
-                    if ( LangDirectoryEntry->Id != ChecksumLangID )
+                    if (LangDirectoryEntry->Id != ChecksumLangID)
                     {
                         continue;
                     }
-                    ResourceDataEntry = (PIMAGE_RESOURCE_DATA_ENTRY)
-                            ((PCHAR)TopDirectory + LangDirectoryEntry->OffsetToData);
+                    ResourceDataEntry =
+                        (PIMAGE_RESOURCE_DATA_ENTRY)((PCHAR)TopDirectory + LangDirectoryEntry->OffsetToData);
 
                     Status = LdrpAccessResourceDataNoMultipleLanguage(
-                                            Module,
-                                            (const PIMAGE_RESOURCE_DATA_ENTRY)ResourceDataEntry,
-                                            &ResourceData,
-                                            &ResourceSize
-                                            );
+                        Module, (const PIMAGE_RESOURCE_DATA_ENTRY)ResourceDataEntry, &ResourceData, &ResourceSize);
 
-                    if (!NT_SUCCESS(Status)) 
+                    if (!NT_SUCCESS(Status))
                     {
                         return (FALSE);
                     }
-                    MD5Update(&ChecksumContext, (unsigned char*)ResourceData, ResourceSize);
+                    MD5Update(&ChecksumContext, (unsigned char *)ResourceData, ResourceSize);
                 }
             }
         }
-        
+
         MD5Final(&ChecksumContext);
         memcpy(MD5Checksum, ChecksumContext.digest, RESOURCE_CHECKSUM_SIZE);
-    } except (EXCEPTION_EXECUTE_HANDLER)
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
     {
         return (FALSE);
     }
     return (TRUE);
 }
 
-BOOLEAN 
-LdrpGetRegValueKey(
-    IN HANDLE Handle, 
-    IN LPWSTR KeyValueName, 
-    IN ULONG  KeyValueType,
-    OUT PVOID Buffer,
-    IN ULONG  BufferSize)
+BOOLEAN
+LdrpGetRegValueKey(IN HANDLE Handle, IN LPWSTR KeyValueName, IN ULONG KeyValueType, OUT PVOID Buffer,
+                   IN ULONG BufferSize)
 /*++
 
 Routine Description:
@@ -2944,36 +2919,27 @@ Return Value:
 {
     NTSTATUS Status;
     UNICODE_STRING KeyValueString;
-    
+
     CHAR KeyValueBuffer[sizeof(KEY_VALUE_PARTIAL_INFORMATION) + 128 * sizeof(WCHAR)];
     PKEY_VALUE_PARTIAL_INFORMATION KeyValueInformation;
     ULONG ResultLength;
 
     RtlInitUnicodeString(&KeyValueString, KeyValueName);
-    KeyValueInformation = (PKEY_VALUE_PARTIAL_INFORMATION)KeyValueBuffer;    
-    Status = NtQueryValueKey( Handle,
-                              &KeyValueString,
-                              KeyValuePartialInformation,
-                              KeyValueInformation,
-                              sizeof( KeyValueBuffer ),
-                              &ResultLength
-                            );
+    KeyValueInformation = (PKEY_VALUE_PARTIAL_INFORMATION)KeyValueBuffer;
+    Status = NtQueryValueKey(Handle, &KeyValueString, KeyValuePartialInformation, KeyValueInformation,
+                             sizeof(KeyValueBuffer), &ResultLength);
 
     if (!NT_SUCCESS(Status) || KeyValueInformation->Type != KeyValueType)
     {
         return (FALSE);
-    }    
+    }
 
     memcpy(Buffer, KeyValueInformation->Data, BufferSize);
     return (TRUE);
 }
 
 NTSTATUS
-LdrpCreateKey(
-    IN PUNICODE_STRING KeyName,
-    IN HANDLE  ParentHandle,
-    OUT PHANDLE ChildHandle
-    )
+LdrpCreateKey(IN PUNICODE_STRING KeyName, IN HANDLE ParentHandle, OUT PHANDLE ChildHandle)
 /*++
 
 Routine Description:
@@ -2993,44 +2959,26 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status;
-    OBJECT_ATTRIBUTES   objectAttributes;
+    NTSTATUS status;
+    OBJECT_ATTRIBUTES objectAttributes;
 
     //
     // Initialize the OBJECT Attributes to a known value
     //
-    InitializeObjectAttributes(
-        &objectAttributes,
-        KeyName,
-        OBJ_CASE_INSENSITIVE,
-        ParentHandle,
-        NULL
-        );
+    InitializeObjectAttributes(&objectAttributes, KeyName, OBJ_CASE_INSENSITIVE, ParentHandle, NULL);
 
     //
     // Create the key here
     //
     *ChildHandle = 0;
-    status = NtCreateKey(
-        ChildHandle,
-        KEY_ALL_ACCESS,
-        &objectAttributes,
-        0,
-        NULL,
-        REG_OPTION_NON_VOLATILE,
-        NULL
-        );
+    status = NtCreateKey(ChildHandle, KEY_ALL_ACCESS, &objectAttributes, 0, NULL, REG_OPTION_NON_VOLATILE, NULL);
 
     return (status);
 }
 
 
 NTSTATUS
-LdrpOpenKey(
-    IN PUNICODE_STRING KeyName,
-    IN HANDLE  ParentHandle,
-    OUT PHANDLE ChildHandle
-    )
+LdrpOpenKey(IN PUNICODE_STRING KeyName, IN HANDLE ParentHandle, OUT PHANDLE ChildHandle)
 /*++
 
 Routine Description:
@@ -3049,19 +2997,13 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status;
-    OBJECT_ATTRIBUTES   objectAttributes;
+    NTSTATUS status;
+    OBJECT_ATTRIBUTES objectAttributes;
 
     //
     // Initialize the OBJECT Attributes to a known value
     //
-    InitializeObjectAttributes(
-        &objectAttributes,
-        KeyName,
-        OBJ_CASE_INSENSITIVE,
-        ParentHandle,
-        NULL
-        );
+    InitializeObjectAttributes(&objectAttributes, KeyName, OBJ_CASE_INSENSITIVE, ParentHandle, NULL);
 
     //
     // Create the key here
@@ -3072,12 +3014,8 @@ Return Value:
     return (status);
 }
 
-BOOLEAN LdrpOpenFileVersionKey(
-    IN LPWSTR LangID,
-    IN LPWSTR BaseDllName, 
-    IN ULONGLONG AltModuleVersion,
-    IN LPWSTR AltModuleVersionStr, 
-    OUT PHANDLE pHandle)
+BOOLEAN LdrpOpenFileVersionKey(IN LPWSTR LangID, IN LPWSTR BaseDllName, IN ULONGLONG AltModuleVersion,
+                               IN LPWSTR AltModuleVersionStr, OUT PHANDLE pHandle)
 /*++
 Routine Description:
 
@@ -3096,23 +3034,23 @@ Return Value:
 
 --*/
 {
-    BOOLEAN Result = FALSE;    
+    BOOLEAN Result = FALSE;
     HANDLE NlsHandle = NULL, MuiHandle = NULL, VersionHandle = NULL, LangHandle = NULL, DllKeyHandle = NULL;
     UNICODE_STRING BufferString;
     NTSTATUS Status;
     PKEY_BASIC_INFORMATION KeyInfo;
-    ULONG ResultLength, Index;    
-    
+    ULONG ResultLength, Index;
+
     CHAR ValueBuffer[sizeof(KEY_BASIC_INFORMATION) + 32];
-    WCHAR buffer[32];   // Temp string buffer.
+    WCHAR buffer[32]; // Temp string buffer.
 
     ULONGLONG CachedAlternateVersion;
 
-    CHAR KeyFullInfoBuffer[sizeof(KEY_VALUE_PARTIAL_INFORMATION ) + DOS_MAX_PATH_LENGTH * sizeof(WCHAR)];
-    PKEY_VALUE_PARTIAL_INFORMATION KeyFullInfo = (PKEY_VALUE_PARTIAL_INFORMATION )KeyFullInfoBuffer;
+    CHAR KeyFullInfoBuffer[sizeof(KEY_VALUE_PARTIAL_INFORMATION) + DOS_MAX_PATH_LENGTH * sizeof(WCHAR)];
+    PKEY_VALUE_PARTIAL_INFORMATION KeyFullInfo = (PKEY_VALUE_PARTIAL_INFORMATION)KeyFullInfoBuffer;
 
     ULONG ChecksumDisabled;
-    HANDLE UserKeyHandle;              // HKEY_CURRENT_USER equivalent
+    HANDLE UserKeyHandle; // HKEY_CURRENT_USER equivalent
     ULONG rc;
 
     *pHandle = NULL;
@@ -3122,8 +3060,8 @@ Return Value:
     {
         return (FALSE);
     }
-    
-    
+
+
     // Open registry REG_MUI_PATH ("HKCU\Software\\Microsoft\\Windows\\CurrentVersion")
     //
     RtlInitUnicodeString(&BufferString, REG_MUI_PATH);
@@ -3131,7 +3069,7 @@ Return Value:
     {
         goto Exit;
     }
-    
+
     //
     // Open/Create registry in REG_MUI_PATH\MUILanguages
     //
@@ -3150,7 +3088,8 @@ Return Value:
         goto Exit;
     }
 
-    if (LdrpGetRegValueKey(VersionHandle, MUI_RC_CHECKSUM_DISABLE_KEY, REG_DWORD, &ChecksumDisabled, sizeof(ChecksumDisabled)) &&
+    if (LdrpGetRegValueKey(VersionHandle, MUI_RC_CHECKSUM_DISABLE_KEY, REG_DWORD, &ChecksumDisabled,
+                           sizeof(ChecksumDisabled)) &&
         ChecksumDisabled == 1)
     {
         goto Exit;
@@ -3173,11 +3112,13 @@ Return Value:
         goto Exit;
     }
 
-    if (!LdrpGetRegValueKey(DllKeyHandle, MUI_ALTERNATE_VERSION_KEY, REG_QWORD, &CachedAlternateVersion, sizeof(CachedAlternateVersion)))
+    if (!LdrpGetRegValueKey(DllKeyHandle, MUI_ALTERNATE_VERSION_KEY, REG_QWORD, &CachedAlternateVersion,
+                            sizeof(CachedAlternateVersion)))
     {
         RtlInitUnicodeString(&BufferString, MUI_ALTERNATE_VERSION_KEY);
-        Result = NT_SUCCESS(NtSetValueKey(DllKeyHandle, &BufferString, 0, REG_QWORD, &AltModuleVersion, sizeof(AltModuleVersion)));
-        if (Result) 
+        Result = NT_SUCCESS(
+            NtSetValueKey(DllKeyHandle, &BufferString, 0, REG_QWORD, &AltModuleVersion, sizeof(AltModuleVersion)));
+        if (Result)
         {
             *pHandle = DllKeyHandle;
         }
@@ -3188,7 +3129,8 @@ Return Value:
     {
         *pHandle = DllKeyHandle;
         Result = TRUE;
-    } else
+    }
+    else
     {
         //
         // Open/Create "\Registry\Machine\System\CurrentControlSet\Control\Nls\MUILanguages\FileVersions
@@ -3198,25 +3140,36 @@ Return Value:
         Result = NT_SUCCESS(LdrpCreateKey(&BufferString, DllKeyHandle, pHandle));
     }
 Exit:
-    if (UserKeyHandle)  {NtClose(UserKeyHandle);}
-    if (NlsHandle)      {NtClose(NlsHandle);}
-    if (MuiHandle)      {NtClose(MuiHandle);}
-    if (VersionHandle)  {NtClose(VersionHandle);}
-    if (LangHandle)     {NtClose(LangHandle);}
+    if (UserKeyHandle)
+    {
+        NtClose(UserKeyHandle);
+    }
+    if (NlsHandle)
+    {
+        NtClose(NlsHandle);
+    }
+    if (MuiHandle)
+    {
+        NtClose(MuiHandle);
+    }
+    if (VersionHandle)
+    {
+        NtClose(VersionHandle);
+    }
+    if (LangHandle)
+    {
+        NtClose(LangHandle);
+    }
     // If DllKeyHandle is the handle that we are going to return,
     // we can not close it.
-    if (DllKeyHandle && *pHandle != DllKeyHandle)   
+    if (DllKeyHandle && *pHandle != DllKeyHandle)
     {
         NtClose(DllKeyHandle);
     }
     return (Result);
 }
 
-void 
-LdrpConvertVersionString(
-    IN ULONGLONG ModuleVersion,
-    OUT LPWSTR ModuleVersionStr
-    )
+void LdrpConvertVersionString(IN ULONGLONG ModuleVersion, OUT LPWSTR ModuleVersionStr)
 /*++
 
 Routine Description:
@@ -3236,7 +3189,7 @@ Return Value:
     LPWSTR StringStart = ModuleVersionStr;
     WCHAR digit;
     // Put the null-terminated char at the end of the converted string.
-    ModuleVersionStr[16] = L'\0';       
+    ModuleVersionStr[16] = L'\0';
     ModuleVersionStr += 15;
     while (ModuleVersionStr >= StringStart)
     {
@@ -3244,18 +3197,11 @@ Return Value:
         *ModuleVersionStr-- = (digit < 10 ? digit + '0' : (digit - 10) + 'a');
         ModuleVersion >>= 4;
     }
-    
 }
 
 BOOLEAN
-LdrpCompareResourceChecksum(
-    IN LPWSTR LangID,
-    IN PVOID Module,
-    IN ULONGLONG ModuleVersion,
-    IN PVOID AlternateModule,
-    IN ULONGLONG AltModuleVersion,
-    IN LPWSTR BaseDllName
-    )    
+LdrpCompareResourceChecksum(IN LPWSTR LangID, IN PVOID Module, IN ULONGLONG ModuleVersion, IN PVOID AlternateModule,
+                            IN ULONGLONG AltModuleVersion, IN LPWSTR BaseDllName)
 /*++
 
 Routine Description:
@@ -3299,24 +3245,25 @@ Return Value:
     // Flag to indicate if the alternate resource can be used for this module.
     ULONG UseAlternateResource = 0;
 
-    unsigned char* ModuleChecksum;                      // The 128-bit MD5 resource checksum for the module.
-    unsigned char  CalculatedModuleChecksum[RESOURCE_CHECKSUM_SIZE];        // The calculated 128-bit MD5 resource checksum for the module.
-    unsigned char* AlternateModuleChecksum;             // The 128-bit MD5 resource checksum embeded in the alternate module.
+    unsigned char *ModuleChecksum; // The 128-bit MD5 resource checksum for the module.
+    unsigned char CalculatedModuleChecksum
+        [RESOURCE_CHECKSUM_SIZE];           // The calculated 128-bit MD5 resource checksum for the module.
+    unsigned char *AlternateModuleChecksum; // The 128-bit MD5 resource checksum embeded in the alternate module.
 
-    WCHAR ModuleVersionStr[17];                         // The string for the 16 heximal digit version.
+    WCHAR ModuleVersionStr[17]; // The string for the 16 heximal digit version.
     WCHAR AltModuleVersionStr[17];
 
-    HANDLE Handle = NULL;                                      // The registry which caches the information for this module.
+    HANDLE Handle = NULL; // The registry which caches the information for this module.
     // Flag to indicate if we have retrieved or calucated the MD5 resource checksum for the original module successfully.
     BOOLEAN FoundModuleChecksum;
 
     UNICODE_STRING BufferString;
 
-    HANDLE   RCHandle = NULL;
-    HANDLE   RCFileHandle = NULL;
-    unsigned char  RegisteredModuleChecksum[RESOURCE_CHECKSUM_SIZE];
-    BOOLEAN  fIsRCInRegsitry = FALSE;
-    
+    HANDLE RCHandle = NULL;
+    HANDLE RCFileHandle = NULL;
+    unsigned char RegisteredModuleChecksum[RESOURCE_CHECKSUM_SIZE];
+    BOOLEAN fIsRCInRegsitry = FALSE;
+
     //
     // Check the cached information in the registry first.
     //
@@ -3324,7 +3271,7 @@ Return Value:
     //
     // Open the version information key under:
     //      HKCU\Control Panel\International\MUI\FileVersions\<LangID>\<BaseDllName>
-    //    
+    //
     if (LdrpOpenFileVersionKey(LangID, BaseDllName, AltModuleVersion, AltModuleVersionStr, &Handle))
     {
         LdrpConvertVersionString(ModuleVersion, ModuleVersionStr);
@@ -3335,27 +3282,28 @@ Return Value:
 
         //
         // Get the cached version information in the registry to see if the original module can re-use the alternative module.
-        //    
-        if (LdrpGetRegValueKey(Handle, ModuleVersionStr, REG_DWORD, &UseAlternateResource, sizeof(UseAlternateResource))) 
+        //
+        if (LdrpGetRegValueKey(Handle, ModuleVersionStr, REG_DWORD, &UseAlternateResource,
+                               sizeof(UseAlternateResource)))
         {
             // Get the cached information.  Let's bail and return the cached result in UseAlternativeResource.
             goto exit;
         }
     }
-    
+
     //
     // When we are here, we know that we either:
     //  1. Can't open the registry key which cached the information. Or
     //  2. This file has never been looked before.
-    //        
+    //
     // Get the resource checksum for the alternate module.
     //
 
     //
-    // Some US binary in SP has different checksum value from RTM MUI, so we want to look for 
+    // Some US binary in SP has different checksum value from RTM MUI, so we want to look for
     // special registry created for this purpose before we get checksum from MUI.
     //
-    
+
 
     RtlInitUnicodeString(&BufferString, REG_MUI_RC_PATH);
     if (NT_SUCCESS(LdrpOpenKey(&BufferString, NULL, &RCHandle)))
@@ -3366,33 +3314,34 @@ Return Value:
         RtlInitUnicodeString(&BufferString, BaseDllName);
         if (NT_SUCCESS(LdrpOpenKey(&BufferString, RCHandle, &RCFileHandle)))
         {
-            if(LdrpGetRegValueKey(RCFileHandle, AltModuleVersionStr, REG_BINARY, &RegisteredModuleChecksum, RESOURCE_CHECKSUM_SIZE ))
+            if (LdrpGetRegValueKey(RCFileHandle, AltModuleVersionStr, REG_BINARY, &RegisteredModuleChecksum,
+                                   RESOURCE_CHECKSUM_SIZE))
             {
                 AlternateModuleChecksum = RegisteredModuleChecksum;
                 fIsRCInRegsitry = TRUE;
             }
         }
-        
     }
 
     //
     // Reading checksum from registry or MUI file
     //
-    if ( fIsRCInRegsitry || LdrpGetResourceChecksum(AlternateModule, &AlternateModuleChecksum) )
+    if (fIsRCInRegsitry || LdrpGetResourceChecksum(AlternateModule, &AlternateModuleChecksum))
     {
         //
         // First, check if the resource checksum is built in the module.
         //
-        if (!(FoundModuleChecksum = LdrpGetResourceChecksum(Module, &ModuleChecksum))) {
+        if (!(FoundModuleChecksum = LdrpGetResourceChecksum(Module, &ModuleChecksum)))
+        {
             //
             // If not, calculate the resource checksum for the current module.
             //
             if (FoundModuleChecksum = LdrpCalcResourceChecksum(Module, CalculatedModuleChecksum))
-            {        
+            {
                 ModuleChecksum = CalculatedModuleChecksum;
             }
         }
-        if (FoundModuleChecksum) 
+        if (FoundModuleChecksum)
         {
             if (memcmp(ModuleChecksum, AlternateModuleChecksum, RESOURCE_CHECKSUM_SIZE) == 0)
             {
@@ -3403,7 +3352,8 @@ Return Value:
             }
         }
     }
-    if (Handle != NULL) {
+    if (Handle != NULL)
+    {
         // If we find the version registry key successfully, cache the result in the registry.
         //
         // Write the working module information into registry.
@@ -3411,21 +3361,25 @@ Return Value:
         RtlInitUnicodeString(&BufferString, ModuleVersionStr);
         NtSetValueKey(Handle, &BufferString, 0, REG_DWORD, &UseAlternateResource, sizeof(UseAlternateResource));
     }
-exit:    
-    if (Handle != NULL) {NtClose(Handle);}
-    if (RCHandle != NULL) {NtClose(RCHandle);}
-    if (RCFileHandle != NULL) {NtClose(RCFileHandle);}
+exit:
+    if (Handle != NULL)
+    {
+        NtClose(Handle);
+    }
+    if (RCHandle != NULL)
+    {
+        NtClose(RCHandle);
+    }
+    if (RCFileHandle != NULL)
+    {
+        NtClose(RCFileHandle);
+    }
 
     return ((BOOLEAN)(UseAlternateResource));
 }
 
 BOOLEAN
-LdrpVerifyAlternateResourceModule(
-    IN PWSTR LangID,
-    IN PVOID Module,
-    IN PVOID AlternateModule,
-    IN LPWSTR BaseDllName
-    )
+LdrpVerifyAlternateResourceModule(IN PWSTR LangID, IN PVOID Module, IN PVOID AlternateModule, IN LPWSTR BaseDllName)
 
 /*++
 
@@ -3451,53 +3405,58 @@ Return Value:
     ULONGLONG AltModuleVersion;
     NTSTATUS Status;
 
-    if (!UILangId || NtCurrentTeb()->ImpersonationLocale){
-        Status = NtQueryDefaultUILanguage( &UILangId);
-        if (!NT_SUCCESS( Status )) {
+    if (!UILangId || NtCurrentTeb()->ImpersonationLocale)
+    {
+        Status = NtQueryDefaultUILanguage(&UILangId);
+        if (!NT_SUCCESS(Status))
+        {
             //
             //  Failed to get UI LangID.  AltResource not enabled.
             //
             return FALSE;
-            }
-        } 
-
-    if (!LdrpGetFileVersion(AlternateModule, UILangId, &AltModuleVersion)){
-        return FALSE;
         }
+    }
 
-    if (!InstallLangId){
-        Status = NtQueryInstallUILanguage (&InstallLangId);
-        if (!NT_SUCCESS( Status )) {
+    if (!LdrpGetFileVersion(AlternateModule, UILangId, &AltModuleVersion))
+    {
+        return FALSE;
+    }
+
+    if (!InstallLangId)
+    {
+        Status = NtQueryInstallUILanguage(&InstallLangId);
+        if (!NT_SUCCESS(Status))
+        {
             //
             //  Failed to get Install LangID.  AltResource not enabled.
             //
             return FALSE;
-            }
         }
+    }
 
-    if (!LdrpGetFileVersion(Module, InstallLangId, &ModuleVersion) && 
-         !LdrpGetFileVersion(Module, ENG_US_LANGID, &ModuleVersion)){
-            return FALSE;
-        }
-    
-    if (ModuleVersion == AltModuleVersion){
+    if (!LdrpGetFileVersion(Module, InstallLangId, &ModuleVersion) &&
+        !LdrpGetFileVersion(Module, ENG_US_LANGID, &ModuleVersion))
+    {
+        return FALSE;
+    }
+
+    if (ModuleVersion == AltModuleVersion)
+    {
         return TRUE;
-        }
+    }
     else
     {
 #ifdef USE_RC_CHECKSUM
-        return (LdrpCompareResourceChecksum(LangID, Module, ModuleVersion, AlternateModule, AltModuleVersion, BaseDllName));
-#else        
+        return (
+            LdrpCompareResourceChecksum(LangID, Module, ModuleVersion, AlternateModule, AltModuleVersion, BaseDllName));
+#else
         return FALSE;
-#endif        
+#endif
     }
 }
 
 BOOLEAN
-LdrpSetAlternateResourceModuleHandle(
-    IN PVOID Module,
-    IN PVOID AlternateModule
-    )
+LdrpSetAlternateResourceModuleHandle(IN PVOID Module, IN PVOID AlternateModule)
 
 /*++
 
@@ -3520,55 +3479,46 @@ Return Value:
 {
     PALT_RESOURCE_MODULE NewModules;
 
-    if (AlternateResourceModules == NULL){
+    if (AlternateResourceModules == NULL)
+    {
         //
         //  Allocate memory of initial size MEMBLOCKSIZE.
         //
-        NewModules = RtlAllocateHeap(
-                        RtlProcessHeap(),
-                        HEAP_ZERO_MEMORY,
-                        RESMODSIZE * MEMBLOCKSIZE);
-        if (!NewModules){
+        NewModules = RtlAllocateHeap(RtlProcessHeap(), HEAP_ZERO_MEMORY, RESMODSIZE * MEMBLOCKSIZE);
+        if (!NewModules)
+        {
             return FALSE;
-            }
+        }
         AlternateResourceModules = NewModules;
         AltResMemBlockCount = MEMBLOCKSIZE;
-        }
-    else
-    if (AlternateResourceModuleCount >= AltResMemBlockCount ){
+    }
+    else if (AlternateResourceModuleCount >= AltResMemBlockCount)
+    {
         //
         //  ReAllocate another chunk of memory.
         //
-        NewModules = RtlReAllocateHeap(
-                        RtlProcessHeap(),
-                        0,
-                        AlternateResourceModules,
-                        (AltResMemBlockCount + MEMBLOCKSIZE) * RESMODSIZE
-                        );
+        NewModules = RtlReAllocateHeap(RtlProcessHeap(), 0, AlternateResourceModules,
+                                       (AltResMemBlockCount + MEMBLOCKSIZE) * RESMODSIZE);
 
-        if (!NewModules){
+        if (!NewModules)
+        {
             return FALSE;
-            }
+        }
         AlternateResourceModules = NewModules;
         AltResMemBlockCount += MEMBLOCKSIZE;
-        }
+    }
 
     AlternateResourceModules[AlternateResourceModuleCount].ModuleBase = Module;
     AlternateResourceModules[AlternateResourceModuleCount].AlternateModule = AlternateModule;
 
 
-
     AlternateResourceModuleCount++;
 
     return TRUE;
-
 }
 
 PVOID
-LdrLoadAlternateResourceModule(
-    IN PVOID Module,
-    IN LPCWSTR PathToAlternateModule OPTIONAL
-    )
+LdrLoadAlternateResourceModule(IN PVOID Module, IN LPCWSTR PathToAlternateModule OPTIONAL)
 
 /*++
 
@@ -3631,37 +3581,42 @@ Return Value:
     //      E.g. if the base DLL is "c:\winnt\system32\ntdll.dll" and UI language is 0411,
     //      AltDllMUIPath will be "c:\winnt\system32\mui\0411\"
     //
-    UNICODE_STRING AltDllMUIPath;         
+    UNICODE_STRING AltDllMUIPath;
     WCHAR AltDllMUIPathBuffer[DOS_MAX_PATH_LENGTH];
 
     //
     // MUI Redir
     //
     UNICODE_STRING BaseDllNameUstr;
-    UNICODE_STRING StaticStringAltModulePathRedirected;         
+    UNICODE_STRING StaticStringAltModulePathRedirected;
     UNICODE_STRING DynamicStringAltModulePathRedirected;
     PUNICODE_STRING FullPathStringFoundAltModulePathRedirected = NULL;
     BOOLEAN fRedirMUI = FALSE;
     PVOID LockCookie = NULL;
 
     // bail out early if this isn't a MUI-enabled system
-    if (!LdrAlternateResourcesEnabled()) {
+    if (!LdrAlternateResourcesEnabled())
+    {
         return NULL;
-        }
-    
+    }
+
     LdrLockLoaderLock(LDR_LOCK_LOADER_LOCK_FLAG_RAISE_ON_ERRORS, NULL, &LockCookie);
-    __try {
+    __try
+    {
         //
         // Look at the cache of the alternate module first.
         //
         AlternateModule = LdrGetAlternateResourceModuleHandle(Module);
-        if (AlternateModule == NO_ALTERNATE_RESOURCE_MODULE) {
+        if (AlternateModule == NO_ALTERNATE_RESOURCE_MODULE)
+        {
             //
             //  We tried to load this module before but failed. Don't try
             //  again in the future.
             //
             return NULL;
-        } else if (AlternateModule > 0) {
+        }
+        else if (AlternateModule > 0)
+        {
             //
             //  We found the previously loaded match
             //
@@ -3670,7 +3625,8 @@ Return Value:
 
         AlternateModule = NULL;
 
-        if (ARGUMENT_PRESENT(PathToAlternateModule)) {
+        if (ARGUMENT_PRESENT(PathToAlternateModule))
+        {
             //
             //  Caller suplied path.
             //
@@ -3684,15 +3640,13 @@ Return Value:
 
             DllPathNameLength = (ULONG)(p - PathToAlternateModule) * sizeof(WCHAR);
 
-            RtlCopyMemory(
-                DllPathName,
-                PathToAlternateModule,
-                DllPathNameLength);
+            RtlCopyMemory(DllPathName, PathToAlternateModule, DllPathNameLength);
 
             BaseDllName = p;
             BaseDllNameLength = wcslen(p);
-
-        } else {
+        }
+        else
+        {
             //
             //  Try to get full dll path from Ldr data table.
             //
@@ -3703,10 +3657,7 @@ Return Value:
 
             DllPathNameLength = Entry->FullDllName.Length - Entry->BaseDllName.Length;
 
-            RtlCopyMemory(
-                DllPathName,
-                Entry->FullDllName.Buffer,
-                DllPathNameLength);
+            RtlCopyMemory(DllPathName, Entry->FullDllName.Buffer, DllPathNameLength);
 
             BaseDllName = Entry->BaseDllName.Buffer;
             BaseDllNameLength = Entry->BaseDllName.Length;
@@ -3717,50 +3668,53 @@ Return Value:
         //
         // dll redirection for the dll to be loaded xiaoyuw@10/31/2000
         //
-        StaticStringAltModulePathRedirected.Buffer = AltModulePath;  // reuse the array instead of define another array
-        StaticStringAltModulePathRedirected.Length = 0; 
-        StaticStringAltModulePathRedirected.MaximumLength = sizeof(AltModulePath); 
+        StaticStringAltModulePathRedirected.Buffer = AltModulePath; // reuse the array instead of define another array
+        StaticStringAltModulePathRedirected.Length = 0;
+        StaticStringAltModulePathRedirected.MaximumLength = sizeof(AltModulePath);
 
-        DynamicStringAltModulePathRedirected.Buffer = NULL; 
-        DynamicStringAltModulePathRedirected.Length = 0; 
-        DynamicStringAltModulePathRedirected.MaximumLength = 0; 
-    
+        DynamicStringAltModulePathRedirected.Buffer = NULL;
+        DynamicStringAltModulePathRedirected.Length = 0;
+        DynamicStringAltModulePathRedirected.MaximumLength = 0;
+
         BaseDllNameUstr.Buffer = AltModulePathMUI; // reuse the array instead of define another array
         BaseDllNameUstr.Length = 0;
         BaseDllNameUstr.MaximumLength = sizeof(AltModulePathMUI);
-    
+
         RtlAppendUnicodeToString(&BaseDllNameUstr, BaseDllName);
         RtlAppendUnicodeToString(&BaseDllNameUstr, L".mui");
-    
+
         Status = RtlDosApplyFileIsolationRedirection_Ustr(
-                            RTL_DOS_APPLY_FILE_REDIRECTION_USTR_FLAG_RESPECT_DOT_LOCAL,
-                            &BaseDllNameUstr, NULL, 
-                            &StaticStringAltModulePathRedirected, 
-                            &DynamicStringAltModulePathRedirected, 
-                            &FullPathStringFoundAltModulePathRedirected, 
-                            NULL,NULL, NULL);
+            RTL_DOS_APPLY_FILE_REDIRECTION_USTR_FLAG_RESPECT_DOT_LOCAL, &BaseDllNameUstr, NULL,
+            &StaticStringAltModulePathRedirected, &DynamicStringAltModulePathRedirected,
+            &FullPathStringFoundAltModulePathRedirected, NULL, NULL, NULL);
         if (!NT_SUCCESS(Status)) // no redirection info found for this string
-        { 
+        {
             if (Status != STATUS_SXS_KEY_NOT_FOUND)
                 goto error_exit;
 
             //
             //  Generate the langid directory like "0804\"
             //
-            if (!UILangId || NtCurrentTeb()->ImpersonationLocale){
-                Status = NtQueryDefaultUILanguage( &UILangId );
-                if (!NT_SUCCESS( Status )) {
+            if (!UILangId || NtCurrentTeb()->ImpersonationLocale)
+            {
+                Status = NtQueryDefaultUILanguage(&UILangId);
+                if (!NT_SUCCESS(Status))
+                {
                     goto error_exit;
-                    }
                 }
+            }
 
             CopyCount = 0;
-            for (i = 12; i >= 0; i -= 4) {
+            for (i = 12; i >= 0; i -= 4)
+            {
                 Digit = ((UILangId >> i) & 0xF);
-                if (Digit >= 10) {
-                    LangIdDir[CopyCount++] = (WCHAR) (Digit - 10 + L'A');
-                } else {
-                    LangIdDir[CopyCount++] = (WCHAR) (Digit + L'0');
+                if (Digit >= 10)
+                {
+                    LangIdDir[CopyCount++] = (WCHAR)(Digit - 10 + L'A');
+                }
+                else
+                {
+                    LangIdDir[CopyCount++] = (WCHAR)(Digit + L'0');
                 }
             }
 
@@ -3774,17 +3728,19 @@ Return Value:
             AltDllMUIPath.Length = 0;
             AltDllMUIPath.MaximumLength = sizeof(AltDllMUIPathBuffer);
 
-            RtlAppendUnicodeToString(&AltDllMUIPath, DllPathName);  // e.g. "c:\winnt\system32\"
-            RtlAppendUnicodeToString(&AltDllMUIPath, L"mui\\");     // e.g. "c:\winnt\system32\mui\"
-            RtlAppendUnicodeToString(&AltDllMUIPath, LangIdDir);    // e.g. "c:\winnt\system32\mui\0411\"
+            RtlAppendUnicodeToString(&AltDllMUIPath, DllPathName); // e.g. "c:\winnt\system32\"
+            RtlAppendUnicodeToString(&AltDllMUIPath, L"mui\\");    // e.g. "c:\winnt\system32\mui\"
+            RtlAppendUnicodeToString(&AltDllMUIPath, LangIdDir);   // e.g. "c:\winnt\system32\mui\0411\"
 
             CurrentAltModulePath.Buffer = CurrentAltModulePathBuffer;
             CurrentAltModulePath.Length = 0;
             CurrentAltModulePath.MaximumLength = sizeof(CurrentAltModulePathBuffer);
-        } else {
-            fRedirMUI = TRUE; 
-        
-            //set CurrentAltModuleFile and CurrentAltModulePath        
+        }
+        else
+        {
+            fRedirMUI = TRUE;
+
+            //set CurrentAltModuleFile and CurrentAltModulePath
             CurrentAltModuleFile.Buffer = AltModulePathMUI;
             CurrentAltModuleFile.Length = 0;
             CurrentAltModuleFile.MaximumLength = sizeof(AltModulePathMUI);
@@ -3792,112 +3748,107 @@ Return Value:
             RtlCopyUnicodeString(&CurrentAltModuleFile, FullPathStringFoundAltModulePathRedirected);
         }
 
-    
+
         //
         //  Try name with .mui extesion first.
         //
         RetryCount = 0;
-        while (RetryCount < 3){
-            if ( ! fRedirMUI ) 
+        while (RetryCount < 3)
+        {
+            if (!fRedirMUI)
             {
-        
+
                 switch (RetryCount)
                 {
-                    case 0:
-                        //
-                        //  Generate the first path under the folder of the base DLL 
-                        //      (e.g. c:\winnt\system32\mui\0804\ntdll.dll)
-                        //
-                        CurrentAltModuleFile.Buffer = AltModulePathMUI;
-                        CurrentAltModuleFile.Length = 0;
-                        CurrentAltModuleFile.MaximumLength = sizeof(AltModulePathMUI);
+                case 0:
+                    //
+                    //  Generate the first path under the folder of the base DLL
+                    //      (e.g. c:\winnt\system32\mui\0804\ntdll.dll)
+                    //
+                    CurrentAltModuleFile.Buffer = AltModulePathMUI;
+                    CurrentAltModuleFile.Length = 0;
+                    CurrentAltModuleFile.MaximumLength = sizeof(AltModulePathMUI);
 
-                        RtlCopyUnicodeString(&CurrentAltModuleFile, &AltDllMUIPath);    // e.g. "c:\winnt\system32\mui\0411\"
-                        RtlCopyUnicodeString(&CurrentAltModulePath, &AltDllMUIPath);                
-                
-                        RtlAppendUnicodeToString(&CurrentAltModuleFile, BaseDllName);   // e.g. "c:\winnt\system32\mui\0411\ntdll.dll"
-                        RtlAppendUnicodeToString(&CurrentAltModuleFile, L".mui");       // e.g. "c:\winnt\system32\mui\0411\ntdll.dll.mui"      
-                        break;
-                    case 1:
-                        //
-                        //  Generate the second path c:\winnt\system32\mui\0804\ntdll.dll.mui
-                        //
-                        CurrentAltModuleFile.Buffer = AltModulePath;
-                        CurrentAltModuleFile.Length = 0;
-                        CurrentAltModuleFile.MaximumLength = sizeof(AltModulePath);
+                    RtlCopyUnicodeString(&CurrentAltModuleFile, &AltDllMUIPath); // e.g. "c:\winnt\system32\mui\0411\"
+                    RtlCopyUnicodeString(&CurrentAltModulePath, &AltDllMUIPath);
 
-                        RtlCopyUnicodeString(&CurrentAltModuleFile, &AltDllMUIPath);    // e.g. "c:\winnt\system32\mui\0411\"    
-                        RtlAppendUnicodeToString(&CurrentAltModuleFile, BaseDllName);   // e.g. "c:\winnt\system32\mui\0411\ntdll.dll"
-                        break;
-                    case 2:
-                        //
-                        //  Generate path c:\winnt\mui\fallback\0804\foo.exe.mui
-                        //
-                        CurrentAltModuleFile.Buffer = AltModulePathFallback;
-                        CurrentAltModuleFile.Length = 0;
-                        CurrentAltModuleFile.MaximumLength = sizeof(AltModulePathFallback);
-                
-                        RtlInitUnicodeString(&NtSystemRoot, USER_SHARED_DATA->NtSystemRoot);    // e.g. "c:\winnt\system32\"
-                        RtlAppendUnicodeStringToString(&CurrentAltModuleFile, &NtSystemRoot);   // e.g. "c:\winnt\system32\"
-                        RtlAppendUnicodeToString(&CurrentAltModuleFile, L"\\mui\\fallback\\");  // e.g. "c:\winnt\system32\mui\fallback\"
-                        RtlAppendUnicodeToString(&CurrentAltModuleFile, LangIdDir);             // e.g. "c:\winnt\system32\mui\fallback\0411\"
+                    RtlAppendUnicodeToString(&CurrentAltModuleFile,
+                                             BaseDllName); // e.g. "c:\winnt\system32\mui\0411\ntdll.dll"
+                    RtlAppendUnicodeToString(&CurrentAltModuleFile,
+                                             L".mui"); // e.g. "c:\winnt\system32\mui\0411\ntdll.dll.mui"
+                    break;
+                case 1:
+                    //
+                    //  Generate the second path c:\winnt\system32\mui\0804\ntdll.dll.mui
+                    //
+                    CurrentAltModuleFile.Buffer = AltModulePath;
+                    CurrentAltModuleFile.Length = 0;
+                    CurrentAltModuleFile.MaximumLength = sizeof(AltModulePath);
 
-                        RtlCopyUnicodeString(&CurrentAltModulePath, &CurrentAltModuleFile);
+                    RtlCopyUnicodeString(&CurrentAltModuleFile, &AltDllMUIPath); // e.g. "c:\winnt\system32\mui\0411\"
+                    RtlAppendUnicodeToString(&CurrentAltModuleFile,
+                                             BaseDllName); // e.g. "c:\winnt\system32\mui\0411\ntdll.dll"
+                    break;
+                case 2:
+                    //
+                    //  Generate path c:\winnt\mui\fallback\0804\foo.exe.mui
+                    //
+                    CurrentAltModuleFile.Buffer = AltModulePathFallback;
+                    CurrentAltModuleFile.Length = 0;
+                    CurrentAltModuleFile.MaximumLength = sizeof(AltModulePathFallback);
 
-                        RtlAppendUnicodeToString(&CurrentAltModuleFile, BaseDllName);           // e.g. "c:\winnt\system32\mui\fallback\0411\ntdll.dll"
-                        RtlAppendUnicodeToString(&CurrentAltModuleFile, L".mui");               // e.g. "c:\winnt\system32\mui\fallback\0411\ntdll.dll.mui"
-            
-                        break;
+                    RtlInitUnicodeString(&NtSystemRoot, USER_SHARED_DATA->NtSystemRoot);  // e.g. "c:\winnt\system32\"
+                    RtlAppendUnicodeStringToString(&CurrentAltModuleFile, &NtSystemRoot); // e.g. "c:\winnt\system32\"
+                    RtlAppendUnicodeToString(&CurrentAltModuleFile,
+                                             L"\\mui\\fallback\\"); // e.g. "c:\winnt\system32\mui\fallback\"
+                    RtlAppendUnicodeToString(&CurrentAltModuleFile,
+                                             LangIdDir); // e.g. "c:\winnt\system32\mui\fallback\0411\"
+
+                    RtlCopyUnicodeString(&CurrentAltModulePath, &CurrentAltModuleFile);
+
+                    RtlAppendUnicodeToString(&CurrentAltModuleFile,
+                                             BaseDllName); // e.g. "c:\winnt\system32\mui\fallback\0411\ntdll.dll"
+                    RtlAppendUnicodeToString(&CurrentAltModuleFile,
+                                             L".mui"); // e.g. "c:\winnt\system32\mui\fallback\0411\ntdll.dll.mui"
+
+                    break;
                 }
             }
 
-            if (!RtlDosPathNameToNtPathName_U(
-                        CurrentAltModuleFile.Buffer,
-                        &AltDllName,
-                        NULL,
-                        &RelativeName))
+            if (!RtlDosPathNameToNtPathName_U(CurrentAltModuleFile.Buffer, &AltDllName, NULL, &RelativeName))
                 goto error_exit;
 
             FreeBuffer = AltDllName.Buffer;
-            if (RelativeName.RelativeName.Length != 0) {
+            if (RelativeName.RelativeName.Length != 0)
+            {
                 AltDllName = *(PUNICODE_STRING)&RelativeName.RelativeName;
-            } else {
+            }
+            else
+            {
                 RelativeName.ContainingDirectory = NULL;
             }
 
-            InitializeObjectAttributes(
-                &ObjectAttributes,
-                &AltDllName,
-                OBJ_CASE_INSENSITIVE,
-                RelativeName.ContainingDirectory,
-                NULL
-                );
+            InitializeObjectAttributes(&ObjectAttributes, &AltDllName, OBJ_CASE_INSENSITIVE,
+                                       RelativeName.ContainingDirectory, NULL);
 
-            Status = NtCreateFile(
-                    &FileHandle,
-                    (ACCESS_MASK) GENERIC_READ | SYNCHRONIZE | FILE_READ_ATTRIBUTES,
-                    &ObjectAttributes,
-                    &IoStatusBlock,
-                    NULL,
-                    0L,
-                    FILE_SHARE_READ | FILE_SHARE_DELETE,
-                    FILE_OPEN,
-                    0L,
-                    NULL,
-                    0L
-                    );
-        
+            Status = NtCreateFile(&FileHandle, (ACCESS_MASK)GENERIC_READ | SYNCHRONIZE | FILE_READ_ATTRIBUTES,
+                                  &ObjectAttributes, &IoStatusBlock, NULL, 0L, FILE_SHARE_READ | FILE_SHARE_DELETE,
+                                  FILE_OPEN, 0L, NULL, 0L);
+
             RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
 
-            if (NT_SUCCESS(Status)) {
+            if (NT_SUCCESS(Status))
+            {
                 goto CreateSection;
             }
 
-            if (fRedirMUI) { // definitely failed 
-                goto error_exit; 
+            if (fRedirMUI)
+            { // definitely failed
+                goto error_exit;
             }
 
-            if (Status != STATUS_OBJECT_NAME_NOT_FOUND && RetryCount == 0) {
+            if (Status != STATUS_OBJECT_NAME_NOT_FOUND && RetryCount == 0)
+            {
                 //
                 //  Error other than the file name with .mui not found.
                 //  Most likely directory is missing.  Skip file name w/o .mui
@@ -3913,19 +3864,13 @@ Return Value:
         goto error_exit;
 
     CreateSection:
-        Status = NtCreateSection(
-                    &MappingHandle,
-                    STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ,
-                    NULL,
-                    NULL,
-                    PAGE_WRITECOPY,
-                    SEC_COMMIT,
-                    FileHandle
-                    );
+        Status = NtCreateSection(&MappingHandle, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ, NULL,
+                                 NULL, PAGE_WRITECOPY, SEC_COMMIT, FileHandle);
 
-        NtClose( FileHandle );
+        NtClose(FileHandle);
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             goto error_exit;
         }
 
@@ -3934,43 +3879,37 @@ Return Value:
         ViewSize = 0;
         DllBase = NULL;
 
-        Status = NtMapViewOfSection(
-                    MappingHandle,
-                    NtCurrentProcess(),
-                    &DllBase,
-                    0L,
-                    0L,
-                    &SectionOffset,
-                    &ViewSize,
-                    ViewShare,
-                    0L,
-                    PAGE_WRITECOPY
-                    );
+        Status = NtMapViewOfSection(MappingHandle, NtCurrentProcess(), &DllBase, 0L, 0L, &SectionOffset, &ViewSize,
+                                    ViewShare, 0L, PAGE_WRITECOPY);
 
         NtClose(MappingHandle);
 
-        if (!NT_SUCCESS(Status)){
+        if (!NT_SUCCESS(Status))
+        {
             goto error_exit;
         }
 
         NtHeaders = RtlImageNtHeader(DllBase);
-        if (!NtHeaders) {
-            NtUnmapViewOfSection(NtCurrentProcess(), (PVOID) DllBase);
+        if (!NtHeaders)
+        {
+            NtUnmapViewOfSection(NtCurrentProcess(), (PVOID)DllBase);
             goto error_exit;
         }
 
         AlternateModule = LDR_VIEW_TO_DATAFILE(DllBase);
 
-        if(!LdrpVerifyAlternateResourceModule(LangIdDir, Module, AlternateModule, BaseDllName)) {
-            NtUnmapViewOfSection(NtCurrentProcess(), (PVOID) DllBase);
+        if (!LdrpVerifyAlternateResourceModule(LangIdDir, Module, AlternateModule, BaseDllName))
+        {
+            NtUnmapViewOfSection(NtCurrentProcess(), (PVOID)DllBase);
             goto error_exit;
-            }
+        }
 
         LdrpSetAlternateResourceModuleHandle(Module, AlternateModule);
         return AlternateModule;
 
-error_exit:
-        if (BaseDllName != NULL) {
+    error_exit:
+        if (BaseDllName != NULL)
+        {
             //
             // If we looked for a MUI file and couldn't find one keep track.  If
             // we couldn't get the base dll name (e.g. someone passing in a
@@ -3981,7 +3920,9 @@ error_exit:
         }
 
         return NULL;
-    } __finally {
+    }
+    __finally
+    {
         Status = LdrUnlockLoaderLock(LDR_UNLOCK_LOADER_LOCK_FLAG_RAISE_ON_ERRORS, LockCookie);
     }
 
@@ -3989,9 +3930,7 @@ error_exit:
 }
 
 BOOLEAN
-LdrUnloadAlternateResourceModule(
-    IN PVOID Module
-    )
+LdrUnloadAlternateResourceModule(IN PVOID Module)
 
 /*++
 
@@ -4017,14 +3956,15 @@ Return Value:
     PVOID LockCookie = NULL;
 
     LdrLockLoaderLock(LDR_LOCK_LOADER_LOCK_FLAG_RAISE_ON_ERRORS, NULL, &LockCookie);
-    __try {
+    __try
+    {
         if (AlternateResourceModuleCount == 0)
             return TRUE;
 
-        for (ModuleIndex = AlternateResourceModuleCount;
-             ModuleIndex > 0;
-             ModuleIndex--) {
-             if (AlternateResourceModules[ModuleIndex-1].ModuleBase == Module) {
+        for (ModuleIndex = AlternateResourceModuleCount; ModuleIndex > 0; ModuleIndex--)
+        {
+            if (AlternateResourceModules[ModuleIndex - 1].ModuleBase == Module)
+            {
                 break;
             }
         }
@@ -4035,43 +3975,37 @@ Return Value:
         //
         //  Adjust to the actual index
         //
-        ModuleIndex --;
+        ModuleIndex--;
 
         AltModule = &AlternateResourceModules[ModuleIndex];
-        if (AltModule->AlternateModule != NO_ALTERNATE_RESOURCE_MODULE) {
-            NtUnmapViewOfSection(
-                NtCurrentProcess(),
-                LDR_DATAFILE_TO_VIEW(AltModule->AlternateModule));
+        if (AltModule->AlternateModule != NO_ALTERNATE_RESOURCE_MODULE)
+        {
+            NtUnmapViewOfSection(NtCurrentProcess(), LDR_DATAFILE_TO_VIEW(AltModule->AlternateModule));
         }
 
-        if (ModuleIndex != AlternateResourceModuleCount - 1) {
+        if (ModuleIndex != AlternateResourceModuleCount - 1)
+        {
             //
             //  Consolidate the array.  Skip this if unloaded item
             //  is the last element.
             //
-            RtlMoveMemory(
-                AltModule,
-                AltModule + 1,
-                (AlternateResourceModuleCount - ModuleIndex - 1) * RESMODSIZE);
+            RtlMoveMemory(AltModule, AltModule + 1, (AlternateResourceModuleCount - ModuleIndex - 1) * RESMODSIZE);
         }
 
         AlternateResourceModuleCount--;
 
-        if (AlternateResourceModuleCount == 0){
-            RtlFreeHeap(
-                RtlProcessHeap(),
-                0,
-                AlternateResourceModules
-                );
+        if (AlternateResourceModuleCount == 0)
+        {
+            RtlFreeHeap(RtlProcessHeap(), 0, AlternateResourceModules);
             AlternateResourceModules = NULL;
             AltResMemBlockCount = 0;
-        } else {
-            if (AlternateResourceModuleCount < AltResMemBlockCount - MEMBLOCKSIZE) {
-                AltModule = RtlReAllocateHeap(
-                                RtlProcessHeap(),
-                                0,
-                                AlternateResourceModules,
-                                (AltResMemBlockCount - MEMBLOCKSIZE) * RESMODSIZE);
+        }
+        else
+        {
+            if (AlternateResourceModuleCount < AltResMemBlockCount - MEMBLOCKSIZE)
+            {
+                AltModule = RtlReAllocateHeap(RtlProcessHeap(), 0, AlternateResourceModules,
+                                              (AltResMemBlockCount - MEMBLOCKSIZE) * RESMODSIZE);
 
                 if (!AltModule)
                     return FALSE;
@@ -4080,7 +4014,9 @@ Return Value:
                 AltResMemBlockCount -= MEMBLOCKSIZE;
             }
         }
-    } __finally {
+    }
+    __finally
+    {
         LdrUnlockLoaderLock(LDR_UNLOCK_LOADER_LOCK_FLAG_RAISE_ON_ERRORS, LockCookie);
     }
 
@@ -4089,9 +4025,7 @@ Return Value:
 
 
 BOOLEAN
-LdrFlushAlternateResourceModules(
-    VOID
-    )
+LdrFlushAlternateResourceModules(VOID)
 
 /*++
 
@@ -4125,26 +4059,28 @@ Return Value:
     //
 
     Status = LdrLockLoaderLock(LDR_LOCK_LOADER_LOCK_FLAG_RAISE_ON_ERRORS, NULL, &LockCookie);
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         // This function erroneously doesn't have any way to communicate failure statuses up so
         // we're stuck with just returning false.
         return FALSE;
     }
-    __try {
-        if (AlternateResourceModuleCount > 0) {
+    __try
+    {
+        if (AlternateResourceModuleCount > 0)
+        {
             //
             // Let's unmap the alternate resource modules from the process
             // address space
             //
-            for (ModuleIndex=0;
-                 ModuleIndex<AlternateResourceModuleCount;
-                 ModuleIndex++) {
+            for (ModuleIndex = 0; ModuleIndex < AlternateResourceModuleCount; ModuleIndex++)
+            {
 
                 AltModule = &AlternateResourceModules[ModuleIndex];
 
-                if (AltModule->AlternateModule != NO_ALTERNATE_RESOURCE_MODULE) {
-                    NtUnmapViewOfSection(NtCurrentProcess(),
-                                         LDR_DATAFILE_TO_VIEW(AltModule->AlternateModule));
+                if (AltModule->AlternateModule != NO_ALTERNATE_RESOURCE_MODULE)
+                {
+                    NtUnmapViewOfSection(NtCurrentProcess(), LDR_DATAFILE_TO_VIEW(AltModule->AlternateModule));
                 }
             }
 
@@ -4161,7 +4097,9 @@ Return Value:
         // Re-Initialize the UI language for the current process,
         //
         UILangId = 0;
-    } __finally {
+    }
+    __finally
+    {
         LdrUnlockLoaderLock(LDR_UNLOCK_LOADER_LOCK_FLAG_RAISE_ON_ERRORS, LockCookie);
     }
 

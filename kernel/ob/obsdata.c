@@ -40,13 +40,13 @@ Revision History:
 //  Test for enabled diagnostic
 //
 
-#define IF_OB_GLOBAL( FlagName ) if (ObsDebugFlags & (OBS_DEBUG_##FlagName))
+#define IF_OB_GLOBAL(FlagName) if (ObsDebugFlags & (OBS_DEBUG_##FlagName))
 
 //
 //  Diagnostics print statement
 //
 
-#define ObPrint( FlagName, _Text_ ) IF_OB_GLOBAL( FlagName ) DbgPrint _Text_
+#define ObPrint(FlagName, _Text_) IF_OB_GLOBAL(FlagName) DbgPrint _Text_
 
 #else
 
@@ -58,13 +58,13 @@ Revision History:
 //  Test for diagnostics enabled
 //
 
-#define IF_OB_GLOBAL( FlagName ) if (FALSE)
+#define IF_OB_GLOBAL(FlagName) if (FALSE)
 
 //
 //  Diagnostics print statement (expands to no-op)
 //
 
-#define ObPrint( FlagName, _Text_ )     ;
+#define ObPrint(FlagName, _Text_) ;
 
 #endif // OB_DIAGNOSTICS_ENABLED
 
@@ -76,20 +76,21 @@ Revision History:
 //
 //
 
-#define OBS_DEBUG_ALLOC_TRACKING          ((ULONG) 0x00000001L)
-#define OBS_DEBUG_CACHE_FREES             ((ULONG) 0x00000002L)
-#define OBS_DEBUG_BREAK_ON_INIT           ((ULONG) 0x00000004L)
-#define OBS_DEBUG_SHOW_COLLISIONS         ((ULONG) 0x00000008L)
-#define OBS_DEBUG_SHOW_STATISTICS         ((ULONG) 0x00000010L)
-#define OBS_DEBUG_SHOW_REFERENCES         ((ULONG) 0x00000020L)
-#define OBS_DEBUG_SHOW_DEASSIGN           ((ULONG) 0x00000040L)
-#define OBS_DEBUG_STOP_INVALID_DESCRIPTOR ((ULONG) 0x00000080L)
-#define OBS_DEBUG_SHOW_HEADER_FREE        ((ULONG) 0x00000100L)
+#define OBS_DEBUG_ALLOC_TRACKING ((ULONG)0x00000001L)
+#define OBS_DEBUG_CACHE_FREES ((ULONG)0x00000002L)
+#define OBS_DEBUG_BREAK_ON_INIT ((ULONG)0x00000004L)
+#define OBS_DEBUG_SHOW_COLLISIONS ((ULONG)0x00000008L)
+#define OBS_DEBUG_SHOW_STATISTICS ((ULONG)0x00000010L)
+#define OBS_DEBUG_SHOW_REFERENCES ((ULONG)0x00000020L)
+#define OBS_DEBUG_SHOW_DEASSIGN ((ULONG)0x00000040L)
+#define OBS_DEBUG_STOP_INVALID_DESCRIPTOR ((ULONG)0x00000080L)
+#define OBS_DEBUG_SHOW_HEADER_FREE ((ULONG)0x00000100L)
 
 //
 // Define struct of single hash clash chain
 //
-typedef struct _OB_SD_CACHE_LIST {
+typedef struct _OB_SD_CACHE_LIST
+{
     EX_PUSH_LOCK PushLock;
     LIST_ENTRY Head;
 } OB_SD_CACHE_LIST, *POB_SD_CACHE_LIST;
@@ -115,26 +116,23 @@ ULONG ObsDebugFlags = 0;
 #endif
 
 
-#if defined (ALLOC_PRAGMA)
-#pragma alloc_text(INIT,ObpInitSecurityDescriptorCache)
-#pragma alloc_text(PAGE,ObpHashSecurityDescriptor)
-#pragma alloc_text(PAGE,ObpHashBuffer)
-#pragma alloc_text(PAGE,ObLogSecurityDescriptor)
-#pragma alloc_text(PAGE,ObpCreateCacheEntry)
-#pragma alloc_text(PAGE,ObpReferenceSecurityDescriptor)
-#pragma alloc_text(PAGE,ObDeassignSecurity)
-#pragma alloc_text(PAGE,ObDereferenceSecurityDescriptor)
-#pragma alloc_text(PAGE,ObpDestroySecurityDescriptorHeader)
-#pragma alloc_text(PAGE,ObpCompareSecurityDescriptors)
-#pragma alloc_text(PAGE,ObReferenceSecurityDescriptor)
+#if defined(ALLOC_PRAGMA)
+#pragma alloc_text(INIT, ObpInitSecurityDescriptorCache)
+#pragma alloc_text(PAGE, ObpHashSecurityDescriptor)
+#pragma alloc_text(PAGE, ObpHashBuffer)
+#pragma alloc_text(PAGE, ObLogSecurityDescriptor)
+#pragma alloc_text(PAGE, ObpCreateCacheEntry)
+#pragma alloc_text(PAGE, ObpReferenceSecurityDescriptor)
+#pragma alloc_text(PAGE, ObDeassignSecurity)
+#pragma alloc_text(PAGE, ObDereferenceSecurityDescriptor)
+#pragma alloc_text(PAGE, ObpDestroySecurityDescriptorHeader)
+#pragma alloc_text(PAGE, ObpCompareSecurityDescriptors)
+#pragma alloc_text(PAGE, ObReferenceSecurityDescriptor)
 #endif
 
 
-
 NTSTATUS
-ObpInitSecurityDescriptorCache (
-    VOID
-    )
+ObpInitSecurityDescriptorCache(VOID)
 
 /*++
 
@@ -157,7 +155,8 @@ Return Value:
     NTSTATUS Status;
     ULONG i;
 
-    IF_OB_GLOBAL( BREAK_ON_INIT ) {
+    IF_OB_GLOBAL(BREAK_ON_INIT)
+    {
 
         DbgBreakPoint();
     }
@@ -165,23 +164,22 @@ Return Value:
     //
     // Initialize all the list heads and their associated locks.
     //
-    for (i = 0; i < SECURITY_DESCRIPTOR_CACHE_ENTRIES; i++) {
-        ExInitializePushLock (&ObsSecurityDescriptorCache[i].PushLock);
-        InitializeListHead (&ObsSecurityDescriptorCache[i].Head);
+    for (i = 0; i < SECURITY_DESCRIPTOR_CACHE_ENTRIES; i++)
+    {
+        ExInitializePushLock(&ObsSecurityDescriptorCache[i].PushLock);
+        InitializeListHead(&ObsSecurityDescriptorCache[i].Head);
     }
 
     //
     //  And return to our caller
     //
 
-    return( STATUS_SUCCESS );
+    return (STATUS_SUCCESS);
 }
 
-
+
 ULONG
-ObpHashSecurityDescriptor (
-    PSECURITY_DESCRIPTOR SecurityDescriptor
-    )
+ObpHashSecurityDescriptor(PSECURITY_DESCRIPTOR SecurityDescriptor)
 
 /*++
 
@@ -203,18 +201,15 @@ Return Value:
     ULONG Length;
     ULONG Hash;
 
-    Length =  RtlLengthSecurityDescriptor (SecurityDescriptor);
-    Hash = ObpHashBuffer (SecurityDescriptor, Length);
+    Length = RtlLengthSecurityDescriptor(SecurityDescriptor);
+    Hash = ObpHashBuffer(SecurityDescriptor, Length);
 
     return Hash;
 }
 
-
+
 ULONG
-ObpHashBuffer (
-    PVOID Data,
-    ULONG Length
-    )
+ObpHashBuffer(PVOID Data, ULONG Length)
 
 /*++
 
@@ -251,37 +246,35 @@ Return Value:
     // Calculate buffer bounds as rounded down ULONG pointers
     //
     Buffer = Data;
-    BufferEnd = (PULONG)(Bufferp + (Length&~(sizeof (ULONG) - 1)));
+    BufferEnd = (PULONG)(Bufferp + (Length & ~(sizeof(ULONG) - 1)));
 
     //
     // Loop over a whole number of ULONGs
     //
-    while (Buffer < BufferEnd) {
+    while (Buffer < BufferEnd)
+    {
         Result ^= *Buffer++;
-        Result = _rotl (Result, 3);
+        Result = _rotl(Result, 3);
     }
 
     //
     // Pull in the remaining bytes
     //
-    Bufferp = (PUCHAR) Buffer;
-    while (Bufferp < BufferEndp) {
+    Bufferp = (PUCHAR)Buffer;
+    while (Bufferp < BufferEndp)
+    {
         Result ^= *Bufferp++;
-        Result = _rotl (Result, 3);
+        Result = _rotl(Result, 3);
     }
 
-    
 
     return Result;
 }
 
-
+
 NTSTATUS
-ObLogSecurityDescriptor (
-    IN PSECURITY_DESCRIPTOR InputSecurityDescriptor,
-    OUT PSECURITY_DESCRIPTOR *OutputSecurityDescriptor,
-    IN ULONG RefBias
-    )
+ObLogSecurityDescriptor(IN PSECURITY_DESCRIPTOR InputSecurityDescriptor,
+                        OUT PSECURITY_DESCRIPTOR *OutputSecurityDescriptor, IN ULONG RefBias)
 
 /*++
 
@@ -318,7 +311,7 @@ Return Value:
     POB_SD_CACHE_LIST Chain;
     PETHREAD CurrentThread;
 
-    FullHash = ObpHashSecurityDescriptor (InputSecurityDescriptor);
+    FullHash = ObpHashSecurityDescriptor(InputSecurityDescriptor);
     Slot = FullHash % SECURITY_DESCRIPTOR_CACHE_ENTRIES;
 
     NewDescriptor = NULL;
@@ -328,11 +321,12 @@ Return Value:
     //
     Chain = &ObsSecurityDescriptorCache[Slot];
 
-    CurrentThread = PsGetCurrentThread ();
-    KeEnterCriticalRegionThread (&CurrentThread->Tcb);
-    ExAcquirePushLockShared (&Chain->PushLock);
+    CurrentThread = PsGetCurrentThread();
+    KeEnterCriticalRegionThread(&CurrentThread->Tcb);
+    ExAcquirePushLockShared(&Chain->PushLock);
 
-    do {
+    do
+    {
         //
         //  See if the list for this slot is in use.
         //  Lock the table first, unlock if if we don't need it.
@@ -343,94 +337,100 @@ Return Value:
         //  Zoom down the hash bucket looking for a full hash match
         //
 
-        for (Front = Chain->Head.Flink;
-             Front != &Chain->Head;
-             Front = Front->Flink) {
+        for (Front = Chain->Head.Flink; Front != &Chain->Head; Front = Front->Flink)
+        {
 
-            Header = LINK_TO_SD_HEADER (Front);
+            Header = LINK_TO_SD_HEADER(Front);
 
             //
             // The list is ordered by full hash value and is maintained this way by virtue
             // of the fact that we use the 'Back' variable for the insert.
             //
 
-            if (Header->FullHash > FullHash) {
+            if (Header->FullHash > FullHash)
+            {
                 break;
             }
 
-            if (Header->FullHash == FullHash) {
+            if (Header->FullHash == FullHash)
+            {
 
-                Match = ObpCompareSecurityDescriptors (InputSecurityDescriptor,
-                                                       &Header->SecurityDescriptor);
+                Match = ObpCompareSecurityDescriptors(InputSecurityDescriptor, &Header->SecurityDescriptor);
 
-                if (Match) {
+                if (Match)
+                {
 
                     break;
                 }
 
-                ObPrint (SHOW_COLLISIONS, ("Got a collision on %d, no match\n", Slot));
+                ObPrint(SHOW_COLLISIONS, ("Got a collision on %d, no match\n", Slot));
             }
         }
 
         //
         //  If we have a match then we'll get the caller to use the old
-        //  cached descriptor, but bumping its ref count, freeing what  
+        //  cached descriptor, but bumping its ref count, freeing what
         //  the caller supplied and returning the old one to our caller
         //
 
-        if (Match) {
+        if (Match)
+        {
 
-            InterlockedExchangeAdd (&Header->RefCount, RefBias);
+            InterlockedExchangeAdd(&Header->RefCount, RefBias);
 
-            ObPrint (SHOW_REFERENCES, ("Reference Hash = 0x%lX, New RefCount = %d\n", Header->FullHash, Header->RefCount));
+            ObPrint(SHOW_REFERENCES,
+                    ("Reference Hash = 0x%lX, New RefCount = %d\n", Header->FullHash, Header->RefCount));
 
-            ExReleasePushLock (&Chain->PushLock);
-            KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+            ExReleasePushLock(&Chain->PushLock);
+            KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
 
             *OutputSecurityDescriptor = &Header->SecurityDescriptor;
 
-            if (NewDescriptor != NULL) {
-                ExFreePool (NewDescriptor);
+            if (NewDescriptor != NULL)
+            {
+                ExFreePool(NewDescriptor);
             }
 
             return STATUS_SUCCESS;
         }
 
 
-        if (NewDescriptor == NULL) {
-            ExReleasePushLockShared (&Chain->PushLock);
-            KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+        if (NewDescriptor == NULL)
+        {
+            ExReleasePushLockShared(&Chain->PushLock);
+            KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
 
             //
             //  Can't use an existing one, create a new entry
             //  and insert it into the list.
             //
 
-            NewDescriptor = ObpCreateCacheEntry (InputSecurityDescriptor,
-                                                 FullHash,
-                                                 RefBias);
+            NewDescriptor = ObpCreateCacheEntry(InputSecurityDescriptor, FullHash, RefBias);
 
-            if (NewDescriptor == NULL) {
+            if (NewDescriptor == NULL)
+            {
                 return STATUS_INSUFFICIENT_RESOURCES;
             }
             //
             // Reacquire the lock in write mode. We will probably have to insert now
             //
-            KeEnterCriticalRegionThread (&CurrentThread->Tcb);
-            ExAcquirePushLockExclusive (&Chain->PushLock);
-        } else {
+            KeEnterCriticalRegionThread(&CurrentThread->Tcb);
+            ExAcquirePushLockExclusive(&Chain->PushLock);
+        }
+        else
+        {
             break;
         }
     } while (1);
 
 #if OB_DIAGNOSTICS_ENABLED
 
-    InterlockedIncrement (&ObsTotalCacheEntries);
+    InterlockedIncrement(&ObsTotalCacheEntries);
 
 #endif
 
-    ObPrint (SHOW_STATISTICS, ("ObsTotalCacheEntries = %d \n", ObsTotalCacheEntries));
-    ObPrint (SHOW_COLLISIONS, ("Adding new entry for index #%d \n", Slot));
+    ObPrint(SHOW_STATISTICS, ("ObsTotalCacheEntries = %d \n", ObsTotalCacheEntries));
+    ObPrint(SHOW_COLLISIONS, ("Adding new entry for index #%d \n", Slot));
 
 
     //
@@ -438,10 +438,10 @@ Return Value:
     // is just inserting at the head
     //
 
-    InsertTailList (Front, &NewDescriptor->Link);
+    InsertTailList(Front, &NewDescriptor->Link);
 
-    ExReleasePushLockExclusive (&Chain->PushLock);
-    KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+    ExReleasePushLockExclusive(&Chain->PushLock);
+    KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
 
     //
     //  Set the output security descriptor and return to our caller
@@ -449,16 +449,12 @@ Return Value:
 
     *OutputSecurityDescriptor = &NewDescriptor->SecurityDescriptor;
 
-    return( STATUS_SUCCESS );
+    return (STATUS_SUCCESS);
 }
 
-
+
 PSECURITY_DESCRIPTOR_HEADER
-ObpCreateCacheEntry (
-    PSECURITY_DESCRIPTOR InputSecurityDescriptor,
-    ULONG FullHash,
-    ULONG RefBias
-    )
+ObpCreateCacheEntry(PSECURITY_DESCRIPTOR InputSecurityDescriptor, ULONG FullHash, ULONG RefBias)
 
 /*++
 
@@ -493,16 +489,17 @@ Return Value:
     //  security descriptor itself.
     //
 
-    SecurityDescriptorLength = RtlLengthSecurityDescriptor (InputSecurityDescriptor);
-    CacheEntrySize = SecurityDescriptorLength + (sizeof (SECURITY_DESCRIPTOR_HEADER) - sizeof(QUAD));
+    SecurityDescriptorLength = RtlLengthSecurityDescriptor(InputSecurityDescriptor);
+    CacheEntrySize = SecurityDescriptorLength + (sizeof(SECURITY_DESCRIPTOR_HEADER) - sizeof(QUAD));
 
     //
     //  Now allocate space for the cached entry
     //
 
-    NewDescriptor = ExAllocatePoolWithTag (PagedPool, CacheEntrySize, 'cSbO');
+    NewDescriptor = ExAllocatePoolWithTag(PagedPool, CacheEntrySize, 'cSbO');
 
-    if (NewDescriptor == NULL) {
+    if (NewDescriptor == NULL)
+    {
 
         return NULL;
     }
@@ -512,21 +509,15 @@ Return Value:
     //  caller
     //
 
-    NewDescriptor->RefCount   = RefBias;
-    NewDescriptor->FullHash   = FullHash;
+    NewDescriptor->RefCount = RefBias;
+    NewDescriptor->FullHash = FullHash;
 
-    RtlCopyMemory (&NewDescriptor->SecurityDescriptor,
-                   InputSecurityDescriptor,
-                   SecurityDescriptorLength);
+    RtlCopyMemory(&NewDescriptor->SecurityDescriptor, InputSecurityDescriptor, SecurityDescriptorLength);
 
     return NewDescriptor;
 }
 
-VOID
-ObReferenceSecurityDescriptor (
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN ULONG Count
-    )
+VOID ObReferenceSecurityDescriptor(IN PSECURITY_DESCRIPTOR SecurityDescriptor, IN ULONG Count)
 /*++
 
 Routine Description:
@@ -546,21 +537,19 @@ Return Value:
 {
     PSECURITY_DESCRIPTOR_HEADER SecurityDescriptorHeader;
 
-    SecurityDescriptorHeader = SD_TO_SD_HEADER( SecurityDescriptor );
-    ObPrint( SHOW_REFERENCES, ("Referencing Hash %lX, Refcount = %d \n",SecurityDescriptorHeader->FullHash,
-                               SecurityDescriptorHeader->RefCount));
+    SecurityDescriptorHeader = SD_TO_SD_HEADER(SecurityDescriptor);
+    ObPrint(SHOW_REFERENCES, ("Referencing Hash %lX, Refcount = %d \n", SecurityDescriptorHeader->FullHash,
+                              SecurityDescriptorHeader->RefCount));
 
     //
     //  Increment the reference count
     //
-    InterlockedExchangeAdd (&SecurityDescriptorHeader->RefCount, Count);
+    InterlockedExchangeAdd(&SecurityDescriptorHeader->RefCount, Count);
 }
 
-
+
 PSECURITY_DESCRIPTOR
-ObpReferenceSecurityDescriptor (
-    POBJECT_HEADER ObjectHeader
-    )
+ObpReferenceSecurityDescriptor(POBJECT_HEADER ObjectHeader)
 
 /*++
 
@@ -588,47 +577,52 @@ Return Value:
     //
     // Attempt the fast reference
     //
-    FastRef = (PEX_FAST_REF) &ObjectHeader->SecurityDescriptor;
+    FastRef = (PEX_FAST_REF)&ObjectHeader->SecurityDescriptor;
 
-    OldRef = ExFastReference (FastRef);
+    OldRef = ExFastReference(FastRef);
 
-    SecurityDescriptor = ExFastRefGetObject (OldRef);
+    SecurityDescriptor = ExFastRefGetObject(OldRef);
 
     //
     // See if we can fast reference this security descriptor. Return NULL if there wasn't one
     // and go the slow way if there are no more cached references left.
     //
-    Unused = ExFastRefGetUnusedReferences (OldRef);
+    Unused = ExFastRefGetUnusedReferences(OldRef);
 
-    if (Unused >= 1 || SecurityDescriptor == NULL) {
-        if (Unused == 1) {
+    if (Unused >= 1 || SecurityDescriptor == NULL)
+    {
+        if (Unused == 1)
+        {
             //
             // If we took the counter to zero then attempt to make life easier for
             // the next referencer by resetting the counter to its max. Since we now
             // have a reference to the security descriptor we can do this.
             //
-            RefsToAdd = ExFastRefGetAdditionalReferenceCount ();
-            SecurityDescriptorHeader = SD_TO_SD_HEADER( SecurityDescriptor );
-            InterlockedExchangeAdd (&SecurityDescriptorHeader->RefCount, RefsToAdd);
+            RefsToAdd = ExFastRefGetAdditionalReferenceCount();
+            SecurityDescriptorHeader = SD_TO_SD_HEADER(SecurityDescriptor);
+            InterlockedExchangeAdd(&SecurityDescriptorHeader->RefCount, RefsToAdd);
 
             //
             // Try to add the added references to the cache. If we fail then just
             // release them. This dereference can not take the reference count to zero.
             //
-            if (!ExFastRefAddAdditionalReferenceCounts (FastRef, SecurityDescriptor, RefsToAdd)) {
-                InterlockedExchangeAdd (&SecurityDescriptorHeader->RefCount, -(LONG)RefsToAdd);
+            if (!ExFastRefAddAdditionalReferenceCounts(FastRef, SecurityDescriptor, RefsToAdd))
+            {
+                InterlockedExchangeAdd(&SecurityDescriptorHeader->RefCount, -(LONG)RefsToAdd);
             }
         }
         return SecurityDescriptor;
     }
 
-    ObpLockObjectShared( ObjectHeader );
+    ObpLockObjectShared(ObjectHeader);
 
-    SecurityDescriptor = ExFastRefGetObject (*FastRef);
+    SecurityDescriptor = ExFastRefGetObject(*FastRef);
 
-    IF_OB_GLOBAL( STOP_INVALID_DESCRIPTOR ) {
+    IF_OB_GLOBAL(STOP_INVALID_DESCRIPTOR)
+    {
 
-        if(!RtlValidSecurityDescriptor ( SecurityDescriptor )) {
+        if (!RtlValidSecurityDescriptor(SecurityDescriptor))
+        {
 
             DbgBreakPoint();
         }
@@ -637,26 +631,24 @@ Return Value:
     //
     //  The obejcts security descriptor is not allowed to go fron NON-NULL to NULL.
     //
-    SecurityDescriptorHeader = SD_TO_SD_HEADER( SecurityDescriptor );
-    ObPrint( SHOW_REFERENCES, ("Referencing Hash %lX, Refcount = %d \n",SecurityDescriptorHeader->FullHash,
-                               SecurityDescriptorHeader->RefCount));
+    SecurityDescriptorHeader = SD_TO_SD_HEADER(SecurityDescriptor);
+    ObPrint(SHOW_REFERENCES, ("Referencing Hash %lX, Refcount = %d \n", SecurityDescriptorHeader->FullHash,
+                              SecurityDescriptorHeader->RefCount));
 
     //
     //  Increment the reference count
     //
-    InterlockedIncrement (&SecurityDescriptorHeader->RefCount);
+    InterlockedIncrement(&SecurityDescriptorHeader->RefCount);
 
-    ObpUnlockObject( ObjectHeader );
+    ObpUnlockObject(ObjectHeader);
 
 
-    return( SecurityDescriptor );
+    return (SecurityDescriptor);
 }
 
-
+
 NTSTATUS
-ObDeassignSecurity (
-    IN OUT PSECURITY_DESCRIPTOR *pSecurityDescriptor
-    )
+ObDeassignSecurity(IN OUT PSECURITY_DESCRIPTOR *pSecurityDescriptor)
 
 /*++
 
@@ -679,27 +671,23 @@ Return Value:
     PSECURITY_DESCRIPTOR SecurityDescriptor;
     EX_FAST_REF FastRef;
 
-    ObPrint( SHOW_DEASSIGN,("Deassigning security descriptor %x\n",*pSecurityDescriptor));
+    ObPrint(SHOW_DEASSIGN, ("Deassigning security descriptor %x\n", *pSecurityDescriptor));
 
     //
     //  NULL out the SecurityDescriptor in the object's
     //  header so we don't try to free it again.
     //
-    FastRef = *(PEX_FAST_REF) pSecurityDescriptor;
+    FastRef = *(PEX_FAST_REF)pSecurityDescriptor;
     *pSecurityDescriptor = NULL;
 
-    SecurityDescriptor = ExFastRefGetObject (FastRef);
-    ObDereferenceSecurityDescriptor (SecurityDescriptor, ExFastRefGetUnusedReferences (FastRef) + 1);
-    
+    SecurityDescriptor = ExFastRefGetObject(FastRef);
+    ObDereferenceSecurityDescriptor(SecurityDescriptor, ExFastRefGetUnusedReferences(FastRef) + 1);
+
     return STATUS_SUCCESS;
 }
 
-
-VOID
-ObDereferenceSecurityDescriptor (
-    PSECURITY_DESCRIPTOR SecurityDescriptor,
-    ULONG Count
-    )
+
+VOID ObDereferenceSecurityDescriptor(PSECURITY_DESCRIPTOR SecurityDescriptor, ULONG Count)
 
 /*++
 
@@ -725,7 +713,7 @@ Return Value:
     PETHREAD CurrentThread;
     ULONG Slot;
 
-    SecurityDescriptorHeader = SD_TO_SD_HEADER( SecurityDescriptor );
+    SecurityDescriptorHeader = SD_TO_SD_HEADER(SecurityDescriptor);
 
     //
     // First see if its possible to do a non-zero transition lock free.
@@ -735,10 +723,12 @@ Return Value:
     //
     // If the old value is equal to the decrement then we will be the deleter of this block. We need the lock for that
     //
-    while (OldValue != Count) {
+    while (OldValue != Count)
+    {
 
-        NewValue = InterlockedCompareExchange (&SecurityDescriptorHeader->RefCount, OldValue - Count, OldValue);
-        if (NewValue == OldValue) {
+        NewValue = InterlockedCompareExchange(&SecurityDescriptorHeader->RefCount, OldValue - Count, OldValue);
+        if (NewValue == OldValue)
+        {
             return;
         }
         OldValue = NewValue;
@@ -752,17 +742,16 @@ Return Value:
 
     Chain = &ObsSecurityDescriptorCache[Slot];
 
-    CurrentThread = PsGetCurrentThread ();
-    KeEnterCriticalRegionThread (&CurrentThread->Tcb);
-    ExAcquirePushLockExclusive (&Chain->PushLock);
+    CurrentThread = PsGetCurrentThread();
+    KeEnterCriticalRegionThread(&CurrentThread->Tcb);
+    ExAcquirePushLockExclusive(&Chain->PushLock);
 
     //
     //  Do some debug work
     //
 
-    ObPrint( SHOW_REFERENCES, ("Dereferencing SecurityDescriptor %x, hash %lx, refcount = %d \n", SecurityDescriptor,
-                               SecurityDescriptorHeader->FullHash,
-                               SecurityDescriptorHeader->RefCount));
+    ObPrint(SHOW_REFERENCES, ("Dereferencing SecurityDescriptor %x, hash %lx, refcount = %d \n", SecurityDescriptor,
+                              SecurityDescriptorHeader->FullHash, SecurityDescriptorHeader->RefCount));
 
     ASSERT(SecurityDescriptorHeader->RefCount != 0);
 
@@ -771,34 +760,34 @@ Return Value:
     //  we can completely remove this entry from the cache
     //
 
-    if (InterlockedExchangeAdd (&SecurityDescriptorHeader->RefCount, -(LONG)Count) == Count) {
+    if (InterlockedExchangeAdd(&SecurityDescriptorHeader->RefCount, -(LONG)Count) == Count)
+    {
 
-        PoolToFree = ObpDestroySecurityDescriptorHeader (SecurityDescriptorHeader);
+        PoolToFree = ObpDestroySecurityDescriptorHeader(SecurityDescriptorHeader);
         //
         //  Unlock the security descriptor cache and free the pool
         //
 
-        ExReleasePushLockExclusive (&Chain->PushLock);
-        KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+        ExReleasePushLockExclusive(&Chain->PushLock);
+        KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
 
-        ExFreePool (PoolToFree);
-    } else {
+        ExFreePool(PoolToFree);
+    }
+    else
+    {
 
         //
         //  Unlock the security descriptor cache and return to our caller
         //
 
-        ExReleasePushLockExclusive (&Chain->PushLock);
-        KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+        ExReleasePushLockExclusive(&Chain->PushLock);
+        KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
     }
-
 }
 
-
+
 PVOID
-ObpDestroySecurityDescriptorHeader (
-    IN PSECURITY_DESCRIPTOR_HEADER Header
-    )
+ObpDestroySecurityDescriptorHeader(IN PSECURITY_DESCRIPTOR_HEADER Header)
 
 /*++
 
@@ -818,23 +807,23 @@ Return Value:
 --*/
 
 {
-    ASSERT ( Header->RefCount == 0 );
+    ASSERT(Header->RefCount == 0);
 
 #if OB_DIAGNOSTICS_ENABLED
 
-    InterlockedDecrement (&ObsTotalCacheEntries);
+    InterlockedDecrement(&ObsTotalCacheEntries);
 
 #endif
 
-    ObPrint( SHOW_STATISTICS, ("ObsTotalCacheEntries = %d \n",ObsTotalCacheEntries));
+    ObPrint(SHOW_STATISTICS, ("ObsTotalCacheEntries = %d \n", ObsTotalCacheEntries));
 
     //
     //  Unlink the cached security descriptor from its linked list
     //
 
-    RemoveEntryList (&Header->Link);
+    RemoveEntryList(&Header->Link);
 
-    ObPrint( SHOW_HEADER_FREE, ("Freeing memory at %x \n",Header));
+    ObPrint(SHOW_HEADER_FREE, ("Freeing memory at %x \n", Header));
 
     //
     //  Now return the cached descriptor to our caller to free
@@ -843,12 +832,9 @@ Return Value:
     return Header;
 }
 
-
+
 BOOLEAN
-ObpCompareSecurityDescriptors (
-    IN PSECURITY_DESCRIPTOR SD1,
-    IN PSECURITY_DESCRIPTOR SD2
-    )
+ObpCompareSecurityDescriptors(IN PSECURITY_DESCRIPTOR SD1, IN PSECURITY_DESCRIPTOR SD2)
 
 /*++
 
@@ -879,14 +865,14 @@ Return Value:
     //  can get away with doing only that.
     //
 
-    Length1 =  RtlLengthSecurityDescriptor ( SD1 );
-    Length2 =  RtlLengthSecurityDescriptor ( SD2 );
+    Length1 = RtlLengthSecurityDescriptor(SD1);
+    Length2 = RtlLengthSecurityDescriptor(SD2);
 
-    if (Length1 != Length2) {
+    if (Length1 != Length2)
+    {
 
-        return( FALSE );
+        return (FALSE);
     }
 
-    return (BOOLEAN)RtlEqualMemory ( SD1, SD2, Length1 );
+    return (BOOLEAN)RtlEqualMemory(SD1, SD2, Length1);
 }
-

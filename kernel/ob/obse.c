@@ -22,33 +22,30 @@ Revision History:
 
 #if defined(ALLOC_PRAGMA)
 
-#pragma alloc_text(PAGE,NtSetSecurityObject)
-#pragma alloc_text(PAGE,NtQuerySecurityObject)
-#pragma alloc_text(PAGE,ObAssignObjectSecurityDescriptor)
-#pragma alloc_text(PAGE,ObAssignSecurity)
-#pragma alloc_text(PAGE,ObCheckCreateObjectAccess)
-#pragma alloc_text(PAGE,ObCheckObjectAccess)
-#pragma alloc_text(PAGE,ObpCheckObjectReference)
-#pragma alloc_text(PAGE,ObpCheckTraverseAccess)
-#pragma alloc_text(PAGE,ObGetObjectSecurity)
-#pragma alloc_text(PAGE,ObSetSecurityDescriptorInfo)
-#pragma alloc_text(PAGE,ObQuerySecurityDescriptorInfo)
-#pragma alloc_text(PAGE,ObReleaseObjectSecurity)
-#pragma alloc_text(PAGE,ObValidateSecurityQuota)
-#pragma alloc_text(PAGE,ObpValidateAccessMask)
-#pragma alloc_text(PAGE,ObSetSecurityObjectByPointer)
+#pragma alloc_text(PAGE, NtSetSecurityObject)
+#pragma alloc_text(PAGE, NtQuerySecurityObject)
+#pragma alloc_text(PAGE, ObAssignObjectSecurityDescriptor)
+#pragma alloc_text(PAGE, ObAssignSecurity)
+#pragma alloc_text(PAGE, ObCheckCreateObjectAccess)
+#pragma alloc_text(PAGE, ObCheckObjectAccess)
+#pragma alloc_text(PAGE, ObpCheckObjectReference)
+#pragma alloc_text(PAGE, ObpCheckTraverseAccess)
+#pragma alloc_text(PAGE, ObGetObjectSecurity)
+#pragma alloc_text(PAGE, ObSetSecurityDescriptorInfo)
+#pragma alloc_text(PAGE, ObQuerySecurityDescriptorInfo)
+#pragma alloc_text(PAGE, ObReleaseObjectSecurity)
+#pragma alloc_text(PAGE, ObValidateSecurityQuota)
+#pragma alloc_text(PAGE, ObpValidateAccessMask)
+#pragma alloc_text(PAGE, ObSetSecurityObjectByPointer)
 
 #endif
 
 ULONG ObpDefaultSecurityDescriptorLength = 256;
 
-
+
 NTSTATUS
-NtSetSecurityObject (
-    IN HANDLE Handle,
-    IN SECURITY_INFORMATION SecurityInformation,
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor
-    )
+NtSetSecurityObject(IN HANDLE Handle, IN SECURITY_INFORMATION SecurityInformation,
+                    IN PSECURITY_DESCRIPTOR SecurityDescriptor)
 
 /*++
 
@@ -89,9 +86,10 @@ Return Value:
     //  SecurityDescriptor, and will just return NULL back.
     //
 
-    if (!ARGUMENT_PRESENT( SecurityDescriptor )) {
+    if (!ARGUMENT_PRESENT(SecurityDescriptor))
+    {
 
-        return( STATUS_ACCESS_VIOLATION );
+        return (STATUS_ACCESS_VIOLATION);
     }
 
     //
@@ -99,16 +97,13 @@ Return Value:
     //  security information being modified.
     //
 
-    SeSetSecurityAccessMask( SecurityInformation, &DesiredAccess );
+    SeSetSecurityAccessMask(SecurityInformation, &DesiredAccess);
 
-    Status = ObReferenceObjectByHandle( Handle,
-                                        DesiredAccess,
-                                        NULL,
-                                        RequestorMode = KeGetPreviousMode(),
-                                        &Object,
-                                        &HandleInformation );
+    Status = ObReferenceObjectByHandle(Handle, DesiredAccess, NULL, RequestorMode = KeGetPreviousMode(), &Object,
+                                       &HandleInformation);
 
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         //  Probe and capture the input security descriptor, and return
@@ -118,13 +113,11 @@ Return Value:
         //  security descriptor is in self-relative format.
         //
 
-        Status = SeCaptureSecurityDescriptor( SecurityDescriptor,
-                                              RequestorMode,
-                                              PagedPool,
-                                              TRUE,
-                                              (PSECURITY_DESCRIPTOR *)&CapturedDescriptor );
+        Status = SeCaptureSecurityDescriptor(SecurityDescriptor, RequestorMode, PagedPool, TRUE,
+                                             (PSECURITY_DESCRIPTOR *)&CapturedDescriptor);
 
-        if (NT_SUCCESS( Status )) {
+        if (NT_SUCCESS(Status))
+        {
 
             //
             //  Now check for a valid combination of what the user wants to set
@@ -136,46 +129,35 @@ Return Value:
 
             ASSERT(CapturedDescriptor->Control & SE_SELF_RELATIVE);
 
-            if (((SecurityInformation & OWNER_SECURITY_INFORMATION) &&
-                (CapturedDescriptor->Owner == 0))
+            if (((SecurityInformation & OWNER_SECURITY_INFORMATION) && (CapturedDescriptor->Owner == 0))
 
                 ||
 
-                ((SecurityInformation & GROUP_SECURITY_INFORMATION) &&
-                (CapturedDescriptor->Group == 0))) {
+                ((SecurityInformation & GROUP_SECURITY_INFORMATION) && (CapturedDescriptor->Group == 0)))
+            {
 
-                SeReleaseSecurityDescriptor( (PSECURITY_DESCRIPTOR)CapturedDescriptor,
-                                             RequestorMode,
-                                             TRUE );
+                SeReleaseSecurityDescriptor((PSECURITY_DESCRIPTOR)CapturedDescriptor, RequestorMode, TRUE);
 
-                ObDereferenceObject( Object );
+                ObDereferenceObject(Object);
 
-                return( STATUS_INVALID_SECURITY_DESCR );
+                return (STATUS_INVALID_SECURITY_DESCR);
             }
 
-            Status = ObSetSecurityObjectByPointer( Object,
-                                                   SecurityInformation,
-                                                   CapturedDescriptor );
+            Status = ObSetSecurityObjectByPointer(Object, SecurityInformation, CapturedDescriptor);
 
-            SeReleaseSecurityDescriptor( (PSECURITY_DESCRIPTOR)CapturedDescriptor,
-                                         RequestorMode,
-                                         TRUE );
+            SeReleaseSecurityDescriptor((PSECURITY_DESCRIPTOR)CapturedDescriptor, RequestorMode, TRUE);
         }
 
-        ObDereferenceObject( Object );
-
+        ObDereferenceObject(Object);
     }
 
-    return( Status );
+    return (Status);
 }
 
-
+
 NTSTATUS
-ObSetSecurityObjectByPointer (
-    IN PVOID Object,
-    IN SECURITY_INFORMATION SecurityInformation,
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor
-    )
+ObSetSecurityObjectByPointer(IN PVOID Object, IN SECURITY_INFORMATION SecurityInformation,
+                             IN PSECURITY_DESCRIPTOR SecurityDescriptor)
 
 /*++
 
@@ -210,55 +192,44 @@ Return Value:
 
     PAGED_CODE();
 
-//    DbgPrint("ObSetSecurityObjectByPointer called for object %#08lx with info "
-//             "%x and descriptor %#08lx\n",
-//             Object, SecurityInformation, SecurityDescriptor);
+    //    DbgPrint("ObSetSecurityObjectByPointer called for object %#08lx with info "
+    //             "%x and descriptor %#08lx\n",
+    //             Object, SecurityInformation, SecurityDescriptor);
 
     //
     //  Map the object body to an object header and the corresponding
     //  object type
     //
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
     ObjectType = ObjectHeader->Type;
 
     //
     //  Make sure the passed security descriptor is really there.
     //
 
-    ASSERT(ARGUMENT_PRESENT( SecurityDescriptor ));
+    ASSERT(ARGUMENT_PRESENT(SecurityDescriptor));
 
     //
     //  Now invoke the security procedure call back to set the security
     //  descriptor for the object
     //
 
-    Status = (ObjectType->TypeInfo.SecurityProcedure)
-                ( Object,
-                  SetSecurityDescriptor,
-                  &SecurityInformation,
-                  SecurityDescriptor,
-                  NULL,
-                  &ObjectHeader->SecurityDescriptor,
-                  ObjectType->TypeInfo.PoolType,
-                  &ObjectType->TypeInfo.GenericMapping );
+    Status = (ObjectType->TypeInfo.SecurityProcedure)(
+        Object, SetSecurityDescriptor, &SecurityInformation, SecurityDescriptor, NULL,
+        &ObjectHeader->SecurityDescriptor, ObjectType->TypeInfo.PoolType, &ObjectType->TypeInfo.GenericMapping);
 
 
-//    DbgPrint("ObSetSecurityObjectByPointer: object security routine returned "
-//             "%#08lx\n", Status);
+    //    DbgPrint("ObSetSecurityObjectByPointer: object security routine returned "
+    //             "%#08lx\n", Status);
 
-    return( Status );
+    return (Status);
 }
 
-
+
 NTSTATUS
-NtQuerySecurityObject (
-    IN HANDLE Handle,
-    IN SECURITY_INFORMATION SecurityInformation,
-    OUT PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN ULONG Length,
-    OUT PULONG LengthNeeded
-    )
+NtQuerySecurityObject(IN HANDLE Handle, IN SECURITY_INFORMATION SecurityInformation,
+                      OUT PSECURITY_DESCRIPTOR SecurityDescriptor, IN ULONG Length, OUT PULONG LengthNeeded)
 
 /*++
 
@@ -305,15 +276,18 @@ Return Value:
 
     RequestorMode = KeGetPreviousMode();
 
-    if (RequestorMode != KernelMode) {
+    if (RequestorMode != KernelMode)
+    {
 
-        try {
+        try
+        {
 
-            ProbeForWriteUlong( LengthNeeded );
+            ProbeForWriteUlong(LengthNeeded);
 
-            ProbeForWrite( SecurityDescriptor, Length, sizeof(ULONG) );
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+            ProbeForWrite(SecurityDescriptor, Length, sizeof(ULONG));
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             return GetExceptionCode();
         }
@@ -324,18 +298,14 @@ Return Value:
     //  security information being queried
     //
 
-    SeQuerySecurityAccessMask( SecurityInformation, &DesiredAccess );
+    SeQuerySecurityAccessMask(SecurityInformation, &DesiredAccess);
 
-    Status = ObReferenceObjectByHandle( Handle,
-                                        DesiredAccess,
-                                        NULL,
-                                        RequestorMode,
-                                        &Object,
-                                        &HandleInformation );
+    Status = ObReferenceObjectByHandle(Handle, DesiredAccess, NULL, RequestorMode, &Object, &HandleInformation);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        return( Status );
+        return (Status);
     }
 
     //
@@ -343,7 +313,7 @@ Return Value:
     //  object type
     //
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
     ObjectType = ObjectHeader->Type;
 
     //
@@ -352,14 +322,9 @@ Return Value:
     //  the setting of the output security descriptor
     //
 
-    Status = (ObjectType->TypeInfo.SecurityProcedure)( Object,
-                                                       QuerySecurityDescriptor,
-                                                       &SecurityInformation,
-                                                       SecurityDescriptor,
-                                                       &Length,
-                                                       &ObjectHeader->SecurityDescriptor,
-                                                       ObjectType->TypeInfo.PoolType,
-                                                       &ObjectType->TypeInfo.GenericMapping );
+    Status = (ObjectType->TypeInfo.SecurityProcedure)(
+        Object, QuerySecurityDescriptor, &SecurityInformation, SecurityDescriptor, &Length,
+        &ObjectHeader->SecurityDescriptor, ObjectType->TypeInfo.PoolType, &ObjectType->TypeInfo.GenericMapping);
 
     //
     //  Indicate the length needed for the security descriptor.  This
@@ -367,35 +332,32 @@ Return Value:
     //  the number of bytes necessary
     //
 
-    try {
+    try
+    {
 
         *LengthNeeded = Length;
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+        ObDereferenceObject(Object);
 
-        ObDereferenceObject( Object );
-
-        return(GetExceptionCode());
+        return (GetExceptionCode());
     }
 
     //
     //  And return to our caller
     //
 
-    ObDereferenceObject( Object );
+    ObDereferenceObject(Object);
 
-    return( Status );
+    return (Status);
 }
 
-
+
 BOOLEAN
-ObCheckObjectAccess (
-    IN PVOID Object,
-    IN OUT PACCESS_STATE AccessState,
-    IN BOOLEAN TypeMutexLocked,
-    IN KPROCESSOR_MODE AccessMode,
-    OUT PNTSTATUS AccessStatus
-    )
+ObCheckObjectAccess(IN PVOID Object, IN OUT PACCESS_STATE AccessState, IN BOOLEAN TypeMutexLocked,
+                    IN KPROCESSOR_MODE AccessMode, OUT PNTSTATUS AccessStatus)
 
 /*++
 
@@ -452,16 +414,14 @@ Return Value:
     //  corresponding object type
     //
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
     ObjectType = ObjectHeader->Type;
-    
+
     //
     //  Obtain the object's security descriptor
     //
 
-    Status = ObGetObjectSecurity( Object,
-                                  &SecurityDescriptor,
-                                  &MemoryAllocated );
+    Status = ObGetObjectSecurity(Object, &SecurityDescriptor, &MemoryAllocated);
 
     //
     //  If we failed in getting the security descriptor then
@@ -469,24 +429,27 @@ Return Value:
     //  the error back to our caller
     //
 
-    if (!NT_SUCCESS( Status )) {
-        
+    if (!NT_SUCCESS(Status))
+    {
+
         *AccessStatus = Status;
 
-        return( FALSE );
-
-    } else {
+        return (FALSE);
+    }
+    else
+    {
 
         //
         //  Otherwise we've been successful at getting the
         //  object's security descriptor, but now make sure
         //  it is not null.
 
-        if (SecurityDescriptor == NULL) {
-            
+        if (SecurityDescriptor == NULL)
+        {
+
             *AccessStatus = Status;
 
-            return(TRUE);
+            return (TRUE);
         }
     }
 
@@ -496,30 +459,25 @@ Return Value:
     //  performed.
     //
 
-    SeLockSubjectContext( &AccessState->SubjectSecurityContext );
+    SeLockSubjectContext(&AccessState->SubjectSecurityContext);
 
     //
     //  Do the access check, and if we have some privileges then
     //  put those in the access state too.
     //
 
-    AccessAllowed = SeAccessCheck( SecurityDescriptor,
-                                   &AccessState->SubjectSecurityContext,
-                                   TRUE,                        // Tokens are locked
-                                   AccessState->RemainingDesiredAccess,
-                                   AccessState->PreviouslyGrantedAccess,
-                                   &Privileges,
-                                   &ObjectType->TypeInfo.GenericMapping,
-                                   AccessMode,
-                                   &GrantedAccess,
-                                   AccessStatus );
+    AccessAllowed =
+        SeAccessCheck(SecurityDescriptor, &AccessState->SubjectSecurityContext,
+                      TRUE, // Tokens are locked
+                      AccessState->RemainingDesiredAccess, AccessState->PreviouslyGrantedAccess, &Privileges,
+                      &ObjectType->TypeInfo.GenericMapping, AccessMode, &GrantedAccess, AccessStatus);
 
-    if (Privileges != NULL) {
+    if (Privileges != NULL)
+    {
 
-        Status = SeAppendPrivileges( AccessState,
-                                     Privileges );
+        Status = SeAppendPrivileges(AccessState, Privileges);
 
-        SeFreePrivileges( Privileges );
+        SeFreePrivileges(Privileges);
     }
 
     //
@@ -528,7 +486,8 @@ Return Value:
     //  to be granted.
     //
 
-    if (AccessAllowed) {
+    if (AccessAllowed)
+    {
 
         AccessState->PreviouslyGrantedAccess |= GrantedAccess;
         AccessState->RemainingDesiredAccess &= ~(GrantedAccess | MAXIMUM_ALLOWED);
@@ -539,41 +498,32 @@ Return Value:
     //  the creation of its handle later.
     //
 
-    if ( SecurityDescriptor != NULL ) {
+    if (SecurityDescriptor != NULL)
+    {
 
-        SeOpenObjectAuditAlarm( &ObjectType->Name,
-                                Object,
-                                NULL,                    // AbsoluteObjectName
-                                SecurityDescriptor,
-                                AccessState,
-                                FALSE,                   // ObjectCreated (FALSE, only open here)
-                                AccessAllowed,
-                                AccessMode,
-                                &AccessState->GenerateOnClose );
+        SeOpenObjectAuditAlarm(&ObjectType->Name, Object,
+                               NULL, // AbsoluteObjectName
+                               SecurityDescriptor, AccessState,
+                               FALSE, // ObjectCreated (FALSE, only open here)
+                               AccessAllowed, AccessMode, &AccessState->GenerateOnClose);
     }
 
-    SeUnlockSubjectContext( &AccessState->SubjectSecurityContext );
+    SeUnlockSubjectContext(&AccessState->SubjectSecurityContext);
 
     //
     //  Free the security descriptor before returning to
     //  our caller
     //
 
-    ObReleaseObjectSecurity( SecurityDescriptor,
-                             MemoryAllocated );
+    ObReleaseObjectSecurity(SecurityDescriptor, MemoryAllocated);
 
-    return( AccessAllowed );
+    return (AccessAllowed);
 }
 
-
+
 BOOLEAN
-ObpCheckObjectReference (
-    IN PVOID Object,
-    IN OUT PACCESS_STATE AccessState,
-    IN BOOLEAN TypeMutexLocked,
-    IN KPROCESSOR_MODE AccessMode,
-    OUT PNTSTATUS AccessStatus
-    )
+ObpCheckObjectReference(IN PVOID Object, IN OUT PACCESS_STATE AccessState, IN BOOLEAN TypeMutexLocked,
+                        IN KPROCESSOR_MODE AccessMode, OUT PNTSTATUS AccessStatus)
 
 /*++
 
@@ -633,16 +583,14 @@ Return Value:
     //  corresponding object type
     //
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
     ObjectType = ObjectHeader->Type;
 
     //
     //  Obtain the object's security descriptor
     //
 
-    Status = ObGetObjectSecurity( Object,
-                                  &SecurityDescriptor,
-                                  &MemoryAllocated );
+    Status = ObGetObjectSecurity(Object, &SecurityDescriptor, &MemoryAllocated);
 
     //
     //  If we failed in getting the security descriptor then
@@ -650,11 +598,12 @@ Return Value:
     //  the error back to our caller
     //
 
-    if (!NT_SUCCESS( Status )) {
-        
+    if (!NT_SUCCESS(Status))
+    {
+
         *AccessStatus = Status;
 
-        return( FALSE );
+        return (FALSE);
     }
 
     //
@@ -662,25 +611,21 @@ Return Value:
     //  performed.
     //
 
-    SeLockSubjectContext( &AccessState->SubjectSecurityContext );
+    SeLockSubjectContext(&AccessState->SubjectSecurityContext);
 
     //
     //  Do the access check, and if we have some privileges then
     //  put those in the access state too.
     //
 
-    AccessAllowed = SeAccessCheck( SecurityDescriptor,
-                                   &AccessState->SubjectSecurityContext,
-                                   TRUE,               // Tokens are locked
-                                   AccessState->RemainingDesiredAccess,
-                                   AccessState->PreviouslyGrantedAccess,
-                                   &Privileges,
-                                   &ObjectType->TypeInfo.GenericMapping,
-                                   AccessMode,
-                                   &GrantedAccess,
-                                   AccessStatus );
+    AccessAllowed =
+        SeAccessCheck(SecurityDescriptor, &AccessState->SubjectSecurityContext,
+                      TRUE, // Tokens are locked
+                      AccessState->RemainingDesiredAccess, AccessState->PreviouslyGrantedAccess, &Privileges,
+                      &ObjectType->TypeInfo.GenericMapping, AccessMode, &GrantedAccess, AccessStatus);
 
-    if (AccessAllowed) {
+    if (AccessAllowed)
+    {
 
         AccessState->PreviouslyGrantedAccess |= GrantedAccess;
         AccessState->RemainingDesiredAccess &= ~GrantedAccess;
@@ -691,41 +636,31 @@ Return Value:
     //  to audit this reference and then unlock the caller's token
     //
 
-    if ( SecurityDescriptor != NULL ) {
+    if (SecurityDescriptor != NULL)
+    {
 
-        SeObjectReferenceAuditAlarm( &AccessState->OperationID,
-                                     Object,
-                                     SecurityDescriptor,
-                                     &AccessState->SubjectSecurityContext,
-                                     AccessState->RemainingDesiredAccess | AccessState->PreviouslyGrantedAccess,
-                                     ((PAUX_ACCESS_DATA)(AccessState->AuxData))->PrivilegesUsed,
-                                     AccessAllowed,
-                                     AccessMode );
+        SeObjectReferenceAuditAlarm(
+            &AccessState->OperationID, Object, SecurityDescriptor, &AccessState->SubjectSecurityContext,
+            AccessState->RemainingDesiredAccess | AccessState->PreviouslyGrantedAccess,
+            ((PAUX_ACCESS_DATA)(AccessState->AuxData))->PrivilegesUsed, AccessAllowed, AccessMode);
     }
 
-    SeUnlockSubjectContext( &AccessState->SubjectSecurityContext );
-    
+    SeUnlockSubjectContext(&AccessState->SubjectSecurityContext);
+
     //
     //  Finally free the security descriptor
     //  and return to our caller
     //
 
-    ObReleaseObjectSecurity( SecurityDescriptor,
-                             MemoryAllocated );
+    ObReleaseObjectSecurity(SecurityDescriptor, MemoryAllocated);
 
-    return( AccessAllowed );
+    return (AccessAllowed);
 }
 
-
+
 BOOLEAN
-ObpCheckTraverseAccess (
-    IN PVOID DirectoryObject,
-    IN ACCESS_MASK TraverseAccess,
-    IN PACCESS_STATE AccessState OPTIONAL,
-    IN BOOLEAN TypeMutexLocked,
-    IN KPROCESSOR_MODE PreviousMode,
-    OUT PNTSTATUS AccessStatus
-    )
+ObpCheckTraverseAccess(IN PVOID DirectoryObject, IN ACCESS_MASK TraverseAccess, IN PACCESS_STATE AccessState OPTIONAL,
+                       IN BOOLEAN TypeMutexLocked, IN KPROCESSOR_MODE PreviousMode, OUT PNTSTATUS AccessStatus)
 
 /*++
 
@@ -788,7 +723,7 @@ Return Value:
     //  object type
     //
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( DirectoryObject );
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(DirectoryObject);
     ObjectType = ObjectHeader->Type;
 
     //
@@ -796,15 +731,14 @@ Return Value:
     //  successful
     //
 
-    Status = ObGetObjectSecurity( DirectoryObject,
-                                  &SecurityDescriptor,
-                                  &MemoryAllocated );
+    Status = ObGetObjectSecurity(DirectoryObject, &SecurityDescriptor, &MemoryAllocated);
 
-    if (!NT_SUCCESS( Status )) {
-        
+    if (!NT_SUCCESS(Status))
+    {
+
         *AccessStatus = Status;
 
-        return( FALSE );
+        return (FALSE);
     }
 
     //
@@ -817,9 +751,8 @@ Return Value:
 
         ||
 
-        (!SeFastTraverseCheck( SecurityDescriptor,
-                               DIRECTORY_TRAVERSE,
-                               PreviousMode ))) {
+        (!SeFastTraverseCheck(SecurityDescriptor, DIRECTORY_TRAVERSE, PreviousMode)))
+    {
 
         //
         //  SeFastTraverseCheck could be modified to tell us that
@@ -829,7 +762,8 @@ Return Value:
         //  all that much about making it blindingly fast.
         //
 
-        if (ARGUMENT_PRESENT( AccessState )) {
+        if (ARGUMENT_PRESENT(AccessState))
+        {
 
             //
             //  The world does not have traverse access and we have
@@ -839,35 +773,30 @@ Return Value:
             //  we return back to our caller
             //
 
-            SeLockSubjectContext( &AccessState->SubjectSecurityContext );
+            SeLockSubjectContext(&AccessState->SubjectSecurityContext);
 
-            AccessAllowed = SeAccessCheck( SecurityDescriptor,
-                                           &AccessState->SubjectSecurityContext,
-                                           TRUE,             // Tokens are locked
-                                           TraverseAccess,
-                                           0,
-                                           &Privileges,
-                                           &ObjectType->TypeInfo.GenericMapping,
-                                           PreviousMode,
-                                           &GrantedAccess,
-                                           AccessStatus );
+            AccessAllowed = SeAccessCheck(SecurityDescriptor, &AccessState->SubjectSecurityContext,
+                                          TRUE, // Tokens are locked
+                                          TraverseAccess, 0, &Privileges, &ObjectType->TypeInfo.GenericMapping,
+                                          PreviousMode, &GrantedAccess, AccessStatus);
 
-            if (Privileges != NULL) {
+            if (Privileges != NULL)
+            {
 
-                Status = SeAppendPrivileges( AccessState,
-                                             Privileges );
+                Status = SeAppendPrivileges(AccessState, Privileges);
 
-                SeFreePrivileges( Privileges );
+                SeFreePrivileges(Privileges);
             }
-            
+
             //
             //  If the client's token is locked then now we can unlock it
             //
-            
-            SeUnlockSubjectContext( &AccessState->SubjectSecurityContext );
-        }
 
-    } else {
+            SeUnlockSubjectContext(&AccessState->SubjectSecurityContext);
+        }
+    }
+    else
+    {
 
         //
         //  At this point the world has traverse access
@@ -875,29 +804,22 @@ Return Value:
 
         AccessAllowed = TRUE;
     }
-    
+
     //
     //  Finally free the security descriptor
     //  and then return to our caller
     //
 
-    ObReleaseObjectSecurity( SecurityDescriptor,
-                             MemoryAllocated );
+    ObReleaseObjectSecurity(SecurityDescriptor, MemoryAllocated);
 
-    return( AccessAllowed );
+    return (AccessAllowed);
 }
 
-
+
 BOOLEAN
-ObCheckCreateObjectAccess (
-    IN PVOID DirectoryObject,
-    IN ACCESS_MASK CreateAccess,
-    IN PACCESS_STATE AccessState,
-    IN PUNICODE_STRING ComponentName,
-    IN BOOLEAN TypeMutexLocked,
-    IN KPROCESSOR_MODE PreviousMode,
-    OUT PNTSTATUS AccessStatus
-    )
+ObCheckCreateObjectAccess(IN PVOID DirectoryObject, IN ACCESS_MASK CreateAccess, IN PACCESS_STATE AccessState,
+                          IN PUNICODE_STRING ComponentName, IN BOOLEAN TypeMutexLocked, IN KPROCESSOR_MODE PreviousMode,
+                          OUT PNTSTATUS AccessStatus)
 
 /*++
 
@@ -958,23 +880,22 @@ Return Value:
     //  object type
     //
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( DirectoryObject );
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(DirectoryObject);
     ObjectType = ObjectHeader->Type;
-    
+
     //
     //  Obtain the object's security descriptor and make it was
     //  successful
     //
 
-    Status = ObGetObjectSecurity( DirectoryObject,
-                                  &SecurityDescriptor,
-                                  &MemoryAllocated );
+    Status = ObGetObjectSecurity(DirectoryObject, &SecurityDescriptor, &MemoryAllocated);
 
-    if (!NT_SUCCESS( Status )) {
-        
+    if (!NT_SUCCESS(Status))
+    {
+
         *AccessStatus = Status;
 
-        return( FALSE );
+        return (FALSE);
     }
 
     //
@@ -982,7 +903,7 @@ Return Value:
     //  performed.
     //
 
-    SeLockSubjectContext( &AccessState->SubjectSecurityContext );
+    SeLockSubjectContext(&AccessState->SubjectSecurityContext);
 
     //
     //  if we have a security descriptor then do an access
@@ -990,25 +911,20 @@ Return Value:
     //  privileges if necessary
     //
 
-    if (SecurityDescriptor != NULL) {
+    if (SecurityDescriptor != NULL)
+    {
 
-        AccessAllowed = SeAccessCheck( SecurityDescriptor,
-                                       &AccessState->SubjectSecurityContext,
-                                       TRUE,            // Tokens are locked
-                                       CreateAccess,
-                                       0,
-                                       &Privileges,
-                                       &ObjectType->TypeInfo.GenericMapping,
-                                       PreviousMode,
-                                       &GrantedAccess,
-                                       AccessStatus );
+        AccessAllowed = SeAccessCheck(SecurityDescriptor, &AccessState->SubjectSecurityContext,
+                                      TRUE, // Tokens are locked
+                                      CreateAccess, 0, &Privileges, &ObjectType->TypeInfo.GenericMapping, PreviousMode,
+                                      &GrantedAccess, AccessStatus);
 
-        if (Privileges != NULL) {
+        if (Privileges != NULL)
+        {
 
-            Status = SeAppendPrivileges( AccessState,
-                                         Privileges );
+            Status = SeAppendPrivileges(AccessState, Privileges);
 
-            SeFreePrivileges( Privileges );
+            SeFreePrivileges(Privileges);
         }
 
         //
@@ -1020,8 +936,9 @@ Return Value:
         //      AccessState->RemainingDesiredAccess &= ~GrantedAccess;
         //  }
         //
-
-    } else {
+    }
+    else
+    {
 
         //
         //  At this point there is not a security descriptor
@@ -1036,26 +953,23 @@ Return Value:
     //  object type locked we need to free it.
     //
 
-    SeUnlockSubjectContext( &AccessState->SubjectSecurityContext );
-    
+    SeUnlockSubjectContext(&AccessState->SubjectSecurityContext);
+
     //
     //  Finally free the security descriptor
     //  and return to our caller
     //
 
-    ObReleaseObjectSecurity( SecurityDescriptor,
-                             MemoryAllocated );
+    ObReleaseObjectSecurity(SecurityDescriptor, MemoryAllocated);
 
-    return( AccessAllowed );
+    return (AccessAllowed);
 }
 
-
+
 NTSTATUS
-ObAssignObjectSecurityDescriptor (
-    IN PVOID Object,
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor OPTIONAL,
-    IN POOL_TYPE PoolType // This field is currently ignored.
-    )
+ObAssignObjectSecurityDescriptor(IN PVOID Object, IN PSECURITY_DESCRIPTOR SecurityDescriptor OPTIONAL,
+                                 IN POOL_TYPE PoolType // This field is currently ignored.
+)
 
 /*++
 
@@ -1094,13 +1008,14 @@ Return Value:
     //  to our caller
     //
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
 
-    if (!ARGUMENT_PRESENT(SecurityDescriptor)) {
+    if (!ARGUMENT_PRESENT(SecurityDescriptor))
+    {
 
-        ExFastRefInitialize ((PEX_FAST_REF) &ObjectHeader->SecurityDescriptor, NULL);
+        ExFastRefInitialize((PEX_FAST_REF)&ObjectHeader->SecurityDescriptor, NULL);
 
-        return( STATUS_SUCCESS );
+        return (STATUS_SUCCESS);
     }
 
     //
@@ -1108,42 +1023,37 @@ Return Value:
     //  get back the real security descriptor to use
     //
 
-    Status = ObLogSecurityDescriptor( SecurityDescriptor,
-                                      &OutputSecurityDescriptor,
-                                      ExFastRefGetAdditionalReferenceCount () + 1 );
+    Status = ObLogSecurityDescriptor(SecurityDescriptor, &OutputSecurityDescriptor,
+                                     ExFastRefGetAdditionalReferenceCount() + 1);
 
     //
     //  If we've been successful so far then set the object's
     //  security descriptor to the newly allocated one.
     //
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
-        ExFreePool (SecurityDescriptor);
+        ExFreePool(SecurityDescriptor);
 
-        ASSERT (OutputSecurityDescriptor);
-        __assume (OutputSecurityDescriptor);
+        ASSERT(OutputSecurityDescriptor);
+        __assume(OutputSecurityDescriptor);
         //
         // Initialize a fast reference structure with zero additional references
         //
-        ExFastRefInitialize ((PEX_FAST_REF) &ObjectHeader->SecurityDescriptor, OutputSecurityDescriptor);
+        ExFastRefInitialize((PEX_FAST_REF)&ObjectHeader->SecurityDescriptor, OutputSecurityDescriptor);
     }
 
     //
     //  And return to our caller
     //
 
-    return( Status );
+    return (Status);
 }
 
 
-
 NTSTATUS
-ObGetObjectSecurity (
-    IN PVOID Object,
-    OUT PSECURITY_DESCRIPTOR *SecurityDescriptor,
-    OUT PBOOLEAN MemoryAllocated
-    )
+ObGetObjectSecurity(IN PVOID Object, OUT PSECURITY_DESCRIPTOR *SecurityDescriptor, OUT PBOOLEAN MemoryAllocated)
 
 /*++
 
@@ -1194,7 +1104,7 @@ Return Value:
     //  object type
     //
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
     ObjectType = ObjectHeader->Type;
 
     //
@@ -1205,36 +1115,36 @@ Return Value:
     //  Reference it so that it doesn't go away out from under us.
     //
 
-    if (ObpCentralizedSecurity(ObjectType))  {
+    if (ObpCentralizedSecurity(ObjectType))
+    {
 
-        *SecurityDescriptor = ObpReferenceSecurityDescriptor( ObjectHeader );
+        *SecurityDescriptor = ObpReferenceSecurityDescriptor(ObjectHeader);
 
         *MemoryAllocated = FALSE;
 
-        return( STATUS_SUCCESS );
+        return (STATUS_SUCCESS);
     }
 
     //
     //  Request a complete security descriptor
     //
 
-    SecurityInformation = OWNER_SECURITY_INFORMATION |
-                          GROUP_SECURITY_INFORMATION |
-                          DACL_SECURITY_INFORMATION  |
-                          SACL_SECURITY_INFORMATION;
-    
+    SecurityInformation =
+        OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION;
+
     //
     //  We don't know exactly how large is the SD, but we try with the largest
-    //  size we get so far. In general the SD will be released after 
+    //  size we get so far. In general the SD will be released after
     //  the access is checked. It shouldn't be then a problem of an extra pool usage
     //  because this oversizing
     //
 
-    *SecurityDescriptor = ExAllocatePoolWithTag( PagedPool, Length, 'qSbO' );
+    *SecurityDescriptor = ExAllocatePoolWithTag(PagedPool, Length, 'qSbO');
 
-    if (*SecurityDescriptor == NULL) {
+    if (*SecurityDescriptor == NULL)
+    {
 
-        return( STATUS_INSUFFICIENT_RESOURCES );
+        return (STATUS_INSUFFICIENT_RESOURCES);
     }
 
     *MemoryAllocated = TRUE;
@@ -1246,27 +1156,23 @@ Return Value:
     //  security descriptor).
     //
 
-    ObpBeginTypeSpecificCallOut( SaveIrql );
+    ObpBeginTypeSpecificCallOut(SaveIrql);
 
-    Status = (*ObjectType->TypeInfo.SecurityProcedure)( Object,
-                                                        QuerySecurityDescriptor,
-                                                        &SecurityInformation,
-                                                        *SecurityDescriptor,
-                                                        &Length,
-                                                        &ObjectHeader->SecurityDescriptor,
-                                                        ObjectType->TypeInfo.PoolType,
-                                                        &ObjectType->TypeInfo.GenericMapping );
+    Status = (*ObjectType->TypeInfo.SecurityProcedure)(
+        Object, QuerySecurityDescriptor, &SecurityInformation, *SecurityDescriptor, &Length,
+        &ObjectHeader->SecurityDescriptor, ObjectType->TypeInfo.PoolType, &ObjectType->TypeInfo.GenericMapping);
 
-    ObpEndTypeSpecificCallOut( SaveIrql, "Security", ObjectType, Object );
+    ObpEndTypeSpecificCallOut(SaveIrql, "Security", ObjectType, Object);
 
-    if (Status == STATUS_BUFFER_TOO_SMALL) {
+    if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
 
         //
         //  The SD is larger than we tried first time. We need to allocate an other
         //  buffer and try again with this size
         //
 
-        ExFreePool( *SecurityDescriptor );
+        ExFreePool(*SecurityDescriptor);
         *MemoryAllocated = FALSE;
 
         //
@@ -1275,19 +1181,20 @@ Return Value:
 
         ObpDefaultSecurityDescriptorLength = Length;
 
-//        DbgPrint( "ObpDefaultSecurityDescriptorLength increased to %ld\n", 
-//                  ObpDefaultSecurityDescriptorLength);
-        
+        //        DbgPrint( "ObpDefaultSecurityDescriptorLength increased to %ld\n",
+        //                  ObpDefaultSecurityDescriptorLength);
+
         //
         //  Now that we know how large the security descriptor is we
         //  can allocate space for it
         //
 
-        *SecurityDescriptor = ExAllocatePoolWithTag( PagedPool, Length, 'qSbO' );
+        *SecurityDescriptor = ExAllocatePoolWithTag(PagedPool, Length, 'qSbO');
 
-        if (*SecurityDescriptor == NULL) {
+        if (*SecurityDescriptor == NULL)
+        {
 
-            return( STATUS_INSUFFICIENT_RESOURCES );
+            return (STATUS_INSUFFICIENT_RESOURCES);
         }
 
         *MemoryAllocated = TRUE;
@@ -1299,36 +1206,28 @@ Return Value:
         //  security descriptor).
         //
 
-        ObpBeginTypeSpecificCallOut( SaveIrql );
+        ObpBeginTypeSpecificCallOut(SaveIrql);
 
-        Status = (*ObjectType->TypeInfo.SecurityProcedure)( Object,
-                                                            QuerySecurityDescriptor,
-                                                            &SecurityInformation,
-                                                            *SecurityDescriptor,
-                                                            &Length,
-                                                            &ObjectHeader->SecurityDescriptor,
-                                                            ObjectType->TypeInfo.PoolType,
-                                                            &ObjectType->TypeInfo.GenericMapping );
+        Status = (*ObjectType->TypeInfo.SecurityProcedure)(
+            Object, QuerySecurityDescriptor, &SecurityInformation, *SecurityDescriptor, &Length,
+            &ObjectHeader->SecurityDescriptor, ObjectType->TypeInfo.PoolType, &ObjectType->TypeInfo.GenericMapping);
 
-        ObpEndTypeSpecificCallOut( SaveIrql, "Security", ObjectType, Object );
+        ObpEndTypeSpecificCallOut(SaveIrql, "Security", ObjectType, Object);
     }
-    
-    if (!NT_SUCCESS( Status )) {
 
-        ExFreePool( *SecurityDescriptor );
+    if (!NT_SUCCESS(Status))
+    {
+
+        ExFreePool(*SecurityDescriptor);
 
         *MemoryAllocated = FALSE;
     }
 
-    return( Status );
+    return (Status);
 }
 
-
-VOID
-ObReleaseObjectSecurity (
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN BOOLEAN MemoryAllocated
-    )
+
+VOID ObReleaseObjectSecurity(IN PSECURITY_DESCRIPTOR SecurityDescriptor, IN BOOLEAN MemoryAllocated)
 
 /*++
 
@@ -1358,7 +1257,8 @@ Return Value:
     //  Check if there is a security descriptor to actually free
     //
 
-    if ( SecurityDescriptor != NULL ) {
+    if (SecurityDescriptor != NULL)
+    {
 
         //
         //  If ObGetObjectSecurity allocated memory then we
@@ -1367,23 +1267,22 @@ Return Value:
         //  to keep it from going away
         //
 
-        if (MemoryAllocated) {
+        if (MemoryAllocated)
+        {
 
-            ExFreePool( SecurityDescriptor );
+            ExFreePool(SecurityDescriptor);
+        }
+        else
+        {
 
-        } else {
-
-            ObDereferenceSecurityDescriptor( SecurityDescriptor, 1);
+            ObDereferenceSecurityDescriptor(SecurityDescriptor, 1);
         }
     }
 }
 
-
+
 NTSTATUS
-ObValidateSecurityQuota (
-    IN PVOID Object,
-    IN ULONG NewSize
-    )
+ObValidateSecurityQuota(IN PVOID Object, IN ULONG NewSize)
 
 /*++
 
@@ -1420,16 +1319,17 @@ Return Value:
     //  quota information block
     //
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
 
     //
     // If we never charged quota originaly then don't worry about it now.
     //
-    if (ObjectHeader->QuotaBlockCharged == (PEPROCESS_QUOTA_BLOCK) 1) {
-        return( STATUS_SUCCESS );
+    if (ObjectHeader->QuotaBlockCharged == (PEPROCESS_QUOTA_BLOCK)1)
+    {
+        return (STATUS_SUCCESS);
     }
 
-    QuotaInfo = OBJECT_HEADER_TO_QUOTA_INFO( ObjectHeader );
+    QuotaInfo = OBJECT_HEADER_TO_QUOTA_INFO(ObjectHeader);
 
     //
     //  If there isn't any quota info and the new size is greater
@@ -1438,25 +1338,29 @@ Return Value:
     //  let the caller get the quota
     //
 
-    if ((QuotaInfo == NULL) && (NewSize > SE_DEFAULT_SECURITY_QUOTA)) {
+    if ((QuotaInfo == NULL) && (NewSize > SE_DEFAULT_SECURITY_QUOTA))
+    {
 
 
-        if (!(ObjectHeader->Flags & OB_FLAG_DEFAULT_SECURITY_QUOTA)) {
+        if (!(ObjectHeader->Flags & OB_FLAG_DEFAULT_SECURITY_QUOTA))
+        {
 
-            return( STATUS_SUCCESS );
+            return (STATUS_SUCCESS);
         }
 
-        return( STATUS_QUOTA_EXCEEDED );
+        return (STATUS_QUOTA_EXCEEDED);
 
-    //
-    //  If the quota is not null and the new size is greater than the
-    //  allowed quota charge then if the charge is zero we grant the
-    //  request otherwise we've exceeded quota.
-    //
+        //
+        //  If the quota is not null and the new size is greater than the
+        //  allowed quota charge then if the charge is zero we grant the
+        //  request otherwise we've exceeded quota.
+        //
+    }
+    else if ((QuotaInfo != NULL) && (NewSize > QuotaInfo->SecurityDescriptorCharge))
+    {
 
-    } else if ((QuotaInfo != NULL) && (NewSize > QuotaInfo->SecurityDescriptorCharge)) {
-
-        if (QuotaInfo->SecurityDescriptorCharge == 0) {
+        if (QuotaInfo->SecurityDescriptorCharge == 0)
+        {
 
             //
             //  Should really charge quota here.
@@ -1464,32 +1368,29 @@ Return Value:
 
             //  QuotaInfo->SecurityDescriptorCharge = SeComputeSecurityQuota( NewSize );
 
-            return( STATUS_SUCCESS );
+            return (STATUS_SUCCESS);
         }
 
-        return( STATUS_QUOTA_EXCEEDED );
+        return (STATUS_QUOTA_EXCEEDED);
 
-    //
-    //  Otherwise we have two cases.  (1) there isn't any quota info but
-    //  the size is within limits or (2) there is a quota info block and
-    //  the size is within the specified security descriptor charge so
-    //  return success to our caller
-    //
+        //
+        //  Otherwise we have two cases.  (1) there isn't any quota info but
+        //  the size is within limits or (2) there is a quota info block and
+        //  the size is within the specified security descriptor charge so
+        //  return success to our caller
+        //
+    }
+    else
+    {
 
-    } else {
-
-        return( STATUS_SUCCESS );
+        return (STATUS_SUCCESS);
     }
 }
 
-
+
 NTSTATUS
-ObAssignSecurity (
-    IN PACCESS_STATE AccessState,
-    IN PSECURITY_DESCRIPTOR ParentDescriptor OPTIONAL,
-    IN PVOID Object,
-    IN POBJECT_TYPE ObjectType
-    )
+ObAssignSecurity(IN PACCESS_STATE AccessState, IN PSECURITY_DESCRIPTOR ParentDescriptor OPTIONAL, IN PVOID Object,
+                 IN POBJECT_TYPE ObjectType)
 
 /*++
 
@@ -1538,64 +1439,51 @@ Return Value:
     //  of the security  descriptor
     //
 
-    Status = SeAssignSecurity( ParentDescriptor,
-                               AccessState->SecurityDescriptor,
-                               &NewDescriptor,
-                               (BOOLEAN)(ObjectType == ObpDirectoryObjectType),
-                               &AccessState->SubjectSecurityContext,
-                               &ObjectType->TypeInfo.GenericMapping,
-                               PagedPool );
+    Status = SeAssignSecurity(ParentDescriptor, AccessState->SecurityDescriptor, &NewDescriptor,
+                              (BOOLEAN)(ObjectType == ObpDirectoryObjectType), &AccessState->SubjectSecurityContext,
+                              &ObjectType->TypeInfo.GenericMapping, PagedPool);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        return( Status );
+        return (Status);
     }
 
-    ObpBeginTypeSpecificCallOut( SaveIrql );
+    ObpBeginTypeSpecificCallOut(SaveIrql);
 
     //
     //  Now invoke the security method callback to finish
     //  the assignment.
     //
 
-    Status = (*ObjectType->TypeInfo.SecurityProcedure)( Object,
-                                                        AssignSecurityDescriptor,
-                                                        NULL,
-                                                        NewDescriptor,
-                                                        NULL,
-                                                        NULL,
-                                                        PagedPool,
-                                                        &ObjectType->TypeInfo.GenericMapping );
+    Status = (*ObjectType->TypeInfo.SecurityProcedure)(Object, AssignSecurityDescriptor, NULL, NewDescriptor, NULL,
+                                                       NULL, PagedPool, &ObjectType->TypeInfo.GenericMapping);
 
-    ObpEndTypeSpecificCallOut( SaveIrql, "Security", ObjectType, Object );
+    ObpEndTypeSpecificCallOut(SaveIrql, "Security", ObjectType, Object);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
         //
         // The attempt to assign the security descriptor to the object
         // failed.  Free the space used by the new security descriptor.
         //
 
-        SeDeassignSecurity( &NewDescriptor );
+        SeDeassignSecurity(&NewDescriptor);
     }
 
     //
     //  And return to our caller
     //
 
-    return( Status );
+    return (Status);
 }
 
 
-
 NTSTATUS
-ObQuerySecurityDescriptorInfo(
-    IN PVOID Object,
-    IN PSECURITY_INFORMATION SecurityInformation,
-    OUT PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN OUT PULONG Length,
-    IN PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor
-    )
+ObQuerySecurityDescriptorInfo(IN PVOID Object, IN PSECURITY_INFORMATION SecurityInformation,
+                              OUT PSECURITY_DESCRIPTOR SecurityDescriptor, IN OUT PULONG Length,
+                              IN PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor)
 /*++
 
 Routine Description:
@@ -1642,37 +1530,30 @@ Return Value:
 
     PAGED_CODE();
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
 
     //
     // Reference the security descriptor
     //
-    ReferencedSecurityDescriptor = ObpReferenceSecurityDescriptor( ObjectHeader );
+    ReferencedSecurityDescriptor = ObpReferenceSecurityDescriptor(ObjectHeader);
 
-    Status = SeQuerySecurityDescriptorInfo( SecurityInformation,
-                                            SecurityDescriptor,
-                                            Length,
-                                            &ReferencedSecurityDescriptor
-                                            );
+    Status =
+        SeQuerySecurityDescriptorInfo(SecurityInformation, SecurityDescriptor, Length, &ReferencedSecurityDescriptor);
 
-    if (ReferencedSecurityDescriptor != NULL) {
-        ObDereferenceSecurityDescriptor ( ReferencedSecurityDescriptor, 1 );
+    if (ReferencedSecurityDescriptor != NULL)
+    {
+        ObDereferenceSecurityDescriptor(ReferencedSecurityDescriptor, 1);
     }
 
-    return( Status );
+    return (Status);
 }
 
 
-
 NTSTATUS
-ObSetSecurityDescriptorInfo (
-    IN PVOID Object,
-    IN PSECURITY_INFORMATION SecurityInformation,
-    IN OUT PSECURITY_DESCRIPTOR SecurityDescriptor,
-    IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor,
-    IN POOL_TYPE PoolType,
-    IN PGENERIC_MAPPING GenericMapping
-    )
+ObSetSecurityDescriptorInfo(IN PVOID Object, IN PSECURITY_INFORMATION SecurityInformation,
+                            IN OUT PSECURITY_DESCRIPTOR SecurityDescriptor,
+                            IN OUT PSECURITY_DESCRIPTOR *ObjectsSecurityDescriptor, IN POOL_TYPE PoolType,
+                            IN PGENERIC_MAPPING GenericMapping)
 
 /*++
 
@@ -1717,80 +1598,84 @@ Return Value:
     //  while we're looking at it.
     //
 
-    ObjectHeader = OBJECT_TO_OBJECT_HEADER( Object );
+    ObjectHeader = OBJECT_TO_OBJECT_HEADER(Object);
 
     //
     // In order to preserve some protected fields in the SD (like the SACL) we need to make sure that only one
     // thread updates it at any one time. If we didn't do this another modification could wipe out a SACL
     // an administrator was adding.
     //
-    while (1) {
+    while (1)
+    {
 
         //
         // Reference the security descriptor
         //
 
-        OldDescriptor = ObpReferenceSecurityDescriptor( ObjectHeader );
+        OldDescriptor = ObpReferenceSecurityDescriptor(ObjectHeader);
         NewDescriptor = OldDescriptor;
 
-        Status = SeSetSecurityDescriptorInfo( Object,
-                                              SecurityInformation,
-                                              SecurityDescriptor,
-                                              &NewDescriptor,
-                                              PoolType,
-                                              GenericMapping );
+        Status = SeSetSecurityDescriptorInfo(Object, SecurityInformation, SecurityDescriptor, &NewDescriptor, PoolType,
+                                             GenericMapping);
         //
         //  If we successfully set the new security descriptor then we
         //  need to log it in our database and get yet another pointer
         //  to the finaly security descriptor
         //
-        if ( NT_SUCCESS( Status )) {
-            Status = ObLogSecurityDescriptor( NewDescriptor,
-                                              &CachedDescriptor,
-                                              ExFastRefGetAdditionalReferenceCount () + 1 );
-            ExFreePool( NewDescriptor );
-            if ( NT_SUCCESS( Status )) {
+        if (NT_SUCCESS(Status))
+        {
+            Status =
+                ObLogSecurityDescriptor(NewDescriptor, &CachedDescriptor, ExFastRefGetAdditionalReferenceCount() + 1);
+            ExFreePool(NewDescriptor);
+            if (NT_SUCCESS(Status))
+            {
                 //
                 // Now we need to see if anyone else update this security descriptor inside the
                 // gap where we didn't hold the lock. If they did then we just try it all again.
                 //
-                OldRef = ExFastRefCompareSwapObject ((PEX_FAST_REF)ObjectsSecurityDescriptor,
-                                                     CachedDescriptor,
-                                                     OldDescriptor);
-                if (ExFastRefEqualObjects (OldRef, OldDescriptor)) {
+                OldRef = ExFastRefCompareSwapObject((PEX_FAST_REF)ObjectsSecurityDescriptor, CachedDescriptor,
+                                                    OldDescriptor);
+                if (ExFastRefEqualObjects(OldRef, OldDescriptor))
+                {
                     //
                     // The swap occured ok. We must now flush any slow refers out of the slow ref path before
                     // dereferencing the object. We do this by obtaining and dropping the object lock.
                     //
-                    ObpLockObject( ObjectHeader );
-                    ObpUnlockObject( ObjectHeader );
+                    ObpLockObject(ObjectHeader);
+                    ObpUnlockObject(ObjectHeader);
                     //
                     // If there was an original object then we need to work out how many
                     // cached references there were (if any) and return them.
                     //
-                    ObDereferenceSecurityDescriptor( OldDescriptor, ExFastRefGetUnusedReferences (OldRef) + 2 );
+                    ObDereferenceSecurityDescriptor(OldDescriptor, ExFastRefGetUnusedReferences(OldRef) + 2);
                     break;
-                } else {
-                    ObDereferenceSecurityDescriptor( OldDescriptor, 1 );
-                    ObDereferenceSecurityDescriptor( CachedDescriptor, ExFastRefGetAdditionalReferenceCount () + 1);
                 }
-
-            } else {
+                else
+                {
+                    ObDereferenceSecurityDescriptor(OldDescriptor, 1);
+                    ObDereferenceSecurityDescriptor(CachedDescriptor, ExFastRefGetAdditionalReferenceCount() + 1);
+                }
+            }
+            else
+            {
 
                 //
                 //  Dereference old SecurityDescriptor
                 //
 
-                ObDereferenceSecurityDescriptor( OldDescriptor, 1 );
+                ObDereferenceSecurityDescriptor(OldDescriptor, 1);
                 break;
             }
-        } else {
+        }
+        else
+        {
 
             //
             //  Dereference old SecurityDescriptor
             //
-            if (OldDescriptor != NULL) {
-                ObDereferenceSecurityDescriptor( OldDescriptor, 1 );
+            if (OldDescriptor != NULL)
+            {
+                ObDereferenceSecurityDescriptor(OldDescriptor, 1);
             }
             break;
         }
@@ -1800,14 +1685,12 @@ Return Value:
     //  And return to our caller
     //
 
-    return( Status );
+    return (Status);
 }
 
-
+
 NTSTATUS
-ObpValidateAccessMask (
-    PACCESS_STATE AccessState
-    )
+ObpValidateAccessMask(PACCESS_STATE AccessState)
 
 /*++
 
@@ -1838,17 +1721,19 @@ Return Value:
     //  security to the remaining desired access state.
     //
 
-    if (SecurityDescriptor != NULL) {
+    if (SecurityDescriptor != NULL)
+    {
 
-        if ( SecurityDescriptor->Control & SE_SACL_PRESENT ) {
+        if (SecurityDescriptor->Control & SE_SACL_PRESENT)
+        {
 
-            if ( !(AccessState->PreviouslyGrantedAccess & ACCESS_SYSTEM_SECURITY)) {
+            if (!(AccessState->PreviouslyGrantedAccess & ACCESS_SYSTEM_SECURITY))
+            {
 
                 AccessState->RemainingDesiredAccess |= ACCESS_SYSTEM_SECURITY;
             }
         }
     }
 
-    return( STATUS_SUCCESS );
+    return (STATUS_SUCCESS);
 }
-

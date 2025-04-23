@@ -14,66 +14,69 @@
 #endif
 
 #ifdef __cplusplus
-extern "C" {            /* Assume C declarations for C++ */
-#endif  /* __cplusplus */
+extern "C"
+{      /* Assume C declarations for C++ */
+#endif /* __cplusplus */
 
 
 /*
  * General size defines.
  */
-#define CCHCCCLASS          32          // Max chars in a class name.
-#define CCHCCDESC           32          // Max chars in a control description.
-#define CCHCCTEXT           256         // Max chars in a text field.
+#define CCHCCCLASS 32 // Max chars in a class name.
+#define CCHCCDESC 32  // Max chars in a control description.
+#define CCHCCTEXT 256 // Max chars in a text field.
 
 
-/*
+    /*
  * CCSTYLE - Custom Control Style structure.  This structure is passed
  * tp the Custom Control Style function when the user wants to edit the
  * styles of the custom control.
  */
-typedef struct tagCCSTYLEA {
-    DWORD   flStyle;                    // Style of the control.
-    DWORD   flExtStyle;                 // Extended style of the control.
-    CHAR    szText[CCHCCTEXT];          // Text of the control.
-    LANGID  lgid;                       // Language Id of the control's dialog.
-    WORD    wReserved1;                 // Reserved value.  Do not change.
-} CCSTYLEA, *LPCCSTYLEA;
+    typedef struct tagCCSTYLEA
+    {
+        DWORD flStyle;          // Style of the control.
+        DWORD flExtStyle;       // Extended style of the control.
+        CHAR szText[CCHCCTEXT]; // Text of the control.
+        LANGID lgid;            // Language Id of the control's dialog.
+        WORD wReserved1;        // Reserved value.  Do not change.
+    } CCSTYLEA, *LPCCSTYLEA;
 
-typedef struct tagCCSTYLEW {
-    DWORD   flStyle;                    // Style of the control.
-    DWORD   flExtStyle;                 // Extended style of the control.
-    WCHAR   szText[CCHCCTEXT];          // Text of the control.
-    LANGID  lgid;                       // Language Id of the control's dialog.
-    WORD    wReserved1;                 // Reserved value.  Do not change.
-} CCSTYLEW, *LPCCSTYLEW;
+    typedef struct tagCCSTYLEW
+    {
+        DWORD flStyle;           // Style of the control.
+        DWORD flExtStyle;        // Extended style of the control.
+        WCHAR szText[CCHCCTEXT]; // Text of the control.
+        LANGID lgid;             // Language Id of the control's dialog.
+        WORD wReserved1;         // Reserved value.  Do not change.
+    } CCSTYLEW, *LPCCSTYLEW;
 
 #ifdef UNICODE
-#define CCSTYLE     CCSTYLEW
-#define LPCCSTYLE   LPCCSTYLEW
+#define CCSTYLE CCSTYLEW
+#define LPCCSTYLE LPCCSTYLEW
 #else
-#define CCSTYLE     CCSTYLEA
-#define LPCCSTYLE   LPCCSTYLEA
+#define CCSTYLE CCSTYLEA
+#define LPCCSTYLE LPCCSTYLEA
 #endif // UNICODE
 
 
-/*
+    /*
  * The Style function prototype.  This will be called when the user
  * wants to edit the styles of a custom control.  It should display a
  * dialog to edit the styles, update the styles in the pccs structure,
  * then return TRUE for success.  If an error occurs or the user
  * cancels the dialog, FALSE should be returned.
  */
-typedef BOOL (CALLBACK* LPFNCCSTYLEA)(HWND hwndParent,  LPCCSTYLEA pccs);
-typedef BOOL (CALLBACK* LPFNCCSTYLEW)(HWND hwndParent,  LPCCSTYLEW pccs);
+    typedef BOOL(CALLBACK *LPFNCCSTYLEA)(HWND hwndParent, LPCCSTYLEA pccs);
+    typedef BOOL(CALLBACK *LPFNCCSTYLEW)(HWND hwndParent, LPCCSTYLEW pccs);
 
 #ifdef UNICODE
 #define LPFNCCSTYLE LPFNCCSTYLEW
 #else
 #define LPFNCCSTYLE LPFNCCSTYLEA
-#endif  // UNICODE
+#endif // UNICODE
 
 
-/*
+    /*
  * The SizeToText function prototype.  This will be called if the user
  * requests that the custom control be sized to fit it's text.  It
  * should use the specified styles, text and font to determine how
@@ -81,41 +84,41 @@ typedef BOOL (CALLBACK* LPFNCCSTYLEW)(HWND hwndParent,  LPCCSTYLEW pccs);
  * value in pixels.  The value of -1 should be returned if an error
  * occurs.
  */
-typedef INT (CALLBACK* LPFNCCSIZETOTEXTA)(DWORD flStyle, DWORD flExtStyle,
-    HFONT hfont, LPSTR pszText);
-typedef INT (CALLBACK* LPFNCCSIZETOTEXTW)(DWORD flStyle, DWORD flExtStyle,
-    HFONT hfont, LPWSTR pszText);
+    typedef INT(CALLBACK *LPFNCCSIZETOTEXTA)(DWORD flStyle, DWORD flExtStyle, HFONT hfont, LPSTR pszText);
+    typedef INT(CALLBACK *LPFNCCSIZETOTEXTW)(DWORD flStyle, DWORD flExtStyle, HFONT hfont, LPWSTR pszText);
 
 #ifdef UNICODE
-#define LPFNCCSIZETOTEXT    LPFNCCSIZETOTEXTW
+#define LPFNCCSIZETOTEXT LPFNCCSIZETOTEXTW
 #else
-#define LPFNCCSIZETOTEXT    LPFNCCSIZETOTEXTA
-#endif  // UNICODE
+#define LPFNCCSIZETOTEXT LPFNCCSIZETOTEXTA
+#endif // UNICODE
 
 
-/*
+    /*
  * CCSTYLEFLAG - Custom Control Style Flag structure.  A table of these
  * structures is used to specify the define strings that match the
  * different styles for a custom control.
  */
-typedef struct tagCCSTYLEFLAGA {
-    DWORD flStyle;                      // Style bits for this style.
-    DWORD flStyleMask;                  // Mask for the style.  Can be zero.
-    LPSTR pszStyle;                     // Points to the style define string.
-} CCSTYLEFLAGA, *LPCCSTYLEFLAGA;
+    typedef struct tagCCSTYLEFLAGA
+    {
+        DWORD flStyle;     // Style bits for this style.
+        DWORD flStyleMask; // Mask for the style.  Can be zero.
+        LPSTR pszStyle;    // Points to the style define string.
+    } CCSTYLEFLAGA, *LPCCSTYLEFLAGA;
 
-typedef struct tagCCSTYLEFLAGW {
-    DWORD flStyle;                      // Style bits for this style.
-    DWORD flStyleMask;                  // Mask for the style.  Can be zero.
-    LPWSTR pszStyle;                    // Points to the style define string.
-} CCSTYLEFLAGW, *LPCCSTYLEFLAGW;
+    typedef struct tagCCSTYLEFLAGW
+    {
+        DWORD flStyle;     // Style bits for this style.
+        DWORD flStyleMask; // Mask for the style.  Can be zero.
+        LPWSTR pszStyle;   // Points to the style define string.
+    } CCSTYLEFLAGW, *LPCCSTYLEFLAGW;
 
 #ifdef UNICODE
-#define CCSTYLEFLAG     CCSTYLEFLAGW
-#define LPCCSTYLEFLAG   LPCCSTYLEFLAGW
+#define CCSTYLEFLAG CCSTYLEFLAGW
+#define LPCCSTYLEFLAG LPCCSTYLEFLAGW
 #else
-#define CCSTYLEFLAG     CCSTYLEFLAGA
-#define LPCCSTYLEFLAG   LPCCSTYLEFLAGA
+#define CCSTYLEFLAG CCSTYLEFLAGA
+#define LPCCSTYLEFLAG LPCCSTYLEFLAGA
 #endif // UNICODE
 
 
@@ -124,60 +127,62 @@ typedef struct tagCCSTYLEFLAGW {
  * CCINFO structure, and describe some basic characteristics of the
  * custom control.
  */
-#define CCF_NOTEXT          0x00000001  // Control cannot have text.
+#define CCF_NOTEXT 0x00000001 // Control cannot have text.
 
 
-/*
+    /*
  * CCINFO - Custom Control Info structure.  This structure provides
  * the dialog editor with information about the control types that the
  * DLL supports.
  */
-typedef struct tagCCINFOA {
-    CHAR    szClass[CCHCCCLASS];        // Class name for the control.
-    DWORD   flOptions;                  // Option flags (CCF_* defines).
-    CHAR    szDesc[CCHCCDESC];          // Short, descriptive text for the ctrl.
-    UINT    cxDefault;                  // Default width (in dialog units).
-    UINT    cyDefault;                  // Default height (in dialog units).
-    DWORD   flStyleDefault;             // Default style (WS_CHILD | WS_VISIBLE).
-    DWORD   flExtStyleDefault;          // Default extended style.
-    DWORD   flCtrlTypeMask;             // Mask for control type styles.
-    CHAR    szTextDefault[CCHCCTEXT];   // Default text.
-    INT     cStyleFlags;                // Entries in the following style table.
-    LPCCSTYLEFLAGA aStyleFlags;         // Points to style flag table.
-    LPFNCCSTYLEA lpfnStyle;             // Pointer to the Styles function.
-    LPFNCCSIZETOTEXTA lpfnSizeToText;   // Pointer to the SizeToText function.
-    DWORD   dwReserved1;                // Reserved.  Must be zero.
-    DWORD   dwReserved2;                // Reserved.  Must be zero.
-} CCINFOA, *LPCCINFOA;
+    typedef struct tagCCINFOA
+    {
+        CHAR szClass[CCHCCCLASS];         // Class name for the control.
+        DWORD flOptions;                  // Option flags (CCF_* defines).
+        CHAR szDesc[CCHCCDESC];           // Short, descriptive text for the ctrl.
+        UINT cxDefault;                   // Default width (in dialog units).
+        UINT cyDefault;                   // Default height (in dialog units).
+        DWORD flStyleDefault;             // Default style (WS_CHILD | WS_VISIBLE).
+        DWORD flExtStyleDefault;          // Default extended style.
+        DWORD flCtrlTypeMask;             // Mask for control type styles.
+        CHAR szTextDefault[CCHCCTEXT];    // Default text.
+        INT cStyleFlags;                  // Entries in the following style table.
+        LPCCSTYLEFLAGA aStyleFlags;       // Points to style flag table.
+        LPFNCCSTYLEA lpfnStyle;           // Pointer to the Styles function.
+        LPFNCCSIZETOTEXTA lpfnSizeToText; // Pointer to the SizeToText function.
+        DWORD dwReserved1;                // Reserved.  Must be zero.
+        DWORD dwReserved2;                // Reserved.  Must be zero.
+    } CCINFOA, *LPCCINFOA;
 
-typedef struct tagCCINFOW {
-    WCHAR   szClass[CCHCCCLASS];        // Class name for the control.
-    DWORD   flOptions;                  // Option flags (CCF_* defines).
-    WCHAR   szDesc[CCHCCDESC];          // Short, descriptive text for the ctrl.
-    UINT    cxDefault;                  // Default width (in dialog units).
-    UINT    cyDefault;                  // Default height (in dialog units).
-    DWORD   flStyleDefault;             // Default style (WS_CHILD | WS_VISIBLE).
-    DWORD   flExtStyleDefault;          // Default extended style.
-    DWORD   flCtrlTypeMask;             // Mask for control type styles.
-    INT     cStyleFlags;                // Entries in the following style table.
-    LPCCSTYLEFLAGW aStyleFlags;         // Points to style flag table.
-    WCHAR   szTextDefault[CCHCCTEXT];   // Default text.
-    LPFNCCSTYLEW lpfnStyle;             // Pointer to the Styles function.
-    LPFNCCSIZETOTEXTW lpfnSizeToText;   // Pointer to the SizeToText function.
-    DWORD   dwReserved1;                // Reserved.  Must be zero.
-    DWORD   dwReserved2;                // Reserved.  Must be zero.
-} CCINFOW, *LPCCINFOW;
+    typedef struct tagCCINFOW
+    {
+        WCHAR szClass[CCHCCCLASS];        // Class name for the control.
+        DWORD flOptions;                  // Option flags (CCF_* defines).
+        WCHAR szDesc[CCHCCDESC];          // Short, descriptive text for the ctrl.
+        UINT cxDefault;                   // Default width (in dialog units).
+        UINT cyDefault;                   // Default height (in dialog units).
+        DWORD flStyleDefault;             // Default style (WS_CHILD | WS_VISIBLE).
+        DWORD flExtStyleDefault;          // Default extended style.
+        DWORD flCtrlTypeMask;             // Mask for control type styles.
+        INT cStyleFlags;                  // Entries in the following style table.
+        LPCCSTYLEFLAGW aStyleFlags;       // Points to style flag table.
+        WCHAR szTextDefault[CCHCCTEXT];   // Default text.
+        LPFNCCSTYLEW lpfnStyle;           // Pointer to the Styles function.
+        LPFNCCSIZETOTEXTW lpfnSizeToText; // Pointer to the SizeToText function.
+        DWORD dwReserved1;                // Reserved.  Must be zero.
+        DWORD dwReserved2;                // Reserved.  Must be zero.
+    } CCINFOW, *LPCCINFOW;
 
 #ifdef UNICODE
-#define CCINFO      CCINFOW
-#define LPCCINFO    LPCCINFOW
+#define CCINFO CCINFOW
+#define LPCCINFO LPCCINFOW
 #else
-#define CCINFO      CCINFOA
-#define LPCCINFO    LPCCINFOA
+#define CCINFO CCINFOA
+#define LPCCINFO LPCCINFOA
 #endif // UNICODE
 
 
-/*
+    /*
  * The Info function prototype.  This function is the first one
  * called by the dialog editor.  Custom control DLL's must export
  * one or both of the following functions by name (the ordinal
@@ -195,18 +200,18 @@ typedef struct tagCCINFOW {
  * If both functions are present, the CustomControlInfoW function
  * will be used by the dialog editor.
  */
-typedef UINT (CALLBACK* LPFNCCINFOA)(LPCCINFOA acci);
-typedef UINT (CALLBACK* LPFNCCINFOW)(LPCCINFOW acci);
+    typedef UINT(CALLBACK *LPFNCCINFOA)(LPCCINFOA acci);
+    typedef UINT(CALLBACK *LPFNCCINFOW)(LPCCINFOW acci);
 
 #ifdef UNICODE
-#define LPFNCCINFO  LPFNCCINFOW
+#define LPFNCCINFO LPFNCCINFOW
 #else
-#define LPFNCCINFO  LPFNCCINFOA
-#endif  // UNICODE
+#define LPFNCCINFO LPFNCCINFOA
+#endif // UNICODE
 
 
 #ifdef __cplusplus
 }
-#endif  /* __cplusplus */
+#endif /* __cplusplus */
 
-#endif  /* _INC_CUSTCNTL */
+#endif /* _INC_CUSTCNTL */

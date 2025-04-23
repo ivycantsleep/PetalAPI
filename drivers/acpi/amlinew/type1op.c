@@ -9,7 +9,7 @@
 
 #include "pch.h"
 
-#ifdef  LOCKABLE_PRAGMA
+#ifdef LOCKABLE_PRAGMA
 #pragma ACPI_LOCKABLE_DATA
 #pragma ACPI_LOCKABLE_CODE
 #endif
@@ -37,7 +37,7 @@ NTSTATUS LOCAL Break(PCTXT pctxt, PTERM pterm)
 
     EXIT(2, ("Break=%x\n", AMLISTA_BREAK));
     return AMLISTA_BREAK;
-}       //Break
+} //Break
 
 /***LP  BreakPoint - Parse and execute the BreakPoint instruction
  *
@@ -55,19 +55,18 @@ NTSTATUS LOCAL BreakPoint(PCTXT pctxt, PTERM pterm)
 {
     TRACENAME("BREAKPOINT")
 
-    ENTER(2, ("BreakPoint(pctxt=%x,pbOp=%x,pterm=%x)\n",
-              pctxt, pctxt->pbOp, pterm));
+    ENTER(2, ("BreakPoint(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
     DEREF(pctxt);
     DEREF(pterm);
-  #ifdef DEBUGGER
+#ifdef DEBUGGER
     PRINTF("\nHit a code breakpoint.\n");
     AMLIDebugger(FALSE);
-  #endif
+#endif
 
     EXIT(2, ("BreakPoint=%x\n", STATUS_SUCCESS));
     return STATUS_SUCCESS;
-}       //BreakPoint
+} //BreakPoint
 
 /***LP  Fatal - Parse and execute the Fatal instruction
  *
@@ -95,16 +94,14 @@ NTSTATUS LOCAL Fatal(PCTXT pctxt, PTERM pterm)
         {
             ((PFNFT)ghFatal.pfnHandler)((ULONG)pterm->pdataArgs[0].uipDataValue,
                                         (ULONG)pterm->pdataArgs[1].uipDataValue,
-                                        (ULONG)pterm->pdataArgs[2].uipDataValue,
-                                        (ULONG_PTR) pctxt,
-                                        ghFatal.uipParam);
+                                        (ULONG)pterm->pdataArgs[2].uipDataValue, (ULONG_PTR)pctxt, ghFatal.uipParam);
         }
         rc = AMLIERR_FATAL;
     }
 
     EXIT(2, ("Fatal=%x\n", rc));
     return rc;
-}       //Fatal
+} //Fatal
 
 /***LP  IfElse - Parse and execute the If and Else instruction
  *
@@ -123,8 +120,7 @@ NTSTATUS LOCAL IfElse(PCTXT pctxt, PTERM pterm)
     TRACENAME("IFELSE")
     NTSTATUS rc = STATUS_SUCCESS;
 
-    ENTER(2, ("IfElse(pctxt=%x,pbOp=%x,pterm=%x)\n",
-              pctxt, pctxt->pbOp, pterm));
+    ENTER(2, ("IfElse(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
     ASSERT(*pterm->pbOpTerm == OP_IF);
     ASSERT(pterm->pbScopeEnd != NULL);
@@ -139,16 +135,14 @@ NTSTATUS LOCAL IfElse(PCTXT pctxt, PTERM pterm)
                 // FALSE case, we must skip TRUE scope.
                 //
                 pctxt->pbOp = pterm->pbOpEnd;
-                if ((pctxt->pbOp < pterm->pbScopeEnd) &&
-                    (*pctxt->pbOp == OP_ELSE))
+                if ((pctxt->pbOp < pterm->pbScopeEnd) && (*pctxt->pbOp == OP_ELSE))
                 {
                     //
                     // There is an ELSE part, execute it.
                     //
                     pctxt->pbOp++;
                     ParsePackageLen(&pctxt->pbOp, &pterm->pbOpEnd);
-                    rc = PushScope(pctxt, pctxt->pbOp, pterm->pbOpEnd, NULL,
-                                   pctxt->pnsScope, pctxt->powner,
+                    rc = PushScope(pctxt, pctxt->pbOp, pterm->pbOpEnd, NULL, pctxt->pnsScope, pctxt->powner,
                                    pctxt->pheapCurrent, pterm->pdataResult);
                 }
             }
@@ -158,8 +152,7 @@ NTSTATUS LOCAL IfElse(PCTXT pctxt, PTERM pterm)
                 //
                 // TRUE case.
                 //
-                if ((pterm->pbOpEnd < pterm->pbScopeEnd) &&
-                    (*pterm->pbOpEnd == OP_ELSE))
+                if ((pterm->pbOpEnd < pterm->pbScopeEnd) && (*pterm->pbOpEnd == OP_ELSE))
                 {
                     //
                     // Set return address to skip else scope.
@@ -175,21 +168,19 @@ NTSTATUS LOCAL IfElse(PCTXT pctxt, PTERM pterm)
                     pbOpRet = NULL;
                 }
 
-                rc = PushScope(pctxt, pctxt->pbOp, pterm->pbOpEnd, pbOpRet,
-                               pctxt->pnsScope, pctxt->powner,
+                rc = PushScope(pctxt, pctxt->pbOp, pterm->pbOpEnd, pbOpRet, pctxt->pnsScope, pctxt->powner,
                                pctxt->pheapCurrent, pterm->pdataResult);
             }
         }
     }
     else
     {
-        rc = AMLI_LOGERR(AMLIERR_INVALID_OPCODE,
-                         ("IfElse: Else statement found without matching If"));
+        rc = AMLI_LOGERR(AMLIERR_INVALID_OPCODE, ("IfElse: Else statement found without matching If"));
     }
 
     EXIT(2, ("IfElse=%x (value=%x)\n", rc, pterm->pdataArgs[0].uipDataValue));
     return rc;
-}       //IfElse
+} //IfElse
 
 /***LP  Load - Parse and execute the Load instructions
  *
@@ -213,31 +204,25 @@ NTSTATUS LOCAL Load(PCTXT pctxt, PTERM pterm)
     ENTER(2, ("Load(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
     if (((rc = ValidateArgTypes(pterm->pdataArgs, "Z")) == STATUS_SUCCESS) &&
-        ((rc = ValidateTarget(&pterm->pdataArgs[1], OBJTYPE_DATA, &pdata)) ==
-         STATUS_SUCCESS))
+        ((rc = ValidateTarget(&pterm->pdataArgs[1], OBJTYPE_DATA, &pdata)) == STATUS_SUCCESS))
     {
         PNSOBJ pns;
 
-        if ((rc = GetNameSpaceObject((PSZ)pterm->pdataArgs[0].pbDataBuff,
-                                     pctxt->pnsScope, &pns, NSF_WARN_NOTFOUND))
-            == AMLIERR_OBJ_NOT_FOUND)
+        if ((rc = GetNameSpaceObject((PSZ)pterm->pdataArgs[0].pbDataBuff, pctxt->pnsScope, &pns, NSF_WARN_NOTFOUND)) ==
+            AMLIERR_OBJ_NOT_FOUND)
         {
-            AMLI_LOGERR(rc,
-                        ("Load: failed to find the memory OpRegion or Field object - %s",
-                         pterm->pdataArgs[0].pbDataBuff));
+            AMLI_LOGERR(
+                rc, ("Load: failed to find the memory OpRegion or Field object - %s", pterm->pdataArgs[0].pbDataBuff));
         }
         else if (rc == STATUS_SUCCESS)
         {
-          #ifdef DEBUG
+#ifdef DEBUG
             gdwfAMLI |= AMLIF_LOADING_DDB;
-          #endif
+#endif
             if ((pns->ObjData.dwDataType == OBJTYPE_OPREGION) &&
-                (((POPREGIONOBJ)pns->ObjData.pbDataBuff)->bRegionSpace ==
-         REGSPACE_MEM))
+                (((POPREGIONOBJ)pns->ObjData.pbDataBuff)->bRegionSpace == REGSPACE_MEM))
             {
-                rc = LoadMemDDB(pctxt,
-                                (PDSDT)((POPREGIONOBJ)pns->ObjData.pbDataBuff)->uipOffset,
-                                &powner);
+                rc = LoadMemDDB(pctxt, (PDSDT)((POPREGIONOBJ)pns->ObjData.pbDataBuff)->uipOffset, &powner);
             }
             else if (pns->ObjData.dwDataType == OBJTYPE_FIELDUNIT)
             {
@@ -245,9 +230,8 @@ NTSTATUS LOCAL Load(PCTXT pctxt, PTERM pterm)
             }
             else
             {
-                rc = AMLI_LOGERR(AMLIERR_UNEXPECTED_OBJTYPE,
-                                 ("Load: object is not a memory OpRegion or Field - %s",
-                                  pterm->pdataArgs[0].pbDataBuff));
+                rc = AMLI_LOGERR(AMLIERR_UNEXPECTED_OBJTYPE, ("Load: object is not a memory OpRegion or Field - %s",
+                                                              pterm->pdataArgs[0].pbDataBuff));
             }
 
             if (rc == STATUS_SUCCESS)
@@ -255,30 +239,30 @@ NTSTATUS LOCAL Load(PCTXT pctxt, PTERM pterm)
                 pdata->dwDataType = OBJTYPE_DDBHANDLE;
                 pdata->powner = powner;
             }
-          #ifdef DEBUG
+#ifdef DEBUG
             {
-                KIRQL   oldIrql;
+                KIRQL oldIrql;
 
                 gdwfAMLI &= ~AMLIF_LOADING_DDB;
-                KeAcquireSpinLock( &gdwGHeapSpinLock, &oldIrql );
+                KeAcquireSpinLock(&gdwGHeapSpinLock, &oldIrql);
                 gdwGHeapSnapshot = gdwGlobalHeapSize;
-                KeReleaseSpinLock( &gdwGHeapSpinLock, oldIrql );
+                KeReleaseSpinLock(&gdwGHeapSpinLock, oldIrql);
             }
-          #endif
+#endif
 
-          #ifdef DEBUGGER
+#ifdef DEBUGGER
             if (gdwfAMLIInit & AMLIIF_LOADDDB_BREAK)
             {
                 PRINTF("\n" MODNAME ": Break at Load Definition Block Completion.\n");
                 AMLIDebugger(FALSE);
             }
-          #endif
+#endif
         }
     }
 
     EXIT(2, ("Load=%x (powner=%x)\n", rc, powner));
     return rc;
-}       //Load
+} //Load
 
 /***LP  Notify - Parse and execute the Notify instruction
  *
@@ -297,31 +281,26 @@ NTSTATUS LOCAL Notify(PCTXT pctxt, PTERM pterm)
     TRACENAME("NOTIFY")
     NTSTATUS rc = STATUS_SUCCESS;
 
-    ENTER(2, ("Notify(pctxt=%x,pbOp=%x,pterm=%x)\n",
-              pctxt, pctxt->pbOp, pterm));
+    ENTER(2, ("Notify(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
     DEREF(pctxt);
     if ((rc = ValidateArgTypes(pterm->pdataArgs, "OI")) == STATUS_SUCCESS)
     {
         if (pterm->pdataArgs[1].uipDataValue > MAX_BYTE)
         {
-            rc = AMLI_LOGERR(AMLIERR_INVALID_DATA,
-                             ("Notify: Notification value is greater than a byte value (Value=%x)",
-                              pterm->pdataArgs[1].uipDataValue));
+            rc =
+                AMLI_LOGERR(AMLIERR_INVALID_DATA, ("Notify: Notification value is greater than a byte value (Value=%x)",
+                                                   pterm->pdataArgs[1].uipDataValue));
         }
         else if (ghNotify.pfnHandler != NULL)
         {
             pterm->pnsObj = pterm->pdataArgs[0].pnsAlias;
 
-            ENTER(2, ("pfnNotify(Value=%x,Obj=%s,Param=%x)\n",
-                      pterm->pdataArgs[1].uipDataValue,
+            ENTER(2, ("pfnNotify(Value=%x,Obj=%s,Param=%x)\n", pterm->pdataArgs[1].uipDataValue,
                       GetObjectPath(pterm->pnsObj), ghNotify.uipParam));
 
-            rc = ((PFNNH)ghNotify.pfnHandler)(EVTYPE_NOTIFY,
-                                         (ULONG)pterm->pdataArgs[1].uipDataValue,
-                                         pterm->pnsObj, (ULONG)ghNotify.uipParam,
-                                         RestartCtxtCallback,
-                                         &(pctxt->CtxtData));
+            rc = ((PFNNH)ghNotify.pfnHandler)(EVTYPE_NOTIFY, (ULONG)pterm->pdataArgs[1].uipDataValue, pterm->pnsObj,
+                                              (ULONG)ghNotify.uipParam, RestartCtxtCallback, &(pctxt->CtxtData));
 
             if (rc == STATUS_PENDING)
             {
@@ -329,9 +308,7 @@ NTSTATUS LOCAL Notify(PCTXT pctxt, PTERM pterm)
             }
             else if (rc != STATUS_SUCCESS)
             {
-                rc = AMLI_LOGERR(AMLIERR_NOTIFY_FAILED,
-                                 ("Notify: Notify handler failed (rc=%x)",
-                                  rc));
+                rc = AMLI_LOGERR(AMLIERR_NOTIFY_FAILED, ("Notify: Notify handler failed (rc=%x)", rc));
             }
 
             EXIT(2, ("pfnNotify!\n"));
@@ -340,7 +317,7 @@ NTSTATUS LOCAL Notify(PCTXT pctxt, PTERM pterm)
 
     EXIT(2, ("Notify=%x (pnsObj=%s)\n", rc, GetObjectPath(pterm->pnsObj)));
     return rc;
-}       //Notify
+} //Notify
 
 /***LP  ReleaseResetSignalUnload - Parse and execute the
  *                                 Release/Reset/Signal/Unload instruction
@@ -360,97 +337,89 @@ NTSTATUS LOCAL ReleaseResetSignalUnload(PCTXT pctxt, PTERM pterm)
     TRACENAME("RELEASERESETSIGNALUNLOAD")
     NTSTATUS rc = STATUS_SUCCESS;
 
-    ENTER(2, ("ReleaseResetSignalUnload(pctxt=%x,pbOp=%x,pterm=%x)\n",
-              pctxt, pctxt->pbOp, pterm));
+    ENTER(2, ("ReleaseResetSignalUnload(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
     if ((rc = ValidateArgTypes(pterm->pdataArgs, "O")) == STATUS_SUCCESS)
     {
         pterm->pnsObj = pterm->pdataArgs[0].pnsAlias;
         switch (pterm->pamlterm->dwOpcode)
         {
-            case OP_RELEASE:
-                ENTER(2, ("Release(Obj=%s)\n", GetObjectPath(pterm->pnsObj)));
-                if (pterm->pnsObj->ObjData.dwDataType != OBJTYPE_MUTEX)
-                {
-                    rc = AMLI_LOGERR(AMLIERR_UNEXPECTED_OBJTYPE,
-                                     ("Release: object is not mutex type (obj=%s,type=%s)",
-                                      GetObjectPath(pterm->pnsObj),
-                                      GetObjectTypeName(pterm->pnsObj->ObjData.dwDataType)));
-                }
-                else
-                {
-                    rc = ReleaseASLMutex(pctxt,
-                                         (PMUTEXOBJ)pterm->pnsObj->ObjData.pbDataBuff);
-                }
+        case OP_RELEASE:
+            ENTER(2, ("Release(Obj=%s)\n", GetObjectPath(pterm->pnsObj)));
+            if (pterm->pnsObj->ObjData.dwDataType != OBJTYPE_MUTEX)
+            {
+                rc = AMLI_LOGERR(AMLIERR_UNEXPECTED_OBJTYPE,
+                                 ("Release: object is not mutex type (obj=%s,type=%s)", GetObjectPath(pterm->pnsObj),
+                                  GetObjectTypeName(pterm->pnsObj->ObjData.dwDataType)));
+            }
+            else
+            {
+                rc = ReleaseASLMutex(pctxt, (PMUTEXOBJ)pterm->pnsObj->ObjData.pbDataBuff);
+            }
 
-                if (pterm->pnsObj->ObjData.dwfData & DATAF_GLOBAL_LOCK)
+            if (pterm->pnsObj->ObjData.dwfData & DATAF_GLOBAL_LOCK)
+            {
+                if ((rc = ReleaseGL(pctxt)) != STATUS_SUCCESS)
                 {
-                    if ((rc = ReleaseGL(pctxt)) != STATUS_SUCCESS)
-                    {
-                        rc = AMLI_LOGERR(AMLIERR_ASSERT_FAILED,
-                                         ("Release: failed to release global lock (rc=%x)",
-                                          rc));
-                    }
+                    rc = AMLI_LOGERR(AMLIERR_ASSERT_FAILED, ("Release: failed to release global lock (rc=%x)", rc));
                 }
-                EXIT(2, ("Release=%x\n", rc));
-                break;
+            }
+            EXIT(2, ("Release=%x\n", rc));
+            break;
 
-            case OP_RESET:
-                ENTER(2, ("Reset(Obj=%s)\n", GetObjectPath(pterm->pnsObj)));
-                if (pterm->pnsObj->ObjData.dwDataType != OBJTYPE_EVENT)
-                {
-                    rc = AMLI_LOGERR(AMLIERR_UNEXPECTED_OBJTYPE,
-                                     ("Reset: object is not event type (obj=%s,type=%s)",
-                                      GetObjectPath(pterm->pnsObj),
-                                      GetObjectTypeName(pterm->pnsObj->ObjData.dwDataType)));
-                }
-                else
-                {
-                    ResetASLEvent((PEVENTOBJ)pterm->pnsObj->ObjData.pbDataBuff);
-                    rc = STATUS_SUCCESS;
-                }
-                EXIT(2, ("Reset=%x\n", rc));
-                break;
+        case OP_RESET:
+            ENTER(2, ("Reset(Obj=%s)\n", GetObjectPath(pterm->pnsObj)));
+            if (pterm->pnsObj->ObjData.dwDataType != OBJTYPE_EVENT)
+            {
+                rc = AMLI_LOGERR(AMLIERR_UNEXPECTED_OBJTYPE,
+                                 ("Reset: object is not event type (obj=%s,type=%s)", GetObjectPath(pterm->pnsObj),
+                                  GetObjectTypeName(pterm->pnsObj->ObjData.dwDataType)));
+            }
+            else
+            {
+                ResetASLEvent((PEVENTOBJ)pterm->pnsObj->ObjData.pbDataBuff);
+                rc = STATUS_SUCCESS;
+            }
+            EXIT(2, ("Reset=%x\n", rc));
+            break;
 
-            case OP_SIGNAL:
-                ENTER(2, ("Signal(Obj=%s)\n", GetObjectPath(pterm->pnsObj)));
-                if (pterm->pnsObj->ObjData.dwDataType != OBJTYPE_EVENT)
-                {
-                    rc = AMLI_LOGERR(AMLIERR_UNEXPECTED_OBJTYPE,
-                                     ("Signal: object is not event type (obj=%s,type=%s)",
-                                      GetObjectPath(pterm->pnsObj),
-                                      GetObjectTypeName(pterm->pnsObj->ObjData.dwDataType)));
-                }
-                else
-                {
-                    SignalASLEvent((PEVENTOBJ)pterm->pnsObj->ObjData.pbDataBuff);
-                }
-                EXIT(2, ("Signal=%x\n", rc));
-                break;
+        case OP_SIGNAL:
+            ENTER(2, ("Signal(Obj=%s)\n", GetObjectPath(pterm->pnsObj)));
+            if (pterm->pnsObj->ObjData.dwDataType != OBJTYPE_EVENT)
+            {
+                rc = AMLI_LOGERR(AMLIERR_UNEXPECTED_OBJTYPE,
+                                 ("Signal: object is not event type (obj=%s,type=%s)", GetObjectPath(pterm->pnsObj),
+                                  GetObjectTypeName(pterm->pnsObj->ObjData.dwDataType)));
+            }
+            else
+            {
+                SignalASLEvent((PEVENTOBJ)pterm->pnsObj->ObjData.pbDataBuff);
+            }
+            EXIT(2, ("Signal=%x\n", rc));
+            break;
 
-            case OP_UNLOAD:
-                ENTER(2, ("Unload(Obj=%s)\n", GetObjectPath(pterm->pnsObj)));
-                if (pterm->pnsObj->ObjData.dwDataType != OBJTYPE_DDBHANDLE)
-                {
-                    rc = AMLI_LOGERR(AMLIERR_UNEXPECTED_OBJTYPE,
-                                     ("Unload: object is not DDBHandle (obj=%s,type=%s)",
-                                      GetObjectPath(pterm->pnsObj),
-                                      GetObjectTypeName(pterm->pnsObj->ObjData.dwDataType)));
-                }
-                else
-                {
-                    UnloadDDB(pterm->pnsObj->ObjData.powner);
-                    MEMZERO(&pterm->pnsObj->ObjData, sizeof(OBJDATA));
-                    rc = STATUS_SUCCESS;
-                }
-                EXIT(2, ("Unload=%x\n", rc));
-                break;
+        case OP_UNLOAD:
+            ENTER(2, ("Unload(Obj=%s)\n", GetObjectPath(pterm->pnsObj)));
+            if (pterm->pnsObj->ObjData.dwDataType != OBJTYPE_DDBHANDLE)
+            {
+                rc = AMLI_LOGERR(AMLIERR_UNEXPECTED_OBJTYPE,
+                                 ("Unload: object is not DDBHandle (obj=%s,type=%s)", GetObjectPath(pterm->pnsObj),
+                                  GetObjectTypeName(pterm->pnsObj->ObjData.dwDataType)));
+            }
+            else
+            {
+                UnloadDDB(pterm->pnsObj->ObjData.powner);
+                MEMZERO(&pterm->pnsObj->ObjData, sizeof(OBJDATA));
+                rc = STATUS_SUCCESS;
+            }
+            EXIT(2, ("Unload=%x\n", rc));
+            break;
         }
     }
 
     EXIT(2, ("ReleaseResetSignalUnload=%x\n", rc));
     return rc;
-}       //ReleaseResetSignalUnload
+} //ReleaseResetSignalUnload
 
 /***LP  Return - Parse and execute the Return instruction
  *
@@ -469,19 +438,17 @@ NTSTATUS LOCAL Return(PCTXT pctxt, PTERM pterm)
     TRACENAME("RETURN")
     NTSTATUS rc = STATUS_SUCCESS;
 
-    ENTER(2, ("Return(pctxt=%x,pbOp=%x,pterm=%x)\n",
-              pctxt, pctxt->pbOp, pterm));
+    ENTER(2, ("Return(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
     DEREF(pctxt);
-    if ((rc = DupObjData(pctxt->pheapCurrent, pterm->pdataResult,
-                         &pterm->pdataArgs[0])) == STATUS_SUCCESS)
+    if ((rc = DupObjData(pctxt->pheapCurrent, pterm->pdataResult, &pterm->pdataArgs[0])) == STATUS_SUCCESS)
     {
         rc = AMLISTA_RETURN;
     }
 
     EXIT(2, ("Return=%x\n", rc));
     return rc;
-}       //Return
+} //Return
 
 /***LP  SleepStall - Parse and execute the Sleep/Stall instruction
  *
@@ -500,8 +467,7 @@ NTSTATUS LOCAL SleepStall(PCTXT pctxt, PTERM pterm)
     TRACENAME("SLEEPSTALL")
     NTSTATUS rc = STATUS_SUCCESS;
 
-    ENTER(2, ("SleepStall(pctxt=%x,pbOp=%x,pterm=%x)\n",
-              pctxt, pctxt->pbOp, pterm));
+    ENTER(2, ("SleepStall(pctxt=%x,pbOp=%x,pterm=%x)\n", pctxt, pctxt->pbOp, pterm));
 
     DEREF(pctxt);
     if ((rc = ValidateArgTypes(pterm->pdataArgs, "I")) == STATUS_SUCCESS)
@@ -511,16 +477,12 @@ NTSTATUS LOCAL SleepStall(PCTXT pctxt, PTERM pterm)
             ENTER(2, ("Sleep(dwMS=%d)\n", pterm->pdataArgs[0].uipDataValue));
             if (pterm->pdataArgs[0].uipDataValue > MAX_WORD)
             {
-                rc = AMLI_LOGERR(AMLIERR_INVALID_DATA,
-                                 ("Sleep: sleep value is greater than a word value (Value=%x)",
-                                  pterm->pdataArgs[0].uipDataValue));
+                rc = AMLI_LOGERR(AMLIERR_INVALID_DATA, ("Sleep: sleep value is greater than a word value (Value=%x)",
+                                                        pterm->pdataArgs[0].uipDataValue));
             }
             else if (pterm->pdataArgs[0].uipDataValue != 0)
             {
-                if ((rc = SleepQueueRequest(
-                                pctxt,
-                                (ULONG)pterm->pdataArgs[0].uipDataValue)) ==
-                    STATUS_SUCCESS)
+                if ((rc = SleepQueueRequest(pctxt, (ULONG)pterm->pdataArgs[0].uipDataValue)) == STATUS_SUCCESS)
                 {
                     rc = AMLISTA_PENDING;
                 }
@@ -529,9 +491,8 @@ NTSTATUS LOCAL SleepStall(PCTXT pctxt, PTERM pterm)
         }
         else if (pterm->pdataArgs[0].uipDataValue > MAX_BYTE)
         {
-            rc = AMLI_LOGERR(AMLIERR_INVALID_DATA,
-                             ("Stall: stall value is greater than a byte value (Value=%x)",
-                              pterm->pdataArgs[0].uipDataValue));
+            rc = AMLI_LOGERR(AMLIERR_INVALID_DATA, ("Stall: stall value is greater than a byte value (Value=%x)",
+                                                    pterm->pdataArgs[0].uipDataValue));
         }
         else
         {
@@ -543,7 +504,7 @@ NTSTATUS LOCAL SleepStall(PCTXT pctxt, PTERM pterm)
 
     EXIT(2, ("SleepStall=%x\n", rc));
     return rc;
-}       //SleepStall
+} //SleepStall
 
 /***LP  While - Parse and execute the While instruction
  *
@@ -578,12 +539,12 @@ NTSTATUS LOCAL While(PCTXT pctxt, PTERM pterm)
             //
             // Set the return address to the beginning of the while term.
             //
-            rc = PushScope(pctxt, pctxt->pbOp, pterm->pbOpEnd, pterm->pbOpTerm,
-                           pctxt->pnsScope, pctxt->powner, pctxt->pheapCurrent,
-                           pterm->pdataResult);
+            rc = PushScope(pctxt, pctxt->pbOp, pterm->pbOpEnd, pterm->pbOpTerm, pctxt->pnsScope, pctxt->powner,
+                           pctxt->pheapCurrent, pterm->pdataResult);
             // SP3
-            if (!rc) {
-              ((PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd)->dwfFrame |= CALLF_ACQ_MUTEX;
+            if (!rc)
+            {
+                ((PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd)->dwfFrame |= CALLF_ACQ_MUTEX;
             }
             // SP3
         }
@@ -591,4 +552,4 @@ NTSTATUS LOCAL While(PCTXT pctxt, PTERM pterm)
 
     EXIT(2, ("While=%x (value=%x)\n", rc, pterm->pdataArgs[0].uipDataValue));
     return rc;
-}       //While
+} //While

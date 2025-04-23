@@ -35,20 +35,16 @@ BOOLEAN SeTest();
 
 #include "ttoken.c"
 
-int
-main(
-    int argc,
-    char *argv[]
-    )
+int main(int argc, char *argv[])
 {
     VOID KiSystemStartup();
 
     TestFunction = SeTest;
     KiSystemStartup();
-    return( 0 );
+    return (0);
 }
 
-
+
 BOOLEAN
 SeTest()
 {
@@ -63,35 +59,43 @@ SeTest()
 
     DbgPrint("Start SeTest()\n");
 
-    if (!TestMakeSystemToken()) {
+    if (!TestMakeSystemToken())
+    {
         DbgPrint("TestMakeSystemToken() Error\n");
         return FALSE;
     }
-    if (!TestTokenCopy()) {
+    if (!TestTokenCopy())
+    {
         DbgPrint("TestTokenCopy() Error\n");
         return FALSE;
     }
-    if (!TestTokenSize()) {
+    if (!TestTokenSize())
+    {
         DbgPrint("TestTokenSize() Error\n");
         return FALSE;
     }
-    if (!TestDefaultObjectMethod()) {
+    if (!TestDefaultObjectMethod())
+    {
         DbgPrint("TestDefaultObjectMethod() Error\n");
         return FALSE;
     }
-    if (!TestCaptureSecurityDescriptor()) {
+    if (!TestCaptureSecurityDescriptor())
+    {
         DbgPrint("TestCaptureSecurityDescriptor() Error\n");
         return FALSE;
     }
-    if (!TestAssignSecurity()) {
+    if (!TestAssignSecurity())
+    {
         DbgPrint("TestAssignSecurity() Error\n");
         return FALSE;
     }
-    if (!TestAccessCheck()) {
+    if (!TestAccessCheck())
+    {
         DbgPrint("TestAccessCheck() Error\n");
         return FALSE;
     }
-    if (!TestGenerateMessage()) {
+    if (!TestGenerateMessage())
+    {
         DbgPrint("TestGenerateMessage() Error\n");
         return FALSE;
     }
@@ -100,7 +104,7 @@ SeTest()
     return TRUE;
 }
 
-
+
 BOOLEAN
 TestMakeSystemToken()
 {
@@ -110,23 +114,24 @@ TestMakeSystemToken()
     //  Make the system token
     //
 
-    Token = (PACCESS_TOKEN)SeMakeSystemToken( PagedPool );
+    Token = (PACCESS_TOKEN)SeMakeSystemToken(PagedPool);
 
     //
     //  and check its contents
     //
 
-    if (!SepIsSystemToken( Token, ((ACCESS_TOKEN *)Token)->Size )) {
+    if (!SepIsSystemToken(Token, ((ACCESS_TOKEN *)Token)->Size))
+    {
         DbgPrint("SepIsSystemToken Error\n");
         return FALSE;
     }
 
-    ExFreePool( Token );
+    ExFreePool(Token);
 
     return TRUE;
 }
 
-
+
 BOOLEAN
 TestTokenCopy()
 {
@@ -144,13 +149,14 @@ TestTokenCopy()
     InToken = (PACCESS_TOKEN)ExAllocatePool(PagedPool, 512);
     OutToken = (PACCESS_TOKEN)ExAllocatePool(PagedPool, 512);
 
-    BuildToken( Fred, InToken );
+    BuildToken(Fred, InToken);
 
     //
     //  Make a copy of the token
     //
 
-    if (!NT_SUCCESS(Status = SeTokenCopy( InToken, OutToken, 512))) {
+    if (!NT_SUCCESS(Status = SeTokenCopy(InToken, OutToken, 512)))
+    {
         DbgPrint("SeTokenCopy Error: %8lx\n", Status);
         return FALSE;
     }
@@ -159,20 +165,22 @@ TestTokenCopy()
     //  check both tokens for equality
     //
 
-    for (i = 0; i < ((ACCESS_TOKEN *)InToken)->Size; i += 1) {
-        if (*((PUCHAR)InToken + 1) != *((PUCHAR)OutToken + 1)) {
+    for (i = 0; i < ((ACCESS_TOKEN *)InToken)->Size; i += 1)
+    {
+        if (*((PUCHAR)InToken + 1) != *((PUCHAR)OutToken + 1))
+        {
             DbgPrint("Token copy error\n");
             return FALSE;
         }
     }
 
-    ExFreePool( InToken );
-    ExFreePool( OutToken );
+    ExFreePool(InToken);
+    ExFreePool(OutToken);
 
     return TRUE;
 }
 
-
+
 BOOLEAN
 TestTokenSize()
 {
@@ -184,23 +192,24 @@ TestTokenSize()
 
     Token = (PACCESS_TOKEN)ExAllocatePool(PagedPool, 512);
 
-    BuildToken( Wilma, Token );
+    BuildToken(Wilma, Token);
 
     //
     //  Get the token size
     //
 
-    if (SeTokenSize(Token) != ((ACCESS_TOKEN *)Token)->Size) {
+    if (SeTokenSize(Token) != ((ACCESS_TOKEN *)Token)->Size)
+    {
         DbgPrint("SeTokenSize error\n");
         return FALSE;
     }
 
-    ExFreePool( Token );
+    ExFreePool(Token);
 
     return TRUE;
 }
 
-
+
 BOOLEAN
 TestDefaultObjectMethod()
 {
@@ -211,11 +220,11 @@ TestDefaultObjectMethod()
     PSECURITY_DESCRIPTOR ObjectsSecurityDescriptor;
     ULONG Length;
 
-    Acl = (PACL)ExAllocatePool( PagedPool, 1024 );
-    Buffer = (PSECURITY_DESCRIPTOR)ExAllocatePool( PagedPool, 1024 );
+    Acl = (PACL)ExAllocatePool(PagedPool, 1024);
+    Buffer = (PSECURITY_DESCRIPTOR)ExAllocatePool(PagedPool, 1024);
 
-    BuildAcl( Fred, Acl, 1024 );
-    DiscretionarySecurityDescriptor( &SecurityDescriptor, Acl );
+    BuildAcl(Fred, Acl, 1024);
+    DiscretionarySecurityDescriptor(&SecurityDescriptor, Acl);
 
     ObjectsSecurityDescriptor = NULL;
 
@@ -223,15 +232,11 @@ TestDefaultObjectMethod()
     //  Set the descriptor
     //
 
-    if (!NT_SUCCESS(Status = SeDefaultObjectMethod( NULL,
-                                                 SetSecurityDescriptor,
-                                                 &SecurityDescriptor,
-                                                 0,
-                                                 NULL,
-                                                 &ObjectsSecurityDescriptor,
-                                                 PagedPool ))) {
+    if (!NT_SUCCESS(Status = SeDefaultObjectMethod(NULL, SetSecurityDescriptor, &SecurityDescriptor, 0, NULL,
+                                                   &ObjectsSecurityDescriptor, PagedPool)))
+    {
 
-        DbgPrint("SeDefaultObjectMethod setting error: %8lx\n", Status );
+        DbgPrint("SeDefaultObjectMethod setting error: %8lx\n", Status);
         return FALSE;
     }
 
@@ -239,15 +244,11 @@ TestDefaultObjectMethod()
     //  Query the descriptor
     //
 
-    if (!NT_SUCCESS(Status = SeDefaultObjectMethod( NULL,
-                                                 QuerySecurityDescriptor,
-                                                 Buffer,
-                                                 AllAclInformation,
-                                                 &Length,
-                                                 &ObjectsSecurityDescriptor,
-                                                 PagedPool ))) {
+    if (!NT_SUCCESS(Status = SeDefaultObjectMethod(NULL, QuerySecurityDescriptor, Buffer, AllAclInformation, &Length,
+                                                   &ObjectsSecurityDescriptor, PagedPool)))
+    {
 
-        DbgPrint("SeDefaultObjectMethod reading error: %8lx\n", Status );
+        DbgPrint("SeDefaultObjectMethod reading error: %8lx\n", Status);
         return FALSE;
     }
 
@@ -255,17 +256,13 @@ TestDefaultObjectMethod()
     //  Replace the descriptor
     //
 
-    BuildAcl( Wilma, Acl, 1024 );
+    BuildAcl(Wilma, Acl, 1024);
 
-    if (!NT_SUCCESS(Status = SeDefaultObjectMethod( NULL,
-                                                 SetSecurityDescriptor,
-                                                 &SecurityDescriptor,
-                                                 AllAclInformation,
-                                                 &Length,
-                                                 &ObjectsSecurityDescriptor,
-                                                 PagedPool ))) {
+    if (!NT_SUCCESS(Status = SeDefaultObjectMethod(NULL, SetSecurityDescriptor, &SecurityDescriptor, AllAclInformation,
+                                                   &Length, &ObjectsSecurityDescriptor, PagedPool)))
+    {
 
-        DbgPrint("SeDefaultObjectMethod reading error: %8lx\n", Status );
+        DbgPrint("SeDefaultObjectMethod reading error: %8lx\n", Status);
         return FALSE;
     }
 
@@ -273,15 +270,11 @@ TestDefaultObjectMethod()
     //  Delete the descriptor
     //
 
-    if (!NT_SUCCESS(Status = SeDefaultObjectMethod( NULL,
-                                                 DeleteSecurityDescriptor,
-                                                 NULL,
-                                                 0,
-                                                 NULL,
-                                                 &ObjectsSecurityDescriptor,
-                                                 PagedPool ))) {
+    if (!NT_SUCCESS(Status = SeDefaultObjectMethod(NULL, DeleteSecurityDescriptor, NULL, 0, NULL,
+                                                   &ObjectsSecurityDescriptor, PagedPool)))
+    {
 
-        DbgPrint("SeDefaultObjectMethod deleting error: %8lx\n", Status );
+        DbgPrint("SeDefaultObjectMethod deleting error: %8lx\n", Status);
         return FALSE;
     }
 
@@ -291,7 +284,7 @@ TestDefaultObjectMethod()
     return TRUE;
 }
 
-
+
 BOOLEAN
 TestCaptureSecurityDescriptor()
 {
@@ -301,12 +294,12 @@ TestCaptureSecurityDescriptor()
     PSECURITY_DESCRIPTOR NewDescriptor;
     NTSTATUS Status;
 
-    Sacl = (PACL)ExAllocatePool( PagedPool, 1024 );
-    Dacl = (PACL)ExAllocatePool( PagedPool, 1024 );
-    BuildAcl( Pebbles, Sacl, 1024 );
-    BuildAcl( Barney, Dacl, 1024 );
+    Sacl = (PACL)ExAllocatePool(PagedPool, 1024);
+    Dacl = (PACL)ExAllocatePool(PagedPool, 1024);
+    BuildAcl(Pebbles, Sacl, 1024);
+    BuildAcl(Barney, Dacl, 1024);
 
-    DiscretionarySecurityDescriptor( &SecurityDescriptor, Dacl );
+    DiscretionarySecurityDescriptor(&SecurityDescriptor, Dacl);
     SecurityDescriptor.SecurityInformationClass = AllAclInformation;
     SecurityDescriptor.SystemAcl = Sacl;
 
@@ -314,12 +307,10 @@ TestCaptureSecurityDescriptor()
     //  Capture kernel mode and don't force
     //
 
-    if (!NT_SUCCESS(Status = SeCaptureSecurityDescriptor( &SecurityDescriptor,
-                                                       KernelMode,
-                                                       PagedPool,
-                                                       FALSE,
-                                                       &NewDescriptor ))) {
-        DbgPrint("SeCapture Error, KernelMode, FALSE : %8lx\n", Status );
+    if (!NT_SUCCESS(Status =
+                        SeCaptureSecurityDescriptor(&SecurityDescriptor, KernelMode, PagedPool, FALSE, &NewDescriptor)))
+    {
+        DbgPrint("SeCapture Error, KernelMode, FALSE : %8lx\n", Status);
         return FALSE;
     }
 
@@ -327,30 +318,30 @@ TestCaptureSecurityDescriptor()
     //  Capture kernel mode and force
     //
 
-    if (!NT_SUCCESS(Status = SeCaptureSecurityDescriptor( &SecurityDescriptor,
-                                                       KernelMode,
-                                                       PagedPool,
-                                                       TRUE,
-                                                       &NewDescriptor ))) {
-        DbgPrint("SeCapture Error, KernelMode, TRUE : %8lx\n", Status );
+    if (!NT_SUCCESS(Status =
+                        SeCaptureSecurityDescriptor(&SecurityDescriptor, KernelMode, PagedPool, TRUE, &NewDescriptor)))
+    {
+        DbgPrint("SeCapture Error, KernelMode, TRUE : %8lx\n", Status);
         return FALSE;
-    } else {
-        ExFreePool( NewDescriptor );
+    }
+    else
+    {
+        ExFreePool(NewDescriptor);
     }
 
     //
     //  Capture user mode
     //
 
-    if (!NT_SUCCESS(Status = SeCaptureSecurityDescriptor( &SecurityDescriptor,
-                                                       UserMode,
-                                                       PagedPool,
-                                                       TRUE,
-                                                       &NewDescriptor ))) {
-        DbgPrint("SeCapture Error, UserMode, FALSE : %8lx\n", Status );
+    if (!NT_SUCCESS(Status =
+                        SeCaptureSecurityDescriptor(&SecurityDescriptor, UserMode, PagedPool, TRUE, &NewDescriptor)))
+    {
+        DbgPrint("SeCapture Error, UserMode, FALSE : %8lx\n", Status);
         return FALSE;
-    } else {
-        ExFreePool( NewDescriptor );
+    }
+    else
+    {
+        ExFreePool(NewDescriptor);
     }
 
     return TRUE;
@@ -370,26 +361,23 @@ TestAssignSecurity()
 
     NTSTATUS Status;
 
-    Acl = (PACL)ExAllocatePool( PagedPool, 1024 );
-    BuildAcl( Fred, Acl, 1024 );
+    Acl = (PACL)ExAllocatePool(PagedPool, 1024);
+    BuildAcl(Fred, Acl, 1024);
 
-    Token = (PACCESS_TOKEN)ExAllocatePool( PagedPool, 512 );
-    BuildToken( Fred, Token );
+    Token = (PACCESS_TOKEN)ExAllocatePool(PagedPool, 512);
+    BuildToken(Fred, Token);
 
-    DiscretionarySecurityDescriptor( &SecurityDescriptor, Acl );
+    DiscretionarySecurityDescriptor(&SecurityDescriptor, Acl);
 
     //
     //  Kernel mode, non dir, and no new
     //
 
     NewDescriptor = NULL;
-    if (!NT_SUCCESS(Status = SeAssignSecurity( &SecurityDescriptor,
-                                            &NewDescriptor,
-                                            FALSE,
-                                            Token,
-                                            &GenericMapping,
-                                            KernelMode ))) {
-        DbgPrint("SeAssign Error NoNew, NoDir, Kernel : %8lx\n", Status );
+    if (!NT_SUCCESS(
+            Status = SeAssignSecurity(&SecurityDescriptor, &NewDescriptor, FALSE, Token, &GenericMapping, KernelMode)))
+    {
+        DbgPrint("SeAssign Error NoNew, NoDir, Kernel : %8lx\n", Status);
         return FALSE;
     }
 
@@ -397,13 +385,10 @@ TestAssignSecurity()
     //  Kernel mode, non dir, and new
     //
 
-    if (!NT_SUCCESS(Status = SeAssignSecurity( &SecurityDescriptor,
-                                            &NewDescriptor,
-                                            FALSE,
-                                            Token,
-                                            &GenericMapping,
-                                            KernelMode ))) {
-        DbgPrint("SeAssign Error New, NoDir, Kernel : %8lx\n", Status );
+    if (!NT_SUCCESS(
+            Status = SeAssignSecurity(&SecurityDescriptor, &NewDescriptor, FALSE, Token, &GenericMapping, KernelMode)))
+    {
+        DbgPrint("SeAssign Error New, NoDir, Kernel : %8lx\n", Status);
         return FALSE;
     }
 
@@ -412,13 +397,10 @@ TestAssignSecurity()
     //
 
     NewDescriptor = NULL;
-    if (!NT_SUCCESS(Status = SeAssignSecurity( &SecurityDescriptor,
-                                            &NewDescriptor,
-                                            TRUE,
-                                            Token,
-                                            &GenericMapping,
-                                            KernelMode ))) {
-        DbgPrint("SeAssign Error NoNew, Dir, Kernel : %8lx\n", Status );
+    if (!NT_SUCCESS(
+            Status = SeAssignSecurity(&SecurityDescriptor, &NewDescriptor, TRUE, Token, &GenericMapping, KernelMode)))
+    {
+        DbgPrint("SeAssign Error NoNew, Dir, Kernel : %8lx\n", Status);
         return FALSE;
     }
 
@@ -426,13 +408,10 @@ TestAssignSecurity()
     //  Kernel mode, dir, and new
     //
 
-    if (!NT_SUCCESS(Status = SeAssignSecurity( &SecurityDescriptor,
-                                            &NewDescriptor,
-                                            TRUE,
-                                            Token,
-                                            &GenericMapping,
-                                            KernelMode ))) {
-        DbgPrint("SeAssign Error New, Dir, Kernel : %8lx\n", Status );
+    if (!NT_SUCCESS(
+            Status = SeAssignSecurity(&SecurityDescriptor, &NewDescriptor, TRUE, Token, &GenericMapping, KernelMode)))
+    {
+        DbgPrint("SeAssign Error New, Dir, Kernel : %8lx\n", Status);
         return FALSE;
     }
 
@@ -442,13 +421,10 @@ TestAssignSecurity()
     //
 
     NewDescriptor = NULL;
-    if (!NT_SUCCESS(Status = SeAssignSecurity( &SecurityDescriptor,
-                                            &NewDescriptor,
-                                            FALSE,
-                                            Token,
-                                            &GenericMapping,
-                                            UserMode ))) {
-        DbgPrint("SeAssign Error NoNew, NoDir, User : %8lx\n", Status );
+    if (!NT_SUCCESS(Status =
+                        SeAssignSecurity(&SecurityDescriptor, &NewDescriptor, FALSE, Token, &GenericMapping, UserMode)))
+    {
+        DbgPrint("SeAssign Error NoNew, NoDir, User : %8lx\n", Status);
         return FALSE;
     }
 
@@ -456,13 +432,10 @@ TestAssignSecurity()
     //  User mode, non dir, and new
     //
 
-    if (!NT_SUCCESS(Status = SeAssignSecurity( &SecurityDescriptor,
-                                            &NewDescriptor,
-                                            FALSE,
-                                            Token,
-                                            &GenericMapping,
-                                            UserMode ))) {
-        DbgPrint("SeAssign Error New, NoDir, User : %8lx\n", Status );
+    if (!NT_SUCCESS(Status =
+                        SeAssignSecurity(&SecurityDescriptor, &NewDescriptor, FALSE, Token, &GenericMapping, UserMode)))
+    {
+        DbgPrint("SeAssign Error New, NoDir, User : %8lx\n", Status);
         return FALSE;
     }
 
@@ -471,13 +444,10 @@ TestAssignSecurity()
     //
 
     NewDescriptor = NULL;
-    if (!NT_SUCCESS(Status = SeAssignSecurity( &SecurityDescriptor,
-                                            &NewDescriptor,
-                                            TRUE,
-                                            Token,
-                                            &GenericMapping,
-                                            UserMode ))) {
-        DbgPrint("SeAssign Error NoNew, Dir, User : %8lx\n", Status );
+    if (!NT_SUCCESS(Status =
+                        SeAssignSecurity(&SecurityDescriptor, &NewDescriptor, TRUE, Token, &GenericMapping, UserMode)))
+    {
+        DbgPrint("SeAssign Error NoNew, Dir, User : %8lx\n", Status);
         return FALSE;
     }
 
@@ -485,20 +455,17 @@ TestAssignSecurity()
     //  User mode, dir, and new
     //
 
-    if (!NT_SUCCESS(Status = SeAssignSecurity( &SecurityDescriptor,
-                                            &NewDescriptor,
-                                            TRUE,
-                                            Token,
-                                            &GenericMapping,
-                                            UserMode ))) {
-        DbgPrint("SeAssign Error New, Dir, User : %8lx\n", Status );
+    if (!NT_SUCCESS(Status =
+                        SeAssignSecurity(&SecurityDescriptor, &NewDescriptor, TRUE, Token, &GenericMapping, UserMode)))
+    {
+        DbgPrint("SeAssign Error New, Dir, User : %8lx\n", Status);
         return FALSE;
     }
 
     return TRUE;
 }
 
-
+
 BOOLEAN
 TestAccessCheck()
 {
@@ -507,23 +474,20 @@ TestAccessCheck()
 
     PACCESS_TOKEN Token;
 
-    Acl = (PACL)ExAllocatePool( PagedPool, 1024 );
-    BuildAcl( Fred, Acl, 1024 );
+    Acl = (PACL)ExAllocatePool(PagedPool, 1024);
+    BuildAcl(Fred, Acl, 1024);
 
-    Token = (PACCESS_TOKEN)ExAllocatePool( PagedPool, 512 );
-    BuildToken( Fred, Token );
+    Token = (PACCESS_TOKEN)ExAllocatePool(PagedPool, 512);
+    BuildToken(Fred, Token);
 
-    DiscretionarySecurityDescriptor( &SecurityDescriptor, Acl );
+    DiscretionarySecurityDescriptor(&SecurityDescriptor, Acl);
 
     //
     //  Test should be successful based on aces
     //
 
-    if (!SeAccessCheck( &SecurityDescriptor,
-                        Token,
-                        0x00000001,
-                        NULL,
-                        UserMode )) {
+    if (!SeAccessCheck(&SecurityDescriptor, Token, 0x00000001, NULL, UserMode))
+    {
         DbgPrint("SeAccessCheck Error should allow access\n");
         return FALSE;
     }
@@ -532,11 +496,8 @@ TestAccessCheck()
     //  Test should be successful based on owner
     //
 
-    if (!SeAccessCheck( &SecurityDescriptor,
-                        Token,
-                        READ_CONTROL,
-                        &FredGuid,
-                        UserMode )) {
+    if (!SeAccessCheck(&SecurityDescriptor, Token, READ_CONTROL, &FredGuid, UserMode))
+    {
         DbgPrint("SeAccessCheck Error should allow owner\n");
         return FALSE;
     }
@@ -545,11 +506,8 @@ TestAccessCheck()
     //  Test should be unsuccessful based on aces
     //
 
-    if (SeAccessCheck( &SecurityDescriptor,
-                       Token,
-                       0x0000000f,
-                       &FredGuid,
-                       UserMode )) {
+    if (SeAccessCheck(&SecurityDescriptor, Token, 0x0000000f, &FredGuid, UserMode))
+    {
         DbgPrint("SeAccessCheck Error shouldn't allow access\n");
         return FALSE;
     }
@@ -558,11 +516,8 @@ TestAccessCheck()
     //  Test should be unsuccessful based on non owner
     //
 
-    if (SeAccessCheck( &SecurityDescriptor,
-                       Token,
-                       READ_CONTROL,
-                       &BarneyGuid,
-                       UserMode )) {
+    if (SeAccessCheck(&SecurityDescriptor, Token, READ_CONTROL, &BarneyGuid, UserMode))
+    {
         DbgPrint("SeAccessCheck Error shouldn't allow non owner access\n");
         return FALSE;
     }
@@ -570,11 +525,10 @@ TestAccessCheck()
     return TRUE;
 }
 
-
+
 BOOLEAN
 TestGenerateMessage()
 {
     return TRUE;
 }
-
 

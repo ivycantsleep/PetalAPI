@@ -9,16 +9,14 @@
 
 #include "pch.h"
 
-#ifdef  LOCKABLE_PRAGMA
+#ifdef LOCKABLE_PRAGMA
 #pragma ACPI_LOCKABLE_DATA
 #pragma ACPI_LOCKABLE_CODE
 #endif
 
 NTSTATUS
 LOCAL
-NewContext(
-    PPCTXT ppctxt
-    )
+NewContext(PPCTXT ppctxt)
 /*++
 
 Routine Description:
@@ -44,34 +42,33 @@ Return Value:
 --*/
 {
     TRACENAME("NEWCONTEXT")
-    KIRQL       oldIrql;
-    NTSTATUS    rc = STATUS_SUCCESS;
+    KIRQL oldIrql;
+    NTSTATUS rc = STATUS_SUCCESS;
 
     ENTER(2, ("NewContext(ppctxt=%x)\n", ppctxt));
 
-    *ppctxt = ExAllocateFromNPagedLookasideList(
-        &AMLIContextLookAsideList
-        );
-    if (*ppctxt == NULL) {
+    *ppctxt = ExAllocateFromNPagedLookasideList(&AMLIContextLookAsideList);
+    if (*ppctxt == NULL)
+    {
 
         AMLI_WARN(("NewContext: Could not Allocate New Context"));
         rc = AMLIERR_OUT_OF_MEM;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Bookkeeping for memory resources to determine the high
         // water mark
         //
-        KeAcquireSpinLock(&gdwGContextSpinLock, &oldIrql );
+        KeAcquireSpinLock(&gdwGContextSpinLock, &oldIrql);
         gdwcCTObjs++;
-        if (gdwcCTObjs > 0 &&
-            (ULONG) gdwcCTObjs > gdwcCTObjsMax) {
+        if (gdwcCTObjs > 0 && (ULONG)gdwcCTObjs > gdwcCTObjsMax)
+        {
 
             gdwcCTObjsMax = gdwcCTObjs;
-
         }
-        KeReleaseSpinLock(&gdwGContextSpinLock, oldIrql );
+        KeReleaseSpinLock(&gdwGContextSpinLock, oldIrql);
 
         //
         // Context Initialization
@@ -80,18 +77,13 @@ Return Value:
         AcquireMutex(&gmutCtxtList);
         ListInsertTail(&(*ppctxt)->listCtxt, &gplistCtxtHead);
         ReleaseMutex(&gmutCtxtList);
-
     }
 
     EXIT(2, ("NewContext=%x (pctxt=%x)\n", rc, *ppctxt));
     return rc;
-}  //NewContext
+} //NewContext
 
-VOID
-LOCAL
-FreeContext(
-    PCTXT pctxt
-    )
+VOID LOCAL FreeContext(PCTXT pctxt)
 /*++
 
 Routine Description:
@@ -110,7 +102,7 @@ Return Value:
 --*/
 {
     TRACENAME("FREECONTEXT")
-    KIRQL   oldIrql;
+    KIRQL oldIrql;
 
     ENTER(2, ("FreeContext(pctxt=%x)\n", pctxt));
     ASSERT(pctxt->powner == NULL);
@@ -121,10 +113,10 @@ Return Value:
     AcquireMutex(&gmutCtxtList);
     ListRemoveEntry(&pctxt->listCtxt, &gplistCtxtHead);
 
-    if (pctxt->pplistCtxtQueue != NULL) {
+    if (pctxt->pplistCtxtQueue != NULL)
+    {
 
         ListRemoveEntry(&pctxt->listQueue, pctxt->pplistCtxtQueue);
-
     }
 
     //
@@ -141,20 +133,15 @@ Return Value:
     // Bookkeeping for memory resources to determine the high
     // water mark
     //
-    KeAcquireSpinLock(&gdwGContextSpinLock, &oldIrql );
+    KeAcquireSpinLock(&gdwGContextSpinLock, &oldIrql);
     gdwcCTObjs--;
     ASSERT(gdwcCTObjs >= 0);
-    KeReleaseSpinLock(&gdwGContextSpinLock, oldIrql );
+    KeReleaseSpinLock(&gdwGContextSpinLock, oldIrql);
 
     //
     // Log the end of a method
     //
-    ACPIWMILOGEVENT((1,
-                EVENT_TRACE_TYPE_END,
-                GUID_List[AMLI_LOG_GUID],
-                "Object = %s",
-                GetObjectPath(pctxt->pnsObj)
-               ));
+    ACPIWMILOGEVENT((1, EVENT_TRACE_TYPE_END, GUID_List[AMLI_LOG_GUID], "Object = %s", GetObjectPath(pctxt->pnsObj)));
 
 
     //
@@ -184,17 +171,16 @@ VOID LOCAL InitContext(PCTXT pctxt, ULONG dwLen)
     pctxt->dwSig = SIG_CTXT;
     pctxt->pbCtxtEnd = (PUCHAR)pctxt + dwLen;
     pctxt->pheapCurrent = &pctxt->LocalHeap;
-//  #ifdef DEBUGGER
-//    KeQuerySystemTime(&pctxt->Timestamp);
-//  #endif
+    //  #ifdef DEBUGGER
+    //    KeQuerySystemTime(&pctxt->Timestamp);
+    //  #endif
     KeInitializeDpc(&pctxt->Dpc, TimeoutCallback, pctxt);
     KeInitializeTimer(&pctxt->Timer);
-    InitHeap(&pctxt->LocalHeap,
-             (ULONG)(pctxt->pbCtxtEnd - (PUCHAR)&pctxt->LocalHeap));
+    InitHeap(&pctxt->LocalHeap, (ULONG)(pctxt->pbCtxtEnd - (PUCHAR)&pctxt->LocalHeap));
     pctxt->LocalHeap.pheapHead = &pctxt->LocalHeap;
 
     EXIT(2, ("InitContext!\n"));
-}       //InitContext
+} //InitContext
 
 /***LP  IsStackEmpty - determine if the stack is empty
  *
@@ -218,7 +204,7 @@ BOOLEAN LOCAL IsStackEmpty(PCTXT pctxt)
 
     EXIT(2, ("IsStackEmpty=%x\n", rc));
     return rc;
-}       //IsStackEmpty
+} //IsStackEmpty
 
 /***LP  PushFrame - Push a new frame on the stack
  *
@@ -235,14 +221,13 @@ BOOLEAN LOCAL IsStackEmpty(PCTXT pctxt)
  *      returns AMLIERR_ code
  */
 
-NTSTATUS LOCAL PushFrame(PCTXT pctxt, ULONG dwSig, ULONG dwLen,
-                         PFNPARSE pfnParse, PVOID *ppvFrame)
+NTSTATUS LOCAL PushFrame(PCTXT pctxt, ULONG dwSig, ULONG dwLen, PFNPARSE pfnParse, PVOID *ppvFrame)
 {
     TRACENAME("PUSHFRAME")
     NTSTATUS rc = STATUS_SUCCESS;
 
-    ENTER(2, ("PushFrame(pctxt=%p,Sig=%s,Len=%d,pfnParse=%p,ppvFrame=%p)\n",
-              pctxt, NameSegString(dwSig), dwLen, pfnParse, ppvFrame));
+    ENTER(2, ("PushFrame(pctxt=%p,Sig=%s,Len=%d,pfnParse=%p,ppvFrame=%p)\n", pctxt, NameSegString(dwSig), dwLen,
+              pfnParse, ppvFrame));
     //
     // Check to see if we have enough space, make sure it doesn't run into the
     // heap.
@@ -263,24 +248,21 @@ NTSTATUS LOCAL PushFrame(PCTXT pctxt, ULONG dwSig, ULONG dwLen,
             *ppvFrame = pfh;
         }
 
-      #ifdef DEBUG
-        if ((ULONG)(pctxt->pbCtxtEnd - pctxt->LocalHeap.pbHeapEnd) >
-            gdwLocalStackMax)
+#ifdef DEBUG
+        if ((ULONG)(pctxt->pbCtxtEnd - pctxt->LocalHeap.pbHeapEnd) > gdwLocalStackMax)
         {
-            gdwLocalStackMax = (ULONG)(pctxt->pbCtxtEnd -
-                                       pctxt->LocalHeap.pbHeapEnd);
+            gdwLocalStackMax = (ULONG)(pctxt->pbCtxtEnd - pctxt->LocalHeap.pbHeapEnd);
         }
-      #endif
+#endif
     }
     else
     {
-        rc = AMLI_LOGERR(AMLIERR_STACK_OVERFLOW,
-                         ("PushFrame: stack ran out of space"));
+        rc = AMLI_LOGERR(AMLIERR_STACK_OVERFLOW, ("PushFrame: stack ran out of space"));
     }
 
     EXIT(2, ("PushFrame=%x (StackTop=%x)\n", rc, pctxt->LocalHeap.pbHeapEnd));
     return rc;
-}       //PushFrame
+} //PushFrame
 
 /***LP  PopFrame - Pop a frame off the stack
  *
@@ -299,11 +281,10 @@ VOID LOCAL PopFrame(PCTXT pctxt)
 
     ASSERT(!IsStackEmpty(pctxt));
     ASSERT(((PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd)->dwSig != 0);
-    pctxt->LocalHeap.pbHeapEnd +=
-        ((PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd)->dwLen;
+    pctxt->LocalHeap.pbHeapEnd += ((PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd)->dwLen;
 
     EXIT(2, ("PopFrame! (StackTop=%p)\n", pctxt->LocalHeap.pbHeapEnd));
-}       //PopFrame
+} //PopFrame
 
 /***LP  PushPost - Push a Post frame on the stack
  *
@@ -320,18 +301,16 @@ VOID LOCAL PopFrame(PCTXT pctxt)
  *      returns AMLIERR_ code
  */
 
-NTSTATUS LOCAL PushPost(PCTXT pctxt, PFNPARSE pfnPost, ULONG_PTR uipData1,
-                        ULONG_PTR uipData2, POBJDATA pdataResult)
+NTSTATUS LOCAL PushPost(PCTXT pctxt, PFNPARSE pfnPost, ULONG_PTR uipData1, ULONG_PTR uipData2, POBJDATA pdataResult)
 {
     TRACENAME("PUSHPOST")
     NTSTATUS rc = STATUS_SUCCESS;
     PPOST ppost;
 
-    ENTER(2, ("PushPost(pctxt=%x,pfnPost=%x,Data1=%x,Data2=%x,pdataResult=%x)\n",
-              pctxt, pfnPost, uipData1, uipData2, pdataResult));
+    ENTER(2, ("PushPost(pctxt=%x,pfnPost=%x,Data1=%x,Data2=%x,pdataResult=%x)\n", pctxt, pfnPost, uipData1, uipData2,
+              pdataResult));
 
-    if ((rc = PushFrame(pctxt, SIG_POST, sizeof(POST), pfnPost, &ppost)) ==
-        STATUS_SUCCESS)
+    if ((rc = PushFrame(pctxt, SIG_POST, sizeof(POST), pfnPost, &ppost)) == STATUS_SUCCESS)
     {
         ppost->uipData1 = uipData1;
         ppost->uipData2 = uipData2;
@@ -340,7 +319,7 @@ NTSTATUS LOCAL PushPost(PCTXT pctxt, PFNPARSE pfnPost, ULONG_PTR uipData1,
 
     EXIT(2, ("PushPost=%x (ppost=%x)\n", rc, ppost));
     return rc;
-}       //PushPost
+} //PushPost
 
 /***LP  PushScope - Push a ParseScope frame on the stack
  *
@@ -360,20 +339,17 @@ NTSTATUS LOCAL PushPost(PCTXT pctxt, PFNPARSE pfnPost, ULONG_PTR uipData1,
  *      returns AMLIERR_ code
  */
 
-NTSTATUS LOCAL PushScope(PCTXT pctxt, PUCHAR pbOpBegin, PUCHAR pbOpEnd,
-                         PUCHAR pbOpRet, PNSOBJ pnsScope, POBJOWNER powner,
-                         PHEAP pheap, POBJDATA pdataResult)
+NTSTATUS LOCAL PushScope(PCTXT pctxt, PUCHAR pbOpBegin, PUCHAR pbOpEnd, PUCHAR pbOpRet, PNSOBJ pnsScope,
+                         POBJOWNER powner, PHEAP pheap, POBJDATA pdataResult)
 {
     TRACENAME("PUSHSCOPE")
     NTSTATUS rc = STATUS_SUCCESS;
     PSCOPE pscope;
 
-    ENTER(2, ("PushScope(pctxt=%x,pbOpBegin=%x,pbOpEnd=%x,pbOpRet=%x,pnsScope=%x,pheap=%x,pdataResult=%x)\n",
-              pctxt, pbOpBegin, pbOpEnd, pbOpRet, pnsScope, pheap,
-              pdataResult));
+    ENTER(2, ("PushScope(pctxt=%x,pbOpBegin=%x,pbOpEnd=%x,pbOpRet=%x,pnsScope=%x,pheap=%x,pdataResult=%x)\n", pctxt,
+              pbOpBegin, pbOpEnd, pbOpRet, pnsScope, pheap, pdataResult));
 
-    if ((rc = PushFrame(pctxt, SIG_SCOPE, sizeof(SCOPE), ParseScope, &pscope))
-        == STATUS_SUCCESS)
+    if ((rc = PushFrame(pctxt, SIG_SCOPE, sizeof(SCOPE), ParseScope, &pscope)) == STATUS_SUCCESS)
     {
         pctxt->pbOp = pbOpBegin;
         pscope->pbOpEnd = pbOpEnd;
@@ -389,7 +365,7 @@ NTSTATUS LOCAL PushScope(PCTXT pctxt, PUCHAR pbOpBegin, PUCHAR pbOpEnd,
 
     EXIT(2, ("PushScope=%x (pscope=%x)\n", rc, pscope));
     return rc;
-}       //PushScope
+} //PushScope
 
 /***LP  PushCall - Push a Call frame on the stack
  *
@@ -410,14 +386,11 @@ NTSTATUS LOCAL PushCall(PCTXT pctxt, PNSOBJ pnsMethod, POBJDATA pdataResult)
     NTSTATUS rc = STATUS_SUCCESS;
     PCALL pcall;
 
-    ENTER(2, ("PushCall(pctxt=%x,pnsMethod=%s,pdataResult=%x)\n",
-              pctxt, GetObjectPath(pnsMethod), pdataResult));
+    ENTER(2, ("PushCall(pctxt=%x,pnsMethod=%s,pdataResult=%x)\n", pctxt, GetObjectPath(pnsMethod), pdataResult));
 
-    ASSERT((pnsMethod == NULL) ||
-           (pnsMethod->ObjData.dwDataType == OBJTYPE_METHOD));
+    ASSERT((pnsMethod == NULL) || (pnsMethod->ObjData.dwDataType == OBJTYPE_METHOD));
 
-    if ((rc = PushFrame(pctxt, SIG_CALL, sizeof(CALL), ParseCall, &pcall))
-        == STATUS_SUCCESS)
+    if ((rc = PushFrame(pctxt, SIG_CALL, sizeof(CALL), ParseCall, &pcall)) == STATUS_SUCCESS)
     {
         if (pnsMethod != NULL)
         {
@@ -431,16 +404,13 @@ NTSTATUS LOCAL PushCall(PCTXT pctxt, PNSOBJ pnsMethod, POBJDATA pdataResult)
             pcall->icArgs = (int)(pm->bMethodFlags & METHOD_NUMARG_MASK);
             if (pcall->icArgs > 0)
             {
-                if ((pcall->pdataArgs = NEWODOBJ(pctxt->pheapCurrent,
-                                                 sizeof(OBJDATA)*pcall->icArgs))
-                    == NULL)
+                if ((pcall->pdataArgs = NEWODOBJ(pctxt->pheapCurrent, sizeof(OBJDATA) * pcall->icArgs)) == NULL)
                 {
-                    rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                                     ("PushCall: failed to allocate argument objects"));
+                    rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("PushCall: failed to allocate argument objects"));
                 }
                 else
                 {
-                    MEMZERO(pcall->pdataArgs, sizeof(OBJDATA)*pcall->icArgs);
+                    MEMZERO(pcall->pdataArgs, sizeof(OBJDATA) * pcall->icArgs);
                 }
             }
         }
@@ -462,7 +432,7 @@ NTSTATUS LOCAL PushCall(PCTXT pctxt, PNSOBJ pnsMethod, POBJDATA pdataResult)
 
     EXIT(2, ("PushCall=%x (pcall=%x)\n", rc, pcall));
     return rc;
-}       //PushCall
+} //PushCall
 
 /***LP  PushTerm - Push a Term frame on the stack
  *
@@ -479,43 +449,38 @@ NTSTATUS LOCAL PushCall(PCTXT pctxt, PNSOBJ pnsMethod, POBJDATA pdataResult)
  *      returns AMLIERR_ code
  */
 
-NTSTATUS LOCAL PushTerm(PCTXT pctxt, PUCHAR pbOpTerm, PUCHAR pbScopeEnd,
-                        PAMLTERM pamlterm, POBJDATA pdataResult)
+NTSTATUS LOCAL PushTerm(PCTXT pctxt, PUCHAR pbOpTerm, PUCHAR pbScopeEnd, PAMLTERM pamlterm, POBJDATA pdataResult)
 {
     TRACENAME("PUSHTERM")
     NTSTATUS rc = STATUS_SUCCESS;
     PTERM pterm;
 
-    ENTER(2, ("PushTerm(pctxt=%x,pbOpTerm=%x,pbScopeEnd=%x,pamlterm=%x,pdataResult=%x)\n",
-              pctxt, pbOpTerm, pbScopeEnd, pamlterm, pdataResult));
+    ENTER(2, ("PushTerm(pctxt=%x,pbOpTerm=%x,pbScopeEnd=%x,pamlterm=%x,pdataResult=%x)\n", pctxt, pbOpTerm, pbScopeEnd,
+              pamlterm, pdataResult));
 
-    if ((rc = PushFrame(pctxt, SIG_TERM, sizeof(TERM), ParseTerm, &pterm)) ==
-        STATUS_SUCCESS)
+    if ((rc = PushFrame(pctxt, SIG_TERM, sizeof(TERM), ParseTerm, &pterm)) == STATUS_SUCCESS)
     {
         pterm->pbOpTerm = pbOpTerm;
         pterm->pbScopeEnd = pbScopeEnd;
         pterm->pamlterm = pamlterm;
         pterm->pdataResult = pdataResult;
-        pterm->icArgs = pamlterm->pszArgTypes? STRLEN(pamlterm->pszArgTypes): 0;
+        pterm->icArgs = pamlterm->pszArgTypes ? STRLEN(pamlterm->pszArgTypes) : 0;
         if (pterm->icArgs > 0)
         {
-            if ((pterm->pdataArgs = NEWODOBJ(pctxt->pheapCurrent,
-                                             sizeof(OBJDATA)*pterm->icArgs)) ==
-                NULL)
+            if ((pterm->pdataArgs = NEWODOBJ(pctxt->pheapCurrent, sizeof(OBJDATA) * pterm->icArgs)) == NULL)
             {
-                rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                                 ("PushTerm: failed to allocate argument objects"));
+                rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("PushTerm: failed to allocate argument objects"));
             }
             else
             {
-                MEMZERO(pterm->pdataArgs, sizeof(OBJDATA)*pterm->icArgs);
+                MEMZERO(pterm->pdataArgs, sizeof(OBJDATA) * pterm->icArgs);
             }
         }
     }
 
     EXIT(2, ("PushTerm=%x (pterm=%x)\n", rc, pterm));
     return rc;
-}       //PushTerm
+} //PushTerm
 
 /***LP  RunContext - Run a context
  *
@@ -555,8 +520,7 @@ NTSTATUS LOCAL RunContext(PCTXT pctxt)
     gReadyQueue.pctxtCurrent = pctxt;
     gReadyQueue.pkthCurrent = KeGetCurrentThread();
 
-    LOGSCHEDEVENT('RUNC', (ULONG_PTR)pctxt, (ULONG_PTR)
-                  (pctxt->pnctxt? pctxt->pnctxt->pnsObj: pctxt->pnsObj),
+    LOGSCHEDEVENT('RUNC', (ULONG_PTR)pctxt, (ULONG_PTR)(pctxt->pnctxt ? pctxt->pnctxt->pnsObj : pctxt->pnsObj),
                   (ULONG_PTR)pctxt->dwfCtxt);
 
     //
@@ -619,7 +583,7 @@ NTSTATUS LOCAL RunContext(PCTXT pctxt)
         // Context became Ready during a pending operation, keep
         // dispatching.
         //
-        ASSERT (rc == AMLISTA_PENDING);
+        ASSERT(rc == AMLISTA_PENDING);
     }
 
     if (rc == AMLISTA_PENDING)
@@ -646,8 +610,8 @@ NTSTATUS LOCAL RunContext(PCTXT pctxt)
         {
             AsyncCallBack(pctxt, rc);
 
-            if(pctxt->dwfCtxt & CTXTF_ASYNC_EVAL)
-            {    
+            if (pctxt->dwfCtxt & CTXTF_ASYNC_EVAL)
+            {
                 rc = AMLISTA_PENDING;
             }
         }
@@ -660,7 +624,7 @@ NTSTATUS LOCAL RunContext(PCTXT pctxt)
             PRESOURCE pres;
 
             pres = CONTAINING_RECORD(pctxt->plistResources, RESOURCE, list);
-            ASSERT (pres->pctxtOwner == pctxt);
+            ASSERT(pres->pctxtOwner == pctxt);
 
             //
             // Note that it is the responsibility of the corresponding
@@ -669,20 +633,18 @@ NTSTATUS LOCAL RunContext(PCTXT pctxt)
             //
             switch (pres->dwResType)
             {
-                case RESTYPE_MUTEX:
-                    ReleaseASLMutex(pctxt, pres->pvResObj);
-                    break;
+            case RESTYPE_MUTEX:
+                ReleaseASLMutex(pctxt, pres->pvResObj);
+                break;
 
-                default:
-                    //
-                    // We should never come here.  In case we do, we need to
-                    // dequeue the unknown resource object and free it.
-                    //
-                    pres = CONTAINING_RECORD(
-                               ListRemoveHead(&pctxt->plistResources),
-                               RESOURCE, list);
-                    ASSERT(pres == NULL);
-                    FREECROBJ(pres);
+            default:
+                //
+                // We should never come here.  In case we do, we need to
+                // dequeue the unknown resource object and free it.
+                //
+                pres = CONTAINING_RECORD(ListRemoveHead(&pctxt->plistResources), RESOURCE, list);
+                ASSERT(pres == NULL);
+                FREECROBJ(pres);
             }
         }
 
@@ -719,4 +681,4 @@ NTSTATUS LOCAL RunContext(PCTXT pctxt)
 
     EXIT(2, ("RunContext=%x\n", rc));
     return rc;
-}       //RunContext
+} //RunContext

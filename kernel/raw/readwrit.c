@@ -26,11 +26,7 @@ Revision History:
 #endif
 
 NTSTATUS
-RawReadWriteDeviceControl (
-    IN PVCB Vcb,
-    IN PIRP Irp,
-    IN PIO_STACK_LOCATION IrpSp
-    )
+RawReadWriteDeviceControl(IN PVCB Vcb, IN PIRP Irp, IN PIO_STACK_LOCATION IrpSp)
 
 /*++
 
@@ -63,11 +59,11 @@ Return Value:
     //  it with success.
     //
 
-    if (((IrpSp->MajorFunction == IRP_MJ_READ) ||
-         (IrpSp->MajorFunction == IRP_MJ_WRITE)) &&
-        (IrpSp->Parameters.Read.Length == 0)) {
+    if (((IrpSp->MajorFunction == IRP_MJ_READ) || (IrpSp->MajorFunction == IRP_MJ_WRITE)) &&
+        (IrpSp->Parameters.Read.Length == 0))
+    {
 
-        RawCompleteRequest( Irp, STATUS_SUCCESS );
+        RawCompleteRequest(Irp, STATUS_SUCCESS);
 
         return STATUS_SUCCESS;
     }
@@ -80,7 +76,7 @@ Return Value:
     //  Get the next stack location, and copy over the stack location
     //
 
-    NextIrpSp = IoGetNextIrpStackLocation( Irp );
+    NextIrpSp = IoGetNextIrpStackLocation(Irp);
 
     *NextIrpSp = *IrpSp;
 
@@ -94,12 +90,7 @@ Return Value:
     //  Set up the completion routine
     //
 
-    IoSetCompletionRoutine( Irp,
-                            RawCompletionRoutine,
-                            NULL,
-                            TRUE,
-                            TRUE,
-                            TRUE );
+    IoSetCompletionRoutine(Irp, RawCompletionRoutine, NULL, TRUE, TRUE, TRUE);
 
     //
     //  Send the request.
@@ -108,5 +99,4 @@ Return Value:
     Status = IoCallDriver(Vcb->TargetDeviceObject, Irp);
 
     return Status;
-
 }

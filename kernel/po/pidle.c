@@ -22,43 +22,22 @@ Revision History:
 #include "pop.h"
 
 #if DBG
-#define IDLE_DEBUG_TABLE_SIZE   400
-ULONGLONG   ST[IDLE_DEBUG_TABLE_SIZE];
-ULONGLONG   ET[IDLE_DEBUG_TABLE_SIZE];
-ULONGLONG   TD[IDLE_DEBUG_TABLE_SIZE];
+#define IDLE_DEBUG_TABLE_SIZE 400
+ULONGLONG ST[IDLE_DEBUG_TABLE_SIZE];
+ULONGLONG ET[IDLE_DEBUG_TABLE_SIZE];
+ULONGLONG TD[IDLE_DEBUG_TABLE_SIZE];
 #endif
 
 
-VOID
-PopPromoteFromIdle0 (
-    IN PPROCESSOR_POWER_STATE PState,
-    IN PKTHREAD Thread
-    );
+VOID PopPromoteFromIdle0(IN PPROCESSOR_POWER_STATE PState, IN PKTHREAD Thread);
 
-VOID
-FASTCALL
-PopDemoteIdleness (
-    IN PPROCESSOR_POWER_STATE   PState,
-    IN PPOP_IDLE_HANDLER        IdleState
-    );
+VOID FASTCALL PopDemoteIdleness(IN PPROCESSOR_POWER_STATE PState, IN PPOP_IDLE_HANDLER IdleState);
 
-VOID
-FASTCALL
-PopPromoteIdleness (
-    IN PPROCESSOR_POWER_STATE   PState,
-    IN PPOP_IDLE_HANDLER        IdleState
-    );
+VOID FASTCALL PopPromoteIdleness(IN PPROCESSOR_POWER_STATE PState, IN PPOP_IDLE_HANDLER IdleState);
 
-VOID
-FASTCALL
-PopIdle0 (
-    IN PPROCESSOR_POWER_STATE PState
-    );
+VOID FASTCALL PopIdle0(IN PPROCESSOR_POWER_STATE PState);
 
-VOID
-PopConvertUsToPerfCount (
-    IN OUT PULONG   UsTime
-    );
+VOID PopConvertUsToPerfCount(IN OUT PULONG UsTime);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, PoInitializePrcb)
@@ -71,11 +50,7 @@ PopConvertUsToPerfCount (
 
 PPROCESSOR_IDLE_FUNCTION PopIdle0Function = PopIdle0;
 
-VOID
-FASTCALL
-PopIdle0SMT (
-    IN PPROCESSOR_POWER_STATE PState
-    );
+VOID FASTCALL PopIdle0SMT(IN PPROCESSOR_POWER_STATE PState);
 
 //
 // PopIdle0Function is a pointer to Idle0 function.
@@ -95,11 +70,7 @@ VOID
 #endif
 
 
-VOID
-FASTCALL
-PoInitializePrcb (
-    PKPRCB      Prcb
-    )
+VOID FASTCALL PoInitializePrcb(PKPRCB Prcb)
 /*++
 
 Routine Description:
@@ -126,33 +97,20 @@ Return Value:
     // Initialize to legacy function with promotion from it disabled
     //
 
-    Prcb->PowerState.Idle0KernelTimeLimit = (ULONG) -1;
+    Prcb->PowerState.Idle0KernelTimeLimit = (ULONG)-1;
     Prcb->PowerState.IdleFunction = PopIdle0;
     Prcb->PowerState.CurrentThrottle = POP_PERF_SCALE;
 
     //
     // Initialize the adaptive throttling subcomponents
     //
-    KeInitializeDpc(
-        &(Prcb->PowerState.PerfDpc),
-        PopPerfIdleDpc,
-        Prcb
-        );
-    KeSetTargetProcessorDpc(
-        &(Prcb->PowerState.PerfDpc),
-        Prcb->Number
-        );
-    KeInitializeTimer(
-        (PKTIMER) &(Prcb->PowerState.PerfTimer)
-        );
-
+    KeInitializeDpc(&(Prcb->PowerState.PerfDpc), PopPerfIdleDpc, Prcb);
+    KeSetTargetProcessorDpc(&(Prcb->PowerState.PerfDpc), Prcb->Number);
+    KeInitializeTimer((PKTIMER) & (Prcb->PowerState.PerfTimer));
 }
 
 
-VOID
-PopInitProcessorStateHandlers (
-    IN  PPROCESSOR_STATE_HANDLER    InputBuffer
-    )
+VOID PopInitProcessorStateHandlers(IN PPROCESSOR_STATE_HANDLER InputBuffer)
 /*++
 
 Routine Description:
@@ -180,16 +138,18 @@ Return Value:
     //
     // Allocate a buffer large enough to hold the larger structure
     //
-    if (StateHandler1->ThrottleScale > 1) {
+    if (StateHandler1->ThrottleScale > 1)
+    {
         PerfStates = StateHandler1->ThrottleScale;
-    } else {
+    }
+    else
+    {
         PerfStates = 0;
     }
-    StateHandler2 = ExAllocatePoolWithTag(PagedPool,
-                                          sizeof(PROCESSOR_STATE_HANDLER2) +
-                                          sizeof(PROCESSOR_PERF_LEVEL) * (PerfStates-1),
-                                          'dHoP');
-    if (!StateHandler2) {
+    StateHandler2 = ExAllocatePoolWithTag(
+        PagedPool, sizeof(PROCESSOR_STATE_HANDLER2) + sizeof(PROCESSOR_PERF_LEVEL) * (PerfStates - 1), 'dHoP');
+    if (!StateHandler2)
+    {
         ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
     }
     StateHandler2->NumPerfStates = PerfStates;
@@ -198,7 +158,8 @@ Return Value:
     // Fill in common information
     //
     StateHandler2->NumIdleHandlers = StateHandler1->NumIdleHandlers;
-    for (i=0;i<MAX_IDLE_HANDLERS;i++) {
+    for (i = 0; i < MAX_IDLE_HANDLERS; i++)
+    {
         StateHandler2->IdleHandler[i] = StateHandler1->IdleHandler[i];
     }
 
@@ -214,9 +175,10 @@ Return Value:
     //
     // Generate a perf level handler for each throttle step.
     //
-    for (i=0; i<StateHandler2->NumPerfStates;i++) {
+    for (i = 0; i < StateHandler2->NumPerfStates; i++)
+    {
 
-        Frequency = (UCHAR)((PerfStates-i)*POP_PERF_SCALE/PerfStates);
+        Frequency = (UCHAR)((PerfStates - i) * POP_PERF_SCALE / PerfStates);
         StateHandler2->PerfLevel[i].PercentFrequency = Frequency;
     }
 
@@ -224,18 +186,18 @@ Return Value:
     // We have built up our table, call off to PopInitProcessorStateHandlers2 for the rest
     // of the work. Note that this can raise an exception if there is an error.
     //
-    try {
+    try
+    {
         PopInitProcessorStateHandlers2(StateHandler2);
-    } finally {
+    }
+    finally
+    {
         ExFreePool(StateHandler2);
     }
 }
 
 
-VOID
-PopInitProcessorStateHandlers2 (
-    IN  PPROCESSOR_STATE_HANDLER2    InputBuffer
-    )
+VOID PopInitProcessorStateHandlers2(IN PPROCESSOR_STATE_HANDLER2 InputBuffer)
 /*++
 
 Routine Description:
@@ -252,25 +214,25 @@ Return Value:
 
 --*/
 {
-    PPROCESSOR_STATE_HANDLER2   processorHandler;
-    ULONG                       last;
-    ULONG                       i;
-    ULONG                       j;
-    ULONG                       max;
-    POP_IDLE_HANDLER            newIdle[MAX_IDLE_HANDLERS];
-    POP_IDLE_HANDLER            tempIdle[MAX_IDLE_HANDLERS];
-    NTSTATUS                    status;
+    PPROCESSOR_STATE_HANDLER2 processorHandler;
+    ULONG last;
+    ULONG i;
+    ULONG j;
+    ULONG max;
+    POP_IDLE_HANDLER newIdle[MAX_IDLE_HANDLERS];
+    POP_IDLE_HANDLER tempIdle[MAX_IDLE_HANDLERS];
+    NTSTATUS status;
 
-    processorHandler = (PPROCESSOR_STATE_HANDLER2) InputBuffer;
+    processorHandler = (PPROCESSOR_STATE_HANDLER2)InputBuffer;
 
     //
     // Install processor throttle support if present
     //
     status = PopSetPerfLevels(processorHandler);
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         ExRaiseStatus(status);
-
     }
 
     //
@@ -278,80 +240,77 @@ Return Value:
     // handlers (if any)
     //
     if ((KeNumberProcessors > 1 && processorHandler->NumIdleHandlers < 1) ||
-        (KeNumberProcessors == 1 && processorHandler->NumIdleHandlers <= 1)) {
+        (KeNumberProcessors == 1 && processorHandler->NumIdleHandlers <= 1))
+    {
 
         //
         // Use NULL and 0 to indicate the number of elements...
         //
-        PopIdleSwitchIdleHandlers( NULL, 0 );
+        PopIdleSwitchIdleHandlers(NULL, 0);
         return;
-
     }
 
     //
     // Get ready to build a set of idle state handlers
     //
-    RtlZeroMemory(newIdle, sizeof(POP_IDLE_HANDLER) * MAX_IDLE_HANDLERS );
-    RtlZeroMemory(tempIdle, sizeof(POP_IDLE_HANDLER) * MAX_IDLE_HANDLERS );
+    RtlZeroMemory(newIdle, sizeof(POP_IDLE_HANDLER) * MAX_IDLE_HANDLERS);
+    RtlZeroMemory(tempIdle, sizeof(POP_IDLE_HANDLER) * MAX_IDLE_HANDLERS);
 
     //
     // We don't support more than 3 handlers ...
     //
     max = processorHandler->NumIdleHandlers;
-    if (max > MAX_IDLE_HANDLERS) {
+    if (max > MAX_IDLE_HANDLERS)
+    {
 
         max = MAX_IDLE_HANDLERS;
-
     }
 
     //
     // Look at all the handlers provided to us...
     //
-    for (last = i = 0; i < max; i++) {
+    for (last = i = 0; i < max; i++)
+    {
 
         //
         // Ensure they were passed in ascending order
         //
         j = processorHandler->IdleHandler[i].HardwareLatency;
-        ASSERT (j >= last  &&  j <= 1000);
+        ASSERT(j >= last && j <= 1000);
         last = j;
 
         //
         // Fill in some defaults
         //
-        tempIdle[i].State       = (UCHAR) i;
-        tempIdle[i].IdleFunction= processorHandler->IdleHandler[i].Handler;
-        tempIdle[i].Latency     = j;
+        tempIdle[i].State = (UCHAR)i;
+        tempIdle[i].IdleFunction = processorHandler->IdleHandler[i].Handler;
+        tempIdle[i].Latency = j;
 
         //
         // Convert latency to perf rate scale
         //
         PopConvertUsToPerfCount(&tempIdle[i].Latency);
-
     }
 
     //
     // Apply policy to this set of states
     //
-    status = PopIdleUpdateIdleHandler( newIdle, tempIdle, max );
-    ASSERT( NT_SUCCESS( status ) );
-    if (!NT_SUCCESS( status ) ) {
+    status = PopIdleUpdateIdleHandler(newIdle, tempIdle, max);
+    ASSERT(NT_SUCCESS(status));
+    if (!NT_SUCCESS(status))
+    {
 
         return;
-
     }
 
     //
     // Initialize each processors idle info to start idle savings
     //
-    PopIdleSwitchIdleHandlers( newIdle, max );
+    PopIdleSwitchIdleHandlers(newIdle, max);
 }
 
 NTSTATUS
-PopIdleSwitchIdleHandler(
-    IN  PPOP_IDLE_HANDLER   NewHandler,
-    IN  ULONG               NumElements
-    )
+PopIdleSwitchIdleHandler(IN PPOP_IDLE_HANDLER NewHandler, IN ULONG NumElements)
 /*++
 
 Routine Description:
@@ -372,11 +331,11 @@ Return Value:
 
 --*/
 {
-    PKPRCB                  prcb;
-    PKTHREAD                thread;
-    PPROCESSOR_POWER_STATE  pState;
+    PKPRCB prcb;
+    PKTHREAD thread;
+    PPROCESSOR_POWER_STATE pState;
 
-    ASSERT( KeGetCurrentIrql() == DISPATCH_LEVEL );
+    ASSERT(KeGetCurrentIrql() == DISPATCH_LEVEL);
 
     //
     // We need to know where the following data structures are
@@ -389,10 +348,11 @@ Return Value:
     // Update the current IdleHandler and IdleState to reflect what was
     // given to us
     //
-    pState->IdleState         = NewHandler;
-    pState->IdleHandlers      = NewHandler;
+    pState->IdleState = NewHandler;
+    pState->IdleHandlers = NewHandler;
     pState->IdleHandlersCount = NumElements;
-    if ( NewHandler) {
+    if (NewHandler)
+    {
 
         //
         // Reset the timers to indicate that there is an idle handler
@@ -401,22 +361,23 @@ Return Value:
         pState->Idle0KernelTimeLimit = thread->KernelTime + PopIdle0PromoteTicks;
         pState->Idle0LastTime = thread->KernelTime + thread->UserTime;
         pState->PromotionCheck = NewHandler[0].PromoteCount;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Setting these to Zero should indicate that there are no idle
         // handlers available
         //
-        pState->Idle0KernelTimeLimit = (ULONG) -1;
+        pState->Idle0KernelTimeLimit = (ULONG)-1;
         pState->Idle0LastTime = 0;
         pState->PromotionCheck = 0;
         pState->IdleFunction = PopIdle0Function;
-
     }
 
 #if defined(i386) && !defined(NT_UP)
-    if (prcb->MultiThreadProcessorSet != prcb->SetMember) {
+    if (prcb->MultiThreadProcessorSet != prcb->SetMember)
+    {
 
         //
         // This processor is a member of a simultaneous
@@ -425,7 +386,6 @@ Return Value:
         //
         PopIdle0Function = PopIdle0SMT;
         pState->IdleFunction = PopIdle0SMT;
-
     }
 #endif
 
@@ -436,10 +396,7 @@ Return Value:
 }
 
 NTSTATUS
-PopIdleSwitchIdleHandlers(
-    IN  PPOP_IDLE_HANDLER   NewHandler,
-    IN  ULONG               NumElements
-    )
+PopIdleSwitchIdleHandlers(IN PPOP_IDLE_HANDLER NewHandler, IN ULONG NumElements)
 /*++
 
 Routine Description:
@@ -459,48 +416,40 @@ Return Value:
 
 --*/
 {
-    KAFFINITY               currentAffinity;
-    KAFFINITY               processors;
-    KIRQL                   oldIrql;
-    NTSTATUS                status = STATUS_SUCCESS;
-    PPOP_IDLE_HANDLER       tempHandler = NULL;
+    KAFFINITY currentAffinity;
+    KAFFINITY processors;
+    KIRQL oldIrql;
+    NTSTATUS status = STATUS_SUCCESS;
+    PPOP_IDLE_HANDLER tempHandler = NULL;
 
-    ASSERT( NumElements <= MAX_IDLE_HANDLER );
+    ASSERT(NumElements <= MAX_IDLE_HANDLER);
 
-    if (NewHandler) {
+    if (NewHandler)
+    {
 
         //
         // Step 1. Allocate a new set of handlers to hold the copy that we
         // will need to keep around
         //
-        tempHandler = ExAllocateFromNPagedLookasideList(
-            &PopIdleHandlerLookAsideList
-            );
-        if (tempHandler == NULL) {
+        tempHandler = ExAllocateFromNPagedLookasideList(&PopIdleHandlerLookAsideList);
+        if (tempHandler == NULL)
+        {
 
             status = STATUS_INSUFFICIENT_RESOURCES;
             return status;
-
         }
 
         //
         // Step 2. Make sure that this new handler is in a consistent state,
         // and copy the buffer that was passed to us
         //
-        RtlZeroMemory(
-            tempHandler,
-            sizeof(POP_IDLE_HANDLER) * MAX_IDLE_HANDLER
-            );
-        RtlCopyMemory(
-            tempHandler,
-            NewHandler,
-            sizeof(POP_IDLE_HANDLER) * NumElements
-            );
-
-    } else {
+        RtlZeroMemory(tempHandler, sizeof(POP_IDLE_HANDLER) * MAX_IDLE_HANDLER);
+        RtlCopyMemory(tempHandler, NewHandler, sizeof(POP_IDLE_HANDLER) * NumElements);
+    }
+    else
+    {
 
         tempHandler = NULL;
-
     }
 
     //
@@ -508,25 +457,25 @@ Return Value:
     //
     currentAffinity = 1;
     processors = KeActiveProcessors;
-    while (processors) {
+    while (processors)
+    {
 
-        if (!(currentAffinity & processors)) {
+        if (!(currentAffinity & processors))
+        {
 
             currentAffinity <<= 1;
             continue;
-
         }
-        KeSetSystemAffinityThread( currentAffinity );
+        KeSetSystemAffinityThread(currentAffinity);
         processors &= ~currentAffinity;
         currentAffinity <<= 1;
 
         //
         // Step 4. Swap out old handler. Indicate that we want to free it
         //
-        KeRaiseIrql( DISPATCH_LEVEL, &oldIrql );
-        PopIdleSwitchIdleHandler( tempHandler, NumElements );
+        KeRaiseIrql(DISPATCH_LEVEL, &oldIrql);
+        PopIdleSwitchIdleHandler(tempHandler, NumElements);
         KeLowerIrql(oldIrql);
-
     }
 
     //
@@ -537,13 +486,10 @@ Return Value:
     // the handler, but if there was something there already, then it should
     // be freed
     //
-    if (PopIdle != NULL) {
+    if (PopIdle != NULL)
+    {
 
-        ExFreeToNPagedLookasideList(
-            &PopIdleHandlerLookAsideList,
-            PopIdle
-            );
-
+        ExFreeToNPagedLookasideList(&PopIdleHandlerLookAsideList, PopIdle);
     }
     PopIdle = tempHandler;
 
@@ -560,11 +506,7 @@ Return Value:
 }
 
 NTSTATUS
-PopIdleUpdateIdleHandler(
-    IN  PPOP_IDLE_HANDLER   NewHandler,
-    IN  PPOP_IDLE_HANDLER   OldHandler,
-    IN  ULONG               NumElements
-    )
+PopIdleUpdateIdleHandler(IN PPOP_IDLE_HANDLER NewHandler, IN PPOP_IDLE_HANDLER OldHandler, IN ULONG NumElements)
 /*++
 
 Routine Description:
@@ -584,42 +526,43 @@ Return Value:
 
 --*/
 {
-    NTSTATUS    status;
-    ULONG       i;
-    ULONG       max;
-    ULONG       realMax;
+    NTSTATUS status;
+    ULONG i;
+    ULONG max;
+    ULONG realMax;
 
     //
     // We don't support more than 3 handlers ...
     //
     realMax = max = NumElements;
-    if (max > MAX_IDLE_HANDLERS) {
+    if (max > MAX_IDLE_HANDLERS)
+    {
 
         realMax = max = MAX_IDLE_HANDLERS;
-
     }
 
     //
     // Cap the max based upon what the policy supports
     //
-    if (max > PopProcessorPolicy->PolicyCount) {
+    if (max > PopProcessorPolicy->PolicyCount)
+    {
 
         max = PopProcessorPolicy->PolicyCount;
-
     }
 
     //
     // Update the temp handler with the new policy
     //
-    for (i = 0; i < max; i++) {
+    for (i = 0; i < max; i++)
+    {
 
-        NewHandler[i].State         = (UCHAR) i;
-        NewHandler[i].Latency       = OldHandler[i].Latency;
-        NewHandler[i].IdleFunction  = OldHandler[i].IdleFunction;
-        NewHandler[i].TimeCheck     = PopProcessorPolicy->Policy[i].TimeCheck;
-        NewHandler[i].PromoteLimit  = PopProcessorPolicy->Policy[i].PromoteLimit;
-        NewHandler[i].PromotePercent= PopProcessorPolicy->Policy[i].PromotePercent;
-        NewHandler[i].DemoteLimit   = PopProcessorPolicy->Policy[i].DemoteLimit;
+        NewHandler[i].State = (UCHAR)i;
+        NewHandler[i].Latency = OldHandler[i].Latency;
+        NewHandler[i].IdleFunction = OldHandler[i].IdleFunction;
+        NewHandler[i].TimeCheck = PopProcessorPolicy->Policy[i].TimeCheck;
+        NewHandler[i].PromoteLimit = PopProcessorPolicy->Policy[i].PromoteLimit;
+        NewHandler[i].PromotePercent = PopProcessorPolicy->Policy[i].PromotePercent;
+        NewHandler[i].DemoteLimit = PopProcessorPolicy->Policy[i].DemoteLimit;
         NewHandler[i].DemotePercent = PopProcessorPolicy->Policy[i].DemotePercent;
 
         //
@@ -632,32 +575,33 @@ Return Value:
         //
         // Fill in the table that allows for promotion / demotion
         //
-        if (PopProcessorPolicy->Policy[i].AllowDemotion) {
+        if (PopProcessorPolicy->Policy[i].AllowDemotion)
+        {
 
-            NewHandler[i].Demote    = (UCHAR) i-1;
-
-        } else {
-
-            NewHandler[i].Demote    = (UCHAR) i;
-
+            NewHandler[i].Demote = (UCHAR)i - 1;
         }
-        if (PopProcessorPolicy->Policy[i].AllowPromotion) {
+        else
+        {
 
-            NewHandler[i].Promote   = (UCHAR) i+1;
-
-        } else {
-
-            NewHandler[i].Promote   = (UCHAR) i;
-
+            NewHandler[i].Demote = (UCHAR)i;
         }
+        if (PopProcessorPolicy->Policy[i].AllowPromotion)
+        {
 
+            NewHandler[i].Promote = (UCHAR)i + 1;
+        }
+        else
+        {
+
+            NewHandler[i].Promote = (UCHAR)i;
+        }
     }
 
     //
     // Make sure that the boundary cases are well respected...
     //
     NewHandler[0].Demote = 0;
-    NewHandler[(max-1)].Promote = (UCHAR) (max-1);
+    NewHandler[(max - 1)].Promote = (UCHAR)(max - 1);
 
     //
     // We let PopVerifyHandler fill in all the details associated with
@@ -665,35 +609,33 @@ Return Value:
     // states
     //
     NewHandler[0].DemotePercent = 0;
-    NewHandler[(max-1)].PromotePercent = 0;
+    NewHandler[(max - 1)].PromotePercent = 0;
 
     //
     // Handle the states that we don't have a policy handler in place for
     //
-    for (; i < realMax; i++) {
+    for (; i < realMax; i++)
+    {
 
         //
         // The only pieces of data that we really need are the latency and the
         // idle handler function
         //
-        NewHandler[i].State         = (UCHAR) i;
-        NewHandler[i].Latency       = OldHandler[i].Latency;
-        NewHandler[i].IdleFunction  = OldHandler[i].IdleFunction;
-
+        NewHandler[i].State = (UCHAR)i;
+        NewHandler[i].Latency = OldHandler[i].Latency;
+        NewHandler[i].IdleFunction = OldHandler[i].IdleFunction;
     }
 
     //
     // Sanity check the new handler
     //
-    status = PopIdleVerifyIdleHandlers( NewHandler, max );
-    ASSERT( NT_SUCCESS( status ) );
+    status = PopIdleVerifyIdleHandlers(NewHandler, max);
+    ASSERT(NT_SUCCESS(status));
     return status;
 }
 
 NTSTATUS
-PopIdleUpdateIdleHandlers(
-    VOID
-    )
+PopIdleUpdateIdleHandlers(VOID)
 /*++
 
 Routine Description:
@@ -711,59 +653,56 @@ Return Value:
 
 --*/
 {
-    BOOLEAN                 foundProcessor = FALSE;
-    KAFFINITY               currentAffinity;
-    KAFFINITY               processors;
-    KIRQL                   oldIrql;
-    NTSTATUS                status = STATUS_SUCCESS;
-    PKPRCB                  prcb;
-    PPOP_IDLE_HANDLER       tempHandler = NULL;
-    PPROCESSOR_POWER_STATE  pState;
-    ULONG                   numElements;
+    BOOLEAN foundProcessor = FALSE;
+    KAFFINITY currentAffinity;
+    KAFFINITY processors;
+    KIRQL oldIrql;
+    NTSTATUS status = STATUS_SUCCESS;
+    PKPRCB prcb;
+    PPOP_IDLE_HANDLER tempHandler = NULL;
+    PPROCESSOR_POWER_STATE pState;
+    ULONG numElements;
 
     //
     // Step 1. Allocate a new set of handlers to hold the copy that we
     // will need to keep around
     //
-    tempHandler = ExAllocateFromNPagedLookasideList(
-        &PopIdleHandlerLookAsideList
-        );
-    if (tempHandler == NULL) {
+    tempHandler = ExAllocateFromNPagedLookasideList(&PopIdleHandlerLookAsideList);
+    if (tempHandler == NULL)
+    {
 
         return STATUS_INSUFFICIENT_RESOURCES;
-
     }
-    RtlZeroMemory(
-        tempHandler,
-        sizeof(POP_IDLE_HANDLER) * MAX_IDLE_HANDLER
-        );
+    RtlZeroMemory(tempHandler, sizeof(POP_IDLE_HANDLER) * MAX_IDLE_HANDLER);
 
     //
     // Step 2. Iterate over the processors
     //
     currentAffinity = 1;
     processors = KeActiveProcessors;
-    while (processors) {
+    while (processors)
+    {
 
-        if (!(currentAffinity & processors)) {
+        if (!(currentAffinity & processors))
+        {
 
             currentAffinity <<= 1;
             continue;
-
         }
-        KeSetSystemAffinityThread( currentAffinity );
+        KeSetSystemAffinityThread(currentAffinity);
         processors &= ~currentAffinity;
         currentAffinity <<= 1;
 
         //
         // Can't look at the processors without being at DPC level
         //
-        KeRaiseIrql( DISPATCH_LEVEL, &oldIrql );
+        KeRaiseIrql(DISPATCH_LEVEL, &oldIrql);
 
         //
         // We need to find a template to get the processor info from
         //
-        if (!foundProcessor) {
+        if (!foundProcessor)
+        {
 
             //
             // Step 3. If we haven't already found a processor so that we
@@ -777,63 +716,51 @@ Return Value:
             //
             prcb = KeGetCurrentPrcb();
             pState = &(prcb->PowerState);
-            if (pState->IdleHandlers == NULL) {
+            if (pState->IdleHandlers == NULL)
+            {
 
                 //
                 // No idle handlers to update
                 //
-                ExFreeToNPagedLookasideList(
-                    &PopIdleHandlerLookAsideList,
-                    tempHandler
-                    );
-                KeLowerIrql( oldIrql );
+                ExFreeToNPagedLookasideList(&PopIdleHandlerLookAsideList, tempHandler);
+                KeLowerIrql(oldIrql);
                 KeRevertToUserAffinityThread();
                 return STATUS_SUCCESS;
-
             }
             numElements = pState->IdleHandlersCount;
 
             //
             // Update the temp handler with the new policy
             //
-            status = PopIdleUpdateIdleHandler(
-                tempHandler,
-                pState->IdleHandlers,
-                numElements
-                );
-            ASSERT( NT_SUCCESS( status ) );
-            if (!NT_SUCCESS( status ) ) {
+            status = PopIdleUpdateIdleHandler(tempHandler, pState->IdleHandlers, numElements);
+            ASSERT(NT_SUCCESS(status));
+            if (!NT_SUCCESS(status))
+            {
 
                 //
                 // No idle handlers to update
                 //
-                ExFreeToNPagedLookasideList(
-                    &PopIdleHandlerLookAsideList,
-                    tempHandler
-                    );
-                KeLowerIrql( oldIrql );
+                ExFreeToNPagedLookasideList(&PopIdleHandlerLookAsideList, tempHandler);
+                KeLowerIrql(oldIrql);
                 KeRevertToUserAffinityThread();
                 return status;
-
             }
 
             //
             // Remember that we have found the processor information
             //
             foundProcessor = TRUE;
-
         }
 
         //
         // Step 4. Swap out old handler. Indicate that we want to free it
         //
-        PopIdleSwitchIdleHandler( tempHandler, numElements );
+        PopIdleSwitchIdleHandler(tempHandler, numElements);
 
         //
         // Revert back to original irql
         //
         KeLowerIrql(oldIrql);
-
     }
 
     //
@@ -844,13 +771,10 @@ Return Value:
     // the handler, but if there was something there already, then it should
     // be freed
     //
-    if (PopIdle != NULL) {
+    if (PopIdle != NULL)
+    {
 
-        ExFreeToNPagedLookasideList(
-            &PopIdleHandlerLookAsideList,
-            PopIdle
-            );
-
+        ExFreeToNPagedLookasideList(&PopIdleHandlerLookAsideList, PopIdle);
     }
     PopIdle = tempHandler;
 
@@ -863,14 +787,10 @@ Return Value:
     // Done
     //
     return status;
-
 }
 
 NTSTATUS
-PopIdleVerifyIdleHandlers(
-    IN  PPOP_IDLE_HANDLER   NewHandler,
-    IN  ULONG               NumElements
-    )
+PopIdleVerifyIdleHandlers(IN PPOP_IDLE_HANDLER NewHandler, IN ULONG NumElements)
 /*++
 
 Routine Description:
@@ -891,31 +811,31 @@ Return Value:
 
 --*/
 {
-    ULONG   i;
+    ULONG i;
 
     //
     // Sanity Check
     //
-    ASSERT( NewHandler != NULL );
-    ASSERT( NumElements );
+    ASSERT(NewHandler != NULL);
+    ASSERT(NumElements);
 
     //
     // Sanity check rules of multi-processors. We don't allow demotion from
     // Idle0 unless the machine is MP
     //
-    if (KeNumberProcessors == 1 && NewHandler[0].DemotePercent != 0) {
+    if (KeNumberProcessors == 1 && NewHandler[0].DemotePercent != 0)
+    {
 
         NewHandler[0].DemotePercent = 0;
-
     }
 
     //
     // Sanity check the other rules for the first state...
     //
-    if (NewHandler[0].Demote != 0) {
+    if (NewHandler[0].Demote != 0)
+    {
 
         NewHandler[0].Demote = 0;
-
     }
 
     //
@@ -923,15 +843,16 @@ Return Value:
     // as MicroSeconds, we need to take the opportunity to convert them to
     // PerfCount units...
     //
-    for (i = 0; i < NumElements; i++) {
+    for (i = 0; i < NumElements; i++)
+    {
 
         //
         // TimeCheck must be in units of Demotion time check
         //
-        if (NewHandler[i].TimeCheck < NewHandler[i].DemoteLimit) {
+        if (NewHandler[i].TimeCheck < NewHandler[i].DemoteLimit)
+        {
 
             NewHandler[i].TimeCheck = NewHandler[i].DemoteLimit;
-
         }
 
         //
@@ -939,54 +860,52 @@ Return Value:
         //
         if (NewHandler[i].DemotePercent == 0 &&
 
-            NewHandler[i].TimeCheck < NewHandler[i].PromoteLimit) {
+            NewHandler[i].TimeCheck < NewHandler[i].PromoteLimit)
+        {
             NewHandler[i].TimeCheck = NewHandler[i].PromoteLimit;
-
         }
 
         //
         // TimeCheck must be in units of Promotion time check
         //
-        if (NewHandler[i].DemotePercent) {
+        if (NewHandler[i].DemotePercent)
+        {
 
-            NewHandler[i].DemoteLimit =
-                NewHandler[i].TimeCheck * NewHandler[i].DemotePercent / 100;
-
-        } else {
+            NewHandler[i].DemoteLimit = NewHandler[i].TimeCheck * NewHandler[i].DemotePercent / 100;
+        }
+        else
+        {
 
             NewHandler[i].DemoteLimit = 0;
-
         }
 
         //
         // Compute promote count as # of time checks
         //
-        NewHandler[i].PromoteCount =
-            NewHandler[i].PromoteLimit / NewHandler[i].TimeCheck;
+        NewHandler[i].PromoteCount = NewHandler[i].PromoteLimit / NewHandler[i].TimeCheck;
 
         //
         // Compute promote limit
         //
-        if (NewHandler[i].PromotePercent) {
+        if (NewHandler[i].PromotePercent)
+        {
 
-            NewHandler[i].PromoteLimit =
-                NewHandler[i].PromoteLimit * NewHandler[i].PromotePercent / 100;
-
-        } else {
-
-            NewHandler[i].PromoteCount = (ULONG) -1;
-            NewHandler[i].PromoteLimit = (ULONG) -1;
-
+            NewHandler[i].PromoteLimit = NewHandler[i].PromoteLimit * NewHandler[i].PromotePercent / 100;
         }
+        else
+        {
 
+            NewHandler[i].PromoteCount = (ULONG)-1;
+            NewHandler[i].PromoteLimit = (ULONG)-1;
+        }
     }
 
     //
     // Sanity check the last state
     //
     i = NumElements - 1;
-    NewHandler[i].Promote = (UCHAR) i;
-    NewHandler[i].PromoteLimit = (ULONG) -1;
+    NewHandler[i].Promote = (UCHAR)i;
+    NewHandler[i].PromoteLimit = (ULONG)-1;
     NewHandler[i].PromotePercent = 0;
 
 
@@ -996,49 +915,41 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
-VOID
-PopConvertUsToPerfCount (
-    IN OUT PULONG   UsTime
-    )
+VOID PopConvertUsToPerfCount(IN OUT PULONG UsTime)
 {
-    LARGE_INTEGER   li;
-    LONGLONG        temp;
+    LARGE_INTEGER li;
+    LONGLONG temp;
 
-    if (*UsTime) {
+    if (*UsTime)
+    {
 
         //
         // Try to avoid Divide by Zero Errors...
         //
         temp = (US2SEC * MAXSECCHECK * 100L) / *UsTime;
-        if (!temp) {
+        if (!temp)
+        {
 
-            *UsTime = (ULONG) -1;
+            *UsTime = (ULONG)-1;
             return;
-
         }
 
         //
         // Get scale of idle times
         //
-        KeQueryPerformanceCounter (&li);
-        li.QuadPart = (li.QuadPart*MAXSECCHECK*100L) / temp;
-        ASSERT (li.HighPart == 0);
+        KeQueryPerformanceCounter(&li);
+        li.QuadPart = (li.QuadPart * MAXSECCHECK * 100L) / temp;
+        ASSERT(li.HighPart == 0);
         *UsTime = li.LowPart;
     }
 }
-
-
 
 
 //
 // ----------------
 //
 
-VOID
-FASTCALL
-PopIdle0 (
-    IN PPROCESSOR_POWER_STATE   PState
-    )
+VOID FASTCALL PopIdle0(IN PPROCESSOR_POWER_STATE PState)
 /*++
 
 Routine Description:
@@ -1057,7 +968,7 @@ Return Value:
 
 --*/
 {
-    PKTHREAD    Thread = KeGetCurrentThread();
+    PKTHREAD Thread = KeGetCurrentThread();
 
     //
     // Performance Throttling Check
@@ -1067,11 +978,10 @@ Return Value:
     // This piece of code really belongs in the functions that will eventually
     // call this one, PopIdle0 or PopProcessorIdle, to save a function call.
     //
-    if ( (PState->Flags & PSTATE_ADAPTIVE_THROTTLE) &&
-        !(PState->Flags & PSTATE_DISABLE_THROTTLE) ) {
+    if ((PState->Flags & PSTATE_ADAPTIVE_THROTTLE) && !(PState->Flags & PSTATE_DISABLE_THROTTLE))
+    {
 
-        PopPerfIdle( PState );
-
+        PopPerfIdle(PState);
     }
 
 
@@ -1080,7 +990,8 @@ Return Value:
     // check for possible promotion from Idle0
     //
 
-    if (Thread->KernelTime > PState->Idle0KernelTimeLimit) {
+    if (Thread->KernelTime > PState->Idle0KernelTimeLimit)
+    {
 
         //
         // Must enable interrupts prior to calling PopPromoteFromIdle
@@ -1088,24 +999,20 @@ Return Value:
         //
 
         _enable();
-        PopPromoteFromIdle0 (PState, Thread);
-        return ;
+        PopPromoteFromIdle0(PState, Thread);
+        return;
     }
 
 #if defined(NT_UP)
     // use legacy function
-    HalProcessorIdle ();
+    HalProcessorIdle();
 #endif
 }
 
 
 #if defined(i386) && !defined(NT_UP)
 
-VOID
-FASTCALL
-PopIdle0SMT (
-    IN PPROCESSOR_POWER_STATE   PState
-    )
+VOID FASTCALL PopIdle0SMT(IN PPROCESSOR_POWER_STATE PState)
 /*++
 
 Routine Description:
@@ -1124,8 +1031,8 @@ Return Value:
 
 --*/
 {
-    PKTHREAD    Thread = KeGetCurrentThread();
-    PKPRCB      Prcb = KeGetCurrentPrcb();
+    PKTHREAD Thread = KeGetCurrentThread();
+    PKPRCB Prcb = KeGetCurrentPrcb();
 
     //
     // Performance Throttling Check
@@ -1135,11 +1042,10 @@ Return Value:
     // This piece of code really belongs in the functions that will eventually
     // call this one, PopIdle0 or PopProcessorIdle, to save a function call.
     //
-    if ( (PState->Flags & PSTATE_ADAPTIVE_THROTTLE) &&
-        !(PState->Flags & PSTATE_DISABLE_THROTTLE) ) {
+    if ((PState->Flags & PSTATE_ADAPTIVE_THROTTLE) && !(PState->Flags & PSTATE_DISABLE_THROTTLE))
+    {
 
-        PopPerfIdle( PState );
-
+        PopPerfIdle(PState);
     }
 
     //
@@ -1150,7 +1056,8 @@ Return Value:
     //
 
     if ((Prcb->MultiThreadSetMaster->MultiThreadSetBusy != FALSE) ||
-        (Thread->KernelTime > PState->Idle0KernelTimeLimit)) {
+        (Thread->KernelTime > PState->Idle0KernelTimeLimit))
+    {
 
         //
         // Must enable interrupts prior to calling PopPromoteFromIdle
@@ -1158,18 +1065,14 @@ Return Value:
         //
 
         _enable();
-        PopPromoteFromIdle0 (PState, Thread);
-        return ;
+        PopPromoteFromIdle0(PState, Thread);
+        return;
     }
 }
 
 #endif
 
-VOID
-FASTCALL
-PopProcessorIdle (
-    IN PPROCESSOR_POWER_STATE   PState
-    )
+VOID FASTCALL PopProcessorIdle(IN PPROCESSOR_POWER_STATE PState)
 /*++
 
 Routine Description:
@@ -1188,12 +1091,12 @@ Return Value:
 
 --*/
 {
-    PPOP_IDLE_HANDLER   IdleState;
-    LARGE_INTEGER       Delta;
-    ULONG               IdleTime;
-    BOOLEAN             DemoteNow;
+    PPOP_IDLE_HANDLER IdleState;
+    LARGE_INTEGER Delta;
+    ULONG IdleTime;
+    BOOLEAN DemoteNow;
 
-    IdleState = (PPOP_IDLE_HANDLER) PState->IdleState;
+    IdleState = (PPOP_IDLE_HANDLER)PState->IdleState;
 
     //
     // Performance Throttling Check
@@ -1203,24 +1106,25 @@ Return Value:
     // This piece of code really belongs in the functions that will eventually
     // call this one, PopIdle0 or PopProcessorIdle, to save a function call.
     //
-    if ( (PState->Flags & PSTATE_ADAPTIVE_THROTTLE) &&
-        !(PState->Flags & PSTATE_DISABLE_THROTTLE) ) {
+    if ((PState->Flags & PSTATE_ADAPTIVE_THROTTLE) && !(PState->Flags & PSTATE_DISABLE_THROTTLE))
+    {
 
-        PopPerfIdle( PState );
-
+        PopPerfIdle(PState);
     }
 
 #if DBG
-    if (!PState->LastCheck) {
-        IdleState->IdleFunction (&PState->IdleTimes);
-        PState->TotalIdleStateTime[IdleState->State] += (ULONG)(PState->IdleTimes.EndTime - PState->IdleTimes.StartTime);
+    if (!PState->LastCheck)
+    {
+        IdleState->IdleFunction(&PState->IdleTimes);
+        PState->TotalIdleStateTime[IdleState->State] +=
+            (ULONG)(PState->IdleTimes.EndTime - PState->IdleTimes.StartTime);
         PState->TotalIdleTransitions[IdleState->State] += 1;
         PState->LastCheck = PState->IdleTimes.EndTime;
         PState->IdleTime1 = 0;
         PState->IdleTime2 = 0;
         PState->PromotionCheck = IdleState->PromoteCount;
         PState->DebugCount = 0;
-        return ;
+        return;
     }
 #endif
 
@@ -1234,15 +1138,17 @@ Return Value:
     // Accumulate last idle time
     //
 
-    IdleTime = (ULONG) (PState->IdleTimes.EndTime - PState->IdleTimes.StartTime);
-    if (IdleTime > IdleState->Latency) {
+    IdleTime = (ULONG)(PState->IdleTimes.EndTime - PState->IdleTimes.StartTime);
+    if (IdleTime > IdleState->Latency)
+    {
         PState->IdleTime1 += IdleTime - IdleState->Latency;
     }
 
 #if DBG
     PState->DebugDelta = Delta.QuadPart;
     PState->DebugCount += 1;
-    if (PState->DebugCount < IDLE_DEBUG_TABLE_SIZE) {
+    if (PState->DebugCount < IDLE_DEBUG_TABLE_SIZE)
+    {
         ST[PState->DebugCount] = PState->IdleTimes.StartTime;
         ET[PState->DebugCount] = PState->IdleTimes.EndTime;
         TD[PState->DebugCount] = PState->IdleTimes.EndTime - PState->IdleTimes.StartTime;
@@ -1253,14 +1159,16 @@ Return Value:
     // If over check interval, check fine grain idleness
     //
 
-    if (Delta.HighPart ||  Delta.LowPart > IdleState->TimeCheck) {
+    if (Delta.HighPart || Delta.LowPart > IdleState->TimeCheck)
+    {
         PState->LastCheck = PState->IdleTimes.EndTime;
 
         //
         // Demote idleness?
         //
 
-        if (PState->IdleTime1 < IdleState->DemoteLimit) {
+        if (PState->IdleTime1 < IdleState->DemoteLimit)
+        {
 
 #if defined(i386) && !defined(NT_UP)
 
@@ -1271,8 +1179,8 @@ Return Value:
 
             PKPRCB Prcb = KeGetCurrentPrcb();
 
-            if ((Prcb->MultiThreadSetMaster->MultiThreadSetBusy) &&
-                (Prcb->SetMember != Prcb->MultiThreadProcessorSet)) {
+            if ((Prcb->MultiThreadSetMaster->MultiThreadSetBusy) && (Prcb->SetMember != Prcb->MultiThreadProcessorSet))
+            {
                 PState->IdleTime1 = 0;
                 return;
             }
@@ -1280,11 +1188,11 @@ Return Value:
 #endif
 
 
-            PopDemoteIdleness (PState, IdleState);
+            PopDemoteIdleness(PState, IdleState);
 #if DBG
             PState->DebugCount = 0;
 #endif
-            return ;
+            return;
         }
 #if DBG
         PState->DebugCount = 0;
@@ -1295,21 +1203,23 @@ Return Value:
         //
 
         PState->IdleTime2 += PState->IdleTime1;
-        PState->IdleTime1  = 0;
+        PState->IdleTime1 = 0;
 
         //
         // Time to check for promotion?
         //
 
         PState->PromotionCheck -= 1;
-        if (!PState->PromotionCheck) {
+        if (!PState->PromotionCheck)
+        {
 
             //
             // Promote idleness?
             //
 
-            if (PState->IdleTime2 > IdleState->PromoteLimit) {
-                PopPromoteIdleness (PState, IdleState);
+            if (PState->IdleTime2 > IdleState->PromoteLimit)
+            {
+                PopPromoteIdleness(PState, IdleState);
                 return;
             }
 
@@ -1322,30 +1232,28 @@ Return Value:
     // Call system specific power handler handler
     //
 
-    DemoteNow = IdleState->IdleFunction (&PState->IdleTimes);
+    DemoteNow = IdleState->IdleFunction(&PState->IdleTimes);
 
     //
     // If the handler returns TRUE, then the demote to less power savings state
     //
 
-    if (DemoteNow) {
-        PopDemoteIdleness (PState, IdleState);
+    if (DemoteNow)
+    {
+        PopDemoteIdleness(PState, IdleState);
 #if DBG
         PState->DebugCount = 0;
 #endif
-    } else {
+    }
+    else
+    {
         PState->TotalIdleStateTime[IdleState->State] += PState->IdleTimes.EndTime - PState->IdleTimes.StartTime;
         PState->TotalIdleTransitions[IdleState->State] += 1;
     }
 }
 
 
-VOID
-FASTCALL
-PopDemoteIdleness (
-    IN PPROCESSOR_POWER_STATE   PState,
-    IN PPOP_IDLE_HANDLER        IdleState
-    )
+VOID FASTCALL PopDemoteIdleness(IN PPROCESSOR_POWER_STATE PState, IN PPOP_IDLE_HANDLER IdleState)
 /*++
 
 Routine Description:
@@ -1365,9 +1273,9 @@ Return Value:
 
 --*/
 {
-    PKPRCB              Prcb;
-    PKTHREAD            Thread;
-    PPOP_IDLE_HANDLER   Idle;
+    PKPRCB Prcb;
+    PKTHREAD Thread;
+    PPOP_IDLE_HANDLER Idle;
 
     //
     // Clear idleness for next check
@@ -1376,7 +1284,7 @@ Return Value:
     PState->IdleTime1 = 0;
     PState->IdleTime2 = 0;
 
-    PERFINFO_POWER_IDLE_STATE_CHANGE( PState, -1 );
+    PERFINFO_POWER_IDLE_STATE_CHANGE(PState, -1);
 
 #if !defined(NT_UP)
 
@@ -1385,15 +1293,16 @@ Return Value:
     // clear this processors bit in the PoSleepingSummary
     //
 
-    if (IdleState->Demote == PO_IDLE_COMPLETE_DEMOTION) {
+    if (IdleState->Demote == PO_IDLE_COMPLETE_DEMOTION)
+    {
 
-        Prcb = CONTAINING_RECORD (PState, KPRCB, PowerState);
-        InterlockedAndAffinity (&PoSleepingSummary, ~Prcb->SetMember);
+        Prcb = CONTAINING_RECORD(PState, KPRCB, PowerState);
+        InterlockedAndAffinity(&PoSleepingSummary, ~Prcb->SetMember);
         Thread = Prcb->IdleThread;
         PState->Idle0KernelTimeLimit = Thread->KernelTime + PopIdle0PromoteTicks;
         PState->Idle0LastTime = Prcb->KernelTime + Prcb->UserTime;
         PState->IdleFunction = PopIdle0Function;
-        return ;
+        return;
     }
 
 #endif
@@ -1403,14 +1312,10 @@ Return Value:
     //
     Idle = PState->IdleHandlers;
     PState->PromotionCheck = Idle[IdleState->Demote].PromoteCount;
-    PState->IdleState = (PVOID) &Idle[IdleState->Demote];
+    PState->IdleState = (PVOID)&Idle[IdleState->Demote];
 }
 
-VOID
-PopPromoteFromIdle0 (
-    IN PPROCESSOR_POWER_STATE PState,
-    IN PKTHREAD Thread
-    )
+VOID PopPromoteFromIdle0(IN PPROCESSOR_POWER_STATE PState, IN PKTHREAD Thread)
 /*++
 
 Routine Description:
@@ -1430,15 +1335,15 @@ Return Value:
 
 --*/
 {
-    ULONG               etime;
-    PKPRCB              Prcb;
-    PPOP_IDLE_HANDLER   Idle;
+    ULONG etime;
+    PKPRCB Prcb;
+    PPOP_IDLE_HANDLER Idle;
 
     //
     // Compute elapsed system time
     //
 
-    Prcb  = CONTAINING_RECORD (PState, KPRCB, PowerState);
+    Prcb = CONTAINING_RECORD(PState, KPRCB, PowerState);
     etime = Prcb->UserTime + Prcb->KernelTime - PState->Idle0LastTime;
     Idle = PState->IdleHandlers;
 
@@ -1446,14 +1351,15 @@ Return Value:
     // Has the processor been idle enough to promote?
     //
 
-    if (etime < PopIdle0PromoteLimit) {
+    if (etime < PopIdle0PromoteLimit)
+    {
         KEVENT DummyEvent;
 
         //
         // Promote to the first real idle handler
         //
 
-        PERFINFO_POWER_IDLE_STATE_CHANGE( PState, 0 );
+        PERFINFO_POWER_IDLE_STATE_CHANGE(PState, 0);
 
         PState->IdleTime1 = 0;
         PState->IdleTime2 = 0;
@@ -1462,8 +1368,8 @@ Return Value:
         PState->IdleFunction = PopProcessorIdle;
         PState->LastCheck = KeQueryPerformanceCounter(NULL).QuadPart;
         PState->IdleTimes.StartTime = PState->LastCheck;
-        PState->IdleTimes.EndTime   = PState->LastCheck;
-        InterlockedOrAffinity (&PoSleepingSummary, Prcb->SetMember);
+        PState->IdleTimes.EndTime = PState->LastCheck;
+        InterlockedOrAffinity(&PoSleepingSummary, Prcb->SetMember);
 
         //
         // Once SleepingSummary is set, make sure no one is in the
@@ -1472,8 +1378,8 @@ Return Value:
         //
 
         KeInitializeEvent(&DummyEvent, SynchronizationEvent, TRUE);
-        KeResetEvent (&DummyEvent);
-        return ;
+        KeResetEvent(&DummyEvent);
+        return;
     }
 
     //
@@ -1485,13 +1391,7 @@ Return Value:
 }
 
 
-
-VOID
-FASTCALL
-PopPromoteIdleness (
-    IN PPROCESSOR_POWER_STATE   PState,
-    IN PPOP_IDLE_HANDLER        IdleState
-    )
+VOID FASTCALL PopPromoteIdleness(IN PPROCESSOR_POWER_STATE PState, IN PPOP_IDLE_HANDLER IdleState)
 /*++
 
 Routine Description:
@@ -1514,23 +1414,23 @@ Return Value:
 
 --*/
 {
-    LARGE_INTEGER       DueTime;
-    PPOP_IDLE_HANDLER   Idle;
+    LARGE_INTEGER DueTime;
+    PPOP_IDLE_HANDLER Idle;
 
     //
     // Clear idleness for next check
     //
     PState->IdleTime2 = 0;
-    PERFINFO_POWER_IDLE_STATE_CHANGE( PState, 1 );
+    PERFINFO_POWER_IDLE_STATE_CHANGE(PState, 1);
 
     //
     // If already fully promoted, then nothing more to do.
     //
-    if (IdleState->Promote == PO_IDLE_THROTTLE_PROMOTION) {
+    if (IdleState->Promote == PO_IDLE_THROTTLE_PROMOTION)
+    {
 
         PState->PromotionCheck = IdleState->PromoteCount;
         return;
-
     }
 
     //
@@ -1538,29 +1438,25 @@ Return Value:
     //
     Idle = PState->IdleHandlers;
     PState->PromotionCheck = Idle[IdleState->Promote].PromoteCount;
-    PState->IdleState = (PVOID) &Idle[IdleState->Promote];
+    PState->IdleState = (PVOID)&Idle[IdleState->Promote];
 }
 
-VOID
-PopProcessorInformation (
-    OUT PPROCESSOR_POWER_INFORMATION    ProcInfo,
-    IN  ULONG                           ProcInfoLength,
-    OUT PULONG                          ReturnBufferLength
-    )
+VOID PopProcessorInformation(OUT PPROCESSOR_POWER_INFORMATION ProcInfo, IN ULONG ProcInfoLength,
+                             OUT PULONG ReturnBufferLength)
 {
-    KAFFINITY                   Summary;
-    KAFFINITY                   Mask;
-    KIRQL                       OldIrql;
-    PPOP_IDLE_HANDLER           IdleState;
-    PKPRCB                      Prcb;
-    PPROCESSOR_POWER_STATE      PState;
+    KAFFINITY Summary;
+    KAFFINITY Mask;
+    KIRQL OldIrql;
+    PPOP_IDLE_HANDLER IdleState;
+    PKPRCB Prcb;
+    PPROCESSOR_POWER_STATE PState;
     PROCESSOR_POWER_INFORMATION TempInfo;
-    ULONG                       Processor;
-    ULONG                       MaxMhz;
-    ULONG                       BufferSize = 0;
-    ULONG                       MaxIdleState = 0;
-    ULONG                       i;
-    ULONG                       j;
+    ULONG Processor;
+    ULONG MaxMhz;
+    ULONG BufferSize = 0;
+    ULONG MaxIdleState = 0;
+    ULONG i;
+    ULONG j;
 
     //
     // The best way to grab the state of the idle handlers is to raise to
@@ -1570,58 +1466,59 @@ PopProcessorInformation (
     // look at it since the code that updates it might have already run past
     // *this* processor...
     //
-    KeRaiseIrql( DISPATCH_LEVEL, &OldIrql );
+    KeRaiseIrql(DISPATCH_LEVEL, &OldIrql);
     Prcb = KeGetCurrentPrcb();
     PState = &(Prcb->PowerState);
     IdleState = PState->IdleHandlers;
-    if (IdleState) {
+    if (IdleState)
+    {
 
-        for (i = 0, MaxIdleState = 1; ;) {
+        for (i = 0, MaxIdleState = 1;;)
+        {
 
             j = IdleState[i].Promote;
-            if (j == 0  ||  j == i || j == PO_IDLE_THROTTLE_PROMOTION) {
+            if (j == 0 || j == i || j == PO_IDLE_THROTTLE_PROMOTION)
+            {
 
                 break;
-
             }
 
             i = j;
             MaxIdleState += 1;
-
         }
-
     }
-    KeLowerIrql( OldIrql );
+    KeLowerIrql(OldIrql);
 
     Summary = KeActiveProcessors;
     Processor = 0;
     Mask = 1;
-    while (Summary) {
+    while (Summary)
+    {
 
-        if (!(Mask & Summary)) {
+        if (!(Mask & Summary))
+        {
 
             Mask <<= 1;
             continue;
-
         }
 
-        if (ProcInfoLength < BufferSize + sizeof(PROCESSOR_POWER_INFORMATION)) {
+        if (ProcInfoLength < BufferSize + sizeof(PROCESSOR_POWER_INFORMATION))
+        {
 
             break;
-
         }
 
         //
         // Run in the context of the target processor
         //
-        KeSetSystemAffinityThread( Mask );
+        KeSetSystemAffinityThread(Mask);
         Summary &= ~Mask;
         Mask <<= 1;
 
         //
         // Lets play safe
         //
-        KeRaiseIrql( DISPATCH_LEVEL, &OldIrql );
+        KeRaiseIrql(DISPATCH_LEVEL, &OldIrql);
 
         //
         // Get the current PState block...
@@ -1630,7 +1527,7 @@ PopProcessorInformation (
         PState = &Prcb->PowerState;
 
         MaxMhz = Prcb->MHz;
-        
+
         TempInfo.Number = Processor;
         TempInfo.MaxMhz = MaxMhz;
 
@@ -1647,38 +1544,36 @@ PopProcessorInformation (
         // Determine what the current Idle state is...
         //
         TempInfo.CurrentIdleState = 0;
-        if (PState->IdleFunction != PopIdle0Function) {
+        if (PState->IdleFunction != PopIdle0Function)
+        {
 
             IdleState = PState->IdleState;
-            if (IdleState != NULL) {
+            if (IdleState != NULL)
+            {
 
                 TempInfo.CurrentIdleState = IdleState->State;
-
             }
-
         }
 
         //
         // At this point, we have captured the info that we need and can safely
         // drop back to a lower irql
         //
-        KeLowerIrql( OldIrql );
+        KeLowerIrql(OldIrql);
 
         //
         // Copy the temp structure we just created over...
         //
-        RtlCopyMemory(ProcInfo, &TempInfo, sizeof(PROCESSOR_POWER_INFORMATION) );
+        RtlCopyMemory(ProcInfo, &TempInfo, sizeof(PROCESSOR_POWER_INFORMATION));
         ProcInfo += 1;
-        BufferSize += sizeof (PROCESSOR_POWER_INFORMATION);
+        BufferSize += sizeof(PROCESSOR_POWER_INFORMATION);
 
         //
         // Next
         //
         Processor = Processor + 1;
-
     }
     KeRevertToUserAffinityThread();
 
     *ReturnBufferLength = BufferSize;
 }
-

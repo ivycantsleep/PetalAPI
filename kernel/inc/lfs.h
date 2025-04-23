@@ -70,7 +70,7 @@ Revision History:
 //      (sizeof-structure / SEQUENCE_NUMBER_STRIDE + 1) * sizeof(USHORT)
 //
 
-#define SEQUENCE_NUMBER_STRIDE           (512)
+#define SEQUENCE_NUMBER_STRIDE (512)
 
 typedef USHORT UPDATE_SEQUENCE_NUMBER, *PUPDATE_SEQUENCE_NUMBER;
 
@@ -79,9 +79,10 @@ typedef USHORT UPDATE_SEQUENCE_NUMBER, *PUPDATE_SEQUENCE_NUMBER;
 // protected.
 //
 
-#if !defined( _AUTOCHECK_ )
+#if !defined(_AUTOCHECK_)
 
-typedef struct _MULTI_SECTOR_HEADER {
+typedef struct _MULTI_SECTOR_HEADER
+{
 
     //
     // Space for a four-character signature
@@ -123,7 +124,8 @@ typedef UPDATE_SEQUENCE_ARRAY *PUPDATE_SEQUENCE_ARRAY;
 //  page size being used by Lfs.
 //
 
-typedef struct _LFS_WRITE_DATA {
+typedef struct _LFS_WRITE_DATA
+{
 
     LONGLONG FileOffset;
     ULONG Length;
@@ -150,13 +152,14 @@ extern LSN LfsZeroLsn;
 //  We set the default page size to 4K
 //
 
-#define LFS_DEFAULT_LOG_PAGE_SIZE           (0x1000)
+#define LFS_DEFAULT_LOG_PAGE_SIZE (0x1000)
 
 //
 //  The following type defines the different log record types.
 //
 
-typedef enum _LFS_RECORD_TYPE {
+typedef enum _LFS_RECORD_TYPE
+{
 
     LfsClientRecord = 1,
     LfsClientRestart
@@ -167,7 +170,8 @@ typedef enum _LFS_RECORD_TYPE {
 //  The following search modes are supported.
 //
 
-typedef enum _LFS_CONTEXT_MODE {
+typedef enum _LFS_CONTEXT_MODE
+{
 
     LfsContextUndoNext = 1,
     LfsContextPrevious,
@@ -177,7 +181,8 @@ typedef enum _LFS_CONTEXT_MODE {
 
 typedef ULONG TRANSACTION_ID, *PTRANSACTION_ID;
 
-typedef enum _TRANSACTION_STATE {
+typedef enum _TRANSACTION_STATE
+{
 
     TransactionUninitialized = 0,
     TransactionActive,
@@ -191,7 +196,8 @@ typedef enum _TRANSACTION_STATE {
 //  LFS and its client.
 //
 
-typedef enum _LFS_CLIENT_INFO {
+typedef enum _LFS_CLIENT_INFO
+{
 
     LfsUseUsa = 1,
     LfsPackLog,
@@ -199,7 +205,8 @@ typedef enum _LFS_CLIENT_INFO {
 
 } LFS_CLIENT_INFO;
 
-typedef struct _LFS_INFO {
+typedef struct _LFS_INFO
+{
 
     LOGICAL ReadOnly;
     LOGICAL InRestart;
@@ -219,28 +226,28 @@ typedef PVOID LFS_LOG_CONTEXT, *PLFS_LOG_CONTEXT;
 //  which are supposed to be copied in sequence to the log file.
 //
 
-typedef struct _LFS_WRITE_ENTRY {
+typedef struct _LFS_WRITE_ENTRY
+{
 
     PVOID Buffer;
     ULONG ByteLength;
 
 } LFS_WRITE_ENTRY, *PLFS_WRITE_ENTRY;
 
-
+
 //
 // Global Maintenance routines
 //
 
 BOOLEAN
-LfsInitializeLogFileService (
-    VOID
-    );
+LfsInitializeLogFileService(VOID);
 
 //
 //  Log File Registration routines
 //
 
-typedef struct _LOG_FILE_INFORMATION {
+typedef struct _LOG_FILE_INFORMATION
+{
 
     //
     //  This is the total useable space in the log file after space for
@@ -283,77 +290,34 @@ typedef struct _LOG_FILE_INFORMATION {
 
 } LOG_FILE_INFORMATION, *PLOG_FILE_INFORMATION;
 
-VOID
-LfsInitializeLogFile (
-    IN PFILE_OBJECT LogFile,
-    IN USHORT MaximumClients,
-    IN ULONG LogPageSize OPTIONAL,
-    IN LONGLONG FileSize,
-    OUT PLFS_WRITE_DATA WriteData
-    );
+VOID LfsInitializeLogFile(IN PFILE_OBJECT LogFile, IN USHORT MaximumClients, IN ULONG LogPageSize OPTIONAL,
+                          IN LONGLONG FileSize, OUT PLFS_WRITE_DATA WriteData);
 
 ULONG
-LfsOpenLogFile (
-    IN PFILE_OBJECT LogFile,
-    IN UNICODE_STRING ClientName,
-    IN USHORT MaximumClients,
-    IN ULONG LogPageSize OPTIONAL,
-    IN LONGLONG FileSize,
-    IN OUT PLFS_INFO LfsInfo,
-    OUT PLFS_LOG_HANDLE LogHandle,
-    OUT PLFS_WRITE_DATA WriteData
-    );
+LfsOpenLogFile(IN PFILE_OBJECT LogFile, IN UNICODE_STRING ClientName, IN USHORT MaximumClients,
+               IN ULONG LogPageSize OPTIONAL, IN LONGLONG FileSize, IN OUT PLFS_INFO LfsInfo,
+               OUT PLFS_LOG_HANDLE LogHandle, OUT PLFS_WRITE_DATA WriteData);
 
-VOID
-LfsCloseLogFile (
-    IN LFS_LOG_HANDLE LogHandle
-    );
+VOID LfsCloseLogFile(IN LFS_LOG_HANDLE LogHandle);
 
-VOID
-LfsDeleteLogHandle (
-    IN LFS_LOG_HANDLE LogHandle
-    );
+VOID LfsDeleteLogHandle(IN LFS_LOG_HANDLE LogHandle);
 
-VOID
-LfsReadLogFileInformation (
-    IN LFS_LOG_HANDLE LogHandle,
-    IN PLOG_FILE_INFORMATION Buffer,
-    IN OUT PULONG Length
-    );
+VOID LfsReadLogFileInformation(IN LFS_LOG_HANDLE LogHandle, IN PLOG_FILE_INFORMATION Buffer, IN OUT PULONG Length);
 
 BOOLEAN
-LfsVerifyLogFile (
-    IN LFS_LOG_HANDLE LogHandle,
-    IN PVOID LogFileHeader,
-    IN ULONG Length
-    );
+LfsVerifyLogFile(IN LFS_LOG_HANDLE LogHandle, IN PVOID LogFileHeader, IN ULONG Length);
 
 //
 //  Log File Client Restart routines
 //
 
 NTSTATUS
-LfsReadRestartArea (
-    IN LFS_LOG_HANDLE LogHandle,
-    IN OUT PULONG BufferLength,
-    IN PVOID Buffer,
-    OUT PLSN Lsn
-    );
+LfsReadRestartArea(IN LFS_LOG_HANDLE LogHandle, IN OUT PULONG BufferLength, IN PVOID Buffer, OUT PLSN Lsn);
 
-VOID
-LfsWriteRestartArea (
-    IN LFS_LOG_HANDLE LogHandle,
-    IN ULONG BufferLength,
-    IN PVOID Buffer,
-    IN LOGICAL CleanShutdown,
-    OUT PLSN Lsn
-    );
+VOID LfsWriteRestartArea(IN LFS_LOG_HANDLE LogHandle, IN ULONG BufferLength, IN PVOID Buffer, IN LOGICAL CleanShutdown,
+                         OUT PLSN Lsn);
 
-VOID
-LfsSetBaseLsn (
-    IN LFS_LOG_HANDLE LogHandle,
-    IN LSN BaseLsn
-    );
+VOID LfsSetBaseLsn(IN LFS_LOG_HANDLE LogHandle, IN LSN BaseLsn);
 
 //
 //  If ResetTotal is positive, then NumberRecords and ResetTotal set the absolute
@@ -361,107 +325,45 @@ LfsSetBaseLsn (
 //  to the totals for this client.
 //
 
-VOID
-LfsResetUndoTotal (
-    IN LFS_LOG_HANDLE LogHandle,
-    IN ULONG NumberRecords,
-    IN LONG ResetTotal
-    );
+VOID LfsResetUndoTotal(IN LFS_LOG_HANDLE LogHandle, IN ULONG NumberRecords, IN LONG ResetTotal);
 
 //
 //  Log File Write routines
 //
 
-VOID
-LfsGetActiveLsnRange (
-    IN LFS_LOG_HANDLE LogHandle,
-    OUT PLSN OldestLsn,
-    OUT PLSN NextLsn
-    );
+VOID LfsGetActiveLsnRange(IN LFS_LOG_HANDLE LogHandle, OUT PLSN OldestLsn, OUT PLSN NextLsn);
 
 BOOLEAN
-LfsWrite (
-    IN LFS_LOG_HANDLE LogHandle,
-    IN ULONG NumberOfWriteEntries,
-    IN PLFS_WRITE_ENTRY WriteEntries,
-    IN LFS_RECORD_TYPE RecordType,
-    IN TRANSACTION_ID *TransactionId OPTIONAL,
-    IN LSN UndoNextLsn,
-    IN LSN PreviousLsn,
-    IN LONG UndoRequirement,
-    IN ULONG Flags,
-    OUT PLSN Lsn
-    );
+LfsWrite(IN LFS_LOG_HANDLE LogHandle, IN ULONG NumberOfWriteEntries, IN PLFS_WRITE_ENTRY WriteEntries,
+         IN LFS_RECORD_TYPE RecordType, IN TRANSACTION_ID *TransactionId OPTIONAL, IN LSN UndoNextLsn,
+         IN LSN PreviousLsn, IN LONG UndoRequirement, IN ULONG Flags, OUT PLSN Lsn);
 
 #define LFS_WRITE_FLAG_WRITE_AT_FRONT 1
 
 BOOLEAN
-LfsForceWrite (
-    IN LFS_LOG_HANDLE LogHandle,
-    IN ULONG NumberOfWriteEntries,
-    IN PLFS_WRITE_ENTRY WriteEntries,
-    IN LFS_RECORD_TYPE RecordType,
-    IN TRANSACTION_ID *TransactionId OPTIONAL,
-    IN LSN UndoNextLsn,
-    IN LSN PreviousLsn,
-    IN LONG UndoRequirement,
-    OUT PLSN Lsn
-    );
+LfsForceWrite(IN LFS_LOG_HANDLE LogHandle, IN ULONG NumberOfWriteEntries, IN PLFS_WRITE_ENTRY WriteEntries,
+              IN LFS_RECORD_TYPE RecordType, IN TRANSACTION_ID *TransactionId OPTIONAL, IN LSN UndoNextLsn,
+              IN LSN PreviousLsn, IN LONG UndoRequirement, OUT PLSN Lsn);
 
-VOID
-LfsFlushToLsn (
-    IN LFS_LOG_HANDLE LogHandle,
-    IN LSN Lsn
-    );
+VOID LfsFlushToLsn(IN LFS_LOG_HANDLE LogHandle, IN LSN Lsn);
 
-VOID
-LfsCheckWriteRange (
-    IN PLFS_WRITE_DATA WriteData,
-    IN OUT PLONGLONG FlushOffset,
-    IN OUT PULONG FlushLength
-    );
+VOID LfsCheckWriteRange(IN PLFS_WRITE_DATA WriteData, IN OUT PLONGLONG FlushOffset, IN OUT PULONG FlushLength);
 
 //
 //  Log File Query Record routines
 //
 
-VOID
-LfsReadLogRecord (
-    IN LFS_LOG_HANDLE LogHandle,
-    IN LSN FirstLsn,
-    IN LFS_CONTEXT_MODE ContextMode,
-    OUT PLFS_LOG_CONTEXT Context,
-    OUT PLFS_RECORD_TYPE RecordType,
-    OUT TRANSACTION_ID *TransactionId,
-    OUT PLSN UndoNextLsn,
-    OUT PLSN PreviousLsn,
-    OUT PULONG BufferLength,
-    OUT PVOID *Buffer
-    );
+VOID LfsReadLogRecord(IN LFS_LOG_HANDLE LogHandle, IN LSN FirstLsn, IN LFS_CONTEXT_MODE ContextMode,
+                      OUT PLFS_LOG_CONTEXT Context, OUT PLFS_RECORD_TYPE RecordType, OUT TRANSACTION_ID *TransactionId,
+                      OUT PLSN UndoNextLsn, OUT PLSN PreviousLsn, OUT PULONG BufferLength, OUT PVOID *Buffer);
 
 BOOLEAN
-LfsReadNextLogRecord (
-    IN LFS_LOG_HANDLE LogHandle,
-    IN OUT LFS_LOG_CONTEXT Context,
-    OUT PLFS_RECORD_TYPE RecordType,
-    OUT TRANSACTION_ID *TransactionId,
-    OUT PLSN UndoNextLsn,
-    OUT PLSN PreviousLsn,
-    OUT PLSN Lsn,
-    OUT PULONG BufferLength,
-    OUT PVOID *Buffer
-    );
+LfsReadNextLogRecord(IN LFS_LOG_HANDLE LogHandle, IN OUT LFS_LOG_CONTEXT Context, OUT PLFS_RECORD_TYPE RecordType,
+                     OUT TRANSACTION_ID *TransactionId, OUT PLSN UndoNextLsn, OUT PLSN PreviousLsn, OUT PLSN Lsn,
+                     OUT PULONG BufferLength, OUT PVOID *Buffer);
 
-VOID
-LfsTerminateLogQuery (
-    IN LFS_LOG_HANDLE LogHandle,
-    IN LFS_LOG_CONTEXT Context
-    );
+VOID LfsTerminateLogQuery(IN LFS_LOG_HANDLE LogHandle, IN LFS_LOG_CONTEXT Context);
 
-LSN
-LfsQueryLastLsn (
-    IN LFS_LOG_HANDLE LogHandle
-    );
+LSN LfsQueryLastLsn(IN LFS_LOG_HANDLE LogHandle);
 
-#endif  // LFS
-
+#endif // LFS

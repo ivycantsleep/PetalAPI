@@ -39,21 +39,15 @@ Revision History:
 // really a kthread and not something else, like deallocated pool.
 //
 
-#define ASSERT_THREAD(E) {                    \
-    ASSERT((E)->Header.Type == ThreadObject); \
-}
+#define ASSERT_THREAD(E)                          \
+    {                                             \
+        ASSERT((E)->Header.Type == ThreadObject); \
+    }
 
 NTSTATUS
-KeInitThread (
-    IN PKTHREAD Thread,
-    IN PVOID KernelStack OPTIONAL,
-    IN PKSYSTEM_ROUTINE SystemRoutine,
-    IN PKSTART_ROUTINE StartRoutine OPTIONAL,
-    IN PVOID StartContext OPTIONAL,
-    IN PCONTEXT ContextFrame OPTIONAL,
-    IN PVOID Teb OPTIONAL,
-    IN PKPROCESS Process
-    )
+KeInitThread(IN PKTHREAD Thread, IN PVOID KernelStack OPTIONAL, IN PKSYSTEM_ROUTINE SystemRoutine,
+             IN PKSTART_ROUTINE StartRoutine OPTIONAL, IN PVOID StartContext OPTIONAL,
+             IN PCONTEXT ContextFrame OPTIONAL, IN PVOID Teb OPTIONAL, IN PKPROCESS Process)
 
 /*++
 
@@ -138,7 +132,8 @@ Return Value:
     // Initialize the thread field of all builtin wait blocks.
     //
 
-    for (Index = 0; Index < (THREAD_WAIT_OBJECTS + 1); Index += 1) {
+    for (Index = 0; Index < (THREAD_WAIT_OBJECTS + 1); Index += 1)
+    {
         Thread->WaitBlock[Index].Thread = Thread;
     }
 
@@ -180,14 +175,8 @@ Return Value:
     // and the builtin wait timeout timer object.
     //
 
-    KeInitializeApc(&Thread->SuspendApc,
-                    Thread,
-                    OriginalApcEnvironment,
-                    (PKKERNEL_ROUTINE)KiSuspendNop,
-                    (PKRUNDOWN_ROUTINE)KiSuspendRundown,
-                    KiSuspendThread,
-                    KernelMode,
-                    NULL);
+    KeInitializeApc(&Thread->SuspendApc, Thread, OriginalApcEnvironment, (PKKERNEL_ROUTINE)KiSuspendNop,
+                    (PKRUNDOWN_ROUTINE)KiSuspendRundown, KiSuspendThread, KernelMode, NULL);
 
     KeInitializeSemaphore(&Thread->SuspendSemaphore, 0L, 2L);
 
@@ -246,7 +235,8 @@ Return Value:
 #if defined(NT_SMT)
 
     TempSet = ~KiProcessorBlock[IdealProcessor]->MultiThreadProcessorSet;
-    if ((PreferredSet & TempSet) != 0) {
+    if ((PreferredSet & TempSet) != 0)
+    {
         PreferredSet &= TempSet;
     }
 
@@ -260,14 +250,14 @@ Return Value:
 #if defined(KE_MULTINODE)
 
     TempSet = KeNodeBlock[Process->IdealNode]->ProcessorMask;
-    if ((PreferredSet & TempSet) != 0) {
+    if ((PreferredSet & TempSet) != 0)
+    {
         PreferredSet &= TempSet;
     }
 
 #endif
 
-    IdealProcessor = KeFindNextRightSetAffinity(IdealProcessor,
-                                                PreferredSet);
+    IdealProcessor = KeFindNextRightSetAffinity(IdealProcessor, PreferredSet);
 
 #endif
 
@@ -279,10 +269,11 @@ Return Value:
 
 #if defined(KE_MULTINODE)
 
-    for (Index = Process->IdealNode;
-         (KeNodeBlock[Index]->ProcessorMask & AFFINITY_MASK(IdealProcessor)) == 0;
-         Index = Index > 0 ? Index - 1 : KeNumberNodes - 1) {
-        if (Process->IdealNode == Index) {
+    for (Index = Process->IdealNode; (KeNodeBlock[Index]->ProcessorMask & AFFINITY_MASK(IdealProcessor)) == 0;
+         Index = Index > 0 ? Index - 1 : KeNumberNodes - 1)
+    {
+        if (Process->IdealNode == Index)
+        {
 
             //
             // This can only happen if we wrapped,... which can't happen.
@@ -305,14 +296,16 @@ Return Value:
     // Set the initial kernel stack and the initial thread context.
     //
 
-    if (KernelStack == NULL) {
+    if (KernelStack == NULL)
+    {
 
         //
         // Get a kernel stack for this thread.
         //
 
         KernelStack = MmCreateKernelStack(FALSE, Thread->InitialNode);
-        if (KernelStack == NULL) {
+        if (KernelStack == NULL)
+        {
             return STATUS_INSUFFICIENT_RESOURCES;
         }
 
@@ -322,15 +315,14 @@ Return Value:
     Thread->InitialStack = KernelStack;
     Thread->StackBase = KernelStack;
     Thread->StackLimit = (PVOID)((ULONG_PTR)KernelStack - KERNEL_STACK_SIZE);
-    try {
-        KiInitializeContextThread(Thread,
-                                  SystemRoutine,
-                                  StartRoutine,
-                                  StartContext,
-                                  ContextFrame);
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-        if (KernelStackAllocated) {
+    try
+    {
+        KiInitializeContextThread(Thread, SystemRoutine, StartRoutine, StartContext, ContextFrame);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        if (KernelStackAllocated)
+        {
             MmDeleteKernelStack(Thread->StackBase, FALSE);
             Thread->InitialStack = NULL;
         }
@@ -359,10 +351,7 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
-VOID
-KeUninitThread (
-    IN PKTHREAD Thread
-    )
+VOID KeUninitThread(IN PKTHREAD Thread)
 /*++
 
 Routine Description:
@@ -386,10 +375,7 @@ Return Value:
     return;
 }
 
-VOID
-KeStartThread (
-    IN PKTHREAD Thread
-    )
+VOID KeStartThread(IN PKTHREAD Thread)
 
 /*++
 
@@ -428,8 +414,7 @@ Return Value:
 
 #if !defined(NT_UP)
 
-    Thread->SoftAffinity =
-        KiProcessorBlock[Thread->IdealProcessor]->ParentNode->ProcessorMask;
+    Thread->SoftAffinity = KiProcessorBlock[Thread->IdealProcessor]->ParentNode->ProcessorMask;
 
 #endif
 
@@ -456,10 +441,12 @@ Return Value:
     //
 
     InsertTailList(&Process->ThreadListHead, &Thread->ThreadListEntry);
-    if (Process->StackCount == MAXSHORT) {
+    if (Process->StackCount == MAXSHORT)
+    {
         Process->StackCount = 1;
-
-    } else {
+    }
+    else
+    {
         Process->StackCount += 1;
     }
 
@@ -480,16 +467,9 @@ Return Value:
 }
 
 NTSTATUS
-KeInitializeThread (
-    IN PKTHREAD Thread,
-    IN PVOID KernelStack OPTIONAL,
-    IN PKSYSTEM_ROUTINE SystemRoutine,
-    IN PKSTART_ROUTINE StartRoutine OPTIONAL,
-    IN PVOID StartContext OPTIONAL,
-    IN PCONTEXT ContextFrame OPTIONAL,
-    IN PVOID Teb OPTIONAL,
-    IN PKPROCESS Process
-    )
+KeInitializeThread(IN PKTHREAD Thread, IN PVOID KernelStack OPTIONAL, IN PKSYSTEM_ROUTINE SystemRoutine,
+                   IN PKSTART_ROUTINE StartRoutine OPTIONAL, IN PVOID StartContext OPTIONAL,
+                   IN PCONTEXT ContextFrame OPTIONAL, IN PVOID Teb OPTIONAL, IN PKPROCESS Process)
 
 /*++
 
@@ -550,16 +530,10 @@ Return Value:
 
     NTSTATUS Status;
 
-    Status = KeInitThread(Thread,
-                          KernelStack,
-                          SystemRoutine,
-                          StartRoutine,
-                          StartContext,
-                          ContextFrame,
-                          Teb,
-                          Process);
+    Status = KeInitThread(Thread, KernelStack, SystemRoutine, StartRoutine, StartContext, ContextFrame, Teb, Process);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
@@ -568,10 +542,7 @@ Return Value:
 }
 
 BOOLEAN
-KeAlertThread (
-    IN PKTHREAD Thread,
-    IN KPROCESSOR_MODE AlertMode
-    )
+KeAlertThread(IN PKTHREAD Thread, IN KPROCESSOR_MODE AlertMode)
 
 /*++
 
@@ -623,7 +594,8 @@ Return Value:
     // then attempt to alert the thread.
     //
 
-    if (Alerted == FALSE) {
+    if (Alerted == FALSE)
+    {
 
         //
         // If the thread is currently in a Wait state, the Wait is alertable,
@@ -631,11 +603,12 @@ Return Value:
         // mode, then the thread is unwaited with a status of "alerted".
         //
 
-        if ((Thread->State == Waiting) && (Thread->Alertable == TRUE) &&
-            (AlertMode <= Thread->WaitMode)) {
+        if ((Thread->State == Waiting) && (Thread->Alertable == TRUE) && (AlertMode <= Thread->WaitMode))
+        {
             KiUnwaitThread(Thread, STATUS_ALERTED, ALERT_INCREMENT, NULL);
-
-        } else {
+        }
+        else
+        {
             Thread->Alerted[AlertMode] = TRUE;
         }
     }
@@ -652,9 +625,7 @@ Return Value:
 }
 
 ULONG
-KeAlertResumeThread (
-    IN PKTHREAD Thread
-    )
+KeAlertResumeThread(IN PKTHREAD Thread)
 
 /*++
 
@@ -695,7 +666,8 @@ Return Value:
     // the thread for kernel mode.
     //
 
-    if (Thread->Alerted[KernelMode] == FALSE) {
+    if (Thread->Alerted[KernelMode] == FALSE)
+    {
 
         //
         // If the thread is currently in a Wait state and the Wait is alertable,
@@ -703,10 +675,12 @@ Return Value:
         // kernel mode alerted variable.
         //
 
-        if ((Thread->State == Waiting) && (Thread->Alertable == TRUE)) {
+        if ((Thread->State == Waiting) && (Thread->Alertable == TRUE))
+        {
             KiUnwaitThread(Thread, STATUS_ALERTED, ALERT_INCREMENT, NULL);
-
-        } else {
+        }
+        else
+        {
             Thread->Alerted[KernelMode] = TRUE;
         }
     }
@@ -721,7 +695,8 @@ Return Value:
     // If the thread is currently suspended, then decrement its suspend count.
     //
 
-    if (OldCount != 0) {
+    if (OldCount != 0)
+    {
         Thread->SuspendCount -= 1;
 
         //
@@ -729,7 +704,8 @@ Return Value:
         // zero, then resume the thread by releasing its suspend semaphore.
         //
 
-        if ((Thread->SuspendCount == 0) && (Thread->FreezeCount == 0)) {
+        if ((Thread->SuspendCount == 0) && (Thread->FreezeCount == 0))
+        {
             Thread->SuspendSemaphore.Header.SignalState += 1;
             KiWaitTest(&Thread->SuspendSemaphore, RESUME_INCREMENT);
         }
@@ -746,11 +722,7 @@ Return Value:
     return OldCount;
 }
 
-VOID
-KeBoostPriorityThread (
-    IN PKTHREAD Thread,
-    IN KPRIORITY Increment
-    )
+VOID KeBoostPriorityThread(IN PKTHREAD Thread, IN KPRIORITY Increment)
 
 /*++
 
@@ -789,7 +761,8 @@ Return Value:
     // the thread priority.
     //
 
-    if (Thread->Priority < LOW_REALTIME_PRIORITY) {
+    if (Thread->Priority < LOW_REALTIME_PRIORITY)
+    {
         KiBoostPriorityThread(Thread, Increment);
     }
 
@@ -803,9 +776,7 @@ Return Value:
 }
 
 KAFFINITY
-KeConfineThread (
-    VOID
-    )
+KeConfineThread(VOID)
 
 /*++
 
@@ -862,9 +833,7 @@ Return Value:
 }
 
 BOOLEAN
-KeDisableApcQueuingThread (
-    IN PKTHREAD Thread
-    )
+KeDisableApcQueuingThread(IN PKTHREAD Thread)
 
 /*++
 
@@ -919,9 +888,7 @@ Return Value:
 }
 
 BOOLEAN
-KeEnableApcQueuingThread (
-    IN PKTHREAD Thread
-    )
+KeEnableApcQueuingThread(IN PKTHREAD Thread)
 
 /*++
 
@@ -976,9 +943,7 @@ Return Value:
 }
 
 ULONG
-KeForceResumeThread (
-    IN PKTHREAD Thread
-    )
+KeForceResumeThread(IN PKTHREAD Thread)
 
 /*++
 
@@ -1023,7 +988,8 @@ Return Value:
     // thread execution.
     //
 
-    if (OldCount != 0) {
+    if (OldCount != 0)
+    {
         Thread->FreezeCount = 0;
         Thread->SuspendCount = 0;
         Thread->SuspendSemaphore.Header.SignalState += 1;
@@ -1044,10 +1010,7 @@ Return Value:
     return OldCount;
 }
 
-VOID
-KeFreezeAllThreads (
-    VOID
-    )
+VOID KeFreezeAllThreads(VOID)
 
 /*++
 
@@ -1092,8 +1055,7 @@ Return Value:
     // Raise IRQL to SYNCH_LEVEL and acquire the process lock.
     //
 
-    KeAcquireInStackQueuedSpinLockRaiseToSynch(&Process->ProcessLock,
-                                               &ProcessHandle);
+    KeAcquireInStackQueuedSpinLockRaiseToSynch(&Process->ProcessLock, &ProcessHandle);
 
     //
     // If the freeze count of the current thread is not zero, then there
@@ -1103,10 +1065,10 @@ Return Value:
     // process lock.
     //
 
-    while (CurrentThread->FreezeCount != 0) {
+    while (CurrentThread->FreezeCount != 0)
+    {
         KeReleaseInStackQueuedSpinLock(&ProcessHandle);
-        KeAcquireInStackQueuedSpinLockRaiseToSynch(&Process->ProcessLock,
-                                                   &ProcessHandle);
+        KeAcquireInStackQueuedSpinLockRaiseToSynch(&Process->ProcessLock, &ProcessHandle);
     }
 
     KeEnterCriticalRegion();
@@ -1117,7 +1079,8 @@ Return Value:
 
     ListHead = &Process->ThreadListHead;
     NextEntry = ListHead->Flink;
-    do {
+    do
+    {
 
         //
         // Get the address of the next thread.
@@ -1130,8 +1093,7 @@ Return Value:
         // database lock.
         //
 
-        KeAcquireInStackQueuedSpinLockAtDpcLevel(&Thread->ApcQueueLock,
-                                                 &ThreadHandle);
+        KeAcquireInStackQueuedSpinLockAtDpcLevel(&Thread->ApcQueueLock, &ThreadHandle);
 
         KiLockDispatcherDatabaseAtSynchLevel();
 
@@ -1140,7 +1102,8 @@ Return Value:
         // then attempt to suspend the thread.
         //
 
-        if ((Thread != CurrentThread) && (Thread->ApcQueueable == TRUE)) {
+        if ((Thread != CurrentThread) && (Thread->ApcQueueable == TRUE))
+        {
 
             //
             // Increment the freeze count. If the thread was not previously
@@ -1152,8 +1115,10 @@ Return Value:
             ASSERT(OldCount != MAXIMUM_SUSPEND_COUNT);
 
             Thread->FreezeCount += 1;
-            if ((OldCount == 0) && (Thread->SuspendCount == 0)) {
-                if (KiInsertQueueApc(&Thread->SuspendApc, RESUME_INCREMENT) == FALSE) {
+            if ((OldCount == 0) && (Thread->SuspendCount == 0))
+            {
+                if (KiInsertQueueApc(&Thread->SuspendApc, RESUME_INCREMENT) == FALSE)
+                {
                     Thread->SuspendSemaphore.Header.SignalState -= 1;
                 }
             }
@@ -1173,14 +1138,12 @@ Return Value:
     // Unlock the process lock and lower IRQL to its previous value.
     //
 
-    KeReleaseInStackQueuedSpinLock(&ProcessHandle); 
+    KeReleaseInStackQueuedSpinLock(&ProcessHandle);
     return;
 }
 
 BOOLEAN
-KeQueryAutoAlignmentThread (
-    IN PKTHREAD Thread
-    )
+KeQueryAutoAlignmentThread(IN PKTHREAD Thread)
 
 /*++
 
@@ -1212,10 +1175,7 @@ Return Value:
     return Thread->AutoAlignment;
 }
 
-LONG
-KeQueryBasePriorityThread (
-    IN PKTHREAD Thread
-    )
+LONG KeQueryBasePriorityThread(IN PKTHREAD Thread)
 
 /*++
 
@@ -1258,7 +1218,8 @@ Return Value:
 
     Process = Thread->ApcStatePointer[0]->Process;
     Increment = Thread->BasePriority - Process->BasePriority;
-    if (Thread->Saturation != 0) {
+    if (Thread->Saturation != 0)
+    {
         Increment = ((HIGH_PRIORITY + 1) / 2) * Thread->Saturation;
     }
 
@@ -1277,9 +1238,7 @@ Return Value:
 }
 
 KPRIORITY
-KeQueryPriorityThread (
-    IN PKTHREAD Thread
-    )
+KeQueryPriorityThread(IN PKTHREAD Thread)
 
 /*++
 
@@ -1303,10 +1262,7 @@ Return Value:
 }
 
 ULONG
-KeQueryRuntimeThread (
-    IN PKTHREAD Thread,
-    OUT PULONG UserTime
-    )
+KeQueryRuntimeThread(IN PKTHREAD Thread, OUT PULONG UserTime)
 
 /*++
 
@@ -1337,9 +1293,7 @@ Return Value:
 }
 
 BOOLEAN
-KeReadStateThread (
-    IN PKTHREAD Thread
-    )
+KeReadStateThread(IN PKTHREAD Thread)
 
 /*++
 
@@ -1368,10 +1322,7 @@ Return Value:
     return (BOOLEAN)Thread->Header.SignalState;
 }
 
-VOID
-KeReadyThread (
-    IN PKTHREAD Thread
-    )
+VOID KeReadyThread(IN PKTHREAD Thread)
 
 /*++
 
@@ -1423,9 +1374,7 @@ Return Value:
 }
 
 ULONG
-KeResumeThread (
-    IN PKTHREAD Thread
-    )
+KeResumeThread(IN PKTHREAD Thread)
 
 /*++
 
@@ -1468,7 +1417,8 @@ Return Value:
     // If the thread is currently suspended, then decrement its suspend count.
     //
 
-    if (OldCount != 0) {
+    if (OldCount != 0)
+    {
         Thread->SuspendCount -= 1;
 
         //
@@ -1476,7 +1426,8 @@ Return Value:
         // zero, then resume the thread by releasing its suspend semaphore.
         //
 
-        if ((Thread->SuspendCount == 0) && (Thread->FreezeCount == 0)) {
+        if ((Thread->SuspendCount == 0) && (Thread->FreezeCount == 0))
+        {
             Thread->SuspendSemaphore.Header.SignalState += 1;
             KiWaitTest(&Thread->SuspendSemaphore, RESUME_INCREMENT);
         }
@@ -1497,10 +1448,7 @@ Return Value:
 }
 
 
-VOID
-KeRevertToUserAffinityThread (
-    VOID
-    )
+VOID KeRevertToUserAffinityThread(VOID)
 
 /*++
 
@@ -1547,8 +1495,8 @@ Return Value:
     CurrentThread->Affinity = CurrentThread->UserAffinity;
     CurrentThread->SystemAffinityActive = FALSE;
     Prcb = KeGetCurrentPrcb();
-    if (((Prcb->SetMember & CurrentThread->Affinity) == 0) &&
-        (Prcb->NextThread == NULL)) {
+    if (((Prcb->SetMember & CurrentThread->Affinity) == 0) && (Prcb->NextThread == NULL))
+    {
         NextThread = KiSelectNextThread(CurrentThread->NextProcessor);
         NextThread->State = Standby;
         Prcb->NextThread = NextThread;
@@ -1562,9 +1510,7 @@ Return Value:
     return;
 }
 
-VOID
-KeRundownThread (
-    )
+VOID KeRundownThread()
 
 /*++
 
@@ -1597,7 +1543,8 @@ Return Value:
 
     Thread = KeGetCurrentThread();
 
-    if (IsListEmpty (&Thread->MutantListHead)) {
+    if (IsListEmpty(&Thread->MutantListHead))
+    {
         return;
     }
 
@@ -1614,19 +1561,20 @@ Return Value:
     //
 
     NextEntry = Thread->MutantListHead.Flink;
-    while (NextEntry != &Thread->MutantListHead) {
+    while (NextEntry != &Thread->MutantListHead)
+    {
         Mutant = CONTAINING_RECORD(NextEntry, KMUTANT, MutantListEntry);
-        if (Mutant->ApcDisable != 0) {
-            KeBugCheckEx(THREAD_TERMINATE_HELD_MUTEX,
-                         (ULONG_PTR)Thread,
-                         (ULONG_PTR)Mutant, 0, 0);
+        if (Mutant->ApcDisable != 0)
+        {
+            KeBugCheckEx(THREAD_TERMINATE_HELD_MUTEX, (ULONG_PTR)Thread, (ULONG_PTR)Mutant, 0, 0);
         }
 
         RemoveEntryList(&Mutant->MutantListEntry);
         Mutant->Header.SignalState = 1;
         Mutant->Abandoned = TRUE;
         Mutant->OwnerThread = (PKTHREAD)NULL;
-        if (IsListEmpty(&Mutant->Header.WaitListHead) != TRUE) {
+        if (IsListEmpty(&Mutant->Header.WaitListHead) != TRUE)
+        {
             KiWaitTest(Mutant, MUTANT_INCREMENT);
         }
 
@@ -1642,10 +1590,7 @@ Return Value:
 }
 
 KAFFINITY
-KeSetAffinityThread (
-    IN PKTHREAD Thread,
-    IN KAFFINITY Affinity
-    )
+KeSetAffinityThread(IN PKTHREAD Thread, IN KAFFINITY Affinity)
 
 /*++
 
@@ -1695,10 +1640,7 @@ Return Value:
     return OldAffinity;
 }
 
-VOID
-KeSetSystemAffinityThread (
-    IN KAFFINITY Affinity
-    )
+VOID KeSetSystemAffinityThread(IN KAFFINITY Affinity)
 
 /*++
 
@@ -1745,8 +1687,8 @@ Return Value:
     CurrentThread->Affinity = Affinity;
     CurrentThread->SystemAffinityActive = TRUE;
     Prcb = KeGetCurrentPrcb();
-    if (((Prcb->SetMember & CurrentThread->Affinity) == 0) &&
-        (Prcb->NextThread == NULL)) {
+    if (((Prcb->SetMember & CurrentThread->Affinity) == 0) && (Prcb->NextThread == NULL))
+    {
         NextThread = KiSelectNextThread(CurrentThread->NextProcessor);
         NextThread->State = Standby;
         Prcb->NextThread = NextThread;
@@ -1760,11 +1702,7 @@ Return Value:
     return;
 }
 
-LONG
-KeSetBasePriorityThread (
-    IN PKTHREAD Thread,
-    IN LONG Increment
-    )
+LONG KeSetBasePriorityThread(IN PKTHREAD Thread, IN LONG Increment)
 
 /*++
 
@@ -1817,12 +1755,14 @@ Return Value:
     Process = Thread->ApcStatePointer[0]->Process;
     OldBase = Thread->BasePriority;
     OldIncrement = OldBase - Process->BasePriority;
-    if (Thread->Saturation != 0) {
+    if (Thread->Saturation != 0)
+    {
         OldIncrement = ((HIGH_PRIORITY + 1) / 2) * Thread->Saturation;
     }
 
     Thread->Saturation = FALSE;
-    if (abs(Increment) >= (HIGH_PRIORITY + 1) / 2) {
+    if (abs(Increment) >= (HIGH_PRIORITY + 1) / 2)
+    {
         Thread->Saturation = (Increment > 0) ? 1 : -1;
     }
 
@@ -1833,11 +1773,14 @@ Return Value:
     //
 
     NewBase = Process->BasePriority + Increment;
-    if (Process->BasePriority >= LOW_REALTIME_PRIORITY) {
-        if (NewBase < LOW_REALTIME_PRIORITY) {
+    if (Process->BasePriority >= LOW_REALTIME_PRIORITY)
+    {
+        if (NewBase < LOW_REALTIME_PRIORITY)
+        {
             NewBase = LOW_REALTIME_PRIORITY;
-
-        } else if (NewBase > HIGH_PRIORITY) {
+        }
+        else if (NewBase > HIGH_PRIORITY)
+        {
             NewBase = HIGH_PRIORITY;
         }
 
@@ -1846,12 +1789,15 @@ Return Value:
         //
 
         NewPriority = NewBase;
-
-    } else {
-        if (NewBase >= LOW_REALTIME_PRIORITY) {
+    }
+    else
+    {
+        if (NewBase >= LOW_REALTIME_PRIORITY)
+        {
             NewBase = LOW_REALTIME_PRIORITY - 1;
-
-        } else if (NewBase <= LOW_PRIORITY) {
+        }
+        else if (NewBase <= LOW_PRIORITY)
+        {
             NewBase = 1;
         }
 
@@ -1861,14 +1807,16 @@ Return Value:
         // variable priority.
         //
 
-        if (Thread->Saturation != 0) {
+        if (Thread->Saturation != 0)
+        {
             NewPriority = NewBase;
+        }
+        else
+        {
+            NewPriority = Thread->Priority + (NewBase - OldBase) - Thread->PriorityDecrement;
 
-        } else {
-            NewPriority = Thread->Priority +
-                            (NewBase - OldBase) - Thread->PriorityDecrement;
-
-            if (NewPriority >= LOW_REALTIME_PRIORITY) {
+            if (NewPriority >= LOW_REALTIME_PRIORITY)
+            {
                 NewPriority = LOW_REALTIME_PRIORITY - 1;
             }
         }
@@ -1883,7 +1831,8 @@ Return Value:
     Thread->BasePriority = (SCHAR)NewBase;
     Thread->DecrementCount = 0;
     Thread->PriorityDecrement = 0;
-    if (NewPriority != Thread->Priority) {
+    if (NewPriority != Thread->Priority)
+    {
         Thread->Quantum = Process->ThreadQuantum;
         KiSetPriorityThread(Thread, NewPriority);
     }
@@ -1903,10 +1852,7 @@ Return Value:
 }
 
 LOGICAL
-KeSetDisableBoostThread (
-    IN PKTHREAD Thread,
-    IN LOGICAL Disable
-    )
+KeSetDisableBoostThread(IN PKTHREAD Thread, IN LOGICAL Disable)
 
 /*++
 
@@ -1964,10 +1910,7 @@ Return Value:
 }
 
 CCHAR
-KeSetIdealProcessorThread (
-    IN PKTHREAD Thread,
-    IN CCHAR Processor
-    )
+KeSetIdealProcessorThread(IN PKTHREAD Thread, IN CCHAR Processor)
 
 /*++
 
@@ -2005,20 +1948,20 @@ Return Value:
 
     KiLockDispatcherDatabase(&OldIrql);
     OldProcessor = Thread->IdealProcessor;
-    if (Processor < KeNumberProcessors) {
+    if (Processor < KeNumberProcessors)
+    {
         Thread->IdealProcessor = Processor;
-
-    } else {
+    }
+    else
+    {
         Process = Thread->ApcState.Process;
         Thread->IdealProcessor =
-            KeFindNextRightSetAffinity(Process->ThreadSeed,
-                                       KeNodeBlock[Process->IdealNode]->ProcessorMask);
+            KeFindNextRightSetAffinity(Process->ThreadSeed, KeNodeBlock[Process->IdealNode]->ProcessorMask);
 
         Process->ThreadSeed = Thread->IdealProcessor;
     }
 
-    Thread->SoftAffinity =
-        KiProcessorBlock[Thread->IdealProcessor]->ParentNode->ProcessorMask;
+    Thread->SoftAffinity = KiProcessorBlock[Thread->IdealProcessor]->ParentNode->ProcessorMask;
 
     //
     // Unlock dispatcher database and lower IRQL to its previous value.
@@ -2029,9 +1972,7 @@ Return Value:
 }
 
 BOOLEAN
-KeSetKernelStackSwapEnable (
-    IN BOOLEAN Enable
-    )
+KeSetKernelStackSwapEnable(IN BOOLEAN Enable)
 
 /*++
 
@@ -2068,10 +2009,7 @@ Return Value:
 }
 
 KPRIORITY
-KeSetPriorityThread (
-    IN PKTHREAD Thread,
-    IN KPRIORITY Priority
-    )
+KeSetPriorityThread(IN PKTHREAD Thread, IN KPRIORITY Priority)
 
 /*++
 
@@ -2102,8 +2040,7 @@ Return Value:
 
     ASSERT_THREAD(Thread);
     ASSERT(KeGetCurrentIrql() <= DISPATCH_LEVEL);
-    ASSERT(((Priority != 0) || (Thread->BasePriority == 0)) &&
-           (Priority <= HIGH_PRIORITY));
+    ASSERT(((Priority != 0) || (Thread->BasePriority == 0)) && (Priority <= HIGH_PRIORITY));
 
     ASSERT(KeIsExecutingDpc() == FALSE);
 
@@ -2123,7 +2060,8 @@ Return Value:
     OldPriority = Thread->Priority;
     Thread->DecrementCount = 0;
     Thread->PriorityDecrement = 0;
-    if (Priority != Thread->Priority) {
+    if (Priority != Thread->Priority)
+    {
         Process = Thread->ApcStatePointer[0]->Process;
         Thread->Quantum = Process->ThreadQuantum;
         KiSetPriorityThread(Thread, Priority);
@@ -2144,9 +2082,7 @@ Return Value:
 }
 
 ULONG
-KeSuspendThread (
-    IN PKTHREAD Thread
-    )
+KeSuspendThread(IN PKTHREAD Thread)
 
 /*++
 
@@ -2190,7 +2126,8 @@ Return Value:
     //
 
     OldCount = Thread->SuspendCount;
-    if (OldCount == MAXIMUM_SUSPEND_COUNT) {
+    if (OldCount == MAXIMUM_SUSPEND_COUNT)
+    {
         KiUnlockDispatcherDatabaseFromSynchLevel();
         KeReleaseInStackQueuedSpinLock(&LockHandle);
         ExRaiseStatus(STATUS_SUSPEND_COUNT_EXCEEDED);
@@ -2201,7 +2138,8 @@ Return Value:
     // thread is being deleted.
     //
 
-    if (Thread->ApcQueueable == TRUE) {
+    if (Thread->ApcQueueable == TRUE)
+    {
 
         //
         // Increment the suspend count. If the thread was not previously
@@ -2209,8 +2147,10 @@ Return Value:
         //
 
         Thread->SuspendCount += 1;
-        if ((OldCount == 0) && (Thread->FreezeCount == 0)) {
-            if (KiInsertQueueApc(&Thread->SuspendApc, RESUME_INCREMENT) == FALSE) {
+        if ((OldCount == 0) && (Thread->FreezeCount == 0))
+        {
+            if (KiInsertQueueApc(&Thread->SuspendApc, RESUME_INCREMENT) == FALSE)
+            {
                 Thread->SuspendSemaphore.Header.SignalState -= 1;
             }
         }
@@ -2227,10 +2167,7 @@ Return Value:
     return OldCount;
 }
 
-VOID
-KeTerminateThread (
-    IN KPRIORITY Increment
-    )
+VOID KeTerminateThread(IN KPRIORITY Increment)
 
 /*++
 
@@ -2287,11 +2224,10 @@ Return Value:
     ((PETHREAD)Thread)->ReaperLink = PsReaperList;
     PsReaperList = (PETHREAD)Thread;
 
-    if (PsReaperActive == FALSE) {
+    if (PsReaperActive == FALSE)
+    {
         PsReaperActive = TRUE;
-        KiInsertQueue(&ExWorkerQueue[HyperCriticalWorkQueue].WorkerQueue,
-                      &PsReaperWorkItem.List,
-                      FALSE);
+        KiInsertQueue(&ExWorkerQueue[HyperCriticalWorkQueue].WorkerQueue, &PsReaperWorkItem.List, FALSE);
     }
 
     //
@@ -2301,7 +2237,8 @@ Return Value:
     //
 
     Queue = Thread->Queue;
-    if (Queue != NULL) {
+    if (Queue != NULL)
+    {
         RemoveEntryList(&Thread->QueueListEntry);
         KiActivateWaiterQueue(Queue);
     }
@@ -2312,7 +2249,8 @@ Return Value:
     //
 
     Thread->Header.SignalState = TRUE;
-    if (IsListEmpty(&Thread->Header.WaitListHead) != TRUE) {
+    if (IsListEmpty(&Thread->Header.WaitListHead) != TRUE)
+    {
         KiWaitTest((PVOID)Thread, Increment);
     }
 
@@ -2336,11 +2274,12 @@ Return Value:
 
     Thread->State = Terminated;
     Process->StackCount -= 1;
-    if (Process->StackCount == 0) {
-        if (Process->ThreadListHead.Flink != &Process->ThreadListHead) {
+    if (Process->StackCount == 0)
+    {
+        if (Process->ThreadListHead.Flink != &Process->ThreadListHead)
+        {
             Process->State = ProcessOutTransition;
-            InterlockedPushEntrySingleList(&KiProcessOutSwapListHead,
-                                           &Process->SwapListEntry);
+            InterlockedPushEntrySingleList(&KiProcessOutSwapListHead, &Process->SwapListEntry);
 
             KiSetSwapEvent();
         }
@@ -2361,9 +2300,7 @@ Return Value:
 }
 
 BOOLEAN
-KeTestAlertThread (
-    IN KPROCESSOR_MODE AlertMode
-    )
+KeTestAlertThread(IN KPROCESSOR_MODE AlertMode)
 
 /*++
 
@@ -2410,11 +2347,12 @@ Return Value:
     //
 
     Alerted = Thread->Alerted[AlertMode];
-    if (Alerted == TRUE) {
+    if (Alerted == TRUE)
+    {
         Thread->Alerted[AlertMode] = FALSE;
-
-    } else if ((AlertMode == UserMode) &&
-              (IsListEmpty(&Thread->ApcState.ApcListHead[UserMode]) != TRUE)) {
+    }
+    else if ((AlertMode == UserMode) && (IsListEmpty(&Thread->ApcState.ApcListHead[UserMode]) != TRUE))
+    {
         Thread->ApcState.UserApcPending = TRUE;
     }
 
@@ -2429,10 +2367,7 @@ Return Value:
     return Alerted;
 }
 
-VOID
-KeThawAllThreads (
-    VOID
-    )
+VOID KeThawAllThreads(VOID)
 
 /*++
 
@@ -2479,7 +2414,8 @@ Return Value:
 
     ListHead = &Process->ThreadListHead;
     NextEntry = ListHead->Flink;
-    do {
+    do
+    {
 
         //
         // Get the address of the next thread and thaw its execution if
@@ -2488,7 +2424,8 @@ Return Value:
 
         Thread = CONTAINING_RECORD(NextEntry, KTHREAD, ThreadListEntry);
         OldCount = Thread->FreezeCount;
-        if (OldCount != 0) {
+        if (OldCount != 0)
+        {
             Thread->FreezeCount -= 1;
 
             //
@@ -2496,7 +2433,8 @@ Return Value:
             // zero, then resume the thread by releasing its suspend semaphore.
             //
 
-            if ((Thread->SuspendCount == 0) && (Thread->FreezeCount == 0)) {
+            if ((Thread->SuspendCount == 0) && (Thread->FreezeCount == 0))
+            {
                 Thread->SuspendSemaphore.Header.SignalState += 1;
                 KiWaitTest(&Thread->SuspendSemaphore, RESUME_INCREMENT);
             }

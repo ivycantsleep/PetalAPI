@@ -24,443 +24,217 @@ Revision History:
 
 THUNKED_API
 PVOID
-VerifierAllocatePool (
-    IN POOL_TYPE PoolType,
-    IN SIZE_T NumberOfBytes
-    );
+VerifierAllocatePool(IN POOL_TYPE PoolType, IN SIZE_T NumberOfBytes);
 
 THUNKED_API
 PVOID
-VerifierAllocatePoolWithTag (
-    IN POOL_TYPE PoolType,
-    IN SIZE_T NumberOfBytes,
-    IN ULONG Tag
-    );
+VerifierAllocatePoolWithTag(IN POOL_TYPE PoolType, IN SIZE_T NumberOfBytes, IN ULONG Tag);
 
 THUNKED_API
 PVOID
-VerifierAllocatePoolWithQuotaTag (
-    IN POOL_TYPE PoolType,
-    IN SIZE_T NumberOfBytes,
-    IN ULONG Tag
-    );
+VerifierAllocatePoolWithQuotaTag(IN POOL_TYPE PoolType, IN SIZE_T NumberOfBytes, IN ULONG Tag);
 
 THUNKED_API
 PVOID
-VerifierAllocatePoolWithTagPriority (
-    IN POOL_TYPE PoolType,
-    IN SIZE_T NumberOfBytes,
-    IN ULONG Tag,
-    IN EX_POOL_PRIORITY Priority
-    );
+VerifierAllocatePoolWithTagPriority(IN POOL_TYPE PoolType, IN SIZE_T NumberOfBytes, IN ULONG Tag,
+                                    IN EX_POOL_PRIORITY Priority);
 
 PVOID
-VeAllocatePoolWithTagPriority (
-    IN POOL_TYPE PoolType,
-    IN SIZE_T NumberOfBytes,
-    IN ULONG Tag,
-    IN EX_POOL_PRIORITY Priority,
-    IN PVOID CallingAddress
-    );
+VeAllocatePoolWithTagPriority(IN POOL_TYPE PoolType, IN SIZE_T NumberOfBytes, IN ULONG Tag,
+                              IN EX_POOL_PRIORITY Priority, IN PVOID CallingAddress);
 
-VOID
-VerifierFreePool (
-    IN PVOID P
-    );
+VOID VerifierFreePool(IN PVOID P);
 
 THUNKED_API
-VOID
-VerifierFreePoolWithTag (
-    IN PVOID P,
-    IN ULONG TagToFree
-    );
+VOID VerifierFreePoolWithTag(IN PVOID P, IN ULONG TagToFree);
 
 THUNKED_API
-LONG
-VerifierSetEvent (
-    IN PRKEVENT Event,
-    IN KPRIORITY Increment,
-    IN BOOLEAN Wait
-    );
+LONG VerifierSetEvent(IN PRKEVENT Event, IN KPRIORITY Increment, IN BOOLEAN Wait);
 
 THUNKED_API
 KIRQL
 FASTCALL
-VerifierKfRaiseIrql (
-    IN KIRQL NewIrql
-    );
+VerifierKfRaiseIrql(IN KIRQL NewIrql);
 
 THUNKED_API
 KIRQL
-VerifierKeRaiseIrqlToDpcLevel (
-    VOID
-    );
+VerifierKeRaiseIrqlToDpcLevel(VOID);
 
 THUNKED_API
-VOID
-FASTCALL
-VerifierKfLowerIrql (
-    IN KIRQL NewIrql
-    );
+VOID FASTCALL VerifierKfLowerIrql(IN KIRQL NewIrql);
 
 THUNKED_API
-VOID
-VerifierKeRaiseIrql (
-    IN KIRQL NewIrql,
-    OUT PKIRQL OldIrql
-    );
+VOID VerifierKeRaiseIrql(IN KIRQL NewIrql, OUT PKIRQL OldIrql);
 
 THUNKED_API
-VOID
-VerifierKeLowerIrql (
-    IN KIRQL NewIrql
-    );
+VOID VerifierKeLowerIrql(IN KIRQL NewIrql);
 
 THUNKED_API
-VOID
-VerifierKeAcquireSpinLock (
-    IN PKSPIN_LOCK SpinLock,
-    OUT PKIRQL OldIrql
-    );
+VOID VerifierKeAcquireSpinLock(IN PKSPIN_LOCK SpinLock, OUT PKIRQL OldIrql);
 
 THUNKED_API
-VOID
-VerifierKeReleaseSpinLock (
-    IN PKSPIN_LOCK SpinLock,
-    IN KIRQL NewIrql
-    );
+VOID VerifierKeReleaseSpinLock(IN PKSPIN_LOCK SpinLock, IN KIRQL NewIrql);
 
 THUNKED_API
 VOID
 #if defined(_X86_)
-FASTCALL
+    FASTCALL
 #endif
-VerifierKeAcquireSpinLockAtDpcLevel (
-    IN PKSPIN_LOCK SpinLock
-    );
+    VerifierKeAcquireSpinLockAtDpcLevel(IN PKSPIN_LOCK SpinLock);
 
 THUNKED_API
 VOID
 #if defined(_X86_)
-FASTCALL
+    FASTCALL
 #endif
-VerifierKeReleaseSpinLockFromDpcLevel (
-    IN PKSPIN_LOCK SpinLock
-    );
+    VerifierKeReleaseSpinLockFromDpcLevel(IN PKSPIN_LOCK SpinLock);
 
 THUNKED_API
 KIRQL
 FASTCALL
-VerifierKfAcquireSpinLock (
-    IN PKSPIN_LOCK SpinLock
-    );
+VerifierKfAcquireSpinLock(IN PKSPIN_LOCK SpinLock);
 
 THUNKED_API
-VOID
-FASTCALL
-VerifierKfReleaseSpinLock (
-    IN PKSPIN_LOCK SpinLock,
-    IN KIRQL NewIrql
-    );
+VOID FASTCALL VerifierKfReleaseSpinLock(IN PKSPIN_LOCK SpinLock, IN KIRQL NewIrql);
 
 #if !defined(_X86_)
 THUNKED_API
 KIRQL
-VerifierKeAcquireSpinLockRaiseToDpc (
-    IN PKSPIN_LOCK SpinLock
-    );
+VerifierKeAcquireSpinLockRaiseToDpc(IN PKSPIN_LOCK SpinLock);
 #endif
 
 
 THUNKED_API
-VOID
-VerifierKeInitializeTimerEx (
-    IN PKTIMER Timer,
-    IN TIMER_TYPE Type
-    );
+VOID VerifierKeInitializeTimerEx(IN PKTIMER Timer, IN TIMER_TYPE Type);
 
 THUNKED_API
-VOID
-VerifierKeInitializeTimer (
-    IN PKTIMER Timer
-    );
+VOID VerifierKeInitializeTimer(IN PKTIMER Timer);
 
 THUNKED_API
 BOOLEAN
 FASTCALL
-VerifierExTryToAcquireFastMutex (
-    IN PFAST_MUTEX FastMutex
-    );
+VerifierExTryToAcquireFastMutex(IN PFAST_MUTEX FastMutex);
 
 THUNKED_API
-VOID
-FASTCALL
-VerifierExAcquireFastMutex (
-    IN PFAST_MUTEX FastMutex
-    );
+VOID FASTCALL VerifierExAcquireFastMutex(IN PFAST_MUTEX FastMutex);
 
 THUNKED_API
-VOID
-FASTCALL
-VerifierExReleaseFastMutex (
-    IN PFAST_MUTEX FastMutex
-    );
+VOID FASTCALL VerifierExReleaseFastMutex(IN PFAST_MUTEX FastMutex);
 
 THUNKED_API
-VOID
-FASTCALL
-VerifierExAcquireFastMutexUnsafe (
-    IN PFAST_MUTEX FastMutex
-    );
+VOID FASTCALL VerifierExAcquireFastMutexUnsafe(IN PFAST_MUTEX FastMutex);
 
 THUNKED_API
-VOID
-FASTCALL
-VerifierExReleaseFastMutexUnsafe (
-    IN PFAST_MUTEX FastMutex
-    );
+VOID FASTCALL VerifierExReleaseFastMutexUnsafe(IN PFAST_MUTEX FastMutex);
 
 THUNKED_API
 BOOLEAN
-VerifierExAcquireResourceExclusiveLite (
-    IN PERESOURCE Resource,
-    IN BOOLEAN Wait
-    );
+VerifierExAcquireResourceExclusiveLite(IN PERESOURCE Resource, IN BOOLEAN Wait);
 
 THUNKED_API
-VOID
-FASTCALL
-VerifierExReleaseResourceLite (
-    IN PERESOURCE Resource
-    );
+VOID FASTCALL VerifierExReleaseResourceLite(IN PERESOURCE Resource);
 
 THUNKED_API
 KIRQL
 FASTCALL
-VerifierKeAcquireQueuedSpinLock (
-    IN KSPIN_LOCK_QUEUE_NUMBER Number
-    );
+VerifierKeAcquireQueuedSpinLock(IN KSPIN_LOCK_QUEUE_NUMBER Number);
 
 THUNKED_API
-VOID
-FASTCALL
-VerifierKeReleaseQueuedSpinLock (
-    IN KSPIN_LOCK_QUEUE_NUMBER Number,
-    IN KIRQL OldIrql
-    );
+VOID FASTCALL VerifierKeReleaseQueuedSpinLock(IN KSPIN_LOCK_QUEUE_NUMBER Number, IN KIRQL OldIrql);
 
 THUNKED_API
 BOOLEAN
-VerifierSynchronizeExecution (
-    IN PKINTERRUPT Interrupt,
-    IN PKSYNCHRONIZE_ROUTINE SynchronizeRoutine,
-    IN PVOID SynchronizeContext
-    );
+VerifierSynchronizeExecution(IN PKINTERRUPT Interrupt, IN PKSYNCHRONIZE_ROUTINE SynchronizeRoutine,
+                             IN PVOID SynchronizeContext);
 
 THUNKED_API
-VOID
-VerifierProbeAndLockPages (
-    IN OUT PMDL MemoryDescriptorList,
-    IN KPROCESSOR_MODE AccessMode,
-    IN LOCK_OPERATION Operation
-    );
+VOID VerifierProbeAndLockPages(IN OUT PMDL MemoryDescriptorList, IN KPROCESSOR_MODE AccessMode,
+                               IN LOCK_OPERATION Operation);
 
 THUNKED_API
-VOID
-VerifierProbeAndLockProcessPages (
-    IN OUT PMDL MemoryDescriptorList,
-    IN PEPROCESS Process,
-    IN KPROCESSOR_MODE AccessMode,
-    IN LOCK_OPERATION Operation
-    );
+VOID VerifierProbeAndLockProcessPages(IN OUT PMDL MemoryDescriptorList, IN PEPROCESS Process,
+                                      IN KPROCESSOR_MODE AccessMode, IN LOCK_OPERATION Operation);
 
 THUNKED_API
-VOID
-VerifierProbeAndLockSelectedPages (
-    IN OUT PMDL MemoryDescriptorList,
-    IN PFILE_SEGMENT_ELEMENT SegmentArray,
-    IN KPROCESSOR_MODE AccessMode,
-    IN LOCK_OPERATION Operation
-    );
+VOID VerifierProbeAndLockSelectedPages(IN OUT PMDL MemoryDescriptorList, IN PFILE_SEGMENT_ELEMENT SegmentArray,
+                                       IN KPROCESSOR_MODE AccessMode, IN LOCK_OPERATION Operation);
 
-VOID
-VerifierUnlockPages (
-     IN OUT PMDL MemoryDescriptorList
-     );
+VOID VerifierUnlockPages(IN OUT PMDL MemoryDescriptorList);
 
-VOID
-VerifierUnmapLockedPages (
-     IN PVOID BaseAddress,
-     IN PMDL MemoryDescriptorList
-     );
+VOID VerifierUnmapLockedPages(IN PVOID BaseAddress, IN PMDL MemoryDescriptorList);
 
-VOID
-VerifierUnmapIoSpace (
-     IN PVOID BaseAddress,
-     IN SIZE_T NumberOfBytes
-     );
+VOID VerifierUnmapIoSpace(IN PVOID BaseAddress, IN SIZE_T NumberOfBytes);
 
 THUNKED_API
 PVOID
-VerifierMapIoSpace (
-    IN PHYSICAL_ADDRESS PhysicalAddress,
-    IN SIZE_T NumberOfBytes,
-    IN MEMORY_CACHING_TYPE CacheType
-    );
+VerifierMapIoSpace(IN PHYSICAL_ADDRESS PhysicalAddress, IN SIZE_T NumberOfBytes, IN MEMORY_CACHING_TYPE CacheType);
 
 THUNKED_API
 PVOID
-VerifierMapLockedPages (
-    IN PMDL MemoryDescriptorList,
-    IN KPROCESSOR_MODE AccessMode
-    );
+VerifierMapLockedPages(IN PMDL MemoryDescriptorList, IN KPROCESSOR_MODE AccessMode);
 
 THUNKED_API
 PVOID
-VerifierMapLockedPagesSpecifyCache (
-    IN PMDL MemoryDescriptorList,
-    IN KPROCESSOR_MODE AccessMode,
-    IN MEMORY_CACHING_TYPE CacheType,
-    IN PVOID RequestedAddress,
-    IN ULONG BugCheckOnFailure,
-    IN MM_PAGE_PRIORITY Priority
-    );
+VerifierMapLockedPagesSpecifyCache(IN PMDL MemoryDescriptorList, IN KPROCESSOR_MODE AccessMode,
+                                   IN MEMORY_CACHING_TYPE CacheType, IN PVOID RequestedAddress,
+                                   IN ULONG BugCheckOnFailure, IN MM_PAGE_PRIORITY Priority);
 
 THUNKED_API
 NTSTATUS
-VerifierKeWaitForSingleObject (
-    IN PVOID Object,
-    IN KWAIT_REASON WaitReason,
-    IN KPROCESSOR_MODE WaitMode,
-    IN BOOLEAN Alertable,
-    IN PLARGE_INTEGER Timeout OPTIONAL
-    );
+VerifierKeWaitForSingleObject(IN PVOID Object, IN KWAIT_REASON WaitReason, IN KPROCESSOR_MODE WaitMode,
+                              IN BOOLEAN Alertable, IN PLARGE_INTEGER Timeout OPTIONAL);
 
 THUNKED_API
-LONG
-VerifierKeReleaseMutex (
-    IN PRKMUTEX Mutex,
-    IN BOOLEAN Wait
-    );
+LONG VerifierKeReleaseMutex(IN PRKMUTEX Mutex, IN BOOLEAN Wait);
 
 THUNKED_API
-VOID
-VerifierKeInitializeMutex (
-    IN PRKMUTEX Mutex,
-    IN ULONG Level
-    );
+VOID VerifierKeInitializeMutex(IN PRKMUTEX Mutex, IN ULONG Level);
 
 THUNKED_API
-LONG
-VerifierKeReleaseMutant(
-    IN PRKMUTANT Mutant,
-    IN KPRIORITY Increment,
-    IN BOOLEAN Abandoned,
-    IN BOOLEAN Wait
-    );
+LONG VerifierKeReleaseMutant(IN PRKMUTANT Mutant, IN KPRIORITY Increment, IN BOOLEAN Abandoned, IN BOOLEAN Wait);
 
 THUNKED_API
-VOID
-VerifierKeInitializeMutant(
-    IN PRKMUTANT Mutant,
-    IN BOOLEAN InitialOwner
-    );
+VOID VerifierKeInitializeMutant(IN PRKMUTANT Mutant, IN BOOLEAN InitialOwner);
 
 THUNKED_API
-VOID
-VerifierKeInitializeSpinLock (
-    IN PKSPIN_LOCK  SpinLock
-    );
+VOID VerifierKeInitializeSpinLock(IN PKSPIN_LOCK SpinLock);
 
-VOID
-ViCheckMdlPages (
-    IN PMDL MemoryDescriptorList,
-    IN MEMORY_CACHING_TYPE CacheType
-    );
+VOID ViCheckMdlPages(IN PMDL MemoryDescriptorList, IN MEMORY_CACHING_TYPE CacheType);
 
-VOID
-ViFreeTrackedPool (
-    IN PVOID VirtualAddress,
-    IN SIZE_T ChargedBytes,
-    IN LOGICAL CheckType,
-    IN LOGICAL SpecialPool
-    );
+VOID ViFreeTrackedPool(IN PVOID VirtualAddress, IN SIZE_T ChargedBytes, IN LOGICAL CheckType, IN LOGICAL SpecialPool);
 
-VOID
-VerifierFreeTrackedPool (
-    IN PVOID VirtualAddress,
-    IN SIZE_T ChargedBytes,
-    IN LOGICAL CheckType,
-    IN LOGICAL SpecialPool
-    );
+VOID VerifierFreeTrackedPool(IN PVOID VirtualAddress, IN SIZE_T ChargedBytes, IN LOGICAL CheckType,
+                             IN LOGICAL SpecialPool);
 
-VOID
-ViPrintString (
-    IN PUNICODE_STRING DriverName
-    );
+VOID ViPrintString(IN PUNICODE_STRING DriverName);
 
 LOGICAL
-ViInjectResourceFailure (
-    VOID
-    );
+ViInjectResourceFailure(VOID);
 
-VOID
-ViTrimAllSystemPagableMemory (
-    VOID
-    );
+VOID ViTrimAllSystemPagableMemory(VOID);
 
-VOID
-ViInitializeEntry (
-    IN PMI_VERIFIER_DRIVER_ENTRY Verifier,
-    IN LOGICAL FirstLoad
-    );
+VOID ViInitializeEntry(IN PMI_VERIFIER_DRIVER_ENTRY Verifier, IN LOGICAL FirstLoad);
 
 LOGICAL
-ViReservePoolAllocation (
-    IN PMI_VERIFIER_DRIVER_ENTRY Verifier
-    );
+ViReservePoolAllocation(IN PMI_VERIFIER_DRIVER_ENTRY Verifier);
 
 ULONG_PTR
-ViInsertPoolAllocation (
-    IN PMI_VERIFIER_DRIVER_ENTRY Verifier,
-    IN PVOID VirtualAddress,
-    IN PVOID CallingAddress,
-    IN SIZE_T NumberOfBytes,
-    IN ULONG Tag
-    );
+ViInsertPoolAllocation(IN PMI_VERIFIER_DRIVER_ENTRY Verifier, IN PVOID VirtualAddress, IN PVOID CallingAddress,
+                       IN SIZE_T NumberOfBytes, IN ULONG Tag);
 
-VOID
-ViCancelPoolAllocation (
-    IN PMI_VERIFIER_DRIVER_ENTRY Verifier
-    );
+VOID ViCancelPoolAllocation(IN PMI_VERIFIER_DRIVER_ENTRY Verifier);
 
-VOID
-ViReleasePoolAllocation (
-    IN PMI_VERIFIER_DRIVER_ENTRY Verifier,
-    IN PVOID VirtualAddress,
-    IN ULONG_PTR ListIndex,
-    IN SIZE_T ChargedBytes
-    );
+VOID ViReleasePoolAllocation(IN PMI_VERIFIER_DRIVER_ENTRY Verifier, IN PVOID VirtualAddress, IN ULONG_PTR ListIndex,
+                             IN SIZE_T ChargedBytes);
 
-VOID
-KfSanityCheckRaiseIrql (
-    IN KIRQL NewIrql
-    );
+VOID KfSanityCheckRaiseIrql(IN KIRQL NewIrql);
 
-VOID
-KfSanityCheckLowerIrql (
-    IN KIRQL NewIrql
-    );
+VOID KfSanityCheckLowerIrql(IN KIRQL NewIrql);
 
 NTSTATUS
-VerifierReferenceObjectByHandle (
-    IN HANDLE Handle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_TYPE ObjectType OPTIONAL,
-    IN KPROCESSOR_MODE AccessMode,
-    OUT PVOID *Object,
-    OUT POBJECT_HANDLE_INFORMATION HandleInformation OPTIONAL
-    );
+VerifierReferenceObjectByHandle(IN HANDLE Handle, IN ACCESS_MASK DesiredAccess, IN POBJECT_TYPE ObjectType OPTIONAL,
+                                IN KPROCESSOR_MODE AccessMode, OUT PVOID *Object,
+                                OUT POBJECT_HANDLE_INFORMATION HandleInformation OPTIONAL);
 
 MM_DRIVER_VERIFIER_DATA MmVerifierData;
 
@@ -489,7 +263,7 @@ LOGICAL MmDontVerifyRandomDrivers = TRUE;
 
 LOGICAL VerifierSystemSufficientlyBooted;
 
-LARGE_INTEGER VerifierRequiredTimeSinceBoot = {(ULONG)(40 * 1000 * 1000 * 10), 1};
+LARGE_INTEGER VerifierRequiredTimeSinceBoot = { (ULONG)(40 * 1000 * 1000 * 10), 1 };
 
 LOGICAL VerifierIsTrackingPool = FALSE;
 
@@ -512,58 +286,32 @@ ULONG KernelVerifierTickPage = 0x7;
 ULONG MiVerifierThunksAdded;
 
 PDRIVER_VERIFIER_THUNK_ROUTINE
-MiResolveVerifierExports (
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock,
-    IN PCHAR PristineName
-    );
+MiResolveVerifierExports(IN PLOADER_PARAMETER_BLOCK LoaderBlock, IN PCHAR PristineName);
 
 LOGICAL
-MiEnableVerifier (
-    IN PKLDR_DATA_TABLE_ENTRY DataTableEntry
-    );
+MiEnableVerifier(IN PKLDR_DATA_TABLE_ENTRY DataTableEntry);
 
 LOGICAL
-MiReEnableVerifier (
-    IN PKLDR_DATA_TABLE_ENTRY DataTableEntry
-    );
+MiReEnableVerifier(IN PKLDR_DATA_TABLE_ENTRY DataTableEntry);
 
-VOID
-ViInsertVerifierEntry (
-    IN PMI_VERIFIER_DRIVER_ENTRY Verifier
-    );
+VOID ViInsertVerifierEntry(IN PMI_VERIFIER_DRIVER_ENTRY Verifier);
 
 PVOID
-ViPostPoolAllocation (
-    IN PVOID VirtualAddress,
-    IN SIZE_T NumberOfBytes,
-    IN POOL_TYPE PoolType,
-    IN ULONG Tag,
-    IN PVOID CallingAddress
-    );
+ViPostPoolAllocation(IN PVOID VirtualAddress, IN SIZE_T NumberOfBytes, IN POOL_TYPE PoolType, IN ULONG Tag,
+                     IN PVOID CallingAddress);
 
 PMI_VERIFIER_DRIVER_ENTRY
-ViLocateVerifierEntry (
-    IN PVOID SystemAddress
-    );
+ViLocateVerifierEntry(IN PVOID SystemAddress);
 
-VOID
-MiVerifierCheckThunks (
-    IN PKLDR_DATA_TABLE_ENTRY DataTableEntry
-    );
+VOID MiVerifierCheckThunks(IN PKLDR_DATA_TABLE_ENTRY DataTableEntry);
 
 //
 // Track irqls functions
 //
 
-VOID
-ViTrackIrqlInitialize (
-    );
+VOID ViTrackIrqlInitialize();
 
-VOID
-ViTrackIrqlLog (
-    IN KIRQL CurrentIrql,
-    IN KIRQL NewIrql
-    );
+VOID ViTrackIrqlLog(IN KIRQL CurrentIrql, IN KIRQL NewIrql);
 
 //
 // Fault injection stack trace log
@@ -571,147 +319,144 @@ ViTrackIrqlLog (
 
 #if defined(_X86_)
 
-VOID
-ViFaultTracesInitialize (
-    );
+VOID ViFaultTracesInitialize();
 
-VOID
-ViFaultTracesLog (
-    );
+VOID ViFaultTracesLog();
 
 #endif
-
 
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,MiInitializeDriverVerifierList)
-#pragma alloc_text(INIT,MiInitializeVerifyingComponents)
-#pragma alloc_text(INIT,ViTrackIrqlInitialize)
-#pragma alloc_text(INIT,MiResolveVerifierExports)
+#pragma alloc_text(INIT, MiInitializeDriverVerifierList)
+#pragma alloc_text(INIT, MiInitializeVerifyingComponents)
+#pragma alloc_text(INIT, ViTrackIrqlInitialize)
+#pragma alloc_text(INIT, MiResolveVerifierExports)
 #if defined(_X86_)
-#pragma alloc_text(INIT,MiEnableKernelVerifier)
-#pragma alloc_text(INIT,ViFaultTracesInitialize)
+#pragma alloc_text(INIT, MiEnableKernelVerifier)
+#pragma alloc_text(INIT, ViFaultTracesInitialize)
 #endif
-#pragma alloc_text(PAGE,MiApplyDriverVerifier)
-#pragma alloc_text(PAGE,MiEnableVerifier)
-#pragma alloc_text(INIT,MiReEnableVerifier)
-#pragma alloc_text(PAGE,ViPrintString)
-#pragma alloc_text(PAGE,MmGetVerifierInformation)
-#pragma alloc_text(PAGE,MmSetVerifierInformation)
-#pragma alloc_text(PAGE,MmAddVerifierThunks)
-#pragma alloc_text(PAGE,MmIsVerifierEnabled)
-#pragma alloc_text(PAGE,MiVerifierCheckThunks)
-#pragma alloc_text(PAGEVRFY,MiVerifyingDriverUnloading)
+#pragma alloc_text(PAGE, MiApplyDriverVerifier)
+#pragma alloc_text(PAGE, MiEnableVerifier)
+#pragma alloc_text(INIT, MiReEnableVerifier)
+#pragma alloc_text(PAGE, ViPrintString)
+#pragma alloc_text(PAGE, MmGetVerifierInformation)
+#pragma alloc_text(PAGE, MmSetVerifierInformation)
+#pragma alloc_text(PAGE, MmAddVerifierThunks)
+#pragma alloc_text(PAGE, MmIsVerifierEnabled)
+#pragma alloc_text(PAGE, MiVerifierCheckThunks)
+#pragma alloc_text(PAGEVRFY, MiVerifyingDriverUnloading)
 
-#pragma alloc_text(PAGE,MmAddVerifierEntry)
-#pragma alloc_text(PAGE,MmRemoveVerifierEntry)
-#pragma alloc_text(INIT,MiReApplyVerifierToLoadedModules)
-#pragma alloc_text(PAGEVRFY,VerifierProbeAndLockPages)
-#pragma alloc_text(PAGEVRFY,VerifierProbeAndLockProcessPages)
-#pragma alloc_text(PAGEVRFY,VerifierProbeAndLockSelectedPages)
-#pragma alloc_text(PAGEVRFY,VerifierUnlockPages)
-#pragma alloc_text(PAGEVRFY,VerifierMapIoSpace)
-#pragma alloc_text(PAGEVRFY,VerifierMapLockedPages)
-#pragma alloc_text(PAGEVRFY,VerifierMapLockedPagesSpecifyCache)
-#pragma alloc_text(PAGEVRFY,VerifierUnmapLockedPages)
-#pragma alloc_text(PAGEVRFY,VerifierUnmapIoSpace)
-#pragma alloc_text(PAGEVRFY,VerifierAllocatePool)
-#pragma alloc_text(PAGEVRFY,VerifierAllocatePoolWithTag)
-#pragma alloc_text(PAGEVRFY,VerifierAllocatePoolWithTagPriority)
-#pragma alloc_text(PAGEVRFY,VerifierAllocatePoolWithQuotaTag)
-#pragma alloc_text(PAGEVRFY,VerifierFreePool)
-#pragma alloc_text(PAGEVRFY,VerifierFreePoolWithTag)
-#pragma alloc_text(PAGEVRFY,VerifierKeWaitForSingleObject)
-#pragma alloc_text(PAGEVRFY,VerifierKfRaiseIrql)
-#pragma alloc_text(PAGEVRFY,VerifierKeRaiseIrqlToDpcLevel)
-#pragma alloc_text(PAGEVRFY,VerifierKfLowerIrql)
-#pragma alloc_text(PAGEVRFY,VerifierKeRaiseIrql)
-#pragma alloc_text(PAGEVRFY,VerifierKeLowerIrql)
-#pragma alloc_text(PAGEVRFY,VerifierKeAcquireSpinLock)
-#pragma alloc_text(PAGEVRFY,VerifierKeReleaseSpinLock)
-#pragma alloc_text(PAGEVRFY,VerifierKeAcquireSpinLockAtDpcLevel)
-#pragma alloc_text(PAGEVRFY,VerifierKeReleaseSpinLockFromDpcLevel)
-#pragma alloc_text(PAGEVRFY,VerifierKfAcquireSpinLock)
-#pragma alloc_text(PAGEVRFY,VerifierKfReleaseSpinLock)
-#pragma alloc_text(PAGEVRFY,VerifierKeInitializeTimer)
-#pragma alloc_text(PAGEVRFY,VerifierKeInitializeTimerEx)
-#pragma alloc_text(PAGEVRFY,VerifierExTryToAcquireFastMutex)
-#pragma alloc_text(PAGEVRFY,VerifierExAcquireFastMutex)
-#pragma alloc_text(PAGEVRFY,VerifierExReleaseFastMutex)
-#pragma alloc_text(PAGEVRFY,VerifierExAcquireFastMutexUnsafe)
-#pragma alloc_text(PAGEVRFY,VerifierExReleaseFastMutexUnsafe)
-#pragma alloc_text(PAGEVRFY,VerifierExAcquireResourceExclusiveLite)
-#pragma alloc_text(PAGEVRFY,VerifierExReleaseResourceLite)
-#pragma alloc_text(PAGEVRFY,VerifierKeAcquireQueuedSpinLock)
-#pragma alloc_text(PAGEVRFY,VerifierKeReleaseQueuedSpinLock)
-#pragma alloc_text(PAGEVRFY,VerifierKeReleaseMutex)
-#pragma alloc_text(PAGEVRFY,VerifierKeInitializeMutex)
-#pragma alloc_text(PAGEVRFY,VerifierKeReleaseMutant)
-#pragma alloc_text(PAGEVRFY,VerifierKeInitializeMutant)
-#pragma alloc_text(PAGEVRFY,VerifierKeInitializeSpinLock)
-#pragma alloc_text(PAGEVRFY,VerifierSynchronizeExecution)
-#pragma alloc_text(PAGEVRFY,VerifierReferenceObjectByHandle)
-#pragma alloc_text(PAGEVRFY,VerifierSetEvent)
+#pragma alloc_text(PAGE, MmAddVerifierEntry)
+#pragma alloc_text(PAGE, MmRemoveVerifierEntry)
+#pragma alloc_text(INIT, MiReApplyVerifierToLoadedModules)
+#pragma alloc_text(PAGEVRFY, VerifierProbeAndLockPages)
+#pragma alloc_text(PAGEVRFY, VerifierProbeAndLockProcessPages)
+#pragma alloc_text(PAGEVRFY, VerifierProbeAndLockSelectedPages)
+#pragma alloc_text(PAGEVRFY, VerifierUnlockPages)
+#pragma alloc_text(PAGEVRFY, VerifierMapIoSpace)
+#pragma alloc_text(PAGEVRFY, VerifierMapLockedPages)
+#pragma alloc_text(PAGEVRFY, VerifierMapLockedPagesSpecifyCache)
+#pragma alloc_text(PAGEVRFY, VerifierUnmapLockedPages)
+#pragma alloc_text(PAGEVRFY, VerifierUnmapIoSpace)
+#pragma alloc_text(PAGEVRFY, VerifierAllocatePool)
+#pragma alloc_text(PAGEVRFY, VerifierAllocatePoolWithTag)
+#pragma alloc_text(PAGEVRFY, VerifierAllocatePoolWithTagPriority)
+#pragma alloc_text(PAGEVRFY, VerifierAllocatePoolWithQuotaTag)
+#pragma alloc_text(PAGEVRFY, VerifierFreePool)
+#pragma alloc_text(PAGEVRFY, VerifierFreePoolWithTag)
+#pragma alloc_text(PAGEVRFY, VerifierKeWaitForSingleObject)
+#pragma alloc_text(PAGEVRFY, VerifierKfRaiseIrql)
+#pragma alloc_text(PAGEVRFY, VerifierKeRaiseIrqlToDpcLevel)
+#pragma alloc_text(PAGEVRFY, VerifierKfLowerIrql)
+#pragma alloc_text(PAGEVRFY, VerifierKeRaiseIrql)
+#pragma alloc_text(PAGEVRFY, VerifierKeLowerIrql)
+#pragma alloc_text(PAGEVRFY, VerifierKeAcquireSpinLock)
+#pragma alloc_text(PAGEVRFY, VerifierKeReleaseSpinLock)
+#pragma alloc_text(PAGEVRFY, VerifierKeAcquireSpinLockAtDpcLevel)
+#pragma alloc_text(PAGEVRFY, VerifierKeReleaseSpinLockFromDpcLevel)
+#pragma alloc_text(PAGEVRFY, VerifierKfAcquireSpinLock)
+#pragma alloc_text(PAGEVRFY, VerifierKfReleaseSpinLock)
+#pragma alloc_text(PAGEVRFY, VerifierKeInitializeTimer)
+#pragma alloc_text(PAGEVRFY, VerifierKeInitializeTimerEx)
+#pragma alloc_text(PAGEVRFY, VerifierExTryToAcquireFastMutex)
+#pragma alloc_text(PAGEVRFY, VerifierExAcquireFastMutex)
+#pragma alloc_text(PAGEVRFY, VerifierExReleaseFastMutex)
+#pragma alloc_text(PAGEVRFY, VerifierExAcquireFastMutexUnsafe)
+#pragma alloc_text(PAGEVRFY, VerifierExReleaseFastMutexUnsafe)
+#pragma alloc_text(PAGEVRFY, VerifierExAcquireResourceExclusiveLite)
+#pragma alloc_text(PAGEVRFY, VerifierExReleaseResourceLite)
+#pragma alloc_text(PAGEVRFY, VerifierKeAcquireQueuedSpinLock)
+#pragma alloc_text(PAGEVRFY, VerifierKeReleaseQueuedSpinLock)
+#pragma alloc_text(PAGEVRFY, VerifierKeReleaseMutex)
+#pragma alloc_text(PAGEVRFY, VerifierKeInitializeMutex)
+#pragma alloc_text(PAGEVRFY, VerifierKeReleaseMutant)
+#pragma alloc_text(PAGEVRFY, VerifierKeInitializeMutant)
+#pragma alloc_text(PAGEVRFY, VerifierKeInitializeSpinLock)
+#pragma alloc_text(PAGEVRFY, VerifierSynchronizeExecution)
+#pragma alloc_text(PAGEVRFY, VerifierReferenceObjectByHandle)
+#pragma alloc_text(PAGEVRFY, VerifierSetEvent)
 
-#pragma alloc_text(PAGEVRFY,ViFreeTrackedPool)
+#pragma alloc_text(PAGEVRFY, ViFreeTrackedPool)
 
-#pragma alloc_text(PAGEVRFY,VeAllocatePoolWithTagPriority)
-#pragma alloc_text(PAGEVRFY,ViCheckMdlPages)
-#pragma alloc_text(PAGEVRFY,ViInsertVerifierEntry)
-#pragma alloc_text(PAGEVRFY,ViLocateVerifierEntry)
-#pragma alloc_text(PAGEVRFY,ViPostPoolAllocation)
-#pragma alloc_text(PAGEVRFY,ViInjectResourceFailure)
-#pragma alloc_text(PAGEVRFY,ViTrimAllSystemPagableMemory)
-#pragma alloc_text(PAGEVRFY,ViInitializeEntry)
-#pragma alloc_text(PAGEVRFY,ViReservePoolAllocation)
-#pragma alloc_text(PAGEVRFY,ViInsertPoolAllocation)
-#pragma alloc_text(PAGEVRFY,ViCancelPoolAllocation)
-#pragma alloc_text(PAGEVRFY,ViReleasePoolAllocation)
-#pragma alloc_text(PAGEVRFY,KfSanityCheckRaiseIrql)
-#pragma alloc_text(PAGEVRFY,KfSanityCheckLowerIrql)
-#pragma alloc_text(PAGEVRFY,ViTrackIrqlLog)
+#pragma alloc_text(PAGEVRFY, VeAllocatePoolWithTagPriority)
+#pragma alloc_text(PAGEVRFY, ViCheckMdlPages)
+#pragma alloc_text(PAGEVRFY, ViInsertVerifierEntry)
+#pragma alloc_text(PAGEVRFY, ViLocateVerifierEntry)
+#pragma alloc_text(PAGEVRFY, ViPostPoolAllocation)
+#pragma alloc_text(PAGEVRFY, ViInjectResourceFailure)
+#pragma alloc_text(PAGEVRFY, ViTrimAllSystemPagableMemory)
+#pragma alloc_text(PAGEVRFY, ViInitializeEntry)
+#pragma alloc_text(PAGEVRFY, ViReservePoolAllocation)
+#pragma alloc_text(PAGEVRFY, ViInsertPoolAllocation)
+#pragma alloc_text(PAGEVRFY, ViCancelPoolAllocation)
+#pragma alloc_text(PAGEVRFY, ViReleasePoolAllocation)
+#pragma alloc_text(PAGEVRFY, KfSanityCheckRaiseIrql)
+#pragma alloc_text(PAGEVRFY, KfSanityCheckLowerIrql)
+#pragma alloc_text(PAGEVRFY, ViTrackIrqlLog)
 
 #if defined(_X86_)
-#pragma alloc_text(PAGEVRFY,ViFaultTracesLog)
+#pragma alloc_text(PAGEVRFY, ViFaultTracesLog)
 #endif
 
 #if !defined(_X86_)
-#pragma alloc_text(PAGEVRFY,VerifierKeAcquireSpinLockRaiseToDpc)
+#pragma alloc_text(PAGEVRFY, VerifierKeAcquireSpinLockRaiseToDpc)
 #endif
 
 #endif
 
-typedef struct _VERIFIER_THUNKS {
-    union {
-        PCHAR                           PristineRoutineAsciiName;
+typedef struct _VERIFIER_THUNKS
+{
+    union
+    {
+        PCHAR PristineRoutineAsciiName;
 
         //
         // The actual pristine routine address is derived from exports
         //
 
-        PDRIVER_VERIFIER_THUNK_ROUTINE  PristineRoutine;
+        PDRIVER_VERIFIER_THUNK_ROUTINE PristineRoutine;
     };
-    PDRIVER_VERIFIER_THUNK_ROUTINE  NewRoutine;
+    PDRIVER_VERIFIER_THUNK_ROUTINE NewRoutine;
 } VERIFIER_THUNKS, *PVERIFIER_THUNKS;
 
 extern const VERIFIER_THUNKS MiVerifierThunks[];
 extern const VERIFIER_THUNKS MiVerifierPoolThunks[];
 
-#if defined (_X86_)
+#if defined(_X86_)
 
-#define VI_KE_RAISE_IRQL            0
-#define VI_KE_LOWER_IRQL            1
-#define VI_KE_ACQUIRE_SPINLOCK      2
-#define VI_KE_RELEASE_SPINLOCK      3
-#define VI_KF_RAISE_IRQL            4
+#define VI_KE_RAISE_IRQL 0
+#define VI_KE_LOWER_IRQL 1
+#define VI_KE_ACQUIRE_SPINLOCK 2
+#define VI_KE_RELEASE_SPINLOCK 3
+#define VI_KF_RAISE_IRQL 4
 #define VI_KE_RAISE_IRQL_TO_DPC_LEVEL 5
-#define VI_KF_LOWER_IRQL            6
-#define VI_KF_ACQUIRE_SPINLOCK      7
-#define VI_KF_RELEASE_SPINLOCK      8
-#define VI_KE_ACQUIRE_QUEUED_SPINLOCK      9
-#define VI_KE_RELEASE_QUEUED_SPINLOCK      10
+#define VI_KF_LOWER_IRQL 6
+#define VI_KF_ACQUIRE_SPINLOCK 7
+#define VI_KF_RELEASE_SPINLOCK 8
+#define VI_KE_ACQUIRE_QUEUED_SPINLOCK 9
+#define VI_KE_RELEASE_QUEUED_SPINLOCK 10
 
-#define VI_HALMAX                   11
+#define VI_HALMAX 11
 
 PVOID MiKernelVerifierOriginalCalls[VI_HALMAX];
 
@@ -723,14 +468,15 @@ PVOID MiKernelVerifierOriginalCalls[VI_HALMAX];
 
 #define VI_TRACK_IRQL_TRACE_LENGTH 5
 
-typedef struct _VI_TRACK_IRQL {
+typedef struct _VI_TRACK_IRQL
+{
 
     PVOID Thread;
     KIRQL OldIrql;
     KIRQL NewIrql;
     UCHAR Processor;
     ULONG TickCount;
-    PVOID StackTrace [VI_TRACK_IRQL_TRACE_LENGTH];
+    PVOID StackTrace[VI_TRACK_IRQL_TRACE_LENGTH];
 
 } VI_TRACK_IRQL, *PVI_TRACK_IRQL;
 
@@ -738,9 +484,7 @@ PVI_TRACK_IRQL ViTrackIrqlQueue;
 ULONG ViTrackIrqlIndex;
 ULONG ViTrackIrqlQueueLength = 128;
 
-VOID
-ViTrackIrqlInitialize (
-    )
+VOID ViTrackIrqlInitialize()
 {
     ULONG Length;
     ULONG Round;
@@ -752,16 +496,20 @@ ViTrackIrqlInitialize (
 
     Length = ViTrackIrqlQueueLength;
 
-    if (Length > 0x10000) {
+    if (Length > 0x10000)
+    {
         Length = 0x10000;
     }
 
-    for (Round = 0x10000; Round != 0; Round >>= 1) {
+    for (Round = 0x10000; Round != 0; Round >>= 1)
+    {
 
-        if (Length == Round) {
+        if (Length == Round)
+        {
             break;
         }
-        else if ((Length & Round) == Round) {
+        else if ((Length & Round) == Round)
+        {
             Length = (Round << 1);
             break;
         }
@@ -774,27 +522,21 @@ ViTrackIrqlInitialize (
     // when using the kernel verifier.
     //
 
-    ViTrackIrqlQueue = ExAllocatePoolWithTagPriority (
-        NonPagedPool | POOL_DRIVER_MASK,
-        ViTrackIrqlQueueLength * sizeof (VI_TRACK_IRQL),
-        'lqrI',
-        HighPoolPriority);
+    ViTrackIrqlQueue = ExAllocatePoolWithTagPriority(
+        NonPagedPool | POOL_DRIVER_MASK, ViTrackIrqlQueueLength * sizeof(VI_TRACK_IRQL), 'lqrI', HighPoolPriority);
 }
 
-VOID
-ViTrackIrqlLog (
-    IN KIRQL CurrentIrql,
-    IN KIRQL NewIrql
-    )
+VOID ViTrackIrqlLog(IN KIRQL CurrentIrql, IN KIRQL NewIrql)
 {
     PVI_TRACK_IRQL Information;
     LARGE_INTEGER TimeStamp;
     ULONG Index;
     ULONG Hash;
 
-    ASSERT (ViTrackIrqlQueue != NULL);
+    ASSERT(ViTrackIrqlQueue != NULL);
 
-    if (CurrentIrql > DISPATCH_LEVEL || NewIrql > DISPATCH_LEVEL) {
+    if (CurrentIrql > DISPATCH_LEVEL || NewIrql > DISPATCH_LEVEL)
+    {
         return;
     }
 
@@ -818,10 +560,7 @@ ViTrackIrqlLog (
     KeQueryTickCount(&TimeStamp);
     Information->TickCount = TimeStamp.LowPart;
 
-    RtlCaptureStackBackTrace (2,
-                              VI_TRACK_IRQL_TRACE_LENGTH,
-                              Information->StackTrace,
-                              &Hash);
+    RtlCaptureStackBackTrace(2, VI_TRACK_IRQL_TRACE_LENGTH, Information->StackTrace, &Hash);
 }
 
 //
@@ -829,9 +568,10 @@ ViTrackIrqlLog (
 // dependent way.
 //
 
-#define VI_DETECT_RETURN_ADDRESS(Caller)  {                     \
-        PVOID CallersCaller;                                    \
-        RtlGetCallersAddress(&Caller, &CallersCaller);          \
+#define VI_DETECT_RETURN_ADDRESS(Caller)               \
+    {                                                  \
+        PVOID CallersCaller;                           \
+        RtlGetCallersAddress(&Caller, &CallersCaller); \
     }
 
 //
@@ -840,9 +580,10 @@ ViTrackIrqlLog (
 
 #define VI_FAULT_TRACE_LENGTH 8
 
-typedef struct _VI_FAULT_TRACE {
+typedef struct _VI_FAULT_TRACE
+{
 
-    PVOID StackTrace [VI_FAULT_TRACE_LENGTH];
+    PVOID StackTrace[VI_FAULT_TRACE_LENGTH];
 
 } VI_FAULT_TRACE, *PVI_FAULT_TRACE;
 
@@ -850,27 +591,18 @@ PVI_FAULT_TRACE ViFaultTraces;
 ULONG ViFaultTracesIndex;
 ULONG ViFaultTracesLength = 128;
 
-VOID
-ViFaultTracesInitialize (
-    VOID
-    )
+VOID ViFaultTracesInitialize(VOID)
 {
     //
     // Note POOL_DRIVER_MASK must be set to stop the recursion loop
     // when using the kernel verifier.
     //
 
-    ViFaultTraces = ExAllocatePoolWithTagPriority (
-                                NonPagedPool | POOL_DRIVER_MASK,
-                                ViFaultTracesLength * sizeof (VI_FAULT_TRACE),
-                                'ttlF',
-                                HighPoolPriority);
+    ViFaultTraces = ExAllocatePoolWithTagPriority(
+        NonPagedPool | POOL_DRIVER_MASK, ViFaultTracesLength * sizeof(VI_FAULT_TRACE), 'ttlF', HighPoolPriority);
 }
 
-VOID
-ViFaultTracesLog (
-    VOID
-    )
+VOID ViFaultTracesLog(VOID)
 {
     PVI_FAULT_TRACE Information;
     ULONG Hash;
@@ -880,7 +612,8 @@ ViFaultTracesLog (
     // Sanity check
     //
 
-    if (ViFaultTraces == NULL) {
+    if (ViFaultTraces == NULL)
+    {
         return;
     }
 
@@ -888,7 +621,7 @@ ViFaultTracesLog (
     // Get slot to write into.
     //
 
-    Index = InterlockedIncrement ((PLONG)&ViFaultTracesIndex);
+    Index = InterlockedIncrement((PLONG)&ViFaultTracesIndex);
     Index &= (ViFaultTracesLength - 1);
 
     //
@@ -900,34 +633,29 @@ ViFaultTracesLog (
 
     Information = &(ViFaultTraces[Index]);
 
-    RtlZeroMemory (Information, sizeof (VI_FAULT_TRACE));
+    RtlZeroMemory(Information, sizeof(VI_FAULT_TRACE));
 
-    RtlCaptureStackBackTrace (2,
-                              VI_FAULT_TRACE_LENGTH,
-                              Information->StackTrace,
-                              &Hash);
+    RtlCaptureStackBackTrace(2, VI_FAULT_TRACE_LENGTH, Information->StackTrace, &Hash);
 }
 
 //
 // Don't fail any requests in the first 7 or 8 minutes as we want to
 // give the system enough time to boot.
 //
-#define MI_CHECK_UPTIME()                                       \
-    if (VerifierSystemSufficientlyBooted == FALSE) {            \
-        LARGE_INTEGER _CurrentTime;                              \
-        KeQuerySystemTime (&_CurrentTime);                       \
-        if (_CurrentTime.QuadPart > KeBootTime.QuadPart + VerifierRequiredTimeSinceBoot.QuadPart) {                                              \
-            VerifierSystemSufficientlyBooted = TRUE;            \
-        }                                                       \
+#define MI_CHECK_UPTIME()                                                                         \
+    if (VerifierSystemSufficientlyBooted == FALSE)                                                \
+    {                                                                                             \
+        LARGE_INTEGER _CurrentTime;                                                               \
+        KeQuerySystemTime(&_CurrentTime);                                                         \
+        if (_CurrentTime.QuadPart > KeBootTime.QuadPart + VerifierRequiredTimeSinceBoot.QuadPart) \
+        {                                                                                         \
+            VerifierSystemSufficientlyBooted = TRUE;                                              \
+        }                                                                                         \
     }
 
 THUNKED_API
-VOID
-VerifierProbeAndLockPages (
-     IN OUT PMDL MemoryDescriptorList,
-     IN KPROCESSOR_MODE AccessMode,
-     IN LOCK_OPERATION Operation
-     )
+VOID VerifierProbeAndLockPages(IN OUT PMDL MemoryDescriptorList, IN KPROCESSOR_MODE AccessMode,
+                               IN LOCK_OPERATION Operation)
 {
     ULONG i;
     KIRQL CurrentIrql;
@@ -941,19 +669,18 @@ VerifierProbeAndLockPages (
     PMI_PHYSICAL_VIEW PhysicalView;
 
     CurrentIrql = KeGetCurrentIrql();
-    if (CurrentIrql > DISPATCH_LEVEL) {
-        KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                      0x70,
-                      CurrentIrql,
-                      (ULONG_PTR)MemoryDescriptorList,
-                      (ULONG_PTR)AccessMode);
+    if (CurrentIrql > DISPATCH_LEVEL)
+    {
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x70, CurrentIrql, (ULONG_PTR)MemoryDescriptorList,
+                     (ULONG_PTR)AccessMode);
     }
 
-    if (ViInjectResourceFailure () == TRUE) {
-        ExRaiseStatus (STATUS_WORKING_SET_QUOTA);
+    if (ViInjectResourceFailure() == TRUE)
+    {
+        ExRaiseStatus(STATUS_WORKING_SET_QUOTA);
     }
 
-    MmProbeAndLockPages (MemoryDescriptorList, AccessMode, Operation);
+    MmProbeAndLockPages(MemoryDescriptorList, AccessMode, Operation);
 
     //
     // Every page that has been probed and locked must have a PFN with the
@@ -961,21 +688,21 @@ VerifierProbeAndLockPages (
     //
 
     Page = (PPFN_NUMBER)(MemoryDescriptorList + 1);
-    StartingVa = (PVOID)((PCHAR)MemoryDescriptorList->StartVa +
-                    MemoryDescriptorList->ByteOffset);
+    StartingVa = (PVOID)((PCHAR)MemoryDescriptorList->StartVa + MemoryDescriptorList->ByteOffset);
 
-    NumberOfPages = ADDRESS_AND_SIZE_TO_SPAN_PAGES(StartingVa,
-                                              MemoryDescriptorList->ByteCount);
+    NumberOfPages = ADDRESS_AND_SIZE_TO_SPAN_PAGES(StartingVa, MemoryDescriptorList->ByteCount);
 
     LastPage = Page + NumberOfPages;
 
-    ASSERT (NumberOfPages != 0);
+    ASSERT(NumberOfPages != 0);
 
-    LOCK_PFN2 (CurrentIrql);
+    LOCK_PFN2(CurrentIrql);
 
-    do {
+    do
+    {
 
-        if (*Page == MM_EMPTY_LIST) {
+        if (*Page == MM_EMPTY_LIST)
+        {
 
             //
             // There are no more locked pages.
@@ -985,10 +712,11 @@ VerifierProbeAndLockPages (
         }
 
         ValidPfn = FALSE;
-        for (i = 0; i < MmPhysicalMemoryBlock->NumberOfRuns; i += 1) {
+        for (i = 0; i < MmPhysicalMemoryBlock->NumberOfRuns; i += 1)
+        {
             if ((*Page >= MmPhysicalMemoryBlock->Run[i].BasePage) &&
-                (*Page <= MmPhysicalMemoryBlock->Run[i].BasePage +
-                    MmPhysicalMemoryBlock->Run[i].PageCount)) {
+                (*Page <= MmPhysicalMemoryBlock->Run[i].BasePage + MmPhysicalMemoryBlock->Run[i].PageCount))
+            {
 
                 //
                 // A valid PFN exists for this page, march to the next one.
@@ -999,17 +727,18 @@ VerifierProbeAndLockPages (
             }
         }
 
-        if (ValidPfn == FALSE) {
+        if (ValidPfn == FALSE)
+        {
 
-            CurrentProcess = PsGetCurrentProcess ();
+            CurrentProcess = PsGetCurrentProcess();
 
             //
             // Check for a transfer to/from a physical VAD - these are
             // allowed to have no backing PFNs.
             //
 
-            if ((StartingVa <= MM_HIGHEST_USER_ADDRESS) &&
-                (CurrentProcess->Flags & PS_PROCESS_FLAGS_HAS_PHYSICAL_VAD)) {
+            if ((StartingVa <= MM_HIGHEST_USER_ADDRESS) && (CurrentProcess->Flags & PS_PROCESS_FLAGS_HAS_PHYSICAL_VAD))
+            {
 
                 //
                 // This process has a physical VAD which maps directly to RAM
@@ -1018,15 +747,14 @@ VerifierProbeAndLockPages (
                 //
 
                 NextEntry = CurrentProcess->PhysicalVadList.Flink;
-                while (NextEntry != &CurrentProcess->PhysicalVadList) {
+                while (NextEntry != &CurrentProcess->PhysicalVadList)
+                {
 
-                    PhysicalView = CONTAINING_RECORD(NextEntry,
-                                                     MI_PHYSICAL_VIEW,
-                                                     ListEntry);
+                    PhysicalView = CONTAINING_RECORD(NextEntry, MI_PHYSICAL_VIEW, ListEntry);
 
                     if ((PhysicalView->Vad->u.VadFlags.PhysicalMapping == 1) &&
-                        (StartingVa >= (PVOID)PhysicalView->StartVa) &&
-                        (StartingVa <= (PVOID)PhysicalView->EndVa)) {
+                        (StartingVa >= (PVOID)PhysicalView->StartVa) && (StartingVa <= (PVOID)PhysicalView->EndVa))
+                    {
 
                         ValidPfn = TRUE;
                         break;
@@ -1035,7 +763,8 @@ VerifierProbeAndLockPages (
                 }
             }
 
-            if (ValidPfn == FALSE) {
+            if (ValidPfn == FALSE)
+            {
 
                 //
                 // The MDL being probed has no backing PFNs and it was not
@@ -1045,11 +774,8 @@ VerifierProbeAndLockPages (
                 // like single bit errors.  This is bad.
                 //
 
-                KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                              0x6F,
-                              (ULONG_PTR)MemoryDescriptorList,
-                              (ULONG_PTR)(*Page),
-                              (ULONG_PTR)MmHighestPhysicalPage);
+                KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x6F, (ULONG_PTR)MemoryDescriptorList,
+                             (ULONG_PTR)(*Page), (ULONG_PTR)MmHighestPhysicalPage);
             }
             break;
         }
@@ -1057,76 +783,54 @@ VerifierProbeAndLockPages (
         Page += 1;
     } while (Page < LastPage);
 
-    UNLOCK_PFN2 (CurrentIrql);
+    UNLOCK_PFN2(CurrentIrql);
 }
 
 THUNKED_API
-VOID
-VerifierProbeAndLockProcessPages (
-    IN OUT PMDL MemoryDescriptorList,
-    IN PEPROCESS Process,
-    IN KPROCESSOR_MODE AccessMode,
-    IN LOCK_OPERATION Operation
-    )
+VOID VerifierProbeAndLockProcessPages(IN OUT PMDL MemoryDescriptorList, IN PEPROCESS Process,
+                                      IN KPROCESSOR_MODE AccessMode, IN LOCK_OPERATION Operation)
 {
     KIRQL CurrentIrql;
 
     CurrentIrql = KeGetCurrentIrql();
-    if (CurrentIrql > DISPATCH_LEVEL) {
-        KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                      0x71,
-                      CurrentIrql,
-                      (ULONG_PTR)MemoryDescriptorList,
-                      (ULONG_PTR)Process);
+    if (CurrentIrql > DISPATCH_LEVEL)
+    {
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x71, CurrentIrql, (ULONG_PTR)MemoryDescriptorList,
+                     (ULONG_PTR)Process);
     }
 
-    if (ViInjectResourceFailure () == TRUE) {
-        ExRaiseStatus (STATUS_WORKING_SET_QUOTA);
+    if (ViInjectResourceFailure() == TRUE)
+    {
+        ExRaiseStatus(STATUS_WORKING_SET_QUOTA);
     }
 
-    MmProbeAndLockProcessPages (MemoryDescriptorList,
-                                Process,
-                                AccessMode,
-                                Operation);
+    MmProbeAndLockProcessPages(MemoryDescriptorList, Process, AccessMode, Operation);
 }
 
 THUNKED_API
-VOID
-VerifierProbeAndLockSelectedPages (
-    IN OUT PMDL MemoryDescriptorList,
-    IN PFILE_SEGMENT_ELEMENT SegmentArray,
-    IN KPROCESSOR_MODE AccessMode,
-    IN LOCK_OPERATION Operation
-    )
+VOID VerifierProbeAndLockSelectedPages(IN OUT PMDL MemoryDescriptorList, IN PFILE_SEGMENT_ELEMENT SegmentArray,
+                                       IN KPROCESSOR_MODE AccessMode, IN LOCK_OPERATION Operation)
 {
     KIRQL CurrentIrql;
 
     CurrentIrql = KeGetCurrentIrql();
-    if (CurrentIrql > APC_LEVEL) {
-        KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                      0x72,
-                      CurrentIrql,
-                      (ULONG_PTR)MemoryDescriptorList,
-                      (ULONG_PTR)AccessMode);
+    if (CurrentIrql > APC_LEVEL)
+    {
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x72, CurrentIrql, (ULONG_PTR)MemoryDescriptorList,
+                     (ULONG_PTR)AccessMode);
     }
 
-    if (ViInjectResourceFailure () == TRUE) {
-        ExRaiseStatus (STATUS_WORKING_SET_QUOTA);
+    if (ViInjectResourceFailure() == TRUE)
+    {
+        ExRaiseStatus(STATUS_WORKING_SET_QUOTA);
     }
 
-    MmProbeAndLockSelectedPages (MemoryDescriptorList,
-                                 SegmentArray,
-                                 AccessMode,
-                                 Operation);
+    MmProbeAndLockSelectedPages(MemoryDescriptorList, SegmentArray, AccessMode, Operation);
 }
 
 THUNKED_API
 PVOID
-VerifierMapIoSpace (
-     IN PHYSICAL_ADDRESS PhysicalAddress,
-     IN SIZE_T NumberOfBytes,
-     IN MEMORY_CACHING_TYPE CacheType
-     )
+VerifierMapIoSpace(IN PHYSICAL_ADDRESS PhysicalAddress, IN SIZE_T NumberOfBytes, IN MEMORY_CACHING_TYPE CacheType)
 {
     KIRQL CurrentIrql;
     ULONG Hint;
@@ -1134,13 +838,11 @@ VerifierMapIoSpace (
     PFN_NUMBER NumberOfPages;
     PFN_NUMBER PageFrameIndex;
 
-    CurrentIrql = KeGetCurrentIrql ();
-    if (CurrentIrql > DISPATCH_LEVEL) {
-        KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                      0x73,
-                      CurrentIrql,
-                      (ULONG_PTR)PhysicalAddress.LowPart,
-                      NumberOfBytes);
+    CurrentIrql = KeGetCurrentIrql();
+    if (CurrentIrql > DISPATCH_LEVEL)
+    {
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x73, CurrentIrql, (ULONG_PTR)PhysicalAddress.LowPart,
+                     NumberOfBytes);
     }
 
     //
@@ -1151,33 +853,33 @@ VerifierMapIoSpace (
     Hint = 0;
     PageFrameIndex = (PFN_NUMBER)(PhysicalAddress.QuadPart >> PAGE_SHIFT);
 
-    if (MiIsPhysicalMemoryAddress (PageFrameIndex, &Hint, TRUE) == TRUE) {
+    if (MiIsPhysicalMemoryAddress(PageFrameIndex, &Hint, TRUE) == TRUE)
+    {
 
-        Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+        Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
 
-        NumberOfPages = ADDRESS_AND_SIZE_TO_SPAN_PAGES (PhysicalAddress.LowPart,
-                                                        NumberOfBytes);
+        NumberOfPages = ADDRESS_AND_SIZE_TO_SPAN_PAGES(PhysicalAddress.LowPart, NumberOfBytes);
 
-        do {
+        do
+        {
 
             //
             // Each frame better be locked down already.  Bugcheck if not.
             //
 
-            if ((Pfn1->u3.e2.ReferenceCount != 0) ||
-                ((Pfn1->u3.e1.Rom == 1) && ((CacheType & 0xFF) == MmCached))) {
+            if ((Pfn1->u3.e2.ReferenceCount != 0) || ((Pfn1->u3.e1.Rom == 1) && ((CacheType & 0xFF) == MmCached)))
+            {
 
                 NOTHING;
             }
-            else {
-                KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                              0x83,
-                              (ULONG_PTR)PhysicalAddress.LowPart,
-                              NumberOfBytes,
-                              (ULONG_PTR)(Pfn1 - MmPfnDatabase));
+            else
+            {
+                KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x83, (ULONG_PTR)PhysicalAddress.LowPart,
+                             NumberOfBytes, (ULONG_PTR)(Pfn1 - MmPfnDatabase));
             }
 
-            if (Pfn1->u3.e1.CacheAttribute == MiNotMapped) {
+            if (Pfn1->u3.e1.CacheAttribute == MiNotMapped)
+            {
 
                 //
                 // This better be for a page allocated with
@@ -1187,19 +889,18 @@ VerifierMapIoSpace (
                 //
 
                 if ((Pfn1->u4.PteFrame == MI_MAGIC_AWE_PTEFRAME) ||
-#if defined (_MI_MORE_THAN_4GB_)
+#if defined(_MI_MORE_THAN_4GB_)
                     (Pfn1->u4.PteFrame == MI_MAGIC_4GB_RECLAIM) ||
 #endif
-                    (Pfn1->PteAddress == (PVOID) (ULONG_PTR)(X64K | 0x1))) {
+                    (Pfn1->PteAddress == (PVOID)(ULONG_PTR)(X64K | 0x1)))
+                {
 
                     NOTHING;
                 }
-                else {
-                    KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                                  0x84,
-                                  (ULONG_PTR)PhysicalAddress.LowPart,
-                                  NumberOfBytes,
-                                  (ULONG_PTR)(Pfn1 - MmPfnDatabase));
+                else
+                {
+                    KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x84, (ULONG_PTR)PhysicalAddress.LowPart,
+                                 NumberOfBytes, (ULONG_PTR)(Pfn1 - MmPfnDatabase));
                 }
             }
             Pfn1 += 1;
@@ -1207,18 +908,15 @@ VerifierMapIoSpace (
         } while (NumberOfPages != 0);
     }
 
-    if (ViInjectResourceFailure () == TRUE) {
+    if (ViInjectResourceFailure() == TRUE)
+    {
         return NULL;
     }
 
-    return MmMapIoSpace (PhysicalAddress, NumberOfBytes, CacheType);
+    return MmMapIoSpace(PhysicalAddress, NumberOfBytes, CacheType);
 }
 
-VOID
-ViCheckMdlPages (
-    IN PMDL MemoryDescriptorList,
-    IN MEMORY_CACHING_TYPE CacheType
-    )
+VOID ViCheckMdlPages(IN PMDL MemoryDescriptorList, IN MEMORY_CACHING_TYPE CacheType)
 {
     PMMPFN Pfn1;
     PFN_NUMBER NumberOfPages;
@@ -1226,42 +924,41 @@ ViCheckMdlPages (
     PPFN_NUMBER LastPage;
     PVOID StartingVa;
 
-    ASSERT ((MemoryDescriptorList->MdlFlags & MDL_IO_SPACE) == 0);
+    ASSERT((MemoryDescriptorList->MdlFlags & MDL_IO_SPACE) == 0);
 
-    StartingVa = (PVOID)((PCHAR)MemoryDescriptorList->StartVa +
-                         MemoryDescriptorList->ByteOffset);
+    StartingVa = (PVOID)((PCHAR)MemoryDescriptorList->StartVa + MemoryDescriptorList->ByteOffset);
 
     Page = (PPFN_NUMBER)(MemoryDescriptorList + 1);
-    NumberOfPages = ADDRESS_AND_SIZE_TO_SPAN_PAGES (StartingVa,
-                                               MemoryDescriptorList->ByteCount);
+    NumberOfPages = ADDRESS_AND_SIZE_TO_SPAN_PAGES(StartingVa, MemoryDescriptorList->ByteCount);
     LastPage = Page + NumberOfPages;
 
-    do {
+    do
+    {
 
-        if (*Page == MM_EMPTY_LIST) {
+        if (*Page == MM_EMPTY_LIST)
+        {
             break;
         }
 
-        Pfn1 = MI_PFN_ELEMENT (*Page);
+        Pfn1 = MI_PFN_ELEMENT(*Page);
 
         //
         // Each frame better be locked down already.  Bugcheck if not.
         //
 
-        if ((Pfn1->u3.e2.ReferenceCount != 0) ||
-            ((Pfn1->u3.e1.Rom == 1) && (CacheType == MmCached))) {
+        if ((Pfn1->u3.e2.ReferenceCount != 0) || ((Pfn1->u3.e1.Rom == 1) && (CacheType == MmCached)))
+        {
 
             NOTHING;
         }
-        else {
-            KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                          0x85,
-                          (ULONG_PTR)MemoryDescriptorList,
-                          NumberOfPages,
-                          (ULONG_PTR)(Pfn1 - MmPfnDatabase));
+        else
+        {
+            KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x85, (ULONG_PTR)MemoryDescriptorList, NumberOfPages,
+                         (ULONG_PTR)(Pfn1 - MmPfnDatabase));
         }
 
-        if (Pfn1->u3.e1.CacheAttribute == MiNotMapped) {
+        if (Pfn1->u3.e1.CacheAttribute == MiNotMapped)
+        {
 
             //
             // This better be for a page allocated with
@@ -1271,19 +968,18 @@ ViCheckMdlPages (
             //
 
             if ((Pfn1->u4.PteFrame == MI_MAGIC_AWE_PTEFRAME) ||
-#if defined (_MI_MORE_THAN_4GB_)
+#if defined(_MI_MORE_THAN_4GB_)
                 (Pfn1->u4.PteFrame == MI_MAGIC_4GB_RECLAIM) ||
 #endif
-                (Pfn1->PteAddress == (PVOID) (ULONG_PTR)(X64K | 0x1))) {
+                (Pfn1->PteAddress == (PVOID)(ULONG_PTR)(X64K | 0x1)))
+            {
 
                 NOTHING;
             }
-            else {
-                KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                              0x86,
-                              (ULONG_PTR)MemoryDescriptorList,
-                              NumberOfPages,
-                              (ULONG_PTR)(Pfn1 - MmPfnDatabase));
+            else
+            {
+                KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x86, (ULONG_PTR)MemoryDescriptorList, NumberOfPages,
+                             (ULONG_PTR)(Pfn1 - MmPfnDatabase));
             }
         }
 
@@ -1293,333 +989,278 @@ ViCheckMdlPages (
 
 THUNKED_API
 PVOID
-VerifierMapLockedPages (
-     IN PMDL MemoryDescriptorList,
-     IN KPROCESSOR_MODE AccessMode
-     )
+VerifierMapLockedPages(IN PMDL MemoryDescriptorList, IN KPROCESSOR_MODE AccessMode)
 {
     KIRQL CurrentIrql;
 
     CurrentIrql = KeGetCurrentIrql();
 
-    if (AccessMode == KernelMode) {
-        if (CurrentIrql > DISPATCH_LEVEL) {
-            KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                          0x74,
-                          CurrentIrql,
-                          (ULONG_PTR)MemoryDescriptorList,
-                          (ULONG_PTR)AccessMode);
+    if (AccessMode == KernelMode)
+    {
+        if (CurrentIrql > DISPATCH_LEVEL)
+        {
+            KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x74, CurrentIrql, (ULONG_PTR)MemoryDescriptorList,
+                         (ULONG_PTR)AccessMode);
         }
     }
-    else {
-        if (CurrentIrql > APC_LEVEL) {
-            KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                          0x75,
-                          CurrentIrql,
-                          (ULONG_PTR)MemoryDescriptorList,
-                          (ULONG_PTR)AccessMode);
-        }
-    }
-
-    if ((MemoryDescriptorList->MdlFlags & MDL_IO_SPACE) == 0) {
-        ViCheckMdlPages (MemoryDescriptorList, MmCached);
-    }
-
-    if ((MemoryDescriptorList->MdlFlags & MDL_MAPPING_CAN_FAIL) == 0) {
-
-        MI_CHECK_UPTIME ();
-
-        if (VerifierSystemSufficientlyBooted == TRUE) {
-
-            KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                          0x81,
-                          (ULONG_PTR) MemoryDescriptorList,
-                          MemoryDescriptorList->MdlFlags,
-                          0);
+    else
+    {
+        if (CurrentIrql > APC_LEVEL)
+        {
+            KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x75, CurrentIrql, (ULONG_PTR)MemoryDescriptorList,
+                         (ULONG_PTR)AccessMode);
         }
     }
 
-    return MmMapLockedPages (MemoryDescriptorList, AccessMode);
+    if ((MemoryDescriptorList->MdlFlags & MDL_IO_SPACE) == 0)
+    {
+        ViCheckMdlPages(MemoryDescriptorList, MmCached);
+    }
+
+    if ((MemoryDescriptorList->MdlFlags & MDL_MAPPING_CAN_FAIL) == 0)
+    {
+
+        MI_CHECK_UPTIME();
+
+        if (VerifierSystemSufficientlyBooted == TRUE)
+        {
+
+            KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x81, (ULONG_PTR)MemoryDescriptorList,
+                         MemoryDescriptorList->MdlFlags, 0);
+        }
+    }
+
+    return MmMapLockedPages(MemoryDescriptorList, AccessMode);
 }
 
 THUNKED_API
 PVOID
-VerifierMapLockedPagesSpecifyCache (
-    IN PMDL MemoryDescriptorList,
-    IN KPROCESSOR_MODE AccessMode,
-    IN MEMORY_CACHING_TYPE CacheType,
-    IN PVOID RequestedAddress,
-    IN ULONG BugCheckOnFailure,
-    IN MM_PAGE_PRIORITY Priority
-    )
+VerifierMapLockedPagesSpecifyCache(IN PMDL MemoryDescriptorList, IN KPROCESSOR_MODE AccessMode,
+                                   IN MEMORY_CACHING_TYPE CacheType, IN PVOID RequestedAddress,
+                                   IN ULONG BugCheckOnFailure, IN MM_PAGE_PRIORITY Priority)
 {
     KIRQL CurrentIrql;
 
-    CurrentIrql = KeGetCurrentIrql ();
-    if (AccessMode == KernelMode) {
-        if (CurrentIrql > DISPATCH_LEVEL) {
-            KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                          0x76,
-                          CurrentIrql,
-                          (ULONG_PTR)MemoryDescriptorList,
-                          (ULONG_PTR)AccessMode);
+    CurrentIrql = KeGetCurrentIrql();
+    if (AccessMode == KernelMode)
+    {
+        if (CurrentIrql > DISPATCH_LEVEL)
+        {
+            KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x76, CurrentIrql, (ULONG_PTR)MemoryDescriptorList,
+                         (ULONG_PTR)AccessMode);
         }
     }
-    else {
-        if (CurrentIrql > APC_LEVEL) {
-            KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                          0x77,
-                          CurrentIrql,
-                          (ULONG_PTR)MemoryDescriptorList,
-                          (ULONG_PTR)AccessMode);
+    else
+    {
+        if (CurrentIrql > APC_LEVEL)
+        {
+            KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x77, CurrentIrql, (ULONG_PTR)MemoryDescriptorList,
+                         (ULONG_PTR)AccessMode);
         }
     }
 
-    if ((MemoryDescriptorList->MdlFlags & MDL_IO_SPACE) == 0) {
-        ViCheckMdlPages (MemoryDescriptorList, CacheType);
+    if ((MemoryDescriptorList->MdlFlags & MDL_IO_SPACE) == 0)
+    {
+        ViCheckMdlPages(MemoryDescriptorList, CacheType);
     }
 
-    if ((MemoryDescriptorList->MdlFlags & MDL_MAPPING_CAN_FAIL) ||
-        (BugCheckOnFailure == 0)) {
+    if ((MemoryDescriptorList->MdlFlags & MDL_MAPPING_CAN_FAIL) || (BugCheckOnFailure == 0))
+    {
 
-        if (ViInjectResourceFailure () == TRUE) {
+        if (ViInjectResourceFailure() == TRUE)
+        {
             return NULL;
         }
     }
-    else {
+    else
+    {
 
         //
         // All drivers must specify can fail or don't bugcheck.
         //
 
-        MI_CHECK_UPTIME ();
+        MI_CHECK_UPTIME();
 
-        if (VerifierSystemSufficientlyBooted == TRUE) {
+        if (VerifierSystemSufficientlyBooted == TRUE)
+        {
 
-            KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                          0x82,
-                          (ULONG_PTR) MemoryDescriptorList,
-                          MemoryDescriptorList->MdlFlags,
-                          BugCheckOnFailure);
+            KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x82, (ULONG_PTR)MemoryDescriptorList,
+                         MemoryDescriptorList->MdlFlags, BugCheckOnFailure);
         }
     }
 
-    return MmMapLockedPagesSpecifyCache (MemoryDescriptorList,
-                                         AccessMode,
-                                         CacheType,
-                                         RequestedAddress,
-                                         BugCheckOnFailure,
-                                         Priority);
+    return MmMapLockedPagesSpecifyCache(MemoryDescriptorList, AccessMode, CacheType, RequestedAddress,
+                                        BugCheckOnFailure, Priority);
 }
 
-VOID
-VerifierUnlockPages (
-     IN OUT PMDL MemoryDescriptorList
-     )
+VOID VerifierUnlockPages(IN OUT PMDL MemoryDescriptorList)
 {
     KIRQL CurrentIrql;
 
     CurrentIrql = KeGetCurrentIrql();
-    if (CurrentIrql > DISPATCH_LEVEL) {
-        KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                      0x78,
-                      CurrentIrql,
-                      (ULONG_PTR)MemoryDescriptorList,
-                      0);
+    if (CurrentIrql > DISPATCH_LEVEL)
+    {
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x78, CurrentIrql, (ULONG_PTR)MemoryDescriptorList, 0);
     }
 
-    if ((MemoryDescriptorList->MdlFlags & MDL_PAGES_LOCKED) == 0) {
+    if ((MemoryDescriptorList->MdlFlags & MDL_PAGES_LOCKED) == 0)
+    {
 
         //
         // The caller is trying to unlock an MDL that was never locked down.
         //
 
-        KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                      0x7C,
-                      (ULONG_PTR)MemoryDescriptorList,
-                      (ULONG_PTR)MemoryDescriptorList->MdlFlags,
-                      0);
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x7C, (ULONG_PTR)MemoryDescriptorList,
+                     (ULONG_PTR)MemoryDescriptorList->MdlFlags, 0);
     }
 
-    if (MemoryDescriptorList->MdlFlags & MDL_SOURCE_IS_NONPAGED_POOL) {
+    if (MemoryDescriptorList->MdlFlags & MDL_SOURCE_IS_NONPAGED_POOL)
+    {
 
         //
         // Nonpaged pool should never be locked down.
         //
 
-        KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                      0x7D,
-                      (ULONG_PTR)MemoryDescriptorList,
-                      (ULONG_PTR)MemoryDescriptorList->MdlFlags,
-                      0);
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x7D, (ULONG_PTR)MemoryDescriptorList,
+                     (ULONG_PTR)MemoryDescriptorList->MdlFlags, 0);
     }
 
-    MmUnlockPages (MemoryDescriptorList);
+    MmUnlockPages(MemoryDescriptorList);
 }
 
-VOID
-VerifierUnmapLockedPages (
-     IN PVOID BaseAddress,
-     IN PMDL MemoryDescriptorList
-     )
+VOID VerifierUnmapLockedPages(IN PVOID BaseAddress, IN PMDL MemoryDescriptorList)
 {
     KIRQL CurrentIrql;
 
     CurrentIrql = KeGetCurrentIrql();
 
-    if (BaseAddress > MM_HIGHEST_USER_ADDRESS) {
-        if (CurrentIrql > DISPATCH_LEVEL) {
-            KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                          0x79,
-                          CurrentIrql,
-                          (ULONG_PTR)BaseAddress,
-                          (ULONG_PTR)MemoryDescriptorList);
+    if (BaseAddress > MM_HIGHEST_USER_ADDRESS)
+    {
+        if (CurrentIrql > DISPATCH_LEVEL)
+        {
+            KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x79, CurrentIrql, (ULONG_PTR)BaseAddress,
+                         (ULONG_PTR)MemoryDescriptorList);
         }
     }
-    else {
-        if (CurrentIrql > APC_LEVEL) {
-            KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                          0x7A,
-                          CurrentIrql,
-                          (ULONG_PTR)BaseAddress,
-                          (ULONG_PTR)MemoryDescriptorList);
+    else
+    {
+        if (CurrentIrql > APC_LEVEL)
+        {
+            KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x7A, CurrentIrql, (ULONG_PTR)BaseAddress,
+                         (ULONG_PTR)MemoryDescriptorList);
         }
     }
 
-    MmUnmapLockedPages (BaseAddress, MemoryDescriptorList);
+    MmUnmapLockedPages(BaseAddress, MemoryDescriptorList);
 }
 
-VOID
-VerifierUnmapIoSpace (
-     IN PVOID BaseAddress,
-     IN SIZE_T NumberOfBytes
-     )
+VOID VerifierUnmapIoSpace(IN PVOID BaseAddress, IN SIZE_T NumberOfBytes)
 {
     KIRQL CurrentIrql;
 
     CurrentIrql = KeGetCurrentIrql();
-    if (CurrentIrql > DISPATCH_LEVEL) {
-        KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                      0x7B,
-                      CurrentIrql,
-                      (ULONG_PTR)BaseAddress,
-                      (ULONG_PTR)NumberOfBytes);
+    if (CurrentIrql > DISPATCH_LEVEL)
+    {
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x7B, CurrentIrql, (ULONG_PTR)BaseAddress,
+                     (ULONG_PTR)NumberOfBytes);
     }
 
-    MmUnmapIoSpace (BaseAddress, NumberOfBytes);
+    MmUnmapIoSpace(BaseAddress, NumberOfBytes);
 }
 
 THUNKED_API
 PVOID
-VerifierAllocatePool (
-    IN POOL_TYPE PoolType,
-    IN SIZE_T NumberOfBytes
-    )
+VerifierAllocatePool(IN POOL_TYPE PoolType, IN SIZE_T NumberOfBytes)
 {
     PVOID CallingAddress;
     PMI_VERIFIER_DRIVER_ENTRY Verifier;
 
-    VI_DETECT_RETURN_ADDRESS (CallingAddress);
+    VI_DETECT_RETURN_ADDRESS(CallingAddress);
 
-    if (KernelVerifier == TRUE) {
+    if (KernelVerifier == TRUE)
+    {
 
-        Verifier = ViLocateVerifierEntry (CallingAddress);
+        Verifier = ViLocateVerifierEntry(CallingAddress);
 
-        if ((Verifier == NULL) ||
-            ((Verifier->Flags & VI_VERIFYING_DIRECTLY) == 0)) {
+        if ((Verifier == NULL) || ((Verifier->Flags & VI_VERIFYING_DIRECTLY) == 0))
+        {
 
-            return ExAllocatePool (PoolType | POOL_DRIVER_MASK, NumberOfBytes);
+            return ExAllocatePool(PoolType | POOL_DRIVER_MASK, NumberOfBytes);
         }
         PoolType |= POOL_DRIVER_MASK;
     }
 
     MmVerifierData.AllocationsWithNoTag += 1;
 
-    return VeAllocatePoolWithTagPriority (PoolType,
-                                          NumberOfBytes,
-                                          'parW',
-                                          HighPoolPriority,
-                                          CallingAddress);
+    return VeAllocatePoolWithTagPriority(PoolType, NumberOfBytes, 'parW', HighPoolPriority, CallingAddress);
 }
 
 THUNKED_API
 PVOID
-VerifierAllocatePoolWithTag (
-    IN POOL_TYPE PoolType,
-    IN SIZE_T NumberOfBytes,
-    IN ULONG Tag
-    )
+VerifierAllocatePoolWithTag(IN POOL_TYPE PoolType, IN SIZE_T NumberOfBytes, IN ULONG Tag)
 {
     PVOID CallingAddress;
     PMI_VERIFIER_DRIVER_ENTRY Verifier;
 
-    VI_DETECT_RETURN_ADDRESS (CallingAddress);
+    VI_DETECT_RETURN_ADDRESS(CallingAddress);
 
-    if (KernelVerifier == TRUE) {
-        Verifier = ViLocateVerifierEntry (CallingAddress);
+    if (KernelVerifier == TRUE)
+    {
+        Verifier = ViLocateVerifierEntry(CallingAddress);
 
-        if ((Verifier == NULL) ||
-            ((Verifier->Flags & VI_VERIFYING_DIRECTLY) == 0)) {
+        if ((Verifier == NULL) || ((Verifier->Flags & VI_VERIFYING_DIRECTLY) == 0))
+        {
 
-            return ExAllocatePoolWithTag (PoolType | POOL_DRIVER_MASK,
-                                          NumberOfBytes,
-                                          Tag);
+            return ExAllocatePoolWithTag(PoolType | POOL_DRIVER_MASK, NumberOfBytes, Tag);
         }
         PoolType |= POOL_DRIVER_MASK;
     }
 
-    return VeAllocatePoolWithTagPriority (PoolType,
-                                          NumberOfBytes,
-                                          Tag,
-                                          HighPoolPriority,
-                                          CallingAddress);
+    return VeAllocatePoolWithTagPriority(PoolType, NumberOfBytes, Tag, HighPoolPriority, CallingAddress);
 }
 
 THUNKED_API
 PVOID
-VerifierAllocatePoolWithQuota(
-    IN POOL_TYPE PoolType,
-    IN SIZE_T NumberOfBytes
-    )
+VerifierAllocatePoolWithQuota(IN POOL_TYPE PoolType, IN SIZE_T NumberOfBytes)
 {
     PVOID Va;
     LOGICAL RaiseOnQuotaFailure;
     PVOID CallingAddress;
     PMI_VERIFIER_DRIVER_ENTRY Verifier;
 
-    VI_DETECT_RETURN_ADDRESS (CallingAddress);
+    VI_DETECT_RETURN_ADDRESS(CallingAddress);
 
-    if (KernelVerifier == TRUE) {
-        Verifier = ViLocateVerifierEntry (CallingAddress);
+    if (KernelVerifier == TRUE)
+    {
+        Verifier = ViLocateVerifierEntry(CallingAddress);
 
-        if ((Verifier == NULL) ||
-            ((Verifier->Flags & VI_VERIFYING_DIRECTLY) == 0)) {
+        if ((Verifier == NULL) || ((Verifier->Flags & VI_VERIFYING_DIRECTLY) == 0))
+        {
 
-            return ExAllocatePoolWithQuota (PoolType | POOL_DRIVER_MASK,
-                                            NumberOfBytes);
+            return ExAllocatePoolWithQuota(PoolType | POOL_DRIVER_MASK, NumberOfBytes);
         }
         PoolType |= POOL_DRIVER_MASK;
     }
 
     MmVerifierData.AllocationsWithNoTag += 1;
 
-    if (PoolType & POOL_QUOTA_FAIL_INSTEAD_OF_RAISE) {
+    if (PoolType & POOL_QUOTA_FAIL_INSTEAD_OF_RAISE)
+    {
         RaiseOnQuotaFailure = FALSE;
         PoolType &= ~POOL_QUOTA_FAIL_INSTEAD_OF_RAISE;
     }
-    else {
+    else
+    {
         RaiseOnQuotaFailure = TRUE;
     }
 
-    Va = VeAllocatePoolWithTagPriority (PoolType,
-                                        NumberOfBytes,
-                                        'parW',
-                                        HighPoolPriority,
-                                        CallingAddress);
+    Va = VeAllocatePoolWithTagPriority(PoolType, NumberOfBytes, 'parW', HighPoolPriority, CallingAddress);
 
-    if (Va == NULL) {
-        if (RaiseOnQuotaFailure == TRUE) {
-            ExRaiseStatus (STATUS_INSUFFICIENT_RESOURCES);
+    if (Va == NULL)
+    {
+        if (RaiseOnQuotaFailure == TRUE)
+        {
+            ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
         }
     }
 
@@ -1628,49 +1269,44 @@ VerifierAllocatePoolWithQuota(
 
 THUNKED_API
 PVOID
-VerifierAllocatePoolWithQuotaTag(
-    IN POOL_TYPE PoolType,
-    IN SIZE_T NumberOfBytes,
-    IN ULONG Tag
-    )
+VerifierAllocatePoolWithQuotaTag(IN POOL_TYPE PoolType, IN SIZE_T NumberOfBytes, IN ULONG Tag)
 {
     PVOID Va;
     LOGICAL RaiseOnQuotaFailure;
     PVOID CallingAddress;
     PMI_VERIFIER_DRIVER_ENTRY Verifier;
 
-    VI_DETECT_RETURN_ADDRESS (CallingAddress);
+    VI_DETECT_RETURN_ADDRESS(CallingAddress);
 
-    if (KernelVerifier == TRUE) {
-        Verifier = ViLocateVerifierEntry (CallingAddress);
+    if (KernelVerifier == TRUE)
+    {
+        Verifier = ViLocateVerifierEntry(CallingAddress);
 
-        if ((Verifier == NULL) ||
-            ((Verifier->Flags & VI_VERIFYING_DIRECTLY) == 0)) {
+        if ((Verifier == NULL) || ((Verifier->Flags & VI_VERIFYING_DIRECTLY) == 0))
+        {
 
-            return ExAllocatePoolWithQuotaTag (PoolType | POOL_DRIVER_MASK,
-                                               NumberOfBytes,
-                                               Tag);
+            return ExAllocatePoolWithQuotaTag(PoolType | POOL_DRIVER_MASK, NumberOfBytes, Tag);
         }
         PoolType |= POOL_DRIVER_MASK;
     }
 
-    if (PoolType & POOL_QUOTA_FAIL_INSTEAD_OF_RAISE) {
+    if (PoolType & POOL_QUOTA_FAIL_INSTEAD_OF_RAISE)
+    {
         RaiseOnQuotaFailure = FALSE;
         PoolType &= ~POOL_QUOTA_FAIL_INSTEAD_OF_RAISE;
     }
-    else {
+    else
+    {
         RaiseOnQuotaFailure = TRUE;
     }
 
-    Va = VeAllocatePoolWithTagPriority (PoolType,
-                                        NumberOfBytes,
-                                        Tag,
-                                        HighPoolPriority,
-                                        CallingAddress);
+    Va = VeAllocatePoolWithTagPriority(PoolType, NumberOfBytes, Tag, HighPoolPriority, CallingAddress);
 
-    if (Va == NULL) {
-        if (RaiseOnQuotaFailure == TRUE) {
-            ExRaiseStatus (STATUS_INSUFFICIENT_RESOURCES);
+    if (Va == NULL)
+    {
+        if (RaiseOnQuotaFailure == TRUE)
+        {
+            ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
         }
     }
 
@@ -1679,12 +1315,8 @@ VerifierAllocatePoolWithQuotaTag(
 
 THUNKED_API
 PVOID
-VerifierAllocatePoolWithTagPriority(
-    IN POOL_TYPE PoolType,
-    IN SIZE_T NumberOfBytes,
-    IN ULONG Tag,
-    IN EX_POOL_PRIORITY Priority
-    )
+VerifierAllocatePoolWithTagPriority(IN POOL_TYPE PoolType, IN SIZE_T NumberOfBytes, IN ULONG Tag,
+                                    IN EX_POOL_PRIORITY Priority)
 
 /*++
 
@@ -1703,33 +1335,25 @@ Routine Description:
     PVOID CallingAddress;
     PMI_VERIFIER_DRIVER_ENTRY Verifier;
 
-    VI_DETECT_RETURN_ADDRESS (CallingAddress);
+    VI_DETECT_RETURN_ADDRESS(CallingAddress);
 
-    if (KernelVerifier == TRUE) {
-        Verifier = ViLocateVerifierEntry (CallingAddress);
+    if (KernelVerifier == TRUE)
+    {
+        Verifier = ViLocateVerifierEntry(CallingAddress);
 
-        if ((Verifier == NULL) ||
-            ((Verifier->Flags & VI_VERIFYING_DIRECTLY) == 0)) {
+        if ((Verifier == NULL) || ((Verifier->Flags & VI_VERIFYING_DIRECTLY) == 0))
+        {
 
-            return ExAllocatePoolWithTagPriority (PoolType | POOL_DRIVER_MASK,
-                                                  NumberOfBytes,
-                                                  Tag,
-                                                  Priority);
+            return ExAllocatePoolWithTagPriority(PoolType | POOL_DRIVER_MASK, NumberOfBytes, Tag, Priority);
         }
         PoolType |= POOL_DRIVER_MASK;
     }
 
-    return VeAllocatePoolWithTagPriority (PoolType,
-                                          NumberOfBytes,
-                                          Tag,
-                                          Priority,
-                                          CallingAddress);
+    return VeAllocatePoolWithTagPriority(PoolType, NumberOfBytes, Tag, Priority, CallingAddress);
 }
 
 LOGICAL
-ViInjectResourceFailure (
-    VOID
-    )
+ViInjectResourceFailure(VOID)
 
 /*++
 
@@ -1757,7 +1381,8 @@ Environment:
     ULONG TimeLow;
     LARGE_INTEGER CurrentTime;
 
-    if ((MmVerifierData.Level & DRIVER_VERIFIER_INJECT_ALLOCATION_FAILURES) == 0) {
+    if ((MmVerifierData.Level & DRIVER_VERIFIER_INJECT_ALLOCATION_FAILURES) == 0)
+    {
         return FALSE;
     }
 
@@ -1766,15 +1391,17 @@ Environment:
     // give the system enough time to boot.
     //
 
-    MI_CHECK_UPTIME ();
+    MI_CHECK_UPTIME();
 
-    if (VerifierSystemSufficientlyBooted == TRUE) {
+    if (VerifierSystemSufficientlyBooted == TRUE)
+    {
 
         KeQueryTickCount(&CurrentTime);
 
         TimeLow = CurrentTime.LowPart;
 
-        if ((TimeLow & 0xF) == 0) {
+        if ((TimeLow & 0xF) == 0)
+        {
 
             MmVerifierData.AllocationsFailedDeliberately += 1;
 
@@ -1782,13 +1409,14 @@ Environment:
             // Deliberately fail this request.
             //
 
-            if (MiFaultRetryMask != 0xFFFFFFFF) {
+            if (MiFaultRetryMask != 0xFFFFFFFF)
+            {
                 MiFaultRetryMask = 0xFFFFFFFF;
                 MiUserFaultRetryMask = 0xFFFFFFFF;
             }
 
 #if defined(_X86_)
-            ViFaultTracesLog ();
+            ViFaultTracesLog();
 #endif
 
             return TRUE;
@@ -1803,7 +1431,8 @@ Environment:
 
         TimeLow &= 0x7FFF;
 
-        if (TimeLow < 0x400) {
+        if (TimeLow < 0x400)
+        {
 
             MmVerifierData.BurstAllocationsFailedDeliberately += 1;
 
@@ -1811,13 +1440,14 @@ Environment:
             // Deliberately fail this request.
             //
 
-            if (MiFaultRetryMask != 0xFFFFFFFF) {
+            if (MiFaultRetryMask != 0xFFFFFFFF)
+            {
                 MiFaultRetryMask = 0xFFFFFFFF;
                 MiUserFaultRetryMask = 0xFFFFFFFF;
             }
 
 #if defined(_X86_)
-            ViFaultTracesLog ();
+            ViFaultTracesLog();
 #endif
 
             return TRUE;
@@ -1828,9 +1458,7 @@ Environment:
 }
 
 LOGICAL
-ViReservePoolAllocation (
-    IN PMI_VERIFIER_DRIVER_ENTRY Verifier
-    )
+ViReservePoolAllocation(IN PMI_VERIFIER_DRIVER_ENTRY Verifier)
 {
     ULONG_PTR OldSize;
     ULONG_PTR NewSize;
@@ -1843,9 +1471,11 @@ ViReservePoolAllocation (
     PVI_POOL_ENTRY HashEntry;
     PVI_POOL_ENTRY OldHashTable;
 
-    ExAcquireSpinLock (&Verifier->VerifierPoolLock, &OldIrql);
+    ExAcquireSpinLock(&Verifier->VerifierPoolLock, &OldIrql);
 
-    while (Verifier->PoolHashSize <= Verifier->CurrentPagedPoolAllocations + Verifier->CurrentNonPagedPoolAllocations + Verifier->PoolHashReserved) {
+    while (Verifier->PoolHashSize <= Verifier->CurrentPagedPoolAllocations + Verifier->CurrentNonPagedPoolAllocations +
+                                         Verifier->PoolHashReserved)
+    {
 
         //
         // More space is needed.  Try for it now.
@@ -1855,18 +1485,21 @@ ViReservePoolAllocation (
 
         OldSize = Verifier->PoolHashSize * sizeof(VI_POOL_ENTRY);
 
-        if (Verifier->PoolHashSize >= VI_POOL_ENTRIES_PER_PAGE) {
+        if (Verifier->PoolHashSize >= VI_POOL_ENTRIES_PER_PAGE)
+        {
             Increment = PAGE_SIZE;
         }
-        else {
-            Increment = 16 * sizeof (VI_POOL_ENTRY);
+        else
+        {
+            Increment = 16 * sizeof(VI_POOL_ENTRY);
         }
 
-        ExReleaseSpinLock (&Verifier->VerifierPoolLock, OldIrql);
+        ExReleaseSpinLock(&Verifier->VerifierPoolLock, OldIrql);
 
         NewSize = OldSize + Increment;
 
-        if (NewSize < OldSize) {
+        if (NewSize < OldSize)
+        {
             return FALSE;
         }
 
@@ -1875,18 +1508,19 @@ ViReservePoolAllocation (
         // when using the kernel verifier.
         //
 
-        NewHashTable = ExAllocatePoolWithTagPriority (NonPagedPool | POOL_DRIVER_MASK,
-                                                      NewSize,
-                                                      'ppeV',
-                                                      HighPoolPriority);
+        NewHashTable =
+            ExAllocatePoolWithTagPriority(NonPagedPool | POOL_DRIVER_MASK, NewSize, 'ppeV', HighPoolPriority);
 
-        ExAcquireSpinLock (&Verifier->VerifierPoolLock, &OldIrql);
+        ExAcquireSpinLock(&Verifier->VerifierPoolLock, &OldIrql);
 
         OldSize = Verifier->PoolHashSize * sizeof(VI_POOL_ENTRY);
 
-        if (NewHashTable == NULL) {
-            if (Verifier->PoolHashSize <= Verifier->CurrentPagedPoolAllocations + Verifier->CurrentNonPagedPoolAllocations + Verifier->PoolHashReserved) {
-                ExReleaseSpinLock (&Verifier->VerifierPoolLock, OldIrql);
+        if (NewHashTable == NULL)
+        {
+            if (Verifier->PoolHashSize <= Verifier->CurrentPagedPoolAllocations +
+                                              Verifier->CurrentNonPagedPoolAllocations + Verifier->PoolHashReserved)
+            {
+                ExReleaseSpinLock(&Verifier->VerifierPoolLock, OldIrql);
                 return FALSE;
             }
 
@@ -1897,25 +1531,28 @@ ViReservePoolAllocation (
             break;
         }
 
-        if (NewSize != OldSize + Increment) {
+        if (NewSize != OldSize + Increment)
+        {
 
             //
             // Another thread got here before us.
             //
 
-            ExReleaseSpinLock (&Verifier->VerifierPoolLock, OldIrql);
-            ExFreePool (NewHashTable);
-            ExAcquireSpinLock (&Verifier->VerifierPoolLock, &OldIrql);
+            ExReleaseSpinLock(&Verifier->VerifierPoolLock, OldIrql);
+            ExFreePool(NewHashTable);
+            ExAcquireSpinLock(&Verifier->VerifierPoolLock, &OldIrql);
         }
-        else {
+        else
+        {
 
             //
             // Rebuild the list into the new table.
             //
 
             OldHashTable = Verifier->PoolHash;
-            if (OldHashTable != NULL) {
-                RtlCopyMemory (NewHashTable, OldHashTable, OldSize);
+            if (OldHashTable != NULL)
+            {
+                RtlCopyMemory(NewHashTable, OldHashTable, OldSize);
             }
 
             //
@@ -1923,8 +1560,8 @@ ViReservePoolAllocation (
             // list (any free entries must be already reserved).
             //
 
-            HashEntry = (PVI_POOL_ENTRY) ((PCHAR)NewHashTable + OldSize);
-            Entries = Increment / sizeof (VI_POOL_ENTRY);
+            HashEntry = (PVI_POOL_ENTRY)((PCHAR)NewHashTable + OldSize);
+            Entries = Increment / sizeof(VI_POOL_ENTRY);
             NewHashOffset = HashEntry - (PVI_POOL_ENTRY)NewHashTable;
 
             //
@@ -1932,7 +1569,8 @@ ViReservePoolAllocation (
             // end here will need to be revisited.
             //
 
-            for (i = 0; i < Entries; i += 1) {
+            for (i = 0; i < Entries; i += 1)
+            {
                 HashEntry->FreeListNext = NewHashOffset + i + 1;
                 HashEntry += 1;
             }
@@ -1946,31 +1584,28 @@ ViReservePoolAllocation (
             // Free the old table.
             //
 
-            if (OldHashTable != NULL) {
-                ExReleaseSpinLock (&Verifier->VerifierPoolLock, OldIrql);
-                ExFreePool (OldHashTable);
-                ExAcquireSpinLock (&Verifier->VerifierPoolLock, &OldIrql);
+            if (OldHashTable != NULL)
+            {
+                ExReleaseSpinLock(&Verifier->VerifierPoolLock, OldIrql);
+                ExFreePool(OldHashTable);
+                ExAcquireSpinLock(&Verifier->VerifierPoolLock, &OldIrql);
             }
         }
     }
 
     Verifier->PoolHashReserved += 1;
 
-    ASSERT (Verifier->PoolHashSize >= Verifier->CurrentPagedPoolAllocations + Verifier->CurrentNonPagedPoolAllocations + Verifier->PoolHashReserved);
+    ASSERT(Verifier->PoolHashSize >= Verifier->CurrentPagedPoolAllocations + Verifier->CurrentNonPagedPoolAllocations +
+                                         Verifier->PoolHashReserved);
 
-    ExReleaseSpinLock (&Verifier->VerifierPoolLock, OldIrql);
+    ExReleaseSpinLock(&Verifier->VerifierPoolLock, OldIrql);
 
     return TRUE;
 }
 
 ULONG_PTR
-ViInsertPoolAllocation (
-    IN PMI_VERIFIER_DRIVER_ENTRY Verifier,
-    IN PVOID VirtualAddress,
-    IN PVOID CallingAddress,
-    IN SIZE_T NumberOfBytes,
-    IN ULONG Tag
-    )
+ViInsertPoolAllocation(IN PMI_VERIFIER_DRIVER_ENTRY Verifier, IN PVOID VirtualAddress, IN PVOID CallingAddress,
+                       IN SIZE_T NumberOfBytes, IN ULONG Tag)
 
 /*++
 
@@ -2005,22 +1640,23 @@ Environment:
     ULONG_PTR Index;
     PVI_POOL_ENTRY HashEntry;
 
-    ASSERT (KeGetCurrentIrql() == DISPATCH_LEVEL);
+    ASSERT(KeGetCurrentIrql() == DISPATCH_LEVEL);
 
     //
     // The list entry must be reserved in advance.
     //
 
-    ASSERT (Verifier->PoolHashReserved != 0);
+    ASSERT(Verifier->PoolHashReserved != 0);
 
-    ASSERT (Verifier->PoolHashSize >= Verifier->CurrentPagedPoolAllocations + Verifier->CurrentNonPagedPoolAllocations + Verifier->PoolHashReserved);
+    ASSERT(Verifier->PoolHashSize >= Verifier->CurrentPagedPoolAllocations + Verifier->CurrentNonPagedPoolAllocations +
+                                         Verifier->PoolHashReserved);
 
     //
     // Use the next free list entry.
     //
 
     Index = Verifier->PoolHashFree;
-    ASSERT (Index != VI_POOL_FREELIST_END);
+    ASSERT(Index != VI_POOL_FREELIST_END);
 
     HashEntry = Verifier->PoolHash + Index;
 
@@ -2028,17 +1664,15 @@ Environment:
 
     Verifier->PoolHashReserved -= 1;
 
-#if defined (_X86_)
+#if defined(_X86_)
     //
     // MiUseMaximumSystemSpace denotes an x86 mode where kernel pointers don't
     // necessarily have the high bit set.
     //
-    ASSERT (((HashEntry->FreeListNext & MINLONG_PTR) == 0) ||
-            (HashEntry->FreeListNext == VI_POOL_FREELIST_END) ||
-            (MiUseMaximumSystemSpace != 0));
+    ASSERT(((HashEntry->FreeListNext & MINLONG_PTR) == 0) || (HashEntry->FreeListNext == VI_POOL_FREELIST_END) ||
+           (MiUseMaximumSystemSpace != 0));
 #else
-    ASSERT (((HashEntry->FreeListNext & MINLONG_PTR) == 0) ||
-            (HashEntry->FreeListNext == VI_POOL_FREELIST_END));
+    ASSERT(((HashEntry->FreeListNext & MINLONG_PTR) == 0) || (HashEntry->FreeListNext == VI_POOL_FREELIST_END));
 #endif
 
     HashEntry->InUse.VirtualAddress = VirtualAddress;
@@ -2046,27 +1680,21 @@ Environment:
     HashEntry->InUse.NumberOfBytes = NumberOfBytes;
     HashEntry->InUse.Tag = Tag;
 
-#if defined (_X86_)
+#if defined(_X86_)
     //
     // MiUseMaximumSystemSpace denotes an x86 mode where kernel pointers don't
     // necessarily have the high bit set.
     //
-    ASSERT (((HashEntry->FreeListNext & MINLONG_PTR) != 0) ||
-            (MiUseMaximumSystemSpace != 0));
+    ASSERT(((HashEntry->FreeListNext & MINLONG_PTR) != 0) || (MiUseMaximumSystemSpace != 0));
 #else
-    ASSERT ((HashEntry->FreeListNext & MINLONG_PTR) != 0);
+    ASSERT((HashEntry->FreeListNext & MINLONG_PTR) != 0);
 #endif
 
     return Index;
 }
 
-VOID
-ViReleasePoolAllocation (
-    IN PMI_VERIFIER_DRIVER_ENTRY Verifier,
-    IN PVOID VirtualAddress,
-    IN ULONG_PTR ListIndex,
-    IN SIZE_T ChargedBytes
-    )
+VOID ViReleasePoolAllocation(IN PMI_VERIFIER_DRIVER_ENTRY Verifier, IN PVOID VirtualAddress, IN ULONG_PTR ListIndex,
+                             IN SIZE_T ChargedBytes)
 
 /*++
 
@@ -2102,14 +1730,12 @@ Environment:
     PVI_POOL_ENTRY HashEntry;
     PMMPTE PointerPte;
 
-    ASSERT (KeGetCurrentIrql() == DISPATCH_LEVEL);
+    ASSERT(KeGetCurrentIrql() == DISPATCH_LEVEL);
 
-    if (Verifier->PoolHash == NULL) {
-        KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                      0x59,
-                      (ULONG_PTR)VirtualAddress,
-                      ListIndex,
-                      (ULONG_PTR)Verifier);
+    if (Verifier->PoolHash == NULL)
+    {
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x59, (ULONG_PTR)VirtualAddress, ListIndex,
+                     (ULONG_PTR)Verifier);
     }
 
     //
@@ -2119,27 +1745,27 @@ Environment:
 
     HashEntry = Verifier->PoolHash + ListIndex;
 
-    if (ListIndex >= Verifier->PoolHashSize) {
-        KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                      0x54,
-                      (ULONG_PTR)VirtualAddress,
-                      Verifier->PoolHashSize,
-                      ListIndex);
+    if (ListIndex >= Verifier->PoolHashSize)
+    {
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x54, (ULONG_PTR)VirtualAddress, Verifier->PoolHashSize,
+                     ListIndex);
     }
 
-    if (HashEntry->InUse.VirtualAddress != VirtualAddress) {
+    if (HashEntry->InUse.VirtualAddress != VirtualAddress)
+    {
 
         PageFrameIndex = 0;
         PageFrameIndex2 = 1;
 
-        if ((!MI_IS_PHYSICAL_ADDRESS(VirtualAddress)) &&
-            (MI_IS_PHYSICAL_ADDRESS(HashEntry->InUse.VirtualAddress))) {
+        if ((!MI_IS_PHYSICAL_ADDRESS(VirtualAddress)) && (MI_IS_PHYSICAL_ADDRESS(HashEntry->InUse.VirtualAddress)))
+        {
 
             PointerPte = MiGetPteAddress(VirtualAddress);
-            if (PointerPte->u.Hard.Valid == 1) {
-                PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE (PointerPte);
+            if (PointerPte->u.Hard.Valid == 1)
+            {
+                PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE(PointerPte);
 
-                PageFrameIndex2 = MI_CONVERT_PHYSICAL_TO_PFN (HashEntry->InUse.VirtualAddress);
+                PageFrameIndex2 = MI_CONVERT_PHYSICAL_TO_PFN(HashEntry->InUse.VirtualAddress);
             }
         }
 
@@ -2148,27 +1774,23 @@ Environment:
         // list cannot be counted on either.
         //
 
-        if (PageFrameIndex != PageFrameIndex2) {
-            KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                          0x52,
-                          (ULONG_PTR)VirtualAddress,
-                          (ULONG_PTR)HashEntry->InUse.VirtualAddress,
-                          ChargedBytes);
+        if (PageFrameIndex != PageFrameIndex2)
+        {
+            KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x52, (ULONG_PTR)VirtualAddress,
+                         (ULONG_PTR)HashEntry->InUse.VirtualAddress, ChargedBytes);
         }
     }
 
-    if (HashEntry->InUse.NumberOfBytes != ChargedBytes) {
+    if (HashEntry->InUse.NumberOfBytes != ChargedBytes)
+    {
 
         //
         // Caller overran and corrupted the byte count - the linked
         // list cannot be counted on either.
         //
 
-        KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                      0x51,
-                      (ULONG_PTR)VirtualAddress,
-                      (ULONG_PTR)HashEntry,
-                      ChargedBytes);
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x51, (ULONG_PTR)VirtualAddress, (ULONG_PTR)HashEntry,
+                     ChargedBytes);
     }
 
     //
@@ -2179,10 +1801,7 @@ Environment:
     Verifier->PoolHashFree = HashEntry - Verifier->PoolHash;
 }
 
-VOID
-ViCancelPoolAllocation (
-    IN PMI_VERIFIER_DRIVER_ENTRY Verifier
-    )
+VOID ViCancelPoolAllocation(IN PMI_VERIFIER_DRIVER_ENTRY Verifier)
 
 /*++
 
@@ -2210,31 +1829,27 @@ Environment:
 {
     KIRQL OldIrql;
 
-    ExAcquireSpinLock (&Verifier->VerifierPoolLock, &OldIrql);
+    ExAcquireSpinLock(&Verifier->VerifierPoolLock, &OldIrql);
 
     //
     // The hash entry reserved earlier is not going to be used after all.
     //
 
-    ASSERT (Verifier->PoolHashReserved != 0);
+    ASSERT(Verifier->PoolHashReserved != 0);
 
-    ASSERT (Verifier->PoolHashSize >= Verifier->CurrentPagedPoolAllocations + Verifier->CurrentNonPagedPoolAllocations + Verifier->PoolHashReserved);
+    ASSERT(Verifier->PoolHashSize >= Verifier->CurrentPagedPoolAllocations + Verifier->CurrentNonPagedPoolAllocations +
+                                         Verifier->PoolHashReserved);
 
-    ASSERT (Verifier->PoolHashFree != VI_POOL_FREELIST_END);
+    ASSERT(Verifier->PoolHashFree != VI_POOL_FREELIST_END);
 
     Verifier->PoolHashReserved -= 1;
 
-    ExReleaseSpinLock (&Verifier->VerifierPoolLock, OldIrql);
+    ExReleaseSpinLock(&Verifier->VerifierPoolLock, OldIrql);
 }
 
 PVOID
-ViPostPoolAllocation (
-    IN PVOID VirtualAddress,
-    IN SIZE_T NumberOfBytes,
-    IN POOL_TYPE PoolType,
-    IN ULONG Tag,
-    IN PVOID CallingAddress
-    )
+ViPostPoolAllocation(IN PVOID VirtualAddress, IN SIZE_T NumberOfBytes, IN POOL_TYPE PoolType, IN ULONG Tag,
+                     IN PVOID CallingAddress)
 
 /*++
 
@@ -2273,41 +1888,47 @@ Environment:
     LOGICAL SpecialPoolAllocation;
     PPOOL_HEADER PoolHeader;
 
-    InterlockedIncrement ((PLONG)&MmVerifierData.AllocationsSucceeded);
+    InterlockedIncrement((PLONG)&MmVerifierData.AllocationsSucceeded);
     ChargedBytes = EX_REAL_POOL_USAGE(NumberOfBytes);
     SpecialPoolAllocation = FALSE;
 
-    if (MmIsSpecialPoolAddress (VirtualAddress) == TRUE) {
+    if (MmIsSpecialPoolAddress(VirtualAddress) == TRUE)
+    {
         ChargedBytes = NumberOfBytes;
-        InterlockedIncrement ((PLONG)&MmVerifierData.AllocationsSucceededSpecialPool);
+        InterlockedIncrement((PLONG)&MmVerifierData.AllocationsSucceededSpecialPool);
         SpecialPoolAllocation = TRUE;
     }
-    else if (NumberOfBytes <= POOL_BUDDY_MAX) {
+    else if (NumberOfBytes <= POOL_BUDDY_MAX)
+    {
         ChargedBytes -= POOL_OVERHEAD;
     }
-    else {
+    else
+    {
 
         //
         // This isn't exactly true but it does give the user a way to see
         // if this machine is large enough to support special pool 100%.
         //
 
-        InterlockedIncrement ((PLONG)&MmVerifierData.AllocationsSucceededSpecialPool);
+        InterlockedIncrement((PLONG)&MmVerifierData.AllocationsSucceededSpecialPool);
     }
 
-    if ((PoolType & POOL_VERIFIER_MASK) == 0) {
+    if ((PoolType & POOL_VERIFIER_MASK) == 0)
+    {
         return VirtualAddress;
     }
 
-    if (NumberOfBytes > POOL_BUDDY_MAX) {
-        ASSERT (BYTE_OFFSET(VirtualAddress) == 0);
+    if (NumberOfBytes > POOL_BUDDY_MAX)
+    {
+        ASSERT(BYTE_OFFSET(VirtualAddress) == 0);
     }
 
-    Verifier = ViLocateVerifierEntry (CallingAddress);
-    ASSERT (Verifier != NULL);
+    Verifier = ViLocateVerifierEntry(CallingAddress);
+    ASSERT(Verifier != NULL);
     VerifierIsTrackingPool = TRUE;
 
-    if (SpecialPoolAllocation == TRUE) {
+    if (SpecialPoolAllocation == TRUE)
+    {
 
         //
         // Carefully adjust the special pool page to move the verifier tracking
@@ -2315,27 +1936,28 @@ Environment:
         // against the end of the page so overruns can be detected immediately.
         //
 
-        if (((ULONG_PTR)VirtualAddress & (PAGE_SIZE - 1))) {
-            PoolHeader = (PPOOL_HEADER)(PAGE_ALIGN (VirtualAddress));
-            Header = (PMI_VERIFIER_POOL_HEADER) (PoolHeader + 1);
-            VirtualAddress = (PVOID) ((PCHAR)VirtualAddress + sizeof (MI_VERIFIER_POOL_HEADER));
+        if (((ULONG_PTR)VirtualAddress & (PAGE_SIZE - 1)))
+        {
+            PoolHeader = (PPOOL_HEADER)(PAGE_ALIGN(VirtualAddress));
+            Header = (PMI_VERIFIER_POOL_HEADER)(PoolHeader + 1);
+            VirtualAddress = (PVOID)((PCHAR)VirtualAddress + sizeof(MI_VERIFIER_POOL_HEADER));
         }
-        else {
-            PoolHeader = (PPOOL_HEADER)((PCHAR)PAGE_ALIGN (VirtualAddress) + PAGE_SIZE - POOL_OVERHEAD);
-            Header = (PMI_VERIFIER_POOL_HEADER) (PoolHeader - 1);
+        else
+        {
+            PoolHeader = (PPOOL_HEADER)((PCHAR)PAGE_ALIGN(VirtualAddress) + PAGE_SIZE - POOL_OVERHEAD);
+            Header = (PMI_VERIFIER_POOL_HEADER)(PoolHeader - 1);
         }
         // ASSERT (PoolHeader->Ulong1 & MI_SPECIAL_POOL_VERIFIER);
-        PoolHeader->Ulong1 -= sizeof (MI_VERIFIER_POOL_HEADER);
-        ChargedBytes -= sizeof (MI_VERIFIER_POOL_HEADER);
+        PoolHeader->Ulong1 -= sizeof(MI_VERIFIER_POOL_HEADER);
+        ChargedBytes -= sizeof(MI_VERIFIER_POOL_HEADER);
         PoolHeader->Ulong1 |= MI_SPECIAL_POOL_VERIFIER;
     }
-    else {
-        Header = (PMI_VERIFIER_POOL_HEADER)((PCHAR)VirtualAddress +
-                         ChargedBytes -
-                         sizeof(MI_VERIFIER_POOL_HEADER));
+    else
+    {
+        Header = (PMI_VERIFIER_POOL_HEADER)((PCHAR)VirtualAddress + ChargedBytes - sizeof(MI_VERIFIER_POOL_HEADER));
     }
 
-    ASSERT (((ULONG_PTR)Header & (sizeof(ULONG) - 1)) == 0);
+    ASSERT(((ULONG_PTR)Header & (sizeof(ULONG) - 1)) == 0);
 
 
     Header->Verifier = Verifier;
@@ -2346,39 +1968,41 @@ Environment:
     // pool to prevent deadlocks.
     //
 
-    ExAcquireSpinLock (&Verifier->VerifierPoolLock, &OldIrql);
+    ExAcquireSpinLock(&Verifier->VerifierPoolLock, &OldIrql);
 
-    InsertedIndex = ViInsertPoolAllocation (Verifier,
-                                            VirtualAddress,
-                                            CallingAddress,
-                                            ChargedBytes,
-                                            Tag);
+    InsertedIndex = ViInsertPoolAllocation(Verifier, VirtualAddress, CallingAddress, ChargedBytes, Tag);
 
-    if ((PoolType & BASE_POOL_TYPE_MASK) == PagedPool) {
+    if ((PoolType & BASE_POOL_TYPE_MASK) == PagedPool)
+    {
 
         Verifier->PagedBytes += ChargedBytes;
-        if (Verifier->PagedBytes > Verifier->PeakPagedBytes) {
+        if (Verifier->PagedBytes > Verifier->PeakPagedBytes)
+        {
             Verifier->PeakPagedBytes = Verifier->PagedBytes;
         }
 
         Verifier->CurrentPagedPoolAllocations += 1;
-        if (Verifier->CurrentPagedPoolAllocations > Verifier->PeakPagedPoolAllocations) {
+        if (Verifier->CurrentPagedPoolAllocations > Verifier->PeakPagedPoolAllocations)
+        {
             Verifier->PeakPagedPoolAllocations = Verifier->CurrentPagedPoolAllocations;
         }
     }
-    else {
+    else
+    {
         Verifier->NonPagedBytes += ChargedBytes;
-        if (Verifier->NonPagedBytes > Verifier->PeakNonPagedBytes) {
+        if (Verifier->NonPagedBytes > Verifier->PeakNonPagedBytes)
+        {
             Verifier->PeakNonPagedBytes = Verifier->NonPagedBytes;
         }
 
         Verifier->CurrentNonPagedPoolAllocations += 1;
-        if (Verifier->CurrentNonPagedPoolAllocations > Verifier->PeakNonPagedPoolAllocations) {
+        if (Verifier->CurrentNonPagedPoolAllocations > Verifier->PeakNonPagedPoolAllocations)
+        {
             Verifier->PeakNonPagedPoolAllocations = Verifier->CurrentNonPagedPoolAllocations;
         }
     }
 
-    ExReleaseSpinLock (&Verifier->VerifierPoolLock, OldIrql);
+    ExReleaseSpinLock(&Verifier->VerifierPoolLock, OldIrql);
 
     //
     // Since the header for paged pool is paged, don't initialize it until the
@@ -2391,48 +2015,49 @@ Environment:
     // Update systemwide counters.
     //
 
-    if ((PoolType & BASE_POOL_TYPE_MASK) == PagedPool) {
-        ExAcquireFastMutex (&VerifierPoolMutex);
+    if ((PoolType & BASE_POOL_TYPE_MASK) == PagedPool)
+    {
+        ExAcquireFastMutex(&VerifierPoolMutex);
 
         MmVerifierData.PagedBytes += ChargedBytes;
-        if (MmVerifierData.PagedBytes > MmVerifierData.PeakPagedBytes) {
+        if (MmVerifierData.PagedBytes > MmVerifierData.PeakPagedBytes)
+        {
             MmVerifierData.PeakPagedBytes = MmVerifierData.PagedBytes;
         }
 
         MmVerifierData.CurrentPagedPoolAllocations += 1;
-        if (MmVerifierData.CurrentPagedPoolAllocations > MmVerifierData.PeakPagedPoolAllocations) {
+        if (MmVerifierData.CurrentPagedPoolAllocations > MmVerifierData.PeakPagedPoolAllocations)
+        {
             MmVerifierData.PeakPagedPoolAllocations = MmVerifierData.CurrentPagedPoolAllocations;
         }
 
-        ExReleaseFastMutex (&VerifierPoolMutex);
+        ExReleaseFastMutex(&VerifierPoolMutex);
     }
-    else {
-        ExAcquireSpinLock (&VerifierPoolLock, &OldIrql);
+    else
+    {
+        ExAcquireSpinLock(&VerifierPoolLock, &OldIrql);
 
         MmVerifierData.NonPagedBytes += ChargedBytes;
-        if (MmVerifierData.NonPagedBytes > MmVerifierData.PeakNonPagedBytes) {
+        if (MmVerifierData.NonPagedBytes > MmVerifierData.PeakNonPagedBytes)
+        {
             MmVerifierData.PeakNonPagedBytes = MmVerifierData.NonPagedBytes;
         }
 
         MmVerifierData.CurrentNonPagedPoolAllocations += 1;
-        if (MmVerifierData.CurrentNonPagedPoolAllocations > MmVerifierData.PeakNonPagedPoolAllocations) {
+        if (MmVerifierData.CurrentNonPagedPoolAllocations > MmVerifierData.PeakNonPagedPoolAllocations)
+        {
             MmVerifierData.PeakNonPagedPoolAllocations = MmVerifierData.CurrentNonPagedPoolAllocations;
         }
 
-        ExReleaseSpinLock (&VerifierPoolLock, OldIrql);
+        ExReleaseSpinLock(&VerifierPoolLock, OldIrql);
     }
 
     return VirtualAddress;
 }
 
 PVOID
-VeAllocatePoolWithTagPriority (
-    IN POOL_TYPE PoolType,
-    IN SIZE_T NumberOfBytes,
-    IN ULONG Tag,
-    IN EX_POOL_PRIORITY Priority,
-    IN PVOID CallingAddress
-    )
+VeAllocatePoolWithTagPriority(IN POOL_TYPE PoolType, IN SIZE_T NumberOfBytes, IN ULONG Tag,
+                              IN EX_POOL_PRIORITY Priority, IN PVOID CallingAddress)
 
 /*++
 
@@ -2455,39 +2080,40 @@ Routine Description:
     LOGICAL ReservedHash;
     ULONG HeaderSize;
 
-    ExAllocatePoolSanityChecks (PoolType, NumberOfBytes);
+    ExAllocatePoolSanityChecks(PoolType, NumberOfBytes);
 
-    InterlockedIncrement ((PLONG)&MmVerifierData.AllocationsAttempted);
+    InterlockedIncrement((PLONG)&MmVerifierData.AllocationsAttempted);
 
-    if ((PoolType & MUST_SUCCEED_POOL_TYPE_MASK) == 0) {
+    if ((PoolType & MUST_SUCCEED_POOL_TYPE_MASK) == 0)
+    {
 
-        if (ViInjectResourceFailure () == TRUE) {
+        if (ViInjectResourceFailure() == TRUE)
+        {
 
             //
             // Caller requested an exception - throw it here.
             //
 
-            if ((PoolType & POOL_RAISE_IF_ALLOCATION_FAILURE) != 0) {
-                ExRaiseStatus (STATUS_INSUFFICIENT_RESOURCES);
+            if ((PoolType & POOL_RAISE_IF_ALLOCATION_FAILURE) != 0)
+            {
+                ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
             }
 
             return NULL;
         }
     }
-    else {
-        MI_CHECK_UPTIME ();
+    else
+    {
+        MI_CHECK_UPTIME();
 
-        if (VerifierSystemSufficientlyBooted == TRUE) {
+        if (VerifierSystemSufficientlyBooted == TRUE)
+        {
 
-            KeBugCheckEx (BAD_POOL_CALLER,
-                          0x9A,
-                          PoolType,
-                          NumberOfBytes,
-                          Tag);
+            KeBugCheckEx(BAD_POOL_CALLER, 0x9A, PoolType, NumberOfBytes, Tag);
         }
     }
 
-    ASSERT ((PoolType & POOL_VERIFIER_MASK) == 0);
+    ASSERT((PoolType & POOL_VERIFIER_MASK) == 0);
 
     //
     // Initializing Verifier is not needed for
@@ -2499,27 +2125,33 @@ Routine Description:
 
     AllocationPriority = Priority;
 
-    if (MmVerifierData.Level & DRIVER_VERIFIER_SPECIAL_POOLING) {
+    if (MmVerifierData.Level & DRIVER_VERIFIER_SPECIAL_POOLING)
+    {
 
         //
         // Try for a special pool overrun allocation unless the caller has
         // explicitly specified otherwise.
         //
 
-        if ((AllocationPriority & (LowPoolPrioritySpecialPoolOverrun | LowPoolPrioritySpecialPoolUnderrun)) == 0) {
-            if (MmSpecialPoolCatchOverruns == TRUE) {
+        if ((AllocationPriority & (LowPoolPrioritySpecialPoolOverrun | LowPoolPrioritySpecialPoolUnderrun)) == 0)
+        {
+            if (MmSpecialPoolCatchOverruns == TRUE)
+            {
                 AllocationPriority |= LowPoolPrioritySpecialPoolOverrun;
             }
-            else {
+            else
+            {
                 AllocationPriority |= LowPoolPrioritySpecialPoolUnderrun;
             }
         }
     }
 
     ReservedHash = FALSE;
-    if (MmVerifierData.Level & DRIVER_VERIFIER_TRACK_POOL_ALLOCATIONS) {
+    if (MmVerifierData.Level & DRIVER_VERIFIER_TRACK_POOL_ALLOCATIONS)
+    {
 
-        if (PoolType & SESSION_POOL_MASK) {
+        if (PoolType & SESSION_POOL_MASK)
+        {
 
             //
             // Session pool is directly tracked by default already.
@@ -2527,15 +2159,16 @@ Routine Description:
 
             NOTHING;
         }
-        else {
+        else
+        {
             HeaderSize = sizeof(MI_VERIFIER_POOL_HEADER);
 
-            ChargedBytes = MI_ROUND_TO_SIZE (NumberOfBytes, sizeof(ULONG)) + HeaderSize;
-            Verifier = ViLocateVerifierEntry (CallingAddress);
+            ChargedBytes = MI_ROUND_TO_SIZE(NumberOfBytes, sizeof(ULONG)) + HeaderSize;
+            Verifier = ViLocateVerifierEntry(CallingAddress);
 
-            if ((Verifier == NULL) ||
-                ((Verifier->Flags & VI_VERIFYING_DIRECTLY) == 0) ||
-                (Verifier->Flags & VI_DISABLE_VERIFICATION)) {
+            if ((Verifier == NULL) || ((Verifier->Flags & VI_VERIFYING_DIRECTLY) == 0) ||
+                (Verifier->Flags & VI_DISABLE_VERIFICATION))
+            {
 
                 //
                 // This can happen for many reasons including no framing (which
@@ -2545,7 +2178,8 @@ Routine Description:
 
                 MmVerifierData.UnTrackedPool += 1;
             }
-            else if (ChargedBytes <= NumberOfBytes) {
+            else if (ChargedBytes <= NumberOfBytes)
+            {
 
                 //
                 // Don't let the verifier header transform a bad caller into a
@@ -2555,8 +2189,8 @@ Routine Description:
 
                 MmVerifierData.UnTrackedPool += 1;
             }
-            else if (((PoolType & MUST_SUCCEED_POOL_TYPE_MASK) == 0) ||
-                     (ChargedBytes <= PAGE_SIZE)) {
+            else if (((PoolType & MUST_SUCCEED_POOL_TYPE_MASK) == 0) || (ChargedBytes <= PAGE_SIZE))
+            {
 
                 //
                 // Any pool allocation that is allowed to fail or where the
@@ -2565,60 +2199,51 @@ Routine Description:
                 // Just ensure that the hash list has space for it.
                 //
 
-                if (ViReservePoolAllocation (Verifier) == TRUE) {
+                if (ViReservePoolAllocation(Verifier) == TRUE)
+                {
                     ReservedHash = TRUE;
                     NumberOfBytes = ChargedBytes;
                     PoolType |= POOL_VERIFIER_MASK;
                 }
             }
-            else {
-                ASSERT ((PoolType & BASE_POOL_TYPE_MASK) == NonPagedPool);
+            else
+            {
+                ASSERT((PoolType & BASE_POOL_TYPE_MASK) == NonPagedPool);
                 MmVerifierData.UnTrackedPool += 1;
             }
         }
     }
 
-    VirtualAddress = ExAllocatePoolWithTagPriority (PoolType,
-                                                    NumberOfBytes,
-                                                    Tag,
-                                                    AllocationPriority);
+    VirtualAddress = ExAllocatePoolWithTagPriority(PoolType, NumberOfBytes, Tag, AllocationPriority);
 
-    if (VirtualAddress == NULL) {
+    if (VirtualAddress == NULL)
+    {
         MmVerifierData.AllocationsFailed += 1;
 
-        if (ReservedHash == TRUE) {
+        if (ReservedHash == TRUE)
+        {
 
             //
             // Release the hash table entry now as it's not needed.
             //
 
-            ViCancelPoolAllocation (Verifier);
+            ViCancelPoolAllocation(Verifier);
         }
 
-        if ((PoolType & POOL_RAISE_IF_ALLOCATION_FAILURE) != 0) {
-            ExRaiseStatus (STATUS_INSUFFICIENT_RESOURCES);
+        if ((PoolType & POOL_RAISE_IF_ALLOCATION_FAILURE) != 0)
+        {
+            ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
         }
         return NULL;
     }
 
-    VirtualAddress = ViPostPoolAllocation (VirtualAddress,
-                                           NumberOfBytes,
-                                           PoolType,
-                                           Tag,
-                                           CallingAddress);
-
+    VirtualAddress = ViPostPoolAllocation(VirtualAddress, NumberOfBytes, PoolType, Tag, CallingAddress);
 
 
     return VirtualAddress;
 }
 
-VOID
-ViFreeTrackedPool (
-    IN PVOID VirtualAddress,
-    IN SIZE_T ChargedBytes,
-    IN LOGICAL CheckType,
-    IN LOGICAL SpecialPool
-    )
+VOID ViFreeTrackedPool(IN PVOID VirtualAddress, IN SIZE_T ChargedBytes, IN LOGICAL CheckType, IN LOGICAL SpecialPool)
 
 /*++
 
@@ -2663,38 +2288,39 @@ Environment:
     PMI_VERIFIER_POOL_HEADER Header;
     PMI_VERIFIER_DRIVER_ENTRY Verifier;
 
-    ASSERT (VerifierIsTrackingPool == TRUE);
+    ASSERT(VerifierIsTrackingPool == TRUE);
 
-    if (SpecialPool == TRUE) {
+    if (SpecialPool == TRUE)
+    {
 
         //
         // Special pool allocation.
         //
 
-        if (((ULONG_PTR)VirtualAddress & (PAGE_SIZE - 1))) {
-            PoolHeader = PAGE_ALIGN (VirtualAddress);
+        if (((ULONG_PTR)VirtualAddress & (PAGE_SIZE - 1)))
+        {
+            PoolHeader = PAGE_ALIGN(VirtualAddress);
             Header = (PMI_VERIFIER_POOL_HEADER)(PoolHeader + 1);
         }
-        else {
-            PoolHeader = (PPOOL_HEADER)((PCHAR)PAGE_ALIGN (VirtualAddress) + PAGE_SIZE - POOL_OVERHEAD);
+        else
+        {
+            PoolHeader = (PPOOL_HEADER)((PCHAR)PAGE_ALIGN(VirtualAddress) + PAGE_SIZE - POOL_OVERHEAD);
             Header = (PMI_VERIFIER_POOL_HEADER)(PoolHeader - 1);
         }
     }
-    else if (PAGE_ALIGNED(VirtualAddress)) {
+    else if (PAGE_ALIGNED(VirtualAddress))
+    {
 
         //
         // Large page allocation.
         //
 
-        Header = (PMI_VERIFIER_POOL_HEADER) ((PCHAR)VirtualAddress +
-                     ChargedBytes -
-                     sizeof(MI_VERIFIER_POOL_HEADER));
+        Header = (PMI_VERIFIER_POOL_HEADER)((PCHAR)VirtualAddress + ChargedBytes - sizeof(MI_VERIFIER_POOL_HEADER));
     }
-    else {
+    else
+    {
         ChargedBytes -= POOL_OVERHEAD;
-        Header = (PMI_VERIFIER_POOL_HEADER) ((PCHAR)VirtualAddress +
-                     ChargedBytes -
-                     sizeof(MI_VERIFIER_POOL_HEADER));
+        Header = (PMI_VERIFIER_POOL_HEADER)((PCHAR)VirtualAddress + ChargedBytes - sizeof(MI_VERIFIER_POOL_HEADER));
     }
 
     Verifier = Header->Verifier;
@@ -2704,60 +2330,51 @@ Environment:
     // rather than crashing below on a bad reference.
     //
 
-    if ((((ULONG_PTR)Verifier & (sizeof(ULONG) - 1)) != 0) ||
-        (!MmIsAddressValid(&Verifier->Signature)) ||
-        (Verifier->Signature != MI_VERIFIER_ENTRY_SIGNATURE)) {
+    if ((((ULONG_PTR)Verifier & (sizeof(ULONG) - 1)) != 0) || (!MmIsAddressValid(&Verifier->Signature)) ||
+        (Verifier->Signature != MI_VERIFIER_ENTRY_SIGNATURE))
+    {
 
         //
         // The caller corrupted the saved verifier field.
         //
 
-        KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                      0x53,
-                      (ULONG_PTR)VirtualAddress,
-                      (ULONG_PTR)Header,
-                      (ULONG_PTR)Verifier);
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x53, (ULONG_PTR)VirtualAddress, (ULONG_PTR)Header,
+                     (ULONG_PTR)Verifier);
     }
 
     Index = Header->ListIndex;
 
-    ExAcquireSpinLock (&Verifier->VerifierPoolLock, &OldIrql);
+    ExAcquireSpinLock(&Verifier->VerifierPoolLock, &OldIrql);
 
-    ViReleasePoolAllocation (Verifier,
-                             VirtualAddress,
-                             Index,
-                             ChargedBytes);
+    ViReleasePoolAllocation(Verifier, VirtualAddress, Index, ChargedBytes);
 
-    if (CheckType == PagedPool) {
+    if (CheckType == PagedPool)
+    {
         Verifier->PagedBytes -= ChargedBytes;
         Verifier->CurrentPagedPoolAllocations -= 1;
 
-        ExReleaseSpinLock (&Verifier->VerifierPoolLock, OldIrql);
+        ExReleaseSpinLock(&Verifier->VerifierPoolLock, OldIrql);
 
-        ExAcquireFastMutex (&VerifierPoolMutex);
+        ExAcquireFastMutex(&VerifierPoolMutex);
         MmVerifierData.PagedBytes -= ChargedBytes;
         MmVerifierData.CurrentPagedPoolAllocations -= 1;
-        ExReleaseFastMutex (&VerifierPoolMutex);
+        ExReleaseFastMutex(&VerifierPoolMutex);
     }
-    else {
+    else
+    {
         Verifier->NonPagedBytes -= ChargedBytes;
         Verifier->CurrentNonPagedPoolAllocations -= 1;
-        ExReleaseSpinLock (&Verifier->VerifierPoolLock, OldIrql);
+        ExReleaseSpinLock(&Verifier->VerifierPoolLock, OldIrql);
 
-        ExAcquireSpinLock (&VerifierPoolLock, &OldIrql);
+        ExAcquireSpinLock(&VerifierPoolLock, &OldIrql);
         MmVerifierData.NonPagedBytes -= ChargedBytes;
         MmVerifierData.CurrentNonPagedPoolAllocations -= 1;
-        ExReleaseSpinLock (&VerifierPoolLock, OldIrql);
+        ExReleaseSpinLock(&VerifierPoolLock, OldIrql);
     }
 }
 
-VOID
-VerifierFreeTrackedPool (
-    IN PVOID VirtualAddress,
-    IN SIZE_T ChargedBytes,
-    IN LOGICAL CheckType,
-    IN LOGICAL SpecialPool
-    )
+VOID VerifierFreeTrackedPool(IN PVOID VirtualAddress, IN SIZE_T ChargedBytes, IN LOGICAL CheckType,
+                             IN LOGICAL SpecialPool)
 
 /*++
 
@@ -2796,7 +2413,8 @@ Environment:
 --*/
 
 {
-    if (VerifierIsTrackingPool == FALSE) {
+    if (VerifierIsTrackingPool == FALSE)
+    {
 
         //
         // The verifier is not enabled so the only way this routine is being
@@ -2804,125 +2422,92 @@ Environment:
         // a bad address.  Either way it's a bugcheck.
         //
 
-        KeBugCheckEx (BAD_POOL_CALLER,
-                      0x99,
-                      (ULONG_PTR)VirtualAddress,
-                      0,
-                      0);
+        KeBugCheckEx(BAD_POOL_CALLER, 0x99, (ULONG_PTR)VirtualAddress, 0, 0);
     }
 
-    ViFreeTrackedPool (VirtualAddress, ChargedBytes, CheckType, SpecialPool);
+    ViFreeTrackedPool(VirtualAddress, ChargedBytes, CheckType, SpecialPool);
 }
 
 THUNKED_API
-VOID
-VerifierFreePool(
-    IN PVOID P
-    )
+VOID VerifierFreePool(IN PVOID P)
 {
-    if (KernelVerifier == TRUE) {
-        ExFreePool (P);
+    if (KernelVerifier == TRUE)
+    {
+        ExFreePool(P);
         return;
     }
 
-    VerifierFreePoolWithTag (P, 0);
+    VerifierFreePoolWithTag(P, 0);
 }
 
 THUNKED_API
-VOID
-VerifierFreePoolWithTag(
-    IN PVOID P,
-    IN ULONG TagToFree
-    )
+VOID VerifierFreePoolWithTag(IN PVOID P, IN ULONG TagToFree)
 {
-    if (KernelVerifier == TRUE) {
-        ExFreePoolWithTag (P, TagToFree);
+    if (KernelVerifier == TRUE)
+    {
+        ExFreePoolWithTag(P, TagToFree);
         return;
     }
 
-    ExFreePoolSanityChecks (P);
+    ExFreePoolSanityChecks(P);
 
-    ExFreePoolWithTag (P, TagToFree);
+    ExFreePoolWithTag(P, TagToFree);
 }
 
 THUNKED_API
-LONG
-VerifierSetEvent (
-    IN PRKEVENT Event,
-    IN KPRIORITY Increment,
-    IN BOOLEAN Wait
-    )
+LONG VerifierSetEvent(IN PRKEVENT Event, IN KPRIORITY Increment, IN BOOLEAN Wait)
 {
     KIRQL CurrentIrql;
 
     CurrentIrql = KeGetCurrentIrql();
-    if (CurrentIrql > DISPATCH_LEVEL) {
-        KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                      0x80,
-                      CurrentIrql,
-                      (ULONG_PTR)Event,
-                      (ULONG_PTR)0);
+    if (CurrentIrql > DISPATCH_LEVEL)
+    {
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x80, CurrentIrql, (ULONG_PTR)Event, (ULONG_PTR)0);
     }
 
-    return KeSetEvent (Event, Increment, Wait);
+    return KeSetEvent(Event, Increment, Wait);
 }
 
 THUNKED_API
 BOOLEAN
-VerifierExAcquireResourceExclusiveLite(
-    IN PERESOURCE Resource,
-    IN BOOLEAN Wait
-    )
+VerifierExAcquireResourceExclusiveLite(IN PERESOURCE Resource, IN BOOLEAN Wait)
 {
     KIRQL CurrentIrql;
 
-    CurrentIrql = KeGetCurrentIrql ();
+    CurrentIrql = KeGetCurrentIrql();
 
-    if ((CurrentIrql != APC_LEVEL) &&
-        (!IS_SYSTEM_THREAD(PsGetCurrentThread())) &&
-        (KeGetCurrentThread()->KernelApcDisable == 0)) {
+    if ((CurrentIrql != APC_LEVEL) && (!IS_SYSTEM_THREAD(PsGetCurrentThread())) &&
+        (KeGetCurrentThread()->KernelApcDisable == 0))
+    {
 
-            KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                          0x37,
-                          CurrentIrql,
-                          (ULONG_PTR)(KeGetCurrentThread()->KernelApcDisable),
-                          (ULONG_PTR)Resource);
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x37, CurrentIrql,
+                     (ULONG_PTR)(KeGetCurrentThread()->KernelApcDisable), (ULONG_PTR)Resource);
     }
 
-    return ExAcquireResourceExclusiveLite (Resource, Wait);
+    return ExAcquireResourceExclusiveLite(Resource, Wait);
 }
 
 THUNKED_API
-VOID
-FASTCALL
-VerifierExReleaseResourceLite(
-    IN PERESOURCE Resource
-    )
+VOID FASTCALL VerifierExReleaseResourceLite(IN PERESOURCE Resource)
 {
     KIRQL CurrentIrql;
 
-    CurrentIrql = KeGetCurrentIrql ();
+    CurrentIrql = KeGetCurrentIrql();
 
-    if ((CurrentIrql != APC_LEVEL) &&
-        (!IS_SYSTEM_THREAD(PsGetCurrentThread())) &&
-        (KeGetCurrentThread()->KernelApcDisable == 0)) {
+    if ((CurrentIrql != APC_LEVEL) && (!IS_SYSTEM_THREAD(PsGetCurrentThread())) &&
+        (KeGetCurrentThread()->KernelApcDisable == 0))
+    {
 
-            KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                          0x38,
-                          CurrentIrql,
-                          (ULONG_PTR)(KeGetCurrentThread()->KernelApcDisable),
-                          (ULONG_PTR)Resource);
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x38, CurrentIrql,
+                     (ULONG_PTR)(KeGetCurrentThread()->KernelApcDisable), (ULONG_PTR)Resource);
     }
 
-    ExReleaseResourceLite (Resource);
+    ExReleaseResourceLite(Resource);
 }
 
 int VerifierIrqlData[0x10];
 
-VOID
-KfSanityCheckRaiseIrql (
-    IN KIRQL NewIrql
-    )
+VOID KfSanityCheckRaiseIrql(IN KIRQL NewIrql)
 {
     KIRQL CurrentIrql;
 
@@ -2930,53 +2515,50 @@ KfSanityCheckRaiseIrql (
     // Check for the caller inadvertently lowering.
     //
 
-    CurrentIrql = KeGetCurrentIrql ();
+    CurrentIrql = KeGetCurrentIrql();
 
-    if (CurrentIrql == NewIrql) {
+    if (CurrentIrql == NewIrql)
+    {
         VerifierIrqlData[0] += 1;
-        if (CurrentIrql == APC_LEVEL) {
+        if (CurrentIrql == APC_LEVEL)
+        {
             VerifierIrqlData[1] += 1;
         }
-        else if (CurrentIrql == DISPATCH_LEVEL) {
+        else if (CurrentIrql == DISPATCH_LEVEL)
+        {
             VerifierIrqlData[2] += 1;
         }
-        else {
+        else
+        {
             VerifierIrqlData[3] += 1;
         }
     }
-    else {
+    else
+    {
         VerifierIrqlData[4] += 1;
     }
 
-    if (CurrentIrql > NewIrql) {
-        KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                      0x30,
-                      CurrentIrql,
-                      NewIrql,
-                      0);
+    if (CurrentIrql > NewIrql)
+    {
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x30, CurrentIrql, NewIrql, 0);
     }
 
     //
     // Check for the caller using an uninitialized variable.
     //
 
-    if (NewIrql > HIGH_LEVEL) {
-        KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                      0x30,
-                      CurrentIrql,
-                      NewIrql,
-                      0);
+    if (NewIrql > HIGH_LEVEL)
+    {
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x30, CurrentIrql, NewIrql, 0);
     }
 
-    if (ViTrackIrqlQueue != NULL) {
-        ViTrackIrqlLog (CurrentIrql, NewIrql);
+    if (ViTrackIrqlQueue != NULL)
+    {
+        ViTrackIrqlLog(CurrentIrql, NewIrql);
     }
 }
 
-VOID
-KfSanityCheckLowerIrql (
-    IN KIRQL NewIrql
-    )
+VOID KfSanityCheckLowerIrql(IN KIRQL NewIrql)
 {
     KIRQL CurrentIrql;
 
@@ -2984,214 +2566,191 @@ KfSanityCheckLowerIrql (
     // Check for the caller inadvertently lowering.
     //
 
-    CurrentIrql = KeGetCurrentIrql ();
+    CurrentIrql = KeGetCurrentIrql();
 
-    if (CurrentIrql == NewIrql) {
+    if (CurrentIrql == NewIrql)
+    {
         VerifierIrqlData[8] += 1;
-        if (CurrentIrql == APC_LEVEL) {
+        if (CurrentIrql == APC_LEVEL)
+        {
             VerifierIrqlData[9] += 1;
         }
-        else if (CurrentIrql == DISPATCH_LEVEL) {
+        else if (CurrentIrql == DISPATCH_LEVEL)
+        {
             VerifierIrqlData[10] += 1;
         }
-        else {
+        else
+        {
             VerifierIrqlData[11] += 1;
         }
     }
-    else {
+    else
+    {
         VerifierIrqlData[12] += 1;
     }
 
-    if (CurrentIrql < NewIrql) {
-        KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                      0x31,
-                      CurrentIrql,
-                      NewIrql,
-                      0);
+    if (CurrentIrql < NewIrql)
+    {
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x31, CurrentIrql, NewIrql, 0);
     }
 
     //
     // Check for the caller using an uninitialized variable.
     //
 
-    if (NewIrql > HIGH_LEVEL) {
-        KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                      0x31,
-                      CurrentIrql,
-                      NewIrql,
-                      0);
+    if (NewIrql > HIGH_LEVEL)
+    {
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x31, CurrentIrql, NewIrql, 0);
     }
 
-    if (ViTrackIrqlQueue != NULL) {
-        ViTrackIrqlLog (CurrentIrql, NewIrql);
+    if (ViTrackIrqlQueue != NULL)
+    {
+        ViTrackIrqlLog(CurrentIrql, NewIrql);
     }
 }
 
-#define VI_TRIM_KERNEL  0x00000001
-#define VI_TRIM_USER    0x00000002
+#define VI_TRIM_KERNEL 0x00000001
+#define VI_TRIM_USER 0x00000002
 #define VI_TRIM_SESSION 0x00000004
-#define VI_TRIM_PURGE   0x80000000
+#define VI_TRIM_PURGE 0x80000000
 
 ULONG ViTrimSpaces = VI_TRIM_KERNEL;
 
-VOID
-ViTrimAllSystemPagableMemory (
-    VOID
-    )
+VOID ViTrimAllSystemPagableMemory(VOID)
 {
     LOGICAL PurgeTransition;
     LARGE_INTEGER CurrentTime;
     LOGICAL PageOut;
 
     PageOut = TRUE;
-    if (KernelVerifier == TRUE) {
+    if (KernelVerifier == TRUE)
+    {
         KeQueryTickCount(&CurrentTime);
-        if ((CurrentTime.LowPart & KernelVerifierTickPage) != 0) {
+        if ((CurrentTime.LowPart & KernelVerifierTickPage) != 0)
+        {
             PageOut = FALSE;
         }
     }
 
-    if ((PageOut == TRUE) && (MiNoPageOnRaiseIrql == 0)) {
+    if ((PageOut == TRUE) && (MiNoPageOnRaiseIrql == 0))
+    {
         MmVerifierData.TrimRequests += 1;
 
-        if (ViTrimSpaces & VI_TRIM_PURGE) {
+        if (ViTrimSpaces & VI_TRIM_PURGE)
+        {
             PurgeTransition = TRUE;
         }
-        else {
+        else
+        {
             PurgeTransition = FALSE;
         }
 
-        if (ViTrimSpaces & VI_TRIM_KERNEL) {
-            if (MmTrimAllSystemPagableMemory (PurgeTransition) == TRUE) {
+        if (ViTrimSpaces & VI_TRIM_KERNEL)
+        {
+            if (MmTrimAllSystemPagableMemory(PurgeTransition) == TRUE)
+            {
                 MmVerifierData.Trims += 1;
             }
         }
 
-        if (ViTrimSpaces & VI_TRIM_USER) {
-            if (MmTrimProcessMemory (PurgeTransition) == TRUE) {
+        if (ViTrimSpaces & VI_TRIM_USER)
+        {
+            if (MmTrimProcessMemory(PurgeTransition) == TRUE)
+            {
                 MmVerifierData.UserTrims += 1;
             }
         }
 
-        if (ViTrimSpaces & VI_TRIM_SESSION) {
-            if (MmTrimSessionMemory (PurgeTransition) == TRUE) {
+        if (ViTrimSpaces & VI_TRIM_SESSION)
+        {
+            if (MmTrimSessionMemory(PurgeTransition) == TRUE)
+            {
                 MmVerifierData.SessionTrims += 1;
             }
         }
     }
 }
 
-typedef
-VOID
-(*PKE_ACQUIRE_SPINLOCK) (
-    IN PKSPIN_LOCK SpinLock,
-    OUT PKIRQL OldIrql
-    );
+typedef VOID (*PKE_ACQUIRE_SPINLOCK)(IN PKSPIN_LOCK SpinLock, OUT PKIRQL OldIrql);
 
 THUNKED_API
-VOID
-VerifierKeAcquireSpinLock (
-    IN PKSPIN_LOCK SpinLock,
-    OUT PKIRQL OldIrql
-    )
+VOID VerifierKeAcquireSpinLock(IN PKSPIN_LOCK SpinLock, OUT PKIRQL OldIrql)
 {
     KIRQL CurrentIrql;
 
-#if defined (_X86_)
+#if defined(_X86_)
     PKE_ACQUIRE_SPINLOCK HalRoutine;
 #endif
 
-    CurrentIrql = KeGetCurrentIrql ();
+    CurrentIrql = KeGetCurrentIrql();
 
-    KfSanityCheckRaiseIrql (DISPATCH_LEVEL);
+    KfSanityCheckRaiseIrql(DISPATCH_LEVEL);
 
     MmVerifierData.AcquireSpinLocks += 1;
 
-    if (MmVerifierData.Level & DRIVER_VERIFIER_FORCE_IRQL_CHECKING) {
-        if (CurrentIrql < DISPATCH_LEVEL) {
-            ViTrimAllSystemPagableMemory ();
+    if (MmVerifierData.Level & DRIVER_VERIFIER_FORCE_IRQL_CHECKING)
+    {
+        if (CurrentIrql < DISPATCH_LEVEL)
+        {
+            ViTrimAllSystemPagableMemory();
         }
     }
 
-#if defined (_X86_)
-    HalRoutine = (PKE_ACQUIRE_SPINLOCK) (ULONG_PTR) MiKernelVerifierOriginalCalls[VI_KE_ACQUIRE_SPINLOCK];
+#if defined(_X86_)
+    HalRoutine = (PKE_ACQUIRE_SPINLOCK)(ULONG_PTR)MiKernelVerifierOriginalCalls[VI_KE_ACQUIRE_SPINLOCK];
 
-    if (HalRoutine) {
+    if (HalRoutine)
+    {
         (*HalRoutine)(SpinLock, OldIrql);
 
-        VfDeadlockAcquireResource(SpinLock,
-                                  VfDeadlockSpinLock,
-                                  KeGetCurrentThread(),
-                                  FALSE,
-                                  _ReturnAddress());
+        VfDeadlockAcquireResource(SpinLock, VfDeadlockSpinLock, KeGetCurrentThread(), FALSE, _ReturnAddress());
         return;
     }
 #endif
 
-    KeAcquireSpinLock (SpinLock, OldIrql);
+    KeAcquireSpinLock(SpinLock, OldIrql);
 
-    VfDeadlockAcquireResource(SpinLock,
-                              VfDeadlockSpinLock,
-                              KeGetCurrentThread(),
-                              FALSE,
-                              _ReturnAddress());
+    VfDeadlockAcquireResource(SpinLock, VfDeadlockSpinLock, KeGetCurrentThread(), FALSE, _ReturnAddress());
 }
 
-typedef
-VOID
-(*PKE_RELEASE_SPINLOCK) (
-    IN PKSPIN_LOCK SpinLock,
-    IN KIRQL NewIrql
-    );
+typedef VOID (*PKE_RELEASE_SPINLOCK)(IN PKSPIN_LOCK SpinLock, IN KIRQL NewIrql);
 
 THUNKED_API
-VOID
-VerifierKeReleaseSpinLock (
-    IN PKSPIN_LOCK SpinLock,
-    IN KIRQL NewIrql
-    )
+VOID VerifierKeReleaseSpinLock(IN PKSPIN_LOCK SpinLock, IN KIRQL NewIrql)
 {
     KIRQL CurrentIrql;
-#if defined (_X86_)
+#if defined(_X86_)
     PKE_RELEASE_SPINLOCK HalRoutine;
 #endif
 
-    CurrentIrql = KeGetCurrentIrql ();
+    CurrentIrql = KeGetCurrentIrql();
 
     //
     // Caller better still be at DISPATCH_LEVEL when releasing the spinlock
     //
 
-    if (CurrentIrql < DISPATCH_LEVEL) {
-        KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                      0x32,
-                      CurrentIrql,
-                      (ULONG_PTR)SpinLock,
-                      0);
+    if (CurrentIrql < DISPATCH_LEVEL)
+    {
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x32, CurrentIrql, (ULONG_PTR)SpinLock, 0);
     }
 
-    KfSanityCheckLowerIrql (NewIrql);
+    KfSanityCheckLowerIrql(NewIrql);
 
-#if defined (_X86_)
-    HalRoutine = (PKE_RELEASE_SPINLOCK) (ULONG_PTR) MiKernelVerifierOriginalCalls[VI_KE_RELEASE_SPINLOCK];
+#if defined(_X86_)
+    HalRoutine = (PKE_RELEASE_SPINLOCK)(ULONG_PTR)MiKernelVerifierOriginalCalls[VI_KE_RELEASE_SPINLOCK];
 
-    if (HalRoutine) {
-        VfDeadlockReleaseResource(SpinLock,
-                                  VfDeadlockSpinLock,
-                                  KeGetCurrentThread(),
-                                  _ReturnAddress());
+    if (HalRoutine)
+    {
+        VfDeadlockReleaseResource(SpinLock, VfDeadlockSpinLock, KeGetCurrentThread(), _ReturnAddress());
         (*HalRoutine)(SpinLock, NewIrql);
 
         return;
     }
 #endif
 
-    VfDeadlockReleaseResource(SpinLock,
-                              VfDeadlockSpinLock,
-                              KeGetCurrentThread(),
-                              _ReturnAddress());
+    VfDeadlockReleaseResource(SpinLock, VfDeadlockSpinLock, KeGetCurrentThread(), _ReturnAddress());
 
-    KeReleaseSpinLock (SpinLock, NewIrql);
+    KeReleaseSpinLock(SpinLock, NewIrql);
 }
 
 //
@@ -3206,87 +2765,64 @@ VerifierKeReleaseSpinLock (
 THUNKED_API
 VOID
 #if defined(_X86_)
-FASTCALL
+    FASTCALL
 #endif
-VerifierKeAcquireSpinLockAtDpcLevel (
-    IN PKSPIN_LOCK SpinLock
-    )
+    VerifierKeAcquireSpinLockAtDpcLevel(IN PKSPIN_LOCK SpinLock)
 {
     KIRQL CurrentIrql;
 
-    CurrentIrql = KeGetCurrentIrql ();
+    CurrentIrql = KeGetCurrentIrql();
 
     //
     // Caller better be at or above DISPATCH_LEVEL.
     //
 
-    if (CurrentIrql < DISPATCH_LEVEL) {
-        KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                      0x40,
-                      CurrentIrql,
-                      (ULONG_PTR)SpinLock,
-                      0);
+    if (CurrentIrql < DISPATCH_LEVEL)
+    {
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x40, CurrentIrql, (ULONG_PTR)SpinLock, 0);
     }
 
     MmVerifierData.AcquireSpinLocks += 1;
 
-    KeAcquireSpinLockAtDpcLevel (SpinLock);
+    KeAcquireSpinLockAtDpcLevel(SpinLock);
 
-    VfDeadlockAcquireResource(SpinLock,
-                              VfDeadlockSpinLock,
-                              KeGetCurrentThread(),
-                              FALSE,
-                              _ReturnAddress());
+    VfDeadlockAcquireResource(SpinLock, VfDeadlockSpinLock, KeGetCurrentThread(), FALSE, _ReturnAddress());
 }
 
 THUNKED_API
 VOID
 #if defined(_X86_)
-FASTCALL
+    FASTCALL
 #endif
-VerifierKeReleaseSpinLockFromDpcLevel (
-    IN PKSPIN_LOCK SpinLock
-    )
+    VerifierKeReleaseSpinLockFromDpcLevel(IN PKSPIN_LOCK SpinLock)
 {
     KIRQL CurrentIrql;
 
-    CurrentIrql = KeGetCurrentIrql ();
+    CurrentIrql = KeGetCurrentIrql();
 
     //
     // Caller better be at DISPATCH_LEVEL.
     //
 
-    if (CurrentIrql < DISPATCH_LEVEL) {
-        KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                      0x41,
-                      CurrentIrql,
-                      (ULONG_PTR)SpinLock,
-                      0);
+    if (CurrentIrql < DISPATCH_LEVEL)
+    {
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x41, CurrentIrql, (ULONG_PTR)SpinLock, 0);
     }
 
-    VfDeadlockReleaseResource(SpinLock,
-                              VfDeadlockSpinLock,
-                              KeGetCurrentThread(),
-                              _ReturnAddress());
+    VfDeadlockReleaseResource(SpinLock, VfDeadlockSpinLock, KeGetCurrentThread(), _ReturnAddress());
 
-    KeReleaseSpinLockFromDpcLevel (SpinLock);
+    KeReleaseSpinLockFromDpcLevel(SpinLock);
 }
 
 #if !defined(_X86_)
 
 THUNKED_API
 KIRQL
-VerifierKeAcquireSpinLockRaiseToDpc (
-    IN PKSPIN_LOCK SpinLock
-    )
+VerifierKeAcquireSpinLockRaiseToDpc(IN PKSPIN_LOCK SpinLock)
 {
-    KIRQL NewIrql = KeAcquireSpinLockRaiseToDpc (SpinLock);
+    KIRQL NewIrql = KeAcquireSpinLockRaiseToDpc(SpinLock);
 
-    VfDeadlockAcquireResource (SpinLock,
-                              VfDeadlockSpinLock,
-                              KeGetCurrentThread(),
-                              FALSE,
-                              _ReturnAddress());
+    VfDeadlockAcquireResource(SpinLock, VfDeadlockSpinLock, KeGetCurrentThread(), FALSE, _ReturnAddress());
 
     return NewIrql;
 }
@@ -3295,324 +2831,266 @@ VerifierKeAcquireSpinLockRaiseToDpc (
 #endif
 
 
+#if defined(_X86_)
 
-
-#if defined (_X86_)
-
-typedef
-KIRQL
-(FASTCALL *PKF_ACQUIRE_SPINLOCK) (
-    IN PKSPIN_LOCK SpinLock
-    );
+typedef KIRQL(FASTCALL *PKF_ACQUIRE_SPINLOCK)(IN PKSPIN_LOCK SpinLock);
 
 THUNKED_API
 KIRQL
 FASTCALL
-VerifierKfAcquireSpinLock (
-    IN PKSPIN_LOCK SpinLock
-    )
+VerifierKfAcquireSpinLock(IN PKSPIN_LOCK SpinLock)
 {
     KIRQL CurrentIrql;
     PKF_ACQUIRE_SPINLOCK HalRoutine;
 
-    CurrentIrql = KeGetCurrentIrql ();
+    CurrentIrql = KeGetCurrentIrql();
 
-    KfSanityCheckRaiseIrql (DISPATCH_LEVEL);
+    KfSanityCheckRaiseIrql(DISPATCH_LEVEL);
 
     MmVerifierData.AcquireSpinLocks += 1;
 
-    if (MmVerifierData.Level & DRIVER_VERIFIER_FORCE_IRQL_CHECKING) {
-        if (CurrentIrql < DISPATCH_LEVEL) {
-            ViTrimAllSystemPagableMemory ();
+    if (MmVerifierData.Level & DRIVER_VERIFIER_FORCE_IRQL_CHECKING)
+    {
+        if (CurrentIrql < DISPATCH_LEVEL)
+        {
+            ViTrimAllSystemPagableMemory();
         }
     }
 
-#if defined (_X86_)
-    HalRoutine = (PKF_ACQUIRE_SPINLOCK) (ULONG_PTR) MiKernelVerifierOriginalCalls[VI_KF_ACQUIRE_SPINLOCK];
+#if defined(_X86_)
+    HalRoutine = (PKF_ACQUIRE_SPINLOCK)(ULONG_PTR)MiKernelVerifierOriginalCalls[VI_KF_ACQUIRE_SPINLOCK];
 
-    if (HalRoutine) {
+    if (HalRoutine)
+    {
         CurrentIrql = (*HalRoutine)(SpinLock);
 
-        VfDeadlockAcquireResource(SpinLock,
-                                  VfDeadlockSpinLock,
-                                  KeGetCurrentThread(),
-                                  FALSE,
-                                  _ReturnAddress());
+        VfDeadlockAcquireResource(SpinLock, VfDeadlockSpinLock, KeGetCurrentThread(), FALSE, _ReturnAddress());
 
         return CurrentIrql;
     }
 #endif
 
-    CurrentIrql = KfAcquireSpinLock (SpinLock);
+    CurrentIrql = KfAcquireSpinLock(SpinLock);
 
-    VfDeadlockAcquireResource(SpinLock,
-                              VfDeadlockSpinLock,
-                              KeGetCurrentThread(),
-                              FALSE,
-                              _ReturnAddress());
+    VfDeadlockAcquireResource(SpinLock, VfDeadlockSpinLock, KeGetCurrentThread(), FALSE, _ReturnAddress());
 
     return CurrentIrql;
 }
 
-typedef
-VOID
-(FASTCALL *PKF_RELEASE_SPINLOCK) (
-    IN PKSPIN_LOCK SpinLock,
-    IN KIRQL NewIrql
-    );
+typedef VOID(FASTCALL *PKF_RELEASE_SPINLOCK)(IN PKSPIN_LOCK SpinLock, IN KIRQL NewIrql);
 
 THUNKED_API
-VOID
-FASTCALL
-VerifierKfReleaseSpinLock (
-    IN PKSPIN_LOCK SpinLock,
-    IN KIRQL NewIrql
-    )
+VOID FASTCALL VerifierKfReleaseSpinLock(IN PKSPIN_LOCK SpinLock, IN KIRQL NewIrql)
 {
     KIRQL CurrentIrql;
     PKF_RELEASE_SPINLOCK HalRoutine;
 
-    CurrentIrql = KeGetCurrentIrql ();
+    CurrentIrql = KeGetCurrentIrql();
 
     //
     // Caller better still be at DISPATCH_LEVEL when releasing the spinlock.
     //
 
-    if (CurrentIrql < DISPATCH_LEVEL) {
-        KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                      0x35,
-                      CurrentIrql,
-                      (ULONG_PTR)SpinLock,
-                      NewIrql);
+    if (CurrentIrql < DISPATCH_LEVEL)
+    {
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x35, CurrentIrql, (ULONG_PTR)SpinLock, NewIrql);
     }
 
-    KfSanityCheckLowerIrql (NewIrql);
+    KfSanityCheckLowerIrql(NewIrql);
 
-#if defined (_X86_)
-    HalRoutine = (PKF_RELEASE_SPINLOCK) (ULONG_PTR) MiKernelVerifierOriginalCalls[VI_KF_RELEASE_SPINLOCK];
+#if defined(_X86_)
+    HalRoutine = (PKF_RELEASE_SPINLOCK)(ULONG_PTR)MiKernelVerifierOriginalCalls[VI_KF_RELEASE_SPINLOCK];
 
-    if (HalRoutine) {
-        VfDeadlockReleaseResource(SpinLock,
-                                  VfDeadlockSpinLock,
-                                  KeGetCurrentThread(),
-                                  _ReturnAddress());
+    if (HalRoutine)
+    {
+        VfDeadlockReleaseResource(SpinLock, VfDeadlockSpinLock, KeGetCurrentThread(), _ReturnAddress());
 
         (*HalRoutine)(SpinLock, NewIrql);
         return;
     }
 #endif
 
-    VfDeadlockReleaseResource(SpinLock,
-                              VfDeadlockSpinLock,
-                              KeGetCurrentThread(),
-                              _ReturnAddress());
+    VfDeadlockReleaseResource(SpinLock, VfDeadlockSpinLock, KeGetCurrentThread(), _ReturnAddress());
 
-    KfReleaseSpinLock (SpinLock, NewIrql);
+    KfReleaseSpinLock(SpinLock, NewIrql);
 }
 
 
 #if !defined(NT_UP)
 
-typedef
-KIRQL
-(FASTCALL *PKE_ACQUIRE_QUEUED_SPINLOCK) (
-    IN KSPIN_LOCK_QUEUE_NUMBER Number
-    );
+typedef KIRQL(FASTCALL *PKE_ACQUIRE_QUEUED_SPINLOCK)(IN KSPIN_LOCK_QUEUE_NUMBER Number);
 
 THUNKED_API
 KIRQL
 FASTCALL
-VerifierKeAcquireQueuedSpinLock (
-    IN KSPIN_LOCK_QUEUE_NUMBER Number
-    )
+VerifierKeAcquireQueuedSpinLock(IN KSPIN_LOCK_QUEUE_NUMBER Number)
 {
     KIRQL CurrentIrql;
     PKE_ACQUIRE_QUEUED_SPINLOCK HalRoutine;
 
-    CurrentIrql = KeGetCurrentIrql ();
+    CurrentIrql = KeGetCurrentIrql();
 
-    KfSanityCheckRaiseIrql (DISPATCH_LEVEL);
+    KfSanityCheckRaiseIrql(DISPATCH_LEVEL);
 
     MmVerifierData.AcquireSpinLocks += 1;
 
-    if (MmVerifierData.Level & DRIVER_VERIFIER_FORCE_IRQL_CHECKING) {
-        if (CurrentIrql < DISPATCH_LEVEL) {
-            ViTrimAllSystemPagableMemory ();
+    if (MmVerifierData.Level & DRIVER_VERIFIER_FORCE_IRQL_CHECKING)
+    {
+        if (CurrentIrql < DISPATCH_LEVEL)
+        {
+            ViTrimAllSystemPagableMemory();
         }
     }
 
-#if defined (_X86_)
-    HalRoutine = (PKE_ACQUIRE_QUEUED_SPINLOCK) (ULONG_PTR) MiKernelVerifierOriginalCalls[VI_KE_ACQUIRE_QUEUED_SPINLOCK];
+#if defined(_X86_)
+    HalRoutine = (PKE_ACQUIRE_QUEUED_SPINLOCK)(ULONG_PTR)MiKernelVerifierOriginalCalls[VI_KE_ACQUIRE_QUEUED_SPINLOCK];
 
-    if (HalRoutine) {
+    if (HalRoutine)
+    {
         return (*HalRoutine)(Number);
     }
 #endif
 
 
-    CurrentIrql = KeAcquireQueuedSpinLock (Number);
+    CurrentIrql = KeAcquireQueuedSpinLock(Number);
 
     return CurrentIrql;
 }
 
-typedef
-VOID
-(FASTCALL *PKE_RELEASE_QUEUED_SPINLOCK) (
-    IN KSPIN_LOCK_QUEUE_NUMBER Number,
-    IN KIRQL OldIrql
-    );
+typedef VOID(FASTCALL *PKE_RELEASE_QUEUED_SPINLOCK)(IN KSPIN_LOCK_QUEUE_NUMBER Number, IN KIRQL OldIrql);
 
 THUNKED_API
-VOID
-FASTCALL
-VerifierKeReleaseQueuedSpinLock (
-    IN KSPIN_LOCK_QUEUE_NUMBER Number,
-    IN KIRQL OldIrql
-    )
+VOID FASTCALL VerifierKeReleaseQueuedSpinLock(IN KSPIN_LOCK_QUEUE_NUMBER Number, IN KIRQL OldIrql)
 {
     KIRQL CurrentIrql;
     PKE_RELEASE_QUEUED_SPINLOCK HalRoutine;
 
-    CurrentIrql = KeGetCurrentIrql ();
+    CurrentIrql = KeGetCurrentIrql();
 
-    if (KernelVerifier == TRUE) {
-        if (CurrentIrql < DISPATCH_LEVEL) {
-            KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                          0x36,
-                          CurrentIrql,
-                          (ULONG_PTR)Number,
-                          (ULONG_PTR)OldIrql);
+    if (KernelVerifier == TRUE)
+    {
+        if (CurrentIrql < DISPATCH_LEVEL)
+        {
+            KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x36, CurrentIrql, (ULONG_PTR)Number, (ULONG_PTR)OldIrql);
         }
     }
 
-    KfSanityCheckLowerIrql (OldIrql);
+    KfSanityCheckLowerIrql(OldIrql);
 
-#if defined (_X86_)
-    HalRoutine = (PKE_RELEASE_QUEUED_SPINLOCK) (ULONG_PTR) MiKernelVerifierOriginalCalls[VI_KE_RELEASE_QUEUED_SPINLOCK];
+#if defined(_X86_)
+    HalRoutine = (PKE_RELEASE_QUEUED_SPINLOCK)(ULONG_PTR)MiKernelVerifierOriginalCalls[VI_KE_RELEASE_QUEUED_SPINLOCK];
 
-    if (HalRoutine) {
+    if (HalRoutine)
+    {
         (*HalRoutine)(Number, OldIrql);
         return;
     }
 #endif
 
-    KeReleaseQueuedSpinLock (Number, OldIrql);
+    KeReleaseQueuedSpinLock(Number, OldIrql);
 }
-#endif  // NT_UP
+#endif // NT_UP
 
-#endif  // _X86_
+#endif // _X86_
 
 #if defined(_X86_) || defined(_AMD64_)
 
-typedef
-KIRQL
-(FASTCALL *PKF_RAISE_IRQL) (
-    IN KIRQL NewIrql
-    );
+typedef KIRQL(FASTCALL *PKF_RAISE_IRQL)(IN KIRQL NewIrql);
 
 THUNKED_API
 KIRQL
 FASTCALL
-VerifierKfRaiseIrql (
-    IN KIRQL NewIrql
-    )
+VerifierKfRaiseIrql(IN KIRQL NewIrql)
 {
-#if defined (_X86_)
+#if defined(_X86_)
     PKF_RAISE_IRQL HalRoutine;
 #endif
     KIRQL CurrentIrql;
 
-    CurrentIrql = KeGetCurrentIrql ();
+    CurrentIrql = KeGetCurrentIrql();
 
-    KfSanityCheckRaiseIrql (NewIrql);
+    KfSanityCheckRaiseIrql(NewIrql);
 
     MmVerifierData.RaiseIrqls += 1;
 
-    if (MmVerifierData.Level & DRIVER_VERIFIER_FORCE_IRQL_CHECKING) {
-        if ((CurrentIrql < DISPATCH_LEVEL) && (NewIrql >= DISPATCH_LEVEL)) {
-            ViTrimAllSystemPagableMemory ();
+    if (MmVerifierData.Level & DRIVER_VERIFIER_FORCE_IRQL_CHECKING)
+    {
+        if ((CurrentIrql < DISPATCH_LEVEL) && (NewIrql >= DISPATCH_LEVEL))
+        {
+            ViTrimAllSystemPagableMemory();
         }
     }
 
-#if defined (_X86_)
-    HalRoutine = (PKF_RAISE_IRQL) (ULONG_PTR) MiKernelVerifierOriginalCalls[VI_KF_RAISE_IRQL];
-    if (HalRoutine) {
+#if defined(_X86_)
+    HalRoutine = (PKF_RAISE_IRQL)(ULONG_PTR)MiKernelVerifierOriginalCalls[VI_KF_RAISE_IRQL];
+    if (HalRoutine)
+    {
         return (*HalRoutine)(NewIrql);
     }
 #endif
 
-    return KfRaiseIrql (NewIrql);
+    return KfRaiseIrql(NewIrql);
 }
 
-typedef
-KIRQL
-(FASTCALL *PKE_RAISE_IRQL_TO_DPC_LEVEL) (
-    VOID
-    );
+typedef KIRQL(FASTCALL *PKE_RAISE_IRQL_TO_DPC_LEVEL)(VOID);
 
 THUNKED_API
 KIRQL
-VerifierKeRaiseIrqlToDpcLevel (
-    VOID
-    )
+VerifierKeRaiseIrqlToDpcLevel(VOID)
 {
-#if defined (_X86_)
+#if defined(_X86_)
     PKE_RAISE_IRQL_TO_DPC_LEVEL HalRoutine;
 #endif
     KIRQL CurrentIrql;
 
-    CurrentIrql = KeGetCurrentIrql ();
+    CurrentIrql = KeGetCurrentIrql();
 
-    KfSanityCheckRaiseIrql (DISPATCH_LEVEL);
+    KfSanityCheckRaiseIrql(DISPATCH_LEVEL);
 
     MmVerifierData.RaiseIrqls += 1;
 
-    if (MmVerifierData.Level & DRIVER_VERIFIER_FORCE_IRQL_CHECKING) {
-        if (CurrentIrql < DISPATCH_LEVEL) {
-            ViTrimAllSystemPagableMemory ();
+    if (MmVerifierData.Level & DRIVER_VERIFIER_FORCE_IRQL_CHECKING)
+    {
+        if (CurrentIrql < DISPATCH_LEVEL)
+        {
+            ViTrimAllSystemPagableMemory();
         }
     }
 
-#if defined (_X86_)
-    HalRoutine = (PKE_RAISE_IRQL_TO_DPC_LEVEL) (ULONG_PTR) MiKernelVerifierOriginalCalls[VI_KE_RAISE_IRQL_TO_DPC_LEVEL];
-    if (HalRoutine) {
+#if defined(_X86_)
+    HalRoutine = (PKE_RAISE_IRQL_TO_DPC_LEVEL)(ULONG_PTR)MiKernelVerifierOriginalCalls[VI_KE_RAISE_IRQL_TO_DPC_LEVEL];
+    if (HalRoutine)
+    {
         return (*HalRoutine)();
     }
 #endif
 
-    return KeRaiseIrqlToDpcLevel ();
+    return KeRaiseIrqlToDpcLevel();
 }
 
-#endif  // _X86_ || _AMD64_
+#endif // _X86_ || _AMD64_
 
 #if defined(_X86_)
 
-typedef
-VOID
-(FASTCALL *PKF_LOWER_IRQL) (
-    IN KIRQL NewIrql
-    );
+typedef VOID(FASTCALL *PKF_LOWER_IRQL)(IN KIRQL NewIrql);
 
 THUNKED_API
-VOID
-FASTCALL
-VerifierKfLowerIrql (
-    IN KIRQL NewIrql
-    )
+VOID FASTCALL VerifierKfLowerIrql(IN KIRQL NewIrql)
 {
     PKF_LOWER_IRQL HalRoutine;
 
-    KfSanityCheckLowerIrql (NewIrql);
+    KfSanityCheckLowerIrql(NewIrql);
 
-#if defined (_X86_)
-    HalRoutine = (PKF_LOWER_IRQL) (ULONG_PTR) MiKernelVerifierOriginalCalls[VI_KF_LOWER_IRQL];
-    if (HalRoutine) {
+#if defined(_X86_)
+    HalRoutine = (PKF_LOWER_IRQL)(ULONG_PTR)MiKernelVerifierOriginalCalls[VI_KF_LOWER_IRQL];
+    if (HalRoutine)
+    {
         (*HalRoutine)(NewIrql);
         return;
     }
 #endif
 
-    KfLowerIrql (NewIrql);
+    KfLowerIrql(NewIrql);
 }
 
 #endif
@@ -3620,283 +3098,213 @@ VerifierKfLowerIrql (
 THUNKED_API
 BOOLEAN
 FASTCALL
-VerifierExTryToAcquireFastMutex (
-    IN PFAST_MUTEX FastMutex
-    )
+VerifierExTryToAcquireFastMutex(IN PFAST_MUTEX FastMutex)
 {
     KIRQL CurrentIrql;
     BOOLEAN Acquired;
 
-    CurrentIrql = KeGetCurrentIrql ();
+    CurrentIrql = KeGetCurrentIrql();
 
     //
     // Caller better be at or below APC_LEVEL or have APCs blocked.
     //
 
-    if (CurrentIrql > APC_LEVEL) {
-        KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                      0x33,
-                      CurrentIrql,
-                      (ULONG_PTR)FastMutex,
-                      0);
+    if (CurrentIrql > APC_LEVEL)
+    {
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x33, CurrentIrql, (ULONG_PTR)FastMutex, 0);
     }
 
-    Acquired = ExTryToAcquireFastMutex (FastMutex);
-    if (Acquired != FALSE) {
-        VfDeadlockAcquireResource(FastMutex,
-                                  VfDeadlockFastMutex,
-                                  KeGetCurrentThread(),
-                                  TRUE,
-                                  _ReturnAddress());
+    Acquired = ExTryToAcquireFastMutex(FastMutex);
+    if (Acquired != FALSE)
+    {
+        VfDeadlockAcquireResource(FastMutex, VfDeadlockFastMutex, KeGetCurrentThread(), TRUE, _ReturnAddress());
     }
 
     return Acquired;
-
 }
 
 THUNKED_API
-VOID
-FASTCALL
-VerifierExAcquireFastMutex (
-    IN PFAST_MUTEX FastMutex
-    )
+VOID FASTCALL VerifierExAcquireFastMutex(IN PFAST_MUTEX FastMutex)
 {
     KIRQL CurrentIrql;
 
-    CurrentIrql = KeGetCurrentIrql ();
+    CurrentIrql = KeGetCurrentIrql();
 
     //
     // Caller better be at or below APC_LEVEL or have APCs blocked.
     //
 
-    if (CurrentIrql > APC_LEVEL) {
-        KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                      0x33,
-                      CurrentIrql,
-                      (ULONG_PTR)FastMutex,
-                      0);
+    if (CurrentIrql > APC_LEVEL)
+    {
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x33, CurrentIrql, (ULONG_PTR)FastMutex, 0);
     }
 
-    ExAcquireFastMutex (FastMutex);
+    ExAcquireFastMutex(FastMutex);
 
-    VfDeadlockAcquireResource(FastMutex,
-                              VfDeadlockFastMutex,
-                              KeGetCurrentThread(),
-                              FALSE,
-                              _ReturnAddress());
+    VfDeadlockAcquireResource(FastMutex, VfDeadlockFastMutex, KeGetCurrentThread(), FALSE, _ReturnAddress());
 }
 
 THUNKED_API
-VOID
-FASTCALL
-VerifierExAcquireFastMutexUnsafe (
-    IN PFAST_MUTEX FastMutex
-    )
+VOID FASTCALL VerifierExAcquireFastMutexUnsafe(IN PFAST_MUTEX FastMutex)
 {
     KIRQL CurrentIrql;
 
-    CurrentIrql = KeGetCurrentIrql ();
+    CurrentIrql = KeGetCurrentIrql();
 
     //
     // Caller better be at APC_LEVEL or have APCs blocked.
     //
 
-    if ((CurrentIrql != APC_LEVEL) &&
-        (!IS_SYSTEM_THREAD(PsGetCurrentThread())) &&
-        (KeGetCurrentThread()->KernelApcDisable == 0)) {
+    if ((CurrentIrql != APC_LEVEL) && (!IS_SYSTEM_THREAD(PsGetCurrentThread())) &&
+        (KeGetCurrentThread()->KernelApcDisable == 0))
+    {
 
-        KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                      0x39,
-                      CurrentIrql,
-                      (ULONG_PTR)(KeGetCurrentThread()->KernelApcDisable),
-                      (ULONG_PTR)FastMutex);
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x39, CurrentIrql,
+                     (ULONG_PTR)(KeGetCurrentThread()->KernelApcDisable), (ULONG_PTR)FastMutex);
     }
-    ExAcquireFastMutexUnsafe (FastMutex);
+    ExAcquireFastMutexUnsafe(FastMutex);
 
-    VfDeadlockAcquireResource(FastMutex,
-                              VfDeadlockFastMutexUnsafe,
-                              KeGetCurrentThread(),
-                              FALSE,
-                              _ReturnAddress());
+    VfDeadlockAcquireResource(FastMutex, VfDeadlockFastMutexUnsafe, KeGetCurrentThread(), FALSE, _ReturnAddress());
 }
 
 THUNKED_API
-VOID
-FASTCALL
-VerifierExReleaseFastMutex (
-    IN PFAST_MUTEX FastMutex
-    )
+VOID FASTCALL VerifierExReleaseFastMutex(IN PFAST_MUTEX FastMutex)
 {
     KIRQL CurrentIrql;
 
-    CurrentIrql = KeGetCurrentIrql ();
+    CurrentIrql = KeGetCurrentIrql();
 
     //
     // Caller better be at APC_LEVEL or have APCs blocked.
     //
 
-    if ((CurrentIrql != APC_LEVEL) &&
-        (!IS_SYSTEM_THREAD(PsGetCurrentThread())) &&
-        (KeGetCurrentThread()->KernelApcDisable == 0)) {
+    if ((CurrentIrql != APC_LEVEL) && (!IS_SYSTEM_THREAD(PsGetCurrentThread())) &&
+        (KeGetCurrentThread()->KernelApcDisable == 0))
+    {
 
-        KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                      0x34,
-                      CurrentIrql,
-                      (ULONG_PTR)(KeGetCurrentThread()->KernelApcDisable),
-                      (ULONG_PTR)FastMutex);
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x34, CurrentIrql,
+                     (ULONG_PTR)(KeGetCurrentThread()->KernelApcDisable), (ULONG_PTR)FastMutex);
     }
 
-    VfDeadlockReleaseResource(FastMutex,
-                              VfDeadlockFastMutex,
-                              KeGetCurrentThread(),
-                              _ReturnAddress());
-    ExReleaseFastMutex (FastMutex);
+    VfDeadlockReleaseResource(FastMutex, VfDeadlockFastMutex, KeGetCurrentThread(), _ReturnAddress());
+    ExReleaseFastMutex(FastMutex);
 }
 
 THUNKED_API
-VOID
-FASTCALL
-VerifierExReleaseFastMutexUnsafe (
-    IN PFAST_MUTEX FastMutex
-    )
+VOID FASTCALL VerifierExReleaseFastMutexUnsafe(IN PFAST_MUTEX FastMutex)
 {
     KIRQL CurrentIrql;
 
-    CurrentIrql = KeGetCurrentIrql ();
+    CurrentIrql = KeGetCurrentIrql();
 
     //
     // Caller better be at APC_LEVEL or have APCs blocked.
     //
 
-    if ((CurrentIrql != APC_LEVEL) &&
-        (!IS_SYSTEM_THREAD(PsGetCurrentThread())) &&
-        (KeGetCurrentThread()->KernelApcDisable == 0)) {
+    if ((CurrentIrql != APC_LEVEL) && (!IS_SYSTEM_THREAD(PsGetCurrentThread())) &&
+        (KeGetCurrentThread()->KernelApcDisable == 0))
+    {
 
-        KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                      0x3A,
-                      CurrentIrql,
-                      (ULONG_PTR)(KeGetCurrentThread()->KernelApcDisable),
-                      (ULONG_PTR)FastMutex);
+        KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x3A, CurrentIrql,
+                     (ULONG_PTR)(KeGetCurrentThread()->KernelApcDisable), (ULONG_PTR)FastMutex);
     }
 
-    VfDeadlockReleaseResource(FastMutex,
-                              VfDeadlockFastMutexUnsafe,
-                              KeGetCurrentThread(),
-                              _ReturnAddress());
-    ExReleaseFastMutexUnsafe (FastMutex);
-
+    VfDeadlockReleaseResource(FastMutex, VfDeadlockFastMutexUnsafe, KeGetCurrentThread(), _ReturnAddress());
+    ExReleaseFastMutexUnsafe(FastMutex);
 }
 
-typedef
-VOID
-(*PKE_RAISE_IRQL) (
-    IN KIRQL NewIrql,
-    OUT PKIRQL OldIrql
-    );
+typedef VOID (*PKE_RAISE_IRQL)(IN KIRQL NewIrql, OUT PKIRQL OldIrql);
 
 THUNKED_API
-VOID
-VerifierKeRaiseIrql (
-    IN KIRQL NewIrql,
-    OUT PKIRQL OldIrql
-    )
+VOID VerifierKeRaiseIrql(IN KIRQL NewIrql, OUT PKIRQL OldIrql)
 {
-#if defined (_X86_)
+#if defined(_X86_)
     PKE_RAISE_IRQL HalRoutine;
 #endif
 
-    *OldIrql = KeGetCurrentIrql ();
+    *OldIrql = KeGetCurrentIrql();
 
-    KfSanityCheckRaiseIrql (NewIrql);
+    KfSanityCheckRaiseIrql(NewIrql);
 
     MmVerifierData.RaiseIrqls += 1;
 
-    if (MmVerifierData.Level & DRIVER_VERIFIER_FORCE_IRQL_CHECKING) {
-        if ((*OldIrql < DISPATCH_LEVEL) && (NewIrql >= DISPATCH_LEVEL)) {
-            ViTrimAllSystemPagableMemory ();
+    if (MmVerifierData.Level & DRIVER_VERIFIER_FORCE_IRQL_CHECKING)
+    {
+        if ((*OldIrql < DISPATCH_LEVEL) && (NewIrql >= DISPATCH_LEVEL))
+        {
+            ViTrimAllSystemPagableMemory();
         }
     }
 
-#if defined (_X86_)
-    HalRoutine = (PKE_RAISE_IRQL) (ULONG_PTR) MiKernelVerifierOriginalCalls[VI_KE_RAISE_IRQL];
-    if (HalRoutine) {
+#if defined(_X86_)
+    HalRoutine = (PKE_RAISE_IRQL)(ULONG_PTR)MiKernelVerifierOriginalCalls[VI_KE_RAISE_IRQL];
+    if (HalRoutine)
+    {
         (*HalRoutine)(NewIrql, OldIrql);
         return;
     }
 #endif
 
-    KeRaiseIrql (NewIrql, OldIrql);
+    KeRaiseIrql(NewIrql, OldIrql);
 }
 
-typedef
-VOID
-(*PKE_LOWER_IRQL) (
-    IN KIRQL NewIrql
-    );
+typedef VOID (*PKE_LOWER_IRQL)(IN KIRQL NewIrql);
 
 THUNKED_API
-VOID
-VerifierKeLowerIrql (
-    IN KIRQL NewIrql
-    )
+VOID VerifierKeLowerIrql(IN KIRQL NewIrql)
 {
-#if defined (_X86_)
+#if defined(_X86_)
     PKE_LOWER_IRQL HalRoutine;
 #endif
 
-    KfSanityCheckLowerIrql (NewIrql);
+    KfSanityCheckLowerIrql(NewIrql);
 
-#if defined (_X86_)
-    HalRoutine = (PKE_LOWER_IRQL) (ULONG_PTR) MiKernelVerifierOriginalCalls[VI_KE_LOWER_IRQL];
-    if (HalRoutine) {
+#if defined(_X86_)
+    HalRoutine = (PKE_LOWER_IRQL)(ULONG_PTR)MiKernelVerifierOriginalCalls[VI_KE_LOWER_IRQL];
+    if (HalRoutine)
+    {
         (*HalRoutine)(NewIrql);
         return;
     }
 #endif
 
-    KeLowerIrql (NewIrql);
+    KeLowerIrql(NewIrql);
 }
 
 THUNKED_API
 BOOLEAN
-VerifierSynchronizeExecution (
-    IN PKINTERRUPT Interrupt,
-    IN PKSYNCHRONIZE_ROUTINE SynchronizeRoutine,
-    IN PVOID SynchronizeContext
-    )
+VerifierSynchronizeExecution(IN PKINTERRUPT Interrupt, IN PKSYNCHRONIZE_ROUTINE SynchronizeRoutine,
+                             IN PVOID SynchronizeContext)
 {
     KIRQL OldIrql;
 
-    OldIrql = KeGetCurrentIrql ();
+    OldIrql = KeGetCurrentIrql();
 
-    KfSanityCheckRaiseIrql (Interrupt->SynchronizeIrql);
+    KfSanityCheckRaiseIrql(Interrupt->SynchronizeIrql);
 
     MmVerifierData.SynchronizeExecutions += 1;
 
-    if (MmVerifierData.Level & DRIVER_VERIFIER_FORCE_IRQL_CHECKING) {
-        if ((OldIrql < DISPATCH_LEVEL) && (Interrupt->SynchronizeIrql >= DISPATCH_LEVEL)) {
-            ViTrimAllSystemPagableMemory ();
+    if (MmVerifierData.Level & DRIVER_VERIFIER_FORCE_IRQL_CHECKING)
+    {
+        if ((OldIrql < DISPATCH_LEVEL) && (Interrupt->SynchronizeIrql >= DISPATCH_LEVEL))
+        {
+            ViTrimAllSystemPagableMemory();
         }
     }
 
-    return KeSynchronizeExecution (Interrupt,
-                                   SynchronizeRoutine,
-                                   SynchronizeContext);
+    return KeSynchronizeExecution(Interrupt, SynchronizeRoutine, SynchronizeContext);
 }
 
 THUNKED_API
-VOID
-VerifierKeInitializeTimerEx(
-    IN PKTIMER Timer,
-    IN TIMER_TYPE Type
-    )
+VOID VerifierKeInitializeTimerEx(IN PKTIMER Timer, IN TIMER_TYPE Type)
 {
     //
     // Check the object being initialized isn't already an
     // active timer.  Make sure the timer table list is initialized.
     //
 
-    if (KiTimerTableListHead[0].Flink != NULL) {
+    if (KiTimerTableListHead[0].Flink != NULL)
+    {
         KeCheckForTimer(Timer, sizeof(KTIMER));
     }
 
@@ -3904,10 +3312,7 @@ VerifierKeInitializeTimerEx(
 }
 
 THUNKED_API
-VOID
-VerifierKeInitializeTimer(
-    IN PKTIMER Timer
-    )
+VOID VerifierKeInitializeTimer(IN PKTIMER Timer)
 {
     VerifierKeInitializeTimerEx(Timer, NotificationTimer);
 }
@@ -3915,24 +3320,21 @@ VerifierKeInitializeTimer(
 
 THUNKED_API
 NTSTATUS
-VerifierKeWaitForSingleObject (
-    IN PVOID Object,
-    IN KWAIT_REASON WaitReason,
-    IN KPROCESSOR_MODE WaitMode,
-    IN BOOLEAN Alertable,
-    IN PLARGE_INTEGER Timeout OPTIONAL
-    )
+VerifierKeWaitForSingleObject(IN PVOID Object, IN KWAIT_REASON WaitReason, IN KPROCESSOR_MODE WaitMode,
+                              IN BOOLEAN Alertable, IN PLARGE_INTEGER Timeout OPTIONAL)
 {
     KIRQL CurrentIrql;
     PRKTHREAD Thread;
     NTSTATUS Status;
     BOOLEAN TryAcquire;
 
-    if (! ((ARGUMENT_PRESENT(Timeout)) && (Timeout->QuadPart == 0))) {
+    if (!((ARGUMENT_PRESENT(Timeout)) && (Timeout->QuadPart == 0)))
+    {
 
-        CurrentIrql = KeGetCurrentIrql ();
+        CurrentIrql = KeGetCurrentIrql();
 
-        if (CurrentIrql >= DISPATCH_LEVEL) {
+        if (CurrentIrql >= DISPATCH_LEVEL)
+        {
 
             Thread = KeGetCurrentThread();
 
@@ -3941,159 +3343,104 @@ VerifierKeWaitForSingleObject (
             // to optimize dispatcher database lock handling.
             //
 
-            if (Thread->WaitNext == FALSE) {
+            if (Thread->WaitNext == FALSE)
+            {
 
                 //
                 // Cannot call KeWait at DPC level.
                 //
 
-                KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                              0x3B,
-                              (ULONG_PTR)CurrentIrql,
-                              (ULONG_PTR)Object,
-                              (ULONG_PTR)Timeout);
+                KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x3B, (ULONG_PTR)CurrentIrql, (ULONG_PTR)Object,
+                             (ULONG_PTR)Timeout);
             }
         }
     }
 
 
-    Status = KeWaitForSingleObject (Object,
-                                    WaitReason,
-                                    WaitMode,
-                                    Alertable,
-                                    Timeout);
+    Status = KeWaitForSingleObject(Object, WaitReason, WaitMode, Alertable, Timeout);
 
-    if ((STATUS_SUCCESS == Status) &&
-        (((PRKMUTANT) Object)->Header.Type == MutantObject)) {
+    if ((STATUS_SUCCESS == Status) && (((PRKMUTANT)Object)->Header.Type == MutantObject))
+    {
 
-        if (ARGUMENT_PRESENT(Timeout)) {
+        if (ARGUMENT_PRESENT(Timeout))
+        {
             TryAcquire = TRUE;
         }
-        else {
+        else
+        {
             TryAcquire = FALSE;
         }
 
-        VfDeadlockAcquireResource (Object,
-                                   VfDeadlockMutex,
-                                   KeGetCurrentThread (),
-                                   TryAcquire,
-                                   _ReturnAddress ());
+        VfDeadlockAcquireResource(Object, VfDeadlockMutex, KeGetCurrentThread(), TryAcquire, _ReturnAddress());
     }
 
     return Status;
-
 }
 
 THUNKED_API
-LONG
-VerifierKeReleaseMutex(
-    IN PRKMUTEX Mutex,
-    IN BOOLEAN Wait
-    )
+LONG VerifierKeReleaseMutex(IN PRKMUTEX Mutex, IN BOOLEAN Wait)
 {
-    VfDeadlockReleaseResource(Mutex,
-                              VfDeadlockMutex,
-                              KeGetCurrentThread(),
-                              _ReturnAddress());
+    VfDeadlockReleaseResource(Mutex, VfDeadlockMutex, KeGetCurrentThread(), _ReturnAddress());
 
     return KeReleaseMutex(Mutex, Wait);
 }
 
 THUNKED_API
-VOID
-VerifierKeInitializeMutex(
-    IN PRKMUTEX Mutex,
-    IN ULONG Level
-    )
+VOID VerifierKeInitializeMutex(IN PRKMUTEX Mutex, IN ULONG Level)
 {
-    KeInitializeMutex (Mutex,Level);
-    VfDeadlockInitializeResource (Mutex, VfDeadlockMutex, _ReturnAddress(), FALSE);
+    KeInitializeMutex(Mutex, Level);
+    VfDeadlockInitializeResource(Mutex, VfDeadlockMutex, _ReturnAddress(), FALSE);
 }
 
 THUNKED_API
-LONG
-VerifierKeReleaseMutant(
-    IN PRKMUTANT Mutant,
-    IN KPRIORITY Increment,
-    IN BOOLEAN Abandoned,
-    IN BOOLEAN Wait
-    )
+LONG VerifierKeReleaseMutant(IN PRKMUTANT Mutant, IN KPRIORITY Increment, IN BOOLEAN Abandoned, IN BOOLEAN Wait)
 {
-    VfDeadlockReleaseResource(Mutant,
-                              VfDeadlockMutex,
-                              KeGetCurrentThread(),
-                              _ReturnAddress());
+    VfDeadlockReleaseResource(Mutant, VfDeadlockMutex, KeGetCurrentThread(), _ReturnAddress());
 
     return KeReleaseMutant(Mutant, Increment, Abandoned, Wait);
 }
 
 THUNKED_API
-VOID
-VerifierKeInitializeMutant(
-    IN PRKMUTANT Mutant,
-    IN BOOLEAN InitialOwner
-    )
+VOID VerifierKeInitializeMutant(IN PRKMUTANT Mutant, IN BOOLEAN InitialOwner)
 {
-    KeInitializeMutant (Mutant, InitialOwner);
-    VfDeadlockInitializeResource (Mutant, VfDeadlockMutex, _ReturnAddress(), FALSE);
+    KeInitializeMutant(Mutant, InitialOwner);
+    VfDeadlockInitializeResource(Mutant, VfDeadlockMutex, _ReturnAddress(), FALSE);
 
-    if (InitialOwner) {
+    if (InitialOwner)
+    {
 
-        VfDeadlockAcquireResource (Mutant,
-                                   VfDeadlockMutex,
-                                   KeGetCurrentThread(),
-                                   FALSE,
-                                   _ReturnAddress());
+        VfDeadlockAcquireResource(Mutant, VfDeadlockMutex, KeGetCurrentThread(), FALSE, _ReturnAddress());
     }
 }
 
 THUNKED_API
-VOID
-VerifierKeInitializeSpinLock(
-    IN PKSPIN_LOCK  SpinLock
-    )
+VOID VerifierKeInitializeSpinLock(IN PKSPIN_LOCK SpinLock)
 {
-    KeInitializeSpinLock (SpinLock);
-    VfDeadlockInitializeResource (SpinLock, VfDeadlockSpinLock, _ReturnAddress(), FALSE);
-
+    KeInitializeSpinLock(SpinLock);
+    VfDeadlockInitializeResource(SpinLock, VfDeadlockSpinLock, _ReturnAddress(), FALSE);
 }
 
 NTSTATUS
-VerifierReferenceObjectByHandle (
-    IN HANDLE Handle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_TYPE ObjectType OPTIONAL,
-    IN KPROCESSOR_MODE AccessMode,
-    OUT PVOID *Object,
-    OUT POBJECT_HANDLE_INFORMATION HandleInformation OPTIONAL
-    )
+VerifierReferenceObjectByHandle(IN HANDLE Handle, IN ACCESS_MASK DesiredAccess, IN POBJECT_TYPE ObjectType OPTIONAL,
+                                IN KPROCESSOR_MODE AccessMode, OUT PVOID *Object,
+                                OUT POBJECT_HANDLE_INFORMATION HandleInformation OPTIONAL)
 {
     NTSTATUS Status;
 
-    Status = ObReferenceObjectByHandle (Handle,
-                                        DesiredAccess,
-                                        ObjectType,
-                                        AccessMode,
-                                        Object,
-                                        HandleInformation);
-    if (AccessMode == KernelMode || PsIsSystemThread (PsGetCurrentThread ())) {
-        if (Status == STATUS_INVALID_HANDLE || Status == STATUS_OBJECT_TYPE_MISMATCH) {
-            KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                          0x3C,
-                          (ULONG_PTR)Handle,
-                          (ULONG_PTR)ObjectType,
-                          (ULONG_PTR)0);
+    Status = ObReferenceObjectByHandle(Handle, DesiredAccess, ObjectType, AccessMode, Object, HandleInformation);
+    if (AccessMode == KernelMode || PsIsSystemThread(PsGetCurrentThread()))
+    {
+        if (Status == STATUS_INVALID_HANDLE || Status == STATUS_OBJECT_TYPE_MISMATCH)
+        {
+            KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x3C, (ULONG_PTR)Handle, (ULONG_PTR)ObjectType,
+                         (ULONG_PTR)0);
         }
     }
     return Status;
 }
 
 
-VOID
-ViInitializeEntry (
-    IN PMI_VERIFIER_DRIVER_ENTRY Verifier,
-    IN LOGICAL FirstLoad
-    )
+VOID ViInitializeEntry(IN PMI_VERIFIER_DRIVER_ENTRY Verifier, IN LOGICAL FirstLoad)
 
 /*++
 
@@ -4120,7 +3467,7 @@ Return Value:
     // Only the BaseName field is initialized on entry.
     //
 
-    KeInitializeSpinLock (&Verifier->VerifierPoolLock);
+    KeInitializeSpinLock(&Verifier->VerifierPoolLock);
 
     Verifier->CurrentPagedPoolAllocations = 0;
     Verifier->CurrentNonPagedPoolAllocations = 0;
@@ -4139,35 +3486,31 @@ Return Value:
 
     Verifier->Signature = MI_VERIFIER_ENTRY_SIGNATURE;
 
-    if (FirstLoad == TRUE) {
+    if (FirstLoad == TRUE)
+    {
         Verifier->Flags = 0;
         Verifier->Loads = 0;
         Verifier->Unloads = 0;
     }
 
-    ExAcquireSpinLock (&VerifierListLock, &OldIrql);
+    ExAcquireSpinLock(&VerifierListLock, &OldIrql);
     Verifier->StartAddress = NULL;
     Verifier->EndAddress = NULL;
-    ExReleaseSpinLock (&VerifierListLock, OldIrql);
+    ExReleaseSpinLock(&VerifierListLock, OldIrql);
 }
 
-#define UNICODE_TAB               0x0009
-#define UNICODE_LF                0x000A
-#define UNICODE_CR                0x000D
-#define UNICODE_SPACE             0x0020
-#define UNICODE_CJK_SPACE         0x3000
+#define UNICODE_TAB 0x0009
+#define UNICODE_LF 0x000A
+#define UNICODE_CR 0x000D
+#define UNICODE_SPACE 0x0020
+#define UNICODE_CJK_SPACE 0x3000
 
-#define UNICODE_WHITESPACE(_ch)     (((_ch) == UNICODE_TAB) || \
-                                     ((_ch) == UNICODE_LF) || \
-                                     ((_ch) == UNICODE_CR) || \
-                                     ((_ch) == UNICODE_SPACE) || \
-                                     ((_ch) == UNICODE_CJK_SPACE) || \
-                                     ((_ch) == UNICODE_NULL))
+#define UNICODE_WHITESPACE(_ch)                                                                              \
+    (((_ch) == UNICODE_TAB) || ((_ch) == UNICODE_LF) || ((_ch) == UNICODE_CR) || ((_ch) == UNICODE_SPACE) || \
+     ((_ch) == UNICODE_CJK_SPACE) || ((_ch) == UNICODE_NULL))
 
 LOGICAL
-MiInitializeDriverVerifierList (
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+MiInitializeDriverVerifierList(IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 
 /*++
 
@@ -4208,68 +3551,72 @@ Environment:
     UNICODE_STRING KernelString;
     UNICODE_STRING DriverBaseName;
 
-    UNREFERENCED_PARAMETER (LoaderBlock);
+    UNREFERENCED_PARAMETER(LoaderBlock);
 
-    InitializeListHead (&MiSuspectDriverList);
+    InitializeListHead(&MiSuspectDriverList);
 
-    if (MmVerifyDriverLevel != (ULONG)-1) {
-        if (MmVerifyDriverLevel & DRIVER_VERIFIER_IO_CHECKING) {
-            if (MmVerifyDriverBufferLength == (ULONG)-1) {
-                MmVerifyDriverBufferLength = 0;     // Mm will not page out verifier pages.
+    if (MmVerifyDriverLevel != (ULONG)-1)
+    {
+        if (MmVerifyDriverLevel & DRIVER_VERIFIER_IO_CHECKING)
+        {
+            if (MmVerifyDriverBufferLength == (ULONG)-1)
+            {
+                MmVerifyDriverBufferLength = 0; // Mm will not page out verifier pages.
             }
         }
     }
 
-    if (MmVerifyDriverBufferLength == (ULONG)-1) {
+    if (MmVerifyDriverBufferLength == (ULONG)-1)
+    {
 
-        if (MmDontVerifyRandomDrivers == TRUE) {
+        if (MmDontVerifyRandomDrivers == TRUE)
+        {
             return FALSE;
         }
 
         MmVerifyDriverBufferLength = 0;
 
-        CurrentTime = KeQueryPerformanceCounter (NULL);
+        CurrentTime = KeQueryPerformanceCounter(NULL);
         CurrentTime.LowPart = (CurrentTime.LowPart % 26);
 
         MiVerifyRandomDrivers = (WCHAR)('A' + (WCHAR)CurrentTime.LowPart);
 
-        if ((MiVerifyRandomDrivers == (WCHAR)'H') ||
-            (MiVerifyRandomDrivers == (WCHAR)'J') ||
-            (MiVerifyRandomDrivers == (WCHAR)'X') ||
-            (MiVerifyRandomDrivers == (WCHAR)'Y') ||
-            (MiVerifyRandomDrivers == (WCHAR)'Z')) {
-                MiVerifyRandomDrivers = (WCHAR)'X';
+        if ((MiVerifyRandomDrivers == (WCHAR)'H') || (MiVerifyRandomDrivers == (WCHAR)'J') ||
+            (MiVerifyRandomDrivers == (WCHAR)'X') || (MiVerifyRandomDrivers == (WCHAR)'Y') ||
+            (MiVerifyRandomDrivers == (WCHAR)'Z'))
+        {
+            MiVerifyRandomDrivers = (WCHAR)'X';
         }
     }
 
-    KeInitializeSpinLock (&VerifierListLock);
+    KeInitializeSpinLock(&VerifierListLock);
 
-    KeInitializeSpinLock (&VerifierPoolLock);
-    ExInitializeFastMutex (&VerifierPoolMutex);
+    KeInitializeSpinLock(&VerifierPoolLock);
+    ExInitializeFastMutex(&VerifierPoolMutex);
 
     //
     // Initializing this listhead indicates to the rest of this module that
     // the system was booted with verification of some sort configured.
     //
 
-    InitializeListHead (&MiVerifierDriverAddedThunkListHead);
+    InitializeListHead(&MiVerifierDriverAddedThunkListHead);
 
     //
     // If no default is specified, then special pool, pagable code/data
     // flushing and pool leak detection are enabled.
     //
 
-    if (MmVerifyDriverLevel == (ULONG)-1) {
-        MmVerifierData.Level = DRIVER_VERIFIER_SPECIAL_POOLING |
-                               DRIVER_VERIFIER_FORCE_IRQL_CHECKING |
+    if (MmVerifyDriverLevel == (ULONG)-1)
+    {
+        MmVerifierData.Level = DRIVER_VERIFIER_SPECIAL_POOLING | DRIVER_VERIFIER_FORCE_IRQL_CHECKING |
                                DRIVER_VERIFIER_TRACK_POOL_ALLOCATIONS;
     }
-    else {
+    else
+    {
         MmVerifierData.Level = MmVerifyDriverLevel;
     }
 
-    VerifierModifyableOptions = (DRIVER_VERIFIER_SPECIAL_POOLING |
-                                 DRIVER_VERIFIER_FORCE_IRQL_CHECKING |
+    VerifierModifyableOptions = (DRIVER_VERIFIER_SPECIAL_POOLING | DRIVER_VERIFIER_FORCE_IRQL_CHECKING |
                                  DRIVER_VERIFIER_INJECT_ALLOCATION_FAILURES);
 
     //
@@ -4278,26 +3625,32 @@ Environment:
     // support kernel verification (ie: no use of large pages, etc).
     //
 
-    if (MiVerifyRandomDrivers == (WCHAR)0) {
+    if (MiVerifyRandomDrivers == (WCHAR)0)
+    {
 
-        RtlInitUnicodeString (&KernelString, (PUSHORT)L"ntoskrnl.exe");
+        RtlInitUnicodeString(&KernelString, (PUSHORT)L"ntoskrnl.exe");
 
         Start = MmVerifyDriverBuffer;
         End = MmVerifyDriverBuffer + (MmVerifyDriverBufferLength - sizeof(WCHAR)) / sizeof(WCHAR);
 
-        while (Start < End) {
-            if (UNICODE_WHITESPACE(*Start)) {
+        while (Start < End)
+        {
+            if (UNICODE_WHITESPACE(*Start))
+            {
                 Start += 1;
                 continue;
             }
 
-            if (*Start == (WCHAR)'*') {
+            if (*Start == (WCHAR)'*')
+            {
                 MiVerifyAllDrivers = TRUE;
                 break;
             }
 
-            for (Walk = Start; Walk < End; Walk += 1) {
-                if (UNICODE_WHITESPACE(*Walk)) {
+            for (Walk = Start; Walk < End; Walk += 1)
+            {
+                if (UNICODE_WHITESPACE(*Walk))
+                {
                     break;
                 }
             }
@@ -4306,19 +3659,18 @@ Environment:
             // Got a string - see if it indicates the kernel.
             //
 
-            NameLength = (ULONG)(Walk - Start + 1) * sizeof (WCHAR);
+            NameLength = (ULONG)(Walk - Start + 1) * sizeof(WCHAR);
 
             DriverBaseName.Buffer = Start;
-            DriverBaseName.Length = (USHORT)(NameLength - sizeof (UNICODE_NULL));
+            DriverBaseName.Length = (USHORT)(NameLength - sizeof(UNICODE_NULL));
             DriverBaseName.MaximumLength = (USHORT)NameLength;
 
-            if (RtlEqualUnicodeString (&KernelString,
-                                       &DriverBaseName,
-                                       TRUE)) {
+            if (RtlEqualUnicodeString(&KernelString, &DriverBaseName, TRUE))
+            {
 
                 //
-                // AcquireAtDpc/ReleaseFromDpc calls made by the kernel are not 
-                // intercepted which confuses the deadlock verifier.  So disable 
+                // AcquireAtDpc/ReleaseFromDpc calls made by the kernel are not
+                // intercepted which confuses the deadlock verifier.  So disable
                 // deadlock verification if we are kernel verifying.
                 //
 
@@ -4333,7 +3685,7 @@ Environment:
 
                 MiVerifyAllDrivers = TRUE;
                 KernelVerifier = TRUE;
-                ExSetPoolFlags (EX_KERNEL_VERIFIER_ENABLED);
+                ExSetPoolFlags(EX_KERNEL_VERIFIER_ENABLED);
                 break;
             }
 
@@ -4344,10 +3696,7 @@ Environment:
     return TRUE;
 }
 
-VOID
-MiReApplyVerifierToLoadedModules(
-    IN PLIST_ENTRY ModuleListHead
-    )
+VOID MiReApplyVerifierToLoadedModules(IN PLIST_ENTRY ModuleListHead)
 
 /*++
 
@@ -4379,7 +3728,8 @@ Environment:
     // don't notify any components.
     //
 
-    if (MiVerifierDriverAddedThunkListHead.Flink == NULL) {
+    if (MiVerifierDriverAddedThunkListHead.Flink == NULL)
+    {
         return;
     }
 
@@ -4389,8 +3739,8 @@ Environment:
     // the kernel or to the hal.
     //
 
-    RtlInitUnicodeString (&KernelString, (PUSHORT)L"ntoskrnl.exe");
-    RtlInitUnicodeString (&HalString, (PUSHORT)L"hal.dll");
+    RtlInitUnicodeString(&KernelString, (PUSHORT)L"ntoskrnl.exe");
+    RtlInitUnicodeString(&HalString, (PUSHORT)L"hal.dll");
 
     //
     // Walk the list and reapply verifier to all the modules except those
@@ -4398,25 +3748,23 @@ Environment:
     //
 
     Entry = ModuleListHead->Flink;
-    while (Entry != ModuleListHead) {
+    while (Entry != ModuleListHead)
+    {
 
-        TableEntry = CONTAINING_RECORD(Entry,
-                                       KLDR_DATA_TABLE_ENTRY,
-                                       InLoadOrderLinks);
+        TableEntry = CONTAINING_RECORD(Entry, KLDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
         Skip = TRUE;
 
-        if (RtlEqualUnicodeString (&KernelString,
-                                   &TableEntry->BaseDllName,
-                                   TRUE)) {
+        if (RtlEqualUnicodeString(&KernelString, &TableEntry->BaseDllName, TRUE))
+        {
             NOTHING;
         }
-        else if (RtlEqualUnicodeString (&HalString,
-                                        &TableEntry->BaseDllName,
-                                        TRUE)) {
+        else if (RtlEqualUnicodeString(&HalString, &TableEntry->BaseDllName, TRUE))
+        {
             NOTHING;
         }
-        else {
+        else
+        {
             Skip = FALSE;
         }
 
@@ -4425,7 +3773,8 @@ Environment:
         // verified and if it is not one of the modules we've decided to skip.
         //
 
-        if ((Skip == FALSE) && (TableEntry->Flags & LDRP_IMAGE_VERIFYING)) {
+        if ((Skip == FALSE) && (TableEntry->Flags & LDRP_IMAGE_VERIFYING))
+        {
 #if DBG
             PLIST_ENTRY NextEntry;
             PMI_VERIFIER_DRIVER_ENTRY Verifier;
@@ -4445,22 +3794,20 @@ Environment:
             //
 
             NextEntry = MiSuspectDriverList.Flink;
-            while (NextEntry != &MiSuspectDriverList) {
+            while (NextEntry != &MiSuspectDriverList)
+            {
 
-                Verifier = CONTAINING_RECORD(NextEntry,
-                                             MI_VERIFIER_DRIVER_ENTRY,
-                                             Links);
+                Verifier = CONTAINING_RECORD(NextEntry, MI_VERIFIER_DRIVER_ENTRY, Links);
 
-                if (RtlEqualUnicodeString (&Verifier->BaseName,
-                                           &TableEntry->BaseDllName,
-                                           TRUE)) {
+                if (RtlEqualUnicodeString(&Verifier->BaseName, &TableEntry->BaseDllName, TRUE))
+                {
 
                     break;
                 }
                 NextEntry = NextEntry->Flink;
             }
 
-            ASSERT (NextEntry != &MiSuspectDriverList);
+            ASSERT(NextEntry != &MiSuspectDriverList);
 
             //
             // Sanity tests.  We should always find this module in the suspect
@@ -4471,11 +3818,9 @@ Environment:
 
             ASSERT(NextEntry != &MiSuspectDriverList);
             ASSERT(Verifier->StartAddress == TableEntry->DllBase);
-            ASSERT(Verifier->EndAddress ==
-                   (PVOID)((ULONG_PTR)TableEntry->DllBase +
-                           TableEntry->SizeOfImage));
+            ASSERT(Verifier->EndAddress == (PVOID)((ULONG_PTR)TableEntry->DllBase + TableEntry->SizeOfImage));
 #endif
-            MiReEnableVerifier (TableEntry);
+            MiReEnableVerifier(TableEntry);
         }
 
         Entry = Entry->Flink;
@@ -4483,9 +3828,7 @@ Environment:
 }
 
 LOGICAL
-MiInitializeVerifyingComponents (
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+MiInitializeVerifyingComponents(IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 
 /*++
 
@@ -4533,34 +3876,41 @@ Environment:
     // don't notify any components.
     //
 
-    if (MiVerifierDriverAddedThunkListHead.Flink == NULL) {
+    if (MiVerifierDriverAddedThunkListHead.Flink == NULL)
+    {
         return FALSE;
     }
 
     KernelEntry = NULL;
     HalEntry = NULL;
 
-    if (MiVerifyRandomDrivers == (WCHAR)0) {
+    if (MiVerifyRandomDrivers == (WCHAR)0)
+    {
 
-        RtlInitUnicodeString (&KernelString, (PUSHORT)L"ntoskrnl.exe");
-        RtlInitUnicodeString (&HalString, (PUSHORT)L"hal.dll");
+        RtlInitUnicodeString(&KernelString, (PUSHORT)L"ntoskrnl.exe");
+        RtlInitUnicodeString(&HalString, (PUSHORT)L"hal.dll");
 
         Start = MmVerifyDriverBuffer;
         End = MmVerifyDriverBuffer + (MmVerifyDriverBufferLength - sizeof(WCHAR)) / sizeof(WCHAR);
 
-        while (Start < End) {
-            if (UNICODE_WHITESPACE(*Start)) {
+        while (Start < End)
+        {
+            if (UNICODE_WHITESPACE(*Start))
+            {
                 Start += 1;
                 continue;
             }
 
-            if (*Start == (WCHAR)'*') {
+            if (*Start == (WCHAR)'*')
+            {
                 MiVerifyAllDrivers = TRUE;
                 break;
             }
 
-            for (Walk = Start; Walk < End; Walk += 1) {
-                if (UNICODE_WHITESPACE(*Walk)) {
+            for (Walk = Start; Walk < End; Walk += 1)
+            {
+                if (UNICODE_WHITESPACE(*Walk))
+                {
                     break;
                 }
             }
@@ -4569,51 +3919,43 @@ Environment:
             // Got a string.  Save it.
             //
 
-            NameLength = (ULONG)(Walk - Start + 1) * sizeof (WCHAR);
+            NameLength = (ULONG)(Walk - Start + 1) * sizeof(WCHAR);
 
-            Verifier = (PMI_VERIFIER_DRIVER_ENTRY)ExAllocatePoolWithTag (
-                                        NonPagedPool,
-                                        sizeof (MI_VERIFIER_DRIVER_ENTRY) +
-                                                            NameLength,
-                                        'dLmM');
+            Verifier = (PMI_VERIFIER_DRIVER_ENTRY)ExAllocatePoolWithTag(
+                NonPagedPool, sizeof(MI_VERIFIER_DRIVER_ENTRY) + NameLength, 'dLmM');
 
-            if (Verifier == NULL) {
+            if (Verifier == NULL)
+            {
                 break;
             }
 
-            Verifier->BaseName.Buffer = (PWSTR)((PCHAR)Verifier +
-                                                sizeof (MI_VERIFIER_DRIVER_ENTRY));
-            Verifier->BaseName.Length = (USHORT)(NameLength - sizeof (UNICODE_NULL));
+            Verifier->BaseName.Buffer = (PWSTR)((PCHAR)Verifier + sizeof(MI_VERIFIER_DRIVER_ENTRY));
+            Verifier->BaseName.Length = (USHORT)(NameLength - sizeof(UNICODE_NULL));
             Verifier->BaseName.MaximumLength = (USHORT)NameLength;
 
-            RtlCopyMemory (Verifier->BaseName.Buffer,
-                           Start,
-                           NameLength - sizeof (UNICODE_NULL));
+            RtlCopyMemory(Verifier->BaseName.Buffer, Start, NameLength - sizeof(UNICODE_NULL));
 
-            ViInitializeEntry (Verifier, TRUE);
+            ViInitializeEntry(Verifier, TRUE);
 
             Verifier->Flags |= VI_VERIFYING_DIRECTLY;
 
-            ViInsertVerifierEntry (Verifier);
+            ViInsertVerifierEntry(Verifier);
 
-            if (RtlEqualUnicodeString (&KernelString,
-                                       &Verifier->BaseName,
-                                       TRUE)) {
+            if (RtlEqualUnicodeString(&KernelString, &Verifier->BaseName, TRUE))
+            {
 
                 //
                 // All driver pool allocation calls must be intercepted so
                 // they are not mistaken for kernel pool allocations.
                 //
 
-                ASSERT (MiVerifyAllDrivers == TRUE);
-                ASSERT (KernelVerifier == TRUE);
+                ASSERT(MiVerifyAllDrivers == TRUE);
+                ASSERT(KernelVerifier == TRUE);
 
                 KernelEntry = Verifier;
-
             }
-            else if (RtlEqualUnicodeString (&HalString,
-                                            &Verifier->BaseName,
-                                            TRUE)) {
+            else if (RtlEqualUnicodeString(&HalString, &Verifier->BaseName, TRUE))
+            {
 
                 HalEntry = Verifier;
             }
@@ -4627,18 +3969,20 @@ Environment:
     // registry.
     //
 
-    if (MmVerifierData.Level & DRIVER_VERIFIER_DEADLOCK_DETECTION) {
-        VfDeadlockDetectionInitialize (MiVerifyAllDrivers, KernelVerifier);
-        ExSetPoolFlags (EX_VERIFIER_DEADLOCK_DETECTION_ENABLED);
+    if (MmVerifierData.Level & DRIVER_VERIFIER_DEADLOCK_DETECTION)
+    {
+        VfDeadlockDetectionInitialize(MiVerifyAllDrivers, KernelVerifier);
+        ExSetPoolFlags(EX_VERIFIER_DEADLOCK_DETECTION_ENABLED);
     }
 
     //
     // Initialize i/o verifier.
     //
 
-    IoVerifierInit (MmVerifierData.Level);
+    IoVerifierInit(MmVerifierData.Level);
 
-    if (MiTriageAddDrivers (LoaderBlock) == TRUE) {
+    if (MiTriageAddDrivers(LoaderBlock) == TRUE)
+    {
 
         //
         // Disable random driver verification if triage has picked driver(s).
@@ -4647,21 +3991,21 @@ Environment:
         MiVerifyRandomDrivers = (WCHAR)0;
     }
 
-    Thunk = (PVERIFIER_THUNKS) &MiVerifierThunks[0];
+    Thunk = (PVERIFIER_THUNKS)&MiVerifierThunks[0];
 
-    while (Thunk->PristineRoutineAsciiName != NULL) {
-        PristineRoutine = MiResolveVerifierExports (LoaderBlock,
-                                                    Thunk->PristineRoutineAsciiName);
-        ASSERT (PristineRoutine != NULL);
+    while (Thunk->PristineRoutineAsciiName != NULL)
+    {
+        PristineRoutine = MiResolveVerifierExports(LoaderBlock, Thunk->PristineRoutineAsciiName);
+        ASSERT(PristineRoutine != NULL);
         Thunk->PristineRoutine = PristineRoutine;
         Thunk += 1;
     }
 
-    Thunk = (PVERIFIER_THUNKS) &MiVerifierPoolThunks[0];
-    while (Thunk->PristineRoutineAsciiName != NULL) {
-        PristineRoutine = MiResolveVerifierExports (LoaderBlock,
-                                                    Thunk->PristineRoutineAsciiName);
-        ASSERT (PristineRoutine != NULL);
+    Thunk = (PVERIFIER_THUNKS)&MiVerifierPoolThunks[0];
+    while (Thunk->PristineRoutineAsciiName != NULL)
+    {
+        PristineRoutine = MiResolveVerifierExports(LoaderBlock, Thunk->PristineRoutineAsciiName);
+        ASSERT(PristineRoutine != NULL);
         Thunk->PristineRoutine = PristineRoutine;
         Thunk += 1;
     }
@@ -4673,28 +4017,32 @@ Environment:
     i = 0;
     NextEntry = LoaderBlock->LoadOrderListHead.Flink;
 
-    for ( ; NextEntry != &LoaderBlock->LoadOrderListHead; NextEntry = NextEntry->Flink) {
+    for (; NextEntry != &LoaderBlock->LoadOrderListHead; NextEntry = NextEntry->Flink)
+    {
 
-        DataTableEntry = CONTAINING_RECORD(NextEntry,
-                                           KLDR_DATA_TABLE_ENTRY,
-                                           InLoadOrderLinks);
+        DataTableEntry = CONTAINING_RECORD(NextEntry, KLDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
         //
         // Process the kernel and HAL specially.
         //
 
-        if (i == 0) {
-            if (KernelEntry != NULL) {
-                MiApplyDriverVerifier (DataTableEntry, KernelEntry);
+        if (i == 0)
+        {
+            if (KernelEntry != NULL)
+            {
+                MiApplyDriverVerifier(DataTableEntry, KernelEntry);
             }
         }
-        else if (i == 1) {
-            if (HalEntry != NULL) {
-                MiApplyDriverVerifier (DataTableEntry, HalEntry);
+        else if (i == 1)
+        {
+            if (HalEntry != NULL)
+            {
+                MiApplyDriverVerifier(DataTableEntry, HalEntry);
             }
         }
-        else {
-            MiApplyDriverVerifier (DataTableEntry, NULL);
+        else
+        {
+            MiApplyDriverVerifier(DataTableEntry, NULL);
         }
         i += 1;
     }
@@ -4704,23 +4052,21 @@ Environment:
     // will have automatically tracked all their raise/lower irql operations.
     //
 
-    ViTrackIrqlInitialize ();
+    ViTrackIrqlInitialize();
 
     //
     // Initialize fault injection stack trace log package.
     //
 
 #if defined(_X86_)
-    ViFaultTracesInitialize ();
+    ViFaultTracesInitialize();
 #endif
 
     return TRUE;
 }
 
 NTSTATUS
-MmAddVerifierEntry (
-    IN PUNICODE_STRING ImageFileName
-    )
+MmAddVerifierEntry(IN PUNICODE_STRING ImageFileName)
 
 /*++
 
@@ -4760,13 +4106,14 @@ Environment:
     PMI_VERIFIER_DRIVER_ENTRY VerifierEntry;
     PKLDR_DATA_TABLE_ENTRY DataTableEntry;
 
-    ASSERT (KeGetCurrentIrql() == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
     //
     // If the system was not booted with verification on, then bail.
     //
 
-    if (MiVerifierDriverAddedThunkListHead.Flink == NULL) {
+    if (MiVerifierDriverAddedThunkListHead.Flink == NULL)
+    {
         return STATUS_NOT_SUPPORTED;
     }
 
@@ -4774,26 +4121,21 @@ Environment:
     // First build up a verifier entry.
     //
 
-    Verifier = (PMI_VERIFIER_DRIVER_ENTRY)ExAllocatePoolWithTag (
-                                NonPagedPool,
-                                sizeof (MI_VERIFIER_DRIVER_ENTRY) +
-                                    ImageFileName->MaximumLength,
-                                'dLmM');
+    Verifier = (PMI_VERIFIER_DRIVER_ENTRY)ExAllocatePoolWithTag(
+        NonPagedPool, sizeof(MI_VERIFIER_DRIVER_ENTRY) + ImageFileName->MaximumLength, 'dLmM');
 
-    if (Verifier == NULL) {
+    if (Verifier == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    Verifier->BaseName.Buffer = (PWSTR)((PCHAR)Verifier +
-                                    sizeof (MI_VERIFIER_DRIVER_ENTRY));
+    Verifier->BaseName.Buffer = (PWSTR)((PCHAR)Verifier + sizeof(MI_VERIFIER_DRIVER_ENTRY));
     Verifier->BaseName.Length = ImageFileName->Length;
     Verifier->BaseName.MaximumLength = ImageFileName->MaximumLength;
 
-    RtlCopyMemory (Verifier->BaseName.Buffer,
-                   ImageFileName->Buffer,
-                   ImageFileName->Length);
+    RtlCopyMemory(Verifier->BaseName.Buffer, ImageFileName->Buffer, ImageFileName->Length);
 
-    ViInitializeEntry (Verifier, TRUE);
+    ViInitializeEntry(Verifier, TRUE);
 
     Verifier->Flags |= VI_VERIFYING_DIRECTLY;
 
@@ -4801,19 +4143,15 @@ Environment:
     // Arbitrary process context so prevent suspend APCs now.
     //
 
-    CurrentThread = KeGetCurrentThread ();
-    KeEnterCriticalRegionThread (CurrentThread);
+    CurrentThread = KeGetCurrentThread();
+    KeEnterCriticalRegionThread(CurrentThread);
 
     //
     // Acquire the load lock so the verifier list can be read.
     // Then ensure that the specified driver is not already in the list.
     //
 
-    KeWaitForSingleObject (&MmSystemLoadLock,
-                           WrVirtualMemory,
-                           KernelMode,
-                           FALSE,
-                           (PLARGE_INTEGER)NULL);
+    KeWaitForSingleObject(&MmSystemLoadLock, WrVirtualMemory, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
 
     //
     // Check to make sure the requested entry is not already present in
@@ -4821,38 +4159,36 @@ Environment:
     //
 
     NextEntry = MiSuspectDriverList.Flink;
-    while (NextEntry != &MiSuspectDriverList) {
+    while (NextEntry != &MiSuspectDriverList)
+    {
 
-        VerifierEntry = CONTAINING_RECORD(NextEntry,
-                                          MI_VERIFIER_DRIVER_ENTRY,
-                                          Links);
+        VerifierEntry = CONTAINING_RECORD(NextEntry, MI_VERIFIER_DRIVER_ENTRY, Links);
 
-        if (RtlEqualUnicodeString (&Verifier->BaseName,
-                                   &VerifierEntry->BaseName,
-                                   TRUE)) {
+        if (RtlEqualUnicodeString(&Verifier->BaseName, &VerifierEntry->BaseName, TRUE))
+        {
 
             //
             // The driver is already in the verifier list - just mark the
             // entry as verification-enabled and free the temporary allocation.
             //
 
-            if ((VerifierEntry->Loads > VerifierEntry->Unloads) &&
-                (VerifierEntry->Flags & VI_DISABLE_VERIFICATION)) {
+            if ((VerifierEntry->Loads > VerifierEntry->Unloads) && (VerifierEntry->Flags & VI_DISABLE_VERIFICATION))
+            {
 
                 //
                 // The driver is loaded and verification is disabled.  Don't
                 // turn it on now because we don't want to mislead our caller.
                 //
 
-                KeReleaseMutant (&MmSystemLoadLock, 1, FALSE, FALSE);
-                KeLeaveCriticalRegionThread (CurrentThread);
-                ExFreePool (Verifier);
+                KeReleaseMutant(&MmSystemLoadLock, 1, FALSE, FALSE);
+                KeLeaveCriticalRegionThread(CurrentThread);
+                ExFreePool(Verifier);
                 return STATUS_IMAGE_ALREADY_LOADED;
             }
             VerifierEntry->Flags &= ~VI_DISABLE_VERIFICATION;
-            KeReleaseMutant (&MmSystemLoadLock, 1, FALSE, FALSE);
-            KeLeaveCriticalRegionThread (CurrentThread);
-            ExFreePool (Verifier);
+            KeReleaseMutant(&MmSystemLoadLock, 1, FALSE, FALSE);
+            KeLeaveCriticalRegionThread(CurrentThread);
+            ExFreePool(Verifier);
             return STATUS_SUCCESS;
         }
         NextEntry = NextEntry->Flink;
@@ -4863,23 +4199,21 @@ Environment:
     // make sure the specified driver is not already loaded.
     //
 
-    ExAcquireResourceSharedLite (&PsLoadedModuleResource, TRUE);
+    ExAcquireResourceSharedLite(&PsLoadedModuleResource, TRUE);
 
     NextEntry = PsLoadedModuleList.Flink;
-    while (NextEntry != &PsLoadedModuleList) {
+    while (NextEntry != &PsLoadedModuleList)
+    {
 
-        DataTableEntry = CONTAINING_RECORD(NextEntry,
-                                           KLDR_DATA_TABLE_ENTRY,
-                                           InLoadOrderLinks);
+        DataTableEntry = CONTAINING_RECORD(NextEntry, KLDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
-        if (RtlEqualUnicodeString (&Verifier->BaseName,
-                                   &DataTableEntry->BaseDllName,
-                                   TRUE)) {
+        if (RtlEqualUnicodeString(&Verifier->BaseName, &DataTableEntry->BaseDllName, TRUE))
+        {
 
-            KeReleaseMutant (&MmSystemLoadLock, 1, FALSE, FALSE);
-            ExReleaseResourceLite (&PsLoadedModuleResource);
-            KeLeaveCriticalRegionThread (CurrentThread);
-            ExFreePool (Verifier);
+            KeReleaseMutant(&MmSystemLoadLock, 1, FALSE, FALSE);
+            ExReleaseResourceLite(&PsLoadedModuleResource);
+            KeLeaveCriticalRegionThread(CurrentThread);
+            ExFreePool(Verifier);
             return STATUS_IMAGE_ALREADY_LOADED;
         }
 
@@ -4891,19 +4225,17 @@ Environment:
     // currently loaded.  Proceed to insert it now.
     //
 
-    ViInsertVerifierEntry (Verifier);
+    ViInsertVerifierEntry(Verifier);
 
-    ExReleaseResourceLite (&PsLoadedModuleResource);
-    KeReleaseMutant (&MmSystemLoadLock, 1, FALSE, FALSE);
-    KeLeaveCriticalRegionThread (CurrentThread);
+    ExReleaseResourceLite(&PsLoadedModuleResource);
+    KeReleaseMutant(&MmSystemLoadLock, 1, FALSE, FALSE);
+    KeLeaveCriticalRegionThread(CurrentThread);
 
     return STATUS_SUCCESS;
 }
 
 NTSTATUS
-MmRemoveVerifierEntry (
-    IN PUNICODE_STRING ImageFileName
-    )
+MmRemoveVerifierEntry(IN PUNICODE_STRING ImageFileName)
 
 /*++
 
@@ -4940,13 +4272,14 @@ Environment:
     PLIST_ENTRY NextEntry;
     PMI_VERIFIER_DRIVER_ENTRY VerifierEntry;
 
-    ASSERT (KeGetCurrentIrql() == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
     //
     // If the system was not booted with verification on, then bail.
     //
 
-    if (MiVerifierDriverAddedThunkListHead.Flink == NULL) {
+    if (MiVerifierDriverAddedThunkListHead.Flink == NULL)
+    {
         return STATUS_NOT_SUPPORTED;
     }
 
@@ -4954,19 +4287,15 @@ Environment:
     // Arbitrary process context so prevent suspend APCs now.
     //
 
-    CurrentThread = KeGetCurrentThread ();
-    KeEnterCriticalRegionThread (CurrentThread);
+    CurrentThread = KeGetCurrentThread();
+    KeEnterCriticalRegionThread(CurrentThread);
 
     //
     // Acquire the load lock so the verifier list can be read.
     // Then ensure that the specified driver is not already in the list.
     //
 
-    KeWaitForSingleObject (&MmSystemLoadLock,
-                           WrVirtualMemory,
-                           KernelMode,
-                           FALSE,
-                           (PLARGE_INTEGER)NULL);
+    KeWaitForSingleObject(&MmSystemLoadLock, WrVirtualMemory, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
 
     //
     // Check to make sure the requested entry is not already present in
@@ -4974,15 +4303,13 @@ Environment:
     //
 
     NextEntry = MiSuspectDriverList.Flink;
-    while (NextEntry != &MiSuspectDriverList) {
+    while (NextEntry != &MiSuspectDriverList)
+    {
 
-        VerifierEntry = CONTAINING_RECORD(NextEntry,
-                                          MI_VERIFIER_DRIVER_ENTRY,
-                                          Links);
+        VerifierEntry = CONTAINING_RECORD(NextEntry, MI_VERIFIER_DRIVER_ENTRY, Links);
 
-        if (RtlEqualUnicodeString (ImageFileName,
-                                   &VerifierEntry->BaseName,
-                                   TRUE)) {
+        if (RtlEqualUnicodeString(ImageFileName, &VerifierEntry->BaseName, TRUE))
+        {
 
             //
             // The driver is already in the verifier list - just mark the
@@ -4992,36 +4319,34 @@ Environment:
             //
 
             if ((VerifierEntry->Loads > VerifierEntry->Unloads) &&
-                ((VerifierEntry->Flags & VI_DISABLE_VERIFICATION) == 0)) {
+                ((VerifierEntry->Flags & VI_DISABLE_VERIFICATION) == 0))
+            {
 
                 //
                 // The driver is loaded and verification is enabled.  Don't
                 // disable it now because we don't want to mislead our caller.
                 //
 
-                KeReleaseMutant (&MmSystemLoadLock, 1, FALSE, FALSE);
-                KeLeaveCriticalRegionThread (CurrentThread);
+                KeReleaseMutant(&MmSystemLoadLock, 1, FALSE, FALSE);
+                KeLeaveCriticalRegionThread(CurrentThread);
                 return STATUS_IMAGE_ALREADY_LOADED;
             }
 
             VerifierEntry->Flags |= VI_DISABLE_VERIFICATION;
-            KeReleaseMutant (&MmSystemLoadLock, 1, FALSE, FALSE);
-            KeLeaveCriticalRegionThread (CurrentThread);
+            KeReleaseMutant(&MmSystemLoadLock, 1, FALSE, FALSE);
+            KeLeaveCriticalRegionThread(CurrentThread);
             return STATUS_SUCCESS;
         }
         NextEntry = NextEntry->Flink;
     }
 
-    KeReleaseMutant (&MmSystemLoadLock, 1, FALSE, FALSE);
-    KeLeaveCriticalRegionThread (CurrentThread);
+    KeReleaseMutant(&MmSystemLoadLock, 1, FALSE, FALSE);
+    KeLeaveCriticalRegionThread(CurrentThread);
 
     return STATUS_NOT_FOUND;
 }
 
-VOID
-ViInsertVerifierEntry (
-    IN PMI_VERIFIER_DRIVER_ENTRY Verifier
-    )
+VOID ViInsertVerifierEntry(IN PMI_VERIFIER_DRIVER_ENTRY Verifier)
 
 /*++
 
@@ -5049,15 +4374,13 @@ Return Value:
 {
     KIRQL OldIrql;
 
-    ExAcquireSpinLock (&VerifierListLock, &OldIrql);
-    InsertTailList (&MiSuspectDriverList, &Verifier->Links);
-    ExReleaseSpinLock (&VerifierListLock, OldIrql);
+    ExAcquireSpinLock(&VerifierListLock, &OldIrql);
+    InsertTailList(&MiSuspectDriverList, &Verifier->Links);
+    ExReleaseSpinLock(&VerifierListLock, OldIrql);
 }
 
 PMI_VERIFIER_DRIVER_ENTRY
-ViLocateVerifierEntry (
-    IN PVOID SystemAddress
-    )
+ViLocateVerifierEntry(IN PVOID SystemAddress)
 
 /*++
 
@@ -5084,33 +4407,29 @@ Environment:
     PLIST_ENTRY NextEntry;
     PMI_VERIFIER_DRIVER_ENTRY Verifier;
 
-    ExAcquireSpinLock (&VerifierListLock, &OldIrql);
+    ExAcquireSpinLock(&VerifierListLock, &OldIrql);
 
     NextEntry = MiSuspectDriverList.Flink;
-    while (NextEntry != &MiSuspectDriverList) {
+    while (NextEntry != &MiSuspectDriverList)
+    {
 
-        Verifier = CONTAINING_RECORD(NextEntry,
-                                     MI_VERIFIER_DRIVER_ENTRY,
-                                     Links);
+        Verifier = CONTAINING_RECORD(NextEntry, MI_VERIFIER_DRIVER_ENTRY, Links);
 
-        if ((SystemAddress >= Verifier->StartAddress) &&
-            (SystemAddress < Verifier->EndAddress)) {
+        if ((SystemAddress >= Verifier->StartAddress) && (SystemAddress < Verifier->EndAddress))
+        {
 
-            ExReleaseSpinLock (&VerifierListLock, OldIrql);
+            ExReleaseSpinLock(&VerifierListLock, OldIrql);
             return Verifier;
         }
         NextEntry = NextEntry->Flink;
     }
 
-    ExReleaseSpinLock (&VerifierListLock, OldIrql);
+    ExReleaseSpinLock(&VerifierListLock, OldIrql);
     return NULL;
 }
 
 LOGICAL
-MiApplyDriverVerifier (
-    IN PKLDR_DATA_TABLE_ENTRY DataTableEntry,
-    IN PMI_VERIFIER_DRIVER_ENTRY Verifier
-    )
+MiApplyDriverVerifier(IN PKLDR_DATA_TABLE_ENTRY DataTableEntry, IN PMI_VERIFIER_DRIVER_ENTRY Verifier)
 
 /*++
 
@@ -5145,39 +4464,43 @@ Environment:
     PLIST_ENTRY NextEntry;
     ULONG VerifierFlags;
 
-    if (Verifier != NULL) {
+    if (Verifier != NULL)
+    {
         Found = TRUE;
     }
-    else {
+    else
+    {
         Found = FALSE;
         NextEntry = MiSuspectDriverList.Flink;
-        while (NextEntry != &MiSuspectDriverList) {
+        while (NextEntry != &MiSuspectDriverList)
+        {
 
-            Verifier = CONTAINING_RECORD(NextEntry,
-                                         MI_VERIFIER_DRIVER_ENTRY,
-                                         Links);
+            Verifier = CONTAINING_RECORD(NextEntry, MI_VERIFIER_DRIVER_ENTRY, Links);
 
-            if (RtlEqualUnicodeString (&Verifier->BaseName,
-                                       &DataTableEntry->BaseDllName,
-                                       TRUE)) {
+            if (RtlEqualUnicodeString(&Verifier->BaseName, &DataTableEntry->BaseDllName, TRUE))
+            {
 
                 Found = TRUE;
-                ViInitializeEntry (Verifier, FALSE);
+                ViInitializeEntry(Verifier, FALSE);
                 break;
             }
             NextEntry = NextEntry->Flink;
         }
     }
 
-    if (Found == FALSE) {
+    if (Found == FALSE)
+    {
         VerifierFlags = VI_VERIFYING_DIRECTLY;
-        if (MiVerifyAllDrivers == TRUE) {
-            if (KernelVerifier == TRUE) {
+        if (MiVerifyAllDrivers == TRUE)
+        {
+            if (KernelVerifier == TRUE)
+            {
                 VerifierFlags = VI_VERIFYING_INVERSELY;
             }
             Found = TRUE;
         }
-        else if (MiVerifyRandomDrivers != (WCHAR)0) {
+        else if (MiVerifyRandomDrivers != (WCHAR)0)
+        {
 
             //
             // Wildcard match drivers randomly.
@@ -5185,52 +4508,53 @@ Environment:
 
             FirstChar = RtlUpcaseUnicodeChar(DataTableEntry->BaseDllName.Buffer[0]);
 
-            if (MiVerifyRandomDrivers == FirstChar) {
+            if (MiVerifyRandomDrivers == FirstChar)
+            {
                 Found = TRUE;
             }
-            else if (MiVerifyRandomDrivers == (WCHAR)'X') {
-                if ((FirstChar >= (WCHAR)'0') && (FirstChar <= (WCHAR)'9')) {
+            else if (MiVerifyRandomDrivers == (WCHAR)'X')
+            {
+                if ((FirstChar >= (WCHAR)'0') && (FirstChar <= (WCHAR)'9'))
+                {
                     Found = TRUE;
                 }
             }
         }
 
-        if (Found == FALSE) {
+        if (Found == FALSE)
+        {
             return FALSE;
         }
 
-        Verifier = (PMI_VERIFIER_DRIVER_ENTRY)ExAllocatePoolWithTag (
-                                    NonPagedPool,
-                                    sizeof (MI_VERIFIER_DRIVER_ENTRY) +
-                                        DataTableEntry->BaseDllName.MaximumLength,
-                                    'dLmM');
+        Verifier = (PMI_VERIFIER_DRIVER_ENTRY)ExAllocatePoolWithTag(
+            NonPagedPool, sizeof(MI_VERIFIER_DRIVER_ENTRY) + DataTableEntry->BaseDllName.MaximumLength, 'dLmM');
 
-        if (Verifier == NULL) {
+        if (Verifier == NULL)
+        {
             return FALSE;
         }
 
-        Verifier->BaseName.Buffer = (PWSTR)((PCHAR)Verifier +
-                                        sizeof (MI_VERIFIER_DRIVER_ENTRY));
+        Verifier->BaseName.Buffer = (PWSTR)((PCHAR)Verifier + sizeof(MI_VERIFIER_DRIVER_ENTRY));
         Verifier->BaseName.Length = DataTableEntry->BaseDllName.Length;
         Verifier->BaseName.MaximumLength = DataTableEntry->BaseDllName.MaximumLength;
 
-        RtlCopyMemory (Verifier->BaseName.Buffer,
-                       DataTableEntry->BaseDllName.Buffer,
-                       DataTableEntry->BaseDllName.Length);
+        RtlCopyMemory(Verifier->BaseName.Buffer, DataTableEntry->BaseDllName.Buffer,
+                      DataTableEntry->BaseDllName.Length);
 
-        ViInitializeEntry (Verifier, TRUE);
+        ViInitializeEntry(Verifier, TRUE);
 
         Verifier->Flags = VerifierFlags;
 
-        ViInsertVerifierEntry (Verifier);
+        ViInsertVerifierEntry(Verifier);
     }
 
     Verifier->StartAddress = DataTableEntry->DllBase;
     Verifier->EndAddress = (PVOID)((ULONG_PTR)DataTableEntry->DllBase + DataTableEntry->SizeOfImage);
 
-    ASSERT (Found == TRUE);
+    ASSERT(Found == TRUE);
 
-    if (Verifier->Flags & VI_DISABLE_VERIFICATION) {
+    if (Verifier->Flags & VI_DISABLE_VERIFICATION)
+    {
 
         //
         // We've been instructed to not verify this driver.  If kernel
@@ -5239,22 +4563,26 @@ Environment:
         // nothing needs to be done here except load/unload counting.
         //
 
-        if (KernelVerifier == TRUE) {
-            Found = MiEnableVerifier (DataTableEntry);
+        if (KernelVerifier == TRUE)
+        {
+            Found = MiEnableVerifier(DataTableEntry);
         }
-        else {
+        else
+        {
             Found = FALSE;
         }
     }
-    else {
-        Found = MiEnableVerifier (DataTableEntry);
+    else
+    {
+        Found = MiEnableVerifier(DataTableEntry);
     }
 
-    if (Found == TRUE) {
+    if (Found == TRUE)
+    {
 
-        if (Verifier->Flags & VI_VERIFYING_DIRECTLY &&
-            ((DataTableEntry->Flags & LDRP_IMAGE_VERIFYING) == 0)) {
-            ViPrintString (&DataTableEntry->BaseDllName);
+        if (Verifier->Flags & VI_VERIFYING_DIRECTLY && ((DataTableEntry->Flags & LDRP_IMAGE_VERIFYING) == 0))
+        {
+            ViPrintString(&DataTableEntry->BaseDllName);
         }
 
         MmVerifierData.Loads += 1;
@@ -5263,7 +4591,8 @@ Environment:
         DataTableEntry->Flags |= LDRP_IMAGE_VERIFYING;
         MiActiveVerifies += 1;
 
-        if (MiActiveVerifies == 1) {
+        if (MiActiveVerifies == 1)
+        {
 
 #ifndef NO_POOL_CHECKS
 
@@ -5274,16 +4603,18 @@ Environment:
             // use.
             //
 
-            MiEnableRandomSpecialPool (FALSE);
+            MiEnableRandomSpecialPool(FALSE);
 #endif
-            if (MmVerifierData.Level & DRIVER_VERIFIER_FORCE_IRQL_CHECKING) {
+            if (MmVerifierData.Level & DRIVER_VERIFIER_FORCE_IRQL_CHECKING)
+            {
 
                 //
                 // Page out all thread stacks as soon as possible to
                 // catch drivers using local events that do usermode waits.
                 //
 
-                if (KernelVerifier == FALSE) {
+                if (KernelVerifier == FALSE)
+                {
                     MiVerifierStackProtectTime = KiStackProtectTime;
                     KiStackProtectTime = 0;
                 }
@@ -5296,10 +4627,7 @@ Environment:
 
 PUNICODE_STRING ViBadDriver;
 
-VOID
-MiVerifyingDriverUnloading (
-    IN PKLDR_DATA_TABLE_ENTRY DataTableEntry
-    )
+VOID MiVerifyingDriverUnloading(IN PKLDR_DATA_TABLE_ENTRY DataTableEntry)
 
 /*++
 
@@ -5339,22 +4667,20 @@ Environment:
     Verifier = NULL;
 
     NextEntry = MiSuspectDriverList.Flink;
-    while (NextEntry != &MiSuspectDriverList) {
+    while (NextEntry != &MiSuspectDriverList)
+    {
 
-        Verifier = CONTAINING_RECORD(NextEntry,
-                                          MI_VERIFIER_DRIVER_ENTRY,
-                                          Links);
+        Verifier = CONTAINING_RECORD(NextEntry, MI_VERIFIER_DRIVER_ENTRY, Links);
 
-        if (RtlEqualUnicodeString (&Verifier->BaseName,
-                                   &DataTableEntry->BaseDllName,
-                                   TRUE)) {
+        if (RtlEqualUnicodeString(&Verifier->BaseName, &DataTableEntry->BaseDllName, TRUE))
+        {
 
             break;
         }
         NextEntry = NextEntry->Flink;
     }
 
-    ASSERT (NextEntry != &MiSuspectDriverList);
+    ASSERT(NextEntry != &MiSuspectDriverList);
 
     //
     // Delete any static locks in the driver image.
@@ -5363,23 +4689,22 @@ Environment:
     // hook in MmSystemImageUnload.
     //
 
-    VfDeadlockDeleteMemoryRange(DataTableEntry->DllBase,
-                                (SIZE_T) DataTableEntry->SizeOfImage);
+    VfDeadlockDeleteMemoryRange(DataTableEntry->DllBase, (SIZE_T)DataTableEntry->SizeOfImage);
 
 
-    if (MmVerifierData.Level & DRIVER_VERIFIER_TRACK_POOL_ALLOCATIONS) {
+    if (MmVerifierData.Level & DRIVER_VERIFIER_TRACK_POOL_ALLOCATIONS)
+    {
 
         //
         // Better not be any pool left that wasn't freed.
         //
 
-        if (Verifier->PagedBytes) {
+        if (Verifier->PagedBytes)
+        {
 
 #if DBG
-            DbgPrint ("Driver %wZ leaked %d paged pool allocations (0x%x bytes)\n",
-                &DataTableEntry->FullDllName,
-                Verifier->CurrentPagedPoolAllocations,
-                Verifier->PagedBytes);
+            DbgPrint("Driver %wZ leaked %d paged pool allocations (0x%x bytes)\n", &DataTableEntry->FullDllName,
+                     Verifier->CurrentPagedPoolAllocations, Verifier->PagedBytes);
 #endif
 
             //
@@ -5392,18 +4717,18 @@ Environment:
             // No need to undo the increment as we're about to bugcheck anyway.
             //
 
-            InterlockedIncrement ((PLONG)&MiNoPageOnRaiseIrql);
+            InterlockedIncrement((PLONG)&MiNoPageOnRaiseIrql);
         }
 #if DBG
-        if (Verifier->NonPagedBytes) {
-            DbgPrint ("Driver %wZ leaked %d nonpaged pool allocations (0x%x bytes)\n",
-                &DataTableEntry->FullDllName,
-                Verifier->CurrentNonPagedPoolAllocations,
-                Verifier->NonPagedBytes);
+        if (Verifier->NonPagedBytes)
+        {
+            DbgPrint("Driver %wZ leaked %d nonpaged pool allocations (0x%x bytes)\n", &DataTableEntry->FullDllName,
+                     Verifier->CurrentNonPagedPoolAllocations, Verifier->NonPagedBytes);
         }
 #endif
 
-        if (Verifier->PagedBytes || Verifier->NonPagedBytes) {
+        if (Verifier->PagedBytes || Verifier->NonPagedBytes)
+        {
 #if 0
             DbgBreakPoint ();
             InterlockedDecrement (&MiNoPageOnRaiseIrql);
@@ -5414,41 +4739,37 @@ Environment:
 
             ViBadDriver = &Verifier->BaseName;
 
-            KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                          0x60,
-                          Verifier->PagedBytes,
-                          Verifier->NonPagedBytes,
-                          Verifier->CurrentPagedPoolAllocations +
-                            Verifier->CurrentNonPagedPoolAllocations);
+            KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x60, Verifier->PagedBytes, Verifier->NonPagedBytes,
+                         Verifier->CurrentPagedPoolAllocations + Verifier->CurrentNonPagedPoolAllocations);
 #endif
         }
 
-        ExAcquireSpinLock (&Verifier->VerifierPoolLock, &OldIrql);
+        ExAcquireSpinLock(&Verifier->VerifierPoolLock, &OldIrql);
 
-        if (Verifier->PoolHashReserved != 0) {
-            KeBugCheckEx (DRIVER_VERIFIER_DETECTED_VIOLATION,
-                          0x61,
-                          Verifier->PagedBytes,
-                          Verifier->NonPagedBytes,
-                          Verifier->CurrentPagedPoolAllocations +
-                            Verifier->CurrentNonPagedPoolAllocations);
+        if (Verifier->PoolHashReserved != 0)
+        {
+            KeBugCheckEx(DRIVER_VERIFIER_DETECTED_VIOLATION, 0x61, Verifier->PagedBytes, Verifier->NonPagedBytes,
+                         Verifier->CurrentPagedPoolAllocations + Verifier->CurrentNonPagedPoolAllocations);
         }
 
         OldHashTable = Verifier->PoolHash;
-        if (OldHashTable != NULL) {
+        if (OldHashTable != NULL)
+        {
             Verifier->PoolHashSize = 0;
             Verifier->PoolHashFree = VI_POOL_FREELIST_END;
             Verifier->PoolHash = NULL;
         }
-        else {
-            ASSERT (Verifier->PoolHashSize == 0);
-            ASSERT (Verifier->PoolHashFree == VI_POOL_FREELIST_END);
+        else
+        {
+            ASSERT(Verifier->PoolHashSize == 0);
+            ASSERT(Verifier->PoolHashFree == VI_POOL_FREELIST_END);
         }
 
-        ExReleaseSpinLock (&Verifier->VerifierPoolLock, OldIrql);
+        ExReleaseSpinLock(&Verifier->VerifierPoolLock, OldIrql);
 
-        if (OldHashTable != NULL) {
-            ExFreePool (OldHashTable);
+        if (OldHashTable != NULL)
+        {
+            ExFreePool(OldHashTable);
         }
 
         //
@@ -5456,40 +4777,41 @@ Environment:
         // erroneous bucket fills.
         //
 
-        ExAcquireSpinLock (&VerifierListLock, &OldIrql);
+        ExAcquireSpinLock(&VerifierListLock, &OldIrql);
         Verifier->StartAddress = NULL;
         Verifier->EndAddress = NULL;
-        ExReleaseSpinLock (&VerifierListLock, OldIrql);
+        ExReleaseSpinLock(&VerifierListLock, OldIrql);
     }
 
     Verifier->Unloads += 1;
     MmVerifierData.Unloads += 1;
     MiActiveVerifies -= 1;
 
-    if (MiActiveVerifies == 0) {
+    if (MiActiveVerifies == 0)
+    {
 
-        if (MmVerifierData.Level & DRIVER_VERIFIER_FORCE_IRQL_CHECKING) {
+        if (MmVerifierData.Level & DRIVER_VERIFIER_FORCE_IRQL_CHECKING)
+        {
 
             //
             // Return to normal thread stack protection.
             //
 
-            if (KernelVerifier == FALSE) {
+            if (KernelVerifier == FALSE)
+            {
                 KiStackProtectTime = MiVerifierStackProtectTime;
             }
         }
 
 #ifndef NO_POOL_CHECKS
-        MiEnableRandomSpecialPool (TRUE);
+        MiEnableRandomSpecialPool(TRUE);
 #endif
     }
 }
 
 NTKERNELAPI
 LOGICAL
-MmIsDriverVerifying (
-    IN PDRIVER_OBJECT DriverObject
-    )
+MmIsDriverVerifying(IN PDRIVER_OBJECT DriverObject)
 
 /*++
 
@@ -5517,11 +4839,13 @@ Environment:
 
     DataTableEntry = (PKLDR_DATA_TABLE_ENTRY)DriverObject->DriverSection;
 
-    if (DataTableEntry == NULL) {
+    if (DataTableEntry == NULL)
+    {
         return FALSE;
     }
 
-    if ((DataTableEntry->Flags & LDRP_IMAGE_VERIFYING) == 0) {
+    if ((DataTableEntry->Flags & LDRP_IMAGE_VERIFYING) == 0)
+    {
         return FALSE;
     }
 
@@ -5529,10 +4853,7 @@ Environment:
 }
 
 NTSTATUS
-MmAddVerifierThunks (
-    IN PVOID ThunkBuffer,
-    IN ULONG ThunkBufferSize
-    )
+MmAddVerifierThunks(IN PVOID ThunkBuffer, IN ULONG ThunkBufferSize)
 
 /*++
 
@@ -5571,52 +4892,48 @@ Environment:
 
     PAGED_CODE();
 
-    if (MiVerifierDriverAddedThunkListHead.Flink == NULL) {
+    if (MiVerifierDriverAddedThunkListHead.Flink == NULL)
+    {
         return STATUS_NOT_SUPPORTED;
     }
 
     ThunkPairs = (PDRIVER_VERIFIER_THUNK_PAIRS)ThunkBuffer;
     NumberOfThunkPairs = ThunkBufferSize / sizeof(DRIVER_VERIFIER_THUNK_PAIRS);
 
-    if (NumberOfThunkPairs == 0) {
+    if (NumberOfThunkPairs == 0)
+    {
         return STATUS_INVALID_PARAMETER_1;
     }
 
-    ThunkTableBase = (PDRIVER_SPECIFIED_VERIFIER_THUNKS) ExAllocatePoolWithTag (
-                            PagedPool,
-                            sizeof (DRIVER_SPECIFIED_VERIFIER_THUNKS) + NumberOfThunkPairs * sizeof (DRIVER_VERIFIER_THUNK_PAIRS),
-                            'tVmM');
+    ThunkTableBase = (PDRIVER_SPECIFIED_VERIFIER_THUNKS)ExAllocatePoolWithTag(
+        PagedPool, sizeof(DRIVER_SPECIFIED_VERIFIER_THUNKS) + NumberOfThunkPairs * sizeof(DRIVER_VERIFIER_THUNK_PAIRS),
+        'tVmM');
 
-    if (ThunkTableBase == NULL) {
+    if (ThunkTableBase == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     ThunkTable = (PDRIVER_VERIFIER_THUNK_PAIRS)(ThunkTableBase + 1);
 
-    RtlCopyMemory (ThunkTable,
-                   ThunkPairs,
-                   NumberOfThunkPairs * sizeof(DRIVER_VERIFIER_THUNK_PAIRS));
+    RtlCopyMemory(ThunkTable, ThunkPairs, NumberOfThunkPairs * sizeof(DRIVER_VERIFIER_THUNK_PAIRS));
 
-    CurrentThread = KeGetCurrentThread ();
-    KeEnterCriticalRegionThread (CurrentThread);
+    CurrentThread = KeGetCurrentThread();
+    KeEnterCriticalRegionThread(CurrentThread);
 
-    KeWaitForSingleObject (&MmSystemLoadLock,
-                           WrVirtualMemory,
-                           KernelMode,
-                           FALSE,
-                           (PLARGE_INTEGER)NULL);
+    KeWaitForSingleObject(&MmSystemLoadLock, WrVirtualMemory, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
 
     //
     // Find and validate the image that contains the routines to be thunked.
     //
 
-    DataTableEntry = MiLookupDataTableEntry ((PVOID)(ULONG_PTR)ThunkTable->PristineRoutine,
-                                             TRUE);
+    DataTableEntry = MiLookupDataTableEntry((PVOID)(ULONG_PTR)ThunkTable->PristineRoutine, TRUE);
 
-    if (DataTableEntry == NULL) {
-        KeReleaseMutant (&MmSystemLoadLock, 1, FALSE, FALSE);
-        KeLeaveCriticalRegionThread (CurrentThread);
-        ExFreePool (ThunkTableBase);
+    if (DataTableEntry == NULL)
+    {
+        KeReleaseMutant(&MmSystemLoadLock, 1, FALSE, FALSE);
+        KeLeaveCriticalRegionThread(CurrentThread);
+        ExFreePool(ThunkTableBase);
         return STATUS_INVALID_PARAMETER_2;
     }
 
@@ -5629,27 +4946,29 @@ Environment:
 
     i = 0;
     NextEntry = PsLoadedModuleList.Flink;
-    while (NextEntry != &PsLoadedModuleList) {
+    while (NextEntry != &PsLoadedModuleList)
+    {
 
-        DataTableEntry2 = CONTAINING_RECORD(NextEntry,
-                                            KLDR_DATA_TABLE_ENTRY,
-                                            InLoadOrderLinks);
+        DataTableEntry2 = CONTAINING_RECORD(NextEntry, KLDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
-        if (DataTableEntry == DataTableEntry2) {
-            KeReleaseMutant (&MmSystemLoadLock, 1, FALSE, FALSE);
-            KeLeaveCriticalRegionThread (CurrentThread);
-            ExFreePool (ThunkTableBase);
+        if (DataTableEntry == DataTableEntry2)
+        {
+            KeReleaseMutant(&MmSystemLoadLock, 1, FALSE, FALSE);
+            KeLeaveCriticalRegionThread(CurrentThread);
+            ExFreePool(ThunkTableBase);
             return STATUS_INVALID_PARAMETER_2;
         }
 
         NextEntry = NextEntry->Flink;
         i += 1;
-        if (i >= 2) {
+        if (i >= 2)
+        {
             break;
         }
     }
 
-    for (i = 0; i < NumberOfThunkPairs; i += 1) {
+    for (i = 0; i < NumberOfThunkPairs; i += 1)
+    {
 
         //
         // Ensure all the routines being thunked are in the same driver.
@@ -5658,12 +4977,12 @@ Environment:
         if (((ULONG_PTR)ThunkTable->PristineRoutine < (ULONG_PTR)DriverStartAddress) ||
             ((ULONG_PTR)ThunkTable->PristineRoutine >= (ULONG_PTR)DriverEndAddress) ||
             ((ULONG_PTR)ThunkTable->NewRoutine < (ULONG_PTR)DriverStartAddress) ||
-            ((ULONG_PTR)ThunkTable->NewRoutine >= (ULONG_PTR)DriverEndAddress)
-        ) {
+            ((ULONG_PTR)ThunkTable->NewRoutine >= (ULONG_PTR)DriverEndAddress))
+        {
 
-            KeReleaseMutant (&MmSystemLoadLock, 1, FALSE, FALSE);
-            KeLeaveCriticalRegionThread (CurrentThread);
-            ExFreePool (ThunkTableBase);
+            KeReleaseMutant(&MmSystemLoadLock, 1, FALSE, FALSE);
+            KeLeaveCriticalRegionThread(CurrentThread);
+            ExFreePool(ThunkTableBase);
             return STATUS_INVALID_PARAMETER_2;
         }
         ThunkTable += 1;
@@ -5677,11 +4996,10 @@ Environment:
     ThunkTableBase->NumberOfThunks = NumberOfThunkPairs;
     MiActiveVerifierThunks += 1;
 
-    InsertTailList (&MiVerifierDriverAddedThunkListHead,
-                    &ThunkTableBase->ListEntry);
+    InsertTailList(&MiVerifierDriverAddedThunkListHead, &ThunkTableBase->ListEntry);
 
-    KeReleaseMutant (&MmSystemLoadLock, 1, FALSE, FALSE);
-    KeLeaveCriticalRegionThread (CurrentThread);
+    KeReleaseMutant(&MmSystemLoadLock, 1, FALSE, FALSE);
+    KeLeaveCriticalRegionThread(CurrentThread);
 
     //
     // Indicate that new thunks have been added to the verifier list.
@@ -5692,10 +5010,7 @@ Environment:
     return STATUS_SUCCESS;
 }
 
-VOID
-MiVerifierCheckThunks (
-    IN PKLDR_DATA_TABLE_ENTRY DataTableEntry
-    )
+VOID MiVerifierCheckThunks(IN PKLDR_DATA_TABLE_ENTRY DataTableEntry)
 
 /*++
 
@@ -5722,7 +5037,7 @@ Environment:
     PLIST_ENTRY NextEntry;
     PDRIVER_SPECIFIED_VERIFIER_THUNKS ThunkTableBase;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
     //
     // N.B.  The DataTableEntry can move (see MiInitializeLoadedModuleList),
@@ -5730,16 +5045,16 @@ Environment:
     //
 
     NextEntry = MiVerifierDriverAddedThunkListHead.Flink;
-    while (NextEntry != &MiVerifierDriverAddedThunkListHead) {
+    while (NextEntry != &MiVerifierDriverAddedThunkListHead)
+    {
 
-        ThunkTableBase = CONTAINING_RECORD(NextEntry,
-                                           DRIVER_SPECIFIED_VERIFIER_THUNKS,
-                                           ListEntry);
+        ThunkTableBase = CONTAINING_RECORD(NextEntry, DRIVER_SPECIFIED_VERIFIER_THUNKS, ListEntry);
 
-        if (ThunkTableBase->DataTableEntry == DataTableEntry) {
-            RemoveEntryList (NextEntry);
+        if (ThunkTableBase->DataTableEntry == DataTableEntry)
+        {
+            RemoveEntryList(NextEntry);
             NextEntry = NextEntry->Flink;
-            ExFreePool (ThunkTableBase);
+            ExFreePool(ThunkTableBase);
             MiActiveVerifierThunks -= 1;
 
             //
@@ -5754,9 +5069,7 @@ Environment:
 }
 
 NTSTATUS
-MmIsVerifierEnabled (
-    OUT PULONG VerifierFlags
-    )
+MmIsVerifierEnabled(OUT PULONG VerifierFlags)
 
 /*++
 
@@ -5781,7 +5094,8 @@ Environment:
 --*/
 
 {
-    if (MiVerifierDriverAddedThunkListHead.Flink == NULL) {
+    if (MiVerifierDriverAddedThunkListHead.Flink == NULL)
+    {
         *VerifierFlags = 0;
         return STATUS_NOT_SUPPORTED;
     }
@@ -5790,15 +5104,10 @@ Environment:
     return STATUS_SUCCESS;
 }
 
-#define ROUND_UP(VALUE,ROUND) ((ULONG)(((ULONG)VALUE + \
-                               ((ULONG)ROUND - 1L)) & (~((ULONG)ROUND - 1L))))
+#define ROUND_UP(VALUE, ROUND) ((ULONG)(((ULONG)VALUE + ((ULONG)ROUND - 1L)) & (~((ULONG)ROUND - 1L))))
 
 NTSTATUS
-MmGetVerifierInformation (
-    OUT PVOID SystemInformation,
-    IN ULONG SystemInformationLength,
-    OUT PULONG Length
-    )
+MmGetVerifierInformation(OUT PVOID SystemInformation, IN ULONG SystemInformationLength, OUT PULONG Length)
 
 /*++
 
@@ -5853,38 +5162,34 @@ Environment:
 
     Status = STATUS_SUCCESS;
 
-    CurrentThread = KeGetCurrentThread ();
-    KeEnterCriticalRegionThread (CurrentThread);
+    CurrentThread = KeGetCurrentThread();
+    KeEnterCriticalRegionThread(CurrentThread);
 
-    KeWaitForSingleObject (&MmSystemLoadLock,
-                           WrVirtualMemory,
-                           KernelMode,
-                           FALSE,
-                           (PLARGE_INTEGER)NULL);
+    KeWaitForSingleObject(&MmSystemLoadLock, WrVirtualMemory, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
 
-    try {
+    try
+    {
 
         NextEntry = MiSuspectDriverList.Flink;
-        while (NextEntry != &MiSuspectDriverList) {
+        while (NextEntry != &MiSuspectDriverList)
+        {
 
-            Verifier = CONTAINING_RECORD(NextEntry,
-                                              MI_VERIFIER_DRIVER_ENTRY,
-                                              Links);
+            Verifier = CONTAINING_RECORD(NextEntry, MI_VERIFIER_DRIVER_ENTRY, Links);
 
-            if (((Verifier->Flags & VI_VERIFYING_DIRECTLY) == 0) ||
-                (Verifier->Flags & VI_DISABLE_VERIFICATION)) {
+            if (((Verifier->Flags & VI_VERIFYING_DIRECTLY) == 0) || (Verifier->Flags & VI_DISABLE_VERIFICATION))
+            {
 
                 NextEntry = NextEntry->Flink;
                 continue;
             }
 
-            UserVerifyBuffer = (PSYSTEM_VERIFIER_INFORMATION)(
-                                    (PUCHAR)UserVerifyBuffer + NextEntryOffset);
+            UserVerifyBuffer = (PSYSTEM_VERIFIER_INFORMATION)((PUCHAR)UserVerifyBuffer + NextEntryOffset);
             NextEntryOffset = sizeof(SYSTEM_VERIFIER_INFORMATION);
             TotalSize += sizeof(SYSTEM_VERIFIER_INFORMATION);
 
-            if (TotalSize > SystemInformationLength) {
-                ExRaiseStatus (STATUS_INFO_LENGTH_MISMATCH);
+            if (TotalSize > SystemInformationLength)
+            {
+                ExRaiseStatus(STATUS_INFO_LENGTH_MISMATCH);
             }
 
             //
@@ -5933,43 +5238,42 @@ Environment:
             //
 
             UserBufferDriverName.Length = Verifier->BaseName.Length;
-            UserBufferDriverName.MaximumLength = (USHORT)(Verifier->BaseName.Length + sizeof (WCHAR));
+            UserBufferDriverName.MaximumLength = (USHORT)(Verifier->BaseName.Length + sizeof(WCHAR));
             UserBufferDriverName.Buffer = (PWCHAR)(UserVerifyBuffer + 1);
 
             UserVerifyBuffer->DriverName = UserBufferDriverName;
 
-            TotalSize += ROUND_UP (UserBufferDriverName.MaximumLength,
-                                   sizeof(PVOID));
-            NextEntryOffset += ROUND_UP (UserBufferDriverName.MaximumLength,
-                                         sizeof(PVOID));
+            TotalSize += ROUND_UP(UserBufferDriverName.MaximumLength, sizeof(PVOID));
+            NextEntryOffset += ROUND_UP(UserBufferDriverName.MaximumLength, sizeof(PVOID));
 
-            if (TotalSize > SystemInformationLength) {
-                ExRaiseStatus (STATUS_INFO_LENGTH_MISMATCH);
+            if (TotalSize > SystemInformationLength)
+            {
+                ExRaiseStatus(STATUS_INFO_LENGTH_MISMATCH);
             }
 
             //
             // Carefully reference the UserVerifyBuffer here.
             //
 
-            RtlCopyMemory(UserBufferDriverName.Buffer,
-                          Verifier->BaseName.Buffer,
-                          Verifier->BaseName.Length);
+            RtlCopyMemory(UserBufferDriverName.Buffer, Verifier->BaseName.Buffer, Verifier->BaseName.Length);
 
-            UserBufferDriverName.Buffer[
-                        Verifier->BaseName.Length/sizeof(WCHAR)] = UNICODE_NULL;
+            UserBufferDriverName.Buffer[Verifier->BaseName.Length / sizeof(WCHAR)] = UNICODE_NULL;
             UserVerifyBuffer->NextEntryOffset = NextEntryOffset;
 
             NextEntry = NextEntry->Flink;
         }
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
     }
 
-    KeReleaseMutant (&MmSystemLoadLock, 1, FALSE, FALSE);
+    KeReleaseMutant(&MmSystemLoadLock, 1, FALSE, FALSE);
 
-    KeLeaveCriticalRegionThread (CurrentThread);
+    KeLeaveCriticalRegionThread(CurrentThread);
 
-    if (Status != STATUS_INFO_LENGTH_MISMATCH) {
+    if (Status != STATUS_INFO_LENGTH_MISMATCH)
+    {
         UserVerifyBuffer->NextEntryOffset = 0;
         *Length = TotalSize;
     }
@@ -5978,10 +5282,7 @@ Environment:
 }
 
 NTSTATUS
-MmSetVerifierInformation (
-    IN OUT PVOID SystemInformation,
-    IN ULONG SystemInformationLength
-    )
+MmSetVerifierInformation(IN OUT PVOID SystemInformation, IN ULONG SystemInformationLength)
 
 /*++
 
@@ -6020,8 +5321,9 @@ Environment:
 
     PAGED_CODE();
 
-    if (SystemInformationLength < sizeof (ULONG)) {
-        ExRaiseStatus (STATUS_INFO_LENGTH_MISMATCH);
+    if (SystemInformationLength < sizeof(ULONG))
+    {
+        ExRaiseStatus(STATUS_INFO_LENGTH_MISMATCH);
     }
 
     UserVerifyBuffer = (PULONG)SystemInformation;
@@ -6032,16 +5334,13 @@ Environment:
 
     Status = STATUS_SUCCESS;
 
-    CurrentThread = KeGetCurrentThread ();
-    KeEnterCriticalRegionThread (CurrentThread);
+    CurrentThread = KeGetCurrentThread();
+    KeEnterCriticalRegionThread(CurrentThread);
 
-    KeWaitForSingleObject (&MmSystemLoadLock,
-                           WrVirtualMemory,
-                           KernelMode,
-                           FALSE,
-                           (PLARGE_INTEGER)NULL);
+    KeWaitForSingleObject(&MmSystemLoadLock, WrVirtualMemory, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
 
-    try {
+    try
+    {
 
         UserFlags = *UserVerifyBuffer;
 
@@ -6062,28 +5361,31 @@ Environment:
 
         NewFlags &= ~NewFlagsOff;
 
-        if (NewFlags != MmVerifierData.Level) {
+        if (NewFlags != MmVerifierData.Level)
+        {
             VerifierOptionChanges += 1;
             MmVerifierData.Level = NewFlags;
             *UserVerifyBuffer = NewFlags;
         }
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
     }
 
-    KeReleaseMutant (&MmSystemLoadLock, 1, FALSE, FALSE);
+    KeReleaseMutant(&MmSystemLoadLock, 1, FALSE, FALSE);
 
-    KeLeaveCriticalRegionThread (CurrentThread);
+    KeLeaveCriticalRegionThread(CurrentThread);
 
     return Status;
 }
 
-typedef struct _VERIFIER_STRING_INFO {
-   ULONG BuildNumber;
-   ULONG DriverVerifierLevel;
-   ULONG Flags;
-   ULONG Check;
+typedef struct _VERIFIER_STRING_INFO
+{
+    ULONG BuildNumber;
+    ULONG DriverVerifierLevel;
+    ULONG Flags;
+    ULONG Check;
 } VERIFIER_STRING_INFO, *PVERIFIER_STRING_INFO;
 
 #ifdef ALLOC_DATA_PRAGMA
@@ -6091,16 +5393,13 @@ typedef struct _VERIFIER_STRING_INFO {
 #endif
 
 static const WCHAR Printable[] = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-static const ULONG PrintableChars = sizeof (Printable) / sizeof (Printable[0]) - 1;
+static const ULONG PrintableChars = sizeof(Printable) / sizeof(Printable[0]) - 1;
 
 #ifdef ALLOC_DATA_PRAGMA
 #pragma const_seg()
 #endif
 
-VOID
-ViPrintString (
-    IN PUNICODE_STRING DriverName
-    )
+VOID ViPrintString(IN PUNICODE_STRING DriverName)
 
 /*++
 
@@ -6131,7 +5430,7 @@ Return Value:
     ULONG j;
     ULONG DriverChars;
     ULONG MaxChars;
-    WCHAR OutBuf[sizeof (VERIFIER_STRING_INFO) * 2 + 1];
+    WCHAR OutBuf[sizeof(VERIFIER_STRING_INFO) * 2 + 1];
     UNICODE_STRING OutBufU;
     ULONG Rem;
     ULONG LastRem;
@@ -6152,23 +5451,25 @@ Return Value:
 
     Bld.Check = ((Bld.Flags + 1) * Bld.BuildNumber * (Bld.DriverVerifierLevel + 1)) * 123456789;
 
-    BufPtr = (PUCHAR) &Bld;
-    BufLen = sizeof (Bld);
+    BufPtr = (PUCHAR)&Bld;
+    BufLen = sizeof(Bld);
 
-    DriverChars = DriverName->Length / sizeof (DriverName->Buffer[0]);
+    DriverChars = DriverName->Length / sizeof(DriverName->Buffer[0]);
     DriverPtr = DriverName->Buffer;
     MaxChars = DriverChars;
 
-    if (DriverChars < sizeof (VERIFIER_STRING_INFO)) {
-        MaxChars = sizeof (VERIFIER_STRING_INFO);
+    if (DriverChars < sizeof(VERIFIER_STRING_INFO))
+    {
+        MaxChars = sizeof(VERIFIER_STRING_INFO);
     }
 
     //
     // Xor each character in the driver name into the buffer.
     //
 
-    for (i = 0; i < MaxChars; i += 1) {
-        BufPtr[i % BufLen] ^= (UCHAR) RtlUpcaseUnicodeChar(DriverPtr[i % DriverChars]);
+    for (i = 0; i < MaxChars; i += 1)
+    {
+        BufPtr[i % BufLen] ^= (UCHAR)RtlUpcaseUnicodeChar(DriverPtr[i % DriverChars]);
     }
 
     //
@@ -6178,20 +5479,24 @@ Return Value:
     //
 
     j = 0;
-    do {
+    do
+    {
         Done = TRUE;
 
-        for (i = 0, LastRem = 0; i < sizeof (VERIFIER_STRING_INFO); i += 1) {
+        for (i = 0, LastRem = 0; i < sizeof(VERIFIER_STRING_INFO); i += 1)
+        {
             Rem = BufPtr[i] + 256 * LastRem;
-            BufPtr[i] = (UCHAR) (Rem / PrintableChars);
+            BufPtr[i] = (UCHAR)(Rem / PrintableChars);
             LastRem = Rem % PrintableChars;
-            if (BufPtr[i]) {
+            if (BufPtr[i])
+            {
                 Done = FALSE;
             }
         }
         OutBuf[j++] = Printable[LastRem];
 
-        if (j >= sizeof (OutBuf) / sizeof (OutBuf[0])) {
+        if (j >= sizeof(OutBuf) / sizeof(OutBuf[0]))
+        {
 
             //
             // The stack buffer isn't big enough.
@@ -6204,16 +5509,16 @@ Return Value:
 
     OutBuf[j] = L'\0';
 
-    OutBufU.Length = OutBufU.MaximumLength = (USHORT) (j * sizeof (WCHAR));
+    OutBufU.Length = OutBufU.MaximumLength = (USHORT)(j * sizeof(WCHAR));
     OutBufU.Buffer = OutBuf;
 
-    DbgPrint ("*******************************************************************************\n"
-              "*\n"
-              "* This is the string you add to your checkin description\n"
-              "* Driver Verifier: Enabled for %Z on Build %ld %wZ\n"
-              "*\n"
-              "*******************************************************************************\n",
-              DriverName, NtBuildNumber & 0xFFFFFFF, &OutBufU);
+    DbgPrint("*******************************************************************************\n"
+             "*\n"
+             "* This is the string you add to your checkin description\n"
+             "* Driver Verifier: Enabled for %Z on Build %ld %wZ\n"
+             "*\n"
+             "*******************************************************************************\n",
+             DriverName, NtBuildNumber & 0xFFFFFFF, &OutBufU);
 
     return;
 }
@@ -6225,8 +5530,6 @@ Return Value:
 // macros are not referenced from this point down and references go to the
 // real routines.
 //
-
-
 
 
 #undef KeRaiseIrql
@@ -6241,44 +5544,23 @@ Return Value:
 
 #if !defined(_AMD64_)
 
-VOID
-KeRaiseIrql (
-    IN KIRQL NewIrql,
-    OUT PKIRQL OldIrql
-    );
+VOID KeRaiseIrql(IN KIRQL NewIrql, OUT PKIRQL OldIrql);
 
 #endif
 
-VOID
-KeLowerIrql (
-    IN KIRQL NewIrql
-    );
+VOID KeLowerIrql(IN KIRQL NewIrql);
 
 #if !defined(_AMD64_)
 
-VOID
-KeAcquireSpinLock (
-    IN PKSPIN_LOCK SpinLock,
-    OUT PKIRQL OldIrql
-    );
+VOID KeAcquireSpinLock(IN PKSPIN_LOCK SpinLock, OUT PKIRQL OldIrql);
 
 #endif
 
-VOID
-KeReleaseSpinLock (
-    IN PKSPIN_LOCK SpinLock,
-    IN KIRQL NewIrql
-    );
+VOID KeReleaseSpinLock(IN PKSPIN_LOCK SpinLock, IN KIRQL NewIrql);
 
-VOID
-KeAcquireSpinLockAtDpcLevel (
-    IN PKSPIN_LOCK SpinLock
-    );
+VOID KeAcquireSpinLockAtDpcLevel(IN PKSPIN_LOCK SpinLock);
 
-VOID
-KeReleaseSpinLockFromDpcLevel (
-    IN PKSPIN_LOCK SpinLock
-    );
+VOID KeReleaseSpinLockFromDpcLevel(IN PKSPIN_LOCK SpinLock);
 
 #if 0
 BOOLEAN
@@ -6457,19 +5739,19 @@ const VERIFIER_THUNKS MiVerifierThunks[] = {
     (PDRIVER_VERIFIER_THUNK_ROUTINE)VerifierReferenceObjectByHandle,
 
     "KeReleaseMutex",
-    (PDRIVER_VERIFIER_THUNK_ROUTINE) VerifierKeReleaseMutex,
+    (PDRIVER_VERIFIER_THUNK_ROUTINE)VerifierKeReleaseMutex,
 
     "KeInitializeMutex",
-    (PDRIVER_VERIFIER_THUNK_ROUTINE) VerifierKeInitializeMutex,
+    (PDRIVER_VERIFIER_THUNK_ROUTINE)VerifierKeInitializeMutex,
 
     "KeReleaseMutant",
-    (PDRIVER_VERIFIER_THUNK_ROUTINE) VerifierKeReleaseMutant,
+    (PDRIVER_VERIFIER_THUNK_ROUTINE)VerifierKeReleaseMutant,
 
     "KeInitializeMutant",
-    (PDRIVER_VERIFIER_THUNK_ROUTINE) VerifierKeInitializeMutant,
+    (PDRIVER_VERIFIER_THUNK_ROUTINE)VerifierKeInitializeMutant,
 
     "KeInitializeSpinLock",
-    (PDRIVER_VERIFIER_THUNK_ROUTINE) VerifierKeInitializeSpinLock,
+    (PDRIVER_VERIFIER_THUNK_ROUTINE)VerifierKeInitializeSpinLock,
 
 #if !defined(NO_LEGACY_DRIVERS)
     "HalGetAdapter",
@@ -6542,10 +5824,7 @@ const VERIFIER_THUNKS MiVerifierPoolThunks[] = {
 #endif
 
 PDRIVER_VERIFIER_THUNK_ROUTINE
-MiResolveVerifierExports (
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock,
-    IN PCHAR PristineName
-    )
+MiResolveVerifierExports(IN PLOADER_PARAMETER_BLOCK LoaderBlock, IN PCHAR PristineName)
 
 /*++
 
@@ -6589,26 +5868,23 @@ Environment:
     i = 0;
     NextEntry = LoaderBlock->LoadOrderListHead.Flink;
 
-    for ( ; NextEntry != &LoaderBlock->LoadOrderListHead; NextEntry = NextEntry->Flink) {
+    for (; NextEntry != &LoaderBlock->LoadOrderListHead; NextEntry = NextEntry->Flink)
+    {
 
-        DataTableEntry = CONTAINING_RECORD (NextEntry,
-                                            KLDR_DATA_TABLE_ENTRY,
-                                            InLoadOrderLinks);
+        DataTableEntry = CONTAINING_RECORD(NextEntry, KLDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
         //
         // Process the kernel and HAL exports so the proper routine
         // addresses can be generated now that relocations are complete.
         //
 
-        DllBase = (PCHAR) DataTableEntry->DllBase;
+        DllBase = (PCHAR)DataTableEntry->DllBase;
 
         ExportDirectory = (PIMAGE_EXPORT_DIRECTORY)RtlImageDirectoryEntryToData(
-                                    (PVOID) DllBase,
-                                    TRUE,
-                                    IMAGE_DIRECTORY_ENTRY_EXPORT,
-                                    &ExportSize);
+            (PVOID)DllBase, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &ExportSize);
 
-        if (ExportDirectory != NULL) {
+        if (ExportDirectory != NULL)
+        {
 
             //
             // Lookup the import name in the name table using a binary search.
@@ -6628,7 +5904,8 @@ Environment:
 
             Middle = 0;
 
-            while (High >= Low) {
+            while (High >= Low)
+            {
 
                 //
                 // Compute the next probe index and compare the import name
@@ -6636,17 +5913,18 @@ Environment:
                 //
 
                 Middle = (Low + High) >> 1;
-                Result = strcmp (PristineName,
-                                 (PCHAR)DllBase + NameTableBase[Middle]);
+                Result = strcmp(PristineName, (PCHAR)DllBase + NameTableBase[Middle]);
 
-                if (Result < 0) {
+                if (Result < 0)
+                {
                     High = Middle - 1;
-
-                } else if (Result > 0) {
-                    Low = Middle + 1;
-
                 }
-                else {
+                else if (Result > 0)
+                {
+                    Low = Middle + 1;
+                }
+                else
+                {
                     break;
                 }
             }
@@ -6657,7 +5935,8 @@ Environment:
             // from the ordinal table.
             //
 
-            if ((LONG)High >= (LONG)Low) {
+            if ((LONG)High >= (LONG)Low)
+            {
                 OrdinalNumber = NameOrdinalTableBase[Middle];
 
                 //
@@ -6666,7 +5945,8 @@ Environment:
                 // the export that matches the specified argument routine name.
                 //
 
-                if ((ULONG)OrdinalNumber < ExportDirectory->NumberOfFunctions) {
+                if ((ULONG)OrdinalNumber < ExportDirectory->NumberOfFunctions)
+                {
 
                     Addr = (PULONG)(DllBase + (ULONG)ExportDirectory->AddressOfFunctions);
                     return (PDRIVER_VERIFIER_THUNK_ROUTINE)(ULONG_PTR)(DllBase + Addr[OrdinalNumber]);
@@ -6675,7 +5955,8 @@ Environment:
         }
 
         i += 1;
-        if (i == 2) {
+        if (i == 2)
+        {
             break;
         }
     }
@@ -6683,9 +5964,7 @@ Environment:
 }
 
 LOGICAL
-MiEnableVerifier (
-    IN PKLDR_DATA_TABLE_ENTRY DataTableEntry
-    )
+MiEnableVerifier(IN PKLDR_DATA_TABLE_ENTRY DataTableEntry)
 
 /*++
 
@@ -6721,30 +6000,32 @@ Environment:
     PDRIVER_VERIFIER_THUNK_PAIRS ThunkTable;
     PDRIVER_SPECIFIED_VERIFIER_THUNKS ThunkTableBase;
 
-    ImportThunk = (PULONG_PTR)RtlImageDirectoryEntryToData(
-                                               DataTableEntry->DllBase,
-                                               TRUE,
-                                               IMAGE_DIRECTORY_ENTRY_IAT,
-                                               &ImportSize);
+    ImportThunk =
+        (PULONG_PTR)RtlImageDirectoryEntryToData(DataTableEntry->DllBase, TRUE, IMAGE_DIRECTORY_ENTRY_IAT, &ImportSize);
 
-    if (ImportThunk == NULL) {
+    if (ImportThunk == NULL)
+    {
         return FALSE;
     }
 
     ImportSize /= sizeof(PULONG_PTR);
 
-    for (i = 0; i < ImportSize; i += 1, ImportThunk += 1) {
+    for (i = 0; i < ImportSize; i += 1, ImportThunk += 1)
+    {
 
         Found = FALSE;
 
-        if (KernelVerifier == FALSE) {
+        if (KernelVerifier == FALSE)
+        {
             VerifierThunk = MiVerifierThunks;
 
-            while (VerifierThunk->PristineRoutineAsciiName != NULL) {
+            while (VerifierThunk->PristineRoutineAsciiName != NULL)
+            {
 
                 RealRoutine = (ULONG_PTR)VerifierThunk->PristineRoutine;
 
-                if (*ImportThunk == RealRoutine) {
+                if (*ImportThunk == RealRoutine)
+                {
                     *ImportThunk = (ULONG_PTR)(VerifierThunk->NewRoutine);
                     Found = TRUE;
                     break;
@@ -6753,14 +6034,17 @@ Environment:
             }
         }
 
-        if (Found == FALSE) {
+        if (Found == FALSE)
+        {
             VerifierThunk = MiVerifierPoolThunks;
 
-            while (VerifierThunk->PristineRoutineAsciiName != NULL) {
+            while (VerifierThunk->PristineRoutineAsciiName != NULL)
+            {
 
                 RealRoutine = (ULONG_PTR)VerifierThunk->PristineRoutine;
 
-                if (*ImportThunk == RealRoutine) {
+                if (*ImportThunk == RealRoutine)
+                {
                     *ImportThunk = (ULONG_PTR)(VerifierThunk->NewRoutine);
                     Found = TRUE;
                     break;
@@ -6769,20 +6053,22 @@ Environment:
             }
         }
 
-        if (Found == FALSE) {
+        if (Found == FALSE)
+        {
 
             NextEntry = MiVerifierDriverAddedThunkListHead.Flink;
-            while (NextEntry != &MiVerifierDriverAddedThunkListHead) {
+            while (NextEntry != &MiVerifierDriverAddedThunkListHead)
+            {
 
-                ThunkTableBase = CONTAINING_RECORD(NextEntry,
-                                                   DRIVER_SPECIFIED_VERIFIER_THUNKS,
-                                                   ListEntry);
+                ThunkTableBase = CONTAINING_RECORD(NextEntry, DRIVER_SPECIFIED_VERIFIER_THUNKS, ListEntry);
 
                 ThunkTable = (PDRIVER_VERIFIER_THUNK_PAIRS)(ThunkTableBase + 1);
 
-                for (j = 0; j < ThunkTableBase->NumberOfThunks; j += 1) {
+                for (j = 0; j < ThunkTableBase->NumberOfThunks; j += 1)
+                {
 
-                    if (*ImportThunk == (ULONG_PTR)ThunkTable->PristineRoutine) {
+                    if (*ImportThunk == (ULONG_PTR)ThunkTable->PristineRoutine)
+                    {
                         *ImportThunk = (ULONG_PTR)(ThunkTable->NewRoutine);
                         Found = TRUE;
                         break;
@@ -6790,7 +6076,8 @@ Environment:
                     ThunkTable += 1;
                 }
 
-                if (Found == TRUE) {
+                if (Found == TRUE)
+                {
                     break;
                 }
 
@@ -6802,9 +6089,7 @@ Environment:
 }
 
 LOGICAL
-MiReEnableVerifier (
-    IN PKLDR_DATA_TABLE_ENTRY DataTableEntry
-    )
+MiReEnableVerifier(IN PKLDR_DATA_TABLE_ENTRY DataTableEntry)
 
 /*++
 
@@ -6842,13 +6127,11 @@ Environment:
     PDRIVER_SPECIFIED_VERIFIER_THUNKS ThunkTableBase;
     ULONG Offset;
 
-    ImportThunk = (PULONG_PTR)RtlImageDirectoryEntryToData(
-                                               DataTableEntry->DllBase,
-                                               TRUE,
-                                               IMAGE_DIRECTORY_ENTRY_IAT,
-                                               &ImportSize);
+    ImportThunk =
+        (PULONG_PTR)RtlImageDirectoryEntryToData(DataTableEntry->DllBase, TRUE, IMAGE_DIRECTORY_ENTRY_IAT, &ImportSize);
 
-    if (ImportThunk == NULL) {
+    if (ImportThunk == NULL)
+    {
         return FALSE;
     }
 
@@ -6863,49 +6146,49 @@ Environment:
 
     VirtualPageFrameIndex = 0;
 
-    for (i = 0; i < ImportSize; i += 1, ImportThunk += 1) {
+    for (i = 0; i < ImportSize; i += 1, ImportThunk += 1)
+    {
 
         Found = FALSE;
 
         NextEntry = MiVerifierDriverAddedThunkListHead.Flink;
-        while (NextEntry != &MiVerifierDriverAddedThunkListHead) {
+        while (NextEntry != &MiVerifierDriverAddedThunkListHead)
+        {
 
-            ThunkTableBase = CONTAINING_RECORD(NextEntry,
-                                               DRIVER_SPECIFIED_VERIFIER_THUNKS,
-                                               ListEntry);
+            ThunkTableBase = CONTAINING_RECORD(NextEntry, DRIVER_SPECIFIED_VERIFIER_THUNKS, ListEntry);
 
             ThunkTable = (PDRIVER_VERIFIER_THUNK_PAIRS)(ThunkTableBase + 1);
 
-            for (j = 0; j < ThunkTableBase->NumberOfThunks; j += 1) {
+            for (j = 0; j < ThunkTableBase->NumberOfThunks; j += 1)
+            {
 
-                if (*ImportThunk == (ULONG_PTR)ThunkTable->PristineRoutine) {
+                if (*ImportThunk == (ULONG_PTR)ThunkTable->PristineRoutine)
+                {
 
-                    ASSERT (MI_IS_PHYSICAL_ADDRESS(ImportThunk) == 0);
-                    PointerPte = MiGetPteAddress (ImportThunk);
-                    ASSERT (PointerPte->u.Hard.Valid == 1);
-                    PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE (PointerPte);
-                    Offset = (ULONG) MiGetByteOffset(ImportThunk);
+                    ASSERT(MI_IS_PHYSICAL_ADDRESS(ImportThunk) == 0);
+                    PointerPte = MiGetPteAddress(ImportThunk);
+                    ASSERT(PointerPte->u.Hard.Valid == 1);
+                    PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE(PointerPte);
+                    Offset = (ULONG)MiGetByteOffset(ImportThunk);
 
-                    if ((VirtualThunk != NULL) &&
-                        (VirtualPageFrameIndex == PageFrameIndex)) {
+                    if ((VirtualThunk != NULL) && (VirtualPageFrameIndex == PageFrameIndex))
+                    {
 
                         NOTHING;
                     }
-                    else {
+                    else
+                    {
 
-                        VirtualThunk = MiMapSinglePage (VirtualThunk,
-                                                        PageFrameIndex,
-                                                        MmCached,
-                                                        HighPagePriority);
+                        VirtualThunk = MiMapSinglePage(VirtualThunk, PageFrameIndex, MmCached, HighPagePriority);
 
-                        if (VirtualThunk == NULL) {
+                        if (VirtualThunk == NULL)
+                        {
                             return FALSE;
                         }
                         VirtualPageFrameIndex = PageFrameIndex;
                     }
 
-                    *(PULONG_PTR)((PUCHAR)VirtualThunk + Offset) =
-                        (ULONG_PTR)(ThunkTable->NewRoutine);
+                    *(PULONG_PTR)((PUCHAR)VirtualThunk + Offset) = (ULONG_PTR)(ThunkTable->NewRoutine);
 
                     Found = TRUE;
                     break;
@@ -6913,7 +6196,8 @@ Environment:
                 ThunkTable += 1;
             }
 
-            if (Found == TRUE) {
+            if (Found == TRUE)
+            {
                 break;
             }
 
@@ -6921,16 +6205,18 @@ Environment:
         }
     }
 
-    if (VirtualThunk != NULL) {
-        MiUnmapSinglePage (VirtualThunk);
+    if (VirtualThunk != NULL)
+    {
+        MiUnmapSinglePage(VirtualThunk);
     }
 
     return TRUE;
 }
 
-typedef struct _KERNEL_VERIFIER_THUNK_PAIRS {
-    PDRIVER_VERIFIER_THUNK_ROUTINE  PristineRoutine;
-    PDRIVER_VERIFIER_THUNK_ROUTINE  NewRoutine;
+typedef struct _KERNEL_VERIFIER_THUNK_PAIRS
+{
+    PDRIVER_VERIFIER_THUNK_ROUTINE PristineRoutine;
+    PDRIVER_VERIFIER_THUNK_ROUTINE NewRoutine;
 } KERNEL_VERIFIER_THUNK_PAIRS, *PKERNEL_VERIFIER_THUNK_PAIRS;
 
 #if defined(_X86_)
@@ -6981,10 +6267,7 @@ const KERNEL_VERIFIER_THUNK_PAIRS MiKernelVerifierThunks[] = {
 #pragma data_seg()
 #endif
 
-VOID
-MiEnableKernelVerifier (
-    VOID
-    )
+VOID MiEnableKernelVerifier(VOID)
 
 /*++
 
@@ -7016,27 +6299,29 @@ Environment:
     ULONG_PTR RealRoutine;
     PULONG_PTR PointerRealRoutine;
 
-    if (KernelVerifier == FALSE) {
+    if (KernelVerifier == FALSE)
+    {
         return;
     }
 
-    ImportThunk = (PULONG_PTR)RtlImageDirectoryEntryToData(
-                                               PsNtosImageBase,
-                                               TRUE,
-                                               IMAGE_DIRECTORY_ENTRY_IAT,
-                                               &ImportSize);
+    ImportThunk =
+        (PULONG_PTR)RtlImageDirectoryEntryToData(PsNtosImageBase, TRUE, IMAGE_DIRECTORY_ENTRY_IAT, &ImportSize);
 
-    if (ImportThunk == NULL) {
+    if (ImportThunk == NULL)
+    {
         return;
     }
 
     ImportSize /= sizeof(PULONG_PTR);
 
-    for (i = 0; i < ImportSize; i += 1, ImportThunk += 1) {
+    for (i = 0; i < ImportSize; i += 1, ImportThunk += 1)
+    {
 
         VerifierThunk = MiKernelVerifierThunks;
 
-        for (ThunkCount = 0; ThunkCount < sizeof (MiKernelVerifierThunks) / sizeof (KERNEL_VERIFIER_THUNK_PAIRS); ThunkCount += 1) {
+        for (ThunkCount = 0; ThunkCount < sizeof(MiKernelVerifierThunks) / sizeof(KERNEL_VERIFIER_THUNK_PAIRS);
+             ThunkCount += 1)
+        {
 
             //
             // Only the x86 has/needs this oddity - take the kernel address,
@@ -7044,16 +6329,18 @@ Environment:
             // a 4-byte indirect pointer to a destination address.
             //
 
-            PointerRealRoutine = (PULONG_PTR)*((PULONG_PTR)((ULONG_PTR)VerifierThunk->PristineRoutine + 2));
+            PointerRealRoutine = (PULONG_PTR) * ((PULONG_PTR)((ULONG_PTR)VerifierThunk->PristineRoutine + 2));
             RealRoutine = *PointerRealRoutine;
 
-            if (*ImportThunk == RealRoutine) {
+            if (*ImportThunk == RealRoutine)
+            {
 
                 //
                 // Order is important here.
                 //
 
-                if (MiKernelVerifierOriginalCalls[ThunkCount] == NULL) {
+                if (MiKernelVerifierOriginalCalls[ThunkCount] == NULL)
+                {
                     MiKernelVerifierOriginalCalls[ThunkCount] = (PVOID)RealRoutine;
                 }
 

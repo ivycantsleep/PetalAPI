@@ -24,13 +24,12 @@ Revision History:
 #include <ntrtl.h>
 #include <nturtl.h>
 
-#define _TST_USER_  // User mode test
+#define _TST_USER_ // User mode test
 
-#include "tsecomm.c"     // Common routines
-#include "ctseqos.c"     // quality of service tests
+#include "tsecomm.c" // Common routines
+#include "ctseqos.c" // quality of service tests
 
 
-
 BOOLEAN
 Test()
 {
@@ -42,7 +41,7 @@ Test()
 
     return Result;
 }
-
+
 BOOLEAN
 main()
 {

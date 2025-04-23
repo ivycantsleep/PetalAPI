@@ -36,11 +36,11 @@ Revision History:
 #include "pnprlist.h"
 #include "pnpiop.h"
 
-#if (( defined(_X86_) ) && ( FPO ))
-#pragma optimize( "y", off )    // disable FPO for consistent stack traces
+#if ((defined(_X86_)) && (FPO))
+#pragma optimize("y", off) // disable FPO for consistent stack traces
 #endif
 
-#define POOL_TAG_DEFERRED_CONTEXT   'dprI'
+#define POOL_TAG_DEFERRED_CONTEXT 'dprI'
 
 //
 // This entire file is only present if NO_SPECIAL_IRP isn't defined
@@ -159,139 +159,143 @@ ULONG IovpIrpTrackingSpewLevel = 0;
  */
 
 
-VOID
-FASTCALL
-IovpPacketFromIrp(
-    IN  PIRP                Irp,
-    OUT PIOV_REQUEST_PACKET *IovPacket
-    )
+VOID FASTCALL IovpPacketFromIrp(IN PIRP Irp, OUT PIOV_REQUEST_PACKET *IovPacket)
 {
     //
     // The examined flag is set on any IRP that has come through
     // IofCallDriver. We use the flag to detect whether we have seen the IRP
     // before.
     //
-    switch(Irp->Flags&IRPFLAG_EXAMINE_MASK) {
+    switch (Irp->Flags & IRPFLAG_EXAMINE_MASK)
+    {
 
-        case IRPFLAG_EXAMINE_NOT_TRACKED:
+    case IRPFLAG_EXAMINE_NOT_TRACKED:
+
+        //
+        // This packet is marked do not touch. So we ignore it.
+        //
+        *IovPacket = NULL;
+        return;
+
+    case IRPFLAG_EXAMINE_TRACKED:
+
+        //
+        // This packet has been marked. We should find it.
+        //
+        *IovPacket = VfPacketFindAndLock(Irp);
+        ASSERT(*IovPacket != NULL);
+        return;
+
+    case IRPFLAG_EXAMINE_UNMARKED:
+
+        *IovPacket = VfPacketFindAndLock(Irp);
+        if (*IovPacket)
+        {
 
             //
-            // This packet is marked do not touch. So we ignore it.
+            // Was tracked but cache flag got wiped. Replace.
             //
-            *IovPacket = NULL;
-            return;
-
-        case IRPFLAG_EXAMINE_TRACKED:
+            Irp->Flags |= IRPFLAG_EXAMINE_TRACKED;
+        }
+        else if (VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_TRACK_IRPS))
+        {
 
             //
-            // This packet has been marked. We should find it.
+            // Create the packet
             //
-            *IovPacket = VfPacketFindAndLock(Irp);
-            ASSERT(*IovPacket != NULL);
-            return;
-
-        case IRPFLAG_EXAMINE_UNMARKED:
-
-            *IovPacket = VfPacketFindAndLock(Irp);
-            if (*IovPacket) {
+            *IovPacket = VfPacketCreateAndLock(Irp);
+            if (*IovPacket)
+            {
 
                 //
-                // Was tracked but cache flag got wiped. Replace.
+                // Mark it
                 //
                 Irp->Flags |= IRPFLAG_EXAMINE_TRACKED;
-
-            } else if (VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_TRACK_IRPS)) {
-
-                //
-                // Create the packet
-                //
-                *IovPacket = VfPacketCreateAndLock(Irp);
-                if (*IovPacket) {
-
-                    //
-                    // Mark it
-                    //
-                    Irp->Flags |= IRPFLAG_EXAMINE_TRACKED;
-                } else {
-
-                    //
-                    // No memory, try to keep it out of the IRP assert though.
-                    //
-                    Irp->Flags |= IRPFLAG_EXAMINE_NOT_TRACKED;
-                }
-            } else {
+            }
+            else
+            {
 
                 //
-                // Do as told, don't track through IofCallDriver.
+                // No memory, try to keep it out of the IRP assert though.
                 //
                 Irp->Flags |= IRPFLAG_EXAMINE_NOT_TRACKED;
             }
-            return;
+        }
+        else
+        {
 
-        default:
-            ASSERT(0);
-            *IovPacket = NULL;
-            return;
+            //
+            // Do as told, don't track through IofCallDriver.
+            //
+            Irp->Flags |= IRPFLAG_EXAMINE_NOT_TRACKED;
+        }
+        return;
+
+    default:
+        ASSERT(0);
+        *IovPacket = NULL;
+        return;
     }
 }
 
 
 BOOLEAN
 FASTCALL
-IovpCheckIrpForCriticalTracking(
-    IN  PIRP                Irp
-    )
+IovpCheckIrpForCriticalTracking(IN PIRP Irp)
 {
     PIOV_REQUEST_PACKET iovPacket;
     PIOV_SESSION_DATA iovSessionData;
 
-    switch(Irp->Flags&IRPFLAG_EXAMINE_MASK) {
+    switch (Irp->Flags & IRPFLAG_EXAMINE_MASK)
+    {
 
-        case IRPFLAG_EXAMINE_NOT_TRACKED:
+    case IRPFLAG_EXAMINE_NOT_TRACKED:
 
-            //
-            // Noncritical, we can avoid tracking this if memory is tight.
-            //
+        //
+        // Noncritical, we can avoid tracking this if memory is tight.
+        //
+        return FALSE;
+
+    case IRPFLAG_EXAMINE_TRACKED:
+
+        //
+        // Might be critical.
+        //
+        iovPacket = VfPacketFindAndLock(Irp);
+
+        ASSERT(iovPacket);
+
+        if (iovPacket == NULL)
+        {
+
             return FALSE;
+        }
 
-        case IRPFLAG_EXAMINE_TRACKED:
+        break;
+
+    case IRPFLAG_EXAMINE_UNMARKED:
+
+        iovPacket = VfPacketFindAndLock(Irp);
+
+        if (iovPacket)
+        {
 
             //
-            // Might be critical.
+            // Was tracked but cache flag got wiped. Replace.
             //
-            iovPacket = VfPacketFindAndLock(Irp);
-
-            ASSERT(iovPacket);
-
-            if (iovPacket == NULL) {
-
-                return FALSE;
-            }
-
+            Irp->Flags |= IRPFLAG_EXAMINE_TRACKED;
             break;
+        }
 
-        case IRPFLAG_EXAMINE_UNMARKED:
+        //
+        // Noncritical.
+        //
+        Irp->Flags |= IRPFLAG_EXAMINE_NOT_TRACKED;
+        return FALSE;
 
-            iovPacket = VfPacketFindAndLock(Irp);
-
-            if (iovPacket) {
-
-                //
-                // Was tracked but cache flag got wiped. Replace.
-                //
-                Irp->Flags |= IRPFLAG_EXAMINE_TRACKED;
-                break;
-            }
-
-            //
-            // Noncritical.
-            //
-            Irp->Flags |= IRPFLAG_EXAMINE_NOT_TRACKED;
-            return FALSE;
-
-        default:
-            ASSERT(0);
-            return FALSE;
+    default:
+        ASSERT(0);
+        return FALSE;
     }
 
     //
@@ -304,13 +308,8 @@ IovpCheckIrpForCriticalTracking(
 }
 
 
-VOID
-FASTCALL
-IovpCallDriver1(
-    IN      PDEVICE_OBJECT              DeviceObject,
-    IN OUT  PIRP                       *IrpPointer,
-    IN OUT  PIOFCALLDRIVER_STACKDATA    IofCallDriverStackData  OPTIONAL
-    )
+VOID FASTCALL IovpCallDriver1(IN PDEVICE_OBJECT DeviceObject, IN OUT PIRP *IrpPointer,
+                              IN OUT PIOFCALLDRIVER_STACKDATA IofCallDriverStackData OPTIONAL)
 /*++
 
   Description:
@@ -354,7 +353,8 @@ IovpCallDriver1(
     LARGE_INTEGER arrivalTime;
     KIRQL invocationIrql;
 
-    if (IofCallDriverStackData == NULL) {
+    if (IofCallDriverStackData == NULL)
+    {
 
         //
         // Nothing to track.
@@ -363,7 +363,7 @@ IovpCallDriver1(
     }
 
     irp = *IrpPointer;
-    irpSp = IoGetNextIrpStackLocation( irp );
+    irpSp = IoGetNextIrpStackLocation(irp);
     invocationIrql = KeGetCurrentIrql();
 
     //
@@ -371,7 +371,8 @@ IovpCallDriver1(
     // level with a lock held if a packet was available.
     //
     IovpPacketFromIrp(irp, &iovPacket);
-    if (iovPacket == NULL) {
+    if (iovPacket == NULL)
+    {
 
         //
         // Nothing to track, get out.
@@ -394,16 +395,19 @@ IovpCallDriver1(
     //
     // Get the address of IoCallDriver's invoker.
     //
-    if (irpSp->MajorFunction == IRP_MJ_POWER) {
+    if (irpSp->MajorFunction == IRP_MJ_POWER)
+    {
 
         framesCaptured = RtlCaptureStackBackTrace(5, 1, &callerAddress, &stackHash);
-
-    } else {
+    }
+    else
+    {
 
         framesCaptured = RtlCaptureStackBackTrace(3, 1, &callerAddress, &stackHash);
     }
 
-    if (framesCaptured != 1) {
+    if (framesCaptured != 1)
+    {
 
         callerAddress = NULL;
     }
@@ -411,14 +415,10 @@ IovpCallDriver1(
     //
     // If we are going to die shortly, kindly say so.
     //
-    if (DeviceObject == NULL) {
+    if (DeviceObject == NULL)
+    {
 
-        WDM_FAIL_ROUTINE((
-            DCERROR_NULL_DEVOBJ_FORWARDED,
-            DCPARAM_IRP + DCPARAM_ROUTINE,
-            callerAddress,
-            irp
-            ));
+        WDM_FAIL_ROUTINE((DCERROR_NULL_DEVOBJ_FORWARDED, DCPARAM_IRP + DCPARAM_ROUTINE, callerAddress, irp));
     }
 
     //
@@ -427,22 +427,21 @@ IovpCallDriver1(
     //
     iovSessionData = VfPacketGetCurrentSessionData(iovPacket);
 
-    if (iovSessionData) {
+    if (iovSessionData)
+    {
 
         //
         // Pre-existing session (ie, the IRP is being forwarded.)
         //
-        ASSERT(iovPacket->Flags&TRACKFLAG_ACTIVE);
+        ASSERT(iovPacket->Flags & TRACKFLAG_ACTIVE);
         isNewSession = FALSE;
 
-        IovpSessionDataAdvance(
-            DeviceObject,
-            iovSessionData,      // This param is optional.
-            &iovPacket,
-            &surrogateSpawned
-            );
-
-    } else if (!(iovPacket->Flags&TRACKFLAG_ACTIVE)){
+        IovpSessionDataAdvance(DeviceObject,
+                               iovSessionData, // This param is optional.
+                               &iovPacket, &surrogateSpawned);
+    }
+    else if (!(iovPacket->Flags & TRACKFLAG_ACTIVE))
+    {
 
         //
         // New session. Mark the IRP as "active".
@@ -450,13 +449,10 @@ IovpCallDriver1(
         iovPacket->Flags |= TRACKFLAG_ACTIVE;
         isNewSession = TRUE;
 
-        iovSessionData = IovpSessionDataCreate(
-            DeviceObject,
-            &iovPacket,
-            &surrogateSpawned
-            );
-
-    } else {
+        iovSessionData = IovpSessionDataCreate(DeviceObject, &iovPacket, &surrogateSpawned);
+    }
+    else
+    {
 
         //
         // Might hit this path under low memory, or we are tracking allocations
@@ -472,7 +468,8 @@ IovpCallDriver1(
     IofCallDriverStackData->IovPacket = iovPacket;
     IofCallDriverStackData->DispatchRoutine = DeviceObject->DriverObject->MajorFunction[irpSp->MajorFunction];
 
-    if (iovSessionData == NULL) {
+    if (iovSessionData == NULL)
+    {
 
         VfPacketReleaseLock(iovPacket);
         return;
@@ -480,7 +477,8 @@ IovpCallDriver1(
 
     VfPacketLogEntry(iovPacket, IOV_EVENT_IO_CALL_DRIVER, callerAddress, 0);
 
-    if (surrogateSpawned) {
+    if (surrogateSpawned)
+    {
 
         //
         // iovPacket was changed to cover the surrogate IRP. Update our own
@@ -491,13 +489,15 @@ IovpCallDriver1(
         *IrpPointer = irp;
     }
 
-    if (isNewSession) {
+    if (isNewSession)
+    {
 
         VfPacketReference(iovPacket, IOVREFTYPE_POINTER);
         IovpSessionDataReference(iovSessionData);
     }
 
-    if (VfSettingsIsOptionEnabled(iovPacket->VerifierSettings, VERIFIER_OPTION_POLICE_IRPS)) {
+    if (VfSettingsIsOptionEnabled(iovPacket->VerifierSettings, VERIFIER_OPTION_POLICE_IRPS))
+    {
 
         //
         // If someone has given us an IRP with a cancel routine, beat them. Drivers
@@ -507,14 +507,10 @@ IovpCallDriver1(
         // own (which it may). Nor is the lower driver expected to put yours back
         // either...
         //
-        if (irp->CancelRoutine) {
+        if (irp->CancelRoutine)
+        {
 
-            WDM_FAIL_ROUTINE((
-                DCERROR_CANCELROUTINE_FORWARDED,
-                DCPARAM_IRP + DCPARAM_ROUTINE,
-                callerAddress,
-                irp
-                ));
+            WDM_FAIL_ROUTINE((DCERROR_CANCELROUTINE_FORWARDED, DCPARAM_IRP + DCPARAM_ROUTINE, callerAddress, irp));
 
             irp->CancelRoutine = NULL;
         }
@@ -523,7 +519,8 @@ IovpCallDriver1(
     //
     // Now do any checking that requires tracking data.
     //
-    if (iovPacket->Flags&TRACKFLAG_QUEUED_INTERNALLY) {
+    if (iovPacket->Flags & TRACKFLAG_QUEUED_INTERNALLY)
+    {
 
         //
         // We internally queue irps to catch bugs. When we are doing this, we
@@ -532,12 +529,7 @@ IovpCallDriver1(
         // This particular caller is trying to forward an IRP he doesn't own,
         // and we didn't actually end up with an untouchable irp.
         //
-        WDM_FAIL_ROUTINE((
-            DCERROR_QUEUED_IRP_FORWARDED,
-            DCPARAM_IRP + DCPARAM_ROUTINE,
-            callerAddress,
-            irp
-            ));
+        WDM_FAIL_ROUTINE((DCERROR_QUEUED_IRP_FORWARDED, DCPARAM_IRP + DCPARAM_ROUTINE, callerAddress, irp));
     }
 
     //
@@ -546,29 +538,12 @@ IovpCallDriver1(
     // We also need to see exactly how the IRP was forwarded (down the stack,
     // to another stack, straight to the PDO, etc).
     //
-    IovpExamineDevObjForwarding(
-        DeviceObject,
-        iovSessionData->DeviceLastCalled,
-        &iovSessionData->ForwardMethod
-        );
+    IovpExamineDevObjForwarding(DeviceObject, iovSessionData->DeviceLastCalled, &iovSessionData->ForwardMethod);
 
-    IovpExamineIrpStackForwarding(
-        iovPacket,
-        isNewSession,
-        iovSessionData->ForwardMethod,
-        DeviceObject,
-        irp,
-        callerAddress,
-        &irpSp,
-        &irpLastSp,
-        &locationsAdvanced
-        );
+    IovpExamineIrpStackForwarding(iovPacket, isNewSession, iovSessionData->ForwardMethod, DeviceObject, irp,
+                                  callerAddress, &irpSp, &irpLastSp, &locationsAdvanced);
 
-    TRACKIRP_DBGPRINT((
-        "  CD1: Current, Last = (%x, %x)\n",
-        irp->CurrentLocation,
-        iovPacket->LastLocation
-        ), 3);
+    TRACKIRP_DBGPRINT(("  CD1: Current, Last = (%x, %x)\n", irp->CurrentLocation, iovPacket->LastLocation), 3);
 
     //
     // Figure out whether this is a new request or not, and record a
@@ -580,26 +555,20 @@ IovpCallDriver1(
     // Record information in our private stack locations and
     // write that back into the "stack" data itself...
     //
-    previouslyInUse = IovpAdvanceStackDownwards(
-        iovSessionData->StackData,
-        irp->CurrentLocation,
-        irpSp,
-        irpLastSp,
-        locationsAdvanced,
-        isNewRequest,
-        TRUE,
-        &iovCurrentStackLocation
-        );
+    previouslyInUse = IovpAdvanceStackDownwards(iovSessionData->StackData, irp->CurrentLocation, irpSp, irpLastSp,
+                                                locationsAdvanced, isNewRequest, TRUE, &iovCurrentStackLocation);
 
     ASSERT(iovCurrentStackLocation);
 
-    if (previouslyInUse) {
+    if (previouslyInUse)
+    {
 
         ASSERT(!isNewRequest);
         ASSERT(!isNewSession);
         iovCurrentStackLocation->PerfDispatchStart = arrivalTime;
-
-    } else {
+    }
+    else
+    {
 
         IofCallDriverStackData->Flags |= CALLFLAG_TOPMOST_IN_SLOT;
         InitializeListHead(&IofCallDriverStackData->SharedLocationList);
@@ -611,11 +580,13 @@ IovpCallDriver1(
         // Record the first thread this IRP slot was dispatched to.
         //
         iovCurrentStackLocation->ThreadDispatchedTo = PsGetCurrentThread();
-        if (isNewRequest) {
+        if (isNewRequest)
+        {
 
             iovCurrentStackLocation->InitialStatusBlock = irp->IoStatus;
             iovCurrentStackLocation->LastStatusBlock = irp->IoStatus;
-            if (isNewSession) {
+            if (isNewSession)
+            {
 
                 iovCurrentStackLocation->Flags |= STACKFLAG_FIRST_REQUEST;
             }
@@ -631,9 +602,12 @@ IovpCallDriver1(
     // PDO if he has never attached to anyone.
     //
     IovUtilGetLowerDeviceObject(DeviceObject, &lowerDeviceObject);
-    if (lowerDeviceObject) {
+    if (lowerDeviceObject)
+    {
         ObDereferenceObject(lowerDeviceObject);
-    } else {
+    }
+    else
+    {
         iovCurrentStackLocation->Flags |= STACKFLAG_REACHED_PDO;
     }
 
@@ -656,10 +630,7 @@ IovpCallDriver1(
     // be later. Add him to the linked list of addresses to scribble away
     // stati when the appropriate level is completed.
     //
-    InsertHeadList(
-        &iovCurrentStackLocation->CallStackData,
-        &IofCallDriverStackData->SharedLocationList
-        );
+    InsertHeadList(&iovCurrentStackLocation->CallStackData, &IofCallDriverStackData->SharedLocationList);
 
     //
     // More IofCallDriver2 stuff, tell him the stack location.
@@ -678,14 +649,15 @@ IovpCallDriver1(
     // (PoCallDriver does this). We must remember this, because the unwind
     // should be treated as if STATUS_PENDING was returned.
     //
-    if (irpSp->Control & SL_PENDING_RETURNED) {
+    if (irpSp->Control & SL_PENDING_RETURNED)
+    {
 
         IofCallDriverStackData->Flags |= CALLFLAG_ARRIVED_PENDING;
     }
 
     // If it's a remove IRP, mark everyone appropriately
-    if ((irpSp->MajorFunction == IRP_MJ_PNP)&&
-        (irpSp->MinorFunction == IRP_MN_REMOVE_DEVICE)) {
+    if ((irpSp->MajorFunction == IRP_MJ_PNP) && (irpSp->MinorFunction == IRP_MN_REMOVE_DEVICE))
+    {
 
         IofCallDriverStackData->Flags |= CALLFLAG_IS_REMOVE_IRP;
 
@@ -693,49 +665,34 @@ IovpCallDriver1(
         ASSERT(pdo);
         IofCallDriverStackData->RemovePdo = pdo;
         ObDereferenceObject(pdo);
-        if (IovUtilIsInFdoStack(DeviceObject) && (!IovUtilIsRawPdo(DeviceObject))) {
+        if (IovUtilIsInFdoStack(DeviceObject) && (!IovUtilIsRawPdo(DeviceObject)))
+        {
 
             IofCallDriverStackData->Flags |= CALLFLAG_REMOVING_FDO_STACK_DO;
         }
     }
 
     if (VfSettingsIsOptionEnabled(iovPacket->VerifierSettings, VERIFIER_OPTION_POLICE_IRPS) &&
-        VfSettingsIsOptionEnabled(iovPacket->VerifierSettings, VERIFIER_OPTION_MONITOR_MAJORS)) {
+        VfSettingsIsOptionEnabled(iovPacket->VerifierSettings, VERIFIER_OPTION_MONITOR_MAJORS))
+    {
 
         //
         // Do IRP-major specific assertions as appropriate
         //
-        if (isNewSession) {
+        if (isNewSession)
+        {
 
-            VfMajorVerifyNewIrp(
-                iovPacket,
-                irp,
-                irpSp,
-                iovCurrentStackLocation,
-                callerAddress
-                );
+            VfMajorVerifyNewIrp(iovPacket, irp, irpSp, iovCurrentStackLocation, callerAddress);
         }
 
-        if (isNewRequest) {
+        if (isNewRequest)
+        {
 
-            VfMajorVerifyNewRequest(
-                iovPacket,
-                DeviceObject,
-                irpLastSp,
-                irpSp,
-                iovCurrentStackLocation,
-                callerAddress
-                );
+            VfMajorVerifyNewRequest(iovPacket, DeviceObject, irpLastSp, irpSp, iovCurrentStackLocation, callerAddress);
         }
 
-        VfMajorVerifyIrpStackDownward(
-            iovPacket,
-            DeviceObject,
-            irpLastSp,
-            irpSp,
-            iovCurrentStackLocation,
-            callerAddress
-            );
+        VfMajorVerifyIrpStackDownward(iovPacket, DeviceObject, irpLastSp, irpSp, iovCurrentStackLocation,
+                                      callerAddress);
     }
 
     //
@@ -749,11 +706,12 @@ IovpCallDriver1(
     // Dope the next stack location so we can detect usage of
     // IoCopyCurrentIrpStackLocationToNext or IoSetCompletionRoutine.
     //
-    if (irp->CurrentLocation>1) {
-        IoSetNextIrpStackLocation( irp );
-        irpSp = IoGetNextIrpStackLocation( irp );
+    if (irp->CurrentLocation > 1)
+    {
+        IoSetNextIrpStackLocation(irp);
+        irpSp = IoGetNextIrpStackLocation(irp);
         irpSp->Control |= SL_NOTCOPIED;
-        IoSkipCurrentIrpStackLocation( irp );
+        IoSkipCurrentIrpStackLocation(irp);
     }
 
     //
@@ -762,10 +720,11 @@ IovpCallDriver1(
     // set must have been cleared if Cancel = TRUE. They don't handle the case
     // were the Irp was cancelled in flight.
     //
-    if (VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_RANDOMLY_CANCEL_IRPS) &&
-        (!(irp->Flags & IRP_PAGING_IO))) {
+    if (VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_RANDOMLY_CANCEL_IRPS) && (!(irp->Flags & IRP_PAGING_IO)))
+    {
 
-        if (((++IovpCancelCount) % 4000) == 0) {
+        if (((++IovpCancelCount) % 4000) == 0)
+        {
 
             irp->Cancel = TRUE;
         }
@@ -774,7 +733,7 @@ IovpCallDriver1(
     //
     // Assert LastLocation is consistent with an IRP that may be completed.
     //
-    ASSERT(iovSessionData->StackData[iovPacket->LastLocation-1].InUse);
+    ASSERT(iovSessionData->StackData[iovPacket->LastLocation - 1].InUse);
 
     IovpSessionDataReference(iovSessionData);
     VfPacketReference(iovPacket, IOVREFTYPE_PACKET);
@@ -782,13 +741,8 @@ IovpCallDriver1(
 }
 
 
-VOID
-FASTCALL
-IovpCallDriver2(
-    IN      PDEVICE_OBJECT              DeviceObject,
-    IN OUT  NTSTATUS                    *FinalStatus,
-    IN      PIOFCALLDRIVER_STACKDATA    IofCallDriverStackData  OPTIONAL
-    )
+VOID FASTCALL IovpCallDriver2(IN PDEVICE_OBJECT DeviceObject, IN OUT NTSTATUS *FinalStatus,
+                              IN PIOFCALLDRIVER_STACKDATA IofCallDriverStackData OPTIONAL)
 /*++
 
   Description:
@@ -822,13 +776,15 @@ IovpCallDriver2(
     BOOLEAN pendingReturned;
     PDEVICE_OBJECT lowerDevObj;
 
-    if (IofCallDriverStackData == NULL) {
+    if (IofCallDriverStackData == NULL)
+    {
 
         return;
     }
 
     iovSessionData = IofCallDriverStackData->IovSessionData;
-    if (iovSessionData == NULL) {
+    if (iovSessionData == NULL)
+    {
 
         return;
     }
@@ -838,33 +794,27 @@ IovpCallDriver2(
     ASSERT(iovPacket);
     VfPacketAcquireLock(iovPacket);
 
-    VfPacketLogEntry(
-        iovPacket,
-        IOV_EVENT_IO_CALL_DRIVER_UNWIND,
-        IofCallDriverStackData->DispatchRoutine,
-        *FinalStatus
-        );
+    VfPacketLogEntry(iovPacket, IOV_EVENT_IO_CALL_DRIVER_UNWIND, IofCallDriverStackData->DispatchRoutine, *FinalStatus);
 
     //
     // The IRP should be considered to have had pending returned if it arrived
     // pending or the return status was STATUS_PENDING.
     //
-    pendingReturned =
-        ((*FinalStatus == STATUS_PENDING) ||
-        (IofCallDriverStackData->Flags & CALLFLAG_ARRIVED_PENDING));
+    pendingReturned = ((*FinalStatus == STATUS_PENDING) || (IofCallDriverStackData->Flags & CALLFLAG_ARRIVED_PENDING));
 
     //
     // Also ensure People don't detach/delete on surprise-remove
     //
-    if ((IofCallDriverStackData->Flags&CALLFLAG_IS_REMOVE_IRP) &&
-        VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings,
-        VERIFIER_OPTION_MONITOR_REMOVES)) {
+    if ((IofCallDriverStackData->Flags & CALLFLAG_IS_REMOVE_IRP) &&
+        VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_MONITOR_REMOVES))
+    {
 
         //
         // Per bad spec, detaching and deleting occurs *after* the IRP is
         // completed.
         //
-        if (!pendingReturned) {
+        if (!pendingReturned)
+        {
 
             IovUtilGetLowerDeviceObject(DeviceObject, &lowerDevObj);
 
@@ -876,133 +826,130 @@ IovpCallDriver2(
             // referenced during a remove. If we decide to only reference the
             // top object, this logic would break...
             //
-            if (IofCallDriverStackData->Flags&CALLFLAG_REMOVING_FDO_STACK_DO) {
+            if (IofCallDriverStackData->Flags & CALLFLAG_REMOVING_FDO_STACK_DO)
+            {
 
                 //
                 // FDO, Upper, & Lower filters *must* go. Note that lowerDevObj
                 // should be null as we should have detached.
                 //
                 removalOption = PPVREMOVAL_SHOULD_DELETE;
+            }
+            else
+            {
 
-            } else {
-
-                removalOption = PpvUtilGetDevnodeRemovalOption(
-                    IofCallDriverStackData->RemovePdo
-                    );
+                removalOption = PpvUtilGetDevnodeRemovalOption(IofCallDriverStackData->RemovePdo);
             }
 
-            if (removalOption == PPVREMOVAL_SHOULD_DELETE) {
+            if (removalOption == PPVREMOVAL_SHOULD_DELETE)
+            {
 
                 //
                 // IoDetachDevice and IoDeleteDevice should have been called.
                 // First verify IoDetachDevice...
                 //
-                if (lowerDevObj) {
+                if (lowerDevObj)
+                {
 
-                    WDM_FAIL_ROUTINE((
-                        DCERROR_SHOULDVE_DETACHED,
-                        DCPARAM_IRPSNAP + DCPARAM_ROUTINE + DCPARAM_DEVOBJ,
-                        IofCallDriverStackData->DispatchRoutine,
-                        &IofCallDriverStackData->IrpSnapshot,
-                        DeviceObject
-                        ));
+                    WDM_FAIL_ROUTINE((DCERROR_SHOULDVE_DETACHED, DCPARAM_IRPSNAP + DCPARAM_ROUTINE + DCPARAM_DEVOBJ,
+                                      IofCallDriverStackData->DispatchRoutine, &IofCallDriverStackData->IrpSnapshot,
+                                      DeviceObject));
                 }
 
                 //
                 // Now verify IoDeleteDevice
                 //
-                if (!IovUtilIsDeviceObjectMarked(DeviceObject, MARKTYPE_DELETED)) {
+                if (!IovUtilIsDeviceObjectMarked(DeviceObject, MARKTYPE_DELETED))
+                {
 
-                    WDM_FAIL_ROUTINE((
-                        DCERROR_SHOULDVE_DELETED,
-                        DCPARAM_IRPSNAP + DCPARAM_ROUTINE + DCPARAM_DEVOBJ,
-                        IofCallDriverStackData->DispatchRoutine,
-                        &IofCallDriverStackData->IrpSnapshot,
-                        DeviceObject
-                        ));
+                    WDM_FAIL_ROUTINE((DCERROR_SHOULDVE_DELETED, DCPARAM_IRPSNAP + DCPARAM_ROUTINE + DCPARAM_DEVOBJ,
+                                      IofCallDriverStackData->DispatchRoutine, &IofCallDriverStackData->IrpSnapshot,
+                                      DeviceObject));
                 }
-
-            } else if (removalOption == PPVREMOVAL_SHOULDNT_DELETE) {
+            }
+            else if (removalOption == PPVREMOVAL_SHOULDNT_DELETE)
+            {
 
                 //
                 // Did we mistakenly leave? Verify we aren't a bus filter that
                 // has been fooled. In that case, no checking can be done...
                 //
-                ASSERT(!(IofCallDriverStackData->Flags&CALLFLAG_REMOVING_FDO_STACK_DO));
+                ASSERT(!(IofCallDriverStackData->Flags & CALLFLAG_REMOVING_FDO_STACK_DO));
 
-                if (DeviceObject == IofCallDriverStackData->RemovePdo) {
+                if (DeviceObject == IofCallDriverStackData->RemovePdo)
+                {
 
                     //
                     // Check PDO's - did we mistakenly delete ourselves?
                     //
-                    if (IovUtilIsDeviceObjectMarked(DeviceObject, MARKTYPE_DELETED)) {
+                    if (IovUtilIsDeviceObjectMarked(DeviceObject, MARKTYPE_DELETED))
+                    {
 
-                        WDM_FAIL_ROUTINE((
-                            DCERROR_DELETED_PRESENT_PDO,
-                            DCPARAM_IRPSNAP + DCPARAM_ROUTINE + DCPARAM_DEVOBJ,
-                            IofCallDriverStackData->DispatchRoutine,
-                            &IofCallDriverStackData->IrpSnapshot,
-                            DeviceObject
-                            ));
+                        WDM_FAIL_ROUTINE((DCERROR_DELETED_PRESENT_PDO,
+                                          DCPARAM_IRPSNAP + DCPARAM_ROUTINE + DCPARAM_DEVOBJ,
+                                          IofCallDriverStackData->DispatchRoutine, &IofCallDriverStackData->IrpSnapshot,
+                                          DeviceObject));
                     }
-
-                } else if (!IovUtilIsDeviceObjectMarked(DeviceObject, MARKTYPE_DELETED)) {
+                }
+                else if (!IovUtilIsDeviceObjectMarked(DeviceObject, MARKTYPE_DELETED))
+                {
 
                     //
                     // Check bus filters. Bus filters better not have detached
                     // or deleted themselves, as the PDO is still present!
                     //
-                    if (lowerDevObj == NULL) {
+                    if (lowerDevObj == NULL)
+                    {
 
                         //
                         // Oops, it detached. Baad bus filter...
                         //
-                        WDM_FAIL_ROUTINE((
-                            DCERROR_BUS_FILTER_ERRONEOUSLY_DETACHED,
-                            DCPARAM_IRPSNAP + DCPARAM_ROUTINE + DCPARAM_DEVOBJ,
-                            IofCallDriverStackData->DispatchRoutine,
-                            &IofCallDriverStackData->IrpSnapshot,
-                            DeviceObject
-                            ));
+                        WDM_FAIL_ROUTINE((DCERROR_BUS_FILTER_ERRONEOUSLY_DETACHED,
+                                          DCPARAM_IRPSNAP + DCPARAM_ROUTINE + DCPARAM_DEVOBJ,
+                                          IofCallDriverStackData->DispatchRoutine, &IofCallDriverStackData->IrpSnapshot,
+                                          DeviceObject));
                     }
 
-                    if (IovUtilIsDeviceObjectMarked(DeviceObject, MARKTYPE_DELETED)) {
+                    if (IovUtilIsDeviceObjectMarked(DeviceObject, MARKTYPE_DELETED))
+                    {
 
                         //
                         // It deleted itself. Also very bad...
                         //
-                        WDM_FAIL_ROUTINE((
-                            DCERROR_BUS_FILTER_ERRONEOUSLY_DELETED,
-                            DCPARAM_IRPSNAP + DCPARAM_ROUTINE + DCPARAM_DEVOBJ,
-                            IofCallDriverStackData->DispatchRoutine,
-                            &IofCallDriverStackData->IrpSnapshot,
-                            DeviceObject
-                            ));
+                        WDM_FAIL_ROUTINE((DCERROR_BUS_FILTER_ERRONEOUSLY_DELETED,
+                                          DCPARAM_IRPSNAP + DCPARAM_ROUTINE + DCPARAM_DEVOBJ,
+                                          IofCallDriverStackData->DispatchRoutine, &IofCallDriverStackData->IrpSnapshot,
+                                          DeviceObject));
                     }
                 }
             }
 
-            if (lowerDevObj) {
+            if (lowerDevObj)
+            {
 
                 ObDereferenceObject(lowerDevObj);
             }
         }
     }
 
-    if ((IofCallDriverStackData->Flags&CALLFLAG_COMPLETED) &&
+    if ((IofCallDriverStackData->Flags & CALLFLAG_COMPLETED) &&
         VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_MONITOR_PENDING_IO) &&
-        (!(iovSessionData->SessionFlags & SESSIONFLAG_MARKED_INCONSISTANT))) {
+        (!(iovSessionData->SessionFlags & SESSIONFLAG_MARKED_INCONSISTANT)))
+    {
 
         //
         // The rules for the pending bit require that it be set only if
         // STATUS_PENDING is returned, and likewise STATUS_PENDING can be returned
         // only if the IRP is marked pending.
         //
-        if (IofCallDriverStackData->Flags&CALLFLAG_MARKED_PENDING) {
+        if (IofCallDriverStackData->Flags & CALLFLAG_MARKED_PENDING)
+        {
 
-            if (!pendingReturned) {
+            if (!pendingReturned)
+            {
 
-                if (IofCallDriverStackData->IrpSnapshot.IoStackLocation.MajorFunction != IRP_MJ_POWER) {
+                if (IofCallDriverStackData->IrpSnapshot.IoStackLocation.MajorFunction != IRP_MJ_POWER)
+                {
 
                     //
                     // ADRIAO BUGBUG 2001/06/21 - Some bugs left uncaught
@@ -1018,21 +965,19 @@ IovpCallDriver2(
                     //
                     // We will address all this stuff next release.
                     //
-                    WDM_FAIL_ROUTINE((
-                        DCERROR_PENDING_MARKED_NOT_RETURNED,
-                        DCPARAM_IRPSNAP + DCPARAM_ROUTINE + DCPARAM_STATUS,
-                        IofCallDriverStackData->DispatchRoutine,
-                        &IofCallDriverStackData->IrpSnapshot,
-                        *FinalStatus
-                        ));
+                    WDM_FAIL_ROUTINE(
+                        (DCERROR_PENDING_MARKED_NOT_RETURNED, DCPARAM_IRPSNAP + DCPARAM_ROUTINE + DCPARAM_STATUS,
+                         IofCallDriverStackData->DispatchRoutine, &IofCallDriverStackData->IrpSnapshot, *FinalStatus));
                 }
 
                 iovSessionData->SessionFlags |= SESSIONFLAG_MARKED_INCONSISTANT;
             }
+        }
+        else if (pendingReturned)
+        {
 
-        } else if (pendingReturned) {
-
-            if (IofCallDriverStackData->IrpSnapshot.IoStackLocation.MajorFunction != IRP_MJ_POWER) {
+            if (IofCallDriverStackData->IrpSnapshot.IoStackLocation.MajorFunction != IRP_MJ_POWER)
+            {
 
                 //
                 // ADRIAO BUGBUG 2001/06/21 - Some bugs left uncaught
@@ -1048,60 +993,49 @@ IovpCallDriver2(
                 //
                 // We will address all this stuff next release.
                 //
-                WDM_FAIL_ROUTINE((
-                    DCERROR_PENDING_RETURNED_NOT_MARKED_2,
-                    DCPARAM_IRPSNAP + DCPARAM_ROUTINE + DCPARAM_STATUS,
-                    IofCallDriverStackData->DispatchRoutine,
-                    &IofCallDriverStackData->IrpSnapshot,
-                    *FinalStatus
-                    ));
+                WDM_FAIL_ROUTINE(
+                    (DCERROR_PENDING_RETURNED_NOT_MARKED_2, DCPARAM_IRPSNAP + DCPARAM_ROUTINE + DCPARAM_STATUS,
+                     IofCallDriverStackData->DispatchRoutine, &IofCallDriverStackData->IrpSnapshot, *FinalStatus));
             }
 
             iovSessionData->SessionFlags |= SESSIONFLAG_MARKED_INCONSISTANT;
         }
     }
 
-    if (IofCallDriverStackData->Flags&CALLFLAG_COMPLETED) {
+    if (IofCallDriverStackData->Flags & CALLFLAG_COMPLETED)
+    {
 
-        TRACKIRP_DBGPRINT((
-            "  Verifying status in CD2\n"
-            ),2);
+        TRACKIRP_DBGPRINT(("  Verifying status in CD2\n"), 2);
 
-        if ((*FinalStatus != IofCallDriverStackData->ExpectedStatus)&&
-            (*FinalStatus != STATUS_PENDING)) {
+        if ((*FinalStatus != IofCallDriverStackData->ExpectedStatus) && (*FinalStatus != STATUS_PENDING))
+        {
 
             if (VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_POLICE_IRPS) &&
-                (!(iovSessionData->SessionFlags&SESSIONFLAG_UNWOUND_INCONSISTANT))) {
+                (!(iovSessionData->SessionFlags & SESSIONFLAG_UNWOUND_INCONSISTANT)))
+            {
 
                 //
                 // The completion routine and the return value don't match. Hey!
                 //
-                WDM_FAIL_ROUTINE((
-                    DCERROR_INCONSISTANT_STATUS,
-                    DCPARAM_IRPSNAP + DCPARAM_ROUTINE + DCPARAM_STATUS*2,
-                    IofCallDriverStackData->DispatchRoutine,
-                    &IofCallDriverStackData->IrpSnapshot,
-                    IofCallDriverStackData->ExpectedStatus,
-                    *FinalStatus
-                    ));
+                WDM_FAIL_ROUTINE((DCERROR_INCONSISTANT_STATUS, DCPARAM_IRPSNAP + DCPARAM_ROUTINE + DCPARAM_STATUS * 2,
+                                  IofCallDriverStackData->DispatchRoutine, &IofCallDriverStackData->IrpSnapshot,
+                                  IofCallDriverStackData->ExpectedStatus, *FinalStatus));
             }
 
             iovSessionData->SessionFlags |= SESSIONFLAG_UNWOUND_INCONSISTANT;
+        }
+        else if (*FinalStatus == 0xFFFFFFFF)
+        {
 
-        } else if (*FinalStatus == 0xFFFFFFFF) {
-
-            if (VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_POLICE_IRPS)) {
+            if (VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_POLICE_IRPS))
+            {
 
                 //
                 // This status value is illegal. If we see it, we probably have
                 // an uninitialized variable...
                 //
-                WDM_FAIL_ROUTINE((
-                    DCERROR_UNINITIALIZED_STATUS,
-                    DCPARAM_IRPSNAP + DCPARAM_ROUTINE,
-                    IofCallDriverStackData->DispatchRoutine,
-                    &IofCallDriverStackData->IrpSnapshot
-                    ));
+                WDM_FAIL_ROUTINE((DCERROR_UNINITIALIZED_STATUS, DCPARAM_IRPSNAP + DCPARAM_ROUTINE,
+                                  IofCallDriverStackData->DispatchRoutine, &IofCallDriverStackData->IrpSnapshot));
             }
         }
 
@@ -1109,33 +1043,30 @@ IovpCallDriver2(
         // We do not need to remove ourselves from the list because
         // we will not be completed twice (InUse is NULL makes sure).
         //
-
-    } else {
+    }
+    else
+    {
 
         //
         // OK, we haven't completed yet. Status better
         // be pending...
         //
-        TRACKIRP_DBGPRINT((
-            "  Verifying status is STATUS_PENDING in CR2\n"
-            ), 2);
+        TRACKIRP_DBGPRINT(("  Verifying status is STATUS_PENDING in CR2\n"), 2);
 
-        if (*FinalStatus != STATUS_PENDING) {
+        if (*FinalStatus != STATUS_PENDING)
+        {
 
             if (VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_POLICE_IRPS) &&
-                (!(iovPacket->Flags&TRACKFLAG_UNWOUND_BADLY))) {
+                (!(iovPacket->Flags & TRACKFLAG_UNWOUND_BADLY)))
+            {
 
                 //
                 // We got control before this slot was completed. This is
                 // legal as long as STATUS_PENDING was returned (it was not),
                 // so it's bug time. Note that the IRP may not be safe to touch.
                 //
-                WDM_FAIL_ROUTINE((
-                    DCERROR_IRP_RETURNED_WITHOUT_COMPLETION,
-                    DCPARAM_IRPSNAP + DCPARAM_ROUTINE,
-                    IofCallDriverStackData->DispatchRoutine,
-                    &IofCallDriverStackData->IrpSnapshot
-                    ));
+                WDM_FAIL_ROUTINE((DCERROR_IRP_RETURNED_WITHOUT_COMPLETION, DCPARAM_IRPSNAP + DCPARAM_ROUTINE,
+                                  IofCallDriverStackData->DispatchRoutine, &IofCallDriverStackData->IrpSnapshot));
             }
 
             iovPacket->Flags |= TRACKFLAG_UNWOUND_BADLY;
@@ -1159,14 +1090,15 @@ IovpCallDriver2(
         RemoveEntryList(&IofCallDriverStackData->SharedLocationList);
     }
 
-    if ((IofCallDriverStackData->Flags&CALLFLAG_OVERRIDE_STATUS)&&
-        (!pendingReturned)) {
+    if ((IofCallDriverStackData->Flags & CALLFLAG_OVERRIDE_STATUS) && (!pendingReturned))
+    {
 
         *FinalStatus = IofCallDriverStackData->NewStatus;
     }
 
     if (VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_FORCE_PENDING) &&
-        (!(IofCallDriverStackData->Flags&CALLFLAG_IS_REMOVE_IRP))) {
+        (!(IofCallDriverStackData->Flags & CALLFLAG_IS_REMOVE_IRP)))
+    {
 
         //
         // We also have the option of causing trouble by making every Irp
@@ -1181,13 +1113,8 @@ IovpCallDriver2(
 }
 
 
-VOID
-FASTCALL
-IovpCompleteRequest1(
-    IN      PIRP                            Irp,
-    IN      CCHAR                           PriorityBoost,
-    IN OUT  PIOFCOMPLETEREQUEST_STACKDATA   CompletionPacket
-    )
+VOID FASTCALL IovpCompleteRequest1(IN PIRP Irp, IN CCHAR PriorityBoost,
+                                   IN OUT PIOFCOMPLETEREQUEST_STACKDATA CompletionPacket)
 /*++
 
   Description
@@ -1229,13 +1156,15 @@ IovpCompleteRequest1(
 
     CompletionPacket->RaisedCount = 0;
 
-    if (iovPacket == NULL) {
+    if (iovPacket == NULL)
+    {
 
         CompletionPacket->IovSessionData = NULL;
         return;
     }
 
-    if (RtlCaptureStackBackTrace(3, 1, &callerAddress, &stackHash) != 1) {
+    if (RtlCaptureStackBackTrace(3, 1, &callerAddress, &stackHash) != 1)
+    {
 
         callerAddress = NULL;
     }
@@ -1253,7 +1182,8 @@ IovpCompleteRequest1(
     CompletionPacket->IovSessionData = iovSessionData;
     CompletionPacket->IovRequestPacket = iovPacket;
 
-    if (iovSessionData == NULL) {
+    if (iovSessionData == NULL)
+    {
 
         //
         // We just got a look at the allocation, not the session itself.
@@ -1264,59 +1194,46 @@ IovpCompleteRequest1(
         return;
     }
 
-    TRACKIRP_DBGPRINT((
-        "  CR1: Current, Last = (%x, %x)\n",
-        Irp->CurrentLocation, iovPacket->LastLocation
-        ), 3);
+    TRACKIRP_DBGPRINT(("  CR1: Current, Last = (%x, %x)\n", Irp->CurrentLocation, iovPacket->LastLocation), 3);
 
     irpSp = IoGetCurrentIrpStackLocation(Irp);
 
-    if (iovPacket->Flags&TRACKFLAG_QUEUED_INTERNALLY) {
+    if (iovPacket->Flags & TRACKFLAG_QUEUED_INTERNALLY)
+    {
 
         //
         // We are probably going to die now. Anyway, it was a good life...
         //
-        WDM_FAIL_ROUTINE((
-            DCERROR_QUEUED_IRP_COMPLETED,
-            DCPARAM_IRP + DCPARAM_ROUTINE,
-            callerAddress,
-            Irp
-            ));
+        WDM_FAIL_ROUTINE((DCERROR_QUEUED_IRP_COMPLETED, DCPARAM_IRP + DCPARAM_ROUTINE, callerAddress, Irp));
     }
 
     //
     // This would be *very* bad - someone is completing an IRP that is
     // currently in progress...
     //
-    ASSERT(!(Irp->Flags&IRP_DIAG_HAS_SURROGATE));
+    ASSERT(!(Irp->Flags & IRP_DIAG_HAS_SURROGATE));
 
     //
     // Hmmm, someone is completing an IRP that IoCallDriver never called. These
     // is possible but rather gross, so we warn.
     //
-    if (Irp->CurrentLocation == ((CCHAR) Irp->StackCount + 1)) {
+    if (Irp->CurrentLocation == ((CCHAR)Irp->StackCount + 1))
+    {
 
-        WDM_FAIL_ROUTINE((
-            DCERROR_UNFORWARDED_IRP_COMPLETED,
-            DCPARAM_IRP + DCPARAM_ROUTINE,
-            callerAddress,
-            Irp
-            ));
+        WDM_FAIL_ROUTINE((DCERROR_UNFORWARDED_IRP_COMPLETED, DCPARAM_IRP + DCPARAM_ROUTINE, callerAddress, Irp));
     }
 
     //
     // Check for leaked Cancel routines.
     //
-    if (Irp->CancelRoutine) {
+    if (Irp->CancelRoutine)
+    {
 
-        if (VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_VERIFY_CANCEL_LOGIC)) {
+        if (VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_VERIFY_CANCEL_LOGIC))
+        {
 
-            WDM_FAIL_ROUTINE((
-                DCERROR_CANCELROUTINE_AFTER_COMPLETION,
-                DCPARAM_IRP + DCPARAM_ROUTINE,
-                callerAddress,
-                Irp
-                ));
+            WDM_FAIL_ROUTINE(
+                (DCERROR_CANCELROUTINE_AFTER_COMPLETION, DCPARAM_IRP + DCPARAM_ROUTINE, callerAddress, Irp));
         }
     }
 
@@ -1331,7 +1248,8 @@ IovpCompleteRequest1(
     // care of anybody who has synchronized the IRP and thus does not need
     // to mark it pending in his completion routine.
     //
-    if (VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_FORCE_PENDING)) {
+    if (VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_FORCE_PENDING))
+    {
 
         IoMarkIrpPending(Irp);
     }
@@ -1359,27 +1277,15 @@ IovpCompleteRequest1(
     // If somebody called IoSetNextIrpStackLocation, and then completed,
     // update our internal stack locations (slots) as appropriate.
     //
-    slotIsInUse = IovpAdvanceStackDownwards(
-         iovSessionData->StackData,
-         Irp->CurrentLocation,
-         irpSp,
-         irpSp + locationsAdvanced,
-         locationsAdvanced,
-         FALSE,
-         FALSE,
-         &iovCurrentStackLocation
-         );
+    slotIsInUse =
+        IovpAdvanceStackDownwards(iovSessionData->StackData, Irp->CurrentLocation, irpSp, irpSp + locationsAdvanced,
+                                  locationsAdvanced, FALSE, FALSE, &iovCurrentStackLocation);
 
     VfPacketReleaseLock(iovPacket);
 }
 
 
-VOID
-FASTCALL
-IovpCompleteRequest2(
-    IN      PIRP                            Irp,
-    IN OUT  PIOFCOMPLETEREQUEST_STACKDATA   CompletionPacket
-    )
+VOID FASTCALL IovpCompleteRequest2(IN PIRP Irp, IN OUT PIOFCOMPLETEREQUEST_STACKDATA CompletionPacket)
 /*++
 
   Description:
@@ -1414,7 +1320,8 @@ IovpCompleteRequest2(
     PLIST_ENTRY listEntry;
 
     iovSessionData = CompletionPacket->IovSessionData;
-    if (iovSessionData == NULL) {
+    if (iovSessionData == NULL)
+    {
 
         return;
     }
@@ -1429,18 +1336,13 @@ IovpCompleteRequest2(
 
     status = Irp->IoStatus.Status;
 
-    TRACKIRP_DBGPRINT((
-        "  CR2: Current, Last = (%x, %x)\n",
-        Irp->CurrentLocation, iovPacket->LastLocation
-        ), 3);
+    TRACKIRP_DBGPRINT(("  CR2: Current, Last = (%x, %x)\n", Irp->CurrentLocation, iovPacket->LastLocation), 3);
 
-    iovCurrentStackLocation = iovSessionData->StackData + Irp->CurrentLocation -1;
-    TRACKIRP_DBGPRINT((
-        "  Smacking %lx in CR2\n",
-        iovCurrentStackLocation-iovSessionData->StackData
-        ), 2);
+    iovCurrentStackLocation = iovSessionData->StackData + Irp->CurrentLocation - 1;
+    TRACKIRP_DBGPRINT(("  Smacking %lx in CR2\n", iovCurrentStackLocation - iovSessionData->StackData), 2);
 
-    if (Irp->CurrentLocation <= iovPacket->TopStackLocation) {
+    if (Irp->CurrentLocation <= iovPacket->TopStackLocation)
+    {
 
         //
         // Might this be false if the completion routine is to an
@@ -1456,31 +1358,31 @@ IovpCompleteRequest2(
         // rest of the stack. The two are treated as seperate requests.
         //
         requestsFirstStackLocation = iovCurrentStackLocation->RequestsFirstStackLocation;
-        TRACKIRP_DBGPRINT((
-            "  CR2: original request for %lx is %lx\n",
-            iovCurrentStackLocation-iovSessionData->StackData,
-            requestsFirstStackLocation-iovSessionData->StackData
-            ), 3);
+        TRACKIRP_DBGPRINT(("  CR2: original request for %lx is %lx\n",
+                           iovCurrentStackLocation - iovSessionData->StackData,
+                           requestsFirstStackLocation - iovSessionData->StackData),
+                          3);
 
         ASSERT(requestsFirstStackLocation);
-        if (requestsFirstStackLocation->Flags&STACKFLAG_REQUEST_COMPLETED) {
+        if (requestsFirstStackLocation->Flags & STACKFLAG_REQUEST_COMPLETED)
+        {
             newlyCompleted = FALSE;
-        } else {
-            requestsFirstStackLocation->Flags|=STACKFLAG_REQUEST_COMPLETED;
+        }
+        else
+        {
+            requestsFirstStackLocation->Flags |= STACKFLAG_REQUEST_COMPLETED;
             newlyCompleted = TRUE;
-            TRACKIRP_DBGPRINT((
-                "  CR2: Request %lx newly completed by %lx\n",
-                requestsFirstStackLocation-iovSessionData->StackData,
-                iovCurrentStackLocation-iovSessionData->StackData
-                ), 3);
+            TRACKIRP_DBGPRINT(("  CR2: Request %lx newly completed by %lx\n",
+                               requestsFirstStackLocation - iovSessionData->StackData,
+                               iovCurrentStackLocation - iovSessionData->StackData),
+                              3);
         }
         requestFinalized = (iovCurrentStackLocation == requestsFirstStackLocation);
-        if (requestFinalized) {
+        if (requestFinalized)
+        {
 
-            TRACKIRP_DBGPRINT((
-                "  CR2: Request %lx finalized\n",
-                iovCurrentStackLocation-iovSessionData->StackData
-                ), 3);
+            TRACKIRP_DBGPRINT(("  CR2: Request %lx finalized\n", iovCurrentStackLocation - iovSessionData->StackData),
+                              3);
         }
 
         //
@@ -1501,27 +1403,26 @@ IovpCompleteRequest2(
         irpSp = IoGetNextIrpStackLocation(Irp);
 
         if (VfSettingsIsOptionEnabled(iovPacket->VerifierSettings, VERIFIER_OPTION_POLICE_IRPS) &&
-            VfSettingsIsOptionEnabled(iovPacket->VerifierSettings, VERIFIER_OPTION_MONITOR_MAJORS)) {
+            VfSettingsIsOptionEnabled(iovPacket->VerifierSettings, VERIFIER_OPTION_MONITOR_MAJORS))
+        {
 
-            VfMajorVerifyIrpStackUpward(
-                iovPacket,
-                irpSp,
-                iovCurrentStackLocation,
-                newlyCompleted,
-                requestFinalized
-                );
+            VfMajorVerifyIrpStackUpward(iovPacket, irpSp, iovCurrentStackLocation, newlyCompleted, requestFinalized);
         }
 
         entranceStatus = status;
 
         if ((VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_MONITOR_PENDING_IO)) &&
-            (!(iovSessionData->SessionFlags & SESSIONFLAG_MARKED_INCONSISTANT))) {
+            (!(iovSessionData->SessionFlags & SESSIONFLAG_MARKED_INCONSISTANT)))
+        {
 
-            if (iovCurrentStackLocation->Flags & STACKFLAG_UNWOUND_PENDING) {
+            if (iovCurrentStackLocation->Flags & STACKFLAG_UNWOUND_PENDING)
+            {
 
-                if (!Irp->PendingReturned) {
+                if (!Irp->PendingReturned)
+                {
 
-                    if (Irp->Flags & IRP_DEFER_IO_COMPLETION) {
+                    if (Irp->Flags & IRP_DEFER_IO_COMPLETION)
+                    {
 
                         //
                         // ADRIAO BUGBUG 2001/06/21 - Some bugs left uncaught
@@ -1537,13 +1438,9 @@ IovpCompleteRequest2(
                         //
                         // We will address all this stuff next release.
                         //
-                        WDM_FAIL_ROUTINE((
-                            DCERROR_PENDING_RETURNED_NOT_MARKED,
-                            DCPARAM_IRP + DCPARAM_ROUTINE + DCPARAM_STATUS,
-                            iovCurrentStackLocation->LastDispatch,
-                            Irp,
-                            status
-                            ));
+                        WDM_FAIL_ROUTINE((DCERROR_PENDING_RETURNED_NOT_MARKED,
+                                          DCPARAM_IRP + DCPARAM_ROUTINE + DCPARAM_STATUS,
+                                          iovCurrentStackLocation->LastDispatch, Irp, status));
                     }
 
                     iovSessionData->SessionFlags |= SESSIONFLAG_MARKED_INCONSISTANT;
@@ -1551,30 +1448,29 @@ IovpCompleteRequest2(
             }
         }
 
-        while(!IsListEmpty(&iovCurrentStackLocation->CallStackData)) {
+        while (!IsListEmpty(&iovCurrentStackLocation->CallStackData))
+        {
 
             //
             // Pop off the list head.
             //
             listEntry = RemoveHeadList(&iovCurrentStackLocation->CallStackData);
-            IofCallDriverStackData = CONTAINING_RECORD(
-                listEntry,
-                IOFCALLDRIVER_STACKDATA,
-                SharedLocationList);
+            IofCallDriverStackData = CONTAINING_RECORD(listEntry, IOFCALLDRIVER_STACKDATA, SharedLocationList);
 
-            ASSERT(!(IofCallDriverStackData->Flags&CALLFLAG_COMPLETED));
+            ASSERT(!(IofCallDriverStackData->Flags & CALLFLAG_COMPLETED));
 
             IofCallDriverStackData->Flags |= CALLFLAG_COMPLETED;
             IofCallDriverStackData->ExpectedStatus = status;
 
-            if (Irp->PendingReturned) {
+            if (Irp->PendingReturned)
+            {
 
                 IofCallDriverStackData->Flags |= CALLFLAG_MARKED_PENDING;
             }
 
             if (VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_ROTATE_STATUS) &&
-                 (!(iovPacket->Flags&TRACKFLAG_BOGUS)) &&
-                 VfMajorAdvanceIrpStatus(irpSp, entranceStatus, &status)) {
+                (!(iovPacket->Flags & TRACKFLAG_BOGUS)) && VfMajorAdvanceIrpStatus(irpSp, entranceStatus, &status))
+            {
 
                 //
                 // Purposely munge the returned status for everyone at this
@@ -1596,7 +1492,9 @@ IovpCompleteRequest2(
         //
         RtlZeroMemory(iovCurrentStackLocation, sizeof(IOV_STACK_LOCATION));
         InitializeListHead(&iovCurrentStackLocation->CallStackData);
-    } else {
+    }
+    else
+    {
 
         ASSERT(0);
     }
@@ -1607,9 +1505,11 @@ IovpCompleteRequest2(
     //
     raiseToDPC = FALSE;
 
-    if (VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_COMPLETE_AT_DISPATCH)) {
+    if (VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_COMPLETE_AT_DISPATCH))
+    {
 
-        if (!CompletionPacket->RaisedCount) {
+        if (!CompletionPacket->RaisedCount)
+        {
 
             //
             // Copy away the callers IRQL
@@ -1620,14 +1520,16 @@ IovpCompleteRequest2(
         CompletionPacket->RaisedCount++;
     }
 
-    iovPacket->LastLocation = Irp->CurrentLocation+1;
+    iovPacket->LastLocation = Irp->CurrentLocation + 1;
 
-    if (iovPacket->TopStackLocation == Irp->CurrentLocation) {
+    if (iovPacket->TopStackLocation == Irp->CurrentLocation)
+    {
 
         CompletionPacket->IovSessionData = NULL;
         CompletionPacket->IovRequestPacket = NULL;
 
-        if (iovPacket->Flags&TRACKFLAG_SURROGATE) {
+        if (iovPacket->Flags & TRACKFLAG_SURROGATE)
+        {
 
             //
             // Scribble away the real completion routine and corrosponding control
@@ -1642,16 +1544,10 @@ IovpCompleteRequest2(
             // have expanded the initial number of stack locations with the
             // driver verifier enabled.
             //
-            IoSetCompletionRoutine(
-                Irp,
-                IovpSwapSurrogateIrp,
-                Irp,
-                TRUE,
-                TRUE,
-                TRUE
-                );
-
-        } else {
+            IoSetCompletionRoutine(Irp, IovpSwapSurrogateIrp, Irp, TRUE, TRUE, TRUE);
+        }
+        else
+        {
 
             //
             // Close this session as the IRP has entirely completed. We drop
@@ -1659,7 +1555,8 @@ IovpCompleteRequest2(
             // same reason.
             //
             irpSp = IoGetNextIrpStackLocation(Irp);
-            if (VfSettingsIsOptionEnabled(iovPacket->VerifierSettings, VERIFIER_OPTION_POLICE_IRPS)) {
+            if (VfSettingsIsOptionEnabled(iovPacket->VerifierSettings, VERIFIER_OPTION_POLICE_IRPS))
+            {
 
                 VfMajorVerifyFinalIrpStack(iovPacket, irpSp);
             }
@@ -1669,8 +1566,9 @@ IovpCompleteRequest2(
             IovpSessionDataDereference(iovSessionData);
             VfPacketDereference(iovPacket, IOVREFTYPE_POINTER);
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // We will be seeing this IRP again. Hold a session count and a ref
@@ -1683,14 +1581,16 @@ IovpCompleteRequest2(
     //
     // Assert LastLocation is consistent with an IRP that may be completed.
     //
-    if (iovPacket->LastLocation < iovPacket->TopStackLocation) {
+    if (iovPacket->LastLocation < iovPacket->TopStackLocation)
+    {
 
-        ASSERT(iovSessionData->StackData[iovPacket->LastLocation-1].InUse);
+        ASSERT(iovSessionData->StackData[iovPacket->LastLocation - 1].InUse);
     }
 
     VfPacketReleaseLock(iovPacket);
 
-    if (raiseToDPC) {
+    if (raiseToDPC)
+    {
         KeRaiseIrql(DISPATCH_LEVEL, &oldIrql);
     }
 
@@ -1698,13 +1598,7 @@ IovpCompleteRequest2(
 }
 
 
-VOID
-FASTCALL
-IovpCompleteRequest3(
-    IN      PIRP                            Irp,
-    IN      PVOID                           Routine,
-    IN OUT  PIOFCOMPLETEREQUEST_STACKDATA   CompletionPacket
-    )
+VOID FASTCALL IovpCompleteRequest3(IN PIRP Irp, IN PVOID Routine, IN OUT PIOFCOMPLETEREQUEST_STACKDATA CompletionPacket)
 /*++
 
   Description:
@@ -1733,7 +1627,8 @@ IovpCompleteRequest3(
     PDEFERRAL_CONTEXT deferralContext;
 
     iovSessionData = CompletionPacket->IovSessionData;
-    if (iovSessionData == NULL) {
+    if (iovSessionData == NULL)
+    {
 
         return;
     }
@@ -1748,22 +1643,18 @@ IovpCompleteRequest3(
     // special case - when a driver completes the IRP to itself by calling
     // IoSetNextStackLocation before calling IoCompleteRequest.
     //
-    if (VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_POLICE_IRPS)) {
+    if (VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_POLICE_IRPS))
+    {
 
-        if ((CompletionPacket->LocationsAdvanced <= 0) &&
-            (MmIsSystemAddressLocked(Routine) == FALSE)) {
+        if ((CompletionPacket->LocationsAdvanced <= 0) && (MmIsSystemAddressLocked(Routine) == FALSE))
+        {
 
             //DbgPrint(
             //    "Verifier Notes: LocationsAdvanced %d\n",
             //    CompletionPacket->LocationsAdvanced
             //    );
 
-            WDM_FAIL_ROUTINE((
-                DCERROR_COMPLETION_ROUTINE_PAGABLE,
-                DCPARAM_IRP + DCPARAM_ROUTINE,
-                Routine,
-                Irp
-                ));
+            WDM_FAIL_ROUTINE((DCERROR_COMPLETION_ROUTINE_PAGABLE, DCPARAM_IRP + DCPARAM_ROUTINE, Routine, Irp));
         }
     }
 
@@ -1773,9 +1664,8 @@ IovpCompleteRequest3(
     //
     irpSpCur = IoGetCurrentIrpStackLocation(Irp);
     CompletionPacket->IsRemoveIrp =
-       ((Irp->CurrentLocation <= (CCHAR) Irp->StackCount) &&
-        (irpSpCur->MajorFunction == IRP_MJ_PNP) &&
-        (irpSpCur->MinorFunction == IRP_MN_REMOVE_DEVICE));
+        ((Irp->CurrentLocation <= (CCHAR)Irp->StackCount) && (irpSpCur->MajorFunction == IRP_MJ_PNP) &&
+         (irpSpCur->MinorFunction == IRP_MN_REMOVE_DEVICE));
 
     CompletionPacket->CompletionRoutine = Routine;
 
@@ -1784,34 +1674,32 @@ IovpCompleteRequest3(
     // is only legal if we are pending the IRPs (because to the upper driver,
     // IofCallDriver is returning before it's completion routine has been called)
     //
-    if ((!CompletionPacket->IsRemoveIrp)&&
-       (VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_DEFER_COMPLETION)||
-        VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_COMPLETE_AT_PASSIVE))) {
+    if ((!CompletionPacket->IsRemoveIrp) &&
+        (VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_DEFER_COMPLETION) ||
+         VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_COMPLETE_AT_PASSIVE)))
+    {
 
         ASSERT(VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_FORCE_PENDING));
 
         irpSpNext = IoGetNextIrpStackLocation(Irp);
 
-        deferralContext = ExAllocatePoolWithTag(
-           NonPagedPool,
-           sizeof(DEFERRAL_CONTEXT),
-           POOL_TAG_DEFERRED_CONTEXT
-           );
+        deferralContext = ExAllocatePoolWithTag(NonPagedPool, sizeof(DEFERRAL_CONTEXT), POOL_TAG_DEFERRED_CONTEXT);
 
-        if (deferralContext) {
+        if (deferralContext)
+        {
 
             //
             // Swap the original completion and context for our own.
             //
-            deferralContext->IovRequestPacket          = iovPacket;
-            deferralContext->IrpSpNext                 = irpSpNext;
+            deferralContext->IovRequestPacket = iovPacket;
+            deferralContext->IrpSpNext = irpSpNext;
             deferralContext->OriginalCompletionRoutine = irpSpNext->CompletionRoutine;
-            deferralContext->OriginalContext           = irpSpNext->Context;
-            deferralContext->OriginalIrp               = Irp;
-            deferralContext->OriginalPriorityBoost     = iovPacket->PriorityBoost;
+            deferralContext->OriginalContext = irpSpNext->Context;
+            deferralContext->OriginalIrp = Irp;
+            deferralContext->OriginalPriorityBoost = iovPacket->PriorityBoost;
 
             irpSpNext->CompletionRoutine = IovpInternalDeferredCompletion;
-            irpSpNext->Context           = deferralContext;
+            irpSpNext->Context = deferralContext;
             VfPacketReference(iovPacket, IOVREFTYPE_POINTER);
         }
     }
@@ -1820,13 +1708,8 @@ IovpCompleteRequest3(
 }
 
 
-VOID
-FASTCALL
-IovpCompleteRequest4(
-    IN      PIRP                            Irp,
-    IN      NTSTATUS                        ReturnedStatus,
-    IN OUT  PIOFCOMPLETEREQUEST_STACKDATA   CompletionPacket
-    )
+VOID FASTCALL IovpCompleteRequest4(IN PIRP Irp, IN NTSTATUS ReturnedStatus,
+                                   IN OUT PIOFCOMPLETEREQUEST_STACKDATA CompletionPacket)
 /*++
 
   Description:
@@ -1859,7 +1742,8 @@ IovpCompleteRequest4(
     routine = CompletionPacket->CompletionRoutine;
     iovSessionData = CompletionPacket->IovSessionData;
 
-    if (iovSessionData == NULL) {
+    if (iovSessionData == NULL)
+    {
 
         return;
     }
@@ -1868,17 +1752,13 @@ IovpCompleteRequest4(
     ASSERT(iovPacket);
     VfPacketAcquireLock(iovPacket);
 
-    VfPacketLogEntry(
-        iovPacket,
-        IOV_EVENT_IO_COMPLETION_ROUTINE_UNWIND,
-        routine,
-        ReturnedStatus
-        );
+    VfPacketLogEntry(iovPacket, IOV_EVENT_IO_COMPLETION_ROUTINE_UNWIND, routine, ReturnedStatus);
 
-    if (VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_FORCE_PENDING)) {
+    if (VfSettingsIsOptionEnabled(iovSessionData->VerifierSettings, VERIFIER_OPTION_FORCE_PENDING))
+    {
 
-        if ((ReturnedStatus != STATUS_MORE_PROCESSING_REQUIRED)&&
-            (iovPacket->pIovSessionData == iovSessionData)) {
+        if ((ReturnedStatus != STATUS_MORE_PROCESSING_REQUIRED) && (iovPacket->pIovSessionData == iovSessionData))
+        {
 
             //
             // At this point, we know the completion routine is required to have
@@ -1887,20 +1767,16 @@ IovpCompleteRequest4(
             // Verify he did his part
             //
             irpSp = IoGetCurrentIrpStackLocation(Irp);
-            if (!(irpSp->Control & SL_PENDING_RETURNED )) {
+            if (!(irpSp->Control & SL_PENDING_RETURNED))
+            {
 
-                 WDM_FAIL_ROUTINE((
-                     DCERROR_PENDING_BIT_NOT_MIGRATED,
-                     DCPARAM_IRP + DCPARAM_ROUTINE,
-                     routine,
-                     Irp
-                     ));
+                WDM_FAIL_ROUTINE((DCERROR_PENDING_BIT_NOT_MIGRATED, DCPARAM_IRP + DCPARAM_ROUTINE, routine, Irp));
 
-                 //
-                 // This will keep the IRP above from erroneously asserting (and
-                 // correctly hanging).
-                 //
-                 IoMarkIrpPending(Irp);
+                //
+                // This will keep the IRP above from erroneously asserting (and
+                // correctly hanging).
+                //
+                IoMarkIrpPending(Irp);
             }
         }
     }
@@ -1908,12 +1784,7 @@ IovpCompleteRequest4(
 }
 
 
-VOID
-FASTCALL
-IovpCompleteRequest5(
-    IN      PIRP                            Irp,
-    IN OUT  PIOFCOMPLETEREQUEST_STACKDATA   CompletionPacket
-    )
+VOID FASTCALL IovpCompleteRequest5(IN PIRP Irp, IN OUT PIOFCOMPLETEREQUEST_STACKDATA CompletionPacket)
 /*++
 
   Description:
@@ -1943,7 +1814,8 @@ IovpCompleteRequest5(
 
     iovSessionData = CompletionPacket->IovSessionData;
 
-    if (iovSessionData) {
+    if (iovSessionData)
+    {
 
         iovPacket = CompletionPacket->IovRequestPacket;
         ASSERT(iovPacket);
@@ -1961,9 +1833,11 @@ IovpCompleteRequest5(
     // When this count is at zero, we have unnested out of every
     // completion routine, so it is OK to return back to our original IRQL
     //
-    if (CompletionPacket->RaisedCount) {
+    if (CompletionPacket->RaisedCount)
+    {
 
-        if (!(--CompletionPacket->RaisedCount)) {
+        if (!(--CompletionPacket->RaisedCount))
+        {
             //
             // Undo IRQL madness (wouldn't want to return to
             // the caller at DPC, would we now?)
@@ -1974,12 +1848,7 @@ IovpCompleteRequest5(
 }
 
 
-VOID
-FASTCALL
-IovpCompleteRequestApc(
-    IN     PIRP                          Irp,
-    IN     PVOID                         BestStackOffset
-    )
+VOID FASTCALL IovpCompleteRequestApc(IN PIRP Irp, IN PVOID BestStackOffset)
 /*++
 
   Description:
@@ -2007,25 +1876,23 @@ IovpCompleteRequestApc(
     PIOV_REQUEST_PACKET iovPacket;
 
     addr = (PUCHAR)Irp->UserIosb;
-    if ((addr > (PUCHAR)KeGetCurrentThread()->StackLimit) &&
-        (addr <= (PUCHAR)BestStackOffset)) {
+    if ((addr > (PUCHAR)KeGetCurrentThread()->StackLimit) && (addr <= (PUCHAR)BestStackOffset))
+    {
 
         iovPacket = VfPacketFindAndLock(Irp);
 
-        RtlAssert("UserIosb below stack pointer", __FILE__, (ULONG) iovPacket,
-                  "Call AdriaO");
+        RtlAssert("UserIosb below stack pointer", __FILE__, (ULONG)iovPacket, "Call AdriaO");
 
         VfPacketReleaseLock(iovPacket);
     }
 
     addr = (PUCHAR)Irp->UserEvent;
-    if ((addr > (PUCHAR)KeGetCurrentThread()->StackLimit) &&
-        (addr <= (PUCHAR)BestStackOffset)) {
+    if ((addr > (PUCHAR)KeGetCurrentThread()->StackLimit) && (addr <= (PUCHAR)BestStackOffset))
+    {
 
         iovPacket = VfPacketFindAndLock(Irp);
 
-        RtlAssert("UserEvent below stack pointer", __FILE__, (ULONG) iovPacket,
-                  "Call AdriaO");
+        RtlAssert("UserEvent below stack pointer", __FILE__, (ULONG)iovPacket, "Call AdriaO");
 
         VfPacketReleaseLock(iovPacket);
     }
@@ -2035,26 +1902,19 @@ IovpCompleteRequestApc(
 
 
 BOOLEAN
-IovpAdvanceStackDownwards(
-    IN  PIOV_STACK_LOCATION   StackDataArray,
-    IN  CCHAR                 CurrentLocation,
-    IN  PIO_STACK_LOCATION    IrpSp,
-    IN  PIO_STACK_LOCATION    IrpLastSp OPTIONAL,
-    IN  ULONG                 LocationsAdvanced,
-    IN  BOOLEAN               IsNewRequest,
-    IN  BOOLEAN               MarkAsTaken,
-    OUT PIOV_STACK_LOCATION   *StackLocationInfo
-    )
+IovpAdvanceStackDownwards(IN PIOV_STACK_LOCATION StackDataArray, IN CCHAR CurrentLocation, IN PIO_STACK_LOCATION IrpSp,
+                          IN PIO_STACK_LOCATION IrpLastSp OPTIONAL, IN ULONG LocationsAdvanced, IN BOOLEAN IsNewRequest,
+                          IN BOOLEAN MarkAsTaken, OUT PIOV_STACK_LOCATION *StackLocationInfo)
 {
-    PIOV_STACK_LOCATION  iovCurrentStackLocation, advancedLocationData, requestOriginalSLD;
-    PIO_STACK_LOCATION   irpSpTemp;
-    PLARGE_INTEGER       dispatchTime, stackTime;
-    BOOLEAN              isNewSession, wasInUse;
-    PVOID                dispatchRoutine;
+    PIOV_STACK_LOCATION iovCurrentStackLocation, advancedLocationData, requestOriginalSLD;
+    PIO_STACK_LOCATION irpSpTemp;
+    PLARGE_INTEGER dispatchTime, stackTime;
+    BOOLEAN isNewSession, wasInUse;
+    PVOID dispatchRoutine;
 
     isNewSession = (IrpLastSp == NULL);
     ASSERT((!isNewSession) || (LocationsAdvanced == 1));
-    ASSERT(isNewSession || ((ULONG) (IrpLastSp - IrpSp) == LocationsAdvanced));
+    ASSERT(isNewSession || ((ULONG)(IrpLastSp - IrpSp) == LocationsAdvanced));
 
     //
     // This function is called by IoCallDriver prior to decrementing
@@ -2062,18 +1922,16 @@ IovpAdvanceStackDownwards(
     // should as least be two here. We only subtract one as to reserve an extra
     // empty slot at the head of the array.
     //
-    iovCurrentStackLocation = StackDataArray + CurrentLocation -1;
+    iovCurrentStackLocation = StackDataArray + CurrentLocation - 1;
 
-    TRACKIRP_DBGPRINT((
-        "  Smacking %lx (%lx) to valid in SD\n",
-        CurrentLocation -1, iovCurrentStackLocation
-        ), 2);
+    TRACKIRP_DBGPRINT(("  Smacking %lx (%lx) to valid in SD\n", CurrentLocation - 1, iovCurrentStackLocation), 2);
 
     //
     // Is this slot already active? IE, did someone skip and then forward the
     // IRP?
     //
-    if (iovCurrentStackLocation->InUse) {
+    if (iovCurrentStackLocation->InUse)
+    {
 
         //
         // IoSkipCurrentIrpStackLocation was used by the forwarder. Don't
@@ -2081,8 +1939,9 @@ IovpAdvanceStackDownwards(
         //
         ASSERT(!LocationsAdvanced); // && (!isNewSession)
         ASSERT(IrpSp == iovCurrentStackLocation->IrpSp);
-
-    } else if (MarkAsTaken) {
+    }
+    else if (MarkAsTaken)
+    {
 
         //
         // ADRIAO N.B. 01/02/1999 -
@@ -2108,7 +1967,8 @@ IovpAdvanceStackDownwards(
     // differentiate between those two unique requests within the IRP using
     // code below.
     //
-    if (isNewSession) {
+    if (isNewSession)
+    {
 
         //
         // *We* are the original request. None of these fields below should
@@ -2118,8 +1978,9 @@ IovpAdvanceStackDownwards(
         requestOriginalSLD = NULL;
         stackTime = NULL;
         dispatchTime = NULL;
-
-    } else if (LocationsAdvanced) {
+    }
+    else if (LocationsAdvanced)
+    {
 
         //
         // To get the original request (the pointer to the Irp slot that
@@ -2130,17 +1991,18 @@ IovpAdvanceStackDownwards(
         // backfill skipped slots if we advanced more than one Irp stack
         // location this time (ie, someone called IoSetNextIrpStackLocation).
         //
-        dispatchTime       = &iovCurrentStackLocation[LocationsAdvanced].PerfDispatchStart;
-        stackTime          = &iovCurrentStackLocation[LocationsAdvanced].PerfStackLocationStart;
-        dispatchRoutine    = iovCurrentStackLocation[LocationsAdvanced].LastDispatch;
+        dispatchTime = &iovCurrentStackLocation[LocationsAdvanced].PerfDispatchStart;
+        stackTime = &iovCurrentStackLocation[LocationsAdvanced].PerfStackLocationStart;
+        dispatchRoutine = iovCurrentStackLocation[LocationsAdvanced].LastDispatch;
         requestOriginalSLD = iovCurrentStackLocation[LocationsAdvanced].RequestsFirstStackLocation;
 
         ASSERT(dispatchRoutine);
         ASSERT(iovCurrentStackLocation[LocationsAdvanced].InUse);
         ASSERT(requestOriginalSLD->RequestsFirstStackLocation == requestOriginalSLD);
         iovCurrentStackLocation->RequestsFirstStackLocation = requestOriginalSLD;
-
-    } else {
+    }
+    else
+    {
 
         //
         // We skipped. The slot should already be filled.
@@ -2163,14 +2025,12 @@ IovpAdvanceStackDownwards(
     //
     advancedLocationData = iovCurrentStackLocation;
     irpSpTemp = IrpSp;
-    while(LocationsAdvanced>1) {
+    while (LocationsAdvanced > 1)
+    {
         advancedLocationData++;
         LocationsAdvanced--;
         irpSpTemp++;
-        TRACKIRP_DBGPRINT((
-            "  Late smacking %lx to valid in CD1\n",
-            advancedLocationData - StackDataArray
-            ), 3);
+        TRACKIRP_DBGPRINT(("  Late smacking %lx to valid in CD1\n", advancedLocationData - StackDataArray), 3);
 
         ASSERT(!advancedLocationData->InUse);
         RtlZeroMemory(advancedLocationData, sizeof(IOV_STACK_LOCATION));
@@ -2187,17 +2047,19 @@ IovpAdvanceStackDownwards(
     //
     // For the assertion below...
     //
-    if (LocationsAdvanced) {
+    if (LocationsAdvanced)
+    {
         irpSpTemp++;
     }
-    ASSERT((irpSpTemp == IrpLastSp)||(IrpLastSp == NULL));
+    ASSERT((irpSpTemp == IrpLastSp) || (IrpLastSp == NULL));
 
     //
     // Write out the slot we're using.
     //
     *StackLocationInfo = iovCurrentStackLocation;
 
-    if (!MarkAsTaken) {
+    if (!MarkAsTaken)
+    {
         return iovCurrentStackLocation->InUse;
     }
 
@@ -2205,28 +2067,26 @@ IovpAdvanceStackDownwards(
     // Record a pointer in this slot to the requests originating slot as
     // appropriate.
     //
-    if (IsNewRequest) {
+    if (IsNewRequest)
+    {
 
-        TRACKIRP_DBGPRINT((
-            "  CD1: %lx is a new request\n",
-            advancedLocationData-StackDataArray
-            ), 3);
+        TRACKIRP_DBGPRINT(("  CD1: %lx is a new request\n", advancedLocationData - StackDataArray), 3);
 
         ASSERT(LocationsAdvanced == 1);
 
         iovCurrentStackLocation->RequestsFirstStackLocation = iovCurrentStackLocation;
-
-    } else if (LocationsAdvanced) {
+    }
+    else if (LocationsAdvanced)
+    {
 
         ASSERT(!isNewSession);
 
-        TRACKIRP_DBGPRINT((
-            "  CD1: %lx is a request for %lx\n",
-            advancedLocationData-StackDataArray,
-            requestOriginalSLD-StackDataArray
-            ), 3);
-
-    } else {
+        TRACKIRP_DBGPRINT(("  CD1: %lx is a request for %lx\n", advancedLocationData - StackDataArray,
+                           requestOriginalSLD - StackDataArray),
+                          3);
+    }
+    else
+    {
 
         //
         // As we skipped, the request should not have changed. If it did,
@@ -2244,18 +2104,10 @@ IovpAdvanceStackDownwards(
 }
 
 
-VOID
-IovpExamineIrpStackForwarding(
-    IN OUT  PIOV_REQUEST_PACKET  IovPacket,
-    IN      BOOLEAN              IsNewSession,
-    IN      ULONG                ForwardMethod,
-    IN      PDEVICE_OBJECT       DeviceObject,
-    IN      PIRP                 Irp,
-    IN      PVOID                CallerAddress,
-    IN OUT  PIO_STACK_LOCATION  *IoCurrentStackLocation,
-    OUT     PIO_STACK_LOCATION  *IoLastStackLocation,
-    OUT     ULONG               *StackLocationsAdvanced
-    )
+VOID IovpExamineIrpStackForwarding(IN OUT PIOV_REQUEST_PACKET IovPacket, IN BOOLEAN IsNewSession,
+                                   IN ULONG ForwardMethod, IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp,
+                                   IN PVOID CallerAddress, IN OUT PIO_STACK_LOCATION *IoCurrentStackLocation,
+                                   OUT PIO_STACK_LOCATION *IoLastStackLocation, OUT ULONG *StackLocationsAdvanced)
 {
     PIRP irp;
     PIO_STACK_LOCATION irpSp, irpLastSp;
@@ -2265,16 +2117,18 @@ IovpExamineIrpStackForwarding(
 
     irpSp = *IoCurrentStackLocation;
 
-    if (!IsNewSession) {
+    if (!IsNewSession)
+    {
 
         //
         // We are sitting on current next being one back (-1) from
         // CurrentStackLocation.
         //
-        locationsAdvanced = IovPacket->LastLocation-Irp->CurrentLocation;
-        irpLastSp = Irp->Tail.Overlay.CurrentStackLocation+((ULONG_PTR)locationsAdvanced-1);
-
-    } else {
+        locationsAdvanced = IovPacket->LastLocation - Irp->CurrentLocation;
+        irpLastSp = Irp->Tail.Overlay.CurrentStackLocation + ((ULONG_PTR)locationsAdvanced - 1);
+    }
+    else
+    {
 
         //
         // New IRP, so no last SP and we always advance "1"
@@ -2283,8 +2137,8 @@ IovpExamineIrpStackForwarding(
         irpLastSp = NULL;
     }
 
-    if ((!IsNewSession) &&
-        VfSettingsIsOptionEnabled(IovPacket->VerifierSettings, VERIFIER_OPTION_POLICE_IRPS)) {
+    if ((!IsNewSession) && VfSettingsIsOptionEnabled(IovPacket->VerifierSettings, VERIFIER_OPTION_POLICE_IRPS))
+    {
 
         //
         // As the control field is zeroed by IoCopyCurrentStackLocation, we
@@ -2293,8 +2147,8 @@ IovpExamineIrpStackForwarding(
         // the two API's was called. Otherwise the next stack location wasn't
         // set up properly (I have yet to find a case otherwise)...
         //
-        if ((irpSp->Control&SL_NOTCOPIED)&&
-            IovPacket->LastLocation != Irp->CurrentLocation) {
+        if ((irpSp->Control & SL_NOTCOPIED) && IovPacket->LastLocation != Irp->CurrentLocation)
+        {
 
 #if 0
             WDM_FAIL_ROUTINE((
@@ -2310,18 +2164,18 @@ IovpExamineIrpStackForwarding(
         // Now check for people who copy the stack locations and forget to
         // wipe out previous completion routines.
         //
-        if (locationsAdvanced) {
+        if (locationsAdvanced)
+        {
 
             //
             // IoCopyCurrentStackLocation copies everything but Completion,
             // Context, and Control
             //
-            isSameStack = RtlEqualMemory(irpSp, irpLastSp,
-                FIELD_OFFSET(IO_STACK_LOCATION, Control));
+            isSameStack = RtlEqualMemory(irpSp, irpLastSp, FIELD_OFFSET(IO_STACK_LOCATION, Control));
 
             isSameStack &= RtlEqualMemory(&irpSp->Parameters, &irpLastSp->Parameters,
-                FIELD_OFFSET(IO_STACK_LOCATION, DeviceObject)-
-                FIELD_OFFSET(IO_STACK_LOCATION, Parameters));
+                                          FIELD_OFFSET(IO_STACK_LOCATION, DeviceObject) -
+                                              FIELD_OFFSET(IO_STACK_LOCATION, Parameters));
 
             isSameStack &= (irpSp->FileObject == irpLastSp->FileObject);
 
@@ -2331,49 +2185,44 @@ IovpExamineIrpStackForwarding(
             //
             ASSERT(irpSp->CompletionRoutine != IovpSwapSurrogateIrp);
 
-            if (isSameStack) {
+            if (isSameStack)
+            {
 
                 //
                 // We caught them doing something either very bad or quite
                 // inefficient. We can tell which based on whether there is
                 // a completion routine.
                 //
-                if ((irpSp->CompletionRoutine == irpLastSp->CompletionRoutine)&&
-                    (irpSp->Context == irpLastSp->Context) &&
-                    (irpSp->Control == irpLastSp->Control) &&
-                    (irpSp->CompletionRoutine != NULL)) {
+                if ((irpSp->CompletionRoutine == irpLastSp->CompletionRoutine) &&
+                    (irpSp->Context == irpLastSp->Context) && (irpSp->Control == irpLastSp->Control) &&
+                    (irpSp->CompletionRoutine != NULL))
+                {
 
                     //
                     // The driver might have copied the entire stack location
                     // on purpose if more than one device object for the same
                     // driver exists in the stack.
                     //
-                    IovUtilGetUpperDeviceObject(
-                        irpLastSp->DeviceObject,
-                        &upperDevice
-                        );
+                    IovUtilGetUpperDeviceObject(irpLastSp->DeviceObject, &upperDevice);
 
-                    multiplyStacked = (upperDevice &&
-                        (upperDevice->DriverObject == irpLastSp->DeviceObject->DriverObject));
+                    multiplyStacked =
+                        (upperDevice && (upperDevice->DriverObject == irpLastSp->DeviceObject->DriverObject));
 
-                    if (upperDevice) {
+                    if (upperDevice)
+                    {
 
                         ObDereferenceObject(upperDevice);
                     }
 
-                    if (!multiplyStacked) {
+                    if (!multiplyStacked)
+                    {
 
                         //
                         // Duplication of both the completion and the context
                         // while not properly zeroing the control field is enough
                         // to make me believe the caller has made a vexing mistake.
                         //
-                        WDM_FAIL_ROUTINE((
-                            DCERROR_IRPSP_COPIED,
-                            DCPARAM_IRP + DCPARAM_ROUTINE,
-                            CallerAddress,
-                            Irp
-                            ));
+                        WDM_FAIL_ROUTINE((DCERROR_IRPSP_COPIED, DCPARAM_IRP + DCPARAM_ROUTINE, CallerAddress, Irp));
 
                         //
                         // Repair the stack
@@ -2381,46 +2230,37 @@ IovpExamineIrpStackForwarding(
                         irpSp->CompletionRoutine = NULL;
                         irpSp->Control = 0;
                     }
+                }
+                else if (!irpSp->CompletionRoutine)
+                {
 
-                } else if (!irpSp->CompletionRoutine) {
+                    if (!(irpSp->Control & SL_NOTCOPIED) &&
+                        VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_FLAG_UNNECCESSARY_COPIES))
+                    {
 
-                    if (!(irpSp->Control&SL_NOTCOPIED) &&
-                        VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_FLAG_UNNECCESSARY_COPIES)
-                        ) {
-
-                        WDM_FAIL_ROUTINE((
-                            DCERROR_UNNECCESSARY_COPY,
-                            DCPARAM_IRP + DCPARAM_ROUTINE,
-                            CallerAddress,
-                            Irp
-                            ));
+                        WDM_FAIL_ROUTINE(
+                            (DCERROR_UNNECCESSARY_COPY, DCPARAM_IRP + DCPARAM_ROUTINE, CallerAddress, Irp));
                     }
 
-                    IoSetCompletionRoutine(
-                        Irp,
-                        IovpInternalCompletionTrap,
-                        IoGetCurrentIrpStackLocation( Irp ),
-                        TRUE,
-                        TRUE,
-                        TRUE
-                        );
+                    IoSetCompletionRoutine(Irp, IovpInternalCompletionTrap, IoGetCurrentIrpStackLocation(Irp), TRUE,
+                                           TRUE, TRUE);
                 }
             }
+        }
+        else if (VfSettingsIsOptionEnabled(IovPacket->VerifierSettings, VERIFIER_OPTION_CONSUME_ALWAYS))
+        {
 
-        } else if (VfSettingsIsOptionEnabled(IovPacket->VerifierSettings, VERIFIER_OPTION_CONSUME_ALWAYS)) {
+            if (ForwardMethod == FORWARDED_TO_NEXT_DO)
+            {
 
-            if (ForwardMethod == FORWARDED_TO_NEXT_DO) {
+                if (Irp->CurrentLocation <= 2)
+                {
 
-                if (Irp->CurrentLocation<=2) {
-
-                    WDM_FAIL_ROUTINE((
-                        DCERROR_INSUFFICIENT_STACK_LOCATIONS,
-                        DCPARAM_IRP + DCPARAM_ROUTINE,
-                        CallerAddress,
-                        Irp
-                        ));
-
-                } else {
+                    WDM_FAIL_ROUTINE(
+                        (DCERROR_INSUFFICIENT_STACK_LOCATIONS, DCPARAM_IRP + DCPARAM_ROUTINE, CallerAddress, Irp));
+                }
+                else
+                {
 
                     //
                     // Back up the skip, then copy. Add a completion routine with
@@ -2428,26 +2268,20 @@ IovpExamineIrpStackForwarding(
                     // Rtl-copy stack locations (we can't catch them if the caller
                     // above used an empty stack with no completion routine)...
                     //
-                    IoSetNextIrpStackLocation( Irp );
+                    IoSetNextIrpStackLocation(Irp);
 
                     //
                     // Set the trap...
                     //
-                    IoCopyCurrentIrpStackLocationToNext( Irp );
-                    IoSetCompletionRoutine(
-                        Irp,
-                        IovpInternalCompletionTrap,
-                        IoGetCurrentIrpStackLocation( Irp ),
-                        TRUE,
-                        TRUE,
-                        TRUE
-                        );
+                    IoCopyCurrentIrpStackLocationToNext(Irp);
+                    IoSetCompletionRoutine(Irp, IovpInternalCompletionTrap, IoGetCurrentIrpStackLocation(Irp), TRUE,
+                                           TRUE, TRUE);
 
                     //
                     // This is our new reality...
                     //
                     locationsAdvanced = 1;
-                    irpSp = IoGetNextIrpStackLocation( Irp );
+                    irpSp = IoGetNextIrpStackLocation(Irp);
                 }
             }
         }
@@ -2460,11 +2294,7 @@ IovpExamineIrpStackForwarding(
 
 
 NTSTATUS
-IovpInternalCompletionTrap(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN PVOID Context
-    )
+IovpInternalCompletionTrap(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID Context)
 /*++
 
   Description:
@@ -2490,59 +2320,47 @@ IovpInternalCompletionTrap(
 {
     PIO_STACK_LOCATION irpSp;
 
-    if (Irp->PendingReturned) {
+    if (Irp->PendingReturned)
+    {
 
-        IoMarkIrpPending( Irp );
+        IoMarkIrpPending(Irp);
     }
-    irpSp = IoGetCurrentIrpStackLocation( Irp );
+    irpSp = IoGetCurrentIrpStackLocation(Irp);
 
-    ASSERT((PVOID) irpSp == Context);
+    ASSERT((PVOID)irpSp == Context);
 
     return STATUS_SUCCESS;
 }
 
 
-VOID
-IovpInternalCompleteAtDPC(
-    IN PKDPC Dpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    )
+VOID IovpInternalCompleteAtDPC(IN PKDPC Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1,
+                               IN PVOID SystemArgument2)
 {
     IovpInternalCompleteAfterWait(DeferredContext);
 }
 
 
-VOID
-IovpInternalCompleteAfterWait(
-    IN PVOID Context
-    )
+VOID IovpInternalCompleteAfterWait(IN PVOID Context)
 {
-    PDEFERRAL_CONTEXT deferralContext = (PDEFERRAL_CONTEXT) Context;
+    PDEFERRAL_CONTEXT deferralContext = (PDEFERRAL_CONTEXT)Context;
     PIO_STACK_LOCATION irpSpNext;
     NTSTATUS status;
 
-    if (deferralContext->DeferAction == DEFERACTION_QUEUE_PASSIVE_TIMER) {
+    if (deferralContext->DeferAction == DEFERACTION_QUEUE_PASSIVE_TIMER)
+    {
 
         //
         // Wait the appropriate amount of time if so ordered...
         //
-        ASSERT(KeGetCurrentIrql()==PASSIVE_LEVEL);
-        KeWaitForSingleObject(
-            &deferralContext->DeferralTimer,
-            Executive,
-            KernelMode,
-            FALSE,
-            NULL
-            );
+        ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
+        KeWaitForSingleObject(&deferralContext->DeferralTimer, Executive, KernelMode, FALSE, NULL);
     }
 
     VfPacketAcquireLock(deferralContext->IovRequestPacket);
 
     VfIrpMakeTouchable(deferralContext->OriginalIrp);
 
-    irpSpNext = IoGetNextIrpStackLocation( deferralContext->OriginalIrp );
+    irpSpNext = IoGetNextIrpStackLocation(deferralContext->OriginalIrp);
 
     ASSERT(irpSpNext == deferralContext->IrpSpNext);
     ASSERT(irpSpNext->CompletionRoutine == deferralContext->OriginalCompletionRoutine);
@@ -2554,13 +2372,11 @@ IovpInternalCompleteAfterWait(
     VfPacketDereference(deferralContext->IovRequestPacket, IOVREFTYPE_POINTER);
     VfPacketReleaseLock(deferralContext->IovRequestPacket);
 
-    status = irpSpNext->CompletionRoutine(
-        deferralContext->DeviceObject,
-        deferralContext->OriginalIrp,
-        irpSpNext->Context
-        );
+    status =
+        irpSpNext->CompletionRoutine(deferralContext->DeviceObject, deferralContext->OriginalIrp, irpSpNext->Context);
 
-    if (status!=STATUS_MORE_PROCESSING_REQUIRED) {
+    if (status != STATUS_MORE_PROCESSING_REQUIRED)
+    {
 
         IoCompleteRequest(deferralContext->OriginalIrp, deferralContext->OriginalPriorityBoost);
     }
@@ -2569,11 +2385,7 @@ IovpInternalCompleteAfterWait(
 
 
 NTSTATUS
-IovpInternalDeferredCompletion(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN PVOID Context
-    )
+IovpInternalDeferredCompletion(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID Context)
 /*++
 
   Description:
@@ -2597,7 +2409,7 @@ IovpInternalDeferredCompletion(
 
 --*/
 {
-    PDEFERRAL_CONTEXT deferralContext = (PDEFERRAL_CONTEXT) Context;
+    PDEFERRAL_CONTEXT deferralContext = (PDEFERRAL_CONTEXT)Context;
     PIO_STACK_LOCATION irpSpNext;
     BOOLEAN passiveCompletionOK;
     DEFER_ACTION deferAction;
@@ -2609,11 +2421,8 @@ IovpInternalDeferredCompletion(
     //
     // Retrieve time delta.
     //
-    VfSettingsGetValue(
-        deferralContext->IovRequestPacket->VerifierSettings,
-        VERIFIER_VALUE_IRP_DEFERRAL_TIME,
-        (PULONG) &deferralTime
-        );
+    VfSettingsGetValue(deferralContext->IovRequestPacket->VerifierSettings, VERIFIER_VALUE_IRP_DEFERRAL_TIME,
+                       (PULONG)&deferralTime);
 
     //
     // Do delta time conversion.
@@ -2624,9 +2433,9 @@ IovpInternalDeferredCompletion(
     // The *next* stack location holds our completion and context. The current
     // stack location has already been wiped.
     //
-    irpSpNext = IoGetNextIrpStackLocation( Irp );
+    irpSpNext = IoGetNextIrpStackLocation(Irp);
 
-    ASSERT((PVOID) irpSpNext->CompletionRoutine == IovpInternalDeferredCompletion);
+    ASSERT((PVOID)irpSpNext->CompletionRoutine == IovpInternalDeferredCompletion);
 
     //
     // Put everything back in case someone is looking...
@@ -2639,26 +2448,21 @@ IovpInternalDeferredCompletion(
     // paging IRPs (cause we could switch) and Power IRPs. As we don't check yet,
     // if we "were" completed passive, continue to do so, but elsewhere...
     //
-    passiveCompletionOK = (KeGetCurrentIrql()==PASSIVE_LEVEL);
+    passiveCompletionOK = (KeGetCurrentIrql() == PASSIVE_LEVEL);
 
     VfPacketAcquireLock(deferralContext->IovRequestPacket);
 
     //
     // Verify all completion routines are in nonpaged code.
     //
-    if (VfSettingsIsOptionEnabled(
-        deferralContext->IovRequestPacket->VerifierSettings,
-        VERIFIER_OPTION_POLICE_IRPS
-        )) {
+    if (VfSettingsIsOptionEnabled(deferralContext->IovRequestPacket->VerifierSettings, VERIFIER_OPTION_POLICE_IRPS))
+    {
 
-        if (MmIsSystemAddressLocked(irpSpNext->CompletionRoutine) == FALSE) {
+        if (MmIsSystemAddressLocked(irpSpNext->CompletionRoutine) == FALSE)
+        {
 
-            WDM_FAIL_ROUTINE((
-                DCERROR_COMPLETION_ROUTINE_PAGABLE,
-                DCPARAM_IRP + DCPARAM_ROUTINE,
-                irpSpNext->CompletionRoutine,
-                Irp
-                ));
+            WDM_FAIL_ROUTINE(
+                (DCERROR_COMPLETION_ROUTINE_PAGABLE, DCPARAM_IRP + DCPARAM_ROUTINE, irpSpNext->CompletionRoutine, Irp));
         }
     }
 
@@ -2666,49 +2470,55 @@ IovpInternalDeferredCompletion(
 
     ASSERT(VfSettingsIsOptionEnabled(verifierOptions, VERIFIER_OPTION_FORCE_PENDING));
 
-    if (VfSettingsIsOptionEnabled(verifierOptions, VERIFIER_OPTION_DEFER_COMPLETION)) {
+    if (VfSettingsIsOptionEnabled(verifierOptions, VERIFIER_OPTION_DEFER_COMPLETION))
+    {
 
         //
         // Now see whether we can safely defer completion...
         //
-        if (VfSettingsIsOptionEnabled(verifierOptions, VERIFIER_OPTION_COMPLETE_AT_PASSIVE)) {
+        if (VfSettingsIsOptionEnabled(verifierOptions, VERIFIER_OPTION_COMPLETE_AT_PASSIVE))
+        {
 
-            deferAction = passiveCompletionOK ? DEFERACTION_QUEUE_PASSIVE_TIMER :
-                                                DEFERACTION_NORMAL;
-
-        } else if (VfSettingsIsOptionEnabled(verifierOptions, VERIFIER_OPTION_COMPLETE_AT_DISPATCH)) {
+            deferAction = passiveCompletionOK ? DEFERACTION_QUEUE_PASSIVE_TIMER : DEFERACTION_NORMAL;
+        }
+        else if (VfSettingsIsOptionEnabled(verifierOptions, VERIFIER_OPTION_COMPLETE_AT_DISPATCH))
+        {
 
             deferAction = DEFERACTION_QUEUE_DISPATCH_TIMER;
-
-        } else {
-
-            deferAction = (KeGetCurrentIrql()==DISPATCH_LEVEL) ?
-                DEFERACTION_QUEUE_DISPATCH_TIMER :
-                DEFERACTION_QUEUE_PASSIVE_TIMER;
         }
+        else
+        {
 
-    } else if (VfSettingsIsOptionEnabled(verifierOptions, VERIFIER_OPTION_COMPLETE_AT_PASSIVE)) {
+            deferAction = (KeGetCurrentIrql() == DISPATCH_LEVEL) ? DEFERACTION_QUEUE_DISPATCH_TIMER
+                                                                 : DEFERACTION_QUEUE_PASSIVE_TIMER;
+        }
+    }
+    else if (VfSettingsIsOptionEnabled(verifierOptions, VERIFIER_OPTION_COMPLETE_AT_PASSIVE))
+    {
 
-        deferAction = passiveCompletionOK ? DEFERACTION_QUEUE_WORKITEM :
-                                            DEFERACTION_NORMAL;
-    } else {
+        deferAction = passiveCompletionOK ? DEFERACTION_QUEUE_WORKITEM : DEFERACTION_NORMAL;
+    }
+    else
+    {
 
         deferAction = DEFERACTION_NORMAL;
         KDASSERT(0);
     }
 
-    if (deferAction != DEFERACTION_NORMAL) {
+    if (deferAction != DEFERACTION_NORMAL)
+    {
 
         //
         // Set this flag. If anybody uses this IRP while this flag is on, complain
         // immediately!
         //
-        ASSERT(!(deferralContext->IovRequestPacket->Flags&TRACKFLAG_QUEUED_INTERNALLY));
+        ASSERT(!(deferralContext->IovRequestPacket->Flags & TRACKFLAG_QUEUED_INTERNALLY));
         deferralContext->IovRequestPacket->Flags |= TRACKFLAG_QUEUED_INTERNALLY;
         deferralContext->DeviceObject = DeviceObject;
         VfIrpMakeUntouchable(Irp);
-
-    } else {
+    }
+    else
+    {
 
         VfPacketDereference(deferralContext->IovRequestPacket, IOVREFTYPE_POINTER);
     }
@@ -2717,71 +2527,48 @@ IovpInternalDeferredCompletion(
 
     deferralContext->DeferAction = deferAction;
 
-    switch(deferAction) {
+    switch (deferAction)
+    {
 
-        case DEFERACTION_QUEUE_PASSIVE_TIMER:
-            KeInitializeTimerEx(&deferralContext->DeferralTimer, SynchronizationTimer);
-            KeSetTimerEx(
-                &deferralContext->DeferralTimer,
-                deltaTime,
-                0,
-                NULL
-                );
+    case DEFERACTION_QUEUE_PASSIVE_TIMER:
+        KeInitializeTimerEx(&deferralContext->DeferralTimer, SynchronizationTimer);
+        KeSetTimerEx(&deferralContext->DeferralTimer, deltaTime, 0, NULL);
 
-            //
-            // Fall through...
-            //
+        //
+        // Fall through...
+        //
 
-        case DEFERACTION_QUEUE_WORKITEM:
+    case DEFERACTION_QUEUE_WORKITEM:
 
-            //
-            // Queue this up so we can complete this passively.
-            //
-            ExInitializeWorkItem(
-                (PWORK_QUEUE_ITEM)&deferralContext->WorkQueueItem,
-                IovpInternalCompleteAfterWait,
-                deferralContext
-                );
+        //
+        // Queue this up so we can complete this passively.
+        //
+        ExInitializeWorkItem((PWORK_QUEUE_ITEM)&deferralContext->WorkQueueItem, IovpInternalCompleteAfterWait,
+                             deferralContext);
 
-            ExQueueWorkItem(
-                (PWORK_QUEUE_ITEM)&deferralContext->WorkQueueItem,
-                DelayedWorkQueue
-                );
+        ExQueueWorkItem((PWORK_QUEUE_ITEM)&deferralContext->WorkQueueItem, DelayedWorkQueue);
 
-            return STATUS_MORE_PROCESSING_REQUIRED;
+        return STATUS_MORE_PROCESSING_REQUIRED;
 
-        case DEFERACTION_QUEUE_DISPATCH_TIMER:
+    case DEFERACTION_QUEUE_DISPATCH_TIMER:
 
-            KeInitializeDpc(
-                &deferralContext->DpcItem,
-                IovpInternalCompleteAtDPC,
-                deferralContext
-                );
+        KeInitializeDpc(&deferralContext->DpcItem, IovpInternalCompleteAtDPC, deferralContext);
 
-            KeInitializeTimerEx(&deferralContext->DeferralTimer, SynchronizationTimer);
-            KeSetTimerEx(
-                &deferralContext->DeferralTimer,
-                deltaTime,
-                0,
-                &deferralContext->DpcItem
-                );
-            return STATUS_MORE_PROCESSING_REQUIRED;
+        KeInitializeTimerEx(&deferralContext->DeferralTimer, SynchronizationTimer);
+        KeSetTimerEx(&deferralContext->DeferralTimer, deltaTime, 0, &deferralContext->DpcItem);
+        return STATUS_MORE_PROCESSING_REQUIRED;
 
-        case DEFERACTION_NORMAL:
-        default:
+    case DEFERACTION_NORMAL:
+    default:
 
-            ExFreePool(deferralContext);
-            return irpSpNext->CompletionRoutine(DeviceObject, Irp, irpSpNext->Context);
+        ExFreePool(deferralContext);
+        return irpSpNext->CompletionRoutine(DeviceObject, Irp, irpSpNext->Context);
     }
 }
 
 
 NTSTATUS
-IovpSwapSurrogateIrp(
-    IN      PDEVICE_OBJECT  DeviceObject,
-    IN      PIRP            Irp,
-    IN      PVOID           Context
-    )
+IovpSwapSurrogateIrp(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN PVOID Context)
 /*++
 
   Description:
@@ -2826,7 +2613,8 @@ IovpSwapSurrogateIrp(
     iovPacket = VfPacketFindAndLock(Irp);
     ASSERT(iovPacket);
 
-    if (iovPacket == NULL) {
+    if (iovPacket == NULL)
+    {
 
         return STATUS_SUCCESS;
     }
@@ -2839,14 +2627,12 @@ IovpSwapSurrogateIrp(
     //
     // Put everything back
     //
-    ASSERT(iovPacket->ChainHead != (PIOV_DATABASE_HEADER) iovPacket);
+    ASSERT(iovPacket->ChainHead != (PIOV_DATABASE_HEADER)iovPacket);
 
-    iovPrevPacket = (PIOV_REQUEST_PACKET) VfIrpDatabaseEntryGetChainPrevious(
-        (PIOV_DATABASE_HEADER) iovPacket
-        );
+    iovPrevPacket = (PIOV_REQUEST_PACKET)VfIrpDatabaseEntryGetChainPrevious((PIOV_DATABASE_HEADER)iovPacket);
 
     realIrp = iovPrevPacket->TrackedIrp;
-    irpSize = IoSizeOfIrp( Irp->StackCount );
+    irpSize = IoSizeOfIrp(Irp->StackCount);
 
     //
     // Back the IRP stack up so that the original completion routine
@@ -2857,15 +2643,16 @@ IovpSwapSurrogateIrp(
 
     irpSp = IoGetCurrentIrpStackLocation(Irp);
     irpSp->CompletionRoutine = iovPacket->RealIrpCompletionRoutine;
-    irpSp->Control           = iovPacket->RealIrpControl;
-    irpSp->Context           = iovPacket->RealIrpContext;
+    irpSp->Control = iovPacket->RealIrpControl;
+    irpSp->Context = iovPacket->RealIrpContext;
 
     //
     // Record final data and make any accesses to the surrogate IRP
     // crash.
     //
     irpSp = IoGetNextIrpStackLocation(Irp);
-    if (VfSettingsIsOptionEnabled(iovPacket->VerifierSettings, VERIFIER_OPTION_POLICE_IRPS)) {
+    if (VfSettingsIsOptionEnabled(iovPacket->VerifierSettings, VERIFIER_OPTION_POLICE_IRPS))
+    {
 
         VfMajorVerifyFinalIrpStack(iovPacket, irpSp);
     }
@@ -2876,12 +2663,7 @@ IovpSwapSurrogateIrp(
     IovpSessionDataClose(iovSessionData);
     IovpSessionDataDereference(iovSessionData);
 
-    TRACKIRP_DBGPRINT((
-        "  Swapping surrogate IRP %lx back to %lx (Tracking data %lx)\n",
-        Irp,
-        realIrp,
-        iovPacket
-        ), 1);
+    TRACKIRP_DBGPRINT(("  Swapping surrogate IRP %lx back to %lx (Tracking data %lx)\n", Irp, realIrp, iovPacket), 1);
 
     iovPacket->Flags |= TRACKFLAG_SWAPPED_BACK;
 
@@ -2901,13 +2683,7 @@ IovpSwapSurrogateIrp(
 }
 
 
-VOID
-FASTCALL
-IovpCancelIrp(
-    IN     PIRP             Irp,
-    OUT    PBOOLEAN         CancelHandled,
-    OUT    PBOOLEAN         ReturnValue
-    )
+VOID FASTCALL IovpCancelIrp(IN PIRP Irp, OUT PBOOLEAN CancelHandled, OUT PBOOLEAN ReturnValue)
 /*++
 
   Description:
@@ -2945,17 +2721,13 @@ IovpCancelIrp(
     *CancelHandled = FALSE;
 
     iovPacket = VfPacketFindAndLock(Irp);
-    if (iovPacket == NULL) {
+    if (iovPacket == NULL)
+    {
 
         return;
     }
 
-    VfPacketLogEntry(
-        iovPacket,
-        IOV_EVENT_IO_CANCEL_IRP,
-        NULL,
-        0
-        );
+    VfPacketLogEntry(iovPacket, IOV_EVENT_IO_CANCEL_IRP, NULL, 0);
 
     //
     // If the IRP is queued internally, touching it is not very safe as we may
@@ -2963,12 +2735,14 @@ IovpCancelIrp(
     // under the IRPs track lock.
     //
 
-    if (iovPacket->Flags&TRACKFLAG_QUEUED_INTERNALLY) {
+    if (iovPacket->Flags & TRACKFLAG_QUEUED_INTERNALLY)
+    {
 
         VfIrpMakeTouchable(Irp);
     }
 
-    if (!(iovPacket->Flags&TRACKFLAG_ACTIVE)) {
+    if (!(iovPacket->Flags & TRACKFLAG_ACTIVE))
+    {
 
         //
         // We've already completed the IRP, and the only reason it's
@@ -2979,7 +2753,8 @@ IovpCancelIrp(
         return;
     }
 
-    if (!(iovPacket->Flags&TRACKFLAG_HAS_SURROGATE)) {
+    if (!(iovPacket->Flags & TRACKFLAG_HAS_SURROGATE))
+    {
 
         //
         // Cancel of an IRP that doesn't have an active surrogate. Let it
@@ -2989,16 +2764,14 @@ IovpCancelIrp(
         return;
     }
 
-    if (VfSettingsIsOptionEnabled(iovPacket->VerifierSettings, VERIFIER_OPTION_POLICE_IRPS)) {
+    if (VfSettingsIsOptionEnabled(iovPacket->VerifierSettings, VERIFIER_OPTION_POLICE_IRPS))
+    {
 
-        if (Irp->CancelRoutine) {
+        if (Irp->CancelRoutine)
+        {
 
-            WDM_FAIL_ROUTINE((
-                DCERROR_CANCELROUTINE_ON_FORWARDED_IRP,
-                DCPARAM_IRP + DCPARAM_ROUTINE,
-                Irp->CancelRoutine,
-                Irp
-                ));
+            WDM_FAIL_ROUTINE(
+                (DCERROR_CANCELROUTINE_ON_FORWARDED_IRP, DCPARAM_IRP + DCPARAM_ROUTINE, Irp->CancelRoutine, Irp));
 
             //
             // We will ignore this routine. As we should...
@@ -3006,9 +2779,7 @@ IovpCancelIrp(
         }
     }
 
-    iovNextPacket = (PIOV_REQUEST_PACKET) VfIrpDatabaseEntryGetChainNext(
-        (PIOV_DATABASE_HEADER) iovPacket
-        );
+    iovNextPacket = (PIOV_REQUEST_PACKET)VfIrpDatabaseEntryGetChainNext((PIOV_DATABASE_HEADER)iovPacket);
 
     Irp->Cancel = TRUE;
     *CancelHandled = TRUE;
@@ -3026,13 +2797,8 @@ IovpCancelIrp(
  *
  */
 
-VOID
-FASTCALL
-IovpExamineDevObjForwarding(
-    IN     PDEVICE_OBJECT DeviceBeingCalled,
-    IN     PDEVICE_OBJECT DeviceLastCalled      OPTIONAL,
-    OUT    PULONG         ForwardTechnique
-    )
+VOID FASTCALL IovpExamineDevObjForwarding(IN PDEVICE_OBJECT DeviceBeingCalled,
+                                          IN PDEVICE_OBJECT DeviceLastCalled OPTIONAL, OUT PULONG ForwardTechnique)
 /*++
 
     Returns:
@@ -3051,16 +2817,19 @@ IovpExamineDevObjForwarding(
     DEVOBJ_RELATION deviceObjectRelation;
     ULONG result;
 
-    if (DeviceLastCalled == NULL) {
+    if (DeviceLastCalled == NULL)
+    {
 
         IovUtilGetUpperDeviceObject(DeviceBeingCalled, &upperObject);
 
-        if (upperObject) {
+        if (upperObject)
+        {
 
             ObDereferenceObject(upperObject);
             *ForwardTechnique = STARTED_INSIDE_STACK;
-
-        } else {
+        }
+        else
+        {
 
             *ForwardTechnique = STARTED_TOP_OF_STACK;
         }
@@ -3068,76 +2837,71 @@ IovpExamineDevObjForwarding(
         return;
     }
 
-    IovUtilRelateDeviceObjects(
-        DeviceBeingCalled,
-        DeviceLastCalled,
-        &deviceObjectRelation
-        );
+    IovUtilRelateDeviceObjects(DeviceBeingCalled, DeviceLastCalled, &deviceObjectRelation);
 
-    switch(deviceObjectRelation) {
+    switch (deviceObjectRelation)
+    {
 
-        case DEVOBJ_RELATION_IDENTICAL:
+    case DEVOBJ_RELATION_IDENTICAL:
 
-            //
-            // We map forwarded nowhere to forwarded ahead.
-            //
-            result = FORWARDED_TO_NEXT_DO;
-            break;
+        //
+        // We map forwarded nowhere to forwarded ahead.
+        //
+        result = FORWARDED_TO_NEXT_DO;
+        break;
 
-        case DEVOBJ_RELATION_FIRST_IMMEDIATELY_BELOW_SECOND:
-            result = FORWARDED_TO_NEXT_DO;
-            break;
+    case DEVOBJ_RELATION_FIRST_IMMEDIATELY_BELOW_SECOND:
+        result = FORWARDED_TO_NEXT_DO;
+        break;
 
-        case DEVOBJ_RELATION_FIRST_BELOW_SECOND:
+    case DEVOBJ_RELATION_FIRST_BELOW_SECOND:
 
-            //
-            // This is very likely a driver forwarding IRPs directly to the PDO.
-            //
-            result = SKIPPED_A_DO;
-            break;
+        //
+        // This is very likely a driver forwarding IRPs directly to the PDO.
+        //
+        result = SKIPPED_A_DO;
+        break;
 
-        case DEVOBJ_RELATION_FIRST_IMMEDIATELY_ABOVE_SECOND:
-        case DEVOBJ_RELATION_FIRST_ABOVE_SECOND:
+    case DEVOBJ_RELATION_FIRST_IMMEDIATELY_ABOVE_SECOND:
+    case DEVOBJ_RELATION_FIRST_ABOVE_SECOND:
 
-            //
-            // Weird. Really???? Did the IRP truely go backwards, *up* the
-            // stack?
-            //
-            ASSERT(0);
-            result = SKIPPED_A_DO;
-            break;
+        //
+        // Weird. Really???? Did the IRP truely go backwards, *up* the
+        // stack?
+        //
+        ASSERT(0);
+        result = SKIPPED_A_DO;
+        break;
 
 
-        case DEVOBJ_RELATION_NOT_IN_SAME_STACK:
+    case DEVOBJ_RELATION_NOT_IN_SAME_STACK:
 
-            IovUtilGetUpperDeviceObject(DeviceBeingCalled, &upperObject);
+        IovUtilGetUpperDeviceObject(DeviceBeingCalled, &upperObject);
 
-            if (upperObject) {
+        if (upperObject)
+        {
 
-                ObDereferenceObject(upperObject);
-                result = CHANGED_STACKS_MID_STACK;
+            ObDereferenceObject(upperObject);
+            result = CHANGED_STACKS_MID_STACK;
+        }
+        else
+        {
 
-            } else {
+            result = CHANGED_STACKS_AT_BOTTOM;
+        }
+        break;
 
-                result = CHANGED_STACKS_AT_BOTTOM;
-            }
-            break;
-
-        default:
-            ASSERT(0);
-            result = FORWARDED_TO_NEXT_DO;
-            break;
+    default:
+        ASSERT(0);
+        result = FORWARDED_TO_NEXT_DO;
+        break;
     }
 
     *ForwardTechnique = result;
 }
 
 
-VOID
-IovpBuildIrpSnapshot(
-    IN  PIRP            Irp,
-    OUT IRP_SNAPSHOT   *IrpSnapshot
-    )
+VOID IovpBuildIrpSnapshot(IN PIRP Irp, OUT IRP_SNAPSHOT *IrpSnapshot)
 /*++
 
 Routine Description:
@@ -3161,14 +2925,7 @@ Return Value:
 {
     IrpSnapshot->Irp = Irp;
 
-    RtlCopyMemory(
-        &IrpSnapshot->IoStackLocation,
-        IoGetNextIrpStackLocation(Irp),
-        sizeof(IO_STACK_LOCATION)
-        );
+    RtlCopyMemory(&IrpSnapshot->IoStackLocation, IoGetNextIrpStackLocation(Irp), sizeof(IO_STACK_LOCATION));
 }
 
 #endif // NO_SPECIAL_IRP
-
-
-

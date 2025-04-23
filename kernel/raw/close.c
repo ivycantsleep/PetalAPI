@@ -24,13 +24,9 @@ Revision History:
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, RawClose)
 #endif
-
+
 NTSTATUS
-RawClose (
-    IN PVCB Vcb,
-    IN PIRP Irp,
-    IN PIO_STACK_LOCATION IrpSp
-    )
+RawClose(IN PVCB Vcb, IN PIRP Irp, IN PIO_STACK_LOCATION IrpSp)
 
 /*++
 
@@ -65,31 +61,30 @@ Return Value:
     //
     // Skip stream files as they are unopened fileobjects.
     // This might be a close from IopInvalidateVolumesForDevice
-    // 
-    if (IrpSp->FileObject->Flags & FO_STREAM_FILE) {
-        RawCompleteRequest( Irp, STATUS_SUCCESS );
+    //
+    if (IrpSp->FileObject->Flags & FO_STREAM_FILE)
+    {
+        RawCompleteRequest(Irp, STATUS_SUCCESS);
         return STATUS_SUCCESS;
     }
 
-    Status = KeWaitForSingleObject( &Vcb->Mutex,
-                                   Executive,
-                                   KernelMode,
-                                   FALSE,
-                                   (PLARGE_INTEGER) NULL );
-    ASSERT( NT_SUCCESS( Status ) );
+    Status = KeWaitForSingleObject(&Vcb->Mutex, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
+    ASSERT(NT_SUCCESS(Status));
 
     Vcb->OpenCount -= 1;
 
-    if (Vcb->OpenCount == 0) {
+    if (Vcb->OpenCount == 0)
+    {
 
-        DeleteVolume = RawCheckForDismount( Vcb, FALSE );
+        DeleteVolume = RawCheckForDismount(Vcb, FALSE);
     }
 
-    if (!DeleteVolume) {
-        (VOID)KeReleaseMutex( &Vcb->Mutex, FALSE );
+    if (!DeleteVolume)
+    {
+        (VOID) KeReleaseMutex(&Vcb->Mutex, FALSE);
     }
 
-    RawCompleteRequest( Irp, STATUS_SUCCESS );
+    RawCompleteRequest(Irp, STATUS_SUCCESS);
 
     return STATUS_SUCCESS;
 }

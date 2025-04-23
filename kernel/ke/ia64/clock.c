@@ -26,18 +26,11 @@ Revision History:
 #include <ntia64.h>
 #include <ntexapi.h>
 
-VOID
-KiProcessProfileList (
-    IN PKTRAP_FRAME    TrFrame,
-    IN KPROFILE_SOURCE Source,
-    IN PLIST_ENTRY     ListHead
-    );
+VOID KiProcessProfileList(IN PKTRAP_FRAME TrFrame, IN KPROFILE_SOURCE Source, IN PLIST_ENTRY ListHead);
 
-
+
 BOOLEAN
-KiChkTimerExpireSysDpc (
-    IN ULONGLONG     TickCount
-    )
+KiChkTimerExpireSysDpc(IN ULONGLONG TickCount)
 
 /*++
 
@@ -60,16 +53,17 @@ Return Value:
 --*/
 
 {
-    BOOLEAN     ret = FALSE;    // No DPC queued, default return value.
+    BOOLEAN ret = FALSE; // No DPC queued, default return value.
 
-    PLIST_ENTRY ListHead = &KiTimerTableListHead[(ULONG)TickCount%TIMER_TABLE_SIZE];
+    PLIST_ENTRY ListHead = &KiTimerTableListHead[(ULONG)TickCount % TIMER_TABLE_SIZE];
     PLIST_ENTRY NextEntry = ListHead->Flink;
 
     //
     // Check to see if the list is empty.
     //
-    if (NextEntry != ListHead) {
-        PKTIMER   Timer = CONTAINING_RECORD(NextEntry, KTIMER, TimerListEntry);
+    if (NextEntry != ListHead)
+    {
+        PKTIMER Timer = CONTAINING_RECORD(NextEntry, KTIMER, TimerListEntry);
         ULONGLONG TimeValue = Timer->DueTime.QuadPart;
         ULARGE_INTEGER CurrentTime;
 
@@ -79,10 +73,11 @@ Return Value:
 
         CurrentTime.LowPart = SharedUserData->InterruptTime.LowPart;
         CurrentTime.HighPart = SharedUserData->InterruptTime.High1Time;
-        if (TimeValue <= CurrentTime.QuadPart) {
+        if (TimeValue <= CurrentTime.QuadPart)
+        {
 
             PKPRCB Prcb = KeGetCurrentPrcb();
-            PKDPC  Dpc  = &KiTimerExpireDpc;
+            PKDPC Dpc = &KiTimerExpireDpc;
 
             _disable();
 #if !defined(NT_UP)
@@ -91,7 +86,8 @@ Return Value:
             //
             // Insert DPC only if not already inserted.
             //
-            if (Dpc->Lock == NULL) {
+            if (Dpc->Lock == NULL)
+            {
 
                 //
                 // Put timer expiration DPC in the system DPC list and initiate
@@ -117,15 +113,11 @@ Return Value:
         }
     }
 
-    return(ret);
+    return (ret);
 }
 
-
-VOID
-KeUpdateSystemTime (
-    IN PKTRAP_FRAME TrFrame,
-    IN ULONG        Increment
-    )
+
+VOID KeUpdateSystemTime(IN PKTRAP_FRAME TrFrame, IN ULONG Increment)
 
 /*++
 
@@ -167,7 +159,7 @@ Return Value:
     SharedUserData->InterruptTime.LowPart = LowTime;
     SharedUserData->InterruptTime.High1Time = HighTime;
 
-    KiTickOffset                  -= Increment;
+    KiTickOffset -= Increment;
 
     SaveTickOffset = KiTickOffset;
 
@@ -180,8 +172,9 @@ Return Value:
         //
 
         KiChkTimerExpireSysDpc(KeTickCount.QuadPart);
-
-    } else {
+    }
+    else
+    {
 
         //
         // Tick has completed, tick count set to maximum increase plus any
@@ -206,19 +199,16 @@ Return Value:
 
         if (!KiChkTimerExpireSysDpc(KeTickCount.QuadPart - 1))
             KiChkTimerExpireSysDpc(KeTickCount.QuadPart);
-
     }
 
-    if (SaveTickOffset <= 0) {
+    if (SaveTickOffset <= 0)
+    {
         KeUpdateRunTime(TrFrame);
     }
 }
 
-
-VOID
-KeUpdateRunTime (
-    IN PKTRAP_FRAME TrFrame
-    )
+
+VOID KeUpdateRunTime(IN PKTRAP_FRAME TrFrame)
 
 /*++
 
@@ -240,8 +230,8 @@ Return Value:
 
 {
     KSPIN_LOCK Lock;
-    PKPRCB    Prcb    = KeGetCurrentPrcb();
-    PKTHREAD  Thread  = KeGetCurrentThread();
+    PKPRCB Prcb = KeGetCurrentPrcb();
+    PKTHREAD Thread = KeGetCurrentThread();
     PKPROCESS Process = Thread->ApcState.Process;
 
     //
@@ -257,7 +247,8 @@ Return Value:
     //              increment time executing DPC routines.
     //
 
-    if (TrFrame->PreviousMode != KernelMode) {
+    if (TrFrame->PreviousMode != KernelMode)
+    {
         ++Thread->UserTime;
 
         // Atomic Update of Process User Time required.
@@ -265,15 +256,21 @@ Return Value:
 
         // Update the time spent in user mode for the current processor.
         ++Prcb->UserTime;
-    } else {
+    }
+    else
+    {
 
-        if (TrFrame->OldIrql > DISPATCH_LEVEL) {
+        if (TrFrame->OldIrql > DISPATCH_LEVEL)
+        {
             ++Prcb->InterruptTime;
-        } else if ((TrFrame->OldIrql < DISPATCH_LEVEL) ||
-                   (Prcb->DpcRoutineActive == 0)) {
+        }
+        else if ((TrFrame->OldIrql < DISPATCH_LEVEL) || (Prcb->DpcRoutineActive == 0))
+        {
             ++Thread->KernelTime;
             ExInterlockedIncrementLong(&Process->KernelTime, &Lock);
-        } else {
+        }
+        else
+        {
             ++Prcb->DpcTime;
         }
 
@@ -298,7 +295,8 @@ Return Value:
     //      Decrement the maximum DPC queue depth.
     //      Reset the threshold counter if appropriate.
     //
-    if (Prcb->DpcQueueDepth != 0 && Prcb->DpcRoutineActive == 0) {
+    if (Prcb->DpcQueueDepth != 0 && Prcb->DpcRoutineActive == 0)
+    {
 
         Prcb->AdjustDpcThreshold = KiAdjustDpcThreshold;
 
@@ -307,7 +305,9 @@ Return Value:
 
         if (Prcb->DpcRequestRate < KiIdealDpcRate && Prcb->MaximumDpcQueueDepth > 1)
             --Prcb->MaximumDpcQueueDepth;
-    } else {
+    }
+    else
+    {
         //
         // The DPC queue is empty or a DPC routine is active or a DPC interrupt
         // has been requested. Count down the adjustment threshold and if the count
@@ -315,7 +315,8 @@ Return Value:
         // the initial value. Also, reset the adjustment threshold value.
         //
         --Prcb->AdjustDpcThreshold;
-        if (Prcb->AdjustDpcThreshold == 0) {
+        if (Prcb->AdjustDpcThreshold == 0)
+        {
             Prcb->AdjustDpcThreshold = KiAdjustDpcThreshold;
             if (KiMaximumDpcQueueDepth != Prcb->MaximumDpcQueueDepth)
                 ++Prcb->MaximumDpcQueueDepth;
@@ -328,7 +329,8 @@ Return Value:
     Thread->Quantum -= CLOCK_QUANTUM_DECREMENT;
 
     // Set quantum end if time expired, for any thread except idle thread.
-    if (Thread->Quantum <= 0 && Thread != Prcb->IdleThread)  {
+    if (Thread->Quantum <= 0 && Thread != Prcb->IdleThread)
+    {
 
         Prcb->QuantumEnd = 1;
 
@@ -342,18 +344,15 @@ Return Value:
     // but the corresponding IPI may have been lost on pre-B3 processors;
     // therefore, send another IPI to workaround this problem
     //
-    if (KeGetCurrentPrcb()->SignalDone != 0) {
+    if (KeGetCurrentPrcb()->SignalDone != 0)
+    {
         HalRequestIpi(PCR->SetMember);
     }
 #endif //  _MERCED_A0_
-
 }
 
-
-VOID
-KeProfileInterrupt (
-    IN PKTRAP_FRAME TrFrame
-    )
+
+VOID KeProfileInterrupt(IN PKTRAP_FRAME TrFrame)
 /*++
 
 Routine Description:
@@ -384,12 +383,8 @@ Return Value:
     return;
 }
 
-
-VOID
-KeProfileInterruptWithSource (
-    IN PKTRAP_FRAME    TrFrame,
-    IN KPROFILE_SOURCE Source
-    )
+
+VOID KeProfileInterruptWithSource(IN PKTRAP_FRAME TrFrame, IN KPROFILE_SOURCE Source)
 /*++
 
 Routine Description:
@@ -415,7 +410,7 @@ Return Value:
 --*/
 
 {
-    PKTHREAD  Thread  = KeGetCurrentThread();
+    PKTHREAD Thread = KeGetCurrentThread();
     PKPROCESS Process = Thread->ApcState.Process;
 
     PERFINFO_PROFILE(TrFrame, Source);
@@ -434,13 +429,8 @@ Return Value:
     return;
 }
 
-
-VOID
-KiProcessProfileList (
-    IN PKTRAP_FRAME    TrFrame,
-    IN KPROFILE_SOURCE Source,
-    IN PLIST_ENTRY     ListHead
-    )
+
+VOID KiProcessProfileList(IN PKTRAP_FRAME TrFrame, IN KPROFILE_SOURCE Source, IN PLIST_ENTRY ListHead)
 /*++
 
 Routine Description:
@@ -474,24 +464,26 @@ Return Value:
     //
     // Scan profile list and increment profile buckets as appropriate.
     //
-    for (; NextEntry != ListHead; NextEntry = NextEntry->Flink) {
-        PCHAR  BucketPter;
+    for (; NextEntry != ListHead; NextEntry = NextEntry->Flink)
+    {
+        PCHAR BucketPter;
         PULONG BucketValue;
 
         PKPROFILE Profile = CONTAINING_RECORD(NextEntry, KPROFILE, ProfileListEntry);
 
-        if ( (Profile->Source != Source) || ((Profile->Affinity & Prcb->SetMember) == 0) )   {
+        if ((Profile->Source != Source) || ((Profile->Affinity & Prcb->SetMember) == 0))
+        {
             continue;
         }
 
-        if ( ((PVOID)TrFrame->StIIP < Profile->RangeBase) || ((PVOID)TrFrame->StIIP > Profile->RangeLimit) )  {
+        if (((PVOID)TrFrame->StIIP < Profile->RangeBase) || ((PVOID)TrFrame->StIIP > Profile->RangeLimit))
+        {
             continue;
         }
 
         BucketPter = (PCHAR)Profile->Buffer +
-                     ((((PCHAR)TrFrame->StIIP - (PCHAR)Profile->RangeBase)
-                     >> Profile->BucketShift) & 0xFFFFFFFC);
-        BucketValue = (PULONG) BucketPter;
+                     ((((PCHAR)TrFrame->StIIP - (PCHAR)Profile->RangeBase) >> Profile->BucketShift) & 0xFFFFFFFC);
+        BucketValue = (PULONG)BucketPter;
         (*BucketValue)++;
     }
 

@@ -16,53 +16,44 @@ Revision History:
 #ifndef _WSPIAPI_H_
 #define _WSPIAPI_H_
 
-#include <stdio.h>              // sprintf()
-#include <stdlib.h>             // calloc(), strtoul()
-#include <malloc.h>             // calloc()
-#include <string.h>             // strlen(), strcmp(), strstr()
+#include <stdio.h>  // sprintf()
+#include <stdlib.h> // calloc(), strtoul()
+#include <malloc.h> // calloc()
+#include <string.h> // strlen(), strcmp(), strstr()
 
-#define WspiapiMalloc(tSize)    calloc(1, (tSize))
-#define WspiapiFree(p)          free(p)
-#define WspiapiSwap(a, b, c)    { (c) = (a); (a) = (b); (b) = (c); }
-#define getaddrinfo             WspiapiGetAddrInfo
-#define getnameinfo             WspiapiGetNameInfo
-#define freeaddrinfo            WspiapiFreeAddrInfo
+#define WspiapiMalloc(tSize) calloc(1, (tSize))
+#define WspiapiFree(p) free(p)
+#define WspiapiSwap(a, b, c) \
+    {                        \
+        (c) = (a);           \
+        (a) = (b);           \
+        (b) = (c);           \
+    }
+#define getaddrinfo WspiapiGetAddrInfo
+#define getnameinfo WspiapiGetNameInfo
+#define freeaddrinfo WspiapiFreeAddrInfo
 
-typedef int (WINAPI *WSPIAPI_PGETADDRINFO) (
-    IN  const char                      *nodename,
-    IN  const char                      *servname,
-    IN  const struct addrinfo           *hints,
-    OUT struct addrinfo                 **res);
+typedef int(WINAPI *WSPIAPI_PGETADDRINFO)(IN const char *nodename, IN const char *servname,
+                                          IN const struct addrinfo *hints, OUT struct addrinfo **res);
 
-typedef int (WINAPI *WSPIAPI_PGETNAMEINFO) (
-    IN  const struct sockaddr           *sa,
-    IN  socklen_t                       salen,
-    OUT char                            *host,
-    IN  size_t                          hostlen,
-    OUT char                            *serv,
-    IN  size_t                          servlen,
-    IN  int                             flags);
+typedef int(WINAPI *WSPIAPI_PGETNAMEINFO)(IN const struct sockaddr *sa, IN socklen_t salen, OUT char *host,
+                                          IN size_t hostlen, OUT char *serv, IN size_t servlen, IN int flags);
 
-typedef void (WINAPI *WSPIAPI_PFREEADDRINFO) (
-    IN  struct addrinfo                 *ai);
-
+typedef void(WINAPI *WSPIAPI_PFREEADDRINFO)(IN struct addrinfo *ai);
 
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
-    
-////////////////////////////////////////////////////////////
-// v4 only versions of getaddrinfo and friends.
-// NOTE: gai_strerror is inlined in ws2tcpip.h
-////////////////////////////////////////////////////////////
 
-_inline    
-char *
-WINAPI
-WspiapiStrdup (
-	IN  const char *                    pszString)
-/*++
+    ////////////////////////////////////////////////////////////
+    // v4 only versions of getaddrinfo and friends.
+    // NOTE: gai_strerror is inlined in ws2tcpip.h
+    ////////////////////////////////////////////////////////////
+
+    _inline char *WINAPI WspiapiStrdup(IN const char *pszString)
+    /*++
 
 Routine Description
     allocates enough storage via calloc() for a copy of the string,
@@ -75,29 +66,23 @@ Return Value
     a pointer to the newly allocated storage with the string in it.
     NULL if enough memory could not be allocated, or string was NULL.
 
---*/    
-{
-    char    *pszMemory;
+--*/
+    {
+        char *pszMemory;
 
-    if (!pszString)
-        return(NULL);
+        if (!pszString)
+            return (NULL);
 
-    pszMemory = (char *) WspiapiMalloc(strlen(pszString) + 1);
-    if (!pszMemory)
-        return(NULL);
+        pszMemory = (char *)WspiapiMalloc(strlen(pszString) + 1);
+        if (!pszMemory)
+            return (NULL);
 
-    return(strcpy(pszMemory, pszString));
-}
+        return (strcpy(pszMemory, pszString));
+    }
 
-    
-    
-__inline
-BOOL
-WINAPI
-WspiapiParseV4Address (
-    IN  const char *                    pszAddress,
-    OUT PDWORD                          pdwAddress)
-/*++
+
+    __inline BOOL WINAPI WspiapiParseV4Address(IN const char *pszAddress, OUT PDWORD pdwAddress)
+    /*++
 
 Routine Description
     get the IPv4 address (in network byte order) from its string
@@ -111,39 +96,32 @@ Return Value
     Returns FALSE if there is an error, TRUE for success.
     
 --*/
-{
-    DWORD       dwAddress   = 0;
-    const char  *pcNext     = NULL;
-    int         iCount      = 0;
+    {
+        DWORD dwAddress = 0;
+        const char *pcNext = NULL;
+        int iCount = 0;
 
-    // ensure there are 3 '.' (periods)
-    for (pcNext = pszAddress; *pcNext != '\0'; pcNext++)
-        if (*pcNext == '.')
-            iCount++;
-    if (iCount != 3)
-        return FALSE;
+        // ensure there are 3 '.' (periods)
+        for (pcNext = pszAddress; *pcNext != '\0'; pcNext++)
+            if (*pcNext == '.')
+                iCount++;
+        if (iCount != 3)
+            return FALSE;
 
-    // return an error if dwAddress is INADDR_NONE (255.255.255.255)
-    // since this is never a valid argument to getaddrinfo.
-    dwAddress = inet_addr(pszAddress);
-    if (dwAddress == INADDR_NONE)
-        return FALSE;
+        // return an error if dwAddress is INADDR_NONE (255.255.255.255)
+        // since this is never a valid argument to getaddrinfo.
+        dwAddress = inet_addr(pszAddress);
+        if (dwAddress == INADDR_NONE)
+            return FALSE;
 
-    *pdwAddress = dwAddress;
-    return TRUE;
-}
+        *pdwAddress = dwAddress;
+        return TRUE;
+    }
 
 
-
-__inline
-struct addrinfo *
-WINAPI
-WspiapiNewAddrInfo (
-    IN  int                             iSocketType,
-    IN  int                             iProtocol,
-    IN  WORD                            wPort,
-    IN  DWORD                           dwAddress)
-/*++
+    __inline struct addrinfo *WINAPI WspiapiNewAddrInfo(IN int iSocketType, IN int iProtocol, IN WORD wPort,
+                                                        IN DWORD dwAddress)
+    /*++
 
 Routine Description
     allocate an addrinfo structure and populate fields.
@@ -158,51 +136,40 @@ Arguments
 Return Value
     returns an addrinfo struct, or NULL if out of memory.
 
---*/    
-{
-    struct addrinfo     *ptNew;
-    struct sockaddr_in  *ptAddress;
-
-    // allocate a new addrinfo structure.
-    ptNew       =
-        (struct addrinfo *) WspiapiMalloc(sizeof(struct addrinfo));
-    if (!ptNew)
-        return NULL;
-
-    ptAddress   =
-        (struct sockaddr_in *) WspiapiMalloc(sizeof(struct sockaddr_in));
-    if (!ptAddress)
+--*/
     {
-        WspiapiFree(ptNew);
-        return NULL;
+        struct addrinfo *ptNew;
+        struct sockaddr_in *ptAddress;
+
+        // allocate a new addrinfo structure.
+        ptNew = (struct addrinfo *)WspiapiMalloc(sizeof(struct addrinfo));
+        if (!ptNew)
+            return NULL;
+
+        ptAddress = (struct sockaddr_in *)WspiapiMalloc(sizeof(struct sockaddr_in));
+        if (!ptAddress)
+        {
+            WspiapiFree(ptNew);
+            return NULL;
+        }
+        ptAddress->sin_family = AF_INET;
+        ptAddress->sin_port = wPort;
+        ptAddress->sin_addr.s_addr = dwAddress;
+
+        // fill in the fields...
+        ptNew->ai_family = PF_INET;
+        ptNew->ai_socktype = iSocketType;
+        ptNew->ai_protocol = iProtocol;
+        ptNew->ai_addrlen = sizeof(struct sockaddr_in);
+        ptNew->ai_addr = (struct sockaddr *)ptAddress;
+
+        return ptNew;
     }
-    ptAddress->sin_family       = AF_INET;
-    ptAddress->sin_port         = wPort;
-    ptAddress->sin_addr.s_addr  = dwAddress;
-    
-    // fill in the fields...
-    ptNew->ai_family            = PF_INET;
-    ptNew->ai_socktype          = iSocketType;
-    ptNew->ai_protocol          = iProtocol;
-    ptNew->ai_addrlen           = sizeof(struct sockaddr_in);
-    ptNew->ai_addr              = (struct sockaddr *) ptAddress;
-
-    return ptNew;
-}
 
 
-
-__inline
-int
-WINAPI
-WspiapiQueryDNS(
-    IN  const char                      *pszNodeName,
-    IN  int                             iSocketType,
-    IN  int                             iProtocol,  
-    IN  WORD                            wPort,      
-    OUT char                            *pszAlias,
-    OUT struct addrinfo                 **pptResult)
-/*++
+    __inline int WINAPI WspiapiQueryDNS(IN const char *pszNodeName, IN int iSocketType, IN int iProtocol, IN WORD wPort,
+                                        OUT char *pszAlias, OUT struct addrinfo **pptResult)
+    /*++
 
 Routine Description
     helper routine for WspiapiLookupNode.
@@ -220,66 +187,56 @@ Arguments
 Return Value
     Returns 0 on success, an EAI_* style error value otherwise.
 
---*/    
-{
-    struct addrinfo **pptNext   = pptResult;
-    struct hostent  *ptHost     = NULL;
-    char            **ppAddresses;
-
-    *pptNext    = NULL;
-    pszAlias[0] = '\0';
-
-    ptHost = gethostbyname(pszNodeName);
-    if (ptHost)
+--*/
     {
-        if ((ptHost->h_addrtype == AF_INET)     &&
-            (ptHost->h_length   == sizeof(struct in_addr)))
-        {
-            for (ppAddresses    = ptHost->h_addr_list;
-                 *ppAddresses   != NULL;
-                 ppAddresses++)
-            {
-                // create an addrinfo structure...
-                *pptNext = WspiapiNewAddrInfo(
-                    iSocketType,
-                    iProtocol,
-                    wPort,
-                    ((struct in_addr *) *ppAddresses)->s_addr);
-                if (!*pptNext)
-                    return EAI_MEMORY;
+        struct addrinfo **pptNext = pptResult;
+        struct hostent *ptHost = NULL;
+        char **ppAddresses;
 
-                pptNext = &((*pptNext)->ai_next);
+        *pptNext = NULL;
+        pszAlias[0] = '\0';
+
+        ptHost = gethostbyname(pszNodeName);
+        if (ptHost)
+        {
+            if ((ptHost->h_addrtype == AF_INET) && (ptHost->h_length == sizeof(struct in_addr)))
+            {
+                for (ppAddresses = ptHost->h_addr_list; *ppAddresses != NULL; ppAddresses++)
+                {
+                    // create an addrinfo structure...
+                    *pptNext =
+                        WspiapiNewAddrInfo(iSocketType, iProtocol, wPort, ((struct in_addr *)*ppAddresses)->s_addr);
+                    if (!*pptNext)
+                        return EAI_MEMORY;
+
+                    pptNext = &((*pptNext)->ai_next);
+                }
             }
+
+            // pick up the canonical name.
+            strcpy(pszAlias, ptHost->h_name);
+            return 0;
         }
 
-        // pick up the canonical name.
-        strcpy(pszAlias, ptHost->h_name);
-        return 0;
+        switch (WSAGetLastError())
+        {
+        case WSAHOST_NOT_FOUND:
+            return EAI_NONAME;
+        case WSATRY_AGAIN:
+            return EAI_AGAIN;
+        case WSANO_RECOVERY:
+            return EAI_FAIL;
+        case WSANO_DATA:
+            return EAI_NODATA;
+        default:
+            return EAI_NONAME;
+        }
     }
-    
-    switch (WSAGetLastError())
-    {
-        case WSAHOST_NOT_FOUND: return EAI_NONAME;
-        case WSATRY_AGAIN:      return EAI_AGAIN;
-        case WSANO_RECOVERY:    return EAI_FAIL;
-        case WSANO_DATA:        return EAI_NODATA;
-        default:                return EAI_NONAME;
-    }
-}
 
 
-
-__inline
-int
-WINAPI
-WspiapiLookupNode(
-    IN  const char                      *pszNodeName,
-    IN  int                             iSocketType,
-    IN  int                             iProtocol,  
-    IN  WORD                            wPort,      
-    IN  BOOL                            bAI_CANONNAME,
-    OUT struct addrinfo                 **pptResult)
-/*++
+    __inline int WINAPI WspiapiLookupNode(IN const char *pszNodeName, IN int iSocketType, IN int iProtocol,
+                                          IN WORD wPort, IN BOOL bAI_CANONNAME, OUT struct addrinfo **pptResult)
+    /*++
 
 Routine Description
     resolve a nodename and return a list of addrinfo structures.
@@ -301,65 +258,52 @@ Return Value
     Returns 0 on success, an EAI_* style error value otherwise.
 
 --*/
-{
-    int     iError              = 0;
-    int     iAliasCount         = 0;
-
-    char    szFQDN1[NI_MAXHOST] = "";
-    char    szFQDN2[NI_MAXHOST] = "";
-    char    *pszName            = szFQDN1;
-    char    *pszAlias           = szFQDN2;
-    char    *pszScratch         = NULL;
-    strcpy(pszName, pszNodeName);
-
-    for (;;)
     {
-        iError = WspiapiQueryDNS(pszNodeName,
-                                 iSocketType,
-                                 iProtocol,
-                                 wPort,
-                                 pszAlias,
-                                 pptResult);
-        if (iError)
-            break;
+        int iError = 0;
+        int iAliasCount = 0;
 
-        // if we found addresses, then we are done.
-        if (*pptResult)
-            break;
+        char szFQDN1[NI_MAXHOST] = "";
+        char szFQDN2[NI_MAXHOST] = "";
+        char *pszName = szFQDN1;
+        char *pszAlias = szFQDN2;
+        char *pszScratch = NULL;
+        strcpy(pszName, pszNodeName);
 
-        // stop infinite loops due to DNS misconfiguration.  there appears
-        // to be no particular recommended limit in RFCs 1034 and 1035.
-        if ((!strlen(pszAlias))             ||
-            (!strcmp(pszName, pszAlias))    ||
-            (++iAliasCount == 16))
+        for (;;)
         {
-            iError = EAI_FAIL;
-            break;
+            iError = WspiapiQueryDNS(pszNodeName, iSocketType, iProtocol, wPort, pszAlias, pptResult);
+            if (iError)
+                break;
+
+            // if we found addresses, then we are done.
+            if (*pptResult)
+                break;
+
+            // stop infinite loops due to DNS misconfiguration.  there appears
+            // to be no particular recommended limit in RFCs 1034 and 1035.
+            if ((!strlen(pszAlias)) || (!strcmp(pszName, pszAlias)) || (++iAliasCount == 16))
+            {
+                iError = EAI_FAIL;
+                break;
+            }
+
+            // there was a new CNAME, look again.
+            WspiapiSwap(pszName, pszAlias, pszScratch);
         }
 
-        // there was a new CNAME, look again.
-        WspiapiSwap(pszName, pszAlias, pszScratch);
+        if (!iError && bAI_CANONNAME)
+        {
+            (*pptResult)->ai_canonname = WspiapiStrdup(pszAlias);
+            if (!(*pptResult)->ai_canonname)
+                iError = EAI_MEMORY;
+        }
+
+        return iError;
     }
 
-    if (!iError && bAI_CANONNAME)
-    {
-        (*pptResult)->ai_canonname = WspiapiStrdup(pszAlias);
-        if (!(*pptResult)->ai_canonname)
-            iError = EAI_MEMORY;
-    }
 
-    return iError;
-}
-
-
-
-__inline
-int
-WINAPI
-WspiapiClone (
-    IN  WORD                            wPort,      
-    IN  struct addrinfo                 *ptResult)
-/*++
+    __inline int WINAPI WspiapiClone(IN WORD wPort, IN struct addrinfo *ptResult)
+    /*++
 
 Routine Description
     clone every addrinfo structure in ptResult for the UDP service.
@@ -374,41 +318,33 @@ Return Value
     Returns 0 on success, an EAI_MEMORY on allocation failure.
 
 --*/
-{
-    struct addrinfo *ptNext = NULL;
-    struct addrinfo *ptNew  = NULL;
-
-    for (ptNext = ptResult; ptNext != NULL; )
     {
-        // create an addrinfo structure...
-        ptNew = WspiapiNewAddrInfo(
-            SOCK_DGRAM,
-            ptNext->ai_protocol,
-            wPort,
-            ((struct sockaddr_in *) ptNext->ai_addr)->sin_addr.s_addr);
-        if (!ptNew)
-            break;
+        struct addrinfo *ptNext = NULL;
+        struct addrinfo *ptNew = NULL;
 
-        // link the cloned addrinfo
-        ptNew->ai_next  = ptNext->ai_next;
-        ptNext->ai_next = ptNew;
-        ptNext          = ptNew->ai_next;
+        for (ptNext = ptResult; ptNext != NULL;)
+        {
+            // create an addrinfo structure...
+            ptNew = WspiapiNewAddrInfo(SOCK_DGRAM, ptNext->ai_protocol, wPort,
+                                       ((struct sockaddr_in *)ptNext->ai_addr)->sin_addr.s_addr);
+            if (!ptNew)
+                break;
+
+            // link the cloned addrinfo
+            ptNew->ai_next = ptNext->ai_next;
+            ptNext->ai_next = ptNew;
+            ptNext = ptNew->ai_next;
+        }
+
+        if (ptNext != NULL)
+            return EAI_MEMORY;
+
+        return 0;
     }
 
-    if (ptNext != NULL)
-        return EAI_MEMORY;
-    
-    return 0;
-}
 
-
-
-__inline
-void
-WINAPI
-WspiapiLegacyFreeAddrInfo (
-    IN  struct addrinfo                 *ptHead)
-/*++
+    __inline void WINAPI WspiapiLegacyFreeAddrInfo(IN struct addrinfo *ptHead)
+    /*++
 
 Routine Description
     Free an addrinfo structure (or chain of structures).
@@ -417,34 +353,27 @@ Routine Description
 Arguments
     ptHead              structure (chain) to free
     
---*/    
-{
-    struct addrinfo *ptNext;    // next strcture to free
-
-    for (ptNext = ptHead; ptNext != NULL; ptNext = ptHead)
+--*/
     {
-        if (ptNext->ai_canonname)
-            WspiapiFree(ptNext->ai_canonname);
-        
-        if (ptNext->ai_addr)
-            WspiapiFree(ptNext->ai_addr);
+        struct addrinfo *ptNext; // next strcture to free
 
-        ptHead = ptNext->ai_next;
-        WspiapiFree(ptNext);
+        for (ptNext = ptHead; ptNext != NULL; ptNext = ptHead)
+        {
+            if (ptNext->ai_canonname)
+                WspiapiFree(ptNext->ai_canonname);
+
+            if (ptNext->ai_addr)
+                WspiapiFree(ptNext->ai_addr);
+
+            ptHead = ptNext->ai_next;
+            WspiapiFree(ptNext);
+        }
     }
-}
 
 
-
-__inline
-int
-WINAPI
-WspiapiLegacyGetAddrInfo(
-    IN const char                       *pszNodeName,
-    IN const char                       *pszServiceName,
-    IN const struct addrinfo            *ptHints,
-    OUT struct addrinfo                 **pptResult)
-/*++
+    __inline int WINAPI WspiapiLegacyGetAddrInfo(IN const char *pszNodeName, IN const char *pszServiceName,
+                                                 IN const struct addrinfo *ptHints, OUT struct addrinfo **pptResult)
+    /*++
 
 Routine Description
     Protocol-independent name-to-address translation.
@@ -460,212 +389,189 @@ Arguments
 Return Value
     returns zero if successful, an EAI_* error code if not.
 
---*/    
-{
-    int                 iError      = 0;
-    int                 iFlags      = 0;
-    int                 iFamily     = PF_UNSPEC;
-    int                 iSocketType = 0;
-    int                 iProtocol   = 0;
-    WORD                wPort       = 0;
-    DWORD               dwAddress   = 0;
-
-    struct servent      *ptService  = NULL;
-    char                *pc         = NULL;
-    BOOL                bClone      = FALSE;
-    WORD                wTcpPort    = 0;
-    WORD                wUdpPort    = 0;
-    
-    
-    // initialize pptResult with default return value.
-    *pptResult  = NULL;
-
-
-    ////////////////////////////////////////
-    // validate arguments...
-    //
-    
-    // both the node name and the service name can't be NULL.
-    if ((!pszNodeName) && (!pszServiceName))
-        return EAI_NONAME;
-
-    // validate hints.
-    if (ptHints)
+--*/
     {
-        // all members other than ai_flags, ai_family, ai_socktype
-        // and ai_protocol must be zero or a null pointer.
-        if ((ptHints->ai_addrlen    != 0)       ||
-            (ptHints->ai_canonname  != NULL)    ||
-            (ptHints->ai_addr       != NULL)    ||
-            (ptHints->ai_next       != NULL))
-        {
-            return EAI_FAIL;
-        }
-        
-        // the spec has the "bad flags" error code, so presumably we
-        // should check something here.  insisting that there aren't
-        // any unspecified flags set would break forward compatibility,
-        // however.  so we just check for non-sensical combinations.
+        int iError = 0;
+        int iFlags = 0;
+        int iFamily = PF_UNSPEC;
+        int iSocketType = 0;
+        int iProtocol = 0;
+        WORD wPort = 0;
+        DWORD dwAddress = 0;
+
+        struct servent *ptService = NULL;
+        char *pc = NULL;
+        BOOL bClone = FALSE;
+        WORD wTcpPort = 0;
+        WORD wUdpPort = 0;
+
+
+        // initialize pptResult with default return value.
+        *pptResult = NULL;
+
+
+        ////////////////////////////////////////
+        // validate arguments...
         //
-        // we cannot come up with a canonical name given a null node name.
-        iFlags      = ptHints->ai_flags;
-        if ((iFlags & AI_CANONNAME) && !pszNodeName)
-            return EAI_BADFLAGS;
 
-        // we only support a limited number of protocol families.
-        iFamily     = ptHints->ai_family;
-        if ((iFamily != PF_UNSPEC) && (iFamily != PF_INET))
-            return EAI_FAMILY;
+        // both the node name and the service name can't be NULL.
+        if ((!pszNodeName) && (!pszServiceName))
+            return EAI_NONAME;
 
-        // we only support only these socket types.
-        iSocketType = ptHints->ai_socktype;
-        if ((iSocketType != 0)                  &&
-            (iSocketType != SOCK_STREAM)        &&
-            (iSocketType != SOCK_DGRAM)         &&
-            (iSocketType != SOCK_RAW))
-            return EAI_SOCKTYPE;
-
-        // REVIEW: What if ai_socktype and ai_protocol are at odds?
-        iProtocol   = ptHints->ai_protocol;
-    }
-
-
-    ////////////////////////////////////////
-    // do service lookup...
-
-    if (pszServiceName)
-    {
-        wPort = (WORD) strtoul(pszServiceName, &pc, 10);
-        if (*pc == '\0')        // numeric port string
+        // validate hints.
+        if (ptHints)
         {
-            wPort = wTcpPort = wUdpPort = htons(wPort);
-            if (iSocketType == 0)
+            // all members other than ai_flags, ai_family, ai_socktype
+            // and ai_protocol must be zero or a null pointer.
+            if ((ptHints->ai_addrlen != 0) || (ptHints->ai_canonname != NULL) || (ptHints->ai_addr != NULL) ||
+                (ptHints->ai_next != NULL))
             {
-                bClone      = TRUE;
-                iSocketType = SOCK_STREAM;
+                return EAI_FAIL;
+            }
+
+            // the spec has the "bad flags" error code, so presumably we
+            // should check something here.  insisting that there aren't
+            // any unspecified flags set would break forward compatibility,
+            // however.  so we just check for non-sensical combinations.
+            //
+            // we cannot come up with a canonical name given a null node name.
+            iFlags = ptHints->ai_flags;
+            if ((iFlags & AI_CANONNAME) && !pszNodeName)
+                return EAI_BADFLAGS;
+
+            // we only support a limited number of protocol families.
+            iFamily = ptHints->ai_family;
+            if ((iFamily != PF_UNSPEC) && (iFamily != PF_INET))
+                return EAI_FAMILY;
+
+            // we only support only these socket types.
+            iSocketType = ptHints->ai_socktype;
+            if ((iSocketType != 0) && (iSocketType != SOCK_STREAM) && (iSocketType != SOCK_DGRAM) &&
+                (iSocketType != SOCK_RAW))
+                return EAI_SOCKTYPE;
+
+            // REVIEW: What if ai_socktype and ai_protocol are at odds?
+            iProtocol = ptHints->ai_protocol;
+        }
+
+
+        ////////////////////////////////////////
+        // do service lookup...
+
+        if (pszServiceName)
+        {
+            wPort = (WORD)strtoul(pszServiceName, &pc, 10);
+            if (*pc == '\0') // numeric port string
+            {
+                wPort = wTcpPort = wUdpPort = htons(wPort);
+                if (iSocketType == 0)
+                {
+                    bClone = TRUE;
+                    iSocketType = SOCK_STREAM;
+                }
+            }
+            else // non numeric port string
+            {
+                if ((iSocketType == 0) || (iSocketType == SOCK_DGRAM))
+                {
+                    ptService = getservbyname(pszServiceName, "udp");
+                    if (ptService)
+                        wPort = wUdpPort = ptService->s_port;
+                }
+
+                if ((iSocketType == 0) || (iSocketType == SOCK_STREAM))
+                {
+                    ptService = getservbyname(pszServiceName, "tcp");
+                    if (ptService)
+                        wPort = wTcpPort = ptService->s_port;
+                }
+
+                // assumes 0 is an invalid service port...
+                if (wPort == 0) // no service exists
+                    return (iSocketType ? EAI_SERVICE : EAI_NONAME);
+
+                if (iSocketType == 0)
+                {
+                    // if both tcp and udp, process tcp now & clone udp later.
+                    iSocketType = (wTcpPort) ? SOCK_STREAM : SOCK_DGRAM;
+                    bClone = (wTcpPort && wUdpPort);
+                }
             }
         }
-        else                    // non numeric port string
+
+
+        ////////////////////////////////////////
+        // do node name lookup...
+
+        // if we weren't given a node name,
+        // return the wildcard or loopback address (depending on AI_PASSIVE).
+        //
+        // if we have a numeric host address string,
+        // return the binary address.
+        //
+        if ((!pszNodeName) || (WspiapiParseV4Address(pszNodeName, &dwAddress)))
         {
-            if ((iSocketType == 0) || (iSocketType == SOCK_DGRAM))
+            if (!pszNodeName)
             {
-                ptService = getservbyname(pszServiceName, "udp");
-                if (ptService)
-                    wPort = wUdpPort = ptService->s_port;
+                dwAddress = htonl((iFlags & AI_PASSIVE) ? INADDR_ANY : INADDR_LOOPBACK);
             }
 
-            if ((iSocketType == 0) || (iSocketType == SOCK_STREAM))
-            {
-                ptService = getservbyname(pszServiceName, "tcp");
-                if (ptService)
-                    wPort = wTcpPort = ptService->s_port;
-            }
-            
-            // assumes 0 is an invalid service port...
-            if (wPort == 0)     // no service exists
-                return (iSocketType ? EAI_SERVICE : EAI_NONAME);
+            // create an addrinfo structure...
+            *pptResult = WspiapiNewAddrInfo(iSocketType, iProtocol, wPort, dwAddress);
+            if (!(*pptResult))
+                iError = EAI_MEMORY;
 
-            if (iSocketType == 0)
+            if (!iError && pszNodeName)
             {
-                // if both tcp and udp, process tcp now & clone udp later.
-                iSocketType = (wTcpPort) ? SOCK_STREAM : SOCK_DGRAM;
-                bClone      = (wTcpPort && wUdpPort); 
+                // implementation specific behavior: set AI_NUMERICHOST
+                // to indicate that we got a numeric host address string.
+                (*pptResult)->ai_flags |= AI_NUMERICHOST;
+
+                // return the numeric address string as the canonical name
+                if (iFlags & AI_CANONNAME)
+                {
+                    (*pptResult)->ai_canonname = WspiapiStrdup(inet_ntoa(*((struct in_addr *)&dwAddress)));
+                    if (!(*pptResult)->ai_canonname)
+                        iError = EAI_MEMORY;
+                }
             }
         }
-    }
-    
 
 
-    ////////////////////////////////////////
-    // do node name lookup...
-
-    // if we weren't given a node name,
-    // return the wildcard or loopback address (depending on AI_PASSIVE).
-    //
-    // if we have a numeric host address string,
-    // return the binary address.
-    //
-    if ((!pszNodeName) || (WspiapiParseV4Address(pszNodeName, &dwAddress)))
-    {
-        if (!pszNodeName)
+        // if we do not have a numeric host address string and
+        // AI_NUMERICHOST flag is set, return an error!
+        else if (iFlags & AI_NUMERICHOST)
         {
-            dwAddress = htonl((iFlags & AI_PASSIVE)
-                              ? INADDR_ANY
-                              : INADDR_LOOPBACK);
+            iError = EAI_NONAME;
         }
-        
-        // create an addrinfo structure...
-        *pptResult =
-            WspiapiNewAddrInfo(iSocketType, iProtocol, wPort, dwAddress);
-        if (!(*pptResult))
-            iError = EAI_MEMORY;
-        
-        if (!iError && pszNodeName)
+
+
+        // since we have a non-numeric node name,
+        // we have to do a regular node name lookup.
+        else
         {
-            // implementation specific behavior: set AI_NUMERICHOST
-            // to indicate that we got a numeric host address string.
-            (*pptResult)->ai_flags |= AI_NUMERICHOST;
-            
-            // return the numeric address string as the canonical name
-            if (iFlags & AI_CANONNAME)
-            {
-                (*pptResult)->ai_canonname =
-                    WspiapiStrdup(inet_ntoa(*((struct in_addr *) &dwAddress)));
-                if (!(*pptResult)->ai_canonname)        
-                    iError = EAI_MEMORY;
-            }
+            iError = WspiapiLookupNode(pszNodeName, iSocketType, iProtocol, wPort, (iFlags & AI_CANONNAME), pptResult);
         }
+
+        if (!iError && bClone)
+        {
+            iError = WspiapiClone(wUdpPort, *pptResult);
+        }
+
+        if (iError)
+        {
+            WspiapiLegacyFreeAddrInfo(*pptResult);
+            *pptResult = NULL;
+        }
+
+        return (iError);
     }
 
 
-    // if we do not have a numeric host address string and
-    // AI_NUMERICHOST flag is set, return an error!
-    else if (iFlags & AI_NUMERICHOST)
-    {
-        iError = EAI_NONAME;
-    }
-    
-
-    // since we have a non-numeric node name,
-    // we have to do a regular node name lookup.
-    else
-    {
-        iError = WspiapiLookupNode(pszNodeName,
-                                   iSocketType,
-                                   iProtocol,
-                                   wPort,
-                                   (iFlags & AI_CANONNAME),
-                                   pptResult);
-    }
-
-    if (!iError && bClone)
-    {
-        iError = WspiapiClone(wUdpPort, *pptResult);
-    }
-
-    if (iError)
-    {
-        WspiapiLegacyFreeAddrInfo(*pptResult);
-        *pptResult  = NULL;        
-    }
-
-    return (iError);
-}
-
-
-
-__inline
-int
-WINAPI
-WspiapiLegacyGetNameInfo(
-    IN  const struct sockaddr           *ptSocketAddress,
-    IN  socklen_t                       tSocketLength,
-    OUT char                            *pszNodeName,
-    IN  size_t                          tNodeLength,
-    OUT char                            *pszServiceName,
-    IN  size_t                          tServiceLength,
-    IN  int                             iFlags)
-/*++
+    __inline int WINAPI WspiapiLegacyGetNameInfo(IN const struct sockaddr *ptSocketAddress, IN socklen_t tSocketLength,
+                                                 OUT char *pszNodeName, IN size_t tNodeLength, OUT char *pszServiceName,
+                                                 IN size_t tServiceLength, IN int iFlags)
+    /*++
 
 Routine Description
     protocol-independent address-to-name translation.
@@ -684,154 +590,146 @@ Arguments
 Return Value
     returns zero if successful, an EAI_* error code if not.
 
---*/    
-{
-    struct servent  *ptService;
-    WORD            wPort;    
-    char            szBuffer[]  = "65535";
-    char            *pszService = szBuffer;
-
-    struct hostent  *ptHost;
-    struct in_addr  tAddress;
-    char            *pszNode    = NULL;
-    char            *pc         = NULL;
-    
-
-    // sanity check ptSocketAddress and tSocketLength.
-    if (!ptSocketAddress)
-        return EAI_FAIL;
-    
-    if ((ptSocketAddress->sa_family != AF_INET)     ||
-        (tSocketLength != sizeof(struct sockaddr_in)))
+--*/
     {
-        return EAI_FAMILY;
-    }
+        struct servent *ptService;
+        WORD wPort;
+        char szBuffer[] = "65535";
+        char *pszService = szBuffer;
 
-    if (!(pszNodeName && tNodeLength) &&
-        !(pszServiceName && tServiceLength))
-    {
-        return EAI_NONAME;    
-    }
+        struct hostent *ptHost;
+        struct in_addr tAddress;
+        char *pszNode = NULL;
+        char *pc = NULL;
 
-    // the draft has the "bad flags" error code, so presumably we
-    // should check something here.  insisting that there aren't
-    // any unspecified flags set would break forward compatibility,
-    // however.  so we just check for non-sensical combinations.
-    if ((iFlags & NI_NUMERICHOST) && (iFlags & NI_NAMEREQD))
-    {                                                                       
-        return EAI_BADFLAGS;
-    }
-        
-    // translate the port to a service name (if requested).
-    if (pszServiceName && tServiceLength)
-    {
-        wPort = ((struct sockaddr_in *) ptSocketAddress)->sin_port;
-        
-        if (iFlags & NI_NUMERICSERV)
+
+        // sanity check ptSocketAddress and tSocketLength.
+        if (!ptSocketAddress)
+            return EAI_FAIL;
+
+        if ((ptSocketAddress->sa_family != AF_INET) || (tSocketLength != sizeof(struct sockaddr_in)))
         {
-            // return numeric form of the address.
-            sprintf(szBuffer, "%u", ntohs(wPort));
+            return EAI_FAMILY;
         }
-        else
+
+        if (!(pszNodeName && tNodeLength) && !(pszServiceName && tServiceLength))
         {
-            // return service name corresponding to port.
-            ptService = getservbyport(wPort,
-                                      (iFlags & NI_DGRAM) ? "udp" : NULL);
-            if (ptService && ptService->s_name)
+            return EAI_NONAME;
+        }
+
+        // the draft has the "bad flags" error code, so presumably we
+        // should check something here.  insisting that there aren't
+        // any unspecified flags set would break forward compatibility,
+        // however.  so we just check for non-sensical combinations.
+        if ((iFlags & NI_NUMERICHOST) && (iFlags & NI_NAMEREQD))
+        {
+            return EAI_BADFLAGS;
+        }
+
+        // translate the port to a service name (if requested).
+        if (pszServiceName && tServiceLength)
+        {
+            wPort = ((struct sockaddr_in *)ptSocketAddress)->sin_port;
+
+            if (iFlags & NI_NUMERICSERV)
             {
-                // lookup successful.
-                pszService = ptService->s_name;
-            }
-            else
-            {
-                // DRAFT: return numeric form of the port!
+                // return numeric form of the address.
                 sprintf(szBuffer, "%u", ntohs(wPort));
             }
-        }
-        
-        
-        if (tServiceLength > strlen(pszService))
-            strcpy(pszServiceName, pszService);
-        else
-            return EAI_FAIL;
-    }
-
-    
-    // translate the address to a node name (if requested).
-    if (pszNodeName && tNodeLength)
-    {    
-        // this is the IPv4-only version, so we have an IPv4 address.
-        tAddress = ((struct sockaddr_in *) ptSocketAddress)->sin_addr;
-
-        if (iFlags & NI_NUMERICHOST)
-        {
-            // return numeric form of the address.
-            pszNode  = inet_ntoa(tAddress);
-        }
-        else
-        {
-            // return node name corresponding to address.
-            ptHost = gethostbyaddr((char *) &tAddress,
-                                   sizeof(struct in_addr),
-                                   AF_INET);
-            if (ptHost && ptHost->h_name)
+            else
             {
-                // DNS lookup successful.
-                // stop copying at a "." if NI_NOFQDN is specified.
-                pszNode = ptHost->h_name;
-                if ((iFlags & NI_NOFQDN) && (pc = strchr(pszNode, '.')))
-                    *pc = '\0';
+                // return service name corresponding to port.
+                ptService = getservbyport(wPort, (iFlags & NI_DGRAM) ? "udp" : NULL);
+                if (ptService && ptService->s_name)
+                {
+                    // lookup successful.
+                    pszService = ptService->s_name;
+                }
+                else
+                {
+                    // DRAFT: return numeric form of the port!
+                    sprintf(szBuffer, "%u", ntohs(wPort));
+                }
+            }
+
+
+            if (tServiceLength > strlen(pszService))
+                strcpy(pszServiceName, pszService);
+            else
+                return EAI_FAIL;
+        }
+
+
+        // translate the address to a node name (if requested).
+        if (pszNodeName && tNodeLength)
+        {
+            // this is the IPv4-only version, so we have an IPv4 address.
+            tAddress = ((struct sockaddr_in *)ptSocketAddress)->sin_addr;
+
+            if (iFlags & NI_NUMERICHOST)
+            {
+                // return numeric form of the address.
+                pszNode = inet_ntoa(tAddress);
             }
             else
             {
-                // DNS lookup failed.  return numeric form of the address.
-                if (iFlags & NI_NAMEREQD)
+                // return node name corresponding to address.
+                ptHost = gethostbyaddr((char *)&tAddress, sizeof(struct in_addr), AF_INET);
+                if (ptHost && ptHost->h_name)
                 {
-                    switch (WSAGetLastError())
-                    {
-                        case WSAHOST_NOT_FOUND: return EAI_NONAME;
-                        case WSATRY_AGAIN:      return EAI_AGAIN;
-                        case WSANO_RECOVERY:    return EAI_FAIL;
-                        default:                return EAI_NONAME;
-                    }
+                    // DNS lookup successful.
+                    // stop copying at a "." if NI_NOFQDN is specified.
+                    pszNode = ptHost->h_name;
+                    if ((iFlags & NI_NOFQDN) && (pc = strchr(pszNode, '.')))
+                        *pc = '\0';
                 }
                 else
-                    pszNode  = inet_ntoa(tAddress);
+                {
+                    // DNS lookup failed.  return numeric form of the address.
+                    if (iFlags & NI_NAMEREQD)
+                    {
+                        switch (WSAGetLastError())
+                        {
+                        case WSAHOST_NOT_FOUND:
+                            return EAI_NONAME;
+                        case WSATRY_AGAIN:
+                            return EAI_AGAIN;
+                        case WSANO_RECOVERY:
+                            return EAI_FAIL;
+                        default:
+                            return EAI_NONAME;
+                        }
+                    }
+                    else
+                        pszNode = inet_ntoa(tAddress);
+                }
             }
+
+            if (tNodeLength > strlen(pszNode))
+                strcpy(pszNodeName, pszNode);
+            else
+                return EAI_FAIL;
         }
 
-        if (tNodeLength > strlen(pszNode))
-            strcpy(pszNodeName, pszNode);
-        else
-            return EAI_FAIL;
+        return 0;
     }
 
-    return 0;
-}
+
+    typedef struct
+    {
+        char const *pszName;
+        FARPROC pfAddress;
+    } WSPIAPI_FUNCTION;
+
+#define WSPIAPI_FUNCTION_ARRAY                                                                                \
+    {                                                                                                         \
+        "getaddrinfo",  (FARPROC)WspiapiLegacyGetAddrInfo,  "getnameinfo", (FARPROC)WspiapiLegacyGetNameInfo, \
+        "freeaddrinfo", (FARPROC)WspiapiLegacyFreeAddrInfo,                                                   \
+    }
 
 
-
-typedef struct 
-{
-    char const          *pszName;
-    FARPROC             pfAddress;
-} WSPIAPI_FUNCTION;
-
-#define WSPIAPI_FUNCTION_ARRAY                                  \
-{                                                               \
-    "getaddrinfo",      (FARPROC) WspiapiLegacyGetAddrInfo,     \
-    "getnameinfo",      (FARPROC) WspiapiLegacyGetNameInfo,     \
-    "freeaddrinfo",     (FARPROC) WspiapiLegacyFreeAddrInfo,    \
-}
-
-
-
-__inline
-FARPROC
-WINAPI
-WspiapiLoad(
-    IN  WORD                            wFunction)
-/*++
+    __inline FARPROC WINAPI WspiapiLoad(IN WORD wFunction)
+    /*++
 
 Routine Description
     try to locate the address family independent name resolution routines
@@ -854,157 +752,131 @@ Return Value
     address of the library/legacy routine
 
 --*/
-{
-    HMODULE                 hLibrary        = NULL;
-
-    // these static variables store state across calls, across threads.
-    static BOOL             bInitialized    = FALSE;
-    static WSPIAPI_FUNCTION rgtGlobal[]     = WSPIAPI_FUNCTION_ARRAY;
-    static const int        iNumGlobal      = (sizeof(rgtGlobal) /
-                                               sizeof(WSPIAPI_FUNCTION));
-    
-    // we overwrite rgtGlobal only if all routines exist in library.
-    WSPIAPI_FUNCTION        rgtLocal[]      = WSPIAPI_FUNCTION_ARRAY;
-    FARPROC                 fScratch        = NULL;
-    int                     i               = 0;
-    
-    
-    if (bInitialized)           // WspiapiLoad has already been called once
-        return (rgtGlobal[wFunction].pfAddress);
-
-    do                          // breakout loop
     {
-        CHAR SystemDir[MAX_PATH + 1];
-        CHAR Path[MAX_PATH + 8];
+        HMODULE hLibrary = NULL;
 
-        if (GetSystemDirectoryA(SystemDir, MAX_PATH) == 0) 
-        {
-            break;
-        }
+        // these static variables store state across calls, across threads.
+        static BOOL bInitialized = FALSE;
+        static WSPIAPI_FUNCTION rgtGlobal[] = WSPIAPI_FUNCTION_ARRAY;
+        static const int iNumGlobal = (sizeof(rgtGlobal) / sizeof(WSPIAPI_FUNCTION));
 
-        // in Whistler and beyond...
-        // the routines are present in the WinSock 2 library (ws2_32.dll).
-        // printf("Looking in ws2_32 for getaddrinfo...\n");
-        strcpy(Path, SystemDir);
-        strcat(Path, "\\ws2_32");
-        hLibrary = LoadLibraryA(Path);
-        if (hLibrary != NULL)
+        // we overwrite rgtGlobal only if all routines exist in library.
+        WSPIAPI_FUNCTION rgtLocal[] = WSPIAPI_FUNCTION_ARRAY;
+        FARPROC fScratch = NULL;
+        int i = 0;
+
+
+        if (bInitialized) // WspiapiLoad has already been called once
+            return (rgtGlobal[wFunction].pfAddress);
+
+        do // breakout loop
         {
-            fScratch = GetProcAddress(hLibrary, "getaddrinfo");
-            if (fScratch == NULL)
+            CHAR SystemDir[MAX_PATH + 1];
+            CHAR Path[MAX_PATH + 8];
+
+            if (GetSystemDirectoryA(SystemDir, MAX_PATH) == 0)
             {
-                FreeLibrary(hLibrary);
-                hLibrary = NULL;
-            }
-        }
-        if (hLibrary != NULL)
-            break;
-        
-
-        // in the IPv6 Technology Preview...        
-        // the routines are present in the IPv6 WinSock library (wship6.dll).
-        // printf("Looking in wship6 for getaddrinfo...\n");
-        strcpy(Path, SystemDir);
-        strcat(Path, "\\wship6");
-        hLibrary = LoadLibraryA(Path);
-        if (hLibrary != NULL)
-        {
-            fScratch = GetProcAddress(hLibrary, "getaddrinfo");
-            if (fScratch == NULL)
-            {
-                FreeLibrary(hLibrary);
-                hLibrary = NULL;
-            }
-        }
-    } while (FALSE);
-
-
-    if (hLibrary != NULL)
-    {
-        // use routines from this library...
-        // since getaddrinfo is here, we expect all routines to be here,
-        // but will fall back to IPv4-only if any of them is missing.
-        for (i = 0; i < iNumGlobal; i++)
-        {
-            rgtLocal[i].pfAddress
-                = GetProcAddress(hLibrary, rgtLocal[i].pszName);
-            if (rgtLocal[i].pfAddress == NULL)
-            {
-                FreeLibrary(hLibrary);
-                hLibrary = NULL;
                 break;
             }
-        }
+
+            // in Whistler and beyond...
+            // the routines are present in the WinSock 2 library (ws2_32.dll).
+            // printf("Looking in ws2_32 for getaddrinfo...\n");
+            strcpy(Path, SystemDir);
+            strcat(Path, "\\ws2_32");
+            hLibrary = LoadLibraryA(Path);
+            if (hLibrary != NULL)
+            {
+                fScratch = GetProcAddress(hLibrary, "getaddrinfo");
+                if (fScratch == NULL)
+                {
+                    FreeLibrary(hLibrary);
+                    hLibrary = NULL;
+                }
+            }
+            if (hLibrary != NULL)
+                break;
+
+
+            // in the IPv6 Technology Preview...
+            // the routines are present in the IPv6 WinSock library (wship6.dll).
+            // printf("Looking in wship6 for getaddrinfo...\n");
+            strcpy(Path, SystemDir);
+            strcat(Path, "\\wship6");
+            hLibrary = LoadLibraryA(Path);
+            if (hLibrary != NULL)
+            {
+                fScratch = GetProcAddress(hLibrary, "getaddrinfo");
+                if (fScratch == NULL)
+                {
+                    FreeLibrary(hLibrary);
+                    hLibrary = NULL;
+                }
+            }
+        } while (FALSE);
+
 
         if (hLibrary != NULL)
         {
-            // printf("found!\n");
+            // use routines from this library...
+            // since getaddrinfo is here, we expect all routines to be here,
+            // but will fall back to IPv4-only if any of them is missing.
             for (i = 0; i < iNumGlobal; i++)
-                rgtGlobal[i].pfAddress = rgtLocal[i].pfAddress;
+            {
+                rgtLocal[i].pfAddress = GetProcAddress(hLibrary, rgtLocal[i].pszName);
+                if (rgtLocal[i].pfAddress == NULL)
+                {
+                    FreeLibrary(hLibrary);
+                    hLibrary = NULL;
+                    break;
+                }
+            }
+
+            if (hLibrary != NULL)
+            {
+                // printf("found!\n");
+                for (i = 0; i < iNumGlobal; i++)
+                    rgtGlobal[i].pfAddress = rgtLocal[i].pfAddress;
+            }
         }
+
+        bInitialized = TRUE;
+        return (rgtGlobal[wFunction].pfAddress);
     }
-    
-    bInitialized = TRUE;
-    return (rgtGlobal[wFunction].pfAddress);
-}
 
 
+    __inline int WINAPI WspiapiGetAddrInfo(IN const char *nodename, IN const char *servname,
+                                           IN const struct addrinfo *hints, OUT struct addrinfo **res)
+    {
+        static WSPIAPI_PGETADDRINFO pfGetAddrInfo = NULL;
 
-__inline
-int
-WINAPI
-WspiapiGetAddrInfo(
-    IN const char                       *nodename,
-    IN const char                       *servname,
-    IN const struct addrinfo            *hints,
-    OUT struct addrinfo                 **res)
-{
-    static WSPIAPI_PGETADDRINFO     pfGetAddrInfo   = NULL;
-
-    if (!pfGetAddrInfo)
-        pfGetAddrInfo   = (WSPIAPI_PGETADDRINFO) WspiapiLoad(0);
-    return ((*pfGetAddrInfo)
-            (nodename, servname, hints, res));
-}
+        if (!pfGetAddrInfo)
+            pfGetAddrInfo = (WSPIAPI_PGETADDRINFO)WspiapiLoad(0);
+        return ((*pfGetAddrInfo)(nodename, servname, hints, res));
+    }
 
 
+    __inline int WINAPI WspiapiGetNameInfo(IN const struct sockaddr *sa, IN socklen_t salen, OUT char *host,
+                                           IN size_t hostlen, OUT char *serv, IN size_t servlen, IN int flags)
+    {
+        static WSPIAPI_PGETNAMEINFO pfGetNameInfo = NULL;
 
-__inline
-int
-WINAPI
-WspiapiGetNameInfo (
-    IN  const struct sockaddr           *sa,
-    IN  socklen_t                       salen,
-    OUT char                            *host,
-    IN  size_t                          hostlen,
-    OUT char                            *serv,
-    IN  size_t                          servlen,
-    IN  int                             flags)
-{
-    static WSPIAPI_PGETNAMEINFO     pfGetNameInfo   = NULL;
-    
-    if (!pfGetNameInfo)
-        pfGetNameInfo   = (WSPIAPI_PGETNAMEINFO) WspiapiLoad(1);
-    return ((*pfGetNameInfo)
-            (sa, salen, host, hostlen, serv, servlen, flags));
-}
+        if (!pfGetNameInfo)
+            pfGetNameInfo = (WSPIAPI_PGETNAMEINFO)WspiapiLoad(1);
+        return ((*pfGetNameInfo)(sa, salen, host, hostlen, serv, servlen, flags));
+    }
 
 
+    __inline void WINAPI WspiapiFreeAddrInfo(IN struct addrinfo *ai)
+    {
+        static WSPIAPI_PFREEADDRINFO pfFreeAddrInfo = NULL;
 
-__inline
-void
-WINAPI
-WspiapiFreeAddrInfo (
-    IN  struct addrinfo                 *ai)
-{
-    static WSPIAPI_PFREEADDRINFO    pfFreeAddrInfo   = NULL;
+        if (!pfFreeAddrInfo)
+            pfFreeAddrInfo = (WSPIAPI_PFREEADDRINFO)WspiapiLoad(2);
+        (*pfFreeAddrInfo)(ai);
+    }
 
-    if (!pfFreeAddrInfo)
-        pfFreeAddrInfo  = (WSPIAPI_PFREEADDRINFO) WspiapiLoad(2);
-    (*pfFreeAddrInfo)(ai);
-}
-
-#ifdef  __cplusplus
+#ifdef __cplusplus
 }
 #endif
 

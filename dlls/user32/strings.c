@@ -19,12 +19,12 @@
  * This is intended only for the PDK release.  Subsequent releases will
  * use the NLSAPI and Unicode.
  */
-#define LATIN_CAPITAL_LETTER_A_GRAVE    (CHAR)0xc0
-#define LATIN_CAPITAL_LETTER_THORN      (CHAR)0xde
-#define LATIN_SMALL_LETTER_SHARP_S      (CHAR)0xdf
-#define LATIN_SMALL_LETTER_Y_DIAERESIS  (CHAR)0xff
-#define DIVISION_SIGN                   (CHAR)0xf7
-#define MULTIPLICATION_SIGN             (CHAR)0xd7
+#define LATIN_CAPITAL_LETTER_A_GRAVE (CHAR)0xc0
+#define LATIN_CAPITAL_LETTER_THORN (CHAR)0xde
+#define LATIN_SMALL_LETTER_SHARP_S (CHAR)0xdf
+#define LATIN_SMALL_LETTER_Y_DIAERESIS (CHAR)0xff
+#define DIVISION_SIGN (CHAR)0xf7
+#define MULTIPLICATION_SIGN (CHAR)0xd7
 
 
 /***************************************************************************\
@@ -45,19 +45,20 @@
 
 
 FUNCLOG1(LOG_GENERAL, LPSTR, WINAPI, CharLowerA, LPSTR, psz)
-LPSTR WINAPI CharLowerA(
-    LPSTR psz)
+LPSTR WINAPI CharLowerA(LPSTR psz)
 {
     NTSTATUS st;
 
     /*
      * Early out for NULL string or '\0'
      */
-    if (psz == NULL) {
+    if (psz == NULL)
+    {
         return psz;
     }
 
-    if (!IS_PTR(psz)) {
+    if (!IS_PTR(psz))
+    {
         WCHAR wch;
 
 #ifdef FE_SB // CharLowerA()
@@ -65,7 +66,8 @@ LPSTR WINAPI CharLowerA(
          * if only DBCS Leadbyte was passed, just return the character.
          * Same behavior as Windows 3.1J and Windows 95 FarEast version.
          */
-        if (IS_DBCS_ENABLED() && IsDBCSLeadByte((BYTE)(ULONG_PTR)psz)) {
+        if (IS_DBCS_ENABLED() && IsDBCSLeadByte((BYTE)(ULONG_PTR)psz))
+        {
             return psz;
         }
 #endif // FE_SB
@@ -77,13 +79,16 @@ LPSTR WINAPI CharLowerA(
         //    of the low word always ignored?
         //
         st = RtlMultiByteToUnicodeN(&wch, sizeof(WCHAR), NULL, (PCH)&psz, sizeof(CHAR));
-        if (!NT_SUCCESS(st)) {
+        if (!NT_SUCCESS(st))
+        {
             /*
              * Failed!  Caller is not expecting failure, CharLowerA does not
              * have a failure indicator, so just return the original character.
              */
             RIPMSG1(RIP_WARNING, "CharLowerA(%#p) failed\n", psz);
-        } else {
+        }
+        else
+        {
             /*
              * The next two calls never fail.
              */
@@ -91,13 +96,12 @@ LPSTR WINAPI CharLowerA(
             RtlUnicodeToMultiByteN((PCH)&psz, sizeof(CHAR), NULL, &wch, sizeof(WCHAR));
         }
         return psz;
-
     }
 
     /*
      * psz is a null-terminated string
      */
-    CharLowerBuffA(psz, strlen(psz)+1);
+    CharLowerBuffA(psz, strlen(psz) + 1);
     return psz;
 }
 
@@ -120,19 +124,20 @@ LPSTR WINAPI CharLowerA(
 
 
 FUNCLOG1(LOG_GENERAL, LPSTR, WINAPI, CharUpperA, LPSTR, psz)
-LPSTR WINAPI CharUpperA(
-    LPSTR psz)
+LPSTR WINAPI CharUpperA(LPSTR psz)
 {
     NTSTATUS st;
 
     /*
      * Early out for NULL string or '\0'
      */
-    if (psz == NULL) {
+    if (psz == NULL)
+    {
         return psz;
     }
 
-    if (!IS_PTR(psz)) {
+    if (!IS_PTR(psz))
+    {
         WCHAR wch;
 
 #ifdef FE_SB // CharLowerA()
@@ -140,7 +145,8 @@ LPSTR WINAPI CharUpperA(
          * if only DBCS Leadbyte was passed, just return the character.
          * Same behavior as Windows 3.1J and Windows 95 FarEast version.
          */
-        if (IS_DBCS_ENABLED() && IsDBCSLeadByte((BYTE)(ULONG_PTR)psz)) {
+        if (IS_DBCS_ENABLED() && IsDBCSLeadByte((BYTE)(ULONG_PTR)psz))
+        {
             return psz;
         }
 #endif // FE_SB
@@ -152,13 +158,16 @@ LPSTR WINAPI CharUpperA(
         //    of the low word always ignored?
         //
         st = RtlMultiByteToUnicodeN(&wch, sizeof(WCHAR), NULL, (PCH)&psz, sizeof(CHAR));
-        if (!NT_SUCCESS(st)) {
+        if (!NT_SUCCESS(st))
+        {
             /*
              * Failed!  Caller is not expecting failure, CharUpperA does not
              * have a failure indicator, so return the original character.
              */
             RIPMSG1(RIP_WARNING, "CharUpperA(%#p) failed\n", psz);
-        } else {
+        }
+        else
+        {
             /*
              * The next two calls never fail.
              */
@@ -166,13 +175,12 @@ LPSTR WINAPI CharUpperA(
             RtlUnicodeToMultiByteN((PCH)&psz, sizeof(CHAR), NULL, &wch, sizeof(WCHAR));
         }
         return psz;
-
     }
 
     /*
      * psz is a null-terminated string
      */
-    CharUpperBuffA(psz, strlen(psz)+1);
+    CharUpperBuffA(psz, strlen(psz) + 1);
     return psz;
 }
 
@@ -193,11 +201,11 @@ LPSTR WINAPI CharUpperA(
 
 
 FUNCLOG1(LOG_GENERAL, LPSTR, WINAPI, CharNextA, LPCSTR, lpCurrentChar)
-LPSTR WINAPI CharNextA(
-    LPCSTR lpCurrentChar)
+LPSTR WINAPI CharNextA(LPCSTR lpCurrentChar)
 {
 #ifdef FE_SB // CharNextA(): dbcs enabling
-    if (IS_DBCS_ENABLED() && IsDBCSLeadByte(*lpCurrentChar)) {
+    if (IS_DBCS_ENABLED() && IsDBCSLeadByte(*lpCurrentChar))
+    {
         lpCurrentChar++;
     }
     /*
@@ -205,7 +213,8 @@ LPSTR WINAPI CharNextA(
      */
 #endif // FE_SB
 
-    if (*lpCurrentChar) {
+    if (*lpCurrentChar)
+    {
         lpCurrentChar++;
     }
     return (LPSTR)lpCurrentChar;
@@ -223,10 +232,7 @@ LPSTR WINAPI CharNextA(
 
 
 FUNCLOG3(LOG_GENERAL, LPSTR, WINAPI, CharNextExA, WORD, CodePage, LPCSTR, lpCurrentChar, DWORD, dwFlags)
-LPSTR WINAPI CharNextExA(
-    WORD CodePage,
-    LPCSTR lpCurrentChar,
-    DWORD dwFlags)
+LPSTR WINAPI CharNextExA(WORD CodePage, LPCSTR lpCurrentChar, DWORD dwFlags)
 {
     if (lpCurrentChar == (LPSTR)NULL)
     {
@@ -264,17 +270,18 @@ LPSTR WINAPI CharNextExA(
 
 
 FUNCLOG2(LOG_GENERAL, LPSTR, WINAPI, CharPrevA, LPCSTR, lpStart, LPCSTR, lpCurrentChar)
-LPSTR WINAPI CharPrevA(
-    LPCSTR lpStart,
-    LPCSTR lpCurrentChar)
+LPSTR WINAPI CharPrevA(LPCSTR lpStart, LPCSTR lpCurrentChar)
 {
 #ifdef FE_SB // CharPrevA : dbcs enabling
-    if (lpCurrentChar > lpStart) {
-        if (IS_DBCS_ENABLED()) {
+    if (lpCurrentChar > lpStart)
+    {
+        if (IS_DBCS_ENABLED())
+        {
             LPCSTR lpChar;
             BOOL bDBC = FALSE;
 
-            for (lpChar = --lpCurrentChar - 1 ; lpChar >= lpStart ; lpChar--) {
+            for (lpChar = --lpCurrentChar - 1; lpChar >= lpStart; lpChar--)
+            {
                 if (!IsDBCSLeadByte(*lpChar))
                     break;
                 bDBC = !bDBC;
@@ -288,7 +295,8 @@ LPSTR WINAPI CharPrevA(
     }
     return (LPSTR)lpCurrentChar;
 #else
-    if (lpCurrentChar > lpStart) {
+    if (lpCurrentChar > lpStart)
+    {
         lpCurrentChar--;
     }
     return (LPSTR)lpCurrentChar;
@@ -305,18 +313,17 @@ LPSTR WINAPI CharPrevA(
 \***************************************************************************/
 
 
-FUNCLOG4(LOG_GENERAL, LPSTR, WINAPI, CharPrevExA, WORD, CodePage, LPCSTR, lpStart, LPCSTR, lpCurrentChar, DWORD, dwFlags)
-LPSTR WINAPI CharPrevExA(
-    WORD CodePage,
-    LPCSTR lpStart,
-    LPCSTR lpCurrentChar,
-    DWORD dwFlags)
+FUNCLOG4(LOG_GENERAL, LPSTR, WINAPI, CharPrevExA, WORD, CodePage, LPCSTR, lpStart, LPCSTR, lpCurrentChar, DWORD,
+         dwFlags)
+LPSTR WINAPI CharPrevExA(WORD CodePage, LPCSTR lpStart, LPCSTR lpCurrentChar, DWORD dwFlags)
 {
-    if (lpCurrentChar > lpStart) {
+    if (lpCurrentChar > lpStart)
+    {
         LPCSTR lpChar;
         BOOL bDBC = FALSE;
 
-        for (lpChar = --lpCurrentChar - 1 ; lpChar >= lpStart ; lpChar--) {
+        for (lpChar = --lpCurrentChar - 1; lpChar >= lpStart; lpChar--)
+        {
             if (!IsDBCSLeadByteEx(CodePage, *lpChar))
                 break;
             bDBC = !bDBC;
@@ -346,44 +353,42 @@ LPSTR WINAPI CharPrevExA(
 
 
 FUNCLOG2(LOG_GENERAL, DWORD, WINAPI, CharLowerBuffA, LPSTR, psz, DWORD, nLength)
-DWORD WINAPI CharLowerBuffA(
-    LPSTR psz,
-    DWORD nLength)
+DWORD WINAPI CharLowerBuffA(LPSTR psz, DWORD nLength)
 {
     ULONG cb;
     WCHAR awchLocal[CCH_LOCAL_BUFF];
     LPWSTR pwszT = awchLocal;
     int cwch;
 
-    if (nLength == 0) {
-        return(0);
+    if (nLength == 0)
+    {
+        return (0);
     }
 
     /*
      * Convert ANSI to Unicode.
      * Use awchLocal if it is big enough, otherwise allocate space.
      */
-    cwch = MBToWCS(
-            psz,       // ANSI buffer
-            nLength,   // length of buffer
-            &pwszT,    // address of Unicode string
-            (nLength > CCH_LOCAL_BUFF ? -1 : nLength),
-            (nLength > CCH_LOCAL_BUFF) );
+    cwch = MBToWCS(psz,     // ANSI buffer
+                   nLength, // length of buffer
+                   &pwszT,  // address of Unicode string
+                   (nLength > CCH_LOCAL_BUFF ? -1 : nLength), (nLength > CCH_LOCAL_BUFF));
 
-    if (cwch != 0) {
+    if (cwch != 0)
+    {
         CharLowerBuffW(pwszT, cwch);
 
         /*
          * This can't fail
          */
-        RtlUnicodeToMultiByteN(
-                  psz,                   // ANSI string
-                  nLength,               // given to us
-                  &cb,                   // result length
-                  pwszT,                 // Unicode string
-                  cwch * sizeof(WCHAR)); // length IN BYTES
+        RtlUnicodeToMultiByteN(psz,                   // ANSI string
+                               nLength,               // given to us
+                               &cb,                   // result length
+                               pwszT,                 // Unicode string
+                               cwch * sizeof(WCHAR)); // length IN BYTES
 
-        if (pwszT != awchLocal) {
+        if (pwszT != awchLocal)
+        {
             UserLocalFree(pwszT);
         }
 
@@ -394,19 +399,23 @@ DWORD WINAPI CharLowerBuffA(
      * MBToWCS failed!  The caller is not expecting failure,
      * so we convert the string to lower case as best we can.
      */
-    RIPMSG2(RIP_WARNING,
-            "CharLowerBuffA(%#p, %lx) failed\n", psz, nLength);
+    RIPMSG2(RIP_WARNING, "CharLowerBuffA(%#p, %lx) failed\n", psz, nLength);
 
-    for (cb=0; cb < nLength; cb++) {
+    for (cb = 0; cb < nLength; cb++)
+    {
 #ifdef FE_SB // CharLowerBuffA(): skip double byte character
-        if (IS_DBCS_ENABLED() && IsDBCSLeadByte(psz[cb])) {
+        if (IS_DBCS_ENABLED() && IsDBCSLeadByte(psz[cb]))
+        {
             cb++;
-        } else if (IsCharUpperA(psz[cb])) {
-            psz[cb] += 'a'-'A';
+        }
+        else if (IsCharUpperA(psz[cb]))
+        {
+            psz[cb] += 'a' - 'A';
         }
 #else
-        if (IsCharUpperA(psz[cb])) {
-            psz[cb] += 'a'-'A';
+        if (IsCharUpperA(psz[cb]))
+        {
+            psz[cb] += 'a' - 'A';
         }
 #endif // FE_SB
     }
@@ -429,41 +438,39 @@ DWORD WINAPI CharLowerBuffA(
 
 
 FUNCLOG2(LOG_GENERAL, DWORD, WINAPI, CharUpperBuffA, LPSTR, psz, DWORD, nLength)
-DWORD WINAPI CharUpperBuffA(
-    LPSTR psz,
-    DWORD nLength)
+DWORD WINAPI CharUpperBuffA(LPSTR psz, DWORD nLength)
 {
     DWORD cb;
     WCHAR awchLocal[CCH_LOCAL_BUFF];
     LPWSTR pwszT = awchLocal;
     int cwch;
 
-    if (nLength==0) {
-        return(0);
+    if (nLength == 0)
+    {
+        return (0);
     }
 
     /*
      * Convert ANSI to Unicode.
      * Use awchLocal if it is big enough, otherwise allocate space.
      */
-    cwch = MBToWCS(
-            psz,       // ANSI buffer
-            nLength,   // length of buffer
-            &pwszT,    // address of Unicode string
-            (nLength > CCH_LOCAL_BUFF ? -1 : nLength),
-            (nLength > CCH_LOCAL_BUFF) );
+    cwch = MBToWCS(psz,     // ANSI buffer
+                   nLength, // length of buffer
+                   &pwszT,  // address of Unicode string
+                   (nLength > CCH_LOCAL_BUFF ? -1 : nLength), (nLength > CCH_LOCAL_BUFF));
 
-    if (cwch != 0) {
+    if (cwch != 0)
+    {
         CharUpperBuffW(pwszT, cwch);
 
-        RtlUnicodeToMultiByteN(
-                  psz,                   // address of ANSI string
-                  nLength,               // given to us
-                  &cb,                   // result length
-                  pwszT,                 // Unicode string
-                  cwch * sizeof(WCHAR)); // length IN BYTES
+        RtlUnicodeToMultiByteN(psz,                   // address of ANSI string
+                               nLength,               // given to us
+                               &cb,                   // result length
+                               pwszT,                 // Unicode string
+                               cwch * sizeof(WCHAR)); // length IN BYTES
 
-        if (pwszT != awchLocal) {
+        if (pwszT != awchLocal)
+        {
             UserLocalFree(pwszT);
         }
 
@@ -474,27 +481,29 @@ DWORD WINAPI CharUpperBuffA(
      * MBToWCS failed!  The caller is not expecting failure,
      * so we convert the string to upper case as best we can.
      */
-    RIPMSG2(RIP_WARNING,
-            "CharLowerBuffA(%#p, %lx) failed\n", psz, nLength);
+    RIPMSG2(RIP_WARNING, "CharLowerBuffA(%#p, %lx) failed\n", psz, nLength);
 
-    for (cb=0; cb < nLength; cb++) {
+    for (cb = 0; cb < nLength; cb++)
+    {
 #ifdef FE_SB // CharUpperBuffA(): skip double byte characters
-        if (IS_DBCS_ENABLED() && IsDBCSLeadByte(psz[cb])) {
+        if (IS_DBCS_ENABLED() && IsDBCSLeadByte(psz[cb]))
+        {
             cb++;
-        } else if (IsCharLowerA(psz[cb]) &&
-                   /*
+        }
+        else if (IsCharLowerA(psz[cb]) &&
+                 /*
                     * Sometime, LATIN_xxxx code is DBCS LeadingByte depending on ACP.
                     * In that case, we never come here...
                     */
-                   (psz[cb] != LATIN_SMALL_LETTER_SHARP_S) &&
-                   (psz[cb] != LATIN_SMALL_LETTER_Y_DIAERESIS)) {
-            psz[cb] += 'A'-'a';
+                 (psz[cb] != LATIN_SMALL_LETTER_SHARP_S) && (psz[cb] != LATIN_SMALL_LETTER_Y_DIAERESIS))
+        {
+            psz[cb] += 'A' - 'a';
         }
 #else
-        if (IsCharLowerA(psz[cb]) &&
-            (psz[cb] != LATIN_SMALL_LETTER_SHARP_S) &&
-            (psz[cb] != LATIN_SMALL_LETTER_Y_DIAERESIS)) {
-            psz[cb] += 'A'-'a';
+        if (IsCharLowerA(psz[cb]) && (psz[cb] != LATIN_SMALL_LETTER_SHARP_S) &&
+            (psz[cb] != LATIN_SMALL_LETTER_Y_DIAERESIS))
+        {
+            psz[cb] += 'A' - 'a';
         }
 #endif // FE_SB
     }
@@ -517,8 +526,7 @@ DWORD WINAPI CharUpperBuffA(
 
 
 FUNCLOG1(LOG_GENERAL, BOOL, WINAPI, IsCharLowerA, char, cChar)
-BOOL WINAPI IsCharLowerA(
-    char cChar)
+BOOL WINAPI IsCharLowerA(char cChar)
 {
     WORD ctype1info = 0;
     WCHAR wChar = 0;
@@ -528,7 +536,8 @@ BOOL WINAPI IsCharLowerA(
      * if only DBCS Leadbyte was passed, just return FALSE.
      * Same behavior as Windows 3.1J and Windows 95 FarEast version.
      */
-    if (IS_DBCS_ENABLED() && IsDBCSLeadByte(cChar)) {
+    if (IS_DBCS_ENABLED() && IsDBCSLeadByte(cChar))
+    {
         return FALSE;
     }
 #endif // FE_SB
@@ -555,8 +564,7 @@ BOOL WINAPI IsCharLowerA(
 
 
 FUNCLOG1(LOG_GENERAL, BOOL, WINAPI, IsCharUpperA, char, cChar)
-BOOL WINAPI IsCharUpperA(
-    char cChar)
+BOOL WINAPI IsCharUpperA(char cChar)
 {
     WORD ctype1info = 0;
     WCHAR wChar = 0;
@@ -566,7 +574,8 @@ BOOL WINAPI IsCharUpperA(
      * if only DBCS Leadbyte was passed, just return FALSE.
      * Same behavior as Windows 3.1J and Windows 95 FarEast version.
      */
-    if (IS_DBCS_ENABLED() && IsDBCSLeadByte(cChar)) {
+    if (IS_DBCS_ENABLED() && IsDBCSLeadByte(cChar))
+    {
         return FALSE;
     }
 #endif // FE_SB
@@ -596,8 +605,7 @@ BOOL WINAPI IsCharUpperA(
 
 
 FUNCLOG1(LOG_GENERAL, BOOL, WINAPI, IsCharAlphaNumericA, char, cChar)
-BOOL WINAPI IsCharAlphaNumericA(
-    char cChar)
+BOOL WINAPI IsCharAlphaNumericA(char cChar)
 {
     WORD ctype1info = 0;
     WCHAR wChar = 0;
@@ -608,9 +616,11 @@ BOOL WINAPI IsCharAlphaNumericA(
     RtlMultiByteToUnicodeN(&wChar, sizeof(WCHAR), NULL, &cChar, sizeof(CHAR));
     GetStringTypeW(CT_CTYPE1, &wChar, 1, &ctype1info);
 #ifdef FE_SB // IsCharAlphaNumericA()
-    if (ctype1info & C1_ALPHA) {
+    if (ctype1info & C1_ALPHA)
+    {
         WORD ctype3info = 0;
-        if (!IS_DBCS_ENABLED()) {
+        if (!IS_DBCS_ENABLED())
+        {
             return TRUE;
         }
         /*
@@ -619,7 +629,7 @@ BOOL WINAPI IsCharAlphaNumericA(
          * alphabet character.
          */
         GetStringTypeW(CT_CTYPE3, &wChar, 1, &ctype3info);
-        return ((ctype3info & (C3_KATAKANA|C3_HIRAGANA)) ? FALSE : TRUE);
+        return ((ctype3info & (C3_KATAKANA | C3_HIRAGANA)) ? FALSE : TRUE);
     }
     /* Otherwise, it might be digits ? */
     return !!(ctype1info & C1_DIGIT);
@@ -644,8 +654,7 @@ BOOL WINAPI IsCharAlphaNumericA(
 
 
 FUNCLOG1(LOG_GENERAL, BOOL, WINAPI, IsCharAlphaA, char, cChar)
-BOOL WINAPI IsCharAlphaA(
-    char cChar)
+BOOL WINAPI IsCharAlphaA(char cChar)
 {
     WORD ctype1info = 0;
     WCHAR wChar = 0;
@@ -656,9 +665,11 @@ BOOL WINAPI IsCharAlphaA(
     RtlMultiByteToUnicodeN(&wChar, sizeof(WCHAR), NULL, &cChar, sizeof(CHAR));
     GetStringTypeW(CT_CTYPE1, &wChar, 1, &ctype1info);
 #ifdef FE_SB // IsCharAlphaA()
-    if ((ctype1info & C1_ALPHA) == C1_ALPHA) {
+    if ((ctype1info & C1_ALPHA) == C1_ALPHA)
+    {
         WORD ctype3info = 0;
-        if (!IS_DBCS_ENABLED()) {
+        if (!IS_DBCS_ENABLED())
+        {
             return TRUE;
         }
         /*
@@ -667,11 +678,10 @@ BOOL WINAPI IsCharAlphaA(
          * alphabet character.
          */
         GetStringTypeW(CT_CTYPE3, &wChar, 1, &ctype3info);
-        return ((ctype3info & (C3_KATAKANA|C3_HIRAGANA)) ? FALSE : TRUE);
+        return ((ctype3info & (C3_KATAKANA | C3_HIRAGANA)) ? FALSE : TRUE);
     }
     return (FALSE);
 #else
     return (ctype1info & C1_ALPHA) == C1_ALPHA;
 #endif // FE_SB
 }
-

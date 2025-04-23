@@ -60,13 +60,13 @@ WORK_QUEUE_ITEM PspJobTimeLimitsWorkItem;
 FAST_MUTEX PspJobTimeLimitsLock;
 BOOLEAN PspJobTimeLimitsShuttingDown;
 
-#define PSP_ONE_SECOND      (10 * (1000*1000))
-#define PSP_JOB_TIME_LIMITS_TIME    -7
+#define PSP_ONE_SECOND (10 * (1000 * 1000))
+#define PSP_JOB_TIME_LIMITS_TIME -7
 
 #ifdef ALLOC_DATA_PRAGMA
 #pragma data_seg("PAGEDATA")
 #endif
-LARGE_INTEGER PspJobTimeLimitsInterval = {0};
+LARGE_INTEGER PspJobTimeLimitsInterval = { 0 };
 #ifdef ALLOC_DATA_PRAGMA
 #pragma data_seg()
 #endif
@@ -74,11 +74,7 @@ LARGE_INTEGER PspJobTimeLimitsInterval = {0};
 
 NTSTATUS
 NTAPI
-NtCreateJobObject (
-    OUT PHANDLE JobHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL
-    )
+NtCreateJobObject(OUT PHANDLE JobHandle, IN ACCESS_MASK DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL)
 {
 
     PEJOB Job;
@@ -96,21 +92,24 @@ NtCreateJobObject (
     // returned by the object insertion routine.
     //
 
-    CurrentThread = PsGetCurrentThread ();
-    PreviousMode = KeGetPreviousModeByThread (&CurrentThread->Tcb);
-    try {
+    CurrentThread = PsGetCurrentThread();
+    PreviousMode = KeGetPreviousModeByThread(&CurrentThread->Tcb);
+    try
+    {
 
         //
         // Probe output handle address if
         // necessary.
         //
 
-        if (PreviousMode != KernelMode) {
-            ProbeForWriteHandle (JobHandle);
+        if (PreviousMode != KernelMode)
+        {
+            ProbeForWriteHandle(JobHandle);
         }
         *JobHandle = NULL;
-
-    } except (ExSystemExceptionFilter ()) {
+    }
+    except(ExSystemExceptionFilter())
+    {
         return GetExceptionCode();
     }
 
@@ -118,15 +117,7 @@ NtCreateJobObject (
     // Allocate job object.
     //
 
-    Status = ObCreateObject (PreviousMode,
-                             PsJobType,
-                             ObjectAttributes,
-                             PreviousMode,
-                             NULL,
-                             sizeof (EJOB),
-                             0,
-                             0,
-                             &Job);
+    Status = ObCreateObject(PreviousMode, PsJobType, ObjectAttributes, PreviousMode, NULL, sizeof(EJOB), 0, 0, &Job);
 
     //
     // If the job object was successfully allocated, then initialize it
@@ -134,52 +125,52 @@ NtCreateJobObject (
     // process' handle table.
     //
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
-        RtlZeroMemory (Job, sizeof (EJOB));
-        InitializeListHead (&Job->ProcessListHead);
-        InitializeListHead (&Job->JobSetLinks);
-        KeInitializeEvent (&Job->Event, NotificationEvent, FALSE);
-        ExInitializeFastMutex (&Job->MemoryLimitsLock);
+        RtlZeroMemory(Job, sizeof(EJOB));
+        InitializeListHead(&Job->ProcessListHead);
+        InitializeListHead(&Job->JobSetLinks);
+        KeInitializeEvent(&Job->Event, NotificationEvent, FALSE);
+        ExInitializeFastMutex(&Job->MemoryLimitsLock);
 
         //
         // Job Object gets the SessionId of the Process creating the Job
         // We will use this sessionid to restrict the processes that can
         // be added to a job.
         //
-        Job->SessionId = MmGetSessionId (PsGetCurrentProcessByThread (CurrentThread));
+        Job->SessionId = MmGetSessionId(PsGetCurrentProcessByThread(CurrentThread));
 
         //
         // Initialize the scheduling class for the Job
         //
         Job->SchedulingClass = PSP_DEFAULT_SCHEDULING_CLASSES;
 
-        ExInitializeResourceLite (&Job->JobLock);
+        ExInitializeResourceLite(&Job->JobLock);
 
-        ExAcquireFastMutex (&PspJobListLock);
+        ExAcquireFastMutex(&PspJobListLock);
 
-        InsertTailList (&PspJobList, &Job->JobLinks);
+        InsertTailList(&PspJobList, &Job->JobLinks);
 
-        ExReleaseFastMutex (&PspJobListLock);
+        ExReleaseFastMutex(&PspJobListLock);
 
 
-        Status = ObInsertObject (Job,
-                                 NULL,
-                                 DesiredAccess,
-                                 0,
-                                 NULL,
-                                 &Handle);
+        Status = ObInsertObject(Job, NULL, DesiredAccess, 0, NULL, &Handle);
 
         //
         // If the job object was successfully inserted in the current
         // process' handle table, then attempt to write the job object
         // handle value.
         //
-        if (NT_SUCCESS (Status)) {
-            try {
+        if (NT_SUCCESS(Status))
+        {
+            try
+            {
                 *JobHandle = Handle;
-            } except (ExSystemExceptionFilter ()) {
-                 Status = GetExceptionCode ();
+            }
+            except(ExSystemExceptionFilter())
+            {
+                Status = GetExceptionCode();
             }
         }
     }
@@ -192,11 +183,7 @@ NtCreateJobObject (
 
 NTSTATUS
 NTAPI
-NtOpenJobObject(
-    OUT PHANDLE JobHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_ATTRIBUTES ObjectAttributes
-    )
+NtOpenJobObject(OUT PHANDLE JobHandle, IN ACCESS_MASK DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes)
 {
     HANDLE Handle;
     KPROCESSOR_MODE PreviousMode;
@@ -211,19 +198,22 @@ NtOpenJobObject(
     // returned by the object open routine.
     //
 
-    PreviousMode = KeGetPreviousMode ();
+    PreviousMode = KeGetPreviousMode();
 
-    if (PreviousMode != KernelMode) {
-        try {
+    if (PreviousMode != KernelMode)
+    {
+        try
+        {
 
             //
             // Probe output handle address
             // if necessary.
             //
 
-            ProbeForWriteHandle (JobHandle);
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+            ProbeForWriteHandle(JobHandle);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // If an exception occurs during the probe of the output job handle,
@@ -231,7 +221,7 @@ NtOpenJobObject(
             // status value.
             //
 
-            return GetExceptionCode ();
+            return GetExceptionCode();
         }
     }
 
@@ -240,13 +230,7 @@ NtOpenJobObject(
     // Open handle to the event object with the specified desired access.
     //
 
-    Status = ObOpenObjectByName (ObjectAttributes,
-                                 PsJobType,
-                                 PreviousMode,
-                                 NULL,
-                                 DesiredAccess,
-                                 NULL,
-                                 &Handle);
+    Status = ObOpenObjectByName(ObjectAttributes, PsJobType, PreviousMode, NULL, DesiredAccess, NULL, &Handle);
 
     //
     // If the open was successful, then attempt to write the job object
@@ -255,11 +239,15 @@ NtOpenJobObject(
     // access violation will occur.
     //
 
-    if (NT_SUCCESS (Status)) {
-        try {
+    if (NT_SUCCESS(Status))
+    {
+        try
+        {
             *JobHandle = Handle;
-        } except(ExSystemExceptionFilter ()) {
-            return GetExceptionCode ();
+        }
+        except(ExSystemExceptionFilter())
+        {
+            return GetExceptionCode();
         }
     }
 
@@ -268,10 +256,7 @@ NtOpenJobObject(
 
 NTSTATUS
 NTAPI
-NtAssignProcessToJobObject(
-    IN HANDLE JobHandle,
-    IN HANDLE ProcessHandle
-    )
+NtAssignProcessToJobObject(IN HANDLE JobHandle, IN HANDLE ProcessHandle)
 {
     PEJOB Job;
     PEPROCESS Process;
@@ -283,39 +268,32 @@ NtAssignProcessToJobObject(
 
     PAGED_CODE();
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
 
-    PreviousMode = KeGetPreviousModeByThread (&CurrentThread->Tcb);
+    PreviousMode = KeGetPreviousModeByThread(&CurrentThread->Tcb);
 
     //
     // Now reference the job object. Then we need to lock the process and check again
     //
 
-    Status = ObReferenceObjectByHandle (JobHandle,
-                                        JOB_OBJECT_ASSIGN_PROCESS,
-                                        PsJobType,
-                                        PreviousMode,
-                                        &Job,
-                                        NULL);
-    if (!NT_SUCCESS (Status)) {
+    Status = ObReferenceObjectByHandle(JobHandle, JOB_OBJECT_ASSIGN_PROCESS, PsJobType, PreviousMode, &Job, NULL);
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
     JobToken = Job->Token;
-       
+
     //
     // Reference the process object, lock the process, test for already been assigned
     //
 
-    Status = ObReferenceObjectByHandle (ProcessHandle,
-                                        PROCESS_SET_QUOTA | PROCESS_TERMINATE |
-                                            ((JobToken != NULL)?PROCESS_SET_INFORMATION:0),
-                                        PsProcessType,
-                                        PreviousMode,
-                                        &Process,
-                                        NULL);
-    if (!NT_SUCCESS (Status)) {
-        ObDereferenceObject (Job);
+    Status = ObReferenceObjectByHandle(
+        ProcessHandle, PROCESS_SET_QUOTA | PROCESS_TERMINATE | ((JobToken != NULL) ? PROCESS_SET_INFORMATION : 0),
+        PsProcessType, PreviousMode, &Process, NULL);
+    if (!NT_SUCCESS(Status))
+    {
+        ObDereferenceObject(Job);
         return Status;
     }
 
@@ -323,7 +301,8 @@ NtAssignProcessToJobObject(
     // Quick Check for prior assignment
     //
 
-    if (Process->Job) {
+    if (Process->Job)
+    {
         Status = STATUS_ACCESS_DENIED;
         goto deref_and_return_status;
     }
@@ -333,7 +312,8 @@ NtAssignProcessToJobObject(
     // to be assigned to the job.
     //
 
-    if (MmGetSessionId (Process) != Job->SessionId) {
+    if (MmGetSessionId(Process) != Job->SessionId)
+    {
         Status = STATUS_ACCESS_DENIED;
         goto deref_and_return_status;
     }
@@ -343,16 +323,18 @@ NtAssignProcessToJobObject(
     // as admin, that's not allowed
     //
 
-    if (Job->SecurityLimitFlags & JOB_OBJECT_SECURITY_NO_ADMIN) {
+    if (Job->SecurityLimitFlags & JOB_OBJECT_SECURITY_NO_ADMIN)
+    {
         PACCESS_TOKEN Token;
 
-        Token = PsReferencePrimaryToken (Process);
+        Token = PsReferencePrimaryToken(Process);
 
-        IsAdmin = SeTokenIsAdmin (Token);
+        IsAdmin = SeTokenIsAdmin(Token);
 
-        PsDereferencePrimaryTokenEx (Process, Token);
+        PsDereferencePrimaryTokenEx(Process, Token);
 
-        if (IsAdmin) {
+        if (IsAdmin)
+        {
             Status = STATUS_ACCESS_DENIED;
             goto deref_and_return_status;
         }
@@ -361,20 +343,22 @@ NtAssignProcessToJobObject(
     //
     // Duplicate the primary token so we can assign it to the process.
     //
-    if (JobToken != NULL) {
-        Status = SeSubProcessToken (JobToken,
-                                    &NewToken,
-                                    FALSE);
+    if (JobToken != NULL)
+    {
+        Status = SeSubProcessToken(JobToken, &NewToken, FALSE);
 
-        if (!NT_SUCCESS (Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             goto deref_and_return_status;
         }
     }
 
-    if (!ExAcquireRundownProtection (&Process->RundownProtect)) {
+    if (!ExAcquireRundownProtection(&Process->RundownProtect))
+    {
         Status = STATUS_PROCESS_IS_TERMINATING;
-        if (JobToken != NULL) {
-            ObDereferenceObject (NewToken);
+        if (JobToken != NULL)
+        {
+            ObDereferenceObject(NewToken);
         }
         goto deref_and_return_status;
     }
@@ -384,14 +368,16 @@ NtAssignProcessToJobObject(
     // ref the job for the process
     //
 
-    ObReferenceObject (Job);
+    ObReferenceObject(Job);
 
-    if (InterlockedCompareExchangePointer (&Process->Job, Job, NULL) != NULL) {
-        ExReleaseRundownProtection (&Process->RundownProtect);
-        ObDereferenceObject (Process);
-        ObDereferenceObjectEx (Job, 2);
-        if (JobToken != NULL) {
-            ObDereferenceObject (NewToken);
+    if (InterlockedCompareExchangePointer(&Process->Job, Job, NULL) != NULL)
+    {
+        ExReleaseRundownProtection(&Process->RundownProtect);
+        ObDereferenceObject(Process);
+        ObDereferenceObjectEx(Job, 2);
+        if (JobToken != NULL)
+        {
+            ObDereferenceObject(NewToken);
         }
         return STATUS_ACCESS_DENIED;
     }
@@ -399,84 +385,84 @@ NtAssignProcessToJobObject(
     // If the job has a token filter established,
     // use it to filter the
     //
-    ExReleaseRundownProtection (&Process->RundownProtect);
+    ExReleaseRundownProtection(&Process->RundownProtect);
 
-    Status = PspAddProcessToJob (Job, Process);
-    if (!NT_SUCCESS (Status)) {
+    Status = PspAddProcessToJob(Job, Process);
+    if (!NT_SUCCESS(Status))
+    {
 
-        Status1 = PspTerminateProcess (Process, ERROR_NOT_ENOUGH_QUOTA);
-        if (NT_SUCCESS (Status1)) {
+        Status1 = PspTerminateProcess(Process, ERROR_NOT_ENOUGH_QUOTA);
+        if (NT_SUCCESS(Status1))
+        {
 
-            KeEnterCriticalRegionThread (&CurrentThread->Tcb);
-            ExAcquireResourceExclusiveLite (&Job->JobLock, TRUE);
+            KeEnterCriticalRegionThread(&CurrentThread->Tcb);
+            ExAcquireResourceExclusiveLite(&Job->JobLock, TRUE);
 
             Job->TotalTerminatedProcesses++;
 
-            ExReleaseResourceLite (&Job->JobLock);
-            KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+            ExReleaseResourceLite(&Job->JobLock);
+            KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
         }
     }
 
     //
     // If the job has UI restrictions and this is a GUI process, call ntuser
     //
-    if ((Job->UIRestrictionsClass != JOB_OBJECT_UILIMIT_NONE) &&
-         (Process->Win32Process != NULL)) {
+    if ((Job->UIRestrictionsClass != JOB_OBJECT_UILIMIT_NONE) && (Process->Win32Process != NULL))
+    {
         WIN32_JOBCALLOUT_PARAMETERS Parms;
 
         Parms.Job = Job;
         Parms.CalloutType = PsW32JobCalloutAddProcess;
         Parms.Data = Process->Win32Process;
 
-        KeEnterCriticalRegionThread (&CurrentThread->Tcb);
+        KeEnterCriticalRegionThread(&CurrentThread->Tcb);
         ExAcquireResourceExclusiveLite(&Job->JobLock, TRUE);
 
         PspWin32SessionCallout(PspW32JobCallout, &Parms, Job->SessionId);
 
-        ExReleaseResourceLite (&Job->JobLock);
-        KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+        ExReleaseResourceLite(&Job->JobLock);
+        KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
     }
 
-    if (JobToken != NULL) {
-        Status1 = PspSetPrimaryToken (NULL, Process, NULL, NewToken, TRUE);
-        ObDereferenceObject (NewToken);
+    if (JobToken != NULL)
+    {
+        Status1 = PspSetPrimaryToken(NULL, Process, NULL, NewToken, TRUE);
+        ObDereferenceObject(NewToken);
         //
         // Only bad callers should fail here.
         //
-        ASSERT (NT_SUCCESS (Status1));
+        ASSERT(NT_SUCCESS(Status1));
     }
 
 deref_and_return_status:
 
-    ObDereferenceObject (Process);
-    ObDereferenceObject (Job);
+    ObDereferenceObject(Process);
+    ObDereferenceObject(Job);
 
     return Status;
 }
 
 NTSTATUS
-PspAddProcessToJob(
-    PEJOB Job,
-    PEPROCESS Process
-    )
+PspAddProcessToJob(PEJOB Job, PEPROCESS Process)
 {
 
     NTSTATUS Status;
     PETHREAD CurrentThread;
-    SIZE_T MinWs,MaxWs;
+    SIZE_T MinWs, MaxWs;
 
     PAGED_CODE();
 
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
 
     Status = STATUS_SUCCESS;
 
 
-    KeEnterCriticalRegionThread (&CurrentThread->Tcb);
-    ExAcquireResourceExclusiveLite (&Job->JobLock, TRUE);
+    KeEnterCriticalRegionThread(&CurrentThread->Tcb);
+    ExAcquireResourceExclusiveLite(&Job->JobLock, TRUE);
 
-    InsertTailList (&Job->ProcessListHead, &Process->JobLinks);
+    InsertTailList(&Job->ProcessListHead, &Process->JobLinks);
 
     //
     // Update relevant ADD accounting info.
@@ -489,28 +475,25 @@ PspAddProcessToJob(
     // Test for active process count exceeding limit
     //
 
-    if ((Job->LimitFlags & JOB_OBJECT_LIMIT_ACTIVE_PROCESS) &&
-        Job->ActiveProcesses > Job->ActiveProcessLimit) {
+    if ((Job->LimitFlags & JOB_OBJECT_LIMIT_ACTIVE_PROCESS) && Job->ActiveProcesses > Job->ActiveProcessLimit)
+    {
 
-        PS_SET_CLEAR_BITS (&Process->JobStatus,
-                           PS_JOB_STATUS_NOT_REALLY_ACTIVE | PS_JOB_STATUS_ACCOUNTING_FOLDED,
-                           PS_JOB_STATUS_LAST_REPORT_MEMORY);
+        PS_SET_CLEAR_BITS(&Process->JobStatus, PS_JOB_STATUS_NOT_REALLY_ACTIVE | PS_JOB_STATUS_ACCOUNTING_FOLDED,
+                          PS_JOB_STATUS_LAST_REPORT_MEMORY);
         Job->ActiveProcesses--;
 
-        if (Job->CompletionPort != NULL) {
-            IoSetIoCompletion (Job->CompletionPort,
-                               Job->CompletionKey,
-                               NULL,
-                               STATUS_SUCCESS,
-                               JOB_OBJECT_MSG_ACTIVE_PROCESS_LIMIT,
-                               TRUE);
+        if (Job->CompletionPort != NULL)
+        {
+            IoSetIoCompletion(Job->CompletionPort, Job->CompletionKey, NULL, STATUS_SUCCESS,
+                              JOB_OBJECT_MSG_ACTIVE_PROCESS_LIMIT, TRUE);
         }
 
         Status = STATUS_QUOTA_EXCEEDED;
     }
 
-    if ((Job->LimitFlags & JOB_OBJECT_LIMIT_JOB_TIME) && KeReadStateEvent (&Job->Event)) {
-        PS_SET_BITS (&Process->JobStatus, PS_JOB_STATUS_NOT_REALLY_ACTIVE | PS_JOB_STATUS_ACCOUNTING_FOLDED);
+    if ((Job->LimitFlags & JOB_OBJECT_LIMIT_JOB_TIME) && KeReadStateEvent(&Job->Event))
+    {
+        PS_SET_BITS(&Process->JobStatus, PS_JOB_STATUS_NOT_REALLY_ACTIVE | PS_JOB_STATUS_ACCOUNTING_FOLDED);
 
         Job->ActiveProcesses--;
 
@@ -522,75 +505,77 @@ PspAddProcessToJob(
     // we don't let new processes enter the job. This is to make cleanup solid.
     //
 
-    if (PS_TEST_ALL_BITS_SET (Job->JobFlags, PS_JOB_FLAGS_CLOSE_DONE|JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE)) {
+    if (PS_TEST_ALL_BITS_SET(Job->JobFlags, PS_JOB_FLAGS_CLOSE_DONE | JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE))
+    {
         Job->ActiveProcesses--;
         Status = STATUS_INVALID_PARAMETER;
     }
 
-    if (Status == STATUS_SUCCESS) {
+    if (Status == STATUS_SUCCESS)
+    {
 
-        PspApplyJobLimitsToProcess (Job, Process);
+        PspApplyJobLimitsToProcess(Job, Process);
 
-        if (Job->CompletionPort != NULL &&
-            Process->UniqueProcessId &&
+        if (Job->CompletionPort != NULL && Process->UniqueProcessId &&
             !(Process->JobStatus & PS_JOB_STATUS_NOT_REALLY_ACTIVE) &&
-            !(Process->JobStatus & PS_JOB_STATUS_NEW_PROCESS_REPORTED)) {
+            !(Process->JobStatus & PS_JOB_STATUS_NEW_PROCESS_REPORTED))
+        {
 
-            PS_SET_CLEAR_BITS (&Process->JobStatus,
-                               PS_JOB_STATUS_NEW_PROCESS_REPORTED,
-                               PS_JOB_STATUS_LAST_REPORT_MEMORY);
+            PS_SET_CLEAR_BITS(&Process->JobStatus, PS_JOB_STATUS_NEW_PROCESS_REPORTED,
+                              PS_JOB_STATUS_LAST_REPORT_MEMORY);
 
-            IoSetIoCompletion (Job->CompletionPort,
-                               Job->CompletionKey,
-                               (PVOID)Process->UniqueProcessId,
-                               STATUS_SUCCESS,
-                               JOB_OBJECT_MSG_NEW_PROCESS,
-                               FALSE);
+            IoSetIoCompletion(Job->CompletionPort, Job->CompletionKey, (PVOID)Process->UniqueProcessId, STATUS_SUCCESS,
+                              JOB_OBJECT_MSG_NEW_PROCESS, FALSE);
         }
-
     }
 
-    if (Job->LimitFlags & JOB_OBJECT_LIMIT_WORKINGSET) {
+    if (Job->LimitFlags & JOB_OBJECT_LIMIT_WORKINGSET)
+    {
         MinWs = Job->MinimumWorkingSetSize;
         MaxWs = Job->MaximumWorkingSetSize;
-    } else {
+    }
+    else
+    {
         MinWs = 0;
         MaxWs = 0;
     }
 
-    ExReleaseResourceLite (&Job->JobLock);
+    ExReleaseResourceLite(&Job->JobLock);
 
-    KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+    KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
 
-    if (Status == STATUS_SUCCESS) {
+    if (Status == STATUS_SUCCESS)
+    {
 
-        if (MinWs != 0 && MaxWs != 0) {
+        if (MinWs != 0 && MaxWs != 0)
+        {
             KAPC_STATE ApcState;
 
-            KeStackAttachProcess (&Process->Pcb, &ApcState);
+            KeStackAttachProcess(&Process->Pcb, &ApcState);
 
-            ExAcquireFastMutex (&PspWorkingSetChangeHead.Lock);
+            ExAcquireFastMutex(&PspWorkingSetChangeHead.Lock);
 
-            MmAdjustWorkingSetSize (MinWs,MaxWs,FALSE,TRUE);
+            MmAdjustWorkingSetSize(MinWs, MaxWs, FALSE, TRUE);
 
             //
             // call MM to Enable hard workingset
             //
 
-            MmEnforceWorkingSetLimit (&Process->Vm, TRUE);
+            MmEnforceWorkingSetLimit(&Process->Vm, TRUE);
 
-            ExReleaseFastMutex (&PspWorkingSetChangeHead.Lock);
+            ExReleaseFastMutex(&PspWorkingSetChangeHead.Lock);
 
-            KeUnstackDetachProcess (&ApcState);
-
-        } else {
-            MmEnforceWorkingSetLimit (&Process->Vm, FALSE);
+            KeUnstackDetachProcess(&ApcState);
+        }
+        else
+        {
+            MmEnforceWorkingSetLimit(&Process->Vm, FALSE);
         }
 
-        if (!MmAssignProcessToJob (Process)) {
+        if (!MmAssignProcessToJob(Process))
+        {
             Status = STATUS_QUOTA_EXCEEDED;
         }
-
     }
 
     return Status;
@@ -600,52 +585,45 @@ PspAddProcessToJob(
 // Only callable from process delete routine !
 // This means that if the above fails, failure is termination of the process !
 //
-VOID
-PspRemoveProcessFromJob(
-    PEJOB Job,
-    PEPROCESS Process
-    )
+VOID PspRemoveProcessFromJob(PEJOB Job, PEPROCESS Process)
 {
     PETHREAD CurrentThread;
 
     PAGED_CODE();
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
 
-    KeEnterCriticalRegionThread (&CurrentThread->Tcb);
-    ExAcquireResourceExclusiveLite (&Job->JobLock, TRUE);
+    KeEnterCriticalRegionThread(&CurrentThread->Tcb);
+    ExAcquireResourceExclusiveLite(&Job->JobLock, TRUE);
 
-    RemoveEntryList (&Process->JobLinks);
+    RemoveEntryList(&Process->JobLinks);
 
     //
     // Update REMOVE accounting info
     //
 
 
-    if (!(Process->JobStatus & PS_JOB_STATUS_NOT_REALLY_ACTIVE)) {
+    if (!(Process->JobStatus & PS_JOB_STATUS_NOT_REALLY_ACTIVE))
+    {
         Job->ActiveProcesses--;
-        PS_SET_BITS (&Process->JobStatus, PS_JOB_STATUS_NOT_REALLY_ACTIVE);
+        PS_SET_BITS(&Process->JobStatus, PS_JOB_STATUS_NOT_REALLY_ACTIVE);
     }
 
-    PspFoldProcessAccountingIntoJob (Job, Process);
+    PspFoldProcessAccountingIntoJob(Job, Process);
 
-    ExReleaseResourceLite (&Job->JobLock);
-    KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+    ExReleaseResourceLite(&Job->JobLock);
+    KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
 }
 
-VOID
-PspExitProcessFromJob(
-    PEJOB Job,
-    PEPROCESS Process
-    )
+VOID PspExitProcessFromJob(PEJOB Job, PEPROCESS Process)
 {
     PETHREAD CurrentThread;
 
     PAGED_CODE();
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
 
-    KeEnterCriticalRegionThread (&CurrentThread->Tcb);
+    KeEnterCriticalRegionThread(&CurrentThread->Tcb);
     ExAcquireResourceExclusiveLite(&Job->JobLock, TRUE);
 
     //
@@ -653,21 +631,19 @@ PspExitProcessFromJob(
     //
 
 
-    if (!(Process->JobStatus & PS_JOB_STATUS_NOT_REALLY_ACTIVE)) {
+    if (!(Process->JobStatus & PS_JOB_STATUS_NOT_REALLY_ACTIVE))
+    {
         Job->ActiveProcesses--;
-        PS_SET_BITS (&Process->JobStatus, PS_JOB_STATUS_NOT_REALLY_ACTIVE);
+        PS_SET_BITS(&Process->JobStatus, PS_JOB_STATUS_NOT_REALLY_ACTIVE);
     }
 
-    PspFoldProcessAccountingIntoJob(Job,Process);
+    PspFoldProcessAccountingIntoJob(Job, Process);
 
     ExReleaseResourceLite(&Job->JobLock);
-    KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+    KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
 }
 
-VOID
-PspJobDelete(
-    IN PVOID Object
-    )
+VOID PspJobDelete(IN PVOID Object)
 {
     PEJOB Job, tJob;
     WIN32_JOBCALLOUT_PARAMETERS Parms;
@@ -676,7 +652,7 @@ PspJobDelete(
 
     PAGED_CODE();
 
-    Job = (PEJOB) Object;
+    Job = (PEJOB)Object;
 
     //
     // call ntuser to delete its job structure
@@ -686,19 +662,20 @@ PspJobDelete(
     Parms.CalloutType = PsW32JobCalloutTerminate;
     Parms.Data = NULL;
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
 
-    KeEnterCriticalRegionThread (&CurrentThread->Tcb);
+    KeEnterCriticalRegionThread(&CurrentThread->Tcb);
     ExAcquireResourceExclusiveLite(&Job->JobLock, TRUE);
 
     PspWin32SessionCallout(PspW32JobCallout, &Parms, Job->SessionId);
 
     ExReleaseResourceLite(&Job->JobLock);
-    KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+    KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
 
     Job->LimitFlags = 0;
 
-    if (Job->CompletionPort != NULL) {
+    if (Job->CompletionPort != NULL)
+    {
         ObDereferenceObject(Job->CompletionPort);
         Job->CompletionPort = NULL;
     }
@@ -710,67 +687,67 @@ PspJobDelete(
 
     tJob = NULL;
 
-    ExAcquireFastMutex (&PspJobListLock);
+    ExAcquireFastMutex(&PspJobListLock);
 
-    RemoveEntryList (&Job->JobLinks);
+    RemoveEntryList(&Job->JobLinks);
 
     //
     // If we are part of a jobset then we must be the pinning job. We must pass on the pin to the next
     // job in the chain.
     //
-    if (!IsListEmpty (&Job->JobSetLinks)) {
-        tJob = CONTAINING_RECORD (Job->JobSetLinks.Flink, EJOB, JobSetLinks);
-        RemoveEntryList (&Job->JobSetLinks);
+    if (!IsListEmpty(&Job->JobSetLinks))
+    {
+        tJob = CONTAINING_RECORD(Job->JobSetLinks.Flink, EJOB, JobSetLinks);
+        RemoveEntryList(&Job->JobSetLinks);
     }
 
-    ExReleaseFastMutex (&PspJobListLock);
+    ExReleaseFastMutex(&PspJobListLock);
 
     //
     // Removing the pin from the job set can cause a cascade of deletes that would cause a stack overflow
     // as we recursed at this point. We break recursion by forcing the defered delete path here.
     //
-    if (tJob != NULL) {
-        ObDereferenceObjectDeferDelete (tJob);
+    if (tJob != NULL)
+    {
+        ObDereferenceObjectDeferDelete(tJob);
     }
 
     //
     // Free Security clutter:
     //
 
-    if (Job->Token != NULL) {
-        ObDereferenceObject (Job->Token);
+    if (Job->Token != NULL)
+    {
+        ObDereferenceObject(Job->Token);
         Job->Token = NULL;
     }
 
     Filter = Job->Filter;
-    if (Filter != NULL) {
-        if (Filter->CapturedSids != NULL) {
-            ExFreePool (Filter->CapturedSids);
+    if (Filter != NULL)
+    {
+        if (Filter->CapturedSids != NULL)
+        {
+            ExFreePool(Filter->CapturedSids);
         }
 
-        if (Filter->CapturedPrivileges != NULL) {
-            ExFreePool (Filter->CapturedPrivileges);
+        if (Filter->CapturedPrivileges != NULL)
+        {
+            ExFreePool(Filter->CapturedPrivileges);
         }
 
-        if (Filter->CapturedGroups != NULL) {
-            ExFreePool (Filter->CapturedGroups);
+        if (Filter->CapturedGroups != NULL)
+        {
+            ExFreePool(Filter->CapturedGroups);
         }
 
-        ExFreePool (Filter);
-
+        ExFreePool(Filter);
     }
 
-    ExDeleteResourceLite (&Job->JobLock);
+    ExDeleteResourceLite(&Job->JobLock);
 }
 
-VOID
-PspJobClose (
-    IN PEPROCESS Process,
-    IN PVOID Object,
-    IN ACCESS_MASK GrantedAccess,
-    IN ULONG ProcessHandleCount,
-    IN ULONG SystemHandleCount
-    )
+VOID PspJobClose(IN PEPROCESS Process, IN PVOID Object, IN ACCESS_MASK GrantedAccess, IN ULONG ProcessHandleCount,
+                 IN ULONG SystemHandleCount)
 /*++
 
 Routine Description:
@@ -795,22 +772,23 @@ Return Value:
     PVOID Port;
     PETHREAD CurrentThread;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    UNREFERENCED_PARAMETER (Process);
-    UNREFERENCED_PARAMETER (GrantedAccess);
-    UNREFERENCED_PARAMETER (ProcessHandleCount);
+    UNREFERENCED_PARAMETER(Process);
+    UNREFERENCED_PARAMETER(GrantedAccess);
+    UNREFERENCED_PARAMETER(ProcessHandleCount);
     //
     // If this isn't the last handle then do nothing.
     //
-    if (SystemHandleCount > 1) {
+    if (SystemHandleCount > 1)
+    {
         return;
     }
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
 
-    KeEnterCriticalRegionThread (&CurrentThread->Tcb);
-    ExAcquireResourceExclusiveLite (&Job->JobLock, TRUE);
+    KeEnterCriticalRegionThread(&CurrentThread->Tcb);
+    ExAcquireResourceExclusiveLite(&Job->JobLock, TRUE);
 
 
     //
@@ -821,12 +799,13 @@ Return Value:
     // are removed on last handle close.
     //
 
-    PS_SET_BITS (&Job->JobFlags, PS_JOB_FLAGS_CLOSE_DONE);
-    if (Job->LimitFlags&JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE) {
-        PspTerminateAllProcessesInJob (Job, STATUS_SUCCESS, FALSE);
+    PS_SET_BITS(&Job->JobFlags, PS_JOB_FLAGS_CLOSE_DONE);
+    if (Job->LimitFlags & JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE)
+    {
+        PspTerminateAllProcessesInJob(Job, STATUS_SUCCESS, FALSE);
     }
 
-    ExAcquireFastMutex (&Job->MemoryLimitsLock);
+    ExAcquireFastMutex(&Job->MemoryLimitsLock);
 
     //
     // Release the completion port
@@ -835,12 +814,13 @@ Return Value:
     Job->CompletionPort = NULL;
 
 
-    ExReleaseFastMutex (&Job->MemoryLimitsLock);
-    ExReleaseResourceLite (&Job->JobLock);
-    KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+    ExReleaseFastMutex(&Job->MemoryLimitsLock);
+    ExReleaseResourceLite(&Job->JobLock);
+    KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
 
-    if (Port != NULL) {
-        ObDereferenceObject (Port);
+    if (Port != NULL)
+    {
+        ObDereferenceObject(Port);
     }
 }
 
@@ -849,41 +829,35 @@ Return Value:
 #pragma const_seg("PAGECONST")
 #endif
 const ULONG PspJobInfoLengths[] = {
-    sizeof(JOBOBJECT_BASIC_ACCOUNTING_INFORMATION),         // JobObjectBasicAccountingInformation
-    sizeof(JOBOBJECT_BASIC_LIMIT_INFORMATION),              // JobObjectBasicLimitInformation
-    sizeof(JOBOBJECT_BASIC_PROCESS_ID_LIST),                // JobObjectBasicProcessIdList
-    sizeof(JOBOBJECT_BASIC_UI_RESTRICTIONS),                // JobObjectBasicUIRestrictions
-    sizeof(JOBOBJECT_SECURITY_LIMIT_INFORMATION),           // JobObjectSecurityLimitInformation
-    sizeof(JOBOBJECT_END_OF_JOB_TIME_INFORMATION),          // JobObjectEndOfJobTimeInformation
-    sizeof(JOBOBJECT_ASSOCIATE_COMPLETION_PORT),            // JobObjectAssociateCompletionPortInformation
-    sizeof(JOBOBJECT_BASIC_AND_IO_ACCOUNTING_INFORMATION),  // JobObjectBasicAndIoAccountingInformation
-    sizeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION),           // JobObjectExtendedLimitInformation
-    sizeof(JOBOBJECT_JOBSET_INFORMATION),                   // JobObjectJobSetInformation
+    sizeof(JOBOBJECT_BASIC_ACCOUNTING_INFORMATION),        // JobObjectBasicAccountingInformation
+    sizeof(JOBOBJECT_BASIC_LIMIT_INFORMATION),             // JobObjectBasicLimitInformation
+    sizeof(JOBOBJECT_BASIC_PROCESS_ID_LIST),               // JobObjectBasicProcessIdList
+    sizeof(JOBOBJECT_BASIC_UI_RESTRICTIONS),               // JobObjectBasicUIRestrictions
+    sizeof(JOBOBJECT_SECURITY_LIMIT_INFORMATION),          // JobObjectSecurityLimitInformation
+    sizeof(JOBOBJECT_END_OF_JOB_TIME_INFORMATION),         // JobObjectEndOfJobTimeInformation
+    sizeof(JOBOBJECT_ASSOCIATE_COMPLETION_PORT),           // JobObjectAssociateCompletionPortInformation
+    sizeof(JOBOBJECT_BASIC_AND_IO_ACCOUNTING_INFORMATION), // JobObjectBasicAndIoAccountingInformation
+    sizeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION),          // JobObjectExtendedLimitInformation
+    sizeof(JOBOBJECT_JOBSET_INFORMATION),                  // JobObjectJobSetInformation
     0
-    };
+};
 
-const ULONG PspJobInfoAlign[] = {
-    sizeof(ULONG),                                  // JobObjectBasicAccountingInformation
-    sizeof(ULONG),                                  // JobObjectBasicLimitInformation
-    sizeof(ULONG),                                  // JobObjectBasicProcessIdList
-    sizeof(ULONG),                                  // JobObjectBasicUIRestrictions
-    sizeof(ULONG),                                  // JobObjectSecurityLimitInformation
-    sizeof(ULONG),                                  // JobObjectEndOfJobTimeInformation
-    sizeof(PVOID),                                  // JobObjectAssociateCompletionPortInformation
-    sizeof(ULONG),                                  // JobObjectBasicAndIoAccountingInformation
-    sizeof(ULONG),                                  // JobObjectExtendedLimitInformation
-    TYPE_ALIGNMENT (JOBOBJECT_JOBSET_INFORMATION),  // JobObjectJobSetInformation
-    0
-    };
+const ULONG PspJobInfoAlign[] = { sizeof(ULONG), // JobObjectBasicAccountingInformation
+                                  sizeof(ULONG), // JobObjectBasicLimitInformation
+                                  sizeof(ULONG), // JobObjectBasicProcessIdList
+                                  sizeof(ULONG), // JobObjectBasicUIRestrictions
+                                  sizeof(ULONG), // JobObjectSecurityLimitInformation
+                                  sizeof(ULONG), // JobObjectEndOfJobTimeInformation
+                                  sizeof(PVOID), // JobObjectAssociateCompletionPortInformation
+                                  sizeof(ULONG), // JobObjectBasicAndIoAccountingInformation
+                                  sizeof(ULONG), // JobObjectExtendedLimitInformation
+                                  TYPE_ALIGNMENT(JOBOBJECT_JOBSET_INFORMATION), // JobObjectJobSetInformation
+                                  0 };
 
 NTSTATUS
-NtQueryInformationJobObject(
-    IN HANDLE JobHandle,
-    IN JOBOBJECTINFOCLASS JobObjectInformationClass,
-    OUT PVOID JobObjectInformation,
-    IN ULONG JobObjectInformationLength,
-    OUT PULONG ReturnLength OPTIONAL
-    )
+NtQueryInformationJobObject(IN HANDLE JobHandle, IN JOBOBJECTINFOCLASS JobObjectInformationClass,
+                            OUT PVOID JobObjectInformation, IN ULONG JobObjectInformationLength,
+                            OUT PULONG ReturnLength OPTIONAL)
 {
     PEJOB Job;
     KPROCESSOR_MODE PreviousMode;
@@ -893,9 +867,9 @@ NtQueryInformationJobObject(
     JOBOBJECT_SECURITY_LIMIT_INFORMATION SecurityLimitInfo;
     JOBOBJECT_JOBSET_INFORMATION JobSetInformation;
     JOBOBJECT_END_OF_JOB_TIME_INFORMATION EndOfJobInfo;
-    NTSTATUS st=STATUS_SUCCESS;
+    NTSTATUS st = STATUS_SUCCESS;
     ULONG RequiredLength, RequiredAlign, ActualReturnLength;
-    PVOID ReturnData=NULL;
+    PVOID ReturnData = NULL;
     PEPROCESS Process;
     PLIST_ENTRY Next;
     LARGE_INTEGER UserTime, KernelTime;
@@ -914,21 +888,23 @@ NtQueryInformationJobObject(
 
     PAGED_CODE();
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
 
     //
     // Get previous processor mode and probe output argument if necessary.
     //
 
-    if (JobObjectInformationClass >= MaxJobObjectInfoClass || JobObjectInformationClass <= 0) {
+    if (JobObjectInformationClass >= MaxJobObjectInfoClass || JobObjectInformationClass <= 0)
+    {
         return STATUS_INVALID_INFO_CLASS;
     }
 
-    RequiredLength = PspJobInfoLengths[JobObjectInformationClass-1];
-    RequiredAlign = PspJobInfoAlign[JobObjectInformationClass-1];
+    RequiredLength = PspJobInfoLengths[JobObjectInformationClass - 1];
+    RequiredAlign = PspJobInfoAlign[JobObjectInformationClass - 1];
     ActualReturnLength = RequiredLength;
 
-    if (JobObjectInformationLength != RequiredLength) {
+    if (JobObjectInformationLength != RequiredLength)
+    {
 
         //
         // BasicProcessIdList is variable length, so make sure header is
@@ -936,32 +912,39 @@ NtQueryInformationJobObject(
         // as well, due to the token groups and privs
         //
         if ((JobObjectInformationClass == JobObjectBasicProcessIdList) ||
-            (JobObjectInformationClass == JobObjectSecurityLimitInformation) ) {
-            if (JobObjectInformationLength < RequiredLength) {
+            (JobObjectInformationClass == JobObjectSecurityLimitInformation))
+        {
+            if (JobObjectInformationLength < RequiredLength)
+            {
                 return STATUS_INFO_LENGTH_MISMATCH;
-            } else {
+            }
+            else
+            {
                 RequiredLength = JobObjectInformationLength;
             }
-        } else {
+        }
+        else
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
     }
 
 
-    PreviousMode = KeGetPreviousModeByThread (&CurrentThread->Tcb);
+    PreviousMode = KeGetPreviousModeByThread(&CurrentThread->Tcb);
 
-    if (PreviousMode != KernelMode) {
-        try {
-            ProbeForWrite(
-                JobObjectInformation,
-                JobObjectInformationLength,
-                RequiredAlign
-                );
-            if (ARGUMENT_PRESENT (ReturnLength)) {
-                ProbeForWriteUlong (ReturnLength);
+    if (PreviousMode != KernelMode)
+    {
+        try
+        {
+            ProbeForWrite(JobObjectInformation, JobObjectInformationLength, RequiredAlign);
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
+                ProbeForWriteUlong(ReturnLength);
             }
-        } except (EXCEPTION_EXECUTE_HANDLER) {
-            return GetExceptionCode ();
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            return GetExceptionCode();
         }
     }
 
@@ -969,19 +952,16 @@ NtQueryInformationJobObject(
     // reference the job
     //
 
-    if (ARGUMENT_PRESENT (JobHandle)) {
-        st = ObReferenceObjectByHandle(
-                JobHandle,
-                JOB_OBJECT_QUERY,
-                PsJobType,
-                PreviousMode,
-                (PVOID *)&Job,
-                NULL
-                );
-        if (!NT_SUCCESS (st)) {
+    if (ARGUMENT_PRESENT(JobHandle))
+    {
+        st = ObReferenceObjectByHandle(JobHandle, JOB_OBJECT_QUERY, PsJobType, PreviousMode, (PVOID *)&Job, NULL);
+        if (!NT_SUCCESS(st))
+        {
             return st;
         }
-    } else {
+    }
+    else
+    {
 
         //
         // if the current process has a job, NULL means the job of the
@@ -990,22 +970,26 @@ NtQueryInformationJobObject(
 
         Process = PsGetCurrentProcessByThread(CurrentThread);
 
-        if (Process->Job != NULL) {
+        if (Process->Job != NULL)
+        {
             Job = Process->Job;
             ObReferenceObject(Job);
-        } else {
+        }
+        else
+        {
             return STATUS_ACCESS_DENIED;
         }
     }
 
-    AlreadyCopied = FALSE ;
+    AlreadyCopied = FALSE;
 
 
     //
     // Check argument validity.
     //
 
-    switch ( JobObjectInformationClass ) {
+    switch (JobObjectInformationClass)
+    {
 
     case JobObjectBasicAccountingInformation:
     case JobObjectBasicAndIoAccountingInformation:
@@ -1016,10 +1000,10 @@ NtQueryInformationJobObject(
         // basic, and the shorter return'd data length chops what we return.
         //
 
-        RtlZeroMemory (&AccountingInfo.IoInfo,sizeof(AccountingInfo.IoInfo));
+        RtlZeroMemory(&AccountingInfo.IoInfo, sizeof(AccountingInfo.IoInfo));
 
-        KeEnterCriticalRegionThread (&CurrentThread->Tcb);
-        ExAcquireResourceSharedLite (&Job->JobLock, TRUE);
+        KeEnterCriticalRegionThread(&CurrentThread->Tcb);
+        ExAcquireResourceSharedLite(&Job->JobLock, TRUE);
 
         AccountingInfo.BasicInfo.TotalUserTime = Job->TotalUserTime;
         AccountingInfo.BasicInfo.TotalKernelTime = Job->TotalKernelTime;
@@ -1044,13 +1028,15 @@ NtQueryInformationJobObject(
 
         Next = Job->ProcessListHead.Flink;
 
-        while ( Next != &Job->ProcessListHead) {
+        while (Next != &Job->ProcessListHead)
+        {
 
-            Process = (PEPROCESS)(CONTAINING_RECORD(Next,EPROCESS,JobLinks));
-            if (!(Process->JobStatus & PS_JOB_STATUS_ACCOUNTING_FOLDED)) {
+            Process = (PEPROCESS)(CONTAINING_RECORD(Next, EPROCESS, JobLinks));
+            if (!(Process->JobStatus & PS_JOB_STATUS_ACCOUNTING_FOLDED))
+            {
 
-                UserTime.QuadPart = UInt32x32To64(Process->Pcb.UserTime,KeMaximumIncrement);
-                KernelTime.QuadPart = UInt32x32To64(Process->Pcb.KernelTime,KeMaximumIncrement);
+                UserTime.QuadPart = UInt32x32To64(Process->Pcb.UserTime, KeMaximumIncrement);
+                KernelTime.QuadPart = UInt32x32To64(Process->Pcb.KernelTime, KeMaximumIncrement);
 
                 AccountingInfo.BasicInfo.TotalUserTime.QuadPart += UserTime.QuadPart;
                 AccountingInfo.BasicInfo.TotalKernelTime.QuadPart += KernelTime.QuadPart;
@@ -1067,8 +1053,8 @@ NtQueryInformationJobObject(
             }
             Next = Next->Flink;
         }
-        ExReleaseResourceLite (&Job->JobLock);
-        KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+        ExReleaseResourceLite(&Job->JobLock);
+        KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
 
         ReturnData = &AccountingInfo;
         st = STATUS_SUCCESS;
@@ -1081,7 +1067,7 @@ NtQueryInformationJobObject(
         //
         // Get the Basic Information
         //
-        KeEnterCriticalRegionThread (&CurrentThread->Tcb);
+        KeEnterCriticalRegionThread(&CurrentThread->Tcb);
         ExAcquireResourceSharedLite(&Job->JobLock, TRUE);
 
         ExtendedLimitInfo.BasicLimitInformation.LimitFlags = Job->LimitFlags;
@@ -1091,17 +1077,19 @@ NtQueryInformationJobObject(
         ExtendedLimitInfo.BasicLimitInformation.PriorityClass = (ULONG)Job->PriorityClass;
         ExtendedLimitInfo.BasicLimitInformation.SchedulingClass = Job->SchedulingClass;
         ExtendedLimitInfo.BasicLimitInformation.Affinity = (ULONG_PTR)Job->Affinity;
-        ExtendedLimitInfo.BasicLimitInformation.PerProcessUserTimeLimit.QuadPart = Job->PerProcessUserTimeLimit.QuadPart;
+        ExtendedLimitInfo.BasicLimitInformation.PerProcessUserTimeLimit.QuadPart =
+            Job->PerProcessUserTimeLimit.QuadPart;
         ExtendedLimitInfo.BasicLimitInformation.PerJobUserTimeLimit.QuadPart = Job->PerJobUserTimeLimit.QuadPart;
 
 
-        if ( JobObjectInformationClass == JobObjectExtendedLimitInformation ) {
+        if (JobObjectInformationClass == JobObjectExtendedLimitInformation)
+        {
 
             //
             // Get Extended Information
             //
 
-            ExAcquireFastMutex (&Job->MemoryLimitsLock);
+            ExAcquireFastMutex(&Job->MemoryLimitsLock);
 
             ExtendedLimitInfo.ProcessMemoryLimit = Job->ProcessMemoryLimit << PAGE_SHIFT;
             ExtendedLimitInfo.JobMemoryLimit = Job->JobMemoryLimit << PAGE_SHIFT;
@@ -1109,24 +1097,24 @@ NtQueryInformationJobObject(
 
             ExtendedLimitInfo.PeakProcessMemoryUsed = Job->PeakProcessMemoryUsed << PAGE_SHIFT;
 
-            ExReleaseFastMutex (&Job->MemoryLimitsLock);
+            ExReleaseFastMutex(&Job->MemoryLimitsLock);
 
             ExReleaseResourceLite(&Job->JobLock);
-            KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+            KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
             //
             // Zero un-used I/O counters
             //
-            RtlZeroMemory(&ExtendedLimitInfo.IoInfo,sizeof(ExtendedLimitInfo.IoInfo));
+            RtlZeroMemory(&ExtendedLimitInfo.IoInfo, sizeof(ExtendedLimitInfo.IoInfo));
 
             ReturnData = &ExtendedLimitInfo;
-
-        } else {
+        }
+        else
+        {
 
             ExReleaseResourceLite(&Job->JobLock);
-            KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+            KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
 
             ReturnData = &ExtendedLimitInfo.BasicLimitInformation;
-
         }
 
         st = STATUS_SUCCESS;
@@ -1135,13 +1123,13 @@ NtQueryInformationJobObject(
 
     case JobObjectBasicUIRestrictions:
 
-        KeEnterCriticalRegionThread (&CurrentThread->Tcb);
+        KeEnterCriticalRegionThread(&CurrentThread->Tcb);
         ExAcquireResourceSharedLite(&Job->JobLock, TRUE);
 
         BasicUIRestrictions.UIRestrictionsClass = Job->UIRestrictionsClass;
 
         ExReleaseResourceLite(&Job->JobLock);
-        KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+        KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
 
         ReturnData = &BasicUIRestrictions;
         st = STATUS_SUCCESS;
@@ -1152,14 +1140,15 @@ NtQueryInformationJobObject(
 
         IdList = (PJOBOBJECT_BASIC_PROCESS_ID_LIST)JobObjectInformation;
         NextProcessIdSlot = &IdList->ProcessIdList[0];
-        WorkingLength = FIELD_OFFSET(JOBOBJECT_BASIC_PROCESS_ID_LIST,ProcessIdList);
+        WorkingLength = FIELD_OFFSET(JOBOBJECT_BASIC_PROCESS_ID_LIST, ProcessIdList);
 
         AlreadyCopied = TRUE;
 
-        KeEnterCriticalRegionThread (&CurrentThread->Tcb);
+        KeEnterCriticalRegionThread(&CurrentThread->Tcb);
         ExAcquireResourceSharedLite(&Job->JobLock, TRUE);
 
-        try {
+        try
+        {
 
             //
             // Acounted for in the workinglength = 2*sizeof(ULONG)
@@ -1170,18 +1159,26 @@ NtQueryInformationJobObject(
 
             Next = Job->ProcessListHead.Flink;
 
-            while ( Next != &Job->ProcessListHead) {
+            while (Next != &Job->ProcessListHead)
+            {
 
-                Process = (PEPROCESS)(CONTAINING_RECORD(Next,EPROCESS,JobLinks));
-                if ( !(Process->JobStatus & PS_JOB_STATUS_NOT_REALLY_ACTIVE) ) {
-                    if ( !Process->UniqueProcessId ) {
+                Process = (PEPROCESS)(CONTAINING_RECORD(Next, EPROCESS, JobLinks));
+                if (!(Process->JobStatus & PS_JOB_STATUS_NOT_REALLY_ACTIVE))
+                {
+                    if (!Process->UniqueProcessId)
+                    {
                         IdList->NumberOfAssignedProcesses--;
-                    } else {
-                        if ( (RequiredLength - WorkingLength) >= sizeof(ULONG_PTR) ) {
+                    }
+                    else
+                    {
+                        if ((RequiredLength - WorkingLength) >= sizeof(ULONG_PTR))
+                        {
                             *NextProcessIdSlot++ = (ULONG_PTR)Process->UniqueProcessId;
                             WorkingLength += sizeof(ULONG_PTR);
                             IdList->NumberOfProcessIdsInList++;
-                        } else {
+                        }
+                        else
+                        {
                             st = STATUS_BUFFER_OVERFLOW;
                             ActualReturnLength = WorkingLength;
                             break;
@@ -1191,25 +1188,26 @@ NtQueryInformationJobObject(
                 Next = Next->Flink;
             }
             ActualReturnLength = WorkingLength;
-
-        } except ( ExSystemExceptionFilter() ) {
+        }
+        except(ExSystemExceptionFilter())
+        {
             st = GetExceptionCode();
             ActualReturnLength = 0;
         }
         ExReleaseResourceLite(&Job->JobLock);
-        KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+        KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
 
         break;
 
     case JobObjectSecurityLimitInformation:
 
-        RtlZeroMemory (&SecurityLimitInfo, sizeof (SecurityLimitInfo));
+        RtlZeroMemory(&SecurityLimitInfo, sizeof(SecurityLimitInfo));
 
         ReturnData = &SecurityLimitInfo;
 
         st = STATUS_SUCCESS;
 
-        KeEnterCriticalRegionThread (&CurrentThread->Tcb);
+        KeEnterCriticalRegionThread(&CurrentThread->Tcb);
         ExAcquireResourceSharedLite(&Job->JobLock, TRUE);
 
         SecurityLimitInfo.SecurityLimitFlags = Job->SecurityLimitFlags;
@@ -1219,7 +1217,8 @@ NtQueryInformationJobObject(
         //
 
         Filter = Job->Filter;
-        if (Filter != NULL) {
+        if (Filter != NULL)
+        {
 
             WorkingLength = 0;
 
@@ -1227,125 +1226,119 @@ NtQueryInformationJobObject(
             // For each field, if it is present, include the extra stuff
             //
 
-            if (Filter->CapturedSidsLength > 0) {
-                WorkingLength += Filter->CapturedSidsLength + sizeof (ULONG);
+            if (Filter->CapturedSidsLength > 0)
+            {
+                WorkingLength += Filter->CapturedSidsLength + sizeof(ULONG);
             }
 
-            if (Filter->CapturedGroupsLength > 0) {
-                WorkingLength += Filter->CapturedGroupsLength + sizeof (ULONG);
+            if (Filter->CapturedGroupsLength > 0)
+            {
+                WorkingLength += Filter->CapturedGroupsLength + sizeof(ULONG);
             }
 
-            if (Filter->CapturedPrivilegesLength > 0) {
-                WorkingLength += Filter->CapturedPrivilegesLength + sizeof (ULONG);
+            if (Filter->CapturedPrivilegesLength > 0)
+            {
+                WorkingLength += Filter->CapturedPrivilegesLength + sizeof(ULONG);
             }
 
-            RequiredLength -= sizeof (SecurityLimitInfo);
+            RequiredLength -= sizeof(SecurityLimitInfo);
 
-            if (WorkingLength > RequiredLength) {
-                st = STATUS_BUFFER_OVERFLOW ;
-                ActualReturnLength = WorkingLength + sizeof (SecurityLimitInfo);
+            if (WorkingLength > RequiredLength)
+            {
+                st = STATUS_BUFFER_OVERFLOW;
+                ActualReturnLength = WorkingLength + sizeof(SecurityLimitInfo);
                 goto unlock;
             }
 
-            CurrentOffset = (PUCHAR) (JobObjectInformation) + sizeof (SecurityLimitInfo);
+            CurrentOffset = (PUCHAR)(JobObjectInformation) + sizeof(SecurityLimitInfo);
 
-            try {
+            try
+            {
 
-                if (Filter->CapturedSidsLength > 0) {
-                    WorkingGroup = (PTOKEN_GROUPS) CurrentOffset;
+                if (Filter->CapturedSidsLength > 0)
+                {
+                    WorkingGroup = (PTOKEN_GROUPS)CurrentOffset;
 
-                    CurrentOffset += sizeof (ULONG);
+                    CurrentOffset += sizeof(ULONG);
 
                     SecurityLimitInfo.RestrictedSids = WorkingGroup;
 
                     WorkingGroup->GroupCount = Filter->CapturedSidCount;
 
-                    TargetSidBuffer = (PSID) (CurrentOffset +
-                                              sizeof (SID_AND_ATTRIBUTES) *
-                                              Filter->CapturedSidCount);
+                    TargetSidBuffer = (PSID)(CurrentOffset + sizeof(SID_AND_ATTRIBUTES) * Filter->CapturedSidCount);
 
-                    st = RtlCopySidAndAttributesArray (Filter->CapturedSidCount,
-                                                       Filter->CapturedSids,
-                                                       WorkingLength,
-                                                       WorkingGroup->Groups,
-                                                       TargetSidBuffer,
-                                                       &RemainingSid,
-                                                       &RemainingSidBuffer);
+                    st = RtlCopySidAndAttributesArray(Filter->CapturedSidCount, Filter->CapturedSids, WorkingLength,
+                                                      WorkingGroup->Groups, TargetSidBuffer, &RemainingSid,
+                                                      &RemainingSidBuffer);
 
                     CurrentOffset += Filter->CapturedSidsLength;
-
                 }
 
-                if (!NT_SUCCESS (st)) {
+                if (!NT_SUCCESS(st))
+                {
                     leave;
                 }
 
-                if (Filter->CapturedGroupsLength > 0) {
-                    WorkingGroup = (PTOKEN_GROUPS) CurrentOffset;
+                if (Filter->CapturedGroupsLength > 0)
+                {
+                    WorkingGroup = (PTOKEN_GROUPS)CurrentOffset;
 
-                    CurrentOffset += sizeof (ULONG);
+                    CurrentOffset += sizeof(ULONG);
 
                     SecurityLimitInfo.SidsToDisable = WorkingGroup;
 
                     WorkingGroup->GroupCount = Filter->CapturedGroupCount;
 
-                    TargetSidBuffer = (PSID) (CurrentOffset +
-                                              sizeof (SID_AND_ATTRIBUTES) *
-                                              Filter->CapturedGroupCount);
+                    TargetSidBuffer = (PSID)(CurrentOffset + sizeof(SID_AND_ATTRIBUTES) * Filter->CapturedGroupCount);
 
-                    st = RtlCopySidAndAttributesArray (Filter->CapturedGroupCount,
-                                                       Filter->CapturedGroups,
-                                                       WorkingLength,
-                                                       WorkingGroup->Groups,
-                                                       TargetSidBuffer,
-                                                       &RemainingSid,
-                                                       &RemainingSidBuffer);
+                    st = RtlCopySidAndAttributesArray(Filter->CapturedGroupCount, Filter->CapturedGroups, WorkingLength,
+                                                      WorkingGroup->Groups, TargetSidBuffer, &RemainingSid,
+                                                      &RemainingSidBuffer);
 
                     CurrentOffset += Filter->CapturedGroupsLength;
-
                 }
 
-                if (!NT_SUCCESS (st)) {
+                if (!NT_SUCCESS(st))
+                {
                     leave;
                 }
 
-                if (Filter->CapturedPrivilegesLength > 0) {
-                    WorkingPrivs = (PTOKEN_PRIVILEGES) CurrentOffset;
+                if (Filter->CapturedPrivilegesLength > 0)
+                {
+                    WorkingPrivs = (PTOKEN_PRIVILEGES)CurrentOffset;
 
-                    CurrentOffset += sizeof (ULONG);
+                    CurrentOffset += sizeof(ULONG);
 
                     SecurityLimitInfo.PrivilegesToDelete = WorkingPrivs;
 
                     WorkingPrivs->PrivilegeCount = Filter->CapturedPrivilegeCount;
 
-                    RtlCopyMemory (WorkingPrivs->Privileges,
-                                   Filter->CapturedPrivileges,
-                                   Filter->CapturedPrivilegesLength);
-
+                    RtlCopyMemory(WorkingPrivs->Privileges, Filter->CapturedPrivileges,
+                                  Filter->CapturedPrivilegesLength);
                 }
-
-
-
-            } except (EXCEPTION_EXECUTE_HANDLER) {
-                st = GetExceptionCode ();
-                ActualReturnLength = 0 ;
             }
-
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
+                st = GetExceptionCode();
+                ActualReturnLength = 0;
+            }
         }
-unlock:
-        ExReleaseResourceLite (&Job->JobLock);
-        KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+    unlock:
+        ExReleaseResourceLite(&Job->JobLock);
+        KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
 
-        AlreadyCopied = TRUE ;
+        AlreadyCopied = TRUE;
 
-        if (NT_SUCCESS (st)) {
-            try {
-                RtlCopyMemory (JobObjectInformation,
-                               &SecurityLimitInfo,
-                               sizeof (SecurityLimitInfo));
-            }  except (EXCEPTION_EXECUTE_HANDLER) {
-                st = GetExceptionCode ();
-                ActualReturnLength = 0 ;
+        if (NT_SUCCESS(st))
+        {
+            try
+            {
+                RtlCopyMemory(JobObjectInformation, &SecurityLimitInfo, sizeof(SecurityLimitInfo));
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
+                st = GetExceptionCode();
+                ActualReturnLength = 0;
                 break;
             }
         }
@@ -1354,11 +1347,11 @@ unlock:
 
     case JobObjectJobSetInformation:
 
-        ExAcquireFastMutex (&PspJobListLock);
+        ExAcquireFastMutex(&PspJobListLock);
 
         JobSetInformation.MemberLevel = Job->MemberLevel;
 
-        ExReleaseFastMutex (&PspJobListLock);
+        ExReleaseFastMutex(&PspJobListLock);
 
         ReturnData = &JobSetInformation;
         st = STATUS_SUCCESS;
@@ -1386,7 +1379,8 @@ unlock:
     ObDereferenceObject(Job);
 
 
-    if (NT_SUCCESS (st)) {
+    if (NT_SUCCESS(st))
+    {
 
         //
         // Either of these may cause an access violation. The
@@ -1394,46 +1388,46 @@ unlock:
         // status code. No further cleanup needs to be done.
         //
 
-        try {
-            if (!AlreadyCopied) {
-                RtlCopyMemory (JobObjectInformation, ReturnData, RequiredLength);
+        try
+        {
+            if (!AlreadyCopied)
+            {
+                RtlCopyMemory(JobObjectInformation, ReturnData, RequiredLength);
             }
 
-            if (ARGUMENT_PRESENT (ReturnLength)) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = ActualReturnLength;
             }
-        } except(EXCEPTION_EXECUTE_HANDLER) {
-            return GetExceptionCode ();
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            return GetExceptionCode();
         }
     }
 
     return st;
-
 }
 
 NTSTATUS
-NtSetInformationJobObject(
-    IN HANDLE JobHandle,
-    IN JOBOBJECTINFOCLASS JobObjectInformationClass,
-    IN PVOID JobObjectInformation,
-    IN ULONG JobObjectInformationLength
-    )
+NtSetInformationJobObject(IN HANDLE JobHandle, IN JOBOBJECTINFOCLASS JobObjectInformationClass,
+                          IN PVOID JobObjectInformation, IN ULONG JobObjectInformationLength)
 {
     PEJOB Job;
-    EJOB LocalJob={0};
+    EJOB LocalJob = { 0 };
     KPROCESSOR_MODE PreviousMode;
     NTSTATUS st;
-    JOBOBJECT_EXTENDED_LIMIT_INFORMATION ExtendedLimitInfo={0};
-    JOBOBJECT_BASIC_UI_RESTRICTIONS BasicUIRestrictions={0};
-    JOBOBJECT_SECURITY_LIMIT_INFORMATION SecurityLimitInfo={0};
-    JOBOBJECT_END_OF_JOB_TIME_INFORMATION EndOfJobInfo={0};
-    JOBOBJECT_ASSOCIATE_COMPLETION_PORT AssociateInfo={0};
+    JOBOBJECT_EXTENDED_LIMIT_INFORMATION ExtendedLimitInfo = { 0 };
+    JOBOBJECT_BASIC_UI_RESTRICTIONS BasicUIRestrictions = { 0 };
+    JOBOBJECT_SECURITY_LIMIT_INFORMATION SecurityLimitInfo = { 0 };
+    JOBOBJECT_END_OF_JOB_TIME_INFORMATION EndOfJobInfo = { 0 };
+    JOBOBJECT_ASSOCIATE_COMPLETION_PORT AssociateInfo = { 0 };
     ULONG RequiredAccess;
     ULONG RequiredLength, RequiredAlign;
     PEPROCESS Process;
     PETHREAD CurrentThread;
     BOOLEAN HasPrivilege;
-    BOOLEAN IsChild=FALSE;
+    BOOLEAN IsChild = FALSE;
     PLIST_ENTRY Next;
     PPS_JOB_TOKEN_FILTER Filter;
     PVOID IoCompletion;
@@ -1449,30 +1443,32 @@ NtSetInformationJobObject(
     // Get previous processor mode and probe output argument if necessary.
     //
 
-    if (JobObjectInformationClass >= MaxJobObjectInfoClass || JobObjectInformationClass <= 0) {
+    if (JobObjectInformationClass >= MaxJobObjectInfoClass || JobObjectInformationClass <= 0)
+    {
         return STATUS_INVALID_INFO_CLASS;
     }
 
-    RequiredLength = PspJobInfoLengths[JobObjectInformationClass-1];
-    RequiredAlign = PspJobInfoAlign[JobObjectInformationClass-1];
+    RequiredLength = PspJobInfoLengths[JobObjectInformationClass - 1];
+    RequiredAlign = PspJobInfoAlign[JobObjectInformationClass - 1];
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
 
     PreviousMode = KeGetPreviousModeByThread(&CurrentThread->Tcb);
 
-    if (PreviousMode != KernelMode) {
-        try {
-            ProbeForRead(
-                JobObjectInformation,
-                JobObjectInformationLength,
-                RequiredAlign
-                );
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+    if (PreviousMode != KernelMode)
+    {
+        try
+        {
+            ProbeForRead(JobObjectInformation, JobObjectInformationLength, RequiredAlign);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
     }
 
-    if (JobObjectInformationLength != RequiredLength) {
+    if (JobObjectInformationLength != RequiredLength)
+    {
         return STATUS_INFO_LENGTH_MISMATCH;
     }
 
@@ -1480,53 +1476,61 @@ NtSetInformationJobObject(
     // reference the job
     //
 
-    if (JobObjectInformationClass == JobObjectSecurityLimitInformation) {
+    if (JobObjectInformationClass == JobObjectSecurityLimitInformation)
+    {
         RequiredAccess = JOB_OBJECT_SET_SECURITY_ATTRIBUTES;
-    } else {
+    }
+    else
+    {
         RequiredAccess = JOB_OBJECT_SET_ATTRIBUTES;
     }
 
-    st = ObReferenceObjectByHandle(
-            JobHandle,
-            RequiredAccess,
-            PsJobType,
-            PreviousMode,
-            (PVOID *)&Job,
-            NULL
-            );
-    if (!NT_SUCCESS (st)) {
+    st = ObReferenceObjectByHandle(JobHandle, RequiredAccess, PsJobType, PreviousMode, (PVOID *)&Job, NULL);
+    if (!NT_SUCCESS(st))
+    {
         return st;
     }
 
-    KeEnterCriticalRegionThread (&CurrentThread->Tcb);
+    KeEnterCriticalRegionThread(&CurrentThread->Tcb);
 
     //
     // Check argument validity.
     //
 
-    switch (JobObjectInformationClass) {
+    switch (JobObjectInformationClass)
+    {
 
     case JobObjectExtendedLimitInformation:
     case JobObjectBasicLimitInformation:
-        try {
-            RtlCopyMemory (&ExtendedLimitInfo, JobObjectInformation, RequiredLength);
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        try
+        {
+            RtlCopyMemory(&ExtendedLimitInfo, JobObjectInformation, RequiredLength);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             st = GetExceptionCode();
         }
 
-        if (NT_SUCCESS (st)) {
+        if (NT_SUCCESS(st))
+        {
             //
             // sanity check LimitFlags
             //
-            if (JobObjectInformationClass == JobObjectBasicLimitInformation) {
+            if (JobObjectInformationClass == JobObjectBasicLimitInformation)
+            {
                 ValidFlags = JOB_OBJECT_BASIC_LIMIT_VALID_FLAGS;
-            } else {
+            }
+            else
+            {
                 ValidFlags = JOB_OBJECT_EXTENDED_LIMIT_VALID_FLAGS;
             }
 
-            if ( ExtendedLimitInfo.BasicLimitInformation.LimitFlags & ~ValidFlags ) {
+            if (ExtendedLimitInfo.BasicLimitInformation.LimitFlags & ~ValidFlags)
+            {
                 st = STATUS_INVALID_PARAMETER;
-            } else {
+            }
+            else
+            {
 
                 LimitFlags = ExtendedLimitInfo.BasicLimitInformation.LimitFlags;
 
@@ -1541,7 +1545,8 @@ NtSetInformationJobObject(
                 //
                 // ACTIVE PROCESS LIMIT
                 //
-                if (LimitFlags & JOB_OBJECT_LIMIT_ACTIVE_PROCESS) {
+                if (LimitFlags & JOB_OBJECT_LIMIT_ACTIVE_PROCESS)
+                {
 
                     //
                     // Active Process Limit is NOT retroactive. New processes are denied,
@@ -1551,7 +1556,9 @@ NtSetInformationJobObject(
 
                     LocalJob.LimitFlags |= JOB_OBJECT_LIMIT_ACTIVE_PROCESS;
                     LocalJob.ActiveProcessLimit = ExtendedLimitInfo.BasicLimitInformation.ActiveProcessLimit;
-                } else {
+                }
+                else
+                {
                     LocalJob.LimitFlags &= ~JOB_OBJECT_LIMIT_ACTIVE_PROCESS;
                     LocalJob.ActiveProcessLimit = 0;
                 }
@@ -1559,13 +1566,18 @@ NtSetInformationJobObject(
                 //
                 // PRIORITY CLASS LIMIT
                 //
-                if (LimitFlags & JOB_OBJECT_LIMIT_PRIORITY_CLASS) {
+                if (LimitFlags & JOB_OBJECT_LIMIT_PRIORITY_CLASS)
+                {
 
-                    if (ExtendedLimitInfo.BasicLimitInformation.PriorityClass > PROCESS_PRIORITY_CLASS_ABOVE_NORMAL) {
+                    if (ExtendedLimitInfo.BasicLimitInformation.PriorityClass > PROCESS_PRIORITY_CLASS_ABOVE_NORMAL)
+                    {
                         st = STATUS_INVALID_PARAMETER;
-                    } else {
+                    }
+                    else
+                    {
                         if (ExtendedLimitInfo.BasicLimitInformation.PriorityClass == PROCESS_PRIORITY_CLASS_HIGH ||
-                            ExtendedLimitInfo.BasicLimitInformation.PriorityClass == PROCESS_PRIORITY_CLASS_REALTIME) {
+                            ExtendedLimitInfo.BasicLimitInformation.PriorityClass == PROCESS_PRIORITY_CLASS_REALTIME)
+                        {
 
                             //
                             // Increasing the base priority of a process is a
@@ -1573,24 +1585,24 @@ NtSetInformationJobObject(
                             // here.
                             //
 
-                            HasPrivilege = SeCheckPrivilegedObject(
-                                               SeIncreaseBasePriorityPrivilege,
-                                               JobHandle,
-                                               JOB_OBJECT_SET_ATTRIBUTES,
-                                               PreviousMode
-                                               );
+                            HasPrivilege = SeCheckPrivilegedObject(SeIncreaseBasePriorityPrivilege, JobHandle,
+                                                                   JOB_OBJECT_SET_ATTRIBUTES, PreviousMode);
 
-                            if (!HasPrivilege) {
+                            if (!HasPrivilege)
+                            {
                                 st = STATUS_PRIVILEGE_NOT_HELD;
                             }
                         }
 
-                        if ( NT_SUCCESS(st) ) {
+                        if (NT_SUCCESS(st))
+                        {
                             LocalJob.LimitFlags |= JOB_OBJECT_LIMIT_PRIORITY_CLASS;
                             LocalJob.PriorityClass = (UCHAR)ExtendedLimitInfo.BasicLimitInformation.PriorityClass;
                         }
                     }
-                } else {
+                }
+                else
+                {
                     LocalJob.LimitFlags &= ~JOB_OBJECT_LIMIT_PRIORITY_CLASS;
                     LocalJob.PriorityClass = 0;
                 }
@@ -1598,12 +1610,17 @@ NtSetInformationJobObject(
                 //
                 // SCHEDULING CLASS LIMIT
                 //
-                if (LimitFlags & JOB_OBJECT_LIMIT_SCHEDULING_CLASS) {
+                if (LimitFlags & JOB_OBJECT_LIMIT_SCHEDULING_CLASS)
+                {
 
-                    if (ExtendedLimitInfo.BasicLimitInformation.SchedulingClass >= PSP_NUMBER_OF_SCHEDULING_CLASSES) {
+                    if (ExtendedLimitInfo.BasicLimitInformation.SchedulingClass >= PSP_NUMBER_OF_SCHEDULING_CLASSES)
+                    {
                         st = STATUS_INVALID_PARAMETER;
-                    } else {
-                        if (ExtendedLimitInfo.BasicLimitInformation.SchedulingClass > PSP_DEFAULT_SCHEDULING_CLASSES) {
+                    }
+                    else
+                    {
+                        if (ExtendedLimitInfo.BasicLimitInformation.SchedulingClass > PSP_DEFAULT_SCHEDULING_CLASSES)
+                        {
 
                             //
                             // Increasing above the default scheduling class
@@ -1612,41 +1629,48 @@ NtSetInformationJobObject(
                             // here.
                             //
 
-                            HasPrivilege = SeCheckPrivilegedObject(
-                                               SeIncreaseBasePriorityPrivilege,
-                                               JobHandle,
-                                               JOB_OBJECT_SET_ATTRIBUTES,
-                                               PreviousMode
-                                               );
+                            HasPrivilege = SeCheckPrivilegedObject(SeIncreaseBasePriorityPrivilege, JobHandle,
+                                                                   JOB_OBJECT_SET_ATTRIBUTES, PreviousMode);
 
-                            if (!HasPrivilege) {
+                            if (!HasPrivilege)
+                            {
                                 st = STATUS_PRIVILEGE_NOT_HELD;
                             }
                         }
 
-                        if (NT_SUCCESS (st)) {
+                        if (NT_SUCCESS(st))
+                        {
                             LocalJob.LimitFlags |= JOB_OBJECT_LIMIT_SCHEDULING_CLASS;
                             LocalJob.SchedulingClass = ExtendedLimitInfo.BasicLimitInformation.SchedulingClass;
                         }
                     }
-                } else {
+                }
+                else
+                {
                     LocalJob.LimitFlags &= ~JOB_OBJECT_LIMIT_SCHEDULING_CLASS;
-                    LocalJob.SchedulingClass = PSP_DEFAULT_SCHEDULING_CLASSES ;
+                    LocalJob.SchedulingClass = PSP_DEFAULT_SCHEDULING_CLASSES;
                 }
 
                 //
                 // AFFINITY LIMIT
                 //
-                if ( LimitFlags & JOB_OBJECT_LIMIT_AFFINITY ) {
+                if (LimitFlags & JOB_OBJECT_LIMIT_AFFINITY)
+                {
 
-                    if ( !ExtendedLimitInfo.BasicLimitInformation.Affinity ||
-                         (ExtendedLimitInfo.BasicLimitInformation.Affinity != (ExtendedLimitInfo.BasicLimitInformation.Affinity & KeActiveProcessors)) ) {
+                    if (!ExtendedLimitInfo.BasicLimitInformation.Affinity ||
+                        (ExtendedLimitInfo.BasicLimitInformation.Affinity !=
+                         (ExtendedLimitInfo.BasicLimitInformation.Affinity & KeActiveProcessors)))
+                    {
                         st = STATUS_INVALID_PARAMETER;
-                    } else {
+                    }
+                    else
+                    {
                         LocalJob.LimitFlags |= JOB_OBJECT_LIMIT_AFFINITY;
                         LocalJob.Affinity = (KAFFINITY)ExtendedLimitInfo.BasicLimitInformation.Affinity;
                     }
-                } else {
+                }
+                else
+                {
                     LocalJob.LimitFlags &= ~JOB_OBJECT_LIMIT_AFFINITY;
                     LocalJob.Affinity = 0;
                 }
@@ -1654,15 +1678,22 @@ NtSetInformationJobObject(
                 //
                 // PROCESS TIME LIMIT
                 //
-                if ( LimitFlags & JOB_OBJECT_LIMIT_PROCESS_TIME ) {
+                if (LimitFlags & JOB_OBJECT_LIMIT_PROCESS_TIME)
+                {
 
-                    if ( !ExtendedLimitInfo.BasicLimitInformation.PerProcessUserTimeLimit.QuadPart ) {
+                    if (!ExtendedLimitInfo.BasicLimitInformation.PerProcessUserTimeLimit.QuadPart)
+                    {
                         st = STATUS_INVALID_PARAMETER;
-                    } else {
-                        LocalJob.LimitFlags |= JOB_OBJECT_LIMIT_PROCESS_TIME;
-                        LocalJob.PerProcessUserTimeLimit.QuadPart = ExtendedLimitInfo.BasicLimitInformation.PerProcessUserTimeLimit.QuadPart;
                     }
-                } else {
+                    else
+                    {
+                        LocalJob.LimitFlags |= JOB_OBJECT_LIMIT_PROCESS_TIME;
+                        LocalJob.PerProcessUserTimeLimit.QuadPart =
+                            ExtendedLimitInfo.BasicLimitInformation.PerProcessUserTimeLimit.QuadPart;
+                    }
+                }
+                else
+                {
                     LocalJob.LimitFlags &= ~JOB_OBJECT_LIMIT_PROCESS_TIME;
                     LocalJob.PerProcessUserTimeLimit.QuadPart = 0;
                 }
@@ -1670,16 +1701,24 @@ NtSetInformationJobObject(
                 //
                 // JOB TIME LIMIT
                 //
-                if ( LimitFlags & JOB_OBJECT_LIMIT_JOB_TIME ) {
+                if (LimitFlags & JOB_OBJECT_LIMIT_JOB_TIME)
+                {
 
-                    if ( !ExtendedLimitInfo.BasicLimitInformation.PerJobUserTimeLimit.QuadPart ) {
+                    if (!ExtendedLimitInfo.BasicLimitInformation.PerJobUserTimeLimit.QuadPart)
+                    {
                         st = STATUS_INVALID_PARAMETER;
-                    } else {
-                        LocalJob.LimitFlags |= JOB_OBJECT_LIMIT_JOB_TIME;
-                        LocalJob.PerJobUserTimeLimit.QuadPart = ExtendedLimitInfo.BasicLimitInformation.PerJobUserTimeLimit.QuadPart;
                     }
-                } else {
-                    if ( LimitFlags & JOB_OBJECT_LIMIT_PRESERVE_JOB_TIME ) {
+                    else
+                    {
+                        LocalJob.LimitFlags |= JOB_OBJECT_LIMIT_JOB_TIME;
+                        LocalJob.PerJobUserTimeLimit.QuadPart =
+                            ExtendedLimitInfo.BasicLimitInformation.PerJobUserTimeLimit.QuadPart;
+                    }
+                }
+                else
+                {
+                    if (LimitFlags & JOB_OBJECT_LIMIT_PRESERVE_JOB_TIME)
+                    {
 
                         //
                         // If we are supposed to preserve existing job time limits, then
@@ -1688,16 +1727,19 @@ NtSetInformationJobObject(
 
                         LocalJob.LimitFlags |= (Job->LimitFlags & JOB_OBJECT_LIMIT_JOB_TIME);
                         LocalJob.PerJobUserTimeLimit.QuadPart = Job->PerJobUserTimeLimit.QuadPart;
-                    } else {
+                    }
+                    else
+                    {
                         LocalJob.LimitFlags &= ~JOB_OBJECT_LIMIT_JOB_TIME;
                         LocalJob.PerJobUserTimeLimit.QuadPart = 0;
                     }
-               }
+                }
 
                 //
                 // WORKING SET LIMIT
                 //
-                if ( LimitFlags & JOB_OBJECT_LIMIT_WORKINGSET ) {
+                if (LimitFlags & JOB_OBJECT_LIMIT_WORKINGSET)
+                {
 
 
                     //
@@ -1706,47 +1748,62 @@ NtSetInformationJobObject(
                     // limit because it will make the process's working set not fluid
                     //
 
-                    if ( (ExtendedLimitInfo.BasicLimitInformation.MinimumWorkingSetSize == 0 &&
-                         ExtendedLimitInfo.BasicLimitInformation.MaximumWorkingSetSize == 0)                 ||
+                    if ((ExtendedLimitInfo.BasicLimitInformation.MinimumWorkingSetSize == 0 &&
+                         ExtendedLimitInfo.BasicLimitInformation.MaximumWorkingSetSize == 0) ||
 
-                         (ExtendedLimitInfo.BasicLimitInformation.MinimumWorkingSetSize == (SIZE_T)-1 &&
-                         ExtendedLimitInfo.BasicLimitInformation.MaximumWorkingSetSize == (SIZE_T)-1)        ||
+                        (ExtendedLimitInfo.BasicLimitInformation.MinimumWorkingSetSize == (SIZE_T)-1 &&
+                         ExtendedLimitInfo.BasicLimitInformation.MaximumWorkingSetSize == (SIZE_T)-1) ||
 
-                         (ExtendedLimitInfo.BasicLimitInformation.MinimumWorkingSetSize >
-                            ExtendedLimitInfo.BasicLimitInformation.MaximumWorkingSetSize)                   ) {
+                        (ExtendedLimitInfo.BasicLimitInformation.MinimumWorkingSetSize >
+                         ExtendedLimitInfo.BasicLimitInformation.MaximumWorkingSetSize))
+                    {
 
 
                         st = STATUS_INVALID_PARAMETER;
-                    } else {
+                    }
+                    else
+                    {
                         if (ExtendedLimitInfo.BasicLimitInformation.MinimumWorkingSetSize <= PsMinimumWorkingSet ||
-                            SeSinglePrivilegeCheck (SeIncreaseBasePriorityPrivilege,
-                                                    PreviousMode)) {
+                            SeSinglePrivilegeCheck(SeIncreaseBasePriorityPrivilege, PreviousMode))
+                        {
                             LocalJob.LimitFlags |= JOB_OBJECT_LIMIT_WORKINGSET;
-                            LocalJob.MinimumWorkingSetSize = ExtendedLimitInfo.BasicLimitInformation.MinimumWorkingSetSize;
-                            LocalJob.MaximumWorkingSetSize = ExtendedLimitInfo.BasicLimitInformation.MaximumWorkingSetSize;
-
-                        } else {
+                            LocalJob.MinimumWorkingSetSize =
+                                ExtendedLimitInfo.BasicLimitInformation.MinimumWorkingSetSize;
+                            LocalJob.MaximumWorkingSetSize =
+                                ExtendedLimitInfo.BasicLimitInformation.MaximumWorkingSetSize;
+                        }
+                        else
+                        {
                             st = STATUS_PRIVILEGE_NOT_HELD;
                         }
                     }
-                } else {
+                }
+                else
+                {
                     LocalJob.LimitFlags &= ~JOB_OBJECT_LIMIT_WORKINGSET;
                     LocalJob.MinimumWorkingSetSize = 0;
                     LocalJob.MaximumWorkingSetSize = 0;
                 }
 
-                if ( JobObjectInformationClass == JobObjectExtendedLimitInformation) {
+                if (JobObjectInformationClass == JobObjectExtendedLimitInformation)
+                {
                     //
                     // PROCESS MEMORY LIMIT
                     //
-                    if ( LimitFlags & JOB_OBJECT_LIMIT_PROCESS_MEMORY ) {
-                        if ( ExtendedLimitInfo.ProcessMemoryLimit < PAGE_SIZE ) {
+                    if (LimitFlags & JOB_OBJECT_LIMIT_PROCESS_MEMORY)
+                    {
+                        if (ExtendedLimitInfo.ProcessMemoryLimit < PAGE_SIZE)
+                        {
                             st = STATUS_INVALID_PARAMETER;
-                        } else {
+                        }
+                        else
+                        {
                             LocalJob.LimitFlags |= JOB_OBJECT_LIMIT_PROCESS_MEMORY;
                             LocalJob.ProcessMemoryLimit = ExtendedLimitInfo.ProcessMemoryLimit >> PAGE_SHIFT;
                         }
-                    } else {
+                    }
+                    else
+                    {
                         LocalJob.LimitFlags &= ~JOB_OBJECT_LIMIT_PROCESS_MEMORY;
                         LocalJob.ProcessMemoryLimit = 0;
                     }
@@ -1754,14 +1811,20 @@ NtSetInformationJobObject(
                     //
                     // JOB WIDE MEMORY LIMIT
                     //
-                    if ( LimitFlags & JOB_OBJECT_LIMIT_JOB_MEMORY ) {
-                        if ( ExtendedLimitInfo.JobMemoryLimit < PAGE_SIZE ) {
+                    if (LimitFlags & JOB_OBJECT_LIMIT_JOB_MEMORY)
+                    {
+                        if (ExtendedLimitInfo.JobMemoryLimit < PAGE_SIZE)
+                        {
                             st = STATUS_INVALID_PARAMETER;
-                        } else {
+                        }
+                        else
+                        {
                             LocalJob.LimitFlags |= JOB_OBJECT_LIMIT_JOB_MEMORY;
                             LocalJob.JobMemoryLimit = ExtendedLimitInfo.JobMemoryLimit >> PAGE_SHIFT;
                         }
-                    } else {
+                    }
+                    else
+                    {
                         LocalJob.LimitFlags &= ~JOB_OBJECT_LIMIT_JOB_MEMORY;
                         LocalJob.JobMemoryLimit = 0;
                     }
@@ -1769,40 +1832,53 @@ NtSetInformationJobObject(
                     //
                     // JOB_OBJECT_LIMIT_DIE_ON_UNHANDLED_EXCEPTION
                     //
-                    if ( LimitFlags & JOB_OBJECT_LIMIT_DIE_ON_UNHANDLED_EXCEPTION ) {
+                    if (LimitFlags & JOB_OBJECT_LIMIT_DIE_ON_UNHANDLED_EXCEPTION)
+                    {
                         LocalJob.LimitFlags |= JOB_OBJECT_LIMIT_DIE_ON_UNHANDLED_EXCEPTION;
-                    } else {
+                    }
+                    else
+                    {
                         LocalJob.LimitFlags &= ~JOB_OBJECT_LIMIT_DIE_ON_UNHANDLED_EXCEPTION;
                     }
 
                     //
                     // JOB_OBJECT_LIMIT_BREAKAWAY_OK
                     //
-                    if ( LimitFlags & JOB_OBJECT_LIMIT_BREAKAWAY_OK ) {
+                    if (LimitFlags & JOB_OBJECT_LIMIT_BREAKAWAY_OK)
+                    {
                         LocalJob.LimitFlags |= JOB_OBJECT_LIMIT_BREAKAWAY_OK;
-                    } else {
+                    }
+                    else
+                    {
                         LocalJob.LimitFlags &= ~JOB_OBJECT_LIMIT_BREAKAWAY_OK;
                     }
 
                     //
                     // JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK
                     //
-                    if ( LimitFlags & JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK ) {
+                    if (LimitFlags & JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK)
+                    {
                         LocalJob.LimitFlags |= JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK;
-                    } else {
+                    }
+                    else
+                    {
                         LocalJob.LimitFlags &= ~JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK;
                     }
                     //
                     // JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
                     //
-                    if (LimitFlags & JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE) {
+                    if (LimitFlags & JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE)
+                    {
                         LocalJob.LimitFlags |= JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
-                    } else {
+                    }
+                    else
+                    {
                         LocalJob.LimitFlags &= ~JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
                     }
                 }
 
-                if ( NT_SUCCESS(st) ) {
+                if (NT_SUCCESS(st))
+                {
 
 
                     //
@@ -1819,14 +1895,16 @@ NtSetInformationJobObject(
                     Job->PerProcessUserTimeLimit.QuadPart = LocalJob.PerProcessUserTimeLimit.QuadPart;
                     Job->PerJobUserTimeLimit.QuadPart = LocalJob.PerJobUserTimeLimit.QuadPart;
 
-                    if (JobObjectInformationClass == JobObjectExtendedLimitInformation) {
-                        ExAcquireFastMutex (&Job->MemoryLimitsLock);
+                    if (JobObjectInformationClass == JobObjectExtendedLimitInformation)
+                    {
+                        ExAcquireFastMutex(&Job->MemoryLimitsLock);
                         Job->ProcessMemoryLimit = LocalJob.ProcessMemoryLimit;
                         Job->JobMemoryLimit = LocalJob.JobMemoryLimit;
-                        ExReleaseFastMutex (&Job->MemoryLimitsLock);
+                        ExReleaseFastMutex(&Job->MemoryLimitsLock);
                     }
 
-                    if ( LimitFlags & JOB_OBJECT_LIMIT_JOB_TIME ) {
+                    if (LimitFlags & JOB_OBJECT_LIMIT_JOB_TIME)
+                    {
 
                         //
                         // Take any signalled processes and fold their accounting
@@ -1836,9 +1914,10 @@ NtSetInformationJobObject(
 
                         Next = Job->ProcessListHead.Flink;
 
-                        while ( Next != &Job->ProcessListHead) {
+                        while (Next != &Job->ProcessListHead)
+                        {
 
-                            Process = (PEPROCESS)(CONTAINING_RECORD(Next,EPROCESS,JobLinks));
+                            Process = (PEPROCESS)(CONTAINING_RECORD(Next, EPROCESS, JobLinks));
 
                             //
                             // see if process has been signalled.
@@ -1849,9 +1928,12 @@ NtSetInformationJobObject(
                             // it until thread termination
                             //
 
-                            if ( KeReadStateProcess(&Process->Pcb) ) {
-                                PspFoldProcessAccountingIntoJob(Job,Process);
-                            } else {
+                            if (KeReadStateProcess(&Process->Pcb))
+                            {
+                                PspFoldProcessAccountingIntoJob(Job, Process);
+                            }
+                            else
+                            {
 
                                 LARGE_INTEGER ProcessTime;
 
@@ -1863,8 +1945,9 @@ NtSetInformationJobObject(
                                 // the limit
                                 //
 
-                                if ( !(Process->JobStatus & PS_JOB_STATUS_ACCOUNTING_FOLDED) ) {
-                                    ProcessTime.QuadPart = UInt32x32To64(Process->Pcb.UserTime,KeMaximumIncrement);
+                                if (!(Process->JobStatus & PS_JOB_STATUS_ACCOUNTING_FOLDED))
+                                {
+                                    ProcessTime.QuadPart = UInt32x32To64(Process->Pcb.UserTime, KeMaximumIncrement);
                                     Job->PerJobUserTimeLimit.QuadPart += ProcessTime.QuadPart;
                                 }
                             }
@@ -1881,40 +1964,45 @@ NtSetInformationJobObject(
                         Job->ThisPeriodTotalKernelTime.QuadPart = 0;
 
                         KeClearEvent(&Job->Event);
-
                     }
 
-                    if ( Job->LimitFlags & JOB_OBJECT_LIMIT_WORKINGSET ) {
-                        ExAcquireFastMutex (&PspWorkingSetChangeHead.Lock);
+                    if (Job->LimitFlags & JOB_OBJECT_LIMIT_WORKINGSET)
+                    {
+                        ExAcquireFastMutex(&PspWorkingSetChangeHead.Lock);
                         PspWorkingSetChangeHead.MinimumWorkingSetSize = Job->MinimumWorkingSetSize;
                         PspWorkingSetChangeHead.MaximumWorkingSetSize = Job->MaximumWorkingSetSize;
                         ProcessWorkingSetHead = TRUE;
                     }
 
                     PspApplyJobLimitsToProcessSet(Job);
-
                 }
                 ExReleaseResourceLite(&Job->JobLock);
             }
-
         }
         break;
 
     case JobObjectBasicUIRestrictions:
 
-        try {
+        try
+        {
             RtlCopyMemory(&BasicUIRestrictions, JobObjectInformation, RequiredLength);
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             st = GetExceptionCode();
         }
 
-        if (NT_SUCCESS (st)) {
+        if (NT_SUCCESS(st))
+        {
             //
             // sanity check UIRestrictionsClass
             //
-            if ( BasicUIRestrictions.UIRestrictionsClass & ~JOB_OBJECT_UI_VALID_FLAGS ) {
+            if (BasicUIRestrictions.UIRestrictionsClass & ~JOB_OBJECT_UI_VALID_FLAGS)
+            {
                 st = STATUS_INVALID_PARAMETER;
-            } else {
+            }
+            else
+            {
 
                 ExAcquireResourceExclusiveLite(&Job->JobLock, TRUE);
 
@@ -1922,7 +2010,8 @@ NtSetInformationJobObject(
                 // Check for switching between UI restrictions
                 //
 
-                if ( Job->UIRestrictionsClass ^ BasicUIRestrictions.UIRestrictionsClass ) {
+                if (Job->UIRestrictionsClass ^ BasicUIRestrictions.UIRestrictionsClass)
+                {
 
                     //
                     // notify ntuser that the UI restrictions have changed
@@ -1954,21 +2043,25 @@ NtSetInformationJobObject(
 
     case JobObjectSecurityLimitInformation:
 
-        try {
-            RtlCopyMemory(  &SecurityLimitInfo,
-                            JobObjectInformation,
-                            RequiredLength );
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        try
+        {
+            RtlCopyMemory(&SecurityLimitInfo, JobObjectInformation, RequiredLength);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             st = GetExceptionCode();
         }
 
 
-        if (NT_SUCCESS(st)) {
+        if (NT_SUCCESS(st))
+        {
 
-            if ( SecurityLimitInfo.SecurityLimitFlags &
-                    (~JOB_OBJECT_SECURITY_VALID_FLAGS)) {
-                st = STATUS_INVALID_PARAMETER ;
-            } else {
+            if (SecurityLimitInfo.SecurityLimitFlags & (~JOB_OBJECT_SECURITY_VALID_FLAGS))
+            {
+                st = STATUS_INVALID_PARAMETER;
+            }
+            else
+            {
                 ExAcquireResourceExclusiveLite(&Job->JobLock, TRUE);
                 //
                 // Deal with specific options.  Basic rules:  Once a
@@ -1977,26 +2070,30 @@ NtSetInformationJobObject(
                 // restrictions).
                 //
 
-                if ( SecurityLimitInfo.SecurityLimitFlags &
-                            JOB_OBJECT_SECURITY_NO_ADMIN ) {
-                    Job->SecurityLimitFlags |= JOB_OBJECT_SECURITY_NO_ADMIN ;
+                if (SecurityLimitInfo.SecurityLimitFlags & JOB_OBJECT_SECURITY_NO_ADMIN)
+                {
+                    Job->SecurityLimitFlags |= JOB_OBJECT_SECURITY_NO_ADMIN;
 
-                    if ( Job->Token ) {
-                        if ( SeTokenIsAdmin( Job->Token ) ) {
+                    if (Job->Token)
+                    {
+                        if (SeTokenIsAdmin(Job->Token))
+                        {
                             Job->SecurityLimitFlags &= (~JOB_OBJECT_SECURITY_NO_ADMIN);
 
-                            st = STATUS_INVALID_PARAMETER ;
+                            st = STATUS_INVALID_PARAMETER;
                         }
                     }
                 }
 
-                if ( SecurityLimitInfo.SecurityLimitFlags &
-                            JOB_OBJECT_SECURITY_RESTRICTED_TOKEN ) {
-                    if ( Job->SecurityLimitFlags &
-                            ( JOB_OBJECT_SECURITY_ONLY_TOKEN | JOB_OBJECT_SECURITY_FILTER_TOKENS ) ) {
-                        st = STATUS_INVALID_PARAMETER ;
-                    } else {
-                        Job->SecurityLimitFlags |= JOB_OBJECT_SECURITY_RESTRICTED_TOKEN ;
+                if (SecurityLimitInfo.SecurityLimitFlags & JOB_OBJECT_SECURITY_RESTRICTED_TOKEN)
+                {
+                    if (Job->SecurityLimitFlags & (JOB_OBJECT_SECURITY_ONLY_TOKEN | JOB_OBJECT_SECURITY_FILTER_TOKENS))
+                    {
+                        st = STATUS_INVALID_PARAMETER;
+                    }
+                    else
+                    {
+                        Job->SecurityLimitFlags |= JOB_OBJECT_SECURITY_RESTRICTED_TOKEN;
                     }
                 }
 
@@ -2008,37 +2105,38 @@ NtSetInformationJobObject(
                 // at the end, once the token has been ref'd.
                 //
 
-                if ( SecurityLimitInfo.SecurityLimitFlags &
-                            JOB_OBJECT_SECURITY_ONLY_TOKEN ) {
-                    if ( Job->Token ||
-                         (Job->SecurityLimitFlags & JOB_OBJECT_SECURITY_FILTER_TOKENS) ) {
-                        st = STATUS_INVALID_PARAMETER ;
-                    } else {
-                        st = ObReferenceObjectByHandle(
-                                             SecurityLimitInfo.JobToken,
-                                            TOKEN_ASSIGN_PRIMARY |
-                                                TOKEN_IMPERSONATE |
-                                                TOKEN_DUPLICATE ,
-                                            SeTokenObjectType,
-                                            PreviousMode,
-                                            &LocalToken,
-                                            NULL );
+                if (SecurityLimitInfo.SecurityLimitFlags & JOB_OBJECT_SECURITY_ONLY_TOKEN)
+                {
+                    if (Job->Token || (Job->SecurityLimitFlags & JOB_OBJECT_SECURITY_FILTER_TOKENS))
+                    {
+                        st = STATUS_INVALID_PARAMETER;
+                    }
+                    else
+                    {
+                        st = ObReferenceObjectByHandle(SecurityLimitInfo.JobToken,
+                                                       TOKEN_ASSIGN_PRIMARY | TOKEN_IMPERSONATE | TOKEN_DUPLICATE,
+                                                       SeTokenObjectType, PreviousMode, &LocalToken, NULL);
 
-                        if ( NT_SUCCESS( st ) ) {
-                            if (SeTokenType (LocalToken) != TokenPrimary) {
+                        if (NT_SUCCESS(st))
+                        {
+                            if (SeTokenType(LocalToken) != TokenPrimary)
+                            {
                                 st = STATUS_BAD_TOKEN_TYPE;
-                            } else {
-                                st = SeIsChildTokenByPointer (LocalToken,
-                                                              &IsChild);
+                            }
+                            else
+                            {
+                                st = SeIsChildTokenByPointer(LocalToken, &IsChild);
                             }
 
-                            if (!NT_SUCCESS (st)) {
-                                ObDereferenceObject (LocalToken);
+                            if (!NT_SUCCESS(st))
+                            {
+                                ObDereferenceObject(LocalToken);
                             }
                         }
 
 
-                        if (NT_SUCCESS (st)) {
+                        if (NT_SUCCESS(st))
+                        {
                             //
                             // If the token supplied is not a restricted token
                             // based on the caller's ID, then they must have
@@ -2046,20 +2144,20 @@ NtSetInformationJobObject(
                             // the token with the job.
                             //
 
-                            if ( !IsChild ) {
-                                HasPrivilege = SeCheckPrivilegedObject(
-                                                   SeAssignPrimaryTokenPrivilege,
-                                                   JobHandle,
-                                                   JOB_OBJECT_SET_SECURITY_ATTRIBUTES,
-                                                   PreviousMode
-                                                   );
+                            if (!IsChild)
+                            {
+                                HasPrivilege =
+                                    SeCheckPrivilegedObject(SeAssignPrimaryTokenPrivilege, JobHandle,
+                                                            JOB_OBJECT_SET_SECURITY_ATTRIBUTES, PreviousMode);
 
-                                if ( !HasPrivilege ) {
+                                if (!HasPrivilege)
+                                {
                                     st = STATUS_PRIVILEGE_NOT_HELD;
                                 }
                             }
 
-                            if (NT_SUCCESS (st)) {
+                            if (NT_SUCCESS(st))
+                            {
 
                                 //
                                 // Not surprisingly, specifying no-admin and
@@ -2067,58 +2165,56 @@ NtSetInformationJobObject(
                                 //
 
                                 if ((Job->SecurityLimitFlags & JOB_OBJECT_SECURITY_NO_ADMIN) &&
-                                     SeTokenIsAdmin (LocalToken)) {
+                                    SeTokenIsAdmin(LocalToken))
+                                {
                                     st = STATUS_INVALID_PARAMETER;
 
-                                    ObDereferenceObject (LocalToken);
-
-                                } else {
+                                    ObDereferenceObject(LocalToken);
+                                }
+                                else
+                                {
                                     //
                                     // Grab a reference to the token into the job
                                     // object
                                     //
-                                    KeMemoryBarrier ();
+                                    KeMemoryBarrier();
                                     Job->Token = LocalToken;
                                     Job->SecurityLimitFlags |= JOB_OBJECT_SECURITY_ONLY_TOKEN;
                                 }
-
-                            } else {
+                            }
+                            else
+                            {
                                 //
                                 // This is the token was a child or otherwise ok,
                                 // but assign primary was not held, so the
                                 // request was rejected.
                                 //
 
-                                ObDereferenceObject (LocalToken);
+                                ObDereferenceObject(LocalToken);
                             }
-
                         }
-
                     }
                 }
-                if ( SecurityLimitInfo.SecurityLimitFlags &
-                            JOB_OBJECT_SECURITY_FILTER_TOKENS ) {
-                    if ( Job->SecurityLimitFlags &
-                          ( JOB_OBJECT_SECURITY_ONLY_TOKEN |
-                            JOB_OBJECT_SECURITY_FILTER_TOKENS ) ) {
+                if (SecurityLimitInfo.SecurityLimitFlags & JOB_OBJECT_SECURITY_FILTER_TOKENS)
+                {
+                    if (Job->SecurityLimitFlags & (JOB_OBJECT_SECURITY_ONLY_TOKEN | JOB_OBJECT_SECURITY_FILTER_TOKENS))
+                    {
                         st = STATUS_INVALID_PARAMETER;
-                    } else {
+                    }
+                    else
+                    {
                         //
                         // capture the token restrictions
                         //
 
-                        st = PspCaptureTokenFilter(
-                                PreviousMode,
-                                &SecurityLimitInfo,
-                                &Filter
-                                );
+                        st = PspCaptureTokenFilter(PreviousMode, &SecurityLimitInfo, &Filter);
 
-                        if (NT_SUCCESS (st)) {
-                            KeMemoryBarrier ();
+                        if (NT_SUCCESS(st))
+                        {
+                            KeMemoryBarrier();
                             Job->SecurityLimitFlags |= JOB_OBJECT_SECURITY_FILTER_TOKENS;
                             Job->Filter = Filter;
                         }
-
                     }
                 }
 
@@ -2129,61 +2225,75 @@ NtSetInformationJobObject(
 
     case JobObjectEndOfJobTimeInformation:
 
-        try {
-            RtlCopyMemory(&EndOfJobInfo,JobObjectInformation,RequiredLength);
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        try
+        {
+            RtlCopyMemory(&EndOfJobInfo, JobObjectInformation, RequiredLength);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             st = GetExceptionCode();
         }
 
-        if (NT_SUCCESS (st)) {
+        if (NT_SUCCESS(st))
+        {
             //
             // sanity check LimitFlags
             //
-            if (EndOfJobInfo.EndOfJobTimeAction > JOB_OBJECT_POST_AT_END_OF_JOB) {
+            if (EndOfJobInfo.EndOfJobTimeAction > JOB_OBJECT_POST_AT_END_OF_JOB)
+            {
                 st = STATUS_INVALID_PARAMETER;
-            } else {
-                ExAcquireResourceExclusiveLite (&Job->JobLock, TRUE);
+            }
+            else
+            {
+                ExAcquireResourceExclusiveLite(&Job->JobLock, TRUE);
                 Job->EndOfJobTimeAction = EndOfJobInfo.EndOfJobTimeAction;
-                ExReleaseResourceLite (&Job->JobLock);
+                ExReleaseResourceLite(&Job->JobLock);
             }
         }
         break;
 
     case JobObjectAssociateCompletionPortInformation:
 
-        try {
-            RtlCopyMemory(&AssociateInfo,JobObjectInformation,RequiredLength);
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        try
+        {
+            RtlCopyMemory(&AssociateInfo, JobObjectInformation, RequiredLength);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             st = GetExceptionCode();
         }
 
-        if ( NT_SUCCESS(st) ) {
-            if (Job->CompletionPort || AssociateInfo.CompletionPort == NULL) {
+        if (NT_SUCCESS(st))
+        {
+            if (Job->CompletionPort || AssociateInfo.CompletionPort == NULL)
+            {
                 st = STATUS_INVALID_PARAMETER;
-            } else {
-                st = ObReferenceObjectByHandle (AssociateInfo.CompletionPort,
-                                                IO_COMPLETION_MODIFY_STATE,
-                                                IoCompletionObjectType,
-                                                PreviousMode,
-                                                &IoCompletion,
-                                                NULL);
+            }
+            else
+            {
+                st = ObReferenceObjectByHandle(AssociateInfo.CompletionPort, IO_COMPLETION_MODIFY_STATE,
+                                               IoCompletionObjectType, PreviousMode, &IoCompletion, NULL);
 
-                if (NT_SUCCESS(st)) {
+                if (NT_SUCCESS(st))
+                {
                     ExAcquireResourceExclusiveLite(&Job->JobLock, TRUE);
 
                     //
                     // If the job already has a completion port or if the job has been rundown
                     // then reject the request.
                     //
-                    if (Job->CompletionPort != NULL || (Job->JobFlags&PS_JOB_FLAGS_CLOSE_DONE) != 0) {
+                    if (Job->CompletionPort != NULL || (Job->JobFlags & PS_JOB_FLAGS_CLOSE_DONE) != 0)
+                    {
                         ExReleaseResourceLite(&Job->JobLock);
 
-                        ObDereferenceObject (IoCompletion);
+                        ObDereferenceObject(IoCompletion);
                         st = STATUS_INVALID_PARAMETER;
-                    } else {
+                    }
+                    else
+                    {
                         Job->CompletionKey = AssociateInfo.CompletionKey;
 
-                        KeMemoryBarrier ();
+                        KeMemoryBarrier();
                         Job->CompletionPort = IoCompletion;
                         //
                         // Now whip through ALL existing processes in the job
@@ -2192,32 +2302,26 @@ NtSetInformationJobObject(
 
                         Next = Job->ProcessListHead.Flink;
 
-                        while (Next != &Job->ProcessListHead) {
+                        while (Next != &Job->ProcessListHead)
+                        {
 
-                            Process = (PEPROCESS)(CONTAINING_RECORD(Next,EPROCESS,JobLinks));
+                            Process = (PEPROCESS)(CONTAINING_RECORD(Next, EPROCESS, JobLinks));
 
                             //
                             // If the process is really considered part of the job, has
                             // been assigned its id, and has not yet checked in, do it now
                             //
 
-                            if ( !(Process->JobStatus & PS_JOB_STATUS_NOT_REALLY_ACTIVE)
-                                 && Process->UniqueProcessId
-                                 && !(Process->JobStatus & PS_JOB_STATUS_NEW_PROCESS_REPORTED)) {
+                            if (!(Process->JobStatus & PS_JOB_STATUS_NOT_REALLY_ACTIVE) && Process->UniqueProcessId &&
+                                !(Process->JobStatus & PS_JOB_STATUS_NEW_PROCESS_REPORTED))
+                            {
 
-                                PS_SET_CLEAR_BITS (&Process->JobStatus,
-                                                   PS_JOB_STATUS_NEW_PROCESS_REPORTED,
-                                                   PS_JOB_STATUS_LAST_REPORT_MEMORY);
+                                PS_SET_CLEAR_BITS(&Process->JobStatus, PS_JOB_STATUS_NEW_PROCESS_REPORTED,
+                                                  PS_JOB_STATUS_LAST_REPORT_MEMORY);
 
-                                IoSetIoCompletion(
-                                    Job->CompletionPort,
-                                    Job->CompletionKey,
-                                    (PVOID)Process->UniqueProcessId,
-                                    STATUS_SUCCESS,
-                                    JOB_OBJECT_MSG_NEW_PROCESS,
-                                    FALSE
-                                    );
-
+                                IoSetIoCompletion(Job->CompletionPort, Job->CompletionKey,
+                                                  (PVOID)Process->UniqueProcessId, STATUS_SUCCESS,
+                                                  JOB_OBJECT_MSG_NEW_PROCESS, FALSE);
                             }
                             Next = Next->Flink;
                         }
@@ -2241,22 +2345,22 @@ NtSetInformationJobObject(
     // calling MmAdjust CAN NOT cause MM to call PsChangeJobMemoryUsage !
     //
 
-    if (ProcessWorkingSetHead) {
+    if (ProcessWorkingSetHead)
+    {
         LIST_ENTRY FreeList;
         KAPC_STATE ApcState;
 
-        InitializeListHead (&FreeList);
-        while (!IsListEmpty (&PspWorkingSetChangeHead.Links)) {
+        InitializeListHead(&FreeList);
+        while (!IsListEmpty(&PspWorkingSetChangeHead.Links))
+        {
             Next = RemoveHeadList(&PspWorkingSetChangeHead.Links);
-            InsertTailList (&FreeList, Next);
-            WsChangeRecord = CONTAINING_RECORD(Next,JOB_WORKING_SET_CHANGE_RECORD,Links);
+            InsertTailList(&FreeList, Next);
+            WsChangeRecord = CONTAINING_RECORD(Next, JOB_WORKING_SET_CHANGE_RECORD, Links);
 
             KeStackAttachProcess(&WsChangeRecord->Process->Pcb, &ApcState);
 
-            MmAdjustWorkingSetSize (PspWorkingSetChangeHead.MinimumWorkingSetSize,
-                                    PspWorkingSetChangeHead.MaximumWorkingSetSize,
-                                    FALSE,
-                                    TRUE);
+            MmAdjustWorkingSetSize(PspWorkingSetChangeHead.MinimumWorkingSetSize,
+                                   PspWorkingSetChangeHead.MaximumWorkingSetSize, FALSE, TRUE);
 
             //
             // call MM to Enable hard workingset
@@ -2265,18 +2369,19 @@ NtSetInformationJobObject(
             MmEnforceWorkingSetLimit(&WsChangeRecord->Process->Vm, TRUE);
             KeUnstackDetachProcess(&ApcState);
         }
-        ExReleaseFastMutex (&PspWorkingSetChangeHead.Lock);
+        ExReleaseFastMutex(&PspWorkingSetChangeHead.Lock);
 
-        while (!IsListEmpty (&FreeList)) {
+        while (!IsListEmpty(&FreeList))
+        {
             Next = RemoveHeadList(&FreeList);
-            WsChangeRecord = CONTAINING_RECORD(Next,JOB_WORKING_SET_CHANGE_RECORD,Links);
+            WsChangeRecord = CONTAINING_RECORD(Next, JOB_WORKING_SET_CHANGE_RECORD, Links);
 
-            ObDereferenceObject (WsChangeRecord->Process);
-            ExFreePool (WsChangeRecord);
+            ObDereferenceObject(WsChangeRecord->Process);
+            ExFreePool(WsChangeRecord);
         }
     }
 
-    KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+    KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
 
 
     //
@@ -2288,10 +2393,7 @@ NtSetInformationJobObject(
     return st;
 }
 
-VOID
-PspApplyJobLimitsToProcessSet(
-    PEJOB Job
-    )
+VOID PspApplyJobLimitsToProcessSet(PEJOB Job)
 {
     PEPROCESS Process;
     PJOB_WORKING_SET_CHANGE_RECORD WsChangeRecord;
@@ -2302,31 +2404,27 @@ PspApplyJobLimitsToProcessSet(
     // The job object is held exclusive by the caller
     //
 
-    for (Process = PspGetNextJobProcess (Job, NULL);
-         Process != NULL;
-         Process = PspGetNextJobProcess (Job, Process)) {
+    for (Process = PspGetNextJobProcess(Job, NULL); Process != NULL; Process = PspGetNextJobProcess(Job, Process))
+    {
 
-        if (!(Process->JobStatus & PS_JOB_STATUS_NOT_REALLY_ACTIVE)) {
-            if (Job->LimitFlags & JOB_OBJECT_LIMIT_WORKINGSET) {
-                WsChangeRecord = ExAllocatePoolWithTag (PagedPool,
-                                                        sizeof(*WsChangeRecord),
-                                                        'rCsP');
-                if (WsChangeRecord != NULL) {
+        if (!(Process->JobStatus & PS_JOB_STATUS_NOT_REALLY_ACTIVE))
+        {
+            if (Job->LimitFlags & JOB_OBJECT_LIMIT_WORKINGSET)
+            {
+                WsChangeRecord = ExAllocatePoolWithTag(PagedPool, sizeof(*WsChangeRecord), 'rCsP');
+                if (WsChangeRecord != NULL)
+                {
                     WsChangeRecord->Process = Process;
-                    ObReferenceObject (Process);
-                    InsertTailList(&PspWorkingSetChangeHead.Links,&WsChangeRecord->Links);
+                    ObReferenceObject(Process);
+                    InsertTailList(&PspWorkingSetChangeHead.Links, &WsChangeRecord->Links);
                 }
             }
-            PspApplyJobLimitsToProcess(Job,Process);
+            PspApplyJobLimitsToProcess(Job, Process);
         }
     }
 }
 
-VOID
-PspApplyJobLimitsToProcess(
-    PEJOB Job,
-    PEPROCESS Process
-    )
+VOID PspApplyJobLimitsToProcess(PEJOB Job, PEPROCESS Process)
 {
     PETHREAD CurrentThread;
     PAGED_CODE();
@@ -2335,26 +2433,29 @@ PspApplyJobLimitsToProcess(
     // The job object is held exclusive by the caller
     //
 
-    if (Job->LimitFlags & JOB_OBJECT_LIMIT_PRIORITY_CLASS) {
+    if (Job->LimitFlags & JOB_OBJECT_LIMIT_PRIORITY_CLASS)
+    {
         Process->PriorityClass = Job->PriorityClass;
 
-        PsSetProcessPriorityByClass (Process,
-                                     Process->Vm.Flags.MemoryPriority == MEMORY_PRIORITY_FOREGROUND ?
-                                         PsProcessPriorityForeground : PsProcessPriorityBackground);
+        PsSetProcessPriorityByClass(Process, Process->Vm.Flags.MemoryPriority == MEMORY_PRIORITY_FOREGROUND
+                                                 ? PsProcessPriorityForeground
+                                                 : PsProcessPriorityBackground);
     }
 
-    if ( Job->LimitFlags & JOB_OBJECT_LIMIT_AFFINITY ) {
+    if (Job->LimitFlags & JOB_OBJECT_LIMIT_AFFINITY)
+    {
 
-        CurrentThread = PsGetCurrentThread ();
+        CurrentThread = PsGetCurrentThread();
 
-        PspLockProcessExclusive (Process, CurrentThread);
+        PspLockProcessExclusive(Process, CurrentThread);
 
-        KeSetAffinityProcess (&Process->Pcb, Job->Affinity);
+        KeSetAffinityProcess(&Process->Pcb, Job->Affinity);
 
-        PspUnlockProcessExclusive (Process, CurrentThread);
+        PspUnlockProcessExclusive(Process, CurrentThread);
     }
 
-    if ( !(Job->LimitFlags & JOB_OBJECT_LIMIT_WORKINGSET) ) {
+    if (!(Job->LimitFlags & JOB_OBJECT_LIMIT_WORKINGSET))
+    {
         //
         // call MM to disable hard workingset
         //
@@ -2362,46 +2463,48 @@ PspApplyJobLimitsToProcess(
         MmEnforceWorkingSetLimit(&Process->Vm, FALSE);
     }
 
-    ExAcquireFastMutex (&Job->MemoryLimitsLock);
+    ExAcquireFastMutex(&Job->MemoryLimitsLock);
 
-    if ( Job->LimitFlags & JOB_OBJECT_LIMIT_PROCESS_MEMORY  ) {
+    if (Job->LimitFlags & JOB_OBJECT_LIMIT_PROCESS_MEMORY)
+    {
         Process->CommitChargeLimit = Job->ProcessMemoryLimit;
-    } else {
+    }
+    else
+    {
         Process->CommitChargeLimit = 0;
     }
 
-    ExReleaseFastMutex (&Job->MemoryLimitsLock);
+    ExReleaseFastMutex(&Job->MemoryLimitsLock);
 
 
     //
     // If the process is NOT IDLE Priority Class, and long fixed quantums
     // are in use, use the scheduling class stored in the job object for this process
     //
-    if ( Process->PriorityClass != PROCESS_PRIORITY_CLASS_IDLE ) {
+    if (Process->PriorityClass != PROCESS_PRIORITY_CLASS_IDLE)
+    {
 
-        if ( PspUseJobSchedulingClasses ) {
+        if (PspUseJobSchedulingClasses)
+        {
             Process->Pcb.ThreadQuantum = PspJobSchedulingClasses[Job->SchedulingClass];
         }
         //
         // if the scheduling class is PSP_NUMBER_OF_SCHEDULING_CLASSES-1, then
         // give this process non-preemptive scheduling
         //
-        if ( Job->SchedulingClass == PSP_NUMBER_OF_SCHEDULING_CLASSES-1 ) {
-            KeSetDisableQuantumProcess(&Process->Pcb,TRUE);
-        } else {
-            KeSetDisableQuantumProcess(&Process->Pcb,FALSE);
+        if (Job->SchedulingClass == PSP_NUMBER_OF_SCHEDULING_CLASSES - 1)
+        {
+            KeSetDisableQuantumProcess(&Process->Pcb, TRUE);
         }
-
+        else
+        {
+            KeSetDisableQuantumProcess(&Process->Pcb, FALSE);
+        }
     }
-
-
 }
 
 NTSTATUS
-NtTerminateJobObject(
-    IN HANDLE JobHandle,
-    IN NTSTATUS ExitStatus
-    )
+NtTerminateJobObject(IN HANDLE JobHandle, IN NTSTATUS ExitStatus)
 {
     PEJOB Job;
     NTSTATUS st;
@@ -2410,37 +2513,30 @@ NtTerminateJobObject(
 
     PAGED_CODE();
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
     PreviousMode = KeGetPreviousModeByThread(&CurrentThread->Tcb);
 
-    st = ObReferenceObjectByHandle (JobHandle,
-                                    JOB_OBJECT_TERMINATE,
-                                    PsJobType,
-                                    PreviousMode,
-                                    &Job,
-                                    NULL);
-    if (!NT_SUCCESS(st)) {
+    st = ObReferenceObjectByHandle(JobHandle, JOB_OBJECT_TERMINATE, PsJobType, PreviousMode, &Job, NULL);
+    if (!NT_SUCCESS(st))
+    {
         return st;
     }
 
 
-    KeEnterCriticalRegionThread (&CurrentThread->Tcb);
-    ExAcquireResourceExclusiveLite (&Job->JobLock, TRUE);
+    KeEnterCriticalRegionThread(&CurrentThread->Tcb);
+    ExAcquireResourceExclusiveLite(&Job->JobLock, TRUE);
 
-    PspTerminateAllProcessesInJob (Job,ExitStatus,FALSE);
+    PspTerminateAllProcessesInJob(Job, ExitStatus, FALSE);
 
-    ExReleaseResourceLite (&Job->JobLock);
-    KeLeaveCriticalRegionThread (&CurrentThread->Tcb);
+    ExReleaseResourceLite(&Job->JobLock);
+    KeLeaveCriticalRegionThread(&CurrentThread->Tcb);
 
     ObDereferenceObject(Job);
 
     return st;
 }
 
-VOID
-PsEnforceExecutionTimeLimits(
-    VOID
-    )
+VOID PsEnforceExecutionTimeLimits(VOID)
 {
     PLIST_ENTRY NextJob;
     LARGE_INTEGER RunningJobTime;
@@ -2451,15 +2547,17 @@ PsEnforceExecutionTimeLimits(
 
     PAGED_CODE();
 
-    ExAcquireFastMutex (&PspJobListLock);
+    ExAcquireFastMutex(&PspJobListLock);
 
     //
     // Look at each job. If time limits are set for the job, then enforce them
     //
     NextJob = PspJobList.Flink;
-    while (NextJob != &PspJobList) {
-        Job = (PEJOB)(CONTAINING_RECORD (NextJob, EJOB, JobLinks));
-        if ( Job->LimitFlags & (JOB_OBJECT_LIMIT_PROCESS_TIME | JOB_OBJECT_LIMIT_JOB_TIME)) {
+    while (NextJob != &PspJobList)
+    {
+        Job = (PEJOB)(CONTAINING_RECORD(NextJob, EJOB, JobLinks));
+        if (Job->LimitFlags & (JOB_OBJECT_LIMIT_PROCESS_TIME | JOB_OBJECT_LIMIT_JOB_TIME))
+        {
 
             //
             // Job looks like a candidate for time enforcing. Need to get the
@@ -2468,9 +2566,11 @@ PsEnforceExecutionTimeLimits(
             //
             //
 
-            if (ExAcquireResourceExclusiveLite (&Job->JobLock, FALSE)) {
+            if (ExAcquireResourceExclusiveLite(&Job->JobLock, FALSE))
+            {
 
-                if (Job->LimitFlags & (JOB_OBJECT_LIMIT_PROCESS_TIME | JOB_OBJECT_LIMIT_JOB_TIME)) {
+                if (Job->LimitFlags & (JOB_OBJECT_LIMIT_PROCESS_TIME | JOB_OBJECT_LIMIT_JOB_TIME))
+                {
 
                     //
                     // Job is setup for time limits
@@ -2478,18 +2578,21 @@ PsEnforceExecutionTimeLimits(
 
                     RunningJobTime.QuadPart = Job->ThisPeriodTotalUserTime.QuadPart;
 
-                    for (Process = PspGetNextJobProcess (Job, NULL);
-                         Process != NULL;
-                         Process = PspGetNextJobProcess (Job, Process)) {
+                    for (Process = PspGetNextJobProcess(Job, NULL); Process != NULL;
+                         Process = PspGetNextJobProcess(Job, Process))
+                    {
 
-                        ProcessTime.QuadPart = UInt32x32To64 (Process->Pcb.UserTime,KeMaximumIncrement);
+                        ProcessTime.QuadPart = UInt32x32To64(Process->Pcb.UserTime, KeMaximumIncrement);
 
-                        if (!(Process->JobStatus & PS_JOB_STATUS_ACCOUNTING_FOLDED)) {
+                        if (!(Process->JobStatus & PS_JOB_STATUS_ACCOUNTING_FOLDED))
+                        {
                             RunningJobTime.QuadPart += ProcessTime.QuadPart;
                         }
 
-                        if (Job->LimitFlags & JOB_OBJECT_LIMIT_PROCESS_TIME ) {
-                            if (ProcessTime.QuadPart > Job->PerProcessUserTimeLimit.QuadPart) {
+                        if (Job->LimitFlags & JOB_OBJECT_LIMIT_PROCESS_TIME)
+                        {
+                            if (ProcessTime.QuadPart > Job->PerProcessUserTimeLimit.QuadPart)
+                            {
 
                                 //
                                 // Process Time Limit has been exceeded.
@@ -2500,32 +2603,32 @@ PsEnforceExecutionTimeLimits(
                                 //
 
 
-                                if (!(Process->JobStatus & PS_JOB_STATUS_NOT_REALLY_ACTIVE)) {
-                                    if (NT_SUCCESS (PspTerminateProcess (Process,ERROR_NOT_ENOUGH_QUOTA))) {
+                                if (!(Process->JobStatus & PS_JOB_STATUS_NOT_REALLY_ACTIVE))
+                                {
+                                    if (NT_SUCCESS(PspTerminateProcess(Process, ERROR_NOT_ENOUGH_QUOTA)))
+                                    {
 
                                         Job->TotalTerminatedProcesses++;
-                                        PS_SET_CLEAR_BITS (&Process->JobStatus,
-                                                           PS_JOB_STATUS_NOT_REALLY_ACTIVE,
-                                                           PS_JOB_STATUS_LAST_REPORT_MEMORY);
+                                        PS_SET_CLEAR_BITS(&Process->JobStatus, PS_JOB_STATUS_NOT_REALLY_ACTIVE,
+                                                          PS_JOB_STATUS_LAST_REPORT_MEMORY);
                                         Job->ActiveProcesses--;
 
-                                        if (Job->CompletionPort != NULL) {
-                                            IoSetIoCompletion (Job->CompletionPort,
-                                                               Job->CompletionKey,
-                                                               (PVOID)Process->UniqueProcessId,
-                                                               STATUS_SUCCESS,
-                                                               JOB_OBJECT_MSG_END_OF_PROCESS_TIME,
-                                                               FALSE);
+                                        if (Job->CompletionPort != NULL)
+                                        {
+                                            IoSetIoCompletion(Job->CompletionPort, Job->CompletionKey,
+                                                              (PVOID)Process->UniqueProcessId, STATUS_SUCCESS,
+                                                              JOB_OBJECT_MSG_END_OF_PROCESS_TIME, FALSE);
                                         }
-                                        PspFoldProcessAccountingIntoJob(Job,Process);
-
+                                        PspFoldProcessAccountingIntoJob(Job, Process);
                                     }
                                 }
                             }
                         }
                     }
-                    if (Job->LimitFlags & JOB_OBJECT_LIMIT_JOB_TIME) {
-                        if (RunningJobTime.QuadPart > Job->PerJobUserTimeLimit.QuadPart ) {
+                    if (Job->LimitFlags & JOB_OBJECT_LIMIT_JOB_TIME)
+                    {
+                        if (RunningJobTime.QuadPart > Job->PerJobUserTimeLimit.QuadPart)
+                        {
 
                             //
                             // Job Time Limit has been exceeded.
@@ -2533,21 +2636,19 @@ PsEnforceExecutionTimeLimits(
                             // Perform the appropriate action
                             //
 
-                            switch ( Job->EndOfJobTimeAction ) {
+                            switch (Job->EndOfJobTimeAction)
+                            {
 
                             case JOB_OBJECT_TERMINATE_AT_END_OF_JOB:
-                                if (PspTerminateAllProcessesInJob (Job, ERROR_NOT_ENOUGH_QUOTA, TRUE) ) {
-                                    if (Job->ActiveProcesses == 0) {
-                                        KeSetEvent (&Job->Event,0,FALSE);
-                                        if (Job->CompletionPort) {
-                                            IoSetIoCompletion(
-                                                Job->CompletionPort,
-                                                Job->CompletionKey,
-                                                NULL,
-                                                STATUS_SUCCESS,
-                                                JOB_OBJECT_MSG_END_OF_JOB_TIME,
-                                                FALSE
-                                                );
+                                if (PspTerminateAllProcessesInJob(Job, ERROR_NOT_ENOUGH_QUOTA, TRUE))
+                                {
+                                    if (Job->ActiveProcesses == 0)
+                                    {
+                                        KeSetEvent(&Job->Event, 0, FALSE);
+                                        if (Job->CompletionPort)
+                                        {
+                                            IoSetIoCompletion(Job->CompletionPort, Job->CompletionKey, NULL,
+                                                              STATUS_SUCCESS, JOB_OBJECT_MSG_END_OF_JOB_TIME, FALSE);
                                         }
                                     }
                                 }
@@ -2555,16 +2656,12 @@ PsEnforceExecutionTimeLimits(
 
                             case JOB_OBJECT_POST_AT_END_OF_JOB:
 
-                                if (Job->CompletionPort) {
-                                    st = IoSetIoCompletion(
-                                            Job->CompletionPort,
-                                            Job->CompletionKey,
-                                            NULL,
-                                            STATUS_SUCCESS,
-                                            JOB_OBJECT_MSG_END_OF_JOB_TIME,
-                                            FALSE
-                                            );
-                                    if (NT_SUCCESS(st)) {
+                                if (Job->CompletionPort)
+                                {
+                                    st = IoSetIoCompletion(Job->CompletionPort, Job->CompletionKey, NULL,
+                                                           STATUS_SUCCESS, JOB_OBJECT_MSG_END_OF_JOB_TIME, FALSE);
+                                    if (NT_SUCCESS(st))
+                                    {
 
                                         //
                                         // Clear job level time limit
@@ -2573,34 +2670,32 @@ PsEnforceExecutionTimeLimits(
                                         Job->LimitFlags &= ~JOB_OBJECT_LIMIT_JOB_TIME;
                                         Job->PerJobUserTimeLimit.QuadPart = 0;
                                     }
-                                } else {
-                                    if (PspTerminateAllProcessesInJob (Job,ERROR_NOT_ENOUGH_QUOTA,TRUE) ) {
-                                        if (Job->ActiveProcesses == 0) {
-                                            KeSetEvent(&Job->Event,0,FALSE);
+                                }
+                                else
+                                {
+                                    if (PspTerminateAllProcessesInJob(Job, ERROR_NOT_ENOUGH_QUOTA, TRUE))
+                                    {
+                                        if (Job->ActiveProcesses == 0)
+                                        {
+                                            KeSetEvent(&Job->Event, 0, FALSE);
                                         }
                                     }
                                 }
                                 break;
                             }
                         }
-
                     }
-
                 }
                 ExReleaseResourceLite(&Job->JobLock);
             }
         }
         NextJob = NextJob->Flink;
     }
-    ExReleaseFastMutex (&PspJobListLock);
+    ExReleaseFastMutex(&PspJobListLock);
 }
 
 BOOLEAN
-PspTerminateAllProcessesInJob(
-    PEJOB Job,
-    NTSTATUS Status,
-    BOOLEAN IncCounter
-    )
+PspTerminateAllProcessesInJob(PEJOB Job, NTSTATUS Status, BOOLEAN IncCounter)
 {
     PEPROCESS Process;
     BOOLEAN TerminatedAProcess;
@@ -2609,22 +2704,24 @@ PspTerminateAllProcessesInJob(
 
     TerminatedAProcess = FALSE;
 
-    for (Process = PspGetNextJobProcess (Job, NULL);
-         Process != NULL;
-         Process = PspGetNextJobProcess (Job, Process)) {
+    for (Process = PspGetNextJobProcess(Job, NULL); Process != NULL; Process = PspGetNextJobProcess(Job, Process))
+    {
 
-        if (!(Process->JobStatus & PS_JOB_STATUS_NOT_REALLY_ACTIVE)) {
+        if (!(Process->JobStatus & PS_JOB_STATUS_NOT_REALLY_ACTIVE))
+        {
 
-            if (NT_SUCCESS (PspTerminateProcess(Process,Status))) {
+            if (NT_SUCCESS(PspTerminateProcess(Process, Status)))
+            {
 
-                if (IncCounter) {
+                if (IncCounter)
+                {
                     Job->TotalTerminatedProcesses++;
                 }
 
-                PS_SET_BITS (&Process->JobStatus, PS_JOB_STATUS_NOT_REALLY_ACTIVE);
+                PS_SET_BITS(&Process->JobStatus, PS_JOB_STATUS_NOT_REALLY_ACTIVE);
                 Job->ActiveProcesses--;
 
-                PspFoldProcessAccountingIntoJob(Job,Process);
+                PspFoldProcessAccountingIntoJob(Job, Process);
 
                 TerminatedAProcess = TRUE;
             }
@@ -2634,17 +2731,14 @@ PspTerminateAllProcessesInJob(
 }
 
 
-VOID
-PspFoldProcessAccountingIntoJob(
-    PEJOB Job,
-    PEPROCESS Process
-    )
+VOID PspFoldProcessAccountingIntoJob(PEJOB Job, PEPROCESS Process)
 {
     LARGE_INTEGER UserTime, KernelTime;
 
-    if ( !(Process->JobStatus & PS_JOB_STATUS_ACCOUNTING_FOLDED) ) {
-        UserTime.QuadPart = UInt32x32To64(Process->Pcb.UserTime,KeMaximumIncrement);
-        KernelTime.QuadPart = UInt32x32To64(Process->Pcb.KernelTime,KeMaximumIncrement);
+    if (!(Process->JobStatus & PS_JOB_STATUS_ACCOUNTING_FOLDED))
+    {
+        UserTime.QuadPart = UInt32x32To64(Process->Pcb.UserTime, KeMaximumIncrement);
+        KernelTime.QuadPart = UInt32x32To64(Process->Pcb.KernelTime, KeMaximumIncrement);
 
         Job->TotalUserTime.QuadPart += UserTime.QuadPart;
         Job->TotalKernelTime.QuadPart += KernelTime.QuadPart;
@@ -2661,174 +2755,128 @@ PspFoldProcessAccountingIntoJob(
         Job->TotalPageFaultCount += Process->Vm.PageFaultCount;
 
 
-        if ( Process->CommitChargePeak > Job->PeakProcessMemoryUsed ) {
+        if (Process->CommitChargePeak > Job->PeakProcessMemoryUsed)
+        {
             Job->PeakProcessMemoryUsed = Process->CommitChargePeak;
         }
 
-        PS_SET_CLEAR_BITS (&Process->JobStatus,
-                           PS_JOB_STATUS_ACCOUNTING_FOLDED,
-                           PS_JOB_STATUS_LAST_REPORT_MEMORY);
+        PS_SET_CLEAR_BITS(&Process->JobStatus, PS_JOB_STATUS_ACCOUNTING_FOLDED, PS_JOB_STATUS_LAST_REPORT_MEMORY);
 
-        if ( Job->CompletionPort && Job->ActiveProcesses == 0) {
-            IoSetIoCompletion(
-                Job->CompletionPort,
-                Job->CompletionKey,
-                NULL,
-                STATUS_SUCCESS,
-                JOB_OBJECT_MSG_ACTIVE_PROCESS_ZERO,
-                FALSE
-                );
-            }
+        if (Job->CompletionPort && Job->ActiveProcesses == 0)
+        {
+            IoSetIoCompletion(Job->CompletionPort, Job->CompletionKey, NULL, STATUS_SUCCESS,
+                              JOB_OBJECT_MSG_ACTIVE_PROCESS_ZERO, FALSE);
         }
+    }
 }
 
 NTSTATUS
-PspCaptureTokenFilter(
-    KPROCESSOR_MODE PreviousMode,
-    PJOBOBJECT_SECURITY_LIMIT_INFORMATION SecurityLimitInfo,
-    PPS_JOB_TOKEN_FILTER * TokenFilter
-    )
+PspCaptureTokenFilter(KPROCESSOR_MODE PreviousMode, PJOBOBJECT_SECURITY_LIMIT_INFORMATION SecurityLimitInfo,
+                      PPS_JOB_TOKEN_FILTER *TokenFilter)
 {
-    NTSTATUS Status ;
-    PPS_JOB_TOKEN_FILTER Filter ;
+    NTSTATUS Status;
+    PPS_JOB_TOKEN_FILTER Filter;
 
-    Filter = ExAllocatePoolWithTag( NonPagedPool,
-                                    sizeof( PS_JOB_TOKEN_FILTER ),
-                                    'fTsP' );
+    Filter = ExAllocatePoolWithTag(NonPagedPool, sizeof(PS_JOB_TOKEN_FILTER), 'fTsP');
 
-    if ( !Filter )
+    if (!Filter)
     {
-        *TokenFilter = NULL ;
+        *TokenFilter = NULL;
 
-        return STATUS_INSUFFICIENT_RESOURCES ;
+        return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    RtlZeroMemory( Filter, sizeof( PS_JOB_TOKEN_FILTER ) );
+    RtlZeroMemory(Filter, sizeof(PS_JOB_TOKEN_FILTER));
 
-    try {
+    try
+    {
 
-        Status = STATUS_SUCCESS ;
+        Status = STATUS_SUCCESS;
 
         //
         //  Capture Sids to remove
         //
 
-        if (ARGUMENT_PRESENT (SecurityLimitInfo->SidsToDisable)) {
+        if (ARGUMENT_PRESENT(SecurityLimitInfo->SidsToDisable))
+        {
 
-            ProbeForReadSmallStructure (SecurityLimitInfo->SidsToDisable,
-                                        sizeof (TOKEN_GROUPS),
-                                        sizeof (ULONG));
+            ProbeForReadSmallStructure(SecurityLimitInfo->SidsToDisable, sizeof(TOKEN_GROUPS), sizeof(ULONG));
 
             Filter->CapturedGroupCount = SecurityLimitInfo->SidsToDisable->GroupCount;
 
-            Status = SeCaptureSidAndAttributesArray(
-                        SecurityLimitInfo->SidsToDisable->Groups,
-                        Filter->CapturedGroupCount,
-                        PreviousMode,
-                        NULL, 0,
-                        NonPagedPool,
-                        TRUE,
-                        &Filter->CapturedGroups,
-                        &Filter->CapturedGroupsLength
-                        );
-
+            Status = SeCaptureSidAndAttributesArray(SecurityLimitInfo->SidsToDisable->Groups,
+                                                    Filter->CapturedGroupCount, PreviousMode, NULL, 0, NonPagedPool,
+                                                    TRUE, &Filter->CapturedGroups, &Filter->CapturedGroupsLength);
         }
 
         //
         //  Capture PrivilegesToDelete
         //
 
-        if (NT_SUCCESS(Status) &&
-            ARGUMENT_PRESENT (SecurityLimitInfo->PrivilegesToDelete)) {
+        if (NT_SUCCESS(Status) && ARGUMENT_PRESENT(SecurityLimitInfo->PrivilegesToDelete))
+        {
 
-            ProbeForReadSmallStructure (SecurityLimitInfo->PrivilegesToDelete,
-                                        sizeof (TOKEN_PRIVILEGES),
-                                        sizeof (ULONG));
+            ProbeForReadSmallStructure(SecurityLimitInfo->PrivilegesToDelete, sizeof(TOKEN_PRIVILEGES), sizeof(ULONG));
 
             Filter->CapturedPrivilegeCount = SecurityLimitInfo->PrivilegesToDelete->PrivilegeCount;
 
             Status = SeCaptureLuidAndAttributesArray(
-                         SecurityLimitInfo->PrivilegesToDelete->Privileges,
-                         Filter->CapturedPrivilegeCount,
-                         PreviousMode,
-                         NULL, 0,
-                         NonPagedPool,
-                         TRUE,
-                         &Filter->CapturedPrivileges,
-                         &Filter->CapturedPrivilegesLength
-                         );
-
+                SecurityLimitInfo->PrivilegesToDelete->Privileges, Filter->CapturedPrivilegeCount, PreviousMode, NULL,
+                0, NonPagedPool, TRUE, &Filter->CapturedPrivileges, &Filter->CapturedPrivilegesLength);
         }
 
         //
         //  Capture Restricted Sids
         //
 
-        if (NT_SUCCESS(Status) &&
-            ARGUMENT_PRESENT(SecurityLimitInfo->RestrictedSids)) {
+        if (NT_SUCCESS(Status) && ARGUMENT_PRESENT(SecurityLimitInfo->RestrictedSids))
+        {
 
-            ProbeForReadSmallStructure (SecurityLimitInfo->RestrictedSids,
-                                        sizeof (TOKEN_GROUPS),
-                                        sizeof (ULONG));
+            ProbeForReadSmallStructure(SecurityLimitInfo->RestrictedSids, sizeof(TOKEN_GROUPS), sizeof(ULONG));
 
             Filter->CapturedSidCount = SecurityLimitInfo->RestrictedSids->GroupCount;
 
-            Status = SeCaptureSidAndAttributesArray(
-                        SecurityLimitInfo->RestrictedSids->Groups,
-                        Filter->CapturedSidCount,
-                        PreviousMode,
-                        NULL, 0,
-                        NonPagedPool,
-                        TRUE,
-                        &Filter->CapturedSids,
-                        &Filter->CapturedSidsLength
-                        );
-
+            Status = SeCaptureSidAndAttributesArray(SecurityLimitInfo->RestrictedSids->Groups, Filter->CapturedSidCount,
+                                                    PreviousMode, NULL, 0, NonPagedPool, TRUE, &Filter->CapturedSids,
+                                                    &Filter->CapturedSidsLength);
         }
-
-
-
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         Status = GetExceptionCode();
-    }  // end_try
+    } // end_try
 
-    if ( !NT_SUCCESS( Status ) )
+    if (!NT_SUCCESS(Status))
     {
-        if ( Filter->CapturedSids )
+        if (Filter->CapturedSids)
         {
-            ExFreePool( Filter->CapturedSids );
+            ExFreePool(Filter->CapturedSids);
         }
 
-        if ( Filter->CapturedPrivileges )
+        if (Filter->CapturedPrivileges)
         {
-            ExFreePool( Filter->CapturedPrivileges );
+            ExFreePool(Filter->CapturedPrivileges);
         }
 
-        if ( Filter->CapturedGroups )
+        if (Filter->CapturedGroups)
         {
-            ExFreePool( Filter->CapturedGroups );
+            ExFreePool(Filter->CapturedGroups);
         }
 
-        ExFreePool( Filter );
+        ExFreePool(Filter);
 
-        Filter = NULL ;
-
+        Filter = NULL;
     }
 
-    *TokenFilter = Filter ;
+    *TokenFilter = Filter;
 
-    return Status ;
-
-
+    return Status;
 }
 
 
-
 BOOLEAN
-PsChangeJobMemoryUsage(
-    SSIZE_T Amount
-    )
+PsChangeJobMemoryUsage(SSIZE_T Amount)
 {
     PEPROCESS Process;
     PEJOB Job;
@@ -2838,7 +2886,8 @@ PsChangeJobMemoryUsage(
     ReturnValue = TRUE;
     Process = PsGetCurrentProcess();
     Job = Process->Job;
-    if ( Job ) {
+    if (Job)
+    {
         //
         // This routine can be called while holding the process lock (during
         // teb deletion... So instead of using the job lock, we must use the
@@ -2847,16 +2896,15 @@ PsChangeJobMemoryUsage(
         // code while held. It can be grapped while holding the job lock, or
         // the process lock.
         //
-        ExAcquireFastMutex (&Job->MemoryLimitsLock);
+        ExAcquireFastMutex(&Job->MemoryLimitsLock);
 
 
         CurrentJobMemoryUsed = Job->CurrentJobMemoryUsed + Amount;
 
-        if ( Job->LimitFlags & JOB_OBJECT_LIMIT_JOB_MEMORY &&
-             CurrentJobMemoryUsed > Job->JobMemoryLimit ) {
+        if (Job->LimitFlags & JOB_OBJECT_LIMIT_JOB_MEMORY && CurrentJobMemoryUsed > Job->JobMemoryLimit)
+        {
             CurrentJobMemoryUsed = Job->CurrentJobMemoryUsed;
             ReturnValue = FALSE;
-
 
 
             //
@@ -2864,52 +2912,46 @@ PsChangeJobMemoryUsage(
             // was the one that hit it.
             //
 
-            if ( Job->CompletionPort
-                 && Process->UniqueProcessId
-                 && (Process->JobStatus & PS_JOB_STATUS_NEW_PROCESS_REPORTED)
-                 && (Process->JobStatus & PS_JOB_STATUS_LAST_REPORT_MEMORY) == 0) {
+            if (Job->CompletionPort && Process->UniqueProcessId &&
+                (Process->JobStatus & PS_JOB_STATUS_NEW_PROCESS_REPORTED) &&
+                (Process->JobStatus & PS_JOB_STATUS_LAST_REPORT_MEMORY) == 0)
+            {
 
-                PS_SET_BITS (&Process->JobStatus, PS_JOB_STATUS_LAST_REPORT_MEMORY);
-                IoSetIoCompletion(
-                    Job->CompletionPort,
-                    Job->CompletionKey,
-                    (PVOID)Process->UniqueProcessId,
-                    STATUS_SUCCESS,
-                    JOB_OBJECT_MSG_JOB_MEMORY_LIMIT,
-                    TRUE
-                    );
-
+                PS_SET_BITS(&Process->JobStatus, PS_JOB_STATUS_LAST_REPORT_MEMORY);
+                IoSetIoCompletion(Job->CompletionPort, Job->CompletionKey, (PVOID)Process->UniqueProcessId,
+                                  STATUS_SUCCESS, JOB_OBJECT_MSG_JOB_MEMORY_LIMIT, TRUE);
             }
         }
 
-        if (ReturnValue) {
+        if (ReturnValue)
+        {
             Job->CurrentJobMemoryUsed = CurrentJobMemoryUsed;
 
             //
             // Update current and peak counters if this is an addition.
             //
 
-            if (Amount > 0) {
-                if (CurrentJobMemoryUsed > Job->PeakJobMemoryUsed) {
+            if (Amount > 0)
+            {
+                if (CurrentJobMemoryUsed > Job->PeakJobMemoryUsed)
+                {
                     Job->PeakJobMemoryUsed = CurrentJobMemoryUsed;
                 }
 
-                if (Process->CommitCharge + Amount > Job->PeakProcessMemoryUsed) {
+                if (Process->CommitCharge + Amount > Job->PeakProcessMemoryUsed)
+                {
                     Job->PeakProcessMemoryUsed = Process->CommitCharge + Amount;
                 }
             }
         }
-        ExReleaseFastMutex (&Job->MemoryLimitsLock);
+        ExReleaseFastMutex(&Job->MemoryLimitsLock);
     }
 
     return ReturnValue;
 }
 
 
-VOID
-PsReportProcessMemoryLimitViolation(
-    VOID
-    )
+VOID PsReportProcessMemoryLimitViolation(VOID)
 {
     PEPROCESS Process;
     PEJOB Job;
@@ -2918,43 +2960,33 @@ PsReportProcessMemoryLimitViolation(
 
     Process = PsGetCurrentProcess();
     Job = Process->Job;
-    if ( Job && (Job->LimitFlags & JOB_OBJECT_LIMIT_PROCESS_MEMORY) ) {
-        ExAcquireFastMutex (&Job->MemoryLimitsLock);
+    if (Job && (Job->LimitFlags & JOB_OBJECT_LIMIT_PROCESS_MEMORY))
+    {
+        ExAcquireFastMutex(&Job->MemoryLimitsLock);
 
         //
         // Tell the job port that commit has been exceeded, and process id x
         // was the one that hit it.
         //
 
-        if ( Job->CompletionPort
-             && Process->UniqueProcessId
-             && (Process->JobStatus & PS_JOB_STATUS_NEW_PROCESS_REPORTED)
-             && (Process->JobStatus & PS_JOB_STATUS_LAST_REPORT_MEMORY) == 0) {
+        if (Job->CompletionPort && Process->UniqueProcessId &&
+            (Process->JobStatus & PS_JOB_STATUS_NEW_PROCESS_REPORTED) &&
+            (Process->JobStatus & PS_JOB_STATUS_LAST_REPORT_MEMORY) == 0)
+        {
 
-            PS_SET_BITS (&Process->JobStatus, PS_JOB_STATUS_LAST_REPORT_MEMORY);
-            IoSetIoCompletion(
-                Job->CompletionPort,
-                Job->CompletionKey,
-                (PVOID)Process->UniqueProcessId,
-                STATUS_SUCCESS,
-                JOB_OBJECT_MSG_PROCESS_MEMORY_LIMIT,
-                TRUE
-                );
-
+            PS_SET_BITS(&Process->JobStatus, PS_JOB_STATUS_LAST_REPORT_MEMORY);
+            IoSetIoCompletion(Job->CompletionPort, Job->CompletionKey, (PVOID)Process->UniqueProcessId, STATUS_SUCCESS,
+                              JOB_OBJECT_MSG_PROCESS_MEMORY_LIMIT, TRUE);
         }
-        ExReleaseFastMutex (&Job->MemoryLimitsLock);
-
+        ExReleaseFastMutex(&Job->MemoryLimitsLock);
     }
 }
 
-VOID
-PspJobTimeLimitsWork(
-    IN PVOID Context
-    )
+VOID PspJobTimeLimitsWork(IN PVOID Context)
 {
     PAGED_CODE();
 
-    UNREFERENCED_PARAMETER (Context);
+    UNREFERENCED_PARAMETER(Context);
 
     PsEnforceExecutionTimeLimits();
 
@@ -2962,67 +2994,54 @@ PspJobTimeLimitsWork(
     // Reset timer
     //
 
-    ExAcquireFastMutex (&PspJobTimeLimitsLock);
+    ExAcquireFastMutex(&PspJobTimeLimitsLock);
 
-    if (!PspJobTimeLimitsShuttingDown) {
-        KeSetTimer (&PspJobTimeLimitsTimer,
-                    PspJobTimeLimitsInterval,
-                    &PspJobTimeLimitsDpc);
+    if (!PspJobTimeLimitsShuttingDown)
+    {
+        KeSetTimer(&PspJobTimeLimitsTimer, PspJobTimeLimitsInterval, &PspJobTimeLimitsDpc);
     }
 
-    ExReleaseFastMutex (&PspJobTimeLimitsLock);
+    ExReleaseFastMutex(&PspJobTimeLimitsLock);
 }
 
 
-VOID
-PspJobTimeLimitsDpcRoutine(
-    IN PKDPC Dpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    )
+VOID PspJobTimeLimitsDpcRoutine(IN PKDPC Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1,
+                                IN PVOID SystemArgument2)
 {
-    UNREFERENCED_PARAMETER (Dpc);
-    UNREFERENCED_PARAMETER (DeferredContext);
-    UNREFERENCED_PARAMETER (SystemArgument1);
-    UNREFERENCED_PARAMETER (SystemArgument2);
+    UNREFERENCED_PARAMETER(Dpc);
+    UNREFERENCED_PARAMETER(DeferredContext);
+    UNREFERENCED_PARAMETER(SystemArgument1);
+    UNREFERENCED_PARAMETER(SystemArgument2);
     ExQueueWorkItem(&PspJobTimeLimitsWorkItem, DelayedWorkQueue);
 }
 
-VOID
-PspInitializeJobStructures(
-    )
+VOID PspInitializeJobStructures()
 {
 
     //
     // Initialize job list head and mutex
     //
 
-    InitializeListHead (&PspJobList); 
+    InitializeListHead(&PspJobList);
 
-    ExInitializeFastMutex (&PspJobListLock);
+    ExInitializeFastMutex(&PspJobListLock);
 
     //
     // Initialize job time limits timer, etc
     //
 
-    ExInitializeFastMutex (&PspJobTimeLimitsLock);
+    ExInitializeFastMutex(&PspJobTimeLimitsLock);
     PspJobTimeLimitsShuttingDown = FALSE;
 
-    KeInitializeDpc (&PspJobTimeLimitsDpc,
-                     PspJobTimeLimitsDpcRoutine,
-                     NULL);
+    KeInitializeDpc(&PspJobTimeLimitsDpc, PspJobTimeLimitsDpcRoutine, NULL);
 
-    ExInitializeWorkItem (&PspJobTimeLimitsWorkItem, PspJobTimeLimitsWork, NULL);
-    KeInitializeTimer (&PspJobTimeLimitsTimer);
+    ExInitializeWorkItem(&PspJobTimeLimitsWorkItem, PspJobTimeLimitsWork, NULL);
+    KeInitializeTimer(&PspJobTimeLimitsTimer);
 
-    PspJobTimeLimitsInterval.QuadPart = Int32x32To64(PSP_ONE_SECOND,
-                                                     PSP_JOB_TIME_LIMITS_TIME);
+    PspJobTimeLimitsInterval.QuadPart = Int32x32To64(PSP_ONE_SECOND, PSP_JOB_TIME_LIMITS_TIME);
 }
 
-VOID
-PspInitializeJobStructuresPhase1(
-    )
+VOID PspInitializeJobStructuresPhase1()
 {
     //
     // Wait until Phase1 executive initialization completes (ie: the worker
@@ -3030,32 +3049,24 @@ PspInitializeJobStructuresPhase1(
     // queues work items!).
     //
 
-    KeSetTimer (&PspJobTimeLimitsTimer,
-                PspJobTimeLimitsInterval,
-                &PspJobTimeLimitsDpc);
+    KeSetTimer(&PspJobTimeLimitsTimer, PspJobTimeLimitsInterval, &PspJobTimeLimitsDpc);
 }
 
-VOID
-PspShutdownJobLimits(
-    VOID
-    )
+VOID PspShutdownJobLimits(VOID)
 {
     // Cancel the job time limits enforcement worker
 
-    ExAcquireFastMutex (&PspJobTimeLimitsLock);
+    ExAcquireFastMutex(&PspJobTimeLimitsLock);
 
     PspJobTimeLimitsShuttingDown = TRUE;
 
-    KeCancelTimer (&PspJobTimeLimitsTimer);
+    KeCancelTimer(&PspJobTimeLimitsTimer);
 
-    ExReleaseFastMutex (&PspJobTimeLimitsLock);
+    ExReleaseFastMutex(&PspJobTimeLimitsLock);
 }
 
 NTSTATUS
-NtIsProcessInJob (
-    IN HANDLE ProcessHandle,
-    IN HANDLE JobHandle
-    )
+NtIsProcessInJob(IN HANDLE ProcessHandle, IN HANDLE JobHandle)
 /*++
 
 Routine Description:
@@ -3078,51 +3089,48 @@ Return Value:
     PEJOB Job;
     NTSTATUS Status;
 
-    PreviousMode = KeGetPreviousMode ();
+    PreviousMode = KeGetPreviousMode();
 
-    Status = ObReferenceObjectByHandle (ProcessHandle,
-                                        PROCESS_QUERY_INFORMATION,
-                                        PsProcessType,
-                                        PreviousMode,
-                                        &Process,
-                                        NULL);
-    if (!NT_SUCCESS (Status)) {
+    Status = ObReferenceObjectByHandle(ProcessHandle, PROCESS_QUERY_INFORMATION, PsProcessType, PreviousMode, &Process,
+                                       NULL);
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
-    if (JobHandle == NULL) {
+    if (JobHandle == NULL)
+    {
         Job = Process->Job;
-    } else {
-        Status = ObReferenceObjectByHandle (JobHandle,
-                                            JOB_OBJECT_QUERY,
-                                            PsJobType,
-                                            PreviousMode,
-                                            &Job,
-                                            NULL);
-        if (!NT_SUCCESS (Status)) {
-            ObDereferenceObject (Process);
+    }
+    else
+    {
+        Status = ObReferenceObjectByHandle(JobHandle, JOB_OBJECT_QUERY, PsJobType, PreviousMode, &Job, NULL);
+        if (!NT_SUCCESS(Status))
+        {
+            ObDereferenceObject(Process);
             return Status;
         }
     }
 
-    if (Process->Job == NULL || Process->Job != Job) {
+    if (Process->Job == NULL || Process->Job != Job)
+    {
         Status = STATUS_PROCESS_NOT_IN_JOB;
-    } else {
+    }
+    else
+    {
         Status = STATUS_PROCESS_IN_JOB;
     }
 
-    if (JobHandle != NULL) {
-        ObDereferenceObject (Job);
+    if (JobHandle != NULL)
+    {
+        ObDereferenceObject(Job);
     }
-    ObDereferenceObject (Process);
+    ObDereferenceObject(Process);
     return Status;
 }
 
 NTSTATUS
-PspGetJobFromSet (
-    IN PEJOB ParentJob,
-    IN ULONG JobMemberLevel,
-    OUT PEJOB *pJob)
+PspGetJobFromSet(IN PEJOB ParentJob, IN ULONG JobMemberLevel, OUT PEJOB *pJob)
 /*++
 
 Routine Description:
@@ -3150,41 +3158,39 @@ Return Value:
     // This is the normal case. We are not asking to be moved jobs or we are askign for our current level
     //
 
-    if (JobMemberLevel == 0) {
-        ObReferenceObject (ParentJob);
+    if (JobMemberLevel == 0)
+    {
+        ObReferenceObject(ParentJob);
         *pJob = ParentJob;
         return STATUS_SUCCESS;
     }
 
-    ExAcquireFastMutex (&PspJobListLock);
+    ExAcquireFastMutex(&PspJobListLock);
 
     Status = STATUS_ACCESS_DENIED;
 
-    if (ParentJob->MemberLevel != 0 && ParentJob->MemberLevel <= JobMemberLevel) {
+    if (ParentJob->MemberLevel != 0 && ParentJob->MemberLevel <= JobMemberLevel)
+    {
 
-        for (Entry = ParentJob->JobSetLinks.Flink;
-             Entry != &ParentJob->JobSetLinks;
-             Entry = Entry->Flink) {
+        for (Entry = ParentJob->JobSetLinks.Flink; Entry != &ParentJob->JobSetLinks; Entry = Entry->Flink)
+        {
 
-             Job = CONTAINING_RECORD (Entry, EJOB, JobSetLinks);
-             if (Job->MemberLevel == JobMemberLevel &&
-                 ObReferenceObjectSafe (Job)) {
-                 *pJob = Job;
-                 Status = STATUS_SUCCESS;
-                 break;
-             }
+            Job = CONTAINING_RECORD(Entry, EJOB, JobSetLinks);
+            if (Job->MemberLevel == JobMemberLevel && ObReferenceObjectSafe(Job))
+            {
+                *pJob = Job;
+                Status = STATUS_SUCCESS;
+                break;
+            }
         }
     }
-    ExReleaseFastMutex (&PspJobListLock);
+    ExReleaseFastMutex(&PspJobListLock);
 
     return Status;
 }
 
 NTSTATUS
-NtCreateJobSet (
-    IN ULONG NumJob,
-    IN PJOB_SET_ARRAY UserJobSet,
-    IN ULONG Flags)
+NtCreateJobSet(IN ULONG NumJob, IN PJOB_SET_ARRAY UserJobSet, IN ULONG Flags)
 /*++
 
 Routine Description:
@@ -3216,127 +3222,145 @@ Return Value:
     //
     // Flags must be zero and number of jobs >= 2 and not overflow when the length is caculated
     //
-    if (Flags != 0) {
+    if (Flags != 0)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
-    if (NumJob <= 1 || NumJob > MAXULONG_PTR / sizeof (JobSet[0])) {
+    if (NumJob <= 1 || NumJob > MAXULONG_PTR / sizeof(JobSet[0]))
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
-    BufLen = NumJob * sizeof (JobSet[0]);
+    BufLen = NumJob * sizeof(JobSet[0]);
 
-    JobSet = ExAllocatePoolWithQuotaTag (PagedPool|POOL_QUOTA_FAIL_INSTEAD_OF_RAISE, BufLen, 'bjsP');
-    if (JobSet == NULL) {
+    JobSet = ExAllocatePoolWithQuotaTag(PagedPool | POOL_QUOTA_FAIL_INSTEAD_OF_RAISE, BufLen, 'bjsP');
+    if (JobSet == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    PreviousMode = KeGetPreviousMode ();
+    PreviousMode = KeGetPreviousMode();
 
-    try {
-        if (PreviousMode == UserMode) {
-            ProbeForRead (UserJobSet, BufLen, TYPE_ALIGNMENT (JOB_SET_ARRAY));
+    try
+    {
+        if (PreviousMode == UserMode)
+        {
+            ProbeForRead(UserJobSet, BufLen, TYPE_ALIGNMENT(JOB_SET_ARRAY));
         }
-        RtlCopyMemory (JobSet, UserJobSet, BufLen);
-    } except (ExSystemExceptionFilter ()) {
-        ExFreePool (JobSet);
-        return GetExceptionCode ();
+        RtlCopyMemory(JobSet, UserJobSet, BufLen);
+    }
+    except(ExSystemExceptionFilter())
+    {
+        ExFreePool(JobSet);
+        return GetExceptionCode();
     }
 
     MinMemberLevel = 0;
     Status = STATUS_SUCCESS;
-    for (JobsProcessed = 0; JobsProcessed < NumJob; JobsProcessed++) {
-        if (JobSet[JobsProcessed].MemberLevel <= MinMemberLevel || JobSet[JobsProcessed].Flags != 0) {
+    for (JobsProcessed = 0; JobsProcessed < NumJob; JobsProcessed++)
+    {
+        if (JobSet[JobsProcessed].MemberLevel <= MinMemberLevel || JobSet[JobsProcessed].Flags != 0)
+        {
             Status = STATUS_INVALID_PARAMETER;
             break;
         }
         MinMemberLevel = JobSet[JobsProcessed].MemberLevel;
 
-        Status = ObReferenceObjectByHandle (JobSet[JobsProcessed].JobHandle,
-                                            JOB_OBJECT_QUERY,
-                                            PsJobType,
-                                            PreviousMode,
-                                            &Job,
-                                            NULL);
-        if (!NT_SUCCESS (Status)) {
+        Status = ObReferenceObjectByHandle(JobSet[JobsProcessed].JobHandle, JOB_OBJECT_QUERY, PsJobType, PreviousMode,
+                                           &Job, NULL);
+        if (!NT_SUCCESS(Status))
+        {
             break;
         }
         JobSet[JobsProcessed].JobHandle = Job;
     }
 
-    if (!NT_SUCCESS (Status)) {
-        while (JobsProcessed-- > 0) {
+    if (!NT_SUCCESS(Status))
+    {
+        while (JobsProcessed-- > 0)
+        {
             Job = JobSet[JobsProcessed].JobHandle;
-            ObDereferenceObject (Job);
+            ObDereferenceObject(Job);
         }
-        ExFreePool (JobSet);
+        ExFreePool(JobSet);
         return Status;
     }
 
-    ExAcquireFastMutex (&PspJobListLock);
+    ExAcquireFastMutex(&PspJobListLock);
 
     HeadJob = NULL;
-    for (JobsProcessed = 0; JobsProcessed < NumJob; JobsProcessed++) {
+    for (JobsProcessed = 0; JobsProcessed < NumJob; JobsProcessed++)
+    {
         Job = JobSet[JobsProcessed].JobHandle;
 
         //
         // If we are already in a job set then reject this call.
         //
-        if (Job->MemberLevel != 0) {
+        if (Job->MemberLevel != 0)
+        {
             Status = STATUS_INVALID_PARAMETER;
             break;
         }
-        if (HeadJob != NULL) {
-            if (HeadJob == Job) {
+        if (HeadJob != NULL)
+        {
+            if (HeadJob == Job)
+            {
                 Status = STATUS_INVALID_PARAMETER;
                 break;
             }
-            InsertTailList (&HeadJob->JobSetLinks, &Job->JobSetLinks);
-        } else {
+            InsertTailList(&HeadJob->JobSetLinks, &Job->JobSetLinks);
+        }
+        else
+        {
             HeadJob = Job;
         }
         Job->MemberLevel = JobSet[JobsProcessed].MemberLevel;
     }
 
-    if (!NT_SUCCESS (Status)) {
-        if (HeadJob) {
-            while (!IsListEmpty (&HeadJob->JobSetLinks)) {
-                ListEntry = RemoveHeadList (&HeadJob->JobSetLinks);
-                Job = CONTAINING_RECORD (ListEntry, EJOB, JobSetLinks);
+    if (!NT_SUCCESS(Status))
+    {
+        if (HeadJob)
+        {
+            while (!IsListEmpty(&HeadJob->JobSetLinks))
+            {
+                ListEntry = RemoveHeadList(&HeadJob->JobSetLinks);
+                Job = CONTAINING_RECORD(ListEntry, EJOB, JobSetLinks);
                 Job->MemberLevel = 0;
-                InitializeListHead (&Job->JobSetLinks);
+                InitializeListHead(&Job->JobSetLinks);
             }
             HeadJob->MemberLevel = 0;
         }
     }
 
-    ExReleaseFastMutex (&PspJobListLock);
+    ExReleaseFastMutex(&PspJobListLock);
 
     //
     // Dereference all the objects in the error path. If we suceeded then pin all but the first object by
     // leaving the reference there.
     //
-    if (!NT_SUCCESS (Status)) {
-        for (JobsProcessed = 0; JobsProcessed < NumJob; JobsProcessed++) {
+    if (!NT_SUCCESS(Status))
+    {
+        for (JobsProcessed = 0; JobsProcessed < NumJob; JobsProcessed++)
+        {
             Job = JobSet[JobsProcessed].JobHandle;
-            ObDereferenceObject (Job);
+            ObDereferenceObject(Job);
         }
-    } else {
+    }
+    else
+    {
         Job = JobSet[0].JobHandle;
-        ObDereferenceObject (Job);
+        ObDereferenceObject(Job);
     }
 
-    ExFreePool (JobSet);
+    ExFreePool(JobSet);
 
     return Status;
 }
 
 NTSTATUS
-PspWin32SessionCallout(
-    IN  PKWIN32_JOB_CALLOUT CalloutRoutine,
-    IN  PKWIN32_JOBCALLOUT_PARAMETERS Parameters,
-    IN  ULONG SessionId
-    )
+PspWin32SessionCallout(IN PKWIN32_JOB_CALLOUT CalloutRoutine, IN PKWIN32_JOBCALLOUT_PARAMETERS Parameters,
+                       IN ULONG SessionId)
 /*++
 
 Routine Description:
@@ -3373,7 +3397,8 @@ Notes:
     //
     // Make sure we have all the information we need to deliver notification.
     //
-    if (CalloutRoutine == NULL) {
+    if (CalloutRoutine == NULL)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -3383,8 +3408,8 @@ Notes:
     ASSERT(MmIsSessionAddress((PVOID)CalloutRoutine));
 
     Process = PsGetCurrentProcess();
-    if ((Process->Flags & PS_PROCESS_FLAGS_IN_SESSION) &&
-        (SessionId == MmGetSessionId (Process))) {
+    if ((Process->Flags & PS_PROCESS_FLAGS_IN_SESSION) && (SessionId == MmGetSessionId(Process)))
+    {
         //
         // If the call is from a user mode process, and we are asked to call the
         // current session, call directly.
@@ -3392,13 +3417,15 @@ Notes:
         (CalloutRoutine)(Parameters);
 
         Status = STATUS_SUCCESS;
-
-    } else {
+    }
+    else
+    {
         //
         // Reference the session object for the specified session.
         //
-        OpaqueSession = MmGetSessionById (SessionId);
-        if (OpaqueSession == NULL) {
+        OpaqueSession = MmGetSessionById(SessionId);
+        if (OpaqueSession == NULL)
+        {
             return STATUS_NOT_FOUND;
         }
 
@@ -3406,13 +3433,12 @@ Notes:
         // Attach to the specified session.
         //
         Status = MmAttachSession(OpaqueSession, &ApcState);
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             KdPrintEx((DPFLTR_SYSTEM_ID, DPFLTR_WARNING_LEVEL,
                        "PspWin32SessionCallout: "
                        "could not attach to 0x%p, session %d for registered notification callout @ 0x%p\n",
-                       OpaqueSession,
-                       SessionId,
-                       CalloutRoutine));
+                       OpaqueSession, SessionId, CalloutRoutine));
             MmQuitNextSession(OpaqueSession);
             return Status;
         }
@@ -3425,13 +3451,13 @@ Notes:
         //
         // Detach from the session.
         //
-        Status = MmDetachSession (OpaqueSession, &ApcState);
+        Status = MmDetachSession(OpaqueSession, &ApcState);
         ASSERT(NT_SUCCESS(Status));
 
         //
         // Dereference the session object.
         //
-        Status = MmQuitNextSession (OpaqueSession);
+        Status = MmQuitNextSession(OpaqueSession);
         ASSERT(NT_SUCCESS(Status));
     }
 

@@ -1,62 +1,39 @@
 #include "ki.h"
 
 PVOID
-Ki386AllocateContiguousMemory(
-    IN OUT PIDENTITY_MAP IdentityMap,
-    IN     ULONG Pages,
-    IN     BOOLEAN Low4Meg
-    );
+Ki386AllocateContiguousMemory(IN OUT PIDENTITY_MAP IdentityMap, IN ULONG Pages, IN BOOLEAN Low4Meg);
 
 BOOLEAN
-Ki386IdentityMapMakeValid(
-    IN OUT PIDENTITY_MAP IdentityMap,
-    IN     PHARDWARE_PTE PageTableEntry,
-    OUT    PVOID *Page OPTIONAL
-    );
+Ki386IdentityMapMakeValid(IN OUT PIDENTITY_MAP IdentityMap, IN PHARDWARE_PTE PageTableEntry, OUT PVOID *Page OPTIONAL);
 
 BOOLEAN
-Ki386MapAddress(
-    IN OUT PIDENTITY_MAP IdentityMap,
-    IN     ULONG Va,
-    IN     PHYSICAL_ADDRESS PhysicalAddress
-    );
+Ki386MapAddress(IN OUT PIDENTITY_MAP IdentityMap, IN ULONG Va, IN PHYSICAL_ADDRESS PhysicalAddress);
 
 PVOID
-Ki386ConvertPte(
-    IN OUT PHARDWARE_PTE Pte
-    );
+Ki386ConvertPte(IN OUT PHARDWARE_PTE Pte);
 
 PHYSICAL_ADDRESS
-Ki386BuildIdentityBuffer(
-    IN OUT PIDENTITY_MAP IdentityMap,
-    IN     PVOID StartVa,
-    IN     ULONG Length,
-    OUT    PULONG PagesToMap
-    );
+Ki386BuildIdentityBuffer(IN OUT PIDENTITY_MAP IdentityMap, IN PVOID StartVa, IN ULONG Length, OUT PULONG PagesToMap);
 
 #ifdef ALLOC_PRAGMA
 
-#pragma alloc_text(INIT,Ki386AllocateContiguousMemory)
-#pragma alloc_text(INIT,Ki386BuildIdentityBuffer)
-#pragma alloc_text(INIT,Ki386ClearIdentityMap)
-#pragma alloc_text(INIT,Ki386ConvertPte)
-#pragma alloc_text(INIT,Ki386CreateIdentityMap)
-#pragma alloc_text(INIT,Ki386EnableTargetLargePage)
-#pragma alloc_text(INIT,Ki386IdentityMapMakeValid)
-#pragma alloc_text(INIT,Ki386MapAddress)
+#pragma alloc_text(INIT, Ki386AllocateContiguousMemory)
+#pragma alloc_text(INIT, Ki386BuildIdentityBuffer)
+#pragma alloc_text(INIT, Ki386ClearIdentityMap)
+#pragma alloc_text(INIT, Ki386ConvertPte)
+#pragma alloc_text(INIT, Ki386CreateIdentityMap)
+#pragma alloc_text(INIT, Ki386EnableTargetLargePage)
+#pragma alloc_text(INIT, Ki386IdentityMapMakeValid)
+#pragma alloc_text(INIT, Ki386MapAddress)
 
 #endif
 
 #define PTES_PER_PAGE (PAGE_SIZE / sizeof(HARDWARE_PTE))
 
 BOOLEAN
-Ki386CreateIdentityMap(
-    IN OUT PIDENTITY_MAP IdentityMap,
-    IN     PVOID StartVa,
-    IN     PVOID EndVa
-    )
+Ki386CreateIdentityMap(IN OUT PIDENTITY_MAP IdentityMap, IN PVOID StartVa, IN PVOID EndVa)
 {
-/*++
+    /*++
 
     This function creates an identity mapping for a region of memory.
 
@@ -106,18 +83,16 @@ Return Value:
     // Initialize the IdentityMap structure to a known state.
     //
 
-    RtlZeroMemory( IdentityMap, sizeof(IDENTITY_MAP) );
+    RtlZeroMemory(IdentityMap, sizeof(IDENTITY_MAP));
     length = (PCHAR)EndVa - (PCHAR)StartVa;
 
     //
     // Get the physical address of the input buffer (or suitable copy).
     //
 
-    identityAddress = Ki386BuildIdentityBuffer( IdentityMap,
-                                                StartVa,
-                                                length,
-                                                &pagesToMap );
-    if( identityAddress.QuadPart == 0) {
+    identityAddress = Ki386BuildIdentityBuffer(IdentityMap, StartVa, length, &pagesToMap);
+    if (identityAddress.QuadPart == 0)
+    {
 
         //
         // The input buffer was not contiguous or not below 4G, and a
@@ -134,16 +109,16 @@ Return Value:
     //
 
     currentVa = StartVa;
-    do {
+    do
+    {
 
         //
         // Map in the virtual address
         //
 
-        result = Ki386MapAddress( IdentityMap,
-                                  (ULONG)currentVa,
-                                  identityAddress );
-        if (result == FALSE) {
+        result = Ki386MapAddress(IdentityMap, (ULONG)currentVa, identityAddress);
+        if (result == FALSE)
+        {
             return FALSE;
         }
 
@@ -151,10 +126,9 @@ Return Value:
         // Map in the identity (physical) address
         //
 
-        result = Ki386MapAddress( IdentityMap,
-                                  identityAddress.LowPart,
-                                  identityAddress );
-        if (result == FALSE) {
+        result = Ki386MapAddress(IdentityMap, identityAddress.LowPart, identityAddress);
+        if (result == FALSE)
+        {
             return FALSE;
         }
 
@@ -182,52 +156,47 @@ Return Value:
     //
 
     pageDirectoryPointerTable = IdentityMap->TopLevelDirectory;
-    for (pageDirectoryPointerTableIndex = 0;
-         pageDirectoryPointerTableIndex < (1 << PPI_BITS);
-         pageDirectoryPointerTableIndex++) {
+    for (pageDirectoryPointerTableIndex = 0; pageDirectoryPointerTableIndex < (1 << PPI_BITS);
+         pageDirectoryPointerTableIndex++)
+    {
 
-        pageDirectoryPointerTableEntry =
-            &pageDirectoryPointerTable[ pageDirectoryPointerTableIndex ];
+        pageDirectoryPointerTableEntry = &pageDirectoryPointerTable[pageDirectoryPointerTableIndex];
 
-        if (pageDirectoryPointerTableEntry->Valid == 0) {
+        if (pageDirectoryPointerTableEntry->Valid == 0)
+        {
             continue;
         }
 
-        pageDirectory =
-            (PHARDWARE_PTE)Ki386ConvertPte( pageDirectoryPointerTableEntry );
+        pageDirectory = (PHARDWARE_PTE)Ki386ConvertPte(pageDirectoryPointerTableEntry);
 
 #else
-        pageDirectory = IdentityMap->TopLevelDirectory;
+    pageDirectory = IdentityMap->TopLevelDirectory;
 #endif
 
-        for (pageDirectoryIndex = 0;
-             pageDirectoryIndex < PTES_PER_PAGE;
-             pageDirectoryIndex++) {
+        for (pageDirectoryIndex = 0; pageDirectoryIndex < PTES_PER_PAGE; pageDirectoryIndex++)
+        {
 
-            pageDirectoryEntry = &pageDirectory[ pageDirectoryIndex ];
-            if (pageDirectoryEntry->Valid == 0) {
+            pageDirectoryEntry = &pageDirectory[pageDirectoryIndex];
+            if (pageDirectoryEntry->Valid == 0)
+            {
                 continue;
             }
 
-            Ki386ConvertPte( pageDirectoryEntry );
+            Ki386ConvertPte(pageDirectoryEntry);
         }
 
 #if defined(_X86PAE_)
     }
 #endif
 
-    identityAddress = MmGetPhysicalAddress( IdentityMap->TopLevelDirectory );
+    identityAddress = MmGetPhysicalAddress(IdentityMap->TopLevelDirectory);
     IdentityMap->IdentityCR3 = identityAddress.LowPart;
 
     return TRUE;
 }
 
 PVOID
-Ki386AllocateContiguousMemory(
-    IN OUT PIDENTITY_MAP IdentityMap,
-    IN     ULONG Pages,
-    IN     BOOLEAN Low4Meg
-    )
+Ki386AllocateContiguousMemory(IN OUT PIDENTITY_MAP IdentityMap, IN ULONG Pages, IN BOOLEAN Low4Meg)
 /*++
 
     This function allocates page-aligned, physically contiguous memory.
@@ -253,7 +222,8 @@ Return Value:
     ULONG allocationSize;
     PHYSICAL_ADDRESS highestAddress;
 
-    if (Low4Meg != FALSE) {
+    if (Low4Meg != FALSE)
+    {
 
         //
         // The caller has specified that a page must reside physically
@@ -262,8 +232,9 @@ Return Value:
 
         highestAddress.LowPart = 0xFFFFFFFF;
         highestAddress.HighPart = 0;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Memory can reside anywhere
@@ -274,8 +245,9 @@ Return Value:
     }
 
     allocationSize = Pages * PAGE_SIZE;
-    page = MmAllocateContiguousMemory( allocationSize, highestAddress );
-    if (page != NULL) {
+    page = MmAllocateContiguousMemory(allocationSize, highestAddress);
+    if (page != NULL)
+    {
 
         //
         // Record that this page was allocated so that it can be freed when
@@ -283,25 +255,21 @@ Return Value:
         //
 
         pageListIndex = IdentityMap->PagesAllocated;
-        IdentityMap->PageList[ pageListIndex ] = page;
+        IdentityMap->PageList[pageListIndex] = page;
         IdentityMap->PagesAllocated++;
 
         //
         // Initialize it.
         //
 
-        RtlZeroMemory( page, allocationSize );
+        RtlZeroMemory(page, allocationSize);
     }
 
     return page;
 }
 
 BOOLEAN
-Ki386IdentityMapMakeValid(
-    IN OUT PIDENTITY_MAP IdentityMap,
-    IN     PHARDWARE_PTE PageTableEntry,
-    OUT    PVOID *Page OPTIONAL
-    )
+Ki386IdentityMapMakeValid(IN OUT PIDENTITY_MAP IdentityMap, IN PHARDWARE_PTE PageTableEntry, OUT PVOID *Page OPTIONAL)
 /*++
 
     If the page table has the valid bit set, this function merely returns
@@ -332,7 +300,8 @@ Return Value:
 {
     PVOID page;
 
-    if (PageTableEntry->Valid != 0) {
+    if (PageTableEntry->Valid != 0)
+    {
 
         //
         // If it already is present, there is nothing to do except record
@@ -340,15 +309,17 @@ Return Value:
         //
 
         page = (PVOID)((ULONG)(PageTableEntry->PageFrameNumber << PAGE_SHIFT));
-
-    } else {
+    }
+    else
+    {
 
         //
         // The page table entry is not valid.  Allocate a new page table.
         //
 
-        page = Ki386AllocateContiguousMemory( IdentityMap, 1, FALSE );
-        if (page == NULL) {
+        page = Ki386AllocateContiguousMemory(IdentityMap, 1, FALSE);
+        if (page == NULL)
+        {
             return FALSE;
         }
 
@@ -365,7 +336,8 @@ Return Value:
         PageTableEntry->Valid = 1;
     }
 
-    if (ARGUMENT_PRESENT( Page )) {
+    if (ARGUMENT_PRESENT(Page))
+    {
         *Page = page;
     }
 
@@ -373,11 +345,7 @@ Return Value:
 }
 
 BOOLEAN
-Ki386MapAddress(
-    IN OUT PIDENTITY_MAP IdentityMap,
-    IN     ULONG Va,
-    IN     PHYSICAL_ADDRESS PhysicalAddress
-    )
+Ki386MapAddress(IN OUT PIDENTITY_MAP IdentityMap, IN ULONG Va, IN PHYSICAL_ADDRESS PhysicalAddress)
 
 /*++
 
@@ -410,15 +378,17 @@ Return Value:
     PHARDWARE_PTE pageDirectoryPointerTableEntry;
 #endif
 
-    if (IdentityMap->TopLevelDirectory == NULL) {
+    if (IdentityMap->TopLevelDirectory == NULL)
+    {
 
         //
         // Allocate a top-level directory structure, either a page directory
         // or a page directory pointer table.
         //
 
-        table = Ki386AllocateContiguousMemory( IdentityMap, 1, TRUE );
-        if (table == FALSE) {
+        table = Ki386AllocateContiguousMemory(IdentityMap, 1, TRUE);
+        if (table == FALSE)
+        {
             return FALSE;
         }
 
@@ -427,14 +397,13 @@ Return Value:
 
 #if defined(_X86PAE_)
 
-    index = KiGetPpeIndex( Va );
+    index = KiGetPpeIndex(Va);
     pageDirectoryPointerTable = IdentityMap->TopLevelDirectory;
-    pageDirectoryPointerTableEntry = &pageDirectoryPointerTable[ index ];
+    pageDirectoryPointerTableEntry = &pageDirectoryPointerTable[index];
 
-    result = Ki386IdentityMapMakeValid( IdentityMap,
-                                        pageDirectoryPointerTableEntry,
-                                        &pageDirectory );
-    if (result == FALSE) {
+    result = Ki386IdentityMapMakeValid(IdentityMap, pageDirectoryPointerTableEntry, &pageDirectory);
+    if (result == FALSE)
+    {
         return FALSE;
     }
 
@@ -450,12 +419,11 @@ Return Value:
     // entry valid and writeable.
     //
 
-    index = KiGetPdeIndex( Va );
-    pageDirectoryEntry = &pageDirectory[ index ];
-    result = Ki386IdentityMapMakeValid( IdentityMap,
-                                        pageDirectoryEntry,
-                                        &pageTable );
-    if (result == FALSE) {
+    index = KiGetPdeIndex(Va);
+    pageDirectoryEntry = &pageDirectory[index];
+    result = Ki386IdentityMapMakeValid(IdentityMap, pageDirectoryEntry, &pageTable);
+    if (result == FALSE)
+    {
         return FALSE;
     }
     pageDirectoryEntry->Write = 1;
@@ -464,8 +432,8 @@ Return Value:
     // Get a pointer to the appropriate page table entry and fill it in.
     //
 
-    index = KiGetPteIndex( Va );
-    pageTableEntry = &pageTable[ index ];
+    index = KiGetPteIndex(Va);
+    pageTableEntry = &pageTable[index];
 
 #if defined(_X86PAE_)
     pageTableEntry->PageFrameNumber = PhysicalAddress.QuadPart >> PAGE_SHIFT;
@@ -478,9 +446,7 @@ Return Value:
 }
 
 PVOID
-Ki386ConvertPte(
-    IN OUT PHARDWARE_PTE Pte
-    )
+Ki386ConvertPte(IN OUT PHARDWARE_PTE Pte)
 /*++
 
     Converts the virtual frame number in a PTE to a physical frame number.
@@ -499,7 +465,7 @@ Return Value:
     PHYSICAL_ADDRESS physicalAddress;
 
     va = (PVOID)(Pte->PageFrameNumber << PAGE_SHIFT);
-    physicalAddress = MmGetPhysicalAddress( va );
+    physicalAddress = MmGetPhysicalAddress(va);
 
 #if defined(_X86PAE_)
     Pte->PageFrameNumber = physicalAddress.QuadPart >> PAGE_SHIFT;
@@ -511,15 +477,10 @@ Return Value:
 }
 
 PHYSICAL_ADDRESS
-Ki386BuildIdentityBuffer(
-    IN OUT PIDENTITY_MAP IdentityMap,
-    IN     PVOID StartVa,
-    IN     ULONG Length,
-    OUT    PULONG PagesToMap
-    )
+Ki386BuildIdentityBuffer(IN OUT PIDENTITY_MAP IdentityMap, IN PVOID StartVa, IN ULONG Length, OUT PULONG PagesToMap)
 {
 
-/*++
+    /*++
 
     This function checks to see if the physical memory backing a virtual
     buffer is physically contiguous and lies completely below 4G.
@@ -556,9 +517,9 @@ Arguments:
     // address of the start of the buffer.
     //
 
-    pagesToMap = ADDRESS_AND_SIZE_TO_SPAN_PAGES( StartVa, Length );
+    pagesToMap = ADDRESS_AND_SIZE_TO_SPAN_PAGES(StartVa, Length);
     nextVirtualAddress = StartVa;
-    firstPhysicalAddress = MmGetPhysicalAddress( StartVa );
+    firstPhysicalAddress = MmGetPhysicalAddress(StartVa);
     nextPhysicalAddress = firstPhysicalAddress;
 
     //
@@ -566,10 +527,12 @@ Arguments:
     //
 
     pagesRemaining = pagesToMap;
-    while (TRUE) {
+    while (TRUE)
+    {
 
-        physicalAddress = MmGetPhysicalAddress( nextVirtualAddress );
-        if (physicalAddress.QuadPart != nextPhysicalAddress.QuadPart) {
+        physicalAddress = MmGetPhysicalAddress(nextVirtualAddress);
+        if (physicalAddress.QuadPart != nextPhysicalAddress.QuadPart)
+        {
 
             //
             // The buffer is not physically contiguous.
@@ -578,7 +541,8 @@ Arguments:
             break;
         }
 
-        if (physicalAddress.HighPart != 0) {
+        if (physicalAddress.HighPart != 0)
+        {
 
             //
             // The buffer does not lie entirely below 4G
@@ -588,7 +552,8 @@ Arguments:
         }
 
         pagesRemaining -= 1;
-        if (pagesRemaining == 0) {
+        if (pagesRemaining == 0)
+        {
 
             //
             // All of the pages in the buffer have been examined, and have
@@ -609,10 +574,9 @@ Arguments:
     // copied to a buffer that does.
     //
 
-    identityBuffer = Ki386AllocateContiguousMemory( IdentityMap,
-                                                    pagesToMap,
-                                                    TRUE );
-    if (identityBuffer == 0) {
+    identityBuffer = Ki386AllocateContiguousMemory(IdentityMap, pagesToMap, TRUE);
+    if (identityBuffer == 0)
+    {
 
         //
         // A contiguous region of the appropriate size could not be located
@@ -620,18 +584,19 @@ Arguments:
         //
 
         physicalAddress.QuadPart = 0;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Got an appropriate physical buffer, now copy in the data
         //
 
-        pageOffset = (ULONG)StartVa & (PAGE_SIZE-1);
+        pageOffset = (ULONG)StartVa & (PAGE_SIZE - 1);
         identityBuffer += pageOffset;
 
-        RtlCopyMemory( identityBuffer, StartVa, Length );
-        physicalAddress = MmGetPhysicalAddress( identityBuffer );
+        RtlCopyMemory(identityBuffer, StartVa, Length);
+        physicalAddress = MmGetPhysicalAddress(identityBuffer);
 
         *PagesToMap = pagesToMap;
     }
@@ -640,13 +605,9 @@ Arguments:
 }
 
 
-
-VOID
-Ki386ClearIdentityMap(
-    IN PIDENTITY_MAP IdentityMap
-    )
+VOID Ki386ClearIdentityMap(IN PIDENTITY_MAP IdentityMap)
 {
-/*++
+    /*++
 
     This function just frees the page directory and page tables created in
     Ki386CreateIdentityMap().
@@ -661,25 +622,22 @@ Ki386ClearIdentityMap(
     // MmAllocateContiguousMemory().  Walk the array, freeing each page.
     //
 
-    for (index = 0; index < IdentityMap->PagesAllocated; index++) {
+    for (index = 0; index < IdentityMap->PagesAllocated; index++)
+    {
 
-        page = IdentityMap->PageList[ index ];
-        MmFreeContiguousMemory( page );
+        page = IdentityMap->PageList[index];
+        MmFreeContiguousMemory(page);
     }
 }
 
-VOID
-Ki386EnableTargetLargePage(
-    IN PIDENTITY_MAP IdentityMap
-    )
+VOID Ki386EnableTargetLargePage(IN PIDENTITY_MAP IdentityMap)
 {
-/*++
+    /*++
 
     This function just passes info on to the assembly routine
     Ki386EnableLargePage().
 
 --*/
 
-    Ki386EnableCurrentLargePage(IdentityMap->IdentityAddr,
-                                IdentityMap->IdentityCR3);
+    Ki386EnableCurrentLargePage(IdentityMap->IdentityAddr, IdentityMap->IdentityCR3);
 }

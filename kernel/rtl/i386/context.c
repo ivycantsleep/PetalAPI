@@ -27,19 +27,13 @@ Revision History:
 #include "ntrtlp.h"
 
 #if defined(ALLOC_PRAGMA) && defined(NTOS_KERNEL_RUNTIME)
-#pragma alloc_text(PAGE,RtlInitializeContext)
-#pragma alloc_text(PAGE,RtlRemoteCall)
+#pragma alloc_text(PAGE, RtlInitializeContext)
+#pragma alloc_text(PAGE, RtlRemoteCall)
 #endif
 
 
-VOID
-RtlInitializeContext(
-    IN HANDLE Process,
-    OUT PCONTEXT Context,
-    IN PVOID Parameter OPTIONAL,
-    IN PVOID InitialPc OPTIONAL,
-    IN PVOID InitialSp OPTIONAL
-    )
+VOID RtlInitializeContext(IN HANDLE Process, OUT PCONTEXT Context, IN PVOID Parameter OPTIONAL,
+                          IN PVOID InitialPc OPTIONAL, IN PVOID InitialSp OPTIONAL)
 
 /*++
 
@@ -84,21 +78,21 @@ Return Value:
     Context->SegSs = KGDT_R3_DATA;
     Context->SegCs = KGDT_R3_CODE;
 
-    Context->EFlags = 0x200L;	    // force interrupts on, clear all else.
+    Context->EFlags = 0x200L; // force interrupts on, clear all else.
 
     //
     // Even though these are optional, they are used as is, since NULL
     // is what these would have been initialized to anyway
     //
 
-    Context->Esp = (ULONG) InitialSp;
-    Context->Eip = (ULONG) InitialPc;
+    Context->Esp = (ULONG)InitialSp;
+    Context->Eip = (ULONG)InitialPc;
 
     //
     // add code to check alignment and raise exception...
     //
 
-    Context->ContextFlags = CONTEXT_CONTROL|CONTEXT_INTEGER|CONTEXT_SEGMENTS;
+    Context->ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS;
 
     //
     // Set the initial context of the thread in a machine specific way.
@@ -106,28 +100,14 @@ Return Value:
     //
 
     Context->Esp -= sizeof(Parameter);
-    ZwWriteVirtualMemory(Process,
-			 (PVOID)Context->Esp,
-			 (PVOID)&Parameter,
-			 sizeof(Parameter),
-			 NULL);
+    ZwWriteVirtualMemory(Process, (PVOID)Context->Esp, (PVOID)&Parameter, sizeof(Parameter), NULL);
     Context->Esp -= sizeof(Parameter); // Reserve room for ret address
-
-
 }
 
 
-
 NTSTATUS
-RtlRemoteCall(
-    HANDLE Process,
-    HANDLE Thread,
-    PVOID CallSite,
-    ULONG ArgumentCount,
-    PULONG Arguments,
-    BOOLEAN PassContext,
-    BOOLEAN AlreadySuspended
-    )
+RtlRemoteCall(HANDLE Process, HANDLE Thread, PVOID CallSite, ULONG ArgumentCount, PULONG Arguments, BOOLEAN PassContext,
+              BOOLEAN AlreadySuspended)
 
 /*++
 
@@ -176,12 +156,14 @@ Return Value:
     //
     // If necessary, suspend the guy before with we mess with his stack.
     //
-    if (!AlreadySuspended) {
-        Status = NtSuspendThread( Thread, NULL );
-        if (!NT_SUCCESS( Status )) {
-            return( Status );
-            }
+    if (!AlreadySuspended)
+    {
+        Status = NtSuspendThread(Thread, NULL);
+        if (!NT_SUCCESS(Status))
+        {
+            return (Status);
         }
+    }
 
 
     //
@@ -189,13 +171,15 @@ Return Value:
     //
 
     Context.ContextFlags = CONTEXT_FULL;
-    Status = NtGetContextThread( Thread, &Context );
-    if (!NT_SUCCESS( Status )) {
-        if (!AlreadySuspended) {
-            NtResumeThread( Thread, NULL );
-            }
-        return( Status );
+    Status = NtGetContextThread(Thread, &Context);
+    if (!NT_SUCCESS(Status))
+    {
+        if (!AlreadySuspended)
+        {
+            NtResumeThread(Thread, NULL);
         }
+        return (Status);
+    }
 
 
     //
@@ -207,46 +191,43 @@ Return Value:
     //	Put Context Record on stack first, so it is above other args.
     //
     NewSp = Context.Esp;
-    if (PassContext) {
-	NewSp -= sizeof( CONTEXT );
-	Status = NtWriteVirtualMemory( Process,
-				       (PVOID)NewSp,
-				       &Context,
-				       sizeof( CONTEXT ),
-				       NULL
-				    );
-	if (!NT_SUCCESS( Status )) {
-            if (!AlreadySuspended) {
-                NtResumeThread( Thread, NULL );
-                }
-	    return( Status );
-	    }
-        ArgumentsCopy[0] = NewSp;   // pass pointer to context
-        RtlCopyMemory(&(ArgumentsCopy[1]),Arguments,ArgumentCount*sizeof( ULONG ));
-        ArgumentCount++;
-	}
-    else {
-        RtlCopyMemory(ArgumentsCopy,Arguments,ArgumentCount*sizeof( ULONG ));
+    if (PassContext)
+    {
+        NewSp -= sizeof(CONTEXT);
+        Status = NtWriteVirtualMemory(Process, (PVOID)NewSp, &Context, sizeof(CONTEXT), NULL);
+        if (!NT_SUCCESS(Status))
+        {
+            if (!AlreadySuspended)
+            {
+                NtResumeThread(Thread, NULL);
+            }
+            return (Status);
         }
+        ArgumentsCopy[0] = NewSp; // pass pointer to context
+        RtlCopyMemory(&(ArgumentsCopy[1]), Arguments, ArgumentCount * sizeof(ULONG));
+        ArgumentCount++;
+    }
+    else
+    {
+        RtlCopyMemory(ArgumentsCopy, Arguments, ArgumentCount * sizeof(ULONG));
+    }
 
     //
     //	Copy the arguments onto the target stack
     //
-    if (ArgumentCount) {
-        NewSp -= ArgumentCount * sizeof( ULONG );
-        Status = NtWriteVirtualMemory( Process,
-                                       (PVOID)NewSp,
-                                       ArgumentsCopy,
-                                       ArgumentCount * sizeof( ULONG ),
-                                       NULL
-                                     );
-        if (!NT_SUCCESS( Status )) {
-            if (!AlreadySuspended) {
-                NtResumeThread( Thread, NULL );
-                }
-            return( Status );
+    if (ArgumentCount)
+    {
+        NewSp -= ArgumentCount * sizeof(ULONG);
+        Status = NtWriteVirtualMemory(Process, (PVOID)NewSp, ArgumentsCopy, ArgumentCount * sizeof(ULONG), NULL);
+        if (!NT_SUCCESS(Status))
+        {
+            if (!AlreadySuspended)
+            {
+                NtResumeThread(Thread, NULL);
             }
+            return (Status);
         }
+    }
 
     //
     // Set the address of the target code into Eip, the new target stack
@@ -254,10 +235,11 @@ Return Value:
     //
     Context.Esp = NewSp;
     Context.Eip = (ULONG)CallSite;
-    Status = NtSetContextThread( Thread, &Context );
-    if (!AlreadySuspended) {
-        NtResumeThread( Thread, NULL );
-        }
+    Status = NtSetContextThread(Thread, &Context);
+    if (!AlreadySuspended)
+    {
+        NtResumeThread(Thread, NULL);
+    }
 
-    return( Status );
+    return (Status);
 }

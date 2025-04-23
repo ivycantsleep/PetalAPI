@@ -9,7 +9,7 @@
 
 #include "pch.h"
 
-#ifdef  LOCKABLE_PRAGMA
+#ifdef LOCKABLE_PRAGMA
 #pragma ACPI_LOCKABLE_DATA
 #pragma ACPI_LOCKABLE_CODE
 #endif
@@ -32,8 +32,7 @@ VOID LOCAL AsyncCallBack(PCTXT pctxt, NTSTATUS rcCtxt)
     POBJDATA pdataCallBack;
     PVOID pvContext;
 
-    rcCtxt = ((rcCtxt == STATUS_SUCCESS) || (rcCtxt == AMLISTA_CONTINUE))?
-             rcCtxt: NTERR(rcCtxt);
+    rcCtxt = ((rcCtxt == STATUS_SUCCESS) || (rcCtxt == AMLISTA_CONTINUE)) ? rcCtxt : NTERR(rcCtxt);
 
     if (pctxt->pnctxt != NULL)
     {
@@ -54,14 +53,13 @@ VOID LOCAL AsyncCallBack(PCTXT pctxt, NTSTATUS rcCtxt)
         pvContext = pctxt->pvContext;
     }
 
-    ENTER(2, ("AsyncCallBack(pctxt=%x,rc=%x,Obj=%s,pdataCallBack=%x,pvContext=%x)\n",
-              pctxt, rcCtxt, GetObjectPath(pnsObj), pdataCallBack, pvContext));
+    ENTER(2, ("AsyncCallBack(pctxt=%x,rc=%x,Obj=%s,pdataCallBack=%x,pvContext=%x)\n", pctxt, rcCtxt,
+              GetObjectPath(pnsObj), pdataCallBack, pvContext));
 
-    
+
     if (pfnAsyncCallBack == (PFNACB)EvalMethodComplete)
     {
-        LOGSCHEDEVENT('DONE', (ULONG_PTR)pnsObj, (ULONG_PTR)rcCtxt,
-                      (ULONG_PTR)pvContext);
+        LOGSCHEDEVENT('DONE', (ULONG_PTR)pnsObj, (ULONG_PTR)rcCtxt, (ULONG_PTR)pvContext);
         EvalMethodComplete(pctxt, rcCtxt, (PSYNCEVENT)pvContext);
     }
     else if (pfnAsyncCallBack != NULL)
@@ -77,14 +75,13 @@ VOID LOCAL AsyncCallBack(PCTXT pctxt, NTSTATUS rcCtxt)
         }
         else
         {
-            LOGSCHEDEVENT('ASCB', (ULONG_PTR)pnsObj, (ULONG_PTR)rcCtxt,
-                          (ULONG_PTR)pvContext);
+            LOGSCHEDEVENT('ASCB', (ULONG_PTR)pnsObj, (ULONG_PTR)rcCtxt, (ULONG_PTR)pvContext);
             pfnAsyncCallBack(pnsObj, rcCtxt, pdataCallBack, pvContext);
         }
     }
-    
+
     EXIT(2, ("AsyncCallBack!\n"));
-}       //AsyncCallBack
+} //AsyncCallBack
 
 /***LP  EvalMethodComplete - eval completion callback
  *
@@ -107,7 +104,7 @@ VOID EXPORT EvalMethodComplete(PCTXT pctxt, NTSTATUS rc, PSYNCEVENT pse)
     KeSetEvent(&pse->Event, 0, FALSE);
 
     EXIT(2, ("EvalMethodComplete!\n"));
-}       //EvalMethodComplete
+} //EvalMethodComplete
 
 /***LP  SyncEvalObject - evaluate an object synchronously
  *
@@ -123,15 +120,14 @@ VOID EXPORT EvalMethodComplete(PCTXT pctxt, NTSTATUS rc, PSYNCEVENT pse)
  *      returns AMLIERR_ code
  */
 
-NTSTATUS LOCAL SyncEvalObject(PNSOBJ pns, POBJDATA pdataResult, int icArgs,
-                              POBJDATA pdataArgs)
+NTSTATUS LOCAL SyncEvalObject(PNSOBJ pns, POBJDATA pdataResult, int icArgs, POBJDATA pdataArgs)
 {
     TRACENAME("SYNCEVALOBJECT")
     NTSTATUS rc = STATUS_SUCCESS;
     SYNCEVENT seEvalObj;
 
-    ENTER(2, ("SyncEvalObject(Obj=%s,pdataResult=%x,icArgs=%d,pdataArgs=%x)\n",
-              GetObjectPath(pns), pdataResult, icArgs, pdataArgs));
+    ENTER(2, ("SyncEvalObject(Obj=%s,pdataResult=%x,icArgs=%d,pdataArgs=%x)\n", GetObjectPath(pns), pdataResult, icArgs,
+              pdataArgs));
 
     KeInitializeEvent(&seEvalObj.Event, SynchronizationEvent, FALSE);
 
@@ -139,40 +135,33 @@ NTSTATUS LOCAL SyncEvalObject(PNSOBJ pns, POBJDATA pdataResult, int icArgs,
     {
         if (!(gReadyQueue.pctxtCurrent->dwfCtxt & CTXTF_ASYNC_EVAL))
         {
-            LOGSCHEDEVENT('NSYN', (ULONG_PTR)KeGetCurrentIrql(), (ULONG_PTR)pns,
-                          0);
+            LOGSCHEDEVENT('NSYN', (ULONG_PTR)KeGetCurrentIrql(), (ULONG_PTR)pns, 0);
             //
             // Somebody is re-entering with the active context thread, so we
             // must nest using the existing active context.
             //
-            if ((rc = NestAsyncEvalObject(pns, pdataResult, icArgs, pdataArgs,
-                                          (PFNACB)EvalMethodComplete,
-                                          &seEvalObj, FALSE)) ==
-                AMLISTA_PENDING)
+            if ((rc = NestAsyncEvalObject(pns, pdataResult, icArgs, pdataArgs, (PFNACB)EvalMethodComplete, &seEvalObj,
+                                          FALSE)) == AMLISTA_PENDING)
             {
                 rc = RestartContext(gReadyQueue.pctxtCurrent, FALSE);
             }
         }
         else
         {
-            rc = AMLI_LOGERR(AMLIERR_FATAL,
-                             ("SyncEvalObject: cannot nest a SyncEval on an async. context"));
+            rc = AMLI_LOGERR(AMLIERR_FATAL, ("SyncEvalObject: cannot nest a SyncEval on an async. context"));
         }
     }
     else
     {
         LOGSCHEDEVENT('SYNC', (ULONG_PTR)KeGetCurrentIrql(), (ULONG_PTR)pns, 0);
-        rc = AsyncEvalObject(pns, pdataResult, icArgs, pdataArgs,
-                             (PFNACB)EvalMethodComplete, &seEvalObj, FALSE);
+        rc = AsyncEvalObject(pns, pdataResult, icArgs, pdataArgs, (PFNACB)EvalMethodComplete, &seEvalObj, FALSE);
     }
 
     if (KeGetCurrentIrql() < DISPATCH_LEVEL)
     {
         while (rc == AMLISTA_PENDING)
         {
-            if ((rc = KeWaitForSingleObject(&seEvalObj.Event, Executive,
-                                            KernelMode, FALSE,
-                                            (PLARGE_INTEGER)NULL)) ==
+            if ((rc = KeWaitForSingleObject(&seEvalObj.Event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL)) ==
                 STATUS_SUCCESS)
             {
                 if (seEvalObj.rcCompleted == AMLISTA_CONTINUE)
@@ -186,22 +175,19 @@ NTSTATUS LOCAL SyncEvalObject(PNSOBJ pns, POBJDATA pdataResult, int icArgs,
             }
             else
             {
-                rc = AMLI_LOGERR(AMLIERR_FATAL,
-                                 ("SyncEvalObject: object synchronization failed (rc=%x)",
-                                  rc));
+                rc = AMLI_LOGERR(AMLIERR_FATAL, ("SyncEvalObject: object synchronization failed (rc=%x)", rc));
             }
         }
     }
     else if (rc == AMLISTA_PENDING)
     {
         rc = AMLI_LOGERR(AMLIERR_FATAL,
-                         ("SyncEvalObject: object %s being evaluated at IRQL >= DISPATCH_LEVEL",
-                          GetObjectPath(pns)));
+                         ("SyncEvalObject: object %s being evaluated at IRQL >= DISPATCH_LEVEL", GetObjectPath(pns)));
     }
 
-        EXIT(2, ("SyncEvalObject=%x\n", rc));
+    EXIT(2, ("SyncEvalObject=%x\n", rc));
     return rc;
-}       //SyncEvalObject
+} //SyncEvalObject
 
 /***LP  AsyncEvalObject - evaluate an object asynchronously
  *
@@ -220,17 +206,15 @@ NTSTATUS LOCAL SyncEvalObject(PNSOBJ pns, POBJDATA pdataResult, int icArgs,
  *      returns AMLIERR_ code
  */
 
-NTSTATUS LOCAL AsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult, int icArgs,
-                               POBJDATA pdataArgs, PFNACB pfnAsyncCallBack,
-                               PVOID pvContext, BOOLEAN fAsync)
+NTSTATUS LOCAL AsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult, int icArgs, POBJDATA pdataArgs,
+                               PFNACB pfnAsyncCallBack, PVOID pvContext, BOOLEAN fAsync)
 {
     TRACENAME("ASYNCEVALOBJECT")
     NTSTATUS rc = STATUS_SUCCESS;
     PCTXT pctxt = NULL;
 
     ENTER(2, ("AsyncEvalObject(Obj=%s,pdataResult=%x,icArgs=%d,pdataArgs=%x,pfnAysnc=%x,pvContext=%x,fAsync=%x)\n",
-              GetObjectPath(pns), pdataResult, icArgs, pdataArgs,
-              pfnAsyncCallBack, pvContext, fAsync));
+              GetObjectPath(pns), pdataResult, icArgs, pdataArgs, pfnAsyncCallBack, pvContext, fAsync));
 
     LOGSCHEDEVENT('ASYN', (ULONG_PTR)KeGetCurrentIrql(), (ULONG_PTR)pns, 0);
     if ((rc = NewContext(&pctxt)) == STATUS_SUCCESS)
@@ -242,13 +226,9 @@ NTSTATUS LOCAL AsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult, int icArgs,
         pctxt->pfnAsyncCallBack = pfnAsyncCallBack;
         pctxt->pdataCallBack = pdataResult;
         pctxt->pvContext = pvContext;
-	
-	ACPIWMILOGEVENT((1,
-                    EVENT_TRACE_TYPE_START,
-                    GUID_List[AMLI_LOG_GUID],
-                    "Object = %s", 
-                    GetObjectPath(pctxt->pnsObj)
-                   ));
+
+        ACPIWMILOGEVENT(
+            (1, EVENT_TRACE_TYPE_START, GUID_List[AMLI_LOG_GUID], "Object = %s", GetObjectPath(pctxt->pnsObj)));
 
         if (fAsync)
         {
@@ -261,44 +241,38 @@ NTSTATUS LOCAL AsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult, int icArgs,
             {
                 PCALL pcall;
 
-                ASSERT(((PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd)->dwSig ==
-                       SIG_CALL);
+                ASSERT(((PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd)->dwSig == SIG_CALL);
 
                 pcall = (PCALL)pctxt->LocalHeap.pbHeapEnd;
 
                 if (icArgs != pcall->icArgs)
                 {
                     rc = AMLI_LOGERR(AMLIERR_INCORRECT_NUMARG,
-                                     ("AsyncEvalObject: incorrect number of arguments (NumArg=%d,Expected=%d)",
-                                      icArgs, pcall->icArgs));
+                                     ("AsyncEvalObject: incorrect number of arguments (NumArg=%d,Expected=%d)", icArgs,
+                                      pcall->icArgs));
                 }
                 else
                 {
-                  #ifdef DEBUGGER
-                    if (gDebugger.dwfDebugger &
-                        (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+#ifdef DEBUGGER
+                    if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
                     {
-                        PRINTF("\n" MODNAME ": %08x: %s(",
-                               KeGetCurrentThread(), GetObjectPath(pns));
+                        PRINTF("\n" MODNAME ": %08x: %s(", KeGetCurrentThread(), GetObjectPath(pns));
                     }
-                  #endif
+#endif
                     //
                     // Copying arguments to the call frame manually will skip
                     // the argument parsing stage.
                     //
                     for (pcall->iArg = 0; pcall->iArg < icArgs; ++pcall->iArg)
                     {
-                        if ((rc = DupObjData(pctxt->pheapCurrent,
-                                             &pcall->pdataArgs[pcall->iArg],
-                                             &pdataArgs[pcall->iArg])) !=
-                            STATUS_SUCCESS)
+                        if ((rc = DupObjData(pctxt->pheapCurrent, &pcall->pdataArgs[pcall->iArg],
+                                             &pdataArgs[pcall->iArg])) != STATUS_SUCCESS)
                         {
                             break;
                         }
 
-                      #ifdef DEBUGGER
-                        if (gDebugger.dwfDebugger &
-                            (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+#ifdef DEBUGGER
+                        if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
                         {
                             PrintObject(&pdataArgs[pcall->iArg]);
                             if (pcall->iArg + 1 < icArgs)
@@ -306,18 +280,17 @@ NTSTATUS LOCAL AsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult, int icArgs,
                                 PRINTF(",");
                             }
                         }
-                      #endif
+#endif
                     }
 
                     if (rc == STATUS_SUCCESS)
                     {
-                      #ifdef DEBUGGER
-                        if (gDebugger.dwfDebugger &
-                            (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+#ifdef DEBUGGER
+                        if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
                         {
                             PRINTF(")\n");
                         }
-                      #endif
+#endif
                         //
                         // Skip the argument parsing stage.
                         //
@@ -327,10 +300,8 @@ NTSTATUS LOCAL AsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult, int icArgs,
                 }
             }
         }
-        else if (((rc = PushPost(pctxt, ProcessEvalObj, (ULONG_PTR)pns, 0,
-                                 &pctxt->Result)) == STATUS_SUCCESS) &&
-                 ((rc = ReadObject(pctxt, &pns->ObjData, &pctxt->Result)) !=
-                  AMLISTA_PENDING))
+        else if (((rc = PushPost(pctxt, ProcessEvalObj, (ULONG_PTR)pns, 0, &pctxt->Result)) == STATUS_SUCCESS) &&
+                 ((rc = ReadObject(pctxt, &pns->ObjData, &pctxt->Result)) != AMLISTA_PENDING))
         {
             fQueueContext = TRUE;
         }
@@ -351,7 +322,7 @@ NTSTATUS LOCAL AsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult, int icArgs,
 
     EXIT(2, ("AsyncEvalObject=%x\n", rc));
     return rc;
-}       //AsyncEvalObject
+} //AsyncEvalObject
 
 /***LP  NestAsyncEvalObject - evaluate an object asynchronously using the
  *                            current context
@@ -370,18 +341,15 @@ NTSTATUS LOCAL AsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult, int icArgs,
  *  EXIT-FAILURE
  *      returns AMLIERR_ code
  */
-NTSTATUS LOCAL NestAsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult,
-                                   int icArgs, POBJDATA pdataArgs,
-                                   PFNACB pfnAsyncCallBack, PVOID pvContext,
-                                   BOOLEAN fAsync)
+NTSTATUS LOCAL NestAsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult, int icArgs, POBJDATA pdataArgs,
+                                   PFNACB pfnAsyncCallBack, PVOID pvContext, BOOLEAN fAsync)
 {
     TRACENAME("NESTASYNCEVALOBJECT")
     NTSTATUS rc = STATUS_SUCCESS;
     PCTXT pctxt = NULL;
 
     ENTER(2, ("NestAsyncEvalObject(Obj=%s,pdataResult=%x,icArgs=%d,pdataArgs=%x,pfnAysnc=%x,pvContext=%x,fAsync=%x)\n",
-              GetObjectPath(pns), pdataResult, icArgs, pdataArgs,
-              pfnAsyncCallBack, pvContext, fAsync));
+              GetObjectPath(pns), pdataResult, icArgs, pdataArgs, pfnAsyncCallBack, pvContext, fAsync));
 
     //
     // Context must be the current one in progress.
@@ -389,15 +357,12 @@ NTSTATUS LOCAL NestAsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult,
     ASSERT(gReadyQueue.pkthCurrent == KeGetCurrentThread());
     pctxt = gReadyQueue.pctxtCurrent;
 
-    LOGSCHEDEVENT('NASY', (ULONG_PTR)pns, (ULONG_PTR)pfnAsyncCallBack,
-                  (ULONG_PTR)pctxt);
-    if ((pctxt != NULL) &&
-        (gReadyQueue.pkthCurrent == KeGetCurrentThread()))
+    LOGSCHEDEVENT('NASY', (ULONG_PTR)pns, (ULONG_PTR)pfnAsyncCallBack, (ULONG_PTR)pctxt);
+    if ((pctxt != NULL) && (gReadyQueue.pkthCurrent == KeGetCurrentThread()))
     {
-        PNESTEDCTXT  pnctxt;
+        PNESTEDCTXT pnctxt;
 
-        rc = PushFrame(pctxt, SIG_NESTEDCTXT, sizeof(NESTEDCTXT),
-                       ParseNestedContext, &pnctxt);
+        rc = PushFrame(pctxt, SIG_NESTEDCTXT, sizeof(NESTEDCTXT), ParseNestedContext, &pnctxt);
 
         if (rc == STATUS_SUCCESS)
         {
@@ -422,13 +387,11 @@ NTSTATUS LOCAL NestAsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult,
 
             if (pns->ObjData.dwDataType == OBJTYPE_METHOD)
             {
-                if ((rc = PushCall(pctxt, pns, &pnctxt->Result)) ==
-                    STATUS_SUCCESS)
+                if ((rc = PushCall(pctxt, pns, &pnctxt->Result)) == STATUS_SUCCESS)
                 {
                     PCALL pcall;
 
-                    ASSERT(((PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd)->dwSig ==
-                           SIG_CALL);
+                    ASSERT(((PFRAMEHDR)pctxt->LocalHeap.pbHeapEnd)->dwSig == SIG_CALL);
 
                     pcall = (PCALL)pctxt->LocalHeap.pbHeapEnd;
 
@@ -440,32 +403,26 @@ NTSTATUS LOCAL NestAsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult,
                     }
                     else
                     {
-                      #ifdef DEBUGGER
-                        if (gDebugger.dwfDebugger &
-                            (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+#ifdef DEBUGGER
+                        if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
                         {
                             PRINTF("\n" MODNAME ": %s(", GetObjectPath(pns));
                         }
-                      #endif
+#endif
                         //
                         // Copying arguments to the call frame manually will
                         // skip the argument parsing stage.
                         //
-                        for (pcall->iArg = 0;
-                             pcall->iArg < icArgs;
-                             ++pcall->iArg)
+                        for (pcall->iArg = 0; pcall->iArg < icArgs; ++pcall->iArg)
                         {
-                            if ((rc = DupObjData(pctxt->pheapCurrent,
-                                                 &pcall->pdataArgs[pcall->iArg],
-                                                 &pdataArgs[pcall->iArg])) !=
-                                STATUS_SUCCESS)
+                            if ((rc = DupObjData(pctxt->pheapCurrent, &pcall->pdataArgs[pcall->iArg],
+                                                 &pdataArgs[pcall->iArg])) != STATUS_SUCCESS)
                             {
                                 break;
                             }
 
-                          #ifdef DEBUGGER
-                            if (gDebugger.dwfDebugger &
-                                (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
+#ifdef DEBUGGER
+                            if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
                             {
                                 PrintObject(&pdataArgs[pcall->iArg]);
                                 if (pcall->iArg + 1 < icArgs)
@@ -473,17 +430,17 @@ NTSTATUS LOCAL NestAsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult,
                                     PRINTF(",");
                                 }
                             }
-                          #endif
+#endif
                         }
 
                         if (rc == STATUS_SUCCESS)
                         {
-                          #ifdef DEBUGGER
+#ifdef DEBUGGER
                             if (gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES))
                             {
                                 PRINTF(")\n");
                             }
-                          #endif
+#endif
                             //
                             // Skip the argument parsing stage.
                             //
@@ -497,8 +454,7 @@ NTSTATUS LOCAL NestAsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult,
                 //
                 // Delay the evaluate the object.
                 //
-                rc = PushPost(pctxt, ProcessEvalObj, (ULONG_PTR)pns, 0,
-                              &pnctxt->Result);
+                rc = PushPost(pctxt, ProcessEvalObj, (ULONG_PTR)pns, 0, &pnctxt->Result);
 
                 if (rc == STATUS_SUCCESS)
                 {
@@ -517,14 +473,12 @@ NTSTATUS LOCAL NestAsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult,
         //
         // We cannot use the nested version --- fail the call
         //
-        rc = AMLI_LOGERR(AMLIERR_FATAL,
-                         ("NestAsyncEvalObject: pns=%08x No current context\n",
-                          pns));
+        rc = AMLI_LOGERR(AMLIERR_FATAL, ("NestAsyncEvalObject: pns=%08x No current context\n", pns));
     }
 
     EXIT(2, ("NestAsyncEvalObject=%x\n", rc));
     return rc;
-}       //NestAsyncEvalObject
+} //NestAsyncEvalObject
 
 /***LP  ProcessEvalObj - post process of EvalObj
  *
@@ -543,28 +497,25 @@ NTSTATUS LOCAL ProcessEvalObj(PCTXT pctxt, PPOST ppost, NTSTATUS rc)
 {
     TRACENAME("PROCESSEVALOBJ")
 
-    ENTER(2, ("ProcessEvalObj(pctxt=%x,pbOp=%x,ppost=%x,rc=%x)\n",
-              pctxt, pctxt->pbOp, ppost, rc));
+    ENTER(2, ("ProcessEvalObj(pctxt=%x,pbOp=%x,ppost=%x,rc=%x)\n", pctxt, pctxt->pbOp, ppost, rc));
 
     ASSERT(ppost->FrameHdr.dwSig == SIG_POST);
-  #ifdef DEBUGGER
-    if ((gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES)) &&
-        (rc == STATUS_SUCCESS))
+#ifdef DEBUGGER
+    if ((gDebugger.dwfDebugger & (DBGF_AMLTRACE_ON | DBGF_STEP_MODES)) && (rc == STATUS_SUCCESS))
     {
-        PRINTF("\n" MODNAME ": EvalObject(%s)=",
-               GetObjectPath((PNSOBJ)ppost->uipData1));
+        PRINTF("\n" MODNAME ": EvalObject(%s)=", GetObjectPath((PNSOBJ)ppost->uipData1));
         DumpObject(ppost->pdataResult, NULL, 0);
         PRINTF("\n");
     }
-  #else
+#else
     DEREF(ppost);
-  #endif
+#endif
 
     PopFrame(pctxt);
 
     EXIT(2, ("ProcessEvalObj=%x\n", rc));
     return rc;
-}       //ProcessEvalObj
+} //ProcessEvalObj
 
 /***LP  TimeoutCallback - DPC callback for Mutex/Event timeout
  *
@@ -582,8 +533,7 @@ VOID TimeoutCallback(PKDPC pkdpc, PCTXT pctxt, PVOID SysArg1, PVOID SysArg2)
 {
     TRACENAME("TIMEOUTCALLBACK")
 
-    ENTER(2, ("TimeoutCallback(pkdpc=%x,pctxt=%x,SysArg1=%x,SysArg2=%x)\n",
-              pkdpc, pctxt, SysArg1, SysArg2));
+    ENTER(2, ("TimeoutCallback(pkdpc=%x,pctxt=%x,SysArg1=%x,SysArg2=%x)\n", pkdpc, pctxt, SysArg1, SysArg2));
 
     DEREF(pkdpc);
     DEREF(SysArg1);
@@ -601,12 +551,10 @@ VOID TimeoutCallback(PKDPC pkdpc, PCTXT pctxt, PVOID SysArg1, PVOID SysArg2)
         // Remove from waiting queue.
         //
         ASSERT(pctxt->pplistCtxtQueue != NULL);
-        ListRemoveEntry(&((PCTXT)pctxt)->listQueue,
-                        ((PCTXT)pctxt)->pplistCtxtQueue);
+        ListRemoveEntry(&((PCTXT)pctxt)->listQueue, ((PCTXT)pctxt)->pplistCtxtQueue);
         pctxt->pplistCtxtQueue = NULL;
 
-        RestartContext(pctxt,
-                       (BOOLEAN)((pctxt->dwfCtxt & CTXTF_ASYNC_EVAL) == 0));
+        RestartContext(pctxt, (BOOLEAN)((pctxt->dwfCtxt & CTXTF_ASYNC_EVAL) == 0));
     }
     else if (pctxt->dwfCtxt & CTXTF_TIMER_DISPATCH)
     {
@@ -615,8 +563,7 @@ VOID TimeoutCallback(PKDPC pkdpc, PCTXT pctxt, PVOID SysArg1, PVOID SysArg2)
         // queuing was aborted, we continue the queuing here.
         //
         pctxt->dwfCtxt &= ~CTXTF_TIMER_DISPATCH;
-        RestartContext(pctxt,
-                       (BOOLEAN)((pctxt->dwfCtxt & CTXTF_ASYNC_EVAL) == 0));
+        RestartContext(pctxt, (BOOLEAN)((pctxt->dwfCtxt & CTXTF_ASYNC_EVAL) == 0));
     }
     else
     {
@@ -625,7 +572,7 @@ VOID TimeoutCallback(PKDPC pkdpc, PCTXT pctxt, PVOID SysArg1, PVOID SysArg2)
     }
 
     EXIT(2, ("TimeoutCallback!\n"));
-}       //TimeoutCallback
+} //TimeoutCallback
 
 /***LP  QueueContext - queue control method context
  *
@@ -642,8 +589,7 @@ VOID LOCAL QueueContext(PCTXT pctxt, USHORT wTimeout, PPLIST pplist)
 {
     TRACENAME("QUEUECONTEXT")
 
-    ENTER(2, ("QueueContext(pctxt=%x,Timeout=%d,pplist=%x)\n",
-              pctxt, wTimeout, pplist));
+    ENTER(2, ("QueueContext(pctxt=%x,Timeout=%d,pplist=%x)\n", pctxt, wTimeout, pplist));
 
     AcquireMutex(&gReadyQueue.mutCtxtQ);
 
@@ -652,9 +598,7 @@ VOID LOCAL QueueContext(PCTXT pctxt, USHORT wTimeout, PPLIST pplist)
     //
     ASSERT(pctxt->pplistCtxtQueue == NULL);
     ASSERT(pplist != NULL);
-    ASSERT(!(pctxt->dwfCtxt &
-             (CTXTF_TIMER_PENDING | CTXTF_TIMER_DISPATCH | CTXTF_TIMEOUT |
-              CTXTF_READY)));
+    ASSERT(!(pctxt->dwfCtxt & (CTXTF_TIMER_PENDING | CTXTF_TIMER_DISPATCH | CTXTF_TIMEOUT | CTXTF_READY)));
     ListInsertTail(&pctxt->listQueue, pplist);
     pctxt->pplistCtxtQueue = pplist;
 
@@ -663,14 +607,14 @@ VOID LOCAL QueueContext(PCTXT pctxt, USHORT wTimeout, PPLIST pplist)
         LARGE_INTEGER liTimeout;
 
         pctxt->dwfCtxt |= CTXTF_TIMER_PENDING;
-        liTimeout.QuadPart = (INT_PTR)(-10000*(INT_PTR)wTimeout);
+        liTimeout.QuadPart = (INT_PTR)(-10000 * (INT_PTR)wTimeout);
         KeSetTimer(&pctxt->Timer, liTimeout, &pctxt->Dpc);
     }
 
     ReleaseMutex(&gReadyQueue.mutCtxtQ);
 
     EXIT(2, ("QueueContext!\n"));
-}       //QueueContext
+} //QueueContext
 
 /***LP  DequeueAndReadyContext - dequeue context and insert to ready queue
  *
@@ -705,7 +649,7 @@ PCTXT LOCAL DequeueAndReadyContext(PPLIST pplist)
 
     EXIT(2, ("DequeueAndReadyContext=%x\n", pctxt));
     return pctxt;
-}       //DequeueAndReadyContext
+} //DequeueAndReadyContext
 
 /***LP  AcquireASLMutex - acquire ASL mutex
  *
@@ -725,8 +669,7 @@ NTSTATUS LOCAL AcquireASLMutex(PCTXT pctxt, PMUTEXOBJ pm, USHORT wTimeout)
     TRACENAME("ACQUIREASLMUTEX")
     NTSTATUS rc = STATUS_SUCCESS;
 
-    ENTER(2, ("AcquireASLMutex(pctxt=%x,pm=%x,Timeout=%d)\n",
-              pctxt, pm, wTimeout));
+    ENTER(2, ("AcquireASLMutex(pctxt=%x,pm=%x,Timeout=%d)\n", pctxt, pm, wTimeout));
 
     if (pctxt->dwfCtxt & CTXTF_TIMEOUT)
     {
@@ -735,8 +678,7 @@ NTSTATUS LOCAL AcquireASLMutex(PCTXT pctxt, PMUTEXOBJ pm, USHORT wTimeout)
     }
     else if (pm->dwSyncLevel < pctxt->dwSyncLevel)
     {
-        rc = AMLI_LOGERR(AMLIERR_MUTEX_INVALID_LEVEL,
-                         ("AcquireASLMutex: invalid sync level"));
+        rc = AMLI_LOGERR(AMLIERR_MUTEX_INVALID_LEVEL, ("AcquireASLMutex: invalid sync level"));
     }
     else if (pm->dwcOwned == 0)
     {
@@ -745,8 +687,7 @@ NTSTATUS LOCAL AcquireASLMutex(PCTXT pctxt, PMUTEXOBJ pm, USHORT wTimeout)
         pres = NEWCROBJ(pctxt->pheapCurrent, sizeof(RESOURCE));
         if (pres == NULL)
         {
-            rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                             ("AcquireASLMutex: failed to allocate context resource"));
+            rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("AcquireASLMutex: failed to allocate context resource"));
         }
         else
         {
@@ -772,7 +713,7 @@ NTSTATUS LOCAL AcquireASLMutex(PCTXT pctxt, PMUTEXOBJ pm, USHORT wTimeout)
 
     EXIT(2, ("AcquireASLMutex=%x (CurrentOwner=%x)\n", rc, pm->hOwner));
     return rc;
-}       //AcquireASLMutex
+} //AcquireASLMutex
 
 /***LP  ReleaseASLMutex - release ASL mutex
  *
@@ -795,8 +736,7 @@ NTSTATUS LOCAL ReleaseASLMutex(PCTXT pctxt, PMUTEXOBJ pm)
 
     if (pm->dwcOwned == 0)
     {
-        rc = AMLI_LOGERR(AMLIERR_MUTEX_NOT_OWNED,
-                         ("ReleaseASLMutex: Mutex is not owned"));
+        rc = AMLI_LOGERR(AMLIERR_MUTEX_NOT_OWNED, ("ReleaseASLMutex: Mutex is not owned"));
     }
     else
     {
@@ -805,14 +745,13 @@ NTSTATUS LOCAL ReleaseASLMutex(PCTXT pctxt, PMUTEXOBJ pm)
         pres = (PRESOURCE)pm->hOwner;
         if ((pres == NULL) || (pres->pctxtOwner != pctxt))
         {
-            rc = AMLI_LOGERR(AMLIERR_MUTEX_NOT_OWNER,
-                             ("ReleaseASLMutex: Mutex is owned by a different owner"));
+            rc = AMLI_LOGERR(AMLIERR_MUTEX_NOT_OWNER, ("ReleaseASLMutex: Mutex is owned by a different owner"));
         }
         else if (pm->dwSyncLevel > pctxt->dwSyncLevel)
         {
             rc = AMLI_LOGERR(AMLIERR_MUTEX_INVALID_LEVEL,
-                             ("ReleaseASLMutex: invalid sync level (MutexLevel=%d,CurrentLevel=%x",
-                              pm->dwSyncLevel, pctxt->dwSyncLevel));
+                             ("ReleaseASLMutex: invalid sync level (MutexLevel=%d,CurrentLevel=%x", pm->dwSyncLevel,
+                              pctxt->dwSyncLevel));
         }
         else
         {
@@ -830,7 +769,7 @@ NTSTATUS LOCAL ReleaseASLMutex(PCTXT pctxt, PMUTEXOBJ pm)
 
     EXIT(2, ("ReleaseASLMutex=%x\n", rc));
     return rc;
-}       //ReleaseASLMutex
+} //ReleaseASLMutex
 
 /***LP  WaitASLEvent - wait ASL event
  *
@@ -869,7 +808,7 @@ NTSTATUS LOCAL WaitASLEvent(PCTXT pctxt, PEVENTOBJ pe, USHORT wTimeout)
 
     EXIT(2, ("WaitASLEvent=%x\n", rc));
     return rc;
-}       //WaitASLEvent
+} //WaitASLEvent
 
 /***LP  ResetASLEvent - reset ASL event
  *
@@ -889,7 +828,7 @@ VOID LOCAL ResetASLEvent(PEVENTOBJ pe)
     pe->dwcSignaled = 0;
 
     EXIT(2, ("ResetASLEvent!\n"));
-}       //ResetASLEvent
+} //ResetASLEvent
 
 /***LP  SignalASLEvent - signal ASL event
  *
@@ -912,7 +851,7 @@ VOID LOCAL SignalASLEvent(PEVENTOBJ pe)
     }
 
     EXIT(2, ("SignalASLEvent!\n"));
-}       //SignalASLEvent
+} //SignalASLEvent
 
 /***LP  SyncLoadDDB - load a DDB synchronously
  *
@@ -934,15 +873,13 @@ NTSTATUS LOCAL SyncLoadDDB(PCTXT pctxt)
 
     if (KeGetCurrentThread() == gReadyQueue.pkthCurrent)
     {
-        rc = AMLI_LOGERR(AMLIERR_FATAL,
-                         ("SyncLoadDDB: cannot nest a SyncLoadDDB"));
+        rc = AMLI_LOGERR(AMLIERR_FATAL, ("SyncLoadDDB: cannot nest a SyncLoadDDB"));
         pctxt->powner = NULL;
         FreeContext(pctxt);
     }
     else if (KeGetCurrentIrql() >= DISPATCH_LEVEL)
     {
-        rc = AMLI_LOGERR(AMLIERR_FATAL,
-                         ("SyncLoadDDB: cannot SyncLoadDDB at IRQL >= DISPATCH_LEVEL"));
+        rc = AMLI_LOGERR(AMLIERR_FATAL, ("SyncLoadDDB: cannot SyncLoadDDB at IRQL >= DISPATCH_LEVEL"));
         pctxt->powner = NULL;
         FreeContext(pctxt);
     }
@@ -957,9 +894,7 @@ NTSTATUS LOCAL SyncLoadDDB(PCTXT pctxt)
 
         while (rc == AMLISTA_PENDING)
         {
-            if ((rc = KeWaitForSingleObject(&seEvalObj.Event, Executive,
-                                            KernelMode, FALSE,
-                                            (PLARGE_INTEGER)NULL)) ==
+            if ((rc = KeWaitForSingleObject(&seEvalObj.Event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL)) ==
                 STATUS_SUCCESS)
             {
                 if (seEvalObj.rcCompleted == AMLISTA_CONTINUE)
@@ -973,13 +908,11 @@ NTSTATUS LOCAL SyncLoadDDB(PCTXT pctxt)
             }
             else
             {
-                rc = AMLI_LOGERR(AMLIERR_FATAL,
-                                 ("SyncLoadDDB: object synchronization failed (rc=%x)",
-                                  rc));
+                rc = AMLI_LOGERR(AMLIERR_FATAL, ("SyncLoadDDB: object synchronization failed (rc=%x)", rc));
             }
         }
     }
 
     EXIT(2, ("SyncLoadDDB=%x\n", rc));
     return rc;
-}       //SyncLoadDDB
+} //SyncLoadDDB

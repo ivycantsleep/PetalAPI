@@ -22,21 +22,25 @@ Revision History:
 #include "wmikmp.h"
 
 
-// HEY: This is duplicated from wmium.h. 
+// HEY: This is duplicated from wmium.h.
 //
 // This guid is for notifications of changes to registration
 // {B48D49A1-E777-11d0-A50C-00A0C9062910}
-GUID GUID_REGISTRATION_CHANGE_NOTIFICATION = {0xb48d49a1, 0xe777, 0x11d0, 0xa5, 0xc, 0x0, 0xa0, 0xc9, 0x6, 0x29, 0x10};
+GUID GUID_REGISTRATION_CHANGE_NOTIFICATION = {
+    0xb48d49a1, 0xe777, 0x11d0, 0xa5, 0xc, 0x0, 0xa0, 0xc9, 0x6, 0x29, 0x10
+};
 
 //
 // This guid id for notifications of new mof resources being added
 // {B48D49A2-E777-11d0-A50C-00A0C9062910}
-GUID GUID_MOF_RESOURCE_ADDED_NOTIFICATION = {0xb48d49a2, 0xe777, 0x11d0, 0xa5, 0xc, 0x0, 0xa0, 0xc9, 0x6, 0x29, 0x10};
+GUID GUID_MOF_RESOURCE_ADDED_NOTIFICATION = { 0xb48d49a2, 0xe777, 0x11d0, 0xa5, 0xc, 0x0, 0xa0, 0xc9, 0x6, 0x29, 0x10 };
 
 //
 // This guid id for notifications of new mof resources being added
 // {B48D49A3-E777-11d0-A50C-00A0C9062910}
-GUID GUID_MOF_RESOURCE_REMOVED_NOTIFICATION = {0xb48d49a3, 0xe777, 0x11d0, 0xa5, 0xc, 0x0, 0xa0, 0xc9, 0x6, 0x29, 0x10};
+GUID GUID_MOF_RESOURCE_REMOVED_NOTIFICATION = {
+    0xb48d49a3, 0xe777, 0x11d0, 0xa5, 0xc, 0x0, 0xa0, 0xc9, 0x6, 0x29, 0x10
+};
 
 
 //
@@ -47,122 +51,79 @@ GUID GUID_MOF_RESOURCE_REMOVED_NOTIFICATION = {0xb48d49a3, 0xe777, 0x11d0, 0xa5,
 #define DSCHUNKSIZE 64
 #endif
 
-void WmipDSCleanup(
-    PCHUNKINFO ChunkInfo,
-    PENTRYHEADER Entry
-    );
+void WmipDSCleanup(PCHUNKINFO ChunkInfo, PENTRYHEADER Entry);
 
-CHUNKINFO WmipDSChunkInfo =
-{
-    { NULL, NULL },
-    sizeof(DATASOURCE),
-    DSCHUNKSIZE,
-    WmipDSCleanup,
-    FLAG_ENTRY_REMOVE_LIST,
-    DS_SIGNATURE
-};
+CHUNKINFO WmipDSChunkInfo = { { NULL, NULL }, sizeof(DATASOURCE),     DSCHUNKSIZE,
+                              WmipDSCleanup,  FLAG_ENTRY_REMOVE_LIST, DS_SIGNATURE };
 
-LIST_ENTRY WmipDSHead;              // Head of registerd data source list
+LIST_ENTRY WmipDSHead; // Head of registerd data source list
 PLIST_ENTRY WmipDSHeadPtr;
 
 //
 // This defines the number of GuidEntrys allocated in each GuidEntry chunk
 #if DBG
-#define GECHUNKSIZE    4
+#define GECHUNKSIZE 4
 #else
-#define GECHUNKSIZE    512
+#define GECHUNKSIZE 512
 #endif
 
-void WmipGECleanup(
-    PCHUNKINFO ChunkInfo,
-    PENTRYHEADER Entry
-    );
+void WmipGECleanup(PCHUNKINFO ChunkInfo, PENTRYHEADER Entry);
 
-CHUNKINFO WmipGEChunkInfo =
-{
-    { NULL, NULL },
-    sizeof(GUIDENTRY),
-    GECHUNKSIZE,
-    WmipGECleanup,
-    FLAG_ENTRY_REMOVE_LIST,
-    GE_SIGNATURE
-};
+CHUNKINFO WmipGEChunkInfo = { { NULL, NULL }, sizeof(GUIDENTRY),      GECHUNKSIZE,
+                              WmipGECleanup,  FLAG_ENTRY_REMOVE_LIST, GE_SIGNATURE };
 
-LIST_ENTRY WmipGEHead;              // Head of registerd guid list
+LIST_ENTRY WmipGEHead; // Head of registerd guid list
 PLIST_ENTRY WmipGEHeadPtr;
 
 
 //
 // This defines the number of InstanceSets allocated in each InstanceSet chunk
 #if DBG
-#define ISCHUNKSIZE    4
+#define ISCHUNKSIZE 4
 #else
-#define ISCHUNKSIZE    2048
+#define ISCHUNKSIZE 2048
 #endif
 
-void WmipISCleanup(
-    PCHUNKINFO ChunkInfo,
-    PENTRYHEADER Entry
-    );
+void WmipISCleanup(PCHUNKINFO ChunkInfo, PENTRYHEADER Entry);
 
-CHUNKINFO WmipISChunkInfo =
-{
-    { NULL, NULL },
-    sizeof(INSTANCESET),
-    ISCHUNKSIZE,
-    WmipISCleanup,
-    0,
-    IS_SIGNATURE
-};
+CHUNKINFO WmipISChunkInfo = { { NULL, NULL }, sizeof(INSTANCESET), ISCHUNKSIZE, WmipISCleanup, 0, IS_SIGNATURE };
 
 #if DBG
-#define MRCHUNKSIZE    2
+#define MRCHUNKSIZE 2
 #else
-#define MRCHUNKSIZE    16
+#define MRCHUNKSIZE 16
 #endif
 
-void WmipMRCleanup(
-    PCHUNKINFO ChunkInfo,
-    PENTRYHEADER Entry
-    );
+void WmipMRCleanup(PCHUNKINFO ChunkInfo, PENTRYHEADER Entry);
 
-CHUNKINFO WmipMRChunkInfo =
-{
-    { NULL, NULL },
-    sizeof(MOFRESOURCE),
-    MRCHUNKSIZE,
-    WmipMRCleanup,
-    FLAG_ENTRY_REMOVE_LIST,
-    MR_SIGNATURE
-};
+CHUNKINFO WmipMRChunkInfo = { { NULL, NULL }, sizeof(MOFRESOURCE),    MRCHUNKSIZE,
+                              WmipMRCleanup,  FLAG_ENTRY_REMOVE_LIST, MR_SIGNATURE };
 
-LIST_ENTRY WmipMRHead;                     // Head of Mof Resource list
+LIST_ENTRY WmipMRHead; // Head of Mof Resource list
 PLIST_ENTRY WmipMRHeadPtr;
 
 
-LIST_ENTRY  WmipGMHead;     // Head of Guid Map List
+LIST_ENTRY WmipGMHead; // Head of Guid Map List
 PLIST_ENTRY WmipGMHeadPtr;
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text (PAGE, WmipDSCleanup)
-#pragma alloc_text (PAGE, WmipAllocDataSource)
-#pragma alloc_text (PAGE, WmipGECleanup)
-#pragma alloc_text (PAGE, WmipAllocGuidEntry)
-#pragma alloc_text (PAGE, WmipISCleanup)
-#pragma alloc_text (PAGE, WmipMRCleanup)
-#pragma alloc_text (PAGE, WmipFindGEByGuid)
-#pragma alloc_text (PAGE, WmipFindDSByProviderId)
-#pragma alloc_text (PAGE, WmipFindISByGuid)
-#pragma alloc_text (PAGE, WmipFindMRByNames)
-#pragma alloc_text (PAGE, WmipFindISinGEbyName)
-#pragma alloc_text (PAGE, WmipRealloc)
-#pragma alloc_text (PAGE, WmipIsNumber)
+#pragma alloc_text(PAGE, WmipDSCleanup)
+#pragma alloc_text(PAGE, WmipAllocDataSource)
+#pragma alloc_text(PAGE, WmipGECleanup)
+#pragma alloc_text(PAGE, WmipAllocGuidEntry)
+#pragma alloc_text(PAGE, WmipISCleanup)
+#pragma alloc_text(PAGE, WmipMRCleanup)
+#pragma alloc_text(PAGE, WmipFindGEByGuid)
+#pragma alloc_text(PAGE, WmipFindDSByProviderId)
+#pragma alloc_text(PAGE, WmipFindISByGuid)
+#pragma alloc_text(PAGE, WmipFindMRByNames)
+#pragma alloc_text(PAGE, WmipFindISinGEbyName)
+#pragma alloc_text(PAGE, WmipRealloc)
+#pragma alloc_text(PAGE, WmipIsNumber)
 #endif
 
 
-PBDATASOURCE WmipAllocDataSource(
-    void
-    )
+PBDATASOURCE WmipAllocDataSource(void)
 /*++
 
 Routine Description:
@@ -186,18 +147,13 @@ Return Value:
         InitializeListHead(&DataSource->ISHead);
         DataSource->MofResourceCount = AVGMOFRESOURCECOUNT;
         DataSource->MofResources = DataSource->StaticMofResources;
-        memset(DataSource->MofResources,
-               0,
-               AVGMOFRESOURCECOUNT * sizeof(PMOFRESOURCE));
+        memset(DataSource->MofResources, 0, AVGMOFRESOURCECOUNT * sizeof(PMOFRESOURCE));
     }
 
-    return(DataSource);
+    return (DataSource);
 }
 
-void WmipDSCleanup(
-    PCHUNKINFO ChunkInfo,
-    PENTRYHEADER Entry
-    )
+void WmipDSCleanup(PCHUNKINFO ChunkInfo, PENTRYHEADER Entry)
 /*++
 
 Routine Description:
@@ -227,9 +183,7 @@ Return Value:
     InstanceSetList = DataSource->ISHead.Flink;
     while (InstanceSetList != &DataSource->ISHead)
     {
-        InstanceSet = CONTAINING_RECORD(InstanceSetList,
-                                        INSTANCESET,
-                                        DSISList);
+        InstanceSet = CONTAINING_RECORD(InstanceSetList, INSTANCESET, DSISList);
 
         if (InstanceSet->GuidISList.Flink != NULL)
         {
@@ -238,16 +192,13 @@ Return Value:
             InstanceSet->GuidEntry->ISCount--;
         }
 
-        if ((InstanceSet->GuidEntry != NULL) &&
-            (! (InstanceSet->Flags & IS_NEWLY_REGISTERED)))
+        if ((InstanceSet->GuidEntry != NULL) && (!(InstanceSet->Flags & IS_NEWLY_REGISTERED)))
         {
 
-            if (IsEqualGUID(&InstanceSet->GuidEntry->Guid,
-                            &WmipBinaryMofGuid))
+            if (IsEqualGUID(&InstanceSet->GuidEntry->Guid, &WmipBinaryMofGuid))
             {
                 WmipLeaveSMCritSection();
-                WmipGenerateBinaryMofNotification(InstanceSet,
-                                     &GUID_MOF_RESOURCE_REMOVED_NOTIFICATION);
+                WmipGenerateBinaryMofNotification(InstanceSet, &GUID_MOF_RESOURCE_REMOVED_NOTIFICATION);
 
                 WmipEnterSMCritSection();
             }
@@ -282,10 +233,7 @@ Return Value:
     }
 }
 
-void WmipGECleanup(
-    PCHUNKINFO ChunkInfo,
-    PENTRYHEADER Entry
-    )
+void WmipGECleanup(PCHUNKINFO ChunkInfo, PENTRYHEADER Entry)
 /*++
 
 Routine Description:
@@ -302,7 +250,7 @@ Return Value:
 --*/
 {
     PBGUIDENTRY GuidEntry = (PBGUIDENTRY)Entry;
-    
+
     WmipAssert(GuidEntry != NULL);
     WmipAssert(GuidEntry->Flags & FLAG_ENTRY_INVALID);
 
@@ -311,20 +259,15 @@ Return Value:
         ExFreePool(GuidEntry->CollectInProgress);
         GuidEntry->CollectInProgress = NULL;
     }
-
 }
 
-PBGUIDENTRY WmipAllocGuidEntry(
-    void
-    )
+PBGUIDENTRY WmipAllocGuidEntry(void)
 {
     PBGUIDENTRY GuidEntry;
     PKEVENT Event;
 
     GuidEntry = NULL;
-    Event = ExAllocatePoolWithTag(NonPagedPool,
-                                  sizeof(KEVENT),
-                                  WMIPOOLTAG);
+    Event = ExAllocatePoolWithTag(NonPagedPool, sizeof(KEVENT), WMIPOOLTAG);
 
     if (Event != NULL)
     {
@@ -334,19 +277,18 @@ PBGUIDENTRY WmipAllocGuidEntry(
             InitializeListHead(&GuidEntry->ISHead);
             InitializeListHead(&GuidEntry->ObjectHead);
             GuidEntry->CollectInProgress = Event;
-        } else {
+        }
+        else
+        {
             ExFreePool(Event);
         }
     }
 
-    return(GuidEntry);
+    return (GuidEntry);
 }
 
 
-void WmipISCleanup(
-    PCHUNKINFO ChunkInfo,
-    PENTRYHEADER Entry
-    )
+void WmipISCleanup(PCHUNKINFO ChunkInfo, PENTRYHEADER Entry)
 {
     PBINSTANCESET InstanceSet = (PBINSTANCESET)Entry;
 
@@ -358,30 +300,23 @@ void WmipISCleanup(
         WmipFree(InstanceSet->IsBaseName);
     }
 
-    if (InstanceSet->TraceGuidMap != NULL) 
+    if (InstanceSet->TraceGuidMap != NULL)
     {
         WmipFree(InstanceSet->TraceGuidMap);
     }
 }
 
-void WmipMRCleanup(
-    IN PCHUNKINFO ChunkInfo,
-    IN PENTRYHEADER Entry
-    )
+void WmipMRCleanup(IN PCHUNKINFO ChunkInfo, IN PENTRYHEADER Entry)
 {
     PMOFRESOURCE MofResource = (PMOFRESOURCE)Entry;
 
     PAGED_CODE();
-    
-    if ((MofResource->RegistryPath != NULL) &&
-        (MofResource->MofResourceName != NULL))
+
+    if ((MofResource->RegistryPath != NULL) && (MofResource->MofResourceName != NULL))
     {
-        WmipGenerateMofResourceNotification(MofResource->RegistryPath,
-                                    MofResource->MofResourceName,
-                                    &GUID_MOF_RESOURCE_REMOVED_NOTIFICATION,
-                                    MofResource->Flags & MR_FLAG_USER_MODE ?
-                                             MOFEVENT_ACTION_IMAGE_PATH :
-                                             MOFEVENT_ACTION_REGISTRY_PATH);
+        WmipGenerateMofResourceNotification(
+            MofResource->RegistryPath, MofResource->MofResourceName, &GUID_MOF_RESOURCE_REMOVED_NOTIFICATION,
+            MofResource->Flags & MR_FLAG_USER_MODE ? MOFEVENT_ACTION_IMAGE_PATH : MOFEVENT_ACTION_REGISTRY_PATH);
     }
 
     if (MofResource->RegistryPath != NULL)
@@ -396,10 +331,7 @@ void WmipMRCleanup(
 }
 
 
-PBGUIDENTRY WmipFindGEByGuid(
-    LPGUID Guid,
-    BOOLEAN MakeTopOfList
-    )
+PBGUIDENTRY WmipFindGEByGuid(LPGUID Guid, BOOLEAN MakeTopOfList)
 /*++
 
 Routine Description:
@@ -428,9 +360,7 @@ Return Value:
     GuidEntryList = WmipGEHeadPtr->Flink;
     while (GuidEntryList != WmipGEHeadPtr)
     {
-        GuidEntry = CONTAINING_RECORD(GuidEntryList,
-                                      GUIDENTRY,
-                                      MainGEList);
+        GuidEntry = CONTAINING_RECORD(GuidEntryList, GUIDENTRY, MainGEList);
         if (IsEqualGUID(Guid, &GuidEntry->Guid))
         {
             WmipReferenceGE(GuidEntry);
@@ -443,18 +373,16 @@ Return Value:
 
             WmipLeaveSMCritSection();
             WmipAssert(GuidEntry->Signature == GE_SIGNATURE);
-            return(GuidEntry);
+            return (GuidEntry);
         }
         GuidEntryList = GuidEntryList->Flink;
     }
     WmipLeaveSMCritSection();
-    return(NULL);
+    return (NULL);
 }
 
 
-PBDATASOURCE WmipFindDSByProviderId(
-    ULONG_PTR ProviderId
-    )
+PBDATASOURCE WmipFindDSByProviderId(ULONG_PTR ProviderId)
 /*++
 
 Routine Description:
@@ -479,28 +407,23 @@ Return Value:
     DataSourceList = WmipDSHeadPtr->Flink;
     while (DataSourceList != WmipDSHeadPtr)
     {
-        DataSource = CONTAINING_RECORD(DataSourceList,
-                                      DATASOURCE,
-                                      MainDSList);
+        DataSource = CONTAINING_RECORD(DataSourceList, DATASOURCE, MainDSList);
         if (DataSource->ProviderId == ProviderId)
         {
             WmipReferenceDS(DataSource);
             WmipLeaveSMCritSection();
             WmipAssert(DataSource->Signature == DS_SIGNATURE);
-            return(DataSource);
+            return (DataSource);
         }
 
         DataSourceList = DataSourceList->Flink;
     }
     WmipLeaveSMCritSection();
-    return(NULL);
+    return (NULL);
 }
 
 
-PBINSTANCESET WmipFindISByGuid(
-    PBDATASOURCE DataSource,
-    GUID UNALIGNED *Guid
-    )
+PBINSTANCESET WmipFindISByGuid(PBDATASOURCE DataSource, GUID UNALIGNED *Guid)
 /*++
 
 Routine Description:
@@ -528,28 +451,23 @@ Return Value:
     InstanceSetList = DataSource->ISHead.Flink;
     while (InstanceSetList != &DataSource->ISHead)
     {
-        InstanceSet = CONTAINING_RECORD(InstanceSetList,
-                                      INSTANCESET,
-                                      DSISList);
+        InstanceSet = CONTAINING_RECORD(InstanceSetList, INSTANCESET, DSISList);
         if (IsEqualGUID(&InstanceSet->GuidEntry->Guid, Guid))
         {
             WmipReferenceIS(InstanceSet);
             WmipLeaveSMCritSection();
             WmipAssert(InstanceSet->Signature == IS_SIGNATURE);
-            return(InstanceSet);
+            return (InstanceSet);
         }
 
         InstanceSetList = InstanceSetList->Flink;
     }
     WmipLeaveSMCritSection();
-    return(NULL);
+    return (NULL);
 }
 
 
-PMOFRESOURCE WmipFindMRByNames(
-    LPCWSTR ImagePath,
-    LPCWSTR MofResourceName
-    )
+PMOFRESOURCE WmipFindMRByNames(LPCWSTR ImagePath, LPCWSTR MofResourceName)
 /*++
 
 Routine Description:
@@ -579,43 +497,35 @@ Return Value:
     MofResourceList = WmipMRHeadPtr->Flink;
     while (MofResourceList != WmipMRHeadPtr)
     {
-        MofResource = CONTAINING_RECORD(MofResourceList,
-                                      MOFRESOURCE,
-                                      MainMRList);
+        MofResource = CONTAINING_RECORD(MofResourceList, MOFRESOURCE, MainMRList);
         if ((wcscmp(MofResource->RegistryPath, ImagePath) == 0) &&
             (wcscmp(MofResource->MofResourceName, MofResourceName) == 0))
         {
             WmipReferenceMR(MofResource);
             WmipLeaveSMCritSection();
             WmipAssert(MofResource->Signature == MR_SIGNATURE);
-            return(MofResource);
+            return (MofResource);
         }
         MofResourceList = MofResourceList->Flink;
     }
     WmipLeaveSMCritSection();
-    return(NULL);
+    return (NULL);
 }
 
-BOOLEAN WmipIsNumber(
-    LPCWSTR String
-    )
+BOOLEAN WmipIsNumber(LPCWSTR String)
 {
     while (*String != UNICODE_NULL)
     {
         if ((*String < L'0') || (*String > L'9'))
         {
-            return(FALSE);
+            return (FALSE);
         }
         String++;
     }
-    return(TRUE);
+    return (TRUE);
 }
 
-PBINSTANCESET WmipFindISinGEbyName(
-    PBGUIDENTRY GuidEntry,
-    PWCHAR InstanceName,
-    PULONG InstanceIndex
-    )
+PBINSTANCESET WmipFindISinGEbyName(PBGUIDENTRY GuidEntry, PWCHAR InstanceName, PULONG InstanceIndex)
 /*++
 
 Routine Description:
@@ -649,63 +559,50 @@ Return Value:
     InstanceSetList = GuidEntry->ISHead.Flink;
     while (InstanceSetList != &GuidEntry->ISHead)
     {
-        InstanceSet = CONTAINING_RECORD(InstanceSetList,
-                                            INSTANCESET,
-                                            GuidISList);
+        InstanceSet = CONTAINING_RECORD(InstanceSetList, INSTANCESET, GuidISList);
         if (InstanceSet->Flags & IS_INSTANCE_BASENAME)
         {
             BaseNameLen = wcslen(InstanceSet->IsBaseName->BaseName);
-            if (wcsncmp(InstanceName,
-                        InstanceSet->IsBaseName->BaseName,
-                        BaseNameLen) == 0)
+            if (wcsncmp(InstanceName, InstanceSet->IsBaseName->BaseName, BaseNameLen) == 0)
             {
                 InstanceNamePtr = InstanceName + BaseNameLen;
                 InstanceNameIndex = _wtoi(InstanceNamePtr);
                 InstanceSetFirstIndex = InstanceSet->IsBaseName->BaseIndex;
                 InstanceSetLastIndex = InstanceSetFirstIndex + InstanceSet->Count;
-                if (( (InstanceNameIndex >= InstanceSetFirstIndex) &&
-                      (InstanceNameIndex < InstanceSetLastIndex)) &&
+                if (((InstanceNameIndex >= InstanceSetFirstIndex) && (InstanceNameIndex < InstanceSetLastIndex)) &&
                     ((InstanceNameIndex != 0) || WmipIsNumber(InstanceNamePtr)))
                 {
-                   InstanceSet = CONTAINING_RECORD(InstanceSetList,
-                                            INSTANCESET,
-                                            GuidISList);
-                   *InstanceIndex = InstanceNameIndex - InstanceSetFirstIndex;
-                   WmipReferenceIS(InstanceSet);
-                   WmipAssert(InstanceSet->Signature == IS_SIGNATURE);
-                   WmipLeaveSMCritSection();
-                   return(InstanceSet);
+                    InstanceSet = CONTAINING_RECORD(InstanceSetList, INSTANCESET, GuidISList);
+                    *InstanceIndex = InstanceNameIndex - InstanceSetFirstIndex;
+                    WmipReferenceIS(InstanceSet);
+                    WmipAssert(InstanceSet->Signature == IS_SIGNATURE);
+                    WmipLeaveSMCritSection();
+                    return (InstanceSet);
                 }
             }
-        } else if (InstanceSet->Flags & IS_INSTANCE_STATICNAMES) {
+        }
+        else if (InstanceSet->Flags & IS_INSTANCE_STATICNAMES)
+        {
             for (i = 0; i < InstanceSet->Count; i++)
             {
-                if (wcscmp(InstanceName,
-                           InstanceSet->IsStaticNames->StaticNamePtr[i]) == 0)
-               {
-                   InstanceSet = CONTAINING_RECORD(InstanceSetList,
-                                            INSTANCESET,
-                                            GuidISList);
-                   *InstanceIndex = i;
-                   WmipReferenceIS(InstanceSet);
-                   WmipAssert(InstanceSet->Signature == IS_SIGNATURE);
-                   WmipLeaveSMCritSection();
-                   return(InstanceSet);
-               }
+                if (wcscmp(InstanceName, InstanceSet->IsStaticNames->StaticNamePtr[i]) == 0)
+                {
+                    InstanceSet = CONTAINING_RECORD(InstanceSetList, INSTANCESET, GuidISList);
+                    *InstanceIndex = i;
+                    WmipReferenceIS(InstanceSet);
+                    WmipAssert(InstanceSet->Signature == IS_SIGNATURE);
+                    WmipLeaveSMCritSection();
+                    return (InstanceSet);
+                }
             }
         }
         InstanceSetList = InstanceSetList->Flink;
     }
     WmipLeaveSMCritSection();
-    return(NULL);
+    return (NULL);
 }
 
-BOOLEAN WmipRealloc(
-    PVOID *Buffer,
-    ULONG CurrentSize,
-    ULONG NewSize,
-    BOOLEAN FreeOriginalBuffer
-    )
+BOOLEAN WmipRealloc(PVOID *Buffer, ULONG CurrentSize, ULONG NewSize, BOOLEAN FreeOriginalBuffer)
 /*++
 
 Routine Description:
@@ -741,9 +638,8 @@ Return Value:
             WmipFree(*Buffer);
         }
         *Buffer = NewBuffer;
-        return(TRUE);
+        return (TRUE);
     }
 
-    return(FALSE);
+    return (FALSE);
 }
-

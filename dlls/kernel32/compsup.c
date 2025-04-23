@@ -22,10 +22,7 @@ Revision History:
 #include <wow64t.h>
 
 
-BOOL
-SetComPlusPackageInstallStatus(
-    ULONG ComPlusPackage
-    )
+BOOL SetComPlusPackageInstallStatus(ULONG ComPlusPackage)
 
 /*++
 
@@ -49,19 +46,15 @@ Return Value:
 
     if (ComPlusPackage & COMPLUS_INSTALL_FLAGS_INVALID)
     {
-        BaseSetLastNTError (STATUS_INVALID_PARAMETER);
+        BaseSetLastNTError(STATUS_INVALID_PARAMETER);
         return FALSE;
     }
 
-    NtStatus = NtSetSystemInformation(
-                   SystemComPlusPackage,
-                   &ComPlusPackage,
-                   sizeof (ULONG)
-                   );
+    NtStatus = NtSetSystemInformation(SystemComPlusPackage, &ComPlusPackage, sizeof(ULONG));
 
-    if (!NT_SUCCESS (NtStatus))
+    if (!NT_SUCCESS(NtStatus))
     {
-        BaseSetLastNTError (NtStatus);
+        BaseSetLastNTError(NtStatus);
         return FALSE;
     }
 
@@ -70,9 +63,7 @@ Return Value:
 
 
 ULONG
-GetComPlusPackageInstallStatus(
-    VOID
-    )
+GetComPlusPackageInstallStatus(VOID)
 
 /*++
 
@@ -104,12 +95,7 @@ Return Value:
         // the kernel.
         //
 
-        NtQuerySystemInformation(
-            SystemComPlusPackage,
-            &ComPlusPackage,
-            sizeof (ULONG),
-            NULL
-            );
+        NtQuerySystemInformation(SystemComPlusPackage, &ComPlusPackage, sizeof(ULONG), NULL);
     }
 
     return ComPlusPackage;
@@ -119,11 +105,8 @@ Return Value:
 #if defined(_WIN64) || defined(BUILD_WOW6432)
 
 NTSTATUS
-BasepIsComplusILImage(
-    IN HANDLE SectionImageHandle,
-    IN PSECTION_IMAGE_INFORMATION SectionImageInformation,
-    OUT BOOLEAN *IsComplusILImage
-    )
+BasepIsComplusILImage(IN HANDLE SectionImageHandle, IN PSECTION_IMAGE_INFORMATION SectionImageInformation,
+                      OUT BOOLEAN *IsComplusILImage)
 
 /*++
 
@@ -156,15 +139,13 @@ Return Value:
     PIMAGE_NT_HEADERS NtImageHeader;
     ULONG ComPlusPackage64;
 #if defined(BUILD_WOW6432)
-    ULONG   NativePageSize = Wow64GetSystemNativePageSize();
+    ULONG NativePageSize = Wow64GetSystemNativePageSize();
 #else
-    #define NativePageSize  BASE_SYSINFO.PageSize
+#define NativePageSize BASE_SYSINFO.PageSize
 #endif
     NTSTATUS NtStatus = STATUS_SUCCESS;
 
-    
 
-    
     *IsComplusILImage = FALSE;
 
 
@@ -174,51 +155,37 @@ Return Value:
 
     ViewSize = 0;
     ViewBase = NULL;
-    NtStatus = NtMapViewOfSection (
-                   SectionImageHandle,
-                   NtCurrentProcess(),
-                   &ViewBase,
-                   0L,
-                   0L,
-                   NULL,
-                   &ViewSize,
-                   ViewShare,
-                   0L,
-                   PAGE_READONLY
-                   );
+    NtStatus = NtMapViewOfSection(SectionImageHandle, NtCurrentProcess(), &ViewBase, 0L, 0L, NULL, &ViewSize, ViewShare,
+                                  0L, PAGE_READONLY);
 
-    if (NT_SUCCESS (NtStatus)) 
+    if (NT_SUCCESS(NtStatus))
     {
 
         //
         // Examine the image
         //
 
-        try 
+        try
         {
-            NtImageHeader = RtlImageNtHeader (ViewBase);
+            NtImageHeader = RtlImageNtHeader(ViewBase);
 
             if (NtImageHeader != NULL)
             {
                 if (NtImageHeader->OptionalHeader.SectionAlignment < NativePageSize)
                 {
-                    ViewBase = LDR_VIEW_TO_DATAFILE (ViewBase);
+                    ViewBase = LDR_VIEW_TO_DATAFILE(ViewBase);
                 }
 
-                Cor20Header = RtlImageDirectoryEntryToData (
-                                  ViewBase,
-                                  TRUE,
-                                  IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR,
-                                  &EntrySize
-                                  );
+                Cor20Header =
+                    RtlImageDirectoryEntryToData(ViewBase, TRUE, IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, &EntrySize);
 
                 if ((Cor20Header != NULL) && (EntrySize != 0))
                 {
-                    if ((Cor20Header->Flags & (COMIMAGE_FLAGS_32BITREQUIRED | COMIMAGE_FLAGS_ILONLY)) == 
-                            COMIMAGE_FLAGS_ILONLY)
+                    if ((Cor20Header->Flags & (COMIMAGE_FLAGS_32BITREQUIRED | COMIMAGE_FLAGS_ILONLY)) ==
+                        COMIMAGE_FLAGS_ILONLY)
                     {
-                        ComPlusPackage64 = GetComPlusPackageInstallStatus ();
-                          
+                        ComPlusPackage64 = GetComPlusPackageInstallStatus();
+
                         if ((ComPlusPackage64 & COMPLUS_ENABLE_64BIT) != 0)
                         {
                             *IsComplusILImage = TRUE;
@@ -226,10 +193,10 @@ Return Value:
                     }
                 }
 
-                ViewBase = LDR_DATAFILE_TO_VIEW (ViewBase);
+                ViewBase = LDR_DATAFILE_TO_VIEW(ViewBase);
             }
         }
-        except (EXCEPTION_EXECUTE_HANDLER)
+        except(EXCEPTION_EXECUTE_HANDLER)
         {
             NtStatus = GetExceptionCode();
         }
@@ -238,10 +205,7 @@ Return Value:
         // Unmap the section from memory
         //
 
-        NtUnmapViewOfSection (
-            NtCurrentProcess(),
-            ViewBase
-            );
+        NtUnmapViewOfSection(NtCurrentProcess(), ViewBase);
     }
 
     return NtStatus;

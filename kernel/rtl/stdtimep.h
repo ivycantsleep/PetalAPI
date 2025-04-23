@@ -18,7 +18,7 @@ Author:
 Revision History:
 
 --*/
-
+
 #ifndef _STD_TIME_P_
 #define _STD_TIME_P_
 
@@ -34,38 +34,28 @@ Revision History:
 //
 
 extern LARGE_INTEGER Magic10000;
-#define SHIFT10000                       13
+#define SHIFT10000 13
 
 extern LARGE_INTEGER Magic10000000;
-#define SHIFT10000000                    23
+#define SHIFT10000000 23
 
 extern LARGE_INTEGER Magic86400000;
-#define SHIFT86400000                    26
+#define SHIFT86400000 26
 
 //
 //  To make the code more readable we'll also define some macros to
 //  do the actual division for use
 //
 
-#define Convert100nsToMilliseconds(LARGE_INTEGER) (                         \
-    RtlExtendedMagicDivide( (LARGE_INTEGER), Magic10000, SHIFT10000 )       \
-    )
+#define Convert100nsToMilliseconds(LARGE_INTEGER) (RtlExtendedMagicDivide((LARGE_INTEGER), Magic10000, SHIFT10000))
 
-#define ConvertMillisecondsTo100ns(MILLISECONDS) (                 \
-    RtlExtendedIntegerMultiply( (MILLISECONDS), 10000 )            \
-    )
+#define ConvertMillisecondsTo100ns(MILLISECONDS) (RtlExtendedIntegerMultiply((MILLISECONDS), 10000))
 
-#define Convert100nsToSeconds(LARGE_INTEGER) (                              \
-    RtlExtendedMagicDivide( (LARGE_INTEGER), Magic10000000, SHIFT10000000 ) \
-    )
+#define Convert100nsToSeconds(LARGE_INTEGER) (RtlExtendedMagicDivide((LARGE_INTEGER), Magic10000000, SHIFT10000000))
 
-#define ConvertSecondsTo100ns(SECONDS) (                           \
-    RtlExtendedIntegerMultiply( (SECONDS), 10000000L )             \
-    )
+#define ConvertSecondsTo100ns(SECONDS) (RtlExtendedIntegerMultiply((SECONDS), 10000000L))
 
-#define ConvertMillisecondsToDays(LARGE_INTEGER) (                          \
-    RtlExtendedMagicDivide( (LARGE_INTEGER), Magic86400000, SHIFT86400000 ) \
-    )
+#define ConvertMillisecondsToDays(LARGE_INTEGER) (RtlExtendedMagicDivide((LARGE_INTEGER), Magic86400000, SHIFT86400000))
 
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
@@ -107,8 +97,7 @@ extern LARGE_INTEGER Magic86400000;
 //    storing in a STANDARD_TIME.TdfAndRevision field.
 //
 
-#define ShiftStandardTimeRevision(Rev)                                        \
-   ((USHORT) ((Rev) << STDTIME_REVISION_SHIFT))
+#define ShiftStandardTimeRevision(Rev) ((USHORT)((Rev) << STDTIME_REVISION_SHIFT))
 
 
 //
@@ -123,7 +112,7 @@ extern LARGE_INTEGER Magic86400000;
 // the Tdf value.
 //
 
-#define TDF_MASK ((USHORT) 0x0fff)
+#define TDF_MASK ((USHORT)0x0fff)
 
 
 //
@@ -138,7 +127,7 @@ extern LARGE_INTEGER Magic86400000;
 // BUG: Byte order dependant
 //
 
-#define MaskStandardTimeTdf(Tdf) ((USHORT) ((Tdf) & TDF_MASK))
+#define MaskStandardTimeTdf(Tdf) ((USHORT)((Tdf) & TDF_MASK))
 
 
 //
@@ -158,12 +147,9 @@ extern LARGE_INTEGER Magic86400000;
 // BUG: Byte order dependant
 //
 
-#define GetStandardTimeTdf(StdTime)                                           \
-   ((SHORT)                                                                   \
-     (((StdTime)->TdfAndRevision) & 0x0800)                                   \
-        ? (MaskStandardTimeTdf((StdTime)->TdfAndRevision) - 0x1000)           \
-        : MaskStandardTimeTdf((StdTime)->TdfAndRevision)                      \
-   )
+#define GetStandardTimeTdf(StdTime)                                                                            \
+    ((SHORT)(((StdTime)->TdfAndRevision) & 0x0800) ? (MaskStandardTimeTdf((StdTime)->TdfAndRevision) - 0x1000) \
+                                                   : MaskStandardTimeTdf((StdTime)->TdfAndRevision))
 
 
 //
@@ -176,9 +162,7 @@ extern LARGE_INTEGER Magic86400000;
 //    shifted back down to its place as a SHORT.
 //
 
-#define GetStandardTimeRev(StdTime)                                           \
-   ((USHORT) (((StdTime)->TdfAndRevision) >> STDTIME_REVISION_SHIFT))
-
+#define GetStandardTimeRev(StdTime) ((USHORT)(((StdTime)->TdfAndRevision) >> STDTIME_REVISION_SHIFT))
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -197,8 +181,7 @@ extern LARGE_INTEGER Magic86400000;
 //    FALSE - if Time is negative.
 //
 
-#define IsPositive(Time)                                                      \
-   ( ((Time).HighPart > 0) || (((Time).HighPart = 0) & ((Time).LowPart > 0)) )
+#define IsPositive(Time) (((Time).HighPart > 0) || (((Time).HighPart = 0) & ((Time).LowPart > 0)))
 
 //
 // BOOLEAN
@@ -210,8 +193,7 @@ extern LARGE_INTEGER Magic86400000;
 //    FALSE - If the given time is not an absolute time
 //
 
-#define IsAbsoluteTime(Time)                                                  \
-   ( IsPositive(Time->SimpleTime) )
+#define IsAbsoluteTime(Time) (IsPositive(Time->SimpleTime))
 
 
 //
@@ -224,8 +206,7 @@ extern LARGE_INTEGER Magic86400000;
 //    FALSE - If the given time is not a delta time
 //
 
-#define IsDeltaTime(Time)                                                     \
-   ( !IsAbsoluteTime(Time) )
+#define IsDeltaTime(Time) (!IsAbsoluteTime(Time))
 
 
 //
@@ -242,16 +223,9 @@ extern LARGE_INTEGER Magic86400000;
 // BUG: Only works on absolute times
 //
 
-#define GreaterThanTime(Time1, Time2)                                         \
-   (                                                                          \
-     ((Time1).HighPart > (Time2).HighPart)                                    \
-     ||                                                                       \
-     (                                                                        \
-      ((Time1).HighPart == (Time2).HighPart)                                  \
-      &&                                                                      \
-      ((Time1).LowPart > (Time2).LowPart)                                     \
-     )                                                                        \
-   )
+#define GreaterThanTime(Time1, Time2)         \
+    (((Time1).HighPart > (Time2).HighPart) || \
+     (((Time1).HighPart == (Time2).HighPart) && ((Time1).LowPart > (Time2).LowPart)))
 
 
 //
@@ -265,11 +239,9 @@ extern LARGE_INTEGER Magic86400000;
 //    FALSE - If not
 //
 
-#define GreaterThanStdTime(Time1, Time2) \
-   GreaterThanTime((Time1).SimpleTime, (Time2).SimpleTime)
+#define GreaterThanStdTime(Time1, Time2) GreaterThanTime((Time1).SimpleTime, (Time2).SimpleTime)
 
 
-
 //////////////////////////////////////////////////////////////////////////////
 //                                                                           /
 //  The following definitions and declarations are some important constants  /
@@ -281,7 +253,7 @@ extern LARGE_INTEGER Magic86400000;
 //  This is the week day that January 1st, 1601 fell on (a Monday)
 //
 
-#define WEEKDAY_OF_1601                  1
+#define WEEKDAY_OF_1601 1
 
 //
 //  These are known constants used to convert 1970 and 1980 times to 1601
@@ -297,7 +269,7 @@ extern LARGE_INTEGER Magic86400000;
 extern const LARGE_INTEGER SecondsToStartOf1970;
 extern const LARGE_INTEGER SecondsToStartOf1980;
 
-
+
 //
 //  ULONG
 //  ElapsedDaysToYears (
@@ -320,9 +292,7 @@ extern const LARGE_INTEGER SecondsToStartOf1980;
 //  30,000 years
 //
 
-#define ElapsedDaysToYears(DAYS) ( \
-    ((DAYS) * 128 + 127) / 46751   \
-    )
+#define ElapsedDaysToYears(DAYS) (((DAYS) * 128 + 127) / 46751)
 
 //
 //  ULONG
@@ -336,9 +306,7 @@ extern const LARGE_INTEGER SecondsToStartOf1980;
 //  exception to the exception is the quadricenturies
 //
 
-#define NumberOfLeapYears(YEARS) (                    \
-    ((YEARS) / 4) - ((YEARS) / 100) + ((YEARS) / 400) \
-    )
+#define NumberOfLeapYears(YEARS) (((YEARS) / 4) - ((YEARS) / 100) + ((YEARS) / 400))
 
 //
 //  ULONG
@@ -351,9 +319,7 @@ extern const LARGE_INTEGER SecondsToStartOf1980;
 //  the number of leap years there are (i.e., the number of 366 days years)
 //
 
-#define ElapsedYearsToDays(YEARS) (            \
-    ((YEARS) * 365) + NumberOfLeapYears(YEARS) \
-    )
+#define ElapsedYearsToDays(YEARS) (((YEARS) * 365) + NumberOfLeapYears(YEARS))
 
 //
 //  BOOLEAN
@@ -365,13 +331,7 @@ extern const LARGE_INTEGER SecondsToStartOf1980;
 //  answer is true otherwise it's false
 //
 
-#define IsLeapYear(YEARS) (                        \
-    (((YEARS) % 400 == 0) ||                       \
-     ((YEARS) % 100 != 0) && ((YEARS) % 4 == 0)) ? \
-        TRUE                                       \
-    :                                              \
-        FALSE                                      \
-    )
+#define IsLeapYear(YEARS) ((((YEARS) % 400 == 0) || ((YEARS) % 100 != 0) && ((YEARS) % 4 == 0)) ? TRUE : FALSE)
 
 //
 //  ULONG
@@ -385,66 +345,36 @@ extern const LARGE_INTEGER SecondsToStartOf1980;
 //  to the following month
 //
 
-#define MaxDaysInMonth(YEAR,MONTH) (                                      \
-    IsLeapYear(YEAR) ?                                                    \
-        LeapYearDaysPrecedingMonth[(MONTH) + 1] -                         \
-                                    LeapYearDaysPrecedingMonth[(MONTH)]   \
-    :                                                                     \
-        NormalYearDaysPrecedingMonth[(MONTH) + 1] -                       \
-                                    NormalYearDaysPrecedingMonth[(MONTH)] \
-    )
+#define MaxDaysInMonth(YEAR, MONTH)                                                                   \
+    (IsLeapYear(YEAR) ? LeapYearDaysPrecedingMonth[(MONTH) + 1] - LeapYearDaysPrecedingMonth[(MONTH)] \
+                      : NormalYearDaysPrecedingMonth[(MONTH) + 1] - NormalYearDaysPrecedingMonth[(MONTH)])
 
 
 //
 // Local utlity function prototypes
 //
 
-VOID
-RtlpConvert48To64(
-   IN PSTDTIME_ERROR num48,
-   OUT LARGE_INTEGER *num64
-   );
+VOID RtlpConvert48To64(IN PSTDTIME_ERROR num48, OUT LARGE_INTEGER *num64);
 
 NTSTATUS
-RtlpConvert64To48(
-   IN LARGE_INTEGER num64,
-   OUT PSTDTIME_ERROR num48
-   );
+RtlpConvert64To48(IN LARGE_INTEGER num64, OUT PSTDTIME_ERROR num48);
 
 LARGE_INTEGER
-RtlpTimeToLargeInt(
-   IN LARGE_INTEGER Time
-   );
+RtlpTimeToLargeInt(IN LARGE_INTEGER Time);
 
 LARGE_INTEGER
-RtlpLargeIntToTime(
-   IN LARGE_INTEGER Int
-   );
+RtlpLargeIntToTime(IN LARGE_INTEGER Int);
 
 NTSTATUS
-RtlpAdd48Int(
-   IN PSTDTIME_ERROR First48,
-   IN PSTDTIME_ERROR Second48,
-   IN PSTDTIME_ERROR Result48
-   );
+RtlpAdd48Int(IN PSTDTIME_ERROR First48, IN PSTDTIME_ERROR Second48, IN PSTDTIME_ERROR Result48);
 
 NTSTATUS
-RtlpAddTime(
-   IN LARGE_INTEGER Time1,
-   IN LARGE_INTEGER Time2,
-   OUT PLARGE_INTEGER Result
-   );
+RtlpAddTime(IN LARGE_INTEGER Time1, IN LARGE_INTEGER Time2, OUT PLARGE_INTEGER Result);
 
 NTSTATUS
-RtlpSubtractTime(
-   IN LARGE_INTEGER Time1,
-   IN LARGE_INTEGER Time2,
-   OUT PLARGE_INTEGER Result
-   );
+RtlpSubtractTime(IN LARGE_INTEGER Time1, IN LARGE_INTEGER Time2, OUT PLARGE_INTEGER Result);
 
 LARGE_INTEGER
-RtlpAbsTime(
-   IN LARGE_INTEGER Time
-   );
+RtlpAbsTime(IN LARGE_INTEGER Time);
 
 #endif //_STD_TIME_P_

@@ -22,57 +22,31 @@ Revision History:
 #include "nturtl.h"
 
 extern GENERIC_MAPPING CmpKeyMapping;
-extern LIST_ENTRY CmpHiveListHead;            // List of CMHIVEs
+extern LIST_ENTRY CmpHiveListHead; // List of CMHIVEs
 
 #define SECURITY_CELL_LENGTH(pDescriptor) \
-    FIELD_OFFSET(CM_KEY_SECURITY,Descriptor) + \
-    RtlLengthSecurityDescriptor(pDescriptor)
+    FIELD_OFFSET(CM_KEY_SECURITY, Descriptor) + RtlLengthSecurityDescriptor(pDescriptor)
 
 
 NTSTATUS
-EhpAttachSecurity(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX Cell
-    );
+EhpAttachSecurity(IN PHHIVE Hive, IN HCELL_INDEX Cell);
 
 PVOID
-EhpAllocate(
-    ULONG   Size
-    );
+EhpAllocate(ULONG Size);
 
-VOID
-EhpFree(
-    PVOID   MemoryBlock
-    );
+VOID EhpFree(PVOID MemoryBlock);
 
 BOOLEAN
-EhpFileRead (
-    HANDLE      FileHandle,
-    PULONG      FileOffset,
-    PVOID       DataBuffer,
-    ULONG       DataLength
-    );
+EhpFileRead(HANDLE FileHandle, PULONG FileOffset, PVOID DataBuffer, ULONG DataLength);
 
 BOOLEAN
-EhpFileWrite(
-    HANDLE      FileHandle,
-    PULONG      FileOffset,
-    PVOID       DataBuffer,
-    ULONG       DataLength
-    );
+EhpFileWrite(HANDLE FileHandle, PULONG FileOffset, PVOID DataBuffer, ULONG DataLength);
 
 BOOLEAN
-EhpFileFlush (
-    HANDLE      FileHandle
-    );
+EhpFileFlush(HANDLE FileHandle);
 
-VOID
-CmpGetObjectSecurity(
-    IN HCELL_INDEX Cell,
-    IN PHHIVE Hive,
-    OUT PCM_KEY_SECURITY *Security,
-    OUT PHCELL_INDEX SecurityCell OPTIONAL
-    )
+VOID CmpGetObjectSecurity(IN HCELL_INDEX Cell, IN PHHIVE Hive, OUT PCM_KEY_SECURITY *Security,
+                          OUT PHCELL_INDEX SecurityCell OPTIONAL)
 
 /*++
 
@@ -103,27 +77,25 @@ Return Value:
     //
     // Map the node we need to get the security descriptor for
     //
-    Node = (PCM_KEY_NODE) HvGetCell(Hive, Cell);
+    Node = (PCM_KEY_NODE)HvGetCell(Hive, Cell);
 
     CellIndex = Node->u1.s1.Security;
 
     //
     // Map in the security descriptor cell
     //
-    *Security = (PCM_KEY_SECURITY) HvGetCell(Hive, CellIndex);
+    *Security = (PCM_KEY_SECURITY)HvGetCell(Hive, CellIndex);
 
-    if (ARGUMENT_PRESENT(SecurityCell)) {
+    if (ARGUMENT_PRESENT(SecurityCell))
+    {
         *SecurityCell = CellIndex;
     }
 
     return;
 }
 
-
-VOID
-EhCloseHive(
-    IN HANDLE HiveHandle
-    )
+
+VOID EhCloseHive(IN HANDLE HiveHandle)
 
 /*++
 
@@ -148,17 +120,11 @@ Return Value:
     NtClose(((PCMHIVE)HiveHandle)->FileHandles[HFILE_TYPE_ALTERNATE]);
     NtClose(((PCMHIVE)HiveHandle)->FileHandles[HFILE_TYPE_LOG]);
     CmpFree((PCMHIVE)HiveHandle, sizeof(CMHIVE));
-
 }
 
-
+
 HANDLE
-EhOpenHive(
-    IN PUNICODE_STRING FileName,
-    OUT PHANDLE RootHandle,
-    IN PUNICODE_STRING RootName,
-    IN ULONG HiveType
-    )
+EhOpenHive(IN PUNICODE_STRING FileName, OUT PHANDLE RootHandle, IN PUNICODE_STRING RootName, IN ULONG HiveType)
 
 /*++
 
@@ -195,30 +161,22 @@ Return Value:
     OBJECT_ATTRIBUTES ObjectAttributes;
     PCM_KEY_NODE RootNode;
     HANDLE Handle;
-    HANDLE  Primary;
-    HANDLE  Log;
-    HANDLE  Alt;
-    ULONG   FileType;
-    ULONG   Disposition;
-    ULONG   SecondaryDisposition;
-    ULONG   Operation;
+    HANDLE Primary;
+    HANDLE Log;
+    HANDLE Alt;
+    ULONG FileType;
+    ULONG Disposition;
+    ULONG SecondaryDisposition;
+    ULONG Operation;
 
     Alt = NULL;
     Log = NULL;
     InitializeListHead(&CmpHiveListHead);
 
-    switch (HiveType) {
+    switch (HiveType)
+    {
     case TYPE_SIMPLE:
-        Status = CmpOpenHiveFiles(
-                    FileName,
-                    NULL,
-                    &Primary,
-                    NULL,
-                    &Disposition,
-                    &SecondaryDisposition,
-                    TRUE,
-                    NULL
-                    );
+        Status = CmpOpenHiveFiles(FileName, NULL, &Primary, NULL, &Disposition, &SecondaryDisposition, TRUE, NULL);
         if (!NT_SUCCESS(Status))
         {
             return NULL;
@@ -227,42 +185,26 @@ Return Value:
         break;
 
     case TYPE_LOG:
-        Status = CmpOpenHiveFiles(
-                    FileName,
-                    L".log",
-                    &Primary,
-                    &Log,
-                    &Disposition,
-                    &SecondaryDisposition,
-                    TRUE,
-                    NULL
-                    );
+        Status = CmpOpenHiveFiles(FileName, L".log", &Primary, &Log, &Disposition, &SecondaryDisposition, TRUE, NULL);
         if (!NT_SUCCESS(Status))
         {
             return NULL;
         }
-        if (Log == NULL) {
+        if (Log == NULL)
+        {
             return NULL;
         }
         FileType = HFILE_TYPE_LOG;
         break;
 
     case TYPE_ALT:
-        Status = CmpOpenHiveFiles(
-                    FileName,
-                    L".alt",
-                    &Primary,
-                    &Alt,
-                    &Disposition,
-                    &SecondaryDisposition,
-                    TRUE,
-                    NULL
-                    );
+        Status = CmpOpenHiveFiles(FileName, L".alt", &Primary, &Alt, &Disposition, &SecondaryDisposition, TRUE, NULL);
         if (!NT_SUCCESS(Status))
         {
             return NULL;
         }
-        if (Alt == NULL) {
+        if (Alt == NULL)
+        {
             return NULL;
         }
         FileType = HFILE_TYPE_ALTERNATE;
@@ -275,57 +217,44 @@ Return Value:
     //
     // Initialize hive
     //
-    if (Disposition == FILE_CREATED) {
+    if (Disposition == FILE_CREATED)
+    {
         Operation = HINIT_CREATE;
         Allocate = TRUE;
-    } else {
+    }
+    else
+    {
         Operation = HINIT_FILE;
         Allocate = FALSE;
     }
 
-    if ( ! CmpInitializeHive(
-                    &Hive,
-                    Operation,
-                    FALSE,
-                    FileType,
-                    NULL,
-                    Primary,
-                    Alt,
-                    Log,
-                    NULL,
-                    NULL
-                    ))
+    if (!CmpInitializeHive(&Hive, Operation, FALSE, FileType, NULL, Primary, Alt, Log, NULL, NULL))
     {
         return NULL;
     }
 
-    if (!Allocate) {
+    if (!Allocate)
+    {
         *RootHandle = (HANDLE)(Hive->Hive.BaseBlock->RootCell);
-        RootNode = (PCM_KEY_NODE)HvGetCell(
-                                (PHHIVE)Hive, Hive->Hive.BaseBlock->RootCell);
+        RootNode = (PCM_KEY_NODE)HvGetCell((PHHIVE)Hive, Hive->Hive.BaseBlock->RootCell);
         RootName->Length = RootName->MaximumLength = RootNode->NameLength;
         RootName->Buffer = RootNode->Name;
-    } else {
+    }
+    else
+    {
         RtlInitUnicodeString(RootName, L"HiveRoot");
         *RootHandle = (HANDLE)HCELL_NIL;
         HvSyncHive((PHHIVE)Hive);
     }
 
 
-    return((HANDLE)Hive);
+    return ((HANDLE)Hive);
 }
 
-
+
 NTSTATUS
-EhEnumerateKey(
-    IN HANDLE HiveHandle,
-    IN HANDLE CellHandle,
-    IN ULONG Index,
-    IN KEY_INFORMATION_CLASS KeyInformationClass,
-    IN PVOID KeyInformation,
-    IN ULONG Length,
-    IN PULONG ResultLength
-    )
+EhEnumerateKey(IN HANDLE HiveHandle, IN HANDLE CellHandle, IN ULONG Index, IN KEY_INFORMATION_CLASS KeyInformationClass,
+               IN PVOID KeyInformation, IN ULONG Length, IN PULONG ResultLength)
 /*++
 
 Routine Description:
@@ -375,7 +304,7 @@ Return Value:
 
 --*/
 {
-    CM_KEY_CONTROL_BLOCK    kcb;
+    CM_KEY_CONTROL_BLOCK kcb;
 
     kcb.Signature = CM_KEY_CONTROL_BLOCK_SIGNATURE;
     kcb.Delete = FALSE;
@@ -383,25 +312,14 @@ Return Value:
     kcb.KeyCell = (HCELL_INDEX)CellHandle;
     kcb.RefCount = 1;
 
-    return(CmEnumerateKey(&kcb,
-                          Index,
-                          KeyInformationClass,
-                          KeyInformation,
-                          Length,
-                          ResultLength));
+    return (CmEnumerateKey(&kcb, Index, KeyInformationClass, KeyInformation, Length, ResultLength));
 }
 
-
+
 NTSTATUS
-EhEnumerateValueKey(
-    IN HANDLE HiveHandle,
-    IN HANDLE CellHandle,
-    IN ULONG Index,
-    IN KEY_VALUE_INFORMATION_CLASS KeyValueInformationClass,
-    IN PVOID KeyValueInformation,
-    IN ULONG Length,
-    IN PULONG ResultLength
-    )
+EhEnumerateValueKey(IN HANDLE HiveHandle, IN HANDLE CellHandle, IN ULONG Index,
+                    IN KEY_VALUE_INFORMATION_CLASS KeyValueInformationClass, IN PVOID KeyValueInformation,
+                    IN ULONG Length, IN PULONG ResultLength)
 /*++
 
 Routine Description:
@@ -452,31 +370,21 @@ Return Value:
 
 --*/
 {
-    CM_KEY_CONTROL_BLOCK    kcb;
+    CM_KEY_CONTROL_BLOCK kcb;
 
     kcb.Signature = CM_KEY_CONTROL_BLOCK_SIGNATURE;
     kcb.Delete = FALSE;
-    kcb.KeyHive = (PHHIVE)&(((PCMHIVE)HiveHandle)->Hive);
+    kcb.KeyHive = (PHHIVE) & (((PCMHIVE)HiveHandle)->Hive);
     kcb.KeyCell = (HCELL_INDEX)CellHandle;
     kcb.RefCount = 1;
 
-    return(CmEnumerateValueKey(&kcb,
-                               Index,
-                               KeyValueInformationClass,
-                               KeyValueInformation,
-                               Length,
-                               ResultLength));
+    return (CmEnumerateValueKey(&kcb, Index, KeyValueInformationClass, KeyValueInformation, Length, ResultLength));
 }
 
-
+
 NTSTATUS
-EhOpenChildByNumber(
-    IN HANDLE HiveHandle,
-    IN HANDLE CellHandle,
-    IN ULONG  Index,
-    IN NODE_TYPE   Type,
-    OUT PHANDLE ChildCell
-    )
+EhOpenChildByNumber(IN HANDLE HiveHandle, IN HANDLE CellHandle, IN ULONG Index, IN NODE_TYPE Type,
+                    OUT PHANDLE ChildCell)
 /*++
 
 Routine Description:
@@ -502,25 +410,14 @@ Return Value:
 
 --*/
 {
-    return(CmpFindChildByNumber(&((PCMHIVE)HiveHandle)->Hive,
-                                (HCELL_INDEX)CellHandle,
-                                Index,
-                                Type,
-                                (PHCELL_INDEX)ChildCell));
-
+    return (CmpFindChildByNumber(&((PCMHIVE)HiveHandle)->Hive, (HCELL_INDEX)CellHandle, Index, Type,
+                                 (PHCELL_INDEX)ChildCell));
 }
 
-
+
 NTSTATUS
-EhSetValueKey(
-    IN HANDLE HiveHandle,
-    IN HANDLE CellHandle,
-    IN PUNICODE_STRING ValueName,
-    IN ULONG TitleIndex OPTIONAL,
-    IN ULONG Type,
-    IN PVOID Data,
-    IN ULONG DataSize
-    )
+EhSetValueKey(IN HANDLE HiveHandle, IN HANDLE CellHandle, IN PUNICODE_STRING ValueName, IN ULONG TitleIndex OPTIONAL,
+              IN ULONG Type, IN PVOID Data, IN ULONG DataSize)
 /*++
 
 Routine Description:
@@ -565,29 +462,18 @@ Return Value:
 
     kcb.Delete = FALSE;
     kcb.Signature = CM_KEY_CONTROL_BLOCK_SIGNATURE;
-    kcb.KeyHive = (PHHIVE)&(((PCMHIVE)HiveHandle)->Hive);
+    kcb.KeyHive = (PHHIVE) & (((PCMHIVE)HiveHandle)->Hive);
     kcb.KeyCell = (HCELL_INDEX)CellHandle;
     kcb.FullName.Length = 0;
     kcb.FullName.MaximumLength = 0;
     kcb.FullName.Buffer = NULL;
 
-    return(CmSetValueKey(&kcb,
-                         *ValueName,
-                         TitleIndex,
-                         Type,
-                         Data,
-                         DataSize));
-
+    return (CmSetValueKey(&kcb, *ValueName, TitleIndex, Type, Data, DataSize));
 }
 
-
+
 NTSTATUS
-EhOpenChildByName(
-    HANDLE HiveHandle,
-    HANDLE CellHandle,
-    PUNICODE_STRING  Name,
-    PHANDLE ChildCell
-    )
+EhOpenChildByName(HANDLE HiveHandle, HANDLE CellHandle, PUNICODE_STRING Name, PHANDLE ChildCell)
 /*++
 
 Routine Description:
@@ -610,25 +496,16 @@ Return Value:
 
 --*/
 {
-    PHCELL_INDEX    Index;
+    PHCELL_INDEX Index;
 
-    return(CmpFindChildByName(&((PCMHIVE)HiveHandle)->Hive,
-                              (HCELL_INDEX)CellHandle,
-                              *Name,
-                              KeyBodyNode,
-                              (PHCELL_INDEX)ChildCell,
-                              &Index));
+    return (CmpFindChildByName(&((PCMHIVE)HiveHandle)->Hive, (HCELL_INDEX)CellHandle, *Name, KeyBodyNode,
+                               (PHCELL_INDEX)ChildCell, &Index));
 }
 
-
+
 NTSTATUS
-EhCreateChild(
-    IN HANDLE HiveHandle,
-    IN HANDLE CellHandle,
-    IN PUNICODE_STRING  Name,
-    OUT PHANDLE ChildCell,
-    OUT PULONG Disposition OPTIONAL
-    )
+EhCreateChild(IN HANDLE HiveHandle, IN HANDLE CellHandle, IN PUNICODE_STRING Name, OUT PHANDLE ChildCell,
+              OUT PULONG Disposition OPTIONAL)
 /*++
 
 Routine Description:
@@ -676,31 +553,33 @@ Return Value:
 
     Hive = &((PCMHIVE)HiveHandle)->Hive;
 
-    if ((HCELL_INDEX)CellHandle == HCELL_NIL) {
-        if (Hive->BaseBlock->RootCell != HCELL_NIL) {
+    if ((HCELL_INDEX)CellHandle == HCELL_NIL)
+    {
+        if (Hive->BaseBlock->RootCell != HCELL_NIL)
+        {
             *ChildCell = (HANDLE)(Hive->BaseBlock->RootCell);
-            if (ARGUMENT_PRESENT(Disposition)) {
+            if (ARGUMENT_PRESENT(Disposition))
+            {
                 *Disposition = REG_OPENED_EXISTING_KEY;
             }
-            return(STATUS_SUCCESS);
-        } else {
+            return (STATUS_SUCCESS);
+        }
+        else
+        {
             Status = STATUS_OBJECT_NAME_NOT_FOUND;
         }
-    } else {
-        Parent = (PCM_KEY_NODE)HvGetCell(Hive, (HCELL_INDEX)CellHandle);
-        Status = CmpFindChildByName(Hive,
-                                    (HCELL_INDEX)CellHandle,
-                                    *Name,
-                                    KeyBodyNode,
-                                    (PHCELL_INDEX)ChildCell,
-                                    &Index);
     }
-    if (Status == STATUS_OBJECT_NAME_NOT_FOUND) {
+    else
+    {
+        Parent = (PCM_KEY_NODE)HvGetCell(Hive, (HCELL_INDEX)CellHandle);
+        Status = CmpFindChildByName(Hive, (HCELL_INDEX)CellHandle, *Name, KeyBodyNode, (PHCELL_INDEX)ChildCell, &Index);
+    }
+    if (Status == STATUS_OBJECT_NAME_NOT_FOUND)
+    {
 
-        NewCell = HvAllocateCell(Hive,
-                                 CmpHKeyNodeSize(Hive,Name->Length),
-                                 Stable);
-        if (NewCell != HCELL_NIL) {
+        NewCell = HvAllocateCell(Hive, CmpHKeyNodeSize(Hive, Name->Length), Stable);
+        if (NewCell != HCELL_NIL)
+        {
 
             *ChildCell = (HANDLE)NewCell;
             Child = (PCM_KEY_NODE)HvGetCell(Hive, NewCell);
@@ -730,66 +609,68 @@ Return Value:
             Child->MaxValueNameLen = 0;
             Child->MaxClassLen = 0;
 
-            if((HCELL_INDEX)CellHandle == HCELL_NIL) {
+            if ((HCELL_INDEX)CellHandle == HCELL_NIL)
+            {
                 Hive->BaseBlock->RootCell = NewCell;
                 Status = EhpAttachSecurity(Hive, NewCell);
-            } else {
+            }
+            else
+            {
                 Child->u1.s1.Security = Parent->u1.s1.Security;
                 Security = (PCM_KEY_SECURITY)HvGetCell(Hive, Child->u1.s1.Security);
                 ++Security->ReferenceCount;
             }
 
-            RtlMoveMemory(
-                &(Child->Name[0]),
-                Name->Buffer,
-                Name->Length
-                );
+            RtlMoveMemory(&(Child->Name[0]), Name->Buffer, Name->Length);
 
             Status = STATUS_SUCCESS;
-        } else {
-            Status = STATUS_INSUFFICIENT_RESOURCES;
-            return(Status);
         }
-        if (ARGUMENT_PRESENT(Disposition)) {
+        else
+        {
+            Status = STATUS_INSUFFICIENT_RESOURCES;
+            return (Status);
+        }
+        if (ARGUMENT_PRESENT(Disposition))
+        {
             *Disposition = REG_CREATED_NEW_KEY;
         }
 
-        if ((HCELL_INDEX)CellHandle != HCELL_NIL) {
+        if ((HCELL_INDEX)CellHandle != HCELL_NIL)
+        {
 
             //
             // put newly created child into parent's sub key list
             //
-            if (! CmpAddSubKey(Hive, (HCELL_INDEX)CellHandle, NewCell)) {
+            if (!CmpAddSubKey(Hive, (HCELL_INDEX)CellHandle, NewCell))
+            {
                 CmpFreeKeyByCell(Hive, NewCell, FALSE);
                 return STATUS_INSUFFICIENT_RESOURCES;
             }
 
             Parent = (PCM_KEY_NODE)HvGetCell(Hive, (HCELL_INDEX)CellHandle);
 
-            if (Parent->MaxNameLen < Name->Length) {
+            if (Parent->MaxNameLen < Name->Length)
+            {
                 Parent->MaxNameLen = Name->Length;
             }
             Parent->MaxClassLen = 0;
         }
-    } else {
+    }
+    else
+    {
         Status = STATUS_SUCCESS;
-        if (ARGUMENT_PRESENT(Disposition)) {
+        if (ARGUMENT_PRESENT(Disposition))
+        {
             *Disposition = REG_OPENED_EXISTING_KEY;
         }
     }
-    return(Status);
+    return (Status);
 }
 
-
+
 NTSTATUS
-EhQueryKey(
-    IN HANDLE HiveHandle,
-    IN HANDLE KeyHandle,
-    IN KEY_INFORMATION_CLASS KeyInformationClass,
-    IN PVOID KeyInformation,
-    IN ULONG Length,
-    IN PULONG ResultLength
-    )
+EhQueryKey(IN HANDLE HiveHandle, IN HANDLE KeyHandle, IN KEY_INFORMATION_CLASS KeyInformationClass,
+           IN PVOID KeyInformation, IN ULONG Length, IN PULONG ResultLength)
 /*++
 
 Routine Description:
@@ -843,40 +724,24 @@ Return Value:
     Kcb.FullName.MaximumLength = 0;
     Kcb.FullName.Buffer = NULL;
 
-    return(CmQueryKey(&Kcb,
-                      KeyInformationClass,
-                      KeyInformation,
-                      Length,
-                      ResultLength));
+    return (CmQueryKey(&Kcb, KeyInformationClass, KeyInformation, Length, ResultLength));
 }
 
 PSECURITY_DESCRIPTOR
-EhGetKeySecurity(
-    IN HANDLE HiveHandle,
-    IN HANDLE KeyHandle
-    )
+EhGetKeySecurity(IN HANDLE HiveHandle, IN HANDLE KeyHandle)
 {
     PCM_KEY_SECURITY Security;
 
-    CmpGetObjectSecurity((HCELL_INDEX)KeyHandle,
-                         &((PCMHIVE)HiveHandle)->Hive,
-                         &Security,
-                         NULL);
+    CmpGetObjectSecurity((HCELL_INDEX)KeyHandle, &((PCMHIVE)HiveHandle)->Hive, &Security, NULL);
 
-    return(&Security->Descriptor);
+    return (&Security->Descriptor);
 }
 
-
+
 NTSTATUS
-EhQueryValueKey(
-    IN HANDLE HiveHandle,
-    IN HANDLE KeyHandle,
-    IN PUNICODE_STRING ValueName,
-    IN KEY_VALUE_INFORMATION_CLASS KeyValueInformationClass,
-    IN PVOID KeyValueInformation,
-    IN ULONG Length,
-    IN PULONG ResultLength
-    )
+EhQueryValueKey(IN HANDLE HiveHandle, IN HANDLE KeyHandle, IN PUNICODE_STRING ValueName,
+                IN KEY_VALUE_INFORMATION_CLASS KeyValueInformationClass, IN PVOID KeyValueInformation, IN ULONG Length,
+                IN PULONG ResultLength)
 /*++
 
 Routine Description:
@@ -929,22 +794,14 @@ Return Value:
     kcb.FullName.MaximumLength = 0;
     kcb.FullName.Buffer = NULL;
 
-    return(CmQueryValueKey(&kcb,
-                           *ValueName,
-                           KeyValueInformationClass,
-                           KeyValueInformation,
-                           Length,
-                           ResultLength));
-
+    return (CmQueryValueKey(&kcb, *ValueName, KeyValueInformationClass, KeyValueInformation, Length, ResultLength));
 }
 
-
+
 NTSTATUS
-EhDeleteValueKey(
-    IN HANDLE HiveHandle,
-    IN HANDLE CellHandle,
-    IN PUNICODE_STRING ValueName         // RAW
-    )
+EhDeleteValueKey(IN HANDLE HiveHandle, IN HANDLE CellHandle,
+                 IN PUNICODE_STRING ValueName // RAW
+)
 /*++
 
 Routine Description:
@@ -980,15 +837,12 @@ Return Value:
     kcb.FullName.MaximumLength = 0;
     kcb.FullName.Buffer = NULL;
 
-    return(CmDeleteValueKey(&kcb, *ValueName));
+    return (CmDeleteValueKey(&kcb, *ValueName));
 }
 
-
+
 NTSTATUS
-EhpAttachSecurity(
-    IN PHHIVE Hive,
-    IN HCELL_INDEX Cell
-    )
+EhpAttachSecurity(IN PHHIVE Hive, IN HCELL_INDEX Cell)
 
 /*++
 
@@ -1020,28 +874,22 @@ Return Value:
     ULONG DescriptorLength;
     HANDLE Handle;
 
-    Status = NtOpenProcessToken( NtCurrentProcess(),
-                                 TOKEN_QUERY,
-                                 &Token );
-    if (!NT_SUCCESS(Status)) {
-        return(Status);
+    Status = NtOpenProcessToken(NtCurrentProcess(), TOKEN_QUERY, &Token);
+    if (!NT_SUCCESS(Status))
+    {
+        return (Status);
     }
 
-    Status = RtlNewSecurityObject( NULL,
-                                   NULL,
-                                   &Descriptor,
-                                   FALSE,
-                                   Token,
-                                   &CmpKeyMapping );
-    if (!NT_SUCCESS(Status)) {
-        return(Status);
+    Status = RtlNewSecurityObject(NULL, NULL, &Descriptor, FALSE, Token, &CmpKeyMapping);
+    if (!NT_SUCCESS(Status))
+    {
+        return (Status);
     }
 
     Node = (PCM_KEY_NODE)HvGetCell(Hive, Cell);
-    SecurityCell = HvAllocateCell(Hive,
-                                  SECURITY_CELL_LENGTH(Descriptor),
-                                  Stable);
-    if (SecurityCell == HCELL_NIL) {
+    SecurityCell = HvAllocateCell(Hive, SECURITY_CELL_LENGTH(Descriptor), Stable);
+    if (SecurityCell == HCELL_NIL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
     Node->u1.s1.Security = SecurityCell;
@@ -1050,11 +898,8 @@ Return Value:
     Security->Signature = CM_KEY_SECURITY_SIGNATURE;
     Security->ReferenceCount = 1;
     Security->DescriptorLength = DescriptorLength;
-    RtlMoveMemory( &Security->Descriptor,
-                   Descriptor,
-                   DescriptorLength );
+    RtlMoveMemory(&Security->Descriptor, Descriptor, DescriptorLength);
     Security->Flink = Security->Blink = SecurityCell;
-    return(STATUS_SUCCESS);
-
+    return (STATUS_SUCCESS);
 }
 

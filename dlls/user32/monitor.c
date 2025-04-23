@@ -28,10 +28,9 @@
 * History:
 * 11-26-91 sanfords Created.
 \***************************************************************************/
-VOID MonitorStringHandle(
-PCL_INSTANCE_INFO pcii,
-HSZ hsz, // local atom
-DWORD fsAction)
+VOID MonitorStringHandle(PCL_INSTANCE_INFO pcii,
+                         HSZ hsz, // local atom
+                         DWORD fsAction)
 {
     WCHAR szT[256];
     PEVENT_PACKET pep;
@@ -41,29 +40,30 @@ DWORD fsAction)
 
     UserAssert(pcii->MonitorFlags & MF_HSZ_INFO);
 
-    if (!(cchString = GetAtomName(LATOM_FROM_HSZ(hsz), szT,
-            sizeof(szT) / sizeof(WCHAR)))) {
+    if (!(cchString = GetAtomName(LATOM_FROM_HSZ(hsz), szT, sizeof(szT) / sizeof(WCHAR))))
+    {
         SetLastDDEMLError(pcii, DMLERR_INVALIDPARAMETER);
-        return ;
+        return;
     }
     cchString++;
-    pep = (PEVENT_PACKET)DDEMLAlloc(sizeof(EVENT_PACKET) - sizeof(DWORD) +
-            sizeof(MONHSZSTRUCT) + cchString * sizeof(WCHAR));
-    if (pep == NULL) {
+    pep = (PEVENT_PACKET)DDEMLAlloc(sizeof(EVENT_PACKET) - sizeof(DWORD) + sizeof(MONHSZSTRUCT) +
+                                    cchString * sizeof(WCHAR));
+    if (pep == NULL)
+    {
         SetLastDDEMLError(pcii, DMLERR_MEMORY_ERROR);
-        return ;
+        return;
     }
 
-    pep->EventType =    MF_HSZ_INFO;
-    pep->fSense =       TRUE;
-    pep->cbEventData =  (WORD)(sizeof(MONHSZSTRUCT) + cchString * sizeof(WCHAR));
+    pep->EventType = MF_HSZ_INFO;
+    pep->fSense = TRUE;
+    pep->cbEventData = (WORD)(sizeof(MONHSZSTRUCT) + cchString * sizeof(WCHAR));
 
 #define phszs ((MONHSZSTRUCT *)&pep->Data)
-    phszs->cb =      sizeof(MONHSZSTRUCT);
+    phszs->cb = sizeof(MONHSZSTRUCT);
     phszs->fsAction = fsAction;
-    phszs->dwTime =  NtGetTickCount();
+    phszs->dwTime = NtGetTickCount();
     phszs->hsz = hsz;
-    phszs->hTask = (HANDLE)LongToHandle( pcii->tid );
+    phszs->hTask = (HANDLE)LongToHandle(pcii->tid);
     // phszs->wReserved = 0; // zero init.
     wcscpy(phszs->str, szT);
 
@@ -72,8 +72,6 @@ DWORD fsAction)
     EnterDDECrit;
 #undef phszs
 }
-
-
 
 
 /***************************************************************************\
@@ -87,17 +85,8 @@ DWORD fsAction)
 * History:
 * 11-26-91 sanfords Created.
 \***************************************************************************/
-VOID MonitorLink(
-PCL_INSTANCE_INFO pcii,
-BOOL fEstablished,
-BOOL fNoData,
-LATOM aService,
-LATOM aTopic,
-GATOM aItem,
-WORD wFmt,
-BOOL fServer,
-HCONV hConvServer,
-HCONV hConvClient)
+VOID MonitorLink(PCL_INSTANCE_INFO pcii, BOOL fEstablished, BOOL fNoData, LATOM aService, LATOM aTopic, GATOM aItem,
+                 WORD wFmt, BOOL fServer, HCONV hConvServer, HCONV hConvClient)
 {
     PEVENT_PACKET pep;
 
@@ -105,36 +94,36 @@ HCONV hConvClient)
 
     UserAssert(pcii->MonitorFlags & MF_LINKS);
 
-    pep = (PEVENT_PACKET)DDEMLAlloc(sizeof(EVENT_PACKET) - sizeof(DWORD) +
-            sizeof(MONLINKSTRUCT));
-    if (pep == NULL) {
+    pep = (PEVENT_PACKET)DDEMLAlloc(sizeof(EVENT_PACKET) - sizeof(DWORD) + sizeof(MONLINKSTRUCT));
+    if (pep == NULL)
+    {
         SetLastDDEMLError(pcii, DMLERR_MEMORY_ERROR);
-        return ;
+        return;
     }
 
-    pep->EventType =    MF_LINKS;
-    pep->fSense =       TRUE;
-    pep->cbEventData =  sizeof(MONLINKSTRUCT);
+    pep->EventType = MF_LINKS;
+    pep->fSense = TRUE;
+    pep->cbEventData = sizeof(MONLINKSTRUCT);
 
 #define pls ((MONLINKSTRUCT *)&pep->Data)
-    pls->cb =           sizeof(MONLINKSTRUCT);
-    pls->dwTime =       NtGetTickCount();
-    pls->hTask =        (HANDLE)LongToHandle( pcii->tid );
+    pls->cb = sizeof(MONLINKSTRUCT);
+    pls->dwTime = NtGetTickCount();
+    pls->hTask = (HANDLE)LongToHandle(pcii->tid);
     pls->fEstablished = fEstablished;
-    pls->fNoData =      fNoData;
+    pls->fNoData = fNoData;
 
     // use global atoms here - these need to be changed to local atoms before
     // the callbacks to the ddespy apps.
 
-    pls->hszSvc =       (HSZ)LocalToGlobalAtom(aService);
-    pls->hszTopic =     (HSZ)LocalToGlobalAtom(aTopic);
+    pls->hszSvc = (HSZ)LocalToGlobalAtom(aService);
+    pls->hszTopic = (HSZ)LocalToGlobalAtom(aTopic);
     IncGlobalAtomCount(aItem);
-    pls->hszItem =      (HSZ)aItem;
+    pls->hszItem = (HSZ)aItem;
 
-    pls->wFmt =         wFmt;
-    pls->fServer =      fServer;
-    pls->hConvServer =  hConvServer;
-    pls->hConvClient =  hConvClient;
+    pls->wFmt = wFmt;
+    pls->fServer = fServer;
+    pls->hConvServer = hConvServer;
+    pls->hConvClient = hConvClient;
 
     LeaveDDECrit;
     Event(pep);
@@ -145,8 +134,6 @@ HCONV hConvClient)
     GlobalDeleteAtom(aItem);
 #undef pls
 }
-
-
 
 
 /***************************************************************************\
@@ -164,9 +151,7 @@ HCONV hConvClient)
 *                   tie together connect and disconnect events from each
 *                   side.
 \***************************************************************************/
-VOID MonitorConv(
-PCONV_INFO pcoi,
-BOOL fConnect)
+VOID MonitorConv(PCONV_INFO pcoi, BOOL fConnect)
 {
     PEVENT_PACKET pep;
 
@@ -174,30 +159,33 @@ BOOL fConnect)
 
     UserAssert(pcoi->pcii->MonitorFlags & MF_CONV);
 
-    pep = (PEVENT_PACKET)DDEMLAlloc(sizeof(EVENT_PACKET) - sizeof(DWORD) +
-            sizeof(MONCONVSTRUCT));
-    if (pep == NULL) {
+    pep = (PEVENT_PACKET)DDEMLAlloc(sizeof(EVENT_PACKET) - sizeof(DWORD) + sizeof(MONCONVSTRUCT));
+    if (pep == NULL)
+    {
         SetLastDDEMLError(pcoi->pcii, DMLERR_MEMORY_ERROR);
-        return ;
+        return;
     }
 
-    pep->EventType =    MF_CONV;
-    pep->fSense =       TRUE;
-    pep->cbEventData =  sizeof(MONCONVSTRUCT);
+    pep->EventType = MF_CONV;
+    pep->fSense = TRUE;
+    pep->cbEventData = sizeof(MONCONVSTRUCT);
 
 #define pcs ((MONCONVSTRUCT *)&pep->Data)
-    pcs->cb =           sizeof(MONCONVSTRUCT);
-    pcs->fConnect =     fConnect;
-    pcs->dwTime =       NtGetTickCount();
-    pcs->hTask =        (HANDLE)LongToHandle( pcoi->pcii->tid );
-    pcs->hszSvc =       (HSZ)LocalToGlobalAtom(pcoi->laService);
-    pcs->hszTopic =     (HSZ)LocalToGlobalAtom(pcoi->laTopic);
-    if (pcoi->state & ST_CLIENT) {
-        pcs->hConvClient =  (HCONV)pcoi->hwndConv;
-        pcs->hConvServer =  (HCONV)pcoi->hwndPartner;
-    } else {
-        pcs->hConvClient =  (HCONV)pcoi->hwndPartner;
-        pcs->hConvServer =  (HCONV)pcoi->hwndConv;
+    pcs->cb = sizeof(MONCONVSTRUCT);
+    pcs->fConnect = fConnect;
+    pcs->dwTime = NtGetTickCount();
+    pcs->hTask = (HANDLE)LongToHandle(pcoi->pcii->tid);
+    pcs->hszSvc = (HSZ)LocalToGlobalAtom(pcoi->laService);
+    pcs->hszTopic = (HSZ)LocalToGlobalAtom(pcoi->laTopic);
+    if (pcoi->state & ST_CLIENT)
+    {
+        pcs->hConvClient = (HCONV)pcoi->hwndConv;
+        pcs->hConvServer = (HCONV)pcoi->hwndPartner;
+    }
+    else
+    {
+        pcs->hConvClient = (HCONV)pcoi->hwndPartner;
+        pcs->hConvServer = (HCONV)pcoi->hwndConv;
     }
 
     LeaveDDECrit;

@@ -45,10 +45,11 @@ extern ULONG CmpTypeCount[];
 // adapters to their corresponding NT interface type.
 //
 
-extern struct {
-    PUCHAR  AscString;
-    USHORT  InterfaceType;
-    USHORT  Count;
+extern struct
+{
+    PUCHAR AscString;
+    USHORT InterfaceType;
+    USHORT Count;
 } CmpMultifunctionTypes[];
 
 extern USHORT CmpUnknownBusCount;
@@ -69,24 +70,18 @@ extern PCM_FULL_RESOURCE_DESCRIPTOR CmpConfigurationData;
 //
 
 NTSTATUS
-CmpSetupConfigurationTree(
-     IN PCONFIGURATION_COMPONENT_DATA CurrentEntry,
-     IN HANDLE ParentHandle,
-     IN INTERFACE_TYPE InterfaceType,
-     IN ULONG BusNumber
-     );
+CmpSetupConfigurationTree(IN PCONFIGURATION_COMPONENT_DATA CurrentEntry, IN HANDLE ParentHandle,
+                          IN INTERFACE_TYPE InterfaceType, IN ULONG BusNumber);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,CmpInitializeHardwareConfiguration)
-#pragma alloc_text(INIT,CmpSetupConfigurationTree)
-#pragma alloc_text(INIT,CmpInitializeRegistryNode)
+#pragma alloc_text(INIT, CmpInitializeHardwareConfiguration)
+#pragma alloc_text(INIT, CmpSetupConfigurationTree)
+#pragma alloc_text(INIT, CmpInitializeRegistryNode)
 #endif
 
-
+
 NTSTATUS
-CmpInitializeHardwareConfiguration(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+CmpInitializeHardwareConfiguration(IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 /*++
 
 Routine Description:
@@ -118,27 +113,15 @@ Returns:
     // Create \\Registry\Machine\Hardware\DeviceMap
     //
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &CmRegistryMachineHardwareDeviceMapName,
-        0,
-        (HANDLE)NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&ObjectAttributes, &CmRegistryMachineHardwareDeviceMapName, 0, (HANDLE)NULL, NULL);
     ObjectAttributes.Attributes |= OBJ_CASE_INSENSITIVE;
 
-    Status = NtCreateKey(                   // Paht may already exist
-                &BaseHandle,
-                KEY_READ | KEY_WRITE,
-                &ObjectAttributes,
-                TITLE_INDEX_VALUE,
-                NULL,
-                0,
-                &Disposition
-                );
+    Status = NtCreateKey( // Paht may already exist
+        &BaseHandle, KEY_READ | KEY_WRITE, &ObjectAttributes, TITLE_INDEX_VALUE, NULL, 0, &Disposition);
 
-    if (!NT_SUCCESS(Status)) {
-        return(Status);
+    if (!NT_SUCCESS(Status))
+    {
+        return (Status);
     }
 
     NtClose(BaseHandle);
@@ -150,27 +133,15 @@ Returns:
     // returned handle as the BaseHandle to build the hardware tree.
     //
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &CmRegistryMachineHardwareDescriptionName,
-        0,
-        (HANDLE)NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&ObjectAttributes, &CmRegistryMachineHardwareDescriptionName, 0, (HANDLE)NULL, NULL);
     ObjectAttributes.Attributes |= OBJ_CASE_INSENSITIVE;
 
-    Status = NtCreateKey(                   // Path may already exist
-                &BaseHandle,
-                KEY_READ | KEY_WRITE,
-                &ObjectAttributes,
-                TITLE_INDEX_VALUE,
-                NULL,
-                0,
-                &Disposition
-                );
+    Status = NtCreateKey( // Path may already exist
+        &BaseHandle, KEY_READ | KEY_WRITE, &ObjectAttributes, TITLE_INDEX_VALUE, NULL, 0, &Disposition);
 
-    if (!NT_SUCCESS(Status)) {
-        return(Status);
+    if (!NT_SUCCESS(Status))
+    {
+        return (Status);
     }
 
     ASSERT(Disposition == REG_CREATED_NEW_KEY);
@@ -185,13 +156,11 @@ Returns:
     //    of the machines.  Therefore, 16K is the initial value.
     //
 
-    CmpConfigurationData = (PCM_FULL_RESOURCE_DESCRIPTOR)ExAllocatePool(
-                                        PagedPool,
-                                        CmpConfigurationAreaSize
-                                        );
+    CmpConfigurationData = (PCM_FULL_RESOURCE_DESCRIPTOR)ExAllocatePool(PagedPool, CmpConfigurationAreaSize);
 
-    if (CmpConfigurationData == NULL) {
-        return(STATUS_INSUFFICIENT_RESOURCES);
+    if (CmpConfigurationData == NULL)
+    {
+        return (STATUS_INSUFFICIENT_RESOURCES);
     }
 
     //
@@ -199,27 +168,23 @@ Returns:
     // of the tree and add component information to registry database.
     //
 
-    if (ConfigurationRoot) {
-        Status = CmpSetupConfigurationTree(ConfigurationRoot,
-                                           BaseHandle,
-                                           -1,
-                                           (ULONG)-1);
-    } else {
+    if (ConfigurationRoot)
+    {
+        Status = CmpSetupConfigurationTree(ConfigurationRoot, BaseHandle, -1, (ULONG)-1);
+    }
+    else
+    {
         Status = STATUS_SUCCESS;
     }
 
     ExFreePool((PVOID)CmpConfigurationData);
     NtClose(BaseHandle);
-    return(Status);
+    return (Status);
 }
-
+
 NTSTATUS
-CmpSetupConfigurationTree(
-     IN PCONFIGURATION_COMPONENT_DATA CurrentEntry,
-     IN HANDLE ParentHandle,
-     IN INTERFACE_TYPE InterfaceType,
-     IN ULONG BusNumber
-     )
+CmpSetupConfigurationTree(IN PCONFIGURATION_COMPONENT_DATA CurrentEntry, IN HANDLE ParentHandle,
+                          IN INTERFACE_TYPE InterfaceType, IN ULONG BusNumber)
 /*++
 
 Routine Description:
@@ -259,7 +224,8 @@ Returns:
     ULONG LocalBusNumber = BusNumber;
     USHORT DeviceIndexTable[NUMBER_TYPES];
 
-    for (i = 0; i < NUMBER_TYPES; i++) {
+    for (i = 0; i < NUMBER_TYPES; i++)
+    {
         DeviceIndexTable[i] = 0;
     }
 
@@ -267,7 +233,8 @@ Returns:
     // Process current entry and its siblings
     //
 
-    while (CurrentEntry) {
+    while (CurrentEntry)
+    {
 
         //
         // Register current entry first before going down to its children
@@ -281,10 +248,11 @@ Returns:
         // its subtree.
         //
 
-        if (Component->Class == AdapterClass &&
-            CurrentEntry->Parent->ComponentEntry.Class == SystemClass) {
+        if (Component->Class == AdapterClass && CurrentEntry->Parent->ComponentEntry.Class == SystemClass)
+        {
 
-            switch (Component->Type) {
+            switch (Component->Type)
+            {
 
             case EisaAdapter:
                 LocalInterfaceType = Eisa;
@@ -302,11 +270,13 @@ Returns:
                 // its interface type (bus type.)
                 //
 
-                if (Component->Identifier) {
-                    for (i=0; CmpMultifunctionTypes[i].AscString; i++) {
-                        if (_stricmp(CmpMultifunctionTypes[i].AscString,
-                                    Component->Identifier) == 0) {
-                                        break;
+                if (Component->Identifier)
+                {
+                    for (i = 0; CmpMultifunctionTypes[i].AscString; i++)
+                    {
+                        if (_stricmp(CmpMultifunctionTypes[i].AscString, Component->Identifier) == 0)
+                        {
+                            break;
                         }
                     }
 
@@ -336,17 +306,12 @@ Returns:
         // Initialize and copy current component to hardware registry
         //
 
-        Status = CmpInitializeRegistryNode(
-                     CurrentEntry,
-                     ParentHandle,
-                     &NewHandle,
-                     LocalInterfaceType,
-                     LocalBusNumber,
-                     DeviceIndexTable
-                     );
+        Status = CmpInitializeRegistryNode(CurrentEntry, ParentHandle, &NewHandle, LocalInterfaceType, LocalBusNumber,
+                                           DeviceIndexTable);
 
-        if (!NT_SUCCESS(Status)) {
-            return(Status);
+        if (!NT_SUCCESS(Status))
+        {
+            return (Status);
         }
 
         //
@@ -354,38 +319,30 @@ Returns:
         // table for everything under the current component class ...
         //
 
-        if (CurrentEntry->Child) {
+        if (CurrentEntry->Child)
+        {
 
             //
             // Process the child entry of current entry
             //
 
-            Status = CmpSetupConfigurationTree(CurrentEntry->Child,
-                                               NewHandle,
-                                               LocalInterfaceType,
-                                               LocalBusNumber
-                                               );
-            if (!NT_SUCCESS(Status)) {
+            Status = CmpSetupConfigurationTree(CurrentEntry->Child, NewHandle, LocalInterfaceType, LocalBusNumber);
+            if (!NT_SUCCESS(Status))
+            {
                 NtClose(NewHandle);
-                return(Status);
+                return (Status);
             }
         }
         NtClose(NewHandle);
         CurrentEntry = CurrentEntry->Sibling;
     }
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }
 
-
+
 NTSTATUS
-CmpInitializeRegistryNode(
-    IN PCONFIGURATION_COMPONENT_DATA CurrentEntry,
-    IN HANDLE ParentHandle,
-    OUT PHANDLE NewHandle,
-    IN INTERFACE_TYPE InterfaceType,
-    IN ULONG BusNumber,
-    IN PUSHORT DeviceIndexTable
-    )
+CmpInitializeRegistryNode(IN PCONFIGURATION_COMPONENT_DATA CurrentEntry, IN HANDLE ParentHandle, OUT PHANDLE NewHandle,
+                          IN INTERFACE_TYPE InterfaceType, IN ULONG BusNumber, IN PUSHORT DeviceIndexTable)
 
 /*++
 
@@ -442,7 +399,8 @@ Returns:
     // change its Type to ArcSystem to ease the setup.
     //
 
-    if (Component->Class == SystemClass) {
+    if (Component->Class == SystemClass)
+    {
         Component->Type = ArcSystem;
     }
 
@@ -453,27 +411,15 @@ Returns:
     // registry node.  The class is the class of the component.
     //
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &(CmTypeName[Component->Type]),
-        0,
-        ParentHandle,
-        NULL
-        );
+    InitializeObjectAttributes(&ObjectAttributes, &(CmTypeName[Component->Type]), 0, ParentHandle, NULL);
     ObjectAttributes.Attributes |= OBJ_CASE_INSENSITIVE;
 
-    Status = NtCreateKey(                   // Paht may already exist
-                &Handle,
-                KEY_READ | KEY_WRITE,
-                &ObjectAttributes,
-                0,
-                NULL,
-                0,
-                &Disposition
-                );
+    Status = NtCreateKey( // Paht may already exist
+        &Handle, KEY_READ | KEY_WRITE, &ObjectAttributes, 0, NULL, 0, &Disposition);
 
-    if (!NT_SUCCESS(Status)) {
-        return(Status);
+    if (!NT_SUCCESS(Status))
+    {
+        return (Status);
     }
 
     //
@@ -481,55 +427,31 @@ Returns:
     // create a subkey to identify the component's ordering.
     //
 
-    if (Component->Class != SystemClass) {
+    if (Component->Class != SystemClass)
+    {
 
-        RtlIntegerToChar(
-            DeviceIndexTable[Component->Type]++,
-            10,
-            12,
-            Buffer
-            );
+        RtlIntegerToChar(DeviceIndexTable[Component->Type]++, 10, 12, Buffer);
 
-        RtlInitAnsiString(
-            &AnsiString,
-            Buffer
-            );
+        RtlInitAnsiString(&AnsiString, Buffer);
 
         KeyName.Buffer = (PWSTR)UnicodeBuffer;
         KeyName.Length = 0;
         KeyName.MaximumLength = sizeof(UnicodeBuffer);
 
-        RtlAnsiStringToUnicodeString(
-            &KeyName,
-            &AnsiString,
-            FALSE
-            );
+        RtlAnsiStringToUnicodeString(&KeyName, &AnsiString, FALSE);
 
         OldHandle = Handle;
 
-        InitializeObjectAttributes(
-            &ObjectAttributes,
-            &KeyName,
-            0,
-            OldHandle,
-            NULL
-            );
+        InitializeObjectAttributes(&ObjectAttributes, &KeyName, 0, OldHandle, NULL);
         ObjectAttributes.Attributes |= OBJ_CASE_INSENSITIVE;
 
-        Status = NtCreateKey(
-                    &Handle,
-                    KEY_READ | KEY_WRITE,
-                    &ObjectAttributes,
-                    0,
-                    NULL,
-                    0,
-                    &Disposition
-                    );
+        Status = NtCreateKey(&Handle, KEY_READ | KEY_WRITE, &ObjectAttributes, 0, NULL, 0, &Disposition);
 
         NtClose(OldHandle);
 
-        if (!NT_SUCCESS(Status)) {
-            return(Status);
+        if (!NT_SUCCESS(Status))
+        {
+            return (Status);
         }
 
         ASSERT(Disposition == REG_CREATED_NEW_KEY);
@@ -540,62 +462,40 @@ Returns:
     //     Flags, Cersion, Key, AffinityMask.
     //
 
-    RtlInitUnicodeString(
-        &ValueName,
-        L"Component Information"
-        );
+    RtlInitUnicodeString(&ValueName, L"Component Information");
 
-    Status = NtSetValueKey(
-                Handle,
-                &ValueName,
-                TITLE_INDEX_VALUE,
-                REG_BINARY,
-                &Component->Flags,
-                FIELD_OFFSET(CONFIGURATION_COMPONENT, ConfigurationDataLength) -
-                    FIELD_OFFSET(CONFIGURATION_COMPONENT, Flags)
-                );
+    Status = NtSetValueKey(Handle, &ValueName, TITLE_INDEX_VALUE, REG_BINARY, &Component->Flags,
+                           FIELD_OFFSET(CONFIGURATION_COMPONENT, ConfigurationDataLength) -
+                               FIELD_OFFSET(CONFIGURATION_COMPONENT, Flags));
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         NtClose(Handle);
-        return(Status);
+        return (Status);
     }
 
     //
     // Create a value which describes the component identifier, if any.
     //
 
-    if (Component->IdentifierLength) {
+    if (Component->IdentifierLength)
+    {
 
-        RtlInitUnicodeString(
-            &ValueName,
-            L"Identifier"
-            );
+        RtlInitUnicodeString(&ValueName, L"Identifier");
 
-        RtlInitAnsiString(
-            &AnsiString,
-            Component->Identifier
-            );
+        RtlInitAnsiString(&AnsiString, Component->Identifier);
 
-        RtlAnsiStringToUnicodeString(
-            &ValueData,
-            &AnsiString,
-            TRUE
-            );
+        RtlAnsiStringToUnicodeString(&ValueData, &AnsiString, TRUE);
 
-        Status = NtSetValueKey(
-                    Handle,
-                    &ValueName,
-                    TITLE_INDEX_VALUE,
-                    REG_SZ,
-                    ValueData.Buffer,
-                    ValueData.Length + sizeof( UNICODE_NULL )
-                    );
+        Status = NtSetValueKey(Handle, &ValueName, TITLE_INDEX_VALUE, REG_SZ, ValueData.Buffer,
+                               ValueData.Length + sizeof(UNICODE_NULL));
 
         RtlFreeUnicodeString(&ValueData);
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             NtClose(Handle);
-            return(Status);
+            return (Status);
         }
     }
 
@@ -603,10 +503,7 @@ Returns:
     // Create a value entry for component configuration data.
     //
 
-    RtlInitUnicodeString(
-        &ValueName,
-        L"Configuration Data"
-        );
+    RtlInitUnicodeString(&ValueName, L"Configuration Data");
 
     //
     // Create the configuration data based on CM_FULL_RESOURCE_DESCRIPTOR.
@@ -617,7 +514,8 @@ Returns:
     // CM_FULL_RESOURCE_DESCRIPTOR.
     //
 
-    if (CurrentEntry->ConfigurationData) {
+    if (CurrentEntry->ConfigurationData)
+    {
 
         //
         // This component has configuration data, we copy the data
@@ -625,15 +523,15 @@ Returns:
         // configuration data to the registry.
         //
 
-        ConfigurationDataLength = Component->ConfigurationDataLength +
-                      FIELD_OFFSET(CM_FULL_RESOURCE_DESCRIPTOR,
-                      PartialResourceList);
+        ConfigurationDataLength =
+            Component->ConfigurationDataLength + FIELD_OFFSET(CM_FULL_RESOURCE_DESCRIPTOR, PartialResourceList);
 
         //
         // Make sure our reserved area is big enough to hold the data.
         //
 
-        if (ConfigurationDataLength > CmpConfigurationAreaSize) {
+        if (ConfigurationDataLength > CmpConfigurationAreaSize)
+        {
 
             //
             // If reserved area is not big enough, we resize our reserved
@@ -641,35 +539,31 @@ Returns:
             // loss the configuration data of this particular component.
             //
 
-            NewArea = (PCM_FULL_RESOURCE_DESCRIPTOR)ExAllocatePool(
-                                            PagedPool,
-                                            ConfigurationDataLength
-                                            );
+            NewArea = (PCM_FULL_RESOURCE_DESCRIPTOR)ExAllocatePool(PagedPool, ConfigurationDataLength);
 
-            if (NewArea) {
+            if (NewArea)
+            {
                 CmpConfigurationAreaSize = ConfigurationDataLength;
                 ExFreePool(CmpConfigurationData);
                 CmpConfigurationData = NewArea;
-                RtlCopyMemory(
-                    (PUCHAR)&CmpConfigurationData->PartialResourceList.Version,
-                    CurrentEntry->ConfigurationData,
-                    Component->ConfigurationDataLength
-                    );
-            } else {
+                RtlCopyMemory((PUCHAR)&CmpConfigurationData->PartialResourceList.Version,
+                              CurrentEntry->ConfigurationData, Component->ConfigurationDataLength);
+            }
+            else
+            {
                 Component->ConfigurationDataLength = 0;
                 CurrentEntry->ConfigurationData = NULL;
             }
-        } else {
-            RtlCopyMemory(
-                (PUCHAR)&CmpConfigurationData->PartialResourceList.Version,
-                CurrentEntry->ConfigurationData,
-                Component->ConfigurationDataLength
-                );
         }
-
+        else
+        {
+            RtlCopyMemory((PUCHAR)&CmpConfigurationData->PartialResourceList.Version, CurrentEntry->ConfigurationData,
+                          Component->ConfigurationDataLength);
+        }
     }
 
-    if (CurrentEntry->ConfigurationData == NULL) {
+    if (CurrentEntry->ConfigurationData == NULL)
+    {
 
         //
         // This component has NO configuration data (or we can't resize
@@ -680,10 +574,8 @@ Returns:
         CmpConfigurationData->PartialResourceList.Version = 0;
         CmpConfigurationData->PartialResourceList.Revision = 0;
         CmpConfigurationData->PartialResourceList.Count = 0;
-        ConfigurationDataLength = FIELD_OFFSET(CM_FULL_RESOURCE_DESCRIPTOR,
-                                               PartialResourceList) +
-                                  FIELD_OFFSET(CM_PARTIAL_RESOURCE_LIST,
-                                               PartialDescriptors);
+        ConfigurationDataLength = FIELD_OFFSET(CM_FULL_RESOURCE_DESCRIPTOR, PartialResourceList) +
+                                  FIELD_OFFSET(CM_PARTIAL_RESOURCE_LIST, PartialDescriptors);
     }
 
     //
@@ -697,21 +589,15 @@ Returns:
     // Write the newly constructed configuration data to the hardware registry
     //
 
-    Status = NtSetValueKey(
-                Handle,
-                &ValueName,
-                TITLE_INDEX_VALUE,
-                REG_FULL_RESOURCE_DESCRIPTOR,
-                CmpConfigurationData,
-                ConfigurationDataLength
-                );
+    Status = NtSetValueKey(Handle, &ValueName, TITLE_INDEX_VALUE, REG_FULL_RESOURCE_DESCRIPTOR, CmpConfigurationData,
+                           ConfigurationDataLength);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         NtClose(Handle);
-        return(Status);
+        return (Status);
     }
 
     *NewHandle = Handle;
-    return(STATUS_SUCCESS);
-
+    return (STATUS_SUCCESS);
 }

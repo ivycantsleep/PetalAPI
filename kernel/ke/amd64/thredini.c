@@ -30,22 +30,19 @@ Revision History:
 // really the proper type.
 //
 
-#define ASSERT_PROCESS(E) {                    \
-    ASSERT((E)->Header.Type == ProcessObject); \
-}
+#define ASSERT_PROCESS(E)                          \
+    {                                              \
+        ASSERT((E)->Header.Type == ProcessObject); \
+    }
 
-#define ASSERT_THREAD(E) {                    \
-    ASSERT((E)->Header.Type == ThreadObject); \
-}
+#define ASSERT_THREAD(E)                          \
+    {                                             \
+        ASSERT((E)->Header.Type == ThreadObject); \
+    }
 
-VOID
-KiInitializeContextThread (
-    IN PKTHREAD Thread,
-    IN PKSYSTEM_ROUTINE SystemRoutine,
-    IN PKSTART_ROUTINE StartRoutine OPTIONAL,
-    IN PVOID StartContext OPTIONAL,
-    IN PCONTEXT ContextRecord OPTIONAL
-    )
+VOID KiInitializeContextThread(IN PKTHREAD Thread, IN PKSYSTEM_ROUTINE SystemRoutine,
+                               IN PKSTART_ROUTINE StartRoutine OPTIONAL, IN PVOID StartContext OPTIONAL,
+                               IN PCONTEXT ContextRecord OPTIONAL)
 
 /*++
 
@@ -111,7 +108,8 @@ Return Value:
     // an exception frame with the specified user mode context.
     //
 
-    if (ARGUMENT_PRESENT(ContextRecord)) {
+    if (ARGUMENT_PRESENT(ContextRecord))
+    {
         RtlCopyMemory(&ContextFrame, ContextRecord, sizeof(CONTEXT));
         ContextRecord = &ContextFrame;
         ContextRecord->ContextFlags |= CONTEXT_CONTROL;
@@ -122,7 +120,8 @@ Return Value:
         //
 
         ContextRecord->EFlags &= ~EFLAGS_AC_MASK;
-        if (Thread->AutoAlignment == FALSE) {
+        if (Thread->AutoAlignment == FALSE)
+        {
             ContextRecord->EFlags |= EFLAGS_AC_MASK;
         }
 
@@ -151,8 +150,7 @@ Return Value:
         // first four parameters.
         //
 
-        ContextRecord->Rsp =
-            (ContextRecord->Rsp & ~STACK_ROUND) - ((4 * 8) + 8);
+        ContextRecord->Rsp = (ContextRecord->Rsp & ~STACK_ROUND) - ((4 * 8) + 8);
 
         //
         // Zero the exception and trap frames and copy information from the
@@ -161,11 +159,7 @@ Return Value:
 
         RtlZeroMemory(ExFrame, sizeof(KEXCEPTION_FRAME));
         RtlZeroMemory(TrFrame, sizeof(KTRAP_FRAME));
-        KeContextToKframes(TrFrame,
-                           ExFrame,
-                           ContextRecord,
-                           ContextRecord->ContextFlags,
-                           UserMode);
+        KeContextToKframes(TrFrame, ExFrame, ContextRecord, ContextRecord->ContextFlags, UserMode);
 
         //
         // Set the initial legacy floating point control/tag word state and
@@ -195,8 +189,9 @@ Return Value:
 
         TrFrame->PreviousMode = UserMode;
         Thread->PreviousMode = UserMode;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Allocate an exception frame and a context switch frame.
@@ -244,10 +239,7 @@ Return Value:
 }
 
 BOOLEAN
-KeSetAutoAlignmentProcess (
-    IN PKPROCESS Process,
-    IN BOOLEAN Enable
-    )
+KeSetAutoAlignmentProcess(IN PKPROCESS Process, IN BOOLEAN Enable)
 
 /*++
 
@@ -304,10 +296,7 @@ Return Value:
 }
 
 BOOLEAN
-KeSetAutoAlignmentThread (
-    IN PKTHREAD Thread,
-    IN BOOLEAN Enable
-    )
+KeSetAutoAlignmentThread(IN PKTHREAD Thread, IN BOOLEAN Enable)
 
 /*++
 

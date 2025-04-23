@@ -34,26 +34,14 @@ Revision History:
 //  the following section should move to ntia64.h under sdk\inc
 
 
+PRUNTIME_FUNCTION
+RtlLookupStaticFunctionEntry(IN ULONG_PTR ControlPc, OUT PBOOLEAN InImage);
 
 PRUNTIME_FUNCTION
-RtlLookupStaticFunctionEntry(
-    IN ULONG_PTR ControlPc,
-    OUT PBOOLEAN InImage
-    );
+RtlLookupDynamicFunctionEntry(IN ULONG_PTR ControlPc, OUT PULONGLONG ImageBase, OUT PULONGLONG TargetGp);
 
-PRUNTIME_FUNCTION
-RtlLookupDynamicFunctionEntry(
-    IN ULONG_PTR ControlPc,
-    OUT PULONGLONG ImageBase,
-    OUT PULONGLONG TargetGp
-    );
+VOID RtlRestoreContext(IN PCONTEXT ContextRecord, IN PEXCEPTION_RECORD ExceptionRecord OPTIONAL);
 
-VOID
-RtlRestoreContext (
-    IN PCONTEXT ContextRecord,
-    IN PEXCEPTION_RECORD ExceptionRecord OPTIONAL
-    );
-
 
 //
 // Define local macros.
@@ -61,72 +49,56 @@ RtlRestoreContext (
 // Raise noncontinuable exception with associated exception record.
 //
 
-#define IS_HANDLER_DEFINED(f, base)                                \
-    (f->UnwindInfoAddress &&                                       \
-        (((PUNWIND_INFO)(base+f->UnwindInfoAddress))->Flags & 0x3))
+#define IS_HANDLER_DEFINED(f, base) \
+    (f->UnwindInfoAddress && (((PUNWIND_INFO)(base + f->UnwindInfoAddress))->Flags & 0x3))
 
-#define HANDLER(f, base, target)						\
-(((PUNWIND_INFO)(base + f->UnwindInfoAddress))->Version <= 2)	   ?            \
-    ((PEXCEPTION_ROUTINE)                                                       \
-        (*(PULONGLONG) ((LONGLONG)target +                                      \
-        (*(PULONGLONG) (base + f->UnwindInfoAddress + sizeof(UNWIND_INFO)  +    \
-        (((PUNWIND_INFO) (base + f->UnwindInfoAddress))->DataLength * sizeof(ULONGLONG))))))) : \
-    ((PEXCEPTION_ROUTINE)                                                       \
-        (base +			                                \
-        (*(PULONG) (base + f->UnwindInfoAddress + sizeof(UNWIND_INFO)  +        \
-        (((PUNWIND_INFO) (base + f->UnwindInfoAddress))->DataLength * sizeof(ULONGLONG))))))
-	
-#define RAISE_EXCEPTION(Status, ExceptionRecordt) {                \
-    EXCEPTION_RECORD ExceptionRecordn;                             \
-                                                                   \
-    ExceptionRecordn.ExceptionCode = Status;                       \
-    ExceptionRecordn.ExceptionFlags = EXCEPTION_NONCONTINUABLE;    \
-    ExceptionRecordn.ExceptionRecord = ExceptionRecordt;           \
-    ExceptionRecordn.NumberParameters = 0;                         \
-    RtlRaiseException(&ExceptionRecordn);                          \
+#define HANDLER(f, base, target)                                                                               \
+    (((PUNWIND_INFO)(base + f->UnwindInfoAddress))->Version <= 2)                                              \
+        ? ((PEXCEPTION_ROUTINE)(*(                                                                             \
+              PULONGLONG)((LONGLONG)target +                                                                   \
+                          (*(PULONGLONG)(base + f->UnwindInfoAddress + sizeof(UNWIND_INFO) +                   \
+                                         (((PUNWIND_INFO)(base + f->UnwindInfoAddress))->DataLength *          \
+                                          sizeof(ULONGLONG)))))))                                              \
+        : ((PEXCEPTION_ROUTINE)(base + (*(PULONG)(base + f->UnwindInfoAddress + sizeof(UNWIND_INFO) +          \
+                                                  (((PUNWIND_INFO)(base + f->UnwindInfoAddress))->DataLength * \
+                                                   sizeof(ULONGLONG))))))
+
+#define RAISE_EXCEPTION(Status, ExceptionRecordt)                   \
+    {                                                               \
+        EXCEPTION_RECORD ExceptionRecordn;                          \
+                                                                    \
+        ExceptionRecordn.ExceptionCode = Status;                    \
+        ExceptionRecordn.ExceptionFlags = EXCEPTION_NONCONTINUABLE; \
+        ExceptionRecordn.ExceptionRecord = ExceptionRecordt;        \
+        ExceptionRecordn.NumberParameters = 0;                      \
+        RtlRaiseException(&ExceptionRecordn);                       \
     }
 
 
-#define IS_SAME_FRAME(Frame1, Frame2)                              \
-                        ( (Frame1.MemoryStackFp == Frame2.MemoryStackFp) &&            \
-                          (Frame1.BackingStoreFp == Frame2.BackingStoreFp) )
+#define IS_SAME_FRAME(Frame1, Frame2) \
+    ((Frame1.MemoryStackFp == Frame2.MemoryStackFp) && (Frame1.BackingStoreFp == Frame2.BackingStoreFp))
 
-#define INITIALIZE_FRAME(Frame)                                    \
-    Frame.MemoryStackFp = Frame.BackingStoreFp = 0
+#define INITIALIZE_FRAME(Frame) Frame.MemoryStackFp = Frame.BackingStoreFp = 0
 
-#define CHECK_MSTACK_FRAME(Establisher, Target)                            \
-    ((Establisher.MemoryStackFp < LowStackLimit) ||                        \
-     (Establisher.MemoryStackFp > HighStackLimit) ||                       \
-     ((Target.MemoryStackFp != 0) &&                                       \
-      (Target.MemoryStackFp < Establisher.MemoryStackFp)) || \
+#define CHECK_MSTACK_FRAME(Establisher, Target)                                                     \
+    ((Establisher.MemoryStackFp < LowStackLimit) || (Establisher.MemoryStackFp > HighStackLimit) || \
+     ((Target.MemoryStackFp != 0) && (Target.MemoryStackFp < Establisher.MemoryStackFp)) ||         \
      ((Establisher.MemoryStackFp & 0x3) != 0))
 
-#define CHECK_BSTORE_FRAME(Establisher, Target)                               \
-    ((Establisher.BackingStoreFp < LowBStoreLimit) ||                         \
-     (Establisher.BackingStoreFp > HighBStoreLimit) ||                        \
-     ((Target.BackingStoreFp != 0) &&                                         \
-      (Target.BackingStoreFp > Establisher.BackingStoreFp)) ||  \
+#define CHECK_BSTORE_FRAME(Establisher, Target)                                                         \
+    ((Establisher.BackingStoreFp < LowBStoreLimit) || (Establisher.BackingStoreFp > HighBStoreLimit) || \
+     ((Target.BackingStoreFp != 0) && (Target.BackingStoreFp > Establisher.BackingStoreFp)) ||          \
      ((Establisher.BackingStoreFp & 0x7) != 0))
 
 
 ULONGLONG
-RtlpVirtualUnwind (
-    IN ULONGLONG ImageBase,
-    IN ULONGLONG ControlPc,
-    IN PRUNTIME_FUNCTION FunctionEntry,
-    IN PCONTEXT ContextRecord,
-    OUT PBOOLEAN InFunction,
-    OUT PFRAME_POINTERS EstablisherFrame,
-    IN OUT PKNONVOLATILE_CONTEXT_POINTERS ContextPointers OPTIONAL
-    );
+RtlpVirtualUnwind(IN ULONGLONG ImageBase, IN ULONGLONG ControlPc, IN PRUNTIME_FUNCTION FunctionEntry,
+                  IN PCONTEXT ContextRecord, OUT PBOOLEAN InFunction, OUT PFRAME_POINTERS EstablisherFrame,
+                  IN OUT PKNONVOLATILE_CONTEXT_POINTERS ContextPointers OPTIONAL);
 
-
+
 PRUNTIME_FUNCTION
-RtlLookupFunctionEntry (
-    IN ULONGLONG ControlPc,
-    OUT PULONGLONG ImageBase,
-    OUT PULONGLONG TargetGp
-    )
+RtlLookupFunctionEntry(IN ULONGLONG ControlPc, OUT PULONGLONG ImageBase, OUT PULONGLONG TargetGp)
 
 /*++
 
@@ -167,8 +139,7 @@ Return Value:
     // Search for the image that includes the specified swizzled PC value.
     //
 
-    *ImageBase = (ULONG_PTR)RtlPcToFileHeader((PVOID)ControlPc,
-                                              (PVOID *)ImageBase);
+    *ImageBase = (ULONG_PTR)RtlPcToFileHeader((PVOID)ControlPc, (PVOID *)ImageBase);
 
 
     //
@@ -176,27 +147,22 @@ Return Value:
     // function table for the image.
     //
 
-    if ((PVOID)*ImageBase != NULL) {
+    if ((PVOID)*ImageBase != NULL)
+    {
 
-        *TargetGp = (ULONG_PTR)(RtlImageDirectoryEntryToData(
-                               (PVOID)*ImageBase,
-                               TRUE,
-                               IMAGE_DIRECTORY_ENTRY_GLOBALPTR,
-                               &Size
-                               ));
+        *TargetGp =
+            (ULONG_PTR)(RtlImageDirectoryEntryToData((PVOID)*ImageBase, TRUE, IMAGE_DIRECTORY_ENTRY_GLOBALPTR, &Size));
 
         FunctionTable = (PRUNTIME_FUNCTION)RtlImageDirectoryEntryToData(
-                         (PVOID)*ImageBase,
-                         TRUE,
-                         IMAGE_DIRECTORY_ENTRY_EXCEPTION,
-                         &SizeOfExceptionTable);
+            (PVOID)*ImageBase, TRUE, IMAGE_DIRECTORY_ENTRY_EXCEPTION, &SizeOfExceptionTable);
 
         //
         // If a function table is located, then search the table for a
         // function table entry for the specified PC.
         //
 
-        if (FunctionTable != NULL) {
+        if (FunctionTable != NULL)
+        {
 
             //
             // Initialize search indices.
@@ -211,7 +177,8 @@ Return Value:
             // entry that subsumes the specified PC.
             //
 
-            while (High >= Low) {
+            while (High >= Low)
+            {
 
                 //
                 // Compute next probe index and test entry. If the specified PC
@@ -224,34 +191,33 @@ Return Value:
                 Middle = (Low + High) >> 1;
                 FunctionEntry = &FunctionTable[Middle];
 
-                if (ControlPc < FunctionEntry->BeginAddress) {
+                if (ControlPc < FunctionEntry->BeginAddress)
+                {
                     High = Middle - 1;
-
-                } else if (ControlPc >= FunctionEntry->EndAddress) {
+                }
+                else if (ControlPc >= FunctionEntry->EndAddress)
+                {
                     Low = Middle + 1;
-
-                } else {
+                }
+                else
+                {
                     return FunctionEntry;
-
                 }
             }
         }
     }
 #if !defined(NTOS_KERNEL_RUNTIME)
 
-    else     // ImageBase == NULL
-        return   RtlLookupDynamicFunctionEntry ( ControlPc, ImageBase, TargetGp );
+    else // ImageBase == NULL
+        return RtlLookupDynamicFunctionEntry(ControlPc, ImageBase, TargetGp);
 
-#endif  // NTOS_KERNEL_RUNTIME
+#endif // NTOS_KERNEL_RUNTIME
 
     return NULL;
 }
 
-
-VOID
-RtlpRaiseException (
-    IN PEXCEPTION_RECORD ExceptionRecord
-    )
+
+VOID RtlpRaiseException(IN PEXCEPTION_RECORD ExceptionRecord)
 
 /*++
 
@@ -288,28 +254,23 @@ Return Value:
     //
 
     RtlCaptureContext(&ContextRecord);
-    ControlPc = RtlIa64InsertIPSlotNumber((ContextRecord.BrRp-16), 2);
+    ControlPc = RtlIa64InsertIPSlotNumber((ContextRecord.BrRp - 16), 2);
     FunctionEntry = RtlLookupFunctionEntry(ControlPc, &ImageBase, &TargetGp);
-    NextPc = RtlVirtualUnwind(ImageBase,
-                              ControlPc,
-                              FunctionEntry,
-                              &ContextRecord,
-                              &InFunction,
-                              &EstablisherFrame,
-                              NULL);
+    NextPc =
+        RtlVirtualUnwind(ImageBase, ControlPc, FunctionEntry, &ContextRecord, &InFunction, &EstablisherFrame, NULL);
 
     ContextRecord.StIIP = NextPc + 8;
-    ContextRecord.StIPSR &= ~((ULONGLONG) 3 << PSR_RI);
+    ContextRecord.StIPSR &= ~((ULONGLONG)3 << PSR_RI);
     ExceptionRecord->ExceptionAddress = (PVOID)ContextRecord.StIIP;
 
 #if defined(NTOS_KERNEL_RUNTIME)
 
-        if (RtlDispatchException(ExceptionRecord, &ContextRecord) != FALSE) {
-            return;
-    
-        }
+    if (RtlDispatchException(ExceptionRecord, &ContextRecord) != FALSE)
+    {
+        return;
+    }
 
-        Status = ZwRaiseException(ExceptionRecord, &ContextRecord, FALSE);
+    Status = ZwRaiseException(ExceptionRecord, &ContextRecord, FALSE);
 
 #else
 
@@ -327,11 +288,8 @@ Return Value:
     return;
 }
 
-
-VOID
-RtlRaiseException (
-    IN PEXCEPTION_RECORD ExceptionRecord
-    )
+
+VOID RtlRaiseException(IN PEXCEPTION_RECORD ExceptionRecord)
 
 /*++
 
@@ -360,11 +318,8 @@ Return Value:
     return;
 }
 
-#pragma warning(disable:4717)       // recursive function
-VOID
-RtlpRaiseStatus (
-    IN NTSTATUS Status
-    )
+#pragma warning(disable : 4717) // recursive function
+VOID RtlpRaiseStatus(IN NTSTATUS Status)
 
 /*++
 
@@ -411,17 +366,12 @@ Return Value:
     //
 
     RtlCaptureContext(&ContextRecord);
-    ControlPc = RtlIa64InsertIPSlotNumber((ContextRecord.BrRp-16), 2);
+    ControlPc = RtlIa64InsertIPSlotNumber((ContextRecord.BrRp - 16), 2);
     FunctionEntry = RtlLookupFunctionEntry(ControlPc, &ImageBase, &TargetGp);
-    NextPc = RtlVirtualUnwind(ImageBase,
-                              ControlPc,
-                              FunctionEntry,
-                              &ContextRecord,
-                              &InFunction,
-                              &EstablisherFrame,
-                              NULL);
+    NextPc =
+        RtlVirtualUnwind(ImageBase, ControlPc, FunctionEntry, &ContextRecord, &InFunction, &EstablisherFrame, NULL);
     ContextRecord.StIIP = NextPc + 8;
-    ContextRecord.StIPSR &= ~((ULONGLONG) 3 << PSR_RI);
+    ContextRecord.StIPSR &= ~((ULONGLONG)3 << PSR_RI);
     ExceptionRecord.ExceptionAddress = (PVOID)ContextRecord.StIIP;
 #if defined(NTOS_KERNEL_RUNTIME)
 
@@ -444,11 +394,8 @@ Return Value:
     return;
 }
 
-
-VOID
-RtlRaiseStatus (
-    IN NTSTATUS Status
-    )
+
+VOID RtlRaiseStatus(IN NTSTATUS Status)
 
 /*++
 
@@ -478,14 +425,9 @@ Return Value:
     return;
 }
 
-
-VOID
-RtlUnwind (
-    IN PVOID TargetFrame OPTIONAL,
-    IN PVOID TargetIp OPTIONAL,
-    IN PEXCEPTION_RECORD ExceptionRecord OPTIONAL,
-    IN PVOID ReturnValue
-    )
+
+VOID RtlUnwind(IN PVOID TargetFrame OPTIONAL, IN PVOID TargetIp OPTIONAL, IN PEXCEPTION_RECORD ExceptionRecord OPTIONAL,
+               IN PVOID ReturnValue)
 
 /*++
 
@@ -497,15 +439,9 @@ RtlUnwind (
     return;
 }
 
-
-VOID
-RtlUnwind2 (
-    IN FRAME_POINTERS TargetFrame OPTIONAL,
-    IN PVOID TargetIp OPTIONAL,
-    IN PEXCEPTION_RECORD ExceptionRecord OPTIONAL,
-    IN PVOID ReturnValue,
-    IN PCONTEXT ContextRecord
-    )
+
+VOID RtlUnwind2(IN FRAME_POINTERS TargetFrame OPTIONAL, IN PVOID TargetIp OPTIONAL,
+                IN PEXCEPTION_RECORD ExceptionRecord OPTIONAL, IN PVOID ReturnValue, IN PCONTEXT ContextRecord)
 
 /*++
 
@@ -586,15 +522,9 @@ Return Value:
     Rtlp64GetStackLimits(&LowStackLimit, &HighStackLimit);
     Rtlp64GetBStoreLimits(&LowBStoreLimit, &HighBStoreLimit);
 
-    ControlPc = RtlIa64InsertIPSlotNumber((ContextRecord->BrRp-16), 2);
+    ControlPc = RtlIa64InsertIPSlotNumber((ContextRecord->BrRp - 16), 2);
     FunctionEntry = RtlLookupFunctionEntry(ControlPc, &ImageBase, &TargetGp);
-    NextPc = RtlVirtualUnwind(ImageBase,
-                              ControlPc,
-                              FunctionEntry,
-                              ContextRecord,
-                              &InFunction,
-                              &EstablisherFrame,
-                              NULL);
+    NextPc = RtlVirtualUnwind(ImageBase, ControlPc, FunctionEntry, ContextRecord, &InFunction, &EstablisherFrame, NULL);
 
     ControlPc = NextPc;
     ContextRecord->StIIP = (ULONGLONG)TargetIp;
@@ -610,7 +540,8 @@ Return Value:
     // record for use in calling exception handlers during the unwind operation.
     //
 
-    if (ARGUMENT_PRESENT(ExceptionRecord) == FALSE) {
+    if (ARGUMENT_PRESENT(ExceptionRecord) == FALSE)
+    {
         ExceptionRecord = &ExceptionRecord1;
         ExceptionRecord1.ExceptionCode = STATUS_UNWIND;
         ExceptionRecord1.ExceptionRecord = NULL;
@@ -624,7 +555,8 @@ Return Value:
     //
 
     ExceptionFlags = EXCEPTION_UNWINDING;
-    if (TargetFrame.BackingStoreFp == 0 && TargetFrame.MemoryStackFp == 0) {
+    if (TargetFrame.BackingStoreFp == 0 && TargetFrame.MemoryStackFp == 0)
+    {
         ExceptionRecord->ExceptionFlags |= EXCEPTION_EXIT_UNWIND;
     }
 
@@ -633,7 +565,8 @@ Return Value:
     // handlers until the target frame of the unwind is reached.
     //
 
-    do {
+    do
+    {
 
         //
         // Lookup the function table entry using the point at which control
@@ -650,33 +583,32 @@ Return Value:
         // the context record.
         //
 
-        if (FunctionEntry != NULL) {
-            NextPc = RtlpVirtualUnwind(ImageBase,
-                                       ControlPc,
-                                       FunctionEntry,
-                                       ContextRecord,
-                                       &InFunction,
-                                       &EstablisherFrame,
-                                       NULL);
+        if (FunctionEntry != NULL)
+        {
+            NextPc = RtlpVirtualUnwind(ImageBase, ControlPc, FunctionEntry, ContextRecord, &InFunction,
+                                       &EstablisherFrame, NULL);
 
-        //
-        // If virtual frame is not within the specified limits, unaligned,
-        // or the target frame is below the virtual frame and an exit
-        // unwind is not being performed, then raise the exception
-        // STATUS_BAD_STACK or STATUS_BAD_BSTORE. Otherwise,
-        // check to determine if the current routine has an exception
-        // handler.
-        //
+            //
+            // If virtual frame is not within the specified limits, unaligned,
+            // or the target frame is below the virtual frame and an exit
+            // unwind is not being performed, then raise the exception
+            // STATUS_BAD_STACK or STATUS_BAD_BSTORE. Otherwise,
+            // check to determine if the current routine has an exception
+            // handler.
+            //
 
-            if (CHECK_MSTACK_FRAME(EstablisherFrame, TargetFrame)) {
+            if (CHECK_MSTACK_FRAME(EstablisherFrame, TargetFrame))
+            {
 
                 RAISE_EXCEPTION(STATUS_BAD_STACK, ExceptionRecord);
-
-            } else if (CHECK_BSTORE_FRAME(EstablisherFrame, TargetFrame)) {
+            }
+            else if (CHECK_BSTORE_FRAME(EstablisherFrame, TargetFrame))
+            {
 
                 RAISE_EXCEPTION(STATUS_BAD_STACK, ExceptionRecord);
-
-            } else if (InFunction && IS_HANDLER_DEFINED(FunctionEntry, ImageBase)) {
+            }
+            else if (InFunction && IS_HANDLER_DEFINED(FunctionEntry, ImageBase))
+            {
 
                 //
                 // The frame has an exception handler.
@@ -700,14 +632,16 @@ Return Value:
                 // Call the exception handler.
                 //
 
-                do {
+                do
+                {
 
                     //
                     // If the establisher frame is the target of the unwind
                     // operation, then set the target unwind flag.
                     //
 
-                    if (IS_SAME_FRAME(EstablisherFrame,TargetFrame)) {
+                    if (IS_SAME_FRAME(EstablisherFrame, TargetFrame))
+                    {
                         ExceptionFlags |= EXCEPTION_TARGET_UNWIND;
                     }
 
@@ -730,59 +664,50 @@ Return Value:
 
                     DispatcherContext.EstablisherFrame = EstablisherFrame;
                     Disposition = RtlpExecuteEmHandlerForUnwind(
-                                      ExceptionRecord,
-                                      EstablisherFrame.MemoryStackFp,
-                                      EstablisherFrame.BackingStoreFp,
-                                      ContextRecord,
-                                      &DispatcherContext,
-                                      TargetGp,
-                                      HANDLER(FunctionEntry, ImageBase, TargetGp));
+                        ExceptionRecord, EstablisherFrame.MemoryStackFp, EstablisherFrame.BackingStoreFp, ContextRecord,
+                        &DispatcherContext, TargetGp, HANDLER(FunctionEntry, ImageBase, TargetGp));
 
                     //
                     // Clear target unwind and collided unwind flags.
                     //
 
-                    ExceptionFlags &= ~(EXCEPTION_COLLIDED_UNWIND |
-                                                EXCEPTION_TARGET_UNWIND);
+                    ExceptionFlags &= ~(EXCEPTION_COLLIDED_UNWIND | EXCEPTION_TARGET_UNWIND);
 
                     //
                     // Case on the handler disposition.
                     //
 
-                    switch (Disposition) {
+                    switch (Disposition)
+                    {
 
-                    //
-                    // The disposition is to continue the search.
-                    //
-                    // If the target frame has not been reached, then
-                    // virtually unwind to the caller of the current
-                    // routine, update the context record, and continue
-                    // the search for a handler.
-                    //
+                        //
+                        // The disposition is to continue the search.
+                        //
+                        // If the target frame has not been reached, then
+                        // virtually unwind to the caller of the current
+                        // routine, update the context record, and continue
+                        // the search for a handler.
+                        //
 
-                    case ExceptionContinueSearch :
+                    case ExceptionContinueSearch:
 
-                        if (!IS_SAME_FRAME(EstablisherFrame, TargetFrame)) {
-                            NextPc = RtlVirtualUnwind(ImageBase,
-                                                      ControlPc,
-                                                      FunctionEntry,
-                                                      ContextRecord,
-                                                      &InFunction,
-                                                      &EstablisherFrame,
-                                                      NULL);
+                        if (!IS_SAME_FRAME(EstablisherFrame, TargetFrame))
+                        {
+                            NextPc = RtlVirtualUnwind(ImageBase, ControlPc, FunctionEntry, ContextRecord, &InFunction,
+                                                      &EstablisherFrame, NULL);
                         }
                         break;
 
-                    //
-                    // The disposition is collided unwind.
-                    //
-                    // Set the target of the current unwind to the context
-                    // record of the previous unwind, and reexecute the
-                    // exception handler from the collided frame with the
-                    // collided unwind flag set in the exception record.
-                    //
+                        //
+                        // The disposition is collided unwind.
+                        //
+                        // Set the target of the current unwind to the context
+                        // record of the previous unwind, and reexecute the
+                        // exception handler from the collided frame with the
+                        // collided unwind flag set in the exception record.
+                        //
 
-                    case ExceptionCollidedUnwind :
+                    case ExceptionCollidedUnwind:
 
                         ControlPc = DispatcherContext.ControlPc;
                         FunctionEntry = DispatcherContext.FunctionEntry;
@@ -791,27 +716,24 @@ Return Value:
                         ContextRecord->StIIP = (ULONGLONG)TargetIp;
                         ExceptionFlags |= EXCEPTION_COLLIDED_UNWIND;
                         EstablisherFrame = DispatcherContext.EstablisherFrame;
-                        TargetGp = (ULONG_PTR)(RtlImageDirectoryEntryToData(
-                                                   (PVOID)ImageBase,
-                                                   TRUE,
-                                                   IMAGE_DIRECTORY_ENTRY_GLOBALPTR,
-                                                   &Size
-                                                   ));
+                        TargetGp = (ULONG_PTR)(RtlImageDirectoryEntryToData((PVOID)ImageBase, TRUE,
+                                                                            IMAGE_DIRECTORY_ENTRY_GLOBALPTR, &Size));
                         break;
 
-                    //
-                    // All other disposition values are invalid.
-                    //
-                    // Raise invalid disposition exception.
-                    //
+                        //
+                        // All other disposition values are invalid.
+                        //
+                        // Raise invalid disposition exception.
+                        //
 
-                    default :
+                    default:
                         RAISE_EXCEPTION(STATUS_INVALID_DISPOSITION, ExceptionRecord);
                     }
 
                 } while ((ExceptionFlags & EXCEPTION_COLLIDED_UNWIND) != 0);
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // If the target frame has not been reached, then virtually
@@ -820,19 +742,16 @@ Return Value:
                 //
 
                 if (!IS_SAME_FRAME(EstablisherFrame, TargetFrame) ||
-                     (IS_SAME_FRAME(EstablisherFrame, TargetFrame) &&
-                      ContextRecord->RsBSP != TargetFrame.BackingStoreFp)) {
-                    NextPc = RtlVirtualUnwind(ImageBase,
-                                              ControlPc,
-                                              FunctionEntry,
-                                              ContextRecord,
-                                              &InFunction,
-                                              &EstablisherFrame,
-                                              NULL);
+                    (IS_SAME_FRAME(EstablisherFrame, TargetFrame) &&
+                     ContextRecord->RsBSP != TargetFrame.BackingStoreFp))
+                {
+                    NextPc = RtlVirtualUnwind(ImageBase, ControlPc, FunctionEntry, ContextRecord, &InFunction,
+                                              &EstablisherFrame, NULL);
                 }
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // No function table entry was found.
@@ -840,11 +759,12 @@ Return Value:
 
             SHORT BsFrameSize, TempFrameSize;
 
-            NextPc = RtlIa64InsertIPSlotNumber((ContextRecord->BrRp-16), 2);
+            NextPc = RtlIa64InsertIPSlotNumber((ContextRecord->BrRp - 16), 2);
             ContextRecord->StIFS = ContextRecord->RsPFS;
             BsFrameSize = (SHORT)(ContextRecord->StIFS >> PFS_SIZE_SHIFT) & PFS_SIZE_MASK;
             TempFrameSize = BsFrameSize - (SHORT)((ContextRecord->RsBSP >> 3) & NAT_BITS_PER_RNAT_REG);
-            while (TempFrameSize > 0) {
+            while (TempFrameSize > 0)
+            {
                 BsFrameSize++;
                 TempFrameSize -= NAT_BITS_PER_RNAT_REG;
             }
@@ -858,9 +778,9 @@ Return Value:
 
         ControlPc = NextPc;
 
-    } while (((EstablisherFrame.MemoryStackFp < HighStackLimit) ||
-             (EstablisherFrame.BackingStoreFp > LowBStoreLimit)) &&
-            !(IS_SAME_FRAME(EstablisherFrame, TargetFrame)));
+    } while (
+        ((EstablisherFrame.MemoryStackFp < HighStackLimit) || (EstablisherFrame.BackingStoreFp > LowBStoreLimit)) &&
+        !(IS_SAME_FRAME(EstablisherFrame, TargetFrame)));
 
     //
     // If the establisher stack pointer is equal to the target frame
@@ -870,21 +790,21 @@ Return Value:
     // unwind.
     //
 
-    if (IS_SAME_FRAME(EstablisherFrame, TargetFrame)) {
+    if (IS_SAME_FRAME(EstablisherFrame, TargetFrame))
+    {
         ContextRecord->IntGp = TargetGp;
         ContextRecord->StIPSR &= ~(0x3i64 << PSR_RI);
         ContextRecord->IntV0 = (ULONGLONG)ReturnValue;
         RtlRestoreContext(ContextRecord, ExceptionRecord);
-    } else {
+    }
+    else
+    {
         ZwRaiseException(ExceptionRecord, ContextRecord, FALSE);
     }
 }
 
 BOOLEAN
-RtlDispatchException (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PCONTEXT ContextRecord
-    )
+RtlDispatchException(IN PEXCEPTION_RECORD ExceptionRecord, IN PCONTEXT ContextRecord)
 
 /*++
 
@@ -930,7 +850,7 @@ Return Value:
     ULONG ExceptionFlags;
     PRUNTIME_FUNCTION FunctionEntry;
     FRAME_POINTERS EstablisherFrame;
-    FRAME_POINTERS TargetFrame;       // to be removed in the future
+    FRAME_POINTERS TargetFrame; // to be removed in the future
     ULONGLONG HighStackLimit;
     ULONGLONG LowStackLimit;
     ULONGLONG HighBStoreLimit;
@@ -942,7 +862,8 @@ Return Value:
     BOOLEAN InFunction;
 
 #ifndef NTOS_KERNEL_RUNTIME
-    if (RtlCallVectoredExceptionHandlers(ExceptionRecord,ContextRecord)) {
+    if (RtlCallVectoredExceptionHandlers(ExceptionRecord, ContextRecord))
+    {
         return TRUE;
     }
 #endif // NTOS_KERNEL_RUNTIME
@@ -958,16 +879,15 @@ Return Value:
 
     RtlCopyMemory(&ContextRecordEm, ContextRecord, sizeof(CONTEXT));
 
-    if ( (ExceptionRecord->ExceptionCode == STATUS_ACCESS_VIOLATION) &&
-         (ExceptionRecord->NumberParameters == 5) &&
-         (ExceptionRecord->ExceptionInformation[4] & (1 << ISR_X)) )
+    if ((ExceptionRecord->ExceptionCode == STATUS_ACCESS_VIOLATION) && (ExceptionRecord->NumberParameters == 5) &&
+        (ExceptionRecord->ExceptionInformation[4] & (1 << ISR_X)))
     {
         ControlPc = ExceptionRecord->ExceptionInformation[3];
-        ControlPc = RtlIa64InsertIPSlotNumber(ControlPc,
-                               ((ContextRecordEm.StIPSR >> PSR_RI) & 0x3));
-    } else {
-        ControlPc = RtlIa64InsertIPSlotNumber(ContextRecordEm.StIIP,
-                               ((ContextRecordEm.StIPSR >> PSR_RI) & 0x3));
+        ControlPc = RtlIa64InsertIPSlotNumber(ControlPc, ((ContextRecordEm.StIPSR >> PSR_RI) & 0x3));
+    }
+    else
+    {
+        ControlPc = RtlIa64InsertIPSlotNumber(ContextRecordEm.StIIP, ((ContextRecordEm.StIPSR >> PSR_RI) & 0x3));
     }
 
     ExceptionFlags = ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE;
@@ -981,7 +901,8 @@ Return Value:
     // exception handler that will handle the exception.
     //
 
-    do {
+    do
+    {
 
         //
         // Lookup the function table entry using the point at which control
@@ -998,14 +919,10 @@ Return Value:
         // if there is an exception handler for the frame.
         //
 
-        if (FunctionEntry != NULL) {
-            NextPc = RtlVirtualUnwind(ImageBase,
-                                      ControlPc,
-                                      FunctionEntry,
-                                      &ContextRecordEm,
-                                      &InFunction,
-                                      &EstablisherFrame,
-                                      NULL);
+        if (FunctionEntry != NULL)
+        {
+            NextPc = RtlVirtualUnwind(ImageBase, ControlPc, FunctionEntry, &ContextRecordEm, &InFunction,
+                                      &EstablisherFrame, NULL);
 
             //
             // If either one or both of the two virtual frame pointers are
@@ -1015,17 +932,20 @@ Return Value:
             // current routine has an exception handler.
             //
 
-            if (CHECK_MSTACK_FRAME(EstablisherFrame, NullFrame)) {
+            if (CHECK_MSTACK_FRAME(EstablisherFrame, NullFrame))
+            {
 
                 ExceptionFlags |= EXCEPTION_STACK_INVALID;
                 break;
-
-            } else if (CHECK_BSTORE_FRAME(EstablisherFrame, NullFrame)) {
+            }
+            else if (CHECK_BSTORE_FRAME(EstablisherFrame, NullFrame))
+            {
 
                 ExceptionFlags |= EXCEPTION_STACK_INVALID;
                 break;
-
-            } else if ((IS_HANDLER_DEFINED(FunctionEntry, ImageBase) && InFunction)) {
+            }
+            else if ((IS_HANDLER_DEFINED(FunctionEntry, ImageBase) && InFunction))
+            {
 
                 //
                 // The handler (i.e. personality routine) has to be called
@@ -1040,36 +960,29 @@ Return Value:
                 DispatcherContext.FunctionEntry = FunctionEntry;
                 DispatcherContext.ImageBase = ImageBase;
 
-                do {
+                do
+                {
 
                     ExceptionRecord->ExceptionFlags = ExceptionFlags;
 
-                    if (NtGlobalFlag & FLG_ENABLE_EXCEPTION_LOGGING) {
-                        Index = RtlpLogExceptionHandler(
-                                        ExceptionRecord,
-                                        ContextRecord,
-                                        (ULONG)ControlPc,
-                                        FunctionEntry,
-                                        sizeof(RUNTIME_FUNCTION));
+                    if (NtGlobalFlag & FLG_ENABLE_EXCEPTION_LOGGING)
+                    {
+                        Index = RtlpLogExceptionHandler(ExceptionRecord, ContextRecord, (ULONG)ControlPc, FunctionEntry,
+                                                        sizeof(RUNTIME_FUNCTION));
                     }
 
                     DispatcherContext.EstablisherFrame = EstablisherFrame;
                     DispatcherContext.ContextRecord = ContextRecord;
                     Disposition = RtlpExecuteEmHandlerForException(
-                                      ExceptionRecord,
-                                      EstablisherFrame.MemoryStackFp,
-                                      EstablisherFrame.BackingStoreFp,
-                                      ContextRecord,
-                                      &DispatcherContext,
-                                      TargetGp,
-                                      HANDLER(FunctionEntry, ImageBase, TargetGp));
+                        ExceptionRecord, EstablisherFrame.MemoryStackFp, EstablisherFrame.BackingStoreFp, ContextRecord,
+                        &DispatcherContext, TargetGp, HANDLER(FunctionEntry, ImageBase, TargetGp));
 
-                    if (NtGlobalFlag & FLG_ENABLE_EXCEPTION_LOGGING) {
+                    if (NtGlobalFlag & FLG_ENABLE_EXCEPTION_LOGGING)
+                    {
                         RtlpLogLastExceptionDisposition(Index, Disposition);
                     }
 
-                    ExceptionFlags |=
-                        (ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE);
+                    ExceptionFlags |= (ExceptionRecord->ExceptionFlags & EXCEPTION_NONCONTINUABLE);
 
                     ExceptionFlags &= ~EXCEPTION_COLLIDED_UNWIND;
 
@@ -1080,7 +993,8 @@ Return Value:
                     // exception flag in the exception flags.
                     //
 
-                    if (IS_SAME_FRAME(NestedFrame, EstablisherFrame)) {
+                    if (IS_SAME_FRAME(NestedFrame, EstablisherFrame))
+                    {
                         ExceptionFlags &= (~EXCEPTION_NESTED_CALL);
                         INITIALIZE_FRAME(NestedFrame);
                     }
@@ -1089,55 +1003,59 @@ Return Value:
                     // Case on the handler disposition.
                     //
 
-                    switch (Disposition) {
+                    switch (Disposition)
+                    {
 
-                    //
-                    // The disposition is to continue execution.
-                    //
-                    // If the exception is not continuable, then raise the
-                    // exception STATUS_NONCONTINUABLE_EXCEPTION.  Otherwise,
-                    // return exception handled.
-                    //
+                        //
+                        // The disposition is to continue execution.
+                        //
+                        // If the exception is not continuable, then raise the
+                        // exception STATUS_NONCONTINUABLE_EXCEPTION.  Otherwise,
+                        // return exception handled.
+                        //
 
                     case ExceptionContinueExecution:
-                        if ((ExceptionFlags & EXCEPTION_NONCONTINUABLE) != 0) {
-                            RAISE_EXCEPTION(STATUS_NONCONTINUABLE_EXCEPTION,
-                                            ExceptionRecord);
-                        } else {
+                        if ((ExceptionFlags & EXCEPTION_NONCONTINUABLE) != 0)
+                        {
+                            RAISE_EXCEPTION(STATUS_NONCONTINUABLE_EXCEPTION, ExceptionRecord);
+                        }
+                        else
+                        {
                             return TRUE;
                         }
 
-                    //
-                    // The disposition is to continue the search.
-                    //
-                    // Get the next frame address and continue the search.
-                    //
+                        //
+                        // The disposition is to continue the search.
+                        //
+                        // Get the next frame address and continue the search.
+                        //
 
                     case ExceptionContinueSearch:
                         break;
 
-                    //
-                    // The disposition is nested exception.
-                    //
-                    // Set the nested context frame to the establisher frame
-                    // address and set the nested exception flag in the
-                    // exception flags.
-                    //
+                        //
+                        // The disposition is nested exception.
+                        //
+                        // Set the nested context frame to the establisher frame
+                        // address and set the nested exception flag in the
+                        // exception flags.
+                        //
 
                     case ExceptionNestedException:
                         ExceptionFlags |= EXCEPTION_NESTED_CALL;
-                        if (DispatcherContext.EstablisherFrame.MemoryStackFp > NestedFrame.MemoryStackFp) {
+                        if (DispatcherContext.EstablisherFrame.MemoryStackFp > NestedFrame.MemoryStackFp)
+                        {
                             NestedFrame = DispatcherContext.EstablisherFrame;
                         }
                         break;
 
-                    //
-                    // The disposition is hitting a frame processed by a
-                    // previous unwind.
-                    //
-                    // Set the target of the current dispatch to the context
-                    // record of the previous unwind
-                    //
+                        //
+                        // The disposition is hitting a frame processed by a
+                        // previous unwind.
+                        //
+                        // Set the target of the current dispatch to the context
+                        // record of the previous unwind
+                        //
 
                     case ExceptionCollidedUnwind:
                         ControlPc = DispatcherContext.ControlPc;
@@ -1145,23 +1063,17 @@ Return Value:
                         EstablisherFrame = DispatcherContext.EstablisherFrame;
                         FunctionEntry = DispatcherContext.FunctionEntry;
                         ImageBase = DispatcherContext.ImageBase;
-                        RtlCopyMemory(&ContextRecordEm,
-                                      DispatcherContext.ContextRecord,
-                                      sizeof(CONTEXT));
+                        RtlCopyMemory(&ContextRecordEm, DispatcherContext.ContextRecord, sizeof(CONTEXT));
                         ExceptionFlags |= EXCEPTION_COLLIDED_UNWIND;
-                        TargetGp = (ULONG_PTR)(RtlImageDirectoryEntryToData(
-                                                   (PVOID)ImageBase,
-                                                   TRUE,
-                                                   IMAGE_DIRECTORY_ENTRY_GLOBALPTR,
-                                                   &Size
-                                                   ));
+                        TargetGp = (ULONG_PTR)(RtlImageDirectoryEntryToData((PVOID)ImageBase, TRUE,
+                                                                            IMAGE_DIRECTORY_ENTRY_GLOBALPTR, &Size));
                         break;
 
-                    //
-                    // All other disposition values are invalid.
-                    //
-                    // Raise invalid disposition exception.
-                    //
+                        //
+                        // All other disposition values are invalid.
+                        //
+                        // Raise invalid disposition exception.
+                        //
 
                     default:
                         RAISE_EXCEPTION(STATUS_INVALID_DISPOSITION, ExceptionRecord);
@@ -1169,10 +1081,10 @@ Return Value:
                     }
 
                 } while ((ExceptionFlags & EXCEPTION_COLLIDED_UNWIND) != 0);
-
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // No function table entry is found.
@@ -1180,18 +1092,20 @@ Return Value:
 
             SHORT BsFrameSize, TempFrameSize;
 
-            NextPc = RtlIa64InsertIPSlotNumber((ContextRecordEm.BrRp-16), 2);
+            NextPc = RtlIa64InsertIPSlotNumber((ContextRecordEm.BrRp - 16), 2);
             ContextRecordEm.StIFS = ContextRecordEm.RsPFS;
             BsFrameSize = (SHORT)(ContextRecordEm.StIFS >> PFS_SIZE_SHIFT) & PFS_SIZE_MASK;
             TempFrameSize = BsFrameSize - (SHORT)((ContextRecordEm.RsBSP >> 3) & NAT_BITS_PER_RNAT_REG);
-            while (TempFrameSize > 0) {
+            while (TempFrameSize > 0)
+            {
                 BsFrameSize++;
                 TempFrameSize -= NAT_BITS_PER_RNAT_REG;
             }
             ContextRecordEm.RsBSP -= BsFrameSize * sizeof(ULONGLONG);
             ContextRecordEm.RsBSPSTORE = ContextRecordEm.RsBSP;
 
-            if (NextPc == ControlPc) {
+            if (NextPc == ControlPc)
+            {
                 break;
             }
         }
@@ -1202,8 +1116,7 @@ Return Value:
 
         ControlPc = NextPc;
 
-    } while ( (ContextRecordEm.IntSp < HighStackLimit) ||
-              (ContextRecordEm.RsBSP > LowBStoreLimit) );
+    } while ((ContextRecordEm.IntSp < HighStackLimit) || (ContextRecordEm.RsBSP > LowBStoreLimit));
 
     //
     // Could not handle the exception.
@@ -1215,17 +1128,11 @@ Return Value:
     return FALSE;
 }
 
-
+
 ULONGLONG
-RtlpVirtualUnwind (
-    IN ULONGLONG ImageBase,
-    IN ULONGLONG ControlPc,
-    IN PRUNTIME_FUNCTION FunctionEntry,
-    IN PCONTEXT ContextRecord,
-    OUT PBOOLEAN InFunction,
-    OUT PFRAME_POINTERS EstablisherFrame,
-    IN OUT PKNONVOLATILE_CONTEXT_POINTERS ContextPointers OPTIONAL
-    )
+RtlpVirtualUnwind(IN ULONGLONG ImageBase, IN ULONGLONG ControlPc, IN PRUNTIME_FUNCTION FunctionEntry,
+                  IN PCONTEXT ContextRecord, OUT PBOOLEAN InFunction, OUT PFRAME_POINTERS EstablisherFrame,
+                  IN OUT PKNONVOLATILE_CONTEXT_POINTERS ContextPointers OPTIONAL)
 
 /*++
 
@@ -1292,12 +1199,7 @@ Return Value:
     //
 
     RtlCopyMemory((PVOID)&LocalContext, ContextRecord, sizeof(CONTEXT));
-    return RtlVirtualUnwind(ImageBase,
-                            ControlPc,
-                            FunctionEntry,
-                            &LocalContext,
-                            InFunction,
-                            EstablisherFrame,
+    return RtlVirtualUnwind(ImageBase, ControlPc, FunctionEntry, &LocalContext, InFunction, EstablisherFrame,
                             ContextPointers);
 }
 
@@ -1306,9 +1208,7 @@ Return Value:
 LIST_ENTRY RtlpDynamicFunctionTable;
 
 PLIST_ENTRY
-RtlGetFunctionTableListHead (
-    VOID
-    )
+RtlGetFunctionTableListHead(VOID)
 
 /*++
 
@@ -1330,14 +1230,10 @@ Return value:
 
     return &RtlpDynamicFunctionTable;
 }
-
+
 BOOLEAN
-RtlAddFunctionTable(
-    IN PRUNTIME_FUNCTION FunctionTable,
-    IN ULONG             EntryCount,
-    IN ULONGLONG         BaseAddress,
-    IN ULONGLONG         TargetGp
-    )
+RtlAddFunctionTable(IN PRUNTIME_FUNCTION FunctionTable, IN ULONG EntryCount, IN ULONGLONG BaseAddress,
+                    IN ULONGLONG TargetGp)
 
 /*++
 
@@ -1385,14 +1281,15 @@ Return value:
     //  Allocate memory for this link list entry
     //
 
-    pNew = RtlAllocateHeap( RtlProcessHeap(), 0, sizeof(DYNAMIC_FUNCTION_TABLE) );
+    pNew = RtlAllocateHeap(RtlProcessHeap(), 0, sizeof(DYNAMIC_FUNCTION_TABLE));
 
-    if (pNew != NULL) {
+    if (pNew != NULL)
+    {
         PVOID LockCookie = NULL;
 
         pNew->FunctionTable = FunctionTable;
         pNew->EntryCount = EntryCount;
-        NtQuerySystemTime( &pNew->TimeStamp );
+        NtQuerySystemTime(&pNew->TimeStamp);
 
         //
         // Scan the function table for Minimum/Maximum and to determine
@@ -1400,21 +1297,24 @@ Return value:
         //
 
         FunctionEntry = FunctionTable;
-        pNew->MinimumAddress = RF_BEGIN_ADDRESS( BaseAddress, FunctionEntry);
+        pNew->MinimumAddress = RF_BEGIN_ADDRESS(BaseAddress, FunctionEntry);
         pNew->MaximumAddress = RF_END_ADDRESS(BaseAddress, FunctionEntry);
         pNew->Type = RF_SORTED;
         FunctionEntry++;
 
-        for (i = 1; i < EntryCount; FunctionEntry++, i++) {
-            if ((pNew->Type == RF_SORTED) &&
-                (FunctionEntry->BeginAddress < FunctionTable[i-1].BeginAddress)) {
+        for (i = 1; i < EntryCount; FunctionEntry++, i++)
+        {
+            if ((pNew->Type == RF_SORTED) && (FunctionEntry->BeginAddress < FunctionTable[i - 1].BeginAddress))
+            {
                 pNew->Type = RF_UNSORTED;
             }
-            if (RF_BEGIN_ADDRESS(BaseAddress, FunctionEntry) < pNew->MinimumAddress) {
-                pNew->MinimumAddress = RF_BEGIN_ADDRESS( BaseAddress, FunctionEntry);
+            if (RF_BEGIN_ADDRESS(BaseAddress, FunctionEntry) < pNew->MinimumAddress)
+            {
+                pNew->MinimumAddress = RF_BEGIN_ADDRESS(BaseAddress, FunctionEntry);
             }
-            if (RF_END_ADDRESS( BaseAddress, FunctionEntry) > pNew->MaximumAddress) {
-                pNew->MaximumAddress = RF_END_ADDRESS( BaseAddress, FunctionEntry);
+            if (RF_END_ADDRESS(BaseAddress, FunctionEntry) > pNew->MaximumAddress)
+            {
+                pNew->MaximumAddress = RF_END_ADDRESS(BaseAddress, FunctionEntry);
             }
         }
 
@@ -1424,31 +1324,30 @@ Return value:
         //
 
         pNew->BaseAddress = BaseAddress;
-        pNew->TargetGp    = TargetGp;
+        pNew->TargetGp = TargetGp;
 
         LdrLockLoaderLock(LDR_LOCK_LOADER_LOCK_FLAG_RAISE_ON_ERRORS, NULL, &LockCookie);
-        __try {
+        __try
+        {
             InsertTailList((PLIST_ENTRY)&RtlpDynamicFunctionTable, (PLIST_ENTRY)pNew);
-        } __finally {
+        }
+        __finally
+        {
             LdrUnlockLoaderLock(LDR_UNLOCK_LOADER_LOCK_FLAG_RAISE_ON_ERRORS, LockCookie);
         }
 
         return TRUE;
-    } else {
+    }
+    else
+    {
         return FALSE;
     }
 }
 
 BOOLEAN
-RtlInstallFunctionTableCallback (
-    IN ULONG64 TableIdentifier,
-    IN ULONG64 BaseAddress,
-    IN ULONG Length,
-    IN ULONG64 TargetGp,
-    IN PGET_RUNTIME_FUNCTION_CALLBACK Callback,
-    IN PVOID Context,
-    IN PCWSTR OutOfProcessCallbackDll OPTIONAL
-    )
+RtlInstallFunctionTableCallback(IN ULONG64 TableIdentifier, IN ULONG64 BaseAddress, IN ULONG Length,
+                                IN ULONG64 TargetGp, IN PGET_RUNTIME_FUNCTION_CALLBACK Callback, IN PVOID Context,
+                                IN PCWSTR OutOfProcessCallbackDll OPTIONAL)
 
 /*++
 
@@ -1505,7 +1404,8 @@ Return Value
     //      of a function table, i.e., this value is used to delete the entry.
     //
 
-    if ((TableIdentifier & 0x3) != 3) {
+    if ((TableIdentifier & 0x3) != 3)
+    {
         return FALSE;
     }
 
@@ -1514,7 +1414,8 @@ Return Value
     // FALSE.
     //
 
-    if ((LONG)Length < 0) {
+    if ((LONG)Length < 0)
+    {
         return FALSE;
     }
 
@@ -1523,19 +1424,19 @@ Return Value
     //
 
     Size = 0;
-    if (ARGUMENT_PRESENT(OutOfProcessCallbackDll)) {
+    if (ARGUMENT_PRESENT(OutOfProcessCallbackDll))
+    {
         Size = (wcslen(OutOfProcessCallbackDll) + 1) * sizeof(WCHAR);
     }
 
-    NewTable = RtlAllocateHeap(RtlProcessHeap(),
-                               0,
-                               sizeof(DYNAMIC_FUNCTION_TABLE) + Size);
+    NewTable = RtlAllocateHeap(RtlProcessHeap(), 0, sizeof(DYNAMIC_FUNCTION_TABLE) + Size);
 
     //
     // If the allocation is successful, then add dynamic function table.
     //
 
-    if (NewTable != NULL) {
+    if (NewTable != NULL)
+    {
 
         //
         // Initialize the dynamic function table callback entry.
@@ -1551,7 +1452,8 @@ Return Value
         NewTable->Context = Context;
         NewTable->Type = RF_CALLBACK;
         NewTable->OutOfProcessCallbackDll = NULL;
-        if (ARGUMENT_PRESENT(OutOfProcessCallbackDll)) {
+        if (ARGUMENT_PRESENT(OutOfProcessCallbackDll))
+        {
             NewTable->OutOfProcessCallbackDll = (PWSTR)(NewTable + 1);
             wcscpy((PWSTR)(NewTable + 1), OutOfProcessCallbackDll);
         }
@@ -1565,19 +1467,18 @@ Return Value
         InsertTailList(&RtlpDynamicFunctionTable, &NewTable->Links);
         RtlLeaveCriticalSection((PRTL_CRITICAL_SECTION)NtCurrentPeb()->LoaderLock);
         return TRUE;
-
-    } else {
+    }
+    else
+    {
         return FALSE;
     }
 }
 
 BOOLEAN
-RtlDeleteFunctionTable (
-    IN PRUNTIME_FUNCTION FunctionTable
-    )
+RtlDeleteFunctionTable(IN PRUNTIME_FUNCTION FunctionTable)
 {
 
-/*++
+    /*++
 
 Routine Description:
 
@@ -1602,7 +1503,8 @@ Return Value
     PVOID LockCookie = NULL;
 
     LdrLockLoaderLock(LDR_LOCK_LOADER_LOCK_FLAG_RAISE_ON_ERRORS, NULL, &LockCookie);
-    __try {
+    __try
+    {
 
         //
         // Search the dynamic function table list for a match on the the function
@@ -1610,28 +1512,28 @@ Return Value
         //
 
         Head = &RtlpDynamicFunctionTable;
-        for (Next = Head->Blink; Next != Head; Next = Next->Blink) {
-            CurrentEntry = CONTAINING_RECORD(Next,DYNAMIC_FUNCTION_TABLE,Links);
-            if (CurrentEntry->FunctionTable == FunctionTable) {
+        for (Next = Head->Blink; Next != Head; Next = Next->Blink)
+        {
+            CurrentEntry = CONTAINING_RECORD(Next, DYNAMIC_FUNCTION_TABLE, Links);
+            if (CurrentEntry->FunctionTable == FunctionTable)
+            {
                 RemoveEntryList((PLIST_ENTRY)CurrentEntry);
-                RtlFreeHeap( RtlProcessHeap(), 0, CurrentEntry );
+                RtlFreeHeap(RtlProcessHeap(), 0, CurrentEntry);
                 Status = TRUE;
                 break;
             }
         }
-    } __finally {
+    }
+    __finally
+    {
         LdrUnlockLoaderLock(LDR_UNLOCK_LOADER_LOCK_FLAG_RAISE_ON_ERRORS, LockCookie);
     }
 
     return Status;
 }
-
+
 PRUNTIME_FUNCTION
-RtlLookupDynamicFunctionEntry(
-    IN ULONG_PTR ControlPc,
-    OUT PULONGLONG ImageBase,
-    OUT PULONGLONG TargetGp
-    )
+RtlLookupDynamicFunctionEntry(IN ULONG_PTR ControlPc, OUT PULONGLONG ImageBase, OUT PULONGLONG TargetGp)
 
 /*++
 
@@ -1661,7 +1563,7 @@ Routine Description:
     PGET_RUNTIME_FUNCTION_CALLBACK Callback;
     PVOID Context;
     PDYNAMIC_FUNCTION_TABLE CurrentEntry;
-    PLIST_ENTRY Next,Head;
+    PLIST_ENTRY Next, Head;
     PRUNTIME_FUNCTION FunctionTable;
     PRUNTIME_FUNCTION FunctionEntry = NULL;
     LONG High;
@@ -1706,29 +1608,32 @@ Routine Description:
     // R E A D  T H I S  C O M M E N T        R E A D  T H I S  C O M M E N T
 
     LdrLockLoaderLock(LDR_LOCK_LOADER_LOCK_FLAG_RAISE_ON_ERRORS, NULL, &LockCookie);
-    __try {
+    __try
+    {
         //
         //  Search the tree starting from the head, continue until the entry
         //  is found or we reach the end of the list.
         //
 
         Head = &RtlpDynamicFunctionTable;
-        for (Next = Head->Blink; Next != Head; Next = Next->Blink) {
-            CurrentEntry = CONTAINING_RECORD(Next,DYNAMIC_FUNCTION_TABLE,Links);
+        for (Next = Head->Blink; Next != Head; Next = Next->Blink)
+        {
+            CurrentEntry = CONTAINING_RECORD(Next, DYNAMIC_FUNCTION_TABLE, Links);
             FunctionTable = CurrentEntry->FunctionTable;
 
             //
             // Check if the ControlPC is within the range of this function table
             //
 
-            if ((ControlPc >= CurrentEntry->MinimumAddress) &&
-                (ControlPc <  CurrentEntry->MaximumAddress) ) {
+            if ((ControlPc >= CurrentEntry->MinimumAddress) && (ControlPc < CurrentEntry->MaximumAddress))
+            {
 
 
                 // If this function table is sorted do a binary search.
 
                 BaseAddress = CurrentEntry->BaseAddress;
-                if (CurrentEntry->Type == RF_SORTED) {
+                if (CurrentEntry->Type == RF_SORTED)
+                {
 
                     //
                     // Perform binary search on the function table for a function table
@@ -1736,9 +1641,10 @@ Routine Description:
                     //
 
                     Low = 0;
-                    High = CurrentEntry->EntryCount -1 ;
+                    High = CurrentEntry->EntryCount - 1;
 
-                    while (High >= Low) {
+                    while (High >= Low)
+                    {
 
                         //
                         // Compute next probe index and test entry. If the specified PC
@@ -1752,50 +1658,57 @@ Routine Description:
                         Middle = (Low + High) >> 1;
                         FunctionEntry = &FunctionTable[Middle];
 
-                        if (ControlPc < RF_BEGIN_ADDRESS( BaseAddress, FunctionEntry)) {
+                        if (ControlPc < RF_BEGIN_ADDRESS(BaseAddress, FunctionEntry))
+                        {
                             High = Middle - 1;
-
-                        } else if (ControlPc >= RF_END_ADDRESS( BaseAddress, FunctionEntry)) {
+                        }
+                        else if (ControlPc >= RF_END_ADDRESS(BaseAddress, FunctionEntry))
+                        {
                             Low = Middle + 1;
-
-                        } else {
+                        }
+                        else
+                        {
 
                             *ImageBase = CurrentEntry->BaseAddress;
 
-                            if ( TargetGp != NULL )
-                                *TargetGp  = CurrentEntry->TargetGp;
+                            if (TargetGp != NULL)
+                                *TargetGp = CurrentEntry->TargetGp;
 
                             __leave;
                         }
                     }
-
-                } else if (CurrentEntry->Type == RF_UNSORTED) {
+                }
+                else if (CurrentEntry->Type == RF_UNSORTED)
+                {
 
                     PRUNTIME_FUNCTION LastFunctionEntry = &FunctionTable[CurrentEntry->EntryCount];
 
 
-                    for (FunctionEntry = FunctionTable; FunctionEntry < LastFunctionEntry; FunctionEntry++) {
+                    for (FunctionEntry = FunctionTable; FunctionEntry < LastFunctionEntry; FunctionEntry++)
+                    {
 
-                        if ((ControlPc >= RF_BEGIN_ADDRESS( BaseAddress, FunctionEntry)) &&
-                            (ControlPc <  RF_END_ADDRESS( BaseAddress, FunctionEntry))) {
+                        if ((ControlPc >= RF_BEGIN_ADDRESS(BaseAddress, FunctionEntry)) &&
+                            (ControlPc < RF_END_ADDRESS(BaseAddress, FunctionEntry)))
+                        {
 
 
                             *ImageBase = CurrentEntry->BaseAddress;
 
-                            if ( TargetGp != NULL )
-                                *TargetGp  = CurrentEntry->TargetGp;
+                            if (TargetGp != NULL)
+                                *TargetGp = CurrentEntry->TargetGp;
 
                             __leave;
                         }
                     }
-
-                } else {
+                }
+                else
+                {
 
                     //
                     // Perform a callback to obtain the runtime function table
                     // entry that contains the specified control PC.
                     //
-    
+
                     Callback = CurrentEntry->Callback;
                     Context = CurrentEntry->Context;
                     *ImageBase = BaseAddress;
@@ -1808,7 +1721,9 @@ Routine Description:
 
         // Didn't find one...
         FunctionEntry = NULL;
-    } __finally {
+    }
+    __finally
+    {
         LdrUnlockLoaderLock(LDR_UNLOCK_LOADER_LOCK_FLAG_RAISE_ON_ERRORS, LockCookie);
     }
 

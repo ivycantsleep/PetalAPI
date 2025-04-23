@@ -87,12 +87,9 @@ Revision History:
 
 #endif
 
-
+
 NTSTATUS
-IoCreateDisk(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PCREATE_DISK DiskInfo
-    )
+IoCreateDisk(IN PDEVICE_OBJECT DeviceObject, IN PCREATE_DISK DiskInfo)
 
 /*++
 
@@ -122,17 +119,20 @@ Return Values:
     NTSTATUS Status;
     ULONG PartitionStyle;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    ASSERT ( DeviceObject != NULL );
+    ASSERT(DeviceObject != NULL);
 
     //
     // If DiskInfo is NULL, we default to RAW.
     //
-    
-    if ( DiskInfo == NULL ) {
+
+    if (DiskInfo == NULL)
+    {
         PartitionStyle = PARTITION_STYLE_RAW;
-    } else {
+    }
+    else
+    {
         PartitionStyle = DiskInfo->PartitionStyle;
     }
 
@@ -140,33 +140,31 @@ Return Values:
     // Call the lower level routine for EFI, MBR or RAW disks.
     //
 
-    switch ( PartitionStyle ) {
+    switch (PartitionStyle)
+    {
 
-        case PARTITION_STYLE_GPT:
-            Status = FstubCreateDiskEFI ( DeviceObject, &DiskInfo->Gpt );
-            break;
+    case PARTITION_STYLE_GPT:
+        Status = FstubCreateDiskEFI(DeviceObject, &DiskInfo->Gpt);
+        break;
 
-        case PARTITION_STYLE_MBR:
-            Status = FstubCreateDiskMBR ( DeviceObject, &DiskInfo->Mbr );
-            break;
+    case PARTITION_STYLE_MBR:
+        Status = FstubCreateDiskMBR(DeviceObject, &DiskInfo->Mbr);
+        break;
 
-        case PARTITION_STYLE_RAW:
-            Status = FstubCreateDiskRaw ( DeviceObject );
-            break;
-            
-        default:
-            Status = STATUS_NOT_SUPPORTED;
+    case PARTITION_STYLE_RAW:
+        Status = FstubCreateDiskRaw(DeviceObject);
+        break;
+
+    default:
+        Status = STATUS_NOT_SUPPORTED;
     }
 
     return Status;
 }
 
-
+
 NTSTATUS
-IoWritePartitionTableEx(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PDRIVE_LAYOUT_INFORMATION_EX DriveLayout
-    )
+IoWritePartitionTableEx(IN PDEVICE_OBJECT DeviceObject, IN PDRIVE_LAYOUT_INFORMATION_EX DriveLayout)
 
 /*++
 
@@ -191,13 +189,13 @@ Return Values:
     NTSTATUS Status;
     PDISK_INFORMATION Disk;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    ASSERT ( DeviceObject != NULL );
-    ASSERT ( DriveLayout != NULL );
+    ASSERT(DeviceObject != NULL);
+    ASSERT(DriveLayout != NULL);
 
 
-    FstubDbgPrintDriveLayoutEx ( DriveLayout );
+    FstubDbgPrintDriveLayoutEx(DriveLayout);
 
     //
     // Initialize a Disk structure.
@@ -205,13 +203,10 @@ Return Values:
 
     Disk = NULL;
 
-    Status = FstubAllocateDiskInformation (
-                DeviceObject,
-                &Disk,
-                NULL
-                );
+    Status = FstubAllocateDiskInformation(DeviceObject, &Disk, NULL);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
@@ -221,123 +216,103 @@ Return Values:
     // drive layout over a GPT partition table. Detect the partition style
     // and if it doesn't match the one we're passed in, fail the call.
     //
-    
-    ASSERT ( Disk != NULL );
 
-    switch ( DriveLayout->PartitionStyle ) {
+    ASSERT(Disk != NULL);
 
-        case PARTITION_STYLE_GPT: {
+    switch (DriveLayout->PartitionStyle)
+    {
 
-            ULONG MaxPartitionCount;
-            PEFI_PARTITION_HEADER Header;
+    case PARTITION_STYLE_GPT:
+    {
+
+        ULONG MaxPartitionCount;
+        PEFI_PARTITION_HEADER Header;
 
 
-            //
-            // Read the partition table header from the primary partition
-            // table.
-            //
+        //
+        // Read the partition table header from the primary partition
+        // table.
+        //
 
-            Header = NULL;
+        Header = NULL;
 
-            //
-            // NB: Header is allocated in the disk's scratch buffer. Thus,
-            // it does not explicitly need to be deallocated.
-            //
+        //
+        // NB: Header is allocated in the disk's scratch buffer. Thus,
+        // it does not explicitly need to be deallocated.
+        //
 
-            Status = FstubReadHeaderEFI (
-                                Disk,
-                                PRIMARY_PARTITION_TABLE,
-                                &Header
-                                );
+        Status = FstubReadHeaderEFI(Disk, PRIMARY_PARTITION_TABLE, &Header);
 
-            if (!NT_SUCCESS (Status)) {
-
-                //
-                // Failed reading the header from the primary partition table.
-                // Try the backup table.
-                //
-
-                Status = FstubReadHeaderEFI (
-                                    Disk,
-                                    BACKUP_PARTITION_TABLE,
-                                    &Header
-                                    );
-
-                if (!NT_SUCCESS (Status)) {
-                    break;
-                }
-            }
-
-            MaxPartitionCount = Header->NumberOfEntries;
+        if (!NT_SUCCESS(Status))
+        {
 
             //
-            // You cannot write more partition table entries that the
-            // table will hold.
+            // Failed reading the header from the primary partition table.
+            // Try the backup table.
             //
 
-            if (DriveLayout->PartitionCount > MaxPartitionCount) {
+            Status = FstubReadHeaderEFI(Disk, BACKUP_PARTITION_TABLE, &Header);
 
-                KdPrintEx((DPFLTR_FSTUB_ID,
-                           DPFLTR_WARNING_LEVEL,
-                           "FSTUB: ERROR: Requested to write %d partitions\n"
-                               "\tto a table that can hold a maximum of %d entries\n",
-                           DriveLayout->PartitionCount,
-                           MaxPartitionCount));
-
-                Status = STATUS_INVALID_PARAMETER;
+            if (!NT_SUCCESS(Status))
+            {
                 break;
             }
+        }
 
-            //
-            // Write the primary partition table.
-            //
+        MaxPartitionCount = Header->NumberOfEntries;
 
-            Status = FstubWritePartitionTableEFI (
-                                Disk,
-                                DriveLayout->Gpt.DiskId,
-                                MaxPartitionCount,
-                                Header->FirstUsableLBA,
-                                Header->LastUsableLBA,
-                                PRIMARY_PARTITION_TABLE,
-                                DriveLayout->PartitionCount,
-                                DriveLayout->PartitionEntry
-                                );
+        //
+        // You cannot write more partition table entries that the
+        // table will hold.
+        //
 
-            if (!NT_SUCCESS (Status)) {
-                break;
-            }
+        if (DriveLayout->PartitionCount > MaxPartitionCount)
+        {
 
-            //
-            // Write the backup partition table.
-            //
+            KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_WARNING_LEVEL,
+                       "FSTUB: ERROR: Requested to write %d partitions\n"
+                       "\tto a table that can hold a maximum of %d entries\n",
+                       DriveLayout->PartitionCount, MaxPartitionCount));
 
-            Status = FstubWritePartitionTableEFI (
-                                Disk,
-                                DriveLayout->Gpt.DiskId,
-                                MaxPartitionCount,
-                                Header->FirstUsableLBA,
-                                Header->LastUsableLBA,
-                                BACKUP_PARTITION_TABLE,
-                                DriveLayout->PartitionCount,
-                                DriveLayout->PartitionEntry
-                                );
+            Status = STATUS_INVALID_PARAMETER;
             break;
         }
 
-        case PARTITION_STYLE_MBR:
-            Status = FstubWritePartitionTableMBR (
-                                Disk,
-                                DriveLayout
-                                );
-            break;
+        //
+        // Write the primary partition table.
+        //
 
-        default:
-            Status = STATUS_NOT_SUPPORTED;
+        Status = FstubWritePartitionTableEFI(Disk, DriveLayout->Gpt.DiskId, MaxPartitionCount, Header->FirstUsableLBA,
+                                             Header->LastUsableLBA, PRIMARY_PARTITION_TABLE,
+                                             DriveLayout->PartitionCount, DriveLayout->PartitionEntry);
+
+        if (!NT_SUCCESS(Status))
+        {
+            break;
+        }
+
+        //
+        // Write the backup partition table.
+        //
+
+        Status = FstubWritePartitionTableEFI(Disk, DriveLayout->Gpt.DiskId, MaxPartitionCount, Header->FirstUsableLBA,
+                                             Header->LastUsableLBA, BACKUP_PARTITION_TABLE, DriveLayout->PartitionCount,
+                                             DriveLayout->PartitionEntry);
+        break;
+    }
+
+    case PARTITION_STYLE_MBR:
+        Status = FstubWritePartitionTableMBR(Disk, DriveLayout);
+        break;
+
+    default:
+        Status = STATUS_NOT_SUPPORTED;
     }
 
 
-    if ( Disk != NULL ) {
-        FstubFreeDiskInformation ( Disk );
+    if (Disk != NULL)
+    {
+        FstubFreeDiskInformation(Disk);
     }
 
 #if 0
@@ -366,12 +341,8 @@ Return Values:
 }
 
 
-
 NTSTATUS
-IoReadPartitionTableEx(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PDRIVE_LAYOUT_INFORMATION_EX* DriveLayout
-    )
+IoReadPartitionTableEx(IN PDEVICE_OBJECT DeviceObject, IN PDRIVE_LAYOUT_INFORMATION_EX *DriveLayout)
 
 /*++
 
@@ -407,27 +378,21 @@ Return Values:
     PARTITION_STYLE Style;
     BOOLEAN FoundGptPartition;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    ASSERT ( DeviceObject != NULL );
-    ASSERT ( DriveLayout != NULL );
+    ASSERT(DeviceObject != NULL);
+    ASSERT(DriveLayout != NULL);
 
-    Status = FstubAllocateDiskInformation (
-                DeviceObject,
-                &Disk,
-                NULL
-                );
+    Status = FstubAllocateDiskInformation(DeviceObject, &Disk, NULL);
 
-    if ( !NT_SUCCESS ( Status ) ) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
-    ASSERT ( Disk != NULL );
+    ASSERT(Disk != NULL);
 
-    Status = FstubDetectPartitionStyle (
-                    Disk,
-                    &Style
-                    );
+    Status = FstubDetectPartitionStyle(Disk, &Style);
 
     //
     // To include oddities such as super-floppies, EZDrive disks and
@@ -443,26 +408,25 @@ Return Values:
     // to understand such things as super-floppies and raw disks, this
     // will no longer be necessary.
     //
-    
+
     FoundGptPartition = FALSE;
-    
-    if ( NT_SUCCESS (Status) && Style == PARTITION_STYLE_GPT ) {
+
+    if (NT_SUCCESS(Status) && Style == PARTITION_STYLE_GPT)
+    {
 
         //
         // First, read the primary partition table.
         //
-        
-        Status = FstubReadPartitionTableEFI (
-                    Disk,
-                    PRIMARY_PARTITION_TABLE,
-                    DriveLayout
-                    );
 
-        if (NT_SUCCESS (Status)) {
+        Status = FstubReadPartitionTableEFI(Disk, PRIMARY_PARTITION_TABLE, DriveLayout);
+
+        if (NT_SUCCESS(Status))
+        {
 
             FoundGptPartition = TRUE;
-
-        } else {
+        }
+        else
+        {
 
             //
             // If the primary EFI partition table is invalid, try reading
@@ -471,35 +435,31 @@ Return Values:
             // invalid so it can take the steps to fix it.
             //
 
-            Status = FstubReadPartitionTableEFI (
-                        Disk,
-                        BACKUP_PARTITION_TABLE,
-                        DriveLayout
-                        );
+            Status = FstubReadPartitionTableEFI(Disk, BACKUP_PARTITION_TABLE, DriveLayout);
 
-            if ( NT_SUCCESS (Status) ) {
+            if (NT_SUCCESS(Status))
+            {
                 FoundGptPartition = TRUE;
             }
         }
     }
 
-    if ( !FoundGptPartition ) {
-    
-        Status = FstubReadPartitionTableMBR (
-                        Disk,
-                        FALSE,
-                        DriveLayout
-                        );
+    if (!FoundGptPartition)
+    {
+
+        Status = FstubReadPartitionTableMBR(Disk, FALSE, DriveLayout);
     }
 
-    if ( Disk ) {
-        FstubFreeDiskInformation ( Disk );
+    if (Disk)
+    {
+        FstubFreeDiskInformation(Disk);
     }
 
 #if DBG
 
-    if (NT_SUCCESS (Status)) {
-        FstubDbgPrintDriveLayoutEx ( *DriveLayout );
+    if (NT_SUCCESS(Status))
+    {
+        FstubDbgPrintDriveLayoutEx(*DriveLayout);
     }
 
 #endif
@@ -508,13 +468,10 @@ Return Values:
     return Status;
 }
 
-
+
 NTSTATUS
-IoSetPartitionInformationEx(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG PartitionNumber,
-    IN PSET_PARTITION_INFORMATION_EX PartitionInfo
-    )
+IoSetPartitionInformationEx(IN PDEVICE_OBJECT DeviceObject, IN ULONG PartitionNumber,
+                            IN PSET_PARTITION_INFORMATION_EX PartitionInfo)
 
 /*++
 
@@ -542,10 +499,10 @@ Return Values:
     PDISK_INFORMATION Disk;
     PARTITION_STYLE Style;
 
-    ASSERT ( DeviceObject != NULL );
-    ASSERT ( PartitionInfo != NULL );
+    ASSERT(DeviceObject != NULL);
+    ASSERT(PartitionInfo != NULL);
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
 
     //
@@ -554,69 +511,59 @@ Return Values:
 
     Disk = NULL;
 
-    FstubDbgPrintSetPartitionEx (PartitionInfo, PartitionNumber);
+    FstubDbgPrintSetPartitionEx(PartitionInfo, PartitionNumber);
 
-    Status = FstubAllocateDiskInformation (
-                    DeviceObject,
-                    &Disk,
-                    NULL
-                    );
+    Status = FstubAllocateDiskInformation(DeviceObject, &Disk, NULL);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
-    Status = FstubDetectPartitionStyle ( Disk, &Style );
+    Status = FstubDetectPartitionStyle(Disk, &Style);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         goto done;
     }
 
-    if ( Style != PartitionInfo->PartitionStyle ) {
+    if (Style != PartitionInfo->PartitionStyle)
+    {
         Status = STATUS_INVALID_PARAMETER;
         goto done;
     }
 
-    switch ( Style ) {
+    switch (Style)
+    {
 
-        case PARTITION_STYLE_MBR:
-            Status = IoSetPartitionInformation (
-                            DeviceObject,
-                            Disk->SectorSize,
-                            PartitionNumber,
-                            PartitionInfo->Mbr.PartitionType
-                            );
-            break;
+    case PARTITION_STYLE_MBR:
+        Status = IoSetPartitionInformation(DeviceObject, Disk->SectorSize, PartitionNumber,
+                                           PartitionInfo->Mbr.PartitionType);
+        break;
 
-        case PARTITION_STYLE_GPT:
-            Status = FstubSetPartitionInformationEFI (
-                            Disk,
-                            PartitionNumber,
-                            &PartitionInfo->Gpt
-                            );
-            break;
+    case PARTITION_STYLE_GPT:
+        Status = FstubSetPartitionInformationEFI(Disk, PartitionNumber, &PartitionInfo->Gpt);
+        break;
 
-        default:
-            Status = STATUS_NOT_SUPPORTED;
+    default:
+        Status = STATUS_NOT_SUPPORTED;
     }
 
 done:
 
-    if ( Disk != NULL ) {
-        FstubFreeDiskInformation ( Disk );
+    if (Disk != NULL)
+    {
+        FstubFreeDiskInformation(Disk);
         Disk = NULL;
     }
 
     return Status;
 }
 
-
+
 NTSTATUS
-IoUpdateDiskGeometry(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PDISK_GEOMETRY_EX OldDiskGeometry,
-    IN PDISK_GEOMETRY_EX NewDiskGeometry
-    )
+IoUpdateDiskGeometry(IN PDEVICE_OBJECT DeviceObject, IN PDISK_GEOMETRY_EX OldDiskGeometry,
+                     IN PDISK_GEOMETRY_EX NewDiskGeometry)
 
 /*++
 
@@ -649,12 +596,12 @@ Return Value:
     PDISK_INFORMATION OldDisk;
     PDISK_INFORMATION NewDisk;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
 
-    ASSERT ( DeviceObject != NULL );
-    ASSERT ( OldDiskGeometry != NULL );
-    ASSERT ( NewDiskGeometry != NULL );
+    ASSERT(DeviceObject != NULL);
+    ASSERT(OldDiskGeometry != NULL);
+    ASSERT(NewDiskGeometry != NULL);
 
     //
     // Initialization.
@@ -667,86 +614,74 @@ Return Value:
     // Allocate objects representing the old disk and the new disk.
     //
 
-    Status = FstubAllocateDiskInformation (
-                    DeviceObject,
-                    &OldDisk,
-                    (PINTERNAL_DISK_GEOMETRY) OldDiskGeometry
-                    );
+    Status = FstubAllocateDiskInformation(DeviceObject, &OldDisk, (PINTERNAL_DISK_GEOMETRY)OldDiskGeometry);
 
-    if ( !NT_SUCCESS (Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         goto done;
     }
 
 
-    Status = FstubAllocateDiskInformation (
-                DeviceObject,
-                &NewDisk,
-                (PINTERNAL_DISK_GEOMETRY) NewDiskGeometry
-                );
+    Status = FstubAllocateDiskInformation(DeviceObject, &NewDisk, (PINTERNAL_DISK_GEOMETRY)NewDiskGeometry);
 
-    if ( !NT_SUCCESS (Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         goto done;
     }
 
-    Status = FstubDetectPartitionStyle (
-                OldDisk,
-                &Style
-                );
+    Status = FstubDetectPartitionStyle(OldDisk, &Style);
 
-    if ( !NT_SUCCESS (Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         goto done;
     }
 
-    switch ( Style ) {
+    switch (Style)
+    {
 
-        case PARTITION_STYLE_GPT:
+    case PARTITION_STYLE_GPT:
 
-            //
-            // Update the geometry for an EFI disk.
-            //
+        //
+        // Update the geometry for an EFI disk.
+        //
 
-            Status = FstubUpdateDiskGeometryEFI (
-                        OldDisk,
-                        NewDisk
-                        );
-            break;
+        Status = FstubUpdateDiskGeometryEFI(OldDisk, NewDisk);
+        break;
 
-        case PARTITION_STYLE_MBR:
+    case PARTITION_STYLE_MBR:
 
-            //
-            // For MBR partitioned drives, there is nothing to do, so
-            // we succeed by default.
-            //
+        //
+        // For MBR partitioned drives, there is nothing to do, so
+        // we succeed by default.
+        //
 
-            Status = STATUS_SUCCESS;
-            break;
+        Status = STATUS_SUCCESS;
+        break;
 
-        default:
-            Status = STATUS_NOT_SUPPORTED;
+    default:
+        Status = STATUS_NOT_SUPPORTED;
     }
 
 done:
 
-    if ( OldDisk ) {
-        FstubFreeDiskInformation ( OldDisk );
+    if (OldDisk)
+    {
+        FstubFreeDiskInformation(OldDisk);
         OldDisk = NULL;
     }
 
-    if ( NewDisk ) {
-        FstubFreeDiskInformation ( NewDisk );
+    if (NewDisk)
+    {
+        FstubFreeDiskInformation(NewDisk);
         NewDisk = NULL;
     }
 
     return Status;
 }
 
-
+
 NTSTATUS
-IoReadDiskSignature(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG BytesPerSector,
-    OUT PDISK_SIGNATURE Signature
-    )
+IoReadDiskSignature(IN PDEVICE_OBJECT DeviceObject, IN ULONG BytesPerSector, OUT PDISK_SIGNATURE Signature)
 /*++
 
 Routine Description:
@@ -779,8 +714,9 @@ Return Value:
     //
     // Make sure sector size is at least 512 bytes.
     //
-    
-    if (BytesPerSector < 512) {
+
+    if (BytesPerSector < 512)
+    {
         BytesPerSector = 512;
     }
 
@@ -788,72 +724,67 @@ Return Value:
     // Allocate buffer for sector read.
     //
 
-    Mbr = ExAllocatePoolWithTag(NonPagedPoolCacheAligned,
-                                BytesPerSector,
-                                FSTUB_TAG);
+    Mbr = ExAllocatePoolWithTag(NonPagedPoolCacheAligned, BytesPerSector, FSTUB_TAG);
 
-    if (Mbr == NULL) {
+    if (Mbr == NULL)
+    {
         return STATUS_NO_MEMORY;
     }
 
-    Status = FstubReadSector (
-                    DeviceObject,
-                    BytesPerSector,
-                    0,
-                    Mbr);
+    Status = FstubReadSector(DeviceObject, BytesPerSector, 0, Mbr);
 
-    if (!NT_SUCCESS (Status)) {
-        ExFreePool (Mbr);
+    if (!NT_SUCCESS(Status))
+    {
+        ExFreePool(Mbr);
         return Status;
     }
-            
+
     //
     // If this is an EFI disk get the EFI disk signature instead.
     //
-    
-    if ( ((MASTER_BOOT_RECORD*)Mbr)->Partition[0].OSIndicator == EFI_MBR_PARTITION_TYPE &&
-         ((MASTER_BOOT_RECORD*)Mbr)->Partition[1].OSIndicator == 0 &&
-         ((MASTER_BOOT_RECORD*)Mbr)->Partition[2].OSIndicator == 0 &&
-         ((MASTER_BOOT_RECORD*)Mbr)->Partition[3].OSIndicator == 0 ) {
+
+    if (((MASTER_BOOT_RECORD *)Mbr)->Partition[0].OSIndicator == EFI_MBR_PARTITION_TYPE &&
+        ((MASTER_BOOT_RECORD *)Mbr)->Partition[1].OSIndicator == 0 &&
+        ((MASTER_BOOT_RECORD *)Mbr)->Partition[2].OSIndicator == 0 &&
+        ((MASTER_BOOT_RECORD *)Mbr)->Partition[3].OSIndicator == 0)
+    {
 
         PEFI_PARTITION_HEADER EfiHeader;
         ULONG32 Temp;
         ULONG32 CheckSum;
-        
+
         //
         // Get the EFI disk guid.
         //
 
-        Status = FstubReadSector (
-                    DeviceObject,
-                    BytesPerSector,
-                    1,
-                    Mbr);
+        Status = FstubReadSector(DeviceObject, BytesPerSector, 1, Mbr);
 
-        if (!NT_SUCCESS (Status)) {
-            ExFreePool (Mbr);
+        if (!NT_SUCCESS(Status))
+        {
+            ExFreePool(Mbr);
             return Status;
         }
 
-        EfiHeader = (PEFI_PARTITION_HEADER) Mbr;
+        EfiHeader = (PEFI_PARTITION_HEADER)Mbr;
 
         //
         // Compute the CRC32 CheckSum of the header block. This is used to
         // verify that we have a valid EFI disk.
         //
-        
+
         Temp = EfiHeader->HeaderCRC32;
         EfiHeader->HeaderCRC32 = 0;
-        CheckSum = RtlComputeCrc32 (0, EfiHeader, EfiHeader->HeaderSize);
+        CheckSum = RtlComputeCrc32(0, EfiHeader, EfiHeader->HeaderSize);
         EfiHeader->HeaderCRC32 = Temp;
 
         //
         // The EFI CheckSum doesn't match what was in it's header. Return
         // failure.
         //
-        
-        if (CheckSum != EfiHeader->HeaderCRC32) {
-            ExFreePool (Mbr);
+
+        if (CheckSum != EfiHeader->HeaderCRC32)
+        {
+            ExFreePool(Mbr);
             return STATUS_DISK_CORRUPT_ERROR;
         }
 
@@ -861,12 +792,13 @@ Return Value:
         // This is a valid EFI disk. Copy the disk signature from the
         // EFI Header sector.
         //
-        
+
         Signature->PartitionStyle = PARTITION_STYLE_GPT;
         Signature->Gpt.DiskId = EfiHeader->DiskGUID;
+    }
+    else
+    {
 
-    } else {
-    
         ULONG i;
         ULONG MbrCheckSum;
 
@@ -876,7 +808,8 @@ Return Value:
 
         MbrCheckSum = 0;
 
-        for (i = 0; i < 128; i++) {
+        for (i = 0; i < 128; i++)
+        {
             MbrCheckSum += Mbr[i];
         }
 
@@ -887,22 +820,18 @@ Return Value:
         //
 
         Signature->PartitionStyle = PARTITION_STYLE_MBR;
-        Signature->Mbr.Signature = Mbr [PARTITION_TABLE_OFFSET/2-1];
+        Signature->Mbr.Signature = Mbr[PARTITION_TABLE_OFFSET / 2 - 1];
         Signature->Mbr.CheckSum = MbrCheckSum;
     }
 
-    ExFreePool (Mbr);
+    ExFreePool(Mbr);
 
     return Status;
 }
-    
 
-
+
 NTSTATUS
-IoVerifyPartitionTable(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN BOOLEAN FixErrors
-    )
+IoVerifyPartitionTable(IN PDEVICE_OBJECT DeviceObject, IN BOOLEAN FixErrors)
 
 /*++
 
@@ -939,69 +868,59 @@ Return Value:
     PDISK_INFORMATION Disk;
     PARTITION_STYLE Style;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    ASSERT ( DeviceObject != NULL );
+    ASSERT(DeviceObject != NULL);
 
-    Status = FstubAllocateDiskInformation (
-                DeviceObject,
-                &Disk,
-                NULL
-                );
+    Status = FstubAllocateDiskInformation(DeviceObject, &Disk, NULL);
 
-    if ( !NT_SUCCESS ( Status ) ) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
-    ASSERT ( Disk != NULL );
+    ASSERT(Disk != NULL);
 
-    Status = FstubDetectPartitionStyle (
-                    Disk,
-                    &Style
-                    );
+    Status = FstubDetectPartitionStyle(Disk, &Style);
 
-    if ( !NT_SUCCESS (Status) ) {
-        FstubFreeDiskInformation ( Disk );
+    if (!NT_SUCCESS(Status))
+    {
+        FstubFreeDiskInformation(Disk);
         Disk = NULL;
         return Status;
     }
 
-    switch ( Style ) {
+    switch (Style)
+    {
 
-        case PARTITION_STYLE_GPT:
-            Status = FstubVerifyPartitionTableEFI (
-                            Disk,
-                            FixErrors
-                            );
-            break;
+    case PARTITION_STYLE_GPT:
+        Status = FstubVerifyPartitionTableEFI(Disk, FixErrors);
+        break;
 
-        case PARTITION_STYLE_MBR:
-            Status = STATUS_SUCCESS;
-            break;
+    case PARTITION_STYLE_MBR:
+        Status = STATUS_SUCCESS;
+        break;
 
-        default:
-            Status = STATUS_NOT_SUPPORTED;
+    default:
+        Status = STATUS_NOT_SUPPORTED;
     }
 
-    if ( Disk ) {
-        FstubFreeDiskInformation ( Disk );
+    if (Disk)
+    {
+        FstubFreeDiskInformation(Disk);
     }
 
     return Status;
-
 }
 
 //
 // Internal Routines
 //
 
-
+
 NTSTATUS
-FstubSetPartitionInformationEFI(
-    IN PDISK_INFORMATION Disk,
-    IN ULONG PartitionNumber,
-    IN SET_PARTITION_INFORMATION_GPT* PartitionInfo
-    )
+FstubSetPartitionInformationEFI(IN PDISK_INFORMATION Disk, IN ULONG PartitionNumber,
+                                IN SET_PARTITION_INFORMATION_GPT *PartitionInfo)
 
 /*++
 
@@ -1037,10 +956,10 @@ Return Values:
     ULONG PartitionOrdinal;
 
 
-    ASSERT ( Disk != NULL );
-    ASSERT ( PartitionInfo != NULL );
+    ASSERT(Disk != NULL);
+    ASSERT(PartitionInfo != NULL);
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
 
     //
@@ -1049,7 +968,8 @@ Return Values:
 
     Layout = NULL;
 
-    if ( PartitionNumber == 0 ) {
+    if (PartitionNumber == 0)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -1059,23 +979,22 @@ Return Values:
     // Read in the entire partition table.
     //
 
-    Status = IoReadPartitionTableEx (
-                    Disk->DeviceObject,
-                    &Layout
-                    );
+    Status = IoReadPartitionTableEx(Disk->DeviceObject, &Layout);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
-    ASSERT ( Layout != NULL );
+    ASSERT(Layout != NULL);
 
     //
     // If it's out of range, fail.
     //
 
-    if ( PartitionOrdinal >= Layout->PartitionCount ) {
-        ExFreePool ( Layout );
+    if (PartitionOrdinal >= Layout->PartitionCount)
+    {
+        ExFreePool(Layout);
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -1083,42 +1002,31 @@ Return Values:
     // Copy the information into the partition array.
     //
 
-    EntryInfo = &Layout->PartitionEntry [PartitionOrdinal].Gpt;
+    EntryInfo = &Layout->PartitionEntry[PartitionOrdinal].Gpt;
 
     EntryInfo->PartitionType = PartitionInfo->PartitionType;
     EntryInfo->PartitionId = PartitionInfo->PartitionId;
     EntryInfo->Attributes = PartitionInfo->Attributes;
 
-    RtlCopyMemory (
-            EntryInfo->Name,
-            PartitionInfo->Name,
-            sizeof (EntryInfo->Name)
-            );
+    RtlCopyMemory(EntryInfo->Name, PartitionInfo->Name, sizeof(EntryInfo->Name));
 
 
     //
     // And rewrite the partition table.
     //
 
-    Status = IoWritePartitionTableEx (
-                    Disk->DeviceObject,
-                    Layout
-                    );
+    Status = IoWritePartitionTableEx(Disk->DeviceObject, Layout);
 
-    ExFreePool ( Layout );
+    ExFreePool(Layout);
     Layout = NULL;
 
     return Status;
 }
 
 
-
 NTSTATUS
-FstubReadPartitionTableMBR(
-    IN PDISK_INFORMATION Disk,
-    IN BOOLEAN RecognizedPartitionsOnly,
-    OUT PDRIVE_LAYOUT_INFORMATION_EX* ReturnedDriveLayout
-    )
+FstubReadPartitionTableMBR(IN PDISK_INFORMATION Disk, IN BOOLEAN RecognizedPartitionsOnly,
+                           OUT PDRIVE_LAYOUT_INFORMATION_EX *ReturnedDriveLayout)
 
 /*++
 
@@ -1153,10 +1061,10 @@ Return Values:
     PPARTITION_INFORMATION_EX EntryEx;
 
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    ASSERT ( IS_VALID_DISK_INFO ( Disk ) );
-    ASSERT ( ReturnedDriveLayout != NULL );
+    ASSERT(IS_VALID_DISK_INFO(Disk));
+    ASSERT(ReturnedDriveLayout != NULL);
 
     //
     // Initialization
@@ -1166,27 +1074,20 @@ Return Values:
     Layout = NULL;
 
 
-    Status = IoReadPartitionTable (
-                    Disk->DeviceObject,
-                    Disk->SectorSize,
-                    RecognizedPartitionsOnly,
-                    &Layout
-                    );
+    Status = IoReadPartitionTable(Disk->DeviceObject, Disk->SectorSize, RecognizedPartitionsOnly, &Layout);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
-    Size = FIELD_OFFSET (DRIVE_LAYOUT_INFORMATION_EX, PartitionEntry[0]) +
-           Layout->PartitionCount * sizeof (PARTITION_INFORMATION_EX);
+    Size = FIELD_OFFSET(DRIVE_LAYOUT_INFORMATION_EX, PartitionEntry[0]) +
+           Layout->PartitionCount * sizeof(PARTITION_INFORMATION_EX);
 
-    LayoutEx = ExAllocatePoolWithTag (
-                    NonPagedPool,
-                    Size,
-                    FSTUB_TAG
-                    );
+    LayoutEx = ExAllocatePoolWithTag(NonPagedPool, Size, FSTUB_TAG);
 
-    if ( LayoutEx == NULL ) {
+    if (LayoutEx == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -1203,7 +1104,8 @@ Return Values:
     // Translate each entry in the table.
     //
 
-    for (i = 0; i < Layout->PartitionCount; i++) {
+    for (i = 0; i < Layout->PartitionCount; i++)
+    {
 
         EntryEx = &LayoutEx->PartitionEntry[i];
         Entry = &Layout->PartitionEntry[i];
@@ -1224,7 +1126,7 @@ Return Values:
     // Free layout information allocated by IoReadPartitionTable.
     //
 
-    ExFreePool ( Layout );
+    ExFreePool(Layout);
 
     //
     // And return the translated, EX information.
@@ -1236,12 +1138,8 @@ Return Values:
 }
 
 
-
 NTSTATUS
-FstubDetectPartitionStyle(
-    IN PDISK_INFORMATION Disk,
-    OUT PARTITION_STYLE* PartitionStyle
-    )
+FstubDetectPartitionStyle(IN PDISK_INFORMATION Disk, OUT PARTITION_STYLE *PartitionStyle)
 
 /*++
 
@@ -1269,12 +1167,12 @@ Return Values:
 
 {
     NTSTATUS Status;
-    MASTER_BOOT_RECORD* Mbr;
+    MASTER_BOOT_RECORD *Mbr;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    ASSERT ( IS_VALID_DISK_INFO ( Disk ) );
-    ASSERT ( PartitionStyle != NULL );
+    ASSERT(IS_VALID_DISK_INFO(Disk));
+    ASSERT(PartitionStyle != NULL);
 
 
     //
@@ -1282,42 +1180,40 @@ Return Values:
     // or the legacy mbr on an efi-partitioned disk.
     //
 
-    Status = FstubReadSector (
-                    Disk->DeviceObject,
-                    Disk->SectorSize,
-                    0,
-                    Disk->ScratchBuffer
-                    );
+    Status = FstubReadSector(Disk->DeviceObject, Disk->SectorSize, 0, Disk->ScratchBuffer);
 
-    if ( !NT_SUCCESS ( Status ) ) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
     Mbr = Disk->ScratchBuffer;
 
     //
-    // If the disk has an MBR 
+    // If the disk has an MBR
     //
 
     *PartitionStyle = -1;
-    
-    if (Mbr->Signature == MBR_SIGNATURE) {
 
-        if (Mbr->Partition[0].OSIndicator == EFI_MBR_PARTITION_TYPE &&
-            Mbr->Partition[1].OSIndicator == 0 &&
-            Mbr->Partition[2].OSIndicator == 0 &&
-            Mbr->Partition[3].OSIndicator == 0) {
+    if (Mbr->Signature == MBR_SIGNATURE)
+    {
+
+        if (Mbr->Partition[0].OSIndicator == EFI_MBR_PARTITION_TYPE && Mbr->Partition[1].OSIndicator == 0 &&
+            Mbr->Partition[2].OSIndicator == 0 && Mbr->Partition[3].OSIndicator == 0)
+        {
 
             *PartitionStyle = PARTITION_STYLE_GPT;
             Status = STATUS_SUCCESS;
-
-        } else {
+        }
+        else
+        {
 
             *PartitionStyle = PARTITION_STYLE_MBR;
             Status = STATUS_SUCCESS;
         }
-
-    } else {
+    }
+    else
+    {
 
         Status = STATUS_UNSUCCESSFUL;
     }
@@ -1326,12 +1222,8 @@ Return Values:
 }
 
 
-
 NTSTATUS
-FstubGetDiskGeometry(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PINTERNAL_DISK_GEOMETRY Geometry
-    )
+FstubGetDiskGeometry(IN PDEVICE_OBJECT DeviceObject, IN PINTERNAL_DISK_GEOMETRY Geometry)
 
 /*++
 
@@ -1358,10 +1250,10 @@ Return Value:
     PKEVENT eventPtr;
     NTSTATUS status;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    ASSERT ( DeviceObject != NULL );
-    ASSERT ( Geometry != NULL );
+    ASSERT(DeviceObject != NULL);
+    ASSERT(Geometry != NULL);
 
     //
     // Initialization
@@ -1372,63 +1264,40 @@ Return Value:
     diskGeometry = NULL;
 
 
-    diskGeometry = ExAllocatePoolWithTag(
-                      NonPagedPool,
-                      sizeof (*diskGeometry),
-                      'btsF'
-                      );
+    diskGeometry = ExAllocatePoolWithTag(NonPagedPool, sizeof(*diskGeometry), 'btsF');
 
-    if (!diskGeometry) {
+    if (!diskGeometry)
+    {
 
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto done;
     }
 
-    iosb = ExAllocatePoolWithTag(
-               NonPagedPool,
-               sizeof(IO_STATUS_BLOCK),
-               'btsF'
-               );
+    iosb = ExAllocatePoolWithTag(NonPagedPool, sizeof(IO_STATUS_BLOCK), 'btsF');
 
-    if (!iosb) {
+    if (!iosb)
+    {
 
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto done;
-
     }
 
-    eventPtr = ExAllocatePoolWithTag(
-                   NonPagedPool,
-                   sizeof(KEVENT),
-                   'btsF'
-                   );
+    eventPtr = ExAllocatePoolWithTag(NonPagedPool, sizeof(KEVENT), 'btsF');
 
-    if (!eventPtr) {
+    if (!eventPtr)
+    {
 
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto done;
-
     }
 
-    KeInitializeEvent(
-        eventPtr,
-        NotificationEvent,
-        FALSE
-        );
+    KeInitializeEvent(eventPtr, NotificationEvent, FALSE);
 
-    localIrp = IoBuildDeviceIoControlRequest(
-                   IOCTL_DISK_GET_DRIVE_GEOMETRY_EX,
-                   DeviceObject,
-                   NULL,
-                   0UL,
-                   diskGeometry,
-                   sizeof (*diskGeometry),
-                   FALSE,
-                   eventPtr,
-                   iosb
-                   );
+    localIrp = IoBuildDeviceIoControlRequest(IOCTL_DISK_GET_DRIVE_GEOMETRY_EX, DeviceObject, NULL, 0UL, diskGeometry,
+                                             sizeof(*diskGeometry), FALSE, eventPtr, iosb);
 
-    if (!localIrp) {
+    if (!localIrp)
+    {
 
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto done;
@@ -1440,46 +1309,43 @@ Return Value:
     // to finish.
     //
 
-    status = IoCallDriver(
-                 DeviceObject,
-                 localIrp
-                 );
+    status = IoCallDriver(DeviceObject, localIrp);
 
-    if (status == STATUS_PENDING) {
-        KeWaitForSingleObject(
-                   eventPtr,
-                   Executive,
-                   KernelMode,
-                   FALSE,
-                   (PLARGE_INTEGER) NULL
-                   );
+    if (status == STATUS_PENDING)
+    {
+        KeWaitForSingleObject(eventPtr, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
         status = iosb->Status;
     }
 
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
-        RtlCopyMemory (Geometry, diskGeometry, sizeof (*Geometry));
+        RtlCopyMemory(Geometry, diskGeometry, sizeof(*Geometry));
     }
 
 done:
 
-    if ( eventPtr ) {
-        ExFreePool (eventPtr);
+    if (eventPtr)
+    {
+        ExFreePool(eventPtr);
         eventPtr = NULL;
     }
 
-    if ( iosb ) {
+    if (iosb)
+    {
         ExFreePool(iosb);
         iosb = NULL;
     }
 
-    if ( diskGeometry ) {
-        ExFreePool (diskGeometry);
+    if (diskGeometry)
+    {
+        ExFreePool(diskGeometry);
         diskGeometry = NULL;
     }
 
-    if ( NT_SUCCESS ( status ) ) {
+    if (NT_SUCCESS(status))
+    {
 
         //
         // If the the partition entry size is not a factor of the disk block
@@ -1489,19 +1355,16 @@ done:
         // than 128 bytes.
         //
 
-        ASSERT ( (Geometry->Geometry.BytesPerSector % PARTITION_ENTRY_SIZE) == 0);
+        ASSERT((Geometry->Geometry.BytesPerSector % PARTITION_ENTRY_SIZE) == 0);
     }
 
     return status;
 }
 
-
+
 NTSTATUS
-FstubAllocateDiskInformation(
-    IN PDEVICE_OBJECT DeviceObject,
-    OUT PDISK_INFORMATION * DiskBuffer,
-    IN PINTERNAL_DISK_GEOMETRY Geometry OPTIONAL
-    )
+FstubAllocateDiskInformation(IN PDEVICE_OBJECT DeviceObject, OUT PDISK_INFORMATION *DiskBuffer,
+                             IN PINTERNAL_DISK_GEOMETRY Geometry OPTIONAL)
 
 /*++
 
@@ -1531,47 +1394,38 @@ Return Values:
     PDISK_INFORMATION Disk;
     PVOID Buffer;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    ASSERT ( DeviceObject != NULL );
-    ASSERT ( DiskBuffer != NULL );
+    ASSERT(DeviceObject != NULL);
+    ASSERT(DiskBuffer != NULL);
 
 
-    Disk = ExAllocatePoolWithTag (
-                NonPagedPool,
-                sizeof (DISK_INFORMATION),
-                FSTUB_TAG
-                );
+    Disk = ExAllocatePoolWithTag(NonPagedPool, sizeof(DISK_INFORMATION), FSTUB_TAG);
 
-    if ( Disk == NULL ) {
+    if (Disk == NULL)
+    {
 
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    if ( Geometry ) {
+    if (Geometry)
+    {
 
-        RtlCopyMemory (
-                &Disk->Geometry,
-                Geometry,
-                sizeof (Disk->Geometry)
-                );
+        RtlCopyMemory(&Disk->Geometry, Geometry, sizeof(Disk->Geometry));
+    }
+    else
+    {
 
-    } else {
-
-        Status = FstubGetDiskGeometry (
-                                DeviceObject,
-                                &Disk->Geometry
-                                );
+        Status = FstubGetDiskGeometry(DeviceObject, &Disk->Geometry);
 
 
-        if (!NT_SUCCESS (Status)) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            KdPrintEx ((DPFLTR_FSTUB_ID,
-                        DPFLTR_ERROR_LEVEL,
-                        "FSTUB: disk %p failed to report geometry.\n",
-                        DeviceObject));
-                        
-            ExFreePool ( Disk );
+            KdPrintEx(
+                (DPFLTR_FSTUB_ID, DPFLTR_ERROR_LEVEL, "FSTUB: disk %p failed to report geometry.\n", DeviceObject));
+
+            ExFreePool(Disk);
             return Status;
         }
     }
@@ -1580,23 +1434,20 @@ Return Values:
     // Check the geometry. Sometimes drives report incorrect geometry.
     // Removable drives without media report a size of zero.
     //
-        
-    if (Disk->Geometry.Geometry.BytesPerSector == 0 ||
-        Disk->Geometry.DiskSize.QuadPart == 0) {
 
-        KdPrintEx ((DPFLTR_FSTUB_ID,
-                    DPFLTR_WARNING_LEVEL,
-                    "FSTUB: disk %p reported invalid geometry. Probably a removable.\n"
-                    "    SectorSize %d\n"
-                    "    DiskSize %I64x\n",
-                    DeviceObject,
-                    Disk->Geometry.Geometry.BytesPerSector,
-                    Disk->Geometry.DiskSize.QuadPart));
+    if (Disk->Geometry.Geometry.BytesPerSector == 0 || Disk->Geometry.DiskSize.QuadPart == 0)
+    {
 
-        ExFreePool ( Disk );
+        KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_WARNING_LEVEL,
+                   "FSTUB: disk %p reported invalid geometry. Probably a removable.\n"
+                   "    SectorSize %d\n"
+                   "    DiskSize %I64x\n",
+                   DeviceObject, Disk->Geometry.Geometry.BytesPerSector, Disk->Geometry.DiskSize.QuadPart));
+
+        ExFreePool(Disk);
         return STATUS_DEVICE_NOT_READY;
     }
-    
+
     Disk->DeviceObject = DeviceObject;
     Disk->SectorSize = Disk->Geometry.Geometry.BytesPerSector;
 
@@ -1607,23 +1458,19 @@ Return Values:
     // or tracks. Since the only thing we really need here is the sector
     // count, avoid using these potentially incorrect values.
     //
-    
-    Disk->SectorCount = Disk->Geometry.DiskSize.QuadPart /
-                (ULONGLONG) Disk->Geometry.Geometry.BytesPerSector;
+
+    Disk->SectorCount = Disk->Geometry.DiskSize.QuadPart / (ULONGLONG)Disk->Geometry.Geometry.BytesPerSector;
 
     //
     // NOTE: This does not need to be nonpaged or cache aligned, does it?
     //
 
-    Buffer = ExAllocatePoolWithTag (
-                    NonPagedPoolCacheAligned,
-                    Disk->SectorSize,
-                    FSTUB_TAG
-                    );
+    Buffer = ExAllocatePoolWithTag(NonPagedPoolCacheAligned, Disk->SectorSize, FSTUB_TAG);
 
-    if ( Buffer == NULL ) {
+    if (Buffer == NULL)
+    {
 
-        ExFreePool ( Disk );
+        ExFreePool(Disk);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -1633,11 +1480,9 @@ Return Values:
     return STATUS_SUCCESS;
 }
 
-
+
 NTSTATUS
-FstubFreeDiskInformation(
-    IN OUT PDISK_INFORMATION Disk
-    )
+FstubFreeDiskInformation(IN OUT PDISK_INFORMATION Disk)
 
 /*++
 
@@ -1661,13 +1506,15 @@ Return Value:
     // Free up disk scratch buffer and disk object.
     //
 
-    if ( Disk && Disk->ScratchBuffer ) {
-        ExFreePool (Disk->ScratchBuffer);
+    if (Disk && Disk->ScratchBuffer)
+    {
+        ExFreePool(Disk->ScratchBuffer);
         Disk->ScratchBuffer = NULL;
     }
 
-    if ( Disk ) {
-        ExFreePool (Disk);
+    if (Disk)
+    {
+        ExFreePool(Disk);
         Disk = NULL;
     }
 
@@ -1675,11 +1522,8 @@ Return Value:
 }
 
 
-
 NTSTATUS
-FstubWriteBootSectorEFI(
-    IN CONST PDISK_INFORMATION Disk
-    )
+FstubWriteBootSectorEFI(IN CONST PDISK_INFORMATION Disk)
 
 /*++
 
@@ -1701,12 +1545,12 @@ Return Values:
 
 {
     NTSTATUS Status;
-    MASTER_BOOT_RECORD* Mbr;
+    MASTER_BOOT_RECORD *Mbr;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    ASSERT ( Disk );
-    ASSERT ( IS_VALID_DISK_INFO ( Disk ) );
+    ASSERT(Disk);
+    ASSERT(IS_VALID_DISK_INFO(Disk));
 
     //
     // Construct an EFI Master Boot Record. The EFI Master Boot Record has
@@ -1724,7 +1568,7 @@ Return Values:
     // the NTFT signature is NULL.
     //
 
-    RtlZeroMemory (Mbr, Disk->SectorSize);
+    RtlZeroMemory(Mbr, Disk->SectorSize);
 
     //
     // NB: the cylinder and head values are 0-based, but the sector
@@ -1743,9 +1587,9 @@ Return Values:
     Mbr->Partition[0].StartSector = 2;
     Mbr->Partition[0].StartTrack = 0;
     Mbr->Partition[0].OSIndicator = EFI_MBR_PARTITION_TYPE;
-    Mbr->Partition[0].EndHead =  0xFF;
-    Mbr->Partition[0].EndSector =  0xFF;
-    Mbr->Partition[0].EndTrack =  0xFF;
+    Mbr->Partition[0].EndHead = 0xFF;
+    Mbr->Partition[0].EndSector = 0xFF;
+    Mbr->Partition[0].EndTrack = 0xFF;
     Mbr->Partition[0].StartingLBA = 1;
     Mbr->Partition[0].SizeInLBA = 0xFFFFFFFF;
 
@@ -1753,30 +1597,22 @@ Return Values:
     // Zero out the remaining partitions as per the EFI spec.
     //
 
-    RtlZeroMemory (&Mbr->Partition[1], sizeof (Mbr->Partition[1]));
-    RtlZeroMemory (&Mbr->Partition[2], sizeof (Mbr->Partition[2]));
-    RtlZeroMemory (&Mbr->Partition[3], sizeof (Mbr->Partition[3]));
+    RtlZeroMemory(&Mbr->Partition[1], sizeof(Mbr->Partition[1]));
+    RtlZeroMemory(&Mbr->Partition[2], sizeof(Mbr->Partition[2]));
+    RtlZeroMemory(&Mbr->Partition[3], sizeof(Mbr->Partition[3]));
 
     //
     // Write the EFI MBR to the zeroth sector of the disk.
     //
 
-    Status = FstubWriteSector (
-                    Disk->DeviceObject,
-                    Disk->SectorSize,
-                    0,
-                    Mbr
-                    );
+    Status = FstubWriteSector(Disk->DeviceObject, Disk->SectorSize, 0, Mbr);
 
     return Status;
 }
 
 
-
 PDRIVE_LAYOUT_INFORMATION
-FstubConvertExtendedToLayout(
-    IN PDRIVE_LAYOUT_INFORMATION_EX LayoutEx
-    )
+FstubConvertExtendedToLayout(IN PDRIVE_LAYOUT_INFORMATION_EX LayoutEx)
 
 /*++
 
@@ -1803,9 +1639,9 @@ Return Value:
     PPARTITION_INFORMATION Partition;
     PPARTITION_INFORMATION_EX PartitionEx;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    ASSERT ( LayoutEx );
+    ASSERT(LayoutEx);
 
 
     //
@@ -1813,28 +1649,27 @@ Return Value:
     // the old structure.
     //
 
-    if (LayoutEx->PartitionStyle != PARTITION_STYLE_MBR) {
-        ASSERT ( FALSE );
+    if (LayoutEx->PartitionStyle != PARTITION_STYLE_MBR)
+    {
+        ASSERT(FALSE);
         return NULL;
     }
 
-    LayoutSize = FIELD_OFFSET (DRIVE_LAYOUT_INFORMATION, PartitionEntry[0]) +
-                 LayoutEx->PartitionCount * sizeof (PARTITION_INFORMATION);
+    LayoutSize = FIELD_OFFSET(DRIVE_LAYOUT_INFORMATION, PartitionEntry[0]) +
+                 LayoutEx->PartitionCount * sizeof(PARTITION_INFORMATION);
 
-    Layout = ExAllocatePoolWithTag (
-                    NonPagedPool,
-                    LayoutSize,
-                    FSTUB_TAG
-                    );
+    Layout = ExAllocatePoolWithTag(NonPagedPool, LayoutSize, FSTUB_TAG);
 
-    if ( Layout == NULL ) {
+    if (Layout == NULL)
+    {
         return NULL;
     }
 
     Layout->Signature = LayoutEx->Mbr.Signature;
     Layout->PartitionCount = LayoutEx->PartitionCount;
 
-    for (i = 0; i < LayoutEx->PartitionCount; i++) {
+    for (i = 0; i < LayoutEx->PartitionCount; i++)
+    {
 
         Partition = &Layout->PartitionEntry[i];
         PartitionEx = &LayoutEx->PartitionEntry[i];
@@ -1854,12 +1689,8 @@ Return Value:
 }
 
 
-
 NTSTATUS
-FstubWritePartitionTableMBR(
-    IN PDISK_INFORMATION Disk,
-    IN PDRIVE_LAYOUT_INFORMATION_EX LayoutEx
-    )
+FstubWritePartitionTableMBR(IN PDISK_INFORMATION Disk, IN PDRIVE_LAYOUT_INFORMATION_EX LayoutEx)
 
 /*++
 
@@ -1884,44 +1715,33 @@ Return Value:
     NTSTATUS Status;
     PDRIVE_LAYOUT_INFORMATION Layout;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    ASSERT ( IS_VALID_DISK_INFO ( Disk ) );
-    ASSERT ( LayoutEx != NULL );
+    ASSERT(IS_VALID_DISK_INFO(Disk));
+    ASSERT(LayoutEx != NULL);
 
     //
     // Convert extended layout structure to old layout structure.
     //
 
-    Layout = FstubConvertExtendedToLayout ( LayoutEx );
+    Layout = FstubConvertExtendedToLayout(LayoutEx);
 
-    if ( Layout == NULL ) {
+    if (Layout == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    Status = IoWritePartitionTable (
-                    Disk->DeviceObject,
-                    Disk->SectorSize,
-                    Disk->Geometry.Geometry.SectorsPerTrack,
-                    Disk->Geometry.Geometry.TracksPerCylinder,
-                    Layout
-                    );
+    Status = IoWritePartitionTable(Disk->DeviceObject, Disk->SectorSize, Disk->Geometry.Geometry.SectorsPerTrack,
+                                   Disk->Geometry.Geometry.TracksPerCylinder, Layout);
 
     return Status;
 }
 
 
-
 NTSTATUS
-FstubWriteEntryEFI(
-    IN PDISK_INFORMATION Disk,
-    IN ULONG PartitionEntrySectorCount,
-    IN ULONG EntryNumber,
-    IN PEFI_PARTITION_ENTRY PartitionEntry,
-    IN ULONG Partition,
-    IN BOOLEAN Flush,
-    IN OUT ULONG32* PartialCheckSum
-    )
+FstubWriteEntryEFI(IN PDISK_INFORMATION Disk, IN ULONG PartitionEntrySectorCount, IN ULONG EntryNumber,
+                   IN PEFI_PARTITION_ENTRY PartitionEntry, IN ULONG Partition, IN BOOLEAN Flush,
+                   IN OUT ULONG32 *PartialCheckSum)
 
 /*++
 
@@ -1964,10 +1784,10 @@ Return Values:
     ULONGLONG StartOfEntryArray;
     NTSTATUS Status;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    ASSERT ( Disk );
-    ASSERT ( IS_VALID_DISK_INFO ( Disk ) );
+    ASSERT(Disk);
+    ASSERT(IS_VALID_DISK_INFO(Disk));
 
 
     //
@@ -1978,73 +1798,57 @@ Return Values:
     //
 
 
-    if ( Partition == PRIMARY_PARTITION_TABLE ) {
+    if (Partition == PRIMARY_PARTITION_TABLE)
+    {
 
         StartOfEntryArray = 2;
-
-    } else {
+    }
+    else
+    {
 
         StartOfEntryArray = Disk->SectorCount - PartitionEntrySectorCount - 1;
     }
 
 
-    Lba = ( EntryNumber * PARTITION_ENTRY_SIZE ) / Disk->SectorSize;
-    Offset = ( EntryNumber * PARTITION_ENTRY_SIZE ) % Disk->SectorSize;
+    Lba = (EntryNumber * PARTITION_ENTRY_SIZE) / Disk->SectorSize;
+    Offset = (EntryNumber * PARTITION_ENTRY_SIZE) % Disk->SectorSize;
 
-    RtlCopyMemory (
-            ((PUCHAR) Disk->ScratchBuffer) + Offset,
-            PartitionEntry,
-            PARTITION_ENTRY_SIZE
-            );
+    RtlCopyMemory(((PUCHAR)Disk->ScratchBuffer) + Offset, PartitionEntry, PARTITION_ENTRY_SIZE);
 
     Offset += PARTITION_ENTRY_SIZE;
-    ASSERT ( Offset <= Disk->SectorSize );
+    ASSERT(Offset <= Disk->SectorSize);
 
     //
     // Flush the buffer if necessary.
     //
 
-    if ( Offset == Disk->SectorSize || Flush ) {
+    if (Offset == Disk->SectorSize || Flush)
+    {
 
-        Status = FstubWriteSector (
-                        Disk->DeviceObject,
-                        Disk->SectorSize,
-                        StartOfEntryArray + Lba,
-                        Disk->ScratchBuffer
-                        );
+        Status = FstubWriteSector(Disk->DeviceObject, Disk->SectorSize, StartOfEntryArray + Lba, Disk->ScratchBuffer);
 
-        if (!NT_SUCCESS (Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             return Status;
         }
 
-        RtlZeroMemory ( Disk->ScratchBuffer, Disk->SectorSize );
+        RtlZeroMemory(Disk->ScratchBuffer, Disk->SectorSize);
     }
 
 
-    if ( PartialCheckSum ) {
-        *PartialCheckSum = RtlComputeCrc32 (
-                                *PartialCheckSum,
-                                PartitionEntry,
-                                PARTITION_ENTRY_SIZE
-                                );
+    if (PartialCheckSum)
+    {
+        *PartialCheckSum = RtlComputeCrc32(*PartialCheckSum, PartitionEntry, PARTITION_ENTRY_SIZE);
     }
 
     return STATUS_SUCCESS;
 }
 
 
-
 NTSTATUS
-FstubWriteHeaderEFI(
-    IN PDISK_INFORMATION Disk,
-    IN ULONG PartitionEntrySectorCount,
-    IN GUID DiskGUID,
-    IN ULONG32 MaxPartitionCount,
-    IN ULONG64 FirstUsableLBA,
-    IN ULONG64 LastUsableLBA,
-    IN ULONG32 CheckSum,
-    IN ULONG Partition
-    )
+FstubWriteHeaderEFI(IN PDISK_INFORMATION Disk, IN ULONG PartitionEntrySectorCount, IN GUID DiskGUID,
+                    IN ULONG32 MaxPartitionCount, IN ULONG64 FirstUsableLBA, IN ULONG64 LastUsableLBA,
+                    IN ULONG32 CheckSum, IN ULONG Partition)
 
 /*++
 
@@ -2095,17 +1899,17 @@ Notes:
     ULONG32 HeaderCheckSum;
 
 
-    ASSERT ( Disk != NULL );
-    ASSERT ( IS_VALID_DISK_INFO ( Disk ) );
+    ASSERT(Disk != NULL);
+    ASSERT(IS_VALID_DISK_INFO(Disk));
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
 
     TableHeader = Disk->ScratchBuffer;
 
     TableHeader->Signature = EFI_PARTITION_TABLE_SIGNATURE;
     TableHeader->Revision = EFI_PARTITION_TABLE_REVISION;
-    TableHeader->HeaderSize = sizeof (EFI_PARTITION_HEADER);
+    TableHeader->HeaderSize = sizeof(EFI_PARTITION_HEADER);
     TableHeader->HeaderCRC32 = 0;
     TableHeader->Reserved = 0;
 
@@ -2114,12 +1918,14 @@ Notes:
     // table ends at the end of the disk.
     //
 
-    if ( Partition == PRIMARY_PARTITION_TABLE ) {
+    if (Partition == PRIMARY_PARTITION_TABLE)
+    {
 
         TableHeader->MyLBA = 1;
         TableHeader->AlternateLBA = Disk->SectorCount - 1;
-
-    } else {
+    }
+    else
+    {
 
         TableHeader->MyLBA = Disk->SectorCount - 1;
         TableHeader->AlternateLBA = 1;
@@ -2140,66 +1946,46 @@ Notes:
     // a backup partition is located on the last sector of the disk.
     //
 
-    if ( Partition == PRIMARY_PARTITION_TABLE ) {
+    if (Partition == PRIMARY_PARTITION_TABLE)
+    {
         TableHeader->PartitionEntryLBA = TableHeader->MyLBA + 1;
-    } else {
+    }
+    else
+    {
         TableHeader->PartitionEntryLBA = TableHeader->MyLBA - PartitionEntrySectorCount;
     }
 
-    TableHeader->HeaderCRC32 = RtlComputeCrc32 (
-                                    0,
-                                    TableHeader,
-                                    TableHeader->HeaderSize
-                                    );
+    TableHeader->HeaderCRC32 = RtlComputeCrc32(0, TableHeader, TableHeader->HeaderSize);
 
-    KdPrintEx((DPFLTR_FSTUB_ID,
-               DPFLTR_WARNING_LEVEL,
+    KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_WARNING_LEVEL,
                "FSTUB: Dump of %s EFI partition table\n"
-                   "    Signature: %I64x\n"
-                   "    Revision: %x\n"
-                   "    HeaderSize: %x\n"
-                   "    HeaderCRC32: %x\n"
-                   "    MyLBA: %I64x\n"
-                   "    AlternateLBA: %I64x\n",
-               (Partition == PRIMARY_PARTITION_TABLE) ? "Primary" : "Backup",
-               TableHeader->Signature,
-               TableHeader->Revision,
-               TableHeader->HeaderSize,
-               TableHeader->HeaderCRC32,
-               TableHeader->MyLBA,
+               "    Signature: %I64x\n"
+               "    Revision: %x\n"
+               "    HeaderSize: %x\n"
+               "    HeaderCRC32: %x\n"
+               "    MyLBA: %I64x\n"
+               "    AlternateLBA: %I64x\n",
+               (Partition == PRIMARY_PARTITION_TABLE) ? "Primary" : "Backup", TableHeader->Signature,
+               TableHeader->Revision, TableHeader->HeaderSize, TableHeader->HeaderCRC32, TableHeader->MyLBA,
                TableHeader->AlternateLBA));
 
 
-    KdPrintEx((DPFLTR_FSTUB_ID,
-               DPFLTR_WARNING_LEVEL,
+    KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_WARNING_LEVEL,
                "    FirstUsableLBA: %I64x\n"
-                   "    LastUsableLBA: %I64x\n"
-                   "    NumberOfEntries: %x\n"
-                   "    SizeOfPartitionEntry: %x\n"
-                   "    PartitionEntryCRC32: %x\n\n",
-               TableHeader->FirstUsableLBA,
-               TableHeader->LastUsableLBA,
-               TableHeader->NumberOfEntries,
-               TableHeader->SizeOfPartitionEntry,
-               TableHeader->PartitionEntryCRC32));
+               "    LastUsableLBA: %I64x\n"
+               "    NumberOfEntries: %x\n"
+               "    SizeOfPartitionEntry: %x\n"
+               "    PartitionEntryCRC32: %x\n\n",
+               TableHeader->FirstUsableLBA, TableHeader->LastUsableLBA, TableHeader->NumberOfEntries,
+               TableHeader->SizeOfPartitionEntry, TableHeader->PartitionEntryCRC32));
 
-    Status = FstubWriteSector (
-                    Disk->DeviceObject,
-                    Disk->SectorSize,
-                    TableHeader->MyLBA,
-                    TableHeader
-                    );
+    Status = FstubWriteSector(Disk->DeviceObject, Disk->SectorSize, TableHeader->MyLBA, TableHeader);
 
     return Status;
 }
 
 
-
-VOID
-FstubAdjustPartitionCount(
-    IN ULONG SectorSize,
-    IN OUT PULONG PartitionCount
-    )
+VOID FstubAdjustPartitionCount(IN ULONG SectorSize, IN OUT PULONG PartitionCount)
 
 /*++
 
@@ -2227,17 +2013,17 @@ Return Values:
     ULONG Count;
     ULONG EntrySize;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    ASSERT ( SectorSize != 0 );
-    ASSERT ( PartitionCount != NULL );
+    ASSERT(SectorSize != 0);
+    ASSERT(PartitionCount != NULL);
 
 
     EntrySize = PARTITION_ENTRY_SIZE;
-    Count = max (*PartitionCount, MIN_PARTITION_COUNT);
+    Count = max(*PartitionCount, MIN_PARTITION_COUNT);
 
-    Count = ROUND_TO ( EntrySize * Count, SectorSize ) / EntrySize;
-    ASSERT ( *PartitionCount <= Count );
+    Count = ROUND_TO(EntrySize * Count, SectorSize) / EntrySize;
+    ASSERT(*PartitionCount <= Count);
 
     *PartitionCount = Count;
 
@@ -2249,20 +2035,17 @@ Return Values:
     //
 
 
-    if (SectorSize == 512) {
-        ASSERT ( Count % 4 == 0 );
+    if (SectorSize == 512)
+    {
+        ASSERT(Count % 4 == 0);
     }
 
 #endif
-
 }
 
-
+
 NTSTATUS
-FstubCreateDiskEFI(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PCREATE_DISK_GPT DiskInfo
-    )
+FstubCreateDiskEFI(IN PDEVICE_OBJECT DeviceObject, IN PCREATE_DISK_GPT DiskInfo)
 
 /*++
 
@@ -2291,10 +2074,10 @@ Return Values:
     ULONG32 MaxPartitionCount;
 
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    ASSERT ( DeviceObject != NULL );
-    ASSERT ( DiskInfo != NULL );
+    ASSERT(DeviceObject != NULL);
+    ASSERT(DiskInfo != NULL);
 
     //
     // Initialization
@@ -2302,51 +2085,45 @@ Return Values:
 
     Disk = NULL;
 
-    Status = FstubAllocateDiskInformation (
-                    DeviceObject,
-                    &Disk,
-                    NULL
-                    );
+    Status = FstubAllocateDiskInformation(DeviceObject, &Disk, NULL);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
-    ASSERT ( Disk != NULL );
+    ASSERT(Disk != NULL);
 
     //
     // Write the EFI MBR to the disk.
     //
 
-    Status = FstubWriteBootSectorEFI ( Disk );
+    Status = FstubWriteBootSectorEFI(Disk);
 
-    if ( !NT_SUCCESS (Status) ) {
-        FstubFreeDiskInformation ( Disk );
+    if (!NT_SUCCESS(Status))
+    {
+        FstubFreeDiskInformation(Disk);
         Disk = NULL;
         return Status;
     }
 
     MaxPartitionCount = DiskInfo->MaxPartitionCount;
 
-    FstubAdjustPartitionCount (
-            Disk->SectorSize,
-            &MaxPartitionCount
-            );
+    FstubAdjustPartitionCount(Disk->SectorSize, &MaxPartitionCount);
 
     //
     // Initialize the start of partitionable space and the length of
     // partitionable space on this drive.
     //
 
-    PartitionBlocks = ( MaxPartitionCount * PARTITION_ENTRY_SIZE ) / Disk->SectorSize;
+    PartitionBlocks = (MaxPartitionCount * PARTITION_ENTRY_SIZE) / Disk->SectorSize;
 
     FirstUsableLBA = PartitionBlocks + 2;
-    LastUsableLBA = Disk->SectorCount - ( PartitionBlocks + 1 );
+    LastUsableLBA = Disk->SectorCount - (PartitionBlocks + 1);
 
-    KdPrintEx((DPFLTR_FSTUB_ID,
-               DPFLTR_TRACE_LEVEL,
+    KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_TRACE_LEVEL,
                "FSTUB: Disk Information\n"
-                   "    SectorCount: %I64x\n\n",
+               "    SectorCount: %I64x\n\n",
                Disk->SectorCount));
 
 
@@ -2354,48 +2131,29 @@ Return Values:
     // Write the primary partition table.
     //
 
-    Status = FstubWritePartitionTableEFI (
-                    Disk,
-                    DiskInfo->DiskId,
-                    MaxPartitionCount,
-                    FirstUsableLBA,
-                    LastUsableLBA,
-                    PRIMARY_PARTITION_TABLE,
-                    0,
-                    NULL
-                    );
+    Status = FstubWritePartitionTableEFI(Disk, DiskInfo->DiskId, MaxPartitionCount, FirstUsableLBA, LastUsableLBA,
+                                         PRIMARY_PARTITION_TABLE, 0, NULL);
 
-    if (NT_SUCCESS (Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Write the backup partition table.
         //
 
-        Status = FstubWritePartitionTableEFI (
-                        Disk,
-                        DiskInfo->DiskId,
-                        MaxPartitionCount,
-                        FirstUsableLBA,
-                        LastUsableLBA,
-                        BACKUP_PARTITION_TABLE,
-                        0,
-                        NULL
-                        );
+        Status = FstubWritePartitionTableEFI(Disk, DiskInfo->DiskId, MaxPartitionCount, FirstUsableLBA, LastUsableLBA,
+                                             BACKUP_PARTITION_TABLE, 0, NULL);
     }
 
 
-    FstubFreeDiskInformation ( Disk );
+    FstubFreeDiskInformation(Disk);
 
     return Status;
 }
 
 
-
 NTSTATUS
-FstubCreateDiskMBR(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PCREATE_DISK_MBR DiskInfo
-    )
+FstubCreateDiskMBR(IN PDEVICE_OBJECT DeviceObject, IN PCREATE_DISK_MBR DiskInfo)
 
 /*++
 
@@ -2420,64 +2178,53 @@ Return Value:
     NTSTATUS Status;
     PDISK_INFORMATION Disk;
     PMASTER_BOOT_RECORD Mbr;
-    
 
-    PAGED_CODE ();
-    ASSERT ( DeviceObject != NULL );
+
+    PAGED_CODE();
+    ASSERT(DeviceObject != NULL);
 
     //
     // Initialization
     //
-    
-    Disk = NULL;
-    
-    Status = FstubAllocateDiskInformation (
-                    DeviceObject,
-                    &Disk,
-                    NULL
-                    );
 
-    if (!NT_SUCCESS (Status)) {
+    Disk = NULL;
+
+    Status = FstubAllocateDiskInformation(DeviceObject, &Disk, NULL);
+
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
-    Status = FstubReadSector (
-                Disk->DeviceObject,
-                Disk->SectorSize,
-                0,
-                Disk->ScratchBuffer
-                );
+    Status = FstubReadSector(Disk->DeviceObject, Disk->SectorSize, 0, Disk->ScratchBuffer);
 
-    if ( !NT_SUCCESS ( Status ) ) {
+    if (!NT_SUCCESS(Status))
+    {
         goto done;
     }
 
-    Mbr = (PMASTER_BOOT_RECORD) Disk->ScratchBuffer;
+    Mbr = (PMASTER_BOOT_RECORD)Disk->ScratchBuffer;
 
     //
     // Zero out all partition entries, set the AA55 signature
     // and set the NTFT signature.
     //
-    
-    RtlZeroMemory (&Mbr->Partition, sizeof (Mbr->Partition)); 
+
+    RtlZeroMemory(&Mbr->Partition, sizeof(Mbr->Partition));
     Mbr->Signature = MBR_SIGNATURE;
     Mbr->DiskSignature = DiskInfo->Signature;
 
     //
     // Then write the sector back to the drive.
     //
-    
-    Status = FstubWriteSector (
-                Disk->DeviceObject,
-                Disk->SectorSize,
-                0,
-                Mbr
-                );
+
+    Status = FstubWriteSector(Disk->DeviceObject, Disk->SectorSize, 0, Mbr);
 
 done:
 
-    if ( Disk ) {
-        FstubFreeDiskInformation ( Disk );
+    if (Disk)
+    {
+        FstubFreeDiskInformation(Disk);
         Disk = NULL;
     }
 
@@ -2485,11 +2232,8 @@ done:
 }
 
 
-
 NTSTATUS
-FstubCreateDiskRaw(
-    IN PDEVICE_OBJECT DeviceObject
-    )
+FstubCreateDiskRaw(IN PDEVICE_OBJECT DeviceObject)
 /*++
 
 Routine Description:
@@ -2511,138 +2255,109 @@ Return Value:
     PDISK_INFORMATION Disk;
     PMASTER_BOOT_RECORD Mbr;
     PARTITION_STYLE PartitionStyle;
-    
 
-    PAGED_CODE ();
-    ASSERT ( DeviceObject != NULL );
+
+    PAGED_CODE();
+    ASSERT(DeviceObject != NULL);
 
     //
     // Initialization
     //
-    
-    Disk = NULL;
-    
-    Status = FstubAllocateDiskInformation (
-                    DeviceObject,
-                    &Disk,
-                    NULL
-                    );
 
-    if (!NT_SUCCESS (Status)) {
+    Disk = NULL;
+
+    Status = FstubAllocateDiskInformation(DeviceObject, &Disk, NULL);
+
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
     //
     // Figure out whether this is an MBR or GPT disk.
     //
-    
-    Status = FstubDetectPartitionStyle (
-                        Disk,
-                        &PartitionStyle
-                        );
 
-    if (!NT_SUCCESS (Status)) {
-        goto done;
-    }
-                        
-    Status = FstubReadSector (
-                Disk->DeviceObject,
-                Disk->SectorSize,
-                0,
-                Disk->ScratchBuffer
-                );
+    Status = FstubDetectPartitionStyle(Disk, &PartitionStyle);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         goto done;
     }
 
-    Mbr = (PMASTER_BOOT_RECORD) Disk->ScratchBuffer;
+    Status = FstubReadSector(Disk->DeviceObject, Disk->SectorSize, 0, Disk->ScratchBuffer);
+
+    if (!NT_SUCCESS(Status))
+    {
+        goto done;
+    }
+
+    Mbr = (PMASTER_BOOT_RECORD)Disk->ScratchBuffer;
 
     //
     // Zero out all partition entries, the AA55 signature
     // and the NTFT disk signature.
     //
-    
-    RtlZeroMemory (&Mbr->Partition, sizeof (Mbr->Partition)); 
+
+    RtlZeroMemory(&Mbr->Partition, sizeof(Mbr->Partition));
     Mbr->Signature = 0;
     Mbr->DiskSignature = 0;
 
     //
     // Then write the sector back to the drive.
     //
-    
-    Status = FstubWriteSector (
-                Disk->DeviceObject,
-                Disk->SectorSize,
-                0,
-                Mbr
-                );
+
+    Status = FstubWriteSector(Disk->DeviceObject, Disk->SectorSize, 0, Mbr);
 
     //
     // If this was a GPT disk, we null out the primary and backup partition
     // table header.
     //
-    
-    if (PartitionStyle == PARTITION_STYLE_GPT) {
 
-        RtlZeroMemory (Disk->ScratchBuffer, Disk->SectorSize);
+    if (PartitionStyle == PARTITION_STYLE_GPT)
+    {
+
+        RtlZeroMemory(Disk->ScratchBuffer, Disk->SectorSize);
 
         //
         // Erase the primary partition table header.
         //
-        
-        Status = FstubWriteSector (
-                        Disk->DeviceObject,
-                        Disk->SectorSize,
-                        1,
-                        Disk->ScratchBuffer
-                        );
 
-        if (!NT_SUCCESS (Status)) {
+        Status = FstubWriteSector(Disk->DeviceObject, Disk->SectorSize, 1, Disk->ScratchBuffer);
+
+        if (!NT_SUCCESS(Status))
+        {
             goto done;
         }
 
         //
         // Erase the backup partition table header.
         //
-        
-        Status = FstubWriteSector (
-                        Disk->DeviceObject,
-                        Disk->SectorSize,
-                        Disk->SectorCount - 1,
-                        Disk->ScratchBuffer
-                        );
+
+        Status = FstubWriteSector(Disk->DeviceObject, Disk->SectorSize, Disk->SectorCount - 1, Disk->ScratchBuffer);
     }
 
 done:
 
-    if (Disk) {
-        FstubFreeDiskInformation (Disk);
+    if (Disk)
+    {
+        FstubFreeDiskInformation(Disk);
         Disk = NULL;
     }
 
     return Status;
 }
 
-    
-    
 
-
-VOID
-FstubCopyEntryEFI(
-    OUT PEFI_PARTITION_ENTRY Entry,
-    IN PPARTITION_INFORMATION_EX Partition,
-    IN ULONG SectorSize
-    )
+VOID FstubCopyEntryEFI(OUT PEFI_PARTITION_ENTRY Entry, IN PPARTITION_INFORMATION_EX Partition, IN ULONG SectorSize)
 {
     ULONG64 StartingLBA;
     ULONG64 EndingLBA;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    ASSERT ( Entry != NULL );
-    ASSERT ( Partition != NULL );
-    ASSERT ( SectorSize != 0 );
+    ASSERT(Entry != NULL);
+    ASSERT(Partition != NULL);
+    ASSERT(SectorSize != 0);
 
     //
     // Translate and copy the Starting and Ending LBA.
@@ -2650,7 +2365,7 @@ FstubCopyEntryEFI(
 
     StartingLBA = Partition->StartingOffset.QuadPart / SectorSize;
     EndingLBA = Partition->StartingOffset.QuadPart + Partition->PartitionLength.QuadPart - 1;
-    EndingLBA /= (ULONG64) SectorSize;
+    EndingLBA /= (ULONG64)SectorSize;
 
     Entry->StartingLBA = StartingLBA;
     Entry->EndingLBA = EndingLBA;
@@ -2667,26 +2382,14 @@ FstubCopyEntryEFI(
     // Copy the partition name.
     //
 
-    RtlCopyMemory (
-            Entry->Name,
-            Partition->Gpt.Name,
-            sizeof (Entry->Name)
-            );
+    RtlCopyMemory(Entry->Name, Partition->Gpt.Name, sizeof(Entry->Name));
 }
 
 
-
 NTSTATUS
-FstubWritePartitionTableEFI(
-    IN PDISK_INFORMATION Disk,
-    IN GUID DiskGUID,
-    IN ULONG32 MaxPartitionCount,
-    IN ULONG64 FirstUsableLBA,
-    IN ULONG64 LastUsableLBA,
-    IN ULONG PartitionTable,
-    IN ULONG PartitionCount,
-    IN PPARTITION_INFORMATION_EX PartitionArray
-    )
+FstubWritePartitionTableEFI(IN PDISK_INFORMATION Disk, IN GUID DiskGUID, IN ULONG32 MaxPartitionCount,
+                            IN ULONG64 FirstUsableLBA, IN ULONG64 LastUsableLBA, IN ULONG PartitionTable,
+                            IN ULONG PartitionCount, IN PPARTITION_INFORMATION_EX PartitionArray)
 
 /*++
 
@@ -2732,23 +2435,22 @@ Return Values:
     EFI_PARTITION_ENTRY Entry;
 
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    ASSERT ( Disk != NULL );
+    ASSERT(Disk != NULL);
 
 
     SectorSize = Disk->SectorSize;
 
-    ASSERT ( MaxPartitionCount >= 128 );
-    ASSERT ( PartitionCount <= MaxPartitionCount );
+    ASSERT(MaxPartitionCount >= 128);
+    ASSERT(PartitionCount <= MaxPartitionCount);
 
     //
     // TableSectorCount is the number of blocks that the partition table
     // occupies.
     //
 
-    TableSectorCount =
-        ( PARTITION_ENTRY_SIZE * MaxPartitionCount + SectorSize - 1 ) / SectorSize;
+    TableSectorCount = (PARTITION_ENTRY_SIZE * MaxPartitionCount + SectorSize - 1) / SectorSize;
 
     //
     // Write the partition table entry array before writing the partition
@@ -2762,7 +2464,8 @@ Return Values:
     // First, copy all non-NULL entries.
     //
 
-    for (i = 0; i < PartitionCount ; i++) {
+    for (i = 0; i < PartitionCount; i++)
+    {
 
         //
         // Do not write NULL entries to disk. Note that this does not
@@ -2770,22 +2473,16 @@ Return Values:
         // drive. It just prevents us from doing it.
         //
 
-        if ( IS_NULL_GUID ( PartitionArray [ i ].Gpt.PartitionType) ) {
+        if (IS_NULL_GUID(PartitionArray[i].Gpt.PartitionType))
+        {
             continue;
         }
 
-        FstubCopyEntryEFI ( &Entry, &PartitionArray [i], SectorSize );
-        Status = FstubWriteEntryEFI (
-                                Disk,
-                                TableSectorCount,
-                                EntrySlot,
-                                &Entry,
-                                PartitionTable,
-                                FALSE,
-                                &CheckSum
-                                );
+        FstubCopyEntryEFI(&Entry, &PartitionArray[i], SectorSize);
+        Status = FstubWriteEntryEFI(Disk, TableSectorCount, EntrySlot, &Entry, PartitionTable, FALSE, &CheckSum);
 
-        if ( !NT_SUCCESS (Status) ) {
+        if (!NT_SUCCESS(Status))
+        {
             return Status;
         }
 
@@ -2796,21 +2493,15 @@ Return Values:
     // Next, copy all NULL entries at the end.
     //
 
-    for (i = EntrySlot; i < MaxPartitionCount; i++) {
+    for (i = EntrySlot; i < MaxPartitionCount; i++)
+    {
 
-        RtlZeroMemory (&Entry, sizeof (Entry));
+        RtlZeroMemory(&Entry, sizeof(Entry));
 
-        Status = FstubWriteEntryEFI (
-                                Disk,
-                                TableSectorCount,
-                                i,
-                                &Entry,
-                                PartitionTable,
-                                FALSE,
-                                &CheckSum
-                                );
+        Status = FstubWriteEntryEFI(Disk, TableSectorCount, i, &Entry, PartitionTable, FALSE, &CheckSum);
 
-        if ( !NT_SUCCESS (Status) ) {
+        if (!NT_SUCCESS(Status))
+        {
             return Status;
         }
     }
@@ -2819,28 +2510,15 @@ Return Values:
     // Write the partition table header to disk.
     //
 
-    Status = FstubWriteHeaderEFI (
-                        Disk,
-                        TableSectorCount,
-                        DiskGUID,
-                        MaxPartitionCount,
-                        FirstUsableLBA,
-                        LastUsableLBA,
-                        CheckSum,
-                        PartitionTable
-                        );
+    Status = FstubWriteHeaderEFI(Disk, TableSectorCount, DiskGUID, MaxPartitionCount, FirstUsableLBA, LastUsableLBA,
+                                 CheckSum, PartitionTable);
 
     return Status;
 }
 
 
-
 NTSTATUS
-FstubReadHeaderEFI(
-    IN PDISK_INFORMATION Disk,
-    IN ULONG PartitionTable,
-    OUT PEFI_PARTITION_HEADER* HeaderBuffer
-    )
+FstubReadHeaderEFI(IN PDISK_INFORMATION Disk, IN ULONG PartitionTable, OUT PEFI_PARTITION_HEADER *HeaderBuffer)
 
 /*++
 
@@ -2894,11 +2572,11 @@ Return Values:
     PEFI_PARTITION_HEADER Header;
 
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    ASSERT ( Disk != NULL );
-    ASSERT ( IS_VALID_DISK_INFO ( Disk ) );
-    ASSERT ( HeaderBuffer != NULL );
+    ASSERT(Disk != NULL);
+    ASSERT(IS_VALID_DISK_INFO(Disk));
+    ASSERT(HeaderBuffer != NULL);
 
 
     //
@@ -2909,10 +2587,13 @@ Return Values:
     *HeaderBuffer = NULL;
 
 
-    if ( PartitionTable == PRIMARY_PARTITION_TABLE) {
+    if (PartitionTable == PRIMARY_PARTITION_TABLE)
+    {
         MyLBA = 1;
         AlternateLBA = Disk->SectorCount - 1;
-    } else {
+    }
+    else
+    {
         MyLBA = Disk->SectorCount - 1;
         AlternateLBA = 1;
     }
@@ -2921,38 +2602,30 @@ Return Values:
     // Read in the primary partition table header.
     //
 
-    Status = FstubReadSector (
-                Disk->DeviceObject,
-                Disk->SectorSize,
-                MyLBA,
-                Disk->ScratchBuffer
-                );
+    Status = FstubReadSector(Disk->DeviceObject, Disk->SectorSize, MyLBA, Disk->ScratchBuffer);
 
-    if ( !NT_SUCCESS ( Status ) ) {
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   DPFLTR_WARNING_LEVEL,
-                   "FSTUB: Could not read sector %I64x\n",
-                   MyLBA));
+    if (!NT_SUCCESS(Status))
+    {
+        KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_WARNING_LEVEL, "FSTUB: Could not read sector %I64x\n", MyLBA));
 
         goto done;
     }
 
-    Header = (PEFI_PARTITION_HEADER) Disk->ScratchBuffer;
+    Header = (PEFI_PARTITION_HEADER)Disk->ScratchBuffer;
 
 
     //
     // Check Signature, Revision and size.
     //
 
-    if ( Header->Signature != EFI_PARTITION_TABLE_SIGNATURE ||
-         Header->Revision != EFI_PARTITION_TABLE_REVISION ||
-         Header->HeaderSize != sizeof (EFI_PARTITION_HEADER) ) {
+    if (Header->Signature != EFI_PARTITION_TABLE_SIGNATURE || Header->Revision != EFI_PARTITION_TABLE_REVISION ||
+        Header->HeaderSize != sizeof(EFI_PARTITION_HEADER))
+    {
 
         Status = STATUS_DISK_CORRUPT_ERROR;
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   DPFLTR_WARNING_LEVEL,
+        KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_WARNING_LEVEL,
                    "FSTUB: Partition Header Invalid\n"
-                       "       Header Signature / Revision / Size mismatch\n"));
+                   "       Header Signature / Revision / Size mismatch\n"));
 
         goto done;
     }
@@ -2965,11 +2638,12 @@ Return Values:
 
     Temp = Header->HeaderCRC32;
     Header->HeaderCRC32 = 0;
-    CheckSum = RtlComputeCrc32 ( 0, Header, Header->HeaderSize );
+    CheckSum = RtlComputeCrc32(0, Header, Header->HeaderSize);
     Header->HeaderCRC32 = Temp;
 
 
-    if (CheckSum != Header->HeaderCRC32) {
+    if (CheckSum != Header->HeaderCRC32)
+    {
         Status = STATUS_DISK_CORRUPT_ERROR;
         goto done;
     }
@@ -2983,13 +2657,13 @@ Return Values:
     // is grown or shrunk we will fail.
     //
 
-    if ( Header->MyLBA != MyLBA ) {
+    if (Header->MyLBA != MyLBA)
+    {
 
         Status = STATUS_DISK_CORRUPT_ERROR;
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   DPFLTR_WARNING_LEVEL,
+        KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_WARNING_LEVEL,
                    "FSTUB: Partition Header Invalid\n"
-                       "       MyLBA or AlternateLBA is incorrect\n"));
+                   "       MyLBA or AlternateLBA is incorrect\n"));
 
         goto done;
     }
@@ -3005,13 +2679,10 @@ Return Values:
     FullSectorCount = Header->NumberOfEntries * PARTITION_ENTRY_SIZE;
     FullSectorCount /= Disk->SectorSize;
 
-    Buffer = ExAllocatePoolWithTag (
-                    NonPagedPool,
-                    Disk->SectorSize,
-                    FSTUB_TAG
-                    );
+    Buffer = ExAllocatePoolWithTag(NonPagedPool, Disk->SectorSize, FSTUB_TAG);
 
-    if ( Buffer == NULL ) {
+    if (Buffer == NULL)
+    {
 
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto done;
@@ -3019,24 +2690,17 @@ Return Values:
 
     CheckSum = 0;
 
-    for (i = 0; i < FullSectorCount; i++) {
+    for (i = 0; i < FullSectorCount; i++)
+    {
 
-        Status = FstubReadSector (
-                        Disk->DeviceObject,
-                        Disk->SectorSize,
-                        Header->PartitionEntryLBA + i,
-                        Buffer
-                        );
+        Status = FstubReadSector(Disk->DeviceObject, Disk->SectorSize, Header->PartitionEntryLBA + i, Buffer);
 
-        if (!NT_SUCCESS (Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             goto done;
         }
 
-        CheckSum = RtlComputeCrc32 (
-                        CheckSum,
-                        Buffer,
-                        Disk->SectorSize
-                        );
+        CheckSum = RtlComputeCrc32(CheckSum, Buffer, Disk->SectorSize);
     }
 
 
@@ -3050,40 +2714,35 @@ Return Values:
     PartialSectorEntries = Header->NumberOfEntries * PARTITION_ENTRY_SIZE;
     PartialSectorEntries %= FullSectorCount;
 
-    if ( PartialSectorEntries ) {
+    if (PartialSectorEntries)
+    {
 
         //
         // Read the remaining sector which contains some partition entries.
         //
 
-        Status = FstubReadSector (
-                        Disk->DeviceObject,
-                        Disk->SectorSize,
-                        Header->PartitionEntryLBA + FullSectorCount,
-                        Buffer
-                        );
+        Status =
+            FstubReadSector(Disk->DeviceObject, Disk->SectorSize, Header->PartitionEntryLBA + FullSectorCount, Buffer);
 
-        if (!NT_SUCCESS (Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             goto done;
         }
 
-        for (i = 0; i < PartialSectorEntries; i++) {
+        for (i = 0; i < PartialSectorEntries; i++)
+        {
 
-            CheckSum = RtlComputeCrc32 (
-                            CheckSum,
-                            &(((PEFI_PARTITION_ENTRY)Buffer)[ i ]),
-                            Disk->SectorSize
-                            );
+            CheckSum = RtlComputeCrc32(CheckSum, &(((PEFI_PARTITION_ENTRY)Buffer)[i]), Disk->SectorSize);
         }
     }
 
-    if ( Header->PartitionEntryCRC32 != CheckSum ) {
+    if (Header->PartitionEntryCRC32 != CheckSum)
+    {
 
         Status = STATUS_DISK_CORRUPT_ERROR;
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   DPFLTR_WARNING_LEVEL,
+        KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_WARNING_LEVEL,
                    "FSTUB: Partition Table Invalid\n"
-                       "       Partition Array CRC invalid\n"));
+                   "       Partition Array CRC invalid\n"));
 
         goto done;
     }
@@ -3093,30 +2752,25 @@ Return Values:
 
 done:
 
-    if ( Buffer != NULL ) {
-        ExFreePool ( Buffer );
+    if (Buffer != NULL)
+    {
+        ExFreePool(Buffer);
         Buffer = NULL;
     }
 
-    if (!NT_SUCCESS (Status)) {
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   DPFLTR_ERROR_LEVEL,
-                   "FSTUB: %s EFI Partition table is bad.\n",
-                   PartitionTable == PRIMARY_PARTITION_TABLE ?
-                       "Primary" : "Backup"));
+    if (!NT_SUCCESS(Status))
+    {
+        KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_ERROR_LEVEL, "FSTUB: %s EFI Partition table is bad.\n",
+                   PartitionTable == PRIMARY_PARTITION_TABLE ? "Primary" : "Backup"));
     }
 
     return Status;
 }
 
 
-
 NTSTATUS
-FstubReadPartitionTableEFI(
-    IN PDISK_INFORMATION Disk,
-    IN ULONG PartitionTable,
-    OUT PDRIVE_LAYOUT_INFORMATION_EX* ReturnedDriveLayout
-    )
+FstubReadPartitionTableEFI(IN PDISK_INFORMATION Disk, IN ULONG PartitionTable,
+                           OUT PDRIVE_LAYOUT_INFORMATION_EX *ReturnedDriveLayout)
 
 /*++
 
@@ -3169,9 +2823,9 @@ Notes:
     ULONG64 PartitionEntryLBA;
 
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    ASSERT ( Disk != NULL );
+    ASSERT(Disk != NULL);
 
     //
     // Initialization
@@ -3184,9 +2838,10 @@ Notes:
     // Read the partition table header.
     //
 
-    Status = FstubReadHeaderEFI ( Disk, PartitionTable, &Header );
+    Status = FstubReadHeaderEFI(Disk, PartitionTable, &Header);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         goto done;
     }
 
@@ -3196,14 +2851,12 @@ Notes:
 
     MaxPartitionCount = Header->NumberOfEntries;
 
-    DriveLayoutSize = FIELD_OFFSET (DRIVE_LAYOUT_INFORMATION_EX, PartitionEntry[0]) +
-                      MaxPartitionCount * sizeof (PARTITION_INFORMATION_EX);
+    DriveLayoutSize = FIELD_OFFSET(DRIVE_LAYOUT_INFORMATION_EX, PartitionEntry[0]) +
+                      MaxPartitionCount * sizeof(PARTITION_INFORMATION_EX);
 
-    DriveLayout = ExAllocatePoolWithTag ( NonPagedPool,
-                                          DriveLayoutSize,
-                                          FSTUB_TAG
-                                          );
-    if ( DriveLayout == NULL ) {
+    DriveLayout = ExAllocatePoolWithTag(NonPagedPool, DriveLayoutSize, FSTUB_TAG);
+    if (DriveLayout == NULL)
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto done;
     }
@@ -3215,17 +2868,11 @@ Notes:
 
     DriveLayout->PartitionStyle = PARTITION_STYLE_GPT;
 
-    DriveLayout->Gpt.StartingUsableOffset.QuadPart =
-            Header->FirstUsableLBA * Disk->SectorSize;
-    DriveLayout->Gpt.UsableLength.QuadPart =
-            (Header->LastUsableLBA - Header->FirstUsableLBA) * Disk->SectorSize;
+    DriveLayout->Gpt.StartingUsableOffset.QuadPart = Header->FirstUsableLBA * Disk->SectorSize;
+    DriveLayout->Gpt.UsableLength.QuadPart = (Header->LastUsableLBA - Header->FirstUsableLBA) * Disk->SectorSize;
     DriveLayout->Gpt.MaxPartitionCount = MaxPartitionCount;
 
-    RtlCopyMemory (
-            &DriveLayout->Gpt.DiskId,
-            &Header->DiskGUID,
-            sizeof (GUID)
-            );
+    RtlCopyMemory(&DriveLayout->Gpt.DiskId, &Header->DiskGUID, sizeof(GUID));
 
     //
     // Read in each block that contains entries in the partition table
@@ -3236,45 +2883,45 @@ Notes:
 
     PartitionEntryLBA = Header->PartitionEntryLBA;
     Header = NULL;
-    EntryArray = (PEFI_PARTITION_ENTRY) Disk->ScratchBuffer;
+    EntryArray = (PEFI_PARTITION_ENTRY)Disk->ScratchBuffer;
     PartitionCount = 0;
     CurrentSector = -1;
-    PartitionsPerBlock = (ULONG) (Disk->SectorSize / PARTITION_ENTRY_SIZE);
+    PartitionsPerBlock = (ULONG)(Disk->SectorSize / PARTITION_ENTRY_SIZE);
 
-    for (i = 0; i < MaxPartitionCount; i++) {
+    for (i = 0; i < MaxPartitionCount; i++)
+    {
 
-        SectorNumber = i / PartitionsPerBlock ;
-        SectorIndex = i % PartitionsPerBlock ;
+        SectorNumber = i / PartitionsPerBlock;
+        SectorIndex = i % PartitionsPerBlock;
 
         //
         // If we have a sector other than the current sector read in,
         // read in the current sector at this time.
         //
 
-        if ( SectorNumber != CurrentSector ) {
+        if (SectorNumber != CurrentSector)
+        {
 
-            Status = FstubReadSector (
-                            Disk->DeviceObject,
-                            Disk->SectorSize,
-                            PartitionEntryLBA + SectorNumber,
-                            EntryArray
-                            );
+            Status =
+                FstubReadSector(Disk->DeviceObject, Disk->SectorSize, PartitionEntryLBA + SectorNumber, EntryArray);
 
-            if ( !NT_SUCCESS (Status) ) {
+            if (!NT_SUCCESS(Status))
+            {
                 goto done;
             }
 
             CurrentSector = SectorNumber;
         }
 
-        Entry = &EntryArray[ SectorIndex ];
+        Entry = &EntryArray[SectorIndex];
 
         //
         // We ignore NULL entries in the partition table. NOTE: Is this
         // dangerous?
         //
 
-        if ( IS_NULL_GUID (Entry->PartitionType ) ) {
+        if (IS_NULL_GUID(Entry->PartitionType))
+        {
             continue;
         }
 
@@ -3285,21 +2932,17 @@ Notes:
         PartitionInfo = &DriveLayout->PartitionEntry[PartitionCount];
 
         PartitionInfo->StartingOffset.QuadPart = Entry->StartingLBA;
-        PartitionInfo->StartingOffset.QuadPart *= (ULONG64) Disk->SectorSize;
-        PartitionInfo->PartitionLength.QuadPart =
-                (Entry->EndingLBA - Entry->StartingLBA) + 1;
-                
-        PartitionInfo->PartitionLength.QuadPart *= (ULONG64) Disk->SectorSize;
+        PartitionInfo->StartingOffset.QuadPart *= (ULONG64)Disk->SectorSize;
+        PartitionInfo->PartitionLength.QuadPart = (Entry->EndingLBA - Entry->StartingLBA) + 1;
+
+        PartitionInfo->PartitionLength.QuadPart *= (ULONG64)Disk->SectorSize;
         PartitionInfo->PartitionStyle = PARTITION_STYLE_GPT;
 
         PartitionInfo->Gpt.PartitionType = Entry->PartitionType;
         PartitionInfo->Gpt.PartitionId = Entry->UniquePartition;
         PartitionInfo->Gpt.Attributes = Entry->Attributes;
 
-        RtlCopyMemory (PartitionInfo->Gpt.Name,
-                       Entry->Name,
-                       sizeof (PartitionInfo->Gpt.Name)
-                       );
+        RtlCopyMemory(PartitionInfo->Gpt.Name, Entry->Name, sizeof(PartitionInfo->Gpt.Name));
 
         PartitionInfo->RewritePartition = FALSE;
 
@@ -3327,21 +2970,24 @@ done:
     // Free all resources
     //
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         //
         // DriveLayout is not being returned, so deallocate it if it has
         // be allocated.
         //
 
-        if ( DriveLayout ) {
-            ExFreePool (DriveLayout);
+        if (DriveLayout)
+        {
+            ExFreePool(DriveLayout);
             DriveLayout = NULL;
         }
 
         *ReturnedDriveLayout = NULL;
-
-    } else {
+    }
+    else
+    {
 
         *ReturnedDriveLayout = DriveLayout;
         DriveLayout = NULL;
@@ -3350,12 +2996,9 @@ done:
     return Status;
 }
 
-
+
 NTSTATUS
-FstubVerifyPartitionTableEFI(
-    IN PDISK_INFORMATION Disk,
-    IN BOOLEAN FixErrors
-    )
+FstubVerifyPartitionTableEFI(IN PDISK_INFORMATION Disk, IN BOOLEAN FixErrors)
 
 /*++
 
@@ -3398,7 +3041,7 @@ Return Value:
     PEFI_PARTITION_HEADER GoodHeader;
 
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
     //
     // Initialization
@@ -3409,54 +3052,40 @@ Return Value:
     PrimaryValid = FALSE;
     BackupValid = FALSE;
 
-    GoodHeader = ExAllocatePoolWithTag (
-            NonPagedPool,
-            sizeof (EFI_PARTITION_HEADER),
-            FSTUB_TAG
-            );
+    GoodHeader = ExAllocatePoolWithTag(NonPagedPool, sizeof(EFI_PARTITION_HEADER), FSTUB_TAG);
 
-    if ( GoodHeader == NULL ) {
+    if (GoodHeader == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    Status = FstubReadHeaderEFI (
-                        Disk,
-                        PRIMARY_PARTITION_TABLE,
-                        &Header
-                        );
+    Status = FstubReadHeaderEFI(Disk, PRIMARY_PARTITION_TABLE, &Header);
 
-    if ( NT_SUCCESS (Status) ) {
+    if (NT_SUCCESS(Status))
+    {
 
         PrimaryValid = TRUE;
-        ASSERT (Header != NULL);
-        RtlCopyMemory (GoodHeader,
-                       Header,
-                       sizeof (EFI_PARTITION_HEADER)
-                       );
+        ASSERT(Header != NULL);
+        RtlCopyMemory(GoodHeader, Header, sizeof(EFI_PARTITION_HEADER));
     }
 
 
-    Status = FstubReadHeaderEFI (
-                        Disk,
-                        BACKUP_PARTITION_TABLE,
-                        &Header
-                        );
+    Status = FstubReadHeaderEFI(Disk, BACKUP_PARTITION_TABLE, &Header);
 
-    if ( NT_SUCCESS (Status) ) {
+    if (NT_SUCCESS(Status))
+    {
 
         BackupValid = TRUE;
-        ASSERT (Header != NULL);
-        RtlCopyMemory (GoodHeader,
-                       Header,
-                       sizeof (EFI_PARTITION_HEADER)
-                       );
+        ASSERT(Header != NULL);
+        RtlCopyMemory(GoodHeader, Header, sizeof(EFI_PARTITION_HEADER));
     }
 
     //
     // If both primary and backup partition tables are valid, return success.
     //
 
-    if ( PrimaryValid && BackupValid ) {
+    if (PrimaryValid && BackupValid)
+    {
         Status = STATUS_SUCCESS;
         goto done;
     }
@@ -3464,7 +3093,8 @@ Return Value:
     //
     // If both primary and backup partition tables are bad, return failure.
 
-    if ( !PrimaryValid && !BackupValid ) {
+    if (!PrimaryValid && !BackupValid)
+    {
         Status = STATUS_DISK_CORRUPT_ERROR;
         goto done;
     }
@@ -3474,7 +3104,8 @@ Return Value:
     // fix it, return failure.
     //
 
-    if ( !FixErrors ) {
+    if (!FixErrors)
+    {
         Status = STATUS_DISK_CORRUPT_ERROR;
         goto done;
     }
@@ -3484,36 +3115,34 @@ Return Value:
     // bad and we've been instructed to fix it.
     //
 
-    ASSERT ( GoodHeader != NULL );
+    ASSERT(GoodHeader != NULL);
 
     //
     // SectorCount is the number of sectors occupied by the partition table.
     //
 
-    SectorCount = ( PARTITION_ENTRY_SIZE * Header->NumberOfEntries + Disk->SectorSize - 1 ) / Disk->SectorSize;
+    SectorCount = (PARTITION_ENTRY_SIZE * Header->NumberOfEntries + Disk->SectorSize - 1) / Disk->SectorSize;
 
-    if ( PrimaryValid ) {
+    if (PrimaryValid)
+    {
 
         GoodTable = PRIMARY_PARTITION_TABLE;
         BadTable = BACKUP_PARTITION_TABLE;
         SourceStartingLBA = 2;
         DestStartingLBA = Disk->SectorCount - SectorCount - 1;
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   DPFLTR_ERROR_LEVEL,
-                   "FSTUB: Restoring backup partition table from primary\n"));
+        KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_ERROR_LEVEL, "FSTUB: Restoring backup partition table from primary\n"));
+    }
+    else
+    {
 
-    } else {
-
-        ASSERT ( BackupValid );
+        ASSERT(BackupValid);
         GoodTable = BACKUP_PARTITION_TABLE;
         BadTable = PRIMARY_PARTITION_TABLE;
         SourceStartingLBA = Disk->SectorCount - SectorCount - 1;
         DestStartingLBA = 2;
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   DPFLTR_ERROR_LEVEL,
-                   "FSTUB: Restoring primary partition table from backup\n"));
+        KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_ERROR_LEVEL, "FSTUB: Restoring primary partition table from backup\n"));
     }
 
     //
@@ -3522,27 +3151,20 @@ Return Value:
     // the good header will still be valid for this one.
     //
 
-    for (i = 0; i < SectorCount; i++) {
+    for (i = 0; i < SectorCount; i++)
+    {
 
-        Status = FstubReadSector (
-                        Disk->DeviceObject,
-                        Disk->SectorSize,
-                        SourceStartingLBA + i,
-                        Disk->ScratchBuffer
-                        );
+        Status = FstubReadSector(Disk->DeviceObject, Disk->SectorSize, SourceStartingLBA + i, Disk->ScratchBuffer);
 
-        if ( !NT_SUCCESS (Status) ) {
+        if (!NT_SUCCESS(Status))
+        {
             goto done;
         }
 
-        Status = FstubWriteSector (
-                        Disk->DeviceObject,
-                        Disk->SectorSize,
-                        DestStartingLBA + i,
-                        Disk->ScratchBuffer
-                        );
+        Status = FstubWriteSector(Disk->DeviceObject, Disk->SectorSize, DestStartingLBA + i, Disk->ScratchBuffer);
 
-        if ( !NT_SUCCESS (Status) ) {
+        if (!NT_SUCCESS(Status))
+        {
             goto done;
         }
     }
@@ -3551,33 +3173,24 @@ Return Value:
     // Next, write out the header.
     //
 
-    Status = FstubWriteHeaderEFI (
-                Disk,
-                SectorCount,
-                GoodHeader->DiskGUID,
-                GoodHeader->NumberOfEntries,
-                GoodHeader->FirstUsableLBA,
-                GoodHeader->LastUsableLBA,
-                GoodHeader->PartitionEntryCRC32,
-                BadTable
-                );
+    Status = FstubWriteHeaderEFI(Disk, SectorCount, GoodHeader->DiskGUID, GoodHeader->NumberOfEntries,
+                                 GoodHeader->FirstUsableLBA, GoodHeader->LastUsableLBA, GoodHeader->PartitionEntryCRC32,
+                                 BadTable);
 
 done:
 
-    if ( GoodHeader ) {
-        ExFreePool ( GoodHeader );
+    if (GoodHeader)
+    {
+        ExFreePool(GoodHeader);
         GoodHeader = NULL;
     }
 
     return Status;
 }
 
-
+
 NTSTATUS
-FstubUpdateDiskGeometryEFI(
-    IN PDISK_INFORMATION OldDisk,
-    IN PDISK_INFORMATION NewDisk
-    )
+FstubUpdateDiskGeometryEFI(IN PDISK_INFORMATION OldDisk, IN PDISK_INFORMATION NewDisk)
 
 /*++
 
@@ -3613,7 +3226,7 @@ Return Values:
     PEFI_PARTITION_HEADER Header;
 
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
     //
     // Initialization
@@ -3621,13 +3234,10 @@ Return Values:
 
     Header = NULL;
 
-    Status = FstubReadHeaderEFI (
-                        OldDisk,
-                        BACKUP_PARTITION_TABLE,
-                        &Header
-                        );
+    Status = FstubReadHeaderEFI(OldDisk, BACKUP_PARTITION_TABLE, &Header);
 
-    if ( !NT_SUCCESS (Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
@@ -3635,7 +3245,7 @@ Return Values:
     // SectorCount is the number of sectors occupied by the partition table.
     //
 
-    SectorCount = ( PARTITION_ENTRY_SIZE * Header->NumberOfEntries + OldDisk->SectorSize - 1 ) / OldDisk->SectorSize;
+    SectorCount = (PARTITION_ENTRY_SIZE * Header->NumberOfEntries + OldDisk->SectorSize - 1) / OldDisk->SectorSize;
 
 
     //
@@ -3644,34 +3254,21 @@ Return Values:
     // is at the beginning of the disk.
     //
 
-    Status = FstubWriteHeaderEFI (
-                NewDisk,
-                SectorCount,
-                Header->DiskGUID,
-                Header->NumberOfEntries,
-                Header->FirstUsableLBA,
-                Header->LastUsableLBA,
-                Header->PartitionEntryCRC32,
-                PRIMARY_PARTITION_TABLE
-                );
+    Status =
+        FstubWriteHeaderEFI(NewDisk, SectorCount, Header->DiskGUID, Header->NumberOfEntries, Header->FirstUsableLBA,
+                            Header->LastUsableLBA, Header->PartitionEntryCRC32, PRIMARY_PARTITION_TABLE);
 
     //
     // Write the partition table header for the backup table.
     //
 
-    Status = FstubWriteHeaderEFI (
-                NewDisk,
-                SectorCount,
-                Header->DiskGUID,
-                Header->NumberOfEntries,
-                Header->FirstUsableLBA,
-                Header->LastUsableLBA,
-                Header->PartitionEntryCRC32,
-                BACKUP_PARTITION_TABLE
-                );
+    Status =
+        FstubWriteHeaderEFI(NewDisk, SectorCount, Header->DiskGUID, Header->NumberOfEntries, Header->FirstUsableLBA,
+                            Header->LastUsableLBA, Header->PartitionEntryCRC32, BACKUP_PARTITION_TABLE);
 
 
-    if ( !NT_SUCCESS (Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
@@ -3686,26 +3283,21 @@ Return Values:
     // And write the backup table.
     //
 
-    for (i = 0; i < SectorCount; i++) {
+    for (i = 0; i < SectorCount; i++)
+    {
 
-        Status = FstubReadSector (
-                        OldDisk->DeviceObject,
-                        OldDisk->SectorSize,
-                        SourceStartingLBA + i,
-                        OldDisk->ScratchBuffer
-                        );
+        Status =
+            FstubReadSector(OldDisk->DeviceObject, OldDisk->SectorSize, SourceStartingLBA + i, OldDisk->ScratchBuffer);
 
-        if ( !NT_SUCCESS (Status) ) {
+        if (!NT_SUCCESS(Status))
+        {
             return Status;
         }
 
-        Status = FstubWriteSector (
-                        NewDisk->DeviceObject,
-                        NewDisk->SectorSize,
-                        DestStartingLBA + i,
-                        OldDisk->ScratchBuffer
-                        );
-        if ( !NT_SUCCESS (Status) ) {
+        Status =
+            FstubWriteSector(NewDisk->DeviceObject, NewDisk->SectorSize, DestStartingLBA + i, OldDisk->ScratchBuffer);
+        if (!NT_SUCCESS(Status))
+        {
             return Status;
         }
     }
@@ -3717,8 +3309,8 @@ Return Values:
     // Make a sanity check that we actually did this correctly.
     //
 
-    Status = FstubVerifyPartitionTableEFI ( NewDisk, FALSE );
-    ASSERT ( NT_SUCCESS ( Status ) );
+    Status = FstubVerifyPartitionTableEFI(NewDisk, FALSE);
+    ASSERT(NT_SUCCESS(Status));
 
 #endif
 
@@ -3726,14 +3318,8 @@ Return Values:
 }
 
 
-
 NTSTATUS
-FstubWriteSector(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG SectorSize,
-    IN ULONG64 SectorNumber,
-    IN PVOID Buffer
-    )
+FstubWriteSector(IN PDEVICE_OBJECT DeviceObject, IN ULONG SectorSize, IN ULONG64 SectorNumber, IN PVOID Buffer)
 
 /*++
 
@@ -3766,44 +3352,33 @@ Return Values:
     LARGE_INTEGER Offset;
 
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    ASSERT ( DeviceObject );
-    ASSERT ( Buffer );
-    ASSERT ( SectorSize != 0 );
+    ASSERT(DeviceObject);
+    ASSERT(Buffer);
+    ASSERT(SectorSize != 0);
 
 
     Offset.QuadPart = (SectorNumber * SectorSize);
-    KeInitializeEvent (&Event, NotificationEvent, FALSE);
+    KeInitializeEvent(&Event, NotificationEvent, FALSE);
 
-    Irp = IoBuildSynchronousFsdRequest ( IRP_MJ_WRITE,
-                                         DeviceObject,
-                                         Buffer,
-                                         SectorSize,
-                                         &Offset,
-                                         &Event,
-                                         &IoStatus
-                                         );
+    Irp = IoBuildSynchronousFsdRequest(IRP_MJ_WRITE, DeviceObject, Buffer, SectorSize, &Offset, &Event, &IoStatus);
 
-    if ( Irp == NULL ) {
+    if (Irp == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    IrpStack = IoGetNextIrpStackLocation (Irp);
+    IrpStack = IoGetNextIrpStackLocation(Irp);
     IrpStack->Flags |= SL_OVERRIDE_VERIFY_VOLUME;
 
-    Status = IoCallDriver( DeviceObject, Irp );
+    Status = IoCallDriver(DeviceObject, Irp);
 
 
-    if (Status == STATUS_PENDING) {
+    if (Status == STATUS_PENDING)
+    {
 
-        Status = KeWaitForSingleObject (
-                                &Event,
-                                Executive,
-                                KernelMode,
-                                FALSE,
-                                NULL
-                                );
+        Status = KeWaitForSingleObject(&Event, Executive, KernelMode, FALSE, NULL);
 
         Status = IoStatus.Status;
     }
@@ -3812,14 +3387,8 @@ Return Values:
 }
 
 
-
 NTSTATUS
-FstubReadSector(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG SectorSize,
-    IN ULONG64 SectorNumber,
-    OUT PVOID Buffer
-    )
+FstubReadSector(IN PDEVICE_OBJECT DeviceObject, IN ULONG SectorSize, IN ULONG64 SectorNumber, OUT PVOID Buffer)
 
 /*++
 
@@ -3852,47 +3421,36 @@ Return Values:
     KEVENT Event;
     LARGE_INTEGER Offset;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    ASSERT ( DeviceObject );
-    ASSERT ( Buffer );
-    ASSERT ( SectorSize != 0 );
+    ASSERT(DeviceObject);
+    ASSERT(Buffer);
+    ASSERT(SectorSize != 0);
 
 
     Offset.QuadPart = (SectorNumber * SectorSize);
-    KeInitializeEvent (&Event, NotificationEvent, FALSE);
+    KeInitializeEvent(&Event, NotificationEvent, FALSE);
 
-    Irp = IoBuildSynchronousFsdRequest ( IRP_MJ_READ,
-                                         DeviceObject,
-                                         Buffer,
-                                         SectorSize,
-                                         &Offset,
-                                         &Event,
-                                         &IoStatus
-                                         );
+    Irp = IoBuildSynchronousFsdRequest(IRP_MJ_READ, DeviceObject, Buffer, SectorSize, &Offset, &Event, &IoStatus);
 
-    if ( Irp == NULL ) {
+    if (Irp == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    IrpStack = IoGetNextIrpStackLocation (Irp);
+    IrpStack = IoGetNextIrpStackLocation(Irp);
     IrpStack->Flags |= SL_OVERRIDE_VERIFY_VOLUME;
 
-    Status = IoCallDriver( DeviceObject, Irp );
+    Status = IoCallDriver(DeviceObject, Irp);
 
-    if (Status == STATUS_PENDING) {
-        KeWaitForSingleObject ( &Event,
-                                Executive,
-                                KernelMode,
-                                FALSE,
-                                NULL
-                                );
+    if (Status == STATUS_PENDING)
+    {
+        KeWaitForSingleObject(&Event, Executive, KernelMode, FALSE, NULL);
         Status = IoStatus.Status;
     }
 
     return Status;
 }
-
 
 
 //
@@ -3902,35 +3460,17 @@ Return Values:
 #if DBG
 
 PCHAR
-FstubDbgGuidToString(
-    IN GUID* Guid,
-    PCHAR StringBuffer
-    )
+FstubDbgGuidToString(IN GUID *Guid, PCHAR StringBuffer)
 {
-    sprintf (StringBuffer,
-            "{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-            Guid->Data1,
-            Guid->Data2,
-            Guid->Data3,
-            Guid->Data4[0],
-            Guid->Data4[1],
-            Guid->Data4[2],
-            Guid->Data4[3],
-            Guid->Data4[4],
-            Guid->Data4[5],
-            Guid->Data4[6],
-            Guid->Data4[7]
-            );
+    sprintf(StringBuffer, "{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}", Guid->Data1, Guid->Data2, Guid->Data3,
+            Guid->Data4[0], Guid->Data4[1], Guid->Data4[2], Guid->Data4[3], Guid->Data4[4], Guid->Data4[5],
+            Guid->Data4[6], Guid->Data4[7]);
 
     return StringBuffer;
 }
 
 
-VOID
-FstubDbgPrintSetPartitionEx(
-    IN PSET_PARTITION_INFORMATION_EX SetPartition,
-    IN ULONG PartitionNumber
-    )
+VOID FstubDbgPrintSetPartitionEx(IN PSET_PARTITION_INFORMATION_EX SetPartition, IN ULONG PartitionNumber)
 
 /*++
 
@@ -3954,71 +3494,49 @@ Mode:
 --*/
 
 {
-    CHAR GuidStringBuffer [40];
+    CHAR GuidStringBuffer[40];
 
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
 
-    KdPrintEx((DPFLTR_FSTUB_ID,
-               FSTUB_VERBOSE_LEVEL,
+    KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL,
                "\n"
-                   "FSTUB:\n"
-                   "SET_PARTITION_INFORMATION_EX %p\n"));
+               "FSTUB:\n"
+               "SET_PARTITION_INFORMATION_EX %p\n"));
 
-    if ( SetPartition->PartitionStyle != PARTITION_STYLE_MBR &&
-         SetPartition->PartitionStyle != PARTITION_STYLE_GPT ) {
+    if (SetPartition->PartitionStyle != PARTITION_STYLE_MBR && SetPartition->PartitionStyle != PARTITION_STYLE_GPT)
+    {
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   FSTUB_VERBOSE_LEVEL,
-                   "ERROR: PartitionStyle is invalid %d\n",
+        KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "ERROR: PartitionStyle is invalid %d\n",
                    SetPartition->PartitionStyle));
     }
 
-    if ( SetPartition->PartitionStyle == PARTITION_STYLE_MBR ) {
+    if (SetPartition->PartitionStyle == PARTITION_STYLE_MBR)
+    {
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   FSTUB_VERBOSE_LEVEL,
-                   "Type: %8.8x\n\n",
-                   SetPartition->Mbr.PartitionType));
-
-    } else {
+        KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "Type: %8.8x\n\n", SetPartition->Mbr.PartitionType));
+    }
+    else
+    {
 
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   FSTUB_VERBOSE_LEVEL,
-                   "[%d] %ws\n",
-                   PartitionNumber,
-                   SetPartition->Gpt.Name));
+        KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "[%d] %ws\n", PartitionNumber, SetPartition->Gpt.Name));
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   FSTUB_VERBOSE_LEVEL,
-                   "  ATTR %-16I64x\n",
-                   SetPartition->Gpt.Attributes));
+        KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "  ATTR %-16I64x\n", SetPartition->Gpt.Attributes));
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   FSTUB_VERBOSE_LEVEL,
-                   "  TYPE %s\n",
-                   FstubDbgGuidToString(&SetPartition->Gpt.PartitionType,
-                                        GuidStringBuffer)));
+        KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "  TYPE %s\n",
+                   FstubDbgGuidToString(&SetPartition->Gpt.PartitionType, GuidStringBuffer)));
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   FSTUB_VERBOSE_LEVEL,
-                   "  ID %s\n",
-                   FstubDbgGuidToString(&SetPartition->Gpt.PartitionId,
-                                        GuidStringBuffer)));
-
+        KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "  ID %s\n",
+                   FstubDbgGuidToString(&SetPartition->Gpt.PartitionId, GuidStringBuffer)));
     }
 
-    KdPrintEx((DPFLTR_FSTUB_ID,  FSTUB_VERBOSE_LEVEL, "\n"));
+    KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "\n"));
 }
 
 
-VOID
-FstubDbgPrintPartition(
-    IN PPARTITION_INFORMATION Partition,
-    IN ULONG PartitionCount
-    )
+VOID FstubDbgPrintPartition(IN PPARTITION_INFORMATION Partition, IN ULONG PartitionCount)
 
 /*++
 
@@ -4042,48 +3560,37 @@ Return Value:
 {
     ULONG PartitionNumber;
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
     //
     // Sanity check the data.
     //
 
-    if ( (Partition->BootIndicator != TRUE &&
-          Partition->BootIndicator != FALSE) ||
-         (Partition->RecognizedPartition != TRUE &&
-          Partition->RecognizedPartition != FALSE) ||
-         (Partition->RewritePartition != TRUE &&
-          Partition->RewritePartition != FALSE) ) {
+    if ((Partition->BootIndicator != TRUE && Partition->BootIndicator != FALSE) ||
+        (Partition->RecognizedPartition != TRUE && Partition->RecognizedPartition != FALSE) ||
+        (Partition->RewritePartition != TRUE && Partition->RewritePartition != FALSE))
+    {
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   FSTUB_VERBOSE_LEVEL,
-                   "Invalid partition information at %p\n",
-                   Partition));
+        KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "Invalid partition information at %p\n", Partition));
     }
 
-    if (Partition->PartitionNumber > PartitionCount) {
+    if (Partition->PartitionNumber > PartitionCount)
+    {
         PartitionNumber = -1;
-    } else {
+    }
+    else
+    {
         PartitionNumber = Partition->PartitionNumber;
     }
 
-    KdPrintEx((DPFLTR_FSTUB_ID,
-               FSTUB_VERBOSE_LEVEL,
-               "[%-2d] %-16I64x %-16I64x %2.2x   %c  %c  %c\n",
-               PartitionNumber,
-               Partition->StartingOffset.QuadPart,
-               Partition->PartitionLength.QuadPart,
-               Partition->PartitionType,
-               Partition->BootIndicator ? 'x' : ' ',
-               Partition->RecognizedPartition ? 'x' : ' ',
+    KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "[%-2d] %-16I64x %-16I64x %2.2x   %c  %c  %c\n", PartitionNumber,
+               Partition->StartingOffset.QuadPart, Partition->PartitionLength.QuadPart, Partition->PartitionType,
+               Partition->BootIndicator ? 'x' : ' ', Partition->RecognizedPartition ? 'x' : ' ',
                Partition->RewritePartition ? 'x' : ' '));
 }
 
 
-VOID
-FstubDbgPrintDriveLayout(
-    IN PDRIVE_LAYOUT_INFORMATION  Layout
-    )
+VOID FstubDbgPrintDriveLayout(IN PDRIVE_LAYOUT_INFORMATION Layout)
 
 /*++
 
@@ -4109,13 +3616,12 @@ Mode:
     ULONG i;
 
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    KdPrintEx((DPFLTR_FSTUB_ID,
-               FSTUB_VERBOSE_LEVEL,
+    KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL,
                "\n"
-                   "FSTUB:\n"
-                   "DRIVE_LAYOUT %p\n",
+               "FSTUB:\n"
+               "DRIVE_LAYOUT %p\n",
                Layout));
 
     //
@@ -4123,48 +3629,32 @@ Mode:
     // bad partition information structure, but we'll continue on anyway.
     //
 
-    if (Layout->PartitionCount % 4 != 0) {
+    if (Layout->PartitionCount % 4 != 0)
+    {
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   FSTUB_VERBOSE_LEVEL,
-                   "WARNING: Partition count should be a factor of 4.\n"));
+        KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "WARNING: Partition count should be a factor of 4.\n"));
     }
 
-    KdPrintEx((DPFLTR_FSTUB_ID,
-               FSTUB_VERBOSE_LEVEL,
-               "PartitionCount: %d\n",
-               Layout->PartitionCount));
+    KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "PartitionCount: %d\n", Layout->PartitionCount));
 
-    KdPrintEx((DPFLTR_FSTUB_ID,
-               FSTUB_VERBOSE_LEVEL,
-               "Signature: %8.8x\n\n",
-               Layout->Signature));
+    KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "Signature: %8.8x\n\n", Layout->Signature));
 
-    KdPrintEx((DPFLTR_FSTUB_ID,
-               FSTUB_VERBOSE_LEVEL,
-               "    ORD Offset           Length           Type BI RP RW\n"));
+    KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "    ORD Offset           Length           Type BI RP RW\n"));
 
-    KdPrintEx((DPFLTR_FSTUB_ID,
-               FSTUB_VERBOSE_LEVEL,
-               "   ------------------------------------------------------------\n"));
+    KdPrintEx(
+        (DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "   ------------------------------------------------------------\n"));
 
-    for (i = 0; i < Layout->PartitionCount; i++) {
+    for (i = 0; i < Layout->PartitionCount; i++)
+    {
 
-        FstubDbgPrintPartition (
-                &Layout->PartitionEntry[i],
-                Layout->PartitionCount
-                );
+        FstubDbgPrintPartition(&Layout->PartitionEntry[i], Layout->PartitionCount);
     }
 
     KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "\n"));
 }
 
 
-VOID
-FstubDbgPrintPartitionEx(
-    IN PPARTITION_INFORMATION_EX PartitionEx,
-    IN ULONG PartitionCount
-    )
+VOID FstubDbgPrintPartitionEx(IN PPARTITION_INFORMATION_EX PartitionEx, IN ULONG PartitionCount)
 
 /*++
 
@@ -4187,18 +3677,16 @@ Return Value:
 {
     ULONG Style;
     ULONG PartitionNumber;
-    CHAR GuidStringBuffer [40];
+    CHAR GuidStringBuffer[40];
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
     Style = PartitionEx->PartitionStyle;
 
-    if (Style != PARTITION_STYLE_MBR &&
-        Style != PARTITION_STYLE_GPT) {
+    if (Style != PARTITION_STYLE_MBR && Style != PARTITION_STYLE_GPT)
+    {
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   DPFLTR_ERROR_LEVEL,
-                   "ERROR: PartitionStyle is invalid %d for partition %p\n",
+        KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_ERROR_LEVEL, "ERROR: PartitionStyle is invalid %d for partition %p\n",
                    PartitionEx));
 
         return;
@@ -4209,62 +3697,43 @@ Return Value:
     // We use -1 to denote an invalid partition ordinal.
     //
 
-    if (PartitionEx->PartitionNumber < PartitionCount) {
+    if (PartitionEx->PartitionNumber < PartitionCount)
+    {
         PartitionNumber = PartitionEx->PartitionNumber;
-    } else {
+    }
+    else
+    {
         PartitionNumber = -1;
     }
 
-    if (Style == PARTITION_STYLE_MBR) {
+    if (Style == PARTITION_STYLE_MBR)
+    {
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   FSTUB_VERBOSE_LEVEL,
-                   "  [%-2d] %-16I64x %-16I64x %2.2x   %c  %c  %c\n",
-                   PartitionNumber,
-                   PartitionEx->StartingOffset.QuadPart,
-                   PartitionEx->PartitionLength.QuadPart,
-                   PartitionEx->Mbr.PartitionType,
-                   PartitionEx->Mbr.BootIndicator ? 'x' : ' ',
-                   PartitionEx->Mbr.RecognizedPartition ? 'x' : ' ',
-                   PartitionEx->RewritePartition ? 'x' : ' '));
-    } else {
+        KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "  [%-2d] %-16I64x %-16I64x %2.2x   %c  %c  %c\n",
+                   PartitionNumber, PartitionEx->StartingOffset.QuadPart, PartitionEx->PartitionLength.QuadPart,
+                   PartitionEx->Mbr.PartitionType, PartitionEx->Mbr.BootIndicator ? 'x' : ' ',
+                   PartitionEx->Mbr.RecognizedPartition ? 'x' : ' ', PartitionEx->RewritePartition ? 'x' : ' '));
+    }
+    else
+    {
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   FSTUB_VERBOSE_LEVEL,
-                   "[%-2d] %ws\n",
-                   PartitionNumber,
-                   PartitionEx->Gpt.Name));
+        KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "[%-2d] %ws\n", PartitionNumber, PartitionEx->Gpt.Name));
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   FSTUB_VERBOSE_LEVEL,
-                   "  OFF %-16I64x LEN %-16I64x ATTR %-16I64x %s\n",
-                   PartitionEx->StartingOffset.QuadPart,
-                   PartitionEx->PartitionLength.QuadPart,
-                   PartitionEx->Gpt.Attributes,
-                   PartitionEx->RewritePartition ? "R/W" : ""));
+        KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "  OFF %-16I64x LEN %-16I64x ATTR %-16I64x %s\n",
+                   PartitionEx->StartingOffset.QuadPart, PartitionEx->PartitionLength.QuadPart,
+                   PartitionEx->Gpt.Attributes, PartitionEx->RewritePartition ? "R/W" : ""));
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   FSTUB_VERBOSE_LEVEL,
-                   "  TYPE %s\n",
-                   FstubDbgGuidToString(&PartitionEx->Gpt.PartitionType,
-                                        GuidStringBuffer)));
+        KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "  TYPE %s\n",
+                   FstubDbgGuidToString(&PartitionEx->Gpt.PartitionType, GuidStringBuffer)));
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   FSTUB_VERBOSE_LEVEL,
-                   "  ID %s\n",
-                   FstubDbgGuidToString(&PartitionEx->Gpt.PartitionId,
-                                        GuidStringBuffer)));
+        KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "  ID %s\n",
+                   FstubDbgGuidToString(&PartitionEx->Gpt.PartitionId, GuidStringBuffer)));
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   FSTUB_VERBOSE_LEVEL,
-                   "\n"));
+        KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "\n"));
     }
 }
 
-VOID
-FstubDbgPrintDriveLayoutEx(
-    IN PDRIVE_LAYOUT_INFORMATION_EX LayoutEx
-    )
+VOID FstubDbgPrintDriveLayoutEx(IN PDRIVE_LAYOUT_INFORMATION_EX LayoutEx)
 
 /*++
 
@@ -4292,92 +3761,64 @@ Mode:
     ULONG Style;
     CHAR GuidStringBuffer[40];
 
-    PAGED_CODE ();
+    PAGED_CODE();
 
-    KdPrintEx((DPFLTR_FSTUB_ID,
-               FSTUB_VERBOSE_LEVEL,
+    KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL,
                "\n"
-                   "FSTUB:\n"
-                   "DRIVE_LAYOUT_EX %p\n",
+               "FSTUB:\n"
+               "DRIVE_LAYOUT_EX %p\n",
                LayoutEx));
 
     Style = LayoutEx->PartitionStyle;
 
-    if (Style != PARTITION_STYLE_MBR && Style != PARTITION_STYLE_GPT) {
+    if (Style != PARTITION_STYLE_MBR && Style != PARTITION_STYLE_GPT)
+    {
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   DPFLTR_ERROR_LEVEL,
-                   "ERROR: invalid partition style %d for layout %p\n",
-                   Style,
+        KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_ERROR_LEVEL, "ERROR: invalid partition style %d for layout %p\n", Style,
                    LayoutEx));
         return;
     }
 
-    if (Style == PARTITION_STYLE_MBR &&
-        LayoutEx->PartitionCount % 4 != 0) {
+    if (Style == PARTITION_STYLE_MBR && LayoutEx->PartitionCount % 4 != 0)
+    {
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   DPFLTR_WARNING_LEVEL,
-                   "WARNING: Partition count is not a factor of 4, (%d)\n",
+        KdPrintEx((DPFLTR_FSTUB_ID, DPFLTR_WARNING_LEVEL, "WARNING: Partition count is not a factor of 4, (%d)\n",
                    LayoutEx->PartitionCount));
     }
 
-    if (Style == PARTITION_STYLE_MBR) {
+    if (Style == PARTITION_STYLE_MBR)
+    {
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   FSTUB_VERBOSE_LEVEL,
-                   "Signature: %8.8x\n",
-                   LayoutEx->Mbr.Signature));
+        KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "Signature: %8.8x\n", LayoutEx->Mbr.Signature));
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   FSTUB_VERBOSE_LEVEL,
-                   "PartitionCount %d\n\n",
-                   LayoutEx->PartitionCount));
+        KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "PartitionCount %d\n\n", LayoutEx->PartitionCount));
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   FSTUB_VERBOSE_LEVEL,
-                   "  ORD Offset           Length           Type BI RP RW\n"));
+        KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "  ORD Offset           Length           Type BI RP RW\n"));
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   FSTUB_VERBOSE_LEVEL,
-                   "------------------------------------------------------------\n"));
+        KdPrintEx(
+            (DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "------------------------------------------------------------\n"));
+    }
+    else
+    {
 
-    } else {
+        KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "DiskId: %s\n",
+                   FstubDbgGuidToString(&LayoutEx->Gpt.DiskId, GuidStringBuffer)));
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   FSTUB_VERBOSE_LEVEL,
-                   "DiskId: %s\n",
-                   FstubDbgGuidToString(&LayoutEx->Gpt.DiskId,
-                                        GuidStringBuffer)));
-
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   FSTUB_VERBOSE_LEVEL,
-                   "StartingUsableOffset: %I64x\n",
+        KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "StartingUsableOffset: %I64x\n",
                    LayoutEx->Gpt.StartingUsableOffset.QuadPart));
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   FSTUB_VERBOSE_LEVEL,
-                   "UsableLength:  %I64x\n",
-                   LayoutEx->Gpt.UsableLength));
+        KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "UsableLength:  %I64x\n", LayoutEx->Gpt.UsableLength));
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   FSTUB_VERBOSE_LEVEL,
-                   "MaxPartitionCount: %d\n",
-                   LayoutEx->Gpt.MaxPartitionCount));
+        KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "MaxPartitionCount: %d\n", LayoutEx->Gpt.MaxPartitionCount));
 
-        KdPrintEx((DPFLTR_FSTUB_ID,
-                   FSTUB_VERBOSE_LEVEL,
-                   "PartitionCount %d\n\n",
-                   LayoutEx->PartitionCount));
+        KdPrintEx((DPFLTR_FSTUB_ID, FSTUB_VERBOSE_LEVEL, "PartitionCount %d\n\n", LayoutEx->PartitionCount));
     }
 
 
-    for (i = 0; i < LayoutEx->PartitionCount; i++) {
+    for (i = 0; i < LayoutEx->PartitionCount; i++)
+    {
 
-        FstubDbgPrintPartitionEx (
-                &LayoutEx->PartitionEntry[i],
-                LayoutEx->PartitionCount
-                );
+        FstubDbgPrintPartitionEx(&LayoutEx->PartitionEntry[i], LayoutEx->PartitionCount);
     }
 }
 

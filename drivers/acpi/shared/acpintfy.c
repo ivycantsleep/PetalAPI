@@ -27,14 +27,11 @@ Environment:
 //
 // For handler installation
 //
-KSPIN_LOCK           NotifyHandlerLock;
-
+KSPIN_LOCK NotifyHandlerLock;
+
 NTSTATUS
-ACPIRegisterForDeviceNotifications (
-    IN PDEVICE_OBJECT               DeviceObject,
-    IN PDEVICE_NOTIFY_CALLBACK      DeviceNotify,
-    IN PVOID                        Context
-    )
+ACPIRegisterForDeviceNotifications(IN PDEVICE_OBJECT DeviceObject, IN PDEVICE_NOTIFY_CALLBACK DeviceNotify,
+                                   IN PVOID Context)
 /*++
 
 Routine Description:
@@ -53,10 +50,10 @@ Return Value
 
 --*/
 {
-    PACPI_POWER_INFO    node;
-    PVOID               previous;
-    KIRQL               oldIrql;
-    NTSTATUS            status;
+    PACPI_POWER_INFO node;
+    PVOID previous;
+    KIRQL oldIrql;
+    NTSTATUS status;
 
 
     //
@@ -65,44 +62,41 @@ Return Value
     // DeviceObject, since this is what is stored within the ACPI Name Space
     // object
     //
-    node = OSPowerFindPowerInfoByContext( DeviceObject );
-    if (node == NULL) {
+    node = OSPowerFindPowerInfoByContext(DeviceObject);
+    if (node == NULL)
+    {
 
         return STATUS_NO_SUCH_DEVICE;
-
     }
 
     //
     // Apply the handler
     //
-    KeAcquireSpinLock (&NotifyHandlerLock, &oldIrql);
+    KeAcquireSpinLock(&NotifyHandlerLock, &oldIrql);
 
-    if (node->DeviceNotifyHandler != NULL) {
+    if (node->DeviceNotifyHandler != NULL)
+    {
 
         //
         // A handler already present
         //
         status = STATUS_UNSUCCESSFUL;
-
-    } else {
+    }
+    else
+    {
 
         node->DeviceNotifyHandler = DeviceNotify;
         node->HandlerContext = Context;
         status = STATUS_SUCCESS;
-
     }
 
-    KeReleaseSpinLock (&NotifyHandlerLock, oldIrql);
+    KeReleaseSpinLock(&NotifyHandlerLock, oldIrql);
 
     return status;
 }
 
 
-VOID
-ACPIUnregisterForDeviceNotifications (
-    IN PDEVICE_OBJECT               DeviceObject,
-    IN PDEVICE_NOTIFY_CALLBACK      DeviceNotify
-    )
+VOID ACPIUnregisterForDeviceNotifications(IN PDEVICE_OBJECT DeviceObject, IN PDEVICE_NOTIFY_CALLBACK DeviceNotify)
 /*++
 
 Routine Description:
@@ -121,10 +115,10 @@ Return Value
 
 --*/
 {
-    PACPI_POWER_INFO    node;
-    PVOID               previous;
-    KIRQL               oldIrql;
-    NTSTATUS            status;
+    PACPI_POWER_INFO node;
+    PVOID previous;
+    KIRQL oldIrql;
+    NTSTATUS status;
 
 
     //
@@ -133,48 +127,45 @@ Return Value
     // DeviceObject, since this is what is stored within the ACPI Name Space
     // object
     //
-    node = OSPowerFindPowerInfoByContext( DeviceObject );
-    if (node == NULL) {
-        ASSERTMSG("ACPIUnregisterForDeviceNotifications failed.  "\
-                  "Can't find ACPI_POWER_INFO for DeviceObject", FALSE);
+    node = OSPowerFindPowerInfoByContext(DeviceObject);
+    if (node == NULL)
+    {
+        ASSERTMSG("ACPIUnregisterForDeviceNotifications failed.  "
+                  "Can't find ACPI_POWER_INFO for DeviceObject",
+                  FALSE);
         return;
     }
 
     //
     // Attempt to remove the handler/context from the node
     //
-    KeAcquireSpinLock (&NotifyHandlerLock, &oldIrql);
+    KeAcquireSpinLock(&NotifyHandlerLock, &oldIrql);
 
-    if (node->DeviceNotifyHandler != DeviceNotify) {
+    if (node->DeviceNotifyHandler != DeviceNotify)
+    {
 
         //
         // Handler does not match
         //
-        ASSERTMSG("ACPIUnregisterForDeviceNotifications failed.  "\
-                  "Handler doesn't match.", FALSE);
-
-    } else {
+        ASSERTMSG("ACPIUnregisterForDeviceNotifications failed.  "
+                  "Handler doesn't match.",
+                  FALSE);
+    }
+    else
+    {
 
         node->DeviceNotifyHandler = NULL;
         node->HandlerContext = NULL;
-
     }
 
-    KeReleaseSpinLock (&NotifyHandlerLock, oldIrql);
+    KeReleaseSpinLock(&NotifyHandlerLock, oldIrql);
 
     return;
 }
 
 
-NTSTATUS EXPORT
-NotifyHandler (
-    ULONG           dwEventType,
-    ULONG           dwEventData,
-    PNSOBJ          pnsObj,
-    ULONG           dwParam,
-    PFNAA           CompletionCallback,
-    PVOID           CallbackContext
-    )
+NTSTATUS EXPORT NotifyHandler(ULONG dwEventType, ULONG dwEventData, PNSOBJ pnsObj, ULONG dwParam,
+                              PFNAA CompletionCallback, PVOID CallbackContext)
 /*++
 
 Routine Description:
@@ -200,65 +191,61 @@ Return Value
 
 --*/
 {
-    PACPI_POWER_INFO        node;
-    KIRQL                   oldIrql;
+    PACPI_POWER_INFO node;
+    KIRQL oldIrql;
     PDEVICE_NOTIFY_CALLBACK notifyHandler;
-    PVOID                   notifyHandlerContext;
+    PVOID notifyHandlerContext;
 
-    ASSERT (dwEventType == EVTYPE_NOTIFY);
+    ASSERT(dwEventType == EVTYPE_NOTIFY);
 
-    ACPIPrint( (
-        ACPI_PRINT_DPC,
-        "ACPINotifyHandler: Notify on %x value %x, object type %x\n",
-        pnsObj,
-        dwEventData,
-        NSGETOBJTYPE(pnsObj)
-        ) );
+    ACPIPrint((ACPI_PRINT_DPC, "ACPINotifyHandler: Notify on %x value %x, object type %x\n", pnsObj, dwEventData,
+               NSGETOBJTYPE(pnsObj)));
 
     //
     // Any events which must be handled by ACPI and is common to all device
     // object types is handled here
     //
-    switch (dwEventData) {
-        case OPEVENT_DEVICE_ENUM:
-            OSNotifyDeviceEnum( pnsObj );
-            break;
-        case OPEVENT_DEVICE_CHECK:
-            OSNotifyDeviceCheck( pnsObj );
-            break;
-        case OPEVENT_DEVICE_WAKE:
-            OSNotifyDeviceWake( pnsObj );
-            break;
-        case OPEVENT_DEVICE_EJECT:
-            OSNotifyDeviceEject( pnsObj );
-            break;
+    switch (dwEventData)
+    {
+    case OPEVENT_DEVICE_ENUM:
+        OSNotifyDeviceEnum(pnsObj);
+        break;
+    case OPEVENT_DEVICE_CHECK:
+        OSNotifyDeviceCheck(pnsObj);
+        break;
+    case OPEVENT_DEVICE_WAKE:
+        OSNotifyDeviceWake(pnsObj);
+        break;
+    case OPEVENT_DEVICE_EJECT:
+        OSNotifyDeviceEject(pnsObj);
+        break;
     }
 
     //
     // Look for handle for this node and dispatch it
     //
     node = OSPowerFindPowerInfo(pnsObj);
-    if (node) {
+    if (node)
+    {
 
         //
         // Get handler address/context with mutex
         //
-        KeAcquireSpinLock (&NotifyHandlerLock, &oldIrql);
+        KeAcquireSpinLock(&NotifyHandlerLock, &oldIrql);
 
         notifyHandler = node->DeviceNotifyHandler;
         notifyHandlerContext = node->HandlerContext;
 
-        KeReleaseSpinLock (&NotifyHandlerLock, oldIrql);
+        KeReleaseSpinLock(&NotifyHandlerLock, oldIrql);
 
         //
         // If we got something, dispatch it
         //
-        if (notifyHandler) {
+        if (notifyHandler)
+        {
 
-            notifyHandler (notifyHandlerContext, dwEventData);
-
+            notifyHandler(notifyHandlerContext, dwEventData);
         }
-
     }
     return (STATUS_SUCCESS);
 }

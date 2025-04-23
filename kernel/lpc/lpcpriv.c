@@ -23,16 +23,13 @@ Revision History:
 #include "lpcp.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,LpcpFreePortClientSecurity)
-#pragma alloc_text(PAGE,NtImpersonateClientOfPort)
+#pragma alloc_text(PAGE, LpcpFreePortClientSecurity)
+#pragma alloc_text(PAGE, NtImpersonateClientOfPort)
 #endif
 
-
+
 NTSTATUS
-NtImpersonateClientOfPort (
-    IN HANDLE PortHandle,
-    IN PPORT_MESSAGE Message
-    )
+NtImpersonateClientOfPort(IN HANDLE PortHandle, IN PPORT_MESSAGE Message)
 
 /*++
 
@@ -91,21 +88,25 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    if (PreviousMode != KernelMode) {
+    if (PreviousMode != KernelMode)
+    {
 
-        try {
+        try
+        {
 
-            ProbeForReadSmallStructure( Message, sizeof( PORT_MESSAGE ), sizeof( ULONG ));
+            ProbeForReadSmallStructure(Message, sizeof(PORT_MESSAGE), sizeof(ULONG));
 
             CapturedClientId = Message->ClientId;
             CapturedMessageId = Message->MessageId;
-
-        } except( EXCEPTION_EXECUTE_HANDLER ) {
-
-            return( GetExceptionCode() );
         }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
-    } else {
+            return (GetExceptionCode());
+        }
+    }
+    else
+    {
 
         CapturedClientId = Message->ClientId;
         CapturedMessageId = Message->MessageId;
@@ -116,11 +117,11 @@ Return Value:
     //  unsuccessful.
     //
 
-    Status = LpcpReferencePortObject( PortHandle, 0,
-                                      PreviousMode, &PortObject );
-    if (!NT_SUCCESS( Status )) {
+    Status = LpcpReferencePortObject(PortHandle, 0, PreviousMode, &PortObject);
+    if (!NT_SUCCESS(Status))
+    {
 
-        return( Status );
+        return (Status);
     }
 
     //
@@ -128,11 +129,12 @@ Return Value:
     //  communication port
     //
 
-    if ((PortObject->Flags & PORT_TYPE) != SERVER_COMMUNICATION_PORT) {
+    if ((PortObject->Flags & PORT_TYPE) != SERVER_COMMUNICATION_PORT)
+    {
 
-        ObDereferenceObject( PortObject );
+        ObDereferenceObject(PortObject);
 
-        return( STATUS_INVALID_PORT_HANDLE );
+        return (STATUS_INVALID_PORT_HANDLE);
     }
 
     //
@@ -141,15 +143,14 @@ Return Value:
     //  from evaporating out from under us.
     //
 
-    Status = PsLookupProcessThreadByCid( &CapturedClientId,
-                                         NULL,
-                                         &ClientThread );
+    Status = PsLookupProcessThreadByCid(&CapturedClientId, NULL, &ClientThread);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        ObDereferenceObject( PortObject );
+        ObDereferenceObject(PortObject);
 
-        return( Status );
+        return (Status);
     }
 
     //
@@ -166,23 +167,23 @@ Return Value:
     //
 
     ConnectedPort = PortObject->ConnectedPort;
-    
-    if ( ( ConnectedPort == NULL ) || 
-         ( !ObReferenceObjectSafe( ConnectedPort ) ) ) {
+
+    if ((ConnectedPort == NULL) || (!ObReferenceObjectSafe(ConnectedPort)))
+    {
 
         //
-        //  The port is being deleted. Quit this function with 
-        //  appropriate return status. 
-        //  We don't need to dereference the connected port because 
+        //  The port is being deleted. Quit this function with
+        //  appropriate return status.
+        //  We don't need to dereference the connected port because
         //  it is anyway about to be deleted
         //
 
         LpcpReleaseLpcpLock();
 
-        ObDereferenceObject( PortObject );
-        ObDereferenceObject( ClientThread );
+        ObDereferenceObject(PortObject);
+        ObDereferenceObject(ClientThread);
 
-        return( STATUS_PORT_DISCONNECTED );
+        return (STATUS_PORT_DISCONNECTED);
     }
 
     //
@@ -199,19 +200,15 @@ Return Value:
     //  we can use that easy test for the impersonation too, w/o searching the rundown queue
     //
 
-    if ((ClientThread->LpcReplyMessageId != CapturedMessageId) 
-            ||
-        (CapturedMessageId == 0) 
-            ||
-        (!LpcpValidateClientPort( ClientThread, 
-                                  PortObject, 
-                                  LPCP_VALIDATE_REASON_IMPERSONATION)) ) {
+    if ((ClientThread->LpcReplyMessageId != CapturedMessageId) || (CapturedMessageId == 0) ||
+        (!LpcpValidateClientPort(ClientThread, PortObject, LPCP_VALIDATE_REASON_IMPERSONATION)))
+    {
 
         LpcpReleaseLpcpLock();
 
-        ObDereferenceObject( PortObject );
-        ObDereferenceObject( ClientThread );
-        ObDereferenceObject( ConnectedPort );
+        ObDereferenceObject(PortObject);
+        ObDereferenceObject(ClientThread);
+        ObDereferenceObject(ConnectedPort);
 
         return (STATUS_REPLY_MESSAGE_MISMATCH);
     }
@@ -224,42 +221,42 @@ Return Value:
     //  it is already in the client's port.
     //
 
-    if (ConnectedPort->Flags & PORT_DYNAMIC_SECURITY) {
+    if (ConnectedPort->Flags & PORT_DYNAMIC_SECURITY)
+    {
 
         //
         //  Impersonate the client with information from the queued message
         //
 
-        Status = LpcpGetDynamicClientSecurity( ClientThread,
-                                               PortObject->ConnectedPort,
-                                               &DynamicSecurity );
+        Status = LpcpGetDynamicClientSecurity(ClientThread, PortObject->ConnectedPort, &DynamicSecurity);
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            ObDereferenceObject( PortObject );
-            ObDereferenceObject( ClientThread );
-            ObDereferenceObject( ConnectedPort );
+            ObDereferenceObject(PortObject);
+            ObDereferenceObject(ClientThread);
+            ObDereferenceObject(ConnectedPort);
 
-            return( Status );
+            return (Status);
         }
 
-        Status = SeImpersonateClientEx( &DynamicSecurity, NULL );
+        Status = SeImpersonateClientEx(&DynamicSecurity, NULL);
 
-        LpcpFreeDynamicClientSecurity( &DynamicSecurity );
-
-    } else {
+        LpcpFreeDynamicClientSecurity(&DynamicSecurity);
+    }
+    else
+    {
 
         //
         //  Impersonate the client with information from the client's port
         //
 
-        Status = SeImpersonateClientEx( &ConnectedPort->StaticSecurity, NULL );
-
+        Status = SeImpersonateClientEx(&ConnectedPort->StaticSecurity, NULL);
     }
 
-    ObDereferenceObject( PortObject );
-    ObDereferenceObject( ClientThread );
-    ObDereferenceObject( ConnectedPort );
+    ObDereferenceObject(PortObject);
+    ObDereferenceObject(ClientThread);
+    ObDereferenceObject(ConnectedPort);
 
     //
     //  And return to our caller
@@ -268,11 +265,8 @@ Return Value:
     return Status;
 }
 
-
-VOID
-LpcpFreePortClientSecurity (
-    IN PLPCP_PORT_OBJECT Port
-    )
+
+VOID LpcpFreePortClientSecurity(IN PLPCP_PORT_OBJECT Port)
 
 /*++
 
@@ -296,7 +290,8 @@ Return Value:
     //  We only do this action if supplied with a client communication port
     //
 
-    if ((Port->Flags & PORT_TYPE) == CLIENT_COMMUNICATION_PORT) {
+    if ((Port->Flags & PORT_TYPE) == CLIENT_COMMUNICATION_PORT)
+    {
 
         //
         //  We only do this action if the port has static security tracking,
@@ -304,11 +299,13 @@ Return Value:
         //  delete the client token.
         //
 
-        if (!(Port->Flags & PORT_DYNAMIC_SECURITY)) {
+        if (!(Port->Flags & PORT_DYNAMIC_SECURITY))
+        {
 
-            if ( Port->StaticSecurity.ClientToken ) {
+            if (Port->StaticSecurity.ClientToken)
+            {
 
-                SeDeleteClientSecurity( &(Port)->StaticSecurity );
+                SeDeleteClientSecurity(&(Port)->StaticSecurity);
             }
         }
     }

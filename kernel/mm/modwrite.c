@@ -22,19 +22,22 @@ Revision History:
 #include "mi.h"
 #include "ntiodump.h"
 
-typedef enum _MODIFIED_WRITER_OBJECT {
+typedef enum _MODIFIED_WRITER_OBJECT
+{
     NormalCase,
     MappedPagesNeedWriting,
     ModifiedWriterMaximumObject
 } MODIFIED_WRITER_OBJECT;
 
-typedef struct _MM_WRITE_CLUSTER {
+typedef struct _MM_WRITE_CLUSTER
+{
     ULONG Count;
     ULONG StartIndex;
     ULONG Cluster[2 * (MM_MAXIMUM_DISK_IO_SIZE / PAGE_SIZE) + 1];
 } MM_WRITE_CLUSTER, *PMM_WRITE_CLUSTER;
 
-typedef struct _MM_LDW_WORK_CONTEXT {
+typedef struct _MM_LDW_WORK_CONTEXT
+{
     WORK_QUEUE_ITEM WorkItem;
     PFILE_OBJECT FileObject;
 } MM_LDW_WORK_CONTEXT, *PMM_LDW_WORK_CONTEXT;
@@ -52,51 +55,33 @@ ULONG MmNumberOfMappedMdlsInUsePeak;
 
 ULONG MiClusterWritesDisabled;
 
-#define MI_SLOW_CLUSTER_WRITES   10
+#define MI_SLOW_CLUSTER_WRITES 10
 
-#define ONEMB_IN_PAGES  ((1024 * 1024) / PAGE_SIZE)
+#define ONEMB_IN_PAGES ((1024 * 1024) / PAGE_SIZE)
 
-VOID
-MiClusterWritePages (
-    IN PMMPFN Pfn1,
-    IN PFN_NUMBER PageFrameIndex,
-    IN PMM_WRITE_CLUSTER WriteCluster,
-    IN ULONG Size
-    );
+VOID MiClusterWritePages(IN PMMPFN Pfn1, IN PFN_NUMBER PageFrameIndex, IN PMM_WRITE_CLUSTER WriteCluster,
+                         IN ULONG Size);
 
-VOID
-MiExtendPagingFileMaximum (
-    IN ULONG PageFileNumber,
-    IN PRTL_BITMAP NewBitmap
-    );
+VOID MiExtendPagingFileMaximum(IN ULONG PageFileNumber, IN PRTL_BITMAP NewBitmap);
 
-VOID
-MiLdwPopupWorker (
-    IN PVOID Context
-    );
+VOID MiLdwPopupWorker(IN PVOID Context);
 
 SIZE_T
-MiAttemptPageFileExtension (
-    IN ULONG PageFileNumber,
-    IN SIZE_T SizeNeeded,
-    IN LOGICAL Maximum
-    );
+MiAttemptPageFileExtension(IN ULONG PageFileNumber, IN SIZE_T SizeNeeded, IN LOGICAL Maximum);
 
 NTSTATUS
-MiZeroPageFileFirstPage (
-    IN PFILE_OBJECT File
-    );
+MiZeroPageFileFirstPage(IN PFILE_OBJECT File);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,NtCreatePagingFile)
-#pragma alloc_text(PAGE,MmGetPageFileInformation)
-#pragma alloc_text(PAGE,MmGetSystemPageFile)
-#pragma alloc_text(PAGE,MiLdwPopupWorker)
-#pragma alloc_text(PAGE,MiAttemptPageFileExtension)
-#pragma alloc_text(PAGE,MiExtendPagingFiles)
-#pragma alloc_text(PAGE,MiZeroPageFileFirstPage)
-#pragma alloc_text(PAGELK,MiModifiedPageWriter)
-#pragma alloc_text(PAGELK,MiFlushAllPages)
+#pragma alloc_text(PAGE, NtCreatePagingFile)
+#pragma alloc_text(PAGE, MmGetPageFileInformation)
+#pragma alloc_text(PAGE, MmGetSystemPageFile)
+#pragma alloc_text(PAGE, MiLdwPopupWorker)
+#pragma alloc_text(PAGE, MiAttemptPageFileExtension)
+#pragma alloc_text(PAGE, MiExtendPagingFiles)
+#pragma alloc_text(PAGE, MiZeroPageFileFirstPage)
+#pragma alloc_text(PAGELK, MiModifiedPageWriter)
+#pragma alloc_text(PAGELK, MiFlushAllPages)
 #endif
 
 
@@ -115,31 +100,17 @@ ULONG MmSystemShutdown;
 BOOLEAN MmSystemPageFileLocated;
 
 NTSTATUS
-MiCheckPageFileMapping (
-    IN PFILE_OBJECT File
-    );
+MiCheckPageFileMapping(IN PFILE_OBJECT File);
 
-VOID
-MiInsertPageFileInList (
-    VOID
-    );
+VOID MiInsertPageFileInList(VOID);
 
 PFN_NUMBER
-MiGatherMappedPages (
-    IN PMMPFN Pfn1,
-    IN PFN_NUMBER PageFrameIndex
-    );
+MiGatherMappedPages(IN PMMPFN Pfn1, IN PFN_NUMBER PageFrameIndex);
 
 PFN_NUMBER
-MiGatherPagefilePages (
-    IN PMMPFN Pfn1,
-    IN PFN_NUMBER PageFrameIndex
-    );
+MiGatherPagefilePages(IN PMMPFN Pfn1, IN PFN_NUMBER PageFrameIndex);
 
-VOID
-MiPageFileFull (
-    VOID
-    );
+VOID MiPageFileFull(VOID);
 
 #if DBG
 ULONG_PTR MmPagingFileDebug[8192];
@@ -147,18 +118,12 @@ ULONG_PTR MmPagingFileDebug[8192];
 
 extern PFN_NUMBER MmMoreThanEnoughFreePages;
 
-#define MINIMUM_PAGE_FILE_SIZE ((ULONG)(256*PAGE_SIZE))
+#define MINIMUM_PAGE_FILE_SIZE ((ULONG)(256 * PAGE_SIZE))
 
-VOID
-MiModifiedPageWriterWorker (
-    VOID
-    );
+VOID MiModifiedPageWriterWorker(VOID);
 
-
-VOID
-MiReleaseModifiedWriter (
-    VOID
-    )
+
+VOID MiReleaseModifiedWriter(VOID)
 
 /*++
 
@@ -171,15 +136,13 @@ Routine Description:
 
 {
     KIRQL OldIrql;
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
     MiFirstPageFileCreatedAndReady = TRUE;
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 }
 
 NTSTATUS
-MiZeroPageFileFirstPage (
-    IN PFILE_OBJECT File
-    )
+MiZeroPageFileFirstPage(IN PFILE_OBJECT File)
 
 /*++
 
@@ -200,64 +163,54 @@ Return Value:
 
 {
     PMDL Mdl;
-    LARGE_INTEGER Offset = {0};
+    LARGE_INTEGER Offset = { 0 };
     PULONG Block;
     IO_STATUS_BLOCK IoStatus;
     NTSTATUS Status;
     PPFN_NUMBER Page;
-    PFN_NUMBER MdlHack[(sizeof(MDL)/sizeof(PFN_NUMBER)) + 1];
+    PFN_NUMBER MdlHack[(sizeof(MDL) / sizeof(PFN_NUMBER)) + 1];
     KEVENT Event;
 
     Mdl = (PMDL)&MdlHack[0];
 
-    MmCreateMdl (Mdl, NULL, PAGE_SIZE);
+    MmCreateMdl(Mdl, NULL, PAGE_SIZE);
 
     Mdl->MdlFlags |= MDL_PAGES_LOCKED;
 
     Page = (PPFN_NUMBER)(Mdl + 1);
 
-    *Page = MiGetPageForHeader ();
+    *Page = MiGetPageForHeader();
 
-    Block = MmGetSystemAddressForMdl (Mdl);
+    Block = MmGetSystemAddressForMdl(Mdl);
 
-    RtlZeroMemory (Block, PAGE_SIZE);
+    RtlZeroMemory(Block, PAGE_SIZE);
 
-    KeInitializeEvent (&Event, NotificationEvent, FALSE);
+    KeInitializeEvent(&Event, NotificationEvent, FALSE);
 
-    Status = IoSynchronousPageWrite (File,
-                                     Mdl,
-                                     &Offset,
-                                     &Event,
-                                     &IoStatus);
+    Status = IoSynchronousPageWrite(File, Mdl, &Offset, &Event, &IoStatus);
 
-    if (NT_SUCCESS (Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
-        KeWaitForSingleObject (&Event,
-                               WrVirtualMemory,
-                               KernelMode,
-                               FALSE,
-                               NULL);
+        KeWaitForSingleObject(&Event, WrVirtualMemory, KernelMode, FALSE, NULL);
 
         Status = IoStatus.Status;
     }
 
-    if (Mdl->MdlFlags & MDL_MAPPED_TO_SYSTEM_VA) {
-        MmUnmapLockedPages (Mdl->MappedSystemVa, Mdl);
+    if (Mdl->MdlFlags & MDL_MAPPED_TO_SYSTEM_VA)
+    {
+        MmUnmapLockedPages(Mdl->MappedSystemVa, Mdl);
     }
 
-    MiRemoveImageHeaderPage (*Page);
+    MiRemoveImageHeaderPage(*Page);
 
     return Status;
 }
 
-
+
 NTSTATUS
-NtCreatePagingFile (
-    IN PUNICODE_STRING PageFileName,
-    IN PLARGE_INTEGER MinimumSize,
-    IN PLARGE_INTEGER MaximumSize,
-    IN ULONG Priority OPTIONAL
-    )
+NtCreatePagingFile(IN PUNICODE_STRING PageFileName, IN PLARGE_INTEGER MinimumSize, IN PLARGE_INTEGER MaximumSize,
+                   IN ULONG Priority OPTIONAL)
 
 /*++
 
@@ -317,14 +270,15 @@ Return Value:
     ULONG DaclLength;
     PACL Dacl;
 
-    DBG_UNREFERENCED_PARAMETER (Priority);
+    DBG_UNREFERENCED_PARAMETER(Priority);
 
     PAGED_CODE();
 
     CapturedBuffer = NULL;
     Dacl = NULL;
 
-    if (MmNumberOfPagingFiles == MAX_PAGE_FILES) {
+    if (MmNumberOfPagingFiles == MAX_PAGE_FILES)
+    {
 
         //
         // The maximum number of paging files is already in use.
@@ -335,13 +289,15 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    if (PreviousMode != KernelMode) {
+    if (PreviousMode != KernelMode)
+    {
 
         //
         // Make sure the caller has the proper privilege for this.
         //
 
-        if (!SeSinglePrivilegeCheck (SeCreatePagefilePrivilege, PreviousMode)) {
+        if (!SeSinglePrivilegeCheck(SeCreatePagefilePrivilege, PreviousMode))
+        {
             return STATUS_PRIVILEGE_NOT_HELD;
         }
 
@@ -349,9 +305,10 @@ Return Value:
         // Probe arguments.
         //
 
-        try {
+        try
+        {
 
-#if !defined (_WIN64)
+#if !defined(_WIN64)
 
             //
             // Note we only probe for byte alignment because early releases
@@ -359,30 +316,23 @@ Return Value:
             // that had bad alignment if they worked before.
             //
 
-            ProbeForReadSmallStructure (PageFileName,
-                                        sizeof(*PageFileName),
-                                        sizeof(UCHAR));
+            ProbeForReadSmallStructure(PageFileName, sizeof(*PageFileName), sizeof(UCHAR));
 #else
-            ProbeForReadSmallStructure (PageFileName,
-                                        sizeof(*PageFileName),
-                                        PROBE_ALIGNMENT (UNICODE_STRING));
+            ProbeForReadSmallStructure(PageFileName, sizeof(*PageFileName), PROBE_ALIGNMENT(UNICODE_STRING));
 #endif
 
-            ProbeForReadSmallStructure (MaximumSize,
-                                        sizeof(LARGE_INTEGER),
-                                        PROBE_ALIGNMENT (LARGE_INTEGER));
+            ProbeForReadSmallStructure(MaximumSize, sizeof(LARGE_INTEGER), PROBE_ALIGNMENT(LARGE_INTEGER));
 
-            ProbeForReadSmallStructure (MinimumSize,
-                                        sizeof(LARGE_INTEGER),
-                                        PROBE_ALIGNMENT (LARGE_INTEGER));
+            ProbeForReadSmallStructure(MinimumSize, sizeof(LARGE_INTEGER), PROBE_ALIGNMENT(LARGE_INTEGER));
 
             //
             // Capture arguments.
             //
 
             CapturedMinimumSize = *MinimumSize;
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // If an exception occurs during the probe or capture
@@ -393,7 +343,8 @@ Return Value:
             return GetExceptionCode();
         }
     }
-    else {
+    else
+    {
 
         //
         // Capture arguments.
@@ -403,15 +354,20 @@ Return Value:
     }
 
     if ((CapturedMinimumSize.QuadPart > MI_MAXIMUM_PAGEFILE_SIZE) ||
-        (CapturedMinimumSize.LowPart < MINIMUM_PAGE_FILE_SIZE)) {
+        (CapturedMinimumSize.LowPart < MINIMUM_PAGE_FILE_SIZE))
+    {
         return STATUS_INVALID_PARAMETER_2;
     }
 
-    if (PreviousMode != KernelMode) {
+    if (PreviousMode != KernelMode)
+    {
 
-        try {
+        try
+        {
             CapturedMaximumSize = *MaximumSize;
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // If an exception occurs during the probe or capture
@@ -422,22 +378,29 @@ Return Value:
             return GetExceptionCode();
         }
     }
-    else {
+    else
+    {
         CapturedMaximumSize = *MaximumSize;
     }
 
-    if (CapturedMaximumSize.QuadPart > MI_MAXIMUM_PAGEFILE_SIZE) {
+    if (CapturedMaximumSize.QuadPart > MI_MAXIMUM_PAGEFILE_SIZE)
+    {
         return STATUS_INVALID_PARAMETER_3;
     }
 
-    if (CapturedMinimumSize.QuadPart > CapturedMaximumSize.QuadPart) {
+    if (CapturedMinimumSize.QuadPart > CapturedMaximumSize.QuadPart)
+    {
         return STATUS_INVALID_PARAMETER_3;
     }
 
-    if (PreviousMode != KernelMode) {
-        try {
+    if (PreviousMode != KernelMode)
+    {
+        try
+        {
             CapturedName = *PageFileName;
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // If an exception occurs during the probe or capture
@@ -448,41 +411,40 @@ Return Value:
             return GetExceptionCode();
         }
     }
-    else {
+    else
+    {
         CapturedName = *PageFileName;
     }
 
     CapturedName.MaximumLength = CapturedName.Length;
 
-    if ((CapturedName.Length == 0) ||
-        (CapturedName.Length > MAXIMUM_FILENAME_LENGTH )) {
+    if ((CapturedName.Length == 0) || (CapturedName.Length > MAXIMUM_FILENAME_LENGTH))
+    {
         return STATUS_OBJECT_NAME_INVALID;
     }
 
-    CapturedBuffer = ExAllocatePoolWithTag (PagedPool,
-                                            (ULONG)CapturedName.Length,
-                                            '  mM');
+    CapturedBuffer = ExAllocatePoolWithTag(PagedPool, (ULONG)CapturedName.Length, '  mM');
 
-    if (CapturedBuffer == NULL) {
+    if (CapturedBuffer == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    if (PreviousMode != KernelMode) {
-        try {
+    if (PreviousMode != KernelMode)
+    {
+        try
+        {
 
-            ProbeForRead (CapturedName.Buffer,
-                          CapturedName.Length,
-                          sizeof (UCHAR));
+            ProbeForRead(CapturedName.Buffer, CapturedName.Length, sizeof(UCHAR));
 
             //
             // Copy the string to the allocated buffer.
             //
 
-            RtlCopyMemory (CapturedBuffer,
-                           CapturedName.Buffer,
-                           CapturedName.Length);
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+            RtlCopyMemory(CapturedBuffer, CapturedName.Buffer, CapturedName.Length);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // If an exception occurs during the probe or capture
@@ -490,20 +452,19 @@ Return Value:
             // return the exception code as the status value.
             //
 
-            ExFreePool (CapturedBuffer);
+            ExFreePool(CapturedBuffer);
 
             return GetExceptionCode();
         }
     }
-    else {
+    else
+    {
 
         //
         // Copy the string to the allocated buffer.
         //
 
-        RtlCopyMemory (CapturedBuffer,
-                       CapturedName.Buffer,
-                       CapturedName.Length);
+        RtlCopyMemory(CapturedBuffer, CapturedName.Buffer, CapturedName.Length);
     }
 
     //
@@ -515,135 +476,112 @@ Return Value:
     //
     // Create a security descriptor to protect the pagefile.
     //
-    Status = RtlCreateSecurityDescriptor (&SecurityDescriptor,
-                                          SECURITY_DESCRIPTOR_REVISION);
+    Status = RtlCreateSecurityDescriptor(&SecurityDescriptor, SECURITY_DESCRIPTOR_REVISION);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         goto ErrorReturn1;
     }
-    DaclLength = sizeof (ACL) + sizeof (ACCESS_ALLOWED_ACE) * 2 +
-                 RtlLengthSid (SeLocalSystemSid) +
-                 RtlLengthSid (SeAliasAdminsSid);
+    DaclLength =
+        sizeof(ACL) + sizeof(ACCESS_ALLOWED_ACE) * 2 + RtlLengthSid(SeLocalSystemSid) + RtlLengthSid(SeAliasAdminsSid);
 
-    Dacl = ExAllocatePoolWithTag (PagedPool, DaclLength, 'lcaD');
+    Dacl = ExAllocatePoolWithTag(PagedPool, DaclLength, 'lcaD');
 
-    if (Dacl == NULL) {
+    if (Dacl == NULL)
+    {
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto ErrorReturn1;
     }
 
-    Status = RtlCreateAcl (Dacl, DaclLength, ACL_REVISION);
+    Status = RtlCreateAcl(Dacl, DaclLength, ACL_REVISION);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         goto ErrorReturn1;
     }
 
-    Status = RtlAddAccessAllowedAce (Dacl,
-                                     ACL_REVISION,
-                                     FILE_ALL_ACCESS,
-                                     SeAliasAdminsSid);
+    Status = RtlAddAccessAllowedAce(Dacl, ACL_REVISION, FILE_ALL_ACCESS, SeAliasAdminsSid);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         goto ErrorReturn1;
     }
 
-    Status = RtlAddAccessAllowedAce (Dacl,
-                                     ACL_REVISION,
-                                     FILE_ALL_ACCESS,
-                                     SeLocalSystemSid);
+    Status = RtlAddAccessAllowedAce(Dacl, ACL_REVISION, FILE_ALL_ACCESS, SeLocalSystemSid);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         goto ErrorReturn1;
     }
-  
-    Status = RtlSetDaclSecurityDescriptor (&SecurityDescriptor,
-                                           TRUE,
-                                           Dacl,
-                                           FALSE);
 
-    if (!NT_SUCCESS (Status)) {
+    Status = RtlSetDaclSecurityDescriptor(&SecurityDescriptor, TRUE, Dacl, FALSE);
+
+    if (!NT_SUCCESS(Status))
+    {
         goto ErrorReturn1;
     }
-  
+
 
     //
     // Open a paging file and get the size.
     //
 
-    InitializeObjectAttributes (&PagingFileAttributes,
-                                &CapturedName,
-                                (OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE),
-                                NULL,
-                                NULL);
+    InitializeObjectAttributes(&PagingFileAttributes, &CapturedName, (OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE), NULL,
+                               NULL);
 
-//
-// Note this macro cannot use ULONG_PTR as it must also work on PAE.
-//
+    //
+    // Note this macro cannot use ULONG_PTR as it must also work on PAE.
+    //
 
-#define ROUND64_TO_PAGES(Size)  (((ULONG64)(Size) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1))
+#define ROUND64_TO_PAGES(Size) (((ULONG64)(Size) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1))
 
-    EndOfFileInformation.EndOfFile.QuadPart =
-                                ROUND64_TO_PAGES (CapturedMinimumSize.QuadPart);
+    EndOfFileInformation.EndOfFile.QuadPart = ROUND64_TO_PAGES(CapturedMinimumSize.QuadPart);
 
-    Status = IoCreateFile (&FileHandle,
-                           FILE_READ_DATA | FILE_WRITE_DATA | WRITE_DAC | SYNCHRONIZE,
-                           &PagingFileAttributes,
-                           &IoStatus,
-                           &CapturedMinimumSize,
-                           FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM,
-                           FILE_SHARE_WRITE,
-                           FILE_SUPERSEDE,
-                           FILE_NO_INTERMEDIATE_BUFFERING | FILE_NO_COMPRESSION | FILE_DELETE_ON_CLOSE,
-                           NULL,
-                           0L,
-                           CreateFileTypeNone,
-                           NULL,
-                           IO_OPEN_PAGING_FILE | IO_NO_PARAMETER_CHECKING);
+    Status =
+        IoCreateFile(&FileHandle, FILE_READ_DATA | FILE_WRITE_DATA | WRITE_DAC | SYNCHRONIZE, &PagingFileAttributes,
+                     &IoStatus, &CapturedMinimumSize, FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM, FILE_SHARE_WRITE,
+                     FILE_SUPERSEDE, FILE_NO_INTERMEDIATE_BUFFERING | FILE_NO_COMPRESSION | FILE_DELETE_ON_CLOSE, NULL,
+                     0L, CreateFileTypeNone, NULL, IO_OPEN_PAGING_FILE | IO_NO_PARAMETER_CHECKING);
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // Update the DACL in case there was a pre-existing regular file named
         // pagefile.sys (even supersede above does not do this).
         //
 
-        if (NT_SUCCESS(IoStatus.Status)) {
+        if (NT_SUCCESS(IoStatus.Status))
+        {
 
-            Status = ZwSetSecurityObject (FileHandle,
-                                          DACL_SECURITY_INFORMATION,
-                                          &SecurityDescriptor);
+            Status = ZwSetSecurityObject(FileHandle, DACL_SECURITY_INFORMATION, &SecurityDescriptor);
 
-            if (!NT_SUCCESS(Status)) {
+            if (!NT_SUCCESS(Status))
+            {
                 goto ErrorReturn2;
             }
         }
     }
-    else {
+    else
+    {
 
         //
         // Treat this as an extension of an existing pagefile maximum -
         // and try to open rather than create the paging file specified.
         //
 
-        Status = IoCreateFile (&FileHandle,
-                           FILE_WRITE_DATA | SYNCHRONIZE,
-                           &PagingFileAttributes,
-                           &IoStatus,
-                           &CapturedMinimumSize,
-                           FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM,
-                           FILE_SHARE_READ | FILE_SHARE_WRITE,
-                           FILE_OPEN,
-                           FILE_NO_INTERMEDIATE_BUFFERING | FILE_NO_COMPRESSION,
-                           (PVOID) NULL,
-                           0L,
-                           CreateFileTypeNone,
-                           (PVOID) NULL,
-                           IO_OPEN_PAGING_FILE | IO_NO_PARAMETER_CHECKING);
+        Status = IoCreateFile(&FileHandle, FILE_WRITE_DATA | SYNCHRONIZE, &PagingFileAttributes, &IoStatus,
+                              &CapturedMinimumSize, FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM,
+                              FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_OPEN,
+                              FILE_NO_INTERMEDIATE_BUFFERING | FILE_NO_COMPRESSION, (PVOID)NULL, 0L, CreateFileTypeNone,
+                              (PVOID)NULL, IO_OPEN_PAGING_FILE | IO_NO_PARAMETER_CHECKING);
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
 
 #if DBG
-            if (Status != STATUS_DISK_FULL) {
+            if (Status != STATUS_DISK_FULL)
+            {
                 DbgPrint("MM MODWRITE: unable to open paging file %wZ - status = %X \n", &CapturedName, Status);
             }
 #endif
@@ -651,29 +589,29 @@ Return Value:
             goto ErrorReturn1;
         }
 
-        Status = ObReferenceObjectByHandle (FileHandle,
-                                            FILE_READ_DATA | FILE_WRITE_DATA,
-                                            IoFileObjectType,
-                                            KernelMode,
-                                            (PVOID *)&File,
-                                            NULL);
+        Status = ObReferenceObjectByHandle(FileHandle, FILE_READ_DATA | FILE_WRITE_DATA, IoFileObjectType, KernelMode,
+                                           (PVOID *)&File, NULL);
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             goto ErrorReturn2;
         }
 
         FoundExisting = NULL;
 
-        ExAcquireFastMutex (&MmPageFileCreationLock);
+        ExAcquireFastMutex(&MmPageFileCreationLock);
 
-        for (PageFileNumber = 0; PageFileNumber < MmNumberOfPagingFiles; PageFileNumber += 1) {
-            if (MmPagingFile[PageFileNumber]->File->SectionObjectPointer == File->SectionObjectPointer) {
+        for (PageFileNumber = 0; PageFileNumber < MmNumberOfPagingFiles; PageFileNumber += 1)
+        {
+            if (MmPagingFile[PageFileNumber]->File->SectionObjectPointer == File->SectionObjectPointer)
+            {
                 FoundExisting = MmPagingFile[PageFileNumber];
                 break;
             }
         }
 
-        if (FoundExisting == NULL) {
+        if (FoundExisting == NULL)
+        {
             Status = STATUS_NOT_FOUND;
             goto ErrorReturn4;
         }
@@ -686,17 +624,20 @@ Return Value:
         NewMaxSizeInPages = (ULONG)(CapturedMaximumSize.QuadPart >> PAGE_SHIFT);
         NewMinSizeInPages = (ULONG)(CapturedMinimumSize.QuadPart >> PAGE_SHIFT);
 
-        if (FoundExisting->MinimumSize > NewMinSizeInPages) {
+        if (FoundExisting->MinimumSize > NewMinSizeInPages)
+        {
             Status = STATUS_INVALID_PARAMETER_2;
             goto ErrorReturn4;
         }
 
-        if (FoundExisting->MaximumSize > NewMaxSizeInPages) {
+        if (FoundExisting->MaximumSize > NewMaxSizeInPages)
+        {
             Status = STATUS_INVALID_PARAMETER_3;
             goto ErrorReturn4;
         }
 
-        if (NewMaxSizeInPages > FoundExisting->MaximumSize) {
+        if (NewMaxSizeInPages > FoundExisting->MaximumSize)
+        {
 
             //
             // Make sure that the pagefile increase doesn't cause the commit
@@ -705,7 +646,9 @@ Return Value:
             // than the 32-bit commit variable (max is 16TB).
             //
 
-            if (MmTotalCommitLimitMaximum + (NewMaxSizeInPages - FoundExisting->MaximumSize) <= MmTotalCommitLimitMaximum) {
+            if (MmTotalCommitLimitMaximum + (NewMaxSizeInPages - FoundExisting->MaximumSize) <=
+                MmTotalCommitLimitMaximum)
+            {
                 Status = STATUS_INVALID_PARAMETER_3;
                 goto ErrorReturn4;
             }
@@ -714,18 +657,19 @@ Return Value:
             // Handle the increase to the maximum paging file size.
             //
 
-            MiCreateBitMap (&NewBitmap, NewMaxSizeInPages, NonPagedPool);
+            MiCreateBitMap(&NewBitmap, NewMaxSizeInPages, NonPagedPool);
 
-            if (NewBitmap == NULL) {
+            if (NewBitmap == NULL)
+            {
                 Status = STATUS_INSUFFICIENT_RESOURCES;
                 goto ErrorReturn4;
             }
 
             OldBitmap = FoundExisting->Bitmap;
 
-            MiExtendPagingFileMaximum (PageFileNumber, NewBitmap);
+            MiExtendPagingFileMaximum(PageFileNumber, NewBitmap);
 
-            MiRemoveBitMap (&OldBitmap);
+            MiRemoveBitMap(&OldBitmap);
 
             //
             // We may be low on commitment and/or may have put a temporary
@@ -733,20 +677,24 @@ Return Value:
             // extension and immediately returning it.
             //
 
-            if (MmTotalCommittedPages + 100 > MmTotalCommitLimit) {
-                if (MiChargeCommitment (200, NULL) == TRUE) {
-                    MiReturnCommitment (200);
+            if (MmTotalCommittedPages + 100 > MmTotalCommitLimit)
+            {
+                if (MiChargeCommitment(200, NULL) == TRUE)
+                {
+                    MiReturnCommitment(200);
                 }
             }
         }
 
-        if (NewMinSizeInPages > FoundExisting->MinimumSize) {
+        if (NewMinSizeInPages > FoundExisting->MinimumSize)
+        {
 
             //
             // Handle the increase to the minimum paging file size.
             //
 
-            if (NewMinSizeInPages > FoundExisting->Size) {
+            if (NewMinSizeInPages > FoundExisting->Size)
+            {
 
                 //
                 // Queue a message to the segment dereferencing / pagefile
@@ -758,9 +706,9 @@ Return Value:
                 PageExtend.RequestedExpansionSize = NewMinSizeInPages - FoundExisting->Size;
                 PageExtend.Segment = NULL;
                 PageExtend.PageFileNumber = PageFileNumber;
-                KeInitializeEvent (&PageExtend.Event, NotificationEvent, FALSE);
+                KeInitializeEvent(&PageExtend.Event, NotificationEvent, FALSE);
 
-                MiIssuePageExtendRequest (&PageExtend);
+                MiIssuePageExtendRequest(&PageExtend);
             }
 
             //
@@ -768,12 +716,14 @@ Return Value:
             // Ensure subsequent contractions obey this new minimum.
             //
 
-            if (FoundExisting->Size >= NewMinSizeInPages) {
-                ASSERT (FoundExisting->Size >= FoundExisting->MinimumSize);
-                ASSERT (NewMinSizeInPages >= FoundExisting->MinimumSize);
+            if (FoundExisting->Size >= NewMinSizeInPages)
+            {
+                ASSERT(FoundExisting->Size >= FoundExisting->MinimumSize);
+                ASSERT(NewMinSizeInPages >= FoundExisting->MinimumSize);
                 FoundExisting->MinimumSize = NewMinSizeInPages;
             }
-            else {
+            else
+            {
 
                 //
                 // The pagefile could not be expanded to handle the new minimum.
@@ -789,7 +739,8 @@ Return Value:
         goto ErrorReturn4;
     }
 
-    if (!NT_SUCCESS(IoStatus.Status)) {
+    if (!NT_SUCCESS(IoStatus.Status))
+    {
         KdPrint(("MM MODWRITE: unable to open paging file %wZ - iosb %lx\n", &CapturedName, IoStatus.Status));
         Status = IoStatus.Status;
         goto ErrorReturn1;
@@ -802,41 +753,34 @@ Return Value:
     // than the 32-bit commit variable (max is 16TB).
     //
 
-    if (MmTotalCommitLimitMaximum + (CapturedMaximumSize.QuadPart >> PAGE_SHIFT)
-        <= MmTotalCommitLimitMaximum) {
+    if (MmTotalCommitLimitMaximum + (CapturedMaximumSize.QuadPart >> PAGE_SHIFT) <= MmTotalCommitLimitMaximum)
+    {
         Status = STATUS_INVALID_PARAMETER_3;
         goto ErrorReturn2;
     }
 
-    Status = ZwSetInformationFile (FileHandle,
-                                   &IoStatus,
-                                   &EndOfFileInformation,
-                                   sizeof(EndOfFileInformation),
-                                   FileEndOfFileInformation);
+    Status = ZwSetInformationFile(FileHandle, &IoStatus, &EndOfFileInformation, sizeof(EndOfFileInformation),
+                                  FileEndOfFileInformation);
 
-    if (!NT_SUCCESS(Status)) {
-        KdPrint(("MM MODWRITE: unable to set length of paging file %wZ status = %X \n",
-                 &CapturedName, Status));
+    if (!NT_SUCCESS(Status))
+    {
+        KdPrint(("MM MODWRITE: unable to set length of paging file %wZ status = %X \n", &CapturedName, Status));
         goto ErrorReturn2;
     }
 
-    if (!NT_SUCCESS(IoStatus.Status)) {
-        KdPrint(("MM MODWRITE: unable to set length of paging file %wZ - iosb %lx\n",
-                &CapturedName, IoStatus.Status));
+    if (!NT_SUCCESS(IoStatus.Status))
+    {
+        KdPrint(("MM MODWRITE: unable to set length of paging file %wZ - iosb %lx\n", &CapturedName, IoStatus.Status));
         Status = IoStatus.Status;
         goto ErrorReturn2;
     }
 
-    Status = ObReferenceObjectByHandle ( FileHandle,
-                                         FILE_READ_DATA | FILE_WRITE_DATA,
-                                         IoFileObjectType,
-                                         KernelMode,
-                                         (PVOID *)&File,
-                                         NULL );
+    Status = ObReferenceObjectByHandle(FileHandle, FILE_READ_DATA | FILE_WRITE_DATA, IoFileObjectType, KernelMode,
+                                       (PVOID *)&File, NULL);
 
-    if (!NT_SUCCESS(Status)) {
-        KdPrint(("MM MODWRITE: Unable to reference paging file - %wZ\n",
-                 &CapturedName));
+    if (!NT_SUCCESS(Status))
+    {
+        KdPrint(("MM MODWRITE: Unable to reference paging file - %wZ\n", &CapturedName));
         goto ErrorReturn2;
     }
 
@@ -845,16 +789,16 @@ Return Value:
     // the specified file is of a suitable type.
     //
 
-    deviceObject = IoGetRelatedDeviceObject (File);
+    deviceObject = IoGetRelatedDeviceObject(File);
 
     if ((deviceObject->DeviceType != FILE_DEVICE_DISK_FILE_SYSTEM) &&
         (deviceObject->DeviceType != FILE_DEVICE_NETWORK_FILE_SYSTEM) &&
         (deviceObject->DeviceType != FILE_DEVICE_DFS_VOLUME) &&
-        (deviceObject->DeviceType != FILE_DEVICE_DFS_FILE_SYSTEM)) {
-            KdPrint(("MM MODWRITE: Invalid paging file type - %x\n",
-                     deviceObject->DeviceType));
-            Status = STATUS_UNRECOGNIZED_VOLUME;
-            goto ErrorReturn3;
+        (deviceObject->DeviceType != FILE_DEVICE_DFS_FILE_SYSTEM))
+    {
+        KdPrint(("MM MODWRITE: Invalid paging file type - %x\n", deviceObject->DeviceType));
+        Status = STATUS_UNRECOGNIZED_VOLUME;
+        goto ErrorReturn3;
     }
 
     //
@@ -862,8 +806,9 @@ Return Value:
     // as a mapped data file.
     //
 
-    Status = MiCheckPageFileMapping (File);
-    if (!NT_SUCCESS(Status)) {
+    Status = MiCheckPageFileMapping(File);
+    if (!NT_SUCCESS(Status))
+    {
         goto ErrorReturn3;
     }
 
@@ -871,14 +816,11 @@ Return Value:
     // Make sure the volume is not a floppy disk.
     //
 
-    Status = IoQueryVolumeInformation ( File,
-                                        FileFsDeviceInformation,
-                                        sizeof(FILE_FS_DEVICE_INFORMATION),
-                                        &FileDeviceInfo,
-                                        &ReturnedLength
-                                      );
+    Status = IoQueryVolumeInformation(File, FileFsDeviceInformation, sizeof(FILE_FS_DEVICE_INFORMATION),
+                                      &FileDeviceInfo, &ReturnedLength);
 
-    if (FILE_FLOPPY_DISKETTE & FileDeviceInfo.Characteristics) {
+    if (FILE_FLOPPY_DISKETTE & FileDeviceInfo.Characteristics)
+    {
         Status = STATUS_FLOPPY_VOLUME;
         goto ErrorReturn3;
     }
@@ -892,8 +834,9 @@ Return Value:
     //
 
     Status = PpPagePathAssign(File);
-    if (!NT_SUCCESS(Status)) {
-        KdPrint(( "PpPagePathAssign(%wZ) FAILED: %x\n", &CapturedName, Status ));
+    if (!NT_SUCCESS(Status))
+    {
+        KdPrint(("PpPagePathAssign(%wZ) FAILED: %x\n", &CapturedName, Status));
         //
         // Fail the pagefile creation if the storage stack tells us to.
         //
@@ -901,11 +844,10 @@ Return Value:
         goto ErrorReturn3;
     }
 
-    NewPagingFile = ExAllocatePoolWithTag (NonPagedPool,
-                                           sizeof(MMPAGING_FILE),
-                                           '  mM');
+    NewPagingFile = ExAllocatePoolWithTag(NonPagedPool, sizeof(MMPAGING_FILE), '  mM');
 
-    if (NewPagingFile == NULL) {
+    if (NewPagingFile == NULL)
+    {
 
         //
         // Allocate pool failed.
@@ -915,7 +857,7 @@ Return Value:
         goto ErrorReturn3;
     }
 
-    RtlZeroMemory (NewPagingFile, sizeof(MMPAGING_FILE));
+    RtlZeroMemory(NewPagingFile, sizeof(MMPAGING_FILE));
 
     NewPagingFile->File = File;
     NewPagingFile->FileHandle = FileHandle;
@@ -923,55 +865,50 @@ Return Value:
     NewPagingFile->MinimumSize = NewPagingFile->Size;
     NewPagingFile->FreeSpace = NewPagingFile->Size - 1;
 
-    NewPagingFile->MaximumSize = (PFN_NUMBER)(CapturedMaximumSize.QuadPart >>
-                                                PAGE_SHIFT);
+    NewPagingFile->MaximumSize = (PFN_NUMBER)(CapturedMaximumSize.QuadPart >> PAGE_SHIFT);
 
     //
     // Adjust the commit page limit to reflect the new page file space.
     //
 
-    NewPagingFile->Entry[0] = ExAllocatePoolWithTag (NonPagedPool,
-                                            sizeof(MMMOD_WRITER_MDL_ENTRY) +
-                                            MmModifiedWriteClusterSize *
-                                            sizeof(PFN_NUMBER),
-                                            '  mM');
+    NewPagingFile->Entry[0] = ExAllocatePoolWithTag(
+        NonPagedPool, sizeof(MMMOD_WRITER_MDL_ENTRY) + MmModifiedWriteClusterSize * sizeof(PFN_NUMBER), '  mM');
 
-    if (NewPagingFile->Entry[0] == NULL) {
+    if (NewPagingFile->Entry[0] == NULL)
+    {
 
         //
         // Allocate pool failed.
         //
 
-        ExFreePool (NewPagingFile);
+        ExFreePool(NewPagingFile);
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto ErrorReturn3;
     }
 
-    RtlZeroMemory (NewPagingFile->Entry[0], sizeof(MMMOD_WRITER_MDL_ENTRY));
+    RtlZeroMemory(NewPagingFile->Entry[0], sizeof(MMMOD_WRITER_MDL_ENTRY));
 
     NewPagingFile->Entry[0]->PagingListHead = &MmPagingFileHeader;
 
     NewPagingFile->Entry[0]->PagingFile = NewPagingFile;
 
-    NewPagingFile->Entry[1] = ExAllocatePoolWithTag (NonPagedPool,
-                                            sizeof(MMMOD_WRITER_MDL_ENTRY) +
-                                            MmModifiedWriteClusterSize *
-                                            sizeof(PFN_NUMBER),
-                                            '  mM');
+    NewPagingFile->Entry[1] = ExAllocatePoolWithTag(
+        NonPagedPool, sizeof(MMMOD_WRITER_MDL_ENTRY) + MmModifiedWriteClusterSize * sizeof(PFN_NUMBER), '  mM');
 
-    if (NewPagingFile->Entry[1] == NULL) {
+    if (NewPagingFile->Entry[1] == NULL)
+    {
 
         //
         // Allocate pool failed.
         //
 
-        ExFreePool (NewPagingFile->Entry[0]);
-        ExFreePool (NewPagingFile);
+        ExFreePool(NewPagingFile->Entry[0]);
+        ExFreePool(NewPagingFile);
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto ErrorReturn3;
     }
 
-    RtlZeroMemory (NewPagingFile->Entry[1], sizeof(MMMOD_WRITER_MDL_ENTRY));
+    RtlZeroMemory(NewPagingFile->Entry[1], sizeof(MMMOD_WRITER_MDL_ENTRY));
 
     NewPagingFile->Entry[1]->PagingListHead = &MmPagingFileHeader;
 
@@ -979,26 +916,26 @@ Return Value:
 
     NewPagingFile->PageFileName = CapturedName;
 
-    MiCreateBitMap (&NewPagingFile->Bitmap,
-                    NewPagingFile->MaximumSize,
-                    NonPagedPool);
+    MiCreateBitMap(&NewPagingFile->Bitmap, NewPagingFile->MaximumSize, NonPagedPool);
 
-    if (NewPagingFile->Bitmap == NULL) {
+    if (NewPagingFile->Bitmap == NULL)
+    {
 
         //
         // Allocate pool failed.
         //
 
-        ExFreePool (NewPagingFile->Entry[0]);
-        ExFreePool (NewPagingFile->Entry[1]);
-        ExFreePool (NewPagingFile);
+        ExFreePool(NewPagingFile->Entry[0]);
+        ExFreePool(NewPagingFile->Entry[1]);
+        ExFreePool(NewPagingFile);
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto ErrorReturn3;
     }
 
-    Status = MiZeroPageFileFirstPage (File);
+    Status = MiZeroPageFileFirstPage(File);
 
-    if (!NT_SUCCESS (Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         //
         // The storage stack could not zero the first page of the file.
@@ -1006,33 +943,33 @@ Return Value:
         // fail the create.
         //
 
-        ExFreePool (NewPagingFile->Entry[0]);
-        ExFreePool (NewPagingFile->Entry[1]);
-        ExFreePool (NewPagingFile);
-        MiRemoveBitMap (&NewPagingFile->Bitmap);
+        ExFreePool(NewPagingFile->Entry[0]);
+        ExFreePool(NewPagingFile->Entry[1]);
+        ExFreePool(NewPagingFile);
+        MiRemoveBitMap(&NewPagingFile->Bitmap);
         goto ErrorReturn3;
     }
 
-    RtlSetAllBits (NewPagingFile->Bitmap);
+    RtlSetAllBits(NewPagingFile->Bitmap);
 
     //
     // Set the first bit as 0 is an invalid page location, clear the
     // following bits.
     //
 
-    RtlClearBits (NewPagingFile->Bitmap,
-                  1,
-                  (ULONG)(NewPagingFile->Size - 1));
+    RtlClearBits(NewPagingFile->Bitmap, 1, (ULONG)(NewPagingFile->Size - 1));
 
     //
     // See if this pagefile is on the boot partition, and if so, mark it
     // so we can find it later if someone enables crashdump.
     //
 
-    if (File->DeviceObject->Flags & DO_SYSTEM_BOOT_PARTITION) {
+    if (File->DeviceObject->Flags & DO_SYSTEM_BOOT_PARTITION)
+    {
         NewPagingFile->BootPartition = TRUE;
     }
-    else {
+    else
+    {
         NewPagingFile->BootPartition = FALSE;
     }
 
@@ -1040,7 +977,7 @@ Return Value:
     // Acquire the global page file creation mutex.
     //
 
-    ExAcquireFastMutex (&MmPageFileCreationLock);
+    ExAcquireFastMutex(&MmPageFileCreationLock);
 
     PageFileNumber = MmNumberOfPagingFiles;
 
@@ -1048,9 +985,10 @@ Return Value:
 
     NewPagingFile->PageFileNumber = PageFileNumber;
 
-    MiInsertPageFileInList ();
+    MiInsertPageFileInList();
 
-    if (PageFileNumber == 0) {
+    if (PageFileNumber == 0)
+    {
 
         //
         // The first paging file has been created and reservation of any
@@ -1058,10 +996,10 @@ Return Value:
         // page writer.
         //
 
-        MiReleaseModifiedWriter ();
+        MiReleaseModifiedWriter();
     }
 
-    ExReleaseFastMutex (&MmPageFileCreationLock);
+    ExReleaseFastMutex(&MmPageFileCreationLock);
 
     //
     // Note that the file handle (a kernel handle) is not closed during the
@@ -1071,9 +1009,9 @@ Return Value:
     // because successive IoCreateFile calls will fail.
     //
 
-    if ((!MmSystemPageFileLocated) &&
-        (File->DeviceObject->Flags & DO_SYSTEM_BOOT_PARTITION)) {
-        MmSystemPageFileLocated = IoInitializeCrashDump (FileHandle);
+    if ((!MmSystemPageFileLocated) && (File->DeviceObject->Flags & DO_SYSTEM_BOOT_PARTITION))
+    {
+        MmSystemPageFileLocated = IoInitializeCrashDump(FileHandle);
     }
 
     return STATUS_SUCCESS;
@@ -1083,28 +1021,27 @@ Return Value:
     //
 
 ErrorReturn4:
-    ExReleaseFastMutex (&MmPageFileCreationLock);
+    ExReleaseFastMutex(&MmPageFileCreationLock);
 
 ErrorReturn3:
-    ObDereferenceObject (File);
+    ObDereferenceObject(File);
 
 ErrorReturn2:
-    ZwClose (FileHandle);
+    ZwClose(FileHandle);
 
 ErrorReturn1:
-    if (Dacl != NULL) {
-        ExFreePool (Dacl);
+    if (Dacl != NULL)
+    {
+        ExFreePool(Dacl);
     }
-    ExFreePool (CapturedBuffer);
+    ExFreePool(CapturedBuffer);
 
     return Status;
 }
 
-
+
 HANDLE
-MmGetSystemPageFile (
-    VOID
-    )
+MmGetSystemPageFile(VOID)
 /*++
 
 Routine Description:
@@ -1132,22 +1069,22 @@ Return Value:
 
     FileHandle = NULL;
 
-    ExAcquireFastMutex (&MmPageFileCreationLock);
-    for (PageFileNumber = 0; PageFileNumber < MmNumberOfPagingFiles; PageFileNumber += 1) {
-        if (MmPagingFile[PageFileNumber]->BootPartition) {
+    ExAcquireFastMutex(&MmPageFileCreationLock);
+    for (PageFileNumber = 0; PageFileNumber < MmNumberOfPagingFiles; PageFileNumber += 1)
+    {
+        if (MmPagingFile[PageFileNumber]->BootPartition)
+        {
             FileHandle = MmPagingFile[PageFileNumber]->FileHandle;
         }
     }
-    ExReleaseFastMutex (&MmPageFileCreationLock);
+    ExReleaseFastMutex(&MmPageFileCreationLock);
 
     return FileHandle;
 }
 
-
+
 LOGICAL
-MmIsFileObjectAPagingFile (
-    IN PFILE_OBJECT FileObject
-    )
+MmIsFileObjectAPagingFile(IN PFILE_OBJECT FileObject)
 /*++
 
 Routine Description:
@@ -1176,9 +1113,11 @@ Return Value:
     PagingFile = MmPagingFile;
     PagingFileEnd = PagingFile + MmNumberOfPagingFiles;
 
-    while (PagingFile < PagingFileEnd) {
+    while (PagingFile < PagingFileEnd)
+    {
         PageFile = *PagingFile;
-        if (PageFile->File == FileObject) {
+        if (PageFile->File == FileObject)
+        {
             return TRUE;
         }
         PagingFile += 1;
@@ -1187,12 +1126,8 @@ Return Value:
     return FALSE;
 }
 
-
-VOID
-MiExtendPagingFileMaximum (
-    IN ULONG PageFileNumber,
-    IN PRTL_BITMAP NewBitmap
-    )
+
+VOID MiExtendPagingFileMaximum(IN ULONG PageFileNumber, IN PRTL_BITMAP NewBitmap)
 
 /*++
 
@@ -1223,21 +1158,19 @@ Environment:
 
     OldBitmap = MmPagingFile[PageFileNumber]->Bitmap;
 
-    RtlSetAllBits (NewBitmap);
+    RtlSetAllBits(NewBitmap);
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
     //
     // Copy the bits from the existing map.
     //
 
-    RtlCopyMemory (NewBitmap->Buffer,
-                   OldBitmap->Buffer,
-                   ((OldBitmap->SizeOfBitMap + 31) / 32) * sizeof (ULONG));
+    RtlCopyMemory(NewBitmap->Buffer, OldBitmap->Buffer, ((OldBitmap->SizeOfBitMap + 31) / 32) * sizeof(ULONG));
 
     Delta = NewBitmap->SizeOfBitMap - OldBitmap->SizeOfBitMap;
 
-    InterlockedExchangeAddSizeT (&MmTotalCommitLimitMaximum, Delta);
+    InterlockedExchangeAddSizeT(&MmTotalCommitLimitMaximum, Delta);
 
     MmPagingFile[PageFileNumber]->MaximumSize = NewBitmap->SizeOfBitMap;
 
@@ -1247,19 +1180,16 @@ Environment:
     // If any MDLs are waiting for space, get them up now.
     //
 
-    if (!IsListEmpty (&MmFreePagingSpaceLow)) {
-        MiUpdateModifiedWriterMdls (PageFileNumber);
+    if (!IsListEmpty(&MmFreePagingSpaceLow))
+    {
+        MiUpdateModifiedWriterMdls(PageFileNumber);
     }
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 }
 
-
-VOID
-MiFinishPageFileExtension (
-    IN ULONG PageFileNumber,
-    IN PFN_NUMBER AdditionalAllocation
-    )
+
+VOID MiFinishPageFileExtension(IN ULONG PageFileNumber, IN PFN_NUMBER AdditionalAllocation)
 
 /*++
 
@@ -1294,31 +1224,25 @@ Return Value:
 
     PagingFile = MmPagingFile[PageFileNumber];
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    ASSERT (RtlCheckBit (PagingFile->Bitmap, PagingFile->Size) == 1);
+    ASSERT(RtlCheckBit(PagingFile->Bitmap, PagingFile->Size) == 1);
 
-    RtlClearBits (PagingFile->Bitmap,
-                  (ULONG)PagingFile->Size,
-                  (ULONG)AdditionalAllocation);
+    RtlClearBits(PagingFile->Bitmap, (ULONG)PagingFile->Size, (ULONG)AdditionalAllocation);
 
     PagingFile->Size += AdditionalAllocation;
     PagingFile->FreeSpace += AdditionalAllocation;
 
-    MiUpdateModifiedWriterMdls (PageFileNumber);
+    MiUpdateModifiedWriterMdls(PageFileNumber);
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
     return;
 }
 
-
+
 SIZE_T
-MiAttemptPageFileExtension (
-    IN ULONG PageFileNumber,
-    IN SIZE_T SizeNeeded,
-    IN LOGICAL Maximum
-    )
+MiAttemptPageFileExtension(IN ULONG PageFileNumber, IN SIZE_T SizeNeeded, IN LOGICAL Maximum)
 
 /*++
 
@@ -1359,8 +1283,8 @@ Return Value:
     // Check to see if this page file is at the maximum.
     //
 
-    if (MmPagingFile[PageFileNumber]->Size ==
-                                    MmPagingFile[PageFileNumber]->MaximumSize) {
+    if (MmPagingFile[PageFileNumber]->Size == MmPagingFile[PageFileNumber]->MaximumSize)
+    {
         return 0;
     }
 
@@ -1368,13 +1292,11 @@ Return Value:
     // Find out how much free space is on this volume.
     //
 
-    status = IoQueryVolumeInformation (MmPagingFile[PageFileNumber]->File,
-                                       FileFsSizeInformation,
-                                       sizeof(FileInfo),
-                                       &FileInfo,
-                                       &ReturnedLength);
+    status = IoQueryVolumeInformation(MmPagingFile[PageFileNumber]->File, FileFsSizeInformation, sizeof(FileInfo),
+                                      &FileInfo, &ReturnedLength);
 
-    if (!NT_SUCCESS (status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // The volume query did not succeed - return 0 indicating
@@ -1395,10 +1317,12 @@ retry:
 
     SizeToExtend = SizeNeeded;
 
-    if (SizeNeeded < MinimumExtension) {
+    if (SizeNeeded < MinimumExtension)
+    {
         SizeToExtend = MinimumExtension;
     }
-    else {
+    else
+    {
         MinimumExtension = MmPageFileExtension;
     }
 
@@ -1406,15 +1330,16 @@ retry:
     // Don't go over the maximum size for the paging file.
     //
 
-    ASSERT (MmPagingFile[PageFileNumber]->MaximumSize >= MmPagingFile[PageFileNumber]->Size);
+    ASSERT(MmPagingFile[PageFileNumber]->MaximumSize >= MmPagingFile[PageFileNumber]->Size);
 
-    PagesAvailable = MmPagingFile[PageFileNumber]->MaximumSize -
-                     MmPagingFile[PageFileNumber]->Size;
+    PagesAvailable = MmPagingFile[PageFileNumber]->MaximumSize - MmPagingFile[PageFileNumber]->Size;
 
-    if (SizeToExtend > PagesAvailable) {
+    if (SizeToExtend > PagesAvailable)
+    {
         SizeToExtend = PagesAvailable;
 
-        if ((SizeToExtend < SizeNeeded) && (Maximum == FALSE)) {
+        if ((SizeToExtend < SizeNeeded) && (Maximum == FALSE))
+        {
 
             //
             // Can't meet the requested (mandatory) requirement.
@@ -1430,22 +1355,22 @@ retry:
 
     AllocSize = FileInfo.SectorsPerAllocationUnit * FileInfo.BytesPerSector;
 
-    BytesAvailable = RtlExtendedIntegerMultiply (
-                        FileInfo.AvailableAllocationUnits,
-                        AllocSize);
+    BytesAvailable = RtlExtendedIntegerMultiply(FileInfo.AvailableAllocationUnits, AllocSize);
 
-    if ((UINT64)BytesAvailable.QuadPart > (UINT64)MmMinimumFreeDiskSpace) {
+    if ((UINT64)BytesAvailable.QuadPart > (UINT64)MmMinimumFreeDiskSpace)
+    {
 
-        BytesAvailable.QuadPart = BytesAvailable.QuadPart -
-                                    (LONGLONG)MmMinimumFreeDiskSpace;
+        BytesAvailable.QuadPart = BytesAvailable.QuadPart - (LONGLONG)MmMinimumFreeDiskSpace;
 
-        if ((UINT64)BytesAvailable.QuadPart > (UINT64)(SizeToExtend << PAGE_SHIFT)) {
+        if ((UINT64)BytesAvailable.QuadPart > (UINT64)(SizeToExtend << PAGE_SHIFT))
+        {
             BytesAvailable.QuadPart = (LONGLONG)(SizeToExtend << PAGE_SHIFT);
         }
 
         PagesAvailable = (PFN_NUMBER)(BytesAvailable.QuadPart >> PAGE_SHIFT);
 
-        if ((Maximum == FALSE) && (PagesAvailable < SizeNeeded)) {
+        if ((Maximum == FALSE) && (PagesAvailable < SizeNeeded))
+        {
 
             //
             // Can't meet the requested (mandatory) requirement.
@@ -1453,9 +1378,9 @@ retry:
 
             return 0;
         }
-
     }
-    else {
+    else
+    {
 
         //
         // Not enough space is available period.
@@ -1464,12 +1389,11 @@ retry:
         return 0;
     }
 
-#if defined (_WIN64) || defined (_X86PAE_)
+#if defined(_WIN64) || defined(_X86PAE_)
     EndOfFileInformation.EndOfFile.QuadPart =
-              ((ULONG64)MmPagingFile[PageFileNumber]->Size + PagesAvailable) * PAGE_SIZE;
+        ((ULONG64)MmPagingFile[PageFileNumber]->Size + PagesAvailable) * PAGE_SIZE;
 #else
-    EndOfFileInformation.EndOfFile.LowPart =
-              (MmPagingFile[PageFileNumber]->Size + PagesAvailable) * PAGE_SIZE;
+    EndOfFileInformation.EndOfFile.LowPart = (MmPagingFile[PageFileNumber]->Size + PagesAvailable) * PAGE_SIZE;
 
     //
     // Set high part to zero as paging files are limited to 4GB.
@@ -1482,17 +1406,17 @@ retry:
     // Attempt to extend the file by setting the end-of-file position.
     //
 
-    ASSERT (KeGetCurrentIrql() < DISPATCH_LEVEL);
+    ASSERT(KeGetCurrentIrql() < DISPATCH_LEVEL);
 
-    status = IoSetInformation (MmPagingFile[PageFileNumber]->File,
-                               FileEndOfFileInformation,
-                               sizeof(FILE_END_OF_FILE_INFORMATION),
-                               &EndOfFileInformation);
+    status = IoSetInformation(MmPagingFile[PageFileNumber]->File, FileEndOfFileInformation,
+                              sizeof(FILE_END_OF_FILE_INFORMATION), &EndOfFileInformation);
 
-    if (status != STATUS_SUCCESS) {
-        KdPrint(("MM MODWRITE: page file extension failed %p %lx\n",PagesAvailable,status));
+    if (status != STATUS_SUCCESS)
+    {
+        KdPrint(("MM MODWRITE: page file extension failed %p %lx\n", PagesAvailable, status));
 
-        if (MinimumExtension != MmPageFileExtension) {
+        if (MinimumExtension != MmPageFileExtension)
+        {
             MinimumExtension = MmPageFileExtension;
             goto retry;
         }
@@ -1500,15 +1424,13 @@ retry:
         return 0;
     }
 
-    MiFinishPageFileExtension (PageFileNumber, PagesAvailable);
+    MiFinishPageFileExtension(PageFileNumber, PagesAvailable);
 
     return PagesAvailable;
 }
-
+
 SIZE_T
-MiExtendPagingFiles (
-    IN PMMPAGE_FILE_EXPANSION PageExpand
-    )
+MiExtendPagingFiles(IN PMMPAGE_FILE_EXPANSION PageExpand)
 
 /*++
 
@@ -1546,24 +1468,27 @@ Return Value:
     DesiredQuota = PageExpand->RequestedExpansionSize;
     PageFileNumber = PageExpand->PageFileNumber;
 
-    ASSERT (PageExpand->ActualExpansion == 0);
+    ASSERT(PageExpand->ActualExpansion == 0);
 
-    ASSERT (PageFileNumber < MmNumberOfPagingFiles || PageFileNumber == MI_EXTEND_ANY_PAGEFILE);
+    ASSERT(PageFileNumber < MmNumberOfPagingFiles || PageFileNumber == MI_EXTEND_ANY_PAGEFILE);
 
-    if (MmNumberOfPagingFiles == 0) {
-        InterlockedExchange ((PLONG)&PageExpand->InProgress, 0);
+    if (MmNumberOfPagingFiles == 0)
+    {
+        InterlockedExchange((PLONG)&PageExpand->InProgress, 0);
         return 0;
     }
 
-    if (PageFileNumber < MmNumberOfPagingFiles) {
+    if (PageFileNumber < MmNumberOfPagingFiles)
+    {
         i = PageFileNumber;
         ExtendedSize = MmPagingFile[i]->MaximumSize - MmPagingFile[i]->Size;
-        if (ExtendedSize < DesiredQuota) {
-            InterlockedExchange ((PLONG)&PageExpand->InProgress, 0);
+        if (ExtendedSize < DesiredQuota)
+        {
+            InterlockedExchange((PLONG)&PageExpand->InProgress, 0);
             return 0;
         }
 
-        ExtendedSize = MiAttemptPageFileExtension (i, DesiredQuota, FALSE);
+        ExtendedSize = MiAttemptPageFileExtension(i, DesiredQuota, FALSE);
         goto alldone;
     }
 
@@ -1584,8 +1509,9 @@ Return Value:
     // Check to make sure the request does not wrap.
     //
 
-    if (SizeNeeded < CommittedPages) {
-        InterlockedExchange ((PLONG)&PageExpand->InProgress, 0);
+    if (SizeNeeded < CommittedPages)
+    {
+        InterlockedExchange((PLONG)&PageExpand->InProgress, 0);
         return 0;
     }
 
@@ -1593,9 +1519,10 @@ Return Value:
     // Check to see if ample space already exists.
     //
 
-    if (SizeNeeded <= CommitLimit) {
+    if (SizeNeeded <= CommitLimit)
+    {
         PageExpand->ActualExpansion = 1;
-        InterlockedExchange ((PLONG)&PageExpand->InProgress, 0);
+        InterlockedExchange((PLONG)&PageExpand->InProgress, 0);
         return 1;
     }
 
@@ -1604,7 +1531,8 @@ Return Value:
     //
 
     SizeNeeded -= CommitLimit;
-    if (SizeNeeded > MmSystemCommitReserve) {
+    if (SizeNeeded > MmSystemCommitReserve)
+    {
         SizeNeeded -= MmSystemCommitReserve;
     }
 
@@ -1615,13 +1543,15 @@ Return Value:
     i = 0;
     ExtendedSize = 0;
 
-    do {
+    do
+    {
         ExtendedSize += MmPagingFile[i]->MaximumSize - MmPagingFile[i]->Size;
         i += 1;
     } while (i < MmNumberOfPagingFiles);
 
-    if (ExtendedSize < SizeNeeded) {
-        InterlockedExchange ((PLONG)&PageExpand->InProgress, 0);
+    if (ExtendedSize < SizeNeeded)
+    {
+        InterlockedExchange((PLONG)&PageExpand->InProgress, 0);
         return 0;
     }
 
@@ -1630,24 +1560,27 @@ Return Value:
     //
 
     i = 0;
-    do {
-        ExtendedSize = MiAttemptPageFileExtension (i, SizeNeeded, FALSE);
-        if (ExtendedSize != 0) {
+    do
+    {
+        ExtendedSize = MiAttemptPageFileExtension(i, SizeNeeded, FALSE);
+        if (ExtendedSize != 0)
+        {
             goto alldone;
         }
         i += 1;
     } while (i < MmNumberOfPagingFiles);
 
-    ASSERT (ExtendedSize == 0);
+    ASSERT(ExtendedSize == 0);
 
-    if (MmNumberOfPagingFiles == 1) {
+    if (MmNumberOfPagingFiles == 1)
+    {
 
         //
         // If the attempt didn't succeed for one (not enough disk space free) -
         // don't try to set it to the maximum size.
         //
 
-        InterlockedExchange ((PLONG)&PageExpand->InProgress, 0);
+        InterlockedExchange((PLONG)&PageExpand->InProgress, 0);
         return 0;
     }
 
@@ -1656,12 +1589,12 @@ Return Value:
     //
 
     i = 0;
-    do {
-        ASSERT (SizeNeeded > ExtendedSize);
-        ExtendedSize += MiAttemptPageFileExtension (i,
-                                                    SizeNeeded - ExtendedSize,
-                                                    TRUE);
-        if (ExtendedSize >= SizeNeeded) {
+    do
+    {
+        ASSERT(SizeNeeded > ExtendedSize);
+        ExtendedSize += MiAttemptPageFileExtension(i, SizeNeeded - ExtendedSize, TRUE);
+        if (ExtendedSize >= SizeNeeded)
+        {
             goto alldone;
         }
         i += 1;
@@ -1671,12 +1604,12 @@ Return Value:
     // Not enough space is available.
     //
 
-    InterlockedExchange ((PLONG)&PageExpand->InProgress, 0);
+    InterlockedExchange((PLONG)&PageExpand->InProgress, 0);
     return 0;
 
 alldone:
 
-    ASSERT (ExtendedSize != 0);
+    ASSERT(ExtendedSize != 0);
 
     PageExpand->ActualExpansion = ExtendedSize;
 
@@ -1684,22 +1617,19 @@ alldone:
     // Increase the systemwide commit limit.
     //
 
-    InterlockedExchangeAddSizeT (&MmTotalCommitLimit, ExtendedSize);
+    InterlockedExchangeAddSizeT(&MmTotalCommitLimit, ExtendedSize);
 
     //
     // Clear the in progress flag - if this is the global cantexpand structure
     // it is possible for it to be immediately reused.
     //
 
-    InterlockedExchange ((PLONG)&PageExpand->InProgress, 0);
+    InterlockedExchange((PLONG)&PageExpand->InProgress, 0);
 
     return ExtendedSize;
 }
-
-VOID
-MiContractPagingFiles (
-    VOID
-    )
+
+VOID MiContractPagingFiles(VOID)
 
 /*++
 
@@ -1731,53 +1661,53 @@ Return Value:
     // made when the packet below is processed by the dereference thread.
     //
 
-    if (MmTotalCommittedPages >= ((MmTotalCommitLimit/10)*8)) {
+    if (MmTotalCommittedPages >= ((MmTotalCommitLimit / 10) * 8))
+    {
         return;
     }
 
-    if ((MmTotalCommitLimit - MmMinimumPageFileReduction) <=
-                                                       MmTotalCommittedPages) {
+    if ((MmTotalCommitLimit - MmMinimumPageFileReduction) <= MmTotalCommittedPages)
+    {
         return;
     }
 
-    for (i = 0; i < MmNumberOfPagingFiles; i += 1) {
-        if (MmPagingFile[i]->Size != MmPagingFile[i]->MinimumSize) {
-            if (MmPagingFile[i]->FreeSpace > MmMinimumPageFileReduction) {
+    for (i = 0; i < MmNumberOfPagingFiles; i += 1)
+    {
+        if (MmPagingFile[i]->Size != MmPagingFile[i]->MinimumSize)
+        {
+            if (MmPagingFile[i]->FreeSpace > MmMinimumPageFileReduction)
+            {
                 break;
             }
         }
     }
 
-    if (i == MmNumberOfPagingFiles) {
+    if (i == MmNumberOfPagingFiles)
+    {
         return;
     }
 
-    PageReduce = ExAllocatePoolWithTag (NonPagedPool,
-                                        sizeof(MMPAGE_FILE_EXPANSION),
-                                        '  mM');
+    PageReduce = ExAllocatePoolWithTag(NonPagedPool, sizeof(MMPAGE_FILE_EXPANSION), '  mM');
 
-    if (PageReduce == NULL) {
+    if (PageReduce == NULL)
+    {
         return;
     }
 
     PageReduce->Segment = NULL;
     PageReduce->RequestedExpansionSize = MI_CONTRACT_PAGEFILES;
 
-    ExAcquireSpinLock (&MmDereferenceSegmentHeader.Lock, &OldIrql);
+    ExAcquireSpinLock(&MmDereferenceSegmentHeader.Lock, &OldIrql);
 
-    InsertTailList (&MmDereferenceSegmentHeader.ListHead,
-                    &PageReduce->DereferenceList);
+    InsertTailList(&MmDereferenceSegmentHeader.ListHead, &PageReduce->DereferenceList);
 
-    ExReleaseSpinLock (&MmDereferenceSegmentHeader.Lock, OldIrql);
+    ExReleaseSpinLock(&MmDereferenceSegmentHeader.Lock, OldIrql);
 
-    KeReleaseSemaphore (&MmDereferenceSegmentHeader.Semaphore, 0L, 1L, FALSE);
+    KeReleaseSemaphore(&MmDereferenceSegmentHeader.Semaphore, 0L, 1L, FALSE);
     return;
 }
-
-VOID
-MiAttemptPageFileReduction (
-    VOID
-    )
+
+VOID MiAttemptPageFileReduction(VOID)
 
 /*++
 
@@ -1832,18 +1762,21 @@ Return Value:
 
     SafetyMargin = 2 * MmMinimumPageFileReduction;
 
-    if (CommittedPages + SafetyMargin >= ((CommitLimit/10)*8)) {
+    if (CommittedPages + SafetyMargin >= ((CommitLimit / 10) * 8))
+    {
         return;
     }
 
-    MaxReduce = ((CommitLimit/10)*8) - (CommittedPages + SafetyMargin);
+    MaxReduce = ((CommitLimit / 10) * 8) - (CommittedPages + SafetyMargin);
 
-    ASSERT ((SSIZE_T)MaxReduce > 0);
-    ASSERT ((LONG_PTR)MaxReduce >= 0);
+    ASSERT((SSIZE_T)MaxReduce > 0);
+    ASSERT((LONG_PTR)MaxReduce >= 0);
 
-    for (i = 0; i < MmNumberOfPagingFiles; i += 1) {
+    for (i = 0; i < MmNumberOfPagingFiles; i += 1)
+    {
 
-        if (MaxReduce < MmMinimumPageFileReduction) {
+        if (MaxReduce < MmMinimumPageFileReduction)
+        {
 
             //
             // Don't reduce any more paging files.
@@ -1854,7 +1787,8 @@ Return Value:
 
         PagingFile = MmPagingFile[i];
 
-        if (PagingFile->Size == PagingFile->MinimumSize) {
+        if (PagingFile->Size == PagingFile->MinimumSize)
+        {
             continue;
         }
 
@@ -1863,7 +1797,8 @@ Return Value:
         // made later.
         //
 
-        if (PagingFile->FreeSpace < MmMinimumPageFileReduction) {
+        if (PagingFile->FreeSpace < MmMinimumPageFileReduction)
+        {
             continue;
         }
 
@@ -1875,7 +1810,8 @@ Return Value:
         TryBit = PagingFile->Size - MmMinimumPageFileReduction;
         TryReduction = MmMinimumPageFileReduction;
 
-        if (TryBit <= PagingFile->MinimumSize) {
+        if (TryBit <= PagingFile->MinimumSize)
+        {
             TryBit = PagingFile->MinimumSize;
             TryReduction = PagingFile->Size - PagingFile->MinimumSize;
         }
@@ -1883,15 +1819,17 @@ Return Value:
         StartReduction = 0;
         ReductionSize = 0;
 
-        LOCK_PFN (OldIrql);
+        LOCK_PFN(OldIrql);
 
-        do {
+        do
+        {
 
             //
             // Try to reduce.
             //
 
-            if ((ReductionSize + TryReduction) > MaxReduce) {
+            if ((ReductionSize + TryReduction) > MaxReduce)
+            {
 
                 //
                 // The reduction attempt would remove more
@@ -1901,9 +1839,8 @@ Return Value:
                 break;
             }
 
-            if (RtlAreBitsClear (PagingFile->Bitmap,
-                                 (ULONG)TryBit,
-                                 (ULONG)TryReduction)) {
+            if (RtlAreBitsClear(PagingFile->Bitmap, (ULONG)TryBit, (ULONG)TryReduction))
+            {
 
                 //
                 // Can reduce it by TryReduction, see if it can
@@ -1913,21 +1850,25 @@ Return Value:
                 StartReduction = TryBit;
                 ReductionSize += TryReduction;
 
-                if (StartReduction == PagingFile->MinimumSize) {
+                if (StartReduction == PagingFile->MinimumSize)
+                {
                     break;
                 }
 
                 TryBit = StartReduction - MmMinimumPageFileReduction;
 
-                if (TryBit <= PagingFile->MinimumSize) {
+                if (TryBit <= PagingFile->MinimumSize)
+                {
                     TryReduction -= PagingFile->MinimumSize - TryBit;
                     TryBit = PagingFile->MinimumSize;
                 }
-                else {
+                else
+                {
                     TryReduction = MmMinimumPageFileReduction;
                 }
             }
-            else {
+            else
+            {
 
                 //
                 // Reduction has failed.
@@ -1943,7 +1884,8 @@ Return Value:
         // pages within the start reduction range.
         //
 
-        if (StartReduction != 0) {
+        if (StartReduction != 0)
+        {
 
             //
             // There is an outstanding write past where the
@@ -1952,10 +1894,11 @@ Return Value:
             // the file.
             //
 
-            ASSERT (MM_PAGING_FILE_MDLS == 2);
+            ASSERT(MM_PAGING_FILE_MDLS == 2);
 
             if ((PagingFile->Entry[0]->LastPageToWrite > StartReduction) ||
-                (PagingFile->Entry[1]->LastPageToWrite > StartReduction)) {
+                (PagingFile->Entry[1]->LastPageToWrite > StartReduction))
+            {
 
                 StartReduction = 0;
             }
@@ -1965,8 +1908,9 @@ Return Value:
         // If there are no pages to remove, march on to the next pagefile.
         //
 
-        if (StartReduction == 0) {
-            UNLOCK_PFN (OldIrql);
+        if (StartReduction == 0)
+        {
+            UNLOCK_PFN(OldIrql);
             continue;
         }
 
@@ -1974,24 +1918,22 @@ Return Value:
         // Reduce the paging file's size and free space.
         //
 
-        ASSERT (ReductionSize == (PagingFile->Size - StartReduction));
+        ASSERT(ReductionSize == (PagingFile->Size - StartReduction));
 
         PagingFile->Size = StartReduction;
         PagingFile->FreeSpace -= ReductionSize;
 
-        RtlSetBits (PagingFile->Bitmap,
-                    (ULONG)StartReduction,
-                    (ULONG)ReductionSize );
+        RtlSetBits(PagingFile->Bitmap, (ULONG)StartReduction, (ULONG)ReductionSize);
 
         //
         // Release the PFN lock now that the size info
         // has been updated.
         //
 
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
 
         MaxReduce -= ReductionSize;
-        ASSERT ((LONG)MaxReduce >= 0);
+        ASSERT((LONG)MaxReduce >= 0);
 
         //
         // Change the commit limit to reflect the returned page file space.
@@ -1999,20 +1941,19 @@ Return Value:
         // reduction is still a sensible thing to do.
         //
 
-        if (MiChargeTemporaryCommitmentForReduction (ReductionSize + SafetyMargin) == FALSE) {
+        if (MiChargeTemporaryCommitmentForReduction(ReductionSize + SafetyMargin) == FALSE)
+        {
 
-            LOCK_PFN (OldIrql);
+            LOCK_PFN(OldIrql);
 
             PagingFile->Size = StartReduction + ReductionSize;
             PagingFile->FreeSpace += ReductionSize;
 
-            RtlClearBits (PagingFile->Bitmap,
-                          (ULONG)StartReduction,
-                          (ULONG)ReductionSize );
+            RtlClearBits(PagingFile->Bitmap, (ULONG)StartReduction, (ULONG)ReductionSize);
 
-            UNLOCK_PFN (OldIrql);
+            UNLOCK_PFN(OldIrql);
 
-            ASSERT ((LONG)(MaxReduce + ReductionSize) >= 0);
+            ASSERT((LONG)(MaxReduce + ReductionSize) >= 0);
 
             break;
         }
@@ -2023,18 +1964,17 @@ Return Value:
         // in this very thread) can consume past the limit.
         //
 
-        InterlockedExchangeAddSizeT (&MmTotalCommitLimit, 0 - ReductionSize);
+        InterlockedExchangeAddSizeT(&MmTotalCommitLimit, 0 - ReductionSize);
 
         //
         // Now that the systemwide commit limit has been lowered, the amount
         // we have removed can be safely returned.
         //
 
-        MiReturnCommitment (ReductionSize + SafetyMargin);
+        MiReturnCommitment(ReductionSize + SafetyMargin);
 
-#if defined (_WIN64) || defined (_X86PAE_)
-        FileAllocationInfo.AllocationSize.QuadPart =
-                                       ((ULONG64)StartReduction << PAGE_SHIFT);
+#if defined(_WIN64) || defined(_X86PAE_)
+        FileAllocationInfo.AllocationSize.QuadPart = ((ULONG64)StartReduction << PAGE_SHIFT);
 
 #else
         FileAllocationInfo.AllocationSize.LowPart = StartReduction * PAGE_SIZE;
@@ -2052,12 +1992,10 @@ Return Value:
         // setting a new end of file.
         //
 
-        ASSERT (KeGetCurrentIrql() < DISPATCH_LEVEL);
+        ASSERT(KeGetCurrentIrql() < DISPATCH_LEVEL);
 
-        status = IoSetInformation (PagingFile->File,
-                                   FileAllocationInformation,
-                                   sizeof(FILE_ALLOCATION_INFORMATION),
-                                   &FileAllocationInfo);
+        status = IoSetInformation(PagingFile->File, FileAllocationInformation, sizeof(FILE_ALLOCATION_INFORMATION),
+                                  &FileAllocationInfo);
 #if DBG
         //
         // Ignore errors on truncating the paging file
@@ -2065,8 +2003,9 @@ Return Value:
         // than the pagefile holds.
         //
 
-        if (status != STATUS_SUCCESS) {
-            DbgPrint ("MM: pagefile truncate status %lx\n", status);
+        if (status != STATUS_SUCCESS)
+        {
+            DbgPrint("MM: pagefile truncate status %lx\n", status);
         }
 #endif
     }
@@ -2074,11 +2013,8 @@ Return Value:
     return;
 }
 
-
-VOID
-MiLdwPopupWorker (
-    IN PVOID Context
-    )
+
+VOID MiLdwPopupWorker(IN PVOID Context)
 
 /*++
 
@@ -2109,11 +2045,11 @@ Environment:
 
     PAGED_CODE();
 
-    LdwContext = (PMM_LDW_WORK_CONTEXT) Context;
+    LdwContext = (PMM_LDW_WORK_CONTEXT)Context;
     FileObject = LdwContext->FileObject;
     FileNameInfo = NULL;
 
-    ExFreePool (LdwContext);
+    ExFreePool(LdwContext);
 
     //
     // Throw the popup with the user-friendly form, if possible.
@@ -2121,23 +2057,19 @@ Environment:
     // out what failed either.
     //
 
-    Status = IoQueryFileDosDeviceName (FileObject, &FileNameInfo);
+    Status = IoQueryFileDosDeviceName(FileObject, &FileNameInfo);
 
-    if (Status == STATUS_SUCCESS) {
+    if (Status == STATUS_SUCCESS)
+    {
 
-        IoRaiseInformationalHardError (STATUS_LOST_WRITEBEHIND_DATA,
-                                       &FileNameInfo->Name,
-                                       NULL);
-
+        IoRaiseInformationalHardError(STATUS_LOST_WRITEBEHIND_DATA, &FileNameInfo->Name, NULL);
     }
-    else {
-        if ((FileObject->FileName.Length) &&
-            (FileObject->FileName.MaximumLength) &&
-            (FileObject->FileName.Buffer)) {
+    else
+    {
+        if ((FileObject->FileName.Length) && (FileObject->FileName.MaximumLength) && (FileObject->FileName.Buffer))
+        {
 
-            IoRaiseInformationalHardError (STATUS_LOST_WRITEBEHIND_DATA,
-                                           &FileObject->FileName,
-                                           NULL);
+            IoRaiseInformationalHardError(STATUS_LOST_WRITEBEHIND_DATA, &FileObject->FileName, NULL);
         }
     }
 
@@ -2145,20 +2077,16 @@ Environment:
     // Now drop the reference to the file object and clean up.
     //
 
-    ObDereferenceObject (FileObject);
+    ObDereferenceObject(FileObject);
 
-    if (FileNameInfo != NULL) {
+    if (FileNameInfo != NULL)
+    {
         ExFreePool(FileNameInfo);
     }
 }
 
-
-VOID
-MiWriteComplete (
-    IN PVOID Context,
-    IN PIO_STATUS_BLOCK IoStatus,
-    IN ULONG Reserved
-    )
+
+VOID MiWriteComplete(IN PVOID Context, IN PIO_STATUS_BLOCK IoStatus, IN ULONG Reserved)
 
 /*++
 
@@ -2199,12 +2127,13 @@ Environment:
     PFILE_OBJECT FileObject;
     PERESOURCE FileResource;
 
-    UNREFERENCED_PARAMETER (Reserved);
+    UNREFERENCED_PARAMETER(Reserved);
 
     FailAllIo = FALSE;
 
 #if DBG
-    if (MmDebug & MM_DBG_MOD_WRITE) {
+    if (MmDebug & MM_DBG_MOD_WRITE)
+    {
         DbgPrint("MM MODWRITE: modified page write completed\n");
     }
 #endif
@@ -2219,9 +2148,9 @@ Environment:
     ByteCount = (LONG)WriterEntry->Mdl.ByteCount;
     Page = &WriterEntry->Page[0];
 
-    if (WriterEntry->Mdl.MdlFlags & MDL_MAPPED_TO_SYSTEM_VA) {
-        MmUnmapLockedPages (WriterEntry->Mdl.MappedSystemVa,
-                            &WriterEntry->Mdl);
+    if (WriterEntry->Mdl.MdlFlags & MDL_MAPPED_TO_SYSTEM_VA)
+    {
+        MmUnmapLockedPages(WriterEntry->Mdl.MappedSystemVa, &WriterEntry->Mdl);
     }
 
     //
@@ -2231,7 +2160,7 @@ Environment:
     status = IoStatus->Status;
     ControlArea = WriterEntry->ControlArea;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
     //
     // Indicate that the write is complete.
@@ -2240,24 +2169,29 @@ Environment:
     WriterEntry->LastPageToWrite = 0;
 
 
-    while (ByteCount > 0) {
+    while (ByteCount > 0)
+    {
 
-        Pfn1 = MI_PFN_ELEMENT (*Page);
-        ASSERT (Pfn1->u3.e1.WriteInProgress == 1);
+        Pfn1 = MI_PFN_ELEMENT(*Page);
+        ASSERT(Pfn1->u3.e1.WriteInProgress == 1);
 #if DBG
-#if !defined (_WIN64)
-        if (Pfn1->OriginalPte.u.Soft.Prototype == 0) {
+#if !defined(_WIN64)
+        if (Pfn1->OriginalPte.u.Soft.Prototype == 0)
+        {
 
             ULONG Offset;
             Offset = GET_PAGING_FILE_OFFSET(Pfn1->OriginalPte);
-            if ((Offset < 8192) &&
-                    (GET_PAGING_FILE_NUMBER(Pfn1->OriginalPte) == 0)) {
-                ASSERT ((MmPagingFileDebug[Offset] & 1) != 0);
-                if (!MI_IS_PFN_DELETED(Pfn1)) {
-                    if ((GET_PAGING_FILE_NUMBER (Pfn1->OriginalPte)) == 0) {
-                        if ((MmPagingFileDebug[Offset] & ~0x1f) !=
-                                   ((ULONG_PTR)Pfn1->PteAddress << 3)) {
-                            if (Pfn1->PteAddress != MiGetPteAddress(PDE_BASE)) {
+            if ((Offset < 8192) && (GET_PAGING_FILE_NUMBER(Pfn1->OriginalPte) == 0))
+            {
+                ASSERT((MmPagingFileDebug[Offset] & 1) != 0);
+                if (!MI_IS_PFN_DELETED(Pfn1))
+                {
+                    if ((GET_PAGING_FILE_NUMBER(Pfn1->OriginalPte)) == 0)
+                    {
+                        if ((MmPagingFileDebug[Offset] & ~0x1f) != ((ULONG_PTR)Pfn1->PteAddress << 3))
+                        {
+                            if (Pfn1->PteAddress != MiGetPteAddress(PDE_BASE))
+                            {
 
                                 //
                                 // Make sure this isn't a PTE that was forked
@@ -2265,24 +2199,20 @@ Environment:
                                 //
 
                                 if ((Pfn1->PteAddress < (PMMPTE)PTE_TOP) ||
-                                    ((Pfn1->OriginalPte.u.Soft.Protection &
-                                            MM_COPY_ON_WRITE_MASK) ==
-                                                MM_PROTECTION_WRITE_MASK)) {
-                                    DbgPrint("MMWRITE: Mismatch Pfn1 %p Offset %lx info %p\n",
-                                             Pfn1,
-                                             Offset,
+                                    ((Pfn1->OriginalPte.u.Soft.Protection & MM_COPY_ON_WRITE_MASK) ==
+                                     MM_PROTECTION_WRITE_MASK))
+                                {
+                                    DbgPrint("MMWRITE: Mismatch Pfn1 %p Offset %lx info %p\n", Pfn1, Offset,
                                              MmPagingFileDebug[Offset]);
 
                                     DbgBreakPoint();
-
                                 }
-                                else {
+                                else
+                                {
                                     MmPagingFileDebug[Offset] &= 0x1f;
-                                    MmPagingFileDebug[Offset] |=
-                                        ((ULONG_PTR)Pfn1->PteAddress << 3);
+                                    MmPagingFileDebug[Offset] |= ((ULONG_PTR)Pfn1->PteAddress << 3);
                                 }
                             }
-
                         }
                     }
                 }
@@ -2293,7 +2223,8 @@ Environment:
 
         Pfn1->u3.e1.WriteInProgress = 0;
 
-        if (NT_ERROR(status)) {
+        if (NT_ERROR(status))
+        {
 
             //
             // If the file object is over the network, assume that this
@@ -2310,24 +2241,21 @@ Environment:
             // disappeared.
             //
 
-            if (((status != STATUS_FILE_LOCK_CONFLICT) &&
-                (ControlArea != NULL) &&
-                (ControlArea->u.Flags.Networked == 1))
-                            ||
-                (status == STATUS_FILE_INVALID)
-                            ||
-                ((status == STATUS_MEDIA_WRITE_PROTECTED) &&
-                 (ControlArea != NULL))) {
+            if (((status != STATUS_FILE_LOCK_CONFLICT) && (ControlArea != NULL) &&
+                 (ControlArea->u.Flags.Networked == 1)) ||
+                (status == STATUS_FILE_INVALID) || ((status == STATUS_MEDIA_WRITE_PROTECTED) && (ControlArea != NULL)))
+            {
 
-                if (ControlArea->u.Flags.FailAllIo == 0) {
+                if (ControlArea->u.Flags.FailAllIo == 0)
+                {
                     ControlArea->u.Flags.FailAllIo = 1;
                     FailAllIo = TRUE;
 
-                    KdPrint(("MM MODWRITE: failing all io, controlarea %p status %lx\n",
-                          ControlArea, status));
+                    KdPrint(("MM MODWRITE: failing all io, controlarea %p status %lx\n", ControlArea, status));
                 }
             }
-            else {
+            else
+            {
 
                 //
                 // The modified write operation failed, SET the modified bit
@@ -2336,30 +2264,29 @@ Environment:
                 //
 
 #if DBG
-                if ((status != STATUS_FILE_LOCK_CONFLICT) &&
-                   ((MmDebug & MM_DBG_PRINTS_MODWRITES) == 0)) {
-                    KdPrint(("MM MODWRITE: modified page write iosb failed - status 0x%lx\n",
-                            status));
+                if ((status != STATUS_FILE_LOCK_CONFLICT) && ((MmDebug & MM_DBG_PRINTS_MODWRITES) == 0))
+                {
+                    KdPrint(("MM MODWRITE: modified page write iosb failed - status 0x%lx\n", status));
                 }
 #endif
 
-                MI_SET_MODIFIED (Pfn1, 1, 0x9);
+                MI_SET_MODIFIED(Pfn1, 1, 0x9);
             }
         }
 
-        if ((Pfn1->u3.e1.Modified == 1) &&
-            (Pfn1->OriginalPte.u.Soft.Prototype == 0)) {
+        if ((Pfn1->u3.e1.Modified == 1) && (Pfn1->OriginalPte.u.Soft.Prototype == 0))
+        {
 
             //
             // This page was modified since the write was done,
             // release the page file space.
             //
 
-            MiReleasePageFileSpace (Pfn1->OriginalPte);
+            MiReleasePageFileSpace(Pfn1->OriginalPte);
             Pfn1->OriginalPte.u.Soft.PageFileHigh = 0;
         }
 
-        MI_REMOVE_LOCKED_PAGE_CHARGE_AND_DECREF (Pfn1, 15);
+        MI_REMOVE_LOCKED_PAGE_CHARGE_AND_DECREF(Pfn1, 15);
 
 #if DBG
         *Page = 0xF0FFFFFF;
@@ -2377,14 +2304,15 @@ Environment:
     FileObject = WriterEntry->File;
     FileResource = WriterEntry->FileResource;
 
-    if ((WriterEntry->PagingFile != NULL) &&
-        (WriterEntry->PagingFile->FreeSpace < MM_USABLE_PAGES_FREE)) {
+    if ((WriterEntry->PagingFile != NULL) && (WriterEntry->PagingFile->FreeSpace < MM_USABLE_PAGES_FREE))
+    {
 
-        InsertTailList (&MmFreePagingSpaceLow, &WriterEntry->Links);
+        InsertTailList(&MmFreePagingSpaceLow, &WriterEntry->Links);
         WriterEntry->CurrentList = &MmFreePagingSpaceLow;
         MmNumberOfActiveMdlEntries -= 1;
 
-        if (MmNumberOfActiveMdlEntries == 0) {
+        if (MmNumberOfActiveMdlEntries == 0)
+        {
 
             //
             // If we leave this entry on the list, there will be
@@ -2394,40 +2322,40 @@ Environment:
 
             WriterEntry = (PMMMOD_WRITER_MDL_ENTRY)MmFreePagingSpaceLow.Flink;
 
-            while ((PLIST_ENTRY)WriterEntry != &MmFreePagingSpaceLow) {
+            while ((PLIST_ENTRY)WriterEntry != &MmFreePagingSpaceLow)
+            {
 
-                NextWriterEntry =
-                            (PMMMOD_WRITER_MDL_ENTRY)WriterEntry->Links.Flink;
+                NextWriterEntry = (PMMMOD_WRITER_MDL_ENTRY)WriterEntry->Links.Flink;
 
-                if (WriterEntry->PagingFile->FreeSpace != 0) {
+                if (WriterEntry->PagingFile->FreeSpace != 0)
+                {
 
-                    RemoveEntryList (&WriterEntry->Links);
+                    RemoveEntryList(&WriterEntry->Links);
 
                     //
                     // Insert this into the active list.
                     //
 
-                    if (IsListEmpty (&WriterEntry->PagingListHead->ListHead)) {
-                        KeSetEvent (&WriterEntry->PagingListHead->Event,
-                                    0,
-                                    FALSE);
+                    if (IsListEmpty(&WriterEntry->PagingListHead->ListHead))
+                    {
+                        KeSetEvent(&WriterEntry->PagingListHead->Event, 0, FALSE);
                     }
 
-                    InsertTailList (&WriterEntry->PagingListHead->ListHead,
-                                    &WriterEntry->Links);
+                    InsertTailList(&WriterEntry->PagingListHead->ListHead, &WriterEntry->Links);
                     WriterEntry->CurrentList = &MmPagingFileHeader.ListHead;
                     MmNumberOfActiveMdlEntries += 1;
                 }
 
                 WriterEntry = NextWriterEntry;
             }
-
         }
     }
-    else {
+    else
+    {
 
 #if DBG
-        if (WriterEntry->PagingFile == NULL) {
+        if (WriterEntry->PagingFile == NULL)
+        {
             MmNumberOfMappedMdlsInUse -= 1;
         }
 #endif
@@ -2435,23 +2363,25 @@ Environment:
         // Ample space exists, put this on the active list.
         //
 
-        if (IsListEmpty (&WriterEntry->PagingListHead->ListHead)) {
-            KeSetEvent (&WriterEntry->PagingListHead->Event, 0, FALSE);
+        if (IsListEmpty(&WriterEntry->PagingListHead->ListHead))
+        {
+            KeSetEvent(&WriterEntry->PagingListHead->Event, 0, FALSE);
         }
 
-        InsertTailList (&WriterEntry->PagingListHead->ListHead,
-                        &WriterEntry->Links);
+        InsertTailList(&WriterEntry->PagingListHead->ListHead, &WriterEntry->Links);
     }
 
-    ASSERT (((ULONG_PTR)WriterEntry->Links.Flink & 1) == 0);
+    ASSERT(((ULONG_PTR)WriterEntry->Links.Flink & 1) == 0);
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
-    if (FileResource != NULL) {
-        FsRtlReleaseFileForModWrite (FileObject, FileResource);
+    if (FileResource != NULL)
+    {
+        FsRtlReleaseFileForModWrite(FileObject, FileResource);
     }
 
-    if (FailAllIo) {
+    if (FailAllIo)
+    {
 
         PMM_LDW_WORK_CONTEXT LdwContext;
 
@@ -2460,25 +2390,23 @@ Environment:
         // The DOS name translation must occur at PASSIVE_LEVEL - we're at APC.
         //
 
-        LdwContext = ExAllocatePoolWithTag (NonPagedPool,
-                                            sizeof(MM_LDW_WORK_CONTEXT),
-                                            'pdmM');
+        LdwContext = ExAllocatePoolWithTag(NonPagedPool, sizeof(MM_LDW_WORK_CONTEXT), 'pdmM');
 
-        if (LdwContext != NULL) {
+        if (LdwContext != NULL)
+        {
             LdwContext->FileObject = ControlArea->FilePointer;
-            ObReferenceObject (LdwContext->FileObject);
+            ObReferenceObject(LdwContext->FileObject);
 
-            ExInitializeWorkItem (&LdwContext->WorkItem,
-                                  MiLdwPopupWorker,
-                                  (PVOID)LdwContext);
+            ExInitializeWorkItem(&LdwContext->WorkItem, MiLdwPopupWorker, (PVOID)LdwContext);
 
-            ExQueueWorkItem (&LdwContext->WorkItem, DelayedWorkQueue);
+            ExQueueWorkItem(&LdwContext->WorkItem, DelayedWorkQueue);
         }
     }
 
-    if (ControlArea != NULL) {
+    if (ControlArea != NULL)
+    {
 
-        LOCK_PFN (OldIrql);
+        LOCK_PFN(OldIrql);
 
         //
         // A write to a mapped file just completed, check to see if
@@ -2486,49 +2414,53 @@ Environment:
         //
 
         ControlArea->ModifiedWriteCount -= 1;
-        ASSERT ((SHORT)ControlArea->ModifiedWriteCount >= 0);
-        if (ControlArea->u.Flags.SetMappedFileIoComplete != 0) {
-            KePulseEvent (&MmMappedFileIoComplete,
-                          0,
-                          FALSE);
+        ASSERT((SHORT)ControlArea->ModifiedWriteCount >= 0);
+        if (ControlArea->u.Flags.SetMappedFileIoComplete != 0)
+        {
+            KePulseEvent(&MmMappedFileIoComplete, 0, FALSE);
         }
 
-        if (MiDrainingMappedWrites == TRUE) {
-            if (MmModifiedPageListHead.Flink != MM_EMPTY_LIST) {
+        if (MiDrainingMappedWrites == TRUE)
+        {
+            if (MmModifiedPageListHead.Flink != MM_EMPTY_LIST)
+            {
                 MiTimerPending = TRUE;
-                KeSetEvent (&MiMappedPagesTooOldEvent, 0, FALSE);
+                KeSetEvent(&MiMappedPagesTooOldEvent, 0, FALSE);
             }
-            else {
+            else
+            {
                 MiDrainingMappedWrites = FALSE;
             }
         }
 
         ControlArea->NumberOfPfnReferences -= 1;
 
-        if (ControlArea->NumberOfPfnReferences == 0) {
+        if (ControlArea->NumberOfPfnReferences == 0)
+        {
 
             //
             // This routine return with the PFN lock released!.
             //
 
-            MiCheckControlArea (ControlArea, NULL, OldIrql);
+            MiCheckControlArea(ControlArea, NULL, OldIrql);
         }
-        else {
-            UNLOCK_PFN (OldIrql);
+        else
+        {
+            UNLOCK_PFN(OldIrql);
         }
     }
 
-    if (NT_ERROR(status)) {
+    if (NT_ERROR(status))
+    {
 
         //
         // Wait for a short time so other processing can continue.
         //
 
-        KeDelayExecutionThread (KernelMode,
-                                FALSE,
-                                (PLARGE_INTEGER)&Mm30Milliseconds);
+        KeDelayExecutionThread(KernelMode, FALSE, (PLARGE_INTEGER)&Mm30Milliseconds);
 
-        if (MmIsRetryIoStatus(status)) {
+        if (MmIsRetryIoStatus(status))
+        {
 
             //
             // Low resource scenarios are a chicken and egg problem.  The
@@ -2541,42 +2473,43 @@ Environment:
             // but ensures that it won't become terminal either.
             //
 
-            LOCK_PFN (OldIrql);
+            LOCK_PFN(OldIrql);
             MiClusterWritesDisabled = MI_SLOW_CLUSTER_WRITES;
-            UNLOCK_PFN (OldIrql);
+            UNLOCK_PFN(OldIrql);
         }
     }
-    else {
+    else
+    {
 
         //
         // Check first without lock synchronization so the common case is
         // not slowed.
         //
 
-        if (MiClusterWritesDisabled != 0) {
+        if (MiClusterWritesDisabled != 0)
+        {
 
-            LOCK_PFN (OldIrql);
+            LOCK_PFN(OldIrql);
 
             //
             // Recheck now that the lock is held.
             //
 
-            if (MiClusterWritesDisabled != 0) {
-                ASSERT (MiClusterWritesDisabled <= MI_SLOW_CLUSTER_WRITES);
+            if (MiClusterWritesDisabled != 0)
+            {
+                ASSERT(MiClusterWritesDisabled <= MI_SLOW_CLUSTER_WRITES);
                 MiClusterWritesDisabled -= 1;
             }
 
-            UNLOCK_PFN (OldIrql);
+            UNLOCK_PFN(OldIrql);
         }
     }
 
     return;
 }
-
+
 LOGICAL
-MiCancelWriteOfMappedPfn (
-    IN PFN_NUMBER PageToStop
-    )
+MiCancelWriteOfMappedPfn(IN PFN_NUMBER PageToStop)
 
 /*++
 
@@ -2618,19 +2551,20 @@ Environment:
     //
 
     NextEntry = MmMappedPageWriterList.Flink;
-    while (NextEntry != &MmMappedPageWriterList) {
+    while (NextEntry != &MmMappedPageWriterList)
+    {
 
-        ModWriterEntry = CONTAINING_RECORD(NextEntry,
-                                           MMMOD_WRITER_MDL_ENTRY,
-                                           Links);
+        ModWriterEntry = CONTAINING_RECORD(NextEntry, MMMOD_WRITER_MDL_ENTRY, Links);
 
         MemoryDescriptorList = &ModWriterEntry->Mdl;
         PageCount = (MemoryDescriptorList->ByteCount >> PAGE_SHIFT);
         Page = (PPFN_NUMBER)(MemoryDescriptorList + 1);
 
-        for (i = 0; i < PageCount; i += 1) {
-            if (*Page == PageToStop) {
-                RemoveEntryList (NextEntry);
+        for (i = 0; i < PageCount; i += 1)
+        {
+            if (*Page == PageToStop)
+            {
+                RemoveEntryList(NextEntry);
                 goto CancelWrite;
             }
             Page += 1;
@@ -2643,7 +2577,7 @@ Environment:
 
 CancelWrite:
 
-    UNLOCK_PFN (APC_LEVEL);
+    UNLOCK_PFN(APC_LEVEL);
 
     //
     // File lock conflict to indicate an error has occurred,
@@ -2654,19 +2588,14 @@ CancelWrite:
     ModWriterEntry->u.IoStatus.Status = STATUS_FILE_LOCK_CONFLICT;
     ModWriterEntry->u.IoStatus.Information = 0;
 
-    MiWriteComplete ((PVOID)ModWriterEntry,
-                     &ModWriterEntry->u.IoStatus,
-                     0 );
+    MiWriteComplete((PVOID)ModWriterEntry, &ModWriterEntry->u.IoStatus, 0);
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
     return TRUE;
 }
-
-VOID
-MiModifiedPageWriter (
-    IN PVOID StartContext
-    )
+
+VOID MiModifiedPageWriter(IN PVOID StartContext)
 
 /*++
 
@@ -2698,15 +2627,15 @@ Environment:
 
     PAGED_CODE();
 
-    UNREFERENCED_PARAMETER (StartContext);
+    UNREFERENCED_PARAMETER(StartContext);
 
     //
     // Initialize listheads as empty.
     //
 
     MmSystemShutdown = 0;
-    KeInitializeEvent (&MmPagingFileHeader.Event, NotificationEvent, FALSE);
-    KeInitializeEvent (&MmMappedFileHeader.Event, NotificationEvent, FALSE);
+    KeInitializeEvent(&MmPagingFileHeader.Event, NotificationEvent, FALSE);
+    KeInitializeEvent(&MmMappedFileHeader.Event, NotificationEvent, FALSE);
 
     InitializeListHead(&MmPagingFileHeader.ListHead);
     InitializeListHead(&MmMappedFileHeader.ListHead);
@@ -2720,25 +2649,25 @@ Environment:
 
     MmNumberOfMappedMdls = MmNumberOfPhysicalPages / (32 * 1024);
 
-    if (MmNumberOfMappedMdls < 20) {
+    if (MmNumberOfMappedMdls < 20)
+    {
         MmNumberOfMappedMdls = 20;
     }
 
-    for (i = 0; i < MmNumberOfMappedMdls; i += 1) {
-        ModWriteEntry = ExAllocatePoolWithTag (NonPagedPool,
-                                             sizeof(MMMOD_WRITER_MDL_ENTRY) +
-                                                MmModifiedWriteClusterSize *
-                                                    sizeof(PFN_NUMBER),
-                                                'eWmM');
+    for (i = 0; i < MmNumberOfMappedMdls; i += 1)
+    {
+        ModWriteEntry = ExAllocatePoolWithTag(
+            NonPagedPool, sizeof(MMMOD_WRITER_MDL_ENTRY) + MmModifiedWriteClusterSize * sizeof(PFN_NUMBER), 'eWmM');
 
-        if (ModWriteEntry == NULL) {
+        if (ModWriteEntry == NULL)
+        {
             break;
         }
 
         ModWriteEntry->PagingFile = NULL;
         ModWriteEntry->PagingListHead = &MmMappedFileHeader;
 
-        InsertTailList (&MmMappedFileHeader.ListHead, &ModWriteEntry->Links);
+        InsertTailList(&MmMappedFileHeader.ListHead, &ModWriteEntry->Links);
     }
 
     MmNumberOfMappedMdls = i;
@@ -2747,7 +2676,7 @@ Environment:
     // Make this a real time thread.
     //
 
-    KeSetPriorityThread (&PsGetCurrentThread()->Tcb, LOW_REALTIME_PRIORITY + 1);
+    KeSetPriorityThread(&PsGetCurrentThread()->Tcb, LOW_REALTIME_PRIORITY + 1);
 
     //
     // Start a secondary thread for writing mapped file pages.  This
@@ -2759,18 +2688,12 @@ Environment:
     // on going page file writes.
     //
 
-    KeInitializeEvent (&MmMappedPageWriterEvent, NotificationEvent, FALSE);
+    KeInitializeEvent(&MmMappedPageWriterEvent, NotificationEvent, FALSE);
     InitializeListHead(&MmMappedPageWriterList);
-    InitializeObjectAttributes( &ObjectAttributes, NULL, 0, NULL, NULL );
+    InitializeObjectAttributes(&ObjectAttributes, NULL, 0, NULL, NULL);
 
-    PsCreateSystemThread (&ThreadHandle,
-                          THREAD_ALL_ACCESS,
-                          &ObjectAttributes,
-                          0L,
-                          NULL,
-                          MiMappedPageWriter,
-                          NULL );
-    ZwClose (ThreadHandle);
+    PsCreateSystemThread(&ThreadHandle, THREAD_ALL_ACCESS, &ObjectAttributes, 0L, NULL, MiMappedPageWriter, NULL);
+    ZwClose(ThreadHandle);
     MiModifiedPageWriterWorker();
 
     //
@@ -2786,20 +2709,15 @@ Environment:
 
         Forever.LowPart = 0;
         Forever.HighPart = 0xF000000;
-        KeDelayExecutionThread (KernelMode, FALSE, &Forever);
+        KeDelayExecutionThread(KernelMode, FALSE, &Forever);
     }
 
     return;
 }
 
-
-VOID
-MiModifiedPageWriterTimerDispatch (
-    IN PKDPC Dpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    )
+
+VOID MiModifiedPageWriterTimerDispatch(IN PKDPC Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1,
+                                       IN PVOID SystemArgument2)
 
 /*++
 
@@ -2826,24 +2744,21 @@ Return Value:
 --*/
 
 {
-    UNREFERENCED_PARAMETER (Dpc);
-    UNREFERENCED_PARAMETER (DeferredContext);
-    UNREFERENCED_PARAMETER (SystemArgument1);
-    UNREFERENCED_PARAMETER (SystemArgument2);
+    UNREFERENCED_PARAMETER(Dpc);
+    UNREFERENCED_PARAMETER(DeferredContext);
+    UNREFERENCED_PARAMETER(SystemArgument1);
+    UNREFERENCED_PARAMETER(SystemArgument2);
 
-    LOCK_PFN_AT_DPC ();
+    LOCK_PFN_AT_DPC();
 
     MiTimerPending = TRUE;
-    KeSetEvent (&MiMappedPagesTooOldEvent, 0, FALSE);
+    KeSetEvent(&MiMappedPagesTooOldEvent, 0, FALSE);
 
-    UNLOCK_PFN_FROM_DPC ();
+    UNLOCK_PFN_FROM_DPC();
 }
 
-
-VOID
-MiModifiedPageWriterWorker (
-    VOID
-    )
+
+VOID MiModifiedPageWriterWorker(VOID)
 
 /*++
 
@@ -2887,39 +2802,34 @@ Environment:
     WaitObjects[NormalCase] = (PVOID)&MmModifiedPageWriterEvent;
     WaitObjects[MappedPagesNeedWriting] = (PVOID)&MiMappedPagesTooOldEvent;
 
-    for (;;) {
+    for (;;)
+    {
 
-        WakeupStatus = KeWaitForMultipleObjects(ModifiedWriterMaximumObject,
-                                          &WaitObjects[0],
-                                          WaitAny,
-                                          WrFreePage,
-                                          KernelMode,
-                                          FALSE,
-                                          NULL,
-                                          &WaitBlockArray[0]);
+        WakeupStatus = KeWaitForMultipleObjects(ModifiedWriterMaximumObject, &WaitObjects[0], WaitAny, WrFreePage,
+                                                KernelMode, FALSE, NULL, &WaitBlockArray[0]);
 
         //
         // Switch on the wait status.
         //
 
-        switch (WakeupStatus) {
+        switch (WakeupStatus)
+        {
 
         case NormalCase:
-                break;
+            break;
 
         case MappedPagesNeedWriting:
 
-                //
-                // Our mapped pages DPC went off, only deal with those pages.
-                // Write all the mapped pages (ONLY), then clear the flag
-                // and come back to the top.
-                //
+            //
+            // Our mapped pages DPC went off, only deal with those pages.
+            // Write all the mapped pages (ONLY), then clear the flag
+            // and come back to the top.
+            //
 
-                break;
+            break;
 
         default:
-                break;
-
+            break;
         }
 
         //
@@ -2927,9 +2837,11 @@ Environment:
         // the paging files.
         //
 
-        if (MmNumberOfPagingFiles != 0) {
+        if (MmNumberOfPagingFiles != 0)
+        {
             i = 0;
-            do {
+            do
+            {
                 MmPagingFile[i]->HintSetToZero = FALSE;
                 i += 1;
             } while (i < MmNumberOfPagingFiles);
@@ -2938,15 +2850,17 @@ Environment:
         NextColor = 0;
         PagesWritten = 0;
 
-        LOCK_PFN (OldIrql);
+        LOCK_PFN(OldIrql);
 
-        for (;;) {
+        for (;;)
+        {
 
             //
             // Modified page writer was signalled.
             //
 
-            if (MmModifiedPageListHead.Total == 0) {
+            if (MmModifiedPageListHead.Total == 0)
+            {
 
                 //
                 // No more pages, clear the event(s) and wait again...
@@ -2954,14 +2868,15 @@ Environment:
                 // since no modified pages of any type exist.
                 //
 
-                if (MiTimerPending == TRUE) {
+                if (MiTimerPending == TRUE)
+                {
                     MiTimerPending = FALSE;
-                    KeClearEvent (&MiMappedPagesTooOldEvent);
+                    KeClearEvent(&MiMappedPagesTooOldEvent);
                 }
 
-                UNLOCK_PFN (OldIrql);
+                UNLOCK_PFN(OldIrql);
 
-                KeClearEvent (&MmModifiedPageWriterEvent);
+                KeClearEvent(&MmModifiedPageWriterEvent);
 
                 break;
             }
@@ -2972,9 +2887,11 @@ Environment:
             // page file backed pages, or mapped file backed pages.
             //
 
-            if (WakeupStatus == MappedPagesNeedWriting) {
+            if (WakeupStatus == MappedPagesNeedWriting)
+            {
                 PageFrameIndex = MmModifiedPageListHead.Flink;
-                if (PageFrameIndex == MM_EMPTY_LIST) {
+                if (PageFrameIndex == MM_EMPTY_LIST)
+                {
 
                     //
                     // No more modified mapped pages (there may still be
@@ -2984,25 +2901,25 @@ Environment:
                     //
 
                     MiTimerPending = FALSE;
-                    KeClearEvent (&MiMappedPagesTooOldEvent);
+                    KeClearEvent(&MiMappedPagesTooOldEvent);
 
-                    UNLOCK_PFN (OldIrql);
+                    UNLOCK_PFN(OldIrql);
 
                     break;
                 }
                 MiDrainingMappedWrites = TRUE;
             }
-            else if (MmTotalPagesForPagingFile >=
-                (MmModifiedPageListHead.Total - MmTotalPagesForPagingFile)) {
+            else if (MmTotalPagesForPagingFile >= (MmModifiedPageListHead.Total - MmTotalPagesForPagingFile))
+            {
 
                 //
                 // More pages are destined for the paging file.
                 //
 
-                MI_GET_MODIFIED_PAGE_ANY_COLOR (PageFrameIndex, NextColor);
-
+                MI_GET_MODIFIED_PAGE_ANY_COLOR(PageFrameIndex, NextColor);
             }
-            else {
+            else
+            {
 
                 //
                 // More pages are destined for mapped files.
@@ -3021,26 +2938,30 @@ Environment:
             // a mapped file.
             //
 
-            Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+            Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
 
-            if (Pfn1->OriginalPte.u.Soft.Prototype == 1) {
-                if (IsListEmpty (&MmMappedFileHeader.ListHead)) {
+            if (Pfn1->OriginalPte.u.Soft.Prototype == 1)
+            {
+                if (IsListEmpty(&MmMappedFileHeader.ListHead))
+                {
 
                     //
                     // Make sure page is destined for paging file as there
                     // are no MDLs for mapped writes free.
                     //
 
-                    if (WakeupStatus != MappedPagesNeedWriting) {
+                    if (WakeupStatus != MappedPagesNeedWriting)
+                    {
 
-                        MI_GET_MODIFIED_PAGE_ANY_COLOR (PageFrameIndex, NextColor);
+                        MI_GET_MODIFIED_PAGE_ANY_COLOR(PageFrameIndex, NextColor);
 
                         //
                         // No pages are destined for the paging file, get the
                         // first page destined for a mapped file.
                         //
 
-                        if (PageFrameIndex == MM_EMPTY_LIST) {
+                        if (PageFrameIndex == MM_EMPTY_LIST)
+                        {
 
                             //
                             // Select the first page from the list anyway.
@@ -3049,27 +2970,29 @@ Environment:
                             PageFrameIndex = MmModifiedPageListHead.Flink;
                         }
 
-                        Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+                        Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
                     }
                 }
             }
-            else if ((IsListEmpty(&MmPagingFileHeader.ListHead)) ||
-                       (MiFirstPageFileCreatedAndReady == FALSE)) {
+            else if ((IsListEmpty(&MmPagingFileHeader.ListHead)) || (MiFirstPageFileCreatedAndReady == FALSE))
+            {
 
                 //
                 // Try for a dirty section-backed page as no paging file MDLs
                 // are available.
                 //
 
-                if (MmModifiedPageListHead.Flink != MM_EMPTY_LIST) {
-                    ASSERT (MmTotalPagesForPagingFile != MmModifiedPageListHead.Total);
+                if (MmModifiedPageListHead.Flink != MM_EMPTY_LIST)
+                {
+                    ASSERT(MmTotalPagesForPagingFile != MmModifiedPageListHead.Total);
                     PageFrameIndex = MmModifiedPageListHead.Flink;
-                    Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+                    Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
                 }
-                else {
-                    ASSERT (MmTotalPagesForPagingFile == MmModifiedPageListHead.Total);
-                    if ((MiFirstPageFileCreatedAndReady == FALSE) &&
-                        (MmNumberOfPagingFiles != 0)) {
+                else
+                {
+                    ASSERT(MmTotalPagesForPagingFile == MmModifiedPageListHead.Total);
+                    if ((MiFirstPageFileCreatedAndReady == FALSE) && (MmNumberOfPagingFiles != 0))
+                    {
 
                         //
                         // The first paging has been created but the reservation
@@ -3077,19 +3000,22 @@ Environment:
                         // a bit as this will finish shortly and then restart.
                         //
 
-                        UNLOCK_PFN (OldIrql);
-                        KeDelayExecutionThread (KernelMode, FALSE, (PLARGE_INTEGER)&MmShortTime);
-                        LOCK_PFN (OldIrql);
+                        UNLOCK_PFN(OldIrql);
+                        KeDelayExecutionThread(KernelMode, FALSE, (PLARGE_INTEGER)&MmShortTime);
+                        LOCK_PFN(OldIrql);
                         continue;
                     }
                 }
             }
 
-            if (Pfn1->OriginalPte.u.Soft.Prototype == 1) {
+            if (Pfn1->OriginalPte.u.Soft.Prototype == 1)
+            {
 
-                if (IsListEmpty(&MmMappedFileHeader.ListHead)) {
+                if (IsListEmpty(&MmMappedFileHeader.ListHead))
+                {
 
-                    if (WakeupStatus == MappedPagesNeedWriting) {
+                    if (WakeupStatus == MappedPagesNeedWriting)
+                    {
 
                         //
                         // Since we woke up only to take care of mapped pages,
@@ -3099,7 +3025,8 @@ Environment:
                         // resulting in the system running out of pages.
                         //
 
-                        if (MiTimerPending == TRUE) {
+                        if (MiTimerPending == TRUE)
+                        {
 
                             //
                             // This should be normal case - the reason we must
@@ -3112,13 +3039,14 @@ Environment:
                             //
 
                             MiTimerPending = FALSE;
-                            KeClearEvent (&MiMappedPagesTooOldEvent);
+                            KeClearEvent(&MiMappedPagesTooOldEvent);
                         }
 
                         MiTimerPending = TRUE;
 
-                        (VOID) KeSetTimerEx( &MiModifiedPageWriterTimer, MiModifiedPageLife, 0, &MiModifiedPageWriterTimerDpc );
-                        UNLOCK_PFN (OldIrql);
+                        (VOID) KeSetTimerEx(&MiModifiedPageWriterTimer, MiModifiedPageLife, 0,
+                                            &MiModifiedPageWriterTimerDpc);
+                        UNLOCK_PFN(OldIrql);
                         break;
                     }
 
@@ -3129,15 +3057,12 @@ Environment:
                     // timeout.
                     //
 
-                    KeClearEvent (&MmMappedFileHeader.Event);
+                    KeClearEvent(&MmMappedFileHeader.Event);
 
-                    UNLOCK_PFN (OldIrql);
-                    KeWaitForSingleObject( &MmMappedFileHeader.Event,
-                                           WrPageOut,
-                                           KernelMode,
-                                           FALSE,
-                                           (PLARGE_INTEGER)&Mm30Milliseconds);
-                    LOCK_PFN (OldIrql);
+                    UNLOCK_PFN(OldIrql);
+                    KeWaitForSingleObject(&MmMappedFileHeader.Event, WrPageOut, KernelMode, FALSE,
+                                          (PLARGE_INTEGER)&Mm30Milliseconds);
+                    LOCK_PFN(OldIrql);
 
                     //
                     // Don't go on as the old PageFrameIndex at the
@@ -3147,20 +3072,22 @@ Environment:
                     continue;
                 }
 
-                PagesWritten += MiGatherMappedPages (Pfn1, PageFrameIndex);
+                PagesWritten += MiGatherMappedPages(Pfn1, PageFrameIndex);
             }
-            else {
+            else
+            {
 
-                PagesWritten += MiGatherPagefilePages (Pfn1, PageFrameIndex);
+                PagesWritten += MiGatherPagefilePages(Pfn1, PageFrameIndex);
             }
 
-            if (MmSystemShutdown) {
+            if (MmSystemShutdown)
+            {
 
                 //
                 // Shutdown has returned.  Stop the modified page writer.
                 //
 
-                UNLOCK_PFN (OldIrql);
+                UNLOCK_PFN(OldIrql);
                 return;
             }
 
@@ -3169,7 +3096,8 @@ Environment:
             // nothing left.
             //
 
-            if (WakeupStatus == MappedPagesNeedWriting) {
+            if (WakeupStatus == MappedPagesNeedWriting)
+            {
                 continue;
             }
 
@@ -3178,25 +3106,28 @@ Environment:
             // writing.
             //
 
-            if (MmWriteAllModifiedPages) {
+            if (MmWriteAllModifiedPages)
+            {
                 continue;
             }
 
-            if ((MmAvailablePages > MmFreeGoal) &&
-                (MmModifiedPageListHead.Total < MmFreeGoal)) {
+            if ((MmAvailablePages > MmFreeGoal) && (MmModifiedPageListHead.Total < MmFreeGoal))
+            {
 
                 //
                 // There are ample pages, clear the event and wait again...
                 //
 
-                UNLOCK_PFN (OldIrql);
+                UNLOCK_PFN(OldIrql);
 
-                KeClearEvent (&MmModifiedPageWriterEvent);
+                KeClearEvent(&MmModifiedPageWriterEvent);
                 break;
             }
 
-            if (MmAvailablePages > MmMoreThanEnoughFreePages) {
-                if (PagesWritten >= 96) { 
+            if (MmAvailablePages > MmMoreThanEnoughFreePages)
+            {
+                if (PagesWritten >= 96)
+                {
 
                     //
                     // Always try to write at least 96 pages worth
@@ -3205,9 +3136,9 @@ Environment:
                     // needlessly drains battery life.
                     //
 
-                    UNLOCK_PFN (OldIrql);
+                    UNLOCK_PFN(OldIrql);
 
-                    KeClearEvent (&MmModifiedPageWriterEvent);
+                    KeClearEvent(&MmModifiedPageWriterEvent);
                     break;
                 }
             }
@@ -3215,12 +3146,9 @@ Environment:
 
     } // end for
 }
-
+
 PFN_NUMBER
-MiGatherMappedPages (
-    IN PMMPFN Pfn1,
-    IN PFN_NUMBER PageFrameIndex
-    )
+MiGatherMappedPages(IN PMMPFN Pfn1, IN PFN_NUMBER PageFrameIndex)
 
 /*++
 
@@ -3272,23 +3200,24 @@ Environment:
     // modified page list and write them out at the same time.
     //
 
-    Subsection = MiGetSubsectionAddress (&Pfn1->OriginalPte);
+    Subsection = MiGetSubsectionAddress(&Pfn1->OriginalPte);
     ControlArea = Subsection->ControlArea;
 
-    if (ControlArea->u.Flags.NoModifiedWriting) {
+    if (ControlArea->u.Flags.NoModifiedWriting)
+    {
 
         //
         // This page should not be written out, add it to the
         // tail of the modified NO WRITE list and get the next page.
         //
 
-        MiUnlinkPageFromList (Pfn1);
-        MiInsertPageInList (&MmModifiedNoWritePageListHead,
-                            PageFrameIndex);
+        MiUnlinkPageFromList(Pfn1);
+        MiInsertPageInList(&MmModifiedNoWritePageListHead, PageFrameIndex);
         return 0;
     }
 
-    if (ControlArea->u.Flags.Image) {
+    if (ControlArea->u.Flags.Image)
+    {
 
 #if 0
         //
@@ -3322,8 +3251,8 @@ Environment:
         //
 
         ControlArea->NumberOfPfnReferences -= 1;
-        ASSERT ((LONG)ControlArea->NumberOfPfnReferences >= 0);
-        MiUnlinkPageFromList (Pfn1);
+        ASSERT((LONG)ControlArea->NumberOfPfnReferences >= 0);
+        MiUnlinkPageFromList(Pfn1);
 
         Pfn1->OriginalPte.u.Soft.PageFileHigh = 0;
         Pfn1->OriginalPte.u.Soft.Prototype = 0;
@@ -3334,7 +3263,7 @@ Environment:
         // color update performed.
         //
 
-        MiInsertPageInList (&MmModifiedPageListHead, PageFrameIndex);
+        MiInsertPageInList(&MmModifiedPageListHead, PageFrameIndex);
         return 0;
     }
 
@@ -3350,15 +3279,17 @@ Environment:
     // Make sure NextPte is in the same page.
     //
 
-    if (NextPte < (PMMPTE)PAGE_ALIGN (PointerPte)) {
-        NextPte = (PMMPTE)PAGE_ALIGN (PointerPte);
+    if (NextPte < (PMMPTE)PAGE_ALIGN(PointerPte))
+    {
+        NextPte = (PMMPTE)PAGE_ALIGN(PointerPte);
     }
 
     //
     // Make sure NextPte is within the subsection.
     //
 
-    if (NextPte < Subsection->SubsectionBase) {
+    if (NextPte < Subsection->SubsectionBase)
+    {
         NextPte = Subsection->SubsectionBase;
     }
 
@@ -3368,23 +3299,26 @@ Environment:
     // prototype PTEs for nonfaulting references.
     //
 
-    if (MmIsAddressValid (PointerPte)) {
+    if (MmIsAddressValid(PointerPte))
+    {
         Process = NULL;
         HyperMapped = NULL;
         BasePte = PointerPte;
     }
-    else {
-        Process = PsGetCurrentProcess ();
-        HyperMapped = MiMapPageInHyperSpaceAtDpc (Process, Pfn1->u4.PteFrame);
-        BasePte = (PMMPTE)((PCHAR)HyperMapped + BYTE_OFFSET (PointerPte));
+    else
+    {
+        Process = PsGetCurrentProcess();
+        HyperMapped = MiMapPageInHyperSpaceAtDpc(Process, Pfn1->u4.PteFrame);
+        BasePte = (PMMPTE)((PCHAR)HyperMapped + BYTE_OFFSET(PointerPte));
     }
 
-    ASSERT (MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE (BasePte) == PageFrameIndex);
+    ASSERT(MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE(BasePte) == PageFrameIndex);
 
     PointerPte -= 1;
     BasePte -= 1;
 
-    if (MiClusterWritesDisabled != 0) {
+    if (MiClusterWritesDisabled != 0)
+    {
         NextPte = PointerPte + 1;
     }
 
@@ -3393,7 +3327,8 @@ Environment:
     // a page boundary.
     //
 
-    while (PointerPte >= NextPte) {
+    while (PointerPte >= NextPte)
+    {
 
         PteContents = *BasePte;
 
@@ -3401,24 +3336,24 @@ Environment:
         // If the page is not in transition, exit loop.
         //
 
-        if ((PteContents.u.Hard.Valid == 1) ||
-            (PteContents.u.Soft.Transition == 0) ||
-            (PteContents.u.Soft.Prototype == 1)) {
+        if ((PteContents.u.Hard.Valid == 1) || (PteContents.u.Soft.Transition == 0) ||
+            (PteContents.u.Soft.Prototype == 1))
+        {
 
             break;
         }
 
-        Pfn2 = MI_PFN_ELEMENT (PteContents.u.Trans.PageFrameNumber);
+        Pfn2 = MI_PFN_ELEMENT(PteContents.u.Trans.PageFrameNumber);
 
         //
         // Make sure page is modified and on the modified list.
         //
 
-        if ((Pfn2->u3.e1.Modified == 0 ) ||
-            (Pfn2->u3.e2.ReferenceCount != 0)) {
+        if ((Pfn2->u3.e1.Modified == 0) || (Pfn2->u3.e2.ReferenceCount != 0))
+        {
             break;
         }
-        PageFrameIndex = MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE (&PteContents);
+        PageFrameIndex = MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE(&PteContents);
         PointerPte -= 1;
         BasePte -= 1;
     }
@@ -3426,20 +3361,20 @@ Environment:
     StartingPte = PointerPte + 1;
     BasePte = BasePte + 1;
 
-    Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
-    ASSERT (StartingPte == Pfn1->PteAddress);
-    MiUnlinkPageFromList (Pfn1);
+    Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
+    ASSERT(StartingPte == Pfn1->PteAddress);
+    MiUnlinkPageFromList(Pfn1);
 
     //
     // Get an entry from the list and fill it in.
     //
 
-    ModWriterEntry = (PMMMOD_WRITER_MDL_ENTRY)RemoveHeadList (
-                                    &MmMappedFileHeader.ListHead);
+    ModWriterEntry = (PMMMOD_WRITER_MDL_ENTRY)RemoveHeadList(&MmMappedFileHeader.ListHead);
 
 #if DBG
     MmNumberOfMappedMdlsInUse += 1;
-    if (MmNumberOfMappedMdlsInUse > MmNumberOfMappedMdlsInUsePeak) {
+    if (MmNumberOfMappedMdlsInUse > MmNumberOfMappedMdlsInUsePeak)
+    {
         MmNumberOfMappedMdlsInUsePeak = MmNumberOfMappedMdlsInUse;
     }
 #endif
@@ -3452,15 +3387,13 @@ Environment:
     //  offset = base + ((thispte - basepte) << PAGE_SHIFT)
     //
 
-    ModWriterEntry->WriteOffset.QuadPart = MiStartingOffset (Subsection,
-                                                             Pfn1->PteAddress);
+    ModWriterEntry->WriteOffset.QuadPart = MiStartingOffset(Subsection, Pfn1->PteAddress);
 
     MmInitializeMdl(&ModWriterEntry->Mdl, NULL, PAGE_SIZE);
 
     ModWriterEntry->Mdl.MdlFlags |= MDL_PAGES_LOCKED;
 
-    ModWriterEntry->Mdl.Size = (CSHORT)(sizeof(MDL) +
-                      (sizeof(PFN_NUMBER) * MmModifiedWriteClusterSize));
+    ModWriterEntry->Mdl.Size = (CSHORT)(sizeof(MDL) + (sizeof(PFN_NUMBER) * MmModifiedWriteClusterSize));
 
     Page = &ModWriterEntry->Page[0];
 
@@ -3469,7 +3402,7 @@ Environment:
     // is I/O in progress.
     //
 
-    MI_ADD_LOCKED_PAGE_CHARGE_FOR_MODIFIED_PAGE (Pfn1, 14);
+    MI_ADD_LOCKED_PAGE_CHARGE_FOR_MODIFIED_PAGE(Pfn1, 14);
     Pfn1->u3.e2.ReferenceCount += 1;
 
     //
@@ -3477,7 +3410,7 @@ Environment:
     // in progress bit.
     //
 
-    MI_SET_MODIFIED (Pfn1, 0, 0x23);
+    MI_SET_MODIFIED(Pfn1, 0, 0x23);
 
     Pfn1->u3.e1.WriteInProgress = 1;
 
@@ -3502,7 +3435,8 @@ Environment:
     // set LastPte so the cluster will not cross.
     //
 
-    if (StartingPte < (PMMPTE)PAGE_ALIGN(LastPte)) {
+    if (StartingPte < (PMMPTE)PAGE_ALIGN(LastPte))
+    {
         LastPte = (PMMPTE)PAGE_ALIGN(LastPte);
     }
 
@@ -3510,7 +3444,8 @@ Environment:
     // Make sure LastPte is within the subsection.
     //
 
-    if (LastPte > &Subsection->SubsectionBase[Subsection->PtesInSubsection]) {
+    if (LastPte > &Subsection->SubsectionBase[Subsection->PtesInSubsection])
+    {
         LastPte = &Subsection->SubsectionBase[Subsection->PtesInSubsection];
     }
 
@@ -3521,7 +3456,8 @@ Environment:
     NextPte = BasePte + 1;
     PointerPte = StartingPte + 1;
 
-    if (MiClusterWritesDisabled != 0) {
+    if (MiClusterWritesDisabled != 0)
+    {
         LastPte = PointerPte;
     }
 
@@ -3532,7 +3468,8 @@ Environment:
     // to where it is mapped in hyperspace (if required).
     //
 
-    while (PointerPte < LastPte) {
+    while (PointerPte < LastPte)
+    {
 
         PteContents = *NextPte;
 
@@ -3540,17 +3477,17 @@ Environment:
         // If the page is not in transition, exit loop.
         //
 
-        if ((PteContents.u.Hard.Valid == 1) ||
-            (PteContents.u.Soft.Transition == 0) ||
-            (PteContents.u.Soft.Prototype == 1)) {
+        if ((PteContents.u.Hard.Valid == 1) || (PteContents.u.Soft.Transition == 0) ||
+            (PteContents.u.Soft.Prototype == 1))
+        {
 
             break;
         }
 
-        Pfn2 = MI_PFN_ELEMENT (PteContents.u.Trans.PageFrameNumber);
+        Pfn2 = MI_PFN_ELEMENT(PteContents.u.Trans.PageFrameNumber);
 
-        if ((Pfn2->u3.e1.Modified == 0 ) ||
-            (Pfn2->u3.e2.ReferenceCount != 0)) {
+        if ((Pfn2->u3.e1.Modified == 0) || (Pfn2->u3.e2.ReferenceCount != 0))
+        {
 
             //
             // Page is not dirty or not on the modified list,
@@ -3565,16 +3502,16 @@ Environment:
         // Add physical page to MDL.
         //
 
-        *Page = MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE (&PteContents);
-        ASSERT (PointerPte == Pfn2->PteAddress);
-        MiUnlinkPageFromList (Pfn2);
+        *Page = MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE(&PteContents);
+        ASSERT(PointerPte == Pfn2->PteAddress);
+        MiUnlinkPageFromList(Pfn2);
 
         //
         // Up the reference count for the physical page as there
         // is I/O in progress.
         //
 
-        MI_ADD_LOCKED_PAGE_CHARGE_FOR_MODIFIED_PAGE (Pfn2, 14);
+        MI_ADD_LOCKED_PAGE_CHARGE_FOR_MODIFIED_PAGE(Pfn2, 14);
         Pfn2->u3.e2.ReferenceCount += 1;
 
         //
@@ -3582,7 +3519,7 @@ Environment:
         // write in progress bit.
         //
 
-        MI_SET_MODIFIED (Pfn2, 0, 0x24);
+        MI_SET_MODIFIED(Pfn2, 0, 0x24);
 
         Pfn2->u3.e1.WriteInProgress = 1;
 
@@ -3590,28 +3527,24 @@ Environment:
 
         NextPte += 1;
         PointerPte += 1;
-
     }
 
-    if (HyperMapped != NULL) {
-        MiUnmapPageInHyperSpaceFromDpc (Process, HyperMapped);
+    if (HyperMapped != NULL)
+    {
+        MiUnmapPageInHyperSpaceFromDpc(Process, HyperMapped);
     }
 
-    ASSERT (BYTES_TO_PAGES (ModWriterEntry->Mdl.ByteCount) <= MmModifiedWriteClusterSize);
+    ASSERT(BYTES_TO_PAGES(ModWriterEntry->Mdl.ByteCount) <= MmModifiedWriteClusterSize);
 
-    ModWriterEntry->u.LastByte.QuadPart = ModWriterEntry->WriteOffset.QuadPart +
-                        ModWriterEntry->Mdl.ByteCount;
+    ModWriterEntry->u.LastByte.QuadPart = ModWriterEntry->WriteOffset.QuadPart + ModWriterEntry->Mdl.ByteCount;
 
-    ASSERT (Subsection->ControlArea->u.Flags.Image == 0);
+    ASSERT(Subsection->ControlArea->u.Flags.Image == 0);
 
 #if DBG
-    if ((ULONG)ModWriterEntry->Mdl.ByteCount >
-                                ((1+MmModifiedWriteClusterSize)*PAGE_SIZE)) {
-        DbgPrint("Mdl %p, MDL End Offset %lx %lx Subsection %p\n",
-            ModWriterEntry->Mdl,
-            ModWriterEntry->u.LastByte.LowPart,
-            ModWriterEntry->u.LastByte.HighPart,
-            Subsection);
+    if ((ULONG)ModWriterEntry->Mdl.ByteCount > ((1 + MmModifiedWriteClusterSize) * PAGE_SIZE))
+    {
+        DbgPrint("Mdl %p, MDL End Offset %lx %lx Subsection %p\n", ModWriterEntry->Mdl,
+                 ModWriterEntry->u.LastByte.LowPart, ModWriterEntry->u.LastByte.HighPart, Subsection);
         DbgBreakPoint();
     }
 #endif
@@ -3637,16 +3570,15 @@ Environment:
 
     ModWriterEntry->FileResource = NULL;
 
-    if (ControlArea->u.Flags.BeingPurged == 1) {
-        UNLOCK_PFN (PASSIVE_LEVEL);
+    if (ControlArea->u.Flags.BeingPurged == 1)
+    {
+        UNLOCK_PFN(PASSIVE_LEVEL);
         ModWriterEntry->u.IoStatus.Status = STATUS_FILE_LOCK_CONFLICT;
         ModWriterEntry->u.IoStatus.Information = 0;
-        KeRaiseIrql (APC_LEVEL, &OldIrql);
-        MiWriteComplete ((PVOID)ModWriterEntry,
-                         &ModWriterEntry->u.IoStatus,
-                         0 );
-        KeLowerIrql (OldIrql);
-        LOCK_PFN (OldIrql);
+        KeRaiseIrql(APC_LEVEL, &OldIrql);
+        MiWriteComplete((PVOID)ModWriterEntry, &ModWriterEntry->u.IoStatus, 0);
+        KeLowerIrql(OldIrql);
+        LOCK_PFN(OldIrql);
         return PagesWritten;
     }
 
@@ -3654,9 +3586,9 @@ Environment:
     // Send the entry for the MappedPageWriter.
     //
 
-    InsertTailList (&MmMappedPageWriterList, &ModWriterEntry->Links);
+    InsertTailList(&MmMappedPageWriterList, &ModWriterEntry->Links);
 
-    KeSetEvent (&MmMappedPageWriterEvent, 0, FALSE);
+    KeSetEvent(&MmMappedPageWriterEvent, 0, FALSE);
 
 #if 0
 
@@ -3718,12 +3650,9 @@ Environment:
 #endif //0
     return PagesWritten;
 }
-
+
 PFN_NUMBER
-MiGatherPagefilePages (
-    IN PMMPFN Pfn1,
-    IN PFN_NUMBER PageFrameIndex
-    )
+MiGatherPagefilePages(IN PMMPFN Pfn1, IN PFN_NUMBER PageFrameIndex)
 
 /*++
 
@@ -3768,7 +3697,8 @@ Environment:
 
     OldIrql = PASSIVE_LEVEL;
 
-    if (IsListEmpty(&MmPagingFileHeader.ListHead)) {
+    if (IsListEmpty(&MmPagingFileHeader.ListHead))
+    {
 
         //
         // Reset the event indicating no paging files MDLs in
@@ -3776,14 +3706,11 @@ Environment:
         // I/O operation to complete.
         //
 
-        KeClearEvent (&MmPagingFileHeader.Event);
-        UNLOCK_PFN (OldIrql);
-        KeWaitForSingleObject( &MmPagingFileHeader.Event,
-                               WrPageOut,
-                               KernelMode,
-                               FALSE,
-                               (PLARGE_INTEGER)&Mm30Milliseconds);
-        LOCK_PFN (OldIrql);
+        KeClearEvent(&MmPagingFileHeader.Event);
+        UNLOCK_PFN(OldIrql);
+        KeWaitForSingleObject(&MmPagingFileHeader.Event, WrPageOut, KernelMode, FALSE,
+                              (PLARGE_INTEGER)&Mm30Milliseconds);
+        LOCK_PFN(OldIrql);
 
         //
         // Don't go on as the old PageFrameIndex at the
@@ -3804,8 +3731,7 @@ Environment:
     NextColor = 0;
 #endif
 
-    ModWriterEntry = (PMMMOD_WRITER_MDL_ENTRY)RemoveHeadList (
-                                    &MmPagingFileHeader.ListHead);
+    ModWriterEntry = (PMMMOD_WRITER_MDL_ENTRY)RemoveHeadList(&MmPagingFileHeader.ListHead);
 #if DBG
     ModWriterEntry->Links.Flink = MM_IO_IN_PROGRESS;
 #endif
@@ -3814,39 +3740,42 @@ Environment:
     File = ModWriterEntry->PagingFile->File;
 
 
-    if (MiClusterWritesDisabled == 0) {
+    if (MiClusterWritesDisabled == 0)
+    {
         ThisCluster = MmModifiedWriteClusterSize;
     }
-    else {
+    else
+    {
         ThisCluster = 1;
     }
 
     PageFileFull = FALSE;
 
-    do {
+    do
+    {
         //
         // Attempt to cluster MmModifiedWriteClusterSize pages
         // together.  Reduce by one half until we succeed or
         // can't find a single page free in the paging file.
         //
 
-        if (((CurrentPagingFile->Hint + MmModifiedWriteClusterSize) >
-                                CurrentPagingFile->MinimumSize)
-             &&
-            (CurrentPagingFile->HintSetToZero == FALSE)) {
+        if (((CurrentPagingFile->Hint + MmModifiedWriteClusterSize) > CurrentPagingFile->MinimumSize) &&
+            (CurrentPagingFile->HintSetToZero == FALSE))
+        {
 
             CurrentPagingFile->HintSetToZero = TRUE;
             CurrentPagingFile->Hint = 0;
         }
 
-        StartBit = RtlFindClearBitsAndSet (CurrentPagingFile->Bitmap,
-                                           (ULONG)ThisCluster,
-                                           (ULONG)CurrentPagingFile->Hint);
+        StartBit =
+            RtlFindClearBitsAndSet(CurrentPagingFile->Bitmap, (ULONG)ThisCluster, (ULONG)CurrentPagingFile->Hint);
 
-        if (StartBit != NO_BITS_FOUND) {
+        if (StartBit != NO_BITS_FOUND)
+        {
             break;
         }
-        if (CurrentPagingFile->Hint != 0) {
+        if (CurrentPagingFile->Hint != 0)
+        {
 
             //
             // Start looking from front of the file.
@@ -3854,14 +3783,16 @@ Environment:
 
             CurrentPagingFile->Hint = 0;
         }
-        else {
+        else
+        {
             ThisCluster = ThisCluster >> 1;
             PageFileFull = TRUE;
         }
 
     } while (ThisCluster != 0);
 
-    if (StartBit == NO_BITS_FOUND) {
+    if (StartBit == NO_BITS_FOUND)
+    {
 
         //
         // Paging file must be full.
@@ -3875,19 +3806,19 @@ Environment:
         // and try again.
         //
 
-        InsertTailList (&MmFreePagingSpaceLow,
-                        &ModWriterEntry->Links);
+        InsertTailList(&MmFreePagingSpaceLow, &ModWriterEntry->Links);
         ModWriterEntry->CurrentList = &MmFreePagingSpaceLow;
         MmNumberOfActiveMdlEntries -= 1;
-        UNLOCK_PFN (OldIrql);
-        MiPageFileFull ();
-        LOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
+        MiPageFileFull();
+        LOCK_PFN(OldIrql);
         return 0;
     }
 
     CurrentPagingFile->FreeSpace -= ThisCluster;
     CurrentPagingFile->CurrentUsage += ThisCluster;
-    if (CurrentPagingFile->FreeSpace < 32) {
+    if (CurrentPagingFile->FreeSpace < 32)
+    {
         PageFileFull = TRUE;
     }
 
@@ -3897,8 +3828,7 @@ Environment:
 
     ModWriterEntry->Mdl.MdlFlags |= MDL_PAGES_LOCKED;
 
-    ModWriterEntry->Mdl.Size = (CSHORT)(sizeof(MDL) +
-                    sizeof(PFN_NUMBER) * MmModifiedWriteClusterSize);
+    ModWriterEntry->Mdl.Size = (CSHORT)(sizeof(MDL) + sizeof(PFN_NUMBER) * MmModifiedWriteClusterSize);
 
     Page = &ModWriterEntry->Page[0];
 
@@ -3909,13 +3839,15 @@ Environment:
     // pages destined for the paging file and build a cluster.
     //
 
-    while (ClusterSize != ThisCluster) {
+    while (ClusterSize != ThisCluster)
+    {
 
         //
         // Is this page destined for a paging file?
         //
 
-        if (Pfn1->OriginalPte.u.Soft.Prototype == 0) {
+        if (Pfn1->OriginalPte.u.Soft.Prototype == 0)
+        {
 
 #if 0  //********* commented out
 
@@ -3928,75 +3860,70 @@ Environment:
                 PageFrameIndex = WriteCluster.Cluster[WriteCluster.StartIndex];
                 Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
 #endif //0
-                *Page = PageFrameIndex;
+            *Page = PageFrameIndex;
 
-                //
-                // Remove the page from the modified list. Note that
-                // write-in-progress marks the state.
-                //
+            //
+            // Remove the page from the modified list. Note that
+            // write-in-progress marks the state.
+            //
 
-                //
-                // Unlink the page so the same page won't be found
-                // on the modified page list by color.
-                //
+            //
+            // Unlink the page so the same page won't be found
+            // on the modified page list by color.
+            //
 
-                MiUnlinkPageFromList (Pfn1);
-                NextColor = MI_GET_NEXT_COLOR(NextColor);
+            MiUnlinkPageFromList(Pfn1);
+            NextColor = MI_GET_NEXT_COLOR(NextColor);
 
-                MI_GET_MODIFIED_PAGE_BY_COLOR (PageFrameIndex,
-                                               NextColor);
+            MI_GET_MODIFIED_PAGE_BY_COLOR(PageFrameIndex, NextColor);
 
-                //
-                // Up the reference count for the physical page as there
-                // is I/O in progress.
-                //
+            //
+            // Up the reference count for the physical page as there
+            // is I/O in progress.
+            //
 
-                MI_ADD_LOCKED_PAGE_CHARGE_FOR_MODIFIED_PAGE (Pfn1, 16);
-                Pfn1->u3.e2.ReferenceCount += 1;
+            MI_ADD_LOCKED_PAGE_CHARGE_FOR_MODIFIED_PAGE(Pfn1, 16);
+            Pfn1->u3.e2.ReferenceCount += 1;
 
-                //
-                // Clear the modified bit for the page and set the
-                // write in progress bit.
-                //
+            //
+            // Clear the modified bit for the page and set the
+            // write in progress bit.
+            //
 
-                MI_SET_MODIFIED (Pfn1, 0, 0x25);
+            MI_SET_MODIFIED(Pfn1, 0, 0x25);
 
-                Pfn1->u3.e1.WriteInProgress = 1;
-                ASSERT (Pfn1->OriginalPte.u.Soft.PageFileHigh == 0);
+            Pfn1->u3.e1.WriteInProgress = 1;
+            ASSERT(Pfn1->OriginalPte.u.Soft.PageFileHigh == 0);
 
-                MI_SET_PAGING_FILE_INFO (LongPte,
-                                         Pfn1->OriginalPte,
-                                         CurrentPagingFile->PageFileNumber,
-                                         StartBit);
+            MI_SET_PAGING_FILE_INFO(LongPte, Pfn1->OriginalPte, CurrentPagingFile->PageFileNumber, StartBit);
 
 #if DBG
-                if ((StartBit < 8192) &&
-                    (CurrentPagingFile->PageFileNumber == 0)) {
-                    ASSERT ((MmPagingFileDebug[StartBit] & 1) == 0);
-                    MmPagingFileDebug[StartBit] =
-                        (((ULONG_PTR)Pfn1->PteAddress << 3) |
-                            ((ClusterSize & 0xf) << 1) | 1);
-                }
+            if ((StartBit < 8192) && (CurrentPagingFile->PageFileNumber == 0))
+            {
+                ASSERT((MmPagingFileDebug[StartBit] & 1) == 0);
+                MmPagingFileDebug[StartBit] = (((ULONG_PTR)Pfn1->PteAddress << 3) | ((ClusterSize & 0xf) << 1) | 1);
+            }
 #endif
 
-                //
-                // Change the original PTE contents to refer to
-                // the paging file offset where this was written.
-                //
+            //
+            // Change the original PTE contents to refer to
+            // the paging file offset where this was written.
+            //
 
-                Pfn1->OriginalPte = LongPte;
+            Pfn1->OriginalPte = LongPte;
 
-                ClusterSize += 1;
-                Page += 1;
-                StartBit += 1;
-#if 0 // COMMENTED OUT
+            ClusterSize += 1;
+            Page += 1;
+            StartBit += 1;
+#if 0  // COMMENTED OUT
                 WriteCluster.Count -= 1;
                 WriteCluster.StartIndex += 1;
 
             } while (WriteCluster.Count != 0);
 #endif //0
         }
-        else {
+        else
+        {
 
             //
             // This page was not destined for a paging file,
@@ -4006,19 +3933,20 @@ Environment:
             // was not usable.
             //
 
-            MI_GET_MODIFIED_PAGE_BY_COLOR (PageFrameIndex,
-                                           NextColor);
+            MI_GET_MODIFIED_PAGE_BY_COLOR(PageFrameIndex, NextColor);
         }
 
-        if (PageFrameIndex == MM_EMPTY_LIST) {
+        if (PageFrameIndex == MM_EMPTY_LIST)
+        {
             break;
         }
 
-        Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+        Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
 
     } //end while
 
-    if (ClusterSize != ThisCluster) {
+    if (ClusterSize != ThisCluster)
+    {
 
         //
         // A complete cluster could not be located, free the
@@ -4026,9 +3954,7 @@ Environment:
         // the size of the packet.
         //
 
-        RtlClearBits (CurrentPagingFile->Bitmap,
-                      StartBit,
-                      (ULONG)(ThisCluster - ClusterSize));
+        RtlClearBits(CurrentPagingFile->Bitmap, StartBit, (ULONG)(ThisCluster - ClusterSize));
 
         CurrentPagingFile->FreeSpace += ThisCluster - ClusterSize;
         CurrentPagingFile->CurrentUsage -= ThisCluster - ClusterSize;
@@ -4038,29 +3964,27 @@ Environment:
         // request and restart the scan loop.
         //
 
-        if (ClusterSize == 0) {
+        if (ClusterSize == 0)
+        {
 
             //
             // No pages to write.  Insert the entry back in the list.
             //
 
-            if (IsListEmpty (&ModWriterEntry->PagingListHead->ListHead)) {
-                KeSetEvent (&ModWriterEntry->PagingListHead->Event,
-                            0,
-                            FALSE);
+            if (IsListEmpty(&ModWriterEntry->PagingListHead->ListHead))
+            {
+                KeSetEvent(&ModWriterEntry->PagingListHead->Event, 0, FALSE);
             }
 
-            InsertTailList (&ModWriterEntry->PagingListHead->ListHead,
-                            &ModWriterEntry->Links);
+            InsertTailList(&ModWriterEntry->PagingListHead->ListHead, &ModWriterEntry->Links);
 
             return 0;
         }
     }
 
-    if (CurrentPagingFile->PeakUsage <
-                                CurrentPagingFile->CurrentUsage) {
-        CurrentPagingFile->PeakUsage =
-                                CurrentPagingFile->CurrentUsage;
+    if (CurrentPagingFile->PeakUsage < CurrentPagingFile->CurrentUsage)
+    {
+        CurrentPagingFile->PeakUsage = CurrentPagingFile->CurrentUsage;
     }
 
     ModWriterEntry->Mdl.ByteCount = (ULONG)(ClusterSize * PAGE_SIZE);
@@ -4073,12 +3997,13 @@ Environment:
     // For now release the PFN lock and wait for the write to complete.
     //
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
 #if DBG
-    if (MmDebug & MM_DBG_MOD_WRITE) {
-        DbgPrint("MM MODWRITE: modified page write begun @ %08lx by %08lx\n",
-                StartingOffset.LowPart, ModWriterEntry->Mdl.ByteCount);
+    if (MmDebug & MM_DBG_MOD_WRITE)
+    {
+        DbgPrint("MM MODWRITE: modified page write begun @ %08lx by %08lx\n", StartingOffset.LowPart,
+                 ModWriterEntry->Mdl.ByteCount);
     }
 #endif
 
@@ -4086,15 +4011,11 @@ Environment:
     // Issue the write request.
     //
 
-    Status = IoAsynchronousPageWrite (File,
-                                      &ModWriterEntry->Mdl,
-                                      &StartingOffset,
-                                      MiWriteComplete,
-                                      (PVOID)ModWriterEntry,
-                                      &ModWriterEntry->u.IoStatus,
-                                      &ModWriterEntry->Irp);
+    Status = IoAsynchronousPageWrite(File, &ModWriterEntry->Mdl, &StartingOffset, MiWriteComplete,
+                                     (PVOID)ModWriterEntry, &ModWriterEntry->u.IoStatus, &ModWriterEntry->Irp);
 
-    if (NT_ERROR(Status)) {
+    if (NT_ERROR(Status))
+    {
         KdPrint(("MM MODWRITE: modified page write failed %lx\n", Status));
 
         //
@@ -4104,24 +4025,23 @@ Environment:
 
         ModWriterEntry->u.IoStatus.Status = Status;
         ModWriterEntry->u.IoStatus.Information = 0;
-        KeRaiseIrql (APC_LEVEL, &OldIrql);
-        MiWriteComplete ((PVOID)ModWriterEntry,
-                         &ModWriterEntry->u.IoStatus,
-                         0 );
-        KeLowerIrql (OldIrql);
+        KeRaiseIrql(APC_LEVEL, &OldIrql);
+        MiWriteComplete((PVOID)ModWriterEntry, &ModWriterEntry->u.IoStatus, 0);
+        KeLowerIrql(OldIrql);
     }
 
-    if (PageFileFull == TRUE) {
-        MiPageFileFull ();
+    if (PageFileFull == TRUE)
+    {
+        MiPageFileFull();
     }
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
     return ClusterSize;
 }
-
 
-#if 0 // COMMENTED OUT **************************************************
+
+#if 0  // COMMENTED OUT **************************************************
 ULONG ClusterCounts[20];
 ULONG ClusterSizes[20];
 VOID
@@ -4269,11 +4189,8 @@ MiClusterWritePages (
 }
 #endif // COMMENTED OUT **************************************************
 
-
-VOID
-MiMappedPageWriter (
-    IN PVOID StartContext
-    )
+
+VOID MiMappedPageWriter(IN PVOID StartContext)
 
 /*++
 
@@ -4309,15 +4226,15 @@ Environment:
     PETHREAD CurrentThread;
     PMMMOD_WRITER_MDL_ENTRY ModWriterEntry;
 
-    UNREFERENCED_PARAMETER (StartContext);
+    UNREFERENCED_PARAMETER(StartContext);
 
     //
     // Make this a real time thread.
     //
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
 
-    KeSetPriorityThread (&CurrentThread->Tcb, LOW_REALTIME_PRIORITY + 1);
+    KeSetPriorityThread(&CurrentThread->Tcb, LOW_REALTIME_PRIORITY + 1);
 
     CurrentThread->MemoryMaker = 1;
 
@@ -4327,51 +4244,48 @@ Environment:
 
     FsRtlSetTopLevelIrpForModWriter();
 
-    KeInitializeEvent (&TempEvent, NotificationEvent, FALSE);
+    KeInitializeEvent(&TempEvent, NotificationEvent, FALSE);
 
     OldIrql = PASSIVE_LEVEL;
 
-    while (TRUE) {
-        KeWaitForSingleObject (&MmMappedPageWriterEvent,
-                               WrVirtualMemory,
-                               KernelMode,
-                               FALSE,
-                               (PLARGE_INTEGER)NULL);
+    while (TRUE)
+    {
+        KeWaitForSingleObject(&MmMappedPageWriterEvent, WrVirtualMemory, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
 
-        LOCK_PFN (OldIrql);
-        if (IsListEmpty (&MmMappedPageWriterList)) {
-            KeClearEvent (&MmMappedPageWriterEvent);
-            UNLOCK_PFN (OldIrql);
+        LOCK_PFN(OldIrql);
+        if (IsListEmpty(&MmMappedPageWriterList))
+        {
+            KeClearEvent(&MmMappedPageWriterEvent);
+            UNLOCK_PFN(OldIrql);
         }
-        else {
+        else
+        {
 
-            ModWriterEntry = (PMMMOD_WRITER_MDL_ENTRY)RemoveHeadList (
-                                                &MmMappedPageWriterList);
+            ModWriterEntry = (PMMMOD_WRITER_MDL_ENTRY)RemoveHeadList(&MmMappedPageWriterList);
 
-            UNLOCK_PFN (OldIrql);
+            UNLOCK_PFN(OldIrql);
 
-            if (ModWriterEntry->ControlArea->u.Flags.FailAllIo == 1) {
+            if (ModWriterEntry->ControlArea->u.Flags.FailAllIo == 1)
+            {
                 Status = STATUS_UNSUCCESSFUL;
             }
-            else {
-                Status = FsRtlAcquireFileForModWriteEx (ModWriterEntry->File,
-                                                        &ModWriterEntry->u.LastByte,
-                                                        &ModWriterEntry->FileResource);
-                if (NT_SUCCESS(Status)) {
+            else
+            {
+                Status = FsRtlAcquireFileForModWriteEx(ModWriterEntry->File, &ModWriterEntry->u.LastByte,
+                                                       &ModWriterEntry->FileResource);
+                if (NT_SUCCESS(Status))
+                {
 
                     //
                     // Issue the write request.
                     //
 
-                    Status = IoAsynchronousPageWrite (ModWriterEntry->File,
-                                                      &ModWriterEntry->Mdl,
-                                                      &ModWriterEntry->WriteOffset,
-                                                      MiWriteComplete,
-                                                      (PVOID)ModWriterEntry,
-                                                      &ModWriterEntry->u.IoStatus,
-                                                      &ModWriterEntry->Irp);
+                    Status = IoAsynchronousPageWrite(
+                        ModWriterEntry->File, &ModWriterEntry->Mdl, &ModWriterEntry->WriteOffset, MiWriteComplete,
+                        (PVOID)ModWriterEntry, &ModWriterEntry->u.IoStatus, &ModWriterEntry->Irp);
                 }
-                else {
+                else
+                {
 
                     //
                     // Unable to get the file system resources, set error status
@@ -4383,7 +4297,8 @@ Environment:
                 }
             }
 
-            if (NT_ERROR(Status)) {
+            if (NT_ERROR(Status))
+            {
 
                 //
                 // An error has occurred, disable APC's and
@@ -4392,11 +4307,9 @@ Environment:
 
                 ModWriterEntry->u.IoStatus.Status = Status;
                 ModWriterEntry->u.IoStatus.Information = 0;
-                KeRaiseIrql (APC_LEVEL, &OldIrql);
-                MiWriteComplete ((PVOID)ModWriterEntry,
-                                 &ModWriterEntry->u.IoStatus,
-                                 0 );
-                KeLowerIrql (OldIrql);
+                KeRaiseIrql(APC_LEVEL, &OldIrql);
+                MiWriteComplete((PVOID)ModWriterEntry, &ModWriterEntry->u.IoStatus, 0);
+                KeLowerIrql(OldIrql);
             }
 #if 0
     //TEMPORARY code to use synchronous I/O here.
@@ -4431,17 +4344,13 @@ Environment:
                              0 );
             KeLowerIrql (OldIrql);
 #endif //0
-
         }
-
     }
 }
 
-
+
 BOOLEAN
-MmDisableModifiedWriteOfSection (
-    IN PSECTION_OBJECT_POINTERS SectionObjectPointer
-    )
+MmDisableModifiedWriteOfSection(IN PSECTION_OBJECT_POINTERS SectionObjectPointer)
 
 /*++
 
@@ -4472,12 +4381,14 @@ Return Value:
 
     state = TRUE;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
     ControlArea = ((PCONTROL_AREA)(SectionObjectPointer->DataSectionObject));
 
-    if (ControlArea != NULL) {
-        if (ControlArea->NumberOfMappedViews == 0) {
+    if (ControlArea != NULL)
+    {
+        if (ControlArea->NumberOfMappedViews == 0)
+        {
 
             //
             // There are no views to this section, indicate no modified
@@ -4486,7 +4397,8 @@ Return Value:
 
             ControlArea->u.Flags.NoModifiedWriting = 1;
         }
-        else {
+        else
+        {
 
             //
             // Return the current modified page writing state.
@@ -4495,7 +4407,8 @@ Return Value:
             state = (BOOLEAN)ControlArea->u.Flags.NoModifiedWriting;
         }
     }
-    else {
+    else
+    {
 
         //
         // This file no longer has an associated segment.
@@ -4504,15 +4417,13 @@ Return Value:
         state = 0;
     }
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
     return state;
 }
 
-
+
 BOOLEAN
-MmEnableModifiedWriteOfSection (
-    IN PSECTION_OBJECT_POINTERS SectionObjectPointer
-    )
+MmEnableModifiedWriteOfSection(IN PSECTION_OBJECT_POINTERS SectionObjectPointer)
 
 /*++
 
@@ -4543,12 +4454,14 @@ Return Value:
 
     state = TRUE;
 
-    LOCK_PFN2 (OldIrql);
+    LOCK_PFN2(OldIrql);
 
     ControlArea = ((PCONTROL_AREA)(SectionObjectPointer->DataSectionObject));
 
-    if (ControlArea != NULL) {
-        if (ControlArea->NumberOfMappedViews == 0) {
+    if (ControlArea != NULL)
+    {
+        if (ControlArea->NumberOfMappedViews == 0)
+        {
 
             //
             // There are no views to this section, indicate modified
@@ -4557,7 +4470,8 @@ Return Value:
 
             ControlArea->u.Flags.NoModifiedWriting = 0;
         }
-        else {
+        else
+        {
 
             //
             // Return the current modified page writing state.
@@ -4567,19 +4481,14 @@ Return Value:
         }
     }
 
-    UNLOCK_PFN2 (OldIrql);
+    UNLOCK_PFN2(OldIrql);
     return state;
 }
 
-
-#define ROUND_UP(VALUE,ROUND) ((ULONG)(((ULONG)VALUE + \
-                               ((ULONG)ROUND - 1L)) & (~((ULONG)ROUND - 1L))))
+
+#define ROUND_UP(VALUE, ROUND) ((ULONG)(((ULONG)VALUE + ((ULONG)ROUND - 1L)) & (~((ULONG)ROUND - 1L))))
 NTSTATUS
-MmGetPageFileInformation (
-    OUT PVOID SystemInformation,
-    IN ULONG SystemInformationLength,
-    OUT PULONG Length
-    )
+MmGetPageFileInformation(OUT PVOID SystemInformation, IN ULONG SystemInformationLength, OUT PULONG Length)
 
 /*++
 
@@ -4618,13 +4527,14 @@ Return Value:
 
     PageFileInfo->TotalSize = 0;
 
-    for (i = 0; i < MmNumberOfPagingFiles; i += 1) {
-        PageFileInfo = (PSYSTEM_PAGEFILE_INFORMATION)(
-                                (PUCHAR)PageFileInfo + NextEntryOffset);
+    for (i = 0; i < MmNumberOfPagingFiles; i += 1)
+    {
+        PageFileInfo = (PSYSTEM_PAGEFILE_INFORMATION)((PUCHAR)PageFileInfo + NextEntryOffset);
         NextEntryOffset = sizeof(SYSTEM_PAGEFILE_INFORMATION);
         TotalSize += sizeof(SYSTEM_PAGEFILE_INFORMATION);
 
-        if (TotalSize > SystemInformationLength) {
+        if (TotalSize > SystemInformationLength)
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
@@ -4645,12 +4555,11 @@ Return Value:
 
         PageFileInfo->PageFileName = UserBufferPageFileName;
 
-        TotalSize += ROUND_UP (UserBufferPageFileName.MaximumLength,
-                               sizeof(ULONG));
-        NextEntryOffset += ROUND_UP (UserBufferPageFileName.MaximumLength,
-                                     sizeof(ULONG));
+        TotalSize += ROUND_UP(UserBufferPageFileName.MaximumLength, sizeof(ULONG));
+        NextEntryOffset += ROUND_UP(UserBufferPageFileName.MaximumLength, sizeof(ULONG));
 
-        if (TotalSize > SystemInformationLength) {
+        if (TotalSize > SystemInformationLength)
+        {
             return STATUS_INFO_LENGTH_MISMATCH;
         }
 
@@ -4658,11 +4567,9 @@ Return Value:
         // Carefully reference the user buffer here.
         //
 
-        RtlCopyMemory(UserBufferPageFileName.Buffer,
-                      MmPagingFile[i]->PageFileName.Buffer,
+        RtlCopyMemory(UserBufferPageFileName.Buffer, MmPagingFile[i]->PageFileName.Buffer,
                       MmPagingFile[i]->PageFileName.Length);
-        UserBufferPageFileName.Buffer[
-                    MmPagingFile[i]->PageFileName.Length/sizeof(WCHAR)] = UNICODE_NULL;
+        UserBufferPageFileName.Buffer[MmPagingFile[i]->PageFileName.Length / sizeof(WCHAR)] = UNICODE_NULL;
         PageFileInfo->NextEntryOffset = NextEntryOffset;
     }
     PageFileInfo->NextEntryOffset = 0;
@@ -4670,11 +4577,9 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
-
+
 NTSTATUS
-MiCheckPageFileMapping (
-    IN PFILE_OBJECT File
-    )
+MiCheckPageFileMapping(IN PFILE_OBJECT File)
 
 /*++
 
@@ -4696,29 +4601,27 @@ Return Value:
 {
     KIRQL OldIrql;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    if (File->SectionObjectPointer == NULL) {
-        UNLOCK_PFN (OldIrql);
+    if (File->SectionObjectPointer == NULL)
+    {
+        UNLOCK_PFN(OldIrql);
         return STATUS_SUCCESS;
     }
 
     if ((File->SectionObjectPointer->DataSectionObject != NULL) ||
-        (File->SectionObjectPointer->ImageSectionObject != NULL)) {
+        (File->SectionObjectPointer->ImageSectionObject != NULL))
+    {
 
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
         return STATUS_INCOMPATIBLE_FILE_MAP;
     }
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
     return STATUS_SUCCESS;
-
 }
 
-
-VOID
-MiInsertPageFileInList (
-    VOID
-    )
+
+VOID MiInsertPageFileInList(VOID)
 
 /*++
 
@@ -4742,49 +4645,43 @@ Return Value:
     SIZE_T FreeSpace;
     SIZE_T MaximumSize;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
     MmNumberOfPagingFiles += 1;
 
-    if (IsListEmpty (&MmPagingFileHeader.ListHead)) {
-        KeSetEvent (&MmPagingFileHeader.Event, 0, FALSE);
+    if (IsListEmpty(&MmPagingFileHeader.ListHead))
+    {
+        KeSetEvent(&MmPagingFileHeader.Event, 0, FALSE);
     }
 
-    InsertTailList (&MmPagingFileHeader.ListHead,
-                    &MmPagingFile[MmNumberOfPagingFiles - 1]->Entry[0]->Links);
+    InsertTailList(&MmPagingFileHeader.ListHead, &MmPagingFile[MmNumberOfPagingFiles - 1]->Entry[0]->Links);
 
-    MmPagingFile[MmNumberOfPagingFiles - 1]->Entry[0]->CurrentList =
-                                                &MmPagingFileHeader.ListHead;
+    MmPagingFile[MmNumberOfPagingFiles - 1]->Entry[0]->CurrentList = &MmPagingFileHeader.ListHead;
 
-    InsertTailList (&MmPagingFileHeader.ListHead,
-                    &MmPagingFile[MmNumberOfPagingFiles - 1]->Entry[1]->Links);
+    InsertTailList(&MmPagingFileHeader.ListHead, &MmPagingFile[MmNumberOfPagingFiles - 1]->Entry[1]->Links);
 
-    MmPagingFile[MmNumberOfPagingFiles - 1]->Entry[1]->CurrentList =
-                                                &MmPagingFileHeader.ListHead;
+    MmPagingFile[MmNumberOfPagingFiles - 1]->Entry[1]->CurrentList = &MmPagingFileHeader.ListHead;
 
     FreeSpace = MmPagingFile[MmNumberOfPagingFiles - 1]->FreeSpace;
     MaximumSize = MmPagingFile[MmNumberOfPagingFiles - 1]->MaximumSize;
 
     MmNumberOfActiveMdlEntries += 2;
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
     //
     // Increase the systemwide commit limit maximum first.  Then increase
     // the current limit.
     //
 
-    InterlockedExchangeAddSizeT (&MmTotalCommitLimitMaximum, MaximumSize);
+    InterlockedExchangeAddSizeT(&MmTotalCommitLimitMaximum, MaximumSize);
 
-    InterlockedExchangeAddSizeT (&MmTotalCommitLimit, FreeSpace);
+    InterlockedExchangeAddSizeT(&MmTotalCommitLimit, FreeSpace);
 
     return;
 }
-
-VOID
-MiPageFileFull (
-    VOID
-    )
+
+VOID MiPageFileFull(VOID)
 
 /*++
 
@@ -4813,14 +4710,16 @@ Return Value:
     PFN_NUMBER Free;
     SIZE_T QuotaCharge;
 
-    if (MmNumberOfPagingFiles == 0) {
+    if (MmNumberOfPagingFiles == 0)
+    {
         return;
     }
 
     Total = 0;
     Free = 0;
 
-    for (i = 0; i < MmNumberOfPagingFiles; i += 1) {
+    for (i = 0; i < MmNumberOfPagingFiles; i += 1)
+    {
         Total += MmPagingFile[i]->Size;
         Free += MmPagingFile[i]->FreeSpace;
     }
@@ -4829,7 +4728,8 @@ Return Value:
     // Check to see if more than 90% of the total space has been used.
     //
 
-    if (((Total >> 5) + (Total >> 4)) >= Free) {
+    if (((Total >> 5) + (Total >> 4)) >= Free)
+    {
 
         //
         // Try to expand the paging files.
@@ -4843,21 +4743,24 @@ Return Value:
 
         i = 0;
 
-        do {
-            if (MmPagingFile[i]->MaximumSize > MmPagingFile[i]->Size) {
+        do
+        {
+            if (MmPagingFile[i]->MaximumSize > MmPagingFile[i]->Size)
+            {
                 break;
             }
             i += 1;
         } while (i < MmNumberOfPagingFiles);
 
-        if (i == MmNumberOfPagingFiles) {
+        if (i == MmNumberOfPagingFiles)
+        {
 
             //
             // No pagefiles can be extended,
             // display a popup if we haven't before.
             //
 
-            MiCauseOverCommitPopup ();
+            MiCauseOverCommitPopup();
 
             return;
         }
@@ -4874,34 +4777,33 @@ Return Value:
         // bother trying to extend the pagefile.
         //
 
-        if ((SSIZE_T)QuotaCharge + 50 > 0) {
+        if ((SSIZE_T)QuotaCharge + 50 > 0)
+        {
 
-            if ((SSIZE_T)QuotaCharge < 50) {
+            if ((SSIZE_T)QuotaCharge < 50)
+            {
                 QuotaCharge = 50;
             }
 
-            MiChargeCommitmentCantExpand (QuotaCharge, TRUE);
+            MiChargeCommitmentCantExpand(QuotaCharge, TRUE);
 
-            MM_TRACK_COMMIT (MM_DBG_COMMIT_PAGEFILE_FULL, QuotaCharge);
+            MM_TRACK_COMMIT(MM_DBG_COMMIT_PAGEFILE_FULL, QuotaCharge);
 
             //
             // Display a popup if we haven't before.
             //
 
-            MiCauseOverCommitPopup ();
+            MiCauseOverCommitPopup();
 
-            MiReturnCommitment (QuotaCharge);
+            MiReturnCommitment(QuotaCharge);
 
-            MM_TRACK_COMMIT (MM_DBG_COMMIT_RETURN_PAGEFILE_FULL, QuotaCharge);
+            MM_TRACK_COMMIT(MM_DBG_COMMIT_RETURN_PAGEFILE_FULL, QuotaCharge);
         }
     }
     return;
 }
-
-VOID
-MiFlushAllPages (
-    VOID
-    )
+
+VOID MiFlushAllPages(VOID)
 
 /*++
 
@@ -4931,17 +4833,19 @@ Environment:
     // modified writes to complete.
     //
 
-    if (MmNumberOfPagingFiles == 0) {
+    if (MmNumberOfPagingFiles == 0)
+    {
         return;
     }
 
     MmWriteAllModifiedPages = TRUE;
-    KeSetEvent (&MmModifiedPageWriterEvent, 0, FALSE);
+    KeSetEvent(&MmModifiedPageWriterEvent, 0, FALSE);
 
     j = 0xff;
 
-    do {
-        KeDelayExecutionThread (KernelMode, FALSE, (PLARGE_INTEGER)&Mm30Milliseconds);
+    do
+    {
+        KeDelayExecutionThread(KernelMode, FALSE, (PLARGE_INTEGER)&Mm30Milliseconds);
         j -= 1;
     } while ((MmModifiedPageListHead.Total > 50) && (j > 0));
 
@@ -4949,11 +4853,9 @@ Environment:
     return;
 }
 
-
+
 LOGICAL
-MiIssuePageExtendRequest (
-    IN PMMPAGE_FILE_EXPANSION PageExtend
-    )
+MiIssuePageExtendRequest(IN PMMPAGE_FILE_EXPANSION PageExtend)
 
 /*++
 
@@ -4985,40 +4887,35 @@ Environment:
     PLIST_ENTRY NextEntry;
     PETHREAD Thread;
 
-    Thread = PsGetCurrentThread ();
+    Thread = PsGetCurrentThread();
 
     //
     // The segment dereference thread cannot wait for itself !
     //
 
-    if (Thread->StartAddress == (PVOID)(ULONG_PTR)MiDereferenceSegmentThread) {
+    if (Thread->StartAddress == (PVOID)(ULONG_PTR)MiDereferenceSegmentThread)
+    {
         return FALSE;
     }
 
-    ExAcquireSpinLock (&MmDereferenceSegmentHeader.Lock, &OldIrql);
+    ExAcquireSpinLock(&MmDereferenceSegmentHeader.Lock, &OldIrql);
 
-    InsertHeadList (&MmDereferenceSegmentHeader.ListHead,
-                    &PageExtend->DereferenceList);
+    InsertHeadList(&MmDereferenceSegmentHeader.ListHead, &PageExtend->DereferenceList);
 
-    ExReleaseSpinLock (&MmDereferenceSegmentHeader.Lock, OldIrql);
+    ExReleaseSpinLock(&MmDereferenceSegmentHeader.Lock, OldIrql);
 
-    KeReleaseSemaphore (&MmDereferenceSegmentHeader.Semaphore,
-                        0L,
-                        1L,
-                        TRUE);
+    KeReleaseSemaphore(&MmDereferenceSegmentHeader.Semaphore, 0L, 1L, TRUE);
 
     //
     // Wait for the thread to extend the paging file.
     //
 
-    status = KeWaitForSingleObject (&PageExtend->Event,
-                                    Executive,
-                                    KernelMode,
-                                    FALSE,
-                                    (PageExtend->RequestedExpansionSize < 10) ?
-                                        (PLARGE_INTEGER)&MmOneSecond : (PLARGE_INTEGER)&MmTwentySeconds);
+    status = KeWaitForSingleObject(&PageExtend->Event, Executive, KernelMode, FALSE,
+                                   (PageExtend->RequestedExpansionSize < 10) ? (PLARGE_INTEGER)&MmOneSecond
+                                                                             : (PLARGE_INTEGER)&MmTwentySeconds);
 
-    if (status == STATUS_TIMEOUT) {
+    if (status == STATUS_TIMEOUT)
+    {
 
         //
         // The wait has timed out, if this request has not
@@ -5030,55 +4927,50 @@ Environment:
         // file object, and waiting in the file system.
         //
 
-        KdPrint(("MiIssuePageExtendRequest: wait timed out, page-extend= %p, quota = %lx\n",
-                   PageExtend, PageExtend->RequestedExpansionSize));
+        KdPrint(("MiIssuePageExtendRequest: wait timed out, page-extend= %p, quota = %lx\n", PageExtend,
+                 PageExtend->RequestedExpansionSize));
 
-        ExAcquireSpinLock (&MmDereferenceSegmentHeader.Lock, &OldIrql);
+        ExAcquireSpinLock(&MmDereferenceSegmentHeader.Lock, &OldIrql);
 
         NextEntry = MmDereferenceSegmentHeader.ListHead.Flink;
 
-        while (NextEntry != &MmDereferenceSegmentHeader.ListHead) {
+        while (NextEntry != &MmDereferenceSegmentHeader.ListHead)
+        {
 
             //
             // Check to see if this is the entry we are waiting for.
             //
 
-            if (NextEntry == &PageExtend->DereferenceList) {
+            if (NextEntry == &PageExtend->DereferenceList)
+            {
 
                 //
                 // Remove this entry.
                 //
 
-                RemoveEntryList (&PageExtend->DereferenceList);
-                ExReleaseSpinLock (&MmDereferenceSegmentHeader.Lock, OldIrql);
+                RemoveEntryList(&PageExtend->DereferenceList);
+                ExReleaseSpinLock(&MmDereferenceSegmentHeader.Lock, OldIrql);
                 return FALSE;
             }
             NextEntry = NextEntry->Flink;
         }
 
-        ExReleaseSpinLock (&MmDereferenceSegmentHeader.Lock, OldIrql);
+        ExReleaseSpinLock(&MmDereferenceSegmentHeader.Lock, OldIrql);
 
         //
         // Entry is being processed, wait for completion.
         //
 
-        KdPrint (("MiIssuePageExtendRequest: rewaiting...\n"));
+        KdPrint(("MiIssuePageExtendRequest: rewaiting...\n"));
 
-        KeWaitForSingleObject (&PageExtend->Event,
-                               Executive,
-                               KernelMode,
-                               FALSE,
-                               NULL);
+        KeWaitForSingleObject(&PageExtend->Event, Executive, KernelMode, FALSE, NULL);
     }
 
     return TRUE;
 }
 
-
-VOID
-MiIssuePageExtendRequestNoWait (
-    IN PFN_NUMBER SizeInPages
-    )
+
+VOID MiIssuePageExtendRequestNoWait(IN PFN_NUMBER SizeInPages)
 
 /*++
 
@@ -5112,10 +5004,10 @@ Environment:
     KIRQL OldIrql;
     LONG OriginalInProgress;
 
-    OriginalInProgress = InterlockedCompareExchange (
-                            &MmAttemptForCantExtend.InProgress, 1, 0);
+    OriginalInProgress = InterlockedCompareExchange(&MmAttemptForCantExtend.InProgress, 1, 0);
 
-    if (OriginalInProgress != 0) {
+    if (OriginalInProgress != 0)
+    {
 
         //
         // An expansion request is already in progress, assume
@@ -5126,24 +5018,20 @@ Environment:
         return;
     }
 
-    ASSERT (MmAttemptForCantExtend.InProgress == 1);
+    ASSERT(MmAttemptForCantExtend.InProgress == 1);
 
     SizeInPages = (SizeInPages + ONEMB_IN_PAGES - 1) & ~(ONEMB_IN_PAGES - 1);
 
     MmAttemptForCantExtend.ActualExpansion = 0;
     MmAttemptForCantExtend.RequestedExpansionSize = SizeInPages;
 
-    ExAcquireSpinLock (&MmDereferenceSegmentHeader.Lock, &OldIrql);
+    ExAcquireSpinLock(&MmDereferenceSegmentHeader.Lock, &OldIrql);
 
-    InsertHeadList (&MmDereferenceSegmentHeader.ListHead,
-                    &MmAttemptForCantExtend.DereferenceList);
+    InsertHeadList(&MmDereferenceSegmentHeader.ListHead, &MmAttemptForCantExtend.DereferenceList);
 
-    ExReleaseSpinLock (&MmDereferenceSegmentHeader.Lock, OldIrql);
+    ExReleaseSpinLock(&MmDereferenceSegmentHeader.Lock, OldIrql);
 
-    KeReleaseSemaphore (&MmDereferenceSegmentHeader.Semaphore,
-                        0L,
-                        1L,
-                        FALSE);
+    KeReleaseSemaphore(&MmDereferenceSegmentHeader.Semaphore, 0L, 1L, FALSE);
 
     return;
 }

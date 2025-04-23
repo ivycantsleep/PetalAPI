@@ -14,31 +14,22 @@
 
 
 WINUSERAPI
-BOOL
-WINAPI
-EnableScrollBar(
-    IN HWND hWnd,
-    IN UINT wSBflags,
-    IN UINT wArrows)
+BOOL WINAPI EnableScrollBar(IN HWND hWnd, IN UINT wSBflags, IN UINT wArrows)
 {
     BOOL ret;
 
     BEGIN_USERAPIHOOK()
-        ret = guah.pfnEnableScrollBar(hWnd, wSBflags, wArrows);
+    ret = guah.pfnEnableScrollBar(hWnd, wSBflags, wArrows);
     END_USERAPIHOOK()
 
     return ret;
 }
 
 
-BOOL RealEnableScrollBar(
-    IN HWND hWnd,
-    IN UINT wSBflags,
-    IN UINT wArrows)
+BOOL RealEnableScrollBar(IN HWND hWnd, IN UINT wSBflags, IN UINT wArrows)
 {
     return NtUserEnableScrollBar(hWnd, wSBflags, wArrows);
 }
-
 
 
 /***************************************************************************\
@@ -49,11 +40,7 @@ BOOL RealEnableScrollBar(
 
 
 FUNCLOG4(LOG_GENERAL, int, DUMMYCALLINGTYPE, SetScrollPos, HWND, hwnd, int, code, int, pos, BOOL, fRedraw)
-int SetScrollPos(
-    HWND hwnd,
-    int code,
-    int pos,
-    BOOL fRedraw)
+int SetScrollPos(HWND hwnd, int code, int pos, BOOL fRedraw)
 {
     SCROLLINFO si;
 
@@ -61,7 +48,7 @@ int SetScrollPos(
     si.nPos = pos;
     si.cbSize = sizeof(SCROLLINFO);
 
-    return((int) SetScrollInfo(hwnd, code, &si, fRedraw));
+    return ((int)SetScrollInfo(hwnd, code, &si, fRedraw));
 }
 
 
@@ -73,13 +60,9 @@ int SetScrollPos(
 \***************************************************************************/
 
 
-FUNCLOG5(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, SetScrollRange, HWND, hwnd, int, code, int, posMin, int, posMax, BOOL, fRedraw)
-BOOL SetScrollRange(
-    HWND hwnd,
-    int code,
-    int posMin,
-    int posMax,
-    BOOL fRedraw)
+FUNCLOG5(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, SetScrollRange, HWND, hwnd, int, code, int, posMin, int, posMax, BOOL,
+         fRedraw)
+BOOL SetScrollRange(HWND hwnd, int code, int posMin, int posMax, BOOL fRedraw)
 {
     SCROLLINFO si;
 
@@ -88,7 +71,7 @@ BOOL SetScrollRange(
      * to NtUserSetScrollInfo will return the position of the scrollbar
      * and not FALSE if the hwnd is invalid
      */
-    if ( ValidateHwnd((hwnd)) == NULL)
+    if (ValidateHwnd((hwnd)) == NULL)
         return FALSE;
 
     /*
@@ -96,14 +79,15 @@ BOOL SetScrollRange(
      * If not, it is an error;
      * Fix for Bug #1089 -- SANKAR -- 20th Sep, 1989 --.
      */
-    if ((unsigned int)(posMax - posMin) > MAXLONG) {
+    if ((unsigned int)(posMax - posMin) > MAXLONG)
+    {
         RIPERR0(ERROR_INVALID_SCROLLBAR_RANGE, RIP_VERBOSE, "");
         return FALSE;
     }
 
-    si.fMask  = SIF_RANGE;
-    si.nMin   = posMin;
-    si.nMax   = posMax;
+    si.fMask = SIF_RANGE;
+    si.nMin = posMin;
+    si.nMax = posMax;
     si.cbSize = sizeof(SCROLLINFO);
 
     SetScrollInfo(hwnd, code, &si, fRedraw);

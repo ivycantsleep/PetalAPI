@@ -25,10 +25,7 @@ Revision History:
 
 #include "ki.h"
 
-VOID
-KiRetireDpcList (
-    PKPRCB Prcb
-    )
+VOID KiRetireDpcList(PKPRCB Prcb)
 
 /*++
 
@@ -69,14 +66,16 @@ Return Value:
     //
 
     ListHead = &Prcb->DpcListHead;
-    do {
+    do
+    {
         Prcb->DpcRoutineActive = TRUE;
 
         //
         // If the timer hand value is nonzero, then process expired timers.
         //
 
-        if ((TimerHand = Prcb->TimerHand) != 0) {
+        if ((TimerHand = Prcb->TimerHand) != 0)
+        {
             Prcb->TimerHand = 0;
             _enable();
             KiTimerExpiration(NULL, NULL, UlongToHandle(TimerHand - 1), NULL);
@@ -87,7 +86,8 @@ Return Value:
         // If the DPC list is not empty, then process the DPC list.
         //
 
-        if (Prcb->DpcQueueDepth != 0) {
+        if (Prcb->DpcQueueDepth != 0)
+        {
 
             //
             // Acquire the DPC lock for the current processor and check if
@@ -99,10 +99,12 @@ Return Value:
             // lock and enable interrupts.
             //
 
-            do {
+            do
+            {
                 KeAcquireSpinLockAtDpcLevel(&Prcb->DpcLock);
                 Entry = Prcb->DpcListHead.Flink;
-                if (Entry != ListHead) {
+                if (Entry != ListHead)
+                {
                     RemoveEntryList(Entry);
                     Dpc = CONTAINING_RECORD(Entry, KDPC, DpcListEntry);
                     DeferredRoutine = Dpc->DeferredRoutine;
@@ -113,16 +115,14 @@ Return Value:
                     Prcb->DpcQueueDepth -= 1;
                     KeReleaseSpinLockFromDpcLevel(&Prcb->DpcLock);
                     _enable();
-                    (DeferredRoutine)(Dpc,
-                                      DeferredContext,
-                                      SystemArgument1,
-                                      SystemArgument2);
+                    (DeferredRoutine)(Dpc, DeferredContext, SystemArgument1, SystemArgument2);
 
                     ASSERT(KeGetCurrentIrql() == DISPATCH_LEVEL);
 
                     _disable();
-
-                } else {
+                }
+                else
+                {
 
                     ASSERT(Prcb->DpcQueueDepth == 0);
 

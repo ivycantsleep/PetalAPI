@@ -52,7 +52,7 @@ Revision History:
 
 #define POOL_VERIFIER_MASK 64
 
-#define POOL_DRIVER_MASK 128        // Note this cannot encode into a header.
+#define POOL_DRIVER_MASK 128 // Note this cannot encode into a header.
 
 //
 // WARNING: POOL_QUOTA_MASK is overloaded by POOL_QUOTA_FAIL_INSTEAD_OF_RAISE
@@ -75,7 +75,7 @@ Revision History:
 // This must be greater than or equal to the page size.
 //
 
-#define POOL_PAGE_SIZE  PAGE_SIZE
+#define POOL_PAGE_SIZE PAGE_SIZE
 
 //
 // The page size must be a multiple of the smallest pool block size.
@@ -89,7 +89,7 @@ Revision History:
 #define POOL_BLOCK_SHIFT 4
 #else
 
-#if defined (_WIN64)
+#if defined(_WIN64)
 #define POOL_BLOCK_SHIFT 4
 #else
 #define POOL_BLOCK_SHIFT 3
@@ -111,7 +111,8 @@ Revision History:
 // Define pool descriptor structure.
 //
 
-typedef struct _POOL_DESCRIPTOR {
+typedef struct _POOL_DESCRIPTOR
+{
     POOL_TYPE PoolType;
     ULONG PoolIndex;
     ULONG RunningAllocs;
@@ -161,25 +162,30 @@ typedef struct _POOL_DESCRIPTOR {
 //      smallest pool block size.
 //
 
-typedef struct _POOL_HEADER {
-    union {
-        struct {
+typedef struct _POOL_HEADER
+{
+    union
+    {
+        struct
+        {
             USHORT PreviousSize : 9;
             USHORT PoolIndex : 7;
             USHORT BlockSize : 9;
             USHORT PoolType : 7;
         };
-        ULONG Ulong1;   // used for InterlockedCompareExchange required by Alpha
+        ULONG Ulong1; // used for InterlockedCompareExchange required by Alpha
     };
-#if defined (_WIN64)
+#if defined(_WIN64)
     ULONG PoolTag;
 #endif
-    union {
+    union
+    {
         EPROCESS *ProcessBilled;
-#if !defined (_WIN64)
+#if !defined(_WIN64)
         ULONG PoolTag;
 #endif
-        struct {
+        struct
+        {
             USHORT AllocatorBackTraceIndex;
             USHORT PoolTagHash;
         };
@@ -196,13 +202,14 @@ typedef struct _POOL_HEADER {
 // Define size of pool block overhead when the block is on a freelist.
 //
 
-#define POOL_FREE_BLOCK_OVERHEAD  (POOL_OVERHEAD + sizeof (LIST_ENTRY))
+#define POOL_FREE_BLOCK_OVERHEAD (POOL_OVERHEAD + sizeof(LIST_ENTRY))
 
 //
 // Define dummy type so computation of pointers is simplified.
 //
 
-typedef struct _POOL_BLOCK {
+typedef struct _POOL_BLOCK
+{
     UCHAR Fill[1 << POOL_BLOCK_SHIFT];
 } POOL_BLOCK, *PPOOL_BLOCK;
 
@@ -221,8 +228,7 @@ typedef struct _POOL_BLOCK {
 #if POOL_CACHE_SUPPORTED
 #define POOL_BUDDY_MAX PoolBuddyMax
 #else
-#define POOL_BUDDY_MAX  \
-   (POOL_PAGE_SIZE - (POOL_OVERHEAD + POOL_SMALLEST_BLOCK ))
+#define POOL_BUDDY_MAX (POOL_PAGE_SIZE - (POOL_OVERHEAD + POOL_SMALLEST_BLOCK))
 #endif
 
 //
@@ -230,35 +236,23 @@ typedef struct _POOL_BLOCK {
 // These are only used by the memory manager.
 //
 
-VOID
-ExInitializePoolDescriptor (
-    IN PPOOL_DESCRIPTOR PoolDescriptor,
-    IN POOL_TYPE PoolType,
-    IN ULONG PoolIndex,
-    IN ULONG Threshold,
-    IN PVOID PoolLock
-    );
+VOID ExInitializePoolDescriptor(IN PPOOL_DESCRIPTOR PoolDescriptor, IN POOL_TYPE PoolType, IN ULONG PoolIndex,
+                                IN ULONG Threshold, IN PVOID PoolLock);
 
-VOID
-ExDeferredFreePool (
-     IN PPOOL_DESCRIPTOR PoolDesc
-     );
+VOID ExDeferredFreePool(IN PPOOL_DESCRIPTOR PoolDesc);
 
-#define EX_CHECK_POOL_FREES_FOR_ACTIVE_TIMERS         0x1
-#define EX_CHECK_POOL_FREES_FOR_ACTIVE_WORKERS        0x2
-#define EX_CHECK_POOL_FREES_FOR_ACTIVE_RESOURCES      0x4
-#define EX_KERNEL_VERIFIER_ENABLED                    0x8
-#define EX_VERIFIER_DEADLOCK_DETECTION_ENABLED       0x10
-#define EX_SPECIAL_POOL_ENABLED                      0x20
-#define EX_PRINT_POOL_FAILURES                       0x40
-#define EX_STOP_ON_POOL_FAILURES                     0x80
-#define EX_SEPARATE_HOT_PAGES_DURING_BOOT           0x100
-#define EX_DELAY_POOL_FREES                         0x200
+#define EX_CHECK_POOL_FREES_FOR_ACTIVE_TIMERS 0x1
+#define EX_CHECK_POOL_FREES_FOR_ACTIVE_WORKERS 0x2
+#define EX_CHECK_POOL_FREES_FOR_ACTIVE_RESOURCES 0x4
+#define EX_KERNEL_VERIFIER_ENABLED 0x8
+#define EX_VERIFIER_DEADLOCK_DETECTION_ENABLED 0x10
+#define EX_SPECIAL_POOL_ENABLED 0x20
+#define EX_PRINT_POOL_FAILURES 0x40
+#define EX_STOP_ON_POOL_FAILURES 0x80
+#define EX_SEPARATE_HOT_PAGES_DURING_BOOT 0x100
+#define EX_DELAY_POOL_FREES 0x200
 
-VOID
-ExSetPoolFlags (
-    IN ULONG PoolFlag
-    );
+VOID ExSetPoolFlags(IN ULONG PoolFlag);
 
 //++
 //SIZE_T
@@ -280,12 +274,13 @@ ExSetPoolFlags (
 //
 //--
 
-#define EX_REAL_POOL_USAGE(SizeInBytes)                             \
-        (((SizeInBytes) > POOL_BUDDY_MAX) ?                         \
-            (ROUND_TO_PAGES(SizeInBytes)) :                         \
-            (((SizeInBytes) + POOL_OVERHEAD + (POOL_SMALLEST_BLOCK - 1)) & ~(POOL_SMALLEST_BLOCK - 1)))
+#define EX_REAL_POOL_USAGE(SizeInBytes)  \
+    (((SizeInBytes) > POOL_BUDDY_MAX)    \
+         ? (ROUND_TO_PAGES(SizeInBytes)) \
+         : (((SizeInBytes) + POOL_OVERHEAD + (POOL_SMALLEST_BLOCK - 1)) & ~(POOL_SMALLEST_BLOCK - 1)))
 
-typedef struct _POOL_TRACKER_TABLE {
+typedef struct _POOL_TRACKER_TABLE
+{
     ULONG Key;
     ULONG NonPagedAllocs;
     ULONG NonPagedFrees;
@@ -302,7 +297,8 @@ typedef struct _POOL_TRACKER_TABLE {
 
 extern PPOOL_TRACKER_TABLE PoolTrackTable;
 
-typedef struct _POOL_TRACKER_BIG_PAGES {
+typedef struct _POOL_TRACKER_BIG_PAGES
+{
     PVOID Va;
     ULONG Key;
     ULONG NumberOfPages;

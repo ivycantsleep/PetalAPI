@@ -20,13 +20,9 @@ Revision History:
 
 #include "psp.h"
 
-
+
 NTSTATUS
-PspSetProcessIoHandlers(
-    IN PEPROCESS Process,
-    IN PVOID IoHandlerInformation,
-    IN ULONG IoHandlerLength
-    )
+PspSetProcessIoHandlers(IN PEPROCESS Process, IN PVOID IoHandlerInformation, IN ULONG IoHandlerLength)
 /*++
 
 Routine Description:
@@ -54,10 +50,7 @@ Return Value:
     return STATUS_NOT_IMPLEMENTED;
 }
 
-VOID
-PspDeleteVdmObjects(
-    IN PEPROCESS Process
-    )
+VOID PspDeleteVdmObjects(IN PEPROCESS Process)
 /*++
 
 Routine Description:

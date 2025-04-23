@@ -26,16 +26,12 @@ PMMPTE MiFirstReservedZeroingPte;
 
 KEVENT MiImageMappingPteEvent;
 
-#pragma alloc_text(PAGE,MiMapImageHeaderInHyperSpace)
-#pragma alloc_text(PAGE,MiUnmapImageHeaderInHyperSpace)
+#pragma alloc_text(PAGE, MiMapImageHeaderInHyperSpace)
+#pragma alloc_text(PAGE, MiUnmapImageHeaderInHyperSpace)
 
-
+
 PVOID
-MiMapPageInHyperSpace (
-    IN PEPROCESS Process,
-    IN PFN_NUMBER PageFrameIndex,
-    IN PKIRQL OldIrql
-    )
+MiMapPageInHyperSpace(IN PEPROCESS Process, IN PFN_NUMBER PageFrameIndex, IN PKIRQL OldIrql)
 
 /*++
 
@@ -77,38 +73,40 @@ Environment:
     PMMPTE PointerPte;
     PFN_NUMBER offset;
 
-    ASSERT (PageFrameIndex != 0);
+    ASSERT(PageFrameIndex != 0);
 
     PointerPte = MmFirstReservedMappingPte;
 
-    UNREFERENCED_PARAMETER (Process);       // Workaround compiler W4 bug.
+    UNREFERENCED_PARAMETER(Process); // Workaround compiler W4 bug.
 
-    LOCK_HYPERSPACE (Process, OldIrql);
+    LOCK_HYPERSPACE(Process, OldIrql);
 
     //
     // Get offset to first free PTE.
     //
 
-    offset = MI_GET_PAGE_FRAME_FROM_PTE (PointerPte);
+    offset = MI_GET_PAGE_FRAME_FROM_PTE(PointerPte);
 
-    if (offset == 0) {
+    if (offset == 0)
+    {
 
         //
         // All the reserved PTEs have been used, make them all invalid.
         //
 
-        MI_MAKING_MULTIPLE_PTES_INVALID (FALSE);
+        MI_MAKING_MULTIPLE_PTES_INVALID(FALSE);
 
 #if DBG
         {
-        PMMPTE LastPte;
+            PMMPTE LastPte;
 
-        LastPte = PointerPte + NUMBER_OF_MAPPING_PTES;
+            LastPte = PointerPte + NUMBER_OF_MAPPING_PTES;
 
-        do {
-            ASSERT (LastPte->u.Long == 0);
-            LastPte -= 1;
-        } while (LastPte > PointerPte);
+            do
+            {
+                ASSERT(LastPte->u.Long == 0);
+                LastPte -= 1;
+            } while (LastPte > PointerPte);
         }
 #endif
 
@@ -123,7 +121,7 @@ Environment:
         // Flush entire TB only on processors executing this process.
         //
 
-        KeFlushEntireTb (TRUE, FALSE);
+        KeFlushEntireTb(TRUE, FALSE);
     }
 
     //
@@ -137,7 +135,7 @@ Environment:
     //
 
     PointerPte += offset;
-    ASSERT (PointerPte->u.Hard.Valid == 0);
+    ASSERT(PointerPte->u.Hard.Valid == 0);
 
 
     TempPte = ValidPtePte;
@@ -148,14 +146,11 @@ Environment:
     // Return the VA that maps the page.
     //
 
-    return MiGetVirtualAddressMappedByPte (PointerPte);
+    return MiGetVirtualAddressMappedByPte(PointerPte);
 }
-
+
 PVOID
-MiMapPageInHyperSpaceAtDpc (
-    IN PEPROCESS Process,
-    IN PFN_NUMBER PageFrameIndex
-    )
+MiMapPageInHyperSpaceAtDpc(IN PEPROCESS Process, IN PFN_NUMBER PageFrameIndex)
 
 /*++
 
@@ -196,12 +191,12 @@ Environment:
     PMMPTE PointerPte;
     PFN_NUMBER offset;
 
-    UNREFERENCED_PARAMETER (Process);       // Workaround compiler W4 bug.
+    UNREFERENCED_PARAMETER(Process); // Workaround compiler W4 bug.
 
-    ASSERT (KeGetCurrentIrql() == DISPATCH_LEVEL);
-    ASSERT (PageFrameIndex != 0);
+    ASSERT(KeGetCurrentIrql() == DISPATCH_LEVEL);
+    ASSERT(PageFrameIndex != 0);
 
-    LOCK_HYPERSPACE_AT_DPC (Process);
+    LOCK_HYPERSPACE_AT_DPC(Process);
 
     //
     // Get offset to first free PTE.
@@ -209,26 +204,28 @@ Environment:
 
     PointerPte = MmFirstReservedMappingPte;
 
-    offset = MI_GET_PAGE_FRAME_FROM_PTE (PointerPte);
+    offset = MI_GET_PAGE_FRAME_FROM_PTE(PointerPte);
 
-    if (offset == 0) {
+    if (offset == 0)
+    {
 
         //
         // All the reserved PTEs have been used, make them all invalid.
         //
 
-        MI_MAKING_MULTIPLE_PTES_INVALID (FALSE);
+        MI_MAKING_MULTIPLE_PTES_INVALID(FALSE);
 
 #if DBG
         {
-        PMMPTE LastPte;
+            PMMPTE LastPte;
 
-        LastPte = PointerPte + NUMBER_OF_MAPPING_PTES;
+            LastPte = PointerPte + NUMBER_OF_MAPPING_PTES;
 
-        do {
-            ASSERT (LastPte->u.Long == 0);
-            LastPte -= 1;
-        } while (LastPte > PointerPte);
+            do
+            {
+                ASSERT(LastPte->u.Long == 0);
+                LastPte -= 1;
+            } while (LastPte > PointerPte);
         }
 #endif
 
@@ -243,7 +240,7 @@ Environment:
         // Flush entire TB only on processors executing this process.
         //
 
-        KeFlushEntireTb (TRUE, FALSE);
+        KeFlushEntireTb(TRUE, FALSE);
     }
 
     //
@@ -257,7 +254,7 @@ Environment:
     //
 
     PointerPte += offset;
-    ASSERT (PointerPte->u.Hard.Valid == 0);
+    ASSERT(PointerPte->u.Hard.Valid == 0);
 
 
     TempPte = ValidPtePte;
@@ -268,13 +265,11 @@ Environment:
     // Return the VA that maps the page.
     //
 
-    return MiGetVirtualAddressMappedByPte (PointerPte);
+    return MiGetVirtualAddressMappedByPte(PointerPte);
 }
-
+
 PVOID
-MiMapImageHeaderInHyperSpace (
-    IN PFN_NUMBER PageFrameIndex
-    )
+MiMapImageHeaderInHyperSpace(IN PFN_NUMBER PageFrameIndex)
 
 /*++
 
@@ -311,32 +306,31 @@ Environment:
     PMMPTE PointerPte;
     PVOID FlushVaPointer;
 
-    ASSERT (PageFrameIndex != 0);
+    ASSERT(PageFrameIndex != 0);
 
     TempPte = ValidPtePte;
     TempPte.u.Hard.PageFrameNumber = PageFrameIndex;
 
-    FlushVaPointer = (PVOID) IMAGE_MAPPING_PTE;
+    FlushVaPointer = (PVOID)IMAGE_MAPPING_PTE;
 
     //
     // Ensure both modified and accessed bits are set so the hardware doesn't
     // ever write this PTE.
     //
 
-    ASSERT (TempPte.u.Hard.Dirty == 1);
-    ASSERT (TempPte.u.Hard.Accessed == 1);
+    ASSERT(TempPte.u.Hard.Dirty == 1);
+    ASSERT(TempPte.u.Hard.Accessed == 1);
 
-    PointerPte = MiGetPteAddress (IMAGE_MAPPING_PTE);
+    PointerPte = MiGetPteAddress(IMAGE_MAPPING_PTE);
 
-    do {
+    do
+    {
         OriginalPte.u.Long = 0;
 
-        OriginalPte.u.Long = InterlockedCompareExchangePte (
-                                PointerPte,
-                                TempPte.u.Long,
-                                OriginalPte.u.Long);
-                                                             
-        if (OriginalPte.u.Long == 0) {
+        OriginalPte.u.Long = InterlockedCompareExchangePte(PointerPte, TempPte.u.Long, OriginalPte.u.Long);
+
+        if (OriginalPte.u.Long == 0)
+        {
             break;
         }
 
@@ -345,7 +339,7 @@ Environment:
         // already in use.  This should be very rare - go the long way.
         //
 
-        InterlockedIncrement ((PLONG)&MmWorkingSetList->NumberOfImageWaiters);
+        InterlockedIncrement((PLONG)&MmWorkingSetList->NumberOfImageWaiters);
 
         //
         // Deliberately wait with a timeout since the PTE release runs
@@ -353,13 +347,9 @@ Environment:
         // race window which the timeout saves us from.
         //
 
-        KeWaitForSingleObject (&MiImageMappingPteEvent,
-                               Executive,
-                               KernelMode,
-                               FALSE,
-                               (PLARGE_INTEGER)&MmOneSecond);
+        KeWaitForSingleObject(&MiImageMappingPteEvent, Executive, KernelMode, FALSE, (PLARGE_INTEGER)&MmOneSecond);
 
-        InterlockedDecrement ((PLONG)&MmWorkingSetList->NumberOfImageWaiters);
+        InterlockedDecrement((PLONG)&MmWorkingSetList->NumberOfImageWaiters);
 
     } while (TRUE);
 
@@ -374,20 +364,12 @@ Environment:
     // in order to support lock-free operation.
     //
 
-    KeFlushMultipleTb (1,
-                       &FlushVaPointer,
-                       TRUE,
-                       TRUE,
-                       NULL,
-                       TempPte.u.Flush);
+    KeFlushMultipleTb(1, &FlushVaPointer, TRUE, TRUE, NULL, TempPte.u.Flush);
 
-    return (PVOID) MiGetVirtualAddressMappedByPte (PointerPte);
+    return (PVOID)MiGetVirtualAddressMappedByPte(PointerPte);
 }
-
-VOID
-MiUnmapImageHeaderInHyperSpace (
-    VOID
-    )
+
+VOID MiUnmapImageHeaderInHyperSpace(VOID)
 
 /*++
 
@@ -414,24 +396,24 @@ Environment:
 {
     PMMPTE PointerPte;
 
-    PointerPte = MiGetPteAddress (IMAGE_MAPPING_PTE);
+    PointerPte = MiGetPteAddress(IMAGE_MAPPING_PTE);
 
     //
     // Capture the number of waiters.
     //
 
-    ASSERT (PointerPte->u.Long != 0);
+    ASSERT(PointerPte->u.Long != 0);
 
-#if defined (_WIN64)
-    InterlockedExchange64 ((PLONG64)PointerPte, ZeroPte.u.Long);
+#if defined(_WIN64)
+    InterlockedExchange64((PLONG64)PointerPte, ZeroPte.u.Long);
 #elif defined(_X86PAE_)
-    KeInterlockedSwapPte ((PHARDWARE_PTE)PointerPte,
-                          (PHARDWARE_PTE)&ZeroPte.u.Long);
+    KeInterlockedSwapPte((PHARDWARE_PTE)PointerPte, (PHARDWARE_PTE)&ZeroPte.u.Long);
 #else
-    InterlockedExchange ((PLONG)PointerPte, ZeroPte.u.Long);
+    InterlockedExchange((PLONG)PointerPte, ZeroPte.u.Long);
 #endif
 
-    if (MmWorkingSetList->NumberOfImageWaiters != 0) {
+    if (MmWorkingSetList->NumberOfImageWaiters != 0)
+    {
 
         //
         // If there are any threads waiting, wake them all now.  Note this
@@ -439,16 +421,14 @@ Environment:
         // rare that there are any waiters in the entire system period.
         //
 
-        KePulseEvent (&MiImageMappingPteEvent, 0, FALSE);
+        KePulseEvent(&MiImageMappingPteEvent, 0, FALSE);
     }
 
     return;
 }
-
+
 PVOID
-MiMapPageToZeroInHyperSpace (
-    IN PFN_NUMBER PageFrameIndex
-    )
+MiMapPageToZeroInHyperSpace(IN PFN_NUMBER PageFrameIndex)
 
 /*++
 
@@ -479,9 +459,9 @@ Environment:
     MMPTE TempPte;
     PMMPTE PointerPte;
 
-    ASSERT (PageFrameIndex != 0);
+    ASSERT(PageFrameIndex != 0);
 
-    ASSERT (KeGetCurrentIrql() == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
     PointerPte = MiFirstReservedZeroingPte;
 
@@ -489,26 +469,28 @@ Environment:
     // Get offset to first free PTE.
     //
 
-    offset = MI_GET_PAGE_FRAME_FROM_PTE (PointerPte);
+    offset = MI_GET_PAGE_FRAME_FROM_PTE(PointerPte);
 
-    if (offset == 0) {
+    if (offset == 0)
+    {
 
         //
         // All the reserved PTEs have been used, make them all invalid.
         //
 
-        MI_MAKING_MULTIPLE_PTES_INVALID (FALSE);
+        MI_MAKING_MULTIPLE_PTES_INVALID(FALSE);
 
 #if DBG
         {
-        PMMPTE LastPte;
+            PMMPTE LastPte;
 
-        LastPte = PointerPte + NUMBER_OF_ZEROING_PTES;
+            LastPte = PointerPte + NUMBER_OF_ZEROING_PTES;
 
-        do {
-            ASSERT (LastPte->u.Long == 0);
-            LastPte -= 1;
-        } while (LastPte > PointerPte);
+            do
+            {
+                ASSERT(LastPte->u.Long == 0);
+                LastPte -= 1;
+            } while (LastPte > PointerPte);
         }
 #endif
 
@@ -525,7 +507,7 @@ Environment:
         // thread may migrate there at any time.
         //
 
-        KeFlushEntireTb (TRUE, FALSE);
+        KeFlushEntireTb(TRUE, FALSE);
     }
 
     //
@@ -539,7 +521,7 @@ Environment:
     //
 
     PointerPte += offset;
-    ASSERT (PointerPte->u.Hard.Valid == 0);
+    ASSERT(PointerPte->u.Hard.Valid == 0);
 
     TempPte = ValidPtePte;
     TempPte.u.Hard.PageFrameNumber = PageFrameIndex;
@@ -549,5 +531,5 @@ Environment:
     // Return the VA that maps the page.
     //
 
-    return MiGetVirtualAddressMappedByPte (PointerPte);
+    return MiGetVirtualAddressMappedByPte(PointerPte);
 }

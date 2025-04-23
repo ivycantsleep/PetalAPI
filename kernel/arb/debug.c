@@ -53,16 +53,10 @@ LONG ArbDebugLevel = -1;
 ULONG ArbStopOnError;
 ULONG ArbReplayOnError;
 
-const CHAR* ArbpActionStrings[] = {
-    "ArbiterActionTestAllocation",
-    "ArbiterActionRetestAllocation",
-    "ArbiterActionCommitAllocation",
-    "ArbiterActionRollbackAllocation",
-    "ArbiterActionQueryAllocatedResources",
-    "ArbiterActionWriteReservedResources",
-    "ArbiterActionQueryConflict",
-    "ArbiterActionQueryArbitrate",
-    "ArbiterActionAddReserved",
+const CHAR *ArbpActionStrings[] = {
+    "ArbiterActionTestAllocation",     "ArbiterActionRetestAllocation",        "ArbiterActionCommitAllocation",
+    "ArbiterActionRollbackAllocation", "ArbiterActionQueryAllocatedResources", "ArbiterActionWriteReservedResources",
+    "ArbiterActionQueryConflict",      "ArbiterActionQueryArbitrate",          "ArbiterActionAddReserved",
     "ArbiterActionBootAllocation"
 };
 
@@ -72,12 +66,7 @@ const CHAR* ArbpActionStrings[] = {
 #pragma alloc_text(PAGE, ArbDumpArbitrationList)
 #endif
 
-VOID
-ArbDumpArbiterRange(
-    LONG Level,
-    PRTL_RANGE_LIST List,
-    PUCHAR RangeText
-    )
+VOID ArbDumpArbiterRange(LONG Level, PRTL_RANGE_LIST List, PUCHAR RangeText)
 
 /*++
 
@@ -104,33 +93,26 @@ Return Value:
 
     PAGED_CODE();
 
-    FOR_ALL_RANGES(List, &iterator, current) {
+    FOR_ALL_RANGES(List, &iterator, current)
+    {
 
-        if (headerDisplayed == FALSE) {
+        if (headerDisplayed == FALSE)
+        {
             headerDisplayed = TRUE;
             ARB_PRINT(Level, ("  %s:\n", RangeText));
         }
 
-        ARB_PRINT(Level,
-                    ("    %I64x-%I64x %s%s O=0x%08x U=0x%08x\n",
-                    current->Start,
-                    current->End,
-                    current->Flags & RTL_RANGE_SHARED ? "S" : " ",
-                    current->Flags & RTL_RANGE_CONFLICT ? "C" : " ",
-                    current->Owner,
-                    current->UserData
-                   ));
+        ARB_PRINT(Level, ("    %I64x-%I64x %s%s O=0x%08x U=0x%08x\n", current->Start, current->End,
+                          current->Flags & RTL_RANGE_SHARED ? "S" : " ",
+                          current->Flags & RTL_RANGE_CONFLICT ? "C" : " ", current->Owner, current->UserData));
     }
-    if (headerDisplayed == FALSE) {
+    if (headerDisplayed == FALSE)
+    {
         ARB_PRINT(Level, ("  %s: <None>\n", RangeText));
     }
 }
-
-VOID
-ArbDumpArbiterInstance(
-    LONG Level,
-    PARBITER_INSTANCE Arbiter
-    )
+
+VOID ArbDumpArbiterInstance(LONG Level, PARBITER_INSTANCE Arbiter)
 
 /*++
 
@@ -154,29 +136,14 @@ Return Value:
 
     PAGED_CODE();
 
-    ARB_PRINT(Level,
-                ("---%S Arbiter State---\n",
-                Arbiter->Name
-                ));
+    ARB_PRINT(Level, ("---%S Arbiter State---\n", Arbiter->Name));
 
-    ArbDumpArbiterRange(
-        Level,
-        Arbiter->Allocation,
-        "Allocation"
-        );
+    ArbDumpArbiterRange(Level, Arbiter->Allocation, "Allocation");
 
-    ArbDumpArbiterRange(
-        Level,
-        Arbiter->PossibleAllocation,
-        "PossibleAllocation"
-        );
+    ArbDumpArbiterRange(Level, Arbiter->PossibleAllocation, "PossibleAllocation");
 }
-
-VOID
-ArbDumpArbitrationList(
-    LONG Level,
-    PLIST_ENTRY ArbitrationList
-    )
+
+VOID ArbDumpArbitrationList(LONG Level, PLIST_ENTRY ArbitrationList)
 
 /*++
 
@@ -207,42 +174,27 @@ Return Value:
 
     ARB_PRINT(Level, ("Arbitration List\n"));
 
-    FOR_ALL_IN_LIST(ARBITER_LIST_ENTRY, ArbitrationList, current) {
+    FOR_ALL_IN_LIST(ARBITER_LIST_ENTRY, ArbitrationList, current)
+    {
 
-        if (previousOwner != current->PhysicalDeviceObject) {
+        if (previousOwner != current->PhysicalDeviceObject)
+        {
 
             previousOwner = current->PhysicalDeviceObject;
 
-            ARB_PRINT(
-                Level,
-                ("  Owning object 0x%08x\n",
-                current->PhysicalDeviceObject
-                ));
-            ARB_PRINT(
-                Level,
-                ("    Length  Alignment   Minimum Address - Maximum Address\n"
-                ));
-
+            ARB_PRINT(Level, ("  Owning object 0x%08x\n", current->PhysicalDeviceObject));
+            ARB_PRINT(Level, ("    Length  Alignment   Minimum Address - Maximum Address\n"));
         }
 
-        FOR_ALL_IN_ARRAY(current->Alternatives,
-                         current->AlternativeCount,
-                         alternative) {
+        FOR_ALL_IN_ARRAY(current->Alternatives, current->AlternativeCount, alternative)
+        {
 
-            ARB_PRINT(
-                Level,
-                ("%c %8x   %8x  %08x%08x - %08x%08x  %s\n",
-                andOr,
-                alternative->u.Generic.Length,
-                alternative->u.Generic.Alignment,
-                alternative->u.Generic.MinimumAddress.HighPart,
-                alternative->u.Generic.MinimumAddress.LowPart,
-                alternative->u.Generic.MaximumAddress.HighPart,
-                alternative->u.Generic.MaximumAddress.LowPart,
-                alternative->Type == CmResourceTypeMemory ?
-                  "Memory"
-                : "Port"
-                ));
+            ARB_PRINT(Level,
+                      ("%c %8x   %8x  %08x%08x - %08x%08x  %s\n", andOr, alternative->u.Generic.Length,
+                       alternative->u.Generic.Alignment, alternative->u.Generic.MinimumAddress.HighPart,
+                       alternative->u.Generic.MinimumAddress.LowPart, alternative->u.Generic.MaximumAddress.HighPart,
+                       alternative->u.Generic.MaximumAddress.LowPart,
+                       alternative->Type == CmResourceTypeMemory ? "Memory" : "Port"));
             andOr = '|';
         }
         andOr = '&';

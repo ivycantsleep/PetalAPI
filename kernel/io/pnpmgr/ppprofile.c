@@ -57,18 +57,15 @@ Revision History:
 // List of current dock devices, and the number of dockdevices.
 // Must hold PiProfileDeviceListLock to change these values.
 //
-LIST_ENTRY  PiProfileDeviceListHead;
-ULONG       PiProfileDeviceCount;
-FAST_MUTEX  PiProfileDeviceListLock;
-KSEMAPHORE  PiProfileChangeSemaphore;
-BOOLEAN     PiProfileChangeCancelRequired;
-LONG        PiProfileDevicesInTransition;
+LIST_ENTRY PiProfileDeviceListHead;
+ULONG PiProfileDeviceCount;
+FAST_MUTEX PiProfileDeviceListLock;
+KSEMAPHORE PiProfileChangeSemaphore;
+BOOLEAN PiProfileChangeCancelRequired;
+LONG PiProfileDevicesInTransition;
 
 
-VOID
-PpProfileInit(
-    VOID
-    )
+VOID PpProfileInit(VOID)
 /*++
 
 Routine Description:
@@ -95,10 +92,7 @@ Return Value:
 }
 
 
-VOID
-PpProfileBeginHardwareProfileTransition(
-    IN BOOLEAN SubsumeExistingDeparture
-    )
+VOID PpProfileBeginHardwareProfileTransition(IN BOOLEAN SubsumeExistingDeparture)
 /*++
 
 Routine Description:
@@ -125,7 +119,8 @@ Return Value:
 {
     NTSTATUS status;
 
-    if (SubsumeExistingDeparture) {
+    if (SubsumeExistingDeparture)
+    {
 
         //
         // We will already have queried in this case. Also, enumeration is
@@ -141,23 +136,13 @@ Return Value:
     // Take the profile change semaphore. We do this whenever a dock is
     // in our list, even if no query is going to occur.
     //
-    status = KeWaitForSingleObject(
-        &PiProfileChangeSemaphore,
-        Executive,
-        KernelMode,
-        FALSE,
-        NULL
-        );
+    status = KeWaitForSingleObject(&PiProfileChangeSemaphore, Executive, KernelMode, FALSE, NULL);
 
     ASSERT(status == STATUS_SUCCESS);
 }
 
 
-VOID
-PpProfileIncludeInHardwareProfileTransition(
-    IN  PDEVICE_NODE    DeviceNode,
-    IN  PROFILE_STATUS  ChangeInPresence
-    )
+VOID PpProfileIncludeInHardwareProfileTransition(IN PDEVICE_NODE DeviceNode, IN PROFILE_STATUS ChangeInPresence)
 /*++
 
 Routine Description:
@@ -179,9 +164,9 @@ Return Value:
 
 --*/
 {
-    PWCHAR          deviceSerialNumber;
-    PDEVICE_OBJECT  deviceObject;
-    NTSTATUS        status;
+    PWCHAR deviceSerialNumber;
+    PDEVICE_OBJECT deviceObject;
+    NTSTATUS status;
 
     //
     // Verify we are under semaphore, we aren't marking the dock twice, and
@@ -189,10 +174,10 @@ Return Value:
     //
     ASSERT_SEMA_NOT_SIGNALLED(&PiProfileChangeSemaphore);
     ASSERT(DeviceNode->DockInfo.DockStatus == DOCK_QUIESCENT);
-    ASSERT((ChangeInPresence == DOCK_DEPARTING)||
-           (ChangeInPresence == DOCK_ARRIVING));
+    ASSERT((ChangeInPresence == DOCK_DEPARTING) || (ChangeInPresence == DOCK_ARRIVING));
 
-    if (ChangeInPresence == DOCK_ARRIVING) {
+    if (ChangeInPresence == DOCK_ARRIVING)
+    {
 
         //
         // First, ensure this dock is a member of the dock list.
@@ -201,7 +186,8 @@ Return Value:
         //     We should move this into IopProcessNewDeviceNode, or perhaps
         // PipStartPhaseN.
         //
-        if (IsListEmpty(&DeviceNode->DockInfo.ListEntry)) {
+        if (IsListEmpty(&DeviceNode->DockInfo.ListEntry))
+        {
 
             //
             // Acquire the lock on the list of dock devices
@@ -211,8 +197,7 @@ Return Value:
             //
             // Add this element to the head of the list
             //
-            InsertHeadList(&PiProfileDeviceListHead,
-                           &DeviceNode->DockInfo.ListEntry);
+            InsertHeadList(&PiProfileDeviceListHead, &DeviceNode->DockInfo.ListEntry);
             PiProfileDeviceCount++;
 
             //
@@ -228,17 +213,16 @@ Return Value:
         //
         deviceObject = DeviceNode->PhysicalDeviceObject;
 
-        status = IopQueryDeviceSerialNumber(
-            deviceObject,
-            &deviceSerialNumber
-            );
+        status = IopQueryDeviceSerialNumber(deviceObject, &deviceSerialNumber);
 
-        if (NT_SUCCESS(status) && (deviceSerialNumber != NULL)) {
+        if (NT_SUCCESS(status) && (deviceSerialNumber != NULL))
+        {
 
             ExFreePool(deviceSerialNumber);
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // DOCK_DEPARTING case, we must be a member of the dock list...
@@ -252,12 +236,8 @@ Return Value:
 
 
 NTSTATUS
-PpProfileQueryHardwareProfileChange(
-    IN  BOOLEAN                     SubsumingExistingDeparture,
-    IN  PROFILE_NOTIFICATION_TIME   InPnpEvent,
-    OUT PPNP_VETO_TYPE              VetoType,
-    OUT PUNICODE_STRING             VetoName OPTIONAL
-    )
+PpProfileQueryHardwareProfileChange(IN BOOLEAN SubsumingExistingDeparture, IN PROFILE_NOTIFICATION_TIME InPnpEvent,
+                                    OUT PPNP_VETO_TYPE VetoType, OUT PUNICODE_STRING VetoName OPTIONAL)
 /*++
 
 Routine Description:
@@ -307,18 +287,17 @@ Return Value:
     ASSERT(PiProfileDevicesInTransition);
 
     arrivingDockFound = FALSE;
-    for (listEntry  = PiProfileDeviceListHead.Flink;
-        listEntry != &(PiProfileDeviceListHead);
-        listEntry  = listEntry->Flink ) {
+    for (listEntry = PiProfileDeviceListHead.Flink; listEntry != &(PiProfileDeviceListHead);
+         listEntry = listEntry->Flink)
+    {
 
-        devNode = CONTAINING_RECORD(listEntry,
-                                    DEVICE_NODE,
-                                    DockInfo.ListEntry);
+        devNode = CONTAINING_RECORD(listEntry, DEVICE_NODE, DockInfo.ListEntry);
 
-        ASSERT((devNode->DockInfo.DockStatus != DOCK_NOTDOCKDEVICE)&&
+        ASSERT((devNode->DockInfo.DockStatus != DOCK_NOTDOCKDEVICE) &&
                (devNode->DockInfo.DockStatus != DOCK_EJECTIRP_COMPLETED));
 
-        if (devNode->DockInfo.DockStatus == DOCK_ARRIVING) {
+        if (devNode->DockInfo.DockStatus == DOCK_ARRIVING)
+        {
 
             arrivingDockFound = TRUE;
         }
@@ -329,7 +308,8 @@ Return Value:
     //
     ExReleaseFastMutex(&PiProfileDeviceListLock);
 
-    if (SubsumingExistingDeparture) {
+    if (SubsumingExistingDeparture)
+    {
 
         ASSERT(PiProfileChangeCancelRequired);
         //
@@ -338,7 +318,8 @@ Return Value:
         return STATUS_SUCCESS;
     }
 
-    if (arrivingDockFound) {
+    if (arrivingDockFound)
+    {
 
         //
         // We currently don't actually query for hardware profile change on a
@@ -350,30 +331,24 @@ Return Value:
         return STATUS_SUCCESS;
     }
 
-    IopDbgPrint((IOP_TRACE_LEVEL,
-               "NTOSKRNL: Sending HW profile change [query]\n"));
+    IopDbgPrint((IOP_TRACE_LEVEL, "NTOSKRNL: Sending HW profile change [query]\n"));
 
-    status = IopRequestHwProfileChangeNotification(
-        (LPGUID) &GUID_HWPROFILE_QUERY_CHANGE,
-        InPnpEvent,
-        VetoType,
-        VetoName
-        );
+    status =
+        IopRequestHwProfileChangeNotification((LPGUID)&GUID_HWPROFILE_QUERY_CHANGE, InPnpEvent, VetoType, VetoName);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         PiProfileChangeCancelRequired = TRUE;
-    } else {
+    }
+    else
+    {
         PiProfileChangeCancelRequired = FALSE;
     }
     return status;
 }
 
 
-VOID
-PpProfileCommitTransitioningDock(
-    IN PDEVICE_NODE     DeviceNode,
-    IN PROFILE_STATUS   ChangeInPresence
-    )
+VOID PpProfileCommitTransitioningDock(IN PDEVICE_NODE DeviceNode, IN PROFILE_STATUS ChangeInPresence)
 /*++
 
 Routine Description:
@@ -405,7 +380,8 @@ Return Value:
     ASSERT(!IsListEmpty(&DeviceNode->DockInfo.ListEntry));
     ASSERT_SEMA_NOT_SIGNALLED(&PiProfileChangeSemaphore);
 
-    if (ChangeInPresence == DOCK_DEPARTING) {
+    if (ChangeInPresence == DOCK_DEPARTING)
+    {
 
         ASSERT((DeviceNode->DockInfo.DockStatus == DOCK_DEPARTING) ||
                (DeviceNode->DockInfo.DockStatus == DOCK_EJECTIRP_COMPLETED));
@@ -413,7 +389,8 @@ Return Value:
         //
         // Free up the serial number
         //
-        if (DeviceNode->DockInfo.SerialNumber != NULL) {
+        if (DeviceNode->DockInfo.SerialNumber != NULL)
+        {
 
             ExFreePool(DeviceNode->DockInfo.SerialNumber);
             DeviceNode->DockInfo.SerialNumber = NULL;
@@ -435,8 +412,9 @@ Return Value:
         // Release the lock on the list of dock devices
         //
         ExReleaseFastMutex(&PiProfileDeviceListLock);
-
-    } else {
+    }
+    else
+    {
 
         ASSERT(DeviceNode->DockInfo.DockStatus == DOCK_ARRIVING);
 
@@ -449,12 +427,12 @@ Return Value:
         // Retrieve the Serial Number from this dock device if we don't already
         // have it.
         //
-        if (DeviceNode->DockInfo.SerialNumber == NULL) {
+        if (DeviceNode->DockInfo.SerialNumber == NULL)
+        {
 
             deviceObject = DeviceNode->PhysicalDeviceObject;
 
-            status = IopQueryDeviceSerialNumber(deviceObject,
-                                                &deviceSerialNumber);
+            status = IopQueryDeviceSerialNumber(deviceObject, &deviceSerialNumber);
 
             DeviceNode->DockInfo.SerialNumber = deviceSerialNumber;
         }
@@ -464,15 +442,16 @@ Return Value:
     remainingDockCount = InterlockedDecrement(&PiProfileDevicesInTransition);
     ASSERT(remainingDockCount >= 0);
 
-    if (remainingDockCount) {
+    if (remainingDockCount)
+    {
 
         return;
     }
 
     profileChanged = FALSE;
 
-    if ((ChangeInPresence == DOCK_ARRIVING) &&
-        (DeviceNode->DockInfo.SerialNumber == NULL)) {
+    if ((ChangeInPresence == DOCK_ARRIVING) && (DeviceNode->DockInfo.SerialNumber == NULL))
+    {
 
         //
         // Couldn't get Serial Number for this dock device, or serial number
@@ -491,10 +470,10 @@ Return Value:
     // 2) If the profile changed, this routine updates the registry.
     //
     status = PiProfileUpdateHardwareProfile(&profileChanged);
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
-        IopDbgPrint((IOP_TRACE_LEVEL,
-                   "PiProfileUpdateHardwareProfile failed with status == %lx\n", status));
+        IopDbgPrint((IOP_TRACE_LEVEL, "PiProfileUpdateHardwareProfile failed with status == %lx\n", status));
     }
 
 BroadcastAndLeave:
@@ -502,32 +481,25 @@ BroadcastAndLeave:
     //
     // Clean up
     //
-    if (NT_SUCCESS(status) && profileChanged) {
+    if (NT_SUCCESS(status) && profileChanged)
+    {
 
         PiProfileSendHardwareProfileCommit();
         PiProfileUpdateDeviceTree();
-
-    } else if (PiProfileChangeCancelRequired) {
+    }
+    else if (PiProfileChangeCancelRequired)
+    {
 
         PiProfileSendHardwareProfileCancel();
     }
 
-    KeReleaseSemaphore(
-        &PiProfileChangeSemaphore,
-        IO_NO_INCREMENT,
-        1,
-        FALSE
-        );
+    KeReleaseSemaphore(&PiProfileChangeSemaphore, IO_NO_INCREMENT, 1, FALSE);
 
     return;
 }
 
 
-VOID
-PpProfileCancelTransitioningDock(
-    IN PDEVICE_NODE     DeviceNode,
-    IN PROFILE_STATUS   ChangeInPresence
-    )
+VOID PpProfileCancelTransitioningDock(IN PDEVICE_NODE DeviceNode, IN PROFILE_STATUS ChangeInPresence)
 /*++
 
 Routine Description:
@@ -551,8 +523,8 @@ Return Value:
 --*/
 {
     NTSTATUS status;
-    BOOLEAN  profileChanged;
-    LONG     remainingDockCount;
+    BOOLEAN profileChanged;
+    LONG remainingDockCount;
 
     ASSERT(ChangeInPresence == DOCK_DEPARTING);
 
@@ -578,7 +550,8 @@ Return Value:
     //
     ExReleaseFastMutex(&PiProfileDeviceListLock);
 
-    if (remainingDockCount) {
+    if (remainingDockCount)
+    {
 
         return;
     }
@@ -588,44 +561,38 @@ Return Value:
     //
     status = PiProfileUpdateHardwareProfile(&profileChanged);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // So we're there physically, but not mentally? Too bad, where broadcasting
         // change either way.
         //
-        IopDbgPrint((IOP_TRACE_LEVEL,
-                   "PiProfileUpdateHardwareProfile failed with status == %lx\n", status));
+        IopDbgPrint((IOP_TRACE_LEVEL, "PiProfileUpdateHardwareProfile failed with status == %lx\n", status));
 
         ASSERT(NT_SUCCESS(status));
     }
 
-    if (NT_SUCCESS(status) && profileChanged) {
+    if (NT_SUCCESS(status) && profileChanged)
+    {
 
         PiProfileSendHardwareProfileCommit();
         PiProfileUpdateDeviceTree();
-
-    } else {
+    }
+    else
+    {
 
         ASSERT(PiProfileChangeCancelRequired);
         PiProfileSendHardwareProfileCancel();
     }
 
-    KeReleaseSemaphore(
-        &PiProfileChangeSemaphore,
-        IO_NO_INCREMENT,
-        1,
-        FALSE
-        );
+    KeReleaseSemaphore(&PiProfileChangeSemaphore, IO_NO_INCREMENT, 1, FALSE);
 
     return;
 }
 
 
-VOID
-PpProfileCancelHardwareProfileTransition(
-    VOID
-    )
+VOID PpProfileCancelHardwareProfileTransition(VOID)
 /*++
 
 Routine Description:
@@ -644,7 +611,7 @@ Return Value:
 
 --*/
 {
-    PLIST_ENTRY  listEntry;
+    PLIST_ENTRY listEntry;
     PDEVICE_NODE devNode;
 
     ASSERT_SEMA_NOT_SIGNALLED(&PiProfileChangeSemaphore);
@@ -654,17 +621,16 @@ Return Value:
     //
     ExAcquireFastMutex(&PiProfileDeviceListLock);
 
-    for (listEntry  = PiProfileDeviceListHead.Flink;
-        listEntry != &(PiProfileDeviceListHead);
-        listEntry  = listEntry->Flink ) {
+    for (listEntry = PiProfileDeviceListHead.Flink; listEntry != &(PiProfileDeviceListHead);
+         listEntry = listEntry->Flink)
+    {
 
-        devNode = CONTAINING_RECORD(listEntry,
-                                    DEVICE_NODE,
-                                    DockInfo.ListEntry);
+        devNode = CONTAINING_RECORD(listEntry, DEVICE_NODE, DockInfo.ListEntry);
 
-        ASSERT((devNode->DockInfo.DockStatus != DOCK_NOTDOCKDEVICE)&&
+        ASSERT((devNode->DockInfo.DockStatus != DOCK_NOTDOCKDEVICE) &&
                (devNode->DockInfo.DockStatus != DOCK_EJECTIRP_COMPLETED));
-        if (devNode->DockInfo.DockStatus != DOCK_QUIESCENT) {
+        if (devNode->DockInfo.DockStatus != DOCK_QUIESCENT)
+        {
 
             InterlockedDecrement(&PiProfileDevicesInTransition);
             devNode->DockInfo.DockStatus = DOCK_QUIESCENT;
@@ -678,24 +644,17 @@ Return Value:
     //
     ExReleaseFastMutex(&PiProfileDeviceListLock);
 
-    if (PiProfileChangeCancelRequired) {
+    if (PiProfileChangeCancelRequired)
+    {
 
         PiProfileSendHardwareProfileCancel();
     }
 
-    KeReleaseSemaphore(
-        &PiProfileChangeSemaphore,
-        IO_NO_INCREMENT,
-        1,
-        FALSE
-        );
+    KeReleaseSemaphore(&PiProfileChangeSemaphore, IO_NO_INCREMENT, 1, FALSE);
 }
 
 
-VOID
-PpProfileMarkAllTransitioningDocksEjected(
-    VOID
-    )
+VOID PpProfileMarkAllTransitioningDocksEjected(VOID)
 /*++
 
 Routine Description:
@@ -716,7 +675,7 @@ Return Value:
 
 --*/
 {
-    PLIST_ENTRY  listEntry;
+    PLIST_ENTRY listEntry;
     PDEVICE_NODE devNode;
 
     //
@@ -731,17 +690,15 @@ Return Value:
     //
     ExAcquireFastMutex(&PiProfileDeviceListLock);
 
-    for (listEntry  = PiProfileDeviceListHead.Flink;
-        listEntry != &(PiProfileDeviceListHead);
-        listEntry  = listEntry->Flink ) {
+    for (listEntry = PiProfileDeviceListHead.Flink; listEntry != &(PiProfileDeviceListHead);
+         listEntry = listEntry->Flink)
+    {
 
-        devNode = CONTAINING_RECORD(listEntry,
-                                    DEVICE_NODE,
-                                    DockInfo.ListEntry);
+        devNode = CONTAINING_RECORD(listEntry, DEVICE_NODE, DockInfo.ListEntry);
 
-        ASSERT((devNode->DockInfo.DockStatus == DOCK_QUIESCENT)||
-               (devNode->DockInfo.DockStatus == DOCK_DEPARTING));
-        if (devNode->DockInfo.DockStatus != DOCK_QUIESCENT) {
+        ASSERT((devNode->DockInfo.DockStatus == DOCK_QUIESCENT) || (devNode->DockInfo.DockStatus == DOCK_DEPARTING));
+        if (devNode->DockInfo.DockStatus != DOCK_QUIESCENT)
+        {
 
             devNode->DockInfo.DockStatus = DOCK_EJECTIRP_COMPLETED;
         }
@@ -754,10 +711,7 @@ Return Value:
 }
 
 
-VOID
-PiProfileSendHardwareProfileCommit(
-    VOID
-    )
+VOID PiProfileSendHardwareProfileCommit(VOID)
 /*++
 
 Routine Description:
@@ -776,22 +730,14 @@ Return Value:
 --*/
 {
     ASSERT_SEMA_NOT_SIGNALLED(&PiProfileChangeSemaphore);
-    IopDbgPrint((IOP_TRACE_LEVEL,
-               "NTOSKRNL: Sending HW profile change [commit]\n"));
+    IopDbgPrint((IOP_TRACE_LEVEL, "NTOSKRNL: Sending HW profile change [commit]\n"));
 
-    IopRequestHwProfileChangeNotification(
-        (LPGUID) &GUID_HWPROFILE_CHANGE_COMPLETE,
-        PROFILE_PERHAPS_IN_PNPEVENT,
-        NULL,
-        NULL
-        );
+    IopRequestHwProfileChangeNotification((LPGUID)&GUID_HWPROFILE_CHANGE_COMPLETE, PROFILE_PERHAPS_IN_PNPEVENT, NULL,
+                                          NULL);
 }
 
 
-VOID
-PiProfileSendHardwareProfileCancel(
-    VOID
-    )
+VOID PiProfileSendHardwareProfileCancel(VOID)
 /*++
 
 Routine Description:
@@ -809,22 +755,15 @@ Return Value:
 --*/
 {
     ASSERT_SEMA_NOT_SIGNALLED(&PiProfileChangeSemaphore);
-    IopDbgPrint((IOP_TRACE_LEVEL,
-               "NTOSKRNL: Sending HW profile change [cancel]\n"));
+    IopDbgPrint((IOP_TRACE_LEVEL, "NTOSKRNL: Sending HW profile change [cancel]\n"));
 
-    IopRequestHwProfileChangeNotification(
-        (LPGUID) &GUID_HWPROFILE_CHANGE_CANCELLED,
-        PROFILE_PERHAPS_IN_PNPEVENT,
-        NULL,
-        NULL
-        );
+    IopRequestHwProfileChangeNotification((LPGUID)&GUID_HWPROFILE_CHANGE_CANCELLED, PROFILE_PERHAPS_IN_PNPEVENT, NULL,
+                                          NULL);
 }
 
 
 NTSTATUS
-PiProfileUpdateHardwareProfile(
-    OUT BOOLEAN     *ProfileChanged
-    )
+PiProfileUpdateHardwareProfile(OUT BOOLEAN *ProfileChanged)
 /*++
 
 Routine Description:
@@ -845,12 +784,12 @@ Return Value:
 --*/
 {
     NTSTATUS status = STATUS_SUCCESS;
-    PLIST_ENTRY  listEntry;
+    PLIST_ENTRY listEntry;
     PDEVICE_NODE devNode;
-    PWCHAR  *profileSerialNumbers, *p;
-    HANDLE  hProfileKey=NULL;
-    ULONG   len, numProfiles;
-    HANDLE  hCurrent, hIDConfigDB;
+    PWCHAR *profileSerialNumbers, *p;
+    HANDLE hProfileKey = NULL;
+    ULONG len, numProfiles;
+    HANDLE hCurrent, hIDConfigDB;
     UNICODE_STRING unicodeName;
 
     //
@@ -862,32 +801,22 @@ Return Value:
     // Update the flag for Ejectable Docks (flag is the count of docks)
     //
     PiWstrToUnicodeString(&unicodeName, CM_HARDWARE_PROFILE_STR_DATABASE);
-    if(NT_SUCCESS(IopOpenRegistryKey(&hIDConfigDB,
-                                     NULL,
-                                     &unicodeName,
-                                     KEY_READ,
-                                     FALSE) )) {
+    if (NT_SUCCESS(IopOpenRegistryKey(&hIDConfigDB, NULL, &unicodeName, KEY_READ, FALSE)))
+    {
 
         PiWstrToUnicodeString(&unicodeName, CM_HARDWARE_PROFILE_STR_CURRENT_DOCK_INFO);
-        if(NT_SUCCESS(IopOpenRegistryKey(&hCurrent,
-                                         hIDConfigDB,
-                                         &unicodeName,
-                                         KEY_READ | KEY_WRITE,
-                                         FALSE) )) {
+        if (NT_SUCCESS(IopOpenRegistryKey(&hCurrent, hIDConfigDB, &unicodeName, KEY_READ | KEY_WRITE, FALSE)))
+        {
 
             PiWstrToUnicodeString(&unicodeName, REGSTR_VAL_EJECTABLE_DOCKS);
-            ZwSetValueKey(hCurrent,
-                          &unicodeName,
-                          0,
-                          REG_DWORD,
-                          &PiProfileDeviceCount,
-                          sizeof(PiProfileDeviceCount));
+            ZwSetValueKey(hCurrent, &unicodeName, 0, REG_DWORD, &PiProfileDeviceCount, sizeof(PiProfileDeviceCount));
             ZwClose(hCurrent);
         }
         ZwClose(hIDConfigDB);
     }
 
-    if (PiProfileDeviceCount == 0) {
+    if (PiProfileDeviceCount == 0)
+    {
         //
         // if there are no dock devices, the list should
         // contain a single null entry, in addition to the null
@@ -895,7 +824,9 @@ Return Value:
         //
         numProfiles = 1;
         ASSERT(IsListEmpty(&PiProfileDeviceListHead));
-    } else {
+    }
+    else
+    {
         numProfiles = PiProfileDeviceCount;
         ASSERT(!IsListEmpty(&PiProfileDeviceListHead));
     }
@@ -903,26 +834,26 @@ Return Value:
     //
     // Allocate space for a null-terminated list of SerialNumber lists.
     //
-    len = (numProfiles+1)*sizeof(PWCHAR);
+    len = (numProfiles + 1) * sizeof(PWCHAR);
     profileSerialNumbers = ExAllocatePool(NonPagedPool, len);
 
-    if (profileSerialNumbers) {
+    if (profileSerialNumbers)
+    {
 
         p = profileSerialNumbers;
 
         //
         // Create the list of Serial Numbers
         //
-        for (listEntry  = PiProfileDeviceListHead.Flink;
-             listEntry != &(PiProfileDeviceListHead);
-             listEntry  = listEntry->Flink ) {
+        for (listEntry = PiProfileDeviceListHead.Flink; listEntry != &(PiProfileDeviceListHead);
+             listEntry = listEntry->Flink)
+        {
 
-            devNode = CONTAINING_RECORD(listEntry,
-                                        DEVICE_NODE,
-                                        DockInfo.ListEntry);
+            devNode = CONTAINING_RECORD(listEntry, DEVICE_NODE, DockInfo.ListEntry);
 
             ASSERT(devNode->DockInfo.DockStatus == DOCK_QUIESCENT);
-            if (devNode->DockInfo.SerialNumber) {
+            if (devNode->DockInfo.SerialNumber)
+            {
                 *p = devNode->DockInfo.SerialNumber;
                 p++;
             }
@@ -930,7 +861,8 @@ Return Value:
 
         ExReleaseFastMutex(&PiProfileDeviceListLock);
 
-        if (p == profileSerialNumbers) {
+        if (p == profileSerialNumbers)
+        {
             //
             // Set a single list entry to NULL if we look to be in an "undocked"
             // profile
@@ -950,17 +882,16 @@ Return Value:
         // Change the current Hardware Profile based on the new Dock State
         // and perform notification that the Hardware Profile has changed
         //
-        status = IopExecuteHardwareProfileChange(HardwareProfileBusTypeACPI,
-                                                 profileSerialNumbers,
-                                                 numProfiles,
-                                                 &hProfileKey,
-                                                 ProfileChanged);
-        if (hProfileKey) {
+        status = IopExecuteHardwareProfileChange(HardwareProfileBusTypeACPI, profileSerialNumbers, numProfiles,
+                                                 &hProfileKey, ProfileChanged);
+        if (hProfileKey)
+        {
             ZwClose(hProfileKey);
         }
-        ExFreePool (profileSerialNumbers);
-
-    } else {
+        ExFreePool(profileSerialNumbers);
+    }
+    else
+    {
 
         ExReleaseFastMutex(&PiProfileDeviceListLock);
 
@@ -972,9 +903,7 @@ Return Value:
 
 
 PDEVICE_OBJECT
-PpProfileRetrievePreferredDockToEject(
-    VOID
-    )
+PpProfileRetrievePreferredDockToEject(VOID)
 /*++
 
 Routine Description:
@@ -992,7 +921,7 @@ Return Value:
 
 ++*/
 {
-    BEST_DOCK_TO_EJECT  bestDock;
+    BEST_DOCK_TO_EJECT bestDock;
     //
     // Search for the Dock Nodes
     //
@@ -1004,9 +933,7 @@ Return Value:
 
 
 PDEVICE_NODE
-PiProfileConvertFakeDockToRealDock(
-    IN  PDEVICE_NODE    FakeDockDevnode
-    )
+PiProfileConvertFakeDockToRealDock(IN PDEVICE_NODE FakeDockDevnode)
 /*++
 
 Routine Description:
@@ -1024,12 +951,12 @@ Returns
 
 --*/
 {
-    ULONG               i;
-    NTSTATUS            status;
-    PDEVICE_OBJECT      devobj;
-    PDEVICE_NODE        devnode, realDock;
-    PDEVICE_RELATIONS   ejectRelations = NULL;
-    IO_STACK_LOCATION   irpSp;
+    ULONG i;
+    NTSTATUS status;
+    PDEVICE_OBJECT devobj;
+    PDEVICE_NODE devnode, realDock;
+    PDEVICE_RELATIONS ejectRelations = NULL;
+    IO_STACK_LOCATION irpSp;
 
     //
     // Obtain the list of ejection relations.
@@ -1040,13 +967,10 @@ Returns
     irpSp.MinorFunction = IRP_MN_QUERY_DEVICE_RELATIONS;
     irpSp.Parameters.QueryDeviceRelations.Type = EjectionRelations;
 
-    status = IopSynchronousCall(
-        FakeDockDevnode->PhysicalDeviceObject,
-        &irpSp,
-        (PULONG_PTR) &ejectRelations
-        );
+    status = IopSynchronousCall(FakeDockDevnode->PhysicalDeviceObject, &irpSp, (PULONG_PTR)&ejectRelations);
 
-    if ((!NT_SUCCESS(status)) || (ejectRelations == NULL)) {
+    if ((!NT_SUCCESS(status)) || (ejectRelations == NULL))
+    {
 
         return NULL;
     }
@@ -1055,7 +979,8 @@ Returns
     // Walk the eject relations looking for the depth.
     //
     realDock = NULL;
-    for(i = 0; i < ejectRelations->Count; i++) {
+    for (i = 0; i < ejectRelations->Count; i++)
+    {
 
         devobj = ejectRelations->Objects[i];
 
@@ -1063,9 +988,10 @@ Returns
         // The last ejection relation is the one that points to the
         // underlying physically enumerated device.
         //
-        if (i == ejectRelations->Count-1) {
+        if (i == ejectRelations->Count - 1)
+        {
 
-            devnode = (PDEVICE_NODE) devobj->DeviceObjectExtension->DeviceNode;
+            devnode = (PDEVICE_NODE)devobj->DeviceObjectExtension->DeviceNode;
 
             //
             // The devnode might be NULL if:
@@ -1075,7 +1001,8 @@ Returns
             //    raise the tree lock to BlockReads while an enumeration
             //    IRP is outstanding...)
             //
-            if (devnode) {
+            if (devnode)
+            {
 
                 realDock = devnode;
                 ObReferenceObject(devobj);
@@ -1091,10 +1018,7 @@ Returns
 
 
 NTSTATUS
-PiProfileRetrievePreferredCallback(
-    IN PDEVICE_NODE DeviceNode,
-    IN PVOID        Context
-    )
+PiProfileRetrievePreferredCallback(IN PDEVICE_NODE DeviceNode, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -1127,12 +1051,13 @@ Returns:
     //
     // Cast the context appropriately.
     //
-    pBestDock = (PBEST_DOCK_TO_EJECT) Context;
+    pBestDock = (PBEST_DOCK_TO_EJECT)Context;
 
     //
     // If it's not a dock device, we will ignore it...
     //
-    if (!IopDeviceNodeFlagsToCapabilities(DeviceNode)->DockDevice) {
+    if (!IopDeviceNodeFlagsToCapabilities(DeviceNode)->DockDevice)
+    {
 
         //
         // Continue enumerating.
@@ -1150,39 +1075,32 @@ Returns:
     // Search for overrides. Examine the real dock first, then the fake
     //
     curDock = realDock ? realDock : DeviceNode;
-    while(1) {
+    while (1)
+    {
 
         //
         // Examine the devnode for a specified ejection priority.
         //
-        status = IoOpenDeviceRegistryKey(
-            curDock->PhysicalDeviceObject,
-            PLUGPLAY_REGKEY_DEVICE,
-            KEY_READ,
-            &hDeviceKey
-            );
+        status = IoOpenDeviceRegistryKey(curDock->PhysicalDeviceObject, PLUGPLAY_REGKEY_DEVICE, KEY_READ, &hDeviceKey);
 
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
 
             RtlZeroMemory(queryTable, sizeof(queryTable));
 
             dockDepth = 0;
-            queryTable[0].Flags         = RTL_QUERY_REGISTRY_DIRECT | RTL_QUERY_REGISTRY_REQUIRED;
-            queryTable[0].Name          = (PWSTR) REGSTR_VAL_EJECT_PRIORITY;
-            queryTable[0].EntryContext  = &dockDepth;
-            queryTable[0].DefaultType   = REG_NONE;
-            queryTable[0].DefaultData   = NULL;
+            queryTable[0].Flags = RTL_QUERY_REGISTRY_DIRECT | RTL_QUERY_REGISTRY_REQUIRED;
+            queryTable[0].Name = (PWSTR)REGSTR_VAL_EJECT_PRIORITY;
+            queryTable[0].EntryContext = &dockDepth;
+            queryTable[0].DefaultType = REG_NONE;
+            queryTable[0].DefaultData = NULL;
             queryTable[0].DefaultLength = 0;
 
-            status = RtlQueryRegistryValues(
-                RTL_REGISTRY_HANDLE | RTL_REGISTRY_OPTIONAL,
-                hDeviceKey,
-                queryTable,
-                NULL,
-                NULL
-                );
+            status =
+                RtlQueryRegistryValues(RTL_REGISTRY_HANDLE | RTL_REGISTRY_OPTIONAL, hDeviceKey, queryTable, NULL, NULL);
 
-            if (NT_SUCCESS(status)) {
+            if (NT_SUCCESS(status))
+            {
 
                 //
                 // Promote manually specified priorities over inferred ones.
@@ -1196,7 +1114,8 @@ Returns:
             ZwClose(hDeviceKey);
         }
 
-        if (NT_SUCCESS(status) || (curDock == DeviceNode)) {
+        if (NT_SUCCESS(status) || (curDock == DeviceNode))
+        {
 
             break;
         }
@@ -1204,7 +1123,8 @@ Returns:
         curDock = DeviceNode;
     }
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // If we can find no eject preference order, use the depth of the
@@ -1213,7 +1133,8 @@ Returns:
         dockDepth = realDock ? realDock->Level : DeviceNode->Level;
     }
 
-    if (realDock) {
+    if (realDock)
+    {
 
         ObDereferenceObject(realDock->PhysicalDeviceObject);
     }
@@ -1221,10 +1142,11 @@ Returns:
     //
     // The best dock is selected as the dock with the deepest ejected device.
     //
-    if ((pBestDock->PhysicalDeviceObject == NULL) ||
-        (dockDepth > pBestDock->Depth)) {
+    if ((pBestDock->PhysicalDeviceObject == NULL) || (dockDepth > pBestDock->Depth))
+    {
 
-        if (pBestDock->PhysicalDeviceObject) {
+        if (pBestDock->PhysicalDeviceObject)
+        {
 
             ObDereferenceObject(pBestDock->PhysicalDeviceObject);
         }
@@ -1243,9 +1165,7 @@ Returns:
 
 
 NTSTATUS
-PiProfileUpdateDeviceTree(
-    VOID
-    )
+PiProfileUpdateDeviceTree(VOID)
 /*++
 
 Routine Description:
@@ -1287,40 +1207,29 @@ Return Value:
 
     PAGED_CODE();
 
-    workQueueItem = (PWORK_QUEUE_ITEM) ExAllocatePool(
-        NonPagedPool,
-        sizeof(WORK_QUEUE_ITEM)
-        );
+    workQueueItem = (PWORK_QUEUE_ITEM)ExAllocatePool(NonPagedPool, sizeof(WORK_QUEUE_ITEM));
 
-    if (workQueueItem) {
+    if (workQueueItem)
+    {
 
         //
         // Queue this up so we can walk the tree outside of the enumeration lock.
         //
-        ExInitializeWorkItem(
-            workQueueItem,
-            PiProfileUpdateDeviceTreeWorker,
-            workQueueItem
-            );
+        ExInitializeWorkItem(workQueueItem, PiProfileUpdateDeviceTreeWorker, workQueueItem);
 
-        ExQueueWorkItem(
-            workQueueItem,
-            CriticalWorkQueue
-            );
+        ExQueueWorkItem(workQueueItem, CriticalWorkQueue);
 
         return STATUS_SUCCESS;
-
-    } else {
+    }
+    else
+    {
 
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 }
 
 
-VOID
-PiProfileUpdateDeviceTreeWorker(
-    IN PVOID Context
-    )
+VOID PiProfileUpdateDeviceTreeWorker(IN PVOID Context)
 /*++
 
 Routine Description:
@@ -1349,10 +1258,7 @@ Return Value:
 
 
 NTSTATUS
-PiProfileUpdateDeviceTreeCallback(
-    IN PDEVICE_NODE DeviceNode,
-    IN PVOID Context
-    )
+PiProfileUpdateDeviceTreeCallback(IN PDEVICE_NODE DeviceNode, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -1372,24 +1278,26 @@ Return Value:
 {
     PDEVICE_NODE parentDevNode;
 
-    UNREFERENCED_PARAMETER( Context );
+    UNREFERENCED_PARAMETER(Context);
 
     PAGED_CODE();
 
-    if (DeviceNode->State == DeviceNodeStarted) {
+    if (DeviceNode->State == DeviceNodeStarted)
+    {
 
         //
         // Calling this function will disable the device if it is appropriate
         // to do so.
         //
-        if (!IopIsDeviceInstanceEnabled(NULL, &DeviceNode->InstancePath, FALSE)) {
+        if (!IopIsDeviceInstanceEnabled(NULL, &DeviceNode->InstancePath, FALSE))
+        {
 
             PipRequestDeviceRemoval(DeviceNode, FALSE, CM_PROB_DISABLED);
         }
-
-    } else if (((DeviceNode->State == DeviceNodeInitialized) ||
-                (DeviceNode->State == DeviceNodeRemoved)) &&
-               PipIsDevNodeProblem(DeviceNode, CM_PROB_DISABLED)) {
+    }
+    else if (((DeviceNode->State == DeviceNodeInitialized) || (DeviceNode->State == DeviceNodeRemoved)) &&
+             PipIsDevNodeProblem(DeviceNode, CM_PROB_DISABLED))
+    {
 
         //
         // We might be turning on the device. So we will clear the problem
@@ -1401,7 +1309,8 @@ Return Value:
         //
         // Make sure the device stays down iff appropriate.
         //
-        if (IopIsDeviceInstanceEnabled(NULL, &DeviceNode->InstancePath, FALSE)) {
+        if (IopIsDeviceInstanceEnabled(NULL, &DeviceNode->InstancePath, FALSE))
+        {
 
             //
             // This device should come back online. Bring it out of the
@@ -1412,26 +1321,24 @@ Return Value:
 
             parentDevNode = DeviceNode->Parent;
 
-            IoInvalidateDeviceRelations(
-                parentDevNode->PhysicalDeviceObject,
-                BusRelations
-                );
-
-        } else {
+            IoInvalidateDeviceRelations(parentDevNode->PhysicalDeviceObject, BusRelations);
+        }
+        else
+        {
 
             //
             // Restore the problem code.
             //
             PipSetDevNodeProblem(DeviceNode, CM_PROB_DISABLED);
         }
+    }
+    else
+    {
 
-    } else {
-
-         ASSERT((!PipIsDevNodeProblem(DeviceNode, CM_PROB_DISABLED)) ||
-                ((DeviceNode->State == DeviceNodeAwaitingQueuedRemoval) ||
-                 (DeviceNode->State == DeviceNodeAwaitingQueuedDeletion)));
+        ASSERT((!PipIsDevNodeProblem(DeviceNode, CM_PROB_DISABLED)) ||
+               ((DeviceNode->State == DeviceNodeAwaitingQueuedRemoval) ||
+                (DeviceNode->State == DeviceNodeAwaitingQueuedDeletion)));
     }
 
     return STATUS_SUCCESS;
 }
-

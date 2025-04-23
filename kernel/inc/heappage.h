@@ -42,14 +42,14 @@ Revision History:
 //  not desired (retail builds).
 //
 
-#define IS_DEBUG_PAGE_HEAP_HANDLE( HeapHandle ) FALSE
-#define IF_DEBUG_PAGE_HEAP_THEN_RETURN( Handle, ReturnThis )
-#define IF_DEBUG_PAGE_HEAP_THEN_CALL( Handle, CallThis )
-#define IF_DEBUG_PAGE_HEAP_THEN_BREAK( Handle, Text, ReturnThis )
+#define IS_DEBUG_PAGE_HEAP_HANDLE(HeapHandle) FALSE
+#define IF_DEBUG_PAGE_HEAP_THEN_RETURN(Handle, ReturnThis)
+#define IF_DEBUG_PAGE_HEAP_THEN_CALL(Handle, CallThis)
+#define IF_DEBUG_PAGE_HEAP_THEN_BREAK(Handle, Text, ReturnThis)
 
 #define HEAP_FLAG_PAGE_ALLOCS 0
 
-#define RtlpDebugPageHeapValidate( HeapHandle, Flags, Address ) TRUE
+#define RtlpDebugPageHeapValidate(HeapHandle, Flags, Address) TRUE
 
 #else // DEBUG_PAGE_HEAP
 
@@ -58,192 +58,112 @@ Revision History:
 //  for hooking the debug heap manager in the retail heap manager.
 //
 
-#define HEAP_FLAG_PAGE_ALLOCS       0x01000000
+#define HEAP_FLAG_PAGE_ALLOCS 0x01000000
 
-#define HEAP_PROTECTION_ENABLED     0x02000000
-#define HEAP_BREAK_WHEN_OUT_OF_VM   0x04000000
-#define HEAP_NO_ALIGNMENT           0x08000000
-
-
-#define IS_DEBUG_PAGE_HEAP_HANDLE( HeapHandle ) \
-            (((PHEAP)(HeapHandle))->ForceFlags & HEAP_FLAG_PAGE_ALLOCS )
+#define HEAP_PROTECTION_ENABLED 0x02000000
+#define HEAP_BREAK_WHEN_OUT_OF_VM 0x04000000
+#define HEAP_NO_ALIGNMENT 0x08000000
 
 
-#define IF_DEBUG_PAGE_HEAP_THEN_RETURN( Handle, ReturnThis )                \
-            {                                                               \
-            if ( IS_DEBUG_PAGE_HEAP_HANDLE( Handle ))                       \
-                {                                                           \
-                return ReturnThis;                                          \
-                }                                                           \
-            }
+#define IS_DEBUG_PAGE_HEAP_HANDLE(HeapHandle) (((PHEAP)(HeapHandle))->ForceFlags & HEAP_FLAG_PAGE_ALLOCS)
 
 
-#define IF_DEBUG_PAGE_HEAP_THEN_CALL( Handle, CallThis )                    \
-            {                                                               \
-            if ( IS_DEBUG_PAGE_HEAP_HANDLE( Handle ))                       \
-                {                                                           \
-                CallThis;                                                   \
-                return;                                                     \
-                }                                                           \
-            }
+#define IF_DEBUG_PAGE_HEAP_THEN_RETURN(Handle, ReturnThis) \
+    {                                                      \
+        if (IS_DEBUG_PAGE_HEAP_HANDLE(Handle))             \
+        {                                                  \
+            return ReturnThis;                             \
+        }                                                  \
+    }
 
 
-#define IF_DEBUG_PAGE_HEAP_THEN_BREAK( Handle, Text, ReturnThis )           \
-            {                                                               \
-            if ( IS_DEBUG_PAGE_HEAP_HANDLE( Handle ))                       \
-                {                                                           \
-                RtlpDebugPageHeapBreak( Text );                             \
-                return ReturnThis;                                          \
-                }                                                           \
-            }
+#define IF_DEBUG_PAGE_HEAP_THEN_CALL(Handle, CallThis) \
+    {                                                  \
+        if (IS_DEBUG_PAGE_HEAP_HANDLE(Handle))         \
+        {                                              \
+            CallThis;                                  \
+            return;                                    \
+        }                                              \
+    }
 
 
-PVOID
-RtlpDebugPageHeapCreate(
-    IN ULONG Flags,
-    IN PVOID HeapBase,
-    IN SIZE_T ReserveSize,
-    IN SIZE_T CommitSize,
-    IN PVOID Lock,
-    IN PRTL_HEAP_PARAMETERS Parameters
-    );
+#define IF_DEBUG_PAGE_HEAP_THEN_BREAK(Handle, Text, ReturnThis) \
+    {                                                           \
+        if (IS_DEBUG_PAGE_HEAP_HANDLE(Handle))                  \
+        {                                                       \
+            RtlpDebugPageHeapBreak(Text);                       \
+            return ReturnThis;                                  \
+        }                                                       \
+    }
+
 
 PVOID
-RtlpDebugPageHeapAllocate(
-    IN PVOID HeapHandle,
-    IN ULONG Flags,
-    IN SIZE_T Size
-    );
+RtlpDebugPageHeapCreate(IN ULONG Flags, IN PVOID HeapBase, IN SIZE_T ReserveSize, IN SIZE_T CommitSize, IN PVOID Lock,
+                        IN PRTL_HEAP_PARAMETERS Parameters);
+
+PVOID
+RtlpDebugPageHeapAllocate(IN PVOID HeapHandle, IN ULONG Flags, IN SIZE_T Size);
 
 BOOLEAN
-RtlpDebugPageHeapFree(
-    IN PVOID HeapHandle,
-    IN ULONG Flags,
-    IN PVOID Address
-    );
+RtlpDebugPageHeapFree(IN PVOID HeapHandle, IN ULONG Flags, IN PVOID Address);
 
 PVOID
-RtlpDebugPageHeapReAllocate(
-    IN PVOID HeapHandle,
-    IN ULONG Flags,
-    IN PVOID Address,
-    IN SIZE_T Size
-    );
+RtlpDebugPageHeapReAllocate(IN PVOID HeapHandle, IN ULONG Flags, IN PVOID Address, IN SIZE_T Size);
 
 PVOID
-RtlpDebugPageHeapDestroy(
-    IN PVOID HeapHandle
-    );
+RtlpDebugPageHeapDestroy(IN PVOID HeapHandle);
 
 SIZE_T
-RtlpDebugPageHeapSize(
-    IN PVOID HeapHandle,
-    IN ULONG Flags,
-    IN PVOID Address
-    );
+RtlpDebugPageHeapSize(IN PVOID HeapHandle, IN ULONG Flags, IN PVOID Address);
 
 ULONG
-RtlpDebugPageHeapGetProcessHeaps(
-    ULONG NumberOfHeaps,
-    PVOID *ProcessHeaps
-    );
+RtlpDebugPageHeapGetProcessHeaps(ULONG NumberOfHeaps, PVOID *ProcessHeaps);
 
 ULONG
-RtlpDebugPageHeapCompact(
-    IN PVOID HeapHandle,
-    IN ULONG Flags
-    );
+RtlpDebugPageHeapCompact(IN PVOID HeapHandle, IN ULONG Flags);
 
 BOOLEAN
-RtlpDebugPageHeapValidate(
-    IN PVOID HeapHandle,
-    IN ULONG Flags,
-    IN PVOID Address
-    );
+RtlpDebugPageHeapValidate(IN PVOID HeapHandle, IN ULONG Flags, IN PVOID Address);
 
 NTSTATUS
-RtlpDebugPageHeapWalk(
-    IN PVOID HeapHandle,
-    IN OUT PRTL_HEAP_WALK_ENTRY Entry
-    );
+RtlpDebugPageHeapWalk(IN PVOID HeapHandle, IN OUT PRTL_HEAP_WALK_ENTRY Entry);
 
 BOOLEAN
-RtlpDebugPageHeapLock(
-    IN PVOID HeapHandle
-    );
+RtlpDebugPageHeapLock(IN PVOID HeapHandle);
 
 BOOLEAN
-RtlpDebugPageHeapUnlock(
-    IN PVOID HeapHandle
-    );
+RtlpDebugPageHeapUnlock(IN PVOID HeapHandle);
 
 BOOLEAN
-RtlpDebugPageHeapSetUserValue(
-    IN PVOID HeapHandle,
-    IN ULONG Flags,
-    IN PVOID Address,
-    IN PVOID UserValue
-    );
+RtlpDebugPageHeapSetUserValue(IN PVOID HeapHandle, IN ULONG Flags, IN PVOID Address, IN PVOID UserValue);
 
 BOOLEAN
-RtlpDebugPageHeapGetUserInfo(
-    IN  PVOID  HeapHandle,
-    IN  ULONG  Flags,
-    IN  PVOID  Address,
-    OUT PVOID* UserValue,
-    OUT PULONG UserFlags
-    );
+RtlpDebugPageHeapGetUserInfo(IN PVOID HeapHandle, IN ULONG Flags, IN PVOID Address, OUT PVOID *UserValue,
+                             OUT PULONG UserFlags);
 
 BOOLEAN
-RtlpDebugPageHeapSetUserFlags(
-    IN PVOID HeapHandle,
-    IN ULONG Flags,
-    IN PVOID Address,
-    IN ULONG UserFlagsReset,
-    IN ULONG UserFlagsSet
-    );
+RtlpDebugPageHeapSetUserFlags(IN PVOID HeapHandle, IN ULONG Flags, IN PVOID Address, IN ULONG UserFlagsReset,
+                              IN ULONG UserFlagsSet);
 
 BOOLEAN
-RtlpDebugPageHeapSerialize(
-    IN PVOID HeapHandle
-    );
+RtlpDebugPageHeapSerialize(IN PVOID HeapHandle);
 
 NTSTATUS
-RtlpDebugPageHeapExtend(
-    IN PVOID HeapHandle,
-    IN ULONG Flags,
-    IN PVOID Base,
-    IN SIZE_T Size
-    );
+RtlpDebugPageHeapExtend(IN PVOID HeapHandle, IN ULONG Flags, IN PVOID Base, IN SIZE_T Size);
 
 NTSTATUS
-RtlpDebugPageHeapZero(
-    IN PVOID HeapHandle,
-    IN ULONG Flags
-    );
+RtlpDebugPageHeapZero(IN PVOID HeapHandle, IN ULONG Flags);
 
 NTSTATUS
-RtlpDebugPageHeapReset(
-    IN PVOID HeapHandle,
-    IN ULONG Flags
-    );
+RtlpDebugPageHeapReset(IN PVOID HeapHandle, IN ULONG Flags);
 
 NTSTATUS
-RtlpDebugPageHeapUsage(
-    IN PVOID HeapHandle,
-    IN ULONG Flags,
-    IN OUT PRTL_HEAP_USAGE Usage
-    );
+RtlpDebugPageHeapUsage(IN PVOID HeapHandle, IN ULONG Flags, IN OUT PRTL_HEAP_USAGE Usage);
 
 BOOLEAN
-RtlpDebugPageHeapIsLocked(
-    IN PVOID HeapHandle
-    );
+RtlpDebugPageHeapIsLocked(IN PVOID HeapHandle);
 
-VOID
-RtlpDebugPageHeapBreak(
-    PCH Text
-    );
+VOID RtlpDebugPageHeapBreak(PCH Text);
 
 //
 // Page Heap Global Flags
@@ -301,7 +221,7 @@ RtlpDebugPageHeapBreak(
 //
 // PAGE_HEAP_USE_FAULT_INJECTION
 //
-//     Fault inject heap allocation calls based on a simple 
+//     Fault inject heap allocation calls based on a simple
 //     probabilistic model (see FaultProbability and FaultTimeOut).
 //
 // PAGE_HEAP_PROTECT_META_DATA
@@ -316,21 +236,21 @@ RtlpDebugPageHeapBreak(
 //     to be used only on processes that do not use MPheap-like heaps.
 //
 
-#define PAGE_HEAP_ENABLE_PAGE_HEAP          0x0001
-#define PAGE_HEAP_COLLECT_STACK_TRACES      0x0002
-#define PAGE_HEAP_RESERVED_04               0x0004
-#define PAGE_HEAP_RESERVED_08               0x0008
-#define PAGE_HEAP_CATCH_BACKWARD_OVERRUNS   0x0010
-#define PAGE_HEAP_UNALIGNED_ALLOCATIONS     0x0020
-#define PAGE_HEAP_SMART_MEMORY_USAGE        0x0040
-#define PAGE_HEAP_USE_SIZE_RANGE            0x0080
-#define PAGE_HEAP_USE_DLL_RANGE             0x0100
-#define PAGE_HEAP_USE_RANDOM_DECISION       0x0200
-#define PAGE_HEAP_USE_DLL_NAMES             0x0400
-#define PAGE_HEAP_USE_FAULT_INJECTION       0x0800
-#define PAGE_HEAP_PROTECT_META_DATA         0x1000
+#define PAGE_HEAP_ENABLE_PAGE_HEAP 0x0001
+#define PAGE_HEAP_COLLECT_STACK_TRACES 0x0002
+#define PAGE_HEAP_RESERVED_04 0x0004
+#define PAGE_HEAP_RESERVED_08 0x0008
+#define PAGE_HEAP_CATCH_BACKWARD_OVERRUNS 0x0010
+#define PAGE_HEAP_UNALIGNED_ALLOCATIONS 0x0020
+#define PAGE_HEAP_SMART_MEMORY_USAGE 0x0040
+#define PAGE_HEAP_USE_SIZE_RANGE 0x0080
+#define PAGE_HEAP_USE_DLL_RANGE 0x0100
+#define PAGE_HEAP_USE_RANDOM_DECISION 0x0200
+#define PAGE_HEAP_USE_DLL_NAMES 0x0400
+#define PAGE_HEAP_USE_FAULT_INJECTION 0x0800
+#define PAGE_HEAP_PROTECT_META_DATA 0x1000
 #define PAGE_HEAP_CHECK_NO_SERIALIZE_ACCESS 0x2000
-#define PAGE_HEAP_NO_LOCK_CHECKS            0x4000
+#define PAGE_HEAP_NO_LOCK_CHECKS 0x4000
 
 //
 // Is page heap enabled for this process?
@@ -341,9 +261,9 @@ extern BOOLEAN RtlpDebugPageHeap;
 //
 // `RtlpDphGlobalFlags' stores the global page heap flags.
 // The value of this variable is copied into the per heap
-// flags (ExtraFlags field) during heap creation. This variable 
+// flags (ExtraFlags field) during heap creation. This variable
 // might get its value from the `PageHeap' ImageFileOptions
-// registry key. 
+// registry key.
 //
 
 extern ULONG RtlpDphGlobalFlags;
@@ -374,17 +294,9 @@ extern ULONG RtlpDphFaultTimeOut;
 // Stuff needed for per dll logic implemented in the loader
 //
 
-const WCHAR *
-RtlpDphIsDllTargeted (
-    const WCHAR * Name
-    );
+const WCHAR *RtlpDphIsDllTargeted(const WCHAR *Name);
 
-VOID
-RtlpDphTargetDllsLoadCallBack (
-    PUNICODE_STRING Name,
-    PVOID Address,
-    ULONG Size
-    );
+VOID RtlpDphTargetDllsLoadCallBack(PUNICODE_STRING Name, PVOID Address, ULONG Size);
 
 //
 // Functions needed to turn on/off fault injection.
@@ -392,13 +304,9 @@ RtlpDphTargetDllsLoadCallBack (
 // succeed while in LdrLoadDll code path.
 //
 
-VOID
-RtlpDphDisableFaultInjection (
-    );
+VOID RtlpDphDisableFaultInjection();
 
-VOID
-RtlpDphEnableFaultInjection (
-    );
+VOID RtlpDphEnableFaultInjection();
 
 #endif // DEBUG_PAGE_HEAP
 

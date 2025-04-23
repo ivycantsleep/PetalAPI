@@ -25,14 +25,16 @@ Revision History:
 
 #define XIP_POOLTAG ' PIX'
 
-typedef struct _XIP_BOOT_PARAMETERS {
-    BOOLEAN    SystemDrive;
-    BOOLEAN    ReadOnly;
+typedef struct _XIP_BOOT_PARAMETERS
+{
+    BOOLEAN SystemDrive;
+    BOOLEAN ReadOnly;
     PFN_NUMBER BasePage;
     PFN_NUMBER PageCount;
 } XIP_BOOT_PARAMETERS, *PXIP_BOOT_PARAMETERS;
 
-typedef enum {
+typedef enum
+{
     XIPCMD_NOOP,
     XIPCMD_GETBOOTPARAMETERS,
     XIPCMD_GETBIOSPARAMETERS
@@ -44,27 +46,20 @@ typedef enum {
 extern BOOLEAN XIPConfigured;
 
 NTSTATUS
-XIPLocatePages(
-    IN  PFILE_OBJECT       FileObject,
-    OUT PPHYSICAL_ADDRESS  PhysicalAddress
-    );
+XIPLocatePages(IN PFILE_OBJECT FileObject, OUT PPHYSICAL_ADDRESS PhysicalAddress);
 
 VOID XIPInit(PLOADER_PARAMETER_BLOCK);
 #endif //!DRIVER
 
 NTSTATUS
-XIPDispatch(
-    IN     XIPCMD Command,
-    IN OUT PVOID  ParameterBuffer OPTIONAL,
-    IN     ULONG  BufferSize
-    );
+XIPDispatch(IN XIPCMD Command, IN OUT PVOID ParameterBuffer OPTIONAL, IN ULONG BufferSize);
 
 #else // !X86
-#  ifndef DRIVER
-#    define XIPConfigured FALSE
-#    define XIPLocatePages(fo,ppa) STATUS_NOT_IMPLEMENTED
-#    define XIPInit(plpb)
-#  endif
+#ifndef DRIVER
+#define XIPConfigured FALSE
+#define XIPLocatePages(fo, ppa) STATUS_NOT_IMPLEMENTED
+#define XIPInit(plpb)
+#endif
 #endif // !X86
 
 

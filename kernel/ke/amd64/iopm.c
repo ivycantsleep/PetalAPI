@@ -29,26 +29,11 @@ Revision History:
 // Define forward referenced function prototypes.
 //
 
-VOID
-KiSetIoAccessMap (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID MapSource,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    );
+VOID KiSetIoAccessMap(IN PKIPI_CONTEXT SignalDone, IN PVOID MapSource, IN PVOID Parameter2, IN PVOID Parameter3);
 
-VOID
-KiSetIoAccessProcess (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID MapOffset,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    );
+VOID KiSetIoAccessProcess(IN PKIPI_CONTEXT SignalDone, IN PVOID MapOffset, IN PVOID Parameter2, IN PVOID Parameter3);
 
-VOID
-KeQueryIoAccessMap (
-    PKIO_ACCESS_MAP IoAccessMap
-    )
+VOID KeQueryIoAccessMap(PKIO_ACCESS_MAP IoAccessMap)
 
 /*++
 
@@ -93,10 +78,7 @@ Return Value:
     return;
 }
 
-VOID
-KeSetIoAccessMap (
-    PKIO_ACCESS_MAP IoAccessMap
-    )
+VOID KeSetIoAccessMap(PKIO_ACCESS_MAP IoAccessMap)
 
 /*++
 
@@ -136,12 +118,9 @@ Return Value:
 
     Prcb = KeGetCurrentPrcb();
     TargetProcessors = KeActiveProcessors & Prcb->NotSetMember;
-    if (TargetProcessors != 0) {
-        KiIpiSendPacket(TargetProcessors,
-                        KiSetIoAccessMap,
-                        IoAccessMap,
-                        NULL,
-                        NULL);
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendPacket(TargetProcessors, KiSetIoAccessMap, IoAccessMap, NULL, NULL);
     }
 
 #endif
@@ -159,7 +138,8 @@ Return Value:
 
 #if !defined(NT_UP)
 
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
         KiIpiStallOnPacketTargets(TargetProcessors);
     }
 
@@ -175,13 +155,7 @@ Return Value:
 
 #if !defined(NT_UP)
 
-VOID
-KiSetIoAccessMap (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID MapSource,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    )
+VOID KiSetIoAccessMap(IN PKIPI_CONTEXT SignalDone, IN PVOID MapSource, IN PVOID Parameter2, IN PVOID Parameter3)
 
 /*++
 
@@ -214,11 +188,7 @@ Return Value:
 
 #endif
 
-VOID
-KeSetIoAccessProcess (
-    PKPROCESS Process,
-    BOOLEAN Enable
-    )
+VOID KeSetIoAccessProcess(PKPROCESS Process, BOOLEAN Enable)
 
 /*++
 
@@ -272,12 +242,9 @@ Return Value:
 #if !defined(NT_UP)
 
     TargetProcessors = Process->ActiveProcessors & Prcb->NotSetMember;
-    if (TargetProcessors != 0) {
-        KiIpiSendPacket(TargetProcessors,
-                        KiSetIoAccessProcess,
-                        (PVOID)((ULONG64)MapOffset),
-                        NULL,
-                        NULL);
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendPacket(TargetProcessors, KiSetIoAccessProcess, (PVOID)((ULONG64)MapOffset), NULL, NULL);
     }
 
 #endif
@@ -287,7 +254,8 @@ Return Value:
     // current processor, then set the new I/O Permissions Map offset.
     //
 
-    if (Process->ActiveProcessors & Prcb->SetMember) {
+    if (Process->ActiveProcessors & Prcb->SetMember)
+    {
         KeGetPcr()->TssBase->IoMapBase = MapOffset;
     }
 
@@ -312,13 +280,7 @@ Return Value:
 
 #if !defined(NT_UP)
 
-VOID
-KiSetIoAccessProcess (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID MapOffset,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    )
+VOID KiSetIoAccessProcess(IN PKIPI_CONTEXT SignalDone, IN PVOID MapOffset, IN PVOID Parameter2, IN PVOID Parameter3)
 
 /*++
 

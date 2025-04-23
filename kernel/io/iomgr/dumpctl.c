@@ -33,7 +33,8 @@ Revision History:
 
 extern KDDEBUGGER_DATA64 KdDebuggerDataBlock;
 
-typedef struct _TRIAGE_PTR_DATA_BLOCK {
+typedef struct _TRIAGE_PTR_DATA_BLOCK
+{
     PUCHAR MinAddress;
     PUCHAR MaxAddress;
 } TRIAGE_PTR_DATA_BLOCK, *PTRIAGE_PTR_DATA_BLOCK;
@@ -52,7 +53,7 @@ typedef struct _TRIAGE_PTR_DATA_BLOCK {
 extern PVOID MmPfnDatabase;
 extern PFN_NUMBER MmHighestPossiblePhysicalPage;
 
-#if defined (_IA64_)
+#if defined(_IA64_)
 extern PFN_NUMBER MmSystemParentTablePage;
 #endif
 
@@ -76,40 +77,21 @@ TRIAGE_PTR_DATA_BLOCK IopTriageDumpDataBlocks[IO_MAX_TRIAGE_DUMP_DATA_BLOCKS];
 #define IOP_LAST_CONTEXT_OFFSET 0xffff
 
 #if defined(_X86_)
-USHORT IopRunTimeContextOffsets[] = {
-    FIELD_OFFSET(CONTEXT, Ebx),
-    FIELD_OFFSET(CONTEXT, Esi),
-    FIELD_OFFSET(CONTEXT, Edi),
-    FIELD_OFFSET(CONTEXT, Ecx),
-    FIELD_OFFSET(CONTEXT, Edx),
-    FIELD_OFFSET(CONTEXT, Eax),
-    FIELD_OFFSET(CONTEXT, Eip),
-    IOP_LAST_CONTEXT_OFFSET
-};
+USHORT IopRunTimeContextOffsets[] = { FIELD_OFFSET(CONTEXT, Ebx), FIELD_OFFSET(CONTEXT, Esi),
+                                      FIELD_OFFSET(CONTEXT, Edi), FIELD_OFFSET(CONTEXT, Ecx),
+                                      FIELD_OFFSET(CONTEXT, Edx), FIELD_OFFSET(CONTEXT, Eax),
+                                      FIELD_OFFSET(CONTEXT, Eip), IOP_LAST_CONTEXT_OFFSET };
 #elif defined(_IA64_)
-USHORT IopRunTimeContextOffsets[] = {
-    FIELD_OFFSET(CONTEXT, IntS0),
-    FIELD_OFFSET(CONTEXT, IntS1),
-    FIELD_OFFSET(CONTEXT, IntS2),
-    FIELD_OFFSET(CONTEXT, IntS3),
-    FIELD_OFFSET(CONTEXT, StIIP),
-    IOP_LAST_CONTEXT_OFFSET
-};
+USHORT IopRunTimeContextOffsets[] = { FIELD_OFFSET(CONTEXT, IntS0), FIELD_OFFSET(CONTEXT, IntS1),
+                                      FIELD_OFFSET(CONTEXT, IntS2), FIELD_OFFSET(CONTEXT, IntS3),
+                                      FIELD_OFFSET(CONTEXT, StIIP), IOP_LAST_CONTEXT_OFFSET };
 #elif defined(_AMD64_)
-USHORT IopRunTimeContextOffsets[] = {
-    FIELD_OFFSET(CONTEXT, Rbx),
-    FIELD_OFFSET(CONTEXT, Rsi),
-    FIELD_OFFSET(CONTEXT, Rdi),
-    FIELD_OFFSET(CONTEXT, Rcx),
-    FIELD_OFFSET(CONTEXT, Rdx),
-    FIELD_OFFSET(CONTEXT, Rax),
-    FIELD_OFFSET(CONTEXT, Rip),
-    IOP_LAST_CONTEXT_OFFSET
-};
+USHORT IopRunTimeContextOffsets[] = { FIELD_OFFSET(CONTEXT, Rbx), FIELD_OFFSET(CONTEXT, Rsi),
+                                      FIELD_OFFSET(CONTEXT, Rdi), FIELD_OFFSET(CONTEXT, Rcx),
+                                      FIELD_OFFSET(CONTEXT, Rdx), FIELD_OFFSET(CONTEXT, Rax),
+                                      FIELD_OFFSET(CONTEXT, Rip), IOP_LAST_CONTEXT_OFFSET };
 #else
-USHORT IopRunTimeContextOffsets[] = {
-    IOP_LAST_CONTEXT_OFFSET
-};
+USHORT IopRunTimeContextOffsets[] = { IOP_LAST_CONTEXT_OFFSET };
 #endif
 
 //
@@ -123,21 +105,21 @@ LOGICAL IopIgnoreDumpCheck = FALSE;
 // Max dump transfer sizes
 //
 
-#define IO_DUMP_MAXIMUM_TRANSFER_SIZE   ( 1024 * 64 )
-#define IO_DUMP_MINIMUM_TRANSFER_SIZE   ( 1024 * 32 )
-#define IO_DUMP_MINIMUM_FILE_SIZE       ( PAGE_SIZE * 256 )
-#define MAX_UNICODE_LENGTH              ( 512 )
+#define IO_DUMP_MAXIMUM_TRANSFER_SIZE (1024 * 64)
+#define IO_DUMP_MINIMUM_TRANSFER_SIZE (1024 * 32)
+#define IO_DUMP_MINIMUM_FILE_SIZE (PAGE_SIZE * 256)
+#define MAX_UNICODE_LENGTH (512)
 
-#define DEFAULT_DRIVER_PATH             ( L"\\SystemRoot\\System32\\Drivers\\" )
-#define DEFAULT_DUMP_DRIVER             ( L"\\SystemRoot\\System32\\Drivers\\diskdump.sys" )
-#define SCSIPORT_DRIVER_NAME            ( L"scsiport.sys" )
-#define STORPORT_DRIVER_NAME            ( L"storport.sys" )
+#define DEFAULT_DRIVER_PATH (L"\\SystemRoot\\System32\\Drivers\\")
+#define DEFAULT_DUMP_DRIVER (L"\\SystemRoot\\System32\\Drivers\\diskdump.sys")
+#define SCSIPORT_DRIVER_NAME (L"scsiport.sys")
+#define STORPORT_DRIVER_NAME (L"storport.sys")
 #ifdef _WIN64
-#define MAX_TRIAGE_STACK_SIZE           ( 32 * 1024 )
+#define MAX_TRIAGE_STACK_SIZE (32 * 1024)
 #else
-#define MAX_TRIAGE_STACK_SIZE           ( 16 * 1024 )
+#define MAX_TRIAGE_STACK_SIZE (16 * 1024)
 #endif
-#define DEFAULT_TRIAGE_DUMP_FLAGS       ( 0xFFFFFFFF )
+#define DEFAULT_TRIAGE_DUMP_FLAGS (0xFFFFFFFF)
 
 //
 // for memory allocations
@@ -145,192 +127,104 @@ LOGICAL IopIgnoreDumpCheck = FALSE;
 
 #define DUMP_TAG ('pmuD')
 #undef ExAllocatePool
-#define ExAllocatePool(Pool,Size) ExAllocatePoolWithTag(Pool,Size,DUMP_TAG)
+#define ExAllocatePool(Pool, Size) ExAllocatePoolWithTag(Pool, Size, DUMP_TAG)
 
 //
 // Function prototypes
 //
 
 NTSTATUS
-IoConfigureCrashDump(
-    CRASHDUMP_CONFIGURATION Configuration
-    );
+IoConfigureCrashDump(CRASHDUMP_CONFIGURATION Configuration);
 
 BOOLEAN
-IoInitializeCrashDump(
-    IN HANDLE hPageFile
-    );
+IoInitializeCrashDump(IN HANDLE hPageFile);
 
 NTSTATUS
-IopWriteTriageDump(
-    IN ULONG FieldsToWrite,
-    IN PDUMP_DRIVER_WRITE WriteRoutine,
-    IN OUT PLARGE_INTEGER * Mcb,
-    IN OUT PMDL Mdl,
-    IN ULONG DiverTransferSize,
-    IN PCONTEXT Context,
-    IN PKTHREAD Thread,
-    IN LPBYTE Buffer,
-    IN ULONG BufferSize,
-    IN ULONG ServicePackBuild,
-    IN ULONG TriageOptions
-    );
+IopWriteTriageDump(IN ULONG FieldsToWrite, IN PDUMP_DRIVER_WRITE WriteRoutine, IN OUT PLARGE_INTEGER *Mcb,
+                   IN OUT PMDL Mdl, IN ULONG DiverTransferSize, IN PCONTEXT Context, IN PKTHREAD Thread,
+                   IN LPBYTE Buffer, IN ULONG BufferSize, IN ULONG ServicePackBuild, IN ULONG TriageOptions);
 
 NTSTATUS
-IopWriteSummaryDump(
-    IN PRTL_BITMAP PageMap,
-    IN PDUMP_DRIVER_WRITE WriteRoutine,
-    IN PANSI_STRING ProgressMessage,
-    IN PUCHAR MessageBuffer,
-    IN OUT PLARGE_INTEGER * Mcb,
-    IN ULONG DiverTransferSize
-    );
+IopWriteSummaryDump(IN PRTL_BITMAP PageMap, IN PDUMP_DRIVER_WRITE WriteRoutine, IN PANSI_STRING ProgressMessage,
+                    IN PUCHAR MessageBuffer, IN OUT PLARGE_INTEGER *Mcb, IN ULONG DiverTransferSize);
 
 NTSTATUS
-IopWriteToDisk(
-    IN PVOID Buffer,
-    IN ULONG WriteLength,
-    IN PDUMP_DRIVER_WRITE DriverWriteRoutine,
-    IN OUT PLARGE_INTEGER * Mcb,
-    IN OUT PMDL Mdl,
-    IN ULONG DriverTransferSize,
-    IN KBUGCHECK_DUMP_IO_TYPE DataType
-    );
+IopWriteToDisk(IN PVOID Buffer, IN ULONG WriteLength, IN PDUMP_DRIVER_WRITE DriverWriteRoutine,
+               IN OUT PLARGE_INTEGER *Mcb, IN OUT PMDL Mdl, IN ULONG DriverTransferSize,
+               IN KBUGCHECK_DUMP_IO_TYPE DataType);
 
-VOID
-IopMapPhysicalMemory(
-    IN OUT PMDL Mdl,
-    IN ULONG_PTR MemoryAddress,
-    IN PPHYSICAL_MEMORY_RUN PhysicalMemoryRun,
-    IN ULONG Length
-    );
+VOID IopMapPhysicalMemory(IN OUT PMDL Mdl, IN ULONG_PTR MemoryAddress, IN PPHYSICAL_MEMORY_RUN PhysicalMemoryRun,
+                          IN ULONG Length);
 
 NTSTATUS
-IopLoadDumpDriver (
-    IN OUT PDUMP_STACK_CONTEXT DumpStack,
-    IN PWCHAR DriverNameString,
-    IN PWCHAR NewBaseNameString
-    );
+IopLoadDumpDriver(IN OUT PDUMP_STACK_CONTEXT DumpStack, IN PWCHAR DriverNameString, IN PWCHAR NewBaseNameString);
 
 NTSTATUS
-IopInitializeSummaryDump(
-    IN OUT PMEMORY_DUMP MemoryDump,
-    IN PDUMP_CONTROL_BLOCK DumpControlBlock
-    );
+IopInitializeSummaryDump(IN OUT PMEMORY_DUMP MemoryDump, IN PDUMP_CONTROL_BLOCK DumpControlBlock);
 
 NTSTATUS
-IopWriteSummaryHeader(
-    IN PSUMMARY_DUMP SummaryHeader,
-    IN PDUMP_DRIVER_WRITE Write,
-    IN OUT PLARGE_INTEGER * Mcb,
-    IN OUT PMDL Mdl,
-    IN ULONG WriteSize,
-    IN ULONG Length
-    );
+IopWriteSummaryHeader(IN PSUMMARY_DUMP SummaryHeader, IN PDUMP_DRIVER_WRITE Write, IN OUT PLARGE_INTEGER *Mcb,
+                      IN OUT PMDL Mdl, IN ULONG WriteSize, IN ULONG Length);
 
-VOID
-IopMapVirtualToPhysicalMdl(
-    IN OUT PMDL pMdl,
-    IN ULONG_PTR dwMemoryAddress,
-    IN ULONG    dwLength
-    );
+VOID IopMapVirtualToPhysicalMdl(IN OUT PMDL pMdl, IN ULONG_PTR dwMemoryAddress, IN ULONG dwLength);
 
 ULONG
-IopCreateSummaryDump (
-    IN PMEMORY_DUMP MemoryDump
-    );
+IopCreateSummaryDump(IN PMEMORY_DUMP MemoryDump);
 
-VOID
-IopDeleteNonExistentMemory(
-    PSUMMARY_DUMP Header,
-    PPHYSICAL_MEMORY_DESCRIPTOR MmPhysicalMemoryBlock
-    );
+VOID IopDeleteNonExistentMemory(PSUMMARY_DUMP Header, PPHYSICAL_MEMORY_DESCRIPTOR MmPhysicalMemoryBlock);
 
 NTSTATUS
-IopInvokeSecondaryDumpDataCallbacks(
-    IN PDUMP_DRIVER_WRITE DriverWriteRoutine,
-    IN OUT PLARGE_INTEGER * Mcb,
-    IN OUT PMDL Mdl,
-    IN ULONG DriverTransferSize,
-    IN BYTE* Buffer,
-    IN ULONG BufferSize,
-    IN ULONG MaxTotal,
-    IN ULONG MaxPerCallback,
-    OUT OPTIONAL PULONG SpaceNeeded
-    );
+IopInvokeSecondaryDumpDataCallbacks(IN PDUMP_DRIVER_WRITE DriverWriteRoutine, IN OUT PLARGE_INTEGER *Mcb,
+                                    IN OUT PMDL Mdl, IN ULONG DriverTransferSize, IN BYTE *Buffer, IN ULONG BufferSize,
+                                    IN ULONG MaxTotal, IN ULONG MaxPerCallback, OUT OPTIONAL PULONG SpaceNeeded);
 
 NTSTATUS
-IopInvokeDumpIoCallbacks(
-    IN PVOID Buffer,
-    IN ULONG BufferSize,
-    IN KBUGCHECK_DUMP_IO_TYPE Type
-    );
+IopInvokeDumpIoCallbacks(IN PVOID Buffer, IN ULONG BufferSize, IN KBUGCHECK_DUMP_IO_TYPE Type);
 
 
 NTSTATUS
-IopGetDumpStack (
-    IN PWCHAR                         ModulePrefix,
-    OUT PDUMP_STACK_CONTEXT           *pDumpStack,
-    IN PUNICODE_STRING                pUniDeviceName,
-    IN PWSTR                          pDumpDriverName,
-    IN DEVICE_USAGE_NOTIFICATION_TYPE UsageType,
-    IN ULONG                          IgnoreDeviceUsageFailure
-    );
+IopGetDumpStack(IN PWCHAR ModulePrefix, OUT PDUMP_STACK_CONTEXT *pDumpStack, IN PUNICODE_STRING pUniDeviceName,
+                IN PWSTR pDumpDriverName, IN DEVICE_USAGE_NOTIFICATION_TYPE UsageType,
+                IN ULONG IgnoreDeviceUsageFailure);
 
 BOOLEAN
-IopInitializeDCB(
-    );
+IopInitializeDCB();
 
 LARGE_INTEGER
-IopCalculateRequiredDumpSpace(
-    IN ULONG            dwDmpFlags,
-    IN ULONG            dwHeaderSize,
-    IN PFN_NUMBER       dwMaxPages,
-    IN PFN_NUMBER       dwMaxSummaryPages
-    );
+IopCalculateRequiredDumpSpace(IN ULONG dwDmpFlags, IN ULONG dwHeaderSize, IN PFN_NUMBER dwMaxPages,
+                              IN PFN_NUMBER dwMaxSummaryPages);
 
 NTSTATUS
-IopCompleteDumpInitialization(
-    IN HANDLE     FileHandle
-    );
+IopCompleteDumpInitialization(IN HANDLE FileHandle);
 
 #ifdef ALLOC_PRAGMA
-VOID
-IopReadDumpRegistry(
-    OUT PULONG dumpControl,
-    OUT PULONG numberOfHeaderPages,
-    OUT PULONG autoReboot,
-    OUT PULONG dumpFileSize
-    );
-VOID
-IopFreeDCB(
-    BOOLEAN FreeDCB
-    );
+VOID IopReadDumpRegistry(OUT PULONG dumpControl, OUT PULONG numberOfHeaderPages, OUT PULONG autoReboot,
+                         OUT PULONG dumpFileSize);
+VOID IopFreeDCB(BOOLEAN FreeDCB);
 
-#pragma alloc_text(PAGE,IoGetDumpStack)
-#pragma alloc_text(PAGE,IopGetDumpStack)
-#pragma alloc_text(PAGE,IopLoadDumpDriver)
-#pragma alloc_text(PAGE,IoFreeDumpStack)
-#pragma alloc_text(PAGE,IopCompleteDumpInitialization)
-#pragma alloc_text(PAGE,IopFreeDCB)
-#pragma alloc_text(PAGE,IopReadDumpRegistry)
-#pragma alloc_text(PAGE,IopInitializeDCB)
-#pragma alloc_text(PAGE,IopConfigureCrashDump)
-#pragma alloc_text(PAGE,IoInitializeCrashDump)
-#pragma alloc_text(PAGE,IoConfigureCrashDump)
+#pragma alloc_text(PAGE, IoGetDumpStack)
+#pragma alloc_text(PAGE, IopGetDumpStack)
+#pragma alloc_text(PAGE, IopLoadDumpDriver)
+#pragma alloc_text(PAGE, IoFreeDumpStack)
+#pragma alloc_text(PAGE, IopCompleteDumpInitialization)
+#pragma alloc_text(PAGE, IopFreeDCB)
+#pragma alloc_text(PAGE, IopReadDumpRegistry)
+#pragma alloc_text(PAGE, IopInitializeDCB)
+#pragma alloc_text(PAGE, IopConfigureCrashDump)
+#pragma alloc_text(PAGE, IoInitializeCrashDump)
+#pragma alloc_text(PAGE, IoConfigureCrashDump)
 #endif
 
 
-#if defined (i386)
+#if defined(i386)
 
 //
 // Functions
 //
 
-
+
 BOOLEAN
-X86PaeEnabled(
-    )
+X86PaeEnabled()
 
 /*++
 
@@ -359,12 +253,9 @@ Return Values:
 
 #endif
 
-
+
 BOOLEAN
-IopIsAddressRangeValid(
-    IN PVOID VirtualAddress,
-    IN SIZE_T Length
-    )
+IopIsAddressRangeValid(IN PVOID VirtualAddress, IN SIZE_T Length)
 
 /*++
 
@@ -390,13 +281,14 @@ Return Value:
     UINT_PTR Va;
     ULONG Pages;
 
-    Va = (UINT_PTR) PAGE_ALIGN (VirtualAddress);
-    Pages = ADDRESS_AND_SIZE_TO_SPAN_PAGES (VirtualAddress, Length);
+    Va = (UINT_PTR)PAGE_ALIGN(VirtualAddress);
+    Pages = ADDRESS_AND_SIZE_TO_SPAN_PAGES(VirtualAddress, Length);
 
-    while (Pages) {
+    while (Pages)
+    {
 
-        if ((Va < 0x10000) ||
-            (!MmIsAddressValid ( (LPVOID) Va))) {
+        if ((Va < 0x10000) || (!MmIsAddressValid((LPVOID)Va)))
+        {
             return FALSE;
         }
 
@@ -408,10 +300,7 @@ Return Value:
 }
 
 BOOLEAN
-IoAddTriageDumpDataBlock(
-    IN PVOID Address,
-    IN ULONG Length
-    )
+IoAddTriageDumpDataBlock(IN PVOID Address, IN ULONG Length)
 
 /*++
 
@@ -441,14 +330,14 @@ Return Value:
     PTRIAGE_PTR_DATA_BLOCK Block;
     PUCHAR MinAddress, MaxAddress;
 
-    if (Length >= TRIAGE_DUMP_SIZE ||
-        !IopIsAddressRangeValid(Address, Length)) {
+    if (Length >= TRIAGE_DUMP_SIZE || !IopIsAddressRangeValid(Address, Length))
+    {
         return FALSE;
     }
-    
+
     MinAddress = (PUCHAR)Address;
     MaxAddress = MinAddress + Length;
-    
+
     //
     // Minimize overlap between the new block and existing blocks.
     // Blocks cannot simply be merged as blocks are inserted in
@@ -458,10 +347,11 @@ Return Value:
     //
 
     Block = IopTriageDumpDataBlocks;
-    for (i = 0; i < IopNumTriageDumpDataBlocks; i++, Block++) {
-        
-        if (MinAddress >= Block->MaxAddress ||
-            MaxAddress <= Block->MinAddress) {
+    for (i = 0; i < IopNumTriageDumpDataBlocks; i++, Block++)
+    {
+
+        if (MinAddress >= Block->MaxAddress || MaxAddress <= Block->MinAddress)
+        {
             // No overlap.
             continue;
         }
@@ -472,9 +362,11 @@ Return Value:
         // trim to keep things simple.  Content may then
         // be duplicated in the dump.
         //
-        
-        if (MinAddress >= Block->MinAddress) {
-            if (MaxAddress <= Block->MaxAddress) {
+
+        if (MinAddress >= Block->MinAddress)
+        {
+            if (MaxAddress <= Block->MaxAddress)
+            {
                 // New block is completely contained.
                 return TRUE;
             }
@@ -482,14 +374,17 @@ Return Value:
             // New block extends above the current block
             // so trim off the low-range overlap.
             MinAddress = Block->MaxAddress;
-        } else if (MaxAddress <= Block->MaxAddress) {
+        }
+        else if (MaxAddress <= Block->MaxAddress)
+        {
             // New block extends below the current block
             // so trim off the high-range overlap.
             MaxAddress = Block->MinAddress;
         }
     }
 
-    if (IopNumTriageDumpDataBlocks >= IO_MAX_TRIAGE_DUMP_DATA_BLOCKS) {
+    if (IopNumTriageDumpDataBlocks >= IO_MAX_TRIAGE_DUMP_DATA_BLOCKS)
+    {
         return FALSE;
     }
 
@@ -500,14 +395,8 @@ Return Value:
     return TRUE;
 }
 
-VOID
-IopAddRunTimeTriageDataBlocks(
-    IN PCONTEXT Context,
-    IN PVOID* StackMin,
-    IN PVOID* StackMax,
-    IN PVOID* StoreMin,
-    IN PVOID* StoreMax
-    )
+VOID IopAddRunTimeTriageDataBlocks(IN PCONTEXT Context, IN PVOID *StackMin, IN PVOID *StackMax, IN PVOID *StoreMin,
+                                   IN PVOID *StoreMax)
 
 /*++
 
@@ -536,37 +425,33 @@ Return Value:
     PUSHORT ContextOffset;
 
     ContextOffset = IopRunTimeContextOffsets;
-    while (*ContextOffset < IOP_LAST_CONTEXT_OFFSET) {
+    while (*ContextOffset < IOP_LAST_CONTEXT_OFFSET)
+    {
 
-        PVOID* Ptr;
+        PVOID *Ptr;
 
         //
         // Retrieve possible pointers from the context
         // registers.
         //
-        
-        Ptr = *(PVOID**)((PUCHAR)Context + *ContextOffset);
+
+        Ptr = *(PVOID **)((PUCHAR)Context + *ContextOffset);
 
         // Stack and backing store memory is already saved
         // so ignore any pointers that fall into those ranges.
-        if ((Ptr < StackMin || Ptr >= StackMax) &&
-            (Ptr < StoreMin || Ptr >= StoreMax)) {
+        if ((Ptr < StackMin || Ptr >= StackMax) && (Ptr < StoreMin || Ptr >= StoreMax))
+        {
             IoAddTriageDumpDataBlock(PAGE_ALIGN(Ptr), PAGE_SIZE);
         }
-        
+
         ContextOffset++;
     }
 }
 
 
-
 NTSTATUS
-IoGetDumpStack (
-    IN PWCHAR                          ModulePrefix,
-    OUT PDUMP_STACK_CONTEXT          * pDumpStack,
-    IN  DEVICE_USAGE_NOTIFICATION_TYPE UsageType,
-    IN  ULONG                          IgnoreDeviceUsageFailure
-    )
+IoGetDumpStack(IN PWCHAR ModulePrefix, OUT PDUMP_STACK_CONTEXT *pDumpStack, IN DEVICE_USAGE_NOTIFICATION_TYPE UsageType,
+               IN ULONG IgnoreDeviceUsageFailure)
 /*++
 
 Routine Description:
@@ -598,23 +483,16 @@ Return Value:
 {
 
     PAGED_CODE();
-    return IopGetDumpStack(ModulePrefix,
-                           pDumpStack,
-                           &IoArcBootDeviceName,
-                           DEFAULT_DUMP_DRIVER,
-                           UsageType,
-                           IgnoreDeviceUsageFailure
-                           );
+    return IopGetDumpStack(ModulePrefix, pDumpStack, &IoArcBootDeviceName, DEFAULT_DUMP_DRIVER, UsageType,
+                           IgnoreDeviceUsageFailure);
 }
 
-
+
 BOOLEAN
-IoIsTriageDumpEnabled(
-    VOID
-    )
+IoIsTriageDumpEnabled(VOID)
 {
-    if (IopDumpControlBlock &&
-        (IopDumpControlBlock->Flags & DCB_TRIAGE_DUMP_ENABLED)) {
+    if (IopDumpControlBlock && (IopDumpControlBlock->Flags & DCB_TRIAGE_DUMP_ENABLED))
+    {
         return TRUE;
     }
 
@@ -622,12 +500,7 @@ IoIsTriageDumpEnabled(
 }
 
 
-
-VOID
-IopDisplayString(
-    IN PCCHAR FormatString,
-    ...
-    )
+VOID IopDisplayString(IN PCCHAR FormatString, ...)
 
 /*++
 
@@ -647,53 +520,42 @@ Return Value:
 --*/
 {
     va_list ap;
-    CHAR    buffer [ 128 ];
+    CHAR buffer[128];
 
-    va_start( ap, FormatString );
+    va_start(ap, FormatString);
 
-    _vsnprintf( buffer,
-                sizeof ( buffer ),
-                FormatString,
-                ap );
+    _vsnprintf(buffer, sizeof(buffer), FormatString, ap);
 
     //
     // Display the string to the boot video monitor.
     //
 
-    InbvDisplayString ( buffer );
+    InbvDisplayString(buffer);
 
     //
     // And, optionally, to the debugger.
     //
 
-    KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                CRASHDUMP_TRACE,
-                "CRASHDUMP [DISP]: %s\r",
-                buffer ));
+    KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_TRACE, "CRASHDUMP [DISP]: %s\r", buffer));
 
     va_end(ap);
-
 }
 
 
-typedef struct _INTERNAL_GEOMETRY {
+typedef struct _INTERNAL_GEOMETRY
+{
     DISK_GEOMETRY Geometry;
     LARGE_INTEGER DiskSize;
     DISK_PARTITION_INFO PartitionInfo;
 } INTERNAL_GEOMETRY, *PINTERNAL_GEOMETRY;
 
-C_ASSERT ( FIELD_OFFSET (INTERNAL_GEOMETRY, PartitionInfo) == FIELD_OFFSET (DISK_GEOMETRY_EX, Data) );
+C_ASSERT(FIELD_OFFSET(INTERNAL_GEOMETRY, PartitionInfo) == FIELD_OFFSET(DISK_GEOMETRY_EX, Data));
 
-
+
 NTSTATUS
-IopGetDumpStack (
-    IN PWCHAR                         ModulePrefix,
-    OUT PDUMP_STACK_CONTEXT         * DumpStackBuffer,
-    IN PUNICODE_STRING                UniDeviceName,
-    IN PWCHAR                         DumpDriverName,
-    IN DEVICE_USAGE_NOTIFICATION_TYPE UsageType,
-    IN ULONG                          IgnoreDeviceUsageFailure
-    )
+IopGetDumpStack(IN PWCHAR ModulePrefix, OUT PDUMP_STACK_CONTEXT *DumpStackBuffer, IN PUNICODE_STRING UniDeviceName,
+                IN PWCHAR DumpDriverName, IN DEVICE_USAGE_NOTIFICATION_TYPE UsageType,
+                IN ULONG IgnoreDeviceUsageFailure)
 /*++
 
 Routine Description:
@@ -727,102 +589,82 @@ Return Value:
 
 --*/
 {
-    PDUMP_STACK_CONTEXT         DumpStack;
-    PUCHAR                      Buffer;
-    ANSI_STRING                 AnsiString;
-    UNICODE_STRING              TempName;
-    OBJECT_ATTRIBUTES           ObjectAttributes;
-    NTSTATUS                    Status;
-    HANDLE                      DeviceHandle;
-    SCSI_ADDRESS                ScsiAddress;
-    BOOLEAN                     ScsiDump;
-    PARTITION_INFORMATION_EX    PartitionInfo;
-    PFILE_OBJECT                FileObject;
-    PDEVICE_OBJECT              DeviceObject;
-    PDUMP_POINTERS              DumpPointers;
-    UNICODE_STRING              DriverName;
-    PDRIVER_OBJECT              DriverObject;
-    PIRP                        Irp;
-    PIO_STACK_LOCATION          IrpSp;
-    IO_STATUS_BLOCK             IoStatus;
-    PWCHAR                      DumpName;
-    PWCHAR                      NameOffset;
-    KEVENT                      Event;
-    PVOID                       p1;
-    PHYSICAL_ADDRESS            pa;
-    ULONG                       i;
-    IO_STACK_LOCATION           irpSp;
-    PINTERNAL_GEOMETRY          Geometry;
+    PDUMP_STACK_CONTEXT DumpStack;
+    PUCHAR Buffer;
+    ANSI_STRING AnsiString;
+    UNICODE_STRING TempName;
+    OBJECT_ATTRIBUTES ObjectAttributes;
+    NTSTATUS Status;
+    HANDLE DeviceHandle;
+    SCSI_ADDRESS ScsiAddress;
+    BOOLEAN ScsiDump;
+    PARTITION_INFORMATION_EX PartitionInfo;
+    PFILE_OBJECT FileObject;
+    PDEVICE_OBJECT DeviceObject;
+    PDUMP_POINTERS DumpPointers;
+    UNICODE_STRING DriverName;
+    PDRIVER_OBJECT DriverObject;
+    PIRP Irp;
+    PIO_STACK_LOCATION IrpSp;
+    IO_STATUS_BLOCK IoStatus;
+    PWCHAR DumpName;
+    PWCHAR NameOffset;
+    KEVENT Event;
+    PVOID p1;
+    PHYSICAL_ADDRESS pa;
+    ULONG i;
+    IO_STACK_LOCATION irpSp;
+    PINTERNAL_GEOMETRY Geometry;
     PDUMP_INITIALIZATION_CONTEXT DumpInit;
 
 
-    KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                CRASHDUMP_TRACE,
-                "CRASHDUMP: Prefix:%ws stk: %x device:%ws driver:%ws\n",
-                ModulePrefix,
-                DumpStackBuffer,
-                UniDeviceName->Buffer,
-                DumpDriverName
-                ));
+    KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_TRACE, "CRASHDUMP: Prefix:%ws stk: %x device:%ws driver:%ws\n",
+               ModulePrefix, DumpStackBuffer, UniDeviceName->Buffer, DumpDriverName));
 
-    ASSERT (DeviceUsageTypeUndefined != UsageType);
+    ASSERT(DeviceUsageTypeUndefined != UsageType);
 
-    DumpStack = ExAllocatePool (
-                    NonPagedPool,
-                    sizeof (DUMP_STACK_CONTEXT) + sizeof (DUMP_POINTERS)
-                    );
+    DumpStack = ExAllocatePool(NonPagedPool, sizeof(DUMP_STACK_CONTEXT) + sizeof(DUMP_POINTERS));
 
-    if (!DumpStack) {
+    if (!DumpStack)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    RtlZeroMemory(DumpStack, sizeof(DUMP_STACK_CONTEXT)+sizeof(DUMP_POINTERS));
+    RtlZeroMemory(DumpStack, sizeof(DUMP_STACK_CONTEXT) + sizeof(DUMP_POINTERS));
     DumpInit = &DumpStack->Init;
-    DumpPointers = (PDUMP_POINTERS) (DumpStack + 1);
+    DumpPointers = (PDUMP_POINTERS)(DumpStack + 1);
     DumpStack->DumpPointers = DumpPointers;
-    InitializeListHead (&DumpStack->DriverList);
+    InitializeListHead(&DumpStack->DriverList);
     DumpName = NULL;
 
     //
     // Allocate scratch buffer
     //
 
-    Buffer = ExAllocatePool (PagedPool, PAGE_SIZE);
-    if (!Buffer) {
-        ExFreePool (DumpStack);
+    Buffer = ExAllocatePool(PagedPool, PAGE_SIZE);
+    if (!Buffer)
+    {
+        ExFreePool(DumpStack);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     if (!KeGetBugMessageText(BUGCODE_PSS_CRASH_INIT, &DumpStack->InitMsg) ||
         !KeGetBugMessageText(BUGCODE_PSS_CRASH_PROGRESS, &DumpStack->ProgMsg) ||
-        !KeGetBugMessageText(BUGCODE_PSS_CRASH_DONE, &DumpStack->DoneMsg)) {
-            Status = STATUS_UNSUCCESSFUL;
-            goto Done;
+        !KeGetBugMessageText(BUGCODE_PSS_CRASH_DONE, &DumpStack->DoneMsg))
+    {
+        Status = STATUS_UNSUCCESSFUL;
+        goto Done;
     }
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        UniDeviceName,
-        0,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&ObjectAttributes, UniDeviceName, 0, NULL, NULL);
 
-    Status = ZwOpenFile(
-              &DeviceHandle,
-              FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE,
-              &ObjectAttributes,
-              &IoStatus,
-              FILE_SHARE_READ | FILE_SHARE_WRITE,
-              FILE_NON_DIRECTORY_FILE
-              );
+    Status = ZwOpenFile(&DeviceHandle, FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE, &ObjectAttributes,
+                        &IoStatus, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_NON_DIRECTORY_FILE);
 
-    if (!NT_SUCCESS(Status)) {
-        KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                    CRASHDUMP_ERROR,
-                    "CRASHDUMP: Could not open boot device partition, %s\n",
-                    Buffer
-                    ));
+    if (!NT_SUCCESS(Status))
+    {
+        KdPrintEx(
+            (DPFLTR_CRASHDUMP_ID, CRASHDUMP_ERROR, "CRASHDUMP: Could not open boot device partition, %s\n", Buffer));
         goto Done;
     }
 
@@ -830,30 +672,17 @@ Return Value:
     // Check to see whether or not the system was booted from a SCSI device.
     //
 
-    Status = ZwDeviceIoControlFile (
-                    DeviceHandle,
-                    NULL,
-                    NULL,
-                    NULL,
-                    &IoStatus,
-                    IOCTL_SCSI_GET_ADDRESS,
-                    NULL,
-                    0,
-                    &ScsiAddress,
-                    sizeof( SCSI_ADDRESS )
-                    );
+    Status = ZwDeviceIoControlFile(DeviceHandle, NULL, NULL, NULL, &IoStatus, IOCTL_SCSI_GET_ADDRESS, NULL, 0,
+                                   &ScsiAddress, sizeof(SCSI_ADDRESS));
 
-    if (Status == STATUS_PENDING) {
-        ZwWaitForSingleObject (
-                DeviceHandle,
-                FALSE,
-                NULL
-                );
+    if (Status == STATUS_PENDING)
+    {
+        ZwWaitForSingleObject(DeviceHandle, FALSE, NULL);
 
         Status = IoStatus.Status;
     }
 
-    ScsiDump = (BOOLEAN) (NT_SUCCESS(Status));
+    ScsiDump = (BOOLEAN)(NT_SUCCESS(Status));
 
     //
     // If SCSI then allocate storage to contain the target address information.
@@ -861,12 +690,10 @@ Return Value:
 
     DumpInit->TargetAddress = NULL;
 
-    if (ScsiDump) {
+    if (ScsiDump)
+    {
 
-        DumpInit->TargetAddress = ExAllocatePool(
-                                    NonPagedPool,
-                                    sizeof (SCSI_ADDRESS)
-                                    );
+        DumpInit->TargetAddress = ExAllocatePool(NonPagedPool, sizeof(SCSI_ADDRESS));
         //
         // Formerly, this allocation was allowed to fail and the dump port
         // driver would search for a disk with a matching signature. No
@@ -875,16 +702,13 @@ Return Value:
         // disk signature isn't really necessary, but leave it in for now.
         //
 
-        if (DumpInit->TargetAddress == NULL) {
+        if (DumpInit->TargetAddress == NULL)
+        {
             Status = STATUS_NO_MEMORY;
             goto Done;
         }
 
-        RtlCopyMemory(
-                DumpInit->TargetAddress,
-                &ScsiAddress,
-                sizeof(SCSI_ADDRESS)
-                );
+        RtlCopyMemory(DumpInit->TargetAddress, &ScsiAddress, sizeof(SCSI_ADDRESS));
     }
 
     //
@@ -892,25 +716,12 @@ Return Value:
     // booted and get the partition offset.
     //
 
-    Status = ZwDeviceIoControlFile(
-                    DeviceHandle,
-                    NULL,
-                    NULL,
-                    NULL,
-                    &IoStatus,
-                    IOCTL_DISK_GET_PARTITION_INFO_EX,
-                    NULL,
-                    0,
-                    &PartitionInfo,
-                    sizeof( PartitionInfo )
-                    );
+    Status = ZwDeviceIoControlFile(DeviceHandle, NULL, NULL, NULL, &IoStatus, IOCTL_DISK_GET_PARTITION_INFO_EX, NULL, 0,
+                                   &PartitionInfo, sizeof(PartitionInfo));
 
-    if (Status == STATUS_PENDING) {
-        ZwWaitForSingleObject (
-            DeviceHandle,
-            FALSE,
-            NULL
-            );
+    if (Status == STATUS_PENDING)
+    {
+        ZwWaitForSingleObject(DeviceHandle, FALSE, NULL);
 
         Status = IoStatus.Status;
     }
@@ -919,27 +730,14 @@ Return Value:
     // Use the scratch buffer for the geometry.
     //
 
-    Geometry = (PINTERNAL_GEOMETRY) Buffer;
+    Geometry = (PINTERNAL_GEOMETRY)Buffer;
 
-    Status = ZwDeviceIoControlFile(
-                    DeviceHandle,
-                    NULL,
-                    NULL,
-                    NULL,
-                    &IoStatus,
-                    IOCTL_DISK_GET_DRIVE_GEOMETRY_EX,
-                    NULL,
-                    0,
-                    Geometry,
-                    sizeof (*Geometry)
-                    );
+    Status = ZwDeviceIoControlFile(DeviceHandle, NULL, NULL, NULL, &IoStatus, IOCTL_DISK_GET_DRIVE_GEOMETRY_EX, NULL, 0,
+                                   Geometry, sizeof(*Geometry));
 
-    if (Status == STATUS_PENDING) {
-        ZwWaitForSingleObject (
-            DeviceHandle,
-            FALSE,
-            NULL
-            );
+    if (Status == STATUS_PENDING)
+    {
+        ZwWaitForSingleObject(DeviceHandle, FALSE, NULL);
 
         Status = IoStatus.Status;
     }
@@ -949,10 +747,13 @@ Return Value:
     //
 
     DumpInit->PartitionStyle = Geometry->PartitionInfo.PartitionStyle;
-    if ( DumpInit->PartitionStyle == PARTITION_STYLE_MBR ) {
+    if (DumpInit->PartitionStyle == PARTITION_STYLE_MBR)
+    {
         DumpInit->DiskInfo.Mbr.Signature = Geometry->PartitionInfo.Mbr.Signature;
         DumpInit->DiskInfo.Mbr.CheckSum = Geometry->PartitionInfo.Mbr.CheckSum;
-    } else {
+    }
+    else
+    {
         DumpInit->DiskInfo.Gpt.DiskId = Geometry->PartitionInfo.Gpt.DiskId;
     }
 
@@ -968,73 +769,56 @@ Return Value:
     // them from scratch.
     //
 
-    ObReferenceObjectByHandle (
-            DeviceHandle,
-            0,
-            IoFileObjectType,
-            KernelMode,
-            (PVOID *) &FileObject,
-            NULL
-            );
+    ObReferenceObjectByHandle(DeviceHandle, 0, IoFileObjectType, KernelMode, (PVOID *)&FileObject, NULL);
 
 
-    DeviceObject = IoGetRelatedDeviceObject (FileObject);
+    DeviceObject = IoGetRelatedDeviceObject(FileObject);
 
-    KeInitializeEvent( &Event, NotificationEvent, FALSE );
+    KeInitializeEvent(&Event, NotificationEvent, FALSE);
 
-    Irp = IoBuildDeviceIoControlRequest(
-                IOCTL_SCSI_GET_DUMP_POINTERS,
-                DeviceObject,
-                NULL,
-                0,
-                DumpPointers,
-                sizeof (DUMP_POINTERS),
-                FALSE,
-                &Event,
-                &IoStatus
-                );
+    Irp = IoBuildDeviceIoControlRequest(IOCTL_SCSI_GET_DUMP_POINTERS, DeviceObject, NULL, 0, DumpPointers,
+                                        sizeof(DUMP_POINTERS), FALSE, &Event, &IoStatus);
 
-    if (!Irp) {
-        ObDereferenceObject (FileObject);
-        ZwClose (DeviceHandle);
+    if (!Irp)
+    {
+        ObDereferenceObject(FileObject);
+        ZwClose(DeviceHandle);
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto Done;
     }
 
-    IrpSp = IoGetNextIrpStackLocation (Irp);
+    IrpSp = IoGetNextIrpStackLocation(Irp);
 
     IrpSp->FileObject = FileObject;
 
-    Status = IoCallDriver( DeviceObject, Irp );
+    Status = IoCallDriver(DeviceObject, Irp);
 
-    if (Status == STATUS_PENDING) {
+    if (Status == STATUS_PENDING)
+    {
         KeWaitForSingleObject(&Event, Executive, KernelMode, FALSE, NULL);
         Status = IoStatus.Status;
     }
 
-    if (!NT_SUCCESS(Status) ||
-        IoStatus.Information < FIELD_OFFSET(DUMP_POINTERS, DeviceObject)) {
+    if (!NT_SUCCESS(Status) || IoStatus.Information < FIELD_OFFSET(DUMP_POINTERS, DeviceObject))
+    {
 
-        KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                    CRASHDUMP_ERROR,
-                    "CRASHDUMP: Could not get dump pointers; error = %x, length %x\n",
-                    Status,
-                    IoStatus.Information
-                    ));
+        KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_ERROR,
+                   "CRASHDUMP: Could not get dump pointers; error = %x, length %x\n", Status, IoStatus.Information));
 
-        ObDereferenceObject (FileObject);
-        ZwClose (DeviceHandle);
+        ObDereferenceObject(FileObject);
+        ZwClose(DeviceHandle);
         goto Done;
     }
-    DumpStack->PointersLength = (ULONG) IoStatus.Information;
+    DumpStack->PointersLength = (ULONG)IoStatus.Information;
 
     //
     // If the driver returned a pointer to a device object, that is the
     // object for the dump driver  (non-scsi case)
     //
 
-    DeviceObject = (PDEVICE_OBJECT) DumpPointers->DeviceObject;
-    if (DeviceObject) {
+    DeviceObject = (PDEVICE_OBJECT)DumpPointers->DeviceObject;
+    if (DeviceObject)
+    {
         DriverObject = DeviceObject->DriverObject;
 
         //
@@ -1043,7 +827,8 @@ Return Value:
         //
 
         DumpName = DriverObject->DriverName.Buffer;
-        while ( NameOffset = wcsstr( DumpName, L"\\" )) {
+        while (NameOffset = wcsstr(DumpName, L"\\"))
+        {
             DumpName = ++NameOffset;
         }
 
@@ -1056,70 +841,67 @@ Return Value:
     //
 
     DumpStack->FileObject = FileObject;
-    ZwClose (DeviceHandle);
+    ZwClose(DeviceHandle);
 
     //
     // Fill in some DumpInit results
     //
 
-    DumpInit->Length             = sizeof (DUMP_INITIALIZATION_CONTEXT);
-    DumpInit->Reserved           = 0;
-    DumpInit->StallRoutine       = &KeStallExecutionProcessor;
-    DumpInit->AdapterObject      = DumpPointers->AdapterObject;
+    DumpInit->Length = sizeof(DUMP_INITIALIZATION_CONTEXT);
+    DumpInit->Reserved = 0;
+    DumpInit->StallRoutine = &KeStallExecutionProcessor;
+    DumpInit->AdapterObject = DumpPointers->AdapterObject;
     DumpInit->MappedRegisterBase = DumpPointers->MappedRegisterBase;
-    DumpInit->PortConfiguration  = DumpPointers->DumpData;
+    DumpInit->PortConfiguration = DumpPointers->DumpData;
 
-    DumpStack->ModulePrefix      = ModulePrefix;
-    DumpStack->PartitionOffset   = PartitionInfo.StartingOffset;
-    DumpStack->UsageType         = DeviceUsageTypeUndefined;
+    DumpStack->ModulePrefix = ModulePrefix;
+    DumpStack->PartitionOffset = PartitionInfo.StartingOffset;
+    DumpStack->UsageType = DeviceUsageTypeUndefined;
 
     //
     // The minimum common buffer size is IO_DUMP_COMMON_BUFFER_SIZE (compatability)
     // This is used by the dump driver for SRB extension, CachedExtension, and sense buffer
     //
-    if (DumpPointers->CommonBufferSize < IO_DUMP_COMMON_BUFFER_SIZE) {
+    if (DumpPointers->CommonBufferSize < IO_DUMP_COMMON_BUFFER_SIZE)
+    {
         DumpPointers->CommonBufferSize = IO_DUMP_COMMON_BUFFER_SIZE;
     }
-    DumpInit->CommonBufferSize    = DumpPointers->CommonBufferSize;
+    DumpInit->CommonBufferSize = DumpPointers->CommonBufferSize;
 
     //
     // Allocate the required common buffers
     //
 
-    if (DumpPointers->AllocateCommonBuffers) {
+    if (DumpPointers->AllocateCommonBuffers)
+    {
         pa.QuadPart = 0x1000000 - 1;
 
-        for (i=0; i < 2; i++) {
+        for (i = 0; i < 2; i++)
+        {
 
-            if (DumpInit->AdapterObject) {
+            if (DumpInit->AdapterObject)
+            {
 
-                p1 = (*((PDMA_ADAPTER)DumpInit->AdapterObject)->DmaOperations->
-                      AllocateCommonBuffer)(
-                          (PDMA_ADAPTER)DumpInit->AdapterObject,
-                          DumpPointers->CommonBufferSize,
-                          &pa,
-                          FALSE
-                          );
+                p1 = (*((PDMA_ADAPTER)DumpInit->AdapterObject)->DmaOperations->AllocateCommonBuffer)(
+                    (PDMA_ADAPTER)DumpInit->AdapterObject, DumpPointers->CommonBufferSize, &pa, FALSE);
+            }
+            else
+            {
 
-            } else {
+                p1 = MmAllocateContiguousMemory(DumpPointers->CommonBufferSize, pa);
 
-                p1 = MmAllocateContiguousMemory (
-                            DumpPointers->CommonBufferSize,
-                            pa
-                            );
-
-                if (!p1) {
-                    p1 = MmAllocateNonCachedMemory (DumpPointers->CommonBufferSize);
+                if (!p1)
+                {
+                    p1 = MmAllocateNonCachedMemory(DumpPointers->CommonBufferSize);
                 }
                 pa = MmGetPhysicalAddress(p1);
             }
 
-            if (!p1) {
+            if (!p1)
+            {
 
-                KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                            CRASHDUMP_ERROR,
-                            "CRASHDUMP: Could not allocate common buffers for dump\n"
-                            ));
+                KdPrintEx(
+                    (DPFLTR_CRASHDUMP_ID, CRASHDUMP_ERROR, "CRASHDUMP: Could not allocate common buffers for dump\n"));
                 Status = STATUS_INSUFFICIENT_RESOURCES;
                 goto Done;
             }
@@ -1133,22 +915,20 @@ Return Value:
     // Determine whether or not the system booted from SCSI.
     //
 
-    if (ScsiDump) {
-    
+    if (ScsiDump)
+    {
+
         //
         // Load the boot disk and port driver to be used by the various
         // miniports for writing memory to the disk.
         //
 
-        Status = IopLoadDumpDriver (
-                        DumpStack,
-                        DumpDriverName,
-                        SCSIPORT_DRIVER_NAME
-                        );
+        Status = IopLoadDumpDriver(DumpStack, DumpDriverName, SCSIPORT_DRIVER_NAME);
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            IopLogErrorEvent(0,9,STATUS_SUCCESS,IO_DUMP_DRIVER_LOAD_FAILURE,0,NULL,0,NULL);
+            IopLogErrorEvent(0, 9, STATUS_SUCCESS, IO_DUMP_DRIVER_LOAD_FAILURE, 0, NULL, 0, NULL);
             goto Done;
         }
 
@@ -1158,7 +938,7 @@ Return Value:
         //
 
         DriverName.Length = 0;
-        DriverName.Buffer = (PVOID) Buffer;
+        DriverName.Buffer = (PVOID)Buffer;
         DriverName.MaximumLength = PAGE_SIZE;
 
 
@@ -1167,34 +947,19 @@ Return Value:
         // miniport driver and load it.
         //
 
-        sprintf(Buffer, "\\Device\\ScsiPort%d", ScsiAddress.PortNumber );
-        RtlInitAnsiString( &AnsiString, Buffer );
-        RtlAnsiStringToUnicodeString( &TempName, &AnsiString, TRUE );
-        InitializeObjectAttributes(
-                    &ObjectAttributes,
-                    &TempName,
-                    0,
-                    NULL,
-                    NULL
-                    );
+        sprintf(Buffer, "\\Device\\ScsiPort%d", ScsiAddress.PortNumber);
+        RtlInitAnsiString(&AnsiString, Buffer);
+        RtlAnsiStringToUnicodeString(&TempName, &AnsiString, TRUE);
+        InitializeObjectAttributes(&ObjectAttributes, &TempName, 0, NULL, NULL);
 
-        Status = ZwOpenFile(
-                    &DeviceHandle,
-                    FILE_READ_ATTRIBUTES,
-                    &ObjectAttributes,
-                    &IoStatus,
-                    FILE_SHARE_READ | FILE_SHARE_WRITE,
-                    FILE_NON_DIRECTORY_FILE
-                    );
+        Status = ZwOpenFile(&DeviceHandle, FILE_READ_ATTRIBUTES, &ObjectAttributes, &IoStatus,
+                            FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_NON_DIRECTORY_FILE);
 
-        RtlFreeUnicodeString( &TempName );
-        if (!NT_SUCCESS( Status )) {
-            KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                           CRASHDUMP_ERROR,
-                           "CRASHDUMP: Could not open SCSI port %d, error = %x\n",
-                           ScsiAddress.PortNumber,
-                           Status
-                           ));
+        RtlFreeUnicodeString(&TempName);
+        if (!NT_SUCCESS(Status))
+        {
+            KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_ERROR, "CRASHDUMP: Could not open SCSI port %d, error = %x\n",
+                       ScsiAddress.PortNumber, Status));
             goto Done;
         }
 
@@ -1203,25 +968,19 @@ Return Value:
         // get the name of the driver from its driver object.
         //
 
-        ObReferenceObjectByHandle(
-                    DeviceHandle,
-                    0,
-                    IoFileObjectType,
-                    KernelMode,
-                    (PVOID *) &FileObject,
-                    NULL
-                    );
+        ObReferenceObjectByHandle(DeviceHandle, 0, IoFileObjectType, KernelMode, (PVOID *)&FileObject, NULL);
 
         DriverObject = FileObject->DeviceObject->DriverObject;
-        ObDereferenceObject( FileObject );
-        ZwClose( DeviceHandle );
+        ObDereferenceObject(FileObject);
+        ZwClose(DeviceHandle);
         //
         // Loop through the name of the driver looking for the end of the name,
         // which is the name of the miniport image.
         //
 
         DumpName = DriverObject->DriverName.Buffer;
-        while ( NameOffset = wcsstr( DumpName, L"\\" )) {
+        while (NameOffset = wcsstr(DumpName, L"\\"))
+        {
             DumpName = ++NameOffset;
         }
     }
@@ -1230,20 +989,18 @@ Return Value:
     // Load the dump driver
     //
 
-    if (!DumpName) {
+    if (!DumpName)
+    {
         Status = STATUS_NOT_SUPPORTED;
         goto Done;
     }
 
-    swprintf ((PWCHAR) Buffer, L"\\SystemRoot\\System32\\Drivers\\%s.sys", DumpName);
-    Status = IopLoadDumpDriver (
-                    DumpStack,
-                    (PWCHAR) Buffer,
-                    NULL
-                    );
-    if (!NT_SUCCESS(Status)) {
+    swprintf((PWCHAR)Buffer, L"\\SystemRoot\\System32\\Drivers\\%s.sys", DumpName);
+    Status = IopLoadDumpDriver(DumpStack, (PWCHAR)Buffer, NULL);
+    if (!NT_SUCCESS(Status))
+    {
 
-        IopLogErrorEvent(0,10,STATUS_SUCCESS,IO_DUMP_DRIVER_LOAD_FAILURE,0,NULL,0,NULL);
+        IopLogErrorEvent(0, 10, STATUS_SUCCESS, IO_DUMP_DRIVER_LOAD_FAILURE, 0, NULL, 0, NULL);
         goto Done;
     }
 
@@ -1252,9 +1009,9 @@ Return Value:
     //
 
     FileObject = DumpStack->FileObject;
-    DeviceObject = IoGetRelatedDeviceObject (FileObject);
+    DeviceObject = IoGetRelatedDeviceObject(FileObject);
 
-    RtlZeroMemory (&irpSp, sizeof (IO_STACK_LOCATION));
+    RtlZeroMemory(&irpSp, sizeof(IO_STACK_LOCATION));
 
     irpSp.MajorFunction = IRP_MJ_PNP;
     irpSp.MinorFunction = IRP_MN_DEVICE_USAGE_NOTIFICATION;
@@ -1262,41 +1019,40 @@ Return Value:
     irpSp.Parameters.UsageNotification.InPath = TRUE;
     irpSp.FileObject = FileObject;
 
-    Status = IopSynchronousCall (DeviceObject, &irpSp, NULL);
+    Status = IopSynchronousCall(DeviceObject, &irpSp, NULL);
 
-    if (!NT_SUCCESS(Status) && IgnoreDeviceUsageFailure) {
-        KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                    CRASHDUMP_WARNING,
-                    "CRASHDUMP: IopGetDumpStack: DEVICE_USAGE_NOTIFICATION "
-                       "Error ignored (%x)\n",
-                    Status
-                    ));
+    if (!NT_SUCCESS(Status) && IgnoreDeviceUsageFailure)
+    {
+        KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_WARNING,
+                   "CRASHDUMP: IopGetDumpStack: DEVICE_USAGE_NOTIFICATION "
+                   "Error ignored (%x)\n",
+                   Status));
 
         Status = STATUS_SUCCESS;
     }
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         DumpStack->UsageType = UsageType;
     }
 
 Done:
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         *DumpStackBuffer = DumpStack;
-    } else {
-        IoFreeDumpStack (DumpStack);
     }
-    ExFreePool (Buffer);
+    else
+    {
+        IoFreeDumpStack(DumpStack);
+    }
+    ExFreePool(Buffer);
     return Status;
 }
 
 
-
 NTSTATUS
-IopLoadDumpDriver (
-    IN OUT PDUMP_STACK_CONTEXT  DumpStack,
-    IN PWCHAR DriverNameString,
-    IN PWCHAR NewBaseNameString OPTIONAL
-    )
+IopLoadDumpDriver(IN OUT PDUMP_STACK_CONTEXT DumpStack, IN PWCHAR DriverNameString,
+                  IN PWCHAR NewBaseNameString OPTIONAL)
 /*++
 
 Routine Description:
@@ -1318,23 +1074,21 @@ Return Value:
 
 --*/
 {
-    NTSTATUS                Status;
-    PDUMP_STACK_IMAGE       DumpImage;
-    UNICODE_STRING          DriverName;
-    UNICODE_STRING          BaseName;
-    UNICODE_STRING          Prefix;
-    PUNICODE_STRING         LoadBaseName;
+    NTSTATUS Status;
+    PDUMP_STACK_IMAGE DumpImage;
+    UNICODE_STRING DriverName;
+    UNICODE_STRING BaseName;
+    UNICODE_STRING Prefix;
+    PUNICODE_STRING LoadBaseName;
 
     //
     // Allocate space to track this dump driver
     //
 
-    DumpImage = ExAllocatePool(
-                        NonPagedPool,
-                        sizeof (DUMP_STACK_IMAGE)
-                        );
+    DumpImage = ExAllocatePool(NonPagedPool, sizeof(DUMP_STACK_IMAGE));
 
-    if (!DumpImage) {
+    if (!DumpImage)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -1342,63 +1096,51 @@ Return Value:
     // Load the system image
     //
 
-    RtlInitUnicodeString (&DriverName, DriverNameString);
-    RtlInitUnicodeString (&Prefix, DumpStack->ModulePrefix);
+    RtlInitUnicodeString(&DriverName, DriverNameString);
+    RtlInitUnicodeString(&Prefix, DumpStack->ModulePrefix);
     LoadBaseName = NULL;
-    if (NewBaseNameString) {
+    if (NewBaseNameString)
+    {
         LoadBaseName = &BaseName;
-        RtlInitUnicodeString (&BaseName, NewBaseNameString);
+        RtlInitUnicodeString(&BaseName, NewBaseNameString);
         BaseName.MaximumLength = Prefix.Length + BaseName.Length;
-        BaseName.Buffer = ExAllocatePool (
-                            NonPagedPool,
-                            BaseName.MaximumLength
-                            );
+        BaseName.Buffer = ExAllocatePool(NonPagedPool, BaseName.MaximumLength);
 
 
-        if (!BaseName.Buffer) {
-            ExFreePool (DumpImage);
+        if (!BaseName.Buffer)
+        {
+            ExFreePool(DumpImage);
             return STATUS_INSUFFICIENT_RESOURCES;
         }
 
         BaseName.Length = 0;
-        RtlAppendUnicodeStringToString (&BaseName, &Prefix);
-        RtlAppendUnicodeToString (&BaseName, NewBaseNameString);
+        RtlAppendUnicodeStringToString(&BaseName, &Prefix);
+        RtlAppendUnicodeToString(&BaseName, NewBaseNameString);
     }
-    else {
+    else
+    {
         BaseName.Buffer = NULL;
     }
 
-    Status = MmLoadSystemImage(
-                &DriverName,
-                &Prefix,
-                LoadBaseName,
-                MM_LOAD_IMAGE_AND_LOCKDOWN,
-                &DumpImage->Image,
-                &DumpImage->ImageBase
-                );
+    Status = MmLoadSystemImage(&DriverName, &Prefix, LoadBaseName, MM_LOAD_IMAGE_AND_LOCKDOWN, &DumpImage->Image,
+                               &DumpImage->ImageBase);
 
-    KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                CRASHDUMP_TRACE,
-                "CRASHDUMP: MmLoadAndLockSystemImage\n"
-                "           DumpImage %p Image %p Base %p\n",
-                DumpImage,
-                DumpImage->Image,
-                DumpImage->ImageBase
-                ));
+    KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_TRACE,
+               "CRASHDUMP: MmLoadAndLockSystemImage\n"
+               "           DumpImage %p Image %p Base %p\n",
+               DumpImage, DumpImage->Image, DumpImage->ImageBase));
 
-    if (BaseName.Buffer) {
-        ExFreePool (BaseName.Buffer);
+    if (BaseName.Buffer)
+    {
+        ExFreePool(BaseName.Buffer);
     }
 
-    if (!NT_SUCCESS (Status)) {
-        KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                    CRASHDUMP_ERROR,
-                    "CRASHDUMP: Could not load %wZ; error = %x\n",
-                    &DriverName,
-                    Status
-                    ));
+    if (!NT_SUCCESS(Status))
+    {
+        KdPrintEx(
+            (DPFLTR_CRASHDUMP_ID, CRASHDUMP_ERROR, "CRASHDUMP: Could not load %wZ; error = %x\n", &DriverName, Status));
 
-        ExFreePool (DumpImage);
+        ExFreePool(DumpImage);
         return Status;
     }
 
@@ -1407,15 +1149,13 @@ Return Value:
     //
 
     DumpImage->SizeOfImage = DumpImage->Image->SizeOfImage;
-    InsertTailList (&DumpStack->DriverList, &DumpImage->Link);
+    InsertTailList(&DumpStack->DriverList, &DumpImage->Link);
     return STATUS_SUCCESS;
 }
 
-
+
 ULONG
-IopGetDumpControlBlockCheck (
-    IN PDUMP_CONTROL_BLOCK  Dcb
-    )
+IopGetDumpControlBlockCheck(IN PDUMP_CONTROL_BLOCK Dcb)
 /*++
 
 Routine Description:
@@ -1432,11 +1172,11 @@ Return Value:
 
 --*/
 {
-    ULONG                   Check;
-    PLIST_ENTRY             Link;
-    PDUMP_STACK_IMAGE       DumpImage;
-    PMAPPED_ADDRESS         MappedAddress;
-    PDUMP_STACK_CONTEXT     DumpStack;
+    ULONG Check;
+    PLIST_ENTRY Link;
+    PDUMP_STACK_IMAGE DumpImage;
+    PMAPPED_ADDRESS MappedAddress;
+    PDUMP_STACK_CONTEXT DumpStack;
 
     //
     // Check the DCB, memory descriptor array, and the FileDescriptorArray
@@ -1447,7 +1187,8 @@ Return Value:
     Check = PoSimpleCheck(Check, Dcb->FileDescriptorArray, Dcb->FileDescriptorSize);
 
     DumpStack = Dcb->DumpStack;
-    if (DumpStack) {
+    if (DumpStack)
+    {
 
         //
         // Include the dump stack context structure, and dump driver images
@@ -1456,14 +1197,13 @@ Return Value:
         Check = PoSimpleCheck(Check, DumpStack, sizeof(DUMP_STACK_CONTEXT));
         Check = PoSimpleCheck(Check, DumpStack->DumpPointers, DumpStack->PointersLength);
 
-        for (Link = DumpStack->DriverList.Flink;
-             Link != &DumpStack->DriverList;
-             Link = Link->Flink) {
+        for (Link = DumpStack->DriverList.Flink; Link != &DumpStack->DriverList; Link = Link->Flink)
+        {
 
             DumpImage = CONTAINING_RECORD(Link, DUMP_STACK_IMAGE, Link);
             Check = PoSimpleCheck(Check, DumpImage, sizeof(DUMP_STACK_IMAGE));
 
-#if !defined (_IA64_)
+#if !defined(_IA64_)
 
             //
             // ISSUE - 2000/02/14 - math: Add image check image for IA64.
@@ -1473,7 +1213,6 @@ Return Value:
 
             Check = PoSimpleCheck(Check, DumpImage->ImageBase, DumpImage->SizeOfImage);
 #endif
-
         }
 
         //
@@ -1481,14 +1220,18 @@ Return Value:
         //
         // If this is non-null it is treated as a PMAPPED_ADDRESS * (see scsiport and atdisk)
         //
-        if (DumpStack->Init.MappedRegisterBase != NULL) {
+        if (DumpStack->Init.MappedRegisterBase != NULL)
+        {
             MappedAddress = *(PMAPPED_ADDRESS *)DumpStack->Init.MappedRegisterBase;
-        } else {
+        }
+        else
+        {
             MappedAddress = NULL;
         }
 
-        while (MappedAddress) {
-            Check = PoSimpleCheck (Check, MappedAddress, sizeof(MAPPED_ADDRESS));
+        while (MappedAddress)
+        {
+            Check = PoSimpleCheck(Check, MappedAddress, sizeof(MAPPED_ADDRESS));
             MappedAddress = MappedAddress->NextMappedAddress;
         }
     }
@@ -1496,12 +1239,9 @@ Return Value:
     return Check;
 }
 
-
+
 NTSTATUS
-IoInitializeDumpStack (
-    IN PDUMP_STACK_CONTEXT  DumpStack,
-    IN PUCHAR               MessageBuffer OPTIONAL
-    )
+IoInitializeDumpStack(IN PDUMP_STACK_CONTEXT DumpStack, IN PUCHAR MessageBuffer OPTIONAL)
 /*++
 
 Routine Description:
@@ -1519,11 +1259,11 @@ Return Value:
 --*/
 {
 
-    PDUMP_INITIALIZATION_CONTEXT    DumpInit;
-    PLIST_ENTRY                     Link;
-    NTSTATUS                        Status;
-    PDRIVER_INITIALIZE              DriverInit;
-    PDUMP_STACK_IMAGE               DumpImage;
+    PDUMP_INITIALIZATION_CONTEXT DumpInit;
+    PLIST_ENTRY Link;
+    NTSTATUS Status;
+    PDRIVER_INITIALIZE DriverInit;
+    PDUMP_STACK_IMAGE DumpImage;
 
 
     DumpInit = &DumpStack->Init;
@@ -1536,9 +1276,8 @@ Return Value:
     // Initializes the dump drivers
     //
 
-    for (Link = DumpStack->DriverList.Flink;
-         Link != &DumpStack->DriverList;
-         Link = Link->Flink) {
+    for (Link = DumpStack->DriverList.Flink; Link != &DumpStack->DriverList; Link = Link->Flink)
+    {
 
         DumpImage = CONTAINING_RECORD(Link, DUMP_STACK_IMAGE, Link);
 
@@ -1547,16 +1286,14 @@ Return Value:
         // dump initialization context
         //
 
-        DriverInit = (PDRIVER_INITIALIZE) (ULONG_PTR) DumpImage->Image->EntryPoint;
-        Status = DriverInit (NULL, (PUNICODE_STRING) DumpInit);
+        DriverInit = (PDRIVER_INITIALIZE)(ULONG_PTR)DumpImage->Image->EntryPoint;
+        Status = DriverInit(NULL, (PUNICODE_STRING)DumpInit);
         DumpInit = NULL;
 
-        if (!NT_SUCCESS(Status)) {
-            KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                        CRASHDUMP_ERROR,
-                        "CRASHDUMP: Unable to initialize driver; error = %x\n",
-                        Status
-                        ));
+        if (!NT_SUCCESS(Status))
+        {
+            KdPrintEx(
+                (DPFLTR_CRASHDUMP_ID, CRASHDUMP_ERROR, "CRASHDUMP: Unable to initialize driver; error = %x\n", Status));
             return Status;
         }
     }
@@ -1567,8 +1304,9 @@ Return Value:
     // Display string we are starting
     //
 
-    if (MessageBuffer) {
-        IopDisplayString ( MessageBuffer );
+    if (MessageBuffer)
+    {
+        IopDisplayString(MessageBuffer);
     }
 
     //
@@ -1577,24 +1315,18 @@ Return Value:
     // otherwise a NULL, in which case there is no way to continue.
     //
 
-    if (!DumpInit->OpenRoutine (DumpStack->PartitionOffset)) {
+    if (!DumpInit->OpenRoutine(DumpStack->PartitionOffset))
+    {
 
-        KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                    CRASHDUMP_ERROR,
-                    "CRASHDUMP: Could not find/open partition offset\n"
-                    ));
+        KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_ERROR, "CRASHDUMP: Could not find/open partition offset\n"));
         return STATUS_UNSUCCESSFUL;
     }
 
     return STATUS_SUCCESS;
 }
 
-
-VOID
-IoGetDumpHiberRanges (
-    IN PVOID                    HiberContext,
-    IN PDUMP_STACK_CONTEXT      DumpStack
-    )
+
+VOID IoGetDumpHiberRanges(IN PVOID HiberContext, IN PDUMP_STACK_CONTEXT DumpStack)
 /*++
 
 Routine Description:
@@ -1616,9 +1348,9 @@ Return Value:
 
 --*/
 {
-    PDUMP_POINTERS              DumpPointers;
-    PDUMP_STACK_IMAGE           DumpImage;
-    PLIST_ENTRY                 Link;
+    PDUMP_POINTERS DumpPointers;
+    PDUMP_STACK_IMAGE DumpImage;
+    PLIST_ENTRY Link;
 
     DumpPointers = DumpStack->DumpPointers;
 
@@ -1626,41 +1358,27 @@ Return Value:
     // Report the common buffer
     //
 
-    if (DumpPointers->CommonBufferVa) {
-        PoSetHiberRange (
-            HiberContext,
-            PO_MEM_CL_OR_NCHK,
-            DumpPointers->CommonBufferVa,
-            DumpPointers->CommonBufferSize,
-            'fubc'
-            );
+    if (DumpPointers->CommonBufferVa)
+    {
+        PoSetHiberRange(HiberContext, PO_MEM_CL_OR_NCHK, DumpPointers->CommonBufferVa, DumpPointers->CommonBufferSize,
+                        'fubc');
     }
 
     //
     // Dump the entire image of the dump drivers
     //
 
-    for (Link = DumpStack->DriverList.Flink;
-         Link != &DumpStack->DriverList;
-         Link = Link->Flink) {
+    for (Link = DumpStack->DriverList.Flink; Link != &DumpStack->DriverList; Link = Link->Flink)
+    {
 
         DumpImage = CONTAINING_RECORD(Link, DUMP_STACK_IMAGE, Link);
 
-        PoSetHiberRange (
-            HiberContext,
-            PO_MEM_CL_OR_NCHK,
-            DumpImage->ImageBase,
-            DumpImage->SizeOfImage,
-            'gmID'
-            );
+        PoSetHiberRange(HiberContext, PO_MEM_CL_OR_NCHK, DumpImage->ImageBase, DumpImage->SizeOfImage, 'gmID');
     }
 }
 
-
-VOID
-IoFreeDumpStack (
-    IN PDUMP_STACK_CONTEXT     DumpStack
-    )
+
+VOID IoFreeDumpStack(IN PDUMP_STACK_CONTEXT DumpStack)
 /*++
 
 Routine Description:
@@ -1677,17 +1395,17 @@ Return Value:
 
 --*/
 {
-    PDUMP_INITIALIZATION_CONTEXT     DumpInit;
-    PDUMP_STACK_IMAGE               DumpImage;
-    PDEVICE_OBJECT                  DeviceObject;
-    PIO_STACK_LOCATION              IrpSp;
-    IO_STATUS_BLOCK                 IoStatus;
-    PIRP                            Irp;
-    KEVENT                          Event;
-    NTSTATUS                        Status;
-    ULONG                           i;
-    PFILE_OBJECT                    FileObject;
-    IO_STACK_LOCATION               irpSp;
+    PDUMP_INITIALIZATION_CONTEXT DumpInit;
+    PDUMP_STACK_IMAGE DumpImage;
+    PDEVICE_OBJECT DeviceObject;
+    PIO_STACK_LOCATION IrpSp;
+    IO_STATUS_BLOCK IoStatus;
+    PIRP Irp;
+    KEVENT Event;
+    NTSTATUS Status;
+    ULONG i;
+    PFILE_OBJECT FileObject;
+    IO_STACK_LOCATION irpSp;
 
     PAGED_CODE();
     DumpInit = &DumpStack->Init;
@@ -1697,10 +1415,11 @@ Return Value:
     //
 
     FileObject = DumpStack->FileObject;
-    if (FileObject) {
-        DeviceObject = IoGetRelatedDeviceObject (FileObject);
+    if (FileObject)
+    {
+        DeviceObject = IoGetRelatedDeviceObject(FileObject);
 
-        RtlZeroMemory (&irpSp, sizeof (IO_STACK_LOCATION));
+        RtlZeroMemory(&irpSp, sizeof(IO_STACK_LOCATION));
 
         irpSp.MajorFunction = IRP_MJ_PNP;
         irpSp.MinorFunction = IRP_MN_DEVICE_USAGE_NOTIFICATION;
@@ -1708,9 +1427,12 @@ Return Value:
         irpSp.Parameters.UsageNotification.InPath = FALSE;
         irpSp.FileObject = FileObject;
 
-        if (DeviceUsageTypeUndefined != DumpStack->UsageType) {
-            Status = IopSynchronousCall (DeviceObject, &irpSp, NULL);
-        } else {
+        if (DeviceUsageTypeUndefined != DumpStack->UsageType)
+        {
+            Status = IopSynchronousCall(DeviceObject, &irpSp, NULL);
+        }
+        else
+        {
             Status = STATUS_SUCCESS;
         }
     }
@@ -1719,20 +1441,20 @@ Return Value:
     // Free any common buffers which where allocated
     //
 
-    for (i=0; i < 2; i++) {
-        if (DumpInit->CommonBuffer[i]) {
-            if (DumpInit->AdapterObject) {
+    for (i = 0; i < 2; i++)
+    {
+        if (DumpInit->CommonBuffer[i])
+        {
+            if (DumpInit->AdapterObject)
+            {
 
-                (*((PDMA_ADAPTER)DumpInit->AdapterObject)->DmaOperations->
-                 FreeCommonBuffer )(
-                     (PDMA_ADAPTER)DumpInit->AdapterObject,
-                     ((PDUMP_POINTERS)DumpStack->DumpPointers)->CommonBufferSize,
-                     DumpInit->PhysicalAddress[i],
-                     DumpInit->CommonBuffer[i],
-                     FALSE
-                     );
-            } else {
-                MmFreeContiguousMemory (DumpInit->CommonBuffer[i]);
+                (*((PDMA_ADAPTER)DumpInit->AdapterObject)->DmaOperations->FreeCommonBuffer)(
+                    (PDMA_ADAPTER)DumpInit->AdapterObject, ((PDUMP_POINTERS)DumpStack->DumpPointers)->CommonBufferSize,
+                    DumpInit->PhysicalAddress[i], DumpInit->CommonBuffer[i], FALSE);
+            }
+            else
+            {
+                MmFreeContiguousMemory(DumpInit->CommonBuffer[i]);
             }
         }
         DumpInit->CommonBuffer[i] = NULL;
@@ -1742,77 +1464,71 @@ Return Value:
     // Unload the dump drivers
     //
 
-    while (!IsListEmpty(&DumpStack->DriverList)) {
+    while (!IsListEmpty(&DumpStack->DriverList))
+    {
         DumpImage = CONTAINING_RECORD(DumpStack->DriverList.Blink, DUMP_STACK_IMAGE, Link);
-        RemoveEntryList (&DumpImage->Link);
-        MmUnloadSystemImage (DumpImage->Image);
-        ExFreePool (DumpImage);
+        RemoveEntryList(&DumpImage->Link);
+        MmUnloadSystemImage(DumpImage->Image);
+        ExFreePool(DumpImage);
     }
 
     //
     // Inform the driver stack that the dump registartion is over
     //
 
-    if (DumpStack->FileObject) {
-        DeviceObject = IoGetRelatedDeviceObject ((PFILE_OBJECT) DumpStack->FileObject);
+    if (DumpStack->FileObject)
+    {
+        DeviceObject = IoGetRelatedDeviceObject((PFILE_OBJECT)DumpStack->FileObject);
 
-        KeInitializeEvent( &Event, NotificationEvent, FALSE );
-        Irp = IoBuildDeviceIoControlRequest(
-                    IOCTL_SCSI_FREE_DUMP_POINTERS,
-                    DeviceObject,
-                    DumpStack->DumpPointers,
-                    sizeof (DUMP_POINTERS),
-                    NULL,
-                    0,
-                    FALSE,
-                    &Event,
-                    &IoStatus
-                    );
+        KeInitializeEvent(&Event, NotificationEvent, FALSE);
+        Irp = IoBuildDeviceIoControlRequest(IOCTL_SCSI_FREE_DUMP_POINTERS, DeviceObject, DumpStack->DumpPointers,
+                                            sizeof(DUMP_POINTERS), NULL, 0, FALSE, &Event, &IoStatus);
 
-        IrpSp = IoGetNextIrpStackLocation (Irp);
+        IrpSp = IoGetNextIrpStackLocation(Irp);
         IrpSp->FileObject = DumpStack->FileObject;
 
-        Status = IoCallDriver( DeviceObject, Irp );
+        Status = IoCallDriver(DeviceObject, Irp);
 
-        if (Status == STATUS_PENDING) {
+        if (Status == STATUS_PENDING)
+        {
             KeWaitForSingleObject(&Event, Executive, KernelMode, FALSE, NULL);
             Status = IoStatus.Status;
         }
-        ObDereferenceObject( DumpStack->FileObject );
+        ObDereferenceObject(DumpStack->FileObject);
     }
     //
     // Free the target address if it exists
     //
-    if (DumpStack->Init.TargetAddress) {
-        ExFreePool( DumpStack->Init.TargetAddress);
+    if (DumpStack->Init.TargetAddress)
+    {
+        ExFreePool(DumpStack->Init.TargetAddress);
     }
     //
     // Free the dump stack context
     //
 
-    ExFreePool (DumpStack);
+    ExFreePool(DumpStack);
 }
 
-VOID
-IopGetSecondaryDumpDataLimits(
-    ULONG Flags,
-    OUT PULONG MaxData,
-    OUT PULONG MaxPerCallback
-    )
+VOID IopGetSecondaryDumpDataLimits(ULONG Flags, OUT PULONG MaxData, OUT PULONG MaxPerCallback)
 {
     // When the selected dump type is small also
     // limit the amount of secondary dump data.
     // This prevents overzealous secondary dumpers from
     // creating multi-megabyte secondary dumps when triage
     // dumps are selected.
-    if (!(Flags & DCB_DUMP_ENABLED) ||
-        (Flags & DCB_DUMP_HEADER_ENABLED)) {
+    if (!(Flags & DCB_DUMP_ENABLED) || (Flags & DCB_DUMP_HEADER_ENABLED))
+    {
         *MaxData = 0;
         *MaxPerCallback = 0;
-    } else if (Flags & DCB_TRIAGE_DUMP_ENABLED) {
+    }
+    else if (Flags & DCB_TRIAGE_DUMP_ENABLED)
+    {
         *MaxData = 16 * PAGE_SIZE;
         *MaxPerCallback = PAGE_SIZE;
-    } else {
+    }
+    else
+    {
         // Arbitrarily limit maximum data amount to 256MB.
         // There shouldn't be any reason that callers should
         // have anywhere near that much data that wouldn't
@@ -1823,44 +1539,34 @@ IopGetSecondaryDumpDataLimits(
 }
 
 NTSTATUS
-IopGetSecondaryDumpDataSpace(
-    IN PDUMP_CONTROL_BLOCK dcb,
-    OUT PULONG Space
-    )
+IopGetSecondaryDumpDataSpace(IN PDUMP_CONTROL_BLOCK dcb, OUT PULONG Space)
 {
     ULONG MaxDumpData;
     ULONG MaxPerCallbackDumpData;
     NTSTATUS NtStatus;
 
-    IopGetSecondaryDumpDataLimits(dcb->Flags,
-                                  &MaxDumpData, &MaxPerCallbackDumpData);
+    IopGetSecondaryDumpDataLimits(dcb->Flags, &MaxDumpData, &MaxPerCallbackDumpData);
 
-    NtStatus = IopInvokeSecondaryDumpDataCallbacks(NULL, NULL, NULL, 0,
-                                                   (PBYTE)dcb->HeaderPage,
-                                                   PAGE_SIZE,
-                                                   MaxDumpData,
-                                                   MaxPerCallbackDumpData,
-                                                   Space);
-    if (!NT_SUCCESS(NtStatus)) {
+    NtStatus = IopInvokeSecondaryDumpDataCallbacks(NULL, NULL, NULL, 0, (PBYTE)dcb->HeaderPage, PAGE_SIZE, MaxDumpData,
+                                                   MaxPerCallbackDumpData, Space);
+    if (!NT_SUCCESS(NtStatus))
+    {
         *Space = 0;
     }
 
     return NtStatus;
 }
 
-
+
 NTSTATUS
-IopInitializeDumpSpaceAndType(
-    IN PDUMP_CONTROL_BLOCK dcb,
-    IN OUT PMEMORY_DUMP MemoryDump,
-    IN ULONG SecondarySpace
-    )
+IopInitializeDumpSpaceAndType(IN PDUMP_CONTROL_BLOCK dcb, IN OUT PMEMORY_DUMP MemoryDump, IN ULONG SecondarySpace)
 {
     LARGE_INTEGER Space;
 
     Space.QuadPart = 0;
 
-    if (dcb->Flags & DCB_TRIAGE_DUMP_ENABLED) {
+    if (dcb->Flags & DCB_TRIAGE_DUMP_ENABLED)
+    {
 
         //
         // Fixed size dump for triage-dumps.
@@ -1869,29 +1575,24 @@ IopInitializeDumpSpaceAndType(
         MemoryDump->Header.DumpType = DUMP_TYPE_TRIAGE;
         MemoryDump->Header.MiniDumpFields = dcb->TriageDumpFlags;
         Space.QuadPart = TRIAGE_DUMP_SIZE;
-
-
-    } else if (dcb->Flags & DCB_SUMMARY_DUMP_ENABLED) {
+    }
+    else if (dcb->Flags & DCB_SUMMARY_DUMP_ENABLED)
+    {
 
         MemoryDump->Header.DumpType = DUMP_TYPE_SUMMARY;
-        Space = IopCalculateRequiredDumpSpace(
-                                dcb->Flags,
-                                dcb->HeaderSize,
-                                MmPhysicalMemoryBlock->NumberOfPages,
-                                MemoryDump->Summary.Pages
-                                );
-    } else {
+        Space = IopCalculateRequiredDumpSpace(dcb->Flags, dcb->HeaderSize, MmPhysicalMemoryBlock->NumberOfPages,
+                                              MemoryDump->Summary.Pages);
+    }
+    else
+    {
 
-        if (dcb->Flags & DCB_DUMP_HEADER_ENABLED) {
+        if (dcb->Flags & DCB_DUMP_HEADER_ENABLED)
+        {
             MemoryDump->Header.DumpType = DUMP_TYPE_HEADER;
         }
 
-        Space = IopCalculateRequiredDumpSpace(
-                                dcb->Flags,
-                                dcb->HeaderSize,
-                                MmPhysicalMemoryBlock->NumberOfPages,
-                                MmPhysicalMemoryBlock->NumberOfPages
-                                );
+        Space = IopCalculateRequiredDumpSpace(dcb->Flags, dcb->HeaderSize, MmPhysicalMemoryBlock->NumberOfPages,
+                                              MmPhysicalMemoryBlock->NumberOfPages);
     }
 
     //
@@ -1899,39 +1600,29 @@ IopInitializeDumpSpaceAndType(
     //
 
     Space.QuadPart += SecondarySpace;
-    
+
     //
     // If the calculated size is larger than the pagefile, truncate it to
     // the pagefile size.
     //
 
-    if (Space.QuadPart > dcb->DumpFileSize.QuadPart) {
+    if (Space.QuadPart > dcb->DumpFileSize.QuadPart)
+    {
         Space.QuadPart = dcb->DumpFileSize.QuadPart;
     }
 
     MemoryDump->Header.RequiredDumpSpace = Space;
 
-    KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                CRASHDUMP_TRACE,
-                "CRASHDUMP: Dump File Size set to %I64x\n",
-                Space.QuadPart
-                ));
+    KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_TRACE, "CRASHDUMP: Dump File Size set to %I64x\n", Space.QuadPart));
 
     return STATUS_SUCCESS;
 }
 
-
+
 BOOLEAN
-IoWriteCrashDump(
-    IN ULONG BugCheckCode,
-    IN ULONG_PTR BugCheckParameter1,
-    IN ULONG_PTR BugCheckParameter2,
-    IN ULONG_PTR BugCheckParameter3,
-    IN ULONG_PTR BugCheckParameter4,
-    IN PVOID ContextSave,
-    IN PKTHREAD Thread,
-    OUT PBOOLEAN Reboot
-    )
+IoWriteCrashDump(IN ULONG BugCheckCode, IN ULONG_PTR BugCheckParameter1, IN ULONG_PTR BugCheckParameter2,
+                 IN ULONG_PTR BugCheckParameter3, IN ULONG_PTR BugCheckParameter4, IN PVOID ContextSave,
+                 IN PKTHREAD Thread, OUT PBOOLEAN Reboot)
 
 /*++
 
@@ -1961,7 +1652,7 @@ Return Value:
     PMEMORY_DUMP MemoryDump;
     LARGE_INTEGER diskByteOffset;
     PPFN_NUMBER page;
-    PFN_NUMBER localMdl[(sizeof( MDL )/sizeof(PFN_NUMBER)) + 17];
+    PFN_NUMBER localMdl[(sizeof(MDL) / sizeof(PFN_NUMBER)) + 17];
     PMDL mdl;
     PLARGE_INTEGER mcb;
     ULONG_PTR memoryAddress;
@@ -1971,7 +1662,7 @@ Return Value:
     PFN_NUMBER ActualPages;
     ULONG dwTransferSize;
     PFN_NUMBER NumberOfPages;
-#if defined (_X86_)
+#if defined(_X86_)
     ULONG_PTR DirBasePage;
 #endif
     ULONG MaxDumpData;
@@ -1981,8 +1672,8 @@ Return Value:
 
     KdCheckForDebugBreak();
 
-    ASSERT (Reboot != NULL);
-    
+    ASSERT(Reboot != NULL);
+
     //
     // Initialization
     //
@@ -1994,23 +1685,28 @@ Return Value:
     // may be enabled even with no other post-mortem features.
     //
 
-    if (IopAutoReboot) {
+    if (IopAutoReboot)
+    {
         *Reboot = TRUE;
-    } else {
+    }
+    else
+    {
         *Reboot = FALSE;
     }
-    
+
     //
     // Begin by determining whether or not crash dumps are enabled.  If not,
     // return immediately since there is nothing to do.
     //
 
     dcb = IopDumpControlBlock;
-    if (!dcb) {
+    if (!dcb)
+    {
         return FALSE;
     }
 
-    if (dcb->Flags & DCB_DUMP_ENABLED || dcb->Flags & DCB_SUMMARY_ENABLED) {
+    if (dcb->Flags & DCB_DUMP_ENABLED || dcb->Flags & DCB_SUMMARY_ENABLED)
+    {
 
         IopFinalCrashDumpStatus = STATUS_PENDING;
 
@@ -2026,18 +1722,15 @@ Return Value:
         // We do not check the checksum if IopIgnoreDumpCheck is TRUE. Use
         // this to make debugging easier.
         //
-        
-        if (!IopIgnoreDumpCheck &&
-            IopGetDumpControlBlockCheck(dcb) != IopDumpControlBlockChecksum) {
 
-            KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                        CRASHDUMP_ERROR,
-                        "CRASHDUMP: Disk dump routine returning due to DCB integrity error\n"
-                        "           Computed Checksum: %d != Saved Checksum %d\n"
-                        "           No dump will be created\n",
-                        IopGetDumpControlBlockCheck (dcb),
-                        IopDumpControlBlockChecksum
-                        ));
+        if (!IopIgnoreDumpCheck && IopGetDumpControlBlockCheck(dcb) != IopDumpControlBlockChecksum)
+        {
+
+            KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_ERROR,
+                       "CRASHDUMP: Disk dump routine returning due to DCB integrity error\n"
+                       "           Computed Checksum: %d != Saved Checksum %d\n"
+                       "           No dump will be created\n",
+                       IopGetDumpControlBlockCheck(dcb), IopDumpControlBlockChecksum));
 
             IopFinalCrashDumpStatus = STATUS_UNSUCCESSFUL;
             return FALSE;
@@ -2049,21 +1742,22 @@ Return Value:
 
         dumpStack = dcb->DumpStack;
 
-//        sprintf( messageBuffer, "%Z\n", &dumpStack->InitMsg );
+        //        sprintf( messageBuffer, "%Z\n", &dumpStack->InitMsg );
         //
         //  Disable HAL Verifier during a crash dump.
         //
         VfDisableHalVerifier();
-         
+
         //
         // Initialize the dump stack
         //
 
-        status = IoInitializeDumpStack (dumpStack, NULL);
+        status = IoInitializeDumpStack(dumpStack, NULL);
 
         KdCheckForDebugBreak();
-        
-        if (!NT_SUCCESS( status )) {
+
+        if (!NT_SUCCESS(status))
+        {
             IopFinalCrashDumpStatus = STATUS_UNSUCCESSFUL;
             return FALSE;
         }
@@ -2073,7 +1767,7 @@ Return Value:
         // message.
         //
 
-        IopDisplayString ("%Z\n", &dumpStack->InitMsg);
+        IopDisplayString("%Z\n", &dumpStack->InitMsg);
 
         //
         // Record the dump driver's entry points.
@@ -2085,14 +1779,12 @@ Return Value:
 
         dwTransferSize = dumpStack->Init.MaximumTransferSize;
 
-        if ( ( !dwTransferSize ) || ( dwTransferSize > IO_DUMP_MAXIMUM_TRANSFER_SIZE ) ) {
+        if ((!dwTransferSize) || (dwTransferSize > IO_DUMP_MAXIMUM_TRANSFER_SIZE))
+        {
             dwTransferSize = IO_DUMP_MINIMUM_TRANSFER_SIZE;
         }
 
-        KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                    CRASHDUMP_TRACE,
-                    "CRASHDUMP: Maximum Transfer Size = %x\n",dwTransferSize
-                    ));
+        KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_TRACE, "CRASHDUMP: Maximum Transfer Size = %x\n", dwTransferSize));
 
         //
         // The boot partition was found, so put together a dump file header
@@ -2102,11 +1794,11 @@ Return Value:
         // Get the amount of secondary dump data while the
         // header page can still be used as scratch space.
         SecondaryStatus = IopGetSecondaryDumpDataSpace(dcb, &SecondarySpace);
-        
-        MemoryDump = (PMEMORY_DUMP) dcb->HeaderPage;
+
+        MemoryDump = (PMEMORY_DUMP)dcb->HeaderPage;
         header = &MemoryDump->Header;
 
-        RtlFillMemoryUlong( header, sizeof(*header), DUMP_SIGNATURE );
+        RtlFillMemoryUlong(header, sizeof(*header), DUMP_SIGNATURE);
         header->ValidDump = DUMP_VALID_DUMP;
         header->BugCheckCode = BugCheckCode;
         header->BugCheckParameter1 = BugCheckParameter1;
@@ -2115,7 +1807,7 @@ Return Value:
         header->BugCheckParameter4 = BugCheckParameter4;
         header->SecondaryDataState = (ULONG)SecondaryStatus;
 
-#if defined (_X86_)
+#if defined(_X86_)
 
         //
         // Add the current page directory table page - don't use the directory
@@ -2129,54 +1821,52 @@ Return Value:
         }
         header->DirectoryTableBase = DirBasePage;
 
-#elif defined (_IA64_)
-        ASSERT (((MmSystemParentTablePage << PAGE_SHIFT) >> PAGE_SHIFT) ==
-                MmSystemParentTablePage);
+#elif defined(_IA64_)
+        ASSERT(((MmSystemParentTablePage << PAGE_SHIFT) >> PAGE_SHIFT) == MmSystemParentTablePage);
         header->DirectoryTableBase = MmSystemParentTablePage << PAGE_SHIFT;
 #else
         header->DirectoryTableBase = KeGetCurrentThread()->ApcState.Process->DirectoryTableBase[0];
 #endif
         header->PfnDataBase = (ULONG_PTR)MmPfnDatabase;
-        header->PsLoadedModuleList = (ULONG_PTR) &PsLoadedModuleList;
-        header->PsActiveProcessHead = (ULONG_PTR) &PsActiveProcessHead;
+        header->PsLoadedModuleList = (ULONG_PTR)&PsLoadedModuleList;
+        header->PsActiveProcessHead = (ULONG_PTR)&PsActiveProcessHead;
         header->NumberProcessors = dcb->NumberProcessors;
         header->MajorVersion = dcb->MajorVersion;
         header->MinorVersion = dcb->MinorVersion;
 
-#if defined (i386)
-        header->PaeEnabled = X86PaeEnabled ();
+#if defined(i386)
+        header->PaeEnabled = X86PaeEnabled();
 #endif
         header->KdDebuggerDataBlock = KdGetDataBlock();
 
-        header->MachineImageType = CURRENT_IMAGE_TYPE ();
+        header->MachineImageType = CURRENT_IMAGE_TYPE();
 
-        if (!(dcb->Flags & DCB_DUMP_ENABLED)) {
+        if (!(dcb->Flags & DCB_DUMP_ENABLED))
+        {
             NumberOfPages = 1;
-        } else {
+        }
+        else
+        {
             NumberOfPages = MmPhysicalMemoryBlock->NumberOfPages;
         }
 
-        strcpy( header->VersionUser, dcb->VersionUser );
+        strcpy(header->VersionUser, dcb->VersionUser);
 
         //
         // Copy the physical memory descriptor.
         //
 
-        RtlCopyMemory (&MemoryDump->Header.PhysicalMemoryBlock,
-                       MmPhysicalMemoryBlock,
-                       sizeof( PHYSICAL_MEMORY_DESCRIPTOR ) +
-                       ((MmPhysicalMemoryBlock->NumberOfRuns - 1) *
-                       sizeof( PHYSICAL_MEMORY_RUN )) );
+        RtlCopyMemory(&MemoryDump->Header.PhysicalMemoryBlock, MmPhysicalMemoryBlock,
+                      sizeof(PHYSICAL_MEMORY_DESCRIPTOR) +
+                          ((MmPhysicalMemoryBlock->NumberOfRuns - 1) * sizeof(PHYSICAL_MEMORY_RUN)));
 
-        RtlCopyMemory( MemoryDump->Header.ContextRecord,
-                       context,
-                       sizeof( CONTEXT ) );
+        RtlCopyMemory(MemoryDump->Header.ContextRecord, context, sizeof(CONTEXT));
 
         MemoryDump->Header.Exception.ExceptionCode = STATUS_BREAKPOINT;
         MemoryDump->Header.Exception.ExceptionRecord = 0;
         MemoryDump->Header.Exception.NumberParameters = 0;
         MemoryDump->Header.Exception.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
-        MemoryDump->Header.Exception.ExceptionAddress = PROGRAM_COUNTER (context);
+        MemoryDump->Header.Exception.ExceptionAddress = PROGRAM_COUNTER(context);
 
         //
         // Init dump type to FULL
@@ -2190,16 +1880,16 @@ Return Value:
         // high 1 part
         //
 
-        MemoryDump->Header.SystemTime.LowPart  = SharedUserData->SystemTime.LowPart;
+        MemoryDump->Header.SystemTime.LowPart = SharedUserData->SystemTime.LowPart;
         MemoryDump->Header.SystemTime.HighPart = SharedUserData->SystemTime.High1Time;
 
-        MemoryDump->Header.SystemUpTime.LowPart  = SharedUserData->InterruptTime.LowPart;
+        MemoryDump->Header.SystemUpTime.LowPart = SharedUserData->InterruptTime.LowPart;
         MemoryDump->Header.SystemUpTime.HighPart = SharedUserData->InterruptTime.High1Time;
 
         // Save product type and suite.
         MemoryDump->Header.ProductType = SharedUserData->NtProductType;
         MemoryDump->Header.SuiteMask = SharedUserData->SuiteMask;
-        
+
         //
         // Set the Required dump size in the dump header. In the case of
         // a summary dump the file allocation size can be significantly larger
@@ -2208,39 +1898,40 @@ Return Value:
 
         MemoryDump->Header.RequiredDumpSpace.QuadPart = 0;
 
-        IopGetSecondaryDumpDataLimits(dcb->Flags,
-                                      &MaxDumpData, &MaxPerCallbackDumpData);
-        if (MaxDumpData > SecondarySpace) {
+        IopGetSecondaryDumpDataLimits(dcb->Flags, &MaxDumpData, &MaxPerCallbackDumpData);
+        if (MaxDumpData > SecondarySpace)
+        {
             MaxDumpData = SecondarySpace;
-            if (MaxPerCallbackDumpData > MaxDumpData) {
+            if (MaxPerCallbackDumpData > MaxDumpData)
+            {
                 MaxPerCallbackDumpData = MaxDumpData;
             }
         }
 
-        if (dcb->Flags & DCB_DUMP_ENABLED) {
+        if (dcb->Flags & DCB_DUMP_ENABLED)
+        {
 
             //
             // If summary dump try to create the dump header
             //
 
-            if ( (dcb->Flags & DCB_SUMMARY_DUMP_ENABLED) ) {
+            if ((dcb->Flags & DCB_SUMMARY_DUMP_ENABLED))
+            {
 
                 //
                 // Initialize the summary dump
                 //
 
-                status = IopInitializeSummaryDump( MemoryDump, dcb );
+                status = IopInitializeSummaryDump(MemoryDump, dcb);
 
-                if ( !NT_SUCCESS (status) ) {
+                if (!NT_SUCCESS(status))
+                {
 
                     //
                     // No summary dump header so return.
                     //
 
-                    KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                                CRASHDUMP_WARNING,
-                                "CRASHDUMP: NULL summary dump header\n"
-                                ));
+                    KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_WARNING, "CRASHDUMP: NULL summary dump header\n"));
 
                     IopFinalCrashDumpStatus = STATUS_UNSUCCESSFUL;
 
@@ -2248,7 +1939,7 @@ Return Value:
                 }
             }
 
-            IopInitializeDumpSpaceAndType ( dcb, MemoryDump, SecondarySpace );
+            IopInitializeDumpSpaceAndType(dcb, MemoryDump, SecondarySpace);
         }
 
         //
@@ -2265,8 +1956,8 @@ Return Value:
         // Create MDL for dump.
         //
 
-        mdl = (PMDL) &localMdl[0];
-        MmCreateMdl( mdl, NULL, PAGE_SIZE );
+        mdl = (PMDL)&localMdl[0];
+        MmCreateMdl(mdl, NULL, PAGE_SIZE);
         mdl->MdlFlags |= MDL_PAGES_LOCKED;
 
         mcb = dcb->FileDescriptorArray;
@@ -2276,34 +1967,34 @@ Return Value:
         mdl->MdlFlags |= MDL_MAPPED_TO_SYSTEM_VA;
 
         bytesRemaining = PAGE_SIZE;
-        memoryAddress = (ULONG_PTR) dcb->HeaderPage;
+        memoryAddress = (ULONG_PTR)dcb->HeaderPage;
 
-        IopInvokeDumpIoCallbacks(dcb->HeaderPage, PAGE_SIZE,
-                                 KbDumpIoHeader);
-        
+        IopInvokeDumpIoCallbacks(dcb->HeaderPage, PAGE_SIZE, KbDumpIoHeader);
+
         //
         // All of the pieces of the header file have been generated.  Write
         // the header page to the paging file, using the appropriate drivers,
         // etc.
         //
 
-        KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                    CRASHDUMP_TRACE,
-                    "CRASHDUMP: Writing dump header to disk\n"
-                    ));
+        KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_TRACE, "CRASHDUMP: Writing dump header to disk\n"));
 
-        while (bytesRemaining) {
+        while (bytesRemaining)
+        {
 
-            if (mcb[0].QuadPart <= bytesRemaining) {
+            if (mcb[0].QuadPart <= bytesRemaining)
+            {
                 byteCount = mcb[0].LowPart;
-            } else {
+            }
+            else
+            {
                 byteCount = bytesRemaining;
             }
 
             mdl->ByteCount = byteCount;
             mdl->ByteOffset = (ULONG)(memoryAddress & (PAGE_SIZE - 1));
-            mdl->MappedSystemVa = (PVOID) memoryAddress;
-            mdl->StartVa = PAGE_ALIGN ((PVOID)memoryAddress);
+            mdl->MappedSystemVa = (PVOID)memoryAddress;
+            mdl->StartVa = PAGE_ALIGN((PVOID)memoryAddress);
 
             //
             // Write to disk.
@@ -2311,7 +2002,8 @@ Return Value:
 
             KdCheckForDebugBreak();
 
-            if (!NT_SUCCESS( write( &mcb[1], mdl ) )) {
+            if (!NT_SUCCESS(write(&mcb[1], mdl)))
+            {
                 IopFinalCrashDumpStatus = STATUS_UNSUCCESSFUL;
                 return FALSE;
             }
@@ -2325,7 +2017,8 @@ Return Value:
             mcb[0].QuadPart = mcb[0].QuadPart - byteCount;
             mcb[1].QuadPart = mcb[1].QuadPart + byteCount;
 
-            if (!mcb[0].QuadPart) {
+            if (!mcb[0].QuadPart)
+            {
                 mcb += 2;
             }
         }
@@ -2334,7 +2027,8 @@ Return Value:
         // If only requesting a header dump, we are now done.
         //
 
-        if (dcb->Flags & DCB_DUMP_HEADER_ENABLED) {
+        if (dcb->Flags & DCB_DUMP_HEADER_ENABLED)
+        {
             goto FinishDump;
         }
 
@@ -2344,26 +2038,16 @@ Return Value:
         // full or summary dump.
         //
 
-        if (dcb->Flags & DCB_TRIAGE_DUMP_ENABLED) {
-            status = IopWriteTriageDump (dcb->TriageDumpFlags,
-                                       write,
-                                       &mcb,
-                                       mdl,
-                                       dwTransferSize,
-                                       context,
-                                       Thread,
-                                       dcb->TriageDumpBuffer,
-                                       dcb->TriageDumpBufferSize - sizeof(DUMP_HEADER),
-                                       dcb->BuildNumber,
-                                       (UCHAR)dcb->Flags
-                                       );
+        if (dcb->Flags & DCB_TRIAGE_DUMP_ENABLED)
+        {
+            status = IopWriteTriageDump(dcb->TriageDumpFlags, write, &mcb, mdl, dwTransferSize, context, Thread,
+                                        dcb->TriageDumpBuffer, dcb->TriageDumpBufferSize - sizeof(DUMP_HEADER),
+                                        dcb->BuildNumber, (UCHAR)dcb->Flags);
 
-            if (!NT_SUCCESS (status)) {
+            if (!NT_SUCCESS(status))
+            {
 
-                KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                            CRASHDUMP_WARNING,
-                            "CRASHDUMP: Failed to write triage-dump\n"
-                            ));
+                KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_WARNING, "CRASHDUMP: Failed to write triage-dump\n"));
 
                 IopFinalCrashDumpStatus = STATUS_UNSUCCESSFUL;
                 return FALSE;
@@ -2377,7 +2061,8 @@ Return Value:
         // of all of physical memory is to be written, write it now.
         //
 
-        if (dcb->Flags & DCB_DUMP_ENABLED) {
+        if (dcb->Flags & DCB_DUMP_ENABLED)
+        {
 
             ULONG64 bytesDoneSoFar = 0;
             ULONG currentPercentage = 0;
@@ -2390,41 +2075,30 @@ Return Value:
 
             ActualPages = NumberOfPages;
 
-            if (dcb->Flags & DCB_SUMMARY_DUMP_ENABLED) {
+            if (dcb->Flags & DCB_SUMMARY_DUMP_ENABLED)
+            {
 
                 //
                 // At this point the dump header header has been sucessfully
                 // written. Write the summary dump header.
                 //
 
-                status = IopWriteSummaryHeader(
-                                     &MemoryDump->Summary,
-                                     write,
-                                     &mcb,
-                                     mdl,
-                                     dwTransferSize,
-                                     (dcb->HeaderSize - sizeof(DUMP_HEADER))
-                                     );
+                status = IopWriteSummaryHeader(&MemoryDump->Summary, write, &mcb, mdl, dwTransferSize,
+                                               (dcb->HeaderSize - sizeof(DUMP_HEADER)));
 
-                if ( !NT_SUCCESS (status) ) {
-                    KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                                CRASHDUMP_WARNING,
-                                "CRASHDUMP: Error writing summary dump header %08x\n",
-                                status
-                                ));
+                if (!NT_SUCCESS(status))
+                {
+                    KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_WARNING,
+                               "CRASHDUMP: Error writing summary dump header %08x\n", status));
 
                     IopFinalCrashDumpStatus = status;
                     return FALSE;
                 }
 
                 ActualPages = MemoryDump->Summary.Pages;
-
             }
 
-            KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                        CRASHDUMP_TRACE,
-                        "CRASHDUMP: Writing Memory Dump\n"
-                        ));
+            KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_TRACE, "CRASHDUMP: Writing Memory Dump\n"));
 
             //
             // Set the virtual file offset and initialize loop variables and
@@ -2433,22 +2107,16 @@ Return Value:
 
             memoryAddress = (ULONG_PTR)MmPhysicalMemoryBlock->Run[0].BasePage * PAGE_SIZE;
 
-            if ( dcb->Flags & DCB_SUMMARY_DUMP_ENABLED ) {
+            if (dcb->Flags & DCB_SUMMARY_DUMP_ENABLED)
+            {
 
-                status = IopWriteSummaryDump (
-                                        (PRTL_BITMAP) &MemoryDump->Summary.Bitmap,
-                                        write,
-                                        &dumpStack->ProgMsg,
-                                        NULL,
-                                        &mcb,
-                                        dwTransferSize
-                                        );
+                status = IopWriteSummaryDump((PRTL_BITMAP)&MemoryDump->Summary.Bitmap, write, &dumpStack->ProgMsg, NULL,
+                                             &mcb, dwTransferSize);
 
-                if (!NT_SUCCESS (status)) {
-                    KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                                CRASHDUMP_WARNING,
-                                "CRASHDUMP: Failed to write kernel memory dump\n"
-                                ));
+                if (!NT_SUCCESS(status))
+                {
+                    KdPrintEx(
+                        (DPFLTR_CRASHDUMP_ID, CRASHDUMP_WARNING, "CRASHDUMP: Failed to write kernel memory dump\n"));
                     IopFinalCrashDumpStatus = STATUS_UNSUCCESSFUL;
                     return FALSE;
                 }
@@ -2459,7 +2127,8 @@ Return Value:
             // Now loop, writing all of physical memory to the paging file.
             //
 
-            while (mcb[0].QuadPart) {
+            while (mcb[0].QuadPart)
+            {
 
                 diskByteOffset = mcb[1];
 
@@ -2469,22 +2138,24 @@ Return Value:
 
                 byteOffset = (ULONG)(memoryAddress & (PAGE_SIZE - 1));
 
-                if (dwTransferSize <= mcb[0].QuadPart) {
+                if (dwTransferSize <= mcb[0].QuadPart)
+                {
                     byteCount = dwTransferSize - byteOffset;
-                } else {
+                }
+                else
+                {
                     byteCount = mcb[0].LowPart;
                 }
-                if ((ULONG64)ActualPages * PAGE_SIZE - bytesDoneSoFar <
-                    byteCount) {
-                    byteCount = (ULONG)
-                        ((ULONG64)ActualPages * PAGE_SIZE - bytesDoneSoFar);
+                if ((ULONG64)ActualPages * PAGE_SIZE - bytesDoneSoFar < byteCount)
+                {
+                    byteCount = (ULONG)((ULONG64)ActualPages * PAGE_SIZE - bytesDoneSoFar);
                 }
                 bytesDoneSoFar += byteCount;
 
-                currentPercentage = (ULONG)
-                    (((bytesDoneSoFar / PAGE_SIZE) * 100) / ActualPages);
+                currentPercentage = (ULONG)(((bytesDoneSoFar / PAGE_SIZE) * 100) / ActualPages);
 
-                if (currentPercentage > maximumPercentage) {
+                if (currentPercentage > maximumPercentage)
+                {
 
                     maximumPercentage = currentPercentage;
 
@@ -2492,10 +2163,7 @@ Return Value:
                     // Update message on screen.
                     //
 
-                    IopDisplayString ( "%Z: %3d\r",
-                                       &dumpStack->ProgMsg,
-                                       maximumPercentage
-                                       );
+                    IopDisplayString("%Z: %3d\r", &dumpStack->ProgMsg, maximumPercentage);
                 }
 
                 //
@@ -2503,11 +2171,7 @@ Return Value:
                 // current segment of the file.
                 //
 
-                IopMapPhysicalMemory( mdl,
-                                   memoryAddress,
-                                   &MmPhysicalMemoryBlock->Run[0],
-                                   byteCount
-                                   );
+                IopMapPhysicalMemory(mdl, memoryAddress, &MmPhysicalMemoryBlock->Run[0], byteCount);
 
                 //
                 // Write the next segment.
@@ -2515,11 +2179,10 @@ Return Value:
 
                 KdCheckForDebugBreak();
 
-                IopInvokeDumpIoCallbacks((PUCHAR)mdl->MappedSystemVa +
-                                         mdl->ByteOffset, byteCount,
-                                         KbDumpIoBody);
-        
-                if (!NT_SUCCESS( write( &diskByteOffset, mdl ) )) {
+                IopInvokeDumpIoCallbacks((PUCHAR)mdl->MappedSystemVa + mdl->ByteOffset, byteCount, KbDumpIoBody);
+
+                if (!NT_SUCCESS(write(&diskByteOffset, mdl)))
+                {
                     IopFinalCrashDumpStatus = STATUS_UNSUCCESSFUL;
                     return FALSE;
                 }
@@ -2532,38 +2195,30 @@ Return Value:
                 mcb[0].QuadPart = mcb[0].QuadPart - byteCount;
                 mcb[1].QuadPart = mcb[1].QuadPart + byteCount;
 
-                if (!mcb[0].QuadPart) {
+                if (!mcb[0].QuadPart)
+                {
                     mcb += 2;
                 }
 
-                if ((bytesDoneSoFar / PAGE_SIZE) >= ActualPages) {
+                if ((bytesDoneSoFar / PAGE_SIZE) >= ActualPages)
+                {
                     break;
                 }
             }
 
-            KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                        CRASHDUMP_TRACE,
-                        "CRASHDUMP: memory dump written\n"
-                        ));
+            KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_TRACE, "CRASHDUMP: memory dump written\n"));
         }
 
-FinishDump:
+    FinishDump:
 
-        IopDisplayString ( "%Z", &dumpStack->DoneMsg );
+        IopDisplayString("%Z", &dumpStack->DoneMsg);
 
-        IopInvokeSecondaryDumpDataCallbacks(write,
-                                            &mcb,
-                                            mdl,
-                                            dwTransferSize,
-                                            (PBYTE)dcb->HeaderPage,
-                                            PAGE_SIZE,
-                                            MaxDumpData,
-                                            MaxPerCallbackDumpData,
-                                            NULL);
+        IopInvokeSecondaryDumpDataCallbacks(write, &mcb, mdl, dwTransferSize, (PBYTE)dcb->HeaderPage, PAGE_SIZE,
+                                            MaxDumpData, MaxPerCallbackDumpData, NULL);
 
         // Final I/O complete notification.
         IopInvokeDumpIoCallbacks(NULL, 0, KbDumpIoComplete);
-        
+
         //
         // Sweep the cache so the debugger will work.
         //
@@ -2586,19 +2241,13 @@ FinishDump:
     }
 
     KdCheckForDebugBreak();
-    
+
     return TRUE;
 }
 
 
-
-VOID
-IopMapPhysicalMemory(
-    IN OUT PMDL Mdl,
-    IN ULONG_PTR MemoryAddress,
-    IN PPHYSICAL_MEMORY_RUN PhysicalMemoryRun,
-    IN ULONG Length
-    )
+VOID IopMapPhysicalMemory(IN OUT PMDL Mdl, IN ULONG_PTR MemoryAddress, IN PPHYSICAL_MEMORY_RUN PhysicalMemoryRun,
+                          IN ULONG Length)
 
 /*++
 
@@ -2635,7 +2284,7 @@ Return Value:
     // Begin by determining the base physical page of the start of the address
     // range and filling in the MDL appropriately.
     //
-    Mdl->StartVa = PAGE_ALIGN( (PVOID) (MemoryAddress) );
+    Mdl->StartVa = PAGE_ALIGN((PVOID)(MemoryAddress));
     Mdl->ByteOffset = (ULONG)(MemoryAddress & (PAGE_SIZE - 1));
     Mdl->ByteCount = Length;
 
@@ -2643,7 +2292,7 @@ Return Value:
     // Get the page frame index for the base address.
     //
 
-    base = (PFN_NUMBER) ((ULONG_PTR)(Mdl->StartVa) >> PAGE_SHIFT);
+    base = (PFN_NUMBER)((ULONG_PTR)(Mdl->StartVa) >> PAGE_SHIFT);
     pages = ADDRESS_AND_SIZE_TO_SPAN_PAGES(MemoryAddress, Length);
     currentBase = pmr->BasePage;
     page = MmGetMdlPfnArray(Mdl);
@@ -2653,13 +2302,15 @@ Return Value:
     // to be mapped.
     //
 
-    while (pages) {
+    while (pages)
+    {
 
         //
         // Find the memory run that maps the beginning of this transfer.
         //
 
-        while (currentBase + pmr->PageCount <= base) {
+        while (currentBase + pmr->PageCount <= base)
+        {
             currentBase += pmr->PageCount;
             pmr++;
         }
@@ -2678,60 +2329,42 @@ Return Value:
     // physical memory into virtual address space.
     //
 
-    MmMapMemoryDumpMdl( Mdl );
+    MmMapMemoryDumpMdl(Mdl);
 }
 
 
-
-VOID
-IopAddPageToPageMap(
-    IN ULONG MaxPage,
-    IN PRTL_BITMAP BitMap,
-    IN ULONG PageFrameIndex,
-    IN ULONG NumberOfPages
-    )
+VOID IopAddPageToPageMap(IN ULONG MaxPage, IN PRTL_BITMAP BitMap, IN ULONG PageFrameIndex, IN ULONG NumberOfPages)
 {
     //
     // Sometimes we get PFNs that are out of range. Just ignore them.
     //
 
-    if (PageFrameIndex >= MaxPage) {
+    if (PageFrameIndex >= MaxPage)
+    {
         return;
     }
 
-    RtlSetBits (BitMap, PageFrameIndex, NumberOfPages);
+    RtlSetBits(BitMap, PageFrameIndex, NumberOfPages);
 }
 
 
-
-VOID
-IopRemovePageFromPageMap(
-    IN ULONG MaxPage,
-    IN PRTL_BITMAP BitMap,
-    IN ULONG PageFrameIndex,
-    IN ULONG NumberOfPages
-    )
+VOID IopRemovePageFromPageMap(IN ULONG MaxPage, IN PRTL_BITMAP BitMap, IN ULONG PageFrameIndex, IN ULONG NumberOfPages)
 {
     //
     // Sometimes we get PFNs that are out of range. Just ignore them.
     //
 
-    if (PageFrameIndex >= MaxPage) {
+    if (PageFrameIndex >= MaxPage)
+    {
         return;
     }
 
-    RtlClearBits (BitMap, PageFrameIndex, NumberOfPages);
-
+    RtlClearBits(BitMap, PageFrameIndex, NumberOfPages);
 }
 
-
+
 NTSTATUS
-IoSetDumpRange(
-    IN PMM_KERNEL_DUMP_CONTEXT Context,
-    IN PVOID StartVa,
-    IN ULONG_PTR Pages,
-    IN ULONG AddressFlags
-    )
+IoSetDumpRange(IN PMM_KERNEL_DUMP_CONTEXT Context, IN PVOID StartVa, IN ULONG_PTR Pages, IN ULONG AddressFlags)
 
 /*++
 
@@ -2773,15 +2406,14 @@ Return Value:
     // Validation
     //
 
-    ASSERT (Context != NULL &&
-            Context->Context != NULL);
+    ASSERT(Context != NULL && Context->Context != NULL);
 
     //
     // Initialization
     //
 
-    Summary = (PSUMMARY_DUMP) Context->Context;
-    BitMap = (PRTL_BITMAP) &Summary->Bitmap;
+    Summary = (PSUMMARY_DUMP)Context->Context;
+    BitMap = (PRTL_BITMAP)&Summary->Bitmap;
     Va = StartVa;
     AllPagesSet = TRUE;
 
@@ -2793,75 +2425,66 @@ Return Value:
 
     ASSERT(Pages <= MAXULONG);
 
-    if (AddressFlags == 1) {
+    if (AddressFlags == 1)
+    {
 
-        PhyAddr = MmGetPhysicalAddress (Va);
-        IopAddPageToPageMap ( Summary->BitmapSize,
-                              BitMap,
-                              (ULONG) (PhyAddr.QuadPart >> PAGE_SHIFT),
-                              (ULONG) Pages
-                              );
+        PhyAddr = MmGetPhysicalAddress(Va);
+        IopAddPageToPageMap(Summary->BitmapSize, BitMap, (ULONG)(PhyAddr.QuadPart >> PAGE_SHIFT), (ULONG)Pages);
+    }
+    else if (AddressFlags == 2)
+    {
 
-    } else if (AddressFlags == 2) {
+        PageFrameIndex = (ULONG_PTR)Va;
 
-        PageFrameIndex = (ULONG_PTR) Va;
-
-        IopAddPageToPageMap ( Summary->BitmapSize,
-                              BitMap,
-                              (ULONG) PageFrameIndex,
-                              (ULONG) Pages
-                              );
-
-    } else {
+        IopAddPageToPageMap(Summary->BitmapSize, BitMap, (ULONG)PageFrameIndex, (ULONG)Pages);
+    }
+    else
+    {
 
         //
         // Not physically contiguous.
         //
 
-        while (Pages) {
+        while (Pages)
+        {
 
             //
             // Only do a translation for valid pages.
             //
 
-            if ( MmIsAddressValid(Va) ) {
+            if (MmIsAddressValid(Va))
+            {
 
                 //
                 // Get the physical mapping. Note: this does not require a lock
                 //
 
-                PhyAddr = MmGetPhysicalAddress (Va);
+                PhyAddr = MmGetPhysicalAddress(Va);
 
-                IopAddPageToPageMap ( Summary->BitmapSize,
-                                      BitMap,
-                                      (ULONG)( PhyAddr.QuadPart >> PAGE_SHIFT),
-                                      1);
+                IopAddPageToPageMap(Summary->BitmapSize, BitMap, (ULONG)(PhyAddr.QuadPart >> PAGE_SHIFT), 1);
 
-                if (PhyAddr.QuadPart >> PAGE_SHIFT > Summary->BitmapSize) {
+                if (PhyAddr.QuadPart >> PAGE_SHIFT > Summary->BitmapSize)
+                {
                     AllPagesSet = FALSE;
                 }
             }
 
-            Va +=  PAGE_SIZE;
+            Va += PAGE_SIZE;
             Pages--;
         }
     }
 
-    if (AllPagesSet) {
+    if (AllPagesSet)
+    {
         return STATUS_SUCCESS;
     }
 
     return STATUS_INVALID_ADDRESS;
 }
 
-
+
 NTSTATUS
-IoFreeDumpRange(
-    IN PMM_KERNEL_DUMP_CONTEXT Context,
-    IN PVOID StartVa,
-    IN ULONG_PTR Pages,
-    IN ULONG AddressFlags
-    )
+IoFreeDumpRange(IN PMM_KERNEL_DUMP_CONTEXT Context, IN PVOID StartVa, IN ULONG_PTR Pages, IN ULONG AddressFlags)
 /*++
 
 Routine Description:
@@ -2892,20 +2515,19 @@ Return Value:
 --*/
 {
     PCHAR Va;
-    PRTL_BITMAP  BitMap;
+    PRTL_BITMAP BitMap;
     PHYSICAL_ADDRESS PhyAddr;
     PSUMMARY_DUMP Summary;
     ULONG_PTR PageFrameIndex;
 
-    ASSERT (Context != NULL &&
-            Context->Context != NULL);
+    ASSERT(Context != NULL && Context->Context != NULL);
 
     //
     // Round to page size.
     //
 
     Summary = (PSUMMARY_DUMP)Context->Context;
-    BitMap = (PRTL_BITMAP) &Summary->Bitmap;
+    BitMap = (PRTL_BITMAP)&Summary->Bitmap;
     Va = StartVa;
 
     //
@@ -2914,43 +2536,37 @@ Return Value:
     // the casts of Pages to ULONG must be removed.
     //
 
-    ASSERT (Pages <= MAXULONG);
+    ASSERT(Pages <= MAXULONG);
 
-    if (AddressFlags == 1) {
+    if (AddressFlags == 1)
+    {
 
         PhyAddr = MmGetPhysicalAddress(Va);
 
-        IopRemovePageFromPageMap (Summary->BitmapSize,
-                                  BitMap,
-                                  (ULONG)(PhyAddr.QuadPart >> PAGE_SHIFT),
-                                  (ULONG) Pages
-                                  );
+        IopRemovePageFromPageMap(Summary->BitmapSize, BitMap, (ULONG)(PhyAddr.QuadPart >> PAGE_SHIFT), (ULONG)Pages);
+    }
+    else if (AddressFlags == 2)
+    {
 
-    } else if (AddressFlags == 2) {
+        PageFrameIndex = (ULONG_PTR)Va;
 
-        PageFrameIndex = (ULONG_PTR) Va;
+        IopRemovePageFromPageMap(Summary->BitmapSize, BitMap, (ULONG)PageFrameIndex, (ULONG)Pages);
+    }
+    else
+    {
 
-        IopRemovePageFromPageMap (Summary->BitmapSize,
-                                  BitMap,
-                                  (ULONG) PageFrameIndex,
-                                  (ULONG) Pages
-                                  );
-    } else {
-
-        while (Pages) {
+        while (Pages)
+        {
 
             //
             // Only do a translation for valid pages.
             //
 
-            if ( MmIsAddressValid (Va) ) {
-                PhyAddr = MmGetPhysicalAddress (Va);
+            if (MmIsAddressValid(Va))
+            {
+                PhyAddr = MmGetPhysicalAddress(Va);
 
-                IopRemovePageFromPageMap (Summary->BitmapSize,
-                                          BitMap,
-                                          (ULONG)(PhyAddr.QuadPart >> PAGE_SHIFT),
-                                          1);
-
+                IopRemovePageFromPageMap(Summary->BitmapSize, BitMap, (ULONG)(PhyAddr.QuadPart >> PAGE_SHIFT), 1);
             }
 
             Va += PAGE_SIZE;
@@ -2962,14 +2578,9 @@ Return Value:
 }
 
 
-
 LARGE_INTEGER
-IopCalculateRequiredDumpSpace(
-    IN ULONG   dwDmpFlags,
-    IN ULONG   dwHeaderSize,
-    IN PFN_NUMBER   dwMaxPages,
-    IN PFN_NUMBER   dwMaxSummaryPages
-    )
+IopCalculateRequiredDumpSpace(IN ULONG dwDmpFlags, IN ULONG dwHeaderSize, IN PFN_NUMBER dwMaxPages,
+                              IN PFN_NUMBER dwMaxSummaryPages)
 
 /*++
 
@@ -3006,24 +2617,26 @@ Return Value:
     // Dump header or dump summary.
     //
 
-    if ( (dwDmpFlags & DCB_DUMP_HEADER_ENABLED) ||
-         ( !( dwDmpFlags & DCB_DUMP_ENABLED ) &&
-         ( dwDmpFlags & DCB_SUMMARY_ENABLED ) ) ) {
+    if ((dwDmpFlags & DCB_DUMP_HEADER_ENABLED) ||
+        (!(dwDmpFlags & DCB_DUMP_ENABLED) && (dwDmpFlags & DCB_SUMMARY_ENABLED)))
+    {
 
         maxMemorySize.QuadPart = IO_DUMP_MINIMUM_FILE_SIZE;
         return maxMemorySize;
     }
 
-    if (dwDmpFlags & DCB_TRIAGE_DUMP_ENABLED) {
+    if (dwDmpFlags & DCB_TRIAGE_DUMP_ENABLED)
+    {
 
         maxMemorySize.QuadPart = TRIAGE_DUMP_SIZE;
         return maxMemorySize;
     }
 
-    if (dwDmpFlags & DCB_SUMMARY_DUMP_ENABLED) {
+    if (dwDmpFlags & DCB_SUMMARY_DUMP_ENABLED)
+    {
         ULONG dwGB;
 
-        maxMemorySize.QuadPart  = (dwMaxSummaryPages) * PAGE_SIZE;
+        maxMemorySize.QuadPart = (dwMaxSummaryPages)*PAGE_SIZE;
 
         //
         // If biased then max kernel memory is 1GB otherwise it is 2GB
@@ -3031,10 +2644,14 @@ Return Value:
 
         dwGB = 1024 * 1024 * 1024;
 
-        if (maxMemorySize.QuadPart >  (2 * dwGB) ) {
-            if (MmVirtualBias) {
+        if (maxMemorySize.QuadPart > (2 * dwGB))
+        {
+            if (MmVirtualBias)
+            {
                 maxMemorySize.QuadPart = dwGB;
-            } else {
+            }
+            else
+            {
                 maxMemorySize.QuadPart = (2 * dwGB);
             }
         }
@@ -3044,11 +2661,10 @@ Return Value:
         // includes space for the base header, the summary
         // header and the page bitmap.
         //
-        
+
         maxMemorySize.QuadPart += dwHeaderSize;
 
         return maxMemorySize;
-
     }
 
     //
@@ -3058,9 +2674,7 @@ Return Value:
     maxMemorySize.QuadPart = (dwMaxPages * PAGE_SIZE) + dwHeaderSize;
 
     return maxMemorySize;
-
 }
-
 
 
 //
@@ -3069,10 +2683,7 @@ Return Value:
 
 
 NTSTATUS
-IopGetLoadedDriverInfo(
-    OUT ULONG * lpDriverCount,
-    OUT ULONG * lpSizeOfStringData
-    )
+IopGetLoadedDriverInfo(OUT ULONG *lpDriverCount, OUT ULONG *lpSizeOfStringData)
 
 /*++
 
@@ -3103,16 +2714,14 @@ Return Values:
 
 
     NextEntry = PsLoadedModuleList.Flink;
-    while (NextEntry != &PsLoadedModuleList) {
+    while (NextEntry != &PsLoadedModuleList)
+    {
 
-        DriverEntry = CONTAINING_RECORD (NextEntry,
-                                         KLDR_DATA_TABLE_ENTRY,
-                                         InLoadOrderLinks
-                                         );
+        DriverEntry = CONTAINING_RECORD(NextEntry, KLDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
-        if (!IopIsAddressRangeValid (DriverEntry, sizeof (*DriverEntry)) ||
-            !IopIsAddressRangeValid (DriverEntry->BaseDllName.Buffer,
-                                     DriverEntry->BaseDllName.Length)) {
+        if (!IopIsAddressRangeValid(DriverEntry, sizeof(*DriverEntry)) ||
+            !IopIsAddressRangeValid(DriverEntry->BaseDllName.Buffer, DriverEntry->BaseDllName.Length))
+        {
 
             return STATUS_UNSUCCESSFUL;
         }
@@ -3134,34 +2743,23 @@ Return Values:
     return STATUS_SUCCESS;
 }
 
-#define DmpPoolStringSize(DumpString)\
-        (sizeof (DUMP_STRING) + sizeof (WCHAR) * ( DumpString->Length + 1 ))
+#define DmpPoolStringSize(DumpString) (sizeof(DUMP_STRING) + sizeof(WCHAR) * (DumpString->Length + 1))
 
-#define DmpNextPoolString(DumpString)                                       \
-        (PDUMP_STRING) (                                                    \
-            ALIGN_UP_POINTER(                                               \
-                ((LPBYTE) DumpString) + DmpPoolStringSize (DumpString),     \
-                ULONGLONG                                                   \
-                )                                                           \
-            )
+#define DmpNextPoolString(DumpString) \
+    (PDUMP_STRING)(ALIGN_UP_POINTER(((LPBYTE)DumpString) + DmpPoolStringSize(DumpString), ULONGLONG))
 
 #define ALIGN_8(_x) ALIGN_UP(_x, DWORDLONG)
 
-#define ASSERT_ALIGNMENT(Pointer, Alignment)\
-    ASSERT ((((ULONG_PTR)Pointer) & ((Alignment) - 1)) == 0)
+#define ASSERT_ALIGNMENT(Pointer, Alignment) ASSERT((((ULONG_PTR)Pointer) & ((Alignment) - 1)) == 0)
 
 #ifndef IndexByByte
-#define IndexByByte(Pointer, Index) (&(((BYTE*) (Pointer)) [Index]))
+#define IndexByByte(Pointer, Index) (&(((BYTE *)(Pointer))[Index]))
 #endif
 
 
 NTSTATUS
-IopWriteDriverList(
-    IN ULONG_PTR BufferAddress,
-    IN ULONG BufferSize,
-    IN ULONG DriverListOffset,
-    IN ULONG StringPoolOffset
-    )
+IopWriteDriverList(IN ULONG_PTR BufferAddress, IN ULONG BufferSize, IN ULONG DriverListOffset,
+                   IN ULONG StringPoolOffset)
 
 /*++
 
@@ -3197,29 +2795,28 @@ Return Value:
     PDUMP_STRING DumpStringName = NULL;
     PIMAGE_NT_HEADERS NtHeaders;
 
-    ASSERT (DriverListOffset != 0);
-    ASSERT (StringPoolOffset != 0);
+    ASSERT(DriverListOffset != 0);
+    ASSERT(StringPoolOffset != 0);
 
-    UNREFERENCED_PARAMETER (BufferSize);
+    UNREFERENCED_PARAMETER(BufferSize);
 
-    DumpImageArray = (PDUMP_DRIVER_ENTRY) (BufferAddress + DriverListOffset);
-    DumpStringName = (PDUMP_STRING) (BufferAddress + StringPoolOffset);
+    DumpImageArray = (PDUMP_DRIVER_ENTRY)(BufferAddress + DriverListOffset);
+    DumpStringName = (PDUMP_STRING)(BufferAddress + StringPoolOffset);
 
     NextEntry = PsLoadedModuleList.Flink;
 
-    while (NextEntry != &PsLoadedModuleList) {
+    while (NextEntry != &PsLoadedModuleList)
+    {
 
-        DriverEntry = CONTAINING_RECORD (NextEntry,
-                                        KLDR_DATA_TABLE_ENTRY,
-                                        InLoadOrderLinks);
+        DriverEntry = CONTAINING_RECORD(NextEntry, KLDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
 
         //
         // Verify the memory is valid before reading anything from it.
         //
 
-        if (!IopIsAddressRangeValid (DriverEntry, sizeof (*DriverEntry)) ||
-            !IopIsAddressRangeValid (DriverEntry->BaseDllName.Buffer,
-                                     DriverEntry->BaseDllName.Length)) {
+        if (!IopIsAddressRangeValid(DriverEntry, sizeof(*DriverEntry)) ||
+            !IopIsAddressRangeValid(DriverEntry->BaseDllName.Buffer, DriverEntry->BaseDllName.Length))
+        {
 
             return STATUS_UNSUCCESSFUL;
         }
@@ -3230,17 +2827,11 @@ Return Value:
         //
 
         DumpStringName->Length = DriverEntry->BaseDllName.Length / 2;
-        RtlCopyMemory (DumpStringName->Buffer,
-                       DriverEntry->BaseDllName.Buffer,
-                       DumpStringName->Length * sizeof (WCHAR)
-                       );
+        RtlCopyMemory(DumpStringName->Buffer, DriverEntry->BaseDllName.Buffer, DumpStringName->Length * sizeof(WCHAR));
 
-        DumpStringName->Buffer[ DumpStringName->Length ] = '\000';
+        DumpStringName->Buffer[DumpStringName->Length] = '\000';
 
-        RtlCopyMemory (&DumpImageArray [i].LdrEntry,
-                       DriverEntry,
-                       sizeof (DumpImageArray [i].LdrEntry)
-                       );
+        RtlCopyMemory(&DumpImageArray[i].LdrEntry, DriverEntry, sizeof(DumpImageArray[i].LdrEntry));
 
         //
         // Add the time/date stamp.
@@ -3249,28 +2840,25 @@ Return Value:
         DumpImageArray[i].LdrEntry.TimeDateStamp = 0;
         DumpImageArray[i].LdrEntry.SizeOfImage = 0;
 
-        if ( MmIsAddressValid (DriverEntry->DllBase ) ) {
+        if (MmIsAddressValid(DriverEntry->DllBase))
+        {
 
-            NtHeaders = RtlImageNtHeader (DriverEntry->DllBase);
-            ASSERT ( NtHeaders );
-            DumpImageArray[i].LdrEntry.TimeDateStamp =
-                        NtHeaders->FileHeader.TimeDateStamp;
-            DumpImageArray[i].LdrEntry.SizeOfImage =
-                        NtHeaders->OptionalHeader.SizeOfImage;
+            NtHeaders = RtlImageNtHeader(DriverEntry->DllBase);
+            ASSERT(NtHeaders);
+            DumpImageArray[i].LdrEntry.TimeDateStamp = NtHeaders->FileHeader.TimeDateStamp;
+            DumpImageArray[i].LdrEntry.SizeOfImage = NtHeaders->OptionalHeader.SizeOfImage;
+        }
+        else if (DriverEntry->Flags & LDRP_NON_PAGED_DEBUG_INFO)
+        {
 
-        } else if (DriverEntry->Flags & LDRP_NON_PAGED_DEBUG_INFO) {
-
-            DumpImageArray[i].LdrEntry.TimeDateStamp =
-                        DriverEntry->NonPagedDebugInfo->TimeDateStamp;
-            DumpImageArray[i].LdrEntry.SizeOfImage =
-                        DriverEntry->NonPagedDebugInfo->SizeOfImage;
+            DumpImageArray[i].LdrEntry.TimeDateStamp = DriverEntry->NonPagedDebugInfo->TimeDateStamp;
+            DumpImageArray[i].LdrEntry.SizeOfImage = DriverEntry->NonPagedDebugInfo->SizeOfImage;
         }
 
-        DumpImageArray [i].DriverNameOffset =
-                (ULONG)((ULONG_PTR) DumpStringName - BufferAddress);
+        DumpImageArray[i].DriverNameOffset = (ULONG)((ULONG_PTR)DumpStringName - BufferAddress);
 
         i++;
-        DumpStringName = DmpNextPoolString (DumpStringName);
+        DumpStringName = DmpNextPoolString(DumpStringName);
         NextEntry = NextEntry->Flink;
     }
 
@@ -3278,11 +2866,7 @@ Return Value:
 }
 
 ULONG
-IopSizeTriageDumpDataBlocks(
-    PTRIAGE_DUMP TriageDump,
-    ULONG Offset,
-    ULONG BufferSize
-    )
+IopSizeTriageDumpDataBlocks(PTRIAGE_DUMP TriageDump, ULONG Offset, ULONG BufferSize)
 
 /*++
 
@@ -3311,17 +2895,19 @@ Return Values:
     PTRIAGE_PTR_DATA_BLOCK Block;
 
     TriageDump->DataBlocksCount = 0;
-    
+
     Block = IopTriageDumpDataBlocks;
-    for (i = 0; i < IopNumTriageDumpDataBlocks; i++, Block++) {
-        Size = ALIGN_8(sizeof(TRIAGE_DATA_BLOCK)) +
-            ALIGN_8((ULONG)(Block->MaxAddress - Block->MinAddress));
-        if (Offset + Size >= BufferSize) {
+    for (i = 0; i < IopNumTriageDumpDataBlocks; i++, Block++)
+    {
+        Size = ALIGN_8(sizeof(TRIAGE_DATA_BLOCK)) + ALIGN_8((ULONG)(Block->MaxAddress - Block->MinAddress));
+        if (Offset + Size >= BufferSize)
+        {
             TriageDump->TriageOptions |= TRIAGE_OPTION_OVERFLOWED;
             break;
         }
 
-        if (i == 0) {
+        if (i == 0)
+        {
             TriageDump->DataBlocksOffset = Offset;
         }
 
@@ -3332,11 +2918,7 @@ Return Values:
     return Offset;
 }
 
-VOID
-IopWriteTriageDumpDataBlocks(
-    PTRIAGE_DUMP TriageDump,
-    PUCHAR BufferAddress
-    )
+VOID IopWriteTriageDumpDataBlocks(PTRIAGE_DUMP TriageDump, PUCHAR BufferAddress)
 
 /*++
 
@@ -3362,40 +2944,29 @@ Return Values:
     PUCHAR DataBuffer;
     PTRIAGE_DATA_BLOCK DumpBlock;
 
-    DumpBlock = (PTRIAGE_DATA_BLOCK)
-        (BufferAddress + TriageDump->DataBlocksOffset);
+    DumpBlock = (PTRIAGE_DATA_BLOCK)(BufferAddress + TriageDump->DataBlocksOffset);
     DataBuffer = (PUCHAR)(DumpBlock + TriageDump->DataBlocksCount);
-    
+
     Block = IopTriageDumpDataBlocks;
-    for (i = 0; i < TriageDump->DataBlocksCount; i++, Block++) {
+    for (i = 0; i < TriageDump->DataBlocksCount; i++, Block++)
+    {
 
         DumpBlock->Address = (ULONG64)(LONG_PTR)Block->MinAddress;
         DumpBlock->Offset = (ULONG)(DataBuffer - BufferAddress);
         DumpBlock->Size = (ULONG)(Block->MaxAddress - Block->MinAddress);
 
         RtlCopyMemory(DataBuffer, Block->MinAddress, DumpBlock->Size);
-        
+
         DataBuffer += DumpBlock->Size;
         DumpBlock++;
     }
 }
 
 
-
 NTSTATUS
-IopWriteTriageDump(
-    IN ULONG Fields,
-    IN PDUMP_DRIVER_WRITE DriverWriteRoutine,
-    IN OUT PLARGE_INTEGER * Mcb,
-    IN OUT PMDL Mdl,
-    IN ULONG DriverTransferSize,
-    IN PCONTEXT Context,
-    IN PKTHREAD Thread,
-    IN BYTE* Buffer,
-    IN ULONG BufferSize,
-    IN ULONG ServicePackBuild,
-    IN ULONG TriageOptions
-)
+IopWriteTriageDump(IN ULONG Fields, IN PDUMP_DRIVER_WRITE DriverWriteRoutine, IN OUT PLARGE_INTEGER *Mcb,
+                   IN OUT PMDL Mdl, IN ULONG DriverTransferSize, IN PCONTEXT Context, IN PKTHREAD Thread,
+                   IN BYTE *Buffer, IN ULONG BufferSize, IN ULONG ServicePackBuild, IN ULONG TriageOptions)
 
 /*++
 
@@ -3452,14 +3023,15 @@ Comments:
     // Setup the triage-dump header.
     //
 
-    if (BufferSize < sizeof (TRIAGE_DUMP) + sizeof (DWORD)) {
+    if (BufferSize < sizeof(TRIAGE_DUMP) + sizeof(DWORD))
+    {
         return STATUS_NO_MEMORY;
     }
 
-    TriageDump = (PTRIAGE_DUMP) Buffer;
-    RtlZeroMemory (TriageDump, sizeof (*TriageDump));
+    TriageDump = (PTRIAGE_DUMP)Buffer;
+    RtlZeroMemory(TriageDump, sizeof(*TriageDump));
 
-   //
+    //
     // The normal dump header is a DUMP_HEADER.
     //
 
@@ -3470,105 +3042,124 @@ Comments:
     // end.
     //
 
-    BufferSize -= sizeof (DWORD);
-    RtlZeroMemory (IndexByByte (Buffer, BufferSize), sizeof (DWORD));
+    BufferSize -= sizeof(DWORD);
+    RtlZeroMemory(IndexByByte(Buffer, BufferSize), sizeof(DWORD));
 
-    TriageDump->ValidOffset = ( TriageDump->SizeOfDump - sizeof (ULONG) );
-    TriageDump->ContextOffset = FIELD_OFFSET (DUMP_HEADER, ContextRecord);
-    TriageDump->ExceptionOffset = FIELD_OFFSET (DUMP_HEADER, Exception);
+    TriageDump->ValidOffset = (TriageDump->SizeOfDump - sizeof(ULONG));
+    TriageDump->ContextOffset = FIELD_OFFSET(DUMP_HEADER, ContextRecord);
+    TriageDump->ExceptionOffset = FIELD_OFFSET(DUMP_HEADER, Exception);
     TriageDump->BrokenDriverOffset = 0;
     TriageDump->ServicePackBuild = ServicePackBuild;
     TriageDump->TriageOptions = TriageOptions;
 
-    Offset = ALIGN_8 (sizeof(DUMP_HEADER) + sizeof (TRIAGE_DUMP));
-    ASSERT_ALIGNMENT (Offset, 8);
+    Offset = ALIGN_8(sizeof(DUMP_HEADER) + sizeof(TRIAGE_DUMP));
+    ASSERT_ALIGNMENT(Offset, 8);
 
     //
     // Set the Mm Offset, if necessary.
     //
 
-    SizeOfSection = ALIGN_8 (MmSizeOfTriageInformation());
+    SizeOfSection = ALIGN_8(MmSizeOfTriageInformation());
 
-    if (Offset + SizeOfSection < BufferSize) {
+    if (Offset + SizeOfSection < BufferSize)
+    {
         TriageDump->MmOffset = Offset;
         Offset += SizeOfSection;
-    } else {
+    }
+    else
+    {
         TriageDump->TriageOptions |= TRIAGE_OPTION_OVERFLOWED;
     }
 
-    ASSERT_ALIGNMENT (Offset, 8);
+    ASSERT_ALIGNMENT(Offset, 8);
 
     //
     // Set the Unloaded Drivers Offset, if necessary.
     //
 
-    SizeOfSection = ALIGN_8 (MmSizeOfUnloadedDriverInformation());
+    SizeOfSection = ALIGN_8(MmSizeOfUnloadedDriverInformation());
 
-    if (Offset + SizeOfSection < BufferSize) {
+    if (Offset + SizeOfSection < BufferSize)
+    {
         TriageDump->UnloadedDriversOffset = Offset;
         Offset += SizeOfSection;
-    } else {
+    }
+    else
+    {
         TriageDump->TriageOptions |= TRIAGE_OPTION_OVERFLOWED;
     }
 
-    ASSERT_ALIGNMENT (Offset, 8);
+    ASSERT_ALIGNMENT(Offset, 8);
 
     //
     // Set the Prcb Offset, if necessary.
     //
 
-    if (Fields & TRIAGE_DUMP_PRCB) {
-        SizeOfSection = ALIGN_8 (sizeof (KPRCB));
+    if (Fields & TRIAGE_DUMP_PRCB)
+    {
+        SizeOfSection = ALIGN_8(sizeof(KPRCB));
 
-        if (Offset + SizeOfSection < BufferSize) {
+        if (Offset + SizeOfSection < BufferSize)
+        {
             TriageDump->PrcbOffset = Offset;
             Offset += SizeOfSection;
-        } else {
+        }
+        else
+        {
             TriageDump->TriageOptions |= TRIAGE_OPTION_OVERFLOWED;
         }
     }
 
-    ASSERT_ALIGNMENT (Offset, 8);
+    ASSERT_ALIGNMENT(Offset, 8);
 
     //
     // Set the Process Offset, if necessary.
     //
 
-    if (Fields & TRIAGE_DUMP_PROCESS) {
-        SizeOfSection = ALIGN_8 (sizeof (EPROCESS));
+    if (Fields & TRIAGE_DUMP_PROCESS)
+    {
+        SizeOfSection = ALIGN_8(sizeof(EPROCESS));
 
-        if (Offset + SizeOfSection < BufferSize) {
+        if (Offset + SizeOfSection < BufferSize)
+        {
             TriageDump->ProcessOffset = Offset;
             Offset += SizeOfSection;
-        } else {
+        }
+        else
+        {
             TriageDump->TriageOptions |= TRIAGE_OPTION_OVERFLOWED;
         }
     }
 
-    ASSERT_ALIGNMENT (Offset, 8);
+    ASSERT_ALIGNMENT(Offset, 8);
 
     //
     // Set the Thread Offset, if necessary.
     //
 
-    if (Fields & TRIAGE_DUMP_THREAD) {
-        SizeOfSection = ALIGN_8 (sizeof (ETHREAD));
+    if (Fields & TRIAGE_DUMP_THREAD)
+    {
+        SizeOfSection = ALIGN_8(sizeof(ETHREAD));
 
-        if (Offset + SizeOfSection < BufferSize) {
+        if (Offset + SizeOfSection < BufferSize)
+        {
             TriageDump->ThreadOffset = Offset;
             Offset += SizeOfSection;
-        } else {
+        }
+        else
+        {
             TriageDump->TriageOptions |= TRIAGE_OPTION_OVERFLOWED;
         }
     }
 
-    ASSERT_ALIGNMENT (Offset, 8);
+    ASSERT_ALIGNMENT(Offset, 8);
 
     //
     // Set the CallStack Offset, if necessary.
     //
 
-    if (Fields & TRIAGE_DUMP_STACK) {
+    if (Fields & TRIAGE_DUMP_STACK)
+    {
 
         //
         // If there is a stack, calculate its size.
@@ -3579,29 +3170,32 @@ Comments:
         // Base >= Current = SP = Top > Limit.
         //
 
-        if (Thread->KernelStackResident) {
+        if (Thread->KernelStackResident)
+        {
 
             ULONG_PTR StackBase;
             ULONG_PTR StackLimit;
             ULONG_PTR StackTop;
-            
-            StackBase = (ULONG_PTR) Thread->StackBase;
-            StackLimit = (ULONG_PTR) Thread->StackLimit;
+
+            StackBase = (ULONG_PTR)Thread->StackBase;
+            StackLimit = (ULONG_PTR)Thread->StackLimit;
 
             //
             // Don't necessarily trust that SP is valid. If it's
             // outside the reasonable range, just copy from the limit.
             //
 
-            if (StackLimit < STACK_POINTER (Context) &&
-                STACK_POINTER (Context) <= StackBase) {
+            if (StackLimit < STACK_POINTER(Context) && STACK_POINTER(Context) <= StackBase)
+            {
 
-                StackTop = STACK_POINTER (Context);
-            } else {
-                StackTop = (ULONG_PTR) Thread->StackLimit;
+                StackTop = STACK_POINTER(Context);
+            }
+            else
+            {
+                StackTop = (ULONG_PTR)Thread->StackLimit;
             }
 
-            ASSERT (StackLimit <= StackTop && StackTop < StackBase);
+            ASSERT(StackLimit <= StackTop && StackTop < StackBase);
 
             //
             // There is a valid stack. Note that we limit the size of
@@ -3609,33 +3203,36 @@ Comments:
             // 16 KB).
             //
 
-            SizeOfSection = (ULONG) min (StackBase -  StackTop,
-                                         MAX_TRIAGE_STACK_SIZE - 1);
+            SizeOfSection = (ULONG)min(StackBase - StackTop, MAX_TRIAGE_STACK_SIZE - 1);
 
-            if (SizeOfSection) {
-                if (Offset + SizeOfSection < BufferSize) {
+            if (SizeOfSection)
+            {
+                if (Offset + SizeOfSection < BufferSize)
+                {
                     TriageDump->CallStackOffset = Offset;
                     TriageDump->SizeOfCallStack = SizeOfSection;
                     TriageDump->TopOfStack = StackTop;
                     Offset += SizeOfSection;
-                    Offset = ALIGN_8 (Offset);
-                } else {
+                    Offset = ALIGN_8(Offset);
+                }
+                else
+                {
                     TriageDump->TriageOptions |= TRIAGE_OPTION_OVERFLOWED;
                 }
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // There is not a valid stack.
             //
         }
-
     }
-    
-    ASSERT_ALIGNMENT (Offset, 8);
-    
-#if defined (_IA64_)
+
+    ASSERT_ALIGNMENT(Offset, 8);
+
+#if defined(_IA64_)
 
     //
     // The IA64 contains two callstacks. The first is the normal
@@ -3644,37 +3241,39 @@ Comments:
     // the backing-store, that we now save.
     //
 
-    if ( Fields & TRIAGE_DUMP_STACK ) {
+    if (Fields & TRIAGE_DUMP_STACK)
+    {
 
         ULONG_PTR BStoreBase;
         ULONG_PTR BStoreLimit;
 
-        BStoreBase = (ULONG_PTR) Thread->InitialBStore;
-        BStoreLimit = (ULONG_PTR) Thread->BStoreLimit;
+        BStoreBase = (ULONG_PTR)Thread->InitialBStore;
+        BStoreLimit = (ULONG_PTR)Thread->BStoreLimit;
 
-        KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                    CRASHDUMP_TRACE,
-                    "CRASHDUMP: IA64 BStore: base %p limit %p\n",
-                    BStoreBase,
-                    BStoreLimit));
+        KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_TRACE, "CRASHDUMP: IA64 BStore: base %p limit %p\n", BStoreBase,
+                   BStoreLimit));
 
-        SizeOfSection = (ULONG) (BStoreLimit - BStoreBase);
+        SizeOfSection = (ULONG)(BStoreLimit - BStoreBase);
 
         //
         // The calculated size had better be less than the maximum size
         // for a BSTORE region.
         //
 
-        ASSERT ( SizeOfSection < KERNEL_LARGE_BSTORE_SIZE );
+        ASSERT(SizeOfSection < KERNEL_LARGE_BSTORE_SIZE);
 
-        if (SizeOfSection) {
-            if (Offset + SizeOfSection < BufferSize) {
+        if (SizeOfSection)
+        {
+            if (Offset + SizeOfSection < BufferSize)
+            {
                 TriageDump->ArchitectureSpecific.Ia64.BStoreOffset = Offset;
                 TriageDump->ArchitectureSpecific.Ia64.SizeOfBStore = SizeOfSection;
-                TriageDump->ArchitectureSpecific.Ia64.LimitOfBStore= BStoreLimit;
+                TriageDump->ArchitectureSpecific.Ia64.LimitOfBStore = BStoreLimit;
                 Offset += SizeOfSection;
-                Offset = ALIGN_8 (Offset);
-            } else {
+                Offset = ALIGN_8(Offset);
+            }
+            else
+            {
                 TriageDump->TriageOptions |= TRIAGE_OPTION_OVERFLOWED;
             }
         }
@@ -3682,41 +3281,51 @@ Comments:
 
 #endif
 
-    ASSERT_ALIGNMENT (Offset, 8);
-    
-    if (Fields & TRIAGE_DUMP_DEBUGGER_DATA) {
-        if (Offset + ALIGN_8(sizeof(KdDebuggerDataBlock)) < BufferSize) {
+    ASSERT_ALIGNMENT(Offset, 8);
+
+    if (Fields & TRIAGE_DUMP_DEBUGGER_DATA)
+    {
+        if (Offset + ALIGN_8(sizeof(KdDebuggerDataBlock)) < BufferSize)
+        {
             TriageDump->DebuggerDataOffset = Offset;
             TriageDump->DebuggerDataSize = sizeof(KdDebuggerDataBlock);
             Offset += ALIGN_8(sizeof(KdDebuggerDataBlock));
-            Offset = ALIGN_8 (Offset);
-        } else {
+            Offset = ALIGN_8(Offset);
+        }
+        else
+        {
             TriageDump->TriageOptions |= TRIAGE_OPTION_OVERFLOWED;
         }
     }
-    
-    ASSERT_ALIGNMENT (Offset, 8);
-    
+
+    ASSERT_ALIGNMENT(Offset, 8);
+
     //
     // Set the Driver List Offset, if necessary.
     //
 
-    Status = IopGetLoadedDriverInfo (&DriverCount, &SizeOfStringData);
+    Status = IopGetLoadedDriverInfo(&DriverCount, &SizeOfStringData);
 
-    if (NT_SUCCESS (Status) && (Fields & TRIAGE_DUMP_DRIVER_LIST)) {
-        SizeOfSection = ALIGN_8 (DriverCount * sizeof (DUMP_DRIVER_ENTRY));
+    if (NT_SUCCESS(Status) && (Fields & TRIAGE_DUMP_DRIVER_LIST))
+    {
+        SizeOfSection = ALIGN_8(DriverCount * sizeof(DUMP_DRIVER_ENTRY));
 
-        if (SizeOfSection) {
-            if (Offset + SizeOfSection < BufferSize) {
+        if (SizeOfSection)
+        {
+            if (Offset + SizeOfSection < BufferSize)
+            {
                 TriageDump->DriverListOffset = Offset;
                 TriageDump->DriverCount = DriverCount;
                 Offset += SizeOfSection;
-            } else {
+            }
+            else
+            {
                 TriageDump->TriageOptions |= TRIAGE_OPTION_OVERFLOWED;
             }
         }
-
-    } else {
+    }
+    else
+    {
 
         SizeOfSection = 0;
         SizeOfStringData = 0;
@@ -3726,26 +3335,30 @@ Comments:
     // Set the String Pool offset.
     //
 
-    SizeOfSection = ALIGN_8 (SizeOfStringData +
-                        DriverCount * (sizeof (WCHAR) + sizeof (DUMP_STRING)));
+    SizeOfSection = ALIGN_8(SizeOfStringData + DriverCount * (sizeof(WCHAR) + sizeof(DUMP_STRING)));
 
-    if (SizeOfSection) {
-        if (Offset + SizeOfSection < BufferSize) {
+    if (SizeOfSection)
+    {
+        if (Offset + SizeOfSection < BufferSize)
+        {
             TriageDump->StringPoolOffset = (ULONG)Offset;
             TriageDump->StringPoolSize = SizeOfSection;
             Offset += SizeOfSection;
-            Offset = ALIGN_8 (Offset);
-        } else {
+            Offset = ALIGN_8(Offset);
+        }
+        else
+        {
             TriageDump->TriageOptions |= TRIAGE_OPTION_OVERFLOWED;
         }
     }
 
-    ASSERT_ALIGNMENT (Offset, 8);
-    
-    if (Fields & TRIAGE_DUMP_DATA_BLOCKS) {
+    ASSERT_ALIGNMENT(Offset, 8);
+
+    if (Fields & TRIAGE_DUMP_DATA_BLOCKS)
+    {
 
 #ifdef _IA64_
-        volatile KPCR* const Pcr = KeGetPcr();
+        volatile KPCR *const Pcr = KeGetPcr();
 
         //
         // In certain failures there is a switch from
@@ -3755,9 +3368,9 @@ Comments:
         // from the current thread's stack and store pointers
         // so save the extra stack and store if they are.
         //
-        
-        if ((PVOID)Pcr->InitialBStore != Thread->InitialBStore ||
-            (PVOID)Pcr->BStoreLimit != Thread->BStoreLimit) {
+
+        if ((PVOID)Pcr->InitialBStore != Thread->InitialBStore || (PVOID)Pcr->BStoreLimit != Thread->BStoreLimit)
+        {
             ULONG64 StoreTop, StoreBase;
             ULONG FrameSize;
             ULONG StoreSize;
@@ -3765,171 +3378,165 @@ Comments:
             StoreTop = Context->RsBSP;
             StoreBase = Pcr->InitialBStore;
             FrameSize = (ULONG)(Context->StIFS & PFS_SIZE_MASK);
-            
+
             // Add in a ULONG64 for every register in the
             // current frame.  While doing so, check for
             // spill entries.
-            while (FrameSize-- > 0) {
+            while (FrameSize-- > 0)
+            {
                 StoreTop += sizeof(ULONG64);
-                if ((StoreTop & 0x1f8) == 0x1f8) {
+                if ((StoreTop & 0x1f8) == 0x1f8)
+                {
                     // Spill will be placed at this address so
                     // account for it.
                     StoreTop += sizeof(ULONG64);
                 }
             }
 
-            if (StoreTop < Pcr->InitialBStore ||
-                StoreTop >= Pcr->BStoreLimit) {
+            if (StoreTop < Pcr->InitialBStore || StoreTop >= Pcr->BStoreLimit)
+            {
                 // BSP isn't in the PCR store range so
                 // just save the whole thing.
                 StoreTop = Pcr->BStoreLimit;
             }
 
             StoreSize = (ULONG)(StoreTop - Pcr->InitialBStore);
-            if (StoreSize > MAX_TRIAGE_STACK_SIZE) {
+            if (StoreSize > MAX_TRIAGE_STACK_SIZE)
+            {
                 StoreSize = MAX_TRIAGE_STACK_SIZE;
                 StoreBase = StoreTop - StoreSize;
             }
-                
+
             IoAddTriageDumpDataBlock((PVOID)StoreBase, StoreSize);
         }
 
-        if ((PVOID)Pcr->InitialStack != Thread->InitialStack ||
-            (PVOID)Pcr->StackLimit != Thread->StackLimit) {
+        if ((PVOID)Pcr->InitialStack != Thread->InitialStack || (PVOID)Pcr->StackLimit != Thread->StackLimit)
+        {
             ULONG64 StackTop;
             ULONG StackSize;
-            
+
             StackTop = STACK_POINTER(Context);
-            if (StackTop < Pcr->StackLimit ||
-                StackTop >= Pcr->InitialStack) {
+            if (StackTop < Pcr->StackLimit || StackTop >= Pcr->InitialStack)
+            {
                 // SP isn't in the PCR stack range so
                 // just save the whole thing.
                 StackTop = Pcr->StackLimit;
             }
 
             StackSize = (ULONG)(Pcr->InitialStack - StackTop);
-            if (StackSize > MAX_TRIAGE_STACK_SIZE) {
+            if (StackSize > MAX_TRIAGE_STACK_SIZE)
+            {
                 StackSize = MAX_TRIAGE_STACK_SIZE;
             }
-            
+
             IoAddTriageDumpDataBlock((PVOID)StackTop, StackSize);
         }
 #endif
-        
+
         // Add data blocks which might be referred to by
         // the context or other runtime state.
-        IopAddRunTimeTriageDataBlocks(Context,
-                                      (PVOID*)TriageDump->TopOfStack,
-                                      (PVOID*)((PUCHAR)TriageDump->TopOfStack +
-                                               TriageDump->SizeOfCallStack),
+        IopAddRunTimeTriageDataBlocks(
+            Context, (PVOID *)TriageDump->TopOfStack,
+            (PVOID *)((PUCHAR)TriageDump->TopOfStack + TriageDump->SizeOfCallStack),
 #ifdef _IA64_
-                                      (PVOID*)Thread->InitialBStore,
-                                      (PVOID*)((PUCHAR)Thread->InitialBStore +
-                                               TriageDump->ArchitectureSpecific.Ia64.SizeOfBStore)
+            (PVOID *)Thread->InitialBStore,
+            (PVOID *)((PUCHAR)Thread->InitialBStore + TriageDump->ArchitectureSpecific.Ia64.SizeOfBStore)
 #else
-                                      NULL, NULL
+            NULL, NULL
 #endif
-                                      );
-        
+        );
+
         // Check which data blocks fit.
         Offset = IopSizeTriageDumpDataBlocks(TriageDump, Offset, BufferSize);
-        Offset = ALIGN_8 (Offset);
+        Offset = ALIGN_8(Offset);
     }
 
-    ASSERT_ALIGNMENT (Offset, 8);
-    
+    ASSERT_ALIGNMENT(Offset, 8);
+
     BytesToWrite = (ULONG)Offset;
-    BufferAddress = ((ULONG_PTR) Buffer) - sizeof(DUMP_HEADER);
+    BufferAddress = ((ULONG_PTR)Buffer) - sizeof(DUMP_HEADER);
 
     //
     // Write the Mm information.
     //
 
-    if (TriageDump->MmOffset) {
+    if (TriageDump->MmOffset)
+    {
 
-        Address = (LPVOID) (BufferAddress + TriageDump->MmOffset);
-        MmWriteTriageInformation (Address);
+        Address = (LPVOID)(BufferAddress + TriageDump->MmOffset);
+        MmWriteTriageInformation(Address);
     }
 
-    if (TriageDump->UnloadedDriversOffset) {
+    if (TriageDump->UnloadedDriversOffset)
+    {
 
-        Address = (LPVOID) (BufferAddress + TriageDump->UnloadedDriversOffset);
-        MmWriteUnloadedDriverInformation (Address);
+        Address = (LPVOID)(BufferAddress + TriageDump->UnloadedDriversOffset);
+        MmWriteUnloadedDriverInformation(Address);
     }
 
     //
     // Write the PRCB.
     //
 
-    if (TriageDump->PrcbOffset) {
+    if (TriageDump->PrcbOffset)
+    {
 
-        Address = (LPVOID) (BufferAddress + TriageDump->PrcbOffset);
-        RtlCopyMemory (Address,
-                       KeGetCurrentPrcb (),
-                       sizeof (KPRCB)
-                       );
+        Address = (LPVOID)(BufferAddress + TriageDump->PrcbOffset);
+        RtlCopyMemory(Address, KeGetCurrentPrcb(), sizeof(KPRCB));
     }
 
     //
     // Write the EPROCESS.
     //
 
-    if (TriageDump->ProcessOffset) {
+    if (TriageDump->ProcessOffset)
+    {
 
-        Address = (LPVOID) (BufferAddress + TriageDump->ProcessOffset);
-        RtlCopyMemory (Address,
-                       Thread->ApcState.Process,
-                       sizeof (EPROCESS)
-                       );
+        Address = (LPVOID)(BufferAddress + TriageDump->ProcessOffset);
+        RtlCopyMemory(Address, Thread->ApcState.Process, sizeof(EPROCESS));
     }
 
     //
     // Write the ETHREAD.
     //
 
-    if (TriageDump->ThreadOffset) {
+    if (TriageDump->ThreadOffset)
+    {
 
-        Address = (LPVOID) (BufferAddress + TriageDump->ThreadOffset);
-        RtlCopyMemory (Address,
-                       Thread,
-                       sizeof (ETHREAD));
+        Address = (LPVOID)(BufferAddress + TriageDump->ThreadOffset);
+        RtlCopyMemory(Address, Thread, sizeof(ETHREAD));
     }
 
     //
     // Write the Call Stack.
     //
 
-    if (TriageDump->CallStackOffset) {
+    if (TriageDump->CallStackOffset)
+    {
 
         PVOID StackTop;
-        
-        ASSERT (TriageDump->SizeOfCallStack != 0);
+
+        ASSERT(TriageDump->SizeOfCallStack != 0);
 
         StackTop = (PVOID)TriageDump->TopOfStack;
 
-        ASSERT (IopIsAddressRangeValid (StackTop, TriageDump->SizeOfCallStack));
-        Address = (LPVOID) (BufferAddress + TriageDump->CallStackOffset);
-        RtlCopyMemory (Address,
-                       StackTop,
-                       TriageDump->SizeOfCallStack
-                       );
+        ASSERT(IopIsAddressRangeValid(StackTop, TriageDump->SizeOfCallStack));
+        Address = (LPVOID)(BufferAddress + TriageDump->CallStackOffset);
+        RtlCopyMemory(Address, StackTop, TriageDump->SizeOfCallStack);
     }
 
-#if defined (_IA64_)
+#if defined(_IA64_)
 
     //
     // Write the IA64 BStore.
     //
 
-    if ( TriageDump->ArchitectureSpecific.Ia64.BStoreOffset ) {
+    if (TriageDump->ArchitectureSpecific.Ia64.BStoreOffset)
+    {
 
-        ASSERT (IopIsAddressRangeValid (Thread->InitialBStore,
-                                        TriageDump->ArchitectureSpecific.Ia64.SizeOfBStore));
-        Address = (PVOID) (BufferAddress + TriageDump->ArchitectureSpecific.Ia64.BStoreOffset);
-        RtlCopyMemory (Address,
-                       Thread->InitialBStore,
-                       TriageDump->ArchitectureSpecific.Ia64.SizeOfBStore
-                       );
+        ASSERT(IopIsAddressRangeValid(Thread->InitialBStore, TriageDump->ArchitectureSpecific.Ia64.SizeOfBStore));
+        Address = (PVOID)(BufferAddress + TriageDump->ArchitectureSpecific.Ia64.BStoreOffset);
+        RtlCopyMemory(Address, Thread->InitialBStore, TriageDump->ArchitectureSpecific.Ia64.SizeOfBStore);
     }
 
 #endif // IA64
@@ -3937,30 +3544,26 @@ Comments:
     //
     // Write the debugger data block.
     //
-    
-    if (TriageDump->DebuggerDataOffset) {
-        Address = (LPVOID) (BufferAddress + TriageDump->DebuggerDataOffset);
-        
-        RtlCopyMemory (Address,
-                       &KdDebuggerDataBlock,
-                       sizeof(KdDebuggerDataBlock)
-                       );
+
+    if (TriageDump->DebuggerDataOffset)
+    {
+        Address = (LPVOID)(BufferAddress + TriageDump->DebuggerDataOffset);
+
+        RtlCopyMemory(Address, &KdDebuggerDataBlock, sizeof(KdDebuggerDataBlock));
     }
-    
+
     //
     // Write the Driver List.
     //
 
-    if (TriageDump->DriverListOffset &&
-        TriageDump->StringPoolOffset) {
+    if (TriageDump->DriverListOffset && TriageDump->StringPoolOffset)
+    {
 
-        Status = IopWriteDriverList (BufferAddress,
-                                     BufferSize,
-                                     TriageDump->DriverListOffset,
-                                     TriageDump->StringPoolOffset
-                                     );
+        Status =
+            IopWriteDriverList(BufferAddress, BufferSize, TriageDump->DriverListOffset, TriageDump->StringPoolOffset);
 
-        if (!NT_SUCCESS (Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             TriageDump->DriverListOffset = 0;
         }
     }
@@ -3970,49 +3573,37 @@ Comments:
     //
 
     IopWriteTriageDumpDataBlocks(TriageDump, (PUCHAR)BufferAddress);
-    
-    
-    ASSERT (BytesToWrite < BufferSize);
-    ASSERT (ALIGN_UP (BytesToWrite, PAGE_SIZE) < BufferSize);
+
+
+    ASSERT(BytesToWrite < BufferSize);
+    ASSERT(ALIGN_UP(BytesToWrite, PAGE_SIZE) < BufferSize);
 
     //
     // Write the valid status to the end of the dump.
     //
 
-    *((ULONG *)IndexByByte (Buffer, BufferSize)) = TRIAGE_DUMP_VALID ;
+    *((ULONG *)IndexByByte(Buffer, BufferSize)) = TRIAGE_DUMP_VALID;
 
     //
     // Re-adjust the buffer size.
     //
 
-    BufferSize += sizeof (DWORD);
+    BufferSize += sizeof(DWORD);
 
     //
     // NOTE: This routine writes the entire buffer, even if it is not
     // all required.
     //
 
-    Status = IopWriteToDisk (Buffer,
-                             BufferSize,
-                             DriverWriteRoutine,
-                             Mcb,
-                             Mdl,
-                             DriverTransferSize,
-                             KbDumpIoBody
-                             );
+    Status = IopWriteToDisk(Buffer, BufferSize, DriverWriteRoutine, Mcb, Mdl, DriverTransferSize, KbDumpIoBody);
 
     return Status;
 }
 
 
-
 NTSTATUS
-IopWritePageToDisk(
-    IN PDUMP_DRIVER_WRITE DriverWrite,
-    IN OUT PLARGE_INTEGER * McbBuffer,
-    IN OUT ULONG DriverTransferSize,
-    IN PFN_NUMBER PageFrameIndex
-    )
+IopWritePageToDisk(IN PDUMP_DRIVER_WRITE DriverWrite, IN OUT PLARGE_INTEGER *McbBuffer, IN OUT ULONG DriverTransferSize,
+                   IN PFN_NUMBER PageFrameIndex)
 
 /*++
 
@@ -4044,7 +3635,7 @@ Return Values:
 
 {
     NTSTATUS Status = STATUS_SUCCESS;
-    PFN_NUMBER MdlHack [ (sizeof (MDL) / sizeof (PFN_NUMBER)) + 1];
+    PFN_NUMBER MdlHack[(sizeof(MDL) / sizeof(PFN_NUMBER)) + 1];
     PPFN_NUMBER PfnArray;
     PLARGE_INTEGER Mcb;
     ULONG ByteCount;
@@ -4053,17 +3644,17 @@ Return Values:
     PMDL TempMdl;
 
 
-    ASSERT ( DriverWrite );
-    ASSERT ( McbBuffer );
-    ASSERT ( DriverTransferSize && DriverTransferSize >= PAGE_SIZE );
+    ASSERT(DriverWrite);
+    ASSERT(McbBuffer);
+    ASSERT(DriverTransferSize && DriverTransferSize >= PAGE_SIZE);
 
     KdCheckForDebugBreak();
-    
+
     //
     // Initialization
     //
 
-    TempMdl = (PMDL) &MdlHack[0];
+    TempMdl = (PMDL)&MdlHack[0];
     Mcb = *McbBuffer;
     BytesToWrite = PAGE_SIZE;
 
@@ -4072,10 +3663,10 @@ Return Values:
     // Initialze the MDL to point to this page.
     //
 
-    MmInitializeMdl (TempMdl, NULL, PAGE_SIZE);
+    MmInitializeMdl(TempMdl, NULL, PAGE_SIZE);
 
-//    TempMdl->StartVa = (PVOID) (PageFrameIndex << PAGE_SHIFT);
-    PfnArray = MmGetMdlPfnArray ( TempMdl );
+    //    TempMdl->StartVa = (PVOID) (PageFrameIndex << PAGE_SHIFT);
+    PfnArray = MmGetMdlPfnArray(TempMdl);
     PfnArray[0] = PageFrameIndex;
 
     //
@@ -4089,17 +3680,15 @@ Return Values:
 
     ByteOffset = 0;
 
-    while ( BytesToWrite ) {
+    while (BytesToWrite)
+    {
 
-        ASSERT ( Mcb[0].QuadPart != 0 );
+        ASSERT(Mcb[0].QuadPart != 0);
 
-        ByteCount = (ULONG) min3 ((LONGLONG) BytesToWrite,
-                                  (LONGLONG) DriverTransferSize,
-                                  Mcb[0].QuadPart
-                                  );
+        ByteCount = (ULONG)min3((LONGLONG)BytesToWrite, (LONGLONG)DriverTransferSize, Mcb[0].QuadPart);
 
 
-        ASSERT ( ByteCount != 0 );
+        ASSERT(ByteCount != 0);
 
         //
         // Update the MDL byte count and byte offset.
@@ -4113,21 +3702,21 @@ Return Values:
         // is valid (which should probably be done in MmMapMemoryDumpMdl).
         //
 
-        MmMapMemoryDumpMdl ( TempMdl );
-        TempMdl->MdlFlags |= ( MDL_PAGES_LOCKED | MDL_MAPPED_TO_SYSTEM_VA );
-        TempMdl->StartVa = PAGE_ALIGN (TempMdl->MappedSystemVa);
+        MmMapMemoryDumpMdl(TempMdl);
+        TempMdl->MdlFlags |= (MDL_PAGES_LOCKED | MDL_MAPPED_TO_SYSTEM_VA);
+        TempMdl->StartVa = PAGE_ALIGN(TempMdl->MappedSystemVa);
 
-        IopInvokeDumpIoCallbacks((PUCHAR)TempMdl->StartVa + ByteOffset,
-                                 ByteCount, KbDumpIoBody);
+        IopInvokeDumpIoCallbacks((PUCHAR)TempMdl->StartVa + ByteOffset, ByteCount, KbDumpIoBody);
 
         //
         // Write the bufffer.
         //
 
-        Status = DriverWrite ( &Mcb[1], TempMdl );
+        Status = DriverWrite(&Mcb[1], TempMdl);
 
 
-        if (!NT_SUCCESS (Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             return Status;
         }
 
@@ -4141,7 +3730,8 @@ Return Values:
         // If there is no more room for this MCB, go to the next one.
         //
 
-        if ( Mcb[0].QuadPart == 0 ) {
+        if (Mcb[0].QuadPart == 0)
+        {
 
             Mcb += 2;
 
@@ -4149,14 +3739,12 @@ Return Values:
             // We have filled up all the space in the paging file.
             //
 
-            if ( Mcb[0].QuadPart == 0) {
-                KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                            CRASHDUMP_ERROR,
-                            "CRASHDUMP: Pagefile is full.\n"));
+            if (Mcb[0].QuadPart == 0)
+            {
+                KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_ERROR, "CRASHDUMP: Pagefile is full.\n"));
                 return STATUS_END_OF_FILE;
             }
         }
-
     }
 
     *McbBuffer = Mcb;
@@ -4164,16 +3752,10 @@ Return Values:
     return Status;
 }
 
-
+
 NTSTATUS
-IopWriteSummaryDump(
-    IN PRTL_BITMAP PageMap,
-    IN PDUMP_DRIVER_WRITE DriverWriteRoutine,
-    IN PANSI_STRING ProgressMessage,
-    IN PUCHAR MessageBuffer,
-    IN OUT PLARGE_INTEGER * Mcb,
-    IN OUT ULONG DriverTransferSize
-    )
+IopWriteSummaryDump(IN PRTL_BITMAP PageMap, IN PDUMP_DRIVER_WRITE DriverWriteRoutine, IN PANSI_STRING ProgressMessage,
+                    IN PUCHAR MessageBuffer, IN OUT PLARGE_INTEGER *Mcb, IN OUT ULONG DriverTransferSize)
 
 /*++
 
@@ -4211,71 +3793,62 @@ Return Values:
     ULONG Step;
 
 #if !DBG
-    UNREFERENCED_PARAMETER (MessageBuffer);
+    UNREFERENCED_PARAMETER(MessageBuffer);
 #endif
 
-    ASSERT ( DriverWriteRoutine != NULL );
-    ASSERT ( Mcb != NULL );
-    ASSERT ( DriverTransferSize != 0 );
-    ASSERT ( MessageBuffer == NULL );
+    ASSERT(DriverWriteRoutine != NULL);
+    ASSERT(Mcb != NULL);
+    ASSERT(DriverTransferSize != 0);
+    ASSERT(MessageBuffer == NULL);
 
 
-    MaxWriteCount = RtlNumberOfSetBits ( PageMap );
-    ASSERT (MaxWriteCount != 0);
+    MaxWriteCount = RtlNumberOfSetBits(PageMap);
+    ASSERT(MaxWriteCount != 0);
     Step = MaxWriteCount / 100;
 
-    KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                CRASHDUMP_TRACE,
-                "CRASHDUMP: Summary Dump\n"
-                "           Writing %x pages to disk from a total of %x\n",
-                  MaxWriteCount,
-                  PageMap->SizeOfBitMap
-                  ));
+    KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_TRACE,
+               "CRASHDUMP: Summary Dump\n"
+               "           Writing %x pages to disk from a total of %x\n",
+               MaxWriteCount, PageMap->SizeOfBitMap));
     //
     // Loop over all pages in the system and write those that are set
     // in the bitmap.
     //
 
     WriteCount = 0;
-    for ( PageFrameIndex = 0;
-          PageFrameIndex < PageMap->SizeOfBitMap;
-          PageFrameIndex++) {
+    for (PageFrameIndex = 0; PageFrameIndex < PageMap->SizeOfBitMap; PageFrameIndex++)
+    {
 
 
         //
         // If this page needs to be included in the dump file.
         //
 
-        if ( RtlCheckBit (PageMap, PageFrameIndex) ) {
+        if (RtlCheckBit(PageMap, PageFrameIndex))
+        {
 
-            if (++WriteCount % Step == 0) {
+            if (++WriteCount % Step == 0)
+            {
 
                 //
                 // Update the progress percentage.
                 //
 
-                IopDisplayString ("%Z: %3d\r",
-                                  ProgressMessage,
-                                  (WriteCount * 100) / MaxWriteCount
-                                  );
+                IopDisplayString("%Z: %3d\r", ProgressMessage, (WriteCount * 100) / MaxWriteCount);
             }
 
-            ASSERT ( WriteCount <= MaxWriteCount );
+            ASSERT(WriteCount <= MaxWriteCount);
 
             //
             // Write the page to disk.
             //
 
             KdCheckForDebugBreak();
-            
-            Status = IopWritePageToDisk (
-                            DriverWriteRoutine,
-                            Mcb,
-                            DriverTransferSize,
-                            PageFrameIndex
-                            );
 
-            if (!NT_SUCCESS (Status)) {
+            Status = IopWritePageToDisk(DriverWriteRoutine, Mcb, DriverTransferSize, PageFrameIndex);
+
+            if (!NT_SUCCESS(Status))
+            {
 
                 return STATUS_UNSUCCESSFUL;
             }
@@ -4285,12 +3858,9 @@ Return Values:
     return STATUS_SUCCESS;
 }
 
-
+
 NTSTATUS
-IopInitializeSummaryDump(
-    IN OUT PMEMORY_DUMP MemoryDump,
-    IN PDUMP_CONTROL_BLOCK DumpControlBlock
-    )
+IopInitializeSummaryDump(IN OUT PMEMORY_DUMP MemoryDump, IN PDUMP_CONTROL_BLOCK DumpControlBlock)
 /*++
 
 Routine Description:
@@ -4314,16 +3884,14 @@ Return Value:
 {
     ULONG ActualPages;
 
-    ASSERT ( MemoryDump != NULL );
-    ASSERT ( DumpControlBlock != NULL );
+    ASSERT(MemoryDump != NULL);
+    ASSERT(DumpControlBlock != NULL);
 
     //
     // Fill the header with signatures.
     //
 
-    RtlFillMemoryUlong( &MemoryDump->Summary,
-                        sizeof (SUMMARY_DUMP),
-                        DUMP_SUMMARY_SIGNATURE);
+    RtlFillMemoryUlong(&MemoryDump->Summary, sizeof(SUMMARY_DUMP), DUMP_SUMMARY_SIGNATURE);
 
     //
     // Set the size and valid signature.
@@ -4336,8 +3904,8 @@ Return Value:
     //
 
     MemoryDump->Summary.BitmapSize =
-        (ULONG)( MmPhysicalMemoryBlock->Run[MmPhysicalMemoryBlock->NumberOfRuns-1].BasePage  +
-        MmPhysicalMemoryBlock->Run[MmPhysicalMemoryBlock->NumberOfRuns-1].PageCount );
+        (ULONG)(MmPhysicalMemoryBlock->Run[MmPhysicalMemoryBlock->NumberOfRuns - 1].BasePage +
+                MmPhysicalMemoryBlock->Run[MmPhysicalMemoryBlock->NumberOfRuns - 1].PageCount);
 
     MemoryDump->Summary.ValidDump = DUMP_SUMMARY_VALID;
 
@@ -4351,13 +3919,12 @@ Return Value:
     // Actual will probably need to be a 64-bit value for Win64.
     //
 
-    ActualPages = IopCreateSummaryDump (MemoryDump);
+    ActualPages = IopCreateSummaryDump(MemoryDump);
 
-    KdPrintEx ((DPFLTR_CRASHDUMP_ID, CRASHDUMP_TRACE,
-                "CRASHDUMP: Kernel Pages = %x\n",
-                ActualPages ));
+    KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_TRACE, "CRASHDUMP: Kernel Pages = %x\n", ActualPages));
 
-    if (ActualPages == 0) {
+    if (ActualPages == 0)
+    {
         return STATUS_UNSUCCESSFUL;
     }
 
@@ -4372,16 +3939,9 @@ Return Value:
 }
 
 
-
 NTSTATUS
-IopWriteSummaryHeader(
-    IN PSUMMARY_DUMP        SummaryHeader,
-    IN PDUMP_DRIVER_WRITE   WriteRoutine,
-    IN OUT PLARGE_INTEGER * McbBuffer,
-    IN OUT PMDL             Mdl,
-    IN ULONG                WriteSize,
-    IN ULONG                Length
-    )
+IopWriteSummaryHeader(IN PSUMMARY_DUMP SummaryHeader, IN PDUMP_DRIVER_WRITE WriteRoutine,
+                      IN OUT PLARGE_INTEGER *McbBuffer, IN OUT PMDL Mdl, IN ULONG WriteSize, IN ULONG Length)
 /*++
 
 Routine Description:
@@ -4418,27 +3978,29 @@ Return Value:
     Mcb = *McbBuffer;
 
     BytesRemaining = Length;
-    MemoryAddress = (ULONG_PTR) SummaryHeader;
+    MemoryAddress = (ULONG_PTR)SummaryHeader;
 
     IopInvokeDumpIoCallbacks(SummaryHeader, Length, KbDumpIoBody);
-        
-    KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                CRASHDUMP_TRACE,
-                "CRASHDUMP: Writing SUMMARY dump header to disk\n" ));
+
+    KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_TRACE, "CRASHDUMP: Writing SUMMARY dump header to disk\n"));
 
 
-    while ( BytesRemaining ) {
+    while (BytesRemaining)
+    {
 
-        ByteOffset = BYTE_OFFSET ( MemoryAddress );
+        ByteOffset = BYTE_OFFSET(MemoryAddress);
 
         //
         // See if the number of bytes to write is greator than the crash
         // drives max transfer.
         //
 
-        if ( BytesRemaining <= WriteSize) {
+        if (BytesRemaining <= WriteSize)
+        {
             ByteCount = BytesRemaining;
-        } else {
+        }
+        else
+        {
             ByteCount = WriteSize;
         }
 
@@ -4446,27 +4008,29 @@ Return Value:
         // If the byteCount is greater than the remaining mcb then correct it.
         //
 
-        if ( ByteCount > Mcb[0].QuadPart) {
+        if (ByteCount > Mcb[0].QuadPart)
+        {
             ByteCount = Mcb[0].LowPart;
         }
 
-        Mdl->ByteCount      = ByteCount;
-        Mdl->ByteOffset     = ByteOffset;
-        Mdl->MappedSystemVa = (PVOID) MemoryAddress;
+        Mdl->ByteCount = ByteCount;
+        Mdl->ByteOffset = ByteOffset;
+        Mdl->MappedSystemVa = (PVOID)MemoryAddress;
 
         //
         // Get the actual physical frame and create an mdl.
         //
 
-        IopMapVirtualToPhysicalMdl ( Mdl, MemoryAddress, ByteCount );
+        IopMapVirtualToPhysicalMdl(Mdl, MemoryAddress, ByteCount);
 
         //
         // Write to disk.
         //
 
-        Status =  WriteRoutine ( &Mcb[1], Mdl );
+        Status = WriteRoutine(&Mcb[1], Mdl);
 
-        if ( !NT_SUCCESS (Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             return Status;
         }
 
@@ -4480,14 +4044,14 @@ Return Value:
         Mcb[0].QuadPart = Mcb[0].QuadPart - ByteCount;
         Mcb[1].QuadPart = Mcb[1].QuadPart + ByteCount;
 
-        if (Mcb[0].QuadPart == 0) {
+        if (Mcb[0].QuadPart == 0)
+        {
             Mcb += 2;
         }
 
-        if (Mcb[0].QuadPart == 0) {
-            KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                        CRASHDUMP_ERROR,
-                        "CRASHDUMP: Pagefile is full.\n"));
+        if (Mcb[0].QuadPart == 0)
+        {
+            KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_ERROR, "CRASHDUMP: Pagefile is full.\n"));
             return STATUS_END_OF_FILE;
         }
     }
@@ -4497,17 +4061,10 @@ Return Value:
 }
 
 
-
 NTSTATUS
-IopWriteToDisk(
-    IN PVOID Buffer,
-    IN ULONG WriteLength,
-    IN PDUMP_DRIVER_WRITE DriverWriteRoutine,
-    IN OUT PLARGE_INTEGER * McbBuffer,
-    IN OUT PMDL Mdl,
-    IN ULONG DriverTransferSize,
-    IN KBUGCHECK_DUMP_IO_TYPE DataType
-    )
+IopWriteToDisk(IN PVOID Buffer, IN ULONG WriteLength, IN PDUMP_DRIVER_WRITE DriverWriteRoutine,
+               IN OUT PLARGE_INTEGER *McbBuffer, IN OUT PMDL Mdl, IN ULONG DriverTransferSize,
+               IN KBUGCHECK_DUMP_IO_TYPE DataType)
 /*++
 
 Routine Description:
@@ -4541,55 +4098,54 @@ Return Value:
     ULONG ByteCount;
     PLARGE_INTEGER Mcb;
 
-    ASSERT (Buffer);
-    ASSERT (WriteLength);
-    ASSERT (DriverWriteRoutine);
-    ASSERT (McbBuffer && *McbBuffer);
-    ASSERT (Mdl);
-    ASSERT (DriverTransferSize >= IO_DUMP_MINIMUM_TRANSFER_SIZE &&
-            DriverTransferSize <= IO_DUMP_MAXIMUM_TRANSFER_SIZE);
+    ASSERT(Buffer);
+    ASSERT(WriteLength);
+    ASSERT(DriverWriteRoutine);
+    ASSERT(McbBuffer && *McbBuffer);
+    ASSERT(Mdl);
+    ASSERT(DriverTransferSize >= IO_DUMP_MINIMUM_TRANSFER_SIZE && DriverTransferSize <= IO_DUMP_MAXIMUM_TRANSFER_SIZE);
 
 
     IopInvokeDumpIoCallbacks(Buffer, WriteLength, DataType);
 
     Mcb = *McbBuffer;
     BytesRemaining = WriteLength;
-    MemoryAddress = (ULONG_PTR) Buffer;
+    MemoryAddress = (ULONG_PTR)Buffer;
 
-    while ( BytesRemaining ) {
+    while (BytesRemaining)
+    {
 
-        ASSERT (IopDumpControlBlock->FileDescriptorArray <= Mcb &&
-                (LPBYTE) Mcb < (LPBYTE) IopDumpControlBlock->FileDescriptorArray +
-                               IopDumpControlBlock->FileDescriptorSize
-                );
+        ASSERT(IopDumpControlBlock->FileDescriptorArray <= Mcb &&
+               (LPBYTE)Mcb <
+                   (LPBYTE)IopDumpControlBlock->FileDescriptorArray + IopDumpControlBlock->FileDescriptorSize);
 
-        if (Mcb[0].QuadPart == 0) {
-            KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                        CRASHDUMP_ERROR,
-                        "CRASHDUMP: Pagefile is full.\n"));
+        if (Mcb[0].QuadPart == 0)
+        {
+            KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_ERROR, "CRASHDUMP: Pagefile is full.\n"));
             return STATUS_END_OF_FILE;
         }
 
-        ByteOffset = BYTE_OFFSET ( MemoryAddress );
+        ByteOffset = BYTE_OFFSET(MemoryAddress);
 
         //
         // See if the number of bytes to write is greator than the crash
         // drives max transfer.
         //
 
-        ByteCount = min ( BytesRemaining, DriverTransferSize );
+        ByteCount = min(BytesRemaining, DriverTransferSize);
 
         //
         // If the byteCount is greater than the remaining mcb then correct it.
         //
 
-        if (ByteCount > Mcb[0].QuadPart) {
+        if (ByteCount > Mcb[0].QuadPart)
+        {
             ByteCount = Mcb[0].LowPart;
         }
 
         Mdl->ByteCount = ByteCount;
         Mdl->ByteOffset = ByteOffset;
-        Mdl->MappedSystemVa = (PVOID) MemoryAddress;
+        Mdl->MappedSystemVa = (PVOID)MemoryAddress;
 
         //
         // Get the actual physical frame and create an mdl.
@@ -4599,18 +4155,15 @@ Return Value:
 
         KdCheckForDebugBreak();
 
-        if (!NT_SUCCESS( DriverWriteRoutine ( &Mcb[1], Mdl ) )) {
+        if (!NT_SUCCESS(DriverWriteRoutine(&Mcb[1], Mdl)))
+        {
 
             //
             // We are in deep trouble if we failed the write.
             //
 
-            KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                        CRASHDUMP_ERROR,
-                        "CRASHDUMP: Failed to write Mcb = %p, Mdl = %p to disk\n",
-                        &Mcb[1],
-                        Mdl
-                        ));
+            KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_ERROR, "CRASHDUMP: Failed to write Mcb = %p, Mdl = %p to disk\n",
+                       &Mcb[1], Mdl));
 
             return STATUS_UNSUCCESSFUL;
         }
@@ -4619,16 +4172,17 @@ Return Value:
         // Adjust bytes remaining.
         //
 
-        ASSERT ( BytesRemaining >= ByteCount );
-        ASSERT ( ByteCount != 0 );
+        ASSERT(BytesRemaining >= ByteCount);
+        ASSERT(ByteCount != 0);
 
         BytesRemaining -= ByteCount;
-        MemoryAddress  += ByteCount;
+        MemoryAddress += ByteCount;
 
         Mcb[0].QuadPart -= ByteCount;
         Mcb[1].QuadPart += ByteCount;
 
-        if (Mcb[0].QuadPart == 0) {
+        if (Mcb[0].QuadPart == 0)
+        {
             Mcb += 2;
         }
     }
@@ -4637,16 +4191,11 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
-
-VOID
-IopMapVirtualToPhysicalMdl(
-    IN OUT PMDL Mdl,
-    IN ULONG_PTR MemoryAddress,
-    IN ULONG Length
-    )
+
+VOID IopMapVirtualToPhysicalMdl(IN OUT PMDL Mdl, IN ULONG_PTR MemoryAddress, IN ULONG Length)
 {
     ULONG Pages;
-    PPFN_NUMBER  Pfn;
+    PPFN_NUMBER Pfn;
     PCHAR BaseVa;
     PHYSICAL_ADDRESS PhysicalAddress;
 
@@ -4663,8 +4212,8 @@ IopMapVirtualToPhysicalMdl(
     // range and filling in the MDL appropriately.
     //
 
-    Mdl->StartVa = PAGE_ALIGN ( MemoryAddress );
-    Mdl->ByteOffset = BYTE_OFFSET ( MemoryAddress );
+    Mdl->StartVa = PAGE_ALIGN(MemoryAddress);
+    Mdl->ByteOffset = BYTE_OFFSET(MemoryAddress);
     Mdl->ByteCount = Length;
     Mdl->MdlFlags |= MDL_MAPPED_TO_SYSTEM_VA;
 
@@ -4672,18 +4221,19 @@ IopMapVirtualToPhysicalMdl(
     // Compute the number of pages spanned
     //
 
-    Pages = ADDRESS_AND_SIZE_TO_SPAN_PAGES( MemoryAddress, Length );
-    Pfn = MmGetMdlPfnArray ( Mdl );
+    Pages = ADDRESS_AND_SIZE_TO_SPAN_PAGES(MemoryAddress, Length);
+    Pfn = MmGetMdlPfnArray(Mdl);
 
     //
     // Map all of the pages for this transfer until there are no more remaining
     // to be mapped.
     //
 
-    BaseVa = PAGE_ALIGN ( MemoryAddress );
+    BaseVa = PAGE_ALIGN(MemoryAddress);
 
-    while ( Pages ) {
-        PhysicalAddress = MmGetPhysicalAddress ( BaseVa );
+    while (Pages)
+    {
+        PhysicalAddress = MmGetPhysicalAddress(BaseVa);
         *Pfn++ = (PFN_NUMBER)(PhysicalAddress.QuadPart >> PAGE_SHIFT);
         BaseVa += PAGE_SIZE;
         Pages--;
@@ -4694,15 +4244,12 @@ IopMapVirtualToPhysicalMdl(
     // physical memory into virtual address space using crash dump PTE.
     //
 
-//    MmMapMemoryDumpMdl( pMdl );
+    //    MmMapMemoryDumpMdl( pMdl );
 }
 
 
-
 ULONG
-IopCreateSummaryDump (
-    IN PMEMORY_DUMP MemoryDump
-    )
+IopCreateSummaryDump(IN PMEMORY_DUMP MemoryDump)
 /*++
 
 Routine Description:
@@ -4736,14 +4283,14 @@ Return Value:
     // Validation
     //
 
-    ASSERT (MemoryDump != NULL);
+    ASSERT(MemoryDump != NULL);
 
     //
     // Initialize Bit Map, set the size and buffer address.
     //
 
     Summary = &MemoryDump->Summary;
-    BitMap = (PRTL_BITMAP) &Summary->Bitmap;
+    BitMap = (PRTL_BITMAP)&Summary->Bitmap;
     BitMap->SizeOfBitMap = Summary->BitmapSize; // Why??
     BitMap->Buffer = Summary->Bitmap.Buffer;
 
@@ -4751,7 +4298,7 @@ Return Value:
     // Clear all bits
     //
 
-    RtlClearAllBits (BitMap);
+    RtlClearAllBits(BitMap);
 
     //
     // Have MM initialize the kernel memory to dump
@@ -4761,9 +4308,9 @@ Return Value:
     Context.SetDumpRange = IoSetDumpRange;
     Context.FreeDumpRange = IoFreeDumpRange;
 
-    MmGetKernelDumpRange (&Context);
+    MmGetKernelDumpRange(&Context);
 
-    PagesUsed = RtlNumberOfSetBits ( BitMap );
+    PagesUsed = RtlNumberOfSetBits(BitMap);
 
     //
     // See If we have room to Include user va for the current process
@@ -4788,38 +4335,22 @@ Return Value:
 
     PagesUsed += UserPages;
 
-    KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                CRASHDUMP_TRACE,
-                "CRASHDUMP: Number of user mode pages for kernel dump = %x\n",
-                UserPages
-                ));
+    KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_TRACE, "CRASHDUMP: Number of user mode pages for kernel dump = %x\n",
+               UserPages));
 
-    KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                CRASHDUMP_TRACE,
-                "CRASHDUMP: Kernel Dump, Header = %p\n",
-                Summary
-                ));
+    KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_TRACE, "CRASHDUMP: Kernel Dump, Header = %p\n", Summary));
 
-    KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                CRASHDUMP_TRACE,
-                "           BitMapSize:    %x\n"
-                "           Pages:         %x\n"
-                "           BitMapBuffer:  %p\n",
-                Summary->BitmapSize,
-                PagesUsed,
-                BitMap->Buffer
-                ));
+    KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_TRACE,
+               "           BitMapSize:    %x\n"
+               "           Pages:         %x\n"
+               "           BitMapBuffer:  %p\n",
+               Summary->BitmapSize, PagesUsed, BitMap->Buffer));
 
     return PagesUsed;
-
 }
 
-
-VOID
-IopDeleteNonExistentMemory(
-    PSUMMARY_DUMP Summary,
-    PPHYSICAL_MEMORY_DESCRIPTOR MmPhysicalMemoryBlock
-    )
+
+VOID IopDeleteNonExistentMemory(PSUMMARY_DUMP Summary, PPHYSICAL_MEMORY_DESCRIPTOR MmPhysicalMemoryBlock)
 /*++
 
 Routine Description:
@@ -4859,14 +4390,14 @@ Return Value:
     // Verification
     //
 
-    ASSERT ( Summary != NULL );
-    ASSERT ( MmPhysicalMemoryBlock != NULL );
+    ASSERT(Summary != NULL);
+    ASSERT(MmPhysicalMemoryBlock != NULL);
 
     //
     // Initialization
     //
 
-    BitMap = (PRTL_BITMAP) &Summary->Bitmap;
+    BitMap = (PRTL_BITMAP)&Summary->Bitmap;
     NumberOfRuns = MmPhysicalMemoryBlock->NumberOfRuns;
     Run = &MmPhysicalMemoryBlock->Run[0];
 
@@ -4879,7 +4410,8 @@ Return Value:
     // Remove the gap from 0 till the first run.
     //
 
-    if (NextPageFrame > CurrentPageFrame) {
+    if (NextPageFrame > CurrentPageFrame)
+    {
 
         //
         // ISSUE - 2000/02/07 - math: Win64 PFN_NUMBER > 32 bits.
@@ -4888,19 +4420,16 @@ Return Value:
         // Then remove the casts on the PageFrames below.
         //
 
-        IopRemovePageFromPageMap (Summary->BitmapSize,
-                                  BitMap,
-                                  (ULONG)CurrentPageFrame,
-                                  (ULONG)(NextPageFrame-CurrentPageFrame)
-                                  );
-
+        IopRemovePageFromPageMap(Summary->BitmapSize, BitMap, (ULONG)CurrentPageFrame,
+                                 (ULONG)(NextPageFrame - CurrentPageFrame));
     }
 
     //
     // Remove the gaps between runs.
     //
 
-    while (i < NumberOfRuns - 1) {
+    while (i < NumberOfRuns - 1)
+    {
 
         CurrentPageFrame = Run->BasePage + Run->PageCount;
         i++;
@@ -4912,7 +4441,8 @@ Return Value:
 
         NextPageFrame = Run->BasePage;
 
-        if (NextPageFrame != CurrentPageFrame) {
+        if (NextPageFrame != CurrentPageFrame)
+        {
 
             //
             // ISSUE - 2000/02/07 - math: Win64 PFN_NUMBER > 32 bits.
@@ -4921,27 +4451,16 @@ Return Value:
             // Then remove the casts on the page frames below.
             //
 
-            IopRemovePageFromPageMap (Summary->BitmapSize,
-                                      BitMap,
-                                      (ULONG)CurrentPageFrame,
-                                      (ULONG)(NextPageFrame - CurrentPageFrame)
-                                      );
+            IopRemovePageFromPageMap(Summary->BitmapSize, BitMap, (ULONG)CurrentPageFrame,
+                                     (ULONG)(NextPageFrame - CurrentPageFrame));
         }
     }
 }
 
 NTSTATUS
-IopInvokeSecondaryDumpDataCallbacks(
-    IN PDUMP_DRIVER_WRITE DriverWriteRoutine,
-    IN OUT PLARGE_INTEGER * Mcb,
-    IN OUT PMDL Mdl,
-    IN ULONG DriverTransferSize,
-    IN BYTE* Buffer,
-    IN ULONG BufferSize,
-    IN ULONG MaxTotal,
-    IN ULONG MaxPerCallback,
-    OUT OPTIONAL PULONG SpaceNeeded
-    )
+IopInvokeSecondaryDumpDataCallbacks(IN PDUMP_DRIVER_WRITE DriverWriteRoutine, IN OUT PLARGE_INTEGER *Mcb,
+                                    IN OUT PMDL Mdl, IN ULONG DriverTransferSize, IN BYTE *Buffer, IN ULONG BufferSize,
+                                    IN ULONG MaxTotal, IN ULONG MaxPerCallback, OUT OPTIONAL PULONG SpaceNeeded)
 
 /*++
 
@@ -4995,19 +4514,21 @@ Return Values:
     C_ASSERT((sizeof(DUMP_BLOB_FILE_HEADER) & 7) == 0);
     C_ASSERT((sizeof(DUMP_BLOB_HEADER) & 7) == 0);
 
-    if (ARGUMENT_PRESENT(SpaceNeeded)) {
+    if (ARGUMENT_PRESENT(SpaceNeeded))
+    {
         *SpaceNeeded = 0;
     }
-    
+
     //
     // If the caller isn't allowing a reasonable amount of
     // data don't even bother to look.
     //
 
-    if (MaxPerCallback < PAGE_SIZE || MaxTotal < MaxPerCallback) {
+    if (MaxPerCallback < PAGE_SIZE || MaxTotal < MaxPerCallback)
+    {
         return STATUS_SUCCESS;
     }
-    
+
     //
     // If the bug check callback listhead is not initialized, then the
     // bug check has occured before the system has gotten far enough
@@ -5015,7 +4536,8 @@ Return Values:
     //
 
     ListHead = &KeBugCheckReasonCallbackListHead;
-    if (ListHead->Flink == NULL || ListHead->Blink == NULL) {
+    if (ListHead->Flink == NULL || ListHead->Blink == NULL)
+    {
         return STATUS_SUCCESS;
     }
 
@@ -5029,50 +4551,54 @@ Return Values:
     // the blob header will be moved down to the head
     // of the buffer.
     //
-    
+
     BlobFileHdr = (PDUMP_BLOB_FILE_HEADER)Buffer;
     BlobHdr = (PDUMP_BLOB_HEADER)(BlobFileHdr + 1);
-    
+
     //
     // Scan the bug check callback list.
     //
 
     LastEntry = ListHead;
     NextEntry = ListHead->Flink;
-    while (NextEntry != ListHead) {
+    while (NextEntry != ListHead)
+    {
 
         //
         // If no more dump data is allowed we're done.
         //
 
-        if (!MaxTotal) {
+        if (!MaxTotal)
+        {
             break;
         }
-                
+
         //
         // The next entry address must be aligned properly, the
         // callback record must be readable, and the callback record
         // must have back link to the last entry.
         //
 
-        if (((ULONG_PTR)NextEntry & (sizeof(ULONG_PTR) - 1)) != 0) {
+        if (((ULONG_PTR)NextEntry & (sizeof(ULONG_PTR) - 1)) != 0)
+        {
             return STATUS_DATATYPE_MISALIGNMENT;
         }
 
-        CallbackRecord = CONTAINING_RECORD(NextEntry,
-                                           KBUGCHECK_REASON_CALLBACK_RECORD,
-                                           Entry);
+        CallbackRecord = CONTAINING_RECORD(NextEntry, KBUGCHECK_REASON_CALLBACK_RECORD, Entry);
 
         Source = (PUCHAR)CallbackRecord;
-        for (Index = 0; Index < sizeof(*CallbackRecord); Index += 1) {
-            if (MmIsAddressValid((PVOID)Source) == FALSE) {
+        for (Index = 0; Index < sizeof(*CallbackRecord); Index += 1)
+        {
+            if (MmIsAddressValid((PVOID)Source) == FALSE)
+            {
                 return STATUS_PARTIAL_COPY;
             }
-            
+
             Source += 1;
         }
 
-        if (CallbackRecord->Entry.Blink != LastEntry) {
+        if (CallbackRecord->Entry.Blink != LastEntry)
+        {
             return STATUS_INVALID_PARAMETER;
         }
 
@@ -5088,11 +4614,10 @@ Return Values:
         Checksum = (ULONG_PTR)CallbackRecord->CallbackRoutine;
         Checksum += (ULONG_PTR)CallbackRecord->Reason;
         Checksum += (ULONG_PTR)CallbackRecord->Component;
-        if ((CallbackRecord->State != BufferInserted) ||
-            (CallbackRecord->Checksum != Checksum) ||
+        if ((CallbackRecord->State != BufferInserted) || (CallbackRecord->Checksum != Checksum) ||
             (CallbackRecord->Reason != KbCallbackSecondaryDumpData) ||
-            MmIsAddressValid((PVOID)(ULONG_PTR)CallbackRecord->
-                             CallbackRoutine) == FALSE) {
+            MmIsAddressValid((PVOID)(ULONG_PTR)CallbackRecord->CallbackRoutine) == FALSE)
+        {
             continue;
         }
 
@@ -5101,11 +4626,13 @@ Return Values:
         // handle any exceptions that occur.
         //
 
-        if (!ARGUMENT_PRESENT(SpaceNeeded)) {
+        if (!ARGUMENT_PRESENT(SpaceNeeded))
+        {
             CallbackRecord->State = BufferStarted;
         }
-            
-        try {
+
+        try
+        {
             KBUGCHECK_SECONDARY_DUMP_DATA CbArgument;
             NTSTATUS Status;
             ULONG BufferAvail;
@@ -5116,42 +4643,39 @@ Return Values:
 
             // Start the callback's buffer after the blob header.
             CbArgument.InBuffer = (PVOID)(BlobHdr + 1);
-            BufferAvail = BufferSize - (ULONG)
-                ((ULONG_PTR)CbArgument.InBuffer - (ULONG_PTR)Buffer);
+            BufferAvail = BufferSize - (ULONG)((ULONG_PTR)CbArgument.InBuffer - (ULONG_PTR)Buffer);
             CbArgument.InBufferLength = BufferAvail;
             CbArgument.MaximumAllowed = MaxPerCallback;
             RtlZeroMemory(&CbArgument.Guid, sizeof(CbArgument.Guid));
-            CbArgument.OutBuffer = ARGUMENT_PRESENT(SpaceNeeded) ?
-                NULL : CbArgument.InBuffer;
+            CbArgument.OutBuffer = ARGUMENT_PRESENT(SpaceNeeded) ? NULL : CbArgument.InBuffer;
             CbArgument.OutBufferLength = 0;
-            
-            (CallbackRecord->CallbackRoutine)(KbCallbackSecondaryDumpData,
-                                              CallbackRecord,
-                                              &CbArgument,
+
+            (CallbackRecord->CallbackRoutine)(KbCallbackSecondaryDumpData, CallbackRecord, &CbArgument,
                                               sizeof(CbArgument));
 
             //
             // If no data was used there's nothing to write.
             //
 
-            if (!CbArgument.OutBuffer || !CbArgument.OutBufferLength) {
+            if (!CbArgument.OutBuffer || !CbArgument.OutBufferLength)
+            {
                 // Set this state even when sizing as
                 // there's no need to call again.
                 CallbackRecord->State = BufferFinished;
                 __leave;
             }
-                
+
             //
             // The callback may have used the buffer given or
             // it may have returned its own buffer.  If it
             // used the buffer given it must be page aligned.
             //
 
-            if ((PBYTE)CbArgument.OutBuffer >= Buffer &&
-                (PBYTE)CbArgument.OutBuffer < Buffer + BufferSize) {
-                
-                if (CbArgument.OutBuffer != (PVOID)(BlobHdr + 1) ||
-                    CbArgument.OutBufferLength > BufferAvail) {
+            if ((PBYTE)CbArgument.OutBuffer >= Buffer && (PBYTE)CbArgument.OutBuffer < Buffer + BufferSize)
+            {
+
+                if (CbArgument.OutBuffer != (PVOID)(BlobHdr + 1) || CbArgument.OutBufferLength > BufferAvail)
+                {
                     // If too much or the wrong data was used memory has
                     // been trashed.  Exit and hope the system still runs.
                     return STATUS_INVALID_PARAMETER;
@@ -5161,29 +4685,28 @@ Return Values:
                 // the data along with the header.
                 BlobHdr->PrePad = 0;
                 BlobHdr->PostPad = BufferAvail - CbArgument.OutBufferLength;
-                
-            } else {
+            }
+            else
+            {
 
-                if (CbArgument.OutBufferLength > MaxPerCallback ||
-                    BYTE_OFFSET(CbArgument.OutBuffer) ||
-                    !IopIsAddressRangeValid(CbArgument.OutBuffer,
-                                            CbArgument.OutBufferLength)) {
+                if (CbArgument.OutBufferLength > MaxPerCallback || BYTE_OFFSET(CbArgument.OutBuffer) ||
+                    !IopIsAddressRangeValid(CbArgument.OutBuffer, CbArgument.OutBufferLength))
+                {
                     return STATUS_INVALID_PARAMETER;
                 }
 
                 // The header buffer is separate from the data
                 // buffer so prepad and postpad to a page boundary.
                 BlobHdr->PrePad = BufferAvail;
-                BlobHdr->PostPad =
-                    (ULONG)(ROUND_TO_PAGES(CbArgument.OutBufferLength) -
-                            CbArgument.OutBufferLength);
+                BlobHdr->PostPad = (ULONG)(ROUND_TO_PAGES(CbArgument.OutBufferLength) - CbArgument.OutBufferLength);
             }
-                    
+
             //
             // Write the page containing the headers.
             //
 
-            if ((PBYTE)BlobHdr > Buffer) {
+            if ((PBYTE)BlobHdr > Buffer)
+            {
                 BlobFileHdr->Signature1 = DUMP_BLOB_SIGNATURE1;
                 BlobFileHdr->Signature2 = DUMP_BLOB_SIGNATURE2;
                 BlobFileHdr->HeaderSize = sizeof(*BlobFileHdr);
@@ -5194,14 +4717,16 @@ Return Values:
             BlobHdr->Tag = CbArgument.Guid;
             BlobHdr->DataSize = CbArgument.OutBufferLength;
 
-            if (ARGUMENT_PRESENT(SpaceNeeded)) {
+            if (ARGUMENT_PRESENT(SpaceNeeded))
+            {
                 (*SpaceNeeded) += BufferSize;
-            } else {
-                Status = IopWriteToDisk(Buffer, BufferSize,
-                                        DriverWriteRoutine,
-                                        Mcb, Mdl, DriverTransferSize,
+            }
+            else
+            {
+                Status = IopWriteToDisk(Buffer, BufferSize, DriverWriteRoutine, Mcb, Mdl, DriverTransferSize,
                                         KbDumpIoSecondaryData);
-                if (!NT_SUCCESS(Status)) {
+                if (!NT_SUCCESS(Status))
+                {
                     return Status;
                 }
             }
@@ -5210,33 +4735,36 @@ Return Values:
             // Write any extra data buffer pages.
             //
 
-            if (CbArgument.OutBuffer != (PVOID)(BlobHdr + 1)) {
-                if (ARGUMENT_PRESENT(SpaceNeeded)) {
-                    (*SpaceNeeded) += (ULONG)
-                        ROUND_TO_PAGES(CbArgument.OutBufferLength);
-                } else {
-                    Status = IopWriteToDisk(CbArgument.OutBuffer,
-                                            (ULONG)ROUND_TO_PAGES(CbArgument.OutBufferLength),
-                                            DriverWriteRoutine,
-                                            Mcb, Mdl, DriverTransferSize,
-                                            KbDumpIoSecondaryData);
-                    if (!NT_SUCCESS(Status)) {
+            if (CbArgument.OutBuffer != (PVOID)(BlobHdr + 1))
+            {
+                if (ARGUMENT_PRESENT(SpaceNeeded))
+                {
+                    (*SpaceNeeded) += (ULONG)ROUND_TO_PAGES(CbArgument.OutBufferLength);
+                }
+                else
+                {
+                    Status = IopWriteToDisk(CbArgument.OutBuffer, (ULONG)ROUND_TO_PAGES(CbArgument.OutBufferLength),
+                                            DriverWriteRoutine, Mcb, Mdl, DriverTransferSize, KbDumpIoSecondaryData);
+                    if (!NT_SUCCESS(Status))
+                    {
                         return Status;
                     }
                 }
             }
 
             MaxTotal -= (ULONG)ROUND_TO_PAGES(CbArgument.OutBufferLength);
-            
+
             // We've written at least one blob so we don't
             // need the file header any more.
             BlobHdr = (PDUMP_BLOB_HEADER)Buffer;
-            
-            if (!ARGUMENT_PRESENT(SpaceNeeded)) {
+
+            if (!ARGUMENT_PRESENT(SpaceNeeded))
+            {
                 CallbackRecord->State = BufferFinished;
             }
-            
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             // Set this state even when sizing as
             // we don't want to call a bad callback again.
             CallbackRecord->State = BufferIncomplete;
@@ -5247,11 +4775,7 @@ Return Values:
 }
 
 NTSTATUS
-IopInvokeDumpIoCallbacks(
-    IN PVOID Buffer,
-    IN ULONG BufferLength,
-    IN KBUGCHECK_DUMP_IO_TYPE Type
-    )
+IopInvokeDumpIoCallbacks(IN PVOID Buffer, IN ULONG BufferLength, IN KBUGCHECK_DUMP_IO_TYPE Type)
 
 /*++
 
@@ -5291,7 +4815,8 @@ Return Values:
     //
 
     ListHead = &KeBugCheckReasonCallbackListHead;
-    if (ListHead->Flink == NULL || ListHead->Blink == NULL) {
+    if (ListHead->Flink == NULL || ListHead->Blink == NULL)
+    {
         return STATUS_SUCCESS;
     }
 
@@ -5301,7 +4826,8 @@ Return Values:
 
     LastEntry = ListHead;
     NextEntry = ListHead->Flink;
-    while (NextEntry != ListHead) {
+    while (NextEntry != ListHead)
+    {
 
         //
         // The next entry address must be aligned properly, the
@@ -5309,24 +4835,26 @@ Return Values:
         // must have back link to the last entry.
         //
 
-        if (((ULONG_PTR)NextEntry & (sizeof(ULONG_PTR) - 1)) != 0) {
+        if (((ULONG_PTR)NextEntry & (sizeof(ULONG_PTR) - 1)) != 0)
+        {
             return STATUS_DATATYPE_MISALIGNMENT;
         }
 
-        CallbackRecord = CONTAINING_RECORD(NextEntry,
-                                           KBUGCHECK_REASON_CALLBACK_RECORD,
-                                           Entry);
+        CallbackRecord = CONTAINING_RECORD(NextEntry, KBUGCHECK_REASON_CALLBACK_RECORD, Entry);
 
         Source = (PUCHAR)CallbackRecord;
-        for (Index = 0; Index < sizeof(*CallbackRecord); Index += 1) {
-            if (MmIsAddressValid((PVOID)Source) == FALSE) {
+        for (Index = 0; Index < sizeof(*CallbackRecord); Index += 1)
+        {
+            if (MmIsAddressValid((PVOID)Source) == FALSE)
+            {
                 return STATUS_PARTIAL_COPY;
             }
-            
+
             Source += 1;
         }
 
-        if (CallbackRecord->Entry.Blink != LastEntry) {
+        if (CallbackRecord->Entry.Blink != LastEntry)
+        {
             return STATUS_INVALID_PARAMETER;
         }
 
@@ -5342,11 +4870,10 @@ Return Values:
         Checksum = (ULONG_PTR)CallbackRecord->CallbackRoutine;
         Checksum += (ULONG_PTR)CallbackRecord->Reason;
         Checksum += (ULONG_PTR)CallbackRecord->Component;
-        if ((CallbackRecord->State != BufferInserted) ||
-            (CallbackRecord->Checksum != Checksum) ||
+        if ((CallbackRecord->State != BufferInserted) || (CallbackRecord->Checksum != Checksum) ||
             (CallbackRecord->Reason != KbCallbackDumpIo) ||
-            MmIsAddressValid((PVOID)(ULONG_PTR)CallbackRecord->
-                             CallbackRoutine) == FALSE) {
+            MmIsAddressValid((PVOID)(ULONG_PTR)CallbackRecord->CallbackRoutine) == FALSE)
+        {
             continue;
         }
 
@@ -5355,7 +4882,8 @@ Return Values:
         // handle any exceptions that occur.
         //
 
-        try {
+        try
+        {
             KBUGCHECK_DUMP_IO CbArgument;
 
             // Currently we aren't allowing arbitrary I/O
@@ -5364,17 +4892,16 @@ Return Values:
             CbArgument.Buffer = Buffer;
             CbArgument.BufferLength = BufferLength;
             CbArgument.Type = Type;
-            
-            (CallbackRecord->CallbackRoutine)(KbCallbackDumpIo,
-                                              CallbackRecord,
-                                              &CbArgument,
-                                              sizeof(CbArgument));
 
-            if (Type == KbDumpIoComplete) {
+            (CallbackRecord->CallbackRoutine)(KbCallbackDumpIo, CallbackRecord, &CbArgument, sizeof(CbArgument));
+
+            if (Type == KbDumpIoComplete)
+            {
                 CallbackRecord->State = BufferFinished;
             }
-            
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             CallbackRecord->State = BufferIncomplete;
         }
     }
@@ -5382,11 +4909,9 @@ Return Values:
     return STATUS_SUCCESS;
 }
 
-
+
 NTSTATUS
-IopCompleteDumpInitialization(
-    IN HANDLE     FileHandle
-    )
+IopCompleteDumpInitialization(IN HANDLE FileHandle)
 
 /*++
 
@@ -5429,20 +4954,15 @@ Return Value:
     ULONG MaxSecondaryCbData;
 
     Status = STATUS_UNSUCCESSFUL;
-    ErrorToLog = STATUS_SUCCESS;    // No error
+    ErrorToLog = STATUS_SUCCESS; // No error
     FileObject = NULL;
     DeviceObject = NULL;
 
-    Status = ObReferenceObjectByHandle( FileHandle,
-                                        0,
-                                        IoFileObjectType,
-                                        KernelMode,
-                                        (PVOID *) &FileObject,
-                                        NULL
-                                        );
+    Status = ObReferenceObjectByHandle(FileHandle, 0, IoFileObjectType, KernelMode, (PVOID *)&FileObject, NULL);
 
-    if ( !NT_SUCCESS (Status) ) {
-        ASSERT (FALSE);
+    if (!NT_SUCCESS(Status))
+    {
+        ASSERT(FALSE);
         goto Cleanup;
     }
 
@@ -5454,35 +4974,27 @@ Return Value:
     // the retrieval pointers for the file.
     //
 
-    if ( !(DeviceObject->Flags & DO_SYSTEM_BOOT_PARTITION) ) {
+    if (!(DeviceObject->Flags & DO_SYSTEM_BOOT_PARTITION))
+    {
 
-        KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                    CRASHDUMP_ERROR,
-                    "CRASHDUMP: Cannot dump to pagefile on non-system partition.\n"
-                    "           DO = %p\n",
-                    DeviceObject));
+        KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_ERROR,
+                   "CRASHDUMP: Cannot dump to pagefile on non-system partition.\n"
+                   "           DO = %p\n",
+                   DeviceObject));
         goto Cleanup;
     }
 
-    Status = ZwQueryInformationFile(
-                                FileHandle,
-                                &IoStatusBlock,
-                                &StandardFileInfo,
-                                sizeof (StandardFileInfo),
-                                FileStandardInformation
-                                );
+    Status = ZwQueryInformationFile(FileHandle, &IoStatusBlock, &StandardFileInfo, sizeof(StandardFileInfo),
+                                    FileStandardInformation);
 
-    if (Status == STATUS_PENDING) {
-        Status = KeWaitForSingleObject( &FileObject->Event,
-                                        Executive,
-                                        KernelMode,
-                                        FALSE,
-                                        NULL
-                                        );
+    if (Status == STATUS_PENDING)
+    {
+        Status = KeWaitForSingleObject(&FileObject->Event, Executive, KernelMode, FALSE, NULL);
         Status = IoStatusBlock.Status;
     }
 
-    if ( !NT_SUCCESS (Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         goto Cleanup;
     }
 
@@ -5493,38 +5005,25 @@ Return Value:
 
     RequestedFileSize = IopDumpControlBlock->DumpFileSize;
 
-    IopGetSecondaryDumpDataLimits(IopDumpControlBlock->Flags,
-                                  &MaxSecondaryData, &MaxSecondaryCbData);
+    IopGetSecondaryDumpDataLimits(IopDumpControlBlock->Flags, &MaxSecondaryData, &MaxSecondaryCbData);
 
     RequestedFileSize.QuadPart += MaxSecondaryData;
-    
+
     //
     // Do not ask for more space than is in the pagefile.
     //
 
-    if (RequestedFileSize.QuadPart > StandardFileInfo.EndOfFile.QuadPart) {
+    if (RequestedFileSize.QuadPart > StandardFileInfo.EndOfFile.QuadPart)
+    {
         RequestedFileSize = StandardFileInfo.EndOfFile;
     }
 
-    Status = ZwFsControlFile(
-                        FileHandle,
-                        NULL,
-                        NULL,
-                        NULL,
-                        &IoStatusBlock,
-                        FSCTL_QUERY_RETRIEVAL_POINTERS,
-                        &RequestedFileSize,
-                        sizeof( LARGE_INTEGER ),
-                        &mcb,
-                        sizeof( PVOID )
-                        );
+    Status = ZwFsControlFile(FileHandle, NULL, NULL, NULL, &IoStatusBlock, FSCTL_QUERY_RETRIEVAL_POINTERS,
+                             &RequestedFileSize, sizeof(LARGE_INTEGER), &mcb, sizeof(PVOID));
 
-    if (Status == STATUS_PENDING) {
-        Status = KeWaitForSingleObject( &FileObject->Event,
-                                        Executive,
-                                        KernelMode,
-                                        FALSE,
-                                        NULL );
+    if (Status == STATUS_PENDING)
+    {
+        Status = KeWaitForSingleObject(&FileObject->Event, Executive, KernelMode, FALSE, NULL);
         Status = IoStatusBlock.Status;
     }
 
@@ -5534,14 +5033,12 @@ Return Value:
     // or FatQueryRetrievalPointers and see why you failed.
     //
 
-    if ( !NT_SUCCESS (Status) ) {
-        KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                    CRASHDUMP_ERROR,
-                    "CRASHDUMP: ZwFsControlFile returnd %d\n"
-                    "           File = %p\n",
-                    FileObject,
-                    Status
-                    ));
+    if (!NT_SUCCESS(Status))
+    {
+        KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_ERROR,
+                   "CRASHDUMP: ZwFsControlFile returnd %d\n"
+                   "           File = %p\n",
+                   FileObject, Status));
         ErrorToLog = IO_DUMP_POINTER_FAILURE;
         goto Cleanup;
     }
@@ -5552,7 +5049,8 @@ Return Value:
     // queried.  Walk the MCB to size it, and then checksum it.
     //
 
-    for (i = 0; mcb [i].QuadPart; i++) {
+    for (i = 0; mcb[i].QuadPart; i++)
+    {
         NOTHING;
     }
 
@@ -5561,44 +5059,33 @@ Return Value:
     //
 
     IopDumpControlBlock->FileDescriptorArray = mcb;
-    IopDumpControlBlock->FileDescriptorSize = (i + 1) * sizeof (LARGE_INTEGER);
+    IopDumpControlBlock->FileDescriptorSize = (i + 1) * sizeof(LARGE_INTEGER);
     IopDumpControlBlock->DumpFileSize = RequestedFileSize;
-    IopDumpControlBlockChecksum = IopGetDumpControlBlockCheck ( IopDumpControlBlock );
+    IopDumpControlBlockChecksum = IopGetDumpControlBlockCheck(IopDumpControlBlock);
 
     Status = STATUS_SUCCESS;
 
 Cleanup:
 
-    if (Status != STATUS_SUCCESS &&
-        ErrorToLog != STATUS_SUCCESS ) {
+    if (Status != STATUS_SUCCESS && ErrorToLog != STATUS_SUCCESS)
+    {
 
-        IopLogErrorEvent (0,
-                          4,
-                          STATUS_SUCCESS,
-                          ErrorToLog,
-                          0,
-                          NULL,
-                          0,
-                          NULL
-                          );
+        IopLogErrorEvent(0, 4, STATUS_SUCCESS, ErrorToLog, 0, NULL, 0, NULL);
     }
 
     DeviceObject = NULL;
 
-    if ( FileObject ) {
-        ObDereferenceObject( FileObject );
+    if (FileObject)
+    {
+        ObDereferenceObject(FileObject);
         FileObject = NULL;
     }
 
     return Status;
-
 }
 
-
-VOID
-IopFreeDCB(
-    BOOLEAN FreeDCB
-    )
+
+VOID IopFreeDCB(BOOLEAN FreeDCB)
 
 /*++
 
@@ -5620,25 +5107,30 @@ Return Value:
 
     dcb = IopDumpControlBlock;
 
-    if (dcb) {
+    if (dcb)
+    {
 
-        if (dcb->HeaderPage) {
-            ExFreePool (dcb->HeaderPage);
+        if (dcb->HeaderPage)
+        {
+            ExFreePool(dcb->HeaderPage);
             dcb->HeaderPage = NULL;
         }
 
-        if (dcb->FileDescriptorArray) {
-            ExFreePool (dcb->FileDescriptorArray);
+        if (dcb->FileDescriptorArray)
+        {
+            ExFreePool(dcb->FileDescriptorArray);
             dcb->FileDescriptorArray = NULL;
         }
 
-        if (dcb->DumpStack) {
-            IoFreeDumpStack (dcb->DumpStack);
+        if (dcb->DumpStack)
+        {
+            IoFreeDumpStack(dcb->DumpStack);
             dcb->DumpStack = NULL;
         }
 
-        if (dcb->TriageDumpBuffer) {
-            ExFreePool (dcb->TriageDumpBuffer);
+        if (dcb->TriageDumpBuffer)
+        {
+            ExFreePool(dcb->TriageDumpBuffer);
             dcb->TriageDumpBuffer = NULL;
             dcb->TriageDumpBufferSize = 0;
         }
@@ -5649,19 +5141,17 @@ Return Value:
 
         dcb->Flags = 0;
 
-        if (FreeDCB) {
+        if (FreeDCB)
+        {
             IopDumpControlBlock = NULL;
-            ExFreePool( dcb );
+            ExFreePool(dcb);
         }
     }
 }
 
 
-
 NTSTATUS
-IoConfigureCrashDump(
-    CRASHDUMP_CONFIGURATION Configuration
-    )
+IoConfigureCrashDump(CRASHDUMP_CONFIGURATION Configuration)
 
 /*++
 
@@ -5690,35 +5180,43 @@ Return Value:
     HANDLE FileHandle;
     PKTHREAD CurrentThread;
 
-    CurrentThread = KeGetCurrentThread ();
+    CurrentThread = KeGetCurrentThread();
     KeEnterCriticalRegionThread(CurrentThread);
-    switch (Configuration) {
+    switch (Configuration)
+    {
 
-        case CrashDumpDisable:
-            if (ExAcquireResourceExclusiveLite(&IopCrashDumpLock, FALSE)) {
-                IopFreeDCB (FALSE);
-                ExReleaseResourceLite(&IopCrashDumpLock);
+    case CrashDumpDisable:
+        if (ExAcquireResourceExclusiveLite(&IopCrashDumpLock, FALSE))
+        {
+            IopFreeDCB(FALSE);
+            ExReleaseResourceLite(&IopCrashDumpLock);
+        }
+        Status = STATUS_SUCCESS;
+        break;
+
+    case CrashDumpReconfigure:
+        FileHandle = MmGetSystemPageFile();
+        if (FileHandle == NULL)
+        {
+            Status = STATUS_OBJECT_NAME_NOT_FOUND;
+        }
+        else
+        {
+            ExAcquireResourceExclusiveLite(&IopCrashDumpLock, TRUE);
+            if (IoInitializeCrashDump(FileHandle))
+            {
+                Status = STATUS_SUCCESS;
             }
-            Status = STATUS_SUCCESS;
-            break;
-
-        case CrashDumpReconfigure:
-            FileHandle = MmGetSystemPageFile();
-            if (FileHandle == NULL) {
-                Status = STATUS_OBJECT_NAME_NOT_FOUND;
-            } else {
-                ExAcquireResourceExclusiveLite(&IopCrashDumpLock,TRUE);
-                if (IoInitializeCrashDump(FileHandle)) {
-                    Status = STATUS_SUCCESS;
-                } else {
-                    Status = STATUS_UNSUCCESSFUL;
-                }
-                ExReleaseResourceLite(&IopCrashDumpLock);
+            else
+            {
+                Status = STATUS_UNSUCCESSFUL;
             }
-            break;
+            ExReleaseResourceLite(&IopCrashDumpLock);
+        }
+        break;
 
-        default:
-            Status = STATUS_INVALID_DEVICE_REQUEST;
+    default:
+        Status = STATUS_INVALID_DEVICE_REQUEST;
     }
     KeLeaveCriticalRegionThread(CurrentThread);
 
@@ -5726,14 +5224,8 @@ Return Value:
 }
 
 
-
-VOID
-IopReadDumpRegistry(
-    OUT PULONG dumpControl,
-    OUT PULONG numberOfHeaderPages,
-    OUT PULONG autoReboot,
-    OUT PULONG dumpFileSize
-    )
+VOID IopReadDumpRegistry(OUT PULONG dumpControl, OUT PULONG numberOfHeaderPages, OUT PULONG autoReboot,
+                         OUT PULONG dumpFileSize)
 /*++
 
 Routine Description:
@@ -5751,13 +5243,13 @@ Return Value:
 --*/
 
 {
-    HANDLE                      keyHandle;
-    HANDLE                      crashHandle;
-    LOGICAL                     crashHandleOpened;
-    UNICODE_STRING              keyName;
-    NTSTATUS                    status;
+    HANDLE keyHandle;
+    HANDLE crashHandle;
+    LOGICAL crashHandleOpened;
+    UNICODE_STRING keyName;
+    NTSTATUS status;
     PKEY_VALUE_FULL_INFORMATION keyValueInformation;
-    ULONG                       handleValue;
+    ULONG handleValue;
 
     *dumpControl = 0;
     *autoReboot = 0;
@@ -5772,28 +5264,22 @@ Return Value:
 
     crashHandleOpened = FALSE;
 
-    RtlInitUnicodeString( &keyName, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control" );
+    RtlInitUnicodeString(&keyName, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control");
 
-    status = IopOpenRegistryKey( &keyHandle,
-                                 (HANDLE) NULL,
-                                 &keyName,
-                                 KEY_READ,
-                                 FALSE );
+    status = IopOpenRegistryKey(&keyHandle, (HANDLE)NULL, &keyName, KEY_READ, FALSE);
 
-    if (!NT_SUCCESS( status )) {
+    if (!NT_SUCCESS(status))
+    {
         return;
     }
 
-    RtlInitUnicodeString( &keyName, L"CrashControl" );
-    status = IopOpenRegistryKey( &crashHandle,
-                                 keyHandle,
-                                 &keyName,
-                                 KEY_READ,
-                                 FALSE );
+    RtlInitUnicodeString(&keyName, L"CrashControl");
+    status = IopOpenRegistryKey(&crashHandle, keyHandle, &keyName, KEY_READ, FALSE);
 
-    NtClose( keyHandle );
+    NtClose(keyHandle);
 
-    if (!NT_SUCCESS( status )) {
+    if (!NT_SUCCESS(status))
+    {
         return;
     }
 
@@ -5804,30 +5290,34 @@ Return Value:
     // dumping is enabled.
     //
 
-    status = IopGetRegistryValue( crashHandle,
-                                  L"CrashDumpEnabled",
-                                  &keyValueInformation );
+    status = IopGetRegistryValue(crashHandle, L"CrashDumpEnabled", &keyValueInformation);
 
-    if (NT_SUCCESS (status)) {
+    if (NT_SUCCESS(status))
+    {
 
-        if (keyValueInformation->DataLength) {
+        if (keyValueInformation->DataLength)
+        {
 
-            handleValue = * ((PULONG) ((PUCHAR) keyValueInformation + keyValueInformation->DataOffset));
-            ExFreePool( keyValueInformation );
+            handleValue = *((PULONG)((PUCHAR)keyValueInformation + keyValueInformation->DataOffset));
+            ExFreePool(keyValueInformation);
 
-            if (handleValue) {
+            if (handleValue)
+            {
 
                 *dumpControl |= DCB_DUMP_ENABLED;
 
-                if ( handleValue == 3 ) {
+                if (handleValue == 3)
+                {
 
                     *dumpControl |= DCB_TRIAGE_DUMP_ENABLED;
+                }
+                else if (handleValue == 4)
+                {
 
-                } else if ( handleValue == 4 ) {
-
-                    *dumpControl |= ( DCB_TRIAGE_DUMP_ENABLED | DCB_TRIAGE_DUMP_ACT_UPON_ENABLED );
-
-                } else if ( handleValue == 2 ) {
+                    *dumpControl |= (DCB_TRIAGE_DUMP_ENABLED | DCB_TRIAGE_DUMP_ACT_UPON_ENABLED);
+                }
+                else if (handleValue == 2)
+                {
 
                     *dumpControl |= DCB_SUMMARY_DUMP_ENABLED;
 
@@ -5836,39 +5326,38 @@ Return Value:
                     // dump header and bitmap.
                     //
 
-                    *numberOfHeaderPages = (ULONG) BYTES_TO_PAGES(
-                                            sizeof(DUMP_HEADER) +
-                                            ((MmPhysicalMemoryBlock->NumberOfPages / 8) + 1) +
-                                            sizeof (SUMMARY_DUMP));
-
+                    *numberOfHeaderPages = (ULONG)BYTES_TO_PAGES(
+                        sizeof(DUMP_HEADER) + ((MmPhysicalMemoryBlock->NumberOfPages / 8) + 1) + sizeof(SUMMARY_DUMP));
                 }
             }
         }
     }
 
-    status = IopGetRegistryValue( crashHandle,
-                                  L"LogEvent",
-                                  &keyValueInformation );
+    status = IopGetRegistryValue(crashHandle, L"LogEvent", &keyValueInformation);
 
-    if (NT_SUCCESS( status )) {
-         if (keyValueInformation->DataLength) {
-            handleValue = * ((PULONG) ((PUCHAR) keyValueInformation + keyValueInformation->DataOffset));
-            ExFreePool( keyValueInformation);
-            if (handleValue) {
+    if (NT_SUCCESS(status))
+    {
+        if (keyValueInformation->DataLength)
+        {
+            handleValue = *((PULONG)((PUCHAR)keyValueInformation + keyValueInformation->DataOffset));
+            ExFreePool(keyValueInformation);
+            if (handleValue)
+            {
                 *dumpControl |= DCB_SUMMARY_ENABLED;
             }
         }
     }
 
-    status = IopGetRegistryValue( crashHandle,
-                                  L"SendAlert",
-                                  &keyValueInformation );
+    status = IopGetRegistryValue(crashHandle, L"SendAlert", &keyValueInformation);
 
-    if (NT_SUCCESS( status )) {
-         if (keyValueInformation->DataLength) {
-            handleValue = * ((PULONG) ((PUCHAR) keyValueInformation + keyValueInformation->DataOffset));
-            ExFreePool( keyValueInformation);
-            if (handleValue) {
+    if (NT_SUCCESS(status))
+    {
+        if (keyValueInformation->DataLength)
+        {
+            handleValue = *((PULONG)((PUCHAR)keyValueInformation + keyValueInformation->DataOffset));
+            ExFreePool(keyValueInformation);
+            if (handleValue)
+            {
                 *dumpControl |= DCB_SUMMARY_ENABLED;
             }
         }
@@ -5878,47 +5367,48 @@ Return Value:
     // Now determine whether or not automatic reboot is enabled.
     //
 
-    status = IopGetRegistryValue( crashHandle,
-                                  L"AutoReboot",
-                                  &keyValueInformation );
+    status = IopGetRegistryValue(crashHandle, L"AutoReboot", &keyValueInformation);
 
 
-    if (NT_SUCCESS( status )) {
-        if (keyValueInformation->DataLength) {
-            *autoReboot = * ((PULONG) ((PUCHAR) keyValueInformation + keyValueInformation->DataOffset));
+    if (NT_SUCCESS(status))
+    {
+        if (keyValueInformation->DataLength)
+        {
+            *autoReboot = *((PULONG)((PUCHAR)keyValueInformation + keyValueInformation->DataOffset));
         }
-        ExFreePool( keyValueInformation );
+        ExFreePool(keyValueInformation);
     }
 
     //
     // If we aren't auto rebooting or crashing then return now.
     //
 
-    if (*dumpControl == 0 && *autoReboot == 0) {
-        if (crashHandleOpened == TRUE) {
-            NtClose( crashHandle );
+    if (*dumpControl == 0 && *autoReboot == 0)
+    {
+        if (crashHandleOpened == TRUE)
+        {
+            NtClose(crashHandle);
         }
         return;
     }
 
-    status = IopGetRegistryValue( crashHandle,
-                                  L"DumpFileSize",
-                                  &keyValueInformation );
+    status = IopGetRegistryValue(crashHandle, L"DumpFileSize", &keyValueInformation);
 
-    if (NT_SUCCESS( status )) {
-        if (keyValueInformation->DataLength) {
-            *dumpFileSize = * ((PULONG) ((PUCHAR) keyValueInformation + keyValueInformation->DataOffset));
+    if (NT_SUCCESS(status))
+    {
+        if (keyValueInformation->DataLength)
+        {
+            *dumpFileSize = *((PULONG)((PUCHAR)keyValueInformation + keyValueInformation->DataOffset));
         }
 
-        ExFreePool( keyValueInformation );
+        ExFreePool(keyValueInformation);
     }
     return;
 }
 
-
+
 BOOLEAN
-IopInitializeDCB(
-    )
+IopInitializeDCB()
 /*++
 
 Routine Description:
@@ -5936,27 +5426,25 @@ Return Value:
 --*/
 
 {
-    PDUMP_CONTROL_BLOCK         dcb;
-    ULONG                       dumpControl;
-    ULONG                       dcbSize;
-    LARGE_INTEGER               page;
-    ULONG                       numberOfHeaderPages;
-    ULONG                       dumpFileSize;
+    PDUMP_CONTROL_BLOCK dcb;
+    ULONG dumpControl;
+    ULONG dcbSize;
+    LARGE_INTEGER page;
+    ULONG numberOfHeaderPages;
+    ULONG dumpFileSize;
 
     //
     // Read all the registry default values first.
     //
 
-    IopReadDumpRegistry ( &dumpControl,
-                          &numberOfHeaderPages,
-                          &IopAutoReboot,
-                          &dumpFileSize);
+    IopReadDumpRegistry(&dumpControl, &numberOfHeaderPages, &IopAutoReboot, &dumpFileSize);
 
     //
     // If we aren't crashing or auto rebooting then return now.
     //
 
-    if (dumpControl == 0 && IopAutoReboot == 0) {
+    if (dumpControl == 0 && IopAutoReboot == 0)
+    {
 
         //
         // At some point, we will conditionally on system size, type, etc,
@@ -5970,7 +5458,8 @@ Return Value:
         return TRUE;
     }
 
-    if (dumpControl & DCB_TRIAGE_DUMP_ENABLED) {
+    if (dumpControl & DCB_TRIAGE_DUMP_ENABLED)
+    {
         dumpControl &= ~DCB_SUMMARY_ENABLED;
         dumpFileSize = TRIAGE_DUMP_SIZE;
     }
@@ -5980,31 +5469,28 @@ Return Value:
     // the post-bugcheck code.
     //
 
-    dcbSize = sizeof( DUMP_CONTROL_BLOCK ) + sizeof( MINIPORT_NODE );
-    dcb = ExAllocatePool( NonPagedPool, dcbSize );
+    dcbSize = sizeof(DUMP_CONTROL_BLOCK) + sizeof(MINIPORT_NODE);
+    dcb = ExAllocatePool(NonPagedPool, dcbSize);
 
-    if (!dcb) {
-        KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                    CRASHDUMP_ERROR,
-                    "CRASHDUMP: Not enough pool to allocate DCB %d\n",
-                    __LINE__
-                    ));
+    if (!dcb)
+    {
+        KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_ERROR, "CRASHDUMP: Not enough pool to allocate DCB %d\n", __LINE__));
 
-        IopLogErrorEvent(0,1,STATUS_SUCCESS,IO_DUMP_INITIALIZATION_FAILURE,0,NULL,0,NULL);
+        IopLogErrorEvent(0, 1, STATUS_SUCCESS, IO_DUMP_INITIALIZATION_FAILURE, 0, NULL, 0, NULL);
         return FALSE;
     }
 
-    RtlZeroMemory( dcb, dcbSize );
+    RtlZeroMemory(dcb, dcbSize);
     dcb->Type = IO_TYPE_DCB;
-    dcb->Size = (USHORT) dcbSize;
-    dcb->Flags = (UCHAR) dumpControl;
+    dcb->Size = (USHORT)dcbSize;
+    dcb->Flags = (UCHAR)dumpControl;
     dcb->NumberProcessors = KeNumberProcessors;
     dcb->ProcessorArchitecture = KeProcessorArchitecture;
-    dcb->MinorVersion = (USHORT) NtBuildNumber;
-    dcb->MajorVersion = (USHORT) ((NtBuildNumber >> 28) & 0xfffffff);
+    dcb->MinorVersion = (USHORT)NtBuildNumber;
+    dcb->MajorVersion = (USHORT)((NtBuildNumber >> 28) & 0xfffffff);
     dcb->BuildNumber = CmNtCSDVersion;
-    dcb->TriageDumpFlags = TRIAGE_DUMP_BASIC_INFO | TRIAGE_DUMP_MMINFO |
-                           TRIAGE_DUMP_DEBUGGER_DATA | TRIAGE_DUMP_DATA_BLOCKS;
+    dcb->TriageDumpFlags =
+        TRIAGE_DUMP_BASIC_INFO | TRIAGE_DUMP_MMINFO | TRIAGE_DUMP_DEBUGGER_DATA | TRIAGE_DUMP_DATA_BLOCKS;
 
     dcb->DumpFileSize.QuadPart = dumpFileSize;
 
@@ -6013,19 +5499,16 @@ Return Value:
     //
 
     dcb->HeaderSize = numberOfHeaderPages * PAGE_SIZE;
-    dcb->HeaderPage = ExAllocatePool( NonPagedPool, dcb->HeaderSize );
+    dcb->HeaderPage = ExAllocatePool(NonPagedPool, dcb->HeaderSize);
 
-    if (!dcb->HeaderPage) {
-        ExFreePool (dcb);
-        KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                    CRASHDUMP_ERROR,
-                    "CRASHDUMP: Not enough pool to allocate DCB %d\n",
-                    __LINE__
-                    ));
-        IopLogErrorEvent(0,1,STATUS_SUCCESS,IO_DUMP_INITIALIZATION_FAILURE,0,NULL,0,NULL);
+    if (!dcb->HeaderPage)
+    {
+        ExFreePool(dcb);
+        KdPrintEx((DPFLTR_CRASHDUMP_ID, CRASHDUMP_ERROR, "CRASHDUMP: Not enough pool to allocate DCB %d\n", __LINE__));
+        IopLogErrorEvent(0, 1, STATUS_SUCCESS, IO_DUMP_INITIALIZATION_FAILURE, 0, NULL, 0, NULL);
         return FALSE;
     }
-    page = MmGetPhysicalAddress( dcb->HeaderPage );
+    page = MmGetPhysicalAddress(dcb->HeaderPage);
     dcb->HeaderPfn = (ULONG)(page.QuadPart >> PAGE_SHIFT);
 
 
@@ -6033,23 +5516,19 @@ Return Value:
     // Allocate the triage-dump buffer.
     //
 
-    if (dumpControl & DCB_TRIAGE_DUMP_ENABLED) {
+    if (dumpControl & DCB_TRIAGE_DUMP_ENABLED)
+    {
 
-        dcb->TriageDumpBuffer = ExAllocatePool  (
-                                    NonPagedPool,
-                                    dumpFileSize
-                                    );
+        dcb->TriageDumpBuffer = ExAllocatePool(NonPagedPool, dumpFileSize);
 
-        if (!dcb->TriageDumpBuffer) {
-            ExFreePool (dcb->HeaderPage);
-            ExFreePool (dcb);
+        if (!dcb->TriageDumpBuffer)
+        {
+            ExFreePool(dcb->HeaderPage);
+            ExFreePool(dcb);
 
-            KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                        CRASHDUMP_ERROR,
-                        "CRASHDUMP: Not enough pool to allocate DCB %d\n",
-                        __LINE__
-                        ));
-            IopLogErrorEvent(0,1,STATUS_SUCCESS,IO_DUMP_INITIALIZATION_FAILURE,0,NULL,0,NULL);
+            KdPrintEx(
+                (DPFLTR_CRASHDUMP_ID, CRASHDUMP_ERROR, "CRASHDUMP: Not enough pool to allocate DCB %d\n", __LINE__));
+            IopLogErrorEvent(0, 1, STATUS_SUCCESS, IO_DUMP_INITIALIZATION_FAILURE, 0, NULL, 0, NULL);
             return FALSE;
         }
 
@@ -6061,11 +5540,9 @@ Return Value:
     return TRUE;
 }
 
-
+
 BOOLEAN
-IoInitializeCrashDump(
-    IN HANDLE hPageFile
-    )
+IoInitializeCrashDump(IN HANDLE hPageFile)
 /*++
 
 Routine Description:
@@ -6097,23 +5574,25 @@ Return Value:
 
 --*/
 {
-    NTSTATUS        dwStatus;
-    PFILE_OBJECT    fileObject;
-    PDEVICE_OBJECT  deviceObject;
+    NTSTATUS dwStatus;
+    PFILE_OBJECT fileObject;
+    PDEVICE_OBJECT deviceObject;
 
     //
     // If crashdump is already enabled, free it and reinitialize with the
     // current settings.
     //
-    IopFreeDCB (TRUE);
-    if (!IopInitializeDCB()) {
+    IopFreeDCB(TRUE);
+    if (!IopInitializeDCB())
+    {
         return TRUE;
     }
 
     //
     // Return crash dump not enabled
     //
-    if (!IopDumpControlBlock) {
+    if (!IopDumpControlBlock)
+    {
         return TRUE;
     }
 
@@ -6121,7 +5600,8 @@ Return Value:
     //  No dump enabled?
     //
 
-    if ( !( IopDumpControlBlock->Flags & (DCB_DUMP_ENABLED | DCB_SUMMARY_ENABLED) ) ) {
+    if (!(IopDumpControlBlock->Flags & (DCB_DUMP_ENABLED | DCB_SUMMARY_ENABLED)))
+    {
         return TRUE;
     }
 
@@ -6129,16 +5609,10 @@ Return Value:
     // Configure the paging file for crash dump.
     //
 
-    dwStatus = ObReferenceObjectByHandle(
-                                        hPageFile,
-                                        0,
-                                        IoFileObjectType,
-                                        KernelMode,
-                                        (PVOID *) &fileObject,
-                                        NULL
-                                        );
+    dwStatus = ObReferenceObjectByHandle(hPageFile, 0, IoFileObjectType, KernelMode, (PVOID *)&fileObject, NULL);
 
-    if (!NT_SUCCESS( dwStatus )) {
+    if (!NT_SUCCESS(dwStatus))
+    {
         goto error_return;
     }
 
@@ -6150,7 +5624,7 @@ Return Value:
 
     deviceObject = fileObject->DeviceObject;
 
-    ObDereferenceObject( fileObject );
+    ObDereferenceObject(fileObject);
 
     //
     // This should never be called on devices that are not the boot partition
@@ -6161,28 +5635,22 @@ Return Value:
     // Load paging file dump stack
     //
 
-    dwStatus = IoGetDumpStack (L"dump_",
-                               &IopDumpControlBlock->DumpStack,
-                               DeviceUsageTypeDumpFile,
-                               FALSE);
+    dwStatus = IoGetDumpStack(L"dump_", &IopDumpControlBlock->DumpStack, DeviceUsageTypeDumpFile, FALSE);
 
-    if (!NT_SUCCESS(dwStatus)) {
-        KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                    CRASHDUMP_ERROR,
-                    "CRASHDUMP: Could not load dump stack status = %x\n",
-                    dwStatus
-                    ));
+    if (!NT_SUCCESS(dwStatus))
+    {
+        KdPrintEx(
+            (DPFLTR_CRASHDUMP_ID, CRASHDUMP_ERROR, "CRASHDUMP: Could not load dump stack status = %x\n", dwStatus));
         goto error_return;
     }
 
     IopDumpControlBlock->DumpStack->Init.CrashDump = TRUE;
 
-    IopDumpControlBlock->DumpStack->Init.MemoryBlock = ExAllocatePool (
-                                                NonPagedPool,
-                                                IO_DUMP_MEMORY_BLOCK_PAGES * PAGE_SIZE
-                                                );
+    IopDumpControlBlock->DumpStack->Init.MemoryBlock =
+        ExAllocatePool(NonPagedPool, IO_DUMP_MEMORY_BLOCK_PAGES * PAGE_SIZE);
 
-    if (!IopDumpControlBlock->DumpStack->Init.MemoryBlock) {
+    if (!IopDumpControlBlock->DumpStack->Init.MemoryBlock)
+    {
         dwStatus = STATUS_NO_MEMORY;
         goto error_return;
     }
@@ -6192,12 +5660,8 @@ Return Value:
     // Calculate the amount of space required for the dump
     //
     IopDumpControlBlock->DumpFileSize =
-        IopCalculateRequiredDumpSpace(
-            IopDumpControlBlock->Flags,
-            IopDumpControlBlock->HeaderSize,
-            MmPhysicalMemoryBlock->NumberOfPages,
-            MmPhysicalMemoryBlock->NumberOfPages
-            );
+        IopCalculateRequiredDumpSpace(IopDumpControlBlock->Flags, IopDumpControlBlock->HeaderSize,
+                                      MmPhysicalMemoryBlock->NumberOfPages, MmPhysicalMemoryBlock->NumberOfPages);
 
 
     //
@@ -6214,13 +5678,11 @@ error_return:
     //   2. Return TRUE so that MM does not try again
     //
 
-    if (!NT_SUCCESS(dwStatus)) {
+    if (!NT_SUCCESS(dwStatus))
+    {
 
-        KdPrintEx ((DPFLTR_CRASHDUMP_ID,
-                    CRASHDUMP_ERROR,
-                    "CRASHDUMP: Page File dump init FAILED status = %x\n",
-                    dwStatus
-                    ));
+        KdPrintEx(
+            (DPFLTR_CRASHDUMP_ID, CRASHDUMP_ERROR, "CRASHDUMP: Page File dump init FAILED status = %x\n", dwStatus));
         IopLogErrorEvent(0, 3, STATUS_SUCCESS, IO_DUMP_PAGE_CONFIG_FAILED, 0, NULL, 0, NULL);
 
         //
@@ -6231,7 +5693,6 @@ error_return:
         //
 
         IopFreeDCB(FALSE);
-
     }
 
     return TRUE;
@@ -6239,12 +5700,7 @@ error_return:
 
 #define TRIAGE_DUMP_DATA_SIZE (TRIAGE_DUMP_SIZE - sizeof(ULONG))
 
-static
-BOOLEAN
-IopValidateSectionSize(
-    ULONG Offset,
-    ULONG* pSectionSize
-    )
+static BOOLEAN IopValidateSectionSize(ULONG Offset, ULONG *pSectionSize)
 
 /*++
 
@@ -6267,20 +5723,15 @@ Return Value:
 --*/
 
 {
-    if ((Offset + *pSectionSize) < TRIAGE_DUMP_DATA_SIZE) return TRUE;
-    
-    *pSectionSize = (Offset < TRIAGE_DUMP_DATA_SIZE) ? 
-                           (TRIAGE_DUMP_DATA_SIZE - Offset) : 0;
+    if ((Offset + *pSectionSize) < TRIAGE_DUMP_DATA_SIZE)
+        return TRUE;
+
+    *pSectionSize = (Offset < TRIAGE_DUMP_DATA_SIZE) ? (TRIAGE_DUMP_DATA_SIZE - Offset) : 0;
     return FALSE;
 }
 
-static
-ULONG
-IopGetMaxValidSectionSize(
-    ULONG_PTR Base, 
-    ULONG  MaxSize
-    )
-    
+static ULONG IopGetMaxValidSectionSize(ULONG_PTR Base, ULONG MaxSize)
+
 /*++
 
 Routine Description:
@@ -6298,24 +5749,19 @@ Return Value:
     SectionMaxSize
 
 --*/
-    
+
 {
     ULONG Size = 0;
 
     // XXX olegk - optimize it later to iterate by page size
     while ((Size < MaxSize) && (MmIsAddressValid((PVOID)(Base + Size))))
         ++Size;
-    
+
     return Size;
 }
 
-static
-ULONG
-IopGetMaxValidSectionSizeDown(
-    ULONG_PTR Base, 
-    ULONG MaxSize
-    )
-    
+static ULONG IopGetMaxValidSectionSizeDown(ULONG_PTR Base, ULONG MaxSize)
+
 /*++
 
 Routine Description:
@@ -6333,30 +5779,24 @@ Return Value:
     SectionMaxSize
 
 --*/
-    
+
 {
     ULONG Size = 0;
-    
-    if ((ULONG_PTR)Base < (ULONG_PTR)MaxSize) MaxSize = (ULONG)Base;
+
+    if ((ULONG_PTR)Base < (ULONG_PTR)MaxSize)
+        MaxSize = (ULONG)Base;
 
     // XXX olegk - optimize it later to iterate by page size
     while ((Size < MaxSize) && (MmIsAddressValid((PVOID)(Base - Size))))
         ++Size;
-    
+
     return Size;
 }
 
 ULONG
-KeCapturePersistentThreadState(
-    PCONTEXT pContext,
-    PETHREAD pThread,
-    ULONG ulBugCheckCode,
-    ULONG_PTR ulpBugCheckParam1,
-    ULONG_PTR ulpBugCheckParam2,
-    ULONG_PTR ulpBugCheckParam3,
-    ULONG_PTR ulpBugCheckParam4,
-    PVOID pvDump
-    )
+KeCapturePersistentThreadState(PCONTEXT pContext, PETHREAD pThread, ULONG ulBugCheckCode, ULONG_PTR ulpBugCheckParam1,
+                               ULONG_PTR ulpBugCheckParam2, ULONG_PTR ulpBugCheckParam3, ULONG_PTR ulpBugCheckParam4,
+                               PVOID pvDump)
 
 /*++
 
@@ -6384,7 +5824,7 @@ Return Value:
     Actual size of the dump file to save on disk (always at least TRIAGE_DUMP_SIZE)
 
 --*/
-                      
+
 {
     PMEMORY_DUMP pDump = (PMEMORY_DUMP)pvDump;
     PDUMP_HEADER pdh = &(pDump->Header);
@@ -6392,106 +5832,107 @@ Return Value:
     ULONG Offset = 0, SectionSize = 0;
     PKDDEBUGGER_DATA64 pKdDebuggerDataBlock = (PKDDEBUGGER_DATA64)KdGetDataBlock();
     PEPROCESS pProcess;
-    
-    if (!pvDump) return 0;
-    
-    if (!pThread) pThread = PsGetCurrentThread();
+
+    if (!pvDump)
+        return 0;
+
+    if (!pThread)
+        pThread = PsGetCurrentThread();
     pProcess = (PEPROCESS)pThread->Tcb.ApcState.Process;
-    
+
     RtlZeroMemory(pDump, TRIAGE_DUMP_SIZE);
-    
+
     //
     // Fill the dump header with signature
     //
-    
+
     RtlFillMemoryUlong(pdh, sizeof(*pdh), DUMP_SIGNATURE);
-    
+
     pdh->Signature = DUMP_SIGNATURE;
     pdh->ValidDump = DUMP_VALID_DUMP;
-    
-    pdh->MinorVersion = (USHORT) NtBuildNumber;
-    pdh->MajorVersion = (USHORT) ((NtBuildNumber >> 28) & 0xfffffff);
 
-#if defined (_IA64_)
+    pdh->MinorVersion = (USHORT)NtBuildNumber;
+    pdh->MajorVersion = (USHORT)((NtBuildNumber >> 28) & 0xfffffff);
+
+#if defined(_IA64_)
     pdh->DirectoryTableBase = MmSystemParentTablePage << PAGE_SHIFT;
 #else
     pdh->DirectoryTableBase = pThread->Tcb.ApcState.Process->DirectoryTableBase[0];
 #endif
-    
+
     pdh->PfnDataBase = (ULONG_PTR)MmPfnDatabase;
     pdh->PsLoadedModuleList = (ULONG_PTR)&PsLoadedModuleList;
     pdh->PsActiveProcessHead = (ULONG_PTR)&PsActiveProcessHead;
 
     pdh->MachineImageType = CURRENT_IMAGE_TYPE();
     pdh->NumberProcessors = KeNumberProcessors;
-   
+
     pdh->BugCheckCode = ulBugCheckCode;
     pdh->BugCheckParameter1 = ulpBugCheckParam1;
     pdh->BugCheckParameter2 = ulpBugCheckParam2;
     pdh->BugCheckParameter3 = ulpBugCheckParam3;
     pdh->BugCheckParameter4 = ulpBugCheckParam4;
 
-#if defined (_X86_)
-    pdh->PaeEnabled = X86PaeEnabled ();
+#if defined(_X86_)
+    pdh->PaeEnabled = X86PaeEnabled();
 #endif
 
-    pdh->Exception.ExceptionCode = STATUS_BREAKPOINT;   // XXX olegk - ???
+    pdh->Exception.ExceptionCode = STATUS_BREAKPOINT; // XXX olegk - ???
     pdh->Exception.ExceptionRecord = 0;
     pdh->Exception.NumberParameters = 0;
     pdh->Exception.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
-    pdh->Exception.ExceptionAddress = PROGRAM_COUNTER (pContext);
-    
+    pdh->Exception.ExceptionAddress = PROGRAM_COUNTER(pContext);
+
     pdh->RequiredDumpSpace.QuadPart = TRIAGE_DUMP_SIZE;
-    
-    pdh->SystemTime.LowPart  = SharedUserData->SystemTime.LowPart;
+
+    pdh->SystemTime.LowPart = SharedUserData->SystemTime.LowPart;
     pdh->SystemTime.HighPart = SharedUserData->SystemTime.High1Time;
 
-    pdh->SystemUpTime.LowPart  = SharedUserData->InterruptTime.LowPart;
+    pdh->SystemUpTime.LowPart = SharedUserData->InterruptTime.LowPart;
     pdh->SystemUpTime.HighPart = SharedUserData->InterruptTime.High1Time;
-    
+
     pdh->DumpType = DUMP_TYPE_TRIAGE;
-    pdh->MiniDumpFields = TRIAGE_DUMP_EXCEPTION | 
-                          TRIAGE_DUMP_BROKEN_DRIVER; // XXX olegk - debugger need it for memory mapping
-    
+    pdh->MiniDumpFields =
+        TRIAGE_DUMP_EXCEPTION | TRIAGE_DUMP_BROKEN_DRIVER; // XXX olegk - debugger need it for memory mapping
+
     pdh->ProductType = SharedUserData->NtProductType;
     pdh->SuiteMask = SharedUserData->SuiteMask;
-    
+
     //
     // TRIAGE header
-    //   
-    
+    //
+
     ptdh->TriageOptions = 0;
     ptdh->ServicePackBuild = CmNtCSDVersion;
     ptdh->SizeOfDump = TRIAGE_DUMP_SIZE;
     ptdh->ExceptionOffset = FIELD_OFFSET(DUMP_HEADER, Exception);
-    
+
     ptdh->BrokenDriverOffset = 0;
-    
+
     Offset = sizeof(DUMP_HEADER) + sizeof(TRIAGE_DUMP);
-    
+
     //
     // Context
     //
-    
+
     pdh->MiniDumpFields |= TRIAGE_DUMP_CONTEXT;
-    ptdh->ContextOffset = FIELD_OFFSET (DUMP_HEADER, ContextRecord);
+    ptdh->ContextOffset = FIELD_OFFSET(DUMP_HEADER, ContextRecord);
     RtlCopyMemory(pdh->ContextRecord, pContext, sizeof(CONTEXT));
-    
+
     //
     // Save debugger data block
     //
-    
+
     SectionSize = sizeof(KDDEBUGGER_DATA64);
-    if (IopValidateSectionSize(ALIGN_8(Offset), &SectionSize)) {
+    if (IopValidateSectionSize(ALIGN_8(Offset), &SectionSize))
+    {
         Offset = ALIGN_8(Offset);
         pdh->MiniDumpFields |= TRIAGE_DUMP_DEBUGGER_DATA;
         pdh->KdDebuggerDataBlock = (LONG_PTR)pKdDebuggerDataBlock;
         ptdh->DebuggerDataOffset = Offset;
         ptdh->DebuggerDataSize = sizeof(KDDEBUGGER_DATA64);
-        RtlCopyMemory((char*)pDump + Offset, 
-                      pKdDebuggerDataBlock, 
-                      SectionSize);
-        Offset += SectionSize;                          
+        RtlCopyMemory((char *)pDump + Offset, pKdDebuggerDataBlock, SectionSize);
+        Offset += SectionSize;
     }
 
     //
@@ -6499,13 +5940,12 @@ Return Value:
     //
 
     SectionSize = sizeof(KPRCB);
-    if (IopValidateSectionSize(ALIGN_8(Offset), &SectionSize)) {
+    if (IopValidateSectionSize(ALIGN_8(Offset), &SectionSize))
+    {
         Offset = ALIGN_8(Offset);
         pdh->MiniDumpFields |= TRIAGE_DUMP_PRCB;
         ptdh->PrcbOffset = Offset;
-        RtlCopyMemory((char*)pDump + Offset, 
-                      KeGetCurrentPrcb(), 
-                      SectionSize);
+        RtlCopyMemory((char *)pDump + Offset, KeGetCurrentPrcb(), SectionSize);
         Offset += SectionSize;
     }
 
@@ -6514,124 +5954,116 @@ Return Value:
     //
 
     SectionSize = sizeof(EPROCESS);
-    if (IopValidateSectionSize(ALIGN_8(Offset), &SectionSize)) {
+    if (IopValidateSectionSize(ALIGN_8(Offset), &SectionSize))
+    {
         Offset = ALIGN_8(Offset);
         pdh->MiniDumpFields |= TRIAGE_DUMP_PROCESS;
         ptdh->ProcessOffset = Offset;
-        RtlCopyMemory((char*)pDump + Offset, 
-                      pThread->Tcb.ApcState.Process,
-                      SectionSize);
+        RtlCopyMemory((char *)pDump + Offset, pThread->Tcb.ApcState.Process, SectionSize);
         Offset += SectionSize;
     }
 
     //
     // Write the ETHREAD
     //
-    
+
     SectionSize = sizeof(ETHREAD);
-    if (IopValidateSectionSize(ALIGN_8(Offset), &SectionSize)) {
+    if (IopValidateSectionSize(ALIGN_8(Offset), &SectionSize))
+    {
         Offset = ALIGN_8(Offset);
         pdh->MiniDumpFields |= TRIAGE_DUMP_THREAD;
         ptdh->ThreadOffset = Offset;
-        RtlCopyMemory((PUCHAR)pDump + Offset,
-                      pThread,
-                      SectionSize);
+        RtlCopyMemory((PUCHAR)pDump + Offset, pThread, SectionSize);
         Offset += SectionSize;
     }
 
     //
     // Call Stack (and backing store on ia64)
-    // 
-   
-    if (pThread->Tcb.KernelStackResident) {
+    //
+
+    if (pThread->Tcb.KernelStackResident)
+    {
         ULONG_PTR StackBase = (ULONG_PTR)pThread->Tcb.StackBase;
         ULONG_PTR StackLimit = (ULONG_PTR)pThread->Tcb.StackLimit;
         ULONG_PTR StackTop = STACK_POINTER(pContext);
-        
-        if ((StackLimit > StackTop) || (StackTop >= StackBase)) 
+
+        if ((StackLimit > StackTop) || (StackTop >= StackBase))
             StackTop = (ULONG_PTR)pThread->Tcb.StackLimit;
-            
+
         SectionSize = (StackBase > StackTop) ? (ULONG)(StackBase - StackTop) : 0;
         SectionSize = min(SectionSize, MAX_TRIAGE_STACK_SIZE - 1);
         SectionSize = IopGetMaxValidSectionSize(StackTop, SectionSize);
-        
-        if (SectionSize) {
-            if (!IopValidateSectionSize(Offset, &SectionSize)) 
+
+        if (SectionSize)
+        {
+            if (!IopValidateSectionSize(Offset, &SectionSize))
                 ptdh->TriageOptions |= TRIAGE_OPTION_OVERFLOWED;
-            
+
             pdh->MiniDumpFields |= TRIAGE_DUMP_STACK;
             ptdh->CallStackOffset = Offset;
             ptdh->SizeOfCallStack = SectionSize;
             ptdh->TopOfStack = (LONG_PTR)StackTop;
-            
-            RtlCopyMemory((char*)pDump + Offset, 
-                          (char*)StackTop,
-                          SectionSize);
-            
+
+            RtlCopyMemory((char *)pDump + Offset, (char *)StackTop, SectionSize);
+
             Offset += SectionSize;
         }
 
-#if defined(_IA64_)         
+#if defined(_IA64_)
         {
             ULONG_PTR BStoreTop = pContext->RsBSP;
             ULONG_PTR BStoreBase = (ULONG_PTR)pThread->Tcb.InitialBStore;
             ULONG_PTR BStoreLimit = (ULONG_PTR)pThread->Tcb.BStoreLimit;
-            
+
             if ((BStoreBase >= BStoreTop) || (BStoreTop > BStoreLimit))
                 BStoreTop = (ULONG_PTR)pThread->Tcb.BStoreLimit;
-        
+
             SectionSize = (BStoreTop > BStoreBase) ? (ULONG)(BStoreTop - BStoreBase) : 0;
             SectionSize = min(SectionSize, MAX_TRIAGE_STACK_SIZE - 1);
             SectionSize = IopGetMaxValidSectionSizeDown(BStoreTop, SectionSize);
-                                
-            if (SectionSize) {
+
+            if (SectionSize)
+            {
                 if (!IopValidateSectionSize(Offset, &SectionSize))
                     ptdh->TriageOptions |= TRIAGE_OPTION_OVERFLOWED;
-                
+
                 ptdh->ArchitectureSpecific.Ia64.BStoreOffset = Offset;
                 ptdh->ArchitectureSpecific.Ia64.SizeOfBStore = SectionSize;
                 ptdh->ArchitectureSpecific.Ia64.LimitOfBStore = (LONG_PTR)BStoreTop;
-                RtlCopyMemory((char*)pDump + Offset, 
-                              (char*)BStoreTop - SectionSize + 1,
-                              SectionSize);
-                              
+                RtlCopyMemory((char *)pDump + Offset, (char *)BStoreTop - SectionSize + 1, SectionSize);
+
                 Offset += SectionSize;
             }
         }
-#endif // defined(_IA64_)        
+#endif // defined(_IA64_)
     }
 
     //
     // Loaded modules list
     //
-    
+
     {
         ULONG DrvOffset = ALIGN_8(Offset);
         ULONG DrvCount, StrDataSize;
         KIRQL OldIrql;
-        
+
         OldIrql = KeGetCurrentIrql();
-        if (OldIrql < DISPATCH_LEVEL) {
+        if (OldIrql < DISPATCH_LEVEL)
+        {
             KeRaiseIrqlToDpcLevel();
         }
-        ExAcquireSpinLockAtDpcLevel(&PsLoadedModuleSpinLock);        
-        
-        if (NT_SUCCESS(IopGetLoadedDriverInfo(&DrvCount, &StrDataSize))) {
+        ExAcquireSpinLockAtDpcLevel(&PsLoadedModuleSpinLock);
+
+        if (NT_SUCCESS(IopGetLoadedDriverInfo(&DrvCount, &StrDataSize)))
+        {
             SectionSize = ALIGN_8(DrvCount * sizeof(DUMP_DRIVER_ENTRY));
-            if (SectionSize && 
-                IopValidateSectionSize(DrvOffset, &SectionSize)) 
+            if (SectionSize && IopValidateSectionSize(DrvOffset, &SectionSize))
             {
                 ULONG StrOffset = DrvOffset + SectionSize;
-                SectionSize = ALIGN_8(StrDataSize + 
-                                      DrvCount * (sizeof(WCHAR) + 
-                                      sizeof(DUMP_STRING)));
-                if (SectionSize && 
-                    IopValidateSectionSize(StrOffset, &SectionSize)) 
+                SectionSize = ALIGN_8(StrDataSize + DrvCount * (sizeof(WCHAR) + sizeof(DUMP_STRING)));
+                if (SectionSize && IopValidateSectionSize(StrOffset, &SectionSize))
                 {
-                    if (NT_SUCCESS(IopWriteDriverList((ULONG_PTR)pDump, 
-                                                      TRIAGE_DUMP_DATA_SIZE,
-                                                      DrvOffset,
-                                                      StrOffset)))
+                    if (NT_SUCCESS(IopWriteDriverList((ULONG_PTR)pDump, TRIAGE_DUMP_DATA_SIZE, DrvOffset, StrOffset)))
                     {
                         pdh->MiniDumpFields |= TRIAGE_DUMP_DRIVER_LIST;
                         ptdh->DriverListOffset = DrvOffset;
@@ -6640,52 +6072,55 @@ Return Value:
                         ptdh->StringPoolSize = SectionSize;
                         Offset = StrOffset + SectionSize;
                     }
-                } else {
+                }
+                else
+                {
                     ptdh->TriageOptions |= TRIAGE_OPTION_OVERFLOWED;
                 }
-            } else {
+            }
+            else
+            {
                 ptdh->TriageOptions |= TRIAGE_OPTION_OVERFLOWED;
             }
-        } 
-        
+        }
+
         ExReleaseSpinLock(&PsLoadedModuleSpinLock, OldIrql);
     } // Loaded modules list
-    
+
     //
     // Save some current code
     //
 
     SectionSize = PAGE_SIZE + sizeof(TRIAGE_DATA_BLOCK);
     IopValidateSectionSize(ALIGN_8(Offset), &SectionSize);
-    if (SectionSize > sizeof(TRIAGE_DATA_BLOCK)) {
+    if (SectionSize > sizeof(TRIAGE_DATA_BLOCK))
+    {
         ULONG DataSize = SectionSize - sizeof(TRIAGE_DATA_BLOCK);
-        ULONG PreIpSize = IopGetMaxValidSectionSizeDown(PROGRAM_COUNTER(pContext), 
-                                                        DataSize / 2);
-                                                        
-        if (PreIpSize) {                                                        
-            ULONG_PTR CodeStartOffset = PROGRAM_COUNTER(pContext) - PreIpSize + 1;
-            DataSize = IopGetMaxValidSectionSize(CodeStartOffset, 
-                                                 DataSize);
+        ULONG PreIpSize = IopGetMaxValidSectionSizeDown(PROGRAM_COUNTER(pContext), DataSize / 2);
 
-            if (DataSize) {
+        if (PreIpSize)
+        {
+            ULONG_PTR CodeStartOffset = PROGRAM_COUNTER(pContext) - PreIpSize + 1;
+            DataSize = IopGetMaxValidSectionSize(CodeStartOffset, DataSize);
+
+            if (DataSize)
+            {
                 PTRIAGE_DATA_BLOCK pDataBlock;
-            
+
                 Offset = ALIGN_8(Offset);
-            
+
                 pdh->MiniDumpFields |= TRIAGE_DUMP_DATA_BLOCKS;
                 ptdh->DataBlocksOffset = Offset;
                 ptdh->DataBlocksCount = 1;
-            
-                pDataBlock = (PTRIAGE_DATA_BLOCK)((char*)pDump + Offset);
+
+                pDataBlock = (PTRIAGE_DATA_BLOCK)((char *)pDump + Offset);
                 Offset += sizeof(*pDataBlock);
                 Offset = ALIGN_8(Offset);
-            
+
                 pDataBlock->Address = (LONG_PTR)CodeStartOffset;
                 pDataBlock->Size = DataSize;
                 pDataBlock->Offset = Offset;
-                RtlCopyMemory((char*)pDump + Offset, 
-                              (char*)CodeStartOffset, 
-                              DataSize);
+                RtlCopyMemory((char *)pDump + Offset, (char *)CodeStartOffset, DataSize);
                 Offset += DataSize;
             }
         }
@@ -6694,9 +6129,9 @@ Return Value:
     //
     // End of dump validation
     //
-    
+
     ptdh->ValidOffset = TRIAGE_DUMP_SIZE - sizeof(ULONG);
-    *(PULONG)((char*)pDump + ptdh->ValidOffset) = TRIAGE_DUMP_VALID;
+    *(PULONG)((char *)pDump + ptdh->ValidOffset) = TRIAGE_DUMP_VALID;
     Offset = TRIAGE_DUMP_SIZE;
     return Offset;
 }

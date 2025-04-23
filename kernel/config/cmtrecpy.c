@@ -22,101 +22,68 @@ Revision History:
 
 --*/
 
-#include    "cmp.h"
+#include "cmp.h"
 
 //
 // Set this to true to enable tree sync debug outputs
 //
 
 #define DEBUG_TREE_SYNC FALSE
-                          
+
 //
 // stack used for directing nesting of tree copy.  gets us off
 // the kernel stack and thus allows for VERY deep nesting
 //
 
-#define CMP_INITIAL_STACK_SIZE  1024        // ENTRIES
+#define CMP_INITIAL_STACK_SIZE 1024 // ENTRIES
 
-typedef struct {
+typedef struct
+{
     HCELL_INDEX SourceCell;
     HCELL_INDEX TargetCell;
-    ULONG       i;
+    ULONG i;
 } CMP_COPY_STACK_ENTRY, *PCMP_COPY_STACK_ENTRY;
 
 BOOLEAN
-CmpCopySyncTree2(
-    PCMP_COPY_STACK_ENTRY   CmpCopyStack,
-    ULONG                   CmpCopyStackSize,
-    ULONG                   CmpCopyStackTop,
-    PHHIVE                  CmpSourceHive,
-    PHHIVE                  CmpTargetHive,
-    BOOLEAN                 CopyVolatile,
-    CMP_COPY_TYPE           CopyType
-    );
+CmpCopySyncTree2(PCMP_COPY_STACK_ENTRY CmpCopyStack, ULONG CmpCopyStackSize, ULONG CmpCopyStackTop,
+                 PHHIVE CmpSourceHive, PHHIVE CmpTargetHive, BOOLEAN CopyVolatile, CMP_COPY_TYPE CopyType);
 
 BOOLEAN
-CmpFreeKeyValues(
-    PHHIVE Hive,
-    HCELL_INDEX Cell,
-    PCM_KEY_NODE Node
-    );
+CmpFreeKeyValues(PHHIVE Hive, HCELL_INDEX Cell, PCM_KEY_NODE Node);
 
 BOOLEAN
-CmpSyncKeyValues(
-    PHHIVE  SourceHive,
-    HCELL_INDEX SourceKeyCell,
-    PCM_KEY_NODE SourceKeyNode,
-    PHHIVE  TargetHive,
-    HCELL_INDEX TargetKeyCell,
-    PCM_KEY_NODE TargetKeyNode
-    );
+CmpSyncKeyValues(PHHIVE SourceHive, HCELL_INDEX SourceKeyCell, PCM_KEY_NODE SourceKeyNode, PHHIVE TargetHive,
+                 HCELL_INDEX TargetKeyCell, PCM_KEY_NODE TargetKeyNode);
 
 BOOLEAN
-CmpMergeKeyValues(
-    PHHIVE  SourceHive,
-    HCELL_INDEX SourceKeyCell,
-    PCM_KEY_NODE SourceKeyNode,
-    PHHIVE  TargetHive,
-    HCELL_INDEX TargetKeyCell,
-    PCM_KEY_NODE TargetKeyNode
-    );
+CmpMergeKeyValues(PHHIVE SourceHive, HCELL_INDEX SourceKeyCell, PCM_KEY_NODE SourceKeyNode, PHHIVE TargetHive,
+                  HCELL_INDEX TargetKeyCell, PCM_KEY_NODE TargetKeyNode);
 
 
 BOOLEAN
-CmpSyncSubKeysAfterDelete(
-                          PHHIVE SourceHive,
-                          PCM_KEY_NODE SourceCell,
-                          PHHIVE TargetHive,
-                          PCM_KEY_NODE TargetCell, 
+CmpSyncSubKeysAfterDelete(PHHIVE SourceHive, PCM_KEY_NODE SourceCell, PHHIVE TargetHive, PCM_KEY_NODE TargetCell,
                           WCHAR *NameBuffer);
 
 BOOLEAN
-CmpMarkKeyValuesDirty(
-    PHHIVE Hive,
-    HCELL_INDEX Cell,
-    PCM_KEY_NODE Node
-    );
+CmpMarkKeyValuesDirty(PHHIVE Hive, HCELL_INDEX Cell, PCM_KEY_NODE Node);
 
 BOOLEAN
-CmpMarkKeyParentDirty(
-    PHHIVE Hive,
-    HCELL_INDEX Cell
-    );
+CmpMarkKeyParentDirty(PHHIVE Hive, HCELL_INDEX Cell);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,CmpCopySyncTree)
-#pragma alloc_text(PAGE,CmpCopySyncTree2)
-#pragma alloc_text(PAGE,CmpCopyKeyPartial)
-#pragma alloc_text(PAGE,CmpCopyValue)
-#pragma alloc_text(PAGE,CmpCopyCell)
-#pragma alloc_text(PAGE,CmpFreeKeyValues)
-#pragma alloc_text(PAGE,CmpSyncKeyValues)
-#pragma alloc_text(PAGE,CmpMergeKeyValues)
-#pragma alloc_text(PAGE,CmpInitializeKeyNameString)
-#pragma alloc_text(PAGE,CmpInitializeValueNameString)
-#pragma alloc_text(PAGE,CmpSyncSubKeysAfterDelete)
-#pragma alloc_text(PAGE,CmpMarkKeyValuesDirty)
-#pragma alloc_text(PAGE,CmpMarkKeyParentDirty)
+#pragma alloc_text(PAGE, CmpCopySyncTree)
+#pragma alloc_text(PAGE, CmpCopySyncTree2)
+#pragma alloc_text(PAGE, CmpCopyKeyPartial)
+#pragma alloc_text(PAGE, CmpCopyValue)
+#pragma alloc_text(PAGE, CmpCopyCell)
+#pragma alloc_text(PAGE, CmpFreeKeyValues)
+#pragma alloc_text(PAGE, CmpSyncKeyValues)
+#pragma alloc_text(PAGE, CmpMergeKeyValues)
+#pragma alloc_text(PAGE, CmpInitializeKeyNameString)
+#pragma alloc_text(PAGE, CmpInitializeValueNameString)
+#pragma alloc_text(PAGE, CmpSyncSubKeysAfterDelete)
+#pragma alloc_text(PAGE, CmpMarkKeyValuesDirty)
+#pragma alloc_text(PAGE, CmpMarkKeyParentDirty)
 #endif
 
 //
@@ -124,14 +91,8 @@ CmpMarkKeyParentDirty(
 //
 
 BOOLEAN
-CmpCopySyncTree(
-    PHHIVE          SourceHive,
-    HCELL_INDEX     SourceCell,
-    PHHIVE          TargetHive,
-    HCELL_INDEX     TargetCell,
-    BOOLEAN         CopyVolatile,
-    CMP_COPY_TYPE   CopyType
-    )
+CmpCopySyncTree(PHHIVE SourceHive, HCELL_INDEX SourceCell, PHHIVE TargetHive, HCELL_INDEX TargetCell,
+                BOOLEAN CopyVolatile, CMP_COPY_TYPE CopyType)
 /*++
 
 Routine Description:
@@ -212,16 +173,14 @@ Return Value:
 --*/
 {
     BOOLEAN result;
-    PCMP_COPY_STACK_ENTRY   CmpCopyStack;
-    PRELEASE_CELL_ROUTINE   TargetReleaseCellRoutine;
+    PCMP_COPY_STACK_ENTRY CmpCopyStack;
+    PRELEASE_CELL_ROUTINE TargetReleaseCellRoutine;
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SAVRES,"CmpCopyTree:\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SAVRES, "CmpCopyTree:\n"));
 
-    CmpCopyStack = ExAllocatePool(
-                        PagedPool,
-                        sizeof(CMP_COPY_STACK_ENTRY)*CMP_INITIAL_STACK_SIZE
-                        );
-    if (CmpCopyStack == NULL) {
+    CmpCopyStack = ExAllocatePool(PagedPool, sizeof(CMP_COPY_STACK_ENTRY) * CMP_INITIAL_STACK_SIZE);
+    if (CmpCopyStack == NULL)
+    {
         return FALSE;
     }
     CmpCopyStack[0].SourceCell = SourceCell;
@@ -230,22 +189,14 @@ Return Value:
     //ASSERT_CM_LOCK_OWNED_EXCLUSIVE();
 
     //
-    // since the registry is locked exclusively here, we don't need to lock/release cells 
+    // since the registry is locked exclusively here, we don't need to lock/release cells
     // while copying the trees; So, we just set the release routines to NULL and restore after
     // the copy is complete; this saves some pain
     //
     TargetReleaseCellRoutine = TargetHive->ReleaseCellRoutine;
     TargetHive->ReleaseCellRoutine = NULL;
 
-    result = CmpCopySyncTree2(
-                CmpCopyStack,
-                CMP_INITIAL_STACK_SIZE,
-                0,
-                SourceHive,
-                TargetHive,
-                CopyVolatile,
-                CopyType
-                );
+    result = CmpCopySyncTree2(CmpCopyStack, CMP_INITIAL_STACK_SIZE, 0, SourceHive, TargetHive, CopyVolatile, CopyType);
 
     TargetHive->ReleaseCellRoutine = TargetReleaseCellRoutine;
 
@@ -253,21 +204,14 @@ Return Value:
     return result;
 }
 
-
+
 //
 // Helper
 //
 
 BOOLEAN
-CmpCopySyncTree2(
-    PCMP_COPY_STACK_ENTRY   CmpCopyStack,
-    ULONG                   CmpCopyStackSize,
-    ULONG                   CmpCopyStackTop,
-    PHHIVE                  CmpSourceHive,
-    PHHIVE                  CmpTargetHive,
-    BOOLEAN                 CopyVolatile,
-    CMP_COPY_TYPE           CopyType
-    )
+CmpCopySyncTree2(PCMP_COPY_STACK_ENTRY CmpCopyStack, ULONG CmpCopyStackSize, ULONG CmpCopyStackTop,
+                 PHHIVE CmpSourceHive, PHHIVE CmpTargetHive, BOOLEAN CopyVolatile, CMP_COPY_TYPE CopyType)
 /*++
 
 Routine Description:
@@ -303,98 +247,103 @@ Return Value:
 
 --*/
 {
-    PCMP_COPY_STACK_ENTRY   Frame;
-    HCELL_INDEX             SourceChild;
-    HCELL_INDEX             NewSubKey;
+    PCMP_COPY_STACK_ENTRY Frame;
+    HCELL_INDEX SourceChild;
+    HCELL_INDEX NewSubKey;
 
-    BOOLEAN                 Ret = FALSE, SyncNeedsTreeCopy = FALSE;
-    UNICODE_STRING          KeyName;
-    PCM_KEY_NODE            SourceChildCell, TargetChildCell;       
-    PCM_KEY_NODE            SourceCell, TargetCell, TempNode;
-    ULONG                   SyncTreeCopyStackStart;
-    WCHAR                   *NameBuffer = NULL;
-    
+    BOOLEAN Ret = FALSE, SyncNeedsTreeCopy = FALSE;
+    UNICODE_STRING KeyName;
+    PCM_KEY_NODE SourceChildCell, TargetChildCell;
+    PCM_KEY_NODE SourceCell, TargetCell, TempNode;
+    ULONG SyncTreeCopyStackStart;
+    WCHAR *NameBuffer = NULL;
+
     // A merge is a particular case of a sync !!!
-    BOOLEAN                 TreeSync = (CopyType == Sync || CopyType == Merge)?TRUE:FALSE;
+    BOOLEAN TreeSync = (CopyType == Sync || CopyType == Merge) ? TRUE : FALSE;
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SAVRES,"CmpCopyTree2:\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SAVRES, "CmpCopyTree2:\n"));
 
-    if (TreeSync) {
+    if (TreeSync)
+    {
 
-       //
-       // The sync operation involves some work with key names, 
-       // so we must allocate a buffer used for key name decompression.
-       //
+        //
+        // The sync operation involves some work with key names,
+        // so we must allocate a buffer used for key name decompression.
+        //
 
-       NameBuffer = ExAllocatePool(PagedPool, REG_MAX_KEY_NAME_LENGTH);
-       if(!NameBuffer) return FALSE;
+        NameBuffer = ExAllocatePool(PagedPool, REG_MAX_KEY_NAME_LENGTH);
+        if (!NameBuffer)
+            return FALSE;
+    }
 
-    } 
-
-    //
-    // outer loop, apply to entire tree, emulate recursion here
-    // jump to here is a virtual call
-    //
-    Outer: while (TRUE) {
+//
+// outer loop, apply to entire tree, emulate recursion here
+// jump to here is a virtual call
+//
+Outer:
+    while (TRUE)
+    {
 
         Frame = &(CmpCopyStack[CmpCopyStackTop]);
 
         Frame->i = 0;
-                        
-    //
-    // inner loop, applies to one key
-    // jump to here is a virtual return
-    //
-        Inner: while (TRUE) {
+
+        //
+        // inner loop, applies to one key
+        // jump to here is a virtual return
+        //
+    Inner:
+        while (TRUE)
+        {
 
             SourceCell = (PCM_KEY_NODE)HvGetCell(CmpSourceHive, Frame->SourceCell);
-            if( SourceCell == NULL ) {
+            if (SourceCell == NULL)
+            {
                 //
                 // we couldn't map the bin containing this cell
                 //
                 goto CopyEnd;
             }
 
-            SourceChild = CmpFindSubKeyByNumber(CmpSourceHive,
-                                                SourceCell,
-                                                Frame->i);
+            SourceChild = CmpFindSubKeyByNumber(CmpSourceHive, SourceCell, Frame->i);
             (Frame->i)++;
 
-            if ((SourceChild == HCELL_NIL) || (!CopyVolatile &&
-                                               (HvGetCellType(SourceChild) == Volatile))) {
+            if ((SourceChild == HCELL_NIL) || (!CopyVolatile && (HvGetCellType(SourceChild) == Volatile)))
+            {
 
                 //
                 // we've stepped through all the children (or we are only
                 // interested in stable children and have just stepped through
                 // the stable children and into the volatile ones)
-                //                
-                
-                if(TreeSync && (CopyType != Merge))
-                { 
-                   //
-                   // If we are here during a sync, that means most of sync operations
-                   // applied to the current SourceCell have been completed.
-                   // That is, we have:
-                   //   1) Synchronized SourceCell's values with its counterpart in the
-                   //      target tree.
-                   //   2) Synchronized any new SourceCell subkeys (subkeys present
-                   //      in SourceCell but not its counterpart) by creating
-                   //      and copying them to the proper place in the target tree.
-                   //
-                   // What this means is that SourceCell's counterpart in the target tree
-                   // (TargetCell) now has at least as many subkeys as SourceCell.
-                   //
-                   // This implies that if TargetCell now has more subkeys that SourceCell
-                   // than some subkeys of TargetCell are not present in the source tree
-                   // (probably because those keys were deleted from the source tree 
-                   //  during the period between the previous sync and now).
-                   //
-                   // If such keys exist, then they must be delete them from TargetCell
-                   // in order to complete the sync. We do this below.
-                   //
+                //
 
-                   TargetCell = (PCM_KEY_NODE)HvGetCell(CmpTargetHive, Frame->TargetCell);
-                    if( TargetCell == NULL ) {
+                if (TreeSync && (CopyType != Merge))
+                {
+                    //
+                    // If we are here during a sync, that means most of sync operations
+                    // applied to the current SourceCell have been completed.
+                    // That is, we have:
+                    //   1) Synchronized SourceCell's values with its counterpart in the
+                    //      target tree.
+                    //   2) Synchronized any new SourceCell subkeys (subkeys present
+                    //      in SourceCell but not its counterpart) by creating
+                    //      and copying them to the proper place in the target tree.
+                    //
+                    // What this means is that SourceCell's counterpart in the target tree
+                    // (TargetCell) now has at least as many subkeys as SourceCell.
+                    //
+                    // This implies that if TargetCell now has more subkeys that SourceCell
+                    // than some subkeys of TargetCell are not present in the source tree
+                    // (probably because those keys were deleted from the source tree
+                    //  during the period between the previous sync and now).
+                    //
+                    // If such keys exist, then they must be delete them from TargetCell
+                    // in order to complete the sync. We do this below.
+                    //
+
+                    TargetCell = (PCM_KEY_NODE)HvGetCell(CmpTargetHive, Frame->TargetCell);
+                    if (TargetCell == NULL)
+                    {
                         //
                         // we couldn't map the bin containing this cell
                         //
@@ -402,317 +351,304 @@ Return Value:
                         goto CopyEnd;
                     }
 
-                   //
-                   // Does TargetCell have more subkeys than SourceCell?
-                   //
+                    //
+                    // Does TargetCell have more subkeys than SourceCell?
+                    //
 
-                   if((TargetCell->SubKeyCounts[Stable] + 
-                       TargetCell->SubKeyCounts[Volatile]) >
+                    if ((TargetCell->SubKeyCounts[Stable] + TargetCell->SubKeyCounts[Volatile]) >
 
-                      (SourceCell->SubKeyCounts[Stable] + 
+                        (SourceCell->SubKeyCounts[Stable] +
 
-                       // We only count the volatile keys if we are actually
-                       // syncing them. Note, however, that we always use
-                       // the volatile counts in TargetCell since we may
-                       // be syncing to a volatile tree where all keys are volatile.
-                       
-                       (CopyVolatile ? SourceCell->SubKeyCounts[Volatile] : 0)))  
-                           
-                   {
+                         // We only count the volatile keys if we are actually
+                         // syncing them. Note, however, that we always use
+                         // the volatile counts in TargetCell since we may
+                         // be syncing to a volatile tree where all keys are volatile.
+
+                         (CopyVolatile ? SourceCell->SubKeyCounts[Volatile] : 0)))
+
+                    {
 #if DEBUG_TREE_SYNC
-                      CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,"CONFIG: SubKey Deletion from Source Cell #%lu.\n", 
-                               Frame->SourceCell));
+                        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+                                     "CONFIG: SubKey Deletion from Source Cell #%lu.\n", Frame->SourceCell));
 #endif
 
-                      //
-                      // Delete what should be deleted from TargetCell
-                      //
+                        //
+                        // Delete what should be deleted from TargetCell
+                        //
 
-                      CmpSyncSubKeysAfterDelete(CmpSourceHive,
-                                                SourceCell, 
-                                                CmpTargetHive,
-                                                TargetCell,
-                                                NameBuffer);
-                   }                                      
-                   //
-                   // release target cell as we don't need it anymore
-                   //
-                   HvReleaseCell(CmpTargetHive, Frame->TargetCell);
+                        CmpSyncSubKeysAfterDelete(CmpSourceHive, SourceCell, CmpTargetHive, TargetCell, NameBuffer);
+                    }
+                    //
+                    // release target cell as we don't need it anymore
+                    //
+                    HvReleaseCell(CmpTargetHive, Frame->TargetCell);
                 }
                 //
                 // release the source cell
                 //
                 HvReleaseCell(CmpSourceHive, Frame->SourceCell);
                 break;
-            } else {
+            }
+            else
+            {
                 //
                 // release the source cell
                 //
                 HvReleaseCell(CmpSourceHive, Frame->SourceCell);
             }
-                                                
-            if (TreeSync) {
 
-               //
-               // For a sync, we want to check if the current child (subkey)
-               // of SourceCell is also a child of TargetCell - i.e. if
-               // the subkey in question has a counterpart in the target tree.
-               //
-               // There is no guarantee that the counterpart's index number
-               // will be the same so we must perform this check using
-               // the subkey name.
-               //
+            if (TreeSync)
+            {
 
-               //
-               // Get the name of the current child
-               //
-                     
-               SourceChildCell = (PCM_KEY_NODE)HvGetCell(CmpSourceHive,                                                               
-                                                         SourceChild);                                         
-                     
-                if( SourceChildCell == NULL ) {
+                //
+                // For a sync, we want to check if the current child (subkey)
+                // of SourceCell is also a child of TargetCell - i.e. if
+                // the subkey in question has a counterpart in the target tree.
+                //
+                // There is no guarantee that the counterpart's index number
+                // will be the same so we must perform this check using
+                // the subkey name.
+                //
+
+                //
+                // Get the name of the current child
+                //
+
+                SourceChildCell = (PCM_KEY_NODE)HvGetCell(CmpSourceHive, SourceChild);
+
+                if (SourceChildCell == NULL)
+                {
                     //
                     // we couldn't map the bin containing this cell
                     //
                     goto CopyEnd;
                 }
-               CmpInitializeKeyNameString(SourceChildCell,
-                                          &KeyName, 
-                                          NameBuffer);                     
+                CmpInitializeKeyNameString(SourceChildCell, &KeyName, NameBuffer);
 
-               //
-               // Try to find the current child's counterpart in
-               // in the target tree using the child's name.
-               //
-                     
-                TempNode = (PCM_KEY_NODE)HvGetCell(CmpTargetHive,Frame->TargetCell);
-                if( TempNode == NULL ) {
+                //
+                // Try to find the current child's counterpart in
+                // in the target tree using the child's name.
+                //
+
+                TempNode = (PCM_KEY_NODE)HvGetCell(CmpTargetHive, Frame->TargetCell);
+                if (TempNode == NULL)
+                {
                     //
                     // we couldn't map the bin containing this cell
                     //
-                    HvReleaseCell(CmpSourceHive,SourceChild);                                         
+                    HvReleaseCell(CmpSourceHive, SourceChild);
                     goto CopyEnd;
                 }
 
-               NewSubKey = CmpFindSubKeyByName(CmpTargetHive,
-                                               TempNode,
-                                               &KeyName);
-                                   
-               // release the temporary node
-               HvReleaseCell(CmpTargetHive,Frame->TargetCell);
-                     
-               if (NewSubKey != HCELL_NIL) {
+                NewSubKey = CmpFindSubKeyByName(CmpTargetHive, TempNode, &KeyName);
 
-                  //
-                  // Found it, the current child (subkey) has a counterpart
-                  // in the target tree. Thus, we just need to check if 
-                  // the counterpart's values are out of date and should
-                  // be updated.
-                  //
+                // release the temporary node
+                HvReleaseCell(CmpTargetHive, Frame->TargetCell);
 
-                  TargetChildCell = (PCM_KEY_NODE)HvGetCell(CmpTargetHive,
-                                                            NewSubKey);
-                    if( TargetChildCell == NULL ) {
+                if (NewSubKey != HCELL_NIL)
+                {
+
+                    //
+                    // Found it, the current child (subkey) has a counterpart
+                    // in the target tree. Thus, we just need to check if
+                    // the counterpart's values are out of date and should
+                    // be updated.
+                    //
+
+                    TargetChildCell = (PCM_KEY_NODE)HvGetCell(CmpTargetHive, NewSubKey);
+                    if (TargetChildCell == NULL)
+                    {
                         //
                         // we couldn't map the bin containing this cell
                         //
-                        HvReleaseCell(CmpSourceHive,SourceChild);                                         
+                        HvReleaseCell(CmpSourceHive, SourceChild);
                         goto CopyEnd;
                     }
-                        
-                  //
-                  // Check if the current subkey has been modified
-                  // more recently than its target tree counterpart.
-                  // When we are doing a tree merge, always override the target.
-                  //
-                        
-                  if ( (CopyType == Merge) ||
-                      ((TargetChildCell->LastWriteTime.QuadPart) < 
-                      (SourceChildCell->LastWriteTime.QuadPart))) {
 
-                     //
-                     // The counterpart is out of date. Its values
-                     // must be synchronized with the current subkey.
-                     //
+                    //
+                    // Check if the current subkey has been modified
+                    // more recently than its target tree counterpart.
+                    // When we are doing a tree merge, always override the target.
+                    //
+
+                    if ((CopyType == Merge) ||
+                        ((TargetChildCell->LastWriteTime.QuadPart) < (SourceChildCell->LastWriteTime.QuadPart)))
+                    {
+
+                        //
+                        // The counterpart is out of date. Its values
+                        // must be synchronized with the current subkey.
+                        //
 #if DEBUG_TREE_SYNC
-                     CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,"CONFIG: Target Refresh.\n"));
-                     CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,"CONFIG: Source Cell %lu = %.*S\n", 
-                              SourceChild,
-                              KeyName.Length / sizeof(WCHAR),
-                              KeyName.Buffer));
+                        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL, "CONFIG: Target Refresh.\n"));
+                        CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL, "CONFIG: Source Cell %lu = %.*S\n",
+                                     SourceChild, KeyName.Length / sizeof(WCHAR), KeyName.Buffer));
 #endif
 
-                     //
-                     // Sync up the key's values, sd, & class                     
-                     //
+                        //
+                        // Sync up the key's values, sd, & class
+                        //
 
-                     if(CopyType == Merge) {
-                         if(!CmpMergeKeyValues(CmpSourceHive, SourceChild, SourceChildCell,
-                                              CmpTargetHive, NewSubKey, TargetChildCell)) {
-                            HvReleaseCell(CmpSourceHive,SourceChild);                                         
-                            HvReleaseCell(CmpTargetHive,NewSubKey);
-                            goto CopyEnd;                              
-                         }
-                     } else {
-                         if(!CmpSyncKeyValues(CmpSourceHive, SourceChild, SourceChildCell,
-                                              CmpTargetHive, NewSubKey, TargetChildCell)) {
-                            HvReleaseCell(CmpSourceHive,SourceChild);                                         
-                            HvReleaseCell(CmpTargetHive,NewSubKey);
-                            goto CopyEnd;                              
+                        if (CopyType == Merge)
+                        {
+                            if (!CmpMergeKeyValues(CmpSourceHive, SourceChild, SourceChildCell, CmpTargetHive,
+                                                   NewSubKey, TargetChildCell))
+                            {
+                                HvReleaseCell(CmpSourceHive, SourceChild);
+                                HvReleaseCell(CmpTargetHive, NewSubKey);
+                                goto CopyEnd;
+                            }
                         }
-                     }
+                        else
+                        {
+                            if (!CmpSyncKeyValues(CmpSourceHive, SourceChild, SourceChildCell, CmpTargetHive, NewSubKey,
+                                                  TargetChildCell))
+                            {
+                                HvReleaseCell(CmpSourceHive, SourceChild);
+                                HvReleaseCell(CmpTargetHive, NewSubKey);
+                                goto CopyEnd;
+                            }
+                        }
 
-                     //
-                     // Sync the timestamps so that we don't do this again.
-                     //
+                        //
+                        // Sync the timestamps so that we don't do this again.
+                        //
 
-                     TargetChildCell->LastWriteTime.QuadPart =
-                        SourceChildCell->LastWriteTime.QuadPart;
-                        
-                  }
-                           
-                  //
-                  // If we are here, then the current subkey's target
-                  // tree counterpart has been synchronized (or did not need
-                  // to be). Transfer control to the code that will apply
-                  // this function "recursively" to the current subkey in order
-                  // to continue the sync.
-                  //
+                        TargetChildCell->LastWriteTime.QuadPart = SourceChildCell->LastWriteTime.QuadPart;
+                    }
 
-                  HvReleaseCell(CmpSourceHive,SourceChild);                                         
-                  HvReleaseCell(CmpTargetHive,NewSubKey);
-                  goto NewKeyCreated;
-                     
-               }   
+                    //
+                    // If we are here, then the current subkey's target
+                    // tree counterpart has been synchronized (or did not need
+                    // to be). Transfer control to the code that will apply
+                    // this function "recursively" to the current subkey in order
+                    // to continue the sync.
+                    //
 
-               //
-               // If we are here, it means that the current child (subkey)
-               // does not have a counterpart in the target tree. This means
-               // we have encountered a new subkey in the source tree and must
-               // create it in the target tree. 
-               //
-               // The standard copy code below will create this subkey. However,
-               // we must also make sure that the tree under this subkey is properly
-               // copied from source to target. The most efficient way of doing
-               // this is to temporarily forget that we are in a sync operation
-               // and merely perform a copy until the desired result is achieved.
-               // 
+                    HvReleaseCell(CmpSourceHive, SourceChild);
+                    HvReleaseCell(CmpTargetHive, NewSubKey);
+                    goto NewKeyCreated;
+                }
+
+                //
+                // If we are here, it means that the current child (subkey)
+                // does not have a counterpart in the target tree. This means
+                // we have encountered a new subkey in the source tree and must
+                // create it in the target tree.
+                //
+                // The standard copy code below will create this subkey. However,
+                // we must also make sure that the tree under this subkey is properly
+                // copied from source to target. The most efficient way of doing
+                // this is to temporarily forget that we are in a sync operation
+                // and merely perform a copy until the desired result is achieved.
+                //
 
 #if DEBUG_TREE_SYNC
-               CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,"CONFIG: New SubKey.\n"));
-               CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,"CONFIG: Source Cell %lu = %.*S\n", 
-                        SourceChild,
-                        KeyName.Length / sizeof(WCHAR),
-                        KeyName.Buffer));
+                CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL, "CONFIG: New SubKey.\n"));
+                CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL, "CONFIG: Source Cell %lu = %.*S\n", SourceChild,
+                             KeyName.Length / sizeof(WCHAR), KeyName.Buffer));
 #endif
 
-               //
-               // Indicate that we will just copy and not sync for a while
-               //
-                                             
-               SyncNeedsTreeCopy = TRUE;                                          
-               //
-               // release this cell as we don't need it anymore
-               //
-               HvReleaseCell(CmpSourceHive,SourceChild);                                         
+                //
+                // Indicate that we will just copy and not sync for a while
+                //
+
+                SyncNeedsTreeCopy = TRUE;
+                //
+                // release this cell as we don't need it anymore
+                //
+                HvReleaseCell(CmpSourceHive, SourceChild);
             }
 
-            NewSubKey = CmpCopyKeyPartial(
-                                          CmpSourceHive,
-                                          SourceChild,
-                                          CmpTargetHive,
-                                          Frame->TargetCell,
-                                          TRUE
-                                          );
+            NewSubKey = CmpCopyKeyPartial(CmpSourceHive, SourceChild, CmpTargetHive, Frame->TargetCell, TRUE);
 
-                
-            if (NewSubKey == HCELL_NIL) {
-               
-               goto CopyEnd;
+
+            if (NewSubKey == HCELL_NIL)
+            {
+
+                goto CopyEnd;
             }
-                
-            if ( !  CmpAddSubKey(
-                                 CmpTargetHive,
-                                 Frame->TargetCell,
-                                 NewSubKey
-                                 )
-                 ) {
 
-               goto CopyEnd;
+            if (!CmpAddSubKey(CmpTargetHive, Frame->TargetCell, NewSubKey))
+            {
+
+                goto CopyEnd;
             }
 
             //
             // Check if the sync operation determined that this
             // subtree should be copied
             //
-                
-            if(TreeSync && SyncNeedsTreeCopy) {
 
-               //
-               // We have just created a new key in the target tree
-               // with the above code. However, since this is a sync,
-               // the parent of that new key has not been created by our
-               // code and thus may not have been modified at all before
-               // the creation of the new key. But this parent now 
-               // has a new child, and must therefore be marked as dirty.
-               //
-                   
-               if (! CmpMarkKeyParentDirty(CmpTargetHive, NewSubKey)) {
+            if (TreeSync && SyncNeedsTreeCopy)
+            {
 
-                  goto CopyEnd;
-               }
-                   
-               //
-               // Record the stack level where we start the copy 
-               // (and temporarily abandon the sync)
-               // so that we can return to the sync operation when this
-               // stack level is reached again (i.e. when the tree
-               // under the current subkey is fully copied)
-               //
+                //
+                // We have just created a new key in the target tree
+                // with the above code. However, since this is a sync,
+                // the parent of that new key has not been created by our
+                // code and thus may not have been modified at all before
+                // the creation of the new key. But this parent now
+                // has a new child, and must therefore be marked as dirty.
+                //
 
-               SyncTreeCopyStackStart = CmpCopyStackTop;
+                if (!CmpMarkKeyParentDirty(CmpTargetHive, NewSubKey))
+                {
 
-               //
-               // Pretend that this is not a sync in order
-               // to simply start copying
-               //
+                    goto CopyEnd;
+                }
 
-               TreeSync = FALSE;
+                //
+                // Record the stack level where we start the copy
+                // (and temporarily abandon the sync)
+                // so that we can return to the sync operation when this
+                // stack level is reached again (i.e. when the tree
+                // under the current subkey is fully copied)
+                //
+
+                SyncTreeCopyStackStart = CmpCopyStackTop;
+
+                //
+                // Pretend that this is not a sync in order
+                // to simply start copying
+                //
+
+                TreeSync = FALSE;
             }
 
-NewKeyCreated:
-                    
-                    //
-                    // We succeeded in copying/syncing the subkey, apply
-                    // ourselves to it
-                    //
-                    CmpCopyStackTop++;
+        NewKeyCreated:
 
-                    if (CmpCopyStackTop >= CmpCopyStackSize) {
+            //
+            // We succeeded in copying/syncing the subkey, apply
+            // ourselves to it
+            //
+            CmpCopyStackTop++;
 
-                        //
-                        // if we're here, it means that the tree
-                        // we're trying to copy is more than 1024
-                        // COMPONENTS deep (from 2048 to 256k bytes)
-                        // we could grow the stack, but this is pretty
-                        // severe, so return FALSE and fail the copy
-                        //
-                        
-                        goto CopyEnd;
-                    }
+            if (CmpCopyStackTop >= CmpCopyStackSize)
+            {
 
-                    CmpCopyStack[CmpCopyStackTop].SourceCell =
-                            SourceChild;
+                //
+                // if we're here, it means that the tree
+                // we're trying to copy is more than 1024
+                // COMPONENTS deep (from 2048 to 256k bytes)
+                // we could grow the stack, but this is pretty
+                // severe, so return FALSE and fail the copy
+                //
 
-                    CmpCopyStack[CmpCopyStackTop].TargetCell =
-                            NewSubKey;
+                goto CopyEnd;
+            }
 
-                    goto Outer;
+            CmpCopyStack[CmpCopyStackTop].SourceCell = SourceChild;
 
-                    
+            CmpCopyStack[CmpCopyStackTop].TargetCell = NewSubKey;
+
+            goto Outer;
+
+
         } // Inner: while
 
-        if (CmpCopyStackTop == 0) {            
+        if (CmpCopyStackTop == 0)
+        {
             Ret = TRUE;
             goto CopyEnd;
         }
@@ -726,15 +662,15 @@ NewKeyCreated:
         // suspended sync operation.
         //
 
-        if(SyncNeedsTreeCopy && (CmpCopyStackTop == SyncTreeCopyStackStart))
+        if (SyncNeedsTreeCopy && (CmpCopyStackTop == SyncTreeCopyStackStart))
         {
-           //
-           // We've been copying a tree for a sync. But now, that tree is fully
-           // copied. So, let's resume the sync once again.
-           //
+            //
+            // We've been copying a tree for a sync. But now, that tree is fully
+            // copied. So, let's resume the sync once again.
+            //
 
-           TreeSync = TRUE;               
-           SyncNeedsTreeCopy = FALSE;
+            TreeSync = TRUE;
+            SyncNeedsTreeCopy = FALSE;
         }
 
 
@@ -744,19 +680,15 @@ NewKeyCreated:
 
 CopyEnd:
 
-   if (NameBuffer) ExFreePool(NameBuffer);
-   return Ret;
+    if (NameBuffer)
+        ExFreePool(NameBuffer);
+    return Ret;
 }
 
-
+
 HCELL_INDEX
-CmpCopyKeyPartial(
-    PHHIVE  SourceHive,
-    HCELL_INDEX SourceKeyCell,
-    PHHIVE  TargetHive,
-    HCELL_INDEX Parent,
-    BOOLEAN CopyValues
-    )
+CmpCopyKeyPartial(PHHIVE SourceHive, HCELL_INDEX SourceKeyCell, PHHIVE TargetHive, HCELL_INDEX Parent,
+                  BOOLEAN CopyValues)
 /*++
 
 Routine Description:
@@ -783,55 +715,60 @@ Return Value:
 
 --*/
 {
-    NTSTATUS                status;
-    HCELL_INDEX             newkey = HCELL_NIL;
-    HCELL_INDEX             newclass = HCELL_NIL;
-    HCELL_INDEX             newsecurity = HCELL_NIL;
-    HCELL_INDEX             newlist = HCELL_NIL;
-    HCELL_INDEX             newvalue;
-    BOOLEAN                 success = FALSE;
-    ULONG                   i,Index;
-    PCELL_DATA              psrckey = NULL;
-    PCM_KEY_NODE            ptarkey = NULL;
-    PCELL_DATA              psrclist = NULL;
-    PCELL_DATA              ptarlist;
-    HCELL_INDEX             security;
-    HCELL_INDEX             class;
-    ULONG                   classlength;
-    ULONG                   count;
-    ULONG                   Type;
-    PCM_KEY_VALUE           pvalue;
+    NTSTATUS status;
+    HCELL_INDEX newkey = HCELL_NIL;
+    HCELL_INDEX newclass = HCELL_NIL;
+    HCELL_INDEX newsecurity = HCELL_NIL;
+    HCELL_INDEX newlist = HCELL_NIL;
+    HCELL_INDEX newvalue;
+    BOOLEAN success = FALSE;
+    ULONG i, Index;
+    PCELL_DATA psrckey = NULL;
+    PCM_KEY_NODE ptarkey = NULL;
+    PCELL_DATA psrclist = NULL;
+    PCELL_DATA ptarlist;
+    HCELL_INDEX security;
+    HCELL_INDEX class;
+    ULONG classlength;
+    ULONG count;
+    ULONG Type;
+    PCM_KEY_VALUE pvalue;
 #if DBG
-    WCHAR                   *NameBuffer = NULL;
-    UNICODE_STRING          ValueName;
-    HCELL_INDEX             child;
+    WCHAR *NameBuffer = NULL;
+    UNICODE_STRING ValueName;
+    HCELL_INDEX child;
 #endif
-    PSECURITY_DESCRIPTOR    SrcSecurityDescriptor;
+    PSECURITY_DESCRIPTOR SrcSecurityDescriptor;
 
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SAVRES,"CmpCopyKeyPartial:\n"));
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SAVRES,"\tSHive=%p SCell=%08lx\n",SourceHive,SourceKeyCell));
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SAVRES,"\tTHive=%p\n",TargetHive));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SAVRES, "CmpCopyKeyPartial:\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SAVRES, "\tSHive=%p SCell=%08lx\n", SourceHive, SourceKeyCell));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SAVRES, "\tTHive=%p\n", TargetHive));
 
-#if DBG    
-	NameBuffer = ExAllocatePool(PagedPool, REG_MAX_KEY_VALUE_NAME_LENGTH);
-    if(!NameBuffer) {
+#if DBG
+    NameBuffer = ExAllocatePool(PagedPool, REG_MAX_KEY_VALUE_NAME_LENGTH);
+    if (!NameBuffer)
+    {
         return HCELL_NIL;
     }
 #endif //DBG
     //
     // get description of source
     //
-    if (Parent == HCELL_NIL) {
+    if (Parent == HCELL_NIL)
+    {
         //
         // This is a root node we are creating, so don't make it volatile.
         //
         Type = Stable;
-    } else {
+    }
+    else
+    {
         Type = HvGetCellType(Parent);
     }
     psrckey = HvGetCell(SourceHive, SourceKeyCell);
-    if( psrckey == NULL ) {
+    if (psrckey == NULL)
+    {
         //
         // we couldn't map the bin containing this cell
         //
@@ -845,7 +782,8 @@ Return Value:
     // Allocate and copy the body
     //
     newkey = CmpCopyCell(SourceHive, SourceKeyCell, TargetHive, Type);
-    if (newkey == HCELL_NIL) {
+    if (newkey == HCELL_NIL)
+    {
         goto DoFinally;
     }
     //
@@ -856,9 +794,11 @@ Return Value:
     //
     // Allocate and copy class
     //
-    if (classlength > 0) {
+    if (classlength > 0)
+    {
         newclass = CmpCopyCell(SourceHive, class, TargetHive, Type);
-        if (newclass == HCELL_NIL) {
+        if (newclass == HCELL_NIL)
+        {
             goto DoFinally;
         }
     }
@@ -867,7 +807,8 @@ Return Value:
     // Fill in the target body
     //
     ptarkey = (PCM_KEY_NODE)HvGetCell(TargetHive, newkey);
-    if( ptarkey == NULL ) {
+    if (ptarkey == NULL)
+    {
         //
         // we couldn't map the bin containing this cell
         //
@@ -878,12 +819,13 @@ Return Value:
     ptarkey->Security = HCELL_NIL;
     ptarkey->SubKeyLists[Stable] = HCELL_NIL;
     ptarkey->SubKeyCounts[Stable] = 0;
-	ptarkey->SubKeyCounts[Volatile] = 0;
-	ptarkey->SubKeyLists[Volatile] = HCELL_NIL;
+    ptarkey->SubKeyCounts[Volatile] = 0;
+    ptarkey->SubKeyLists[Volatile] = HCELL_NIL;
     ptarkey->Parent = Parent;
-    
+
     ptarkey->Flags = (psrckey->u.KeyNode.Flags & KEY_COMP_NAME);
-    if (Parent == HCELL_NIL) {
+    if (Parent == HCELL_NIL)
+    {
         ptarkey->Flags |= KEY_HIVE_ENTRY + KEY_NO_DELETE;
     }
 
@@ -892,17 +834,16 @@ Return Value:
     //
     // Use the hash Luke !!!
     //
-    if( CmpFindSecurityCellCacheIndex ((PCMHIVE)SourceHive,security,&Index) == FALSE ) {
+    if (CmpFindSecurityCellCacheIndex((PCMHIVE)SourceHive, security, &Index) == FALSE)
+    {
         goto DoFinally;
     }
 
     SrcSecurityDescriptor = &(((PCMHIVE)SourceHive)->SecurityCache[Index].CachedSecurity->Descriptor);
 
-    status = CmpAssignSecurityDescriptor(TargetHive,
-                                         newkey,
-                                         ptarkey,
-                                         SrcSecurityDescriptor);
-    if (!NT_SUCCESS(status)) {
+    status = CmpAssignSecurityDescriptor(TargetHive, newkey, ptarkey, SrcSecurityDescriptor);
+    if (!NT_SUCCESS(status))
+    {
         goto DoFinally;
     }
 
@@ -917,12 +858,16 @@ Return Value:
     ptarkey->ValueList.List = HCELL_NIL;
     ptarkey->ValueList.Count = 0;
 
-    if ((count == 0) || (CopyValues == FALSE)) {
+    if ((count == 0) || (CopyValues == FALSE))
+    {
         success = TRUE;
-    } else {
+    }
+    else
+    {
 
         psrclist = HvGetCell(SourceHive, psrckey->u.KeyNode.ValueList.List);
-        if( psrclist == NULL ) {
+        if (psrclist == NULL)
+        {
             //
             // we couldn't map the bin containing this cell
             //
@@ -933,16 +878,13 @@ Return Value:
         //
         // Copy the values
         //
-        for (i = 0; i < count; i++) {
+        for (i = 0; i < count; i++)
+        {
 
-            newvalue = CmpCopyValue(
-                            SourceHive,
-                            psrclist->u.KeyList[i],
-                            TargetHive,
-                            Type
-                            );
+            newvalue = CmpCopyValue(SourceHive, psrclist->u.KeyList[i], TargetHive, Type);
 
-            if (newvalue == HCELL_NIL) {
+            if (newvalue == HCELL_NIL)
+            {
                 //
                 // for cleanup purposes
                 //
@@ -951,13 +893,14 @@ Return Value:
             }
 
             pvalue = (PCM_KEY_VALUE)HvGetCell(TargetHive, newvalue);
-            if( pvalue == NULL ) {
+            if (pvalue == NULL)
+            {
                 //
                 // we couldn't map the bin containing this cell
                 // this shouldn't happen as we just allocated the cell
                 // (i.e. the bin containing it should be PINNED into memory by now )
                 //
-                ASSERT( FALSE );
+                ASSERT(FALSE);
                 //
                 // for cleanup purposes
                 //
@@ -975,15 +918,16 @@ Return Value:
             //
             // get the name
             //
-            CmpInitializeValueNameString(pvalue,&ValueName,NameBuffer);
+            CmpInitializeValueNameString(pvalue, &ValueName, NameBuffer);
 
 
             //
-            // find out the index where we should insert this 
+            // find out the index where we should insert this
             // this is a special treatment for the case when we copy form and old hive (not sorted)
             // into a new format one (sorted)
             //
-            if( CmpFindNameInList(TargetHive,&(ptarkey->ValueList),&ValueName,&Index,&child) == FALSE ) {
+            if (CmpFindNameInList(TargetHive, &(ptarkey->ValueList), &ValueName, &Index, &child) == FALSE)
+            {
                 //
                 // we couldn't map a view inside the above call
                 //
@@ -997,33 +941,36 @@ Return Value:
             //
             // the value is not present in the list; we're about to add it!
             //
-            ASSERT( child == HCELL_NIL );
-            
+            ASSERT(child == HCELL_NIL);
+
             //
             // sanity validation : insert at the end
             //
-            ASSERT( Index == i );
+            ASSERT(Index == i);
 
 #endif //DBG
 
-            if( !NT_SUCCESS( CmpAddValueToList(TargetHive,newvalue,i,Type,&(ptarkey->ValueList)) ) ) {
+            if (!NT_SUCCESS(CmpAddValueToList(TargetHive, newvalue, i, Type, &(ptarkey->ValueList))))
+            {
                 //
                 // for cleanup purposes
                 //
                 newlist = ptarkey->ValueList.List;
-                if( newlist != HCELL_NIL ) {
-                    ASSERT( i > 0 );
+                if (newlist != HCELL_NIL)
+                {
+                    ASSERT(i > 0);
                     //
                     // free already copied values
                     //
                     ptarlist = HvGetCell(TargetHive, newlist);
-                    if( ptarlist == NULL ) {
+                    if (ptarlist == NULL)
+                    {
                         //
                         // we couldn't map the bin containing this cell
                         // this shouldn't fail as we just allocated this cell
                         // (i.e. the bin should be PINNED into memory at this point)
                         //
-                        ASSERT( FALSE );
+                        ASSERT(FALSE);
                         goto DoFinally;
                     }
                     //
@@ -1033,77 +980,80 @@ Return Value:
                     ASSERT_CELL_DIRTY(TargetHive, newlist);
                     HvReleaseCell(TargetHive, newlist);
 
-                    for (; i > 0; i--) {
-                        HvFreeCell(
-                            TargetHive,
-                            ptarlist->u.KeyList[i - 1]
-                            );
+                    for (; i > 0; i--)
+                    {
+                        HvFreeCell(TargetHive, ptarlist->u.KeyList[i - 1]);
                     }
-                } else {
-                    ASSERT( i == 0 );
+                }
+                else
+                {
+                    ASSERT(i == 0);
                 }
 
                 goto DoFinally;
             }
-            
         }
         success = TRUE;
     }
 
 DoFinally:
-    
+
 #if DBG
-    ASSERT( NameBuffer != NULL );
+    ASSERT(NameBuffer != NULL);
     ExFreePool(NameBuffer);
 #endif //DBG
-    
-    if( psrclist != NULL ) {
-        ASSERT(psrckey!= NULL ); 
+
+    if (psrclist != NULL)
+    {
+        ASSERT(psrckey != NULL);
         HvReleaseCell(SourceHive, psrckey->u.KeyNode.ValueList.List);
     }
 
-    if( psrckey != NULL ) {
+    if (psrckey != NULL)
+    {
         HvReleaseCell(SourceHive, SourceKeyCell);
     }
 
-    if( ptarkey != NULL ) {
-		ASSERT( newkey != HCELL_NIL );
+    if (ptarkey != NULL)
+    {
+        ASSERT(newkey != HCELL_NIL);
         HvReleaseCell(TargetHive, newkey);
     }
-    
-    if (success == FALSE) {
-        if (newlist != HCELL_NIL) {
+
+    if (success == FALSE)
+    {
+        if (newlist != HCELL_NIL)
+        {
             HvFreeCell(TargetHive, newlist);
         }
 
-        if (newsecurity != HCELL_NIL) {
+        if (newsecurity != HCELL_NIL)
+        {
             HvFreeCell(TargetHive, newsecurity);
         }
 
-        if (newclass != HCELL_NIL) {
+        if (newclass != HCELL_NIL)
+        {
             HvFreeCell(TargetHive, newclass);
         }
 
-        if (newkey != HCELL_NIL) {
+        if (newkey != HCELL_NIL)
+        {
             HvFreeCell(TargetHive, newkey);
         }
 
         return HCELL_NIL;
-
-    } else {
+    }
+    else
+    {
 
         return newkey;
     }
 }
 
-
+
 HCELL_INDEX
-CmpCopyValue(
-    PHHIVE  SourceHive,
-    HCELL_INDEX SourceValueCell,
-    PHHIVE  TargetHive,
-    HSTORAGE_TYPE   Type
-    )
+CmpCopyValue(PHHIVE SourceHive, HCELL_INDEX SourceValueCell, PHHIVE TargetHive, HSTORAGE_TYPE Type)
 /*++
 
 Routine Description:
@@ -1130,24 +1080,25 @@ Return Value:
 {
     HCELL_INDEX newvalue;
     HCELL_INDEX newdata;
-    PCELL_DATA  pvalue;
-    ULONG       datalength;
+    PCELL_DATA pvalue;
+    ULONG datalength;
     HCELL_INDEX olddata;
-    ULONG       tempdata;
-    BOOLEAN     small;
+    ULONG tempdata;
+    BOOLEAN small;
     HCELL_INDEX CellToRelease = HCELL_NIL;
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SAVRES,"CmpCopyValue:\n"));
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SAVRES,"\tSHive=%p SCell=%08lx\n",SourceHive,SourceValueCell));
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SAVRES,"\tTargetHive=%p\n",TargetHive));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SAVRES, "CmpCopyValue:\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SAVRES, "\tSHive=%p SCell=%08lx\n", SourceHive, SourceValueCell));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SAVRES, "\tTargetHive=%p\n", TargetHive));
 
-    ASSERT( TargetHive->ReleaseCellRoutine == NULL );
+    ASSERT(TargetHive->ReleaseCellRoutine == NULL);
 
     //
     // get source data
     //
     pvalue = HvGetCell(SourceHive, SourceValueCell);
-    if( pvalue == NULL ) {
+    if (pvalue == NULL)
+    {
         //
         // we couldn't map the bin containing this cell
         //
@@ -1160,7 +1111,8 @@ Return Value:
     // Copy body
     //
     newvalue = CmpCopyCell(SourceHive, SourceValueCell, TargetHive, Type);
-    if (newvalue == HCELL_NIL) {
+    if (newvalue == HCELL_NIL)
+    {
         HvReleaseCell(SourceHive, SourceValueCell);
         return HCELL_NIL;
     }
@@ -1168,25 +1120,29 @@ Return Value:
     //
     // Copy data (if any)
     //
-    if (datalength > 0) {
+    if (datalength > 0)
+    {
 
-        if (datalength > CM_KEY_VALUE_SMALL) {
+        if (datalength > CM_KEY_VALUE_SMALL)
+        {
 
-            if( (CmpIsHKeyValueBig(SourceHive,datalength) == TRUE) ||
-                (CmpIsHKeyValueBig(TargetHive,datalength) == TRUE)
-                ) {
-                PCELL_DATA  Buffer;
-                BOOLEAN     BufferAllocated;
+            if ((CmpIsHKeyValueBig(SourceHive, datalength) == TRUE) ||
+                (CmpIsHKeyValueBig(TargetHive, datalength) == TRUE))
+            {
+                PCELL_DATA Buffer;
+                BOOLEAN BufferAllocated;
                 HCELL_INDEX CellToRelease2 = HCELL_NIL;
                 //
                 // get the data from source, regardless of the size
                 //
-                if( CmpGetValueData(SourceHive,&(pvalue->u.KeyValue),&datalength,&Buffer,&BufferAllocated,&CellToRelease2) == FALSE ) {
+                if (CmpGetValueData(SourceHive, &(pvalue->u.KeyValue), &datalength, &Buffer, &BufferAllocated,
+                                    &CellToRelease2) == FALSE)
+                {
                     //
                     // insufficient resources; return NULL
                     //
-                    ASSERT( BufferAllocated == FALSE );
-                    ASSERT( Buffer == NULL );
+                    ASSERT(BufferAllocated == FALSE);
+                    ASSERT(Buffer == NULL);
                     HvFreeCell(TargetHive, newvalue);
                     HvReleaseCell(SourceHive, SourceValueCell);
                     return HCELL_NIL;
@@ -1199,16 +1155,19 @@ Return Value:
                 // allocate a new value data in the target hive (regardless of the size)
                 // and copy the data onto it.
                 //
-                if( !NT_SUCCESS(CmpSetValueDataNew(TargetHive,Buffer,datalength,Type,newvalue,&newdata)) ) {
+                if (!NT_SUCCESS(CmpSetValueDataNew(TargetHive, Buffer, datalength, Type, newvalue, &newdata)))
+                {
                     //
                     // We have bombed out loading user data, clean up and exit.
                     //
-                    if( BufferAllocated == TRUE ) {
-                        ExFreePool( Buffer );
+                    if (BufferAllocated == TRUE)
+                    {
+                        ExFreePool(Buffer);
                     }
                     HvFreeCell(TargetHive, newvalue);
                     HvReleaseCell(SourceHive, SourceValueCell);
-                    if( CellToRelease2 != HCELL_NIL ) {
+                    if (CellToRelease2 != HCELL_NIL)
+                    {
                         HvReleaseCell(SourceHive, CellToRelease2);
                     }
                     return HCELL_NIL;
@@ -1217,65 +1176,74 @@ Return Value:
                 //
                 // free the source buffer
                 //
-                if( BufferAllocated == TRUE ) {
-                    ExFreePool( Buffer );
+                if (BufferAllocated == TRUE)
+                {
+                    ExFreePool(Buffer);
                 }
-                if( CellToRelease2 != HCELL_NIL ) {
+                if (CellToRelease2 != HCELL_NIL)
+                {
                     HvReleaseCell(SourceHive, CellToRelease2);
                 }
-
-            } else {
+            }
+            else
+            {
                 //
-                // there's data, normal size, or none of the hives support 
+                // there's data, normal size, or none of the hives support
                 // bigdata cells, so do standard copy
                 //
                 newdata = CmpCopyCell(SourceHive, olddata, TargetHive, Type);
             }
 
-            if (newdata == HCELL_NIL) {
+            if (newdata == HCELL_NIL)
+            {
                 HvFreeCell(TargetHive, newvalue);
                 HvReleaseCell(SourceHive, SourceValueCell);
                 return HCELL_NIL;
             }
 
             pvalue = HvGetCell(TargetHive, newvalue);
-            if( pvalue == NULL ) {
+            if (pvalue == NULL)
+            {
                 //
                 // we couldn't map the bin containing this cell
                 // this shouldn't happen as we just allocated the cell
                 // (i.e. it should be PINNED into memory at this point)
                 //
-                ASSERT( FALSE );
+                ASSERT(FALSE);
                 HvFreeCell(TargetHive, newvalue);
                 HvReleaseCell(SourceHive, SourceValueCell);
-                CmpFreeValueData(TargetHive,newdata,datalength);
+                CmpFreeValueData(TargetHive, newdata, datalength);
                 return HCELL_NIL;
             }
 
             pvalue->u.KeyValue.Data = newdata;
             pvalue->u.KeyValue.DataLength = datalength;
-
-        } else {
+        }
+        else
+        {
 
             //
             // the data is small, but may be stored in either large or
             // small format for historical reasons
             //
-            if (small) {
+            if (small)
+            {
 
                 //
                 // data is already small, so just do a body to body copy
                 //
                 tempdata = pvalue->u.KeyValue.Data;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // data is stored externally in old cell, will be internal in new
                 //
                 CellToRelease = pvalue->u.KeyValue.Data;
                 pvalue = HvGetCell(SourceHive, pvalue->u.KeyValue.Data);
-                if( pvalue == NULL ) {
+                if (pvalue == NULL)
+                {
                     //
                     // we couldn't map the bin containing this cell
                     //
@@ -1286,25 +1254,27 @@ Return Value:
                 tempdata = *((PULONG)pvalue);
             }
             pvalue = HvGetCell(TargetHive, newvalue);
-            if( pvalue == NULL ) {
+            if (pvalue == NULL)
+            {
                 //
                 // we couldn't map the bin containing this cell
                 // this shouldn't happen as we just allocated the cell
                 // (i.e. it should be PINNED into memory at this point)
                 //
-                ASSERT( FALSE );
+                ASSERT(FALSE);
                 HvFreeCell(TargetHive, newvalue);
                 HvReleaseCell(SourceHive, SourceValueCell);
-                if( CellToRelease != HCELL_NIL ) {
+                if (CellToRelease != HCELL_NIL)
+                {
                     HvReleaseCell(SourceHive, CellToRelease);
                 }
                 return HCELL_NIL;
             }
             pvalue->u.KeyValue.Data = tempdata;
-            pvalue->u.KeyValue.DataLength =
-                datalength + CM_KEY_VALUE_SPECIAL_SIZE;
+            pvalue->u.KeyValue.DataLength = datalength + CM_KEY_VALUE_SPECIAL_SIZE;
 
-            if( CellToRelease != HCELL_NIL ) {
+            if (CellToRelease != HCELL_NIL)
+            {
                 HvReleaseCell(SourceHive, CellToRelease);
             }
         }
@@ -1315,12 +1285,7 @@ Return Value:
 }
 
 HCELL_INDEX
-CmpCopyCell(
-    PHHIVE  SourceHive,
-    HCELL_INDEX SourceCell,
-    PHHIVE  TargetHive,
-    HSTORAGE_TYPE   Type
-    )
+CmpCopyCell(PHHIVE SourceHive, HCELL_INDEX SourceCell, PHHIVE TargetHive, HSTORAGE_TYPE Type)
 /*++
 
 Routine Description:
@@ -1343,17 +1308,18 @@ Return Value:
 
 --*/
 {
-    PVOID   psource;
-    PVOID   ptarget;
-    ULONG   size;
+    PVOID psource;
+    PVOID ptarget;
+    ULONG size;
     HCELL_INDEX newcell;
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SAVRES,"CmpCopyCell:\n"));
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SAVRES,"\tSourceHive=%p SourceCell=%08lx\n",SourceHive,SourceCell));
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_SAVRES,"\tTargetHive=%p\n",TargetHive));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SAVRES, "CmpCopyCell:\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SAVRES, "\tSourceHive=%p SourceCell=%08lx\n", SourceHive, SourceCell));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_SAVRES, "\tTargetHive=%p\n", TargetHive));
 
     psource = HvGetCell(SourceHive, SourceCell);
-    if( psource == NULL ) {
+    if (psource == NULL)
+    {
         //
         // we couldn't map the bin containing this cell
         //
@@ -1362,26 +1328,28 @@ Return Value:
 
     size = HvGetCellSize(SourceHive, psource);
 
-    newcell = HvAllocateCell(TargetHive, size, Type,HCELL_NIL);
-    if (newcell == HCELL_NIL) {
+    newcell = HvAllocateCell(TargetHive, size, Type, HCELL_NIL);
+    if (newcell == HCELL_NIL)
+    {
         HvReleaseCell(SourceHive, SourceCell);
         return HCELL_NIL;
     }
 
     ptarget = HvGetCell(TargetHive, newcell);
-    if( ptarget == NULL ) {
+    if (ptarget == NULL)
+    {
         //
         // we couldn't map the bin containing this cell
         // this shouldn't happen as we just allocated the cell
         // (i.e. it should be PINNED into memory at this point)
         //
-        ASSERT( FALSE );
+        ASSERT(FALSE);
         HvFreeCell(TargetHive, newcell);
         HvReleaseCell(SourceHive, SourceCell);
         return HCELL_NIL;
     }
 
-   
+
     RtlCopyMemory(ptarget, psource, size);
 
     HvReleaseCell(SourceHive, SourceCell);
@@ -1391,11 +1359,7 @@ Return Value:
 }
 
 BOOLEAN
-CmpFreeKeyValues(
-    PHHIVE Hive,
-    HCELL_INDEX Cell,
-    PCM_KEY_NODE Node
-    )
+CmpFreeKeyValues(PHHIVE Hive, HCELL_INDEX Cell, PCM_KEY_NODE Node)
 /*++
 
 Routine Description:
@@ -1414,51 +1378,57 @@ Return Value:
    TRUE if successful, FALSE otherwise.
 
 --*/
-{    
-    PCELL_DATA  plist;
-    ULONG       i;
+{
+    PCELL_DATA plist;
+    ULONG i;
 
-    ASSERT( Hive->ReleaseCellRoutine == NULL );
+    ASSERT(Hive->ReleaseCellRoutine == NULL);
     //
-    // Mark all the value-related cells dirty 
+    // Mark all the value-related cells dirty
     //
 
-    if (! CmpMarkKeyValuesDirty(Hive, Cell, Node)) {
+    if (!CmpMarkKeyValuesDirty(Hive, Cell, Node))
+    {
         return FALSE;
     }
-    
+
     //
     // Link nodes don't have things that we need to free
     //
 
-    if (!(Node->Flags & KEY_HIVE_EXIT)) {
+    if (!(Node->Flags & KEY_HIVE_EXIT))
+    {
 
         //
         // First, free the value entries
         //
-        if (Node->ValueList.Count > 0) {
+        if (Node->ValueList.Count > 0)
+        {
 
             // Get value list
             plist = HvGetCell(Hive, Node->ValueList.List);
-            if( plist == NULL ) {
+            if (plist == NULL)
+            {
                 //
                 // we couldn't map the bin containing this cell
                 // this shouldn't happen as we just marked the cell dirty
                 // (i.e. it should be PINNED into memory at this point)
                 //
-                ASSERT( FALSE );
+                ASSERT(FALSE);
                 return FALSE;
             }
 
             // Free each value
-            for (i = 0; i < Node->ValueList.Count; i++) {
-                if( CmpFreeValue(Hive, plist->u.KeyList[i]) == FALSE ) {
+            for (i = 0; i < Node->ValueList.Count; i++)
+            {
+                if (CmpFreeValue(Hive, plist->u.KeyList[i]) == FALSE)
+                {
                     //
                     // we couldn't map view inside call above
                     // this shouldn't happen as we just marked the values dirty
                     // (i.e. they should be PINNED into memory at this point)
                     //
-                    ASSERT( FALSE );
+                    ASSERT(FALSE);
                     return FALSE;
                 }
             }
@@ -1484,26 +1454,20 @@ Return Value:
         // Free the Class information
         //
 
-        if (Node->ClassLength > 0) {
+        if (Node->ClassLength > 0)
+        {
             HvFreeCell(Hive, Node->Class);
             Node->Class = HCELL_NIL;
             Node->ClassLength = 0;
         }
-        
     }
 
     return TRUE;
 }
 
 BOOLEAN
-CmpMergeKeyValues(
-    PHHIVE  SourceHive,
-    HCELL_INDEX SourceKeyCell,
-    PCM_KEY_NODE SourceKeyNode,
-    PHHIVE  TargetHive,
-    HCELL_INDEX TargetKeyCell,
-    PCM_KEY_NODE TargetKeyNode
-    )
+CmpMergeKeyValues(PHHIVE SourceHive, HCELL_INDEX SourceKeyCell, PCM_KEY_NODE SourceKeyNode, PHHIVE TargetHive,
+                  HCELL_INDEX TargetKeyCell, PCM_KEY_NODE TargetKeyNode)
 /*++
 
 Routine Description:
@@ -1530,28 +1494,31 @@ Return Value:
 
 --*/
 {
-    NTSTATUS        status;    
-    BOOLEAN         success = FALSE;    
-    PCELL_DATA      psrclist;
-    HCELL_INDEX     newvalue, newlist = HCELL_NIL,child;    
-    ULONG           i, count, Type, ChildIndex;
-    PCM_KEY_VALUE   poldvalue;
-    WCHAR           *NameBuffer = NULL;
-    UNICODE_STRING  ValueName;
+    NTSTATUS status;
+    BOOLEAN success = FALSE;
+    PCELL_DATA psrclist;
+    HCELL_INDEX newvalue, newlist = HCELL_NIL, child;
+    ULONG i, count, Type, ChildIndex;
+    PCM_KEY_VALUE poldvalue;
+    WCHAR *NameBuffer = NULL;
+    UNICODE_STRING ValueName;
 
     ASSERT_CM_LOCK_OWNED_EXCLUSIVE();
-    ASSERT( SourceHive->ReleaseCellRoutine == NULL );
-    ASSERT( TargetHive->ReleaseCellRoutine == NULL );
+    ASSERT(SourceHive->ReleaseCellRoutine == NULL);
+    ASSERT(TargetHive->ReleaseCellRoutine == NULL);
 
-    if(TargetKeyNode->MaxValueNameLen < SourceKeyNode->MaxValueNameLen) {
+    if (TargetKeyNode->MaxValueNameLen < SourceKeyNode->MaxValueNameLen)
+    {
         TargetKeyNode->MaxValueNameLen = SourceKeyNode->MaxValueNameLen;
     }
 
-    if(TargetKeyNode->MaxValueDataLen < SourceKeyNode->MaxValueDataLen) {
+    if (TargetKeyNode->MaxValueDataLen < SourceKeyNode->MaxValueDataLen)
+    {
         TargetKeyNode->MaxValueDataLen = SourceKeyNode->MaxValueDataLen;
     }
 
-    if(TargetKeyNode->ValueList.Count == 0) {
+    if (TargetKeyNode->ValueList.Count == 0)
+    {
         //
         // No Values in Target, do a sync
         //
@@ -1562,30 +1529,35 @@ Return Value:
     //
     count = SourceKeyNode->ValueList.Count;
 
-    if (count == 0) {
+    if (count == 0)
+    {
 
         // No values in source, no update to the list needed.
         success = TRUE;
-    } else {        
+    }
+    else
+    {
 
         NameBuffer = ExAllocatePool(PagedPool, REG_MAX_KEY_VALUE_NAME_LENGTH);
-        if(!NameBuffer) return FALSE;
+        if (!NameBuffer)
+            return FALSE;
 
         //
         // The type of the new cells will be the same as that
         // of the target cell.
         //
 
-        Type = HvGetCellType(TargetKeyCell);    
+        Type = HvGetCellType(TargetKeyCell);
 
         //
         // Reallocate the value list for target to fit the new size
-        // Worst case: all values from the source node will be added 
+        // Worst case: all values from the source node will be added
         // to the target node
         //
 
         psrclist = HvGetCell(SourceHive, SourceKeyNode->ValueList.List);
-        if( psrclist == NULL ) {
+        if (psrclist == NULL)
+        {
             //
             // we couldn't map the bin containing this cell
             //
@@ -1596,14 +1568,16 @@ Return Value:
         //
         // Copy the values
         //
-        for (i = 0; i < count; i++) {
+        for (i = 0; i < count; i++)
+        {
 
             poldvalue = (PCM_KEY_VALUE)HvGetCell(SourceHive, psrclist->u.KeyList[i]);
-            if( poldvalue == NULL ) {
+            if (poldvalue == NULL)
+            {
                 //
                 // we couldn't map the bin containing this cell
                 //
-                
+
                 //
                 // for cleanup purposes
                 //
@@ -1611,17 +1585,18 @@ Return Value:
 
                 goto EndValueMerge;
             }
-            
+
             //
             // get the name
             //
-            CmpInitializeValueNameString(poldvalue,&ValueName,NameBuffer);
+            CmpInitializeValueNameString(poldvalue, &ValueName, NameBuffer);
 
 
             //
             // check if this particular values doesn't exist in the target node already
             //
-            if( CmpFindNameInList(TargetHive,&(TargetKeyNode->ValueList),&ValueName,&ChildIndex,&child) == FALSE ) {
+            if (CmpFindNameInList(TargetHive, &(TargetKeyNode->ValueList), &ValueName, &ChildIndex, &child) == FALSE)
+            {
                 //
                 // we couldn't map a view inside the above call
                 //
@@ -1633,23 +1608,20 @@ Return Value:
                 goto EndValueMerge;
             }
 
-            if( child == HCELL_NIL ) {
+            if (child == HCELL_NIL)
+            {
                 //
                 // sanity validation : insert at the end
                 //
-                ASSERT( ChildIndex == TargetKeyNode->ValueList.Count );
+                ASSERT(ChildIndex == TargetKeyNode->ValueList.Count);
 
                 //
                 // No, it doesn't, so add it
                 //
-                newvalue = CmpCopyValue(
-                                SourceHive,
-                                psrclist->u.KeyList[i],
-                                TargetHive,
-                                Type
-                                );
+                newvalue = CmpCopyValue(SourceHive, psrclist->u.KeyList[i], TargetHive, Type);
 
-                if (newvalue == HCELL_NIL) {
+                if (newvalue == HCELL_NIL)
+                {
                     //
                     // for cleanup purposes
                     //
@@ -1657,7 +1629,8 @@ Return Value:
                     goto EndValueMerge;
                 }
 
-                if( !NT_SUCCESS( CmpAddValueToList(TargetHive,newvalue,ChildIndex,Type,&(TargetKeyNode->ValueList)) ) ) {
+                if (!NT_SUCCESS(CmpAddValueToList(TargetHive, newvalue, ChildIndex, Type, &(TargetKeyNode->ValueList))))
+                {
                     //
                     // for cleanup purposes
                     //
@@ -1671,13 +1644,15 @@ Return Value:
     }
 
 EndValueMerge:
-    if (NameBuffer) ExFreePool(NameBuffer);
+    if (NameBuffer)
+        ExFreePool(NameBuffer);
 
-    if (success == FALSE) {
+    if (success == FALSE)
+    {
 
         // Clean-up on failure
         // Revert to the original size
-        
+
         //
         // unfortunatelly we cannot do that anymore as we have sorted the list
         //
@@ -1685,16 +1660,10 @@ EndValueMerge:
 
     return success;
 }
-    
+
 BOOLEAN
-CmpSyncKeyValues(
-    PHHIVE  SourceHive,
-    HCELL_INDEX SourceKeyCell,
-    PCM_KEY_NODE SourceKeyNode,
-    PHHIVE  TargetHive,
-    HCELL_INDEX TargetKeyCell,
-    PCM_KEY_NODE TargetKeyNode
-    )
+CmpSyncKeyValues(PHHIVE SourceHive, HCELL_INDEX SourceKeyCell, PCM_KEY_NODE SourceKeyNode, PHHIVE TargetHive,
+                 HCELL_INDEX TargetKeyCell, PCM_KEY_NODE TargetKeyNode)
 /*++
 
 Routine Description:
@@ -1719,39 +1688,40 @@ Return Value:
 
 --*/
 {
-    NTSTATUS                status;    
-    BOOLEAN                 success = FALSE;    
-    PCELL_DATA              psrclist = NULL, ptarlist, psrcsecurity;
-    HCELL_INDEX             newvalue, newlist = HCELL_NIL, newclass = HCELL_NIL;    
-    ULONG                   i, count, Type, Index;
-    PCM_KEY_VALUE           pvalue;
+    NTSTATUS status;
+    BOOLEAN success = FALSE;
+    PCELL_DATA psrclist = NULL, ptarlist, psrcsecurity;
+    HCELL_INDEX newvalue, newlist = HCELL_NIL, newclass = HCELL_NIL;
+    ULONG i, count, Type, Index;
+    PCM_KEY_VALUE pvalue;
 #if DBG
-    WCHAR                   *NameBuffer = NULL;
-    UNICODE_STRING          ValueName;
-	HCELL_INDEX				child;
+    WCHAR *NameBuffer = NULL;
+    UNICODE_STRING ValueName;
+    HCELL_INDEX child;
 #endif //DBG
 
-    PSECURITY_DESCRIPTOR    SrcSecurityDescriptor;
-    HCELL_INDEX             OldSecurity,NewSecurity;    
-    
+    PSECURITY_DESCRIPTOR SrcSecurityDescriptor;
+    HCELL_INDEX OldSecurity, NewSecurity;
+
     //
     // nobody is operating on the target hive
     //
-    ASSERT( TargetHive->ReleaseCellRoutine == NULL );
+    ASSERT(TargetHive->ReleaseCellRoutine == NULL);
 
     //
     // First, free the target key's values, sd, and class info.
     //
 
-    if(!CmpFreeKeyValues(TargetHive, TargetKeyCell, TargetKeyNode))
-       return FALSE;
+    if (!CmpFreeKeyValues(TargetHive, TargetKeyCell, TargetKeyNode))
+        return FALSE;
 
 #if DBG
     NameBuffer = ExAllocatePool(PagedPool, REG_MAX_KEY_VALUE_NAME_LENGTH);
-    if(!NameBuffer) {
+    if (!NameBuffer)
+    {
         return FALSE;
     }
-#endif //DBG    
+#endif //DBG
     //
     // Now, copy the values, class, & sd from the source cell
     //
@@ -1761,17 +1731,19 @@ Return Value:
     // of the target cell.
     //
 
-    Type = HvGetCellType(TargetKeyCell);    
-    
+    Type = HvGetCellType(TargetKeyCell);
+
     //
     // Allocate and copy class
     //
-    if ((SourceKeyNode->ClassLength > 0) && (SourceKeyNode->Class != HCELL_NIL)) {
+    if ((SourceKeyNode->ClassLength > 0) && (SourceKeyNode->Class != HCELL_NIL))
+    {
         newclass = CmpCopyCell(SourceHive, SourceKeyNode->Class, TargetHive, Type);
-        if (newclass == HCELL_NIL) {
+        if (newclass == HCELL_NIL)
+        {
             goto EndValueSync;
         }
-        
+
         // only if class is valid. Otherwise remains 0 (set by CmpFreeKeyValues)
         TargetKeyNode->ClassLength = SourceKeyNode->ClassLength;
     }
@@ -1789,7 +1761,8 @@ Return Value:
     //
     // Use the hash Luke !!!
     //
-    if( CmpFindSecurityCellCacheIndex ((PCMHIVE)SourceHive,SourceKeyNode->Security,&Index) == FALSE ) {
+    if (CmpFindSecurityCellCacheIndex((PCMHIVE)SourceHive, SourceKeyNode->Security, &Index) == FALSE)
+    {
         goto EndValueSync;
     }
 
@@ -1803,65 +1776,67 @@ Return Value:
     OldSecurity = TargetKeyNode->Security;
     TargetKeyNode->Security = HCELL_NIL;
 
-    status = CmpAssignSecurityDescriptor(TargetHive,
-                                         TargetKeyCell,
-                                         TargetKeyNode,
-                                         SrcSecurityDescriptor);
-    if (!NT_SUCCESS(status)) {
+    status = CmpAssignSecurityDescriptor(TargetHive, TargetKeyCell, TargetKeyNode, SrcSecurityDescriptor);
+    if (!NT_SUCCESS(status))
+    {
         TargetKeyNode->Security = OldSecurity;
         goto EndValueSync;
     }
 
     NewSecurity = TargetKeyNode->Security;
     TargetKeyNode->Security = OldSecurity;
-    if ((TargetKeyNode->Flags & KEY_HIVE_ENTRY) && ( NewSecurity != OldSecurity) ) {
+    if ((TargetKeyNode->Flags & KEY_HIVE_ENTRY) && (NewSecurity != OldSecurity))
+    {
         //
         // we need to play it safe here so we don't blow away the security list for entire hive.
         //
-        PCM_KEY_SECURITY    NewSec;
-        PCM_KEY_SECURITY    OldSec;
-        PCM_KEY_SECURITY    LastSec;
-        HCELL_INDEX         LastSecCell;
+        PCM_KEY_SECURITY NewSec;
+        PCM_KEY_SECURITY OldSec;
+        PCM_KEY_SECURITY LastSec;
+        HCELL_INDEX LastSecCell;
 
-        NewSec = (PCM_KEY_SECURITY)HvGetCell(TargetHive,NewSecurity);
-        if( NewSec == NULL ) {
+        NewSec = (PCM_KEY_SECURITY)HvGetCell(TargetHive, NewSecurity);
+        if (NewSec == NULL)
+        {
             //
             // could not map view
             //
             goto EndValueSync;
         }
 
-        OldSec = (PCM_KEY_SECURITY)HvGetCell(TargetHive,OldSecurity);
-        if( OldSec == NULL ) {
+        OldSec = (PCM_KEY_SECURITY)HvGetCell(TargetHive, OldSecurity);
+        if (OldSec == NULL)
+        {
             //
             // could not map view
             //
-            HvReleaseCell(TargetHive,NewSecurity);
+            HvReleaseCell(TargetHive, NewSecurity);
             goto EndValueSync;
         }
 
         LastSecCell = OldSec->Blink;
-        LastSec = (PCM_KEY_SECURITY)HvGetCell(TargetHive,LastSecCell);
-        if( LastSec == NULL ) {
+        LastSec = (PCM_KEY_SECURITY)HvGetCell(TargetHive, LastSecCell);
+        if (LastSec == NULL)
+        {
             //
             // could not map view
             //
-            HvReleaseCell(TargetHive,OldSecurity);
-            HvReleaseCell(TargetHive,NewSecurity);
+            HvReleaseCell(TargetHive, OldSecurity);
+            HvReleaseCell(TargetHive, NewSecurity);
             goto EndValueSync;
         }
 
-        if( !HvMarkCellDirty(TargetHive,OldSecurity) ||
-            !HvMarkCellDirty(TargetHive,LastSecCell) ) {
+        if (!HvMarkCellDirty(TargetHive, OldSecurity) || !HvMarkCellDirty(TargetHive, LastSecCell))
+        {
             //
             // no log space
             //
-            HvReleaseCell(TargetHive,LastSecCell);
-            HvReleaseCell(TargetHive,OldSecurity);
-            HvReleaseCell(TargetHive,NewSecurity);
+            HvReleaseCell(TargetHive, LastSecCell);
+            HvReleaseCell(TargetHive, OldSecurity);
+            HvReleaseCell(TargetHive, NewSecurity);
             goto EndValueSync;
         }
-        
+
         //
         // link old list to new security
         //
@@ -1870,10 +1845,9 @@ Return Value:
         OldSec->Blink = NewSecurity;
         LastSec->Flink = NewSecurity;
 
-        HvReleaseCell(TargetHive,LastSecCell);
-        HvReleaseCell(TargetHive,OldSecurity);
-        HvReleaseCell(TargetHive,NewSecurity);
-
+        HvReleaseCell(TargetHive, LastSecCell);
+        HvReleaseCell(TargetHive, OldSecurity);
+        HvReleaseCell(TargetHive, NewSecurity);
     }
     //
     // we need to play it safe here, to make sure we never end up having a key
@@ -1881,7 +1855,7 @@ Return Value:
     //
     CmpFreeSecurityDescriptor(TargetHive, TargetKeyCell);
     TargetKeyNode->Security = NewSecurity;
-    
+
     //
     // Set up the value list
     //
@@ -1893,25 +1867,29 @@ Return Value:
     TargetKeyNode->ValueList.List = HCELL_NIL;
     TargetKeyNode->ValueList.Count = 0;
 
-	//
-	// after sync we'll have the values from source
-	//
-	TargetKeyNode->MaxValueNameLen = SourceKeyNode->MaxValueNameLen;
-	TargetKeyNode->MaxValueDataLen = SourceKeyNode->MaxValueDataLen;
+    //
+    // after sync we'll have the values from source
+    //
+    TargetKeyNode->MaxValueNameLen = SourceKeyNode->MaxValueNameLen;
+    TargetKeyNode->MaxValueDataLen = SourceKeyNode->MaxValueDataLen;
 
-    if (count == 0) {
+    if (count == 0)
+    {
 
         // No values in source, no list needed.
 
         success = TRUE;
-    } else {        
+    }
+    else
+    {
 
         //
         // Do not allocate space for ValueList; CmpAddValueToList will do it
         //
 
         psrclist = HvGetCell(SourceHive, SourceKeyNode->ValueList.List);
-        if( psrclist == NULL ) {
+        if (psrclist == NULL)
+        {
             //
             // we couldn't map the bin containing this cell
             //
@@ -1922,16 +1900,13 @@ Return Value:
         //
         // Copy the values
         //
-        for (i = 0; i < count; i++) {
+        for (i = 0; i < count; i++)
+        {
 
-            newvalue = CmpCopyValue(
-                            SourceHive,
-                            psrclist->u.KeyList[i],
-                            TargetHive,
-                            Type
-                            );
+            newvalue = CmpCopyValue(SourceHive, psrclist->u.KeyList[i], TargetHive, Type);
 
-            if (newvalue == HCELL_NIL) {
+            if (newvalue == HCELL_NIL)
+            {
                 //
                 // for cleanup purposes
                 //
@@ -1940,13 +1915,14 @@ Return Value:
             }
 
             pvalue = (PCM_KEY_VALUE)HvGetCell(TargetHive, newvalue);
-            if( pvalue == NULL ) {
+            if (pvalue == NULL)
+            {
                 //
                 // we couldn't map the bin containing this cell
                 // this shouldn't happen as we just allocated the cell
                 // (i.e. the bin containing it should be PINNED into memory by now )
                 //
-                ASSERT( FALSE );
+                ASSERT(FALSE);
                 //
                 // for cleanup purposes
                 //
@@ -1954,19 +1930,20 @@ Return Value:
                 goto EndValueSync;
             }
 
-#if DBG            
+#if DBG
             //
             // get the name
             //
-            CmpInitializeValueNameString(pvalue,&ValueName,NameBuffer);
+            CmpInitializeValueNameString(pvalue, &ValueName, NameBuffer);
 
 
             //
-            // find out the index where we should insert this 
+            // find out the index where we should insert this
             // this is a special treatment for the case when we copy form and old hive (not sorted)
             // into a new format one (sorted)
             //
-            if( CmpFindNameInList(TargetHive,&(TargetKeyNode->ValueList),&ValueName,&Index,&child) == FALSE ) {
+            if (CmpFindNameInList(TargetHive, &(TargetKeyNode->ValueList), &ValueName, &Index, &child) == FALSE)
+            {
                 //
                 // we couldn't map a view inside the above call
                 //
@@ -1980,44 +1957,44 @@ Return Value:
             //
             // the value is not present in the list; we're about to add it!
             //
-            ASSERT( child == HCELL_NIL );
-            
+            ASSERT(child == HCELL_NIL);
+
             //
             // sanity validation : insert at the end
             //
-            ASSERT( Index == i );
-#endif //DBG            
+            ASSERT(Index == i);
+#endif //DBG
 
-            if( !NT_SUCCESS( CmpAddValueToList(TargetHive,newvalue,i,Type,&(TargetKeyNode->ValueList)) ) ) {
+            if (!NT_SUCCESS(CmpAddValueToList(TargetHive, newvalue, i, Type, &(TargetKeyNode->ValueList))))
+            {
                 //
                 // for cleanup purposes
                 //
                 newlist = TargetKeyNode->ValueList.List;
 
-                if( newlist != HCELL_NIL ) {
+                if (newlist != HCELL_NIL)
+                {
                     //
                     // Delete all the copied values on an error.
                     //
                     ptarlist = HvGetCell(TargetHive, newlist);
-                    if( ptarlist == NULL ) {
+                    if (ptarlist == NULL)
+                    {
                         //
                         // we couldn't map the bin containing this cell
                         // this shouldn't fail as we just allocated this cell
                         // (i.e. the bin should be PINNED into memory at this point)
                         //
-                        ASSERT( FALSE );
+                        ASSERT(FALSE);
                         goto EndValueSync;
                     }
-                    for (; i > 0; i--) {
-                        HvFreeCell(
-                            TargetHive,
-                            ptarlist->u.KeyList[i - 1]
-                            );
+                    for (; i > 0; i--)
+                    {
+                        HvFreeCell(TargetHive, ptarlist->u.KeyList[i - 1]);
                     }
                 }
                 goto EndValueSync;
             }
-
         }
 
         success = TRUE;
@@ -2026,36 +2003,35 @@ Return Value:
 EndValueSync:
 
 #if DBG
-    ASSERT( NameBuffer != NULL );
+    ASSERT(NameBuffer != NULL);
     ExFreePool(NameBuffer);
 #endif //DBG
 
-    if( psrclist != NULL ) {
+    if (psrclist != NULL)
+    {
         HvReleaseCell(SourceHive, SourceKeyNode->ValueList.List);
     }
 
-    if (success == FALSE) {
+    if (success == FALSE)
+    {
 
         // Clean-up on failure
 
-        if (newlist != HCELL_NIL) {
+        if (newlist != HCELL_NIL)
+        {
             HvFreeCell(TargetHive, newlist);
         }
 
-        if (newclass != HCELL_NIL) {
+        if (newclass != HCELL_NIL)
+        {
             HvFreeCell(TargetHive, newclass);
         }
-
     }
 
     return success;
 }
 
-VOID 
-CmpInitializeKeyNameString(PCM_KEY_NODE Cell, 
-                           PUNICODE_STRING KeyName,
-                           WCHAR *NameBuffer
-                           )
+VOID CmpInitializeKeyNameString(PCM_KEY_NODE Cell, PUNICODE_STRING KeyName, WCHAR *NameBuffer)
 /*++
 
 Routine Description:
@@ -2078,51 +2054,44 @@ Return Value:
    NONE.
 
 --*/
-{                        
-   // is the name stored in compressed form?
+{
+    // is the name stored in compressed form?
 
-   if(Cell->Flags & KEY_COMP_NAME) {
+    if (Cell->Flags & KEY_COMP_NAME)
+    {
 
-      // Name is compressed. 
+        // Name is compressed.
 
-      // Get the uncompressed length.
-                        
-      KeyName->Length = CmpCompressedNameSize(Cell->Name,
-                                              Cell->NameLength);
-                        
-      // Decompress the name into a buffer.
+        // Get the uncompressed length.
 
-      CmpCopyCompressedName(NameBuffer, 
-                            REG_MAX_KEY_NAME_LENGTH,
-                            Cell->Name,                                            
-                            Cell->NameLength);
+        KeyName->Length = CmpCompressedNameSize(Cell->Name, Cell->NameLength);
 
-      //
-      // Use the decompression buffer as the string buffer
-      //
-                        
-      KeyName->Buffer = NameBuffer;      
-      KeyName->MaximumLength = REG_MAX_KEY_NAME_LENGTH;
+        // Decompress the name into a buffer.
 
-   } else {
+        CmpCopyCompressedName(NameBuffer, REG_MAX_KEY_NAME_LENGTH, Cell->Name, Cell->NameLength);
 
-      //
-      // Name is not compressed. Just use the name string 
-      // from the key buffer as the string buffer.
-      //
-                        
-      KeyName->Length = Cell->NameLength;                        
-      KeyName->Buffer = Cell->Name;
-      KeyName->MaximumLength = (USHORT)Cell->MaxNameLen;
-                     
-   }                                             
+        //
+        // Use the decompression buffer as the string buffer
+        //
+
+        KeyName->Buffer = NameBuffer;
+        KeyName->MaximumLength = REG_MAX_KEY_NAME_LENGTH;
+    }
+    else
+    {
+
+        //
+        // Name is not compressed. Just use the name string
+        // from the key buffer as the string buffer.
+        //
+
+        KeyName->Length = Cell->NameLength;
+        KeyName->Buffer = Cell->Name;
+        KeyName->MaximumLength = (USHORT)Cell->MaxNameLen;
+    }
 }
 
-VOID 
-CmpInitializeValueNameString(PCM_KEY_VALUE Cell, 
-                             PUNICODE_STRING ValueName,
-                             WCHAR *NameBuffer
-                             )
+VOID CmpInitializeValueNameString(PCM_KEY_VALUE Cell, PUNICODE_STRING ValueName, WCHAR *NameBuffer)
 /*
 Routine Description:
 
@@ -2144,51 +2113,45 @@ Return Value:
    NONE.
 */
 
-{                        
-   // is the name stored in compressed form?
+{
+    // is the name stored in compressed form?
 
-   if(Cell->Flags & VALUE_COMP_NAME) {
+    if (Cell->Flags & VALUE_COMP_NAME)
+    {
 
-      // Name is compressed. 
+        // Name is compressed.
 
-      // Get the uncompressed length.
-                        
-      ValueName->Length = CmpCompressedNameSize(Cell->Name,
-                                              Cell->NameLength);
-                        
-      // Decompress the name into a buffer.
+        // Get the uncompressed length.
 
-      CmpCopyCompressedName(NameBuffer, 
-                            REG_MAX_KEY_VALUE_NAME_LENGTH,
-                            Cell->Name,                                            
-                            Cell->NameLength);
+        ValueName->Length = CmpCompressedNameSize(Cell->Name, Cell->NameLength);
 
-      //
-      // Use the decompression buffer as the string buffer
-      //
-                        
-      ValueName->Buffer = NameBuffer;      
-      ValueName->MaximumLength = REG_MAX_KEY_VALUE_NAME_LENGTH;
+        // Decompress the name into a buffer.
 
-   } else {
+        CmpCopyCompressedName(NameBuffer, REG_MAX_KEY_VALUE_NAME_LENGTH, Cell->Name, Cell->NameLength);
 
-      //
-      // Name is not compressed. Just use the name string 
-      // from the ValueName buffer as the string buffer.
-      //
-                        
-      ValueName->Length = Cell->NameLength;                        
-      ValueName->Buffer = Cell->Name;
-      ValueName->MaximumLength = ValueName->Length;
-                     
-   }                                             
+        //
+        // Use the decompression buffer as the string buffer
+        //
+
+        ValueName->Buffer = NameBuffer;
+        ValueName->MaximumLength = REG_MAX_KEY_VALUE_NAME_LENGTH;
+    }
+    else
+    {
+
+        //
+        // Name is not compressed. Just use the name string
+        // from the ValueName buffer as the string buffer.
+        //
+
+        ValueName->Length = Cell->NameLength;
+        ValueName->Buffer = Cell->Name;
+        ValueName->MaximumLength = ValueName->Length;
+    }
 }
 
 BOOLEAN
-CmpSyncSubKeysAfterDelete(PHHIVE SourceHive,
-                          PCM_KEY_NODE SourceCell,
-                          PHHIVE TargetHive,
-                          PCM_KEY_NODE TargetCell,
+CmpSyncSubKeysAfterDelete(PHHIVE SourceHive, PCM_KEY_NODE SourceCell, PHHIVE TargetHive, PCM_KEY_NODE TargetCell,
                           WCHAR *NameBuffer)
 /*++
 
@@ -2220,112 +2183,100 @@ Return Value:
 
 --*/
 {
-   HCELL_INDEX TargetSubKey, SourceSubKey;
-   ULONG i = 0;   
-   PCM_KEY_NODE SubKeyCell;
-   UNICODE_STRING SubKeyName;
+    HCELL_INDEX TargetSubKey, SourceSubKey;
+    ULONG i = 0;
+    PCM_KEY_NODE SubKeyCell;
+    UNICODE_STRING SubKeyName;
 
-   //
-   // Run through all of the target cell's subkeys
-   //
+    //
+    // Run through all of the target cell's subkeys
+    //
 
-   while((TargetSubKey = CmpFindSubKeyByNumber(
-                                               TargetHive,
-                                               TargetCell,
-                                               i)) != HCELL_NIL)
-   {
-      
-      //
-      // Check if the current subkey has a counterpart
-      // subkey of the source cell.
-      // (Note that we use similar techniques as in the code
-      //  of CmpCopySyncTree2)
-      //
+    while ((TargetSubKey = CmpFindSubKeyByNumber(TargetHive, TargetCell, i)) != HCELL_NIL)
+    {
 
-      SubKeyCell = (PCM_KEY_NODE)HvGetCell(TargetHive, TargetSubKey);
-        if( SubKeyCell == NULL ) {
+        //
+        // Check if the current subkey has a counterpart
+        // subkey of the source cell.
+        // (Note that we use similar techniques as in the code
+        //  of CmpCopySyncTree2)
+        //
+
+        SubKeyCell = (PCM_KEY_NODE)HvGetCell(TargetHive, TargetSubKey);
+        if (SubKeyCell == NULL)
+        {
             //
             // we couldn't map the bin containing this cell
             //
             return FALSE;
         }
 
-      CmpInitializeKeyNameString(SubKeyCell,
-                                 &SubKeyName,
-                                 NameBuffer);
+        CmpInitializeKeyNameString(SubKeyCell, &SubKeyName, NameBuffer);
 
-      SourceSubKey = CmpFindSubKeyByName(SourceHive, 
-                                         SourceCell,
-                                         &SubKeyName);
+        SourceSubKey = CmpFindSubKeyByName(SourceHive, SourceCell, &SubKeyName);
 
-      if(SourceSubKey == HCELL_NIL)
-      { 
-         //
-         // The current subkey has no counterpart, 
-         // it must therefore be deleted from the target cell.
-         //
+        if (SourceSubKey == HCELL_NIL)
+        {
+            //
+            // The current subkey has no counterpart,
+            // it must therefore be deleted from the target cell.
+            //
 
 #if DEBUG_TREE_SYNC
-         CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,"CONFIG: SubKey Deletion of %.*S\n",                         
-               SubKeyName.Length / sizeof(WCHAR),
-               SubKeyName.Buffer));         
+            CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL, "CONFIG: SubKey Deletion of %.*S\n",
+                         SubKeyName.Length / sizeof(WCHAR), SubKeyName.Buffer));
 #endif
-         
-         if(SubKeyCell->SubKeyCounts[Stable] + SubKeyCell->SubKeyCounts[Volatile])
-         {
-            // The subkey we are deleting has subkeys - use delete tree to get rid of them            
 
-            CmpDeleteTree(TargetHive, TargetSubKey);
+            if (SubKeyCell->SubKeyCounts[Stable] + SubKeyCell->SubKeyCounts[Volatile])
+            {
+                // The subkey we are deleting has subkeys - use delete tree to get rid of them
+
+                CmpDeleteTree(TargetHive, TargetSubKey);
 
 #if DEBUG_TREE_SYNC
-            CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,"CONFIG: Delete TREE performed.\n"));
+                CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL, "CONFIG: Delete TREE performed.\n"));
 #endif
-         }
-      
-         //
-         // release this cell as we don't need it anymore
-         //
-         HvReleaseCell(TargetHive, TargetSubKey);
-         
-         // The subkey we are deleting is now a leaf (or has always been one), 
-         // just delete it.
+            }
 
-         if(!NT_SUCCESS(CmpFreeKeyByCell(TargetHive, TargetSubKey, TRUE)))
-         {
-            return FALSE;
-         }
-         
-         //
-         // We have deleted a subkey, so *i* does not need to get incremented
-         // here because it now refers to the next subkey.
-         //         
-      }
-      else
-      {
-         //
-         // Counterpart found. No deletion necessary. Move on to the next subkey
-         //
+            //
+            // release this cell as we don't need it anymore
+            //
+            HvReleaseCell(TargetHive, TargetSubKey);
 
-         i++;
+            // The subkey we are deleting is now a leaf (or has always been one),
+            // just delete it.
 
-         //
-         // release this cell as we don't need it anymore
-         //
-         HvReleaseCell(TargetHive, TargetSubKey);
+            if (!NT_SUCCESS(CmpFreeKeyByCell(TargetHive, TargetSubKey, TRUE)))
+            {
+                return FALSE;
+            }
 
-      }
-   }
-         
-   return TRUE;
+            //
+            // We have deleted a subkey, so *i* does not need to get incremented
+            // here because it now refers to the next subkey.
+            //
+        }
+        else
+        {
+            //
+            // Counterpart found. No deletion necessary. Move on to the next subkey
+            //
+
+            i++;
+
+            //
+            // release this cell as we don't need it anymore
+            //
+            HvReleaseCell(TargetHive, TargetSubKey);
+        }
+    }
+
+    return TRUE;
 }
 
 
 BOOLEAN
-CmpMarkKeyValuesDirty(
-    PHHIVE Hive,
-    HCELL_INDEX Cell,
-    PCM_KEY_NODE Node
-    )
+CmpMarkKeyValuesDirty(PHHIVE Hive, HCELL_INDEX Cell, PCM_KEY_NODE Node)
 /*++
 
 Routine Description:
@@ -2348,34 +2299,38 @@ Return Value:
    A failure probably indicates that no log space was available.
 
 --*/
-{    
-    PCELL_DATA  plist, security, pvalue;
-    ULONG       i, realsize;    
+{
+    PCELL_DATA plist, security, pvalue;
+    ULONG i, realsize;
 
-    ASSERT( Hive->ReleaseCellRoutine == NULL );
+    ASSERT(Hive->ReleaseCellRoutine == NULL);
 
-    if (Node->Flags & KEY_HIVE_EXIT) {
+    if (Node->Flags & KEY_HIVE_EXIT)
+    {
 
         //
         // If this is a link node, we are done.  Link nodes never have
         // classes, values, subkeys, or security descriptors.  Since
         // they always reside in the master hive, they're always volatile.
         //
-        return(TRUE);
+        return (TRUE);
     }
 
     //
     // mark cell itself
     //
-    if (! HvMarkCellDirty(Hive, Cell)) {
+    if (!HvMarkCellDirty(Hive, Cell))
+    {
         return FALSE;
     }
 
     //
     // Mark the class
     //
-    if (Node->Class != HCELL_NIL) {
-        if (! HvMarkCellDirty(Hive, Node->Class)) {
+    if (Node->Class != HCELL_NIL)
+    {
+        if (!HvMarkCellDirty(Hive, Node->Class))
+        {
             return FALSE;
         }
     }
@@ -2383,23 +2338,26 @@ Return Value:
     //
     // Mark security
     //
-    if (Node->Security != HCELL_NIL) {
-        if (! HvMarkCellDirty(Hive, Node->Security)) {
+    if (Node->Security != HCELL_NIL)
+    {
+        if (!HvMarkCellDirty(Hive, Node->Security))
+        {
             return FALSE;
         }
 
         security = HvGetCell(Hive, Node->Security);
-        if( security == NULL ) {
+        if (security == NULL)
+        {
             //
             // we couldn't map the bin containing this cell
             // this shouldn't happen as we just marked the cell dirty
             // (dirty == PINNED in memory).
             //
-            ASSERT( FALSE );
+            ASSERT(FALSE);
             return FALSE;
         }
-        if (! (HvMarkCellDirty(Hive, security->u.KeySecurity.Flink) &&
-               HvMarkCellDirty(Hive, security->u.KeySecurity.Blink)))
+        if (!(HvMarkCellDirty(Hive, security->u.KeySecurity.Flink) &&
+              HvMarkCellDirty(Hive, security->u.KeySecurity.Blink)))
         {
             return FALSE;
         }
@@ -2408,43 +2366,49 @@ Return Value:
     //
     // Mark the value entries and their data
     //
-    if (Node->ValueList.Count > 0) {
+    if (Node->ValueList.Count > 0)
+    {
 
         // Value list
-        if (! HvMarkCellDirty(Hive, Node->ValueList.List)) {
+        if (!HvMarkCellDirty(Hive, Node->ValueList.List))
+        {
             return FALSE;
         }
         plist = HvGetCell(Hive, Node->ValueList.List);
-        if( plist == NULL ) {
+        if (plist == NULL)
+        {
             //
             // we couldn't map the bin containing this cell
             // this shouldn't happen as we just marked the cell dirty
             // (dirty == PINNED in memory).
             //
-            ASSERT( FALSE );
+            ASSERT(FALSE);
             return FALSE;
         }
 
-        for (i = 0; i < Node->ValueList.Count; i++) {
-            if (! HvMarkCellDirty(Hive, plist->u.KeyList[i])) {
+        for (i = 0; i < Node->ValueList.Count; i++)
+        {
+            if (!HvMarkCellDirty(Hive, plist->u.KeyList[i]))
+            {
                 return FALSE;
             }
 
             pvalue = HvGetCell(Hive, plist->u.KeyList[i]);
-            if( pvalue == NULL ) {
+            if (pvalue == NULL)
+            {
                 //
                 // we couldn't map the bin containing this cell
                 // this shouldn't happen as we just marked the cell dirty
                 // (dirty == PINNED in memory).
                 //
-                ASSERT( FALSE );
+                ASSERT(FALSE);
                 return FALSE;
             }
-            
-            if( !CmpMarkValueDataDirty(Hive,&(pvalue->u.KeyValue)) ) {
+
+            if (!CmpMarkValueDataDirty(Hive, &(pvalue->u.KeyValue)))
+            {
                 return FALSE;
             }
-            
         }
     }
 
@@ -2452,10 +2416,7 @@ Return Value:
 }
 
 BOOLEAN
-CmpMarkKeyParentDirty(
-    PHHIVE Hive,
-    HCELL_INDEX Cell
-    )
+CmpMarkKeyParentDirty(PHHIVE Hive, HCELL_INDEX Cell)
 /*++
 
 Routine Description:
@@ -2484,8 +2445,9 @@ Return Value:
     //
     // Map in the target
     //
-    ptarget = HvGetCell(Hive, Cell);    
-    if( ptarget == NULL ) {
+    ptarget = HvGetCell(Hive, Cell);
+    if (ptarget == NULL)
+    {
         //
         // we couldn't map the bin containing this cell
         //
@@ -2493,7 +2455,8 @@ Return Value:
     }
 
 
-    if (ptarget->u.KeyNode.Flags & KEY_HIVE_ENTRY) {
+    if (ptarget->u.KeyNode.Flags & KEY_HIVE_ENTRY)
+    {
 
         //
         // if this is an entry node, we are done.  our parent will
@@ -2505,14 +2468,16 @@ Return Value:
     //
     // Mark the parent's Subkey list
     //
-    if (! CmpMarkIndexDirty(Hive, ptarget->u.KeyNode.Parent, Cell)) {
+    if (!CmpMarkIndexDirty(Hive, ptarget->u.KeyNode.Parent, Cell))
+    {
         return FALSE;
     }
 
     //
     // Mark the parent
     //
-    if (! HvMarkCellDirty(Hive, ptarget->u.KeyNode.Parent)) {
+    if (!HvMarkCellDirty(Hive, ptarget->u.KeyNode.Parent))
+    {
         return FALSE;
     }
 

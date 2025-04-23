@@ -28,7 +28,7 @@ Revision History:
 #include "vimajor.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,     VfMajorInit)
+#pragma alloc_text(INIT, VfMajorInit)
 #pragma alloc_text(PAGEVRFY, VfMajorRegisterHandlers)
 #pragma alloc_text(PAGEVRFY, VfMajorDumpIrpStack)
 #pragma alloc_text(PAGEVRFY, VfMajorVerifyNewRequest)
@@ -49,16 +49,13 @@ Revision History:
 //
 IRP_MAJOR_VERIFIER_ROUTINES ViMajorVerifierRoutines[IRP_MJ_MAXIMUM_FUNCTION + 3];
 
-#define GET_MAJOR_ROUTINES(Major) \
-    (ViMajorVerifierRoutines + \
-    ((Major <= IRP_MJ_MAXIMUM_FUNCTION) ? Major : \
-    ((Major == IRP_MJ_ALL_MAJORS) ? (IRP_MJ_MAXIMUM_FUNCTION + 1) : \
-                                    (IRP_MJ_MAXIMUM_FUNCTION + 2))))
+#define GET_MAJOR_ROUTINES(Major)        \
+    (ViMajorVerifierRoutines +           \
+     ((Major <= IRP_MJ_MAXIMUM_FUNCTION) \
+          ? Major                        \
+          : ((Major == IRP_MJ_ALL_MAJORS) ? (IRP_MJ_MAXIMUM_FUNCTION + 1) : (IRP_MJ_MAXIMUM_FUNCTION + 2))))
 
-VOID
-VfMajorInit(
-    VOID
-    )
+VOID VfMajorInit(VOID)
 {
     //
     // Set every pointer to NULL.
@@ -67,30 +64,22 @@ VfMajorInit(
 }
 
 
-VOID
-FASTCALL
-VfMajorRegisterHandlers(
-    IN  UCHAR                           IrpMajorCode,
-    IN  PFN_DUMP_IRP_STACK              DumpIrpStack            OPTIONAL,
-    IN  PFN_VERIFY_NEW_REQUEST          VerifyNewRequest        OPTIONAL,
-    IN  PFN_VERIFY_IRP_STACK_DOWNWARD   VerifyStackDownward     OPTIONAL,
-    IN  PFN_VERIFY_IRP_STACK_UPWARD     VerifyStackUpward       OPTIONAL,
-    IN  PFN_IS_SYSTEM_RESTRICTED_IRP    IsSystemRestrictedIrp   OPTIONAL,
-    IN  PFN_ADVANCE_IRP_STATUS          AdvanceIrpStatus        OPTIONAL,
-    IN  PFN_IS_VALID_IRP_STATUS         IsValidIrpStatus        OPTIONAL,
-    IN  PFN_IS_NEW_REQUEST              IsNewRequest            OPTIONAL,
-    IN  PFN_VERIFY_NEW_IRP              VerifyNewIrp            OPTIONAL,
-    IN  PFN_VERIFY_FINAL_IRP_STACK      VerifyFinalIrpStack     OPTIONAL,
-    IN  PFN_TEST_STARTED_PDO_STACK      TestStartedPdoStack     OPTIONAL
-    )
+VOID FASTCALL VfMajorRegisterHandlers(
+    IN UCHAR IrpMajorCode, IN PFN_DUMP_IRP_STACK DumpIrpStack OPTIONAL,
+    IN PFN_VERIFY_NEW_REQUEST VerifyNewRequest OPTIONAL, IN PFN_VERIFY_IRP_STACK_DOWNWARD VerifyStackDownward OPTIONAL,
+    IN PFN_VERIFY_IRP_STACK_UPWARD VerifyStackUpward OPTIONAL,
+    IN PFN_IS_SYSTEM_RESTRICTED_IRP IsSystemRestrictedIrp OPTIONAL, IN PFN_ADVANCE_IRP_STATUS AdvanceIrpStatus OPTIONAL,
+    IN PFN_IS_VALID_IRP_STATUS IsValidIrpStatus OPTIONAL, IN PFN_IS_NEW_REQUEST IsNewRequest OPTIONAL,
+    IN PFN_VERIFY_NEW_IRP VerifyNewIrp OPTIONAL, IN PFN_VERIFY_FINAL_IRP_STACK VerifyFinalIrpStack OPTIONAL,
+    IN PFN_TEST_STARTED_PDO_STACK TestStartedPdoStack OPTIONAL)
 {
     PIRP_MAJOR_VERIFIER_ROUTINES verifierRoutines;
 
     //
     // Ensure only legal major codes are passed in.
     //
-    if ((IrpMajorCode != IRP_MJ_ALL_MAJORS) &&
-        (IrpMajorCode > IRP_MJ_MAXIMUM_FUNCTION)) {
+    if ((IrpMajorCode != IRP_MJ_ALL_MAJORS) && (IrpMajorCode > IRP_MJ_MAXIMUM_FUNCTION))
+    {
 
         return;
     }
@@ -111,11 +100,7 @@ VfMajorRegisterHandlers(
 }
 
 
-VOID
-FASTCALL
-VfMajorDumpIrpStack(
-    IN PIO_STACK_LOCATION IrpSp
-    )
+VOID FASTCALL VfMajorDumpIrpStack(IN PIO_STACK_LOCATION IrpSp)
 {
     PIRP_MAJOR_VERIFIER_ROUTINES verifierRoutines;
 
@@ -125,11 +110,13 @@ VfMajorDumpIrpStack(
     // First try to get a specific routine, else try a generic one. We never
     // call both for the purposes of printing.
     //
-    if (verifierRoutines->DumpIrpStack == NULL) {
+    if (verifierRoutines->DumpIrpStack == NULL)
+    {
 
         verifierRoutines = GET_MAJOR_ROUTINES(IRP_MJ_ALL_MAJORS);
 
-        if (verifierRoutines->DumpIrpStack == NULL) {
+        if (verifierRoutines->DumpIrpStack == NULL)
+        {
 
             return;
         }
@@ -139,16 +126,9 @@ VfMajorDumpIrpStack(
 }
 
 
-VOID
-FASTCALL
-VfMajorVerifyNewRequest(
-    IN PIOV_REQUEST_PACKET  IovPacket,
-    IN PDEVICE_OBJECT       DeviceObject,
-    IN PIO_STACK_LOCATION   IrpLastSp           OPTIONAL,
-    IN PIO_STACK_LOCATION   IrpSp,
-    IN PIOV_STACK_LOCATION  StackLocationData,
-    IN PVOID                CallerAddress       OPTIONAL
-    )
+VOID FASTCALL VfMajorVerifyNewRequest(IN PIOV_REQUEST_PACKET IovPacket, IN PDEVICE_OBJECT DeviceObject,
+                                      IN PIO_STACK_LOCATION IrpLastSp OPTIONAL, IN PIO_STACK_LOCATION IrpSp,
+                                      IN PIOV_STACK_LOCATION StackLocationData, IN PVOID CallerAddress OPTIONAL)
 {
     PIRP_MAJOR_VERIFIER_ROUTINES verifierRoutines;
 
@@ -157,16 +137,10 @@ VfMajorVerifyNewRequest(
     //
     verifierRoutines = GET_MAJOR_ROUTINES(IrpSp->MajorFunction);
 
-    if (verifierRoutines->VerifyNewRequest) {
+    if (verifierRoutines->VerifyNewRequest)
+    {
 
-        verifierRoutines->VerifyNewRequest(
-            IovPacket,
-            DeviceObject,
-            IrpLastSp,
-            IrpSp,
-            StackLocationData,
-            CallerAddress
-            );
+        verifierRoutines->VerifyNewRequest(IovPacket, DeviceObject, IrpLastSp, IrpSp, StackLocationData, CallerAddress);
     }
 
     //
@@ -174,30 +148,17 @@ VfMajorVerifyNewRequest(
     //
     verifierRoutines = GET_MAJOR_ROUTINES(IRP_MJ_ALL_MAJORS);
 
-    if (verifierRoutines->VerifyNewRequest) {
+    if (verifierRoutines->VerifyNewRequest)
+    {
 
-        verifierRoutines->VerifyNewRequest(
-            IovPacket,
-            DeviceObject,
-            IrpLastSp,
-            IrpSp,
-            StackLocationData,
-            CallerAddress
-            );
+        verifierRoutines->VerifyNewRequest(IovPacket, DeviceObject, IrpLastSp, IrpSp, StackLocationData, CallerAddress);
     }
 }
 
 
-VOID
-FASTCALL
-VfMajorVerifyIrpStackDownward(
-    IN PIOV_REQUEST_PACKET  IovPacket,
-    IN PDEVICE_OBJECT       DeviceObject,
-    IN PIO_STACK_LOCATION   IrpLastSp           OPTIONAL,
-    IN PIO_STACK_LOCATION   IrpSp,
-    IN PIOV_STACK_LOCATION  StackLocationData,
-    IN PVOID                CallerAddress       OPTIONAL
-    )
+VOID FASTCALL VfMajorVerifyIrpStackDownward(IN PIOV_REQUEST_PACKET IovPacket, IN PDEVICE_OBJECT DeviceObject,
+                                            IN PIO_STACK_LOCATION IrpLastSp OPTIONAL, IN PIO_STACK_LOCATION IrpSp,
+                                            IN PIOV_STACK_LOCATION StackLocationData, IN PVOID CallerAddress OPTIONAL)
 {
     PIRP_MAJOR_VERIFIER_ROUTINES verifierRoutines;
 
@@ -206,17 +167,12 @@ VfMajorVerifyIrpStackDownward(
     //
     verifierRoutines = GET_MAJOR_ROUTINES(IrpSp->MajorFunction);
 
-    if (verifierRoutines->VerifyStackDownward) {
+    if (verifierRoutines->VerifyStackDownward)
+    {
 
-        verifierRoutines->VerifyStackDownward(
-            IovPacket,
-            DeviceObject,
-            IrpLastSp,
-            IrpSp,
-            StackLocationData->RequestsFirstStackLocation,
-            StackLocationData,
-            CallerAddress
-            );
+        verifierRoutines->VerifyStackDownward(IovPacket, DeviceObject, IrpLastSp, IrpSp,
+                                              StackLocationData->RequestsFirstStackLocation, StackLocationData,
+                                              CallerAddress);
     }
 
     //
@@ -224,30 +180,19 @@ VfMajorVerifyIrpStackDownward(
     //
     verifierRoutines = GET_MAJOR_ROUTINES(IRP_MJ_ALL_MAJORS);
 
-    if (verifierRoutines->VerifyStackDownward) {
+    if (verifierRoutines->VerifyStackDownward)
+    {
 
-        verifierRoutines->VerifyStackDownward(
-            IovPacket,
-            DeviceObject,
-            IrpLastSp,
-            IrpSp,
-            StackLocationData->RequestsFirstStackLocation,
-            StackLocationData,
-            CallerAddress
-            );
+        verifierRoutines->VerifyStackDownward(IovPacket, DeviceObject, IrpLastSp, IrpSp,
+                                              StackLocationData->RequestsFirstStackLocation, StackLocationData,
+                                              CallerAddress);
     }
 }
 
 
-VOID
-FASTCALL
-VfMajorVerifyIrpStackUpward(
-    IN PIOV_REQUEST_PACKET  IovPacket,
-    IN PIO_STACK_LOCATION   IrpSp,
-    IN PIOV_STACK_LOCATION  StackLocationData,
-    IN BOOLEAN              IsNewlyCompleted,
-    IN BOOLEAN              RequestFinalized
-    )
+VOID FASTCALL VfMajorVerifyIrpStackUpward(IN PIOV_REQUEST_PACKET IovPacket, IN PIO_STACK_LOCATION IrpSp,
+                                          IN PIOV_STACK_LOCATION StackLocationData, IN BOOLEAN IsNewlyCompleted,
+                                          IN BOOLEAN RequestFinalized)
 {
     PIRP_MAJOR_VERIFIER_ROUTINES verifierRoutines;
 
@@ -256,16 +201,11 @@ VfMajorVerifyIrpStackUpward(
     //
     verifierRoutines = GET_MAJOR_ROUTINES(IrpSp->MajorFunction);
 
-    if (verifierRoutines->VerifyStackUpward) {
+    if (verifierRoutines->VerifyStackUpward)
+    {
 
-        verifierRoutines->VerifyStackUpward(
-            IovPacket,
-            IrpSp,
-            StackLocationData->RequestsFirstStackLocation,
-            StackLocationData,
-            IsNewlyCompleted,
-            RequestFinalized
-            );
+        verifierRoutines->VerifyStackUpward(IovPacket, IrpSp, StackLocationData->RequestsFirstStackLocation,
+                                            StackLocationData, IsNewlyCompleted, RequestFinalized);
     }
 
     //
@@ -273,25 +213,18 @@ VfMajorVerifyIrpStackUpward(
     //
     verifierRoutines = GET_MAJOR_ROUTINES(IRP_MJ_ALL_MAJORS);
 
-    if (verifierRoutines->VerifyStackUpward) {
+    if (verifierRoutines->VerifyStackUpward)
+    {
 
-        verifierRoutines->VerifyStackUpward(
-            IovPacket,
-            IrpSp,
-            StackLocationData->RequestsFirstStackLocation,
-            StackLocationData,
-            IsNewlyCompleted,
-            RequestFinalized
-            );
+        verifierRoutines->VerifyStackUpward(IovPacket, IrpSp, StackLocationData->RequestsFirstStackLocation,
+                                            StackLocationData, IsNewlyCompleted, RequestFinalized);
     }
 }
 
 
 BOOLEAN
 FASTCALL
-VfMajorIsSystemRestrictedIrp(
-    IN PIO_STACK_LOCATION IrpSp
-    )
+VfMajorIsSystemRestrictedIrp(IN PIO_STACK_LOCATION IrpSp)
 {
     PIRP_MAJOR_VERIFIER_ROUTINES verifierRoutines;
 
@@ -300,9 +233,11 @@ VfMajorIsSystemRestrictedIrp(
     //
     verifierRoutines = GET_MAJOR_ROUTINES(IrpSp->MajorFunction);
 
-    if (verifierRoutines->IsSystemRestrictedIrp) {
+    if (verifierRoutines->IsSystemRestrictedIrp)
+    {
 
-        if (verifierRoutines->IsSystemRestrictedIrp(IrpSp)) {
+        if (verifierRoutines->IsSystemRestrictedIrp(IrpSp))
+        {
 
             return TRUE;
         }
@@ -313,7 +248,8 @@ VfMajorIsSystemRestrictedIrp(
     //
     verifierRoutines = GET_MAJOR_ROUTINES(IRP_MJ_ALL_MAJORS);
 
-    if (verifierRoutines->IsSystemRestrictedIrp) {
+    if (verifierRoutines->IsSystemRestrictedIrp)
+    {
 
         return verifierRoutines->IsSystemRestrictedIrp(IrpSp);
     }
@@ -324,11 +260,7 @@ VfMajorIsSystemRestrictedIrp(
 
 BOOLEAN
 FASTCALL
-VfMajorAdvanceIrpStatus(
-    IN     PIO_STACK_LOCATION   IrpSp,
-    IN     NTSTATUS             OriginalStatus,
-    IN OUT NTSTATUS             *StatusToAdvance
-    )
+VfMajorAdvanceIrpStatus(IN PIO_STACK_LOCATION IrpSp, IN NTSTATUS OriginalStatus, IN OUT NTSTATUS *StatusToAdvance)
 /*++
 
   Description:
@@ -364,13 +296,11 @@ VfMajorAdvanceIrpStatus(
     //
     verifierRoutines = GET_MAJOR_ROUTINES(IrpSp->MajorFunction);
 
-    if (verifierRoutines->AdvanceIrpStatus) {
+    if (verifierRoutines->AdvanceIrpStatus)
+    {
 
-        if (verifierRoutines->AdvanceIrpStatus(
-            IrpSp,
-            OriginalStatus,
-            StatusToAdvance
-            )) {
+        if (verifierRoutines->AdvanceIrpStatus(IrpSp, OriginalStatus, StatusToAdvance))
+        {
 
             return TRUE;
         }
@@ -381,13 +311,10 @@ VfMajorAdvanceIrpStatus(
     //
     verifierRoutines = GET_MAJOR_ROUTINES(IRP_MJ_ALL_MAJORS);
 
-    if (verifierRoutines->AdvanceIrpStatus) {
+    if (verifierRoutines->AdvanceIrpStatus)
+    {
 
-        return verifierRoutines->AdvanceIrpStatus(
-            IrpSp,
-            OriginalStatus,
-            StatusToAdvance
-            );
+        return verifierRoutines->AdvanceIrpStatus(IrpSp, OriginalStatus, StatusToAdvance);
     }
 
     return FALSE;
@@ -396,10 +323,7 @@ VfMajorAdvanceIrpStatus(
 
 BOOLEAN
 FASTCALL
-VfMajorIsValidIrpStatus(
-    IN PIO_STACK_LOCATION   IrpSp,
-    IN NTSTATUS             Status
-    )
+VfMajorIsValidIrpStatus(IN PIO_STACK_LOCATION IrpSp, IN NTSTATUS Status)
 /*++
 
   Description:
@@ -427,9 +351,11 @@ VfMajorIsValidIrpStatus(
     //
     verifierRoutines = GET_MAJOR_ROUTINES(IrpSp->MajorFunction);
 
-    if (verifierRoutines->IsValidIrpStatus) {
+    if (verifierRoutines->IsValidIrpStatus)
+    {
 
-        if (!verifierRoutines->IsValidIrpStatus(IrpSp, Status)) {
+        if (!verifierRoutines->IsValidIrpStatus(IrpSp, Status))
+        {
 
             return FALSE;
         }
@@ -440,7 +366,8 @@ VfMajorIsValidIrpStatus(
     //
     verifierRoutines = GET_MAJOR_ROUTINES(IRP_MJ_ALL_MAJORS);
 
-    if (verifierRoutines->IsValidIrpStatus) {
+    if (verifierRoutines->IsValidIrpStatus)
+    {
 
         return verifierRoutines->IsValidIrpStatus(IrpSp, Status);
     }
@@ -451,10 +378,7 @@ VfMajorIsValidIrpStatus(
 
 BOOLEAN
 FASTCALL
-VfMajorIsNewRequest(
-    IN PIO_STACK_LOCATION   IrpLastSp OPTIONAL,
-    IN PIO_STACK_LOCATION   IrpSp
-    )
+VfMajorIsNewRequest(IN PIO_STACK_LOCATION IrpLastSp OPTIONAL, IN PIO_STACK_LOCATION IrpSp)
 /*++
 
   Description:
@@ -483,9 +407,11 @@ VfMajorIsNewRequest(
     //
     verifierRoutines = GET_MAJOR_ROUTINES(IrpSp->MajorFunction);
 
-    if (verifierRoutines->IsNewRequest) {
+    if (verifierRoutines->IsNewRequest)
+    {
 
-        if (verifierRoutines->IsNewRequest(IrpLastSp, IrpSp)) {
+        if (verifierRoutines->IsNewRequest(IrpLastSp, IrpSp))
+        {
 
             return TRUE;
         }
@@ -496,7 +422,8 @@ VfMajorIsNewRequest(
     //
     verifierRoutines = GET_MAJOR_ROUTINES(IRP_MJ_ALL_MAJORS);
 
-    if (verifierRoutines->IsNewRequest) {
+    if (verifierRoutines->IsNewRequest)
+    {
 
         return verifierRoutines->IsNewRequest(IrpLastSp, IrpSp);
     }
@@ -505,15 +432,8 @@ VfMajorIsNewRequest(
 }
 
 
-VOID
-FASTCALL
-VfMajorVerifyNewIrp(
-    IN PIOV_REQUEST_PACKET  IovPacket,
-    IN PIRP                 Irp,
-    IN PIO_STACK_LOCATION   IrpSp,
-    IN PIOV_STACK_LOCATION  StackLocationData,
-    IN PVOID                CallerAddress       OPTIONAL
-    )
+VOID FASTCALL VfMajorVerifyNewIrp(IN PIOV_REQUEST_PACKET IovPacket, IN PIRP Irp, IN PIO_STACK_LOCATION IrpSp,
+                                  IN PIOV_STACK_LOCATION StackLocationData, IN PVOID CallerAddress OPTIONAL)
 {
     PIRP_MAJOR_VERIFIER_ROUTINES verifierRoutines;
 
@@ -522,15 +442,10 @@ VfMajorVerifyNewIrp(
     //
     verifierRoutines = GET_MAJOR_ROUTINES(IrpSp->MajorFunction);
 
-    if (verifierRoutines->VerifyNewIrp) {
+    if (verifierRoutines->VerifyNewIrp)
+    {
 
-        verifierRoutines->VerifyNewIrp(
-            IovPacket,
-            Irp,
-            IrpSp,
-            StackLocationData,
-            CallerAddress
-            );
+        verifierRoutines->VerifyNewIrp(IovPacket, Irp, IrpSp, StackLocationData, CallerAddress);
     }
 
     //
@@ -538,25 +453,15 @@ VfMajorVerifyNewIrp(
     //
     verifierRoutines = GET_MAJOR_ROUTINES(IRP_MJ_ALL_MAJORS);
 
-    if (verifierRoutines->VerifyNewIrp) {
+    if (verifierRoutines->VerifyNewIrp)
+    {
 
-        verifierRoutines->VerifyNewIrp(
-            IovPacket,
-            Irp,
-            IrpSp,
-            StackLocationData,
-            CallerAddress
-            );
+        verifierRoutines->VerifyNewIrp(IovPacket, Irp, IrpSp, StackLocationData, CallerAddress);
     }
 }
 
 
-VOID
-FASTCALL
-VfMajorVerifyFinalIrpStack(
-    IN PIOV_REQUEST_PACKET  IovPacket,
-    IN PIO_STACK_LOCATION   IrpSp
-    )
+VOID FASTCALL VfMajorVerifyFinalIrpStack(IN PIOV_REQUEST_PACKET IovPacket, IN PIO_STACK_LOCATION IrpSp)
 {
     PIRP_MAJOR_VERIFIER_ROUTINES verifierRoutines;
 
@@ -565,7 +470,8 @@ VfMajorVerifyFinalIrpStack(
     //
     verifierRoutines = GET_MAJOR_ROUTINES(IrpSp->MajorFunction);
 
-    if (verifierRoutines->VerifyFinalIrpStack) {
+    if (verifierRoutines->VerifyFinalIrpStack)
+    {
 
         verifierRoutines->VerifyFinalIrpStack(IovPacket, IrpSp);
     }
@@ -575,18 +481,15 @@ VfMajorVerifyFinalIrpStack(
     //
     verifierRoutines = GET_MAJOR_ROUTINES(IRP_MJ_ALL_MAJORS);
 
-    if (verifierRoutines->VerifyFinalIrpStack) {
+    if (verifierRoutines->VerifyFinalIrpStack)
+    {
 
         verifierRoutines->VerifyFinalIrpStack(IovPacket, IrpSp);
     }
 }
 
 
-VOID
-FASTCALL
-VfMajorTestStartedPdoStack(
-    IN PDEVICE_OBJECT   PhysicalDeviceObject
-    )
+VOID FASTCALL VfMajorTestStartedPdoStack(IN PDEVICE_OBJECT PhysicalDeviceObject)
 /*++
 
     Description:
@@ -601,11 +504,13 @@ VfMajorTestStartedPdoStack(
     PIRP_MAJOR_VERIFIER_ROUTINES verifierRoutines;
     ULONG index;
 
-    for(index=0; index <= IRP_MJ_MAXIMUM_FUNCTION; index++) {
+    for (index = 0; index <= IRP_MJ_MAXIMUM_FUNCTION; index++)
+    {
 
         verifierRoutines = GET_MAJOR_ROUTINES(index);
 
-        if (verifierRoutines->TestStartedPdoStack) {
+        if (verifierRoutines->TestStartedPdoStack)
+        {
 
             verifierRoutines->TestStartedPdoStack(PhysicalDeviceObject);
         }
@@ -613,9 +518,9 @@ VfMajorTestStartedPdoStack(
 
     verifierRoutines = GET_MAJOR_ROUTINES(IRP_MJ_ALL_MAJORS);
 
-    if (verifierRoutines->TestStartedPdoStack) {
+    if (verifierRoutines->TestStartedPdoStack)
+    {
 
         verifierRoutines->TestStartedPdoStack(PhysicalDeviceObject);
     }
 }
-

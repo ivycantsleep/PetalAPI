@@ -29,7 +29,8 @@ Revision History:
 // Executive timer object structure definition.
 //
 
-typedef struct _ETIMER {
+typedef struct _ETIMER
+{
     KTIMER KeTimer;
     KAPC TimerApc;
     KDPC TimerDpc;
@@ -62,15 +63,9 @@ POBJECT_TYPE ExTimerObjectType;
 #ifdef ALLOC_DATA_PRAGMA
 #pragma const_seg("INITCONST")
 #endif
-const GENERIC_MAPPING ExpTimerMapping = {
-    STANDARD_RIGHTS_READ |
-        TIMER_QUERY_STATE,
-    STANDARD_RIGHTS_WRITE |
-        TIMER_MODIFY_STATE,
-    STANDARD_RIGHTS_EXECUTE |
-        SYNCHRONIZE,
-    TIMER_ALL_ACCESS
-};
+const GENERIC_MAPPING ExpTimerMapping = { STANDARD_RIGHTS_READ | TIMER_QUERY_STATE,
+                                          STANDARD_RIGHTS_WRITE | TIMER_MODIFY_STATE,
+                                          STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE, TIMER_ALL_ACCESS };
 #ifdef ALLOC_DATA_PRAGMA
 #pragma const_seg()
 #endif
@@ -82,15 +77,9 @@ const GENERIC_MAPPING ExpTimerMapping = {
 #pragma alloc_text(PAGE, NtQueryTimer)
 #pragma alloc_text(PAGELK, ExGetNextWakeTime)
 #endif
-
-VOID
-ExpTimerApcRoutine (
-    IN PKAPC Apc,
-    IN PKNORMAL_ROUTINE *NormalRoutine,
-    IN PVOID *NormalContext,
-    IN PVOID *SystemArgument1,
-    IN PVOID *SystemArgument2
-    )
+
+VOID ExpTimerApcRoutine(IN PKAPC Apc, IN PKNORMAL_ROUTINE *NormalRoutine, IN PVOID *NormalContext,
+                        IN PVOID *SystemArgument1, IN PVOID *SystemArgument2)
 
 /*++
 
@@ -125,9 +114,9 @@ Return Value:
     PETIMER ExTimer;
     KIRQL OldIrql1;
 
-    UNREFERENCED_PARAMETER (NormalContext);
-    UNREFERENCED_PARAMETER (SystemArgument1);
-    UNREFERENCED_PARAMETER (SystemArgument2);
+    UNREFERENCED_PARAMETER(NormalContext);
+    UNREFERENCED_PARAMETER(SystemArgument1);
+    UNREFERENCED_PARAMETER(SystemArgument2);
 
     //
     // Get address of executive timer object and the current thread object.
@@ -152,33 +141,31 @@ Return Value:
     Dereference = FALSE;
     ExAcquireSpinLock(&ExTimer->Lock, &OldIrql1);
     ExAcquireSpinLockAtDpcLevel(&ExThread->ActiveTimerListLock);
-    if ((ExTimer->ApcAssociated) && (&ExThread->Tcb == ExTimer->TimerApc.Thread)) {
-        if (ExTimer->Period == 0) {
+    if ((ExTimer->ApcAssociated) && (&ExThread->Tcb == ExTimer->TimerApc.Thread))
+    {
+        if (ExTimer->Period == 0)
+        {
             RemoveEntryList(&ExTimer->ActiveTimerListEntry);
             ExTimer->ApcAssociated = FALSE;
             Dereference = TRUE;
         }
-
-    } else {
+    }
+    else
+    {
         *NormalRoutine = (PKNORMAL_ROUTINE)NULL;
     }
 
     ExReleaseSpinLockFromDpcLevel(&ExThread->ActiveTimerListLock);
     ExReleaseSpinLock(&ExTimer->Lock, OldIrql1);
-    if (Dereference) {
+    if (Dereference)
+    {
         ObDereferenceObject((PVOID)ExTimer);
     }
 
     return;
 }
-
-VOID
-ExpTimerDpcRoutine (
-    IN PKDPC Dpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    )
+
+VOID ExpTimerDpcRoutine(IN PKDPC Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1, IN PVOID SystemArgument2)
 
 /*++
 
@@ -210,7 +197,7 @@ Return Value:
     PKTIMER KeTimer;
     KIRQL OldIrql;
 
-    UNREFERENCED_PARAMETER (Dpc);
+    UNREFERENCED_PARAMETER(Dpc);
 
     //
     // Get address of executive and kernel timer objects.
@@ -229,21 +216,16 @@ Return Value:
     //
 
     ExAcquireSpinLock(&ExTimer->Lock, &OldIrql);
-    if (ExTimer->ApcAssociated) {
-        KeInsertQueueApc(&ExTimer->TimerApc,
-                         SystemArgument1,
-                         SystemArgument2,
-                         TIMER_APC_INCREMENT);
+    if (ExTimer->ApcAssociated)
+    {
+        KeInsertQueueApc(&ExTimer->TimerApc, SystemArgument1, SystemArgument2, TIMER_APC_INCREMENT);
     }
 
     ExReleaseSpinLock(&ExTimer->Lock, OldIrql);
     return;
 }
-
-static VOID
-ExpDeleteTimer (
-    IN PVOID    Object
-    )
+
+static VOID ExpDeleteTimer(IN PVOID Object)
 
 /*++
 
@@ -263,18 +245,20 @@ Return Value:
 --*/
 
 {
-    PETIMER     ExTimer;
-    KIRQL       OldIrql;
+    PETIMER ExTimer;
+    KIRQL OldIrql;
 
-    ExTimer = (PETIMER) Object;
+    ExTimer = (PETIMER)Object;
 
     //
     // Remove from wake list
     //
 
-    if (ExTimer->WakeTimerListEntry.Flink) {
+    if (ExTimer->WakeTimerListEntry.Flink)
+    {
         ExAcquireSpinLock(&ExpWakeTimerListLock, &OldIrql);
-        if (ExTimer->WakeTimerListEntry.Flink) {
+        if (ExTimer->WakeTimerListEntry.Flink)
+        {
             RemoveEntryList(&ExTimer->WakeTimerListEntry);
             ExTimer->WakeTimerListEntry.Flink = NULL;
         }
@@ -288,10 +272,9 @@ Return Value:
     KeCancelTimer(&ExTimer->KeTimer);
     return;
 }
-
+
 BOOLEAN
-ExpTimerInitialization (
-    )
+ExpTimerInitialization()
 
 /*++
 
@@ -318,8 +301,8 @@ Return Value:
     NTSTATUS Status;
     UNICODE_STRING TypeName;
 
-    KeInitializeSpinLock (&ExpWakeTimerListLock);
-    InitializeListHead (&ExpWakeTimerList);
+    KeInitializeSpinLock(&ExpWakeTimerListLock);
+    InitializeListHead(&ExpWakeTimerList);
 
     //
     // Initialize string descriptor.
@@ -339,11 +322,7 @@ Return Value:
     ObjectTypeInitializer.DefaultNonPagedPoolCharge = sizeof(ETIMER);
     ObjectTypeInitializer.ValidAccessMask = TIMER_ALL_ACCESS;
     ObjectTypeInitializer.DeleteProcedure = ExpDeleteTimer;
-    Status = ObCreateObjectType(&TypeName,
-                                &ObjectTypeInitializer,
-                                (PSECURITY_DESCRIPTOR)NULL,
-                                &ExTimerObjectType);
-
+    Status = ObCreateObjectType(&TypeName, &ObjectTypeInitializer, (PSECURITY_DESCRIPTOR)NULL, &ExTimerObjectType);
 
 
     //
@@ -353,10 +332,8 @@ Return Value:
 
     return (BOOLEAN)(NT_SUCCESS(Status));
 }
-
-VOID
-ExTimerRundown (
-    )
+
+VOID ExTimerRundown()
 
 /*++
 
@@ -392,7 +369,8 @@ Return Value:
     ExThread = PsGetCurrentThread();
     ExAcquireSpinLock(&ExThread->ActiveTimerListLock, &OldIrql1);
     NextEntry = ExThread->ActiveTimerListHead.Flink;
-    while (NextEntry != &ExThread->ActiveTimerListHead) {
+    while (NextEntry != &ExThread->ActiveTimerListHead)
+    {
         ExTimer = CONTAINING_RECORD(NextEntry, ETIMER, ActiveTimerListEntry);
 
         //
@@ -419,21 +397,24 @@ Return Value:
 
         ExAcquireSpinLock(&ExTimer->Lock, &OldIrql1);
         ExAcquireSpinLockAtDpcLevel(&ExThread->ActiveTimerListLock);
-        if ((ExTimer->ApcAssociated) && (&ExThread->Tcb == ExTimer->TimerApc.Thread)) {
+        if ((ExTimer->ApcAssociated) && (&ExThread->Tcb == ExTimer->TimerApc.Thread))
+        {
             RemoveEntryList(&ExTimer->ActiveTimerListEntry);
             ExTimer->ApcAssociated = FALSE;
             KeCancelTimer(&ExTimer->KeTimer);
             KeRemoveQueueDpc(&ExTimer->TimerDpc);
             KeRemoveQueueApc(&ExTimer->TimerApc);
             Dereference = TRUE;
-
-        } else {
+        }
+        else
+        {
             Dereference = FALSE;
         }
 
         ExReleaseSpinLockFromDpcLevel(&ExThread->ActiveTimerListLock);
         ExReleaseSpinLock(&ExTimer->Lock, OldIrql1);
-        if (Dereference) {
+        if (Dereference)
+        {
             ObDereferenceObject((PVOID)ExTimer);
         }
 
@@ -451,14 +432,10 @@ Return Value:
     ExReleaseSpinLock(&ExThread->ActiveTimerListLock, OldIrql1);
     return;
 }
-
+
 NTSTATUS
-NtCreateTimer (
-    OUT PHANDLE TimerHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,
-    IN TIMER_TYPE TimerType
-    )
+NtCreateTimer(OUT PHANDLE TimerHandle, IN ACCESS_MASK DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,
+              IN TIMER_TYPE TimerType)
 
 /*++
 
@@ -504,10 +481,14 @@ Return Value:
     //
 
     PreviousMode = KeGetPreviousMode();
-    if (PreviousMode != KernelMode) {
-        try {
+    if (PreviousMode != KernelMode)
+    {
+        try
+        {
             ProbeForWriteHandle(TimerHandle);
-        } except(ExSystemExceptionFilter()) {
+        }
+        except(ExSystemExceptionFilter())
+        {
             return GetExceptionCode();
         }
     }
@@ -516,8 +497,8 @@ Return Value:
     // Check argument validity.
     //
 
-    if ((TimerType != NotificationTimer) &&
-        (TimerType != SynchronizationTimer)) {
+    if ((TimerType != NotificationTimer) && (TimerType != SynchronizationTimer))
+    {
         return STATUS_INVALID_PARAMETER_4;
     }
 
@@ -525,14 +506,7 @@ Return Value:
     // Allocate timer object.
     //
 
-    Status = ObCreateObject(PreviousMode,
-                            ExTimerObjectType,
-                            ObjectAttributes,
-                            PreviousMode,
-                            NULL,
-                            sizeof(ETIMER),
-                            0,
-                            0,
+    Status = ObCreateObject(PreviousMode, ExTimerObjectType, ObjectAttributes, PreviousMode, NULL, sizeof(ETIMER), 0, 0,
                             (PVOID *)&ExTimer);
 
     //
@@ -541,22 +515,16 @@ Return Value:
     // process' handle table.
     //
 
-    if (NT_SUCCESS(Status)) {
-        KeInitializeDpc(&ExTimer->TimerDpc,
-                        ExpTimerDpcRoutine,
-                        (PVOID)ExTimer);
+    if (NT_SUCCESS(Status))
+    {
+        KeInitializeDpc(&ExTimer->TimerDpc, ExpTimerDpcRoutine, (PVOID)ExTimer);
 
         KeInitializeTimerEx(&ExTimer->KeTimer, TimerType);
         KeInitializeSpinLock(&ExTimer->Lock);
         ExTimer->ApcAssociated = FALSE;
         ExTimer->WakeTimer = FALSE;
         ExTimer->WakeTimerListEntry.Flink = NULL;
-        Status = ObInsertObject((PVOID)ExTimer,
-                                NULL,
-                                DesiredAccess,
-                                0,
-                                (PVOID *)NULL,
-                                &Handle);
+        Status = ObInsertObject((PVOID)ExTimer, NULL, DesiredAccess, 0, (PVOID *)NULL, &Handle);
 
         //
         // If the timer object was successfully inserted in the current
@@ -566,17 +534,23 @@ Return Value:
         // an access violation will occur.
         //
 
-        if (NT_SUCCESS(Status)) {
-            if (PreviousMode != KernelMode) {
-                try {
+        if (NT_SUCCESS(Status))
+        {
+            if (PreviousMode != KernelMode)
+            {
+                try
+                {
                     *TimerHandle = Handle;
-                } except(ExSystemExceptionFilter()) {
+                }
+                except(ExSystemExceptionFilter())
+                {
                     NOTHING;
                 }
-             }
-             else {
+            }
+            else
+            {
                 *TimerHandle = Handle;
-             }
+            }
         }
     }
 
@@ -586,13 +560,9 @@ Return Value:
 
     return Status;
 }
-
+
 NTSTATUS
-NtOpenTimer (
-    OUT PHANDLE TimerHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN POBJECT_ATTRIBUTES ObjectAttributes
-    )
+NtOpenTimer(OUT PHANDLE TimerHandle, IN ACCESS_MASK DesiredAccess, IN POBJECT_ATTRIBUTES ObjectAttributes)
 
 /*++
 
@@ -635,10 +605,14 @@ Return Value:
     //
 
     PreviousMode = KeGetPreviousMode();
-    if (PreviousMode != KernelMode) {
-        try {
+    if (PreviousMode != KernelMode)
+    {
+        try
+        {
             ProbeForWriteHandle(TimerHandle);
-        } except(ExSystemExceptionFilter()) {
+        }
+        except(ExSystemExceptionFilter())
+        {
             return GetExceptionCode();
         }
     }
@@ -647,13 +621,7 @@ Return Value:
     // Open handle to the timer object with the specified desired access.
     //
 
-    Status = ObOpenObjectByName(ObjectAttributes,
-                                ExTimerObjectType,
-                                PreviousMode,
-                                NULL,
-                                DesiredAccess,
-                                NULL,
-                                &Handle);
+    Status = ObOpenObjectByName(ObjectAttributes, ExTimerObjectType, PreviousMode, NULL, DesiredAccess, NULL, &Handle);
 
     //
     // If the open was successful, then attempt to write the timer object
@@ -662,16 +630,21 @@ Return Value:
     // access violation will occur.
     //
 
-    if (NT_SUCCESS(Status)) {
-        if (PreviousMode != KernelMode) {
-            try {
+    if (NT_SUCCESS(Status))
+    {
+        if (PreviousMode != KernelMode)
+        {
+            try
+            {
                 *TimerHandle = Handle;
-
-            } except(ExSystemExceptionFilter()) {
+            }
+            except(ExSystemExceptionFilter())
+            {
                 NOTHING;
             }
         }
-        else {
+        else
+        {
             *TimerHandle = Handle;
         }
     }
@@ -682,12 +655,9 @@ Return Value:
 
     return Status;
 }
-
+
 NTSTATUS
-NtCancelTimer (
-    IN HANDLE TimerHandle,
-    OUT PBOOLEAN CurrentState OPTIONAL
-    )
+NtCancelTimer(IN HANDLE TimerHandle, OUT PBOOLEAN CurrentState OPTIONAL)
 
 /*++
 
@@ -733,11 +703,15 @@ Return Value:
 
     PreviousMode = KeGetPreviousMode();
 
-    if ((ARGUMENT_PRESENT(CurrentState)) && (PreviousMode != KernelMode)) {
+    if ((ARGUMENT_PRESENT(CurrentState)) && (PreviousMode != KernelMode))
+    {
 
-        try {
+        try
+        {
             ProbeForWriteBoolean(CurrentState);
-        } except(ExSystemExceptionFilter()) {
+        }
+        except(ExSystemExceptionFilter())
+        {
             return GetExceptionCode();
         }
     }
@@ -746,12 +720,8 @@ Return Value:
     // Reference timer object by handle.
     //
 
-    Status = ObReferenceObjectByHandle(TimerHandle,
-                                       TIMER_MODIFY_STATE,
-                                       ExTimerObjectType,
-                                       PreviousMode,
-                                       (PVOID *)&ExTimer,
-                                       NULL);
+    Status = ObReferenceObjectByHandle(TimerHandle, TIMER_MODIFY_STATE, ExTimerObjectType, PreviousMode,
+                                       (PVOID *)&ExTimer, NULL);
 
     //
     // If the reference was successful, then cancel the timer object,
@@ -761,11 +731,13 @@ Return Value:
     // an access violation will occur.
     //
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         ExAcquireSpinLock(&ExTimer->Lock, &OldIrql1);
 
-        if (ExTimer->ApcAssociated) {
+        if (ExTimer->ApcAssociated)
+        {
             ExThread = CONTAINING_RECORD(ExTimer->TimerApc.Thread, ETHREAD, Tcb);
 
             ExAcquireSpinLockAtDpcLevel(&ExThread->ActiveTimerListLock);
@@ -777,19 +749,22 @@ Return Value:
             KeRemoveQueueDpc(&ExTimer->TimerDpc);
             KeRemoveQueueApc(&ExTimer->TimerApc);
             Dereference = TRUE;
-
-        } else {
+        }
+        else
+        {
             KeCancelTimer(&ExTimer->KeTimer);
             Dereference = FALSE;
         }
 
-        if (ExTimer->WakeTimerListEntry.Flink) {
+        if (ExTimer->WakeTimerListEntry.Flink)
+        {
             ExAcquireSpinLockAtDpcLevel(&ExpWakeTimerListLock);
 
             //
             // Check again as ExGetNextWakeTime might have removed it.
             //
-            if (ExTimer->WakeTimerListEntry.Flink) {
+            if (ExTimer->WakeTimerListEntry.Flink)
+            {
                 RemoveEntryList(&ExTimer->WakeTimerListEntry);
                 ExTimer->WakeTimerListEntry.Flink = NULL;
             }
@@ -798,7 +773,8 @@ Return Value:
 
         ExReleaseSpinLock(&ExTimer->Lock, OldIrql1);
 
-        if (Dereference) {
+        if (Dereference)
+        {
             ObDereferenceObject((PVOID)ExTimer);
         }
 
@@ -810,15 +786,20 @@ Return Value:
         State = KeReadStateTimer(&ExTimer->KeTimer);
         ObDereferenceObject(ExTimer);
 
-        if (ARGUMENT_PRESENT(CurrentState)) {
-            if (PreviousMode != KernelMode) {
-                try {
+        if (ARGUMENT_PRESENT(CurrentState))
+        {
+            if (PreviousMode != KernelMode)
+            {
+                try
+                {
                     *CurrentState = State;
-
-                } except(ExSystemExceptionFilter()) {
+                }
+                except(ExSystemExceptionFilter())
+                {
                 }
             }
-            else {
+            else
+            {
                 *CurrentState = State;
             }
         }
@@ -830,15 +811,10 @@ Return Value:
 
     return Status;
 }
-
+
 NTSTATUS
-NtQueryTimer (
-    IN HANDLE TimerHandle,
-    IN TIMER_INFORMATION_CLASS TimerInformationClass,
-    OUT PVOID TimerInformation,
-    IN ULONG TimerInformationLength,
-    OUT PULONG ReturnLength OPTIONAL
-    )
+NtQueryTimer(IN HANDLE TimerHandle, IN TIMER_INFORMATION_CLASS TimerInformationClass, OUT PVOID TimerInformation,
+             IN ULONG TimerInformationLength, OUT PULONG ReturnLength OPTIONAL)
 
 /*++
 
@@ -890,17 +866,20 @@ Return Value:
     //
 
     PreviousMode = KeGetPreviousMode();
-    if (PreviousMode != KernelMode) {
-        try {
+    if (PreviousMode != KernelMode)
+    {
+        try
+        {
 
-            ProbeForWriteSmallStructure(TimerInformation,
-                                        sizeof(TIMER_BASIC_INFORMATION),
-                                        sizeof(ULONG));
+            ProbeForWriteSmallStructure(TimerInformation, sizeof(TIMER_BASIC_INFORMATION), sizeof(ULONG));
 
-            if (ARGUMENT_PRESENT(ReturnLength)) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 ProbeForWriteUlong(ReturnLength);
             }
-        } except(ExSystemExceptionFilter()) {
+        }
+        except(ExSystemExceptionFilter())
+        {
             return GetExceptionCode();
         }
     }
@@ -909,11 +888,13 @@ Return Value:
     // Check argument validity.
     //
 
-    if (TimerInformationClass != TimerBasicInformation) {
+    if (TimerInformationClass != TimerBasicInformation)
+    {
         return STATUS_INVALID_INFO_CLASS;
     }
 
-    if (TimerInformationLength != sizeof(TIMER_BASIC_INFORMATION)) {
+    if (TimerInformationLength != sizeof(TIMER_BASIC_INFORMATION))
+    {
         return STATUS_INFO_LENGTH_MISMATCH;
     }
 
@@ -921,12 +902,8 @@ Return Value:
     // Reference timer object by handle.
     //
 
-    Status = ObReferenceObjectByHandle(TimerHandle,
-                                       TIMER_QUERY_STATE,
-                                       ExTimerObjectType,
-                                       PreviousMode,
-                                       (PVOID *)&ExTimer,
-                                       NULL);
+    Status = ObReferenceObjectByHandle(TimerHandle, TIMER_QUERY_STATE, ExTimerObjectType, PreviousMode,
+                                       (PVOID *)&ExTimer, NULL);
 
     //
     // If the reference was successful, then read the current state,
@@ -938,29 +915,36 @@ Return Value:
     // occur.
     //
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         KeTimer = &ExTimer->KeTimer;
         State = KeReadStateTimer(KeTimer);
         KiQueryInterruptTime(&TimeToGo);
         TimeToGo.QuadPart = KeTimer->DueTime.QuadPart - TimeToGo.QuadPart;
         ObDereferenceObject(ExTimer);
 
-        if (PreviousMode != KernelMode) {
-            try {
+        if (PreviousMode != KernelMode)
+        {
+            try
+            {
                 ((PTIMER_BASIC_INFORMATION)TimerInformation)->TimerState = State;
                 ((PTIMER_BASIC_INFORMATION)TimerInformation)->RemainingTime = TimeToGo;
-                if (ARGUMENT_PRESENT(ReturnLength)) {
+                if (ARGUMENT_PRESENT(ReturnLength))
+                {
                     *ReturnLength = sizeof(TIMER_BASIC_INFORMATION);
                 }
-
-            } except(ExSystemExceptionFilter()) {
+            }
+            except(ExSystemExceptionFilter())
+            {
                 NOTHING;
             }
         }
-        else {
+        else
+        {
             ((PTIMER_BASIC_INFORMATION)TimerInformation)->TimerState = State;
             ((PTIMER_BASIC_INFORMATION)TimerInformation)->RemainingTime = TimeToGo;
-            if (ARGUMENT_PRESENT(ReturnLength)) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = sizeof(TIMER_BASIC_INFORMATION);
             }
         }
@@ -972,17 +956,11 @@ Return Value:
 
     return Status;
 }
-
+
 NTSTATUS
-NtSetTimer (
-    IN HANDLE TimerHandle,
-    IN PLARGE_INTEGER DueTime,
-    IN PTIMER_APC_ROUTINE TimerApcRoutine OPTIONAL,
-    IN PVOID TimerContext OPTIONAL,
-    IN BOOLEAN WakeTimer,
-    IN LONG Period OPTIONAL,
-    OUT PBOOLEAN PreviousState OPTIONAL
-    )
+NtSetTimer(IN HANDLE TimerHandle, IN PLARGE_INTEGER DueTime, IN PTIMER_APC_ROUTINE TimerApcRoutine OPTIONAL,
+           IN PVOID TimerContext OPTIONAL, IN BOOLEAN WakeTimer, IN LONG Period OPTIONAL,
+           OUT PBOOLEAN PreviousState OPTIONAL)
 
 /*++
 
@@ -1047,21 +1025,26 @@ Return Value:
     //
 
     PreviousMode = KeGetPreviousMode();
-    if (PreviousMode != KernelMode) {
-        try {
+    if (PreviousMode != KernelMode)
+    {
+        try
+        {
 
-            if (ARGUMENT_PRESENT(PreviousState)) {
+            if (ARGUMENT_PRESENT(PreviousState))
+            {
                 ProbeForWriteBoolean(PreviousState);
             }
 
             ProbeForReadSmallStructure(DueTime, sizeof(LARGE_INTEGER), sizeof(ULONG));
             ExpirationTime = *DueTime;
-
-        } except(ExSystemExceptionFilter()) {
+        }
+        except(ExSystemExceptionFilter())
+        {
             return GetExceptionCode();
         }
     }
-    else {
+    else
+    {
         ExpirationTime = *DueTime;
     }
 
@@ -1069,7 +1052,8 @@ Return Value:
     // Check argument validity.
     //
 
-    if (Period < 0) {
+    if (Period < 0)
+    {
         return STATUS_INVALID_PARAMETER_6;
     }
 
@@ -1077,19 +1061,16 @@ Return Value:
     // Reference timer object by handle.
     //
 
-    Status = ObReferenceObjectByHandle(TimerHandle,
-                                       TIMER_MODIFY_STATE,
-                                       ExTimerObjectType,
-                                       PreviousMode,
-                                       (PVOID *)&ExTimer,
-                                       NULL);
+    Status = ObReferenceObjectByHandle(TimerHandle, TIMER_MODIFY_STATE, ExTimerObjectType, PreviousMode,
+                                       (PVOID *)&ExTimer, NULL);
 
     //
     // If this WakeTimer flag is set, return the appropiate informational
     // success status code.
     //
 
-    if (NT_SUCCESS(Status) && WakeTimer && !PoWakeTimerSupported()) {
+    if (NT_SUCCESS(Status) && WakeTimer && !PoWakeTimerSupported())
+    {
         Status = STATUS_TIMER_RESUME_IGNORED;
     }
 
@@ -1101,10 +1082,12 @@ Return Value:
     // access the previous state value, an access violation will occur.
     //
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         ExAcquireSpinLock(&ExTimer->Lock, &OldIrql1);
 
-        if (ExTimer->ApcAssociated) {
+        if (ExTimer->ApcAssociated)
+        {
             ExThread = CONTAINING_RECORD(ExTimer->TimerApc.Thread, ETHREAD, Tcb);
 
             ExAcquireSpinLockAtDpcLevel(&ExThread->ActiveTimerListLock);
@@ -1116,8 +1099,9 @@ Return Value:
             KeRemoveQueueDpc(&ExTimer->TimerDpc);
             KeRemoveQueueApc(&ExTimer->TimerApc);
             Dereference = TRUE;
-
-        } else {
+        }
+        else
+        {
             KeCancelTimer(&ExTimer->KeTimer);
             Dereference = FALSE;
         }
@@ -1135,12 +1119,17 @@ Return Value:
         ExTimer->WakeTimer = WakeTimer;
 
         ExAcquireSpinLockAtDpcLevel(&ExpWakeTimerListLock);
-        if (WakeTimer) {
-            if (!ExTimer->WakeTimerListEntry.Flink) {
+        if (WakeTimer)
+        {
+            if (!ExTimer->WakeTimerListEntry.Flink)
+            {
                 InsertTailList(&ExpWakeTimerList, &ExTimer->WakeTimerListEntry);
             }
-        } else {
-            if (ExTimer->WakeTimerListEntry.Flink) {
+        }
+        else
+        {
+            if (ExTimer->WakeTimerListEntry.Flink)
+            {
                 RemoveEntryList(&ExTimer->WakeTimerListEntry);
                 ExTimer->WakeTimerListEntry.Flink = NULL;
             }
@@ -1156,35 +1145,24 @@ Return Value:
         //
 
         ExTimer->Period = Period;
-        if (ARGUMENT_PRESENT((ULONG_PTR)TimerApcRoutine)) {
+        if (ARGUMENT_PRESENT((ULONG_PTR)TimerApcRoutine))
+        {
             ExThread = PsGetCurrentThread();
-            KeInitializeApc(&ExTimer->TimerApc,
-                            &ExThread->Tcb,
-                            CurrentApcEnvironment,
-                            ExpTimerApcRoutine,
-                            (PKRUNDOWN_ROUTINE)NULL,
-                            (PKNORMAL_ROUTINE)TimerApcRoutine,
-                            PreviousMode,
-                            TimerContext);
+            KeInitializeApc(&ExTimer->TimerApc, &ExThread->Tcb, CurrentApcEnvironment, ExpTimerApcRoutine,
+                            (PKRUNDOWN_ROUTINE)NULL, (PKNORMAL_ROUTINE)TimerApcRoutine, PreviousMode, TimerContext);
 
             ExAcquireSpinLockAtDpcLevel(&ExThread->ActiveTimerListLock);
-            InsertTailList(&ExThread->ActiveTimerListHead,
-                           &ExTimer->ActiveTimerListEntry);
+            InsertTailList(&ExThread->ActiveTimerListHead, &ExTimer->ActiveTimerListEntry);
 
             ExTimer->ApcAssociated = TRUE;
             ExReleaseSpinLockFromDpcLevel(&ExThread->ActiveTimerListLock);
-            KeSetTimerEx(&ExTimer->KeTimer,
-                         ExpirationTime,
-                         Period,
-                         &ExTimer->TimerDpc);
+            KeSetTimerEx(&ExTimer->KeTimer, ExpirationTime, Period, &ExTimer->TimerDpc);
 
             AssociatedApc = TRUE;
-
-        } else {
-            KeSetTimerEx(&ExTimer->KeTimer,
-                         ExpirationTime,
-                         Period,
-                         NULL);
+        }
+        else
+        {
+            KeSetTimerEx(&ExTimer->KeTimer, ExpirationTime, Period, NULL);
 
             AssociatedApc = FALSE;
         }
@@ -1195,24 +1173,31 @@ Return Value:
         // Dereference the object as appropriate.
         //
 
-        if (Dereference) {
+        if (Dereference)
+        {
             ObDereferenceObject((PVOID)ExTimer);
         }
 
-        if (AssociatedApc == FALSE) {
+        if (AssociatedApc == FALSE)
+        {
             ObDereferenceObject((PVOID)ExTimer);
         }
 
-        if (ARGUMENT_PRESENT(PreviousState)) {
-            if (PreviousMode != KernelMode) {
-                try {
+        if (ARGUMENT_PRESENT(PreviousState))
+        {
+            if (PreviousMode != KernelMode)
+            {
+                try
+                {
                     *PreviousState = State;
-
-                } except(ExSystemExceptionFilter()) {
+                }
+                except(ExSystemExceptionFilter())
+                {
                     NOTHING;
                 }
             }
-            else {
+            else
+            {
                 *PreviousState = State;
             }
         }
@@ -1226,32 +1211,29 @@ Return Value:
 }
 
 
-VOID
-ExGetNextWakeTime (
-    OUT PULONGLONG      DueTime,
-    OUT PTIME_FIELDS    TimeFields,
-    OUT PVOID           *TimerObject
-    )
+VOID ExGetNextWakeTime(OUT PULONGLONG DueTime, OUT PTIME_FIELDS TimeFields, OUT PVOID *TimerObject)
 {
-    PLIST_ENTRY     Link;
-    PETIMER         ExTimer;
-    PETIMER         BestTimer;
-    KIRQL           OldIrql;
-    ULONGLONG       TimerDueTime;
-    ULONGLONG       BestDueTime;
-    ULONGLONG       InterruptTime;
-    LARGE_INTEGER   SystemTime;
-    LARGE_INTEGER   CmosTime;
+    PLIST_ENTRY Link;
+    PETIMER ExTimer;
+    PETIMER BestTimer;
+    KIRQL OldIrql;
+    ULONGLONG TimerDueTime;
+    ULONGLONG BestDueTime;
+    ULONGLONG InterruptTime;
+    LARGE_INTEGER SystemTime;
+    LARGE_INTEGER CmosTime;
 
     ExAcquireSpinLock(&ExpWakeTimerListLock, &OldIrql);
     BestDueTime = 0;
     BestTimer = NULL;
     Link = ExpWakeTimerList.Flink;
-    while (Link != &ExpWakeTimerList) {
+    while (Link != &ExpWakeTimerList)
+    {
         ExTimer = CONTAINING_RECORD(Link, ETIMER, WakeTimerListEntry);
         Link = Link->Flink;
 
-        if (ExTimer->WakeTimer) {
+        if (ExTimer->WakeTimer)
+        {
 
             TimerDueTime = KeQueryTimerDueTime(&ExTimer->KeTimer);
             TimerDueTime = 0 - TimerDueTime;
@@ -1260,12 +1242,14 @@ ExGetNextWakeTime (
             // Is this timers due time closer?
             //
 
-            if (TimerDueTime > BestDueTime) {
+            if (TimerDueTime > BestDueTime)
+            {
                 BestDueTime = TimerDueTime;
                 BestTimer = ExTimer;
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // Timer is not an active wake timer, remove it
@@ -1278,13 +1262,14 @@ ExGetNextWakeTime (
 
     ExReleaseSpinLock(&ExpWakeTimerListLock, OldIrql);
 
-    if (BestDueTime) {
+    if (BestDueTime)
+    {
         //
         // Convert time to timefields
         //
 
-        KeQuerySystemTime (&SystemTime);
-        InterruptTime = KeQueryInterruptTime ();
+        KeQuerySystemTime(&SystemTime);
+        InterruptTime = KeQueryInterruptTime();
         BestDueTime = 0 - BestDueTime;
 
         SystemTime.QuadPart += BestDueTime - InterruptTime;
@@ -1297,7 +1282,7 @@ ExGetNextWakeTime (
 
         SystemTime.QuadPart += 10000000;
 
-        ExSystemTimeToLocalTime(&SystemTime,&CmosTime);
+        ExSystemTimeToLocalTime(&SystemTime, &CmosTime);
         RtlTimeToTimeFields(&CmosTime, TimeFields);
     }
 

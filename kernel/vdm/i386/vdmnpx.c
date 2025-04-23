@@ -25,8 +25,8 @@ Revision History:
 #include <vdmntos.h>
 
 #ifdef ALLOC_PRAGMA
-#pragma  alloc_text(PAGE, VdmDispatchIRQ13)
-#pragma  alloc_text(PAGE, VdmSkipNpxInstruction)
+#pragma alloc_text(PAGE, VdmDispatchIRQ13)
+#pragma alloc_text(PAGE, VdmSkipNpxInstruction)
 #endif
 
 #ifdef ALLOC_DATA_PRAGMA
@@ -35,28 +35,26 @@ Revision History:
 static const UCHAR MOD16[] = { 0, 1, 2, 0 };
 static const UCHAR MOD32[] = { 0, 1, 4, 0 };
 const UCHAR VdmUserCr0MapIn[] = {
-    /* !EM !MP */       0,
-    /* !EM  MP */       CR0_PE,             // Don't set MP, but shadow users MP setting
-    /*  EM !MP */       CR0_EM,
-    /*  EM  MP */       CR0_EM | CR0_MP
-    };
+    /* !EM !MP */ 0,
+    /* !EM  MP */ CR0_PE, // Don't set MP, but shadow users MP setting
+    /*  EM !MP */ CR0_EM,
+    /*  EM  MP */ CR0_EM | CR0_MP
+};
 
 const UCHAR VdmUserCr0MapOut[] = {
-    /* !EM !MP !PE */   0,
-    /* !EM !MP  PE */   CR0_MP,
-    /* !EM  MP !PE */   CR0_MP,             // setting not valid
-    /* !EM  MP  PE */   CR0_MP,             // setting not valid
-    /*  EM !MP !PE */   CR0_EM,
-    /*  EM !MP  PE */   CR0_EM | CR0_MP,    // setting not valid
-    /*  EM  MP !PE */   CR0_EM | CR0_MP,
-    /*  EM  MP  PE */   CR0_EM | CR0_MP     // setting not valid
-    };
+    /* !EM !MP !PE */ 0,
+    /* !EM !MP  PE */ CR0_MP,
+    /* !EM  MP !PE */ CR0_MP, // setting not valid
+    /* !EM  MP  PE */ CR0_MP, // setting not valid
+    /*  EM !MP !PE */ CR0_EM,
+    /*  EM !MP  PE */ CR0_EM | CR0_MP, // setting not valid
+    /*  EM  MP !PE */ CR0_EM | CR0_MP,
+    /*  EM  MP  PE */ CR0_EM | CR0_MP // setting not valid
+};
 
 
 BOOLEAN
-VdmDispatchIRQ13(
-    PKTRAP_FRAME TrapFrame
-    )
+VdmDispatchIRQ13(PKTRAP_FRAME TrapFrame)
 /*++
 
 aRoutine Description:
@@ -84,16 +82,20 @@ Return Value:
     PAGED_CODE();
 
     Status = VdmpGetVdmTib(&VdmTib);
-    if (!NT_SUCCESS(Status)) {
-       return FALSE;
+    if (!NT_SUCCESS(Status))
+    {
+        return FALSE;
     }
 
     Success = TRUE;
 
-    try {
+    try
+    {
         VdmTib->EventInfo.Event = VdmIrq13;
         VdmTib->EventInfo.InstructionSize = 0L;
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         ExceptionRecord.ExceptionCode = GetExceptionCode();
         ExceptionRecord.ExceptionFlags = 0;
         ExceptionRecord.NumberParameters = 0;
@@ -101,10 +103,14 @@ Return Value:
         Success = FALSE;
     }
 
-    if (Success)  {             // insure that we do not redispatch an exception
-        try {
-            VdmEndExecution(TrapFrame,VdmTib);
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+    if (Success)
+    { // insure that we do not redispatch an exception
+        try
+        {
+            VdmEndExecution(TrapFrame, VdmTib);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             NOTHING;
         }
     }
@@ -113,12 +119,7 @@ Return Value:
 }
 
 BOOLEAN
-VdmSkipNpxInstruction(
-    PKTRAP_FRAME TrapFrame,
-    ULONG        Address32Bits,
-    PUCHAR       istream,
-    ULONG        InstructionSize
-    )
+VdmSkipNpxInstruction(PKTRAP_FRAME TrapFrame, ULONG Address32Bits, PUCHAR istream, ULONG InstructionSize)
 /*++
 
 Routine Description:
@@ -141,9 +142,10 @@ Return Value:
 
 --*/
 {
-    UCHAR       ibyte, Mod, rm;
+    UCHAR ibyte, Mod, rm;
 
-    if (KeI386NpxPresent) {
+    if (KeI386NpxPresent)
+    {
 
         //
         // We should only get here if the thread is executing garbage so
@@ -163,28 +165,34 @@ Return Value:
 
     istream += 1;
 
-    try {
+    try
+    {
         ibyte = *istream;
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         return FALSE;
     }
 
     InstructionSize += 1;
 
-    if (ibyte <= 0xbf) {
+    if (ibyte <= 0xbf)
+    {
 
         //
         // Within ModR/M range for addressing, process it.
         //
 
         Mod = ibyte >> 6;
-        rm  = ibyte & 0x7;
+        rm = ibyte & 0x7;
 
-        if (Address32Bits) {
+        if (Address32Bits)
+        {
 
-            InstructionSize += MOD32 [Mod];
+            InstructionSize += MOD32[Mod];
 
-            if (Mod == 0  &&  rm == 5) {
+            if (Mod == 0 && rm == 5)
+            {
                 // disp 32
                 InstructionSize += 4;
             }
@@ -193,26 +201,33 @@ Return Value:
             // If SIB byte, read it
             //
 
-            if (rm == 4) {
+            if (rm == 4)
+            {
                 istream += 1;
 
-                try {
+                try
+                {
                     ibyte = *istream;
-                } except (EXCEPTION_EXECUTE_HANDLER) { 
+                }
+                except(EXCEPTION_EXECUTE_HANDLER)
+                {
                     return FALSE;
                 }
 
                 InstructionSize += 1;
 
-                if (Mod == 0  &&  (ibyte & 7) == 5) {
+                if (Mod == 0 && (ibyte & 7) == 5)
+                {
                     // disp 32
                     InstructionSize += 4;
                 }
             }
-
-        } else {
-            InstructionSize += MOD16 [Mod];
-            if (Mod == 0  &&  rm == 6) {
+        }
+        else
+        {
+            InstructionSize += MOD16[Mod];
+            if (Mod == 0 && rm == 6)
+            {
                 // disp 16
                 InstructionSize += 2;
             }

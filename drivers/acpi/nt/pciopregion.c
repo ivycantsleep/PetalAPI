@@ -24,56 +24,29 @@ Environment:
 #include "pch.h"
 
 NTSTATUS
-AcpiRegisterPciRegionSupport(
-    PDEVICE_OBJECT  PciDeviceFilter
-    );
+AcpiRegisterPciRegionSupport(PDEVICE_OBJECT PciDeviceFilter);
 
 NTSTATUS
-GetPciAddress(
-    IN      PNSOBJ              PciObj,
-    IN      PFNACB              CompletionRoutine,
-    IN      PVOID               Context,
-    IN OUT  PUCHAR              Bus,
-    IN OUT  PPCI_SLOT_NUMBER    Slot
-    );
+GetPciAddress(IN PNSOBJ PciObj, IN PFNACB CompletionRoutine, IN PVOID Context, IN OUT PUCHAR Bus,
+              IN OUT PPCI_SLOT_NUMBER Slot);
 
 NTSTATUS
 EXPORT
-GetPciAddressWorker(
-    IN PNSOBJ               AcpiObject,
-    IN NTSTATUS             Status,
-    IN POBJDATA             Result,
-    IN PVOID                Context
-    );
+GetPciAddressWorker(IN PNSOBJ AcpiObject, IN NTSTATUS Status, IN POBJDATA Result, IN PVOID Context);
 
 NTSTATUS
-GetOpRegionScope(
-    IN  PNSOBJ  OpRegion,
-    IN  PFNACB  CompletionHandler,
-    IN  PVOID   CompletionContext,
-    OUT PNSOBJ  *PciObj
-    );
+GetOpRegionScope(IN PNSOBJ OpRegion, IN PFNACB CompletionHandler, IN PVOID CompletionContext, OUT PNSOBJ *PciObj);
 
 NTSTATUS
 EXPORT
-GetOpRegionScopeWorker(
-    IN PNSOBJ               AcpiObject,
-    IN NTSTATUS             Status,
-    IN POBJDATA             Result,
-    IN PVOID                Context
-    );
+GetOpRegionScopeWorker(IN PNSOBJ AcpiObject, IN NTSTATUS Status, IN POBJDATA Result, IN PVOID Context);
 
 UCHAR
-GetBusNumberFromCRS(
-    IN  PDEVICE_EXTENSION   DeviceExtension,
-    IN  PUCHAR              CRS
-    );
+GetBusNumberFromCRS(IN PDEVICE_EXTENSION DeviceExtension, IN PUCHAR CRS);
 
-#define MAX(a, b)       \
-    ((a) > (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
 
-#define MIN(a, b)       \
-    ((a) < (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, AcpiRegisterPciRegionSupport)
@@ -84,11 +57,8 @@ GetBusNumberFromCRS(
 #pragma alloc_text(PAGE, EnableDisableRegions)
 #endif
 
-
-VOID
-ACPIInitBusInterfaces(
-    PDEVICE_OBJECT  Filter
-    )
+
+VOID ACPIInitBusInterfaces(PDEVICE_OBJECT Filter)
 /*++
 
 Routine Description:
@@ -108,25 +78,23 @@ Notes:
 
 --*/
 {
-    PDEVICE_EXTENSION   filterExt = Filter->DeviceExtension;
-    PDEVICE_EXTENSION   parentExt;
-    NTSTATUS            status;
+    PDEVICE_EXTENSION filterExt = Filter->DeviceExtension;
+    PDEVICE_EXTENSION parentExt;
+    NTSTATUS status;
 
     PAGED_CODE();
 
     parentExt = filterExt->ParentExtension;
 
-    if (!IsPciBus(parentExt->DeviceObject)) {
+    if (!IsPciBus(parentExt->DeviceObject))
+    {
         return;
     }
 
     AcpiRegisterPciRegionSupport(Filter);
 }
-
-VOID
-ACPIDeleteFilterInterfaceReferences(
-    IN  PDEVICE_EXTENSION   DeviceExtension
-    )
+
+VOID ACPIDeleteFilterInterfaceReferences(IN PDEVICE_EXTENSION DeviceExtension)
 /*++
 
 Routine Description:
@@ -144,37 +112,29 @@ Return Value:
 
 --*/
 {
-    AMLISUPP_CONTEXT_PASSIVE    isPciDeviceContext;
-    BOOLEAN                     pciDevice;
-    NTSTATUS                    status;
+    AMLISUPP_CONTEXT_PASSIVE isPciDeviceContext;
+    BOOLEAN pciDevice;
+    NTSTATUS status;
 
     PAGED_CODE();
 
-    if ( (DeviceExtension->Flags & DEV_PROP_NO_OBJECT) ) {
+    if ((DeviceExtension->Flags & DEV_PROP_NO_OBJECT))
+    {
 
         return;
-
     }
 
     KeInitializeEvent(&isPciDeviceContext.Event, SynchronizationEvent, FALSE);
     isPciDeviceContext.Status = STATUS_NOT_FOUND;
-    status = IsPciDevice(
-        DeviceExtension->AcpiObject,
-        AmlisuppCompletePassive,
-        (PVOID)&isPciDeviceContext,
-        &pciDevice);
-    if (status == STATUS_PENDING) {
+    status = IsPciDevice(DeviceExtension->AcpiObject, AmlisuppCompletePassive, (PVOID)&isPciDeviceContext, &pciDevice);
+    if (status == STATUS_PENDING)
+    {
 
-        KeWaitForSingleObject(
-            &isPciDeviceContext.Event,
-            Executive,
-            KernelMode,
-            FALSE,
-            NULL);
+        KeWaitForSingleObject(&isPciDeviceContext.Event, Executive, KernelMode, FALSE, NULL);
         status = isPciDeviceContext.Status;
-
     }
-    if (!NT_SUCCESS(status) || !pciDevice) {
+    if (!NT_SUCCESS(status) || !pciDevice)
+    {
 
         return;
     }
@@ -183,29 +143,25 @@ Return Value:
     // This is a PCI device, so we need to relinquish
     // the interfaces that we got from the PCI driver.
     //
-    if (!DeviceExtension->Filter.Interface) {
+    if (!DeviceExtension->Filter.Interface)
+    {
 
         //
         // There were no interfaces to release.
         //
         return;
-
     }
 
     //
     // Dereference it.
     //
-    DeviceExtension->Filter.Interface->InterfaceDereference(
-        DeviceExtension->Filter.Interface->Context
-        );
+    DeviceExtension->Filter.Interface->InterfaceDereference(DeviceExtension->Filter.Interface->Context);
     ExFreePool(DeviceExtension->Filter.Interface);
     DeviceExtension->Filter.Interface = NULL;
 }
-
+
 NTSTATUS
-AcpiRegisterPciRegionSupport(
-    PDEVICE_OBJECT  PciDeviceFilter
-    )
+AcpiRegisterPciRegionSupport(PDEVICE_OBJECT PciDeviceFilter)
 /*++
 
 Routine Description:
@@ -229,17 +185,17 @@ Notes:
 --*/
 {
     PBUS_INTERFACE_STANDARD interface;
-    PCI_COMMON_CONFIG   pciData;
-    NTSTATUS            status;
-    IO_STACK_LOCATION   irpSp;
-    PWSTR               buffer;
-    PDEVICE_EXTENSION   pciFilterExt;
-    PDEVICE_OBJECT      topDeviceInStack;
-    ULONG               bytes;
+    PCI_COMMON_CONFIG pciData;
+    NTSTATUS status;
+    IO_STACK_LOCATION irpSp;
+    PWSTR buffer;
+    PDEVICE_EXTENSION pciFilterExt;
+    PDEVICE_OBJECT topDeviceInStack;
+    ULONG bytes;
 
     PAGED_CODE();
 
-    RtlZeroMemory( &irpSp, sizeof(IO_STACK_LOCATION) );
+    RtlZeroMemory(&irpSp, sizeof(IO_STACK_LOCATION));
 
     //
     // If we have already registered a handler for this
@@ -248,13 +204,15 @@ Notes:
 
     pciFilterExt = PciDeviceFilter->DeviceExtension;
 
-    if (pciFilterExt->Filter.Interface) {
+    if (pciFilterExt->Filter.Interface)
+    {
         return STATUS_SUCCESS;
     }
 
     interface = ExAllocatePoolWithTag(NonPagedPool, sizeof(BUS_INTERFACE_STANDARD), ACPI_INTERFACE_POOLTAG);
 
-    if (!interface) {
+    if (!interface)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -265,19 +223,18 @@ Notes:
     //
     irpSp.MajorFunction = IRP_MJ_PNP;
     irpSp.MinorFunction = IRP_MN_QUERY_INTERFACE;
-    irpSp.Parameters.QueryInterface.InterfaceType = (LPGUID) &GUID_BUS_INTERFACE_STANDARD;
+    irpSp.Parameters.QueryInterface.InterfaceType = (LPGUID)&GUID_BUS_INTERFACE_STANDARD;
     irpSp.Parameters.QueryInterface.Version = 1;
-    irpSp.Parameters.QueryInterface.Size = sizeof (BUS_INTERFACE_STANDARD);
-    irpSp.Parameters.QueryInterface.Interface = (PINTERFACE) interface;
+    irpSp.Parameters.QueryInterface.Size = sizeof(BUS_INTERFACE_STANDARD);
+    irpSp.Parameters.QueryInterface.Interface = (PINTERFACE)interface;
     irpSp.Parameters.QueryInterface.InterfaceSpecificData = NULL;
 
     //
     // Call the PCI driver.
     //
-    status = ACPIInternalSendSynchronousIrp(topDeviceInStack,
-                                            &irpSp,
-                                            &buffer);
-    if (NT_SUCCESS(status)) {
+    status = ACPIInternalSendSynchronousIrp(topDeviceInStack, &irpSp, &buffer);
+    if (NT_SUCCESS(status))
+    {
 
         //
         // Attach this interface to the PCI bus PDO.
@@ -299,22 +256,20 @@ Notes:
         // this bus exists.
         //
 
-        bytes = interface->GetBusData(interface->Context,
-                                      0,
-                                      &pciData,
-                                      0,
-                                      PCI_COMMON_HDR_LENGTH);
+        bytes = interface->GetBusData(interface->Context, 0, &pciData, 0, PCI_COMMON_HDR_LENGTH);
 
         ASSERT(bytes != 0);
 
         if ((PCI_CONFIGURATION_TYPE((&pciData)) == PCI_BRIDGE_TYPE) ||
-            (PCI_CONFIGURATION_TYPE((&pciData)) == PCI_CARDBUS_BRIDGE_TYPE)) {
+            (PCI_CONFIGURATION_TYPE((&pciData)) == PCI_CARDBUS_BRIDGE_TYPE))
+        {
 
             //
             // This is actually a PCI to PCI bridge.
             //
 
-            if (pciData.u.type1.SecondaryBus != 0) {
+            if (pciData.u.type1.SecondaryBus != 0)
+            {
 
                 //
                 // And it has a bus number.  So notify the HAL.
@@ -323,8 +278,9 @@ Notes:
                 HalSetMaxLegacyPciBusNumber(pciData.u.type1.SecondaryBus);
             }
         }
-
-    } else {
+    }
+    else
+    {
 
         ExFreePool(interface);
     }
@@ -333,45 +289,38 @@ Notes:
 
     return status;
 }
-
-typedef struct {
+
+typedef struct
+{
     //
     // Arguments to PciConfigSpaceHandler
     //
-    ULONG   AccessType;
-    PNSOBJ  OpRegion;
-    ULONG   Address;
-    ULONG   Size;
-    PULONG  Data;
-    ULONG   Context;
-    PVOID   CompletionHandler;
-    PVOID   CompletionContext;
+    ULONG AccessType;
+    PNSOBJ OpRegion;
+    ULONG Address;
+    ULONG Size;
+    PULONG Data;
+    ULONG Context;
+    PVOID CompletionHandler;
+    PVOID CompletionContext;
 
     //
     // Function state
     //
-    PNSOBJ          PciObj;
-    PNSOBJ          ParentObj;
-    ULONG           CompletionHandlerType;
-    ULONG           Flags;
-    LONG            RunCompletion;
+    PNSOBJ PciObj;
+    PNSOBJ ParentObj;
+    ULONG CompletionHandlerType;
+    ULONG Flags;
+    LONG RunCompletion;
     PCI_SLOT_NUMBER Slot;
-    UCHAR           Bus;
-    BOOLEAN         IsPciDeviceResult;
+    UCHAR Bus;
+    BOOLEAN IsPciDeviceResult;
 } PCI_CONFIG_STATE, *PPCI_CONFIG_STATE;
 
 NTSTATUS
 EXPORT
-PciConfigSpaceHandler (
-    ULONG                   AccessType,
-    PNSOBJ                  OpRegion,
-    ULONG                   Address,
-    ULONG                   Size,
-    PULONG                  Data,
-    ULONG                   Context,
-    PFNAA                   CompletionHandler,
-    PVOID                   CompletionContext
-    )
+PciConfigSpaceHandler(ULONG AccessType, PNSOBJ OpRegion, ULONG Address, ULONG Size, PULONG Data, ULONG Context,
+                      PFNAA CompletionHandler, PVOID CompletionContext)
 /*++
 
 Routine Description:
@@ -397,48 +346,40 @@ Notes:
 
 --*/
 {
-    PPCI_CONFIG_STATE   state;
+    PPCI_CONFIG_STATE state;
 
     state = ExAllocatePoolWithTag(NonPagedPool, sizeof(PCI_CONFIG_STATE), ACPI_INTERFACE_POOLTAG);
 
-    if (!state) {
+    if (!state)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     RtlZeroMemory(state, sizeof(PCI_CONFIG_STATE));
 
-    state->AccessType           = AccessType;
-    state->OpRegion             = OpRegion;
-    state->Address              = Address;
-    state->Size                 = Size;
-    state->Data                 = Data;
-    state->Context              = Context;
-    state->CompletionHandler    = CompletionHandler;
-    state->CompletionContext    = CompletionContext;
-    state->PciObj               = OpRegion->pnsParent;
-    state->RunCompletion        = INITIAL_RUN_COMPLETION;
+    state->AccessType = AccessType;
+    state->OpRegion = OpRegion;
+    state->Address = Address;
+    state->Size = Size;
+    state->Data = Data;
+    state->Context = Context;
+    state->CompletionHandler = CompletionHandler;
+    state->CompletionContext = CompletionContext;
+    state->PciObj = OpRegion->pnsParent;
+    state->RunCompletion = INITIAL_RUN_COMPLETION;
 
-    return PciConfigSpaceHandlerWorker(state->PciObj,
-                                       STATUS_SUCCESS,
-                                       NULL,
-                                       (PVOID)state);
+    return PciConfigSpaceHandlerWorker(state->PciObj, STATUS_SUCCESS, NULL, (PVOID)state);
 }
-
-typedef struct {
-    PCI_CONFIG_STATE    HandlerState;
-    NSOBJ               FakeOpRegion;
+
+typedef struct
+{
+    PCI_CONFIG_STATE HandlerState;
+    NSOBJ FakeOpRegion;
 } PCI_INTERNAL_STATE, *PPCI_INTERNAL_STATE;
 
 NTSTATUS
-PciConfigInternal(
-    IN      ULONG   AccessType,
-    IN      PNSOBJ  PciObject,
-    IN      ULONG   Offset,
-    IN      ULONG   Length,
-    IN      PFNACB  CompletionHandler,
-    IN      PVOID   CompletionContext,
-    IN OUT  PUCHAR  Data
-    )
+PciConfigInternal(IN ULONG AccessType, IN PNSOBJ PciObject, IN ULONG Offset, IN ULONG Length,
+                  IN PFNACB CompletionHandler, IN PVOID CompletionContext, IN OUT PUCHAR Data)
 /*++
 
 Routine Description:
@@ -474,12 +415,13 @@ Notes:
 --*/
 {
     PPCI_INTERNAL_STATE internal;
-    PPCI_CONFIG_STATE   state;
-    PNSOBJ              opRegion;
+    PPCI_CONFIG_STATE state;
+    PNSOBJ opRegion;
 
     internal = ExAllocatePoolWithTag(NonPagedPool, sizeof(PCI_INTERNAL_STATE), ACPI_INTERFACE_POOLTAG);
 
-    if (!internal) {
+    if (!internal)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -489,70 +431,61 @@ Notes:
 
     state = (PPCI_CONFIG_STATE)internal;
 
-    state->AccessType           = AccessType;
-    state->OpRegion             = &internal->FakeOpRegion;
-    state->Address              = Offset;
-    state->Size                 = Length;
-    state->Data                 = (PULONG)Data;
-    state->Context              = 0;
-    state->CompletionHandler    = CompletionHandler;
-    state->CompletionContext    = CompletionContext;
-    state->PciObj               = PciObject;
+    state->AccessType = AccessType;
+    state->OpRegion = &internal->FakeOpRegion;
+    state->Address = Offset;
+    state->Size = Length;
+    state->Data = (PULONG)Data;
+    state->Context = 0;
+    state->CompletionHandler = CompletionHandler;
+    state->CompletionContext = CompletionContext;
+    state->PciObj = PciObject;
     state->CompletionHandlerType = PCISUPP_COMPLETION_HANDLER_PFNACB;
-    state->RunCompletion        = INITIAL_RUN_COMPLETION;
+    state->RunCompletion = INITIAL_RUN_COMPLETION;
 
-    return PciConfigSpaceHandlerWorker(PciObject,
-                                       STATUS_SUCCESS,
-                                       NULL,
-                                       (PVOID)state);
+    return PciConfigSpaceHandlerWorker(PciObject, STATUS_SUCCESS, NULL, (PVOID)state);
 }
-
+
 //
 // This structure defines ranges in PCI configuration
 // space that AML may not write.  This list must be
 // monotonic increasing.
 //
-USHORT PciOpRegionDisallowedRanges[4][2] =
-{   //
+USHORT PciOpRegionDisallowedRanges[4][2] = { //
     // Everything below the subsystem ID registers
     //
-    {0,0x2b},
+    { 0, 0x2b },
 
     //
     // Everthing between the subsystem ID registers and
     // the Max_Lat register
     //
-    {0x30, 0x3b},
+    { 0x30, 0x3b },
 
     //
     // Disallow anything above MAXUCHAR
     //
-    {0x100, 0xffff},
+    { 0x100, 0xffff },
 
     // End tag.
-    {0,0}
+    { 0, 0 }
 };
 
 NTSTATUS
 EXPORT
-PciConfigSpaceHandlerWorker(
-    IN PNSOBJ               AcpiObject,
-    IN NTSTATUS             CompletionStatus,
-    IN POBJDATA             Result,
-    IN PVOID                Context
-    )
+PciConfigSpaceHandlerWorker(IN PNSOBJ AcpiObject, IN NTSTATUS CompletionStatus, IN POBJDATA Result, IN PVOID Context)
 {
     PBUS_INTERFACE_STANDARD interface;
-    PDEVICE_EXTENSION       pciDeviceFilter;
-    PPCI_CONFIG_STATE       state;
-    NTSTATUS                status;
-    ULONG                   range, offset, length, bytes = 0;
-    ULONG                   bytesWritten;
-    PFNAA                   simpleCompletion;
-    PFNACB                  lessSimpleCompletion;
-    KIRQL                   oldIrql;
+    PDEVICE_EXTENSION pciDeviceFilter;
+    PPCI_CONFIG_STATE state;
+    NTSTATUS status;
+    ULONG range, offset, length, bytes = 0;
+    ULONG bytesWritten;
+    PFNAA simpleCompletion;
+    PFNACB lessSimpleCompletion;
+    KIRQL oldIrql;
 #if DBG
-    BOOLEAN                 Complain = FALSE;
+    BOOLEAN Complain = FALSE;
 #endif
 
     state = (PPCI_CONFIG_STATE)Context;
@@ -568,11 +501,12 @@ PciConfigSpaceHandlerWorker(
     //
     // If the interpretter failed, just bail.
     //
-    if (!NT_SUCCESS(CompletionStatus)) {
+    if (!NT_SUCCESS(CompletionStatus))
+    {
         status = STATUS_SUCCESS;
-    #if DBG
+#if DBG
         Complain = TRUE;
-    #endif
+#endif
         goto PciConfigSpaceHandlerWorkerDone;
     }
 
@@ -582,22 +516,24 @@ PciConfigSpaceHandlerWorker(
     // PCI device which the OpRegion relates to.
     //
 
-    if (!state->OpRegion->Context) {
+    if (!state->OpRegion->Context)
+    {
 
-        if (!(state->Flags & PCISUPP_GOT_SCOPE)) {
+        if (!(state->Flags & PCISUPP_GOT_SCOPE))
+        {
 
             state->Flags |= PCISUPP_GOT_SCOPE;
 
-            status = GetOpRegionScope(state->OpRegion,
-                                      PciConfigSpaceHandlerWorker,
-                                      (PVOID)state,
+            status = GetOpRegionScope(state->OpRegion, PciConfigSpaceHandlerWorker, (PVOID)state,
                                       &((PNSOBJ)(state->OpRegion->Context)));
 
-            if (status == STATUS_PENDING) {
+            if (status == STATUS_PENDING)
+            {
                 return status;
             }
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 status = STATUS_SUCCESS;
                 goto PciConfigSpaceHandlerWorkerDone;
             }
@@ -614,7 +550,8 @@ PciConfigSpaceHandlerWorker(
 
     pciDeviceFilter = (PDEVICE_EXTENSION)state->PciObj->Context;
 
-    if (pciDeviceFilter == NULL) {
+    if (pciDeviceFilter == NULL)
+    {
 
         //
         // The device has not been initialized yet, we cannot perform
@@ -639,23 +576,23 @@ PciConfigSpaceHandlerWorker(
     // used in calls to the HAL.
     //
 
-    if (!interface) {
+    if (!interface)
+    {
 
-        if (!(state->Flags & PCISUPP_GOT_SLOT_INFO)) {
+        if (!(state->Flags & PCISUPP_GOT_SLOT_INFO))
+        {
 
             state->Flags |= PCISUPP_GOT_SLOT_INFO;
 
-            status = GetPciAddress(state->PciObj,
-                                   PciConfigSpaceHandlerWorker,
-                                   (PVOID)state,
-                                   &state->Bus,
-                                   &state->Slot);
+            status = GetPciAddress(state->PciObj, PciConfigSpaceHandlerWorker, (PVOID)state, &state->Bus, &state->Slot);
 
-            if (status == STATUS_PENDING) {
+            if (status == STATUS_PENDING)
+            {
                 return status;
             }
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 status = STATUS_SUCCESS;
                 goto PciConfigSpaceHandlerWorkerDone;
             }
@@ -666,10 +603,12 @@ PciConfigSpaceHandlerWorker(
 
     oldIrql = KeGetCurrentIrql();
 
-    switch (state->AccessType) {
+    switch (state->AccessType)
+    {
     case RSACCESS_READ:
 
-        if (interface) {
+        if (interface)
+        {
 
             //
             // Do config space op through PCI driver.  Do it
@@ -679,169 +618,157 @@ PciConfigSpaceHandlerWorker(
             // after we have powered off the disk.
             //
 
-            if (oldIrql < DISPATCH_LEVEL) {
-                KeRaiseIrql(DISPATCH_LEVEL,
-                            &oldIrql);
+            if (oldIrql < DISPATCH_LEVEL)
+            {
+                KeRaiseIrql(DISPATCH_LEVEL, &oldIrql);
             }
 
-            bytes = interface->GetBusData(interface->Context,
-                                          0,
-                                          state->Data,
-                                          state->Address,
-                                          state->Size);
+            bytes = interface->GetBusData(interface->Context, 0, state->Data, state->Address, state->Size);
 
-            if (oldIrql < DISPATCH_LEVEL) {
+            if (oldIrql < DISPATCH_LEVEL)
+            {
                 KeLowerIrql(oldIrql);
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // Do config space op through HAL
             //
 
-            bytes = HalGetBusDataByOffset(PCIConfiguration,
-                                          state->Bus,
-                                          state->Slot.u.AsULONG,
-                                          state->Data,
-                                          state->Address,
-                                          state->Size);
-
+            bytes = HalGetBusDataByOffset(PCIConfiguration, state->Bus, state->Slot.u.AsULONG, state->Data,
+                                          state->Address, state->Size);
         }
 
         break;
 
     case RSACCESS_WRITE:
+    {
+        static BOOLEAN ErrorLogged = FALSE;
+
+        offset = state->Address;
+        length = state->Size;
+        bytesWritten = 0;
+
+        //
+        // Crop any writes down to the regions that are allowed.
+        //
+
+        range = 0;
+
+        while (PciOpRegionDisallowedRanges[range][1] != 0)
         {
-            static BOOLEAN ErrorLogged = FALSE;
 
-            offset = state->Address;
-            length = state->Size;
-            bytesWritten = 0;
+            if (offset < PciOpRegionDisallowedRanges[range][0])
+            {
 
-            //
-            // Crop any writes down to the regions that are allowed.
-            //
+                //
+                // At least part of this write falls below this
+                // disallowed range.  Write all the data up to
+                // the beggining of the next allowed range.
+                //
 
-            range = 0;
+                length = MIN(state->Address + state->Size - offset, PciOpRegionDisallowedRanges[range][0] - offset);
 
-            while (PciOpRegionDisallowedRanges[range][1] != 0) {
+                if (interface)
+                {
 
-                if (offset < PciOpRegionDisallowedRanges[range][0]) {
-
-                    //
-                    // At least part of this write falls below this
-                    // disallowed range.  Write all the data up to
-                    // the beggining of the next allowed range.
-                    //
-
-                    length = MIN(state->Address + state->Size - offset,
-                                 PciOpRegionDisallowedRanges[range][0] - offset);
-
-                    if (interface) {
-
-                        if (oldIrql < DISPATCH_LEVEL) {
-                            KeRaiseIrql(DISPATCH_LEVEL,
-                                        &oldIrql);
-                        }
-
-                        bytes = interface->SetBusData(interface->Context,
-                                                      0,
-                                                      (PUCHAR)(state->Data + offset - state->Address),
-                                                      offset,
-                                                      length);
-
-                        if (oldIrql < DISPATCH_LEVEL) {
-                            KeLowerIrql(oldIrql);
-                        }
-
-                    } else {
-
-                        bytes = HalSetBusDataByOffset(PCIConfiguration,
-                                                      state->Bus,
-                                                      state->Slot.u.AsULONG,
-                                                      (PUCHAR)(state->Data + offset - state->Address),
-                                                      offset,
-                                                      length);
+                    if (oldIrql < DISPATCH_LEVEL)
+                    {
+                        KeRaiseIrql(DISPATCH_LEVEL, &oldIrql);
                     }
 
-                    //
-                    // Keep track of what we wrote.
-                    //
+                    bytes = interface->SetBusData(interface->Context, 0,
+                                                  (PUCHAR)(state->Data + offset - state->Address), offset, length);
 
-                    bytesWritten += length;
+                    if (oldIrql < DISPATCH_LEVEL)
+                    {
+                        KeLowerIrql(oldIrql);
+                    }
+                }
+                else
+                {
+
+                    bytes = HalSetBusDataByOffset(PCIConfiguration, state->Bus, state->Slot.u.AsULONG,
+                                                  (PUCHAR)(state->Data + offset - state->Address), offset, length);
                 }
 
                 //
-                // Now advance offset past the end of the disallowed range.
+                // Keep track of what we wrote.
                 //
 
-                offset = MAX(state->Address,
-                             (ULONG)(PciOpRegionDisallowedRanges[range][1] + 1));
-
-                if (offset >= state->Address + state->Size) {
-
-                    //
-                    // The current possible write is beyond the end
-                    // of the requested buffer.  So we are done.
-                    //
-
-                    break;
-                }
-
-                range++;
+                bytesWritten += length;
             }
 
-            if (bytesWritten == 0) {
+            //
+            // Now advance offset past the end of the disallowed range.
+            //
 
-                if(!ErrorLogged) {
-                    PWCHAR IllegalPCIOpRegionAddress[2];
-                    WCHAR ACPIName[] = L"ACPI";
-                    WCHAR addressBuffer[13];
+            offset = MAX(state->Address, (ULONG)(PciOpRegionDisallowedRanges[range][1] + 1));
 
-                    //
-                    // None of this write was possible. Log the problem.
-                    //
+            if (offset >= state->Address + state->Size)
+            {
 
-                    //
-                    // Turn the address into a string
-                    //
-                    swprintf( addressBuffer, L"0x%x", state->Address );
+                //
+                // The current possible write is beyond the end
+                // of the requested buffer.  So we are done.
+                //
 
-                    //
-                    // Build the list of arguments to pass to the function that will write the
-                    // error log to the registry
-                    //
-                    IllegalPCIOpRegionAddress[0] = ACPIName;
-                    IllegalPCIOpRegionAddress[1] = addressBuffer;
-
-                    //
-                    // Log error to event log
-                    //
-                    ACPIWriteEventLogEntry(ACPI_ERR_ILLEGAL_PCIOPREGION_WRITE,
-                                           &IllegalPCIOpRegionAddress,
-                                           2,
-                                           NULL,
-                                           0
-                                          );
-                    ErrorLogged = TRUE;
-                }
-            #if DBG
-                Complain = TRUE;
-            #endif
-               goto PciConfigSpaceHandlerWorkerExit;
+                break;
             }
 
-            bytes = bytesWritten;
-            break;
+            range++;
         }
+
+        if (bytesWritten == 0)
+        {
+
+            if (!ErrorLogged)
+            {
+                PWCHAR IllegalPCIOpRegionAddress[2];
+                WCHAR ACPIName[] = L"ACPI";
+                WCHAR addressBuffer[13];
+
+                //
+                // None of this write was possible. Log the problem.
+                //
+
+                //
+                // Turn the address into a string
+                //
+                swprintf(addressBuffer, L"0x%x", state->Address);
+
+                //
+                // Build the list of arguments to pass to the function that will write the
+                // error log to the registry
+                //
+                IllegalPCIOpRegionAddress[0] = ACPIName;
+                IllegalPCIOpRegionAddress[1] = addressBuffer;
+
+                //
+                // Log error to event log
+                //
+                ACPIWriteEventLogEntry(ACPI_ERR_ILLEGAL_PCIOPREGION_WRITE, &IllegalPCIOpRegionAddress, 2, NULL, 0);
+                ErrorLogged = TRUE;
+            }
+#if DBG
+            Complain = TRUE;
+#endif
+            goto PciConfigSpaceHandlerWorkerExit;
+        }
+
+        bytes = bytesWritten;
+        break;
+    }
     default:
         status = STATUS_NOT_IMPLEMENTED;
     }
 
 PciConfigSpaceHandlerWorkerDone:
 
-    if (bytes == 0) {
+    if (bytes == 0)
+    {
 
         //
         // The handler from the HAL or the PCI driver didn't
@@ -854,72 +781,65 @@ PciConfigSpaceHandlerWorkerDone:
 
 PciConfigSpaceHandlerWorkerExit:
 
-    if (state->RunCompletion) {
+    if (state->RunCompletion)
+    {
 
-        if (state->CompletionHandlerType ==
-             PCISUPP_COMPLETION_HANDLER_PFNAA) {
+        if (state->CompletionHandlerType == PCISUPP_COMPLETION_HANDLER_PFNAA)
+        {
 
             simpleCompletion = (PFNAA)state->CompletionHandler;
 
             simpleCompletion(state->CompletionContext);
-
-        } else {
+        }
+        else
+        {
 
             lessSimpleCompletion = (PFNACB)state->CompletionHandler;
 
-            lessSimpleCompletion(state->PciObj,
-                                 status,
-                                 NULL,
-                                 state->CompletionContext);
+            lessSimpleCompletion(state->PciObj, status, NULL, state->CompletionContext);
         }
     }
 
 #if DBG
-    if ((!NT_SUCCESS(status)) || Complain) {
-        UCHAR   opRegion[5] = {0};
-        UCHAR   parent[5] = {0};
+    if ((!NT_SUCCESS(status)) || Complain)
+    {
+        UCHAR opRegion[5] = { 0 };
+        UCHAR parent[5] = { 0 };
 
         RtlCopyMemory(opRegion, ACPIAmliNameObject(state->OpRegion), 4);
 
-        if (state->PciObj) {
+        if (state->PciObj)
+        {
             RtlCopyMemory(parent, ACPIAmliNameObject(state->PciObj), 4);
         }
 
-        ACPIPrint( (
-            ACPI_PRINT_WARNING,
-            "Op Region %s failed (parent PCI device was %s)\n",
-            opRegion, parent
-            ) );
+        ACPIPrint((ACPI_PRINT_WARNING, "Op Region %s failed (parent PCI device was %s)\n", opRegion, parent));
     }
 #endif
     ExFreePool(state);
     return status;
 }
-
-typedef struct {
-    PNSOBJ              PciObject;
-    PUCHAR              Bus;
-    PPCI_SLOT_NUMBER    Slot;
 
-    UCHAR               ParentBus;
-    PCI_SLOT_NUMBER     ParentSlot;
-    ULONG               Flags;
-    ULONG               Address;
-    ULONG               BaseBusNumber;
-    LONG                RunCompletion;
-    PFNACB              CompletionRoutine;
-    PVOID               CompletionContext;
+typedef struct
+{
+    PNSOBJ PciObject;
+    PUCHAR Bus;
+    PPCI_SLOT_NUMBER Slot;
+
+    UCHAR ParentBus;
+    PCI_SLOT_NUMBER ParentSlot;
+    ULONG Flags;
+    ULONG Address;
+    ULONG BaseBusNumber;
+    LONG RunCompletion;
+    PFNACB CompletionRoutine;
+    PVOID CompletionContext;
 
 } GET_ADDRESS_CONTEXT, *PGET_ADDRESS_CONTEXT;
 
 NTSTATUS
-GetPciAddress(
-    IN      PNSOBJ              PciObj,
-    IN      PFNACB              CompletionRoutine,
-    IN      PVOID               Context,
-    IN OUT  PUCHAR              Bus,
-    IN OUT  PPCI_SLOT_NUMBER    Slot
-    )
+GetPciAddress(IN PNSOBJ PciObj, IN PFNACB CompletionRoutine, IN PVOID Context, IN OUT PUCHAR Bus,
+              IN OUT PPCI_SLOT_NUMBER Slot)
 /*++
 
 Routine Description:
@@ -949,49 +869,41 @@ Notes:
 
 --*/
 {
-    PGET_ADDRESS_CONTEXT    state;
+    PGET_ADDRESS_CONTEXT state;
 
     ASSERT(CompletionRoutine);
 
     state = ExAllocatePoolWithTag(NonPagedPool, sizeof(GET_ADDRESS_CONTEXT), ACPI_INTERFACE_POOLTAG);
 
-    if (!state) {
+    if (!state)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     RtlZeroMemory(state, sizeof(GET_ADDRESS_CONTEXT));
 
-    state->PciObject            = PciObj;
-    state->CompletionRoutine    = CompletionRoutine;
-    state->CompletionContext    = Context;
-    state->Bus                  = Bus;
-    state->Slot                 = Slot;
-    state->RunCompletion        = INITIAL_RUN_COMPLETION;
+    state->PciObject = PciObj;
+    state->CompletionRoutine = CompletionRoutine;
+    state->CompletionContext = Context;
+    state->Bus = Bus;
+    state->Slot = Slot;
+    state->RunCompletion = INITIAL_RUN_COMPLETION;
 
-    return GetPciAddressWorker(PciObj,
-                               STATUS_SUCCESS,
-                               NULL,
-                               (PVOID)state);
-
+    return GetPciAddressWorker(PciObj, STATUS_SUCCESS, NULL, (PVOID)state);
 }
-
+
 NTSTATUS
 EXPORT
-GetPciAddressWorker(
-    IN PNSOBJ               AcpiObject,
-    IN NTSTATUS             Status,
-    IN POBJDATA             Result,
-    IN PVOID                Context
-    )
+GetPciAddressWorker(IN PNSOBJ AcpiObject, IN NTSTATUS Status, IN POBJDATA Result, IN PVOID Context)
 {
-    PIO_RESOURCE_REQUIREMENTS_LIST  resources;
-    PGET_ADDRESS_CONTEXT            state;
-    PPCI_COMMON_CONFIG              pciConfig;
-    NTSTATUS                        status;
-    PNSOBJ                          bus;
-    PNSOBJ                          tempObj;
-    ULONG                           bytesRead, i;
-    UCHAR                           buffer[PCI_COMMON_HDR_LENGTH];
+    PIO_RESOURCE_REQUIREMENTS_LIST resources;
+    PGET_ADDRESS_CONTEXT state;
+    PPCI_COMMON_CONFIG pciConfig;
+    NTSTATUS status;
+    PNSOBJ bus;
+    PNSOBJ tempObj;
+    ULONG bytesRead, i;
+    UCHAR buffer[PCI_COMMON_HDR_LENGTH];
 
     ASSERT(Context);
     state = (PGET_ADDRESS_CONTEXT)Context;
@@ -1007,53 +919,50 @@ GetPciAddressWorker(
     // If Status isn't success, then one of the worker
     // functions we called puked.  Bail.
     //
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         goto GetPciAddressWorkerExit;
-
     }
 
     //
     // First, determine the slot number.
     //
-    if (!(state->Flags & PCISUPP_CHECKED_ADR)) {
+    if (!(state->Flags & PCISUPP_CHECKED_ADR))
+    {
 
         //
         // Get the _ADR.
         //
         state->Flags |= PCISUPP_CHECKED_ADR;
-        status = ACPIGetNSAddressAsync(
-                    state->PciObject,
-                    GetPciAddressWorker,
-                    (PVOID)state,
-                    &(state->Address),
-                    NULL
-                    );
+        status = ACPIGetNSAddressAsync(state->PciObject, GetPciAddressWorker, (PVOID)state, &(state->Address), NULL);
 
-        if (status == STATUS_PENDING) {
+        if (status == STATUS_PENDING)
+        {
             return status;
         }
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             goto GetPciAddressWorkerExit;
         }
     }
 
-    if (!(state->Flags & PCISUPP_GOT_SLOT_INFO)) {
+    if (!(state->Flags & PCISUPP_GOT_SLOT_INFO))
+    {
 
         //
         // Build a PCI_SLOT_NUMBER out of the integer returned
         // from the interpretter.
         //
         state->Slot->u.bits.FunctionNumber = (state->Address) & 0x7;
-        state->Slot->u.bits.DeviceNumber = ( (state->Address) >> 16) & 0x1f;
+        state->Slot->u.bits.DeviceNumber = ((state->Address) >> 16) & 0x1f;
         state->Flags |= PCISUPP_GOT_SLOT_INFO;
-
     }
 
     //
     // Next, get the bus number, if possible.
     //
-    *state->Bus = 0;   // default value, in case we have to guess
+    *state->Bus = 0; // default value, in case we have to guess
 
     //
     // Check first to see if this bus has a _HID.
@@ -1061,7 +970,8 @@ GetPciAddressWorker(
     //
     bus = state->PciObject;
     tempObj = ACPIAmliGetNamedChild(bus, PACKED_HID);
-    if (!tempObj) {
+    if (!tempObj)
+    {
 
         //
         // This device had no _HID.  So look up
@@ -1070,31 +980,28 @@ GetPciAddressWorker(
         //
         bus = state->PciObject->pnsParent;
         tempObj = ACPIAmliGetNamedChild(bus, PACKED_HID);
-
     }
 
-    if (!tempObj) {
+    if (!tempObj)
+    {
 
         //
         // This PCI device is on a PCI bus that
         // is created by a PCI-PCI bridge.
         //
-        if (!(state->Flags & PCISUPP_CHECKED_PARENT)) {
+        if (!(state->Flags & PCISUPP_CHECKED_PARENT))
+        {
 
             state->Flags |= PCISUPP_CHECKED_PARENT;
-            status = GetPciAddress(
-                        bus,
-                        GetPciAddressWorker,
-                        (PVOID)state,
-                        &state->ParentBus,
-                        &state->ParentSlot
-                        );
+            status = GetPciAddress(bus, GetPciAddressWorker, (PVOID)state, &state->ParentBus, &state->ParentSlot);
 
-            if (status == STATUS_PENDING) {
+            if (status == STATUS_PENDING)
+            {
                 return status;
             }
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 goto GetPciAddressWorkerExit;
             }
         }
@@ -1102,14 +1009,11 @@ GetPciAddressWorker(
         //
         // Read the config space for this device.
         //
-        bytesRead = HalGetBusDataByOffset(PCIConfiguration,
-                                          state->ParentBus,
-                                          state->ParentSlot.u.AsULONG,
-                                          buffer,
-                                          0,
+        bytesRead = HalGetBusDataByOffset(PCIConfiguration, state->ParentBus, state->ParentSlot.u.AsULONG, buffer, 0,
                                           PCI_COMMON_HDR_LENGTH);
 
-        if (bytesRead == 0) {
+        if (bytesRead == 0)
+        {
             //
             // Make a guess that the bus number was 0.
             //
@@ -1121,8 +1025,9 @@ GetPciAddressWorker(
 
         // SP3
         if ((PCI_CONFIGURATION_TYPE(pciConfig) != PCI_BRIDGE_TYPE) &&
-            (PCI_CONFIGURATION_TYPE(pciConfig) != PCI_CARDBUS_BRIDGE_TYPE)) {
-        // SP3
+            (PCI_CONFIGURATION_TYPE(pciConfig) != PCI_CARDBUS_BRIDGE_TYPE))
+        {
+            // SP3
 
             //
             // Make a guess that the bus number was 0.
@@ -1139,35 +1044,32 @@ GetPciAddressWorker(
 
         status = STATUS_SUCCESS;
         goto GetPciAddressWorkerExit;
-
     }
 
     //
     // Is there a _BBN to run?
     //
     tempObj = ACPIAmliGetNamedChild(bus, PACKED_BBN);
-    if (tempObj) {
+    if (tempObj)
+    {
 
         //
         // This device must be the child of a root PCI bus.
         //
-        if (!(state->Flags & PCISUPP_CHECKED_BBN)) {
+        if (!(state->Flags & PCISUPP_CHECKED_BBN))
+        {
 
             state->Flags |= PCISUPP_CHECKED_BBN;
-            status = ACPIGetNSIntegerAsync(
-                        bus,
-                        PACKED_BBN,
-                        GetPciAddressWorker,
-                        (PVOID)state,
-                        &(state->BaseBusNumber),
-                        NULL
-                        );
+            status = ACPIGetNSIntegerAsync(bus, PACKED_BBN, GetPciAddressWorker, (PVOID)state, &(state->BaseBusNumber),
+                                           NULL);
 
-            if (status == STATUS_PENDING) {
-                return(status);
+            if (status == STATUS_PENDING)
+            {
+                return (status);
             }
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 goto GetPciAddressWorkerExit;
             }
         }
@@ -1176,8 +1078,8 @@ GetPciAddressWorker(
         // At this point, we must have a Boot Bus Number. This is the correct
         // number for this bus
         //
-        ASSERT( state->BaseBusNumber <= 0xFF );
-        *(state->Bus) = (UCHAR) (state->BaseBusNumber);
+        ASSERT(state->BaseBusNumber <= 0xFF);
+        *(state->Bus) = (UCHAR)(state->BaseBusNumber);
 
         //
         // HACKHACK.  The ACPI HAL doesn't really know much about busses.  But
@@ -1189,52 +1091,45 @@ GetPciAddressWorker(
         HalSetMaxLegacyPciBusNumber(state->BaseBusNumber);
 
         status = STATUS_SUCCESS;
-
-    } else {
+    }
+    else
+    {
 
         //
         // There is a no _BBN, so the bus number MUST be Zero
         //
         *(state->Bus) = 0;
         status = STATUS_SUCCESS;
-
     }
 
 GetPciAddressWorkerExit:
 
-    if (state->RunCompletion) {
+    if (state->RunCompletion)
+    {
 
-        state->CompletionRoutine(AcpiObject,
-                                 status,
-                                 NULL,
-                                 state->CompletionContext);
-
+        state->CompletionRoutine(AcpiObject, status, NULL, state->CompletionContext);
     }
 
     ExFreePool(state);
     return status;
 }
-
-typedef struct {
-    PNSOBJ  AcpiObject;
-    ULONG   Flags;
-    ULONG   Adr;
-    PUCHAR  Hid;
-    PUCHAR  Cid;
+
+typedef struct
+{
+    PNSOBJ AcpiObject;
+    ULONG Flags;
+    ULONG Adr;
+    PUCHAR Hid;
+    PUCHAR Cid;
     BOOLEAN IsPciDeviceResult;
-    LONG    RunCompletion;
-    PFNACB  CompletionHandler;
-    PVOID   CompletionContext;
+    LONG RunCompletion;
+    PFNACB CompletionHandler;
+    PVOID CompletionContext;
     BOOLEAN *Result;
 } IS_PCI_DEVICE_STATE, *PIS_PCI_DEVICE_STATE;
 
 NTSTATUS
-IsPciDevice(
-    IN  PNSOBJ  AcpiObject,
-    IN  PFNACB  CompletionHandler,
-    IN  PVOID   CompletionContext,
-    OUT BOOLEAN *Result
-    )
+IsPciDevice(IN PNSOBJ AcpiObject, IN PFNACB CompletionHandler, IN PVOID CompletionContext, OUT BOOLEAN *Result)
 /*++
 
 Routine Description:
@@ -1254,37 +1149,30 @@ Notes:
 
 --*/
 {
-    PIS_PCI_DEVICE_STATE    state;
-    NTSTATUS                status;
+    PIS_PCI_DEVICE_STATE state;
+    NTSTATUS status;
 
     state = ExAllocatePoolWithTag(NonPagedPool, sizeof(IS_PCI_DEVICE_STATE), ACPI_INTERFACE_POOLTAG);
 
-    if (!state) {
+    if (!state)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     RtlZeroMemory(state, sizeof(IS_PCI_DEVICE_STATE));
 
-    state->AcpiObject        = AcpiObject;
+    state->AcpiObject = AcpiObject;
     state->CompletionHandler = CompletionHandler;
     state->CompletionContext = CompletionContext;
-    state->Result            = Result;
-    state->RunCompletion     = INITIAL_RUN_COMPLETION;
+    state->Result = Result;
+    state->RunCompletion = INITIAL_RUN_COMPLETION;
 
-    return IsPciDeviceWorker(AcpiObject,
-                             STATUS_SUCCESS,
-                             NULL,
-                             (PVOID)state);
+    return IsPciDeviceWorker(AcpiObject, STATUS_SUCCESS, NULL, (PVOID)state);
 }
 
 NTSTATUS
 EXPORT
-IsPciDeviceWorker(
-    IN PNSOBJ               AcpiObject,
-    IN NTSTATUS             Status,
-    IN POBJDATA             Result,
-    IN PVOID                Context
-    )
+IsPciDeviceWorker(IN PNSOBJ AcpiObject, IN NTSTATUS Status, IN POBJDATA Result, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -1325,10 +1213,10 @@ Notes:
 
 --*/
 {
-    PIS_PCI_DEVICE_STATE    state;
-    NTSTATUS                status;
-    PNSOBJ                  hidObj;
-    PNSOBJ                  cidObj;
+    PIS_PCI_DEVICE_STATE state;
+    NTSTATUS status;
+    PNSOBJ hidObj;
+    PNSOBJ cidObj;
 
     state = (PIS_PCI_DEVICE_STATE)Context;
     status = Status;
@@ -1343,7 +1231,8 @@ Notes:
     // If Status isn't success, then one of the worker
     // functions we called puked.  Bail.
     //
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         *state->Result = FALSE;
         goto IsPciDeviceExit;
     }
@@ -1353,7 +1242,8 @@ Notes:
     // namespace object.
     //
 
-    if (NSGETOBJTYPE(state->AcpiObject) != OBJTYPE_DEVICE) {
+    if (NSGETOBJTYPE(state->AcpiObject) != OBJTYPE_DEVICE)
+    {
         *state->Result = FALSE;
         goto IsPciDeviceExit;
     }
@@ -1362,37 +1252,37 @@ Notes:
     // Step 1), check the _HID.
     //
 
-    if (!(state->Flags & PCISUPP_CHECKED_HID)) {
+    if (!(state->Flags & PCISUPP_CHECKED_HID))
+    {
 
         state->Flags |= PCISUPP_CHECKED_HID;
         state->Hid = NULL;
 
-        hidObj = ACPIAmliGetNamedChild( state->AcpiObject, PACKED_HID );
+        hidObj = ACPIAmliGetNamedChild(state->AcpiObject, PACKED_HID);
 
-        if (hidObj) {
+        if (hidObj)
+        {
 
-            status = ACPIGetNSPnpIDAsync(
-                        state->AcpiObject,
-                        IsPciDeviceWorker,
-                        (PVOID)state,
-                        &state->Hid,
-                        NULL);
+            status = ACPIGetNSPnpIDAsync(state->AcpiObject, IsPciDeviceWorker, (PVOID)state, &state->Hid, NULL);
 
-            if (status == STATUS_PENDING) {
+            if (status == STATUS_PENDING)
+            {
                 return status;
             }
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 *state->Result = FALSE;
                 goto IsPciDeviceExit;
             }
         }
     }
 
-    if (state->Hid) {
+    if (state->Hid)
+    {
 
-        if (strstr(state->Hid, PCI_PNP_ID)  ||
-            strstr(state->Hid, PCIE_PNP_ID)) {
+        if (strstr(state->Hid, PCI_PNP_ID) || strstr(state->Hid, PCIE_PNP_ID))
+        {
             //
             // Was PCI.
             //
@@ -1407,37 +1297,37 @@ Notes:
     // Step 2), check the _CID.
     //
 
-    if (!(state->Flags & PCISUPP_CHECKED_CID)) {
+    if (!(state->Flags & PCISUPP_CHECKED_CID))
+    {
 
         state->Flags |= PCISUPP_CHECKED_CID;
         state->Cid = NULL;
 
-        cidObj = ACPIAmliGetNamedChild( state->AcpiObject, PACKED_CID );
+        cidObj = ACPIAmliGetNamedChild(state->AcpiObject, PACKED_CID);
 
-        if (cidObj) {
+        if (cidObj)
+        {
 
-            status = ACPIGetNSCompatibleIDAsync(
-                state->AcpiObject,
-                IsPciDeviceWorker,
-                (PVOID)state,
-                &state->Cid,
-                NULL);
+            status = ACPIGetNSCompatibleIDAsync(state->AcpiObject, IsPciDeviceWorker, (PVOID)state, &state->Cid, NULL);
 
-            if (status == STATUS_PENDING) {
+            if (status == STATUS_PENDING)
+            {
                 return status;
             }
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 *state->Result = FALSE;
                 goto IsPciDeviceExit;
             }
         }
     }
 
-    if (state->Cid) {
+    if (state->Cid)
+    {
 
-        if (strstr(state->Cid, PCI_PNP_ID)  ||
-            strstr(state->Cid, PCIE_PNP_ID)) {
+        if (strstr(state->Cid, PCI_PNP_ID) || strstr(state->Cid, PCIE_PNP_ID))
+        {
             //
             // Was PCI.
             //
@@ -1452,21 +1342,19 @@ Notes:
     // Step 3), check the _ADR.
     //
 
-    if (!(state->Flags & PCISUPP_CHECKED_ADR)) {
+    if (!(state->Flags & PCISUPP_CHECKED_ADR))
+    {
 
         state->Flags |= PCISUPP_CHECKED_ADR;
-        status = ACPIGetNSAddressAsync(
-                    state->AcpiObject,
-                    IsPciDeviceWorker,
-                    (PVOID)state,
-                    &(state->Adr),
-                    NULL);
+        status = ACPIGetNSAddressAsync(state->AcpiObject, IsPciDeviceWorker, (PVOID)state, &(state->Adr), NULL);
 
-        if (status == STATUS_PENDING) {
+        if (status == STATUS_PENDING)
+        {
             return status;
         }
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             *state->Result = FALSE;
             goto IsPciDeviceExit;
         }
@@ -1477,20 +1365,20 @@ Notes:
     // parent device is a PCI device.
     //
 
-    if (!(state->Flags & PCISUPP_CHECKED_PARENT)) {
+    if (!(state->Flags & PCISUPP_CHECKED_PARENT))
+    {
 
         state->Flags |= PCISUPP_CHECKED_PARENT;
         state->IsPciDeviceResult = FALSE;
-        status = IsPciDevice(state->AcpiObject->pnsParent,
-                             IsPciDeviceWorker,
-                             (PVOID)state,
-                             &state->IsPciDeviceResult);
+        status = IsPciDevice(state->AcpiObject->pnsParent, IsPciDeviceWorker, (PVOID)state, &state->IsPciDeviceResult);
 
-        if (status == STATUS_PENDING) {
+        if (status == STATUS_PENDING)
+        {
             return status;
         }
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             *state->Result = FALSE;
             goto IsPciDeviceExit;
         }
@@ -1503,7 +1391,8 @@ Notes:
 
 IsPciDeviceExit:
 
-    if (state->IsPciDeviceResult) {
+    if (state->IsPciDeviceResult)
+    {
 
         //
         // Record the result.
@@ -1512,46 +1401,43 @@ IsPciDeviceExit:
         *state->Result = state->IsPciDeviceResult;
     }
 
-    if (status == STATUS_OBJECT_NAME_NOT_FOUND) {
+    if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+    {
         status = STATUS_SUCCESS;
     }
 
-    if (state->RunCompletion) {
+    if (state->RunCompletion)
+    {
 
-        state->CompletionHandler(state->AcpiObject,
-                                 status,
-                                 NULL,
-                                 state->CompletionContext);
+        state->CompletionHandler(state->AcpiObject, status, NULL, state->CompletionContext);
     }
 
-    if (state->Hid) ExFreePool(state->Hid);
-    if (state->Cid) ExFreePool(state->Cid);
+    if (state->Hid)
+        ExFreePool(state->Hid);
+    if (state->Cid)
+        ExFreePool(state->Cid);
     ExFreePool(state);
     return status;
 }
-
-typedef struct {
-    PNSOBJ  AcpiObject;
-    ULONG   Flags;
-    PUCHAR  Hid;
-    PUCHAR  Cid;
-    ULONG   Adr;
+
+typedef struct
+{
+    PNSOBJ AcpiObject;
+    ULONG Flags;
+    PUCHAR Hid;
+    PUCHAR Cid;
+    ULONG Adr;
     BOOLEAN IsPciDevice;
-    LONG    RunCompletion;
-    PFNACB  CompletionHandler;
-    PVOID   CompletionContext;
+    LONG RunCompletion;
+    PFNACB CompletionHandler;
+    PVOID CompletionContext;
     BOOLEAN *Result;
-    UCHAR   Buffer[PCI_COMMON_HDR_LENGTH];
+    UCHAR Buffer[PCI_COMMON_HDR_LENGTH];
 
 } IS_PCI_BUS_STATE, *PIS_PCI_BUS_STATE;
 
 NTSTATUS
-IsPciBusAsync(
-    IN  PNSOBJ  AcpiObject,
-    IN  PFNACB  CompletionHandler,
-    IN  PVOID   CompletionContext,
-    OUT BOOLEAN *Result
-    )
+IsPciBusAsync(IN PNSOBJ AcpiObject, IN PFNACB CompletionHandler, IN PVOID CompletionContext, OUT BOOLEAN *Result)
 /*++
 
 Routine Description:
@@ -1574,44 +1460,37 @@ Notes:
 
 --*/
 {
-    PIS_PCI_BUS_STATE   state;
+    PIS_PCI_BUS_STATE state;
 
     state = ExAllocatePoolWithTag(NonPagedPool, sizeof(IS_PCI_BUS_STATE), ACPI_INTERFACE_POOLTAG);
 
-    if (!state) {
+    if (!state)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     RtlZeroMemory(state, sizeof(IS_PCI_BUS_STATE));
 
-    state->AcpiObject        = AcpiObject;
+    state->AcpiObject = AcpiObject;
     state->CompletionHandler = CompletionHandler;
     state->CompletionContext = CompletionContext;
-    state->Result            = Result;
-    state->RunCompletion     = INITIAL_RUN_COMPLETION;
+    state->Result = Result;
+    state->RunCompletion = INITIAL_RUN_COMPLETION;
 
     *Result = FALSE;
 
-    return IsPciBusAsyncWorker(AcpiObject,
-                               STATUS_SUCCESS,
-                               NULL,
-                               (PVOID)state);
+    return IsPciBusAsyncWorker(AcpiObject, STATUS_SUCCESS, NULL, (PVOID)state);
 }
 
 NTSTATUS
 EXPORT
-IsPciBusAsyncWorker(
-    IN PNSOBJ               AcpiObject,
-    IN NTSTATUS             Status,
-    IN POBJDATA             Result,
-    IN PVOID                Context
-    )
+IsPciBusAsyncWorker(IN PNSOBJ AcpiObject, IN NTSTATUS Status, IN POBJDATA Result, IN PVOID Context)
 {
-    PIS_PCI_BUS_STATE   state;
-    PNSOBJ              hidObj;
-    PNSOBJ              cidObj;
-    PPCI_COMMON_CONFIG  pciData;
-    NTSTATUS            status;
+    PIS_PCI_BUS_STATE state;
+    PNSOBJ hidObj;
+    PNSOBJ cidObj;
+    PPCI_COMMON_CONFIG pciData;
+    NTSTATUS status;
 
     ASSERT(Context);
 
@@ -1627,7 +1506,8 @@ IsPciBusAsyncWorker(
     //
     // Definitely not a PCI bus...
     //
-    if (state->AcpiObject == NULL) {
+    if (state->AcpiObject == NULL)
+    {
 
         *state->Result = FALSE;
         goto IsPciBusAsyncExit;
@@ -1637,12 +1517,14 @@ IsPciBusAsyncWorker(
     // If Status isn't success, then one of the worker
     // functions we called puked.  Bail.
     //
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         *state->Result = FALSE;
         goto IsPciBusAsyncExit;
     }
 
-    if (!(state->Flags & PCISUPP_CHECKED_HID)) {
+    if (!(state->Flags & PCISUPP_CHECKED_HID))
+    {
 
         state->Flags |= PCISUPP_CHECKED_HID;
         state->Hid = NULL;
@@ -1650,32 +1532,31 @@ IsPciBusAsyncWorker(
         //
         // Is there an _HID?
         //
-        hidObj = ACPIAmliGetNamedChild( state->AcpiObject, PACKED_HID );
+        hidObj = ACPIAmliGetNamedChild(state->AcpiObject, PACKED_HID);
 
-        if (hidObj) {
+        if (hidObj)
+        {
 
-            status = ACPIGetNSPnpIDAsync(
-                        state->AcpiObject,
-                        IsPciBusAsyncWorker,
-                        (PVOID)state,
-                        &(state->Hid),
-                        NULL);
+            status = ACPIGetNSPnpIDAsync(state->AcpiObject, IsPciBusAsyncWorker, (PVOID)state, &(state->Hid), NULL);
 
-            if (status == STATUS_PENDING) {
+            if (status == STATUS_PENDING)
+            {
                 return status;
             }
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 *state->Result = FALSE;
                 goto IsPciBusAsyncExit;
             }
         }
     }
 
-    if (state->Hid) {
+    if (state->Hid)
+    {
 
-        if (strstr(state->Hid, PCI_PNP_ID)  ||
-            strstr(state->Hid, PCIE_PNP_ID)) {
+        if (strstr(state->Hid, PCI_PNP_ID) || strstr(state->Hid, PCIE_PNP_ID))
+        {
             //
             // Was PCI.
             //
@@ -1686,7 +1567,8 @@ IsPciBusAsyncWorker(
         state->Hid = NULL;
     }
 
-    if (!(state->Flags & PCISUPP_CHECKED_CID)) {
+    if (!(state->Flags & PCISUPP_CHECKED_CID))
+    {
 
         state->Flags |= PCISUPP_CHECKED_CID;
         state->Cid = NULL;
@@ -1694,31 +1576,31 @@ IsPciBusAsyncWorker(
         //
         // Is there a _CID?
         //
-        cidObj = ACPIAmliGetNamedChild( state->AcpiObject, PACKED_CID );
-        if (cidObj) {
+        cidObj = ACPIAmliGetNamedChild(state->AcpiObject, PACKED_CID);
+        if (cidObj)
+        {
 
-            status = ACPIGetNSCompatibleIDAsync(
-                        state->AcpiObject,
-                        IsPciBusAsyncWorker,
-                        (PVOID)state,
-                        &(state->Cid),
-                        NULL);
+            status =
+                ACPIGetNSCompatibleIDAsync(state->AcpiObject, IsPciBusAsyncWorker, (PVOID)state, &(state->Cid), NULL);
 
-            if (status == STATUS_PENDING) {
+            if (status == STATUS_PENDING)
+            {
                 return status;
             }
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 *state->Result = FALSE;
                 goto IsPciBusAsyncExit;
             }
         }
     }
 
-    if (state->Cid) {
+    if (state->Cid)
+    {
 
-        if (strstr(state->Cid, PCI_PNP_ID)  ||
-            strstr(state->Cid, PCIE_PNP_ID)) {
+        if (strstr(state->Cid, PCI_PNP_ID) || strstr(state->Cid, PCIE_PNP_ID))
+        {
             //
             // Was PCI.
             //
@@ -1729,66 +1611,62 @@ IsPciBusAsyncWorker(
         state->Cid = NULL;
     }
 
-    if (!(state->Flags & PCISUPP_CHECKED_PCI_DEVICE)) {
+    if (!(state->Flags & PCISUPP_CHECKED_PCI_DEVICE))
+    {
 
         state->Flags |= PCISUPP_CHECKED_PCI_DEVICE;
-        status = IsPciDevice(state->AcpiObject,
-                             IsPciBusAsyncWorker,
-                             (PVOID)state,
-                             &state->IsPciDevice);
+        status = IsPciDevice(state->AcpiObject, IsPciBusAsyncWorker, (PVOID)state, &state->IsPciDevice);
 
-        if (status == STATUS_PENDING) {
+        if (status == STATUS_PENDING)
+        {
             return status;
         }
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             *state->Result = FALSE;
             goto IsPciBusAsyncExit;
         }
     }
 
-    if (state->IsPciDevice) {
+    if (state->IsPciDevice)
+    {
 
-        if (!(state->Flags & PCISUPP_CHECKED_ADR)) {
+        if (!(state->Flags & PCISUPP_CHECKED_ADR))
+        {
 
             state->Flags |= PCISUPP_CHECKED_ADR;
-            status = ACPIGetNSAddressAsync(
-                        state->AcpiObject,
-                        IsPciBusAsyncWorker,
-                        (PVOID)state,
-                        &(state->Adr),
-                        NULL
-                        );
+            status = ACPIGetNSAddressAsync(state->AcpiObject, IsPciBusAsyncWorker, (PVOID)state, &(state->Adr), NULL);
 
-            if (status == STATUS_PENDING) {
+            if (status == STATUS_PENDING)
+            {
                 return status;
             }
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 *state->Result = FALSE;
                 goto IsPciBusAsyncExit;
             }
         }
 
-        if (!(state->Flags & PCISUPP_CHECKED_PCI_BRIDGE)) {
+        if (!(state->Flags & PCISUPP_CHECKED_PCI_BRIDGE))
+        {
 
             //
             // Now read PCI config space to see if this is a bridge.
             //
             state->Flags |= PCISUPP_CHECKED_PCI_BRIDGE;
-            status = PciConfigInternal(RSACCESS_READ,
-                                       state->AcpiObject,
-                                       0,
-                                       PCI_COMMON_HDR_LENGTH,
-                                       IsPciBusAsyncWorker,
-                                       (PVOID)state,
-                                       state->Buffer);
+            status = PciConfigInternal(RSACCESS_READ, state->AcpiObject, 0, PCI_COMMON_HDR_LENGTH, IsPciBusAsyncWorker,
+                                       (PVOID)state, state->Buffer);
 
-            if (status == STATUS_PENDING) {
+            if (status == STATUS_PENDING)
+            {
                 return status;
             }
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 *state->Result = FALSE;
                 goto IsPciBusAsyncExit;
             }
@@ -1797,41 +1675,41 @@ IsPciBusAsyncWorker(
         pciData = (PPCI_COMMON_CONFIG)state->Buffer;
 
         if ((PCI_CONFIGURATION_TYPE(pciData) == PCI_BRIDGE_TYPE) ||
-            (PCI_CONFIGURATION_TYPE(pciData) == PCI_CARDBUS_BRIDGE_TYPE)) {
+            (PCI_CONFIGURATION_TYPE(pciData) == PCI_CARDBUS_BRIDGE_TYPE))
+        {
 
             *state->Result = TRUE;
-
-        } else {
+        }
+        else
+        {
 
             *state->Result = FALSE;
         }
-
     }
 
 IsPciBusAsyncExit:
 
-    if (status == STATUS_OBJECT_NAME_NOT_FOUND) {
+    if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+    {
         status = STATUS_SUCCESS;
     }
 
-    if (state->RunCompletion) {
+    if (state->RunCompletion)
+    {
 
-        state->CompletionHandler(state->AcpiObject,
-                                 status,
-                                 NULL,
-                                 state->CompletionContext);
+        state->CompletionHandler(state->AcpiObject, status, NULL, state->CompletionContext);
     }
 
-    if (state->Hid) ExFreePool(state->Hid);
-    if (state->Cid) ExFreePool(state->Cid);
+    if (state->Hid)
+        ExFreePool(state->Hid);
+    if (state->Cid)
+        ExFreePool(state->Cid);
     ExFreePool(state);
     return status;
 }
-
+
 BOOLEAN
-IsPciBus(
-    IN PDEVICE_OBJECT   DeviceObject
-    )
+IsPciBus(IN PDEVICE_OBJECT DeviceObject)
 /*++
 
 Routine Description:
@@ -1851,10 +1729,10 @@ Notes:
 
 --*/
 {
-    AMLISUPP_CONTEXT_PASSIVE    getDataContext;
-    PDEVICE_EXTENSION   devExt = ACPIInternalGetDeviceExtension(DeviceObject);
-    NTSTATUS            status;
-    BOOLEAN             result = FALSE;
+    AMLISUPP_CONTEXT_PASSIVE getDataContext;
+    PDEVICE_EXTENSION devExt = ACPIInternalGetDeviceExtension(DeviceObject);
+    NTSTATUS status;
+    BOOLEAN result = FALSE;
 
     PAGED_CODE();
 
@@ -1863,30 +1741,22 @@ Notes:
     KeInitializeEvent(&getDataContext.Event, SynchronizationEvent, FALSE);
     getDataContext.Status = STATUS_NOT_FOUND;
 
-    if (!(devExt->Flags & DEV_PROP_NO_OBJECT) ) {
+    if (!(devExt->Flags & DEV_PROP_NO_OBJECT))
+    {
 
-        status = IsPciBusAsync( devExt->AcpiObject,
-                                AmlisuppCompletePassive,
-                                (PVOID)&getDataContext,
-                                &result );
+        status = IsPciBusAsync(devExt->AcpiObject, AmlisuppCompletePassive, (PVOID)&getDataContext, &result);
 
-        if (status == STATUS_PENDING) {
+        if (status == STATUS_PENDING)
+        {
 
-            KeWaitForSingleObject(&getDataContext.Event,
-                                  Executive,
-                                  KernelMode,
-                                  FALSE,
-                                  NULL);
+            KeWaitForSingleObject(&getDataContext.Event, Executive, KernelMode, FALSE, NULL);
         }
-
     }
     return result;
 }
-
+
 BOOLEAN
-IsPciBusExtension(
-    IN PDEVICE_EXTENSION    DeviceExtension
-    )
+IsPciBusExtension(IN PDEVICE_EXTENSION DeviceExtension)
 /*++
 
 Routine Description:
@@ -1906,9 +1776,9 @@ Notes:
 
 --*/
 {
-    AMLISUPP_CONTEXT_PASSIVE    getDataContext;
-    NTSTATUS                    status;
-    BOOLEAN                     result = FALSE;
+    AMLISUPP_CONTEXT_PASSIVE getDataContext;
+    NTSTATUS status;
+    BOOLEAN result = FALSE;
 
     PAGED_CODE();
 
@@ -1917,36 +1787,23 @@ Notes:
     KeInitializeEvent(&getDataContext.Event, SynchronizationEvent, FALSE);
     getDataContext.Status = STATUS_NOT_FOUND;
 
-    if ( (DeviceExtension->Flags & DEV_PROP_NO_OBJECT) ) {
+    if ((DeviceExtension->Flags & DEV_PROP_NO_OBJECT))
+    {
 
         return result;
-
     }
 
-    status = IsPciBusAsync(
-        DeviceExtension->AcpiObject,
-        AmlisuppCompletePassive,
-        (PVOID)&getDataContext,
-        &result
-        );
-    if (status == STATUS_PENDING) {
+    status = IsPciBusAsync(DeviceExtension->AcpiObject, AmlisuppCompletePassive, (PVOID)&getDataContext, &result);
+    if (status == STATUS_PENDING)
+    {
 
-        KeWaitForSingleObject(
-            &getDataContext.Event,
-            Executive,
-            KernelMode,
-            FALSE,
-            NULL
-            );
-
+        KeWaitForSingleObject(&getDataContext.Event, Executive, KernelMode, FALSE, NULL);
     }
     return result;
 }
-
+
 BOOLEAN
-IsNsobjPciBus(
-    IN PNSOBJ Device
-    )
+IsNsobjPciBus(IN PNSOBJ Device)
 /*++
 
 Routine Description:
@@ -1966,52 +1823,42 @@ Notes:
 
 --*/
 {
-    AMLISUPP_CONTEXT_PASSIVE    getDataContext;
-    NTSTATUS                    status;
-    BOOLEAN                     result = FALSE;
+    AMLISUPP_CONTEXT_PASSIVE getDataContext;
+    NTSTATUS status;
+    BOOLEAN result = FALSE;
 
     PAGED_CODE();
 
     KeInitializeEvent(&getDataContext.Event, SynchronizationEvent, FALSE);
     getDataContext.Status = STATUS_NOT_FOUND;
 
-    status = IsPciBusAsync( Device,
-                            AmlisuppCompletePassive,
-                            (PVOID)&getDataContext,
-                            &result );
+    status = IsPciBusAsync(Device, AmlisuppCompletePassive, (PVOID)&getDataContext, &result);
 
-    if (status == STATUS_PENDING) {
+    if (status == STATUS_PENDING)
+    {
 
-        KeWaitForSingleObject(&getDataContext.Event,
-                              Executive,
-                              KernelMode,
-                              FALSE,
-                              NULL);
+        KeWaitForSingleObject(&getDataContext.Event, Executive, KernelMode, FALSE, NULL);
 
         status = getDataContext.Status;
     }
 
     return result;
 }
-
-typedef struct {
-    PNSOBJ  OpRegion;
-    PNSOBJ  Parent;
-    ULONG   Flags;
+
+typedef struct
+{
+    PNSOBJ OpRegion;
+    PNSOBJ Parent;
+    ULONG Flags;
     BOOLEAN IsPciDeviceResult;
-    LONG    RunCompletion;
-    PFNACB  CompletionHandler;
-    PVOID   CompletionContext;
-    PNSOBJ  *PciObj;
+    LONG RunCompletion;
+    PFNACB CompletionHandler;
+    PVOID CompletionContext;
+    PNSOBJ *PciObj;
 } OP_REGION_SCOPE_STATE, *POP_REGION_SCOPE_STATE;
 
 NTSTATUS
-GetOpRegionScope(
-    IN  PNSOBJ  OpRegion,
-    IN  PFNACB  CompletionHandler,
-    IN  PVOID   CompletionContext,
-    OUT PNSOBJ  *PciObj
-    )
+GetOpRegionScope(IN PNSOBJ OpRegion, IN PFNACB CompletionHandler, IN PVOID CompletionContext, OUT PNSOBJ *PciObj)
 /*++
 
 Routine Description:
@@ -2033,41 +1880,34 @@ Notes:
 
 --*/
 {
-    POP_REGION_SCOPE_STATE  state;
+    POP_REGION_SCOPE_STATE state;
 
     state = ExAllocatePoolWithTag(NonPagedPool, sizeof(OP_REGION_SCOPE_STATE), ACPI_INTERFACE_POOLTAG);
 
-    if (!state) {
+    if (!state)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     RtlZeroMemory(state, sizeof(OP_REGION_SCOPE_STATE));
 
-    state->OpRegion          = OpRegion;
-    state->Parent            = OpRegion->pnsParent;
+    state->OpRegion = OpRegion;
+    state->Parent = OpRegion->pnsParent;
     state->CompletionHandler = CompletionHandler;
     state->CompletionContext = CompletionContext;
-    state->PciObj            = PciObj;
-    state->RunCompletion     = INITIAL_RUN_COMPLETION;
+    state->PciObj = PciObj;
+    state->RunCompletion = INITIAL_RUN_COMPLETION;
 
-    return GetOpRegionScopeWorker(OpRegion,
-                                  STATUS_SUCCESS,
-                                  NULL,
-                                  (PVOID)state);
+    return GetOpRegionScopeWorker(OpRegion, STATUS_SUCCESS, NULL, (PVOID)state);
 }
 
 NTSTATUS
 EXPORT
-GetOpRegionScopeWorker(
-    IN PNSOBJ               AcpiObject,
-    IN NTSTATUS             Status,
-    IN POBJDATA             Result,
-    IN PVOID                Context
-    )
+GetOpRegionScopeWorker(IN PNSOBJ AcpiObject, IN NTSTATUS Status, IN POBJDATA Result, IN PVOID Context)
 {
-    POP_REGION_SCOPE_STATE  state;
-    NTSTATUS                status;
-    BOOLEAN                 found = FALSE;
+    POP_REGION_SCOPE_STATE state;
+    NTSTATUS status;
+    BOOLEAN found = FALSE;
 
     ASSERT(Context);
 
@@ -2081,7 +1921,8 @@ GetOpRegionScopeWorker(
 
     InterlockedIncrement(&state->RunCompletion);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         goto GetOpRegionScopeWorkerExit;
     }
 
@@ -2090,30 +1931,31 @@ GetOpRegionScopeWorker(
     // looking up the tree.
     //
 
-    while ((state->Parent != NULL) &&
-           (state->Parent->pnsParent != state->Parent)) {
+    while ((state->Parent != NULL) && (state->Parent->pnsParent != state->Parent))
+    {
 
-        if ( !(state->Flags & PCISUPP_COMPLETING_IS_PCI) ) {
+        if (!(state->Flags & PCISUPP_COMPLETING_IS_PCI))
+        {
 
             state->Flags |= PCISUPP_COMPLETING_IS_PCI;
 
-            status = IsPciDevice(state->Parent,
-                                 GetOpRegionScopeWorker,
-                                 (PVOID)state,
-                                 &state->IsPciDeviceResult);
+            status = IsPciDevice(state->Parent, GetOpRegionScopeWorker, (PVOID)state, &state->IsPciDeviceResult);
 
-            if (status == STATUS_PENDING) {
+            if (status == STATUS_PENDING)
+            {
                 return status;
             }
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 goto GetOpRegionScopeWorkerExit;
             }
         }
 
         state->Flags &= ~PCISUPP_COMPLETING_IS_PCI;
 
-        if (state->IsPciDeviceResult) {
+        if (state->IsPciDeviceResult)
+        {
 
             found = TRUE;
             break;
@@ -2125,35 +1967,32 @@ GetOpRegionScopeWorker(
         state->Parent = state->Parent->pnsParent;
     }
 
-    if (found) {
+    if (found)
+    {
 
         *state->PciObj = state->Parent;
         status = STATUS_SUCCESS;
-
-    } else {
+    }
+    else
+    {
 
         status = STATUS_NOT_FOUND;
     }
 
 GetOpRegionScopeWorkerExit:
 
-    if (state->RunCompletion) {
+    if (state->RunCompletion)
+    {
 
-        state->CompletionHandler(state->OpRegion,
-                                 status,
-                                 NULL,
-                                 state->CompletionContext);
+        state->CompletionHandler(state->OpRegion, status, NULL, state->CompletionContext);
     }
 
     ExFreePool(state);
     return status;
 }
-
+
 NTSTATUS
-EnableDisableRegions(
-    IN PNSOBJ NameSpaceObj,
-    IN BOOLEAN Enable
-    )
+EnableDisableRegions(IN PNSOBJ NameSpaceObj, IN BOOLEAN Enable)
 /*++
 
 Routine Description:
@@ -2176,11 +2015,11 @@ Return Value:
 Notes:
 
 --*/
-#define CONNECT_HANDLER     1
-#define DISCONNECT_HANDLER  0
+#define CONNECT_HANDLER 1
+#define DISCONNECT_HANDLER 0
 {
-    PNSOBJ  sibling;
-    PNSOBJ  regMethod = NULL;
+    PNSOBJ sibling;
+    PNSOBJ regMethod = NULL;
     OBJDATA objdata[2];
     NTSTATUS status, returnStatus;
 
@@ -2191,8 +2030,9 @@ Notes:
     //
     // Find a _REG that is a child of this device.
     //
-    regMethod = ACPIAmliGetNamedChild( NameSpaceObj, PACKED_REG );
-    if (regMethod != NULL) {
+    regMethod = ACPIAmliGetNamedChild(NameSpaceObj, PACKED_REG);
+    if (regMethod != NULL)
+    {
 
         //
         // Construct arguments for _REG method.
@@ -2202,15 +2042,9 @@ Notes:
         objdata[0].dwDataType = OBJTYPE_INTDATA;
         objdata[0].uipDataValue = REGSPACE_PCICFG;
         objdata[1].dwDataType = OBJTYPE_INTDATA;
-        objdata[1].uipDataValue = (Enable ? CONNECT_HANDLER : DISCONNECT_HANDLER );
+        objdata[1].uipDataValue = (Enable ? CONNECT_HANDLER : DISCONNECT_HANDLER);
 
-        status = AMLIEvalNameSpaceObject(
-            regMethod,
-            NULL,
-            2,
-            objdata
-            );
-
+        status = AMLIEvalNameSpaceObject(regMethod, NULL, 2, objdata);
     }
 
     //
@@ -2222,16 +2056,20 @@ Notes:
 
     sibling = NSGETFIRSTCHILD(NameSpaceObj);
 
-    if (!sibling) {
+    if (!sibling)
+    {
         return returnStatus;
     }
 
-    do {
+    do
+    {
 
-        switch (NSGETOBJTYPE(sibling)) {
+        switch (NSGETOBJTYPE(sibling))
+        {
         case OBJTYPE_DEVICE:
 
-            if (IsNsobjPciBus(sibling)) {
+            if (IsNsobjPciBus(sibling))
+            {
 
                 //
                 // Don't recurse past a child PCI to PCI bridge.
@@ -2241,7 +2079,8 @@ Notes:
 
             status = EnableDisableRegions(sibling, Enable);
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
                 returnStatus = status;
             }
 
@@ -2255,12 +2094,9 @@ Notes:
 
     return returnStatus;
 }
-
+
 UCHAR
-GetBusNumberFromCRS(
-    IN  PDEVICE_EXTENSION   DeviceExtension,
-    IN  PUCHAR              CRS
-    )
+GetBusNumberFromCRS(IN PDEVICE_EXTENSION DeviceExtension, IN PUCHAR CRS)
 /*++
 
 Routine Description:
@@ -2280,56 +2116,64 @@ Return Value:
 --*/
 
 {
-    PPNP_DWORD_ADDRESS_DESCRIPTOR   DwordAddress;
-    PPNP_QWORD_ADDRESS_DESCRIPTOR   QwordAddress;
-    PPNP_WORD_ADDRESS_DESCRIPTOR    WordAddress;
-    PUCHAR                          Current;
-    UCHAR                           TagName;
-    USHORT                          Increment;
+    PPNP_DWORD_ADDRESS_DESCRIPTOR DwordAddress;
+    PPNP_QWORD_ADDRESS_DESCRIPTOR QwordAddress;
+    PPNP_WORD_ADDRESS_DESCRIPTOR WordAddress;
+    PUCHAR Current;
+    UCHAR TagName;
+    USHORT Increment;
 
     Current = CRS;
-    while ( *Current ) {
+    while (*Current)
+    {
 
         TagName = *Current;
-        if ( !(TagName & LARGE_RESOURCE_TAG)) {
-            Increment = (USHORT) (TagName & SMALL_TAG_SIZE_MASK) + 1;
+        if (!(TagName & LARGE_RESOURCE_TAG))
+        {
+            Increment = (USHORT)(TagName & SMALL_TAG_SIZE_MASK) + 1;
             TagName &= SMALL_TAG_MASK;
-        } else {
-            Increment = ( *(USHORT UNALIGNED *)(Current + 1) ) + 3;
+        }
+        else
+        {
+            Increment = (*(USHORT UNALIGNED *)(Current + 1)) + 3;
         }
 
-        if (TagName == TAG_END) {
+        if (TagName == TAG_END)
+        {
             break;
         }
 
-        switch(TagName) {
+        switch (TagName)
+        {
         case TAG_DOUBLE_ADDRESS:
 
-            DwordAddress = (PPNP_DWORD_ADDRESS_DESCRIPTOR) Current;
-            if (DwordAddress->RFlag == PNP_ADDRESS_BUS_NUMBER_TYPE) {
+            DwordAddress = (PPNP_DWORD_ADDRESS_DESCRIPTOR)Current;
+            if (DwordAddress->RFlag == PNP_ADDRESS_BUS_NUMBER_TYPE)
+            {
                 ASSERT(DwordAddress->MinimumAddress <= 0xFF);
-                return (UCHAR) DwordAddress->MinimumAddress;
+                return (UCHAR)DwordAddress->MinimumAddress;
             }
             break;
 
         case TAG_QUAD_ADDRESS:
 
-            QwordAddress = (PPNP_QWORD_ADDRESS_DESCRIPTOR) Current;
-            if (QwordAddress->RFlag == PNP_ADDRESS_BUS_NUMBER_TYPE) {
+            QwordAddress = (PPNP_QWORD_ADDRESS_DESCRIPTOR)Current;
+            if (QwordAddress->RFlag == PNP_ADDRESS_BUS_NUMBER_TYPE)
+            {
                 ASSERT(QwordAddress->MinimumAddress <= 0xFF);
-                return (UCHAR) QwordAddress->MinimumAddress;
+                return (UCHAR)QwordAddress->MinimumAddress;
             }
             break;
 
         case TAG_WORD_ADDRESS:
 
-            WordAddress = (PPNP_WORD_ADDRESS_DESCRIPTOR) Current;
-            if (WordAddress->RFlag == PNP_ADDRESS_BUS_NUMBER_TYPE) {
+            WordAddress = (PPNP_WORD_ADDRESS_DESCRIPTOR)Current;
+            if (WordAddress->RFlag == PNP_ADDRESS_BUS_NUMBER_TYPE)
+            {
                 ASSERT(WordAddress->MinimumAddress <= 0xFF);
-                return (UCHAR) WordAddress->MinimumAddress;
+                return (UCHAR)WordAddress->MinimumAddress;
             }
             break;
-
         }
 
         Current += Increment;
@@ -2338,13 +2182,6 @@ Return Value:
     //
     // No Bus address was found. This is an error in the BIOS.
     //
-    KeBugCheckEx(
-        ACPI_BIOS_ERROR,
-        ACPI_ROOT_PCI_RESOURCE_FAILURE,
-        (ULONG_PTR) DeviceExtension,
-        3,
-        (ULONG_PTR) CRS
-        );
-    return((UCHAR)-1);
+    KeBugCheckEx(ACPI_BIOS_ERROR, ACPI_ROOT_PCI_RESOURCE_FAILURE, (ULONG_PTR)DeviceExtension, 3, (ULONG_PTR)CRS);
+    return ((UCHAR)-1);
 }
-

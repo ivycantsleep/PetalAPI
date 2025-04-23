@@ -23,7 +23,8 @@ Revision History:
 
 --*/
 
-typedef enum {
+typedef enum
+{
 
     NOT_PROCESSED = 0,
     POSSIBLY_PROCESSED,
@@ -31,13 +32,6 @@ typedef enum {
 
 } HOW_PROCESSED;
 
-VOID
-ViPnpVerifyMinorWasProcessedProperly(
-    IN  PIRP                        Irp,
-    IN  PIO_STACK_LOCATION          IrpSp,
-    IN  VF_DEVOBJ_TYPE              DevObjType,
-    IN  PVERIFIER_SETTINGS_SNAPSHOT VerifierSnapshot,
-    IN  HOW_PROCESSED               HowProcessed,
-    IN  PVOID                       CallerAddress
-    );
-
+VOID ViPnpVerifyMinorWasProcessedProperly(IN PIRP Irp, IN PIO_STACK_LOCATION IrpSp, IN VF_DEVOBJ_TYPE DevObjType,
+                                          IN PVERIFIER_SETTINGS_SNAPSHOT VerifierSnapshot,
+                                          IN HOW_PROCESSED HowProcessed, IN PVOID CallerAddress);

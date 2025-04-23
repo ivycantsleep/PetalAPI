@@ -23,9 +23,7 @@
 #undef NtGetTickCount
 
 ULONG
-NtGetTickCount (
-   VOID
-   )
+NtGetTickCount(VOID)
 
 /*++
 
@@ -74,6 +72,4 @@ Return Value:
 
     return ((ULONG)(Product >> 24));
 }
-
-
 

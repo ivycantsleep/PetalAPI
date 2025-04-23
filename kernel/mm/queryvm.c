@@ -25,47 +25,29 @@ Revision History:
 extern POBJECT_TYPE IoFileObjectType;
 
 NTSTATUS
-MiGetWorkingSetInfo (
-    IN PMEMORY_WORKING_SET_INFORMATION WorkingSetInfo,
-    IN SIZE_T Length,
-    IN PEPROCESS Process
-    );
+MiGetWorkingSetInfo(IN PMEMORY_WORKING_SET_INFORMATION WorkingSetInfo, IN SIZE_T Length, IN PEPROCESS Process);
 
 MMPTE
-MiCaptureSystemPte (
-    IN PMMPTE PointerProtoPte,
-    IN PEPROCESS Process
-    );
+MiCaptureSystemPte(IN PMMPTE PointerProtoPte, IN PEPROCESS Process);
 
 #if DBG
 PEPROCESS MmWatchProcess;
 #endif // DBG
 
 ULONG
-MiQueryAddressState (
-    IN PVOID Va,
-    IN PMMVAD Vad,
-    IN PEPROCESS TargetProcess,
-    OUT PULONG ReturnedProtect,
-    OUT PVOID *NextVaToQuery
-    );
+MiQueryAddressState(IN PVOID Va, IN PMMVAD Vad, IN PEPROCESS TargetProcess, OUT PULONG ReturnedProtect,
+                    OUT PVOID *NextVaToQuery);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,NtQueryVirtualMemory)
-#pragma alloc_text(PAGE,MiQueryAddressState)
-#pragma alloc_text(PAGE,MiGetWorkingSetInfo)
+#pragma alloc_text(PAGE, NtQueryVirtualMemory)
+#pragma alloc_text(PAGE, MiQueryAddressState)
+#pragma alloc_text(PAGE, MiGetWorkingSetInfo)
 #endif
 
-
+
 NTSTATUS
-NtQueryVirtualMemory (
-    IN HANDLE ProcessHandle,
-    IN PVOID BaseAddress,
-    IN MEMORY_INFORMATION_CLASS MemoryInformationClass,
-    OUT PVOID MemoryInformation,
-    IN SIZE_T MemoryInformationLength,
-    OUT PSIZE_T ReturnLength OPTIONAL
-     )
+NtQueryVirtualMemory(IN HANDLE ProcessHandle, IN PVOID BaseAddress, IN MEMORY_INFORMATION_CLASS MemoryInformationClass,
+                     OUT PVOID MemoryInformation, IN SIZE_T MemoryInformationLength, OUT PSIZE_T ReturnLength OPTIONAL)
 
 /*++
 
@@ -216,46 +198,51 @@ Environment:
     // Check argument validity.
     //
 
-    switch (MemoryInformationClass) {
-        case MemoryBasicInformation:
-            if (MemoryInformationLength < sizeof(MEMORY_BASIC_INFORMATION)) {
-                return STATUS_INFO_LENGTH_MISMATCH;
-            }
-            break;
+    switch (MemoryInformationClass)
+    {
+    case MemoryBasicInformation:
+        if (MemoryInformationLength < sizeof(MEMORY_BASIC_INFORMATION))
+        {
+            return STATUS_INFO_LENGTH_MISMATCH;
+        }
+        break;
 
-        case MemoryWorkingSetInformation:
-            if (MemoryInformationLength < sizeof(ULONG_PTR)) {
-                return STATUS_INFO_LENGTH_MISMATCH;
-            }
-            break;
+    case MemoryWorkingSetInformation:
+        if (MemoryInformationLength < sizeof(ULONG_PTR))
+        {
+            return STATUS_INFO_LENGTH_MISMATCH;
+        }
+        break;
 
-        case MemoryMappedFilenameInformation:
-            break;
+    case MemoryMappedFilenameInformation:
+        break;
 
-        default:
-            return STATUS_INVALID_INFO_CLASS;
+    default:
+        return STATUS_INVALID_INFO_CLASS;
     }
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
     PreviousMode = KeGetPreviousModeByThread(&CurrentThread->Tcb);
 
-    if (PreviousMode != KernelMode) {
+    if (PreviousMode != KernelMode)
+    {
 
         //
         // Check arguments.
         //
 
-        try {
+        try
+        {
 
-            ProbeForWrite(MemoryInformation,
-                          MemoryInformationLength,
-                          sizeof(ULONG_PTR));
+            ProbeForWrite(MemoryInformation, MemoryInformationLength, sizeof(ULONG_PTR));
 
-            if (ARGUMENT_PRESENT(ReturnLength)) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 ProbeForWriteUlong_ptr(ReturnLength);
             }
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // If an exception occurs during the probe or capture
@@ -267,61 +254,59 @@ Environment:
         }
     }
 
-    if (BaseAddress > MM_HIGHEST_USER_ADDRESS) {
+    if (BaseAddress > MM_HIGHEST_USER_ADDRESS)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
     if ((BaseAddress >= MM_HIGHEST_VAD_ADDRESS)
 #if defined(MM_SHARED_USER_DATA_VA)
-            ||
-         (PAGE_ALIGN(BaseAddress) == (PVOID)MM_SHARED_USER_DATA_VA)
+        || (PAGE_ALIGN(BaseAddress) == (PVOID)MM_SHARED_USER_DATA_VA)
 #endif
-             ) {
+    )
+    {
 
         //
         // Indicate a reserved area from this point on.
         //
 
-        if (MemoryInformationClass == MemoryBasicInformation) {
+        if (MemoryInformationClass == MemoryBasicInformation)
+        {
 
-            try {
-                ((PMEMORY_BASIC_INFORMATION)MemoryInformation)->AllocationBase =
-                                      (PCHAR) MM_HIGHEST_VAD_ADDRESS + 1;
-                ((PMEMORY_BASIC_INFORMATION)MemoryInformation)->AllocationProtect =
-                                                                      PAGE_READONLY;
-                ((PMEMORY_BASIC_INFORMATION)MemoryInformation)->BaseAddress =
-                                                       PAGE_ALIGN(BaseAddress);
+            try
+            {
+                ((PMEMORY_BASIC_INFORMATION)MemoryInformation)->AllocationBase = (PCHAR)MM_HIGHEST_VAD_ADDRESS + 1;
+                ((PMEMORY_BASIC_INFORMATION)MemoryInformation)->AllocationProtect = PAGE_READONLY;
+                ((PMEMORY_BASIC_INFORMATION)MemoryInformation)->BaseAddress = PAGE_ALIGN(BaseAddress);
                 ((PMEMORY_BASIC_INFORMATION)MemoryInformation)->RegionSize =
-                                    ((PCHAR)MM_HIGHEST_USER_ADDRESS + 1) -
-                                                (PCHAR)PAGE_ALIGN(BaseAddress);
+                    ((PCHAR)MM_HIGHEST_USER_ADDRESS + 1) - (PCHAR)PAGE_ALIGN(BaseAddress);
                 ((PMEMORY_BASIC_INFORMATION)MemoryInformation)->State = MEM_RESERVE;
                 ((PMEMORY_BASIC_INFORMATION)MemoryInformation)->Protect = PAGE_NOACCESS;
                 ((PMEMORY_BASIC_INFORMATION)MemoryInformation)->Type = MEM_PRIVATE;
 
-                if (ARGUMENT_PRESENT(ReturnLength)) {
+                if (ARGUMENT_PRESENT(ReturnLength))
+                {
                     *ReturnLength = sizeof(MEMORY_BASIC_INFORMATION);
                 }
 
 #if defined(MM_SHARED_USER_DATA_VA)
-                if (PAGE_ALIGN(BaseAddress) == (PVOID)MM_SHARED_USER_DATA_VA) {
+                if (PAGE_ALIGN(BaseAddress) == (PVOID)MM_SHARED_USER_DATA_VA)
+                {
 
                     //
                     // This is the page that is double mapped between
                     // user mode and kernel mode.
                     //
 
-                    ((PMEMORY_BASIC_INFORMATION)MemoryInformation)->AllocationBase =
-                                (PVOID)MM_SHARED_USER_DATA_VA;
-                    ((PMEMORY_BASIC_INFORMATION)MemoryInformation)->Protect =
-                                                                 PAGE_READONLY;
-                    ((PMEMORY_BASIC_INFORMATION)MemoryInformation)->RegionSize =
-                                                                 PAGE_SIZE;
-                    ((PMEMORY_BASIC_INFORMATION)MemoryInformation)->State =
-                                                                 MEM_COMMIT;
+                    ((PMEMORY_BASIC_INFORMATION)MemoryInformation)->AllocationBase = (PVOID)MM_SHARED_USER_DATA_VA;
+                    ((PMEMORY_BASIC_INFORMATION)MemoryInformation)->Protect = PAGE_READONLY;
+                    ((PMEMORY_BASIC_INFORMATION)MemoryInformation)->RegionSize = PAGE_SIZE;
+                    ((PMEMORY_BASIC_INFORMATION)MemoryInformation)->State = MEM_COMMIT;
                 }
 #endif
-
-            } except (EXCEPTION_EXECUTE_HANDLER) {
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
 
                 //
                 // Just return success.
@@ -330,56 +315,59 @@ Environment:
 
             return STATUS_SUCCESS;
         }
-        else {
+        else
+        {
             return STATUS_INVALID_ADDRESS;
         }
     }
 
-    if (ProcessHandle == NtCurrentProcess()) {
+    if (ProcessHandle == NtCurrentProcess())
+    {
         TargetProcess = PsGetCurrentProcessByThread(CurrentThread);
     }
-    else {
-        Status = ObReferenceObjectByHandle (ProcessHandle,
-                                            PROCESS_QUERY_INFORMATION,
-                                            PsProcessType,
-                                            PreviousMode,
-                                            (PVOID *)&TargetProcess,
-                                            NULL);
+    else
+    {
+        Status = ObReferenceObjectByHandle(ProcessHandle, PROCESS_QUERY_INFORMATION, PsProcessType, PreviousMode,
+                                           (PVOID *)&TargetProcess, NULL);
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             return Status;
         }
     }
 
-    if (MemoryInformationClass == MemoryWorkingSetInformation) {
+    if (MemoryInformationClass == MemoryWorkingSetInformation)
+    {
 
-        Status = MiGetWorkingSetInfo (
-                            (PMEMORY_WORKING_SET_INFORMATION) MemoryInformation,
-                            MemoryInformationLength,
-                            TargetProcess);
+        Status = MiGetWorkingSetInfo((PMEMORY_WORKING_SET_INFORMATION)MemoryInformation, MemoryInformationLength,
+                                     TargetProcess);
 
-        if (ProcessHandle != NtCurrentProcess()) {
-            ObDereferenceObject (TargetProcess);
+        if (ProcessHandle != NtCurrentProcess())
+        {
+            ObDereferenceObject(TargetProcess);
         }
 
         //
         // If MiGetWorkingSetInfo failed then inform the caller.
         //
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             return Status;
         }
 
-        try {
+        try
+        {
 
-            if (ARGUMENT_PRESENT(ReturnLength)) {
-                *ReturnLength = ((((PMEMORY_WORKING_SET_INFORMATION)
-                                    MemoryInformation)->NumberOfEntries - 1) *
-                                        sizeof(ULONG)) +
-                                        sizeof(MEMORY_WORKING_SET_INFORMATION);
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
+                *ReturnLength =
+                    ((((PMEMORY_WORKING_SET_INFORMATION)MemoryInformation)->NumberOfEntries - 1) * sizeof(ULONG)) +
+                    sizeof(MEMORY_WORKING_SET_INFORMATION);
             }
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
         }
 
         return STATUS_SUCCESS;
@@ -390,11 +378,13 @@ Environment:
     // to the specified process.
     //
 
-    if (ProcessHandle != NtCurrentProcess()) {
-        KeStackAttachProcess (&TargetProcess->Pcb, &ApcState);
+    if (ProcessHandle != NtCurrentProcess())
+    {
+        KeStackAttachProcess(&TargetProcess->Pcb, &ApcState);
         Attached = TRUE;
     }
-    else {
+    else
+    {
         Attached = FALSE;
     }
 
@@ -402,17 +392,19 @@ Environment:
     // Get working set mutex and block APCs.
     //
 
-    LOCK_ADDRESS_SPACE (TargetProcess);
+    LOCK_ADDRESS_SPACE(TargetProcess);
 
     //
     // Make sure the address space was not deleted, if so, return an error.
     //
 
-    if (TargetProcess->Flags & PS_PROCESS_FLAGS_VM_DELETED) {
-        UNLOCK_ADDRESS_SPACE (TargetProcess);
-        if (Attached == TRUE) {
-            KeUnstackDetachProcess (&ApcState);
-            ObDereferenceObject (TargetProcess);
+    if (TargetProcess->Flags & PS_PROCESS_FLAGS_VM_DELETED)
+    {
+        UNLOCK_ADDRESS_SPACE(TargetProcess);
+        if (Attached == TRUE)
+        {
+            KeUnstackDetachProcess(&ApcState);
+            ObDereferenceObject(TargetProcess);
         }
         return STATUS_PROCESS_IS_TERMINATING;
     }
@@ -423,39 +415,46 @@ Environment:
     //
 
     Vad = TargetProcess->VadRoot;
-    BaseVpn = MI_VA_TO_VPN (BaseAddress);
+    BaseVpn = MI_VA_TO_VPN(BaseAddress);
 
-    for (;;) {
+    for (;;)
+    {
 
-        if (Vad == NULL) {
+        if (Vad == NULL)
+        {
             break;
         }
 
-        if ((BaseVpn >= Vad->StartingVpn) &&
-            (BaseVpn <= Vad->EndingVpn)) {
+        if ((BaseVpn >= Vad->StartingVpn) && (BaseVpn <= Vad->EndingVpn))
+        {
             Found = TRUE;
             break;
         }
 
-        if (BaseVpn < Vad->StartingVpn) {
-            if (Vad->LeftChild == NULL) {
+        if (BaseVpn < Vad->StartingVpn)
+        {
+            if (Vad->LeftChild == NULL)
+            {
                 break;
             }
             Vad = Vad->LeftChild;
-
         }
-        else {
-            if (BaseVpn < Vad->EndingVpn) {
+        else
+        {
+            if (BaseVpn < Vad->EndingVpn)
+            {
                 break;
             }
-            if (Vad->RightChild == NULL) {
+            if (Vad->RightChild == NULL)
+            {
                 break;
             }
             Vad = Vad->RightChild;
         }
     }
 
-    if (!Found) {
+    if (!Found)
+    {
 
         //
         // There is no virtual address allocated at the base
@@ -463,39 +462,42 @@ Environment:
         // the base address.
         //
 
-        if (Vad == NULL) {
-            TheRegionSize = ((PCHAR)MM_HIGHEST_VAD_ADDRESS + 1) -
-                                                (PCHAR)PAGE_ALIGN(BaseAddress);
+        if (Vad == NULL)
+        {
+            TheRegionSize = ((PCHAR)MM_HIGHEST_VAD_ADDRESS + 1) - (PCHAR)PAGE_ALIGN(BaseAddress);
         }
-        else {
-            if (Vad->StartingVpn < BaseVpn) {
+        else
+        {
+            if (Vad->StartingVpn < BaseVpn)
+            {
 
                 //
                 // We are looking at the Vad which occupies the range
                 // just before the desired range.  Get the next Vad.
                 //
 
-                Vad = MiGetNextVad (Vad);
-                if (Vad == NULL) {
-                    TheRegionSize = ((PCHAR)MM_HIGHEST_VAD_ADDRESS + 1) -
-                                                (PCHAR)PAGE_ALIGN(BaseAddress);
+                Vad = MiGetNextVad(Vad);
+                if (Vad == NULL)
+                {
+                    TheRegionSize = ((PCHAR)MM_HIGHEST_VAD_ADDRESS + 1) - (PCHAR)PAGE_ALIGN(BaseAddress);
                 }
-                else {
-                    TheRegionSize = (PCHAR)MI_VPN_TO_VA (Vad->StartingVpn) -
-                                                (PCHAR)PAGE_ALIGN(BaseAddress);
+                else
+                {
+                    TheRegionSize = (PCHAR)MI_VPN_TO_VA(Vad->StartingVpn) - (PCHAR)PAGE_ALIGN(BaseAddress);
                 }
             }
-            else {
-                TheRegionSize = (PCHAR)MI_VPN_TO_VA (Vad->StartingVpn) -
-                                                (PCHAR)PAGE_ALIGN(BaseAddress);
+            else
+            {
+                TheRegionSize = (PCHAR)MI_VPN_TO_VA(Vad->StartingVpn) - (PCHAR)PAGE_ALIGN(BaseAddress);
             }
         }
 
-        UNLOCK_ADDRESS_SPACE (TargetProcess);
+        UNLOCK_ADDRESS_SPACE(TargetProcess);
 
-        if (Attached == TRUE) {
-            KeUnstackDetachProcess (&ApcState);
-            ObDereferenceObject (TargetProcess);
+        if (Attached == TRUE)
+        {
+            KeUnstackDetachProcess(&ApcState);
+            ObDereferenceObject(TargetProcess);
         }
 
         //
@@ -503,10 +505,12 @@ Environment:
         // returned length.
         //
 
-        if (MemoryInformationClass == MemoryBasicInformation) {
-            BasicInfo = (PMEMORY_BASIC_INFORMATION) MemoryInformation;
+        if (MemoryInformationClass == MemoryBasicInformation)
+        {
+            BasicInfo = (PMEMORY_BASIC_INFORMATION)MemoryInformation;
             Found = FALSE;
-            try {
+            try
+            {
 
                 BasicInfo->AllocationBase = NULL;
                 BasicInfo->AllocationProtect = 0;
@@ -517,19 +521,22 @@ Environment:
                 BasicInfo->Type = 0;
 
                 Found = TRUE;
-                if (ARGUMENT_PRESENT(ReturnLength)) {
+                if (ARGUMENT_PRESENT(ReturnLength))
+                {
                     *ReturnLength = sizeof(MEMORY_BASIC_INFORMATION);
                 }
-
-            } except (EXCEPTION_EXECUTE_HANDLER) {
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
 
                 //
                 // Just return success if the BasicInfo was successfully
                 // filled in.
                 //
-                
-                if (Found == FALSE) {
-                    return GetExceptionCode ();
+
+                if (Found == FALSE)
+                {
+                    return GetExceptionCode();
                 }
             }
 
@@ -549,50 +556,52 @@ Environment:
     // There is a page mapped at the base address.
     //
 
-    if (Vad->u.VadFlags.PrivateMemory) {
+    if (Vad->u.VadFlags.PrivateMemory)
+    {
         Info.Type = MEM_PRIVATE;
     }
-    else {
-        if (Vad->u.VadFlags.ImageMap == 1) {
+    else
+    {
+        if (Vad->u.VadFlags.ImageMap == 1)
+        {
             Info.Type = MEM_IMAGE;
         }
-        else {
+        else
+        {
             Info.Type = MEM_MAPPED;
         }
 
-        if (MemoryInformationClass == MemoryMappedFilenameInformation) {
+        if (MemoryInformationClass == MemoryMappedFilenameInformation)
+        {
 
-            if (Vad->ControlArea) {
+            if (Vad->ControlArea)
+            {
                 FilePointer = Vad->ControlArea->FilePointer;
             }
-            if (FilePointer == NULL) {
+            if (FilePointer == NULL)
+            {
                 FilePointer = (PVOID)1;
             }
-            else {
+            else
+            {
                 ObReferenceObject(FilePointer);
             }
         }
     }
 
-    LOCK_WS_UNSAFE (TargetProcess);
+    LOCK_WS_UNSAFE(TargetProcess);
 
-    Info.State = MiQueryAddressState (Va,
-                                      Vad,
-                                      TargetProcess,
-                                      &Info.Protect,
-                                      &NextVaToQuery);
+    Info.State = MiQueryAddressState(Va, Vad, TargetProcess, &Info.Protect, &NextVaToQuery);
 
     Va = NextVaToQuery;
 
-    while (MI_VA_TO_VPN (Va) <= Vad->EndingVpn) {
+    while (MI_VA_TO_VPN(Va) <= Vad->EndingVpn)
+    {
 
-        NewState = MiQueryAddressState (Va,
-                                        Vad,
-                                        TargetProcess,
-                                        &NewProtect,
-                                        &NextVaToQuery);
+        NewState = MiQueryAddressState(Va, Vad, TargetProcess, &NewProtect, &NextVaToQuery);
 
-        if ((NewState != Info.State) || (NewProtect != Info.Protect)) {
+        if ((NewState != Info.State) || (NewProtect != Info.Protect))
+        {
 
             //
             // The state for this address does not match, calculate
@@ -605,21 +614,21 @@ Environment:
         Va = NextVaToQuery;
     }
 
-    UNLOCK_WS_UNSAFE (TargetProcess);
+    UNLOCK_WS_UNSAFE(TargetProcess);
 
     //
     // We may have aggressively leaped past the end of the VAD.  Shorten the
     // Va here if we did.
     //
 
-    if (Leaped == TRUE) {
-        Va = MI_VPN_TO_VA (Vad->EndingVpn + 1);
+    if (Leaped == TRUE)
+    {
+        Va = MI_VPN_TO_VA(Vad->EndingVpn + 1);
     }
 
     Info.RegionSize = ((PCHAR)Va - (PCHAR)Info.BaseAddress);
-    Info.AllocationBase = MI_VPN_TO_VA (Vad->StartingVpn);
-    Info.AllocationProtect = MI_CONVERT_FROM_PTE_PROTECTION (
-                                             Vad->u.VadFlags.Protection);
+    Info.AllocationBase = MI_VPN_TO_VA(Vad->StartingVpn);
+    Info.AllocationProtect = MI_CONVERT_FROM_PTE_PROTECTION(Vad->u.VadFlags.Protection);
 
     //
     // A range has been found, release the mutexes, detach from the
@@ -628,47 +637,50 @@ Environment:
 
 #if defined(_MIALT4K_)
 
-    if (TargetProcess->Wow64Process != NULL) {
-        
+    if (TargetProcess->Wow64Process != NULL)
+    {
+
         Info.BaseAddress = PAGE_4K_ALIGN(BaseAddress);
 
-        MiQueryRegionFor4kPage (Info.BaseAddress,
-                                MI_VPN_TO_VA_ENDING(Vad->EndingVpn),
-                                &Info.RegionSize,
-                                &Info.State,
-                                &Info.Protect,
-                                TargetProcess);
+        MiQueryRegionFor4kPage(Info.BaseAddress, MI_VPN_TO_VA_ENDING(Vad->EndingVpn), &Info.RegionSize, &Info.State,
+                               &Info.Protect, TargetProcess);
     }
 
 #endif
 
-    UNLOCK_ADDRESS_SPACE (TargetProcess);
+    UNLOCK_ADDRESS_SPACE(TargetProcess);
 
-    if (Attached == TRUE) {
-        KeUnstackDetachProcess (&ApcState);
-        ObDereferenceObject (TargetProcess);
+    if (Attached == TRUE)
+    {
+        KeUnstackDetachProcess(&ApcState);
+        ObDereferenceObject(TargetProcess);
     }
 
-    if (MemoryInformationClass == MemoryBasicInformation) {
+    if (MemoryInformationClass == MemoryBasicInformation)
+    {
         Found = FALSE;
-        try {
+        try
+        {
 
             *(PMEMORY_BASIC_INFORMATION)MemoryInformation = Info;
 
             Found = TRUE;
-            if (ARGUMENT_PRESENT(ReturnLength)) {
+            if (ARGUMENT_PRESENT(ReturnLength))
+            {
                 *ReturnLength = sizeof(MEMORY_BASIC_INFORMATION);
             }
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // Just return success if the BasicInfo was successfully
             // filled in.
             //
-                
-            if (Found == FALSE) {
-                return GetExceptionCode ();
+
+            if (Found == FALSE)
+            {
+                return GetExceptionCode();
             }
         }
         return STATUS_SUCCESS;
@@ -678,44 +690,40 @@ Environment:
     // Try to return the name of the file that is mapped.
     //
 
-    if (FilePointer == NULL) {
+    if (FilePointer == NULL)
+    {
         return STATUS_INVALID_ADDRESS;
     }
 
-    if (FilePointer == (PVOID)1) {
+    if (FilePointer == (PVOID)1)
+    {
         return STATUS_FILE_INVALID;
     }
 
     MemoryInformationLengthUlong = (ULONG)MemoryInformationLength;
 
-    if ((SIZE_T)MemoryInformationLengthUlong < MemoryInformationLength) {
+    if ((SIZE_T)MemoryInformationLengthUlong < MemoryInformationLength)
+    {
         return STATUS_INVALID_PARAMETER_5;
     }
-    
+
     //
     // We have a referenced pointer to the file.  Call ObQueryNameString
     // and get the file name.
     //
 
-    Status = ObQueryNameString (FilePointer,
-                                (POBJECT_NAME_INFORMATION) MemoryInformation,
-                                 MemoryInformationLengthUlong,
-                                 (PULONG)ReturnLength);
+    Status = ObQueryNameString(FilePointer, (POBJECT_NAME_INFORMATION)MemoryInformation, MemoryInformationLengthUlong,
+                               (PULONG)ReturnLength);
 
-    ObDereferenceObject (FilePointer);
+    ObDereferenceObject(FilePointer);
 
     return Status;
 }
 
-
+
 ULONG
-MiQueryAddressState (
-    IN PVOID Va,
-    IN PMMVAD Vad,
-    IN PEPROCESS TargetProcess,
-    OUT PULONG ReturnedProtect,
-    OUT PVOID *NextVaToQuery
-    )
+MiQueryAddressState(IN PVOID Va, IN PMMVAD Vad, IN PEPROCESS TargetProcess, OUT PULONG ReturnedProtect,
+                    OUT PVOID *NextVaToQuery)
 
 /*++
 
@@ -752,84 +760,81 @@ Environment:
     Protect = 0;
 
 #ifdef LARGE_PAGES
-    if (Vad->u.VadFlags.LargePages) {
-        *ReturnedProtect = MI_CONVERT_FROM_PTE_PROTECTION (
-                                             Vad->u.VadFlags.Protection);
+    if (Vad->u.VadFlags.LargePages)
+    {
+        *ReturnedProtect = MI_CONVERT_FROM_PTE_PROTECTION(Vad->u.VadFlags.Protection);
         return MEM_COMMIT;
     }
 #endif //LARGE_PAGES
 
-    PointerPxe = MiGetPxeAddress (Va);
-    PointerPpe = MiGetPpeAddress (Va);
-    PointerPde = MiGetPdeAddress (Va);
-    PointerPte = MiGetPteAddress (Va);
+    PointerPxe = MiGetPxeAddress(Va);
+    PointerPpe = MiGetPpeAddress(Va);
+    PointerPde = MiGetPdeAddress(Va);
+    PointerPte = MiGetPteAddress(Va);
 
-    ASSERT ((Vad->StartingVpn <= MI_VA_TO_VPN (Va)) &&
-            (Vad->EndingVpn >= MI_VA_TO_VPN (Va)));
+    ASSERT((Vad->StartingVpn <= MI_VA_TO_VPN(Va)) && (Vad->EndingVpn >= MI_VA_TO_VPN(Va)));
 
     PteIsZero = TRUE;
     PteDetected = FALSE;
 
     *NextVaToQuery = (PVOID)((PCHAR)Va + PAGE_SIZE);
 
-    do {
+    do
+    {
 
-        if (!MiDoesPxeExistAndMakeValid (PointerPxe,
-                                         TargetProcess,
-                                         FALSE,
-                                         &Waited)) {
+        if (!MiDoesPxeExistAndMakeValid(PointerPxe, TargetProcess, FALSE, &Waited))
+        {
 
 #if (_MI_PAGING_LEVELS >= 4)
-            NextVa = MiGetVirtualAddressMappedByPte (PointerPxe + 1);
-            NextVa = MiGetVirtualAddressMappedByPte (NextVa);
-            NextVa = MiGetVirtualAddressMappedByPte (NextVa);
-            *NextVaToQuery = MiGetVirtualAddressMappedByPte (NextVa);
+            NextVa = MiGetVirtualAddressMappedByPte(PointerPxe + 1);
+            NextVa = MiGetVirtualAddressMappedByPte(NextVa);
+            NextVa = MiGetVirtualAddressMappedByPte(NextVa);
+            *NextVaToQuery = MiGetVirtualAddressMappedByPte(NextVa);
 #endif
             break;
         }
-    
+
 #if (_MI_PAGING_LEVELS >= 4)
         Waited = 0;
 #endif
 
-        if (!MiDoesPpeExistAndMakeValid (PointerPpe,
-                                         TargetProcess,
-                                         FALSE,
-                                         &Waited)) {
+        if (!MiDoesPpeExistAndMakeValid(PointerPpe, TargetProcess, FALSE, &Waited))
+        {
 #if (_MI_PAGING_LEVELS >= 3)
-            NextVa = MiGetVirtualAddressMappedByPte (PointerPpe + 1);
-            NextVa = MiGetVirtualAddressMappedByPte (NextVa);
-            *NextVaToQuery = MiGetVirtualAddressMappedByPte (NextVa);
+            NextVa = MiGetVirtualAddressMappedByPte(PointerPpe + 1);
+            NextVa = MiGetVirtualAddressMappedByPte(NextVa);
+            *NextVaToQuery = MiGetVirtualAddressMappedByPte(NextVa);
 #endif
             break;
         }
-    
+
 #if (_MI_PAGING_LEVELS < 4)
         Waited = 0;
 #endif
 
-        if (!MiDoesPdeExistAndMakeValid (PointerPde,
-                                         TargetProcess,
-                                         FALSE,
-                                         &Waited)) {
-            NextVa = MiGetVirtualAddressMappedByPte (PointerPde + 1);
-            *NextVaToQuery = MiGetVirtualAddressMappedByPte (NextVa);
+        if (!MiDoesPdeExistAndMakeValid(PointerPde, TargetProcess, FALSE, &Waited))
+        {
+            NextVa = MiGetVirtualAddressMappedByPte(PointerPde + 1);
+            *NextVaToQuery = MiGetVirtualAddressMappedByPte(NextVa);
             break;
         }
 
-        if (Waited == 0) {
+        if (Waited == 0)
+        {
             PteDetected = TRUE;
         }
 
     } while (Waited != 0);
 
-    if (PteDetected == TRUE) {
+    if (PteDetected == TRUE)
+    {
 
         //
         // A PTE exists at this address, see if it is zero.
         //
 
-        if (PointerPte->u.Long != 0) {
+        if (PointerPte->u.Long != 0)
+        {
 
             PteIsZero = FALSE;
 
@@ -838,44 +843,44 @@ Environment:
             // it to build the information block.
             //
 
-            if (MiIsPteDecommittedPage (PointerPte)) {
-                ASSERT (Protect == 0);
-                ASSERT (State == MEM_RESERVE);
+            if (MiIsPteDecommittedPage(PointerPte))
+            {
+                ASSERT(Protect == 0);
+                ASSERT(State == MEM_RESERVE);
             }
-            else {
+            else
+            {
                 State = MEM_COMMIT;
-                if (Vad->u.VadFlags.PhysicalMapping == 1) {
+                if (Vad->u.VadFlags.PhysicalMapping == 1)
+                {
 
                     //
                     // Physical mapping, there is no corresponding
                     // PFN element to get the page protection from.
                     //
 
-                    Protect = MI_CONVERT_FROM_PTE_PROTECTION (
-                                             Vad->u.VadFlags.Protection);
+                    Protect = MI_CONVERT_FROM_PTE_PROTECTION(Vad->u.VadFlags.Protection);
                 }
-                else {
-                    Protect = MiGetPageProtection (PointerPte,
-                                                   TargetProcess,
-                                                   FALSE);
+                else
+                {
+                    Protect = MiGetPageProtection(PointerPte, TargetProcess, FALSE);
 
-                    if ((PointerPte->u.Soft.Valid == 0) &&
-                        (PointerPte->u.Soft.Prototype == 1) &&
-                        (Vad->u.VadFlags.PrivateMemory == 0) &&
-                        (Vad->ControlArea != (PCONTROL_AREA)NULL)) {
+                    if ((PointerPte->u.Soft.Valid == 0) && (PointerPte->u.Soft.Prototype == 1) &&
+                        (Vad->u.VadFlags.PrivateMemory == 0) && (Vad->ControlArea != (PCONTROL_AREA)NULL))
+                    {
 
                         //
                         // Make sure the protoPTE is committed.
                         //
 
-                        ProtoPte = MiGetProtoPteAddress(Vad,
-                                                    MI_VA_TO_VPN (Va));
+                        ProtoPte = MiGetProtoPteAddress(Vad, MI_VA_TO_VPN(Va));
                         CapturedProtoPte.u.Long = 0;
-                        if (ProtoPte) {
-                            CapturedProtoPte = MiCaptureSystemPte (ProtoPte,
-                                                               TargetProcess);
+                        if (ProtoPte)
+                        {
+                            CapturedProtoPte = MiCaptureSystemPte(ProtoPte, TargetProcess);
                         }
-                        if (CapturedProtoPte.u.Long == 0) {
+                        if (CapturedProtoPte.u.Long == 0)
+                        {
                             State = MEM_RESERVE;
                             Protect = 0;
                         }
@@ -885,7 +890,8 @@ Environment:
         }
     }
 
-    if (PteIsZero) {
+    if (PteIsZero)
+    {
 
         //
         // There is no PDE at this address, the template from
@@ -901,16 +907,17 @@ Environment:
         State = MEM_RESERVE;
         Protect = 0;
 
-        if (Vad->u.VadFlags.PhysicalMapping == 1) {
+        if (Vad->u.VadFlags.PhysicalMapping == 1)
+        {
 
             //
             // Must be banked memory, just return reserved.
             //
 
             NOTHING;
-
-        } else if ((Vad->u.VadFlags.PrivateMemory == 0) &&
-            (Vad->ControlArea != (PCONTROL_AREA)NULL)) {
+        }
+        else if ((Vad->u.VadFlags.PrivateMemory == 0) && (Vad->ControlArea != (PCONTROL_AREA)NULL))
+        {
 
             //
             // This VAD refers to a section.  Even though the PTE is
@@ -919,45 +926,45 @@ Environment:
 
             *NextVaToQuery = (PVOID)((PCHAR)Va + PAGE_SIZE);
 
-            ProtoPte = MiGetProtoPteAddress(Vad, MI_VA_TO_VPN (Va));
+            ProtoPte = MiGetProtoPteAddress(Vad, MI_VA_TO_VPN(Va));
 
             CapturedProtoPte.u.Long = 0;
-            if (ProtoPte) {
-                CapturedProtoPte = MiCaptureSystemPte (ProtoPte,
-                                                       TargetProcess);
+            if (ProtoPte)
+            {
+                CapturedProtoPte = MiCaptureSystemPte(ProtoPte, TargetProcess);
             }
 
-            if (CapturedProtoPte.u.Long != 0) {
+            if (CapturedProtoPte.u.Long != 0)
+            {
                 State = MEM_COMMIT;
 
-                if (Vad->u.VadFlags.ImageMap == 0) {
-                    Protect = MI_CONVERT_FROM_PTE_PROTECTION (
-                                              Vad->u.VadFlags.Protection);
+                if (Vad->u.VadFlags.ImageMap == 0)
+                {
+                    Protect = MI_CONVERT_FROM_PTE_PROTECTION(Vad->u.VadFlags.Protection);
                 }
-                else {
+                else
+                {
 
                     //
                     // This is an image file, the protection is in the
                     // prototype PTE.
                     //
 
-                    Protect = MiGetPageProtection (&CapturedProtoPte,
-                                                   TargetProcess,
-                                                   TRUE);
+                    Protect = MiGetPageProtection(&CapturedProtoPte, TargetProcess, TRUE);
                 }
             }
-
         }
-        else {
+        else
+        {
 
             //
             // Get the protection from the corresponding VAD.
             //
 
-            if (Vad->u.VadFlags.MemCommit) {
+            if (Vad->u.VadFlags.MemCommit)
+            {
                 State = MEM_COMMIT;
-                Protect = MI_CONVERT_FROM_PTE_PROTECTION (
-                                            Vad->u.VadFlags.Protection);
+                Protect = MI_CONVERT_FROM_PTE_PROTECTION(Vad->u.VadFlags.Protection);
             }
         }
     }
@@ -966,14 +973,9 @@ Environment:
     return State;
 }
 
-
 
 NTSTATUS
-MiGetWorkingSetInfo (
-    IN PMEMORY_WORKING_SET_INFORMATION WorkingSetInfo,
-    IN SIZE_T Length,
-    IN PEPROCESS Process
-    )
+MiGetWorkingSetInfo(IN PMEMORY_WORKING_SET_INFORMATION WorkingSetInfo, IN SIZE_T Length, IN PEPROCESS Process)
 
 {
     PMDL Mdl;
@@ -996,12 +998,11 @@ MiGetWorkingSetInfo (
     // Allocate an MDL to map the request.
     //
 
-    Mdl = ExAllocatePoolWithTag (NonPagedPool,
-                                 sizeof(MDL) + sizeof(PFN_NUMBER) +
-                                     BYTES_TO_PAGES (Length) * sizeof(PFN_NUMBER),
-                                 '  mM');
+    Mdl = ExAllocatePoolWithTag(NonPagedPool,
+                                sizeof(MDL) + sizeof(PFN_NUMBER) + BYTES_TO_PAGES(Length) * sizeof(PFN_NUMBER), '  mM');
 
-    if (Mdl == NULL) {
+    if (Mdl == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -1011,60 +1012,68 @@ MiGetWorkingSetInfo (
 
     MmInitializeMdl(Mdl, WorkingSetInfo, Length);
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
 
-    try {
-        MmProbeAndLockPages (Mdl,
-                             KeGetPreviousModeByThread (&CurrentThread->Tcb),
-                             IoWriteAccess);
+    try
+    {
+        MmProbeAndLockPages(Mdl, KeGetPreviousModeByThread(&CurrentThread->Tcb), IoWriteAccess);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-
-        ExFreePool (Mdl);
+        ExFreePool(Mdl);
         return GetExceptionCode();
     }
 
-    Info = MmGetSystemAddressForMdlSafe (Mdl, NormalPagePriority);
+    Info = MmGetSystemAddressForMdlSafe(Mdl, NormalPagePriority);
 
-    if (Info == NULL) {
-        MmUnlockPages (Mdl);
-        ExFreePool (Mdl);
+    if (Info == NULL)
+    {
+        MmUnlockPages(Mdl);
+        ExFreePool(Mdl);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    if (PsGetCurrentProcessByThread (CurrentThread) != Process) {
-        KeStackAttachProcess (&Process->Pcb, &ApcState);
+    if (PsGetCurrentProcessByThread(CurrentThread) != Process)
+    {
+        KeStackAttachProcess(&Process->Pcb, &ApcState);
         Attached = TRUE;
     }
-    else {
+    else
+    {
         Attached = FALSE;
     }
 
     status = STATUS_SUCCESS;
 
-    LOCK_WS (Process);
+    LOCK_WS(Process);
 
-    if (Process->Flags & PS_PROCESS_FLAGS_VM_DELETED) {
+    if (Process->Flags & PS_PROCESS_FLAGS_VM_DELETED)
+    {
         status = STATUS_PROCESS_IS_TERMINATING;
     }
-    else {
+    else
+    {
         WsSize = Process->Vm.WorkingSetSize;
-        ASSERT (WsSize != 0);
+        ASSERT(WsSize != 0);
         Info->NumberOfEntries = WsSize;
-        if (sizeof(MEMORY_WORKING_SET_INFORMATION) + (WsSize-1) * sizeof(ULONG_PTR) > Length) {
+        if (sizeof(MEMORY_WORKING_SET_INFORMATION) + (WsSize - 1) * sizeof(ULONG_PTR) > Length)
+        {
             status = STATUS_INFO_LENGTH_MISMATCH;
         }
     }
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
-        UNLOCK_WS (Process);
+        UNLOCK_WS(Process);
 
-        if (Attached == TRUE) {
-            KeUnstackDetachProcess (&ApcState);
+        if (Attached == TRUE)
+        {
+            KeUnstackDetachProcess(&ApcState);
         }
-        MmUnlockPages (Mdl);
-        ExFreePool (Mdl);
+        MmUnlockPages(Mdl);
+        ExFreePool(Mdl);
         return status;
     }
 
@@ -1073,16 +1082,17 @@ MiGetWorkingSetInfo (
     Entry = &Info->WorkingSetInfo[0];
 
 #if DBG
-    LastEntry = (PMEMORY_WORKING_SET_BLOCK)(
-                            (PCHAR)Info + (Length & (~(sizeof(ULONG_PTR) - 1))));
+    LastEntry = (PMEMORY_WORKING_SET_BLOCK)((PCHAR)Info + (Length & (~(sizeof(ULONG_PTR) - 1))));
 #endif
 
-    do {
-        if (Wsle->u1.e1.Valid == 1) {
+    do
+    {
+        if (Wsle->u1.e1.Valid == 1)
+        {
             Entry->VirtualPage = Wsle->u1.e1.VirtualPageNumber;
-            PointerPte = MiGetPteAddress (Wsle->u1.VirtualAddress);
-            ASSERT (PointerPte->u.Hard.Valid == 1);
-            Pfn1 = MI_PFN_ELEMENT (PointerPte->u.Hard.PageFrameNumber);
+            PointerPte = MiGetPteAddress(Wsle->u1.VirtualAddress);
+            ASSERT(PointerPte->u.Hard.Valid == 1);
+            Pfn1 = MI_PFN_ELEMENT(PointerPte->u.Hard.PageFrameNumber);
 
 #if defined(MI_MULTINODE)
             Entry->Node = Pfn1->u3.e1.PageColor;
@@ -1090,21 +1100,27 @@ MiGetWorkingSetInfo (
             Entry->Node = 0;
 #endif
             Entry->Shared = Pfn1->u3.e1.PrototypePte;
-            if (Pfn1->u3.e1.PrototypePte == 0) {
+            if (Pfn1->u3.e1.PrototypePte == 0)
+            {
                 Entry->ShareCount = 0;
                 Entry->Protection = MI_GET_PROTECTION_FROM_SOFT_PTE(&Pfn1->OriginalPte);
             }
-            else {
-                if (Pfn1->u2.ShareCount <= 7) {
+            else
+            {
+                if (Pfn1->u2.ShareCount <= 7)
+                {
                     Entry->ShareCount = Pfn1->u2.ShareCount;
                 }
-                else {
+                else
+                {
                     Entry->ShareCount = 7;
                 }
-                if (Wsle->u1.e1.SameProtectAsProto == 1) {
+                if (Wsle->u1.e1.SameProtectAsProto == 1)
+                {
                     Entry->Protection = MI_GET_PROTECTION_FROM_SOFT_PTE(&Pfn1->OriginalPte);
                 }
-                else {
+                else
+                {
                     Entry->Protection = Wsle->u1.e1.Protection;
                 }
             }
@@ -1112,16 +1128,17 @@ MiGetWorkingSetInfo (
         }
         Wsle += 1;
 #if DBG
-        ASSERT ((Entry < LastEntry) || (Wsle > LastWsle));
+        ASSERT((Entry < LastEntry) || (Wsle > LastWsle));
 #endif
     } while (Wsle <= LastWsle);
 
-    UNLOCK_WS (Process);
+    UNLOCK_WS(Process);
 
-    if (Attached == TRUE) {
-        KeUnstackDetachProcess (&ApcState);
+    if (Attached == TRUE)
+    {
+        KeUnstackDetachProcess(&ApcState);
     }
-    MmUnlockPages (Mdl);
-    ExFreePool (Mdl);
+    MmUnlockPages(Mdl);
+    ExFreePool(Mdl);
     return STATUS_SUCCESS;
 }

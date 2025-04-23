@@ -26,7 +26,8 @@ Revision History:
 // Define balance set wait object types.
 //
 
-typedef enum _BALANCE_OBJECT {
+typedef enum _BALANCE_OBJECT
+{
     TimerExpiration,
     ThreadSetManagerEvent,
     ShutdownEvent,
@@ -43,19 +44,21 @@ C_ASSERT(MaximumBalanceObject <= THREAD_WAIT_OBJECTS);
 // This is the structure passed around during shutdown
 //
 
-typedef struct {
+typedef struct
+{
     WORK_QUEUE_ITEM WorkItem;
     WORK_QUEUE_TYPE QueueType;
-    PETHREAD        PrevThread;
+    PETHREAD PrevThread;
 } SHUTDOWN_WORK_ITEM, *PSHUTDOWN_WORK_ITEM;
 
 //
 // Used for disabling stack swapping
 //
 
-typedef struct _EXP_WORKER_LINK {
+typedef struct _EXP_WORKER_LINK
+{
     LIST_ENTRY List;
-    PETHREAD   Thread;
+    PETHREAD Thread;
     struct _EXP_WORKER_LINK **StackRef;
 } EXP_WORKER_LINK, *PEXP_WORKER_LINK;
 
@@ -67,9 +70,9 @@ typedef struct _EXP_WORKER_LINK {
 // user interface under heavy load.
 //
 
-#define DELAYED_WORK_QUEUE_PRIORITY         (12 - NORMAL_BASE_PRIORITY)
-#define CRITICAL_WORK_QUEUE_PRIORITY        (13 - NORMAL_BASE_PRIORITY)
-#define HYPER_CRITICAL_WORK_QUEUE_PRIORITY  (15 - NORMAL_BASE_PRIORITY)
+#define DELAYED_WORK_QUEUE_PRIORITY (12 - NORMAL_BASE_PRIORITY)
+#define CRITICAL_WORK_QUEUE_PRIORITY (13 - NORMAL_BASE_PRIORITY)
+#define HYPER_CRITICAL_WORK_QUEUE_PRIORITY (15 - NORMAL_BASE_PRIORITY)
 
 //
 // Number of worker threads to create for each type of system.
@@ -147,7 +150,7 @@ PETHREAD ExpLastWorkerThread;
 
 FAST_MUTEX ExpWorkerSwapinMutex;
 LIST_ENTRY ExpWorkerListHead;
-BOOLEAN    ExpWorkersCanSwap;
+BOOLEAN ExpWorkersCanSwap;
 
 //
 // Worker queue item that can be filled in by the kernel debugger
@@ -159,60 +162,30 @@ PVOID ExpDebuggerProcessAttach;
 PVOID ExpDebuggerPageIn;
 ULONG ExpDebuggerWork;
 
-VOID
-ExpCheckDynamicThreadCount (
-    VOID
-    );
+VOID ExpCheckDynamicThreadCount(VOID);
 
 NTSTATUS
-ExpCreateWorkerThread (
-    WORK_QUEUE_TYPE QueueType,
-    BOOLEAN Dynamic
-    );
+ExpCreateWorkerThread(WORK_QUEUE_TYPE QueueType, BOOLEAN Dynamic);
 
-VOID
-ExpDetectWorkerThreadDeadlock (
-    VOID
-    );
+VOID ExpDetectWorkerThreadDeadlock(VOID);
 
-VOID
-ExpWorkerThreadBalanceManager (
-    IN PVOID StartContext
-    );
+VOID ExpWorkerThreadBalanceManager(IN PVOID StartContext);
 
-VOID
-ExpSetSwappingKernelApc (
-    IN PKAPC Apc,
-    OUT PKNORMAL_ROUTINE *NormalRoutine,
-    IN OUT PVOID NormalContext,
-    IN OUT PVOID *SystemArgument1,
-    IN OUT PVOID *SystemArgument2
-    );
+VOID ExpSetSwappingKernelApc(IN PKAPC Apc, OUT PKNORMAL_ROUTINE *NormalRoutine, IN OUT PVOID NormalContext,
+                             IN OUT PVOID *SystemArgument1, IN OUT PVOID *SystemArgument2);
 
 //
 // Procedure prototypes for the worker threads.
 //
 
-VOID
-ExpWorkerThread (
-    IN PVOID StartContext
-    );
+VOID ExpWorkerThread(IN PVOID StartContext);
 
 LOGICAL
-ExpCheckQueueShutdown (
-    IN WORK_QUEUE_TYPE QueueType,
-    IN PSHUTDOWN_WORK_ITEM ShutdownItem
-    );
+ExpCheckQueueShutdown(IN WORK_QUEUE_TYPE QueueType, IN PSHUTDOWN_WORK_ITEM ShutdownItem);
 
-VOID
-ExpShutdownWorker (
-    IN PVOID Parameter
-    );
+VOID ExpShutdownWorker(IN PVOID Parameter);
 
-VOID
-ExpDebuggerWorker(
-    IN PVOID Context
-    );
+VOID ExpDebuggerWorker(IN PVOID Context);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, ExpWorkerInitialization)
@@ -229,10 +202,7 @@ ExpDebuggerWorker(
 #endif
 
 LOGICAL
-__forceinline
-ExpNewThreadNecessary (
-    IN PEX_WORK_QUEUE Queue
-    )
+__forceinline ExpNewThreadNecessary(IN PEX_WORK_QUEUE Queue)
 
 /*++
 
@@ -252,10 +222,10 @@ Return Value:
 
 --*/
 {
-    if ((Queue->Info.MakeThreadsAsNecessary == 1) &&
-        (IsListEmpty (&Queue->WorkerQueue.EntryListHead) == FALSE) &&
+    if ((Queue->Info.MakeThreadsAsNecessary == 1) && (IsListEmpty(&Queue->WorkerQueue.EntryListHead) == FALSE) &&
         (Queue->WorkerQueue.CurrentCount < Queue->WorkerQueue.MaximumCount) &&
-        (Queue->DynamicThreadCount < MAX_ADDITIONAL_DYNAMIC_THREADS)) {
+        (Queue->DynamicThreadCount < MAX_ADDITIONAL_DYNAMIC_THREADS))
+    {
 
         //
         // We know these things:
@@ -285,9 +255,7 @@ Return Value:
 }
 
 NTSTATUS
-ExpWorkerInitialization (
-    VOID
-    )
+ExpWorkerInitialization(VOID)
 {
     ULONG Index;
     OBJECT_ATTRIBUTES ObjectAttributes;
@@ -299,8 +267,8 @@ ExpWorkerInitialization (
     BOOLEAN NtAs;
     WORK_QUEUE_TYPE WorkQueueType;
 
-    ExInitializeFastMutex (&ExpWorkerSwapinMutex);
-    InitializeListHead (&ExpWorkerListHead);
+    ExInitializeFastMutex(&ExpWorkerSwapinMutex);
+    InitializeListHead(&ExpWorkerListHead);
     ExpWorkersCanSwap = TRUE;
 
     //
@@ -323,37 +291,42 @@ ExpWorkerInitialization (
 
     NumberOfDelayedThreads = MEDIUM_NUMBER_OF_THREADS + 4;
 
-    switch (MmQuerySystemSize()) {
+    switch (MmQuerySystemSize())
+    {
 
-        case MmSmallSystem:
-            break;
+    case MmSmallSystem:
+        break;
 
-        case MmMediumSystem:
-            if (NtAs) {
-                NumberOfCriticalThreads += MEDIUM_NUMBER_OF_THREADS;
-            }
-            break;
+    case MmMediumSystem:
+        if (NtAs)
+        {
+            NumberOfCriticalThreads += MEDIUM_NUMBER_OF_THREADS;
+        }
+        break;
 
-        case MmLargeSystem:
-            NumberOfCriticalThreads = LARGE_NUMBER_OF_THREADS;
-            if (NtAs) {
-                NumberOfCriticalThreads += LARGE_NUMBER_OF_THREADS;
-            }
-            break;
+    case MmLargeSystem:
+        NumberOfCriticalThreads = LARGE_NUMBER_OF_THREADS;
+        if (NtAs)
+        {
+            NumberOfCriticalThreads += LARGE_NUMBER_OF_THREADS;
+        }
+        break;
 
-        default:
-            break;
+    default:
+        break;
     }
 
     //
     // Initialize the work Queue objects.
     //
 
-    if (ExpAdditionalCriticalWorkerThreads > MAX_ADDITIONAL_THREADS) {
+    if (ExpAdditionalCriticalWorkerThreads > MAX_ADDITIONAL_THREADS)
+    {
         ExpAdditionalCriticalWorkerThreads = MAX_ADDITIONAL_THREADS;
     }
 
-    if (ExpAdditionalDelayedWorkerThreads > MAX_ADDITIONAL_THREADS) {
+    if (ExpAdditionalDelayedWorkerThreads > MAX_ADDITIONAL_THREADS)
+    {
         ExpAdditionalDelayedWorkerThreads = MAX_ADDITIONAL_THREADS;
     }
 
@@ -361,11 +334,12 @@ ExpWorkerInitialization (
     // Initialize the ExWorkerQueue[] array.
     //
 
-    RtlZeroMemory (&ExWorkerQueue[0], MaximumWorkQueue * sizeof(EX_WORK_QUEUE));
+    RtlZeroMemory(&ExWorkerQueue[0], MaximumWorkQueue * sizeof(EX_WORK_QUEUE));
 
-    for (WorkQueueType = 0; WorkQueueType < MaximumWorkQueue; WorkQueueType += 1) {
+    for (WorkQueueType = 0; WorkQueueType < MaximumWorkQueue; WorkQueueType += 1)
+    {
 
-        KeInitializeQueue (&ExWorkerQueue[WorkQueueType].WorkerQueue, 0);
+        KeInitializeQueue(&ExWorkerQueue[WorkQueueType].WorkerQueue, 0);
         ExWorkerQueue[WorkQueueType].Info.WaitMode = UserMode;
     }
 
@@ -382,7 +356,8 @@ ExpWorkerInitialization (
 
     ExWorkerQueue[HyperCriticalWorkQueue].Info.WaitMode = KernelMode;
 
-    if (NtAs) {
+    if (NtAs)
+    {
         ExWorkerQueue[CriticalWorkQueue].Info.WaitMode = KernelMode;
     }
 
@@ -401,13 +376,9 @@ ExpWorkerInitialization (
     // Initialize the global thread set manager events
     //
 
-    KeInitializeEvent (&ExpThreadSetManagerEvent,
-                       SynchronizationEvent,
-                       FALSE);
+    KeInitializeEvent(&ExpThreadSetManagerEvent, SynchronizationEvent, FALSE);
 
-    KeInitializeEvent (&ExpThreadSetManagerShutdownEvent,
-                       SynchronizationEvent,
-                       FALSE);
+    KeInitializeEvent(&ExpThreadSetManagerShutdownEvent, SynchronizationEvent, FALSE);
 
     //
     // Create the desired number of executive worker threads for each
@@ -419,15 +390,17 @@ ExpWorkerInitialization (
     //
 
     NumberOfThreads = NumberOfCriticalThreads + ExpAdditionalCriticalWorkerThreads;
-    for (Index = 0; Index < NumberOfThreads; Index += 1) {
+    for (Index = 0; Index < NumberOfThreads; Index += 1)
+    {
 
         //
         // Create a worker thread to service the critical work queue.
         //
 
-        Status = ExpCreateWorkerThread (CriticalWorkQueue, FALSE);
+        Status = ExpCreateWorkerThread(CriticalWorkQueue, FALSE);
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             break;
         }
     }
@@ -439,15 +412,17 @@ ExpWorkerInitialization (
     //
 
     NumberOfThreads = NumberOfDelayedThreads + ExpAdditionalDelayedWorkerThreads;
-    for (Index = 0; Index < NumberOfThreads; Index += 1) {
+    for (Index = 0; Index < NumberOfThreads; Index += 1)
+    {
 
         //
         // Create a worker thread to service the delayed work queue.
         //
 
-        Status = ExpCreateWorkerThread (DelayedWorkQueue, FALSE);
+        Status = ExpCreateWorkerThread(DelayedWorkQueue, FALSE);
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             break;
         }
     }
@@ -458,40 +433,28 @@ ExpWorkerInitialization (
     // Create the hypercritical worker thread.
     //
 
-    Status = ExpCreateWorkerThread (HyperCriticalWorkQueue, FALSE);
+    Status = ExpCreateWorkerThread(HyperCriticalWorkQueue, FALSE);
 
     //
     // Create the worker thread set manager thread.
     //
 
-    InitializeObjectAttributes (&ObjectAttributes, NULL, 0, NULL, NULL);
+    InitializeObjectAttributes(&ObjectAttributes, NULL, 0, NULL, NULL);
 
-    Status = PsCreateSystemThread (&Thread,
-                                   THREAD_ALL_ACCESS,
-                                   &ObjectAttributes,
-                                   0,
-                                   NULL,
-                                   ExpWorkerThreadBalanceManager,
-                                   NULL);
+    Status = PsCreateSystemThread(&Thread, THREAD_ALL_ACCESS, &ObjectAttributes, 0, NULL, ExpWorkerThreadBalanceManager,
+                                  NULL);
 
-    if (NT_SUCCESS(Status)) {
-        Status = ObReferenceObjectByHandle (Thread,
-                                            SYNCHRONIZE,
-                                            NULL,
-                                            KernelMode,
-                                            &ExpWorkerThreadBalanceManagerPtr,
-                                            NULL);
-        ZwClose (Thread);
+    if (NT_SUCCESS(Status))
+    {
+        Status =
+            ObReferenceObjectByHandle(Thread, SYNCHRONIZE, NULL, KernelMode, &ExpWorkerThreadBalanceManagerPtr, NULL);
+        ZwClose(Thread);
     }
 
     return Status;
 }
 
-VOID
-ExQueueWorkItem (
-    IN PWORK_QUEUE_ITEM WorkItem,
-    IN WORK_QUEUE_TYPE QueueType
-    )
+VOID ExQueueWorkItem(IN PWORK_QUEUE_ITEM WorkItem, IN WORK_QUEUE_TYPE QueueType)
 
 /*++
 
@@ -519,8 +482,8 @@ Return Value:
 {
     PEX_WORK_QUEUE Queue;
 
-    ASSERT (QueueType < MaximumWorkQueue);
-    ASSERT (WorkItem->List.Flink == NULL);
+    ASSERT(QueueType < MaximumWorkQueue);
+    ASSERT(WorkItem->List.Flink == NULL);
 
     Queue = &ExWorkerQueue[QueueType];
 
@@ -528,7 +491,7 @@ Return Value:
     // Insert the work item in the appropriate queue object.
     //
 
-    KeInsertQueue (&Queue->WorkerQueue, &WorkItem->List);
+    KeInsertQueue(&Queue->WorkerQueue, &WorkItem->List);
 
     //
     // We check the queue's shutdown state after we insert the work
@@ -542,24 +505,22 @@ Return Value:
     // to insert new queue items.
     //
 
-    ASSERT (!Queue->Info.QueueDisabled);
+    ASSERT(!Queue->Info.QueueDisabled);
 
     //
     // Determine whether another thread should be created, and signal the
     // thread set balance manager if so.
     //
 
-    if (ExpNewThreadNecessary (Queue) != FALSE) {
-        KeSetEvent (&ExpThreadSetManagerEvent, 0, FALSE);
+    if (ExpNewThreadNecessary(Queue) != FALSE)
+    {
+        KeSetEvent(&ExpThreadSetManagerEvent, 0, FALSE);
     }
 
     return;
 }
 
-VOID
-ExpWorkerThreadBalanceManager (
-    IN PVOID StartContext
-    )
+VOID ExpWorkerThreadBalanceManager(IN PVOID StartContext)
 
 /*++
 
@@ -590,22 +551,21 @@ Return Value:
 
     PAGED_CODE();
 
-    UNREFERENCED_PARAMETER (StartContext);
+    UNREFERENCED_PARAMETER(StartContext);
 
     //
     // Raise the thread priority to just higher than the priority of the
     // critical work queue.
     //
 
-    KeSetBasePriorityThread (KeGetCurrentThread(),
-                             CRITICAL_WORK_QUEUE_PRIORITY + 1);
+    KeSetBasePriorityThread(KeGetCurrentThread(), CRITICAL_WORK_QUEUE_PRIORITY + 1);
 
     //
     // Initialize the periodic timer and set the manager period.
     //
 
-    KeInitializeTimer (&PeriodTimer);
-    DueTime.QuadPart = - THREAD_SET_INTERVAL;
+    KeInitializeTimer(&PeriodTimer);
+    DueTime.QuadPart = -THREAD_SET_INTERVAL;
 
     //
     // Initialize the wait object array.
@@ -619,75 +579,67 @@ Return Value:
     // Loop forever processing events.
     //
 
-    while (TRUE) {
+    while (TRUE)
+    {
 
         //
         // Set the timer to expire at the next periodic interval.
         //
 
-        KeSetTimer (&PeriodTimer, DueTime, NULL);
+        KeSetTimer(&PeriodTimer, DueTime, NULL);
 
         //
         // Wake up when the timer expires or the set manager event is
         // signalled.
         //
 
-        Status = KeWaitForMultipleObjects (MaximumBalanceObject,
-                                           WaitObjects,
-                                           WaitAny,
-                                           Executive,
-                                           KernelMode,
-                                           FALSE,
-                                           NULL,
-                                           NULL);
+        Status = KeWaitForMultipleObjects(MaximumBalanceObject, WaitObjects, WaitAny, Executive, KernelMode, FALSE,
+                                          NULL, NULL);
 
-        switch (Status) {
+        switch (Status)
+        {
 
-            case TimerExpiration:
+        case TimerExpiration:
 
-                //
-                // Periodic timer expiration - go see if any work queues
-                // are deadlocked.
-                //
+            //
+            // Periodic timer expiration - go see if any work queues
+            // are deadlocked.
+            //
 
-                ExpDetectWorkerThreadDeadlock ();
-                break;
+            ExpDetectWorkerThreadDeadlock();
+            break;
 
-            case ThreadSetManagerEvent:
+        case ThreadSetManagerEvent:
 
-                //
-                // Someone has asked us to check some metrics to determine
-                // whether we should create another worker thread.
-                //
+            //
+            // Someone has asked us to check some metrics to determine
+            // whether we should create another worker thread.
+            //
 
-                ExpCheckDynamicThreadCount ();
-                break;
+            ExpCheckDynamicThreadCount();
+            break;
 
-            case ShutdownEvent:
+        case ShutdownEvent:
 
-                //
-                // Time to exit...
-                //
+            //
+            // Time to exit...
+            //
 
-                KeCancelTimer (&PeriodTimer);
+            KeCancelTimer(&PeriodTimer);
 
-                ASSERT (ExpLastWorkerThread);
+            ASSERT(ExpLastWorkerThread);
 
-                //
-                // Wait for the last worker thread to terminate
-                //
+            //
+            // Wait for the last worker thread to terminate
+            //
 
-                KeWaitForSingleObject (ExpLastWorkerThread,
-                                       Executive,
-                                       KernelMode,
-                                       FALSE,
-                                       NULL);
+            KeWaitForSingleObject(ExpLastWorkerThread, Executive, KernelMode, FALSE, NULL);
 
-                ObDereferenceObject (ExpLastWorkerThread);
+            ObDereferenceObject(ExpLastWorkerThread);
 
-                PsTerminateSystemThread(STATUS_SYSTEM_SHUTDOWN);
+            PsTerminateSystemThread(STATUS_SYSTEM_SHUTDOWN);
 
-                break;
+            break;
         }
 
         //
@@ -697,19 +649,17 @@ Return Value:
         // behalf of the debugger.
         //
 
-        if (ExpDebuggerWork == 1) {
+        if (ExpDebuggerWork == 1)
+        {
 
-             ExInitializeWorkItem(&ExpDebuggerWorkItem, ExpDebuggerWorker, NULL);
-             ExpDebuggerWork = 2;
-             ExQueueWorkItem(&ExpDebuggerWorkItem, DelayedWorkQueue);
+            ExInitializeWorkItem(&ExpDebuggerWorkItem, ExpDebuggerWorker, NULL);
+            ExpDebuggerWork = 2;
+            ExQueueWorkItem(&ExpDebuggerWorkItem, DelayedWorkQueue);
         }
     }
 }
 
-VOID
-ExpCheckDynamicThreadCount (
-    VOID
-    )
+VOID ExpCheckDynamicThreadCount(VOID)
 
 /*++
 
@@ -744,9 +694,11 @@ Return Value:
 
     Queue = &ExWorkerQueue[0];
 
-    for (QueueType = 0; QueueType < MaximumWorkQueue; Queue += 1, QueueType += 1) {
+    for (QueueType = 0; QueueType < MaximumWorkQueue; Queue += 1, QueueType += 1)
+    {
 
-        if (ExpNewThreadNecessary (Queue)) {
+        if (ExpNewThreadNecessary(Queue))
+        {
 
             //
             // Create a new thread for this queue.  We explicitly ignore
@@ -754,15 +706,12 @@ Return Value:
             // we can or should do in the event of a failure.
             //
 
-            ExpCreateWorkerThread (QueueType, TRUE);
+            ExpCreateWorkerThread(QueueType, TRUE);
         }
     }
 }
 
-VOID
-ExpDetectWorkerThreadDeadlock (
-    VOID
-    )
+VOID ExpDetectWorkerThreadDeadlock(VOID)
 
 /*++
 
@@ -791,15 +740,16 @@ Return Value:
     // Process each queue type.
     //
 
-    for (Index = 0; Index < MaximumWorkQueue; Index += 1) {
+    for (Index = 0; Index < MaximumWorkQueue; Index += 1)
+    {
 
         Queue = &ExWorkerQueue[Index];
 
-        ASSERT( Queue->DynamicThreadCount <= MAX_ADDITIONAL_DYNAMIC_THREADS );
+        ASSERT(Queue->DynamicThreadCount <= MAX_ADDITIONAL_DYNAMIC_THREADS);
 
-        if ((Queue->QueueDepthLastPass > 0) &&
-            (Queue->WorkItemsProcessed == Queue->WorkItemsProcessedLastPass) &&
-            (Queue->DynamicThreadCount < MAX_ADDITIONAL_DYNAMIC_THREADS)) {
+        if ((Queue->QueueDepthLastPass > 0) && (Queue->WorkItemsProcessed == Queue->WorkItemsProcessedLastPass) &&
+            (Queue->DynamicThreadCount < MAX_ADDITIONAL_DYNAMIC_THREADS))
+        {
 
             //
             // These things are known:
@@ -816,7 +766,7 @@ Return Value:
             // like it's still stuck.
             //
 
-            ExpCreateWorkerThread (Index, TRUE);
+            ExpCreateWorkerThread(Index, TRUE);
         }
 
         //
@@ -827,15 +777,12 @@ Return Value:
         //
 
         Queue->WorkItemsProcessedLastPass = Queue->WorkItemsProcessed;
-        Queue->QueueDepthLastPass = KeReadStateQueue (&Queue->WorkerQueue);
+        Queue->QueueDepthLastPass = KeReadStateQueue(&Queue->WorkerQueue);
     }
 }
 
 NTSTATUS
-ExpCreateWorkerThread (
-    IN WORK_QUEUE_TYPE QueueType,
-    IN BOOLEAN Dynamic
-    )
+ExpCreateWorkerThread(IN WORK_QUEUE_TYPE QueueType, IN BOOLEAN Dynamic)
 
 /*++
 
@@ -873,75 +820,67 @@ Notes:
     ULONG BasePriority;
     PETHREAD Thread;
 
-    InitializeObjectAttributes (&ObjectAttributes, NULL, 0, NULL, NULL);
+    InitializeObjectAttributes(&ObjectAttributes, NULL, 0, NULL, NULL);
 
     Context = QueueType;
-    if (Dynamic != FALSE) {
+    if (Dynamic != FALSE)
+    {
         Context |= DYNAMIC_WORKER_THREAD;
     }
 
-    Status = PsCreateSystemThread (&ThreadHandle,
-                                   THREAD_ALL_ACCESS,
-                                   &ObjectAttributes,
-                                   0L,
-                                   NULL,
-                                   ExpWorkerThread,
-                                   (PVOID)(ULONG_PTR)Context);
-    if (!NT_SUCCESS(Status)) {
+    Status = PsCreateSystemThread(&ThreadHandle, THREAD_ALL_ACCESS, &ObjectAttributes, 0L, NULL, ExpWorkerThread,
+                                  (PVOID)(ULONG_PTR)Context);
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
-    if (Dynamic != FALSE) {
-        InterlockedIncrement ((PLONG)&ExWorkerQueue[QueueType].DynamicThreadCount);
+    if (Dynamic != FALSE)
+    {
+        InterlockedIncrement((PLONG)&ExWorkerQueue[QueueType].DynamicThreadCount);
     }
 
     //
     // Set the priority according to the type of worker thread.
     //
 
-    switch (QueueType) {
+    switch (QueueType)
+    {
 
-        case HyperCriticalWorkQueue:
-            BasePriority = HYPER_CRITICAL_WORK_QUEUE_PRIORITY;
-            break;
+    case HyperCriticalWorkQueue:
+        BasePriority = HYPER_CRITICAL_WORK_QUEUE_PRIORITY;
+        break;
 
-        case CriticalWorkQueue:
-            BasePriority = CRITICAL_WORK_QUEUE_PRIORITY;
-            break;
+    case CriticalWorkQueue:
+        BasePriority = CRITICAL_WORK_QUEUE_PRIORITY;
+        break;
 
-        case DelayedWorkQueue:
-        default:
+    case DelayedWorkQueue:
+    default:
 
-            BasePriority = DELAYED_WORK_QUEUE_PRIORITY;
-            break;
+        BasePriority = DELAYED_WORK_QUEUE_PRIORITY;
+        break;
     }
 
     //
     // Set the base priority of the just-created thread.
     //
 
-    Status = ObReferenceObjectByHandle (ThreadHandle,
-                                        THREAD_SET_INFORMATION,
-                                        PsThreadType,
-                                        KernelMode,
-                                        (PVOID *)&Thread,
-                                        NULL);
+    Status = ObReferenceObjectByHandle(ThreadHandle, THREAD_SET_INFORMATION, PsThreadType, KernelMode, (PVOID *)&Thread,
+                                       NULL);
 
-    if (NT_SUCCESS(Status)) {
-        KeSetBasePriorityThread (&Thread->Tcb, BasePriority);
-        ObDereferenceObject (Thread);
+    if (NT_SUCCESS(Status))
+    {
+        KeSetBasePriorityThread(&Thread->Tcb, BasePriority);
+        ObDereferenceObject(Thread);
     }
 
-    ZwClose (ThreadHandle);
+    ZwClose(ThreadHandle);
 
     return Status;
 }
 
-VOID
-ExpCheckForWorker (
-    IN PVOID p,
-    IN SIZE_T Size
-    )
+VOID ExpCheckForWorker(IN PVOID p, IN SIZE_T Size)
 
 {
     KIRQL OldIrql;
@@ -953,23 +892,20 @@ ExpCheckForWorker (
     BeginBlock = (PCHAR)p;
     EndBlock = (PCHAR)p + Size;
 
-    KiLockDispatcherDatabase (&OldIrql);
+    KiLockDispatcherDatabase(&OldIrql);
 
-    for (wqt = CriticalWorkQueue; wqt < MaximumWorkQueue; wqt += 1) {
-        for (Entry = (PLIST_ENTRY) ExWorkerQueue[wqt].WorkerQueue.EntryListHead.Flink;
-             Entry && (Entry != (PLIST_ENTRY) &ExWorkerQueue[wqt].WorkerQueue.EntryListHead);
-             Entry = Entry->Flink) {
-           if (((PCHAR) Entry >= BeginBlock) && ((PCHAR) Entry < EndBlock)) {
-              KeBugCheckEx(WORKER_INVALID,
-                           0x0,
-                           (ULONG_PTR)Entry,
-                           (ULONG_PTR)BeginBlock,
-                           (ULONG_PTR)EndBlock);
-
-           }
+    for (wqt = CriticalWorkQueue; wqt < MaximumWorkQueue; wqt += 1)
+    {
+        for (Entry = (PLIST_ENTRY)ExWorkerQueue[wqt].WorkerQueue.EntryListHead.Flink;
+             Entry && (Entry != (PLIST_ENTRY)&ExWorkerQueue[wqt].WorkerQueue.EntryListHead); Entry = Entry->Flink)
+        {
+            if (((PCHAR)Entry >= BeginBlock) && ((PCHAR)Entry < EndBlock))
+            {
+                KeBugCheckEx(WORKER_INVALID, 0x0, (ULONG_PTR)Entry, (ULONG_PTR)BeginBlock, (ULONG_PTR)EndBlock);
+            }
         }
     }
-    KiUnlockDispatcherDatabase (OldIrql);
+    KiUnlockDispatcherDatabase(OldIrql);
 }
 
 #ifdef ALLOC_DATA_PRAGMA
@@ -981,10 +917,7 @@ const char ExpWorkerApcDisabledMessage[] =
 #pragma const_seg()
 #endif
 
-VOID
-ExpWorkerThread (
-    IN PVOID StartContext
-    )
+VOID ExpWorkerThread(IN PVOID StartContext)
 {
     PLIST_ENTRY Entry;
     WORK_QUEUE_TYPE QueueType;
@@ -1004,7 +937,8 @@ ExpWorkerThread (
     // Set timeout value etc according to whether we are static or dynamic.
     //
 
-    if (((ULONG_PTR)StartContext & DYNAMIC_WORKER_THREAD) == 0) {
+    if (((ULONG_PTR)StartContext & DYNAMIC_WORKER_THREAD) == 0)
+    {
 
         //
         // We are being created as a static thread.  As such it will not
@@ -1014,7 +948,8 @@ ExpWorkerThread (
 
         Timeout = NULL;
     }
-    else {
+    else
+    {
 
         //
         // This is a dynamic worker thread.  It has a non-infinite timeout
@@ -1025,7 +960,7 @@ ExpWorkerThread (
         Timeout = &TimeoutValue;
     }
 
-    Thread = PsGetCurrentThread ();
+    Thread = PsGetCurrentThread();
 
     //
     // If the thread is a critical worker thread, then set the thread
@@ -1033,16 +968,16 @@ ExpWorkerThread (
     // thread priority to time critical.
     //
 
-    QueueType = (WORK_QUEUE_TYPE)
-                ((ULONG_PTR)StartContext & ~DYNAMIC_WORKER_THREAD);
+    QueueType = (WORK_QUEUE_TYPE)((ULONG_PTR)StartContext & ~DYNAMIC_WORKER_THREAD);
 
     WorkerQueue = &ExWorkerQueue[QueueType];
 
-    WaitMode = (KPROCESSOR_MODE) WorkerQueue->Info.WaitMode;
+    WaitMode = (KPROCESSOR_MODE)WorkerQueue->Info.WaitMode;
 
-    ASSERT (Thread->ExWorkerCanWaitUser == 0);
+    ASSERT(Thread->ExWorkerCanWaitUser == 0);
 
-    if (WaitMode == UserMode) {
+    if (WaitMode == UserMode)
+    {
         Thread->ExWorkerCanWaitUser = 1;
     }
 
@@ -1052,8 +987,9 @@ ExpWorkerThread (
     // threads will not be swapped out.
     //
 
-    if (IoRemoteBootClient) {
-        KeSetKernelStackSwapEnable (FALSE);
+    if (IoRemoteBootClient)
+    {
+        KeSetKernelStackSwapEnable(FALSE);
     }
 #endif // defined(REMOTE_BOOT)
 
@@ -1066,30 +1002,34 @@ ExpWorkerThread (
     // we should be helping to process).
     //
 
-    if (PO_SHUTDOWN_QUEUE == QueueType) {
+    if (PO_SHUTDOWN_QUEUE == QueueType)
+    {
         CountForQueueEmpty = 1;
     }
-    else {
+    else
+    {
         CountForQueueEmpty = 0;
     }
 
-    if (ExpWorkersCanSwap == FALSE) {
-        KeSetKernelStackSwapEnable (FALSE);
+    if (ExpWorkersCanSwap == FALSE)
+    {
+        KeSetKernelStackSwapEnable(FALSE);
     }
 
-    do {
+    do
+    {
 
         OldWorkerInfo.QueueWorkerInfo = WorkerQueue->Info.QueueWorkerInfo;
 
-        if (OldWorkerInfo.QueueDisabled &&
-            OldWorkerInfo.WorkerCount <= CountForQueueEmpty) {
+        if (OldWorkerInfo.QueueDisabled && OldWorkerInfo.WorkerCount <= CountForQueueEmpty)
+        {
 
             //
             // The queue is disabled and empty so just exit.
             //
 
-            KeSetKernelStackSwapEnable (TRUE);
-            PsTerminateSystemThread (STATUS_SYSTEM_SHUTDOWN);
+            KeSetKernelStackSwapEnable(TRUE);
+            PsTerminateSystemThread(STATUS_SYSTEM_SHUTDOWN);
         }
 
         NewWorkerInfo.QueueWorkerInfo = OldWorkerInfo.QueueWorkerInfo;
@@ -1097,9 +1037,8 @@ ExpWorkerThread (
 
     } while (OldWorkerInfo.QueueWorkerInfo !=
 
-        InterlockedCompareExchange (&WorkerQueue->Info.QueueWorkerInfo,
-                                    NewWorkerInfo.QueueWorkerInfo,
-                                    OldWorkerInfo.QueueWorkerInfo));
+             InterlockedCompareExchange(&WorkerQueue->Info.QueueWorkerInfo, NewWorkerInfo.QueueWorkerInfo,
+                                        OldWorkerInfo.QueueWorkerInfo));
 
     //
     // As of this point, we must only exit if we decrement the worker
@@ -1115,7 +1054,8 @@ ExpWorkerThread (
     // routine, and then waiting for another work queue item.
     //
 
-    do {
+    do
+    {
 
         //
         // Wait until something is put in the queue or until we time out.
@@ -1124,11 +1064,10 @@ ExpWorkerThread (
         // stack is swappable.
         //
 
-        Entry = KeRemoveQueue (&WorkerQueue->WorkerQueue,
-                               WaitMode,
-                               Timeout);
+        Entry = KeRemoveQueue(&WorkerQueue->WorkerQueue, WaitMode, Timeout);
 
-        if ((ULONG_PTR)Entry != STATUS_TIMEOUT) {
+        if ((ULONG_PTR)Entry != STATUS_TIMEOUT)
+        {
 
             //
             // This is a real work item, process it.
@@ -1136,7 +1075,7 @@ ExpWorkerThread (
             // Update the total number of work items processed.
             //
 
-            InterlockedIncrement ((PLONG)&WorkerQueue->WorkItemsProcessed);
+            InterlockedIncrement((PLONG)&WorkerQueue->WorkItemsProcessed);
 
             WorkItem = CONTAINING_RECORD(Entry, WORK_QUEUE_ITEM, List);
             WorkerRoutine = WorkItem->WorkerRoutine;
@@ -1146,7 +1085,7 @@ ExpWorkerThread (
             // Execute the specified routine.
             //
 
-            ((PWORKER_THREAD_ROUTINE)WorkerRoutine) (Parameter);
+            ((PWORKER_THREAD_ROUTINE)WorkerRoutine)(Parameter);
 
             //
             // Catch worker routines that forget to do KeLeaveCriticalRegion.
@@ -1155,30 +1094,24 @@ ExpWorkerThread (
             // APCs can continue to fire to this thread.
             //
 
-            if (Thread->Tcb.KernelApcDisable != 0) {
-                DbgPrint ((char*)ExpWorkerApcDisabledMessage,
-                          WorkerRoutine,
-                          Parameter,
-                          WorkItem);
-                ASSERT (FALSE);
+            if (Thread->Tcb.KernelApcDisable != 0)
+            {
+                DbgPrint((char *)ExpWorkerApcDisabledMessage, WorkerRoutine, Parameter, WorkItem);
+                ASSERT(FALSE);
 
                 Thread->Tcb.KernelApcDisable = 0;
             }
 
-            if (KeGetCurrentIrql () != PASSIVE_LEVEL) {
-                KeBugCheckEx (WORKER_THREAD_RETURNED_AT_BAD_IRQL,
-                              (ULONG_PTR)WorkerRoutine,
-                              (ULONG_PTR)KeGetCurrentIrql(),
-                              (ULONG_PTR)Parameter,
-                              (ULONG_PTR)WorkItem);
+            if (KeGetCurrentIrql() != PASSIVE_LEVEL)
+            {
+                KeBugCheckEx(WORKER_THREAD_RETURNED_AT_BAD_IRQL, (ULONG_PTR)WorkerRoutine,
+                             (ULONG_PTR)KeGetCurrentIrql(), (ULONG_PTR)Parameter, (ULONG_PTR)WorkItem);
             }
 
-            if (PS_IS_THREAD_IMPERSONATING (Thread)) {
-                KeBugCheckEx (IMPERSONATING_WORKER_THREAD,
-                              (ULONG_PTR)WorkerRoutine,
-                              (ULONG_PTR)Parameter,
-                              (ULONG_PTR)WorkItem,
-                              0);
+            if (PS_IS_THREAD_IMPERSONATING(Thread))
+            {
+                KeBugCheckEx(IMPERSONATING_WORKER_THREAD, (ULONG_PTR)WorkerRoutine, (ULONG_PTR)Parameter,
+                             (ULONG_PTR)WorkItem, 0);
             }
 
             continue;
@@ -1194,7 +1127,8 @@ ExpWorkerThread (
         //   to do.
         //
 
-        if (IsListEmpty (&Thread->IrpList) == FALSE) {
+        if (IsListEmpty(&Thread->IrpList) == FALSE)
+        {
 
             //
             // There is still I/O pending, can't terminate yet.
@@ -1207,10 +1141,12 @@ ExpWorkerThread (
         // Get out of the queue, if we can
         //
 
-        do {
+        do
+        {
             OldWorkerInfo.QueueWorkerInfo = WorkerQueue->Info.QueueWorkerInfo;
 
-            if (OldWorkerInfo.QueueDisabled) {
+            if (OldWorkerInfo.QueueDisabled)
+            {
 
                 //
                 // We're exiting via the queue disable work item;
@@ -1223,12 +1159,12 @@ ExpWorkerThread (
             NewWorkerInfo.QueueWorkerInfo = OldWorkerInfo.QueueWorkerInfo;
             NewWorkerInfo.WorkerCount -= 1;
 
-        } while (OldWorkerInfo.QueueWorkerInfo
-                 != InterlockedCompareExchange(&WorkerQueue->Info.QueueWorkerInfo,
-                                               NewWorkerInfo.QueueWorkerInfo,
-                                               OldWorkerInfo.QueueWorkerInfo));
+        } while (OldWorkerInfo.QueueWorkerInfo != InterlockedCompareExchange(&WorkerQueue->Info.QueueWorkerInfo,
+                                                                             NewWorkerInfo.QueueWorkerInfo,
+                                                                             OldWorkerInfo.QueueWorkerInfo));
 
-        if (OldWorkerInfo.QueueDisabled) {
+        if (OldWorkerInfo.QueueDisabled)
+        {
 
             //
             // We're exiting via the queue disable work item
@@ -1249,7 +1185,7 @@ ExpWorkerThread (
     // Terminate this dynamic thread.
     //
 
-    InterlockedDecrement ((PLONG)&WorkerQueue->DynamicThreadCount);
+    InterlockedDecrement((PLONG)&WorkerQueue->DynamicThreadCount);
 
     //
     // Carefully clear this before marking the thread stack as swap enabled
@@ -1264,33 +1200,27 @@ ExpWorkerThread (
     // disabled.
     //
 
-    KeSetKernelStackSwapEnable (TRUE);
+    KeSetKernelStackSwapEnable(TRUE);
 
     return;
 }
 
-VOID
-ExpSetSwappingKernelApc (
-    IN PKAPC Apc,
-    OUT PKNORMAL_ROUTINE *NormalRoutine,
-    IN OUT PVOID NormalContext,
-    IN OUT PVOID *SystemArgument1,
-    IN OUT PVOID *SystemArgument2
-    )
+VOID ExpSetSwappingKernelApc(IN PKAPC Apc, OUT PKNORMAL_ROUTINE *NormalRoutine, IN OUT PVOID NormalContext,
+                             IN OUT PVOID *SystemArgument1, IN OUT PVOID *SystemArgument2)
 {
     PBOOLEAN AllowSwap;
     PKEVENT SwapSetEvent;
 
-    UNREFERENCED_PARAMETER (Apc);
-    UNREFERENCED_PARAMETER (NormalRoutine);
-    UNREFERENCED_PARAMETER (SystemArgument2);
+    UNREFERENCED_PARAMETER(Apc);
+    UNREFERENCED_PARAMETER(NormalRoutine);
+    UNREFERENCED_PARAMETER(SystemArgument2);
 
     //
     // SystemArgument1 is a pointer to the event to signal once this
     // thread has finished servicing the request.
     //
 
-    SwapSetEvent = (PKEVENT) *SystemArgument1;
+    SwapSetEvent = (PKEVENT)*SystemArgument1;
 
     //
     // Don't disable stack swapping if the thread is exiting because
@@ -1298,18 +1228,16 @@ ExpSetSwappingKernelApc (
     // too since the thread is bailing anyway.
     //
 
-    if (PsGetCurrentThread()->ActiveExWorker != 0) {
+    if (PsGetCurrentThread()->ActiveExWorker != 0)
+    {
         AllowSwap = NormalContext;
-        KeSetKernelStackSwapEnable (*AllowSwap);
+        KeSetKernelStackSwapEnable(*AllowSwap);
     }
 
-    KeSetEvent (SwapSetEvent, 0, FALSE);
+    KeSetEvent(SwapSetEvent, 0, FALSE);
 }
 
-VOID
-ExSwapinWorkerThreads (
-    IN BOOLEAN AllowSwap
-    )
+VOID ExSwapinWorkerThreads(IN BOOLEAN AllowSwap)
 
 /*++
 
@@ -1330,19 +1258,17 @@ Return Value:
 --*/
 
 {
-    PETHREAD         Thread;
-    PETHREAD         CurrentThread;
-    PEPROCESS        Process;
-    KAPC             Apc;
-    KEVENT           SwapSetEvent;
+    PETHREAD Thread;
+    PETHREAD CurrentThread;
+    PEPROCESS Process;
+    KAPC Apc;
+    KEVENT SwapSetEvent;
 
     PAGED_CODE();
 
     CurrentThread = PsGetCurrentThread();
 
-    KeInitializeEvent (&SwapSetEvent,
-                       NotificationEvent,
-                       FALSE);
+    KeInitializeEvent(&SwapSetEvent, NotificationEvent, FALSE);
 
     Process = PsInitialSystemProcess;
 
@@ -1350,7 +1276,7 @@ Return Value:
     // Serialize callers.
     //
 
-    ExAcquireFastMutex (&ExpWorkerSwapinMutex);
+    ExAcquireFastMutex(&ExpWorkerSwapinMutex);
 
     //
     // Stop new threads from swapping.
@@ -1362,70 +1288,63 @@ Return Value:
     // Stop existing worker threads from swapping.
     //
 
-    for (Thread = PsGetNextProcessThread (Process, NULL);
-         Thread != NULL;
-         Thread = PsGetNextProcessThread (Process, Thread)) {
+    for (Thread = PsGetNextProcessThread(Process, NULL); Thread != NULL;
+         Thread = PsGetNextProcessThread(Process, Thread))
+    {
 
         //
         // Skip threads that are not worker threads or worker threads that
         // were permanently marked noswap at creation time.
         //
 
-        if (Thread->ExWorkerCanWaitUser == 0) {
+        if (Thread->ExWorkerCanWaitUser == 0)
+        {
             continue;
         }
 
-        if (Thread == CurrentThread) {
+        if (Thread == CurrentThread)
+        {
 
             //
             // No need to use an APC on the current thread.
             //
 
-            KeSetKernelStackSwapEnable (AllowSwap);
+            KeSetKernelStackSwapEnable(AllowSwap);
         }
-        else {
+        else
+        {
 
             //
             // Queue an APC to the thread, and wait for it to fire:
             //
 
-            KeInitializeApc (&Apc,
-                             &Thread->Tcb,
-                             InsertApcEnvironment,
-                             ExpSetSwappingKernelApc,
-                             NULL,
-                             NULL,
-                             KernelMode,
-                             &AllowSwap);
+            KeInitializeApc(&Apc, &Thread->Tcb, InsertApcEnvironment, ExpSetSwappingKernelApc, NULL, NULL, KernelMode,
+                            &AllowSwap);
 
-            if (KeInsertQueueApc (&Apc, &SwapSetEvent, NULL, 3)) {
+            if (KeInsertQueueApc(&Apc, &SwapSetEvent, NULL, 3))
+            {
 
-                KeWaitForSingleObject (&SwapSetEvent,
-                                       Executive,
-                                       KernelMode,
-                                       FALSE,
-                                       NULL);
+                KeWaitForSingleObject(&SwapSetEvent, Executive, KernelMode, FALSE, NULL);
 
                 KeClearEvent(&SwapSetEvent);
             }
         }
     }
 
-    ExReleaseFastMutex (&ExpWorkerSwapinMutex);
+    ExReleaseFastMutex(&ExpWorkerSwapinMutex);
 }
 
 LOGICAL
-ExpCheckQueueShutdown (
-    IN WORK_QUEUE_TYPE QueueType,
-    IN PSHUTDOWN_WORK_ITEM ShutdownItem
-    )
+ExpCheckQueueShutdown(IN WORK_QUEUE_TYPE QueueType, IN PSHUTDOWN_WORK_ITEM ShutdownItem)
 {
     ULONG CountForQueueEmpty;
 
-    if (PO_SHUTDOWN_QUEUE == QueueType) {
+    if (PO_SHUTDOWN_QUEUE == QueueType)
+    {
         CountForQueueEmpty = 1;
     }
-    else {
+    else
+    {
         CountForQueueEmpty = 0;
     }
 
@@ -1439,7 +1358,8 @@ ExpCheckQueueShutdown (
     // See ExpWorkerThread, ExpShutdownWorker, and ExpShutdownWorkerThreads.
     //
 
-    if (ExWorkerQueue[QueueType].Info.WorkerCount > CountForQueueEmpty) {
+    if (ExWorkerQueue[QueueType].Info.WorkerCount > CountForQueueEmpty)
+    {
 
         //
         // There're still worker threads; send one of them the axe.
@@ -1447,29 +1367,26 @@ ExpCheckQueueShutdown (
 
         ShutdownItem->QueueType = QueueType;
         ShutdownItem->PrevThread = PsGetCurrentThread();
-        ObReferenceObject (ShutdownItem->PrevThread);
+        ObReferenceObject(ShutdownItem->PrevThread);
 
-        KeInsertQueue (&ExWorkerQueue[QueueType].WorkerQueue,
-                       &ShutdownItem->WorkItem.List);
+        KeInsertQueue(&ExWorkerQueue[QueueType].WorkerQueue, &ShutdownItem->WorkItem.List);
         return TRUE;
     }
 
-    return FALSE;               // we did not queue a shutdown
+    return FALSE; // we did not queue a shutdown
 }
 
-VOID
-ExpShutdownWorker (
-    IN PVOID Parameter
-    )
+VOID ExpShutdownWorker(IN PVOID Parameter)
 {
     PETHREAD CurrentThread;
-    PSHUTDOWN_WORK_ITEM  ShutdownItem;
+    PSHUTDOWN_WORK_ITEM ShutdownItem;
 
-    ShutdownItem = (PSHUTDOWN_WORK_ITEM) Parameter;
+    ShutdownItem = (PSHUTDOWN_WORK_ITEM)Parameter;
 
-    ASSERT (ShutdownItem != NULL);
+    ASSERT(ShutdownItem != NULL);
 
-    if (ShutdownItem->PrevThread != NULL) {
+    if (ShutdownItem->PrevThread != NULL)
+    {
 
         //
         // Wait for the previous thread to exit -- if it's in the same
@@ -1477,13 +1394,9 @@ ExpShutdownWorker (
         // (and if it's not, we *definitely* need to make sure).
         //
 
-        KeWaitForSingleObject (ShutdownItem->PrevThread,
-                               Executive,
-                               KernelMode,
-                               FALSE,
-                               NULL);
+        KeWaitForSingleObject(ShutdownItem->PrevThread, Executive, KernelMode, FALSE, NULL);
 
-        ObDereferenceObject (ShutdownItem->PrevThread);
+        ObDereferenceObject(ShutdownItem->PrevThread);
 
         ShutdownItem->PrevThread = NULL;
     }
@@ -1492,43 +1405,41 @@ ExpShutdownWorker (
     // Decrement the worker count.
     //
 
-    InterlockedDecrement (&ExWorkerQueue[ShutdownItem->QueueType].Info.QueueWorkerInfo);
+    InterlockedDecrement(&ExWorkerQueue[ShutdownItem->QueueType].Info.QueueWorkerInfo);
 
     CurrentThread = PsGetCurrentThread();
 
     if ((!ExpCheckQueueShutdown(DelayedWorkQueue, ShutdownItem)) &&
-        (!ExpCheckQueueShutdown(CriticalWorkQueue, ShutdownItem))) {
+        (!ExpCheckQueueShutdown(CriticalWorkQueue, ShutdownItem)))
+    {
 
         //
         // We're the last worker to exit
         //
 
-        ASSERT (!ExpLastWorkerThread);
+        ASSERT(!ExpLastWorkerThread);
         ExpLastWorkerThread = CurrentThread;
-        ObReferenceObject (ExpLastWorkerThread);
-        KeSetEvent (&ExpThreadSetManagerShutdownEvent, 0, FALSE);
+        ObReferenceObject(ExpLastWorkerThread);
+        KeSetEvent(&ExpThreadSetManagerShutdownEvent, 0, FALSE);
     }
 
-    KeSetKernelStackSwapEnable (TRUE);
+    KeSetKernelStackSwapEnable(TRUE);
     CurrentThread->ActiveExWorker = 0;
 
-    PsTerminateSystemThread (STATUS_SYSTEM_SHUTDOWN);
+    PsTerminateSystemThread(STATUS_SYSTEM_SHUTDOWN);
 }
 
-VOID
-ExpShutdownWorkerThreads (
-    VOID
-    )
+VOID ExpShutdownWorkerThreads(VOID)
 {
     PULONG QueueEnable;
     SHUTDOWN_WORK_ITEM ShutdownItem;
 
-    if ((PoCleanShutdownEnabled () & PO_CLEAN_SHUTDOWN_WORKERS) == 0) {
+    if ((PoCleanShutdownEnabled() & PO_CLEAN_SHUTDOWN_WORKERS) == 0)
+    {
         return;
     }
 
-    ASSERT (KeGetCurrentThread()->Queue
-           == &ExWorkerQueue[PO_SHUTDOWN_QUEUE].WorkerQueue);
+    ASSERT(KeGetCurrentThread()->Queue == &ExWorkerQueue[PO_SHUTDOWN_QUEUE].WorkerQueue);
 
     //
     // Mark the queues as terminating.
@@ -1536,10 +1447,10 @@ ExpShutdownWorkerThreads (
 
     QueueEnable = (PULONG)&ExWorkerQueue[DelayedWorkQueue].Info.QueueWorkerInfo;
 
-    RtlInterlockedSetBitsDiscardReturn (QueueEnable, EX_WORKER_QUEUE_DISABLED);
+    RtlInterlockedSetBitsDiscardReturn(QueueEnable, EX_WORKER_QUEUE_DISABLED);
 
     QueueEnable = (PULONG)&ExWorkerQueue[CriticalWorkQueue].Info.QueueWorkerInfo;
-    RtlInterlockedSetBitsDiscardReturn (QueueEnable, EX_WORKER_QUEUE_DISABLED);
+    RtlInterlockedSetBitsDiscardReturn(QueueEnable, EX_WORKER_QUEUE_DISABLED);
 
     //
     // Queue the shutdown work item to the delayed work queue.  After
@@ -1548,27 +1459,21 @@ ExpShutdownWorkerThreads (
     // they're all done.
     //
 
-    ExInitializeWorkItem (&ShutdownItem.WorkItem,
-                          &ExpShutdownWorker,
-                          &ShutdownItem);
+    ExInitializeWorkItem(&ShutdownItem.WorkItem, &ExpShutdownWorker, &ShutdownItem);
 
     ShutdownItem.QueueType = DelayedWorkQueue;
     ShutdownItem.PrevThread = NULL;
 
-    KeInsertQueue (&ExWorkerQueue[DelayedWorkQueue].WorkerQueue,
-                   &ShutdownItem.WorkItem.List);
+    KeInsertQueue(&ExWorkerQueue[DelayedWorkQueue].WorkerQueue, &ShutdownItem.WorkItem.List);
 
     //
     // Wait for all of the workers and the balancer to exit.
     //
 
-    if (ExpWorkerThreadBalanceManagerPtr != NULL) {
+    if (ExpWorkerThreadBalanceManagerPtr != NULL)
+    {
 
-        KeWaitForSingleObject(ExpWorkerThreadBalanceManagerPtr,
-                              Executive,
-                              KernelMode,
-                              FALSE,
-                              NULL);
+        KeWaitForSingleObject(ExpWorkerThreadBalanceManagerPtr, Executive, KernelMode, FALSE, NULL);
 
         ASSERT(!ShutdownItem.PrevThread);
 
@@ -1576,10 +1481,7 @@ ExpShutdownWorkerThreads (
     }
 }
 
-VOID
-ExpDebuggerWorker(
-    IN PVOID Context
-    )
+VOID ExpDebuggerWorker(IN PVOID Context)
 /*++
 
 Routine Description:
@@ -1601,16 +1503,16 @@ Return Value:
 
 {
     NTSTATUS Status;
-    KAPC_STATE  ApcState;
+    KAPC_STATE ApcState;
     volatile UCHAR Data;
-    PRKPROCESS  AttachProcess = (PRKPROCESS) ExpDebuggerProcessAttach;
-    PUCHAR PageIn = (PUCHAR) ExpDebuggerPageIn;
+    PRKPROCESS AttachProcess = (PRKPROCESS)ExpDebuggerProcessAttach;
+    PUCHAR PageIn = (PUCHAR)ExpDebuggerPageIn;
     PEPROCESS Process;
 
     ExpDebuggerProcessAttach = 0;
     ExpDebuggerPageIn = 0;
 
-    UNREFERENCED_PARAMETER (Context);
+    UNREFERENCED_PARAMETER(Context);
 
 #if DBG
     if (ExpDebuggerWork != 2)
@@ -1623,31 +1525,37 @@ Return Value:
 
 
     Process = NULL;
-    if (AttachProcess) {
-        for (Process =  PsGetNextProcess (NULL);
-             Process != NULL;
-             Process =  PsGetNextProcess (Process)) {
-            if (&Process->Pcb ==  AttachProcess) {
-                KeStackAttachProcess (AttachProcess, &ApcState);
+    if (AttachProcess)
+    {
+        for (Process = PsGetNextProcess(NULL); Process != NULL; Process = PsGetNextProcess(Process))
+        {
+            if (&Process->Pcb == AttachProcess)
+            {
+                KeStackAttachProcess(AttachProcess, &ApcState);
                 break;
             }
         }
     }
 
-    if (PageIn) {
-        try {
-            ProbeForReadSmallStructure (PageIn, sizeof (UCHAR), sizeof (UCHAR));
+    if (PageIn)
+    {
+        try
+        {
+            ProbeForReadSmallStructure(PageIn, sizeof(UCHAR), sizeof(UCHAR));
             Data = *PageIn;
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             Status = GetExceptionCode();
         }
     }
 
     DbgBreakPointWithStatus(DBG_STATUS_WORKER);
 
-    if (Process != NULL) {
-        KeUnstackDetachProcess (&ApcState);
-        PsQuitNextProcess (Process);
+    if (Process != NULL)
+    {
+        KeUnstackDetachProcess(&ApcState);
+        PsQuitNextProcess(Process);
     }
 
     return;

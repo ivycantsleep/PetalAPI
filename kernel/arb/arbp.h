@@ -22,7 +22,7 @@
 #else
 
 //
-// If we are building the library for bus drivers to use make sure we use the 
+// If we are building the library for bus drivers to use make sure we use the
 // same definitions of things as them
 //
 
@@ -31,33 +31,20 @@
 #endif
 
 #include "arbiter.h"
-#include <stdlib.h>     // for __min and __max
+#include <stdlib.h> // for __min and __max
 
 
 #if ARB_DBG
 
-extern const CHAR* ArbpActionStrings[];
+extern const CHAR *ArbpActionStrings[];
 extern ULONG ArbStopOnError;
 extern ULONG ArbReplayOnError;
 
-VOID
-ArbDumpArbiterInstance(
-    LONG Level,
-    PARBITER_INSTANCE Arbiter
-    );
+VOID ArbDumpArbiterInstance(LONG Level, PARBITER_INSTANCE Arbiter);
 
-VOID
-ArbDumpArbiterRange(
-    LONG Level,
-    PRTL_RANGE_LIST List,
-    PUCHAR RangeText
-    );
+VOID ArbDumpArbiterRange(LONG Level, PRTL_RANGE_LIST List, PUCHAR RangeText);
 
-VOID
-ArbDumpArbitrationList(
-    LONG Level,
-    PLIST_ENTRY ArbitrationList
-    );
+VOID ArbDumpArbitrationList(LONG Level, PLIST_ENTRY ArbitrationList);
 
 #endif // ARB_DBG
 

@@ -32,39 +32,24 @@ Revision History:
 
 
 NTSTATUS
-SepCreateImpersonationTokenDacl(
-    IN PTOKEN Token,
-    IN PACCESS_TOKEN PrimaryToken,
-    OUT PACL *Acl
-    );
+SepCreateImpersonationTokenDacl(IN PTOKEN Token, IN PACCESS_TOKEN PrimaryToken, OUT PACL *Acl);
 
 #ifdef ALLOC_PRAGMA
 NTSTATUS
-SepOpenTokenOfThread(
-    IN HANDLE ThreadHandle,
-    IN BOOLEAN OpenAsSelf,
-    OUT PACCESS_TOKEN *Token,
-    OUT PETHREAD *Thread,
-    OUT PBOOLEAN CopyOnOpen,
-    OUT PBOOLEAN EffectiveOnly,
-    OUT PSECURITY_IMPERSONATION_LEVEL ImpersonationLevel
-    );
-#pragma alloc_text(PAGE,SepCreateImpersonationTokenDacl)
-#pragma alloc_text(PAGE,NtOpenProcessToken)
-#pragma alloc_text(PAGE,NtOpenProcessTokenEx)
-#pragma alloc_text(PAGE,SepOpenTokenOfThread)
-#pragma alloc_text(PAGE,NtOpenThreadToken)
-#pragma alloc_text(PAGE,NtOpenThreadTokenEx)
+SepOpenTokenOfThread(IN HANDLE ThreadHandle, IN BOOLEAN OpenAsSelf, OUT PACCESS_TOKEN *Token, OUT PETHREAD *Thread,
+                     OUT PBOOLEAN CopyOnOpen, OUT PBOOLEAN EffectiveOnly,
+                     OUT PSECURITY_IMPERSONATION_LEVEL ImpersonationLevel);
+#pragma alloc_text(PAGE, SepCreateImpersonationTokenDacl)
+#pragma alloc_text(PAGE, NtOpenProcessToken)
+#pragma alloc_text(PAGE, NtOpenProcessTokenEx)
+#pragma alloc_text(PAGE, SepOpenTokenOfThread)
+#pragma alloc_text(PAGE, NtOpenThreadToken)
+#pragma alloc_text(PAGE, NtOpenThreadTokenEx)
 #endif
 
 
-
 NTSTATUS
-SepCreateImpersonationTokenDacl(
-    IN PTOKEN Token,
-    IN PACCESS_TOKEN PrimaryToken,
-    OUT PACL *Acl
-    )
+SepCreateImpersonationTokenDacl(IN PTOKEN Token, IN PACCESS_TOKEN PrimaryToken, OUT PACL *Acl)
 /*++
 
 Routine Description:
@@ -123,63 +108,38 @@ Return Value:
     // Compute how much space we'll need for the new DACL.
     //
 
-    AclLength = 5 * sizeof( ACCESS_ALLOWED_ACE ) - 5 * sizeof( ULONG ) +
-                SeLengthSid( ServerUserSid ) + SeLengthSid( SeLocalSystemSid ) +
-                SeLengthSid( ClientUserSid ) + SeLengthSid( SeAliasAdminsSid ) +
-                SeLengthSid( SeRestrictedSid ) + sizeof( ACL );
+    AclLength = 5 * sizeof(ACCESS_ALLOWED_ACE) - 5 * sizeof(ULONG) + SeLengthSid(ServerUserSid) +
+                SeLengthSid(SeLocalSystemSid) + SeLengthSid(ClientUserSid) + SeLengthSid(SeAliasAdminsSid) +
+                SeLengthSid(SeRestrictedSid) + sizeof(ACL);
 
-    NewDacl = ExAllocatePool( PagedPool, AclLength );
+    NewDacl = ExAllocatePool(PagedPool, AclLength);
 
-    if (NewDacl == NULL) {
+    if (NewDacl == NULL)
+    {
 
         *Acl = NULL;
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    Status = RtlCreateAcl( NewDacl, AclLength, ACL_REVISION2 );
-    ASSERT(NT_SUCCESS( Status ));
+    Status = RtlCreateAcl(NewDacl, AclLength, ACL_REVISION2);
+    ASSERT(NT_SUCCESS(Status));
 
-    Status = RtlAddAccessAllowedAce (
-                 NewDacl,
-                 ACL_REVISION2,
-                 TOKEN_ALL_ACCESS,
-                 ServerUserSid
-                 );
-    ASSERT( NT_SUCCESS( Status ));
+    Status = RtlAddAccessAllowedAce(NewDacl, ACL_REVISION2, TOKEN_ALL_ACCESS, ServerUserSid);
+    ASSERT(NT_SUCCESS(Status));
 
-    Status = RtlAddAccessAllowedAce (
-                 NewDacl,
-                 ACL_REVISION2,
-                 TOKEN_ALL_ACCESS,
-                 ClientUserSid
-                 );
-    ASSERT( NT_SUCCESS( Status ));
+    Status = RtlAddAccessAllowedAce(NewDacl, ACL_REVISION2, TOKEN_ALL_ACCESS, ClientUserSid);
+    ASSERT(NT_SUCCESS(Status));
 
-    Status = RtlAddAccessAllowedAce (
-                 NewDacl,
-                 ACL_REVISION2,
-                 TOKEN_ALL_ACCESS,
-                 SeAliasAdminsSid
-                 );
-    ASSERT( NT_SUCCESS( Status ));
+    Status = RtlAddAccessAllowedAce(NewDacl, ACL_REVISION2, TOKEN_ALL_ACCESS, SeAliasAdminsSid);
+    ASSERT(NT_SUCCESS(Status));
 
-    Status = RtlAddAccessAllowedAce (
-                 NewDacl,
-                 ACL_REVISION2,
-                 TOKEN_ALL_ACCESS,
-                 SeLocalSystemSid
-                 );
-    ASSERT( NT_SUCCESS( Status ));
+    Status = RtlAddAccessAllowedAce(NewDacl, ACL_REVISION2, TOKEN_ALL_ACCESS, SeLocalSystemSid);
+    ASSERT(NT_SUCCESS(Status));
 
-    if(ARGUMENT_PRESENT(((PTOKEN)PrimaryToken)->RestrictedSids) ||
-       ARGUMENT_PRESENT(Token->RestrictedSids)) {
-        Status = RtlAddAccessAllowedAce (
-                     NewDacl,
-                     ACL_REVISION2,
-                     TOKEN_ALL_ACCESS,
-                     SeRestrictedSid
-                     );
-        ASSERT( NT_SUCCESS( Status ));
+    if (ARGUMENT_PRESENT(((PTOKEN)PrimaryToken)->RestrictedSids) || ARGUMENT_PRESENT(Token->RestrictedSids))
+    {
+        Status = RtlAddAccessAllowedAce(NewDacl, ACL_REVISION2, TOKEN_ALL_ACCESS, SeRestrictedSid);
+        ASSERT(NT_SUCCESS(Status));
     }
 
     *Acl = NewDacl;
@@ -187,13 +147,8 @@ Return Value:
 }
 
 
-
 NTSTATUS
-NtOpenProcessToken(
-    IN HANDLE ProcessHandle,
-    IN ACCESS_MASK DesiredAccess,
-    OUT PHANDLE TokenHandle
-    )
+NtOpenProcessToken(IN HANDLE ProcessHandle, IN ACCESS_MASK DesiredAccess, OUT PHANDLE TokenHandle)
 
 /*++
 
@@ -220,19 +175,12 @@ Return Value:
 
 --*/
 {
-    return NtOpenProcessTokenEx (ProcessHandle,
-                                 DesiredAccess,
-                                 0,
-                                 TokenHandle);
+    return NtOpenProcessTokenEx(ProcessHandle, DesiredAccess, 0, TokenHandle);
 }
-
+
 NTSTATUS
-NtOpenProcessTokenEx(
-    IN HANDLE ProcessHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN ULONG HandleAttributes,
-    OUT PHANDLE TokenHandle
-    )
+NtOpenProcessTokenEx(IN HANDLE ProcessHandle, IN ACCESS_MASK DesiredAccess, IN ULONG HandleAttributes,
+                     OUT PHANDLE TokenHandle)
 
 /*++
 
@@ -275,7 +223,8 @@ Return Value:
     //
     // Reject bad flags
     //
-    if (HandleAttributes&~OBJ_KERNEL_HANDLE) {
+    if (HandleAttributes & ~OBJ_KERNEL_HANDLE)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -283,15 +232,18 @@ Return Value:
     //  Probe parameters
     //
 
-    if (PreviousMode != KernelMode) {
+    if (PreviousMode != KernelMode)
+    {
 
-        try {
+        try
+        {
 
             ProbeForWriteHandle(TokenHandle);
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
-        }  // end_try
+        } // end_try
 
         HandleAttributes &= ~OBJ_KERNEL_HANDLE;
     } //end_if
@@ -303,9 +255,10 @@ Return Value:
     // reference count to be incremented.
     //
 
-    Status = PsOpenTokenOfProcess( ProcessHandle, ((PACCESS_TOKEN *)&Token));
+    Status = PsOpenTokenOfProcess(ProcessHandle, ((PACCESS_TOKEN *)&Token));
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
@@ -313,15 +266,14 @@ Return Value:
     //  Now try to open the token for the specified desired access
     //
 
-    Status = ObOpenObjectByPointer(
-                 (PVOID)Token,         // Object
-                 HandleAttributes,     // HandleAttributes
-                 NULL,                 // AccessState
-                 DesiredAccess,        // DesiredAccess
-                 SeTokenObjectType,   // ObjectType
-                 PreviousMode,         // AccessMode
-                 &LocalHandle          // Handle
-                 );
+    Status = ObOpenObjectByPointer((PVOID)Token,      // Object
+                                   HandleAttributes,  // HandleAttributes
+                                   NULL,              // AccessState
+                                   DesiredAccess,     // DesiredAccess
+                                   SeTokenObjectType, // ObjectType
+                                   PreviousMode,      // AccessMode
+                                   &LocalHandle       // Handle
+    );
 
     //
     //  And decrement the reference count of the token to counter
@@ -330,39 +282,34 @@ Return Value:
     //  reference count to have been incremented.
     //
 
-    ObDereferenceObject( Token );
+    ObDereferenceObject(Token);
 
     //
     //  Return the new handle
     //
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
-        try {
+        try
+        {
 
             *TokenHandle = LocalHandle;
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             return GetExceptionCode();
-
         }
     }
 
     return Status;
-
 }
-
+
 NTSTATUS
-SepOpenTokenOfThread(
-    IN HANDLE ThreadHandle,
-    IN BOOLEAN OpenAsSelf,
-    OUT PACCESS_TOKEN *Token,
-    OUT PETHREAD *Thread,
-    OUT PBOOLEAN CopyOnOpen,
-    OUT PBOOLEAN EffectiveOnly,
-    OUT PSECURITY_IMPERSONATION_LEVEL ImpersonationLevel
-    )
+SepOpenTokenOfThread(IN HANDLE ThreadHandle, IN BOOLEAN OpenAsSelf, OUT PACCESS_TOKEN *Token, OUT PETHREAD *Thread,
+                     OUT PBOOLEAN CopyOnOpen, OUT PBOOLEAN EffectiveOnly,
+                     OUT PSECURITY_IMPERSONATION_LEVEL ImpersonationLevel)
 
 /*++
 
@@ -421,16 +368,16 @@ Return Value:
 {
 
     NTSTATUS
-        Status;
+    Status;
 
     KPROCESSOR_MODE
-        PreviousMode;
+    PreviousMode;
 
     SE_IMPERSONATION_STATE
-        DisabledImpersonationState;
+    DisabledImpersonationState;
 
     BOOLEAN
-        RestoreImpersonationState = FALSE;
+    RestoreImpersonationState = FALSE;
 
     PAGED_CODE();
 
@@ -442,16 +389,11 @@ Return Value:
     //  thread.
     //
 
-    Status = ObReferenceObjectByHandle(
-                 ThreadHandle,
-                 THREAD_QUERY_INFORMATION,
-                 PsThreadType,
-                 PreviousMode,
-                 (PVOID *)Thread,
-                 NULL
-                 );
+    Status = ObReferenceObjectByHandle(ThreadHandle, THREAD_QUERY_INFORMATION, PsThreadType, PreviousMode,
+                                       (PVOID *)Thread, NULL);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
@@ -459,21 +401,16 @@ Return Value:
     //  Reference the impersonation token, if there is one
     //
 
-    (*Token) = PsReferenceImpersonationToken( *Thread,
-                                              CopyOnOpen,
-                                              EffectiveOnly,
-                                              ImpersonationLevel
-                                              );
-
-
+    (*Token) = PsReferenceImpersonationToken(*Thread, CopyOnOpen, EffectiveOnly, ImpersonationLevel);
 
 
     //
     // Make sure there is a token
     //
 
-    if ((*Token) == NULL) {
-        ObDereferenceObject( *Thread );
+    if ((*Token) == NULL)
+    {
+        ObDereferenceObject(*Thread);
         (*Thread) = NULL;
         return STATUS_NO_TOKEN;
     }
@@ -484,9 +421,10 @@ Return Value:
     //  the token to be openned.
     //
 
-    if ((*ImpersonationLevel) <= SecurityAnonymous) {
-        PsDereferenceImpersonationToken( (*Token) );
-        ObDereferenceObject( *Thread );
+    if ((*ImpersonationLevel) <= SecurityAnonymous)
+    {
+        PsDereferenceImpersonationToken((*Token));
+        ObDereferenceObject(*Thread);
         (*Thread) = NULL;
         (*Token) = NULL;
         return STATUS_CANT_OPEN_ANONYMOUS;
@@ -494,17 +432,11 @@ Return Value:
 
 
     return STATUS_SUCCESS;
-
 }
 
-
+
 NTSTATUS
-NtOpenThreadToken(
-    IN HANDLE ThreadHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN BOOLEAN OpenAsSelf,
-    OUT PHANDLE TokenHandle
-    )
+NtOpenThreadToken(IN HANDLE ThreadHandle, IN ACCESS_MASK DesiredAccess, IN BOOLEAN OpenAsSelf, OUT PHANDLE TokenHandle)
 
 /*++
 
@@ -553,21 +485,12 @@ Return Value:
 
 --*/
 {
-    return NtOpenThreadTokenEx (ThreadHandle,
-                                DesiredAccess,
-                                OpenAsSelf,
-                                0,
-                                TokenHandle);
+    return NtOpenThreadTokenEx(ThreadHandle, DesiredAccess, OpenAsSelf, 0, TokenHandle);
 }
-
+
 NTSTATUS
-NtOpenThreadTokenEx(
-    IN HANDLE ThreadHandle,
-    IN ACCESS_MASK DesiredAccess,
-    IN BOOLEAN OpenAsSelf,
-    IN ULONG HandleAttributes,
-    OUT PHANDLE TokenHandle
-    )
+NtOpenThreadTokenEx(IN HANDLE ThreadHandle, IN ACCESS_MASK DesiredAccess, IN BOOLEAN OpenAsSelf,
+                    IN ULONG HandleAttributes, OUT PHANDLE TokenHandle)
 
 /*++
 
@@ -650,19 +573,23 @@ Return Value:
     //
     // Reject bad flags
     //
-    if (HandleAttributes&~OBJ_KERNEL_HANDLE) {
+    if (HandleAttributes & ~OBJ_KERNEL_HANDLE)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
-    if (PreviousMode != KernelMode) {
+    if (PreviousMode != KernelMode)
+    {
 
-        try {
+        try
+        {
 
             ProbeForWriteHandle(TokenHandle);
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
-        }  // end_try
+        } // end_try
 
         HandleAttributes &= ~OBJ_KERNEL_HANDLE;
 
@@ -677,16 +604,11 @@ Return Value:
     // honor the OpenAsSelf flag.
     //
 
-    Status = SepOpenTokenOfThread( ThreadHandle,
-                                  OpenAsSelf,
-                                  ((PACCESS_TOKEN *)&Token),
-                                  &OriginalThread,
-                                  &CopyOnOpen,
-                                  &EffectiveOnly,
-                                  &ImpersonationLevel
-                                  );
+    Status = SepOpenTokenOfThread(ThreadHandle, OpenAsSelf, ((PACCESS_TOKEN *)&Token), &OriginalThread, &CopyOnOpen,
+                                  &EffectiveOnly, &ImpersonationLevel);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
@@ -700,11 +622,9 @@ Return Value:
     // if necessary.
     //
 
-    if (OpenAsSelf) {
-         RestoreImpersonationState = PsDisableImpersonation(
-                                         PsGetCurrentThread(),
-                                         &DisabledImpersonationState
-                                         );
+    if (OpenAsSelf)
+    {
+        RestoreImpersonationState = PsDisableImpersonation(PsGetCurrentThread(), &DisabledImpersonationState);
     }
 
     //
@@ -713,7 +633,8 @@ Return Value:
     //  and a handle to the duplicate returned.
     //
 
-    if (CopyOnOpen) {
+    if (CopyOnOpen)
+    {
 
         //
         // Create the new security descriptor for the token.
@@ -725,39 +646,33 @@ Return Value:
         // SID of whoever is calling us, which isn't what we want.
         //
 
-        Status = ObReferenceObjectByHandle(
-                     ThreadHandle,
-                     THREAD_ALL_ACCESS,
-                     PsThreadType,
-                     KernelMode,
-                     (PVOID)&Thread,
-                     NULL
-                     );
+        Status =
+            ObReferenceObjectByHandle(ThreadHandle, THREAD_ALL_ACCESS, PsThreadType, KernelMode, (PVOID)&Thread, NULL);
 
         //
         // Verify that the handle is still pointer to the same thread
         //
 
-        if (NT_SUCCESS(Status) && (Thread != OriginalThread)) {
+        if (NT_SUCCESS(Status) && (Thread != OriginalThread))
+        {
             Status = STATUS_OBJECT_TYPE_MISMATCH;
         }
 
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
             PEPROCESS Process = THREAD_TO_PROCESS(Thread);
 
             PrimaryToken = PsReferencePrimaryToken(Process);
 
-            Status = SepCreateImpersonationTokenDacl(
-                         (PTOKEN)Token,
-                         PrimaryToken,
-                         &NewAcl
-                         );
+            Status = SepCreateImpersonationTokenDacl((PTOKEN)Token, PrimaryToken, &NewAcl);
 
-            PsDereferencePrimaryTokenEx( Process, PrimaryToken );
+            PsDereferencePrimaryTokenEx(Process, PrimaryToken);
 
-            if (NT_SUCCESS( Status )) {
+            if (NT_SUCCESS(Status))
+            {
 
-                if (NewAcl != NULL) {
+                if (NewAcl != NULL)
+                {
 
                     //
                     // There exist tokens that either do not have security descriptors at all,
@@ -765,42 +680,31 @@ Return Value:
                     // nothing.
                     //
 
-                    Status = RtlCreateSecurityDescriptor ( &SecurityDescriptor, SECURITY_DESCRIPTOR_REVISION );
-                    ASSERT( NT_SUCCESS( Status ));
+                    Status = RtlCreateSecurityDescriptor(&SecurityDescriptor, SECURITY_DESCRIPTOR_REVISION);
+                    ASSERT(NT_SUCCESS(Status));
 
-                    Status = RtlSetDaclSecurityDescriptor (
-                                 &SecurityDescriptor,
-                                 TRUE,
-                                 NewAcl,
-                                 FALSE
-                                 );
+                    Status = RtlSetDaclSecurityDescriptor(&SecurityDescriptor, TRUE, NewAcl, FALSE);
 
-                    ASSERT( NT_SUCCESS( Status ));
+                    ASSERT(NT_SUCCESS(Status));
                 }
 
-                InitializeObjectAttributes(
-                    &ObjectAttributes,
-                    NULL,
-                    HandleAttributes,
-                    NULL,
-                    NewAcl == NULL ? NULL : &SecurityDescriptor
-                    );
+                InitializeObjectAttributes(&ObjectAttributes, NULL, HandleAttributes, NULL,
+                                           NewAcl == NULL ? NULL : &SecurityDescriptor);
 
                 //
                 // Open a copy of the token
                 //
 
-                Status = SepDuplicateToken(
-                             (PTOKEN)Token,        // ExistingToken
-                             &ObjectAttributes,    // ObjectAttributes
-                             EffectiveOnly,        // EffectiveOnly
-                             TokenImpersonation,   // TokenType
-                             ImpersonationLevel,   // ImpersonationLevel
-                             KernelMode,           // RequestorMode must be kernel mode
-                             &NewToken
-                             );
+                Status = SepDuplicateToken((PTOKEN)Token,      // ExistingToken
+                                           &ObjectAttributes,  // ObjectAttributes
+                                           EffectiveOnly,      // EffectiveOnly
+                                           TokenImpersonation, // TokenType
+                                           ImpersonationLevel, // ImpersonationLevel
+                                           KernelMode,         // RequestorMode must be kernel mode
+                                           &NewToken);
 
-                if (NT_SUCCESS( Status )) {
+                if (NT_SUCCESS(Status))
+                {
 
                     //
                     // Reference the token so it doesn't go away
@@ -812,19 +716,13 @@ Return Value:
                     //  Insert the new token
                     //
 
-                    Status = ObInsertObject( NewToken,
-                                             NULL,
-                                             DesiredAccess,
-                                             0,
-                                             (PVOID *)NULL,
-                                             &LocalHandle
-                                             );
+                    Status = ObInsertObject(NewToken, NULL, DesiredAccess, 0, (PVOID *)NULL, &LocalHandle);
                 }
             }
         }
-
-
-    } else {
+    }
+    else
+    {
 
         //
         // We do not have to modify the security on the token in the static case,
@@ -842,26 +740,24 @@ Return Value:
         //  Open the existing token
         //
 
-        Status = ObOpenObjectByPointer(
-                     (PVOID)Token,         // Object
-                     HandleAttributes,     // HandleAttributes
-                     NULL,                 // AccessState
-                     DesiredAccess,        // DesiredAccess
-                     SeTokenObjectType,   // ObjectType
-                     PreviousMode,         // AccessMode
-                     &LocalHandle          // Handle
-                     );
+        Status = ObOpenObjectByPointer((PVOID)Token,      // Object
+                                       HandleAttributes,  // HandleAttributes
+                                       NULL,              // AccessState
+                                       DesiredAccess,     // DesiredAccess
+                                       SeTokenObjectType, // ObjectType
+                                       PreviousMode,      // AccessMode
+                                       &LocalHandle       // Handle
+        );
     }
 
-    if (NewAcl != NULL) {
-        ExFreePool( NewAcl );
+    if (NewAcl != NULL)
+    {
+        ExFreePool(NewAcl);
     }
 
-    if (RestoreImpersonationState) {
-        PsRestoreImpersonation(
-            PsGetCurrentThread(),
-            &DisabledImpersonationState
-            );
+    if (RestoreImpersonationState)
+    {
+        PsRestoreImpersonation(PsGetCurrentThread(), &DisabledImpersonationState);
     }
 
     //
@@ -871,37 +767,37 @@ Return Value:
     //  reference count to have been incremented.
     //
 
-    ObDereferenceObject( Token );
+    ObDereferenceObject(Token);
 
-    if (NT_SUCCESS( Status ) && CopyOnOpen) {
+    if (NT_SUCCESS(Status) && CopyOnOpen)
+    {
 
         //
         // Assign the newly duplicated token to the thread.
         //
 
-        PsImpersonateClient( Thread,
-                             NewToken,
-                             FALSE,  // turn off CopyOnOpen flag
-                             EffectiveOnly,
-                             ImpersonationLevel
-                             );
-
+        PsImpersonateClient(Thread, NewToken,
+                            FALSE, // turn off CopyOnOpen flag
+                            EffectiveOnly, ImpersonationLevel);
     }
 
     //
     // We've impersonated the token so let go of oure reference
     //
 
-    if (NewToken != NULL) {
-        ObDereferenceObject( NewToken );
+    if (NewToken != NULL)
+    {
+        ObDereferenceObject(NewToken);
     }
 
-    if (CopyOnOpen && (Thread != NULL)) {
+    if (CopyOnOpen && (Thread != NULL))
+    {
 
-        ObDereferenceObject( Thread );
+        ObDereferenceObject(Thread);
     }
 
-    if (OriginalThread != NULL) {
+    if (OriginalThread != NULL)
+    {
         ObDereferenceObject(OriginalThread);
     }
 
@@ -909,15 +805,17 @@ Return Value:
     //  Return the new handle
     //
 
-    if (NT_SUCCESS(Status)) {
-        try {
+    if (NT_SUCCESS(Status))
+    {
+        try
+        {
             *TokenHandle = LocalHandle;
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
     }
 
     return Status;
-
 }
-

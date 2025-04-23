@@ -40,9 +40,12 @@ VOID CheckHandleTable()
 {
     int i;
 
-    for (i = 0; i < cHandlesAllocated; i++) {
-        if (aHandleEntry[i].handle && aHandleEntry[i].dwData) {
-            switch (TypeFromHandle(aHandleEntry[i].handle)) {
+    for (i = 0; i < cHandlesAllocated; i++)
+    {
+        if (aHandleEntry[i].handle && aHandleEntry[i].dwData)
+        {
+            switch (TypeFromHandle(aHandleEntry[i].handle))
+            {
             case HTYPE_INSTANCE:
                 UserAssert(((PCL_INSTANCE_INFO)aHandleEntry[i].dwData)->hInstClient == aHandleEntry[i].handle);
                 break;
@@ -50,7 +53,7 @@ VOID CheckHandleTable()
             case HTYPE_CLIENT_CONVERSATION:
             case HTYPE_SERVER_CONVERSATION:
                 UserAssert(((PCONV_INFO)aHandleEntry[i].dwData)->hConv == (HCONV)aHandleEntry[i].handle ||
-                        ((PCONV_INFO)aHandleEntry[i].dwData)->hConv == 0);
+                           ((PCONV_INFO)aHandleEntry[i].dwData)->hConv == 0);
                 break;
             }
         }
@@ -72,44 +75,45 @@ VOID CheckHandleTable()
 * History:
 * 11-1-91 sanfords Created.
 \***************************************************************************/
-HANDLE CreateHandle(
-ULONG_PTR dwData,
-DWORD type,
-DWORD inst)
+HANDLE CreateHandle(ULONG_PTR dwData, DWORD type, DWORD inst)
 {
     HANDLE h;
     int i, iNextFree;
     PCHANDLEENTRY phe;
 
-    if (iFirstFree >= cHandlesAllocated) {
-        if (cHandlesAllocated == 0) {
-           aHandleEntry = (PCHANDLEENTRY)DDEMLAlloc(sizeof(CHANDLEENTRY) * GROW_COUNT);
-        } else {
-           aHandleEntry = (PCHANDLEENTRY)DDEMLReAlloc(aHandleEntry,
-               sizeof(CHANDLEENTRY) * (cHandlesAllocated + GROW_COUNT));
+    if (iFirstFree >= cHandlesAllocated)
+    {
+        if (cHandlesAllocated == 0)
+        {
+            aHandleEntry = (PCHANDLEENTRY)DDEMLAlloc(sizeof(CHANDLEENTRY) * GROW_COUNT);
         }
-        if (aHandleEntry == NULL) {
+        else
+        {
+            aHandleEntry =
+                (PCHANDLEENTRY)DDEMLReAlloc(aHandleEntry, sizeof(CHANDLEENTRY) * (cHandlesAllocated + GROW_COUNT));
+        }
+        if (aHandleEntry == NULL)
+        {
             return (0);
         }
         i = cHandlesAllocated;
         cHandlesAllocated += GROW_COUNT;
         phe = &aHandleEntry[i];
-        while (i < cHandlesAllocated) {
-           // phe->handle = 0; // indicates empty - ZERO init.
-           phe->dwData = ++i; // index to next free spot.
-           phe++;
+        while (i < cHandlesAllocated)
+        {
+            // phe->handle = 0; // indicates empty - ZERO init.
+            phe->dwData = ++i; // index to next free spot.
+            phe++;
         }
     }
-    h = aHandleEntry[iFirstFree].handle = (HANDLE)LongToHandle(
-         HandleFromId(nextId) |
-         HandleFromIndex(iFirstFree) |
-         HandleFromType(type) |
-         HandleFromInst(inst) );
+    h = aHandleEntry[iFirstFree].handle = (HANDLE)LongToHandle(HandleFromId(nextId) | HandleFromIndex(iFirstFree) |
+                                                               HandleFromType(type) | HandleFromInst(inst));
     iNextFree = (int)aHandleEntry[iFirstFree].dwData;
     aHandleEntry[iFirstFree].dwData = dwData;
     nextId++;
-    if (nextId == 0) {     // guarentees HIWORD of handle != 0
-       nextId++;
+    if (nextId == 0)
+    { // guarentees HIWORD of handle != 0
+        nextId++;
     }
     iFirstFree = iNextFree;
 
@@ -134,8 +138,7 @@ DWORD inst)
 * History:
 * 11-1-91 sanfords Created.
 \***************************************************************************/
-ULONG_PTR DestroyHandle(
-HANDLE h)
+ULONG_PTR DestroyHandle(HANDLE h)
 {
     register int i;
     register ULONG_PTR dwRet;
@@ -162,8 +165,7 @@ HANDLE h)
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-ULONG_PTR GetHandleData(
-HANDLE h)
+ULONG_PTR GetHandleData(HANDLE h)
 {
     register ULONG_PTR dwRet;
 
@@ -182,9 +184,7 @@ HANDLE h)
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-VOID SetHandleData(
-HANDLE h,
-ULONG_PTR dwData)
+VOID SetHandleData(HANDLE h, ULONG_PTR dwData)
 {
     aHandleEntry[IndexFromHandle(h)].dwData = dwData;
 }
@@ -201,10 +201,7 @@ ULONG_PTR dwData)
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-ULONG_PTR ValidateCHandle(
-HANDLE h,
-DWORD ExpectedType,
-DWORD ExpectedInstance)
+ULONG_PTR ValidateCHandle(HANDLE h, DWORD ExpectedType, DWORD ExpectedInstance)
 {
     register int i;
     register ULONG_PTR dwRet;
@@ -212,41 +209,41 @@ DWORD ExpectedInstance)
     CheckHandleTable();
     dwRet = 0;
     i = IndexFromHandle(h);
-    if (i < cHandlesAllocated &&
-          aHandleEntry[i].handle == h &&
-          (ExpectedType == -1 || ExpectedType == TypeFromHandle(h)) &&
-          (ExpectedInstance == -1 || ExpectedInstance == InstFromHandle(h))) {
-       dwRet = aHandleEntry[i].dwData;
+    if (i < cHandlesAllocated && aHandleEntry[i].handle == h &&
+        (ExpectedType == -1 || ExpectedType == TypeFromHandle(h)) &&
+        (ExpectedInstance == -1 || ExpectedInstance == InstFromHandle(h)))
+    {
+        dwRet = aHandleEntry[i].dwData;
     }
 
     return (dwRet);
 }
 
 
-PCL_INSTANCE_INFO PciiFromHandle(
-HANDLE h)
+PCL_INSTANCE_INFO PciiFromHandle(HANDLE h)
 {
     PCHANDLEENTRY phe;
 
     CheckDDECritIn;
 
-    if (!cHandlesAllocated) {
-        return(NULL);
+    if (!cHandlesAllocated)
+    {
+        return (NULL);
     }
     phe = &aHandleEntry[cHandlesAllocated];
 
-    do {
+    do
+    {
         phe--;
-        if (phe->handle != 0 &&
-                TypeFromHandle(phe->handle) == HTYPE_INSTANCE &&
-                (InstFromHandle(phe->handle) == InstFromHandle(h))) {
-            return(((PCL_INSTANCE_INFO)phe->dwData)->tid == GetCurrentThreadId() ?
-                (PCL_INSTANCE_INFO)phe->dwData : NULL);
+        if (phe->handle != 0 && TypeFromHandle(phe->handle) == HTYPE_INSTANCE &&
+            (InstFromHandle(phe->handle) == InstFromHandle(h)))
+        {
+            return (((PCL_INSTANCE_INFO)phe->dwData)->tid == GetCurrentThreadId() ? (PCL_INSTANCE_INFO)phe->dwData
+                                                                                  : NULL);
         }
     } while (phe != aHandleEntry);
-    return(NULL);
+    return (NULL);
 }
-
 
 
 /***************************************************************************\
@@ -260,27 +257,24 @@ HANDLE h)
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-VOID ApplyFunctionToObjects(
-DWORD ExpectedType,
-DWORD ExpectedInstance,
-PFNHANDLEAPPLY pfn)
+VOID ApplyFunctionToObjects(DWORD ExpectedType, DWORD ExpectedInstance, PFNHANDLEAPPLY pfn)
 {
     PCHANDLEENTRY phe;
 
     CheckDDECritIn;
 
-    if (!cHandlesAllocated) {
+    if (!cHandlesAllocated)
+    {
         return;
     }
     phe = &aHandleEntry[cHandlesAllocated];
 
-    do {
+    do
+    {
         phe--;
-        if (phe->handle != 0 &&
-                (ExpectedType == HTYPE_ANY ||
-                    ExpectedType == TypeFromHandle(phe->handle)) &&
-                (ExpectedInstance == HTYPE_ANY ||
-                    ExpectedInstance == InstFromHandle(phe->handle))) {
+        if (phe->handle != 0 && (ExpectedType == HTYPE_ANY || ExpectedType == TypeFromHandle(phe->handle)) &&
+            (ExpectedInstance == HTYPE_ANY || ExpectedInstance == InstFromHandle(phe->handle)))
+        {
             LeaveDDECrit;
             CheckDDECritOut;
             (*pfn)(phe->handle);
@@ -297,12 +291,13 @@ DWORD GetFullUserHandle(WORD wHandle)
 
     dwHandle = HMIndexFromHandle(wHandle);
 
-    if (dwHandle < gpsi->cHandleEntries) {
+    if (dwHandle < gpsi->cHandleEntries)
+    {
 
         phe = &gSharedInfo.aheList[dwHandle];
 
         if (phe->bType == TYPE_WINDOW)
-            return(MAKELONG(dwHandle, phe->wUniq));
+            return (MAKELONG(dwHandle, phe->wUniq));
     }
 
     /*
@@ -316,9 +311,8 @@ DWORD GetFullUserHandle(WORD wHandle)
      *
      * BUG: We WILL see a problem for OLE32 thunked DDE though.
      */
-    return(wHandle);
+    return (wHandle);
 }
-
 
 
 /***************************************************************************\
@@ -333,20 +327,22 @@ DWORD GetFullUserHandle(WORD wHandle)
 * History:
 * 11-12-91 sanfords Created.
 \***************************************************************************/
-VOID BestSetLastDDEMLError(
-DWORD error)
+VOID BestSetLastDDEMLError(DWORD error)
 {
     PCHANDLEENTRY phe;
 
     CheckDDECritIn;
 
-    if (!cHandlesAllocated) {
+    if (!cHandlesAllocated)
+    {
         return;
     }
     phe = &aHandleEntry[cHandlesAllocated];
-    do {
+    do
+    {
         phe--;
-        if (phe->handle != 0 && TypeFromHandle(phe->handle) == HTYPE_INSTANCE) {
+        if (phe->handle != 0 && TypeFromHandle(phe->handle) == HTYPE_INSTANCE)
+        {
             SetLastDDEMLError((PCL_INSTANCE_INFO)phe->dwData, error);
         }
     } while (phe != aHandleEntry);

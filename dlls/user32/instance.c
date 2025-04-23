@@ -37,35 +37,40 @@ int iFirstFreeInst = 0;
 * History:
 * 11-1-91 sanfords Created.
 \***************************************************************************/
-HANDLE AddInstance(
-HANDLE hInstServer)
+HANDLE AddInstance(HANDLE hInstServer)
 {
     int i, iNextFree;
     PHANDLE ph;
 
-    if (iFirstFreeInst >= cInstAllocated) {
-        if (cInstAllocated == 0) {
-           aInstance = (PHANDLE)DDEMLAlloc(sizeof(HANDLE) * INST_GROW_COUNT);
-        } else {
-           aInstance = (PHANDLE)DDEMLReAlloc((PVOID)aInstance,
-                 sizeof(HANDLE) * (cInstAllocated + INST_GROW_COUNT));
+    if (iFirstFreeInst >= cInstAllocated)
+    {
+        if (cInstAllocated == 0)
+        {
+            aInstance = (PHANDLE)DDEMLAlloc(sizeof(HANDLE) * INST_GROW_COUNT);
         }
-        if (aInstance == 0) {
+        else
+        {
+            aInstance = (PHANDLE)DDEMLReAlloc((PVOID)aInstance, sizeof(HANDLE) * (cInstAllocated + INST_GROW_COUNT));
+        }
+        if (aInstance == 0)
+        {
             return (0);
         }
         ph = &aInstance[cInstAllocated];
         i = cInstAllocated + 1;
-        while (i <= cInstAllocated + INST_GROW_COUNT) {
-           *ph++ = (HANDLE)(UINT_PTR)(UINT)i++;
+        while (i <= cInstAllocated + INST_GROW_COUNT)
+        {
+            *ph++ = (HANDLE)(UINT_PTR)(UINT)i++;
         }
         cInstAllocated += INST_GROW_COUNT;
     }
     iNextFree = HandleToUlong(aInstance[iFirstFreeInst]);
-    if (iNextFree > MAX_INST) {
+    if (iNextFree > MAX_INST)
+    {
         /*
          * Instance limit for this process exceeded!
          */
-        return(0);
+        return (0);
     }
     aInstance[iFirstFreeInst] = hInstServer;
     i = iFirstFreeInst;
@@ -84,14 +89,13 @@ HANDLE hInstServer)
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-HANDLE DestroyInstance(
-HANDLE hInstClient)
+HANDLE DestroyInstance(HANDLE hInstClient)
 {
     register HANDLE hInstServerRet = 0;
 
     DestroyHandle(hInstClient);
     hInstServerRet = aInstance[InstFromHandle(hInstClient)];
-    aInstance[InstFromHandle(hInstClient)] = (HANDLE)UIntToPtr( iFirstFreeInst );
+    aInstance[InstFromHandle(hInstClient)] = (HANDLE)UIntToPtr(iFirstFreeInst);
     iFirstFreeInst = InstFromHandle(hInstClient);
 
     return (hInstServerRet);
@@ -108,16 +112,16 @@ HANDLE hInstClient)
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-PCL_INSTANCE_INFO ValidateInstance(
-HANDLE hInstClient)
+PCL_INSTANCE_INFO ValidateInstance(HANDLE hInstClient)
 {
     PCL_INSTANCE_INFO pcii;
 
     pcii = (PCL_INSTANCE_INFO)ValidateCHandle(hInstClient, HTYPE_INSTANCE, HINST_ANY);
 
-    if (pcii != NULL) {
-        if (pcii->tid != GetCurrentThreadId() ||
-                pcii->hInstClient != hInstClient) {
+    if (pcii != NULL)
+    {
+        if (pcii->tid != GetCurrentThreadId() || pcii->hInstClient != hInstClient)
+        {
             return (NULL);
         }
     }
@@ -134,24 +138,23 @@ HANDLE hInstClient)
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-VOID SetLastDDEMLError(
-PCL_INSTANCE_INFO pcii,
-DWORD error)
+VOID SetLastDDEMLError(PCL_INSTANCE_INFO pcii, DWORD error)
 {
     PEVENT_PACKET pep;
 
-    if (pcii->MonitorFlags & MF_ERRORS && !(pcii->afCmd & APPCLASS_MONITOR)) {
-        pep = (PEVENT_PACKET)DDEMLAlloc(sizeof(EVENT_PACKET) - sizeof(DWORD) +
-                sizeof(MONERRSTRUCT));
-        if (pep != NULL) {
-            pep->EventType =    MF_ERRORS;
-            pep->fSense =       TRUE;
-            pep->cbEventData =  sizeof(MONERRSTRUCT);
+    if (pcii->MonitorFlags & MF_ERRORS && !(pcii->afCmd & APPCLASS_MONITOR))
+    {
+        pep = (PEVENT_PACKET)DDEMLAlloc(sizeof(EVENT_PACKET) - sizeof(DWORD) + sizeof(MONERRSTRUCT));
+        if (pep != NULL)
+        {
+            pep->EventType = MF_ERRORS;
+            pep->fSense = TRUE;
+            pep->cbEventData = sizeof(MONERRSTRUCT);
 #define perrs ((MONERRSTRUCT *)&pep->Data)
-            perrs->cb =      sizeof(MONERRSTRUCT);
+            perrs->cb = sizeof(MONERRSTRUCT);
             perrs->wLastError = (WORD)error;
-            perrs->dwTime =  NtGetTickCount();
-            perrs->hTask =   (HANDLE)LongToHandle( pcii->tid );
+            perrs->dwTime = NtGetTickCount();
+            perrs->hTask = (HANDLE)LongToHandle(pcii->tid);
 #undef perrs
             LeaveDDECrit;
             Event(pep);
@@ -159,13 +162,10 @@ DWORD error)
         }
     }
 #if DBG
-    if (error != 0 && error != DMLERR_NO_CONV_ESTABLISHED) {
-        RIPMSG3(RIP_WARNING,
-                "DDEML Error set=%x, Client Instance=%p, Process=%x.",
-                error, pcii, GetCurrentProcessId());
+    if (error != 0 && error != DMLERR_NO_CONV_ESTABLISHED)
+    {
+        RIPMSG3(RIP_WARNING, "DDEML Error set=%x, Client Instance=%p, Process=%x.", error, pcii, GetCurrentProcessId());
     }
 #endif
     pcii->LastError = error;
 }
-
-

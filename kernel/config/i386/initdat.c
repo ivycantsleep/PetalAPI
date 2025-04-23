@@ -36,10 +36,8 @@ Revision History:
 #pragma const_seg("INITCONST")
 #endif
 
-const PCHAR  SearchStrings[] = {
-      "Ver", "Rev", "Rel", "v0", "v1", "v2", "v3", "v4", "v5",
-      "v6", "v7", "v8", "v9", "v 0", "v 1", "v 2", "v 3", "v 4",
-      "v 5", "v 6", "v 7", "v 8", "v 9", NULL };
+const PCHAR SearchStrings[] = { "Ver", "Rev", "Rel", "v0",  "v1",  "v2",  "v3",  "v4",  "v5",  "v6",  "v7",  "v8",
+                                "v9",  "v 0", "v 1", "v 2", "v 3", "v 4", "v 5", "v 6", "v 7", "v 8", "v 9", NULL };
 
 PCHAR BiosBegin = { 0 };
 PCHAR Start = { 0 };
@@ -56,17 +54,17 @@ const WCHAR CmDisabledFloatingPointProcessor[] = L"DisabledFloatingPointProcesso
 const WCHAR CmPhysicalAddressExtension[] = L"PhysicalAddressExtension";
 
 #ifdef ALLOC_DATA_PRAGMA
-#pragma  data_seg("PAGE")
-#pragma  const_seg("PAGECONST")
+#pragma data_seg("PAGE")
+#pragma const_seg("PAGECONST")
 #endif
 
-const UCHAR CmpCyrixID[]     = "CyrixInstead";
-const UCHAR CmpIntelID[]     = "GenuineIntel";
-const UCHAR CmpAmdID[]       = "AuthenticAMD";
+const UCHAR CmpCyrixID[] = "CyrixInstead";
+const UCHAR CmpIntelID[] = "GenuineIntel";
+const UCHAR CmpAmdID[] = "AuthenticAMD";
 const UCHAR CmpTransmetaID[] = "GenuineTMx86";
-const UCHAR CmpCentaurID[]   = "CentaurHauls";
+const UCHAR CmpCentaurID[] = "CentaurHauls";
 
 #ifdef ALLOC_DATA_PRAGMA
-#pragma  data_seg()
-#pragma  const_seg()
+#pragma data_seg()
+#pragma const_seg()
 #endif

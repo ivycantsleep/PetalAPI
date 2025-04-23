@@ -32,26 +32,16 @@ extern NTSTATUS IoPerfReset();
 
 #ifdef NTPERF
 NTSTATUS
-PerfInfopStartLog(
-    PERFINFO_GROUPMASK *pGroupMask,
-    PERFINFO_START_LOG_LOCATION StartLogLocation
-    );
+PerfInfopStartLog(PERFINFO_GROUPMASK *pGroupMask, PERFINFO_START_LOG_LOCATION StartLogLocation);
 
 NTSTATUS
-PerfInfopStopLog(
-    VOID
-    );
+PerfInfopStopLog(VOID);
 
-VOID
-PerfInfoSetProcessorSpeed(
-    VOID
-    );
+VOID PerfInfoSetProcessorSpeed(VOID);
 #endif // NTPERF
 
-
-VOID
-PerfInfoProfileInit(
-    )
+
+VOID PerfInfoProfileInit()
 /*++
 
 Routine description:
@@ -77,22 +67,12 @@ Return Value:
     PerfInfoProfileSourceActive = PerfInfoProfileSourceRequested;
 
     KeSetIntervalProfile(PerfInfoProfileInterval, PerfInfoProfileSourceActive);
-    KeInitializeProfile(&PerfInfoProfileObject,
-                        NULL,
-                        NULL,
-                        0,
-                        0,
-                        0,
-                        PerfInfoProfileSourceActive,
-                        0
-                        );
+    KeInitializeProfile(&PerfInfoProfileObject, NULL, NULL, 0, 0, 0, PerfInfoProfileSourceActive, 0);
     KeStartProfile(&PerfInfoProfileObject, NULL);
 }
 
-
-VOID
-PerfInfoProfileUninit(
-    )
+
+VOID PerfInfoProfileUninit()
 /*++
 
 Routine description:
@@ -107,18 +87,15 @@ Return Value:
 
 --*/
 {
-    PerfInfoProfileSourceActive = ProfileMaximum;   // Invalid value stops us from
-                                                    // collecting more samples
+    PerfInfoProfileSourceActive = ProfileMaximum; // Invalid value stops us from
+                                                  // collecting more samples
     KeStopProfile(&PerfInfoProfileObject);
     PerfInfoFlushProfileCache();
 }
 
-
+
 NTSTATUS
-PerfInfoStartLog (
-    PERFINFO_GROUPMASK *PGroupMask,
-    PERFINFO_START_LOG_LOCATION StartLogLocation
-    )
+PerfInfoStartLog(PERFINFO_GROUPMASK *PGroupMask, PERFINFO_START_LOG_LOCATION StartLogLocation)
 
 /*++
 
@@ -148,39 +125,42 @@ Return Value:
     PERFINFO_CLEAR_GROUPMASK(&PerfGlobalGroupMask);
     PPerfGlobalGroupMask = &PerfGlobalGroupMask;
 
-    if (PerfIsGroupOnInGroupMask(PERF_MEMORY, PGroupMask) ||
-        PerfIsGroupOnInGroupMask(PERF_FILENAME, PGroupMask) ||
-        PerfIsGroupOnInGroupMask(PERF_DRIVERS, PGroupMask)) {
-            PERFINFO_OR_GROUP_WITH_GROUPMASK(PERF_FILENAME_ALL, PGroupMask);
+    if (PerfIsGroupOnInGroupMask(PERF_MEMORY, PGroupMask) || PerfIsGroupOnInGroupMask(PERF_FILENAME, PGroupMask) ||
+        PerfIsGroupOnInGroupMask(PERF_DRIVERS, PGroupMask))
+    {
+        PERFINFO_OR_GROUP_WITH_GROUPMASK(PERF_FILENAME_ALL, PGroupMask);
     }
 
 
-    if (StartLogLocation == PERFINFO_START_LOG_FROM_GLOBAL_LOGGER) {
+    if (StartLogLocation == PERFINFO_START_LOG_FROM_GLOBAL_LOGGER)
+    {
         //
         // From the wmi global logger, need to do Rundown in kernel mode
         //
-        if (PerfIsGroupOnInGroupMask(PERF_PROC_THREAD, PGroupMask)) {
+        if (PerfIsGroupOnInGroupMask(PERF_PROC_THREAD, PGroupMask))
+        {
             Status = PerfInfoProcessRunDown();
         }
 
-        if (PerfIsGroupOnInGroupMask(PERF_PROC_THREAD, PGroupMask)) {
+        if (PerfIsGroupOnInGroupMask(PERF_PROC_THREAD, PGroupMask))
+        {
             Status = PerfInfoSysModuleRunDown();
         }
     }
 
-    if ((StartLogLocation != PERFINFO_START_LOG_AT_BOOT) && 
-        PerfIsGroupOnInGroupMask(PERF_FILENAME_ALL, PGroupMask)) {
+    if ((StartLogLocation != PERFINFO_START_LOG_AT_BOOT) && PerfIsGroupOnInGroupMask(PERF_FILENAME_ALL, PGroupMask))
+    {
         Status = PerfInfoFileNameRunDown();
     }
 
-    if (PerfIsGroupOnInGroupMask(PERF_DRIVERS, PGroupMask)) {
+    if (PerfIsGroupOnInGroupMask(PERF_DRIVERS, PGroupMask))
+    {
         IoPerfInit();
     }
 
-    if (PerfIsGroupOnInGroupMask(PERF_PROFILE, PGroupMask)
-        && ((KeGetPreviousMode() == KernelMode) ||
-          SeSinglePrivilegeCheck(SeSystemProfilePrivilege, UserMode))
-        ) {
+    if (PerfIsGroupOnInGroupMask(PERF_PROFILE, PGroupMask) &&
+        ((KeGetPreviousMode() == KernelMode) || SeSinglePrivilegeCheck(SeSystemProfilePrivilege, UserMode)))
+    {
         //
         // Sampled profile
         //
@@ -190,29 +170,34 @@ Return Value:
     //
     // Enable context swap tracing
     //
-    if ( PerfIsGroupOnInGroupMask(PERF_CONTEXT_SWITCH, PGroupMask) ) {
+    if (PerfIsGroupOnInGroupMask(PERF_CONTEXT_SWITCH, PGroupMask))
+    {
         WmiStartContextSwapTrace();
     }
 
 #ifdef NTPERF
-    Status = PerfInfopStartLog(PGroupMask,  StartLogLocation);
+    Status = PerfInfopStartLog(PGroupMask, StartLogLocation);
 #else
     //
     // See if we need to empty the working set to start
     //
-    if (PerfIsGroupOnInGroupMask(PERF_FOOTPRINT, PGroupMask) ||
-        PerfIsGroupOnInGroupMask(PERF_BIGFOOT, PGroupMask) ||
-        PerfIsGroupOnInGroupMask(PERF_FOOTPRINT_PROC, PGroupMask)) {
-        MmEmptyAllWorkingSets ();
+    if (PerfIsGroupOnInGroupMask(PERF_FOOTPRINT, PGroupMask) || PerfIsGroupOnInGroupMask(PERF_BIGFOOT, PGroupMask) ||
+        PerfIsGroupOnInGroupMask(PERF_FOOTPRINT_PROC, PGroupMask))
+    {
+        MmEmptyAllWorkingSets();
     }
 #endif // NTPERF
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         PPerfGlobalGroupMask = NULL;
         PERFINFO_CLEAR_GROUPMASK(&PerfGlobalGroupMask);
-    } else {
+    }
+    else
+    {
 #ifdef NTPERF
-        if (PERFINFO_IS_LOGGING_TO_PERFMEM()) {
+        if (PERFINFO_IS_LOGGING_TO_PERFMEM())
+        {
             //
             // Make a copy of the GroupMask in PerfMem header
             // so user mode logging can work
@@ -226,10 +211,9 @@ Return Value:
     return Status;
 }
 
-
+
 NTSTATUS
-PerfInfoStopLog (
-    )
+PerfInfoStopLog()
 
 /*++
 
@@ -249,27 +233,32 @@ Return Value:
 
 {
     NTSTATUS Status = STATUS_SUCCESS;
-    BOOLEAN DisableContextSwaps=FALSE;
+    BOOLEAN DisableContextSwaps = FALSE;
 
-    if (PPerfGlobalGroupMask == NULL) {
+    if (PPerfGlobalGroupMask == NULL)
+    {
         return Status;
     }
 
-    if (PERFINFO_IS_GROUP_ON(PERF_MEMORY)) {
+    if (PERFINFO_IS_GROUP_ON(PERF_MEMORY))
+    {
         MmIdentifyPhysicalMemory();
     }
 
-    if (PERFINFO_IS_GROUP_ON(PERF_PROFILE)) {
+    if (PERFINFO_IS_GROUP_ON(PERF_PROFILE))
+    {
         PerfInfoProfileUninit();
     }
 
-    if (PERFINFO_IS_GROUP_ON(PERF_DRIVERS)) {
+    if (PERFINFO_IS_GROUP_ON(PERF_DRIVERS))
+    {
         IoPerfReset();
     }
 
 #ifdef NTPERF
-    if (PERFINFO_IS_LOGGING_TO_PERFMEM()) {
-        // 
+    if (PERFINFO_IS_LOGGING_TO_PERFMEM())
+    {
+        //
         // Now clear the GroupMask in Perfmem to stop logging.
         //
         PERFINFO_CLEAR_GROUPMASK(&PerfBufHdr()->GlobalGroupMask);
@@ -277,7 +266,8 @@ Return Value:
     Status = PerfInfopStopLog();
 #endif // NTPERF
 
-    if ( PERFINFO_IS_GROUP_ON(PERF_CONTEXT_SWITCH) ) {
+    if (PERFINFO_IS_GROUP_ON(PERF_CONTEXT_SWITCH))
+    {
         DisableContextSwaps = TRUE;
     }
 
@@ -291,20 +281,19 @@ Return Value:
     // Disable context swap tracing.
     // IMPORTANT: This must be done AFTER the global flag is set to NULL!!!
     //
-    if( DisableContextSwaps ) {
+    if (DisableContextSwaps)
+    {
 
         WmiStopContextSwapTrace();
     }
 
     return (Status);
-
 }
 
 #ifdef NTPERF
-
+
 NTSTATUS
-PerfInfoStartPerfMemLog (
-    )
+PerfInfoStartPerfMemLog()
 
 /*++
 
@@ -334,7 +323,8 @@ Return Value:
     //
     // Is it big enough to use?
     //
-    if (PerfQueryBufferSizeBytes() <= 2 * PERFINFO_HEADER_ZONE_SIZE) {
+    if (PerfQueryBufferSizeBytes() <= 2 * PERFINFO_HEADER_ZONE_SIZE)
+    {
         PERFINFO_SET_LOGGING_TO_PERFMEM(FALSE);
         return STATUS_BUFFER_TOO_SMALL;
     }
@@ -343,11 +333,12 @@ Return Value:
     // It is OK to use the buffer, increment the reference count
     //
     LoggerCounts = InterlockedIncrement(&Buffer->LoggerCounts);
-    if (LoggerCounts != 1) {
+    if (LoggerCounts != 1)
+    {
         //
         // Other logger has turned on logging, just return.
         //
-        return STATUS_SUCCESS; 
+        return STATUS_SUCCESS;
     }
 
     //
@@ -385,16 +376,13 @@ Return Value:
     //
     // Determine the size of the thread hash table
     //
-    Buffer->ThreadHash = (PERFINFO_THREAD_HASH_ENTRY *)
-                            (((PCHAR) Buffer) + sizeof(PERFINFO_TRACEBUF_HEADER));
+    Buffer->ThreadHash = (PERFINFO_THREAD_HASH_ENTRY *)(((PCHAR)Buffer) + sizeof(PERFINFO_TRACEBUF_HEADER));
     Buffer->ThreadHashOverflow = FALSE;
-    RtlZeroMemory(Buffer->ThreadHash,
-                  PERFINFO_THREAD_HASH_SIZE *
-                  sizeof(PERFINFO_THREAD_HASH_ENTRY));
+    RtlZeroMemory(Buffer->ThreadHash, PERFINFO_THREAD_HASH_SIZE * sizeof(PERFINFO_THREAD_HASH_ENTRY));
     for (Idx = 0; Idx < PERFINFO_THREAD_HASH_SIZE; Idx++)
         Buffer->ThreadHash[Idx].CurThread = PERFINFO_INVALID_ID;
 
-    pbCurrentStart = (PPERF_BYTE) Buffer + Buffer->PerfBufHeaderZoneSize;
+    pbCurrentStart = (PPERF_BYTE)Buffer + Buffer->PerfBufHeaderZoneSize;
     cbBufferSize = PerfQueryBufferSizeBytes() - Buffer->PerfBufHeaderZoneSize;
 
     Buffer->Start.Ptr = Buffer->Current.Ptr = pbCurrentStart;
@@ -422,10 +410,9 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
-
+
 NTSTATUS
-PerfInfoStopPerfMemLog (
-    )
+PerfInfoStopPerfMemLog()
 
 /*++
 
@@ -449,21 +436,19 @@ Return Value:
     const PPERFINFO_TRACEBUF_HEADER Buffer = PerfBufHdr();
 
     LoggerCounts = InterlockedDecrement(&Buffer->LoggerCounts);
-    if (LoggerCounts == 0) {
+    if (LoggerCounts == 0)
+    {
         //
         // Other logger has turned on logging, just return.
         //
         PERFINFO_SET_LOGGING_TO_PERFMEM(FALSE);
     }
-    return STATUS_SUCCESS; 
+    return STATUS_SUCCESS;
 }
 
-
+
 NTSTATUS
-PerfInfopStartLog(
-    PERFINFO_GROUPMASK *pGroupMask,
-    PERFINFO_START_LOG_LOCATION StartLogLocation
-    )
+PerfInfopStartLog(PERFINFO_GROUPMASK *pGroupMask, PERFINFO_START_LOG_LOCATION StartLogLocation)
 
 /*++
 
@@ -486,7 +471,8 @@ Return Value:
 
 #ifdef NTPERF_PRIVATE
     Status = PerfInfopStartPrivateLog(pGroupMask, StartLogLocation);
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         PERFINFO_CLEAR_GROUPMASK(PPerfGlobalGroupMask);
         return Status;
     }
@@ -498,11 +484,9 @@ Return Value:
     return Status;
 }
 
-
+
 NTSTATUS
-PerfInfopStopLog (
-    VOID
-    )
+PerfInfopStopLog(VOID)
 
 /*++
 
@@ -525,13 +509,15 @@ Return Value:
 --*/
 
 {
-    if (PERFINFO_IS_ANY_GROUP_ON()) {
+    if (PERFINFO_IS_ANY_GROUP_ON())
+    {
 
 #ifdef NTPERF_PRIVATE
         PerfInfopStopPrivateLog();
 #endif // NTPERF_PRIVATE
 
-        if (PERFINFO_IS_LOGGING_TO_PERFMEM()) {
+        if (PERFINFO_IS_LOGGING_TO_PERFMEM())
+        {
             PerfBufHdr()->LogStopTime = PerfGetCycleCount();
         }
     }
@@ -539,12 +525,9 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
-
+
 NTSTATUS
-PerfInfoSetPerformanceTraceInformation (
-    IN PVOID SystemInformation,
-    IN ULONG SystemInformationLength
-    )
+PerfInfoSetPerformanceTraceInformation(IN PVOID SystemInformation, IN ULONG SystemInformationLength)
 /*++
 
 Routine Description:
@@ -571,14 +554,16 @@ Return Value:
     PPERFINFO_PERFORMANCE_INFORMATION PerfInfo;
     PVOID PerfBuffer;
 
-    if (SystemInformationLength < sizeof(PERFINFO_PERFORMANCE_INFORMATION)) {
+    if (SystemInformationLength < sizeof(PERFINFO_PERFORMANCE_INFORMATION))
+    {
         return STATUS_INFO_LENGTH_MISMATCH;
     }
 
-    PerfInfo = (PPERFINFO_PERFORMANCE_INFORMATION) SystemInformation;
+    PerfInfo = (PPERFINFO_PERFORMANCE_INFORMATION)SystemInformation;
     PerfBuffer = PerfInfo + 1;
 
-    switch (PerfInfo->PerformanceType) {
+    switch (PerfInfo->PerformanceType)
+    {
 
     case PerformancePerfInfoStart:
         // Status = PerfInfoStartLog(&PerfInfo->StartInfo.Flags, PERFINFO_START_LOG_POST_BOOT);
@@ -598,9 +583,10 @@ Return Value:
         USHORT LogType;
         ULONG StringLength;
 
-        if (PerfInfo->PerformanceType == PerformanceMmInfoMarkWithFlush) {
-            if (PERFINFO_IS_GROUP_ON(PERF_FOOTPRINT) ||
-                PERFINFO_IS_GROUP_ON(PERF_FOOTPRINT_PROC)) {
+        if (PerfInfo->PerformanceType == PerformanceMmInfoMarkWithFlush)
+        {
+            if (PERFINFO_IS_GROUP_ON(PERF_FOOTPRINT) || PERFINFO_IS_GROUP_ON(PERF_FOOTPRINT_PROC))
+            {
 
                 //
                 // BUGBUG We should get a non-Mi* call for this...
@@ -608,31 +594,31 @@ Return Value:
                 MmEmptyAllWorkingSets();
                 Status = MmPerfSnapShotValidPhysicalMemory();
             }
-            else if (PERFINFO_IS_GROUP_ON(PERF_CLEARWS)) {
+            else if (PERFINFO_IS_GROUP_ON(PERF_CLEARWS))
+            {
                 MmEmptyAllWorkingSets();
             }
-        } else if (PerfinfoBigFootSize) {
+        }
+        else if (PerfinfoBigFootSize)
+        {
             MmEmptyAllWorkingSets();
         }
 
-        if (PERFINFO_IS_ANY_GROUP_ON()) {
+        if (PERFINFO_IS_ANY_GROUP_ON())
+        {
             PERFINFO_MARK_INFORMATION Event;
             StringLength = SystemInformationLength - sizeof(PERFINFO_PERFORMANCE_INFORMATION);
 
-            LogType = (PerfInfo->PerformanceType == PerformanceMmInfoAsyncMark) ?
-                                    PERFINFO_LOG_TYPE_ASYNCMARK :
-                                    PERFINFO_LOG_TYPE_MARK;
+            LogType = (PerfInfo->PerformanceType == PerformanceMmInfoAsyncMark) ? PERFINFO_LOG_TYPE_ASYNCMARK
+                                                                                : PERFINFO_LOG_TYPE_MARK;
 
-            PerfInfoLogBytesAndANSIString(LogType,
-                                        &Event,
-                                        FIELD_OFFSET(PERFINFO_MARK_INFORMATION, Name),
-                                        (PCSTR) PerfBuffer,
-                                        StringLength
-                                        );
+            PerfInfoLogBytesAndANSIString(LogType, &Event, FIELD_OFFSET(PERFINFO_MARK_INFORMATION, Name),
+                                          (PCSTR)PerfBuffer, StringLength);
         }
 
-        if (PERFINFO_IS_GROUP_ON(PERF_FOOTPRINT_PROC)) {
-            PerfInfoDumpWSInfo (TRUE);
+        if (PERFINFO_IS_GROUP_ON(PERF_FOOTPRINT_PROC))
+        {
+            PerfInfoDumpWSInfo(TRUE);
         }
         break;
     }
@@ -652,13 +638,10 @@ Return Value:
     return Status;
 }
 
-
+
 NTSTATUS
-PerfInfoQueryPerformanceTraceInformation (
-    IN PVOID SystemInformation,
-    IN ULONG SystemInformationLength,
-    OUT PULONG ReturnLength
-    )
+PerfInfoQueryPerformanceTraceInformation(IN PVOID SystemInformation, IN ULONG SystemInformationLength,
+                                         OUT PULONG ReturnLength)
 /*++
 
 Routine Description:
@@ -683,16 +666,15 @@ Return Value:
 {
     NTSTATUS Status = STATUS_SUCCESS;
 
-    if (SystemInformationLength != sizeof(PERFINFO_PERFORMANCE_INFORMATION)) {
+    if (SystemInformationLength != sizeof(PERFINFO_PERFORMANCE_INFORMATION))
+    {
         return STATUS_INFO_LENGTH_MISMATCH;
     }
 
 #ifdef NTPERF_PRIVATE
 
-    return PerfInfoQueryPerformanceTraceInformationPrivate(
-                (PPERFINFO_PERFORMANCE_INFORMATION) SystemInformation,
-                ReturnLength
-                );
+    return PerfInfoQueryPerformanceTraceInformationPrivate((PPERFINFO_PERFORMANCE_INFORMATION)SystemInformation,
+                                                           ReturnLength);
 #else
     UNREFERENCED_PARAMETER(ReturnLength);
     UNREFERENCED_PARAMETER(SystemInformation);
@@ -700,11 +682,8 @@ Return Value:
 #endif // NTPERF_PRIVATE
 }
 
-
-VOID
-PerfInfoSetProcessorSpeed(
-    VOID
-    )
+
+VOID PerfInfoSetProcessorSpeed(VOID)
 /*++
 
 Routine Description:
@@ -727,8 +706,8 @@ Return Value:
     ULONGLONG end;
     ULONGLONG freq;
     ULONGLONG TSCStart;
-    LARGE_INTEGER *Pstart = (LARGE_INTEGER *) &start;
-    LARGE_INTEGER *Pend = (LARGE_INTEGER *) &end;
+    LARGE_INTEGER *Pstart = (LARGE_INTEGER *)&start;
+    LARGE_INTEGER *Pend = (LARGE_INTEGER *)&end;
     LARGE_INTEGER Delay;
     ULONGLONG time[3];
     ULONGLONG clocks;
@@ -736,19 +715,21 @@ Return Value:
     int RetryCount = 50;
 
 
-    Delay.QuadPart = -50000;   // relative delay of 5ms (100ns ticks)
+    Delay.QuadPart = -50000; // relative delay of 5ms (100ns ticks)
 
-    while (RetryCount) {
-        for (i = 0; i < 3; i++) {
+    while (RetryCount)
+    {
+        for (i = 0; i < 3; i++)
+        {
             *Pstart = KeQueryPerformanceCounter(NULL);
 
             TSCStart = PerfGetCycleCount();
-            KeDelayExecutionThread (KernelMode, FALSE, &Delay);
+            KeDelayExecutionThread(KernelMode, FALSE, &Delay);
             clocks = PerfGetCycleCount() - TSCStart;
 
-            *Pend = KeQueryPerformanceCounter((LARGE_INTEGER*)&freq);
-            time[i] = (((end-start) * 1000000) / freq);
-            time[i] = (clocks + time[i]/2) / time[i];
+            *Pend = KeQueryPerformanceCounter((LARGE_INTEGER *)&freq);
+            time[i] = (((end - start) * 1000000) / freq);
+            time[i] = (clocks + time[i] / 2) / time[i];
         }
         // If all three match then use it, else try again.
         if (time[0] == time[1] && time[1] == time[2])
@@ -756,7 +737,8 @@ Return Value:
         --RetryCount;
     }
 
-    if (!RetryCount) {
+    if (!RetryCount)
+    {
         // Take the largest value.
         if (time[1] > time[0])
             time[0] = time[1];
@@ -766,11 +748,9 @@ Return Value:
     PerfInfoTickFrequency = time[0];
 }
 
-
+
 BOOLEAN
-PerfInfoIsGroupOn(
-    ULONG Group
-    )
+PerfInfoIsGroupOn(ULONG Group)
 {
     return PERFINFO_IS_GROUP_ON(Group);
 }

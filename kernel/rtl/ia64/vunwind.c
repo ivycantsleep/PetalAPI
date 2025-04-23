@@ -19,7 +19,7 @@
 
 #include "ntrtlp.h"
 
-#else  // !BUILD_DBGHELP && !BUILD_IMAGEHLP
+#else // !BUILD_DBGHELP && !BUILD_IMAGEHLP
 
 #define TARGET_IA64
 #define _CROSS_PLATFORM_
@@ -39,7 +39,7 @@
 #define RUNTIME_FUNCTION IMAGE_RUNTIME_FUNCTION_ENTRY
 #define VUW_DEBUG_PRINT OutputDebugString
 
-#else  // !_IMAGEHLP_SOURCE_
+#else // !_IMAGEHLP_SOURCE_
 
 #define NOT_IMAGEHLP(E) E
 #define VUW_DEBUG_PRINT DbgPrint
@@ -49,15 +49,15 @@
 #ifdef MASK
 #undef MASK
 #endif // MASK
-#define MASK(bp,value)  (value << bp)
+#define MASK(bp, value) (value << bp)
 
 //
 // ABI values
 //
 
-#define SVR4_ABI      0
-#define HPUX_ABI      1
-#define NT_ABI        2
+#define SVR4_ABI 0
+#define HPUX_ABI 1
+#define NT_ABI 2
 
 
 #ifdef KERNEL_DEBUGGER
@@ -67,162 +67,162 @@
 
 #define STATE_RECORD_STACK_SIZE 32
 
-#define SPILLSIZE_OF_FLOAT128_IN_DWORDS   4
-#define SPILLSIZE_OF_ULONGLONG_IN_DWORDS  2
+#define SPILLSIZE_OF_FLOAT128_IN_DWORDS 4
+#define SPILLSIZE_OF_ULONGLONG_IN_DWORDS 2
 
-#define REGISTER_SIZE                sizeof(ULONGLONG)
-#define STATIC_REGISTER_SET_SIZE     32
-#define SLOTS_PER_BUNDLE             3
+#define REGISTER_SIZE sizeof(ULONGLONG)
+#define STATIC_REGISTER_SET_SIZE 32
+#define SLOTS_PER_BUNDLE 3
 
-#define R1_MASK              0xC0
-#define R1_PREFIX            0x0
-#define R1_REGION_TYPE_MASK  0x20
-#define R1_LENGTH_MASK       0x1F
+#define R1_MASK 0xC0
+#define R1_PREFIX 0x0
+#define R1_REGION_TYPE_MASK 0x20
+#define R1_LENGTH_MASK 0x1F
 
-#define R2_MASK              0xE0
-#define R2_PREFIX            0x40
+#define R2_MASK 0xE0
+#define R2_PREFIX 0x40
 
-#define R3_MASK              0xE0
-#define R3_PREFIX            0x60
-#define R3_REGION_TYPE_MASK  0x3
+#define R3_MASK 0xE0
+#define R3_PREFIX 0x60
+#define R3_REGION_TYPE_MASK 0x3
 
-#define P1_MASK              0xE0
-#define P1_PREFIX            0x80
-#define P2_MASK              0xF0
-#define P2_PREFIX            0xA0
-#define P3_MASK              0xF8
-#define P3_PREFIX            0xB0
-#define P4_MASK              0xFF
-#define P4_PREFIX            0xB8
-#define P5_MASK              0xFF
-#define P5_PREFIX            0xB9
-#define P6_MASK              0xE0
-#define P6_PREFIX            0xC0
-#define P7_MASK              0xF0
-#define P7_PREFIX            0xE0
-#define P8_MASK              0xFF
-#define P8_PREFIX            0xF0
-#define P9_MASK              0xFF
-#define P9_PREFIX            0xF1
-#define P10_MASK             0xFF
-#define P10_PREFIX           0xFF
+#define P1_MASK 0xE0
+#define P1_PREFIX 0x80
+#define P2_MASK 0xF0
+#define P2_PREFIX 0xA0
+#define P3_MASK 0xF8
+#define P3_PREFIX 0xB0
+#define P4_MASK 0xFF
+#define P4_PREFIX 0xB8
+#define P5_MASK 0xFF
+#define P5_PREFIX 0xB9
+#define P6_MASK 0xE0
+#define P6_PREFIX 0xC0
+#define P7_MASK 0xF0
+#define P7_PREFIX 0xE0
+#define P8_MASK 0xFF
+#define P8_PREFIX 0xF0
+#define P9_MASK 0xFF
+#define P9_PREFIX 0xF1
+#define P10_MASK 0xFF
+#define P10_PREFIX 0xFF
 
-#define B1_MASK              0xC0
-#define B1_PREFIX            0x80
-#define B1_TYPE_MASK         0x20
-#define B1_LABEL_MASK        0x1F
-#define B2_MASK              0xE0
-#define B2_PREFIX            0xC0
-#define B2_ECOUNT_MASK       0x1F
-#define B3_MASK              0xF0
-#define B3_PREFIX            0xE0
-#define B4_MASK              0xF0
-#define B4_PREFIX            0xF0
-#define B4_TYPE_MASK         0x08
+#define B1_MASK 0xC0
+#define B1_PREFIX 0x80
+#define B1_TYPE_MASK 0x20
+#define B1_LABEL_MASK 0x1F
+#define B2_MASK 0xE0
+#define B2_PREFIX 0xC0
+#define B2_ECOUNT_MASK 0x1F
+#define B3_MASK 0xF0
+#define B3_PREFIX 0xE0
+#define B4_MASK 0xF0
+#define B4_PREFIX 0xF0
+#define B4_TYPE_MASK 0x08
 
 //
 // P3 descriptor type
 //
 
-#define PSP_GR               0
-#define RP_GR                1
-#define PFS_GR               2
-#define PREDS_GR             3
-#define UNAT_GR              4
-#define LC_GR                5
-#define RP_BR                6
-#define RNAT_GR              7
-#define BSP_GR               8
-#define BSPSTORE_GR          9
-#define FPSR_GR              10
-#define PRIUNAT_GR           11
+#define PSP_GR 0
+#define RP_GR 1
+#define PFS_GR 2
+#define PREDS_GR 3
+#define UNAT_GR 4
+#define LC_GR 5
+#define RP_BR 6
+#define RNAT_GR 7
+#define BSP_GR 8
+#define BSPSTORE_GR 9
+#define FPSR_GR 10
+#define PRIUNAT_GR 11
 
 //
 // P7 descriptor type
 //
 
-#define MEM_STACK_F          0
-#define MEM_STACK_V          1
-#define SPILL_BASE           2
-#define PSP_SPREL            3
-#define RP_WHEN              4
-#define RP_PSPREL            5
-#define PFS_WHEN             6
-#define PFS_PSPREL           7
-#define PREDS_WHEN           8
-#define PREDS_PSPREL         9
-#define LC_WHEN              10
-#define LC_PSPREL            11
-#define UNAT_WHEN            12
-#define UNAT_PSPREL          13
-#define FPSR_WHEN            14
-#define FPSR_PSPREL          15
+#define MEM_STACK_F 0
+#define MEM_STACK_V 1
+#define SPILL_BASE 2
+#define PSP_SPREL 3
+#define RP_WHEN 4
+#define RP_PSPREL 5
+#define PFS_WHEN 6
+#define PFS_PSPREL 7
+#define PREDS_WHEN 8
+#define PREDS_PSPREL 9
+#define LC_WHEN 10
+#define LC_PSPREL 11
+#define UNAT_WHEN 12
+#define UNAT_PSPREL 13
+#define FPSR_WHEN 14
+#define FPSR_PSPREL 15
 
 //
 // P8 descriptor type
 //
 
-#define PSP_PSPREL           0
-#define RP_SPREL             1
-#define PFS_SPREL            2
-#define PREDS_SPREL          3
-#define LC_SPREL             4
-#define UNAT_SPREL           5
-#define FPSR_SPREL           6
-#define BSP_WHEN             7
-#define BSP_PSPREL           8
-#define BSP_SPREL            9
-#define BSPSTORE_WHEN        10
-#define BSPSTORE_PSPREL      11
-#define BSPSTORE_SPREL       12
-#define RNAT_WHEN            13
-#define RNAT_PSPREL          14
-#define RNAT_SPREL           15
-#define PRIUNAT_WHEN         16
-#define PRIUNAT_PSPREL       17
-#define PRIUNAT_SPREL        18
+#define PSP_PSPREL 0
+#define RP_SPREL 1
+#define PFS_SPREL 2
+#define PREDS_SPREL 3
+#define LC_SPREL 4
+#define UNAT_SPREL 5
+#define FPSR_SPREL 6
+#define BSP_WHEN 7
+#define BSP_PSPREL 8
+#define BSP_SPREL 9
+#define BSPSTORE_WHEN 10
+#define BSPSTORE_PSPREL 11
+#define BSPSTORE_SPREL 12
+#define RNAT_WHEN 13
+#define RNAT_PSPREL 14
+#define RNAT_SPREL 15
+#define PRIUNAT_WHEN 16
+#define PRIUNAT_PSPREL 17
+#define PRIUNAT_SPREL 18
 
 
-#define STACK_POINTER_GR     12
+#define STACK_POINTER_GR 12
 
-#define FIRST_PRESERVED_GR                4
-#define LAST_PRESERVED_GR                 7
-#define NUMBER_OF_PRESERVED_GR            4
-#define NUMBER_OF_SCRATCH_GR              24
+#define FIRST_PRESERVED_GR 4
+#define LAST_PRESERVED_GR 7
+#define NUMBER_OF_PRESERVED_GR 4
+#define NUMBER_OF_SCRATCH_GR 24
 
-#define FIRST_LOW_PRESERVED_FR            2
-#define LAST_LOW_PRESERVED_FR             5
-#define NUMBER_OF_LOW_PRESERVED_FR        4
+#define FIRST_LOW_PRESERVED_FR 2
+#define LAST_LOW_PRESERVED_FR 5
+#define NUMBER_OF_LOW_PRESERVED_FR 4
 
-#define FIRST_HIGH_PRESERVED_FR           16
-#define LAST_HIGH_PRESERVED_FR            31
-#define NUMBER_OF_HIGH_PRESERVED_FR       16
-#define NUMBER_OF_PRESERVED_FR            (NUMBER_OF_LOW_PRESERVED_FR+NUMBER_OF_HIGH_PRESERVED_FR)
+#define FIRST_HIGH_PRESERVED_FR 16
+#define LAST_HIGH_PRESERVED_FR 31
+#define NUMBER_OF_HIGH_PRESERVED_FR 16
+#define NUMBER_OF_PRESERVED_FR (NUMBER_OF_LOW_PRESERVED_FR + NUMBER_OF_HIGH_PRESERVED_FR)
 
-#define FIRST_PRESERVED_BR                1
-#define LAST_PRESERVED_BR                 5
-#define NUMBER_OF_PRESERVED_BR            5
+#define FIRST_PRESERVED_BR 1
+#define LAST_PRESERVED_BR 5
+#define NUMBER_OF_PRESERVED_BR 5
 
-#define NUMBER_OF_PRESERVED_MISC          8
+#define NUMBER_OF_PRESERVED_MISC 8
 
-#define NUMBER_OF_PRESERVED_REGISTERS     (NUMBER_OF_PRESERVED_MISC+NUMBER_OF_PRESERVED_BR)
+#define NUMBER_OF_PRESERVED_REGISTERS (NUMBER_OF_PRESERVED_MISC + NUMBER_OF_PRESERVED_BR)
 
 
-#define REG_MISC_BASE        0
-#define REG_PREDS            (REG_MISC_BASE+0)
-#define REG_SP               (REG_MISC_BASE+1)
-#define REG_PFS              (REG_MISC_BASE+2)
-#define REG_RP               (REG_MISC_BASE+3)
-#define REG_UNAT             (REG_MISC_BASE+4)
-#define REG_LC               (REG_MISC_BASE+5)
-#define REG_NATS             (REG_MISC_BASE+6)
-#define REG_FPSR             (REG_MISC_BASE+7)
+#define REG_MISC_BASE 0
+#define REG_PREDS (REG_MISC_BASE + 0)
+#define REG_SP (REG_MISC_BASE + 1)
+#define REG_PFS (REG_MISC_BASE + 2)
+#define REG_RP (REG_MISC_BASE + 3)
+#define REG_UNAT (REG_MISC_BASE + 4)
+#define REG_LC (REG_MISC_BASE + 5)
+#define REG_NATS (REG_MISC_BASE + 6)
+#define REG_FPSR (REG_MISC_BASE + 7)
 
-#define REG_BR_BASE          (REG_MISC_BASE+NUMBER_OF_PRESERVED_MISC)
+#define REG_BR_BASE (REG_MISC_BASE + NUMBER_OF_PRESERVED_MISC)
 
-#define REG_BSP              0xff // REG_MISC_BASE+8
-#define REG_BSPSTORE         0xff // REG_MISC_BASE+9
-#define REG_RNAT             0xff // REG_MISC_BASE+10
+#define REG_BSP 0xff      // REG_MISC_BASE+8
+#define REG_BSPSTORE 0xff // REG_MISC_BASE+9
+#define REG_RNAT 0xff     // REG_MISC_BASE+10
 
 //
 // Where is a preserved register saved?
@@ -233,104 +233,108 @@
 //     4. branch register
 //
 
-#define GENERAL_REG          0
-#define PSP_RELATIVE         1
-#define SP_RELATIVE          2
-#define BRANCH_REG           3
+#define GENERAL_REG 0
+#define PSP_RELATIVE 1
+#define SP_RELATIVE 2
+#define BRANCH_REG 3
 
 
-#define ADD_STATE_RECORD(States, RegionLength, DescBeginIndex)       \
-    States.Top++;                                                    \
-    States.Top->IsTarget = FALSE;                                    \
-    States.Top->MiscMask = 0;                                        \
-    States.Top->FrMask = 0;                                          \
-    States.Top->GrMask = 0;                                          \
-    States.Top->Label = (LABEL)0;                                    \
-    States.Top->Ecount = 0;                                          \
-    States.Top->RegionLen = RegionLength;                            \
-    States.Top->RegionBegin = UnwindContext.SlotCount;               \
-    States.Top->SpWhen = 0;                                          \
-    States.Top->SpAdjustment = 0;                                    \
-    States.Top->SpillBase = (States.Top-1)->SpillPtr;                \
-    States.Top->SpillPtr = (States.Top-1)->SpillPtr;                 \
-    States.Top->Previous = States.Current;                           \
-    States.Top->DescBegin = DescBeginIndex;                          \
+#define ADD_STATE_RECORD(States, RegionLength, DescBeginIndex) \
+    States.Top++;                                              \
+    States.Top->IsTarget = FALSE;                              \
+    States.Top->MiscMask = 0;                                  \
+    States.Top->FrMask = 0;                                    \
+    States.Top->GrMask = 0;                                    \
+    States.Top->Label = (LABEL)0;                              \
+    States.Top->Ecount = 0;                                    \
+    States.Top->RegionLen = RegionLength;                      \
+    States.Top->RegionBegin = UnwindContext.SlotCount;         \
+    States.Top->SpWhen = 0;                                    \
+    States.Top->SpAdjustment = 0;                              \
+    States.Top->SpillBase = (States.Top - 1)->SpillPtr;        \
+    States.Top->SpillPtr = (States.Top - 1)->SpillPtr;         \
+    States.Top->Previous = States.Current;                     \
+    States.Top->DescBegin = DescBeginIndex;                    \
     States.Current = States.Top
 
 
-#define VALID_LABEL_BIT_POSITION    15
+#define VALID_LABEL_BIT_POSITION 15
 
-#define LABEL_REGION(Region, Label)                                    \
-    Region->Label = Label;                                             \
+#define LABEL_REGION(Region, Label) \
+    Region->Label = Label;          \
     Region->MiscMask |= (1 << VALID_LABEL_BIT_POSITION)
 
-#define IS_REGION_LABELED(Region)  \
-    (Region->MiscMask & (1 << VALID_LABEL_BIT_POSITION))
+#define IS_REGION_LABELED(Region) (Region->MiscMask & (1 << VALID_LABEL_BIT_POSITION))
 
-#define CHECK_LABEL(State, Label) \
-    ( (IS_REGION_LABELED(State)) && (Label == State->Label) )
+#define CHECK_LABEL(State, Label) ((IS_REGION_LABELED(State)) && (Label == State->Label))
 
 
-#define EXTRACT_NAT_FROM_UNAT(NatBit)  \
-    NatBit = (UCHAR)((IntNats >> (((ULONG_PTR)Source & 0x1F8) >> 3)) & 0x1);
+#define EXTRACT_NAT_FROM_UNAT(NatBit) NatBit = (UCHAR)((IntNats >> (((ULONG_PTR)Source & 0x1F8) >> 3)) & 0x1);
 
 
 #if DBG
 int UnwindDebugLevel = 0;
-# ifdef _IMAGEHLP_SOURCE_
-#  define UW_DEBUG(x) if (UnwindDebugLevel) dbPrint##x
-# else
-#  define UW_DEBUG(x) if (UnwindDebugLevel) DbgPrint##x
-# endif
+#ifdef _IMAGEHLP_SOURCE_
+#define UW_DEBUG(x)       \
+    if (UnwindDebugLevel) \
+    dbPrint##x
 #else
-# define UW_DEBUG(x)
+#define UW_DEBUG(x)       \
+    if (UnwindDebugLevel) \
+    DbgPrint##x
+#endif
+#else
+#define UW_DEBUG(x)
 #endif // DBG
 
 
-
-typedef struct _REGISTER_RECORD {
-    ULONG Where : 2;                  // 2-bit field
-    ULONG SaveOffset : 30;            // 30 bits for offset, big enough?
-    ULONG When;                       // slot offset relative to region
+typedef struct _REGISTER_RECORD
+{
+    ULONG Where : 2;       // 2-bit field
+    ULONG SaveOffset : 30; // 30 bits for offset, big enough?
+    ULONG When;            // slot offset relative to region
 } REGISTER_RECORD, *PREGISTER_RECORD;
 
 typedef ULONG LABEL;
 
-typedef struct _STATE_RECORD {
-    struct _STATE_RECORD *Previous;   // pointer to outer nested prologue
-    BOOLEAN IsTarget;       // TRUE if the control pc is in this prologue
-    UCHAR GrMask;           // Mask that specifies which GRs to be restored
-    USHORT MiscMask;        // Mask that specifies which BRs and misc. registers
-                            // are to be restored.
-                            // N.B. MSBit indicates Label is valid or not.
-    ULONG FrMask;           // Mask that specifies which FRs to be restored
-    ULONG SpAdjustment;     // size of stack frame allocated in the prologue
-    ULONG SpWhen;           // slot offset relative to region
-    ULONG SpillPtr;         // current spill location
-    ULONG SpillBase;        // spill base of the region
-    ULONG RegionBegin;      // first slot of region relative to function entry
-    ULONG RegionLen;        // number of slots in the region
-    LABEL Label;            // label that identifies a post-prologue state
-    ULONG Ecount;           // number of prologue regions to pop
-    ULONG DescBegin;        // first prologue descriptor for the region
-    ULONG DescEnd;          // last prologue descriptor for the region
+typedef struct _STATE_RECORD
+{
+    struct _STATE_RECORD *Previous; // pointer to outer nested prologue
+    BOOLEAN IsTarget;               // TRUE if the control pc is in this prologue
+    UCHAR GrMask;                   // Mask that specifies which GRs to be restored
+    USHORT MiscMask;                // Mask that specifies which BRs and misc. registers
+                                    // are to be restored.
+                                    // N.B. MSBit indicates Label is valid or not.
+    ULONG FrMask;                   // Mask that specifies which FRs to be restored
+    ULONG SpAdjustment;             // size of stack frame allocated in the prologue
+    ULONG SpWhen;                   // slot offset relative to region
+    ULONG SpillPtr;                 // current spill location
+    ULONG SpillBase;                // spill base of the region
+    ULONG RegionBegin;              // first slot of region relative to function entry
+    ULONG RegionLen;                // number of slots in the region
+    LABEL Label;                    // label that identifies a post-prologue state
+    ULONG Ecount;                   // number of prologue regions to pop
+    ULONG DescBegin;                // first prologue descriptor for the region
+    ULONG DescEnd;                  // last prologue descriptor for the region
 } STATE_RECORD, *PSTATE_RECORD;
 
-typedef struct _UNWIND_CONTEXT {
+typedef struct _UNWIND_CONTEXT
+{
     REGISTER_RECORD MiscRegs[NUMBER_OF_PRESERVED_REGISTERS];
     REGISTER_RECORD Float[NUMBER_OF_PRESERVED_FR];
     REGISTER_RECORD Integer[NUMBER_OF_PRESERVED_GR];
     BOOLEAN ActiveRegionFound;
     UCHAR AlternateRp;
     USHORT Version;
-    PUCHAR Descriptors;               // beginning of descriptor data
-    ULONG Size;                       // total size of all descriptors
-    ULONG DescCount;                  // number of descriptor bytes processed
+    PUCHAR Descriptors; // beginning of descriptor data
+    ULONG Size;         // total size of all descriptors
+    ULONG DescCount;    // number of descriptor bytes processed
     ULONG TargetSlot;
     ULONG SlotCount;
 } UNWIND_CONTEXT, *PUNWIND_CONTEXT;
 
-typedef struct _STATE_RECORD_STACK {
+typedef struct _STATE_RECORD_STACK
+{
     ULONG Size;
     PSTATE_RECORD Current;
     PSTATE_RECORD Top;
@@ -339,21 +343,19 @@ typedef struct _STATE_RECORD_STACK {
 
 #define OFFSET(type, field) ((ULONG_PTR)(&((type *)0)->field))
 
-static USHORT MiscContextOffset[NUMBER_OF_PRESERVED_REGISTERS] = {
-    OFFSET(CONTEXT, Preds),
-    OFFSET(CONTEXT, IntSp),
-    OFFSET(CONTEXT, RsPFS),
-    OFFSET(CONTEXT, BrRp),
-    OFFSET(CONTEXT, ApUNAT),
-    OFFSET(CONTEXT, ApLC),
-    0,
-    0,
-    OFFSET(CONTEXT, BrS0),
-    OFFSET(CONTEXT, BrS1),
-    OFFSET(CONTEXT, BrS2),
-    OFFSET(CONTEXT, BrS3),
-    OFFSET(CONTEXT, BrS4)
-};
+static USHORT MiscContextOffset[NUMBER_OF_PRESERVED_REGISTERS] = { OFFSET(CONTEXT, Preds),
+                                                                   OFFSET(CONTEXT, IntSp),
+                                                                   OFFSET(CONTEXT, RsPFS),
+                                                                   OFFSET(CONTEXT, BrRp),
+                                                                   OFFSET(CONTEXT, ApUNAT),
+                                                                   OFFSET(CONTEXT, ApLC),
+                                                                   0,
+                                                                   0,
+                                                                   OFFSET(CONTEXT, BrS0),
+                                                                   OFFSET(CONTEXT, BrS1),
+                                                                   OFFSET(CONTEXT, BrS2),
+                                                                   OFFSET(CONTEXT, BrS3),
+                                                                   OFFSET(CONTEXT, BrS4) };
 
 static USHORT MiscContextPointersOffset[NUMBER_OF_PRESERVED_REGISTERS] = {
     OFFSET(KNONVOLATILE_CONTEXT_POINTERS, Preds),
@@ -371,39 +373,25 @@ static USHORT MiscContextPointersOffset[NUMBER_OF_PRESERVED_REGISTERS] = {
     OFFSET(KNONVOLATILE_CONTEXT_POINTERS, BrS4)
 };
 
-static UCHAR P3RecordTypeToRegisterIndex[] =
-    {REG_SP, REG_RP, REG_PFS, REG_PREDS, REG_UNAT, REG_LC, REG_RP,
-     REG_RNAT, REG_BSP, REG_BSPSTORE, REG_FPSR};
+static UCHAR P3RecordTypeToRegisterIndex[] = { REG_SP, REG_RP,   REG_PFS, REG_PREDS,    REG_UNAT, REG_LC,
+                                               REG_RP, REG_RNAT, REG_BSP, REG_BSPSTORE, REG_FPSR };
 
-static UCHAR P7RecordTypeToRegisterIndex[] =
-    {0, REG_SP, 0, REG_SP, REG_RP, REG_RP, REG_PFS, REG_PFS, REG_PREDS,
-     REG_PREDS, REG_LC, REG_LC, REG_UNAT, REG_UNAT, REG_FPSR, REG_FPSR};
+static UCHAR P7RecordTypeToRegisterIndex[] = { 0,        REG_SP,   0,         REG_SP,    REG_RP, REG_RP,
+                                               REG_PFS,  REG_PFS,  REG_PREDS, REG_PREDS, REG_LC, REG_LC,
+                                               REG_UNAT, REG_UNAT, REG_FPSR,  REG_FPSR };
 
-static UCHAR P8RecordTypeToRegisterIndex[] =
-    {REG_SP, REG_RP, REG_PFS, REG_PREDS, REG_LC, REG_UNAT, REG_FPSR,
-     REG_BSP, REG_BSP, REG_BSP, REG_BSPSTORE, REG_BSPSTORE, REG_BSPSTORE,
-     REG_RNAT, REG_RNAT, REG_RNAT, REG_NATS, REG_NATS, REG_NATS};
+static UCHAR P8RecordTypeToRegisterIndex[] = { REG_SP,       REG_RP,       REG_PFS,      REG_PREDS, REG_LC,
+                                               REG_UNAT,     REG_FPSR,     REG_BSP,      REG_BSP,   REG_BSP,
+                                               REG_BSPSTORE, REG_BSPSTORE, REG_BSPSTORE, REG_RNAT,  REG_RNAT,
+                                               REG_RNAT,     REG_NATS,     REG_NATS,     REG_NATS };
 
 UCHAR
-NewParsePrologueRegionPhase0 (
-    IN PUNWIND_CONTEXT UwContext,
-    IN PSTATE_RECORD StateRecord,
-    IN OUT PUCHAR AbiImmContext
-    );
+NewParsePrologueRegionPhase0(IN PUNWIND_CONTEXT UwContext, IN PSTATE_RECORD StateRecord, IN OUT PUCHAR AbiImmContext);
 
-VOID
-NewParsePrologueRegionPhase1 (
-    IN PUNWIND_CONTEXT UwContext,
-    IN PSTATE_RECORD StateRecord
-    );
+VOID NewParsePrologueRegionPhase1(IN PUNWIND_CONTEXT UwContext, IN PSTATE_RECORD StateRecord);
 
 
-VOID
-SrInitialize (
-    IN PSTATE_RECORD_STACK StateTable,
-    IN PSTATE_RECORD StateRecord,
-    IN ULONG Size
-    )
+VOID SrInitialize(IN PSTATE_RECORD_STACK StateTable, IN PSTATE_RECORD StateRecord, IN ULONG Size)
 {
     StateTable->Size = Size;
     StateTable->Base = StateRecord;
@@ -412,12 +400,9 @@ SrInitialize (
     RtlZeroMemory(StateTable->Top, sizeof(STATE_RECORD));
 }
 
-
+
 ULONG
-ReadLEB128 (
-    IN PUCHAR Descriptors,
-    IN OUT PULONG CurrentDescIndex
-    )
+ReadLEB128(IN PUCHAR Descriptors, IN OUT PULONG CurrentDescIndex)
 {
     PUCHAR Buffer;
     ULONG Value;
@@ -428,12 +413,17 @@ ReadLEB128 (
     Count = 1;
 
     Value = Buffer[0] & 0x7F;
-    if (Buffer[0] & 0x80) {
-        while (TRUE) {
+    if (Buffer[0] & 0x80)
+    {
+        while (TRUE)
+        {
             Value += ((Buffer[Count] & 0x7F) << ShiftCount);
-            if (Buffer[Count++] & 0x80) {
+            if (Buffer[Count++] & 0x80)
+            {
                 ShiftCount += 7;
-            } else {
+            }
+            else
+            {
                 break;
             }
         }
@@ -444,22 +434,15 @@ ReadLEB128 (
     return Value;
 }
 
-
+
 ULONGLONG
-RestorePreservedRegisterFromGR (
-    IN PCONTEXT Context,
-    IN SHORT BsFrameSize,
-    IN SHORT RNatSaveIndex,
-    IN SHORT GrNumber,
+RestorePreservedRegisterFromGR(IN PCONTEXT Context, IN SHORT BsFrameSize, IN SHORT RNatSaveIndex, IN SHORT GrNumber,
 #ifdef _IMAGEHLP_SOURCE_
-    IN HANDLE hProcess,
-    IN PREAD_PROCESS_MEMORY_ROUTINE64 ReadMemory,
-    OUT BOOL *Succeed,
+                               IN HANDLE hProcess, IN PREAD_PROCESS_MEMORY_ROUTINE64 ReadMemory, OUT BOOL *Succeed,
 #else
-    OUT ULONG64 *SourceAddress,
+                               OUT ULONG64 *SourceAddress,
 #endif // _IMAGEHLP_SOURCE_
-    OUT PUCHAR Nat OPTIONAL
-    )
+                               OUT PUCHAR Nat OPTIONAL)
 {
     ULONGLONG Result;
     SHORT Offset;
@@ -472,42 +455,48 @@ RestorePreservedRegisterFromGR (
     *Succeed = FALSE;
 #endif // _IMAGEHLP_SOURCE_
 
-    if (GrNumber >= STATIC_REGISTER_SET_SIZE) {
+    if (GrNumber >= STATIC_REGISTER_SET_SIZE)
+    {
 
         Offset = GrNumber - STATIC_REGISTER_SET_SIZE;
-        if ( Offset < BsFrameSize ) {
+        if (Offset < BsFrameSize)
+        {
 
             Temp = Offset + RNatSaveIndex - NAT_BITS_PER_RNAT_REG;
-            while (Temp >= 0) {
+            while (Temp >= 0)
+            {
                 Offset++;
                 Temp -= NAT_BITS_PER_RNAT_REG;
             }
             Offset = Offset * sizeof(ULONGLONG);
 
 #ifdef _IMAGEHLP_SOURCE_
-            *Succeed = ReadMemory(hProcess, Context->RsBSP + Offset,
-                                  &Result, sizeof(ULONGLONG), &Size);
+            *Succeed = ReadMemory(hProcess, Context->RsBSP + Offset, &Result, sizeof(ULONGLONG), &Size);
 #else
             *SourceAddress = (ULONG64)(Context->RsBSP + Offset);
             Result = *(PULONGLONG)(Context->RsBSP + Offset);
 #endif // _IMAGEHLP_SOURCE_
-
-        } else {
+        }
+        else
+        {
 
             UW_DEBUG(("ERROR: Invalid GR!\n"));
         }
+    }
+    else
+    {
 
-    } else {
-
-        if (GrNumber == 0 || GrNumber == 12) {
+        if (GrNumber == 0 || GrNumber == 12)
+        {
 
             //
             // Invalid GR number -> Invalid Unwind Descriptor
             //
 
             UW_DEBUG(("ERROR: Invalid GR!\n"));
-
-        } else {
+        }
+        else
+        {
 
             UW_DEBUG(("WARNING: Target register is not a stacked GR!\n"));
             Offset = GrNumber - 1;
@@ -517,30 +506,25 @@ RestorePreservedRegisterFromGR (
 #ifdef _IMAGEHLP_SOURCE_
             *Succeed = TRUE;
 #endif // _IMAGEHLP_SOURCE_
-
         }
     }
 
-    if (ARGUMENT_PRESENT(Nat)) {
+    if (ARGUMENT_PRESENT(Nat))
+    {
 
         //
         // TBD: Pick up the corresponding Nat bit
         //
 
-        *Nat = (UCHAR) 0;
-
+        *Nat = (UCHAR)0;
     }
 
     return (Result);
 }
 
-
+
 UCHAR
-ParseBodyRegionDescriptors (
-    IN PUNWIND_CONTEXT UnwindContext,
-    IN PSTATE_RECORD_STACK StateTable,
-    IN ULONG RegionLen
-    )
+ParseBodyRegionDescriptors(IN PUNWIND_CONTEXT UnwindContext, IN PSTATE_RECORD_STACK StateTable, IN ULONG RegionLen)
 {
     LABEL Label;
     UCHAR FirstByte;
@@ -554,22 +538,26 @@ ParseBodyRegionDescriptors (
     CopyLabel = EcountDefined = FALSE;
     Descriptors = UnwindContext->Descriptors;
 
-    while (UnwindContext->DescCount < UnwindContext->Size) {
+    while (UnwindContext->DescCount < UnwindContext->Size)
+    {
 
         FirstByte = Descriptors[UnwindContext->DescCount++];
 
-        if ( (FirstByte & B1_MASK) == B1_PREFIX ) {
+        if ((FirstByte & B1_MASK) == B1_PREFIX)
+        {
 
             Label = (LABEL)(FirstByte & B1_LABEL_MASK);
-            if (FirstByte & B1_TYPE_MASK) {
+            if (FirstByte & B1_TYPE_MASK)
+            {
 
                 //
                 // copy the entry state
                 //
 
                 CopyLabel = TRUE;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // label the entry state
@@ -578,40 +566,42 @@ ParseBodyRegionDescriptors (
                 LABEL_REGION(StateTable->Top, Label);
             }
 
-            UW_DEBUG(("Body region desc B1: copy=%d, label_num=%d\n",
-                     FirstByte & B1_TYPE_MASK ? TRUE : FALSE, Label));
-
-        } else if ( (FirstByte & B2_MASK) == B2_PREFIX ) {
+            UW_DEBUG(("Body region desc B1: copy=%d, label_num=%d\n", FirstByte & B1_TYPE_MASK ? TRUE : FALSE, Label));
+        }
+        else if ((FirstByte & B2_MASK) == B2_PREFIX)
+        {
 
             Ecount = FirstByte & B2_ECOUNT_MASK;
             SlotOffset = ReadLEB128(Descriptors, &UnwindContext->DescCount);
             EcountDefined = TRUE;
 
-            UW_DEBUG(("Epilog desc B2: ecount=%d, LEB128(slot)=%d\n",
-                      Ecount, SlotOffset));
-
-        } else if ( (FirstByte & B3_MASK) == B3_PREFIX ) {
+            UW_DEBUG(("Epilog desc B2: ecount=%d, LEB128(slot)=%d\n", Ecount, SlotOffset));
+        }
+        else if ((FirstByte & B3_MASK) == B3_PREFIX)
+        {
 
             SlotOffset = ReadLEB128(Descriptors, &UnwindContext->DescCount);
             Ecount = ReadLEB128(Descriptors, &UnwindContext->DescCount);
             EcountDefined = TRUE;
 
-            UW_DEBUG(("Epilog desc B3: ecount=%d, LEB128 val=%d\n",
-                      Ecount, SlotOffset));
-
-        } else if ( (FirstByte & B4_MASK) == B4_PREFIX ) {
+            UW_DEBUG(("Epilog desc B3: ecount=%d, LEB128 val=%d\n", Ecount, SlotOffset));
+        }
+        else if ((FirstByte & B4_MASK) == B4_PREFIX)
+        {
 
             Label = ReadLEB128(Descriptors, &UnwindContext->DescCount);
 
-            if (FirstByte & B4_TYPE_MASK) {
+            if (FirstByte & B4_TYPE_MASK)
+            {
 
                 //
                 // copy the entry state
                 //
 
                 CopyLabel = TRUE;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // label the current top of stack
@@ -620,10 +610,10 @@ ParseBodyRegionDescriptors (
                 LABEL_REGION(StateTable->Top, Label);
             }
 
-            UW_DEBUG(("Body region desc B4: copy=%d, label_num=%d\n",
-                     FirstByte & B4_TYPE_MASK, Label));
-
-        } else {
+            UW_DEBUG(("Body region desc B4: copy=%d, label_num=%d\n", FirstByte & B4_TYPE_MASK, Label));
+        }
+        else
+        {
 
             //
             // Encounter another region header record
@@ -633,13 +623,18 @@ ParseBodyRegionDescriptors (
         }
     }
 
-    if (CopyLabel) {
+    if (CopyLabel)
+    {
         StateTablePtr = StateTable->Top;
-        while (TRUE) {
-            if (CHECK_LABEL(StateTablePtr, Label)) {
+        while (TRUE)
+        {
+            if (CHECK_LABEL(StateTablePtr, Label))
+            {
                 StateTable->Current = StateTablePtr;
                 break;
-            } else if ((StateTablePtr == StateTable->Base)) {
+            }
+            else if ((StateTablePtr == StateTable->Base))
+            {
                 UW_DEBUG(("Undefined Label %d\n", Label));
                 break;
             }
@@ -647,41 +642,48 @@ ParseBodyRegionDescriptors (
         }
     }
 
-    if (EcountDefined) {
+    if (EcountDefined)
+    {
 
-        Ecount++;    // Ecount specifies additional level of prologue
-                     // regions to undo (i.e. a value of 0 implies 1
-                     // prologue region)
+        Ecount++; // Ecount specifies additional level of prologue
+                  // regions to undo (i.e. a value of 0 implies 1
+                  // prologue region)
 
-        if (UnwindContext->ActiveRegionFound == FALSE) {
-            while (Ecount-- > 0) {
-                if (StateTable->Current->Previous) {
+        if (UnwindContext->ActiveRegionFound == FALSE)
+        {
+            while (Ecount-- > 0)
+            {
+                if (StateTable->Current->Previous)
+                {
                     StateTable->Current = StateTable->Current->Previous;
                 }
 
 #if DBG
-                else {
+                else
+                {
                     UW_DEBUG(("WARNING: Ecount is greater than the # of active prologues!\n"));
                 }
 #endif // DBG
-
             }
-        } else {
+        }
+        else
+        {
 
             //
             // control PC is in this body/epilog region
             //
 
-            if ((UnwindContext->SlotCount + RegionLen - SlotOffset)
-                    <= UnwindContext->TargetSlot)
+            if ((UnwindContext->SlotCount + RegionLen - SlotOffset) <= UnwindContext->TargetSlot)
             {
                 PSTATE_RECORD SrPointer;
 
                 StateTable->Current->Ecount = Ecount;
                 SrPointer = StateTable->Current;
-                while (Ecount > 0) {
+                while (Ecount > 0)
+                {
 
-                    if (SrPointer->Previous) {
+                    if (SrPointer->Previous)
+                    {
                         SrPointer->Ecount = Ecount;
                         SrPointer->SpWhen = 0;
                         SrPointer->SpAdjustment = 0;
@@ -689,12 +691,12 @@ ParseBodyRegionDescriptors (
                     }
 
 #if DBG
-                    else {
+                    else
+                    {
                         UW_DEBUG(("WARNING: Ecount is greater than the # of active prologues!\n"));
                     }
 #endif // DBG
                     Ecount--;
-
                 }
             }
         }
@@ -703,21 +705,16 @@ ParseBodyRegionDescriptors (
     return FirstByte;
 }
 
-
+
 ULONGLONG
-ProcessInterruptRegion (
+ProcessInterruptRegion(
 #ifdef _IMAGEHLP_SOURCE_
-    IN HANDLE hProcess,
-    IN PREAD_PROCESS_MEMORY_ROUTINE64 ReadMemory,
+    IN HANDLE hProcess, IN PREAD_PROCESS_MEMORY_ROUTINE64 ReadMemory,
 #else
     IN PKNONVOLATILE_CONTEXT_POINTERS ContextPointers,
 #endif _IMAGEHLP_SOURCE_
-    IN PUNWIND_CONTEXT UnwindContext,
-    IN PCONTEXT Context,
-    IN SHORT BsFrameSize,
-    IN SHORT RNatSaveIndex,
-    IN UCHAR AbiImmContext
-    )
+    IN PUNWIND_CONTEXT UnwindContext, IN PCONTEXT Context, IN SHORT BsFrameSize, IN SHORT RNatSaveIndex,
+    IN UCHAR AbiImmContext)
 {
     //
     // no prologue descriptor in interrupt region.
@@ -736,7 +733,8 @@ ProcessInterruptRegion (
 #endif _IMAGEHLP_SOURCE_
 
 
-    if (AbiImmContext != CONTEXT_FRAME) {
+    if (AbiImmContext != CONTEXT_FRAME)
+    {
 
         PKTRAP_FRAME TrapFrame;
         PKEXCEPTION_FRAME ExFrame;
@@ -745,7 +743,7 @@ ProcessInterruptRegion (
         KEXCEPTION_FRAME ExF;
 #endif // _IMAGEHLP_SOURCE_
 
-        TrapFrame = (PKTRAP_FRAME) Context->IntSp;
+        TrapFrame = (PKTRAP_FRAME)Context->IntSp;
 #ifdef _IMAGEHLP_SOURCE_
         if (!ReadMemory(hProcess, Context->IntSp, &TF, sizeof(KTRAP_FRAME), &Size))
         {
@@ -765,7 +763,8 @@ ProcessInterruptRegion (
         Context->RsPFS = TrapFrame->RsPFS;
 
 #ifndef _IMAGEHLP_SOURCE_
-        if (ARGUMENT_PRESENT(ContextPointers)) {
+        if (ARGUMENT_PRESENT(ContextPointers))
+        {
             ContextPointers->ApUNAT = &TrapFrame->ApUNAT;
             ContextPointers->IntSp = &TrapFrame->IntSp;
             ContextPointers->BrRp = &TrapFrame->BrRp;
@@ -774,7 +773,8 @@ ProcessInterruptRegion (
         }
 #endif // _IMAGEHLP_SOURCE_
 
-        switch (AbiImmContext) {
+        switch (AbiImmContext)
+        {
 
         case SYSCALL_FRAME:
 
@@ -803,7 +803,8 @@ ProcessInterruptRegion (
 
         RNatSaveIndex = (SHORT)(TrapFrame->RsBSP >> 3) & NAT_BITS_PER_RNAT_REG;
         TempFrameSize = BsFrameSize - RNatSaveIndex;
-        while (TempFrameSize > 0) {
+        while (TempFrameSize > 0)
+        {
             BsFrameSize++;
             TempFrameSize -= NAT_BITS_PER_RNAT_REG;
         }
@@ -812,8 +813,7 @@ ProcessInterruptRegion (
         Context->RsBSPSTORE = Context->RsBSP;
         Context->RsRNAT = TrapFrame->RsRNAT;
 
-        NextPc = RtlIa64InsertIPSlotNumber(TrapFrame->StIIP,
-                     ((TrapFrame->StIPSR >> PSR_RI) & 0x3));
+        NextPc = RtlIa64InsertIPSlotNumber(TrapFrame->StIIP, ((TrapFrame->StIPSR >> PSR_RI) & 0x3));
 
         return (NextPc);
     }
@@ -829,23 +829,17 @@ ProcessInterruptRegion (
     {
         return 0;
     }
-    NextPc = RtlIa64InsertIPSlotNumber(Context->StIIP,
-                                       ((Context->StIPSR >> PSR_RI) & 0x3));
+    NextPc = RtlIa64InsertIPSlotNumber(Context->StIIP, ((Context->StIPSR >> PSR_RI) & 0x3));
 #else
 
-    RtlCopyMemory(&Context->BrRp, &PrevContext->BrRp,
-                  (NUMBER_OF_PRESERVED_BR+3) * sizeof(ULONGLONG));
-    RtlCopyMemory(&Context->FltS0, &PrevContext->FltS0,
-                  NUMBER_OF_LOW_PRESERVED_FR * sizeof(FLOAT128));
-    RtlCopyMemory(&Context->FltS4, &PrevContext->FltS4,
-                  NUMBER_OF_HIGH_PRESERVED_FR * sizeof(FLOAT128));
-    RtlCopyMemory(&Context->IntS0, &PrevContext->IntS0,
-                  NUMBER_OF_PRESERVED_GR * sizeof(ULONGLONG));
-    RtlCopyMemory(&Context->IntV0, &PrevContext->IntV0,                  
-                  NUMBER_OF_SCRATCH_GR * sizeof(ULONGLONG));
-    Context->IntT0 = PrevContext->IntT0;    
-    Context->IntT1 = PrevContext->IntT1;    
-    
+    RtlCopyMemory(&Context->BrRp, &PrevContext->BrRp, (NUMBER_OF_PRESERVED_BR + 3) * sizeof(ULONGLONG));
+    RtlCopyMemory(&Context->FltS0, &PrevContext->FltS0, NUMBER_OF_LOW_PRESERVED_FR * sizeof(FLOAT128));
+    RtlCopyMemory(&Context->FltS4, &PrevContext->FltS4, NUMBER_OF_HIGH_PRESERVED_FR * sizeof(FLOAT128));
+    RtlCopyMemory(&Context->IntS0, &PrevContext->IntS0, NUMBER_OF_PRESERVED_GR * sizeof(ULONGLONG));
+    RtlCopyMemory(&Context->IntV0, &PrevContext->IntV0, NUMBER_OF_SCRATCH_GR * sizeof(ULONGLONG));
+    Context->IntT0 = PrevContext->IntT0;
+    Context->IntT1 = PrevContext->IntT1;
+
     Context->IntSp = PrevContext->IntSp;
     Context->IntNats = PrevContext->IntNats;
     Context->ApUNAT = PrevContext->ApUNAT;
@@ -860,35 +854,26 @@ ProcessInterruptRegion (
     Context->StIFS = PrevContext->StIFS;
     Context->StIPSR = PrevContext->StIPSR;
 
-    NextPc = RtlIa64InsertIPSlotNumber(PrevContext->StIIP,
-                 ((PrevContext->StIPSR >> PSR_RI) & 0x3));
+    NextPc = RtlIa64InsertIPSlotNumber(PrevContext->StIIP, ((PrevContext->StIPSR >> PSR_RI) & 0x3));
 
 #endif // _IMAGEHLP_SOURCE_
 
-    return(NextPc);
+    return (NextPc);
 }
 
-
+
 ULONGLONG
-RtlVirtualUnwind (
+RtlVirtualUnwind(
 #ifdef _IMAGEHLP_SOURCE_
-    HANDLE hProcess,
-    ULONGLONG ImageBase,
-    ULONGLONG ControlPc,
-    PRUNTIME_FUNCTION FunctionEntry,
-    PCONTEXT ContextRecord,
+    HANDLE hProcess, ULONGLONG ImageBase, ULONGLONG ControlPc, PRUNTIME_FUNCTION FunctionEntry, PCONTEXT ContextRecord,
     PREAD_PROCESS_MEMORY_ROUTINE64 ReadMemory
 #define ContextPointers ((PKNONVOLATILE_CONTEXT_POINTERS)0)
 #else
-    IN ULONGLONG ImageBase,
-    IN ULONGLONG ControlPc,
-    IN PRUNTIME_FUNCTION FunctionEntry,
-    IN OUT PCONTEXT ContextRecord,
-    OUT PBOOLEAN InFunction,
-    OUT PFRAME_POINTERS EstablisherFrame,
+    IN ULONGLONG ImageBase, IN ULONGLONG ControlPc, IN PRUNTIME_FUNCTION FunctionEntry, IN OUT PCONTEXT ContextRecord,
+    OUT PBOOLEAN InFunction, OUT PFRAME_POINTERS EstablisherFrame,
     IN OUT PKNONVOLATILE_CONTEXT_POINTERS ContextPointers OPTIONAL
 #endif
-    )
+)
 
 /*++
 
@@ -953,9 +938,9 @@ Return Value:
     ULONG RegionLen;
     UCHAR FirstByte;
     UCHAR Nat;
-    SHORT BsFrameSize;                  // in 8-byte units
-    SHORT LocalFrameSize;                  // in 8-byte units
-    SHORT TempFrameSize;                // in 8-byte units
+    SHORT BsFrameSize;    // in 8-byte units
+    SHORT LocalFrameSize; // in 8-byte units
+    SHORT TempFrameSize;  // in 8-byte units
     SHORT RNatSaveIndex;
     ULONG i;
     PULONG Buffer;
@@ -982,24 +967,26 @@ Return Value:
     BsFrameSize = (SHORT)ContextRecord->StIFS & PFS_SIZE_MASK;
     RNatSaveIndex = (SHORT)(ContextRecord->RsBSP >> 3) & NAT_BITS_PER_RNAT_REG;
     TempFrameSize = RNatSaveIndex + BsFrameSize - NAT_BITS_PER_RNAT_REG;
-    while (TempFrameSize >= 0) {
+    while (TempFrameSize >= 0)
+    {
         BsFrameSize++;
         TempFrameSize -= NAT_BITS_PER_RNAT_REG;
     }
 
     UnwindInfoPtr = ImageBase + FunctionEntry->UnwindInfoAddress;
 #ifdef _IMAGEHLP_SOURCE_
-    if (!ReadMemory( hProcess, (ULONG64)UnwindInfoPtr,
-                     &UnwindInfo, sizeof(UNWIND_INFO), &Size))
+    if (!ReadMemory(hProcess, (ULONG64)UnwindInfoPtr, &UnwindInfo, sizeof(UNWIND_INFO), &Size))
     {
         return 0;
     }
 
     UnwindContext.Version = UnwindInfo.Version;
     Size = UnwindInfo.DataLength * sizeof(ULONGLONG);
-    if (Size) {
-        Descriptors = (PUCHAR) MemAlloc (Size);
-        if (!ReadMemory(hProcess,(ULONG64)(UnwindInfoPtr+sizeof(UNWIND_INFO)), Descriptors, Size, &Size)) {
+    if (Size)
+    {
+        Descriptors = (PUCHAR)MemAlloc(Size);
+        if (!ReadMemory(hProcess, (ULONG64)(UnwindInfoPtr + sizeof(UNWIND_INFO)), Descriptors, Size, &Size))
+        {
             return 0;
         }
     }
@@ -1014,18 +1001,19 @@ Return Value:
     UnwindContext.AlternateRp = 0;
     UnwindContext.DescCount = 0;
     UnwindContext.SlotCount = 0;
-    UnwindContext.TargetSlot = (ULONG)(((ControlPc - FunctionEntry->BeginAddress - ImageBase) >> 4) * SLOTS_PER_BUNDLE + ((ControlPc >> 2) & 0x3));
+    UnwindContext.TargetSlot = (ULONG)(((ControlPc - FunctionEntry->BeginAddress - ImageBase) >> 4) * SLOTS_PER_BUNDLE +
+                                       ((ControlPc >> 2) & 0x3));
     UnwindContext.Descriptors = Descriptors;
 
     SrInitialize(&StateTable, StateRecords, STATE_RECORD_STACK_SIZE);
 
-    if (Size) {
+    if (Size)
+    {
         FirstByte = Descriptors[UnwindContext.DescCount++];
     }
 
 
-    while ( (UnwindContext.DescCount < UnwindContext.Size) &&
-            (!UnwindContext.ActiveRegionFound) )
+    while ((UnwindContext.DescCount < UnwindContext.Size) && (!UnwindContext.ActiveRegionFound))
     {
 
         //
@@ -1041,7 +1029,8 @@ Return Value:
         // region header record.
         //
 
-        if ((FirstByte & R1_MASK) == R1_PREFIX) {
+        if ((FirstByte & R1_MASK) == R1_PREFIX)
+        {
 
             //
             // region header record in short format
@@ -1049,16 +1038,19 @@ Return Value:
 
             RegionLen = FirstByte & R1_LENGTH_MASK;
 
-            if (FirstByte & R1_REGION_TYPE_MASK) {
+            if (FirstByte & R1_REGION_TYPE_MASK)
+            {
                 IsPrologueRegion = FALSE;
-            } else {
+            }
+            else
+            {
                 ADD_STATE_RECORD(StateTable, RegionLen, UnwindContext.DescCount);
             }
 
-            UW_DEBUG(("Region R1 format: body=%x, length=%d\n",
-                     IsPrologueRegion ? 0 : 1, RegionLen));
-
-        } else if ((FirstByte & R2_MASK) == R2_PREFIX) {
+            UW_DEBUG(("Region R1 format: body=%x, length=%d\n", IsPrologueRegion ? 0 : 1, RegionLen));
+        }
+        else if ((FirstByte & R2_MASK) == R2_PREFIX)
+        {
 
             //
             // general prologue region header
@@ -1074,8 +1066,9 @@ Return Value:
             RegionLen = ReadLEB128(Descriptors, &UnwindContext.DescCount);
             ADD_STATE_RECORD(StateTable, RegionLen, R2DescIndex);
             UW_DEBUG(("Region R2: body=0, length=%d\n", RegionLen));
-
-        } else if ((FirstByte & R3_MASK) == R3_PREFIX) {
+        }
+        else if ((FirstByte & R3_MASK) == R3_PREFIX)
+        {
 
             //
             // region header record in long format
@@ -1083,46 +1076,45 @@ Return Value:
 
             RegionLen = ReadLEB128(Descriptors, &UnwindContext.DescCount);
 
-            switch (FirstByte & R3_REGION_TYPE_MASK) {
+            switch (FirstByte & R3_REGION_TYPE_MASK)
+            {
 
-            case 0:      // prologue region header
+            case 0: // prologue region header
 
                 ADD_STATE_RECORD(StateTable, RegionLen, UnwindContext.DescCount);
                 break;
 
-            case 1:      // body region header
+            case 1: // body region header
 
                 IsPrologueRegion = FALSE;
                 break;
-
             }
 
-            UW_DEBUG(("Region R3: body=%x, length=%d\n",
-                      IsPrologueRegion ? 0 : 1, RegionLen));
-
-        } else {
+            UW_DEBUG(("Region R3: body=%x, length=%d\n", IsPrologueRegion ? 0 : 1, RegionLen));
+        }
+        else
+        {
 
             //
             // Not a region header record -> Invalid unwind descriptor.
             //
 
             UW_DEBUG(("Invalid unwind descriptor!\n"));
-
         }
 
-        if (UnwindContext.TargetSlot < (UnwindContext.SlotCount + RegionLen)) {
+        if (UnwindContext.TargetSlot < (UnwindContext.SlotCount + RegionLen))
+        {
             UnwindContext.ActiveRegionFound = TRUE;
             StateTable.Current->IsTarget = IsPrologueRegion;
         }
 
-        if (IsPrologueRegion) {
-            FirstByte = NewParsePrologueRegionPhase0(&UnwindContext,
-                                                     StateTable.Current,
-                                                     &AbiImmContext);
-        } else {
-            FirstByte = ParseBodyRegionDescriptors(&UnwindContext,
-                                                   &StateTable,
-                                                   RegionLen);
+        if (IsPrologueRegion)
+        {
+            FirstByte = NewParsePrologueRegionPhase0(&UnwindContext, StateTable.Current, &AbiImmContext);
+        }
+        else
+        {
+            FirstByte = ParseBodyRegionDescriptors(&UnwindContext, &StateTable, RegionLen);
         }
 
         UnwindContext.SlotCount += RegionLen;
@@ -1135,83 +1127,80 @@ Return Value:
     //      prologue region in which psp is saved.
     //
 
-    if (ARGUMENT_PRESENT(ContextPointers)) {
+    if (ARGUMENT_PRESENT(ContextPointers))
+    {
         IntNatsSource = (ULONG64)ContextPointers->ApUNAT;
-    } 
+    }
     IntNats = ContextRecord->ApUNAT;
     PreviousIntSp = ContextRecord->IntSp;
     PspRestored = FALSE;
 
     SrPointer = StateTable.Current;
-    while (SrPointer != StateTable.Base) {
+    while (SrPointer != StateTable.Base)
+    {
         NewParsePrologueRegionPhase1(&UnwindContext, SrPointer);
 
-        if (SrPointer->MiscMask & (1 << REG_SP)) {
-            if (UnwindContext.MiscRegs[REG_SP].Where == GENERAL_REG) {
-                PreviousIntSp = RestorePreservedRegisterFromGR (
-                                    ContextRecord,
-                                    BsFrameSize,
-                                    RNatSaveIndex,
-                                    (SHORT)UnwindContext.MiscRegs[REG_SP].SaveOffset,
+        if (SrPointer->MiscMask & (1 << REG_SP))
+        {
+            if (UnwindContext.MiscRegs[REG_SP].Where == GENERAL_REG)
+            {
+                PreviousIntSp = RestorePreservedRegisterFromGR(ContextRecord, BsFrameSize, RNatSaveIndex,
+                                                               (SHORT)UnwindContext.MiscRegs[REG_SP].SaveOffset,
 #ifdef _IMAGEHLP_SOURCE_
-                                    hProcess,
-                                    ReadMemory,
-                                    &Succeed,
+                                                               hProcess, ReadMemory, &Succeed,
 #else
-                                    &Source,
+                                                               &Source,
 #endif // _IMAGEHLP_SOURCE_
-                                    &Nat
-                                    );
+                                                               &Nat);
 #ifdef _IMAGEHLP_SOURCE_
-                if (!Succeed) {
+                if (!Succeed)
+                {
                     return 0;
                 }
 #endif // _IMAGEHLP_SOURCE_
+            }
+            else
+            {
 
-            } else {
-
-                Source = ContextRecord->IntSp + UnwindContext.MiscRegs[REG_SP].SaveOffset*4;
+                Source = ContextRecord->IntSp + UnwindContext.MiscRegs[REG_SP].SaveOffset * 4;
 #ifdef _IMAGEHLP_SOURCE_
-                if (!ReadMemory(hProcess, (ULONG64)(Source), &PreviousIntSp, sizeof(ULONGLONG), &Size)) {
+                if (!ReadMemory(hProcess, (ULONG64)(Source), &PreviousIntSp, sizeof(ULONGLONG), &Size))
+                {
                     return 0;
                 }
 #else
                 PreviousIntSp = *(PULONGLONG)Source;
 #endif // _IMAGEHLP_SOURCE_
                 EXTRACT_NAT_FROM_UNAT(Nat);
-
             }
             ContextRecord->IntNats &= ~(0x1 << STACK_POINTER_GR);
             ContextRecord->IntNats |= (Nat << STACK_POINTER_GR);
             SrPointer->MiscMask &= ~(1 << REG_SP);
-            if (ARGUMENT_PRESENT(ContextPointers)) {
-                CtxPtr = (ULONG64 *)((ULONG_PTR)ContextPointers +
-                                   MiscContextPointersOffset[REG_SP]);
+            if (ARGUMENT_PRESENT(ContextPointers))
+            {
+                CtxPtr = (ULONG64 *)((ULONG_PTR)ContextPointers + MiscContextPointersOffset[REG_SP]);
                 *CtxPtr = Source;
             }
             PspRestored = TRUE;
         }
-        if (PspRestored == FALSE) {
+        if (PspRestored == FALSE)
+        {
             PreviousIntSp += SrPointer->SpAdjustment * 4;
         }
         SrPointer = SrPointer->Previous;
     }
 
-    if (AbiImmContext != 0xFF) {
+    if (AbiImmContext != 0xFF)
+    {
 
-        ContextRecord->IntSp = PreviousIntSp;  // trap/context frame address
+        ContextRecord->IntSp = PreviousIntSp; // trap/context frame address
         NextPc = ProcessInterruptRegion(
 #ifdef _IMAGEHLP_SOURCE_
-                     hProcess,
-                     ReadMemory,
+            hProcess, ReadMemory,
 #else
-                     ContextPointers,
+            ContextPointers,
 #endif _IMAGEHLP_SOURCE_
-                     &UnwindContext,
-                     ContextRecord,
-                     BsFrameSize,
-                     RNatSaveIndex,
-                     AbiImmContext);
+            &UnwindContext, ContextRecord, BsFrameSize, RNatSaveIndex, AbiImmContext);
 
         goto FastExit;
     }
@@ -1221,45 +1210,44 @@ Return Value:
     //
 
     SrPointer = StateTable.Current;
-    while (SrPointer != StateTable.Base) {
+    while (SrPointer != StateTable.Base)
+    {
 
         Mask = SrPointer->MiscMask;
         UW_DEBUG(("MiscMask = 0x%x\n", Mask));
 
-        for (i = 0; i < NUMBER_OF_PRESERVED_REGISTERS; i++) {
+        for (i = 0; i < NUMBER_OF_PRESERVED_REGISTERS; i++)
+        {
             Destination = (PVOID)((ULONG_PTR)ContextRecord + MiscContextOffset[i]);
-            if (Mask & 0x1) {
+            if (Mask & 0x1)
+            {
 
-                if (ARGUMENT_PRESENT(ContextPointers)) {
-                    CtxPtr = (ULONG64 *)((ULONG_PTR)ContextPointers +
-                                       MiscContextPointersOffset[i]);
+                if (ARGUMENT_PRESENT(ContextPointers))
+                {
+                    CtxPtr = (ULONG64 *)((ULONG_PTR)ContextPointers + MiscContextPointersOffset[i]);
                     Source = *CtxPtr;
                 }
 
-                if (UnwindContext.MiscRegs[i].Where == GENERAL_REG) {
+                if (UnwindContext.MiscRegs[i].Where == GENERAL_REG)
+                {
 
-                    *(PULONGLONG)Destination =
-                        RestorePreservedRegisterFromGR (
-                            ContextRecord,
-                            BsFrameSize,
-                            RNatSaveIndex,
-                            (SHORT)UnwindContext.MiscRegs[i].SaveOffset,
+                    *(PULONGLONG)Destination = RestorePreservedRegisterFromGR(
+                        ContextRecord, BsFrameSize, RNatSaveIndex, (SHORT)UnwindContext.MiscRegs[i].SaveOffset,
 #ifdef _IMAGEHLP_SOURCE_
-                            hProcess,
-                            ReadMemory,
-                            &Succeed,
+                        hProcess, ReadMemory, &Succeed,
 #else
-                            &Source,
+                        &Source,
 #endif // _IMAGEHLP_SOURCE_
-                            NULL
-                            );
+                        NULL);
 #ifdef _IMAGEHLP_SOURCE_
-                    if (!Succeed) {
+                    if (!Succeed)
+                    {
                         return 0;
                     }
 #endif // _IMAGEHLP_SOURCE_
-
-                } else if (UnwindContext.MiscRegs[i].Where == BRANCH_REG) {
+                }
+                else if (UnwindContext.MiscRegs[i].Where == BRANCH_REG)
+                {
 
                     //
                     // restore return pointer from branch register
@@ -1267,37 +1255,43 @@ Return Value:
 
                     USHORT Offset;
 
-                    Offset = (USHORT)UnwindContext.MiscRegs[i].SaveOffset-FIRST_PRESERVED_BR;
+                    Offset = (USHORT)UnwindContext.MiscRegs[i].SaveOffset - FIRST_PRESERVED_BR;
                     Source = (ULONG64)(&ContextRecord->BrS0 + Offset);
 #ifdef _IMAGEHLP_SOURCE_
-                    if (!ReadMemory(hProcess, (ULONG64)(Source), Destination, sizeof(ULONGLONG), &Size)) {
+                    if (!ReadMemory(hProcess, (ULONG64)(Source), Destination, sizeof(ULONGLONG), &Size))
+                    {
                         return 0;
                     }
 #else
                     *(PULONGLONG)Destination = *(PULONGLONG)(Source);
 #endif // _IMAGEHLP_SOURCE_
+                }
+                else if (UnwindContext.MiscRegs[i].Where == PSP_RELATIVE)
+                {
 
-                } else if (UnwindContext.MiscRegs[i].Where == PSP_RELATIVE) {
+                    if ((SrPointer->Ecount == 0) ||
+                        (UnwindContext.MiscRegs[i].SaveOffset <= (STACK_SCRATCH_AREA / sizeof(ULONG))))
+                    {
+                        Source = PreviousIntSp + STACK_SCRATCH_AREA - UnwindContext.MiscRegs[i].SaveOffset * 4;
 
-                    if ((SrPointer->Ecount == 0) || (UnwindContext.MiscRegs[i].SaveOffset <= (STACK_SCRATCH_AREA/sizeof(ULONG)))) {
-                        Source = PreviousIntSp + STACK_SCRATCH_AREA
-                                     - UnwindContext.MiscRegs[i].SaveOffset*4;
-
-                        if (i == REG_NATS) {
+                        if (i == REG_NATS)
+                        {
                             Destination = (PVOID)&IntNats;
                             IntNatsSource = Source;
                         }
 
 #ifdef _IMAGEHLP_SOURCE_
-                        if (!ReadMemory(hProcess, (ULONG64)(Source), Destination, sizeof(ULONGLONG), &Size)) {
+                        if (!ReadMemory(hProcess, (ULONG64)(Source), Destination, sizeof(ULONGLONG), &Size))
+                        {
                             return 0;
                         }
 #else
                         *(PULONGLONG)Destination = *(PULONGLONG)(Source);
 #endif // _IMAGEHLP_SOURCE_
                     }
-
-                } else if (UnwindContext.MiscRegs[i].Where == SP_RELATIVE) {
+                }
+                else if (UnwindContext.MiscRegs[i].Where == SP_RELATIVE)
+                {
 
                     //
                     // Make the necessary adjustment depending on whether
@@ -1306,19 +1300,20 @@ Return Value:
                     //
 
                     if (UnwindContext.MiscRegs[i].When >= SrPointer->SpWhen && (SrPointer->RegionLen != 0))
-                        Source = ContextRecord->IntSp
-                                     + UnwindContext.MiscRegs[i].SaveOffset*4;
+                        Source = ContextRecord->IntSp + UnwindContext.MiscRegs[i].SaveOffset * 4;
                     else
-                        Source = ContextRecord->IntSp+SrPointer->SpAdjustment*4
-                                     + UnwindContext.MiscRegs[i].SaveOffset*4;
+                        Source = ContextRecord->IntSp + SrPointer->SpAdjustment * 4 +
+                                 UnwindContext.MiscRegs[i].SaveOffset * 4;
 
-                        if (i == REG_NATS) {
-                            Destination = (PVOID)&IntNats;
-                            IntNatsSource = Source;
-                        }
+                    if (i == REG_NATS)
+                    {
+                        Destination = (PVOID)&IntNats;
+                        IntNatsSource = Source;
+                    }
 
 #ifdef _IMAGEHLP_SOURCE_
-                    if (!ReadMemory(hProcess, (ULONG64)(Source), Destination, sizeof(ULONGLONG), &Size)) {
+                    if (!ReadMemory(hProcess, (ULONG64)(Source), Destination, sizeof(ULONGLONG), &Size))
+                    {
                         return 0;
                     }
 #else
@@ -1326,11 +1321,13 @@ Return Value:
 #endif // _IMAGEHLP_SOURCE_
                 }
 
-                if (ARGUMENT_PRESENT(ContextPointers) && (i != REG_NATS)) {
+                if (ARGUMENT_PRESENT(ContextPointers) && (i != REG_NATS))
+                {
                     *CtxPtr = Source;
                 }
-
-            } else if (Mask == 0) {
+            }
+            else if (Mask == 0)
+            {
 
                 //
                 // No more registers to restore
@@ -1351,36 +1348,45 @@ Return Value:
         CtxPtr = (ULONG64 *)&ContextPointers->FltS0;
 
         UW_DEBUG(("FrMask = 0x%x\n", Mask));
-        for (i = 0; i < NUMBER_OF_PRESERVED_FR; i++) {
-            if (Mask & 0x1) {
+        for (i = 0; i < NUMBER_OF_PRESERVED_FR; i++)
+        {
+            if (Mask & 0x1)
+            {
 
-                if ((SrPointer->Ecount == 0) || (UnwindContext.Float[i].SaveOffset <= (STACK_SCRATCH_AREA/sizeof(ULONG)))) {
-                    Source = PreviousIntSp + STACK_SCRATCH_AREA
-                                 - UnwindContext.Float[i].SaveOffset*4;
+                if ((SrPointer->Ecount == 0) ||
+                    (UnwindContext.Float[i].SaveOffset <= (STACK_SCRATCH_AREA / sizeof(ULONG))))
+                {
+                    Source = PreviousIntSp + STACK_SCRATCH_AREA - UnwindContext.Float[i].SaveOffset * 4;
 #ifdef _IMAGEHLP_SOURCE_
-                    if (!ReadMemory(hProcess, (ULONG64)(Source), Destination, sizeof(FLOAT128), &Size)) {
+                    if (!ReadMemory(hProcess, (ULONG64)(Source), Destination, sizeof(FLOAT128), &Size))
+                    {
                         return 0;
                     }
 #else
                     *(FLOAT128 *)Destination = *(FLOAT128 *)Source;
 #endif // _IMAGEHLP_SOURCE_
 
-                    if (ARGUMENT_PRESENT(ContextPointers)) {
+                    if (ARGUMENT_PRESENT(ContextPointers))
+                    {
                         *CtxPtr = Source;
                     }
                 }
-
-            } else if (Mask == 0) {
+            }
+            else if (Mask == 0)
+            {
                 break;
             }
 
             Mask = Mask >> 1;
 
-            if (i == (NUMBER_OF_LOW_PRESERVED_FR - 1)) {
+            if (i == (NUMBER_OF_LOW_PRESERVED_FR - 1))
+            {
                 Destination = (PVOID)&ContextRecord->FltS4;
                 CtxPtr = (ULONG64 *)(&ContextPointers->FltS4);
-            } else {
-                Destination = (PVOID)((FLOAT128 *)Destination+1);
+            }
+            else
+            {
+                Destination = (PVOID)((FLOAT128 *)Destination + 1);
                 CtxPtr++;
             }
         }
@@ -1397,14 +1403,17 @@ Return Value:
         UW_DEBUG(("GrMask = 0x%x\n", Mask));
         for (i = 0; i < NUMBER_OF_PRESERVED_GR; i++)
         {
-            if (Mask & 0x1) {
+            if (Mask & 0x1)
+            {
 
-                if ((SrPointer->Ecount == 0) || (UnwindContext.Integer[i].SaveOffset <= (STACK_SCRATCH_AREA/sizeof(ULONG)))) {
-                    Source = PreviousIntSp + STACK_SCRATCH_AREA
-                                 - UnwindContext.Integer[i].SaveOffset*4;
+                if ((SrPointer->Ecount == 0) ||
+                    (UnwindContext.Integer[i].SaveOffset <= (STACK_SCRATCH_AREA / sizeof(ULONG))))
+                {
+                    Source = PreviousIntSp + STACK_SCRATCH_AREA - UnwindContext.Integer[i].SaveOffset * 4;
 
 #ifdef _IMAGEHLP_SOURCE_
-                    if (!ReadMemory(hProcess, (ULONG64)(Source), Destination, sizeof(ULONGLONG), &Size)) {
+                    if (!ReadMemory(hProcess, (ULONG64)(Source), Destination, sizeof(ULONGLONG), &Size))
+                    {
                         return 0;
                     }
 #else
@@ -1412,23 +1421,25 @@ Return Value:
 #endif // _IMAGEHLP_SOURCE_
                     EXTRACT_NAT_FROM_UNAT(Nat);
                     Nat = (UCHAR)((IntNats >> (((ULONG_PTR)Source & 0x1F8) >> 3)) & 0x1);
-                    ContextRecord->IntNats &= ~(0x1 << (i+FIRST_PRESERVED_GR));
-                    ContextRecord->IntNats |= (Nat << (i+FIRST_PRESERVED_GR));
+                    ContextRecord->IntNats &= ~(0x1 << (i + FIRST_PRESERVED_GR));
+                    ContextRecord->IntNats |= (Nat << (i + FIRST_PRESERVED_GR));
 
 #ifndef _IMAGEHLP_SOURCE_
-                    if (ARGUMENT_PRESENT(ContextPointers)) {
+                    if (ARGUMENT_PRESENT(ContextPointers))
+                    {
                         *CtxPtr = Source;
                         *NatCtxPtr = IntNatsSource;
                     }
 #endif
                 }
-
-            } else if (Mask == 0) {
+            }
+            else if (Mask == 0)
+            {
                 break;
             }
 
             Mask = Mask >> 1;
-            Destination = (PVOID)((PULONGLONG)Destination+1);
+            Destination = (PVOID)((PULONGLONG)Destination + 1);
             CtxPtr++;
             NatCtxPtr++;
         }
@@ -1443,9 +1454,9 @@ Return Value:
     // Restore the value of the epilogue count from the PFS
     //
 
-    ContextRecord->ApEC = (ContextRecord->RsPFS >> PFS_EC_SHIFT) &
-                               ~(((ULONGLONG)1 << PFS_EC_SIZE) - 1);
-    if (ARGUMENT_PRESENT(ContextPointers)) {
+    ContextRecord->ApEC = (ContextRecord->RsPFS >> PFS_EC_SHIFT) & ~(((ULONGLONG)1 << PFS_EC_SIZE) - 1);
+    if (ARGUMENT_PRESENT(ContextPointers))
+    {
         ContextPointers->ApEC = ContextPointers->RsPFS;
     }
 
@@ -1461,11 +1472,12 @@ FastExit:
         MemFree(Descriptors);
 #endif // _IMAGEHLP_SOURCE_
 
-    if (AbiImmContext == 0xFF) {
+    if (AbiImmContext == 0xFF)
+    {
 
         NextPc = *(&ContextRecord->BrRp + UnwindContext.AlternateRp);
 #ifndef _IMAGEHLP_SOURCE_
-        NextPc = RtlIa64InsertIPSlotNumber((NextPc-0x10), 2);
+        NextPc = RtlIa64InsertIPSlotNumber((NextPc - 0x10), 2);
 #endif // _IMAGEHLP_SOURCE_
 
         //
@@ -1473,13 +1485,14 @@ FastExit:
         // the new bsp.
         //
 
-        OldTopRnat = (ContextRecord->RsBSP+(BsFrameSize-1)*8) | RNAT_ALIGNMENT;
+        OldTopRnat = (ContextRecord->RsBSP + (BsFrameSize - 1) * 8) | RNAT_ALIGNMENT;
 
         ContextRecord->StIFS = MASK(IFS_V, (ULONGLONG)1) | ContextRecord->RsPFS;
         BsFrameSize = (SHORT)ContextRecord->StIFS & PFS_SIZE_MASK;
         LocalFrameSize = (SHORT)(ContextRecord->StIFS >> PFS_SIZE_SHIFT) & PFS_SIZE_MASK;
         TempFrameSize = LocalFrameSize - RNatSaveIndex;
-        while (TempFrameSize > 0) {
+        while (TempFrameSize > 0)
+        {
             LocalFrameSize++;
             BsFrameSize++;
             TempFrameSize -= NAT_BITS_PER_RNAT_REG;
@@ -1491,44 +1504,37 @@ FastExit:
         // determine if the RNAT field needs to be updated.
         //
 
-        NewTopRnat = (ContextRecord->RsBSP+(BsFrameSize-1)*8) | RNAT_ALIGNMENT;
+        NewTopRnat = (ContextRecord->RsBSP + (BsFrameSize - 1) * 8) | RNAT_ALIGNMENT;
 
-        if (NewTopRnat < OldTopRnat) {
+        if (NewTopRnat < OldTopRnat)
+        {
 
 #ifdef _IMAGEHLP_SOURCE_
             Destination = &ContextRecord->RsRNAT;
             Source = NewTopRnat;
-            if (!ReadMemory(hProcess, (ULONG64)Source, Destination, 8, &Size)) {
+            if (!ReadMemory(hProcess, (ULONG64)Source, Destination, 8, &Size))
+            {
                 return 0;
             }
 #else
             ContextRecord->RsRNAT = *(PULONGLONG)(NewTopRnat);
 #endif // _IMAGEHLP_SOURCE_
-
         }
     }
 
 #ifdef _IMAGEHLP_SOURCE_
-    UW_DEBUG(("NextPc = 0x%lx, PSP = 0x%lx, BSP = 0x%lx\n",
-               (ULONGLONG)NextPc,
-               (ULONGLONG)ContextRecord->IntSp,
-               (ULONGLONG)ContextRecord->RsBSP));
+    UW_DEBUG(("NextPc = 0x%lx, PSP = 0x%lx, BSP = 0x%lx\n", (ULONGLONG)NextPc, (ULONGLONG)ContextRecord->IntSp,
+              (ULONGLONG)ContextRecord->RsBSP));
 #else
-    UW_DEBUG(("NextPc = 0x%lx, PSP = 0x%lx, BSP = 0x%lx\n",
-               (ULONGLONG)NextPc,
-               EstablisherFrame->MemoryStackFp,
-               EstablisherFrame->BackingStoreFp));
+    UW_DEBUG(("NextPc = 0x%lx, PSP = 0x%lx, BSP = 0x%lx\n", (ULONGLONG)NextPc, EstablisherFrame->MemoryStackFp,
+              EstablisherFrame->BackingStoreFp));
 #endif // _IMAGEHLP_SOURCE_
     return (NextPc);
 }
 
-
+
 UCHAR
-NewParsePrologueRegionPhase0 (
-    IN PUNWIND_CONTEXT UwContext,
-    IN PSTATE_RECORD State,
-    IN OUT PUCHAR AbiImmContext
-    )
+NewParsePrologueRegionPhase0(IN PUNWIND_CONTEXT UwContext, IN PSTATE_RECORD State, IN OUT PUCHAR AbiImmContext)
 {
     PUCHAR Desc = UwContext->Descriptors;
     ULONG Offset;
@@ -1541,48 +1547,57 @@ NewParsePrologueRegionPhase0 (
     ULONG TempMask;
     ULONG i;
 
-    while (UwContext->DescCount < UwContext->Size) {
+    while (UwContext->DescCount < UwContext->Size)
+    {
 
         FirstByte = Desc[UwContext->DescCount++];
 
-        if ( (FirstByte & P1_MASK) == P1_PREFIX) {
+        if ((FirstByte & P1_MASK) == P1_PREFIX)
+        {
 
             continue;
-
-        } else if ( (FirstByte & P2_MASK) == P2_PREFIX ) {
-
-            UwContext->DescCount++;
-
-        } else if ( (FirstByte & P3_MASK) == P3_PREFIX ) {
+        }
+        else if ((FirstByte & P2_MASK) == P2_PREFIX)
+        {
 
             UwContext->DescCount++;
+        }
+        else if ((FirstByte & P3_MASK) == P3_PREFIX)
+        {
 
-        } else if ( (FirstByte & P4_MASK) == P4_PREFIX ) {
+            UwContext->DescCount++;
+        }
+        else if ((FirstByte & P4_MASK) == P4_PREFIX)
+        {
 
-            UwContext->DescCount += ((State->RegionLen+3) >> 2);
-
-        } else if ( (FirstByte & P5_MASK) == P5_PREFIX ) {
+            UwContext->DescCount += ((State->RegionLen + 3) >> 2);
+        }
+        else if ((FirstByte & P5_MASK) == P5_PREFIX)
+        {
 
             UwContext->DescCount += 3;
-
-        } else if ( (FirstByte & P6_MASK) == P6_PREFIX ) {
+        }
+        else if ((FirstByte & P6_MASK) == P6_PREFIX)
+        {
 
             continue;
-
-        } else if ( (FirstByte & P7_MASK) == P7_PREFIX ) {
+        }
+        else if ((FirstByte & P7_MASK) == P7_PREFIX)
+        {
 
             RecType = FirstByte & ~P7_MASK;
 
-            switch (RecType) {
+            switch (RecType)
+            {
 
             case MEM_STACK_F:
 
                 Offset = ReadLEB128(Desc, &UwContext->DescCount);
                 FrameSize = ReadLEB128(Desc, &UwContext->DescCount);
 
-                if (UwContext->TargetSlot > (UwContext->SlotCount+Offset) || State->RegionLen == 0)
+                if (UwContext->TargetSlot > (UwContext->SlotCount + Offset) || State->RegionLen == 0)
                 {
-                    State->SpAdjustment += FrameSize*4;
+                    State->SpAdjustment += FrameSize * 4;
                     State->SpWhen = Offset;
                 }
                 break;
@@ -1602,14 +1617,16 @@ NewParsePrologueRegionPhase0 (
             case FPSR_WHEN:
 
                 Offset = ReadLEB128(Desc, &UwContext->DescCount);
-                if ((State->IsTarget) &&
-                    (UwContext->TargetSlot > (UwContext->SlotCount+Offset)))
+                if ((State->IsTarget) && (UwContext->TargetSlot > (UwContext->SlotCount + Offset)))
                 {
                     Index = P7RecordTypeToRegisterIndex[RecType];
-                    if (!(State->MiscMask & (1 << Index))) {
-                        State->MiscMask |= MASK(Index,1);
+                    if (!(State->MiscMask & (1 << Index)))
+                    {
+                        State->MiscMask |= MASK(Index, 1);
                         UwContext->MiscRegs[Index].When = Offset;
-                    } else {
+                    }
+                    else
+                    {
                         UW_DEBUG(("Duplicate descriptors,"));
                         UW_DEBUG(("unwinder may produce incorrect result!\n"));
                     }
@@ -1631,14 +1648,15 @@ NewParsePrologueRegionPhase0 (
             default:
 
                 UW_DEBUG(("Invalid record type for descriptor P7!\n"));
-
             }
-
-        } else if ( (FirstByte & P8_MASK) == P8_PREFIX ) {
+        }
+        else if ((FirstByte & P8_MASK) == P8_PREFIX)
+        {
 
             RecType = Desc[UwContext->DescCount++];
 
-            switch (RecType) {
+            switch (RecType)
+            {
 
             case PSP_PSPREL:
             case RP_SPREL:
@@ -1666,14 +1684,16 @@ NewParsePrologueRegionPhase0 (
             case PRIUNAT_WHEN:
 
                 Offset = ReadLEB128(Desc, &UwContext->DescCount);
-                if ((State->IsTarget) &&
-                    (UwContext->TargetSlot > (UwContext->SlotCount+Offset)))
+                if ((State->IsTarget) && (UwContext->TargetSlot > (UwContext->SlotCount + Offset)))
                 {
                     Index = P7RecordTypeToRegisterIndex[RecType];
-                    if (!(State->MiscMask & (1 << Index))) {
-                        State->MiscMask |= MASK(Index,1);
+                    if (!(State->MiscMask & (1 << Index)))
+                    {
+                        State->MiscMask |= MASK(Index, 1);
                         UwContext->MiscRegs[Index].When = Offset;
-                    } else {
+                    }
+                    else
+                    {
                         UW_DEBUG(("Duplicate descriptors,"));
                         UW_DEBUG(("unwinder may produce incorrect result!\n"));
                     }
@@ -1684,26 +1704,29 @@ NewParsePrologueRegionPhase0 (
             default:
 
                 UW_DEBUG(("Invalid record type for descriptor P8!\n"));
-
             }
-
-        } else if ( (FirstByte & P9_MASK) == P9_PREFIX ) {
+        }
+        else if ((FirstByte & P9_MASK) == P9_PREFIX)
+        {
 
             UwContext->DescCount += 2;
             VUW_DEBUG_PRINT("Format P9 not supported yet!\n");
-
-        } else if ( (FirstByte & P10_MASK) == P10_PREFIX ) {
+        }
+        else if ((FirstByte & P10_MASK) == P10_PREFIX)
+        {
 
             UCHAR Abi = Desc[UwContext->DescCount++];
             UCHAR Context = Desc[UwContext->DescCount++];
 
             *AbiImmContext = Context;
 
-            if (Abi != NT_ABI) {
+            if (Abi != NT_ABI)
+            {
                 VUW_DEBUG_PRINT("Unknown ABI unwind descriptor\n");
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // Encounter another region header record
@@ -1717,12 +1740,8 @@ NewParsePrologueRegionPhase0 (
 
     return FirstByte;
 }
-
-VOID
-NewParsePrologueRegionPhase1 (
-    IN PUNWIND_CONTEXT UwContext,
-    IN PSTATE_RECORD State
-    )
+
+VOID NewParsePrologueRegionPhase1(IN PUNWIND_CONTEXT UwContext, IN PSTATE_RECORD State)
 {
     ULONG FrameSize;
     ULONG Offset;
@@ -1731,7 +1750,7 @@ NewParsePrologueRegionPhase1 (
     ULONG Index;
     ULONG Count;
     UCHAR RecType;
-    UCHAR FirstByte, SecondByte;   // 1st & 2nd bytes of a region header record
+    UCHAR FirstByte, SecondByte; // 1st & 2nd bytes of a region header record
     ULONG DescIndex;
     ULONG ImaskBegin;
     UCHAR NextBr, NextGr, NextFr;
@@ -1747,7 +1766,8 @@ NewParsePrologueRegionPhase1 (
 
     FirstByte = Desc[DescIndex];
 
-    if ((FirstByte & R2_MASK) == R2_PREFIX) {
+    if ((FirstByte & R2_MASK) == R2_PREFIX)
+    {
 
         //
         // general prologue region header; need to process it first
@@ -1762,25 +1782,26 @@ NewParsePrologueRegionPhase1 (
         SecondByte = Desc[DescIndex++];
         MiscMask = ((FirstByte & 0x7) << 1) | ((SecondByte & 0x80) >> 7);
         GrSave = SecondByte & 0x7F;
-        ReadLEB128(Desc, &DescIndex);    // advance the descriptor index
+        ReadLEB128(Desc, &DescIndex); // advance the descriptor index
 
-        if (GrSave < STATIC_REGISTER_SET_SIZE) {
+        if (GrSave < STATIC_REGISTER_SET_SIZE)
+        {
             UW_DEBUG(("Invalid unwind descriptor!\n"));
         }
 
-        UW_DEBUG(("Region R2: rmask=%x,grsave=%d,length=%d\n",
-                  MiscMask, GrSave, State->RegionLen));
+        UW_DEBUG(("Region R2: rmask=%x,grsave=%d,length=%d\n", MiscMask, GrSave, State->RegionLen));
 
         Count = 0;
-        for (Index = REG_PREDS; Index <= REG_RP; Index++) {
-            if (MiscMask & 0x1) {
-                if (!(State->IsTarget) ||
-                    (State->MiscMask & MASK(Index,1)))
+        for (Index = REG_PREDS; Index <= REG_RP; Index++)
+        {
+            if (MiscMask & 0x1)
+            {
+                if (!(State->IsTarget) || (State->MiscMask & MASK(Index, 1)))
                 {
                     UwContext->MiscRegs[Index].Where = GENERAL_REG;
-                    UwContext->MiscRegs[Index].SaveOffset = GrSave+Count;
+                    UwContext->MiscRegs[Index].SaveOffset = GrSave + Count;
                     UwContext->MiscRegs[Index].When = 0;
-                    State->MiscMask |= MASK(Index,1);
+                    State->MiscMask |= MASK(Index, 1);
                 }
                 Count++;
             }
@@ -1788,29 +1809,31 @@ NewParsePrologueRegionPhase1 (
         }
     }
 
-    while (DescIndex <= State->DescEnd) {
+    while (DescIndex <= State->DescEnd)
+    {
 
         FirstByte = Desc[DescIndex++];
 
-        if ( (FirstByte & P1_MASK) == P1_PREFIX) {
+        if ((FirstByte & P1_MASK) == P1_PREFIX)
+        {
 
             BrMask = FirstByte & ~P1_MASK;
             State->MiscMask |= (BrMask << REG_BR_BASE);
 
             UW_DEBUG(("Prolog P1: brmask=%x\n", BrMask));
 
-            for (Count = REG_BR_BASE;
-                 Count < REG_BR_BASE+NUMBER_OF_PRESERVED_BR;
-                 Count++)
+            for (Count = REG_BR_BASE; Count < REG_BR_BASE + NUMBER_OF_PRESERVED_BR; Count++)
             {
-                if (BrMask & 0x1) {
+                if (BrMask & 0x1)
+                {
                     UwContext->MiscRegs[Count].Where = PSP_RELATIVE;
                     UwContext->MiscRegs[Count].When = State->RegionLen;
                 }
                 BrMask = BrMask >> 1;
             }
-
-        } else if ( (FirstByte & P2_MASK) == P2_PREFIX ) {
+        }
+        else if ((FirstByte & P2_MASK) == P2_PREFIX)
+        {
 
             SecondByte = Desc[DescIndex++];
             GrSave = SecondByte & 0x7F;
@@ -1819,82 +1842,84 @@ NewParsePrologueRegionPhase1 (
 
             State->MiscMask |= (BrMask << REG_BR_BASE);
 
-            for (Count = REG_BR_BASE;
-                 Count < REG_BR_BASE+NUMBER_OF_PRESERVED_BR;
-                 Count++)
+            for (Count = REG_BR_BASE; Count < REG_BR_BASE + NUMBER_OF_PRESERVED_BR; Count++)
             {
-                if (BrMask & 0x1) {
+                if (BrMask & 0x1)
+                {
                     UwContext->MiscRegs[Count].Where = GENERAL_REG;
                     UwContext->MiscRegs[Count].SaveOffset = GrSave++;
                 }
                 BrMask = BrMask >> 1;
             }
-
-        } else if ( (FirstByte & P3_MASK) == P3_PREFIX ) {
+        }
+        else if ((FirstByte & P3_MASK) == P3_PREFIX)
+        {
 
             SecondByte = Desc[DescIndex++];
             RecType = ((SecondByte & 0x80) >> 7) | ((FirstByte & 0x7) << 1);
             Index = P3RecordTypeToRegisterIndex[RecType];
 
-            if (RecType == RP_BR) 
+            if (RecType == RP_BR)
             {
                 UwContext->AlternateRp = SecondByte & 0x7F;
-            } 
-            else if (!(State->IsTarget) || (State->MiscMask & MASK(Index,1)))
+            }
+            else if (!(State->IsTarget) || (State->MiscMask & MASK(Index, 1)))
             {
                 UwContext->MiscRegs[Index].Where = GENERAL_REG;
                 UwContext->MiscRegs[Index].SaveOffset = SecondByte & 0x7F;
                 UwContext->MiscRegs[Index].When = 0;
-                State->MiscMask |= MASK(Index,1);
+                State->MiscMask |= MASK(Index, 1);
 
-                UW_DEBUG(("Prolog P3: type=%d reg=%d\n",
-                          RecType, UwContext->MiscRegs[Index].SaveOffset));
+                UW_DEBUG(("Prolog P3: type=%d reg=%d\n", RecType, UwContext->MiscRegs[Index].SaveOffset));
             }
-
-        } else if ( (FirstByte & P4_MASK) == P4_PREFIX ) {
+        }
+        else if ((FirstByte & P4_MASK) == P4_PREFIX)
+        {
 
             SpillMaskOmitted = FALSE;
             ImaskBegin = DescIndex;
-            DescIndex += ((State->RegionLen+3) >> 2);
-
-        } else if ( (FirstByte & P5_MASK) == P5_PREFIX ) {
+            DescIndex += ((State->RegionLen + 3) >> 2);
+        }
+        else if ((FirstByte & P5_MASK) == P5_PREFIX)
+        {
 
             GrMask = (Desc[DescIndex] & 0xF0) >> 4;
-            FrMask = ((ULONG)(Desc[DescIndex] & 0xF) << 16) |
-                         ((ULONG)Desc[DescIndex+1] << 8) |
-                         ((ULONG)Desc[DescIndex+2]);
+            FrMask = ((ULONG)(Desc[DescIndex] & 0xF) << 16) | ((ULONG)Desc[DescIndex + 1] << 8) |
+                     ((ULONG)Desc[DescIndex + 2]);
 
-            DescIndex += 3;    // increment the descriptor index
+            DescIndex += 3; // increment the descriptor index
 
             State->GrMask |= GrMask;
             State->FrMask |= FrMask;
 
-            UW_DEBUG(("Prolog P5: grmask = %x, frmask = %x\n",
-                      State->GrMask, State->FrMask));
+            UW_DEBUG(("Prolog P5: grmask = %x, frmask = %x\n", State->GrMask, State->FrMask));
+        }
+        else if ((FirstByte & P6_MASK) == P6_PREFIX)
+        {
 
-        } else if ( (FirstByte & P6_MASK) == P6_PREFIX ) {
-
-            if (FirstByte & 0x10) {
+            if (FirstByte & 0x10)
+            {
 
                 GrMask = FirstByte & 0xF;
                 State->GrMask |= GrMask;
-
-            } else {
+            }
+            else
+            {
 
                 FrMask = FirstByte & 0xF;
                 State->FrMask |= FrMask;
-
             }
 
-            UW_DEBUG(("Prolog P6: is_gr = %d, mask = %x\n",
-                      (FirstByte & 0x10) ? 1 : 0,
+            UW_DEBUG(("Prolog P6: is_gr = %d, mask = %x\n", (FirstByte & 0x10) ? 1 : 0,
                       (FirstByte & 0x10) ? State->GrMask : State->FrMask));
-
-        } else if ( (FirstByte & P7_MASK) == P7_PREFIX ) {
+        }
+        else if ((FirstByte & P7_MASK) == P7_PREFIX)
+        {
 
             RecType = FirstByte & ~P7_MASK;
 
-            switch (RecType) {
+            switch (RecType)
+            {
 
             case PSP_SPREL:
 
@@ -1904,13 +1929,14 @@ NewParsePrologueRegionPhase1 (
 
                 Index = P7RecordTypeToRegisterIndex[RecType];
                 Offset = ReadLEB128(Desc, &DescIndex);
-                if (!(State->IsTarget) || (State->MiscMask & MASK(Index,1)))
+                if (!(State->IsTarget) || (State->MiscMask & MASK(Index, 1)))
                 {
                     UwContext->MiscRegs[Index].Where = SP_RELATIVE;
                     UwContext->MiscRegs[Index].SaveOffset = Offset;
-                    if (!(State->MiscMask & MASK(Index,1))) {
+                    if (!(State->MiscMask & MASK(Index, 1)))
+                    {
                         UwContext->MiscRegs[Index].When = State->RegionLen;
-                        State->MiscMask |= MASK(Index,1);
+                        State->MiscMask |= MASK(Index, 1);
                     }
                 }
                 UW_DEBUG(("Prolog P7: type=%d spoff = %d\n", RecType, Offset));
@@ -1930,12 +1956,12 @@ NewParsePrologueRegionPhase1 (
 
                 Index = P7RecordTypeToRegisterIndex[RecType];
                 Offset = ReadLEB128(Desc, &DescIndex);
-                if (!(State->IsTarget) || (State->MiscMask & MASK(Index,1)))
+                if (!(State->IsTarget) || (State->MiscMask & MASK(Index, 1)))
                 {
                     UwContext->MiscRegs[Index].Where = PSP_RELATIVE;
                     UwContext->MiscRegs[Index].SaveOffset = Offset;
                     UwContext->MiscRegs[Index].When = 0;
-                    State->MiscMask |= MASK(Index,1);
+                    State->MiscMask |= MASK(Index, 1);
                 }
                 UW_DEBUG(("Prolog P7: type=%d pspoff= %d\n", RecType, Offset));
                 break;
@@ -1961,33 +1987,32 @@ NewParsePrologueRegionPhase1 (
                 Offset = ReadLEB128(Desc, &DescIndex);
                 FrameSize = ReadLEB128(Desc, &DescIndex);
 
-                UW_DEBUG(("Prolog P7: type=%d Slot=%d FrameSize=%d\n",
-                          RecType, Offset, FrameSize));
+                UW_DEBUG(("Prolog P7: type=%d Slot=%d FrameSize=%d\n", RecType, Offset, FrameSize));
                 break;
 
             case SPILL_BASE:
 
                 State->SpillBase = ReadLEB128(Desc, &DescIndex);
                 State->SpillPtr = State->SpillBase;
-                UW_DEBUG(("Prolog P7: type=%d, spillbase=%d\n",
-                          RecType, State->SpillBase));
+                UW_DEBUG(("Prolog P7: type=%d, spillbase=%d\n", RecType, State->SpillBase));
                 break;
 
             default:
 
                 UW_DEBUG(("invalid unwind descriptors\n"));
-
             }
-
-        } else if ( (FirstByte & P8_MASK) == P8_PREFIX ) {
+        }
+        else if ((FirstByte & P8_MASK) == P8_PREFIX)
+        {
 
             RecType = Desc[DescIndex++];
 
-            switch (RecType) {
+            switch (RecType)
+            {
 
             case PSP_PSPREL:
-                 VUW_DEBUG_PRINT("Unsupported Unwind Descriptor!\n");
-                 break;
+                VUW_DEBUG_PRINT("Unsupported Unwind Descriptor!\n");
+                break;
 
             case RP_SPREL:
             case PFS_SPREL:
@@ -2006,13 +2031,14 @@ NewParsePrologueRegionPhase1 (
 
                 Index = P8RecordTypeToRegisterIndex[RecType];
                 Offset = ReadLEB128(Desc, &DescIndex);
-                if (!(State->IsTarget) || (State->MiscMask & MASK(Index,1)))
+                if (!(State->IsTarget) || (State->MiscMask & MASK(Index, 1)))
                 {
                     UwContext->MiscRegs[Index].Where = SP_RELATIVE;
                     UwContext->MiscRegs[Index].SaveOffset = Offset;
-                    if (!(State->MiscMask & MASK(Index,1))) {
-                        UwContext->MiscRegs[Index].When=State->RegionLen;
-                        State->MiscMask |= MASK(Index,1);
+                    if (!(State->MiscMask & MASK(Index, 1)))
+                    {
+                        UwContext->MiscRegs[Index].When = State->RegionLen;
+                        State->MiscMask |= MASK(Index, 1);
                     }
                 }
                 UW_DEBUG(("Prolog P8: type=%d spoff= %d\n", RecType, Offset));
@@ -2029,12 +2055,12 @@ NewParsePrologueRegionPhase1 (
 
                 Index = P8RecordTypeToRegisterIndex[RecType];
                 Offset = ReadLEB128(Desc, &DescIndex);
-                if (!(State->IsTarget) || (State->MiscMask & MASK(Index,1)))
+                if (!(State->IsTarget) || (State->MiscMask & MASK(Index, 1)))
                 {
                     UwContext->MiscRegs[Index].Where = PSP_RELATIVE;
                     UwContext->MiscRegs[Index].SaveOffset = Offset;
                     UwContext->MiscRegs[Index].When = 0;
-                    State->MiscMask |= MASK(Index,1);
+                    State->MiscMask |= MASK(Index, 1);
                 }
                 UW_DEBUG(("Prolog P8: type=%d pspoff= %d\n", RecType, Offset));
                 break;
@@ -2055,23 +2081,24 @@ NewParsePrologueRegionPhase1 (
             default:
 
                 UW_DEBUG(("Invalid record type for descriptor P8!\n"));
-
             }
-
-        } else if ( (FirstByte & P9_MASK) == P9_PREFIX ) {
+        }
+        else if ((FirstByte & P9_MASK) == P9_PREFIX)
+        {
 
             DescIndex += 2;
             VUW_DEBUG_PRINT("Format P9 not supported yet!\n");
-
-        } else if ( (FirstByte & P10_MASK) == P10_PREFIX ) {
+        }
+        else if ((FirstByte & P10_MASK) == P10_PREFIX)
+        {
 
             UCHAR Abi = Desc[DescIndex++];
             UCHAR Context = Desc[DescIndex++];
-
-        } else {
+        }
+        else
+        {
 
             UW_DEBUG(("Invalid descriptor!\n"));
-
         }
     }
 
@@ -2079,11 +2106,13 @@ NewParsePrologueRegionPhase1 (
     FrMask = State->FrMask;
     BrMask = State->MiscMask >> REG_BR_BASE;
 
-    if (!(GrMask | FrMask | BrMask)) {
+    if (!(GrMask | FrMask | BrMask))
+    {
 
         return;
-
-    } else if (SpillMaskOmitted && !(State->IsTarget)) {
+    }
+    else if (SpillMaskOmitted && !(State->IsTarget))
+    {
 
         //
         // When spillmask is omitted, floating point registers, general
@@ -2097,8 +2126,10 @@ NewParsePrologueRegionPhase1 (
 
         State->SpillPtr &= ~(SPILLSIZE_OF_FLOAT128_IN_DWORDS - 1);
         NextFr = NUMBER_OF_PRESERVED_FR - 1;
-        while (FrMask & 0xFFFFF) {
-            if (FrMask & 0x80000) {
+        while (FrMask & 0xFFFFF)
+        {
+            if (FrMask & 0x80000)
+            {
                 State->SpillPtr += SPILLSIZE_OF_FLOAT128_IN_DWORDS;
                 UwContext->Float[NextFr].SaveOffset = State->SpillPtr;
             }
@@ -2109,9 +2140,12 @@ NewParsePrologueRegionPhase1 (
         // 2. branch registers
 
         NextBr = REG_BR_BASE + NUMBER_OF_PRESERVED_BR - 1;
-        while (BrMask & 0x1F) {
-            if (BrMask & 0x10) {
-                if (UwContext->MiscRegs[NextBr].Where == PSP_RELATIVE) {
+        while (BrMask & 0x1F)
+        {
+            if (BrMask & 0x10)
+            {
+                if (UwContext->MiscRegs[NextBr].Where == PSP_RELATIVE)
+                {
                     State->SpillPtr += SPILLSIZE_OF_ULONGLONG_IN_DWORDS;
                     UwContext->MiscRegs[NextBr].SaveOffset = State->SpillPtr;
                 }
@@ -2123,26 +2157,31 @@ NewParsePrologueRegionPhase1 (
         // 3. general registers
 
         NextGr = NUMBER_OF_PRESERVED_GR - 1;
-        while (GrMask & 0xF) {
-            if (GrMask & 0x8) {
+        while (GrMask & 0xF)
+        {
+            if (GrMask & 0x8)
+            {
                 State->SpillPtr += SPILLSIZE_OF_ULONGLONG_IN_DWORDS;
                 UwContext->Integer[NextGr].SaveOffset = State->SpillPtr;
             }
             GrMask = GrMask << 1;
             NextGr--;
         }
-
-    } else if (SpillMaskOmitted && State->IsTarget) {
+    }
+    else if (SpillMaskOmitted && State->IsTarget)
+    {
 
         State->GrMask = 0;
         State->FrMask = 0;
         State->MiscMask &= MASK(REG_BR_BASE, 1) - 1;
-
-    } else if (SpillMaskOmitted == FALSE) {
+    }
+    else if (SpillMaskOmitted == FALSE)
+    {
 
         ULONG Length;
 
-        if (State->IsTarget) {
+        if (State->IsTarget)
+        {
 
             //
             // control ip is in the prologue region; clear the masks
@@ -2154,33 +2193,41 @@ NewParsePrologueRegionPhase1 (
             State->FrMask = 0;
             State->MiscMask &= MASK(REG_BR_BASE, 1) - 1;
             Length = UwContext->TargetSlot - State->RegionBegin;
-        } else {
+        }
+        else
+        {
             Length = State->RegionLen;
         }
 
         NextGr = NUMBER_OF_PRESERVED_GR - 1;
         NextBr = NUMBER_OF_PRESERVED_BR - 1;
         NextFr = NUMBER_OF_PRESERVED_FR - 1;
-        for (Count = 0; Count < Length; Count++) {
+        for (Count = 0; Count < Length; Count++)
+        {
 
-            if ((Count % 4) == 0) {
+            if ((Count % 4) == 0)
+            {
                 FirstByte = Desc[ImaskBegin++];
-            } else {
+            }
+            else
+            {
                 FirstByte = FirstByte << 2;
             }
 
-            switch (FirstByte & 0xC0) {
+            switch (FirstByte & 0xC0)
+            {
 
-            case 0x40:                  // 0x01 - save next fr
+            case 0x40: // 0x01 - save next fr
 
-                while ( !(FrMask & 0x80000) && (NextFr > 0) ) {
+                while (!(FrMask & 0x80000) && (NextFr > 0))
+                {
                     NextFr--;
                     FrMask = FrMask << 1;
                 }
 
                 UW_DEBUG(("spilled register FS%lx\n", (ULONG)NextFr));
 
-                State->FrMask |= MASK(NextFr,1);
+                State->FrMask |= MASK(NextFr, 1);
                 UwContext->Float[NextFr].When = Count;
                 State->SpillPtr += SPILLSIZE_OF_ULONGLONG_IN_DWORDS;
                 State->SpillPtr &= ~(SPILLSIZE_OF_FLOAT128_IN_DWORDS - 1);
@@ -2191,16 +2238,17 @@ NewParsePrologueRegionPhase1 (
                 FrMask = FrMask << 1;
                 break;
 
-            case 0x80:                  // 0x10 - save next gr
+            case 0x80: // 0x10 - save next gr
 
-                while ( !(GrMask & 0x8) && (NextGr > 0) ) {
+                while (!(GrMask & 0x8) && (NextGr > 0))
+                {
                     NextGr--;
                     GrMask = GrMask << 1;
                 }
 
                 UW_DEBUG(("spilled register S%lx\n", (ULONG)NextGr));
 
-                State->GrMask |= MASK(NextGr,1);
+                State->GrMask |= MASK(NextGr, 1);
                 UwContext->Integer[NextGr].When = Count;
                 State->SpillPtr += SPILLSIZE_OF_ULONGLONG_IN_DWORDS;
                 UwContext->Integer[NextGr].SaveOffset = State->SpillPtr;
@@ -2209,9 +2257,10 @@ NewParsePrologueRegionPhase1 (
                 GrMask = GrMask << 1;
                 break;
 
-            case 0xC0:                  // 0x11 - save next br
+            case 0xC0: // 0x11 - save next br
 
-                while ( !(BrMask & 0x10) && (NextBr > 0) ) {
+                while (!(BrMask & 0x10) && (NextBr > 0))
+                {
                     NextBr--;
                     BrMask = BrMask << 1;
                 }
@@ -2219,9 +2268,10 @@ NewParsePrologueRegionPhase1 (
                 UW_DEBUG(("spilled register BS%lx\n", (ULONG)NextBr));
 
                 Index = REG_BR_BASE + NextBr;
-                State->MiscMask |= MASK(Index,1);
+                State->MiscMask |= MASK(Index, 1);
                 UwContext->MiscRegs[Index].When = Count;
-                if (UwContext->MiscRegs[Index].Where == PSP_RELATIVE) {
+                if (UwContext->MiscRegs[Index].Where == PSP_RELATIVE)
+                {
                     State->SpillPtr += SPILLSIZE_OF_ULONGLONG_IN_DWORDS;
                     UwContext->MiscRegs[Index].SaveOffset = State->SpillPtr;
                 }
@@ -2230,9 +2280,8 @@ NewParsePrologueRegionPhase1 (
                 BrMask = BrMask << 1;
                 break;
 
-            default:                    // 0x00 - save no register
+            default: // 0x00 - save no register
                 break;
-
             }
         }
     }

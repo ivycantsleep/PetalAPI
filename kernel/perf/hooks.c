@@ -32,11 +32,8 @@ Revision History:
 #pragma alloc_text(PAGEWMI, PerfInfoSysModuleRunDown)
 #endif //ALLOC_PRAGMA
 
-
-VOID
-PerfInfoFlushProfileCache(
-    VOID
-    )
+
+VOID PerfInfoFlushProfileCache(VOID)
 /*++
 
 Routine description:
@@ -58,7 +55,8 @@ Return Value:
 {
     ULONG PreviousInProgress;
 
-    if ((PerfProfileCache.Entries == 0) || (PerfInfoSampledProfileCaching == FALSE)) {
+    if ((PerfProfileCache.Entries == 0) || (PerfInfoSampledProfileCaching == FALSE))
+    {
         return;
     }
 
@@ -66,7 +64,8 @@ Return Value:
     // Signal the interrupt not to mess with the cache
     //
     PreviousInProgress = InterlockedIncrement(&PerfInfoSampledProfileFlushInProgress);
-    if (PreviousInProgress != 1) {
+    if (PreviousInProgress != 1)
+    {
         //
         // A flush is already in progress so just return.
         //
@@ -77,12 +76,9 @@ Return Value:
     //
     // Log the portion of the cache that has valid data.
     //
-    PerfInfoLogBytes(PERFINFO_LOG_TYPE_SAMPLED_PROFILE_CACHE,
-                        &PerfProfileCache,
-                        FIELD_OFFSET(PERFINFO_SAMPLED_PROFILE_CACHE, Sample) +
-                            (PerfProfileCache.Entries *
-                                sizeof(PERFINFO_SAMPLED_PROFILE_INFORMATION))
-                        );
+    PerfInfoLogBytes(PERFINFO_LOG_TYPE_SAMPLED_PROFILE_CACHE, &PerfProfileCache,
+                     FIELD_OFFSET(PERFINFO_SAMPLED_PROFILE_CACHE, Sample) +
+                         (PerfProfileCache.Entries * sizeof(PERFINFO_SAMPLED_PROFILE_INFORMATION)));
 
     //
     // Clear the cache for the next set of entries.
@@ -95,13 +91,8 @@ Return Value:
     InterlockedDecrement(&PerfInfoSampledProfileFlushInProgress);
 }
 
-
-VOID
-FASTCALL
-PerfProfileInterrupt(
-    IN KPROFILE_SOURCE Source,
-    IN PVOID InstructionPointer
-    )
+
+VOID FASTCALL PerfProfileInterrupt(IN KPROFILE_SOURCE Source, IN PVOID InstructionPointer)
 /*++
 
 Routine description:
@@ -129,9 +120,8 @@ Return Value:
 #endif // _X86_
     ULONG ThreadId;
 
-    if (!PERFINFO_IS_GROUP_ON(PERF_PROFILE) &&
-        (Source != PerfInfoProfileSourceActive)
-        ) {
+    if (!PERFINFO_IS_GROUP_ON(PERF_PROFILE) && (Source != PerfInfoProfileSourceActive))
+    {
         //
         // We don't handle multple sources.
         //
@@ -140,8 +130,8 @@ Return Value:
 
     ThreadId = HandleToUlong(PsGetCurrentThread()->Cid.UniqueThread);
 
-    if (!PerfInfoSampledProfileCaching ||
-        PerfInfoSampledProfileFlushInProgress != 0) {
+    if (!PerfInfoSampledProfileCaching || PerfInfoSampledProfileFlushInProgress != 0)
+    {
         //
         // No caching. Log and return.
         //
@@ -149,10 +139,7 @@ Return Value:
         SampleData.InstructionPointer = InstructionPointer;
         SampleData.Count = 1;
 
-        PerfInfoLogBytes(PERFINFO_LOG_TYPE_SAMPLED_PROFILE,
-                            &SampleData,
-                            sizeof(PERFINFO_SAMPLED_PROFILE_INFORMATION)
-                            );
+        PerfInfoLogBytes(PERFINFO_LOG_TYPE_SAMPLED_PROFILE, &SampleData, sizeof(PERFINFO_SAMPLED_PROFILE_INFORMATION));
         return;
     }
 
@@ -167,7 +154,8 @@ Return Value:
     //
     // Initial walk thru Instruction Pointer Cache.  Bump Count if address is in cache.
     //
-    for (i = 0; i < PerfProfileCache.Entries ; i++) {
+    for (i = 0; i < PerfProfileCache.Entries; i++)
+    {
 
         if ((PerfProfileCache.Sample[i].ThreadId == ThreadId) &&
 #ifdef _X86_
@@ -175,7 +163,8 @@ Return Value:
 #else
             (PerfProfileCache.Sample[i].InstructionPointer == InstructionPointer)
 #endif // _X86_
-            ) {
+        )
+        {
             //
             // If we find the instruction pointer in the cache, bump the count
             //
@@ -184,7 +173,8 @@ Return Value:
             return;
         }
     }
-    if (PerfProfileCache.Entries < PERFINFO_SAMPLED_PROFILE_CACHE_MAX) {
+    if (PerfProfileCache.Entries < PERFINFO_SAMPLED_PROFILE_CACHE_MAX)
+    {
         //
         // If we find an empty spot in the cache, use it for this instruction pointer
         //
@@ -199,10 +189,8 @@ Return Value:
     //
     // Flush the cache
     //
-    PerfInfoLogBytes(PERFINFO_LOG_TYPE_SAMPLED_PROFILE_CACHE,
-                    &PerfProfileCache,
-                    sizeof(PERFINFO_SAMPLED_PROFILE_CACHE)
-                    );
+    PerfInfoLogBytes(PERFINFO_LOG_TYPE_SAMPLED_PROFILE_CACHE, &PerfProfileCache,
+                     sizeof(PERFINFO_SAMPLED_PROFILE_CACHE));
 
     PerfProfileCache.Sample[0].ThreadId = ThreadId;
     PerfProfileCache.Sample[0].InstructionPointer = InstructionPointer;
@@ -211,13 +199,8 @@ Return Value:
     return;
 }
 
-
-VOID 
-FASTCALL
-PerfInfoLogDpc(
-    IN PVOID DpcRoutine,
-    IN ULONGLONG InitialTime
-    )
+
+VOID FASTCALL PerfInfoLogDpc(IN PVOID DpcRoutine, IN ULONGLONG InitialTime)
 /*++
 
 Routine description:
@@ -237,20 +220,11 @@ Arguments:
     st.DpcRoutine = DpcRoutine;
     st.InitialTime = InitialTime;
 
-    PerfInfoLogBytes(
-                    PERFINFO_LOG_TYPE_DPC, 
-                    (PVOID) &st,
-                    sizeof(st));
+    PerfInfoLogBytes(PERFINFO_LOG_TYPE_DPC, (PVOID)&st, sizeof(st));
 }
 
-
-VOID
-FASTCALL
-PerfInfoLogInterrupt(
-    IN PVOID InServiceRoutine,
-    IN ULONG RetVal,
-    IN ULONGLONG InitialTime
-    )
+
+VOID FASTCALL PerfInfoLogInterrupt(IN PVOID InServiceRoutine, IN ULONG RetVal, IN ULONGLONG InitialTime)
 /*++
 
 Routine Description:
@@ -278,20 +252,13 @@ Return Value:
     EventInfo.ReturnValue = RetVal;
     EventInfo.InitialTime = InitialTime;
 
-    PerfInfoLogBytes(PERFINFO_LOG_TYPE_INTERRUPT,
-                     &EventInfo,
-                     sizeof(EventInfo));
+    PerfInfoLogBytes(PERFINFO_LOG_TYPE_INTERRUPT, &EventInfo, sizeof(EventInfo));
 
     return;
 }
-
+
 NTSTATUS
-PerfInfoLogBytesAndUnicodeString(
-    USHORT HookId,
-    PVOID SourceData,
-    ULONG SourceByteCount,
-    PUNICODE_STRING String
-    )
+PerfInfoLogBytesAndUnicodeString(USHORT HookId, PVOID SourceData, ULONG SourceByteCount, PUNICODE_STRING String)
 /*++
 
 Routine description:
@@ -318,9 +285,12 @@ Return Value:
     ULONG ByteCount;
     ULONG StringBytes;
 
-    if (String == NULL) {
+    if (String == NULL)
+    {
         StringBytes = 0;
-    } else {
+    }
+    else
+    {
         StringBytes = String->Length;
     }
 
@@ -331,13 +301,13 @@ Return Value:
     {
         const PVOID pvTemp = PERFINFO_HOOK_HANDLE_TO_DATA(Hook, PVOID);
         RtlCopyMemory(pvTemp, SourceData, SourceByteCount);
-        if (StringBytes != 0) {
-            RtlCopyMemory(PERFINFO_APPLY_OFFSET_GIVING_TYPE(pvTemp, SourceByteCount, PVOID),
-                          String->Buffer,
-                          StringBytes
-                          );
+        if (StringBytes != 0)
+        {
+            RtlCopyMemory(PERFINFO_APPLY_OFFSET_GIVING_TYPE(pvTemp, SourceByteCount, PVOID), String->Buffer,
+                          StringBytes);
         }
-        (PERFINFO_APPLY_OFFSET_GIVING_TYPE(pvTemp, SourceByteCount, PWCHAR))[StringBytes / sizeof(WCHAR)] = UNICODE_NULL;
+        (PERFINFO_APPLY_OFFSET_GIVING_TYPE(pvTemp, SourceByteCount, PWCHAR))[StringBytes / sizeof(WCHAR)] =
+            UNICODE_NULL;
         PERF_FINISH_HOOK(Hook);
 
         Status = STATUS_SUCCESS;
@@ -345,12 +315,9 @@ Return Value:
     return Status;
 }
 
-
+
 NTSTATUS
-PerfInfoLogFileName(
-    PVOID  FileObject,
-    PUNICODE_STRING SourceString
-    )
+PerfInfoLogFileName(PVOID FileObject, PUNICODE_STRING SourceString)
 /*++
 
 Routine Description:
@@ -376,25 +343,19 @@ Return Value:
     NTSTATUS Status = STATUS_SUCCESS;
     PERFINFO_FILENAME_INFORMATION FileInfo;
 
-    if ((FileObject != NULL) &&
-        (SourceString != NULL) &&
-        (SourceString->Length != 0)) {
+    if ((FileObject != NULL) && (SourceString != NULL) && (SourceString->Length != 0))
+    {
         FileInfo.HashKeyFileNamePointer = FileObject;
-        Status = PerfInfoLogBytesAndUnicodeString(PERFINFO_LOG_TYPE_FILENAME_CREATE,
-                                                  &FileInfo,
-                                                  FIELD_OFFSET(PERFINFO_FILENAME_INFORMATION, FileName),
-                                                  SourceString);
+        Status = PerfInfoLogBytesAndUnicodeString(PERFINFO_LOG_TYPE_FILENAME_CREATE, &FileInfo,
+                                                  FIELD_OFFSET(PERFINFO_FILENAME_INFORMATION, FileName), SourceString);
     }
 
     return Status;
 }
 
-
+
 ULONG
-PerfInfoCalcHashValue(
-    PVOID Key,
-    ULONG Len
-    )
+PerfInfoCalcHashValue(PVOID Key, ULONG Len)
 
 /*++
 
@@ -416,25 +377,22 @@ Return Value:
 
 {
     char *cp = Key;
-    ULONG i, ConvKey=0;
-    for(i = 0; i < Len; i++)
+    ULONG i, ConvKey = 0;
+    for (i = 0; i < Len; i++)
     {
-        ConvKey = 37 * ConvKey + (unsigned int) *cp;
+        ConvKey = 37 * ConvKey + (unsigned int)*cp;
         cp++;
     }
 
-    #define RNDM_CONSTANT   314159269
-    #define RNDM_PRIME     1000000007
+#define RNDM_CONSTANT 314159269
+#define RNDM_PRIME 1000000007
 
     return (abs(RNDM_CONSTANT * ConvKey) % RNDM_PRIME);
 }
 
-
+
 BOOLEAN
-PerfInfoAddToFileHash(
-    PPERFINFO_ENTRY_TABLE HashTable,
-    PFILE_OBJECT ObjectPointer
-    )
+PerfInfoAddToFileHash(PPERFINFO_ENTRY_TABLE HashTable, PFILE_OBJECT ObjectPointer)
 /*++
 
 Routine Description:
@@ -467,12 +425,13 @@ Return Value:
     // should be at.
     //
 
-    HashIndex = PerfInfoCalcHashValue((PVOID)&ObjectPointer,
-                                      sizeof(ObjectPointer)) % TableSize;
+    HashIndex = PerfInfoCalcHashValue((PVOID)&ObjectPointer, sizeof(ObjectPointer)) % TableSize;
 
-    for (i = 0; i < TableSize; i++) {
+    for (i = 0; i < TableSize; i++)
+    {
 
-        if(Table[HashIndex] == NULL) {
+        if (Table[HashIndex] == NULL)
+        {
             //
             // Found a empty slot. Reference the object and insert
             // it into the table.
@@ -482,7 +441,9 @@ Return Value:
 
             Result = TRUE;
             break;
-        } else if (Table[HashIndex] == ObjectPointer) {
+        }
+        else if (Table[HashIndex] == ObjectPointer)
+        {
             //
             // Found a slot. Reference the object and insert
             // it into the table.
@@ -499,10 +460,9 @@ Return Value:
     return Result;
 }
 
-
+
 NTSTATUS
-PerfInfoFileNameRunDown (
-    )
+PerfInfoFileNameRunDown()
 /*++
 
 Routine Description:
@@ -545,9 +505,12 @@ Return Value:
 
     HashTable.Table = ExAllocatePoolWithTag(NonPagedPool, AllocateBytes, PERFPOOLTAG);
 
-    if (HashTable.Table == NULL) {
+    if (HashTable.Table == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
-    } else {
+    }
+    else
+    {
         //
         // Allocation Succeeded
         //
@@ -564,18 +527,19 @@ Return Value:
     //
     // Now, walk through each process
     //
-    for (Process = PsGetNextProcess (NULL);
-         Process != NULL;
-         Process = PsGetNextProcess (Process)) {
+    for (Process = PsGetNextProcess(NULL); Process != NULL; Process = PsGetNextProcess(Process))
+    {
 
         //
         // First Walk the VAD tree
         //
 
         FileObjects = MmPerfVadTreeWalk(Process);
-        if (FileObjects != NULL) {
+        if (FileObjects != NULL)
+        {
             File = FileObjects;
-            while (*File != NULL) {
+            while (*File != NULL)
+            {
                 PerfInfoAddToFileHash(&HashTable, *File);
                 ObDereferenceObject(*File);
                 File += 1;
@@ -586,7 +550,7 @@ Return Value:
         //
         // Next, walk the handle Table
         //
-        ObPerfHandleTableWalk (Process, &HashTable);
+        ObPerfHandleTableWalk(Process, &HashTable);
     }
 
     //
@@ -600,9 +564,11 @@ Return Value:
 
     FileObjects = MmPerfUnusedSegmentsEnumerate();
 
-    if (FileObjects != NULL) {
+    if (FileObjects != NULL)
+    {
         File = FileObjects;
-        while (*File != NULL) {
+        while (*File != NULL)
+        {
             PerfInfoAddToFileHash(&HashTable, *File);
             ObDereferenceObject(*File);
             File += 1;
@@ -615,8 +581,10 @@ Return Value:
     // Log the filenames and dereference the objects.
     //
 
-    for (i = 0; i < HashTable.NumberOfEntries; i++) {
-        if (HashTable.Table[i]) {
+    for (i = 0; i < HashTable.NumberOfEntries; i++)
+    {
+        if (HashTable.Table[i])
+        {
             PFILE_OBJECT FileObject = HashTable.Table[i];
 
             PerfInfoLogFileName(FileObject, &FileObject->FileName);
@@ -632,10 +600,9 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
-
+
 NTSTATUS
-PerfInfoProcessRunDown (
-    )
+PerfInfoProcessRunDown()
 /*++
 
 Routine Description:
@@ -664,24 +631,24 @@ Return Value:
 retry:
     Buffer = ExAllocatePoolWithTag(NonPagedPool, BufferSize, PERFPOOLTAG);
 
-    if (!Buffer) {
+    if (!Buffer)
+    {
         return STATUS_NO_MEMORY;
     }
-    Status = NtQuerySystemInformation( SystemExtendedProcessInformation,
-                                       Buffer,
-                                       BufferSize,
-                                       &ReturnLength
-                                       );
+    Status = NtQuerySystemInformation(SystemExtendedProcessInformation, Buffer, BufferSize, &ReturnLength);
 
-    if (Status == STATUS_INFO_LENGTH_MISMATCH) {
+    if (Status == STATUS_INFO_LENGTH_MISMATCH)
+    {
         ExFreePool(Buffer);
         BufferSize += 8192;
         goto retry;
     }
 
-    if (NT_SUCCESS(Status)) {
-        ProcessInfo = (PSYSTEM_PROCESS_INFORMATION) Buffer;
-        while (TRUE) {
+    if (NT_SUCCESS(Status))
+    {
+        ProcessInfo = (PSYSTEM_PROCESS_INFORMATION)Buffer;
+        while (TRUE)
+        {
             PWMI_PROCESS_INFORMATION WmiProcessInfo;
             PWMI_EXTENDED_THREAD_INFORMATION WmiThreadInfo;
             PERFINFO_HOOK_HANDLE Hook;
@@ -697,19 +664,20 @@ retry:
             //
             // Process Information
             //
-            if ( ProcessInfo->ImageName.Buffer  && ProcessInfo->ImageName.Length > 0 ) {
+            if (ProcessInfo->ImageName.Buffer && ProcessInfo->ImageName.Length > 0)
+            {
                 NameLength = ProcessInfo->ImageName.Length / sizeof(WCHAR) + 1;
             }
-            else {
+            else
+            {
                 NameLength = 1;
             }
             ByteCount = FIELD_OFFSET(WMI_PROCESS_INFORMATION, Sid) + SidLength + NameLength;
 
-            Status = PerfInfoReserveBytes(&Hook, 
-                                          WMI_LOG_TYPE_PROCESS_DC_START, 
-                                          ByteCount);
+            Status = PerfInfoReserveBytes(&Hook, WMI_LOG_TYPE_PROCESS_DC_START, ByteCount);
 
-            if (NT_SUCCESS(Status)){
+            if (NT_SUCCESS(Status))
+            {
                 WmiProcessInfo = PERFINFO_HOOK_HANDLE_TO_DATA(Hook, PWMI_PROCESS_INFORMATION);
 
                 WmiProcessInfo->ProcessId = HandleToUlong(ProcessInfo->UniqueProcessId);
@@ -717,18 +685,17 @@ retry:
                 WmiProcessInfo->SessionId = ProcessInfo->SessionId;
                 WmiProcessInfo->PageDirectoryBase = ProcessInfo->PageDirectoryBase;
 
-                AuxPtr = (PUCHAR) (&WmiProcessInfo->Sid);
+                AuxPtr = (PUCHAR)(&WmiProcessInfo->Sid);
                 RtlCopyMemory(AuxPtr, &TmpSid, SidLength);
 
                 AuxPtr += SidLength;
-                if (NameLength > 1) {
-    
+                if (NameLength > 1)
+                {
+
                     ProcessName.Buffer = AuxPtr;
-                    ProcessName.MaximumLength = (USHORT) NameLength;
-    
-                    RtlUnicodeStringToAnsiString( &ProcessName,
-                                                (PUNICODE_STRING) &ProcessInfo->ImageName,
-                                                FALSE);
+                    ProcessName.MaximumLength = (USHORT)NameLength;
+
+                    RtlUnicodeStringToAnsiString(&ProcessName, (PUNICODE_STRING)&ProcessInfo->ImageName, FALSE);
                     AuxPtr += NameLength;
                 }
                 *AuxPtr = '\0';
@@ -739,16 +706,17 @@ retry:
             //
             // Thread Information
             //
-            ThreadInfo = (PSYSTEM_EXTENDED_THREAD_INFORMATION) (ProcessInfo + 1);
+            ThreadInfo = (PSYSTEM_EXTENDED_THREAD_INFORMATION)(ProcessInfo + 1);
 
-            for (i=0; i < ProcessInfo->NumberOfThreads; i++) {
-                Status = PerfInfoReserveBytes(&Hook, 
-                                              WMI_LOG_TYPE_THREAD_DC_START, 
-                                              sizeof(WMI_EXTENDED_THREAD_INFORMATION));
-                if (NT_SUCCESS(Status)){
+            for (i = 0; i < ProcessInfo->NumberOfThreads; i++)
+            {
+                Status =
+                    PerfInfoReserveBytes(&Hook, WMI_LOG_TYPE_THREAD_DC_START, sizeof(WMI_EXTENDED_THREAD_INFORMATION));
+                if (NT_SUCCESS(Status))
+                {
                     WmiThreadInfo = PERFINFO_HOOK_HANDLE_TO_DATA(Hook, PWMI_EXTENDED_THREAD_INFORMATION);
-                    WmiThreadInfo->ProcessId =  HandleToUlong(ThreadInfo->ThreadInfo.ClientId.UniqueProcess);
-                    WmiThreadInfo->ThreadId =  HandleToUlong(ThreadInfo->ThreadInfo.ClientId.UniqueThread);
+                    WmiThreadInfo->ProcessId = HandleToUlong(ThreadInfo->ThreadInfo.ClientId.UniqueProcess);
+                    WmiThreadInfo->ThreadId = HandleToUlong(ThreadInfo->ThreadInfo.ClientId.UniqueThread);
                     WmiThreadInfo->StackBase = ThreadInfo->StackBase;
                     WmiThreadInfo->StackLimit = ThreadInfo->StackLimit;
 
@@ -760,27 +728,28 @@ retry:
                     PERF_FINISH_HOOK(Hook);
                 }
 
-                ThreadInfo  += 1;
+                ThreadInfo += 1;
             }
 
-            if (ProcessInfo->NextEntryOffset == 0) {
+            if (ProcessInfo->NextEntryOffset == 0)
+            {
                 break;
-            } else {
+            }
+            else
+            {
                 TotalOffset += ProcessInfo->NextEntryOffset;
-                ProcessInfo = (PSYSTEM_PROCESS_INFORMATION) &Buffer[TotalOffset];
+                ProcessInfo = (PSYSTEM_PROCESS_INFORMATION)&Buffer[TotalOffset];
             }
         }
-    } 
+    }
 
     ExFreePool(Buffer);
     return Status;
-
 }
 
-
+
 NTSTATUS
-PerfInfoSysModuleRunDown (
-    )
+PerfInfoSysModuleRunDown()
 /*++
 
 Routine Description:
@@ -798,7 +767,7 @@ Return Value:
 --*/
 {
     NTSTATUS Status;
-    PRTL_PROCESS_MODULES            Modules;
+    PRTL_PROCESS_MODULES Modules;
     PRTL_PROCESS_MODULE_INFORMATION ModuleInfo;
     PVOID Buffer;
     ULONG BufferSize = 4096;
@@ -809,54 +778,51 @@ Return Value:
 retry:
     Buffer = ExAllocatePoolWithTag(NonPagedPool, BufferSize, PERFPOOLTAG);
 
-    if (!Buffer) {
+    if (!Buffer)
+    {
         return STATUS_NO_MEMORY;
     }
-    Status = NtQuerySystemInformation( SystemModuleInformation,
-                                       Buffer,
-                                       BufferSize,
-                                       &ReturnLength
-                                       );
+    Status = NtQuerySystemInformation(SystemModuleInformation, Buffer, BufferSize, &ReturnLength);
 
-    if (Status == STATUS_INFO_LENGTH_MISMATCH) {
+    if (Status == STATUS_INFO_LENGTH_MISMATCH)
+    {
         ExFreePool(Buffer);
         BufferSize += 8192;
         goto retry;
     }
 
-    if (NT_SUCCESS(Status)) {
-        Modules = (PRTL_PROCESS_MODULES) Buffer;
-        for (i = 0, ModuleInfo = & (Modules->Modules[0]);
-             i < Modules->NumberOfModules;
-             i ++, ModuleInfo ++) {
+    if (NT_SUCCESS(Status))
+    {
+        Modules = (PRTL_PROCESS_MODULES)Buffer;
+        for (i = 0, ModuleInfo = &(Modules->Modules[0]); i < Modules->NumberOfModules; i++, ModuleInfo++)
+        {
 
             PWMI_IMAGELOAD_INFORMATION ImageLoadInfo;
             UNICODE_STRING WstrModuleName;
-            ANSI_STRING    AstrModuleName;
-            ULONG          SizeModuleName;
+            ANSI_STRING AstrModuleName;
+            ULONG SizeModuleName;
             PERFINFO_HOOK_HANDLE Hook;
             ULONG ByteCount;
 
-            RtlInitAnsiString( &AstrModuleName, ModuleInfo->FullPathName);
+            RtlInitAnsiString(&AstrModuleName, ModuleInfo->FullPathName);
             SizeModuleName = sizeof(WCHAR) * (AstrModuleName.Length) + sizeof(WCHAR);
-            ByteCount = FIELD_OFFSET(WMI_IMAGELOAD_INFORMATION, FileName) 
-                        + SizeModuleName;
+            ByteCount = FIELD_OFFSET(WMI_IMAGELOAD_INFORMATION, FileName) + SizeModuleName;
 
             Status = PerfInfoReserveBytes(&Hook, WMI_LOG_TYPE_PROCESS_LOAD_IMAGE, ByteCount);
 
-            if (NT_SUCCESS(Status)){
+            if (NT_SUCCESS(Status))
+            {
                 ImageLoadInfo = PERFINFO_HOOK_HANDLE_TO_DATA(Hook, PWMI_IMAGELOAD_INFORMATION);
                 ImageLoadInfo->ImageBase = ModuleInfo->ImageBase;
                 ImageLoadInfo->ImageSize = ModuleInfo->ImageSize;
                 ImageLoadInfo->ProcessId = HandleToUlong(NULL);
-                WstrModuleName.Buffer    = (LPWSTR) &ImageLoadInfo->FileName[0];
-                WstrModuleName.MaximumLength = (USHORT) SizeModuleName; 
-                RtlAnsiStringToUnicodeString(&WstrModuleName, & AstrModuleName, FALSE);
+                WstrModuleName.Buffer = (LPWSTR)&ImageLoadInfo->FileName[0];
+                WstrModuleName.MaximumLength = (USHORT)SizeModuleName;
+                RtlAnsiStringToUnicodeString(&WstrModuleName, &AstrModuleName, FALSE);
                 PERF_FINISH_HOOK(Hook);
             }
         }
-
-    } 
+    }
 
     ExFreePool(Buffer);
     return Status;

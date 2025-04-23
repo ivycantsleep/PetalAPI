@@ -27,11 +27,9 @@ Revision History:
 
 #include "ki.h"
 
-
+
 KIRQL
-KeAcquireInterruptSpinLock (
-    IN PKINTERRUPT Interrupt
-    )
+KeAcquireInterruptSpinLock(IN PKINTERRUPT Interrupt)
 
 /*++
 
@@ -63,12 +61,8 @@ Return Value:
     KeAcquireSpinLockAtDpcLevel(Interrupt->ActualLock);
     return OldIrql;
 }
-
-VOID
-KeReleaseInterruptSpinLock (
-    IN PKINTERRUPT Interrupt,
-    IN KIRQL OldIrql
-    )
+
+VOID KeReleaseInterruptSpinLock(IN PKINTERRUPT Interrupt, IN KIRQL OldIrql)
 
 /*++
 

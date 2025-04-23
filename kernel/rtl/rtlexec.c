@@ -27,105 +27,75 @@ Revision History:
 #include <string.h>
 #include "init.h"
 #include "ntos.h"
-#define ROUND_UP( x, y )  ((ULONG)(x) + ((y)-1) & ~((y)-1))
+#define ROUND_UP(x, y) ((ULONG)(x) + ((y) - 1) & ~((y) - 1))
 #ifdef KERNEL
 #define ISTERMINALSERVER() (SharedUserData->SuiteMask & (1 << TerminalServer))
 #else
 #define ISTERMINALSERVER() (USER_SHARED_DATA->SuiteMask & (1 << TerminalServer))
 #endif
 
-VOID
-RtlpCopyProcString(
-    IN OUT PWSTR *pDst,
-    OUT PUNICODE_STRING DestString,
-    IN PUNICODE_STRING SourceString,
-    IN ULONG DstAlloc OPTIONAL
-    );
+VOID RtlpCopyProcString(IN OUT PWSTR *pDst, OUT PUNICODE_STRING DestString, IN PUNICODE_STRING SourceString,
+                        IN ULONG DstAlloc OPTIONAL);
 
 NTSTATUS
-RtlpOpenImageFile(
-    IN PUNICODE_STRING ImagePathName,
-    IN ULONG Attributes,
-    OUT PHANDLE FileHandle,
-    IN BOOLEAN ReportErrors
-    );
+RtlpOpenImageFile(IN PUNICODE_STRING ImagePathName, IN ULONG Attributes, OUT PHANDLE FileHandle,
+                  IN BOOLEAN ReportErrors);
 
 NTSTATUS
-RtlpFreeStack(
-    IN HANDLE Process,
-    IN PINITIAL_TEB InitialTeb
-    );
+RtlpFreeStack(IN HANDLE Process, IN PINITIAL_TEB InitialTeb);
 
 NTSTATUS
-RtlpCreateStack(
-    IN HANDLE Process,
-    IN SIZE_T MaximumStackSize OPTIONAL,
-    IN SIZE_T CommittedStackSize OPTIONAL,
-    IN ULONG ZeroBits OPTIONAL,
-    OUT PINITIAL_TEB InitialTeb
-    );
+RtlpCreateStack(IN HANDLE Process, IN SIZE_T MaximumStackSize OPTIONAL, IN SIZE_T CommittedStackSize OPTIONAL,
+                IN ULONG ZeroBits OPTIONAL, OUT PINITIAL_TEB InitialTeb);
 
 #if defined(ALLOC_PRAGMA) && defined(NTOS_KERNEL_RUNTIME)
-#pragma alloc_text(INIT,RtlpCopyProcString          )
-#pragma alloc_text(INIT,RtlCreateProcessParameters  )
-#pragma alloc_text(INIT,RtlDestroyProcessParameters )
-#pragma alloc_text(INIT,RtlNormalizeProcessParams   )
-#pragma alloc_text(INIT,RtlDeNormalizeProcessParams )
-#pragma alloc_text(INIT,RtlpOpenImageFile           )
-#pragma alloc_text(PAGE,RtlpCreateStack             )
-#pragma alloc_text(PAGE,RtlpFreeStack               )
-#pragma alloc_text(INIT,RtlCreateUserProcess        )
-#pragma alloc_text(PAGE,RtlCreateUserThread         )
-#pragma alloc_text(INIT,RtlExitUserThread           )
+#pragma alloc_text(INIT, RtlpCopyProcString)
+#pragma alloc_text(INIT, RtlCreateProcessParameters)
+#pragma alloc_text(INIT, RtlDestroyProcessParameters)
+#pragma alloc_text(INIT, RtlNormalizeProcessParams)
+#pragma alloc_text(INIT, RtlDeNormalizeProcessParams)
+#pragma alloc_text(INIT, RtlpOpenImageFile)
+#pragma alloc_text(PAGE, RtlpCreateStack)
+#pragma alloc_text(PAGE, RtlpFreeStack)
+#pragma alloc_text(INIT, RtlCreateUserProcess)
+#pragma alloc_text(PAGE, RtlCreateUserThread)
+#pragma alloc_text(INIT, RtlExitUserThread)
 #endif
 
 #if defined(ALLOC_DATA_PRAGMA) && defined(NTOS_KERNEL_RUNTIME)
 #pragma const_seg("INITCONST")
 #endif
-const UNICODE_STRING NullString = {0, 1, L""};
+const UNICODE_STRING NullString = { 0, 1, L"" };
 
-VOID
-RtlpCopyProcString(
-    IN OUT PWSTR *pDst,
-    OUT PUNICODE_STRING DestString,
-    IN PUNICODE_STRING SourceString,
-    IN ULONG DstAlloc OPTIONAL
-    )
+VOID RtlpCopyProcString(IN OUT PWSTR *pDst, OUT PUNICODE_STRING DestString, IN PUNICODE_STRING SourceString,
+                        IN ULONG DstAlloc OPTIONAL)
 {
-    if (!ARGUMENT_PRESENT( (ULONG_PTR)DstAlloc )) {
+    if (!ARGUMENT_PRESENT((ULONG_PTR)DstAlloc))
+    {
         DstAlloc = SourceString->MaximumLength;
-        }
+    }
 
     ASSERT((SourceString->Length == 0) || (SourceString->Buffer != NULL));
 
-    if (SourceString->Buffer != NULL && SourceString->Length != 0) {
-        RtlMoveMemory( *pDst,
-                       SourceString->Buffer,
-                       SourceString->Length
-                     );
-        }
+    if (SourceString->Buffer != NULL && SourceString->Length != 0)
+    {
+        RtlMoveMemory(*pDst, SourceString->Buffer, SourceString->Length);
+    }
 
     DestString->Buffer = *pDst;
     DestString->Length = SourceString->Length;
     DestString->MaximumLength = (USHORT)DstAlloc;
 
-    *pDst = (PWSTR)((PCHAR)(*pDst) + ROUND_UP( DstAlloc, sizeof( ULONG ) ) );
+    *pDst = (PWSTR)((PCHAR)(*pDst) + ROUND_UP(DstAlloc, sizeof(ULONG)));
     return;
 }
 
 NTSTATUS
-RtlCreateProcessParameters(
-    OUT PRTL_USER_PROCESS_PARAMETERS *ProcessParameters,
-    IN PUNICODE_STRING ImagePathName,
-    IN PUNICODE_STRING DllPath OPTIONAL,
-    IN PUNICODE_STRING CurrentDirectory OPTIONAL,
-    IN PUNICODE_STRING CommandLine OPTIONAL,
-    IN PVOID Environment OPTIONAL,
-    IN PUNICODE_STRING WindowTitle OPTIONAL,
-    IN PUNICODE_STRING DesktopInfo OPTIONAL,
-    IN PUNICODE_STRING ShellInfo OPTIONAL,
-    IN PUNICODE_STRING RuntimeData OPTIONAL
-    )
+RtlCreateProcessParameters(OUT PRTL_USER_PROCESS_PARAMETERS *ProcessParameters, IN PUNICODE_STRING ImagePathName,
+                           IN PUNICODE_STRING DllPath OPTIONAL, IN PUNICODE_STRING CurrentDirectory OPTIONAL,
+                           IN PUNICODE_STRING CommandLine OPTIONAL, IN PVOID Environment OPTIONAL,
+                           IN PUNICODE_STRING WindowTitle OPTIONAL, IN PUNICODE_STRING DesktopInfo OPTIONAL,
+                           IN PUNICODE_STRING ShellInfo OPTIONAL, IN PUNICODE_STRING RuntimeData OPTIONAL)
 
 /*++
 
@@ -227,40 +197,46 @@ Return Value:
     Status = STATUS_SUCCESS;
     p = NULL;
     CurDirHandle = NULL;
-    try {
+    try
+    {
         //
         //  Validate input parameters
         //
 
-#define VALIDATE_STRING_PARAMETER(_x) \
-    do { \
-        ASSERT(ARGUMENT_PRESENT((_x))); \
-        if (!ARGUMENT_PRESENT((_x))) { \
-            Status = STATUS_INVALID_PARAMETER; \
-            leave; \
-        } \
-        if (ARGUMENT_PRESENT((_x))) { \
-            ASSERT((_x)->MaximumLength >= (_x)->Length); \
-            ASSERT(((_x)->Length == 0) || ((_x)->Buffer != NULL)); \
-            if (((_x)->MaximumLength < (_x)->Length) || \
-                (((_x)->Length != 0) && ((_x)->Buffer == NULL))) { \
-                Status = STATUS_INVALID_PARAMETER; \
-                leave; \
-            } \
-        } \
+#define VALIDATE_STRING_PARAMETER(_x)                                                                    \
+    do                                                                                                   \
+    {                                                                                                    \
+        ASSERT(ARGUMENT_PRESENT((_x)));                                                                  \
+        if (!ARGUMENT_PRESENT((_x)))                                                                     \
+        {                                                                                                \
+            Status = STATUS_INVALID_PARAMETER;                                                           \
+            leave;                                                                                       \
+        }                                                                                                \
+        if (ARGUMENT_PRESENT((_x)))                                                                      \
+        {                                                                                                \
+            ASSERT((_x)->MaximumLength >= (_x)->Length);                                                 \
+            ASSERT(((_x)->Length == 0) || ((_x)->Buffer != NULL));                                       \
+            if (((_x)->MaximumLength < (_x)->Length) || (((_x)->Length != 0) && ((_x)->Buffer == NULL))) \
+            {                                                                                            \
+                Status = STATUS_INVALID_PARAMETER;                                                       \
+                leave;                                                                                   \
+            }                                                                                            \
+        }                                                                                                \
     } while (0)
 
-#define VALIDATE_OPTIONAL_STRING_PARAMETER(_x) \
-    do { \
-        if (ARGUMENT_PRESENT((_x))) { \
-            ASSERT((_x)->MaximumLength >= (_x)->Length); \
-            ASSERT(((_x)->Length == 0) || ((_x)->Buffer != NULL)); \
-            if (((_x)->MaximumLength < (_x)->Length) || \
-                (((_x)->Length != 0) && ((_x)->Buffer == NULL))) { \
-                Status = STATUS_INVALID_PARAMETER; \
-                leave; \
-            } \
-        } \
+#define VALIDATE_OPTIONAL_STRING_PARAMETER(_x)                                                           \
+    do                                                                                                   \
+    {                                                                                                    \
+        if (ARGUMENT_PRESENT((_x)))                                                                      \
+        {                                                                                                \
+            ASSERT((_x)->MaximumLength >= (_x)->Length);                                                 \
+            ASSERT(((_x)->Length == 0) || ((_x)->Buffer != NULL));                                       \
+            if (((_x)->MaximumLength < (_x)->Length) || (((_x)->Length != 0) && ((_x)->Buffer == NULL))) \
+            {                                                                                            \
+                Status = STATUS_INVALID_PARAMETER;                                                       \
+                leave;                                                                                   \
+            }                                                                                            \
+        }                                                                                                \
     } while (0)
 
         VALIDATE_STRING_PARAMETER(ImagePathName);
@@ -281,51 +257,64 @@ Return Value:
         // structure or to a null string.
         //
 
-        if (!ARGUMENT_PRESENT( DllPath )) {
+        if (!ARGUMENT_PRESENT(DllPath))
+        {
             DllPath = &Peb->ProcessParameters->DllPath;
         }
 
-        if (!ARGUMENT_PRESENT( CurrentDirectory )) {
+        if (!ARGUMENT_PRESENT(CurrentDirectory))
+        {
 
-            if ( Peb->ProcessParameters->CurrentDirectory.Handle ) {
-                CurDirHandle = (HANDLE)((ULONG_PTR)Peb->ProcessParameters->CurrentDirectory.Handle & ~OBJ_HANDLE_TAGBITS);
+            if (Peb->ProcessParameters->CurrentDirectory.Handle)
+            {
+                CurDirHandle =
+                    (HANDLE)((ULONG_PTR)Peb->ProcessParameters->CurrentDirectory.Handle & ~OBJ_HANDLE_TAGBITS);
                 CurDirHandle = (HANDLE)((ULONG_PTR)CurDirHandle | RTL_USER_PROC_CURDIR_INHERIT);
-                }
-            CurrentDirectory = &Peb->ProcessParameters->CurrentDirectory.DosPath;
             }
-        else {
+            CurrentDirectory = &Peb->ProcessParameters->CurrentDirectory.DosPath;
+        }
+        else
+        {
             ASSERT(CurrentDirectory->MaximumLength >= CurrentDirectory->Length);
             ASSERT((CurrentDirectory->Length == 0) || (CurrentDirectory->Buffer != NULL));
 
-            if ( Peb->ProcessParameters->CurrentDirectory.Handle ) {
-                CurDirHandle = (HANDLE)((ULONG_PTR)Peb->ProcessParameters->CurrentDirectory.Handle & ~OBJ_HANDLE_TAGBITS);
+            if (Peb->ProcessParameters->CurrentDirectory.Handle)
+            {
+                CurDirHandle =
+                    (HANDLE)((ULONG_PTR)Peb->ProcessParameters->CurrentDirectory.Handle & ~OBJ_HANDLE_TAGBITS);
                 CurDirHandle = (HANDLE)((ULONG_PTR)CurDirHandle | RTL_USER_PROC_CURDIR_CLOSE);
-                }
             }
+        }
 
-        if (!ARGUMENT_PRESENT( CommandLine )) {
+        if (!ARGUMENT_PRESENT(CommandLine))
+        {
             CommandLine = ImagePathName;
-            }
+        }
 
-        if (!ARGUMENT_PRESENT( Environment )) {
+        if (!ARGUMENT_PRESENT(Environment))
+        {
             Environment = Peb->ProcessParameters->Environment;
-            }
+        }
 
-        if (!ARGUMENT_PRESENT( WindowTitle )) {
+        if (!ARGUMENT_PRESENT(WindowTitle))
+        {
             WindowTitle = (PUNICODE_STRING)&NullString;
-            }
+        }
 
-        if (!ARGUMENT_PRESENT( DesktopInfo )) {
+        if (!ARGUMENT_PRESENT(DesktopInfo))
+        {
             DesktopInfo = (PUNICODE_STRING)&NullString;
-            }
+        }
 
-        if (!ARGUMENT_PRESENT( ShellInfo )) {
+        if (!ARGUMENT_PRESENT(ShellInfo))
+        {
             ShellInfo = (PUNICODE_STRING)&NullString;
-            }
+        }
 
-        if (!ARGUMENT_PRESENT( RuntimeData )) {
+        if (!ARGUMENT_PRESENT(RuntimeData))
+        {
             RuntimeData = (PUNICODE_STRING)&NullString;
-            }
+        }
 
         //
         // Determine size need to contain the process parameter record
@@ -333,33 +322,28 @@ Return Value:
         // will be aligned on a ULONG byte boundary.
         //
 
-        ByteCount = sizeof( **ProcessParameters );
-        ByteCount += ROUND_UP( ImagePathName->Length + sizeof(UNICODE_NULL),    sizeof( ULONG ) );
-        ByteCount += ROUND_UP( DllPath->MaximumLength,       sizeof( ULONG ) );
-        ByteCount += ROUND_UP( DOS_MAX_PATH_LENGTH*2,        sizeof( ULONG ) );
-        ByteCount += ROUND_UP( CommandLine->Length + sizeof(UNICODE_NULL),      sizeof( ULONG ) );
-        ByteCount += ROUND_UP( WindowTitle->MaximumLength,   sizeof( ULONG ) );
-        ByteCount += ROUND_UP( DesktopInfo->MaximumLength,   sizeof( ULONG ) );
-        ByteCount += ROUND_UP( ShellInfo->MaximumLength,     sizeof( ULONG ) );
-        ByteCount += ROUND_UP( RuntimeData->MaximumLength,   sizeof( ULONG ) );
+        ByteCount = sizeof(**ProcessParameters);
+        ByteCount += ROUND_UP(ImagePathName->Length + sizeof(UNICODE_NULL), sizeof(ULONG));
+        ByteCount += ROUND_UP(DllPath->MaximumLength, sizeof(ULONG));
+        ByteCount += ROUND_UP(DOS_MAX_PATH_LENGTH * 2, sizeof(ULONG));
+        ByteCount += ROUND_UP(CommandLine->Length + sizeof(UNICODE_NULL), sizeof(ULONG));
+        ByteCount += ROUND_UP(WindowTitle->MaximumLength, sizeof(ULONG));
+        ByteCount += ROUND_UP(DesktopInfo->MaximumLength, sizeof(ULONG));
+        ByteCount += ROUND_UP(ShellInfo->MaximumLength, sizeof(ULONG));
+        ByteCount += ROUND_UP(RuntimeData->MaximumLength, sizeof(ULONG));
 
         //
         // Allocate memory for the process parameter record.
         //
 
         MaxByteCount = ByteCount;
-        Status = ZwAllocateVirtualMemory( NtCurrentProcess(),
-                                          (PVOID *)&p,
-                                          0,
-                                          &MaxByteCount,
-                                          MEM_COMMIT,
-                                          PAGE_READWRITE
-                                        );
-        if (!NT_SUCCESS( Status )) {
-            return( Status );
-            }
+        Status = ZwAllocateVirtualMemory(NtCurrentProcess(), (PVOID *)&p, 0, &MaxByteCount, MEM_COMMIT, PAGE_READWRITE);
+        if (!NT_SUCCESS(Status))
+        {
+            return (Status);
+        }
 
-        p->MaximumLength = (ULONG) MaxByteCount;
+        p->MaximumLength = (ULONG)MaxByteCount;
         p->Length = ByteCount;
         p->Flags = RTL_USER_PROC_PARAMS_NORMALIZED;
         p->Environment = Environment;
@@ -372,186 +356,148 @@ Return Value:
         p->ConsoleFlags = Peb->ProcessParameters->ConsoleFlags;
 
         pDst = (PWSTR)(p + 1);
-        RtlpCopyProcString( &pDst,
-                            &p->CurrentDirectory.DosPath,
-                            CurrentDirectory,
-                            DOS_MAX_PATH_LENGTH*2
-                          );
+        RtlpCopyProcString(&pDst, &p->CurrentDirectory.DosPath, CurrentDirectory, DOS_MAX_PATH_LENGTH * 2);
 
-        RtlpCopyProcString( &pDst, &p->DllPath, DllPath, 0 );
-        RtlpCopyProcString( &pDst, &p->ImagePathName, ImagePathName, ImagePathName->Length + sizeof(UNICODE_NULL) );
-        if (CommandLine->Length == CommandLine->MaximumLength) {
-            RtlpCopyProcString( &pDst, &p->CommandLine, CommandLine, 0 );
-            }
-        else {
-            RtlpCopyProcString( &pDst, &p->CommandLine, CommandLine, CommandLine->Length + sizeof(UNICODE_NULL) );
-            }
-        RtlpCopyProcString( &pDst, &p->WindowTitle, WindowTitle, 0 );
-        RtlpCopyProcString( &pDst, &p->DesktopInfo, DesktopInfo, 0 );
-        RtlpCopyProcString( &pDst, &p->ShellInfo,   ShellInfo, 0 );
-        if (RuntimeData->Length != 0) {
-            RtlpCopyProcString( &pDst, &p->RuntimeData, RuntimeData, 0 );
-            }
-        else {
+        RtlpCopyProcString(&pDst, &p->DllPath, DllPath, 0);
+        RtlpCopyProcString(&pDst, &p->ImagePathName, ImagePathName, ImagePathName->Length + sizeof(UNICODE_NULL));
+        if (CommandLine->Length == CommandLine->MaximumLength)
+        {
+            RtlpCopyProcString(&pDst, &p->CommandLine, CommandLine, 0);
+        }
+        else
+        {
+            RtlpCopyProcString(&pDst, &p->CommandLine, CommandLine, CommandLine->Length + sizeof(UNICODE_NULL));
+        }
+        RtlpCopyProcString(&pDst, &p->WindowTitle, WindowTitle, 0);
+        RtlpCopyProcString(&pDst, &p->DesktopInfo, DesktopInfo, 0);
+        RtlpCopyProcString(&pDst, &p->ShellInfo, ShellInfo, 0);
+        if (RuntimeData->Length != 0)
+        {
+            RtlpCopyProcString(&pDst, &p->RuntimeData, RuntimeData, 0);
+        }
+        else
+        {
             p->RuntimeData.Buffer = NULL;
             p->RuntimeData.Length = 0;
             p->RuntimeData.MaximumLength = 0;
-            }
-        *ProcessParameters = RtlDeNormalizeProcessParams( p );
-        p = NULL;
         }
-    finally {
-        if (AbnormalTermination()) {
+        *ProcessParameters = RtlDeNormalizeProcessParams(p);
+        p = NULL;
+    }
+    finally
+    {
+        if (AbnormalTermination())
+        {
             Status = STATUS_ACCESS_VIOLATION;
-            }
+        }
 
-        if (p != NULL) {
-            RtlDestroyProcessParameters( p );
-            }
+        if (p != NULL)
+        {
+            RtlDestroyProcessParameters(p);
+        }
 
         RtlReleasePebLock();
-        }
+    }
 
-    return( Status );
+    return (Status);
 }
 
 
-
 NTSTATUS
-RtlDestroyProcessParameters(
-    IN PRTL_USER_PROCESS_PARAMETERS ProcessParameters
-    )
+RtlDestroyProcessParameters(IN PRTL_USER_PROCESS_PARAMETERS ProcessParameters)
 {
     NTSTATUS Status;
     SIZE_T RegionSize;
 
     RegionSize = 0;
-    Status = ZwFreeVirtualMemory( NtCurrentProcess(),
-                                  (PVOID *)&ProcessParameters,
-                                  &RegionSize,
-                                  MEM_RELEASE
-                                );
+    Status = ZwFreeVirtualMemory(NtCurrentProcess(), (PVOID *)&ProcessParameters, &RegionSize, MEM_RELEASE);
 
-    return( Status );
+    return (Status);
 }
 
 
-#define RtlpNormalizeProcessParam( Base, p )        \
-    if ((p) != NULL) {                              \
-        (p) = (PWSTR)((PCHAR)(p) + (ULONG_PTR)(Base));  \
-        }                                           \
+#define RtlpNormalizeProcessParam(Base, p)             \
+    if ((p) != NULL)                                   \
+    {                                                  \
+        (p) = (PWSTR)((PCHAR)(p) + (ULONG_PTR)(Base)); \
+    }
 
-#define RtlpDeNormalizeProcessParam( Base, p )      \
-    if ((p) != NULL) {                              \
-        (p) = (PWSTR)((PCHAR)(p) - (ULONG_PTR)(Base));  \
-        }                                           \
+#define RtlpDeNormalizeProcessParam(Base, p)           \
+    if ((p) != NULL)                                   \
+    {                                                  \
+        (p) = (PWSTR)((PCHAR)(p) - (ULONG_PTR)(Base)); \
+    }
 
 
 PRTL_USER_PROCESS_PARAMETERS
-RtlNormalizeProcessParams(
-    IN OUT PRTL_USER_PROCESS_PARAMETERS ProcessParameters
-    )
+RtlNormalizeProcessParams(IN OUT PRTL_USER_PROCESS_PARAMETERS ProcessParameters)
 {
-    if (!ARGUMENT_PRESENT( ProcessParameters )) {
-        return( NULL );
-        }
+    if (!ARGUMENT_PRESENT(ProcessParameters))
+    {
+        return (NULL);
+    }
 
-    if (ProcessParameters->Flags & RTL_USER_PROC_PARAMS_NORMALIZED) {
-        return( ProcessParameters );
-        }
+    if (ProcessParameters->Flags & RTL_USER_PROC_PARAMS_NORMALIZED)
+    {
+        return (ProcessParameters);
+    }
 
-    RtlpNormalizeProcessParam( ProcessParameters,
-                               ProcessParameters->CurrentDirectory.DosPath.Buffer
-                             );
+    RtlpNormalizeProcessParam(ProcessParameters, ProcessParameters->CurrentDirectory.DosPath.Buffer);
 
-    RtlpNormalizeProcessParam( ProcessParameters,
-                               ProcessParameters->DllPath.Buffer
-                             );
+    RtlpNormalizeProcessParam(ProcessParameters, ProcessParameters->DllPath.Buffer);
 
-    RtlpNormalizeProcessParam( ProcessParameters,
-                               ProcessParameters->ImagePathName.Buffer
-                             );
+    RtlpNormalizeProcessParam(ProcessParameters, ProcessParameters->ImagePathName.Buffer);
 
-    RtlpNormalizeProcessParam( ProcessParameters,
-                               ProcessParameters->CommandLine.Buffer
-                             );
+    RtlpNormalizeProcessParam(ProcessParameters, ProcessParameters->CommandLine.Buffer);
 
-    RtlpNormalizeProcessParam( ProcessParameters,
-                               ProcessParameters->WindowTitle.Buffer
-                             );
+    RtlpNormalizeProcessParam(ProcessParameters, ProcessParameters->WindowTitle.Buffer);
 
-    RtlpNormalizeProcessParam( ProcessParameters,
-                               ProcessParameters->DesktopInfo.Buffer
-                             );
+    RtlpNormalizeProcessParam(ProcessParameters, ProcessParameters->DesktopInfo.Buffer);
 
-    RtlpNormalizeProcessParam( ProcessParameters,
-                               ProcessParameters->ShellInfo.Buffer
-                             );
+    RtlpNormalizeProcessParam(ProcessParameters, ProcessParameters->ShellInfo.Buffer);
 
-    RtlpNormalizeProcessParam( ProcessParameters,
-                               ProcessParameters->RuntimeData.Buffer
-                             );
+    RtlpNormalizeProcessParam(ProcessParameters, ProcessParameters->RuntimeData.Buffer);
     ProcessParameters->Flags |= RTL_USER_PROC_PARAMS_NORMALIZED;
 
-    return( ProcessParameters );
+    return (ProcessParameters);
 }
 
 PRTL_USER_PROCESS_PARAMETERS
-RtlDeNormalizeProcessParams(
-    IN OUT PRTL_USER_PROCESS_PARAMETERS ProcessParameters
-    )
+RtlDeNormalizeProcessParams(IN OUT PRTL_USER_PROCESS_PARAMETERS ProcessParameters)
 {
-    if (!ARGUMENT_PRESENT( ProcessParameters )) {
-        return( NULL );
-        }
+    if (!ARGUMENT_PRESENT(ProcessParameters))
+    {
+        return (NULL);
+    }
 
-    if (!(ProcessParameters->Flags & RTL_USER_PROC_PARAMS_NORMALIZED)) {
-        return( ProcessParameters );
-        }
+    if (!(ProcessParameters->Flags & RTL_USER_PROC_PARAMS_NORMALIZED))
+    {
+        return (ProcessParameters);
+    }
 
-    RtlpDeNormalizeProcessParam( ProcessParameters,
-                                 ProcessParameters->CurrentDirectory.DosPath.Buffer
-                               );
+    RtlpDeNormalizeProcessParam(ProcessParameters, ProcessParameters->CurrentDirectory.DosPath.Buffer);
 
-    RtlpDeNormalizeProcessParam( ProcessParameters,
-                                 ProcessParameters->DllPath.Buffer
-                               );
+    RtlpDeNormalizeProcessParam(ProcessParameters, ProcessParameters->DllPath.Buffer);
 
-    RtlpDeNormalizeProcessParam( ProcessParameters,
-                                 ProcessParameters->ImagePathName.Buffer
-                               );
+    RtlpDeNormalizeProcessParam(ProcessParameters, ProcessParameters->ImagePathName.Buffer);
 
-    RtlpDeNormalizeProcessParam( ProcessParameters,
-                                 ProcessParameters->CommandLine.Buffer
-                               );
+    RtlpDeNormalizeProcessParam(ProcessParameters, ProcessParameters->CommandLine.Buffer);
 
-    RtlpDeNormalizeProcessParam( ProcessParameters,
-                                 ProcessParameters->WindowTitle.Buffer
-                               );
+    RtlpDeNormalizeProcessParam(ProcessParameters, ProcessParameters->WindowTitle.Buffer);
 
-    RtlpDeNormalizeProcessParam( ProcessParameters,
-                                 ProcessParameters->DesktopInfo.Buffer
-                               );
+    RtlpDeNormalizeProcessParam(ProcessParameters, ProcessParameters->DesktopInfo.Buffer);
 
-    RtlpDeNormalizeProcessParam( ProcessParameters,
-                                 ProcessParameters->ShellInfo.Buffer
-                               );
+    RtlpDeNormalizeProcessParam(ProcessParameters, ProcessParameters->ShellInfo.Buffer);
 
-    RtlpDeNormalizeProcessParam( ProcessParameters,
-                                 ProcessParameters->RuntimeData.Buffer
-                               );
+    RtlpDeNormalizeProcessParam(ProcessParameters, ProcessParameters->RuntimeData.Buffer);
 
     ProcessParameters->Flags &= ~RTL_USER_PROC_PARAMS_NORMALIZED;
-    return( ProcessParameters );
+    return (ProcessParameters);
 }
 
 NTSTATUS
-RtlpOpenImageFile(
-    IN PUNICODE_STRING ImagePathName,
-    IN ULONG Attributes,
-    OUT PHANDLE FileHandle,
-    IN BOOLEAN ReportErrors
-    )
+RtlpOpenImageFile(IN PUNICODE_STRING ImagePathName, IN ULONG Attributes, OUT PHANDLE FileHandle,
+                  IN BOOLEAN ReportErrors)
 {
     NTSTATUS Status;
     OBJECT_ATTRIBUTES ObjectAttributes;
@@ -560,45 +506,29 @@ RtlpOpenImageFile(
 
     *FileHandle = NULL;
 
-    InitializeObjectAttributes( &ObjectAttributes,
-                                ImagePathName,
-                                Attributes,
-                                NULL,
-                                NULL
-                              );
-    Status = ZwOpenFile( &File,
-                         SYNCHRONIZE | FILE_EXECUTE,
-                         &ObjectAttributes,
-                         &IoStatus,
-                         FILE_SHARE_READ | FILE_SHARE_DELETE,
-                         FILE_NON_DIRECTORY_FILE
-                         );
+    InitializeObjectAttributes(&ObjectAttributes, ImagePathName, Attributes, NULL, NULL);
+    Status = ZwOpenFile(&File, SYNCHRONIZE | FILE_EXECUTE, &ObjectAttributes, &IoStatus,
+                        FILE_SHARE_READ | FILE_SHARE_DELETE, FILE_NON_DIRECTORY_FILE);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 #if DBG
-        if (ReportErrors) {
-            DbgPrint( "NTRTL: RtlpOpenImageFile - NtCreateFile( %wZ ) failed.  Status == %X\n",
-                      ImagePathName,
-                      Status
-                    );
-            }
-#endif // DBG
-        return( Status );
+        if (ReportErrors)
+        {
+            DbgPrint("NTRTL: RtlpOpenImageFile - NtCreateFile( %wZ ) failed.  Status == %X\n", ImagePathName, Status);
         }
+#endif // DBG
+        return (Status);
+    }
 
     *FileHandle = File;
-    return( STATUS_SUCCESS );
+    return (STATUS_SUCCESS);
 }
 
 
 NTSTATUS
-RtlpCreateStack(
-    IN HANDLE Process,
-    IN SIZE_T MaximumStackSize OPTIONAL,
-    IN SIZE_T CommittedStackSize OPTIONAL,
-    IN ULONG ZeroBits OPTIONAL,
-    OUT PINITIAL_TEB InitialTeb
-    )
+RtlpCreateStack(IN HANDLE Process, IN SIZE_T MaximumStackSize OPTIONAL, IN SIZE_T CommittedStackSize OPTIONAL,
+                IN ULONG ZeroBits OPTIONAL, OUT PINITIAL_TEB InitialTeb)
 {
     NTSTATUS Status;
     PCH Stack;
@@ -613,21 +543,19 @@ RtlpCreateStack(
     SIZE_T MstackPlusBstoreSize;
 #endif
 
-    Status = ZwQuerySystemInformation( SystemBasicInformation,
-                                       (PVOID)&SysInfo,
-                                       sizeof( SysInfo ),
-                                       NULL
-                                     );
-    if ( !NT_SUCCESS( Status ) ) {
-        return( Status );
-        }
+    Status = ZwQuerySystemInformation(SystemBasicInformation, (PVOID)&SysInfo, sizeof(SysInfo), NULL);
+    if (!NT_SUCCESS(Status))
+    {
+        return (Status);
+    }
 
     //
     // if stack is in the current process, then default to
     // the parameters from the image
     //
 
-    if ( Process == NtCurrentProcess() ) {
+    if (Process == NtCurrentProcess())
+    {
         PPEB Peb;
         PIMAGE_NT_HEADERS NtHeaders;
 
@@ -635,31 +563,35 @@ RtlpCreateStack(
         Peb = NtCurrentPeb();
         NtHeaders = RtlImageNtHeader(Peb->ImageBaseAddress);
 
-        if (!NtHeaders) {
+        if (!NtHeaders)
+        {
             return STATUS_INVALID_IMAGE_FORMAT;
         }
 
 
-        if (!MaximumStackSize) {
+        if (!MaximumStackSize)
+        {
             MaximumStackSize = NtHeaders->OptionalHeader.SizeOfStackReserve;
-            }
+        }
 
-        if (!CommittedStackSize) {
+        if (!CommittedStackSize)
+        {
             CommittedStackSize = NtHeaders->OptionalHeader.SizeOfStackCommit;
-            }
-
         }
-    else {
+    }
+    else
+    {
 
-        if (!CommittedStackSize) {
+        if (!CommittedStackSize)
+        {
             CommittedStackSize = SysInfo.PageSize;
-            }
-
-        if (!MaximumStackSize) {
-            MaximumStackSize = SysInfo.AllocationGranularity;
-            }
-
         }
+
+        if (!MaximumStackSize)
+        {
+            MaximumStackSize = SysInfo.AllocationGranularity;
+        }
+    }
 
     //
     // Enforce a minimal stack commit if there is a PEB setting
@@ -671,22 +603,22 @@ RtlpCreateStack(
         SIZE_T MinimumStackCommit;
 
         MinimumStackCommit = NtCurrentPeb()->MinimumStackCommit;
-        
-        if (MinimumStackCommit != 0 && CommittedStackSize < MinimumStackCommit) {
+
+        if (MinimumStackCommit != 0 && CommittedStackSize < MinimumStackCommit)
+        {
             CommittedStackSize = MinimumStackCommit;
         }
     }
 #endif
 
-    if ( CommittedStackSize >= MaximumStackSize ) {
-        MaximumStackSize = ROUND_UP(CommittedStackSize, (1024*1024));
-        }
+    if (CommittedStackSize >= MaximumStackSize)
+    {
+        MaximumStackSize = ROUND_UP(CommittedStackSize, (1024 * 1024));
+    }
 
 
-    CommittedStackSize = ROUND_UP( CommittedStackSize, SysInfo.PageSize );
-    MaximumStackSize = ROUND_UP( MaximumStackSize,
-                                 SysInfo.AllocationGranularity
-                               );
+    CommittedStackSize = ROUND_UP(CommittedStackSize, SysInfo.PageSize);
+    MaximumStackSize = ROUND_UP(MaximumStackSize, SysInfo.AllocationGranularity);
 
     Stack = NULL;
 
@@ -700,33 +632,21 @@ RtlpCreateStack(
     MaximumBstoreSize = MaximumStackSize;
     MstackPlusBstoreSize = MaximumBstoreSize + MaximumStackSize;
 
-    Status = ZwAllocateVirtualMemory( Process,
-                                      (PVOID *)&Stack,
-                                      ZeroBits,
-                                      &MstackPlusBstoreSize,
-                                      MEM_RESERVE,
-                                      PAGE_READWRITE
-                                    );
+    Status =
+        ZwAllocateVirtualMemory(Process, (PVOID *)&Stack, ZeroBits, &MstackPlusBstoreSize, MEM_RESERVE, PAGE_READWRITE);
 #else
 
-    Status = ZwAllocateVirtualMemory( Process,
-                                      (PVOID *)&Stack,
-                                      ZeroBits,
-                                      &MaximumStackSize,
-                                      MEM_RESERVE,
-                                      PAGE_READWRITE
-                                    );
+    Status =
+        ZwAllocateVirtualMemory(Process, (PVOID *)&Stack, ZeroBits, &MaximumStackSize, MEM_RESERVE, PAGE_READWRITE);
 #endif // defined(_IA64_)
 
-    if ( !NT_SUCCESS( Status ) ) {
+    if (!NT_SUCCESS(Status))
+    {
 #if DBG
-        DbgPrint( "NTRTL: RtlpCreateStack( %lx ) failed.  Stack Reservation Status == %X\n",
-                  Process,
-                  Status
-                );
+        DbgPrint("NTRTL: RtlpCreateStack( %lx ) failed.  Stack Reservation Status == %X\n", Process, Status);
 #endif // DBG
-        return( Status );
-        }
+        return (Status);
+    }
 
 #if defined(_IA64_)
     InitialTeb->OldInitialTeb.OldBStoreLimit = NULL;
@@ -738,57 +658,47 @@ RtlpCreateStack(
     InitialTeb->StackBase = Stack + MaximumStackSize;
 
     Stack += MaximumStackSize - CommittedStackSize;
-    if (MaximumStackSize > CommittedStackSize) {
+    if (MaximumStackSize > CommittedStackSize)
+    {
         Stack -= SysInfo.PageSize;
         CommittedStackSize += SysInfo.PageSize;
         GuardPage = TRUE;
-        }
-    else {
+    }
+    else
+    {
         GuardPage = FALSE;
-        }
-    Status = ZwAllocateVirtualMemory( Process,
-                                      (PVOID *)&Stack,
-                                      0,
-                                      &CommittedStackSize,
-                                      MEM_COMMIT,
-                                      PAGE_READWRITE
-                                    );
+    }
+    Status = ZwAllocateVirtualMemory(Process, (PVOID *)&Stack, 0, &CommittedStackSize, MEM_COMMIT, PAGE_READWRITE);
     InitialTeb->StackLimit = Stack;
 
-    if ( !NT_SUCCESS( Status ) ) {
+    if (!NT_SUCCESS(Status))
+    {
 #if DBG
-        DbgPrint( "NTRTL: RtlpCreateStack( %lx ) failed.  Stack Commit Status == %X\n",
-                  Process,
-                  Status
-                );
+        DbgPrint("NTRTL: RtlpCreateStack( %lx ) failed.  Stack Commit Status == %X\n", Process, Status);
 #endif // DBG
-        return( Status );
-        }
+        return (Status);
+    }
 
     //
     // if we have space, create a guard page.
     //
 
-    if (GuardPage) {
-        RegionSize =  SysInfo.PageSize;
-        Status = ZwProtectVirtualMemory( Process,
-                                         (PVOID *)&Stack,
-                                         &RegionSize,
-                                         PAGE_GUARD | PAGE_READWRITE,
-                                         &OldProtect);
+    if (GuardPage)
+    {
+        RegionSize = SysInfo.PageSize;
+        Status =
+            ZwProtectVirtualMemory(Process, (PVOID *)&Stack, &RegionSize, PAGE_GUARD | PAGE_READWRITE, &OldProtect);
 
 
-        if ( !NT_SUCCESS( Status ) ) {
+        if (!NT_SUCCESS(Status))
+        {
 #if DBG
-            DbgPrint( "NTRTL: RtlpCreateStack( %lx ) failed.  Guard Page Creation Status == %X\n",
-                      Process,
-                      Status
-                    );
+            DbgPrint("NTRTL: RtlpCreateStack( %lx ) failed.  Guard Page Creation Status == %X\n", Process, Status);
 #endif // DBG
-            return( Status );
-            }
-        InitialTeb->StackLimit = (PVOID)((PUCHAR)InitialTeb->StackLimit + RegionSize);
+            return (Status);
         }
+        InitialTeb->StackLimit = (PVOID)((PUCHAR)InitialTeb->StackLimit + RegionSize);
+    }
 
 #if defined(_IA64_)
 
@@ -797,48 +707,39 @@ RtlpCreateStack(
     //
 
     Bstore = InitialTeb->StackBase;
-    if (MaximumBstoreSize > CommittedBstoreSize) {
+    if (MaximumBstoreSize > CommittedBstoreSize)
+    {
         CommittedBstoreSize += SysInfo.PageSize;
         GuardPage = TRUE;
-    } else {
+    }
+    else
+    {
         GuardPage = FALSE;
     }
 
-    Status = ZwAllocateVirtualMemory( Process,
-                                      (PVOID *)&Bstore,
-                                      0,
-                                      &CommittedBstoreSize,
-                                      MEM_COMMIT,
-                                      PAGE_READWRITE
-                                    );
+    Status = ZwAllocateVirtualMemory(Process, (PVOID *)&Bstore, 0, &CommittedBstoreSize, MEM_COMMIT, PAGE_READWRITE);
 
     InitialTeb->BStoreLimit = Bstore + CommittedBstoreSize;
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
 #if DBG
-        DbgPrint("NTRTL: RtlpCreateStack( %lx ) failed. Backing Store Commit Status == %X\n",
-                 Process,
-                 Status
-                );
+        DbgPrint("NTRTL: RtlpCreateStack( %lx ) failed. Backing Store Commit Status == %X\n", Process, Status);
 #endif // DBG
         return (Status);
     }
 
-    if (GuardPage) {
+    if (GuardPage)
+    {
         Bstore = (PCH)InitialTeb->BStoreLimit - SysInfo.PageSize;
         RegionSize = SysInfo.PageSize;
-        Status = ZwProtectVirtualMemory(Process,
-                                        (PVOID *)&Bstore,
-                                        &RegionSize,
-                                        PAGE_GUARD | PAGE_READWRITE,
-                                        &OldProtect
-                                       );
-        if ( !NT_SUCCESS(Status) ) {
+        Status =
+            ZwProtectVirtualMemory(Process, (PVOID *)&Bstore, &RegionSize, PAGE_GUARD | PAGE_READWRITE, &OldProtect);
+        if (!NT_SUCCESS(Status))
+        {
 #if DBG
-            DbgPrint("NTRTL: RtlpCreateStack( %lx ) failed.  Backing Store Guard Page Creation Status == %X\n",
-                     Process,
-                     Status
-                    );
+            DbgPrint("NTRTL: RtlpCreateStack( %lx ) failed.  Backing Store Guard Page Creation Status == %X\n", Process,
+                     Status);
 #endif // DBG
             return (Status);
         }
@@ -847,53 +748,38 @@ RtlpCreateStack(
 
 #endif // defined(_IA64_)
 
-    return( STATUS_SUCCESS );
+    return (STATUS_SUCCESS);
 }
 
 
 NTSTATUS
-RtlpFreeStack(
-    IN HANDLE Process,
-    IN PINITIAL_TEB InitialTeb
-    )
+RtlpFreeStack(IN HANDLE Process, IN PINITIAL_TEB InitialTeb)
 {
     NTSTATUS Status;
     SIZE_T Zero;
 
     Zero = 0;
-    Status = ZwFreeVirtualMemory( Process,
-                                  &InitialTeb->StackAllocationBase,
-                                  &Zero,
-                                  MEM_RELEASE
-                                );
-    if ( !NT_SUCCESS( Status ) ) {
+    Status = ZwFreeVirtualMemory(Process, &InitialTeb->StackAllocationBase, &Zero, MEM_RELEASE);
+    if (!NT_SUCCESS(Status))
+    {
 #if DBG
-        DbgPrint( "NTRTL: RtlpFreeStack( %lx ) failed.  Stack DeCommit Status == %X\n",
-                  Process,
-                  Status
-                );
+        DbgPrint("NTRTL: RtlpFreeStack( %lx ) failed.  Stack DeCommit Status == %X\n", Process, Status);
 #endif // DBG
-        return( Status );
-        }
+        return (Status);
+    }
 
-    RtlZeroMemory( InitialTeb, sizeof( *InitialTeb ) );
-    return( STATUS_SUCCESS );
+    RtlZeroMemory(InitialTeb, sizeof(*InitialTeb));
+    return (STATUS_SUCCESS);
 }
 
 
 NTSTATUS
-RtlCreateUserProcess(
-    IN PUNICODE_STRING NtImagePathName,
-    IN ULONG Attributes,
-    IN PRTL_USER_PROCESS_PARAMETERS ProcessParameters,
-    IN PSECURITY_DESCRIPTOR ProcessSecurityDescriptor OPTIONAL,
-    IN PSECURITY_DESCRIPTOR ThreadSecurityDescriptor OPTIONAL,
-    IN HANDLE ParentProcess OPTIONAL,
-    IN BOOLEAN InheritHandles,
-    IN HANDLE DebugPort OPTIONAL,
-    IN HANDLE ExceptionPort OPTIONAL,
-    OUT PRTL_USER_PROCESS_INFORMATION ProcessInformation
-    )
+RtlCreateUserProcess(IN PUNICODE_STRING NtImagePathName, IN ULONG Attributes,
+                     IN PRTL_USER_PROCESS_PARAMETERS ProcessParameters,
+                     IN PSECURITY_DESCRIPTOR ProcessSecurityDescriptor OPTIONAL,
+                     IN PSECURITY_DESCRIPTOR ThreadSecurityDescriptor OPTIONAL, IN HANDLE ParentProcess OPTIONAL,
+                     IN BOOLEAN InheritHandles, IN HANDLE DebugPort OPTIONAL, IN HANDLE ExceptionPort OPTIONAL,
+                     OUT PRTL_USER_PROCESS_INFORMATION ProcessInformation)
 
 /*++
 
@@ -968,39 +854,30 @@ Return Value:
     // Zero output parameter and probe the addresses at the same time
     //
 
-    RtlZeroMemory( ProcessInformation, sizeof( *ProcessInformation ) );
-    ProcessInformation->Length = sizeof( *ProcessInformation );
+    RtlZeroMemory(ProcessInformation, sizeof(*ProcessInformation));
+    ProcessInformation->Length = sizeof(*ProcessInformation);
 
     //
     // Open the specified image file.
     //
 
-    Status = RtlpOpenImageFile( NtImagePathName,
-                                Attributes & (OBJ_INHERIT | OBJ_CASE_INSENSITIVE),
-                                &File,
-                                TRUE
-                              );
-    if (!NT_SUCCESS( Status )) {
-        return( Status );
-        }
+    Status = RtlpOpenImageFile(NtImagePathName, Attributes & (OBJ_INHERIT | OBJ_CASE_INSENSITIVE), &File, TRUE);
+    if (!NT_SUCCESS(Status))
+    {
+        return (Status);
+    }
 
 
     //
     // Create a memory section backed by the opened image file
     //
 
-    Status = ZwCreateSection( &Section,
-                              SECTION_ALL_ACCESS,
-                              NULL,
-                              NULL,
-                              PAGE_EXECUTE,
-                              SEC_IMAGE,
-                              File
-                            );
-    ZwClose( File );
-    if ( !NT_SUCCESS( Status ) ) {
-        return( Status );
-        }
+    Status = ZwCreateSection(&Section, SECTION_ALL_ACCESS, NULL, NULL, PAGE_EXECUTE, SEC_IMAGE, File);
+    ZwClose(File);
+    if (!NT_SUCCESS(Status))
+    {
+        return (Status);
+    }
 
 
     //
@@ -1009,80 +886,69 @@ Return Value:
     // have a name nor will the handle be inherited by other processes.
     //
 
-    if (!ARGUMENT_PRESENT( ParentProcess )) {
+    if (!ARGUMENT_PRESENT(ParentProcess))
+    {
         ParentProcess = NtCurrentProcess();
-        }
+    }
 
-    InitializeObjectAttributes( &ObjectAttributes, NULL, 0, NULL,
-                                ProcessSecurityDescriptor );
-    if ( RtlGetNtGlobalFlags() & FLG_ENABLE_CSRDEBUG ) {
-        if ( wcsstr(NtImagePathName->Buffer,L"csrss") ||
-             wcsstr(NtImagePathName->Buffer,L"CSRSS")
-           ) {
+    InitializeObjectAttributes(&ObjectAttributes, NULL, 0, NULL, ProcessSecurityDescriptor);
+    if (RtlGetNtGlobalFlags() & FLG_ENABLE_CSRDEBUG)
+    {
+        if (wcsstr(NtImagePathName->Buffer, L"csrss") || wcsstr(NtImagePathName->Buffer, L"CSRSS"))
+        {
 
             //
             // For Hydra we don't name the CSRSS process to avoid name
             // collissions when multiple CSRSS's are started
             //
-            if (ISTERMINALSERVER()) {
+            if (ISTERMINALSERVER())
+            {
 
-                InitializeObjectAttributes( &ObjectAttributes, NULL, 0, NULL,
-                                            ProcessSecurityDescriptor );
-            } else {
-
-                RtlInitUnicodeString(&Unicode,L"\\WindowsSS");
-                InitializeObjectAttributes( &ObjectAttributes, &Unicode, 0, NULL,
-                                            ProcessSecurityDescriptor );
+                InitializeObjectAttributes(&ObjectAttributes, NULL, 0, NULL, ProcessSecurityDescriptor);
             }
+            else
+            {
 
+                RtlInitUnicodeString(&Unicode, L"\\WindowsSS");
+                InitializeObjectAttributes(&ObjectAttributes, &Unicode, 0, NULL, ProcessSecurityDescriptor);
             }
         }
+    }
 
-    if ( !InheritHandles ) {
+    if (!InheritHandles)
+    {
         ProcessParameters->CurrentDirectory.Handle = NULL;
-        }
-    Status = ZwCreateProcess( &ProcessInformation->Process,
-                              PROCESS_ALL_ACCESS,
-                              &ObjectAttributes,
-                              ParentProcess,
-                              InheritHandles,
-                              Section,
-                              DebugPort,
-                              ExceptionPort
-                            );
-    if ( !NT_SUCCESS( Status ) ) {
-        ZwClose( Section );
-        return( Status );
-        }
+    }
+    Status = ZwCreateProcess(&ProcessInformation->Process, PROCESS_ALL_ACCESS, &ObjectAttributes, ParentProcess,
+                             InheritHandles, Section, DebugPort, ExceptionPort);
+    if (!NT_SUCCESS(Status))
+    {
+        ZwClose(Section);
+        return (Status);
+    }
 
 
     //
     // Retreive the interesting information from the image header
     //
 
-    Status = ZwQuerySection( Section,
-                             SectionImageInformation,
-                             &ProcessInformation->ImageInformation,
-                             sizeof( ProcessInformation->ImageInformation ),
-                             NULL
-                           );
-    if ( !NT_SUCCESS( Status ) ) {
-        ZwClose( ProcessInformation->Process );
-        ZwClose( Section );
-        return( Status );
-        }
+    Status = ZwQuerySection(Section, SectionImageInformation, &ProcessInformation->ImageInformation,
+                            sizeof(ProcessInformation->ImageInformation), NULL);
+    if (!NT_SUCCESS(Status))
+    {
+        ZwClose(ProcessInformation->Process);
+        ZwClose(Section);
+        return (Status);
+    }
 
-    Status = ZwQueryInformationProcess( ProcessInformation->Process,
-                                        ProcessBasicInformation,
-                                        &ProcessInfo,
-                                        sizeof( ProcessInfo ),
-                                        NULL
-                                      );
-    if ( !NT_SUCCESS( Status ) ) {
-        ZwClose( ProcessInformation->Process );
-        ZwClose( Section );
-        return( Status );
-        }
+    Status = ZwQueryInformationProcess(ProcessInformation->Process, ProcessBasicInformation, &ProcessInfo,
+                                       sizeof(ProcessInfo), NULL);
+    if (!NT_SUCCESS(Status))
+    {
+        ZwClose(ProcessInformation->Process);
+        ZwClose(Section);
+        return (Status);
+    }
 
     Peb = ProcessInfo.PebBaseAddress;
 
@@ -1091,92 +957,81 @@ Return Value:
     // Note that the duplicated handles will overlay the input values.
     //
 
-    try {
+    try
+    {
         Status = STATUS_SUCCESS;
 
-        if ( ProcessParameters->StandardInput ) {
+        if (ProcessParameters->StandardInput)
+        {
 
-            Status = ZwDuplicateObject(
-                        ParentProcess,
-                        ProcessParameters->StandardInput,
-                        ProcessInformation->Process,
-                        &ProcessParameters->StandardInput,
-                        0L,
-                        0L,
-                        DUPLICATE_SAME_ACCESS | DUPLICATE_SAME_ATTRIBUTES
-                        );
-            if ( !NT_SUCCESS(Status) ) {
+            Status = ZwDuplicateObject(ParentProcess, ProcessParameters->StandardInput, ProcessInformation->Process,
+                                       &ProcessParameters->StandardInput, 0L, 0L,
+                                       DUPLICATE_SAME_ACCESS | DUPLICATE_SAME_ATTRIBUTES);
+            if (!NT_SUCCESS(Status))
+            {
                 return Status;
             }
         }
 
-        if ( ProcessParameters->StandardOutput ) {
+        if (ProcessParameters->StandardOutput)
+        {
 
-            Status = ZwDuplicateObject(
-                        ParentProcess,
-                        ProcessParameters->StandardOutput,
-                        ProcessInformation->Process,
-                        &ProcessParameters->StandardOutput,
-                        0L,
-                        0L,
-                        DUPLICATE_SAME_ACCESS | DUPLICATE_SAME_ATTRIBUTES
-                        );
-            if ( !NT_SUCCESS(Status) ) {
+            Status = ZwDuplicateObject(ParentProcess, ProcessParameters->StandardOutput, ProcessInformation->Process,
+                                       &ProcessParameters->StandardOutput, 0L, 0L,
+                                       DUPLICATE_SAME_ACCESS | DUPLICATE_SAME_ATTRIBUTES);
+            if (!NT_SUCCESS(Status))
+            {
                 return Status;
             }
         }
 
-        if ( ProcessParameters->StandardError ) {
+        if (ProcessParameters->StandardError)
+        {
 
-            Status = ZwDuplicateObject(
-                        ParentProcess,
-                        ProcessParameters->StandardError,
-                        ProcessInformation->Process,
-                        &ProcessParameters->StandardError,
-                        0L,
-                        0L,
-                        DUPLICATE_SAME_ACCESS | DUPLICATE_SAME_ATTRIBUTES
-                        );
-            if ( !NT_SUCCESS(Status) ) {
+            Status = ZwDuplicateObject(ParentProcess, ProcessParameters->StandardError, ProcessInformation->Process,
+                                       &ProcessParameters->StandardError, 0L, 0L,
+                                       DUPLICATE_SAME_ACCESS | DUPLICATE_SAME_ATTRIBUTES);
+            if (!NT_SUCCESS(Status))
+            {
                 return Status;
             }
         }
-
-    } finally {
-        if ( !NT_SUCCESS(Status) ) {
-            ZwClose( ProcessInformation->Process );
-            ZwClose( Section );
-            }
+    }
+    finally
+    {
+        if (!NT_SUCCESS(Status))
+        {
+            ZwClose(ProcessInformation->Process);
+            ZwClose(Section);
         }
+    }
 
     //
     // Possibly reserve some address space in the new process
     //
 
-    if (ProcessInformation->ImageInformation.SubSystemType == IMAGE_SUBSYSTEM_NATIVE ) {
-        if ( ProcessParameters->Flags & RTL_USER_PROC_RESERVE_1MB ) {
+    if (ProcessInformation->ImageInformation.SubSystemType == IMAGE_SUBSYSTEM_NATIVE)
+    {
+        if (ProcessParameters->Flags & RTL_USER_PROC_RESERVE_1MB)
+        {
 
 #if defined(_IA64_)
-            Environment = (PVOID)(UADDRESS_BASE+4);
+            Environment = (PVOID)(UADDRESS_BASE + 4);
 #else
             Environment = (PVOID)(4);
 #endif
-            RegionSize = (1024*1024)-(256);
+            RegionSize = (1024 * 1024) - (256);
 
-            Status = ZwAllocateVirtualMemory( ProcessInformation->Process,
-                                              (PVOID *)&Environment,
-                                              0,
-                                              &RegionSize,
-                                              MEM_RESERVE,
-                                              PAGE_READWRITE
-                                            );
-            if ( !NT_SUCCESS( Status ) ) {
-                ZwClose( ProcessInformation->Process );
-                ZwClose( Section );
-                return( Status );
-                }
+            Status = ZwAllocateVirtualMemory(ProcessInformation->Process, (PVOID *)&Environment, 0, &RegionSize,
+                                             MEM_RESERVE, PAGE_READWRITE);
+            if (!NT_SUCCESS(Status))
+            {
+                ZwClose(ProcessInformation->Process);
+                ZwClose(Section);
+                return (Status);
             }
         }
+    }
 
     //
     // Allocate virtual memory in the new process and use NtWriteVirtualMemory
@@ -1185,42 +1040,38 @@ Return Value:
     // the process parameter block so the new process can access it.
     //
 
-    if (s = (PWCHAR)ProcessParameters->Environment) {
-        while (*s++) {
-            while (*s++) {
-                }
+    if (s = (PWCHAR)ProcessParameters->Environment)
+    {
+        while (*s++)
+        {
+            while (*s++)
+            {
             }
+        }
         EnvironmentLength = (SIZE_T)(s - (PWCHAR)ProcessParameters->Environment) * sizeof(WCHAR);
 
         Environment = NULL;
         RegionSize = EnvironmentLength;
-        Status = ZwAllocateVirtualMemory( ProcessInformation->Process,
-                                          (PVOID *)&Environment,
-                                          0,
-                                          &RegionSize,
-                                          MEM_COMMIT,
-                                          PAGE_READWRITE
-                                        );
-        if ( !NT_SUCCESS( Status ) ) {
-            ZwClose( ProcessInformation->Process );
-            ZwClose( Section );
-            return( Status );
-            }
+        Status = ZwAllocateVirtualMemory(ProcessInformation->Process, (PVOID *)&Environment, 0, &RegionSize, MEM_COMMIT,
+                                         PAGE_READWRITE);
+        if (!NT_SUCCESS(Status))
+        {
+            ZwClose(ProcessInformation->Process);
+            ZwClose(Section);
+            return (Status);
+        }
 
-        Status = ZwWriteVirtualMemory( ProcessInformation->Process,
-                                       Environment,
-                                       ProcessParameters->Environment,
-                                       EnvironmentLength,
-                                       NULL
-                                     );
-        if ( !NT_SUCCESS( Status ) ) {
-            ZwClose( ProcessInformation->Process );
-            ZwClose( Section );
-            return( Status );
-            }
+        Status = ZwWriteVirtualMemory(ProcessInformation->Process, Environment, ProcessParameters->Environment,
+                                      EnvironmentLength, NULL);
+        if (!NT_SUCCESS(Status))
+        {
+            ZwClose(ProcessInformation->Process);
+            ZwClose(Section);
+            return (Status);
+        }
 
         ProcessParameters->Environment = Environment;
-        }
+    }
 
     //
     // Allocate virtual memory in the new process and use NtWriteVirtualMemory
@@ -1231,42 +1082,32 @@ Return Value:
 
     Parameters = NULL;
     ParameterLength = ProcessParameters->MaximumLength;
-    Status = ZwAllocateVirtualMemory( ProcessInformation->Process,
-                                      (PVOID *)&Parameters,
-                                      0,
-                                      &ParameterLength,
-                                      MEM_COMMIT,
-                                      PAGE_READWRITE
-                                    );
-    if ( !NT_SUCCESS( Status ) ) {
-        ZwClose( ProcessInformation->Process );
-        ZwClose( Section );
-        return( Status );
-        }
+    Status = ZwAllocateVirtualMemory(ProcessInformation->Process, (PVOID *)&Parameters, 0, &ParameterLength, MEM_COMMIT,
+                                     PAGE_READWRITE);
+    if (!NT_SUCCESS(Status))
+    {
+        ZwClose(ProcessInformation->Process);
+        ZwClose(Section);
+        return (Status);
+    }
 
-    Status = ZwWriteVirtualMemory( ProcessInformation->Process,
-                                   Parameters,
-                                   ProcessParameters,
-                                   ProcessParameters->Length,
-                                   NULL
-                                 );
-    if ( !NT_SUCCESS( Status ) ) {
-            ZwClose( ProcessInformation->Process );
-            ZwClose( Section );
-            return( Status );
-            }
+    Status = ZwWriteVirtualMemory(ProcessInformation->Process, Parameters, ProcessParameters, ProcessParameters->Length,
+                                  NULL);
+    if (!NT_SUCCESS(Status))
+    {
+        ZwClose(ProcessInformation->Process);
+        ZwClose(Section);
+        return (Status);
+    }
 
-    Status = ZwWriteVirtualMemory( ProcessInformation->Process,
-                                   &Peb->ProcessParameters,
-                                   &Parameters,
-                                   sizeof( Parameters ),
-                                   NULL
-                                 );
-    if ( !NT_SUCCESS( Status ) ) {
-        ZwClose( ProcessInformation->Process );
-        ZwClose( Section );
-        return( Status );
-        }
+    Status = ZwWriteVirtualMemory(ProcessInformation->Process, &Peb->ProcessParameters, &Parameters, sizeof(Parameters),
+                                  NULL);
+    if (!NT_SUCCESS(Status))
+    {
+        ZwClose(ProcessInformation->Process);
+        ZwClose(Section);
+        return (Status);
+    }
 
     //
     // Create a suspended thread in the new process.  Specify the size and
@@ -1276,52 +1117,37 @@ Return Value:
     //
 
     Status = RtlCreateUserThread(
-                 ProcessInformation->Process,
-                 ThreadSecurityDescriptor,
-                 TRUE,
-                 ProcessInformation->ImageInformation.ZeroBits,
-                 ProcessInformation->ImageInformation.MaximumStackSize,
-                 ProcessInformation->ImageInformation.CommittedStackSize,
-                 (PUSER_THREAD_START_ROUTINE)
-                     ProcessInformation->ImageInformation.TransferAddress,
-                 (PVOID)Peb,
-                 &ProcessInformation->Thread,
-                 &ProcessInformation->ClientId
-                 );
-    if ( !NT_SUCCESS( Status ) ) {
-        ZwClose( ProcessInformation->Process );
-        ZwClose( Section );
-        return( Status );
-        }
+        ProcessInformation->Process, ThreadSecurityDescriptor, TRUE, ProcessInformation->ImageInformation.ZeroBits,
+        ProcessInformation->ImageInformation.MaximumStackSize, ProcessInformation->ImageInformation.CommittedStackSize,
+        (PUSER_THREAD_START_ROUTINE)ProcessInformation->ImageInformation.TransferAddress, (PVOID)Peb,
+        &ProcessInformation->Thread, &ProcessInformation->ClientId);
+    if (!NT_SUCCESS(Status))
+    {
+        ZwClose(ProcessInformation->Process);
+        ZwClose(Section);
+        return (Status);
+    }
 
     //
     // Now close the section and file handles.  The objects they represent
     // will not actually go away until the process is destroyed.
     //
 
-    ZwClose( Section );
+    ZwClose(Section);
 
     //
     // Return success status
     //
 
-    return( STATUS_SUCCESS );
+    return (STATUS_SUCCESS);
 }
 
 
 NTSTATUS
-RtlCreateUserThread(
-    IN HANDLE Process,
-    IN PSECURITY_DESCRIPTOR ThreadSecurityDescriptor OPTIONAL,
-    IN BOOLEAN CreateSuspended,
-    IN ULONG ZeroBits OPTIONAL,
-    IN SIZE_T MaximumStackSize OPTIONAL,
-    IN SIZE_T CommittedStackSize OPTIONAL,
-    IN PUSER_THREAD_START_ROUTINE StartAddress,
-    IN PVOID Parameter OPTIONAL,
-    OUT PHANDLE Thread OPTIONAL,
-    OUT PCLIENT_ID ClientId OPTIONAL
-    )
+RtlCreateUserThread(IN HANDLE Process, IN PSECURITY_DESCRIPTOR ThreadSecurityDescriptor OPTIONAL,
+                    IN BOOLEAN CreateSuspended, IN ULONG ZeroBits OPTIONAL, IN SIZE_T MaximumStackSize OPTIONAL,
+                    IN SIZE_T CommittedStackSize OPTIONAL, IN PUSER_THREAD_START_ROUTINE StartAddress,
+                    IN PVOID Parameter OPTIONAL, OUT PHANDLE Thread OPTIONAL, OUT PCLIENT_ID ClientId OPTIONAL)
 
 /*++
 
@@ -1388,14 +1214,10 @@ Return Value:
     // process.
     //
 
-    Status = RtlpCreateStack( Process,
-                              MaximumStackSize,
-                              CommittedStackSize,
-                              ZeroBits,
-                              &InitialTeb
-                            );
-    if ( !NT_SUCCESS( Status ) ) {
-        return( Status );
+    Status = RtlpCreateStack(Process, MaximumStackSize, CommittedStackSize, ZeroBits, &InitialTeb);
+    if (!NT_SUCCESS(Status))
+    {
+        return (Status);
     }
 
     //
@@ -1403,16 +1225,14 @@ Return Value:
     //
 
 
-    try {
-        RtlInitializeContext( Process,
-                              &ThreadContext,
-                              Parameter,
-                              (PVOID)StartAddress,
-                              InitialTeb.StackBase
-                            );
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-        RtlpFreeStack( Process, &InitialTeb );
-        return GetExceptionCode ();
+    try
+    {
+        RtlInitializeContext(Process, &ThreadContext, Parameter, (PVOID)StartAddress, InitialTeb.StackBase);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        RtlpFreeStack(Process, &InitialTeb);
+        return GetExceptionCode();
     }
 
     //
@@ -1421,50 +1241,43 @@ Return Value:
     // processes.
     //
 
-    InitializeObjectAttributes( &ObjectAttributes, NULL, 0, NULL,
-                                ThreadSecurityDescriptor );
-    Status = ZwCreateThread( &ThreadHandle,
-                             THREAD_ALL_ACCESS,
-                             &ObjectAttributes,
-                             Process,
-                             &ThreadClientId,
-                             &ThreadContext,
-                             &InitialTeb,
-                             CreateSuspended
-                           );
-    if (!NT_SUCCESS( Status )) {
+    InitializeObjectAttributes(&ObjectAttributes, NULL, 0, NULL, ThreadSecurityDescriptor);
+    Status = ZwCreateThread(&ThreadHandle, THREAD_ALL_ACCESS, &ObjectAttributes, Process, &ThreadClientId,
+                            &ThreadContext, &InitialTeb, CreateSuspended);
+    if (!NT_SUCCESS(Status))
+    {
 #if DBG
-        DbgPrint( "NTRTL: RtlCreateUserThread Failed. NtCreateThread Status == %X\n",
-                  Status );
+        DbgPrint("NTRTL: RtlCreateUserThread Failed. NtCreateThread Status == %X\n", Status);
 #endif // DBG
-        RtlpFreeStack( Process, &InitialTeb );
-    } else {
-        if (ARGUMENT_PRESENT( Thread )) {
+        RtlpFreeStack(Process, &InitialTeb);
+    }
+    else
+    {
+        if (ARGUMENT_PRESENT(Thread))
+        {
             *Thread = ThreadHandle;
-        } else {
-            ZwClose (ThreadHandle);
+        }
+        else
+        {
+            ZwClose(ThreadHandle);
         }
 
-        if (ARGUMENT_PRESENT( ClientId )) {
+        if (ARGUMENT_PRESENT(ClientId))
+        {
             *ClientId = ThreadClientId;
         }
-
     }
 
     //
     // Return status
     //
 
-    return( Status );
+    return (Status);
 }
 
 DECLSPEC_NORETURN
 NTSYSAPI
-VOID
-NTAPI
-RtlExitUserThread (
-    IN NTSTATUS ExitStatus
-    )
+VOID NTAPI RtlExitUserThread(IN NTSTATUS ExitStatus)
 /*++
 
 Routine Description:
@@ -1482,15 +1295,11 @@ Return Value:
 
 --*/
 {
-    NtCurrentTeb ()->FreeStackOnTermination = TRUE;
-    NtTerminateThread (NtCurrentThread (), ExitStatus);
+    NtCurrentTeb()->FreeStackOnTermination = TRUE;
+    NtTerminateThread(NtCurrentThread(), ExitStatus);
 }
 
-VOID
-RtlFreeUserThreadStack(
-    HANDLE hProcess,
-    HANDLE hThread
-    )
+VOID RtlFreeUserThreadStack(HANDLE hProcess, HANDLE hThread)
 {
     NTSTATUS Status;
     PTEB Teb;
@@ -1498,28 +1307,21 @@ RtlFreeUserThreadStack(
     PVOID StackDeallocationBase;
     SIZE_T Size;
 
-    Status = NtQueryInformationThread( hThread,
-                                       ThreadBasicInformation,
-                                       &ThreadInfo,
-                                       sizeof( ThreadInfo ),
-                                       NULL
-                                     );
+    Status = NtQueryInformationThread(hThread, ThreadBasicInformation, &ThreadInfo, sizeof(ThreadInfo), NULL);
     Teb = ThreadInfo.TebBaseAddress;
-    if (!NT_SUCCESS( Status ) || !Teb) {
+    if (!NT_SUCCESS(Status) || !Teb)
+    {
         return;
-        }
+    }
 
-    Status = NtReadVirtualMemory( hProcess,
-                                  &Teb->DeallocationStack,
-                                  &StackDeallocationBase,
-                                  sizeof( StackDeallocationBase ),
-                                  NULL
-                                );
-    if (!NT_SUCCESS( Status ) || !StackDeallocationBase) {
+    Status = NtReadVirtualMemory(hProcess, &Teb->DeallocationStack, &StackDeallocationBase,
+                                 sizeof(StackDeallocationBase), NULL);
+    if (!NT_SUCCESS(Status) || !StackDeallocationBase)
+    {
         return;
-        }
+    }
 
     Size = 0;
-    NtFreeVirtualMemory( hProcess, &StackDeallocationBase, &Size, MEM_RELEASE );
+    NtFreeVirtualMemory(hProcess, &StackDeallocationBase, &Size, MEM_RELEASE);
     return;
 }

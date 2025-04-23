@@ -22,20 +22,14 @@ Revision History:
 #include "lpcp.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,LpcpClosePort)
-#pragma alloc_text(PAGE,LpcpDeletePort)
-#pragma alloc_text(PAGE,LpcExitThread)
+#pragma alloc_text(PAGE, LpcpClosePort)
+#pragma alloc_text(PAGE, LpcpDeletePort)
+#pragma alloc_text(PAGE, LpcExitThread)
 #endif
 
-
-VOID
-LpcpClosePort (
-    IN PEPROCESS Process OPTIONAL,
-    IN PVOID Object,
-    IN ACCESS_MASK GrantedAccess,
-    IN ULONG ProcessHandleCount,
-    IN ULONG SystemHandleCount
-    )
+
+VOID LpcpClosePort(IN PEPROCESS Process OPTIONAL, IN PVOID Object, IN ACCESS_MASK GrantedAccess,
+                   IN ULONG ProcessHandleCount, IN ULONG SystemHandleCount)
 
 /*++
 
@@ -72,15 +66,16 @@ Return Value:
 
     PLPCP_PORT_OBJECT Port = Object;
 
-    UNREFERENCED_PARAMETER (Process);
-    UNREFERENCED_PARAMETER (GrantedAccess);
-    UNREFERENCED_PARAMETER (ProcessHandleCount);
+    UNREFERENCED_PARAMETER(Process);
+    UNREFERENCED_PARAMETER(GrantedAccess);
+    UNREFERENCED_PARAMETER(ProcessHandleCount);
 
     //
     //  We only have work to do if the object is a server communication port
     //
 
-    if ( (Port->Flags & PORT_TYPE) == SERVER_CONNECTION_PORT ) {
+    if ((Port->Flags & PORT_TYPE) == SERVER_CONNECTION_PORT)
+    {
 
         //
         //  If this is a server communication port without any system handles
@@ -88,18 +83,20 @@ Return Value:
         //  port
         //
 
-        if ( SystemHandleCount == 0 ) {
+        if (SystemHandleCount == 0)
+        {
 
-            LpcpDestroyPortQueue( Port, TRUE );
+            LpcpDestroyPortQueue(Port, TRUE);
 
-        //
-        //  If there is only one system handle left then we'll reset the
-        //  communication queue for the port
-        //
+            //
+            //  If there is only one system handle left then we'll reset the
+            //  communication queue for the port
+            //
+        }
+        else if (SystemHandleCount == 1)
+        {
 
-        } else if ( SystemHandleCount == 1 ) {
-
-            LpcpDestroyPortQueue( Port, FALSE );
+            LpcpDestroyPortQueue(Port, FALSE);
         }
 
         //
@@ -110,11 +107,8 @@ Return Value:
     return;
 }
 
-
-VOID
-LpcpDeletePort (
-    IN PVOID Object
-    )
+
+VOID LpcpDeletePort(IN PVOID Object)
 
 /*++
 
@@ -143,7 +137,7 @@ Return Value:
 
     PAGED_CODE();
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
 
     //
     //  If the port is a server communication port then make sure that if
@@ -152,21 +146,24 @@ Return Value:
     //  calling NtCompleteConnectPort
     //
 
-    if ((Port->Flags & PORT_TYPE) == SERVER_COMMUNICATION_PORT) {
+    if ((Port->Flags & PORT_TYPE) == SERVER_COMMUNICATION_PORT)
+    {
 
         PETHREAD ClientThread;
 
         LpcpAcquireLpcpLockByThread(CurrentThread);
 
-        if ((ClientThread = Port->ClientThread) != NULL) {
+        if ((ClientThread = Port->ClientThread) != NULL)
+        {
 
             Port->ClientThread = NULL;
 
             LpcpReleaseLpcpLock();
 
-            ObDereferenceObject( ClientThread );
-
-        } else {
+            ObDereferenceObject(ClientThread);
+        }
+        else
+        {
 
             LpcpReleaseLpcpLock();
         }
@@ -177,17 +174,18 @@ Return Value:
     //  to this port so they know they are no longer connected.
     //
 
-    if ((Port->Flags & PORT_TYPE) == CLIENT_COMMUNICATION_PORT) {
+    if ((Port->Flags & PORT_TYPE) == CLIENT_COMMUNICATION_PORT)
+    {
 
-        ClientPortClosedDatagram.PortMsg.u1.s1.TotalLength = sizeof( ClientPortClosedDatagram );
-        ClientPortClosedDatagram.PortMsg.u1.s1.DataLength = sizeof( ClientPortClosedDatagram.CreateTime );
+        ClientPortClosedDatagram.PortMsg.u1.s1.TotalLength = sizeof(ClientPortClosedDatagram);
+        ClientPortClosedDatagram.PortMsg.u1.s1.DataLength = sizeof(ClientPortClosedDatagram.CreateTime);
 
         ClientPortClosedDatagram.PortMsg.u2.s2.Type = LPC_PORT_CLOSED;
         ClientPortClosedDatagram.PortMsg.u2.s2.DataInfoOffset = 0;
 
         ClientPortClosedDatagram.CreateTime = PsGetCurrentProcess()->CreateTime;
 
-        LpcRequestPort( Port, (PPORT_MESSAGE)&ClientPortClosedDatagram );
+        LpcRequestPort(Port, (PPORT_MESSAGE)&ClientPortClosedDatagram);
     }
 
     //
@@ -195,43 +193,41 @@ Return Value:
     //  for this port and dereference any messages in the queue.
     //
 
-    LpcpDestroyPortQueue( Port, TRUE );
+    LpcpDestroyPortQueue(Port, TRUE);
 
     //
     //  If we had mapped sections into the server or client communication ports,
     //  we need to unmap them in the context of that process.
     //
 
-    if ( (Port->ClientSectionBase != NULL) ||
-         (Port->ServerSectionBase != NULL) ) {
+    if ((Port->ClientSectionBase != NULL) || (Port->ServerSectionBase != NULL))
+    {
 
         //
         //  If the client has a port memory view, then unmap it
         //
 
-        if (Port->ClientSectionBase != NULL) {
+        if (Port->ClientSectionBase != NULL)
+        {
 
-            MmUnmapViewOfSection( Port->MappingProcess,
-                                  Port->ClientSectionBase );
-
+            MmUnmapViewOfSection(Port->MappingProcess, Port->ClientSectionBase);
         }
 
         //
         //  If the server has a port memory view, then unmap it
         //
 
-        if (Port->ServerSectionBase != NULL) {
+        if (Port->ServerSectionBase != NULL)
+        {
 
-            MmUnmapViewOfSection( Port->MappingProcess,
-                                  Port->ServerSectionBase  );
-
+            MmUnmapViewOfSection(Port->MappingProcess, Port->ServerSectionBase);
         }
 
         //
         //  Removing the reference added while mapping the section
         //
 
-        ObDereferenceObject( Port->MappingProcess );
+        ObDereferenceObject(Port->MappingProcess);
 
         Port->MappingProcess = NULL;
     }
@@ -245,40 +241,35 @@ Return Value:
 
     ConnectionPort = Port->ConnectionPort;
 
-    if (ConnectionPort) {
+    if (ConnectionPort)
+    {
 
         CurrentProcessId = CurrentThread->Cid.UniqueProcess;
 
         Head = &ConnectionPort->LpcDataInfoChainHead;
         Next = Head->Flink;
 
-        while (Next != Head) {
+        while (Next != Head)
+        {
 
-            Msg = CONTAINING_RECORD( Next, LPCP_MESSAGE, Entry );
+            Msg = CONTAINING_RECORD(Next, LPCP_MESSAGE, Entry);
             Next = Next->Flink;
 
             //
             //  Test whether the message come from the same port and process
             //
 
-            if ((Msg->Request.ClientId.UniqueProcess == CurrentProcessId)
-                    &&
-                ((Msg->SenderPort == Port) 
-                        || 
-                 (Msg->SenderPort == Port->ConnectedPort) 
-                        || 
-                 (Msg->SenderPort == ConnectionPort))) {
+            if ((Msg->Request.ClientId.UniqueProcess == CurrentProcessId) &&
+                ((Msg->SenderPort == Port) || (Msg->SenderPort == Port->ConnectedPort) ||
+                 (Msg->SenderPort == ConnectionPort)))
+            {
 
-                LpcpTrace(( "%s Freeing DataInfo Message %lx (%u.%u)  Port: %lx\n",
-                            PsGetCurrentProcess()->ImageFileName,
-                            Msg,
-                            Msg->Request.MessageId,
-                            Msg->Request.CallbackId,
-                            ConnectionPort ));
+                LpcpTrace(("%s Freeing DataInfo Message %lx (%u.%u)  Port: %lx\n", PsGetCurrentProcess()->ImageFileName,
+                           Msg, Msg->Request.MessageId, Msg->Request.CallbackId, ConnectionPort));
 
-                RemoveEntryList( &Msg->Entry );
+                RemoveEntryList(&Msg->Entry);
 
-                LpcpFreeToPortZone( Msg, LPCP_MUTEX_OWNED );
+                LpcpFreeToPortZone(Msg, LPCP_MUTEX_OWNED);
 
                 //
                 //  In LpcpFreeToPortZone the LPC lock is released and reacquired.
@@ -292,20 +283,22 @@ Return Value:
 
         LpcpReleaseLpcpLock();
 
-        if (ConnectionPort != Port) {
+        if (ConnectionPort != Port)
+        {
 
-            ObDereferenceObject( ConnectionPort );
+            ObDereferenceObject(ConnectionPort);
         }
-
-    } else {
+    }
+    else
+    {
 
         LpcpReleaseLpcpLock();
     }
 
-    if (((Port->Flags & PORT_TYPE) == SERVER_CONNECTION_PORT) &&
-        (ConnectionPort->ServerProcess != NULL)) {
+    if (((Port->Flags & PORT_TYPE) == SERVER_CONNECTION_PORT) && (ConnectionPort->ServerProcess != NULL))
+    {
 
-        ObDereferenceObject( ConnectionPort->ServerProcess );
+        ObDereferenceObject(ConnectionPort->ServerProcess);
 
         ConnectionPort->ServerProcess = NULL;
     }
@@ -314,7 +307,7 @@ Return Value:
     //  Free any static client security context
     //
 
-    LpcpFreePortClientSecurity( Port );
+    LpcpFreePortClientSecurity(Port);
 
     //
     //  And return to our caller
@@ -323,11 +316,8 @@ Return Value:
     return;
 }
 
-
-VOID
-LpcExitThread (
-    PETHREAD Thread
-    )
+
+VOID LpcExitThread(PETHREAD Thread)
 
 /*++
 
@@ -355,13 +345,14 @@ Return Value:
     //  when we release the lock.
     //
 
-    ASSERT (Thread == PsGetCurrentThread());
+    ASSERT(Thread == PsGetCurrentThread());
 
     LpcpAcquireLpcpLockByThread(Thread);
 
-    if (!IsListEmpty( &Thread->LpcReplyChain )) {
+    if (!IsListEmpty(&Thread->LpcReplyChain))
+    {
 
-        RemoveEntryList( &Thread->LpcReplyChain );
+        RemoveEntryList(&Thread->LpcReplyChain);
     }
 
     //
@@ -378,22 +369,25 @@ Return Value:
 
     Msg = LpcpGetThreadMessage(Thread);
 
-    if (Msg != NULL) {
+    if (Msg != NULL)
+    {
 
         Thread->LpcReplyMessage = NULL;
 
-        if (Msg->RepliedToThread != NULL) {
+        if (Msg->RepliedToThread != NULL)
+        {
 
-            ObDereferenceObject( Msg->RepliedToThread );
+            ObDereferenceObject(Msg->RepliedToThread);
 
             Msg->RepliedToThread = NULL;
         }
 
-        LpcpTrace(( "Cleanup Msg %lx (%d) for Thread %lx allocated\n", Msg, IsListEmpty( &Msg->Entry ), Thread ));
+        LpcpTrace(("Cleanup Msg %lx (%d) for Thread %lx allocated\n", Msg, IsListEmpty(&Msg->Entry), Thread));
 
-        LpcpFreeToPortZone( Msg, LPCP_MUTEX_OWNED | LPCP_MUTEX_RELEASE_ON_RETURN );
+        LpcpFreeToPortZone(Msg, LPCP_MUTEX_OWNED | LPCP_MUTEX_RELEASE_ON_RETURN);
     }
-    else {
+    else
+    {
 
         //
         //  Free the global lpc mutex.

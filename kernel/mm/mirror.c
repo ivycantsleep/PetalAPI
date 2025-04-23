@@ -53,9 +53,7 @@ ULONG MiMirrorPassMax[2];
 #pragma alloc_text(PAGELK, MmCreateMirror)
 
 NTSTATUS
-MmCreateMirror (
-    VOID
-    )
+MmCreateMirror(VOID)
 {
     KIRQL OldIrql;
     KIRQL ExitIrql;
@@ -87,18 +85,20 @@ MmCreateMirror (
     PFN_NUMBER PagesVerified;
 #endif
 
-    ASSERT (KeGetCurrentIrql() == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
-    if ((MmMirroring & MM_MIRRORING_ENABLED) == 0) {
+    if ((MmMirroring & MM_MIRRORING_ENABLED) == 0)
+    {
         return STATUS_NOT_SUPPORTED;
     }
 
-    if (MiMirrorBitMap == NULL) {
+    if (MiMirrorBitMap == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    if ((ExVerifySuite(DataCenter) == TRUE) ||
-        ((MmProductType != 0x00690057) && (ExVerifySuite(Enterprise) == TRUE))) {
+    if ((ExVerifySuite(DataCenter) == TRUE) || ((MmProductType != 0x00690057) && (ExVerifySuite(Enterprise) == TRUE)))
+    {
         //
         // DataCenter and Advanced Server are the only appropriate mirroring
         // platforms, allow them to proceed.
@@ -106,7 +106,8 @@ MmCreateMirror (
 
         NOTHING;
     }
-    else {
+    else
+    {
         return STATUS_LICENSE_VIOLATION;
     }
 
@@ -114,20 +115,20 @@ MmCreateMirror (
     // Serialize here with dynamic memory additions and removals.
     //
 
-    ExAcquireFastMutex (&MmDynamicMemoryMutex);
+    ExAcquireFastMutex(&MmDynamicMemoryMutex);
 
-    ASSERT (MiMirroringActive == FALSE);
+    ASSERT(MiMirroringActive == FALSE);
 
-    MmLockPagableSectionByHandle (ExPageLockHandle);
+    MmLockPagableSectionByHandle(ExPageLockHandle);
 
     //
     // Setting all the bits here states all the pages need to be mirrored.
     // In the Phase0 loop below, the bits will be cleared as pages are
-    // found on the lists and marked to be sent to the mirror. Bits are 
+    // found on the lists and marked to be sent to the mirror. Bits are
     // set again if the pages are reclaimed for active use.
     //
 
-    RtlSetAllBits (MiMirrorBitMap2);
+    RtlSetAllBits(MiMirrorBitMap2);
 
     //
     // Put all readonly nonpaged kernel and HAL subsection pages into the
@@ -148,13 +149,15 @@ MmCreateMirror (
     PagesWrittenLast = 0;
 
 #if DBG
-    if (MiMirrorDebug != 0) {
-        for (MemoryList = ZeroedPageList; MemoryList <= ModifiedNoWritePageList; MemoryList += 1) {
+    if (MiMirrorDebug != 0)
+    {
+        for (MemoryList = ZeroedPageList; MemoryList <= ModifiedNoWritePageList; MemoryList += 1)
+        {
             PagesWrittenLast += (PFN_COUNT)MmPageLocationList[MemoryList]->Total;
         }
-	    DbgPrint ("Mirror P0 starting with %x pages\n", PagesWrittenLast);
+        DbgPrint("Mirror P0 starting with %x pages\n", PagesWrittenLast);
         PagesWrittenLast = 0;
-	}
+    }
 #endif
 
     //
@@ -162,29 +165,31 @@ MmCreateMirror (
     // Inform the HAL so it can initialize if need be.
     //
 
-    Status = HalStartMirroring ();
+    Status = HalStartMirroring();
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         MmUnlockPagableImageSection(ExPageLockHandle);
         MiZeroingDisabled = FALSE;
-        ASSERT (MiMirroringActive == FALSE);
-        ExReleaseFastMutex (&MmDynamicMemoryMutex);
+        ASSERT(MiMirroringActive == FALSE);
+        ExReleaseFastMutex(&MmDynamicMemoryMutex);
         return Status;
     }
-    
+
     //
     // Scan system memory and mirror pages until a pass
     // doesn't find many pages to transfer.
     //
 
-    do {
+    do
+    {
 
         //
         // The list of pages to be transferred on this iteration will be
         // formed in the MiMirrorBitMap array.  Clear out prior usage.
         //
 
-        RtlClearAllBits (MiMirrorBitMap);
+        RtlClearAllBits(MiMirrorBitMap);
 
         //
         // Trim all pages from all process working sets so that as many pages
@@ -194,43 +199,46 @@ MmCreateMirror (
         // an application's perspective.
         //
 
-        MmEmptyAllWorkingSets ();
-    
-        MiFreeAllExpansionNonPagedPool (FALSE);
-    
-        LOCK_PFN (OldIrql);
-    
+        MmEmptyAllWorkingSets();
+
+        MiFreeAllExpansionNonPagedPool(FALSE);
+
+        LOCK_PFN(OldIrql);
+
         //
         // Scan all the page lists so they can be copied during Phase0
         // mirroring.
         //
-        
-        for (MemoryList = ZeroedPageList; MemoryList <= ModifiedNoWritePageList; MemoryList += 1) {
-    
+
+        for (MemoryList = ZeroedPageList; MemoryList <= ModifiedNoWritePageList; MemoryList += 1)
+        {
+
             ListHead = MmPageLocationList[MemoryList];
-    
-            if (ListHead->Total == 0) {
+
+            if (ListHead->Total == 0)
+            {
                 continue;
             }
-    
-            if ((MemoryList == ModifiedPageList) &&
-                (ListHead->Total == MmTotalPagesForPagingFile)) {
-                    continue;
+
+            if ((MemoryList == ModifiedPageList) && (ListHead->Total == MmTotalPagesForPagingFile))
+            {
+                continue;
             }
-    
+
             PageFrameIndex = ListHead->Flink;
-    
-            do {
-    
+
+            do
+            {
+
                 //
                 // The scan is operating via the lists rather than the PFN
                 // entries as read-in-progress pages are not on lists and
                 // therefore do not have to be special cased here and elsewhere.
                 //
-    
-                Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
-                ASSERT (Pfn1->u3.e1.ReadInProgress == 0);
-    
+
+                Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
+                ASSERT(Pfn1->u3.e1.ReadInProgress == 0);
+
                 //
                 // Setting the bit in BitMap means this page is to be copied
                 // in this Phase0 iteration.  If it is reused after this
@@ -238,40 +246,44 @@ MmCreateMirror (
                 // it will be recopied on a later iteration or in Phase1.
                 //
 
-                if (RtlCheckBit(MiMirrorBitMap2, (ULONG)PageFrameIndex)) {
-                    RtlSetBit (MiMirrorBitMap, (ULONG)PageFrameIndex);
-                    RtlClearBit (MiMirrorBitMap2, (ULONG)PageFrameIndex);
+                if (RtlCheckBit(MiMirrorBitMap2, (ULONG)PageFrameIndex))
+                {
+                    RtlSetBit(MiMirrorBitMap, (ULONG)PageFrameIndex);
+                    RtlClearBit(MiMirrorBitMap2, (ULONG)PageFrameIndex);
                 }
-    
+
                 PageFrameIndex = Pfn1->u1.Flink;
             } while (PageFrameIndex != MM_EMPTY_LIST);
         }
-    
+
         //
         // Scan for modified pages destined for the paging file.
         //
-    
-        for (Color = 0; Color < MM_MAXIMUM_NUMBER_OF_COLORS; Color += 1) {
-    
+
+        for (Color = 0; Color < MM_MAXIMUM_NUMBER_OF_COLORS; Color += 1)
+        {
+
             ListHead = &MmModifiedPageListByColor[Color];
-    
-            if (ListHead->Total == 0) {
+
+            if (ListHead->Total == 0)
+            {
                 continue;
             }
-    
+
             PageFrameIndex = ListHead->Flink;
-    
-            do {
-    
+
+            do
+            {
+
                 //
                 // The scan is operating via the lists rather than the PFN
                 // entries as read-in-progress are not on lists.  Thus this
                 // case does not have to be handled here and just works out.
                 //
-    
-                Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
-                ASSERT (Pfn1->u3.e1.ReadInProgress == 0);
-    
+
+                Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
+                ASSERT(Pfn1->u3.e1.ReadInProgress == 0);
+
                 //
                 // Setting the bit in BitMap means this page is to be copied
                 // on this iteration of Phase0.  If it is reused after this
@@ -279,25 +291,25 @@ MmCreateMirror (
                 // it will be recopied on a later iteration or in Phase1.
                 //
 
-                if (RtlCheckBit(MiMirrorBitMap2, (ULONG)PageFrameIndex)) {
-                    RtlSetBit (MiMirrorBitMap, (ULONG)PageFrameIndex);
-                    RtlClearBit (MiMirrorBitMap2, (ULONG)PageFrameIndex);
+                if (RtlCheckBit(MiMirrorBitMap2, (ULONG)PageFrameIndex))
+                {
+                    RtlSetBit(MiMirrorBitMap, (ULONG)PageFrameIndex);
+                    RtlClearBit(MiMirrorBitMap2, (ULONG)PageFrameIndex);
                 }
-    
+
                 PageFrameIndex = Pfn1->u1.Flink;
             } while (PageFrameIndex != MM_EMPTY_LIST);
         }
-    
+
 #if DBG
-        if (MiMirrorDebug != 0) {
-            DbgPrint ("Mirror P0 pass %d: Transfer %x pages\n", 
-		      IterationCount,
-		      RtlNumberOfSetBits(MiMirrorBitMap));
+        if (MiMirrorDebug != 0)
+        {
+            DbgPrint("Mirror P0 pass %d: Transfer %x pages\n", IterationCount, RtlNumberOfSetBits(MiMirrorBitMap));
         }
 #endif
-    
+
         MiMirroringActive = TRUE;
-    
+
         //
         // The dirty PFN bitmap has been initialized and the flag set.
         // There are very intricate rules governing how different places in
@@ -335,110 +347,117 @@ MmCreateMirror (
         // begin with and thus wasn't subtracted above and therefore doesn't
         // need to update the bitmap either.
         //
-    
-        UNLOCK_PFN (OldIrql);
-    
+
+        UNLOCK_PFN(OldIrql);
+
         BitMapHint = 0;
         PagesWritten = 0;
 #if DBG
         PassMaxRun = 0;
 #endif
-    
-        do {
-    
-            BitMapIndex = RtlFindSetBits (MiMirrorBitMap, 1, BitMapHint);
-        
-            if (BitMapIndex < BitMapHint) {
+
+        do
+        {
+
+            BitMapIndex = RtlFindSetBits(MiMirrorBitMap, 1, BitMapHint);
+
+            if (BitMapIndex < BitMapHint)
+            {
                 break;
             }
-        
-            if (BitMapIndex == NO_BITS_FOUND) {
+
+            if (BitMapIndex == NO_BITS_FOUND)
+            {
                 break;
             }
-    
+
             //
             // Found at least one page to copy - try for a cluster.
             //
-    
-            LengthOfClearRun = RtlFindNextForwardRunClear (MiMirrorBitMap,
-                                                           BitMapIndex,
-                                                           &StartingRunIndex);
-    
-            if (LengthOfClearRun != 0) {
+
+            LengthOfClearRun = RtlFindNextForwardRunClear(MiMirrorBitMap, BitMapIndex, &StartingRunIndex);
+
+            if (LengthOfClearRun != 0)
+            {
                 LengthOfSetRun = StartingRunIndex - BitMapIndex;
             }
-            else {
+            else
+            {
                 LengthOfSetRun = MiMirrorBitMap->SizeOfBitMap - BitMapIndex;
             }
 
             PagesWritten += LengthOfSetRun;
-    
+
 #if DBG
-            if (LengthOfSetRun > PassMaxRun) {
+            if (LengthOfSetRun > PassMaxRun)
+            {
                 PassMaxRun = LengthOfSetRun;
             }
 #endif
             //
             // Write out the page(s).
             //
-    
+
             PhysicalAddress.QuadPart = BitMapIndex;
             PhysicalAddress.QuadPart = PhysicalAddress.QuadPart << PAGE_SHIFT;
-    
+
             PhysicalBytes.QuadPart = LengthOfSetRun;
             PhysicalBytes.QuadPart = PhysicalBytes.QuadPart << PAGE_SHIFT;
-    
-            Status = HalMirrorPhysicalMemory (PhysicalAddress, PhysicalBytes);
-    
-            if (!NT_SUCCESS(Status)) {
+
+            Status = HalMirrorPhysicalMemory(PhysicalAddress, PhysicalBytes);
+
+            if (!NT_SUCCESS(Status))
+            {
                 MiZeroingDisabled = FALSE;
                 MmUnlockPagableImageSection(ExPageLockHandle);
                 MiMirroringActive = FALSE;
-                ExReleaseFastMutex (&MmDynamicMemoryMutex);
+                ExReleaseFastMutex(&MmDynamicMemoryMutex);
                 return Status;
             }
-    
+
             BitMapHint = BitMapIndex + LengthOfSetRun + LengthOfClearRun;
-    
+
         } while (BitMapHint < MiMirrorBitMap->SizeOfBitMap);
-    
-        ASSERT (RtlNumberOfSetBits(MiMirrorBitMap) == PagesWritten);
-    
+
+        ASSERT(RtlNumberOfSetBits(MiMirrorBitMap) == PagesWritten);
+
 #if DBG
-        if (PassMaxRun > MiMirrorPassMax[0]) {
+        if (PassMaxRun > MiMirrorPassMax[0])
+        {
             MiMirrorPassMax[0] = PassMaxRun;
         }
 
-        if (MiMirrorDebug != 0) {
-            DbgPrint ("Mirror P0 pass %d: ended with %x (last= %x) pages\n", 
-                  IterationCount, PagesWritten, PagesWrittenLast);
+        if (MiMirrorDebug != 0)
+        {
+            DbgPrint("Mirror P0 pass %d: ended with %x (last= %x) pages\n", IterationCount, PagesWritten,
+                     PagesWrittenLast);
         }
 #endif
 
-        ASSERT (MiMirroringActive == TRUE);
+        ASSERT(MiMirroringActive == TRUE);
 
-	    //
-	    // Stop when PagesWritten by the current pass is not somewhat
-	    // better than the preceeding pass.  If improvement is vanishing,
-	    // the method is at the steady state where working set removals and
-	    // transition faults are in balance.  Also stop if PagesWritten is
-	    // small in absolute terms.  Finally, there is a limit on iterations
-	    // for the misbehaving cases.
-	    //
+        //
+        // Stop when PagesWritten by the current pass is not somewhat
+        // better than the preceeding pass.  If improvement is vanishing,
+        // the method is at the steady state where working set removals and
+        // transition faults are in balance.  Also stop if PagesWritten is
+        // small in absolute terms.  Finally, there is a limit on iterations
+        // for the misbehaving cases.
+        //
 
-        if (((PagesWritten > PagesWrittenLast - 256) && (IterationCount > 0)) ||
-            (PagesWritten < 1024)) {
+        if (((PagesWritten > PagesWrittenLast - 256) && (IterationCount > 0)) || (PagesWritten < 1024))
+        {
             break;
         }
 
-        ASSERT (MiMirroringActive == TRUE);
+        ASSERT(MiMirroringActive == TRUE);
         PagesWrittenLast = PagesWritten;
 
         IterationCount += 1;
 
     } while (IterationCount < MIRROR_MAX_PHASE_ZERO_PASSES);
 
-    ASSERT (MiMirroringActive == TRUE);
+    ASSERT(MiMirroringActive == TRUE);
 
     //
     // Notify the HAL that Phase0 is complete.  The HAL is responsible for
@@ -447,23 +466,23 @@ MmCreateMirror (
     // call at DISPATCH_LEVEL, so snap current IRQL now.
     //
 
-    ExitIrql = KeGetCurrentIrql ();
-    ASSERT (ExitIrql == APC_LEVEL);
+    ExitIrql = KeGetCurrentIrql();
+    ASSERT(ExitIrql == APC_LEVEL);
 
-    Status = HalEndMirroring (0);
+    Status = HalEndMirroring(0);
 
-    if (!NT_SUCCESS(Status)) {
-        ASSERT (KeGetCurrentIrql () == APC_LEVEL);
+    if (!NT_SUCCESS(Status))
+    {
+        ASSERT(KeGetCurrentIrql() == APC_LEVEL);
         MmUnlockPagableImageSection(ExPageLockHandle);
         MiZeroingDisabled = FALSE;
         MiMirroringActive = FALSE;
-        ExReleaseFastMutex (&MmDynamicMemoryMutex);
+        ExReleaseFastMutex(&MmDynamicMemoryMutex);
         return Status;
     }
 
-    ASSERT ((KeGetCurrentIrql () == APC_LEVEL) ||
-            (KeGetCurrentIrql () == DISPATCH_LEVEL));
-    
+    ASSERT((KeGetCurrentIrql() == APC_LEVEL) || (KeGetCurrentIrql() == DISPATCH_LEVEL));
+
     //
     // Phase0 copying is now complete.
     //
@@ -492,13 +511,14 @@ MmCreateMirror (
     BitMap2 = MiMirrorBitMap2->Buffer;
 
     BitMapSize = MiMirrorBitMap->SizeOfBitMap;
-    ASSERT (BitMapSize == MiMirrorBitMap2->SizeOfBitMap);
+    ASSERT(BitMapSize == MiMirrorBitMap2->SizeOfBitMap);
 
     //
     // Step 1:  Assume all pages are to be verified (set all bits in BitMap).
     //
 
-    if (MmMirroring & MM_MIRRORING_VERIFYING) {
+    if (MmMirroring & MM_MIRRORING_VERIFYING)
+    {
         RtlSetAllBits(MiMirrorBitMap);
     }
 
@@ -506,7 +526,7 @@ MmCreateMirror (
     //  Step 2:  Synchronize list updates by acquiring the PFN lock.
     //
 
-    LOCK_PFN2 (OldIrql);
+    LOCK_PFN2(OldIrql);
 
     //
     // No more updates of the bitmaps are needed - we've already snapped the
@@ -523,19 +543,18 @@ MmCreateMirror (
     Limit = 0;
     PreviousPage = 0;
 
-    do {
+    do
+    {
 
         ThisPage = MmPhysicalMemoryBlock->Run[Limit].BasePage;
 
-        if (ThisPage != PreviousPage) {
-            RtlClearBits (MiMirrorBitMap2,
-                          (ULONG)PreviousPage,
-                          (ULONG)(ThisPage - PreviousPage));
-	    
-            if (MmMirroring & MM_MIRRORING_VERIFYING) {
-                RtlClearBits (MiMirrorBitMap,
-                          (ULONG)PreviousPage,
-                          (ULONG)(ThisPage - PreviousPage));
+        if (ThisPage != PreviousPage)
+        {
+            RtlClearBits(MiMirrorBitMap2, (ULONG)PreviousPage, (ULONG)(ThisPage - PreviousPage));
+
+            if (MmMirroring & MM_MIRRORING_VERIFYING)
+            {
+                RtlClearBits(MiMirrorBitMap, (ULONG)PreviousPage, (ULONG)(ThisPage - PreviousPage));
             }
         }
 
@@ -544,15 +563,14 @@ MmCreateMirror (
 
     } while (Limit != MmPhysicalMemoryBlock->NumberOfRuns);
 
-    if (PreviousPage != MmHighestPossiblePhysicalPage + 1) {
+    if (PreviousPage != MmHighestPossiblePhysicalPage + 1)
+    {
 
-        RtlClearBits (MiMirrorBitMap2,
-                      (ULONG)PreviousPage,
-                      (ULONG)(MmHighestPossiblePhysicalPage + 1 - PreviousPage));
-        if (MmMirroring & MM_MIRRORING_VERIFYING) {
-            RtlClearBits (MiMirrorBitMap,
-                          (ULONG)PreviousPage,
-                          (ULONG)(MmHighestPossiblePhysicalPage + 1 - PreviousPage));
+        RtlClearBits(MiMirrorBitMap2, (ULONG)PreviousPage, (ULONG)(MmHighestPossiblePhysicalPage + 1 - PreviousPage));
+        if (MmMirroring & MM_MIRRORING_VERIFYING)
+        {
+            RtlClearBits(MiMirrorBitMap, (ULONG)PreviousPage,
+                         (ULONG)(MmHighestPossiblePhysicalPage + 1 - PreviousPage));
         }
     }
 
@@ -577,15 +595,18 @@ MmCreateMirror (
     PassMaxRun = 0;
 #endif
 
-    do {
+    do
+    {
 
-        BitMapIndex = RtlFindSetBits (MiMirrorBitMap2, 1, BitMapHint);
-    
-        if (BitMapIndex < BitMapHint) {
+        BitMapIndex = RtlFindSetBits(MiMirrorBitMap2, 1, BitMapHint);
+
+        if (BitMapIndex < BitMapHint)
+        {
             break;
         }
-    
-        if (BitMapIndex == NO_BITS_FOUND) {
+
+        if (BitMapIndex == NO_BITS_FOUND)
+        {
             break;
         }
 
@@ -593,21 +614,22 @@ MmCreateMirror (
         // Found at least one page to copy - try for a cluster.
         //
 
-        LengthOfClearRun = RtlFindNextForwardRunClear (MiMirrorBitMap2,
-                                                       BitMapIndex,
-                                                       &StartingRunIndex);
+        LengthOfClearRun = RtlFindNextForwardRunClear(MiMirrorBitMap2, BitMapIndex, &StartingRunIndex);
 
-        if (LengthOfClearRun != 0) {
+        if (LengthOfClearRun != 0)
+        {
             LengthOfSetRun = StartingRunIndex - BitMapIndex;
         }
-        else {
+        else
+        {
             LengthOfSetRun = MiMirrorBitMap2->SizeOfBitMap - BitMapIndex;
         }
 
 #if DBG
         PagesWritten += LengthOfSetRun;
 
-        if (LengthOfSetRun > PassMaxRun) {
+        if (LengthOfSetRun > PassMaxRun)
+        {
             PassMaxRun = LengthOfSetRun;
         }
 #endif
@@ -622,13 +644,14 @@ MmCreateMirror (
         PhysicalBytes.QuadPart = LengthOfSetRun;
         PhysicalBytes.QuadPart = PhysicalBytes.QuadPart << PAGE_SHIFT;
 
-        Status = HalMirrorPhysicalMemory (PhysicalAddress, PhysicalBytes);
+        Status = HalMirrorPhysicalMemory(PhysicalAddress, PhysicalBytes);
 
-        if (!NT_SUCCESS(Status)) {
-            UNLOCK_PFN2 (ExitIrql);
+        if (!NT_SUCCESS(Status))
+        {
+            UNLOCK_PFN2(ExitIrql);
             MiZeroingDisabled = FALSE;
             MmUnlockPagableImageSection(ExPageLockHandle);
-            ExReleaseFastMutex (&MmDynamicMemoryMutex);
+            ExReleaseFastMutex(&MmDynamicMemoryMutex);
             return Status;
         }
 
@@ -654,65 +677,70 @@ MmCreateMirror (
     PagesVerified = 0;
 #endif
 
-    if (MmMirroring & MM_MIRRORING_VERIFYING) {
+    if (MmMirroring & MM_MIRRORING_VERIFYING)
+    {
         BitMapHint = 0;
 
-        do {
-    
-            BitMapIndex = RtlFindSetBits (MiMirrorBitMap, 1, BitMapHint);
-        
-            if (BitMapIndex < BitMapHint) {
+        do
+        {
+
+            BitMapIndex = RtlFindSetBits(MiMirrorBitMap, 1, BitMapHint);
+
+            if (BitMapIndex < BitMapHint)
+            {
                 break;
             }
-        
-            if (BitMapIndex == NO_BITS_FOUND) {
+
+            if (BitMapIndex == NO_BITS_FOUND)
+            {
                 break;
             }
-    
+
             //
             // Found at least one page in this mirror range - try for a cluster.
             //
-    
-            LengthOfClearRun = RtlFindNextForwardRunClear (MiMirrorBitMap,
-                                                           BitMapIndex,
-                                                           &StartingRunIndex);
-    
-            if (LengthOfClearRun != 0) {
+
+            LengthOfClearRun = RtlFindNextForwardRunClear(MiMirrorBitMap, BitMapIndex, &StartingRunIndex);
+
+            if (LengthOfClearRun != 0)
+            {
                 LengthOfSetRun = StartingRunIndex - BitMapIndex;
             }
-            else {
+            else
+            {
                 LengthOfSetRun = MiMirrorBitMap->SizeOfBitMap - BitMapIndex;
             }
-    
+
 #if DBG
             PagesVerified += LengthOfSetRun;
 #endif
-    
+
             //
             // Tell the HAL that this range must be in a mirrored state.
             //
-    
+
             PhysicalAddress.QuadPart = BitMapIndex;
             PhysicalAddress.QuadPart = PhysicalAddress.QuadPart << PAGE_SHIFT;
-    
+
             PhysicalBytes.QuadPart = LengthOfSetRun;
             PhysicalBytes.QuadPart = PhysicalBytes.QuadPart << PAGE_SHIFT;
-    
-            Status = HalMirrorVerify (PhysicalAddress, PhysicalBytes);
-    
-            if (!NT_SUCCESS(Status)) {
-                UNLOCK_PFN2 (ExitIrql);
+
+            Status = HalMirrorVerify(PhysicalAddress, PhysicalBytes);
+
+            if (!NT_SUCCESS(Status))
+            {
+                UNLOCK_PFN2(ExitIrql);
                 MiZeroingDisabled = FALSE;
                 MmUnlockPagableImageSection(ExPageLockHandle);
-                ExReleaseFastMutex (&MmDynamicMemoryMutex);
+                ExReleaseFastMutex(&MmDynamicMemoryMutex);
                 return Status;
             }
-    
+
             BitMapHint = BitMapIndex + LengthOfSetRun + LengthOfClearRun;
-    
+
         } while (BitMapHint < MiMirrorBitMap->SizeOfBitMap);
     }
-    
+
     //
     // Phase1 verification is now complete.
     //
@@ -723,18 +751,21 @@ MmCreateMirror (
     // any other needed state before returning from this call.
     //
 
-    Status = HalEndMirroring (1);
+    Status = HalEndMirroring(1);
 
-    UNLOCK_PFN2 (ExitIrql);
+    UNLOCK_PFN2(ExitIrql);
 
 #if DBG
-    if (MiMirrorDebug != 0) {
-        DbgPrint ("Mirror P1: %x pages copied\n", PagesWritten);
-        if (MmMirroring & MM_MIRRORING_VERIFYING) {
-            DbgPrint ("Mirror P1: %x pages verified\n", PagesVerified);
+    if (MiMirrorDebug != 0)
+    {
+        DbgPrint("Mirror P1: %x pages copied\n", PagesWritten);
+        if (MmMirroring & MM_MIRRORING_VERIFYING)
+        {
+            DbgPrint("Mirror P1: %x pages verified\n", PagesVerified);
         }
     }
-    if (PassMaxRun > MiMirrorPassMax[1]) {
+    if (PassMaxRun > MiMirrorPassMax[1])
+    {
         MiMirrorPassMax[1] = PassMaxRun;
     }
 #endif
@@ -743,7 +774,7 @@ MmCreateMirror (
 
     MmUnlockPagableImageSection(ExPageLockHandle);
 
-    ExReleaseFastMutex (&MmDynamicMemoryMutex);
+    ExReleaseFastMutex(&MmDynamicMemoryMutex);
 
     return Status;
 }

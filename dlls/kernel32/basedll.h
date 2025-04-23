@@ -55,19 +55,22 @@ Revision History:
 #include "winuserp.h"
 #include "basesxs.h"
 
-typedef struct _CMDSHOW {
+typedef struct _CMDSHOW
+{
     WORD wMustBe2;
     WORD wShowWindowValue;
 } CMDSHOW, *PCMDSHOW;
 
-typedef struct _LOAD_MODULE_PARAMS {
+typedef struct _LOAD_MODULE_PARAMS
+{
     LPVOID lpEnvAddress;
     LPSTR lpCmdLine;
     PCMDSHOW lpCmdShow;
     DWORD dwReserved;
 } LOAD_MODULE_PARAMS, *PLOAD_MODULE_PARAMS;
 
-typedef struct _RELATIVE_NAME {
+typedef struct _RELATIVE_NAME
+{
     STRING RelativeName;
     HANDLE ContainingDirectory;
 } RELATIVE_NAME, *PRELATIVE_NAME;
@@ -123,16 +126,17 @@ extern BOOLEAN BaseRunningInServerProcess;
 
 ULONG BaseIniFileUpdateCount;
 
-#define ROUND_UP_TO_PAGES(SIZE) (((ULONG_PTR)(SIZE) + (ULONG_PTR)BASE_SYSINFO.PageSize - 1) & ~((ULONG_PTR)BASE_SYSINFO.PageSize - 1))
+#define ROUND_UP_TO_PAGES(SIZE) \
+    (((ULONG_PTR)(SIZE) + (ULONG_PTR)BASE_SYSINFO.PageSize - 1) & ~((ULONG_PTR)BASE_SYSINFO.PageSize - 1))
 #define ROUND_DOWN_TO_PAGES(SIZE) (((ULONG_PTR)(SIZE)) & ~((ULONG_PTR)BASE_SYSINFO.PageSize - 1))
 
-#define BASE_COPY_FILE_CHUNK (64*1024)
+#define BASE_COPY_FILE_CHUNK (64 * 1024)
 #define BASE_MAX_PATH_STRING 4080
 
 extern BOOLEAN BasepFileApisAreOem;
 
-#define DATA_ATTRIBUTE_NAME         L":$DATA"
-#define DATA_ATTRIBUTE_LENGTH       (sizeof( DATA_ATTRIBUTE_NAME ) - sizeof( WCHAR ))
+#define DATA_ATTRIBUTE_NAME L":$DATA"
+#define DATA_ATTRIBUTE_LENGTH (sizeof(DATA_ATTRIBUTE_NAME) - sizeof(WCHAR))
 
 extern WCHAR BasepDataAttributeType[];
 
@@ -146,324 +150,172 @@ LIST_ENTRY BasepAppCertDllsList;
 RTL_CRITICAL_SECTION gcsAppCompat;
 
 NTSTATUS
-BasepConfigureAppCertDlls(
-    IN PWSTR ValueName,
-    IN ULONG ValueType,
-    IN PVOID ValueData,
-    IN ULONG ValueLength,
-    IN PVOID Context,
-    IN PVOID EntryContext
-    );
+BasepConfigureAppCertDlls(IN PWSTR ValueName, IN ULONG ValueType, IN PVOID ValueData, IN ULONG ValueLength,
+                          IN PVOID Context, IN PVOID EntryContext);
 
 NTSTATUS
-BasepSaveAppCertRegistryValue(
-    IN OUT PLIST_ENTRY ListHead,
-    IN PWSTR Name,
-    IN PWSTR Value OPTIONAL
-    );
+BasepSaveAppCertRegistryValue(IN OUT PLIST_ENTRY ListHead, IN PWSTR Name, IN PWSTR Value OPTIONAL);
 
 
-typedef struct _BASEP_APPCERT_ENTRY {
+typedef struct _BASEP_APPCERT_ENTRY
+{
     LIST_ENTRY Entry;
     UNICODE_STRING Name;
-    NTSTATUS (WINAPI *fPluginCertFunc)(LPCWSTR lpApplicationName,ULONG Reason);
+    NTSTATUS(WINAPI *fPluginCertFunc)(LPCWSTR lpApplicationName, ULONG Reason);
 } BASEP_APPCERT_ENTRY, *PBASEP_APPCERT_ENTRY;
 
 extern RTL_QUERY_REGISTRY_TABLE BasepAppCertTable[];
 
-#define APPCERT_IMAGE_OK_TO_RUN     1
-#define APPCERT_CREATION_ALLOWED    2
-#define APPCERT_CREATION_DENIED     3
+#define APPCERT_IMAGE_OK_TO_RUN 1
+#define APPCERT_CREATION_ALLOWED 2
+#define APPCERT_CREATION_DENIED 3
 
 
-__inline
-BOOL
-BasepIsDataAttribute(
-    ULONG Count,
-    const WCHAR *Name
-    )
+__inline BOOL BasepIsDataAttribute(ULONG Count, const WCHAR *Name)
 {
-    return Count > DATA_ATTRIBUTE_LENGTH &&
-         !_wcsnicmp( &Name[(Count - DATA_ATTRIBUTE_LENGTH) / sizeof( WCHAR )],
-                     BasepDataAttributeType,
-                     DATA_ATTRIBUTE_LENGTH / sizeof( WCHAR ));
+    return Count > DATA_ATTRIBUTE_LENGTH && !_wcsnicmp(&Name[(Count - DATA_ATTRIBUTE_LENGTH) / sizeof(WCHAR)],
+                                                       BasepDataAttributeType, DATA_ATTRIBUTE_LENGTH / sizeof(WCHAR));
 }
 
 PUNICODE_STRING
-Basep8BitStringToStaticUnicodeString(
-    IN LPCSTR SourceString
-    );
+Basep8BitStringToStaticUnicodeString(IN LPCSTR SourceString);
 
-BOOL
-Basep8BitStringToDynamicUnicodeString(
-    OUT PUNICODE_STRING UnicodeString,
-    IN LPCSTR lpSourceString
-    );
+BOOL Basep8BitStringToDynamicUnicodeString(OUT PUNICODE_STRING UnicodeString, IN LPCSTR lpSourceString);
 
-NTSTATUS
-(*Basep8BitStringToUnicodeString)(
-    PUNICODE_STRING DestinationString,
-    PANSI_STRING SourceString,
-    BOOLEAN AllocateDestinationString
-    );
+NTSTATUS (*Basep8BitStringToUnicodeString)(PUNICODE_STRING DestinationString, PANSI_STRING SourceString,
+                                           BOOLEAN AllocateDestinationString);
 
-NTSTATUS
-(*BasepUnicodeStringTo8BitString)(
-    PANSI_STRING DestinationString,
-    PUNICODE_STRING SourceString,
-    BOOLEAN AllocateDestinationString
-    );
+NTSTATUS (*BasepUnicodeStringTo8BitString)(PANSI_STRING DestinationString, PUNICODE_STRING SourceString,
+                                           BOOLEAN AllocateDestinationString);
+
+ULONG (*BasepUnicodeStringTo8BitSize)(PUNICODE_STRING UnicodeString);
 
 ULONG
-(*BasepUnicodeStringTo8BitSize)(
-    PUNICODE_STRING UnicodeString
-    );
+BasepUnicodeStringToAnsiSize(PUNICODE_STRING UnicodeString);
 
 ULONG
-BasepUnicodeStringToAnsiSize(
-    PUNICODE_STRING UnicodeString
-    );
+BasepUnicodeStringToOemSize(PUNICODE_STRING UnicodeString);
+
+ULONG (*Basep8BitStringToUnicodeSize)(PANSI_STRING AnsiString);
 
 ULONG
-BasepUnicodeStringToOemSize(
-    PUNICODE_STRING UnicodeString
-    );
+BasepAnsiStringToUnicodeSize(PANSI_STRING AnsiString);
 
 ULONG
-(*Basep8BitStringToUnicodeSize)(
-    PANSI_STRING AnsiString
-    );
-
-ULONG
-BasepAnsiStringToUnicodeSize(
-    PANSI_STRING AnsiString
-    );
-
-ULONG
-BasepOemStringToUnicodeSize(
-    PANSI_STRING OemString
-    );
+BasepOemStringToUnicodeSize(PANSI_STRING OemString);
 
 HANDLE
-BaseGetNamedObjectDirectory(
-    VOID
-    );
+BaseGetNamedObjectDirectory(VOID);
 
-void
-BaseDllInitializeMemoryManager( VOID );
+void BaseDllInitializeMemoryManager(VOID);
 
-typedef
-NTSTATUS
-(*BASECLIENTCONNECTROUTINE)(
-    PVOID MustBeNull,
-    PVOID ConnectionInformation,
-    PULONG ConnectionInformationLength
-    );
+typedef NTSTATUS (*BASECLIENTCONNECTROUTINE)(PVOID MustBeNull, PVOID ConnectionInformation,
+                                             PULONG ConnectionInformationLength);
 
 
 POBJECT_ATTRIBUTES
-BaseFormatObjectAttributes(
-    POBJECT_ATTRIBUTES ObjectAttributes,
-    PSECURITY_ATTRIBUTES SecurityAttributes,
-    PUNICODE_STRING ObjectName
-    );
+BaseFormatObjectAttributes(POBJECT_ATTRIBUTES ObjectAttributes, PSECURITY_ATTRIBUTES SecurityAttributes,
+                           PUNICODE_STRING ObjectName);
 
 PLARGE_INTEGER
-BaseFormatTimeOut(
-    PLARGE_INTEGER TimeOut,
-    DWORD Milliseconds
-    );
+BaseFormatTimeOut(PLARGE_INTEGER TimeOut, DWORD Milliseconds);
 
 ULONG
-BaseSetLastNTError(
-    NTSTATUS Status
-    );
+BaseSetLastNTError(NTSTATUS Status);
 
-VOID
-BaseSwitchStackThenTerminate(
-    PVOID CurrentStack,
-    PVOID NewStack,
-    DWORD ExitCode
-    );
+VOID BaseSwitchStackThenTerminate(PVOID CurrentStack, PVOID NewStack, DWORD ExitCode);
 
-VOID
-BaseFreeStackAndTerminate(
-    PVOID OldStack,
-    DWORD ExitCode
-    );
+VOID BaseFreeStackAndTerminate(PVOID OldStack, DWORD ExitCode);
 
 NTSTATUS
-BaseCreateStack(
-    HANDLE Process,
-    SIZE_T StackSize,
-    SIZE_T MaximumStackSize,
-    PINITIAL_TEB InitialTeb
-    );
+BaseCreateStack(HANDLE Process, SIZE_T StackSize, SIZE_T MaximumStackSize, PINITIAL_TEB InitialTeb);
 
-VOID
-BasepSwitchToFiber(
-    PFIBER CurrentFiber,
-    PFIBER NewFiber
-    );
+VOID BasepSwitchToFiber(PFIBER CurrentFiber, PFIBER NewFiber);
 
-VOID
-BaseFiberStart(
-    VOID
-    );
+VOID BaseFiberStart(VOID);
 
-VOID
-BaseThreadStart(
-    LPTHREAD_START_ROUTINE lpStartAddress,
-    LPVOID lpParameter
-    );
+VOID BaseThreadStart(LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter);
 
-typedef DWORD (WINAPI *PPROCESS_START_ROUTINE)(
-    VOID
-    );
+typedef DWORD(WINAPI *PPROCESS_START_ROUTINE)(VOID);
 
-VOID
-BaseProcessStart(
-    PPROCESS_START_ROUTINE lpStartAddress
-    );
+VOID BaseProcessStart(PPROCESS_START_ROUTINE lpStartAddress);
 
-VOID
-BaseThreadStartThunk(
-    LPTHREAD_START_ROUTINE lpStartAddress,
-    LPVOID lpParameter
-    );
+VOID BaseThreadStartThunk(LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter);
 
-VOID
-BaseProcessStartThunk(
-    LPVOID lpProcessStartAddress,
-    LPVOID lpParameter
-    );
+VOID BaseProcessStartThunk(LPVOID lpProcessStartAddress, LPVOID lpParameter);
 
-typedef enum _BASE_CONTEXT_TYPE {
+typedef enum _BASE_CONTEXT_TYPE
+{
     BaseContextTypeProcess,
     BaseContextTypeThread,
     BaseContextTypeFiber
 } BASE_CONTEXT_TYPE, *PBASE_CONTEXT_TYPE;
 
-VOID
-BaseInitializeContext(
-    PCONTEXT Context,
-    PVOID Parameter,
-    PVOID InitialPc,
-    PVOID InitialSp,
-    BASE_CONTEXT_TYPE ContextType
-    );
+VOID BaseInitializeContext(PCONTEXT Context, PVOID Parameter, PVOID InitialPc, PVOID InitialSp,
+                           BASE_CONTEXT_TYPE ContextType);
 
 #if defined(WX86) || defined(_AXP64_)
 NTSTATUS
-BaseCreateWx86Tib(
-    HANDLE Process,
-    HANDLE Thread,
-    ULONG InitialPc,
-    ULONG CommittedStackSize,
-    ULONG MaximumStackSize,
-    BOOLEAN EmulateInitialPc
-    );
+BaseCreateWx86Tib(HANDLE Process, HANDLE Thread, ULONG InitialPc, ULONG CommittedStackSize, ULONG MaximumStackSize,
+                  BOOLEAN EmulateInitialPc);
 #endif
 
-VOID
-BaseFreeThreadStack(
-     HANDLE hProcess,
-     HANDLE hThread,
-     PINITIAL_TEB InitialTeb
-     );
+VOID BaseFreeThreadStack(HANDLE hProcess, HANDLE hThread, PINITIAL_TEB InitialTeb);
 
-#define BASE_PUSH_PROCESS_PARAMETERS_FLAG_APP_MANIFEST_PRESENT  (0x00000001)
+#define BASE_PUSH_PROCESS_PARAMETERS_FLAG_APP_MANIFEST_PRESENT (0x00000001)
 
-BOOL
-BasePushProcessParameters(
-    DWORD dwFlags,
-    HANDLE Process,
-    PPEB Peb,
-    LPCWSTR ApplicationPathName,
-    LPCWSTR CurrentDirectory,
-    LPCWSTR CommandLine,
-    LPVOID Environment,
-    LPSTARTUPINFOW lpStartupInfo,
-    DWORD dwCreationFlags,
-    BOOL bInheritHandles,
-    DWORD dwSubsystem,
-    PVOID pAppCompatData,
-    DWORD cbAppCompatData
-    );
+BOOL BasePushProcessParameters(DWORD dwFlags, HANDLE Process, PPEB Peb, LPCWSTR ApplicationPathName,
+                               LPCWSTR CurrentDirectory, LPCWSTR CommandLine, LPVOID Environment,
+                               LPSTARTUPINFOW lpStartupInfo, DWORD dwCreationFlags, BOOL bInheritHandles,
+                               DWORD dwSubsystem, PVOID pAppCompatData, DWORD cbAppCompatData);
 
 LPWSTR
-BaseComputeProcessDllPath(
-    LPCWSTR AppName,
-    LPVOID Environment
-    );
+BaseComputeProcessDllPath(LPCWSTR AppName, LPVOID Environment);
 
 LPWSTR
-BaseComputeProcessSearchPath(
-    VOID
-    );
+BaseComputeProcessSearchPath(VOID);
 
 extern PCLDR_DATA_TABLE_ENTRY BasepExeLdrEntry;
 
-VOID
-BasepLocateExeLdrEntry(
-    IN PCLDR_DATA_TABLE_ENTRY Entry,
-    IN PVOID Context,
-    IN OUT BOOLEAN *StopEnumeration
-    );
+VOID BasepLocateExeLdrEntry(IN PCLDR_DATA_TABLE_ENTRY Entry, IN PVOID Context, IN OUT BOOLEAN *StopEnumeration);
 
 FORCEINLINE
-VOID
-BasepCheckExeLdrEntry(
-    VOID
-    )
+VOID BasepCheckExeLdrEntry(VOID)
 {
-    if (! BasepExeLdrEntry) {
-        LdrEnumerateLoadedModules(0,
-                                  &BasepLocateExeLdrEntry,
-                                  NtCurrentPeb()->ImageBaseAddress);
+    if (!BasepExeLdrEntry)
+    {
+        LdrEnumerateLoadedModules(0, &BasepLocateExeLdrEntry, NtCurrentPeb()->ImageBaseAddress);
     }
 }
 
 LPCWSTR
-BasepEndOfDirName(
-    IN LPCWSTR FileName
-    );
+BasepEndOfDirName(IN LPCWSTR FileName);
 
 DWORD
-BaseDebugAttachThread(
-    LPVOID ThreadParameter
-    );
+BaseDebugAttachThread(LPVOID ThreadParameter);
 
 HANDLE
-BaseFindFirstDevice(
-    PCUNICODE_STRING FileName,
-    LPWIN32_FIND_DATAW lpFindFileData
-    );
+BaseFindFirstDevice(PCUNICODE_STRING FileName, LPWIN32_FIND_DATAW lpFindFileData);
 
 PUNICODE_STRING
-BaseIsThisAConsoleName(
-    PCUNICODE_STRING FileNameString,
-    DWORD dwDesiredAccess
-    );
+BaseIsThisAConsoleName(PCUNICODE_STRING FileNameString, DWORD dwDesiredAccess);
 
 
-typedef ULONG (FAR WINAPI *CSRREMOTEPROCPROC)(HANDLE, CLIENT_ID *);
+typedef ULONG(FAR WINAPI *CSRREMOTEPROCPROC)(HANDLE, CLIENT_ID *);
 
 #if DBG
-VOID
-BaseHeapBreakPoint( VOID );
+VOID BaseHeapBreakPoint(VOID);
 #endif
 
 ULONG
-BasepOfShareToWin32Share(
-    IN ULONG OfShare
-    );
+BasepOfShareToWin32Share(IN ULONG OfShare);
 
 //
 // Data structure for CopyFileEx context
 //
 
-typedef struct _COPYFILE_CONTEXT {
+typedef struct _COPYFILE_CONTEXT
+{
     LARGE_INTEGER TotalFileSize;
     LARGE_INTEGER TotalBytesTransferred;
     DWORD dwStreamNumber;
@@ -476,7 +328,8 @@ typedef struct _COPYFILE_CONTEXT {
 // Data structure for tracking restart state
 //
 
-typedef struct _RESTART_STATE {
+typedef struct _RESTART_STATE
+{
     CSHORT Type;
     CSHORT Size;
     DWORD NumberOfStreams;
@@ -492,69 +345,36 @@ typedef struct _RESTART_STATE {
 #define SUCCESS_RETURNED_STATE 2
 
 DWORD
-BaseCopyStream(
-    LPCWSTR lpExistingFileName,
-    HANDLE hSourceFile,
-    ACCESS_MASK SourceFileAccess OPTIONAL,
-    LPCWSTR lpNewFileName,
-    HANDLE hTargetFile OPTIONAL,
-    LARGE_INTEGER *lpFileSize,
-    LPDWORD lpCopyFlags,
-    LPHANDLE lpDestFile,
-    LPDWORD lpCopySize,
-    LPCOPYFILE_CONTEXT *lpCopyFileContext,
-    LPRESTART_STATE lpRestartState OPTIONAL,
-    BOOL OpenFileAsReparsePoint,
-    DWORD dwReparseTag,
-    PDWORD DestFileFsAttributes
-    );
+BaseCopyStream(LPCWSTR lpExistingFileName, HANDLE hSourceFile, ACCESS_MASK SourceFileAccess OPTIONAL,
+               LPCWSTR lpNewFileName, HANDLE hTargetFile OPTIONAL, LARGE_INTEGER *lpFileSize, LPDWORD lpCopyFlags,
+               LPHANDLE lpDestFile, LPDWORD lpCopySize, LPCOPYFILE_CONTEXT *lpCopyFileContext,
+               LPRESTART_STATE lpRestartState OPTIONAL, BOOL OpenFileAsReparsePoint, DWORD dwReparseTag,
+               PDWORD DestFileFsAttributes);
 
-BOOL
-BasepCopyFileExW(
-    LPCWSTR lpExistingFileName,
-    LPCWSTR lpNewFileName,
-    LPPROGRESS_ROUTINE lpProgressRoutine OPTIONAL,
-    LPVOID lpData OPTIONAL,
-    LPBOOL pbCancel OPTIONAL,
-    DWORD dwCopyFlags,
-    DWORD dwPrivCopyFlags,
-    LPHANDLE phSource OPTIONAL,
-    LPHANDLE phDest OPTIONAL
-    );
+BOOL BasepCopyFileExW(LPCWSTR lpExistingFileName, LPCWSTR lpNewFileName, LPPROGRESS_ROUTINE lpProgressRoutine OPTIONAL,
+                      LPVOID lpData OPTIONAL, LPBOOL pbCancel OPTIONAL, DWORD dwCopyFlags, DWORD dwPrivCopyFlags,
+                      LPHANDLE phSource OPTIONAL, LPHANDLE phDest OPTIONAL);
 
-VOID
-BaseMarkFileForDelete(
-    HANDLE File,
-    DWORD FileAttributes
-    );
+VOID BaseMarkFileForDelete(HANDLE File, DWORD FileAttributes);
 
 
 PVOID
-BasepMapModuleHandle(
-    IN HMODULE hModule,
-    IN BOOLEAN bResourcesOnly
-    );
+BasepMapModuleHandle(IN HMODULE hModule, IN BOOLEAN bResourcesOnly);
 
 ULONG_PTR
-BaseDllMapResourceIdA(
-    PCSTR lpId
-    );
+BaseDllMapResourceIdA(PCSTR lpId);
 
 ULONG_PTR
-BaseDllMapResourceIdW(
-    PCWSTR lpId
-    );
+BaseDllMapResourceIdW(PCWSTR lpId);
 
-VOID
-BaseDllFreeResourceId(
-    ULONG_PTR Id
-    );
+VOID BaseDllFreeResourceId(ULONG_PTR Id);
 
 //
 // Data structures and interfaces used by dllini.c
 //
 
-typedef struct _INIFILE_CACHE {
+typedef struct _INIFILE_CACHE
+{
     struct _INIFILE_CACHE *Next;
     ULONG EnvironmentUpdateCount;
     UNICODE_STRING NtFileName;
@@ -574,7 +394,8 @@ typedef struct _INIFILE_CACHE {
     FILE_STANDARD_INFORMATION StandardInformation;
 } INIFILE_CACHE, *PINIFILE_CACHE;
 
-typedef enum _INIFILE_OPERATION {
+typedef enum _INIFILE_OPERATION
+{
     FlushProfiles,
     ReadKeyValue,
     WriteKeyValue,
@@ -587,7 +408,8 @@ typedef enum _INIFILE_OPERATION {
     RefreshIniFileMapping
 } INIFILE_OPERATION;
 
-typedef struct _INIFILE_PARAMETERS {
+typedef struct _INIFILE_PARAMETERS
+{
     INIFILE_OPERATION Operation;
     BOOLEAN WriteOperation;
     BOOLEAN Unicode;
@@ -602,11 +424,13 @@ typedef struct _INIFILE_PARAMETERS {
     UNICODE_STRING ApplicationNameU;
     UNICODE_STRING VariableNameU;
     BOOLEAN MultiValueStrings;
-    union {
+    union
+    {
         //
         // This structure filled in for write operations
         //
-        struct {
+        struct
+        {
             LPSTR ValueBuffer;
             ULONG ValueLength;
             PWSTR ValueBufferU;
@@ -615,7 +439,8 @@ typedef struct _INIFILE_PARAMETERS {
         //
         // This structure filled in for read operations
         //
-        struct {
+        struct
+        {
             ULONG ResultChars;
             ULONG ResultMaxChars;
             LPSTR ResultBuffer;
@@ -648,52 +473,30 @@ typedef struct _INIFILE_PARAMETERS {
 } INIFILE_PARAMETERS, *PINIFILE_PARAMETERS;
 
 NTSTATUS
-BaseDllInitializeIniFileMappings(
-    PBASE_STATIC_SERVER_DATA StaticServerData
-    );
+BaseDllInitializeIniFileMappings(PBASE_STATIC_SERVER_DATA StaticServerData);
 
 NTSTATUS
-BasepAcquirePrivilege(
-    ULONG Privilege,
-    PVOID *ReturnedState
-    );
+BasepAcquirePrivilege(ULONG Privilege, PVOID *ReturnedState);
 
 NTSTATUS
-BasepAcquirePrivilegeEx(
-    ULONG Privilege,
-    PVOID *ReturnedState
-    );
+BasepAcquirePrivilegeEx(ULONG Privilege, PVOID *ReturnedState);
 
-VOID
-BasepReleasePrivilege(
-    PVOID StatePointer
-    );
+VOID BasepReleasePrivilege(PVOID StatePointer);
 
 NTSTATUS
 NTAPI
-BaseCreateThreadPoolThread(
-    PUSER_THREAD_START_ROUTINE Function,
-    PVOID Parameter,
-    HANDLE * ThreadHandle
-    );
+BaseCreateThreadPoolThread(PUSER_THREAD_START_ROUTINE Function, PVOID Parameter, HANDLE *ThreadHandle);
 
 NTSTATUS
 NTAPI
-BaseExitThreadPoolThread(
-    NTSTATUS Status
-    );
+BaseExitThreadPoolThread(NTSTATUS Status);
 
 //
 // Function for returning the volume name from a reparse point.
 //
 
-BOOL
-BasepGetVolumeNameFromReparsePoint(
-    LPCWSTR lpszVolumeMountPoint,
-    LPWSTR lpszVolumeName,
-    DWORD cchBufferLength,
-    PBOOL ResultOfOpen
-    );
+BOOL BasepGetVolumeNameFromReparsePoint(LPCWSTR lpszVolumeMountPoint, LPWSTR lpszVolumeName, DWORD cchBufferLength,
+                                        PBOOL ResultOfOpen);
 
 
 #if defined(_WIN64) || defined(BUILD_WOW6432)
@@ -703,11 +506,8 @@ BasepGetVolumeNameFromReparsePoint(
 //
 
 NTSTATUS
-BasepIsComplusILImage(
-    IN HANDLE SectionImageHandle,
-    IN PSECTION_IMAGE_INFORMATION SectionImageInformation,
-    OUT BOOLEAN *IsComplusILImage
-    );
+BasepIsComplusILImage(IN HANDLE SectionImageHandle, IN PSECTION_IMAGE_INFORMATION SectionImageInformation,
+                      OUT BOOLEAN *IsComplusILImage);
 
 #endif
 
@@ -716,19 +516,21 @@ BasepIsComplusILImage(
 // Definitions for memory handles used by Local/GlobalAlloc functions
 //
 
-typedef struct _BASE_HANDLE_TABLE_ENTRY {
+typedef struct _BASE_HANDLE_TABLE_ENTRY
+{
     USHORT Flags;
     USHORT LockCount;
-    union {
-        PVOID Object;                               // Allocated handle
-        ULONG Size;                                 // Handle to discarded obj.
+    union
+    {
+        PVOID Object; // Allocated handle
+        ULONG Size;   // Handle to discarded obj.
     };
 } BASE_HANDLE_TABLE_ENTRY, *PBASE_HANDLE_TABLE_ENTRY;
 
-#define BASE_HANDLE_MOVEABLE    (USHORT)0x0002
+#define BASE_HANDLE_MOVEABLE (USHORT)0x0002
 #define BASE_HANDLE_DISCARDABLE (USHORT)0x0004
-#define BASE_HANDLE_DISCARDED   (USHORT)0x0008
-#define BASE_HANDLE_SHARED      (USHORT)0x8000
+#define BASE_HANDLE_DISCARDED (USHORT)0x0008
+#define BASE_HANDLE_SHARED (USHORT)0x8000
 
 //
 // Handles are 32-bit pointers to the u.Object field of a
@@ -746,14 +548,14 @@ typedef struct _BASE_HANDLE_TABLE_ENTRY {
 //     #define BASE_HANDLE_MARK_BIT (ULONG_PTR)0x00000004
 //
 
-#define BASE_HANDLE_MARK_BIT (ULONG_PTR)FIELD_OFFSET(BASE_HANDLE_TABLE_ENTRY,Object)
-#define BASE_HEAP_FLAG_MOVEABLE  HEAP_SETTABLE_USER_FLAG1
-#define BASE_HEAP_FLAG_DDESHARE  HEAP_SETTABLE_USER_FLAG2
+#define BASE_HANDLE_MARK_BIT (ULONG_PTR) FIELD_OFFSET(BASE_HANDLE_TABLE_ENTRY, Object)
+#define BASE_HEAP_FLAG_MOVEABLE HEAP_SETTABLE_USER_FLAG1
+#define BASE_HEAP_FLAG_DDESHARE HEAP_SETTABLE_USER_FLAG2
 
 
 ULONG BaseDllTag;
 
-#define MAKE_TAG( t ) (RTL_HEAP_MAKE_TAG( BaseDllTag, t ))
+#define MAKE_TAG(t) (RTL_HEAP_MAKE_TAG(BaseDllTag, t))
 
 #define TMP_TAG 0
 #define BACKUP_TAG 1
@@ -770,108 +572,65 @@ ULONG BaseDllTag;
 #include "vdm.h"
 #include "basevdm.h"
 
-#include "stdlib.h"     // for atol
-#include "stdio.h"     // for atol
+#include "stdlib.h" // for atol
+#include "stdio.h"  // for atol
 
-#include <objidl.h>         //  needs nturtl.h
-#include <propset.h>        //  needs objidl.h
+#include <objidl.h>  //  needs nturtl.h
+#include <propset.h> //  needs objidl.h
 #include <tsappcmp.h>
 
 //
 // Hydra function for supporting beeps on remote sessions
 //
-typedef HANDLE (WINAPI * PWINSTATIONBEEPOPEN)(ULONG);
-HANDLE WINAPI
-_WinStationBeepOpen(
-    ULONG SessionId
-    );
+typedef HANDLE(WINAPI *PWINSTATIONBEEPOPEN)(ULONG);
+HANDLE WINAPI _WinStationBeepOpen(ULONG SessionId);
 PWINSTATIONBEEPOPEN pWinStationBeepOpen;
 
 //
 //  Private functions for communication with CSR.
 //
-VOID
-CsrBasepSoundSentryNotification(
-    ULONG VideoMode
-    );
+VOID CsrBasepSoundSentryNotification(ULONG VideoMode);
 
 NTSTATUS
-CsrBaseClientConnectToServer(
-    PWSTR szSessionDir,
-    PHANDLE phMutant,
-    PBOOLEAN pServerProcess
-    );
+CsrBaseClientConnectToServer(PWSTR szSessionDir, PHANDLE phMutant, PBOOLEAN pServerProcess);
 
 NTSTATUS
-CsrBasepRefreshIniFileMapping(
-    PUNICODE_STRING BaseFileName
-    );
+CsrBasepRefreshIniFileMapping(PUNICODE_STRING BaseFileName);
 
 NTSTATUS
-CsrBasepDefineDosDevice(
-    DWORD dwFlags,
-    PUNICODE_STRING pDeviceName,
-    PUNICODE_STRING pTargetPath
-    );
+CsrBasepDefineDosDevice(DWORD dwFlags, PUNICODE_STRING pDeviceName, PUNICODE_STRING pTargetPath);
 
-UINT
-CsrBasepGetTempFile(
-    VOID
-    );
+UINT CsrBasepGetTempFile(VOID);
 
 NTSTATUS
-CsrBasepCreateProcess(
-    PBASE_CREATEPROCESS_MSG a
-    );
+CsrBasepCreateProcess(PBASE_CREATEPROCESS_MSG a);
 
-VOID
-CsrBasepExitProcess(
-    UINT uExitCode
-    );
+VOID CsrBasepExitProcess(UINT uExitCode);
 
 NTSTATUS
-CsrBasepSetProcessShutdownParam(
-    DWORD dwLevel,
-    DWORD dwFlags
-    );
+CsrBasepSetProcessShutdownParam(DWORD dwLevel, DWORD dwFlags);
 
 NTSTATUS
-CsrBasepGetProcessShutdownParam(
-    LPDWORD lpdwLevel,
-    LPDWORD lpdwFlags
-    );
+CsrBasepGetProcessShutdownParam(LPDWORD lpdwLevel, LPDWORD lpdwFlags);
 
 NTSTATUS
-CsrBasepSetTermsrvAppInstallMode(
-    BOOL bState
-    );
+CsrBasepSetTermsrvAppInstallMode(BOOL bState);
 
 NTSTATUS
-CsrBasepSetClientTimeZoneInformation(
-    IN PBASE_SET_TERMSRVCLIENTTIMEZONE c
-    );
+CsrBasepSetClientTimeZoneInformation(IN PBASE_SET_TERMSRVCLIENTTIMEZONE c);
 
 NTSTATUS
-CsrBasepCreateThread(
-    HANDLE ThreadHandle,
-    CLIENT_ID ClientId
-    );
+CsrBasepCreateThread(HANDLE ThreadHandle, CLIENT_ID ClientId);
 
 //
 // This should be merged with BasepCreateActCtx, its only caller.
 //
 #define BASEP_CREATE_ACTCTX_FLAG_NO_ADMIN_OVERRIDE 0x00000001
 NTSTATUS
-BasepCreateActCtx(
-    ULONG           Flags,
-    IN PCACTCTXW    ActParams,
-    OUT PVOID*      ActivationContextData
-    );
+BasepCreateActCtx(ULONG Flags, IN PCACTCTXW ActParams, OUT PVOID *ActivationContextData);
 
 NTSTATUS
-CsrBasepCreateActCtx(
-    IN PBASE_SXS_CREATE_ACTIVATION_CONTEXT_MSG Message
-    );
+CsrBasepCreateActCtx(IN PBASE_SXS_CREATE_ACTIVATION_CONTEXT_MSG Message);
 
 #if defined(BUILD_WOW6432)
 #include "ntwow64b.h"
@@ -883,7 +642,7 @@ BOOL TermsrvLogInstallIniFile(PINIFILE_PARAMETERS a);
 
 PTERMSRVFORMATOBJECTNAME gpTermsrvFormatObjectName;
 
-PTERMSRVGETCOMPUTERNAME  gpTermsrvGetComputerName;
+PTERMSRVGETCOMPUTERNAME gpTermsrvGetComputerName;
 
 PTERMSRVADJUSTPHYMEMLIMITS gpTermsrvAdjustPhyMemLimits;
 
@@ -916,7 +675,8 @@ PTERMSRVLOGINSTALLINIFILE gpTermsrvLogInstallIniFile;
 
 #define BASE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK_FLAG_DO_NOT_FREE_AFTER_CALLBACK (0x00000001)
 
-typedef struct _BASE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK {
+typedef struct _BASE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK
+{
     DWORD Flags;
     PVOID CallbackFunction;
     PVOID CallbackContext;
@@ -927,45 +687,26 @@ typedef struct _BASE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK {
 #define BASEP_ALLOCATE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK_FLAG_DO_NOT_ALLOCATE_IF_PROCESS_DEFAULT (0x00000002)
 
 NTSTATUS
-BasepAllocateActivationContextActivationBlock(
-    IN DWORD Flags,
-    IN PVOID CallbackFunction,
-    IN PVOID CallbackContext,
-    OUT PBASE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK *ActivationBlock
-    );
+BasepAllocateActivationContextActivationBlock(IN DWORD Flags, IN PVOID CallbackFunction, IN PVOID CallbackContext,
+                                              OUT PBASE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK *ActivationBlock);
 
-VOID
-BasepFreeActivationContextActivationBlock(
-    IN PBASE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK ActivationBlock
-    );
+VOID BasepFreeActivationContextActivationBlock(IN PBASE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK ActivationBlock);
 
-VOID
-WINAPI
-BasepActivationContextActivationIoCompletion(
-    IN PVOID ApcContext, // actually PBASE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK
-    PIO_STATUS_BLOCK IoStatusBlock,
-    DWORD Reserved
-    );
+VOID WINAPI
+BasepActivationContextActivationIoCompletion(IN PVOID ApcContext, // actually PBASE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK
+                                             PIO_STATUS_BLOCK IoStatusBlock, DWORD Reserved);
 
-VOID
-CALLBACK
-BasepTimerAPCProc(
-    IN PVOID ApcContext, // actually PBASE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK
-    IN ULONG TimerLowValue,
-    IN LONG TimerHighValue
-    );
+VOID CALLBACK BasepTimerAPCProc(IN PVOID ApcContext, // actually PBASE_ACTIVATION_CONTEXT_ACTIVATION_BLOCK
+                                IN ULONG TimerLowValue, IN LONG TimerHighValue);
 
 #define BASE_FILE_PATH_ISOLATION_ALLOCATE_PATH (0x00000001)
 
 NTSTATUS
-BasepApplyFilePathIsolationRedirection(
-    IN DWORD Flags,
-    IN PCUNICODE_STRING FileName,
-    IN OUT PUNICODE_STRING FullyQualifiedPath
-    );
+BasepApplyFilePathIsolationRedirection(IN DWORD Flags, IN PCUNICODE_STRING FileName,
+                                       IN OUT PUNICODE_STRING FullyQualifiedPath);
 
-#define SXS_POLICY_SUFFIX       L".Config"
-#define SXS_MANIFEST_SUFFIX     L".Manifest"
+#define SXS_POLICY_SUFFIX L".Config"
+#define SXS_MANIFEST_SUFFIX L".Manifest"
 extern const UNICODE_STRING SxsPolicySuffix;
 
 typedef struct _SXS_CONSTANT_WIN32_NT_PATH_PAIR
@@ -973,122 +714,72 @@ typedef struct _SXS_CONSTANT_WIN32_NT_PATH_PAIR
     PCUNICODE_STRING Win32;
     PCUNICODE_STRING Nt;
 } SXS_CONSTANT_WIN32_NT_PATH_PAIR;
-typedef       SXS_CONSTANT_WIN32_NT_PATH_PAIR*  PSXS_CONSTANT_WIN32_NT_PATH_PAIR;
-typedef CONST SXS_CONSTANT_WIN32_NT_PATH_PAIR* PCSXS_CONSTANT_WIN32_NT_PATH_PAIR;
+typedef SXS_CONSTANT_WIN32_NT_PATH_PAIR *PSXS_CONSTANT_WIN32_NT_PATH_PAIR;
+typedef CONST SXS_CONSTANT_WIN32_NT_PATH_PAIR *PCSXS_CONSTANT_WIN32_NT_PATH_PAIR;
 
 typedef struct _SXS_WIN32_NT_PATH_PAIR
 {
-    PRTL_UNICODE_STRING_BUFFER   Win32;
-    PRTL_UNICODE_STRING_BUFFER   Nt;
+    PRTL_UNICODE_STRING_BUFFER Win32;
+    PRTL_UNICODE_STRING_BUFFER Nt;
 } SXS_WIN32_NT_PATH_PAIR;
-typedef       SXS_WIN32_NT_PATH_PAIR*  PSXS_WIN32_NT_PATH_PAIR;
-typedef CONST SXS_WIN32_NT_PATH_PAIR* PCSXS_WIN32_NT_PATH_PAIR;
+typedef SXS_WIN32_NT_PATH_PAIR *PSXS_WIN32_NT_PATH_PAIR;
+typedef CONST SXS_WIN32_NT_PATH_PAIR *PCSXS_WIN32_NT_PATH_PAIR;
 
 NTSTATUS
-BasepSxsCreateResourceStream(
-    IN ULONG                  LdrCreateOutOfProcessImageFlags,
-    PCSXS_CONSTANT_WIN32_NT_PATH_PAIR Win32NtPathPair,
-    IN OUT PBASE_MSG_SXS_HANDLES Handles,
-    IN ULONG_PTR              MappedResourceName,
-    OUT PBASE_MSG_SXS_STREAM  MessageStream
-    );
+BasepSxsCreateResourceStream(IN ULONG LdrCreateOutOfProcessImageFlags,
+                             PCSXS_CONSTANT_WIN32_NT_PATH_PAIR Win32NtPathPair, IN OUT PBASE_MSG_SXS_HANDLES Handles,
+                             IN ULONG_PTR MappedResourceName, OUT PBASE_MSG_SXS_STREAM MessageStream);
 
 NTSTATUS
-BasepSxsCreateFileStream(
-    IN ACCESS_MASK            AccessMask,
-    PCSXS_CONSTANT_WIN32_NT_PATH_PAIR Win32NtPathPair,
-    IN OUT PBASE_MSG_SXS_HANDLES Handles,
-    OUT PBASE_MSG_SXS_STREAM  MessageStream
-    );
+BasepSxsCreateFileStream(IN ACCESS_MASK AccessMask, PCSXS_CONSTANT_WIN32_NT_PATH_PAIR Win32NtPathPair,
+                         IN OUT PBASE_MSG_SXS_HANDLES Handles, OUT PBASE_MSG_SXS_STREAM MessageStream);
 
 // Pass the address of this to force policy to be empty.
 // It doesn't have a special address, just the right values.
 extern const SXS_OVERRIDE_STREAM SxsForceEmptyPolicy;
 
-VOID
-BasepSxsOverrideStreamToMessageStream(
-    IN  PCSXS_OVERRIDE_STREAM OverrideStream,
-    OUT PBASE_MSG_SXS_STREAM  MessageStream
-    );
+VOID BasepSxsOverrideStreamToMessageStream(IN PCSXS_OVERRIDE_STREAM OverrideStream,
+                                           OUT PBASE_MSG_SXS_STREAM MessageStream);
 
 #define BASEP_SXS_CREATESTREAMS_FLAG_LIKE_CREATEPROCESS 0x00000001
 
 NTSTATUS
 BasepSxsCreateStreams(
-    IN ULONG                                Flags,
-    IN ULONG                                LdrCreateOutOfProcessImageFlags,
-    IN ACCESS_MASK                          AccessMask,
-    IN PCSXS_OVERRIDE_STREAM                OverrideManifest OPTIONAL,
-    IN PCSXS_OVERRIDE_STREAM                OverridePolicy OPTIONAL,
-    IN PCSXS_CONSTANT_WIN32_NT_PATH_PAIR    ManifestFilePathPair,
-    IN OUT PBASE_MSG_SXS_HANDLES            ManifestFileHandles,
-    IN PCSXS_CONSTANT_WIN32_NT_PATH_PAIR    ManifestImagePathPair,
-    IN OUT PBASE_MSG_SXS_HANDLES            ManifestImageHandles,
-// If none of the optional parameters are passed, then you could have directly
-// called a simpler function.
-    IN ULONG_PTR                            MappedManifestResourceName OPTIONAL,
-    IN PCSXS_CONSTANT_WIN32_NT_PATH_PAIR    PolicyPathPair OPTIONAL,
-    IN OUT PBASE_MSG_SXS_HANDLES            PolicyHandles OPTIONAL,
-    OUT PULONG                              MessageFlags,
-    OUT PBASE_MSG_SXS_STREAM                ManifestMessageStream,
-    OUT PBASE_MSG_SXS_STREAM                PolicyMessageStream  OPTIONAL
-    );
+    IN ULONG Flags, IN ULONG LdrCreateOutOfProcessImageFlags, IN ACCESS_MASK AccessMask,
+    IN PCSXS_OVERRIDE_STREAM OverrideManifest OPTIONAL, IN PCSXS_OVERRIDE_STREAM OverridePolicy OPTIONAL,
+    IN PCSXS_CONSTANT_WIN32_NT_PATH_PAIR ManifestFilePathPair, IN OUT PBASE_MSG_SXS_HANDLES ManifestFileHandles,
+    IN PCSXS_CONSTANT_WIN32_NT_PATH_PAIR ManifestImagePathPair, IN OUT PBASE_MSG_SXS_HANDLES ManifestImageHandles,
+    // If none of the optional parameters are passed, then you could have directly
+    // called a simpler function.
+    IN ULONG_PTR MappedManifestResourceName OPTIONAL, IN PCSXS_CONSTANT_WIN32_NT_PATH_PAIR PolicyPathPair OPTIONAL,
+    IN OUT PBASE_MSG_SXS_HANDLES PolicyHandles OPTIONAL, OUT PULONG MessageFlags,
+    OUT PBASE_MSG_SXS_STREAM ManifestMessageStream, OUT PBASE_MSG_SXS_STREAM PolicyMessageStream OPTIONAL);
 
-BOOL
-BasepSxsIsStatusFileNotFoundEtc(
-    NTSTATUS Status
-    );
+BOOL BasepSxsIsStatusFileNotFoundEtc(NTSTATUS Status);
 
-BOOL
-BasepSxsIsStatusResourceNotFound(
-    NTSTATUS Status
-    );
+BOOL BasepSxsIsStatusResourceNotFound(NTSTATUS Status);
 
 NTSTATUS
 BasepSxsCreateProcessCsrMessage(
-    IN PCSXS_OVERRIDE_STREAM             OverrideManifest OPTIONAL,
-    IN PCSXS_OVERRIDE_STREAM             OverridePolicy   OPTIONAL,
-    IN OUT PCSXS_WIN32_NT_PATH_PAIR      ManifestFilePathPair,
-    IN OUT PBASE_MSG_SXS_HANDLES         ManifestFileHandles,
-    IN PCSXS_CONSTANT_WIN32_NT_PATH_PAIR ManifestImagePathPair,
-    IN OUT PBASE_MSG_SXS_HANDLES         ManifestImageHandles,
-    IN OUT PCSXS_WIN32_NT_PATH_PAIR      PolicyPathPair,
-    IN OUT PBASE_MSG_SXS_HANDLES         PolicyHandles,
-    IN OUT PRTL_UNICODE_STRING_BUFFER    Win32AssemblyDirectoryBuffer,
-    OUT PBASE_SXS_CREATEPROCESS_MSG      Message
-    );
+    IN PCSXS_OVERRIDE_STREAM OverrideManifest OPTIONAL, IN PCSXS_OVERRIDE_STREAM OverridePolicy OPTIONAL,
+    IN OUT PCSXS_WIN32_NT_PATH_PAIR ManifestFilePathPair, IN OUT PBASE_MSG_SXS_HANDLES ManifestFileHandles,
+    IN PCSXS_CONSTANT_WIN32_NT_PATH_PAIR ManifestImagePathPair, IN OUT PBASE_MSG_SXS_HANDLES ManifestImageHandles,
+    IN OUT PCSXS_WIN32_NT_PATH_PAIR PolicyPathPair, IN OUT PBASE_MSG_SXS_HANDLES PolicyHandles,
+    IN OUT PRTL_UNICODE_STRING_BUFFER Win32AssemblyDirectoryBuffer, OUT PBASE_SXS_CREATEPROCESS_MSG Message);
 
 NTSTATUS
-BasepSxsGetProcessImageBaseAddress(
-    HANDLE Process,
-    PVOID* ImageBaseAddress
-    );
+BasepSxsGetProcessImageBaseAddress(HANDLE Process, PVOID *ImageBaseAddress);
 
-VOID
-NTAPI
-BasepSxsActivationContextNotification(
-    IN ULONG NotificationType,
-    IN PACTIVATION_CONTEXT ActivationContext,
-    IN const VOID *ActivationContextData,
-    IN PVOID NotificationContext,
-    IN PVOID NotificationData,
-    IN OUT PBOOLEAN DisableNotification
-    );
+VOID NTAPI BasepSxsActivationContextNotification(IN ULONG NotificationType, IN PACTIVATION_CONTEXT ActivationContext,
+                                                 IN const VOID *ActivationContextData, IN PVOID NotificationContext,
+                                                 IN PVOID NotificationData, IN OUT PBOOLEAN DisableNotification);
 
-VOID
-BasepSxsDbgPrintMessageStream(
-    PCSTR Function,
-    PCSTR StreamName,
-    PBASE_MSG_SXS_STREAM MessageStream
-    );
+VOID BasepSxsDbgPrintMessageStream(PCSTR Function, PCSTR StreamName, PBASE_MSG_SXS_STREAM MessageStream);
 
 extern const UNICODE_STRING SxsManifestSuffix;
 extern const UNICODE_STRING SxsPolicySuffix;
 
-VOID
-BasepSxsCloseHandles(
-    IN PCBASE_MSG_SXS_HANDLES Handles
-    );
+VOID BasepSxsCloseHandles(IN PCBASE_MSG_SXS_HANDLES Handles);
 
 extern const WCHAR AdvapiDllString[];
 
@@ -1101,71 +792,35 @@ extern const WCHAR AdvapiDllString[];
 //
 
 
-BOOL
-WINAPI
-BaseCheckAppcompatCache(
-    LPCWSTR pwszPath,
-    HANDLE  hFile,
-    PVOID   pEnvironment,
-    DWORD*  dwReason
-    );
+BOOL WINAPI BaseCheckAppcompatCache(LPCWSTR pwszPath, HANDLE hFile, PVOID pEnvironment, DWORD *dwReason);
 
 //
 // function that we call from winlogon
 //
 
-BOOL
-WINAPI
-BaseInitAppcompatCacheSupport(
-    VOID
-    );
+BOOL WINAPI BaseInitAppcompatCacheSupport(VOID);
 
-VOID
-WINAPI
-BaseCleanupAppcompatCache(
-    VOID
-    );
+VOID WINAPI BaseCleanupAppcompatCache(VOID);
 
-BOOL
-WINAPI
-BaseCleanupAppcompatCacheSupport(
-    BOOL bWrite
-    );
+BOOL WINAPI BaseCleanupAppcompatCacheSupport(BOOL bWrite);
 
 
 NTSTATUS
 NTAPI
-BasepProbeForDllManifest(
-    IN PVOID DllBase,
-    IN PCWSTR FullDllPath,
-    OUT PVOID *ActivationContext
-    );
+BasepProbeForDllManifest(IN PVOID DllBase, IN PCWSTR FullDllPath, OUT PVOID *ActivationContext);
 
-#define BASEP_GET_MODULE_HANDLE_EX_NO_LOCK                    (0x00000001)
-BOOL
-BasepGetModuleHandleExW(
-    IN DWORD        dwPrivateFlags,
-    IN DWORD        dwPublicFlags,
-    IN LPCWSTR      lpModuleName,
-    OUT HMODULE*    phModule
-    );
+#define BASEP_GET_MODULE_HANDLE_EX_NO_LOCK (0x00000001)
+BOOL BasepGetModuleHandleExW(IN DWORD dwPrivateFlags, IN DWORD dwPublicFlags, IN LPCWSTR lpModuleName,
+                             OUT HMODULE *phModule);
 
-#define BASEP_GET_MODULE_HANDLE_EX_PARAMETER_VALIDATION_ERROR    1
-#define BASEP_GET_MODULE_HANDLE_EX_PARAMETER_VALIDATION_SUCCESS  2
+#define BASEP_GET_MODULE_HANDLE_EX_PARAMETER_VALIDATION_ERROR 1
+#define BASEP_GET_MODULE_HANDLE_EX_PARAMETER_VALIDATION_SUCCESS 2
 #define BASEP_GET_MODULE_HANDLE_EX_PARAMETER_VALIDATION_CONTINUE 3
 ULONG
-BasepGetModuleHandleExParameterValidation(
-    IN DWORD        dwFlags,
-    IN CONST VOID*  lpModuleName,
-    OUT HMODULE*    phModule
-    );
+BasepGetModuleHandleExParameterValidation(IN DWORD dwFlags, IN CONST VOID *lpModuleName, OUT HMODULE *phModule);
 
-#define BASEP_GET_TEMP_PATH_PRESERVE_TEB         (0x00000001)
+#define BASEP_GET_TEMP_PATH_PRESERVE_TEB (0x00000001)
 DWORD
-BasepGetTempPathW(
-    ULONG  Flags,
-    DWORD nBufferLength,
-    LPWSTR lpBuffer
-    );
+BasepGetTempPathW(ULONG Flags, DWORD nBufferLength, LPWSTR lpBuffer);
 
 #endif // _BASEP_

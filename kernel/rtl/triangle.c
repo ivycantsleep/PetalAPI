@@ -26,32 +26,35 @@ Revision History:
 #include <nt.h>
 #include "triangle.h"
 
-
+
 //
 //  There are three type of swap macros.  The first two (are really the same)
 //  are used to swap pointer and ulongs.  The last macro is used to swap refs
 //  but it does not swap the ref type flags.
 //
 
-#define SwapPointers(Ptr1, Ptr2) {      \
-    PVOID _SWAP_POINTER_TEMP;           \
-    _SWAP_POINTER_TEMP = (PVOID)(Ptr1); \
-    (Ptr1) = (Ptr2);                    \
-    (Ptr2) = _SWAP_POINTER_TEMP;        \
+#define SwapPointers(Ptr1, Ptr2)            \
+    {                                       \
+        PVOID _SWAP_POINTER_TEMP;           \
+        _SWAP_POINTER_TEMP = (PVOID)(Ptr1); \
+        (Ptr1) = (Ptr2);                    \
+        (Ptr2) = _SWAP_POINTER_TEMP;        \
     }
 
-#define SwapUlongs(Ptr1, Ptr2) {        \
-    ULONG _SWAP_POINTER_TEMP;           \
-    _SWAP_POINTER_TEMP = (ULONG)(Ptr1); \
-    (Ptr1) = (Ptr2);                    \
-    (Ptr2) = _SWAP_POINTER_TEMP;        \
+#define SwapUlongs(Ptr1, Ptr2)              \
+    {                                       \
+        ULONG _SWAP_POINTER_TEMP;           \
+        _SWAP_POINTER_TEMP = (ULONG)(Ptr1); \
+        (Ptr1) = (Ptr2);                    \
+        (Ptr2) = _SWAP_POINTER_TEMP;        \
     }
 
-#define SwapRefsButKeepFlags(Ref1, Ref2) {                            \
-    ULONG _SWAP_ULONG_TEMP;                                           \
-    _SWAP_ULONG_TEMP = (ULONG)(Ref1);                                 \
-    (Ref1) = ((Ref2)           & 0xfffffffc) | ((Ref1) & 0x00000003); \
-    (Ref2) = (_SWAP_ULONG_TEMP & 0xfffffffc) | ((Ref2) & 0x00000003); \
+#define SwapRefsButKeepFlags(Ref1, Ref2)                                  \
+    {                                                                     \
+        ULONG _SWAP_ULONG_TEMP;                                           \
+        _SWAP_ULONG_TEMP = (ULONG)(Ref1);                                 \
+        (Ref1) = ((Ref2) & 0xfffffffc) | ((Ref1) & 0x00000003);           \
+        (Ref2) = (_SWAP_ULONG_TEMP & 0xfffffffc) | ((Ref2) & 0x00000003); \
     }
 
 //
@@ -60,13 +63,15 @@ Revision History:
 //  a ulong, but does not overwrite the ref flags already in the ref.
 //
 
-#define SetRefViaPointer(Ref, Ulong) { \
-    if (Ref != NULL) { \
-        (*(Ref)) = (((ULONG)(Ulong)) & 0xfffffffc) | ((ULONG)(*(Ref)) & 0x00000003); \
-    } \
-}
+#define SetRefViaPointer(Ref, Ulong)                                                     \
+    {                                                                                    \
+        if (Ref != NULL)                                                                 \
+        {                                                                                \
+            (*(Ref)) = (((ULONG)(Ulong)) & 0xfffffffc) | ((ULONG)(*(Ref)) & 0x00000003); \
+        }                                                                                \
+    }
 
-
+
 //
 //  The following five procedures are local to triangle.c and are used to
 //  help manipluate the splay links.  The first two procedures take a pointer
@@ -84,35 +89,19 @@ Revision History:
 //
 
 PULONG
-TriAddressOfBackRefViaParent (
-    IN PTRI_SPLAY_LINKS Links
-    );
+TriAddressOfBackRefViaParent(IN PTRI_SPLAY_LINKS Links);
 
 PULONG
-TriAddressOfBackRefViaChild (
-    IN PTRI_SPLAY_LINKS Links
-    );
+TriAddressOfBackRefViaChild(IN PTRI_SPLAY_LINKS Links);
 
-VOID
-TriSwapSplayLinks (
-    IN PTRI_SPLAY_LINKS Link1,
-    IN PTRI_SPLAY_LINKS Link2
-    );
+VOID TriSwapSplayLinks(IN PTRI_SPLAY_LINKS Link1, IN PTRI_SPLAY_LINKS Link2);
 
-VOID
-TriRotateRight (
-   IN PTRI_SPLAY_LINKS Links
-   );
+VOID TriRotateRight(IN PTRI_SPLAY_LINKS Links);
 
-VOID
-TriRotateLeft (
-    IN PTRI_SPLAY_LINKS Links
-    );
-
+VOID TriRotateLeft(IN PTRI_SPLAY_LINKS Links);
+
 PTRI_SPLAY_LINKS
-TriSplay (
-    IN PTRI_SPLAY_LINKS Links
-    )
+TriSplay(IN PTRI_SPLAY_LINKS Links)
 
 /*++
 
@@ -140,7 +129,8 @@ Return Values:
     //  While Links is not the root we test and rotate until it is the root.
     //
 
-    while (!TriIsRoot(Links)) {
+    while (!TriIsRoot(Links))
+    {
 
         //
         //  Get Parent and then check if we don't have a grandparent.
@@ -148,13 +138,15 @@ Return Values:
 
         Parent = TriParent(Links);
 
-        if (TriIsRoot(Parent)) {
+        if (TriIsRoot(Parent))
+        {
 
             //
             //  No grandparent so check for single rotation
             //
 
-            if (TriIsLeftChild(Links)) {
+            if (TriIsLeftChild(Links))
+            {
 
                 //
                 //  do the following single rotation
@@ -165,8 +157,9 @@ Return Values:
                 //
 
                 TriRotateRight(Parent);
-
-            } else { // TriIsRightChild(Links)
+            }
+            else
+            { // TriIsRightChild(Links)
 
                 //
                 //  do the following single rotation
@@ -178,10 +171,10 @@ Return Values:
                 //
 
                 TriRotateLeft(Parent);
-
             }
-
-        } else { // !TriIsRoot(Parent)
+        }
+        else
+        { // !TriIsRoot(Parent)
 
             //
             //  Get grandparent and check for the four double rotation
@@ -190,9 +183,11 @@ Return Values:
 
             GrandParent = TriParent(Parent);
 
-            if (TriIsLeftChild(Links)) {
+            if (TriIsLeftChild(Links))
+            {
 
-                if (TriIsLeftChild(Parent)) {
+                if (TriIsLeftChild(Parent))
+                {
 
                     //
                     //  do the following double rotation
@@ -206,8 +201,9 @@ Return Values:
 
                     TriRotateRight(GrandParent);
                     TriRotateRight(Parent);
-
-                } else { // TriIsRightChild(Parent)
+                }
+                else
+                { // TriIsRightChild(Parent)
 
                     //
                     //  do the following double rotation
@@ -221,12 +217,13 @@ Return Values:
 
                     TriRotateRight(Parent);
                     TriRotateLeft(GrandParent);
-
                 }
+            }
+            else
+            { // TriIsRightChild(Links);
 
-            } else { // TriIsRightChild(Links);
-
-                if (TriIsLeftChild(Parent)) {
+                if (TriIsLeftChild(Parent))
+                {
 
                     //
                     //  do the following double rotation
@@ -240,8 +237,9 @@ Return Values:
 
                     TriRotateLeft(Parent);
                     TriRotateRight(GrandParent);
-
-                } else { // TriIsRightChild(Parent)
+                }
+                else
+                { // TriIsRightChild(Parent)
 
                     //
                     //  do the following double rotation
@@ -255,24 +253,17 @@ Return Values:
 
                     TriRotateLeft(GrandParent);
                     TriRotateLeft(Parent);
-
                 }
-
             }
-
         }
-
     }
 
     return Links;
-
 }
 
-
+
 PTRI_SPLAY_LINKS
-TriDelete (
-    IN PTRI_SPLAY_LINKS Links
-    )
+TriDelete(IN PTRI_SPLAY_LINKS Links)
 
 /*++
 
@@ -306,7 +297,8 @@ Return Values:
     //  has at most one child.
     //
 
-    if ((TriLeftChild(Links) != NULL) && (TriRightChild(Links) != NULL)) {
+    if ((TriLeftChild(Links) != NULL) && (TriRightChild(Links) != NULL))
+    {
 
         //
         //  get the predecessor, and swap their position in the tree
@@ -314,7 +306,6 @@ Return Values:
 
         Predecessor = TriSubtreePredecessor(Links);
         TriSwapSplayLinks(Predecessor, Links);
-
     }
 
     //
@@ -324,16 +315,17 @@ Return Values:
     //  pointer, and possibly sibling, and splay the parent.
     //
 
-    if ((TriLeftChild(Links) == NULL) && (TriRightChild(Links) == NULL)) {
+    if ((TriLeftChild(Links) == NULL) && (TriRightChild(Links) == NULL))
+    {
 
         //
         //  Links has no children, if it is the root then return NULL
         //
 
-        if (TriIsRoot(Links)) {
+        if (TriIsRoot(Links))
+        {
 
             return NULL;
-
         }
 
         //
@@ -341,8 +333,8 @@ Return Values:
         //
 
         Parent = TriParent(Links);
-        if (MakeIntoPointer(Parent->Refs.Child) == Links &&
-            MakeIntoPointer(Links->Refs.ParSib) == Parent) {
+        if (MakeIntoPointer(Parent->Refs.Child) == Links && MakeIntoPointer(Links->Refs.ParSib) == Parent)
+        {
 
             //
             //  Links has no children and is an only child.  So simply make
@@ -355,8 +347,9 @@ Return Values:
 
             Parent->Refs.Child = 0;
             return TriSplay(Parent);
-
-        } else if (TriIsLeftChild(Links)) {
+        }
+        else if (TriIsLeftChild(Links))
+        {
 
             //
             //  Links has no children and has a right sibling.  So make the
@@ -369,8 +362,9 @@ Return Values:
 
             Parent->Refs.Child = MakeIntoRightChildRef(Links->Refs.ParSib);
             return TriSplay(Parent);
-
-        } else { // TriIsRightChild(Links)
+        }
+        else
+        { // TriIsRightChild(Links)
 
             //
             //  Links has no children and has a left sibling.  So make link's
@@ -385,9 +379,7 @@ Return Values:
             ParentChildRef = TriAddressOfBackRefViaParent(Links);
             *ParentChildRef = MakeIntoParentRef(Parent);
             return TriSplay(Parent);
-
         }
-
     }
 
     //
@@ -396,9 +388,12 @@ Return Values:
     //  the parent.  But first remember who our child is.
     //
 
-    if (TriLeftChild(Links) != NULL) {
+    if (TriLeftChild(Links) != NULL)
+    {
         Child = TriLeftChild(Links);
-    } else {
+    }
+    else
+    {
         Child = TriRightChild(Links);
     }
 
@@ -407,7 +402,8 @@ Return Values:
     //  child.
     //
 
-    if (TriIsRoot(Links)) {
+    if (TriIsRoot(Links))
+    {
         Child->Refs.ParSib = MakeIntoParentRef(Child);
         return Child;
     }
@@ -425,14 +421,11 @@ Return Values:
     Child->Refs.ParSib = Links->Refs.ParSib;
 
     return TriSplay(Parent);
-
 }
 
-
+
 PTRI_SPLAY_LINKS
-TriSubtreeSuccessor (
-    IN PTRI_SPLAY_LINKS Links
-    )
+TriSubtreeSuccessor(IN PTRI_SPLAY_LINKS Links)
 
 /*++
 
@@ -471,14 +464,15 @@ Return Values:
     //               \
     //
 
-    if ((Ptr = TriRightChild(Links)) != NULL) {
+    if ((Ptr = TriRightChild(Links)) != NULL)
+    {
 
-        while (TriLeftChild(Ptr) != NULL) {
+        while (TriLeftChild(Ptr) != NULL)
+        {
             Ptr = TriLeftChild(Ptr);
         }
 
         return Ptr;
-
     }
 
     //
@@ -486,14 +480,11 @@ Return Values:
     //
 
     return NULL;
-
 }
 
-
+
 PTRI_SPLAY_LINKS
-TriSubtreePredecessor (
-    IN PTRI_SPLAY_LINKS Links
-    )
+TriSubtreePredecessor(IN PTRI_SPLAY_LINKS Links)
 
 /*++
 
@@ -531,14 +522,15 @@ Return Values:
     //                /
     //
 
-    if ((Ptr = TriLeftChild(Links)) != NULL) {
+    if ((Ptr = TriLeftChild(Links)) != NULL)
+    {
 
-        while (TriRightChild(Ptr) != NULL) {
+        while (TriRightChild(Ptr) != NULL)
+        {
             Ptr = TriRightChild(Ptr);
         }
 
         return Ptr;
-
     }
 
     //
@@ -546,14 +538,11 @@ Return Values:
     //
 
     return NULL;
-
 }
 
-
+
 PTRI_SPLAY_LINKS
-TriRealSuccessor (
-    IN PTRI_SPLAY_LINKS Links
-    )
+TriRealSuccessor(IN PTRI_SPLAY_LINKS Links)
 
 /*++
 
@@ -591,14 +580,15 @@ Return Values:
     //               \
     //
 
-    if ((Ptr = TriRightChild(Links)) != NULL) {
+    if ((Ptr = TriRightChild(Links)) != NULL)
+    {
 
-        while (TriLeftChild(Ptr) != NULL) {
+        while (TriLeftChild(Ptr) != NULL)
+        {
             Ptr = TriLeftChild(Ptr);
         }
 
         return Ptr;
-
     }
 
     //
@@ -615,11 +605,13 @@ Return Values:
     //
 
     Ptr = Links;
-    while (!TriIsLeftChild(Ptr) && !TriIsRoot(Ptr)) {  // (TriIsRightChild(Ptr)) {
+    while (!TriIsLeftChild(Ptr) && !TriIsRoot(Ptr))
+    { // (TriIsRightChild(Ptr)) {
         Ptr = TriParent(Ptr);
     }
 
-    if (TriIsLeftChild(Ptr)) {
+    if (TriIsLeftChild(Ptr))
+    {
         return TriParent(Ptr);
     }
 
@@ -628,14 +620,11 @@ Return Values:
     //
 
     return NULL;
-
 }
 
-
+
 PTRI_SPLAY_LINKS
-TriRealPredecessor (
-    IN PTRI_SPLAY_LINKS Links
-    )
+TriRealPredecessor(IN PTRI_SPLAY_LINKS Links)
 
 /*++
 
@@ -672,14 +661,15 @@ Return Values:
     //                /
     //
 
-    if ((Ptr = TriLeftChild(Links)) != NULL) {
+    if ((Ptr = TriLeftChild(Links)) != NULL)
+    {
 
-        while (TriRightChild(Ptr) != NULL) {
+        while (TriRightChild(Ptr) != NULL)
+        {
             Ptr = TriRightChild(Ptr);
         }
 
         return Ptr;
-
     }
 
     //
@@ -696,11 +686,13 @@ Return Values:
     //
 
     Ptr = Links;
-    while (TriIsLeftChild(Ptr)) {
+    while (TriIsLeftChild(Ptr))
+    {
         Ptr = TriParent(Ptr);
     }
 
-    if (!TriIsLeftChild(Ptr) && !TriIsRoot(Ptr)) { // (TriIsRightChild(Ptr)) {
+    if (!TriIsLeftChild(Ptr) && !TriIsRoot(Ptr))
+    { // (TriIsRightChild(Ptr)) {
         return TriParent(Ptr);
     }
 
@@ -709,14 +701,11 @@ Return Values:
     //
 
     return NULL;
-
 }
 
-
+
 PULONG
-TriAddressOfBackRefViaParent (
-    IN PTRI_SPLAY_LINKS Links
-    )
+TriAddressOfBackRefViaParent(IN PTRI_SPLAY_LINKS Links)
 
 {
     PTRI_SPLAY_LINKS Ptr;
@@ -726,10 +715,10 @@ TriAddressOfBackRefViaParent (
     //  so return NULL
     //
 
-    if (TriIsRoot(Links)) {
+    if (TriIsRoot(Links))
+    {
 
         return NULL;
-
     }
 
     //
@@ -740,19 +729,19 @@ TriAddressOfBackRefViaParent (
     //
 
     Ptr = TriParent(Links);
-    if (MakeIntoPointer(Ptr->Refs.Child) == Links) {
+    if (MakeIntoPointer(Ptr->Refs.Child) == Links)
+    {
         return &(Ptr->Refs.Child);
-    } else {
+    }
+    else
+    {
         return &(MakeIntoPointer(Ptr->Refs.Child)->Refs.ParSib);
     }
-
 }
 
-
+
 PULONG
-TriAddressOfBackRefViaChild (
-    IN PTRI_SPLAY_LINKS Links
-    )
+TriAddressOfBackRefViaChild(IN PTRI_SPLAY_LINKS Links)
 
 {
     PTRI_SPLAY_LINKS Ptr;
@@ -768,35 +757,32 @@ TriAddressOfBackRefViaChild (
     //  via our child so return NULL.
     //
 
-    if (Ptr == NULL) {
+    if (Ptr == NULL)
+    {
         return NULL;
 
-    //
-    //  if our child directly reference's us (then we only have one child)
-    //  return the address of the ParSib of our only child.
-    //
-
-    } else if (MakeIntoPointer(Ptr->Refs.ParSib) == Links) {
+        //
+        //  if our child directly reference's us (then we only have one child)
+        //  return the address of the ParSib of our only child.
+        //
+    }
+    else if (MakeIntoPointer(Ptr->Refs.ParSib) == Links)
+    {
         return &(Ptr->Refs.ParSib);
 
-    //
-    //  otherwise we have two children so return the address of the ParSib
-    //  of the second child.
-    //
-
-    } else {
-        return &(MakeIntoPointer(Ptr->Refs.ParSib)->Refs.ParSib);
-
+        //
+        //  otherwise we have two children so return the address of the ParSib
+        //  of the second child.
+        //
     }
-
+    else
+    {
+        return &(MakeIntoPointer(Ptr->Refs.ParSib)->Refs.ParSib);
+    }
 }
 
-
-VOID
-TriSwapSplayLinks (
-    IN PTRI_SPLAY_LINKS Link1,
-    IN PTRI_SPLAY_LINKS Link2
-    )
+
+VOID TriSwapSplayLinks(IN PTRI_SPLAY_LINKS Link1, IN PTRI_SPLAY_LINKS Link2)
 
 {
     PULONG Parent1ChildRef;
@@ -824,12 +810,10 @@ TriSwapSplayLinks (
     //  link2 have a parsib pointer to link1
     //
 
-    if ((TriIsRoot(Link1)) ||
-        (TriParent(Link2) == Link1) ||
-        (MakeIntoPointer(Link1->Refs.ParSib) == Link2)) {
+    if ((TriIsRoot(Link1)) || (TriParent(Link2) == Link1) || (MakeIntoPointer(Link1->Refs.ParSib) == Link2))
+    {
 
         SwapPointers(Link1, Link2);
-
     }
 
     //
@@ -852,11 +836,14 @@ TriSwapSplayLinks (
     //  Each case will be handled separately
     //
 
-    if (TriParent(Link1) != Link2) {
+    if (TriParent(Link1) != Link2)
+    {
 
-        if (!TriIsRoot(Link2)) {
+        if (!TriIsRoot(Link2))
+        {
 
-            if (MakeIntoPointer(Link2->Refs.ParSib) != Link1) {
+            if (MakeIntoPointer(Link2->Refs.ParSib) != Link1)
+            {
 
                 //
                 //  Case 1 - Link1 is not a child of link2,
@@ -874,8 +861,9 @@ TriSwapSplayLinks (
                 SetRefViaPointer(Parent2ChildRef, Link1);
                 SetRefViaPointer(Child1ParSibRef, Link2);
                 SetRefViaPointer(Child2ParSibRef, Link1);
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  Case 2 - Link1 is not a child of link2,
@@ -892,10 +880,10 @@ TriSwapSplayLinks (
                 *Parent2ChildRef = MakeIntoLeftChildRef(Link1);
                 Link2->Refs.ParSib = Link1->Refs.ParSib;
                 Link1->Refs.ParSib = MakeIntoSiblingRef(Link2);
-
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             //  Case 3 - Link1 is not a child of link2, and
@@ -911,15 +899,16 @@ TriSwapSplayLinks (
             SetRefViaPointer(Child1ParSibRef, Link2);
             SetRefViaPointer(Child2ParSibRef, Link1);
             SetRefViaPointer(Parent1ChildRef, Link2);
-
         }
+    }
+    else
+    { // TriParent(Link1) == Link2
 
-    } else { // TriParent(Link1) == Link2
+        if (MakeIntoPointer(Link2->Refs.Child) == Link1 && MakeIntoPointer(Link1->Refs.ParSib) == Link2)
+        { // Link1 is an only child
 
-        if (MakeIntoPointer(Link2->Refs.Child) == Link1 &&
-            MakeIntoPointer(Link1->Refs.ParSib) == Link2) { // Link1 is an only child
-
-            if (!TriIsRoot(Link2)) {
+            if (!TriIsRoot(Link2))
+            {
 
                 //
                 //  Case 4 - Link1 is an only child of link2, and
@@ -934,8 +923,9 @@ TriSwapSplayLinks (
                 Link2->Refs.ParSib = MakeIntoParentRef(Link1);
                 SwapRefsButKeepFlags(Link1->Refs.Child, Link2->Refs.Child);
                 SetRefViaPointer(&Link1->Refs.Child, Link2);
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  Case 5 - Link1 is an only child of link2, and
@@ -948,12 +938,13 @@ TriSwapSplayLinks (
                 Link2->Refs.ParSib = MakeIntoParentRef(Link1);
                 SwapRefsButKeepFlags(Link1->Refs.Child, Link2->Refs.Child);
                 SetRefViaPointer(&Link1->Refs.Child, Link2);
-
             }
+        }
+        else if (TriIsLeftChild(Link1))
+        { // and link1 has a sibling
 
-        } else if (TriIsLeftChild(Link1)) {  // and link1 has a sibling
-
-            if (!TriIsRoot(Link2)) {
+            if (!TriIsRoot(Link2))
+            {
 
                 //
                 //  Case 6 - Link1 is a left child of link2 (has a sibling), and
@@ -969,8 +960,9 @@ TriSwapSplayLinks (
                 Link2->Refs.Child = Link1->Refs.Child;
                 Link1->Refs.Child = MakeIntoLeftChildRef(Link2);
                 SwapUlongs(Link1->Refs.ParSib, Link2->Refs.ParSib);
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  Case 7 - Link1 is a left child of link2 (has a sibling), and
@@ -985,12 +977,13 @@ TriSwapSplayLinks (
                 Link1->Refs.Child = MakeIntoLeftChildRef(Link2);
                 Link2->Refs.ParSib = Link1->Refs.ParSib;
                 Link1->Refs.ParSib = MakeIntoParentRef(Link1);
-
             }
+        }
+        else
+        { // TriIsRightChild(Link1) and Link1 has a sibling
 
-        } else { // TriIsRightChild(Link1) and Link1 has a sibling
-
-            if (!TriIsRoot(Link2)) {
+            if (!TriIsRoot(Link2))
+            {
 
                 //
                 //  Case 8 - Link1 is a right child of link2 (has a sibling), and
@@ -1006,8 +999,9 @@ TriSwapSplayLinks (
                 SwapUlongs(Link1->Refs.Child, Link2->Refs.Child);
                 Link1->Refs.ParSib = Link2->Refs.ParSib;
                 Link2->Refs.ParSib = MakeIntoParentRef(Link1);
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  Case 9 - Link1 is a right child of link2 (has a sibling), and
@@ -1021,27 +1015,20 @@ TriSwapSplayLinks (
                 SwapUlongs(Link1->Refs.Child, Link2->Refs.Child);
                 Link1->Refs.ParSib = MakeIntoParentRef(Link1);
                 Link1->Refs.ParSib = MakeIntoParentRef(Link1);
-
             }
-
         }
-
     }
-
 }
 
-
-VOID
-TriRotateRight (
-    IN PTRI_SPLAY_LINKS Links
-    )
+
+VOID TriRotateRight(IN PTRI_SPLAY_LINKS Links)
 
 {
     BOOLEAN IsRoot;
     PULONG ParentChildRef;
     ULONG SavedParSibRef;
     PTRI_SPLAY_LINKS LeftChild;
-    PTRI_SPLAY_LINKS a,b,c;
+    PTRI_SPLAY_LINKS a, b, c;
 
     //
     //  We perform the following rotation
@@ -1063,9 +1050,12 @@ TriRotateRight (
     //  back ref via our parent.
     //
 
-    if (TriIsRoot(Links)) {
+    if (TriIsRoot(Links))
+    {
         IsRoot = TRUE;
-    } else {
+    }
+    else
+    {
         IsRoot = FALSE;
         ParentChildRef = TriAddressOfBackRefViaParent(Links);
         SavedParSibRef = Links->Refs.ParSib;
@@ -1082,7 +1072,8 @@ TriRotateRight (
     b = TriRightChild(LeftChild);
     c = TriRightChild(Links);
 
-    if        ((a != NULL) && (b != NULL) && (c != NULL)) {
+    if ((a != NULL) && (b != NULL) && (c != NULL))
+    {
 
         //
         //  Handle the following case
@@ -1098,8 +1089,9 @@ TriRotateRight (
         b->Refs.ParSib = MakeIntoSiblingRef(c);
         Links->Refs.Child = MakeIntoLeftChildRef(b);
         Links->Refs.ParSib = MakeIntoParentRef(LeftChild);
-
-    } else if ((a != NULL) && (b != NULL) && (c == NULL)) {
+    }
+    else if ((a != NULL) && (b != NULL) && (c == NULL))
+    {
 
         //
         //  Handle the following case
@@ -1115,8 +1107,9 @@ TriRotateRight (
         b->Refs.ParSib = MakeIntoParentRef(Links);
         Links->Refs.Child = MakeIntoLeftChildRef(b);
         Links->Refs.ParSib = MakeIntoParentRef(LeftChild);
-
-    } else if ((a != NULL) && (b == NULL) && (c != NULL)) {
+    }
+    else if ((a != NULL) && (b == NULL) && (c != NULL))
+    {
 
         //
         //  Handle the following case
@@ -1131,8 +1124,9 @@ TriRotateRight (
         a->Refs.ParSib = MakeIntoSiblingRef(Links);
         Links->Refs.Child = MakeIntoRightChildRef(c);
         Links->Refs.ParSib = MakeIntoParentRef(LeftChild);
-
-    } else if ((a != NULL) && (b == NULL) && (c == NULL)) {
+    }
+    else if ((a != NULL) && (b == NULL) && (c == NULL))
+    {
 
         //
         //  Handle the following case
@@ -1147,8 +1141,9 @@ TriRotateRight (
         a->Refs.ParSib = MakeIntoSiblingRef(Links);
         Links->Refs.Child = 0L;
         Links->Refs.ParSib = MakeIntoParentRef(LeftChild);
-
-    } else if ((a == NULL) && (b != NULL) && (c != NULL)) {
+    }
+    else if ((a == NULL) && (b != NULL) && (c != NULL))
+    {
 
         //
         //  Handle the following case
@@ -1164,8 +1159,9 @@ TriRotateRight (
         Links->Refs.Child = MakeIntoLeftChildRef(b);
         Links->Refs.ParSib = MakeIntoParentRef(LeftChild);
         LeftChild->Refs.Child = MakeIntoRightChildRef(Links);
-
-    } else if ((a == NULL) && (b != NULL) && (c == NULL)) {
+    }
+    else if ((a == NULL) && (b != NULL) && (c == NULL))
+    {
 
         //
         //  Handle the following case
@@ -1181,8 +1177,9 @@ TriRotateRight (
         Links->Refs.Child = MakeIntoLeftChildRef(b);
         Links->Refs.ParSib = MakeIntoParentRef(LeftChild);
         LeftChild->Refs.Child = MakeIntoRightChildRef(Links);
-
-    } else if ((a == NULL) && (b == NULL) && (c != NULL)) {
+    }
+    else if ((a == NULL) && (b == NULL) && (c != NULL))
+    {
 
         //
         //  Handle the following case
@@ -1197,8 +1194,9 @@ TriRotateRight (
         Links->Refs.Child = MakeIntoRightChildRef(c);
         Links->Refs.ParSib = MakeIntoParentRef(LeftChild);
         LeftChild->Refs.Child = MakeIntoRightChildRef(Links);
-
-    } else if ((a == NULL) && (b == NULL) && (c == NULL)) {
+    }
+    else if ((a == NULL) && (b == NULL) && (c == NULL))
+    {
 
         //
         //  Handle the following case
@@ -1212,30 +1210,28 @@ TriRotateRight (
         Links->Refs.Child = 0L;
         Links->Refs.ParSib = MakeIntoParentRef(LeftChild);
         LeftChild->Refs.Child = MakeIntoRightChildRef(Links);
-
     }
 
-    if (IsRoot) {
+    if (IsRoot)
+    {
         LeftChild->Refs.ParSib = MakeIntoParentRef(LeftChild);
-    } else {
+    }
+    else
+    {
         LeftChild->Refs.ParSib = SavedParSibRef;
         SetRefViaPointer(ParentChildRef, LeftChild);
     }
-
 }
 
-
-VOID
-TriRotateLeft (
-    IN PTRI_SPLAY_LINKS Links
-    )
+
+VOID TriRotateLeft(IN PTRI_SPLAY_LINKS Links)
 
 {
     BOOLEAN IsRoot;
     PULONG ParentChildRef;
     ULONG SavedParSibRef;
     PTRI_SPLAY_LINKS RightChild;
-    PTRI_SPLAY_LINKS a,b,c;
+    PTRI_SPLAY_LINKS a, b, c;
 
     //
     //  We perform the following rotation
@@ -1257,9 +1253,12 @@ TriRotateLeft (
     //  back ref via our parent.
     //
 
-    if (TriIsRoot(Links)) {
+    if (TriIsRoot(Links))
+    {
         IsRoot = TRUE;
-    } else {
+    }
+    else
+    {
         IsRoot = FALSE;
         ParentChildRef = TriAddressOfBackRefViaParent(Links);
         SavedParSibRef = Links->Refs.ParSib;
@@ -1276,7 +1275,8 @@ TriRotateLeft (
     b = TriLeftChild(RightChild);
     c = TriRightChild(RightChild);
 
-    if        ((a != NULL) && (b != NULL) && (c != NULL)) {
+    if ((a != NULL) && (b != NULL) && (c != NULL))
+    {
 
         //
         //  Handle the following case
@@ -1292,8 +1292,9 @@ TriRotateLeft (
         b->Refs.ParSib = MakeIntoParentRef(Links);
         Links->Refs.ParSib = MakeIntoSiblingRef(c);
         RightChild->Refs.Child = MakeIntoLeftChildRef(Links);
-
-    } else if ((a != NULL) && (b != NULL) && (c == NULL)) {
+    }
+    else if ((a != NULL) && (b != NULL) && (c == NULL))
+    {
 
         //
         //  Handle the following case
@@ -1309,8 +1310,9 @@ TriRotateLeft (
         b->Refs.ParSib = MakeIntoParentRef(Links);
         Links->Refs.ParSib = MakeIntoParentRef(RightChild);
         RightChild->Refs.Child = MakeIntoLeftChildRef(Links);
-
-    } else if ((a != NULL) && (b == NULL) && (c != NULL)) {
+    }
+    else if ((a != NULL) && (b == NULL) && (c != NULL))
+    {
 
         //
         //  Handle the following case
@@ -1325,8 +1327,9 @@ TriRotateLeft (
         a->Refs.ParSib = MakeIntoParentRef(Links);
         Links->Refs.ParSib = MakeIntoSiblingRef(c);
         RightChild->Refs.Child = MakeIntoLeftChildRef(Links);
-
-    } else if ((a != NULL) && (b == NULL) && (c == NULL)) {
+    }
+    else if ((a != NULL) && (b == NULL) && (c == NULL))
+    {
 
         //
         //  Handle the following case
@@ -1341,8 +1344,9 @@ TriRotateLeft (
         a->Refs.ParSib = MakeIntoParentRef(Links);
         Links->Refs.ParSib = MakeIntoParentRef(RightChild);
         RightChild->Refs.Child = MakeIntoLeftChildRef(Links);
-
-    } else if ((a == NULL) && (b != NULL) && (c != NULL)) {
+    }
+    else if ((a == NULL) && (b != NULL) && (c != NULL))
+    {
 
         //
         //  Handle the following case
@@ -1358,8 +1362,9 @@ TriRotateLeft (
         Links->Refs.Child = MakeIntoRightChildRef(b);
         Links->Refs.ParSib = MakeIntoSiblingRef(c);
         RightChild->Refs.Child = MakeIntoLeftChildRef(Links);
-
-    } else if ((a == NULL) && (b != NULL) && (c == NULL)) {
+    }
+    else if ((a == NULL) && (b != NULL) && (c == NULL))
+    {
 
         //
         //  Handle the following case
@@ -1375,8 +1380,9 @@ TriRotateLeft (
         Links->Refs.Child = MakeIntoRightChildRef(b);
         Links->Refs.ParSib = MakeIntoParentRef(RightChild);
         RightChild->Refs.Child = MakeIntoLeftChildRef(Links);
-
-    } else if ((a == NULL) && (b == NULL) && (c != NULL)) {
+    }
+    else if ((a == NULL) && (b == NULL) && (c != NULL))
+    {
 
         //
         //  Handle the following case
@@ -1391,8 +1397,9 @@ TriRotateLeft (
         Links->Refs.Child = 0L;
         Links->Refs.ParSib = MakeIntoSiblingRef(c);
         RightChild->Refs.Child = MakeIntoLeftChildRef(Links);
-
-    } else if ((a == NULL) && (b == NULL) && (c == NULL)) {
+    }
+    else if ((a == NULL) && (b == NULL) && (c == NULL))
+    {
 
         //
         //  Handle the following case
@@ -1407,14 +1414,15 @@ TriRotateLeft (
         Links->Refs.Child = 0L;
         Links->Refs.ParSib = MakeIntoParentRef(RightChild);
         RightChild->Refs.Child = MakeIntoLeftChildRef(Links);
-
     }
 
-    if (IsRoot) {
+    if (IsRoot)
+    {
         RightChild->Refs.ParSib = MakeIntoParentRef(RightChild);
-    } else {
+    }
+    else
+    {
         RightChild->Refs.ParSib = SavedParSibRef;
         SetRefViaPointer(ParentChildRef, RightChild);
     }
-
 }

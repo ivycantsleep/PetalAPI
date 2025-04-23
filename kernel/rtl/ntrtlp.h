@@ -47,7 +47,7 @@ Revision History:
 
 #ifdef BLDR_KERNEL_RUNTIME
 #undef try
-#define try if(1)
+#define try if (1)
 #undef except
 #define except(a) else if (0)
 #undef finally
@@ -64,92 +64,51 @@ Revision History:
 //  Machine state reporting.  See machine specific includes for more.
 //
 
-VOID
-RtlpGetStackLimits (
-    OUT PULONG_PTR LowLimit,
-    OUT PULONG_PTR HighLimit
-    );
+VOID RtlpGetStackLimits(OUT PULONG_PTR LowLimit, OUT PULONG_PTR HighLimit);
 
 #if defined(_WIN64)
 
 PRUNTIME_FUNCTION
-RtlpLookupFunctionTable (
-    IN PVOID ControlPc,
-    OUT PVOID *ImageBase,
+RtlpLookupFunctionTable(IN PVOID ControlPc, OUT PVOID *ImageBase,
 
 #if defined(_IA64_)
 
-    OUT PULONG64 Gp,
+                        OUT PULONG64 Gp,
 #endif
 
-    OUT PULONG SizeOfTable
-    );
+                        OUT PULONG SizeOfTable);
 
 extern PVOID RtlpFunctionAddressTable[];
 extern UNWIND_HISTORY_TABLE RtlpUnwindHistoryTable;
 
 #endif
 
-LONG
-LdrpCompareResourceNames(
-    IN ULONG ResourceName,
-    IN const IMAGE_RESOURCE_DIRECTORY* ResourceDirectory,
-    IN const IMAGE_RESOURCE_DIRECTORY_ENTRY* ResourceDirectoryEntry
-    );
+LONG LdrpCompareResourceNames(IN ULONG ResourceName, IN const IMAGE_RESOURCE_DIRECTORY *ResourceDirectory,
+                              IN const IMAGE_RESOURCE_DIRECTORY_ENTRY *ResourceDirectoryEntry);
 
 NTSTATUS
-LdrpSearchResourceSection(
-    IN PVOID DllHandle,
-    IN const ULONG_PTR* ResourceIdPath,
-    IN ULONG ResourceIdPathLength,
-    IN BOOLEAN FindDirectoryEntry,
-    OUT PVOID *ResourceDirectoryOrData
-    );
+LdrpSearchResourceSection(IN PVOID DllHandle, IN const ULONG_PTR *ResourceIdPath, IN ULONG ResourceIdPathLength,
+                          IN BOOLEAN FindDirectoryEntry, OUT PVOID *ResourceDirectoryOrData);
 
-LONG
-LdrpCompareResourceNames_U(
-    IN ULONG_PTR ResourceName,
-    IN const IMAGE_RESOURCE_DIRECTORY* ResourceDirectory,
-    IN const IMAGE_RESOURCE_DIRECTORY_ENTRY* ResourceDirectoryEntry
-    );
+LONG LdrpCompareResourceNames_U(IN ULONG_PTR ResourceName, IN const IMAGE_RESOURCE_DIRECTORY *ResourceDirectory,
+                                IN const IMAGE_RESOURCE_DIRECTORY_ENTRY *ResourceDirectoryEntry);
 
 NTSTATUS
-LdrpSearchResourceSection_U(
-    IN PVOID DllHandle,
-    IN const ULONG_PTR* ResourceIdPath,
-    IN ULONG ResourceIdPathLength,
-    IN ULONG Flags,
-    OUT PVOID *ResourceDirectoryOrData
-    );
+LdrpSearchResourceSection_U(IN PVOID DllHandle, IN const ULONG_PTR *ResourceIdPath, IN ULONG ResourceIdPathLength,
+                            IN ULONG Flags, OUT PVOID *ResourceDirectoryOrData);
 
 NTSTATUS
-LdrpAccessResourceData(
-    IN PVOID DllHandle,
-    IN const IMAGE_RESOURCE_DATA_ENTRY* ResourceDataEntry,
-    OUT PVOID *Address OPTIONAL,
-    OUT PULONG Size OPTIONAL
-    );
+LdrpAccessResourceData(IN PVOID DllHandle, IN const IMAGE_RESOURCE_DATA_ENTRY *ResourceDataEntry,
+                       OUT PVOID *Address OPTIONAL, OUT PULONG Size OPTIONAL);
 
 NTSTATUS
-LdrpAccessResourceDataNoMultipleLanguage(
-    IN PVOID DllHandle,
-    IN const IMAGE_RESOURCE_DATA_ENTRY* ResourceDataEntry,
-    OUT PVOID *Address OPTIONAL,
-    OUT PULONG Size OPTIONAL
-    );
+LdrpAccessResourceDataNoMultipleLanguage(IN PVOID DllHandle, IN const IMAGE_RESOURCE_DATA_ENTRY *ResourceDataEntry,
+                                         OUT PVOID *Address OPTIONAL, OUT PULONG Size OPTIONAL);
 
-VOID
-RtlpAnsiPszToUnicodePsz(
-    IN PCHAR AnsiString,
-    IN WCHAR *UnicodeString,
-    IN USHORT AnsiStringLength
-    );
+VOID RtlpAnsiPszToUnicodePsz(IN PCHAR AnsiString, IN WCHAR *UnicodeString, IN USHORT AnsiStringLength);
 
 BOOLEAN
-RtlpDidUnicodeToOemWork(
-    IN PCOEM_STRING OemString,
-    IN PCUNICODE_STRING UnicodeString
-    );
+RtlpDidUnicodeToOemWork(IN PCOEM_STRING OemString, IN PCUNICODE_STRING UnicodeString);
 
 extern CONST CCHAR RtlpBitsClearAnywhere[256];
 extern CONST CCHAR RtlpBitsClearLow[256];
@@ -161,7 +120,7 @@ extern CONST CCHAR RtlpBitsClearTotal[256];
 //  a byte
 //
 
-#define RtlpBitSetAnywhere( Byte ) RtlpBitsClearAnywhere[ (~(Byte) & 0xFF) ]
+#define RtlpBitSetAnywhere(Byte) RtlpBitsClearAnywhere[(~(Byte) & 0xFF)]
 
 
 //
@@ -169,7 +128,7 @@ extern CONST CCHAR RtlpBitsClearTotal[256];
 //  (i.e., 1) in a byte
 //
 
-#define RtlpBitsSetLow( Byte ) RtlpBitsClearLow[ (~(Byte) & 0xFF) ]
+#define RtlpBitsSetLow(Byte) RtlpBitsClearLow[(~(Byte) & 0xFF)]
 
 
 //
@@ -177,15 +136,14 @@ extern CONST CCHAR RtlpBitsClearTotal[256];
 //  (i.e., 1) in a byte
 //
 
-#define RtlpBitsSetHigh( Byte ) RtlpBitsClearHigh[ (~(Byte) & 0xFF) ]
+#define RtlpBitsSetHigh(Byte) RtlpBitsClearHigh[(~(Byte) & 0xFF)]
 
 
 //
 //  Macro that tells how many set bits (i.e., 1) there are in a byte
 //
 
-#define RtlpBitsSetTotal( Byte ) RtlpBitsClearTotal[ (~(Byte) & 0xFF) ]
-
+#define RtlpBitsSetTotal(Byte) RtlpBitsClearTotal[(~(Byte) & 0xFF)]
 
 
 //
@@ -200,11 +158,11 @@ extern PUSHORT Nls844UnicodeLowercaseTable;
 // Macros for Upper Casing a Unicode Code Point.
 //
 
-#define LOBYTE(w)           ((UCHAR)((w)))
-#define HIBYTE(w)           ((UCHAR)(((USHORT)((w)) >> 8) & 0xFF))
-#define GET8(w)             ((ULONG)(((w) >> 8) & 0xff))
-#define GETHI4(w)           ((ULONG)(((w) >> 4) & 0xf))
-#define GETLO4(w)           ((ULONG)((w) & 0xf))
+#define LOBYTE(w) ((UCHAR)((w)))
+#define HIBYTE(w) ((UCHAR)(((USHORT)((w)) >> 8) & 0xFF))
+#define GET8(w) ((ULONG)(((w) >> 8) & 0xff))
+#define GETHI4(w) ((ULONG)(((w) >> 4) & 0xf))
+#define GETLO4(w) ((ULONG)((w) & 0xf))
 
 /***************************************************************************\
 * TRAVERSE844W
@@ -223,8 +181,7 @@ extern PUSHORT Nls844UnicodeLowercaseTable;
 * 05-31-91    JulieB    Created.
 \***************************************************************************/
 
-#define TRAVERSE844W(pTable, wch)                                               \
-    ( (pTable)[(pTable)[(pTable)[GET8((wch))] + GETHI4((wch))] + GETLO4((wch))] )
+#define TRAVERSE844W(pTable, wch) ((pTable)[(pTable)[(pTable)[GET8((wch))] + GETHI4((wch))] + GETLO4((wch))])
 
 //
 // NLS_UPCASE - Based on julieb's macros in nls.h
@@ -236,29 +193,15 @@ extern PUSHORT Nls844UnicodeLowercaseTable;
 // 'a' and 2 compares for lowercase a-z.
 //
 
-#define NLS_UPCASE(wch) (                                                   \
-    ((wch) < 'a' ?                                                          \
-        (wch)                                                               \
-    :                                                                       \
-        ((wch) <= 'z' ?                                                     \
-            (wch) - ('a'-'A')                                               \
-        :                                                                   \
-            ((WCHAR)((wch) + TRAVERSE844W(Nls844UnicodeUpcaseTable,(wch)))) \
-        )                                                                   \
-    )                                                                       \
-)
+#define NLS_UPCASE(wch) \
+    (((wch) < 'a'       \
+          ? (wch)       \
+          : ((wch) <= 'z' ? (wch) - ('a' - 'A') : ((WCHAR)((wch) + TRAVERSE844W(Nls844UnicodeUpcaseTable, (wch)))))))
 
-#define NLS_DOWNCASE(wch) (                                                 \
-    ((wch) < 'A' ?                                                          \
-        (wch)                                                               \
-    :                                                                       \
-        ((wch) <= 'Z' ?                                                     \
-            (wch) + ('a'-'A')                                               \
-        :                                                                   \
-            ((WCHAR)((wch) + TRAVERSE844W(Nls844UnicodeLowercaseTable,(wch)))) \
-        )                                                                   \
-    )                                                                       \
-)
+#define NLS_DOWNCASE(wch)                               \
+    (((wch) < 'A' ? (wch)                               \
+                  : ((wch) <= 'Z' ? (wch) + ('a' - 'A') \
+                                  : ((WCHAR)((wch) + TRAVERSE844W(Nls844UnicodeLowercaseTable, (wch)))))))
 
 #if DBG && defined(NTOS_KERNEL_RUNTIME)
 #define RTL_PAGED_CODE() PAGED_CODE()
@@ -266,178 +209,101 @@ extern PUSHORT Nls844UnicodeLowercaseTable;
 #define RTL_PAGED_CODE()
 #endif
 
-
+
 //
 // The follow definition is used to support the Rtl compression engine
 // Every compression format that NT supports will need to supply
 // these set of routines in order to be called by NtRtl.
 //
 
-typedef NTSTATUS (*PRTL_COMPRESS_WORKSPACE_SIZE) (
-    IN USHORT CompressionEngine,
-    OUT PULONG CompressBufferWorkSpaceSize,
-    OUT PULONG CompressFragmentWorkSpaceSize
-    );
+typedef NTSTATUS (*PRTL_COMPRESS_WORKSPACE_SIZE)(IN USHORT CompressionEngine, OUT PULONG CompressBufferWorkSpaceSize,
+                                                 OUT PULONG CompressFragmentWorkSpaceSize);
 
-typedef NTSTATUS (*PRTL_COMPRESS_BUFFER) (
-    IN USHORT CompressionEngine,
-    IN PUCHAR UncompressedBuffer,
-    IN ULONG UncompressedBufferSize,
-    OUT PUCHAR CompressedBuffer,
-    IN ULONG CompressedBufferSize,
-    IN ULONG UncompressedChunkSize,
-    OUT PULONG FinalCompressedSize,
-    IN PVOID WorkSpace
-    );
+typedef NTSTATUS (*PRTL_COMPRESS_BUFFER)(IN USHORT CompressionEngine, IN PUCHAR UncompressedBuffer,
+                                         IN ULONG UncompressedBufferSize, OUT PUCHAR CompressedBuffer,
+                                         IN ULONG CompressedBufferSize, IN ULONG UncompressedChunkSize,
+                                         OUT PULONG FinalCompressedSize, IN PVOID WorkSpace);
 
-typedef NTSTATUS (*PRTL_DECOMPRESS_BUFFER) (
-    OUT PUCHAR UncompressedBuffer,
-    IN ULONG UncompressedBufferSize,
-    IN PUCHAR CompressedBuffer,
-    IN ULONG CompressedBufferSize,
-    OUT PULONG FinalUncompressedSize
-    );
+typedef NTSTATUS (*PRTL_DECOMPRESS_BUFFER)(OUT PUCHAR UncompressedBuffer, IN ULONG UncompressedBufferSize,
+                                           IN PUCHAR CompressedBuffer, IN ULONG CompressedBufferSize,
+                                           OUT PULONG FinalUncompressedSize);
 
-typedef NTSTATUS (*PRTL_DECOMPRESS_FRAGMENT) (
-    OUT PUCHAR UncompressedFragment,
-    IN ULONG UncompressedFragmentSize,
-    IN PUCHAR CompressedBuffer,
-    IN ULONG CompressedBufferSize,
-    IN ULONG FragmentOffset,
-    OUT PULONG FinalUncompressedSize,
-    IN PVOID WorkSpace
-    );
+typedef NTSTATUS (*PRTL_DECOMPRESS_FRAGMENT)(OUT PUCHAR UncompressedFragment, IN ULONG UncompressedFragmentSize,
+                                             IN PUCHAR CompressedBuffer, IN ULONG CompressedBufferSize,
+                                             IN ULONG FragmentOffset, OUT PULONG FinalUncompressedSize,
+                                             IN PVOID WorkSpace);
 
-typedef NTSTATUS (*PRTL_DESCRIBE_CHUNK) (
-    IN OUT PUCHAR *CompressedBuffer,
-    IN PUCHAR EndOfCompressedBufferPlus1,
-    OUT PUCHAR *ChunkBuffer,
-    OUT PULONG ChunkSize
-    );
+typedef NTSTATUS (*PRTL_DESCRIBE_CHUNK)(IN OUT PUCHAR *CompressedBuffer, IN PUCHAR EndOfCompressedBufferPlus1,
+                                        OUT PUCHAR *ChunkBuffer, OUT PULONG ChunkSize);
 
-typedef NTSTATUS (*PRTL_RESERVE_CHUNK) (
-    IN OUT PUCHAR *CompressedBuffer,
-    IN PUCHAR EndOfCompressedBufferPlus1,
-    OUT PUCHAR *ChunkBuffer,
-    IN ULONG ChunkSize
-    );
+typedef NTSTATUS (*PRTL_RESERVE_CHUNK)(IN OUT PUCHAR *CompressedBuffer, IN PUCHAR EndOfCompressedBufferPlus1,
+                                       OUT PUCHAR *ChunkBuffer, IN ULONG ChunkSize);
 
 //
 // Here is the declarations of the LZNT1 routines
 //
 
 NTSTATUS
-RtlCompressWorkSpaceSizeLZNT1 (
-    IN USHORT CompressionEngine,
-    OUT PULONG CompressBufferWorkSpaceSize,
-    OUT PULONG CompressFragmentWorkSpaceSize
-    );
+RtlCompressWorkSpaceSizeLZNT1(IN USHORT CompressionEngine, OUT PULONG CompressBufferWorkSpaceSize,
+                              OUT PULONG CompressFragmentWorkSpaceSize);
 
 NTSTATUS
-RtlCompressBufferLZNT1 (
-    IN USHORT CompressionEngine,
-    IN PUCHAR UncompressedBuffer,
-    IN ULONG UncompressedBufferSize,
-    OUT PUCHAR CompressedBuffer,
-    IN ULONG CompressedBufferSize,
-    IN ULONG UncompressedChunkSize,
-    OUT PULONG FinalCompressedSize,
-    IN PVOID WorkSpace
-    );
+RtlCompressBufferLZNT1(IN USHORT CompressionEngine, IN PUCHAR UncompressedBuffer, IN ULONG UncompressedBufferSize,
+                       OUT PUCHAR CompressedBuffer, IN ULONG CompressedBufferSize, IN ULONG UncompressedChunkSize,
+                       OUT PULONG FinalCompressedSize, IN PVOID WorkSpace);
 
 NTSTATUS
-RtlDecompressBufferLZNT1 (
-    OUT PUCHAR UncompressedBuffer,
-    IN ULONG UncompressedBufferSize,
-    IN PUCHAR CompressedBuffer,
-    IN ULONG CompressedBufferSize,
-    OUT PULONG FinalUncompressedSize
-    );
+RtlDecompressBufferLZNT1(OUT PUCHAR UncompressedBuffer, IN ULONG UncompressedBufferSize, IN PUCHAR CompressedBuffer,
+                         IN ULONG CompressedBufferSize, OUT PULONG FinalUncompressedSize);
 
 NTSTATUS
-RtlDecompressFragmentLZNT1 (
-    OUT PUCHAR UncompressedFragment,
-    IN ULONG UncompressedFragmentSize,
-    IN PUCHAR CompressedBuffer,
-    IN ULONG CompressedBufferSize,
-    IN ULONG FragmentOffset,
-    OUT PULONG FinalUncompressedSize,
-    IN PVOID WorkSpace
-    );
+RtlDecompressFragmentLZNT1(OUT PUCHAR UncompressedFragment, IN ULONG UncompressedFragmentSize,
+                           IN PUCHAR CompressedBuffer, IN ULONG CompressedBufferSize, IN ULONG FragmentOffset,
+                           OUT PULONG FinalUncompressedSize, IN PVOID WorkSpace);
 
 NTSTATUS
-RtlDescribeChunkLZNT1 (
-    IN OUT PUCHAR *CompressedBuffer,
-    IN PUCHAR EndOfCompressedBufferPlus1,
-    OUT PUCHAR *ChunkBuffer,
-    OUT PULONG ChunkSize
-    );
+RtlDescribeChunkLZNT1(IN OUT PUCHAR *CompressedBuffer, IN PUCHAR EndOfCompressedBufferPlus1, OUT PUCHAR *ChunkBuffer,
+                      OUT PULONG ChunkSize);
 
 NTSTATUS
-RtlReserveChunkLZNT1 (
-    IN OUT PUCHAR *CompressedBuffer,
-    IN PUCHAR EndOfCompressedBufferPlus1,
-    OUT PUCHAR *ChunkBuffer,
-    IN ULONG ChunkSize
-    );
+RtlReserveChunkLZNT1(IN OUT PUCHAR *CompressedBuffer, IN PUCHAR EndOfCompressedBufferPlus1, OUT PUCHAR *ChunkBuffer,
+                     IN ULONG ChunkSize);
 
 
 NTSTATUS
-RtlpSecMemFreeVirtualMemory(
-    IN HANDLE ProcessHandle,
-    IN OUT PVOID *BaseAddress,
-    IN OUT PSIZE_T RegionSize,
-    IN ULONG FreeType
-     );
+RtlpSecMemFreeVirtualMemory(IN HANDLE ProcessHandle, IN OUT PVOID *BaseAddress, IN OUT PSIZE_T RegionSize,
+                            IN ULONG FreeType);
 
 //
 // Define procedure prototypes for architecture specific debug support routines.
 //
 
 NTSTATUS
-DebugPrint(
-    IN PSTRING Output,
-    IN ULONG ComponentId,
-    IN ULONG Level
-    );
+DebugPrint(IN PSTRING Output, IN ULONG ComponentId, IN ULONG Level);
 
 ULONG
-DebugPrompt(
-    IN PSTRING Output,
-    IN PSTRING Input
-    );
+DebugPrompt(IN PSTRING Output, IN PSTRING Input);
 
-#endif  // _NTRTLP_
+#endif // _NTRTLP_
 
 //
 // Procedure prototype for exception logging routines.
 
 ULONG
-RtlpLogExceptionHandler(
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PCONTEXT ContextRecord,
-    IN ULONG_PTR ControlPc,
-    IN PVOID HandlerData,
-    IN ULONG Size
-    );
+RtlpLogExceptionHandler(IN PEXCEPTION_RECORD ExceptionRecord, IN PCONTEXT ContextRecord, IN ULONG_PTR ControlPc,
+                        IN PVOID HandlerData, IN ULONG Size);
 
-VOID
-RtlpLogLastExceptionDisposition(
-    IN ULONG LogIndex,
-    IN EXCEPTION_DISPOSITION Disposition
-    );
+VOID RtlpLogLastExceptionDisposition(IN ULONG LogIndex, IN EXCEPTION_DISPOSITION Disposition);
 
 #ifndef NTOS_KERNEL_RUNTIME
 
 BOOLEAN
-RtlCallVectoredExceptionHandlers(
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PCONTEXT ContextRecord
-    );
+RtlCallVectoredExceptionHandlers(IN PEXCEPTION_RECORD ExceptionRecord, IN PCONTEXT ContextRecord);
 
-#define NO_ALTERNATE_RESOURCE_MODULE    ((PVOID)(LONG_PTR)-1)
+#define NO_ALTERNATE_RESOURCE_MODULE ((PVOID)(LONG_PTR) - 1)
 
-typedef struct _ALT_RESOURCE_MODULE {
+typedef struct _ALT_RESOURCE_MODULE
+{
     //
     // Module handle for module known to application,
     // whose resource accesses we want to redirect.
@@ -454,18 +320,10 @@ typedef struct _ALT_RESOURCE_MODULE {
 } ALT_RESOURCE_MODULE, *PALT_RESOURCE_MODULE;
 
 BOOLEAN
-LdrpVerifyAlternateResourceModule(
-    IN PWSTR LangID,
-    IN PVOID Module,
-    IN PVOID AlternateModule,
-    IN LPWSTR BaseDllName
-    );
+LdrpVerifyAlternateResourceModule(IN PWSTR LangID, IN PVOID Module, IN PVOID AlternateModule, IN LPWSTR BaseDllName);
 
 BOOLEAN
-LdrpSetAlternateResourceModuleHandle(
-    IN PVOID Module,
-    IN PVOID AlternateModule
-    );
+LdrpSetAlternateResourceModuleHandle(IN PVOID Module, IN PVOID AlternateModule);
 #endif
 
 #define NUMBER_OF(x) (sizeof(x) / sizeof((x)[0]))
@@ -479,9 +337,6 @@ PCUNICODE_STRING RtlpGetImagePathName(VOID);
 #endif
 
 NTSTATUS
-RtlpThreadPoolGetActiveActivationContext(
-    PACTIVATION_CONTEXT* ActivationContext
-    );
+RtlpThreadPoolGetActiveActivationContext(PACTIVATION_CONTEXT *ActivationContext);
 
 #endif // !defined(NTOS_KERNEL_RUNTIME)
-

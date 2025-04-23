@@ -24,13 +24,7 @@ Revision History:
 
 #if defined(_X86_)
 LRESULT
-InternalCallWinProc(
-    WNDPROC proc,
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam
-    );
+InternalCallWinProc(WNDPROC proc, HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 /*
  * Bug 246472 - joejo
@@ -38,23 +32,13 @@ InternalCallWinProc(
  * C-Style instead of PASCAL.
  */
 HDDEDATA
-UserCallDDECallback(
-    PFNCALLBACK pfnDDECallback,
-    UINT wType,
-    UINT wFmt,
-    HCONV hConv,
-    HSZ hsz1,
-    HSZ hsz2,
-    HDDEDATA hData,
-    ULONG_PTR dwData1,
-    ULONG_PTR dwData2
-    );
+UserCallDDECallback(PFNCALLBACK pfnDDECallback, UINT wType, UINT wFmt, HCONV hConv, HSZ hsz1, HSZ hsz2, HDDEDATA hData,
+                    ULONG_PTR dwData1, ULONG_PTR dwData2);
 
 
 #else
 
-#define InternalCallWinProc(winproc, hwnd, message, wParam, lParam)    \
-    (winproc)(hwnd, message, wParam, lParam)
+#define InternalCallWinProc(winproc, hwnd, message, wParam, lParam) (winproc)(hwnd, message, wParam, lParam)
 
 
 #define UserCallDDECallback(pfnDDECallback, wType, wFmt, hConv, hsz1, hsz2, hData, dwData1, dwData2) \

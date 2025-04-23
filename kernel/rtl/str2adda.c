@@ -1,5 +1,5 @@
 //
-// Without this define, link errors can occur due to missing _pctype and 
+// Without this define, link errors can occur due to missing _pctype and
 // __mb_cur_max
 //
 #define _CTYPE_DISABLE_MACROS

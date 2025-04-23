@@ -44,62 +44,57 @@ UCHAR KiSystemCallExitAdjusted;
 BOOLEAN KiFastSystemCallIsIA32;
 BOOLEAN KiFastCallCopyDoneOnce = FALSE;
 
-VOID
-KeRestoreMtrr (
-    VOID
-    );
+VOID KeRestoreMtrr(VOID);
 
-VOID
-KeRestorePAT(
-    VOID
-    );
+VOID KeRestorePAT(VOID);
 //
 //
 // Internal format of the floating_save structure which is passed
 //
-typedef struct _CONTROL_WORD {
-    USHORT      ControlWord;
-    ULONG       MXCsr;
+typedef struct _CONTROL_WORD
+{
+    USHORT ControlWord;
+    ULONG MXCsr;
 } CONTROL_WORD, *PCONTROL_WORD;
 
-typedef struct {
-    UCHAR       Flags;
-    KIRQL       Irql;
-    KIRQL       PreviousNpxIrql;
-    UCHAR       Spare[2];
+typedef struct
+{
+    UCHAR Flags;
+    KIRQL Irql;
+    KIRQL PreviousNpxIrql;
+    UCHAR Spare[2];
 
-    union {
-        CONTROL_WORD    Fcw;
-        PFX_SAVE_AREA   Context;
-        ULONG_PTR       ContextAddressAsULONG;
+    union
+    {
+        CONTROL_WORD Fcw;
+        PFX_SAVE_AREA Context;
+        ULONG_PTR ContextAddressAsULONG;
     } u;
-    ULONG       Cr0NpxState;
+    ULONG Cr0NpxState;
 
-    PKTHREAD    Thread;         // debug
+    PKTHREAD Thread; // debug
 
 } FLOAT_SAVE, *PFLOAT_SAVE;
 
 
-#define FLOAT_SAVE_COMPLETE_CONTEXT     0x01
-#define FLOAT_SAVE_FREE_CONTEXT_HEAP    0x02
-#define FLOAT_SAVE_VALID                0x04
-#define FLOAT_SAVE_ALIGN_ADJUSTED       0x08
-#define FLOAT_SAVE_RESERVED             0xF0
+#define FLOAT_SAVE_COMPLETE_CONTEXT 0x01
+#define FLOAT_SAVE_FREE_CONTEXT_HEAP 0x02
+#define FLOAT_SAVE_VALID 0x04
+#define FLOAT_SAVE_ALIGN_ADJUSTED 0x08
+#define FLOAT_SAVE_RESERVED 0xF0
 
 //
 // Allocate Pool returns a pointer which is 8 byte aligned.  The
-// floating point save area needs to be 16 byte aligned.  When 
+// floating point save area needs to be 16 byte aligned.  When
 // allocating the save area we add the difference and adjust if
 // needed.
 //
 
-#define ALIGN_ADJUST                    8
+#define ALIGN_ADJUST 8
 
 
 NTSTATUS
-KeSaveFloatingPointState (
-    OUT PKFLOATING_SAVE     PublicFloatSave
-    )
+KeSaveFloatingPointState(OUT PKFLOATING_SAVE PublicFloatSave)
 /*++
 
 Routine Description:
@@ -117,18 +112,19 @@ Return Value:
 {
     PKTHREAD Thread;
     PFX_SAVE_AREA NpxFrame;
-    KIRQL                   Irql;
-    USHORT                  ControlWord;
-    ULONG                   MXCsr;
-    PKPRCB                  Prcb;
-    PFLOAT_SAVE             FloatSave;
+    KIRQL Irql;
+    USHORT ControlWord;
+    ULONG MXCsr;
+    PKPRCB Prcb;
+    PFLOAT_SAVE FloatSave;
 
     //
     // If the system is using floating point emulation, then
     // return an error
     //
 
-    if (!KeI386NpxPresent) {
+    if (!KeI386NpxPresent)
+    {
         return STATUS_ILLEGAL_FLOAT_CONTEXT;
     }
 
@@ -136,38 +132,37 @@ Return Value:
     // Get the current irql and thread
     //
 
-    FloatSave = (PFLOAT_SAVE) PublicFloatSave;
+    FloatSave = (PFLOAT_SAVE)PublicFloatSave;
 
     Irql = KeGetCurrentIrql();
     Thread = KeGetCurrentThread();
 
-    ASSERT (Thread->NpxIrql <= Irql);
+    ASSERT(Thread->NpxIrql <= Irql);
 
-    FloatSave->Flags           = 0;
-    FloatSave->Irql            = Irql;
+    FloatSave->Flags = 0;
+    FloatSave->Irql = Irql;
     FloatSave->PreviousNpxIrql = Thread->NpxIrql;
-    FloatSave->Thread          = Thread;
+    FloatSave->Thread = Thread;
 
     //
     // If the irql has changed we need to save the complete floating
     // state context as the prior level has been interrupted.
     //
 
-    if (Thread->NpxIrql != Irql) {
+    if (Thread->NpxIrql != Irql)
+    {
 
         //
         // If this is apc level we don't have anyplace to hold this
         // context, allocate some heap.
         //
 
-        if (Irql == APC_LEVEL) {
-            FloatSave->u.Context = ExAllocatePoolWithTag (
-                                        NonPagedPool,
-                                        sizeof (FX_SAVE_AREA) + ALIGN_ADJUST,
-                                        ' XPN'
-                                        );
+        if (Irql == APC_LEVEL)
+        {
+            FloatSave->u.Context = ExAllocatePoolWithTag(NonPagedPool, sizeof(FX_SAVE_AREA) + ALIGN_ADJUST, ' XPN');
 
-            if (!FloatSave->u.Context) {
+            if (!FloatSave->u.Context)
+            {
                 return STATUS_INSUFFICIENT_RESOURCES;
             }
 
@@ -179,17 +174,18 @@ Return Value:
             // the base address of the save area if needed.
             //
 
-            if ((FloatSave->u.ContextAddressAsULONG & ALIGN_ADJUST) != 0) {
+            if ((FloatSave->u.ContextAddressAsULONG & ALIGN_ADJUST) != 0)
+            {
                 FloatSave->u.ContextAddressAsULONG += ALIGN_ADJUST;
                 FloatSave->Flags |= FLOAT_SAVE_ALIGN_ADJUSTED;
             }
             ASSERT((FloatSave->u.ContextAddressAsULONG & 0xF) == 0);
+        }
+        else
+        {
 
-        } else {
-
-            ASSERT (Irql == DISPATCH_LEVEL);
+            ASSERT(Irql == DISPATCH_LEVEL);
             FloatSave->u.Context = &KeGetCurrentPrcb()->NpxSaveArea;
-
         }
 
         FloatSave->Flags |= FLOAT_SAVE_COMPLETE_CONTEXT;
@@ -217,89 +213,102 @@ sav10:
     // Get ownership of npx register set for this context
     //
 
-    if (Prcb->NpxThread != Thread) {
+    if (Prcb->NpxThread != Thread)
+    {
 
         //
         // If the other context is loaded in the npx registers, flush
         // it to that threads save area
         //
-        if (Prcb->NpxThread) {
+        if (Prcb->NpxThread)
+        {
 
-            NpxFrame = (PFX_SAVE_AREA)(((ULONG)(Prcb->NpxThread->InitialStack) -
-                        sizeof(FX_SAVE_AREA)));
+            NpxFrame = (PFX_SAVE_AREA)(((ULONG)(Prcb->NpxThread->InitialStack) - sizeof(FX_SAVE_AREA)));
 
-            if (KeI386FxsrPresent) {
+            if (KeI386FxsrPresent)
+            {
                 Kix86FxSave(NpxFrame);
-            } else {
+            }
+            else
+            {
                 Kix86FnSave(NpxFrame);
             }
 
             NpxFrame->NpxSavedCpu = 0;
             Prcb->NpxThread->NpxState = NPX_STATE_NOT_LOADED;
-
         }
 
         Prcb->NpxThread = Thread;
     }
 
-    NpxFrame = (PFX_SAVE_AREA)(((ULONG)(Thread->InitialStack) -
-                sizeof(FX_SAVE_AREA)));
+    NpxFrame = (PFX_SAVE_AREA)(((ULONG)(Thread->InitialStack) - sizeof(FX_SAVE_AREA)));
 
 
     //
     // Save the previous state as required
     //
 
-    if (FloatSave->Flags & FLOAT_SAVE_COMPLETE_CONTEXT) {
+    if (FloatSave->Flags & FLOAT_SAVE_COMPLETE_CONTEXT)
+    {
 
         //
         // Need to save the entire context
         //
 
-        if (Thread->NpxState == NPX_STATE_LOADED) {
-            if (KeI386FxsrPresent) {
+        if (Thread->NpxState == NPX_STATE_LOADED)
+        {
+            if (KeI386FxsrPresent)
+            {
                 Kix86FxSave((FloatSave->u.Context));
-            } else {
+            }
+            else
+            {
                 Kix86FnSave((FloatSave->u.Context));
             }
 
             FloatSave->u.Context->NpxSavedCpu = 0;
             FloatSave->u.Context->Cr0NpxState = NpxFrame->Cr0NpxState;
-
-        } else {
-            RtlCopyMemory (FloatSave->u.Context, NpxFrame, sizeof(FX_SAVE_AREA));
-            FloatSave->u.Context->NpxSavedCpu = 0;
-
         }
-
-    } else {
+        else
+        {
+            RtlCopyMemory(FloatSave->u.Context, NpxFrame, sizeof(FX_SAVE_AREA));
+            FloatSave->u.Context->NpxSavedCpu = 0;
+        }
+    }
+    else
+    {
 
         //
         // Save only the non-volatile state
         //
 
-        if (Thread->NpxState == NPX_STATE_LOADED) {
+        if (Thread->NpxState == NPX_STATE_LOADED)
+        {
 
             _asm {
                 mov     eax, FloatSave
                 fnstcw  [eax] FLOAT_SAVE.u.Fcw.ControlWord
             }
 
-            if ((KeI386FxsrPresent) && (KeI386XMMIPresent)) {
+            if ((KeI386FxsrPresent) && (KeI386XMMIPresent))
+            {
                 Kix86StMXCsr(&FloatSave->u.Fcw.MXCsr);
             }
-
-        } else {
+        }
+        else
+        {
             //
             // Save the control word from the npx frame.
             //
 
-            if (KeI386FxsrPresent) {
-                FloatSave->u.Fcw.ControlWord = (USHORT) NpxFrame->U.FxArea.ControlWord;
+            if (KeI386FxsrPresent)
+            {
+                FloatSave->u.Fcw.ControlWord = (USHORT)NpxFrame->U.FxArea.ControlWord;
                 FloatSave->u.Fcw.MXCsr = NpxFrame->U.FxArea.MXCsr;
-
-            } else {
-                FloatSave->u.Fcw.ControlWord = (USHORT) NpxFrame->U.FnArea.ControlWord;
+            }
+            else
+            {
+                FloatSave->u.Fcw.ControlWord = (USHORT)NpxFrame->U.FnArea.ControlWord;
             }
         }
 
@@ -319,8 +328,8 @@ sav10:
 
     NpxFrame->Cr0NpxState = 0;
     Thread->NpxState = NPX_STATE_LOADED;
-    Thread->NpxIrql  = Irql;
-    ControlWord = 0x27f;    // 64bit mode
+    Thread->NpxIrql = Irql;
+    ControlWord = 0x27f; // 64bit mode
     MXCsr = 0x1f80;
 
     _asm {
@@ -328,7 +337,8 @@ sav10:
         fldcw       ControlWord
     }
 
-    if ((KeI386FxsrPresent) && (KeI386XMMIPresent)) {
+    if ((KeI386FxsrPresent) && (KeI386XMMIPresent))
+    {
         Kix86LdMXCsr(&MXCsr);
     }
 
@@ -342,9 +352,7 @@ sav10:
 
 
 NTSTATUS
-KeRestoreFloatingPointState (
-    IN PKFLOATING_SAVE      PublicFloatSave
-    )
+KeRestoreFloatingPointState(IN PKFLOATING_SAVE PublicFloatSave)
 /*++
 
 Routine Description:
@@ -362,36 +370,33 @@ Return Value:
 {
     PKTHREAD Thread;
     PFX_SAVE_AREA NpxFrame;
-    ULONG                   Cr0State;
-    PFLOAT_SAVE             FloatSave;
+    ULONG Cr0State;
+    PFLOAT_SAVE FloatSave;
 
-    ASSERT (KeI386NpxPresent);
+    ASSERT(KeI386NpxPresent);
 
-    FloatSave = (PFLOAT_SAVE) PublicFloatSave;
+    FloatSave = (PFLOAT_SAVE)PublicFloatSave;
     Thread = FloatSave->Thread;
 
-    NpxFrame = (PFX_SAVE_AREA)(((ULONG)(Thread->InitialStack) -
-                sizeof(FX_SAVE_AREA)));
+    NpxFrame = (PFX_SAVE_AREA)(((ULONG)(Thread->InitialStack) - sizeof(FX_SAVE_AREA)));
 
 
     //
     // Verify float save looks like it's from the right context
     //
 
-    if ((FloatSave->Flags & (FLOAT_SAVE_VALID | FLOAT_SAVE_RESERVED)) != FLOAT_SAVE_VALID) {
+    if ((FloatSave->Flags & (FLOAT_SAVE_VALID | FLOAT_SAVE_RESERVED)) != FLOAT_SAVE_VALID)
+    {
 
         //
         // Invalid floating point save area.
         //
 
-        KeBugCheckEx(INVALID_FLOATING_POINT_STATE,
-                     0,
-                     FloatSave->Flags,
-                     0,
-                     0);
+        KeBugCheckEx(INVALID_FLOATING_POINT_STATE, 0, FloatSave->Flags, 0, 0);
     }
 
-    if (FloatSave->Irql != KeGetCurrentIrql()) {
+    if (FloatSave->Irql != KeGetCurrentIrql())
+    {
 
         //
         // Invalid IRQL.   IRQL now must be the same as when the
@@ -399,14 +404,11 @@ Return Value:
         // places depending on the IRQL at that time).
         //
 
-        KeBugCheckEx(INVALID_FLOATING_POINT_STATE,
-                     1,
-                     FloatSave->Irql,
-                     KeGetCurrentIrql(),
-                     0);
+        KeBugCheckEx(INVALID_FLOATING_POINT_STATE, 1, FloatSave->Irql, KeGetCurrentIrql(), 0);
     }
 
-    if (Thread != KeGetCurrentThread()) {
+    if (Thread != KeGetCurrentThread())
+    {
 
         //
         // Invalid Thread.   The thread this floating point context
@@ -414,11 +416,7 @@ Return Value:
         // field is trash).
         //
 
-        KeBugCheckEx(INVALID_FLOATING_POINT_STATE,
-                     2,
-                     (ULONG_PTR)Thread,
-                     (ULONG_PTR)KeGetCurrentThread(),
-                     0);
+        KeBugCheckEx(INVALID_FLOATING_POINT_STATE, 2, (ULONG_PTR)Thread, (ULONG_PTR)KeGetCurrentThread(), 0);
     }
 
 
@@ -434,13 +432,15 @@ Return Value:
     // Restore the required state
     //
 
-    if (FloatSave->Flags & FLOAT_SAVE_COMPLETE_CONTEXT) {
+    if (FloatSave->Flags & FLOAT_SAVE_COMPLETE_CONTEXT)
+    {
 
         //
         // Restore the entire fp state to the threads save area
         //
 
-        if (Thread->NpxState == NPX_STATE_LOADED) {
+        if (Thread->NpxState == NPX_STATE_LOADED)
+        {
 
             //
             // This state in the fp unit is no longer needed, just disregard it
@@ -454,15 +454,17 @@ Return Value:
         // Copy restored state to npx frame
         //
 
-        RtlCopyMemory (NpxFrame, FloatSave->u.Context, sizeof(FX_SAVE_AREA));
-
-    } else {
+        RtlCopyMemory(NpxFrame, FloatSave->u.Context, sizeof(FX_SAVE_AREA));
+    }
+    else
+    {
 
         //
         // Restore the non-volatile state
         //
 
-        if (Thread->NpxState == NPX_STATE_LOADED) {
+        if (Thread->NpxState == NPX_STATE_LOADED)
+        {
 
             //
             // Init fp state and restore control word
@@ -475,30 +477,32 @@ Return Value:
             }
 
 
-            if ((KeI386FxsrPresent) && (KeI386XMMIPresent)) {
+            if ((KeI386FxsrPresent) && (KeI386XMMIPresent))
+            {
                 Kix86LdMXCsr(&FloatSave->u.Fcw.MXCsr);
             }
-
-
-        } else {
+        }
+        else
+        {
 
             //
             // Fp state not loaded.  Restore control word in npx frame
             //
 
-            if (KeI386FxsrPresent) {
+            if (KeI386FxsrPresent)
+            {
                 NpxFrame->U.FxArea.ControlWord = FloatSave->u.Fcw.ControlWord;
                 NpxFrame->U.FxArea.StatusWord = 0;
                 NpxFrame->U.FxArea.TagWord = 0;
                 NpxFrame->NpxSavedCpu = 0;
                 NpxFrame->U.FxArea.MXCsr = FloatSave->u.Fcw.MXCsr;
-
-            } else {
+            }
+            else
+            {
                 NpxFrame->U.FnArea.ControlWord = FloatSave->u.Fcw.ControlWord;
                 NpxFrame->U.FnArea.StatusWord = 0;
                 NpxFrame->U.FnArea.TagWord = 0xffff;
             }
-
         }
 
         NpxFrame->Cr0NpxState = FloatSave->Cr0NpxState;
@@ -527,27 +531,26 @@ res10:
     // Done
     //
 
-    if ((FloatSave->Flags & FLOAT_SAVE_FREE_CONTEXT_HEAP) != 0) {
+    if ((FloatSave->Flags & FLOAT_SAVE_FREE_CONTEXT_HEAP) != 0)
+    {
 
         //
         // If FXSAVE area was adjusted for alignment after allocation,
         // undo that adjustment before freeing.
         //
 
-        if ((FloatSave->Flags & FLOAT_SAVE_ALIGN_ADJUSTED) != 0) {
+        if ((FloatSave->Flags & FLOAT_SAVE_ALIGN_ADJUSTED) != 0)
+        {
             FloatSave->u.ContextAddressAsULONG -= ALIGN_ADJUST;
         }
-        ExFreePool (FloatSave->u.Context);
+        ExFreePool(FloatSave->u.Context);
     }
 
     FloatSave->Flags = 0;
     return STATUS_SUCCESS;
 }
-
-VOID
-KiDisableFastSyscallReturn(
-    VOID
-    )
+
+VOID KiDisableFastSyscallReturn(VOID)
 
 /*++
 
@@ -574,16 +577,14 @@ Return Value:
 --*/
 
 {
-    if (KiSystemCallExitAdjusted) {
+    if (KiSystemCallExitAdjusted)
+    {
         KiSystemCallExitBranch[1] -= KiSystemCallExitAdjusted;
         KiSystemCallExitAdjusted = 0;
     }
 }
-
-VOID
-KiEnableFastSyscallReturn(
-    VOID
-    )
+
+VOID KiEnableFastSyscallReturn(VOID)
 
 /*++
 
@@ -622,8 +623,8 @@ Return Value:
     // hibernating/suspending.
     //
 
-    if ((KiSystemCallExitAdjusted == KiSystemCallExitAdjust) &&
-        KiFastCallCopyDoneOnce) {
+    if ((KiSystemCallExitAdjusted == KiSystemCallExitAdjust) && KiFastCallCopyDoneOnce)
+    {
 
         //
         // It's already done, don't try to do it again.
@@ -632,7 +633,8 @@ Return Value:
         return;
     }
 
-    if ((KiSystemCallExitAdjust + KiSystemCallExitBranch[1]) < 0x80) {
+    if ((KiSystemCallExitAdjust + KiSystemCallExitBranch[1]) < 0x80)
+    {
 
         //
         // It's good, undo any previous adjustment.
@@ -652,17 +654,12 @@ Return Value:
         // data where it can be executed from user mode.
         //
 
-        RtlCopyMemory(SharedUserData->SystemCall,
-                      KiFastSystemCallCode,
-                      sizeof(SharedUserData->SystemCall));
+        RtlCopyMemory(SharedUserData->SystemCall, KiFastSystemCallCode, sizeof(SharedUserData->SystemCall));
         KiFastCallCopyDoneOnce = TRUE;
     }
 }
-
-VOID
-KePrepareToLoseProcessorSpecificState(
-    VOID
-    )
+
+VOID KePrepareToLoseProcessorSpecificState(VOID)
 {
     //
     //  The kernel has been marked read only, adjusting
@@ -672,11 +669,8 @@ KePrepareToLoseProcessorSpecificState(
     //
     // KiDisableFastSyscallReturn();
 }
-
-VOID
-KiLoadFastSyscallMachineSpecificRegisters(
-    IN volatile PLONG Void
-    )
+
+VOID KiLoadFastSyscallMachineSpecificRegisters(IN volatile PLONG Void)
 
 /*++
 
@@ -696,13 +690,14 @@ Return Value:
 --*/
 
 {
-    if (KiFastSystemCallIsIA32) {
+    if (KiFastSystemCallIsIA32)
+    {
 
         //
         // Use Intel defined way of doing this.
         //
 
-        WRMSR(MSR_SYSENTER_CS,  KGDT_R0_CODE);
+        WRMSR(MSR_SYSENTER_CS, KGDT_R0_CODE);
         WRMSR(MSR_SYSENTER_EIP, (ULONGLONG)(ULONG)KiFastCallEntry);
         WRMSR(MSR_SYSENTER_ESP, 0);
 
@@ -730,33 +725,36 @@ Return Value:
         WRMSR(MSR_EXT_FEATURE_ENABLE, Value.QuadPart);
 
 #endif
-
     }
 }
-
-VOID
-KiRestoreFastSyscallReturnState(
-    VOID
-    )
+
+VOID KiRestoreFastSyscallReturnState(VOID)
 {
     ULONG_PTR Void = 0;
 
-    if (KeFeatureBits & KF_FAST_SYSCALL) {
+    if (KeFeatureBits & KF_FAST_SYSCALL)
+    {
 
-        if (KiFastSystemCallDisable == 0) {
+        if (KiFastSystemCallDisable == 0)
+        {
 
             //
             // Fast system call is enabled.
             //
 
-            if (KiFastSystemCallIsIA32 == TRUE) {
+            if (KiFastSystemCallIsIA32 == TRUE)
+            {
                 KiSystemCallExitAdjust = KiSystemCallExit2 - KiSystemCallExit;
                 KiFastSystemCallCode = KiFastSystemCallIa32;
-            } else {
+            }
+            else
+            {
                 KiSystemCallExitAdjust = KiSystemCallExit3 - KiSystemCallExit;
                 KiFastSystemCallCode = KiFastSystemCallAmdK6;
             }
-        } else {
+        }
+        else
+        {
 
             //
             // Fast system call has been explicitly disabled or is
@@ -766,17 +764,14 @@ KiRestoreFastSyscallReturnState(
             KeFeatureBits &= ~KF_FAST_SYSCALL;
         }
     }
-    if (KeFeatureBits & KF_FAST_SYSCALL) {
+    if (KeFeatureBits & KF_FAST_SYSCALL)
+    {
 
         //
         // On all processors, set the MSRs that support syscall/sysexit.
         //
 
-        KiIpiGenericCall(
-            (PKIPI_BROADCAST_WORKER)KiLoadFastSyscallMachineSpecificRegisters,
-            Void
-            );
-
+        KiIpiGenericCall((PKIPI_BROADCAST_WORKER)KiLoadFastSyscallMachineSpecificRegisters, Void);
     }
 
     //
@@ -786,11 +781,8 @@ KiRestoreFastSyscallReturnState(
 
     KiEnableFastSyscallReturn();
 }
-
-VOID
-KeRestoreProcessorSpecificFeatures(
-    VOID
-    )
+
+VOID KeRestoreProcessorSpecificFeatures(VOID)
 
 /*++
 
@@ -817,16 +809,11 @@ Return Value:
     KeRestorePAT();
     KiRestoreFastSyscallReturnState();
 }
-
+
 
 #if !defined(NT_UP)
 
-VOID
-FASTCALL
-KiAcquireQueuedSpinLockCheckForFreeze(
-    IN PKSPIN_LOCK_QUEUE QueuedLock,
-    IN PKTRAP_FRAME TrapFrame
-    )
+VOID FASTCALL KiAcquireQueuedSpinLockCheckForFreeze(IN PKSPIN_LOCK_QUEUE QueuedLock, IN PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -855,25 +842,27 @@ Return Value:
     PKSPIN_LOCK_QUEUE Previous;
     PKSPIN_LOCK Lock;
     PKPRCB Prcb;
-    volatile ULONG_PTR * LockPointer;
+    volatile ULONG_PTR *LockPointer;
 
     LockPointer = (volatile ULONG_PTR *)&QueuedLock->Lock;
 
     Previous = InterlockedExchangePointer(QueuedLock->Lock, QueuedLock);
 
-    if (Previous == NULL) {
+    if (Previous == NULL)
+    {
 
         //
         // This processor now owns this lock.
         //
 
         *LockPointer |= LOCK_QUEUE_OWNER;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Lock is already held, update thew next pointer in the
-        // previous queue entry to point to this new waiter and 
+        // previous queue entry to point to this new waiter and
         // wait until the lock is granted.
         //
         // The following loop is careful not to write ANYTHING
@@ -887,17 +876,17 @@ Return Value:
 
         Prcb = KeGetCurrentPrcb();
 
-        while (*LockPointer & LOCK_QUEUE_WAIT) {
-            if (Prcb->RequestSummary & IPI_FREEZE) {
+        while (*LockPointer & LOCK_QUEUE_WAIT)
+        {
+            if (Prcb->RequestSummary & IPI_FREEZE)
+            {
                 ULONG OldSummary;
                 ULONG NewSummary;
                 ULONG Summary;
 
                 OldSummary = Prcb->RequestSummary;
                 NewSummary = OldSummary & ~IPI_FREEZE;
-                Summary = InterlockedCompareExchange((PVOID)&Prcb->RequestSummary,
-                                                     NewSummary,
-                                                     OldSummary);
+                Summary = InterlockedCompareExchange((PVOID)&Prcb->RequestSummary, NewSummary, OldSummary);
 
                 //
                 // If something else edited the RequestSummary, we'll
@@ -905,7 +894,8 @@ Return Value:
                 // handled).
                 //
 
-                if (Summary == OldSummary) {
+                if (Summary == OldSummary)
+                {
 
                     //
                     // IPI_FREEZE cleared in RequestSummary.   Now
@@ -931,7 +921,7 @@ Return Value:
 
 #endif
 
-
+
 /*++
 
 QLOCK_STAT_GATHER
@@ -945,82 +935,79 @@ QLOCK_STAT_GATHER
 #if defined(QLOCK_STAT_GATHER)
 
 #define QLOCK_STAT_CLEAN
-#define QLOCKS_NUMBER   16
-#define QLOCKS_MAX_LOG  512
+#define QLOCKS_NUMBER 16
+#define QLOCKS_MAX_LOG 512
 
 ULONG
 FASTCALL
-KiRDTSC(
-    PULONGLONG Time
-    );
+KiRDTSC(PULONGLONG Time);
 
 //
 // The following structure is used to accumulate data about each
 // acquire/release pair for a lock.
 //
 
-typedef struct {
-    ULONGLONG   Key;
-    ULONGLONG   Time;
-    ULONGLONG   WaitTime;
-    ULONG       Count;
-    ULONG       Waiters;
-    ULONG       Depth;
-    ULONG       IncreasedDepth;
-    ULONG       Clean;
+typedef struct
+{
+    ULONGLONG Key;
+    ULONGLONG Time;
+    ULONGLONG WaitTime;
+    ULONG Count;
+    ULONG Waiters;
+    ULONG Depth;
+    ULONG IncreasedDepth;
+    ULONG Clean;
 } QLOCKDATA, *PQLOCKDATA;
 
 //
 // House keeping data for each lock.
 //
 
-typedef struct {
+typedef struct
+{
 
     //
     // The following fields are used to keep data from acquire
     // to release.
     //
 
-    ULONGLONG   AcquireTime;
-    ULONGLONG   WaitToAcquire;
-    ULONG_PTR   AcquirePoint;
-    BOOLEAN     Clean;
+    ULONGLONG AcquireTime;
+    ULONGLONG WaitToAcquire;
+    ULONG_PTR AcquirePoint;
+    BOOLEAN Clean;
 
     //
     // Remaining fields accumulate global stats for this lock.
     //
 
-    ULONG       Count;
-    ULONG       Pairs;
-    ULONG       FailedTry;
-    UCHAR       MaxDepth;
-    UCHAR       PreviousDepth;
-    ULONG       NoWait;
+    ULONG Count;
+    ULONG Pairs;
+    ULONG FailedTry;
+    UCHAR MaxDepth;
+    UCHAR PreviousDepth;
+    ULONG NoWait;
 } QLOCKHOUSE, *PQLOCKHOUSE;
 
-QLOCKDATA   KiQueuedSpinLockLog[QLOCKS_NUMBER][QLOCKS_MAX_LOG];
-QLOCKHOUSE  KiQueuedSpinLockHouse[QLOCKS_NUMBER];
+QLOCKDATA KiQueuedSpinLockLog[QLOCKS_NUMBER][QLOCKS_MAX_LOG];
+QLOCKHOUSE KiQueuedSpinLockHouse[QLOCKS_NUMBER];
 
 //
 // Implement the lock queue mechanisms in C for when we are
 // gathering performance data.
 //
 
-VOID
-FASTCALL
-KiAcquireQueuedLock(
-    IN PKSPIN_LOCK_QUEUE QueuedLock
-    )
+VOID FASTCALL KiAcquireQueuedLock(IN PKSPIN_LOCK_QUEUE QueuedLock)
 {
     PKSPIN_LOCK_QUEUE Previous;
     PKSPIN_LOCK Lock;
-    volatile ULONG_PTR * LockPointer;
+    volatile ULONG_PTR *LockPointer;
 
     LockPointer = (volatile ULONG_PTR *)&QueuedLock->Lock;
 
     Previous = InterlockedExchangePointer(QueuedLock->Lock, QueuedLock);
 
-    if (Previous == NULL) {
+    if (Previous == NULL)
+    {
 
         //
         // This processor now owns this lock.
@@ -1038,26 +1025,29 @@ KiAcquireQueuedLock(
         // locks are using this routine.
         //
 
-        if (LockNumber < QLOCKS_NUMBER) {
+        if (LockNumber < QLOCKS_NUMBER)
+        {
             KiQueuedSpinLockHouse[LockNumber].Clean = 1;
         }
-        
+
 #endif
 
         *LockPointer |= LOCK_QUEUE_OWNER;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Lock is already held, update thew next pointer in the
-        // previous queue entry to point to this new waiter and 
+        // previous queue entry to point to this new waiter and
         // wait until the lock is granted.
         //
 
         *LockPointer |= LOCK_QUEUE_WAIT;
         Previous->Next = QueuedLock;
 
-        while (*LockPointer & LOCK_QUEUE_WAIT) {
+        while (*LockPointer & LOCK_QUEUE_WAIT)
+        {
             KeYieldProcessor();
         }
     }
@@ -1067,11 +1057,7 @@ KiAcquireQueuedLock(
     //
 }
 
-VOID
-FASTCALL
-KiReleaseQueuedLock(
-    IN PKSPIN_LOCK_QUEUE QueuedLock
-    )
+VOID FASTCALL KiReleaseQueuedLock(IN PKSPIN_LOCK_QUEUE QueuedLock)
 {
     PKSPIN_LOCK_QUEUE Waiter;
 
@@ -1085,7 +1071,8 @@ KiReleaseQueuedLock(
 
     Waiter = (PKSPIN_LOCK_QUEUE)*QueuedLock->Lock;
 
-    if (Waiter == QueuedLock) {
+    if (Waiter == QueuedLock)
+    {
 
         //
         // Good chance noone is queued on this lock, to be sure
@@ -1095,24 +1082,24 @@ KiReleaseQueuedLock(
         // else has already joined the queue.
         //
 
-        Waiter = InterlockedCompareExchangePointer(QueuedLock->Lock,
-                                                   NULL,
-                                                   QueuedLock);
+        Waiter = InterlockedCompareExchangePointer(QueuedLock->Lock, NULL, QueuedLock);
     }
-    if (Waiter != QueuedLock) {
+    if (Waiter != QueuedLock)
+    {
 
         //
         // There is another waiter.  It is possible for the waiter
-        // to have only just performed the exchange that put its 
+        // to have only just performed the exchange that put its
         // context in the lock and to have not yet updated the
-        // 'next' pointer in the previous context (which could be 
+        // 'next' pointer in the previous context (which could be
         // this context), so we wait for our next pointer to be
         // non-null before continuing.
         //
 
-        volatile PKSPIN_LOCK_QUEUE * NextQueuedLock = &QueuedLock->Next;
+        volatile PKSPIN_LOCK_QUEUE *NextQueuedLock = &QueuedLock->Next;
 
-        while ((Waiter = *NextQueuedLock) == NULL) {
+        while ((Waiter = *NextQueuedLock) == NULL)
+        {
             KeYieldProcessor();
         }
 
@@ -1127,9 +1114,7 @@ KiReleaseQueuedLock(
 
 KIRQL
 FASTCALL
-KiQueueStatAcquireQueuedLock(
-    IN KSPIN_LOCK_QUEUE_NUMBER Number
-    )
+KiQueueStatAcquireQueuedLock(IN KSPIN_LOCK_QUEUE_NUMBER Number)
 {
     KIRQL PreviousIrql;
 
@@ -1140,9 +1125,7 @@ KiQueueStatAcquireQueuedLock(
 
 KIRQL
 FASTCALL
-KiQueueStatAcquireQueuedLockRTS(
-    IN KSPIN_LOCK_QUEUE_NUMBER Number
-    )
+KiQueueStatAcquireQueuedLockRTS(IN KSPIN_LOCK_QUEUE_NUMBER Number)
 {
     KIRQL PreviousIrql;
 
@@ -1153,17 +1136,13 @@ KiQueueStatAcquireQueuedLockRTS(
 
 LOGICAL
 FASTCALL
-KiQueueStatTryAcquire(
-    IN KSPIN_LOCK_QUEUE_NUMBER Number,
-    IN PKIRQL OldIrql,
-    IN KIRQL NewIrql
-    )
+KiQueueStatTryAcquire(IN KSPIN_LOCK_QUEUE_NUMBER Number, IN PKIRQL OldIrql, IN KIRQL NewIrql)
 {
     KIRQL PreviousIrql;
     LOGICAL Acquired = FALSE;
     PKSPIN_LOCK_QUEUE Previous;
     PKSPIN_LOCK_QUEUE QueuedLock;
-    ULONG_PTR * LockPointer;
+    ULONG_PTR *LockPointer;
     ULONG_PTR Lock;
 
     _disable();
@@ -1174,7 +1153,8 @@ KiQueueStatTryAcquire(
 
     Previous = InterlockedCompareExchangePointer(Lock, QueuedLock, NULL);
 
-    if (Previous == NULL) {
+    if (Previous == NULL)
+    {
 
         //
         // This processor now owns this lock.  Set the owner bit in
@@ -1189,18 +1169,13 @@ KiQueueStatTryAcquire(
         PreviousIrql = KfRaiseIrql(NewIrql);
         *OldIrql = PreviousIrql;
     }
-    
+
     _enable();
 
     return Acquired;
 }
 
-VOID
-FASTCALL
-KiQueueStatReleaseQueuedLock(
-    IN KSPIN_LOCK_QUEUE_NUMBER Number,
-    IN KIRQL OldIrql
-    )
+VOID FASTCALL KiQueueStatReleaseQueuedLock(IN KSPIN_LOCK_QUEUE_NUMBER Number, IN KIRQL OldIrql)
 {
     KiReleaseQueuedLock(&KeGetCurrentPrcb()->LockQueue[Number]);
     KfLowerIrql(OldIrql);
@@ -1208,9 +1183,7 @@ KiQueueStatReleaseQueuedLock(
 
 UCHAR
 FASTCALL
-KiQueuedLockDepth(
-    IN PKSPIN_LOCK_QUEUE QueuedLock
-    )
+KiQueuedLockDepth(IN PKSPIN_LOCK_QUEUE QueuedLock)
 {
     //
     // Run down the list of waiters and see how many there are.
@@ -1234,7 +1207,8 @@ KiQueuedLockDepth(
     // Run down the list advancing QueuedLock until the end is reached.
     //
 
-    while (LastAcquire != (ULONG_PTR)QueuedLock) {
+    while (LastAcquire != (ULONG_PTR)QueuedLock)
+    {
         Debug = 0;
 
         //
@@ -1242,12 +1216,15 @@ KiQueuedLockDepth(
         // updated the forward pointer, wait for that update to happen.
         //
 
-        if (QueuedLock->Next == NULL) {
-            volatile PKSPIN_LOCK_QUEUE * NextQueuedLock = &QueuedLock->Next;
+        if (QueuedLock->Next == NULL)
+        {
+            volatile PKSPIN_LOCK_QUEUE *NextQueuedLock = &QueuedLock->Next;
 
-            while (*NextQueuedLock == NULL) {
+            while (*NextQueuedLock == NULL)
+            {
                 KeYieldProcessor();
-                if (++Debug > 10000000) {
+                if (++Debug > 10000000)
+                {
                     DbgBreakPoint();
                     Debug = 0;
                 }
@@ -1264,29 +1241,20 @@ KiQueuedLockDepth(
 // The following routines complete the queued spinlock package.
 //
 
-VOID
-FASTCALL
-KeAcquireInStackQueuedSpinLockAtDpcLevel(
-    IN PKSPIN_LOCK SpinLock,
-    IN PKLOCK_QUEUE_HANDLE LockHandle
-    )
+VOID FASTCALL KeAcquireInStackQueuedSpinLockAtDpcLevel(IN PKSPIN_LOCK SpinLock, IN PKLOCK_QUEUE_HANDLE LockHandle)
 {
     LockHandle->LockQueue.Next = NULL;
     LockHandle->LockQueue.Lock = SpinLock;
     KiAcquireQueuedLock(&LockHandle->LockQueue);
 }
 
-VOID
-FASTCALL
-KeReleaseInStackQueuedSpinLockFromDpcLevel (
-    IN PKLOCK_QUEUE_HANDLE LockHandle
-    )
+VOID FASTCALL KeReleaseInStackQueuedSpinLockFromDpcLevel(IN PKLOCK_QUEUE_HANDLE LockHandle)
 {
     KiReleaseQueuedLock(&LockHandle->LockQueue);
 }
 
 //
-// Although part of the queued spinlock package, the following 
+// Although part of the queued spinlock package, the following
 // routines need to be implemented in assembly code to gather
 // lock statistics.
 //
@@ -1312,15 +1280,10 @@ KeReleaseQueuedSpinLockFromDpcLevel (
 
 #endif
 
-VOID
-FASTCALL
-KiQueueStatTrySucceeded(
-    IN PKSPIN_LOCK_QUEUE QueuedLock,
-    IN ULONG_PTR CallersAddress
-    )
+VOID FASTCALL KiQueueStatTrySucceeded(IN PKSPIN_LOCK_QUEUE QueuedLock, IN ULONG_PTR CallersAddress)
 {
-    PKPRCB      Prcb;
-    ULONG       LockNumber;
+    PKPRCB Prcb;
+    ULONG LockNumber;
 
     Prcb = KeGetCurrentPrcb();
     LockNumber = QueuedLock - Prcb->LockQueue;
@@ -1334,14 +1297,10 @@ KiQueueStatTrySucceeded(
     KiQueuedSpinLockHouse[LockNumber].AcquirePoint = CallersAddress;
 }
 
-VOID
-FASTCALL
-KiQueueStatTryFailed(
-    IN PKSPIN_LOCK_QUEUE QueuedLock
-    )
+VOID FASTCALL KiQueueStatTryFailed(IN PKSPIN_LOCK_QUEUE QueuedLock)
 {
-    PKPRCB      Prcb;
-    ULONG       LockNumber;
+    PKPRCB Prcb;
+    ULONG LockNumber;
 
     Prcb = KeGetCurrentPrcb();
     LockNumber = QueuedLock - Prcb->LockQueue;
@@ -1349,11 +1308,7 @@ KiQueueStatTryFailed(
     KiQueuedSpinLockHouse[LockNumber].FailedTry++;
 }
 
-VOID
-FASTCALL
-KiQueueStatTry(
-    IN PULONG Everything
-    )
+VOID FASTCALL KiQueueStatTry(IN PULONG Everything)
 
 /*++
 
@@ -1384,7 +1339,8 @@ Return Value:
     UCHAR Success = *(PUCHAR)Everything;
     ULONG LockNumber = Everything[1];
 
-    if (!Success) {
+    if (!Success)
+    {
         KiQueuedSpinLockHouse[LockNumber].FailedTry++;
         return;
     }
@@ -1394,11 +1350,7 @@ Return Value:
     KiQueuedSpinLockHouse[LockNumber].AcquirePoint = Everything[2];
 }
 
-VOID
-FASTCALL
-KiQueueStatAcquire(
-    IN PULONG Everything
-    )
+VOID FASTCALL KiQueueStatAcquire(IN PULONG Everything)
 
 /*++
 
@@ -1432,10 +1384,10 @@ Return Value:
     // Make this routine work with either a lock number of lock address.
     //
 
-    if (LockNumber > QLOCKS_NUMBER) {
+    if (LockNumber > QLOCKS_NUMBER)
+    {
 
-        LockNumber = ((PKSPIN_LOCK_QUEUE)Everything[0]) -
-                     KeGetCurrentPrcb()->LockQueue;
+        LockNumber = ((PKSPIN_LOCK_QUEUE)Everything[0]) - KeGetCurrentPrcb()->LockQueue;
     }
 
     LockHome = &KiQueuedSpinLockHouse[LockNumber];
@@ -1444,11 +1396,7 @@ Return Value:
     KiRDTSC(&LockHome->AcquireTime);
 }
 
-VOID
-FASTCALL
-KiQueueStatRelease(
-    IN PULONG Everything
-    )
+VOID FASTCALL KiQueueStatRelease(IN PULONG Everything)
 
 /*++
 
@@ -1488,9 +1436,9 @@ Return Value:
     // Make this routine work with either a lock number of lock address.
     //
 
-    if (LockNumber > QLOCKS_NUMBER) {
-        LockNumber = ((PKSPIN_LOCK_QUEUE)Everything[0]) -
-                     KeGetCurrentPrcb()->LockQueue;
+    if (LockNumber > QLOCKS_NUMBER)
+    {
+        LockNumber = ((PKSPIN_LOCK_QUEUE)Everything[0]) - KeGetCurrentPrcb()->LockQueue;
     }
 
     LockHome = &KiQueuedSpinLockHouse[LockNumber];
@@ -1500,14 +1448,15 @@ Return Value:
     //
 
     ((PLARGE_INTEGER)&Key)->HighPart = LockHome->AcquirePoint;
-    ((PLARGE_INTEGER)&Key)->LowPart  = Everything[1];
+    ((PLARGE_INTEGER)&Key)->LowPart = Everything[1];
 
     //
     // Get the count of processors now waiting on this lock.
     //
 
     Waiters = KiQueuedLockDepth(&KeGetCurrentPrcb()->LockQueue[LockNumber]);
-    if (Waiters > LockHome->MaxDepth) {
+    if (Waiters > LockHome->MaxDepth)
+    {
         LockHome->MaxDepth = Waiters;
     }
 
@@ -1522,10 +1471,11 @@ Return Value:
     LockHome->AcquirePoint = 0;
 
     HoldTime = Now - LockHome->AcquireTime;
-    if (HoldTime < 0) {
+    if (HoldTime < 0)
+    {
 
         //
-        // This happens when KeSetSystemTime is called.  
+        // This happens when KeSetSystemTime is called.
         // Drop any negative results.
         //
 
@@ -1543,8 +1493,10 @@ Return Value:
     // Search for a match in the log and add in the new data.
     //
 
-    for (Entry = KiQueuedSpinLockLog[LockNumber]; TRUE; Entry++) {
-        if (Entry->Key == 0) {
+    for (Entry = KiQueuedSpinLockLog[LockNumber]; TRUE; Entry++)
+    {
+        if (Entry->Key == 0)
+        {
 
             //
             // We have reached the end of the list of valid
@@ -1552,7 +1504,8 @@ Return Value:
             // room, create a new entry.
             //
 
-            if (LockHome->Pairs >= QLOCKS_MAX_LOG) {
+            if (LockHome->Pairs >= QLOCKS_MAX_LOG)
+            {
 
                 //
                 // No room, just return.
@@ -1564,7 +1517,8 @@ Return Value:
             Entry->Key = Key;
         }
 
-        if (Entry->Key == Key) {
+        if (Entry->Key == Key)
+        {
 
             //
             // Found a match (or created a new pair).  Update statistics
@@ -1572,7 +1526,8 @@ Return Value:
             //
 
             Entry->Time += HoldTime;
-            if (LockHome->WaitToAcquire) {
+            if (LockHome->WaitToAcquire)
+            {
                 Entry->WaitTime += (LockHome->AcquireTime - LockHome->WaitToAcquire);
             }
             Entry->Count++;
@@ -1586,8 +1541,9 @@ Return Value:
             // to know about as it indicates contention on this
             // lock.
             //
-            
-            if ((Waiters) && (Waiters >= LockHome->PreviousDepth)) {
+
+            if ((Waiters) && (Waiters >= LockHome->PreviousDepth))
+            {
                 Entry->IncreasedDepth++;
             }
             LockHome->PreviousDepth = Waiters;
@@ -1598,17 +1554,13 @@ Return Value:
 }
 
 #endif
-
+
 #ifdef _X86_
-#pragma optimize("y", off)      // RtlCaptureContext needs EBP to be correct
+#pragma optimize("y", off) // RtlCaptureContext needs EBP to be correct
 #endif
 
 
-VOID
-__cdecl
-KeSaveStateForHibernate(
-    IN PKPROCESSOR_STATE ProcessorState
-    )
+VOID __cdecl KeSaveStateForHibernate(IN PKPROCESSOR_STATE ProcessorState)
 /*++
 
 Routine Description:

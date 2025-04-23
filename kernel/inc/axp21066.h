@@ -36,25 +36,26 @@ Revision History:
 
 #define ITB_ENTRIES_21064 12
 #define DTB_ENTRIES_21064 32
-#define PAL_TEMPS_21064   32
+#define PAL_TEMPS_21064 32
 
 //
 // Define an interrupt enable table entry.
 //
 
-typedef struct _IETEntry_21064{
-    ULONG ApcEnable: 1;
-    ULONG DispatchEnable: 1;
-    ULONG PerformanceCounter0Enable: 1;
-    ULONG PerformanceCounter1Enable: 1;
-    ULONG CorrectableReadEnable: 1;
-    ULONG Irq0Enable: 1;
-    ULONG Irq1Enable: 1;
-    ULONG Irq2Enable: 1;
-    ULONG Irq3Enable: 1;
-    ULONG Irq4Enable: 1;
-    ULONG Irq5Enable: 1;
-    ULONG Reserved: 21;
+typedef struct _IETEntry_21064
+{
+    ULONG ApcEnable : 1;
+    ULONG DispatchEnable : 1;
+    ULONG PerformanceCounter0Enable : 1;
+    ULONG PerformanceCounter1Enable : 1;
+    ULONG CorrectableReadEnable : 1;
+    ULONG Irq0Enable : 1;
+    ULONG Irq1Enable : 1;
+    ULONG Irq2Enable : 1;
+    ULONG Irq3Enable : 1;
+    ULONG Irq4Enable : 1;
+    ULONG Irq5Enable : 1;
+    ULONG Reserved : 21;
 } IETEntry_21064, *PIETEntry_21064;
 
 
@@ -69,7 +70,7 @@ typedef struct _IETEntry_21064{
 #define IRQLMASK_SFW_SUBTABLE_21064 (0)
 #define IRQLMASK_SFW_SUBTABLE_21064_ENTRIES (4)
 
-#define IRQLMASK_PC_SUBTABLE_21064  (4)
+#define IRQLMASK_PC_SUBTABLE_21064 (4)
 #define IRQLMASK_PC_SUBTABLE_21064_ENTRIES (4)
 
 //
@@ -77,7 +78,8 @@ typedef struct _IETEntry_21064{
 // This is the structure of the data returned by the rdcounters call pal.
 //
 
-typedef struct _COUNTERS_21064{
+typedef struct _COUNTERS_21064
+{
     LARGE_INTEGER MachineCheckCount;
     LARGE_INTEGER ArithmeticExceptionCount;
     LARGE_INTEGER InterruptCount;
@@ -137,12 +139,14 @@ typedef struct _COUNTERS_21064{
     LARGE_INTEGER Misc3Count;
 } COUNTERS_21064, *PCOUNTERS_21064;
 
-typedef enum _AXP21064_PCCOUNTER{
+typedef enum _AXP21064_PCCOUNTER
+{
     Ev4PerformanceCounter0 = 0,
     Ev4PerformanceCounter1 = 1
 } AXP21064_PCCOUNTER, *PAXP21064_PCCOUNTER;
 
-typedef enum _AXP21064_PCMUXCONTROL{
+typedef enum _AXP21064_PCMUXCONTROL
+{
     Ev4TotalIssues = 0x0,
     Ev4PipelineDry = 0x2,
     Ev4LoadInstruction = 0x4,
@@ -162,13 +166,15 @@ typedef enum _AXP21064_PCMUXCONTROL{
     Ev4ExternalCounter1 = 0x7
 } AXP21064_PCMUXCONTROL, *PAXP21064_PCMUXCONTROL;
 
-typedef enum _AXP21064_PCEVENTCOUNT{
+typedef enum _AXP21064_PCEVENTCOUNT
+{
     Ev4CountEvents2xx8 = 0x100,
     Ev4CountEvents2xx12 = 0x1000,
     Ev4CountEvents2xx16 = 0x10000
 } AXP21064_PCEVENTCOUNT, *PAXP21064_PCEVENTCOUNT;
 
-typedef enum _AXP21064_EVENTCOUNT{
+typedef enum _AXP21064_EVENTCOUNT
+{
     Ev4EventCountHigh = 1,
     Ev4EventCountLow = 0
 } AXP21064_EVENTCOUNT, *PAXP21064_EVENTCOUNT;
@@ -195,24 +201,24 @@ typedef DTB_PTE_21064 *PDTB_PTE_21064;
 #define PTE_KRE_21064_SHIFT 9
 #define PTE_ERE_21064_SHIFT 10
 #define PTE_SRE_21064_SHIFT 11
-#define PTE_URE_21064_SHIFT 12 
+#define PTE_URE_21064_SHIFT 12
 #define PTE_PFN_21064_SHIFT 13
-#define PTE_PFN_21064_SHIFTMASK  0x1FFFF
+#define PTE_PFN_21064_SHIFTMASK 0x1FFFF
 #define PTE_ASM_21064_SHIFT 34
 
 #define PTE_ALL_21064(itbpte) (itbpte)
-#define PTE_FOR_21064(itbpte) ( (itbpte.LowPart >> PTE_FOR_21064_SHIFT) & 1)
-#define PTE_FOW_21064(itbpte) ( (itbpte.LowPart >> PTE_FOW_21064_SHIFT) & 1)
-#define PTE_KWE_21064(itbpte) ( (itbpte.LowPart >> PTE_KWE_21064_SHIFT) & 1)
-#define PTE_EWE_21064(itbpte) ( (itbpte.LowPart >> PTE_EWE_21064_SHIFT) & 1)
-#define PTE_SWE_21064(itbpte) ( (itbpte.LowPart >> PTE_SWE_21064_SHIFT) & 1)
-#define PTE_UWE_21064(itbpte) ( (itbpte.LowPart >> PTE_UWE_21064_SHIFT) & 1)
-#define PTE_KRE_21064(itbpte) ( (itbpte.LowPart >> PTE_KRE_21064_SHIFT) & 1)
-#define PTE_ERE_21064(itbpte) ( (itbpte.LowPart >> PTE_ERE_21064_SHIFT) & 1)
-#define PTE_SRE_21064(itbpte) ( (itbpte.LowPart >> PTE_SRE_21064_SHIFT) & 1)
-#define PTE_URE_21064(itbpte) ( (itbpte.LowPart >> PTE_URE_21064_SHIFT) & 1)
-#define PTE_ASM_21064(itbpte) ( (itbpte.LowPart >> PTE_ASM_21064_SHIFT) & 1)
-#define PTE_PFN_21064(itbpte) ( (itbpte.LowPart >> PTE_PFN_21064_SHIFT) & PTE_PFN_21064_SHIFTMASK)
+#define PTE_FOR_21064(itbpte) ((itbpte.LowPart >> PTE_FOR_21064_SHIFT) & 1)
+#define PTE_FOW_21064(itbpte) ((itbpte.LowPart >> PTE_FOW_21064_SHIFT) & 1)
+#define PTE_KWE_21064(itbpte) ((itbpte.LowPart >> PTE_KWE_21064_SHIFT) & 1)
+#define PTE_EWE_21064(itbpte) ((itbpte.LowPart >> PTE_EWE_21064_SHIFT) & 1)
+#define PTE_SWE_21064(itbpte) ((itbpte.LowPart >> PTE_SWE_21064_SHIFT) & 1)
+#define PTE_UWE_21064(itbpte) ((itbpte.LowPart >> PTE_UWE_21064_SHIFT) & 1)
+#define PTE_KRE_21064(itbpte) ((itbpte.LowPart >> PTE_KRE_21064_SHIFT) & 1)
+#define PTE_ERE_21064(itbpte) ((itbpte.LowPart >> PTE_ERE_21064_SHIFT) & 1)
+#define PTE_SRE_21064(itbpte) ((itbpte.LowPart >> PTE_SRE_21064_SHIFT) & 1)
+#define PTE_URE_21064(itbpte) ((itbpte.LowPart >> PTE_URE_21064_SHIFT) & 1)
+#define PTE_ASM_21064(itbpte) ((itbpte.LowPart >> PTE_ASM_21064_SHIFT) & 1)
+#define PTE_PFN_21064(itbpte) ((itbpte.LowPart >> PTE_PFN_21064_SHIFT) & PTE_PFN_21064_SHIFTMASK)
 
 //
 // Instruction Cache Control and Status Register format
@@ -221,40 +227,37 @@ typedef DTB_PTE_21064 *PDTB_PTE_21064;
 typedef LARGE_INTEGER ICCSR_21064;
 typedef ICCSR_21064 *PICCSR_21064;
 
-#define ICCSR_PC0_21064_SHIFT   1
-#define ICCSR_PC1_21064_SHIFT   2
+#define ICCSR_PC0_21064_SHIFT 1
+#define ICCSR_PC1_21064_SHIFT 2
 #define ICCSR_PCMUX0_21064_SHIFT 9
 #define ICCSR_PCMUX0_21064_SHIFTMASK 0xF
 #define ICCSR_PCMUX1_21064_SHIFT 13
 #define ICCSR_PCMUX1_21064_SHIFTMASK 0x7
 #define ICCSR_PIPE_21064_SHIFT 16
-#define ICCSR_BPE_21064_SHIFT  17
-#define ICCSR_JSE_21064_SHIFT  18
-#define ICCSR_BHE_21064_SHIFT  19
-#define ICCSR_DI_21064_SHIFT   20
-#define ICCSR_HWE_21064_SHIFT  21
-#define ICCSR_MAP_21064_SHIFT  22
-#define ICCSR_FPE_21064_SHIFT  23
-#define ICCSR_ASN_21064_SHIFT  28
+#define ICCSR_BPE_21064_SHIFT 17
+#define ICCSR_JSE_21064_SHIFT 18
+#define ICCSR_BHE_21064_SHIFT 19
+#define ICCSR_DI_21064_SHIFT 20
+#define ICCSR_HWE_21064_SHIFT 21
+#define ICCSR_MAP_21064_SHIFT 22
+#define ICCSR_FPE_21064_SHIFT 23
+#define ICCSR_ASN_21064_SHIFT 28
 #define ICCSR_ASN_21064_SHIFTMASK 0x3F
 
 #define ICCSR_ALL_21064(iccsr) (iccsr)
-#define ICCSR_PC0_21064(iccsr) ( (iccsr.LowPart >> ICCSR_PC0_21064_SHIFT) & 1)
-#define ICCSR_PC1_21064(iccsr) ( (iccsr.LowPart >> ICCSR_PC1_21064_SHIFT) & 1)
-#define ICCSR_PCMUX0_21064(iccsr) \
-    ( (iccsr.LowPart >> ICCSR_PCMUX0_21064_SHIFT) & ICCSR_PCMUX0_21064_SHIFTMASK)
-#define ICCSR_PCMUX1_21064(iccsr) \
-    ( (iccsr.LowPart >> ICCSR_PCMUX1_21064_SHIFT) & ICCSR_PCMUX1_21064_SHIFTMASK)
-#define ICCSR_PIPE_21064(iccsr) ( (iccsr.LowPart >> ICCSR_PIPE_21064_SHIFT) & 1)
-#define ICCSR_BPE_21064(iccsr) ( (iccsr.LowPart >> ICCSR_BPE_21064_SHIFT) & 1)
-#define ICCSR_JSE_21064(iccsr) ( (iccsr.LowPart >> ICCSR_JSE_21064_SHIFT) & 1)
-#define ICCSR_BHE_21064(iccsr) ( (iccsr.LowPart >> ICCSR_BHE_21064_SHIFT) & 1)
-#define ICCSR_DI_21064(iccsr)  ( (iccsr.LowPart >> ICCSR_DI_21064_SHIFT) & 1)
-#define ICCSR_HWE_21064(iccsr) ( (iccsr.LowPart >> ICCSR_HWE_21064_SHIFT) & 1)
-#define ICCSR_MAP_21064(iccsr) ( (iccsr.LowPart >> ICCSR_MAP_21064_SHIFT) & 1)
-#define ICCSR_FPE_21064(iccsr) ( (iccsr.LowPart >> ICCSR_FPE_21064_SHIFT) & 1)
-#define ICCSR_ASN_21064(iccsr) \
-    (ULONG)( (iccsr.LowPart >> ICCSR_ASN_21064_SHIFT) & ICCSR_ASN_21064_SHIFTMASK)
+#define ICCSR_PC0_21064(iccsr) ((iccsr.LowPart >> ICCSR_PC0_21064_SHIFT) & 1)
+#define ICCSR_PC1_21064(iccsr) ((iccsr.LowPart >> ICCSR_PC1_21064_SHIFT) & 1)
+#define ICCSR_PCMUX0_21064(iccsr) ((iccsr.LowPart >> ICCSR_PCMUX0_21064_SHIFT) & ICCSR_PCMUX0_21064_SHIFTMASK)
+#define ICCSR_PCMUX1_21064(iccsr) ((iccsr.LowPart >> ICCSR_PCMUX1_21064_SHIFT) & ICCSR_PCMUX1_21064_SHIFTMASK)
+#define ICCSR_PIPE_21064(iccsr) ((iccsr.LowPart >> ICCSR_PIPE_21064_SHIFT) & 1)
+#define ICCSR_BPE_21064(iccsr) ((iccsr.LowPart >> ICCSR_BPE_21064_SHIFT) & 1)
+#define ICCSR_JSE_21064(iccsr) ((iccsr.LowPart >> ICCSR_JSE_21064_SHIFT) & 1)
+#define ICCSR_BHE_21064(iccsr) ((iccsr.LowPart >> ICCSR_BHE_21064_SHIFT) & 1)
+#define ICCSR_DI_21064(iccsr) ((iccsr.LowPart >> ICCSR_DI_21064_SHIFT) & 1)
+#define ICCSR_HWE_21064(iccsr) ((iccsr.LowPart >> ICCSR_HWE_21064_SHIFT) & 1)
+#define ICCSR_MAP_21064(iccsr) ((iccsr.LowPart >> ICCSR_MAP_21064_SHIFT) & 1)
+#define ICCSR_FPE_21064(iccsr) ((iccsr.LowPart >> ICCSR_FPE_21064_SHIFT) & 1)
+#define ICCSR_ASN_21064(iccsr) (ULONG)((iccsr.LowPart >> ICCSR_ASN_21064_SHIFT) & ICCSR_ASN_21064_SHIFTMASK)
 
 //
 // Processor Status (PS) format.
@@ -267,9 +270,7 @@ typedef PS_21064 *PPS_21064;
 #define PS_CM1_21064_SHIFT 34
 
 #define PS_ALL_21064(ps) (ps)
-#define PS_CM_21064(ps) \
-        ( (((ps).LowPart >> PS_CM0_21064_SHIFT) & 1) || \
-          (((ps).LowPart >> (PS_CM1_21064_SHIFT-1)) & 1) )
+#define PS_CM_21064(ps) ((((ps).LowPart >> PS_CM0_21064_SHIFT) & 1) || (((ps).LowPart >> (PS_CM1_21064_SHIFT - 1)) & 1))
 
 //
 // Exception Summary (EXC_SUM) format.
@@ -289,13 +290,13 @@ typedef EXC_SUM_21064 *PEXC_SUM_21064;
 
 #define EXCSUM_ALL_21064(excsum) (excsum)
 #define EXCSUM_SWC_21064(excsum) ((excsum.LowPart >> EXCSUM_SWC_21064_SHIFT) & 0x1)
-#define EXCSUM_INV_21064(excsum) ( (excsum.LowPart >> EXCSUM_INV_21064_SHIFT) & 0x1)
-#define EXCSUM_DZE_21064(excsum) ( (excsum.LowPart >> EXCSUM_DZE_21064_SHIFT) & 0x1)
-#define EXCSUM_FOV_21064(excsum) ( (excsum.LowPart >> EXCSUM_FOV_21064_SHIFT) & 0x1)
-#define EXCSUM_UNF_21064(excsum) ( (excsum.LowPart >> EXCSUM_UNF_21064_SHIFT) & 0x1)
-#define EXCSUM_INE_21064(excsum) ( (excsum.LowPart >> EXCSUM_INE_21064_SHIFT) & 0x1)
-#define EXCSUM_IOV_21064(excsum) ( (excsum.LowPart >> EXCSUM_IOV_21064_SHIFT) & 0x1)
-#define EXCSUM_MSK_21064(excsum) ( (excsum.LowPart >> EXCSUM_MSK_21064_SHIFT) & 0x1)
+#define EXCSUM_INV_21064(excsum) ((excsum.LowPart >> EXCSUM_INV_21064_SHIFT) & 0x1)
+#define EXCSUM_DZE_21064(excsum) ((excsum.LowPart >> EXCSUM_DZE_21064_SHIFT) & 0x1)
+#define EXCSUM_FOV_21064(excsum) ((excsum.LowPart >> EXCSUM_FOV_21064_SHIFT) & 0x1)
+#define EXCSUM_UNF_21064(excsum) ((excsum.LowPart >> EXCSUM_UNF_21064_SHIFT) & 0x1)
+#define EXCSUM_INE_21064(excsum) ((excsum.LowPart >> EXCSUM_INE_21064_SHIFT) & 0x1)
+#define EXCSUM_IOV_21064(excsum) ((excsum.LowPart >> EXCSUM_IOV_21064_SHIFT) & 0x1)
+#define EXCSUM_MSK_21064(excsum) ((excsum.LowPart >> EXCSUM_MSK_21064_SHIFT) & 0x1)
 
 //
 // Interrupt Request (HIRR, SIRR, ASTRR) format.
@@ -321,20 +322,18 @@ typedef IRR_21064 *PIRR_21064;
 #define IRR_ASTRR_21064_SHIFTMASK 0xF
 
 #define IRR_ALL_21064(irr) (irr)
-#define IRR_HWR_21064(irr) ( (irr.LowPart >> IRR_HWR_21064_SHIFT) & 0x1)
-#define IRR_SWR_21064(irr) ( (irr.LowPart >> IRR_SWR_21064_SHIFT) & 0x1)
-#define IRR_ATR_21064(irr) ( (irr.LowPart >> IRR_ATR_21064_SHIFT) & 0x1)
-#define IRR_CRR_21064(irr) ( (irr.LowPart >> IRR_CRR_21064_SHIFT) & 0x1)
-#define IRR_HIRR_21064(irr) \
-    ( ((irr.LowPart >> (IRR_HIRR53_21064_SHIFT-3)) & IRR_HIRR53_21064_SHIFTMASK) || \
-    ( (irr.LowPart >> IRR_HIRR20_21064_SHIFT) & IRR_HIRR20_21064_SHIFTMASK) )
-#define IRR_PC1_21064(irr) ( (irr.LowPart >> IRR_PC1_21064_SHIFT) & 0x1)
-#define IRR_PC0_21064(irr) ( (irr.LowPart >> IRR_PC0_21064_SHIFT) & 0x1)
-#define IRR_SLR_21064(irr) ( (irr.LowPart >> IRR_SLR_21064_SHIFT) & 0x1)
-#define IRR_SIRR_21064(irr) \
-    ( (irr.LowPart >> IRR_SIRR_21064_SHIFT) & IRR_SIRR_21064_SHIFTMASK)
-#define IRR_ASTRR_21064(irr) \
-    ( (irr.LowPart >> IRR_ASTRR_21064_SHIFT) & IRR_ASTRR_21064_SHIFTMASK)
+#define IRR_HWR_21064(irr) ((irr.LowPart >> IRR_HWR_21064_SHIFT) & 0x1)
+#define IRR_SWR_21064(irr) ((irr.LowPart >> IRR_SWR_21064_SHIFT) & 0x1)
+#define IRR_ATR_21064(irr) ((irr.LowPart >> IRR_ATR_21064_SHIFT) & 0x1)
+#define IRR_CRR_21064(irr) ((irr.LowPart >> IRR_CRR_21064_SHIFT) & 0x1)
+#define IRR_HIRR_21064(irr)                                                          \
+    (((irr.LowPart >> (IRR_HIRR53_21064_SHIFT - 3)) & IRR_HIRR53_21064_SHIFTMASK) || \
+     ((irr.LowPart >> IRR_HIRR20_21064_SHIFT) & IRR_HIRR20_21064_SHIFTMASK))
+#define IRR_PC1_21064(irr) ((irr.LowPart >> IRR_PC1_21064_SHIFT) & 0x1)
+#define IRR_PC0_21064(irr) ((irr.LowPart >> IRR_PC0_21064_SHIFT) & 0x1)
+#define IRR_SLR_21064(irr) ((irr.LowPart >> IRR_SLR_21064_SHIFT) & 0x1)
+#define IRR_SIRR_21064(irr) ((irr.LowPart >> IRR_SIRR_21064_SHIFT) & IRR_SIRR_21064_SHIFTMASK)
+#define IRR_ASTRR_21064(irr) ((irr.LowPart >> IRR_ASTRR_21064_SHIFT) & IRR_ASTRR_21064_SHIFTMASK)
 
 //
 // Interrupt Enable (HIER, SIER, ASTER) format.
@@ -357,34 +356,34 @@ typedef IER_21064 *PIER_21064;
 #define IER_ASTER_21064_SHIFTMASK 0xF
 
 #define IER_ALL_21064(ier) (ier)
-#define IER_CRR_21064(ier) ( (ier.LowPart >> IER_CRR_21064_SHIFT) & 0x1)
-#define IER_HIER_21064(ier) \
-    ( ( (ier.LowPart >> (IER_HIER53_21064_SHIFT-3)) & IER_HIER53_21064_SHIFTMASK) || \
-      ( (ier.LowPart >> IER_HIER20_21064_SHIFT) & IER_HIER20_21064_SHIFTMASK) )
-#define IER_PC1_21064(ier) ( (ier.LowPart >> IER_PC1_21064_SHIFT) & 0x1)
-#define IER_PC0_21064(ier) ( (ier.LowPart >> IER_PC0_21064_SHIFT) & 0x1)
-#define IER_SLR_21064(ier) ( (ier.LowPart >> IER_SLR_21064_SHIFT) & 0x1)
-#define IER_SIER_21064(ier) \
-    ( (ier.LowPart >> IER_SIER_21064_SHIFT) & IER_SIER_21064_SHIFTMASK)
-#define IER_ASTER_21064(ier) \
-    ( (ier.LowPart >> IER_ASTER_21064_SHIFT) & IER_ASTER_21064_SHIFTMASK)
+#define IER_CRR_21064(ier) ((ier.LowPart >> IER_CRR_21064_SHIFT) & 0x1)
+#define IER_HIER_21064(ier)                                                          \
+    (((ier.LowPart >> (IER_HIER53_21064_SHIFT - 3)) & IER_HIER53_21064_SHIFTMASK) || \
+     ((ier.LowPart >> IER_HIER20_21064_SHIFT) & IER_HIER20_21064_SHIFTMASK))
+#define IER_PC1_21064(ier) ((ier.LowPart >> IER_PC1_21064_SHIFT) & 0x1)
+#define IER_PC0_21064(ier) ((ier.LowPart >> IER_PC0_21064_SHIFT) & 0x1)
+#define IER_SLR_21064(ier) ((ier.LowPart >> IER_SLR_21064_SHIFT) & 0x1)
+#define IER_SIER_21064(ier) ((ier.LowPart >> IER_SIER_21064_SHIFT) & IER_SIER_21064_SHIFTMASK)
+#define IER_ASTER_21064(ier) ((ier.LowPart >> IER_ASTER_21064_SHIFT) & IER_ASTER_21064_SHIFTMASK)
 
 //
 // Abox Control Register (ABOX_CTL) format.
 //
 
-typedef union _ABOX_CTL_21064{
-    struct {
-        ULONG wb_dis: 1;
-        ULONG mchk_en: 1;
-        ULONG crd_en: 1;
-        ULONG ic_sbuf_en: 1;
-        ULONG spe_1: 1;
-        ULONG spe_2: 1;
-        ULONG emd_en: 1;
-        ULONG mbz1: 3;
-        ULONG dc_ena: 1;
-        ULONG dc_fhit: 1;
+typedef union _ABOX_CTL_21064
+{
+    struct
+    {
+        ULONG wb_dis : 1;
+        ULONG mchk_en : 1;
+        ULONG crd_en : 1;
+        ULONG ic_sbuf_en : 1;
+        ULONG spe_1 : 1;
+        ULONG spe_2 : 1;
+        ULONG emd_en : 1;
+        ULONG mbz1 : 3;
+        ULONG dc_ena : 1;
+        ULONG dc_fhit : 1;
     } bits;
     LARGE_INTEGER all;
 } ABOX_CTL_21064, *PABOX_CTL_21064;
@@ -404,14 +403,16 @@ typedef union _ABOX_CTL_21064{
 // Memory Management Control and Status Register (MMCSR) format.
 //
 
-typedef union _MMCSR_21064{
-    struct {
-        ULONG Wr: 1;
-        ULONG Acv: 1;
-        ULONG For: 1;
-        ULONG Fow: 1;
-        ULONG Ra: 5;
-        ULONG Opcode: 6;
+typedef union _MMCSR_21064
+{
+    struct
+    {
+        ULONG Wr : 1;
+        ULONG Acv : 1;
+        ULONG For : 1;
+        ULONG Fow : 1;
+        ULONG Ra : 5;
+        ULONG Opcode : 6;
     } bits;
     LARGE_INTEGER all;
 } MMCSR_21064, *PMMCSR_21064;
@@ -427,12 +428,14 @@ typedef union _MMCSR_21064{
 //
 // Dcache Status (DC_STAT) format.
 //
-typedef union _DC_STAT_21064{
-    struct {
-        ULONG Reserved: 3;
-        ULONG DcHit: 1;
-        ULONG DCacheParityError: 1;
-        ULONG ICacheParityError: 1;
+typedef union _DC_STAT_21064
+{
+    struct
+    {
+        ULONG Reserved : 3;
+        ULONG DcHit : 1;
+        ULONG DCacheParityError : 1;
+        ULONG ICacheParityError : 1;
     } bits;
     LARGE_INTEGER all;
 } DC_STAT_21064, *PDC_STAT_21064;
@@ -464,7 +467,8 @@ typedef union _DC_STAT_21064{
 // Define the memory controller CSR structure.
 //
 
-typedef struct _MEMC_CSRS_21066{
+typedef struct _MEMC_CSRS_21066
+{
     LARGE_INTEGER Bcr0;
     LARGE_INTEGER Bcr1;
     LARGE_INTEGER Bcr2;
@@ -490,7 +494,8 @@ typedef struct _MEMC_CSRS_21066{
 // Define the i/o controller CSR structure.
 //
 
-typedef struct _IOC_CSRS_21066{
+typedef struct _IOC_CSRS_21066
+{
     LARGE_INTEGER Hae;
     LARGE_INTEGER Filler1[3];
     LARGE_INTEGER Cct;
@@ -526,19 +531,21 @@ typedef struct _IOC_CSRS_21066{
 // Bank Configuration Registers (BCR0 - BCR3)
 //
 
-typedef union _BCR_21066{
-    struct {
-        ULONG Reserved1: 6;
-        ULONG Ras: 4;
-        ULONG Erm: 1;
-        ULONG Wrm: 1;
-        ULONG Bwe: 1;
-        ULONG Sbe: 1;
-        ULONG Bav: 1;
-        ULONG Reserved2: 5;
-        ULONG BankBase: 9;
-        ULONG Reserved3: 3;
-    } ;
+typedef union _BCR_21066
+{
+    struct
+    {
+        ULONG Reserved1 : 6;
+        ULONG Ras : 4;
+        ULONG Erm : 1;
+        ULONG Wrm : 1;
+        ULONG Bwe : 1;
+        ULONG Sbe : 1;
+        ULONG Bav : 1;
+        ULONG Reserved2 : 5;
+        ULONG BankBase : 9;
+        ULONG Reserved3 : 3;
+    };
     LARGE_INTEGER all;
 } BCR_21066, *PBCR_21066;
 
@@ -546,12 +553,14 @@ typedef union _BCR_21066{
 // Bank Address Mask Registers (BMR0 - BMR3)
 //
 
-typedef union _BMR_21066{
-    struct {
-        ULONG Reserved1: 20;
-        ULONG BankAddressMask: 9;
-        ULONG Reserved2: 3;
-    } ;
+typedef union _BMR_21066
+{
+    struct
+    {
+        ULONG Reserved1 : 20;
+        ULONG BankAddressMask : 9;
+        ULONG Reserved2 : 3;
+    };
     LARGE_INTEGER all;
 } BMR_21066, *PBMR_21066;
 
@@ -559,16 +568,18 @@ typedef union _BMR_21066{
 // Global Timing Register (GTR)
 //
 
-typedef union _GTR_21066{
-    struct {
-        ULONG Precharge: 5;
-        ULONG MinimumRas: 5;
-        ULONG MaximumRas: 8;
-        ULONG RefreshEnable: 1;
-        ULONG RefreshInterval: 8;
-        ULONG RefreshDivideSelect: 1;
-        ULONG Setup: 4;
-    } ;
+typedef union _GTR_21066
+{
+    struct
+    {
+        ULONG Precharge : 5;
+        ULONG MinimumRas : 5;
+        ULONG MaximumRas : 8;
+        ULONG RefreshEnable : 1;
+        ULONG RefreshInterval : 8;
+        ULONG RefreshDivideSelect : 1;
+        ULONG Setup : 4;
+    };
     LARGE_INTEGER all;
 } GTR_21066, *PGTR_21066;
 
@@ -576,45 +587,47 @@ typedef union _GTR_21066{
 // Error Status Register (ESR)
 //
 
-typedef union _ESR_21066{
-    struct {
-        ULONG Eav: 1;
-        ULONG Cee: 1;
-        ULONG Uee: 1;
-        ULONG Wre: 1;
-        ULONG Sor: 1;
-        ULONG Reserved1: 2;
-        ULONG Cte: 1;
-        ULONG Reserved2: 1;
-        ULONG Mse: 1;
-        ULONG Mhe: 1;
-        ULONG Ice: 1;
-        ULONG Nxm: 1;
-        ULONG Reserved3: 19;
-        ULONG Ecc0: 1;       
-        ULONG Wec6: 1;
-        ULONG Wec3: 1;
-        ULONG Reserved4: 1;
-        ULONG Ecc1: 1;
-        ULONG Reserved5: 3;
-        ULONG Wec7: 1;
-        ULONG Ecc2: 1;
-        ULONG Wec2: 1;
-        ULONG Reserved6: 2;
-        ULONG Ecc3: 1;
-        ULONG Reserved7: 2;
-        ULONG Wec4: 1;
-        ULONG Wec1: 1;
-        ULONG Ecc4: 1;
-        ULONG Wec0: 1;
-        ULONG Reserved8: 2;
-        ULONG Ecc5: 1;
-        ULONG Reserved9: 4;
-        ULONG Ecc6: 1;
-        ULONG Wec5: 1;
-        ULONG Reserved10: 2;
-        ULONG Ecc7: 1;       
-    } ;
+typedef union _ESR_21066
+{
+    struct
+    {
+        ULONG Eav : 1;
+        ULONG Cee : 1;
+        ULONG Uee : 1;
+        ULONG Wre : 1;
+        ULONG Sor : 1;
+        ULONG Reserved1 : 2;
+        ULONG Cte : 1;
+        ULONG Reserved2 : 1;
+        ULONG Mse : 1;
+        ULONG Mhe : 1;
+        ULONG Ice : 1;
+        ULONG Nxm : 1;
+        ULONG Reserved3 : 19;
+        ULONG Ecc0 : 1;
+        ULONG Wec6 : 1;
+        ULONG Wec3 : 1;
+        ULONG Reserved4 : 1;
+        ULONG Ecc1 : 1;
+        ULONG Reserved5 : 3;
+        ULONG Wec7 : 1;
+        ULONG Ecc2 : 1;
+        ULONG Wec2 : 1;
+        ULONG Reserved6 : 2;
+        ULONG Ecc3 : 1;
+        ULONG Reserved7 : 2;
+        ULONG Wec4 : 1;
+        ULONG Wec1 : 1;
+        ULONG Ecc4 : 1;
+        ULONG Wec0 : 1;
+        ULONG Reserved8 : 2;
+        ULONG Ecc5 : 1;
+        ULONG Reserved9 : 4;
+        ULONG Ecc6 : 1;
+        ULONG Wec5 : 1;
+        ULONG Reserved10 : 2;
+        ULONG Ecc7 : 1;
+    };
     LARGE_INTEGER all;
 } ESR_21066, *PESR_21066;
 
@@ -622,12 +635,14 @@ typedef union _ESR_21066{
 // Error Address Register (EAR)
 //
 
-typedef union _EAR_21066{
-    struct {
-        ULONG PerfCntMux0: 3;
-        ULONG ErrorAddress: 26;
-        ULONG PerfCntMux1: 3;
-    } ;
+typedef union _EAR_21066
+{
+    struct
+    {
+        ULONG PerfCntMux0 : 3;
+        ULONG ErrorAddress : 26;
+        ULONG PerfCntMux1 : 3;
+    };
     LARGE_INTEGER all;
 } EAR_21066, *PEAR_21066;
 
@@ -636,40 +651,44 @@ typedef union _EAR_21066{
 // Cache Register (CAR)
 //
 
-typedef union _CAR_21066{
-    struct {
-        ULONG Bce: 1;
-        ULONG Reserved1: 1;
-        ULONG Etp: 1;
-        ULONG Wwp: 1;
-        ULONG Ece: 1;
-        ULONG BCacheSize: 3;
-        ULONG ReadCycles: 3;
-        ULONG WriteCycles: 3;
-        ULONG Whd: 1;
-        ULONG Pwr: 1;
-        ULONG Tag: 15;
-        ULONG Hit: 1;
-    } ;
+typedef union _CAR_21066
+{
+    struct
+    {
+        ULONG Bce : 1;
+        ULONG Reserved1 : 1;
+        ULONG Etp : 1;
+        ULONG Wwp : 1;
+        ULONG Ece : 1;
+        ULONG BCacheSize : 3;
+        ULONG ReadCycles : 3;
+        ULONG WriteCycles : 3;
+        ULONG Whd : 1;
+        ULONG Pwr : 1;
+        ULONG Tag : 15;
+        ULONG Hit : 1;
+    };
     LARGE_INTEGER all;
 } CAR_21066, *PCAR_21066;
 
-       
+
 //
 // IOC Status 0 Registers (IOC_STAT0)
 //
 
-typedef union _IOC_STAT0_21066{
-    struct {
-        ULONG Cmd: 4;
-        ULONG Err: 1;
-        ULONG Lost: 1;
-        ULONG Thit: 1;
-        ULONG Tref: 1;
-        ULONG Code: 3;
-        ULONG Reserved1: 2;
-        ULONG PageNumber: 19;
-    } ;
+typedef union _IOC_STAT0_21066
+{
+    struct
+    {
+        ULONG Cmd : 4;
+        ULONG Err : 1;
+        ULONG Lost : 1;
+        ULONG Thit : 1;
+        ULONG Tref : 1;
+        ULONG Code : 3;
+        ULONG Reserved1 : 2;
+        ULONG PageNumber : 19;
+    };
     LARGE_INTEGER all;
 } IOC_STAT0_21066, *PIOC_STAT0_21066;
 
@@ -678,10 +697,12 @@ typedef union _IOC_STAT0_21066{
 // IOC Status 1 Register (IOC_STAT1)
 //
 
-typedef union _IOC_STAT1_21066{
-    struct {
-        ULONG Address: 32;
-    } ;
+typedef union _IOC_STAT1_21066
+{
+    struct
+    {
+        ULONG Address : 32;
+    };
     LARGE_INTEGER all;
 } IOC_STAT1_21066, *PIOC_STAT1_21066;
 
@@ -691,22 +712,23 @@ typedef union _IOC_STAT1_21066{
 // This is the structure of the data returned by the rdstate call pal.
 //
 
-typedef struct _PROCESSOR_STATE_21066{
+typedef struct _PROCESSOR_STATE_21066
+{
     ABOX_CTL_21064 AboxCtl;
     IER_21064 Aster;
     IRR_21064 Astrr;
-    BCR_21066 BankConfig[ MEMORY_BANKS_21066 ];
-    BMR_21066 BankMask[ MEMORY_BANKS_21066 ];
+    BCR_21066 BankConfig[MEMORY_BANKS_21066];
+    BMR_21066 BankMask[MEMORY_BANKS_21066];
     DC_STAT_21064 DcStat;
-    DTB_PTE_21064 DtbPte[ DTB_ENTRIES_21064 ];
+    DTB_PTE_21064 DtbPte[DTB_ENTRIES_21064];
     EXC_SUM_21064 ExcSum;
     IER_21064 Hier;
     IRR_21064 Hirr;
     ICCSR_21064 Iccsr;
-    ITB_PTE_21064 ItbPte[ ITB_ENTRIES_21064 ];
+    ITB_PTE_21064 ItbPte[ITB_ENTRIES_21064];
     MMCSR_21064 MmCsr;
     LARGE_INTEGER PalBase;
-    LARGE_INTEGER PalTemp[ PAL_TEMPS_21064 ];
+    LARGE_INTEGER PalTemp[PAL_TEMPS_21064];
     PS_21064 Ps;
     IER_21064 Sier;
     IRR_21064 Sirr;
@@ -717,10 +739,11 @@ typedef struct _PROCESSOR_STATE_21066{
 // Machine-check logout frame.
 //
 
-typedef struct _LOGOUT_FRAME_21066{
+typedef struct _LOGOUT_FRAME_21066
+{
     ABOX_CTL_21064 AboxCtl;
-    BCR_21066 BankConfig[ MEMORY_BANKS_21066 ];
-    BMR_21066 BankMask[ MEMORY_BANKS_21066 ];
+    BCR_21066 BankConfig[MEMORY_BANKS_21066];
+    BMR_21066 BankMask[MEMORY_BANKS_21066];
     DC_STAT_21064 DcStat;
     LARGE_INTEGER ExcAddr;
     EXC_SUM_21064 ExcSum;
@@ -729,7 +752,7 @@ typedef struct _LOGOUT_FRAME_21066{
     ICCSR_21064 Iccsr;
     MMCSR_21064 MmCsr;
     LARGE_INTEGER PalBase;
-    LARGE_INTEGER PalTemp[ PAL_TEMPS_21064 ];
+    LARGE_INTEGER PalTemp[PAL_TEMPS_21064];
     PS_21064 Ps;
     LARGE_INTEGER Va;
 } LOGOUT_FRAME_21066, *PLOGOUT_FRAME_21066;
@@ -738,9 +761,10 @@ typedef struct _LOGOUT_FRAME_21066{
 // Correctable Machine-check logout frame.
 //
 
-typedef struct _CORRECTABLE_FRAME_21066{
-    BCR_21066 BankConfig[ MEMORY_BANKS_21066 ];
-    BMR_21066 BankMask[ MEMORY_BANKS_21066 ];
+typedef struct _CORRECTABLE_FRAME_21066
+{
+    BCR_21066 BankConfig[MEMORY_BANKS_21066];
+    BMR_21066 BankMask[MEMORY_BANKS_21066];
     DC_STAT_21064 DcStat;
 } CORRECTABLE_FRAME_21066;
 
@@ -748,7 +772,7 @@ typedef struct _CORRECTABLE_FRAME_21066{
 // Define the physical and virtual address bits
 //
 
-#define LCA_PHYSICAL_ADDRESS_BITS     34
-#define LCA_VIRTUAL_ADDRESS_BITS      43
+#define LCA_PHYSICAL_ADDRESS_BITS 34
+#define LCA_VIRTUAL_ADDRESS_BITS 43
 
-#endif //!_AXP21066_  
+#endif //!_AXP21066_

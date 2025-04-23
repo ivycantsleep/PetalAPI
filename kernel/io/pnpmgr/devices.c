@@ -21,18 +21,17 @@ Revision History:
 #include "pnpmgrp.h"
 #pragma hdrstop
 
-typedef struct {
+typedef struct
+{
     BOOLEAN Add;
 } PROCESS_DRIVER_CONTEXT, *PPROCESS_DRIVER_CONTEXT;
 
-typedef NTSTATUS (*PDEVICE_SERVICE_ITERATOR_ROUTINE)(
-    IN PUNICODE_STRING DeviceInstancePath,
-    IN PUNICODE_STRING ServiceName,
-    IN ULONG ServiceType,
-    IN PVOID Context
-    );
+typedef NTSTATUS (*PDEVICE_SERVICE_ITERATOR_ROUTINE)(IN PUNICODE_STRING DeviceInstancePath,
+                                                     IN PUNICODE_STRING ServiceName, IN ULONG ServiceType,
+                                                     IN PVOID Context);
 
-typedef struct {
+typedef struct
+{
     PUNICODE_STRING DeviceInstancePath;
     PDEVICE_SERVICE_ITERATOR_ROUTINE Iterator;
     PVOID Context;
@@ -43,36 +42,19 @@ typedef struct {
 //
 
 NTSTATUS
-PiFindDevInstMatch(
-    IN HANDLE ServiceEnumHandle,
-    IN PUNICODE_STRING DeviceInstanceName,
-    OUT PULONG InstanceCount,
-    OUT PUNICODE_STRING MatchingValueName
-    );
+PiFindDevInstMatch(IN HANDLE ServiceEnumHandle, IN PUNICODE_STRING DeviceInstanceName, OUT PULONG InstanceCount,
+                   OUT PUNICODE_STRING MatchingValueName);
 
-NTSTATUS PiProcessDriverInstance(
-    IN PUNICODE_STRING DeviceInstancePath,
-    IN PUNICODE_STRING ServiceName,
-    IN ULONG ServiceType,
-    IN PPROCESS_DRIVER_CONTEXT Context
-    );
+NTSTATUS PiProcessDriverInstance(IN PUNICODE_STRING DeviceInstancePath, IN PUNICODE_STRING ServiceName,
+                                 IN ULONG ServiceType, IN PPROCESS_DRIVER_CONTEXT Context);
 
 NTSTATUS
-PpForEachDeviceInstanceDriver(
-    PUNICODE_STRING DeviceInstancePath,
-    PDEVICE_SERVICE_ITERATOR_ROUTINE IteratorRoutine,
-    PVOID Context
-    );
+PpForEachDeviceInstanceDriver(PUNICODE_STRING DeviceInstancePath, PDEVICE_SERVICE_ITERATOR_ROUTINE IteratorRoutine,
+                              PVOID Context);
 
 NTSTATUS
-PiForEachDriverQueryRoutine(
-    IN PWSTR ValueName,
-    IN ULONG ValueType,
-    IN PVOID ValueData,
-    IN ULONG ValueLength,
-    IN PDEVICE_SERVICE_ITERATOR_CONTEXT InternalContext,
-    IN ULONG ServiceType
-    );
+PiForEachDriverQueryRoutine(IN PWSTR ValueName, IN ULONG ValueType, IN PVOID ValueData, IN ULONG ValueLength,
+                            IN PDEVICE_SERVICE_ITERATOR_CONTEXT InternalContext, IN ULONG ServiceType);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, PpDeviceRegistration)
@@ -82,13 +64,9 @@ PiForEachDriverQueryRoutine(
 #pragma alloc_text(PAGE, PpForEachDeviceInstanceDriver)
 #pragma alloc_text(PAGE, PiForEachDriverQueryRoutine)
 #endif // ALLOC_PRAGMA
-
+
 NTSTATUS
-PpDeviceRegistration(
-    IN PUNICODE_STRING DeviceInstancePath,
-    IN BOOLEAN Add,
-    IN PUNICODE_STRING ServiceKeyName OPTIONAL
-    )
+PpDeviceRegistration(IN PUNICODE_STRING DeviceInstancePath, IN BOOLEAN Add, IN PUNICODE_STRING ServiceKeyName OPTIONAL)
 
 /*++
 
@@ -147,22 +125,15 @@ Return Value:
     //
     PiLockPnpRegistry(TRUE);
 
-    Status = PiDeviceRegistration(DeviceInstancePath,
-                                  Add,
-                                  ServiceKeyName
-                                  );
+    Status = PiDeviceRegistration(DeviceInstancePath, Add, ServiceKeyName);
 
     PiUnlockPnpRegistry();
     return Status;
 }
 
-
+
 NTSTATUS
-PiDeviceRegistration(
-    IN PUNICODE_STRING DeviceInstancePath,
-    IN BOOLEAN Add,
-    IN PUNICODE_STRING ServiceKeyName OPTIONAL
-    )
+PiDeviceRegistration(IN PUNICODE_STRING DeviceInstancePath, IN BOOLEAN Add, IN PUNICODE_STRING ServiceKeyName OPTIONAL)
 
 /*++
 
@@ -225,7 +196,8 @@ Return Value:
     //
     Status = STATUS_SUCCESS;
 
-    if (ServiceKeyName) {
+    if (ServiceKeyName)
+    {
         PiWstrToUnicodeString(ServiceKeyName, NULL);
     }
 
@@ -234,25 +206,23 @@ Return Value:
     // backslash (if present)
     //
 
-    if (DeviceInstancePath->Length <= sizeof(WCHAR)) {
+    if (DeviceInstancePath->Length <= sizeof(WCHAR))
+    {
         Status = STATUS_INVALID_PARAMETER;
         goto PrepareForReturn1;
     }
 
-    if (DeviceInstancePath->Buffer[CB_TO_CWC(DeviceInstancePath->Length) - 1] ==
-                                                            OBJ_NAME_PATH_SEPARATOR) {
+    if (DeviceInstancePath->Buffer[CB_TO_CWC(DeviceInstancePath->Length) - 1] == OBJ_NAME_PATH_SEPARATOR)
+    {
         DeviceInstancePath->Length -= sizeof(WCHAR);
     }
 
     //
     // Open HKLM\System\CurrentControlSet\Enum
     //
-    Status = IopOpenRegistryKeyEx( &TempKeyHandle,
-                                   NULL,
-                                   &CmRegistryMachineSystemCurrentControlSetEnumName,
-                                   KEY_READ
-                                   );
-    if(!NT_SUCCESS(Status)) {
+    Status = IopOpenRegistryKeyEx(&TempKeyHandle, NULL, &CmRegistryMachineSystemCurrentControlSetEnumName, KEY_READ);
+    if (!NT_SUCCESS(Status))
+    {
         goto PrepareForReturn1;
     }
 
@@ -260,13 +230,10 @@ Return Value:
     // Open the specified device instance key under HKLM\CCS\System\Enum
     //
 
-    Status = IopOpenRegistryKeyEx( &DeviceInstanceHandle,
-                                   TempKeyHandle,
-                                   DeviceInstancePath,
-                                   KEY_READ
-                                   );
+    Status = IopOpenRegistryKeyEx(&DeviceInstanceHandle, TempKeyHandle, DeviceInstancePath, KEY_READ);
     ZwClose(TempKeyHandle);
-    if(!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         goto PrepareForReturn1;
     }
 
@@ -274,38 +241,36 @@ Return Value:
     // Read Service= value entry of the specified device instance key.
     //
 
-    Status = IopGetRegistryValue(DeviceInstanceHandle,
-                                 REGSTR_VALUE_SERVICE,
-                                 &KeyValueInformation
-                                 );
+    Status = IopGetRegistryValue(DeviceInstanceHandle, REGSTR_VALUE_SERVICE, &KeyValueInformation);
     ZwClose(DeviceInstanceHandle);
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         Status = STATUS_OBJECT_NAME_NOT_FOUND;
-        if (KeyValueInformation->Type == REG_SZ) {
-            if (KeyValueInformation->DataLength > sizeof(UNICODE_NULL)) {
-                IopRegistryDataToUnicodeString(&ServiceName,
-                                               (PWSTR)KEY_VALUE_DATA(KeyValueInformation),
-                                               KeyValueInformation->DataLength
-                                               );
+        if (KeyValueInformation->Type == REG_SZ)
+        {
+            if (KeyValueInformation->DataLength > sizeof(UNICODE_NULL))
+            {
+                IopRegistryDataToUnicodeString(&ServiceName, (PWSTR)KEY_VALUE_DATA(KeyValueInformation),
+                                               KeyValueInformation->DataLength);
                 Status = STATUS_SUCCESS;
-                if (ServiceKeyName) {
+                if (ServiceKeyName)
+                {
 
                     //
                     // If need to return ServiceKeyName, make a copy now.
                     //
 
-                    if (!PipConcatenateUnicodeStrings(  ServiceKeyName,
-                                                        &ServiceName,
-                                                        NULL)) {
+                    if (!PipConcatenateUnicodeStrings(ServiceKeyName, &ServiceName, NULL))
+                    {
                         Status = STATUS_INSUFFICIENT_RESOURCES;
                     }
-
                 }
             }
         }
         ExFreePool(KeyValueInformation);
-
-    } else if (Status == STATUS_OBJECT_NAME_NOT_FOUND) {
+    }
+    else if (Status == STATUS_OBJECT_NAME_NOT_FOUND)
+    {
         //
         // The device instance key may have no Service value entry if the device
         // is raw capable.
@@ -314,30 +279,31 @@ Return Value:
         goto PrepareForReturn1;
     }
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         PROCESS_DRIVER_CONTEXT context;
         context.Add = Add;
 
-        Status = PpForEachDeviceInstanceDriver(
-                    DeviceInstancePath,
-                    (PDEVICE_SERVICE_ITERATOR_ROUTINE) PiProcessDriverInstance,
-                    &context);
+        Status = PpForEachDeviceInstanceDriver(DeviceInstancePath,
+                                               (PDEVICE_SERVICE_ITERATOR_ROUTINE)PiProcessDriverInstance, &context);
 
-        if(!NT_SUCCESS(Status) && Add) {
+        if (!NT_SUCCESS(Status) && Add)
+        {
 
             context.Add = FALSE;
-            PpForEachDeviceInstanceDriver(DeviceInstancePath,
-                                          PiProcessDriverInstance,
-                                          &context);
+            PpForEachDeviceInstanceDriver(DeviceInstancePath, PiProcessDriverInstance, &context);
         }
     }
 
 PrepareForReturn1:
 
-    if (!NT_SUCCESS(Status)) {
-        if (ServiceKeyName) {
-            if (ServiceKeyName->Length != 0) {
+    if (!NT_SUCCESS(Status))
+    {
+        if (ServiceKeyName)
+        {
+            if (ServiceKeyName->Length != 0)
+            {
                 ExFreePool(ServiceKeyName->Buffer);
                 ServiceKeyName->Buffer = NULL;
                 ServiceKeyName->Length = ServiceKeyName->MaximumLength = 0;
@@ -349,12 +315,8 @@ PrepareForReturn1:
 }
 
 NTSTATUS
-PiProcessDriverInstance(
-    IN PUNICODE_STRING DeviceInstancePath,
-    IN PUNICODE_STRING ServiceName,
-    IN ULONG ServiceType,
-    IN PPROCESS_DRIVER_CONTEXT Context
-    )
+PiProcessDriverInstance(IN PUNICODE_STRING DeviceInstancePath, IN PUNICODE_STRING ServiceName, IN ULONG ServiceType,
+                        IN PPROCESS_DRIVER_CONTEXT Context)
 {
     NTSTATUS Status = STATUS_OBJECT_NAME_NOT_FOUND;
 
@@ -366,7 +328,7 @@ PiProcessDriverInstance(
     BOOLEAN UpdateCount = FALSE;
     ULONG i, j, Count, junk, maxCount;
 
-    UNREFERENCED_PARAMETER( ServiceType );
+    UNREFERENCED_PARAMETER(ServiceType);
 
     PAGED_CODE();
 
@@ -378,13 +340,9 @@ PiProcessDriverInstance(
     // doesn't exist)
     //
 
-    Status = PipOpenServiceEnumKeys(ServiceName,
-                                    KEY_ALL_ACCESS,
-                                    NULL,
-                                    &ServiceEnumHandle,
-                                    TRUE
-                                   );
-    if(!NT_SUCCESS(Status)) {
+    Status = PipOpenServiceEnumKeys(ServiceName, KEY_ALL_ACCESS, NULL, &ServiceEnumHandle, TRUE);
+    if (!NT_SUCCESS(Status))
+    {
         goto PrepareForReturn2;
     }
 
@@ -393,23 +351,23 @@ PiProcessDriverInstance(
     // if this instance has previously been registered.
     //
 
-    Status = PiFindDevInstMatch(ServiceEnumHandle,
-                                DeviceInstancePath,
-                                &Count,
-                                &MatchingDeviceInstance);
+    Status = PiFindDevInstMatch(ServiceEnumHandle, DeviceInstancePath, &Count, &MatchingDeviceInstance);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         goto PrepareForReturn3;
     }
 
-    if (!MatchingDeviceInstance.Buffer) {
+    if (!MatchingDeviceInstance.Buffer)
+    {
 
         //
         // If we didn't find a match and caller wants to register the device, then we add
         // this instance to the service's Enum list.
         //
 
-        if (Context->Add) {
+        if (Context->Add)
+        {
             PWSTR instancePathBuffer;
             ULONG instancePathLength;
             BOOLEAN freeBuffer = FALSE;
@@ -418,46 +376,43 @@ PiProcessDriverInstance(
             // Create the value entry and update NextInstance= for the madeup key
             //
 
-            if (DeviceInstancePath->Buffer[DeviceInstancePath->Length / sizeof(WCHAR) - 1] !=
-                UNICODE_NULL) {
+            if (DeviceInstancePath->Buffer[DeviceInstancePath->Length / sizeof(WCHAR) - 1] != UNICODE_NULL)
+            {
                 instancePathLength = DeviceInstancePath->Length + sizeof(WCHAR);
                 instancePathBuffer = (PWSTR)ExAllocatePool(PagedPool, instancePathLength);
-                if (instancePathBuffer) {
-                    RtlCopyMemory(instancePathBuffer,
-                                  DeviceInstancePath->Buffer,
-                                  DeviceInstancePath->Length
-                                  );
+                if (instancePathBuffer)
+                {
+                    RtlCopyMemory(instancePathBuffer, DeviceInstancePath->Buffer, DeviceInstancePath->Length);
                     instancePathBuffer[DeviceInstancePath->Length / sizeof(WCHAR)] = UNICODE_NULL;
                     freeBuffer = TRUE;
                 }
             }
-            if (!freeBuffer) {
+            if (!freeBuffer)
+            {
                 instancePathBuffer = DeviceInstancePath->Buffer;
                 instancePathLength = DeviceInstancePath->Length;
             }
             PiUlongToUnicodeString(&TempUnicodeString, UnicodeBuffer, 20, Count);
-            Status = ZwSetValueKey(
-                        ServiceEnumHandle,
-                        &TempUnicodeString,
-                        TITLE_INDEX_VALUE,
-                        REG_SZ,
-                        instancePathBuffer,
-                        instancePathLength
-                        );
-            if (freeBuffer) {
+            Status = ZwSetValueKey(ServiceEnumHandle, &TempUnicodeString, TITLE_INDEX_VALUE, REG_SZ, instancePathBuffer,
+                                   instancePathLength);
+            if (freeBuffer)
+            {
                 ExFreePool(instancePathBuffer);
             }
             Count++;
             UpdateCount = TRUE;
         }
-    } else {
+    }
+    else
+    {
 
         //
         // If we did find a match and caller wants to deregister the device, then we remove
         // this instance from the service's Enum list.
         //
 
-        if (Context->Add == FALSE) {
+        if (Context->Add == FALSE)
+        {
             ZwDeleteValueKey(ServiceEnumHandle, &MatchingDeviceInstance);
             Count--;
             UpdateCount = TRUE;
@@ -467,52 +422,51 @@ PiProcessDriverInstance(
             // instances under the ServiceKey\Enum key to make them contiguous.
             //
 
-            if (Count != 0) {
+            if (Count != 0)
+            {
                 KEY_FULL_INFORMATION keyInfo;
                 ULONG tmp;
 
                 Status = ZwQueryKey(ServiceEnumHandle, KeyFullInformation, &keyInfo, sizeof(keyInfo), &tmp);
-                if (NT_SUCCESS(Status) && keyInfo.Values) {
+                if (NT_SUCCESS(Status) && keyInfo.Values)
+                {
                     maxCount = keyInfo.Values;
-                } else {
+                }
+                else
+                {
                     maxCount = 0x200;
                 }
                 i = j = 0;
-                while (j < Count && i < maxCount) {
+                while (j < Count && i < maxCount)
+                {
                     PiUlongToUnicodeString(&TempUnicodeString, UnicodeBuffer, 20, i);
-                    Status = ZwQueryValueKey( ServiceEnumHandle,
-                                              &TempUnicodeString,
-                                              KeyValueFullInformation,
-                                              (PVOID) NULL,
-                                              0,
-                                              &junk);
-                    if ((Status != STATUS_OBJECT_NAME_NOT_FOUND) && (Status != STATUS_OBJECT_PATH_NOT_FOUND)) {
-                        if (i != j) {
+                    Status = ZwQueryValueKey(ServiceEnumHandle, &TempUnicodeString, KeyValueFullInformation,
+                                             (PVOID)NULL, 0, &junk);
+                    if ((Status != STATUS_OBJECT_NAME_NOT_FOUND) && (Status != STATUS_OBJECT_PATH_NOT_FOUND))
+                    {
+                        if (i != j)
+                        {
 
                             //
                             // Need to change the instance i to instance j
                             //
 
-                            Status = IopGetRegistryValue(ServiceEnumHandle,
-                                                         TempUnicodeString.Buffer,
-                                                         &KeyValueInformation
-                                                         );
-                            if (NT_SUCCESS(Status)) {
+                            Status =
+                                IopGetRegistryValue(ServiceEnumHandle, TempUnicodeString.Buffer, &KeyValueInformation);
+                            if (NT_SUCCESS(Status))
+                            {
                                 ZwDeleteValueKey(ServiceEnumHandle, &TempUnicodeString);
                                 PiUlongToUnicodeString(&TempUnicodeString, UnicodeBuffer, 20, j);
-                                ZwSetValueKey (ServiceEnumHandle,
-                                               &TempUnicodeString,
-                                               TITLE_INDEX_VALUE,
-                                               REG_SZ,
-                                               (PVOID)KEY_VALUE_DATA(KeyValueInformation),
-                                               KeyValueInformation->DataLength
-                                               );
+                                ZwSetValueKey(ServiceEnumHandle, &TempUnicodeString, TITLE_INDEX_VALUE, REG_SZ,
+                                              (PVOID)KEY_VALUE_DATA(KeyValueInformation),
+                                              KeyValueInformation->DataLength);
                                 ExFreePool(KeyValueInformation);
                                 KeyValueInformation = NULL;
-                            } else {
+                            }
+                            else
+                            {
                                 IopDbgPrint((IOP_WARNING_LEVEL,
-                                           "PpDeviceRegistration: Fail to rearrange device instances %x\n",
-                                           Status));
+                                             "PpDeviceRegistration: Fail to rearrange device instances %x\n", Status));
 
                                 break;
                             }
@@ -524,32 +478,20 @@ PiProcessDriverInstance(
             }
         }
     }
-    if (UpdateCount) {
+    if (UpdateCount)
+    {
         PiWstrToUnicodeString(&TempUnicodeString, REGSTR_VALUE_COUNT);
-        ZwSetValueKey(
-                ServiceEnumHandle,
-                &TempUnicodeString,
-                TITLE_INDEX_VALUE,
-                REG_DWORD,
-                &Count,
-                sizeof(Count)
-                );
+        ZwSetValueKey(ServiceEnumHandle, &TempUnicodeString, TITLE_INDEX_VALUE, REG_DWORD, &Count, sizeof(Count));
         PiWstrToUnicodeString(&TempUnicodeString, REGSTR_VALUE_NEXT_INSTANCE);
-        ZwSetValueKey(
-                ServiceEnumHandle,
-                &TempUnicodeString,
-                TITLE_INDEX_VALUE,
-                REG_DWORD,
-                &Count,
-                sizeof(Count)
-                );
+        ZwSetValueKey(ServiceEnumHandle, &TempUnicodeString, TITLE_INDEX_VALUE, REG_DWORD, &Count, sizeof(Count));
     }
 
     //
     // Need to release the matching device value name
     //
 
-    if (MatchingDeviceInstance.Buffer) {
+    if (MatchingDeviceInstance.Buffer)
+    {
         RtlFreeUnicodeString(&MatchingDeviceInstance);
     }
     Status = STATUS_SUCCESS;
@@ -560,21 +502,18 @@ PrepareForReturn3:
 
 PrepareForReturn2:
 
-    if (KeyValueInformation) {
+    if (KeyValueInformation)
+    {
         ExFreePool(KeyValueInformation);
     }
 
     return Status;
 }
 
-
+
 NTSTATUS
-PiFindDevInstMatch(
-    IN HANDLE ServiceEnumHandle,
-    IN PUNICODE_STRING DeviceInstanceName,
-    OUT PULONG Count,
-    OUT PUNICODE_STRING MatchingValueName
-    )
+PiFindDevInstMatch(IN HANDLE ServiceEnumHandle, IN PUNICODE_STRING DeviceInstanceName, OUT PULONG Count,
+                   OUT PUNICODE_STRING MatchingValueName)
 
 /*++
 
@@ -622,23 +561,24 @@ Return Value:
     MatchingValueName->Buffer = NULL;
     *Count = instanceCount = 0;
 
-    status = IopGetRegistryValue(ServiceEnumHandle,
-                                 REGSTR_VALUE_COUNT,
-                                 &keyValueInformation
-                                );
-    if (NT_SUCCESS(status)) {
+    status = IopGetRegistryValue(ServiceEnumHandle, REGSTR_VALUE_COUNT, &keyValueInformation);
+    if (NT_SUCCESS(status))
+    {
 
-        if((keyValueInformation->Type == REG_DWORD) &&
-           (keyValueInformation->DataLength >= sizeof(ULONG))) {
+        if ((keyValueInformation->Type == REG_DWORD) && (keyValueInformation->DataLength >= sizeof(ULONG)))
+        {
 
             instanceCount = *(PULONG)KEY_VALUE_DATA(keyValueInformation);
             *Count = instanceCount;
         }
         ExFreePool(keyValueInformation);
-
-    } else if(status != STATUS_OBJECT_NAME_NOT_FOUND) {
+    }
+    else if (status != STATUS_OBJECT_NAME_NOT_FOUND)
+    {
         return status;
-    } else {
+    }
+    else
+    {
 
         //
         // If 'Count' value entry not found, consider this to mean there are simply
@@ -648,9 +588,9 @@ Return Value:
         return STATUS_SUCCESS;
     }
 
-    keyValueInformation = (PKEY_VALUE_FULL_INFORMATION)ExAllocatePool(
-                                    PagedPool, length);
-    if (!keyValueInformation) {
+    keyValueInformation = (PKEY_VALUE_FULL_INFORMATION)ExAllocatePool(PagedPool, length);
+    if (!keyValueInformation)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -659,7 +599,8 @@ Return Value:
     //
 
     unicodeBuffer = (PWSTR)ExAllocatePool(PagedPool, 10 * sizeof(WCHAR));
-    if (!unicodeBuffer) {
+    if (!unicodeBuffer)
+    {
         ExFreePool(keyValueInformation);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -668,23 +609,20 @@ Return Value:
     // Next scan thru each value key to find a match
     //
 
-    for (i = 0; i < instanceCount ; i++) {
-       PiUlongToUnicodeString(&valueName, unicodeBuffer, 20, i);
-       status = ZwQueryValueKey (
-                        ServiceEnumHandle,
-                        &valueName,
-                        KeyValueFullInformation,
-                        keyValueInformation,
-                        length,
-                        &junk
-                        );
-        if (!NT_SUCCESS(status)) {
-            if (status == STATUS_BUFFER_OVERFLOW || status == STATUS_BUFFER_TOO_SMALL) {
+    for (i = 0; i < instanceCount; i++)
+    {
+        PiUlongToUnicodeString(&valueName, unicodeBuffer, 20, i);
+        status =
+            ZwQueryValueKey(ServiceEnumHandle, &valueName, KeyValueFullInformation, keyValueInformation, length, &junk);
+        if (!NT_SUCCESS(status))
+        {
+            if (status == STATUS_BUFFER_OVERFLOW || status == STATUS_BUFFER_TOO_SMALL)
+            {
                 ExFreePool(keyValueInformation);
                 length = junk;
-                keyValueInformation = (PKEY_VALUE_FULL_INFORMATION)ExAllocatePool(
-                                        PagedPool, length);
-                if (!keyValueInformation) {
+                keyValueInformation = (PKEY_VALUE_FULL_INFORMATION)ExAllocatePool(PagedPool, length);
+                if (!keyValueInformation)
+                {
                     ExFreePool(unicodeBuffer);
                     return STATUS_INSUFFICIENT_RESOURCES;
                 }
@@ -693,34 +631,39 @@ Return Value:
             continue;
         }
 
-        if (keyValueInformation->Type == REG_SZ) {
-            if (keyValueInformation->DataLength > sizeof(UNICODE_NULL)) {
-                IopRegistryDataToUnicodeString(&unicodeValue,
-                                               (PWSTR)KEY_VALUE_DATA(keyValueInformation),
-                                               keyValueInformation->DataLength
-                                               );
-            } else {
+        if (keyValueInformation->Type == REG_SZ)
+        {
+            if (keyValueInformation->DataLength > sizeof(UNICODE_NULL))
+            {
+                IopRegistryDataToUnicodeString(&unicodeValue, (PWSTR)KEY_VALUE_DATA(keyValueInformation),
+                                               keyValueInformation->DataLength);
+            }
+            else
+            {
                 continue;
             }
-        } else {
+        }
+        else
+        {
             continue;
         }
 
-        if (RtlEqualUnicodeString(&unicodeValue,
-                                  DeviceInstanceName,
-                                  TRUE)) {
+        if (RtlEqualUnicodeString(&unicodeValue, DeviceInstanceName, TRUE))
+        {
             //
             // We found a match.
             //
 
-            *MatchingValueName= valueName;
+            *MatchingValueName = valueName;
             break;
         }
     }
-    if (keyValueInformation) {
+    if (keyValueInformation)
+    {
         ExFreePool(keyValueInformation);
     }
-    if (MatchingValueName->Length == 0) {
+    if (MatchingValueName->Length == 0)
+    {
 
         //
         // If we did not find a match, we need to release the buffer.  Otherwise
@@ -733,11 +676,8 @@ Return Value:
 }
 
 NTSTATUS
-PpForEachDeviceInstanceDriver(
-    PUNICODE_STRING DeviceInstancePath,
-    PDEVICE_SERVICE_ITERATOR_ROUTINE IteratorRoutine,
-    PVOID Context
-    )
+PpForEachDeviceInstanceDriver(PUNICODE_STRING DeviceInstancePath, PDEVICE_SERVICE_ITERATOR_ROUTINE IteratorRoutine,
+                              PVOID Context)
 /*++
 
 Routine Description:
@@ -772,7 +712,7 @@ Return Value:
 --*/
 
 {
-    HANDLE enumKey,instanceKey, classKey, controlKey;
+    HANDLE enumKey, instanceKey, classKey, controlKey;
     PKEY_VALUE_FULL_INFORMATION keyValueInformation;
     DEVICE_SERVICE_ITERATOR_CONTEXT internalContext;
     RTL_QUERY_REGISTRY_TABLE queryTable[4];
@@ -786,13 +726,10 @@ Return Value:
     // Open the HKLM\System\CCS\Enum key.
     //
 
-    status = IopOpenRegistryKeyEx( &enumKey,
-                                   NULL,
-                                   &CmRegistryMachineSystemCurrentControlSetEnumName,
-                                   KEY_READ
-                                   );
+    status = IopOpenRegistryKeyEx(&enumKey, NULL, &CmRegistryMachineSystemCurrentControlSetEnumName, KEY_READ);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
@@ -800,46 +737,34 @@ Return Value:
     // Open the instance key for this devnode
     //
 
-    status = IopOpenRegistryKeyEx( &instanceKey,
-                                   enumKey,
-                                   DeviceInstancePath,
-                                   KEY_READ
-                                   );
+    status = IopOpenRegistryKeyEx(&instanceKey, enumKey, DeviceInstancePath, KEY_READ);
 
     ZwClose(enumKey);
 
-    if(!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
     classKey = NULL;
-    status = IopGetRegistryValue(instanceKey,
-                                 REGSTR_VALUE_CLASSGUID,
-                                 &keyValueInformation);
-    if(NT_SUCCESS(status)) {
+    status = IopGetRegistryValue(instanceKey, REGSTR_VALUE_CLASSGUID, &keyValueInformation);
+    if (NT_SUCCESS(status))
+    {
 
-        if (    keyValueInformation->Type == REG_SZ &&
-                keyValueInformation->DataLength) {
+        if (keyValueInformation->Type == REG_SZ && keyValueInformation->DataLength)
+        {
 
-            IopRegistryDataToUnicodeString(
-                &unicodeClassGuid,
-                (PWSTR) KEY_VALUE_DATA(keyValueInformation),
-                keyValueInformation->DataLength);
+            IopRegistryDataToUnicodeString(&unicodeClassGuid, (PWSTR)KEY_VALUE_DATA(keyValueInformation),
+                                           keyValueInformation->DataLength);
             //
             // Open the class key
             //
-            status = IopOpenRegistryKeyEx( &controlKey,
-                                           NULL,
-                                           &CmRegistryMachineSystemCurrentControlSetControlClass,
-                                           KEY_READ
-                                           );
-            if(NT_SUCCESS(status)) {
+            status = IopOpenRegistryKeyEx(&controlKey, NULL, &CmRegistryMachineSystemCurrentControlSetControlClass,
+                                          KEY_READ);
+            if (NT_SUCCESS(status))
+            {
 
-                status = IopOpenRegistryKeyEx( &classKey,
-                                               controlKey,
-                                               &unicodeClassGuid,
-                                               KEY_READ
-                                               );
+                status = IopOpenRegistryKeyEx(&classKey, controlKey, &unicodeClassGuid, KEY_READ);
                 ZwClose(controlKey);
             }
         }
@@ -862,74 +787,63 @@ Return Value:
     // the device node.
     //
 
-    if(classKey != NULL) {
+    if (classKey != NULL)
+    {
         RtlZeroMemory(queryTable, sizeof(queryTable));
 
-        queryTable[0].QueryRoutine =
-            (PRTL_QUERY_REGISTRY_ROUTINE) PiForEachDriverQueryRoutine;
+        queryTable[0].QueryRoutine = (PRTL_QUERY_REGISTRY_ROUTINE)PiForEachDriverQueryRoutine;
         queryTable[0].Name = REGSTR_VAL_LOWERFILTERS;
-        queryTable[0].EntryContext = (PVOID) 0;
+        queryTable[0].EntryContext = (PVOID)0;
 
-        status = RtlQueryRegistryValues(RTL_REGISTRY_HANDLE,
-                                        (PWSTR) classKey,
-                                        queryTable,
-                                        &internalContext,
-                                        NULL);
+        status = RtlQueryRegistryValues(RTL_REGISTRY_HANDLE, (PWSTR)classKey, queryTable, &internalContext, NULL);
 
-        if(!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             goto PrepareForReturn;
         }
     }
 
     RtlZeroMemory(queryTable, sizeof(queryTable));
 
-    queryTable[0].QueryRoutine =
-        (PRTL_QUERY_REGISTRY_ROUTINE) PiForEachDriverQueryRoutine;
+    queryTable[0].QueryRoutine = (PRTL_QUERY_REGISTRY_ROUTINE)PiForEachDriverQueryRoutine;
     queryTable[0].Name = REGSTR_VAL_LOWERFILTERS;
-    queryTable[0].EntryContext = (PVOID) 1;
+    queryTable[0].EntryContext = (PVOID)1;
 
-    queryTable[1].QueryRoutine =
-        (PRTL_QUERY_REGISTRY_ROUTINE) PiForEachDriverQueryRoutine;
+    queryTable[1].QueryRoutine = (PRTL_QUERY_REGISTRY_ROUTINE)PiForEachDriverQueryRoutine;
     queryTable[1].Name = REGSTR_VAL_SERVICE;
-    queryTable[1].EntryContext = (PVOID) 2;
+    queryTable[1].EntryContext = (PVOID)2;
 
-    queryTable[2].QueryRoutine =
-        (PRTL_QUERY_REGISTRY_ROUTINE) PiForEachDriverQueryRoutine;
+    queryTable[2].QueryRoutine = (PRTL_QUERY_REGISTRY_ROUTINE)PiForEachDriverQueryRoutine;
     queryTable[2].Name = REGSTR_VAL_UPPERFILTERS;
-    queryTable[2].EntryContext = (PVOID) 3;
+    queryTable[2].EntryContext = (PVOID)3;
 
-    status = RtlQueryRegistryValues(RTL_REGISTRY_HANDLE,
-                                    (PWSTR) instanceKey,
-                                    queryTable,
-                                    &internalContext,
-                                    NULL);
+    status = RtlQueryRegistryValues(RTL_REGISTRY_HANDLE, (PWSTR)instanceKey, queryTable, &internalContext, NULL);
 
-    if(!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         goto PrepareForReturn;
     }
 
-    if(classKey != NULL) {
+    if (classKey != NULL)
+    {
 
         RtlZeroMemory(queryTable, sizeof(queryTable));
 
-        queryTable[0].QueryRoutine =
-            (PRTL_QUERY_REGISTRY_ROUTINE) PiForEachDriverQueryRoutine;
+        queryTable[0].QueryRoutine = (PRTL_QUERY_REGISTRY_ROUTINE)PiForEachDriverQueryRoutine;
         queryTable[0].Name = REGSTR_VAL_UPPERFILTERS;
-        queryTable[0].EntryContext = (PVOID) 4;
+        queryTable[0].EntryContext = (PVOID)4;
 
-        status = RtlQueryRegistryValues(RTL_REGISTRY_HANDLE,
-                                        (PWSTR) classKey,
-                                        queryTable,
-                                        &internalContext,
-                                        NULL);
-        if(!NT_SUCCESS(status)) {
+        status = RtlQueryRegistryValues(RTL_REGISTRY_HANDLE, (PWSTR)classKey, queryTable, &internalContext, NULL);
+        if (!NT_SUCCESS(status))
+        {
             goto PrepareForReturn;
         }
     }
 
 PrepareForReturn:
 
-    if(classKey != NULL) {
+    if (classKey != NULL)
+    {
         ZwClose(classKey);
     }
 
@@ -939,20 +853,15 @@ PrepareForReturn:
 }
 
 NTSTATUS
-PiForEachDriverQueryRoutine(
-    IN PWSTR ValueName,
-    IN ULONG ValueType,
-    IN PVOID ValueData,
-    IN ULONG ValueLength,
-    IN PDEVICE_SERVICE_ITERATOR_CONTEXT InternalContext,
-    IN ULONG ServiceType
-    )
+PiForEachDriverQueryRoutine(IN PWSTR ValueName, IN ULONG ValueType, IN PVOID ValueData, IN ULONG ValueLength,
+                            IN PDEVICE_SERVICE_ITERATOR_CONTEXT InternalContext, IN ULONG ServiceType)
 {
     UNICODE_STRING ServiceName;
 
-    UNREFERENCED_PARAMETER( ValueName );
+    UNREFERENCED_PARAMETER(ValueName);
 
-    if (ValueType != REG_SZ) {
+    if (ValueType != REG_SZ)
+    {
         return STATUS_SUCCESS;
     }
 
@@ -961,15 +870,13 @@ PiForEachDriverQueryRoutine(
     // copied directly from IopCallDriverAddDeviceQueryRoutine
     //
 
-    if (ValueLength <= sizeof(WCHAR)) {
+    if (ValueLength <= sizeof(WCHAR))
+    {
         return STATUS_SUCCESS;
     }
 
     RtlInitUnicodeString(&ServiceName, ValueData);
 
-    return InternalContext->Iterator(
-                InternalContext->DeviceInstancePath,
-                &ServiceName,
-                ServiceType,
-                InternalContext->Context);
+    return InternalContext->Iterator(InternalContext->DeviceInstancePath, &ServiceName, ServiceType,
+                                     InternalContext->Context);
 }

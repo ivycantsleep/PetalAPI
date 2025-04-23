@@ -25,20 +25,10 @@ Revision History:
 
 #include "ki.h"
 
-VOID
-KeInitializeInterrupt (
-    IN PKINTERRUPT Interrupt,
-    IN PKSERVICE_ROUTINE ServiceRoutine,
-    IN PVOID ServiceContext,
-    IN PKSPIN_LOCK SpinLock OPTIONAL,
-    IN ULONG Vector,
-    IN KIRQL Irql,
-    IN KIRQL SynchronizeIrql,
-    IN KINTERRUPT_MODE InterruptMode,
-    IN BOOLEAN ShareVector,
-    IN CCHAR ProcessorNumber,
-    IN BOOLEAN FloatingSave
-    )
+VOID KeInitializeInterrupt(IN PKINTERRUPT Interrupt, IN PKSERVICE_ROUTINE ServiceRoutine, IN PVOID ServiceContext,
+                           IN PKSPIN_LOCK SpinLock OPTIONAL, IN ULONG Vector, IN KIRQL Irql, IN KIRQL SynchronizeIrql,
+                           IN KINTERRUPT_MODE InterruptMode, IN BOOLEAN ShareVector, IN CCHAR ProcessorNumber,
+                           IN BOOLEAN FloatingSave)
 
 /*++
 
@@ -110,11 +100,13 @@ Return Value:
 
     Interrupt->ServiceRoutine = ServiceRoutine;
     Interrupt->ServiceContext = ServiceContext;
-    if (ARGUMENT_PRESENT(SpinLock)) {
+    if (ARGUMENT_PRESENT(SpinLock))
+    {
         Interrupt->ActualLock = SpinLock;
-
-    } else {
-        KeInitializeSpinLock (&Interrupt->SpinLock);
+    }
+    else
+    {
+        KeInitializeSpinLock(&Interrupt->SpinLock);
         Interrupt->ActualLock = &Interrupt->SpinLock;
     }
 
@@ -129,7 +121,8 @@ Return Value:
     // Copy the interrupt dispatch code template into the interrupt object.
     //
 
-    for (Index = 0; Index < NORMAL_DISPATCH_LENGTH; Index += 1) {
+    for (Index = 0; Index < NORMAL_DISPATCH_LENGTH; Index += 1)
+    {
         Interrupt->DispatchCode[Index] = KiInterruptTemplate[Index];
     }
 
@@ -154,9 +147,7 @@ Return Value:
 }
 
 BOOLEAN
-KeConnectInterrupt (
-    IN PKINTERRUPT Interrupt
-    )
+KeConnectInterrupt(IN PKINTERRUPT Interrupt)
 
 /*++
 
@@ -203,11 +194,9 @@ Return Value:
     Number = Interrupt->Number;
     Vector = Interrupt->Vector;
     IdtIndex = HalVectorToIDTEntry(Vector);
-    if (((IdtIndex > MAXIMUM_PRIMARY_VECTOR) ||
-        (Irql > HIGH_LEVEL) ||
-        (Irql != (IdtIndex >> 4)) ||
-        (Number >= KeNumberProcessors) ||
-        (Interrupt->SynchronizeIrql < Irql)) == FALSE) {
+    if (((IdtIndex > MAXIMUM_PRIMARY_VECTOR) || (Irql > HIGH_LEVEL) || (Irql != (IdtIndex >> 4)) ||
+         (Number >= KeNumberProcessors) || (Interrupt->SynchronizeIrql < Irql)) == FALSE)
+    {
 
         //
         // Set the system affinity to the specified processor, raise IRQL to
@@ -229,25 +218,27 @@ Return Value:
         // a chain must be the same.
         //
 
-        if (Interrupt->Connected == FALSE) {
+        if (Interrupt->Connected == FALSE)
+        {
             KeGetIdtHandlerAddress(Vector, &Dispatch);
             Unexpected = &KxUnexpectedInterrupt0[IdtIndex];
-            if (Unexpected == Dispatch) {
+            if (Unexpected == Dispatch)
+            {
 
                 //
                 // The interrupt vector is not connected.
                 //
 
-                Connected = HalEnableSystemInterrupt(Vector,
-                                                     Irql,
-                                                     Interrupt->Mode);
+                Connected = HalEnableSystemInterrupt(Vector, Irql, Interrupt->Mode);
 
-                if (Connected != FALSE) {
+                if (Connected != FALSE)
+                {
                     Interrupt->DispatchAddress = &KiInterruptDispatch;
                     KeSetIdtHandlerAddress(Vector, &Interrupt->DispatchCode[0]);
                 }
-
-            } else if (IdtIndex >= PRIMARY_VECTOR_BASE) {
+            }
+            else if (IdtIndex >= PRIMARY_VECTOR_BASE)
+            {
 
                 //
                 // The interrupt vector is connected. Make sure the interrupt
@@ -255,13 +246,11 @@ Return Value:
                 // of the interrupt vector.
                 //
 
-                Interruptx = CONTAINING_RECORD(Dispatch,
-                                               KINTERRUPT,
-                                               DispatchCode[0]);
+                Interruptx = CONTAINING_RECORD(Dispatch, KINTERRUPT, DispatchCode[0]);
 
-                if ((Interrupt->Mode == Interruptx->Mode) &&
-                    (Interrupt->ShareVector != FALSE) &&
-                    (Interruptx->ShareVector != FALSE)) {
+                if ((Interrupt->Mode == Interruptx->Mode) && (Interrupt->ShareVector != FALSE) &&
+                    (Interruptx->ShareVector != FALSE))
+                {
                     Connected = TRUE;
 
                     //
@@ -269,13 +258,13 @@ Return Value:
                     // then switch to chained dispatch.
                     //
 
-                    if (Interruptx->DispatchAddress != &KiChainedDispatch) {
+                    if (Interruptx->DispatchAddress != &KiChainedDispatch)
+                    {
                         InitializeListHead(&Interruptx->InterruptListEntry);
                         Interruptx->DispatchAddress = &KiChainedDispatch;
                     }
 
-                    InsertTailList(&Interruptx->InterruptListEntry,
-                                   &Interrupt->InterruptListEntry);
+                    InsertTailList(&Interruptx->InterruptListEntry, &Interrupt->InterruptListEntry);
                 }
             }
         }
@@ -298,9 +287,7 @@ Return Value:
 }
 
 BOOLEAN
-KeDisconnectInterrupt (
-    IN PKINTERRUPT Interrupt
-    )
+KeDisconnectInterrupt(IN PKINTERRUPT Interrupt)
 
 /*++
 
@@ -346,7 +333,8 @@ Return Value:
     //
 
     Disconnected = Interrupt->Connected;
-    if (Disconnected != FALSE) {
+    if (Disconnected != FALSE)
+    {
         Irql = Interrupt->Irql;
         Vector = Interrupt->Vector;
         IdtIndex = HalVectorToIDTEntry(Vector);
@@ -362,32 +350,32 @@ Return Value:
 
         KeGetIdtHandlerAddress(Vector, &Dispatch);
         Interruptx = CONTAINING_RECORD(Dispatch, KINTERRUPT, DispatchCode[0]);
-        if (Interruptx->DispatchAddress == &KiChainedDispatch) {
+        if (Interruptx->DispatchAddress == &KiChainedDispatch)
+        {
 
             //
             // The interrupt object is connected to the chained dispatcher.
             //
 
-            if (Interrupt == Interruptx) {
-                Interruptx = CONTAINING_RECORD(Interruptx->InterruptListEntry.Flink,
-                                               KINTERRUPT,
-                                               InterruptListEntry);
+            if (Interrupt == Interruptx)
+            {
+                Interruptx = CONTAINING_RECORD(Interruptx->InterruptListEntry.Flink, KINTERRUPT, InterruptListEntry);
 
                 Interruptx->DispatchAddress = &KiChainedDispatch;
                 KeSetIdtHandlerAddress(Vector, &Interruptx->DispatchCode[0]);
             }
 
             RemoveEntryList(&Interrupt->InterruptListEntry);
-            Interrupty = CONTAINING_RECORD(Interruptx->InterruptListEntry.Flink,
-                                           KINTERRUPT,
-                                           InterruptListEntry);
+            Interrupty = CONTAINING_RECORD(Interruptx->InterruptListEntry.Flink, KINTERRUPT, InterruptListEntry);
 
-            if (Interruptx == Interrupty) {
+            if (Interruptx == Interrupty)
+            {
                 Interrupty->DispatchAddress = KiDispatchInterrupt;
                 KeSetIdtHandlerAddress(Vector, &Interrupty->DispatchCode[0]);
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // The interrupt object is not connected to the chained interrupt

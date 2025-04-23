@@ -29,10 +29,7 @@ Revision History:
 
 
 NTSTATUS
-DbgkpSendApiMessage(
-    IN OUT PDBGKM_APIMSG ApiMsg,
-    IN BOOLEAN SuspendProcess
-    )
+DbgkpSendApiMessage(IN OUT PDBGKM_APIMSG ApiMsg, IN BOOLEAN SuspendProcess)
 
 /*++
 
@@ -66,7 +63,8 @@ Return Value:
 
     PAGED_CODE();
 
-    if ( SuspendProcess ) {
+    if (SuspendProcess)
+    {
         SuspendProcess = DbgkpSuspendProcess();
     }
 
@@ -74,12 +72,13 @@ Return Value:
 
     Process = PsGetCurrentProcess();
 
-    PS_SET_BITS (&Process->Flags, PS_PROCESS_FLAGS_CREATE_REPORTED);
+    PS_SET_BITS(&Process->Flags, PS_PROCESS_FLAGS_CREATE_REPORTED);
 
-    st = DbgkpQueueMessage (Process, PsGetCurrentThread (), ApiMsg, 0, NULL);
+    st = DbgkpQueueMessage(Process, PsGetCurrentThread(), ApiMsg, 0, NULL);
 
-    ZwFlushInstructionCache (NtCurrentProcess (), NULL, 0);
-    if ( SuspendProcess ) {
+    ZwFlushInstructionCache(NtCurrentProcess(), NULL, 0);
+    if (SuspendProcess)
+    {
         DbgkpResumeProcess();
     }
 
@@ -87,11 +86,7 @@ Return Value:
 }
 
 NTSTATUS
-DbgkpSendApiMessageLpc(
-    IN OUT PDBGKM_APIMSG ApiMsg,
-    IN PVOID Port,
-    IN BOOLEAN SuspendProcess
-    )
+DbgkpSendApiMessageLpc(IN OUT PDBGKM_APIMSG ApiMsg, IN PVOID Port, IN BOOLEAN SuspendProcess)
 
 /*++
 
@@ -123,28 +118,29 @@ Return Value:
 
 {
     NTSTATUS st;
-    ULONG_PTR MessageBuffer[PORT_MAXIMUM_MESSAGE_LENGTH/sizeof(ULONG_PTR)];
+    ULONG_PTR MessageBuffer[PORT_MAXIMUM_MESSAGE_LENGTH / sizeof(ULONG_PTR)];
 
     PAGED_CODE();
 
-    if ( SuspendProcess ) {
+    if (SuspendProcess)
+    {
         SuspendProcess = DbgkpSuspendProcess();
     }
 
     ApiMsg->ReturnedStatus = STATUS_PENDING;
 
-    PS_SET_BITS (&PsGetCurrentProcess()->Flags, PS_PROCESS_FLAGS_CREATE_REPORTED);
+    PS_SET_BITS(&PsGetCurrentProcess()->Flags, PS_PROCESS_FLAGS_CREATE_REPORTED);
 
-    st = LpcRequestWaitReplyPortEx (Port,
-                    (PPORT_MESSAGE) ApiMsg,
-                    (PPORT_MESSAGE) &MessageBuffer[0]);
+    st = LpcRequestWaitReplyPortEx(Port, (PPORT_MESSAGE)ApiMsg, (PPORT_MESSAGE)&MessageBuffer[0]);
 
     ZwFlushInstructionCache(NtCurrentProcess(), NULL, 0);
-    if (NT_SUCCESS (st)) {
-        RtlCopyMemory(ApiMsg,MessageBuffer,sizeof(*ApiMsg));
+    if (NT_SUCCESS(st))
+    {
+        RtlCopyMemory(ApiMsg, MessageBuffer, sizeof(*ApiMsg));
     }
 
-    if (SuspendProcess) {
+    if (SuspendProcess)
+    {
         DbgkpResumeProcess();
     }
 
@@ -152,11 +148,7 @@ Return Value:
 }
 
 BOOLEAN
-DbgkForwardException(
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN BOOLEAN DebugException,
-    IN BOOLEAN SecondChance
-    )
+DbgkForwardException(IN PEXCEPTION_RECORD ExceptionRecord, IN BOOLEAN DebugException, IN BOOLEAN SecondChance)
 
 /*++
 
@@ -200,21 +192,27 @@ Return Value:
     // Initialize the debug LPC message with default infomaation.
     //
 
-    DBGKM_FORMAT_API_MSG(m,DbgKmExceptionApi,sizeof(*args));
+    DBGKM_FORMAT_API_MSG(m, DbgKmExceptionApi, sizeof(*args));
 
     //
     // Get the address of the destination LPC port.
     //
 
     Process = PsGetCurrentProcess();
-    if (DebugException) {
-        if (PsGetCurrentThread()->CrossThreadFlags&PS_CROSS_THREAD_FLAGS_HIDEFROMDBG) {
+    if (DebugException)
+    {
+        if (PsGetCurrentThread()->CrossThreadFlags & PS_CROSS_THREAD_FLAGS_HIDEFROMDBG)
+        {
             Port = NULL;
-        } else {
+        }
+        else
+        {
             Port = Process->DebugPort;
         }
         LpcPort = FALSE;
-    } else {
+    }
+    else
+    {
         Port = Process->ExceptionPort;
         m.h.u2.ZeroInit = LPC_EXCEPTION;
         LpcPort = TRUE;
@@ -224,7 +222,8 @@ Return Value:
     // If the destination LPC port address is NULL, then return FALSE.
     //
 
-    if (Port == NULL) {
+    if (Port == NULL)
+    {
         return FALSE;
     }
 
@@ -239,10 +238,13 @@ Return Value:
     // Send the debug message to the destination LPC port.
     //
 
-    if (LpcPort) {
-        st = DbgkpSendApiMessageLpc(&m,Port,DebugException);
-    } else {
-        st = DbgkpSendApiMessage(&m,DebugException);
+    if (LpcPort)
+    {
+        st = DbgkpSendApiMessageLpc(&m, Port, DebugException);
+    }
+    else
+    {
+        st = DbgkpSendApiMessage(&m, DebugException);
     }
 
 
@@ -253,11 +255,12 @@ Return Value:
     //
 
     if (!NT_SUCCESS(st) ||
-        ((DebugException) &&
-        (m.ReturnedStatus == DBG_EXCEPTION_NOT_HANDLED || !NT_SUCCESS(m.ReturnedStatus)))) {
+        ((DebugException) && (m.ReturnedStatus == DBG_EXCEPTION_NOT_HANDLED || !NT_SUCCESS(m.ReturnedStatus))))
+    {
         return FALSE;
-
-    } else {
+    }
+    else
+    {
         return TRUE;
     }
 }

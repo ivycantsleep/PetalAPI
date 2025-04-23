@@ -23,27 +23,16 @@ Revision History:
 
 #include "ki.h"
 
-VOID
-KiSetRegionRegister (
-    PVOID VirtualAddress,
-    ULONGLONG Contents
-    );
+VOID KiSetRegionRegister(PVOID VirtualAddress, ULONGLONG Contents);
 
 
-#define KiMakeValidRegionRegister(Rid, Ps) \
-   (((ULONGLONG)Rid << RR_RID) | (Ps << RR_PS) | (1 << RR_VE))
+#define KiMakeValidRegionRegister(Rid, Ps) (((ULONGLONG)Rid << RR_RID) | (Ps << RR_PS) | (1 << RR_VE))
 
 ULONG KiMaximumRid = MAXIMUM_RID;
 ULONG KiRegionFlushRequired = 0;
 
-
-VOID
-KiSyncNewRegionIdTarget (
-    IN PULONG SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    )
+
+VOID KiSyncNewRegionIdTarget(IN PULONG SignalDone, IN PVOID Parameter1, IN PVOID Parameter2, IN PVOID Parameter3)
 
 /*++
 
@@ -78,7 +67,7 @@ Return Value:
 
     //
     // get KPROCESS from PCR for MP synchronization
-    // 
+    //
 
     Process = (PKPROCESS)PCR->Pcb;
 
@@ -87,43 +76,35 @@ Return Value:
 
     KiAcquireSpinLock(&KiMasterRidLock);
 
-    if (ProcessRegion->SequenceNumber != KiMasterSequence) {
-        
+    if (ProcessRegion->SequenceNumber != KiMasterSequence)
+    {
+
         KiMasterRid += 1;
 
         ProcessRegion->RegionId = KiMasterRid;
         ProcessRegion->SequenceNumber = KiMasterSequence;
-
     }
 
-    KiSetRegionRegister(MM_LOWEST_USER_ADDRESS,
-                        KiMakeValidRegionRegister(ProcessRegion->RegionId, PAGE_SHIFT));
+    KiSetRegionRegister(MM_LOWEST_USER_ADDRESS, KiMakeValidRegionRegister(ProcessRegion->RegionId, PAGE_SHIFT));
 
     KiFlushFixedDataTb(TRUE, PDE_UTBASE);
 
-    KeFillFixedEntryTb((PHARDWARE_PTE)&Process->DirectoryTableBase[0], 
-                       (PVOID)PDE_UTBASE,
-                       PAGE_SHIFT,
-                       DTR_UTBASE_INDEX);
+    KeFillFixedEntryTb((PHARDWARE_PTE)&Process->DirectoryTableBase[0], (PVOID)PDE_UTBASE, PAGE_SHIFT, DTR_UTBASE_INDEX);
 
-    if (MappedSession->SequenceNumber != KiMasterSequence) {
+    if (MappedSession->SequenceNumber != KiMasterSequence)
+    {
 
         KiMasterRid += 1;
-        
+
         MappedSession->RegionId = KiMasterRid;
         MappedSession->SequenceNumber = KiMasterSequence;
-
     }
 
-    KiSetRegionRegister((PVOID)SADDRESS_BASE,
-                        KiMakeValidRegionRegister(MappedSession->RegionId, PAGE_SHIFT));
+    KiSetRegionRegister((PVOID)SADDRESS_BASE, KiMakeValidRegionRegister(MappedSession->RegionId, PAGE_SHIFT));
 
     KiFlushFixedDataTb(TRUE, PDE_STBASE);
 
-    KeFillFixedEntryTb((PHARDWARE_PTE)&Process->SessionParentBase, 
-                       (PVOID)PDE_STBASE, 
-                       PAGE_SHIFT,
-                       DTR_STBASE_INDEX);
+    KeFillFixedEntryTb((PHARDWARE_PTE)&Process->SessionParentBase, (PVOID)PDE_STBASE, PAGE_SHIFT, DTR_STBASE_INDEX);
 
     KiReleaseSpinLock(&KiMasterRidLock);
 
@@ -134,12 +115,9 @@ Return Value:
 #endif
     return;
 }
-
+
 BOOLEAN
-KiSyncNewRegionId(
-    IN PREGION_MAP_INFO ProcessRegion,
-    IN PREGION_MAP_INFO SessionRegion
-    )
+KiSyncNewRegionId(IN PREGION_MAP_INFO ProcessRegion, IN PREGION_MAP_INFO SessionRegion)
 /*++
 
  Routine Description:
@@ -193,57 +171,59 @@ KiSyncNewRegionId(
     // Invalidx1ate the ForwardProgressTb buffer
     //
 
-    for (i = 0; i < MAXIMUM_FWP_BUFFER_ENTRY; i += 1) {
-        
-        PCR->ForwardProgressBuffer[(i*2)+1] = 0;
+    for (i = 0; i < MAXIMUM_FWP_BUFFER_ENTRY; i += 1)
+    {
 
+        PCR->ForwardProgressBuffer[(i * 2) + 1] = 0;
     }
-    
-    if ((PrSequence == KiMasterSequence) && (SeSequence == KiMasterSequence)) {
-        
-not_recycled:
 
-        KiSetRegionRegister(MM_LOWEST_USER_ADDRESS,
-                            KiMakeValidRegionRegister(ProcessRegion->RegionId,
-                                                      PAGE_SHIFT));
-        
-        KiSetRegionRegister((PVOID)SADDRESS_BASE,
-                            KiMakeValidRegionRegister(SessionRegion->RegionId,
-                                                      PAGE_SHIFT));
-    
+    if ((PrSequence == KiMasterSequence) && (SeSequence == KiMasterSequence))
+    {
+
+    not_recycled:
+
+        KiSetRegionRegister(MM_LOWEST_USER_ADDRESS, KiMakeValidRegionRegister(ProcessRegion->RegionId, PAGE_SHIFT));
+
+        KiSetRegionRegister((PVOID)SADDRESS_BASE, KiMakeValidRegionRegister(SessionRegion->RegionId, PAGE_SHIFT));
+
 #if !defined(NT_UP)
-        if (KiRegionFlushRequired) {
+        if (KiRegionFlushRequired)
+        {
             KiRegionFlushRequired = 0;
             goto RegionFlush;
         }
 #endif
 
         return FALSE;
-    
     }
 
-    if (PrSequence != KiMasterSequence) {
+    if (PrSequence != KiMasterSequence)
+    {
 
-        if (KiMasterRid + 1 > KiMaximumRid) {
+        if (KiMasterRid + 1 > KiMaximumRid)
+        {
 
             RidRecycled = TRUE;
-
-        } else {
+        }
+        else
+        {
 
             KiMasterRid += 1;
             ProcessRegion->RegionId = KiMasterRid;
             ProcessRegion->SequenceNumber = KiMasterSequence;
         }
-                
     }
 
-    if ((RidRecycled == FALSE) && (SeSequence != KiMasterSequence)) {
-        
-        if (KiMasterRid + 1 > KiMaximumRid) {
+    if ((RidRecycled == FALSE) && (SeSequence != KiMasterSequence))
+    {
+
+        if (KiMasterRid + 1 > KiMaximumRid)
+        {
 
             RidRecycled = TRUE;
-
-        } else {
+        }
+        else
+        {
 
             KiMasterRid += 1;
             SessionRegion->RegionId = KiMasterRid;
@@ -251,10 +231,10 @@ not_recycled:
         }
     }
 
-    if (RidRecycled == FALSE) {
-    
-        goto not_recycled;
+    if (RidRecycled == FALSE)
+    {
 
+        goto not_recycled;
     }
 
     //
@@ -268,15 +248,17 @@ not_recycled:
     // not be recycled in your life time.
     //
 
-    if (KiMasterSequence + 1 > MAXIMUM_SEQUENCE) {
+    if (KiMasterSequence + 1 > MAXIMUM_SEQUENCE)
+    {
 
         KiMasterSequence = START_SEQUENCE;
-
-    } else {
+    }
+    else
+    {
 
         KiMasterSequence += 1;
     }
-        
+
     //
     // Update the new process's ProcessRid and ProcessSequence.
     //
@@ -284,16 +266,14 @@ not_recycled:
     ProcessRegion->RegionId = KiMasterRid;
     ProcessRegion->SequenceNumber = KiMasterSequence;
 
-    KiSetRegionRegister(MM_LOWEST_USER_ADDRESS,
-                        KiMakeValidRegionRegister(ProcessRegion->RegionId, PAGE_SHIFT));
+    KiSetRegionRegister(MM_LOWEST_USER_ADDRESS, KiMakeValidRegionRegister(ProcessRegion->RegionId, PAGE_SHIFT));
 
     KiMasterRid += 1;
 
     SessionRegion->RegionId = KiMasterRid;
     SessionRegion->SequenceNumber = KiMasterSequence;
 
-    KiSetRegionRegister((PVOID)SADDRESS_BASE,
-                        KiMakeValidRegionRegister(SessionRegion->RegionId, PAGE_SHIFT));
+    KiSetRegionRegister((PVOID)SADDRESS_BASE, KiMakeValidRegionRegister(SessionRegion->RegionId, PAGE_SHIFT));
 
 #if !defined(NT_UP)
 
@@ -306,12 +286,9 @@ RegionFlush:
     TargetProcessors = KeActiveProcessors;
     TargetProcessors &= PCR->NotMember;
 
-    if (TargetProcessors != 0) {
-        KiIpiSendPacket(TargetProcessors,
-                        KiSyncNewRegionIdTarget,
-                        (PVOID)TRUE,
-                        NULL,
-                        NULL);
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendPacket(TargetProcessors, KiSyncNewRegionIdTarget, (PVOID)TRUE, NULL, NULL);
     }
 
 #endif
@@ -325,7 +302,8 @@ RegionFlush:
     // Wait until all target processors have finished.
     //
 
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
         KiIpiStallOnPacketTargets(TargetProcessors);
     }
 
@@ -333,12 +311,8 @@ RegionFlush:
 
     return TRUE;
 }
-
-VOID
-KeEnableSessionSharing(
-    IN PREGION_MAP_INFO SessionMapInfo,
-    IN PFN_NUMBER SessionParentPage
-    )
+
+VOID KeEnableSessionSharing(IN PREGION_MAP_INFO SessionMapInfo, IN PFN_NUMBER SessionParentPage)
 /*++
 
  Routine Description:
@@ -389,42 +363,44 @@ KeEnableSessionSharing(
 
 #endif
 
-    INITIALIZE_DIRECTORY_TABLE_BASE (&Process->SessionParentBase,
-                                     SessionParentPage);
+    INITIALIZE_DIRECTORY_TABLE_BASE(&Process->SessionParentBase, SessionParentPage);
 
     //
     // Invalidate the ForwardProgressTb buffer.
     //
 
-    for (i = 0; i < MAXIMUM_FWP_BUFFER_ENTRY; i += 1) {
-        
-        PCR->ForwardProgressBuffer[(i*2)+1] = 0;
+    for (i = 0; i < MAXIMUM_FWP_BUFFER_ENTRY; i += 1)
+    {
 
+        PCR->ForwardProgressBuffer[(i * 2) + 1] = 0;
     }
-    
-    if (KiMasterRid + 1 > KiMaximumRid) {
+
+    if (KiMasterRid + 1 > KiMaximumRid)
+    {
 
         //
         // The region ID must be recycled.
         //
-    
+
         KiMasterRid = START_PROCESS_RID;
-    
+
         //
         // Since KiMasterSequence is 64-bits wide, it will
         // not be recycled in your life time.
         //
-    
-        if (KiMasterSequence + 1 > MAXIMUM_SEQUENCE) {
-    
+
+        if (KiMasterSequence + 1 > MAXIMUM_SEQUENCE)
+        {
+
             KiMasterSequence = START_SEQUENCE;
-    
-        } else {
-    
+        }
+        else
+        {
+
             KiMasterSequence += 1;
         }
     }
-            
+
     //
     // Update the newly created session's RegionId and SequenceNumber.
     //
@@ -436,9 +412,7 @@ KeEnableSessionSharing(
     SessionMapInfo->RegionId = KiMasterRid;
     SessionMapInfo->SequenceNumber = KiMasterSequence;
 
-    KiSetRegionRegister((PVOID)SADDRESS_BASE,
-                        KiMakeValidRegionRegister(SessionMapInfo->RegionId,
-                                                  PAGE_SHIFT));
+    KiSetRegionRegister((PVOID)SADDRESS_BASE, KiMakeValidRegionRegister(SessionMapInfo->RegionId, PAGE_SHIFT));
     //
     // Note that all processors must be notified because this thread could
     // context switch onto another processor.  If that processor was already
@@ -455,22 +429,16 @@ KeEnableSessionSharing(
     TargetProcessors = KeActiveProcessors;
     TargetProcessors &= PCR->NotMember;
 
-    if (TargetProcessors != 0) {
-        KiIpiSendPacket(TargetProcessors,
-                        KiSyncNewRegionIdTarget,
-                        (PVOID)TRUE,
-                        NULL,
-                        NULL);
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendPacket(TargetProcessors, KiSyncNewRegionIdTarget, (PVOID)TRUE, NULL, NULL);
     }
 
 #endif
 
     KeFlushCurrentTb();
 
-    KeFillFixedEntryTb((PHARDWARE_PTE)&Process->SessionParentBase,
-                       (PVOID)PDE_STBASE, 
-                       PAGE_SHIFT,
-                       DTR_STBASE_INDEX);
+    KeFillFixedEntryTb((PHARDWARE_PTE)&Process->SessionParentBase, (PVOID)PDE_STBASE, PAGE_SHIFT, DTR_STBASE_INDEX);
 
 #if defined(NT_UP)
 
@@ -482,7 +450,8 @@ KeEnableSessionSharing(
     // Wait until all target processors have finished.
     //
 
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
         KiIpiStallOnPacketTargets(TargetProcessors);
     }
 
@@ -490,12 +459,8 @@ KeEnableSessionSharing(
 
 #endif
 }
-
-VOID
-KeAttachSessionSpace(
-    PREGION_MAP_INFO SessionMapInfo,
-    IN PFN_NUMBER SessionParentPage
-    )
+
+VOID KeAttachSessionSpace(PREGION_MAP_INFO SessionMapInfo, IN PFN_NUMBER SessionParentPage)
 /*++
 
  Routine Description:
@@ -548,8 +513,7 @@ KeAttachSessionSpace(
     // Attach to the specified session.
     //
 
-    INITIALIZE_DIRECTORY_TABLE_BASE (&Process->SessionParentBase,
-                                     SessionParentPage);
+    INITIALIZE_DIRECTORY_TABLE_BASE(&Process->SessionParentBase, SessionParentPage);
 
     Process->SessionMapInfo = SessionMapInfo;
 
@@ -561,17 +525,14 @@ KeAttachSessionSpace(
     // protection to signify this to KiSyncNewRegionId.
     //
 
-    ASSERT (KiRegionFlushRequired == 0);
+    ASSERT(KiRegionFlushRequired == 0);
     KiRegionFlushRequired = 1;
 
     KiSyncNewRegionId(&Process->ProcessRegion, SessionMapInfo);
 
     KiFlushFixedDataTb(TRUE, PDE_STBASE);
 
-    KeFillFixedEntryTb((PHARDWARE_PTE)&Process->SessionParentBase, 
-                       (PVOID)PDE_STBASE,
-                       PAGE_SHIFT,
-                       DTR_STBASE_INDEX);
+    KeFillFixedEntryTb((PHARDWARE_PTE)&Process->SessionParentBase, (PVOID)PDE_STBASE, PAGE_SHIFT, DTR_STBASE_INDEX);
 
 #if defined(NT_UP)
 
@@ -582,16 +543,9 @@ KeAttachSessionSpace(
     KiUnlockContextSwap(OldIrql);
 
 #endif
-
 }
-
-VOID
-KiSyncSessionTarget(
-    IN PULONG SignalDone,
-    IN PKPROCESS Process,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2
-    )
+
+VOID KiSyncSessionTarget(IN PULONG SignalDone, IN PKPROCESS Process, IN PVOID Parameter1, IN PVOID Parameter2)
 /*++
 
  Routine Description:
@@ -622,30 +576,27 @@ KiSyncSessionTarget(
     ULONG NewRid;
 
     //
-    // Check to see if the current process is the process that needs to be 
+    // Check to see if the current process is the process that needs to be
     // synchronized.
     //
 
-    if (Process == (PKPROCESS)PCR->Pcb) {
-        
+    if (Process == (PKPROCESS)PCR->Pcb)
+    {
+
         KiAcquireSpinLock(&KiMasterRidLock);
 
         //
         // Disable the session region.
         //
 
-        KiSetRegionRegister((PVOID)SADDRESS_BASE, 
+        KiSetRegionRegister((PVOID)SADDRESS_BASE,
                             KiMakeValidRegionRegister(Process->SessionMapInfo->RegionId, PAGE_SHIFT));
 
         KiFlushFixedDataTb(TRUE, (PVOID)PDE_STBASE);
 
-        KeFillFixedEntryTb((PHARDWARE_PTE)&Process->SessionParentBase, 
-                           (PVOID)PDE_STBASE, 
-                           PAGE_SHIFT,
-                           DTR_STBASE_INDEX);
+        KeFillFixedEntryTb((PHARDWARE_PTE)&Process->SessionParentBase, (PVOID)PDE_STBASE, PAGE_SHIFT, DTR_STBASE_INDEX);
 
         KiReleaseSpinLock(&KiMasterRidLock);
-
     }
 
     KiIpiSignalPacketDone(SignalDone);
@@ -654,12 +605,8 @@ KiSyncSessionTarget(
     return;
 }
 
-
-VOID 
-KeDetachSessionSpace(
-    IN PREGION_MAP_INFO NullSessionMapInfo,
-    IN PFN_NUMBER NullSessionPage
-    )
+
+VOID KeDetachSessionSpace(IN PREGION_MAP_INFO NullSessionMapInfo, IN PFN_NUMBER NullSessionPage)
 /*++
 
  Routine Description:
@@ -715,11 +662,10 @@ KeDetachSessionSpace(
 
 #endif
 
-    INITIALIZE_DIRECTORY_TABLE_BASE (&Process->SessionParentBase,
-                                     NullSessionPage);
+    INITIALIZE_DIRECTORY_TABLE_BASE(&Process->SessionParentBase, NullSessionPage);
 
     Process->SessionMapInfo = NullSessionMapInfo;
-    
+
 #if !defined(NT_UP)
 
     //
@@ -729,25 +675,18 @@ KeDetachSessionSpace(
     TargetProcessors = KeActiveProcessors;
     TargetProcessors &= PCR->NotMember;
 
-    if (TargetProcessors != 0) {
-        KiIpiSendPacket(TargetProcessors,
-                        KiSyncSessionTarget,
-                        Process,
-                        NULL,
-                        NULL);
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendPacket(TargetProcessors, KiSyncSessionTarget, Process, NULL, NULL);
     }
 
 #endif
 
-    KiSetRegionRegister((PVOID)SADDRESS_BASE, 
-                        KiMakeValidRegionRegister(NullSessionMapInfo->RegionId, PAGE_SHIFT));
+    KiSetRegionRegister((PVOID)SADDRESS_BASE, KiMakeValidRegionRegister(NullSessionMapInfo->RegionId, PAGE_SHIFT));
 
     KiFlushFixedDataTb(TRUE, PDE_STBASE);
 
-    KeFillFixedEntryTb((PHARDWARE_PTE)&Process->SessionParentBase, 
-                       (PVOID)PDE_STBASE, 
-                       PAGE_SHIFT,
-                       DTR_STBASE_INDEX);
+    KeFillFixedEntryTb((PHARDWARE_PTE)&Process->SessionParentBase, (PVOID)PDE_STBASE, PAGE_SHIFT, DTR_STBASE_INDEX);
 
 #if defined(NT_UP)
 
@@ -759,22 +698,17 @@ KeDetachSessionSpace(
     // Wait until all target processors have finished.
     //
 
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
         KiIpiStallOnPacketTargets(TargetProcessors);
     }
 
     KiUnlockContextSwap(OldIrql);
 
 #endif
+}
 
-}    
-
-VOID
-KeAddSessionSpace(
-    IN PKPROCESS Process,
-    IN PREGION_MAP_INFO SessionMapInfo,
-    IN PFN_NUMBER SessionParentPage
-    )
+VOID KeAddSessionSpace(IN PKPROCESS Process, IN PREGION_MAP_INFO SessionMapInfo, IN PFN_NUMBER SessionParentPage)
 /*++
 
 Routine Description:
@@ -806,14 +740,10 @@ Environment:
 {
     Process->SessionMapInfo = SessionMapInfo;
 
-    INITIALIZE_DIRECTORY_TABLE_BASE (&Process->SessionParentBase,
-                                     SessionParentPage);
+    INITIALIZE_DIRECTORY_TABLE_BASE(&Process->SessionParentBase, SessionParentPage);
 }
-
-VOID
-KiAttachRegion(
-    IN PKPROCESS Process
-    )
+
+VOID KiAttachRegion(IN PKPROCESS Process)
 /*++
 
 Routine Description:
@@ -844,21 +774,16 @@ Environment:
     // attach the target user space
     //
 
-    KiSetRegionRegister(MM_LOWEST_USER_ADDRESS,
-                        KiMakeValidRegionRegister(ProcessRegion->RegionId, PAGE_SHIFT));
+    KiSetRegionRegister(MM_LOWEST_USER_ADDRESS, KiMakeValidRegionRegister(ProcessRegion->RegionId, PAGE_SHIFT));
 
     //
     // attach the target session space
     //
 
-    KiSetRegionRegister((PVOID)SADDRESS_BASE,
-                        KiMakeValidRegionRegister(MappedSession->RegionId, PAGE_SHIFT));
+    KiSetRegionRegister((PVOID)SADDRESS_BASE, KiMakeValidRegionRegister(MappedSession->RegionId, PAGE_SHIFT));
 }
-
-VOID
-KiDetachRegion(
-    VOID
-    )
+
+VOID KiDetachRegion(VOID)
 /*++
 
 Routine Description:
@@ -896,14 +821,11 @@ Environment:
     // attach the original user space
     //
 
-    KiSetRegionRegister(MM_LOWEST_USER_ADDRESS,
-                        KiMakeValidRegionRegister(ProcessRegion->RegionId, PAGE_SHIFT));
+    KiSetRegionRegister(MM_LOWEST_USER_ADDRESS, KiMakeValidRegionRegister(ProcessRegion->RegionId, PAGE_SHIFT));
 
     //
     // attach the original session space
     //
 
-    KiSetRegionRegister((PVOID)SADDRESS_BASE,
-                        KiMakeValidRegionRegister(MappedSession->RegionId, PAGE_SHIFT));
-
+    KiSetRegionRegister((PVOID)SADDRESS_BASE, KiMakeValidRegionRegister(MappedSession->RegionId, PAGE_SHIFT));
 }

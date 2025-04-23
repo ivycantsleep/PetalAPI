@@ -31,10 +31,7 @@ Revision History:
 
 #define POOLTAG_LASTGOOD ('gLpP')
 
-VOID
-PpLastGoodDoBootProcessing(
-    VOID
-    )
+VOID PpLastGoodDoBootProcessing(VOID)
 /*++
 
 Routine Description:
@@ -57,33 +54,23 @@ Return Value:
     UNICODE_STRING lastKnownGoodDelKey, lastKnownGoodTmpDelKey;
     NTSTATUS status;
 
-    RtlInitUnicodeString(
-        &lastKnownGoodPath,
-        L"\\SystemRoot\\LastGood"
-        );
+    RtlInitUnicodeString(&lastKnownGoodPath, L"\\SystemRoot\\LastGood");
 
-    RtlInitUnicodeString(
-        &lastKnownGoodDelKey,
-        CM_REGISTRY_MACHINE(REGSTR_PATH_LASTGOOD)
-        );
+    RtlInitUnicodeString(&lastKnownGoodDelKey, CM_REGISTRY_MACHINE(REGSTR_PATH_LASTGOOD));
 
-    RtlInitUnicodeString(
-        &lastKnownGoodTmpPath,
-        L"\\SystemRoot\\LastGood.Tmp"
-        );
+    RtlInitUnicodeString(&lastKnownGoodTmpPath, L"\\SystemRoot\\LastGood.Tmp");
 
-    RtlInitUnicodeString(
-        &lastKnownGoodTmpDelKey,
-        CM_REGISTRY_MACHINE(REGSTR_PATH_LASTGOODTMP)
-        );
+    RtlInitUnicodeString(&lastKnownGoodTmpDelKey, CM_REGISTRY_MACHINE(REGSTR_PATH_LASTGOODTMP));
 
-    if (!CmIsLastKnownGoodBoot()) {
+    if (!CmIsLastKnownGoodBoot())
+    {
 
         //
         // If we are in safe mode we don't do anything to commit the current
         // boot.
         //
-        if (InitSafeBootMode) {
+        if (InitSafeBootMode)
+        {
 
             return;
         }
@@ -96,13 +83,10 @@ Return Value:
         // tmp directory already exists, we *don't* perform the copy, as a good
         // boot is signified by deleting that directory.
         //
-        status = IopFileUtilRename(
-            &lastKnownGoodPath,
-            &lastKnownGoodTmpPath,
-            FALSE
-            );
+        status = IopFileUtilRename(&lastKnownGoodPath, &lastKnownGoodTmpPath, FALSE);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 
             return;
         }
@@ -110,11 +94,7 @@ Return Value:
         //
         // It worked, now we also take care of the registry info.
         //
-        PiLastGoodCopyKeyContents(
-            &lastKnownGoodDelKey,
-            &lastKnownGoodTmpDelKey,
-            TRUE
-            );
+        PiLastGoodCopyKeyContents(&lastKnownGoodDelKey, &lastKnownGoodTmpDelKey, TRUE);
 
         return;
     }
@@ -123,26 +103,18 @@ Return Value:
     // Revert the LastGood tree. This tree contains the changes made after
     // SMSS.EXE's initialization.
     //
-    PiLastGoodRevertLastKnownDirectory(
-        &lastKnownGoodPath,
-        &lastKnownGoodDelKey
-        );
+    PiLastGoodRevertLastKnownDirectory(&lastKnownGoodPath, &lastKnownGoodDelKey);
 
     //
     // Revert the LastGood.Tmp tree. This tree contains the changes made on
     // a prior boot if we crashed between SMSS.EXE's initialization and login.
     //
-    PiLastGoodRevertLastKnownDirectory(
-        &lastKnownGoodTmpPath,
-        &lastKnownGoodTmpDelKey);
+    PiLastGoodRevertLastKnownDirectory(&lastKnownGoodTmpPath, &lastKnownGoodTmpDelKey);
 }
 
 
-VOID
-PiLastGoodRevertLastKnownDirectory(
-    IN PUNICODE_STRING  LastKnownGoodDirectory,
-    IN PUNICODE_STRING  LastKnownGoodRegPath
-    )
+VOID PiLastGoodRevertLastKnownDirectory(IN PUNICODE_STRING LastKnownGoodDirectory,
+                                        IN PUNICODE_STRING LastKnownGoodRegPath)
 /*++
 
 Routine Description:
@@ -172,7 +144,7 @@ Return Value:
     OBJECT_ATTRIBUTES lastKnownGoodKeyAttributes;
     OBJECT_ATTRIBUTES fileAttributes;
     HANDLE lastGoodRegHandle;
-    UCHAR keyBuffer[sizeof(KEY_VALUE_FULL_INFORMATION) + 256*sizeof(WCHAR) + sizeof(ULONG)];
+    UCHAR keyBuffer[sizeof(KEY_VALUE_FULL_INFORMATION) + 256 * sizeof(WCHAR) + sizeof(ULONG)];
     WCHAR filePathName[255 + sizeof("\\SystemRoot\\")];
     PKEY_VALUE_FULL_INFORMATION pFullKeyInformation;
     ULONG resultLength, i, j, optionValue;
@@ -180,55 +152,41 @@ Return Value:
     //
     // Preinit our pointer to the full information buffer.
     //
-    pFullKeyInformation = (PKEY_VALUE_FULL_INFORMATION) keyBuffer;
+    pFullKeyInformation = (PKEY_VALUE_FULL_INFORMATION)keyBuffer;
 
     //
     // Preform the file copy.
     //
-    IopFileUtilWalkDirectoryTreeTopDown(
-        LastKnownGoodDirectory,
-        ( DIRWALK_INCLUDE_FILES | DIRWALK_CULL_DOTPATHS | DIRWALK_TRAVERSE ),
-        PiLastGoodRevertCopyCallback,
-        (PVOID) LastKnownGoodDirectory
-        );
+    IopFileUtilWalkDirectoryTreeTopDown(LastKnownGoodDirectory,
+                                        (DIRWALK_INCLUDE_FILES | DIRWALK_CULL_DOTPATHS | DIRWALK_TRAVERSE),
+                                        PiLastGoodRevertCopyCallback, (PVOID)LastKnownGoodDirectory);
 
     //
     // Delete all the files specified in by the registry keys.
     //
-    InitializeObjectAttributes(
-        &lastKnownGoodKeyAttributes,
-        LastKnownGoodRegPath,
-        OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-        NULL,
-        (PSECURITY_DESCRIPTOR) NULL
-        );
+    InitializeObjectAttributes(&lastKnownGoodKeyAttributes, LastKnownGoodRegPath,
+                               OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, (PSECURITY_DESCRIPTOR)NULL);
 
-    status = ZwOpenKey(
-        &lastGoodRegHandle,
-        KEY_ALL_ACCESS,
-        &lastKnownGoodKeyAttributes
-        );
+    status = ZwOpenKey(&lastGoodRegHandle, KEY_ALL_ACCESS, &lastKnownGoodKeyAttributes);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         return;
     }
 
     i = 0;
-    while (1) {
+    while (1)
+    {
 
-        status = ZwEnumerateValueKey(
-            lastGoodRegHandle,
-            i++,
-            KeyValueFullInformation,
-            pFullKeyInformation,
-            sizeof(keyBuffer),
-            &resultLength
-            );
+        status = ZwEnumerateValueKey(lastGoodRegHandle, i++, KeyValueFullInformation, pFullKeyInformation,
+                                     sizeof(keyBuffer), &resultLength);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 
-            if (status == STATUS_NO_MORE_ENTRIES) {
+            if (status == STATUS_NO_MORE_ENTRIES)
+            {
 
                 status = STATUS_SUCCESS;
             }
@@ -236,38 +194,41 @@ Return Value:
             break;
         }
 
-        if (resultLength == 0) {
+        if (resultLength == 0)
+        {
 
             continue;
         }
 
-        if (pFullKeyInformation->Type != REG_DWORD) {
+        if (pFullKeyInformation->Type != REG_DWORD)
+        {
 
             continue;
         }
 
-        if (pFullKeyInformation->DataLength != sizeof(ULONG)) {
+        if (pFullKeyInformation->DataLength != sizeof(ULONG))
+        {
 
             continue;
         }
 
-        optionValue = *((PULONG) (((PUCHAR) pFullKeyInformation) +
-            pFullKeyInformation->DataOffset));
+        optionValue = *((PULONG)(((PUCHAR)pFullKeyInformation) + pFullKeyInformation->DataOffset));
 
         //
         // We only understand deletes (and no flags).
         //
-        if ((optionValue & 0xFF) != 1) {
+        if ((optionValue & 0xFF) != 1)
+        {
 
             continue;
         }
 
         fileToDelete.Buffer = filePathName;
-        fileToDelete.Length = (USHORT) 0;
+        fileToDelete.Length = (USHORT)0;
         fileToDelete.MaximumLength = sizeof(filePathName);
 
-        fileName.Buffer = (PWSTR) pFullKeyInformation->Name;
-        fileName.Length = (USHORT) pFullKeyInformation->NameLength;
+        fileName.Buffer = (PWSTR)pFullKeyInformation->Name;
+        fileName.Length = (USHORT)pFullKeyInformation->NameLength;
         fileName.MaximumLength = fileName.Length;
 
         RtlAppendUnicodeToString(&fileToDelete, L"\\SystemRoot\\");
@@ -278,30 +239,21 @@ Return Value:
         // them back as the file systems are *almost* but not quite slash-tilt
         // agnostic.
         //
-        for(j = sizeof(L"\\SystemRoot\\")/sizeof(WCHAR);
-            j < fileToDelete.Length/sizeof(WCHAR);
-            j++) {
+        for (j = sizeof(L"\\SystemRoot\\") / sizeof(WCHAR); j < fileToDelete.Length / sizeof(WCHAR); j++)
+        {
 
-            if (filePathName[j] == L'/') {
+            if (filePathName[j] == L'/')
+            {
 
                 filePathName[j] = L'\\';
             }
         }
 
-        IopFileUtilClearAttributes(
-            &fileToDelete,
-            ( FILE_ATTRIBUTE_READONLY |
-              FILE_ATTRIBUTE_HIDDEN |
-              FILE_ATTRIBUTE_SYSTEM )
-            );
+        IopFileUtilClearAttributes(&fileToDelete,
+                                   (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM));
 
-        InitializeObjectAttributes(
-            &fileAttributes,
-            &fileToDelete,
-            OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-            NULL,
-            NULL
-            );
+        InitializeObjectAttributes(&fileAttributes, &fileToDelete, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL,
+                                   NULL);
 
         ZwDeleteFile(&fileAttributes);
     }
@@ -312,12 +264,8 @@ Return Value:
 
 
 NTSTATUS
-PiLastGoodRevertCopyCallback(
-    IN PUNICODE_STRING  FullPathName,
-    IN PUNICODE_STRING  FileName,
-    IN ULONG            FileAttributes,
-    IN PVOID            Context
-    )
+PiLastGoodRevertCopyCallback(IN PUNICODE_STRING FullPathName, IN PUNICODE_STRING FileName, IN ULONG FileAttributes,
+                             IN PVOID Context)
 /*++
 
 Routine Description:
@@ -342,7 +290,7 @@ Return Value:
 --*/
 {
     NTSTATUS status;
-    const USHORT rootLength = sizeof(L"\\SystemRoot\\")-sizeof(WCHAR);
+    const USHORT rootLength = sizeof(L"\\SystemRoot\\") - sizeof(WCHAR);
     USHORT lastGoodLength;
     UNICODE_STRING targetFile;
     PWCHAR newPathText;
@@ -350,15 +298,12 @@ Return Value:
     //
     // Add in an extra character to skip past the '\\'
     //
-    lastGoodLength = ((PUNICODE_STRING) Context)->Length + sizeof(WCHAR);
+    lastGoodLength = ((PUNICODE_STRING)Context)->Length + sizeof(WCHAR);
 
-    newPathText = ExAllocatePoolWithTag(
-        PagedPool,
-        FullPathName->Length,
-        POOLTAG_LASTGOOD
-        );
+    newPathText = ExAllocatePoolWithTag(PagedPool, FullPathName->Length, POOLTAG_LASTGOOD);
 
-    if (newPathText == NULL) {
+    if (newPathText == NULL)
+    {
 
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -366,17 +311,10 @@ Return Value:
     //
     // Change \\SystemRoot\LastGood\Blah... to \\SystemRoot\Blah...
     //
-    RtlCopyMemory(
-        newPathText,
-        FullPathName->Buffer,
-        rootLength
-        );
+    RtlCopyMemory(newPathText, FullPathName->Buffer, rootLength);
 
-    RtlCopyMemory(
-        newPathText + rootLength/sizeof(WCHAR),
-        FullPathName->Buffer + lastGoodLength/sizeof(WCHAR),
-        FullPathName->Length - lastGoodLength
-        );
+    RtlCopyMemory(newPathText + rootLength / sizeof(WCHAR), FullPathName->Buffer + lastGoodLength / sizeof(WCHAR),
+                  FullPathName->Length - lastGoodLength);
 
     //
     // Setup our unicode string path.
@@ -399,11 +337,8 @@ Return Value:
 
 
 NTSTATUS
-PiLastGoodCopyKeyContents(
-    IN PUNICODE_STRING  SourceRegPath,
-    IN PUNICODE_STRING  DestinationRegPath,
-    IN BOOLEAN          DeleteSourceKey
-    )
+PiLastGoodCopyKeyContents(IN PUNICODE_STRING SourceRegPath, IN PUNICODE_STRING DestinationRegPath,
+                          IN BOOLEAN DeleteSourceKey)
 /*++
 
 Routine Description:
@@ -434,7 +369,7 @@ Return Value:
     NTSTATUS status;
     OBJECT_ATTRIBUTES sourceKeyAttributes, destinationKeyAttributes;
     HANDLE sourceRegHandle, destinationRegHandle;
-    UCHAR keyBuffer[sizeof(KEY_VALUE_FULL_INFORMATION) + 512*sizeof(WCHAR)];
+    UCHAR keyBuffer[sizeof(KEY_VALUE_FULL_INFORMATION) + 512 * sizeof(WCHAR)];
     PKEY_VALUE_FULL_INFORMATION pFullKeyInformation;
     ULONG resultLength, i, disposition;
     UNICODE_STRING valueName;
@@ -442,26 +377,18 @@ Return Value:
     //
     // Prep the buffer.
     //
-    pFullKeyInformation = (PKEY_VALUE_FULL_INFORMATION) keyBuffer;
+    pFullKeyInformation = (PKEY_VALUE_FULL_INFORMATION)keyBuffer;
 
     //
     // Open the source key.
     //
-    InitializeObjectAttributes(
-        &sourceKeyAttributes,
-        SourceRegPath,
-        OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-        NULL,
-        (PSECURITY_DESCRIPTOR) NULL
-        );
+    InitializeObjectAttributes(&sourceKeyAttributes, SourceRegPath, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL,
+                               (PSECURITY_DESCRIPTOR)NULL);
 
-    status = ZwOpenKey(
-        &sourceRegHandle,
-        KEY_ALL_ACCESS,
-        &sourceKeyAttributes
-        );
+    status = ZwOpenKey(&sourceRegHandle, KEY_ALL_ACCESS, &sourceKeyAttributes);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         return status;
     }
@@ -469,25 +396,14 @@ Return Value:
     //
     // Open or create the destination key.
     //
-    InitializeObjectAttributes(
-        &destinationKeyAttributes,
-        DestinationRegPath,
-        OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-        NULL,
-        (PSECURITY_DESCRIPTOR) NULL
-        );
+    InitializeObjectAttributes(&destinationKeyAttributes, DestinationRegPath, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
+                               NULL, (PSECURITY_DESCRIPTOR)NULL);
 
-    status = ZwCreateKey(
-        &destinationRegHandle,
-        KEY_ALL_ACCESS,
-        &destinationKeyAttributes,
-        0,
-        NULL,
-        REG_OPTION_NON_VOLATILE,
-        &disposition
-        );
+    status = ZwCreateKey(&destinationRegHandle, KEY_ALL_ACCESS, &destinationKeyAttributes, 0, NULL,
+                         REG_OPTION_NON_VOLATILE, &disposition);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         ZwClose(sourceRegHandle);
         return status;
@@ -497,20 +413,17 @@ Return Value:
     // Iterate over all the value keys, copying each.
     //
     i = 0;
-    while (1) {
+    while (1)
+    {
 
-        status = ZwEnumerateValueKey(
-            sourceRegHandle,
-            i++,
-            KeyValueFullInformation,
-            pFullKeyInformation,
-            sizeof(keyBuffer),
-            &resultLength
-            );
+        status = ZwEnumerateValueKey(sourceRegHandle, i++, KeyValueFullInformation, pFullKeyInformation,
+                                     sizeof(keyBuffer), &resultLength);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 
-            if (status == STATUS_NO_MORE_ENTRIES) {
+            if (status == STATUS_NO_MORE_ENTRIES)
+            {
 
                 status = STATUS_SUCCESS;
             }
@@ -519,19 +432,15 @@ Return Value:
         }
 
         valueName.Buffer = pFullKeyInformation->Name;
-        valueName.Length = (USHORT) pFullKeyInformation->NameLength;
+        valueName.Length = (USHORT)pFullKeyInformation->NameLength;
         valueName.MaximumLength = valueName.Length;
 
-        status = ZwSetValueKey(
-            destinationRegHandle,
-            &valueName,
-            0,
-            pFullKeyInformation->Type,
-            ((PUCHAR) pFullKeyInformation) + pFullKeyInformation->DataOffset,
-            pFullKeyInformation->DataLength
-            );
+        status = ZwSetValueKey(destinationRegHandle, &valueName, 0, pFullKeyInformation->Type,
+                               ((PUCHAR)pFullKeyInformation) + pFullKeyInformation->DataOffset,
+                               pFullKeyInformation->DataLength);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 
             break;
         }
@@ -540,7 +449,8 @@ Return Value:
     //
     // Cleanup time.
     //
-    if (NT_SUCCESS(status) && DeleteSourceKey) {
+    if (NT_SUCCESS(status) && DeleteSourceKey)
+    {
 
         ZwDeleteKey(sourceRegHandle);
     }
@@ -550,6 +460,3 @@ Return Value:
 
     return status;
 }
-
-
-

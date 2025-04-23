@@ -32,14 +32,12 @@ Revision History:
 #endif
 
 #define Multiplier ((ULONG)(0x80000000ul - 19)) // 2**31 - 19
-#define Increment  ((ULONG)(0x80000000ul - 61)) // 2**31 - 61
-#define Modulus    ((ULONG)(0x80000000ul - 1))  // 2**31 - 1
+#define Increment ((ULONG)(0x80000000ul - 61))  // 2**31 - 61
+#define Modulus ((ULONG)(0x80000000ul - 1))     // 2**31 - 1
 
 #if !defined(NTOS_KERNEL_RUNTIME)
 ULONG
-RtlUniform (
-    IN OUT PULONG Seed
-    )
+RtlUniform(IN OUT PULONG Seed)
 
 /*++
 
@@ -64,17 +62,13 @@ Return Value:
 }
 #endif
 
-#define UniformMacro(Seed) (                                 \
-    *Seed = (((Multiplier * (*Seed)) + Increment) % Modulus) \
-    )
+#define UniformMacro(Seed) (*Seed = (((Multiplier * (*Seed)) + Increment) % Modulus))
 
-
+
 extern ULONG RtlpRandomConstantVector[];
 
 ULONG
-RtlRandom (
-    IN OUT PULONG Seed
-    )
+RtlRandom(IN OUT PULONG Seed)
 
 /*++
 
@@ -110,16 +104,13 @@ Return Value:
     RtlpRandomConstantVector[j] = X;
 
     return Result;
-
 }
 
 extern ULONG RtlpRandomExAuxVarY;
 extern ULONG RtlpRandomExConstantVector[];
 
 ULONG
-RtlRandomEx(
-    IN OUT PULONG Seed
-    )
+RtlRandomEx(IN OUT PULONG Seed)
 
 /*++
 
@@ -165,6 +156,5 @@ Return Value:
     RtlpRandomExConstantVector[j] = UniformMacro(Seed);
 
     return Result;
-
 }
 

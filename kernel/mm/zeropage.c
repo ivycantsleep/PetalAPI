@@ -21,19 +21,16 @@ Revision History:
 
 #include "mi.h"
 
-#define MM_ZERO_PAGE_OBJECT     0
-#define PO_SYS_IDLE_OBJECT      1
-#define NUMBER_WAIT_OBJECTS     2
+#define MM_ZERO_PAGE_OBJECT 0
+#define PO_SYS_IDLE_OBJECT 1
+#define NUMBER_WAIT_OBJECTS 2
 
 #define MACHINE_ZERO_PAGE() KeZeroPageFromIdleThread(ZeroBase)
 
 LOGICAL MiZeroingDisabled = FALSE;
 ULONG MmLastNodeZeroing = 0;
 
-VOID
-MmZeroPageThread (
-    VOID
-    )
+VOID MmZeroPageThread(VOID)
 
 /*++
 
@@ -82,9 +79,10 @@ Environment:
     // initialization code.
     //
 
-    MiFindInitializationCode (&StartVa, &EndVa);
-    if (StartVa != NULL) {
-        MiFreeInitializationCode (StartVa, EndVa);
+    MiFindInitializationCode(&StartVa, &EndVa);
+    if (StartVa != NULL)
+    {
+        MiFreeInitializationCode(StartVa, EndVa);
     }
 
     //
@@ -95,7 +93,7 @@ Environment:
 
     Thread = KeGetCurrentThread();
     Thread->BasePriority = 0;
-    KeSetPriorityThread (Thread, 0);
+    KeSetPriorityThread(Thread, 0);
 
     //
     // Initialize wait object array for multiple wait
@@ -108,31 +106,28 @@ Environment:
     // Loop forever zeroing pages.
     //
 
-    do {
+    do
+    {
 
         //
         // Wait until there are at least MmZeroPageMinimum pages
         // on the free list.
         //
 
-        Status = KeWaitForMultipleObjects (NUMBER_WAIT_OBJECTS,
-                                           WaitObjects,
-                                           WaitAny,
-                                           WrFreePage,
-                                           KernelMode,
-                                           FALSE,
-                                           (PLARGE_INTEGER) NULL,
-                                           (PKWAIT_BLOCK) NULL
-                                           );
+        Status = KeWaitForMultipleObjects(NUMBER_WAIT_OBJECTS, WaitObjects, WaitAny, WrFreePage, KernelMode, FALSE,
+                                          (PLARGE_INTEGER)NULL, (PKWAIT_BLOCK)NULL);
 
-        if (Status == PO_SYS_IDLE_OBJECT) {
-            PoSystemIdleWorker (TRUE);
+        if (Status == PO_SYS_IDLE_OBJECT)
+        {
+            PoSystemIdleWorker(TRUE);
             continue;
         }
 
-        LOCK_PFN_WITH_TRY (OldIrql);
-        do {
-            if (*(PFN_NUMBER volatile*)&MmFreePageListHead.Total == 0) {
+        LOCK_PFN_WITH_TRY(OldIrql);
+        do
+        {
+            if (*(PFN_NUMBER volatile *)&MmFreePageListHead.Total == 0)
+            {
 
                 //
                 // No pages on the free list at this time, wait for
@@ -140,15 +135,15 @@ Environment:
                 //
 
                 MmZeroingPageThreadActive = FALSE;
-                UNLOCK_PFN (OldIrql);
+                UNLOCK_PFN(OldIrql);
                 break;
-
             }
 
-            if (MiZeroingDisabled == TRUE) {
+            if (MiZeroingDisabled == TRUE)
+            {
                 MmZeroingPageThreadActive = FALSE;
-                UNLOCK_PFN (OldIrql);
-                KeDelayExecutionThread (KernelMode, FALSE, (PLARGE_INTEGER)&MmHalfSecond);
+                UNLOCK_PFN(OldIrql);
+                KeDelayExecutionThread(KernelMode, FALSE, (PLARGE_INTEGER)&MmHalfSecond);
                 break;
             }
 
@@ -160,19 +155,23 @@ Environment:
 
 #if defined(MI_MULTINODE)
 
-            if (KeNumberNodes > 1) {
+            if (KeNumberNodes > 1)
+            {
                 n = MmLastNodeZeroing;
 
-                for (i = 0; i < KeNumberNodes; i += 1) {
-                    if (KeNodeBlock[n]->FreeCount[FreePageList] != 0) {
+                for (i = 0; i < KeNumberNodes; i += 1)
+                {
+                    if (KeNodeBlock[n]->FreeCount[FreePageList] != 0)
+                    {
                         break;
                     }
                     n = (n + 1) % KeNumberNodes;
                 }
 
-                ASSERT (KeNodeBlock[n]->FreeCount[FreePageList]);
+                ASSERT(KeNodeBlock[n]->FreeCount[FreePageList]);
 
-                if (n != MmLastNodeZeroing) {
+                if (n != MmLastNodeZeroing)
+                {
                     Color = KeNodeBlock[n]->MmShiftedColor;
                 }
 
@@ -183,43 +182,40 @@ Environment:
                 //
 
                 StartColor = Color;
-                do {
-                    if (MmFreePagesByColor[FreePageList][Color].Flink !=
-                            MM_EMPTY_LIST) {
+                do
+                {
+                    if (MmFreePagesByColor[FreePageList][Color].Flink != MM_EMPTY_LIST)
+                    {
                         break;
                     }
 
-                    Color = (Color & ~MmSecondaryColorMask) |
-                            ((Color + 1) & MmSecondaryColorMask);
+                    Color = (Color & ~MmSecondaryColorMask) | ((Color + 1) & MmSecondaryColorMask);
 
                     ASSERT(StartColor != Color);
 
                 } while (TRUE);
 
                 PageFrame = MiRemoveAnyPage(Color);
-
             }
-            else {
+            else
+            {
                 n = 0;
 #endif
                 PageFrame = MmFreePageListHead.Flink;
-                ASSERT (PageFrame != MM_EMPTY_LIST);
+                ASSERT(PageFrame != MM_EMPTY_LIST);
 
                 Pfn1 = MI_PFN_ELEMENT(PageFrame);
 
                 NewPage = MiRemoveAnyPage(MI_GET_COLOR_FROM_LIST_ENTRY(PageFrame, Pfn1));
-                if (NewPage != PageFrame) {
+                if (NewPage != PageFrame)
+                {
 
                     //
                     // Someone has removed a page from the colored lists
                     // chain without updating the freelist chain.
                     //
 
-                    KeBugCheckEx (PFN_LIST_CORRUPT,
-                                  0x8F,
-                                  NewPage,
-                                  PageFrame,
-                                  0);
+                    KeBugCheckEx(PFN_LIST_CORRUPT, 0x8F, NewPage, PageFrame, 0);
                 }
 
 #if defined(MI_MULTINODE)
@@ -230,9 +226,9 @@ Environment:
             // Zero the page using the last color used to map the page.
             //
 
-            UNLOCK_PFN (OldIrql);
+            UNLOCK_PFN(OldIrql);
 
-            ZeroBase = MiMapPageToZeroInHyperSpace (PageFrame);
+            ZeroBase = MiMapPageToZeroInHyperSpace(PageFrame);
 
             //
             // If a node switch is in order, do it now that the PFN
@@ -241,7 +237,8 @@ Environment:
 
 #if defined(MI_MULTINODE)
 
-            if ((KeNumberNodes > 1) && (n != MmLastNodeZeroing)) {
+            if ((KeNumberNodes > 1) && (n != MmLastNodeZeroing))
+            {
                 MmLastNodeZeroing = n;
                 KeFindFirstSetLeftAffinity(KeNodeBlock[n]->ProcessorMask, &i);
                 KeSetIdealProcessorThread(Thread, (UCHAR)i);
@@ -251,12 +248,12 @@ Environment:
 
             MACHINE_ZERO_PAGE();
 
-            MiUnmapPageInZeroSpace (ZeroBase);
+            MiUnmapPageInZeroSpace(ZeroBase);
 
-            LOCK_PFN_WITH_TRY (OldIrql);
-            MiInsertPageInList (&MmZeroedPageListHead, PageFrame);
+            LOCK_PFN_WITH_TRY(OldIrql);
+            MiInsertPageInList(&MmZeroedPageListHead, PageFrame);
 
-        } while(TRUE);
+        } while (TRUE);
 
     } while (TRUE);
 }

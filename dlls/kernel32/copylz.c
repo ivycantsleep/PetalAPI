@@ -34,9 +34,9 @@
 ** Globals:    none
 */
 
-INT  APIENTRY LZStart(VOID)
+INT APIENTRY LZStart(VOID)
 {
-   return(TRUE);
+    return (TRUE);
 }
 
 
@@ -53,9 +53,9 @@ INT  APIENTRY LZStart(VOID)
 **
 ** Globals:    none
 */
-VOID  APIENTRY LZDone(VOID)
+VOID APIENTRY LZDone(VOID)
 {
-   return;
+    return;
 }
 
 /*
@@ -67,7 +67,7 @@ VOID  APIENTRY LZDone(VOID)
 */
 LONG APIENTRY CopyLZFile(HFILE doshSource, HFILE doshDest)
 {
-   return(LZCopy(doshSource, doshDest));
+    return (LZCopy(doshSource, doshDest));
 }
 
 /*
@@ -83,60 +83,64 @@ LONG APIENTRY CopyLZFile(HFILE doshSource, HFILE doshDest)
 **
 ** Globals:    none
 */
-LONG  APIENTRY LZCopy(HFILE doshSource, HFILE doshDest)
+LONG APIENTRY LZCopy(HFILE doshSource, HFILE doshDest)
 {
-   INT f;
-   LONG lRetVal;
-   PLZINFO pLZI;
+    INT f;
+    LONG lRetVal;
+    PLZINFO pLZI;
 
-   // If it's a compressed file handle, translate to a DOS handle.
-   if (doshSource >= LZ_TABLE_BIAS)
-   {
-      LZFile *lpLZ;       // pointer to LZFile struct
-      HANDLE hLZFile;         // handle to LZFile struct
+    // If it's a compressed file handle, translate to a DOS handle.
+    if (doshSource >= LZ_TABLE_BIAS)
+    {
+        LZFile *lpLZ;   // pointer to LZFile struct
+        HANDLE hLZFile; // handle to LZFile struct
 
-      if ((hLZFile = rghLZFileTable[doshSource - LZ_TABLE_BIAS]) == NULL)
-      {
-         return(LZERROR_BADINHANDLE);
-      }
+        if ((hLZFile = rghLZFileTable[doshSource - LZ_TABLE_BIAS]) == NULL)
+        {
+            return (LZERROR_BADINHANDLE);
+        }
 
-      if ((lpLZ = (LZFile *)GlobalLock(hLZFile)) == NULL)
-      {
-         return(LZERROR_GLOBLOCK);
-      }
+        if ((lpLZ = (LZFile *)GlobalLock(hLZFile)) == NULL)
+        {
+            return (LZERROR_GLOBLOCK);
+        }
 
-      doshSource = lpLZ->dosh;
-      doshDest = ConvertDosFHToWin32(doshDest);
+        doshSource = lpLZ->dosh;
+        doshDest = ConvertDosFHToWin32(doshDest);
 
-      GlobalUnlock(hLZFile);
-   }
-   else {
-      doshDest   = ConvertDosFHToWin32(doshDest);
-      doshSource = ConvertDosFHToWin32(doshSource);
-   }
+        GlobalUnlock(hLZFile);
+    }
+    else
+    {
+        doshDest = ConvertDosFHToWin32(doshDest);
+        doshSource = ConvertDosFHToWin32(doshSource);
+    }
 
-   // Initialize buffers
-   pLZI = InitGlobalBuffersEx();
+    // Initialize buffers
+    pLZI = InitGlobalBuffersEx();
 
-   if (!pLZI) {
-      return(LZERROR_GLOBALLOC);
-   }
+    if (!pLZI)
+    {
+        return (LZERROR_GLOBALLOC);
+    }
 
-   ResetBuffers();
+    ResetBuffers();
 
-   // Expand / copy file.
-   if ((f = ExpandOrCopyFile(doshSource, doshDest, pLZI)) != TRUE) {
-      // Expansion / copy failed.
-      lRetVal = (LONG)f;
-   } else {
-      // Expansion / copy successful - return number of bytes written.
-      lRetVal = pLZI->cblOutSize;
-   }
+    // Expand / copy file.
+    if ((f = ExpandOrCopyFile(doshSource, doshDest, pLZI)) != TRUE)
+    {
+        // Expansion / copy failed.
+        lRetVal = (LONG)f;
+    }
+    else
+    {
+        // Expansion / copy successful - return number of bytes written.
+        lRetVal = pLZI->cblOutSize;
+    }
 
-   // Free global buffers.
-   FreeGlobalBuffers(pLZI);
+    // Free global buffers.
+    FreeGlobalBuffers(pLZI);
 
-   return(lRetVal);
+    return (lRetVal);
 }
-
 

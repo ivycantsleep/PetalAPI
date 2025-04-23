@@ -39,7 +39,6 @@ extern ULONG BreakPfn;
 extern ULONG IoDeviceHandlerObjectSize;
 
 
-
 #if defined(REMOTE_BOOT)
 VOID
 IopShutdownCsc (
@@ -52,8 +51,6 @@ IopShutdownCsc (
 //
 
 #endif
-
-
 
 
 #endif // _IOP_

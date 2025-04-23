@@ -11,7 +11,7 @@
 //#include "amlihook.h"
 //#include "amlitest.h"
 
-#ifdef  LOCKABLE_PRAGMA
+#ifdef LOCKABLE_PRAGMA
 #pragma ACPI_LOCKABLE_DATA
 #pragma ACPI_LOCKABLE_CODE
 #endif
@@ -25,9 +25,7 @@ Method(_OSI, 0x1, NotSerialized)
 }
 --*/
 
-UCHAR OSIAML[] = {
-                    0xa4, 0xca, 0x68
-                  };
+UCHAR OSIAML[] = { 0xa4, 0xca, 0x68 };
 
 
 /***EP  AMLIInitialize - Initialize AML interpreter
@@ -67,87 +65,68 @@ UCHAR OSIAML[] = {
  *  @RDESC  FAILURE - Returns NT status code.
  */
 
-NTSTATUS AMLIAPI AMLIInitialize(ULONG dwCtxtBlkSize, ULONG dwGlobalHeapBlkSize,
-                                ULONG dwfAMLIInit, ULONG dwmsTimeSliceLength,
-                                ULONG dwmsTimeSliceInterval, ULONG dwmsMaxCTObjs)
+NTSTATUS AMLIAPI AMLIInitialize(ULONG dwCtxtBlkSize, ULONG dwGlobalHeapBlkSize, ULONG dwfAMLIInit,
+                                ULONG dwmsTimeSliceLength, ULONG dwmsTimeSliceInterval, ULONG dwmsMaxCTObjs)
 {
     TRACENAME("AMLIINITIALIZE")
     NTSTATUS rc = STATUS_SUCCESS;
 
     ENTER(1, ("AMLIInitialize(InitFlags=%x,CtxtBlkSize=%d,GlobalHeapBlkSize=%d,TimeSliceLen=%d,TimeSliceInterval=%d)\n",
-              dwfAMLIInit, dwCtxtBlkSize, dwGlobalHeapBlkSize,
-              dwmsTimeSliceLength, dwmsTimeSliceInterval));
+              dwfAMLIInit, dwCtxtBlkSize, dwGlobalHeapBlkSize, dwmsTimeSliceLength, dwmsTimeSliceInterval));
 
-  #ifndef DEBUGGER
+#ifndef DEBUGGER
     DEREF(dwfAMLIInit);
-  #endif
+#endif
 
     RESETERR();
     if (gpnsNameSpaceRoot != NULL)
     {
-        rc = AMLI_LOGERR(AMLIERR_ALREADY_INITIALIZED,
-                         ("AMLIInitialize: interpreter already initialized"));
+        rc = AMLI_LOGERR(AMLIERR_ALREADY_INITIALIZED, ("AMLIInitialize: interpreter already initialized"));
     }
     else
     {
-        gdwCtxtBlkSize = dwCtxtBlkSize ? dwCtxtBlkSize: DEF_CTXTBLK_SIZE;
-        gdwGlobalHeapBlkSize = dwGlobalHeapBlkSize? dwGlobalHeapBlkSize:
-                                                    DEF_GLOBALHEAPBLK_SIZE;
+        gdwCtxtBlkSize = dwCtxtBlkSize ? dwCtxtBlkSize : DEF_CTXTBLK_SIZE;
+        gdwGlobalHeapBlkSize = dwGlobalHeapBlkSize ? dwGlobalHeapBlkSize : DEF_GLOBALHEAPBLK_SIZE;
         gdwfAMLIInit = dwfAMLIInit;
         gdwfHacks = GetHackFlags(NULL);
 
         //
         // Sanity Check
         //
-        if (dwmsMaxCTObjs > 1024) {
+        if (dwmsMaxCTObjs > 1024)
+        {
 
             dwmsMaxCTObjs = 1024;
-
         }
-        gdwcCTObjsMax = (dwmsMaxCTObjs > DEF_CTXTMAX_SIZE) ? dwmsMaxCTObjs :
-                                                             DEF_CTXTMAX_SIZE;
+        gdwcCTObjsMax = (dwmsMaxCTObjs > DEF_CTXTMAX_SIZE) ? dwmsMaxCTObjs : DEF_CTXTMAX_SIZE;
 
-      #ifdef DEBUGGER
+#ifdef DEBUGGER
         //   gDebugger.dwfDebugger |= (DBGF_LOGEVENT_ON | DBGF_ERRBREAK_ON);
         gDebugger.dwfDebugger |= DBGF_LOGEVENT_ON;
         SetLogSize(DEF_MAXLOG_ENTRIES);
-        KeInitializeSpinLock( &gdwGHeapSpinLock );
-      #endif
-        KeInitializeSpinLock( &gdwGContextSpinLock );
+        KeInitializeSpinLock(&gdwGHeapSpinLock);
+#endif
+        KeInitializeSpinLock(&gdwGContextSpinLock);
 
         //
         // Initialize the LookAside lists.
         //
-        ExInitializeNPagedLookasideList(
-            &AMLIContextLookAsideList,
-            NULL,
-            NULL,
-            0,
-            gdwCtxtBlkSize,
-            CTOBJ_TAG,
-            (USHORT) gdwcCTObjsMax
-            );
+        ExInitializeNPagedLookasideList(&AMLIContextLookAsideList, NULL, NULL, 0, gdwCtxtBlkSize, CTOBJ_TAG,
+                                        (USHORT)gdwcCTObjsMax);
 
-        if ((rc = NewHeap(gdwGlobalHeapBlkSize, &gpheapGlobal)) ==
-            STATUS_SUCCESS)
+        if ((rc = NewHeap(gdwGlobalHeapBlkSize, &gpheapGlobal)) == STATUS_SUCCESS)
         {
             int i;
             PNSOBJ pns;
-            static PSZ apszDefinedRootObjs[] =
-            {
-                "_GPE", "_PR", "_SB", "_SI", "_TZ"
-            };
-            #define NUM_DEFINED_ROOT_OBJS (sizeof(apszDefinedRootObjs)/sizeof(PSZ))
+            static PSZ apszDefinedRootObjs[] = { "_GPE", "_PR", "_SB", "_SI", "_TZ" };
+#define NUM_DEFINED_ROOT_OBJS (sizeof(apszDefinedRootObjs) / sizeof(PSZ))
 
             gpheapGlobal->pheapHead = gpheapGlobal;
-            if ((rc = CreateNameSpaceObject(gpheapGlobal, NAMESTR_ROOT, NULL,
-                                            NULL, NULL, 0)) == STATUS_SUCCESS)
+            if ((rc = CreateNameSpaceObject(gpheapGlobal, NAMESTR_ROOT, NULL, NULL, NULL, 0)) == STATUS_SUCCESS)
             {
                 for (i = 0; i < NUM_DEFINED_ROOT_OBJS; ++i)
                 {
-                    if ((rc = CreateNameSpaceObject(gpheapGlobal,
-                                                    apszDefinedRootObjs[i],
-                                                    NULL, NULL, NULL, 0)) !=
+                    if ((rc = CreateNameSpaceObject(gpheapGlobal, apszDefinedRootObjs[i], NULL, NULL, NULL, 0)) !=
                         STATUS_SUCCESS)
                     {
                         break;
@@ -156,61 +135,49 @@ NTSTATUS AMLIAPI AMLIInitialize(ULONG dwCtxtBlkSize, ULONG dwGlobalHeapBlkSize,
             }
 
             if ((rc == STATUS_SUCCESS) &&
-                ((rc = CreateNameSpaceObject(gpheapGlobal, "_REV", NULL, NULL,
-                                             &pns, 0)) == STATUS_SUCCESS))
+                ((rc = CreateNameSpaceObject(gpheapGlobal, "_REV", NULL, NULL, &pns, 0)) == STATUS_SUCCESS))
             {
                 pns->ObjData.dwDataType = OBJTYPE_INTDATA;
                 pns->ObjData.uipDataValue = AMLI_REVISION;
             }
 
             if ((rc == STATUS_SUCCESS) &&
-                ((rc = CreateNameSpaceObject(gpheapGlobal, "_OS", NULL, NULL,
-                                             &pns, 0)) == STATUS_SUCCESS))
+                ((rc = CreateNameSpaceObject(gpheapGlobal, "_OS", NULL, NULL, &pns, 0)) == STATUS_SUCCESS))
             {
                 pns->ObjData.dwDataType = OBJTYPE_STRDATA;
                 pns->ObjData.dwDataLen = STRLEN(gpszOSName) + 1;
-                if ((pns->ObjData.pbDataBuff = NEWSDOBJ(gpheapGlobal,
-                                                        pns->ObjData.dwDataLen))
-                    == NULL)
+                if ((pns->ObjData.pbDataBuff = NEWSDOBJ(gpheapGlobal, pns->ObjData.dwDataLen)) == NULL)
                 {
-                    rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                                     ("AMLIInitialize: failed to allocate \\_OS name object"));
+                    rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("AMLIInitialize: failed to allocate \\_OS name object"));
                 }
                 else
                 {
-                    MEMCPY(pns->ObjData.pbDataBuff, gpszOSName,
-                           pns->ObjData.dwDataLen);
+                    MEMCPY(pns->ObjData.pbDataBuff, gpszOSName, pns->ObjData.dwDataLen);
                 }
             }
 
             if ((rc == STATUS_SUCCESS) &&
-                ((rc = CreateNameSpaceObject(gpheapGlobal,"_OSI", NULL, NULL,
-                                              &pns, 0)) == STATUS_SUCCESS))
+                ((rc = CreateNameSpaceObject(gpheapGlobal, "_OSI", NULL, NULL, &pns, 0)) == STATUS_SUCCESS))
             {
 
                 pns->ObjData.dwDataType = OBJTYPE_METHOD;
                 pns->ObjData.dwDataLen = sizeof(METHODOBJ) + sizeof(OSIAML) - sizeof(UCHAR);
-                if ((pns->ObjData.pbDataBuff = NEWSDOBJ(gpheapGlobal,
-                                                        pns->ObjData.dwDataLen))
-                    == NULL)
+                if ((pns->ObjData.pbDataBuff = NEWSDOBJ(gpheapGlobal, pns->ObjData.dwDataLen)) == NULL)
                 {
-                    rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM,
-                                     ("AMLIInitiaize: failed to allocate \\_OSI name object"));
+                    rc = AMLI_LOGERR(AMLIERR_OUT_OF_MEM, ("AMLIInitiaize: failed to allocate \\_OSI name object"));
                 }
                 else
                 {
                     MEMZERO(pns->ObjData.pbDataBuff, pns->ObjData.dwDataLen);
                     //This method has one argument
-                    ((PMETHODOBJ)(pns->ObjData.pbDataBuff))->bMethodFlags |=  0x1; 
-                    
-                    MEMCPY(((PMETHODOBJ)(pns->ObjData.pbDataBuff))->abCodeBuff, (PUCHAR)OSIAML,
-                           sizeof(OSIAML));
+                    ((PMETHODOBJ)(pns->ObjData.pbDataBuff))->bMethodFlags |= 0x1;
+
+                    MEMCPY(((PMETHODOBJ)(pns->ObjData.pbDataBuff))->abCodeBuff, (PUCHAR)OSIAML, sizeof(OSIAML));
                 }
             }
 
             if ((rc == STATUS_SUCCESS) &&
-                ((rc = CreateNameSpaceObject(gpheapGlobal, "_GL", NULL, NULL,
-                                             &pns, 0)) == STATUS_SUCCESS))
+                ((rc = CreateNameSpaceObject(gpheapGlobal, "_GL", NULL, NULL, &pns, 0)) == STATUS_SUCCESS))
             {
                 pns->ObjData.dwfData = DATAF_GLOBAL_LOCK;
                 rc = InitMutex(gpheapGlobal, pns, 0);
@@ -218,26 +185,18 @@ NTSTATUS AMLIAPI AMLIInitialize(ULONG dwCtxtBlkSize, ULONG dwGlobalHeapBlkSize,
 
             if (rc == STATUS_SUCCESS)
             {
-                gReadyQueue.dwmsTimeSliceLength = dwmsTimeSliceLength?
-                                                    dwmsTimeSliceLength:
-                                                    DEF_TIMESLICE_LENGTH;
-                gReadyQueue.dwmsTimeSliceInterval = dwmsTimeSliceInterval?
-                                                      dwmsTimeSliceInterval:
-                                                      DEF_TIMESLICE_INTERVAL;
+                gReadyQueue.dwmsTimeSliceLength = dwmsTimeSliceLength ? dwmsTimeSliceLength : DEF_TIMESLICE_LENGTH;
+                gReadyQueue.dwmsTimeSliceInterval =
+                    dwmsTimeSliceInterval ? dwmsTimeSliceInterval : DEF_TIMESLICE_INTERVAL;
                 KeInitializeTimer(&gReadyQueue.Timer);
                 InitializeMutex(&gReadyQueue.mutCtxtQ);
-                ExInitializeWorkItem(&gReadyQueue.WorkItem,
-                                     StartTimeSlicePassive, &gReadyQueue);
+                ExInitializeWorkItem(&gReadyQueue.WorkItem, StartTimeSlicePassive, &gReadyQueue);
                 InitializeMutex(&gmutCtxtList);
                 InitializeMutex(&gmutOwnerList);
                 InitializeMutex(&gmutHeap);
                 InitializeMutex(&gmutSleep);
-                KeInitializeDpc(&gReadyQueue.DpcStartTimeSlice,
-                                StartTimeSlice,
-                                &gReadyQueue);
-                KeInitializeDpc(&gReadyQueue.DpcExpireTimeSlice,
-                                ExpireTimeSlice,
-                                &gReadyQueue);
+                KeInitializeDpc(&gReadyQueue.DpcStartTimeSlice, StartTimeSlice, &gReadyQueue);
+                KeInitializeDpc(&gReadyQueue.DpcExpireTimeSlice, ExpireTimeSlice, &gReadyQueue);
                 KeInitializeDpc(&SleepDpc, SleepQueueDpc, NULL);
                 KeInitializeTimer(&SleepTimer);
                 InitializeListHead(&SleepQueue);
@@ -252,17 +211,17 @@ NTSTATUS AMLIAPI AMLIInitialize(ULONG dwCtxtBlkSize, ULONG dwGlobalHeapBlkSize,
     else if (rc != STATUS_SUCCESS)
         rc = NTERR(rc);
 
-  #ifdef DEBUGGER
+#ifdef DEBUGGER
     if (gdwfAMLIInit & AMLIIF_INIT_BREAK)
     {
         PRINTF("\n" MODNAME ": Break at AMLI Initialization Completion.\n");
         AMLIDebugger(FALSE);
     }
-  #endif
+#endif
 
     EXIT(1, ("AMLIInitialize=%x\n", rc));
     return rc;
-}       //AMLIInitialize
+} //AMLIInitialize
 
 /***EP  AMLITerminate - Terminate AML interpreter
  *
@@ -288,22 +247,21 @@ NTSTATUS AMLIAPI AMLITerminate(VOID)
     RESETERR();
     if (gpnsNameSpaceRoot == NULL)
     {
-        rc = AMLI_LOGERR(AMLIERR_NOT_INITIALIZED,
-                         ("AMLITerminate: interpreter not initialized"));
+        rc = AMLI_LOGERR(AMLIERR_NOT_INITIALIZED, ("AMLITerminate: interpreter not initialized"));
     }
     else
     {
         PLIST plist;
         PHEAP pheap;
 
-      #ifdef DEBUGGER
+#ifdef DEBUGGER
         FreeSymList();
         if (gDebugger.pEventLog != NULL)
         {
             MFREE(gDebugger.pEventLog);
         }
         MEMZERO(&gDebugger, sizeof(DBGR));
-      #endif
+#endif
 
         ASSERT(gReadyQueue.pkthCurrent == NULL);
         ASSERT(gReadyQueue.pctxtCurrent == NULL);
@@ -333,7 +291,7 @@ NTSTATUS AMLIAPI AMLITerminate(VOID)
         MEMZERO(&ghFatal, sizeof(EVHANDLE));
         MEMZERO(&ghGlobalLock, sizeof(EVHANDLE));
         MEMZERO(&ghCreate, sizeof(EVHANDLE));
-        MEMZERO(&ghDestroyObj,sizeof(EVHANDLE));
+        MEMZERO(&ghDestroyObj, sizeof(EVHANDLE));
         for (pheap = gpheapGlobal; pheap != NULL; pheap = gpheapGlobal)
         {
             gpheapGlobal = pheap->pheapNext;
@@ -344,13 +302,13 @@ NTSTATUS AMLIAPI AMLITerminate(VOID)
 
         gdwfAMLI = 0;
 
-      #ifdef DEBUG
+#ifdef DEBUG
         if (gdwcMemObjs != 0)
         {
             DumpMemObjCounts();
             ASSERT(gdwcMemObjs == 0);
         }
-      #endif
+#endif
     }
 
     if (rc == AMLISTA_PENDING)
@@ -360,7 +318,7 @@ NTSTATUS AMLIAPI AMLITerminate(VOID)
 
     EXIT(1, ("AMLITerminate=%x\n", rc));
     return rc;
-}       //AMLITerminate
+} //AMLITerminate
 
 /***EP  AMLILoadDDB - Load and parse Differentiated Definition Block
  *
@@ -403,15 +361,14 @@ NTSTATUS AMLIAPI AMLILoadDDB(PDSDT pDSDT, HANDLE *phDDB)
     CHKDEBUGGERREQ();
 
     gInitTime = TRUE;
-    
-  #ifdef DEBUGGER
+
+#ifdef DEBUGGER
     if (gDebugger.dwfDebugger & DBGF_VERBOSE_ON)
     {
-        PRINTF(MODNAME ": %08x: Loading Definition Block %s at 0x%08x.\n",
-               KeGetCurrentThread(), NameSegString(pDSDT->Header.Signature),
-               pDSDT);
+        PRINTF(MODNAME ": %08x: Loading Definition Block %s at 0x%08x.\n", KeGetCurrentThread(),
+               NameSegString(pDSDT->Header.Signature), pDSDT);
     }
-  #endif
+#endif
 
     gdwfHacks |= GetHackFlags(pDSDT);
 
@@ -420,38 +377,32 @@ NTSTATUS AMLIAPI AMLILoadDDB(PDSDT pDSDT, HANDLE *phDDB)
         ASSERT(gpheapGlobal != NULL);
         pctxt->pheapCurrent = gpheapGlobal;
 
-      #ifdef DEBUG
+#ifdef DEBUG
         gdwfAMLI |= AMLIF_LOADING_DDB;
-      #endif
+#endif
 
-        if (atLoad.pfnCallBack != NULL && atLoad.dwfOpcode & OF_CALLBACK_EX) {
+        if (atLoad.pfnCallBack != NULL && atLoad.dwfOpcode & OF_CALLBACK_EX)
+        {
 
-            ((PFNOPEX)atLoad.pfnCallBack)(
-                EVTYPE_OPCODE_EX,
-                OPEXF_NOTIFY_PRE,
-                atLoad.dwOpcode,
-                NULL,
-                atLoad.dwCBData
-                );
-
+            ((PFNOPEX)atLoad.pfnCallBack)(EVTYPE_OPCODE_EX, OPEXF_NOTIFY_PRE, atLoad.dwOpcode, NULL, atLoad.dwCBData);
         }
 
-        rc = LoadDDB(pctxt,pDSDT, gpnsNameSpaceRoot, &powner);
+        rc = LoadDDB(pctxt, pDSDT, gpnsNameSpaceRoot, &powner);
         if (rc == STATUS_SUCCESS)
         {
             rc = SyncLoadDDB(pctxt);
         }
 
-      #ifdef DEBUG
+#ifdef DEBUG
         {
-            KIRQL   oldIrql;
+            KIRQL oldIrql;
 
             gdwfAMLI &= ~AMLIF_LOADING_DDB;
-            KeAcquireSpinLock( &gdwGHeapSpinLock, &oldIrql );
+            KeAcquireSpinLock(&gdwGHeapSpinLock, &oldIrql);
             gdwGHeapSnapshot = gdwGlobalHeapSize;
-            KeReleaseSpinLock( &gdwGHeapSpinLock, oldIrql );
+            KeReleaseSpinLock(&gdwGHeapSpinLock, oldIrql);
         }
-      #endif
+#endif
     }
 
     if (phDDB != NULL)
@@ -461,35 +412,25 @@ NTSTATUS AMLIAPI AMLILoadDDB(PDSDT pDSDT, HANDLE *phDDB)
 
     if ((powner != NULL) && (atLoad.pfnCallBack != NULL))
     {
-        if (atLoad.dwfOpcode & OF_CALLBACK_EX) {
+        if (atLoad.dwfOpcode & OF_CALLBACK_EX)
+        {
 
-            ((PFNOPEX)atLoad.pfnCallBack)(
-                EVTYPE_OPCODE_EX,
-                OPEXF_NOTIFY_POST,
-                atLoad.dwOpcode,
-                NULL,
-                atLoad.dwCBData
-                );
+            ((PFNOPEX)atLoad.pfnCallBack)(EVTYPE_OPCODE_EX, OPEXF_NOTIFY_POST, atLoad.dwOpcode, NULL, atLoad.dwCBData);
+        }
+        else
+        {
 
-        } else {
-
-            atLoad.pfnCallBack(
-                EVTYPE_OPCODE,
-                atLoad.dwOpcode,
-                NULL,
-                atLoad.dwCBData
-                );
-
+            atLoad.pfnCallBack(EVTYPE_OPCODE, atLoad.dwOpcode, NULL, atLoad.dwCBData);
         }
     }
 
-  #ifdef DEBUGGER
+#ifdef DEBUGGER
     if (gdwfAMLIInit & AMLIIF_LOADDDB_BREAK)
     {
         PRINTF("\n" MODNAME ": Break at Load Definition Block Completion.\n");
         AMLIDebugger(FALSE);
     }
-  #endif
+#endif
 
     if (rc == AMLISTA_PENDING)
         rc = STATUS_PENDING;
@@ -497,10 +438,10 @@ NTSTATUS AMLIAPI AMLILoadDDB(PDSDT pDSDT, HANDLE *phDDB)
         rc = NTERR(rc);
 
     gInitTime = FALSE;
-    
+
     EXIT(1, ("AMLILoadDDB=%x (powner=%x)\n", rc, powner));
     return rc;
-}       //AMLILoadDDB
+} //AMLILoadDDB
 
 /***EP  AMLIUnloadDDB - Unload Differentiated Definition Block
  *
@@ -533,7 +474,7 @@ VOID AMLIAPI AMLIUnloadDDB(HANDLE hDDB)
     }
 
     EXIT(1, ("AMLIUnloadDDB!\n"));
-}       //AMLIUnloadDDB
+} //AMLIUnloadDDB
 
 /***EP  AMLIGetNameSpaceObject - Find a name space object
  *
@@ -567,15 +508,14 @@ VOID AMLIAPI AMLIUnloadDDB(HANDLE hDDB)
  *  @RDESC  FAILURE - Returns NT status code.
  */
 
-NTSTATUS AMLIAPI AMLIGetNameSpaceObject(PSZ pszObjPath, PNSOBJ pnsScope,
-                                        PPNSOBJ ppns, ULONG dwfFlags)
+NTSTATUS AMLIAPI AMLIGetNameSpaceObject(PSZ pszObjPath, PNSOBJ pnsScope, PPNSOBJ ppns, ULONG dwfFlags)
 {
     TRACENAME("AMLIGETNAMESPACEOBJECT")
     NTSTATUS rc = STATUS_SUCCESS;
-    PAMLIHOOK_DATA  pHData = NULL;
+    PAMLIHOOK_DATA pHData = NULL;
 
-    ENTER(1, ("AMLIGetNameSpaceObject(ObjPath=%s,Scope=%s,ppns=%p,Flags=%x)\n",
-              pszObjPath, GetObjectPath(pnsScope), ppns, dwfFlags));
+    ENTER(1, ("AMLIGetNameSpaceObject(ObjPath=%s,Scope=%s,ppns=%p,Flags=%x)\n", pszObjPath, GetObjectPath(pnsScope),
+              ppns, dwfFlags));
 
     ASSERT(pszObjPath != NULL);
     ASSERT(*pszObjPath != '\0');
@@ -584,16 +524,14 @@ NTSTATUS AMLIAPI AMLIGetNameSpaceObject(PSZ pszObjPath, PNSOBJ pnsScope,
     CHKDEBUGGERREQ();
 
 
-    if(IsAmliHookEnabled())
-      {
+    if (IsAmliHookEnabled())
+    {
 
-       rc = AMLITest_Pre_GetNameSpaceObject(
-         pszObjPath,pnsScope,ppns,dwfFlags,&pHData);
+        rc = AMLITest_Pre_GetNameSpaceObject(pszObjPath, pnsScope, ppns, dwfFlags, &pHData);
 
-      if(rc != STATUS_SUCCESS)
-         return(rc);
-
-      }
+        if (rc != STATUS_SUCCESS)
+            return (rc);
+    }
 
     if ((pnsScope != NULL) && (pnsScope->ObjData.dwfData & DATAF_NSOBJ_DEFUNC))
     {
@@ -611,16 +549,15 @@ NTSTATUS AMLIAPI AMLIGetNameSpaceObject(PSZ pszObjPath, PNSOBJ pnsScope,
     else if (rc != STATUS_SUCCESS)
         rc = NTERR(rc);
 
-    if(IsAmliHookEnabled())
-      {
-      rc = AMLITest_Post_GetNameSpaceObject(
-         &pHData,rc);
-      }
+    if (IsAmliHookEnabled())
+    {
+        rc = AMLITest_Post_GetNameSpaceObject(&pHData, rc);
+    }
 
 
     EXIT(1, ("AMLIGetNameSpaceObject=%x (pns=%p)\n", rc, *ppns));
     return rc;
-}       //AMLIGetNameSpaceObject
+} //AMLIGetNameSpaceObject
 
 /***EP  AMLIGetFieldUnitRegionObj - Get OpRegion associated with FieldUnit
  *
@@ -643,7 +580,7 @@ NTSTATUS AMLIAPI AMLIGetFieldUnitRegionObj(PFIELDUNITOBJ pfu, PPNSOBJ ppns)
 {
     TRACENAME("AMLIGETFIELDUNITREGIONOBJ")
     NTSTATUS rc = STATUS_SUCCESS;
-    PAMLIHOOK_DATA  pHData = NULL;
+    PAMLIHOOK_DATA pHData = NULL;
 
 
     ENTER(1, ("AMLIGetFieldUnitRegionObj(pfu=%x,ppns=%x)\n", pfu, ppns));
@@ -652,32 +589,29 @@ NTSTATUS AMLIAPI AMLIGetFieldUnitRegionObj(PFIELDUNITOBJ pfu, PPNSOBJ ppns)
     ASSERT(ppns != NULL);
     RESETERR();
 
-    if(IsAmliHookEnabled())
-      {
+    if (IsAmliHookEnabled())
+    {
 
-       rc = AMLITest_Pre_GetFieldUnitRegionObj(
-         pfu,ppns,&pHData);
+        rc = AMLITest_Pre_GetFieldUnitRegionObj(pfu, ppns, &pHData);
 
-      if(rc != STATUS_SUCCESS)
-         return(rc);
-
-      }
+        if (rc != STATUS_SUCCESS)
+            return (rc);
+    }
 
     rc = GetFieldUnitRegionObj(pfu, ppns);
 
     if (rc != STATUS_SUCCESS)
         rc = NTERR(rc);
 
-    if(IsAmliHookEnabled())
-      {
+    if (IsAmliHookEnabled())
+    {
 
-       rc = AMLITest_Post_GetFieldUnitRegionObj(
-          &pHData,rc);
-      }
+        rc = AMLITest_Post_GetFieldUnitRegionObj(&pHData, rc);
+    }
 
     EXIT(1, ("AMLIGetFieldUnitRegionObj=%x (pns=%x)\n", rc, *ppns));
     return rc;
-}       //AMLIGetFieldUnitRegionObj
+} //AMLIGetFieldUnitRegionObj
 
 /***EP  AMLIEvalNameSpaceObject - Evaluate a name space object
  *
@@ -712,15 +646,14 @@ NTSTATUS AMLIAPI AMLIGetFieldUnitRegionObj(PFIELDUNITOBJ pfu, PPNSOBJ ppns)
  *          after the result object data is no longer needed.
  */
 
-NTSTATUS AMLIAPI AMLIEvalNameSpaceObject(PNSOBJ pns, POBJDATA pdataResult,
-                                         int icArgs, POBJDATA pdataArgs)
+NTSTATUS AMLIAPI AMLIEvalNameSpaceObject(PNSOBJ pns, POBJDATA pdataResult, int icArgs, POBJDATA pdataArgs)
 {
     TRACENAME("AMLIEVALNAMESPACEOBJECT")
     NTSTATUS rc = STATUS_SUCCESS;
-    PAMLIHOOK_DATA  pHData = NULL;
+    PAMLIHOOK_DATA pHData = NULL;
 
-    ENTER(1, ("AMLIEvalNameSpaceObject(Obj=%s,pdataResult=%x,icArgs=%d,pdataArgs=%x)\n",
-              GetObjectPath(pns), pdataResult, icArgs, pdataArgs));
+    ENTER(1, ("AMLIEvalNameSpaceObject(Obj=%s,pdataResult=%x,icArgs=%d,pdataArgs=%x)\n", GetObjectPath(pns),
+              pdataResult, icArgs, pdataArgs));
 
     ASSERT(pns != NULL);
     ASSERT((icArgs == 0) || (pdataArgs != NULL));
@@ -728,15 +661,14 @@ NTSTATUS AMLIAPI AMLIEvalNameSpaceObject(PNSOBJ pns, POBJDATA pdataResult,
     CHKGLOBALHEAP();
     CHKDEBUGGERREQ();
 
-    if(IsAmliHookEnabled())
-      {
+    if (IsAmliHookEnabled())
+    {
 
-      rc = AMLITest_Pre_EvalNameSpaceObject(
-         pns,pdataResult,icArgs,pdataArgs,&pHData);
+        rc = AMLITest_Pre_EvalNameSpaceObject(pns, pdataResult, icArgs, pdataArgs, &pHData);
 
-      if(rc != STATUS_SUCCESS)
-         return(rc);
-      }
+        if (rc != STATUS_SUCCESS)
+            return (rc);
+    }
 
 
     if (pns->ObjData.dwfData & DATAF_NSOBJ_DEFUNC)
@@ -751,13 +683,12 @@ NTSTATUS AMLIAPI AMLIEvalNameSpaceObject(PNSOBJ pns, POBJDATA pdataResult,
 
         pns = GetBaseObject(pns);
 
-      #ifdef DEBUGGER
+#ifdef DEBUGGER
         if (gDebugger.dwfDebugger & DBGF_VERBOSE_ON)
         {
-            PRINTF(MODNAME ": %08x: EvalNameSpaceObject(%s)\n",
-                   KeGetCurrentThread(), GetObjectPath(pns));
+            PRINTF(MODNAME ": %08x: EvalNameSpaceObject(%s)\n", KeGetCurrentThread(), GetObjectPath(pns));
         }
-      #endif
+#endif
 
         rc = SyncEvalObject(pns, pdataResult, icArgs, pdataArgs);
 
@@ -767,17 +698,16 @@ NTSTATUS AMLIAPI AMLIEvalNameSpaceObject(PNSOBJ pns, POBJDATA pdataResult,
             rc = NTERR(rc);
     }
 
-    if(IsAmliHookEnabled())
-      {
+    if (IsAmliHookEnabled())
+    {
 
-      rc = AMLITest_Post_EvalNameSpaceObject(
-          &pHData,rc);
-      }
+        rc = AMLITest_Post_EvalNameSpaceObject(&pHData, rc);
+    }
 
 
     EXIT(1, ("AMLIEvalNameSpaceObject=%x\n", rc));
     return rc;
-}       //AMLIEvalNameSpaceObject
+} //AMLIEvalNameSpaceObject
 
 /***EP  AMLIAsyncEvalObject - Evaluate an object asynchronously
  *
@@ -815,17 +745,15 @@ NTSTATUS AMLIAPI AMLIEvalNameSpaceObject(PNSOBJ pns, POBJDATA pdataResult,
  *          after the result object data is no longer needed.
  */
 
-NTSTATUS AMLIAPI AMLIAsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult,
-                                     int icArgs, POBJDATA pdataArgs,
+NTSTATUS AMLIAPI AMLIAsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult, int icArgs, POBJDATA pdataArgs,
                                      PFNACB pfnAsyncCallBack, PVOID pvContext)
 {
     TRACENAME("AMLIASYNCEVALOBJECT")
     NTSTATUS rc = STATUS_SUCCESS;
-    PAMLIHOOK_DATA  pHData = NULL;
+    PAMLIHOOK_DATA pHData = NULL;
 
-    ENTER(1, ("AMLIAsyncEvalObject(Obj=%s,pdataResult=%x,icArgs=%d,pdataArgs=%x,pfnAysnc=%x)\n",
-              GetObjectPath(pns), pdataResult, icArgs, pdataArgs,
-              pfnAsyncCallBack));
+    ENTER(1, ("AMLIAsyncEvalObject(Obj=%s,pdataResult=%x,icArgs=%d,pdataArgs=%x,pfnAysnc=%x)\n", GetObjectPath(pns),
+              pdataResult, icArgs, pdataArgs, pfnAsyncCallBack));
 
     ASSERT(pns != NULL);
     ASSERT((icArgs == 0) || (pdataArgs != NULL));
@@ -833,18 +761,14 @@ NTSTATUS AMLIAPI AMLIAsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult,
     CHKGLOBALHEAP();
     CHKDEBUGGERREQ();
 
-    if(IsAmliHookEnabled())
-      {
+    if (IsAmliHookEnabled())
+    {
 
-      rc = AMLITest_Pre_AsyncEvalObject(
-         pns,pdataResult,icArgs,pdataArgs,
-         &pfnAsyncCallBack,&pvContext,&pHData);
+        rc = AMLITest_Pre_AsyncEvalObject(pns, pdataResult, icArgs, pdataArgs, &pfnAsyncCallBack, &pvContext, &pHData);
 
-      if(rc != STATUS_SUCCESS)
-         return(rc);
-
-      }
-
+        if (rc != STATUS_SUCCESS)
+            return (rc);
+    }
 
 
     if (pns->ObjData.dwfData & DATAF_NSOBJ_DEFUNC)
@@ -859,16 +783,14 @@ NTSTATUS AMLIAPI AMLIAsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult,
 
         pns = GetBaseObject(pns);
 
-      #ifdef DEBUGGER
+#ifdef DEBUGGER
         if (gDebugger.dwfDebugger & DBGF_VERBOSE_ON)
         {
-            PRINTF(MODNAME ": %08x: AsyncEvalObject(%s)\n",
-                   KeGetCurrentThread(), GetObjectPath(pns));
+            PRINTF(MODNAME ": %08x: AsyncEvalObject(%s)\n", KeGetCurrentThread(), GetObjectPath(pns));
         }
-      #endif
+#endif
 
-        rc = AsyncEvalObject(pns, pdataResult, icArgs, pdataArgs,
-                             pfnAsyncCallBack, pvContext, TRUE);
+        rc = AsyncEvalObject(pns, pdataResult, icArgs, pdataArgs, pfnAsyncCallBack, pvContext, TRUE);
 
         if (rc == AMLISTA_PENDING)
             rc = STATUS_PENDING;
@@ -876,17 +798,16 @@ NTSTATUS AMLIAPI AMLIAsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult,
             rc = NTERR(rc);
     }
 
-    if(IsAmliHookEnabled())
-      {
+    if (IsAmliHookEnabled())
+    {
 
-      rc = AMLITest_Post_AsyncEvalObject(
-          &pHData,rc);
-      }
+        rc = AMLITest_Post_AsyncEvalObject(&pHData, rc);
+    }
 
 
     EXIT(1, ("AMLIAsyncEvalObject=%x\n", rc));
     return rc;
-}       //AMLIAsyncEvalObject
+} //AMLIAsyncEvalObject
 
 /***EP  AMLINestAsyncEvalObject - Evaluate an object asynchronously from within
  *                                the current context
@@ -926,19 +847,16 @@ NTSTATUS AMLIAPI AMLIAsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult,
  *          after the result object data is no longer needed.
  */
 
-NTSTATUS AMLIAPI AMLINestAsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult,
-                                         int icArgs, POBJDATA pdataArgs,
-                                         PFNACB pfnAsyncCallBack,
-                                         PVOID pvContext)
+NTSTATUS AMLIAPI AMLINestAsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult, int icArgs, POBJDATA pdataArgs,
+                                         PFNACB pfnAsyncCallBack, PVOID pvContext)
 {
     TRACENAME("AMLINESTASYNCEVALOBJECT")
     NTSTATUS rc = STATUS_SUCCESS;
-    PAMLIHOOK_DATA  pHData = NULL;
+    PAMLIHOOK_DATA pHData = NULL;
 
 
-    ENTER(1, ("AMLINestAsyncEvalObject(Obj=%s,pdataResult=%x,icArgs=%d,pdataArgs=%x,pfnAysnc=%x)\n",
-              GetObjectPath(pns), pdataResult, icArgs, pdataArgs,
-              pfnAsyncCallBack));
+    ENTER(1, ("AMLINestAsyncEvalObject(Obj=%s,pdataResult=%x,icArgs=%d,pdataArgs=%x,pfnAysnc=%x)\n", GetObjectPath(pns),
+              pdataResult, icArgs, pdataArgs, pfnAsyncCallBack));
 
     ASSERT(pns != NULL);
     ASSERT((icArgs == 0) || (pdataArgs != NULL));
@@ -946,18 +864,15 @@ NTSTATUS AMLIAPI AMLINestAsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult,
     CHKGLOBALHEAP();
     CHKDEBUGGERREQ();
 
-    if(IsAmliHookEnabled())
-      {
+    if (IsAmliHookEnabled())
+    {
 
-      rc = AMLITest_Pre_NestAsyncEvalObject(
-         pns,pdataResult,icArgs,pdataArgs,
-         &pfnAsyncCallBack,&pvContext,&pHData);
+        rc = AMLITest_Pre_NestAsyncEvalObject(pns, pdataResult, icArgs, pdataArgs, &pfnAsyncCallBack, &pvContext,
+                                              &pHData);
 
-      if(rc != STATUS_SUCCESS)
-         return(rc);
-
-
-      }
+        if (rc != STATUS_SUCCESS)
+            return (rc);
+    }
 
 
     if (pns->ObjData.dwfData & DATAF_NSOBJ_DEFUNC)
@@ -972,16 +887,14 @@ NTSTATUS AMLIAPI AMLINestAsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult,
 
         pns = GetBaseObject(pns);
 
-      #ifdef DEBUGGER
+#ifdef DEBUGGER
         if (gDebugger.dwfDebugger & DBGF_VERBOSE_ON)
         {
-            PRINTF(MODNAME ": %08x: AsyncNestEvalObject(%s)\n",
-                   KeGetCurrentThread(), GetObjectPath(pns));
+            PRINTF(MODNAME ": %08x: AsyncNestEvalObject(%s)\n", KeGetCurrentThread(), GetObjectPath(pns));
         }
-      #endif
+#endif
 
-        rc = NestAsyncEvalObject(pns, pdataResult, icArgs, pdataArgs,
-                                 pfnAsyncCallBack, pvContext, TRUE);
+        rc = NestAsyncEvalObject(pns, pdataResult, icArgs, pdataArgs, pfnAsyncCallBack, pvContext, TRUE);
 
         if (rc == AMLISTA_PENDING)
             rc = STATUS_PENDING;
@@ -989,16 +902,15 @@ NTSTATUS AMLIAPI AMLINestAsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult,
             rc = NTERR(rc);
     }
 
-    if(IsAmliHookEnabled())
-      {
+    if (IsAmliHookEnabled())
+    {
 
-      rc = AMLITest_Post_NestAsyncEvalObject(
-          &pHData,rc);
-      }
+        rc = AMLITest_Post_NestAsyncEvalObject(&pHData, rc);
+    }
 
     EXIT(1, ("AMLINestAsyncEvalObject=%x\n", rc));
     return rc;
-}       //AMLINestAsyncEvalObject
+} //AMLINestAsyncEvalObject
 
 /***EP  AMLIEvalPackageElement - Evaluate a package element
  *
@@ -1032,8 +944,7 @@ NTSTATUS AMLIAPI AMLINestAsyncEvalObject(PNSOBJ pns, POBJDATA pdataResult,
  *          after the result object data is no longer needed.
  */
 
-NTSTATUS AMLIAPI AMLIEvalPackageElement(PNSOBJ pns, int iPkgIndex,
-                                        POBJDATA pdataResult)
+NTSTATUS AMLIAPI AMLIEvalPackageElement(PNSOBJ pns, int iPkgIndex, POBJDATA pdataResult)
 {
     TRACENAME("AMLIEVALPACKAGEELEMENT")
     NTSTATUS rc = STATUS_SUCCESS;
@@ -1041,8 +952,7 @@ NTSTATUS AMLIAPI AMLIEvalPackageElement(PNSOBJ pns, int iPkgIndex,
     POBJDATA pdata = NULL;
     PAMLIHOOK_DATA pHData = NULL;
 
-    ENTER(1, ("AMLIEvalPackageElement(Obj=%s,Index=%d,pdataResult=%x)\n",
-              GetObjectPath(pns), iPkgIndex, pdataResult));
+    ENTER(1, ("AMLIEvalPackageElement(Obj=%s,Index=%d,pdataResult=%x)\n", GetObjectPath(pns), iPkgIndex, pdataResult));
 
     ASSERT(pns != NULL);
     ASSERT(pdataResult != NULL);
@@ -1051,16 +961,14 @@ NTSTATUS AMLIAPI AMLIEvalPackageElement(PNSOBJ pns, int iPkgIndex,
     CHKDEBUGGERREQ();
 
 
-    if(IsAmliHookEnabled())
-      {
+    if (IsAmliHookEnabled())
+    {
 
-      rc = AMLITest_Pre_EvalPackageElement(
-         pns,iPkgIndex,pdataResult,&pHData);
+        rc = AMLITest_Pre_EvalPackageElement(pns, iPkgIndex, pdataResult, &pHData);
 
-      if(rc != STATUS_SUCCESS)
-         return(rc);
-      }
-
+        if (rc != STATUS_SUCCESS)
+            return (rc);
+    }
 
 
     if (pns->ObjData.dwfData & DATAF_NSOBJ_DEFUNC)
@@ -1074,13 +982,12 @@ NTSTATUS AMLIAPI AMLIEvalPackageElement(PNSOBJ pns, int iPkgIndex,
         MEMZERO(&data, sizeof(data));
         pns = GetBaseObject(pns);
 
-      #ifdef DEBUGGER
+#ifdef DEBUGGER
         if (gDebugger.dwfDebugger & DBGF_VERBOSE_ON)
         {
-            PRINTF(MODNAME ": %08x: EvalPackageElement(%s,%d)\n",
-                   KeGetCurrentThread(), GetObjectPath(pns), iPkgIndex);
+            PRINTF(MODNAME ": %08x: EvalPackageElement(%s,%d)\n", KeGetCurrentThread(), GetObjectPath(pns), iPkgIndex);
         }
-      #endif
+#endif
 
         if (pns->ObjData.dwDataType == OBJTYPE_METHOD)
         {
@@ -1109,8 +1016,7 @@ NTSTATUS AMLIAPI AMLIEvalPackageElement(PNSOBJ pns, int iPkgIndex,
 
         if (rc == STATUS_SUCCESS)
         {
-            rc = EvalPackageElement((PPACKAGEOBJ)pdata->pbDataBuff, iPkgIndex,
-                                    pdataResult);
+            rc = EvalPackageElement((PPACKAGEOBJ)pdata->pbDataBuff, iPkgIndex, pdataResult);
         }
         FreeDataBuffs(&data, 1);
 
@@ -1120,24 +1026,20 @@ NTSTATUS AMLIAPI AMLIEvalPackageElement(PNSOBJ pns, int iPkgIndex,
             rc = NTERR(rc);
         else
         {
-            ASSERT((pdataResult->pbDataBuff == NULL) ||
-                   !(pdataResult->dwfData & DATAF_BUFF_ALIAS));
+            ASSERT((pdataResult->pbDataBuff == NULL) || !(pdataResult->dwfData & DATAF_BUFF_ALIAS));
         }
     }
 
-    if(IsAmliHookEnabled())
-      {
+    if (IsAmliHookEnabled())
+    {
 
-      rc = AMLITest_Post_EvalPackageElement(
-          &pHData,rc);
-      }
-
-
+        rc = AMLITest_Post_EvalPackageElement(&pHData, rc);
+    }
 
 
     EXIT(1, ("AMLIEvalPackageElement=%x\n", rc));
     return rc;
-}       //AMLIEvalPackageElement
+} //AMLIEvalPackageElement
 
 /***EP  AMLIEvalPkgDataElement - Evaluate an element of a package data
  *
@@ -1170,15 +1072,13 @@ NTSTATUS AMLIAPI AMLIEvalPackageElement(PNSOBJ pns, int iPkgIndex,
  *          after the result object data is no longer needed.
  */
 
-NTSTATUS AMLIAPI AMLIEvalPkgDataElement(POBJDATA pdataPkg, int iPkgIndex,
-                                        POBJDATA pdataResult)
+NTSTATUS AMLIAPI AMLIEvalPkgDataElement(POBJDATA pdataPkg, int iPkgIndex, POBJDATA pdataResult)
 {
     TRACENAME("AMLIEVALPKGDATAELEMENT")
     NTSTATUS rc = STATUS_SUCCESS;
     PAMLIHOOK_DATA pHData = NULL;
 
-    ENTER(1, ("AMLIEvalPkgDataElement(pdataPkg=%x,Index=%d,pdataResult=%x)\n",
-              pdataPkg, iPkgIndex, pdataResult));
+    ENTER(1, ("AMLIEvalPkgDataElement(pdataPkg=%x,Index=%d,pdataResult=%x)\n", pdataPkg, iPkgIndex, pdataResult));
 
     ASSERT(pdataResult != NULL);
     RESETERR();
@@ -1188,35 +1088,31 @@ NTSTATUS AMLIAPI AMLIEvalPkgDataElement(POBJDATA pdataPkg, int iPkgIndex,
     MEMZERO(pdataResult, sizeof(OBJDATA));
 
 
-    if(IsAmliHookEnabled())
-      {
+    if (IsAmliHookEnabled())
+    {
 
-      rc = AMLITest_Pre_EvalPkgDataElement(
-         pdataPkg,iPkgIndex,pdataResult,&pHData);
+        rc = AMLITest_Pre_EvalPkgDataElement(pdataPkg, iPkgIndex, pdataResult, &pHData);
 
-      if(rc != STATUS_SUCCESS)
-         return(rc);
-      }
+        if (rc != STATUS_SUCCESS)
+            return (rc);
+    }
 
 
-  #ifdef DEBUGGER
+#ifdef DEBUGGER
     if (gDebugger.dwfDebugger & DBGF_VERBOSE_ON)
     {
-        PRINTF(MODNAME ": %08x: EvalPkgDataElement(%x,%d)\n",
-               KeGetCurrentThread(), pdataPkg, iPkgIndex);
+        PRINTF(MODNAME ": %08x: EvalPkgDataElement(%x,%d)\n", KeGetCurrentThread(), pdataPkg, iPkgIndex);
     }
-  #endif
+#endif
 
     if (pdataPkg->dwDataType != OBJTYPE_PKGDATA)
     {
-        rc = AMLI_LOGERR(AMLIERR_UNEXPECTED_OBJTYPE,
-                         ("AMLIEvalPkgDataElement: object is not a package (ObjType=%s)",
-                          GetObjectTypeName(pdataPkg->dwDataType)));
+        rc = AMLI_LOGERR(AMLIERR_UNEXPECTED_OBJTYPE, ("AMLIEvalPkgDataElement: object is not a package (ObjType=%s)",
+                                                      GetObjectTypeName(pdataPkg->dwDataType)));
     }
     else
     {
-        rc = EvalPackageElement((PPACKAGEOBJ)pdataPkg->pbDataBuff, iPkgIndex,
-                                pdataResult);
+        rc = EvalPackageElement((PPACKAGEOBJ)pdataPkg->pbDataBuff, iPkgIndex, pdataResult);
     }
 
     if (rc == AMLISTA_PENDING)
@@ -1225,21 +1121,19 @@ NTSTATUS AMLIAPI AMLIEvalPkgDataElement(POBJDATA pdataPkg, int iPkgIndex,
         rc = NTERR(rc);
     else
     {
-        ASSERT((pdataResult->pbDataBuff == NULL) ||
-               !(pdataResult->dwfData & DATAF_BUFF_ALIAS));
+        ASSERT((pdataResult->pbDataBuff == NULL) || !(pdataResult->dwfData & DATAF_BUFF_ALIAS));
     }
 
-    if(IsAmliHookEnabled())
-      {
+    if (IsAmliHookEnabled())
+    {
 
-      rc = AMLITest_Post_EvalPkgDataElement(
-          &pHData,rc);
-      }
+        rc = AMLITest_Post_EvalPkgDataElement(&pHData, rc);
+    }
 
 
     EXIT(1, ("AMLIEvalPkgDataElement=%x\n", rc));
     return rc;
-}       //AMLIEvalPkgDataElement
+} //AMLIEvalPkgDataElement
 
 /***EP  AMLIFreeDataBuffs - Free data buffers of an object array
  *
@@ -1269,25 +1163,22 @@ VOID AMLIAPI AMLIFreeDataBuffs(POBJDATA pdata, int icData)
     ASSERT(icData > 0);
     RESETERR();
 
-    if(IsAmliHookEnabled())
-      {
+    if (IsAmliHookEnabled())
+    {
 
-      AMLITest_Pre_FreeDataBuffs(
-         pdata,icData,&pHData);
-
-      }
+        AMLITest_Pre_FreeDataBuffs(pdata, icData, &pHData);
+    }
 
     FreeDataBuffs(pdata, icData);
 
-    if(IsAmliHookEnabled())
-      {
+    if (IsAmliHookEnabled())
+    {
 
-      AMLITest_Post_FreeDataBuffs(
-          &pHData,STATUS_SUCCESS);
-      }
+        AMLITest_Post_FreeDataBuffs(&pHData, STATUS_SUCCESS);
+    }
 
     EXIT(1, ("AMLIFreeDataBuffs!\n"));
-}       //AMLIFreeDataBuffs
+} //AMLIFreeDataBuffs
 
 /***EP  AMLIRegEventHandler - Register an event handler
  *
@@ -1313,87 +1204,79 @@ VOID AMLIAPI AMLIFreeDataBuffs(POBJDATA pdata, int icData)
  *  @RDESC  None.
  */
 
-NTSTATUS AMLIAPI AMLIRegEventHandler(ULONG dwEventType, ULONG_PTR uipEventData,
-                                     PFNHND pfnHandler, ULONG_PTR uipParam)
+NTSTATUS AMLIAPI AMLIRegEventHandler(ULONG dwEventType, ULONG_PTR uipEventData, PFNHND pfnHandler, ULONG_PTR uipParam)
 {
     TRACENAME("AMLIREGEVENTHANDLER")
     NTSTATUS rc = STATUS_SUCCESS;
     PAMLIHOOK_DATA pHData = NULL;
 
-    ENTER(1, ("AMLIRegEventHandler(EventType=%x,EventData=%x,pfnHandler=%x,Param=%x)\n",
-              dwEventType, uipEventData, pfnHandler, uipParam));
+    ENTER(1, ("AMLIRegEventHandler(EventType=%x,EventData=%x,pfnHandler=%x,Param=%x)\n", dwEventType, uipEventData,
+              pfnHandler, uipParam));
     RESETERR();
 
-   if(IsAmliHookEnabled())
-      {
+    if (IsAmliHookEnabled())
+    {
 
-      rc = AMLIHook_Pre_RegEventHandler(
-         dwEventType,uipEventData,&pfnHandler,&uipParam,&pHData);
+        rc = AMLIHook_Pre_RegEventHandler(dwEventType, uipEventData, &pfnHandler, &uipParam, &pHData);
 
-      if(rc != STATUS_SUCCESS)
-         return(rc);
-
-
-      }
+        if (rc != STATUS_SUCCESS)
+            return (rc);
+    }
 
     switch (dwEventType)
     {
-        case EVTYPE_OPCODE:
-            rc = RegOpcodeHandler((ULONG)uipEventData, (PFNOH)pfnHandler,
-                                  uipParam, 0);
-            break;
+    case EVTYPE_OPCODE:
+        rc = RegOpcodeHandler((ULONG)uipEventData, (PFNOH)pfnHandler, uipParam, 0);
+        break;
 
-        case EVTYPE_OPCODE_EX:
-            rc = RegOpcodeHandler((ULONG)uipEventData, (PFNOH)pfnHandler,
-                                  uipParam, OF_CALLBACK_EX);
-            break;
+    case EVTYPE_OPCODE_EX:
+        rc = RegOpcodeHandler((ULONG)uipEventData, (PFNOH)pfnHandler, uipParam, OF_CALLBACK_EX);
+        break;
 
-        case EVTYPE_NOTIFY:
-            rc = RegEventHandler(&ghNotify, pfnHandler, uipParam);
-            break;
+    case EVTYPE_NOTIFY:
+        rc = RegEventHandler(&ghNotify, pfnHandler, uipParam);
+        break;
 
-        case EVTYPE_FATAL:
-            rc = RegEventHandler(&ghFatal, pfnHandler, uipParam);
-            break;
+    case EVTYPE_FATAL:
+        rc = RegEventHandler(&ghFatal, pfnHandler, uipParam);
+        break;
 
-        case EVTYPE_VALIDATE_TABLE:
-            rc = RegEventHandler(&ghValidateTable, pfnHandler, uipParam);
-            break;
+    case EVTYPE_VALIDATE_TABLE:
+        rc = RegEventHandler(&ghValidateTable, pfnHandler, uipParam);
+        break;
 
-        case EVTYPE_ACQREL_GLOBALLOCK:
-            rc = RegEventHandler(&ghGlobalLock, pfnHandler, uipParam);
-            break;
+    case EVTYPE_ACQREL_GLOBALLOCK:
+        rc = RegEventHandler(&ghGlobalLock, pfnHandler, uipParam);
+        break;
 
-        case EVTYPE_RS_COOKACCESS:
-            rc = RegRSAccess((ULONG)uipEventData, pfnHandler, uipParam, FALSE);
-            break;
+    case EVTYPE_RS_COOKACCESS:
+        rc = RegRSAccess((ULONG)uipEventData, pfnHandler, uipParam, FALSE);
+        break;
 
-        case EVTYPE_RS_RAWACCESS:
-            rc = RegRSAccess((ULONG)uipEventData, pfnHandler, uipParam, TRUE);
-            break;
+    case EVTYPE_RS_RAWACCESS:
+        rc = RegRSAccess((ULONG)uipEventData, pfnHandler, uipParam, TRUE);
+        break;
 
-        case EVTYPE_CREATE:
-            rc = RegEventHandler(&ghCreate, pfnHandler, uipParam);
-            break;
+    case EVTYPE_CREATE:
+        rc = RegEventHandler(&ghCreate, pfnHandler, uipParam);
+        break;
 
-        case EVTYPE_DESTROYOBJ:
-            rc =RegEventHandler(&ghDestroyObj, pfnHandler, uipParam);
-            break;
+    case EVTYPE_DESTROYOBJ:
+        rc = RegEventHandler(&ghDestroyObj, pfnHandler, uipParam);
+        break;
 
-      #ifdef DEBUGGER
-        case EVTYPE_CON_MESSAGE:
-            rc = RegEventHandler(&gDebugger.hConMessage, pfnHandler, uipParam);
-            break;
+#ifdef DEBUGGER
+    case EVTYPE_CON_MESSAGE:
+        rc = RegEventHandler(&gDebugger.hConMessage, pfnHandler, uipParam);
+        break;
 
-        case EVTYPE_CON_PROMPT:
-            rc = RegEventHandler(&gDebugger.hConPrompt, pfnHandler, uipParam);
-            break;
-      #endif
+    case EVTYPE_CON_PROMPT:
+        rc = RegEventHandler(&gDebugger.hConPrompt, pfnHandler, uipParam);
+        break;
+#endif
 
-        default:
-            rc = AMLI_LOGERR(AMLIERR_INVALID_EVENTTYPE,
-                             ("AMLIRegEventHandler: invalid event type %x",
-                              dwEventType));
+    default:
+        rc = AMLI_LOGERR(AMLIERR_INVALID_EVENTTYPE, ("AMLIRegEventHandler: invalid event type %x", dwEventType));
     }
 
     if (rc == AMLISTA_PENDING)
@@ -1401,17 +1284,16 @@ NTSTATUS AMLIAPI AMLIRegEventHandler(ULONG dwEventType, ULONG_PTR uipEventData,
     else if (rc != STATUS_SUCCESS)
         rc = NTERR(rc);
 
-    if(IsAmliHookEnabled())
-      {
+    if (IsAmliHookEnabled())
+    {
 
-      rc = AMLIHook_Post_RegEventHandler(
-          &pHData,rc);
-      }
+        rc = AMLIHook_Post_RegEventHandler(&pHData, rc);
+    }
 
 
     EXIT(1, ("AMLIRegEventHandler=%x\n", rc));
     return rc;
-}       //AMLIRegEventHandler
+} //AMLIRegEventHandler
 
 /***EP  AMLIPauseInterpreter
  *
@@ -1433,20 +1315,17 @@ NTSTATUS AMLIAPI AMLIPauseInterpreter(PFNAA pfnCallback, PVOID Context)
     PAMLIHOOK_DATA pHData = NULL;
 
 
-    ENTER(1, ("AMLIPauseInterpreter(Callback=%p,Context=%p)\n",
-              pfnCallback, Context));
+    ENTER(1, ("AMLIPauseInterpreter(Callback=%p,Context=%p)\n", pfnCallback, Context));
     RESETERR();
 
-   if(IsAmliHookEnabled())
-      {
+    if (IsAmliHookEnabled())
+    {
 
-      rc = AMLITest_Pre_PauseInterpreter(
-         &pfnCallback,&Context,&pHData);
+        rc = AMLITest_Pre_PauseInterpreter(&pfnCallback, &Context, &pHData);
 
-      if(rc != STATUS_SUCCESS)
-         return(rc);
-      }
-
+        if (rc != STATUS_SUCCESS)
+            return (rc);
+    }
 
 
     AcquireMutex(&gReadyQueue.mutCtxtQ);
@@ -1472,8 +1351,7 @@ NTSTATUS AMLIAPI AMLIPauseInterpreter(PFNAA pfnCallback, PVOID Context)
     }
     else
     {
-        rc = AMLI_LOGERR(AMLIERR_FATAL,
-                         ("AMLIPauseInterpreter: interpreter already entered paused state"));
+        rc = AMLI_LOGERR(AMLIERR_FATAL, ("AMLIPauseInterpreter: interpreter already entered paused state"));
     }
     ReleaseMutex(&gReadyQueue.mutCtxtQ);
 
@@ -1484,16 +1362,15 @@ NTSTATUS AMLIAPI AMLIPauseInterpreter(PFNAA pfnCallback, PVOID Context)
     else if (rc != STATUS_SUCCESS)
         rc = NTERR(rc);
 
-    if(IsAmliHookEnabled())
-      {
+    if (IsAmliHookEnabled())
+    {
 
-      rc = AMLITest_Post_PauseInterpreter(
-          &pHData,rc);
-      }
+        rc = AMLITest_Post_PauseInterpreter(&pHData, rc);
+    }
 
     EXIT(1, ("AMLIPauseInterpreter=%x\n", rc));
     return rc;
-}       //AMLIPauseInterpreter
+} //AMLIPauseInterpreter
 
 /***EP  AMLIResumeInterpreter
  *
@@ -1515,12 +1392,11 @@ VOID AMLIAPI AMLIResumeInterpreter(VOID)
     ENTER(1, ("AMLIResumeInterpreter()\n"));
     RESETERR();
 
-   if(IsAmliHookEnabled())
-      {
+    if (IsAmliHookEnabled())
+    {
 
-      AMLITest_Pre_ResumeInterpreter(
-         &pHData);
-      }
+        AMLITest_Pre_ResumeInterpreter(&pHData);
+    }
 
     AcquireMutex(&gReadyQueue.mutCtxtQ);
     if (gReadyQueue.dwfCtxtQ & (CQF_PAUSED | CQF_FLUSHING))
@@ -1529,8 +1405,7 @@ VOID AMLIAPI AMLIResumeInterpreter(VOID)
         gReadyQueue.pfnPauseCallback = NULL;
         gReadyQueue.PauseCBContext = NULL;
         LOGSCHEDEVENT('RSUM', 0, 0, 0);
-        if ((gReadyQueue.plistCtxtQ != NULL) &&
-            !(gReadyQueue.dwfCtxtQ & CQF_WORKITEM_SCHEDULED))
+        if ((gReadyQueue.plistCtxtQ != NULL) && !(gReadyQueue.dwfCtxtQ & CQF_WORKITEM_SCHEDULED))
         {
             OSQueueWorkItem(&gReadyQueue.WorkItem);
             gReadyQueue.dwfCtxtQ |= CQF_WORKITEM_SCHEDULED;
@@ -1543,17 +1418,15 @@ VOID AMLIAPI AMLIResumeInterpreter(VOID)
     }
     ReleaseMutex(&gReadyQueue.mutCtxtQ);
 
-    if(IsAmliHookEnabled())
-      {
+    if (IsAmliHookEnabled())
+    {
 
-      AMLITest_Post_ResumeInterpreter(
-          &pHData,STATUS_SUCCESS);
-      }
-
+        AMLITest_Post_ResumeInterpreter(&pHData, STATUS_SUCCESS);
+    }
 
 
     EXIT(1, ("AMLIResumeInterpreter!\n"));
-}       //AMLIResumeInterpreter
+} //AMLIResumeInterpreter
 
 /***EP  AMLIReferenceObject - Bump up the reference count of the object
  *
@@ -1578,7 +1451,7 @@ VOID AMLIAPI AMLIReferenceObject(PNSOBJ pnsObj)
     ASSERT(pnsObj != NULL);
     pnsObj->dwRefCount++;
     EXIT(1, ("AMLIReferenceObj!\n"));
-}       //AMLIReferenceObject
+} //AMLIReferenceObject
 
 /***EP  AMLIDereferenceObject - Bump down the reference count of the object
  *
@@ -1615,7 +1488,7 @@ VOID AMLIAPI AMLIDereferenceObject(PNSOBJ pnsObj)
     }
 
     EXIT(1, ("AMLIDereferenceObj!\n"));
-}       //AMLIDereferenceObject
+} //AMLIDereferenceObject
 
 /***EP  AMLIDestroyFreedObjs - Destroy freed objects during an unload
  *
@@ -1635,7 +1508,7 @@ NTSTATUS AMLIAPI AMLIDestroyFreedObjs(PNSOBJ pnsObj)
 {
     TRACENAME("AMLIDESTROYFREEDOBJS")
 
-    ENTER(1, ("AMLIDestroyFreedObjs(pnsObj=%x)\n",pnsObj));
+    ENTER(1, ("AMLIDestroyFreedObjs(pnsObj=%x)\n", pnsObj));
 
     RESETERR();
 
@@ -1646,9 +1519,9 @@ NTSTATUS AMLIAPI AMLIDestroyFreedObjs(PNSOBJ pnsObj)
     //
     FreeNameSpaceObjects(pnsObj);
 
-    EXIT(1, ("AMLIDestroyFreedObjs=%x \n",STATUS_SUCCESS));
+    EXIT(1, ("AMLIDestroyFreedObjs=%x \n", STATUS_SUCCESS));
     return STATUS_SUCCESS;
-}       //AMLIDestroyFreedObjs
+} //AMLIDestroyFreedObjs
 
 #ifdef DEBUGGER
 /***EP  AMLIGetLastError - Get last error code and message
@@ -1678,8 +1551,7 @@ NTSTATUS AMLIAPI AMLIGetLastError(PSZ *ppszErrMsg)
     else
         *ppszErrMsg = NULL;
 
-    EXIT(1, ("AMLIGetLastError=%x (Msg=%s)\n",
-             rc, *ppszErrMsg? *ppszErrMsg: "<null>"));
+    EXIT(1, ("AMLIGetLastError=%x (Msg=%s)\n", rc, *ppszErrMsg ? *ppszErrMsg : "<null>"));
     return rc;
-}       //AMLIGetLastError
-#endif  //ifdef DEBUGGER
+} //AMLIGetLastError
+#endif //ifdef DEBUGGER

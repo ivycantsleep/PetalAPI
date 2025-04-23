@@ -24,11 +24,8 @@ Revision History:
 --*/
 
 #include "ntrtlp.h"
-
-VOID
-RtlRaiseStatus (
-    IN NTSTATUS Status
-    )
+
+VOID RtlRaiseStatus(IN NTSTATUS Status)
 
 /*++
 

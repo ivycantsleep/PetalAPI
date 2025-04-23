@@ -28,17 +28,12 @@ Revision History:
 #pragma hdrstop
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,SepRegQueryDwordValue)
+#pragma alloc_text(PAGE, SepRegQueryDwordValue)
 #endif
 
 
-
 NTSTATUS
-SepRegQueryDwordValue(
-    IN  PCWSTR KeyName,
-    IN  PCWSTR ValueName,
-    OUT PULONG Value
-    )
+SepRegQueryDwordValue(IN PCWSTR KeyName, IN PCWSTR ValueName, OUT PULONG Value)
 /*++
 
 Routine Description:
@@ -70,52 +65,36 @@ Notes:
     NTSTATUS Status = STATUS_SUCCESS;
     NTSTATUS CloseStatus;
     ULONG ResultLength;
-        
+
     PAGED_CODE();
 
-    RtlInitUnicodeString( &usKey, KeyName );
-    
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &usKey,
-        OBJ_CASE_INSENSITIVE,
-        NULL,
-        NULL
-        );
+    RtlInitUnicodeString(&usKey, KeyName);
 
-    Status = ZwOpenKey(
-                 &hKey,
-                 KEY_QUERY_VALUE,
-                 &ObjectAttributes
-                 );
+    InitializeObjectAttributes(&ObjectAttributes, &usKey, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    if (NT_SUCCESS( Status )) {
- 
-        RtlInitUnicodeString( &usValue, ValueName );
+    Status = ZwOpenKey(&hKey, KEY_QUERY_VALUE, &ObjectAttributes);
 
-        Status = ZwQueryValueKey(
-                     hKey,
-                     &usValue,
-                     KeyValuePartialInformation,
-                     KeyInfo,
-                     sizeof(KeyInfo),
-                     &ResultLength
-                     );
-        
-        if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
+
+        RtlInitUnicodeString(&usValue, ValueName);
+
+        Status = ZwQueryValueKey(hKey, &usValue, KeyValuePartialInformation, KeyInfo, sizeof(KeyInfo), &ResultLength);
+
+        if (NT_SUCCESS(Status))
+        {
 
             pKeyInfo = (PKEY_VALUE_PARTIAL_INFORMATION)KeyInfo;
 
-            *Value = *((PULONG) (pKeyInfo->Data));
+            *Value = *((PULONG)(pKeyInfo->Data));
         }
 
         CloseStatus = ZwClose(hKey);
-        
-        ASSERT( NT_SUCCESS( CloseStatus ));
+
+        ASSERT(NT_SUCCESS(CloseStatus));
     }
 
     //DbgPrint("SepRegQueryDwordValue: %ws--%ws = %x, status: %x \n", KeyName, ValueName, *Value, Status );
-    
+
     return Status;
 }
-

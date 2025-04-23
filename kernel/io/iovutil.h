@@ -24,14 +24,16 @@ Revision History:
 
 --*/
 
-typedef enum {
+typedef enum
+{
 
     DATABASELOCKSTATE_HELD,
     DATABASELOCKSTATE_NOT_HELD
 
 } DATABASELOCKSTATE;
 
-typedef enum  {
+typedef enum
+{
 
     DEVOBJ_RELATION_IDENTICAL,
     DEVOBJ_RELATION_FIRST_IMMEDIATELY_ABOVE_SECOND,
@@ -42,7 +44,8 @@ typedef enum  {
 
 } DEVOBJ_RELATION, *PDEVOBJ_RELATION;
 
-typedef enum {
+typedef enum
+{
 
     MARKTYPE_DELETED,
     MARKTYPE_BOTTOM_OF_FDO_STACK,
@@ -53,121 +56,54 @@ typedef enum {
 
 } MARK_TYPE;
 
-VOID
-FASTCALL
-IovUtilInit(
-    VOID
-    );
+VOID FASTCALL IovUtilInit(VOID);
 
-VOID
-FASTCALL
-IovUtilGetLowerDeviceObject(
-    IN  PDEVICE_OBJECT  UpperDeviceObject,
-    OUT PDEVICE_OBJECT  *LowerDeviceObject
-    );
+VOID FASTCALL IovUtilGetLowerDeviceObject(IN PDEVICE_OBJECT UpperDeviceObject, OUT PDEVICE_OBJECT *LowerDeviceObject);
 
-VOID
-FASTCALL
-IovUtilGetBottomDeviceObject(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    OUT PDEVICE_OBJECT  *BottomDeviceObject
-    );
+VOID FASTCALL IovUtilGetBottomDeviceObject(IN PDEVICE_OBJECT DeviceObject, OUT PDEVICE_OBJECT *BottomDeviceObject);
 
-VOID
-FASTCALL
-IovUtilGetUpperDeviceObject(
-    IN  PDEVICE_OBJECT  LowerDeviceObject,
-    OUT PDEVICE_OBJECT  *UpperDeviceObject
-    );
+VOID FASTCALL IovUtilGetUpperDeviceObject(IN PDEVICE_OBJECT LowerDeviceObject, OUT PDEVICE_OBJECT *UpperDeviceObject);
 
 BOOLEAN
 FASTCALL
-IovUtilIsVerifiedDeviceStack(
-    IN PDEVICE_OBJECT DeviceObject
-    );
+IovUtilIsVerifiedDeviceStack(IN PDEVICE_OBJECT DeviceObject);
 
-VOID
-FASTCALL
-IovUtilFlushVerifierDriverListCache(
-    VOID
-    );
+VOID FASTCALL IovUtilFlushVerifierDriverListCache(VOID);
 
-VOID
-FASTCALL
-IovUtilFlushStackCache(
-    IN  PDEVICE_OBJECT      DeviceObject,
-    IN  DATABASELOCKSTATE   DatabaseLockState
-    );
+VOID FASTCALL IovUtilFlushStackCache(IN PDEVICE_OBJECT DeviceObject, IN DATABASELOCKSTATE DatabaseLockState);
 
-VOID
-IovUtilRelateDeviceObjects(
-    IN     PDEVICE_OBJECT   FirstDeviceObject,
-    IN     PDEVICE_OBJECT   SecondDeviceObject,
-    OUT    DEVOBJ_RELATION  *DeviceObjectRelation
-    );
+VOID IovUtilRelateDeviceObjects(IN PDEVICE_OBJECT FirstDeviceObject, IN PDEVICE_OBJECT SecondDeviceObject,
+                                OUT DEVOBJ_RELATION *DeviceObjectRelation);
 
 BOOLEAN
-IovUtilIsPdo(
-    IN  PDEVICE_OBJECT  DeviceObject
-    );
+IovUtilIsPdo(IN PDEVICE_OBJECT DeviceObject);
 
 BOOLEAN
-IovUtilIsWdmStack(
-    IN  PDEVICE_OBJECT  DeviceObject
-    );
+IovUtilIsWdmStack(IN PDEVICE_OBJECT DeviceObject);
 
 BOOLEAN
 FASTCALL
-IovUtilHasDispatchHandler(
-    IN  PDRIVER_OBJECT  DriverObject,
-    IN  UCHAR           MajorFunction
-    );
+IovUtilHasDispatchHandler(IN PDRIVER_OBJECT DriverObject, IN UCHAR MajorFunction);
 
 BOOLEAN
 FASTCALL
-IovUtilIsInFdoStack(
-    IN PDEVICE_OBJECT   DeviceObject
-    );
+IovUtilIsInFdoStack(IN PDEVICE_OBJECT DeviceObject);
 
 BOOLEAN
 FASTCALL
-IovUtilIsRawPdo(
-    IN  PDEVICE_OBJECT  DeviceObject
-    );
+IovUtilIsRawPdo(IN PDEVICE_OBJECT DeviceObject);
 
 BOOLEAN
 FASTCALL
-IovUtilIsDesignatedFdo(
-    IN  PDEVICE_OBJECT  DeviceObject
-    );
+IovUtilIsDesignatedFdo(IN PDEVICE_OBJECT DeviceObject);
 
-VOID
-FASTCALL
-IovUtilMarkDeviceObject(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  MARK_TYPE       MarkType
-    );
+VOID FASTCALL IovUtilMarkDeviceObject(IN PDEVICE_OBJECT DeviceObject, IN MARK_TYPE MarkType);
 
 BOOLEAN
 FASTCALL
-IovUtilIsDeviceObjectMarked(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  MARK_TYPE       MarkType
-    );
+IovUtilIsDeviceObjectMarked(IN PDEVICE_OBJECT DeviceObject, IN MARK_TYPE MarkType);
 
-VOID
-FASTCALL
-IovUtilMarkStack(
-    IN  PDEVICE_OBJECT  PhysicalDeviceObject,
-    IN  PDEVICE_OBJECT  BottomOfFdoStack        OPTIONAL,
-    IN  PDEVICE_OBJECT  FunctionalDeviceObject  OPTIONAL,
-    IN  BOOLEAN         RawStack
-    );
+VOID FASTCALL IovUtilMarkStack(IN PDEVICE_OBJECT PhysicalDeviceObject, IN PDEVICE_OBJECT BottomOfFdoStack OPTIONAL,
+                               IN PDEVICE_OBJECT FunctionalDeviceObject OPTIONAL, IN BOOLEAN RawStack);
 
-VOID
-FASTCALL
-IovUtilWatermarkIrp(
-    IN  PIRP    Irp,
-    IN  ULONG   Flags
-    );
-
+VOID FASTCALL IovUtilWatermarkIrp(IN PIRP Irp, IN ULONG Flags);

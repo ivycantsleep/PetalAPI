@@ -29,7 +29,7 @@ Revision History:
 #include "viirpdb.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,     VfIrpDatabaseInit)
+#pragma alloc_text(INIT, VfIrpDatabaseInit)
 #pragma alloc_text(PAGEVRFY, ViIrpDatabaseFindPointer)
 #pragma alloc_text(PAGEVRFY, VfIrpDatabaseEntryInsertAndLock)
 #pragma alloc_text(PAGEVRFY, VfIrpDatabaseEntryFindAndLock)
@@ -44,14 +44,14 @@ Revision History:
 #pragma alloc_text(PAGEVRFY, ViIrpDatabaseEntryDestroy)
 #endif
 
-#define POOL_TAG_IRP_DATABASE   'tToI'
+#define POOL_TAG_IRP_DATABASE 'tToI'
 
 //
 // This is our IRP tracking table, a hash table that points to a block of
 // data associated with each IRP.
 //
 PLIST_ENTRY ViIrpDatabase;
-KSPIN_LOCK  ViIrpDatabaseLock;
+KSPIN_LOCK ViIrpDatabaseLock;
 
 /*
  * The routines listed below -
@@ -102,11 +102,7 @@ KSPIN_LOCK  ViIrpDatabaseLock;
  *        VI_DATABASE_HASH_SIZE database locks with little cost.
  */
 
-VOID
-FASTCALL
-VfIrpDatabaseInit(
-    VOID
-    )
+VOID FASTCALL VfIrpDatabaseInit(VOID)
 /*++
 
   Description:
@@ -134,25 +130,20 @@ VfIrpDatabaseInit(
     // As this is system startup code, it is one of the very few places where
     // it's ok to use MustSucceed.
     //
-    ViIrpDatabase = (PLIST_ENTRY) ExAllocatePoolWithTag(
-        NonPagedPoolMustSucceed,
-        VI_DATABASE_HASH_SIZE * sizeof(LIST_ENTRY),
-        POOL_TAG_IRP_DATABASE
-        );
+    ViIrpDatabase = (PLIST_ENTRY)ExAllocatePoolWithTag(
+        NonPagedPoolMustSucceed, VI_DATABASE_HASH_SIZE * sizeof(LIST_ENTRY), POOL_TAG_IRP_DATABASE);
 
-    for(i=0; i < VI_DATABASE_HASH_SIZE; i++) {
+    for (i = 0; i < VI_DATABASE_HASH_SIZE; i++)
+    {
 
-        InitializeListHead(ViIrpDatabase+i);
+        InitializeListHead(ViIrpDatabase + i);
     }
 }
 
 
 PIOV_DATABASE_HEADER
 FASTCALL
-ViIrpDatabaseFindPointer(
-    IN  PIRP            Irp,
-    OUT PLIST_ENTRY     *HashHead
-    )
+ViIrpDatabaseFindPointer(IN PIRP Irp, OUT PLIST_ENTRY *HashHead)
 /*++
 
   Description:
@@ -186,13 +177,13 @@ ViIrpDatabaseFindPointer(
 
     *HashHead = listHead = ViIrpDatabase + hashIndex;
 
-    for(listEntry = listHead;
-        listEntry->Flink != listHead;
-        listEntry = listEntry->Flink) {
+    for (listEntry = listHead; listEntry->Flink != listHead; listEntry = listEntry->Flink)
+    {
 
         iovHeader = CONTAINING_RECORD(listEntry->Flink, IOV_DATABASE_HEADER, HashLink);
 
-        if (iovHeader->TrackedIrp == Irp) {
+        if (iovHeader->TrackedIrp == Irp)
+        {
 
             return iovHeader;
         }
@@ -204,11 +195,8 @@ ViIrpDatabaseFindPointer(
 
 BOOLEAN
 FASTCALL
-VfIrpDatabaseEntryInsertAndLock(
-    IN      PIRP                    Irp,
-    IN      PFN_IRPDBEVENT_CALLBACK NotificationCallback,
-    IN OUT  PIOV_DATABASE_HEADER    IovHeader
-    )
+VfIrpDatabaseEntryInsertAndLock(IN PIRP Irp, IN PFN_IRPDBEVENT_CALLBACK NotificationCallback,
+                                IN OUT PIOV_DATABASE_HEADER IovHeader)
 /*++
 
   Description:
@@ -244,7 +232,8 @@ VfIrpDatabaseEntryInsertAndLock(
 
     ASSERT(iovHeaderPointer == NULL);
 
-    if (iovHeaderPointer) {
+    if (iovHeaderPointer)
+    {
 
         ExReleaseSpinLock(&ViIrpDatabaseLock, oldIrql);
         return FALSE;
@@ -272,11 +261,7 @@ VfIrpDatabaseEntryInsertAndLock(
     //
     InsertHeadList(hashHead, &IovHeader->HashLink);
 
-    VERIFIER_DBGPRINT((
-        "  VRP CREATE(%x)->%x\n",
-        Irp,
-        IovHeader
-        ), 3);
+    VERIFIER_DBGPRINT(("  VRP CREATE(%x)->%x\n", Irp, IovHeader), 3);
 
     ExReleaseSpinLock(&ViIrpDatabaseLock, oldIrql);
 
@@ -284,11 +269,13 @@ VfIrpDatabaseEntryInsertAndLock(
 
     ASSERT(iovHeaderPointer == IovHeader);
 
-    if (iovHeaderPointer == NULL) {
+    if (iovHeaderPointer == NULL)
+    {
 
         return FALSE;
-
-    } else if (iovHeaderPointer != IovHeader) {
+    }
+    else if (iovHeaderPointer != IovHeader)
+    {
 
         VfIrpDatabaseEntryReleaseLock(iovHeaderPointer);
         return FALSE;
@@ -304,9 +291,7 @@ VfIrpDatabaseEntryInsertAndLock(
 
 PIOV_DATABASE_HEADER
 FASTCALL
-VfIrpDatabaseEntryFindAndLock(
-    IN PIRP     Irp
-    )
+VfIrpDatabaseEntryFindAndLock(IN PIRP Irp)
 /*++
 
   Description:
@@ -334,7 +319,8 @@ VfIrpDatabaseEntryFindAndLock(
 
     iovHeader = ViIrpDatabaseFindPointer(Irp, &listHead);
 
-    if (!iovHeader) {
+    if (!iovHeader)
+    {
 
         ExReleaseSpinLock(&ViIrpDatabaseLock, oldIrql);
         return NULL;
@@ -354,7 +340,8 @@ VfIrpDatabaseEntryFindAndLock(
     // be zero if the another thread just unlocked the entry after decrementing
     // the pointer count all the way to zero.
     //
-    if (iovHeader->PointerCount == 0) {
+    if (iovHeader->PointerCount == 0)
+    {
 
         //
         // This might happen in the following manner:
@@ -377,21 +364,13 @@ VfIrpDatabaseEntryFindAndLock(
         return NULL;
     }
 
-    VERIFIER_DBGPRINT((
-        "  VRP FIND(%x)->%x\n",
-        Irp,
-        iovHeader
-        ), 3);
+    VERIFIER_DBGPRINT(("  VRP FIND(%x)->%x\n", Irp, iovHeader), 3);
 
     return iovHeader;
 }
 
 
-VOID
-FASTCALL
-VfIrpDatabaseEntryAcquireLock(
-    IN  PIOV_DATABASE_HEADER    IovHeader   OPTIONAL
-    )
+VOID FASTCALL VfIrpDatabaseEntryAcquireLock(IN PIOV_DATABASE_HEADER IovHeader OPTIONAL)
 /*++
 
   Description:
@@ -414,7 +393,8 @@ VfIrpDatabaseEntryAcquireLock(
     KIRQL oldIrql;
     PIOV_DATABASE_HEADER iovCurHeader;
 
-    if (!IovHeader) {
+    if (!IovHeader)
+    {
 
         return;
     }
@@ -422,30 +402,24 @@ VfIrpDatabaseEntryAcquireLock(
     iovCurHeader = IovHeader;
     ASSERT(iovCurHeader->ReferenceCount != 0);
 
-    while(1) {
+    while (1)
+    {
 
         ExAcquireSpinLock(&iovCurHeader->HeaderLock, &oldIrql);
         iovCurHeader->LockIrql = oldIrql;
 
-        if (iovCurHeader == iovCurHeader->ChainHead) {
+        if (iovCurHeader == iovCurHeader->ChainHead)
+        {
 
             break;
         }
 
-        iovCurHeader = CONTAINING_RECORD(
-            iovCurHeader->ChainLink.Blink,
-            IOV_DATABASE_HEADER,
-            ChainLink
-            );
+        iovCurHeader = CONTAINING_RECORD(iovCurHeader->ChainLink.Blink, IOV_DATABASE_HEADER, ChainLink);
     }
 }
 
 
-VOID
-FASTCALL
-VfIrpDatabaseEntryReleaseLock(
-    IN  PIOV_DATABASE_HEADER    IovHeader
-    )
+VOID FASTCALL VfIrpDatabaseEntryReleaseLock(IN PIOV_DATABASE_HEADER IovHeader)
 /*++
 
   Description:
@@ -473,33 +447,29 @@ VfIrpDatabaseEntryReleaseLock(
     // no surrogates are left after a freed one.
     //
     iovCurHeader = iovChainHead = IovHeader->ChainHead;
-    while(1) {
+    while (1)
+    {
 
         ASSERT_SPINLOCK_HELD(&iovCurHeader->HeaderLock);
 
-        iovNextHeader = CONTAINING_RECORD(
-            iovCurHeader->ChainLink.Flink,
-            IOV_DATABASE_HEADER,
-            ChainLink
-            );
+        iovNextHeader = CONTAINING_RECORD(iovCurHeader->ChainLink.Flink, IOV_DATABASE_HEADER, ChainLink);
 
         //
         // PointerCount is always referenced under the header lock.
         //
-        if (iovCurHeader->PointerCount == 0) {
+        if (iovCurHeader->PointerCount == 0)
+        {
 
             ExAcquireSpinLock(&ViIrpDatabaseLock, &oldIrql);
 
             //
             // This field may be examined only under the database lock.
             //
-            if (iovCurHeader->TrackedIrp) {
+            if (iovCurHeader->TrackedIrp)
+            {
 
-                iovCurHeader->NotificationCallback(
-                    iovCurHeader,
-                    iovCurHeader->TrackedIrp,
-                    IRPDBEVENT_POINTER_COUNT_ZERO
-                    );
+                iovCurHeader->NotificationCallback(iovCurHeader, iovCurHeader->TrackedIrp,
+                                                   IRPDBEVENT_POINTER_COUNT_ZERO);
 
                 iovCurHeader->TrackedIrp = NULL;
             }
@@ -515,19 +485,20 @@ VfIrpDatabaseEntryReleaseLock(
         // once and then take the lock to prevent anyone finding it and
         // incrementing it.
         //
-        if (iovCurHeader->ReferenceCount == 0) {
+        if (iovCurHeader->ReferenceCount == 0)
+        {
 
             ExAcquireSpinLock(&ViIrpDatabaseLock, &oldIrql);
 
-            if (iovCurHeader->ReferenceCount == 0) {
+            if (iovCurHeader->ReferenceCount == 0)
+            {
 
                 ASSERT(iovCurHeader->PointerCount == 0);
-/*
+                /*
                 ASSERT((iovCurHeader->pIovSessionData == NULL) ||
                        (iovCurHeader != iovChainHead));
 */
-                ASSERT((iovNextHeader->ReferenceCount == 0) ||
-                       (iovNextHeader == iovChainHead));
+                ASSERT((iovNextHeader->ReferenceCount == 0) || (iovNextHeader == iovChainHead));
 
                 RemoveEntryList(&iovCurHeader->HashLink);
 
@@ -537,7 +508,8 @@ VfIrpDatabaseEntryReleaseLock(
             ExReleaseSpinLock(&ViIrpDatabaseLock, oldIrql);
         }
 
-        if (iovCurHeader == IovHeader) {
+        if (iovCurHeader == IovHeader)
+        {
 
             break;
         }
@@ -549,32 +521,27 @@ VfIrpDatabaseEntryReleaseLock(
     // Pass two, drop locks and free neccessary data.
     //
     iovCurHeader = iovChainHead;
-    while(1) {
+    while (1)
+    {
 
         freeTrackingData = (BOOLEAN)IsListEmpty(&iovCurHeader->HashLink);
 
-        iovNextHeader = CONTAINING_RECORD(
-            iovCurHeader->ChainLink.Flink,
-            IOV_DATABASE_HEADER,
-            ChainLink
-            );
+        iovNextHeader = CONTAINING_RECORD(iovCurHeader->ChainLink.Flink, IOV_DATABASE_HEADER, ChainLink);
 
         ExReleaseSpinLock(&iovCurHeader->HeaderLock, iovCurHeader->LockIrql);
 
-        if (freeTrackingData) {
+        if (freeTrackingData)
+        {
 
             ASSERT(IsListEmpty(&iovCurHeader->ChainLink));
 
             ViIrpDatabaseEntryDestroy(iovCurHeader);
 
-            iovCurHeader->NotificationCallback(
-                iovCurHeader,
-                iovCurHeader->TrackedIrp,
-                IRPDBEVENT_REFERENCE_COUNT_ZERO
-                );
+            iovCurHeader->NotificationCallback(iovCurHeader, iovCurHeader->TrackedIrp, IRPDBEVENT_REFERENCE_COUNT_ZERO);
         }
 
-        if (iovCurHeader == IovHeader) {
+        if (iovCurHeader == IovHeader)
+        {
 
             break;
         }
@@ -584,74 +551,47 @@ VfIrpDatabaseEntryReleaseLock(
 }
 
 
-VOID
-FASTCALL
-VfIrpDatabaseEntryReference(
-    IN PIOV_DATABASE_HEADER IovHeader,
-    IN IOV_REFERENCE_TYPE   IovRefType
-    )
+VOID FASTCALL VfIrpDatabaseEntryReference(IN PIOV_DATABASE_HEADER IovHeader, IN IOV_REFERENCE_TYPE IovRefType)
 {
     ASSERT_SPINLOCK_HELD(&IovHeader->HeaderLock);
 
-    VERIFIER_DBGPRINT((
-        "  VRP REF(%x) %x++\n",
-        IovHeader,
-        IovHeader->ReferenceCount
-        ), 3);
+    VERIFIER_DBGPRINT(("  VRP REF(%x) %x++\n", IovHeader, IovHeader->ReferenceCount), 3);
 
     InterlockedIncrement(&IovHeader->ReferenceCount);
-    if (IovRefType == IOVREFTYPE_POINTER) {
+    if (IovRefType == IOVREFTYPE_POINTER)
+    {
 
-        VERIFIER_DBGPRINT((
-            "  VRP REF2(%x) %x++\n",
-            IovHeader,
-            IovHeader->PointerCount
-            ), 3);
+        VERIFIER_DBGPRINT(("  VRP REF2(%x) %x++\n", IovHeader, IovHeader->PointerCount), 3);
 
         IovHeader->PointerCount++;
     }
 }
 
 
-VOID
-FASTCALL
-VfIrpDatabaseEntryDereference(
-    IN PIOV_DATABASE_HEADER IovHeader,
-    IN IOV_REFERENCE_TYPE   IovRefType
-    )
+VOID FASTCALL VfIrpDatabaseEntryDereference(IN PIOV_DATABASE_HEADER IovHeader, IN IOV_REFERENCE_TYPE IovRefType)
 {
     KIRQL oldIrql;
 
     ASSERT_SPINLOCK_HELD(&IovHeader->HeaderLock);
     ASSERT(IovHeader->ReferenceCount > 0);
 
-    VERIFIER_DBGPRINT((
-        "  VRP DEREF(%x) %x--\n",
-        IovHeader,
-        IovHeader->ReferenceCount
-        ), 3);
+    VERIFIER_DBGPRINT(("  VRP DEREF(%x) %x--\n", IovHeader, IovHeader->ReferenceCount), 3);
 
-    if (IovRefType == IOVREFTYPE_POINTER) {
+    if (IovRefType == IOVREFTYPE_POINTER)
+    {
 
         ASSERT(IovHeader->PointerCount > 0);
 
-        VERIFIER_DBGPRINT((
-            "  VRP DEREF2(%x) %x--\n",
-            IovHeader,
-            IovHeader->PointerCount
-            ), 3);
+        VERIFIER_DBGPRINT(("  VRP DEREF2(%x) %x--\n", IovHeader, IovHeader->PointerCount), 3);
 
         IovHeader->PointerCount--;
 
-        if (IovHeader->PointerCount == 0) {
+        if (IovHeader->PointerCount == 0)
+        {
 
             ExAcquireSpinLock(&ViIrpDatabaseLock, &oldIrql);
 
-            IovHeader->NotificationCallback(
-                IovHeader,
-                IovHeader->TrackedIrp,
-                IRPDBEVENT_POINTER_COUNT_ZERO
-                );
+            IovHeader->NotificationCallback(IovHeader, IovHeader->TrackedIrp, IRPDBEVENT_POINTER_COUNT_ZERO);
 
             IovHeader->TrackedIrp = NULL;
 
@@ -665,12 +605,8 @@ VfIrpDatabaseEntryDereference(
 }
 
 
-VOID
-FASTCALL
-VfIrpDatabaseEntryAppendToChain(
-    IN OUT  PIOV_DATABASE_HEADER    IovExistingHeader,
-    IN OUT  PIOV_DATABASE_HEADER    IovNewHeader
-    )
+VOID FASTCALL VfIrpDatabaseEntryAppendToChain(IN OUT PIOV_DATABASE_HEADER IovExistingHeader,
+                                              IN OUT PIOV_DATABASE_HEADER IovNewHeader)
 {
     ASSERT_SPINLOCK_HELD(&IovExistingHeader->HeaderLock);
     ASSERT_SPINLOCK_HELD(&IovNewHeader->HeaderLock);
@@ -686,18 +622,11 @@ VfIrpDatabaseEntryAppendToChain(
     //
     // Insert this entry into the chain list
     //
-    InsertTailList(
-        &IovExistingHeader->ChainHead->ChainLink,
-        &IovNewHeader->ChainLink
-        );
+    InsertTailList(&IovExistingHeader->ChainHead->ChainLink, &IovNewHeader->ChainLink);
 }
 
 
-VOID
-FASTCALL
-VfIrpDatabaseEntryRemoveFromChain(
-    IN OUT  PIOV_DATABASE_HEADER    IovHeader
-    )
+VOID FASTCALL VfIrpDatabaseEntryRemoveFromChain(IN OUT PIOV_DATABASE_HEADER IovHeader)
 {
     PIOV_DATABASE_HEADER iovNextHeader;
 
@@ -708,11 +637,7 @@ VfIrpDatabaseEntryRemoveFromChain(
     // This is illegal because the following entries might not be locked down,
     // and the ChainLink must be protected.
     //
-    iovNextHeader = CONTAINING_RECORD(
-        IovHeader->ChainLink.Flink,
-        IOV_DATABASE_HEADER,
-        ChainLink
-        );
+    iovNextHeader = CONTAINING_RECORD(IovHeader->ChainLink.Flink, IOV_DATABASE_HEADER, ChainLink);
 
     ASSERT(iovNextHeader == IovHeader->ChainHead);
 
@@ -724,24 +649,19 @@ VfIrpDatabaseEntryRemoveFromChain(
 
 PIOV_DATABASE_HEADER
 FASTCALL
-VfIrpDatabaseEntryGetChainPrevious(
-    IN  PIOV_DATABASE_HEADER    IovHeader
-    )
+VfIrpDatabaseEntryGetChainPrevious(IN PIOV_DATABASE_HEADER IovHeader)
 {
     PIOV_DATABASE_HEADER iovPrevHeader;
 
     ASSERT_SPINLOCK_HELD(&IovHeader->HeaderLock);
 
-    if (IovHeader == IovHeader->ChainHead) {
+    if (IovHeader == IovHeader->ChainHead)
+    {
 
         return NULL;
     }
 
-    iovPrevHeader = CONTAINING_RECORD(
-        IovHeader->ChainLink.Blink,
-        IOV_DATABASE_HEADER,
-        ChainLink
-        );
+    iovPrevHeader = CONTAINING_RECORD(IovHeader->ChainLink.Blink, IOV_DATABASE_HEADER, ChainLink);
 
     return iovPrevHeader;
 }
@@ -749,29 +669,19 @@ VfIrpDatabaseEntryGetChainPrevious(
 
 PIOV_DATABASE_HEADER
 FASTCALL
-VfIrpDatabaseEntryGetChainNext(
-    IN  PIOV_DATABASE_HEADER    IovHeader
-    )
+VfIrpDatabaseEntryGetChainNext(IN PIOV_DATABASE_HEADER IovHeader)
 {
     PIOV_DATABASE_HEADER iovNextHeader;
 
     ASSERT_SPINLOCK_HELD(&IovHeader->HeaderLock);
 
-    iovNextHeader = CONTAINING_RECORD(
-        IovHeader->ChainLink.Flink,
-        IOV_DATABASE_HEADER,
-        ChainLink
-        );
+    iovNextHeader = CONTAINING_RECORD(IovHeader->ChainLink.Flink, IOV_DATABASE_HEADER, ChainLink);
 
     return (iovNextHeader == IovHeader->ChainHead) ? NULL : iovNextHeader;
 }
 
 
-VOID
-FASTCALL
-ViIrpDatabaseEntryDestroy(
-    IN OUT  PIOV_DATABASE_HEADER    IovHeader
-    )
+VOID FASTCALL ViIrpDatabaseEntryDestroy(IN OUT PIOV_DATABASE_HEADER IovHeader)
 /*++
 
   Description:
@@ -803,11 +713,5 @@ ViIrpDatabaseEntryDestroy(
     ASSERT(!IovHeader->ReferenceCount);
     ASSERT(!IovHeader->PointerCount);
 
-    VERIFIER_DBGPRINT((
-        "  VRP FREE(%x)x\n",
-        IovHeader
-        ), 3);
+    VERIFIER_DBGPRINT(("  VRP FREE(%x)x\n", IovHeader), 3);
 }
-
-
-

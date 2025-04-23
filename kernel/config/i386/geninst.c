@@ -32,78 +32,32 @@ Revision History:
 #include "parseini.h"
 #include "geninst.h"
 
-typedef
-BOOLEAN
-(* PFN_INFRULE)(
-    IN PVOID InfHandle,
-    IN PCHAR Section,
-    IN PVOID RefData
-    );
+typedef BOOLEAN (*PFN_INFRULE)(IN PVOID InfHandle, IN PCHAR Section, IN PVOID RefData);
 
-typedef
-BOOLEAN
-(* PFN_REGLINE)(
-    IN PVOID InfHandle,
-    IN PCHAR Section,
-    IN ULONG LineIndex
-    );
+typedef BOOLEAN (*PFN_REGLINE)(IN PVOID InfHandle, IN PCHAR Section, IN ULONG LineIndex);
 
 BOOLEAN
-CmpProcessReg(
-    IN PVOID InfHandle,
-    IN PCHAR Section,
-    IN PVOID RefData
-    );
+CmpProcessReg(IN PVOID InfHandle, IN PCHAR Section, IN PVOID RefData);
 
 NTSTATUS
-CmpProcessAddRegLine(
-    IN PVOID InfHandle,
-    IN PCHAR Section,
-    IN ULONG LineIndex
-    );
+CmpProcessAddRegLine(IN PVOID InfHandle, IN PCHAR Section, IN ULONG LineIndex);
 
 NTSTATUS
-CmpProcessDelRegLine(
-    IN PVOID InfHandle,
-    IN PCHAR Section,
-    IN ULONG LineIndex
-    );
+CmpProcessDelRegLine(IN PVOID InfHandle, IN PCHAR Section, IN ULONG LineIndex);
 
 NTSTATUS
-CmpProcessBitRegLine(
-    IN PVOID InfHandle,
-    IN PCHAR Section,
-    IN ULONG LineIndex
-    );
+CmpProcessBitRegLine(IN PVOID InfHandle, IN PCHAR Section, IN ULONG LineIndex);
 
 NTSTATUS
-CmpGetAddRegInfData(
-    IN PVOID InfHandle,
-    IN PCHAR Section,
-    IN ULONG LineIndex,
-    IN ULONG ValueIndex,
-    IN ULONG ValueType,
-    OUT PVOID *Data,
-    OUT PULONG DataSize
-    );
+CmpGetAddRegInfData(IN PVOID InfHandle, IN PCHAR Section, IN ULONG LineIndex, IN ULONG ValueIndex, IN ULONG ValueType,
+                    OUT PVOID *Data, OUT PULONG DataSize);
 
 NTSTATUS
-CmpOpenRegKey(
-    IN OUT PHANDLE Key,
-    IN OUT PULONG Disposition,
-    IN PCHAR Root,
-    IN PCHAR SubKey,
-    IN ULONG DesiredAccess,
-    IN BOOLEAN Create
-    );
+CmpOpenRegKey(IN OUT PHANDLE Key, IN OUT PULONG Disposition, IN PCHAR Root, IN PCHAR SubKey, IN ULONG DesiredAccess,
+              IN BOOLEAN Create);
 
 NTSTATUS
-CmpAppendStringToMultiSz(
-    IN HANDLE Key,
-    IN PCHAR ValueName,
-    IN OUT PVOID *Data,
-    IN OUT PULONG DataSize
-    );
+CmpAppendStringToMultiSz(IN HANDLE Key, IN PCHAR ValueName, IN OUT PVOID *Data, IN OUT PULONG DataSize);
 
 //
 // Copied from setupapi.h
@@ -119,32 +73,33 @@ CmpAppendStringToMultiSz(
 // by the 16-bit Windows 95 SETUPX APIs.
 //
 
-#define FLG_ADDREG_BINVALUETYPE     ( 0x00000001 )
-#define FLG_ADDREG_NOCLOBBER        ( 0x00000002 )
-#define FLG_ADDREG_DELVAL           ( 0x00000004 )
-#define FLG_ADDREG_APPEND           ( 0x00000008 ) // Currently supported only
-                                                   // for REG_MULTI_SZ values.
-#define FLG_ADDREG_KEYONLY          ( 0x00000010 ) // Just create the key, ignore value
-#define FLG_ADDREG_OVERWRITEONLY    ( 0x00000020 ) // Set only if value already exists
+#define FLG_ADDREG_BINVALUETYPE (0x00000001)
+#define FLG_ADDREG_NOCLOBBER (0x00000002)
+#define FLG_ADDREG_DELVAL (0x00000004)
+#define FLG_ADDREG_APPEND                                                 \
+    (0x00000008)                              // Currently supported only \
+                                              // for REG_MULTI_SZ values.
+#define FLG_ADDREG_KEYONLY (0x00000010)       // Just create the key, ignore value
+#define FLG_ADDREG_OVERWRITEONLY (0x00000020) // Set only if value already exists
 
-#define FLG_ADDREG_TYPE_MASK        ( 0xFFFF0000 | FLG_ADDREG_BINVALUETYPE )
-#define FLG_ADDREG_TYPE_SZ          ( 0x00000000                           )
-#define FLG_ADDREG_TYPE_MULTI_SZ    ( 0x00010000                           )
-#define FLG_ADDREG_TYPE_EXPAND_SZ   ( 0x00020000                           )
-#define FLG_ADDREG_TYPE_BINARY      ( 0x00000000 | FLG_ADDREG_BINVALUETYPE )
-#define FLG_ADDREG_TYPE_DWORD       ( 0x00010000 | FLG_ADDREG_BINVALUETYPE )
-#define FLG_ADDREG_TYPE_NONE        ( 0x00020000 | FLG_ADDREG_BINVALUETYPE )
+#define FLG_ADDREG_TYPE_MASK (0xFFFF0000 | FLG_ADDREG_BINVALUETYPE)
+#define FLG_ADDREG_TYPE_SZ (0x00000000)
+#define FLG_ADDREG_TYPE_MULTI_SZ (0x00010000)
+#define FLG_ADDREG_TYPE_EXPAND_SZ (0x00020000)
+#define FLG_ADDREG_TYPE_BINARY (0x00000000 | FLG_ADDREG_BINVALUETYPE)
+#define FLG_ADDREG_TYPE_DWORD (0x00010000 | FLG_ADDREG_BINVALUETYPE)
+#define FLG_ADDREG_TYPE_NONE (0x00020000 | FLG_ADDREG_BINVALUETYPE)
 
-#define FLG_BITREG_CLEAR            ( 0x00000000 )
-#define FLG_BITREG_SET              ( 0x00000001 )
-#define FLG_BITREG_TYPE_BINARY      ( 0x00000000 )
-#define FLG_BITREG_TYPE_DWORD       ( 0x00000002 )
+#define FLG_BITREG_CLEAR (0x00000000)
+#define FLG_BITREG_SET (0x00000001)
+#define FLG_BITREG_TYPE_BINARY (0x00000000)
+#define FLG_BITREG_TYPE_DWORD (0x00000002)
 
 //
 // We currently only support AddReg and DelReg sections.
 //
 
-#define NUM_OF_INF_RULES    3
+#define NUM_OF_INF_RULES 3
 
 //
 // GenInstall methods we support.
@@ -153,34 +108,29 @@ CmpAppendStringToMultiSz(
 #ifdef ALLOC_DATA_PRAGMA
 #pragma const_seg("INITCONST")
 #endif
-struct {
-    PCHAR       Name;
-    PFN_INFRULE Action;
-    PVOID       RefData;
-} const gInfRuleTable[NUM_OF_INF_RULES] =
+struct
 {
-    {"AddReg", CmpProcessReg, CmpProcessAddRegLine},
-    {"DelReg", CmpProcessReg, CmpProcessDelRegLine},
-    {"BitReg", CmpProcessReg, CmpProcessBitRegLine}
-};
-static const UNICODE_STRING NullString = {0, 1, L""};
+    PCHAR Name;
+    PFN_INFRULE Action;
+    PVOID RefData;
+} const gInfRuleTable[NUM_OF_INF_RULES] = { { "AddReg", CmpProcessReg, CmpProcessAddRegLine },
+                                            { "DelReg", CmpProcessReg, CmpProcessDelRegLine },
+                                            { "BitReg", CmpProcessReg, CmpProcessBitRegLine } };
+static const UNICODE_STRING NullString = { 0, 1, L"" };
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,CmpAppendStringToMultiSz)
-#pragma alloc_text(INIT,CmpOpenRegKey)
-#pragma alloc_text(INIT,CmpGetAddRegInfData)
-#pragma alloc_text(INIT,CmpProcessReg)
-#pragma alloc_text(INIT,CmpProcessAddRegLine)
-#pragma alloc_text(INIT,CmpProcessDelRegLine)
-#pragma alloc_text(INIT,CmpProcessBitRegLine)
-#pragma alloc_text(INIT,CmpGenInstall)
+#pragma alloc_text(INIT, CmpAppendStringToMultiSz)
+#pragma alloc_text(INIT, CmpOpenRegKey)
+#pragma alloc_text(INIT, CmpGetAddRegInfData)
+#pragma alloc_text(INIT, CmpProcessReg)
+#pragma alloc_text(INIT, CmpProcessAddRegLine)
+#pragma alloc_text(INIT, CmpProcessDelRegLine)
+#pragma alloc_text(INIT, CmpProcessBitRegLine)
+#pragma alloc_text(INIT, CmpGenInstall)
 #endif
 
 BOOLEAN
-CmpGenInstall(
-    IN PVOID InfHandle,
-    IN PCHAR Section
-    )
+CmpGenInstall(IN PVOID InfHandle, IN PCHAR Section)
 
 /*++
 
@@ -201,10 +151,10 @@ CmpGenInstall(
 --*/
 
 {
-    ULONG   ruleNumber;
-    ULONG   i;
-    PCHAR   ruleName;
-    PCHAR   regSection;
+    ULONG ruleNumber;
+    ULONG i;
+    PCHAR ruleName;
+    PCHAR regSection;
     BOOLEAN result = FALSE;
 
     if (CmpSearchInfSection(InfHandle, Section))
@@ -214,26 +164,19 @@ CmpGenInstall(
         // each of them.
         //
 
-        for (   ruleNumber = 0;
-                ruleName = CmpGetKeyName(InfHandle, Section, ruleNumber);
-                ruleNumber++)
+        for (ruleNumber = 0; ruleName = CmpGetKeyName(InfHandle, Section, ruleNumber); ruleNumber++)
         {
 
             //
             // Search for the proceesing function in our table.
             //
 
-            for (   i = 0;
-                    i < NUM_OF_INF_RULES &&
-                        _stricmp(ruleName, gInfRuleTable[i].Name);
-                    i++);
+            for (i = 0; i < NUM_OF_INF_RULES && _stricmp(ruleName, gInfRuleTable[i].Name); i++)
+                ;
 
-            if (    i >= NUM_OF_INF_RULES ||
-                    (regSection = CmpGetSectionLineIndex(   InfHandle,
-                                                            Section,
-                                                            ruleNumber,
-                                                            0)) == NULL ||
-                    !CmpSearchInfSection(InfHandle, Section))
+            if (i >= NUM_OF_INF_RULES ||
+                (regSection = CmpGetSectionLineIndex(InfHandle, Section, ruleNumber, 0)) == NULL ||
+                !CmpSearchInfSection(InfHandle, Section))
             {
                 result = FALSE;
                 break;
@@ -259,11 +202,7 @@ CmpGenInstall(
 }
 
 BOOLEAN
-CmpProcessReg(
-    IN PVOID InfHandle,
-    IN PCHAR Section,
-    IN PVOID RefData
-    )
+CmpProcessReg(IN PVOID InfHandle, IN PCHAR Section, IN PVOID RefData)
 
 /*++
 
@@ -284,17 +223,15 @@ CmpProcessReg(
 --*/
 
 {
-    ULONG       lineIndex;
-    NTSTATUS    status = STATUS_SUCCESS;
-    NTSTATUS    temp;
+    ULONG lineIndex;
+    NTSTATUS status = STATUS_SUCCESS;
+    NTSTATUS temp;
 
     //
     // Process all the lines in the xxxReg Section.
     //
 
-    for (   lineIndex = 0;
-            CmpSearchInfLine(InfHandle, Section, lineIndex);
-            lineIndex++)
+    for (lineIndex = 0; CmpSearchInfLine(InfHandle, Section, lineIndex); lineIndex++)
     {
         temp = (*(PFN_REGLINE)RefData)(InfHandle, Section, lineIndex);
         if (!NT_SUCCESS(temp))
@@ -312,11 +249,7 @@ CmpProcessReg(
 }
 
 NTSTATUS
-CmpProcessAddRegLine(
-    IN PVOID InfHandle,
-    IN PCHAR Section,
-    IN ULONG LineIndex
-    )
+CmpProcessAddRegLine(IN PVOID InfHandle, IN PCHAR Section, IN ULONG LineIndex)
 
 /*++
 
@@ -339,49 +272,40 @@ CmpProcessAddRegLine(
 --*/
 
 {
-    NTSTATUS            status = STATUS_UNSUCCESSFUL;
-    PCHAR               rootKeyName;
-    PCHAR               subKeyName;
-    PCHAR               valueName;
-    ULONG               flags;
-    ULONG               valueType;
-    PCHAR               buffer;
-    HANDLE              key;
-    ULONG               disposition;
-    BOOLEAN             dontSet;
-    PVOID               data = 0;
-    ULONG               dataSize = 0;
-    ANSI_STRING         ansiString;
-    UNICODE_STRING      unicodeString;
-    OBJECT_ATTRIBUTES   objectAttributes;
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
+    PCHAR rootKeyName;
+    PCHAR subKeyName;
+    PCHAR valueName;
+    ULONG flags;
+    ULONG valueType;
+    PCHAR buffer;
+    HANDLE key;
+    ULONG disposition;
+    BOOLEAN dontSet;
+    PVOID data = 0;
+    ULONG dataSize = 0;
+    ANSI_STRING ansiString;
+    UNICODE_STRING unicodeString;
+    OBJECT_ATTRIBUTES objectAttributes;
 
     //
     // Get the root-key name.
     //
 
-    rootKeyName = CmpGetSectionLineIndex(   InfHandle,
-                                            Section,
-                                            LineIndex,
-                                            0);
+    rootKeyName = CmpGetSectionLineIndex(InfHandle, Section, LineIndex, 0);
     if (rootKeyName)
     {
         //
         // Get the optional sub-key name.
         //
 
-        subKeyName = CmpGetSectionLineIndex(    InfHandle,
-                                                Section,
-                                                LineIndex,
-                                                1);
+        subKeyName = CmpGetSectionLineIndex(InfHandle, Section, LineIndex, 1);
 
         //
         // Value name is optional. Can be NULL or "".
         //
 
-        valueName = CmpGetSectionLineIndex( InfHandle,
-                                            Section,
-                                            LineIndex,
-                                            2);
+        valueName = CmpGetSectionLineIndex(InfHandle, Section, LineIndex, 2);
         //
         // If we don't have a value name, the type is REG_SZ to force
         // the right behavior in RegSetValueEx. Otherwise get the data type.
@@ -393,11 +317,7 @@ CmpProcessAddRegLine(
         // Read in the flags.
         //
 
-        if (!CmpGetIntField(    InfHandle,
-                                Section,
-                                LineIndex,
-                                3,
-                                &flags))
+        if (!CmpGetIntField(InfHandle, Section, LineIndex, 3, &flags))
         {
             flags = 0;
         }
@@ -406,67 +326,66 @@ CmpProcessAddRegLine(
         // Convert the flags to the registry type.
         //
 
-        switch(flags & FLG_ADDREG_TYPE_MASK)
+        switch (flags & FLG_ADDREG_TYPE_MASK)
         {
 
-            case FLG_ADDREG_TYPE_SZ:
+        case FLG_ADDREG_TYPE_SZ:
 
-                valueType = REG_SZ;
-                break;
+            valueType = REG_SZ;
+            break;
 
-            case FLG_ADDREG_TYPE_MULTI_SZ:
+        case FLG_ADDREG_TYPE_MULTI_SZ:
 
-                valueType = REG_MULTI_SZ;
-                break;
+            valueType = REG_MULTI_SZ;
+            break;
 
-            case FLG_ADDREG_TYPE_EXPAND_SZ:
+        case FLG_ADDREG_TYPE_EXPAND_SZ:
 
-                valueType = REG_EXPAND_SZ;
-                break;
+            valueType = REG_EXPAND_SZ;
+            break;
 
-            case FLG_ADDREG_TYPE_BINARY:
+        case FLG_ADDREG_TYPE_BINARY:
 
-                valueType = REG_BINARY;
-                break;
+            valueType = REG_BINARY;
+            break;
 
-            case FLG_ADDREG_TYPE_DWORD:
+        case FLG_ADDREG_TYPE_DWORD:
 
-                valueType = REG_DWORD;
-                break;
+            valueType = REG_DWORD;
+            break;
 
-            case FLG_ADDREG_TYPE_NONE:
+        case FLG_ADDREG_TYPE_NONE:
 
-                valueType = REG_NONE;
-                break;
+            valueType = REG_NONE;
+            break;
 
-            default :
+        default:
 
+            //
+            // If the FLG_ADDREG_BINVALUETYPE is set, then the highword
+            // can contain just about any random reg data type ordinal value.
+            //
+
+            if (flags & FLG_ADDREG_BINVALUETYPE)
+            {
                 //
-                // If the FLG_ADDREG_BINVALUETYPE is set, then the highword
-                // can contain just about any random reg data type ordinal value.
+                // Disallow the following reg data types:
+                //
+                //    REG_NONE, REG_SZ, REG_EXPAND_SZ, REG_MULTI_SZ
                 //
 
-                if(flags & FLG_ADDREG_BINVALUETYPE)
-                {
-                    //
-                    // Disallow the following reg data types:
-                    //
-                    //    REG_NONE, REG_SZ, REG_EXPAND_SZ, REG_MULTI_SZ
-                    //
+                valueType = HIGHWORD(flags);
 
-                    valueType = HIGHWORD(flags);
-
-                    if(valueType < REG_BINARY || valueType == REG_MULTI_SZ)
-                    {
-                        return (STATUS_INVALID_PARAMETER);
-                    }
-
-                }
-                else
+                if (valueType < REG_BINARY || valueType == REG_MULTI_SZ)
                 {
                     return (STATUS_INVALID_PARAMETER);
                 }
-                break;
+            }
+            else
+            {
+                return (STATUS_INVALID_PARAMETER);
+            }
+            break;
         }
 
         //
@@ -474,7 +393,7 @@ CmpProcessAddRegLine(
         // REG_MULTI_SZ values.
         //
 
-        if((flags & FLG_ADDREG_APPEND) && valueType != REG_MULTI_SZ)
+        if ((flags & FLG_ADDREG_APPEND) && valueType != REG_MULTI_SZ)
         {
             return (STATUS_INVALID_PARAMETER);
         }
@@ -483,7 +402,7 @@ CmpProcessAddRegLine(
         // W9x compatibility.
         //
 
-        if( (!valueName || *valueName == '\0') && valueType == REG_EXPAND_SZ)
+        if ((!valueName || *valueName == '\0') && valueType == REG_EXPAND_SZ)
         {
             valueType = REG_SZ;
         }
@@ -492,27 +411,17 @@ CmpProcessAddRegLine(
         // Open the specified key if possible.
         //
 
-        status = CmpOpenRegKey( &key,
-                                &disposition,
-                                rootKeyName,
-                                subKeyName,
-                                KEY_QUERY_VALUE | KEY_SET_VALUE,
-                                (BOOLEAN)!(flags & FLG_ADDREG_OVERWRITEONLY));
+        status = CmpOpenRegKey(&key, &disposition, rootKeyName, subKeyName, KEY_QUERY_VALUE | KEY_SET_VALUE,
+                               (BOOLEAN) !(flags & FLG_ADDREG_OVERWRITEONLY));
 
         if (NT_SUCCESS(status))
         {
             //
             // Respect the key only flag.
             //
-            if (!(flags & FLG_ADDREG_KEYONLY)) 
+            if (!(flags & FLG_ADDREG_KEYONLY))
             {
-                status = CmpGetAddRegInfData(   InfHandle,
-                                                Section,
-                                                LineIndex,
-                                                4,
-                                                valueType,
-                                                &data,
-                                                &dataSize);
+                status = CmpGetAddRegInfData(InfHandle, Section, LineIndex, 4, valueType, &data, &dataSize);
                 if (NT_SUCCESS(status))
                 {
                     //
@@ -523,10 +432,7 @@ CmpProcessAddRegLine(
                     dontSet = FALSE;
                     if (flags & FLG_ADDREG_APPEND)
                     {
-                        status = CmpAppendStringToMultiSz(  key,
-                                                            valueName,
-                                                            &data,
-                                                            &dataSize);
+                        status = CmpAppendStringToMultiSz(key, valueName, &data, &dataSize);
                     }
                     if (NT_SUCCESS(status))
                     {
@@ -536,15 +442,10 @@ CmpProcessAddRegLine(
 
                         if (disposition == REG_OPENED_EXISTING_KEY)
                         {
-                            if (    (flags & FLG_ADDREG_NOCLOBBER) &&
-                                    (valueName == NULL || *valueName == '\0'))
+                            if ((flags & FLG_ADDREG_NOCLOBBER) && (valueName == NULL || *valueName == '\0'))
                             {
-                                status = NtQueryValueKey(   key,
-                                                            (PUNICODE_STRING)&NullString,
-                                                            KeyValueBasicInformation,
-                                                            NULL,
-                                                            0,
-                                                            &disposition);
+                                status = NtQueryValueKey(key, (PUNICODE_STRING)&NullString, KeyValueBasicInformation,
+                                                         NULL, 0, &disposition);
                                 if (NT_SUCCESS(status) || status == STATUS_BUFFER_TOO_SMALL)
                                 {
                                     flags &= ~FLG_ADDREG_NOCLOBBER;
@@ -591,17 +492,14 @@ CmpProcessAddRegLine(
                             status = RtlAnsiStringToUnicodeString(&unicodeString, &ansiString, TRUE);
                             if (NT_SUCCESS(status))
                             {
-                                NTSTATUS    existStatus;
+                                NTSTATUS existStatus;
 
                                 if (flags & FLG_ADDREG_NOCLOBBER)
                                 {
-                                    existStatus = NtQueryValueKey(  key,
-                                                                    &unicodeString,
-                                                                    KeyValueBasicInformation,
-                                                                    NULL,
-                                                                    0,
-                                                                    &disposition);
-                                    if (NT_SUCCESS(existStatus) || existStatus == STATUS_BUFFER_TOO_SMALL) {
+                                    existStatus = NtQueryValueKey(key, &unicodeString, KeyValueBasicInformation, NULL,
+                                                                  0, &disposition);
+                                    if (NT_SUCCESS(existStatus) || existStatus == STATUS_BUFFER_TOO_SMALL)
+                                    {
                                         dontSet = TRUE;
                                     }
                                 }
@@ -609,13 +507,10 @@ CmpProcessAddRegLine(
                                 {
                                     if (flags & FLG_ADDREG_OVERWRITEONLY)
                                     {
-                                        existStatus = NtQueryValueKey(  key,
-                                                                        &unicodeString,
-                                                                        KeyValueBasicInformation,
-                                                                        NULL,
-                                                                        0,
-                                                                        &disposition);
-                                        if (!NT_SUCCESS(existStatus) && existStatus != STATUS_BUFFER_TOO_SMALL) {
+                                        existStatus = NtQueryValueKey(key, &unicodeString, KeyValueBasicInformation,
+                                                                      NULL, 0, &disposition);
+                                        if (!NT_SUCCESS(existStatus) && existStatus != STATUS_BUFFER_TOO_SMALL)
+                                        {
                                             dontSet = TRUE;
                                         }
                                     }
@@ -623,12 +518,7 @@ CmpProcessAddRegLine(
 
                                 if (!dontSet)
                                 {
-                                    status = NtSetValueKey( key,
-                                                            &unicodeString,
-                                                            0,
-                                                            valueType,
-                                                            data,
-                                                            dataSize);
+                                    status = NtSetValueKey(key, &unicodeString, 0, valueType, data, dataSize);
                                 }
 
                                 RtlFreeUnicodeString(&unicodeString);
@@ -649,11 +539,7 @@ CmpProcessAddRegLine(
 }
 
 NTSTATUS
-CmpProcessDelRegLine(
-    IN PVOID InfHandle,
-    IN PCHAR Section,
-    IN ULONG LineIndex
-    )
+CmpProcessDelRegLine(IN PVOID InfHandle, IN PCHAR Section, IN ULONG LineIndex)
 
 /*++
 
@@ -676,28 +562,22 @@ CmpProcessDelRegLine(
 --*/
 
 {
-    NTSTATUS            status = STATUS_UNSUCCESSFUL;
-    PCHAR               rootKeyName;
-    PCHAR               subKeyName;
-    PCHAR               valueName;
-    HANDLE              key;
-    ULONG               disposition;
-    ANSI_STRING         ansiString;
-    UNICODE_STRING      unicodeString;
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
+    PCHAR rootKeyName;
+    PCHAR subKeyName;
+    PCHAR valueName;
+    HANDLE key;
+    ULONG disposition;
+    ANSI_STRING ansiString;
+    UNICODE_STRING unicodeString;
 
     //
     // Read the required fields.
     //
 
-    rootKeyName = CmpGetSectionLineIndex(   InfHandle,
-                                            Section,
-                                            LineIndex,
-                                            0);
+    rootKeyName = CmpGetSectionLineIndex(InfHandle, Section, LineIndex, 0);
 
-    subKeyName = CmpGetSectionLineIndex(    InfHandle,
-                                            Section,
-                                            LineIndex,
-                                            1);
+    subKeyName = CmpGetSectionLineIndex(InfHandle, Section, LineIndex, 1);
 
     if (rootKeyName && subKeyName)
     {
@@ -705,21 +585,13 @@ CmpProcessDelRegLine(
         // Read the optional field.
         //
 
-        valueName = CmpGetSectionLineIndex( InfHandle,
-                                            Section,
-                                            LineIndex,
-                                            2);
+        valueName = CmpGetSectionLineIndex(InfHandle, Section, LineIndex, 2);
 
         //
         // Open the specified registry key.
         //
 
-        status = CmpOpenRegKey( &key,
-                                &disposition,
-                                rootKeyName,
-                                subKeyName,
-                                KEY_ALL_ACCESS,
-                                FALSE);
+        status = CmpOpenRegKey(&key, &disposition, rootKeyName, subKeyName, KEY_ALL_ACCESS, FALSE);
 
         //
         // Proceed if we successfully opened the registry key.
@@ -767,11 +639,7 @@ CmpProcessDelRegLine(
 }
 
 NTSTATUS
-CmpProcessBitRegLine(
-    IN PVOID InfHandle,
-    IN PCHAR Section,
-    IN ULONG LineIndex
-    )
+CmpProcessBitRegLine(IN PVOID InfHandle, IN PCHAR Section, IN ULONG LineIndex)
 
 /*++
 
@@ -794,79 +662,58 @@ CmpProcessBitRegLine(
 --*/
 
 {
-    NTSTATUS                    status = STATUS_UNSUCCESSFUL;
-    PCHAR                       rootKeyName;
-    PCHAR                       subKeyName;
-    PCHAR                       valueName;
-    ULONG                       flags;
-    ULONG                       mask;
-    ULONG                       field;
-    HANDLE                      key;
-    ULONG                       disposition;
-    ANSI_STRING                 ansiString;
-    UNICODE_STRING              unicodeString;
-    PCHAR                       buffer;
-    ULONG                       size;
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
+    PCHAR rootKeyName;
+    PCHAR subKeyName;
+    PCHAR valueName;
+    ULONG flags;
+    ULONG mask;
+    ULONG field;
+    HANDLE key;
+    ULONG disposition;
+    ANSI_STRING ansiString;
+    UNICODE_STRING unicodeString;
+    PCHAR buffer;
+    ULONG size;
     PKEY_VALUE_FULL_INFORMATION valueInfo;
 
     //
     // Get the root-key name.
     //
 
-    rootKeyName = CmpGetSectionLineIndex(   InfHandle,
-                                            Section,
-                                            LineIndex,
-                                            0);
+    rootKeyName = CmpGetSectionLineIndex(InfHandle, Section, LineIndex, 0);
     if (rootKeyName)
     {
         //
         // Get the optional sub-key name.
         //
 
-        subKeyName = CmpGetSectionLineIndex(    InfHandle,
-                                                Section,
-                                                LineIndex,
-                                                1);
+        subKeyName = CmpGetSectionLineIndex(InfHandle, Section, LineIndex, 1);
 
         //
         // Value name is optional. Can be NULL or "".
         //
 
-        valueName = CmpGetSectionLineIndex( InfHandle,
-                                            Section,
-                                            LineIndex,
-                                            2);
+        valueName = CmpGetSectionLineIndex(InfHandle, Section, LineIndex, 2);
         if (valueName && *valueName)
         {
             //
             // Read in the flags.
             //
 
-            if (!CmpGetIntField(    InfHandle,
-                                    Section,
-                                    LineIndex,
-                                    3,
-                                    &flags))
+            if (!CmpGetIntField(InfHandle, Section, LineIndex, 3, &flags))
             {
                 flags = 0;
             }
 
-            if (!CmpGetIntField(    InfHandle,
-                                    Section,
-                                    LineIndex,
-                                    4,
-                                    &mask))
+            if (!CmpGetIntField(InfHandle, Section, LineIndex, 4, &mask))
             {
                 mask = 0;
             }
 
             if (!(flags & FLG_BITREG_TYPE_DWORD))
             {
-                if (!CmpGetIntField(    InfHandle,
-                                        Section,
-                                        LineIndex,
-                                        5,
-                                        &field))
+                if (!CmpGetIntField(InfHandle, Section, LineIndex, 5, &field))
                 {
                     return (status);
                 }
@@ -876,12 +723,7 @@ CmpProcessBitRegLine(
             // Open the specified registry key.
             //
 
-            status = CmpOpenRegKey( &key,
-                                    &disposition,
-                                    rootKeyName,
-                                    subKeyName,
-                                    KEY_ALL_ACCESS,
-                                    FALSE);
+            status = CmpOpenRegKey(&key, &disposition, rootKeyName, subKeyName, KEY_ALL_ACCESS, FALSE);
             if (NT_SUCCESS(status))
             {
                 //
@@ -893,24 +735,14 @@ CmpProcessBitRegLine(
                 if (NT_SUCCESS(status))
                 {
                     size = 0;
-                    status = NtQueryValueKey(   key,
-                                                &unicodeString,
-                                                KeyValueFullInformation,
-                                                NULL,
-                                                0,
-                                                &size);
+                    status = NtQueryValueKey(key, &unicodeString, KeyValueFullInformation, NULL, 0, &size);
                     if (size)
                     {
                         status = STATUS_NO_MEMORY;
                         buffer = ExAllocatePoolWithTag(PagedPool, size, CM_GENINST_TAG);
                         if (buffer)
                         {
-                            status = NtQueryValueKey(   key,
-                                                        &unicodeString,
-                                                        KeyValueFullInformation,
-                                                        buffer,
-                                                        size,
-                                                        &size);
+                            status = NtQueryValueKey(key, &unicodeString, KeyValueFullInformation, buffer, size, &size);
                             if (NT_SUCCESS(status))
                             {
                                 valueInfo = (PKEY_VALUE_FULL_INFORMATION)buffer;
@@ -942,17 +774,14 @@ CmpProcessBitRegLine(
                                         }
                                     }
                                 }
-                                status = NtSetValueKey( key,
-                                                        &unicodeString,
-                                                        0,
-                                                        valueInfo->Type,
-                                                        buffer + valueInfo->DataOffset,
-                                                        valueInfo->DataLength);
+                                status = NtSetValueKey(key, &unicodeString, 0, valueInfo->Type,
+                                                       buffer + valueInfo->DataOffset, valueInfo->DataLength);
                             }
                             else
                             {
 #ifndef _CM_LDR_
-                                DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"Value cannot be read for BitReg in %s line %d\n", Section, LineIndex);
+                                DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL,
+                                           "Value cannot be read for BitReg in %s line %d\n", Section, LineIndex);
 #endif //_CM_LDR_
                                 ASSERT(NT_SUCCESS(status));
                             }
@@ -980,15 +809,8 @@ CmpProcessBitRegLine(
 }
 
 NTSTATUS
-CmpGetAddRegInfData(
-    IN PVOID InfHandle,
-    IN PCHAR Section,
-    IN ULONG LineIndex,
-    IN ULONG ValueIndex,
-    IN ULONG ValueType,
-    OUT PVOID *Data,
-    OUT PULONG DataSize
-    )
+CmpGetAddRegInfData(IN PVOID InfHandle, IN PCHAR Section, IN ULONG LineIndex, IN ULONG ValueIndex, IN ULONG ValueType,
+                    OUT PVOID *Data, OUT PULONG DataSize)
 
 /*++
 
@@ -1019,12 +841,12 @@ CmpGetAddRegInfData(
 --*/
 
 {
-    NTSTATUS        status = STATUS_UNSUCCESSFUL;
-    PCHAR           str;
-    ULONG           count;
-    ULONG           i;
-    ANSI_STRING     ansiString;
-    UNICODE_STRING  unicodeString;
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
+    PCHAR str;
+    ULONG count;
+    ULONG i;
+    ANSI_STRING ansiString;
+    UNICODE_STRING unicodeString;
 
     //
     // Validate the required fields.
@@ -1035,207 +857,144 @@ CmpGetAddRegInfData(
 
     switch (ValueType)
     {
-        case REG_DWORD:
+    case REG_DWORD:
 
-            *DataSize = sizeof(ULONG);
-            *Data = ExAllocatePoolWithTag(PagedPool, *DataSize, CM_GENINST_TAG);
-            if (*Data)
+        *DataSize = sizeof(ULONG);
+        *Data = ExAllocatePoolWithTag(PagedPool, *DataSize, CM_GENINST_TAG);
+        if (*Data)
+        {
+            //
+            // DWORD data is specified as four bytes in W9x.
+            //
+
+            if (CmpGetSectionLineIndexValueCount(InfHandle, Section, LineIndex) == 8)
             {
-                //
-                // DWORD data is specified as four bytes in W9x.
-                //
-
-                if (CmpGetSectionLineIndexValueCount(   InfHandle,
-                                                        Section,
-                                                        LineIndex) == 8)
+                if (!CmpGetBinaryField(InfHandle, Section, LineIndex, ValueIndex, *Data, *DataSize, NULL))
                 {
-                    if (!CmpGetBinaryField( InfHandle,
-                                            Section,
-                                            LineIndex,
-                                            ValueIndex,
-                                            *Data,
-                                            *DataSize,
-                                            NULL))
-                    {
-                        *((PULONG)*Data) = 0;
-                    }
-
-                    status = STATUS_SUCCESS;
+                    *((PULONG)*Data) = 0;
                 }
-                else
-                {
-                    //
-                    // Get the DWORD value.
-                    //
 
-                    if (!CmpGetIntField(    InfHandle,
-                                            Section,
-                                            LineIndex,
-                                            4,
-                                            *Data))
-                    {
-                        *((PULONG)*Data) = 0;
-                    }
-
-                    status = STATUS_SUCCESS;
-                }
+                status = STATUS_SUCCESS;
             }
             else
             {
-                ASSERT(*Data);
-                status = STATUS_NO_MEMORY;
-            }
+                //
+                // Get the DWORD value.
+                //
 
-            break;
-
-        case REG_SZ:
-        case REG_EXPAND_SZ:
-
-            //
-            // Null terminated string. Gets converted to unicode before being
-            // added into the registry.
-            //
-
-            str = CmpGetSectionLineIndex(   InfHandle,
-                                            Section,
-                                            LineIndex,
-                                            ValueIndex);
-            if (str)
-            {
-                RtlInitAnsiString(&ansiString, str);
-                *DataSize = (ansiString.Length << 1) + sizeof(UNICODE_NULL);
-                unicodeString.MaximumLength = (USHORT)*DataSize;
-                unicodeString.Buffer = ExAllocatePoolWithTag(PagedPool, *DataSize, CM_GENINST_TAG);
-                *Data = NULL;
-                if (unicodeString.Buffer)
+                if (!CmpGetIntField(InfHandle, Section, LineIndex, 4, *Data))
                 {
-                    status = RtlAnsiStringToUnicodeString(&unicodeString, &ansiString, FALSE);
-                    if (NT_SUCCESS(status))
-                    {
-                        *Data = unicodeString.Buffer;
-                        status = STATUS_SUCCESS;
-                    }
+                    *((PULONG)*Data) = 0;
                 }
-                else
-                {
-                    ASSERT(unicodeString.Buffer);
-                    status = STATUS_NO_MEMORY;
-                }
+
+                status = STATUS_SUCCESS;
             }
-            else
-            {
-                ASSERT(str);
-                status = STATUS_NO_MEMORY;
-            }
+        }
+        else
+        {
+            ASSERT(*Data);
+            status = STATUS_NO_MEMORY;
+        }
 
-            break;
+        break;
 
-        case REG_MULTI_SZ:
+    case REG_SZ:
+    case REG_EXPAND_SZ:
 
-            *DataSize = 0;
+        //
+        // Null terminated string. Gets converted to unicode before being
+        // added into the registry.
+        //
+
+        str = CmpGetSectionLineIndex(InfHandle, Section, LineIndex, ValueIndex);
+        if (str)
+        {
+            RtlInitAnsiString(&ansiString, str);
+            *DataSize = (ansiString.Length << 1) + sizeof(UNICODE_NULL);
+            unicodeString.MaximumLength = (USHORT)*DataSize;
+            unicodeString.Buffer = ExAllocatePoolWithTag(PagedPool, *DataSize, CM_GENINST_TAG);
             *Data = NULL;
-
-            //
-            // Loop to determine the total memory that needs to be allocated.
-            //
-
-            count = CmpGetSectionLineIndexValueCount(   InfHandle,
-                                                        Section,
-                                                        LineIndex);
-            if (count > ValueIndex)
+            if (unicodeString.Buffer)
             {
-                count -= ValueIndex;
-                for (i = 0; i < count; i++)
+                status = RtlAnsiStringToUnicodeString(&unicodeString, &ansiString, FALSE);
+                if (NT_SUCCESS(status))
                 {
-                    str = CmpGetSectionLineIndex(   InfHandle,
-                                                    Section,
-                                                    LineIndex,
-                                                    ValueIndex + i);
-                    if (str == NULL)
-                    {
-                        break;
-                    }
-
-                    *DataSize += ((strlen(str) * sizeof(WCHAR)) + sizeof(UNICODE_NULL));
-                }
-
-                if (i == count)
-                {
-                    //
-                    // Account for the terminating NULL.
-                    //
-
-                    *DataSize += sizeof(UNICODE_NULL);
-                    *Data = ExAllocatePoolWithTag(PagedPool, *DataSize, CM_GENINST_TAG);
-                    if (*Data)
-                    {
-                        for (   i = 0, unicodeString.Buffer = *Data;
-                                i < count;
-                                i++, (PCHAR)unicodeString.Buffer += unicodeString.MaximumLength)
-                        {
-                            str = CmpGetSectionLineIndex(   InfHandle,
-                                                            Section,
-                                                            LineIndex,
-                                                            ValueIndex + i);
-                            if (str == NULL)
-                            {
-                                break;
-                            }
-                            RtlInitAnsiString(&ansiString, str);
-                            unicodeString.MaximumLength = (ansiString.Length * sizeof(WCHAR)) + sizeof(UNICODE_NULL);
-                            status = RtlAnsiStringToUnicodeString(&unicodeString, &ansiString, FALSE);
-                            if (!NT_SUCCESS(status))
-                            {
-                                break;
-                            }
-                        }
-
-                        //
-                        // Terminate the multi-sz string.
-                        //
-
-                        if (i == count)
-                        {
-                            unicodeString.Buffer[0] = UNICODE_NULL;
-                            status = STATUS_SUCCESS;
-                        }
-                    }
-                    else
-                    {
-                        ASSERT(*Data);
-                        status = STATUS_NO_MEMORY;
-                    }
+                    *Data = unicodeString.Buffer;
+                    status = STATUS_SUCCESS;
                 }
             }
-
-            break;
-
-        case REG_BINARY:
-        default:
-
-            //
-            // Free form binary data.
-            //
-
-            if (CmpGetBinaryField(  InfHandle,
-                                    Section,
-                                    LineIndex,
-                                    ValueIndex,
-                                    NULL,
-                                    0,
-                                    DataSize) && *DataSize)
+            else
             {
+                ASSERT(unicodeString.Buffer);
+                status = STATUS_NO_MEMORY;
+            }
+        }
+        else
+        {
+            ASSERT(str);
+            status = STATUS_NO_MEMORY;
+        }
+
+        break;
+
+    case REG_MULTI_SZ:
+
+        *DataSize = 0;
+        *Data = NULL;
+
+        //
+        // Loop to determine the total memory that needs to be allocated.
+        //
+
+        count = CmpGetSectionLineIndexValueCount(InfHandle, Section, LineIndex);
+        if (count > ValueIndex)
+        {
+            count -= ValueIndex;
+            for (i = 0; i < count; i++)
+            {
+                str = CmpGetSectionLineIndex(InfHandle, Section, LineIndex, ValueIndex + i);
+                if (str == NULL)
+                {
+                    break;
+                }
+
+                *DataSize += ((strlen(str) * sizeof(WCHAR)) + sizeof(UNICODE_NULL));
+            }
+
+            if (i == count)
+            {
+                //
+                // Account for the terminating NULL.
+                //
+
+                *DataSize += sizeof(UNICODE_NULL);
                 *Data = ExAllocatePoolWithTag(PagedPool, *DataSize, CM_GENINST_TAG);
                 if (*Data)
                 {
-                    if (CmpGetBinaryField( InfHandle,
-                                            Section,
-                                            LineIndex,
-                                            4,
-                                            *Data,
-                                            *DataSize,
-                                            NULL))
+                    for (i = 0, unicodeString.Buffer = *Data; i < count;
+                         i++, (PCHAR)unicodeString.Buffer += unicodeString.MaximumLength)
                     {
+                        str = CmpGetSectionLineIndex(InfHandle, Section, LineIndex, ValueIndex + i);
+                        if (str == NULL)
+                        {
+                            break;
+                        }
+                        RtlInitAnsiString(&ansiString, str);
+                        unicodeString.MaximumLength = (ansiString.Length * sizeof(WCHAR)) + sizeof(UNICODE_NULL);
+                        status = RtlAnsiStringToUnicodeString(&unicodeString, &ansiString, FALSE);
+                        if (!NT_SUCCESS(status))
+                        {
+                            break;
+                        }
+                    }
+
+                    //
+                    // Terminate the multi-sz string.
+                    //
+
+                    if (i == count)
+                    {
+                        unicodeString.Buffer[0] = UNICODE_NULL;
                         status = STATUS_SUCCESS;
                     }
                 }
@@ -1245,26 +1004,47 @@ CmpGetAddRegInfData(
                     status = STATUS_NO_MEMORY;
                 }
             }
+        }
+
+        break;
+
+    case REG_BINARY:
+    default:
+
+        //
+        // Free form binary data.
+        //
+
+        if (CmpGetBinaryField(InfHandle, Section, LineIndex, ValueIndex, NULL, 0, DataSize) && *DataSize)
+        {
+            *Data = ExAllocatePoolWithTag(PagedPool, *DataSize, CM_GENINST_TAG);
+            if (*Data)
+            {
+                if (CmpGetBinaryField(InfHandle, Section, LineIndex, 4, *Data, *DataSize, NULL))
+                {
+                    status = STATUS_SUCCESS;
+                }
+            }
             else
             {
-                status = STATUS_UNSUCCESSFUL;
+                ASSERT(*Data);
+                status = STATUS_NO_MEMORY;
             }
+        }
+        else
+        {
+            status = STATUS_UNSUCCESSFUL;
+        }
 
-            break;
+        break;
     }
 
     return (status);
 }
 
 NTSTATUS
-CmpOpenRegKey(
-    IN OUT PHANDLE Key,
-    IN OUT PULONG Disposition,
-    IN PCHAR Root,
-    IN PCHAR SubKey,
-    IN ULONG DesiredAccess,
-    IN BOOLEAN Create
-    )
+CmpOpenRegKey(IN OUT PHANDLE Key, IN OUT PULONG Disposition, IN PCHAR Root, IN PCHAR SubKey, IN ULONG DesiredAccess,
+              IN BOOLEAN Create)
 
 /*++
 
@@ -1293,12 +1073,12 @@ CmpOpenRegKey(
 --*/
 
 {
-    NTSTATUS            status = STATUS_OBJECT_NAME_INVALID;
-    ULONG               size;
-    PCHAR               str;
-    ANSI_STRING         ansiString;
-    UNICODE_STRING      unicodeString;
-    OBJECT_ATTRIBUTES   objectAttributes;
+    NTSTATUS status = STATUS_OBJECT_NAME_INVALID;
+    ULONG size;
+    PCHAR str;
+    ANSI_STRING ansiString;
+    UNICODE_STRING unicodeString;
+    OBJECT_ATTRIBUTES objectAttributes;
 
     str = NULL;
     size = strlen(SubKey) + 1;
@@ -1337,24 +1117,15 @@ CmpOpenRegKey(
         status = RtlAnsiStringToUnicodeString(&unicodeString, &ansiString, TRUE);
         if (NT_SUCCESS(status))
         {
-            InitializeObjectAttributes( &objectAttributes,
-                                        &unicodeString,
-                                        OBJ_CASE_INSENSITIVE,
-                                        NULL,
-                                        NULL);
+            InitializeObjectAttributes(&objectAttributes, &unicodeString, OBJ_CASE_INSENSITIVE, NULL, NULL);
             if (Create)
             {
                 //
                 // Create a new key or open an existing one.
                 //
 
-                status = NtCreateKey(   Key,
-                                        DesiredAccess,
-                                        &objectAttributes,
-                                        0,
-                                        NULL,
-                                        REG_OPTION_NON_VOLATILE,
-                                        Disposition ? Disposition : &size);
+                status = NtCreateKey(Key, DesiredAccess, &objectAttributes, 0, NULL, REG_OPTION_NON_VOLATILE,
+                                     Disposition ? Disposition : &size);
             }
             else
             {
@@ -1366,9 +1137,7 @@ CmpOpenRegKey(
                 {
                     *Disposition = REG_OPENED_EXISTING_KEY;
                 }
-                status = NtOpenKey( Key,
-                                    DesiredAccess,
-                                    &objectAttributes);
+                status = NtOpenKey(Key, DesiredAccess, &objectAttributes);
             }
 
             RtlFreeUnicodeString(&unicodeString);
@@ -1385,12 +1154,7 @@ CmpOpenRegKey(
 }
 
 NTSTATUS
-CmpAppendStringToMultiSz(
-    IN HANDLE Key,
-    IN PCHAR ValueName,
-    IN OUT PVOID *Data,
-    IN OUT PULONG DataSize
-    )
+CmpAppendStringToMultiSz(IN HANDLE Key, IN PCHAR ValueName, IN OUT PVOID *Data, IN OUT PULONG DataSize)
 
 /*++
 
@@ -1415,13 +1179,13 @@ CmpAppendStringToMultiSz(
 --*/
 
 {
-    NTSTATUS                    status;
-    ULONG                       size;
-    ANSI_STRING                 ansiString;
-    UNICODE_STRING              unicodeString;
+    NTSTATUS status;
+    ULONG size;
+    ANSI_STRING ansiString;
+    UNICODE_STRING unicodeString;
     PKEY_VALUE_FULL_INFORMATION valueInfo;
-    PVOID                       buffer;
-    PVOID                       str;
+    PVOID buffer;
+    PVOID str;
 
     ASSERT(DataSize && *DataSize);
     ASSERT(*Data);
@@ -1431,38 +1195,22 @@ CmpAppendStringToMultiSz(
     if (NT_SUCCESS(status))
     {
         size = 0;
-        status = NtQueryValueKey(   Key,
-                                    &unicodeString,
-                                    KeyValueFullInformation,
-                                    NULL,
-                                    0,
-                                    &size);
+        status = NtQueryValueKey(Key, &unicodeString, KeyValueFullInformation, NULL, 0, &size);
         if (size)
         {
             buffer = ExAllocatePoolWithTag(PagedPool, size, CM_GENINST_TAG);
             if (buffer)
             {
-                status = NtQueryValueKey(   Key,
-                                            &unicodeString,
-                                            KeyValueFullInformation,
-                                            buffer,
-                                            size,
-                                            &size);
+                status = NtQueryValueKey(Key, &unicodeString, KeyValueFullInformation, buffer, size, &size);
                 if (NT_SUCCESS(status))
                 {
                     valueInfo = (PKEY_VALUE_FULL_INFORMATION)buffer;
-                    str = ExAllocatePoolWithTag(    PagedPool,
-                                                    valueInfo->DataLength +
-                                                        *DataSize - sizeof(UNICODE_NULL),
-                                                    CM_GENINST_TAG);
+                    str = ExAllocatePoolWithTag(PagedPool, valueInfo->DataLength + *DataSize - sizeof(UNICODE_NULL),
+                                                CM_GENINST_TAG);
                     if (str)
                     {
-                        memcpy( str,
-                                (PCHAR)buffer + valueInfo->DataOffset,
-                                valueInfo->DataLength);
-                        memcpy( (PCHAR)str + valueInfo->DataLength - sizeof(UNICODE_NULL),
-                                *Data,
-                                *DataSize);
+                        memcpy(str, (PCHAR)buffer + valueInfo->DataOffset, valueInfo->DataLength);
+                        memcpy((PCHAR)str + valueInfo->DataLength - sizeof(UNICODE_NULL), *Data, *DataSize);
                         ExFreePool(*Data);
                         *Data = str;
                         *DataSize += valueInfo->DataLength - sizeof(UNICODE_NULL);
@@ -1470,7 +1218,8 @@ CmpAppendStringToMultiSz(
                     else
                     {
 #ifndef _CM_LDR_
-                        DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"CmpAppendStringToMultiSz: Failed to allocate memory!\n");
+                        DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL,
+                                   "CmpAppendStringToMultiSz: Failed to allocate memory!\n");
 #endif //_CM_LDR_
                         ASSERT(str);
                         status = STATUS_NO_MEMORY;
@@ -1481,7 +1230,8 @@ CmpAppendStringToMultiSz(
             else
             {
 #ifndef _CM_LDR_
-                DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"CmpAppendStringToMultiSz: Failed to allocate memory!\n");
+                DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL,
+                           "CmpAppendStringToMultiSz: Failed to allocate memory!\n");
 #endif //_CM_LDR_
                 ASSERT(buffer);
                 status = STATUS_NO_MEMORY;

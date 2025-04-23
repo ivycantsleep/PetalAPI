@@ -25,11 +25,7 @@ Revision History:
 
 #include "ki.h"
 
-__forceinline
-VOID
-KxAcquireSpinLock (
-    IN PKSPIN_LOCK SpinLock
-    )
+__forceinline VOID KxAcquireSpinLock(IN PKSPIN_LOCK SpinLock)
 
 /*++
 
@@ -60,18 +56,18 @@ Return Value:
 #if DBG
 
     Thread = KeGetCurrentThread();
-    while (InterlockedCompareExchange64((PLONGLONG)SpinLock,
-                                        (LONGLONG)Thread,
-                                        0) != 0) {
+    while (InterlockedCompareExchange64((PLONGLONG)SpinLock, (LONGLONG)Thread, 0) != 0)
+    {
 
 #else
 
-    while (InterlockedExchange64((PLONGLONG)SpinLock,
-                                 (LONGLONG)SpinLock) != 0) {
+    while (InterlockedExchange64((PLONGLONG)SpinLock, (LONGLONG)SpinLock) != 0)
+    {
 
 #endif // DBG
 
-        do {
+        do
+        {
         } while (*(volatile LONGLONG *)SpinLock != 0);
     }
 
@@ -80,11 +76,7 @@ Return Value:
     return;
 }
 
-__forceinline
-BOOLEAN
-KxTryToAcquireSpinLock (
-    IN PKSPIN_LOCK SpinLock
-    )
+__forceinline BOOLEAN KxTryToAcquireSpinLock(IN PKSPIN_LOCK SpinLock)
 
 /*++
 
@@ -115,23 +107,22 @@ Return Value:
 
 #if !defined(NT_UP)
 
-    if (*(volatile ULONGLONG *)SpinLock == 0) {
+    if (*(volatile ULONGLONG *)SpinLock == 0)
+    {
 
 #if DBG
 
         Thread = KeGetCurrentThread();
-        return InterlockedCompareExchange64((PLONGLONG)SpinLock,
-                                            (LONGLONG)Thread,
-                                            0) == 0;
+        return InterlockedCompareExchange64((PLONGLONG)SpinLock, (LONGLONG)Thread, 0) == 0;
 
 #else
 
-        return InterlockedExchange64((PLONGLONG)SpinLock,
-                                     (LONGLONG)SpinLock) == 0;
+        return InterlockedExchange64((PLONGLONG)SpinLock, (LONGLONG)SpinLock) == 0;
 
 #endif // DBG
-
-    } else {
+    }
+    else
+    {
         return FALSE;
     }
 
@@ -140,14 +131,9 @@ Return Value:
     return TRUE;
 
 #endif // !defined(NT_UP)
-
 }
 
-__forceinline
-VOID
-KxReleaseSpinLock (
-    IN PKSPIN_LOCK SpinLock
-    )
+__forceinline VOID KxReleaseSpinLock(IN PKSPIN_LOCK SpinLock)
 
 /*++
 
@@ -182,10 +168,7 @@ Return Value:
     return;
 }
 
-VOID
-KeInitializeSpinLock (
-    IN PKSPIN_LOCK SpinLock
-    )
+VOID KeInitializeSpinLock(IN PKSPIN_LOCK SpinLock)
 
 /*++
 
@@ -210,9 +193,7 @@ Return Value:
 }
 
 KIRQL
-KeAcquireSpinLockRaiseToDpc (
-    IN PKSPIN_LOCK SpinLock
-    )
+KeAcquireSpinLockRaiseToDpc(IN PKSPIN_LOCK SpinLock)
 
 /*++
 
@@ -245,9 +226,7 @@ Return Value:
 }
 
 KIRQL
-KeAcquireSpinLockRaiseToSynch (
-    IN PKSPIN_LOCK SpinLock
-    )
+KeAcquireSpinLockRaiseToSynch(IN PKSPIN_LOCK SpinLock)
 
 /*++
 
@@ -279,10 +258,7 @@ Return Value:
     return OldIrql;
 }
 
-VOID
-KeAcquireSpinLockAtDpcLevel (
-    IN PKSPIN_LOCK SpinLock
-    )
+VOID KeAcquireSpinLockAtDpcLevel(IN PKSPIN_LOCK SpinLock)
 
 /*++
 
@@ -311,10 +287,7 @@ Return Value:
 }
 
 BOOLEAN
-KeTryToAcquireSpinLock (
-    IN PKSPIN_LOCK SpinLock,
-    OUT PKIRQL OldIrql
-    )
+KeTryToAcquireSpinLock(IN PKSPIN_LOCK SpinLock, OUT PKIRQL OldIrql)
 
 /*++
 
@@ -346,7 +319,8 @@ Return Value:
     //
 
     *OldIrql = KfRaiseIrql(DISPATCH_LEVEL);
-    if (KxTryToAcquireSpinLock(SpinLock) == FALSE) {
+    if (KxTryToAcquireSpinLock(SpinLock) == FALSE)
+    {
         KeLowerIrql(*OldIrql);
         return FALSE;
     }
@@ -355,9 +329,7 @@ Return Value:
 }
 
 BOOLEAN
-KeTryToAcquireSpinLockAtDpcLevel (
-    IN PKSPIN_LOCK SpinLock
-    )
+KeTryToAcquireSpinLockAtDpcLevel(IN PKSPIN_LOCK SpinLock)
 
 /*++
 
@@ -387,11 +359,7 @@ Return Value:
     return KxTryToAcquireSpinLock(SpinLock);
 }
 
-VOID
-KeReleaseSpinLock (
-    IN PKSPIN_LOCK SpinLock,
-    IN KIRQL OldIrql
-    )
+VOID KeReleaseSpinLock(IN PKSPIN_LOCK SpinLock, IN KIRQL OldIrql)
 
 /*++
 
@@ -423,10 +391,7 @@ Return Value:
     return;
 }
 
-VOID
-KeReleaseSpinLockFromDpcLevel (
-    IN PKSPIN_LOCK SpinLock
-    )
+VOID KeReleaseSpinLockFromDpcLevel(IN PKSPIN_LOCK SpinLock)
 
 /*++
 
@@ -460,9 +425,7 @@ Return Value:
 
 
 BOOLEAN
-KeTestSpinLock (
-    IN PKSPIN_LOCK SpinLock
-    )
+KeTestSpinLock(IN PKSPIN_LOCK SpinLock)
 
 /*++
 
@@ -491,4 +454,3 @@ Return Value:
     return TRUE;
 #endif // !defined(NT_UP)
 }
-

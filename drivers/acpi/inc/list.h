@@ -14,7 +14,7 @@
  */
 
 #ifndef EXPORT
-  #define EXPORT __cdecl
+#define EXPORT __cdecl
 #endif
 
 /*** Type and Structure definitions
@@ -36,4 +36,4 @@ VOID EXPORT ListRemoveAll(PPLIST pplistHead);
 VOID EXPORT ListInsertHead(PLIST plist, PPLIST pplistHead);
 VOID EXPORT ListInsertTail(PLIST plist, PPLIST pplistHead);
 
-#endif  //ifndef _LIST_H
+#endif //ifndef _LIST_H

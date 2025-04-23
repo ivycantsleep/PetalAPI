@@ -26,31 +26,22 @@ Revision History:
 
 #include <ntrtl.h>
 
-#define SwapPointers(Ptr1, Ptr2) {      \
-    PVOID _SWAP_POINTER_TEMP;           \
-    _SWAP_POINTER_TEMP = (PVOID)(Ptr1); \
-    (Ptr1) = (Ptr2);                    \
-    (Ptr2) = _SWAP_POINTER_TEMP; \
+#define SwapPointers(Ptr1, Ptr2)            \
+    {                                       \
+        PVOID _SWAP_POINTER_TEMP;           \
+        _SWAP_POINTER_TEMP = (PVOID)(Ptr1); \
+        (Ptr1) = (Ptr2);                    \
+        (Ptr2) = _SWAP_POINTER_TEMP;        \
     }
 
-#define ParentsChildPointerAddress(Links) ( \
-    RtlIsLeftChild(Links) ?                 \
-        &(((Links)->Parent)->LeftChild)     \
-    :                                       \
-        &(((Links)->Parent)->RightChild)    \
-    )
+#define ParentsChildPointerAddress(Links) \
+    (RtlIsLeftChild(Links) ? &(((Links)->Parent)->LeftChild) : &(((Links)->Parent)->RightChild))
 
-VOID
-SwapSplayLinks (
-    IN PRTL_SPLAY_LINKS Link1,
-    IN PRTL_SPLAY_LINKS Link2
-    );
+VOID SwapSplayLinks(IN PRTL_SPLAY_LINKS Link1, IN PRTL_SPLAY_LINKS Link2);
 
-
+
 PRTL_SPLAY_LINKS
-RtlSplay (
-    IN PRTL_SPLAY_LINKS Links
-    )
+RtlSplay(IN PRTL_SPLAY_LINKS Links)
 
 /*++
 
@@ -82,14 +73,17 @@ Return Value:
 
     L = Links;
 
-    while (!RtlIsRoot(L)) {
+    while (!RtlIsRoot(L))
+    {
 
         P = RtlParent(L);
         G = RtlParent(P);
 
-        if (RtlIsLeftChild(L)) {
+        if (RtlIsLeftChild(L))
+        {
 
-            if (RtlIsRoot(P)) {
+            if (RtlIsRoot(P))
+            {
 
                 /*
                   we have the following case
@@ -106,7 +100,10 @@ Return Value:
                 //
 
                 P->LeftChild = L->RightChild;
-                if (P->LeftChild != NULL) {P->LeftChild->Parent = P;}
+                if (P->LeftChild != NULL)
+                {
+                    P->LeftChild->Parent = P;
+                }
 
                 //
                 //  Connect L & P
@@ -120,8 +117,9 @@ Return Value:
                 //
 
                 L->Parent = L;
-
-            } else if (RtlIsLeftChild(P)) {
+            }
+            else if (RtlIsLeftChild(P))
+            {
 
                 /*
                   we have the following case
@@ -141,22 +139,31 @@ Return Value:
                 //
 
                 P->LeftChild = L->RightChild;
-                if (P->LeftChild != NULL) {P->LeftChild->Parent = P;}
+                if (P->LeftChild != NULL)
+                {
+                    P->LeftChild->Parent = P;
+                }
 
                 //
                 //  Connect G & c
                 //
 
                 G->LeftChild = P->RightChild;
-                if (G->LeftChild != NULL) {G->LeftChild->Parent = G;}
+                if (G->LeftChild != NULL)
+                {
+                    G->LeftChild->Parent = G;
+                }
 
                 //
                 //  Connect L & Great GrandParent
                 //
 
-                if (RtlIsRoot(G)) {
+                if (RtlIsRoot(G))
+                {
                     L->Parent = L;
-                } else {
+                }
+                else
+                {
                     L->Parent = G->Parent;
                     *(ParentsChildPointerAddress(G)) = L;
                 }
@@ -174,8 +181,9 @@ Return Value:
 
                 P->RightChild = G;
                 G->Parent = P;
-
-            } else { // RtlIsRightChild(Parent)
+            }
+            else
+            { // RtlIsRightChild(Parent)
 
                 /*
                   we have the following case
@@ -195,22 +203,31 @@ Return Value:
                 //
 
                 G->RightChild = L->LeftChild;
-                if (G->RightChild != NULL) {G->RightChild->Parent = G;}
+                if (G->RightChild != NULL)
+                {
+                    G->RightChild->Parent = G;
+                }
 
                 //
                 //  Connect P & c
                 //
 
                 P->LeftChild = L->RightChild;
-                if (P->LeftChild != NULL) {P->LeftChild->Parent = P;}
+                if (P->LeftChild != NULL)
+                {
+                    P->LeftChild->Parent = P;
+                }
 
                 //
                 //  Connect L & Great GrandParent
                 //
 
-                if (RtlIsRoot(G)) {
+                if (RtlIsRoot(G))
+                {
                     L->Parent = L;
-                } else {
+                }
+                else
+                {
                     L->Parent = G->Parent;
                     *(ParentsChildPointerAddress(G)) = L;
                 }
@@ -228,12 +245,13 @@ Return Value:
 
                 L->RightChild = P;
                 P->Parent = L;
-
             }
+        }
+        else
+        { // RtlIsRightChild(L)
 
-        } else { // RtlIsRightChild(L)
-
-            if (RtlIsRoot(P)) {
+            if (RtlIsRoot(P))
+            {
 
                 /*
                   we have the following case
@@ -250,7 +268,10 @@ Return Value:
                 //
 
                 P->RightChild = L->LeftChild;
-                if (P->RightChild != NULL) {P->RightChild->Parent = P;}
+                if (P->RightChild != NULL)
+                {
+                    P->RightChild->Parent = P;
+                }
 
                 //
                 //  Connect P & L
@@ -264,8 +285,9 @@ Return Value:
                 //
 
                 L->Parent = L;
-
-            } else if (RtlIsRightChild(P)) {
+            }
+            else if (RtlIsRightChild(P))
+            {
 
                 /*
                   we have the following case
@@ -285,22 +307,31 @@ Return Value:
                 //
 
                 G->RightChild = P->LeftChild;
-                if (G->RightChild != NULL) {G->RightChild->Parent = G;}
+                if (G->RightChild != NULL)
+                {
+                    G->RightChild->Parent = G;
+                }
 
                 //
                 //  Connect P & c
                 //
 
                 P->RightChild = L->LeftChild;
-                if (P->RightChild != NULL) {P->RightChild->Parent = P;}
+                if (P->RightChild != NULL)
+                {
+                    P->RightChild->Parent = P;
+                }
 
                 //
                 //  Connect L & Great GrandParent
                 //
 
-                if (RtlIsRoot(G)) {
+                if (RtlIsRoot(G))
+                {
                     L->Parent = L;
-                } else {
+                }
+                else
+                {
                     L->Parent = G->Parent;
                     *(ParentsChildPointerAddress(G)) = L;
                 }
@@ -318,8 +349,9 @@ Return Value:
 
                 P->LeftChild = G;
                 G->Parent = P;
-
-            } else { // RtlIsLeftChild(P)
+            }
+            else
+            { // RtlIsLeftChild(P)
 
                 /*
                   we have the following case
@@ -339,22 +371,31 @@ Return Value:
                 //
 
                 P->RightChild = L->LeftChild;
-                if (P->RightChild != NULL) {P->RightChild->Parent = P;}
+                if (P->RightChild != NULL)
+                {
+                    P->RightChild->Parent = P;
+                }
 
                 //
                 //  Connect G & c
                 //
 
                 G->LeftChild = L->RightChild;
-                if (G->LeftChild != NULL) {G->LeftChild->Parent = G;}
+                if (G->LeftChild != NULL)
+                {
+                    G->LeftChild->Parent = G;
+                }
 
                 //
                 //  Connect L & Great GrandParent
                 //
 
-                if (RtlIsRoot(G)) {
+                if (RtlIsRoot(G))
+                {
                     L->Parent = L;
-                } else {
+                }
+                else
+                {
                     L->Parent = G->Parent;
                     *(ParentsChildPointerAddress(G)) = L;
                 }
@@ -372,7 +413,6 @@ Return Value:
 
                 L->RightChild = G;
                 G->Parent = L;
-
             }
         }
     }
@@ -380,11 +420,9 @@ Return Value:
     return L;
 }
 
-
+
 PRTL_SPLAY_LINKS
-RtlDelete (
-    IN PRTL_SPLAY_LINKS Links
-    )
+RtlDelete(IN PRTL_SPLAY_LINKS Links)
 
 /*++
 
@@ -418,7 +456,8 @@ Return Value:
     //  has at most one child.
     //
 
-    if ((RtlLeftChild(Links) != NULL) && (RtlRightChild(Links) != NULL)) {
+    if ((RtlLeftChild(Links) != NULL) && (RtlRightChild(Links) != NULL))
+    {
 
         //
         //  get the predecessor, and swap their position in the tree
@@ -426,7 +465,6 @@ Return Value:
 
         Predecessor = RtlSubtreePredecessor(Links);
         SwapSplayLinks(Predecessor, Links);
-
     }
 
     //
@@ -436,13 +474,15 @@ Return Value:
     //  pointer (i.e., the one to links) to NULL, and splay the parent.
     //
 
-    if ((RtlLeftChild(Links) == NULL) && (RtlRightChild(Links) == NULL)) {
+    if ((RtlLeftChild(Links) == NULL) && (RtlRightChild(Links) == NULL))
+    {
 
         //
         //  Links has no children, if it is the root then return NULL
         //
 
-        if (RtlIsRoot(Links)) {
+        if (RtlIsRoot(Links))
+        {
 
             return NULL;
         }
@@ -458,7 +498,6 @@ Return Value:
         *ParentChildPtr = NULL;
 
         return RtlSplay(Parent);
-
     }
 
     //
@@ -467,9 +506,12 @@ Return Value:
     //  the parent.  But first remember who our child is.
     //
 
-    if (RtlLeftChild(Links) != NULL) {
+    if (RtlLeftChild(Links) != NULL)
+    {
         Child = RtlLeftChild(Links);
-    } else {
+    }
+    else
+    {
         Child = RtlRightChild(Links);
     }
 
@@ -478,7 +520,8 @@ Return Value:
     //  child.
     //
 
-    if (RtlIsRoot(Links)) {
+    if (RtlIsRoot(Links))
+    {
         Child->Parent = Child;
         return Child;
     }
@@ -494,15 +537,10 @@ Return Value:
     Child->Parent = Links->Parent;
 
     return RtlSplay(RtlParent(Child));
-
 }
 
-
-VOID
-RtlDeleteNoSplay (
-    IN PRTL_SPLAY_LINKS Links,
-    IN OUT PRTL_SPLAY_LINKS *Root
-    )
+
+VOID RtlDeleteNoSplay(IN PRTL_SPLAY_LINKS Links, IN OUT PRTL_SPLAY_LINKS *Root)
 
 /*++
 
@@ -541,7 +579,8 @@ Return Value:
     //  has at most one child.
     //
 
-    if ((RtlLeftChild(Links) != NULL) && (RtlRightChild(Links) != NULL)) {
+    if ((RtlLeftChild(Links) != NULL) && (RtlRightChild(Links) != NULL))
+    {
 
         //
         //  get the predecessor, and swap their position in the tree
@@ -549,7 +588,8 @@ Return Value:
 
         Predecessor = RtlSubtreePredecessor(Links);
 
-        if (RtlIsRoot(Links)) {
+        if (RtlIsRoot(Links))
+        {
 
             //
             //  If we're switching with the root of the tree, fix the
@@ -560,7 +600,6 @@ Return Value:
         }
 
         SwapSplayLinks(Predecessor, Links);
-
     }
 
     //
@@ -570,13 +609,15 @@ Return Value:
     //  pointer (i.e., the one to links) to NULL.
     //
 
-    if ((RtlLeftChild(Links) == NULL) && (RtlRightChild(Links) == NULL)) {
+    if ((RtlLeftChild(Links) == NULL) && (RtlRightChild(Links) == NULL))
+    {
 
         //
         //  Links has no children, if it is the root then set root to NULL
         //
 
-        if (RtlIsRoot(Links)) {
+        if (RtlIsRoot(Links))
+        {
 
             *Root = NULL;
 
@@ -600,9 +641,12 @@ Return Value:
     //  remember who our child is.
     //
 
-    if (RtlLeftChild(Links) != NULL) {
+    if (RtlLeftChild(Links) != NULL)
+    {
         Child = RtlLeftChild(Links);
-    } else {
+    }
+    else
+    {
         Child = RtlRightChild(Links);
     }
 
@@ -611,7 +655,8 @@ Return Value:
     //  child.
     //
 
-    if (RtlIsRoot(Links)) {
+    if (RtlIsRoot(Links))
+    {
         Child->Parent = Child;
 
         *Root = Child;
@@ -631,11 +676,9 @@ Return Value:
     return;
 }
 
-
+
 PRTL_SPLAY_LINKS
-RtlSubtreeSuccessor (
-    IN PRTL_SPLAY_LINKS Links
-    )
+RtlSubtreeSuccessor(IN PRTL_SPLAY_LINKS Links)
 
 /*++
 
@@ -674,14 +717,15 @@ Return Value:
                    \
     */
 
-    if ((Ptr = RtlRightChild(Links)) != NULL) {
+    if ((Ptr = RtlRightChild(Links)) != NULL)
+    {
 
-        while (RtlLeftChild(Ptr) != NULL) {
+        while (RtlLeftChild(Ptr) != NULL)
+        {
             Ptr = RtlLeftChild(Ptr);
         }
 
         return Ptr;
-
     }
 
     //
@@ -690,14 +734,11 @@ Return Value:
     //
 
     return NULL;
-
 }
 
-
+
 PRTL_SPLAY_LINKS
-RtlSubtreePredecessor (
-    IN PRTL_SPLAY_LINKS Links
-    )
+RtlSubtreePredecessor(IN PRTL_SPLAY_LINKS Links)
 
 /*++
 
@@ -735,14 +776,15 @@ Return Value:
     //                /
     //
 
-    if ((Ptr = RtlLeftChild(Links)) != NULL) {
+    if ((Ptr = RtlLeftChild(Links)) != NULL)
+    {
 
-        while (RtlRightChild(Ptr) != NULL) {
+        while (RtlRightChild(Ptr) != NULL)
+        {
             Ptr = RtlRightChild(Ptr);
         }
 
         return Ptr;
-
     }
 
     //
@@ -751,14 +793,11 @@ Return Value:
     //
 
     return NULL;
-
 }
 
-
+
 PRTL_SPLAY_LINKS
-RtlRealSuccessor (
-    IN PRTL_SPLAY_LINKS Links
-    )
+RtlRealSuccessor(IN PRTL_SPLAY_LINKS Links)
 
 /*++
 
@@ -796,14 +835,15 @@ Return Value:
                    \
     */
 
-    if ((Ptr = RtlRightChild(Links)) != NULL) {
+    if ((Ptr = RtlRightChild(Links)) != NULL)
+    {
 
-        while (RtlLeftChild(Ptr) != NULL) {
+        while (RtlLeftChild(Ptr) != NULL)
+        {
             Ptr = RtlLeftChild(Ptr);
         }
 
         return Ptr;
-
     }
 
     /*
@@ -820,11 +860,13 @@ Return Value:
     */
 
     Ptr = Links;
-    while (RtlIsRightChild(Ptr)) {
+    while (RtlIsRightChild(Ptr))
+    {
         Ptr = RtlParent(Ptr);
     }
 
-    if (RtlIsLeftChild(Ptr)) {
+    if (RtlIsLeftChild(Ptr))
+    {
         return RtlParent(Ptr);
     }
 
@@ -834,14 +876,11 @@ Return Value:
     //
 
     return NULL;
-
 }
 
-
+
 PRTL_SPLAY_LINKS
-RtlRealPredecessor (
-    IN PRTL_SPLAY_LINKS Links
-    )
+RtlRealPredecessor(IN PRTL_SPLAY_LINKS Links)
 
 /*++
 
@@ -879,14 +918,15 @@ Return Value:
                     /
     */
 
-    if ((Ptr = RtlLeftChild(Links)) != NULL) {
+    if ((Ptr = RtlLeftChild(Links)) != NULL)
+    {
 
-        while (RtlRightChild(Ptr) != NULL) {
+        while (RtlRightChild(Ptr) != NULL)
+        {
             Ptr = RtlRightChild(Ptr);
         }
 
         return Ptr;
-
     }
 
     /*
@@ -903,11 +943,13 @@ Return Value:
     */
 
     Ptr = Links;
-    while (RtlIsLeftChild(Ptr)) {
+    while (RtlIsLeftChild(Ptr))
+    {
         Ptr = RtlParent(Ptr);
     }
 
-    if (RtlIsRightChild(Ptr)) {
+    if (RtlIsRightChild(Ptr))
+    {
         return RtlParent(Ptr);
     }
 
@@ -917,15 +959,10 @@ Return Value:
     //
 
     return NULL;
-
 }
 
-
-VOID
-SwapSplayLinks (
-    IN PRTL_SPLAY_LINKS Link1,
-    IN PRTL_SPLAY_LINKS Link2
-    )
+
+VOID SwapSplayLinks(IN PRTL_SPLAY_LINKS Link1, IN PRTL_SPLAY_LINKS Link2)
 
 {
     PRTL_SPLAY_LINKS *Parent1ChildPtr;
@@ -949,7 +986,8 @@ SwapSplayLinks (
       the possible child.
     */
 
-    if ((RtlIsRoot(Link1)) || (RtlParent(Link2) == Link1)) {
+    if ((RtlIsRoot(Link1)) || (RtlParent(Link2) == Link1))
+    {
         SwapPointers(Link1, Link2);
     }
 
@@ -965,9 +1003,11 @@ SwapSplayLinks (
     //  Each case will be handled separately
     //
 
-    if (RtlParent(Link1) != Link2) {
+    if (RtlParent(Link1) != Link2)
+    {
 
-        if (!RtlIsRoot(Link2)) {
+        if (!RtlIsRoot(Link2))
+        {
 
             //
             //  Case 1 the initial steps are:
@@ -983,8 +1023,9 @@ SwapSplayLinks (
             SwapPointers(*Parent1ChildPtr, *Parent2ChildPtr);
 
             SwapPointers(Link1->Parent, Link2->Parent);
-
-        } else {
+        }
+        else
+        {
 
             //
             //  Case 2 the initial steps are:
@@ -1000,7 +1041,6 @@ SwapSplayLinks (
             Link2->Parent = Link1->Parent;
 
             Link1->Parent = Link1;
-
         }
 
         //
@@ -1011,10 +1051,12 @@ SwapSplayLinks (
 
         SwapPointers(Link1->LeftChild, Link2->LeftChild);
         SwapPointers(Link1->RightChild, Link2->RightChild);
+    }
+    else
+    { // RtlParent(Link1) == Link2
 
-    } else { // RtlParent(Link1) == Link2
-
-        if (!RtlIsRoot(Link2)) {
+        if (!RtlIsRoot(Link2))
+        {
 
             //
             //  Case 3 the initial steps are:
@@ -1027,8 +1069,9 @@ SwapSplayLinks (
             *Parent2ChildPtr = Link1;
 
             Link1->Parent = Link2->Parent;
-
-        } else {
+        }
+        else
+        {
 
             //
             //  Case 4 the initial steps are:
@@ -1037,7 +1080,6 @@ SwapSplayLinks (
             //
 
             Link1->Parent = Link1;
-
         }
 
         //
@@ -1052,12 +1094,14 @@ SwapSplayLinks (
         SwapPointers(Link1->LeftChild, Link2->LeftChild);
         SwapPointers(Link1->RightChild, Link2->RightChild);
 
-        if (Link1->LeftChild == Link1) {
+        if (Link1->LeftChild == Link1)
+        {
             Link1->LeftChild = Link2;
-        } else {
+        }
+        else
+        {
             Link1->RightChild = Link2;
         }
-
     }
 
     //
@@ -1066,9 +1110,20 @@ SwapSplayLinks (
     //  1. Fix the parent pointers of the left and right children
     //
 
-    if (Link1->LeftChild  != NULL) {Link1->LeftChild->Parent  = Link1;}
-    if (Link1->RightChild != NULL) {Link1->RightChild->Parent = Link1;}
-    if (Link2->LeftChild  != NULL) {Link2->LeftChild->Parent  = Link2;}
-    if (Link2->RightChild != NULL) {Link2->RightChild->Parent = Link2;}
-
+    if (Link1->LeftChild != NULL)
+    {
+        Link1->LeftChild->Parent = Link1;
+    }
+    if (Link1->RightChild != NULL)
+    {
+        Link1->RightChild->Parent = Link1;
+    }
+    if (Link2->LeftChild != NULL)
+    {
+        Link2->LeftChild->Parent = Link2;
+    }
+    if (Link2->RightChild != NULL)
+    {
+        Link2->RightChild->Parent = Link2;
+    }
 }

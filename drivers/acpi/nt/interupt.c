@@ -54,16 +54,14 @@ BOOLEAN AcpiGpeWorkDone;
 //
 // This is the timer that we use to schedule the DPC...
 //
-KTIMER  AcpiGpeTimer;
+KTIMER AcpiGpeTimer;
 
 //
 // This is the DPC routine that we use to process the GPEs...
 //
-KDPC    AcpiGpeDpc;
-
-VOID
-ACPIInterruptDispatchEvents(
-    )
+KDPC AcpiGpeDpc;
+
+VOID ACPIInterruptDispatchEvents()
 /*++
 
 Routine Description:
@@ -83,24 +81,25 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status;
-    UCHAR               edg;
-    UCHAR               sts;
-    ULONG               gpeRegister;
-    ULONG               gpeSize;
+    NTSTATUS status;
+    UCHAR edg;
+    UCHAR sts;
+    ULONG gpeRegister;
+    ULONG gpeSize;
 
     //
     // Remember the size of the GPE registers and that we need a spinlock to
     // touch the tables
     //
     gpeSize = AcpiInformation->GpeSize;
-    KeAcquireSpinLockAtDpcLevel (&GpeTableLock);
+    KeAcquireSpinLockAtDpcLevel(&GpeTableLock);
 
     //
     // Pre-handler processing.  Read status bits and clear their enables.
     // Eoi any edge firing gpe before gpe handler is invoked
     //
-    for (gpeRegister = 0; gpeRegister < gpeSize; gpeRegister++) {
+    for (gpeRegister = 0; gpeRegister < gpeSize; gpeRegister++)
+    {
 
         //
         // Read the list of currently trigged method from the hardware
@@ -110,7 +109,7 @@ Return Value:
         //
         // Remember which sts bits need processed
         //
-        GpePending[gpeRegister]   |= sts;
+        GpePending[gpeRegister] |= sts;
         GpeRunMethod[gpeRegister] |= sts;
 
         //
@@ -127,12 +126,11 @@ Return Value:
         //
         // Eoi edge gpe sts bits
         //
-        if (edg) {
+        if (edg)
+        {
 
             ACPIWriteGpeStatusRegister(gpeRegister, edg);
-
         }
-
     }
 
     //
@@ -143,11 +141,11 @@ Return Value:
     //
     // If the DPC isn't running, then schedule it
     //
-    if (!AcpiGpeDpcRunning && !AcpiGpeDpcScheduled) {
+    if (!AcpiGpeDpcRunning && !AcpiGpeDpcScheduled)
+    {
 
         AcpiGpeDpcScheduled = TRUE;
-        KeInsertQueueDpc( &AcpiGpeDpc, 0, 0);
-
+        KeInsertQueueDpc(&AcpiGpeDpc, 0, 0);
     }
 
     //
@@ -155,14 +153,9 @@ Return Value:
     //
     KeReleaseSpinLockFromDpcLevel(&GpeTableLock);
 }
-
-VOID
-ACPIInterruptDispatchEventDpc(
-    IN  PKDPC       Dpc,
-    IN  PVOID       DpcContext,
-    IN  PVOID       SystemArgument1,
-    IN  PVOID       SystemArgument2
-    )
+
+VOID ACPIInterruptDispatchEventDpc(IN PKDPC Dpc, IN PVOID DpcContext, IN PVOID SystemArgument1,
+                                   IN PVOID SystemArgument2)
 /*++
 
 Routine Description:
@@ -180,29 +173,29 @@ Return Value:
 
 --*/
 {
-    static CHAR         methodName[] = "\\_GPE._L00";
-    ASYNC_GPE_CONTEXT   asyncGpeEval;
-    NTSTATUS            status;
-    PGPE_VECTOR_OBJECT  gpeVectorObject;
-    PNSOBJ              pnsobj;
-    UCHAR               cmp;
-    UCHAR               gpeSTS[MAX_GPE_BUFFER_SIZE];
-    UCHAR               gpeLVL[MAX_GPE_BUFFER_SIZE];
-    UCHAR               gpeCMP[MAX_GPE_BUFFER_SIZE];
-    UCHAR               gpeWAK[MAX_GPE_BUFFER_SIZE];
-    UCHAR               lvl;
-    UCHAR               sts;
-    ULONG               bitmask;
-    ULONG               bitno;
-    ULONG               gpeIndex;
-    ULONG               gpeRegister;
-    ULONG               gpeSize;
-    ULONG               i;
+    static CHAR methodName[] = "\\_GPE._L00";
+    ASYNC_GPE_CONTEXT asyncGpeEval;
+    NTSTATUS status;
+    PGPE_VECTOR_OBJECT gpeVectorObject;
+    PNSOBJ pnsobj;
+    UCHAR cmp;
+    UCHAR gpeSTS[MAX_GPE_BUFFER_SIZE];
+    UCHAR gpeLVL[MAX_GPE_BUFFER_SIZE];
+    UCHAR gpeCMP[MAX_GPE_BUFFER_SIZE];
+    UCHAR gpeWAK[MAX_GPE_BUFFER_SIZE];
+    UCHAR lvl;
+    UCHAR sts;
+    ULONG bitmask;
+    ULONG bitno;
+    ULONG gpeIndex;
+    ULONG gpeRegister;
+    ULONG gpeSize;
+    ULONG i;
 
-    UNREFERENCED_PARAMETER( Dpc );
-    UNREFERENCED_PARAMETER( DpcContext );
-    UNREFERENCED_PARAMETER( SystemArgument1 );
-    UNREFERENCED_PARAMETER( SystemArgument2 );
+    UNREFERENCED_PARAMETER(Dpc);
+    UNREFERENCED_PARAMETER(DpcContext);
+    UNREFERENCED_PARAMETER(SystemArgument1);
+    UNREFERENCED_PARAMETER(SystemArgument2);
 
     //
     // Remember how many gpe bytes we have
@@ -212,7 +205,7 @@ Return Value:
     //
     // First step is to acquire the DPC lock
     //
-    KeAcquireSpinLockAtDpcLevel( &GpeTableLock );
+    KeAcquireSpinLockAtDpcLevel(&GpeTableLock);
 
     //
     // Remember that the DPC is no longer scheduled...
@@ -221,14 +214,14 @@ Return Value:
 
     //
     // check to see if another DPC is already running
-    if (AcpiGpeDpcRunning) {
+    if (AcpiGpeDpcRunning)
+    {
 
         //
         // The DPC is already running, so we need to exit now
         //
-        KeReleaseSpinLockFromDpcLevel( &GpeTableLock );
+        KeReleaseSpinLockFromDpcLevel(&GpeTableLock);
         return;
-
     }
 
     //
@@ -239,12 +232,13 @@ Return Value:
     //
     // Make sure that we know that we haven't completed anything
     //
-    RtlZeroMemory( gpeCMP, MAX_GPE_BUFFER_SIZE );
+    RtlZeroMemory(gpeCMP, MAX_GPE_BUFFER_SIZE);
 
     //
     // We must try to do *some* work
     //
-    do {
+    do
+    {
 
         //
         // Assume that we haven't done any work
@@ -255,7 +249,8 @@ Return Value:
         // Pre-handler processing.  Build up the list of GPEs that we are
         // going to run on this iteration of the loop
         //
-        for (gpeRegister = 0; gpeRegister < gpeSize; gpeRegister++) {
+        for (gpeRegister = 0; gpeRegister < gpeSize; gpeRegister++)
+        {
 
             //
             // We have stored away the list of methods that need to be run
@@ -284,7 +279,6 @@ Return Value:
             //
             gpeCMP[gpeRegister] |= GpeComplete[gpeRegister];
             GpeComplete[gpeRegister] = 0;
-
         }
 
         //
@@ -292,23 +286,25 @@ Return Value:
         // because we have a race condition if we check for GpeWakeEnable()
         // after we drop the lock
         //
-        RtlCopyMemory( gpeWAK, GpeWakeEnable, gpeSize );
+        RtlCopyMemory(gpeWAK, GpeWakeEnable, gpeSize);
 
         //
         // At this point, we must release the lock
         //
-        KeReleaseSpinLockFromDpcLevel( &GpeTableLock );
+        KeReleaseSpinLockFromDpcLevel(&GpeTableLock);
 
         //
         // Issue gpe handler for each set gpe
         //
-        for (gpeRegister = 0; gpeRegister < gpeSize; gpeRegister++) {
+        for (gpeRegister = 0; gpeRegister < gpeSize; gpeRegister++)
+        {
 
             sts = gpeSTS[gpeRegister];
             lvl = gpeLVL[gpeRegister];
             cmp = 0;
 
-            while (sts) {
+            while (sts)
+            {
 
                 //
                 // Determine which bits are set within the current index
@@ -316,12 +312,13 @@ Return Value:
                 bitno = FirstSetLeftBit[sts];
                 bitmask = 1 << bitno;
                 sts &= ~bitmask;
-                gpeIndex = ACPIGpeRegisterToGpeIndex (gpeRegister, bitno);
+                gpeIndex = ACPIGpeRegisterToGpeIndex(gpeRegister, bitno);
 
                 //
                 // Do we have a method to run here?
                 //
-                if (GpeHandlerType[gpeRegister] & bitmask) {
+                if (GpeHandlerType[gpeRegister] & bitmask)
+                {
 
                     //
                     // Run the control method for this gpe
@@ -329,12 +326,7 @@ Return Value:
                     methodName[7] = (lvl & bitmask) ? 'L' : 'E';
                     methodName[8] = HexDigit[gpeIndex >> 4];
                     methodName[9] = HexDigit[gpeIndex & 0x0f];
-                    status = AMLIGetNameSpaceObject(
-                        methodName,
-                        NULL,
-                        &pnsobj,
-                        0
-                        );
+                    status = AMLIGetNameSpaceObject(methodName, NULL, &pnsobj, 0);
 
                     //
                     // Setup the evaluation context. Note that we cheat
@@ -342,14 +334,15 @@ Return Value:
                     // pointer to hold the information (since the info is
                     // so small)
                     //
-                    asyncGpeEval.GpeRegister = (UCHAR) gpeRegister;
-                    asyncGpeEval.StsBit      = (UCHAR) bitmask;
-                    asyncGpeEval.Lvl         = lvl;
+                    asyncGpeEval.GpeRegister = (UCHAR)gpeRegister;
+                    asyncGpeEval.StsBit = (UCHAR)bitmask;
+                    asyncGpeEval.Lvl = lvl;
 
                     //
                     // Did we find a control method to execute?
                     //
-                    if (!NT_SUCCESS(status)) {
+                    if (!NT_SUCCESS(status))
+                    {
 
                         //
                         // The GPE is not meaningful to us.  Simply disable it -
@@ -357,33 +350,28 @@ Return Value:
                         // from the GpeCurEnables.
                         //
                         continue;
-
                     }
 
-                    status = AMLIAsyncEvalObject (
-                        pnsobj,
-                        NULL,
-                        0,
-                        NULL,
-                        (PFNACB) ACPIInterruptEventCompletion,
-                        (PVOID)ULongToPtr(asyncGpeEval.AsULONG)
-                        );
+                    status = AMLIAsyncEvalObject(pnsobj, NULL, 0, NULL, (PFNACB)ACPIInterruptEventCompletion,
+                                                 (PVOID)ULongToPtr(asyncGpeEval.AsULONG));
 
                     //
                     // If the evalution has completed re-enable the gpe; otherwise,
                     // wait for the async completion routine to do it
                     //
-                    if (NT_SUCCESS(status)) {
+                    if (NT_SUCCESS(status))
+                    {
 
-                        if (status != STATUS_PENDING) {
+                        if (status != STATUS_PENDING)
+                        {
 
                             cmp |= bitmask;
-
                         }
+                    }
+                    else
+                    {
 
-                    } else {
-
-                        LONGLONG    dueTime;
+                        LONGLONG dueTime;
 
                         //
                         // We need to modify the table lock
@@ -398,7 +386,8 @@ Return Value:
                         //
                         // Have we already scheduled the DPC?
                         //
-                        if (!AcpiGpeDpcScheduled) {
+                        if (!AcpiGpeDpcScheduled)
+                        {
 
                             //
                             // Remember that we have schedule the DPC...
@@ -408,27 +397,22 @@ Return Value:
                             //
                             // We want approximately a 2 second delay in this case
                             //
-                            dueTime = -2 * 1000* 1000 * 10;
+                            dueTime = -2 * 1000 * 1000 * 10;
 
                             //
                             // This is unconditional --- it will fire in 2 seconds
                             //
-                            KeSetTimer(
-                                &AcpiGpeTimer,
-                                *(PLARGE_INTEGER) &dueTime,
-                                &AcpiGpeDpc
-                                );
-
+                            KeSetTimer(&AcpiGpeTimer, *(PLARGE_INTEGER)&dueTime, &AcpiGpeDpc);
                         }
 
                         //
                         // Done with the lock
                         //
                         KeReleaseSpinLockFromDpcLevel(&GpeTableLock);
-
                     }
-
-                } else if (gpeWAK[gpeRegister] & bitmask) {
+                }
+                else if (gpeWAK[gpeRegister] & bitmask)
+                {
 
                     //
                     // Vector is used for exlucive wake signalling
@@ -439,42 +423,38 @@ Return Value:
                     // Processing of this gpe complete
                     //
                     cmp |= bitmask;
-
-                } else {
+                }
+                else
+                {
 
                     //
                     // Notify the target device driver
                     //
-                    i = GpeMap[ACPIGpeIndexToByteIndex (gpeIndex)];
-                    if (i < GpeVectorTableSize) {
+                    i = GpeMap[ACPIGpeIndexToByteIndex(gpeIndex)];
+                    if (i < GpeVectorTableSize)
+                    {
 
                         gpeVectorObject = GpeVectorTable[i].GpeVectorObject;
-                        if (gpeVectorObject) {
+                        if (gpeVectorObject)
+                        {
 
                             //
                             // Call the target driver
                             //
-                            gpeVectorObject->Handler(
-                                gpeVectorObject,
-                                gpeVectorObject->Context
-                                );
+                            gpeVectorObject->Handler(gpeVectorObject, gpeVectorObject->Context);
+                        }
+                        else
+                        {
 
-                        } else {
-
-                            ACPIPrint( (
-                                ACPI_PRINT_CRITICAL,
-                                "ACPIInterruptDispatchEvents: No Handler for Gpe: 0x%x\n",
-                                gpeIndex
-                                ) );
+                            ACPIPrint((ACPI_PRINT_CRITICAL, "ACPIInterruptDispatchEvents: No Handler for Gpe: 0x%x\n",
+                                       gpeIndex));
                             ACPIBreakPoint();
-
                         }
 
                         //
                         // Processing of this gpe complete
                         //
                         cmp |= bitmask;
-
                     }
                 }
             }
@@ -483,21 +463,21 @@ Return Value:
             // Remember what GPEs have been completed
             //
             gpeCMP[gpeRegister] |= cmp;
-
         }
 
         //
         // Synchronize accesses to the ACPI tables
         //
-        KeAcquireSpinLockAtDpcLevel (&GpeTableLock);
+        KeAcquireSpinLockAtDpcLevel(&GpeTableLock);
 
-    } while ( AcpiGpeWorkDone );
+    } while (AcpiGpeWorkDone);
 
     //
     // Post-handler processing.  EOI any completed lvl firing gpe and re-enable
     // any completed gpe event
     //
-    for (gpeRegister = 0; gpeRegister < gpeSize; gpeRegister++) {
+    for (gpeRegister = 0; gpeRegister < gpeSize; gpeRegister++)
+    {
 
         cmp = gpeCMP[gpeRegister];
         lvl = gpeLVL[gpeRegister] & cmp;
@@ -505,20 +485,16 @@ Return Value:
         //
         // EOI any completed level gpes
         //
-        if (lvl) {
+        if (lvl)
+        {
 
             ACPIWriteGpeStatusRegister(gpeRegister, lvl);
-
         }
 
         //
         // Calculate which functions it is we have to re-enable
         //
-        ACPIGpeUpdateCurrentEnable(
-            gpeRegister,
-            cmp
-            );
-
+        ACPIGpeUpdateCurrentEnable(gpeRegister, cmp);
     }
 
     //
@@ -529,22 +505,16 @@ Return Value:
     //
     // Before we exist, we should re-enable the GPEs...
     //
-    ACPIGpeEnableDisableEvents( TRUE );
+    ACPIGpeEnableDisableEvents(TRUE);
 
     //
     // Done with the table lock
     //
-    KeReleaseSpinLockFromDpcLevel (&GpeTableLock);
+    KeReleaseSpinLockFromDpcLevel(&GpeTableLock);
 }
-
-VOID
-EXPORT
-ACPIInterruptEventCompletion (
-    IN PNSOBJ               AcpiObject,
-    IN NTSTATUS             Status,
-    IN POBJDATA             Result  OPTIONAL,
-    IN PVOID                Context
-    )
+
+VOID EXPORT ACPIInterruptEventCompletion(IN PNSOBJ AcpiObject, IN NTSTATUS Status, IN POBJDATA Result OPTIONAL,
+                                         IN PVOID Context)
 /*++
 
 Routine Description:
@@ -567,28 +537,29 @@ Return Value:
 
 --*/
 {
-    ASYNC_GPE_CONTEXT       gpeContext;
-    KIRQL                   oldIrql;
-    LONGLONG                dueTime;
-    ULONG                   gpeRegister;
+    ASYNC_GPE_CONTEXT gpeContext;
+    KIRQL oldIrql;
+    LONGLONG dueTime;
+    ULONG gpeRegister;
 
     //
     // We store the context information as part of the pointer. Convert it
     // back to a ULONG so that it is useful to us
     //
-    gpeContext.AsULONG  = PtrToUlong(Context);
-    gpeContext.Lvl     &= gpeContext.StsBit;
-    gpeRegister         = gpeContext.GpeRegister;
+    gpeContext.AsULONG = PtrToUlong(Context);
+    gpeContext.Lvl &= gpeContext.StsBit;
+    gpeRegister = gpeContext.GpeRegister;
 
     //
     // Need to synchronize access to these values
     //
-    KeAcquireSpinLock (&GpeTableLock, &oldIrql);
+    KeAcquireSpinLock(&GpeTableLock, &oldIrql);
 
     //
     // We have a different policy if the method failed then if it succeeded
     //
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         //
         // In the failure case, we need to cause to method to run again
@@ -598,7 +569,8 @@ Return Value:
         //
         // Did we already schedule the DPC?
         //
-        if (!AcpiGpeDpcScheduled) {
+        if (!AcpiGpeDpcScheduled)
+        {
 
             //
             // Remember that we have schedule the DPC...
@@ -613,14 +585,11 @@ Return Value:
             //
             // This is unconditional --- it will fire in 2 seconds
             //
-            KeSetTimer(
-                &AcpiGpeTimer,
-                *(PLARGE_INTEGER) &dueTime,
-                &AcpiGpeDpc
-                );
+            KeSetTimer(&AcpiGpeTimer, *(PLARGE_INTEGER)&dueTime, &AcpiGpeDpc);
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // Remember that we did some work
@@ -635,25 +604,21 @@ Return Value:
         //
         // If the DPC isn't already running, schedule it...
         //
-        if (!AcpiGpeDpcRunning) {
+        if (!AcpiGpeDpcRunning)
+        {
 
-            KeInsertQueueDpc( &AcpiGpeDpc, 0, 0);
-
+            KeInsertQueueDpc(&AcpiGpeDpc, 0, 0);
         }
-
     }
 
     //
     // Done with the table lock
     //
-    KeReleaseSpinLock (&GpeTableLock, oldIrql);
+    KeReleaseSpinLock(&GpeTableLock, oldIrql);
 }
-
+
 BOOLEAN
-ACPIInterruptServiceRoutine(
-    IN  PKINTERRUPT Interrupt,
-    IN  PVOID       Context
-    )
+ACPIInterruptServiceRoutine(IN PKINTERRUPT Interrupt, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -672,22 +637,22 @@ Return Value:
 
 --*/
 {
-    PDEVICE_EXTENSION   deviceExtension;
-    ULONG               IntStatus;
-    ULONG               BitsHandled;
-    ULONG               PrevStatus;
-    ULONG               i;
-    BOOLEAN             Handled;
+    PDEVICE_EXTENSION deviceExtension;
+    ULONG IntStatus;
+    ULONG BitsHandled;
+    ULONG PrevStatus;
+    ULONG i;
+    BOOLEAN Handled;
 
     //
     // No need to look at the interrupt object
     //
-    UNREFERENCED_PARAMETER( Interrupt );
+    UNREFERENCED_PARAMETER(Interrupt);
 
     //
     // Setup ---
     //
-    deviceExtension = (PDEVICE_EXTENSION) Context;
+    deviceExtension = (PDEVICE_EXTENSION)Context;
     Handled = FALSE;
 
     //
@@ -699,10 +664,10 @@ Return Value:
     // Unfortently due to a piix4 errata we need to check the GPEs because
     // a piix4 sometimes forgets to raise an SCI on an asserted GPE
     //
-    if (ACPIGpeIsEvent()) {
+    if (ACPIGpeIsEvent())
+    {
 
         IntStatus |= PM1_GPE_PENDING;
-
     }
 
     //
@@ -713,10 +678,10 @@ Return Value:
     //
 
     // SP3
-    if ( !(AcpiOverrideAttributes & 0x0100) && !IntStatus ) {   // test    byte ptr _AcpiOverrideAttributes+1, 1
+    if (!(AcpiOverrideAttributes & 0x0100) && !IntStatus)
+    { // test    byte ptr _AcpiOverrideAttributes+1, 1
 
         IntStatus |= PM1_GPE_PENDING;
-
     }
     // SP3
 
@@ -724,69 +689,67 @@ Return Value:
     // Are any status bits set for events which are handled at ISR time?
     //
     BitsHandled = IntStatus & (PM1_TMR_STS | PM1_BM_STS);
-    if (BitsHandled) {
+    if (BitsHandled)
+    {
 
         //
         // Clear their status bits then handle them
         // (Note no special handling is required for PM1_BM_STS)
         //
-        ACPIIoClearPm1Status ((USHORT) BitsHandled);
+        ACPIIoClearPm1Status((USHORT)BitsHandled);
 
         //
         // If the overflow bit is set handle it
         //
-        if (IntStatus & PM1_TMR_STS) {
+        if (IntStatus & PM1_TMR_STS)
+        {
 
             HalAcpiTimerInterrupt();
-
         }
         IntStatus &= ~BitsHandled;
-
     }
 
     //
     // If more service bits are pending, they are for the DPC function
     //
 
-    if (IntStatus) {
+    if (IntStatus)
+    {
 
         //
         // If no new status bits, then make sure we check for GPEs
         //
-        if (!(IntStatus & (~deviceExtension->Fdo.Pm1Status))) {
+        if (!(IntStatus & (~deviceExtension->Fdo.Pm1Status)))
+        {
 
             IntStatus |= PM1_GPE_PENDING;
-
         }
 
         //
         // If we're going to process outstanding GPEs, disable them
         // for DPC processing
         //
-        if (IntStatus & PM1_GPE_PENDING) {
+        if (IntStatus & PM1_GPE_PENDING)
+        {
 
-            ACPIGpeEnableDisableEvents( FALSE );
-
+            ACPIGpeEnableDisableEvents(FALSE);
         }
 
         //
         // Clear the status bits we've handled
         //
-        ACPIIoClearPm1Status ((USHORT) IntStatus);
+        ACPIIoClearPm1Status((USHORT)IntStatus);
 
         //
         // Set status bits for DPC routine to process
         //
         IntStatus |= PM1_DPC_IN_PROGRESS;
         PrevStatus = deviceExtension->Fdo.Pm1Status;
-        do {
+        do
+        {
 
             i = PrevStatus;
-            PrevStatus = InterlockedCompareExchange(
-                &deviceExtension->Fdo.Pm1Status,
-                (i | IntStatus),
-                i
-                );
+            PrevStatus = InterlockedCompareExchange(&deviceExtension->Fdo.Pm1Status, (i | IntStatus), i);
 
         } while (i != PrevStatus);
 
@@ -798,12 +761,11 @@ Return Value:
         //
         // If one of the new bits is "dpc in progress", we had better queue a dpc
         //
-        if (BitsHandled & PM1_DPC_IN_PROGRESS) {
+        if (BitsHandled & PM1_DPC_IN_PROGRESS)
+        {
 
             KeInsertQueueDpc(&deviceExtension->Fdo.InterruptDpc, NULL, NULL);
-
         }
-
     }
 
     //
@@ -811,14 +773,8 @@ Return Value:
     //
     return BitsHandled ? TRUE : FALSE;
 }
-
-VOID
-ACPIInterruptServiceRoutineDPC(
-    IN  PKDPC       Dpc,
-    IN  PVOID       Context,
-    IN  PVOID       Arg1,
-    IN  PVOID       Arg2
-    )
+
+VOID ACPIInterruptServiceRoutineDPC(IN PKDPC Dpc, IN PVOID Context, IN PVOID Arg1, IN PVOID Arg2)
 /*++
 
 Routine Description:
@@ -835,31 +791,33 @@ Arguments:
 
 --*/
 {
-    PDEVICE_EXTENSION           deviceExtension;
-    ULONG                       IntStatus;
-    ULONG                       NewStatus;
-    ULONG                       PrevStatus;
-    ULONG                       BitsHandled;
-    ULONG                       FixedButtonEvent;
+    PDEVICE_EXTENSION deviceExtension;
+    ULONG IntStatus;
+    ULONG NewStatus;
+    ULONG PrevStatus;
+    ULONG BitsHandled;
+    ULONG FixedButtonEvent;
 
-    deviceExtension  = (PDEVICE_EXTENSION) Context;
+    deviceExtension = (PDEVICE_EXTENSION)Context;
 
-    UNREFERENCED_PARAMETER( Arg1 );
-    UNREFERENCED_PARAMETER( Arg2 );
+    UNREFERENCED_PARAMETER(Arg1);
+    UNREFERENCED_PARAMETER(Arg2);
 
     //
     // Loop while there's work
     //
     BitsHandled = 0;
     IntStatus = 0;
-    for (; ;) {
+    for (;;)
+    {
 
         //
         // Get the status bits form the ISR.  If there are no more
         // status bits then exit
         //
         PrevStatus = deviceExtension->Fdo.Pm1Status;
-        do {
+        do
+        {
 
             IntStatus = PrevStatus;
 
@@ -867,7 +825,8 @@ Arguments:
             // If there's no work pending, try to complete DPC
             //
             NewStatus = PM1_DPC_IN_PROGRESS;
-            if (!(IntStatus & ~PM1_DPC_IN_PROGRESS)) {
+            if (!(IntStatus & ~PM1_DPC_IN_PROGRESS))
+            {
 
                 //
                 // Note: The original code, after this call, would go
@@ -889,24 +848,19 @@ Arguments:
 
                 NewStatus = 0;
                 BitsHandled = 0;
-
             }
 
-            PrevStatus = InterlockedCompareExchange (
-                &deviceExtension->Fdo.Pm1Status,
-                NewStatus,
-                IntStatus
-                );
+            PrevStatus = InterlockedCompareExchange(&deviceExtension->Fdo.Pm1Status, NewStatus, IntStatus);
 
         } while (IntStatus != PrevStatus);
 
         //
         // If NewStatus cleared DPC_IN_PROGRESS, then we're done
         //
-        if (!NewStatus) {
+        if (!NewStatus)
+        {
 
             break;
-
         }
 
         //
@@ -918,46 +872,44 @@ Arguments:
         // Handle fixed power & sleep button events
         //
         FixedButtonEvent = 0;
-        if (IntStatus & PM1_PWRBTN_STS) {
+        if (IntStatus & PM1_PWRBTN_STS)
+        {
 
             FixedButtonEvent |= SYS_BUTTON_POWER;
-
         }
-        if (IntStatus & PM1_SLEEPBTN_STS) {
+        if (IntStatus & PM1_SLEEPBTN_STS)
+        {
 
             FixedButtonEvent |= SYS_BUTTON_SLEEP;
-
         }
-        if (FixedButtonEvent) {
+        if (FixedButtonEvent)
+        {
 
-            if (IntStatus & PM1_WAK_STS) {
+            if (IntStatus & PM1_WAK_STS)
+            {
 
                 FixedButtonEvent = SYS_BUTTON_WAKE;
-
             }
-            ACPIButtonEvent (FixedButtonDeviceObject, FixedButtonEvent, NULL);
-
+            ACPIButtonEvent(FixedButtonDeviceObject, FixedButtonEvent, NULL);
         }
 
         //
         // PM1_GBL_STS is set whenever the BIOS has released the global
         // lock (and we are waiting for it).  Notify the global lock handler.
         //
-        if (IntStatus & PM1_GBL_STS) {
+        if (IntStatus & PM1_GBL_STS)
+        {
 
             ACPIHardwareGlobalLockReleased();
-
         }
 
         //
         // Handle GP Registers
         //
-        if (IntStatus & PM1_GPE_PENDING) {
+        if (IntStatus & PM1_GPE_PENDING)
+        {
 
             ACPIInterruptDispatchEvents();
-
         }
-
     }
-
 }

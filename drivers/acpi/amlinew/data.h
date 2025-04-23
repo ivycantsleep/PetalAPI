@@ -42,10 +42,10 @@ extern ULONG gdwLocalStackMax;
 extern ULONG gdwGHeapSnapshot;
 extern KSPIN_LOCK gdwGHeapSpinLock;
 #endif
-extern LONG             gdwcCTObjs;
-extern ULONG            gdwcCTObjsMax;
-extern KSPIN_LOCK       gdwGContextSpinLock;
-extern NPAGED_LOOKASIDE_LIST   AMLIContextLookAsideList;
+extern LONG gdwcCTObjs;
+extern ULONG gdwcCTObjsMax;
+extern KSPIN_LOCK gdwGContextSpinLock;
+extern NPAGED_LOOKASIDE_LIST AMLIContextLookAsideList;
 #ifdef TRACING
 extern PSZ gpszTrigPts;
 #endif
@@ -79,9 +79,9 @@ extern BOOLEAN gInitTime;
 //
 // Sleep specific data structures
 //
-extern MUTEX      gmutSleep;
-extern KDPC       SleepDpc;
-extern KTIMER     SleepTimer;
+extern MUTEX gmutSleep;
+extern KDPC SleepDpc;
+extern KTIMER SleepTimer;
 extern LIST_ENTRY SleepQueue;
 
 extern PAMLTERM OpcodeTable[256];
@@ -94,4 +94,4 @@ extern AMLTERM atLoad;
 
 extern PCHAR gpszOSName;
 
-#endif  //ifndef _DATA_H
+#endif //ifndef _DATA_H

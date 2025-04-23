@@ -35,14 +35,9 @@ ULONG VdmpPMCliCount;
 #endif
 
 BOOLEAN
-VdmpIsVdmProcess(
-    VOID
-    );
+VdmpIsVdmProcess(VOID);
 
-VOID
-VdmpEnableOPL2 (
-    ULONG BasePort
-    );
+VOID VdmpEnableOPL2(ULONG BasePort);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, VdmpIsVdmProcess)
@@ -55,9 +50,7 @@ ULONG VdmInjectFailures;
 #endif
 
 BOOLEAN
-VdmpIsVdmProcess(
-    VOID
-    )
+VdmpIsVdmProcess(VOID)
 
 /*++
 
@@ -84,7 +77,8 @@ Return Value:
 
     Process = PsGetCurrentProcess();
 
-    if (Process->VdmObjects == NULL) {
+    if (Process->VdmObjects == NULL)
+    {
         return FALSE;
     }
 
@@ -93,8 +87,9 @@ Return Value:
     //
 
     Status = VdmpGetVdmTib(&VdmTib);
-    if (!NT_SUCCESS(Status)) {
-       return(FALSE);
+    if (!NT_SUCCESS(Status))
+    {
+        return (FALSE);
     }
 
     //
@@ -105,10 +100,7 @@ Return Value:
 }
 
 NTSTATUS
-NtVdmControl(
-    IN VDMSERVICECLASS Service,
-    IN OUT PVOID ServiceData
-    )
+NtVdmControl(IN VDMSERVICECLASS Service, IN OUT PVOID ServiceData)
 /*++
 
 Routine Description:
@@ -142,32 +134,43 @@ Return Value:
     //                         perform the check
     //
 
-    if ((Service != VdmInitialize) &&
-        (Service != VdmStartExecution) &&
-        (PsGetCurrentProcess()->VdmObjects == NULL)) {
+    if ((Service != VdmInitialize) && (Service != VdmStartExecution) && (PsGetCurrentProcess()->VdmObjects == NULL))
+    {
 
         return STATUS_ACCESS_DENIED;
     }
 
-    try {
+    try
+    {
 
         //
         //  Dispatch in descending order of frequency
         //
-        if (Service == VdmStartExecution) {
+        if (Service == VdmStartExecution)
+        {
             Status = VdmpStartExecution();
-        } else if (Service == VdmQueueInterrupt) {
+        }
+        else if (Service == VdmQueueInterrupt)
+        {
             Status = VdmpQueueInterrupt(ServiceData);
-        } else if (Service == VdmDelayInterrupt) {
+        }
+        else if (Service == VdmDelayInterrupt)
+        {
             Status = VdmpDelayInterrupt(ServiceData);
-        } else if (Service == VdmQueryDir) {
+        }
+        else if (Service == VdmQueryDir)
+        {
             Status = VdmQueryDirectoryFile(ServiceData);
-        } else if (Service == VdmInitialize) {
+        }
+        else if (Service == VdmInitialize)
+        {
             VdmpMaxPMCliTime = 1;
             ProbeForRead(ServiceData, sizeof(VDM_INITIALIZE_DATA), 1);
-            RtlCopyMemory (&CapturedVdmInitializeData, ServiceData, sizeof (VDM_INITIALIZE_DATA));
+            RtlCopyMemory(&CapturedVdmInitializeData, ServiceData, sizeof(VDM_INITIALIZE_DATA));
             Status = VdmpInitialize(&CapturedVdmInitializeData);
-        } else if (Service == VdmFeatures) {
+        }
+        else if (Service == VdmFeatures)
+        {
             //
             // Verify that we were passed a valid user address
             //
@@ -178,45 +181,50 @@ Return Value:
             // ntvdm which modes (if any) fast IF emulation is
             // available for
             //
-            if (KeI386VdmIoplAllowed) {
+            if (KeI386VdmIoplAllowed)
+            {
                 *((PULONG)ServiceData) = V86_VIRTUAL_INT_EXTENSIONS;
-            } else {
+            }
+            else
+            {
                 // remove this if pm extensions to be used
-                *((PULONG)ServiceData) = KeI386VirtualIntExtensions &
-                    ~PM_VIRTUAL_INT_EXTENSIONS;
+                *((PULONG)ServiceData) = KeI386VirtualIntExtensions & ~PM_VIRTUAL_INT_EXTENSIONS;
             }
 
             Status = STATUS_SUCCESS;
-
-        } else if (Service == VdmSetInt21Handler) {
+        }
+        else if (Service == VdmSetInt21Handler)
+        {
             ProbeForRead(ServiceData, sizeof(VDMSET_INT21_HANDLER_DATA), 1);
 
-            Status = Ke386SetVdmInterruptHandler(
-                KeGetCurrentThread()->ApcState.Process,
-                0x21L,
-                (USHORT)(((PVDMSET_INT21_HANDLER_DATA)ServiceData)->Selector),
-                ((PVDMSET_INT21_HANDLER_DATA)ServiceData)->Offset,
-                ((PVDMSET_INT21_HANDLER_DATA)ServiceData)->Gate32
-                );
-
-        } else if (Service == VdmPrinterDirectIoOpen) {
+            Status = Ke386SetVdmInterruptHandler(KeGetCurrentThread()->ApcState.Process, 0x21L,
+                                                 (USHORT)(((PVDMSET_INT21_HANDLER_DATA)ServiceData)->Selector),
+                                                 ((PVDMSET_INT21_HANDLER_DATA)ServiceData)->Offset,
+                                                 ((PVDMSET_INT21_HANDLER_DATA)ServiceData)->Gate32);
+        }
+        else if (Service == VdmPrinterDirectIoOpen)
+        {
             Status = VdmpPrinterDirectIoOpen(ServiceData);
-        } else if (Service == VdmPrinterDirectIoClose) {
+        }
+        else if (Service == VdmPrinterDirectIoClose)
+        {
             Status = VdmpPrinterDirectIoClose(ServiceData);
-        } else if (Service == VdmPrinterInitialize) {
+        }
+        else if (Service == VdmPrinterInitialize)
+        {
             Status = VdmpPrinterInitialize(ServiceData);
-        } else if (Service == VdmSetLdtEntries && VdmpIsVdmProcess()) {
+        }
+        else if (Service == VdmSetLdtEntries && VdmpIsVdmProcess())
+        {
             ProbeForRead(ServiceData, sizeof(VDMSET_LDT_ENTRIES_DATA), 1);
 
             Status = VdmpSetLdtEntries(
-                ((PVDMSET_LDT_ENTRIES_DATA)ServiceData)->Selector0,
-                ((PVDMSET_LDT_ENTRIES_DATA)ServiceData)->Entry0Low,
-                ((PVDMSET_LDT_ENTRIES_DATA)ServiceData)->Entry0Hi,
-                ((PVDMSET_LDT_ENTRIES_DATA)ServiceData)->Selector1,
-                ((PVDMSET_LDT_ENTRIES_DATA)ServiceData)->Entry1Low,
-                ((PVDMSET_LDT_ENTRIES_DATA)ServiceData)->Entry1Hi
-                );
-        } else if (Service == VdmSetProcessLdtInfo && VdmpIsVdmProcess()) {
+                ((PVDMSET_LDT_ENTRIES_DATA)ServiceData)->Selector0, ((PVDMSET_LDT_ENTRIES_DATA)ServiceData)->Entry0Low,
+                ((PVDMSET_LDT_ENTRIES_DATA)ServiceData)->Entry0Hi, ((PVDMSET_LDT_ENTRIES_DATA)ServiceData)->Selector1,
+                ((PVDMSET_LDT_ENTRIES_DATA)ServiceData)->Entry1Low, ((PVDMSET_LDT_ENTRIES_DATA)ServiceData)->Entry1Hi);
+        }
+        else if (Service == VdmSetProcessLdtInfo && VdmpIsVdmProcess())
+        {
             PPROCESS_LDT_INFORMATION ldtInfo;
             ULONG length;
 
@@ -227,7 +235,9 @@ Return Value:
 
             ProbeForRead(ldtInfo, length, 1);
             Status = VdmpSetProcessLdtInfo(ldtInfo, length);
-        } else if (Service == VdmAdlibEmulation && VdmpIsVdmProcess()) {
+        }
+        else if (Service == VdmAdlibEmulation && VdmpIsVdmProcess())
+        {
             //
             // Ntvdm calls here to do adlib emulation under the following conditions:
             //   ADLIB_DIRECT_IO - only If a FM synth device is opened for exclusive access.
@@ -238,24 +248,28 @@ Return Value:
             ProbeForRead(ServiceData, sizeof(VDM_ADLIB_DATA), 1);
             pVdmObjects = PsGetCurrentProcess()->VdmObjects;
 
-            pVdmObjects->AdlibAction        = ((PVDM_ADLIB_DATA)ServiceData)->Action;
+            pVdmObjects->AdlibAction = ((PVDM_ADLIB_DATA)ServiceData)->Action;
             pVdmObjects->AdlibPhysPortStart = ((PVDM_ADLIB_DATA)ServiceData)->PhysicalPortStart;
-            pVdmObjects->AdlibPhysPortEnd   = ((PVDM_ADLIB_DATA)ServiceData)->PhysicalPortEnd;
+            pVdmObjects->AdlibPhysPortEnd = ((PVDM_ADLIB_DATA)ServiceData)->PhysicalPortEnd;
             pVdmObjects->AdlibVirtPortStart = ((PVDM_ADLIB_DATA)ServiceData)->VirtualPortStart;
-            pVdmObjects->AdlibVirtPortEnd   = ((PVDM_ADLIB_DATA)ServiceData)->VirtualPortEnd;
+            pVdmObjects->AdlibVirtPortEnd = ((PVDM_ADLIB_DATA)ServiceData)->VirtualPortEnd;
             pVdmObjects->AdlibIndexRegister = 0;
-            pVdmObjects->AdlibStatus        = 0x6;  // OPL2 emulation
+            pVdmObjects->AdlibStatus = 0x6; // OPL2 emulation
 
-            if (pVdmObjects->AdlibAction == ADLIB_DIRECT_IO) {
+            if (pVdmObjects->AdlibAction == ADLIB_DIRECT_IO)
+            {
                 VdmpEnableOPL2(pVdmObjects->AdlibPhysPortStart);
             }
             Status = STATUS_SUCCESS;
-        } else if (Service == VdmPMCliControl) {
+        }
+        else if (Service == VdmPMCliControl)
+        {
             pVdmObjects = PsGetCurrentProcess()->VdmObjects;
             ProbeForRead(ServiceData, sizeof(VDM_PM_CLI_DATA), 1);
 
             Status = STATUS_SUCCESS;
-            switch (((PVDM_PM_CLI_DATA)ServiceData)->Control) {
+            switch (((PVDM_PM_CLI_DATA)ServiceData)->Control)
+            {
             case PM_CLI_CONTROL_DISABLE:
                 pVdmObjects->VdmControl &= ~PM_CLI_CONTROL;
                 break;
@@ -264,7 +278,8 @@ Return Value:
 #if DISABLE_CLI
                 VdmpPMCliCount = 0;
 #endif
-                if ((*FIXED_NTVDMSTATE_LINEAR_PC_AT & VDM_VIRTUAL_INTERRUPTS) == 0) {
+                if ((*FIXED_NTVDMSTATE_LINEAR_PC_AT & VDM_VIRTUAL_INTERRUPTS) == 0)
+                {
                     VdmSetPMCliTimeStamp(TRUE);
                 }
                 break;
@@ -280,30 +295,31 @@ Return Value:
             default:
                 Status = STATUS_INVALID_PARAMETER_1;
             }
-        } else {
+        }
+        else
+        {
             Status = STATUS_INVALID_PARAMETER_1;
         }
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
     }
 #if DBG
-    if (PsGetCurrentProcess()->VdmObjects != NULL) {
-        if (VdmInjectFailures != 0) {
-            PS_SET_BITS (&PsGetCurrentProcess()->Flags,
-                         PS_PROCESS_INJECT_INPAGE_ERRORS);
+    if (PsGetCurrentProcess()->VdmObjects != NULL)
+    {
+        if (VdmInjectFailures != 0)
+        {
+            PS_SET_BITS(&PsGetCurrentProcess()->Flags, PS_PROCESS_INJECT_INPAGE_ERRORS);
         }
     }
 #endif
 
-    ASSERT(KeGetCurrentIrql () == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
     return Status;
-
 }
 
-VOID
-VdmpEnableOPL2 (
-    ULONG BasePort
-    )
+VOID VdmpEnableOPL2(ULONG BasePort)
 
 /*++
 
@@ -333,18 +349,16 @@ Return Value:
     PUCHAR SecondaryPort;
 
     ch = READ_PORT_UCHAR((PUCHAR)BasePort);
-    if (ch == 0) {          // if OPL3
+    if (ch == 0)
+    {                                           // if OPL3
         SecondaryPort = (PUCHAR)(BasePort + 2); // move to secondary ports
         WRITE_PORT_UCHAR(SecondaryPort, 5);     // Select index register 5
         ch = READ_PORT_UCHAR((PUCHAR)BasePort); // a little bit delay
-        WRITE_PORT_UCHAR(SecondaryPort + 1, 0);     // Select index register 5
+        WRITE_PORT_UCHAR(SecondaryPort + 1, 0); // Select index register 5
     }
 }
 
-VOID
-VdmCheckPMCliTimeStamp (
-    VOID
-    )
+VOID VdmCheckPMCliTimeStamp(VOID)
 
 /*++
 
@@ -373,31 +387,33 @@ Return Value:
     PVDM_TIB vdmTib;
 
     pVdmObjects = ((PEPROCESS)process)->VdmObjects;
-    if (pVdmObjects->VdmControl & PM_CLI_CONTROL &&
-        pVdmObjects->PMCliTimeStamp != 0) {
-        if (((process->UserTime + 1)- pVdmObjects->PMCliTimeStamp) >= VdmpMaxPMCliTime) {
+    if (pVdmObjects->VdmControl & PM_CLI_CONTROL && pVdmObjects->PMCliTimeStamp != 0)
+    {
+        if (((process->UserTime + 1) - pVdmObjects->PMCliTimeStamp) >= VdmpMaxPMCliTime)
+        {
             pVdmObjects->PMCliTimeStamp = 0;
 #if DISABLE_CLI
             VdmpPMCliCount++;
 #endif
-            try {
+            try
+            {
 
                 *FIXED_NTVDMSTATE_LINEAR_PC_AT |= VDM_VIRTUAL_INTERRUPTS;
                 status = VdmpGetVdmTib(&vdmTib);
-                if (NT_SUCCESS(status)) {
+                if (NT_SUCCESS(status))
+                {
                     vdmTib->VdmContext.EFlags |= EFLAGS_INTERRUPT_MASK;
                 }
-            } except(ExSystemExceptionFilter()) {
+            }
+            except(ExSystemExceptionFilter())
+            {
                 status = GetExceptionCode();
             }
         }
     }
 }
 
-VOID
-VdmSetPMCliTimeStamp (
-    BOOLEAN Reset
-    )
+VOID VdmSetPMCliTimeStamp(BOOLEAN Reset)
 
 /*++
 
@@ -424,28 +440,30 @@ Return Value:
     PKPROCESS process = (PKPROCESS)PsGetCurrentProcess();
 
 #if DISABLE_CLI
-    if (VdmpPMCliCount > 0x20) {
-        try {
+    if (VdmpPMCliCount > 0x20)
+    {
+        try
+        {
             *FIXED_NTVDMSTATE_LINEAR_PC_AT |= VDM_VIRTUAL_INTERRUPTS;
         }
-        except (EXCEPTION_EXECUTE_HANDLER) {
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             NOTHING;
         }
         return;
     }
 #endif
     pVdmObjects = ((PEPROCESS)process)->VdmObjects;
-    if (pVdmObjects->VdmControl & PM_CLI_CONTROL) {
-        if (Reset || pVdmObjects->PMCliTimeStamp == 0) {
+    if (pVdmObjects->VdmControl & PM_CLI_CONTROL)
+    {
+        if (Reset || pVdmObjects->PMCliTimeStamp == 0)
+        {
             pVdmObjects->PMCliTimeStamp = process->UserTime + 1;
         }
     }
 }
 
-VOID
-VdmClearPMCliTimeStamp (
-    VOID
-    )
+VOID VdmClearPMCliTimeStamp(VOID)
 
 /*++
 
@@ -471,9 +489,8 @@ Return Value:
     PVDM_PROCESS_OBJECTS pVdmObjects;
 
     pVdmObjects = PsGetCurrentProcess()->VdmObjects;
-    if (pVdmObjects->VdmControl & PM_CLI_CONTROL) {
+    if (pVdmObjects->VdmControl & PM_CLI_CONTROL)
+    {
         pVdmObjects->PMCliTimeStamp = 0;
     }
 }
-
-

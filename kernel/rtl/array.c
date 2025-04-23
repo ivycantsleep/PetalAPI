@@ -28,95 +28,51 @@ Environment:
 // the type of the comparison callback used by qsort and bsearch,
 // and optionally RtlMergeSortedArrays and RtlRemoveAdjacentEquivalentArrayElements
 //
-typedef
-int
-(__cdecl  *
-RTL_QSORT_BSEARCH_COMPARISON_FUNCTION)(
-    CONST VOID * Element1,
-    CONST VOID * Element2
-    );
+typedef int(__cdecl *RTL_QSORT_BSEARCH_COMPARISON_FUNCTION)(CONST VOID *Element1, CONST VOID *Element2);
 
 //
 // the type of the comparison callback usually used by
 // RtlMergeSortedArrays and RtlRemoveAdjacentEquivalentArrayElements
 //
-typedef
-RTL_GENERIC_COMPARE_RESULTS
-(NTAPI *
-RTL_COMPARE_ARRAY_ELEMENT_FUNCTION)(
-    PVOID Context,
-    IN CONST VOID * Element1,
-    IN CONST VOID * Element2,
-    IN SIZE_T       ElementSize
-    );
+typedef RTL_GENERIC_COMPARE_RESULTS(NTAPI *RTL_COMPARE_ARRAY_ELEMENT_FUNCTION)(PVOID Context, IN CONST VOID *Element1,
+                                                                               IN CONST VOID *Element2,
+                                                                               IN SIZE_T ElementSize);
 
 //
 // the callback to RtlMergeSortedArrays and RtlRemoveAdjacentEquivalentArrayElements
 // to copy an elmement, if not via RtlCopyMemory
 //
-typedef
-VOID
-(NTAPI *
-RTL_COPY_ARRAY_ELEMENT_FUNCTION)(
-    PVOID        Context,
-    PVOID        To,
-    CONST VOID * From,
-    IN SIZE_T    ElementSize
-    );
+typedef VOID(NTAPI *RTL_COPY_ARRAY_ELEMENT_FUNCTION)(PVOID Context, PVOID To, CONST VOID *From, IN SIZE_T ElementSize);
 
 
-#define \
-RTL_MERGE_SORTED_ARRAYS_FLAG_COMPARE_IS_QSORT_BSEARCH_SIGNATURE \
-    (0x00000001)
+#define RTL_MERGE_SORTED_ARRAYS_FLAG_COMPARE_IS_QSORT_BSEARCH_SIGNATURE (0x00000001)
 
 // deliberately not NTSYSAPI, so it can be linked to statically w/o warning
 NTSTATUS
 NTAPI
-RtlMergeSortedArrays(
-    IN ULONG                                Flags,
-    IN CONST VOID *                         VoidArray1,
-    IN SIZE_T                               Count1,
-    IN CONST VOID *                         VoidArray2,
-    IN SIZE_T                               Count2,
-    // VoidResult == NULL is useful for getting the count first.
-    OUT PVOID                               VoidResult      OPTIONAL,
-    OUT PSIZE_T                             OutResultCount,
-    IN SIZE_T                               ElementSize,
-    IN RTL_COMPARE_ARRAY_ELEMENT_FUNCTION   CompareCallback,
-    PVOID                                   CompareContext  OPTIONAL,
-    IN RTL_COPY_ARRAY_ELEMENT_FUNCTION      CopyCallback    OPTIONAL,
-    PVOID                                   CopyContext     OPTIONAL
-    );
+RtlMergeSortedArrays(IN ULONG Flags, IN CONST VOID *VoidArray1, IN SIZE_T Count1, IN CONST VOID *VoidArray2,
+                     IN SIZE_T Count2,
+                     // VoidResult == NULL is useful for getting the count first.
+                     OUT PVOID VoidResult OPTIONAL, OUT PSIZE_T OutResultCount, IN SIZE_T ElementSize,
+                     IN RTL_COMPARE_ARRAY_ELEMENT_FUNCTION CompareCallback, PVOID CompareContext OPTIONAL,
+                     IN RTL_COPY_ARRAY_ELEMENT_FUNCTION CopyCallback OPTIONAL, PVOID CopyContext OPTIONAL);
 
-#define \
-RTL_REMOVE_ADJACENT_EQUIVALENT_ARRAY_ELEMENTS_FLAG_COMPARE_IS_QSORT_BSEARCH_SIGNATURE \
-    (0x00000001)
+#define RTL_REMOVE_ADJACENT_EQUIVALENT_ARRAY_ELEMENTS_FLAG_COMPARE_IS_QSORT_BSEARCH_SIGNATURE (0x00000001)
 
 // deliberately not NTSYSAPI, so it can be linked to statically w/o warning
 NTSTATUS
 NTAPI
-RtlRemoveAdjacentEquivalentArrayElements(
-    IN ULONG                                Flags,
-    IN OUT PVOID                            VoidArray,
-    IN SIZE_T                               Count,
-    OUT PSIZE_T                             OutCount,
-    IN SIZE_T                               ElementSize,
-    IN RTL_COMPARE_ARRAY_ELEMENT_FUNCTION   CompareCallback,
-    PVOID                                   CompareContext  OPTIONAL,
-    IN RTL_COPY_ARRAY_ELEMENT_FUNCTION      CopyCallback    OPTIONAL,
-    PVOID                                   CopyContext     OPTIONAL
-    );
+RtlRemoveAdjacentEquivalentArrayElements(IN ULONG Flags, IN OUT PVOID VoidArray, IN SIZE_T Count, OUT PSIZE_T OutCount,
+                                         IN SIZE_T ElementSize, IN RTL_COMPARE_ARRAY_ELEMENT_FUNCTION CompareCallback,
+                                         PVOID CompareContext OPTIONAL,
+                                         IN RTL_COPY_ARRAY_ELEMENT_FUNCTION CopyCallback OPTIONAL,
+                                         PVOID CopyContext OPTIONAL);
 
-typedef CONST VOID* PCVOID;
+typedef CONST VOID *PCVOID;
 
 RTL_GENERIC_COMPARE_RESULTS
 NTAPI
-RtlpQsortBsearchCompareAdapter(
-    PVOID       VoidContext,
-    IN PCVOID   VoidElement1,
-    IN PCVOID   VoidElement2,
-    IN SIZE_T   ElementSize
-    )
+RtlpQsortBsearchCompareAdapter(PVOID VoidContext, IN PCVOID VoidElement1, IN PCVOID VoidElement2, IN SIZE_T ElementSize)
 /*++
 
 Routine Description:
@@ -148,14 +104,7 @@ Return Value:
     return (i < 0) ? GenericLessThan : (i > 0) ? GenericGreaterThan : GenericEqual;
 }
 
-VOID
-NTAPI
-RtlpDoNothingCopyArrayElement(
-    PVOID           Context,
-    OUT PVOID       To,
-    IN CONST VOID * From,
-    IN SIZE_T       ElementSize
-    )
+VOID NTAPI RtlpDoNothingCopyArrayElement(PVOID Context, OUT PVOID To, IN CONST VOID *From, IN SIZE_T ElementSize)
 /*++
 
 Routine Description:
@@ -185,16 +134,10 @@ Return Value:
 NTSTATUS
 NTAPI
 RtlRemoveAdjacentEquivalentArrayElements( // aka "unique" (if sorted)
-    IN ULONG                                Flags,
-    IN OUT PVOID                            VoidArray,
-    IN SIZE_T                               Count,
-    OUT PSIZE_T                             OutCount,
-    IN SIZE_T                               ElementSize,
-    IN RTL_COMPARE_ARRAY_ELEMENT_FUNCTION   CompareCallback,
-    PVOID                                   CompareContext  OPTIONAL,
-    IN RTL_COPY_ARRAY_ELEMENT_FUNCTION      CopyCallback    OPTIONAL, // defaults to RtlCopyMemory
-    PVOID                                   CopyContext     OPTIONAL
-    )
+    IN ULONG Flags, IN OUT PVOID VoidArray, IN SIZE_T Count, OUT PSIZE_T OutCount, IN SIZE_T ElementSize,
+    IN RTL_COMPARE_ARRAY_ELEMENT_FUNCTION CompareCallback, PVOID CompareContext OPTIONAL,
+    IN RTL_COPY_ARRAY_ELEMENT_FUNCTION CopyCallback OPTIONAL, // defaults to RtlCopyMemory
+    PVOID CopyContext OPTIONAL)
 /*++
 
 Routine Description:
@@ -226,37 +169,49 @@ Return Value:
     PUCHAR Iterator = NextAccepted;
     NTSTATUS Status;
 
-    if (OutCount == NULL) {
+    if (OutCount == NULL)
+    {
         Status = STATUS_INVALID_PARAMETER;
         goto Exit;
     }
     *OutCount = 0;
 
-    if ((Flags & ~RTL_REMOVE_ADJACENT_EQUIVALENT_ARRAY_ELEMENTS_FLAG_COMPARE_IS_QSORT_BSEARCH_SIGNATURE) != 0) {
+    if ((Flags & ~RTL_REMOVE_ADJACENT_EQUIVALENT_ARRAY_ELEMENTS_FLAG_COMPARE_IS_QSORT_BSEARCH_SIGNATURE) != 0)
+    {
         Status = STATUS_INVALID_PARAMETER;
         goto Exit;
     }
 
-    if ((Flags & RTL_REMOVE_ADJACENT_EQUIVALENT_ARRAY_ELEMENTS_FLAG_COMPARE_IS_QSORT_BSEARCH_SIGNATURE) != 0) {
+    if ((Flags & RTL_REMOVE_ADJACENT_EQUIVALENT_ARRAY_ELEMENTS_FLAG_COMPARE_IS_QSORT_BSEARCH_SIGNATURE) != 0)
+    {
         CompareCallback = (RTL_COMPARE_ARRAY_ELEMENT_FUNCTION)RtlpQsortBsearchCompareAdapter;
         CompareContext = (PVOID)CompareCallback;
     }
 
-    if (Count < 2) {
+    if (Count < 2)
+    {
         *OutCount = 1;
         Status = STATUS_SUCCESS;
         goto Exit;
     }
     Count = 1; // always take the first element
-    for ( ; Iterator != End ; Iterator += ElementSize) {
-        if ((*CompareCallback)(CompareContext, Iterator, LastAccepted, ElementSize) != 0) {
-            if (Iterator != NextAccepted) {
-                if (CopyCallback != NULL) {
+    for (; Iterator != End; Iterator += ElementSize)
+    {
+        if ((*CompareCallback)(CompareContext, Iterator, LastAccepted, ElementSize) != 0)
+        {
+            if (Iterator != NextAccepted)
+            {
+                if (CopyCallback != NULL)
+                {
                     (*CopyCallback)(CopyContext, NextAccepted, Iterator, ElementSize);
-                } else {
+                }
+                else
+                {
                     RtlCopyMemory(NextAccepted, Iterator, ElementSize);
                 }
-            } else {
+            }
+            else
+            {
                 // do not bother copying until we have skipped any elements
             }
             LastAccepted = NextAccepted;
@@ -272,20 +227,10 @@ Exit:
 
 NTSTATUS
 NTAPI
-RtlMergeSortedArrays(
-    IN ULONG                                Flags,
-    IN PCVOID                               VoidArray1,
-    IN SIZE_T                               Count1,
-    IN PCVOID                               VoidArray2,
-    IN SIZE_T                               Count2,
-    OUT PVOID                               VoidResult      OPTIONAL,
-    OUT PSIZE_T                             OutResultCount,
-    IN SIZE_T                               ElementSize,
-    IN RTL_COMPARE_ARRAY_ELEMENT_FUNCTION   CompareCallback,
-    PVOID                                   CompareContext  OPTIONAL,
-    IN RTL_COPY_ARRAY_ELEMENT_FUNCTION      CopyCallback,
-    PVOID                                   CopyContext     OPTIONAL
-    )
+RtlMergeSortedArrays(IN ULONG Flags, IN PCVOID VoidArray1, IN SIZE_T Count1, IN PCVOID VoidArray2, IN SIZE_T Count2,
+                     OUT PVOID VoidResult OPTIONAL, OUT PSIZE_T OutResultCount, IN SIZE_T ElementSize,
+                     IN RTL_COMPARE_ARRAY_ELEMENT_FUNCTION CompareCallback, PVOID CompareContext OPTIONAL,
+                     IN RTL_COPY_ARRAY_ELEMENT_FUNCTION CopyCallback, PVOID CopyContext OPTIONAL)
 /*++
 
 Routine Description:
@@ -325,13 +270,15 @@ Return Value:
     SIZE_T ResultCount = 0;
     NTSTATUS Status;
 
-    if (OutResultCount == NULL) {
+    if (OutResultCount == NULL)
+    {
         Status = STATUS_INVALID_PARAMETER;
         goto Exit;
     }
     *OutResultCount = 0;
 
-    if ((Flags & ~RTL_MERGE_SORTED_ARRAYS_FLAG_COMPARE_IS_QSORT_BSEARCH_SIGNATURE) != 0) {
+    if ((Flags & ~RTL_MERGE_SORTED_ARRAYS_FLAG_COMPARE_IS_QSORT_BSEARCH_SIGNATURE) != 0)
+    {
         Status = STATUS_INVALID_PARAMETER;
         goto Exit;
     }
@@ -340,45 +287,60 @@ Return Value:
     // This is useful to get back the resulting count, before allocating
     // the space.
     //
-    if (VoidResult == NULL) {
+    if (VoidResult == NULL)
+    {
         CopyCallback = RtlpDoNothingCopyArrayElement;
     }
 
-    if ((Flags & RTL_MERGE_SORTED_ARRAYS_FLAG_COMPARE_IS_QSORT_BSEARCH_SIGNATURE) != 0) {
+    if ((Flags & RTL_MERGE_SORTED_ARRAYS_FLAG_COMPARE_IS_QSORT_BSEARCH_SIGNATURE) != 0)
+    {
         CompareCallback = RtlpQsortBsearchCompareAdapter;
         CompareContext = (PVOID)CompareCallback;
     }
 
-    for ( ; Count1 != 0 && Count2 != 0 ; ) {
+    for (; Count1 != 0 && Count2 != 0;)
+    {
 
         CONST int CompareResult = (*CompareCallback)(CompareContext, Array1, Array2, ElementSize);
 
-        if (CompareResult < 0) {
-            if (CopyCallback != NULL) {
+        if (CompareResult < 0)
+        {
+            if (CopyCallback != NULL)
+            {
                 (*CopyCallback)(CopyContext, ResultArray, Array1, ElementSize);
-            } else {
+            }
+            else
+            {
                 RtlCopyMemory(ResultArray, Array1, ElementSize);
             }
             Array1 += ElementSize;
             Count1 -= 1;
         }
-        else if (CompareResult > 0) {
-            if (CopyCallback != NULL) {
+        else if (CompareResult > 0)
+        {
+            if (CopyCallback != NULL)
+            {
                 (*CopyCallback)(CopyContext, ResultArray, Array2, ElementSize);
-            } else {
+            }
+            else
+            {
                 RtlCopyMemory(ResultArray, Array2, ElementSize);
             }
             Array2 += ElementSize;
             Count2 -= 1;
         }
-        else /* CompareResult == 0 */ {
+        else /* CompareResult == 0 */
+        {
             //
             // move past the elements in both arrays, chosing arbitrarily
             // which one to take (Array1)
             //
-            if (CopyCallback != NULL) {
+            if (CopyCallback != NULL)
+            {
                 (*CopyCallback)(CopyContext, ResultArray, Array1, ElementSize);
-            } else {
+            }
+            else
+            {
                 RtlCopyMemory(ResultArray, Array1, ElementSize);
             }
             Array1 += ElementSize;
@@ -392,12 +354,17 @@ Return Value:
     //
     // now pick up the tail of whichever one has any left, if either
     //
-    if (VoidResult == NULL) {
+    if (VoidResult == NULL)
+    {
         ResultCount += Count1 + Count2;
-    } else if (Count1 != 0) {
+    }
+    else if (Count1 != 0)
+    {
         ResultCount += Count1;
-        if (CopyCallback != NULL) {
-            while (Count1 != 0) {
+        if (CopyCallback != NULL)
+        {
+            while (Count1 != 0)
+            {
                 //
                 // perhaps CopyCallback should be copy_n instead of copy_1,
                 // so we might gain an efficiency over the loop with an uninlinable
@@ -409,14 +376,20 @@ Return Value:
                 ResultArray += ElementSize;
                 Array1 += ElementSize;
             }
-        } else {
+        }
+        else
+        {
             RtlCopyMemory(ResultArray, Array1, Count1 * ElementSize);
             ResultArray += Count1 * ElementSize;
         }
-    } else if (Count2 != 0) {
+    }
+    else if (Count2 != 0)
+    {
         ResultCount += Count2;
-        if (CopyCallback != NULL) {
-            while (Count2 != 0) {
+        if (CopyCallback != NULL)
+        {
+            while (Count2 != 0)
+            {
                 //
                 // perhaps CopyCallback should be copy_n instead of copy_1
                 //
@@ -426,7 +399,9 @@ Return Value:
                 ResultArray += ElementSize;
                 Array2 += ElementSize;
             }
-        } else {
+        }
+        else
+        {
             RtlCopyMemory(ResultArray, Array2, Count2 * ElementSize);
             //optimize away ResultArray += Count2 * ElementSize;
         }

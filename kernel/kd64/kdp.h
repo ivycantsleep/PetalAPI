@@ -46,11 +46,9 @@ PKPCR KdpGetPcr();
 ULONG KdpReadInternalProcessorState(PVOID, ULONG);
 ULONG KdpReadInternalProcessorCounters(PVOID, ULONG);
 
-struct _KPRCB *
-KdpGetCurrentPrcb();
+struct _KPRCB *KdpGetCurrentPrcb();
 
-struct _KTHREAD *
-KdpGetCurrentThread();
+struct _KTHREAD *KdpGetCurrentThread();
 
 //
 // Redefine the standard PCR routines
@@ -71,7 +69,7 @@ KdpGetCurrentThread();
 // Define TYPES
 //
 
-#define KDP_BREAKPOINT_TYPE  ULONG
+#define KDP_BREAKPOINT_TYPE ULONG
 #define KDP_BREAKPOINT_BUFFER sizeof(ULONG)
 
 // longword aligned
@@ -124,15 +122,15 @@ KdpGetCurrentThread();
 //  export it in ExceptionRecord.ExceptionAddress.
 
 
-#define KDP_BREAKPOINT_TYPE  ULONGLONG          // 64-bit ULONGLONG type is needed to cover 41-bit EM break instruction.
+#define KDP_BREAKPOINT_TYPE ULONGLONG // 64-bit ULONGLONG type is needed to cover 41-bit EM break instruction.
 #define KDP_BREAKPOINT_BUFFER (2 * sizeof(ULONGLONG))
-#define KDP_BREAKPOINT_ALIGN 0x3                // An EM address consists of bundle and slot number and is 32-bit aligned.
+#define KDP_BREAKPOINT_ALIGN 0x3 // An EM address consists of bundle and slot number and is 32-bit aligned.
 #define KDP_BREAKPOINT_INSTR_ALIGN 0xf
 #define KDP_BREAKPOINT_VALUE (BREAK_INSTR | (BREAKPOINT_STOP << 6))
 
 #elif defined(_X86_) || defined(_AMD64_)
 
-#define KDP_BREAKPOINT_TYPE  UCHAR
+#define KDP_BREAKPOINT_TYPE UCHAR
 #define KDP_BREAKPOINT_BUFFER sizeof(UCHAR)
 #define KDP_BREAKPOINT_ALIGN 0
 #define KDP_BREAKPOINT_INSTR_ALIGN 0
@@ -155,17 +153,18 @@ KdpGetCurrentThread();
 // Define breakpoint table entry structure.
 //
 
-#define KD_BREAKPOINT_IN_USE        0x00000001
-#define KD_BREAKPOINT_NEEDS_WRITE   0x00000002
-#define KD_BREAKPOINT_SUSPENDED     0x00000004
+#define KD_BREAKPOINT_IN_USE 0x00000001
+#define KD_BREAKPOINT_NEEDS_WRITE 0x00000002
+#define KD_BREAKPOINT_SUSPENDED 0x00000004
 #define KD_BREAKPOINT_NEEDS_REPLACE 0x00000008
 // IA64 specific defines
-#define KD_BREAKPOINT_STATE_MASK    0x0000000f
-#define KD_BREAKPOINT_IA64_MASK     0x000f0000
-#define KD_BREAKPOINT_IA64_MODE     0x00010000   // IA64 mode
-#define KD_BREAKPOINT_IA64_MOVL     0x00020000   // MOVL instruction displaced
+#define KD_BREAKPOINT_STATE_MASK 0x0000000f
+#define KD_BREAKPOINT_IA64_MASK 0x000f0000
+#define KD_BREAKPOINT_IA64_MODE 0x00010000 // IA64 mode
+#define KD_BREAKPOINT_IA64_MOVL 0x00020000 // MOVL instruction displaced
 
-typedef struct _BREAKPOINT_ENTRY {
+typedef struct _BREAKPOINT_ENTRY
+{
     ULONG Flags;
     ULONG_PTR DirectoryTableBase;
     PVOID Address;
@@ -180,14 +179,16 @@ typedef struct _BREAKPOINT_ENTRY {
 
 #define DBGKD_MAX_SPECIAL_CALLS 10
 
-typedef struct _TRACE_DATA_SYM {
+typedef struct _TRACE_DATA_SYM
+{
     ULONG SymMin;
     ULONG SymMax;
 } TRACE_DATA_SYM, *PTRACE_DATA_SYM;
 
 #define KD_MAX_REMOTE_FILES 16
 
-typedef struct _KD_REMOTE_FILE {
+typedef struct _KD_REMOTE_FILE
+{
     ULONG64 RemoteHandle;
 } KD_REMOTE_FILE, *PKD_REMOTE_FILE;
 
@@ -196,157 +197,71 @@ typedef struct _KD_REMOTE_FILE {
 //
 
 NTSTATUS
-KdpPrint(
-    IN ULONG ComponentId,
-    IN ULONG Level,
-    IN PCHAR Message,
-    IN USHORT Length,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    OUT PBOOLEAN Completion
-    );
+KdpPrint(IN ULONG ComponentId, IN ULONG Level, IN PCHAR Message, IN USHORT Length, IN KPROCESSOR_MODE PreviousMode,
+         IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame, OUT PBOOLEAN Completion);
 
 BOOLEAN
-KdpPrintString (
-    IN PSTRING Output
-    );
+KdpPrintString(IN PSTRING Output);
 
 USHORT
-KdpPrompt(
-    IN PCHAR Message,
-    IN USHORT MessageLength,
-    IN OUT PCHAR Reply,
-    IN USHORT ReplyLength,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame
-    );
+KdpPrompt(IN PCHAR Message, IN USHORT MessageLength, IN OUT PCHAR Reply, IN USHORT ReplyLength,
+          IN KPROCESSOR_MODE PreviousMode, IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame);
 
 BOOLEAN
-KdpPromptString (
-    IN PSTRING Output,
-    IN OUT PSTRING Input
-    );
+KdpPromptString(IN PSTRING Output, IN OUT PSTRING Input);
 
 BOOLEAN
-KdpReport(
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PCONTEXT ContextRecord,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN BOOLEAN SecondChance
-    );
+KdpReport(IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame, IN PEXCEPTION_RECORD ExceptionRecord,
+          IN PCONTEXT ContextRecord, IN KPROCESSOR_MODE PreviousMode, IN BOOLEAN SecondChance);
 
-VOID
-KdpSymbol(
-    IN PSTRING String,
-    IN PKD_SYMBOLS_INFO Symbol,
-    IN BOOLEAN Unload,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN PCONTEXT ContextRecord,
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame
-    );
+VOID KdpSymbol(IN PSTRING String, IN PKD_SYMBOLS_INFO Symbol, IN BOOLEAN Unload, IN KPROCESSOR_MODE PreviousMode,
+               IN PCONTEXT ContextRecord, IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame);
 
-VOID
-KdpCommandString(
-    IN PSTRING Name,
-    IN PSTRING Command,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN PCONTEXT ContextRecord,
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame
-    );
+VOID KdpCommandString(IN PSTRING Name, IN PSTRING Command, IN KPROCESSOR_MODE PreviousMode, IN PCONTEXT ContextRecord,
+                      IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame);
 
 ULONG
-KdpAddBreakpoint (
-    IN PVOID Address
-    );
+KdpAddBreakpoint(IN PVOID Address);
 
 BOOLEAN
-KdpDeleteBreakpoint (
-    IN ULONG Handle
-    );
+KdpDeleteBreakpoint(IN ULONG Handle);
 
 BOOLEAN
-KdpDeleteBreakpointRange (
-    IN PVOID Lower,
-    IN PVOID Upper
-    );
+KdpDeleteBreakpointRange(IN PVOID Lower, IN PVOID Upper);
 
 #if defined(_IA64_)
 
 BOOLEAN
-KdpSuspendBreakpointRange (
-    IN PVOID Lower,
-    IN PVOID Upper
-    );
+KdpSuspendBreakpointRange(IN PVOID Lower, IN PVOID Upper);
 
 BOOLEAN
-KdpRestoreBreakpointRange (
-    IN PVOID Lower,
-    IN PVOID Upper
-    );
+KdpRestoreBreakpointRange(IN PVOID Lower, IN PVOID Upper);
 #endif
 
 #if i386
 
 BOOLEAN
-KdpCheckTracePoint(
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN OUT PCONTEXT ContextRecord
-    );
+KdpCheckTracePoint(IN PEXCEPTION_RECORD ExceptionRecord, IN OUT PCONTEXT ContextRecord);
 
 NTSTATUS
-KdGetTraceInformation (
-    OUT PVOID TraceInformation,
-    IN ULONG TraceInformationLength,
-    OUT PULONG RequiredLength
-    );
+KdGetTraceInformation(OUT PVOID TraceInformation, IN ULONG TraceInformationLength, OUT PULONG RequiredLength);
 
-VOID
-KdSetInternalBreakpoint (
-    IN PDBGKD_MANIPULATE_STATE64 m
-    );
+VOID KdSetInternalBreakpoint(IN PDBGKD_MANIPULATE_STATE64 m);
 
 #endif
 
 NTSTATUS
-KdQuerySpecialCalls (
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN ULONG Length,
-    OUT PULONG RequiredLength
-    );
+KdQuerySpecialCalls(IN PDBGKD_MANIPULATE_STATE64 m, IN ULONG Length, OUT PULONG RequiredLength);
 
-VOID
-KdSetSpecialCall (
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PCONTEXT ContextRecord
-    );
+VOID KdSetSpecialCall(IN PDBGKD_MANIPULATE_STATE64 m, IN PCONTEXT ContextRecord);
 
-VOID
-KdClearSpecialCalls (
-    VOID
-    );
+VOID KdClearSpecialCalls(VOID);
 
-VOID
-KdpQuickMoveMemory (
-    IN PCHAR Destination,
-    IN PCHAR Source,
-    IN ULONG Length
-    );
+VOID KdpQuickMoveMemory(IN PCHAR Destination, IN PCHAR Source, IN ULONG Length);
 
 NTSTATUS
-KdpCopyMemoryChunks(
-    ULONG64 Address,
-    PVOID Buffer,
-    ULONG TotalSize,
-    ULONG ChunkSize,
-    ULONG Flags,
-    PULONG ActualSize OPTIONAL
-    );
+KdpCopyMemoryChunks(ULONG64 Address, PVOID Buffer, ULONG TotalSize, ULONG ChunkSize, ULONG Flags,
+                    PULONG ActualSize OPTIONAL);
 
 //
 // KdpCopyMemoryChunks always copies between an untrusted address
@@ -357,111 +272,50 @@ KdpCopyMemoryChunks(
 
 // Read memory from an untrusted pointer into a trusted buffer.
 #define KdpCopyFromPtr(Dst, Src, Size, Done) \
-    KdpCopyMemoryChunks((ULONG_PTR)(Src), Dst, Size, 0,                       \
-                        MMDBG_COPY_UNSAFE, Done)
+    KdpCopyMemoryChunks((ULONG_PTR)(Src), Dst, Size, 0, MMDBG_COPY_UNSAFE, Done)
 // Write memory from a trusted buffer through an untrusted pointer.
 #define KdpCopyToPtr(Dst, Src, Size, Done) \
-    KdpCopyMemoryChunks((ULONG_PTR)(Dst), Src, Size, 0,                       \
-                        MMDBG_COPY_WRITE | MMDBG_COPY_UNSAFE, Done)
+    KdpCopyMemoryChunks((ULONG_PTR)(Dst), Src, Size, 0, MMDBG_COPY_WRITE | MMDBG_COPY_UNSAFE, Done)
 
 ULONG
-KdpReceivePacket (
-    IN ULONG ExpectedPacketType,
-    OUT PSTRING MessageHeader,
-    OUT PSTRING MessageData,
-    OUT PULONG DataLength
-    );
+KdpReceivePacket(IN ULONG ExpectedPacketType, OUT PSTRING MessageHeader, OUT PSTRING MessageData,
+                 OUT PULONG DataLength);
 
-VOID
-KdpSetContextState(
-    IN OUT PDBGKD_ANY_WAIT_STATE_CHANGE WaitStateChange,
-    IN PCONTEXT ContextRecord
-    );
+VOID KdpSetContextState(IN OUT PDBGKD_ANY_WAIT_STATE_CHANGE WaitStateChange, IN PCONTEXT ContextRecord);
 
-VOID
-KdpSetStateChange(
-    IN OUT PDBGKD_ANY_WAIT_STATE_CHANGE WaitStateChange,
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PCONTEXT ContextRecord,
-    IN BOOLEAN SecondChance
-    );
+VOID KdpSetStateChange(IN OUT PDBGKD_ANY_WAIT_STATE_CHANGE WaitStateChange, IN PEXCEPTION_RECORD ExceptionRecord,
+                       IN PCONTEXT ContextRecord, IN BOOLEAN SecondChance);
 
-VOID
-KdpGetStateChange(
-    IN PDBGKD_MANIPULATE_STATE64 ManipulateState,
-    IN PCONTEXT ContextRecord
-    );
+VOID KdpGetStateChange(IN PDBGKD_MANIPULATE_STATE64 ManipulateState, IN PCONTEXT ContextRecord);
 
-VOID
-KdpSendPacket (
-    IN ULONG PacketType,
-    IN PSTRING MessageHeader,
-    IN PSTRING MessageData OPTIONAL
-    );
+VOID KdpSendPacket(IN ULONG PacketType, IN PSTRING MessageHeader, IN PSTRING MessageData OPTIONAL);
 
 BOOLEAN
-KdpStub (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN PCONTEXT ContextRecord,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN BOOLEAN SecondChance
-    );
+KdpStub(IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame, IN PEXCEPTION_RECORD ExceptionRecord,
+        IN PCONTEXT ContextRecord, IN KPROCESSOR_MODE PreviousMode, IN BOOLEAN SecondChance);
 
 BOOLEAN
-KdpTrap (
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PEXCEPTION_RECORD ExceptionRecord64,
-    IN PCONTEXT ContextRecord,
-    IN KPROCESSOR_MODE PreviousMode,
-    IN BOOLEAN SecondChance
-    );
+KdpTrap(IN PKTRAP_FRAME TrapFrame, IN PKEXCEPTION_FRAME ExceptionFrame, IN PEXCEPTION_RECORD ExceptionRecord64,
+        IN PCONTEXT ContextRecord, IN KPROCESSOR_MODE PreviousMode, IN BOOLEAN SecondChance);
 
 BOOLEAN
-KdpSwitchProcessor (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN OUT PCONTEXT ContextRecord,
-    IN BOOLEAN SecondChance
-    );
+KdpSwitchProcessor(IN PEXCEPTION_RECORD ExceptionRecord, IN OUT PCONTEXT ContextRecord, IN BOOLEAN SecondChance);
 
 BOOLEAN
-KdpReportExceptionStateChange (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN OUT PCONTEXT ContextRecord,
-    IN BOOLEAN SecondChance
-    );
+KdpReportExceptionStateChange(IN PEXCEPTION_RECORD ExceptionRecord, IN OUT PCONTEXT ContextRecord,
+                              IN BOOLEAN SecondChance);
 
 BOOLEAN
-KdpReportLoadSymbolsStateChange (
-    IN PSTRING PathName,
-    IN PKD_SYMBOLS_INFO SymbolInfo,
-    IN BOOLEAN UnloadSymbols,
-    IN OUT PCONTEXT ContextRecord
-    );
+KdpReportLoadSymbolsStateChange(IN PSTRING PathName, IN PKD_SYMBOLS_INFO SymbolInfo, IN BOOLEAN UnloadSymbols,
+                                IN OUT PCONTEXT ContextRecord);
 
-VOID
-KdpReportCommandStringStateChange (
-    IN PSTRING Name,
-    IN PSTRING Command,
-    IN OUT PCONTEXT ContextRecord
-    );
+VOID KdpReportCommandStringStateChange(IN PSTRING Name, IN PSTRING Command, IN OUT PCONTEXT ContextRecord);
 
 KCONTINUE_STATUS
-KdpSendWaitContinue(
-    IN ULONG PacketType,
-    IN PSTRING MessageHeader,
-    IN PSTRING MessageData OPTIONAL,
-    IN OUT PCONTEXT ContextRecord
-    );
+KdpSendWaitContinue(IN ULONG PacketType, IN PSTRING MessageHeader, IN PSTRING MessageData OPTIONAL,
+                    IN OUT PCONTEXT ContextRecord);
 
-VOID
-KdpReadVirtualMemory(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    );
+VOID KdpReadVirtualMemory(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context);
 
 #if 0
 VOID
@@ -472,12 +326,7 @@ KdpReadVirtualMemory64(
     );
 #endif
 
-VOID
-KdpWriteVirtualMemory(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    );
+VOID KdpWriteVirtualMemory(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context);
 
 #if 0
 VOID
@@ -488,245 +337,90 @@ KdpWriteVirtualMemory64(
     );
 #endif
 
-VOID
-KdpReadPhysicalMemory(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    );
+VOID KdpReadPhysicalMemory(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context);
 
-VOID
-KdpWritePhysicalMemory(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    );
+VOID KdpWritePhysicalMemory(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context);
 
-VOID
-KdpCheckLowMemory(
-    IN PDBGKD_MANIPULATE_STATE64 m
-    );
+VOID KdpCheckLowMemory(IN PDBGKD_MANIPULATE_STATE64 m);
 
-VOID
-KdpGetContext(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    );
+VOID KdpGetContext(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context);
 
-VOID
-KdpSetContext(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    );
+VOID KdpSetContext(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context);
 
-VOID
-KdpWriteBreakpoint(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    );
+VOID KdpWriteBreakpoint(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context);
 
-VOID
-KdpRestoreBreakpoint(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    );
+VOID KdpRestoreBreakpoint(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context);
 
-VOID
-KdpReadControlSpace(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    );
+VOID KdpReadControlSpace(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context);
 
-VOID
-KdpWriteControlSpace(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    );
+VOID KdpWriteControlSpace(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context);
 
-VOID
-KdpReadIoSpace(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    );
+VOID KdpReadIoSpace(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context);
 
-VOID
-KdpWriteIoSpace(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    );
+VOID KdpWriteIoSpace(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context);
 
-VOID
-KdpReadIoSpaceExtended (
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    );
+VOID KdpReadIoSpaceExtended(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context);
 
-VOID
-KdpWriteIoSpaceExtended (
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    );
+VOID KdpWriteIoSpaceExtended(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context);
 
-VOID
-KdpReadMachineSpecificRegister(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    );
+VOID KdpReadMachineSpecificRegister(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context);
 
-VOID
-KdpWriteMachineSpecificRegister(
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    );
+VOID KdpWriteMachineSpecificRegister(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context);
 
-VOID
-KdpGetBusData (
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    );
+VOID KdpGetBusData(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context);
 
-VOID
-KdpSetBusData (
-    IN PDBGKD_MANIPULATE_STATE64 m,
-    IN PSTRING AdditionalData,
-    IN PCONTEXT Context
-    );
+VOID KdpSetBusData(IN PDBGKD_MANIPULATE_STATE64 m, IN PSTRING AdditionalData, IN PCONTEXT Context);
 
-VOID
-KdpSendTraceData(
-    PSTRING Data
-    );
+VOID KdpSendTraceData(PSTRING Data);
 
 
-VOID
-KdpSuspendBreakpoint (
-    ULONG Handle
-    );
+VOID KdpSuspendBreakpoint(ULONG Handle);
 
-VOID
-KdpSuspendAllBreakpoints (
-    VOID
-    );
+VOID KdpSuspendAllBreakpoints(VOID);
 
-VOID
-KdpRestoreAllBreakpoints (
-    VOID
-    );
+VOID KdpRestoreAllBreakpoints(VOID);
 
-VOID
-KdpTimeSlipDpcRoutine (
-    PKDPC Dpc,
-    PVOID DeferredContext,
-    PVOID SystemArgument1,
-    PVOID SystemArgument2
-    );
+VOID KdpTimeSlipDpcRoutine(PKDPC Dpc, PVOID DeferredContext, PVOID SystemArgument1, PVOID SystemArgument2);
 
-VOID
-KdpTimeSlipWork (
-    IN PVOID Context
-    );
+VOID KdpTimeSlipWork(IN PVOID Context);
 
 //
 // Routines shared between the debugger and
 // NtSystemDebugControl.
 //
 
-VOID
-KdpSysGetVersion(
-    PDBGKD_GET_VERSION64 Version
-    );
+VOID KdpSysGetVersion(PDBGKD_GET_VERSION64 Version);
 
 NTSTATUS
-KdpSysReadControlSpace(
-    ULONG Processor,
-    ULONG64 Address,
-    PVOID Buffer,
-    ULONG Request,
-    PULONG Actual
-    );
+KdpSysReadControlSpace(ULONG Processor, ULONG64 Address, PVOID Buffer, ULONG Request, PULONG Actual);
 
 NTSTATUS
-KdpSysWriteControlSpace(
-    ULONG Processor,
-    ULONG64 Address,
-    PVOID Buffer,
-    ULONG Request,
-    PULONG Actual
-    );
+KdpSysWriteControlSpace(ULONG Processor, ULONG64 Address, PVOID Buffer, ULONG Request, PULONG Actual);
 
 NTSTATUS
-KdpSysReadIoSpace(
-    INTERFACE_TYPE InterfaceType,
-    ULONG BusNumber,
-    ULONG AddressSpace,
-    ULONG64 Address,
-    PVOID Buffer,
-    ULONG Request,
-    PULONG Actual
-    );
+KdpSysReadIoSpace(INTERFACE_TYPE InterfaceType, ULONG BusNumber, ULONG AddressSpace, ULONG64 Address, PVOID Buffer,
+                  ULONG Request, PULONG Actual);
 
 NTSTATUS
-KdpSysWriteIoSpace(
-    INTERFACE_TYPE InterfaceType,
-    ULONG BusNumber,
-    ULONG AddressSpace,
-    ULONG64 Address,
-    PVOID Buffer,
-    ULONG Request,
-    PULONG Actual
-    );
+KdpSysWriteIoSpace(INTERFACE_TYPE InterfaceType, ULONG BusNumber, ULONG AddressSpace, ULONG64 Address, PVOID Buffer,
+                   ULONG Request, PULONG Actual);
 
 NTSTATUS
-KdpSysReadMsr(
-    ULONG Msr,
-    PULONG64 Data
-    );
+KdpSysReadMsr(ULONG Msr, PULONG64 Data);
 
 NTSTATUS
-KdpSysWriteMsr(
-    ULONG Msr,
-    PULONG64 Data
-    );
+KdpSysWriteMsr(ULONG Msr, PULONG64 Data);
 
 NTSTATUS
-KdpSysReadBusData(
-    BUS_DATA_TYPE BusDataType,
-    ULONG BusNumber,
-    ULONG SlotNumber,
-    ULONG Address,
-    PVOID Buffer,
-    ULONG Request,
-    PULONG Actual
-    );
+KdpSysReadBusData(BUS_DATA_TYPE BusDataType, ULONG BusNumber, ULONG SlotNumber, ULONG Address, PVOID Buffer,
+                  ULONG Request, PULONG Actual);
 
 NTSTATUS
-KdpSysWriteBusData(
-    BUS_DATA_TYPE BusDataType,
-    ULONG BusNumber,
-    ULONG SlotNumber,
-    ULONG Address,
-    PVOID Buffer,
-    ULONG Request,
-    PULONG Actual
-    );
+KdpSysWriteBusData(BUS_DATA_TYPE BusDataType, ULONG BusNumber, ULONG SlotNumber, ULONG Address, PVOID Buffer,
+                   ULONG Request, PULONG Actual);
 
 NTSTATUS
-KdpSysCheckLowMemory(
-    VOID
-    );
+KdpSysCheckLowMemory(VOID);
 
 //
 // Define dummy prototype so the address of the standard breakpoint instruction
@@ -735,10 +429,7 @@ KdpSysCheckLowMemory(
 // N.B. This function is NEVER called.
 //
 
-VOID
-RtlpBreakWithStatusInstruction (
-    VOID
-    );
+VOID RtlpBreakWithStatusInstruction(VOID);
 
 //
 // Define external references.
@@ -767,38 +458,39 @@ extern PULONG KdComponentTable[];
 extern BOOLEAN BreakpointsSuspended;
 extern LIST_ENTRY KdpDebuggerDataListHead;
 
-typedef struct {
-    ULONG64 Addr;               // pc address of breakpoint
-    ULONG Flags;                // Flags bits
-    ULONG Calls;                // # of times traced routine called
-    ULONG CallsLastCheck;       // # of calls at last periodic (1s) check
+typedef struct
+{
+    ULONG64 Addr;         // pc address of breakpoint
+    ULONG Flags;          // Flags bits
+    ULONG Calls;          // # of times traced routine called
+    ULONG CallsLastCheck; // # of calls at last periodic (1s) check
     ULONG MaxCallsPerPeriod;
-    ULONG MinInstructions;      // largest number of instructions for 1 call
-    ULONG MaxInstructions;      // smallest # of instructions for 1 call
-    ULONG TotalInstructions;    // total instructions for all calls
-    ULONG Handle;               // handle in (regular) bpt table
-    PVOID Thread;               // Thread that's skipping this BP
-    ULONG64 ReturnAddress;        // return address (if not COUNTONLY)
+    ULONG MinInstructions;   // largest number of instructions for 1 call
+    ULONG MaxInstructions;   // smallest # of instructions for 1 call
+    ULONG TotalInstructions; // total instructions for all calls
+    ULONG Handle;            // handle in (regular) bpt table
+    PVOID Thread;            // Thread that's skipping this BP
+    ULONG64 ReturnAddress;   // return address (if not COUNTONLY)
 } DBGKD_INTERNAL_BREAKPOINT, *PDBGKD_INTERNAL_BREAKPOINT;
 
 
 extern DBGKD_INTERNAL_BREAKPOINT KdpInternalBPs[DBGKD_MAX_INTERNAL_BREAKPOINTS];
 
-extern ULONG_PTR   KdpCurrentSymbolStart;
-extern ULONG_PTR   KdpCurrentSymbolEnd;
-extern LONG    KdpNextCallLevelChange;
-extern ULONG_PTR   KdSpecialCalls[];
-extern ULONG   KdNumberOfSpecialCalls;
-extern ULONG_PTR   InitialSP;
-extern ULONG   KdpNumInternalBreakpoints;
-extern KTIMER  InternalBreakpointTimer;
-extern KDPC    InternalBreakpointCheckDpc;
+extern ULONG_PTR KdpCurrentSymbolStart;
+extern ULONG_PTR KdpCurrentSymbolEnd;
+extern LONG KdpNextCallLevelChange;
+extern ULONG_PTR KdSpecialCalls[];
+extern ULONG KdNumberOfSpecialCalls;
+extern ULONG_PTR InitialSP;
+extern ULONG KdpNumInternalBreakpoints;
+extern KTIMER InternalBreakpointTimer;
+extern KDPC InternalBreakpointCheckDpc;
 extern BOOLEAN KdpPortLocked;
-extern LARGE_INTEGER   KdpTimeEntered;
+extern LARGE_INTEGER KdpTimeEntered;
 
 extern DBGKD_TRACE_DATA TraceDataBuffer[];
-extern ULONG            TraceDataBufferPosition;
-extern TRACE_DATA_SYM   TraceDataSyms[];
+extern ULONG TraceDataBufferPosition;
+extern TRACE_DATA_SYM TraceDataSyms[];
 extern UCHAR NextTraceDataSym;
 extern UCHAR NumTraceDataSyms;
 extern ULONG IntBPsSkipping;
@@ -819,9 +511,9 @@ extern BOOLEAN KdpControlCPressed;
 extern KD_CONTEXT KdpContext;
 
 extern KDP_BREAKPOINT_TYPE KdpBreakpointInstruction;
-extern UCHAR  KdPrintCircularBuffer[KDPRINTBUFFERSIZE];
+extern UCHAR KdPrintCircularBuffer[KDPRINTBUFFERSIZE];
 extern PUCHAR KdPrintWritePointer;
-extern ULONG  KdPrintRolloverCount;
+extern ULONG KdPrintRolloverCount;
 extern KSPIN_LOCK KdpPrintSpinLock;
 extern KSPIN_LOCK KdpDataSpinLock;
 extern LIST_ENTRY KdpDebuggerDataListHead;
@@ -896,52 +588,31 @@ extern ULONG KdpSearchCheckPoint;
 #define KDP_SEARCH_ALL_OFFSETS_IN_PAGE 0x0001
 
 
-
 //
 // Private procedure prototypes
 //
 
 BOOLEAN
-KdpAcquireBreakpoint(
-    IN ULONG Number
-    );
+KdpAcquireBreakpoint(IN ULONG Number);
 
-VOID
-KdpInitCom(
-    VOID
-    );
+VOID KdpInitCom(VOID);
 
-VOID
-KdpPortLock(
-    VOID
-    );
+VOID KdpPortLock(VOID);
 
-VOID
-KdpPortUnlock(
-    VOID
-    );
+VOID KdpPortUnlock(VOID);
 
 BOOLEAN
-KdpPollBreakInWithPortLock(
-    VOID
-    );
+KdpPollBreakInWithPortLock(VOID);
 
 USHORT
-KdpReceivePacketLeader (
-    IN ULONG PacketType,
-    OUT PULONG PacketLeader
-    );
+KdpReceivePacketLeader(IN ULONG PacketType, OUT PULONG PacketLeader);
 
 #if DBG
 
 #include <stdio.h>
 #define DPRINT(s) KdpDprintf s
 
-VOID
-KdpDprintf(
-    IN PCHAR f,
-    ...
-    );
+VOID KdpDprintf(IN PCHAR f, ...);
 
 #else
 

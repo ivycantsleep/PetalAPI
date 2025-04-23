@@ -21,11 +21,9 @@
 * History:
 \***************************************************************************/
 
-BOOL SysHasKanji(
-    )
+BOOL SysHasKanji()
 {
-  return (*(WORD *)&keybdInfo.Begin_First_range != 0x0FEFF ||
-          *(WORD *)&keybdInfo.Begin_Second_range != 0x0FEFF);
+    return (*(WORD *)&keybdInfo.Begin_First_range != 0x0FEFF || *(WORD *)&keybdInfo.Begin_Second_range != 0x0FEFF);
 }
 
 /***************************************************************************\
@@ -36,36 +34,35 @@ BOOL SysHasKanji(
 * History:
 \***************************************************************************/
 
-int KAlign(
-     PED ped,
-    int ichIn)
+int KAlign(PED ped, int ichIn)
 {
-   int ichCheck;
-  int ichOut;
-  LPSTR lpch;
+    int ichCheck;
+    int ichOut;
+    LPSTR lpch;
 
-  /*
+    /*
    * ichOut chases ichCheck until ichCheck > ichIn
    */
-  if (ped->fSingle)
-      ichOut = ichCheck = 0;
-  else
-      ichOut = ichCheck = ped->mpilich[IlFromIch(ped, ichIn)];
+    if (ped->fSingle)
+        ichOut = ichCheck = 0;
+    else
+        ichOut = ichCheck = ped->mpilich[IlFromIch(ped, ichIn)];
 
-  lpch = ECLock(ped) + ichCheck;
-  while (ichCheck <= ichIn) {
-      ichOut = ichCheck;
-      if (IsTwoByteCharPrefix(*(unsigned char *)lpch))
-	{
-          lpch++;
-          ichCheck++;
+    lpch = ECLock(ped) + ichCheck;
+    while (ichCheck <= ichIn)
+    {
+        ichOut = ichCheck;
+        if (IsTwoByteCharPrefix(*(unsigned char *)lpch))
+        {
+            lpch++;
+            ichCheck++;
         }
 
-      lpch++;
-      ichCheck++;
+        lpch++;
+        ichCheck++;
     }
-  ECUnlock(ped);
-  return (ichOut);
+    ECUnlock(ped);
+    return (ichOut);
 }
 
 /***************************************************************************\
@@ -77,18 +74,16 @@ int KAlign(
 * History:
 \***************************************************************************/
 
-int KBump(
-     PED ped,
-    int dch)
+int KBump(PED ped, int dch)
 {
-  unsigned char *pch;
+    unsigned char *pch;
 
-  pch = ECLock(ped) + ped->ichMaxSel;
-  if (IsTwoByteCharPrefix(*pch))
-      dch += ped->cxChar;
-  ECUnlock(ped);
+    pch = ECLock(ped) + ped->ichMaxSel;
+    if (IsTwoByteCharPrefix(*pch))
+        dch += ped->cxChar;
+    ECUnlock(ped);
 
-  return (dch);
+    return (dch);
 }
 
 /***************************************************************************\
@@ -99,9 +94,7 @@ int KBump(
 * History:
 \***************************************************************************/
 
-int KCombine(
-    HWND hwnd,
-    int ch)
+int KCombine(HWND hwnd, int ch)
 {
     MSG msg;
     int i;
@@ -111,7 +104,8 @@ int KCombine(
      */
     i = 10;
 
-    while (!PeekMessage(&msg, hwnd, WM_CHAR, WM_CHAR, PM_REMOVE)) {
+    while (!PeekMessage(&msg, hwnd, WM_CHAR, WM_CHAR, PM_REMOVE))
+    {
         if (--i == 0)
             return 0;
         Yield();

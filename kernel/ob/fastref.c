@@ -86,20 +86,15 @@ Revision History:
 #pragma hdrstop
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,ObInitializeFastReference)
-#pragma alloc_text(PAGE,ObFastReferenceObject)
-#pragma alloc_text(PAGE,ObFastReferenceObjectLocked)
-#pragma alloc_text(PAGE,ObFastDereferenceObject)
-#pragma alloc_text(PAGE,ObFastReplaceObject)
+#pragma alloc_text(PAGE, ObInitializeFastReference)
+#pragma alloc_text(PAGE, ObFastReferenceObject)
+#pragma alloc_text(PAGE, ObFastReferenceObjectLocked)
+#pragma alloc_text(PAGE, ObFastDereferenceObject)
+#pragma alloc_text(PAGE, ObFastReplaceObject)
 #endif
 
 NTKERNELAPI
-VOID
-FASTCALL
-ObInitializeFastReference (
-    IN PEX_FAST_REF FastRef,
-    IN PVOID Object
-    )
+VOID FASTCALL ObInitializeFastReference(IN PEX_FAST_REF FastRef, IN PVOID Object)
 /*++
 
 Routine Description:
@@ -119,18 +114,17 @@ Return Value:
     //
     // If an object was given then bias the object reference by the cache size.
     //
-    if (Object != NULL) {
-        ObReferenceObjectEx (Object, ExFastRefGetAdditionalReferenceCount ());
+    if (Object != NULL)
+    {
+        ObReferenceObjectEx(Object, ExFastRefGetAdditionalReferenceCount());
     }
-    ExFastRefInitialize (FastRef, Object);
+    ExFastRefInitialize(FastRef, Object);
 }
 
 NTKERNELAPI
 PVOID
 FASTCALL
-ObFastReferenceObject (
-    IN PEX_FAST_REF FastRef
-    )
+ObFastReferenceObject(IN PEX_FAST_REF FastRef)
 /*++
 
 Routine Description:
@@ -154,17 +148,19 @@ Return Value:
     //
     // Attempt the fast reference
     //
-    OldRef = ExFastReference (FastRef);
+    OldRef = ExFastReference(FastRef);
 
-    Object = ExFastRefGetObject (OldRef);
+    Object = ExFastRefGetObject(OldRef);
     //
     // We fail if there wasn't an object or if it has no cached references
     // left. Both of these cases had the cached reference count zero.
     //
-    Unused = ExFastRefGetUnusedReferences (OldRef);
+    Unused = ExFastRefGetUnusedReferences(OldRef);
 
-    if (Unused <= 1) {
-        if (Unused == 0) {
+    if (Unused <= 1)
+    {
+        if (Unused == 0)
+        {
             return NULL;
         }
         //
@@ -172,15 +168,16 @@ Return Value:
         // the next referencer by resetting the counter to its max. Since we now
         // have a reference to the object we can do this.
         //
-        RefsToAdd = ExFastRefGetAdditionalReferenceCount ();
-        ObReferenceObjectEx (Object, RefsToAdd);
+        RefsToAdd = ExFastRefGetAdditionalReferenceCount();
+        ObReferenceObjectEx(Object, RefsToAdd);
 
         //
         // Try to add the added references to the cache. If we fail then just
         // release them.
         //
-        if (!ExFastRefAddAdditionalReferenceCounts (FastRef, Object, RefsToAdd)) {
-            ObDereferenceObjectEx (Object, RefsToAdd);
+        if (!ExFastRefAddAdditionalReferenceCounts(FastRef, Object, RefsToAdd))
+        {
+            ObDereferenceObjectEx(Object, RefsToAdd);
         }
     }
     return Object;
@@ -189,9 +186,7 @@ Return Value:
 NTKERNELAPI
 PVOID
 FASTCALL
-ObFastReferenceObjectLocked (
-    IN PEX_FAST_REF FastRef
-    )
+ObFastReferenceObjectLocked(IN PEX_FAST_REF FastRef)
 /*++
 
 Routine Description:
@@ -213,20 +208,16 @@ Return Value:
     EX_FAST_REF OldRef;
 
     OldRef = *FastRef;
-    Object = ExFastRefGetObject (OldRef);
-    if (Object != NULL) {
-        ObReferenceObject (Object);
+    Object = ExFastRefGetObject(OldRef);
+    if (Object != NULL)
+    {
+        ObReferenceObject(Object);
     }
     return Object;
 }
 
 NTKERNELAPI
-VOID
-FASTCALL
-ObFastDereferenceObject (
-    IN PEX_FAST_REF FastRef,
-    IN PVOID Object
-    )
+VOID FASTCALL ObFastDereferenceObject(IN PEX_FAST_REF FastRef, IN PVOID Object)
 /*++
 
 Routine Description:
@@ -243,22 +234,20 @@ Return Value:
 
 --*/
 {
-    if (!ExFastRefDereference (FastRef, Object)) {
+    if (!ExFastRefDereference(FastRef, Object))
+    {
         //
         // If the object changed or there is no space left in the reference
         // cache then just deref the object.
         //
-        ObDereferenceObject (Object);
+        ObDereferenceObject(Object);
     }
 }
 
 NTKERNELAPI
 PVOID
 FASTCALL
-ObFastReplaceObject (
-    IN PEX_FAST_REF FastRef,
-    IN PVOID Object
-    )
+ObFastReplaceObject(IN PEX_FAST_REF FastRef, IN PVOID Object)
 /*++
 
 Routine Description:
@@ -283,22 +272,25 @@ Return Value:
     //
     // If we have been given an object then bias it by the correct amount.
     //
-    if (Object != NULL) {
-        ObReferenceObjectEx (Object, ExFastRefGetAdditionalReferenceCount ());
+    if (Object != NULL)
+    {
+        ObReferenceObjectEx(Object, ExFastRefGetAdditionalReferenceCount());
     }
     //
     // Do the swap
     //
-    OldRef = ExFastRefSwapObject (FastRef, Object);
-    OldObject = ExFastRefGetObject (OldRef);
+    OldRef = ExFastRefSwapObject(FastRef, Object);
+    OldObject = ExFastRefGetObject(OldRef);
     //
     // If there was an original object then we need to work out how many
     // cached references there were (if any) and return them.
     //
-    if (OldObject != NULL) {
-        RefsToReturn = ExFastRefGetUnusedReferences (OldRef);
-        if (RefsToReturn > 0) {
-            ObDereferenceObjectEx (OldObject, RefsToReturn);
+    if (OldObject != NULL)
+    {
+        RefsToReturn = ExFastRefGetUnusedReferences(OldRef);
+        if (RefsToReturn > 0)
+        {
+            ObDereferenceObjectEx(OldObject, RefsToReturn);
         }
     }
     return OldObject;

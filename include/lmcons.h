@@ -37,74 +37,74 @@ Abstract:
 /*INC*/
 
 #ifndef PASCAL
-#define PASCAL                          // pascal on OS/2
+#define PASCAL // pascal on OS/2
 #endif
 
 #ifndef FAR
-#define FAR                             // far on OS/2
+#define FAR // far on OS/2
 #endif
 
 //
 // String Lengths for various LanMan names
 //
 
-#define CNLEN       15                  // Computer name length
-#define LM20_CNLEN  15                  // LM 2.0 Computer name length
-#define DNLEN       CNLEN               // Maximum domain name length
-#define LM20_DNLEN  LM20_CNLEN          // LM 2.0 Maximum domain name length
+#define CNLEN 15              // Computer name length
+#define LM20_CNLEN 15         // LM 2.0 Computer name length
+#define DNLEN CNLEN           // Maximum domain name length
+#define LM20_DNLEN LM20_CNLEN // LM 2.0 Maximum domain name length
 
 #if (CNLEN != DNLEN)
 #error CNLEN and DNLEN are not equal
 #endif
 
-#define UNCLEN      (CNLEN+2)           // UNC computer name length
-#define LM20_UNCLEN (LM20_CNLEN+2)      // LM 2.0 UNC computer name length
+#define UNCLEN (CNLEN + 2)           // UNC computer name length
+#define LM20_UNCLEN (LM20_CNLEN + 2) // LM 2.0 UNC computer name length
 
-#define NNLEN       80                  // Net name length (share name)
-#define LM20_NNLEN  12                  // LM 2.0 Net name length
+#define NNLEN 80      // Net name length (share name)
+#define LM20_NNLEN 12 // LM 2.0 Net name length
 
-#define RMLEN       (UNCLEN+1+NNLEN)    // Max remote name length
-#define LM20_RMLEN  (LM20_UNCLEN+1+LM20_NNLEN) // LM 2.0 Max remote name length
+#define RMLEN (UNCLEN + 1 + NNLEN)                // Max remote name length
+#define LM20_RMLEN (LM20_UNCLEN + 1 + LM20_NNLEN) // LM 2.0 Max remote name length
 
-#define SNLEN       80                  // Service name length
-#define LM20_SNLEN  15                  // LM 2.0 Service name length
-#define STXTLEN     256                 // Service text length
-#define LM20_STXTLEN 63                 // LM 2.0 Service text length
+#define SNLEN 80        // Service name length
+#define LM20_SNLEN 15   // LM 2.0 Service name length
+#define STXTLEN 256     // Service text length
+#define LM20_STXTLEN 63 // LM 2.0 Service text length
 
-#define PATHLEN     256                 // Max. path (not including drive name)
-#define LM20_PATHLEN 256                // LM 2.0 Max. path
+#define PATHLEN 256      // Max. path (not including drive name)
+#define LM20_PATHLEN 256 // LM 2.0 Max. path
 
-#define DEVLEN      80                  // Device name length
-#define LM20_DEVLEN 8                   // LM 2.0 Device name length
+#define DEVLEN 80     // Device name length
+#define LM20_DEVLEN 8 // LM 2.0 Device name length
 
-#define EVLEN       16                  // Event name length
+#define EVLEN 16 // Event name length
 
 //
 // User, Group and Password lengths
 //
 
-#define UNLEN       256                 // Maximum user name length
-#define LM20_UNLEN  20                  // LM 2.0 Maximum user name length
+#define UNLEN 256     // Maximum user name length
+#define LM20_UNLEN 20 // LM 2.0 Maximum user name length
 
-#define GNLEN       UNLEN               // Group name
-#define LM20_GNLEN  LM20_UNLEN          // LM 2.0 Group name
+#define GNLEN UNLEN           // Group name
+#define LM20_GNLEN LM20_UNLEN // LM 2.0 Group name
 
-#define PWLEN       256                 // Maximum password length
-#define LM20_PWLEN  14                  // LM 2.0 Maximum password length
+#define PWLEN 256     // Maximum password length
+#define LM20_PWLEN 14 // LM 2.0 Maximum password length
 
-#define SHPWLEN     8                   // Share password length (bytes)
-
-
-#define CLTYPE_LEN  12                  // Length of client type string
+#define SHPWLEN 8 // Share password length (bytes)
 
 
-#define MAXCOMMENTSZ 256                // Multipurpose comment length
-#define LM20_MAXCOMMENTSZ 48            // LM 2.0 Multipurpose comment length
+#define CLTYPE_LEN 12 // Length of client type string
 
-#define QNLEN       NNLEN               // Queue name maximum length
-#define LM20_QNLEN  LM20_NNLEN          // LM 2.0 Queue name maximum length
+
+#define MAXCOMMENTSZ 256     // Multipurpose comment length
+#define LM20_MAXCOMMENTSZ 48 // LM 2.0 Multipurpose comment length
+
+#define QNLEN NNLEN           // Queue name maximum length
+#define LM20_QNLEN LM20_NNLEN // LM 2.0 Queue name maximum length
 #if (QNLEN != NNLEN)
-# error QNLEN and NNLEN are not equal
+#error QNLEN and NNLEN are not equal
 #endif
 
 //
@@ -112,14 +112,14 @@ Abstract:
 // Whoever ports these components should change these values appropriately.
 //
 
-#define ALERTSZ     128                 // size of alert string in server
-#define MAXDEVENTRIES (sizeof (int)*8)  // Max number of device entries
+#define ALERTSZ 128                     // size of alert string in server
+#define MAXDEVENTRIES (sizeof(int) * 8) // Max number of device entries
 
-                                        //
-                                        // We use int bitmap to represent
-                                        //
+//
+// We use int bitmap to represent
+//
 
-#define NETBIOS_NAME_LEN  16            // NetBIOS net name (bytes)
+#define NETBIOS_NAME_LEN 16 // NetBIOS net name (bytes)
 
 //
 // Value to be used with APIs which have a "preferred maximum length"
@@ -127,50 +127,49 @@ Abstract:
 // "as much as it takes."
 //
 
-#define MAX_PREFERRED_LENGTH    ((DWORD) -1)
+#define MAX_PREFERRED_LENGTH ((DWORD) - 1)
 
 //
 //        Constants used with encryption
 //
 
-#define CRYPT_KEY_LEN           7
-#define CRYPT_TXT_LEN           8
-#define ENCRYPTED_PWLEN         16
-#define SESSION_PWLEN           24
-#define SESSION_CRYPT_KLEN      21
+#define CRYPT_KEY_LEN 7
+#define CRYPT_TXT_LEN 8
+#define ENCRYPTED_PWLEN 16
+#define SESSION_PWLEN 24
+#define SESSION_CRYPT_KLEN 21
 
 //
 //  Value to be used with SetInfo calls to allow setting of all
 //  settable parameters (parmnum zero option)
 //
 #ifndef PARMNUM_ALL
-#define PARMNUM_ALL             0
+#define PARMNUM_ALL 0
 #endif
 
-#define PARM_ERROR_UNKNOWN      ( (DWORD) (-1) )
-#define PARM_ERROR_NONE         0
-#define PARMNUM_BASE_INFOLEVEL  1000
+#define PARM_ERROR_UNKNOWN ((DWORD)(-1))
+#define PARM_ERROR_NONE 0
+#define PARMNUM_BASE_INFOLEVEL 1000
 
 //
 // Only the UNICODE version of the LM APIs are available on NT.
 // Non-UNICODE version on other platforms
 //
-#if defined( _WIN32_WINNT ) || defined( WINNT ) || defined( __midl ) \
-    || defined( FORCE_UNICODE )
-#define LMSTR   LPWSTR
-#define LMCSTR  LPCWSTR
+#if defined(_WIN32_WINNT) || defined(WINNT) || defined(__midl) || defined(FORCE_UNICODE)
+#define LMSTR LPWSTR
+#define LMCSTR LPCWSTR
 #else
-#define LMSTR   LPSTR
-#define LMCSTR  LPCSTR
+#define LMSTR LPSTR
+#define LMCSTR LPCSTR
 #endif
 
 //
 //        Message File Names
 //
 
-#define MESSAGE_FILENAME        TEXT("NETMSG")
-#define OS2MSG_FILENAME         TEXT("BASE")
-#define HELP_MSG_FILENAME       TEXT("NETH")
+#define MESSAGE_FILENAME TEXT("NETMSG")
+#define OS2MSG_FILENAME TEXT("BASE")
+#define HELP_MSG_FILENAME TEXT("NETH")
 
 /**INTERNAL_ONLY**/
 
@@ -182,15 +181,15 @@ Abstract:
 // retrieving the messages from net.msg do we then get the bound
 // messages out of bak.msg (really out of the message segment).
 
-#define BACKUP_MSG_FILENAME     TEXT("BAK.MSG")
+#define BACKUP_MSG_FILENAME TEXT("BAK.MSG")
 
 /**END_INTERNAL**/
 
 #ifndef NULL
 #ifdef __cplusplus
-#define NULL	0
+#define NULL 0
 #else
-#define NULL	((void *)0)
+#define NULL ((void *)0)
 #endif
 #endif
 
@@ -198,10 +197,10 @@ Abstract:
 // Keywords used in Function Prototypes
 //
 
-#define NET_API_STATUS          DWORD
-#define API_RET_TYPE            NET_API_STATUS      // Old value: do not use
+#define NET_API_STATUS DWORD
+#define API_RET_TYPE NET_API_STATUS // Old value: do not use
 #if (_MSC_VER >= 800) || defined(_STDCALL_SUPPORTED)
-#define NET_API_FUNCTION    __stdcall
+#define NET_API_FUNCTION __stdcall
 #else
 #define NET_API_FUNCTION
 #endif
@@ -221,7 +220,6 @@ Abstract:
 /*INC*/
 
 
-
 //
 // The platform ID indicates the levels to use for platform-specific
 // information.
@@ -229,7 +227,7 @@ Abstract:
 
 #define PLATFORM_ID_DOS 300
 #define PLATFORM_ID_OS2 400
-#define PLATFORM_ID_NT  500
+#define PLATFORM_ID_NT 500
 #define PLATFORM_ID_OSF 600
 #define PLATFORM_ID_VMS 700
 
@@ -251,8 +249,8 @@ Abstract:
 //      lmerrlog.h      5700 - 5899     ERRLOG2_BASE
 //
 
-#define MIN_LANMAN_MESSAGE_ID  NERR_BASE
-#define MAX_LANMAN_MESSAGE_ID  5899
+#define MIN_LANMAN_MESSAGE_ID NERR_BASE
+#define MAX_LANMAN_MESSAGE_ID 5899
 
 /*NOINC*/
 #endif // NETCONS_INCLUDED

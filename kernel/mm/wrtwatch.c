@@ -28,17 +28,10 @@ Revision History:
 
 ULONG_PTR MiActiveWriteWatch;
 
-
+
 NTSTATUS
-NtGetWriteWatch (
-    IN HANDLE ProcessHandle,
-    IN ULONG Flags,
-    IN PVOID BaseAddress,
-    IN SIZE_T RegionSize,
-    IN OUT PVOID *UserAddressArray,
-    IN OUT PULONG_PTR EntriesInUserAddressArray,
-    OUT PULONG Granularity
-    )
+NtGetWriteWatch(IN HANDLE ProcessHandle, IN ULONG Flags, IN PVOID BaseAddress, IN SIZE_T RegionSize,
+                IN OUT PVOID *UserAddressArray, IN OUT PULONG_PTR EntriesInUserAddressArray, OUT PULONG Granularity)
 
 /*++
 
@@ -117,13 +110,14 @@ Return Value:
     PETHREAD CurrentThread;
     PEPROCESS CurrentProcess;
 
-    ASSERT (KeGetCurrentIrql() == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
-    if ((Flags & ~WRITE_WATCH_FLAG_RESET) != 0) {
+    if ((Flags & ~WRITE_WATCH_FLAG_RESET) != 0)
+    {
         return STATUS_INVALID_PARAMETER_2;
     }
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
 
     CurrentProcess = PsGetCurrentProcessByThread(CurrentThread);
 
@@ -134,21 +128,24 @@ Return Value:
     // for write access and capture the initial values.
     //
 
-    try {
+    try
+    {
 
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
 
             //
             // Make sure the specified starting and ending addresses are
             // within the user part of the virtual address space.
             //
-        
-            if (BaseAddress > MM_HIGHEST_VAD_ADDRESS) {
+
+            if (BaseAddress > MM_HIGHEST_VAD_ADDRESS)
+            {
                 return STATUS_INVALID_PARAMETER_2;
             }
-        
-            if ((((ULONG_PTR)MM_HIGHEST_VAD_ADDRESS + 1) - (ULONG_PTR)BaseAddress) <
-                    RegionSize) {
+
+            if ((((ULONG_PTR)MM_HIGHEST_VAD_ADDRESS + 1) - (ULONG_PTR)BaseAddress) < RegionSize)
+            {
                 return STATUS_INVALID_PARAMETER_3;
             }
 
@@ -156,30 +153,32 @@ Return Value:
             // Capture the number of pages.
             //
 
-            ProbeForWritePointer (EntriesInUserAddressArray);
+            ProbeForWritePointer(EntriesInUserAddressArray);
 
             NumberOfPages = *EntriesInUserAddressArray;
 
-            if (NumberOfPages == 0) {
+            if (NumberOfPages == 0)
+            {
                 return STATUS_INVALID_PARAMETER_5;
             }
 
-            if (NumberOfPages > (MAXULONG_PTR / sizeof(ULONG_PTR))) {
+            if (NumberOfPages > (MAXULONG_PTR / sizeof(ULONG_PTR)))
+            {
                 return STATUS_INVALID_PARAMETER_5;
             }
 
-            ProbeForWrite (UserAddressArray,
-                           NumberOfPages * sizeof (PVOID),
-                           sizeof(PVOID));
+            ProbeForWrite(UserAddressArray, NumberOfPages * sizeof(PVOID), sizeof(PVOID));
 
-            ProbeForWriteUlong (Granularity);
+            ProbeForWriteUlong(Granularity);
         }
-        else {
+        else
+        {
             NumberOfPages = *EntriesInUserAddressArray;
-            ASSERT (NumberOfPages != 0);
+            ASSERT(NumberOfPages != 0);
         }
-
-    } except (ExSystemExceptionFilter()) {
+    }
+    except(ExSystemExceptionFilter())
+    {
 
         //
         // If an exception occurs during the probe or capture
@@ -198,12 +197,12 @@ Return Value:
 
     NumberOfBytes = NumberOfPages * sizeof(ULONG_PTR);
 
-    if (NumberOfPages > COPY_STACK_SIZE) {
-        PoolArea = ExAllocatePoolWithTag (NonPagedPool,
-                                                 NumberOfBytes,
-                                                 'cGmM');
+    if (NumberOfPages > COPY_STACK_SIZE)
+    {
+        PoolArea = ExAllocatePoolWithTag(NonPagedPool, NumberOfBytes, 'cGmM');
 
-        if (PoolArea == NULL) {
+        if (PoolArea == NULL)
+        {
             return STATUS_INSUFFICIENT_RESOURCES;
         }
     }
@@ -216,18 +215,17 @@ Return Value:
     // Reference the specified process handle for VM_OPERATION access.
     //
 
-    if (ProcessHandle == NtCurrentProcess()) {
+    if (ProcessHandle == NtCurrentProcess())
+    {
         Process = CurrentProcess;
     }
-    else {
-        Status = ObReferenceObjectByHandle ( ProcessHandle,
-                                             PROCESS_VM_OPERATION,
-                                             PsProcessType,
-                                             PreviousMode,
-                                             (PVOID *)&Process,
-                                             NULL );
+    else
+    {
+        Status = ObReferenceObjectByHandle(ProcessHandle, PROCESS_VM_OPERATION, PsProcessType, PreviousMode,
+                                           (PVOID *)&Process, NULL);
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             goto ErrorReturn0;
         }
     }
@@ -236,7 +234,8 @@ Return Value:
 
     PagesWritten = 0;
 
-    if (BaseAddress > EndAddress) {
+    if (BaseAddress > EndAddress)
+    {
         Status = STATUS_INVALID_PARAMETER_4;
         goto ErrorReturn;
     }
@@ -246,8 +245,9 @@ Return Value:
     // to the specified process.
     //
 
-    if (CurrentProcess != Process) {
-        KeStackAttachProcess (&Process->Pcb, &ApcState);
+    if (CurrentProcess != Process)
+    {
+        KeStackAttachProcess(&Process->Pcb, &ApcState);
         Attached = TRUE;
     }
 
@@ -263,7 +263,7 @@ Return Value:
 
     First = TRUE;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
     //
     // The PhysicalVadList should typically have just one entry - the view
@@ -271,19 +271,19 @@ Return Value:
     //
 
     NextEntry = Process->PhysicalVadList.Flink;
-    while (NextEntry != &Process->PhysicalVadList) {
+    while (NextEntry != &Process->PhysicalVadList)
+    {
 
-        PhysicalView = CONTAINING_RECORD(NextEntry,
-                                         MI_PHYSICAL_VIEW,
-                                         ListEntry);
+        PhysicalView = CONTAINING_RECORD(NextEntry, MI_PHYSICAL_VIEW, ListEntry);
 
-        if (PhysicalView->Vad->u.VadFlags.WriteWatch == 1) {
+        if (PhysicalView->Vad->u.VadFlags.WriteWatch == 1)
+        {
 
-            if ((BaseAddress >= (PVOID)PhysicalView->StartVa) &&
-                (EndAddress <= (PVOID)PhysicalView->EndVa)) {
+            if ((BaseAddress >= (PVOID)PhysicalView->StartVa) && (EndAddress <= (PVOID)PhysicalView->EndVa))
+            {
 
-                    Vad = PhysicalView->Vad;
-                    break;
+                Vad = PhysicalView->Vad;
+                break;
             }
         }
 
@@ -291,7 +291,8 @@ Return Value:
         continue;
     }
 
-    if (Vad == NULL) {
+    if (Vad == NULL)
+    {
 
         //
         // No virtual address is marked for write-watch at the specified base
@@ -299,11 +300,11 @@ Return Value:
         //
 
         Status = STATUS_INVALID_PARAMETER_1;
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
         goto ErrorReturn;
     }
 
-    ASSERT (Process->Flags & PS_PROCESS_FLAGS_USING_WRITE_WATCH);
+    ASSERT(Process->Flags & PS_PROCESS_FLAGS_USING_WRITE_WATCH);
 
     //
     // Extract the write watch status for each page in the range.
@@ -312,23 +313,24 @@ Return Value:
 
     BitMap = PhysicalView->u.BitMap;
 
-    PointerPte = MiGetPteAddress (BaseAddress);
-    EndPte = MiGetPteAddress (EndAddress);
+    PointerPte = MiGetPteAddress(BaseAddress);
+    EndPte = MiGetPteAddress(EndAddress);
 
-    PointerPde = MiGetPdeAddress (BaseAddress);
-    PointerPpe = MiGetPpeAddress (BaseAddress);
-    PointerPxe = MiGetPxeAddress (BaseAddress);
+    PointerPde = MiGetPdeAddress(BaseAddress);
+    PointerPpe = MiGetPpeAddress(BaseAddress);
+    PointerPxe = MiGetPxeAddress(BaseAddress);
 
-    BaseAddress = MiGetVirtualAddressMappedByPte (PointerPte);
+    BaseAddress = MiGetVirtualAddressMappedByPte(PointerPte);
 
     BitMapIndex = (ULONG)(((PCHAR)BaseAddress - (PCHAR)(Vad->StartingVpn << PAGE_SHIFT)) >> PAGE_SHIFT);
 
-    ASSERT (BitMapIndex < BitMap->SizeOfBitMap);
-    ASSERT (BitMapIndex + (EndPte - PointerPte) < BitMap->SizeOfBitMap);
+    ASSERT(BitMapIndex < BitMap->SizeOfBitMap);
+    ASSERT(BitMapIndex + (EndPte - PointerPte) < BitMap->SizeOfBitMap);
 
-    while (PointerPte <= EndPte) {
+    while (PointerPte <= EndPte)
+    {
 
-        ASSERT (BitMapIndex < BitMap->SizeOfBitMap);
+        ASSERT(BitMapIndex < BitMap->SizeOfBitMap);
 
         UserWritten = FALSE;
 
@@ -337,7 +339,8 @@ Return Value:
         // dirtied, then let the caller know.
         //
 
-        if (RtlCheckBit (BitMap, BitMapIndex) == 1) {
+        if (RtlCheckBit(BitMap, BitMapIndex) == 1)
+        {
             UserWritten = TRUE;
 
             //
@@ -347,14 +350,16 @@ Return Value:
             // his own fault that he won't know which bits were cleared !
             //
 
-            if (Flags & WRITE_WATCH_FLAG_RESET) {
-                RtlClearBit (BitMap, BitMapIndex);
+            if (Flags & WRITE_WATCH_FLAG_RESET)
+            {
+                RtlClearBit(BitMap, BitMapIndex);
                 goto ClearPteIfValid;
             }
         }
-        else {
+        else
+        {
 
-ClearPteIfValid:
+        ClearPteIfValid:
 
             //
             // If the page table page is not present, then the dirty bit
@@ -362,9 +367,10 @@ ClearPteIfValid:
             // Unfortunately all the entries in the page cannot be skipped
             // as the write watch bitmap must be checked for each PTE.
             //
-    
+
 #if (_MI_PAGING_LEVELS >= 4)
-            if (PointerPxe->u.Hard.Valid == 0) {
+            if (PointerPxe->u.Hard.Valid == 0)
+            {
 
                 //
                 // Skip the entire extended page parent if the bitmap permits.
@@ -372,12 +378,12 @@ ClearPteIfValid:
                 // avoid wraps.
                 //
 
-                NextBitMapIndex = RtlFindSetBits (BitMap, 1, BitMapIndex);
+                NextBitMapIndex = RtlFindSetBits(BitMap, 1, BitMapIndex);
 
                 PointerPxe += 1;
-                PointerPpe = MiGetVirtualAddressMappedByPte (PointerPxe);
-                PointerPde = MiGetVirtualAddressMappedByPte (PointerPpe);
-                NextPte = MiGetVirtualAddressMappedByPte (PointerPde);
+                PointerPpe = MiGetVirtualAddressMappedByPte(PointerPxe);
+                PointerPde = MiGetVirtualAddressMappedByPte(PointerPpe);
+                NextPte = MiGetVirtualAddressMappedByPte(PointerPde);
 
                 //
                 // Compare the bitmap jump with the PTE jump and take
@@ -385,25 +391,28 @@ ClearPteIfValid:
                 //
 
                 if ((NextBitMapIndex == NO_BITS_FOUND) ||
-                    ((ULONG)(NextPte - PointerPte) < (NextBitMapIndex - BitMapIndex))) {
+                    ((ULONG)(NextPte - PointerPte) < (NextBitMapIndex - BitMapIndex)))
+                {
                     BitMapIndex += (ULONG)(NextPte - PointerPte);
                     PointerPte = NextPte;
                 }
-                else {
+                else
+                {
                     PointerPte += (NextBitMapIndex - BitMapIndex);
                     BitMapIndex = NextBitMapIndex;
                 }
 
-                PointerPde = MiGetPteAddress (PointerPte);
-                PointerPpe = MiGetPdeAddress (PointerPte);
-                PointerPxe = MiGetPpeAddress (PointerPte);
+                PointerPde = MiGetPteAddress(PointerPte);
+                PointerPpe = MiGetPdeAddress(PointerPte);
+                PointerPxe = MiGetPpeAddress(PointerPte);
 
-                BaseAddress = MiGetVirtualAddressMappedByPte (PointerPte);
+                BaseAddress = MiGetVirtualAddressMappedByPte(PointerPte);
                 continue;
             }
 #endif
 #if (_MI_PAGING_LEVELS >= 3)
-            if (PointerPpe->u.Hard.Valid == 0) {
+            if (PointerPpe->u.Hard.Valid == 0)
+            {
 
                 //
                 // Skip the entire page parent if the bitmap permits.
@@ -411,11 +420,11 @@ ClearPteIfValid:
                 // avoid wraps.
                 //
 
-                NextBitMapIndex = RtlFindSetBits (BitMap, 1, BitMapIndex);
+                NextBitMapIndex = RtlFindSetBits(BitMap, 1, BitMapIndex);
 
                 PointerPpe += 1;
-                PointerPde = MiGetVirtualAddressMappedByPte (PointerPpe);
-                NextPte = MiGetVirtualAddressMappedByPte (PointerPde);
+                PointerPde = MiGetVirtualAddressMappedByPte(PointerPpe);
+                NextPte = MiGetVirtualAddressMappedByPte(PointerPde);
 
                 //
                 // Compare the bitmap jump with the PTE jump and take
@@ -423,24 +432,27 @@ ClearPteIfValid:
                 //
 
                 if ((NextBitMapIndex == NO_BITS_FOUND) ||
-                    ((ULONG)(NextPte - PointerPte) < (NextBitMapIndex - BitMapIndex))) {
+                    ((ULONG)(NextPte - PointerPte) < (NextBitMapIndex - BitMapIndex)))
+                {
                     BitMapIndex += (ULONG)(NextPte - PointerPte);
                     PointerPte = NextPte;
                 }
-                else {
+                else
+                {
                     PointerPte += (NextBitMapIndex - BitMapIndex);
                     BitMapIndex = NextBitMapIndex;
                 }
 
-                PointerPde = MiGetPteAddress (PointerPte);
-                PointerPpe = MiGetPdeAddress (PointerPte);
-                PointerPxe = MiGetPpeAddress (PointerPte);
+                PointerPde = MiGetPteAddress(PointerPte);
+                PointerPpe = MiGetPdeAddress(PointerPte);
+                PointerPxe = MiGetPpeAddress(PointerPte);
 
-                BaseAddress = MiGetVirtualAddressMappedByPte (PointerPte);
+                BaseAddress = MiGetVirtualAddressMappedByPte(PointerPte);
                 continue;
             }
 #endif
-            if (PointerPde->u.Hard.Valid == 0) {
+            if (PointerPde->u.Hard.Valid == 0)
+            {
 
                 //
                 // Skip the entire page directory if the bitmap permits.
@@ -448,10 +460,10 @@ ClearPteIfValid:
                 // avoid wraps.
                 //
 
-                NextBitMapIndex = RtlFindSetBits (BitMap, 1, BitMapIndex);
+                NextBitMapIndex = RtlFindSetBits(BitMap, 1, BitMapIndex);
 
                 PointerPde += 1;
-                NextPte = MiGetVirtualAddressMappedByPte (PointerPde);
+                NextPte = MiGetVirtualAddressMappedByPte(PointerPde);
 
                 //
                 // Compare the bitmap jump with the PTE jump and take
@@ -459,32 +471,35 @@ ClearPteIfValid:
                 //
 
                 if ((NextBitMapIndex == NO_BITS_FOUND) ||
-                    ((ULONG)(NextPte - PointerPte) < (NextBitMapIndex - BitMapIndex))) {
+                    ((ULONG)(NextPte - PointerPte) < (NextBitMapIndex - BitMapIndex)))
+                {
                     BitMapIndex += (ULONG)(NextPte - PointerPte);
                     PointerPte = NextPte;
                 }
-                else {
+                else
+                {
                     PointerPte += (NextBitMapIndex - BitMapIndex);
                     BitMapIndex = NextBitMapIndex;
                 }
 
-                PointerPde = MiGetPteAddress (PointerPte);
-                PointerPpe = MiGetPdeAddress (PointerPte);
-                PointerPxe = MiGetPpeAddress (PointerPte);
+                PointerPde = MiGetPteAddress(PointerPte);
+                PointerPpe = MiGetPdeAddress(PointerPte);
+                PointerPxe = MiGetPpeAddress(PointerPte);
 
-                BaseAddress = MiGetVirtualAddressMappedByPte (PointerPte);
+                BaseAddress = MiGetVirtualAddressMappedByPte(PointerPte);
                 continue;
             }
 
             PteContents = *PointerPte;
 
-            if ((PteContents.u.Hard.Valid == 1) &&
-                (MI_IS_PTE_DIRTY(PteContents))) {
+            if ((PteContents.u.Hard.Valid == 1) && (MI_IS_PTE_DIRTY(PteContents)))
+            {
 
-                ASSERT (MI_PFN_ELEMENT(MI_GET_PAGE_FRAME_FROM_PTE(&PteContents))->u3.e1.PrototypePte == 0);
+                ASSERT(MI_PFN_ELEMENT(MI_GET_PAGE_FRAME_FROM_PTE(&PteContents))->u3.e1.PrototypePte == 0);
 
                 UserWritten = TRUE;
-                if (Flags & WRITE_WATCH_FLAG_RESET) {
+                if (Flags & WRITE_WATCH_FLAG_RESET)
+                {
 
                     //
                     // For the uniprocessor x86, just the dirty bit is
@@ -492,48 +507,44 @@ ClearPteIfValid:
                     // bit must be disabled now so future writes trigger
                     // write watch updates.
                     //
-        
-                    PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE (&PteContents);
+
+                    PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE(&PteContents);
                     Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
-                    ASSERT (Pfn1->u3.e1.PrototypePte == 0);
-        
-                    MI_MAKE_VALID_PTE (TempPte,
-                                       PageFrameIndex,
-                                       Pfn1->OriginalPte.u.Soft.Protection,
-                                       PointerPte);
-        
-                    WorkingSetIndex = MI_GET_WORKING_SET_FROM_PTE (&PteContents);
-                    MI_SET_PTE_IN_WORKING_SET (&TempPte, WorkingSetIndex);
-        
+                    ASSERT(Pfn1->u3.e1.PrototypePte == 0);
+
+                    MI_MAKE_VALID_PTE(TempPte, PageFrameIndex, Pfn1->OriginalPte.u.Soft.Protection, PointerPte);
+
+                    WorkingSetIndex = MI_GET_WORKING_SET_FROM_PTE(&PteContents);
+                    MI_SET_PTE_IN_WORKING_SET(&TempPte, WorkingSetIndex);
+
                     //
                     // Flush the TB as the protection of a valid PTE is
                     // being changed.
                     //
-        
-                    PreviousPte.u.Flush = KeFlushSingleTb (BaseAddress,
-                                                           FALSE,
-                                                           FALSE,
-                                                           (PHARDWARE_PTE)PointerPte,
-                                                           *(PHARDWARE_PTE)&TempPte.u.Hard);
-                
-                    ASSERT (PreviousPte.u.Hard.Valid == 1);
-                
+
+                    PreviousPte.u.Flush = KeFlushSingleTb(BaseAddress, FALSE, FALSE, (PHARDWARE_PTE)PointerPte,
+                                                          *(PHARDWARE_PTE)&TempPte.u.Hard);
+
+                    ASSERT(PreviousPte.u.Hard.Valid == 1);
+
                     //
                     // A page's protection is being changed, on certain
                     // hardware the dirty bit should be ORed into the
                     // modify bit in the PFN element.
                     //
-                    
-                    MI_CAPTURE_DIRTY_BIT_TO_PFN (&PreviousPte, Pfn1);
+
+                    MI_CAPTURE_DIRTY_BIT_TO_PFN(&PreviousPte, Pfn1);
                 }
             }
         }
 
-        if (UserWritten == TRUE) {
+        if (UserWritten == TRUE)
+        {
             *PoolAreaPointer = BaseAddress;
             PoolAreaPointer += 1;
             PagesWritten += 1;
-            if (PagesWritten == NumberOfPages) {
+            if (PagesWritten == NumberOfPages)
+            {
 
                 //
                 // User array isn't big enough to take any more.  The API
@@ -545,13 +556,16 @@ ClearPteIfValid:
         }
 
         PointerPte += 1;
-        if (MiIsPteOnPdeBoundary(PointerPte)) {
-            PointerPde = MiGetPteAddress (PointerPte);
-            if (MiIsPteOnPdeBoundary(PointerPde)) {
-                PointerPpe = MiGetPdeAddress (PointerPte);
+        if (MiIsPteOnPdeBoundary(PointerPte))
+        {
+            PointerPde = MiGetPteAddress(PointerPte);
+            if (MiIsPteOnPdeBoundary(PointerPde))
+            {
+                PointerPpe = MiGetPdeAddress(PointerPte);
 #if (_MI_PAGING_LEVELS >= 4)
-                if (MiIsPteOnPdeBoundary(PointerPpe)) {
-                    PointerPxe = MiGetPpeAddress (PointerPte);
+                if (MiIsPteOnPdeBoundary(PointerPpe))
+                {
+                    PointerPxe = MiGetPpeAddress(PointerPte);
                 }
 #endif
             }
@@ -560,58 +574,58 @@ ClearPteIfValid:
         BaseAddress = (PVOID)((PCHAR)BaseAddress + PAGE_SIZE);
     }
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
     Status = STATUS_SUCCESS;
 
 ErrorReturn:
 
-    if (Attached == TRUE) {
-        KeUnstackDetachProcess (&ApcState);
+    if (Attached == TRUE)
+    {
+        KeUnstackDetachProcess(&ApcState);
         Attached = FALSE;
     }
 
-    if (ProcessHandle != NtCurrentProcess()) {
-        ObDereferenceObject (Process);
+    if (ProcessHandle != NtCurrentProcess())
+    {
+        ObDereferenceObject(Process);
     }
 
-    if (Status == STATUS_SUCCESS) {
+    if (Status == STATUS_SUCCESS)
+    {
 
         //
         // Return all results to the caller.
         //
-    
-        try {
-    
-            RtlCopyMemory (UserAddressArray,
-                           PoolArea,
-                           PagesWritten * sizeof (PVOID));
+
+        try
+        {
+
+            RtlCopyMemory(UserAddressArray, PoolArea, PagesWritten * sizeof(PVOID));
 
             *EntriesInUserAddressArray = PagesWritten;
 
             *Granularity = PAGE_SIZE;
-    
-        } except (ExSystemExceptionFilter()) {
-    
+        }
+        except(ExSystemExceptionFilter())
+        {
+
             Status = GetExceptionCode();
         }
     }
-    
+
 ErrorReturn0:
 
-    if (PoolArea != (PVOID)&StackArray[0]) {
-        ExFreePool (PoolArea);
+    if (PoolArea != (PVOID)&StackArray[0])
+    {
+        ExFreePool(PoolArea);
     }
 
     return Status;
 }
-
+
 NTSTATUS
-NtResetWriteWatch (
-    IN HANDLE ProcessHandle,
-    IN PVOID BaseAddress,
-    IN SIZE_T RegionSize
-    )
+NtResetWriteWatch(IN HANDLE ProcessHandle, IN PVOID BaseAddress, IN SIZE_T RegionSize)
 
 /*++
 
@@ -666,14 +680,15 @@ Return Value:
     PETHREAD CurrentThread;
     PEPROCESS CurrentProcess;
 
-    ASSERT (KeGetCurrentIrql() == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
-    if (BaseAddress > MM_HIGHEST_VAD_ADDRESS) {
+    if (BaseAddress > MM_HIGHEST_VAD_ADDRESS)
+    {
         return STATUS_INVALID_PARAMETER_2;
     }
 
-    if ((((ULONG_PTR)MM_HIGHEST_VAD_ADDRESS + 1) - (ULONG_PTR)BaseAddress) <
-            RegionSize) {
+    if ((((ULONG_PTR)MM_HIGHEST_VAD_ADDRESS + 1) - (ULONG_PTR)BaseAddress) < RegionSize)
+    {
         return STATUS_INVALID_PARAMETER_3;
     }
 
@@ -681,24 +696,23 @@ Return Value:
     // Reference the specified process handle for VM_OPERATION access.
     //
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
 
     CurrentProcess = PsGetCurrentProcessByThread(CurrentThread);
 
-    if (ProcessHandle == NtCurrentProcess()) {
+    if (ProcessHandle == NtCurrentProcess())
+    {
         Process = CurrentProcess;
     }
-    else {
+    else
+    {
         PreviousMode = KeGetPreviousModeByThread(&CurrentThread->Tcb);
 
-        Status = ObReferenceObjectByHandle ( ProcessHandle,
-                                             PROCESS_VM_OPERATION,
-                                             PsProcessType,
-                                             PreviousMode,
-                                             (PVOID *)&Process,
-                                             NULL );
+        Status = ObReferenceObjectByHandle(ProcessHandle, PROCESS_VM_OPERATION, PsProcessType, PreviousMode,
+                                           (PVOID *)&Process, NULL);
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             return Status;
         }
     }
@@ -706,8 +720,9 @@ Return Value:
     Attached = FALSE;
 
     EndAddress = (PVOID)((PCHAR)BaseAddress + RegionSize - 1);
-    
-    if (BaseAddress > EndAddress) {
+
+    if (BaseAddress > EndAddress)
+    {
         Status = STATUS_INVALID_PARAMETER_3;
         goto ErrorReturn;
     }
@@ -717,8 +732,9 @@ Return Value:
     // to the specified process.
     //
 
-    if (CurrentProcess != Process) {
-        KeStackAttachProcess (&Process->Pcb, &ApcState);
+    if (CurrentProcess != Process)
+    {
+        KeStackAttachProcess(&Process->Pcb, &ApcState);
         Attached = TRUE;
     }
 
@@ -733,7 +749,7 @@ Return Value:
 
     PhysicalView = NULL;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
     //
     // The PhysicalVadList should typically have just one entry - the view
@@ -741,19 +757,19 @@ Return Value:
     //
 
     NextEntry = Process->PhysicalVadList.Flink;
-    while (NextEntry != &Process->PhysicalVadList) {
+    while (NextEntry != &Process->PhysicalVadList)
+    {
 
-        PhysicalView = CONTAINING_RECORD(NextEntry,
-                                         MI_PHYSICAL_VIEW,
-                                         ListEntry);
+        PhysicalView = CONTAINING_RECORD(NextEntry, MI_PHYSICAL_VIEW, ListEntry);
 
-        if (PhysicalView->Vad->u.VadFlags.WriteWatch == 1) {
+        if (PhysicalView->Vad->u.VadFlags.WriteWatch == 1)
+        {
 
-            if ((BaseAddress >= (PVOID)PhysicalView->StartVa) &&
-                (EndAddress <= (PVOID)PhysicalView->EndVa)) {
+            if ((BaseAddress >= (PVOID)PhysicalView->StartVa) && (EndAddress <= (PVOID)PhysicalView->EndVa))
+            {
 
-                    Vad = PhysicalView->Vad;
-                    break;
+                Vad = PhysicalView->Vad;
+                break;
             }
         }
 
@@ -761,7 +777,8 @@ Return Value:
         continue;
     }
 
-    if (Vad == NULL) {
+    if (Vad == NULL)
+    {
 
         //
         // No virtual address is marked for write-watch at the specified base
@@ -769,11 +786,11 @@ Return Value:
         //
 
         Status = STATUS_INVALID_PARAMETER_1;
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
         goto ErrorReturn;
     }
 
-    ASSERT (Process->Flags & PS_PROCESS_FLAGS_USING_WRITE_WATCH);
+    ASSERT(Process->Flags & PS_PROCESS_FLAGS_USING_WRITE_WATCH);
 
     //
     // Clear the write watch status (and PTE writable/dirty bits) for each page
@@ -786,58 +803,63 @@ Return Value:
 
     BitMap = PhysicalView->u.BitMap;
 
-    PointerPte = MiGetPteAddress (BaseAddress);
-    EndPte = MiGetPteAddress (EndAddress);
+    PointerPte = MiGetPteAddress(BaseAddress);
+    EndPte = MiGetPteAddress(EndAddress);
 
-    BaseAddress = MiGetVirtualAddressMappedByPte (PointerPte);
+    BaseAddress = MiGetVirtualAddressMappedByPte(PointerPte);
 
     BitMapIndex = (ULONG)(((PCHAR)BaseAddress - (PCHAR)(Vad->StartingVpn << PAGE_SHIFT)) >> PAGE_SHIFT);
 
-    ASSERT (BitMapIndex < BitMap->SizeOfBitMap);
-    ASSERT (BitMapIndex + (EndPte - PointerPte) < BitMap->SizeOfBitMap);
+    ASSERT(BitMapIndex < BitMap->SizeOfBitMap);
+    ASSERT(BitMapIndex + (EndPte - PointerPte) < BitMap->SizeOfBitMap);
 
-    RtlClearBits (BitMap, BitMapIndex, (ULONG)(EndPte - PointerPte + 1));
+    RtlClearBits(BitMap, BitMapIndex, (ULONG)(EndPte - PointerPte + 1));
 
-    while (PointerPte <= EndPte) {
+    while (PointerPte <= EndPte)
+    {
 
         //
         // If the page table page is not present, then the dirty bit
         // has already been captured to the write watch bitmap.  So skip it.
         //
 
-        if ((First == TRUE) || MiIsPteOnPdeBoundary(PointerPte)) {
+        if ((First == TRUE) || MiIsPteOnPdeBoundary(PointerPte))
+        {
             First = FALSE;
 
-            PointerPpe = MiGetPpeAddress (BaseAddress);
-            PointerPxe = MiGetPxeAddress (BaseAddress);
+            PointerPpe = MiGetPpeAddress(BaseAddress);
+            PointerPxe = MiGetPxeAddress(BaseAddress);
 
 #if (_MI_PAGING_LEVELS >= 4)
-            if (PointerPxe->u.Hard.Valid == 0) {
+            if (PointerPxe->u.Hard.Valid == 0)
+            {
                 PointerPxe += 1;
-                PointerPpe = MiGetVirtualAddressMappedByPte (PointerPxe);
-                PointerPde = MiGetVirtualAddressMappedByPte (PointerPpe);
-                PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-                BaseAddress = MiGetVirtualAddressMappedByPte (PointerPte);
+                PointerPpe = MiGetVirtualAddressMappedByPte(PointerPxe);
+                PointerPde = MiGetVirtualAddressMappedByPte(PointerPpe);
+                PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+                BaseAddress = MiGetVirtualAddressMappedByPte(PointerPte);
                 continue;
             }
 #endif
 
 #if (_MI_PAGING_LEVELS >= 3)
-            if (PointerPpe->u.Hard.Valid == 0) {
+            if (PointerPpe->u.Hard.Valid == 0)
+            {
                 PointerPpe += 1;
-                PointerPde = MiGetVirtualAddressMappedByPte (PointerPpe);
-                PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-                BaseAddress = MiGetVirtualAddressMappedByPte (PointerPte);
+                PointerPde = MiGetVirtualAddressMappedByPte(PointerPpe);
+                PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+                BaseAddress = MiGetVirtualAddressMappedByPte(PointerPte);
                 continue;
             }
 #endif
 
-            PointerPde = MiGetPdeAddress (BaseAddress);
+            PointerPde = MiGetPdeAddress(BaseAddress);
 
-            if (PointerPde->u.Hard.Valid == 0) {
+            if (PointerPde->u.Hard.Valid == 0)
+            {
                 PointerPde += 1;
-                PointerPte = MiGetVirtualAddressMappedByPte (PointerPde);
-                BaseAddress = MiGetVirtualAddressMappedByPte (PointerPte);
+                PointerPte = MiGetVirtualAddressMappedByPte(PointerPde);
+                BaseAddress = MiGetVirtualAddressMappedByPte(PointerPte);
                 continue;
             }
         }
@@ -849,8 +871,8 @@ Return Value:
 
         PteContents = *PointerPte;
 
-        if ((PteContents.u.Hard.Valid == 1) &&
-            (MI_IS_PTE_DIRTY(PteContents))) {
+        if ((PteContents.u.Hard.Valid == 1) && (MI_IS_PTE_DIRTY(PteContents)))
+        {
 
             //
             // For the uniprocessor x86, just the dirty bit is cleared.
@@ -858,66 +880,58 @@ Return Value:
             // disabled now so future writes trigger write watch updates.
             //
 
-            PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE (&PteContents);
+            PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE(&PteContents);
             Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
-            ASSERT (Pfn1->u3.e1.PrototypePte == 0);
+            ASSERT(Pfn1->u3.e1.PrototypePte == 0);
 
-            MI_MAKE_VALID_PTE (TempPte,
-                               PageFrameIndex,
-                               Pfn1->OriginalPte.u.Soft.Protection,
-                               PointerPte);
+            MI_MAKE_VALID_PTE(TempPte, PageFrameIndex, Pfn1->OriginalPte.u.Soft.Protection, PointerPte);
 
-            WorkingSetIndex = MI_GET_WORKING_SET_FROM_PTE (&PteContents);
-            MI_SET_PTE_IN_WORKING_SET (&TempPte, WorkingSetIndex);
+            WorkingSetIndex = MI_GET_WORKING_SET_FROM_PTE(&PteContents);
+            MI_SET_PTE_IN_WORKING_SET(&TempPte, WorkingSetIndex);
 
             //
             // Flush the TB as the protection of a valid PTE is being changed.
             //
 
-            PreviousPte.u.Flush = KeFlushSingleTb (BaseAddress,
-                                                   FALSE,
-                                                   FALSE,
-                                                   (PHARDWARE_PTE)PointerPte,
-                                                   *(PHARDWARE_PTE)&TempPte.u.Hard);
-        
-            ASSERT (PreviousPte.u.Hard.Valid == 1);
-        
+            PreviousPte.u.Flush =
+                KeFlushSingleTb(BaseAddress, FALSE, FALSE, (PHARDWARE_PTE)PointerPte, *(PHARDWARE_PTE)&TempPte.u.Hard);
+
+            ASSERT(PreviousPte.u.Hard.Valid == 1);
+
             //
             // A page's protection is being changed, on certain
             // hardware the dirty bit should be ORed into the
             // modify bit in the PFN element.
             //
-        
-            MI_CAPTURE_DIRTY_BIT_TO_PFN (&PreviousPte, Pfn1);
+
+            MI_CAPTURE_DIRTY_BIT_TO_PFN(&PreviousPte, Pfn1);
         }
 
         PointerPte += 1;
         BaseAddress = (PVOID)((PCHAR)BaseAddress + PAGE_SIZE);
     }
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
     Status = STATUS_SUCCESS;
 
 ErrorReturn:
 
-    if (Attached == TRUE) {
-        KeUnstackDetachProcess (&ApcState);
+    if (Attached == TRUE)
+    {
+        KeUnstackDetachProcess(&ApcState);
         Attached = FALSE;
     }
 
-    if (ProcessHandle != NtCurrentProcess()) {
-        ObDereferenceObject (Process);
+    if (ProcessHandle != NtCurrentProcess())
+    {
+        ObDereferenceObject(Process);
     }
 
     return Status;
 }
-
-VOID
-MiCaptureWriteWatchDirtyBit (
-    IN PEPROCESS Process,
-    IN PVOID VirtualAddress
-    )
+
+VOID MiCaptureWriteWatchDirtyBit(IN PEPROCESS Process, IN PVOID VirtualAddress)
 
 /*++
 
@@ -952,7 +966,7 @@ Environment:
 
     MM_PFN_LOCK_ASSERT();
 
-    ASSERT (Process->Flags & PS_PROCESS_FLAGS_USING_WRITE_WATCH);
+    ASSERT(Process->Flags & PS_PROCESS_FLAGS_USING_WRITE_WATCH);
 
     //
     // This process has (or had) write watch VADs.  Search now
@@ -962,16 +976,16 @@ Environment:
 
     Vad = NULL;
     NextEntry = Process->PhysicalVadList.Flink;
-    while (NextEntry != &Process->PhysicalVadList) {
+    while (NextEntry != &Process->PhysicalVadList)
+    {
 
-        PhysicalView = CONTAINING_RECORD(NextEntry,
-                                         MI_PHYSICAL_VIEW,
-                                         ListEntry);
+        PhysicalView = CONTAINING_RECORD(NextEntry, MI_PHYSICAL_VIEW, ListEntry);
 
-        if (PhysicalView->Vad->u.VadFlags.WriteWatch == 1) {
+        if (PhysicalView->Vad->u.VadFlags.WriteWatch == 1)
+        {
 
-            if ((VirtualAddress >= (PVOID)PhysicalView->StartVa) &&
-                (VirtualAddress <= (PVOID)PhysicalView->EndVa)) {
+            if ((VirtualAddress >= (PVOID)PhysicalView->StartVa) && (VirtualAddress <= (PVOID)PhysicalView->EndVa))
+            {
 
                 //
                 // The write watch bitmap must be updated.
@@ -981,10 +995,10 @@ Environment:
                 BitMap = PhysicalView->u.BitMap;
 
                 BitMapIndex = (ULONG)(((PCHAR)VirtualAddress - (PCHAR)(Vad->StartingVpn << PAGE_SHIFT)) >> PAGE_SHIFT);
-            
-                ASSERT (BitMapIndex < BitMap->SizeOfBitMap);
 
-                RtlSetBit (BitMap, BitMapIndex);
+                ASSERT(BitMapIndex < BitMap->SizeOfBitMap);
+
+                RtlSetBit(BitMap, BitMapIndex);
                 break;
             }
         }

@@ -23,7 +23,8 @@ Author:
 // selection of rotation bar - depends on logo bitmap contants
 //
 
-typedef enum {
+typedef enum
+{
     RB_UNSPECIFIED,
     RB_SQUARE_CELLS
 } ROT_BAR_TYPE;
@@ -36,17 +37,10 @@ typedef enum {
 
 extern ROT_BAR_TYPE RotBarSelection;
 
-VOID
-InbvRotBarInit(
-    VOID
-    );
+VOID InbvRotBarInit(VOID);
 
-VOID
-InbvRotateGuiBootDisplay(
-    IN PVOID Context
-    );
+VOID InbvRotateGuiBootDisplay(IN PVOID Context);
 
-VOID
-FinalizeBootLogo(VOID);
+VOID FinalizeBootLogo(VOID);
 
 #endif // _ANIM_H

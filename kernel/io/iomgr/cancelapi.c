@@ -40,22 +40,13 @@ Revision History:
 
 #endif
 
-VOID
-IopCsqCancelRoutine(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    );
+VOID IopCsqCancelRoutine(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 NTSTATUS
-CSQLIB_DDI(IoCsqInitialize)(
-    IN PIO_CSQ                          Csq,
-    IN PIO_CSQ_INSERT_IRP               CsqInsertIrp,
-    IN PIO_CSQ_REMOVE_IRP               CsqRemoveIrp,
-    IN PIO_CSQ_PEEK_NEXT_IRP            CsqPeekNextIrp,
-    IN PIO_CSQ_ACQUIRE_LOCK             CsqAcquireLock,
-    IN PIO_CSQ_RELEASE_LOCK             CsqReleaseLock,
-    IN PIO_CSQ_COMPLETE_CANCELED_IRP    CsqCompleteCanceledIrp
-    )
+CSQLIB_DDI(IoCsqInitialize)(IN PIO_CSQ Csq, IN PIO_CSQ_INSERT_IRP CsqInsertIrp, IN PIO_CSQ_REMOVE_IRP CsqRemoveIrp,
+                            IN PIO_CSQ_PEEK_NEXT_IRP CsqPeekNextIrp, IN PIO_CSQ_ACQUIRE_LOCK CsqAcquireLock,
+                            IN PIO_CSQ_RELEASE_LOCK CsqReleaseLock,
+                            IN PIO_CSQ_COMPLETE_CANCELED_IRP CsqCompleteCanceledIrp)
 /*++
 
 Routine Description:
@@ -86,12 +77,7 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
-VOID
-CSQLIB_DDI(IoCsqInsertIrp)(
-    IN  PIO_CSQ             Csq,
-    IN  PIRP                Irp,
-    IN  PIO_CSQ_IRP_CONTEXT Context
-    )
+VOID CSQLIB_DDI(IoCsqInsertIrp)(IN PIO_CSQ Csq, IN PIRP Irp, IN PIO_CSQ_IRP_CONTEXT Context)
 /*++
 
 Routine Description:
@@ -117,22 +103,25 @@ Return Value:
 
 --*/
 {
-    KIRQL           irql;
-    PDRIVER_CANCEL  cancelRoutine;
+    KIRQL irql;
+    PDRIVER_CANCEL cancelRoutine;
 #if CSQLIB
-    PVOID           originalDriverContext;
+    PVOID originalDriverContext;
 #endif
 
     //
     // Set the association between the context and the IRP.
     //
 
-    if (Context) {
+    if (Context)
+    {
         Irp->Tail.Overlay.DriverContext[3] = Context;
         Context->Irp = Irp;
         Context->Csq = Csq;
         Context->Type = IO_TYPE_CSQ_IRP_CONTEXT;
-    } else {
+    }
+    else
+    {
         Irp->Tail.Overlay.DriverContext[3] = Csq;
     }
 
@@ -159,11 +148,12 @@ Return Value:
     //
 
 #if CSQLIB
-    if (Irp->Tail.Overlay.DriverContext[3] != originalDriverContext) {
+    if (Irp->Tail.Overlay.DriverContext[3] != originalDriverContext)
+    {
 
         Csq->CsqReleaseLock(Csq, irql);
 
-        return ;
+        return;
     }
 
     IoMarkIrpPending(Irp);
@@ -174,15 +164,18 @@ Return Value:
 
     ASSERT(!cancelRoutine);
 
-    if (Irp->Cancel) {
+    if (Irp->Cancel)
+    {
 
         cancelRoutine = IoSetCancelRoutine(Irp, NULL);
 
-        if (cancelRoutine) {
+        if (cancelRoutine)
+        {
 
             Csq->CsqRemoveIrp(Csq, Irp);
 
-            if (Context) {
+            if (Context)
+            {
                 Context->Irp = NULL;
             }
 
@@ -192,8 +185,9 @@ Return Value:
             Csq->CsqReleaseLock(Csq, irql);
 
             Csq->CsqCompleteCanceledIrp(Csq, Irp);
-
-        } else {
+        }
+        else
+        {
 
             //
             // The cancel routine beat us to it.
@@ -201,20 +195,15 @@ Return Value:
 
             Csq->CsqReleaseLock(Csq, irql);
         }
-
-    } else {
+    }
+    else
+    {
 
         Csq->CsqReleaseLock(Csq, irql);
-
     }
-
 }
 
-PIRP
-CSQLIB_DDI(IoCsqRemoveNextIrp)(
-    IN  PIO_CSQ   Csq,
-    IN  PVOID     PeekContext
-    )
+PIRP CSQLIB_DDI(IoCsqRemoveNextIrp)(IN PIO_CSQ Csq, IN PVOID PeekContext)
 /*++
 
 Routine Description:
@@ -234,10 +223,10 @@ Return Value:
 
 --*/
 {
-    KIRQL   irql;
+    KIRQL irql;
     PIO_CSQ_IRP_CONTEXT context;
-    PDRIVER_CANCEL  cancelRoutine;
-    PIRP    irp;
+    PDRIVER_CANCEL cancelRoutine;
+    PIRP irp;
 
 
     irp = NULL;
@@ -247,7 +236,8 @@ Return Value:
 
     irp = Csq->CsqPeekNextIrp(Csq, NULL, PeekContext);
 
-    while (1) {
+    while (1)
+    {
 
         //
         // This routine will return a pointer to the next IRP in the queue adjacent to
@@ -255,24 +245,27 @@ Return Value:
         // the queue.
         //
 
-        if (!irp) {
+        if (!irp)
+        {
             Csq->CsqReleaseLock(Csq, irql);
             return NULL;
         }
 
         cancelRoutine = IoSetCancelRoutine(irp, NULL);
-        if (!cancelRoutine) {
+        if (!cancelRoutine)
+        {
             irp = Csq->CsqPeekNextIrp(Csq, irp, PeekContext);
             continue;
         }
 
-        Csq->CsqRemoveIrp(Csq, irp);    // Remove this IRP from the queue
+        Csq->CsqRemoveIrp(Csq, irp); // Remove this IRP from the queue
 
         break;
     }
 
     context = irp->Tail.Overlay.DriverContext[3];
-    if (context->Type == IO_TYPE_CSQ_IRP_CONTEXT) {
+    if (context->Type == IO_TYPE_CSQ_IRP_CONTEXT)
+    {
         context->Irp = NULL;
         ASSERT(context->Csq == Csq);
     }
@@ -285,11 +278,7 @@ Return Value:
     return irp;
 }
 
-PIRP
-CSQLIB_DDI(IoCsqRemoveIrp)(
-    IN  PIO_CSQ             Csq,
-    IN  PIO_CSQ_IRP_CONTEXT Context
-    )
+PIRP CSQLIB_DDI(IoCsqRemoveIrp)(IN PIO_CSQ Csq, IN PIO_CSQ_IRP_CONTEXT Context)
 /*++
 
 Routine Description:
@@ -311,15 +300,16 @@ Return Value:
 
 --*/
 {
-    KIRQL   irql;
-    PIRP    irp;
-    PDRIVER_CANCEL  cancelRoutine;
+    KIRQL irql;
+    PIRP irp;
+    PDRIVER_CANCEL cancelRoutine;
 
     Csq->ReservePointer = NULL; // Force drivers to be good citizens
 
     Csq->CsqAcquireLock(Csq, &irql);
 
-    if (Context->Irp ) {
+    if (Context->Irp)
+    {
 
         ASSERT(Context->Csq == Csq);
 
@@ -327,7 +317,8 @@ Return Value:
 
 
         cancelRoutine = IoSetCancelRoutine(irp, NULL);
-        if (!cancelRoutine) {
+        if (!cancelRoutine)
+        {
             Csq->CsqReleaseLock(Csq, irql);
             return NULL;
         }
@@ -348,19 +339,16 @@ Return Value:
         Csq->CsqReleaseLock(Csq, irql);
 
         return irp;
-
-    } else {
+    }
+    else
+    {
 
         Csq->CsqReleaseLock(Csq, irql);
         return NULL;
     }
 }
 
-VOID
-IopCsqCancelRoutine(
-    IN  PDEVICE_OBJECT  DeviceObject,
-    IN  PIRP            Irp
-    )
+VOID IopCsqCancelRoutine(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 
 Routine Description:
@@ -382,21 +370,26 @@ Return Value:
 
 --*/
 {
-    KIRQL   irql;
+    KIRQL irql;
     PIO_CSQ_IRP_CONTEXT irpContext;
     PIO_CSQ cfq;
 
-    UNREFERENCED_PARAMETER (DeviceObject);
+    UNREFERENCED_PARAMETER(DeviceObject);
 
     IoReleaseCancelSpinLock(Irp->CancelIrql);
 
     irpContext = Irp->Tail.Overlay.DriverContext[3];
 
-    if (irpContext->Type == IO_TYPE_CSQ_IRP_CONTEXT) {
+    if (irpContext->Type == IO_TYPE_CSQ_IRP_CONTEXT)
+    {
         cfq = irpContext->Csq;
-    } else if (irpContext->Type == IO_TYPE_CSQ) {
+    }
+    else if (irpContext->Type == IO_TYPE_CSQ)
+    {
         cfq = (PIO_CSQ)irpContext;
-    } else {
+    }
+    else
+    {
 
         //
         // Bad type
@@ -418,7 +411,8 @@ Return Value:
     // Break the association if necessary.
     //
 
-    if (irpContext != (PIO_CSQ_IRP_CONTEXT)cfq) {
+    if (irpContext != (PIO_CSQ_IRP_CONTEXT)cfq)
+    {
         irpContext->Irp = NULL;
 
         Irp->Tail.Overlay.DriverContext[3] = NULL;
@@ -427,4 +421,3 @@ Return Value:
 
     cfq->CsqCompleteCanceledIrp(cfq, Irp);
 }
-

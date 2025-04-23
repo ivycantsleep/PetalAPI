@@ -26,7 +26,6 @@ Revision History:
 #include "filter.h"
 
 
-
 NTSTATUS VA_Power(struct DEVICE_EXTENSION *devExt, PIRP irp)
 /*++
 
@@ -56,52 +55,53 @@ Return Value:
 
     irpSp = IoGetCurrentIrpStackLocation(irp);
 
-    DBGOUT(("VA_Power, minorFunc = %d ", (ULONG)irpSp->MinorFunction)); 
+    DBGOUT(("VA_Power, minorFunc = %d ", (ULONG)irpSp->MinorFunction));
 
 
-    switch (irpSp->MinorFunction){
+    switch (irpSp->MinorFunction)
+    {
 
-        case IRP_MN_SET_POWER:
+    case IRP_MN_SET_POWER:
 
-            switch (irpSp->Parameters.Power.Type) {
+        switch (irpSp->Parameters.Power.Type)
+        {
 
-                case SystemPowerState:
-                    /*
+        case SystemPowerState:
+            /*
                      *  For system power states, just pass the IRP down.
                      */
-                    break;
+            break;
 
-                case DevicePowerState:
+        case DevicePowerState:
 
-                    switch (irpSp->Parameters.Power.State.DeviceState) {
+            switch (irpSp->Parameters.Power.State.DeviceState)
+            {
 
-                        case PowerDeviceD0:
-                            /*
+            case PowerDeviceD0:
+                /*
                              *  Resume from APM Suspend
                              *
                              *  Do nothing here; 
                              *  Send down the read IRPs in the completion
                              *  routine for this (the power) IRP.
                              */
-                            break;
+                break;
 
-                        case PowerDeviceD1:
-                        case PowerDeviceD2:
-                        case PowerDeviceD3:
-                            /*
+            case PowerDeviceD1:
+            case PowerDeviceD2:
+            case PowerDeviceD3:
+                /*
                              *  Suspend
                              */
-                            if (devExt->state == STATE_STARTED){
-                                devExt->state = STATE_SUSPENDED;
-                            }
-                            break;
-
-                    }
-                    break;
-
+                if (devExt->state == STATE_STARTED)
+                {
+                    devExt->state = STATE_SUSPENDED;
+                }
+                break;
             }
             break;
-
+        }
+        break;
     }
 
 
@@ -117,22 +117,16 @@ Return Value:
      */
     IoCopyCurrentIrpStackLocationToNext(irp);
     IncrementPendingActionCount(devExt);
-    IoSetCompletionRoutine( irp, 
-                            VA_PowerComplete, 
-                            (PVOID)devExt,  // context
-                            TRUE, 
-                            TRUE, 
-                            TRUE);
+    IoSetCompletionRoutine(irp, VA_PowerComplete,
+                           (PVOID)devExt, // context
+                           TRUE, TRUE, TRUE);
     status = PoCallDriver(devExt->physicalDevObj, irp);
 
     return status;
 }
 
 
-NTSTATUS VA_PowerComplete(
-                            IN PDEVICE_OBJECT devObj, 
-                            IN PIRP irp, 
-                            IN PVOID context)
+NTSTATUS VA_PowerComplete(IN PDEVICE_OBJECT devObj, IN PIRP irp, IN PVOID context)
 /*++
 
 Routine Description:
@@ -155,32 +149,35 @@ Return Value:
     struct DEVICE_EXTENSION *devExt = (struct DEVICE_EXTENSION *)context;
 
     ASSERT(devExt);
-    ASSERT(devExt->signature == DEVICE_EXTENSION_SIGNATURE); 
+    ASSERT(devExt->signature == DEVICE_EXTENSION_SIGNATURE);
 
     irpSp = IoGetCurrentIrpStackLocation(irp);
     ASSERT(irpSp->MajorFunction == IRP_MJ_POWER);
 
-    if (NT_SUCCESS(irp->IoStatus.Status)){
-        switch (irpSp->MinorFunction){
+    if (NT_SUCCESS(irp->IoStatus.Status))
+    {
+        switch (irpSp->MinorFunction)
+        {
 
-            case IRP_MN_SET_POWER:
+        case IRP_MN_SET_POWER:
 
-                switch (irpSp->Parameters.Power.Type){
+            switch (irpSp->Parameters.Power.Type)
+            {
 
-                    case DevicePowerState:
-                        switch (irpSp->Parameters.Power.State.DeviceState){
-                            case PowerDeviceD0:
-                                if (devExt->state == STATE_SUSPENDED){
-                                    devExt->state = STATE_STARTED;
-                                }
-                                break;
-                        }
-                        break;
-
+            case DevicePowerState:
+                switch (irpSp->Parameters.Power.State.DeviceState)
+                {
+                case PowerDeviceD0:
+                    if (devExt->state == STATE_SUSPENDED)
+                    {
+                        devExt->state = STATE_STARTED;
+                    }
+                    break;
                 }
                 break;
+            }
+            break;
         }
-
     }
 
     /*
@@ -190,6 +187,3 @@ Return Value:
 
     return STATUS_SUCCESS;
 }
-
-
-

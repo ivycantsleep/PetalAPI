@@ -27,36 +27,22 @@ Revision History:
 #ifndef _LOADDSDT_H_
 #define _LOADDSDT_H_
 
-    PRSDT
-    ACPILoadFindRSDT(
-        VOID
-        );
+PRSDT
+ACPILoadFindRSDT(VOID);
 
-    NTSTATUS
-    ACPILoadProcessDSDT(
-        ULONG_PTR   Address
-        );
+NTSTATUS
+ACPILoadProcessDSDT(ULONG_PTR Address);
 
-    NTSTATUS
-    ACPILoadProcessFADT(
-        PFADT       Fadt
-        );
+NTSTATUS
+ACPILoadProcessFADT(PFADT Fadt);
 
-    NTSTATUS
-    ACPILoadProcessFACS(
-        ULONG_PTR   Address
-        );
+NTSTATUS
+ACPILoadProcessFACS(ULONG_PTR Address);
 
-    NTSTATUS
-    ACPILoadProcessRSDT(
-        VOID
-        );
+NTSTATUS
+ACPILoadProcessRSDT(VOID);
 
-    BOOLEAN
-    ACPILoadTableCheckSum(
-        PVOID   StartAddress,
-        ULONG   Length
-        );
+BOOLEAN
+ACPILoadTableCheckSum(PVOID StartAddress, ULONG Length);
 
 #endif
-

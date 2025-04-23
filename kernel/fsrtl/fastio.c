@@ -26,7 +26,8 @@ Revision History:
 
 #if DBG
 
-typedef struct _FS_RTL_DEBUG_COUNTERS {
+typedef struct _FS_RTL_DEBUG_COUNTERS
+{
 
     ULONG AcquireFileExclusiveEx_Succeed;
     ULONG AcquireFileExclusiveEx_Fail;
@@ -39,12 +40,10 @@ typedef struct _FS_RTL_DEBUG_COUNTERS {
     ULONG AcquireFileForCcFlushEx_Succeed;
     ULONG AcquireFileForCcFlushEx_Fail;
     ULONG ReleaseFileForCcFlush;
-    
+
 } FS_RTL_DEBUG_COUNTERS, *PFS_RTL_DEBUG_COUNTERS;
 
-FS_RTL_DEBUG_COUNTERS gCounter = { 0, 0, 0,
-                                   0, 0, 0,
-                                   0, 0, 0 };
+FS_RTL_DEBUG_COUNTERS gCounter = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 #endif
 
@@ -52,7 +51,7 @@ FS_RTL_DEBUG_COUNTERS gCounter = { 0, 0, 0,
 //  Trace level for the module
 //
 
-#define Dbg                              (0x04000000)
+#define Dbg (0x04000000)
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, FsRtlCopyRead)
@@ -72,23 +71,15 @@ FS_RTL_DEBUG_COUNTERS gCounter = { 0, 0, 0,
 #pragma alloc_text(PAGE, FsRtlReleaseFile)
 #pragma alloc_text(PAGE, FsRtlGetFileSize)
 #pragma alloc_text(PAGE, FsRtlSetFileSize)
-#pragma alloc_text(PAGE, FsRtlIncrementCcFastReadNotPossible )
-#pragma alloc_text(PAGE, FsRtlIncrementCcFastReadWait )
+#pragma alloc_text(PAGE, FsRtlIncrementCcFastReadNotPossible)
+#pragma alloc_text(PAGE, FsRtlIncrementCcFastReadWait)
 
 #endif
 
-
+
 BOOLEAN
-FsRtlCopyRead (
-    IN PFILE_OBJECT FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN BOOLEAN Wait,
-    IN ULONG LockKey,
-    OUT PVOID Buffer,
-    OUT PIO_STATUS_BLOCK IoStatus,
-    IN PDEVICE_OBJECT DeviceObject
-    )
+FsRtlCopyRead(IN PFILE_OBJECT FileObject, IN PLARGE_INTEGER FileOffset, IN ULONG Length, IN BOOLEAN Wait,
+              IN ULONG LockKey, OUT PVOID Buffer, OUT PIO_STATUS_BLOCK IoStatus, IN PDEVICE_OBJECT DeviceObject)
 
 /*++
 
@@ -126,7 +117,7 @@ Return Value:
 {
     PFSRTL_COMMON_FCB_HEADER Header;
     BOOLEAN Status = TRUE;
-    ULONG PageCount = ADDRESS_AND_SIZE_TO_SPAN_PAGES( FileOffset->QuadPart, Length );
+    ULONG PageCount = ADDRESS_AND_SIZE_TO_SPAN_PAGES(FileOffset->QuadPart, Length);
     LARGE_INTEGER BeyondLastByte;
     PDEVICE_OBJECT targetVdo;
 
@@ -136,21 +127,23 @@ Return Value:
     //  Special case a read of zero length
     //
 
-    if (Length != 0) {
+    if (Length != 0)
+    {
 
         //
         //  Check for overflow. Returning false here will re-route this request through the
         //  IRP based path, but this isn't performance critical.
         //
 
-        if (MAXLONGLONG - FileOffset->QuadPart < (LONGLONG)Length) {
+        if (MAXLONGLONG - FileOffset->QuadPart < (LONGLONG)Length)
+        {
 
             IoStatus->Status = STATUS_INVALID_PARAMETER;
             IoStatus->Information = 0;
-            
+
             return FALSE;
         }
-        
+
         BeyondLastByte.QuadPart = FileOffset->QuadPart + (LONGLONG)Length;
         Header = (PFSRTL_COMMON_FCB_HEADER)FileObject->FsContext;
 
@@ -164,7 +157,8 @@ Return Value:
         //  Increment performance counters and get the resource
         //
 
-        if (Wait) {
+        if (Wait)
+        {
 
             HOT_STATISTIC(CcFastReadWait) += 1;
 
@@ -172,9 +166,10 @@ Return Value:
             //  Acquired shared on the common fcb header
             //
 
-            (VOID)ExAcquireResourceSharedLite( Header->Resource, TRUE );
-
-        } else {
+            (VOID) ExAcquireResourceSharedLite(Header->Resource, TRUE);
+        }
+        else
+        {
 
             HOT_STATISTIC(CcFastReadNoWait) += 1;
 
@@ -183,7 +178,8 @@ Return Value:
             //  don't get it
             //
 
-            if (!ExAcquireResourceSharedLite( Header->Resource, FALSE )) {
+            if (!ExAcquireResourceSharedLite(Header->Resource, FALSE))
+            {
 
                 FsRtlExitFileSystem();
 
@@ -199,10 +195,10 @@ Return Value:
         //  release the fcb and return.
         //
 
-        if ((FileObject->PrivateCacheMap == NULL) ||
-            (Header->IsFastIoPossible == FastIoIsNotPossible)) {
+        if ((FileObject->PrivateCacheMap == NULL) || (Header->IsFastIoPossible == FastIoIsNotPossible))
+        {
 
-            ExReleaseResourceLite( Header->Resource );
+            ExReleaseResourceLite(Header->Resource);
             FsRtlExitFileSystem();
 
             HOT_STATISTIC(CcFastReadNotPossible) += 1;
@@ -215,13 +211,14 @@ Return Value:
         //  file system the answer
         //
 
-        if (Header->IsFastIoPossible == FastIoIsQuestionable) {
+        if (Header->IsFastIoPossible == FastIoIsQuestionable)
+        {
 
             PFAST_IO_DISPATCH FastIoDispatch;
 
             ASSERT(!KeIsExecutingDpc());
 
-            targetVdo = IoGetRelatedDeviceObject( FileObject );
+            targetVdo = IoGetRelatedDeviceObject(FileObject);
             FastIoDispatch = targetVdo->DriverObject->FastIoDispatch;
 
 
@@ -239,20 +236,16 @@ Return Value:
             //  path.
             //
 
-            if (!FastIoDispatch->FastIoCheckIfPossible( FileObject,
-                                                        FileOffset,
-                                                        Length,
-                                                        Wait,
-                                                        LockKey,
-                                                        TRUE, // read operation
-                                                        IoStatus,
-                                                        targetVdo )) {
+            if (!FastIoDispatch->FastIoCheckIfPossible(FileObject, FileOffset, Length, Wait, LockKey,
+                                                       TRUE, // read operation
+                                                       IoStatus, targetVdo))
+            {
 
                 //
                 //  Fast I/O is not possible so release the Fcb and return.
                 //
 
-                ExReleaseResourceLite( Header->Resource );
+                ExReleaseResourceLite(Header->Resource);
                 FsRtlExitFileSystem();
 
                 HOT_STATISTIC(CcFastReadNotPossible) += 1;
@@ -265,19 +258,21 @@ Return Value:
         //  Check for read past file size.
         //
 
-        if ( BeyondLastByte.QuadPart > Header->FileSize.QuadPart ) {
+        if (BeyondLastByte.QuadPart > Header->FileSize.QuadPart)
+        {
 
-            if ( FileOffset->QuadPart >= Header->FileSize.QuadPart ) {
+            if (FileOffset->QuadPart >= Header->FileSize.QuadPart)
+            {
                 IoStatus->Status = STATUS_END_OF_FILE;
                 IoStatus->Information = 0;
 
-                ExReleaseResourceLite( Header->Resource );
+                ExReleaseResourceLite(Header->Resource);
                 FsRtlExitFileSystem();
 
                 return TRUE;
             }
 
-            Length = (ULONG)( Header->FileSize.QuadPart - FileOffset->QuadPart );
+            Length = (ULONG)(Header->FileSize.QuadPart - FileOffset->QuadPart);
         }
 
         //
@@ -291,56 +286,50 @@ Return Value:
 
         PsGetCurrentThread()->TopLevelIrp = FSRTL_FAST_IO_TOP_LEVEL_IRP;
 
-        try {
+        try
+        {
 
-            if (Wait && ((BeyondLastByte.HighPart | Header->FileSize.HighPart) == 0)) {
+            if (Wait && ((BeyondLastByte.HighPart | Header->FileSize.HighPart) == 0))
+            {
 
-                CcFastCopyRead( FileObject,
-                                FileOffset->LowPart,
-                                Length,
-                                PageCount,
-                                Buffer,
-                                IoStatus );
+                CcFastCopyRead(FileObject, FileOffset->LowPart, Length, PageCount, Buffer, IoStatus);
 
                 FileObject->Flags |= FO_FILE_FAST_IO_READ;
 
-                ASSERT( (IoStatus->Status == STATUS_END_OF_FILE) ||
-                        ((FileOffset->LowPart + IoStatus->Information) <= Header->FileSize.LowPart));
+                ASSERT((IoStatus->Status == STATUS_END_OF_FILE) ||
+                       ((FileOffset->LowPart + IoStatus->Information) <= Header->FileSize.LowPart));
+            }
+            else
+            {
 
-            } else {
-
-                Status = CcCopyRead( FileObject,
-                                     FileOffset,
-                                     Length,
-                                     Wait,
-                                     Buffer,
-                                     IoStatus );
+                Status = CcCopyRead(FileObject, FileOffset, Length, Wait, Buffer, IoStatus);
 
                 FileObject->Flags |= FO_FILE_FAST_IO_READ;
 
-                ASSERT( !Status || (IoStatus->Status == STATUS_END_OF_FILE) ||
-                        ((LONGLONG)(FileOffset->QuadPart + IoStatus->Information) <= Header->FileSize.QuadPart));
+                ASSERT(!Status || (IoStatus->Status == STATUS_END_OF_FILE) ||
+                       ((LONGLONG)(FileOffset->QuadPart + IoStatus->Information) <= Header->FileSize.QuadPart));
             }
 
-            if (Status) {
+            if (Status)
+            {
 
                 FileObject->CurrentByteOffset.QuadPart = FileOffset->QuadPart + IoStatus->Information;
             }
-
-        } except( FsRtlIsNtstatusExpected(GetExceptionCode())
-                                        ? EXCEPTION_EXECUTE_HANDLER
-                                        : EXCEPTION_CONTINUE_SEARCH ) {
+        }
+        except(FsRtlIsNtstatusExpected(GetExceptionCode()) ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
+        {
 
             Status = FALSE;
         }
 
         PsGetCurrentThread()->TopLevelIrp = 0;
 
-        ExReleaseResourceLite( Header->Resource );
+        ExReleaseResourceLite(Header->Resource);
         FsRtlExitFileSystem();
         return Status;
-
-    } else {
+    }
+    else
+    {
 
         //
         //  A zero length transfer was requested.
@@ -353,18 +342,10 @@ Return Value:
     }
 }
 
-
+
 BOOLEAN
-FsRtlCopyWrite (
-    IN PFILE_OBJECT FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN BOOLEAN Wait,
-    IN ULONG LockKey,
-    IN PVOID Buffer,
-    OUT PIO_STATUS_BLOCK IoStatus,
-    IN PDEVICE_OBJECT DeviceObject
-    )
+FsRtlCopyWrite(IN PFILE_OBJECT FileObject, IN PLARGE_INTEGER FileOffset, IN ULONG Length, IN BOOLEAN Wait,
+               IN ULONG LockKey, IN PVOID Buffer, OUT PIO_STATUS_BLOCK IoStatus, IN PDEVICE_OBJECT DeviceObject)
 
 /*++
 
@@ -404,8 +385,8 @@ Return Value:
     BOOLEAN AcquiredShared = FALSE;
     BOOLEAN Status = TRUE;
     BOOLEAN FileSizeChanged = FALSE;
-    BOOLEAN WriteToEndOfFile = (BOOLEAN)((FileOffset->LowPart == FILE_WRITE_TO_END_OF_FILE) &&
-                                         (FileOffset->HighPart == -1));
+    BOOLEAN WriteToEndOfFile =
+        (BOOLEAN)((FileOffset->LowPart == FILE_WRITE_TO_END_OF_FILE) && (FileOffset->HighPart == -1));
 
     PAGED_CODE();
 
@@ -421,9 +402,9 @@ Return Value:
     //  File System must do that.
     //
 
-    if (CcCanIWrite( FileObject, Length, Wait, FALSE ) &&
-        !FlagOn(FileObject->Flags, FO_WRITE_THROUGH) &&
-        CcCopyWriteWontFlush(FileObject, FileOffset, Length)) {
+    if (CcCanIWrite(FileObject, Length, Wait, FALSE) && !FlagOn(FileObject->Flags, FO_WRITE_THROUGH) &&
+        CcCopyWriteWontFlush(FileObject, FileOffset, Length))
+    {
 
         //
         //  Assume our transfer will work
@@ -436,7 +417,8 @@ Return Value:
         //  Special case the zero byte length
         //
 
-        if (Length != 0) {
+        if (Length != 0)
+        {
 
             //
             //  Enter the file system
@@ -456,7 +438,8 @@ Return Value:
             //                  which is the else of this test!
             //
 
-            if (Wait && (Header->AllocationSize.HighPart == 0)) {
+            if (Wait && (Header->AllocationSize.HighPart == 0))
+            {
 
                 ULONG Offset, NewFileSize;
                 ULONG OldFileSize;
@@ -471,21 +454,23 @@ Return Value:
 
                 NewFileSize = FileOffset->LowPart + Length;
 
-                if (WriteToEndOfFile || (NewFileSize > Header->ValidDataLength.LowPart)) {
+                if (WriteToEndOfFile || (NewFileSize > Header->ValidDataLength.LowPart))
+                {
 
                     //
                     //  Acquired shared on the common fcb header
                     //
 
-                    ExAcquireResourceExclusiveLite( Header->Resource, TRUE );
-
-                } else {
+                    ExAcquireResourceExclusiveLite(Header->Resource, TRUE);
+                }
+                else
+                {
 
                     //
                     //  Acquired shared on the common fcb header
                     //
 
-                    ExAcquireResourceSharedLite( Header->Resource, TRUE );
+                    ExAcquireResourceSharedLite(Header->Resource, TRUE);
 
                     AcquiredShared = TRUE;
                 }
@@ -496,13 +481,15 @@ Return Value:
                 //  release the fcb and return.
                 //
 
-                if (WriteToEndOfFile) {
+                if (WriteToEndOfFile)
+                {
 
                     Offset = Header->FileSize.LowPart;
                     NewFileSize = Header->FileSize.LowPart + Length;
                     Wrapped = NewFileSize < Header->FileSize.LowPart;
-
-                } else {
+                }
+                else
+                {
 
                     Offset = FileOffset->LowPart;
                     NewFileSize = FileOffset->LowPart + Length;
@@ -520,13 +507,13 @@ Return Value:
                 //  a way to do this more efficiently.
                 //
 
-                if ((FileObject->PrivateCacheMap == NULL) ||
-                    (Header->IsFastIoPossible == FastIoIsNotPossible) ||
+                if ((FileObject->PrivateCacheMap == NULL) || (Header->IsFastIoPossible == FastIoIsNotPossible) ||
                     (NewFileSize > Header->AllocationSize.LowPart) ||
-                    (Offset >= (Header->ValidDataLength.LowPart + 0x2000)) ||
-                    (Header->AllocationSize.HighPart != 0) || Wrapped) {
+                    (Offset >= (Header->ValidDataLength.LowPart + 0x2000)) || (Header->AllocationSize.HighPart != 0) ||
+                    Wrapped)
+                {
 
-                    ExReleaseResourceLite( Header->Resource );
+                    ExReleaseResourceLite(Header->Resource);
                     FsRtlExitFileSystem();
 
                     return FALSE;
@@ -540,29 +527,31 @@ Return Value:
                 //  above.
                 //
 
-                if (AcquiredShared && (NewFileSize > Header->ValidDataLength.LowPart)) {
+                if (AcquiredShared && (NewFileSize > Header->ValidDataLength.LowPart))
+                {
 
-                    ExReleaseResourceLite( Header->Resource );
+                    ExReleaseResourceLite(Header->Resource);
 
-                    ExAcquireResourceExclusiveLite( Header->Resource, TRUE );
+                    ExAcquireResourceExclusiveLite(Header->Resource, TRUE);
 
                     //
                     // If writing to end of file, we must recalculate new size.
                     //
 
-                    if (WriteToEndOfFile) {
+                    if (WriteToEndOfFile)
+                    {
 
                         Offset = Header->FileSize.LowPart;
                         NewFileSize = Header->FileSize.LowPart + Length;
                         Wrapped = NewFileSize < Header->FileSize.LowPart;
                     }
 
-                    if ((FileObject->PrivateCacheMap == NULL) ||
-                        (Header->IsFastIoPossible == FastIoIsNotPossible) ||
-                        (NewFileSize > Header->AllocationSize.LowPart) ||
-                        (Header->AllocationSize.HighPart != 0) || Wrapped) {
+                    if ((FileObject->PrivateCacheMap == NULL) || (Header->IsFastIoPossible == FastIoIsNotPossible) ||
+                        (NewFileSize > Header->AllocationSize.LowPart) || (Header->AllocationSize.HighPart != 0) ||
+                        Wrapped)
+                    {
 
-                        ExReleaseResourceLite( Header->Resource );
+                        ExReleaseResourceLite(Header->Resource);
                         FsRtlExitFileSystem();
 
                         return FALSE;
@@ -574,9 +563,10 @@ Return Value:
                 //  the file system the answer
                 //
 
-                if (Header->IsFastIoPossible == FastIoIsQuestionable) {
+                if (Header->IsFastIoPossible == FastIoIsQuestionable)
+                {
 
-                    PDEVICE_OBJECT targetVdo = IoGetRelatedDeviceObject( FileObject );
+                    PDEVICE_OBJECT targetVdo = IoGetRelatedDeviceObject(FileObject);
                     PFAST_IO_DISPATCH FastIoDispatch = targetVdo->DriverObject->FastIoDispatch;
                     IO_STATUS_BLOCK IoStatus;
 
@@ -596,22 +586,19 @@ Return Value:
 
                     ASSERT(FILE_WRITE_TO_END_OF_FILE == 0xffffffff);
 
-                    if (!FastIoDispatch->FastIoCheckIfPossible( FileObject,
-                                                                FileOffset->QuadPart != (LONGLONG)-1 ?
-                                                                  FileOffset : &Header->FileSize,
-                                                                Length,
-                                                                TRUE,
-                                                                LockKey,
-                                                                FALSE, // write operation
-                                                                &IoStatus,
-                                                                targetVdo )) {
+                    if (!FastIoDispatch->FastIoCheckIfPossible(
+                            FileObject, FileOffset->QuadPart != (LONGLONG)-1 ? FileOffset : &Header->FileSize, Length,
+                            TRUE, LockKey,
+                            FALSE, // write operation
+                            &IoStatus, targetVdo))
+                    {
 
                         //
                         //  Fast I/O is not possible so release the Fcb and
                         //  return.
                         //
 
-                        ExReleaseResourceLite( Header->Resource );
+                        ExReleaseResourceLite(Header->Resource);
                         FsRtlExitFileSystem();
 
                         return FALSE;
@@ -623,7 +610,8 @@ Return Value:
                 //  so that our reads are not nooped.
                 //
 
-                if (NewFileSize > Header->FileSize.LowPart) {
+                if (NewFileSize > Header->FileSize.LowPart)
+                {
 
                     FileSizeChanged = TRUE;
                     OldFileSize = Header->FileSize.LowPart;
@@ -643,33 +631,29 @@ Return Value:
 
                 PsGetCurrentThread()->TopLevelIrp = FSRTL_FAST_IO_TOP_LEVEL_IRP;
 
-                try {
+                try
+                {
 
                     //
                     //  See if we have to do some zeroing
                     //
 
-                    if (Offset > Header->ValidDataLength.LowPart) {
+                    if (Offset > Header->ValidDataLength.LowPart)
+                    {
 
                         LARGE_INTEGER ZeroEnd;
 
                         ZeroEnd.LowPart = Offset;
                         ZeroEnd.HighPart = 0;
 
-                        CcZeroData( FileObject,
-                                    &Header->ValidDataLength,
-                                    &ZeroEnd,
-                                    TRUE );
+                        CcZeroData(FileObject, &Header->ValidDataLength, &ZeroEnd, TRUE);
                     }
 
-                    CcFastCopyWrite( FileObject,
-                                     Offset,
-                                     Length,
-                                     Buffer );
-
-                } except( FsRtlIsNtstatusExpected(GetExceptionCode())
-                                                ? EXCEPTION_EXECUTE_HANDLER
-                                                : EXCEPTION_CONTINUE_SEARCH ) {
+                    CcFastCopyWrite(FileObject, Offset, Length, Buffer);
+                }
+                except(FsRtlIsNtstatusExpected(GetExceptionCode()) ? EXCEPTION_EXECUTE_HANDLER
+                                                                   : EXCEPTION_CONTINUE_SEARCH)
+                {
 
                     Status = FALSE;
                 }
@@ -681,7 +665,8 @@ Return Value:
                 //  ValidDataLength.
                 //
 
-                if (Status) {
+                if (Status)
+                {
 
                     //
                     //  In the case of ValidDataLength, we really have to
@@ -689,7 +674,8 @@ Return Value:
                     //  the resource exclusive.
                     //
 
-                    if (NewFileSize > Header->ValidDataLength.LowPart) {
+                    if (NewFileSize > Header->ValidDataLength.LowPart)
+                    {
 
                         Header->ValidDataLength.LowPart = NewFileSize;
                     }
@@ -700,7 +686,8 @@ Return Value:
 
                     FileObject->Flags |= FO_FILE_MODIFIED;
 
-                    if (FileSizeChanged) {
+                    if (FileSizeChanged)
+                    {
 
                         CcGetFileSizePointer(FileObject)->LowPart = NewFileSize;
 
@@ -714,33 +701,37 @@ Return Value:
                     FileObject->CurrentByteOffset.LowPart = Offset + Length;
                     FileObject->CurrentByteOffset.HighPart = 0;
 
-                //
-                //  If we did not succeed, then we must restore the original
-                //  FileSize while holding the PagingIoResource exclusive if
-                //  it exists.
-                //
+                    //
+                    //  If we did not succeed, then we must restore the original
+                    //  FileSize while holding the PagingIoResource exclusive if
+                    //  it exists.
+                    //
+                }
+                else if (FileSizeChanged)
+                {
 
-                } else if (FileSizeChanged) {
+                    if (Header->PagingIoResource != NULL)
+                    {
 
-                    if ( Header->PagingIoResource != NULL ) {
-
-                        (VOID)ExAcquireResourceExclusiveLite( Header->PagingIoResource, TRUE );
+                        (VOID) ExAcquireResourceExclusiveLite(Header->PagingIoResource, TRUE);
                         Header->FileSize.LowPart = OldFileSize;
                         Header->ValidDataLength.LowPart = OldValidDataLength;
-                        ExReleaseResourceLite( Header->PagingIoResource );
-
-                    } else {
+                        ExReleaseResourceLite(Header->PagingIoResource);
+                    }
+                    else
+                    {
 
                         Header->FileSize.LowPart = OldFileSize;
                         Header->ValidDataLength.LowPart = OldValidDataLength;
                     }
                 }
 
-            //
-            //  Here is the 64-bit or no-wait path.
-            //
-
-            } else {
+                //
+                //  Here is the 64-bit or no-wait path.
+                //
+            }
+            else
+            {
 
                 LARGE_INTEGER Offset, NewFileSize;
                 LARGE_INTEGER OldFileSize;
@@ -755,28 +746,32 @@ Return Value:
 
                 NewFileSize.QuadPart = FileOffset->QuadPart + (LONGLONG)Length;
 
-                if (WriteToEndOfFile || (NewFileSize.QuadPart > Header->ValidDataLength.QuadPart)) {
+                if (WriteToEndOfFile || (NewFileSize.QuadPart > Header->ValidDataLength.QuadPart))
+                {
 
                     //
                     //  Acquired shared on the common fcb header, and return
                     //  if we don't get it.
                     //
 
-                    if (!ExAcquireResourceExclusiveLite( Header->Resource, Wait )) {
+                    if (!ExAcquireResourceExclusiveLite(Header->Resource, Wait))
+                    {
 
                         FsRtlExitFileSystem();
 
                         return FALSE;
                     }
-
-                } else {
+                }
+                else
+                {
 
                     //
                     //  Acquired shared on the common fcb header, and return
                     //  if we don't get it.
                     //
 
-                    if (!ExAcquireResourceSharedLite( Header->Resource, Wait )) {
+                    if (!ExAcquireResourceSharedLite(Header->Resource, Wait))
+                    {
 
                         FsRtlExitFileSystem();
 
@@ -793,12 +788,14 @@ Return Value:
                 //  release the fcb and return.
                 //
 
-                if (WriteToEndOfFile) {
+                if (WriteToEndOfFile)
+                {
 
                     Offset = Header->FileSize;
                     NewFileSize.QuadPart = Header->FileSize.QuadPart + (LONGLONG)Length;
-
-                } else {
+                }
+                else
+                {
 
                     Offset = *FileOffset;
                     NewFileSize.QuadPart = FileOffset->QuadPart + (LONGLONG)Length;
@@ -814,13 +811,13 @@ Return Value:
                 //  Likewise, for NewFileSizes that exceed MAXLONGLONG.
                 //
 
-                if ((FileObject->PrivateCacheMap == NULL) ||
-                    (Header->IsFastIoPossible == FastIoIsNotPossible) ||
-                      (Offset.QuadPart >= (Header->ValidDataLength.QuadPart + 0x2000)) ||
-                      (MAXLONGLONG - Offset.QuadPart < (LONGLONG)Length) ||
-                      (NewFileSize.QuadPart > Header->AllocationSize.QuadPart) ) {
+                if ((FileObject->PrivateCacheMap == NULL) || (Header->IsFastIoPossible == FastIoIsNotPossible) ||
+                    (Offset.QuadPart >= (Header->ValidDataLength.QuadPart + 0x2000)) ||
+                    (MAXLONGLONG - Offset.QuadPart < (LONGLONG)Length) ||
+                    (NewFileSize.QuadPart > Header->AllocationSize.QuadPart))
+                {
 
-                    ExReleaseResourceLite( Header->Resource );
+                    ExReleaseResourceLite(Header->Resource);
                     FsRtlExitFileSystem();
 
                     return FALSE;
@@ -834,11 +831,13 @@ Return Value:
                 //  above.
                 //
 
-                if (AcquiredShared && ( NewFileSize.QuadPart > Header->ValidDataLength.QuadPart )) {
+                if (AcquiredShared && (NewFileSize.QuadPart > Header->ValidDataLength.QuadPart))
+                {
 
-                    ExReleaseResourceLite( Header->Resource );
+                    ExReleaseResourceLite(Header->Resource);
 
-                    if (!ExAcquireResourceExclusiveLite( Header->Resource, Wait )) {
+                    if (!ExAcquireResourceExclusiveLite(Header->Resource, Wait))
+                    {
 
                         FsRtlExitFileSystem();
 
@@ -849,17 +848,18 @@ Return Value:
                     // If writing to end of file, we must recalculate new size.
                     //
 
-                    if (WriteToEndOfFile) {
+                    if (WriteToEndOfFile)
+                    {
 
                         Offset = Header->FileSize;
                         NewFileSize.QuadPart = Header->FileSize.QuadPart + (LONGLONG)Length;
                     }
 
-                    if ((FileObject->PrivateCacheMap == NULL) ||
-                        (Header->IsFastIoPossible == FastIoIsNotPossible) ||
-                        ( NewFileSize.QuadPart > Header->AllocationSize.QuadPart ) ) {
+                    if ((FileObject->PrivateCacheMap == NULL) || (Header->IsFastIoPossible == FastIoIsNotPossible) ||
+                        (NewFileSize.QuadPart > Header->AllocationSize.QuadPart))
+                    {
 
-                        ExReleaseResourceLite( Header->Resource );
+                        ExReleaseResourceLite(Header->Resource);
                         FsRtlExitFileSystem();
 
                         return FALSE;
@@ -871,9 +871,11 @@ Return Value:
                 //  the file system the answer
                 //
 
-                if (Header->IsFastIoPossible == FastIoIsQuestionable) {
+                if (Header->IsFastIoPossible == FastIoIsQuestionable)
+                {
 
-                    PFAST_IO_DISPATCH FastIoDispatch = IoGetRelatedDeviceObject( FileObject )->DriverObject->FastIoDispatch;
+                    PFAST_IO_DISPATCH FastIoDispatch =
+                        IoGetRelatedDeviceObject(FileObject)->DriverObject->FastIoDispatch;
                     IO_STATUS_BLOCK IoStatus;
 
                     //
@@ -892,22 +894,19 @@ Return Value:
 
                     ASSERT(FILE_WRITE_TO_END_OF_FILE == 0xffffffff);
 
-                    if (!FastIoDispatch->FastIoCheckIfPossible( FileObject,
-                                                                FileOffset->QuadPart != (LONGLONG)-1 ?
-                                                                  FileOffset : &Header->FileSize,
-                                                                Length,
-                                                                Wait,
-                                                                LockKey,
-                                                                FALSE, // write operation
-                                                                &IoStatus,
-                                                                DeviceObject )) {
+                    if (!FastIoDispatch->FastIoCheckIfPossible(
+                            FileObject, FileOffset->QuadPart != (LONGLONG)-1 ? FileOffset : &Header->FileSize, Length,
+                            Wait, LockKey,
+                            FALSE, // write operation
+                            &IoStatus, DeviceObject))
+                    {
 
                         //
                         //  Fast I/O is not possible so release the Fcb and
                         //  return.
                         //
 
-                        ExReleaseResourceLite( Header->Resource );
+                        ExReleaseResourceLite(Header->Resource);
                         FsRtlExitFileSystem();
 
                         return FALSE;
@@ -919,7 +918,8 @@ Return Value:
                 //  so that our reads are not nooped.
                 //
 
-                if ( NewFileSize.QuadPart > Header->FileSize.QuadPart ) {
+                if (NewFileSize.QuadPart > Header->FileSize.QuadPart)
+                {
 
                     FileSizeChanged = TRUE;
                     OldFileSize = Header->FileSize;
@@ -930,14 +930,15 @@ Return Value:
                     //  file size wraps.
                     //
 
-                    if ( (Header->FileSize.HighPart != NewFileSize.HighPart) &&
-                         (Header->PagingIoResource != NULL) ) {
+                    if ((Header->FileSize.HighPart != NewFileSize.HighPart) && (Header->PagingIoResource != NULL))
+                    {
 
-                        (VOID)ExAcquireResourceExclusiveLite( Header->PagingIoResource, TRUE );
+                        (VOID) ExAcquireResourceExclusiveLite(Header->PagingIoResource, TRUE);
                         Header->FileSize = NewFileSize;
-                        ExReleaseResourceLite( Header->PagingIoResource );
-
-                    } else {
+                        ExReleaseResourceLite(Header->PagingIoResource);
+                    }
+                    else
+                    {
 
                         Header->FileSize = NewFileSize;
                     }
@@ -955,32 +956,28 @@ Return Value:
 
                 PsGetCurrentThread()->TopLevelIrp = FSRTL_FAST_IO_TOP_LEVEL_IRP;
 
-                try {
+                try
+                {
 
                     //
                     //  See if we have to do some zeroing
                     //
 
-                    if ( Offset.QuadPart > Header->ValidDataLength.QuadPart ) {
+                    if (Offset.QuadPart > Header->ValidDataLength.QuadPart)
+                    {
 
-                        Status = CcZeroData( FileObject,
-                                             &Header->ValidDataLength,
-                                             &Offset,
-                                             Wait );
+                        Status = CcZeroData(FileObject, &Header->ValidDataLength, &Offset, Wait);
                     }
 
-                    if (Status) {
+                    if (Status)
+                    {
 
-                        Status = CcCopyWrite( FileObject,
-                                              &Offset,
-                                              Length,
-                                              Wait,
-                                              Buffer );
+                        Status = CcCopyWrite(FileObject, &Offset, Length, Wait, Buffer);
                     }
-
-                } except( FsRtlIsNtstatusExpected(GetExceptionCode())
-                                                ? EXCEPTION_EXECUTE_HANDLER
-                                                : EXCEPTION_CONTINUE_SEARCH ) {
+                }
+                except(FsRtlIsNtstatusExpected(GetExceptionCode()) ? EXCEPTION_EXECUTE_HANDLER
+                                                                   : EXCEPTION_CONTINUE_SEARCH)
+                {
 
                     Status = FALSE;
                 }
@@ -992,7 +989,8 @@ Return Value:
                 //  ValidDataLength.
                 //
 
-                if (Status) {
+                if (Status)
+                {
 
                     //
                     //  In the case of ValidDataLength, we really have to
@@ -1000,21 +998,24 @@ Return Value:
                     //  the resource exclusive.
                     //
 
-                    if ( NewFileSize.QuadPart > Header->ValidDataLength.QuadPart ) {
+                    if (NewFileSize.QuadPart > Header->ValidDataLength.QuadPart)
+                    {
 
                         //
                         //  Deal with an extremely rare pathalogical case here
                         //  the ValidDataLength wraps.
                         //
 
-                        if ( (Header->ValidDataLength.HighPart != NewFileSize.HighPart) &&
-                             (Header->PagingIoResource != NULL) ) {
+                        if ((Header->ValidDataLength.HighPart != NewFileSize.HighPart) &&
+                            (Header->PagingIoResource != NULL))
+                        {
 
-                            (VOID)ExAcquireResourceExclusiveLite( Header->PagingIoResource, TRUE );
+                            (VOID) ExAcquireResourceExclusiveLite(Header->PagingIoResource, TRUE);
                             Header->ValidDataLength = NewFileSize;
-                            ExReleaseResourceLite( Header->PagingIoResource );
-
-                        } else {
+                            ExReleaseResourceLite(Header->PagingIoResource);
+                        }
+                        else
+                        {
 
                             Header->ValidDataLength = NewFileSize;
                         }
@@ -1026,7 +1027,8 @@ Return Value:
 
                     FileObject->Flags |= FO_FILE_MODIFIED;
 
-                    if (FileSizeChanged) {
+                    if (FileSizeChanged)
+                    {
 
                         *CcGetFileSizePointer(FileObject) = NewFileSize;
 
@@ -1039,36 +1041,39 @@ Return Value:
 
                     FileObject->CurrentByteOffset.QuadPart = Offset.QuadPart + Length;
 
-                //
-                // If we did not succeed, then we must restore the original
-                // FileSize while holding the PagingIoResource exclusive if
-                // it exists.
-                //
+                    //
+                    // If we did not succeed, then we must restore the original
+                    // FileSize while holding the PagingIoResource exclusive if
+                    // it exists.
+                    //
+                }
+                else if (FileSizeChanged)
+                {
 
-                } else if (FileSizeChanged) {
+                    if (Header->PagingIoResource != NULL)
+                    {
 
-                    if ( Header->PagingIoResource != NULL ) {
-
-                        (VOID)ExAcquireResourceExclusiveLite( Header->PagingIoResource, TRUE );
+                        (VOID) ExAcquireResourceExclusiveLite(Header->PagingIoResource, TRUE);
                         Header->FileSize = OldFileSize;
                         Header->ValidDataLength = OldValidDataLength;
-                        ExReleaseResourceLite( Header->PagingIoResource );
-
-                    } else {
+                        ExReleaseResourceLite(Header->PagingIoResource);
+                    }
+                    else
+                    {
 
                         Header->FileSize = OldFileSize;
                         Header->ValidDataLength = OldValidDataLength;
                     }
                 }
-
             }
 
-            ExReleaseResourceLite( Header->Resource );
+            ExReleaseResourceLite(Header->Resource);
             FsRtlExitFileSystem();
 
             return Status;
-
-        } else {
+        }
+        else
+        {
 
             //
             //  A zero length transfer was requested.
@@ -1076,8 +1081,9 @@ Return Value:
 
             return TRUE;
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // The volume must be verified or the file is write through.
@@ -1087,17 +1093,10 @@ Return Value:
     }
 }
 
-
+
 BOOLEAN
-FsRtlMdlReadDev (
-    IN PFILE_OBJECT FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN ULONG LockKey,
-    OUT PMDL *MdlChain,
-    OUT PIO_STATUS_BLOCK IoStatus,
-    IN PDEVICE_OBJECT DeviceObject
-    )
+FsRtlMdlReadDev(IN PFILE_OBJECT FileObject, IN PLARGE_INTEGER FileOffset, IN ULONG Length, IN ULONG LockKey,
+                OUT PMDL *MdlChain, OUT PIO_STATUS_BLOCK IoStatus, IN PDEVICE_OBJECT DeviceObject)
 
 /*++
 
@@ -1143,7 +1142,8 @@ Return Value:
     //  Special case a read of zero length
     //
 
-    if (Length == 0) {
+    if (Length == 0)
+    {
 
         IoStatus->Status = STATUS_SUCCESS;
         IoStatus->Information = 0;
@@ -1157,7 +1157,7 @@ Return Value:
 
     ASSERT(MAXLONGLONG - FileOffset->QuadPart >= (LONGLONG)Length);
 
-       
+
     //
     //  Get a real pointer to the common fcb header
     //
@@ -1177,7 +1177,7 @@ Return Value:
     //  Acquired shared on the common fcb header
     //
 
-    (VOID)ExAcquireResourceSharedLite( Header->Resource, TRUE );
+    (VOID) ExAcquireResourceSharedLite(Header->Resource, TRUE);
 
     //
     //  Now that the File is acquired shared, we can safely test if it is
@@ -1185,10 +1185,10 @@ Return Value:
     //  then release the fcb and return.
     //
 
-    if ((FileObject->PrivateCacheMap == NULL) ||
-        (Header->IsFastIoPossible == FastIoIsNotPossible)) {
+    if ((FileObject->PrivateCacheMap == NULL) || (Header->IsFastIoPossible == FastIoIsNotPossible))
+    {
 
-        ExReleaseResourceLite( Header->Resource );
+        ExReleaseResourceLite(Header->Resource);
         FsRtlExitFileSystem();
 
         CcFastMdlReadNotPossible += 1;
@@ -1201,13 +1201,14 @@ Return Value:
     //  the answer
     //
 
-    if (Header->IsFastIoPossible == FastIoIsQuestionable) {
+    if (Header->IsFastIoPossible == FastIoIsQuestionable)
+    {
 
         PFAST_IO_DISPATCH FastIoDispatch;
 
         ASSERT(!KeIsExecutingDpc());
 
-        FastIoDispatch = IoGetRelatedDeviceObject( FileObject )->DriverObject->FastIoDispatch;
+        FastIoDispatch = IoGetRelatedDeviceObject(FileObject)->DriverObject->FastIoDispatch;
 
 
         //
@@ -1222,20 +1223,16 @@ Return Value:
         //  other than GoForIt then we cannot take the fast I/O path.
         //
 
-        if (!FastIoDispatch->FastIoCheckIfPossible( FileObject,
-                                                    FileOffset,
-                                                    Length,
-                                                    TRUE,
-                                                    LockKey,
-                                                    TRUE, // read operation
-                                                    IoStatus,
-                                                    IoGetRelatedDeviceObject( FileObject ) )) {
+        if (!FastIoDispatch->FastIoCheckIfPossible(FileObject, FileOffset, Length, TRUE, LockKey,
+                                                   TRUE, // read operation
+                                                   IoStatus, IoGetRelatedDeviceObject(FileObject)))
+        {
 
             //
             //  Fast I/O is not possible so release the Fcb and return.
             //
 
-            ExReleaseResourceLite( Header->Resource );
+            ExReleaseResourceLite(Header->Resource);
             FsRtlExitFileSystem();
 
             CcFastMdlReadNotPossible += 1;
@@ -1248,19 +1245,21 @@ Return Value:
     //  Check for read past file size.
     //
 
-    if ( BeyondLastByte.QuadPart > Header->FileSize.QuadPart ) {
+    if (BeyondLastByte.QuadPart > Header->FileSize.QuadPart)
+    {
 
-        if ( FileOffset->QuadPart >= Header->FileSize.QuadPart ) {
+        if (FileOffset->QuadPart >= Header->FileSize.QuadPart)
+        {
             IoStatus->Status = STATUS_END_OF_FILE;
             IoStatus->Information = 0;
 
-            ExReleaseResourceLite( Header->Resource );
+            ExReleaseResourceLite(Header->Resource);
             FsRtlExitFileSystem();
 
             return TRUE;
         }
 
-        Length = (ULONG)( Header->FileSize.QuadPart - FileOffset->QuadPart );
+        Length = (ULONG)(Header->FileSize.QuadPart - FileOffset->QuadPart);
     }
 
     //
@@ -1275,41 +1274,35 @@ Return Value:
 
     PsGetCurrentThread()->TopLevelIrp = FSRTL_FAST_IO_TOP_LEVEL_IRP;
 
-    try {
+    try
+    {
 
-        CcMdlRead( FileObject, FileOffset, Length, MdlChain, IoStatus );
+        CcMdlRead(FileObject, FileOffset, Length, MdlChain, IoStatus);
 
         FileObject->Flags |= FO_FILE_FAST_IO_READ;
-
-    } except( FsRtlIsNtstatusExpected(GetExceptionCode())
-                                   ? EXCEPTION_EXECUTE_HANDLER
-                                   : EXCEPTION_CONTINUE_SEARCH ) {
+    }
+    except(FsRtlIsNtstatusExpected(GetExceptionCode()) ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
+    {
 
         Status = FALSE;
     }
 
     PsGetCurrentThread()->TopLevelIrp = 0;
 
-    ExReleaseResourceLite( Header->Resource );
+    ExReleaseResourceLite(Header->Resource);
     FsRtlExitFileSystem();
 
     return Status;
 }
 
-
+
 //
 //  The old routine will either dispatch or call FsRtlMdlReadDev
 //
 
 BOOLEAN
-FsRtlMdlRead (
-    IN PFILE_OBJECT FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN ULONG LockKey,
-    OUT PMDL *MdlChain,
-    OUT PIO_STATUS_BLOCK IoStatus
-    )
+FsRtlMdlRead(IN PFILE_OBJECT FileObject, IN PLARGE_INTEGER FileOffset, IN ULONG Length, IN ULONG LockKey,
+             OUT PMDL *MdlChain, OUT PIO_STATUS_BLOCK IoStatus)
 
 /*++
 
@@ -1346,20 +1339,21 @@ Return Value:
     PDEVICE_OBJECT DeviceObject, VolumeDeviceObject;
     PFAST_IO_DISPATCH FastIoDispatch;
 
-    DeviceObject = IoGetRelatedDeviceObject( FileObject );
+    DeviceObject = IoGetRelatedDeviceObject(FileObject);
     FastIoDispatch = DeviceObject->DriverObject->FastIoDispatch;
 
     //
     //  See if the (top-level) FileSystem has a FastIo routine, and if so, call it.
     //
 
-    if ((FastIoDispatch != NULL) &&
-        (FastIoDispatch->SizeOfFastIoDispatch > FIELD_OFFSET(FAST_IO_DISPATCH, MdlRead)) &&
-        (FastIoDispatch->MdlRead != NULL)) {
+    if ((FastIoDispatch != NULL) && (FastIoDispatch->SizeOfFastIoDispatch > FIELD_OFFSET(FAST_IO_DISPATCH, MdlRead)) &&
+        (FastIoDispatch->MdlRead != NULL))
+    {
 
-        return FastIoDispatch->MdlRead( FileObject, FileOffset, Length, LockKey, MdlChain, IoStatus, DeviceObject );
-
-    } else {
+        return FastIoDispatch->MdlRead(FileObject, FileOffset, Length, LockKey, MdlChain, IoStatus, DeviceObject);
+    }
+    else
+    {
 
         //
         //  Get the DeviceObject for the volume.  If that DeviceObject is different, and
@@ -1367,35 +1361,34 @@ Return Value:
         //  an Irp to get generated.
         //
 
-        VolumeDeviceObject = IoGetBaseFileSystemDeviceObject( FileObject );
+        VolumeDeviceObject = IoGetBaseFileSystemDeviceObject(FileObject);
         if ((VolumeDeviceObject != DeviceObject) &&
             (FastIoDispatch = VolumeDeviceObject->DriverObject->FastIoDispatch) &&
             (FastIoDispatch->SizeOfFastIoDispatch > FIELD_OFFSET(FAST_IO_DISPATCH, MdlRead)) &&
-            (FastIoDispatch->MdlRead != NULL)) {
+            (FastIoDispatch->MdlRead != NULL))
+        {
 
             return FALSE;
 
-        //
-        //  Otherwise, call the default routine.
-        //
+            //
+            //  Otherwise, call the default routine.
+            //
+        }
+        else
+        {
 
-        } else {
-
-            return FsRtlMdlReadDev( FileObject, FileOffset, Length, LockKey, MdlChain, IoStatus, DeviceObject );
+            return FsRtlMdlReadDev(FileObject, FileOffset, Length, LockKey, MdlChain, IoStatus, DeviceObject);
         }
     }
 }
 
-
+
 //
 //  The old routine will either dispatch or call FsRtlMdlReadCompleteDev
 //
 
 BOOLEAN
-FsRtlMdlReadComplete (
-    IN PFILE_OBJECT FileObject,
-    IN PMDL MdlChain
-    )
+FsRtlMdlReadComplete(IN PFILE_OBJECT FileObject, IN PMDL MdlChain)
 
 /*++
 
@@ -1421,7 +1414,7 @@ Return Value:
     PDEVICE_OBJECT DeviceObject, VolumeDeviceObject;
     PFAST_IO_DISPATCH FastIoDispatch;
 
-    DeviceObject = IoGetRelatedDeviceObject( FileObject );
+    DeviceObject = IoGetRelatedDeviceObject(FileObject);
     FastIoDispatch = DeviceObject->DriverObject->FastIoDispatch;
 
     //
@@ -1430,11 +1423,13 @@ Return Value:
 
     if ((FastIoDispatch != NULL) &&
         (FastIoDispatch->SizeOfFastIoDispatch > FIELD_OFFSET(FAST_IO_DISPATCH, MdlReadComplete)) &&
-        (FastIoDispatch->MdlReadComplete != NULL)) {
+        (FastIoDispatch->MdlReadComplete != NULL))
+    {
 
-        return FastIoDispatch->MdlReadComplete( FileObject, MdlChain, DeviceObject );
-
-    } else {
+        return FastIoDispatch->MdlReadComplete(FileObject, MdlChain, DeviceObject);
+    }
+    else
+    {
 
         //
         //  Get the DeviceObject for the volume.  If that DeviceObject is different, and
@@ -1442,32 +1437,30 @@ Return Value:
         //  an Irp to get generated.
         //
 
-        VolumeDeviceObject = IoGetBaseFileSystemDeviceObject( FileObject );
+        VolumeDeviceObject = IoGetBaseFileSystemDeviceObject(FileObject);
         if ((VolumeDeviceObject != DeviceObject) &&
             (FastIoDispatch = VolumeDeviceObject->DriverObject->FastIoDispatch) &&
             (FastIoDispatch->SizeOfFastIoDispatch > FIELD_OFFSET(FAST_IO_DISPATCH, MdlReadComplete)) &&
-            (FastIoDispatch->MdlReadComplete != NULL)) {
+            (FastIoDispatch->MdlReadComplete != NULL))
+        {
 
             return FALSE;
 
-        //
-        //  Otherwise, call the default routine.
-        //
+            //
+            //  Otherwise, call the default routine.
+            //
+        }
+        else
+        {
 
-        } else {
-
-            return FsRtlMdlReadCompleteDev( FileObject, MdlChain, DeviceObject );
+            return FsRtlMdlReadCompleteDev(FileObject, MdlChain, DeviceObject);
         }
     }
 }
 
-
+
 BOOLEAN
-FsRtlMdlReadCompleteDev (
-    IN PFILE_OBJECT FileObject,
-    IN PMDL MdlChain,
-    IN PDEVICE_OBJECT DeviceObject
-    )
+FsRtlMdlReadCompleteDev(IN PFILE_OBJECT FileObject, IN PMDL MdlChain, IN PDEVICE_OBJECT DeviceObject)
 
 /*++
 
@@ -1493,21 +1486,14 @@ Return Value:
 
 
 {
-    CcMdlReadComplete2( FileObject, MdlChain );
+    CcMdlReadComplete2(FileObject, MdlChain);
     return TRUE;
 }
 
-
+
 BOOLEAN
-FsRtlPrepareMdlWriteDev (
-    IN PFILE_OBJECT FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN ULONG LockKey,
-    OUT PMDL *MdlChain,
-    OUT PIO_STATUS_BLOCK IoStatus,
-    IN PDEVICE_OBJECT DeviceObject
-    )
+FsRtlPrepareMdlWriteDev(IN PFILE_OBJECT FileObject, IN PLARGE_INTEGER FileOffset, IN ULONG Length, IN ULONG LockKey,
+                        OUT PMDL *MdlChain, OUT PIO_STATUS_BLOCK IoStatus, IN PDEVICE_OBJECT DeviceObject)
 
 /*++
 
@@ -1550,8 +1536,8 @@ Return Value:
     BOOLEAN Status = TRUE;
     BOOLEAN AcquiredShared = FALSE;
     BOOLEAN FileSizeChanged = FALSE;
-    BOOLEAN WriteToEndOfFile = (BOOLEAN)((FileOffset->LowPart == FILE_WRITE_TO_END_OF_FILE) &&
-                                         (FileOffset->HighPart == -1));
+    BOOLEAN WriteToEndOfFile =
+        (BOOLEAN)((FileOffset->LowPart == FILE_WRITE_TO_END_OF_FILE) && (FileOffset->HighPart == -1));
 
     PAGED_CODE();
 
@@ -1560,8 +1546,8 @@ Return Value:
     //  the File System must do that.
     //
 
-    if ( !CcCanIWrite( FileObject, Length, TRUE, FALSE ) ||
-         FlagOn( FileObject->Flags, FO_WRITE_THROUGH )) {
+    if (!CcCanIWrite(FileObject, Length, TRUE, FALSE) || FlagOn(FileObject->Flags, FO_WRITE_THROUGH))
+    {
 
         return FALSE;
     }
@@ -1576,7 +1562,8 @@ Return Value:
     //  Special case the zero byte length
     //
 
-    if (Length == 0) {
+    if (Length == 0)
+    {
 
         return TRUE;
     }
@@ -1600,23 +1587,25 @@ Return Value:
 
     NewFileSize.QuadPart = FileOffset->QuadPart + (LONGLONG)Length;
 
-    if (WriteToEndOfFile || (NewFileSize.QuadPart > Header->ValidDataLength.QuadPart)) {
+    if (WriteToEndOfFile || (NewFileSize.QuadPart > Header->ValidDataLength.QuadPart))
+    {
 
         //
         //  Acquired exclusive on the common fcb header, and return if we don't
         //  get it.
         //
 
-        ExAcquireResourceExclusiveLite( Header->Resource, TRUE );
-
-    } else {
+        ExAcquireResourceExclusiveLite(Header->Resource, TRUE);
+    }
+    else
+    {
 
         //
         //  Acquired shared on the common fcb header, and return if we don't
         //  get it.
         //
 
-        ExAcquireResourceSharedLite( Header->Resource, TRUE );
+        ExAcquireResourceSharedLite(Header->Resource, TRUE);
 
         AcquiredShared = TRUE;
     }
@@ -1627,12 +1616,14 @@ Return Value:
     //  space is allocated, and if not then release the fcb and return.
     //
 
-    if (WriteToEndOfFile) {
+    if (WriteToEndOfFile)
+    {
 
         Offset = Header->FileSize;
         NewFileSize.QuadPart = Header->FileSize.QuadPart + (LONGLONG)Length;
-
-    } else {
+    }
+    else
+    {
 
         Offset = *FileOffset;
         NewFileSize.QuadPart = FileOffset->QuadPart + (LONGLONG)Length;
@@ -1644,12 +1635,11 @@ Return Value:
     //  If not then release the fcb and return.
     //
 
-    if ((FileObject->PrivateCacheMap == NULL) ||
-        (Header->IsFastIoPossible == FastIoIsNotPossible) ||
-        (MAXLONGLONG - Offset.QuadPart < (LONGLONG)Length) ||
-        ( NewFileSize.QuadPart > Header->AllocationSize.QuadPart ) ) {
+    if ((FileObject->PrivateCacheMap == NULL) || (Header->IsFastIoPossible == FastIoIsNotPossible) ||
+        (MAXLONGLONG - Offset.QuadPart < (LONGLONG)Length) || (NewFileSize.QuadPart > Header->AllocationSize.QuadPart))
+    {
 
-        ExReleaseResourceLite( Header->Resource );
+        ExReleaseResourceLite(Header->Resource);
         FsRtlExitFileSystem();
 
         return FALSE;
@@ -1660,11 +1650,12 @@ Return Value:
     //  Fcb exclusive, and make sure that FastIo is still possible.
     //
 
-    if (AcquiredShared && ( NewFileSize.QuadPart > Header->ValidDataLength.QuadPart )) {
+    if (AcquiredShared && (NewFileSize.QuadPart > Header->ValidDataLength.QuadPart))
+    {
 
-        ExReleaseResourceLite( Header->Resource );
+        ExReleaseResourceLite(Header->Resource);
 
-        ExAcquireResourceExclusiveLite( Header->Resource, TRUE );
+        ExAcquireResourceExclusiveLite(Header->Resource, TRUE);
 
         AcquiredShared = FALSE;
 
@@ -1672,17 +1663,18 @@ Return Value:
         //  If writing to end of file, we must recalculate new size.
         //
 
-        if (WriteToEndOfFile) {
+        if (WriteToEndOfFile)
+        {
 
             Offset = Header->FileSize;
             NewFileSize.QuadPart = Header->FileSize.QuadPart + (LONGLONG)Length;
         }
 
-        if ((FileObject->PrivateCacheMap == NULL) ||
-            (Header->IsFastIoPossible == FastIoIsNotPossible) ||
-            ( NewFileSize.QuadPart > Header->AllocationSize.QuadPart )) {
+        if ((FileObject->PrivateCacheMap == NULL) || (Header->IsFastIoPossible == FastIoIsNotPossible) ||
+            (NewFileSize.QuadPart > Header->AllocationSize.QuadPart))
+        {
 
-            ExReleaseResourceLite( Header->Resource );
+            ExReleaseResourceLite(Header->Resource);
             FsRtlExitFileSystem();
 
             return FALSE;
@@ -1694,9 +1686,10 @@ Return Value:
     //  the answer
     //
 
-    if (Header->IsFastIoPossible == FastIoIsQuestionable) {
+    if (Header->IsFastIoPossible == FastIoIsQuestionable)
+    {
 
-        PFAST_IO_DISPATCH FastIoDispatch = IoGetRelatedDeviceObject( FileObject )->DriverObject->FastIoDispatch;
+        PFAST_IO_DISPATCH FastIoDispatch = IoGetRelatedDeviceObject(FileObject)->DriverObject->FastIoDispatch;
 
         //
         //  All file system then set "Is Questionable" had better support fast I/O
@@ -1710,20 +1703,16 @@ Return Value:
         //  other than GoForIt then we cannot take the fast I/O path.
         //
 
-        if (!FastIoDispatch->FastIoCheckIfPossible( FileObject,
-                                                    FileOffset,
-                                                    Length,
-                                                    TRUE,
-                                                    LockKey,
-                                                    FALSE, // write operation
-                                                    IoStatus,
-                                                    IoGetRelatedDeviceObject( FileObject ) )) {
+        if (!FastIoDispatch->FastIoCheckIfPossible(FileObject, FileOffset, Length, TRUE, LockKey,
+                                                   FALSE, // write operation
+                                                   IoStatus, IoGetRelatedDeviceObject(FileObject)))
+        {
 
             //
             //  Fast I/O is not possible so release the Fcb and return.
             //
 
-            ExReleaseResourceLite( Header->Resource );
+            ExReleaseResourceLite(Header->Resource);
             FsRtlExitFileSystem();
 
             return FALSE;
@@ -1735,7 +1724,8 @@ Return Value:
     // reads are not nooped.
     //
 
-    if ( NewFileSize.QuadPart > Header->FileSize.QuadPart ) {
+    if (NewFileSize.QuadPart > Header->FileSize.QuadPart)
+    {
 
         FileSizeChanged = TRUE;
         OldFileSize = Header->FileSize;
@@ -1746,14 +1736,15 @@ Return Value:
         //  size wraps.
         //
 
-        if ( (Header->FileSize.HighPart != NewFileSize.HighPart) &&
-             (Header->PagingIoResource != NULL) ) {
+        if ((Header->FileSize.HighPart != NewFileSize.HighPart) && (Header->PagingIoResource != NULL))
+        {
 
-            (VOID)ExAcquireResourceExclusiveLite( Header->PagingIoResource, TRUE );
+            (VOID) ExAcquireResourceExclusiveLite(Header->PagingIoResource, TRUE);
             Header->FileSize = NewFileSize;
-            ExReleaseResourceLite( Header->PagingIoResource );
-
-        } else {
+            ExReleaseResourceLite(Header->PagingIoResource);
+        }
+        else
+        {
 
             Header->FileSize = NewFileSize;
         }
@@ -1771,28 +1762,27 @@ Return Value:
 
     PsGetCurrentThread()->TopLevelIrp = FSRTL_FAST_IO_TOP_LEVEL_IRP;
 
-    try {
+    try
+    {
 
         //
         //  See if we have to do some zeroing
         //
 
-        if ( Offset.QuadPart > Header->ValidDataLength.QuadPart ) {
+        if (Offset.QuadPart > Header->ValidDataLength.QuadPart)
+        {
 
-            Status = CcZeroData( FileObject,
-                                 &Header->ValidDataLength,
-                                 &Offset,
-                                 TRUE );
+            Status = CcZeroData(FileObject, &Header->ValidDataLength, &Offset, TRUE);
         }
 
-        if (Status) {
+        if (Status)
+        {
 
-            CcPrepareMdlWrite( FileObject, &Offset, Length, MdlChain, IoStatus );
+            CcPrepareMdlWrite(FileObject, &Offset, Length, MdlChain, IoStatus);
         }
-
-    } except( FsRtlIsNtstatusExpected(GetExceptionCode())
-                                    ? EXCEPTION_EXECUTE_HANDLER
-                                    : EXCEPTION_CONTINUE_SEARCH ) {
+    }
+    except(FsRtlIsNtstatusExpected(GetExceptionCode()) ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
+    {
 
         Status = FALSE;
     }
@@ -1803,28 +1793,31 @@ Return Value:
     //  If we succeeded, see if we have to update FileSize or ValidDataLength.
     //
 
-    if (Status) {
+    if (Status)
+    {
 
         //
         // In the case of ValidDataLength, we really have to check again
         // since we did not do this when we acquired the resource exclusive.
         //
 
-        if ( NewFileSize.QuadPart > Header->ValidDataLength.QuadPart ) {
+        if (NewFileSize.QuadPart > Header->ValidDataLength.QuadPart)
+        {
 
             //
             //  Deal with an extremely rare pathalogical case here the
             //  ValidDataLength wraps.
             //
 
-            if ( (Header->ValidDataLength.HighPart != NewFileSize.HighPart) &&
-                 (Header->PagingIoResource != NULL) ) {
+            if ((Header->ValidDataLength.HighPart != NewFileSize.HighPart) && (Header->PagingIoResource != NULL))
+            {
 
-                (VOID)ExAcquireResourceExclusiveLite( Header->PagingIoResource, TRUE );
+                (VOID) ExAcquireResourceExclusiveLite(Header->PagingIoResource, TRUE);
                 Header->ValidDataLength = NewFileSize;
-                ExReleaseResourceLite( Header->PagingIoResource );
-
-            } else {
+                ExReleaseResourceLite(Header->PagingIoResource);
+            }
+            else
+            {
 
                 Header->ValidDataLength = NewFileSize;
             }
@@ -1836,31 +1829,36 @@ Return Value:
 
         FileObject->Flags |= FO_FILE_MODIFIED;
 
-        if (FileSizeChanged) {
+        if (FileSizeChanged)
+        {
 
             *CcGetFileSizePointer(FileObject) = NewFileSize;
 
             FileObject->Flags |= FO_FILE_SIZE_CHANGED;
         }
 
-    //
-    //  If we did not succeed, then we must restore the original FileSize
-    //  and release the resource.  In the success path, the cache manager
-    //  will release the resource.
-    //
+        //
+        //  If we did not succeed, then we must restore the original FileSize
+        //  and release the resource.  In the success path, the cache manager
+        //  will release the resource.
+        //
+    }
+    else
+    {
 
-    } else {
+        if (FileSizeChanged)
+        {
 
-        if (FileSizeChanged) {
+            if (Header->PagingIoResource != NULL)
+            {
 
-            if ( Header->PagingIoResource != NULL ) {
-
-                (VOID)ExAcquireResourceExclusiveLite( Header->PagingIoResource, TRUE );
+                (VOID) ExAcquireResourceExclusiveLite(Header->PagingIoResource, TRUE);
                 Header->FileSize = OldFileSize;
                 Header->ValidDataLength = OldValidDataLength;
-                ExReleaseResourceLite( Header->PagingIoResource );
-
-            } else {
+                ExReleaseResourceLite(Header->PagingIoResource);
+            }
+            else
+            {
 
                 Header->FileSize = OldFileSize;
                 Header->ValidDataLength = OldValidDataLength;
@@ -1872,27 +1870,21 @@ Return Value:
     //  Now we can release the resource.
     //
 
-    ExReleaseResourceLite( Header->Resource );
+    ExReleaseResourceLite(Header->Resource);
 
     FsRtlExitFileSystem();
 
     return Status;
 }
 
-
+
 //
 //  The old routine will either dispatch or call FsRtlPrepareMdlWriteDev
 //
 
 BOOLEAN
-FsRtlPrepareMdlWrite (
-    IN PFILE_OBJECT FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN ULONG LockKey,
-    OUT PMDL *MdlChain,
-    OUT PIO_STATUS_BLOCK IoStatus
-    )
+FsRtlPrepareMdlWrite(IN PFILE_OBJECT FileObject, IN PLARGE_INTEGER FileOffset, IN ULONG Length, IN ULONG LockKey,
+                     OUT PMDL *MdlChain, OUT PIO_STATUS_BLOCK IoStatus)
 
 /*++
 
@@ -1929,7 +1921,7 @@ Return Value:
     PDEVICE_OBJECT DeviceObject, VolumeDeviceObject;
     PFAST_IO_DISPATCH FastIoDispatch;
 
-    DeviceObject = IoGetRelatedDeviceObject( FileObject );
+    DeviceObject = IoGetRelatedDeviceObject(FileObject);
     FastIoDispatch = DeviceObject->DriverObject->FastIoDispatch;
 
     //
@@ -1938,11 +1930,14 @@ Return Value:
 
     if ((FastIoDispatch != NULL) &&
         (FastIoDispatch->SizeOfFastIoDispatch > FIELD_OFFSET(FAST_IO_DISPATCH, PrepareMdlWrite)) &&
-        (FastIoDispatch->PrepareMdlWrite != NULL)) {
+        (FastIoDispatch->PrepareMdlWrite != NULL))
+    {
 
-        return FastIoDispatch->PrepareMdlWrite( FileObject, FileOffset, Length, LockKey, MdlChain, IoStatus, DeviceObject );
-
-    } else {
+        return FastIoDispatch->PrepareMdlWrite(FileObject, FileOffset, Length, LockKey, MdlChain, IoStatus,
+                                               DeviceObject);
+    }
+    else
+    {
 
         //
         //  Get the DeviceObject for the volume.  If that DeviceObject is different, and
@@ -1950,36 +1945,34 @@ Return Value:
         //  an Irp to get generated.
         //
 
-        VolumeDeviceObject = IoGetBaseFileSystemDeviceObject( FileObject );
+        VolumeDeviceObject = IoGetBaseFileSystemDeviceObject(FileObject);
         if ((VolumeDeviceObject != DeviceObject) &&
             (FastIoDispatch = VolumeDeviceObject->DriverObject->FastIoDispatch) &&
             (FastIoDispatch->SizeOfFastIoDispatch > FIELD_OFFSET(FAST_IO_DISPATCH, PrepareMdlWrite)) &&
-            (FastIoDispatch->PrepareMdlWrite != NULL)) {
+            (FastIoDispatch->PrepareMdlWrite != NULL))
+        {
 
             return FALSE;
 
-        //
-        //  Otherwise, call the default routine.
-        //
+            //
+            //  Otherwise, call the default routine.
+            //
+        }
+        else
+        {
 
-        } else {
-
-            return FsRtlPrepareMdlWriteDev( FileObject, FileOffset, Length, LockKey, MdlChain, IoStatus, DeviceObject );
+            return FsRtlPrepareMdlWriteDev(FileObject, FileOffset, Length, LockKey, MdlChain, IoStatus, DeviceObject);
         }
     }
 }
 
-
+
 //
 //  The old routine will either dispatch or call FsRtlMdlWriteCompleteDev
 //
 
 BOOLEAN
-FsRtlMdlWriteComplete (
-    IN PFILE_OBJECT FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN PMDL MdlChain
-    )
+FsRtlMdlWriteComplete(IN PFILE_OBJECT FileObject, IN PLARGE_INTEGER FileOffset, IN PMDL MdlChain)
 
 /*++
 
@@ -2003,7 +1996,7 @@ Return Value:
     PDEVICE_OBJECT DeviceObject, VolumeDeviceObject;
     PFAST_IO_DISPATCH FastIoDispatch;
 
-    DeviceObject = IoGetRelatedDeviceObject( FileObject );
+    DeviceObject = IoGetRelatedDeviceObject(FileObject);
     FastIoDispatch = DeviceObject->DriverObject->FastIoDispatch;
 
     //
@@ -2012,11 +2005,13 @@ Return Value:
 
     if ((FastIoDispatch != NULL) &&
         (FastIoDispatch->SizeOfFastIoDispatch > FIELD_OFFSET(FAST_IO_DISPATCH, MdlWriteComplete)) &&
-        (FastIoDispatch->MdlWriteComplete != NULL)) {
+        (FastIoDispatch->MdlWriteComplete != NULL))
+    {
 
-        return FastIoDispatch->MdlWriteComplete( FileObject, FileOffset, MdlChain, DeviceObject );
-
-    } else {
+        return FastIoDispatch->MdlWriteComplete(FileObject, FileOffset, MdlChain, DeviceObject);
+    }
+    else
+    {
 
         //
         //  Get the DeviceObject for the volume.  If that DeviceObject is different, and
@@ -2024,33 +2019,31 @@ Return Value:
         //  an Irp to get generated.
         //
 
-        VolumeDeviceObject = IoGetBaseFileSystemDeviceObject( FileObject );
+        VolumeDeviceObject = IoGetBaseFileSystemDeviceObject(FileObject);
         if ((VolumeDeviceObject != DeviceObject) &&
             (FastIoDispatch = VolumeDeviceObject->DriverObject->FastIoDispatch) &&
             (FastIoDispatch->SizeOfFastIoDispatch > FIELD_OFFSET(FAST_IO_DISPATCH, MdlWriteComplete)) &&
-            (FastIoDispatch->MdlWriteComplete != NULL)) {
+            (FastIoDispatch->MdlWriteComplete != NULL))
+        {
 
             return FALSE;
 
-        //
-        //  Otherwise, call the default routine.
-        //
+            //
+            //  Otherwise, call the default routine.
+            //
+        }
+        else
+        {
 
-        } else {
-
-            return FsRtlMdlWriteCompleteDev( FileObject, FileOffset, MdlChain, DeviceObject );
+            return FsRtlMdlWriteCompleteDev(FileObject, FileOffset, MdlChain, DeviceObject);
         }
     }
 }
 
-
+
 BOOLEAN
-FsRtlMdlWriteCompleteDev (
-    IN PFILE_OBJECT FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN PMDL MdlChain,
-    IN PDEVICE_OBJECT DeviceObject
-    )
+FsRtlMdlWriteCompleteDev(IN PFILE_OBJECT FileObject, IN PLARGE_INTEGER FileOffset, IN PMDL MdlChain,
+                         IN PDEVICE_OBJECT DeviceObject)
 
 /*++
 
@@ -2078,21 +2071,19 @@ Return Value:
     //  Do not support WRITE_THROUGH in the fast path call.
     //
 
-    if (FlagOn( FileObject->Flags, FO_WRITE_THROUGH )) {
+    if (FlagOn(FileObject->Flags, FO_WRITE_THROUGH))
+    {
         return FALSE;
     }
 
-    CcMdlWriteComplete2( FileObject, FileOffset, MdlChain );
+    CcMdlWriteComplete2(FileObject, FileOffset, MdlChain);
     return TRUE;
 }
 
-
+
 NTKERNELAPI
 NTSTATUS
-FsRtlRegisterFileSystemFilterCallbacks (
-    IN PDRIVER_OBJECT FilterDriverObject,
-    IN PFS_FILTER_CALLBACKS Callbacks
-    )
+FsRtlRegisterFileSystemFilterCallbacks(IN PDRIVER_OBJECT FilterDriverObject, IN PFS_FILTER_CALLBACKS Callbacks)
 
 /*++
 
@@ -2135,40 +2126,35 @@ Return Value:
 
     PAGED_CODE();
 
-    if (!(ARGUMENT_PRESENT( FilterDriverObject ) && 
-          ARGUMENT_PRESENT( Callbacks ))) {
+    if (!(ARGUMENT_PRESENT(FilterDriverObject) && ARGUMENT_PRESENT(Callbacks)))
+    {
 
         return STATUS_INVALID_PARAMETER;
     }
-    
+
     DriverExt = FilterDriverObject->DriverExtension;
 
-    FsFilterCallbacks = ExAllocatePoolWithTag( NonPagedPool, 
-                                               Callbacks->SizeOfFsFilterCallbacks,
-                                               FSRTL_FILTER_MEMORY_TAG ); 
+    FsFilterCallbacks =
+        ExAllocatePoolWithTag(NonPagedPool, Callbacks->SizeOfFsFilterCallbacks, FSRTL_FILTER_MEMORY_TAG);
 
-    if (FsFilterCallbacks == NULL) {
+    if (FsFilterCallbacks == NULL)
+    {
 
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    RtlCopyMemory( FsFilterCallbacks,
-                   Callbacks,
-                   Callbacks->SizeOfFsFilterCallbacks );
-                   
+    RtlCopyMemory(FsFilterCallbacks, Callbacks, Callbacks->SizeOfFsFilterCallbacks);
+
     DriverExt->FsFilterCallbacks = FsFilterCallbacks;
 
     return STATUS_SUCCESS;
 }
 
-
+
 NTKERNELAPI
 BOOLEAN
-FsRtlAcquireFileForModWrite (
-    IN PFILE_OBJECT FileObject,
-    IN PLARGE_INTEGER EndingOffset,
-    OUT PERESOURCE *ResourceToRelease
-    )
+FsRtlAcquireFileForModWrite(IN PFILE_OBJECT FileObject, IN PLARGE_INTEGER EndingOffset,
+                            OUT PERESOURCE *ResourceToRelease)
 
 /*++
 
@@ -2203,34 +2189,29 @@ Return Value:
 
 {
     NTSTATUS Status;
-    
+
     //
     //  Just call the new version of this routine and process
-    //  the NTSTATUS returned into TRUE for success and FALSE 
+    //  the NTSTATUS returned into TRUE for success and FALSE
     //  for failure.
     //
-    
-    Status = FsRtlAcquireFileForModWriteEx( FileObject,
-                                            EndingOffset,
-                                            ResourceToRelease );
 
-    if (!NT_SUCCESS( Status )) {
+    Status = FsRtlAcquireFileForModWriteEx(FileObject, EndingOffset, ResourceToRelease);
+
+    if (!NT_SUCCESS(Status))
+    {
 
         return FALSE;
-
     }
 
     return TRUE;
 }
 
-
+
 NTKERNELAPI
 NTSTATUS
-FsRtlAcquireFileForModWriteEx (
-    IN PFILE_OBJECT FileObject,
-    IN PLARGE_INTEGER EndingOffset,
-    OUT PERESOURCE *ResourceToRelease
-    )
+FsRtlAcquireFileForModWriteEx(IN PFILE_OBJECT FileObject, IN PLARGE_INTEGER EndingOffset,
+                              OUT PERESOURCE *ResourceToRelease)
 /*++
 
 Routine Description:
@@ -2285,12 +2266,12 @@ Return Value:
     //  these operations to another stack that could possibly have file system
     //  filter drivers correctly.
     //
-    
-    DeviceObject = IoGetRelatedDeviceObject( FileObject );
-    BaseFsDeviceObject = IoGetBaseFileSystemDeviceObject( FileObject );
 
-    FastIoDispatch = GET_FAST_IO_DISPATCH( BaseFsDeviceObject );
-    FsFilterCallbacks = GET_FS_FILTER_CALLBACKS( BaseFsDeviceObject );
+    DeviceObject = IoGetRelatedDeviceObject(FileObject);
+    BaseFsDeviceObject = IoGetBaseFileSystemDeviceObject(FileObject);
+
+    FastIoDispatch = GET_FAST_IO_DISPATCH(BaseFsDeviceObject);
+    FsFilterCallbacks = GET_FS_FILTER_CALLBACKS(BaseFsDeviceObject);
 
     //
     //  The BaseFsDeviceObject should only support one of these interfaces --
@@ -2299,18 +2280,19 @@ Return Value:
     //  the FsFilterCallback interface.
     //
 
-    ASSERT( !(VALID_FAST_IO_DISPATCH_HANDLER( FastIoDispatch, AcquireForModWrite ) &&
-              (VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PreAcquireForModifiedPageWriter ) ||
-               VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PostAcquireForModifiedPageWriter ))) );
+    ASSERT(!(VALID_FAST_IO_DISPATCH_HANDLER(FastIoDispatch, AcquireForModWrite) &&
+             (VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PreAcquireForModifiedPageWriter) ||
+              VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PostAcquireForModifiedPageWriter))));
 
-    if (VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PreAcquireForModifiedPageWriter ) ||
-        VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PostAcquireForModifiedPageWriter )) {
+    if (VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PreAcquireForModifiedPageWriter) ||
+        VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PostAcquireForModifiedPageWriter))
+    {
 
         BaseFsGetsFsFilterCallbacks = TRUE;
     }
-    
-    if (DeviceObject == BaseFsDeviceObject &&
-        !BaseFsGetsFsFilterCallbacks) {
+
+    if (DeviceObject == BaseFsDeviceObject && !BaseFsGetsFsFilterCallbacks)
+    {
 
         //
         //  There are no filters attached to this device and the base file system
@@ -2321,20 +2303,18 @@ Return Value:
         CallFilters = NULL;
     }
 
-    if (CallFilters) {
+    if (CallFilters)
+    {
 
         //
         //  Call routine to initialize the control structure.
         //
 
-        Status = FsFilterCtrlInit( &FsFilterCtrl,
-                                   FS_FILTER_ACQUIRE_FOR_MOD_WRITE,
-                                   DeviceObject,
-                                   BaseFsDeviceObject,
-                                   FileObject,
-                                   TRUE );
+        Status = FsFilterCtrlInit(&FsFilterCtrl, FS_FILTER_ACQUIRE_FOR_MOD_WRITE, DeviceObject, BaseFsDeviceObject,
+                                  FileObject, TRUE);
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
 
             return Status;
         }
@@ -2346,37 +2326,38 @@ Return Value:
         CallbackData = &(FsFilterCtrl.Data);
         CallbackData->Parameters.AcquireForModifiedPageWriter.EndingOffset = EndingOffset;
 
-        Status = FsFilterPerformCallbacks( &FsFilterCtrl, 
-                                           TRUE, 
-                                           TRUE, 
-                                           &BaseFsFailedOperation );
+        Status = FsFilterPerformCallbacks(&FsFilterCtrl, TRUE, TRUE, &BaseFsFailedOperation);
     }
 
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
 
-        if (CallFilters && FlagOn( FsFilterCtrl.Flags, FS_FILTER_CHANGED_DEVICE_STACKS )) {
+        if (CallFilters && FlagOn(FsFilterCtrl.Flags, FS_FILTER_CHANGED_DEVICE_STACKS))
+        {
 
-            BaseFsDeviceObject = IoGetDeviceAttachmentBaseRef( FsFilterCtrl.Data.DeviceObject );
+            BaseFsDeviceObject = IoGetDeviceAttachmentBaseRef(FsFilterCtrl.Data.DeviceObject);
             ReleaseBaseFsDeviceReference = TRUE;
-            FastIoDispatch = GET_FAST_IO_DISPATCH( BaseFsDeviceObject );
-            FsFilterCallbacks = GET_FS_FILTER_CALLBACKS( BaseFsDeviceObject );
+            FastIoDispatch = GET_FAST_IO_DISPATCH(BaseFsDeviceObject);
+            FsFilterCallbacks = GET_FS_FILTER_CALLBACKS(BaseFsDeviceObject);
             FileObject = FsFilterCtrl.Data.FileObject;
         }
 
-        if (!(VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PreAcquireForModifiedPageWriter ) ||
-              VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PostAcquireForModifiedPageWriter ))) {
+        if (!(VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PreAcquireForModifiedPageWriter) ||
+              VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PostAcquireForModifiedPageWriter)))
+        {
 
             //
             //  Call the base file system.
             //
 
-            if (VALID_FAST_IO_DISPATCH_HANDLER( FastIoDispatch, AcquireForModWrite )) {
+            if (VALID_FAST_IO_DISPATCH_HANDLER(FastIoDispatch, AcquireForModWrite))
+            {
 
-                Status = FastIoDispatch->AcquireForModWrite( FileObject,
-                                                             EndingOffset,
-                                                             ResourceToRelease,
-                                                             BaseFsDeviceObject );
-            } else {
+                Status =
+                    FastIoDispatch->AcquireForModWrite(FileObject, EndingOffset, ResourceToRelease, BaseFsDeviceObject);
+            }
+            else
+            {
 
                 Status = STATUS_INVALID_DEVICE_REQUEST;
             }
@@ -2385,29 +2366,27 @@ Return Value:
             //  If there is a failure at this point, we know that the failure
             //  was caused by the base file system.
             //
-            
+
             BaseFsFailedOperation = TRUE;
         }
 
-        if (ReleaseBaseFsDeviceReference) {
+        if (ReleaseBaseFsDeviceReference)
+        {
 
-            ObDereferenceObject( BaseFsDeviceObject );
+            ObDereferenceObject(BaseFsDeviceObject);
         }
     }
 
-    ASSERT( (Status == STATUS_SUCCESS) || 
-            (Status == STATUS_CANT_WAIT) || 
-            (Status == STATUS_INVALID_DEVICE_REQUEST) );
+    ASSERT((Status == STATUS_SUCCESS) || (Status == STATUS_CANT_WAIT) || (Status == STATUS_INVALID_DEVICE_REQUEST));
 
     //
     //  If the base file system didn't have an AcquireForModWrite handler
-    //  or couldn't return STATUS_SUCCESS or STATUS_CANT_WAIT, 
+    //  or couldn't return STATUS_SUCCESS or STATUS_CANT_WAIT,
     //  we need to perform the default actions here.
     //
 
-    if ((Status != STATUS_SUCCESS) && 
-        (Status != STATUS_CANT_WAIT) && 
-        BaseFsFailedOperation) {
+    if ((Status != STATUS_SUCCESS) && (Status != STATUS_CANT_WAIT) && BaseFsFailedOperation)
+    {
 
         //
         //  We follow the following rules to determine which resource
@@ -2429,10 +2408,11 @@ Return Value:
         //
         //  3 - Otherwise acquire the paging io resource shared.
         //
-    
-        Header = (PFSRTL_COMMON_FCB_HEADER) FileObject->FsContext;
 
-        if (Header->Resource == NULL) {
+        Header = (PFSRTL_COMMON_FCB_HEADER)FileObject->FsContext;
+
+        if (Header->Resource == NULL)
+        {
 
             *ResourceToRelease = NULL;
 
@@ -2440,20 +2420,22 @@ Return Value:
             goto FsRtlAcquireFileForModWrite_CallCompletionCallbacks;
         }
 
-        if (FlagOn( Header->Flags, FSRTL_FLAG_ACQUIRE_MAIN_RSRC_EX ) ||
+        if (FlagOn(Header->Flags, FSRTL_FLAG_ACQUIRE_MAIN_RSRC_EX) ||
             (EndingOffset->QuadPart > Header->ValidDataLength.QuadPart &&
-             Header->ValidDataLength.QuadPart != Header->FileSize.QuadPart)) {
+             Header->ValidDataLength.QuadPart != Header->FileSize.QuadPart))
+        {
 
             ResourceAcquired = Header->Resource;
             AcquireExclusive = TRUE;
-
-        } else if (FlagOn( Header->Flags, FSRTL_FLAG_ACQUIRE_MAIN_RSRC_SH ) ||
-                   Header->PagingIoResource == NULL) {
+        }
+        else if (FlagOn(Header->Flags, FSRTL_FLAG_ACQUIRE_MAIN_RSRC_SH) || Header->PagingIoResource == NULL)
+        {
 
             ResourceAcquired = Header->Resource;
             AcquireExclusive = FALSE;
-
-        } else {
+        }
+        else
+        {
 
             ResourceAcquired = Header->PagingIoResource;
             AcquireExclusive = FALSE;
@@ -2468,21 +2450,25 @@ Return Value:
         //  one.
         //
 
-        while (TRUE) {
+        while (TRUE)
+        {
 
             //
             //  Now acquire the desired resource.
             //
 
-            if (AcquireExclusive) {
+            if (AcquireExclusive)
+            {
 
-                if (!ExAcquireResourceExclusiveLite( ResourceAcquired, FALSE )) {
+                if (!ExAcquireResourceExclusiveLite(ResourceAcquired, FALSE))
+                {
 
                     Status = STATUS_CANT_WAIT;
                     goto FsRtlAcquireFileForModWrite_CallCompletionCallbacks;
                 }
-
-            } else if (!ExAcquireSharedWaitForExclusive( ResourceAcquired, FALSE )) {
+            }
+            else if (!ExAcquireSharedWaitForExclusive(ResourceAcquired, FALSE))
+            {
 
                 Status = STATUS_CANT_WAIT;
                 goto FsRtlAcquireFileForModWrite_CallCompletionCallbacks;
@@ -2500,8 +2486,9 @@ Return Value:
             //  under our shared (pagingio) access.
             //
 
-            if (FlagOn( Header->Flags, FSRTL_FLAG_ACQUIRE_MAIN_RSRC_EX ) ||
-                EndingOffset->QuadPart > Header->ValidDataLength.QuadPart) {
+            if (FlagOn(Header->Flags, FSRTL_FLAG_ACQUIRE_MAIN_RSRC_EX) ||
+                EndingOffset->QuadPart > Header->ValidDataLength.QuadPart)
+            {
 
                 //
                 //  If we don't have the main resource exclusively then
@@ -2509,9 +2496,10 @@ Return Value:
                 //  the main resource exclusively.
                 //
 
-                if (!AcquireExclusive) {
+                if (!AcquireExclusive)
+                {
 
-                    ExReleaseResourceLite( ResourceAcquired );
+                    ExReleaseResourceLite(ResourceAcquired);
                     AcquireExclusive = TRUE;
                     ResourceAcquired = Header->Resource;
                     continue;
@@ -2521,32 +2509,35 @@ Return Value:
                 //  We have the correct resource.  Exit the loop.
                 //
 
-            //
-            //  If we should be acquiring the main resource shared then move
-            //  to acquire the correct resource and proceed to the top of the loop.
-            //
-
-            } else if (FlagOn( Header->Flags, FSRTL_FLAG_ACQUIRE_MAIN_RSRC_SH )) {
+                //
+                //  If we should be acquiring the main resource shared then move
+                //  to acquire the correct resource and proceed to the top of the loop.
+                //
+            }
+            else if (FlagOn(Header->Flags, FSRTL_FLAG_ACQUIRE_MAIN_RSRC_SH))
+            {
 
                 //
                 //  If we have the main resource exclusively then downgrade to
                 //  shared and exit the loop.
                 //
 
-                if (AcquireExclusive) {
+                if (AcquireExclusive)
+                {
 
-                    ExConvertExclusiveToSharedLite( ResourceAcquired );
+                    ExConvertExclusiveToSharedLite(ResourceAcquired);
 
-                //
-                //  If we have the paging io resource then give up this resource
-                //  and acquire the main resource exclusively.  This is going
-                //  at it with a large hammer but is guaranteed to be resolved
-                //  in the next pass through the loop.
-                //
+                    //
+                    //  If we have the paging io resource then give up this resource
+                    //  and acquire the main resource exclusively.  This is going
+                    //  at it with a large hammer but is guaranteed to be resolved
+                    //  in the next pass through the loop.
+                    //
+                }
+                else if (ResourceAcquired != Header->Resource)
+                {
 
-                } else if (ResourceAcquired != Header->Resource) {
-
-                    ExReleaseResourceLite( ResourceAcquired );
+                    ExReleaseResourceLite(ResourceAcquired);
                     ResourceAcquired = Header->Resource;
                     AcquireExclusive = TRUE;
                     continue;
@@ -2556,25 +2547,27 @@ Return Value:
                 //  We have the correct resource.  Exit the loop.
                 //
 
-            //
-            //  At this point we should have the paging Io resource shared
-            //  if it exists.  If not then acquire it shared and release the
-            //  other resource and exit the loop.
-            //
-
-            } else if (Header->PagingIoResource != NULL
-                       && ResourceAcquired != Header->PagingIoResource) {
+                //
+                //  At this point we should have the paging Io resource shared
+                //  if it exists.  If not then acquire it shared and release the
+                //  other resource and exit the loop.
+                //
+            }
+            else if (Header->PagingIoResource != NULL && ResourceAcquired != Header->PagingIoResource)
+            {
 
                 ResourceAcquired = NULL;
 
-                if (ExAcquireSharedWaitForExclusive( Header->PagingIoResource, FALSE )) {
+                if (ExAcquireSharedWaitForExclusive(Header->PagingIoResource, FALSE))
+                {
 
                     ResourceAcquired = Header->PagingIoResource;
                 }
 
-                ExReleaseResourceLite( Header->Resource );
+                ExReleaseResourceLite(Header->Resource);
 
-                if (ResourceAcquired == NULL) {
+                if (ResourceAcquired == NULL)
+                {
 
                     Status = STATUS_CANT_WAIT;
                     goto FsRtlAcquireFileForModWrite_CallCompletionCallbacks;
@@ -2584,14 +2577,15 @@ Return Value:
                 //  We now have the correct resource.  Exit the loop.
                 //
 
-            //
-            //  We should have the main resource shared.  If we don't then
-            //  degrade our lock to shared access.
-            //
+                //
+                //  We should have the main resource shared.  If we don't then
+                //  degrade our lock to shared access.
+                //
+            }
+            else if (AcquireExclusive)
+            {
 
-            } else if (AcquireExclusive) {
-
-                ExConvertExclusiveToSharedLite( ResourceAcquired );
+                ExConvertExclusiveToSharedLite(ResourceAcquired);
 
                 //
                 //  We now have the correct resource.  Exit the loop.
@@ -2618,40 +2612,40 @@ FsRtlAcquireFileForModWrite_CallCompletionCallbacks:
     //  completion callbacks.  In any case, if we called down to the filters
     //  we need to free the FsFilterCtrl.
     //
-    
-    if (CallFilters) {
 
-        if (FS_FILTER_HAVE_COMPLETIONS( CallFilters )) {
+    if (CallFilters)
+    {
 
-            FsFilterPerformCompletionCallbacks( &FsFilterCtrl, Status );
+        if (FS_FILTER_HAVE_COMPLETIONS(CallFilters))
+        {
+
+            FsFilterPerformCompletionCallbacks(&FsFilterCtrl, Status);
         }
-        
-        FsFilterCtrlFree( &FsFilterCtrl );
+
+        FsFilterCtrlFree(&FsFilterCtrl);
     }
 
 #if DBG
 
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
 
-        gCounter.AcquireFileForModWriteEx_Succeed ++;
+        gCounter.AcquireFileForModWriteEx_Succeed++;
+    }
+    else
+    {
 
-    } else {
-
-        gCounter.AcquireFileForModWriteEx_Fail ++;
+        gCounter.AcquireFileForModWriteEx_Fail++;
     }
 
 #endif
-    
-    return Status;          
+
+    return Status;
 }
 
-
+
 NTKERNELAPI
-VOID
-FsRtlReleaseFileForModWrite (
-    IN PFILE_OBJECT FileObject,
-    IN PERESOURCE ResourceToRelease
-    )
+VOID FsRtlReleaseFileForModWrite(IN PFILE_OBJECT FileObject, IN PERESOURCE ResourceToRelease)
 
 /*++
 
@@ -2686,7 +2680,7 @@ Return Value:
     BOOLEAN BaseFsFailedOperation = FALSE;
 
 #if DBG
-    gCounter.ReleaseFileForModWrite ++;
+    gCounter.ReleaseFileForModWrite++;
 #endif
 
     //
@@ -2696,12 +2690,12 @@ Return Value:
     //  these operations to another stack that could possibly have file system
     //  filter drivers correctly.
     //
-    
-    DeviceObject = IoGetRelatedDeviceObject( FileObject );
-    BaseFsDeviceObject = IoGetBaseFileSystemDeviceObject( FileObject );
 
-    FastIoDispatch = GET_FAST_IO_DISPATCH( BaseFsDeviceObject );
-    FsFilterCallbacks = GET_FS_FILTER_CALLBACKS( BaseFsDeviceObject );
+    DeviceObject = IoGetRelatedDeviceObject(FileObject);
+    BaseFsDeviceObject = IoGetBaseFileSystemDeviceObject(FileObject);
+
+    FastIoDispatch = GET_FAST_IO_DISPATCH(BaseFsDeviceObject);
+    FsFilterCallbacks = GET_FS_FILTER_CALLBACKS(BaseFsDeviceObject);
 
     //
     //  The BaseFsDeviceObject should only support one of these interfaces --
@@ -2710,18 +2704,19 @@ Return Value:
     //  the FsFilterCallback interface.
     //
 
-    ASSERT( !(VALID_FAST_IO_DISPATCH_HANDLER( FastIoDispatch, ReleaseForModWrite ) &&
-              (VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PreReleaseForModifiedPageWriter ) ||
-               VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PostReleaseForModifiedPageWriter ))) );
+    ASSERT(!(VALID_FAST_IO_DISPATCH_HANDLER(FastIoDispatch, ReleaseForModWrite) &&
+             (VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PreReleaseForModifiedPageWriter) ||
+              VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PostReleaseForModifiedPageWriter))));
 
-    if (VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PreReleaseForModifiedPageWriter ) ||
-        VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PostReleaseForModifiedPageWriter )) {
+    if (VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PreReleaseForModifiedPageWriter) ||
+        VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PostReleaseForModifiedPageWriter))
+    {
 
         BaseFsGetsFsFilterCallbacks = TRUE;
     }
 
-    if (DeviceObject == BaseFsDeviceObject &&
-        !BaseFsGetsFsFilterCallbacks) {
+    if (DeviceObject == BaseFsDeviceObject && !BaseFsGetsFsFilterCallbacks)
+    {
 
         //
         //  There are no filters attached to this device and the base file system
@@ -2732,14 +2727,11 @@ Return Value:
         CallFilters = NULL;
     }
 
-    if (CallFilters) {
-    
-        FsFilterCtrlInit( &FsFilterCtrl,
-                          FS_FILTER_RELEASE_FOR_MOD_WRITE,
-                          DeviceObject,
-                          BaseFsDeviceObject,
-                          FileObject,
-                          FALSE );
+    if (CallFilters)
+    {
+
+        FsFilterCtrlInit(&FsFilterCtrl, FS_FILTER_RELEASE_FOR_MOD_WRITE, DeviceObject, BaseFsDeviceObject, FileObject,
+                         FALSE);
 
         //
         // Initialize the operation-specific parameters in the callback data.
@@ -2748,37 +2740,37 @@ Return Value:
         CallbackData = &(FsFilterCtrl.Data);
         CallbackData->Parameters.ReleaseForModifiedPageWriter.ResourceToRelease = ResourceToRelease;
 
-        Status = FsFilterPerformCallbacks( &FsFilterCtrl, 
-                                           FALSE, 
-                                           TRUE, 
-                                           &BaseFsFailedOperation );
-    }                                           
+        Status = FsFilterPerformCallbacks(&FsFilterCtrl, FALSE, TRUE, &BaseFsFailedOperation);
+    }
 
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
 
-        if (CallFilters && FlagOn( FsFilterCtrl.Flags, FS_FILTER_CHANGED_DEVICE_STACKS )) {
+        if (CallFilters && FlagOn(FsFilterCtrl.Flags, FS_FILTER_CHANGED_DEVICE_STACKS))
+        {
 
-            BaseFsDeviceObject = IoGetDeviceAttachmentBaseRef( FsFilterCtrl.Data.DeviceObject );
+            BaseFsDeviceObject = IoGetDeviceAttachmentBaseRef(FsFilterCtrl.Data.DeviceObject);
             ReleaseBaseDeviceReference = TRUE;
-            FastIoDispatch = GET_FAST_IO_DISPATCH( BaseFsDeviceObject );
-            FsFilterCallbacks = GET_FS_FILTER_CALLBACKS( BaseFsDeviceObject );
+            FastIoDispatch = GET_FAST_IO_DISPATCH(BaseFsDeviceObject);
+            FsFilterCallbacks = GET_FS_FILTER_CALLBACKS(BaseFsDeviceObject);
             FileObject = FsFilterCtrl.Data.FileObject;
         }
 
-        if (!(VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PreReleaseForModifiedPageWriter ) ||
-              VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PostReleaseForModifiedPageWriter ))) {
+        if (!(VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PreReleaseForModifiedPageWriter) ||
+              VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PostReleaseForModifiedPageWriter)))
+        {
 
             //
             //  Call the base file system.
             //
 
-            if (VALID_FAST_IO_DISPATCH_HANDLER( FastIoDispatch, ReleaseForModWrite )) {
+            if (VALID_FAST_IO_DISPATCH_HANDLER(FastIoDispatch, ReleaseForModWrite))
+            {
 
-                Status = FastIoDispatch->ReleaseForModWrite( FileObject, 
-                                                             ResourceToRelease, 
-                                                             BaseFsDeviceObject );
-
-            } else {
+                Status = FastIoDispatch->ReleaseForModWrite(FileObject, ResourceToRelease, BaseFsDeviceObject);
+            }
+            else
+            {
 
                 Status = STATUS_INVALID_DEVICE_REQUEST;
             }
@@ -2787,55 +2779,55 @@ Return Value:
             //  If there is a failure at this point, we know that the failure
             //  was caused by the base file system.
             //
-            
+
             BaseFsFailedOperation = TRUE;
         }
 
-        if (ReleaseBaseDeviceReference) {
+        if (ReleaseBaseDeviceReference)
+        {
 
-            ObDereferenceObject( BaseFsDeviceObject );
+            ObDereferenceObject(BaseFsDeviceObject);
         }
     }
 
-    ASSERT( (Status == STATUS_SUCCESS) || (Status == STATUS_INVALID_DEVICE_REQUEST) );
+    ASSERT((Status == STATUS_SUCCESS) || (Status == STATUS_INVALID_DEVICE_REQUEST));
 
     //
     //  If the base file system doesn't provide a handler for this
-    //  operation or the handler couldn't release the lock, perform the 
+    //  operation or the handler couldn't release the lock, perform the
     //  default action, which is releasing the ResourceToRelease.
     //
-    
-    if (Status == STATUS_INVALID_DEVICE_REQUEST &&
-        BaseFsFailedOperation) {
-        
-        ExReleaseResourceLite( ResourceToRelease );
+
+    if (Status == STATUS_INVALID_DEVICE_REQUEST && BaseFsFailedOperation)
+    {
+
+        ExReleaseResourceLite(ResourceToRelease);
         Status = STATUS_SUCCESS;
     }
-    
+
     //
     //  Again, we only want to call try to do completion callbacks
     //  if there are any filters attached to this device that have
     //  completion callbacks.  In any case, if we called down to the filters
     //  we need to free the FsFilterCtrl.
     //
-    
-    if (CallFilters) {
 
-        if (FS_FILTER_HAVE_COMPLETIONS( CallFilters )) {
+    if (CallFilters)
+    {
 
-            FsFilterPerformCompletionCallbacks( &FsFilterCtrl, Status );
+        if (FS_FILTER_HAVE_COMPLETIONS(CallFilters))
+        {
+
+            FsFilterPerformCompletionCallbacks(&FsFilterCtrl, Status);
         }
-        
-        FsFilterCtrlFree( &FsFilterCtrl );
+
+        FsFilterCtrlFree(&FsFilterCtrl);
     }
 }
 
-
+
 NTKERNELAPI
-VOID
-FsRtlAcquireFileForCcFlush (
-    IN PFILE_OBJECT FileObject
-    )
+VOID FsRtlAcquireFileForCcFlush(IN PFILE_OBJECT FileObject)
 
 /*++
 
@@ -2868,17 +2860,15 @@ Return Value:
     //  FsRtlAcquireFileForCcFlushEx.
     //
 
-    Status = FsRtlAcquireFileForCcFlushEx( FileObject );
+    Status = FsRtlAcquireFileForCcFlushEx(FileObject);
 
-    ASSERT( NT_SUCCESS( Status ) );
+    ASSERT(NT_SUCCESS(Status));
 }
 
-
+
 NTKERNELAPI
 NTSTATUS
-FsRtlAcquireFileForCcFlushEx (
-    IN PFILE_OBJECT FileObject
-    )
+FsRtlAcquireFileForCcFlushEx(IN PFILE_OBJECT FileObject)
 
 /*++
 
@@ -2922,12 +2912,12 @@ Return Value:
     //  these operations to another stack that could possibly have file system
     //  filter drivers correctly.
     //
-    
-    DeviceObject = IoGetRelatedDeviceObject( FileObject );
-    BaseFsDeviceObject = IoGetBaseFileSystemDeviceObject( FileObject );
 
-    FastIoDispatch = GET_FAST_IO_DISPATCH( BaseFsDeviceObject );
-    FsFilterCallbacks = GET_FS_FILTER_CALLBACKS( BaseFsDeviceObject );
+    DeviceObject = IoGetRelatedDeviceObject(FileObject);
+    BaseFsDeviceObject = IoGetBaseFileSystemDeviceObject(FileObject);
+
+    FastIoDispatch = GET_FAST_IO_DISPATCH(BaseFsDeviceObject);
+    FsFilterCallbacks = GET_FS_FILTER_CALLBACKS(BaseFsDeviceObject);
 
     //
     //  The BaseFsDeviceObject should only support one of these interfaces --
@@ -2936,18 +2926,19 @@ Return Value:
     //  the FsFilterCallback interface.
     //
 
-    ASSERT( !(VALID_FAST_IO_DISPATCH_HANDLER( FastIoDispatch, AcquireForCcFlush ) &&
-              (VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PreAcquireForCcFlush ) ||
-               VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PostAcquireForCcFlush ))) );
+    ASSERT(!(VALID_FAST_IO_DISPATCH_HANDLER(FastIoDispatch, AcquireForCcFlush) &&
+             (VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PreAcquireForCcFlush) ||
+              VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PostAcquireForCcFlush))));
 
-    if (VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PreAcquireForCcFlush ) ||
-        VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PostAcquireForCcFlush )) {
+    if (VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PreAcquireForCcFlush) ||
+        VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PostAcquireForCcFlush))
+    {
 
         BaseFsGetsFsFilterCallbacks = TRUE;
     }
-    
-    if (DeviceObject == BaseFsDeviceObject &&
-        !BaseFsGetsFsFilterCallbacks) {
+
+    if (DeviceObject == BaseFsDeviceObject && !BaseFsGetsFsFilterCallbacks)
+    {
 
         //
         //  There are no filters attached to this device and the base file system
@@ -2958,20 +2949,18 @@ Return Value:
         CallFilters = NULL;
     }
 
-    if (CallFilters) {
+    if (CallFilters)
+    {
 
         //
         //  Call routine to initialize the control structure.
         //
 
-        Status = FsFilterCtrlInit( &FsFilterCtrl,
-                                   FS_FILTER_ACQUIRE_FOR_CC_FLUSH,
-                                   DeviceObject,
-                                   BaseFsDeviceObject,
-                                   FileObject,
-                                   TRUE );
+        Status = FsFilterCtrlInit(&FsFilterCtrl, FS_FILTER_ACQUIRE_FOR_CC_FLUSH, DeviceObject, BaseFsDeviceObject,
+                                  FileObject, TRUE);
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
 
             return Status;
         }
@@ -2983,12 +2972,10 @@ Return Value:
 
         FsRtlEnterFileSystem();
 
-        Status = FsFilterPerformCallbacks( &FsFilterCtrl, 
-                                           TRUE, 
-                                           TRUE, 
-                                           &BaseFsFailedOperation );
-                                           
-    } else {
+        Status = FsFilterPerformCallbacks(&FsFilterCtrl, TRUE, TRUE, &BaseFsFailedOperation);
+    }
+    else
+    {
 
         //
         //  We don't have any filters to call, but we still need
@@ -2998,30 +2985,34 @@ Return Value:
         FsRtlEnterFileSystem();
     }
 
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
 
-        if (CallFilters && FlagOn( FsFilterCtrl.Flags, FS_FILTER_CHANGED_DEVICE_STACKS )) {
+        if (CallFilters && FlagOn(FsFilterCtrl.Flags, FS_FILTER_CHANGED_DEVICE_STACKS))
+        {
 
-            BaseFsDeviceObject = IoGetDeviceAttachmentBaseRef( FsFilterCtrl.Data.DeviceObject );
+            BaseFsDeviceObject = IoGetDeviceAttachmentBaseRef(FsFilterCtrl.Data.DeviceObject);
             ReleaseBaseFsDeviceReference = TRUE;
-            FastIoDispatch = GET_FAST_IO_DISPATCH( BaseFsDeviceObject );
-            FsFilterCallbacks = GET_FS_FILTER_CALLBACKS( BaseFsDeviceObject );
+            FastIoDispatch = GET_FAST_IO_DISPATCH(BaseFsDeviceObject);
+            FsFilterCallbacks = GET_FS_FILTER_CALLBACKS(BaseFsDeviceObject);
             FileObject = FsFilterCtrl.Data.FileObject;
         }
 
-        if (!(VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PreAcquireForCcFlush ) ||
-              VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PostAcquireForCcFlush))) {
+        if (!(VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PreAcquireForCcFlush) ||
+              VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PostAcquireForCcFlush)))
+        {
 
             //
             //  Call the base file system.
             //
 
-            if (VALID_FAST_IO_DISPATCH_HANDLER( FastIoDispatch, AcquireForCcFlush )) {
+            if (VALID_FAST_IO_DISPATCH_HANDLER(FastIoDispatch, AcquireForCcFlush))
+            {
 
-                Status = FastIoDispatch->AcquireForCcFlush( FileObject, 
-                                                            BaseFsDeviceObject );
-
-            } else {
+                Status = FastIoDispatch->AcquireForCcFlush(FileObject, BaseFsDeviceObject);
+            }
+            else
+            {
 
                 Status = STATUS_INVALID_DEVICE_REQUEST;
             }
@@ -3030,25 +3021,26 @@ Return Value:
             //  If there is a failure at this point, we know that the failure
             //  was caused by the base file system.
             //
-            
+
             BaseFsFailedOperation = TRUE;
         }
 
-        if (ReleaseBaseFsDeviceReference) {
+        if (ReleaseBaseFsDeviceReference)
+        {
 
-            ObDereferenceObject( BaseFsDeviceObject );
+            ObDereferenceObject(BaseFsDeviceObject);
         }
     }
 
-    ASSERT( (Status == STATUS_SUCCESS) || (Status == STATUS_INVALID_DEVICE_REQUEST) );
-    
+    ASSERT((Status == STATUS_SUCCESS) || (Status == STATUS_INVALID_DEVICE_REQUEST));
+
     //
     //  If the file system doesn't have a dispatch handler or failed this
     //  this operation, try to acquire the appropriate resources ourself.
     //
 
-    if (Status == STATUS_INVALID_DEVICE_REQUEST &&
-        BaseFsFailedOperation) {
+    if (Status == STATUS_INVALID_DEVICE_REQUEST && BaseFsFailedOperation)
+    {
 
         PFSRTL_COMMON_FCB_HEADER Header = FileObject->FsContext;
 
@@ -3056,16 +3048,19 @@ Return Value:
         //  If not already owned get the main resource exclusive because we may
         //  extend ValidDataLength.  Otherwise acquire it one more time recursively.
         //
-        
-        if (Header->Resource != NULL) {
 
-            if (!ExIsResourceAcquiredSharedLite( Header->Resource )) {
+        if (Header->Resource != NULL)
+        {
 
-                ExAcquireResourceExclusiveLite( Header->Resource, TRUE );
+            if (!ExIsResourceAcquiredSharedLite(Header->Resource))
+            {
 
-            } else {
+                ExAcquireResourceExclusiveLite(Header->Resource, TRUE);
+            }
+            else
+            {
 
-                ExAcquireResourceSharedLite( Header->Resource, TRUE );
+                ExAcquireResourceSharedLite(Header->Resource, TRUE);
             }
         }
 
@@ -3073,29 +3068,32 @@ Return Value:
         //  Also get the paging I/O resource ahead of any MM resources.
         //
 
-        if (Header->PagingIoResource != NULL) {
-        
-            ExAcquireResourceSharedLite( Header->PagingIoResource, TRUE );
+        if (Header->PagingIoResource != NULL)
+        {
+
+            ExAcquireResourceSharedLite(Header->PagingIoResource, TRUE);
         }
 
         Status = STATUS_SUCCESS;
     }
-            
+
     //
     //  Again, we only want to call try to do completion callbacks
     //  if there are any filters attached to this device that have
     //  completion callbacks.  In any case, if we called down to the filters
     //  we need to free the FsFilterCtrl.
     //
-    
-    if (CallFilters) {
 
-        if (FS_FILTER_HAVE_COMPLETIONS( CallFilters )) {
+    if (CallFilters)
+    {
 
-            FsFilterPerformCompletionCallbacks( &FsFilterCtrl, Status );
+        if (FS_FILTER_HAVE_COMPLETIONS(CallFilters))
+        {
+
+            FsFilterPerformCompletionCallbacks(&FsFilterCtrl, Status);
         }
-        
-        FsFilterCtrlFree( &FsFilterCtrl );
+
+        FsFilterCtrlFree(&FsFilterCtrl);
     }
 
     //
@@ -3104,20 +3102,23 @@ Return Value:
     //  FsRtlExitFileSystem now.
     //
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
         FsRtlExitFileSystem();
     }
 
 #if DBG
 
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
 
-        gCounter.AcquireFileForCcFlushEx_Succeed ++;
+        gCounter.AcquireFileForCcFlushEx_Succeed++;
+    }
+    else
+    {
 
-    } else {
-
-        gCounter.AcquireFileForCcFlushEx_Fail ++;
+        gCounter.AcquireFileForCcFlushEx_Fail++;
     }
 
 #endif
@@ -3125,12 +3126,9 @@ Return Value:
     return Status;
 }
 
-
+
 NTKERNELAPI
-VOID
-FsRtlReleaseFileForCcFlush (
-    IN PFILE_OBJECT FileObject
-    )
+VOID FsRtlReleaseFileForCcFlush(IN PFILE_OBJECT FileObject)
 
 /*++
 
@@ -3163,7 +3161,7 @@ Return Value:
     PAGED_CODE();
 
 #if DBG
-    gCounter.ReleaseFileForCcFlush ++;
+    gCounter.ReleaseFileForCcFlush++;
 #endif
 
     //
@@ -3173,12 +3171,12 @@ Return Value:
     //  these operations to another stack that could possibly have file system
     //  filter drivers correctly.
     //
-    
-    DeviceObject = IoGetRelatedDeviceObject( FileObject );
-    BaseFsDeviceObject = IoGetBaseFileSystemDeviceObject( FileObject );
 
-    FastIoDispatch = GET_FAST_IO_DISPATCH( BaseFsDeviceObject );
-    FsFilterCallbacks = GET_FS_FILTER_CALLBACKS( BaseFsDeviceObject );
+    DeviceObject = IoGetRelatedDeviceObject(FileObject);
+    BaseFsDeviceObject = IoGetBaseFileSystemDeviceObject(FileObject);
+
+    FastIoDispatch = GET_FAST_IO_DISPATCH(BaseFsDeviceObject);
+    FsFilterCallbacks = GET_FS_FILTER_CALLBACKS(BaseFsDeviceObject);
 
     //
     //  The BaseFsDeviceObject should only support one of these interfaces --
@@ -3187,18 +3185,19 @@ Return Value:
     //  the FsFilterCallback interface.
     //
 
-    ASSERT( !(VALID_FAST_IO_DISPATCH_HANDLER( FastIoDispatch, ReleaseForCcFlush ) &&
-              (VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PreReleaseForCcFlush ) ||
-               VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PostReleaseForCcFlush ))) );
+    ASSERT(!(VALID_FAST_IO_DISPATCH_HANDLER(FastIoDispatch, ReleaseForCcFlush) &&
+             (VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PreReleaseForCcFlush) ||
+              VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PostReleaseForCcFlush))));
 
-    if (VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PreReleaseForCcFlush ) ||
-        VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PostReleaseForCcFlush )) {
+    if (VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PreReleaseForCcFlush) ||
+        VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PostReleaseForCcFlush))
+    {
 
         BaseFsGetsFsFilterCallbacks = TRUE;
     }
-    
-    if (DeviceObject == BaseFsDeviceObject &&
-        !BaseFsGetsFsFilterCallbacks) {
+
+    if (DeviceObject == BaseFsDeviceObject && !BaseFsGetsFsFilterCallbacks)
+    {
 
         //
         //  There are no filters attached to this device and the base file system
@@ -3206,53 +3205,52 @@ Return Value:
         //  logic to see if any filters are interested.
         //
 
-        
+
         CallFilters = NULL;
     }
 
-    if (CallFilters) {
-    
-        FsFilterCtrlInit( &FsFilterCtrl,
-                          FS_FILTER_RELEASE_FOR_CC_FLUSH,
-                          DeviceObject,
-                          BaseFsDeviceObject,
-                          FileObject,
-                          FALSE );
+    if (CallFilters)
+    {
+
+        FsFilterCtrlInit(&FsFilterCtrl, FS_FILTER_RELEASE_FOR_CC_FLUSH, DeviceObject, BaseFsDeviceObject, FileObject,
+                         FALSE);
 
         //
         //  There are no operation-specific parameters to initialize,
         //  so perform the preoperation callbacks.
         //
 
-        Status = FsFilterPerformCallbacks( &FsFilterCtrl, 
-                                           FALSE, 
-                                           TRUE, 
-                                           &BaseFsFailedOperation );
+        Status = FsFilterPerformCallbacks(&FsFilterCtrl, FALSE, TRUE, &BaseFsFailedOperation);
     }
 
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
 
-        if (CallFilters && FlagOn( FsFilterCtrl.Flags, FS_FILTER_CHANGED_DEVICE_STACKS )) {
+        if (CallFilters && FlagOn(FsFilterCtrl.Flags, FS_FILTER_CHANGED_DEVICE_STACKS))
+        {
 
-            BaseFsDeviceObject = IoGetDeviceAttachmentBaseRef( FsFilterCtrl.Data.DeviceObject );
-            ReleaseBaseFsDeviceReference= TRUE;
-            FastIoDispatch = GET_FAST_IO_DISPATCH( BaseFsDeviceObject );
-            FsFilterCallbacks = GET_FS_FILTER_CALLBACKS( BaseFsDeviceObject );
+            BaseFsDeviceObject = IoGetDeviceAttachmentBaseRef(FsFilterCtrl.Data.DeviceObject);
+            ReleaseBaseFsDeviceReference = TRUE;
+            FastIoDispatch = GET_FAST_IO_DISPATCH(BaseFsDeviceObject);
+            FsFilterCallbacks = GET_FS_FILTER_CALLBACKS(BaseFsDeviceObject);
             FileObject = FsFilterCtrl.Data.FileObject;
         }
 
-        if (!(VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PreReleaseForCcFlush ) ||
-              VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PostReleaseForCcFlush ))) {
+        if (!(VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PreReleaseForCcFlush) ||
+              VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PostReleaseForCcFlush)))
+        {
 
             //
             //  Call the base file system.
             //
 
-            if (VALID_FAST_IO_DISPATCH_HANDLER( FastIoDispatch, ReleaseForCcFlush )) {
+            if (VALID_FAST_IO_DISPATCH_HANDLER(FastIoDispatch, ReleaseForCcFlush))
+            {
 
-                Status = FastIoDispatch->ReleaseForCcFlush( FileObject, BaseFsDeviceObject );
-                
-            } else {
+                Status = FastIoDispatch->ReleaseForCcFlush(FileObject, BaseFsDeviceObject);
+            }
+            else
+            {
 
                 Status = STATUS_INVALID_DEVICE_REQUEST;
             }
@@ -3261,20 +3259,21 @@ Return Value:
             //  If there is a failure at this point, we know that the failure
             //  was caused by the base file system.
             //
-            
+
             BaseFsFailedOperation = TRUE;
         }
-        
-        if (ReleaseBaseFsDeviceReference) {
 
-            ObDereferenceObject( BaseFsDeviceObject );
+        if (ReleaseBaseFsDeviceReference)
+        {
+
+            ObDereferenceObject(BaseFsDeviceObject);
         }
     }
 
-    ASSERT( (Status == STATUS_SUCCESS) || (Status == STATUS_INVALID_DEVICE_REQUEST) );
+    ASSERT((Status == STATUS_SUCCESS) || (Status == STATUS_INVALID_DEVICE_REQUEST));
 
-    if (Status == STATUS_INVALID_DEVICE_REQUEST &&
-        BaseFsFailedOperation) {
+    if (Status == STATUS_INVALID_DEVICE_REQUEST && BaseFsFailedOperation)
+    {
 
         PFSRTL_COMMON_FCB_HEADER Header = FileObject->FsContext;
 
@@ -3287,20 +3286,22 @@ Return Value:
         //  Free whatever we could have acquired.
         //
 
-        if (Header->PagingIoResource != NULL) {
+        if (Header->PagingIoResource != NULL)
+        {
 
-            ExReleaseResourceLite( Header->PagingIoResource );
+            ExReleaseResourceLite(Header->PagingIoResource);
         }
 
-        if (Header->Resource != NULL) {
+        if (Header->Resource != NULL)
+        {
 
-            ExReleaseResourceLite( Header->Resource );
+            ExReleaseResourceLite(Header->Resource);
         }
 
         Status = STATUS_SUCCESS;
     }
 
-    ASSERT( Status == STATUS_SUCCESS );
+    ASSERT(Status == STATUS_SUCCESS);
 
     //
     //  Again, we only want to call try to do completion callbacks
@@ -3308,26 +3309,25 @@ Return Value:
     //  completion callbacks.  In any case, if we called down to the filters
     //  we need to free the FsFilterCtrl.
     //
-    
-    if (CallFilters) {
 
-        if (FS_FILTER_HAVE_COMPLETIONS( CallFilters )) {
+    if (CallFilters)
+    {
 
-            FsFilterPerformCompletionCallbacks( &FsFilterCtrl, Status );
+        if (FS_FILTER_HAVE_COMPLETIONS(CallFilters))
+        {
+
+            FsFilterPerformCompletionCallbacks(&FsFilterCtrl, Status);
         }
-        
-        FsFilterCtrlFree( &FsFilterCtrl );
+
+        FsFilterCtrlFree(&FsFilterCtrl);
     }
 
     FsRtlExitFileSystem();
 }
 
-
+
 NTKERNELAPI
-VOID
-FsRtlAcquireFileExclusive (
-    IN PFILE_OBJECT FileObject
-    )
+VOID FsRtlAcquireFileExclusive(IN PFILE_OBJECT FileObject)
 
 /*++
 
@@ -3354,32 +3354,29 @@ Return Value:
 
 {
     NTSTATUS Status;
-    
+
     PAGED_CODE();
 
     //
-    //  Just call the common version of this function, 
+    //  Just call the common version of this function,
     //  FsRtlAcquireFileExclusiveCommon.
     //
 
-    Status = FsRtlAcquireFileExclusiveCommon( FileObject, SyncTypeOther, 0 );
+    Status = FsRtlAcquireFileExclusiveCommon(FileObject, SyncTypeOther, 0);
 
     //
     //  This should always be STATUS_SUCCESS since we are not
     //  allowing failures and the file system cannot fail
     //  this operation...
     //
-    
-    ASSERT( NT_SUCCESS( Status ) );
+
+    ASSERT(NT_SUCCESS(Status));
 }
 
-
+
 NTKERNELAPI
 NTSTATUS
-FsRtlAcquireToCreateMappedSection (
-    IN PFILE_OBJECT FileObject,
-    IN ULONG SectionPageProtection
-    )
+FsRtlAcquireToCreateMappedSection(IN PFILE_OBJECT FileObject, IN ULONG SectionPageProtection)
 
 /*++
 
@@ -3420,18 +3417,14 @@ Return Value:
 
     PAGED_CODE();
 
-    return FsRtlAcquireFileExclusiveCommon( FileObject, SyncTypeCreateSection, SectionPageProtection );
-
+    return FsRtlAcquireFileExclusiveCommon(FileObject, SyncTypeCreateSection, SectionPageProtection);
 }
 
-
+
 NTKERNELAPI
 NTSTATUS
-FsRtlAcquireFileExclusiveCommon (
-    IN PFILE_OBJECT FileObject,
-    IN FS_FILTER_SECTION_SYNC_TYPE SyncType,
-    IN ULONG SectionPageProtection
-    )
+FsRtlAcquireFileExclusiveCommon(IN PFILE_OBJECT FileObject, IN FS_FILTER_SECTION_SYNC_TYPE SyncType,
+                                IN ULONG SectionPageProtection)
 
 /*++
 
@@ -3481,12 +3474,12 @@ Return Value:
     //  these operations to another stack that could possibly have file system
     //  filter drivers correctly.
     //
-    
-    DeviceObject = IoGetRelatedDeviceObject( FileObject );
-    BaseFsDeviceObject = IoGetBaseFileSystemDeviceObject( FileObject );
 
-    FastIoDispatch = GET_FAST_IO_DISPATCH( BaseFsDeviceObject );
-    FsFilterCallbacks = GET_FS_FILTER_CALLBACKS( BaseFsDeviceObject );
+    DeviceObject = IoGetRelatedDeviceObject(FileObject);
+    BaseFsDeviceObject = IoGetBaseFileSystemDeviceObject(FileObject);
+
+    FastIoDispatch = GET_FAST_IO_DISPATCH(BaseFsDeviceObject);
+    FsFilterCallbacks = GET_FS_FILTER_CALLBACKS(BaseFsDeviceObject);
 
     //
     //  The BaseFsDeviceObject should only support one of these interfaces --
@@ -3495,18 +3488,19 @@ Return Value:
     //  the FsFilterCallback interface.
     //
 
-    ASSERT( !(VALID_FAST_IO_DISPATCH_HANDLER( FastIoDispatch, AcquireFileForNtCreateSection ) &&
-              (VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PreAcquireForSectionSynchronization ) ||
-               VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PostAcquireForSectionSynchronization ))) );
+    ASSERT(!(VALID_FAST_IO_DISPATCH_HANDLER(FastIoDispatch, AcquireFileForNtCreateSection) &&
+             (VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PreAcquireForSectionSynchronization) ||
+              VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PostAcquireForSectionSynchronization))));
 
-    if (VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PreAcquireForSectionSynchronization ) ||
-        VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PostAcquireForSectionSynchronization )) {
+    if (VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PreAcquireForSectionSynchronization) ||
+        VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PostAcquireForSectionSynchronization))
+    {
 
         BaseFsGetsFsFilterCallbacks = TRUE;
     }
-    
-    if (DeviceObject == BaseFsDeviceObject &&
-        !BaseFsGetsFsFilterCallbacks) {
+
+    if (DeviceObject == BaseFsDeviceObject && !BaseFsGetsFsFilterCallbacks)
+    {
 
         //
         //  There are no filters attached to this device and the base file system
@@ -3517,23 +3511,23 @@ Return Value:
         CallFilters = NULL;
     }
 
-    if (CallFilters) {
-    
+    if (CallFilters)
+    {
+
         //
         //  Initialize operation specific parameters for this
         //  operation.
         //
 
-        FsFilterCtrl.Data.Parameters.AcquireForSectionSynchronization.SyncType = 
-            SyncType;
-        FsFilterCtrl.Data.Parameters.AcquireForSectionSynchronization.PageProtection = 
-            SectionPageProtection;
+        FsFilterCtrl.Data.Parameters.AcquireForSectionSynchronization.SyncType = SyncType;
+        FsFilterCtrl.Data.Parameters.AcquireForSectionSynchronization.PageProtection = SectionPageProtection;
 
-        switch (SyncType) {
+        switch (SyncType)
+        {
         case SyncTypeCreateSection:
             AllowFilterToFailOperation = TRUE;
             break;
-        
+
         case SyncTypeOther:
         default:
             AllowFilterToFailOperation = FALSE;
@@ -3543,14 +3537,11 @@ Return Value:
         //  Call routine to initialize the control structure.
         //
 
-        Status = FsFilterCtrlInit( &FsFilterCtrl,
-                                   FS_FILTER_ACQUIRE_FOR_SECTION_SYNCHRONIZATION,
-                                   DeviceObject,
-                                   BaseFsDeviceObject,
-                                   FileObject,
-                                   AllowFilterToFailOperation );
+        Status = FsFilterCtrlInit(&FsFilterCtrl, FS_FILTER_ACQUIRE_FOR_SECTION_SYNCHRONIZATION, DeviceObject,
+                                  BaseFsDeviceObject, FileObject, AllowFilterToFailOperation);
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
 
             return Status;
         }
@@ -3559,7 +3550,7 @@ Return Value:
         //  There are no operation specific parameters for this
         //  operation, so just perform the pre-callbacks.
         //
-        
+
         FsRtlEnterFileSystem();
 
         //
@@ -3568,12 +3559,11 @@ Return Value:
         //  parameters to FsFilterPerformCallbacks.
         //
 
-        Status = FsFilterPerformCallbacks( &FsFilterCtrl,
-                                           AllowFilterToFailOperation,
-                                           AllowFilterToFailOperation,
-                                           &BaseFsFailedOperation );
-
-    } else {
+        Status = FsFilterPerformCallbacks(&FsFilterCtrl, AllowFilterToFailOperation, AllowFilterToFailOperation,
+                                          &BaseFsFailedOperation);
+    }
+    else
+    {
 
         //
         //  We don't have any filters to call, but we still need
@@ -3583,37 +3573,42 @@ Return Value:
         FsRtlEnterFileSystem();
     }
 
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
 
-        if (CallFilters && FlagOn( FsFilterCtrl.Flags, FS_FILTER_CHANGED_DEVICE_STACKS )) {
+        if (CallFilters && FlagOn(FsFilterCtrl.Flags, FS_FILTER_CHANGED_DEVICE_STACKS))
+        {
 
-            BaseFsDeviceObject = IoGetDeviceAttachmentBaseRef( FsFilterCtrl.Data.DeviceObject );
+            BaseFsDeviceObject = IoGetDeviceAttachmentBaseRef(FsFilterCtrl.Data.DeviceObject);
             ReleaseBaseFsDeviceReference = TRUE;
-            FastIoDispatch = GET_FAST_IO_DISPATCH( BaseFsDeviceObject );
-            FsFilterCallbacks = GET_FS_FILTER_CALLBACKS( BaseFsDeviceObject );
+            FastIoDispatch = GET_FAST_IO_DISPATCH(BaseFsDeviceObject);
+            FsFilterCallbacks = GET_FS_FILTER_CALLBACKS(BaseFsDeviceObject);
             FileObject = FsFilterCtrl.Data.FileObject;
         }
 
-        if (!(VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PreAcquireForSectionSynchronization ) ||
-              VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PostAcquireForSectionSynchronization ))) {
-                  
+        if (!(VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PreAcquireForSectionSynchronization) ||
+              VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PostAcquireForSectionSynchronization)))
+        {
+
             //
             //  Call the base file system.
             //
 
-            if (VALID_FAST_IO_DISPATCH_HANDLER( FastIoDispatch, AcquireFileForNtCreateSection )) {
+            if (VALID_FAST_IO_DISPATCH_HANDLER(FastIoDispatch, AcquireFileForNtCreateSection))
+            {
 
-                FastIoDispatch->AcquireFileForNtCreateSection( FileObject );
+                FastIoDispatch->AcquireFileForNtCreateSection(FileObject);
 
                 //
                 //  The status should already be STATUS_SUCCESS if we come down
                 //  this path.  Since the FastIo handler doesn't return a value
                 //  the status should remain STATUS_SUCCESS.
                 //
-                
-                //  Status = STATUS_SUCCESS;
 
-            } else {
+                //  Status = STATUS_SUCCESS;
+            }
+            else
+            {
 
                 Status = STATUS_INVALID_DEVICE_REQUEST;
             }
@@ -3622,21 +3617,22 @@ Return Value:
             //  If there is a failure at this point, we know that the failure
             //  was caused by the base file system.
             //
-            
-            BaseFsFailedOperation = TRUE;
-        }        
-        
-        if (ReleaseBaseFsDeviceReference) {
 
-            ObDereferenceObject( BaseFsDeviceObject );
+            BaseFsFailedOperation = TRUE;
+        }
+
+        if (ReleaseBaseFsDeviceReference)
+        {
+
+            ObDereferenceObject(BaseFsDeviceObject);
         }
     }
 
-    ASSERT( (Status == STATUS_SUCCESS) || (Status == STATUS_INVALID_DEVICE_REQUEST) );
+    ASSERT((Status == STATUS_SUCCESS) || (Status == STATUS_INVALID_DEVICE_REQUEST));
 
-    if (Status == STATUS_INVALID_DEVICE_REQUEST &&
-        BaseFsFailedOperation) {
-        
+    if (Status == STATUS_INVALID_DEVICE_REQUEST && BaseFsFailedOperation)
+    {
+
         PFSRTL_COMMON_FCB_HEADER Header;
 
         //
@@ -3651,10 +3647,10 @@ Return Value:
 
         Header = FileObject->FsContext;
 
-        if ((Header != NULL) &&
-            (Header->Resource != NULL)) {
+        if ((Header != NULL) && (Header->Resource != NULL))
+        {
 
-            ExAcquireResourceExclusiveLite( Header->Resource, TRUE );
+            ExAcquireResourceExclusiveLite(Header->Resource, TRUE);
         }
 
         Status = STATUS_SUCCESS;
@@ -3666,15 +3662,17 @@ Return Value:
     //  completion callbacks.  In any case, if we called down to the filters
     //  we need to free the FsFilterCtrl.
     //
-    
-    if (CallFilters) {
 
-        if (FS_FILTER_HAVE_COMPLETIONS( CallFilters )) {
+    if (CallFilters)
+    {
 
-            FsFilterPerformCompletionCallbacks( &FsFilterCtrl, Status );
+        if (FS_FILTER_HAVE_COMPLETIONS(CallFilters))
+        {
+
+            FsFilterPerformCompletionCallbacks(&FsFilterCtrl, Status);
         }
-        
-        FsFilterCtrlFree( &FsFilterCtrl );
+
+        FsFilterCtrlFree(&FsFilterCtrl);
     }
 
     //
@@ -3683,33 +3681,33 @@ Return Value:
     //  FsRtlExitFileSystem now.
     //
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
         FsRtlExitFileSystem();
     }
-    
+
 #if DBG
 
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
 
-        gCounter.AcquireFileExclusiveEx_Succeed ++;
-
-    } else {
-
-        gCounter.AcquireFileExclusiveEx_Fail ++;
+        gCounter.AcquireFileExclusiveEx_Succeed++;
     }
-    
+    else
+    {
+
+        gCounter.AcquireFileExclusiveEx_Fail++;
+    }
+
 #endif
-                                       
+
     return Status;
 }
 
-
+
 NTKERNELAPI
-VOID
-FsRtlReleaseFile (
-    IN PFILE_OBJECT FileObject
-    )
+VOID FsRtlReleaseFile(IN PFILE_OBJECT FileObject)
 
 /*++
 
@@ -3741,7 +3739,7 @@ Return Value:
     PAGED_CODE();
 
 #if DBG
-    gCounter.ReleaseFile ++;
+    gCounter.ReleaseFile++;
 #endif
 
     //
@@ -3751,12 +3749,12 @@ Return Value:
     //  these operations to another stack that could possibly have file system
     //  filter drivers correctly.
     //
-    
-    DeviceObject = IoGetRelatedDeviceObject( FileObject );
-    BaseFsDeviceObject = IoGetBaseFileSystemDeviceObject( FileObject );
 
-    FastIoDispatch = GET_FAST_IO_DISPATCH( BaseFsDeviceObject );
-    FsFilterCallbacks = GET_FS_FILTER_CALLBACKS( BaseFsDeviceObject );
+    DeviceObject = IoGetRelatedDeviceObject(FileObject);
+    BaseFsDeviceObject = IoGetBaseFileSystemDeviceObject(FileObject);
+
+    FastIoDispatch = GET_FAST_IO_DISPATCH(BaseFsDeviceObject);
+    FsFilterCallbacks = GET_FS_FILTER_CALLBACKS(BaseFsDeviceObject);
 
     //
     //  The BaseFsDeviceObject should only support one of these interfaces --
@@ -3765,18 +3763,19 @@ Return Value:
     //  the FsFilterCallback interface.
     //
 
-    ASSERT( !(VALID_FAST_IO_DISPATCH_HANDLER( FastIoDispatch, ReleaseFileForNtCreateSection ) &&
-              (VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PreReleaseForSectionSynchronization ) ||
-               VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PostReleaseForSectionSynchronization ))) );
+    ASSERT(!(VALID_FAST_IO_DISPATCH_HANDLER(FastIoDispatch, ReleaseFileForNtCreateSection) &&
+             (VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PreReleaseForSectionSynchronization) ||
+              VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PostReleaseForSectionSynchronization))));
 
-    if (VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PreReleaseForSectionSynchronization ) ||
-        VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PostReleaseForSectionSynchronization )) {
+    if (VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PreReleaseForSectionSynchronization) ||
+        VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PostReleaseForSectionSynchronization))
+    {
 
         BaseFsGetsFsFilterCallbacks = TRUE;
     }
-    
-    if (DeviceObject == BaseFsDeviceObject &&
-        !BaseFsGetsFsFilterCallbacks) {
+
+    if (DeviceObject == BaseFsDeviceObject && !BaseFsGetsFsFilterCallbacks)
+    {
 
         //
         //  There are no filters attached to this device and the base file system
@@ -3787,59 +3786,57 @@ Return Value:
 
         CallFilters = NULL;
     }
-    
-    if (CallFilters) {
 
-        FsFilterCtrlInit( &FsFilterCtrl,
-                          FS_FILTER_RELEASE_FOR_SECTION_SYNCHRONIZATION,
-                          DeviceObject,
-                          BaseFsDeviceObject,
-                          FileObject,
-                          FALSE );
+    if (CallFilters)
+    {
+
+        FsFilterCtrlInit(&FsFilterCtrl, FS_FILTER_RELEASE_FOR_SECTION_SYNCHRONIZATION, DeviceObject, BaseFsDeviceObject,
+                         FileObject, FALSE);
 
         //
         //  There are no operation-specific parameters to initialize,
         //  so perform the preoperation callbacks.
         //
 
-        Status = FsFilterPerformCallbacks( &FsFilterCtrl, 
-                                           FALSE,
-                                           FALSE,
-                                           &BaseFsFailedOperation );
+        Status = FsFilterPerformCallbacks(&FsFilterCtrl, FALSE, FALSE, &BaseFsFailedOperation);
     }
 
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
 
-        if (CallFilters && FlagOn( FsFilterCtrl.Flags, FS_FILTER_CHANGED_DEVICE_STACKS )) {
+        if (CallFilters && FlagOn(FsFilterCtrl.Flags, FS_FILTER_CHANGED_DEVICE_STACKS))
+        {
 
-            BaseFsDeviceObject = IoGetDeviceAttachmentBaseRef( FsFilterCtrl.Data.DeviceObject );
+            BaseFsDeviceObject = IoGetDeviceAttachmentBaseRef(FsFilterCtrl.Data.DeviceObject);
             ReleaseBaseFsDeviceReference = TRUE;
-            FastIoDispatch = GET_FAST_IO_DISPATCH( BaseFsDeviceObject );
-            FsFilterCallbacks = GET_FS_FILTER_CALLBACKS( BaseFsDeviceObject );
+            FastIoDispatch = GET_FAST_IO_DISPATCH(BaseFsDeviceObject);
+            FsFilterCallbacks = GET_FS_FILTER_CALLBACKS(BaseFsDeviceObject);
             FileObject = FsFilterCtrl.Data.FileObject;
         }
 
-        if (!(VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PreReleaseForSectionSynchronization ) ||
-              VALID_FS_FILTER_CALLBACK_HANDLER( FsFilterCallbacks, PostReleaseForSectionSynchronization ))) {
+        if (!(VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PreReleaseForSectionSynchronization) ||
+              VALID_FS_FILTER_CALLBACK_HANDLER(FsFilterCallbacks, PostReleaseForSectionSynchronization)))
+        {
 
             //
             //  Call the base file system.
             //
 
-            if (VALID_FAST_IO_DISPATCH_HANDLER( FastIoDispatch, 
-                                                ReleaseFileForNtCreateSection )) {
+            if (VALID_FAST_IO_DISPATCH_HANDLER(FastIoDispatch, ReleaseFileForNtCreateSection))
+            {
 
-                FastIoDispatch->ReleaseFileForNtCreateSection( FileObject );
+                FastIoDispatch->ReleaseFileForNtCreateSection(FileObject);
 
                 //
                 //  The status should already be STATUS_SUCCESS if we come down
                 //  this path.  Since the FastIo handler doesn't return a value
                 //  the status should remain STATUS_SUCCESS.
                 //
-                
-                //  Status = STATUS_SUCCESS;
 
-            } else {
+                //  Status = STATUS_SUCCESS;
+            }
+            else
+            {
 
                 Status = STATUS_INVALID_DEVICE_REQUEST;
             }
@@ -3848,20 +3845,21 @@ Return Value:
             //  If there is a failure at this point, we know that the failure
             //  was caused by the base file system.
             //
-            
-            BaseFsFailedOperation = TRUE;
-        }        
-        
-        if (ReleaseBaseFsDeviceReference) {
 
-            ObDereferenceObject( BaseFsDeviceObject );
+            BaseFsFailedOperation = TRUE;
+        }
+
+        if (ReleaseBaseFsDeviceReference)
+        {
+
+            ObDereferenceObject(BaseFsDeviceObject);
         }
     }
 
-    ASSERT( (Status == STATUS_SUCCESS) || (Status == STATUS_INVALID_DEVICE_REQUEST ) );
-    
-    if (Status == STATUS_INVALID_DEVICE_REQUEST &&
-        BaseFsFailedOperation) {
+    ASSERT((Status == STATUS_SUCCESS) || (Status == STATUS_INVALID_DEVICE_REQUEST));
+
+    if (Status == STATUS_INVALID_DEVICE_REQUEST && BaseFsFailedOperation)
+    {
 
         PFSRTL_COMMON_FCB_HEADER Header = FileObject->FsContext;
 
@@ -3874,29 +3872,32 @@ Return Value:
         //  If there is a main file resource, release that.
         //
 
-        if ((Header != NULL) && (Header->Resource != NULL)) {
+        if ((Header != NULL) && (Header->Resource != NULL))
+        {
 
-            ExReleaseResourceLite( Header->Resource );
+            ExReleaseResourceLite(Header->Resource);
         }
 
         Status = STATUS_SUCCESS;
     }
-        
+
     //
     //  Again, we only want to call try to do completion callbacks
     //  if there are any filters attached to this device that have
     //  completion callbacks.  In any case, if we called down to the filters
     //  we need to free the FsFilterCtrl.
     //
-    
-    if (CallFilters) {
 
-        if (FS_FILTER_HAVE_COMPLETIONS( CallFilters )) {
+    if (CallFilters)
+    {
 
-            FsFilterPerformCompletionCallbacks( &FsFilterCtrl, Status );
+        if (FS_FILTER_HAVE_COMPLETIONS(CallFilters))
+        {
+
+            FsFilterPerformCompletionCallbacks(&FsFilterCtrl, Status);
         }
-        
-        FsFilterCtrlFree( &FsFilterCtrl );
+
+        FsFilterCtrlFree(&FsFilterCtrl);
     }
 
     FsRtlExitFileSystem();
@@ -3904,12 +3905,9 @@ Return Value:
     return;
 }
 
-
+
 NTSTATUS
-FsRtlGetFileSize(
-    IN PFILE_OBJECT FileObject,
-    IN OUT PLARGE_INTEGER FileSize
-    )
+FsRtlGetFileSize(IN PFILE_OBJECT FileObject, IN OUT PLARGE_INTEGER FileSize)
 
 /*++
 
@@ -3946,7 +3944,7 @@ Return Value:
     // Get the address of the target device object.
     //
 
-    DeviceObject = IoGetRelatedDeviceObject( FileObject );
+    DeviceObject = IoGetRelatedDeviceObject(FileObject);
 
     //
     // Try the fast query call if it exists.
@@ -3954,18 +3952,15 @@ Return Value:
 
     FastIoDispatch = DeviceObject->DriverObject->FastIoDispatch;
 
-    if (FastIoDispatch &&
-        FastIoDispatch->FastIoQueryStandardInfo &&
-        FastIoDispatch->FastIoQueryStandardInfo( FileObject,
-                                                 TRUE,
-                                                 &FileInformation,
-                                                 &IoStatus,
-                                                 DeviceObject )) {
+    if (FastIoDispatch && FastIoDispatch->FastIoQueryStandardInfo &&
+        FastIoDispatch->FastIoQueryStandardInfo(FileObject, TRUE, &FileInformation, &IoStatus, DeviceObject))
+    {
         //
         //  Cool, it worked.
         //
-
-    } else {
+    }
+    else
+    {
 
         //
         //  Life's tough, take the long path.
@@ -3981,14 +3976,15 @@ Return Value:
         //  Initialize the event.
         //
 
-        KeInitializeEvent( &Event, NotificationEvent, FALSE );
+        KeInitializeEvent(&Event, NotificationEvent, FALSE);
 
         //
         //  Allocate an I/O Request Packet (IRP) for this in-page operation.
         //
 
-        Irp = IoAllocateIrp( DeviceObject->StackSize, FALSE );
-        if (Irp == NULL) {
+        Irp = IoAllocateIrp(DeviceObject->StackSize, FALSE);
+        if (Irp == NULL)
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
         }
@@ -3998,7 +3994,7 @@ Return Value:
         //  region and cannot complete hard error APCs.
         //
 
-        HardErrorState = IoSetThreadHardErrorMode( FALSE );
+        HardErrorState = IoSetThreadHardErrorMode(FALSE);
 
         //
         //  Get a pointer to the first stack location in the packet.  This location
@@ -4006,7 +4002,7 @@ Return Value:
         //  driver.
         //
 
-        IrpSp = IoGetNextIrpStackLocation( Irp );
+        IrpSp = IoGetNextIrpStackLocation(Irp);
 
         //
         //  Fill in the IRP according to this request, setting the flags to
@@ -4036,19 +4032,16 @@ Return Value:
         //  should not raise.
         //
 
-        Status = IoCallDriver( DeviceObject, Irp );
+        Status = IoCallDriver(DeviceObject, Irp);
 
         //
         //  If pending is returned (which is a successful status),
         //  we must wait for the request to complete.
         //
 
-        if (Status == STATUS_PENDING) {
-            KeWaitForSingleObject( &Event,
-                                   Executive,
-                                   KernelMode,
-                                   FALSE,
-                                   (PLARGE_INTEGER)NULL);
+        if (Status == STATUS_PENDING)
+        {
+            KeWaitForSingleObject(&Event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
         }
 
         //
@@ -4057,7 +4050,8 @@ Return Value:
         //  there, then test the final status after that.
         //
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             IoStatus.Status = Status;
         }
 
@@ -4065,7 +4059,7 @@ Return Value:
         //  Reset the hard error state.
         //
 
-        IoSetThreadHardErrorMode( HardErrorState );
+        IoSetThreadHardErrorMode(HardErrorState);
     }
 
     //
@@ -4073,17 +4067,20 @@ Return Value:
     //  if not, fill in the FileSize parameter.
     //
 
-    if (NT_SUCCESS(IoStatus.Status)) {
+    if (NT_SUCCESS(IoStatus.Status))
+    {
 
-        if (FileInformation.Directory) {
+        if (FileInformation.Directory)
+        {
 
             //
             // Can't get file size for a directory. Return error.
             //
 
             IoStatus.Status = STATUS_FILE_IS_A_DIRECTORY;
-
-        } else {
+        }
+        else
+        {
 
             *FileSize = FileInformation.EndOfFile;
         }
@@ -4092,12 +4089,9 @@ Return Value:
     return IoStatus.Status;
 }
 
-
+
 NTSTATUS
-FsRtlSetFileSize(
-    IN PFILE_OBJECT FileObject,
-    IN OUT PLARGE_INTEGER FileSize
-    )
+FsRtlSetFileSize(IN PFILE_OBJECT FileObject, IN OUT PLARGE_INTEGER FileSize)
 
 /*++
 
@@ -4134,7 +4128,7 @@ Return Value:
     BOOLEAN HardErrorState;
 
     PAGED_CODE();
-    
+
     //
     //  Copy FileSize to our buffer.
     //
@@ -4145,21 +4139,22 @@ Return Value:
     //  Initialize the event.
     //
 
-    KeInitializeEvent( &Event, NotificationEvent, FALSE );
+    KeInitializeEvent(&Event, NotificationEvent, FALSE);
 
     //
     //  Begin by getting a pointer to the device object that the file resides
     //  on.
     //
 
-    DeviceObject = IoGetRelatedDeviceObject( FileObject );
+    DeviceObject = IoGetRelatedDeviceObject(FileObject);
 
     //
     //  Allocate an I/O Request Packet (IRP) for this in-page operation.
     //
 
-    Irp = IoAllocateIrp( DeviceObject->StackSize, FALSE );
-    if (Irp == NULL) {
+    Irp = IoAllocateIrp(DeviceObject->StackSize, FALSE);
+    if (Irp == NULL)
+    {
 
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -4169,7 +4164,7 @@ Return Value:
     //  region and cannot complete hard error APCs.
     //
 
-    HardErrorState = IoSetThreadHardErrorMode( FALSE );
+    HardErrorState = IoSetThreadHardErrorMode(FALSE);
 
     //
     //  Get a pointer to the first stack location in the packet.  This location
@@ -4177,7 +4172,7 @@ Return Value:
     //  driver.
     //
 
-    IrpSp = IoGetNextIrpStackLocation( Irp );
+    IrpSp = IoGetNextIrpStackLocation(Irp);
 
     //
     //  Fill in the IRP according to this request, setting the flags to
@@ -4207,19 +4202,16 @@ Return Value:
     //  is a VPB associated with the device.  This routine should not raise.
     //
 
-    Status = IoCallDriver( DeviceObject, Irp );
+    Status = IoCallDriver(DeviceObject, Irp);
 
     //
     //  If pending is returned (which is a successful status),
     //  we must wait for the request to complete.
     //
 
-    if (Status == STATUS_PENDING) {
-        KeWaitForSingleObject( &Event,
-                               Executive,
-                               KernelMode,
-                               FALSE,
-                               (PLARGE_INTEGER)NULL);
+    if (Status == STATUS_PENDING)
+    {
+        KeWaitForSingleObject(&Event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
     }
 
     //
@@ -4228,7 +4220,8 @@ Return Value:
     //  there, then test the final status after that.
     //
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         IoStatus.Status = Status;
     }
 
@@ -4236,14 +4229,13 @@ Return Value:
     //  Reset the hard error state.
     //
 
-    IoSetThreadHardErrorMode( HardErrorState );
+    IoSetThreadHardErrorMode(HardErrorState);
 
     return IoStatus.Status;
 }
 
-
-VOID 
-FsRtlIncrementCcFastReadNotPossible( VOID )
+
+VOID FsRtlIncrementCcFastReadNotPossible(VOID)
 
 /*++
 
@@ -4258,12 +4250,11 @@ Return Value:
 --*/
 
 {
-    HOT_STATISTIC( CcFastReadNotPossible ) += 1;
+    HOT_STATISTIC(CcFastReadNotPossible) += 1;
 }
 
-
-VOID 
-FsRtlIncrementCcFastReadWait( VOID )
+
+VOID FsRtlIncrementCcFastReadWait(VOID)
 
 /*++
 
@@ -4282,9 +4273,8 @@ Return Value:
     HOT_STATISTIC(CcFastReadWait) += 1;
 }
 
-
-VOID 
-FsRtlIncrementCcFastReadNoWait( VOID )
+
+VOID FsRtlIncrementCcFastReadNoWait(VOID)
 
 /*++
 
@@ -4303,9 +4293,8 @@ Return Value:
     HOT_STATISTIC(CcFastReadNoWait) += 1;
 }
 
-
-VOID 
-FsRtlIncrementCcFastReadResourceMiss( VOID )
+
+VOID FsRtlIncrementCcFastReadResourceMiss(VOID)
 
 /*++
 
@@ -4323,4 +4312,3 @@ Return Value:
 
     CcFastReadResourceMiss += 1;
 }
-

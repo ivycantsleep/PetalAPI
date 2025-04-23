@@ -23,18 +23,13 @@ Revision History:
 #include "pop.h"
 
 
-
 // sync rules - only PoSetPowerState ever writes to the
 // StateValue entries in the psb.
 //
 
 NTKERNELAPI
 POWER_STATE
-PoSetPowerState (
-    IN PDEVICE_OBJECT   DeviceObject,
-    IN POWER_STATE_TYPE Type,
-    IN POWER_STATE      State
-    )
+PoSetPowerState(IN PDEVICE_OBJECT DeviceObject, IN POWER_STATE_TYPE Type, IN POWER_STATE State)
 /*++
 
 Routine Description:
@@ -68,17 +63,17 @@ Return Value:
 
 --*/
 {
-    PDEVOBJ_EXTENSION   doe;
-    PDEVICE_OBJECT_POWER_EXTENSION  dope;
-    POWER_STATE         OldState;
-    BOOLEAN             change;
-    ULONG               notificationmask;
-    KIRQL               OldIrql, OldIrql2;
+    PDEVOBJ_EXTENSION doe;
+    PDEVICE_OBJECT_POWER_EXTENSION dope;
+    POWER_STATE OldState;
+    BOOLEAN change;
+    ULONG notificationmask;
+    KIRQL OldIrql, OldIrql2;
 
     ASSERT(KeGetCurrentIrql() <= DISPATCH_LEVEL);
 
 
-    PoPowerTrace(POWERTRACE_SETSTATE,DeviceObject,(ULONG)Type,(ULONG)State.SystemState);
+    PoPowerTrace(POWERTRACE_SETSTATE, DeviceObject, (ULONG)Type, (ULONG)State.SystemState);
 
     doe = DeviceObject->DeviceObjectExtension;
     dope = doe->Dope;
@@ -88,29 +83,36 @@ Return Value:
     notificationmask = 0L;
     change = FALSE;
 
-    switch (Type) {
+    switch (Type)
+    {
 
     case SystemPowerState:
         OldState.SystemState = PopGetDoSystemPowerState(doe);
-        if (OldState.SystemState != State.SystemState) {
+        if (OldState.SystemState != State.SystemState)
+        {
             change = TRUE;
         }
         break;
 
     case DevicePowerState:
         OldState.DeviceState = PopGetDoDevicePowerState(doe);
-        if (OldState.DeviceState != State.DeviceState) {
+        if (OldState.DeviceState != State.DeviceState)
+        {
             change = TRUE;
-            if (OldState.DeviceState == PowerDeviceD0) {
+            if (OldState.DeviceState == PowerDeviceD0)
+            {
                 notificationmask = PO_NOTIFY_TRANSITIONING_FROM_D0;
-            } else if (State.DeviceState == PowerDeviceD0) {
+            }
+            else if (State.DeviceState == PowerDeviceD0)
+            {
                 notificationmask = PO_NOTIFY_D0;
             }
         }
         break;
     }
 
-    if (! change) {
+    if (!change)
+    {
         PopUnlockIrpSerialList(OldIrql2);
         return OldState;
     }
@@ -120,7 +122,8 @@ Return Value:
     // state first, so we can drop the lock and do the notification.
     //
 
-    switch (Type) {
+    switch (Type)
+    {
 
     case SystemPowerState:
         PopSetDoSystemPowerState(doe, State.SystemState);
@@ -136,18 +139,17 @@ Return Value:
     //
     // If anything to notify...
     //
-    if (notificationmask && dope) {
+    if (notificationmask && dope)
+    {
         PopStateChangeNotify(DeviceObject, notificationmask);
     }
 
     return OldState;
 }
 
-
+
 DEVICE_POWER_STATE
-PopLockGetDoDevicePowerState(
-    IN PDEVOBJ_EXTENSION Doe
-    )
+PopLockGetDoDevicePowerState(IN PDEVOBJ_EXTENSION Doe)
 /*++
 
 Routine Description:
@@ -174,6 +176,5 @@ Return Value:
     State = PopGetDoDevicePowerState(Doe);
     PopUnlockIrpSerialList(OldIrql);
 
-    return(State);
+    return (State);
 }
-

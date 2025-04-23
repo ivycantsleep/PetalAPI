@@ -30,11 +30,9 @@ Revision History:
 #pragma alloc_text(PAGE, NtLoadDriver)
 #pragma alloc_text(PAGE, NtUnloadDriver)
 #endif
-
+
 NTSTATUS
-NtLoadDriver(
-    IN PUNICODE_STRING DriverServiceName
-    )
+NtLoadDriver(IN PUNICODE_STRING DriverServiceName)
 
 /*++
 
@@ -58,7 +56,7 @@ Return Value:
 {
     KPROCESSOR_MODE requestorMode;
     UNICODE_STRING driverServiceName;
-    PWCHAR nameBuffer = (PWCHAR) NULL;
+    PWCHAR nameBuffer = (PWCHAR)NULL;
     LOAD_PACKET loadPacket;
     PETHREAD CurrentThread;
 
@@ -68,10 +66,11 @@ Return Value:
     // Get the previous mode;  i.e., the mode of the caller.
     //
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
     requestorMode = KeGetPreviousModeByThread(&CurrentThread->Tcb);
 
-    if (requestorMode != KernelMode) {
+    if (requestorMode != KernelMode)
+    {
 
         //
         // The caller's access mode is not kernel so check to ensure that
@@ -79,7 +78,8 @@ Return Value:
         // capture the name of the driver service entry.
         //
 
-        if (!SeSinglePrivilegeCheck( SeLoadDriverPrivilege, requestorMode )) {
+        if (!SeSinglePrivilegeCheck(SeLoadDriverPrivilege, requestorMode))
+        {
             return STATUS_PRIVILEGE_NOT_HELD;
         }
 
@@ -89,28 +89,26 @@ Return Value:
         // can be used to locate the driver from the registry node.
         //
 
-        try {
+        try
+        {
 
-            driverServiceName = ProbeAndReadUnicodeString( DriverServiceName );
+            driverServiceName = ProbeAndReadUnicodeString(DriverServiceName);
 
-            if (!driverServiceName.Length) {
+            if (!driverServiceName.Length)
+            {
                 return STATUS_INVALID_PARAMETER;
             }
 
-            ProbeForRead( driverServiceName.Buffer,
-                          driverServiceName.Length,
-                          sizeof( WCHAR ) );
+            ProbeForRead(driverServiceName.Buffer, driverServiceName.Length, sizeof(WCHAR));
 
-            nameBuffer = ExAllocatePoolWithQuota( PagedPool,
-                                                  driverServiceName.Length );
+            nameBuffer = ExAllocatePoolWithQuota(PagedPool, driverServiceName.Length);
 
-            RtlCopyMemory( nameBuffer,
-                           driverServiceName.Buffer,
-                           driverServiceName.Length );
+            RtlCopyMemory(nameBuffer, driverServiceName.Buffer, driverServiceName.Length);
 
             driverServiceName.Buffer = nameBuffer;
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // An exception was incurred while attempting to capture the
@@ -119,12 +117,15 @@ Return Value:
             // appropriate error status code.
             //
 
-            if (nameBuffer) {
-                ExFreePool( nameBuffer );
+            if (nameBuffer)
+            {
+                ExFreePool(nameBuffer);
             }
             return GetExceptionCode();
         }
-    } else {
+    }
+    else
+    {
         driverServiceName = *DriverServiceName;
     }
 
@@ -139,32 +140,27 @@ Return Value:
     // that it can actually do the load.
     //
 
-    KeInitializeEvent( &loadPacket.Event, NotificationEvent, FALSE );
-    loadPacket.DriverObject = (PDRIVER_OBJECT) NULL;
+    KeInitializeEvent(&loadPacket.Event, NotificationEvent, FALSE);
+    loadPacket.DriverObject = (PDRIVER_OBJECT)NULL;
     loadPacket.DriverServiceName = &driverServiceName;
 
-    if (PsGetCurrentProcessByThread(CurrentThread) == PsInitialSystemProcess) {
+    if (PsGetCurrentProcessByThread(CurrentThread) == PsInitialSystemProcess)
+    {
 
         //
         // If we are already in the system process, just use this thread.
         //
 
         IopLoadUnloadDriver(&loadPacket);
+    }
+    else
+    {
 
-    } else {
+        ExInitializeWorkItem(&loadPacket.WorkQueueItem, IopLoadUnloadDriver, &loadPacket);
 
-        ExInitializeWorkItem( &loadPacket.WorkQueueItem,
-                              IopLoadUnloadDriver,
-                              &loadPacket );
+        ExQueueWorkItem(&loadPacket.WorkQueueItem, DelayedWorkQueue);
 
-        ExQueueWorkItem( &loadPacket.WorkQueueItem, DelayedWorkQueue );
-
-        KeWaitForSingleObject( &loadPacket.Event,
-                               UserRequest,
-                               KernelMode,
-                               FALSE,
-                               (PLARGE_INTEGER) NULL );
-
+        KeWaitForSingleObject(&loadPacket.Event, UserRequest, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
     }
 
     //
@@ -172,18 +168,16 @@ Return Value:
     // deallocate it now, and return the final status of the load operation.
     //
 
-    if (nameBuffer) {
-         ExFreePool( nameBuffer );
+    if (nameBuffer)
+    {
+        ExFreePool(nameBuffer);
     }
 
     return loadPacket.FinalStatus;
 }
 
 NTSTATUS
-IopCheckUnloadDriver(
-    IN PDRIVER_OBJECT driverObject,
-    OUT PBOOLEAN unloadDriver
-    )
+IopCheckUnloadDriver(IN PDRIVER_OBJECT driverObject, OUT PBOOLEAN unloadDriver)
 {
     PDEVICE_OBJECT deviceObject;
     KIRQL irql;
@@ -193,13 +187,12 @@ IopCheckUnloadDriver(
     // operation by anyone in the past.
     //
 
-    irql = KeAcquireQueuedSpinLock( LockQueueIoDatabaseLock );
+    irql = KeAcquireQueuedSpinLock(LockQueueIoDatabaseLock);
 
-    if ((driverObject->DeviceObject == NULL &&
-        (driverObject->Flags & DRVO_UNLOAD_INVOKED)) ||
+    if ((driverObject->DeviceObject == NULL && (driverObject->Flags & DRVO_UNLOAD_INVOKED)) ||
         (!(driverObject->Flags & DRVO_BASE_FILESYSTEM_DRIVER) && driverObject->DeviceObject &&
-        driverObject->DeviceObject->DeviceObjectExtension->ExtensionFlags
-        & DOE_UNLOAD_PENDING)) {
+         driverObject->DeviceObject->DeviceObjectExtension->ExtensionFlags & DOE_UNLOAD_PENDING))
+    {
 
         //
         // The driver has already been marked for unload or is being
@@ -208,9 +201,9 @@ IopCheckUnloadDriver(
         // unload".
         //
 
-        KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+        KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
 
-        ObDereferenceObject( driverObject );
+        ObDereferenceObject(driverObject);
         return STATUS_SUCCESS;
     }
 
@@ -226,10 +219,12 @@ IopCheckUnloadDriver(
     deviceObject = driverObject->DeviceObject;
     *unloadDriver = TRUE;
 
-    while (deviceObject) {
+    while (deviceObject)
+    {
         deviceObject->DeviceObjectExtension->ExtensionFlags |= DOE_UNLOAD_PENDING;
-        if (deviceObject->ReferenceCount || deviceObject->AttachedDevice) {
-	    *unloadDriver = FALSE;
+        if (deviceObject->ReferenceCount || deviceObject->AttachedDevice)
+        {
+            *unloadDriver = FALSE;
         }
         deviceObject = deviceObject->NextDevice;
     }
@@ -237,33 +232,30 @@ IopCheckUnloadDriver(
     //
     // If this is a base filesystem driver then delay the unload until all its device objects
     // are deleted.
-    // 
+    //
 
-    if (driverObject->Flags & DRVO_BASE_FILESYSTEM_DRIVER && driverObject->DeviceObject) {
-	    *unloadDriver = FALSE;
+    if (driverObject->Flags & DRVO_BASE_FILESYSTEM_DRIVER && driverObject->DeviceObject)
+    {
+        *unloadDriver = FALSE;
     }
 
-    if (*unloadDriver) {
+    if (*unloadDriver)
+    {
         driverObject->Flags |= DRVO_UNLOAD_INVOKED;
     }
 
-    KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+    KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
     return STATUS_UNSUCCESSFUL;
 }
-
+
 NTSTATUS
-NtUnloadDriver(
-    IN PUNICODE_STRING DriverServiceName
-    )
+NtUnloadDriver(IN PUNICODE_STRING DriverServiceName)
 {
     return (IopUnloadDriver(DriverServiceName, FALSE));
 }
 
 NTSTATUS
-IopUnloadDriver(
-    IN PUNICODE_STRING DriverServiceName,
-    IN BOOLEAN InvokedByPnpMgr
-    )
+IopUnloadDriver(IN PUNICODE_STRING DriverServiceName, IN BOOLEAN InvokedByPnpMgr)
 /*++
 
 Routine Description:
@@ -286,7 +278,7 @@ Return Value:
 {
     KPROCESSOR_MODE requestorMode;
     UNICODE_STRING driverServiceName;
-    PWCHAR nameBuffer = (PWCHAR) NULL;
+    PWCHAR nameBuffer = (PWCHAR)NULL;
     NTSTATUS status;
     OBJECT_ATTRIBUTES objectAttributes;
     HANDLE keyHandle;
@@ -303,7 +295,8 @@ Return Value:
 
     requestorMode = KeGetPreviousMode();
 
-    if ((requestorMode != KernelMode) && (InvokedByPnpMgr == FALSE)) {
+    if ((requestorMode != KernelMode) && (InvokedByPnpMgr == FALSE))
+    {
 
         //
         // The caller's access mode is not kernel so check to ensure that
@@ -311,7 +304,8 @@ Return Value:
         // capture the name of the driver service entry.
         //
 
-        if (!SeSinglePrivilegeCheck( SeLoadDriverPrivilege, requestorMode )) {
+        if (!SeSinglePrivilegeCheck(SeLoadDriverPrivilege, requestorMode))
+        {
             return STATUS_PRIVILEGE_NOT_HELD;
         }
 
@@ -321,28 +315,26 @@ Return Value:
         // can be used to locate the driver from the registry node.
         //
 
-        try {
+        try
+        {
 
-            driverServiceName = ProbeAndReadUnicodeString( DriverServiceName );
+            driverServiceName = ProbeAndReadUnicodeString(DriverServiceName);
 
-            if (!driverServiceName.Length) {
+            if (!driverServiceName.Length)
+            {
                 return STATUS_INVALID_PARAMETER;
             }
 
-            ProbeForRead( driverServiceName.Buffer,
-                          driverServiceName.Length,
-                          sizeof( WCHAR ) );
+            ProbeForRead(driverServiceName.Buffer, driverServiceName.Length, sizeof(WCHAR));
 
-            nameBuffer = ExAllocatePoolWithQuota( PagedPool,
-                                                  driverServiceName.Length );
+            nameBuffer = ExAllocatePoolWithQuota(PagedPool, driverServiceName.Length);
 
-            RtlCopyMemory( nameBuffer,
-                           driverServiceName.Buffer,
-                           driverServiceName.Length );
+            RtlCopyMemory(nameBuffer, driverServiceName.Buffer, driverServiceName.Length);
 
             driverServiceName.Buffer = nameBuffer;
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
             //
             // An exception was incurred while attempting to capture the
@@ -351,8 +343,9 @@ Return Value:
             // appropriate error status code.
             //
 
-            if (nameBuffer) {
-                ExFreePool( nameBuffer );
+            if (nameBuffer)
+            {
+                ExFreePool(nameBuffer);
             }
             return GetExceptionCode();
         }
@@ -366,8 +359,8 @@ Return Value:
         // unload operation.
         //
 
-        status = ZwUnloadDriver( &driverServiceName );
-        ExFreePool( nameBuffer );
+        status = ZwUnloadDriver(&driverServiceName);
+        ExFreePool(nameBuffer);
         return status;
     }
 
@@ -377,12 +370,9 @@ Return Value:
     // the registry node for this driver.
     //
 
-    status = IopOpenRegistryKey( &keyHandle,
-                                 (HANDLE) NULL,
-                                 DriverServiceName,
-                                 KEY_READ,
-                                 FALSE );
-    if (!NT_SUCCESS( status )) {
+    status = IopOpenRegistryKey(&keyHandle, (HANDLE)NULL, DriverServiceName, KEY_READ, FALSE);
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
@@ -392,10 +382,10 @@ Return Value:
     // driver.
     //
 
-    status = IopGetDriverNameFromKeyNode( keyHandle,
-                                          &driverName );
-    NtClose( keyHandle );
-    if (!NT_SUCCESS( status )) {
+    status = IopGetDriverNameFromKeyNode(keyHandle, &driverName);
+    NtClose(keyHandle);
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
@@ -403,19 +393,11 @@ Return Value:
     // Now attempt to open the driver object for the specified driver.
     //
 
-    InitializeObjectAttributes( &objectAttributes,
-                                &driverName,
-                                OBJ_CASE_INSENSITIVE,
-                                (HANDLE) NULL,
-                                (PSECURITY_DESCRIPTOR) NULL );
+    InitializeObjectAttributes(&objectAttributes, &driverName, OBJ_CASE_INSENSITIVE, (HANDLE)NULL,
+                               (PSECURITY_DESCRIPTOR)NULL);
 
-    status = ObOpenObjectByName( &objectAttributes,
-                                 IoDriverObjectType,
-                                 KernelMode,
-                                 NULL,
-                                 FILE_READ_DATA,
-                                 (PVOID) NULL,
-                                 &driverHandle );
+    status = ObOpenObjectByName(&objectAttributes, IoDriverObjectType, KernelMode, NULL, FILE_READ_DATA, (PVOID)NULL,
+                                &driverHandle);
 
     //
     // Perform some common cleanup by getting rid of buffers that have been
@@ -423,14 +405,15 @@ Return Value:
     // much work to do on each exit path.
     //
 
-    ExFreePool( driverName.Buffer );
+    ExFreePool(driverName.Buffer);
 
     //
     // If the driver object could not be located in the first place, then
     // return now before attempting to do anything else.
     //
 
-    if (!NT_SUCCESS( status )) {
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
@@ -439,15 +422,11 @@ Return Value:
     // so that the driver object itself can be examined.
     //
 
-    status = ObReferenceObjectByHandle( driverHandle,
-                                        0,
-                                        IoDriverObjectType,
-                                        KernelMode,
-                                        (PVOID *) &driverObject,
-                                        NULL );
-    NtClose( driverHandle );
+    status = ObReferenceObjectByHandle(driverHandle, 0, IoDriverObjectType, KernelMode, (PVOID *)&driverObject, NULL);
+    NtClose(driverHandle);
 
-    if (!NT_SUCCESS( status )) {
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
@@ -458,15 +437,16 @@ Return Value:
     // return an appropriate error status code.
     //
 
-    if (driverObject->DriverUnload == (PDRIVER_UNLOAD) NULL ||
-        !driverObject->DriverSection) {
-        ObDereferenceObject( driverObject );
+    if (driverObject->DriverUnload == (PDRIVER_UNLOAD)NULL || !driverObject->DriverSection)
+    {
+        ObDereferenceObject(driverObject);
         return STATUS_INVALID_DEVICE_REQUEST;
     }
 
-    if (!InvokedByPnpMgr && !IopIsLegacyDriver(driverObject)) {
+    if (!InvokedByPnpMgr && !IopIsLegacyDriver(driverObject))
+    {
 
-        ObDereferenceObject( driverObject );
+        ObDereferenceObject(driverObject);
         return STATUS_INVALID_DEVICE_REQUEST;
     }
 
@@ -475,24 +455,28 @@ Return Value:
     // operation by anyone in the past.
     //
 
-    status = IopCheckUnloadDriver(driverObject,&unloadDriver);
+    status = IopCheckUnloadDriver(driverObject, &unloadDriver);
 
-    if ( NT_SUCCESS(status) ) {
+    if (NT_SUCCESS(status))
+    {
         return status;
     }
 
-    if (unloadDriver) {
+    if (unloadDriver)
+    {
 
-        if (PsGetCurrentProcess() == PsInitialSystemProcess) {
+        if (PsGetCurrentProcess() == PsInitialSystemProcess)
+        {
 
             //
             // The current thread is alrady executing in the context of the
             // system process, so simply invoke the driver's unload routine.
             //
 
-            driverObject->DriverUnload( driverObject );
-
-        } else {
+            driverObject->DriverUnload(driverObject);
+        }
+        else
+        {
 
             //
             // The current thread is not executing in the context of the system
@@ -504,20 +488,14 @@ Return Value:
 
             LOAD_PACKET loadPacket;
 
-            KeInitializeEvent( &loadPacket.Event, NotificationEvent, FALSE );
+            KeInitializeEvent(&loadPacket.Event, NotificationEvent, FALSE);
             loadPacket.DriverObject = driverObject;
-            ExInitializeWorkItem( &loadPacket.WorkQueueItem,
-                                  IopLoadUnloadDriver,
-                                  &loadPacket );
-            ExQueueWorkItem( &loadPacket.WorkQueueItem, DelayedWorkQueue );
-            (VOID) KeWaitForSingleObject( &loadPacket.Event,
-                                          Executive,
-                                          KernelMode,
-                                          FALSE,
-                                          (PLARGE_INTEGER) NULL );
+            ExInitializeWorkItem(&loadPacket.WorkQueueItem, IopLoadUnloadDriver, &loadPacket);
+            ExQueueWorkItem(&loadPacket.WorkQueueItem, DelayedWorkQueue);
+            (VOID) KeWaitForSingleObject(&loadPacket.Event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
         }
-        ObMakeTemporaryObject( driverObject );
-        ObDereferenceObject( driverObject );
+        ObMakeTemporaryObject(driverObject);
+        ObDereferenceObject(driverObject);
     }
 
     //
@@ -526,6 +504,6 @@ Return Value:
     // the object and return success.
     //
 
-    ObDereferenceObject( driverObject );
+    ObDereferenceObject(driverObject);
     return STATUS_SUCCESS;
 }

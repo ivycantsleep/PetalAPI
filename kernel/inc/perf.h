@@ -29,63 +29,39 @@ extern PERFINFO_GROUPMASK *PPerfGlobalGroupMask;
 extern const PERFINFO_HOOK_HANDLE PerfNullHookHandle;
 #define PERF_NULL_HOOK_HANDLE (PerfNullHookHandle)
 
-typedef enum _PERFINFO_START_LOG_LOCATION {
+typedef enum _PERFINFO_START_LOG_LOCATION
+{
     PERFINFO_START_LOG_AT_BOOT,
     PERFINFO_START_LOG_POST_BOOT,
     PERFINFO_START_LOG_FROM_GLOBAL_LOGGER
 } PERFINFO_START_LOG_LOCATION, *PPERFINFO_START_LOG_LOCATION;
 
-typedef struct _PERFINFO_ENTRY_TABLE {
+typedef struct _PERFINFO_ENTRY_TABLE
+{
     PVOID *Table;
     LONG NumberOfEntries;
 } PERFINFO_ENTRY_TABLE, *PPERFINFO_ENTRY_TABLE;
 
 NTSTATUS
-PerfInfoStartLog (
-    PERFINFO_GROUPMASK *pGroupMask,
-    PERFINFO_START_LOG_LOCATION StartLogLocation
-    );
+PerfInfoStartLog(PERFINFO_GROUPMASK *pGroupMask, PERFINFO_START_LOG_LOCATION StartLogLocation);
 
 NTSTATUS
-PerfInfoStopLog (
-    VOID
-    );
+PerfInfoStopLog(VOID);
 
 NTSTATUS
-PerfInfoLogFileName(
-    PVOID  FileObject,
-    PUNICODE_STRING SourceString
-    );
+PerfInfoLogFileName(PVOID FileObject, PUNICODE_STRING SourceString);
 
 ULONG
-PerfInfoCalcHashValue(
-    PVOID Key,
-    ULONG Len
-    );
+PerfInfoCalcHashValue(PVOID Key, ULONG Len);
 
 BOOLEAN
-PerfInfoAddToFileHash(
-    PPERFINFO_ENTRY_TABLE HashTable,
-    PVOID ObjectPointer
-    );
+PerfInfoAddToFileHash(PPERFINFO_ENTRY_TABLE HashTable, PVOID ObjectPointer);
 
-VOID
-ObPerfHandleTableWalk (
-    PEPROCESS Process,
-    PPERFINFO_ENTRY_TABLE HashTable
-    );
+VOID ObPerfHandleTableWalk(PEPROCESS Process, PPERFINFO_ENTRY_TABLE HashTable);
 
-VOID
-FASTCALL
-PerfProfileInterrupt(
-    IN KPROFILE_SOURCE Source,
-    IN PVOID InstructionPointer
-    );
+VOID FASTCALL PerfProfileInterrupt(IN KPROFILE_SOURCE Source, IN PVOID InstructionPointer);
 
-VOID
-PerfInfoFlushProfileCache(
-    VOID
-    );
+VOID PerfInfoFlushProfileCache(VOID);
 
 #define PERFINFO_IS_ANY_GROUP_ON() (PPerfGlobalGroupMask != NULL)
 
@@ -94,38 +70,22 @@ PerfInfoFlushProfileCache(
 #define PERF_FINISH_HOOK(_HookHandle) WmiReleaseKernelBuffer((_HookHandle).WmiBufferHeader);
 
 NTSTATUS
-PerfInfoReserveBytes(
-    PPERFINFO_HOOK_HANDLE Hook,
-    USHORT HookId,
-    ULONG BytesToReserve
-    );
+PerfInfoReserveBytes(PPERFINFO_HOOK_HANDLE Hook, USHORT HookId, ULONG BytesToReserve);
 
 NTSTATUS
-PerfInfoLogBytes(
-    USHORT HookId,
-    PVOID Data,
-    ULONG NumBytes
-    );
+PerfInfoLogBytes(USHORT HookId, PVOID Data, ULONG NumBytes);
 
 NTSTATUS
-PerfInfoLogBytesAndUnicodeString(
-    USHORT HookId,
-    PVOID SourceData,
-    ULONG SourceByteCount,
-    PUNICODE_STRING String
-    );
+PerfInfoLogBytesAndUnicodeString(USHORT HookId, PVOID SourceData, ULONG SourceByteCount, PUNICODE_STRING String);
 
 //
 // Macros for TimeStamps
 //
 #ifdef NTPERF
 #if defined(_X86_)
-__inline
-LONGLONG
-PerfGetCycleCount(
-    )
+__inline LONGLONG PerfGetCycleCount()
 {
-    __asm{
+    __asm {
         RDTSC
     }
 }
@@ -145,69 +105,64 @@ PerfGetCycleCount(
 //
 // Macros used in \nt\base\ntos\io\iomgr\parse.c
 //
-#define PERFINFO_LOG_FILE_CREATE(FileObject, CompleteName)                                              \
-    if (PERFINFO_IS_GROUP_ON(PERF_FILENAME_ALL)){                                                       \
-        PerfInfoLogFileName(FileObject, CompleteName);                                                  \
+#define PERFINFO_LOG_FILE_CREATE(FileObject, CompleteName) \
+    if (PERFINFO_IS_GROUP_ON(PERF_FILENAME_ALL))           \
+    {                                                      \
+        PerfInfoLogFileName(FileObject, CompleteName);     \
     }
 
 // Macros used in \nt\base\ntos\mm\creasect.c
 //
-#define PERFINFO_SECTION_CREATE(ControlArea)                                                            \
-    if (PERFINFO_IS_GROUP_ON(PERF_FILENAME_ALL)){                                                       \
-        PerfInfoLogFileName(ControlArea->FilePointer,                                                   \
-                            &(ControlArea)->FilePointer->FileName);                                     \
+#define PERFINFO_SECTION_CREATE(ControlArea)                                                  \
+    if (PERFINFO_IS_GROUP_ON(PERF_FILENAME_ALL))                                              \
+    {                                                                                         \
+        PerfInfoLogFileName(ControlArea->FilePointer, &(ControlArea)->FilePointer->FileName); \
     }
 
 //
 // Macros used in \nt\base\ntos\ps\psquery.c
 //
 
-#define PERFINFO_CONVERT_TO_GUI_THREAD(EThread)                                                         \
-    if (PERFINFO_IS_GROUP_ON(PERF_MEMORY)) {                                                            \
-        PERFINFO_THREAD_INFORMATION _ThreadInfo;                                                        \
-        _ThreadInfo.ProcessId = HandleToUlong((EThread)->Cid.UniqueProcess);                            \
-        _ThreadInfo.ThreadId = HandleToUlong((EThread)->Cid.UniqueThread);                              \
-        _ThreadInfo.StackBase = (EThread)->Tcb.StackBase;                                               \
-        _ThreadInfo.StackLimit = (EThread)->Tcb.StackLimit;                                             \
-        _ThreadInfo.UserStackBase = 0;                                                                  \
-        _ThreadInfo.UserStackLimit = 0;                                                                 \
-        _ThreadInfo.StartAddr = 0;                                                                      \
-        _ThreadInfo.Win32StartAddr = 0;                                                                 \
-        _ThreadInfo.WaitMode = -1;                                                                      \
-        PerfInfoLogBytes(                                                                               \
-            PERFINFO_LOG_TYPE_CONVERTTOGUITHREAD,                                                       \
-            &_ThreadInfo,                                                                               \
-            sizeof(_ThreadInfo)                                                                         \
-            );                                                                                          \
+#define PERFINFO_CONVERT_TO_GUI_THREAD(EThread)                                                    \
+    if (PERFINFO_IS_GROUP_ON(PERF_MEMORY))                                                         \
+    {                                                                                              \
+        PERFINFO_THREAD_INFORMATION _ThreadInfo;                                                   \
+        _ThreadInfo.ProcessId = HandleToUlong((EThread)->Cid.UniqueProcess);                       \
+        _ThreadInfo.ThreadId = HandleToUlong((EThread)->Cid.UniqueThread);                         \
+        _ThreadInfo.StackBase = (EThread)->Tcb.StackBase;                                          \
+        _ThreadInfo.StackLimit = (EThread)->Tcb.StackLimit;                                        \
+        _ThreadInfo.UserStackBase = 0;                                                             \
+        _ThreadInfo.UserStackLimit = 0;                                                            \
+        _ThreadInfo.StartAddr = 0;                                                                 \
+        _ThreadInfo.Win32StartAddr = 0;                                                            \
+        _ThreadInfo.WaitMode = -1;                                                                 \
+        PerfInfoLogBytes(PERFINFO_LOG_TYPE_CONVERTTOGUITHREAD, &_ThreadInfo, sizeof(_ThreadInfo)); \
     }
 
 //
 // Macros used in \NT\PRIVATE\NTOS\ps\psdelete.c
 //
 
-#define PERFINFO_PROCESS_DELETE(EProcess)                                                               \
-    WmiTraceProcess(EProcess, FALSE);
+#define PERFINFO_PROCESS_DELETE(EProcess) WmiTraceProcess(EProcess, FALSE);
 
-#define PERFINFO_THREAD_DELETE(EThread)                                                                 \
-    WmiTraceThread(EThread, NULL, FALSE);
+#define PERFINFO_THREAD_DELETE(EThread) WmiTraceThread(EThread, NULL, FALSE);
 //
 // Macros used in \NT\PRIVATE\NTOS\ps\create.c
 //
 
-#define PERFINFO_PROCESS_CREATE(EProcess)                                                               \
-    WmiTraceProcess(EProcess, TRUE);
+#define PERFINFO_PROCESS_CREATE(EProcess) WmiTraceProcess(EProcess, TRUE);
 
-#define PERFINFO_THREAD_CREATE(EThread, ITeb)                                                           \
-    WmiTraceThread(EThread, ITeb, TRUE);                                                                \
+#define PERFINFO_THREAD_CREATE(EThread, ITeb) WmiTraceThread(EThread, ITeb, TRUE);
 
 //
 // ntos\ke\ia64\clock.c Sampled Profile stuff for IA64.  The x86 version is in
 // assembly.
 //
 #if defined(_IA64_)
-#define PERFINFO_PROFILE(_frame, _source)                                                               \
-    if (PERFINFO_IS_GROUP_ON(PERF_PROFILE)) {                                                           \
-        PerfProfileInterrupt(_source, (PVOID)_frame->StIIP);                                            \
+#define PERFINFO_PROFILE(_frame, _source)                    \
+    if (PERFINFO_IS_GROUP_ON(PERF_PROFILE))                  \
+    {                                                        \
+        PerfProfileInterrupt(_source, (PVOID)_frame->StIIP); \
     }
 #endif
 
@@ -215,9 +170,9 @@ PerfGetCycleCount(
 
 extern PERFINFO_GROUPMASK StartAtBootGroupMask;
 extern ULONG PerfInfo_InitialStackWalk_Threshold_ms;
-extern VOID * BBTBuffer;
+extern VOID *BBTBuffer;
 extern ULONG PerfInfoLoggingToPerfMem;
-#define PerfBufHdr() ((PPERFINFO_TRACEBUF_HEADER) BBTBuffer)
+#define PerfBufHdr() ((PPERFINFO_TRACEBUF_HEADER)BBTBuffer)
 
 #define PERFINFO_IS_PERFMEM_ALLOCATED() (PerfBufHdr() != NULL)
 
@@ -228,52 +183,37 @@ extern ULONG PerfInfoLoggingToPerfMem;
 #define PerfQueryBufferSizeBytes() (PAGE_SIZE * (PerfBufHdr()->PagesReserved))
 
 NTSTATUS
-PerfInfoStartPerfMemLog(
-    );
+PerfInfoStartPerfMemLog();
 
 NTSTATUS
-PerfInfoStopPerfMemLog(
-    );
+PerfInfoStopPerfMemLog();
 
 PVOID
 FASTCALL
-PerfInfoReserveBytesFromPerfMem(
-    ULONG BytesToReserve
-    );
+PerfInfoReserveBytesFromPerfMem(ULONG BytesToReserve);
 
 NTSTATUS
-PerfInfoSetPerformanceTraceInformation (
-    IN PVOID SystemInformation,
-    IN ULONG SystemInformationLength
-    );
+PerfInfoSetPerformanceTraceInformation(IN PVOID SystemInformation, IN ULONG SystemInformationLength);
 
 NTSTATUS
-PerfInfoQueryPerformanceTraceInformation (
-    IN PVOID SystemInformation,
-    IN ULONG SystemInformationLength,
-    OUT PULONG ReturnLength
-    );
+PerfInfoQueryPerformanceTraceInformation(IN PVOID SystemInformation, IN ULONG SystemInformationLength,
+                                         OUT PULONG ReturnLength);
 
-VOID
-PerfInfoSetProcessorSpeed(
-    VOID
-    );
+VOID PerfInfoSetProcessorSpeed(VOID);
 
 //
 // Macros used in \nt\base\ntos\mm\
 //
 
-#define PERFINFO_MMINIT_START()                                                                         \
-    PerfInfoSetProcessorSpeed();                                                                        \
-    if (PerfIsAnyGroupOnInGroupMask(&StartAtBootGroupMask)) {                                           \
-        PerfInfoStartLog(&StartAtBootGroupMask, PERFINFO_START_LOG_AT_BOOT);                            \
-        PerfBufHdr()->GetStack_CSwitchDelta =                                                           \
-           1000 *                                                                                       \
-           PerfInfo_InitialStackWalk_Threshold_ms *                                                     \
-           PerfBufHdr()->CalcPerfFrequency;                                                             \
-                                                                                                        \
-        PerfBufHdr()->GetStack_DrvDelayDelta =                                                          \
-            PerfBufHdr()->GetStack_CSwitchDelta;                                                        \
+#define PERFINFO_MMINIT_START()                                                              \
+    PerfInfoSetProcessorSpeed();                                                             \
+    if (PerfIsAnyGroupOnInGroupMask(&StartAtBootGroupMask))                                  \
+    {                                                                                        \
+        PerfInfoStartLog(&StartAtBootGroupMask, PERFINFO_START_LOG_AT_BOOT);                 \
+        PerfBufHdr()->GetStack_CSwitchDelta =                                                \
+            1000 * PerfInfo_InitialStackWalk_Threshold_ms * PerfBufHdr()->CalcPerfFrequency; \
+                                                                                             \
+        PerfBufHdr()->GetStack_DrvDelayDelta = PerfBufHdr()->GetStack_CSwitchDelta;          \
     }
 
 #else
@@ -425,4 +365,4 @@ PerfInfoSetProcessorSpeed(
 #include "..\perf\perfinfokrn.h"
 #endif // !NTPERF_PRIVATE
 
-#endif  // PERF_H
+#endif // PERF_H

@@ -22,32 +22,16 @@ Revision History:
 #include "RawProcs.h"
 
 NTSTATUS
-RawQueryFsVolumeInfo (
-    IN PVCB Vcb,
-    IN PFILE_FS_VOLUME_INFORMATION Buffer,
-    IN OUT PULONG Length
-    );
+RawQueryFsVolumeInfo(IN PVCB Vcb, IN PFILE_FS_VOLUME_INFORMATION Buffer, IN OUT PULONG Length);
 
 NTSTATUS
-RawQueryFsSizeInfo (
-    IN PVCB Vcb,
-    IN PFILE_FS_SIZE_INFORMATION Buffer,
-    IN OUT PULONG Length
-    );
+RawQueryFsSizeInfo(IN PVCB Vcb, IN PFILE_FS_SIZE_INFORMATION Buffer, IN OUT PULONG Length);
 
 NTSTATUS
-RawQueryFsDeviceInfo (
-    IN PVCB Vcb,
-    IN PFILE_FS_DEVICE_INFORMATION Buffer,
-    IN OUT PULONG Length
-    );
+RawQueryFsDeviceInfo(IN PVCB Vcb, IN PFILE_FS_DEVICE_INFORMATION Buffer, IN OUT PULONG Length);
 
 NTSTATUS
-RawQueryFsAttributeInfo (
-    IN PVCB Vcb,
-    IN PFILE_FS_ATTRIBUTE_INFORMATION Buffer,
-    IN OUT PULONG Length
-    );
+RawQueryFsAttributeInfo(IN PVCB Vcb, IN PFILE_FS_ATTRIBUTE_INFORMATION Buffer, IN OUT PULONG Length);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, RawQueryVolumeInformation)
@@ -57,13 +41,9 @@ RawQueryFsAttributeInfo (
 #pragma alloc_text(PAGE, RawQueryFsAttributeInfo)
 #endif
 
-
+
 NTSTATUS
-RawQueryVolumeInformation (
-    IN PVCB Vcb,
-    IN PIRP Irp,
-    IN PIO_STACK_LOCATION IrpSp
-    )
+RawQueryVolumeInformation(IN PVCB Vcb, IN PIRP Irp, IN PIO_STACK_LOCATION IrpSp)
 
 /*++
 
@@ -109,26 +89,27 @@ Return Value:
     //  and false if it couldn't wait for any I/O to complete.
     //
 
-    switch (FsInformationClass) {
+    switch (FsInformationClass)
+    {
 
     case FileFsVolumeInformation:
 
-        Status = RawQueryFsVolumeInfo( Vcb, Buffer, &Length );
+        Status = RawQueryFsVolumeInfo(Vcb, Buffer, &Length);
         break;
 
     case FileFsSizeInformation:
 
-        Status = RawQueryFsSizeInfo( Vcb, Buffer, &Length );
+        Status = RawQueryFsSizeInfo(Vcb, Buffer, &Length);
         break;
 
     case FileFsDeviceInformation:
 
-        Status = RawQueryFsDeviceInfo( Vcb, Buffer, &Length );
+        Status = RawQueryFsDeviceInfo(Vcb, Buffer, &Length);
         break;
 
     case FileFsAttributeInformation:
 
-        Status = RawQueryFsAttributeInfo( Vcb, Buffer, &Length );
+        Status = RawQueryFsAttributeInfo(Vcb, Buffer, &Length);
         break;
 
     default:
@@ -144,22 +125,18 @@ Return Value:
 
     Irp->IoStatus.Information = IrpSp->Parameters.QueryVolume.Length - Length;
 
-    RawCompleteRequest( Irp, Status );
+    RawCompleteRequest(Irp, Status);
 
     return Status;
 }
 
-
+
 //
 //  Internal support routine
 //
 
 NTSTATUS
-RawQueryFsVolumeInfo (
-    IN PVCB Vcb,
-    IN PFILE_FS_VOLUME_INFORMATION Buffer,
-    IN OUT PULONG Length
-    )
+RawQueryFsVolumeInfo(IN PVCB Vcb, IN PFILE_FS_VOLUME_INFORMATION Buffer, IN OUT PULONG Length)
 
 /*++
 
@@ -190,7 +167,7 @@ Return Value:
     //  Zero out the buffer, then extract and fill up the non zero fields.
     //
 
-    RtlZeroMemory( Buffer, sizeof(FILE_FS_VOLUME_INFORMATION) );
+    RtlZeroMemory(Buffer, sizeof(FILE_FS_VOLUME_INFORMATION));
 
     Buffer->VolumeSerialNumber = Vcb->Vpb->SerialNumber;
 
@@ -207,17 +184,13 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
-
+
 //
 //  Internal support routine
 //
 
 NTSTATUS
-RawQueryFsSizeInfo (
-    IN PVCB Vcb,
-    IN PFILE_FS_SIZE_INFORMATION Buffer,
-    IN OUT PULONG Length
-    )
+RawQueryFsSizeInfo(IN PVCB Vcb, IN PFILE_FS_SIZE_INFORMATION Buffer, IN OUT PULONG Length)
 
 /*++
 
@@ -259,12 +232,13 @@ Return Value:
     //  Make sure the buffer is large enough
     //
 
-    if (*Length < sizeof(FILE_FS_SIZE_INFORMATION)) {
+    if (*Length < sizeof(FILE_FS_SIZE_INFORMATION))
+    {
 
         return STATUS_BUFFER_OVERFLOW;
     }
 
-    RtlZeroMemory( Buffer, sizeof(FILE_FS_SIZE_INFORMATION) );
+    RtlZeroMemory(Buffer, sizeof(FILE_FS_SIZE_INFORMATION));
 
     //
     //  Prepare for our device control below.  The device drivers only
@@ -272,34 +246,25 @@ Return Value:
     //  so it is OK to make these calls even when we can't wait.
     //
 
-    KeInitializeEvent( &Event, NotificationEvent, FALSE );
+    KeInitializeEvent(&Event, NotificationEvent, FALSE);
     RealDevice = Vcb->Vpb->RealDevice;
 
     //
     //  Query the disk geometry
     //
 
-    Irp = IoBuildDeviceIoControlRequest( IOCTL_DISK_GET_DRIVE_GEOMETRY,
-                                         RealDevice,
-                                         NULL,
-                                         0,
-                                         &DiskGeometry,
-                                         sizeof(DISK_GEOMETRY),
-                                         FALSE,
-                                         &Event,
-                                         &Iosb );
+    Irp = IoBuildDeviceIoControlRequest(IOCTL_DISK_GET_DRIVE_GEOMETRY, RealDevice, NULL, 0, &DiskGeometry,
+                                        sizeof(DISK_GEOMETRY), FALSE, &Event, &Iosb);
 
-    if ( Irp == NULL ) {
+    if (Irp == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-    if ( (Status = IoCallDriver( RealDevice, Irp )) == STATUS_PENDING ) {
+    if ((Status = IoCallDriver(RealDevice, Irp)) == STATUS_PENDING)
+    {
 
-        (VOID) KeWaitForSingleObject( &Event,
-                                      Executive,
-                                      KernelMode,
-                                      FALSE,
-                                      (PLARGE_INTEGER)NULL );
+        (VOID) KeWaitForSingleObject(&Event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
 
         Status = Iosb.Status;
     }
@@ -309,7 +274,8 @@ Return Value:
     //  formatted, and thus geometry information is undefined.
     //
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
         *Length = 0;
         return Status;
@@ -320,39 +286,33 @@ Return Value:
     //  the only type that can't have partitions )
     //
 
-    if ( FlagOn( RealDevice->Characteristics, FILE_FLOPPY_DISKETTE )) {
+    if (FlagOn(RealDevice->Characteristics, FILE_FLOPPY_DISKETTE))
+    {
 
         DriveIsPartitioned = FALSE;
-
-    } else {
+    }
+    else
+    {
 
         //
         //  Query the partition table
         //
 
-        KeResetEvent( &Event );
+        KeResetEvent(&Event);
 
-        Irp = IoBuildDeviceIoControlRequest( IOCTL_DISK_GET_PARTITION_INFO_EX,
-                                             RealDevice,
-                                             NULL,
-                                             0,
-                                             &PartitionInformation,
-                                             sizeof(PARTITION_INFORMATION_EX),
-                                             FALSE,
-                                             &Event,
-                                             &Iosb );
+        Irp =
+            IoBuildDeviceIoControlRequest(IOCTL_DISK_GET_PARTITION_INFO_EX, RealDevice, NULL, 0, &PartitionInformation,
+                                          sizeof(PARTITION_INFORMATION_EX), FALSE, &Event, &Iosb);
 
-        if ( Irp == NULL ) {
-           return STATUS_INSUFFICIENT_RESOURCES;
+        if (Irp == NULL)
+        {
+            return STATUS_INSUFFICIENT_RESOURCES;
         }
 
-        if ( (Status = IoCallDriver( RealDevice, Irp )) == STATUS_PENDING ) {
+        if ((Status = IoCallDriver(RealDevice, Irp)) == STATUS_PENDING)
+        {
 
-            (VOID) KeWaitForSingleObject( &Event,
-                                          Executive,
-                                          KernelMode,
-                                          FALSE,
-                                          (PLARGE_INTEGER)NULL );
+            (VOID) KeWaitForSingleObject(&Event, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
 
             Status = Iosb.Status;
         }
@@ -361,11 +321,13 @@ Return Value:
         //  If we get back invalid device request, the disk is not partitioned
         //
 
-        if ( !NT_SUCCESS (Status) ) {
+        if (!NT_SUCCESS(Status))
+        {
 
             DriveIsPartitioned = FALSE;
-
-        } else {
+        }
+        else
+        {
 
             DriveIsPartitioned = TRUE;
         }
@@ -384,18 +346,16 @@ Return Value:
     //  total number of sectors on this disk.
     //
 
-    Buffer->TotalAllocationUnits =
-    Buffer->AvailableAllocationUnits = ( DriveIsPartitioned == TRUE ) ?
+    Buffer->TotalAllocationUnits = Buffer->AvailableAllocationUnits =
+        (DriveIsPartitioned == TRUE)
+            ?
 
-        RtlExtendedLargeIntegerDivide( PartitionInformation.PartitionLength,
-                                       DiskGeometry.BytesPerSector,
-                                       NULL )
+            RtlExtendedLargeIntegerDivide(PartitionInformation.PartitionLength, DiskGeometry.BytesPerSector, NULL)
 
-                                        :
+            :
 
-        RtlExtendedIntegerMultiply( DiskGeometry.Cylinders,
-                                    DiskGeometry.TracksPerCylinder *
-                                    DiskGeometry.SectorsPerTrack );
+            RtlExtendedIntegerMultiply(DiskGeometry.Cylinders,
+                                       DiskGeometry.TracksPerCylinder * DiskGeometry.SectorsPerTrack);
 
     //
     //  Adjust the length variable
@@ -410,17 +370,13 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
-
+
 //
 //  Internal support routine
 //
 
 NTSTATUS
-RawQueryFsDeviceInfo (
-    IN PVCB Vcb,
-    IN PFILE_FS_DEVICE_INFORMATION Buffer,
-    IN OUT PULONG Length
-    )
+RawQueryFsDeviceInfo(IN PVCB Vcb, IN PFILE_FS_DEVICE_INFORMATION Buffer, IN OUT PULONG Length)
 
 /*++
 
@@ -451,12 +407,13 @@ Return Value:
     //  Make sure the buffer is large enough
     //
 
-    if (*Length < sizeof(FILE_FS_DEVICE_INFORMATION)) {
+    if (*Length < sizeof(FILE_FS_DEVICE_INFORMATION))
+    {
 
         return STATUS_BUFFER_OVERFLOW;
     }
 
-    RtlZeroMemory( Buffer, sizeof(FILE_FS_DEVICE_INFORMATION) );
+    RtlZeroMemory(Buffer, sizeof(FILE_FS_DEVICE_INFORMATION));
 
     //
     //  Set the output buffer
@@ -479,17 +436,13 @@ Return Value:
     return STATUS_SUCCESS;
 }
 
-
+
 //
 //  Internal support routine
 //
 
 NTSTATUS
-RawQueryFsAttributeInfo (
-    IN PVCB Vcb,
-    IN PFILE_FS_ATTRIBUTE_INFORMATION Buffer,
-    IN OUT PULONG Length
-    )
+RawQueryFsAttributeInfo(IN PVCB Vcb, IN PFILE_FS_ATTRIBUTE_INFORMATION Buffer, IN OUT PULONG Length)
 
 /*++
 
@@ -516,7 +469,7 @@ Return Value:
 {
     ULONG LengthUsed;
 
-    UNREFERENCED_PARAMETER( Vcb );
+    UNREFERENCED_PARAMETER(Vcb);
 
     PAGED_CODE();
 
@@ -526,7 +479,8 @@ Return Value:
 
     LengthUsed = FIELD_OFFSET(FILE_FS_ATTRIBUTE_INFORMATION, FileSystemName[0]) + 6;
 
-    if (*Length < LengthUsed) {
+    if (*Length < LengthUsed)
+    {
 
         return STATUS_BUFFER_OVERFLOW;
     }
@@ -535,10 +489,10 @@ Return Value:
     //  Set the output buffer
     //
 
-    Buffer->FileSystemAttributes       = 0;
+    Buffer->FileSystemAttributes = 0;
     Buffer->MaximumComponentNameLength = 0;
-    Buffer->FileSystemNameLength       = 6;
-    RtlCopyMemory( &Buffer->FileSystemName[0], L"RAW", 6 );
+    Buffer->FileSystemNameLength = 6;
+    RtlCopyMemory(&Buffer->FileSystemName[0], L"RAW", 6);
 
     //
     //  Adjust the length variable
@@ -552,4 +506,3 @@ Return Value:
 
     return STATUS_SUCCESS;
 }
-

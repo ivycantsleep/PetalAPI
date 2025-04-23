@@ -26,12 +26,7 @@ Revision History:
 #pragma alloc_text(PAGEKD, KdpCopyMemoryChunks)
 #endif
 
-VOID
-KdpQuickMoveMemory (
-    IN PCHAR Destination,
-    IN PCHAR Source,
-    IN ULONG Length
-    )
+VOID KdpQuickMoveMemory(IN PCHAR Destination, IN PCHAR Source, IN ULONG Length)
 
 /*++
 
@@ -60,7 +55,8 @@ Return Value:
 
 --*/
 {
-    while (Length > 0) {
+    while (Length > 0)
+    {
         *Destination = *Source;
         Destination++;
         Source++;
@@ -69,14 +65,8 @@ Return Value:
 }
 
 NTSTATUS
-KdpCopyMemoryChunks(
-    ULONG64 Address,
-    PVOID Buffer,
-    ULONG TotalSize,
-    ULONG ChunkSize,
-    ULONG Flags,
-    PULONG ActualSize OPTIONAL
-    )
+KdpCopyMemoryChunks(ULONG64 Address, PVOID Buffer, ULONG TotalSize, ULONG ChunkSize, ULONG Flags,
+                    PULONG ActualSize OPTIONAL)
 
 /*++
 
@@ -115,9 +105,12 @@ Return Value:
     NTSTATUS Status;
     ULONG64 AddressStart = Address;
 
-    if (ChunkSize > MMDBG_COPY_MAX_SIZE) {
+    if (ChunkSize > MMDBG_COPY_MAX_SIZE)
+    {
         ChunkSize = MMDBG_COPY_MAX_SIZE;
-    } else if (ChunkSize == 0) {
+    }
+    else if (ChunkSize == 0)
+    {
         // Default to 4 byte chunks as that's
         // what the previous code did.
         ChunkSize = 4;
@@ -136,27 +129,29 @@ Return Value:
 
     Length = TotalSize;
     CopyChunk = 1;
-    
-    while (Length > 0) {
+
+    while (Length > 0)
+    {
 
         // Expand the chunk size as long as:
         //   We haven't hit the chunk limit.
         //   We have enough data left.
         //   The address is properly aligned.
-        while (CopyChunk < ChunkSize &&
-               (CopyChunk << 1) <= Length &&
-               (Address & ((CopyChunk << 1) - 1)) == 0) {
+        while (CopyChunk < ChunkSize && (CopyChunk << 1) <= Length && (Address & ((CopyChunk << 1) - 1)) == 0)
+        {
             CopyChunk <<= 1;
         }
-        
+
         // Shrink the chunk size to fit the available data.
-        while (CopyChunk > Length) {
+        while (CopyChunk > Length)
+        {
             CopyChunk >>= 1;
         }
-        
+
         Status = MmDbgCopyMemory(Address, Buffer, CopyChunk, Flags);
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             break;
         }
 
@@ -176,8 +171,8 @@ Return Value:
     // and if any bytes were actually written
     //
 
-    if ((Flags & MMDBG_COPY_WRITE) &&
-        Length < TotalSize) {
+    if ((Flags & MMDBG_COPY_WRITE) && Length < TotalSize)
+    {
 #if defined(_IA64_)
         KeSweepCurrentIcacheRange((PVOID)AddressStart, TotalSize - Length);
 #else

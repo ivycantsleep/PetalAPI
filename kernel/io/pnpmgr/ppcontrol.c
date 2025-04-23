@@ -26,43 +26,38 @@ Revision History:
 // ISSUE - 2000/08/19 - ADRIAO: This should be generalized for all of Pnp
 //
 #if DBG
-LONG
-PiControlExceptionFilter(
-    IN  PEXCEPTION_POINTERS ExceptionPointers
-    );
+LONG PiControlExceptionFilter(IN PEXCEPTION_POINTERS ExceptionPointers);
 #else
-#define PiControlExceptionFilter(a)  EXCEPTION_EXECUTE_HANDLER
+#define PiControlExceptionFilter(a) EXCEPTION_EXECUTE_HANDLER
 #endif
 
-__inline
-NTSTATUS
-PiControlAllocateBufferForUserModeCaller(
-    PVOID           *Dest,
-    ULONG           Size,
-    KPROCESSOR_MODE CallerMode,
-    PVOID           Src
-    )
+__inline NTSTATUS PiControlAllocateBufferForUserModeCaller(PVOID *Dest, ULONG Size, KPROCESSOR_MODE CallerMode,
+                                                           PVOID Src)
 {
-    NTSTATUS    status;
+    NTSTATUS status;
 
     status = STATUS_SUCCESS;
-    if (Size) {
+    if (Size)
+    {
 
-        if (CallerMode != KernelMode) {
+        if (CallerMode != KernelMode)
+        {
 
-            *Dest = ExAllocatePoolWithQuota(
-                PagedPool | POOL_QUOTA_FAIL_INSTEAD_OF_RAISE,
-                Size
-                );
-            if (*Dest == NULL) {
+            *Dest = ExAllocatePoolWithQuota(PagedPool | POOL_QUOTA_FAIL_INSTEAD_OF_RAISE, Size);
+            if (*Dest == NULL)
+            {
 
                 status = STATUS_INSUFFICIENT_RESOURCES;
             }
-        } else {
+        }
+        else
+        {
 
             *Dest = Src;
         }
-    } else {
+    }
+    else
+    {
 
         *Dest = NULL;
     }
@@ -70,16 +65,13 @@ PiControlAllocateBufferForUserModeCaller(
     return status;
 }
 
-__inline
-void
-PiControlFreeUserModeCallersBuffer(
-    KPROCESSOR_MODE CallerMode,
-    PVOID           Buffer
-    )
+__inline void PiControlFreeUserModeCallersBuffer(KPROCESSOR_MODE CallerMode, PVOID Buffer)
 {
-    if (CallerMode != KernelMode) {
+    if (CallerMode != KernelMode)
+    {
 
-        if (Buffer != NULL) {
+        if (Buffer != NULL)
+        {
 
             ExFreePool(Buffer);
         }
@@ -91,7 +83,7 @@ PiControlFreeUserModeCallersBuffer(
 // with control type of PlugPlayControlDetectResourceConflict.
 //
 #ifdef ALLOC_DATA_PRAGMA
-#pragma  data_seg("PAGEDATA")
+#pragma data_seg("PAGEDATA")
 #endif
 PDRIVER_OBJECT driverObject = NULL;
 
@@ -100,103 +92,56 @@ PDRIVER_OBJECT driverObject = NULL;
 // NtPlugPlayControl, PlugPlayControlGetDeviceStatus (which is a misnomer,
 // since it can perform both gets and sets).
 //
-#define DEVICE_NODE_SETTABLE_FLAG_BITS (DNF_HAS_PROBLEM         | \
-                                        DNF_HAS_PRIVATE_PROBLEM   \
-                                       )
+#define DEVICE_NODE_SETTABLE_FLAG_BITS (DNF_HAS_PROBLEM | DNF_HAS_PRIVATE_PROBLEM)
 
 NTSTATUS
-PiGetInterfaceDeviceAlias(
-    IN  PUNICODE_STRING SymbolicLinkName,
-    IN  LPGUID AliasClassGuid,
-    OUT PWSTR AliasSymbolicLinkName,
-    IN OUT PULONG AliasSymbolicLinkNameLength
-    );
+PiGetInterfaceDeviceAlias(IN PUNICODE_STRING SymbolicLinkName, IN LPGUID AliasClassGuid,
+                          OUT PWSTR AliasSymbolicLinkName, IN OUT PULONG AliasSymbolicLinkNameLength);
 
 NTSTATUS
-PiGenerateLegacyDeviceInstance(
-    IN  PUNICODE_STRING ServiceKeyName,
-    OUT PWSTR DeviceInstance,
-    IN OUT PULONG DeviceInstanceLength
-    );
+PiGenerateLegacyDeviceInstance(IN PUNICODE_STRING ServiceKeyName, OUT PWSTR DeviceInstance,
+                               IN OUT PULONG DeviceInstanceLength);
 
 NTSTATUS
-PiQueueQueryAndRemoveEvent(
-    IN  PUNICODE_STRING DeviceInstance,
-    IN  PPNP_VETO_TYPE VetoType,
-    IN  LPWSTR VetoName,
-    IN  PULONG VetoNameLength,
-    IN  ULONG Flags
-    );
+PiQueueQueryAndRemoveEvent(IN PUNICODE_STRING DeviceInstance, IN PPNP_VETO_TYPE VetoType, IN LPWSTR VetoName,
+                           IN PULONG VetoNameLength, IN ULONG Flags);
 
 NTSTATUS
-PiQueueDeviceRequest(
-    IN PUNICODE_STRING DeviceInstance,
-    IN DEVICE_REQUEST_TYPE RequestType,
-    IN ULONG Flags,
-    IN BOOLEAN Synchronous
-    );
+PiQueueDeviceRequest(IN PUNICODE_STRING DeviceInstance, IN DEVICE_REQUEST_TYPE RequestType, IN ULONG Flags,
+                     IN BOOLEAN Synchronous);
 
 NTSTATUS
-PiInitializeDevice(
-    IN  PUNICODE_STRING DeviceInstance
-    );
+PiInitializeDevice(IN PUNICODE_STRING DeviceInstance);
 
 NTSTATUS
-PiDetectResourceConflict(
-    IN PCM_RESOURCE_LIST  ResourceList,
-    IN ULONG              ResourceListSize
-    );
+PiDetectResourceConflict(IN PCM_RESOURCE_LIST ResourceList, IN ULONG ResourceListSize);
 
 NTSTATUS
-PiGetInterfaceDeviceList(
-    IN  GUID *InterfaceGuid,
-    IN  PUNICODE_STRING DeviceInstance,
-    IN  ULONG Flags,
-    OUT PWSTR InterfaceList,
-    IN OUT PULONG InterfaceListSize
-    );
+PiGetInterfaceDeviceList(IN GUID *InterfaceGuid, IN PUNICODE_STRING DeviceInstance, IN ULONG Flags,
+                         OUT PWSTR InterfaceList, IN OUT PULONG InterfaceListSize);
 
 NTSTATUS
-PiDeviceClassAssociation(
-    IN PUNICODE_STRING DeviceInstance,
-    IN GUID * ClassGuid,
-    IN PUNICODE_STRING Reference,   OPTIONAL
-    IN OUT PWSTR SymbolicLink,
-    IN OUT PULONG SymbolicLinkLength,
-    IN BOOLEAN Register
-    );
+PiDeviceClassAssociation(IN PUNICODE_STRING DeviceInstance, IN GUID *ClassGuid, IN PUNICODE_STRING Reference,
+                         OPTIONAL IN OUT PWSTR SymbolicLink, IN OUT PULONG SymbolicLinkLength, IN BOOLEAN Register);
 
 NTSTATUS
-PiGetRelatedDevice(
-    IN  PUNICODE_STRING TargetDeviceInstance,
-    OUT LPWSTR RelatedDeviceInstance,
-    IN OUT PULONG RelatedDeviceInstanceLength,
-    IN  ULONG Relation
-    );
+PiGetRelatedDevice(IN PUNICODE_STRING TargetDeviceInstance, OUT LPWSTR RelatedDeviceInstance,
+                   IN OUT PULONG RelatedDeviceInstanceLength, IN ULONG Relation);
 
 NTSTATUS
-PiQueryDeviceRelations(
-    IN PUNICODE_STRING DeviceInstance,
-    IN PNP_QUERY_RELATION Operation,
-    OUT PULONG BufferLength,
-    OUT LPWSTR Buffer
-    );
+PiQueryDeviceRelations(IN PUNICODE_STRING DeviceInstance, IN PNP_QUERY_RELATION Operation, OUT PULONG BufferLength,
+                       OUT LPWSTR Buffer);
 
 DEVICE_RELATION_TYPE
-PiDeviceRelationType(
-    PNP_QUERY_RELATION  Operation
-    );
+PiDeviceRelationType(PNP_QUERY_RELATION Operation);
 
 NTSTATUS
-PiControlGetBlockedDriverData(
-    IN     PLUGPLAY_CONTROL_CLASS                   PnPControlClass,
-    IN OUT PPLUGPLAY_CONTROL_BLOCKED_DRIVER_DATA    BlockedDriverData,
-    IN     ULONG                                    PnPControlDataLength,
-    IN     KPROCESSOR_MODE                          CallerMode
-    );
+PiControlGetBlockedDriverData(IN PLUGPLAY_CONTROL_CLASS PnPControlClass,
+                              IN OUT PPLUGPLAY_CONTROL_BLOCKED_DRIVER_DATA BlockedDriverData,
+                              IN ULONG PnPControlDataLength, IN KPROCESSOR_MODE CallerMode);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGELK, PpShutdownSystem)                    // this gets called after paging shutdown
+#pragma alloc_text(PAGELK, PpShutdownSystem) // this gets called after paging shutdown
 #pragma alloc_text(PAGE, NtPlugPlayControl)
 #pragma alloc_text(PAGE, PiControlMakeUserModeCallersCopy)
 #pragma alloc_text(PAGE, PiGetInterfaceDeviceAlias)
@@ -245,109 +190,64 @@ PiControlGetBlockedDriverData(
 //
 PLUGPLAY_CONTROL_HANDLER_DATA PlugPlayHandlerTable[] = {
 
-    { PlugPlayControlEnumerateDevice,
-      sizeof(PLUGPLAY_CONTROL_DEVICE_CONTROL_DATA),
-      PiControlEnumerateDevice },
+    { PlugPlayControlEnumerateDevice, sizeof(PLUGPLAY_CONTROL_DEVICE_CONTROL_DATA), PiControlEnumerateDevice },
 
-    { PlugPlayControlRegisterNewDevice,
-      sizeof(PLUGPLAY_CONTROL_DEVICE_CONTROL_DATA),
-      PiControlRegisterNewDevice },
+    { PlugPlayControlRegisterNewDevice, sizeof(PLUGPLAY_CONTROL_DEVICE_CONTROL_DATA), PiControlRegisterNewDevice },
 
-    { PlugPlayControlDeregisterDevice,
-      sizeof(PLUGPLAY_CONTROL_DEVICE_CONTROL_DATA),
-      PiControlDeregisterDevice },
+    { PlugPlayControlDeregisterDevice, sizeof(PLUGPLAY_CONTROL_DEVICE_CONTROL_DATA), PiControlDeregisterDevice },
 
-    { PlugPlayControlInitializeDevice,
-      sizeof(PLUGPLAY_CONTROL_DEVICE_CONTROL_DATA),
-      PiControlInitializeDevice },
+    { PlugPlayControlInitializeDevice, sizeof(PLUGPLAY_CONTROL_DEVICE_CONTROL_DATA), PiControlInitializeDevice },
 
-    { PlugPlayControlStartDevice,
-      sizeof(PLUGPLAY_CONTROL_DEVICE_CONTROL_DATA),
-      PiControlStartDevice },
+    { PlugPlayControlStartDevice, sizeof(PLUGPLAY_CONTROL_DEVICE_CONTROL_DATA), PiControlStartDevice },
 
-    { PlugPlayControlUnlockDevice,
-      sizeof(PLUGPLAY_CONTROL_DEVICE_CONTROL_DATA),
-      NULL },
+    { PlugPlayControlUnlockDevice, sizeof(PLUGPLAY_CONTROL_DEVICE_CONTROL_DATA), NULL },
 
-    { PlugPlayControlQueryAndRemoveDevice,
-      sizeof(PLUGPLAY_CONTROL_QUERY_AND_REMOVE_DATA),
+    { PlugPlayControlQueryAndRemoveDevice, sizeof(PLUGPLAY_CONTROL_QUERY_AND_REMOVE_DATA),
       PiControlQueryAndRemoveDevice },
 
-    { PlugPlayControlUserResponse,
-      sizeof(PLUGPLAY_CONTROL_USER_RESPONSE_DATA),
-      PiControlUserResponse },
+    { PlugPlayControlUserResponse, sizeof(PLUGPLAY_CONTROL_USER_RESPONSE_DATA), PiControlUserResponse },
 
-    { PlugPlayControlGenerateLegacyDevice,
-      sizeof(PLUGPLAY_CONTROL_LEGACY_DEVGEN_DATA),
-      PiControlGenerateLegacyDevice },
+    { PlugPlayControlGenerateLegacyDevice, sizeof(PLUGPLAY_CONTROL_LEGACY_DEVGEN_DATA), PiControlGenerateLegacyDevice },
 
-    { PlugPlayControlGetInterfaceDeviceList,
-      sizeof(PLUGPLAY_CONTROL_INTERFACE_LIST_DATA),
+    { PlugPlayControlGetInterfaceDeviceList, sizeof(PLUGPLAY_CONTROL_INTERFACE_LIST_DATA),
       PiControlGetInterfaceDeviceList },
 
-    { PlugPlayControlProperty,
-      sizeof(PLUGPLAY_CONTROL_PROPERTY_DATA),
-      PiControlGetPropertyData },
+    { PlugPlayControlProperty, sizeof(PLUGPLAY_CONTROL_PROPERTY_DATA), PiControlGetPropertyData },
 
-    { PlugPlayControlDeviceClassAssociation,
-      sizeof(PLUGPLAY_CONTROL_CLASS_ASSOCIATION_DATA),
+    { PlugPlayControlDeviceClassAssociation, sizeof(PLUGPLAY_CONTROL_CLASS_ASSOCIATION_DATA),
       PiControlDeviceClassAssociation },
 
-    { PlugPlayControlGetRelatedDevice,
-      sizeof(PLUGPLAY_CONTROL_RELATED_DEVICE_DATA),
-      PiControlGetRelatedDevice },
+    { PlugPlayControlGetRelatedDevice, sizeof(PLUGPLAY_CONTROL_RELATED_DEVICE_DATA), PiControlGetRelatedDevice },
 
-    { PlugPlayControlGetInterfaceDeviceAlias,
-      sizeof(PLUGPLAY_CONTROL_INTERFACE_ALIAS_DATA),
+    { PlugPlayControlGetInterfaceDeviceAlias, sizeof(PLUGPLAY_CONTROL_INTERFACE_ALIAS_DATA),
       PiControlGetInterfaceDeviceAlias },
 
-    { PlugPlayControlDeviceStatus,
-      sizeof(PLUGPLAY_CONTROL_STATUS_DATA),
-      PiControlGetSetDeviceStatus },
+    { PlugPlayControlDeviceStatus, sizeof(PLUGPLAY_CONTROL_STATUS_DATA), PiControlGetSetDeviceStatus },
 
-    { PlugPlayControlGetDeviceDepth,
-      sizeof(PLUGPLAY_CONTROL_DEPTH_DATA),
-      PiControlGetDeviceDepth },
+    { PlugPlayControlGetDeviceDepth, sizeof(PLUGPLAY_CONTROL_DEPTH_DATA), PiControlGetDeviceDepth },
 
-    { PlugPlayControlQueryDeviceRelations,
-      sizeof(PLUGPLAY_CONTROL_DEVICE_RELATIONS_DATA),
+    { PlugPlayControlQueryDeviceRelations, sizeof(PLUGPLAY_CONTROL_DEVICE_RELATIONS_DATA),
       PiControlQueryDeviceRelations },
 
-    { PlugPlayControlTargetDeviceRelation,
-      sizeof(PLUGPLAY_CONTROL_TARGET_RELATION_DATA),
+    { PlugPlayControlTargetDeviceRelation, sizeof(PLUGPLAY_CONTROL_TARGET_RELATION_DATA),
       PiControlQueryTargetDeviceRelation },
 
-    { PlugPlayControlQueryConflictList,
-      sizeof(PLUGPLAY_CONTROL_CONFLICT_DATA),
-      PiControlQueryConflictList },
+    { PlugPlayControlQueryConflictList, sizeof(PLUGPLAY_CONTROL_CONFLICT_DATA), PiControlQueryConflictList },
 
-    { PlugPlayControlRetrieveDock,
-      sizeof(PLUGPLAY_CONTROL_RETRIEVE_DOCK_DATA),
-      PiControlRetrieveDockData },
+    { PlugPlayControlRetrieveDock, sizeof(PLUGPLAY_CONTROL_RETRIEVE_DOCK_DATA), PiControlRetrieveDockData },
 
-    { PlugPlayControlResetDevice,
-      sizeof(PLUGPLAY_CONTROL_DEVICE_CONTROL_DATA),
-      PiControlResetDevice },
+    { PlugPlayControlResetDevice, sizeof(PLUGPLAY_CONTROL_DEVICE_CONTROL_DATA), PiControlResetDevice },
 
-    { PlugPlayControlHaltDevice,
-      sizeof(PLUGPLAY_CONTROL_DEVICE_CONTROL_DATA),
-      PiControlHaltDevice },
+    { PlugPlayControlHaltDevice, sizeof(PLUGPLAY_CONTROL_DEVICE_CONTROL_DATA), PiControlHaltDevice },
 
-    { PlugPlayControlGetBlockedDriverList,
-      sizeof(PLUGPLAY_CONTROL_BLOCKED_DRIVER_DATA),
+    { PlugPlayControlGetBlockedDriverList, sizeof(PLUGPLAY_CONTROL_BLOCKED_DRIVER_DATA),
       PiControlGetBlockedDriverData },
 
-    { MaxPlugPlayControl,
-      0,
-      NULL }
+    { MaxPlugPlayControl, 0, NULL }
 };
 
 NTSTATUS
-NtPlugPlayControl(
-    IN     PLUGPLAY_CONTROL_CLASS   PnPControlClass,
-    IN OUT PVOID                    PnPControlData,
-    IN     ULONG                    PnPControlDataLength
-    )
+NtPlugPlayControl(IN PLUGPLAY_CONTROL_CLASS PnPControlClass, IN OUT PVOID PnPControlData, IN ULONG PnPControlDataLength)
 /*++
 
 Routine Description:
@@ -400,14 +300,15 @@ Return Value:
     // Get previous processor mode and probe arguments if necessary.
     //
     previousMode = KeGetPreviousMode();
-    if (previousMode != KernelMode) {
+    if (previousMode != KernelMode)
+    {
         //
         // Does the caller have "trusted computer base" privilge?
         //
-        if (!SeSinglePrivilegeCheck(SeTcbPrivilege, UserMode)) {
+        if (!SeSinglePrivilegeCheck(SeTcbPrivilege, UserMode))
+        {
 
-            IopDbgPrint((IOP_IOAPI_WARNING_LEVEL,
-                       "NtPlugPlayControl: SecurityCheck failed\n"));
+            IopDbgPrint((IOP_IOAPI_WARNING_LEVEL, "NtPlugPlayControl: SecurityCheck failed\n"));
             return STATUS_PRIVILEGE_NOT_HELD;
         }
     }
@@ -417,24 +318,28 @@ Return Value:
     //
     index = (ULONG)PnPControlClass;
     handlerData = NULL;
-    if (index < MaxPlugPlayControl) {
+    if (index < MaxPlugPlayControl)
+    {
 
-        if (PlugPlayHandlerTable[index].ControlCode == PnPControlClass) {
+        if (PlugPlayHandlerTable[index].ControlCode == PnPControlClass)
+        {
 
             handlerData = &PlugPlayHandlerTable[index];
-        } else {
+        }
+        else
+        {
             //
             // Someone broke the table.
             //
-            IopDbgPrint((IOP_IOAPI_ERROR_LEVEL,
-                       "NtPlugPlayControl: Lookup table isn't ordered correctly (entry %d)!\n",
-                       PnPControlClass
-                       ));
+            IopDbgPrint((IOP_IOAPI_ERROR_LEVEL, "NtPlugPlayControl: Lookup table isn't ordered correctly (entry %d)!\n",
+                         PnPControlClass));
             ASSERT(0);
 
-            for(index = 0; index < MaxPlugPlayControl; index++) {
+            for (index = 0; index < MaxPlugPlayControl; index++)
+            {
 
-                if (PlugPlayHandlerTable[index].ControlCode == PnPControlClass) {
+                if (PlugPlayHandlerTable[index].ControlCode == PnPControlClass)
+                {
 
                     handlerData = &PlugPlayHandlerTable[index];
                     break;
@@ -445,58 +350,47 @@ Return Value:
     //
     // Do we have handler data?
     //
-    if (handlerData == NULL) {
+    if (handlerData == NULL)
+    {
         //
         // Invalid control class.
         //
-        IopDbgPrint((IOP_IOAPI_ERROR_LEVEL,
-                   "NtPlugPlayControl: Unknown control class, Class = %d, Size = %d\n",
-                   PnPControlClass,
-                   PnPControlDataLength));
+        IopDbgPrint((IOP_IOAPI_ERROR_LEVEL, "NtPlugPlayControl: Unknown control class, Class = %d, Size = %d\n",
+                     PnPControlClass, PnPControlDataLength));
         return STATUS_INVALID_PARAMETER_1;
     }
     //
     // No control function means not implemented.
     //
-    if (handlerData->ControlFunction == NULL) {
+    if (handlerData->ControlFunction == NULL)
+    {
 
         return STATUS_NOT_IMPLEMENTED;
     }
     //
     // Check the data size.
     //
-    if (handlerData->ControlDataSize != PnPControlDataLength) {
+    if (handlerData->ControlDataSize != PnPControlDataLength)
+    {
 
-        IopDbgPrint((IOP_IOAPI_ERROR_LEVEL,
-                   "NtPlugPlayControl: Invalid size for control, Class = %d, Size = %d\n",
-                   PnPControlClass,
-                   PnPControlDataLength));
+        IopDbgPrint((IOP_IOAPI_ERROR_LEVEL, "NtPlugPlayControl: Invalid size for control, Class = %d, Size = %d\n",
+                     PnPControlClass, PnPControlDataLength));
         return STATUS_INVALID_PARAMETER_MIX;
     }
     //
     // Make copy of caller's buffer.
     //
-    status = PiControlMakeUserModeCallersCopy(
-        &controlDataSnapshot,
-        PnPControlData,
-        PnPControlDataLength,
-        sizeof(ULONG),
-        previousMode,
-        TRUE
-        );
-    if (!NT_SUCCESS(status)) {
+    status = PiControlMakeUserModeCallersCopy(&controlDataSnapshot, PnPControlData, PnPControlDataLength, sizeof(ULONG),
+                                              previousMode, TRUE);
+    if (!NT_SUCCESS(status))
+    {
 
         return status;
     }
     //
     // Invoke the handler.
     //
-    status = handlerData->ControlFunction(
-        PnPControlClass,
-        controlDataSnapshot,
-        PnPControlDataLength,
-        previousMode
-        );
+    status = handlerData->ControlFunction(PnPControlClass, controlDataSnapshot, PnPControlDataLength, previousMode);
     //
     // Copy the buffer if the operation was successful or the value is
     // a warning like STATUS_BUFFER_OVERFLOW.
@@ -506,20 +400,16 @@ Return Value:
     // STATUS_BUFFER_TOO_SMALL instead of STATUS_BUFFER_OVERFLOW. This
     // should be fixed here and in UMPNPMGR.
     //
-    if ((!NT_ERROR(status)) || (status == STATUS_BUFFER_TOO_SMALL)) {
+    if ((!NT_ERROR(status)) || (status == STATUS_BUFFER_TOO_SMALL))
+    {
 
         //
         // Copy result back into caller's buffer.
         //
-        tempStatus = PiControlMakeUserModeCallersCopy(
-            &PnPControlData,
-            controlDataSnapshot,
-            PnPControlDataLength,
-            sizeof(ULONG),
-            previousMode,
-            FALSE
-            );
-        if (!NT_SUCCESS(tempStatus)) {
+        tempStatus = PiControlMakeUserModeCallersCopy(&PnPControlData, controlDataSnapshot, PnPControlDataLength,
+                                                      sizeof(ULONG), previousMode, FALSE);
+        if (!NT_SUCCESS(tempStatus))
+        {
 
             status = tempStatus;
         }
@@ -533,16 +423,12 @@ Return Value:
 }
 
 #if DBG
-LONG
-PiControlExceptionFilter(
-    IN  PEXCEPTION_POINTERS ExceptionPointers
-    )
+LONG PiControlExceptionFilter(IN PEXCEPTION_POINTERS ExceptionPointers)
 {
     IopDbgPrint((IOP_IOAPI_ERROR_LEVEL,
-              "PiExceptionFilter: Exception = 0x%08X, Exception Record = 0x%p, Context Record = 0x%p\n",
-              ExceptionPointers->ExceptionRecord->ExceptionCode,
-              ExceptionPointers->ExceptionRecord,
-              ExceptionPointers->ContextRecord));
+                 "PiExceptionFilter: Exception = 0x%08X, Exception Record = 0x%p, Context Record = 0x%p\n",
+                 ExceptionPointers->ExceptionRecord->ExceptionCode, ExceptionPointers->ExceptionRecord,
+                 ExceptionPointers->ContextRecord));
 
     DbgBreakPoint();
 
@@ -551,75 +437,69 @@ PiControlExceptionFilter(
 #endif
 
 NTSTATUS
-PiControlMakeUserModeCallersCopy(
-    PVOID           *Destination,
-    PVOID           Src,
-    ULONG           Length,
-    ULONG           Alignment,
-    KPROCESSOR_MODE CallerMode,
-    BOOLEAN         AllocateDestination
-    )
+PiControlMakeUserModeCallersCopy(PVOID *Destination, PVOID Src, ULONG Length, ULONG Alignment,
+                                 KPROCESSOR_MODE CallerMode, BOOLEAN AllocateDestination)
 {
-    NTSTATUS    status;
+    NTSTATUS status;
 
     status = STATUS_SUCCESS;
-    if (CallerMode == KernelMode) {
+    if (CallerMode == KernelMode)
+    {
 
         ASSERT(AllocateDestination == FALSE);
         *Destination = Src;
+    }
+    else
+    {
 
-    } else {
+        if (Length)
+        {
 
-        if (Length) {
+            if (AllocateDestination)
+            {
 
-            if (AllocateDestination) {
-
-                *Destination = ExAllocatePoolWithQuota(
-                    PagedPool | POOL_QUOTA_FAIL_INSTEAD_OF_RAISE,
-                    Length
-                    );
-                if (*Destination == NULL) {
+                *Destination = ExAllocatePoolWithQuota(PagedPool | POOL_QUOTA_FAIL_INSTEAD_OF_RAISE, Length);
+                if (*Destination == NULL)
+                {
 
                     return STATUS_INSUFFICIENT_RESOURCES;
                 }
             }
-            if (*Destination) {
-                try {
+            if (*Destination)
+            {
+                try
+                {
 
-                    if (AllocateDestination == FALSE) {
+                    if (AllocateDestination == FALSE)
+                    {
 
-                        ProbeForWrite(
-                            *Destination,
-                            Length,
-                            Alignment
-                            );
-                    } else {
-
-                        ProbeForRead(
-                            Src,
-                            Length,
-                            Alignment
-                            );
+                        ProbeForWrite(*Destination, Length, Alignment);
                     }
-                    RtlCopyMemory(
-                        *Destination,
-                        Src,
-                        Length
-                        );
+                    else
+                    {
 
-                } except(PiControlExceptionFilter(GetExceptionInformation())) {
+                        ProbeForRead(Src, Length, Alignment);
+                    }
+                    RtlCopyMemory(*Destination, Src, Length);
+                }
+                except(PiControlExceptionFilter(GetExceptionInformation()))
+                {
 
-                    if (AllocateDestination == TRUE) {
+                    if (AllocateDestination == TRUE)
+                    {
 
                         ExFreePool(*Destination);
                         *Destination = NULL;
                     }
                     status = GetExceptionCode();
-                    IopDbgPrint((IOP_IOAPI_ERROR_LEVEL,
-                               "PiControlMakeUserModeCallersCopy: Exception copying data to or from user's buffer\n"));
+                    IopDbgPrint(
+                        (IOP_IOAPI_ERROR_LEVEL,
+                         "PiControlMakeUserModeCallersCopy: Exception copying data to or from user's buffer\n"));
                 }
             }
-        } else {
+        }
+        else
+        {
 
             *Destination = NULL;
         }
@@ -629,12 +509,8 @@ PiControlMakeUserModeCallersCopy(
 }
 
 NTSTATUS
-PiGetInterfaceDeviceAlias(
-    IN  PUNICODE_STRING SymbolicLinkName,
-    IN  LPGUID AliasClassGuid,
-    OUT PWSTR AliasSymbolicLinkName,
-    IN OUT PULONG AliasSymbolicLinkNameLength
-    )
+PiGetInterfaceDeviceAlias(IN PUNICODE_STRING SymbolicLinkName, IN LPGUID AliasClassGuid,
+                          OUT PWSTR AliasSymbolicLinkName, IN OUT PULONG AliasSymbolicLinkNameLength)
 
 /*++
 
@@ -673,18 +549,19 @@ Return Value:
     NTSTATUS status;
     UNICODE_STRING aliasString;
 
-    status = IoGetDeviceInterfaceAlias( SymbolicLinkName,
-                                        AliasClassGuid,
-                                        &aliasString
-                                        );
+    status = IoGetDeviceInterfaceAlias(SymbolicLinkName, AliasClassGuid, &aliasString);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
-        if (aliasString.Length < *AliasSymbolicLinkNameLength) {
+        if (aliasString.Length < *AliasSymbolicLinkNameLength)
+        {
             RtlCopyMemory(AliasSymbolicLinkName, aliasString.Buffer, aliasString.Length);
             *(PWCHAR)((PUCHAR)AliasSymbolicLinkName + aliasString.Length) = L'\0';
             *AliasSymbolicLinkNameLength = aliasString.Length;
-        } else {
+        }
+        else
+        {
             *AliasSymbolicLinkNameLength = aliasString.Length + sizeof(UNICODE_NULL);
             status = STATUS_BUFFER_TOO_SMALL;
         }
@@ -693,13 +570,10 @@ Return Value:
 
     return status;
 }
-
+
 NTSTATUS
-PiGenerateLegacyDeviceInstance(
-    IN  PUNICODE_STRING ServiceKeyName,
-    OUT PWSTR DeviceInstance,
-    IN OUT PULONG DeviceInstanceLength
-    )
+PiGenerateLegacyDeviceInstance(IN PUNICODE_STRING ServiceKeyName, OUT PWSTR DeviceInstance,
+                               IN OUT PULONG DeviceInstanceLength)
 
 /*++
 
@@ -738,13 +612,9 @@ Return Value:
 
     PiLockPnpRegistry(FALSE);
 
-    status = PipCreateMadeupNode(ServiceKeyName,
-                                 &handle,
-                                 &tempUnicodeString,
-                                 &junk,
-                                 TRUE
-                                 );
-    if (NT_SUCCESS(status)) {
+    status = PipCreateMadeupNode(ServiceKeyName, &handle, &tempUnicodeString, &junk, TRUE);
+    if (NT_SUCCESS(status))
+    {
 
         //
         // We have successfully retrieved the newly-generated device instance name.
@@ -753,15 +623,15 @@ Return Value:
 
         ZwClose(handle);
 
-        if (tempUnicodeString.Length < *DeviceInstanceLength) {
-            RtlCopyMemory(DeviceInstance,
-                          tempUnicodeString.Buffer,
-                          tempUnicodeString.Length
-                          );
+        if (tempUnicodeString.Length < *DeviceInstanceLength)
+        {
+            RtlCopyMemory(DeviceInstance, tempUnicodeString.Buffer, tempUnicodeString.Length);
 
             *(PWCHAR)((PUCHAR)DeviceInstance + tempUnicodeString.Length) = L'\0';
             *DeviceInstanceLength = tempUnicodeString.Length;
-        } else {
+        }
+        else
+        {
             *DeviceInstanceLength = tempUnicodeString.Length + sizeof(UNICODE_NULL);
             status = STATUS_BUFFER_TOO_SMALL;
         }
@@ -773,15 +643,10 @@ Return Value:
 
     return status;
 }
-
+
 NTSTATUS
-PiQueueQueryAndRemoveEvent(
-    IN  PUNICODE_STRING DeviceInstance,
-    IN  PPNP_VETO_TYPE VetoType,
-    IN  LPWSTR VetoName,
-    IN  PULONG VetoNameLength,
-    IN  ULONG Flags
-    )
+PiQueueQueryAndRemoveEvent(IN PUNICODE_STRING DeviceInstance, IN PPNP_VETO_TYPE VetoType, IN LPWSTR VetoName,
+                           IN PULONG VetoNameLength, IN ULONG Flags)
 
 /*++
 
@@ -824,11 +689,12 @@ Return Value:
     BOOLEAN noRestart, doEject;
     ULONG problem;
     KEVENT userEvent;
-    ULONG  eventResult;
+    ULONG eventResult;
 
     deviceObject = IopDeviceObjectFromDeviceInstance(DeviceInstance);
 
-    if (!deviceObject) {
+    if (!deviceObject)
+    {
 
         status = STATUS_NO_SUCH_DEVICE;
         goto Clean1;
@@ -839,12 +705,14 @@ Return Value:
     //
 
     deviceNode = (PDEVICE_NODE)deviceObject->DeviceObjectExtension->DeviceNode;
-    if (!deviceNode) {
+    if (!deviceNode)
+    {
         status = STATUS_NO_SUCH_DEVICE;
         goto Clean1;
     }
 
-    if (deviceNode == IopRootDeviceNode) {
+    if (deviceNode == IopRootDeviceNode)
+    {
         status = STATUS_ACCESS_DENIED;
         goto Clean1;
     }
@@ -852,17 +720,20 @@ Return Value:
     vetoNameString.Length = 0;
     vetoNameString.MaximumLength = (USHORT)(*VetoNameLength);
 
-    if (vetoNameString.MaximumLength != 0) {
+    if (vetoNameString.MaximumLength != 0)
+    {
 
         vetoNameString.Buffer = ExAllocatePool(PagedPool, vetoNameString.MaximumLength);
 
-        if (vetoNameString.Buffer == NULL) {
+        if (vetoNameString.Buffer == NULL)
+        {
             vetoNameString.MaximumLength = 0;
         }
 
         vetoNameStringPtr = &vetoNameString;
-
-    } else {
+    }
+    else
+    {
 
         vetoNameString.Buffer = NULL;
         vetoNameStringPtr = NULL;
@@ -872,13 +743,13 @@ Return Value:
     // Do preprocessing of device node before queueing notification.
     //
 
-    if (Flags & (PNP_QUERY_AND_REMOVE_NO_RESTART |
-                 PNP_QUERY_AND_REMOVE_DISABLE |
-                 PNP_QUERY_AND_REMOVE_EJECT_DEVICE)) {
+    if (Flags & (PNP_QUERY_AND_REMOVE_NO_RESTART | PNP_QUERY_AND_REMOVE_DISABLE | PNP_QUERY_AND_REMOVE_EJECT_DEVICE))
+    {
 
         noRestart = TRUE;
-
-    } else {
+    }
+    else
+    {
 
         noRestart = FALSE;
     }
@@ -889,7 +760,8 @@ Return Value:
     //
     ASSERT(!(Flags & PNP_QUERY_AND_REMOVE_UNINSTALL));
 
-    if (Flags & PNP_QUERY_AND_REMOVE_DISABLE) {
+    if (Flags & PNP_QUERY_AND_REMOVE_DISABLE)
+    {
 
         //
         // this particular problem may cause a
@@ -897,13 +769,15 @@ Return Value:
         //
         problem = CM_PROB_DISABLED;
         doEject = FALSE;
-
-    } else if (Flags & PNP_QUERY_AND_REMOVE_EJECT_DEVICE) {
+    }
+    else if (Flags & PNP_QUERY_AND_REMOVE_EJECT_DEVICE)
+    {
 
         problem = CM_PROB_HELD_FOR_EJECT;
         doEject = TRUE;
-
-    } else {
+    }
+    else
+    {
 
         problem = CM_PROB_WILL_BE_REMOVED;
         doEject = FALSE;
@@ -921,16 +795,10 @@ Return Value:
     // outcome of the actual event.
     //
 
-    status = PpSetTargetDeviceRemove(deviceObject,
-                                     FALSE,
-                                     noRestart,
-                                     doEject,
-                                     problem,
-                                     &userEvent,
-                                     &eventResult,
-                                     VetoType,
-                                     vetoNameStringPtr);
-    if (!NT_SUCCESS(status)) {
+    status = PpSetTargetDeviceRemove(deviceObject, FALSE, noRestart, doEject, problem, &userEvent, &eventResult,
+                                     VetoType, vetoNameStringPtr);
+    if (!NT_SUCCESS(status))
+    {
         goto Clean0;
     }
 
@@ -943,45 +811,49 @@ Return Value:
 
     status = KeWaitForSingleObject(&userEvent, Executive, KernelMode, FALSE, NULL);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         status = eventResult;
     }
 
-    if (vetoNameString.Length != 0) {
+    if (vetoNameString.Length != 0)
+    {
 
-        if (vetoNameString.Length >= vetoNameString.MaximumLength) {
+        if (vetoNameString.Length >= vetoNameString.MaximumLength)
+        {
             vetoNameString.Length--;
         }
 
         RtlCopyMemory(VetoName, vetoNameString.Buffer, vetoNameString.Length);
 
 
-        VetoName[ vetoNameString.Length / sizeof(WCHAR) ] = L'\0';
+        VetoName[vetoNameString.Length / sizeof(WCHAR)] = L'\0';
     }
 
-    if (VetoNameLength != NULL) {
+    if (VetoNameLength != NULL)
+    {
         *VetoNameLength = vetoNameString.Length;
     }
 
 Clean0:
 
-    if (vetoNameString.Buffer != NULL) {
+    if (vetoNameString.Buffer != NULL)
+    {
         ExFreePool(vetoNameString.Buffer);
     }
 
 Clean1:
-    if (deviceObject) {
+    if (deviceObject)
+    {
         ObDereferenceObject(deviceObject);
     }
 
     return status;
 
 } // PiQueueDeviceEvent
-
+
 NTSTATUS
-PiInitializeDevice(
-    IN  PUNICODE_STRING DeviceInstance
-    )
+PiInitializeDevice(IN PUNICODE_STRING DeviceInstance)
 
 /*++
 
@@ -1016,18 +888,16 @@ Return Value:
     PiLockPnpRegistry(TRUE);
 
     deviceObject = IopDeviceObjectFromDeviceInstance(DeviceInstance);
-    if (deviceObject == NULL) {
+    if (deviceObject == NULL)
+    {
 
         //
         // Open a key to HKLM\SYSTEM\CCC\Enum
         //
 
-        status = IopOpenRegistryKeyEx( &hEnum,
-                                       NULL,
-                                       &CmRegistryMachineSystemCurrentControlSetEnumName,
-                                       KEY_ALL_ACCESS
-                                       );
-        if (!NT_SUCCESS(status)) {
+        status = IopOpenRegistryKeyEx(&hEnum, NULL, &CmRegistryMachineSystemCurrentControlSetEnumName, KEY_ALL_ACCESS);
+        if (!NT_SUCCESS(status))
+        {
             goto Clean0;
         }
 
@@ -1035,14 +905,10 @@ Return Value:
         // Open a key to the specified device instance
         //
 
-        status = IopCreateRegistryKeyEx( &hDevInst,
-                                         hEnum,
-                                         DeviceInstance,
-                                         KEY_ALL_ACCESS,
-                                         REG_OPTION_NON_VOLATILE,
-                                         NULL
-                                         );
-        if (!NT_SUCCESS(status)) {
+        status =
+            IopCreateRegistryKeyEx(&hDevInst, hEnum, DeviceInstance, KEY_ALL_ACCESS, REG_OPTION_NON_VOLATILE, NULL);
+        if (!NT_SUCCESS(status))
+        {
             goto Clean0;
         }
 
@@ -1051,12 +917,11 @@ Return Value:
         //
 
         deviceFlags = 0;
-        status = IopGetRegistryValue(hDevInst,
-                                     REGSTR_VALUE_CONFIG_FLAGS,
-                                     &keyValueInformation);
-        if (NT_SUCCESS(status)) {
-            if ((keyValueInformation->Type == REG_DWORD) &&
-                (keyValueInformation->DataLength >= sizeof(ULONG))) {
+        status = IopGetRegistryValue(hDevInst, REGSTR_VALUE_CONFIG_FLAGS, &keyValueInformation);
+        if (NT_SUCCESS(status))
+        {
+            if ((keyValueInformation->Type == REG_DWORD) && (keyValueInformation->DataLength >= sizeof(ULONG)))
+            {
                 deviceFlags = *(PULONG)KEY_VALUE_DATA(keyValueInformation);
             }
             ExFreePool(keyValueInformation);
@@ -1069,23 +934,19 @@ Return Value:
         keyValueInformation = NULL;
         PiWstrToUnicodeString(&serviceName, NULL);
 
-        status = IopGetRegistryValue(hDevInst,
-                                     REGSTR_VALUE_SERVICE,
-                                     &keyValueInformation
-                                     );
-        if (NT_SUCCESS(status)) {
+        status = IopGetRegistryValue(hDevInst, REGSTR_VALUE_SERVICE, &keyValueInformation);
+        if (NT_SUCCESS(status))
+        {
 
-            if ((keyValueInformation->Type == REG_SZ) &&
-                (keyValueInformation->DataLength != 0)) {
+            if ((keyValueInformation->Type == REG_SZ) && (keyValueInformation->DataLength != 0))
+            {
 
                 //
                 // Set up ServiceKeyName unicode string
                 //
 
-                IopRegistryDataToUnicodeString(&serviceName,
-                                               (PWSTR)KEY_VALUE_DATA(keyValueInformation),
-                                               keyValueInformation->DataLength
-                                               );
+                IopRegistryDataToUnicodeString(&serviceName, (PWSTR)KEY_VALUE_DATA(keyValueInformation),
+                                               keyValueInformation->DataLength);
             }
 
             //
@@ -1097,27 +958,27 @@ Return Value:
         // Create madeup PDO and device node to represent the root device.
         //
 
-        status = IoCreateDevice( IoPnpDriverObject,
-                                 0,
-                                 NULL,
-                                 FILE_DEVICE_CONTROLLER,
-                                 FILE_AUTOGENERATED_DEVICE_NAME,
-                                 FALSE,
-                                 &deviceObject );
+        status = IoCreateDevice(IoPnpDriverObject, 0, NULL, FILE_DEVICE_CONTROLLER, FILE_AUTOGENERATED_DEVICE_NAME,
+                                FALSE, &deviceObject);
 
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
 
             deviceObject->Flags |= DO_BUS_ENUMERATED_DEVICE;
             PipAllocateDeviceNode(deviceObject, &deviceNode);
-            if (status != STATUS_SYSTEM_HIVE_TOO_LARGE && deviceNode) {
+            if (status != STATUS_SYSTEM_HIVE_TOO_LARGE && deviceNode)
+            {
 
                 deviceNode->Flags = DNF_MADEUP | DNF_ENUMERATED;
 
                 PipSetDevNodeState(deviceNode, DeviceNodeInitialized, NULL);
 
-                if (deviceFlags & CONFIGFLAG_REINSTALL) {
+                if (deviceFlags & CONFIGFLAG_REINSTALL)
+                {
                     PipSetDevNodeProblem(deviceNode, CM_PROB_REINSTALL);
-                } else if (deviceFlags & CONFIGFLAG_PARTIAL_LOG_CONF) {
+                }
+                else if (deviceFlags & CONFIGFLAG_PARTIAL_LOG_CONF)
+                {
                     PipSetDevNodeProblem(deviceNode, CM_PROB_PARTIAL_LOG_CONF);
                 }
 
@@ -1126,21 +987,18 @@ Return Value:
                 // device node.
                 //
 
-                status = PipConcatenateUnicodeStrings(&deviceNode->InstancePath,
-                                                      DeviceInstance,
-                                                      NULL
-                                                      );
+                status = PipConcatenateUnicodeStrings(&deviceNode->InstancePath, DeviceInstance, NULL);
 
-                if (serviceName.Length != 0) {
+                if (serviceName.Length != 0)
+                {
 
                     //
                     // Make a copy of the service name and save it in device node.
                     //
-                    status = PipConcatenateUnicodeStrings(&deviceNode->ServiceName,
-                                                          &serviceName,
-                                                          NULL
-                                                          );
-                } else {
+                    status = PipConcatenateUnicodeStrings(&deviceNode->ServiceName, &serviceName, NULL);
+                }
+                else
+                {
 
                     PiWstrToUnicodeString(&deviceNode->ServiceName, NULL);
                 }
@@ -1149,10 +1007,8 @@ Return Value:
                 // Add an entry into the table to set up a mapping between the DO
                 // and the instance path.
                 //
-                status = IopMapDeviceObjectToDeviceInstance(
-                    deviceNode->PhysicalDeviceObject,
-                    &deviceNode->InstancePath
-                    );
+                status =
+                    IopMapDeviceObjectToDeviceInstance(deviceNode->PhysicalDeviceObject, &deviceNode->InstancePath);
 
                 ASSERT(NT_SUCCESS(status));
 
@@ -1161,21 +1017,23 @@ Return Value:
                 //
                 // Add an event so user-mode will attempt to install this device later.
                 //
-                PpSetPlugPlayEvent(&GUID_DEVICE_ENUMERATED,
-                                   deviceNode->PhysicalDeviceObject);
-
-            } else {
+                PpSetPlugPlayEvent(&GUID_DEVICE_ENUMERATED, deviceNode->PhysicalDeviceObject);
+            }
+            else
+            {
                 IoDeleteDevice(deviceObject);
                 deviceObject = NULL;
                 status = STATUS_INSUFFICIENT_RESOURCES;
             }
         }
 
-        if (keyValueInformation != NULL) {
+        if (keyValueInformation != NULL)
+        {
             ExFreePool(keyValueInformation);
         }
-
-    } else {
+    }
+    else
+    {
 
         ObDereferenceObject(deviceObject);
     }
@@ -1184,10 +1042,12 @@ Return Value:
     // If we failed, Clean up ...
     //
 
-    if (hDevInst) {
+    if (hDevInst)
+    {
         ZwClose(hDevInst);
     }
-    if (hEnum) {
+    if (hEnum)
+    {
         ZwClose(hEnum);
     }
 
@@ -1204,13 +1064,8 @@ Clean0:
 } // PiInitializeDevice
 
 
-
-
 NTSTATUS
-PiDetectResourceConflict(
-    IN PCM_RESOURCE_LIST  ResourceList,
-    IN ULONG              ResourceListSize
-    )
+PiDetectResourceConflict(IN PCM_RESOURCE_LIST ResourceList, IN ULONG ResourceListSize)
 
 /*++
 
@@ -1246,7 +1101,8 @@ Return Value:
     CM_RESOURCE_LIST EmptyResourceList;
 
 
-    if (driverObject == NULL) {
+    if (driverObject == NULL)
+    {
         //
         // Driver object has not been created yet, do that now.
         //
@@ -1255,10 +1111,7 @@ Return Value:
         //
         // Begin by creating the permanent driver object.
         //
-        InitializeObjectAttributes(&objectAttributes,
-                                   &DriverName,
-                                   OBJ_PERMANENT | OBJ_CASE_INSENSITIVE,
-                                   (HANDLE)NULL,
+        InitializeObjectAttributes(&objectAttributes, &DriverName, OBJ_PERMANENT | OBJ_CASE_INSENSITIVE, (HANDLE)NULL,
                                    (PSECURITY_DESCRIPTOR)NULL);
 
         //
@@ -1266,29 +1119,23 @@ Return Value:
         // the objectAttributes buffer, not the previous operating system
         // mode.
         //
-        status = ObCreateObject(KernelMode,
-                                IoDriverObjectType,
-                                &objectAttributes,
-                                KernelMode,
-                                (PVOID)NULL,
-                                (ULONG)(sizeof(DRIVER_OBJECT) + sizeof(DRIVER_EXTENSION)),
-                                0,
-                                0,
-                                (PVOID)&driverObject);
+        status = ObCreateObject(KernelMode, IoDriverObjectType, &objectAttributes, KernelMode, (PVOID)NULL,
+                                (ULONG)(sizeof(DRIVER_OBJECT) + sizeof(DRIVER_EXTENSION)), 0, 0, (PVOID)&driverObject);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             return status;
         }
 
         //
         // Initialize the driver object.
         //
-        RtlZeroMemory(driverObject,
-                      sizeof(DRIVER_OBJECT) + sizeof(DRIVER_EXTENSION));
+        RtlZeroMemory(driverObject, sizeof(DRIVER_OBJECT) + sizeof(DRIVER_EXTENSION));
         driverObject->DriverExtension = (PDRIVER_EXTENSION)(driverObject + 1);
         driverObject->DriverExtension->DriverObject = driverObject;
-        for (i = 0; i <= IRP_MJ_MAXIMUM_FUNCTION; i++) {
-            driverObject->MajorFunction[i] = NULL;        // OK???
+        for (i = 0; i <= IRP_MJ_MAXIMUM_FUNCTION; i++)
+        {
+            driverObject->MajorFunction[i] = NULL; // OK???
         }
         driverObject->Type = IO_TYPE_DRIVER;
         driverObject->Size = sizeof(DRIVER_OBJECT);
@@ -1297,16 +1144,12 @@ Return Value:
         //
         // Insert the driver object into the object table.
         //
-        status = ObInsertObject(driverObject,
-                                NULL,
-                                FILE_READ_DATA,
-                                0,
-                                (PVOID *)NULL,
-                                &handle);
+        status = ObInsertObject(driverObject, NULL, FILE_READ_DATA, 0, (PVOID *)NULL, &handle);
 
-        if (!NT_SUCCESS(status)) {
-//            ObMakeTemporaryObject(driverObject);    //?
-//            ObDereferenceObject(driverObject);      //?
+        if (!NT_SUCCESS(status))
+        {
+            //            ObMakeTemporaryObject(driverObject);    //?
+            //            ObDereferenceObject(driverObject);      //?
             //
             // Object is dereferenced by the object manager if insert fails.
             //
@@ -1319,14 +1162,13 @@ Return Value:
         //
         buffer = ExAllocatePool(PagedPool, DriverName.MaximumLength + 2);
 
-        if (buffer) {
+        if (buffer)
+        {
             driverObject->DriverName.Buffer = buffer;
             driverObject->DriverName.MaximumLength = DriverName.MaximumLength;
             driverObject->DriverName.Length = DriverName.Length;
 
-            RtlCopyMemory(driverObject->DriverName.Buffer,
-                          DriverName.Buffer,
-                          DriverName.MaximumLength);
+            RtlCopyMemory(driverObject->DriverName.Buffer, DriverName.Buffer, DriverName.MaximumLength);
             buffer[DriverName.Length / sizeof(UNICODE_NULL)] = L'\0';
         }
     }
@@ -1336,35 +1178,22 @@ Return Value:
     // resource is avaiable, overwise assume it conflicts with another
     // devices resource's.
     //
-    status = IoReportResourceUsage(NULL,
-                                   driverObject,
-                                   ResourceList,
-                                   ResourceListSize,
-                                   NULL,
-                                   NULL,
-                                   0,
-                                   FALSE,
-                                   &bTemp);
+    status = IoReportResourceUsage(NULL, driverObject, ResourceList, ResourceListSize, NULL, NULL, 0, FALSE, &bTemp);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         //
         // Clear any resources that might have been assigned to my fake device.
         //
         RtlZeroMemory(&EmptyResourceList, sizeof(CM_RESOURCE_LIST));
 
-        IoReportResourceUsage(NULL,
-                              driverObject,
-                              &EmptyResourceList,
-                              sizeof(CM_RESOURCE_LIST),
-                              NULL,
-                              NULL,
-                              0,
-                              FALSE,
+        IoReportResourceUsage(NULL, driverObject, &EmptyResourceList, sizeof(CM_RESOURCE_LIST), NULL, NULL, 0, FALSE,
                               &bTemp);
     }
 
 
-    if (status == STATUS_CONFLICTING_ADDRESSES) {
+    if (status == STATUS_CONFLICTING_ADDRESSES)
+    {
         status = STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -1373,15 +1202,9 @@ Return Value:
 } // PiDetectResourceConflict
 
 
-
 NTSTATUS
-PiGetInterfaceDeviceList(
-    IN  GUID *InterfaceGuid,
-    IN  PUNICODE_STRING DeviceInstance,
-    IN  ULONG Flags,
-    OUT PWSTR InterfaceList,
-    IN OUT PULONG InterfaceListSize
-    )
+PiGetInterfaceDeviceList(IN GUID *InterfaceGuid, IN PUNICODE_STRING DeviceInstance, IN ULONG Flags,
+                         OUT PWSTR InterfaceList, IN OUT PULONG InterfaceListSize)
 
 /*++
 
@@ -1409,33 +1232,33 @@ Return Value:
     // interface device list in that buffer. I need to copy it to the
     // users buffer (if any) and then free it before returning.
     //
-    if (DeviceInstance->Length == 0) {
-        status = IopGetDeviceInterfaces(InterfaceGuid,
-                                        NULL,
-                                        Flags,
-                                        TRUE,    // user-mode format
-                                        &tempBuffer,
-                                        &tempSize
-                                        );
-    } else {
-        status = IopGetDeviceInterfaces(InterfaceGuid,
-                                        DeviceInstance,
-                                        Flags,
-                                        TRUE,    // user-mode format
-                                        &tempBuffer,
-                                        &tempSize
-                                        );
+    if (DeviceInstance->Length == 0)
+    {
+        status = IopGetDeviceInterfaces(InterfaceGuid, NULL, Flags,
+                                        TRUE, // user-mode format
+                                        &tempBuffer, &tempSize);
+    }
+    else
+    {
+        status = IopGetDeviceInterfaces(InterfaceGuid, DeviceInstance, Flags,
+                                        TRUE, // user-mode format
+                                        &tempBuffer, &tempSize);
     }
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
-        if (InterfaceList) {
+        if (InterfaceList)
+        {
             //
             // Not just asking for the size, copy the buffer too.
             //
-            if (tempSize > *InterfaceListSize) {
+            if (tempSize > *InterfaceListSize)
+            {
                 status = STATUS_BUFFER_TOO_SMALL;
-            } else {
+            }
+            else
+            {
                 RtlCopyMemory(InterfaceList, tempBuffer, tempSize);
             }
         }
@@ -1449,54 +1272,49 @@ Return Value:
 
 } // PiGetInterfaceDeviceList
 
-
+
 NTSTATUS
-PiDeviceClassAssociation(
-    IN PUNICODE_STRING DeviceInstance,
-    IN GUID * InterfaceGuid,
-    IN PUNICODE_STRING Reference,   OPTIONAL
-    IN OUT LPWSTR SymbolicLink,
-    IN OUT PULONG SymbolicLinkLength,
-    IN BOOLEAN Register
-    )
+PiDeviceClassAssociation(IN PUNICODE_STRING DeviceInstance, IN GUID *InterfaceGuid, IN PUNICODE_STRING Reference,
+                         OPTIONAL IN OUT LPWSTR SymbolicLink, IN OUT PULONG SymbolicLinkLength, IN BOOLEAN Register)
 {
     NTSTATUS status = STATUS_SUCCESS;
     UNICODE_STRING tempString;
 
-    if (Register) {
+    if (Register)
+    {
         //
         // An interface GUID and device instance are required to register a
         // symbolic link.
         //
-        if (!ARGUMENT_PRESENT(InterfaceGuid)) {
+        if (!ARGUMENT_PRESENT(InterfaceGuid))
+        {
             return STATUS_INVALID_PARAMETER;
         }
 
-        if ((!ARGUMENT_PRESENT(DeviceInstance)) ||
-            (DeviceInstance->Buffer == NULL) ||
-            (DeviceInstance->Length == 0)) {
+        if ((!ARGUMENT_PRESENT(DeviceInstance)) || (DeviceInstance->Buffer == NULL) || (DeviceInstance->Length == 0))
+        {
             return STATUS_INVALID_PARAMETER;
         }
 
-        status = IopRegisterDeviceInterface(DeviceInstance,
-                                            InterfaceGuid,
-                                            Reference,
-                                            TRUE,      // user-mode format
-                                            &tempString
-                                            );
-        if (NT_SUCCESS(status)) {
+        status = IopRegisterDeviceInterface(DeviceInstance, InterfaceGuid, Reference,
+                                            TRUE, // user-mode format
+                                            &tempString);
+        if (NT_SUCCESS(status))
+        {
 
             ASSERT(tempString.Buffer);
 
-            if ((tempString.Length + sizeof(UNICODE_NULL)) <= *SymbolicLinkLength) {
+            if ((tempString.Length + sizeof(UNICODE_NULL)) <= *SymbolicLinkLength)
+            {
                 //
                 // copy the returned symbolic link to user buffer
                 //
                 RtlCopyMemory(SymbolicLink, tempString.Buffer, tempString.Length);
                 SymbolicLink[tempString.Length / sizeof(WCHAR)] = L'\0';
                 *SymbolicLinkLength = tempString.Length + sizeof(UNICODE_NULL);
-
-            } else {
+            }
+            else
+            {
                 //
                 // return only the length of the registered symbolic link.
                 //
@@ -1506,14 +1324,14 @@ PiDeviceClassAssociation(
 
             ExFreePool(tempString.Buffer);
         }
-
-    } else {
+    }
+    else
+    {
         //
         // A symbolic link name is required to unregister a device interface.
         //
-        if ((!ARGUMENT_PRESENT(SymbolicLink)) ||
-            (!ARGUMENT_PRESENT(SymbolicLinkLength)) ||
-            (*SymbolicLinkLength == 0)) {
+        if ((!ARGUMENT_PRESENT(SymbolicLink)) || (!ARGUMENT_PRESENT(SymbolicLinkLength)) || (*SymbolicLinkLength == 0))
+        {
             return STATUS_INVALID_PARAMETER;
         }
 
@@ -1530,14 +1348,9 @@ PiDeviceClassAssociation(
 } // PiDeviceClassAssociation
 
 
-
 NTSTATUS
-PiGetRelatedDevice(
-    IN  PUNICODE_STRING TargetDeviceInstance,
-    OUT LPWSTR RelatedDeviceInstance,
-    IN OUT PULONG RelatedDeviceInstanceLength,
-    IN  ULONG Relation
-    )
+PiGetRelatedDevice(IN PUNICODE_STRING TargetDeviceInstance, OUT LPWSTR RelatedDeviceInstance,
+                   IN OUT PULONG RelatedDeviceInstanceLength, IN ULONG Relation)
 {
     NTSTATUS status = STATUS_SUCCESS;
     PDEVICE_OBJECT deviceObject, relatedDeviceObject;
@@ -1550,7 +1363,8 @@ PiGetRelatedDevice(
     //
     deviceObject = IopDeviceObjectFromDeviceInstance(TargetDeviceInstance);
 
-    if (!deviceObject) {
+    if (!deviceObject)
+    {
         status = STATUS_NO_SUCH_DEVICE;
         goto Clean0;
     }
@@ -1560,45 +1374,48 @@ PiGetRelatedDevice(
     //
 
     deviceNode = (PDEVICE_NODE)deviceObject->DeviceObjectExtension->DeviceNode;
-    if (!deviceNode) {
+    if (!deviceNode)
+    {
         status = STATUS_NO_SUCH_DEVICE;
         goto Clean0;
     }
 
     originalDeviceNode = deviceNode;
 
-    if ((deviceNode->State == DeviceNodeDeleted) ||
-        (deviceNode->State == DeviceNodeDeletePendingCloses)) {
+    if ((deviceNode->State == DeviceNodeDeleted) || (deviceNode->State == DeviceNodeDeletePendingCloses))
+    {
 
         status = STATUS_NO_SUCH_DEVICE;
         goto Clean0;
     }
 
-    switch (Relation) {
+    switch (Relation)
+    {
     case PNP_RELATION_PARENT:
         relatedDeviceNode = deviceNode->Parent;
         break;
 
     case PNP_RELATION_CHILD:
         relatedDeviceNode = deviceNode->Child;
-        if (relatedDeviceNode &&
-            PipIsDevNodeProblem(relatedDeviceNode, CM_PROB_DEVICE_NOT_THERE) &&
-            (relatedDeviceNode->Flags & DNF_LEGACY_DRIVER)) {
+        if (relatedDeviceNode && PipIsDevNodeProblem(relatedDeviceNode, CM_PROB_DEVICE_NOT_THERE) &&
+            (relatedDeviceNode->Flags & DNF_LEGACY_DRIVER))
+        {
             deviceNode = relatedDeviceNode;
 
             //
             // Fall through...
             //
-
-        } else {
+        }
+        else
+        {
             break;
         }
 
     case PNP_RELATION_SIBLING:
         relatedDeviceNode = deviceNode->Sibling;
-        while (relatedDeviceNode &&
-            PipIsDevNodeProblem(relatedDeviceNode, CM_PROB_DEVICE_NOT_THERE) &&
-            (relatedDeviceNode->Flags & DNF_LEGACY_DRIVER)) {
+        while (relatedDeviceNode && PipIsDevNodeProblem(relatedDeviceNode, CM_PROB_DEVICE_NOT_THERE) &&
+               (relatedDeviceNode->Flags & DNF_LEGACY_DRIVER))
+        {
             relatedDeviceNode = relatedDeviceNode->Sibling;
         }
         break;
@@ -1616,12 +1433,15 @@ PiGetRelatedDevice(
     // on to the next sibling.
     //
 
-    if (Relation != PNP_RELATION_PARENT)  {
+    if (Relation != PNP_RELATION_PARENT)
+    {
 
         PiLockPnpRegistry(FALSE);
 
-        while (relatedDeviceNode) {
-            if (relatedDeviceNode->InstancePath.Length != 0) {
+        while (relatedDeviceNode)
+        {
+            if (relatedDeviceNode->InstancePath.Length != 0)
+            {
 
                 //
                 // Retrieve the PDO from the device instance string.
@@ -1629,7 +1449,8 @@ PiGetRelatedDevice(
 
                 relatedDeviceObject = IopDeviceObjectFromDeviceInstance(&relatedDeviceNode->InstancePath);
 
-                if (relatedDeviceObject != NULL) {
+                if (relatedDeviceObject != NULL)
+                {
                     ObDereferenceObject(relatedDeviceObject);
                     break;
                 }
@@ -1641,20 +1462,25 @@ PiGetRelatedDevice(
         PiUnlockPnpRegistry();
     }
 
-    if (relatedDeviceNode != NULL) {
-        if (*RelatedDeviceInstanceLength > relatedDeviceNode->InstancePath.Length) {
+    if (relatedDeviceNode != NULL)
+    {
+        if (*RelatedDeviceInstanceLength > relatedDeviceNode->InstancePath.Length)
+        {
 
-            RtlCopyMemory(RelatedDeviceInstance,
-                        relatedDeviceNode->InstancePath.Buffer,
-                        relatedDeviceNode->InstancePath.Length);
+            RtlCopyMemory(RelatedDeviceInstance, relatedDeviceNode->InstancePath.Buffer,
+                          relatedDeviceNode->InstancePath.Length);
 
             *(PWCHAR)((PUCHAR)RelatedDeviceInstance + relatedDeviceNode->InstancePath.Length) = L'\0';
             *RelatedDeviceInstanceLength = relatedDeviceNode->InstancePath.Length;
-        } else {
+        }
+        else
+        {
             *RelatedDeviceInstanceLength = relatedDeviceNode->InstancePath.Length + sizeof(UNICODE_NULL);
             status = STATUS_BUFFER_TOO_SMALL;
         }
-    } else {
+    }
+    else
+    {
         status = STATUS_NO_SUCH_DEVICE;
     }
 
@@ -1662,7 +1488,8 @@ Clean0:
 
     PpDevNodeUnlockTree(PPL_SIMPLE_READ);
 
-    if (deviceObject) {
+    if (deviceObject)
+    {
         ObDereferenceObject(deviceObject);
     }
 
@@ -1670,14 +1497,10 @@ Clean0:
 
 } // PiGetRelatedDevice
 
-
+
 NTSTATUS
-PiQueryDeviceRelations(
-    IN PUNICODE_STRING DeviceInstance,
-    IN PNP_QUERY_RELATION Operation,
-    OUT PULONG BufferLength,
-    OUT LPWSTR Buffer
-    )
+PiQueryDeviceRelations(IN PUNICODE_STRING DeviceInstance, IN PNP_QUERY_RELATION Operation, OUT PULONG BufferLength,
+                       OUT LPWSTR Buffer)
 {
     NTSTATUS status = STATUS_SUCCESS;
     PDEVICE_OBJECT deviceObject = NULL;
@@ -1694,7 +1517,8 @@ PiQueryDeviceRelations(
     //
 
     relationType = PiDeviceRelationType(Operation);
-    if (relationType == (ULONG)-1) {
+    if (relationType == (ULONG)-1)
+    {
 
         return STATUS_INVALID_PARAMETER;
     }
@@ -1706,7 +1530,8 @@ PiQueryDeviceRelations(
     //
     deviceObject = IopDeviceObjectFromDeviceInstance(DeviceInstance);
 
-    if (!deviceObject) {
+    if (!deviceObject)
+    {
         status = STATUS_NO_SUCH_DEVICE;
         goto Clean0;
     }
@@ -1718,14 +1543,15 @@ PiQueryDeviceRelations(
     //
     // We don't want to bother with things not in the tree...
     //
-    if ((deviceNode->State == DeviceNodeDeletePendingCloses) ||
-        (deviceNode->State == DeviceNodeDeleted)) {
+    if ((deviceNode->State == DeviceNodeDeletePendingCloses) || (deviceNode->State == DeviceNodeDeleted))
+    {
 
         status = STATUS_NO_SUCH_DEVICE;
         goto Clean0;
     }
 
-    if (relationType == BusRelations) {
+    if (relationType == BusRelations)
+    {
 
         //
         // Querying the bus relations from the FDO has side effects.  Besides
@@ -1738,18 +1564,17 @@ PiQueryDeviceRelations(
         //
         maxCount = 0;
 
-        for (relatedDeviceNode = deviceNode->Child;
-             relatedDeviceNode != NULL;
-             relatedDeviceNode = relatedDeviceNode->Sibling) {
+        for (relatedDeviceNode = deviceNode->Child; relatedDeviceNode != NULL;
+             relatedDeviceNode = relatedDeviceNode->Sibling)
+        {
 
             maxCount++;
         }
 
-        deviceRelations = ExAllocatePool( PagedPool,
-                                          sizeof(DEVICE_RELATIONS) +
-                                          maxCount * sizeof(PDEVICE_OBJECT));
+        deviceRelations = ExAllocatePool(PagedPool, sizeof(DEVICE_RELATIONS) + maxCount * sizeof(PDEVICE_OBJECT));
 
-        if (deviceRelations != NULL) {
+        if (deviceRelations != NULL)
+        {
 
             deviceRelations->Count = maxCount;
 
@@ -1760,22 +1585,24 @@ PiQueryDeviceRelations(
             // Note that we carefully take into account that legacy devnodes
             // can be added to the root totally asynchronously!
             //
-            for (relatedDeviceNode = deviceNode->Child;
-                 ((relatedDeviceNode != NULL) && (currentCount < maxCount));
-                 relatedDeviceNode = relatedDeviceNode->Sibling) {
+            for (relatedDeviceNode = deviceNode->Child; ((relatedDeviceNode != NULL) && (currentCount < maxCount));
+                 relatedDeviceNode = relatedDeviceNode->Sibling)
+            {
 
                 ObReferenceObject(relatedDeviceNode->PhysicalDeviceObject);
 
-                deviceRelations->Objects[currentCount++] =
-                    relatedDeviceNode->PhysicalDeviceObject;
+                deviceRelations->Objects[currentCount++] = relatedDeviceNode->PhysicalDeviceObject;
             }
 
             ASSERT(currentCount == deviceRelations->Count);
-        } else {
+        }
+        else
+        {
             status = STATUS_INSUFFICIENT_RESOURCES;
         }
-
-    } else {
+    }
+    else
+    {
         //
         // Initialize the stack location to pass to IopSynchronousCall()
         //
@@ -1791,7 +1618,8 @@ PiQueryDeviceRelations(
         irpSp.Parameters.QueryDeviceRelations.Type = relationType;
         status = IopSynchronousCall(deviceObject, &irpSp, (PULONG_PTR)&deviceRelations);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
             deviceRelations = NULL;
         }
     }
@@ -1799,10 +1627,12 @@ PiQueryDeviceRelations(
     // Convert these relation device objects into a multisz list of device instances
     //
 
-    if (deviceRelations && (deviceRelations->Count > 0)) {
+    if (deviceRelations && (deviceRelations->Count > 0))
+    {
         pBuffer = Buffer;
-        length = sizeof(UNICODE_NULL);     // account for that last extra trailing null
-        for (i = 0; i < deviceRelations->Count; i++) {
+        length = sizeof(UNICODE_NULL); // account for that last extra trailing null
+        for (i = 0; i < deviceRelations->Count; i++)
+        {
 
             relatedDeviceNode = deviceRelations->Objects[i]->DeviceObjectExtension->DeviceNode;
 
@@ -1814,16 +1644,19 @@ PiQueryDeviceRelations(
             //    raise the tree lock to BlockReads while an enumeration
             //    IRP is outstanding...)
             //
-            if (relatedDeviceNode) {
+            if (relatedDeviceNode)
+            {
 
-                if (pBuffer) {
+                if (pBuffer)
+                {
 
                     //
                     // We're retrieving the device instance strings (not just determining
                     // required buffer size). Validate buffer size (including room for
                     // null terminator).
                     //
-                    if (*BufferLength < length + relatedDeviceNode->InstancePath.Length + sizeof(UNICODE_NULL)) {
+                    if (*BufferLength < length + relatedDeviceNode->InstancePath.Length + sizeof(UNICODE_NULL))
+                    {
 
                         //
                         // ADRIAO ISSUE 02/06/2001 -
@@ -1842,12 +1675,11 @@ PiQueryDeviceRelations(
                     // update the length used in the buffer so far.
                     //
 
-                    RtlCopyMemory(pBuffer,
-                                  relatedDeviceNode->InstancePath.Buffer,
+                    RtlCopyMemory(pBuffer, relatedDeviceNode->InstancePath.Buffer,
                                   relatedDeviceNode->InstancePath.Length);
 
                     pBuffer += relatedDeviceNode->InstancePath.Length / sizeof(UNICODE_NULL);
-                    *pBuffer++ = L'\0';   // always need the single-term
+                    *pBuffer++ = L'\0'; // always need the single-term
                 }
 
                 length += relatedDeviceNode->InstancePath.Length + sizeof(UNICODE_NULL);
@@ -1855,9 +1687,10 @@ PiQueryDeviceRelations(
 
             ObDereferenceObject(deviceRelations->Objects[i]);
         }
-        if (pBuffer) {
+        if (pBuffer)
+        {
 
-            *pBuffer = L'\0';   // This is the last, double-term
+            *pBuffer = L'\0'; // This is the last, double-term
         }
     }
 
@@ -1865,17 +1698,22 @@ Clean0:
 
     PpDevNodeUnlockTree(PPL_SIMPLE_READ);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         *BufferLength = length;
-    } else {
+    }
+    else
+    {
         *BufferLength = 0;
     }
 
-    if (deviceRelations) {
+    if (deviceRelations)
+    {
         ExFreePool(deviceRelations);
     }
 
-    if (deviceObject) {
+    if (deviceObject)
+    {
         ObDereferenceObject(deviceObject);
     }
 
@@ -1884,11 +1722,8 @@ Clean0:
 } // PiQueryDeviceRelations
 
 
-
 DEVICE_RELATION_TYPE
-PiDeviceRelationType(
-    PNP_QUERY_RELATION  Operation
-    )
+PiDeviceRelationType(PNP_QUERY_RELATION Operation)
 
 /*++
 
@@ -1909,7 +1744,8 @@ Return Value:
 
 --*/
 {
-    switch (Operation) {
+    switch (Operation)
+    {
     case PnpQueryEjectRelations:
         return EjectionRelations;
 
@@ -1929,12 +1765,7 @@ Return Value:
 } // PiDeviceRelationType
 
 
-
-VOID
-PiControlGetUserFlagsFromDeviceNode(
-    IN  PDEVICE_NODE    DeviceNode,
-    OUT ULONG          *StatusFlags
-    )
+VOID PiControlGetUserFlagsFromDeviceNode(IN PDEVICE_NODE DeviceNode, OUT ULONG *StatusFlags)
 /*++
 
 Routine Description:
@@ -1964,47 +1795,58 @@ Return Value:
 
     returnedFlags = (DN_NT_DRIVER | DN_NT_ENUMERATOR);
 
-    if (PipAreDriversLoaded(DeviceNode)) {
+    if (PipAreDriversLoaded(DeviceNode))
+    {
         returnedFlags |= DN_DRIVER_LOADED;
     }
 
-    if (PipIsDevNodeDNStarted(DeviceNode)) {
+    if (PipIsDevNodeDNStarted(DeviceNode))
+    {
         returnedFlags |= DN_STARTED;
     }
 
-    if (DeviceNode->UserFlags & DNUF_WILL_BE_REMOVED) {
+    if (DeviceNode->UserFlags & DNUF_WILL_BE_REMOVED)
+    {
         returnedFlags |= DN_WILL_BE_REMOVED;
     }
 
-    if (DeviceNode->UserFlags & DNUF_DONT_SHOW_IN_UI) {
+    if (DeviceNode->UserFlags & DNUF_DONT_SHOW_IN_UI)
+    {
         returnedFlags |= DN_NO_SHOW_IN_DM;
     }
 
-    if (DeviceNode->UserFlags & DNUF_NEED_RESTART) {
+    if (DeviceNode->UserFlags & DNUF_NEED_RESTART)
+    {
         returnedFlags |= DN_NEED_RESTART;
     }
 
-    if (DeviceNode->Flags & DNF_HAS_PRIVATE_PROBLEM) {
+    if (DeviceNode->Flags & DNF_HAS_PRIVATE_PROBLEM)
+    {
         returnedFlags |= DN_PRIVATE_PROBLEM;
     }
 
-    if (DeviceNode->Flags & DNF_HAS_PROBLEM) {
+    if (DeviceNode->Flags & DNF_HAS_PROBLEM)
+    {
         returnedFlags |= DN_HAS_PROBLEM;
     }
 
-    if ((DeviceNode->Flags & DNF_DRIVER_BLOCKED)) {
+    if ((DeviceNode->Flags & DNF_DRIVER_BLOCKED))
+    {
         returnedFlags |= DN_DRIVER_BLOCKED;
     }
 
-    if ((DeviceNode->Flags & DNF_LEGACY_DRIVER)) {
+    if ((DeviceNode->Flags & DNF_LEGACY_DRIVER))
+    {
         returnedFlags |= DN_LEGACY_DRIVER;
     }
 
-    if ((DeviceNode->Flags & DNF_CHILD_WITH_INVALID_ID)) {
+    if ((DeviceNode->Flags & DNF_CHILD_WITH_INVALID_ID))
+    {
         returnedFlags |= DN_CHILD_WITH_INVALID_ID;
     }
 
-    if (DeviceNode->DisableableDepends == 0) {
+    if (DeviceNode->DisableableDepends == 0)
+    {
         //
         // if there's no reason for us not to be disableable, flag we are disableable
         //
@@ -2025,13 +1867,8 @@ Return Value:
 
     *StatusFlags = returnedFlags;
 }
-
-VOID
-PpShutdownSystem (
-    IN BOOLEAN Reboot,
-    IN ULONG Phase,
-    IN OUT PVOID *Context
-    )
+
+VOID PpShutdownSystem(IN BOOLEAN Reboot, IN ULONG Phase, IN OUT PVOID *Context)
 
 /*++
 
@@ -2057,24 +1894,21 @@ Return Value:
 
 {
 #if defined(_X86_)
-    if (Reboot) {
+    if (Reboot)
+    {
         PnPBiosShutdownSystem(Phase, Context);
     }
 #else
-    UNREFERENCED_PARAMETER( Reboot );
-    UNREFERENCED_PARAMETER( Phase );
-    UNREFERENCED_PARAMETER( Context );
+    UNREFERENCED_PARAMETER(Reboot);
+    UNREFERENCED_PARAMETER(Phase);
+    UNREFERENCED_PARAMETER(Context);
 #endif
 }
 
 
 NTSTATUS
-PiQueueDeviceRequest(
-    IN PUNICODE_STRING      DeviceInstance,
-    IN DEVICE_REQUEST_TYPE  RequestType,
-    IN ULONG                Flags,
-    IN BOOLEAN              Synchronous
-    )
+PiQueueDeviceRequest(IN PUNICODE_STRING DeviceInstance, IN DEVICE_REQUEST_TYPE RequestType, IN ULONG Flags,
+                     IN BOOLEAN Synchronous)
 {
     PDEVICE_OBJECT deviceObject;
     PDEVICE_NODE deviceNode;
@@ -2083,41 +1917,38 @@ PiQueueDeviceRequest(
 
     deviceObject = IopDeviceObjectFromDeviceInstance(DeviceInstance);
 
-    if (!deviceObject) {
+    if (!deviceObject)
+    {
         status = STATUS_NO_SUCH_DEVICE;
         goto Clean0;
     }
 
     deviceNode = (PDEVICE_NODE)deviceObject->DeviceObjectExtension->DeviceNode;
-    if (!deviceNode) {
+    if (!deviceNode)
+    {
         status = STATUS_NO_SUCH_DEVICE;
         goto Clean0;
     }
 
-    if (Synchronous) {
-        KeInitializeEvent( &completionEvent, NotificationEvent, FALSE );
+    if (Synchronous)
+    {
+        KeInitializeEvent(&completionEvent, NotificationEvent, FALSE);
     }
 
-    status = PipRequestDeviceAction( deviceObject,
-                                     RequestType,
-                                     FALSE,
-                                     Flags,
-                                     Synchronous ? &completionEvent : NULL,
-                                     NULL );
+    status =
+        PipRequestDeviceAction(deviceObject, RequestType, FALSE, Flags, Synchronous ? &completionEvent : NULL, NULL);
 
-    if (NT_SUCCESS(status) && Synchronous) {
+    if (NT_SUCCESS(status) && Synchronous)
+    {
 
-        status = KeWaitForSingleObject( &completionEvent,
-                                        Executive,
-                                        KernelMode,
-                                        FALSE,
-                                        NULL);
+        status = KeWaitForSingleObject(&completionEvent, Executive, KernelMode, FALSE, NULL);
     }
 
 Clean0:
 
-    if (deviceObject != NULL) {
-        ObDereferenceObject( deviceObject );
+    if (deviceObject != NULL)
+    {
+        ObDereferenceObject(deviceObject);
     }
 
     return status;
@@ -2125,12 +1956,9 @@ Clean0:
 
 
 NTSTATUS
-PiControlStartDevice(
-    IN     PLUGPLAY_CONTROL_CLASS                   PnPControlClass,
-    IN OUT PPLUGPLAY_CONTROL_DEVICE_CONTROL_DATA    DeviceControlData,
-    IN     ULONG                                    PnPControlDataLength,
-    IN     KPROCESSOR_MODE                          CallerMode
-    )
+PiControlStartDevice(IN PLUGPLAY_CONTROL_CLASS PnPControlClass,
+                     IN OUT PPLUGPLAY_CONTROL_DEVICE_CONTROL_DATA DeviceControlData, IN ULONG PnPControlDataLength,
+                     IN KPROCESSOR_MODE CallerMode)
 /*++
 
 Routine Description:
@@ -2166,24 +1994,14 @@ Return Value:
     // Make a copy of caller supplied DeviceInstance.
     //
     instance.Length = instance.MaximumLength = DeviceControlData->DeviceInstance.Length;
-    status = PiControlMakeUserModeCallersCopy(
-        &instance.Buffer,
-        DeviceControlData->DeviceInstance.Buffer,
-        instance.Length,
-        sizeof(WCHAR),
-        CallerMode,
-        TRUE
-        );
-    if (NT_SUCCESS(status)) {
+    status = PiControlMakeUserModeCallersCopy(&instance.Buffer, DeviceControlData->DeviceInstance.Buffer,
+                                              instance.Length, sizeof(WCHAR), CallerMode, TRUE);
+    if (NT_SUCCESS(status))
+    {
         //
         // Queue an event to start the device
         //
-        status = PiQueueDeviceRequest(
-            &instance,
-            StartDevice,
-            0,
-            TRUE
-            );
+        status = PiQueueDeviceRequest(&instance, StartDevice, 0, TRUE);
         //
         // Free the copy of user mode supplied DeviceInstance.
         //
@@ -2195,12 +2013,9 @@ Return Value:
 
 
 NTSTATUS
-PiControlResetDevice(
-    IN     PLUGPLAY_CONTROL_CLASS                   PnPControlClass,
-    IN OUT PPLUGPLAY_CONTROL_DEVICE_CONTROL_DATA    DeviceControlData,
-    IN     ULONG                                    PnPControlDataLength,
-    IN     KPROCESSOR_MODE                          CallerMode
-    )
+PiControlResetDevice(IN PLUGPLAY_CONTROL_CLASS PnPControlClass,
+                     IN OUT PPLUGPLAY_CONTROL_DEVICE_CONTROL_DATA DeviceControlData, IN ULONG PnPControlDataLength,
+                     IN KPROCESSOR_MODE CallerMode)
 /*++
 
 Routine Description:
@@ -2228,24 +2043,15 @@ Return Value:
     UNICODE_STRING instance;
 
     instance.Length = instance.MaximumLength = DeviceControlData->DeviceInstance.Length;
-    status = PiControlMakeUserModeCallersCopy(
-        &instance.Buffer,
-        DeviceControlData->DeviceInstance.Buffer,
-        DeviceControlData->DeviceInstance.Length,
-        sizeof(WCHAR),
-        CallerMode,
-        TRUE
-        );
-    if (NT_SUCCESS(status)) {
+    status =
+        PiControlMakeUserModeCallersCopy(&instance.Buffer, DeviceControlData->DeviceInstance.Buffer,
+                                         DeviceControlData->DeviceInstance.Length, sizeof(WCHAR), CallerMode, TRUE);
+    if (NT_SUCCESS(status))
+    {
         //
         // Queue an event to start the device
         //
-        status = PiQueueDeviceRequest(
-            &instance,
-            ResetDevice,
-            0,
-            TRUE
-            );
+        status = PiQueueDeviceRequest(&instance, ResetDevice, 0, TRUE);
 
         PiControlFreeUserModeCallersBuffer(CallerMode, instance.Buffer);
     }
@@ -2254,12 +2060,9 @@ Return Value:
 
 
 NTSTATUS
-PiControlInitializeDevice(
-    IN     PLUGPLAY_CONTROL_CLASS                   PnPControlClass,
-    IN OUT PPLUGPLAY_CONTROL_DEVICE_CONTROL_DATA    DeviceControlData,
-    IN     ULONG                                    PnPControlDataLength,
-    IN     KPROCESSOR_MODE                          CallerMode
-    )
+PiControlInitializeDevice(IN PLUGPLAY_CONTROL_CLASS PnPControlClass,
+                          IN OUT PPLUGPLAY_CONTROL_DEVICE_CONTROL_DATA DeviceControlData, IN ULONG PnPControlDataLength,
+                          IN KPROCESSOR_MODE CallerMode)
 /*++
 
 Routine Description:
@@ -2295,15 +2098,10 @@ Return Value:
     // Make a copy of caller supplied DeviceInstance.
     //
     instance.Length = instance.MaximumLength = DeviceControlData->DeviceInstance.Length;
-    status = PiControlMakeUserModeCallersCopy(
-        &instance.Buffer,
-        DeviceControlData->DeviceInstance.Buffer,
-        instance.Length,
-        sizeof(WCHAR),
-        CallerMode,
-        TRUE
-        );
-    if (NT_SUCCESS(status)) {
+    status = PiControlMakeUserModeCallersCopy(&instance.Buffer, DeviceControlData->DeviceInstance.Buffer,
+                                              instance.Length, sizeof(WCHAR), CallerMode, TRUE);
+    if (NT_SUCCESS(status))
+    {
 
         status = PiInitializeDevice(&instance);
         //
@@ -2317,12 +2115,9 @@ Return Value:
 
 
 NTSTATUS
-PiControlDeregisterDevice(
-    IN     PLUGPLAY_CONTROL_CLASS                   PnPControlClass,
-    IN OUT PPLUGPLAY_CONTROL_DEVICE_CONTROL_DATA    DeviceControlData,
-    IN     ULONG                                    PnPControlDataLength,
-    IN     KPROCESSOR_MODE                          CallerMode
-    )
+PiControlDeregisterDevice(IN PLUGPLAY_CONTROL_CLASS PnPControlClass,
+                          IN OUT PPLUGPLAY_CONTROL_DEVICE_CONTROL_DATA DeviceControlData, IN ULONG PnPControlDataLength,
+                          IN KPROCESSOR_MODE CallerMode)
 /*++
 
 Routine Description:
@@ -2358,25 +2153,18 @@ Return Value:
     // Make a copy of caller supplied DeviceInstance.
     //
     instance.Length = instance.MaximumLength = DeviceControlData->DeviceInstance.Length;
-    status = PiControlMakeUserModeCallersCopy(
-        &instance.Buffer,
-        DeviceControlData->DeviceInstance.Buffer,
-        instance.Length,
-        sizeof(WCHAR),
-        CallerMode,
-        TRUE
-        );
-    if (NT_SUCCESS(status)) {
+    status = PiControlMakeUserModeCallersCopy(&instance.Buffer, DeviceControlData->DeviceInstance.Buffer,
+                                              instance.Length, sizeof(WCHAR), CallerMode, TRUE);
+    if (NT_SUCCESS(status))
+    {
         //
         // Acquire PnP device-specific registry resource for exclusive (read/write) access.
         //
         PiLockPnpRegistry(TRUE);
 
-        status = PiDeviceRegistration(&instance,
-                                      FALSE,
-                                      NULL
-                                      );
-        if (NT_SUCCESS(status)) {
+        status = PiDeviceRegistration(&instance, FALSE, NULL);
+        if (NT_SUCCESS(status))
+        {
             //
             // Remove all interfaces to this device.
             //
@@ -2394,12 +2182,9 @@ Return Value:
 }
 
 NTSTATUS
-PiControlRegisterNewDevice(
-    IN     PLUGPLAY_CONTROL_CLASS                   PnPControlClass,
-    IN OUT PPLUGPLAY_CONTROL_DEVICE_CONTROL_DATA    DeviceControlData,
-    IN     ULONG                                    PnPControlDataLength,
-    IN     KPROCESSOR_MODE                          CallerMode
-    )
+PiControlRegisterNewDevice(IN PLUGPLAY_CONTROL_CLASS PnPControlClass,
+                           IN OUT PPLUGPLAY_CONTROL_DEVICE_CONTROL_DATA DeviceControlData,
+                           IN ULONG PnPControlDataLength, IN KPROCESSOR_MODE CallerMode)
 /*++
 
 Routine Description:
@@ -2435,21 +2220,12 @@ Return Value:
     // Make a copy of caller supplied DeviceInstance.
     //
     instance.Length = instance.MaximumLength = DeviceControlData->DeviceInstance.Length;
-    status = PiControlMakeUserModeCallersCopy(
-        &instance.Buffer,
-        DeviceControlData->DeviceInstance.Buffer,
-        instance.Length,
-        sizeof(WCHAR),
-        CallerMode,
-        TRUE
-        );
-    if (NT_SUCCESS(status)) {
+    status = PiControlMakeUserModeCallersCopy(&instance.Buffer, DeviceControlData->DeviceInstance.Buffer,
+                                              instance.Length, sizeof(WCHAR), CallerMode, TRUE);
+    if (NT_SUCCESS(status))
+    {
 
-        status = PpDeviceRegistration(
-            &instance,
-            TRUE,
-            NULL
-            );
+        status = PpDeviceRegistration(&instance, TRUE, NULL);
         //
         // Free the copy of user mode supplied DeviceInstance.
         //
@@ -2460,12 +2236,9 @@ Return Value:
 }
 
 NTSTATUS
-PiControlEnumerateDevice(
-    IN     PLUGPLAY_CONTROL_CLASS                   PnPControlClass,
-    IN OUT PPLUGPLAY_CONTROL_DEVICE_CONTROL_DATA    DeviceControlData,
-    IN     ULONG                                    PnPControlDataLength,
-    IN     KPROCESSOR_MODE                          CallerMode
-    )
+PiControlEnumerateDevice(IN PLUGPLAY_CONTROL_CLASS PnPControlClass,
+                         IN OUT PPLUGPLAY_CONTROL_DEVICE_CONTROL_DATA DeviceControlData, IN ULONG PnPControlDataLength,
+                         IN KPROCESSOR_MODE CallerMode)
 /*++
 
 Routine Description:
@@ -2514,27 +2287,20 @@ Return Value:
     // Make a copy of caller supplied DeviceInstance.
     //
     instance.Length = instance.MaximumLength = DeviceControlData->DeviceInstance.Length;
-    status = PiControlMakeUserModeCallersCopy(
-        &instance.Buffer,
-        DeviceControlData->DeviceInstance.Buffer,
-        instance.Length,
-        sizeof(WCHAR),
-        CallerMode,
-        TRUE
-        );
-    if (!NT_SUCCESS(status)) {
+    status = PiControlMakeUserModeCallersCopy(&instance.Buffer, DeviceControlData->DeviceInstance.Buffer,
+                                              instance.Length, sizeof(WCHAR), CallerMode, TRUE);
+    if (!NT_SUCCESS(status))
+    {
 
         return status;
     }
     //
     // Queue a request to enumerate the device
     //
-    status = PiQueueDeviceRequest(
-        &instance,
-        (DeviceControlData->Flags & PNP_ENUMERATE_DEVICE_ONLY)  ? ReenumerateDeviceOnly : ReenumerateDeviceTree,
-        0,
-        (DeviceControlData->Flags & PNP_ENUMERATE_ASYNCHRONOUS) ? FALSE : TRUE
-        );
+    status = PiQueueDeviceRequest(&instance,
+                                  (DeviceControlData->Flags & PNP_ENUMERATE_DEVICE_ONLY) ? ReenumerateDeviceOnly
+                                                                                         : ReenumerateDeviceTree,
+                                  0, (DeviceControlData->Flags & PNP_ENUMERATE_ASYNCHRONOUS) ? FALSE : TRUE);
     //
     // Free the copy of user mode supplied DeviceInstance.
     //
@@ -2544,12 +2310,9 @@ Return Value:
 
 
 NTSTATUS
-PiControlQueryAndRemoveDevice(
-    IN     PLUGPLAY_CONTROL_CLASS                   PnPControlClass,
-    IN OUT PPLUGPLAY_CONTROL_QUERY_AND_REMOVE_DATA  QueryAndRemoveData,
-    IN     ULONG                                    PnPControlDataLength,
-    IN     KPROCESSOR_MODE                          CallerMode
-    )
+PiControlQueryAndRemoveDevice(IN PLUGPLAY_CONTROL_CLASS PnPControlClass,
+                              IN OUT PPLUGPLAY_CONTROL_QUERY_AND_REMOVE_DATA QueryAndRemoveData,
+                              IN ULONG PnPControlDataLength, IN KPROCESSOR_MODE CallerMode)
 /*++
 
 Routine Description:
@@ -2584,8 +2347,8 @@ Return Value:
 {
     NTSTATUS status, tempStatus;
     UNICODE_STRING instance;
-    PWCHAR  vetoName;
-    ULONG   vetoNameLength;
+    PWCHAR vetoName;
+    ULONG vetoNameLength;
 
     PAGED_CODE();
 
@@ -2597,10 +2360,13 @@ Return Value:
     //
     // Check if the caller wants veto information or not.
     //
-    if (QueryAndRemoveData->VetoNameLength && QueryAndRemoveData->VetoName) {
+    if (QueryAndRemoveData->VetoNameLength && QueryAndRemoveData->VetoName)
+    {
 
         vetoNameLength = QueryAndRemoveData->VetoNameLength * sizeof(WCHAR);
-    } else {
+    }
+    else
+    {
 
         QueryAndRemoveData->VetoNameLength = vetoNameLength = 0;
     }
@@ -2608,13 +2374,10 @@ Return Value:
     // Allocate our own buffer for veto information for user mode callers,
     // otherwise use the supplied one.
     //
-    status = PiControlAllocateBufferForUserModeCaller(
-        &vetoName,
-        vetoNameLength,
-        CallerMode,
-        QueryAndRemoveData->VetoName
-        );
-    if (!NT_SUCCESS(status)) {
+    status =
+        PiControlAllocateBufferForUserModeCaller(&vetoName, vetoNameLength, CallerMode, QueryAndRemoveData->VetoName);
+    if (!NT_SUCCESS(status))
+    {
 
         goto Clean0;
     }
@@ -2622,39 +2385,26 @@ Return Value:
     // Make a copy of caller supplied DeviceInstance.
     //
     instance.Length = instance.MaximumLength = QueryAndRemoveData->DeviceInstance.Length;
-    status = PiControlMakeUserModeCallersCopy(
-        &instance.Buffer,
-        QueryAndRemoveData->DeviceInstance.Buffer,
-        instance.Length,
-        sizeof(WCHAR),
-        CallerMode,
-        TRUE
-        );
-    if (!NT_SUCCESS(status)) {
+    status = PiControlMakeUserModeCallersCopy(&instance.Buffer, QueryAndRemoveData->DeviceInstance.Buffer,
+                                              instance.Length, sizeof(WCHAR), CallerMode, TRUE);
+    if (!NT_SUCCESS(status))
+    {
 
         goto Clean0;
     }
     //
     // Queue an event to query remove the device
     //
-    status = PiQueueQueryAndRemoveEvent(
-        &instance,
-        &QueryAndRemoveData->VetoType,
-        vetoName,
-        &vetoNameLength,
-        QueryAndRemoveData->Flags
-        );
-    if (vetoName) {
+    status = PiQueueQueryAndRemoveEvent(&instance, &QueryAndRemoveData->VetoType, vetoName, &vetoNameLength,
+                                        QueryAndRemoveData->Flags);
+    if (vetoName)
+    {
 
-        tempStatus = PiControlMakeUserModeCallersCopy(
-            &QueryAndRemoveData->VetoName,
-            vetoName,
-            QueryAndRemoveData->VetoNameLength * sizeof(WCHAR),
-            sizeof(WCHAR),
-            CallerMode,
-            FALSE
-            );
-        if (!NT_SUCCESS(tempStatus)) {
+        tempStatus = PiControlMakeUserModeCallersCopy(&QueryAndRemoveData->VetoName, vetoName,
+                                                      QueryAndRemoveData->VetoNameLength * sizeof(WCHAR), sizeof(WCHAR),
+                                                      CallerMode, FALSE);
+        if (!NT_SUCCESS(tempStatus))
+        {
 
             status = tempStatus;
         }
@@ -2672,12 +2422,9 @@ Clean0:
 }
 
 NTSTATUS
-PiControlUserResponse(
-    IN     PLUGPLAY_CONTROL_CLASS               PnPControlClass,
-    IN OUT PPLUGPLAY_CONTROL_USER_RESPONSE_DATA UserResponseData,
-    IN     ULONG                                PnPControlDataLength,
-    IN     KPROCESSOR_MODE                      CallerMode
-    )
+PiControlUserResponse(IN PLUGPLAY_CONTROL_CLASS PnPControlClass,
+                      IN OUT PPLUGPLAY_CONTROL_USER_RESPONSE_DATA UserResponseData, IN ULONG PnPControlDataLength,
+                      IN KPROCESSOR_MODE CallerMode)
 /*++
 
 Routine Description:
@@ -2709,37 +2456,30 @@ Return Value:
     ASSERT(PnPControlClass == PlugPlayControlUserResponse);
     ASSERT(PnPControlDataLength == sizeof(PLUGPLAY_CONTROL_USER_RESPONSE_DATA));
 
-    if (UserResponseData->VetoNameLength && UserResponseData->VetoName) {
+    if (UserResponseData->VetoNameLength && UserResponseData->VetoName)
+    {
 
         vetoNameLength = UserResponseData->VetoNameLength * sizeof(WCHAR);
-    } else {
+    }
+    else
+    {
 
         vetoNameLength = 0;
     }
     //
     // Make a copy of callers buffer.
     //
-    status = PiControlMakeUserModeCallersCopy(
-        &vetoName,
-        UserResponseData->VetoName,
-        vetoNameLength,
-        sizeof(WCHAR),
-        CallerMode,
-        TRUE
-        );
-    if (!NT_SUCCESS(status)) {
+    status = PiControlMakeUserModeCallersCopy(&vetoName, UserResponseData->VetoName, vetoNameLength, sizeof(WCHAR),
+                                              CallerMode, TRUE);
+    if (!NT_SUCCESS(status))
+    {
 
         return status;
     }
     //
     // Copy the user response.
     //
-    PiUserResponse(
-        UserResponseData->Response,
-        UserResponseData->VetoType,
-        vetoName,
-        vetoNameLength
-        );
+    PiUserResponse(UserResponseData->Response, UserResponseData->VetoType, vetoName, vetoNameLength);
 
     PiControlFreeUserModeCallersBuffer(CallerMode, vetoName);
 
@@ -2747,12 +2487,9 @@ Return Value:
 }
 
 NTSTATUS
-PiControlGenerateLegacyDevice(
-    IN     PLUGPLAY_CONTROL_CLASS               PnPControlClass,
-    IN OUT PPLUGPLAY_CONTROL_LEGACY_DEVGEN_DATA LegacyDevGenData,
-    IN     ULONG                                PnPControlDataLength,
-    IN     KPROCESSOR_MODE                      CallerMode
-    )
+PiControlGenerateLegacyDevice(IN PLUGPLAY_CONTROL_CLASS PnPControlClass,
+                              IN OUT PPLUGPLAY_CONTROL_LEGACY_DEVGEN_DATA LegacyDevGenData,
+                              IN ULONG PnPControlDataLength, IN KPROCESSOR_MODE CallerMode)
 /*++
 
 Routine Description:
@@ -2788,48 +2525,33 @@ Return Value:
     instance = NULL;
     PiWstrToUnicodeString(&service, NULL);
     instanceLength = LegacyDevGenData->DeviceInstanceLength * sizeof(WCHAR);
-    status = PiControlAllocateBufferForUserModeCaller(
-        &instance,
-        instanceLength,
-        CallerMode,
-        LegacyDevGenData->DeviceInstance
-        );
-    if (!NT_SUCCESS(status)) {
+    status = PiControlAllocateBufferForUserModeCaller(&instance, instanceLength, CallerMode,
+                                                      LegacyDevGenData->DeviceInstance);
+    if (!NT_SUCCESS(status))
+    {
 
         goto Clean0;
     }
     service.Length = service.MaximumLength = LegacyDevGenData->ServiceName.Length;
-    status = PiControlMakeUserModeCallersCopy(
-        &service.Buffer,
-        LegacyDevGenData->ServiceName.Buffer,
-        service.Length,
-        sizeof(WCHAR),
-        CallerMode,
-        TRUE
-        );
-    if (!NT_SUCCESS(status)) {
+    status = PiControlMakeUserModeCallersCopy(&service.Buffer, LegacyDevGenData->ServiceName.Buffer, service.Length,
+                                              sizeof(WCHAR), CallerMode, TRUE);
+    if (!NT_SUCCESS(status))
+    {
 
         goto Clean0;
     }
-    status = PiGenerateLegacyDeviceInstance(
-        &service,
-        instance,
-        &instanceLength
-        );
+    status = PiGenerateLegacyDeviceInstance(&service, instance, &instanceLength);
     //
     // Copy the instance and length to the callers buffer.
     //
-    if (instance) {
+    if (instance)
+    {
 
-        tempStatus = PiControlMakeUserModeCallersCopy(
-            &LegacyDevGenData->DeviceInstance,
-            instance,
-            LegacyDevGenData->DeviceInstanceLength * sizeof(WCHAR),
-            sizeof(WCHAR),
-            CallerMode,
-            FALSE
-            );
-        if (!NT_SUCCESS(tempStatus)) {
+        tempStatus = PiControlMakeUserModeCallersCopy(&LegacyDevGenData->DeviceInstance, instance,
+                                                      LegacyDevGenData->DeviceInstanceLength * sizeof(WCHAR),
+                                                      sizeof(WCHAR), CallerMode, FALSE);
+        if (!NT_SUCCESS(tempStatus))
+        {
 
             status = tempStatus;
         }
@@ -2847,12 +2569,9 @@ Clean0:
 }
 
 NTSTATUS
-PiControlGetInterfaceDeviceList(
-    IN     PLUGPLAY_CONTROL_CLASS                   PnPControlClass,
-    IN OUT PPLUGPLAY_CONTROL_INTERFACE_LIST_DATA    InterfaceData,
-    IN     ULONG                                    PnPControlDataLength,
-    IN     KPROCESSOR_MODE                          CallerMode
-    )
+PiControlGetInterfaceDeviceList(IN PLUGPLAY_CONTROL_CLASS PnPControlClass,
+                                IN OUT PPLUGPLAY_CONTROL_INTERFACE_LIST_DATA InterfaceData,
+                                IN ULONG PnPControlDataLength, IN KPROCESSOR_MODE CallerMode)
 /*++
 
 Routine Description:
@@ -2892,53 +2611,43 @@ Return Value:
     //
     // For user mode callers, allocate storage to retrieve the interfacelist.
     //
-    if (InterfaceData->InterfaceListSize && InterfaceData->InterfaceList) {
+    if (InterfaceData->InterfaceListSize && InterfaceData->InterfaceList)
+    {
 
         listSize = InterfaceData->InterfaceListSize * sizeof(WCHAR);
-    } else {
+    }
+    else
+    {
 
         listSize = 0;
     }
-    status = PiControlAllocateBufferForUserModeCaller(
-        &list,
-        listSize,
-        CallerMode,
-        InterfaceData->InterfaceList
-        );
-    if (!NT_SUCCESS(status)) {
+    status = PiControlAllocateBufferForUserModeCaller(&list, listSize, CallerMode, InterfaceData->InterfaceList);
+    if (!NT_SUCCESS(status))
+    {
 
         goto Clean0;
     }
     //
     // Copy the user supplied interface GUID.
     //
-    status = PiControlMakeUserModeCallersCopy(
-        &guid,
-        InterfaceData->InterfaceGuid,
-        sizeof(GUID),
-        sizeof(UCHAR),
-        CallerMode,
-        TRUE
-        );
-    if (!NT_SUCCESS(status)) {
+    status = PiControlMakeUserModeCallersCopy(&guid, InterfaceData->InterfaceGuid, sizeof(GUID), sizeof(UCHAR),
+                                              CallerMode, TRUE);
+    if (!NT_SUCCESS(status))
+    {
 
         goto Clean0;
     }
     //
     // Copy the user supplied DeviceInstance.
     //
-    if (InterfaceData->DeviceInstance.Buffer) {
+    if (InterfaceData->DeviceInstance.Buffer)
+    {
 
         instance.Length = instance.MaximumLength = InterfaceData->DeviceInstance.Length;
-        status = PiControlMakeUserModeCallersCopy(
-            &instance.Buffer,
-            InterfaceData->DeviceInstance.Buffer,
-            instance.Length,
-            sizeof(WCHAR),
-            CallerMode,
-            TRUE
-            );
-        if (!NT_SUCCESS(status)) {
+        status = PiControlMakeUserModeCallersCopy(&instance.Buffer, InterfaceData->DeviceInstance.Buffer,
+                                                  instance.Length, sizeof(WCHAR), CallerMode, TRUE);
+        if (!NT_SUCCESS(status))
+        {
 
             goto Clean0;
         }
@@ -2946,26 +2655,17 @@ Return Value:
     //
     // Get the interface list.
     //
-    status = PiGetInterfaceDeviceList(
-        guid,
-        &instance,
-        InterfaceData->Flags,
-        list,
-        &listSize
-        );
-    if (list) {
+    status = PiGetInterfaceDeviceList(guid, &instance, InterfaceData->Flags, list, &listSize);
+    if (list)
+    {
         //
         // Copy the results into the caller's buffer.
         //
-        tempStatus = PiControlMakeUserModeCallersCopy(
-            &InterfaceData->InterfaceList,
-            list,
-            InterfaceData->InterfaceListSize * sizeof(WCHAR),
-            sizeof(WCHAR),
-            CallerMode,
-            FALSE
-            );
-        if (!NT_SUCCESS(tempStatus)) {
+        tempStatus = PiControlMakeUserModeCallersCopy(&InterfaceData->InterfaceList, list,
+                                                      InterfaceData->InterfaceListSize * sizeof(WCHAR), sizeof(WCHAR),
+                                                      CallerMode, FALSE);
+        if (!NT_SUCCESS(tempStatus))
+        {
 
             status = tempStatus;
         }
@@ -2984,12 +2684,8 @@ Clean0:
 }
 
 NTSTATUS
-PiControlGetPropertyData(
-    IN     PLUGPLAY_CONTROL_CLASS           PnPControlClass,
-    IN OUT PPLUGPLAY_CONTROL_PROPERTY_DATA  PropertyData,
-    IN     ULONG                            PnPControlDataLength,
-    IN     KPROCESSOR_MODE                  CallerMode
-    )
+PiControlGetPropertyData(IN PLUGPLAY_CONTROL_CLASS PnPControlClass, IN OUT PPLUGPLAY_CONTROL_PROPERTY_DATA PropertyData,
+                         IN ULONG PnPControlDataLength, IN KPROCESSOR_MODE CallerMode)
 /*++
 
 Routine Description:
@@ -3027,15 +2723,10 @@ Return Value:
 
     buffer = NULL;
     instance.Length = instance.MaximumLength = PropertyData->DeviceInstance.Length;
-    status = PiControlMakeUserModeCallersCopy(
-        &instance.Buffer,
-        PropertyData->DeviceInstance.Buffer,
-        instance.Length,
-        sizeof(WCHAR),
-        CallerMode,
-        TRUE
-        );
-    if (!NT_SUCCESS(status)) {
+    status = PiControlMakeUserModeCallersCopy(&instance.Buffer, PropertyData->DeviceInstance.Buffer, instance.Length,
+                                              sizeof(WCHAR), CallerMode, TRUE);
+    if (!NT_SUCCESS(status))
+    {
 
         return status;
     }
@@ -3048,7 +2739,8 @@ Return Value:
     deviceObject = IopDeviceObjectFromDeviceInstance(&instance);
 
     PiControlFreeUserModeCallersBuffer(CallerMode, instance.Buffer);
-    if (!deviceObject) {
+    if (!deviceObject)
+    {
 
         PpDevNodeUnlockTree(PPL_SIMPLE_READ);
         return STATUS_NO_SUCH_DEVICE;
@@ -3058,118 +2750,102 @@ Return Value:
     // Retrieve the device node for this device object.
     //
     deviceNode = (PDEVICE_NODE)deviceObject->DeviceObjectExtension->DeviceNode;
-    if (!deviceNode) {
+    if (!deviceNode)
+    {
 
         status = STATUS_NO_SUCH_DEVICE;
         goto Clean0;
     }
 
     bufferSize = PropertyData->BufferSize;
-    status = PiControlAllocateBufferForUserModeCaller(
-        &buffer,
-        bufferSize,
-        CallerMode,
-        PropertyData->Buffer
-        );
+    status = PiControlAllocateBufferForUserModeCaller(&buffer, bufferSize, CallerMode, PropertyData->Buffer);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         goto Clean0;
     }
 
-    switch(PropertyData->PropertyType) {
+    switch (PropertyData->PropertyType)
+    {
 
-        case PNP_PROPERTY_PDONAME:
-            property = DevicePropertyPhysicalDeviceObjectName;
-            break;
+    case PNP_PROPERTY_PDONAME:
+        property = DevicePropertyPhysicalDeviceObjectName;
+        break;
 
-        case PNP_PROPERTY_BUSTYPEGUID:
-            property = DevicePropertyBusTypeGuid;
-            break;
+    case PNP_PROPERTY_BUSTYPEGUID:
+        property = DevicePropertyBusTypeGuid;
+        break;
 
-        case PNP_PROPERTY_LEGACYBUSTYPE:
-            property = DevicePropertyLegacyBusType;
-            break;
+    case PNP_PROPERTY_LEGACYBUSTYPE:
+        property = DevicePropertyLegacyBusType;
+        break;
 
-        case PNP_PROPERTY_BUSNUMBER:
-            property = DevicePropertyBusNumber;
-            break;
+    case PNP_PROPERTY_BUSNUMBER:
+        property = DevicePropertyBusNumber;
+        break;
 
-        case PNP_PROPERTY_ADDRESS:
-            property = DevicePropertyAddress;
-            break;
+    case PNP_PROPERTY_ADDRESS:
+        property = DevicePropertyAddress;
+        break;
 
-        case PNP_PROPERTY_POWER_DATA:
-            status = PiControlGetDevicePowerData(
-                deviceNode,
-                CallerMode,
-                bufferSize,
-                buffer,
-                &PropertyData->BufferSize
-                );
-            if (status == STATUS_BUFFER_OVERFLOW) {
+    case PNP_PROPERTY_POWER_DATA:
+        status = PiControlGetDevicePowerData(deviceNode, CallerMode, bufferSize, buffer, &PropertyData->BufferSize);
+        if (status == STATUS_BUFFER_OVERFLOW)
+        {
 
-                //
-                // See comment in NtPlugPlayControl.
-                //
-                status = STATUS_BUFFER_TOO_SMALL;
-            }
-            goto Clean0;
+            //
+            // See comment in NtPlugPlayControl.
+            //
+            status = STATUS_BUFFER_TOO_SMALL;
+        }
+        goto Clean0;
 
-        case PNP_PROPERTY_REMOVAL_POLICY:
-            property = DevicePropertyRemovalPolicy;
-            break;
+    case PNP_PROPERTY_REMOVAL_POLICY:
+        property = DevicePropertyRemovalPolicy;
+        break;
 
-        case PNP_PROPERTY_REMOVAL_POLICY_OVERRIDE:
+    case PNP_PROPERTY_REMOVAL_POLICY_OVERRIDE:
 
-            status = PiGetDeviceRegistryProperty(
-                deviceObject,
-                REG_DWORD,
-                REGSTR_VALUE_REMOVAL_POLICY,
-                NULL,
-                buffer,
-                &PropertyData->BufferSize
-                );
+        status = PiGetDeviceRegistryProperty(deviceObject, REG_DWORD, REGSTR_VALUE_REMOVAL_POLICY, NULL, buffer,
+                                             &PropertyData->BufferSize);
 
-            goto Clean0;
+        goto Clean0;
 
-        case PNP_PROPERTY_REMOVAL_POLICY_HARDWARE_DEFAULT:
+    case PNP_PROPERTY_REMOVAL_POLICY_HARDWARE_DEFAULT:
 
-            if (bufferSize >= sizeof(ULONG)) {
+        if (bufferSize >= sizeof(ULONG))
+        {
 
-                PpHotSwapGetDevnodeRemovalPolicy(
-                    deviceNode,
-                    FALSE, // Include Registry Override
-                    (PDEVICE_REMOVAL_POLICY) buffer
-                    );
+            PpHotSwapGetDevnodeRemovalPolicy(deviceNode,
+                                             FALSE, // Include Registry Override
+                                             (PDEVICE_REMOVAL_POLICY)buffer);
 
-                status = STATUS_SUCCESS;
-            } else {
+            status = STATUS_SUCCESS;
+        }
+        else
+        {
 
-                status = STATUS_BUFFER_TOO_SMALL;
-            }
+            status = STATUS_BUFFER_TOO_SMALL;
+        }
 
-            PropertyData->BufferSize = sizeof(ULONG);
+        PropertyData->BufferSize = sizeof(ULONG);
 
-            goto Clean0;
+        goto Clean0;
 
-        case PNP_PROPERTY_INSTALL_STATE:
-            property = DevicePropertyInstallState;
-            break;
+    case PNP_PROPERTY_INSTALL_STATE:
+        property = DevicePropertyInstallState;
+        break;
 
-        default:
-            status = STATUS_INVALID_PARAMETER;
-            property = DevicePropertyInstallState;  // satisfy W4 compiler
-            break;
+    default:
+        status = STATUS_INVALID_PARAMETER;
+        property = DevicePropertyInstallState; // satisfy W4 compiler
+        break;
     }
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
-        status = IoGetDeviceProperty( deviceObject,
-                                      property,
-                                      bufferSize,
-                                      buffer,
-                                      &PropertyData->BufferSize
-                                      );
+        status = IoGetDeviceProperty(deviceObject, property, bufferSize, buffer, &PropertyData->BufferSize);
     }
 
 Clean0:
@@ -3177,15 +2853,10 @@ Clean0:
     PpDevNodeUnlockTree(PPL_SIMPLE_READ);
     ObDereferenceObject(deviceObject);
 
-    tempStatus = PiControlMakeUserModeCallersCopy(
-        &PropertyData->Buffer,
-        buffer,
-        bufferSize,
-        sizeof(UCHAR),
-        CallerMode,
-        FALSE
-        );
-    if (!NT_SUCCESS(tempStatus)) {
+    tempStatus =
+        PiControlMakeUserModeCallersCopy(&PropertyData->Buffer, buffer, bufferSize, sizeof(UCHAR), CallerMode, FALSE);
+    if (!NT_SUCCESS(tempStatus))
+    {
 
         status = tempStatus;
     }
@@ -3195,12 +2866,9 @@ Clean0:
 }
 
 NTSTATUS
-PiControlDeviceClassAssociation(
-    IN     PLUGPLAY_CONTROL_CLASS                   PnPControlClass,
-    IN OUT PPLUGPLAY_CONTROL_CLASS_ASSOCIATION_DATA AssociationData,
-    IN     ULONG                                    PnPControlDataLength,
-    IN     KPROCESSOR_MODE                          CallerMode
-    )
+PiControlDeviceClassAssociation(IN PLUGPLAY_CONTROL_CLASS PnPControlClass,
+                                IN OUT PPLUGPLAY_CONTROL_CLASS_ASSOCIATION_DATA AssociationData,
+                                IN ULONG PnPControlDataLength, IN KPROCESSOR_MODE CallerMode)
 /*++
 
 Routine Description:
@@ -3241,88 +2909,73 @@ Return Value:
     PiWstrToUnicodeString(&instance, NULL);
     PiWstrToUnicodeString(&reference, NULL);
 
-    if (AssociationData->SymLinkLength && AssociationData->SymLink) {
+    if (AssociationData->SymLinkLength && AssociationData->SymLink)
+    {
         symLinkLength = AssociationData->SymLinkLength * sizeof(WCHAR);
-    } else {
+    }
+    else
+    {
         symLinkLength = 0;
     }
 
-    if (AssociationData->Register) {
+    if (AssociationData->Register)
+    {
         //
         // If registering a device interface, allocate a buffer that is the same
         // size as the one supplied by the caller.
         //
-        status = PiControlAllocateBufferForUserModeCaller(
-            &symLink,
-            symLinkLength,
-            CallerMode,
-            AssociationData->SymLink
-            );
-        if (!NT_SUCCESS(status)) {
+        status =
+            PiControlAllocateBufferForUserModeCaller(&symLink, symLinkLength, CallerMode, AssociationData->SymLink);
+        if (!NT_SUCCESS(status))
+        {
             goto Clean0;
         }
 
         //
         // Copy the user supplied interface GUID, DeviceInstance and Reference.
         //
-        status = PiControlMakeUserModeCallersCopy(
-            &guid,
-            AssociationData->InterfaceGuid,
-            AssociationData->InterfaceGuid ? sizeof(GUID) : 0,
-            sizeof(UCHAR),
-            CallerMode,
-            TRUE
-            );
-        if (!NT_SUCCESS(status)) {
+        status = PiControlMakeUserModeCallersCopy(&guid, AssociationData->InterfaceGuid,
+                                                  AssociationData->InterfaceGuid ? sizeof(GUID) : 0, sizeof(UCHAR),
+                                                  CallerMode, TRUE);
+        if (!NT_SUCCESS(status))
+        {
             goto Clean0;
         }
 
         instance.Length = instance.MaximumLength = AssociationData->DeviceInstance.Length;
-        status = PiControlMakeUserModeCallersCopy(
-            &instance.Buffer,
-            AssociationData->DeviceInstance.Buffer,
-            AssociationData->DeviceInstance.Length,
-            sizeof(WCHAR),
-            CallerMode,
-            TRUE
-            );
-        if (!NT_SUCCESS(status)) {
+        status =
+            PiControlMakeUserModeCallersCopy(&instance.Buffer, AssociationData->DeviceInstance.Buffer,
+                                             AssociationData->DeviceInstance.Length, sizeof(WCHAR), CallerMode, TRUE);
+        if (!NT_SUCCESS(status))
+        {
             goto Clean0;
         }
 
         reference.Length = reference.MaximumLength = AssociationData->Reference.Length;
-        status = PiControlMakeUserModeCallersCopy(
-            &reference.Buffer,
-            AssociationData->Reference.Buffer,
-            AssociationData->Reference.Length,
-            sizeof(WCHAR),
-            CallerMode,
-            TRUE
-            );
-        if (!NT_SUCCESS(status)) {
+        status = PiControlMakeUserModeCallersCopy(&reference.Buffer, AssociationData->Reference.Buffer,
+                                                  AssociationData->Reference.Length, sizeof(WCHAR), CallerMode, TRUE);
+        if (!NT_SUCCESS(status))
+        {
             goto Clean0;
         }
-
-    } else {
+    }
+    else
+    {
         //
         // If unregistering a device interface, allocate and copy only the
         // symbolic link path supplied by the caller.  Interface GUID,
         // DeviceInstance, and Reference are not required for unregistration.
         //
-        if (symLinkLength < sizeof(UNICODE_NULL)) {
+        if (symLinkLength < sizeof(UNICODE_NULL))
+        {
             status = STATUS_INVALID_PARAMETER;
             goto Clean0;
         }
 
-        status = PiControlMakeUserModeCallersCopy(
-            &symLink,
-            AssociationData->SymLink,
-            symLinkLength,
-            sizeof(WCHAR),
-            CallerMode,
-            TRUE
-            );
-        if (!NT_SUCCESS(status)) {
+        status = PiControlMakeUserModeCallersCopy(&symLink, AssociationData->SymLink, symLinkLength, sizeof(WCHAR),
+                                                  CallerMode, TRUE);
+        if (!NT_SUCCESS(status))
+        {
             goto Clean0;
         }
 
@@ -3336,30 +2989,20 @@ Return Value:
     //
     // Register or unregister the device class association.
     //
-    status = PiDeviceClassAssociation(
-        &instance,
-        guid,
-        &reference,
-        symLink,
-        &symLinkLength,
-        AssociationData->Register
-        );
+    status = PiDeviceClassAssociation(&instance, guid, &reference, symLink, &symLinkLength, AssociationData->Register);
 
     //
     // If a symbolic link was registered, copy the symbolic link name to the
     // caller's buffer.
     //
-    if (AssociationData->Register && symLink && NT_SUCCESS(status)) {
+    if (AssociationData->Register && symLink && NT_SUCCESS(status))
+    {
 
-        tempStatus = PiControlMakeUserModeCallersCopy(
-            &AssociationData->SymLink,
-            symLink,
-            AssociationData->SymLinkLength * sizeof(WCHAR),
-            sizeof(WCHAR),
-            CallerMode,
-            FALSE
-            );
-        if (!NT_SUCCESS(tempStatus)) {
+        tempStatus = PiControlMakeUserModeCallersCopy(&AssociationData->SymLink, symLink,
+                                                      AssociationData->SymLinkLength * sizeof(WCHAR), sizeof(WCHAR),
+                                                      CallerMode, FALSE);
+        if (!NT_SUCCESS(tempStatus))
+        {
             status = tempStatus;
         }
     }
@@ -3382,12 +3025,9 @@ Clean0:
 }
 
 NTSTATUS
-PiControlGetRelatedDevice(
-    IN     PLUGPLAY_CONTROL_CLASS                   PnPControlClass,
-    IN OUT PPLUGPLAY_CONTROL_RELATED_DEVICE_DATA    RelatedData,
-    IN     ULONG                                    PnPControlDataLength,
-    IN     KPROCESSOR_MODE                          CallerMode
-    )
+PiControlGetRelatedDevice(IN PLUGPLAY_CONTROL_CLASS PnPControlClass,
+                          IN OUT PPLUGPLAY_CONTROL_RELATED_DEVICE_DATA RelatedData, IN ULONG PnPControlDataLength,
+                          IN KPROCESSOR_MODE CallerMode)
 /*++
 
 Routine Description:
@@ -3422,53 +3062,39 @@ Return Value:
 
     buffer = NULL;
     PiWstrToUnicodeString(&instance, NULL);
-    if (RelatedData->RelatedDeviceInstance && RelatedData->RelatedDeviceInstanceLength) {
+    if (RelatedData->RelatedDeviceInstance && RelatedData->RelatedDeviceInstanceLength)
+    {
 
         length = RelatedData->RelatedDeviceInstanceLength * sizeof(WCHAR);
-    } else {
+    }
+    else
+    {
 
         length = 0;
     }
-    status = PiControlAllocateBufferForUserModeCaller(
-        &buffer,
-        length,
-        CallerMode,
-        RelatedData->RelatedDeviceInstance
-        );
-    if (!NT_SUCCESS(status)) {
+    status = PiControlAllocateBufferForUserModeCaller(&buffer, length, CallerMode, RelatedData->RelatedDeviceInstance);
+    if (!NT_SUCCESS(status))
+    {
 
         goto Clean0;
     }
     instance.Length = instance.MaximumLength = RelatedData->TargetDeviceInstance.Length;
-    status = PiControlMakeUserModeCallersCopy(
-        &instance.Buffer,
-        RelatedData->TargetDeviceInstance.Buffer,
-        instance.Length,
-        sizeof(WCHAR),
-        CallerMode,
-        TRUE
-        );
-    if (!NT_SUCCESS(status)) {
+    status = PiControlMakeUserModeCallersCopy(&instance.Buffer, RelatedData->TargetDeviceInstance.Buffer,
+                                              instance.Length, sizeof(WCHAR), CallerMode, TRUE);
+    if (!NT_SUCCESS(status))
+    {
 
         goto Clean0;
     }
-    status = PiGetRelatedDevice(
-        &instance,
-        buffer,
-        &length,
-        RelatedData->Relation
-        );
-    if (buffer) {
+    status = PiGetRelatedDevice(&instance, buffer, &length, RelatedData->Relation);
+    if (buffer)
+    {
 
-        tempStatus = PiControlMakeUserModeCallersCopy(
-            &RelatedData->RelatedDeviceInstance,
-            buffer,
-            RelatedData->RelatedDeviceInstanceLength * sizeof(WCHAR),
-            sizeof(WCHAR),
-            CallerMode,
-            FALSE
-            );
-        if (!NT_SUCCESS(tempStatus)) {
+        tempStatus = PiControlMakeUserModeCallersCopy(&RelatedData->RelatedDeviceInstance, buffer,
+                                                      RelatedData->RelatedDeviceInstanceLength * sizeof(WCHAR),
+                                                      sizeof(WCHAR), CallerMode, FALSE);
+        if (!NT_SUCCESS(tempStatus))
+        {
 
             status = tempStatus;
         }
@@ -3486,12 +3112,9 @@ Clean0:
 }
 
 NTSTATUS
-PiControlGetInterfaceDeviceAlias(
-    IN     PLUGPLAY_CONTROL_CLASS                   PnPControlClass,
-    IN OUT PPLUGPLAY_CONTROL_INTERFACE_ALIAS_DATA   InterfaceAliasData,
-    IN     ULONG                                    PnPControlDataLength,
-    IN     KPROCESSOR_MODE                          CallerMode
-    )
+PiControlGetInterfaceDeviceAlias(IN PLUGPLAY_CONTROL_CLASS PnPControlClass,
+                                 IN OUT PPLUGPLAY_CONTROL_INTERFACE_ALIAS_DATA InterfaceAliasData,
+                                 IN ULONG PnPControlDataLength, IN KPROCESSOR_MODE CallerMode)
 /*++
 
 Routine Description:
@@ -3528,65 +3151,47 @@ Return Value:
     alias = NULL;
     guid = NULL;
     PiWstrToUnicodeString(&linkName, NULL);
-    if (InterfaceAliasData->AliasSymbolicLinkName && InterfaceAliasData->AliasSymbolicLinkNameLength) {
+    if (InterfaceAliasData->AliasSymbolicLinkName && InterfaceAliasData->AliasSymbolicLinkNameLength)
+    {
 
         aliasLength = InterfaceAliasData->AliasSymbolicLinkNameLength * sizeof(WCHAR);
-    } else {
+    }
+    else
+    {
 
         aliasLength = 0;
     }
-    status = PiControlAllocateBufferForUserModeCaller(
-        &alias,
-        aliasLength,
-        CallerMode,
-        InterfaceAliasData->AliasSymbolicLinkName
-        );
-    if (!NT_SUCCESS(status)) {
+    status = PiControlAllocateBufferForUserModeCaller(&alias, aliasLength, CallerMode,
+                                                      InterfaceAliasData->AliasSymbolicLinkName);
+    if (!NT_SUCCESS(status))
+    {
 
         goto Clean0;
     }
-    status = PiControlMakeUserModeCallersCopy(
-        &guid,
-        InterfaceAliasData->AliasClassGuid,
-        sizeof(GUID),
-        sizeof(UCHAR),
-        CallerMode,
-        TRUE
-        );
-    if (!NT_SUCCESS(status)) {
+    status = PiControlMakeUserModeCallersCopy(&guid, InterfaceAliasData->AliasClassGuid, sizeof(GUID), sizeof(UCHAR),
+                                              CallerMode, TRUE);
+    if (!NT_SUCCESS(status))
+    {
 
         goto Clean0;
     }
     linkName.Length = linkName.MaximumLength = InterfaceAliasData->SymbolicLinkName.Length;
-    status = PiControlMakeUserModeCallersCopy(
-        &linkName.Buffer,
-        InterfaceAliasData->SymbolicLinkName.Buffer,
-        linkName.Length,
-        sizeof(WCHAR),
-        CallerMode,
-        TRUE
-        );
-    if (!NT_SUCCESS(status)) {
+    status = PiControlMakeUserModeCallersCopy(&linkName.Buffer, InterfaceAliasData->SymbolicLinkName.Buffer,
+                                              linkName.Length, sizeof(WCHAR), CallerMode, TRUE);
+    if (!NT_SUCCESS(status))
+    {
 
         goto Clean0;
     }
-    status = PiGetInterfaceDeviceAlias(
-        &linkName,
-        guid,
-        alias,
-        &aliasLength
-        );
-    if (alias) {
+    status = PiGetInterfaceDeviceAlias(&linkName, guid, alias, &aliasLength);
+    if (alias)
+    {
 
-        tempStatus = PiControlMakeUserModeCallersCopy(
-            &InterfaceAliasData->AliasSymbolicLinkName,
-            alias,
-            InterfaceAliasData->AliasSymbolicLinkNameLength * sizeof(WCHAR),
-            sizeof(WCHAR),
-            CallerMode,
-            FALSE
-            );
-        if (!NT_SUCCESS(tempStatus)) {
+        tempStatus = PiControlMakeUserModeCallersCopy(&InterfaceAliasData->AliasSymbolicLinkName, alias,
+                                                      InterfaceAliasData->AliasSymbolicLinkNameLength * sizeof(WCHAR),
+                                                      sizeof(WCHAR), CallerMode, FALSE);
+        if (!NT_SUCCESS(tempStatus))
+        {
 
             status = tempStatus;
         }
@@ -3606,12 +3211,8 @@ Clean0:
 
 
 NTSTATUS
-PiControlGetSetDeviceStatus(
-    IN     PLUGPLAY_CONTROL_CLASS           PnPControlClass,
-    IN OUT PPLUGPLAY_CONTROL_STATUS_DATA    StatusData,
-    IN     ULONG                            PnPControlDataLength,
-    IN     KPROCESSOR_MODE                  CallerMode
-    )
+PiControlGetSetDeviceStatus(IN PLUGPLAY_CONTROL_CLASS PnPControlClass, IN OUT PPLUGPLAY_CONTROL_STATUS_DATA StatusData,
+                            IN ULONG PnPControlDataLength, IN KPROCESSOR_MODE CallerMode)
 /*++
 
 Routine Description:
@@ -3670,15 +3271,10 @@ Return Value:
     ASSERT(PnPControlDataLength == sizeof(PLUGPLAY_CONTROL_STATUS_DATA));
 
     instance.Length = instance.MaximumLength = StatusData->DeviceInstance.Length;
-    status = PiControlMakeUserModeCallersCopy(
-        &instance.Buffer,
-        StatusData->DeviceInstance.Buffer,
-        StatusData->DeviceInstance.Length,
-        sizeof(WCHAR),
-        CallerMode,
-        TRUE
-        );
-    if (!NT_SUCCESS(status)) {
+    status = PiControlMakeUserModeCallersCopy(&instance.Buffer, StatusData->DeviceInstance.Buffer,
+                                              StatusData->DeviceInstance.Length, sizeof(WCHAR), CallerMode, TRUE);
+    if (!NT_SUCCESS(status))
+    {
 
         return status;
     }
@@ -3691,7 +3287,8 @@ Return Value:
     deviceObject = IopDeviceObjectFromDeviceInstance(&instance);
 
     PiControlFreeUserModeCallersBuffer(CallerMode, instance.Buffer);
-    if (deviceObject != NULL) {
+    if (deviceObject != NULL)
+    {
 
         //
         // Retrieve the devnode from the PDO
@@ -3700,92 +3297,75 @@ Return Value:
     }
 
     PpDevNodeUnlockTree(PPL_SIMPLE_READ);
-    if (deviceObject == NULL || deviceNode == NULL ||
-        deviceNode == IopRootDeviceNode) {
+    if (deviceObject == NULL || deviceNode == NULL || deviceNode == IopRootDeviceNode)
+    {
 
         status = STATUS_NO_SUCH_DEVICE;
         goto Clean0;
     }
 
-    switch(StatusData->Operation) {
+    switch (StatusData->Operation)
+    {
 
-        case PNP_GET_STATUS:
+    case PNP_GET_STATUS:
 
-            //
-            // Retrieve the status from the devnode and convert it to a
-            // user-mode Win95 style Problem and Status flag values.
-            //
-            PiControlGetUserFlagsFromDeviceNode(
-                deviceNode,
-                &StatusData->DeviceStatus
-                );
+        //
+        // Retrieve the status from the devnode and convert it to a
+        // user-mode Win95 style Problem and Status flag values.
+        //
+        PiControlGetUserFlagsFromDeviceNode(deviceNode, &StatusData->DeviceStatus);
 
-            StatusData->DeviceProblem = deviceNode->Problem;
+        StatusData->DeviceProblem = deviceNode->Problem;
 
-            status = STATUS_SUCCESS;
-            break;
+        status = STATUS_SUCCESS;
+        break;
 
-        case PNP_SET_STATUS:
+    case PNP_SET_STATUS:
 
-            KeInitializeEvent(&event, NotificationEvent, FALSE);
+        KeInitializeEvent(&event, NotificationEvent, FALSE);
 
-            status = PipRequestDeviceAction( deviceObject,
-                                             SetDeviceProblem,
-                                             FALSE,
-                                             (ULONG_PTR) StatusData,
-                                             &event,
-                                             &result );
+        status = PipRequestDeviceAction(deviceObject, SetDeviceProblem, FALSE, (ULONG_PTR)StatusData, &event, &result);
 
-            if (NT_SUCCESS(status)) {
-                status = KeWaitForSingleObject( &event,
-                                                Executive,
-                                                KernelMode,
-                                                FALSE,
-                                                NULL);
+        if (NT_SUCCESS(status))
+        {
+            status = KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
 
-                if (status == STATUS_WAIT_0) {
+            if (status == STATUS_WAIT_0)
+            {
 
-                    status = result;
-                }
+                status = result;
             }
+        }
 
-            break;
+        break;
 
-        case PNP_CLEAR_STATUS:
+    case PNP_CLEAR_STATUS:
 
-            KeInitializeEvent(&event, NotificationEvent, FALSE);
+        KeInitializeEvent(&event, NotificationEvent, FALSE);
 
-            status = PipRequestDeviceAction( deviceObject,
-                                             ClearDeviceProblem,
-                                             FALSE,
-                                             0,
-                                             &event,
-                                             &result );
+        status = PipRequestDeviceAction(deviceObject, ClearDeviceProblem, FALSE, 0, &event, &result);
 
-            if (NT_SUCCESS(status)) {
-                status = KeWaitForSingleObject( &event,
-                                                Executive,
-                                                KernelMode,
-                                                FALSE,
-                                                NULL);
+        if (NT_SUCCESS(status))
+        {
+            status = KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
 
-                if (status == STATUS_WAIT_0) {
+            if (status == STATUS_WAIT_0)
+            {
 
-                    status = result;
-                }
-
+                status = result;
             }
-            break;
+        }
+        break;
 
-        default:
+    default:
 
-            //
-            // ISSUE - 2000/08/16 - ADRIAO: Maintain behavior?
-            //     We always used to succeed anything not understood!
-            //
-            status = STATUS_SUCCESS;
-            //status = STATUS_INVALID_DEVICE_REQUEST;
-            break;
+        //
+        // ISSUE - 2000/08/16 - ADRIAO: Maintain behavior?
+        //     We always used to succeed anything not understood!
+        //
+        status = STATUS_SUCCESS;
+        //status = STATUS_INVALID_DEVICE_REQUEST;
+        break;
     }
 
     //
@@ -3793,7 +3373,8 @@ Return Value:
     //
 Clean0:
 
-    if (deviceObject != NULL) {
+    if (deviceObject != NULL)
+    {
         ObDereferenceObject(deviceObject);
     }
 
@@ -3802,12 +3383,8 @@ Clean0:
 
 
 NTSTATUS
-PiControlGetDeviceDepth(
-    IN     PLUGPLAY_CONTROL_CLASS       PnPControlClass,
-    IN OUT PPLUGPLAY_CONTROL_DEPTH_DATA DepthData,
-    IN     ULONG                        PnPControlDataLength,
-    IN     KPROCESSOR_MODE              CallerMode
-    )
+PiControlGetDeviceDepth(IN PLUGPLAY_CONTROL_CLASS PnPControlClass, IN OUT PPLUGPLAY_CONTROL_DEPTH_DATA DepthData,
+                        IN ULONG PnPControlDataLength, IN KPROCESSOR_MODE CallerMode)
 /*++
 
 Routine Description:
@@ -3842,15 +3419,10 @@ Return Value:
     ASSERT(PnPControlDataLength == sizeof(PLUGPLAY_CONTROL_DEPTH_DATA));
 
     instance.Length = instance.MaximumLength = DepthData->DeviceInstance.Length;
-    status = PiControlMakeUserModeCallersCopy(
-        &instance.Buffer,
-        DepthData->DeviceInstance.Buffer,
-        DepthData->DeviceInstance.Length,
-        sizeof(WCHAR),
-        CallerMode,
-        TRUE
-        );
-    if (!NT_SUCCESS(status)) {
+    status = PiControlMakeUserModeCallersCopy(&instance.Buffer, DepthData->DeviceInstance.Buffer,
+                                              DepthData->DeviceInstance.Length, sizeof(WCHAR), CallerMode, TRUE);
+    if (!NT_SUCCESS(status))
+    {
 
         return status;
     }
@@ -3868,13 +3440,15 @@ Return Value:
     deviceObject = IopDeviceObjectFromDeviceInstance(&instance);
 
     PiControlFreeUserModeCallersBuffer(CallerMode, instance.Buffer);
-    if (deviceObject) {
+    if (deviceObject)
+    {
 
         //
         // Retrieve the devnode from the PDO
         //
         deviceNode = (PDEVICE_NODE)deviceObject->DeviceObjectExtension->DeviceNode;
-        if (deviceNode) {
+        if (deviceNode)
+        {
 
             DepthData->DeviceDepth = deviceNode->Level;
             status = STATUS_SUCCESS;
@@ -3889,12 +3463,9 @@ Return Value:
 
 
 NTSTATUS
-PiControlQueryDeviceRelations(
-    IN     PLUGPLAY_CONTROL_CLASS                   PnPControlClass,
-    IN OUT PPLUGPLAY_CONTROL_DEVICE_RELATIONS_DATA  RelationsData,
-    IN     ULONG                                    PnPControlDataLength,
-    IN     KPROCESSOR_MODE                          CallerMode
-    )
+PiControlQueryDeviceRelations(IN PLUGPLAY_CONTROL_CLASS PnPControlClass,
+                              IN OUT PPLUGPLAY_CONTROL_DEVICE_RELATIONS_DATA RelationsData,
+                              IN ULONG PnPControlDataLength, IN KPROCESSOR_MODE CallerMode)
 /*++
 
 Routine Description:
@@ -3930,56 +3501,44 @@ Return Value:
 
     buffer = NULL;
     PiWstrToUnicodeString(&instance, NULL);
-    if (RelationsData->BufferLength && RelationsData->Buffer) {
+    if (RelationsData->BufferLength && RelationsData->Buffer)
+    {
 
         length = RelationsData->BufferLength * sizeof(WCHAR);
-    } else {
+    }
+    else
+    {
 
         length = 0;
     }
-    status = PiControlAllocateBufferForUserModeCaller(
-        &buffer,
-        length,
-        CallerMode,
-        RelationsData->Buffer
-        );
-    if (!NT_SUCCESS(status)) {
+    status = PiControlAllocateBufferForUserModeCaller(&buffer, length, CallerMode, RelationsData->Buffer);
+    if (!NT_SUCCESS(status))
+    {
 
         goto Clean0;
     }
     instance.Length = instance.MaximumLength = RelationsData->DeviceInstance.Length;
-    status = PiControlMakeUserModeCallersCopy(
-        &instance.Buffer,
-        RelationsData->DeviceInstance.Buffer,
-        instance.Length,
-        sizeof(WCHAR),
-        CallerMode,
-        TRUE
-        );
-    if (!NT_SUCCESS(status)) {
+    status = PiControlMakeUserModeCallersCopy(&instance.Buffer, RelationsData->DeviceInstance.Buffer, instance.Length,
+                                              sizeof(WCHAR), CallerMode, TRUE);
+    if (!NT_SUCCESS(status))
+    {
 
         goto Clean0;
     }
-    status = PiQueryDeviceRelations(&instance,
-                                    RelationsData->Operation,
-                                    &length,
-                                    buffer);
-    if (buffer) {
+    status = PiQueryDeviceRelations(&instance, RelationsData->Operation, &length, buffer);
+    if (buffer)
+    {
 
-        tempStatus = PiControlMakeUserModeCallersCopy(
-            &RelationsData->Buffer,
-            buffer,
-            RelationsData->BufferLength * sizeof(WCHAR),
-            sizeof(WCHAR),
-            CallerMode,
-            FALSE
-            );
-        if (!NT_SUCCESS(tempStatus)) {
+        tempStatus = PiControlMakeUserModeCallersCopy(&RelationsData->Buffer, buffer,
+                                                      RelationsData->BufferLength * sizeof(WCHAR), sizeof(WCHAR),
+                                                      CallerMode, FALSE);
+        if (!NT_SUCCESS(tempStatus))
+        {
 
             status = tempStatus;
         }
     }
-    RelationsData->BufferLength  = length / sizeof(WCHAR);
+    RelationsData->BufferLength = length / sizeof(WCHAR);
 
 Clean0:
 
@@ -3990,12 +3549,9 @@ Clean0:
 }
 
 NTSTATUS
-PiControlQueryTargetDeviceRelation(
-    IN     PLUGPLAY_CONTROL_CLASS                   PnPControlClass,
-    IN OUT PPLUGPLAY_CONTROL_TARGET_RELATION_DATA   TargetData,
-    IN     ULONG                                    PnPControlDataLength,
-    IN     KPROCESSOR_MODE                          CallerMode
-    )
+PiControlQueryTargetDeviceRelation(IN PLUGPLAY_CONTROL_CLASS PnPControlClass,
+                                   IN OUT PPLUGPLAY_CONTROL_TARGET_RELATION_DATA TargetData,
+                                   IN ULONG PnPControlDataLength, IN KPROCESSOR_MODE CallerMode)
 /*++
 
 Routine Description:
@@ -4031,59 +3587,56 @@ Return Value:
     //
     // Retrieve the file object for the specified file handle.
     //
-    status = ObReferenceObjectByHandle(
-        TargetData->UserFileHandle,
-        FILE_ANY_ACCESS,
-        IoFileObjectType,
-        CallerMode,
-        (PVOID *)&fileObject,
-        NULL
-        );
-    if (NT_SUCCESS(status)) {
+    status = ObReferenceObjectByHandle(TargetData->UserFileHandle, FILE_ANY_ACCESS, IoFileObjectType, CallerMode,
+                                       (PVOID *)&fileObject, NULL);
+    if (NT_SUCCESS(status))
+    {
         //
         // Now retrieve the actual target device object associate with this
         // file object.
         //
         status = IopGetRelatedTargetDevice(fileObject, &deviceNode);
 
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
 
             ASSERT(deviceNode);
 
             requiredLength = deviceNode->InstancePath.Length + sizeof(UNICODE_NULL);
-            if (TargetData->DeviceInstanceLen >= requiredLength) {
+            if (TargetData->DeviceInstanceLen >= requiredLength)
+            {
 
-                if (CallerMode != KernelMode) {
-                    try {
+                if (CallerMode != KernelMode)
+                {
+                    try
+                    {
 
-                        RtlCopyMemory(
-                            TargetData->DeviceInstance,
-                            deviceNode->InstancePath.Buffer,
-                            deviceNode->InstancePath.Length
-                            );
+                        RtlCopyMemory(TargetData->DeviceInstance, deviceNode->InstancePath.Buffer,
+                                      deviceNode->InstancePath.Length);
                         *(PWCHAR)((PUCHAR)TargetData->DeviceInstance + deviceNode->InstancePath.Length) = L'\0';
                         TargetData->DeviceInstanceLen = deviceNode->InstancePath.Length;
                         status = STATUS_SUCCESS;
-
-                    } except(PiControlExceptionFilter(GetExceptionInformation())) {
+                    }
+                    except(PiControlExceptionFilter(GetExceptionInformation()))
+                    {
 
                         status = GetExceptionCode();
-                        IopDbgPrint((IOP_IOAPI_ERROR_LEVEL,
-                                   "PiControlQueryTargetDeviceRelation: Exception copying device instance to user's buffer\n"));
+                        IopDbgPrint((IOP_IOAPI_ERROR_LEVEL, "PiControlQueryTargetDeviceRelation: Exception copying "
+                                                            "device instance to user's buffer\n"));
                     }
-                } else {
+                }
+                else
+                {
 
-                    RtlCopyMemory(
-                        TargetData->DeviceInstance,
-                        deviceNode->InstancePath.Buffer,
-                        deviceNode->InstancePath.Length
-                        );
+                    RtlCopyMemory(TargetData->DeviceInstance, deviceNode->InstancePath.Buffer,
+                                  deviceNode->InstancePath.Length);
                     *(PWCHAR)((PUCHAR)TargetData->DeviceInstance + deviceNode->InstancePath.Length) = L'\0';
                     TargetData->DeviceInstanceLen = deviceNode->InstancePath.Length;
                     status = STATUS_SUCCESS;
                 }
-
-            } else {
+            }
+            else
+            {
 
                 TargetData->DeviceInstanceLen = requiredLength;
                 status = STATUS_BUFFER_TOO_SMALL;
@@ -4101,12 +3654,9 @@ Return Value:
 }
 
 NTSTATUS
-PiControlQueryConflictList(
-    IN     PLUGPLAY_CONTROL_CLASS           PnPControlClass,
-    IN OUT PPLUGPLAY_CONTROL_CONFLICT_DATA  ConflictData,
-    IN     ULONG                            PnPControlDataLength,
-    IN     KPROCESSOR_MODE                  CallerMode
-    )
+PiControlQueryConflictList(IN PLUGPLAY_CONTROL_CLASS PnPControlClass,
+                           IN OUT PPLUGPLAY_CONTROL_CONFLICT_DATA ConflictData, IN ULONG PnPControlDataLength,
+                           IN KPROCESSOR_MODE CallerMode)
 /*++
 
 Routine Description:
@@ -4144,9 +3694,10 @@ Return Value:
     //
     // validate buffer is sufficiently big to not return an error
     //
-    if (ConflictData->ConflictBufferSize < (sizeof(PLUGPLAY_CONTROL_CONFLICT_LIST) -
-                                            sizeof(PLUGPLAY_CONTROL_CONFLICT_ENTRY)) +
-                                            sizeof(PLUGPLAY_CONTROL_CONFLICT_STRINGS)) {
+    if (ConflictData->ConflictBufferSize <
+        (sizeof(PLUGPLAY_CONTROL_CONFLICT_LIST) - sizeof(PLUGPLAY_CONTROL_CONFLICT_ENTRY)) +
+            sizeof(PLUGPLAY_CONTROL_CONFLICT_STRINGS))
+    {
         //
         // nope
         //
@@ -4156,38 +3707,25 @@ Return Value:
     buffer = NULL;
     deviceObject = NULL;
     PiWstrToUnicodeString(&instance, NULL);
-    status = PiControlMakeUserModeCallersCopy(
-        &list,
-        ConflictData->ResourceList,
-        ConflictData->ResourceListSize,
-        sizeof(UCHAR),
-        CallerMode,
-        TRUE
-        );
-    if (!NT_SUCCESS(status)) {
+    status = PiControlMakeUserModeCallersCopy(&list, ConflictData->ResourceList, ConflictData->ResourceListSize,
+                                              sizeof(UCHAR), CallerMode, TRUE);
+    if (!NT_SUCCESS(status))
+    {
 
         goto Clean0;
     }
-    status = PiControlAllocateBufferForUserModeCaller(
-        &buffer,
-        ConflictData->ConflictBufferSize,
-        CallerMode,
-        ConflictData->ConflictBuffer
-        );
-    if (!NT_SUCCESS(status)) {
+    status = PiControlAllocateBufferForUserModeCaller(&buffer, ConflictData->ConflictBufferSize, CallerMode,
+                                                      ConflictData->ConflictBuffer);
+    if (!NT_SUCCESS(status))
+    {
 
         goto Clean0;
     }
     instance.Length = instance.MaximumLength = ConflictData->DeviceInstance.Length;
-    status = PiControlMakeUserModeCallersCopy(
-        &instance.Buffer,
-        ConflictData->DeviceInstance.Buffer,
-        ConflictData->DeviceInstance.Length,
-        sizeof(WCHAR),
-        CallerMode,
-        TRUE
-        );
-    if (!NT_SUCCESS(status)) {
+    status = PiControlMakeUserModeCallersCopy(&instance.Buffer, ConflictData->DeviceInstance.Buffer,
+                                              ConflictData->DeviceInstance.Length, sizeof(WCHAR), CallerMode, TRUE);
+    if (!NT_SUCCESS(status))
+    {
 
         goto Clean0;
     }
@@ -4208,7 +3746,8 @@ Return Value:
     //
     deviceObject = IopDeviceObjectFromDeviceInstance(&instance);
 
-    if (deviceObject) {
+    if (deviceObject)
+    {
 
         //
         // Retrieve the devnode from the PDO
@@ -4219,30 +3758,20 @@ Return Value:
         // We don't want to bother with things not in the tree, and we want to
         // skip the root.
         //
-        if ((deviceNode && deviceNode != IopRootDeviceNode) &&
-            (deviceNode->State != DeviceNodeDeletePendingCloses) &&
-            (deviceNode->State != DeviceNodeDeleted)) {
+        if ((deviceNode && deviceNode != IopRootDeviceNode) && (deviceNode->State != DeviceNodeDeletePendingCloses) &&
+            (deviceNode->State != DeviceNodeDeleted))
+        {
 
             //
             // parameters validated
             //
-            status = IopQueryConflictList(
-                deviceObject,
-                list,
-                ConflictData->ResourceListSize,
-                buffer,
-                ConflictData->ConflictBufferSize,
-                ConflictData->Flags
-                );
-            tempStatus = PiControlMakeUserModeCallersCopy(
-                &ConflictData->ConflictBuffer,
-                buffer,
-                ConflictData->ConflictBufferSize,
-                sizeof(UCHAR),
-                CallerMode,
-                FALSE
-                );
-            if (!NT_SUCCESS(tempStatus)) {
+            status = IopQueryConflictList(deviceObject, list, ConflictData->ResourceListSize, buffer,
+                                          ConflictData->ConflictBufferSize, ConflictData->Flags);
+            tempStatus =
+                PiControlMakeUserModeCallersCopy(&ConflictData->ConflictBuffer, buffer,
+                                                 ConflictData->ConflictBufferSize, sizeof(UCHAR), CallerMode, FALSE);
+            if (!NT_SUCCESS(tempStatus))
+            {
 
                 status = tempStatus;
             }
@@ -4256,7 +3785,8 @@ Clean0:
     PiControlFreeUserModeCallersBuffer(CallerMode, list);
     PiControlFreeUserModeCallersBuffer(CallerMode, buffer);
     PiControlFreeUserModeCallersBuffer(CallerMode, instance.Buffer);
-    if (deviceObject) {
+    if (deviceObject)
+    {
 
         ObDereferenceObject(deviceObject);
     }
@@ -4266,12 +3796,9 @@ Clean0:
 }
 
 NTSTATUS
-PiControlRetrieveDockData(
-    IN     PLUGPLAY_CONTROL_CLASS               PnPControlClass,
-    IN OUT PPLUGPLAY_CONTROL_RETRIEVE_DOCK_DATA DockData,
-    IN     ULONG                                PnPControlDataLength,
-    IN     KPROCESSOR_MODE                      CallerMode
-    )
+PiControlRetrieveDockData(IN PLUGPLAY_CONTROL_CLASS PnPControlClass,
+                          IN OUT PPLUGPLAY_CONTROL_RETRIEVE_DOCK_DATA DockData, IN ULONG PnPControlDataLength,
+                          IN KPROCESSOR_MODE CallerMode)
 /*++
 
 Routine Description:
@@ -4305,13 +3832,15 @@ Return Value:
     ASSERT(PnPControlDataLength == sizeof(PLUGPLAY_CONTROL_RETRIEVE_DOCK_DATA));
 
     dockDevice = PpProfileRetrievePreferredDockToEject();
-    if (dockDevice == NULL) {
+    if (dockDevice == NULL)
+    {
 
         status = STATUS_NO_SUCH_DEVICE;
         goto Clean0;
     }
     deviceNode = (PDEVICE_NODE)dockDevice->DeviceObjectExtension->DeviceNode;
-    if (deviceNode == NULL) {
+    if (deviceNode == NULL)
+    {
 
         ASSERT(deviceNode);
         status = STATUS_NO_SUCH_DEVICE;
@@ -4320,38 +3849,39 @@ Return Value:
 
     DockData->DeviceInstanceLength *= sizeof(WCHAR);
     requiredSize = deviceNode->InstancePath.Length + sizeof(UNICODE_NULL);
-    if (DockData->DeviceInstanceLength >= requiredSize) {
+    if (DockData->DeviceInstanceLength >= requiredSize)
+    {
 
-        if (CallerMode != KernelMode) {
+        if (CallerMode != KernelMode)
+        {
 
-            try {
+            try
+            {
 
-                RtlCopyMemory(
-                    DockData->DeviceInstance,
-                    deviceNode->InstancePath.Buffer,
-                    deviceNode->InstancePath.Length
-                    );
+                RtlCopyMemory(DockData->DeviceInstance, deviceNode->InstancePath.Buffer,
+                              deviceNode->InstancePath.Length);
                 *(PWCHAR)((PUCHAR)DockData->DeviceInstance + deviceNode->InstancePath.Length) = L'\0';
                 status = STATUS_SUCCESS;
-
-            } except(PiControlExceptionFilter(GetExceptionInformation())) {
+            }
+            except(PiControlExceptionFilter(GetExceptionInformation()))
+            {
 
                 status = GetExceptionCode();
                 IopDbgPrint((IOP_IOAPI_ERROR_LEVEL,
-                           "PiControlRetrieveDockData: Exception copying dock instance to user's buffer\n"));
+                             "PiControlRetrieveDockData: Exception copying dock instance to user's buffer\n"));
             }
-        } else {
+        }
+        else
+        {
 
-            RtlCopyMemory(
-                DockData->DeviceInstance,
-                deviceNode->InstancePath.Buffer,
-                deviceNode->InstancePath.Length
-                );
+            RtlCopyMemory(DockData->DeviceInstance, deviceNode->InstancePath.Buffer, deviceNode->InstancePath.Length);
             *(PWCHAR)((PUCHAR)DockData->DeviceInstance + deviceNode->InstancePath.Length) = L'\0';
             status = STATUS_SUCCESS;
         }
         DockData->DeviceInstanceLength = deviceNode->InstancePath.Length;
-    } else {
+    }
+    else
+    {
 
         DockData->DeviceInstanceLength = requiredSize;
         status = STATUS_BUFFER_TOO_SMALL;
@@ -4360,7 +3890,8 @@ Return Value:
     DockData->DeviceInstanceLength /= sizeof(WCHAR);
 Clean0:
 
-    if (dockDevice) {
+    if (dockDevice)
+    {
 
         ObDereferenceObject(dockDevice);
     }
@@ -4369,13 +3900,8 @@ Clean0:
 }
 
 NTSTATUS
-PiControlGetDevicePowerData(
-    IN  PDEVICE_NODE        DeviceNode,
-    IN  KPROCESSOR_MODE     CallerMode,
-    IN  ULONG               OutputBufferLength,
-    IN  PVOID               PowerDataBuffer     OPTIONAL,
-    OUT ULONG              *BytesWritten
-    )
+PiControlGetDevicePowerData(IN PDEVICE_NODE DeviceNode, IN KPROCESSOR_MODE CallerMode, IN ULONG OutputBufferLength,
+                            IN PVOID PowerDataBuffer OPTIONAL, OUT ULONG *BytesWritten)
 /*++
 
 Routine Description:
@@ -4417,7 +3943,8 @@ Return Value:
     cmPowerData.PD_Size = sizeof(CM_POWER_DATA);
 
     *BytesWritten = 0;
-    if (OutputBufferLength < sizeof(ULONG)) {
+    if (OutputBufferLength < sizeof(ULONG))
+    {
 
         //
         // Assume the *minimum* structure size.
@@ -4428,7 +3955,8 @@ Return Value:
 
     status = PipQueryDeviceCapabilities(DeviceNode, &deviceCapabilities);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         return STATUS_NO_SUCH_DEVICE;
     }
@@ -4437,14 +3965,13 @@ Return Value:
     // Fill out the "current" power state. Nonstarted devices are said to be
     // in D3.
     //
-    if (PipIsDevNodeDNStarted(DeviceNode)) {
+    if (PipIsDevNodeDNStarted(DeviceNode))
+    {
 
-        PoGetDevicePowerState(
-            DeviceNode->PhysicalDeviceObject,
-            &cmPowerData.PD_MostRecentPowerState
-            );
-
-    } else {
+        PoGetDevicePowerState(DeviceNode->PhysicalDeviceObject, &cmPowerData.PD_MostRecentPowerState);
+    }
+    else
+    {
 
         cmPowerData.PD_MostRecentPowerState = PowerDeviceD3;
     }
@@ -4454,46 +3981,50 @@ Return Value:
     //
     cmPowerData.PD_Capabilities = PDCAP_D0_SUPPORTED | PDCAP_D3_SUPPORTED;
 
-    if (deviceCapabilities.DeviceD1) {
+    if (deviceCapabilities.DeviceD1)
+    {
 
         cmPowerData.PD_Capabilities |= PDCAP_D1_SUPPORTED;
     }
 
-    if (deviceCapabilities.DeviceD2) {
+    if (deviceCapabilities.DeviceD2)
+    {
 
         cmPowerData.PD_Capabilities |= PDCAP_D2_SUPPORTED;
     }
 
-    if (deviceCapabilities.WakeFromD0) {
+    if (deviceCapabilities.WakeFromD0)
+    {
 
         cmPowerData.PD_Capabilities |= PDCAP_WAKE_FROM_D0_SUPPORTED;
     }
 
-    if (deviceCapabilities.WakeFromD1) {
+    if (deviceCapabilities.WakeFromD1)
+    {
 
         cmPowerData.PD_Capabilities |= PDCAP_WAKE_FROM_D1_SUPPORTED;
     }
 
-    if (deviceCapabilities.WakeFromD2) {
+    if (deviceCapabilities.WakeFromD2)
+    {
 
         cmPowerData.PD_Capabilities |= PDCAP_WAKE_FROM_D2_SUPPORTED;
     }
 
-    if (deviceCapabilities.WakeFromD3) {
+    if (deviceCapabilities.WakeFromD3)
+    {
 
         cmPowerData.PD_Capabilities |= PDCAP_WAKE_FROM_D3_SUPPORTED;
     }
 
-    if (deviceCapabilities.WarmEjectSupported) {
+    if (deviceCapabilities.WarmEjectSupported)
+    {
 
         cmPowerData.PD_Capabilities |= PDCAP_WARM_EJECT_SUPPORTED;
     }
 
-    RtlCopyMemory(
-        cmPowerData.PD_PowerStateMapping,
-        deviceCapabilities.DeviceState,
-        sizeof(cmPowerData.PD_PowerStateMapping)
-        );
+    RtlCopyMemory(cmPowerData.PD_PowerStateMapping, deviceCapabilities.DeviceState,
+                  sizeof(cmPowerData.PD_PowerStateMapping));
 
     cmPowerData.PD_D1Latency = deviceCapabilities.D1Latency;
     cmPowerData.PD_D2Latency = deviceCapabilities.D2Latency;
@@ -4505,35 +4036,37 @@ Return Value:
     // don't bother to set the DeviceDx and WakeFromDx fields.
     //
     dState = deviceCapabilities.DeviceWake;
-    for(i=0; i<2; i++) {
+    for (i = 0; i < 2; i++)
+    {
 
-        switch(dState) {
+        switch (dState)
+        {
 
-            case PowerDeviceD0:
-                cmPowerData.PD_Capabilities |= PDCAP_WAKE_FROM_D0_SUPPORTED;
-                break;
-            case PowerDeviceD1:
-                cmPowerData.PD_Capabilities |= ( PDCAP_D1_SUPPORTED |
-                                                 PDCAP_WAKE_FROM_D1_SUPPORTED );
-                break;
-            case PowerDeviceD2:
-                cmPowerData.PD_Capabilities |= ( PDCAP_D2_SUPPORTED |
-                                                 PDCAP_WAKE_FROM_D2_SUPPORTED );
-                break;
-            case PowerDeviceD3:
-                cmPowerData.PD_Capabilities |= PDCAP_WAKE_FROM_D3_SUPPORTED;
-                break;
-            default:
-                ASSERT(0);
-            case PowerDeviceUnspecified:
-                break;
+        case PowerDeviceD0:
+            cmPowerData.PD_Capabilities |= PDCAP_WAKE_FROM_D0_SUPPORTED;
+            break;
+        case PowerDeviceD1:
+            cmPowerData.PD_Capabilities |= (PDCAP_D1_SUPPORTED | PDCAP_WAKE_FROM_D1_SUPPORTED);
+            break;
+        case PowerDeviceD2:
+            cmPowerData.PD_Capabilities |= (PDCAP_D2_SUPPORTED | PDCAP_WAKE_FROM_D2_SUPPORTED);
+            break;
+        case PowerDeviceD3:
+            cmPowerData.PD_Capabilities |= PDCAP_WAKE_FROM_D3_SUPPORTED;
+            break;
+        default:
+            ASSERT(0);
+        case PowerDeviceUnspecified:
+            break;
         }
 
-        if (deviceCapabilities.SystemWake != PowerSystemUnspecified) {
+        if (deviceCapabilities.SystemWake != PowerSystemUnspecified)
+        {
 
             dState = deviceCapabilities.DeviceState[deviceCapabilities.SystemWake];
-
-        } else {
+        }
+        else
+        {
 
             dState = PowerDeviceUnspecified;
         }
@@ -4542,23 +4075,28 @@ Return Value:
     //
     // Calculate the deepest D state for wake
     //
-    if (cmPowerData.PD_Capabilities & PDCAP_WAKE_FROM_D3_SUPPORTED) {
+    if (cmPowerData.PD_Capabilities & PDCAP_WAKE_FROM_D3_SUPPORTED)
+    {
 
         deepestDeviceWakeState = PowerDeviceD3;
-
-    } else if (cmPowerData.PD_Capabilities & PDCAP_WAKE_FROM_D2_SUPPORTED) {
+    }
+    else if (cmPowerData.PD_Capabilities & PDCAP_WAKE_FROM_D2_SUPPORTED)
+    {
 
         deepestDeviceWakeState = PowerDeviceD2;
-
-    } else if (cmPowerData.PD_Capabilities & PDCAP_WAKE_FROM_D1_SUPPORTED) {
+    }
+    else if (cmPowerData.PD_Capabilities & PDCAP_WAKE_FROM_D1_SUPPORTED)
+    {
 
         deepestDeviceWakeState = PowerDeviceD1;
-
-    } else if (cmPowerData.PD_Capabilities & PDCAP_WAKE_FROM_D0_SUPPORTED) {
+    }
+    else if (cmPowerData.PD_Capabilities & PDCAP_WAKE_FROM_D0_SUPPORTED)
+    {
 
         deepestDeviceWakeState = PowerDeviceD0;
-
-    } else {
+    }
+    else
+    {
 
         deepestDeviceWakeState = PowerDeviceUnspecified;
     }
@@ -4568,7 +4106,8 @@ Return Value:
     // should infer it from the D-state information.
     //
     sState = deviceCapabilities.SystemWake;
-    if (sState != PowerSystemUnspecified) {
+    if (sState != PowerSystemUnspecified)
+    {
 
         //
         // The D-state for SystemWake should provide enough power to cover
@@ -4579,8 +4118,9 @@ Return Value:
         //    D3Hot/D3Cold dependancies.
         //
         ASSERT(deviceCapabilities.DeviceState[sState] <= deepestDeviceWakeState);
-
-    } else if (deepestDeviceWakeState != PowerDeviceUnspecified) {
+    }
+    else if (deepestDeviceWakeState != PowerDeviceUnspecified)
+    {
 
         //
         // A system wake state wasn't specified, examine each S state and pick
@@ -4589,10 +4129,12 @@ Return Value:
         // but can wake the system from D3, we do *not* assume the driver can
         // wake the system from S4 or S5.
         //
-        for(sState=PowerSystemSleeping3; sState>=PowerSystemWorking; sState--) {
+        for (sState = PowerSystemSleeping3; sState >= PowerSystemWorking; sState--)
+        {
 
             if ((deviceCapabilities.DeviceState[i] != PowerDeviceUnspecified) &&
-                (deviceCapabilities.DeviceState[i] <= deepestDeviceWakeState)) {
+                (deviceCapabilities.DeviceState[i] <= deepestDeviceWakeState))
+            {
 
                 break;
             }
@@ -4605,19 +4147,23 @@ Return Value:
 
     cmPowerData.PD_DeepestSystemWake = sState;
 
-    if (OutputBufferLength < cmPowerData.PD_Size) {
+    if (OutputBufferLength < cmPowerData.PD_Size)
+    {
 
-        if (ARGUMENT_PRESENT(PowerDataBuffer)) {
+        if (ARGUMENT_PRESENT(PowerDataBuffer))
+        {
 
             RtlCopyMemory(PowerDataBuffer, &cmPowerData, OutputBufferLength);
         }
 
         *BytesWritten = cmPowerData.PD_Size;
         status = STATUS_BUFFER_OVERFLOW;
+    }
+    else
+    {
 
-    } else {
-
-        if (ARGUMENT_PRESENT(PowerDataBuffer)) {
+        if (ARGUMENT_PRESENT(PowerDataBuffer))
+        {
 
             RtlCopyMemory(PowerDataBuffer, &cmPowerData, cmPowerData.PD_Size);
         }
@@ -4631,12 +4177,9 @@ Return Value:
 
 
 NTSTATUS
-PiControlHaltDevice(
-    IN     PLUGPLAY_CONTROL_CLASS                   PnPControlClass,
-    IN OUT PPLUGPLAY_CONTROL_DEVICE_CONTROL_DATA    DeviceControlData,
-    IN     ULONG                                    PnPControlDataLength,
-    IN     KPROCESSOR_MODE                          CallerMode
-    )
+PiControlHaltDevice(IN PLUGPLAY_CONTROL_CLASS PnPControlClass,
+                    IN OUT PPLUGPLAY_CONTROL_DEVICE_CONTROL_DATA DeviceControlData, IN ULONG PnPControlDataLength,
+                    IN KPROCESSOR_MODE CallerMode)
 /*++
 
 Routine Description:
@@ -4663,26 +4206,17 @@ Return Value:
     UNICODE_STRING instance;
 
     instance.Length = instance.MaximumLength = DeviceControlData->DeviceInstance.Length;
-    status = PiControlMakeUserModeCallersCopy(
-        &instance.Buffer,
-        DeviceControlData->DeviceInstance.Buffer,
-        DeviceControlData->DeviceInstance.Length,
-        sizeof(WCHAR),
-        CallerMode,
-        TRUE
-        );
+    status =
+        PiControlMakeUserModeCallersCopy(&instance.Buffer, DeviceControlData->DeviceInstance.Buffer,
+                                         DeviceControlData->DeviceInstance.Length, sizeof(WCHAR), CallerMode, TRUE);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         //
         // Queue an event to start the device
         //
-        status = PiQueueDeviceRequest(
-            &instance,
-            HaltDevice,
-            DeviceControlData->Flags,
-            TRUE
-            );
+        status = PiQueueDeviceRequest(&instance, HaltDevice, DeviceControlData->Flags, TRUE);
 
         PiControlFreeUserModeCallersBuffer(CallerMode, instance.Buffer);
     }
@@ -4690,12 +4224,9 @@ Return Value:
 }
 
 NTSTATUS
-PiControlGetBlockedDriverData(
-    IN     PLUGPLAY_CONTROL_CLASS                   PnPControlClass,
-    IN OUT PPLUGPLAY_CONTROL_BLOCKED_DRIVER_DATA    BlockedDriverData,
-    IN     ULONG                                    PnPControlDataLength,
-    IN     KPROCESSOR_MODE                          CallerMode
-    )
+PiControlGetBlockedDriverData(IN PLUGPLAY_CONTROL_CLASS PnPControlClass,
+                              IN OUT PPLUGPLAY_CONTROL_BLOCKED_DRIVER_DATA BlockedDriverData,
+                              IN ULONG PnPControlDataLength, IN KPROCESSOR_MODE CallerMode)
 /*++
 
 Routine Description:
@@ -4722,26 +4253,20 @@ Return Value:
     NTSTATUS status, tempStatus;
     PWCHAR buffer;
 
-    status = PiControlAllocateBufferForUserModeCaller(
-        &buffer, 
-        BlockedDriverData->BufferLength, 
-        CallerMode, 
-        BlockedDriverData->Buffer);
-    if (NT_SUCCESS(status)) {
+    status = PiControlAllocateBufferForUserModeCaller(&buffer, BlockedDriverData->BufferLength, CallerMode,
+                                                      BlockedDriverData->Buffer);
+    if (NT_SUCCESS(status))
+    {
 
         status = PpGetBlockedDriverList((GUID *)buffer, &BlockedDriverData->BufferLength, BlockedDriverData->Flags);
 
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
 
             tempStatus = PiControlMakeUserModeCallersCopy(
-               &BlockedDriverData->Buffer,
-               buffer,
-               BlockedDriverData->BufferLength,
-               sizeof(ULONG),
-               CallerMode,
-               FALSE
-               );
-            if (!NT_SUCCESS(tempStatus)) {
+                &BlockedDriverData->Buffer, buffer, BlockedDriverData->BufferLength, sizeof(ULONG), CallerMode, FALSE);
+            if (!NT_SUCCESS(tempStatus))
+            {
 
                 status = tempStatus;
             }

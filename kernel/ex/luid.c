@@ -19,7 +19,7 @@ Revision History:
 --*/
 
 #include "exp.h"
-
+
 //
 //  Global variables needed to support locally unique IDs.
 //
@@ -31,18 +31,16 @@ Revision History:
 // N.B. The LUID source always refers to the "next" allocatable LUID.
 //
 
-LARGE_INTEGER ExpLuid = {1001,0};
-const LARGE_INTEGER ExpLuidIncrement = {1,0};
-
+LARGE_INTEGER ExpLuid = { 1001, 0 };
+const LARGE_INTEGER ExpLuidIncrement = { 1, 0 };
+
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, ExLuidInitialization)
 #pragma alloc_text(PAGE, NtAllocateLocallyUniqueId)
 #endif
 
 BOOLEAN
-ExLuidInitialization (
-    VOID
-    )
+ExLuidInitialization(VOID)
 
 /*++
 
@@ -68,11 +66,9 @@ Return Value:
 {
     return TRUE;
 }
-
+
 NTSTATUS
-NtAllocateLocallyUniqueId (
-    OUT PLUID Luid
-    )
+NtAllocateLocallyUniqueId(OUT PLUID Luid)
 
 /*++
 
@@ -112,14 +108,16 @@ Return Value:
     // as the service status.
     //
 
-    try {
+    try
+    {
 
         //
         // Get previous processor mode and probe argument if necessary.
         //
 
         PreviousMode = KeGetPreviousMode();
-        if (PreviousMode != KernelMode) {
+        if (PreviousMode != KernelMode)
+        {
             ProbeForWriteSmallStructure((PVOID)Luid, sizeof(LUID), sizeof(ULONG));
         }
 
@@ -128,8 +126,9 @@ Return Value:
         //
 
         ExAllocateLocallyUniqueId(Luid);
-
-    } except (ExSystemExceptionFilter()) {
+    }
+    except(ExSystemExceptionFilter())
+    {
         return GetExceptionCode();
     }
 

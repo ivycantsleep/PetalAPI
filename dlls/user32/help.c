@@ -12,18 +12,18 @@
 #pragma hdrstop
 
 
-#define MAX_ATTEMPTS    5       // maximum -1 id controls to search through
+#define MAX_ATTEMPTS 5 // maximum -1 id controls to search through
 char szDefaultHelpFileA[] = "windows.hlp";
 
 PWCHAR szEXECHELP = TEXT("\\winhlp32 - ");
-PWCHAR szMS_WINHELP =     L"MS_WINHELP";    // Application class
-PWCHAR szMS_POPUPHELP =   L"MS_POPUPHELP";  // Popup class
-PWCHAR szMS_TCARDHELP =   L"MS_TCARDHELP";  // Training card class
+PWCHAR szMS_WINHELP = L"MS_WINHELP";     // Application class
+PWCHAR szMS_POPUPHELP = L"MS_POPUPHELP"; // Popup class
+PWCHAR szMS_TCARDHELP = L"MS_TCARDHELP"; // Training card class
 
 // These are in winhelp.h in Chicago
-#define HLP_POPUP               'p'     // Execute WinHelp as a popup
-#define HLP_TRAININGCARD        'c'     // Execute WinHelp as a training card
-#define HLP_APPLICATION         'x'     // Execute WinHelp as application help
+#define HLP_POPUP 'p'        // Execute WinHelp as a popup
+#define HLP_TRAININGCARD 'c' // Execute WinHelp as a training card
+#define HLP_APPLICATION 'x'  // Execute WinHelp as application help
 
 
 /***************************************************************************\
@@ -36,10 +36,7 @@ PWCHAR szMS_TCARDHELP =   L"MS_TCARDHELP";  // Training card class
 * History:
 * 02-10-98 GerardoB     Created
 \***************************************************************************/
-LRESULT SendWinHelpMessage(
-    HWND hwnd,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT SendWinHelpMessage(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     DWORD dwProcessId = 0;
     GetWindowThreadProcessId(hwnd, &dwProcessId);
@@ -60,16 +57,15 @@ LRESULT SendWinHelpMessage(
 * 03-24-95 BradG - YAP of Win95 code.  Added code to prevent memory
 *                  overwrite on bad ulData == 0 parameter.
 \***************************************************************************/
-LPHLP HFill(
-    LPCSTR lpszHelp,
-    DWORD  ulCommand,        // HELP_ constant
-    ULONG_PTR ulData)
+LPHLP HFill(LPCSTR lpszHelp,
+            DWORD ulCommand, // HELP_ constant
+            ULONG_PTR ulData)
 {
-    DWORD   cb;     // Size of the data block
-    DWORD   cbStr;  // Length of the help file name
-    DWORD   cbData; // Size of the dwData parameter in bytes (0 if not used)
-    LPHLP   phlp;   // Pointer to data block
-    BYTE    bType;  // dwData parameter type
+    DWORD cb;     // Size of the data block
+    DWORD cbStr;  // Length of the help file name
+    DWORD cbData; // Size of the dwData parameter in bytes (0 if not used)
+    LPHLP phlp;   // Pointer to data block
+    BYTE bType;   // dwData parameter type
 
     /*
      * Get the length of the help file name
@@ -80,8 +76,10 @@ LPHLP HFill(
      * Get the length of any dwData parameters
      */
     bType = HIBYTE(LOWORD(ulCommand));
-    if (ulData) {
-        switch (bType) {
+    if (ulData)
+    {
+        switch (bType)
+        {
         case HIBYTE(HELP_HB_STRING):
             /*
              * ulData is an ANSI string, so compute its length
@@ -103,7 +101,9 @@ LPHLP HFill(
              */
             cbData = 0;
         }
-    } else {
+    }
+    else
+    {
         /*
          * No parameter is present
          */
@@ -132,40 +132,49 @@ LPHLP HFill(
     /*
      * Fill in file name
      */
-    if (lpszHelp) {
-        phlp->offszHelpFile = sizeof(HLP);  // NOTE: HLP is called WINHLP in Win95
+    if (lpszHelp)
+    {
+        phlp->offszHelpFile = sizeof(HLP); // NOTE: HLP is called WINHLP in Win95
         strcpy((LPSTR)(phlp + 1), lpszHelp);
-    } else {
+    }
+    else
+    {
         phlp->offszHelpFile = 0;
     }
 
     /*
      * Fill in data
      */
-    switch (bType) {
+    switch (bType)
+    {
     case HIBYTE(HELP_HB_STRING):
-        if (cbData) {
-            phlp->offabData = (WORD)(sizeof(HLP) + cbStr);  // NOTE: HLP is called WINHLP in Win95
+        if (cbData)
+        {
+            phlp->offabData = (WORD)(sizeof(HLP) + cbStr); // NOTE: HLP is called WINHLP in Win95
             strcpy((LPSTR)phlp + phlp->offabData, (LPSTR)ulData);
-        } else {
+        }
+        else
+        {
             phlp->offabData = 0;
         }
         break;
 
     case HIBYTE(HELP_HB_STRUCT):
-        if (cbData) {
-            phlp->offabData = (WORD)(sizeof(HLP) + cbStr);  // NOTE: HLP is called WINHLP in Win95
-            RtlCopyMemory((LPBYTE)phlp + phlp->offabData, (PVOID)ulData,
-                    *((int far *)ulData));
-        } else {
+        if (cbData)
+        {
+            phlp->offabData = (WORD)(sizeof(HLP) + cbStr); // NOTE: HLP is called WINHLP in Win95
+            RtlCopyMemory((LPBYTE)phlp + phlp->offabData, (PVOID)ulData, *((int far *)ulData));
+        }
+        else
+        {
             phlp->offabData = 0;
         }
         break;
 
     default:
         phlp->offabData = 0;
-// BradG - This item is named differently in the Win95 WINHLP structure
-//      phlp->ctx   = ulData;
+        // BradG - This item is named differently in the Win95 WINHLP structure
+        //      phlp->ctx   = ulData;
         phlp->ulTopic = ulData;
         break;
     }
@@ -183,14 +192,12 @@ LPHLP HFill(
 * History:
 *   3/23/95 BradG   YAP (yet another port) of changes from Win95.
 \***************************************************************************/
-BOOL LaunchHelper(
-    LPWSTR lpfile,
-    DWORD dwType)
+BOOL LaunchHelper(LPWSTR lpfile, DWORD dwType)
 {
-    int                 cchLen;
-    int                 cchShift;
-    DWORD               idProcess;
-    STARTUPINFO         StartupInfo;
+    int cchLen;
+    int cchShift;
+    DWORD idProcess;
+    STARTUPINFO StartupInfo;
     PROCESS_INFORMATION ProcessInformation;
     PWCHAR pwcExecHelp;
 
@@ -199,11 +206,14 @@ BOOL LaunchHelper(
     /*
      * Are we at the root? If so, skip over leading backslash in text string.
      */
-    if (*lpfile) {
+    if (*lpfile)
+    {
         cchLen = wcslen(lpfile);
         cchShift = (lpfile[cchLen - 1] == TEXT('\\')) ? 1 : 0;
         wcscat(lpfile, pwcExecHelp + cchShift);
-    } else {
+    }
+    else
+    {
         wcscat(lpfile, pwcExecHelp + 1);
     }
 
@@ -211,17 +221,18 @@ BOOL LaunchHelper(
     /*
      * Defaultly send "winhlp32 -x" or adjust the last flag character
      */
-    switch (dwType) {
+    switch (dwType)
+    {
     case TYPE_POPUP:
-        lpfile[wcslen(lpfile)-1] = TEXT(HLP_POPUP);
+        lpfile[wcslen(lpfile) - 1] = TEXT(HLP_POPUP);
         break;
 
     case TYPE_TCARD:
-        lpfile[wcslen(lpfile)-1] = TEXT(HLP_TRAININGCARD);
+        lpfile[wcslen(lpfile) - 1] = TEXT(HLP_TRAININGCARD);
         break;
 
     default:
-        lpfile[wcslen(lpfile)-1] = TEXT(HLP_APPLICATION);
+        lpfile[wcslen(lpfile) - 1] = TEXT(HLP_APPLICATION);
         break;
     }
 
@@ -233,11 +244,11 @@ BOOL LaunchHelper(
     StartupInfo.wShowWindow = SW_SHOW;
     StartupInfo.dwFlags = STARTF_USESHOWWINDOW | STARTF_FORCEONFEEDBACK;
 
-    idProcess = (DWORD)CreateProcessW(NULL, lpfile,
-            NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL, &StartupInfo,
-            &ProcessInformation);
+    idProcess = (DWORD)CreateProcessW(NULL, lpfile, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL, &StartupInfo,
+                                      &ProcessInformation);
 
-    if (idProcess) {
+    if (idProcess)
+    {
         WaitForInputIdle(ProcessInformation.hProcess, 10000);
         NtClose(ProcessInformation.hProcess);
         NtClose(ProcessInformation.hThread);
@@ -257,8 +268,7 @@ BOOL LaunchHelper(
 * History:
 * 3/23/95 BradG     YAP of new changes from Win95
 \***************************************************************************/
-BOOL LaunchHelp(
-    DWORD dwType)
+BOOL LaunchHelp(DWORD dwType)
 {
     WCHAR wszPath[MAX_PATH] = L"";
 
@@ -295,11 +305,15 @@ PWND GetNextDlgHelpItem(PWND pwndDlg, PWND pwnd)
 {
     PWND pwndSave;
 
-    if (pwnd == pwndDlg) {
+    if (pwnd == pwndDlg)
+    {
         pwnd = NULL;
-    } else {
+    }
+    else
+    {
         pwnd = _GetChildControl(pwndDlg, pwnd);
-        if (pwnd) {
+        if (pwnd)
+        {
             if (!_IsDescendant(pwndDlg, pwnd))
                 return NULL;
         }
@@ -327,7 +341,7 @@ PWND GetNextDlgHelpItem(PWND pwndDlg, PWND pwnd)
         if (!pwndSave)
             pwndSave = pwnd;
 
-        if ((pwnd->style & (WS_TABSTOP | WS_VISIBLE))  == (WS_TABSTOP | WS_VISIBLE))
+        if ((pwnd->style & (WS_TABSTOP | WS_VISIBLE)) == (WS_TABSTOP | WS_VISIBLE))
             /*
              *  Found it.
              */
@@ -346,17 +360,15 @@ PWND GetNextDlgHelpItem(PWND pwndDlg, PWND pwnd)
 * History:
 * 01-Feb-1994 mikeke    Ported.
 \***************************************************************************/
-UINT HelpMenu(
-    HWND hwnd,
-    PPOINT ppt)
+UINT HelpMenu(HWND hwnd, PPOINT ppt)
 {
-    INT     cmd;
-    HMENU   hmenu = LoadMenu( hmodUser, MAKEINTRESOURCE(ID_HELPMENU));
+    INT cmd;
+    HMENU hmenu = LoadMenu(hmodUser, MAKEINTRESOURCE(ID_HELPMENU));
 
-    if (hmenu != NULL) {
-        cmd = TrackPopupMenu( GetSubMenu(hmenu, 0),
-              TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RETURNCMD | TPM_RIGHTBUTTON,
-              ppt->x, ppt->y, 0, hwnd, NULL);
+    if (hmenu != NULL)
+    {
+        cmd = TrackPopupMenu(GetSubMenu(hmenu, 0), TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RETURNCMD | TPM_RIGHTBUTTON,
+                             ppt->x, ppt->y, 0, hwnd, NULL);
         NtUserDestroyMenu(hmenu);
         return cmd;
     }
@@ -373,12 +385,9 @@ UINT HelpMenu(
 * History:
 * 03/24/95 BradG   Created by extracting code from xxxWinHelpA
 \***************************************************************************/
-HWND FindWinHelpWindow(
-    LPCWSTR lpwstrHelpWindowClass,
-    DWORD   dwType,
-    BOOL    bLaunchIt)
+HWND FindWinHelpWindow(LPCWSTR lpwstrHelpWindowClass, DWORD dwType, BOOL bLaunchIt)
 {
-    HWND    hwndHelp;
+    HWND hwndHelp;
 
     /*
      * Find the current help window. If not found, try and launch
@@ -389,14 +398,16 @@ HWND FindWinHelpWindow(
      */
     hwndHelp = InternalFindWindowExW(NULL, NULL, lpwstrHelpWindowClass, NULL, FW_32BIT);
 
-    if (hwndHelp == NULL) {
-        if (bLaunchIt) {
+    if (hwndHelp == NULL)
+    {
+        if (bLaunchIt)
+        {
             /*
              *  Can't find it --> see if we want to launch it
              */
             if ((LaunchHelp(dwType) == FALSE) ||
                 (hwndHelp = FindWindowEx(NULL, NULL, (LPWSTR)lpwstrHelpWindowClass, NULL)) == NULL)
-              {
+            {
 
                 /*
                  *  Can't find help, or not enough memory to load help.
@@ -415,16 +426,17 @@ HWND FindWinHelpWindow(
  *  HWND version of Enumeration function to find controls while
  *  ignoring group boxes but not disabled controls.
  */
-BOOL CALLBACK EnumHwndDlgChildProc(
-    HWND hwnd,
-    LPARAM lParam)
+BOOL CALLBACK EnumHwndDlgChildProc(HWND hwnd, LPARAM lParam)
 {
     PWND pwnd;
     BOOL bResult;
 
-    if (pwnd = ValidateHwnd(hwnd)) {
+    if (pwnd = ValidateHwnd(hwnd))
+    {
         bResult = EnumPwndDlgChildProc(pwnd, lParam);
-    } else {
+    }
+    else
+    {
         bResult = TRUE;
     }
 
@@ -445,54 +457,56 @@ BOOL CALLBACK EnumHwndDlgChildProc(
 *                           xxxWinHelpA because of changes in Win95.  The
 *                           function xxxServerWinHelp was merged.
 \***************************************************************************/
-BOOL WinHelpA(
-    HWND    hwnd,       // hwndMain may be NULL.
-    LPCSTR  lpszHelp,
-    UINT    uCommand,
-    ULONG_PTR dwData)
+BOOL WinHelpA(HWND hwnd, // hwndMain may be NULL.
+              LPCSTR lpszHelp, UINT uCommand, ULONG_PTR dwData)
 {
-    LPWSTR  lpwstrHelpWindowClass;
-    LPHLP   lpHlp = NULL;
-    DWORD   dwType;
-    PWND    pwnd;
-    HWND    hwndHelp = NULL;    /* Handle of help's main window         */
-    PWND    pwndTop = NULL;     /* Top level window that WinHelp uses.  */
-    PWND    pwndMain;           /* pointer to main help control         */
+    LPWSTR lpwstrHelpWindowClass;
+    LPHLP lpHlp = NULL;
+    DWORD dwType;
+    PWND pwnd;
+    HWND hwndHelp = NULL; /* Handle of help's main window         */
+    PWND pwndTop = NULL;  /* Top level window that WinHelp uses.  */
+    PWND pwndMain;        /* pointer to main help control         */
     LRESULT lResult;
-    POINT   ptCur;
-    BOOL    bResult = TRUE;
+    POINT ptCur;
+    BOOL bResult = TRUE;
 
     pwnd = ValidateHwnd(hwnd);
 
-    if (uCommand & HELP_TCARD) {
+    if (uCommand & HELP_TCARD)
+    {
         /*
          * For Training Cards, the HELP_TCARD bit is set.  We need to
          * set our help window class to szMS_TCARDHELP and then remove
          * the HELP_TCARD bit.
          */
         lpwstrHelpWindowClass = szMS_TCARDHELP;
-        uCommand &= ~HELP_TCARD;    // mask out the tcard flag
+        uCommand &= ~HELP_TCARD; // mask out the tcard flag
         dwType = TYPE_TCARD;
-    } else {
-        if( (uCommand == HELP_CONTEXTMENU) || (uCommand == HELP_CONTEXTPOPUP) ||
-            (uCommand == HELP_SETPOPUP_POS) || (uCommand == HELP_WM_HELP)) {
+    }
+    else
+    {
+        if ((uCommand == HELP_CONTEXTMENU) || (uCommand == HELP_CONTEXTPOPUP) || (uCommand == HELP_SETPOPUP_POS) ||
+            (uCommand == HELP_WM_HELP))
+        {
             /*
              *  Popups should be connected to a valid window.  pwndMain has already
              *  been validated as a real window handle or NULL, so we just need to
              *  check the NULL case here.
              */
-            if (pwnd == NULL) {
-                RIPERR1(ERROR_INVALID_PARAMETER,
-                        RIP_WARNING,
-                        "WinHelpA: NULL hWnd invalid for this type of help command (0x%X)",
-                        uCommand);
+            if (pwnd == NULL)
+            {
+                RIPERR1(ERROR_INVALID_PARAMETER, RIP_WARNING,
+                        "WinHelpA: NULL hWnd invalid for this type of help command (0x%X)", uCommand);
 
                 bResult = FALSE;
                 goto Exit_WinHelp;
             }
             dwType = TYPE_POPUP;
             lpwstrHelpWindowClass = szMS_POPUPHELP;
-        } else {
+        }
+        else
+        {
             dwType = TYPE_NORMAL;
             lpwstrHelpWindowClass = szMS_WINHELP;
         }
@@ -506,18 +520,24 @@ BOOL WinHelpA(
      * If the last input was a keyboard one, use the point in the center
      * of the focus window rectangle. MCostea #249270
      */
-    if (gpsi->bLastRITWasKeyboard) {
+    if (gpsi->bLastRITWasKeyboard)
+    {
         HWND hWndFocus = GetFocus();
         RECT rcWindow;
 
-        if (GetWindowRect(hWndFocus, &rcWindow)) {
-            ptCur.x = (rcWindow.left + rcWindow.right)/2;
-            ptCur.y = (rcWindow.top + rcWindow.bottom)/2;
-        } else {
+        if (GetWindowRect(hWndFocus, &rcWindow))
+        {
+            ptCur.x = (rcWindow.left + rcWindow.right) / 2;
+            ptCur.y = (rcWindow.top + rcWindow.bottom) / 2;
+        }
+        else
+        {
             goto getCursorPos;
         }
-    } else {
-getCursorPos:
+    }
+    else
+    {
+    getCursorPos:
         GetCursorPos(&ptCur);
     }
 
@@ -525,9 +545,10 @@ getCursorPos:
      * If we are handling the HELP_CONTEXTMENU command, see if we
      * can determine the correct child window.
      */
-    if (uCommand == HELP_CONTEXTMENU && FIsParentDude(pwnd)) {
-        LONG        lPt;
-        int         nHit;
+    if (uCommand == HELP_CONTEXTMENU && FIsParentDude(pwnd))
+    {
+        LONG lPt;
+        int nHit;
         DLGENUMDATA DlgEnumData;
 
         /*
@@ -536,7 +557,7 @@ getCursorPos:
          *  control.  This makes it consistent across all 3.x and 4.0
          *  windows.
          */
-        lPt = MAKELONG(ptCur.x,ptCur.y);
+        lPt = MAKELONG(ptCur.x, ptCur.y);
         nHit = FindNCHit(pwnd, lPt);
         if ((nHit == HTCAPTION) || (nHit == HTSYSMENU))
             DefWindowProc(hwnd, WM_CONTEXTMENU, (WPARAM)hwnd, lPt);
@@ -563,19 +584,24 @@ getCursorPos:
         DlgEnumData.pwndControl = NULL;
         DlgEnumData.ptCurHelp = ptCur;
         EnumChildWindows(hwnd, (WNDENUMPROC)EnumHwndDlgChildProc, (LPARAM)&DlgEnumData);
-        if (DlgEnumData.pwndControl == NULL) {
+        if (DlgEnumData.pwndControl == NULL)
+        {
             /*
              * Can't find a control, so nothing to do.
              */
             goto Exit_WinHelp;
-        } else {
+        }
+        else
+        {
             /*
              * Remember this control because it will be used as the
              * control for context sensitive help.
              */
             pwndMain = DlgEnumData.pwndControl;
         }
-    } else {
+    }
+    else
+    {
         /*
          * We will use pwnd as our main control.  No need to lock it
          * because it is already locked.
@@ -588,9 +614,10 @@ getCursorPos:
      * context id by looking at the array of double word ID pairs that
      * have been passed in in dwData.
      */
-    if (uCommand == HELP_CONTEXTMENU || uCommand == HELP_WM_HELP) {
-        int     id;
-        int     i;
+    if (uCommand == HELP_CONTEXTMENU || uCommand == HELP_WM_HELP)
+    {
+        int id;
+        int i;
         LPDWORD pid;
 
         /*
@@ -598,8 +625,8 @@ getCursorPos:
          * in the LOWORD of spmenu to be sign extended to an int.
          * Don't sign extend so IDs like 8008 work
          */
-        id = (DWORD)(PTR_TO_ID(pwndMain->spmenu));   // get control id
-        pid = (LPDWORD) dwData;
+        id = (DWORD)(PTR_TO_ID(pwndMain->spmenu)); // get control id
+        pid = (LPDWORD)dwData;
 
         /*
          * Is the control's ID -1?
@@ -617,8 +644,8 @@ getCursorPos:
              * as the UI specs decided to have no context help
              * for these cases.  MCostea
              */
-            if ((TestWF(pwndMain, BFTYPEMASK) == BS_GROUPBOX) &&
-                IS_BUTTON(pwndMain)) {
+            if ((TestWF(pwndMain, BFTYPEMASK) == BS_GROUPBOX) && IS_BUTTON(pwndMain))
+            {
                 goto Exit_WinHelp;
             }
 
@@ -628,14 +655,16 @@ getCursorPos:
              * item until we find a valid id, or we have tried
              * MAX_ATTEMPTS times.
              */
-            do {
-                pwndCtrl = GetNextDlgHelpItem(REBASEPWND(pwndMain,spwndParent), pwndMain);
+            do
+            {
+                pwndCtrl = GetNextDlgHelpItem(REBASEPWND(pwndMain, spwndParent), pwndMain);
 
                 /*
                  * pwndCtrl will be NULL if hwndMain doesn't have a parent,
                  * or if there are no tab stops.
                  */
-                if (!pwndCtrl) {
+                if (!pwndCtrl)
+                {
                     /*
                      * Remember to unlock the control
                      */
@@ -653,15 +682,17 @@ getCursorPos:
             } while (((SHORT)id == -1) && (++cAttempts < MAX_ATTEMPTS));
         }
 
-        if ((SHORT)id == -1) {
+        if ((SHORT)id == -1)
+        {
             id = -1;
         }
 
         /*
          * Find the id value in array of id/help context values
          */
-        for (i = 0; pid[i]; i += 2) {
-            if ((int) pid[i] == id)
+        for (i = 0; pid[i]; i += 2)
+        {
+            if ((int)pid[i] == id)
                 break;
         }
 
@@ -669,14 +700,16 @@ getCursorPos:
          * Since no help was specified for the found control, see if
          * the control is one of the known ID (i.e., OK, Cancel...)
          */
-        if (!pid[i]) {
+        if (!pid[i])
+        {
             /*
              * Help for the standard controls is in the default
              * help file windows.hlp.  Switch to this file.
              */
             lpszHelp = szDefaultHelpFileA;
 
-            switch (id) {
+            switch (id)
+            {
             case IDOK:
                 dwData = IDH_OK;
                 break;
@@ -696,13 +729,16 @@ getCursorPos:
                  */
                 dwData = IDH_MISSING_CONTEXT;
             }
-        } else {
+        }
+        else
+        {
             dwData = pid[i + 1];
-            if (dwData == (DWORD)-1) {
+            if (dwData == (DWORD)-1)
+            {
                 /*
                  * Remember, to unlock the control
                  */
-                goto Exit_WinHelp;     // caller doesn't want help after all
+                goto Exit_WinHelp; // caller doesn't want help after all
             }
         }
 
@@ -718,15 +754,15 @@ getCursorPos:
              * Must lock pwndMain because it may have been reassigned above.
              */
             cmd = HelpMenu(HW(pwndMain), &ptCur);
-            if (cmd <= 0)   // probably means user cancelled the menu
+            if (cmd <= 0) // probably means user cancelled the menu
                 goto Exit_WinHelp;
         }
 
         /*
          * Create WM_WINHELP's HLP data structure for HELP_SETPOPUP_POS
          */
-        if (!(lpHlp = HFill(lpszHelp, HELP_SETPOPUP_POS,
-                MAKELONG(pwndMain->rcWindow.left, pwndMain->rcWindow.top)))) {
+        if (!(lpHlp = HFill(lpszHelp, HELP_SETPOPUP_POS, MAKELONG(pwndMain->rcWindow.left, pwndMain->rcWindow.top))))
+        {
             /*
              * Remember to unlock pwndMain if needed
              */
@@ -740,7 +776,8 @@ getCursorPos:
          * WinHlp32 window and send the HELP_SETPOPUP_POS.  No recursion.
          */
         hwndHelp = FindWinHelpWindow(lpwstrHelpWindowClass, dwType, TRUE);
-        if (hwndHelp == NULL) {
+        if (hwndHelp == NULL)
+        {
             /*
              * Uable to communicate with WinHlp32.exe.
              * Remember to unlock the control
@@ -756,7 +793,8 @@ getCursorPos:
         LocalFree(lpHlp);
         lpHlp = NULL;
 
-        if (!lResult) {
+        if (!lResult)
+        {
             /*
              * WinHlp32 couldn't process the command. Bail out!
              */
@@ -771,12 +809,13 @@ getCursorPos:
     }
 
 
-    if (uCommand == HELP_CONTEXTPOPUP) {
+    if (uCommand == HELP_CONTEXTPOPUP)
+    {
         /*
          * If no help file was specified, use windows.hlp
          */
         if (lpszHelp == NULL || *lpszHelp == '\0')
-            lpszHelp = szDefaultHelpFileA;  // default: use windows.hlp
+            lpszHelp = szDefaultHelpFileA; // default: use windows.hlp
 
         /*
          *  WINHELP.EXE will call SetForegroundWindow on the hwnd that we pass
@@ -785,7 +824,9 @@ getCursorPos:
          *  not the control that wants help.
          */
         pwndTop = GetTopLevelWindow(pwndMain);
-    } else {
+    }
+    else
+    {
         pwndTop = pwndMain;
     }
 
@@ -793,7 +834,8 @@ getCursorPos:
     /*
      * Move Help file name to a handle
      */
-    if (!(lpHlp = HFill(lpszHelp, uCommand, dwData))) {
+    if (!(lpHlp = HFill(lpszHelp, uCommand, dwData)))
+    {
         /*
          * Can't allocate memory
          */
@@ -805,7 +847,8 @@ getCursorPos:
      *  Get a pointer to the help window.
      */
     hwndHelp = FindWinHelpWindow(lpwstrHelpWindowClass, dwType, (uCommand != HELP_QUIT));
-    if (hwndHelp == NULL) {
+    if (hwndHelp == NULL)
+    {
         if (uCommand != HELP_QUIT)
             /*
              * Can't find Winhlp
@@ -825,7 +868,8 @@ getCursorPos:
      * Free the help info data structure (if not already free).
      */
 Exit_WinHelp:
-    if (lpHlp != NULL) {
+    if (lpHlp != NULL)
+    {
         LocalFree(lpHlp);
     }
 
@@ -1091,7 +1135,6 @@ MapIdToHelp:
 #endif
 
 
-
 /***************************************************************************\
 * WinHelpW
 *
@@ -1099,11 +1142,7 @@ MapIdToHelp:
 * Our help engine is ASCII only.
 *
 \***************************************************************************/
-BOOL WinHelpW(
-    HWND hwndMain,
-    LPCWSTR lpwszHelp,
-    UINT uCommand,
-    ULONG_PTR dwData)
+BOOL WinHelpW(HWND hwndMain, LPCWSTR lpwszHelp, UINT uCommand, ULONG_PTR dwData)
 {
     BOOL fSuccess = FALSE;
     LPSTR lpAnsiHelp = NULL;
@@ -1116,33 +1155,34 @@ BOOL WinHelpW(
     /*
      * First convert the string.
      */
-    if (lpwszHelp != NULL &&
-            !WCSToMB(lpwszHelp, -1, &lpAnsiHelp, -1, TRUE)) {
+    if (lpwszHelp != NULL && !WCSToMB(lpwszHelp, -1, &lpAnsiHelp, -1, TRUE))
+    {
         return FALSE;
     }
 
     /*
      * Then convert dwData if needed
      */
-    switch (uCommand) {
+    switch (uCommand)
+    {
     case HELP_MULTIKEY:
-        if (!WCSToMB(((PMULTIKEYHELPW)dwData)->szKeyphrase, -1, &lpAnsiKey,
-                -1, TRUE)) {
+        if (!WCSToMB(((PMULTIKEYHELPW)dwData)->szKeyphrase, -1, &lpAnsiKey, -1, TRUE))
+        {
             goto FreeAnsiHelp;
         }
 
-        pmkh = (PMULTIKEYHELPA)LocalAlloc(LPTR,
-                sizeof(MULTIKEYHELPA) + strlen(lpAnsiKey));
-        if (pmkh == NULL) {
+        pmkh = (PMULTIKEYHELPA)LocalAlloc(LPTR, sizeof(MULTIKEYHELPA) + strlen(lpAnsiKey));
+        if (pmkh == NULL)
+        {
             goto FreeAnsiKeyAndHelp;
         }
 
         pmkh->mkSize = sizeof(MULTIKEYHELPA) + strlen(lpAnsiKey);
-        Status = RtlUnicodeToMultiByteN((LPSTR)&pmkh->mkKeylist, sizeof(CHAR),
-                NULL, (LPWSTR)&((PMULTIKEYHELPW)dwData)->mkKeylist,
-                sizeof(WCHAR));
+        Status = RtlUnicodeToMultiByteN((LPSTR)&pmkh->mkKeylist, sizeof(CHAR), NULL,
+                                        (LPWSTR) & ((PMULTIKEYHELPW)dwData)->mkKeylist, sizeof(WCHAR));
         strcpy(pmkh->szKeyphrase, lpAnsiKey);
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             goto FreeAnsiKeyAndHelp;
         }
 
@@ -1150,17 +1190,18 @@ BOOL WinHelpW(
         break;
 
     case HELP_SETWINPOS:
-        if (!WCSToMB(((PHELPWININFOW)dwData)->rgchMember, -1, &lpAnsiKey,
-                -1, TRUE)) {
+        if (!WCSToMB(((PHELPWININFOW)dwData)->rgchMember, -1, &lpAnsiKey, -1, TRUE))
+        {
             goto FreeAnsiKeyAndHelp;
         }
 
         phwi = (PHELPWININFOA)LocalAlloc(LPTR, ((PHELPWININFOW)dwData)->wStructSize);
-        if (phwi == NULL) {
+        if (phwi == NULL)
+        {
             goto FreeAnsiKeyAndHelp;
         }
 
-        *phwi = *((PHELPWININFOA)dwData);   // copies identical parts
+        *phwi = *((PHELPWININFOA)dwData); // copies identical parts
         strcpy(phwi->rgchMember, lpAnsiKey);
         dwData = (ULONG_PTR)phwi;
         break;
@@ -1168,7 +1209,8 @@ BOOL WinHelpW(
     case HELP_KEY:
     case HELP_PARTIALKEY:
     case HELP_COMMAND:
-        if (!WCSToMB((LPCTSTR)dwData, -1, &lpAnsiKey, -1, TRUE)) {
+        if (!WCSToMB((LPCTSTR)dwData, -1, &lpAnsiKey, -1, TRUE))
+        {
             goto FreeAnsiKeyAndHelp;
         }
 
@@ -1181,16 +1223,19 @@ BOOL WinHelpW(
      */
     fSuccess = WinHelpA(hwndMain, lpAnsiHelp, uCommand, dwData);
 
-    if (pmkh) {
+    if (pmkh)
+    {
         LocalFree(pmkh);
     }
 
-    if (phwi) {
+    if (phwi)
+    {
         LocalFree(phwi);
     }
 
 FreeAnsiKeyAndHelp:
-    if (lpAnsiKey) {
+    if (lpAnsiKey)
+    {
         LocalFree(lpAnsiKey);
     }
 

@@ -16,7 +16,7 @@
 /*** Miscellaneous Constants
  */
 
-#define MAX_CMDLINE_LEN         255
+#define MAX_CMDLINE_LEN 255
 
 /*** Local function prototypes
  */
@@ -54,7 +54,7 @@ VOID LOCAL Debugger(PDBGCMD pDbgCmds, PSZ pszPrompt)
         }
     }
 
-}       //Debugger
+} //Debugger
 
 /***LP  DbgExecuteCmd - execute a debugger command
  *
@@ -83,8 +83,7 @@ LONG LOCAL DbgExecuteCmd(PDBGCMD pDbgCmds, PSZ pszCmd)
                 rc = DBGERR_QUIT;
             }
             else if ((pDbgCmds[i].pArgTable == NULL) ||
-                     ((rc = DbgParseArgs(pDbgCmds[i].pArgTable, &dwNumArgs,
-                                         &dwNonSWArgs, pszTokenSeps)) ==
+                     ((rc = DbgParseArgs(pDbgCmds[i].pArgTable, &dwNumArgs, &dwNonSWArgs, pszTokenSeps)) ==
                       ARGERR_NONE))
             {
                 if (pDbgCmds[i].pfnCmd != NULL)
@@ -104,6 +103,6 @@ LONG LOCAL DbgExecuteCmd(PDBGCMD pDbgCmds, PSZ pszCmd)
     }
 
     return rc;
-}       //DbgExecuteCmd
+} //DbgExecuteCmd
 
-#endif  //ifdef DEBUGGER
+#endif //ifdef DEBUGGER

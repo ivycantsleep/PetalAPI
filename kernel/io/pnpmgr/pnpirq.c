@@ -25,56 +25,33 @@ Revision History:
 // Constants
 //
 
-#define MAX_ULONGLONG           ((ULONGLONG) -1)
+#define MAX_ULONGLONG ((ULONGLONG) - 1)
 
 //
 // Prototypes
 //
 
 NTSTATUS
-IopIrqInitialize(
-    VOID
-    );
+IopIrqInitialize(VOID);
 
 NTSTATUS
-IopIrqUnpackRequirement(
-    IN PIO_RESOURCE_DESCRIPTOR Descriptor,
-    OUT PULONGLONG Minimum,
-    OUT PULONGLONG Maximum,
-    OUT PULONG Length,
-    OUT PULONG Alignment
-    );
+IopIrqUnpackRequirement(IN PIO_RESOURCE_DESCRIPTOR Descriptor, OUT PULONGLONG Minimum, OUT PULONGLONG Maximum,
+                        OUT PULONG Length, OUT PULONG Alignment);
 
 NTSTATUS
-IopIrqPackResource(
-    IN PIO_RESOURCE_DESCRIPTOR Requirement,
-    IN ULONGLONG Start,
-    OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor
-    );
+IopIrqPackResource(IN PIO_RESOURCE_DESCRIPTOR Requirement, IN ULONGLONG Start,
+                   OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor);
 
-LONG
-IopIrqScoreRequirement(
-    IN PIO_RESOURCE_DESCRIPTOR Descriptor
-    );
+LONG IopIrqScoreRequirement(IN PIO_RESOURCE_DESCRIPTOR Descriptor);
 
 NTSTATUS
-IopIrqUnpackResource(
-    IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor,
-    OUT PULONGLONG Start,
-    OUT PULONG Length
-    );
+IopIrqUnpackResource(IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor, OUT PULONGLONG Start, OUT PULONG Length);
 
 NTSTATUS
-IopIrqTranslateOrdering(
-    OUT PIO_RESOURCE_DESCRIPTOR Target,
-    IN PIO_RESOURCE_DESCRIPTOR Source
-    );
+IopIrqTranslateOrdering(OUT PIO_RESOURCE_DESCRIPTOR Target, IN PIO_RESOURCE_DESCRIPTOR Source);
 
 BOOLEAN
-IopIrqFindSuitableRange(
-    PARBITER_INSTANCE Arbiter,
-    PARBITER_ALLOCATION_STATE State
-    );
+IopIrqFindSuitableRange(PARBITER_INSTANCE Arbiter, PARBITER_ALLOCATION_STATE State);
 
 
 //
@@ -97,10 +74,7 @@ IopIrqFindSuitableRange(
 //
 #if !defined(NO_LEGACY_DRIVERS)
 NTSTATUS
-IopIrqTranslateOrdering(
-    OUT PIO_RESOURCE_DESCRIPTOR Target,
-    IN PIO_RESOURCE_DESCRIPTOR Source
-    )
+IopIrqTranslateOrdering(OUT PIO_RESOURCE_DESCRIPTOR Target, IN PIO_RESOURCE_DESCRIPTOR Source)
 
 /*
 
@@ -134,7 +108,8 @@ Return Value:
 
     *Target = *Source;
 
-    if (Source->Type != CmResourceTypeInterrupt) {
+    if (Source->Type != CmResourceTypeInterrupt)
+    {
         return STATUS_SUCCESS;
     }
 
@@ -144,48 +119,29 @@ Return Value:
 
 
     ARB_PRINT(
-        2,
-        ("Translating Vector 0x%x-0x%x =>",
-        Source->u.Interrupt.MinimumVector,
-        Source->u.Interrupt.MaximumVector
-        ));
+        2, ("Translating Vector 0x%x-0x%x =>", Source->u.Interrupt.MinimumVector, Source->u.Interrupt.MaximumVector));
 
-    Target->u.Interrupt.MinimumVector =
-        HalGetInterruptVector(Isa,
-                              0,
-                              Source->u.Interrupt.MinimumVector,
-                              Source->u.Interrupt.MinimumVector,
-                              &level,
-                              &affinity
-                              );
+    Target->u.Interrupt.MinimumVector = HalGetInterruptVector(Isa, 0, Source->u.Interrupt.MinimumVector,
+                                                              Source->u.Interrupt.MinimumVector, &level, &affinity);
 
-    if (affinity == 0) {
-        ARB_PRINT(2,("Translation failed\n"));
+    if (affinity == 0)
+    {
+        ARB_PRINT(2, ("Translation failed\n"));
         *Target = *Source;
         return STATUS_SUCCESS;
     }
 
-    Target->u.Interrupt.MaximumVector =
-        HalGetInterruptVector(Isa,
-                              0,
-                              Source->u.Interrupt.MaximumVector,
-                              Source->u.Interrupt.MaximumVector,
-                              &level,
-                              &affinity
-                              );
+    Target->u.Interrupt.MaximumVector = HalGetInterruptVector(Isa, 0, Source->u.Interrupt.MaximumVector,
+                                                              Source->u.Interrupt.MaximumVector, &level, &affinity);
 
-    if (affinity == 0) {
-        ARB_PRINT(2,("Translation failed\n"));
+    if (affinity == 0)
+    {
+        ARB_PRINT(2, ("Translation failed\n"));
         *Target = *Source;
         return STATUS_SUCCESS;
     }
 
-    ARB_PRINT(
-        2,
-        ("0x%x-0x%x\n",
-        Target->u.Interrupt.MinimumVector,
-        Target->u.Interrupt.MaximumVector
-        ));
+    ARB_PRINT(2, ("0x%x-0x%x\n", Target->u.Interrupt.MinimumVector, Target->u.Interrupt.MaximumVector));
 
 
     return STATUS_SUCCESS;
@@ -193,9 +149,7 @@ Return Value:
 #endif // NO_LEGACY_DRIVERS
 
 NTSTATUS
-IopIrqInitialize(
-    VOID
-    )
+IopIrqInitialize(VOID)
 
 /*++
 
@@ -216,21 +170,19 @@ Return Value:
 {
 
     IopRootIrqArbiter.UnpackRequirement = IopIrqUnpackRequirement;
-    IopRootIrqArbiter.PackResource      = IopIrqPackResource;
-    IopRootIrqArbiter.UnpackResource    = IopIrqUnpackResource;
-    IopRootIrqArbiter.ScoreRequirement  = IopIrqScoreRequirement;
+    IopRootIrqArbiter.PackResource = IopIrqPackResource;
+    IopRootIrqArbiter.UnpackResource = IopIrqUnpackResource;
+    IopRootIrqArbiter.ScoreRequirement = IopIrqScoreRequirement;
 
     return ArbInitializeArbiterInstance(&IopRootIrqArbiter,
-                                        NULL,     // Indicates ROOT arbiter
-                                        CmResourceTypeInterrupt,
-                                        L"RootIRQ",
-                                        L"Root",
+                                        NULL, // Indicates ROOT arbiter
+                                        CmResourceTypeInterrupt, L"RootIRQ", L"Root",
 #if defined(NO_LEGACY_DRIVERS)
                                         NULL
 #else
                                         IopIrqTranslateOrdering
 #endif // NO_LEGACY_DRIVERS
-                                        );
+    );
 }
 
 //
@@ -238,13 +190,8 @@ Return Value:
 //
 
 NTSTATUS
-IopIrqUnpackRequirement(
-    IN PIO_RESOURCE_DESCRIPTOR Descriptor,
-    OUT PULONGLONG Minimum,
-    OUT PULONGLONG Maximum,
-    OUT PULONG Length,
-    OUT PULONG Alignment
-    )
+IopIrqUnpackRequirement(IN PIO_RESOURCE_DESCRIPTOR Descriptor, OUT PULONGLONG Minimum, OUT PULONGLONG Maximum,
+                        OUT PULONG Length, OUT PULONG Alignment)
 
 /*++
 
@@ -276,26 +223,18 @@ Return Value:
     ASSERT(Descriptor);
     ASSERT(Descriptor->Type == CmResourceTypeInterrupt);
 
-    ARB_PRINT(2,
-                ("Unpacking IRQ requirement %p => 0x%I64x-0x%I64x\n",
-                Descriptor,
-                (ULONGLONG) Descriptor->u.Interrupt.MinimumVector,
-                (ULONGLONG) Descriptor->u.Interrupt.MaximumVector
-                ));
+    ARB_PRINT(2, ("Unpacking IRQ requirement %p => 0x%I64x-0x%I64x\n", Descriptor,
+                  (ULONGLONG)Descriptor->u.Interrupt.MinimumVector, (ULONGLONG)Descriptor->u.Interrupt.MaximumVector));
 
-    *Minimum = (ULONGLONG) Descriptor->u.Interrupt.MinimumVector;
-    *Maximum = (ULONGLONG) Descriptor->u.Interrupt.MaximumVector;
+    *Minimum = (ULONGLONG)Descriptor->u.Interrupt.MinimumVector;
+    *Maximum = (ULONGLONG)Descriptor->u.Interrupt.MaximumVector;
     *Length = 1;
     *Alignment = 1;
 
     return STATUS_SUCCESS;
-
 }
 
-LONG
-IopIrqScoreRequirement(
-    IN PIO_RESOURCE_DESCRIPTOR Descriptor
-    )
+LONG IopIrqScoreRequirement(IN PIO_RESOURCE_DESCRIPTOR Descriptor)
 
 /*++
 
@@ -322,24 +261,16 @@ Return Value:
     ASSERT(Descriptor);
     ASSERT(Descriptor->Type == CmResourceTypeInterrupt);
 
-    score = Descriptor->u.Interrupt.MaximumVector -
-        Descriptor->u.Interrupt.MinimumVector + 1;
+    score = Descriptor->u.Interrupt.MaximumVector - Descriptor->u.Interrupt.MinimumVector + 1;
 
-    ARB_PRINT(2,
-                ("Scoring IRQ resource %p => %i\n",
-                Descriptor,
-                score
-                ));
+    ARB_PRINT(2, ("Scoring IRQ resource %p => %i\n", Descriptor, score));
 
     return score;
 }
 
 NTSTATUS
-IopIrqPackResource(
-    IN PIO_RESOURCE_DESCRIPTOR Requirement,
-    IN ULONGLONG Start,
-    OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor
-    )
+IopIrqPackResource(IN PIO_RESOURCE_DESCRIPTOR Requirement, IN ULONGLONG Start,
+                   OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor)
 
 /*++
 
@@ -367,28 +298,20 @@ Return Value:
     ASSERT(Requirement);
     ASSERT(Requirement->Type == CmResourceTypeInterrupt);
 
-    ARB_PRINT(2,
-                ("Packing IRQ resource %p => 0x%I64x\n",
-                Descriptor,
-                Start
-                ));
+    ARB_PRINT(2, ("Packing IRQ resource %p => 0x%I64x\n", Descriptor, Start));
 
     Descriptor->Type = CmResourceTypeInterrupt;
     Descriptor->Flags = Requirement->Flags;
     Descriptor->ShareDisposition = Requirement->ShareDisposition;
-    Descriptor->u.Interrupt.Vector = (ULONG) Start;
-    Descriptor->u.Interrupt.Level = (ULONG) Start;
+    Descriptor->u.Interrupt.Vector = (ULONG)Start;
+    Descriptor->u.Interrupt.Level = (ULONG)Start;
     Descriptor->u.Interrupt.Affinity = 0xFFFFFFFF;
 
     return STATUS_SUCCESS;
 }
 
 NTSTATUS
-IopIrqUnpackResource(
-    IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor,
-    OUT PULONGLONG Start,
-    OUT PULONG Length
-    )
+IopIrqUnpackResource(IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Descriptor, OUT PULONGLONG Start, OUT PULONG Length)
 
 /*++
 
@@ -419,12 +342,7 @@ Return Value:
     *Start = Descriptor->u.Interrupt.Vector;
     *Length = 1;
 
-    ARB_PRINT(2,
-                ("Unpacking IRQ resource %p => 0x%I64x\n",
-                Descriptor,
-                *Start
-                ));
+    ARB_PRINT(2, ("Unpacking IRQ resource %p => 0x%I64x\n", Descriptor, *Start));
 
     return STATUS_SUCCESS;
-
 }

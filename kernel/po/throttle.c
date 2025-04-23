@@ -33,13 +33,13 @@ Revision History:
 --*/
 #include "pop.h"
 
-#define POP_THROTTLE_NON_LINEAR     1
+#define POP_THROTTLE_NON_LINEAR 1
 
 //
 // Globals representing currently available performance levels
 //
 PSET_PROCESSOR_THROTTLE PopRealSetThrottle;
-UCHAR                   PopThunkThrottleScale;
+UCHAR PopThunkThrottleScale;
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, PopGetThrottle)
@@ -48,11 +48,9 @@ UCHAR                   PopThunkThrottleScale;
 #pragma alloc_text(PAGE, PopCalculatePerfIncreaseLevel)
 #pragma alloc_text(PAGE, PopCalculatePerfMinCapacity)
 #endif
-
+
 UCHAR
-PopCalculateBusyPercentage(
-    IN  PPROCESSOR_POWER_STATE  PState
-    )
+PopCalculateBusyPercentage(IN PPROCESSOR_POWER_STATE PState)
 /*++
 
 Routine Description:
@@ -72,18 +70,18 @@ Return Value:
 
 --*/
 {
-    PKPRCB      prcb;
-    PKTHREAD    thread;
-    UCHAR       frequency;
-    ULONGLONG   idle;
-    ULONG       busy;
-    ULONG       idleTimeDelta;
-    ULONG       cpuTimeDelta;
+    PKPRCB prcb;
+    PKTHREAD thread;
+    UCHAR frequency;
+    ULONGLONG idle;
+    ULONG busy;
+    ULONG idleTimeDelta;
+    ULONG cpuTimeDelta;
 
-    ASSERT( KeGetCurrentIrql() == DISPATCH_LEVEL );
-    ASSERT( KeGetCurrentPrcb() == CONTAINING_RECORD( PState, KPRCB, PowerState ) );
+    ASSERT(KeGetCurrentIrql() == DISPATCH_LEVEL);
+    ASSERT(KeGetCurrentPrcb() == CONTAINING_RECORD(PState, KPRCB, PowerState));
 
-    prcb = CONTAINING_RECORD( PState, KPRCB, PowerState );
+    prcb = CONTAINING_RECORD(PState, KPRCB, PowerState);
     thread = prcb->IdleThread;
 
     //
@@ -97,36 +95,27 @@ Return Value:
     // We cannot be more than 100% idle, and if we are then we are
     // 0 busy (by definition), so apply the proper caps
     //
-    if (idle > 100) {
+    if (idle > 100)
+    {
 
         idle = 0;
-
     }
 
-    busy = 100 - (UCHAR) idle;
-    frequency = (UCHAR) (busy * PState->CurrentThrottle / POWER_PERF_SCALE);
+    busy = 100 - (UCHAR)idle;
+    frequency = (UCHAR)(busy * PState->CurrentThrottle / POWER_PERF_SCALE);
 
     //
     // Remember what it was --- this will make debugging so much easier
     //
     prcb->PowerState.LastBusyPercentage = frequency;
-    PoPrint(
-        PO_THROTTLE_DETAIL,
-        ("PopCalculateBusyPercentage: %d%% of %d%% (dCpu = %ld dIdle = %ld)\n",
-         busy,
-         PState->CurrentThrottle,
-         cpuTimeDelta,
-         idleTimeDelta
-         )
-        );
+    PoPrint(PO_THROTTLE_DETAIL, ("PopCalculateBusyPercentage: %d%% of %d%% (dCpu = %ld dIdle = %ld)\n", busy,
+                                 PState->CurrentThrottle, cpuTimeDelta, idleTimeDelta));
     return frequency;
 }
 
-
+
 UCHAR
-PopCalculateC3Percentage(
-    IN  PPROCESSOR_POWER_STATE  PState
-    )
+PopCalculateC3Percentage(IN PPROCESSOR_POWER_STATE PState)
 /*++
 
 Routine Description:
@@ -145,60 +134,48 @@ Return Value:
 
 --*/
 {
-    PKPRCB          prcb;
-    ULONGLONG       cpuTimeDelta;
-    ULONGLONG       c3;
-    LARGE_INTEGER   c3Delta;
+    PKPRCB prcb;
+    ULONGLONG cpuTimeDelta;
+    ULONGLONG c3;
+    LARGE_INTEGER c3Delta;
 
-    ASSERT( KeGetCurrentIrql() == DISPATCH_LEVEL );
-    ASSERT( KeGetCurrentPrcb() == CONTAINING_RECORD( PState, KPRCB, PowerState ) );
+    ASSERT(KeGetCurrentIrql() == DISPATCH_LEVEL);
+    ASSERT(KeGetCurrentPrcb() == CONTAINING_RECORD(PState, KPRCB, PowerState));
 
-    prcb = CONTAINING_RECORD( PState, KPRCB, PowerState );
+    prcb = CONTAINING_RECORD(PState, KPRCB, PowerState);
 
     //
     // Calculate the C3 time delta in terms of nanosecs. The formulas for
     // conversion are taken from PopConvertUsToPerfCount
     //
     c3Delta.QuadPart = PState->TotalIdleStateTime[2] - PState->PreviousC3StateTime;
-    c3Delta.QuadPart = (US2SEC * US2TIME * c3Delta.QuadPart) /
-        PopPerfCounterFrequency.QuadPart;
+    c3Delta.QuadPart = (US2SEC * US2TIME * c3Delta.QuadPart) / PopPerfCounterFrequency.QuadPart;
 
     //
     // Now calculate the CpuTimeDelta in terms of nanosecs
     //
-    cpuTimeDelta = (POP_CUR_TIME(prcb) - PState->PerfSystemTime) *
-        KeTimeIncrement;
+    cpuTimeDelta = (POP_CUR_TIME(prcb) - PState->PerfSystemTime) * KeTimeIncrement;
 
     //
     // Figure out the ratio of the two. Remember to cap it at 100%
     //
     c3 = c3Delta.QuadPart * 100 / cpuTimeDelta;
-    if (c3 > 100) {
+    if (c3 > 100)
+    {
 
         c3 = 100;
-
     }
 
     //
     // Remember what it was --- this will make debugging so much easier
     //
-    prcb->PowerState.LastC3Percentage = (UCHAR) c3;
-    PoPrint(
-        PO_THROTTLE_DETAIL,
-        ("PopCalculateC3Percentage: C3 = %d%% (dCpu = %ld dC3 = %ld)\n",
-         (UCHAR) c3,
-         cpuTimeDelta,
-         c3Delta.QuadPart
-         )
-        );
-    return (UCHAR) c3;
+    prcb->PowerState.LastC3Percentage = (UCHAR)c3;
+    PoPrint(PO_THROTTLE_DETAIL, ("PopCalculateC3Percentage: C3 = %d%% (dCpu = %ld dC3 = %ld)\n", (UCHAR)c3,
+                                 cpuTimeDelta, c3Delta.QuadPart));
+    return (UCHAR)c3;
 }
-
-VOID
-PopCalculatePerfDecreaseLevel(
-    IN  PPROCESSOR_PERF_STATE   PerfStates,
-    IN  ULONG                   PerfStatesCount
-    )
+
+VOID PopCalculatePerfDecreaseLevel(IN PPROCESSOR_PERF_STATE PerfStates, IN ULONG PerfStatesCount)
 /*++
 
 Routine Description:
@@ -222,30 +199,31 @@ Return Value:
     // versus which one we care about is to use two variables to keep track
     // of the various indexes.
     //
-    ULONG   i;
-    ULONG   j;
-    ULONG   deltaPerf;
+    ULONG i;
+    ULONG j;
+    ULONG deltaPerf;
 
     PAGED_CODE();
 
     //
     // Sanity check
     //
-    if (PerfStatesCount == 0) {
+    if (PerfStatesCount == 0)
+    {
 
         return;
-
     }
 
     //
     // Set the decrease value for the last element in the array
     //
-    PerfStates[PerfStatesCount-1].DecreaseLevel = 0;
+    PerfStates[PerfStatesCount - 1].DecreaseLevel = 0;
 
     //
     // Calculate the base decrease level
     //
-    for (i = 0; i < (PerfStatesCount - 1); i++) {
+    for (i = 0; i < (PerfStatesCount - 1); i++)
+    {
 
         //
         // it should be noted that for the decrease level, the
@@ -253,8 +231,7 @@ Return Value:
         // deltaperf level calculated for the increase level. This
         // is due to how we walk the array and is non-trivial to fix.
         //
-        deltaPerf = PerfStates[i].PercentFrequency -
-            PerfStates[i+1].PercentFrequency;
+        deltaPerf = PerfStates[i].PercentFrequency - PerfStates[i + 1].PercentFrequency;
         deltaPerf *= PopPerfDecreasePercentModifier;
         deltaPerf /= POWER_PERF_SCALE;
         deltaPerf += PopPerfDecreaseAbsoluteModifier;
@@ -263,35 +240,29 @@ Return Value:
         // We can't have a delta perf that larger than the current
         // CPU frequency. This would cause the decrease level to go negative
         //
-        if (deltaPerf > PerfStates[i+1].PercentFrequency) {
+        if (deltaPerf > PerfStates[i + 1].PercentFrequency)
+        {
 
             deltaPerf = 0;
+        }
+        else
+        {
 
-        } else {
-
-            deltaPerf = PerfStates[i+1].PercentFrequency - deltaPerf;
-
+            deltaPerf = PerfStates[i + 1].PercentFrequency - deltaPerf;
         }
 
         //
         // Set the decrease level to the appropiate value
         //
-        PerfStates[i].DecreaseLevel = (UCHAR) deltaPerf;
-
+        PerfStates[i].DecreaseLevel = (UCHAR)deltaPerf;
     }
 
 #if DBG
-    for (i = 0; i < PerfStatesCount; i++) {
+    for (i = 0; i < PerfStatesCount; i++)
+    {
 
-        PoPrint(
-            PO_THROTTLE,
-            ("PopCalculatePerfDecreaseLevel: (%d) %d%% DecreaseLevel: %d%%\n",
-             i,
-             PerfStates[i].PercentFrequency,
-             PerfStates[i].DecreaseLevel
-             )
-            );
-
+        PoPrint(PO_THROTTLE, ("PopCalculatePerfDecreaseLevel: (%d) %d%% DecreaseLevel: %d%%\n", i,
+                              PerfStates[i].PercentFrequency, PerfStates[i].DecreaseLevel));
     }
 #endif
 #if 0
@@ -351,28 +322,17 @@ Return Value:
     }
 #endif
 #if DBG
-    for (i = 0; i < PerfStatesCount; i++) {
+    for (i = 0; i < PerfStatesCount; i++)
+    {
 
-        PoPrint(
-            PO_THROTTLE,
-            ("PopCalculatePerfDecreaseLevel: (%d) %d%% DecreaseLevel: %d%%\n",
-             i,
-             PerfStates[i].PercentFrequency,
-             PerfStates[i].DecreaseLevel
-             )
-            );
-
+        PoPrint(PO_THROTTLE, ("PopCalculatePerfDecreaseLevel: (%d) %d%% DecreaseLevel: %d%%\n", i,
+                              PerfStates[i].PercentFrequency, PerfStates[i].DecreaseLevel));
     }
 #endif
-
 }
-
-VOID
-PopCalculatePerfIncreaseDecreaseTime(
-    IN  PPROCESSOR_PERF_STATE       PerfStates,
-    IN  ULONG                       PerfStatesCount,
-    IN  PPROCESSOR_STATE_HANDLER2   PerfHandler
-    )
+
+VOID PopCalculatePerfIncreaseDecreaseTime(IN PPROCESSOR_PERF_STATE PerfStates, IN ULONG PerfStatesCount,
+                                          IN PPROCESSOR_STATE_HANDLER2 PerfHandler)
 /*++
 
 Routine Description:
@@ -391,19 +351,19 @@ Return Value:
 
 --*/
 {
-    ULONG   i;
-    ULONG   time;
-    ULONG   tickRate;
+    ULONG i;
+    ULONG time;
+    ULONG tickRate;
 
     PAGED_CODE();
 
     //
     // Sanity Check
     //
-    if (PerfStatesCount == 0) {
+    if (PerfStatesCount == 0)
+    {
 
         return;
-
     }
 
     //
@@ -414,28 +374,25 @@ Return Value:
     //
     // We can never increase from State 0
     //
-    PerfStates[0].IncreaseTime = (ULONG) - 1;
+    PerfStates[0].IncreaseTime = (ULONG)-1;
 
     //
     // We can never decrease from State <x>
     //
-    PerfStates[PerfStatesCount-1].DecreaseTime = (ULONG) -1;
+    PerfStates[PerfStatesCount - 1].DecreaseTime = (ULONG)-1;
 
     //
     // Might as tell say what the hardware latency is...
     //
-    PoPrint(
-        PO_THROTTLE,
-        ("PopCalculatePerfIncreaseDecreaseTime: Hardware Latency %d us\n",
-         PerfHandler->HardwareLatency
-         )
-        );
+    PoPrint(PO_THROTTLE,
+            ("PopCalculatePerfIncreaseDecreaseTime: Hardware Latency %d us\n", PerfHandler->HardwareLatency));
 
     //
     // Loop over the remaining elements to calculate their
     // increase and decrease times
     //
-    for (i = 1; i < PerfStatesCount; i++) {
+    for (i = 1; i < PerfStatesCount; i++)
+    {
 
         //
         // DecreaseTime is calculated for the previous state
@@ -443,7 +400,8 @@ Return Value:
         // is linear
         //
         time = PerfHandler->HardwareLatency * 10;
-        if (PerfStates[i].Flags & POP_THROTTLE_NON_LINEAR) {
+        if (PerfStates[i].Flags & POP_THROTTLE_NON_LINEAR)
+        {
 
             time *= 10;
             time += PopPerfDecreaseTimeValue;
@@ -451,31 +409,25 @@ Return Value:
             //
             // We do have some minimums that we must respect
             //
-            if (time < PopPerfDecreaseMinimumTime) {
+            if (time < PopPerfDecreaseMinimumTime)
+            {
 
                 time = PopPerfDecreaseMinimumTime;
-
             }
-
-        } else {
+        }
+        else
+        {
 
             time += PopPerfDecreaseTimeValue;
-
         }
 
         //
         // Time is in microseconds (us) and we need it in
         // units of KeTimeIncrement
         //
-        PoPrint(
-            PO_THROTTLE,
-            ("PopCalculatePerfIncreaseDecreaseTime: (%d) %d%% DecreaseTime %d us\n",
-             (i-1),
-             PerfStates[i-1].PercentFrequency,
-             time
-             )
-            );
-        PerfStates[i-1].DecreaseTime = time * US2TIME / tickRate + 1;
+        PoPrint(PO_THROTTLE, ("PopCalculatePerfIncreaseDecreaseTime: (%d) %d%% DecreaseTime %d us\n", (i - 1),
+                              PerfStates[i - 1].PercentFrequency, time));
+        PerfStates[i - 1].DecreaseTime = time * US2TIME / tickRate + 1;
 
         //
         // IncreaseTime is calculated for the current state
@@ -483,7 +435,8 @@ Return Value:
         // is linear
         //
         time = PerfHandler->HardwareLatency;
-        if (PerfStates[i].Flags & POP_THROTTLE_NON_LINEAR) {
+        if (PerfStates[i].Flags & POP_THROTTLE_NON_LINEAR)
+        {
 
             time *= 10;
             time += PopPerfIncreaseTimeValue;
@@ -491,56 +444,38 @@ Return Value:
             //
             // We do have some minimums that we must respect
             //
-            if (time < PopPerfIncreaseMinimumTime) {
+            if (time < PopPerfIncreaseMinimumTime)
+            {
 
                 time = PopPerfIncreaseMinimumTime;
-
             }
-
-        } else {
+        }
+        else
+        {
 
             time += PopPerfIncreaseTimeValue;
-
         }
 
         //
         // Time is in microseconds (us) and we need it in
         // units of KeTimeIncrement
         //
-        PoPrint(
-            PO_THROTTLE,
-            ("PopCalculatePerfIncreaseDecreaseTime: (%d) %d%% IncreaseTime %d us\n",
-             i,
-             PerfStates[i].PercentFrequency,
-             time
-             )
-            );
+        PoPrint(PO_THROTTLE, ("PopCalculatePerfIncreaseDecreaseTime: (%d) %d%% IncreaseTime %d us\n", i,
+                              PerfStates[i].PercentFrequency, time));
         PerfStates[i].IncreaseTime = time * US2TIME / tickRate + 1;
     }
 
 #if DBG
-    for (i = 0; i < PerfStatesCount; i++) {
+    for (i = 0; i < PerfStatesCount; i++)
+    {
 
-        PoPrint(
-            PO_THROTTLE,
-            ("PopCalculatePerfIncreaseDecreaseTime: (%d) %d%% IncreaseTime: %d DecreaseTime: %d\n",
-             i,
-             PerfStates[i].PercentFrequency,
-             PerfStates[i].IncreaseTime,
-             PerfStates[i].DecreaseTime
-             )
-            );
-
+        PoPrint(PO_THROTTLE, ("PopCalculatePerfIncreaseDecreaseTime: (%d) %d%% IncreaseTime: %d DecreaseTime: %d\n", i,
+                              PerfStates[i].PercentFrequency, PerfStates[i].IncreaseTime, PerfStates[i].DecreaseTime));
     }
 #endif
-
 }
-
-VOID
-PopCalculatePerfIncreaseLevel(
-    IN  PPROCESSOR_PERF_STATE   PerfStates,
-    IN  ULONG                   PerfStatesCount
-    )
+
+VOID PopCalculatePerfIncreaseLevel(IN PPROCESSOR_PERF_STATE PerfStates, IN ULONG PerfStatesCount)
 /*++
 
 Routine Description:
@@ -558,18 +493,18 @@ Return Value:
 
 --*/
 {
-    ULONG   i;
-    ULONG   deltaPerf;
+    ULONG i;
+    ULONG deltaPerf;
 
     PAGED_CODE();
 
     //
     // Sanity check
     //
-    if (PerfStatesCount == 0) {
+    if (PerfStatesCount == 0)
+    {
 
         return;
-
     }
 
     //
@@ -580,7 +515,8 @@ Return Value:
     //
     // Calculate the base increase level
     //
-    for (i = 1; i < PerfStatesCount; i++) {
+    for (i = 1; i < PerfStatesCount; i++)
+    {
 
         //
         // it should be noted that for the decrease level, the
@@ -588,8 +524,7 @@ Return Value:
         // deltaperf level calculated for the increase level. This
         // is due to how we walk the array and is non-trivial to fix.
         //
-        deltaPerf = PerfStates[i-1].PercentFrequency -
-            PerfStates[i].PercentFrequency;
+        deltaPerf = PerfStates[i - 1].PercentFrequency - PerfStates[i].PercentFrequency;
         deltaPerf *= PopPerfIncreasePercentModifier;
         deltaPerf /= POWER_PERF_SCALE;
         deltaPerf += PopPerfIncreaseAbsoluteModifier;
@@ -599,45 +534,34 @@ Return Value:
         // out mathematically that this would happen, then the safe thing
         // to do is not allow for promotion out of this state...
         //
-        if (deltaPerf > PerfStates[i].PercentFrequency) {
+        if (deltaPerf > PerfStates[i].PercentFrequency)
+        {
 
             deltaPerf = POWER_PERF_SCALE + 1;
-
-        } else {
+        }
+        else
+        {
 
             deltaPerf = PerfStates[i].PercentFrequency - deltaPerf;
-
         }
 
         //
         // Set the decrease level to the appropiate value
         //
-        PerfStates[i].IncreaseLevel = (UCHAR) deltaPerf;
-
+        PerfStates[i].IncreaseLevel = (UCHAR)deltaPerf;
     }
 
 #if DBG
-    for (i = 0; i < PerfStatesCount; i++) {
+    for (i = 0; i < PerfStatesCount; i++)
+    {
 
-        PoPrint(
-            PO_THROTTLE,
-            ("PopCalculatePerfIncreaseLevel: (%d) %d%% IncreaseLevel: %d%%\n",
-             i,
-             PerfStates[i].PercentFrequency,
-             PerfStates[i].IncreaseLevel
-             )
-            );
-
+        PoPrint(PO_THROTTLE, ("PopCalculatePerfIncreaseLevel: (%d) %d%% IncreaseLevel: %d%%\n", i,
+                              PerfStates[i].PercentFrequency, PerfStates[i].IncreaseLevel));
     }
 #endif
-
 }
-
-VOID
-PopCalculatePerfMinCapacity(
-    IN  PPROCESSOR_PERF_STATE   PerfStates,
-    IN  ULONG                   PerfStatesCount
-    )
+
+VOID PopCalculatePerfMinCapacity(IN PPROCESSOR_PERF_STATE PerfStates, IN ULONG PerfStatesCount)
 /*++
 
 Routine Description:
@@ -657,48 +581,48 @@ Return Value:
 
 --*/
 {
-    UCHAR   i;
-    UCHAR   kneeThrottleIndex = 0;
-    UCHAR   num;
-    UCHAR   total = (UCHAR) PopPerfDegradeThrottleMinCapacity;
-    UCHAR   width = 0;
+    UCHAR i;
+    UCHAR kneeThrottleIndex = 0;
+    UCHAR num;
+    UCHAR total = (UCHAR)PopPerfDegradeThrottleMinCapacity;
+    UCHAR width = 0;
 
     PAGED_CODE();
 
     //
     // Sanity check...
     //
-    if (!PerfStatesCount) {
+    if (!PerfStatesCount)
+    {
 
         return;
-
     }
 
     //
     // Calculate the knee of the curve ... this is quick and avoids
     // having to pass this information around
     //
-    for (i = (UCHAR) PerfStatesCount ; i >= 1; i--) {
+    for (i = (UCHAR)PerfStatesCount; i >= 1; i--)
+    {
 
-        if (PerfStates[i-1].Flags & POP_THROTTLE_NON_LINEAR) {
+        if (PerfStates[i - 1].Flags & POP_THROTTLE_NON_LINEAR)
+        {
 
-            kneeThrottleIndex = i-1;
+            kneeThrottleIndex = i - 1;
             break;
-
         }
-
     }
 
     //
     // Look at all the states that occur before the knee in the curve
     //
-    for (i = 0; i < kneeThrottleIndex; i++) {
+    for (i = 0; i < kneeThrottleIndex; i++)
+    {
 
         //
         // Any of these steps can only run when the battery is at 100%
         //
         PerfStates[i].MinCapacity = 100;
-
     }
 
     //
@@ -706,8 +630,9 @@ Return Value:
     // Note that we are currently using a linear algorithm, but this
     // can be changed relatively easily...
     //
-    num = ( (UCHAR)PerfStatesCount - kneeThrottleIndex);
-    if (num != 0) {
+    num = ((UCHAR)PerfStatesCount - kneeThrottleIndex);
+    if (num != 0)
+    {
 
         //
         // We do this here to avoid potential divide by zero errors.
@@ -715,7 +640,6 @@ Return Value:
         // capacity we lose during each "step"
         //
         width = total / num;
-
     }
 
     //
@@ -724,7 +648,8 @@ Return Value:
     // subtract the appropriate value to get the capacity for the next
     // state
     //
-    for (i = kneeThrottleIndex; i < PerfStatesCount; i++) {
+    for (i = kneeThrottleIndex; i < PerfStatesCount; i++)
+    {
 
         //
         // We put a floor onto how low we can force the throttle
@@ -733,16 +658,11 @@ Return Value:
         // reflects the fact that we don't want to degrade beyond this
         // point
         //
-        if (PerfStates[i].PercentFrequency < PopPerfDegradeThrottleMinCapacity) {
+        if (PerfStates[i].PercentFrequency < PopPerfDegradeThrottleMinCapacity)
+        {
 
-            PoPrint(
-                PO_THROTTLE,
-                ("PopCalculatePerMinCapacity: (%d) %d%% below MinCapacity %d%%\n",
-                 i,
-                 PerfStates[i].PercentFrequency,
-                 PopPerfDegradeThrottleMinCapacity
-                 )
-                );
+            PoPrint(PO_THROTTLE, ("PopCalculatePerMinCapacity: (%d) %d%% below MinCapacity %d%%\n", i,
+                                  PerfStates[i].PercentFrequency, PopPerfDegradeThrottleMinCapacity));
 
             //
             // We modify the min capacity for the previous state since we
@@ -754,42 +674,31 @@ Return Value:
             // that can only happen if the perf states array is badly formed
             // or the min frequency is badly formed
             //
-            if (i != 0 && PerfStates[i-1].PercentFrequency < PopPerfDegradeThrottleMinCapacity) {
+            if (i != 0 && PerfStates[i - 1].PercentFrequency < PopPerfDegradeThrottleMinCapacity)
+            {
 
-                PerfStates[i-1].MinCapacity = 0;
-
+                PerfStates[i - 1].MinCapacity = 0;
             }
             PerfStates[i].MinCapacity = 0;
             continue;
-
         }
 
         PerfStates[i].MinCapacity = total;
         total -= width;
-
     }
 
 #if DBG
-    for (i = 0; i < PerfStatesCount; i++) {
+    for (i = 0; i < PerfStatesCount; i++)
+    {
 
-        PoPrint(
-            PO_THROTTLE,
-            ("PopCalculatePerfMinCapacity: (%d) %d%% MinCapacity: %d%%\n",
-             i,
-             PerfStates[i].PercentFrequency,
-             PerfStates[i].MinCapacity
-             )
-            );
-
+        PoPrint(PO_THROTTLE, ("PopCalculatePerfMinCapacity: (%d) %d%% MinCapacity: %d%%\n", i,
+                              PerfStates[i].PercentFrequency, PerfStates[i].MinCapacity));
     }
 #endif
-
 }
-
+
 UCHAR
-PopGetThrottle(
-    VOID
-    )
+PopGetThrottle(VOID)
 /*++
 
 Routine Description:
@@ -810,13 +719,10 @@ Return Value:
 {
     PAGED_CODE();
 
-    return(PopPolicy->ForcedThrottle);
+    return (PopPolicy->ForcedThrottle);
 }
-
-VOID
-PopPerfHandleInrush(
-    IN  BOOLEAN EnableHandler
-    )
+
+VOID PopPerfHandleInrush(IN BOOLEAN EnableHandler)
 /*++
 
 Routine Description:
@@ -837,17 +743,17 @@ Return Value:
 
 --*/
 {
-    KIRQL   oldIrql;
+    KIRQL oldIrql;
 
     //
     // Set the proper bit on all the processors
     //
-    PopSetPerfFlag( PSTATE_DISABLE_THROTTLE_INRUSH, !EnableHandler );
+    PopSetPerfFlag(PSTATE_DISABLE_THROTTLE_INRUSH, !EnableHandler);
 
     //
     // Make sure we are running at DPC level (to avoid pre-emption)
     //
-    KeRaiseIrql ( DISPATCH_LEVEL, &oldIrql );
+    KeRaiseIrql(DISPATCH_LEVEL, &oldIrql);
 
     //
     // Force an update on the current processor
@@ -857,13 +763,10 @@ Return Value:
     //
     // Done
     //
-    KeLowerIrql( oldIrql );
+    KeLowerIrql(oldIrql);
 }
-
-VOID
-PopPerfIdle(
-    IN  PPROCESSOR_POWER_STATE  PState
-    )
+
+VOID PopPerfIdle(IN PPROCESSOR_POWER_STATE PState)
 /*++
 
 Routine Description:
@@ -882,50 +785,50 @@ Return Value:
 
 --*/
 {
-    BOOLEAN                 cancelTimer = FALSE;
-    BOOLEAN                 setTimer = FALSE;
-    BOOLEAN                 forced = FALSE;
-    BOOLEAN                 promoted = FALSE;
-    BOOLEAN                 demoted = FALSE;
-    PKPRCB                  prcb;
-    PPROCESSOR_PERF_STATE   perfStates;
-    UCHAR                   currentPerfState;
-    UCHAR                   freq;
-    UCHAR                   i;
-    UCHAR                   j;
-    ULONG                   idleTime;
-    ULONG                   perfStatesCount;
-    ULONG                   tickCount;
-    ULONG                   time;
-    ULONG                   timeDelta;
+    BOOLEAN cancelTimer = FALSE;
+    BOOLEAN setTimer = FALSE;
+    BOOLEAN forced = FALSE;
+    BOOLEAN promoted = FALSE;
+    BOOLEAN demoted = FALSE;
+    PKPRCB prcb;
+    PPROCESSOR_PERF_STATE perfStates;
+    UCHAR currentPerfState;
+    UCHAR freq;
+    UCHAR i;
+    UCHAR j;
+    ULONG idleTime;
+    ULONG perfStatesCount;
+    ULONG tickCount;
+    ULONG time;
+    ULONG timeDelta;
 
     //
     // Sanity checks
     //
-    ASSERT( KeGetCurrentIrql() == DISPATCH_LEVEL );
-    ASSERT( KeGetCurrentPrcb() == CONTAINING_RECORD( PState, KPRCB, PowerState ) );
+    ASSERT(KeGetCurrentIrql() == DISPATCH_LEVEL);
+    ASSERT(KeGetCurrentPrcb() == CONTAINING_RECORD(PState, KPRCB, PowerState));
 
     //
     // This piece of code really belongs in the functions that will eventually
     // call this one, PopIdle0 or PopProcessorIdle, to save a function call.
     //
-    if (!(PState->Flags & PSTATE_ADAPTIVE_THROTTLE) ) {
+    if (!(PState->Flags & PSTATE_ADAPTIVE_THROTTLE))
+    {
 
         return;
-
     }
 
     //
     // Has enough time expired?
     //
-    prcb = CONTAINING_RECORD( PState, KPRCB, PowerState );
+    prcb = CONTAINING_RECORD(PState, KPRCB, PowerState);
     time = POP_CUR_TIME(prcb);
     idleTime = prcb->IdleThread->KernelTime;
     timeDelta = time - PState->PerfSystemTime;
-    if (timeDelta < PopPerfTimeTicks) {
+    if (timeDelta < PopPerfTimeTicks)
+    {
 
         return;
-
     }
 
     //
@@ -948,23 +851,25 @@ Return Value:
     // busy and in C3. Make sure to remember the value for user informational
     // purposes.
     //
-    freq = PopCalculateC3Percentage( PState );
+    freq = PopCalculateC3Percentage(PState);
     PState->LastC3Percentage = freq;
-    if (freq >= PopPerfMaxC3Frequency) {
+    if (freq >= PopPerfMaxC3Frequency)
+    {
 
         //
         // Set the throttle to the lowest knee in the
         // the voltage and frequency curve
         //
         i = PState->KneeThrottleIndex;
-        if (currentPerfState > i) {
+        if (currentPerfState > i)
+        {
 
             promoted = TRUE;
-
-        } else if (currentPerfState < i) {
+        }
+        else if (currentPerfState < i)
+        {
 
             demoted = TRUE;
-
         }
 
         //
@@ -976,18 +881,18 @@ Return Value:
         // Skip directly to setting the throttle
         //
         goto PopPerfIdleSetThrottle;
-
     }
 
     //
     // Calculate how busy the CPU is
     //
-    freq = PopCalculateBusyPercentage( PState );
+    freq = PopCalculateBusyPercentage(PState);
 
     //
     // Have we exceeded the thermal throttle limit?
     //
-    if (freq > PState->ThermalThrottleLimit) {
+    if (freq > PState->ThermalThrottleLimit)
+    {
 
         //
         // The following code will force the frequency to be only
@@ -1003,7 +908,6 @@ Return Value:
         // demote
         //
         forced = TRUE;
-
     }
 
     //
@@ -1012,13 +916,15 @@ Return Value:
     // thermal limit, it means that it is not possible for the
     // frequency to exceed the thermal limit that was specified
     //
-    if (PState->Flags & PSTATE_DEGRADED_THROTTLE) {
+    if (PState->Flags & PSTATE_DEGRADED_THROTTLE)
+    {
 
         //
         // Make sure that we don't exceed the state that is specified
         //
         j = PState->ThrottleLimitIndex;
-        if (freq >= perfStates[j].IncreaseLevel) {
+        if (freq >= perfStates[j].IncreaseLevel)
+        {
 
             //
             // We must make a special allowance that says that if
@@ -1028,13 +934,14 @@ Return Value:
             forced = TRUE;
             freq = perfStates[j].IncreaseLevel;
             i = j;
-
         }
-
-    } else if (PState->Flags & PSTATE_CONSTANT_THROTTLE) {
+    }
+    else if (PState->Flags & PSTATE_CONSTANT_THROTTLE)
+    {
 
         j = PState->KneeThrottleIndex;
-        if (freq >= perfStates[j].IncreaseLevel) {
+        if (freq >= perfStates[j].IncreaseLevel)
+        {
 
             //
             // We must make a special allowance that says that if
@@ -1044,10 +951,10 @@ Return Value:
             forced = TRUE;
             freq = perfStates[j].IncreaseLevel;
             i = j;
-
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // This is the case that we are running in Adaptive throttle
@@ -1058,7 +965,8 @@ Return Value:
         // If we are not in degraded throttle mode, then the min level
         // cannot be lower than the KneeThrottleIndex
         //
-        if ( (i > PState->KneeThrottleIndex) ) {
+        if ((i > PState->KneeThrottleIndex))
+        {
 
             //
             // Promote to the knee of the curve
@@ -1066,30 +974,24 @@ Return Value:
             forced = TRUE;
             i = PState->KneeThrottleIndex;
             freq = perfStates[i].IncreaseLevel;
-
         }
-
     }
 
     //
     // Determine if there was a promotion or demotion in the previous...
     //
-    if (i < currentPerfState) {
+    if (i < currentPerfState)
+    {
 
         promoted = TRUE;
-
-    } else if (i > currentPerfState) {
+    }
+    else if (i > currentPerfState)
+    {
 
         demoted = TRUE;
-
     }
 
-    PoPrint(
-        PO_THROTTLE_DETAIL,
-        ("PopPerfIdle: Freq = %d%% (Adjusted)\n",
-         freq
-         )
-        );
+    PoPrint(PO_THROTTLE_DETAIL, ("PopPerfIdle: Freq = %d%% (Adjusted)\n", freq));
 
     //
     // Remember this value for user information purposes
@@ -1104,7 +1006,8 @@ Return Value:
     // allowing the possibility of "i" doing a "yo-yo" between two states
     // and thus never terminating the while loop.
     //
-    if (perfStates[i].IncreaseLevel < freq) {
+    if (perfStates[i].IncreaseLevel < freq)
+    {
 
         //
         // Now, we must handle the cases where there are multiple voltage
@@ -1115,15 +1018,16 @@ Return Value:
         // we desired last.
         //
         j = i;
-        while (perfStates[j].IncreaseLevel < freq) {
+        while (perfStates[j].IncreaseLevel < freq)
+        {
 
             //
             // Can we actually promote any further?
             //
-            if (j == 0) {
+            if (j == 0)
+            {
 
                 break;
-
             }
 
             //
@@ -1132,17 +1036,16 @@ Return Value:
             // promotion if the target state is marked as non-linear...
             //
             j--;
-            if ((PState->Flags & PSTATE_DEGRADED_THROTTLE) ||
-                (perfStates[j].Flags & POP_THROTTLE_NON_LINEAR)) {
+            if ((PState->Flags & PSTATE_DEGRADED_THROTTLE) || (perfStates[j].Flags & POP_THROTTLE_NON_LINEAR))
+            {
 
                 i = j;
                 promoted = TRUE;
-
             }
-
         }
-
-    } else if (perfStates[i].DecreaseLevel > freq) {
+    }
+    else if (perfStates[i].DecreaseLevel > freq)
+    {
 
         //
         // We need the same logic as in the promote case. That is, we need
@@ -1151,15 +1054,16 @@ Return Value:
         // should transition too
         //
         j = i;
-        do {
+        do
+        {
 
-            if (j == (perfStatesCount - 1) ) {
+            if (j == (perfStatesCount - 1))
+            {
 
                 //
                 // Can't demote further
                 //
                 break;
-
             }
 
             //
@@ -1168,16 +1072,14 @@ Return Value:
             // demotion if the target state is marked as non-linear
             //
             j++;
-            if ((PState->Flags & PSTATE_DEGRADED_THROTTLE) ||
-                (perfStates[j].Flags & POP_THROTTLE_NON_LINEAR) ) {
+            if ((PState->Flags & PSTATE_DEGRADED_THROTTLE) || (perfStates[j].Flags & POP_THROTTLE_NON_LINEAR))
+            {
 
                 i = j;
                 demoted = TRUE;
-
             }
 
-        } while ( perfStates[j].DecreaseLevel > freq );
-
+        } while (perfStates[j].DecreaseLevel > freq);
     }
 
 PopPerfIdleSetThrottle:
@@ -1186,7 +1088,8 @@ PopPerfIdleSetThrottle:
     // We have to make special allowances if we were forced to throttle
     // because of various considerations (C3, thermal, degrade, constant)
     //
-    if (!forced) {
+    if (!forced)
+    {
 
         //
         // See if enough time has expired to justify changing
@@ -1198,7 +1101,8 @@ PopPerfIdleSetThrottle:
         // function
         //
         if ((promoted && timeDelta < perfStates[currentPerfState].IncreaseTime) ||
-            (demoted  && timeDelta < perfStates[currentPerfState].DecreaseTime)) {
+            (demoted && timeDelta < perfStates[currentPerfState].DecreaseTime))
+        {
 
             //
             // We haven't had enough time in the current state to justify
@@ -1215,42 +1119,37 @@ PopPerfIdleSetThrottle:
             // Base our actions for the timer based upon the current
             // state instead of the target state
             //
-            PopSetTimer( PState, currentPerfState );
+            PopSetTimer(PState, currentPerfState);
             return;
-
         }
-
     }
 
-    PoPrint(
-        PO_THROTTLE_DETAIL,
-        ("PopPerfIdle: Index: %d vs %d (%s)\n",
-         i,
-         currentPerfState,
-         (promoted ? "promoted" : (demoted ? "demoted" : "no change") )
-         )
-        );
+    PoPrint(PO_THROTTLE_DETAIL, ("PopPerfIdle: Index: %d vs %d (%s)\n", i, currentPerfState,
+                                 (promoted ? "promoted" : (demoted ? "demoted" : "no change"))));
 
     //
     // Note that we need to do this now because we dont want to exit this
     // path without having set or cancelled the timer as appropariate.
     //
-    PopSetTimer( PState, i );
+    PopSetTimer(PState, i);
 
     //
     // Update the promote/demote count
     //
-    if (promoted) {
+    if (promoted)
+    {
 
         perfStates[currentPerfState].IncreaseCount++;
         PState->PromotionCount++;
-
-    } else if (demoted) {
+    }
+    else if (demoted)
+    {
 
         perfStates[currentPerfState].DecreaseCount++;
         PState->DemotionCount++;
-
-    } else {
+    }
+    else
+    {
 
         //
         // At this point, we realize that aren't promoting or demoting
@@ -1261,40 +1160,20 @@ PopPerfIdleSetThrottle:
         PState->PerfSystemTime = time;
         PState->PreviousC3StateTime = PState->TotalIdleStateTime[2];
         return;
-
     }
 
-    PoPrint(
-        PO_THROTTLE,
-        ("PopPerfIdle: Index=%d (%d%%) %ld (dSystem) %ld (dIdle)\n",
-         i,
-         perfStates[i].PercentFrequency,
-         (time - PState->PerfSystemTime),
-         (idleTime - PState->PerfIdleTime)
-         )
-        );
+    PoPrint(PO_THROTTLE, ("PopPerfIdle: Index=%d (%d%%) %ld (dSystem) %ld (dIdle)\n", i, perfStates[i].PercentFrequency,
+                          (time - PState->PerfSystemTime), (idleTime - PState->PerfIdleTime)));
 
     //
     // We have a new throttle. Update the bookkeeping to reflect the
     // amount of time that we spent in the previous state and reset the
     // count for the next state
     //
-    PopSetThrottle(
-        PState,
-        perfStates,
-        i,
-        time,
-        idleTime
-        );
+    PopSetThrottle(PState, perfStates, i, time, idleTime);
 }
-
-VOID
-PopPerfIdleDpc(
-    IN  PKDPC   Dpc,
-    IN  PVOID   DpcContext,
-    IN  PVOID   SystemArgument1,
-    IN  PVOID   SystemArgument2
-    )
+
+VOID PopPerfIdleDpc(IN PKDPC Dpc, IN PVOID DpcContext, IN PVOID SystemArgument1, IN PVOID SystemArgument2)
 /*++
 
 Routine Description:
@@ -1316,16 +1195,16 @@ Return Value:
 
 --*/
 {
-    PKPRCB                  prcb;
-    PKTHREAD                idleThread;
-    PPROCESSOR_PERF_STATE   perfStates;
-    PPROCESSOR_POWER_STATE  pState;
-    UCHAR                   currentPerfState;
-    UCHAR                   freq;
-    UCHAR                   i;
-    ULONG                   idleTime;
-    ULONG                   time;
-    ULONG                   timeDelta;
+    PKPRCB prcb;
+    PKTHREAD idleThread;
+    PPROCESSOR_PERF_STATE perfStates;
+    PPROCESSOR_POWER_STATE pState;
+    UCHAR currentPerfState;
+    UCHAR freq;
+    UCHAR i;
+    ULONG idleTime;
+    ULONG time;
+    ULONG timeDelta;
 
     //
     // We need to fetch the PRCB and the PState structres. We could
@@ -1334,7 +1213,7 @@ Return Value:
     // more code and runs more slowly than using the context field). The
     // memory for the context field is already allocated anyways
     //
-    prcb = (PKPRCB) DpcContext;
+    prcb = (PKPRCB)DpcContext;
     pState = &(prcb->PowerState);
 
     //
@@ -1348,14 +1227,14 @@ Return Value:
     // that the watchdog fired and in the mean time, the kernel received
     // notification to switch the state table
     //
-    if (perfStates == NULL) {
+    if (perfStates == NULL)
+    {
 
         //
         // Note that we don't setup the timer to fire again. This is to
         // deal with the case where perf states go away and never come back
         //
         return;
-
     }
 
     //
@@ -1363,12 +1242,11 @@ Return Value:
     //
     time = POP_CUR_TIME(prcb);
     timeDelta = time - pState->PerfSystemTime;
-    if (timeDelta < PopPerfCriticalTimeTicks) {
+    if (timeDelta < PopPerfCriticalTimeTicks)
+    {
 
-        PopSetTimer( pState, currentPerfState );
+        PopSetTimer(pState, currentPerfState);
         return;
-
-
     }
 
     //
@@ -1389,12 +1267,13 @@ Return Value:
     //
     // We might as well cancel the timer --- for sanity's sake
     //
-    KeCancelTimer( (PKTIMER) &(pState->PerfTimer) );
+    KeCancelTimer((PKTIMER) & (pState->PerfTimer));
 
     //
     // Have we exceeded the thermal throttle limit?
     //
-    if (freq > pState->ThermalThrottleLimit) {
+    if (freq > pState->ThermalThrottleLimit)
+    {
 
         //
         // The following code will force the frequency to be only
@@ -1403,7 +1282,6 @@ Return Value:
         //
         freq = pState->ThermalThrottleLimit;
         i = pState->ThermalThrottleIndex;
-
     }
 
     //
@@ -1412,19 +1290,20 @@ Return Value:
     // thermal limit, it means that it is not possible for the
     // frequency to exceed the thermal limit that was specified
     //
-    if (pState->Flags & PSTATE_DEGRADED_THROTTLE) {
+    if (pState->Flags & PSTATE_DEGRADED_THROTTLE)
+    {
 
         //
         // Make sure that we don't exceed the state that is specified
         //
         freq = perfStates[i].PercentFrequency;
         i = pState->ThrottleLimitIndex;
-
-    } else if (pState->Flags & PSTATE_CONSTANT_THROTTLE) {
+    }
+    else if (pState->Flags & PSTATE_CONSTANT_THROTTLE)
+    {
 
         freq = perfStates[i].PercentFrequency;
         i = pState->KneeThrottleIndex;
-
     }
 
     //
@@ -1436,68 +1315,45 @@ Return Value:
     //
     // Let the world know
     //
-    PoPrint(
-        PO_THROTTLE,
-        ("PopPerfIdleDpc: %d%% vs %d%% (Time: %ld Delta: %ld)\n",
-         freq,
-         pState->CurrentThrottle,
-         time,
-         timeDelta
-         )
-        );
-    PoPrint(
-        PO_THROTTLE,
-        ("PopPerfIdleDpc: Index=%d (%d%%) %ld (dSystem) %ld (dIdle)\n",
-         i,
-         perfStates[i].PercentFrequency,
-         (time - pState->PerfSystemTime),
-         (idleTime - pState->PerfIdleTime)
-         )
-        );
+    PoPrint(PO_THROTTLE,
+            ("PopPerfIdleDpc: %d%% vs %d%% (Time: %ld Delta: %ld)\n", freq, pState->CurrentThrottle, time, timeDelta));
+    PoPrint(PO_THROTTLE,
+            ("PopPerfIdleDpc: Index=%d (%d%%) %ld (dSystem) %ld (dIdle)\n", i, perfStates[i].PercentFrequency,
+             (time - pState->PerfSystemTime), (idleTime - pState->PerfIdleTime)));
 
     //
     // Update the promote/demote count
     //
-    if (i < currentPerfState) {
+    if (i < currentPerfState)
+    {
 
         perfStates[currentPerfState].IncreaseCount++;
         pState->PromotionCount++;
-
-    } else if (i > currentPerfState) {
+    }
+    else if (i > currentPerfState)
+    {
 
         perfStates[currentPerfState].DecreaseCount++;
         pState->DemotionCount++;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Its in theory possible for us to be running at the max
         // state when this routines gets called
         //
         return;
-
     }
 
     //
     // Set the new throttle
     //
-    PopSetThrottle(
-        pState,
-        perfStates,
-        i,
-        time,
-        idleTime
-        );
+    PopSetThrottle(pState, perfStates, i, time, idleTime);
 }
-
-VOID
-PopRoundThrottle(
-    IN UCHAR Throttle,
-    OUT OPTIONAL PUCHAR RoundDown,
-    OUT OPTIONAL PUCHAR RoundUp,
-    OUT OPTIONAL PUCHAR RoundDownIndex,
-    OUT OPTIONAL PUCHAR RoundUpIndex
-    )
+
+VOID PopRoundThrottle(IN UCHAR Throttle, OUT OPTIONAL PUCHAR RoundDown, OUT OPTIONAL PUCHAR RoundUp,
+                      OUT OPTIONAL PUCHAR RoundDownIndex, OUT OPTIONAL PUCHAR RoundUpIndex)
 /*++
 
 Routine Description:
@@ -1521,15 +1377,15 @@ Return Value:
 --*/
 
 {
-    KIRQL                   oldIrql;
-    PKPRCB                  prcb;
-    PPROCESSOR_PERF_STATE   perfStates;
-    PPROCESSOR_POWER_STATE  pState;
-    UCHAR                   low;
-    UCHAR                   lowIndex;
-    UCHAR                   high;
-    UCHAR                   highIndex;
-    UCHAR                   i;
+    KIRQL oldIrql;
+    PKPRCB prcb;
+    PPROCESSOR_PERF_STATE perfStates;
+    PPROCESSOR_POWER_STATE pState;
+    UCHAR low;
+    UCHAR lowIndex;
+    UCHAR high;
+    UCHAR highIndex;
+    UCHAR i;
 
 
     //
@@ -1542,32 +1398,33 @@ Return Value:
     // Make sure that we are synchronized with the idle thread and
     // other routines that access these data structures
     //
-    KeRaiseIrql( DISPATCH_LEVEL, &oldIrql );
+    KeRaiseIrql(DISPATCH_LEVEL, &oldIrql);
     perfStates = pState->PerfStates;
 
     //
     // Does this processor support throttling?
     //
-    if ((pState->Flags & PSTATE_SUPPORTS_THROTTLE) == 0) {
+    if ((pState->Flags & PSTATE_SUPPORTS_THROTTLE) == 0)
+    {
 
         low = high = Throttle;
         lowIndex = highIndex = 0;
         goto PopRoundThrottleExit;
-
     }
-    ASSERT( perfStates != NULL );
+    ASSERT(perfStates != NULL);
 
     //
     // Check if the supplied throttle is out of range
     //
-    if (Throttle < pState->ProcessorMinThrottle) {
+    if (Throttle < pState->ProcessorMinThrottle)
+    {
 
         Throttle = pState->ProcessorMinThrottle;
-
-    } else if (Throttle > pState->ProcessorMaxThrottle) {
+    }
+    else if (Throttle > pState->ProcessorMaxThrottle)
+    {
 
         Throttle = pState->ProcessorMaxThrottle;
-
     }
 
     //
@@ -1579,50 +1436,50 @@ Return Value:
     //
     // Look at all the available perf states
     //
-    for (i = 0; i < pState->PerfStatesCount; i++) {
+    for (i = 0; i < pState->PerfStatesCount; i++)
+    {
 
-        if (low > Throttle) {
+        if (low > Throttle)
+        {
 
-            if (perfStates[i].PercentFrequency < low) {
-
-                low = perfStates[i].PercentFrequency;
-                lowIndex = i;
-
-            }
-
-        } else if (low < Throttle) {
-
-            if (perfStates[i].PercentFrequency <= Throttle &&
-                perfStates[i].PercentFrequency > low) {
+            if (perfStates[i].PercentFrequency < low)
+            {
 
                 low = perfStates[i].PercentFrequency;
                 lowIndex = i;
-
             }
+        }
+        else if (low < Throttle)
+        {
 
+            if (perfStates[i].PercentFrequency <= Throttle && perfStates[i].PercentFrequency > low)
+            {
+
+                low = perfStates[i].PercentFrequency;
+                lowIndex = i;
+            }
         }
 
-        if (high < Throttle) {
+        if (high < Throttle)
+        {
 
-            if (perfStates[i].PercentFrequency > high) {
+            if (perfStates[i].PercentFrequency > high)
+            {
 
                 high = perfStates[i].PercentFrequency;
                 highIndex = i;
-
             }
+        }
+        else if (high > Throttle)
+        {
 
-        } else if (high > Throttle) {
-
-            if (perfStates[i].PercentFrequency >= Throttle &&
-                perfStates[i].PercentFrequency < high) {
+            if (perfStates[i].PercentFrequency >= Throttle && perfStates[i].PercentFrequency < high)
+            {
 
                 high = perfStates[i].PercentFrequency;
                 highIndex = i;
-
             }
-
         }
-
     }
 
 PopRoundThrottleExit:
@@ -1630,39 +1487,34 @@ PopRoundThrottleExit:
     //
     // Revert back to the previous IRQL
     //
-    KeLowerIrql( oldIrql );
+    KeLowerIrql(oldIrql);
 
     //
     // Fill in the pointers provided by the caller
     //
-    if (ARGUMENT_PRESENT(RoundUp)) {
+    if (ARGUMENT_PRESENT(RoundUp))
+    {
 
         *RoundUp = high;
-        if (ARGUMENT_PRESENT(RoundUpIndex)) {
+        if (ARGUMENT_PRESENT(RoundUpIndex))
+        {
 
             *RoundUpIndex = highIndex;
-
         }
-
     }
-    if (ARGUMENT_PRESENT(RoundDown)) {
+    if (ARGUMENT_PRESENT(RoundDown))
+    {
 
         *RoundDown = low;
-        if (ARGUMENT_PRESENT(RoundDownIndex)) {
+        if (ARGUMENT_PRESENT(RoundDownIndex))
+        {
 
             *RoundDownIndex = lowIndex;
-
         }
-
     }
-
 }
-
-VOID
-PopSetPerfFlag(
-    IN  ULONG   PerfFlag,
-    IN  BOOLEAN Clear
-    )
+
+VOID PopSetPerfFlag(IN ULONG PerfFlag, IN BOOLEAN Clear)
 /*++
 
 Routine Description:
@@ -1682,20 +1534,20 @@ Return Value:
 
 --*/
 {
-    PKPRCB  prcb;
-    ULONG   processorNumber;
-    PULONG  flags;
+    PKPRCB prcb;
+    ULONG processorNumber;
+    PULONG flags;
 
     //
     // For each processor in the system.
     //
 
-    for (processorNumber = 0;
-         processorNumber < MAXIMUM_PROCESSORS;
-         processorNumber++) {
+    for (processorNumber = 0; processorNumber < MAXIMUM_PROCESSORS; processorNumber++)
+    {
 
         prcb = KeGetPrcb(processorNumber);
-        if (prcb != NULL) {
+        if (prcb != NULL)
+        {
 
             //
             // Get the address of the PowerState.Flags field in
@@ -1704,19 +1556,20 @@ Return Value:
 
             flags = &prcb->PowerState.Flags;
 
-            if (Clear) {
+            if (Clear)
+            {
                 RtlInterlockedClearBits(flags, PerfFlag);
-            } else {
+            }
+            else
+            {
                 RtlInterlockedSetBits(flags, PerfFlag);
             }
         }
     }
 }
-
+
 NTSTATUS
-PopSetPerfLevels(
-    IN PPROCESSOR_STATE_HANDLER2 ProcessorHandler
-    )
+PopSetPerfLevels(IN PPROCESSOR_STATE_HANDLER2 ProcessorHandler)
 /*++
 
 Routine Description:
@@ -1734,29 +1587,30 @@ Return Value:
 --*/
 
 {
-    BOOLEAN                     failedAllocation = FALSE;
-    KAFFINITY                   processors;
-    KAFFINITY                   currentAffinity;
-    KIRQL                       oldIrql;
-    NTSTATUS                    status = STATUS_SUCCESS;
-    PKPRCB                      prcb;
-    PPROCESSOR_PERF_STATE       perfStates = NULL;
-    PPROCESSOR_PERF_STATE       tempStates;
-    PPROCESSOR_POWER_STATE      pState;
-    UCHAR                       freq;
-    UCHAR                       kneeThrottleIndex = 0;
-    UCHAR                       minThrottle;
-    UCHAR                       maxThrottle;
-    UCHAR                       thermalThrottleIndex = 0;
-    ULONG                       i;
-    ULONG                       perfStatesCount = 0;
+    BOOLEAN failedAllocation = FALSE;
+    KAFFINITY processors;
+    KAFFINITY currentAffinity;
+    KIRQL oldIrql;
+    NTSTATUS status = STATUS_SUCCESS;
+    PKPRCB prcb;
+    PPROCESSOR_PERF_STATE perfStates = NULL;
+    PPROCESSOR_PERF_STATE tempStates;
+    PPROCESSOR_POWER_STATE pState;
+    UCHAR freq;
+    UCHAR kneeThrottleIndex = 0;
+    UCHAR minThrottle;
+    UCHAR maxThrottle;
+    UCHAR thermalThrottleIndex = 0;
+    ULONG i;
+    ULONG perfStatesCount = 0;
 
     //
     // The first step is to convert the data that was passed to us
     // in PROCESSOR_PERF_LEVEL format over to the PROCESSOR_PERF_STATE
     // format
     //
-    if (ProcessorHandler->NumPerfStates) {
+    if (ProcessorHandler->NumPerfStates)
+    {
 
         //
         // Because we are going to allocate the perfStates array first
@@ -1766,12 +1620,9 @@ Return Value:
         // the individual processors.
         //
         perfStatesCount = ProcessorHandler->NumPerfStates;
-        perfStates = ExAllocatePoolWithTag(
-            NonPagedPool,
-            perfStatesCount * sizeof(PROCESSOR_PERF_STATE),
-            'sPoP'
-            );
-        if (perfStates == NULL) {
+        perfStates = ExAllocatePoolWithTag(NonPagedPool, perfStatesCount * sizeof(PROCESSOR_PERF_STATE), 'sPoP');
+        if (perfStates == NULL)
+        {
 
             //
             // We can handle this case. We will set the return code to
@@ -1783,12 +1634,8 @@ Return Value:
             status = STATUS_INSUFFICIENT_RESOURCES;
             perfStatesCount = 0;
             goto PopSetPerfLevelsSetNewStates;
-
         }
-        RtlZeroMemory(
-            perfStates,
-            perfStatesCount * sizeof(PROCESSOR_PERF_STATE)
-            );
+        RtlZeroMemory(perfStates, perfStatesCount * sizeof(PROCESSOR_PERF_STATE));
 
         //
         // For completeness, we should make sure that the highest performance
@@ -1799,47 +1646,43 @@ Return Value:
         //
         // Initialize each of the PROCESSOR_PERF_STATE entries
         //
-        for (i = 0; i < perfStatesCount; i++) {
+        for (i = 0; i < perfStatesCount; i++)
+        {
 
-            perfStates[i].PercentFrequency =
-                ProcessorHandler->PerfLevel[i].PercentFrequency;
+            perfStates[i].PercentFrequency = ProcessorHandler->PerfLevel[i].PercentFrequency;
 
             //
             // If this is a Processor Performance State (Frequency and Voltage),
             // then mark it as a Non-Linear state.
             //
             ASSERT(ProcessorHandler->PerfLevel[i].Flags);
-            if (ProcessorHandler->PerfLevel[i].Flags & PROCESSOR_STATE_TYPE_PERFORMANCE) {
-              perfStates[i].Flags |= POP_THROTTLE_NON_LINEAR;
+            if (ProcessorHandler->PerfLevel[i].Flags & PROCESSOR_STATE_TYPE_PERFORMANCE)
+            {
+                perfStates[i].Flags |= POP_THROTTLE_NON_LINEAR;
             }
-
         }
 
         //
         // Calculate the increase level, decrease level, increase time,
         // decrease time, and min capacity information
         //
-        PopCalculatePerfIncreaseLevel( perfStates, perfStatesCount );
-        PopCalculatePerfDecreaseLevel( perfStates, perfStatesCount );
-        PopCalculatePerfMinCapacity( perfStates, perfStatesCount );
-        PopCalculatePerfIncreaseDecreaseTime(
-            perfStates,
-            perfStatesCount,
-            ProcessorHandler
-            );
+        PopCalculatePerfIncreaseLevel(perfStates, perfStatesCount);
+        PopCalculatePerfDecreaseLevel(perfStates, perfStatesCount);
+        PopCalculatePerfMinCapacity(perfStates, perfStatesCount);
+        PopCalculatePerfIncreaseDecreaseTime(perfStates, perfStatesCount, ProcessorHandler);
 
         //
         // Calculate where the knee in the performance curve is...
         //
-        for (i = (UCHAR) perfStatesCount; i >= 1; i--) {
+        for (i = (UCHAR)perfStatesCount; i >= 1; i--)
+        {
 
-            if (perfStates[i-1].Flags & POP_THROTTLE_NON_LINEAR) {
+            if (perfStates[i - 1].Flags & POP_THROTTLE_NON_LINEAR)
+            {
 
-                kneeThrottleIndex = (UCHAR) i-1;
+                kneeThrottleIndex = (UCHAR)i - 1;
                 break;
-
             }
-
         }
 
         //
@@ -1848,31 +1691,31 @@ Return Value:
         //
         minThrottle = POP_PERF_SCALE;
         maxThrottle = 0;
-        for (i = 0; i < perfStatesCount; i ++) {
+        for (i = 0; i < perfStatesCount; i++)
+        {
 
             freq = perfStates[i].PercentFrequency;
-            if (freq < minThrottle && freq >= PopIdleDefaultMinThrottle) {
+            if (freq < minThrottle && freq >= PopIdleDefaultMinThrottle)
+            {
 
                 minThrottle = freq;
-
             }
-            if (freq > maxThrottle && freq >= PopIdleDefaultMinThrottle) {
+            if (freq > maxThrottle && freq >= PopIdleDefaultMinThrottle)
+            {
 
                 //
                 // Note that for now, the thermal throttle index should
                 // be the same as the max throttle index
                 //
                 maxThrottle = freq;
-                thermalThrottleIndex = (UCHAR) i;
-
+                thermalThrottleIndex = (UCHAR)i;
             }
-
         }
 
         //
         // Make sure that we can run at *SOME* speed
         //
-        ASSERT( maxThrottle >= PopIdleDefaultMinThrottle );
+        ASSERT(maxThrottle >= PopIdleDefaultMinThrottle);
 
         //
         // Set the Time Delta and Time ticks for the idle loop based upon
@@ -1880,19 +1723,18 @@ Return Value:
         //
         PopPerfTimeDelta = ProcessorHandler->HardwareLatency;
         PopPerfTimeTicks = PopPerfTimeDelta * US2TIME / KeQueryTimeIncrement() + 1;
-
     }
 
 PopSetPerfLevelsSetNewStates:
 
-    if (!perfStates) {
+    if (!perfStates)
+    {
 
         //
         // We don't have any perf states, so these should be remembered
         // as not being setable
         //
         maxThrottle = minThrottle = POP_PERF_SCALE;
-
     }
 
     //
@@ -1903,13 +1745,14 @@ PopSetPerfLevelsSetNewStates:
 
     processors = KeActiveProcessors;
     currentAffinity = 1;
-    while (processors) {
+    while (processors)
+    {
 
-        if (!(processors & currentAffinity)) {
+        if (!(processors & currentAffinity))
+        {
 
             currentAffinity <<= 1;
             continue;
-
         }
 
         //
@@ -1925,7 +1768,7 @@ PopSetPerfLevelsSetNewStates:
         // To make sure that we aren't pre-empted, we must raise to
         // DISPATCH_LEVEL...
         //
-        KeRaiseIrql(DISPATCH_LEVEL, &oldIrql );
+        KeRaiseIrql(DISPATCH_LEVEL, &oldIrql);
 
         //
         // Get the PRCB nad PPROCESSOR_POWER_STATE structures that
@@ -1956,16 +1799,17 @@ PopSetPerfLevelsSetNewStates:
         // and set the tick count to the current time
         //
         pState->PerfTickCount = POP_CUR_TIME(prcb);
-        if (perfStatesCount) {
+        if (perfStatesCount)
+        {
 
-            pState->CurrentThrottleIndex = (UCHAR) (perfStatesCount - 1);
-            pState->CurrentThrottle = perfStates[(perfStatesCount-1)].PercentFrequency;
-
-        } else {
+            pState->CurrentThrottleIndex = (UCHAR)(perfStatesCount - 1);
+            pState->CurrentThrottle = perfStates[(perfStatesCount - 1)].PercentFrequency;
+        }
+        else
+        {
 
             pState->CurrentThrottle = POP_PERF_SCALE;
             pState->CurrentThrottleIndex = 0;
-
         }
 
         //
@@ -1999,19 +1843,20 @@ PopSetPerfLevelsSetNewStates:
         // then free it. Note that since we are pre-empting everyone else
         // this should be a safe operation..
         //
-        if (pState->PerfStates) {
+        if (pState->PerfStates)
+        {
 
             ExFreePool(pState->PerfStates);
             pState->PerfStates = NULL;
             pState->PerfStatesCount = 0;
-
         }
 
         //
         // At this point, we have to distinguish our behaviour based on
         // whether or not we have new perfs states...
         //
-        if (perfStates) {
+        if (perfStates)
+        {
 
             //
             // We do, so lets allocate some memory and make a copy of
@@ -2020,12 +1865,9 @@ PopSetPerfLevelsSetNewStates:
             // lookaside list, but we can't because we don't know how many
             // elements we will need to allocate
             //
-            tempStates = ExAllocatePoolWithTag(
-                NonPagedPool,
-                perfStatesCount * sizeof(PROCESSOR_PERF_STATE),
-                'sPoP'
-                );
-            if (tempStates == NULL) {
+            tempStates = ExAllocatePoolWithTag(NonPagedPool, perfStatesCount * sizeof(PROCESSOR_PERF_STATE), 'sPoP');
+            if (tempStates == NULL)
+            {
 
                 //
                 // Not being able to allocate this structure is surely
@@ -2041,35 +1883,28 @@ PopSetPerfLevelsSetNewStates:
                 // Make sure that we don't indicate that this thread
                 // supports throttling
                 //
-                RtlInterlockedClearBits( &(pState->Flags), PSTATE_SUPPORTS_THROTTLE );
+                RtlInterlockedClearBits(&(pState->Flags), PSTATE_SUPPORTS_THROTTLE);
                 pState->PerfSetThrottle = NULL;
-                KeLowerIrql( oldIrql );
+                KeLowerIrql(oldIrql);
                 continue;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // Copy the template to the one associated wit hthe
                 // processor
                 //
-                RtlCopyMemory(
-                    tempStates,
-                    perfStates,
-                    perfStatesCount * sizeof(PROCESSOR_PERF_STATE)
-                    );
+                RtlCopyMemory(tempStates, perfStates, perfStatesCount * sizeof(PROCESSOR_PERF_STATE));
                 pState->PerfStates = tempStates;
-                pState->PerfStatesCount = (UCHAR) perfStatesCount;
-
+                pState->PerfStatesCount = (UCHAR)perfStatesCount;
             }
 
             //
             // Remember that we support processor throttling.
             //
-            RtlInterlockedClearBits( &(pState->Flags), PSTATE_CLEAR_MASK);
-            RtlInterlockedSetBits(
-                &(pState->Flags),
-                (PSTATE_SUPPORTS_THROTTLE | PSTATE_NOT_INITIALIZED)
-                );
+            RtlInterlockedClearBits(&(pState->Flags), PSTATE_CLEAR_MASK);
+            RtlInterlockedSetBits(&(pState->Flags), (PSTATE_SUPPORTS_THROTTLE | PSTATE_NOT_INITIALIZED));
             pState->PerfSetThrottle = ProcessorHandler->SetPerfLevel;
 
             //
@@ -2077,42 +1912,44 @@ PopSetPerfLevelsSetNewStates:
             // we are already running on the target processor...)
             //
             PopUpdateProcessorThrottle();
-
-        } else {
+        }
+        else
+        {
 
             //
             // Remember that we do not support processor throttling.
             // Note that we don't have to call PopUpdateProcessorThrottle
             // since without a PopSetThrottle function, its a No-Op.
             //
-            RtlInterlockedClearBits( &(pState->Flags), PSTATE_CLEAR_MASK);
-            RtlInterlockedSetBits( &(pState->Flags), PSTATE_NOT_INITIALIZED);
+            RtlInterlockedClearBits(&(pState->Flags), PSTATE_CLEAR_MASK);
+            RtlInterlockedSetBits(&(pState->Flags), PSTATE_NOT_INITIALIZED);
             pState->PerfSetThrottle = NULL;
-
         }
 
         //
         // At this point, we are done the work for this processors and
         // we should return to our previous IRQL
         //
-        KeLowerIrql( oldIrql );
+        KeLowerIrql(oldIrql);
 
     } // while
 
     //
     // did we fail an allocation (thus requiring a cleanup)?
     //
-    if (failedAllocation) {
+    if (failedAllocation)
+    {
 
         processors = KeActiveProcessors;
         currentAffinity = 1;
-        while (processors) {
+        while (processors)
+        {
 
-            if (!(processors & currentAffinity)) {
+            if (!(processors & currentAffinity))
+            {
 
                 currentAffinity <<= 1;
                 continue;
-
             }
 
             //
@@ -2126,7 +1963,7 @@ PopSetPerfLevelsSetNewStates:
             // We need to be running at DPC level to avoid synchronization
             // issues.
             //
-            KeRaiseIrql(DISPATCH_LEVEL, &oldIrql );
+            KeRaiseIrql(DISPATCH_LEVEL, &oldIrql);
 
             //
             // Get the power state information from the processor
@@ -2141,16 +1978,17 @@ PopSetPerfLevelsSetNewStates:
             pState->ThermalThrottleIndex = 0;
             pState->ProcessorMinThrottle = POP_PERF_SCALE;
             pState->ProcessorMaxThrottle = POP_PERF_SCALE;
-            pState->CurrentThrottle      = POP_PERF_SCALE;
-            pState->PerfTickCount        = POP_CUR_TIME(prcb);
+            pState->CurrentThrottle = POP_PERF_SCALE;
+            pState->PerfTickCount = POP_CUR_TIME(prcb);
             pState->CurrentThrottleIndex = 0;
-            pState->KneeThrottleIndex    = 0;
-            pState->ThrottleLimitIndex   = 0;
+            pState->KneeThrottleIndex = 0;
+            pState->ThrottleLimitIndex = 0;
 
             //
             // Free the allocated structure, if any
             //
-            if (pState->PerfStates) {
+            if (pState->PerfStates)
+            {
 
                 //
                 // For the sake of completeness, if there is a perf
@@ -2164,8 +2002,9 @@ PopSetPerfLevelsSetNewStates:
                 // Free the structure...
                 //
                 ExFreePool(pState->PerfStates);
-
-            } else {
+            }
+            else
+            {
 
                 //
                 // I guess its possible to hit this case if we are
@@ -2174,7 +2013,6 @@ PopSetPerfLevelsSetNewStates:
                 // so this code might not matter.
                 //
                 maxThrottle = POP_PERF_SCALE;
-
             }
             pState->PerfStates = NULL;
             pState->PerfStatesCount = 0;
@@ -2184,10 +2022,10 @@ PopSetPerfLevelsSetNewStates:
             // throttle back to 100% or whatever the highest freq that is
             // supported...
             //
-            if (pState->PerfSetThrottle) {
+            if (pState->PerfSetThrottle)
+            {
 
                 pState->PerfSetThrottle(maxThrottle);
-
             }
 
             //
@@ -2195,13 +2033,13 @@ PopSetPerfLevelsSetNewStates:
             // we support *nothing* throttle related. This should
             // prevent confusion in the DPC and/or Idle loop
             //
-            RtlInterlockedClearBits( &(pState->Flags), PSTATE_CLEAR_MASK);
+            RtlInterlockedClearBits(&(pState->Flags), PSTATE_CLEAR_MASK);
             pState->PerfSetThrottle = NULL;
 
             //
             // As usual, we should lower IRQL to what we started at
             //
-            KeLowerIrql( oldIrql );
+            KeLowerIrql(oldIrql);
 
         } // while
 
@@ -2211,8 +2049,9 @@ PopSetPerfLevelsSetNewStates:
         PopCapabilities.ProcessorThrottle = FALSE;
         PopCapabilities.ProcessorMinThrottle = POP_PERF_SCALE;
         PopCapabilities.ProcessorMaxThrottle = POP_PERF_SCALE;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Otherwise, we succeeded, and thus we can use whatever we
@@ -2221,7 +2060,6 @@ PopSetPerfLevelsSetNewStates:
         PopCapabilities.ProcessorThrottle = (perfStates != NULL);
         PopCapabilities.ProcessorMinThrottle = minThrottle;
         PopCapabilities.ProcessorMaxThrottle = maxThrottle;
-
     }
 
     //
@@ -2232,25 +2070,21 @@ PopSetPerfLevelsSetNewStates:
     //
     // Free the memory we allocated
     //
-    if (perfStates) {
+    if (perfStates)
+    {
 
         ExFreePool(perfStates);
-
     }
 
     //
     // And return whatever status we calculated...
     //
     return status;
-
 }
 
-
+
 NTSTATUS
-PopSetTimer(
-    IN  PPROCESSOR_POWER_STATE  PState,
-    IN  UCHAR                   Index
-    )
+PopSetTimer(IN PPROCESSOR_POWER_STATE PState, IN UCHAR Index)
 /*++
 
 Routine Description:
@@ -2272,51 +2106,44 @@ Return Value:
 
 --*/
 {
-    NTSTATUS        status;
-    LONGLONG        dueTime;
+    NTSTATUS status;
+    LONGLONG dueTime;
 
     //
     // Cancel the timer under the following conditions
     //
-    if (Index == 0) {
+    if (Index == 0)
+    {
 
         //
         // We are 100% throttle, so timer won't do much of anything...
         //
-        KeCancelTimer( (PKTIMER) &(PState->PerfTimer) );
+        KeCancelTimer((PKTIMER) & (PState->PerfTimer));
         status = STATUS_CANCELLED;
-        PoPrint(
-            PO_THROTTLE_DETAIL,
-            ("PopSetTimer: Timer Cancelled (already 100%)\n")
-            );
-
-    } else if (PState->Flags & PSTATE_CONSTANT_THROTTLE &&
-        Index == PState->KneeThrottleIndex) {
+        PoPrint(PO_THROTTLE_DETAIL, ("PopSetTimer: Timer Cancelled (already 100%)\n"));
+    }
+    else if (PState->Flags & PSTATE_CONSTANT_THROTTLE && Index == PState->KneeThrottleIndex)
+    {
 
         //
         // We are at the maximum constant throttle allowed
         //
-        KeCancelTimer( (PKTIMER) &(PState->PerfTimer) );
+        KeCancelTimer((PKTIMER) & (PState->PerfTimer));
         status = STATUS_CANCELLED;
-        PoPrint(
-            PO_THROTTLE_DETAIL,
-            ("PopSetTimer: Timer Cancelled (at constant)\n")
-            );
-
-    } else if (PState->Flags & PSTATE_DEGRADED_THROTTLE &&
-        Index == PState->ThrottleLimitIndex) {
+        PoPrint(PO_THROTTLE_DETAIL, ("PopSetTimer: Timer Cancelled (at constant)\n"));
+    }
+    else if (PState->Flags & PSTATE_DEGRADED_THROTTLE && Index == PState->ThrottleLimitIndex)
+    {
 
         //
         // We are at the maximum degraded throttle allowed
         //
-        KeCancelTimer( (PKTIMER) &(PState->PerfTimer) );
+        KeCancelTimer((PKTIMER) & (PState->PerfTimer));
         status = STATUS_CANCELLED;
-        PoPrint(
-            PO_THROTTLE_DETAIL,
-            ("PopSetTimer: Timer Cancelled (at degrade)\n")
-            );
-
-    } else {
+        PoPrint(PO_THROTTLE_DETAIL, ("PopSetTimer: Timer Cancelled (at degrade)\n"));
+    }
+    else
+    {
 
         //
         // No restrictions that we can think of, so set the timer. Note
@@ -2324,33 +2151,18 @@ Return Value:
         // the timer has already been set, then this resets it (moves
         // it back to the non-signaled state) and recomputes the period.
         //
-        dueTime = -1 * US2TIME * (LONGLONG) PopPerfCriticalTimeDelta;
-        KeSetTimer(
-            (PKTIMER) &(PState->PerfTimer),
-            *(PLARGE_INTEGER) &dueTime,
-            &(PState->PerfDpc)
-            );
+        dueTime = -1 * US2TIME * (LONGLONG)PopPerfCriticalTimeDelta;
+        KeSetTimer((PKTIMER) & (PState->PerfTimer), *(PLARGE_INTEGER)&dueTime, &(PState->PerfDpc));
         status = STATUS_SUCCESS;
-        PoPrint(
-            PO_THROTTLE_DETAIL,
-            ("PopSetTimer: Timer set for %ld hundred-nanoseconds\n",
-             dueTime
-             )
-            );
-
+        PoPrint(PO_THROTTLE_DETAIL, ("PopSetTimer: Timer set for %ld hundred-nanoseconds\n", dueTime));
     }
 
     return status;
 }
-
+
 NTSTATUS
-PopSetThrottle(
-    IN  PPROCESSOR_POWER_STATE  PState,
-    IN  PPROCESSOR_PERF_STATE   PerfStates,
-    IN  ULONG                   Index,
-    IN  ULONG                   SystemTime,
-    IN  ULONG                   IdleTime
-    )
+PopSetThrottle(IN PPROCESSOR_POWER_STATE PState, IN PPROCESSOR_PERF_STATE PerfStates, IN ULONG Index,
+               IN ULONG SystemTime, IN ULONG IdleTime)
 /*++
 
 Routine Description:
@@ -2380,31 +2192,25 @@ Arguments:
 
 --*/
 {
-    NTSTATUS    status;
-    PKPRCB      prcb;
-    PKTHREAD    thread;
-    UCHAR       current = PState->CurrentThrottleIndex;
+    NTSTATUS status;
+    PKPRCB prcb;
+    PKTHREAD thread;
+    UCHAR current = PState->CurrentThrottleIndex;
 
-    ASSERT( KeGetCurrentIrql() == DISPATCH_LEVEL );
-    ASSERT( KeGetCurrentPrcb() == CONTAINING_RECORD( PState, KPRCB, PowerState ) );
-    ASSERT( PState != NULL && PerfStates != NULL );
-    ASSERT( PState->PerfSetThrottle != NULL );
+    ASSERT(KeGetCurrentIrql() == DISPATCH_LEVEL);
+    ASSERT(KeGetCurrentPrcb() == CONTAINING_RECORD(PState, KPRCB, PowerState));
+    ASSERT(PState != NULL && PerfStates != NULL);
+    ASSERT(PState->PerfSetThrottle != NULL);
 
-    PoPrint(
-        PO_THROTTLE,
-        ("PopSetThrottle: Index=%d (%d%%) at %ld (system) %ld (idle)\n",
-         Index,
-         PerfStates[Index].PercentFrequency,
-         SystemTime,
-         IdleTime
-         )
-        );
+    PoPrint(PO_THROTTLE, ("PopSetThrottle: Index=%d (%d%%) at %ld (system) %ld (idle)\n", Index,
+                          PerfStates[Index].PercentFrequency, SystemTime, IdleTime));
 
     //
     // If there is, then attempt to set it to the desired state
     //
     status = PState->PerfSetThrottle(PerfStates[Index].PercentFrequency);
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         //
         // We failed. Update the Error tracking bookkeeping
@@ -2415,14 +2221,8 @@ Arguments:
         //
         // No reason to update the other bookkeeping
         //
-        PoPrint(
-            PO_THROTTLE,
-            ("PopSetThrottle: Index=%d FAILED!\n",
-             Index
-             )
-            );
+        PoPrint(PO_THROTTLE, ("PopSetThrottle: Index=%d FAILED!\n", Index));
         return status;
-
     }
 
     //
@@ -2432,39 +2232,32 @@ Arguments:
     thread = prcb->IdleThread;
     SystemTime = POP_CUR_TIME(prcb);
     IdleTime = thread->KernelTime;
-    PoPrint(
-        PO_THROTTLE,
-        ("PopSetThrottle: Index=%d (%d%%) now at %ld (system) %ld (idle)\n",
-         Index,
-         PerfStates[Index].PercentFrequency,
-         SystemTime,
-         IdleTime
-         )
-        );
+    PoPrint(PO_THROTTLE, ("PopSetThrottle: Index=%d (%d%%) now at %ld (system) %ld (idle)\n", Index,
+                          PerfStates[Index].PercentFrequency, SystemTime, IdleTime));
 
     //
     // Update the bookkeeping information for the current state
     //
-    if (!(PState->Flags & PSTATE_NOT_INITIALIZED) ) {
+    if (!(PState->Flags & PSTATE_NOT_INITIALIZED))
+    {
 
-        ASSERT( current < PState->PerfStatesCount );
-        PerfStates[current].PerformanceTime +=
-            (SystemTime - PState->PerfTickCount);
-
-    } else {
+        ASSERT(current < PState->PerfStatesCount);
+        PerfStates[current].PerformanceTime += (SystemTime - PState->PerfTickCount);
+    }
+    else
+    {
 
         //
         // We have successfully placed the CPU into a known state
         //
-        RtlInterlockedClearBits( &(PState->Flags), PSTATE_NOT_INITIALIZED);
-
+        RtlInterlockedClearBits(&(PState->Flags), PSTATE_NOT_INITIALIZED);
     }
 
     //
     // Update the current throttle information
     //
     PState->CurrentThrottle = PerfStates[Index].PercentFrequency;
-    PState->CurrentThrottleIndex = (UCHAR) Index;
+    PState->CurrentThrottleIndex = (UCHAR)Index;
 
     //
     // Update our idea of what the current tick counts are
@@ -2484,12 +2277,10 @@ Arguments:
     PState->PreviousC3StateTime = PState->TotalIdleStateTime[2];
     return status;
 }
-
+
 NTSTATUS
 FASTCALL
-PopThunkSetThrottle(
-    IN UCHAR Throttle
-    )
+PopThunkSetThrottle(IN UCHAR Throttle)
 /*++
 
 Routine Description:
@@ -2512,15 +2303,12 @@ Return Value:
     // Convert percentage back into level/scale. Add scale-1 so that we round up to recover
     // from the truncation when we did the original divide.
     //
-    PopRealSetThrottle((Throttle*PopThunkThrottleScale + PopThunkThrottleScale - 1)/POP_PERF_SCALE);
+    PopRealSetThrottle((Throttle * PopThunkThrottleScale + PopThunkThrottleScale - 1) / POP_PERF_SCALE);
     return STATUS_SUCCESS;
 }
 
-
-VOID
-PopUpdateAllThrottles(
-    VOID
-    )
+
+VOID PopUpdateAllThrottles(VOID)
 /*++
 
 Routine Description:
@@ -2544,18 +2332,20 @@ Return Value:
 --*/
 
 {
-    KAFFINITY               processors;
-    KAFFINITY               currentAffinity;
-    KIRQL                   oldIrql;
-    PPROCESSOR_POWER_STATE  pState;
+    KAFFINITY processors;
+    KAFFINITY currentAffinity;
+    KIRQL oldIrql;
+    PPROCESSOR_POWER_STATE pState;
 
     ASSERT(KeGetCurrentIrql() < DISPATCH_LEVEL);
 
     processors = KeActiveProcessors;
     currentAffinity = 1;
-    while (processors) {
+    while (processors)
+    {
 
-        if (processors & currentAffinity) {
+        if (processors & currentAffinity)
+        {
 
             processors &= ~currentAffinity;
             KeSetSystemAffinityThread(currentAffinity);
@@ -2564,7 +2354,7 @@ Return Value:
             // Ensure that all calls to PopUpdateProcessorThrottle
             // are done at DISPATCH_LEVEL (to properly synchronize.
             //
-            KeRaiseIrql( DISPATCH_LEVEL, &oldIrql );
+            KeRaiseIrql(DISPATCH_LEVEL, &oldIrql);
 
             //
             // Optimization: If we haven't marked the prcb->powerstate
@@ -2572,28 +2362,23 @@ Return Value:
             // call
             //
             pState = &(KeGetCurrentPrcb()->PowerState);
-            if (pState->Flags & PSTATE_SUPPORTS_THROTTLE) {
+            if (pState->Flags & PSTATE_SUPPORTS_THROTTLE)
+            {
 
                 PopUpdateProcessorThrottle();
-
             }
 
             //
             // Return to the previous Irql
             //
-            KeLowerIrql( oldIrql );
-
+            KeLowerIrql(oldIrql);
         }
         currentAffinity <<= 1;
-
     }
     KeRevertToUserAffinityThread();
 }
-
-VOID
-PopUpdateProcessorThrottle(
-    VOID
-    )
+
+VOID PopUpdateProcessorThrottle(VOID)
 /*++
 
 Routine Description:
@@ -2615,15 +2400,15 @@ Return Value:
 --*/
 
 {
-    PKPRCB                  prcb;
-    PPROCESSOR_PERF_STATE   perfStates;
-    PPROCESSOR_POWER_STATE  pState;
-    UCHAR                   i;
-    UCHAR                   index;
-    UCHAR                   newLimit;
-    UCHAR                   perfStatesCount;
-    ULONG                   idleTime;
-    ULONG                   time;
+    PKPRCB prcb;
+    PPROCESSOR_PERF_STATE perfStates;
+    PPROCESSOR_POWER_STATE pState;
+    UCHAR i;
+    UCHAR index;
+    UCHAR newLimit;
+    UCHAR perfStatesCount;
+    ULONG idleTime;
+    ULONG time;
 
     //
     // Get the power state structure from the PRCB
@@ -2634,10 +2419,10 @@ Return Value:
     //
     // Sanity check
     //
-    if (!(pState->Flags & PSTATE_SUPPORTS_THROTTLE)) {
+    if (!(pState->Flags & PSTATE_SUPPORTS_THROTTLE))
+    {
 
         return;
-
     }
 
     //
@@ -2646,8 +2431,8 @@ Return Value:
     // idle time
     //
     newLimit = pState->CurrentThrottle;
-    index    = pState->CurrentThrottleIndex;
-    time     = POP_CUR_TIME(prcb);
+    index = pState->CurrentThrottleIndex;
+    time = POP_CUR_TIME(prcb);
     idleTime = prcb->IdleThread->KernelTime;
 
     //
@@ -2659,7 +2444,7 @@ Return Value:
     //
     // Setup all the flags. Clear any that we might not need.
     //
-    RtlInterlockedClearBits( &(pState->Flags), PSTATE_THROTTLE_MASK);
+    RtlInterlockedClearBits(&(pState->Flags), PSTATE_THROTTLE_MASK);
 
     //
     // If we are on AC, then we always want to run at the highest
@@ -2669,26 +2454,29 @@ Return Value:
     // if someone DOES want dynamic throttling on AC, they can just edit
     // the policy
     //
-    if (PopProcessorPolicy->DynamicThrottle == PO_THROTTLE_NONE) {
+    if (PopProcessorPolicy->DynamicThrottle == PO_THROTTLE_NONE)
+    {
 
         //
         // We precomputed what the max throttle should be
         //
         index = pState->ThermalThrottleIndex;
         newLimit = perfStates[index].PercentFrequency;
-
-    } else {
+    }
+    else
+    {
 
         //
         // No matter what, we are taking an adaptive policy...
         //
-        RtlInterlockedSetBits( &(pState->Flags), PSTATE_ADAPTIVE_THROTTLE );
+        RtlInterlockedSetBits(&(pState->Flags), PSTATE_ADAPTIVE_THROTTLE);
 
         //
         // We are on DC, apply the appropriate heuristics based on
         // the dynamic throttling policy
         //
-        switch (PopProcessorPolicy->DynamicThrottle) {
+        switch (PopProcessorPolicy->DynamicThrottle)
+        {
         case PO_THROTTLE_CONSTANT:
 
             //
@@ -2701,7 +2489,7 @@ Return Value:
             //
             // Set the constant flag
             //
-            RtlInterlockedSetBits( &(pState->Flags), PSTATE_CONSTANT_THROTTLE );
+            RtlInterlockedSetBits(&(pState->Flags), PSTATE_CONSTANT_THROTTLE);
             break;
 
         case PO_THROTTLE_DEGRADE:
@@ -2715,7 +2503,7 @@ Return Value:
             //
             // Set the degraded flag
             //
-            RtlInterlockedSetBits( &(pState->Flags), PSTATE_DEGRADED_THROTTLE );
+            RtlInterlockedSetBits(&(pState->Flags), PSTATE_DEGRADED_THROTTLE);
             break;
 
         default:
@@ -2723,12 +2511,9 @@ Return Value:
             //
             // In case of the default (ie: unknown, simply dump a message)
             //
-            PoPrint(
-                PO_THROTTLE,
-                ("PopUpdateProcessorThrottle - unimplemented "
-                 "dynamic throttle %d\n",
-                 PopProcessorPolicy->DynamicThrottle)
-                );
+            PoPrint(PO_THROTTLE, ("PopUpdateProcessorThrottle - unimplemented "
+                                  "dynamic throttle %d\n",
+                                  PopProcessorPolicy->DynamicThrottle));
 
             //
             // Fall through...
@@ -2743,26 +2528,23 @@ Return Value:
         //
         // See if we are over the thermal limit...
         //
-        ASSERT( pState->ThermalThrottleLimit >= pState->ProcessorMinThrottle );
-        if (newLimit > pState->ThermalThrottleLimit) {
+        ASSERT(pState->ThermalThrottleLimit >= pState->ProcessorMinThrottle);
+        if (newLimit > pState->ThermalThrottleLimit)
+        {
 
-            PoPrint(
-                PO_THROTTLE,
-                ("PopUpdateProcessorThrottle - new throttle limit %d over "
-                 " thermal throttle limit %d\n",
-                 newLimit,
-                 pState->ThermalThrottleLimit)
-                );
+            PoPrint(PO_THROTTLE, ("PopUpdateProcessorThrottle - new throttle limit %d over "
+                                  " thermal throttle limit %d\n",
+                                  newLimit, pState->ThermalThrottleLimit));
             newLimit = pState->ThermalThrottleLimit;
             index = pState->ThermalThrottleIndex;
-
         }
     } // if () { } else { }
 
     //
     // Special Cases
     //
-    if (pState->Flags & PSTATE_DISABLE_THROTTLE_INRUSH) {
+    if (pState->Flags & PSTATE_DISABLE_THROTTLE_INRUSH)
+    {
 
         //
         // InRush power irp outstanding --- force the throttle to goto
@@ -2770,8 +2552,9 @@ Return Value:
         //
         index = pState->KneeThrottleIndex;
         newLimit = perfStates[index].PercentFrequency;
-
-    } else if (pState->Flags & PSTATE_DISABLE_THROTTLE_NTAPI) {
+    }
+    else if (pState->Flags & PSTATE_DISABLE_THROTTLE_NTAPI)
+    {
 
         //
         // We are trying to do a power management API. Pick the closest
@@ -2779,7 +2562,6 @@ Return Value:
         //
         index = 0;
         newLimit = perfStates[index].PercentFrequency;
-
     }
 
     //
@@ -2787,54 +2569,33 @@ Return Value:
     // flag is set, then we don't really know which processor state we
     // are currently in, so we set it without updating the bookkeeping
     //
-    if (pState->Flags & PSTATE_NOT_INITIALIZED) {
+    if (pState->Flags & PSTATE_NOT_INITIALIZED)
+    {
 
-        PoPrint(
-            PO_THROTTLE,
-            ("PopUpdateProcessorThrottle - setting CPU throttle to %d\n",
-             newLimit)
-            );
-        PopSetThrottle(
-            pState,
-            perfStates,
-            index,
-            time,
-            idleTime
-            );
+        PoPrint(PO_THROTTLE, ("PopUpdateProcessorThrottle - setting CPU throttle to %d\n", newLimit));
+        PopSetThrottle(pState, perfStates, index, time, idleTime);
         return;
-
     }
 
     //
     // Apply the new throttle if there has been a change
     //
-    if (newLimit != pState->CurrentThrottle) {
+    if (newLimit != pState->CurrentThrottle)
+    {
 
-        PoPrint(
-            PO_THROTTLE,
-            ("PopUpdateProcessorThrottle - setting CPU throttle to %d\n",
-             newLimit)
-            );
-        if (newLimit < pState->CurrentThrottle) {
+        PoPrint(PO_THROTTLE, ("PopUpdateProcessorThrottle - setting CPU throttle to %d\n", newLimit));
+        if (newLimit < pState->CurrentThrottle)
+        {
 
             pState->DemotionCount++;
             perfStates[pState->CurrentThrottleIndex].DecreaseCount++;
-
-        } else {
+        }
+        else
+        {
 
             pState->PromotionCount++;
             perfStates[pState->CurrentThrottleIndex].IncreaseCount++;
-
         }
-        PopSetThrottle(
-            pState,
-            perfStates,
-            index,
-            time,
-            idleTime
-            );
-
+        PopSetThrottle(pState, perfStates, index, time, idleTime);
     }
-
 }
-

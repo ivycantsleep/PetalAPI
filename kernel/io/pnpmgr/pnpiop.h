@@ -29,9 +29,9 @@ Revision History:
 // Pool tags
 //
 
-#define IOP_DNOD_TAG    'donD'
-#define IOP_DNDT_TAG    'tdnD'
-#define IOP_DPWR_TAG    'rwPD'
+#define IOP_DNOD_TAG 'donD'
+#define IOP_DNDT_TAG 'tdnD'
+#define IOP_DPWR_TAG 'rwPD'
 
 //
 // The DEVICE_NODE is really just some extra stuff that we'd like to keep around
@@ -40,7 +40,8 @@ Revision History:
 // PDO.
 //
 
-typedef enum {
+typedef enum
+{
 
     DOCK_NOTDOCKDEVICE,
     DOCK_QUIESCENT,
@@ -50,7 +51,8 @@ typedef enum {
 
 } PROFILE_STATUS;
 
-typedef enum {
+typedef enum
+{
 
     PROFILE_IN_PNPEVENT,
     PROFILE_NOT_IN_PNPEVENT,
@@ -58,46 +60,50 @@ typedef enum {
 
 } PROFILE_NOTIFICATION_TIME;
 
-typedef struct _PENDING_SET_INTERFACE_STATE {
-    LIST_ENTRY      List;
-    UNICODE_STRING  LinkName;
+typedef struct _PENDING_SET_INTERFACE_STATE
+{
+    LIST_ENTRY List;
+    UNICODE_STRING LinkName;
 } PENDING_SET_INTERFACE_STATE, *PPENDING_SET_INTERFACE_STATE;
 
 
-typedef enum _UNLOCK_UNLINK_ACTION {
+typedef enum _UNLOCK_UNLINK_ACTION
+{
     UnlinkRemovedDeviceNodes,
     UnlinkAllDeviceNodesPendingClose,
     UnlinkOnlyChildDeviceNodesPendingClose
-}   UNLOCK_UNLINK_ACTION, *PUNLOCK_UNLINK_ACTION;
+} UNLOCK_UNLINK_ACTION, *PUNLOCK_UNLINK_ACTION;
 
-typedef enum _PNP_DEVNODE_STATE {
-    DeviceNodeUnspecified       = 0x300, // 768
-    DeviceNodeUninitialized,             // 769
-    DeviceNodeInitialized,               // 770
-    DeviceNodeDriversAdded,              // 771
-    DeviceNodeResourcesAssigned,         // 772 - Operational state for Added
-    DeviceNodeStartPending,              // 773 - Operational state for Added
-    DeviceNodeStartCompletion,           // 774 - Operational state for Added
-    DeviceNodeStartPostWork,             // 775 - Operational state for Added
-    DeviceNodeStarted,                   // 776
-    DeviceNodeQueryStopped,              // 777
-    DeviceNodeStopped,                   // 778
-    DeviceNodeRestartCompletion,         // 779 - Operational state for Stopped
-    DeviceNodeEnumeratePending,          // 780 - Operational state for Started
-    DeviceNodeEnumerateCompletion,       // 781 - Operational state for Started
-    DeviceNodeAwaitingQueuedDeletion,    // 782
-    DeviceNodeAwaitingQueuedRemoval,     // 783
-    DeviceNodeQueryRemoved,              // 784
-    DeviceNodeRemovePendingCloses,       // 785
-    DeviceNodeRemoved,                   // 786
-    DeviceNodeDeletePendingCloses,       // 787
-    DeviceNodeDeleted                    // 788
-}   PNP_DEVNODE_STATE, *PPNP_DEVNODE_STATE;
+typedef enum _PNP_DEVNODE_STATE
+{
+    DeviceNodeUnspecified = 0x300,    // 768
+    DeviceNodeUninitialized,          // 769
+    DeviceNodeInitialized,            // 770
+    DeviceNodeDriversAdded,           // 771
+    DeviceNodeResourcesAssigned,      // 772 - Operational state for Added
+    DeviceNodeStartPending,           // 773 - Operational state for Added
+    DeviceNodeStartCompletion,        // 774 - Operational state for Added
+    DeviceNodeStartPostWork,          // 775 - Operational state for Added
+    DeviceNodeStarted,                // 776
+    DeviceNodeQueryStopped,           // 777
+    DeviceNodeStopped,                // 778
+    DeviceNodeRestartCompletion,      // 779 - Operational state for Stopped
+    DeviceNodeEnumeratePending,       // 780 - Operational state for Started
+    DeviceNodeEnumerateCompletion,    // 781 - Operational state for Started
+    DeviceNodeAwaitingQueuedDeletion, // 782
+    DeviceNodeAwaitingQueuedRemoval,  // 783
+    DeviceNodeQueryRemoved,           // 784
+    DeviceNodeRemovePendingCloses,    // 785
+    DeviceNodeRemoved,                // 786
+    DeviceNodeDeletePendingCloses,    // 787
+    DeviceNodeDeleted                 // 788
+} PNP_DEVNODE_STATE, *PPNP_DEVNODE_STATE;
 
-#define STATE_HISTORY_SIZE  20
+#define STATE_HISTORY_SIZE 20
 
 typedef struct _DEVICE_NODE *PDEVICE_NODE;
-typedef struct _DEVICE_NODE {
+typedef struct _DEVICE_NODE
+{
 
     //
     // Pointer to another DEVICE_NODE with the same parent as this one.
@@ -316,12 +322,14 @@ typedef struct _DEVICE_NODE {
     //   the resources from LegacyDeviceNode.
     //
 
-    union {
+    union
+    {
         PDEVICE_NODE LegacyDeviceNode;
         PDEVICE_RELATIONS PendingDeviceRelations;
     } OverUsed1;
 
-    union {
+    union
+    {
         PDEVICE_NODE NextResourceDeviceNode;
     } OverUsed2;
 
@@ -342,10 +350,11 @@ typedef struct _DEVICE_NODE {
     //
     // Maintain a list of current dock devices and their SerialNumbers
     //
-    struct {
-        PROFILE_STATUS  DockStatus;
-        LIST_ENTRY      ListEntry;
-        PWCHAR          SerialNumber;
+    struct
+    {
+        PROFILE_STATUS DockStatus;
+        LIST_ENTRY ListEntry;
+        PWCHAR SerialNumber;
     } DockInfo;
 
     //
@@ -382,108 +391,109 @@ typedef struct _DEVICE_NODE {
 // A device Object is a PDO iff it has a non NULL device node (aka set by
 // plug and play during a query device relations.
 //
-#define IS_PDO(d) \
+#define IS_PDO(d)                                        \
     ((NULL != (d)->DeviceObjectExtension->DeviceNode) && \
-    (!(((PDEVICE_NODE)(d)->DeviceObjectExtension->DeviceNode)->Flags & DNF_LEGACY_RESOURCE_DEVICENODE)))
+     (!(((PDEVICE_NODE)(d)->DeviceObjectExtension->DeviceNode)->Flags & DNF_LEGACY_RESOURCE_DEVICENODE)))
 
-#define ASSERT_PDO(d) \
-    do { \
-        if (    NULL == (d)->DeviceObjectExtension->DeviceNode || \
-                (((PDEVICE_NODE)(d)->DeviceObjectExtension->DeviceNode)->Flags & DNF_LEGACY_RESOURCE_DEVICENODE))  { \
-            KeBugCheckEx(PNP_DETECTED_FATAL_ERROR, PNP_ERR_INVALID_PDO, (ULONG_PTR)d, 0, 0); \
-        } \
-    } \
-    while (0)
+#define ASSERT_PDO(d)                                                                                         \
+    do                                                                                                        \
+    {                                                                                                         \
+        if (NULL == (d)->DeviceObjectExtension->DeviceNode ||                                                 \
+            (((PDEVICE_NODE)(d)->DeviceObjectExtension->DeviceNode)->Flags & DNF_LEGACY_RESOURCE_DEVICENODE)) \
+        {                                                                                                     \
+            KeBugCheckEx(PNP_DETECTED_FATAL_ERROR, PNP_ERR_INVALID_PDO, (ULONG_PTR)d, 0, 0);                  \
+        }                                                                                                     \
+    } while (0)
 
 //
 // DNF_MAKEUP - this devnode's device is created and owned by PnP manager
 //
 
-#define DNF_MADEUP                                  0x00000001
+#define DNF_MADEUP 0x00000001
 
 //
 // DNF_DUPLICATE - this devnode's device is a duplicate of another enumerate PDO
 //
 
-#define DNF_DUPLICATE                               0x00000002
+#define DNF_DUPLICATE 0x00000002
 
 //
 // DNF_HAL_NODE - a flag to indicate which device node is the root node created by
 // the hal
 //
 
-#define DNF_HAL_NODE                                0x00000004
+#define DNF_HAL_NODE 0x00000004
 
 //
 // DNF_REENUMERATE - needs to be reenumerated
 //
 
-#define DNF_REENUMERATE                             0x00000008
+#define DNF_REENUMERATE 0x00000008
 
 //
 // DNF_ENUMERATED - used to track enumeration in IopEnumerateDevice()
 //
 
-#define DNF_ENUMERATED                              0x00000010
+#define DNF_ENUMERATED 0x00000010
 
 //
 // Singal that we need to send driver query id irps
 //
 
-#define DNF_IDS_QUERIED                             0x00000020
+#define DNF_IDS_QUERIED 0x00000020
 
 //
 // DNF_HAS_BOOT_CONFIG - the device has resource assigned by BIOS.  It is considered
 //    pseudo-started and need to participate in rebalance.
 //
 
-#define DNF_HAS_BOOT_CONFIG                         0x00000040
+#define DNF_HAS_BOOT_CONFIG 0x00000040
 
 //
 // DNF_BOOT_CONFIG_RESERVED - Indicates the BOOT resources of the device are reserved.
 //
 
-#define DNF_BOOT_CONFIG_RESERVED                    0x00000080
+#define DNF_BOOT_CONFIG_RESERVED 0x00000080
 
 //
 // DNF_NO_RESOURCE_REQUIRED - this devnode's device does not require resource.
 //
 
-#define DNF_NO_RESOURCE_REQUIRED                    0x00000100
+#define DNF_NO_RESOURCE_REQUIRED 0x00000100
 
 //
 // DNF_RESOURCE_REQUIREMENTS_NEED_FILTERED - to distinguished the
 //      DeviceNode->ResourceRequirements is a filtered list or not.
 //
 
-#define DNF_RESOURCE_REQUIREMENTS_NEED_FILTERED     0x00000200
+#define DNF_RESOURCE_REQUIREMENTS_NEED_FILTERED 0x00000200
 
 //
 // DNF_RESOURCE_REQUIREMENTS_CHANGED - Indicates the device's resource
 //      requirements list has been changed.
 //
 
-#define DNF_RESOURCE_REQUIREMENTS_CHANGED           0x00000400
+#define DNF_RESOURCE_REQUIREMENTS_CHANGED 0x00000400
 
 //
 // DNF_NON_STOPPED_REBALANC - indicates the device can be restarted with new
 //      resources without being stopped.
 //
 
-#define DNF_NON_STOPPED_REBALANCE                   0x00000800
+#define DNF_NON_STOPPED_REBALANCE 0x00000800
 
 //
 // The device's controlling driver is a legacy driver
 //
 
-#define DNF_LEGACY_DRIVER                           0x00001000
+#define DNF_LEGACY_DRIVER 0x00001000
 
 //
 // This corresponds to the user-mode CM_PROB_WILL_BE_REMOVED problem value and
 // the DN_WILL_BE_REMOVED status flag.
 //
 
-#define DNF_HAS_PROBLEM                             0x00002000
+#define DNF_HAS_PROBLEM 0x00002000
 
 //
 // DNF_HAS_PRIVATE_PROBLEM - indicates this device reported PNP_DEVICE_FAILED
@@ -491,14 +501,14 @@ typedef struct _DEVICE_NODE {
 //  PNP_DEVICE_RESOURCE_REQUIREMENTS_CHANGED.
 //
 
-#define DNF_HAS_PRIVATE_PROBLEM                     0x00004000
+#define DNF_HAS_PRIVATE_PROBLEM 0x00004000
 
 //
 // DNF_HARDWARE_VERIFICATION is set on device nodes that have hardware
 // verification (probably via WHQL applet).
 //
 
-#define DNF_HARDWARE_VERIFICATION                   0x00008000
+#define DNF_HARDWARE_VERIFICATION 0x00008000
 
 //
 // DNF_DEVICE_GONE is set when a pdo is no longer returned in a query bus
@@ -508,60 +518,60 @@ typedef struct _DEVICE_NODE {
 // from the tree.
 //
 
-#define DNF_DEVICE_GONE                             0x00010000
+#define DNF_DEVICE_GONE 0x00010000
 
 //
 // DNF_LEGACY_RESOURCE_DEVICENODE is set for device nodes created for legacy
 // resource allocation.
 //
 
-#define DNF_LEGACY_RESOURCE_DEVICENODE              0x00020000
+#define DNF_LEGACY_RESOURCE_DEVICENODE 0x00020000
 
 //
 // DNF_NEEDS_REBALANCE is set for device nodes that trigger rebalance.
 //
 
-#define DNF_NEEDS_REBALANCE                         0x00040000
+#define DNF_NEEDS_REBALANCE 0x00040000
 
 //
 // DNF_LOCKED_FOR_EJECT is set on device nodes that are being ejected or are
 // related to a device being ejected.
 //
 
-#define DNF_LOCKED_FOR_EJECT                        0x00080000
+#define DNF_LOCKED_FOR_EJECT 0x00080000
 
 //
 // DNF_DRIVER_BLOCKED is set on device nodes that use one or more drivers that
 // have been blocked from loading.
 //
 
-#define DNF_DRIVER_BLOCKED                          0x00100000
+#define DNF_DRIVER_BLOCKED 0x00100000
 
 //
-// DNF_CHILD_WITH_INVALID_ID is set on device nodes that has one or more children             
+// DNF_CHILD_WITH_INVALID_ID is set on device nodes that has one or more children
 // that have invalid id(s).
 //
 
-#define DNF_CHILD_WITH_INVALID_ID                   0x00200000
+#define DNF_CHILD_WITH_INVALID_ID 0x00200000
 
 //
 // This corresponds to the user-mode the DN_WILL_BE_REMOVED status flag.
 //
 
-#define DNUF_WILL_BE_REMOVED                        0x00000001
+#define DNUF_WILL_BE_REMOVED 0x00000001
 
 //
 // This corresponds to the user-mode DN_NO_SHOW_IN_DM status flag.
 //
 
-#define DNUF_DONT_SHOW_IN_UI                        0x00000002
+#define DNUF_DONT_SHOW_IN_UI 0x00000002
 
 //
 // This flag is set when user-mode lets us know that a reboot is required
 // for this device.
 //
 
-#define DNUF_NEED_RESTART                           0x00000004
+#define DNUF_NEED_RESTART 0x00000004
 
 //
 // This flag is set to let the user-mode know when a device can be disabled
@@ -569,7 +579,7 @@ typedef struct _DEVICE_NODE {
 // a polled flag (see also PNP_DEVICE_NOT_DISABLEABLE)
 //
 
-#define DNUF_NOT_DISABLEABLE                        0x00000008
+#define DNUF_NOT_DISABLEABLE 0x00000008
 
 //
 // Flags used during shutdown when the IO Verifier is trying to remove all
@@ -580,51 +590,46 @@ typedef struct _DEVICE_NODE {
 // DNUF_SHUTDOWN_SUBTREE_DONE is set once we've issued the QueryRemove to all
 // a Devnodes descendants.
 //
-#define DNUF_SHUTDOWN_QUERIED                       0x00000010
-#define DNUF_SHUTDOWN_SUBTREE_DONE                  0x00000020
+#define DNUF_SHUTDOWN_QUERIED 0x00000010
+#define DNUF_SHUTDOWN_SUBTREE_DONE 0x00000020
 
 //
 // PNP Bugcheck Subcodes
 //
-#define PNP_ERR_DUPLICATE_PDO                   1
-#define PNP_ERR_INVALID_PDO                     2
-#define PNP_ERR_BOGUS_ID                        3
-#define PNP_ERR_PDO_ENUMERATED_AFTER_DELETION   4
-#define PNP_ERR_ACTIVE_PDO_FREED                5
+#define PNP_ERR_DUPLICATE_PDO 1
+#define PNP_ERR_INVALID_PDO 2
+#define PNP_ERR_BOGUS_ID 3
+#define PNP_ERR_PDO_ENUMERATED_AFTER_DELETION 4
+#define PNP_ERR_ACTIVE_PDO_FREED 5
 
-#define PNP_ERR_DEVICE_MISSING_FROM_EJECT_LIST  6
-#define PNP_ERR_UNEXPECTED_ADD_RELATION_ERR     7
+#define PNP_ERR_DEVICE_MISSING_FROM_EJECT_LIST 6
+#define PNP_ERR_UNEXPECTED_ADD_RELATION_ERR 7
 
-#define MAX_INSTANCE_PATH_LENGTH    260
+#define MAX_INSTANCE_PATH_LENGTH 260
 
-typedef NTSTATUS (*PENUM_CALLBACK)(
-    IN PDEVICE_NODE DeviceNode,
-    IN PVOID Context
-    );
+typedef NTSTATUS (*PENUM_CALLBACK)(IN PDEVICE_NODE DeviceNode, IN PVOID Context);
 
 //
 // Define callback routine for PipApplyFunctionToSubKeys &
 // PipApplyFunctionToServiceInstances
 //
-typedef BOOLEAN (*PIOP_SUBKEY_CALLBACK_ROUTINE) (
-    IN     HANDLE,
-    IN     PUNICODE_STRING,
-    IN OUT PVOID
-    );
+typedef BOOLEAN (*PIOP_SUBKEY_CALLBACK_ROUTINE)(IN HANDLE, IN PUNICODE_STRING, IN OUT PVOID);
 
 //
 // Define context structures for Start and Add device services
 //
 
-#define NO_MORE_GROUP ((USHORT) -1)
-#define SETUP_RESERVED_GROUP      0
-#define BUS_DRIVER_GROUP          1
+#define NO_MORE_GROUP ((USHORT) - 1)
+#define SETUP_RESERVED_GROUP 0
+#define BUS_DRIVER_GROUP 1
 
-typedef struct _ADD_CONTEXT {
+typedef struct _ADD_CONTEXT
+{
     ULONG DriverStartType;
 } ADD_CONTEXT, *PADD_CONTEXT;
 
-typedef struct _START_CONTEXT {
+typedef struct _START_CONTEXT
+{
     BOOLEAN LoadDriver;
     BOOLEAN NewDevice;
     ADD_CONTEXT AddContext;
@@ -634,7 +639,8 @@ typedef struct _START_CONTEXT {
 // Resource translation and allocation related structures
 //
 
-typedef enum _RESOURCE_HANDLER_TYPE {
+typedef enum _RESOURCE_HANDLER_TYPE
+{
     ResourceHandlerNull,
     ResourceTranslator,
     ResourceArbiter,
@@ -649,17 +655,18 @@ typedef enum _RESOURCE_HANDLER_TYPE {
 // must be the same.
 //
 
-typedef struct _PI_RESOURCE_ARBITER_ENTRY {
-    LIST_ENTRY          DeviceArbiterList;         // Link all the arbiters of a PDO.
-    UCHAR               ResourceType;
-    PARBITER_INTERFACE  ArbiterInterface;
-    ULONG               Level;                     // Level of the owning device.
-    LIST_ENTRY          ResourceList;
-    LIST_ENTRY          BestResourceList;
-    LIST_ENTRY          BestConfig;                // Link all the arbiters which produces the best logconf
-    LIST_ENTRY          ActiveArbiterList;         // Link all the arbiters under testing
-    UCHAR               State;
-    BOOLEAN             ResourcesChanged;
+typedef struct _PI_RESOURCE_ARBITER_ENTRY
+{
+    LIST_ENTRY DeviceArbiterList; // Link all the arbiters of a PDO.
+    UCHAR ResourceType;
+    PARBITER_INTERFACE ArbiterInterface;
+    ULONG Level; // Level of the owning device.
+    LIST_ENTRY ResourceList;
+    LIST_ENTRY BestResourceList;
+    LIST_ENTRY BestConfig;        // Link all the arbiters which produces the best logconf
+    LIST_ENTRY ActiveArbiterList; // Link all the arbiters under testing
+    UCHAR State;
+    BOOLEAN ResourcesChanged;
 } PI_RESOURCE_ARBITER_ENTRY, *PPI_RESOURCE_ARBITER_ENTRY;
 
 //
@@ -667,58 +674,60 @@ typedef struct _PI_RESOURCE_ARBITER_ENTRY {
 //
 
 #define PI_ARBITER_HAS_SOMETHING 1
-#define PI_ARBITER_TEST_FAILED   2
+#define PI_ARBITER_TEST_FAILED 2
 
 //
 // Internal Translator tracking structures
 //
 
-typedef struct _PI_RESOURCE_TRANSLATOR_ENTRY {
-    LIST_ENTRY              DeviceTranslatorList;
-    UCHAR                   ResourceType;
-    PTRANSLATOR_INTERFACE   TranslatorInterface;
-    PDEVICE_NODE            DeviceNode;
+typedef struct _PI_RESOURCE_TRANSLATOR_ENTRY
+{
+    LIST_ENTRY DeviceTranslatorList;
+    UCHAR ResourceType;
+    PTRANSLATOR_INTERFACE TranslatorInterface;
+    PDEVICE_NODE DeviceNode;
 } PI_RESOURCE_TRANSLATOR_ENTRY, *PPI_RESOURCE_TRANSLATOR_ENTRY;
 
 //
 // IOP_RESOURCE_REQUEST
 //
 
-#define QUERY_RESOURCE_LIST                0
-#define QUERY_RESOURCE_REQUIREMENTS        1
+#define QUERY_RESOURCE_LIST 0
+#define QUERY_RESOURCE_REQUIREMENTS 1
 
-#define REGISTRY_ALLOC_CONFIG              1
-#define REGISTRY_FORCED_CONFIG             2
-#define REGISTRY_BOOT_CONFIG               4
-#define REGISTRY_OVERRIDE_CONFIGVECTOR     1
-#define REGISTRY_BASIC_CONFIGVECTOR        2
+#define REGISTRY_ALLOC_CONFIG 1
+#define REGISTRY_FORCED_CONFIG 2
+#define REGISTRY_BOOT_CONFIG 4
+#define REGISTRY_OVERRIDE_CONFIGVECTOR 1
+#define REGISTRY_BASIC_CONFIGVECTOR 2
 
 //
 // An array of IOP_RESOURCE_REQUEST structures is used to anchor all the
 // devices for which resource rerquirement is being attempted.
 //
 
-#define IOP_ASSIGN_RETRY              0x00000008    // Retry resource allocation later
-#define IOP_ASSIGN_EXCLUDE            0x00000010    // internal IopAssign flag
-#define IOP_ASSIGN_IGNORE             0x00000020    // ignore this request
-#define IOP_ASSIGN_NO_REBALANCE       0x00000080    // no rebal if assign fails
-#define IOP_ASSIGN_RESOURCES_RELEASED 0x00000100    // resources are released for rebalancing
-#define IOP_ASSIGN_KEEP_CURRENT_CONFIG 0x00000200   // Indicate non-stopped rebalance.  We need to
-                                                    //   preserved the current config.
-#define IOP_ASSIGN_CLEAR_RESOURCE_REQUIREMENTS_CHANGE_FLAG \
-                                      0x00000400
+#define IOP_ASSIGN_RETRY 0x00000008              // Retry resource allocation later
+#define IOP_ASSIGN_EXCLUDE 0x00000010            // internal IopAssign flag
+#define IOP_ASSIGN_IGNORE 0x00000020             // ignore this request
+#define IOP_ASSIGN_NO_REBALANCE 0x00000080       // no rebal if assign fails
+#define IOP_ASSIGN_RESOURCES_RELEASED 0x00000100 // resources are released for rebalancing
+#define IOP_ASSIGN_KEEP_CURRENT_CONFIG                        \
+    0x00000200 // Indicate non-stopped rebalance.  We need to \
+               //   preserved the current config.
+#define IOP_ASSIGN_CLEAR_RESOURCE_REQUIREMENTS_CHANGE_FLAG 0x00000400
 
-typedef struct _IOP_RESOURCE_REQUEST {
-    PDEVICE_OBJECT                 PhysicalDevice;
-    ULONG                          Flags;
-    ARBITER_REQUEST_SOURCE         AllocationType;
-    ULONG                          Priority;                   // 0 is highest priority
-    ULONG                          Position;                   // used for sorting of entries with same priority
+typedef struct _IOP_RESOURCE_REQUEST
+{
+    PDEVICE_OBJECT PhysicalDevice;
+    ULONG Flags;
+    ARBITER_REQUEST_SOURCE AllocationType;
+    ULONG Priority; // 0 is highest priority
+    ULONG Position; // used for sorting of entries with same priority
     PIO_RESOURCE_REQUIREMENTS_LIST ResourceRequirements;
-    PVOID                          ReqList;                    // PREQ_LIST
-    PCM_RESOURCE_LIST              ResourceAssignment;
-    PCM_RESOURCE_LIST              TranslatedResourceAssignment;
-    NTSTATUS                       Status;
+    PVOID ReqList; // PREQ_LIST
+    PCM_RESOURCE_LIST ResourceAssignment;
+    PCM_RESOURCE_LIST TranslatedResourceAssignment;
+    NTSTATUS Status;
 } IOP_RESOURCE_REQUEST, *PIOP_RESOURCE_REQUEST;
 
 //
@@ -729,7 +738,8 @@ typedef struct _IOP_RESOURCE_REQUEST {
 // Enumeration request type
 //
 
-typedef enum _DEVICE_REQUEST_TYPE {
+typedef enum _DEVICE_REQUEST_TYPE
+{
     AddBootDevices,
     AssignResources,
     ClearDeviceProblem,
@@ -749,8 +759,7 @@ typedef enum _DEVICE_REQUEST_TYPE {
     StartSystemDevices
 } DEVICE_REQUEST_TYPE;
 
-#define CmResourceTypeReserved  0xf0
-
+#define CmResourceTypeReserved 0xf0
 
 
 //
@@ -772,58 +781,35 @@ typedef enum _DEVICE_REQUEST_TYPE {
 #endif
 
 BOOLEAN
-PipAreDriversLoaded(
-    IN PDEVICE_NODE DeviceNode
-    );
+PipAreDriversLoaded(IN PDEVICE_NODE DeviceNode);
 
 BOOLEAN
-PipIsDevNodeDNStarted(
-    IN PDEVICE_NODE DeviceNode
-    );
+PipIsDevNodeDNStarted(IN PDEVICE_NODE DeviceNode);
 
-VOID
-PipClearDevNodeProblem(
-    IN PDEVICE_NODE DeviceNode
-    );
+VOID PipClearDevNodeProblem(IN PDEVICE_NODE DeviceNode);
 
-VOID
-PipSetDevNodeProblem(
-    IN PDEVICE_NODE DeviceNode,
-    IN ULONG        Problem
-    );
+VOID PipSetDevNodeProblem(IN PDEVICE_NODE DeviceNode, IN ULONG Problem);
 
-#define PipIsRequestPending(devnode)   FALSE
+#define PipIsRequestPending(devnode) FALSE
 
-#define PipDoesDevNodeHaveResources(devnode)                        \
-        ((devnode)->ResourceList != NULL || (devnode)->BootResources != NULL || \
-        ((devnode)->Flags & DNF_HAS_BOOT_CONFIG) != 0)
+#define PipDoesDevNodeHaveResources(devnode)                                \
+    ((devnode)->ResourceList != NULL || (devnode)->BootResources != NULL || \
+     ((devnode)->Flags & DNF_HAS_BOOT_CONFIG) != 0)
 
 
-#define PipDoesDevNodeHaveProblem(devnode)                          \
-        ((devnode)->Flags & (DNF_HAS_PROBLEM | DNF_HAS_PRIVATE_PROBLEM))
+#define PipDoesDevNodeHaveProblem(devnode) ((devnode)->Flags & (DNF_HAS_PROBLEM | DNF_HAS_PRIVATE_PROBLEM))
 
-#define PipIsDevNodeProblem(devnode, problem)                       \
-        (((devnode)->Flags & DNF_HAS_PROBLEM) && (devnode)->Problem == (problem))
+#define PipIsDevNodeProblem(devnode, problem) (((devnode)->Flags & DNF_HAS_PROBLEM) && (devnode)->Problem == (problem))
 
-#define PipIsDevNodeDeleted(d)                                      \
-    ((d)->State == DeviceNodeDeletePendingCloses ||(d)->State == DeviceNodeDeleted)
+#define PipIsDevNodeDeleted(d) ((d)->State == DeviceNodeDeletePendingCloses || (d)->State == DeviceNodeDeleted)
 
-VOID
-PipSetDevNodeState(
-    IN  PDEVICE_NODE        DeviceNode,
-    IN  PNP_DEVNODE_STATE   State,
-    OUT PNP_DEVNODE_STATE  *OldState    OPTIONAL
-    );
+VOID PipSetDevNodeState(IN PDEVICE_NODE DeviceNode, IN PNP_DEVNODE_STATE State,
+                        OUT PNP_DEVNODE_STATE *OldState OPTIONAL);
 
-VOID
-PipRestoreDevNodeState(
-    IN PDEVICE_NODE DeviceNode
-    );
+VOID PipRestoreDevNodeState(IN PDEVICE_NODE DeviceNode);
 
 BOOLEAN
-PipIsProblemReadonly(
-    IN  ULONG   Problem
-    );
+PipIsProblemReadonly(IN ULONG Problem);
 
 //++
 //
@@ -835,14 +821,14 @@ PipIsProblemReadonly(
 //     )
 //
 //--
-#define IopRegistryDataToUnicodeString(u, p, l)  \
-    {                                            \
-        ULONG len;                               \
-                                                 \
-        PiRegSzToString((p), (l), &len, NULL);   \
-        (u)->Length = (USHORT)len;               \
-        (u)->MaximumLength = (USHORT)(l);        \
-        (u)->Buffer = (p);                       \
+#define IopRegistryDataToUnicodeString(u, p, l) \
+    {                                           \
+        ULONG len;                              \
+                                                \
+        PiRegSzToString((p), (l), &len, NULL);  \
+        (u)->Length = (USHORT)len;              \
+        (u)->MaximumLength = (USHORT)(l);       \
+        (u)->Buffer = (p);                      \
     }
 
 //
@@ -863,22 +849,23 @@ PipIsProblemReadonly(
 // Define Enumeration Control Flags (used by PipApplyFunctionToSubKeys)
 //
 
-#define FUNCTIONSUBKEY_FLAG_IGNORE_NON_CRITICAL_ERRORS  0x1
-#define FUNCTIONSUBKEY_FLAG_DELETE_SUBKEYS              0x2
+#define FUNCTIONSUBKEY_FLAG_IGNORE_NON_CRITICAL_ERRORS 0x1
+#define FUNCTIONSUBKEY_FLAG_DELETE_SUBKEYS 0x2
 
 //
 // The following definitions are used in IoOpenDeviceInstanceKey
 //
 
-#define PLUGPLAY_REGKEY_DEVICE  1
-#define PLUGPLAY_REGKEY_DRIVER  2
+#define PLUGPLAY_REGKEY_DEVICE 1
+#define PLUGPLAY_REGKEY_DRIVER 2
 #define PLUGPLAY_REGKEY_CURRENT_HWPROFILE 4
 
 //
 // Define device extension for devices reported with IoReportDetectedDevice.
 //
 
-typedef struct _IOPNP_DEVICE_EXTENSION {
+typedef struct _IOPNP_DEVICE_EXTENSION
+{
     PWCHAR CompatibleIdList;
     ULONG CompatibleIdListSize;
 } IOPNP_DEVICE_EXTENSION, *PIOPNP_DEVICE_EXTENSION;
@@ -889,10 +876,11 @@ typedef struct _IOPNP_DEVICE_EXTENSION {
 
 typedef struct _IOP_RESERVED_RESOURCES_RECORD IOP_RESERVED_RESOURCES_RECORD, *PIOP_RESERVED_RESOURCES_RECORD;
 
-struct _IOP_RESERVED_RESOURCES_RECORD {
-    PIOP_RESERVED_RESOURCES_RECORD  Next;
-    PDEVICE_OBJECT                  DeviceObject;
-    PCM_RESOURCE_LIST               ReservedResources;
+struct _IOP_RESERVED_RESOURCES_RECORD
+{
+    PIOP_RESERVED_RESOURCES_RECORD Next;
+    PDEVICE_OBJECT DeviceObject;
+    PCM_RESOURCE_LIST ReservedResources;
 };
 
 //
@@ -1016,134 +1004,77 @@ extern BOOLEAN PnpAsyncOk;
 //
 // IopPendingEjects - List of pending eject requests
 //
-extern LIST_ENTRY  IopPendingEjects;
+extern LIST_ENTRY IopPendingEjects;
 
 //
 // IopPendingSurpriseRemovals - List of pending surprise removal requests
 //
-extern LIST_ENTRY   IopPendingSurpriseRemovals;
+extern LIST_ENTRY IopPendingSurpriseRemovals;
 
-extern KSEMAPHORE   PpRegistrySemaphore;
+extern KSEMAPHORE PpRegistrySemaphore;
 
-extern BOOLEAN      PpPnpShuttingDown;
-
-BOOLEAN
-PipIsDuplicatedDevices(
-    IN PCM_RESOURCE_LIST Configuration1,
-    IN PCM_RESOURCE_LIST Configuration2,
-    IN PHAL_BUS_INFORMATION BusInfo1 OPTIONAL,
-    IN PHAL_BUS_INFORMATION BusInfo2 OPTIONAL
-    );
+extern BOOLEAN PpPnpShuttingDown;
 
 BOOLEAN
-PipConcatenateUnicodeStrings(
-    OUT PUNICODE_STRING Destination,
-    IN  PUNICODE_STRING String1,
-    IN  PUNICODE_STRING String2  OPTIONAL
-    );
-
-NTSTATUS
-PipServiceInstanceToDeviceInstance(
-    IN  HANDLE ServiceKeyHandle OPTIONAL,
-    IN  PUNICODE_STRING ServiceKeyName OPTIONAL,
-    IN  ULONG ServiceInstanceOrdinal,
-    OUT PUNICODE_STRING DeviceInstanceRegistryPath OPTIONAL,
-    OUT PHANDLE DeviceInstanceHandle OPTIONAL,
-    IN  ACCESS_MASK DesiredAccess
-    );
-
-NTSTATUS
-PipCreateMadeupNode(
-    IN PUNICODE_STRING ServiceKeyName,
-    OUT PHANDLE ReturnedHandle,
-    OUT PUNICODE_STRING KeyName,
-    OUT PULONG InstanceOrdinal,
-    IN BOOLEAN ResourceOwned
-    );
-
-NTSTATUS
-PipOpenServiceEnumKeys(
-    IN PUNICODE_STRING ServiceKeyName,
-    IN ACCESS_MASK DesiredAccess,
-    OUT PHANDLE ServiceHandle OPTIONAL,
-    OUT PHANDLE ServiceEnumHandle OPTIONAL,
-    IN BOOLEAN CreateEnum
-    );
-
-NTSTATUS
-IopOpenCurrentHwProfileDeviceInstanceKey(
-    OUT PHANDLE Handle,
-    IN  PUNICODE_STRING ServiceKeyName,
-    IN  ULONG Instance,
-    IN  ACCESS_MASK DesiredAccess,
-    IN  BOOLEAN Create
-    );
-
-NTSTATUS
-IopGetDeviceInstanceCsConfigFlags(
-    IN PUNICODE_STRING DeviceInstance,
-    OUT PULONG CsConfigFlags
-    );
-
-NTSTATUS
-PipGetServiceInstanceCsConfigFlags(
-    IN PUNICODE_STRING ServiceKeyName,
-    IN ULONG Instance,
-    OUT PULONG CsConfigFlags
-    );
-
-NTSTATUS
-PipApplyFunctionToSubKeys(
-    IN HANDLE BaseHandle OPTIONAL,
-    IN PUNICODE_STRING KeyName,
-    IN ACCESS_MASK DesiredAccess,
-    IN ULONG Flags,
-    IN PIOP_SUBKEY_CALLBACK_ROUTINE SubKeyCallbackRoutine,
-    IN OUT PVOID Context
-    );
-
-NTSTATUS
-PipRegMultiSzToUnicodeStrings(
-    IN PKEY_VALUE_FULL_INFORMATION KeyValueInformation,
-    IN PUNICODE_STRING *UnicodeStringList,
-    OUT PULONG UnicodeStringCount
-    );
-
-
-NTSTATUS
-PipApplyFunctionToServiceInstances(
-    IN HANDLE ServiceKeyHandle OPTIONAL,
-    IN PUNICODE_STRING ServiceKeyName OPTIONAL,
-    IN ACCESS_MASK DesiredAccess,
-    IN BOOLEAN IgnoreNonCriticalErrors,
-    IN PIOP_SUBKEY_CALLBACK_ROUTINE DevInstCallbackRoutine,
-    IN OUT PVOID Context,
-    OUT PULONG ServiceInstanceOrdinal OPTIONAL
-    );
-
-VOID
-PipFreeUnicodeStringList(
-    IN PUNICODE_STRING UnicodeStringList,
-    IN ULONG StringCount
-    );
-
-NTSTATUS
-PipReadDeviceConfiguration(
-    IN HANDLE Handle,
-    IN ULONG Flags,
-    OUT PCM_RESOURCE_LIST *CmResource,
-    OUT PULONG Length
-    );
+PipIsDuplicatedDevices(IN PCM_RESOURCE_LIST Configuration1, IN PCM_RESOURCE_LIST Configuration2,
+                       IN PHAL_BUS_INFORMATION BusInfo1 OPTIONAL, IN PHAL_BUS_INFORMATION BusInfo2 OPTIONAL);
 
 BOOLEAN
-PipIsFirmwareMapperDevicePresent(
-    IN HANDLE KeyHandle
-    );
+PipConcatenateUnicodeStrings(OUT PUNICODE_STRING Destination, IN PUNICODE_STRING String1,
+                             IN PUNICODE_STRING String2 OPTIONAL);
 
-#define PiInitializeEngineLock() \
-    ExInitializeResourceLite(&PiEngineLock)
+NTSTATUS
+PipServiceInstanceToDeviceInstance(IN HANDLE ServiceKeyHandle OPTIONAL, IN PUNICODE_STRING ServiceKeyName OPTIONAL,
+                                   IN ULONG ServiceInstanceOrdinal,
+                                   OUT PUNICODE_STRING DeviceInstanceRegistryPath OPTIONAL,
+                                   OUT PHANDLE DeviceInstanceHandle OPTIONAL, IN ACCESS_MASK DesiredAccess);
 
-typedef enum {
+NTSTATUS
+PipCreateMadeupNode(IN PUNICODE_STRING ServiceKeyName, OUT PHANDLE ReturnedHandle, OUT PUNICODE_STRING KeyName,
+                    OUT PULONG InstanceOrdinal, IN BOOLEAN ResourceOwned);
+
+NTSTATUS
+PipOpenServiceEnumKeys(IN PUNICODE_STRING ServiceKeyName, IN ACCESS_MASK DesiredAccess,
+                       OUT PHANDLE ServiceHandle OPTIONAL, OUT PHANDLE ServiceEnumHandle OPTIONAL,
+                       IN BOOLEAN CreateEnum);
+
+NTSTATUS
+IopOpenCurrentHwProfileDeviceInstanceKey(OUT PHANDLE Handle, IN PUNICODE_STRING ServiceKeyName, IN ULONG Instance,
+                                         IN ACCESS_MASK DesiredAccess, IN BOOLEAN Create);
+
+NTSTATUS
+IopGetDeviceInstanceCsConfigFlags(IN PUNICODE_STRING DeviceInstance, OUT PULONG CsConfigFlags);
+
+NTSTATUS
+PipGetServiceInstanceCsConfigFlags(IN PUNICODE_STRING ServiceKeyName, IN ULONG Instance, OUT PULONG CsConfigFlags);
+
+NTSTATUS
+PipApplyFunctionToSubKeys(IN HANDLE BaseHandle OPTIONAL, IN PUNICODE_STRING KeyName, IN ACCESS_MASK DesiredAccess,
+                          IN ULONG Flags, IN PIOP_SUBKEY_CALLBACK_ROUTINE SubKeyCallbackRoutine, IN OUT PVOID Context);
+
+NTSTATUS
+PipRegMultiSzToUnicodeStrings(IN PKEY_VALUE_FULL_INFORMATION KeyValueInformation, IN PUNICODE_STRING *UnicodeStringList,
+                              OUT PULONG UnicodeStringCount);
+
+
+NTSTATUS
+PipApplyFunctionToServiceInstances(IN HANDLE ServiceKeyHandle OPTIONAL, IN PUNICODE_STRING ServiceKeyName OPTIONAL,
+                                   IN ACCESS_MASK DesiredAccess, IN BOOLEAN IgnoreNonCriticalErrors,
+                                   IN PIOP_SUBKEY_CALLBACK_ROUTINE DevInstCallbackRoutine, IN OUT PVOID Context,
+                                   OUT PULONG ServiceInstanceOrdinal OPTIONAL);
+
+VOID PipFreeUnicodeStringList(IN PUNICODE_STRING UnicodeStringList, IN ULONG StringCount);
+
+NTSTATUS
+PipReadDeviceConfiguration(IN HANDLE Handle, IN ULONG Flags, OUT PCM_RESOURCE_LIST *CmResource, OUT PULONG Length);
+
+BOOLEAN
+PipIsFirmwareMapperDevicePresent(IN HANDLE KeyHandle);
+
+#define PiInitializeEngineLock() ExInitializeResourceLite(&PiEngineLock)
+
+typedef enum
+{
 
     PPL_SIMPLE_READ,
     PPL_TREEOP_ALLOW_READS,
@@ -1152,463 +1083,227 @@ typedef enum {
 
 } PNP_LOCK_LEVEL;
 
-VOID
-PpDevNodeLockTree(
-    IN  PNP_LOCK_LEVEL  LockLevel
-    );
+VOID PpDevNodeLockTree(IN PNP_LOCK_LEVEL LockLevel);
 
-VOID
-PpDevNodeUnlockTree(
-    IN  PNP_LOCK_LEVEL  LockLevel
-    );
+VOID PpDevNodeUnlockTree(IN PNP_LOCK_LEVEL LockLevel);
 
 #if DBG
-VOID
-PpDevNodeAssertLockLevel(
-    IN  PNP_LOCK_LEVEL  LockLevel,
-    IN  PCSTR           File,
-    IN  ULONG           Line
-    );
+VOID PpDevNodeAssertLockLevel(IN PNP_LOCK_LEVEL LockLevel, IN PCSTR File, IN ULONG Line);
 
-#define PPDEVNODE_ASSERT_LOCK_HELD(Level) \
-    PpDevNodeAssertLockLevel(Level, __FILE__, __LINE__)
+#define PPDEVNODE_ASSERT_LOCK_HELD(Level) PpDevNodeAssertLockLevel(Level, __FILE__, __LINE__)
 
 #else
 #define PPDEVNODE_ASSERT_LOCK_HELD(Level)
 #endif
 
-VOID
-PpDevNodeInsertIntoTree(
-    IN PDEVICE_NODE     ParentNode,
-    IN PDEVICE_NODE     DeviceNode
-    );
+VOID PpDevNodeInsertIntoTree(IN PDEVICE_NODE ParentNode, IN PDEVICE_NODE DeviceNode);
 
-VOID
-PpDevNodeRemoveFromTree(
-    IN PDEVICE_NODE     DeviceNode
-    );
+VOID PpDevNodeRemoveFromTree(IN PDEVICE_NODE DeviceNode);
 
 NTSTATUS
-PipAllocateDeviceNode(
-    IN PDEVICE_OBJECT PhysicalDeviceObject,
-    OUT PDEVICE_NODE *DeviceNode
-    );
+PipAllocateDeviceNode(IN PDEVICE_OBJECT PhysicalDeviceObject, OUT PDEVICE_NODE *DeviceNode);
 
 NTSTATUS
-PipForAllDeviceNodes(
-    IN PENUM_CALLBACK Callback,
-    IN PVOID Context
-    );
+PipForAllDeviceNodes(IN PENUM_CALLBACK Callback, IN PVOID Context);
 
 NTSTATUS
-PipForDeviceNodeSubtree(
-    IN PDEVICE_NODE     DeviceNode,
-    IN PENUM_CALLBACK   Callback,
-    IN PVOID            Context
-    );
+PipForDeviceNodeSubtree(IN PDEVICE_NODE DeviceNode, IN PENUM_CALLBACK Callback, IN PVOID Context);
 
 ULONG
-IopDetermineResourceListSize(
-    IN PCM_RESOURCE_LIST ResourceList
-    );
+IopDetermineResourceListSize(IN PCM_RESOURCE_LIST ResourceList);
 
 PDEVICE_OBJECT
-IopDeviceObjectFromDeviceInstance(
-    IN PUNICODE_STRING  DeviceInstance
-    );
+IopDeviceObjectFromDeviceInstance(IN PUNICODE_STRING DeviceInstance);
 
 NTSTATUS
-IopMapDeviceObjectToDeviceInstance(
-    IN PDEVICE_OBJECT   DeviceObject,
-    IN PUNICODE_STRING  DeviceInstance
-    );
+IopMapDeviceObjectToDeviceInstance(IN PDEVICE_OBJECT DeviceObject, IN PUNICODE_STRING DeviceInstance);
 
 NTSTATUS
-IopDeviceObjectToDeviceInstance(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PHANDLE DeviceInstanceHandle,
-    IN  ACCESS_MASK DesiredAccess
-    );
+IopDeviceObjectToDeviceInstance(IN PDEVICE_OBJECT DeviceObject, IN PHANDLE DeviceInstanceHandle,
+                                IN ACCESS_MASK DesiredAccess);
 
 BOOLEAN
-IopIsDeviceInstanceEnabled(
-    IN HANDLE DeviceInstanceHandle,
-    IN PUNICODE_STRING DeviceInstance,
-    IN BOOLEAN DisableIfEnabled
-    );
+IopIsDeviceInstanceEnabled(IN HANDLE DeviceInstanceHandle, IN PUNICODE_STRING DeviceInstance,
+                           IN BOOLEAN DisableIfEnabled);
 
 BOOLEAN
-IopProcessAssignResources(
-   IN PDEVICE_NODE DeviceNode,
-   IN BOOLEAN Reallocation,
-   OUT PBOOLEAN RebalancePerformed
-   );
+IopProcessAssignResources(IN PDEVICE_NODE DeviceNode, IN BOOLEAN Reallocation, OUT PBOOLEAN RebalancePerformed);
 
 NTSTATUS
-IopStartDevice (
-    IN PDEVICE_OBJECT TargetDevice
-    );
+IopStartDevice(IN PDEVICE_OBJECT TargetDevice);
 
 NTSTATUS
-IopEjectDevice(
-    IN PDEVICE_OBJECT DeviceObject,
-    PPENDING_RELATIONS_LIST_ENTRY PendingEntry
-    );
+IopEjectDevice(IN PDEVICE_OBJECT DeviceObject, PPENDING_RELATIONS_LIST_ENTRY PendingEntry);
 
 NTSTATUS
-IopRemoveDevice(
-    IN PDEVICE_OBJECT TargetDevice,
-    IN ULONG IrpMinorCode
-    );
+IopRemoveDevice(IN PDEVICE_OBJECT TargetDevice, IN ULONG IrpMinorCode);
 
 NTSTATUS
-IopQueryDeviceRelations(
-    IN DEVICE_RELATION_TYPE Relations,
-    IN PDEVICE_OBJECT DeviceObject,
-    IN BOOLEAN Synchronous,
-    OUT PDEVICE_RELATIONS *DeviceRelations
-    );
+IopQueryDeviceRelations(IN DEVICE_RELATION_TYPE Relations, IN PDEVICE_OBJECT DeviceObject, IN BOOLEAN Synchronous,
+                        OUT PDEVICE_RELATIONS *DeviceRelations);
 
 NTSTATUS
-IopQueryDeviceState(
-    IN PDEVICE_OBJECT DeviceObject,
-    OUT PPNP_DEVICE_STATE DeviceState
-    );
+IopQueryDeviceState(IN PDEVICE_OBJECT DeviceObject, OUT PPNP_DEVICE_STATE DeviceState);
 
 NTSTATUS
-PipForAllChildDeviceNodes(
-    IN PDEVICE_NODE Parent,
-    IN PENUM_CALLBACK Callback,
-    IN PVOID Context
-    );
+PipForAllChildDeviceNodes(IN PDEVICE_NODE Parent, IN PENUM_CALLBACK Callback, IN PVOID Context);
 
 NTSTATUS
-IopCleanupDeviceRegistryValues(
-    IN PUNICODE_STRING InstancePath
-    );
+IopCleanupDeviceRegistryValues(IN PUNICODE_STRING InstancePath);
 
 NTSTATUS
-IopQueryDeviceResources(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG ResourceType,
-    OUT PVOID *Resource,
-    OUT ULONG *Length
-    );
+IopQueryDeviceResources(IN PDEVICE_OBJECT DeviceObject, IN ULONG ResourceType, OUT PVOID *Resource, OUT ULONG *Length);
 
 NTSTATUS
-IopGetDeviceResourcesFromRegistry (
-    IN PDEVICE_OBJECT DeviceObject,
-    IN ULONG ResourceType,
-    IN ULONG Preference,
-    OUT PVOID *Resource,
-    OUT PULONG Length
-    );
+IopGetDeviceResourcesFromRegistry(IN PDEVICE_OBJECT DeviceObject, IN ULONG ResourceType, IN ULONG Preference,
+                                  OUT PVOID *Resource, OUT PULONG Length);
 
-VOID
-IopResourceRequirementsChanged(
-    IN PDEVICE_OBJECT PhysicalDeviceObject,
-    IN BOOLEAN StopRequired
-    );
+VOID IopResourceRequirementsChanged(IN PDEVICE_OBJECT PhysicalDeviceObject, IN BOOLEAN StopRequired);
 
 NTSTATUS
-IopReleaseDeviceResources(
-    IN PDEVICE_NODE DeviceNode,
-    IN BOOLEAN  ReserveResources
-    );
+IopReleaseDeviceResources(IN PDEVICE_NODE DeviceNode, IN BOOLEAN ReserveResources);
 
 NTSTATUS
-IopPnPAddDevice(
-    IN PDRIVER_OBJECT DriverObject,
-    IN PDEVICE_OBJECT DeviceObject
-    );
+IopPnPAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT DeviceObject);
 
 BOOLEAN
-PipProcessCriticalDevice(
-    IN PDEVICE_NODE DeviceNode
-    );
+PipProcessCriticalDevice(IN PDEVICE_NODE DeviceNode);
 
 NTSTATUS
-IopPnPDispatch(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN OUT PIRP Irp
-    );
+IopPnPDispatch(IN PDEVICE_OBJECT DeviceObject, IN OUT PIRP Irp);
 
 NTSTATUS
-IopPowerDispatch(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN OUT PIRP Irp
-    );
+IopPowerDispatch(IN PDEVICE_OBJECT DeviceObject, IN OUT PIRP Irp);
 
-VOID
-IopNewDevice(
-    IN PDEVICE_OBJECT DeviceObject
-    );
+VOID IopNewDevice(IN PDEVICE_OBJECT DeviceObject);
 
 NTSTATUS
-IopFilterResourceRequirementsList (
-    IN PIO_RESOURCE_REQUIREMENTS_LIST IoList,
-    IN PCM_RESOURCE_LIST CmList,
-    IN OUT PIO_RESOURCE_REQUIREMENTS_LIST *FilteredList,
-    OUT PBOOLEAN ExactMatch
-    );
+IopFilterResourceRequirementsList(IN PIO_RESOURCE_REQUIREMENTS_LIST IoList, IN PCM_RESOURCE_LIST CmList,
+                                  IN OUT PIO_RESOURCE_REQUIREMENTS_LIST *FilteredList, OUT PBOOLEAN ExactMatch);
 
 NTSTATUS
-IopMergeFilteredResourceRequirementsList (
-    IN PIO_RESOURCE_REQUIREMENTS_LIST IoList1,
-    IN PIO_RESOURCE_REQUIREMENTS_LIST IoList2,
-    IN OUT PIO_RESOURCE_REQUIREMENTS_LIST *MergedList
-    );
+IopMergeFilteredResourceRequirementsList(IN PIO_RESOURCE_REQUIREMENTS_LIST IoList1,
+                                         IN PIO_RESOURCE_REQUIREMENTS_LIST IoList2,
+                                         IN OUT PIO_RESOURCE_REQUIREMENTS_LIST *MergedList);
 
 NTSTATUS
-IopMergeCmResourceLists (
-    IN PCM_RESOURCE_LIST List1,
-    IN PCM_RESOURCE_LIST List2,
-    IN OUT PCM_RESOURCE_LIST *MergedList
-    );
+IopMergeCmResourceLists(IN PCM_RESOURCE_LIST List1, IN PCM_RESOURCE_LIST List2, IN OUT PCM_RESOURCE_LIST *MergedList);
 
 PIO_RESOURCE_REQUIREMENTS_LIST
-IopCmResourcesToIoResources (
-    IN ULONG SlotNumber,
-    IN PCM_RESOURCE_LIST CmResourceList,
-    IN ULONG Priority
-    );
+IopCmResourcesToIoResources(IN ULONG SlotNumber, IN PCM_RESOURCE_LIST CmResourceList, IN ULONG Priority);
 
 NTSTATUS
-IopReportResourceListToPnp(
-    IN PDRIVER_OBJECT DriverObject OPTIONAL,
-    IN PDEVICE_OBJECT DeviceObject OPTIONAL,
-    IN PCM_RESOURCE_LIST ResourceList,
-    IN ULONG ListSize,
-    IN BOOLEAN Translated
-    );
+IopReportResourceListToPnp(IN PDRIVER_OBJECT DriverObject OPTIONAL, IN PDEVICE_OBJECT DeviceObject OPTIONAL,
+                           IN PCM_RESOURCE_LIST ResourceList, IN ULONG ListSize, IN BOOLEAN Translated);
 
 NTSTATUS
-IopAllocateResources(
-    IN PULONG DeviceCountP,
-    IN OUT PIOP_RESOURCE_REQUEST *AssignTablePP,
-    IN BOOLEAN Locked,
-    IN BOOLEAN DoBootConfigs,
-    OUT PBOOLEAN RebalancePerformed
-    );
+IopAllocateResources(IN PULONG DeviceCountP, IN OUT PIOP_RESOURCE_REQUEST *AssignTablePP, IN BOOLEAN Locked,
+                     IN BOOLEAN DoBootConfigs, OUT PBOOLEAN RebalancePerformed);
 
-VOID
-IopInitializeResourceMap (
-    PLOADER_PARAMETER_BLOCK LoaderBlock
-    );
+VOID IopInitializeResourceMap(PLOADER_PARAMETER_BLOCK LoaderBlock);
 
-VOID
-IopReallocateResources(
-    IN PDEVICE_NODE DeviceNode
-    );
+VOID IopReallocateResources(IN PDEVICE_NODE DeviceNode);
 
 NTSTATUS
-IopWriteResourceList(
-    IN HANDLE ResourceMapKey,
-    IN PUNICODE_STRING ClassName,
-    IN PUNICODE_STRING DriverName,
-    IN PUNICODE_STRING DeviceName,
-    IN PCM_RESOURCE_LIST ResourceList,
-    IN ULONG ResourceListSize
-    );
+IopWriteResourceList(IN HANDLE ResourceMapKey, IN PUNICODE_STRING ClassName, IN PUNICODE_STRING DriverName,
+                     IN PUNICODE_STRING DeviceName, IN PCM_RESOURCE_LIST ResourceList, IN ULONG ResourceListSize);
 
-VOID
-IopRemoveResourceListFromPnp(
-    IN PLIST_ENTRY ResourceList
-    );
+VOID IopRemoveResourceListFromPnp(IN PLIST_ENTRY ResourceList);
 
 NTSTATUS
-IopWriteAllocatedResourcesToRegistry (
-    IN PDEVICE_NODE DeviceNode,
-    IN PCM_RESOURCE_LIST ResourceList,
-    IN ULONG Length
-    );
+IopWriteAllocatedResourcesToRegistry(IN PDEVICE_NODE DeviceNode, IN PCM_RESOURCE_LIST ResourceList, IN ULONG Length);
 
 USHORT
-PpInitGetGroupOrderIndex(
-    IN HANDLE ServiceHandle
-    );
+PpInitGetGroupOrderIndex(IN HANDLE ServiceHandle);
 
-VOID
-IopDeleteLegacyKey(
-    IN PDRIVER_OBJECT DriverObject
-    );
+VOID IopDeleteLegacyKey(IN PDRIVER_OBJECT DriverObject);
 
 NTSTATUS
-IopOpenDeviceParametersSubkey(
-    OUT HANDLE *ParamKeyHandle,
-    IN  HANDLE ParentKeyHandle,
-    IN  PUNICODE_STRING SubKeyString,
-    IN  ACCESS_MASK DesiredAccess
-    );
+IopOpenDeviceParametersSubkey(OUT HANDLE *ParamKeyHandle, IN HANDLE ParentKeyHandle, IN PUNICODE_STRING SubKeyString,
+                              IN ACCESS_MASK DesiredAccess);
 
 NTSTATUS
-PipRequestDeviceAction(
-    IN PDEVICE_OBJECT DeviceObject              OPTIONAL,
-    IN DEVICE_REQUEST_TYPE RequestType,
-    IN BOOLEAN ReorderingBarrier,
-    IN ULONG_PTR Argument,
-    IN PKEVENT CompletionEvent                  OPTIONAL,
-    IN PNTSTATUS CompletionStatus               OPTIONAL
-    );
+PipRequestDeviceAction(IN PDEVICE_OBJECT DeviceObject OPTIONAL, IN DEVICE_REQUEST_TYPE RequestType,
+                       IN BOOLEAN ReorderingBarrier, IN ULONG_PTR Argument, IN PKEVENT CompletionEvent OPTIONAL,
+                       IN PNTSTATUS CompletionStatus OPTIONAL);
 
-VOID
-PipRequestDeviceRemoval(
-    IN PDEVICE_NODE DeviceNode,
-    IN BOOLEAN      TreeDeletion,
-    IN ULONG        Problem
-    );
+VOID PipRequestDeviceRemoval(IN PDEVICE_NODE DeviceNode, IN BOOLEAN TreeDeletion, IN ULONG Problem);
 
 BOOLEAN
-PipIsBeingRemovedSafely(
-    IN  PDEVICE_NODE    DeviceNode
-    );
+PipIsBeingRemovedSafely(IN PDEVICE_NODE DeviceNode);
 
 NTSTATUS
-IopRestartDeviceNode(
-    IN PDEVICE_NODE DeviceNode
-    );
+IopRestartDeviceNode(IN PDEVICE_NODE DeviceNode);
 
-VOID
-PpResetProblemDevices(
-    IN  PDEVICE_NODE    DeviceNode,
-    IN  ULONG           Problem
-    );
+VOID PpResetProblemDevices(IN PDEVICE_NODE DeviceNode, IN ULONG Problem);
 
 NTSTATUS
-IopDeleteKeyRecursive(
-    IN HANDLE SubKeyHandle,
-    IN PWCHAR SubKeyName
-    );
+IopDeleteKeyRecursive(IN HANDLE SubKeyHandle, IN PWCHAR SubKeyName);
 
 NTSTATUS
-IopQueryPnpBusInformation (
-    IN PDEVICE_OBJECT DeviceObject,
-    OUT LPGUID InterfaceGuid           OPTIONAL,
-    OUT INTERFACE_TYPE *InterfaceType  OPTIONAL,
-    OUT ULONG *BusNumber               OPTIONAL
-    );
+IopQueryPnpBusInformation(IN PDEVICE_OBJECT DeviceObject, OUT LPGUID InterfaceGuid OPTIONAL,
+                          OUT INTERFACE_TYPE *InterfaceType OPTIONAL, OUT ULONG *BusNumber OPTIONAL);
 
 NTSTATUS
-IopQueryLegacyBusInformation (
-    IN PDEVICE_OBJECT DeviceObject,
-    OUT LPGUID InterfaceGuid           OPTIONAL,
-    OUT INTERFACE_TYPE *InterfaceType  OPTIONAL,
-    OUT ULONG *BusNumber               OPTIONAL
-    );
+IopQueryLegacyBusInformation(IN PDEVICE_OBJECT DeviceObject, OUT LPGUID InterfaceGuid OPTIONAL,
+                             OUT INTERFACE_TYPE *InterfaceType OPTIONAL, OUT ULONG *BusNumber OPTIONAL);
 
 NTSTATUS
-IopGetRootDevices (
-    PDEVICE_RELATIONS *DeviceRelations
-    );
+IopGetRootDevices(PDEVICE_RELATIONS *DeviceRelations);
 
 NTSTATUS
-IopBuildRemovalRelationList(
-    IN  PDEVICE_OBJECT                  DeviceObject,
-    IN  PLUGPLAY_DEVICE_DELETE_TYPE     OperationCode,
-    OUT PNP_VETO_TYPE                  *VetoType,
-    OUT PUNICODE_STRING                 VetoName,
-    OUT PRELATION_LIST                 *RelationsList
-    );
+IopBuildRemovalRelationList(IN PDEVICE_OBJECT DeviceObject, IN PLUGPLAY_DEVICE_DELETE_TYPE OperationCode,
+                            OUT PNP_VETO_TYPE *VetoType, OUT PUNICODE_STRING VetoName,
+                            OUT PRELATION_LIST *RelationsList);
 
 NTSTATUS
-IopDeleteLockedDeviceNodes(
-    IN  PDEVICE_OBJECT                  DeviceObject,
-    IN  PRELATION_LIST                  RelationsList,
-    IN  PLUGPLAY_DEVICE_DELETE_TYPE     OperationCode,
-    IN  BOOLEAN                         ProcessIndirectDescendants,
-    IN  ULONG                           Problem,
-    OUT PNP_VETO_TYPE                  *VetoType                    OPTIONAL,
-    OUT PUNICODE_STRING                 VetoName                    OPTIONAL
-    );
+IopDeleteLockedDeviceNodes(IN PDEVICE_OBJECT DeviceObject, IN PRELATION_LIST RelationsList,
+                           IN PLUGPLAY_DEVICE_DELETE_TYPE OperationCode, IN BOOLEAN ProcessIndirectDescendants,
+                           IN ULONG Problem, OUT PNP_VETO_TYPE *VetoType OPTIONAL,
+                           OUT PUNICODE_STRING VetoName OPTIONAL);
 
-VOID
-IopUnlinkDeviceRemovalRelations(
-    IN      PDEVICE_OBJECT          RemovedDeviceObject,
-    IN OUT  PRELATION_LIST          RelationsList,
-    IN      UNLOCK_UNLINK_ACTION    UnlinkAction
-    );
+VOID IopUnlinkDeviceRemovalRelations(IN PDEVICE_OBJECT RemovedDeviceObject, IN OUT PRELATION_LIST RelationsList,
+                                     IN UNLOCK_UNLINK_ACTION UnlinkAction);
 
 NTSTATUS
-IopInvalidateRelationsInList(
-    IN  PRELATION_LIST              RelationsList,
-    IN  PLUGPLAY_DEVICE_DELETE_TYPE OperationCode,
-    IN  BOOLEAN                     OnlyIndirectDescendants,
-    IN  BOOLEAN                     RestartDevNode
-    );
+IopInvalidateRelationsInList(IN PRELATION_LIST RelationsList, IN PLUGPLAY_DEVICE_DELETE_TYPE OperationCode,
+                             IN BOOLEAN OnlyIndirectDescendants, IN BOOLEAN RestartDevNode);
 
 BOOLEAN
-IopQueuePendingEject(
-    PPENDING_RELATIONS_LIST_ENTRY Entry
-    );
+IopQueuePendingEject(PPENDING_RELATIONS_LIST_ENTRY Entry);
 
-VOID
-IopProcessCompletedEject(
-    IN PVOID Context
-    );
+VOID IopProcessCompletedEject(IN PVOID Context);
 
-VOID
-IopQueuePendingSurpriseRemoval(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PRELATION_LIST List,
-    IN ULONG Problem
-    );
+VOID IopQueuePendingSurpriseRemoval(IN PDEVICE_OBJECT DeviceObject, IN PRELATION_LIST List, IN ULONG Problem);
 
 NTSTATUS
-IopUnloadAttachedDriver(
-    IN PDRIVER_OBJECT DriverObject
-    );
+IopUnloadAttachedDriver(IN PDRIVER_OBJECT DriverObject);
 
 BOOLEAN
-IopIsAnyDeviceInstanceEnabled(
-    IN PUNICODE_STRING ServiceKeyName,
-    IN HANDLE ServiceHandle,
-    IN BOOLEAN LegacyIncluded
-    );
+IopIsAnyDeviceInstanceEnabled(IN PUNICODE_STRING ServiceKeyName, IN HANDLE ServiceHandle, IN BOOLEAN LegacyIncluded);
 
 NTSTATUS
-IopQueryResourceHandlerInterface(
-    IN RESOURCE_HANDLER_TYPE HandlerType,
-    IN PDEVICE_OBJECT DeviceObject,
-    IN UCHAR ResourceType,
-    IN OUT PVOID *Interface
-    );
+IopQueryResourceHandlerInterface(IN RESOURCE_HANDLER_TYPE HandlerType, IN PDEVICE_OBJECT DeviceObject,
+                                 IN UCHAR ResourceType, IN OUT PVOID *Interface);
 
 NTSTATUS
-IopQueryReconfiguration(
-    IN UCHAR Request,
-    IN PDEVICE_OBJECT DeviceObject
-    );
+IopQueryReconfiguration(IN UCHAR Request, IN PDEVICE_OBJECT DeviceObject);
 
 NTSTATUS
-IopLegacyResourceAllocation (
-    IN ARBITER_REQUEST_SOURCE AllocationType,
-    IN PDRIVER_OBJECT DriverObject,
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIO_RESOURCE_REQUIREMENTS_LIST ResourceRequirements,
-    IN OUT PCM_RESOURCE_LIST *AllocatedResources OPTIONAL
-    );
+IopLegacyResourceAllocation(IN ARBITER_REQUEST_SOURCE AllocationType, IN PDRIVER_OBJECT DriverObject,
+                            IN PDEVICE_OBJECT DeviceObject, IN PIO_RESOURCE_REQUIREMENTS_LIST ResourceRequirements,
+                            IN OUT PCM_RESOURCE_LIST *AllocatedResources OPTIONAL);
 
 NTSTATUS
-IoReportResourceUsageInternal(
-    IN ARBITER_REQUEST_SOURCE AllocationType,
-    IN PUNICODE_STRING DriverClassName OPTIONAL,
-    IN PDRIVER_OBJECT DriverObject,
-    IN PCM_RESOURCE_LIST DriverList OPTIONAL,
-    IN ULONG DriverListSize OPTIONAL,
-    IN PDEVICE_OBJECT DeviceObject OPTIONAL,
-    IN PCM_RESOURCE_LIST DeviceList OPTIONAL,
-    IN ULONG DeviceListSize OPTIONAL,
-    IN BOOLEAN OverrideConflict,
-    OUT PBOOLEAN ConflictDetected
-    );
+IoReportResourceUsageInternal(IN ARBITER_REQUEST_SOURCE AllocationType, IN PUNICODE_STRING DriverClassName OPTIONAL,
+                              IN PDRIVER_OBJECT DriverObject, IN PCM_RESOURCE_LIST DriverList OPTIONAL,
+                              IN ULONG DriverListSize OPTIONAL, IN PDEVICE_OBJECT DeviceObject OPTIONAL,
+                              IN PCM_RESOURCE_LIST DeviceList OPTIONAL, IN ULONG DeviceListSize OPTIONAL,
+                              IN BOOLEAN OverrideConflict, OUT PBOOLEAN ConflictDetected);
 
 NTSTATUS
-IopDuplicateDetection (
-    IN INTERFACE_TYPE LegacyBusType,
-    IN ULONG BusNumber,
-    IN ULONG SlotNumber,
-    OUT PDEVICE_NODE *DeviceNode
-    );
+IopDuplicateDetection(IN INTERFACE_TYPE LegacyBusType, IN ULONG BusNumber, IN ULONG SlotNumber,
+                      OUT PDEVICE_NODE *DeviceNode);
 
 #if 0
 NTSTATUS
@@ -1620,85 +1315,50 @@ IopTranslateResourceList(
 #endif
 
 NTSTATUS
-PipLoadBootFilterDriver(
-    IN PUNICODE_STRING DriverName,
-    IN ULONG GroupIndex,
-    OUT PDRIVER_OBJECT *LoadedFilter
-    );
+PipLoadBootFilterDriver(IN PUNICODE_STRING DriverName, IN ULONG GroupIndex, OUT PDRIVER_OBJECT *LoadedFilter);
 
 NTSTATUS
-IopQueryAndSaveDeviceNodeCapabilities (
-    IN PDEVICE_NODE DeviceNode
-    );
+IopQueryAndSaveDeviceNodeCapabilities(IN PDEVICE_NODE DeviceNode);
 
 NTSTATUS
-IopSaveDeviceCapabilities (
-    IN PDEVICE_NODE DeviceNode,
-    IN PDEVICE_CAPABILITIES Capabilities
-    );
+IopSaveDeviceCapabilities(IN PDEVICE_NODE DeviceNode, IN PDEVICE_CAPABILITIES Capabilities);
 
 NTSTATUS
-PipQueryDeviceCapabilities(
-    IN PDEVICE_NODE DeviceNode,
-    OUT PDEVICE_CAPABILITIES Capabilities
-    );
+PipQueryDeviceCapabilities(IN PDEVICE_NODE DeviceNode, OUT PDEVICE_CAPABILITIES Capabilities);
 
-VOID
-IopIncDisableableDepends(
-    IN OUT PDEVICE_NODE DeviceNode
-    );
+VOID IopIncDisableableDepends(IN OUT PDEVICE_NODE DeviceNode);
 
-VOID
-IopDecDisableableDepends(
-    IN OUT PDEVICE_NODE DeviceNode
-    );
+VOID IopDecDisableableDepends(IN OUT PDEVICE_NODE DeviceNode);
 
 NTSTATUS
-IopQueryDockRemovalInterface(
-    IN      PDEVICE_OBJECT  DeviceObject,
-    IN OUT  PDOCK_INTERFACE *DockInterface
-    );
+IopQueryDockRemovalInterface(IN PDEVICE_OBJECT DeviceObject, IN OUT PDOCK_INTERFACE *DockInterface);
 
 #ifndef FIELD_SIZE
 #define FIELD_SIZE(type, field) (sizeof(((type *)0)->field))
 #endif
 
-#define IopDeviceNodeFlagsToCapabilities(DeviceNode) \
-     ((PDEVICE_CAPABILITIES) (((PUCHAR) (&(DeviceNode)->CapabilityFlags)) - \
-                              FIELD_OFFSET(DEVICE_CAPABILITIES, Version) - \
-                              FIELD_SIZE(DEVICE_CAPABILITIES, Version)))
+#define IopDeviceNodeFlagsToCapabilities(DeviceNode)                                                                  \
+    ((PDEVICE_CAPABILITIES)(((PUCHAR)(&(DeviceNode)->CapabilityFlags)) - FIELD_OFFSET(DEVICE_CAPABILITIES, Version) - \
+                            FIELD_SIZE(DEVICE_CAPABILITIES, Version)))
 
 //
 // BOOT allocation related declarations.
 //
 
-typedef
-NTSTATUS
-(*PIO_ALLOCATE_BOOT_RESOURCES_ROUTINE) (
-    IN ARBITER_REQUEST_SOURCE   ArbiterRequestSource,
-    IN PDEVICE_OBJECT           DeviceObject,
-    IN PCM_RESOURCE_LIST        BootResources
-    );
+typedef NTSTATUS (*PIO_ALLOCATE_BOOT_RESOURCES_ROUTINE)(IN ARBITER_REQUEST_SOURCE ArbiterRequestSource,
+                                                        IN PDEVICE_OBJECT DeviceObject,
+                                                        IN PCM_RESOURCE_LIST BootResources);
 
 NTSTATUS
-IopAllocateBootResources (
-    IN ARBITER_REQUEST_SOURCE   ArbiterRequestSource,
-    IN PDEVICE_OBJECT           DeviceObject,
-    IN PCM_RESOURCE_LIST        BootResources
-    );
+IopAllocateBootResources(IN ARBITER_REQUEST_SOURCE ArbiterRequestSource, IN PDEVICE_OBJECT DeviceObject,
+                         IN PCM_RESOURCE_LIST BootResources);
 
 NTSTATUS
-IopReportBootResources (
-    IN ARBITER_REQUEST_SOURCE   ArbiterRequestSource,
-    IN PDEVICE_OBJECT           DeviceObject,
-    IN PCM_RESOURCE_LIST        BootResources
-    );
+IopReportBootResources(IN ARBITER_REQUEST_SOURCE ArbiterRequestSource, IN PDEVICE_OBJECT DeviceObject,
+                       IN PCM_RESOURCE_LIST BootResources);
 
 NTSTATUS
-IopAllocateLegacyBootResources (
-    IN INTERFACE_TYPE   InterfaceType,
-    IN ULONG            BusNumber
-    );
+IopAllocateLegacyBootResources(IN INTERFACE_TYPE InterfaceType, IN ULONG BusNumber);
 
 extern PIO_ALLOCATE_BOOT_RESOURCES_ROUTINE IopAllocateBootResourcesRoutine;
 
@@ -1706,14 +1366,9 @@ extern PIO_ALLOCATE_BOOT_RESOURCES_ROUTINE IopAllocateBootResourcesRoutine;
 // Legacy Bus information related declarations.
 //
 
-extern LIST_ENTRY  IopLegacyBusInformationTable[];
+extern LIST_ENTRY IopLegacyBusInformationTable[];
 
-VOID
-IopInsertLegacyBusDeviceNode (
-    IN PDEVICE_NODE BusDeviceNode,
-    IN INTERFACE_TYPE InterfaceType,
-    IN ULONG BusNumber
-    );
+VOID IopInsertLegacyBusDeviceNode(IN PDEVICE_NODE BusDeviceNode, IN INTERFACE_TYPE InterfaceType, IN ULONG BusNumber);
 
 #define IopRemoveLegacyBusDeviceNode(d) RemoveEntryList(&((PDEVICE_NODE)d)->LegacyBusListEntry)
 
@@ -1722,43 +1377,23 @@ IopInsertLegacyBusDeviceNode (
 //
 
 NTSTATUS
-IopQueryConflictList(
-    PDEVICE_OBJECT                  PhysicalDeviceObject,
-    IN      PCM_RESOURCE_LIST               ResourceList,
-    IN      ULONG                           ResourceListSize,
-    OUT     PPLUGPLAY_CONTROL_CONFLICT_LIST ConflictList,
-    IN      ULONG                           ConflictListSize,
-    IN      ULONG                           Flags
-    );
+IopQueryConflictList(PDEVICE_OBJECT PhysicalDeviceObject, IN PCM_RESOURCE_LIST ResourceList, IN ULONG ResourceListSize,
+                     OUT PPLUGPLAY_CONTROL_CONFLICT_LIST ConflictList, IN ULONG ConflictListSize, IN ULONG Flags);
 
 //
 // Firmware mapper external declarations.
 //
 
-VOID
-MapperProcessFirmwareTree(
-    IN BOOLEAN OnlyProcessSerialPorts
-    );
+VOID MapperProcessFirmwareTree(IN BOOLEAN OnlyProcessSerialPorts);
 
-VOID
-MapperConstructRootEnumTree(
-    IN BOOLEAN CreatePhantomDevices
-    );
+VOID MapperConstructRootEnumTree(IN BOOLEAN CreatePhantomDevices);
 
-VOID
-MapperFreeList(
-    VOID
-    );
+VOID MapperFreeList(VOID);
 
 NTSTATUS
-EisaBuildEisaDeviceNode(
-    VOID
-    );
+EisaBuildEisaDeviceNode(VOID);
 
-VOID
-MapperPhantomizeDetectedComPorts(
-    VOID
-    );
+VOID MapperPhantomizeDetectedComPorts(VOID);
 
 //
 // General utility macros
@@ -1773,7 +1408,7 @@ MapperPhantomizeDetectedComPorts(
 //      );
 //
 
-#define IopConstStringSize(String)          ( sizeof(String) - sizeof(UNICODE_NULL) )
+#define IopConstStringSize(String) (sizeof(String) - sizeof(UNICODE_NULL))
 
 //
 // This macros calculates the number of characters of a constant string
@@ -1784,7 +1419,7 @@ MapperPhantomizeDetectedComPorts(
 //      );
 //
 
-#define IopConstStringLength(String)        ( ( sizeof(String) - sizeof(UNICODE_NULL) ) / sizeof(WCHAR) )
+#define IopConstStringLength(String) ((sizeof(String) - sizeof(UNICODE_NULL)) / sizeof(WCHAR))
 
 //
 // Kernel mode notification
@@ -1801,10 +1436,9 @@ MapperPhantomizeDetectedComPorts(
 //      );
 //
 
-#define IopHashGuid(_Guid) \
-            ( ( ((PULONG)_Guid)[0] + ((PULONG)_Guid)[1] + ((PULONG)_Guid)[2] \
-                + ((PULONG)_Guid)[3]) % NOTIFY_DEVICE_CLASS_HASH_BUCKETS)
-
+#define IopHashGuid(_Guid)                                                                 \
+    ((((PULONG)_Guid)[0] + ((PULONG)_Guid)[1] + ((PULONG)_Guid)[2] + ((PULONG)_Guid)[3]) % \
+     NOTIFY_DEVICE_CLASS_HASH_BUCKETS)
 
 
 //  This macros abstracts
@@ -1814,7 +1448,7 @@ MapperPhantomizeDetectedComPorts(
 //      PFAST_MUTEX Lock
 //      )
 
-#define IopAcquireNotifyLock(Lock)     ExAcquireFastMutex(Lock);
+#define IopAcquireNotifyLock(Lock) ExAcquireFastMutex(Lock);
 
 /*
 VOID
@@ -1822,7 +1456,7 @@ IopReleaseNotifyLock(
     PFAST_MUTEX Lock
     )
 */
-#define IopReleaseNotifyLock(Lock)     ExReleaseFastMutex(Lock);
+#define IopReleaseNotifyLock(Lock) ExReleaseFastMutex(Lock);
 
 
 //  BOOLEAN
@@ -1831,121 +1465,71 @@ IopReleaseNotifyLock(
 //      IN LPGUID guid2
 //      );
 
-#define IopCompareGuid(g1, g2)  ( (g1) == (g2) \
-                                    ? TRUE \
-                                    : RtlCompareMemory( (g1), (g2), sizeof(GUID) ) == sizeof(GUID) \
-                                    )
+#define IopCompareGuid(g1, g2) ((g1) == (g2) ? TRUE : RtlCompareMemory((g1), (g2), sizeof(GUID)) == sizeof(GUID))
 
-VOID
-IopInitializePlugPlayNotification(
-    VOID
-    );
+VOID IopInitializePlugPlayNotification(VOID);
 
 NTSTATUS
-IopNotifySetupDeviceArrival(
-        PDEVICE_OBJECT PhysicalDeviceObject,    // PDO of the device
-        HANDLE EnumEntryKey,                    // Handle into the enum branch of the registry for this device
-        BOOLEAN InstallDriver                   // Should setup attempt to install a driver
+IopNotifySetupDeviceArrival(PDEVICE_OBJECT PhysicalDeviceObject, // PDO of the device
+                            HANDLE EnumEntryKey,  // Handle into the enum branch of the registry for this device
+                            BOOLEAN InstallDriver // Should setup attempt to install a driver
 );
 
 NTSTATUS
-IopRequestHwProfileChangeNotification(
-    IN   LPGUID                      EventGuid,
-    IN   PROFILE_NOTIFICATION_TIME   NotificationTime,
-    OUT  PPNP_VETO_TYPE              VetoType           OPTIONAL,
-    OUT  PUNICODE_STRING             VetoName           OPTIONAL
-    );
+IopRequestHwProfileChangeNotification(IN LPGUID EventGuid, IN PROFILE_NOTIFICATION_TIME NotificationTime,
+                                      OUT PPNP_VETO_TYPE VetoType OPTIONAL, OUT PUNICODE_STRING VetoName OPTIONAL);
 
 NTSTATUS
-IopNotifyTargetDeviceChange(
-    IN  LPCGUID                             EventGuid,
-    IN  PDEVICE_OBJECT                      DeviceObject,
-    IN  PTARGET_DEVICE_CUSTOM_NOTIFICATION  NotificationStructure   OPTIONAL,
-    OUT PDRIVER_OBJECT                     *VetoingDriver
-    );
+IopNotifyTargetDeviceChange(IN LPCGUID EventGuid, IN PDEVICE_OBJECT DeviceObject,
+                            IN PTARGET_DEVICE_CUSTOM_NOTIFICATION NotificationStructure OPTIONAL,
+                            OUT PDRIVER_OBJECT *VetoingDriver);
 
 NTSTATUS
-IopGetRelatedTargetDevice(
-    IN PFILE_OBJECT FileObject,
-    OUT PDEVICE_NODE *DeviceNode
-    );
+IopGetRelatedTargetDevice(IN PFILE_OBJECT FileObject, OUT PDEVICE_NODE *DeviceNode);
 
 NTSTATUS
-IopNotifyDeviceClassChange(
-    LPGUID EventGuid,
-    LPGUID ClassGuid,
-    PUNICODE_STRING SymbolicLinkName
-    );
+IopNotifyDeviceClassChange(LPGUID EventGuid, LPGUID ClassGuid, PUNICODE_STRING SymbolicLinkName);
 
 NTSTATUS
-IopRegisterDeviceInterface(
-    IN PUNICODE_STRING DeviceInstanceName,
-    IN CONST GUID *InterfaceClassGuid,
-    IN PUNICODE_STRING ReferenceString      OPTIONAL,
-    IN BOOLEAN UserModeFormat,
-    OUT PUNICODE_STRING SymbolicLinkName
-    );
+IopRegisterDeviceInterface(IN PUNICODE_STRING DeviceInstanceName, IN CONST GUID *InterfaceClassGuid,
+                           IN PUNICODE_STRING ReferenceString OPTIONAL, IN BOOLEAN UserModeFormat,
+                           OUT PUNICODE_STRING SymbolicLinkName);
 
 NTSTATUS
-IopUnregisterDeviceInterface(
-    IN PUNICODE_STRING SymbolicLinkName
-    );
+IopUnregisterDeviceInterface(IN PUNICODE_STRING SymbolicLinkName);
 
 NTSTATUS
-IopRemoveDeviceInterfaces(
-    IN PUNICODE_STRING DeviceInstancePath
-    );
+IopRemoveDeviceInterfaces(IN PUNICODE_STRING DeviceInstancePath);
 
 NTSTATUS
-IopDisableDeviceInterfaces(
-    IN PUNICODE_STRING DeviceInstancePath
-    );
+IopDisableDeviceInterfaces(IN PUNICODE_STRING DeviceInstancePath);
 
 NTSTATUS
-IopGetDeviceInterfaces(
-    IN CONST GUID *InterfaceClassGuid,
-    IN PUNICODE_STRING DevicePath   OPTIONAL,
-    IN ULONG Flags,
-    IN BOOLEAN UserModeFormat,
-    OUT PWSTR *SymbolicLinkList,
-    OUT PULONG SymbolicLinkListSize OPTIONAL
-    );
+IopGetDeviceInterfaces(IN CONST GUID *InterfaceClassGuid, IN PUNICODE_STRING DevicePath OPTIONAL, IN ULONG Flags,
+                       IN BOOLEAN UserModeFormat, OUT PWSTR *SymbolicLinkList,
+                       OUT PULONG SymbolicLinkListSize OPTIONAL);
 
 NTSTATUS
-IopDoDeferredSetInterfaceState(
-    IN PDEVICE_NODE DeviceNode
-    );
+IopDoDeferredSetInterfaceState(IN PDEVICE_NODE DeviceNode);
 
 NTSTATUS
-IopProcessSetInterfaceState(
-    IN PUNICODE_STRING SymbolicLinkName,
-    IN BOOLEAN Enable,
-    IN BOOLEAN DeferNotStarted
-    );
+IopProcessSetInterfaceState(IN PUNICODE_STRING SymbolicLinkName, IN BOOLEAN Enable, IN BOOLEAN DeferNotStarted);
 
 NTSTATUS
-IopReplaceSeperatorWithPound(
-    OUT PUNICODE_STRING OutString,
-    IN PUNICODE_STRING InString
-    );
+IopReplaceSeperatorWithPound(OUT PUNICODE_STRING OutString, IN PUNICODE_STRING InString);
 
 NTSTATUS
-IopNotifyHwProfileChange(
-    IN  LPGUID           EventGuid,
-    OUT PPNP_VETO_TYPE   VetoType    OPTIONAL,
-    OUT PUNICODE_STRING  VetoName    OPTIONAL
-    );
+IopNotifyHwProfileChange(IN LPGUID EventGuid, OUT PPNP_VETO_TYPE VetoType OPTIONAL,
+                         OUT PUNICODE_STRING VetoName OPTIONAL);
 
-VOID
-IopUncacheInterfaceInformation(
-    IN PDEVICE_OBJECT DeviceObject
-    );
+VOID IopUncacheInterfaceInformation(IN PDEVICE_OBJECT DeviceObject);
 
 //
 // Notify entry header - all notify entries have these
 //
 
-typedef struct _NOTIFY_ENTRY_HEADER {
+typedef struct _NOTIFY_ENTRY_HEADER
+{
 
     //
     // List Entry structure
@@ -2018,7 +1602,8 @@ typedef struct _NOTIFY_ENTRY_HEADER {
 // Data to store for each target device registration
 //
 
-typedef struct _TARGET_DEVICE_NOTIFY_ENTRY {
+typedef struct _TARGET_DEVICE_NOTIFY_ENTRY
+{
 
     //
     // Header entries
@@ -2055,7 +1640,8 @@ typedef struct _TARGET_DEVICE_NOTIFY_ENTRY {
 // Data to store for each device class registration
 //
 
-typedef struct _DEVICE_CLASS_NOTIFY_ENTRY {
+typedef struct _DEVICE_CLASS_NOTIFY_ENTRY
+{
 
     //
     // Header entries
@@ -2084,7 +1670,8 @@ typedef struct _DEVICE_CLASS_NOTIFY_ENTRY {
 // Data to store for registration of the Reserved (ie setupdd.sys) variety
 //
 
-typedef struct _SETUP_NOTIFY_DATA {
+typedef struct _SETUP_NOTIFY_DATA
+{
 
     //
     // Header entries
@@ -2108,7 +1695,8 @@ typedef struct _SETUP_NOTIFY_DATA {
 // Data to store for registration for HardwareProfileChange Events
 //
 
-typedef struct _HWPROFILE_NOTIFY_ENTRY {
+typedef struct _HWPROFILE_NOTIFY_ENTRY
+{
 
     //
     // Header entries
@@ -2127,14 +1715,14 @@ typedef struct _HWPROFILE_NOTIFY_ENTRY {
 
 } HWPROFILE_NOTIFY_ENTRY, *PHWPROFILE_NOTIFY_ENTRY;
 
-#define PNP_NOTIFICATION_VERSION            1
-#define NOTIFY_DEVICE_CLASS_HASH_BUCKETS    13
+#define PNP_NOTIFICATION_VERSION 1
+#define NOTIFY_DEVICE_CLASS_HASH_BUCKETS 13
 
 //
 // IopMaxDeviceNodeLevel - Level number of the DeviceNode deepest in the tree
 //
-extern ULONG       IopMaxDeviceNodeLevel;
-extern ULONG       IoDeviceNodeTreeSequence;
+extern ULONG IopMaxDeviceNodeLevel;
+extern ULONG IoDeviceNodeTreeSequence;
 
 //
 // Global notification data
@@ -2147,16 +1735,14 @@ extern FAST_MUTEX IopTargetDeviceNotifyLock;
 extern LIST_ENTRY IopProfileNotifyList;
 extern FAST_MUTEX IopHwProfileNotifyLock;
 
-VOID
-IopProcessDeferredRegistrations(
-    VOID
-    );
+VOID IopProcessDeferredRegistrations(VOID);
 
 //
 // Generic buffer management
 //
 
-typedef struct _BUFFER_INFO {
+typedef struct _BUFFER_INFO
+{
 
     //
     // Buffer - pointer to the start of the buffer
@@ -2178,7 +1764,8 @@ typedef struct _BUFFER_INFO {
 
 } BUFFER_INFO, *PBUFFER_INFO;
 
-typedef struct _BUS_TYPE_GUID_LIST {
+typedef struct _BUS_TYPE_GUID_LIST
+{
 
     //
     // Number of allocated guid slots in the table.
@@ -2202,29 +1789,19 @@ typedef struct _BUS_TYPE_GUID_LIST {
 //
 
 NTSTATUS
-IopPortInitialize(
-    VOID
-    );
+IopPortInitialize(VOID);
 
 NTSTATUS
-IopMemInitialize(
-    VOID
-    );
+IopMemInitialize(VOID);
 
 NTSTATUS
-IopIrqInitialize(
-    VOID
-    );
+IopIrqInitialize(VOID);
 
 NTSTATUS
-IopDmaInitialize(
-    VOID
-    );
+IopDmaInitialize(VOID);
 
 NTSTATUS
-IopBusNumberInitialize(
-    VOID
-    );
+IopBusNumberInitialize(VOID);
 
 //
 // Arbiter state
@@ -2241,22 +1818,12 @@ extern ARBITER_INSTANCE IopRootBusNumberArbiter;
 //
 
 NTSTATUS
-IopAllocateBuffer(
-    IN PBUFFER_INFO Info,
-    IN ULONG Size
-    );
+IopAllocateBuffer(IN PBUFFER_INFO Info, IN ULONG Size);
 
 NTSTATUS
-IopResizeBuffer(
-    IN PBUFFER_INFO Info,
-    IN ULONG NewSize,
-    IN BOOLEAN CopyContents
-    );
+IopResizeBuffer(IN PBUFFER_INFO Info, IN ULONG NewSize, IN BOOLEAN CopyContents);
 
-VOID
-IopFreeBuffer(
-    IN PBUFFER_INFO Info
-    );
+VOID IopFreeBuffer(IN PBUFFER_INFO Info);
 
 
 //
@@ -2264,38 +1831,22 @@ IopFreeBuffer(
 //
 
 NTSTATUS
-IopAllocateUnicodeString(
-    IN OUT PUNICODE_STRING String,
-    IN USHORT Length
-    );
+IopAllocateUnicodeString(IN OUT PUNICODE_STRING String, IN USHORT Length);
 
-VOID
-IopFreeAllocatedUnicodeString(
-    PUNICODE_STRING String
-    );
+VOID IopFreeAllocatedUnicodeString(PUNICODE_STRING String);
 
 //
 // Misc.
 //
 
 NTSTATUS
-PnPBiosGetBiosInfo(
-    OUT PVOID *BiosInfo,
-    OUT ULONG *BiosInfoLength
-    );
+PnPBiosGetBiosInfo(OUT PVOID *BiosInfo, OUT ULONG *BiosInfoLength);
 
-VOID
-IopOrphanNotification (
-    PDEVICE_NODE DeviceNode
-    );
+VOID IopOrphanNotification(PDEVICE_NODE DeviceNode);
 
 PVOID
-PiAllocateCriticalMemory(
-    IN  PLUGPLAY_DEVICE_DELETE_TYPE     DeleteType,
-    IN  POOL_TYPE                       PoolType,
-    IN  SIZE_T                          Size,
-    IN  ULONG                           Tag
-    );
+PiAllocateCriticalMemory(IN PLUGPLAY_DEVICE_DELETE_TYPE DeleteType, IN POOL_TYPE PoolType, IN SIZE_T Size,
+                         IN ULONG Tag);
 
 //
 // Warm eject externs and function prototypes
@@ -2304,24 +1855,11 @@ extern KEVENT IopWarmEjectLock;
 extern PDEVICE_OBJECT IopWarmEjectPdo;
 
 NTSTATUS
-IopWarmEjectDevice(
-    IN PDEVICE_OBJECT      DeviceToEject,
-    IN SYSTEM_POWER_STATE  LightestSleepState
-    );
+IopWarmEjectDevice(IN PDEVICE_OBJECT DeviceToEject, IN SYSTEM_POWER_STATE LightestSleepState);
 
 NTSTATUS
-IopSystemControlDispatch(
-    IN      PDEVICE_OBJECT  DeviceObject,
-    IN OUT  PIRP            Irp
-    );
+IopSystemControlDispatch(IN PDEVICE_OBJECT DeviceObject, IN OUT PIRP Irp);
 
-VOID
-PiLockDeviceActionQueue(
-    VOID
-    );
+VOID PiLockDeviceActionQueue(VOID);
 
-VOID
-PiUnlockDeviceActionQueue(
-    VOID
-    );
-
+VOID PiUnlockDeviceActionQueue(VOID);

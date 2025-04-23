@@ -42,119 +42,51 @@ Revision History:
 #define VDM_IO_TEST 0
 
 #if VDM_IO_TEST
-VOID
-TestIoHandlerStuff(
-    VOID
-    );
+VOID TestIoHandlerStuff(VOID);
 #endif
 
 BOOLEAN
-Ki386GetSelectorParameters(
-    IN USHORT Selector,
-    OUT PULONG Flags,
-    OUT PULONG Base,
-    OUT PULONG Limit
-    );
+Ki386GetSelectorParameters(IN USHORT Selector, OUT PULONG Flags, OUT PULONG Base, OUT PULONG Limit);
 
 
 BOOLEAN
-Ki386VdmDispatchIo(
-    IN ULONG PortNumber,
-    IN ULONG Size,
-    IN BOOLEAN Read,
-    IN UCHAR InstructionSize,
-    IN PKTRAP_FRAME TrapFrame
-    );
+Ki386VdmDispatchIo(IN ULONG PortNumber, IN ULONG Size, IN BOOLEAN Read, IN UCHAR InstructionSize,
+                   IN PKTRAP_FRAME TrapFrame);
 
 BOOLEAN
-Ki386VdmDispatchStringIo(
-    IN ULONG PortNumber,
-    IN ULONG Size,
-    IN BOOLEAN Rep,
-    IN BOOLEAN Read,
-    IN ULONG Count,
-    IN ULONG Address,
-    IN UCHAR InstructionSize,
-    IN PKTRAP_FRAME TrapFrame
-    );
+Ki386VdmDispatchStringIo(IN ULONG PortNumber, IN ULONG Size, IN BOOLEAN Rep, IN BOOLEAN Read, IN ULONG Count,
+                         IN ULONG Address, IN UCHAR InstructionSize, IN PKTRAP_FRAME TrapFrame);
 
 
 BOOLEAN
-VdmDispatchIoToHandler(
-    IN PVDM_IO_HANDLER VdmIoHandler,
-    IN ULONG Context,
-    IN ULONG PortNumber,
-    IN ULONG Size,
-    IN BOOLEAN Read,
-    IN OUT PULONG Data
-    );
+VdmDispatchIoToHandler(IN PVDM_IO_HANDLER VdmIoHandler, IN ULONG Context, IN ULONG PortNumber, IN ULONG Size,
+                       IN BOOLEAN Read, IN OUT PULONG Data);
 
 BOOLEAN
-VdmDispatchUnalignedIoToHandler(
-    IN PVDM_IO_HANDLER VdmIoHandler,
-    IN ULONG Context,
-    IN ULONG PortNumber,
-    IN ULONG Size,
-    IN BOOLEAN Read,
-    IN OUT PULONG Data
-    );
+VdmDispatchUnalignedIoToHandler(IN PVDM_IO_HANDLER VdmIoHandler, IN ULONG Context, IN ULONG PortNumber, IN ULONG Size,
+                                IN BOOLEAN Read, IN OUT PULONG Data);
 
 BOOLEAN
-VdmDispatchStringIoToHandler(
-    IN PVDM_IO_HANDLER VdmIoHandler,
-    IN ULONG Context,
-    IN ULONG PortNumber,
-    IN ULONG Size,
-    IN ULONG Count,
-    IN BOOLEAN Read,
-    IN ULONG Data
-    );
+VdmDispatchStringIoToHandler(IN PVDM_IO_HANDLER VdmIoHandler, IN ULONG Context, IN ULONG PortNumber, IN ULONG Size,
+                             IN ULONG Count, IN BOOLEAN Read, IN ULONG Data);
 
 BOOLEAN
-VdmCallStringIoHandler(
-    IN PVDM_IO_HANDLER VdmIoHandler,
-    IN PVOID StringIoRoutine,
-    IN ULONG Context,
-    IN ULONG PortNumber,
-    IN ULONG Size,
-    IN ULONG Count,
-    IN BOOLEAN Read,
-    IN ULONG Data
-    );
+VdmCallStringIoHandler(IN PVDM_IO_HANDLER VdmIoHandler, IN PVOID StringIoRoutine, IN ULONG Context, IN ULONG PortNumber,
+                       IN ULONG Size, IN ULONG Count, IN BOOLEAN Read, IN ULONG Data);
 
 BOOLEAN
-VdmConvertToLinearAddress(
-    IN ULONG SegmentedAddress,
-    IN PVOID *LinearAddress
-    );
+VdmConvertToLinearAddress(IN ULONG SegmentedAddress, IN PVOID *LinearAddress);
 
-VOID
-KeI386VdmInitialize(
-    VOID
-    );
+VOID KeI386VdmInitialize(VOID);
 
 ULONG
-Ki386VdmEnablePentiumExtentions(
-    ULONG
-    );
+Ki386VdmEnablePentiumExtentions(ULONG);
 
-VOID
-Ki386AdlibEmulation(
-    IN ULONG PortNumber,
-    IN ULONG Size,
-    IN BOOLEAN Read,
-    IN UCHAR InstructionSize,
-    IN PKTRAP_FRAME TrapFrame
-    );
+VOID Ki386AdlibEmulation(IN ULONG PortNumber, IN ULONG Size, IN BOOLEAN Read, IN UCHAR InstructionSize,
+                         IN PKTRAP_FRAME TrapFrame);
 
-VOID
-Ki386AdlibDirectIo (
-    IN ULONG PortNumber,
-    IN ULONG Size,
-    IN BOOLEAN Read,
-    IN UCHAR InstructionSize,
-    IN PKTRAP_FRAME TrapFrame
-    );
+VOID Ki386AdlibDirectIo(IN ULONG PortNumber, IN ULONG Size, IN BOOLEAN Read, IN UCHAR InstructionSize,
+                        IN PKTRAP_FRAME TrapFrame);
 
 #pragma alloc_text(PAGE, Ki386GetSelectorParameters)
 #pragma alloc_text(PAGE, Ki386VdmDispatchIo)
@@ -176,12 +108,7 @@ BOOLEAN KeI386VdmIoplAllowed = FALSE;
 ULONG KeI386VirtualIntExtensions = 0;
 
 BOOLEAN
-Ki386GetSelectorParameters(
-    IN USHORT Selector,
-    OUT PULONG Flags,
-    OUT PULONG Base,
-    OUT PULONG Limit
-    )
+Ki386GetSelectorParameters(IN USHORT Selector, OUT PULONG Flags, OUT PULONG Base, OUT PULONG Limit)
 
 /*++
 
@@ -212,26 +139,24 @@ Note:
 
 {
 
-    PLDT_ENTRY Ldt,OldLdt;
-    ULONG LdtLimit,OldLdtLimit,RetryCount = 0;
+    PLDT_ENTRY Ldt, OldLdt;
+    ULONG LdtLimit, OldLdtLimit, RetryCount = 0;
     PKPROCESS Process;
     BOOLEAN ReturnValue = TRUE;
 
     *Flags = 0;
 
-    if ((Selector & (SELECTOR_TABLE_INDEX | DPL_USER))
-        != (SELECTOR_TABLE_INDEX | DPL_USER)) {
+    if ((Selector & (SELECTOR_TABLE_INDEX | DPL_USER)) != (SELECTOR_TABLE_INDEX | DPL_USER))
+    {
         return FALSE;
     }
 
 
     Process = KeGetCurrentThread()->ApcState.Process;
-    Ldt = (PLDT_ENTRY)((Process->LdtDescriptor.BaseLow) |
-        (Process->LdtDescriptor.HighWord.Bytes.BaseMid << 16) |
-        (Process->LdtDescriptor.HighWord.Bytes.BaseHi << 24));
+    Ldt = (PLDT_ENTRY)((Process->LdtDescriptor.BaseLow) | (Process->LdtDescriptor.HighWord.Bytes.BaseMid << 16) |
+                       (Process->LdtDescriptor.HighWord.Bytes.BaseHi << 24));
 
-    LdtLimit = ((Process->LdtDescriptor.LimitLow) |
-        (Process->LdtDescriptor.HighWord.Bits.LimitHi << 16));
+    LdtLimit = ((Process->LdtDescriptor.LimitLow) | (Process->LdtDescriptor.HighWord.Bits.LimitHi << 16));
 
     Selector &= ~(SELECTOR_TABLE_INDEX | DPL_USER);
 
@@ -242,79 +167,95 @@ Note:
     // the Ldt mutex, because that is expensive.
     //
 
-    do {
+    do
+    {
 
         RetryCount++;
 
-        if (((ULONG)Selector >= LdtLimit) || (!Ldt)) {
+        if (((ULONG)Selector >= LdtLimit) || (!Ldt))
+        {
             return FALSE;
         }
 
-        try {
+        try
+        {
 
-            if (!Ldt[Selector/sizeof(LDT_ENTRY)].HighWord.Bits.Pres) {
+            if (!Ldt[Selector / sizeof(LDT_ENTRY)].HighWord.Bits.Pres)
+            {
                 *Flags = SEL_TYPE_NP;
                 ReturnValue = FALSE;
-            } else {
+            }
+            else
+            {
 
-                *Base = (Ldt[Selector/sizeof(LDT_ENTRY)].BaseLow |
-                    (Ldt[Selector/sizeof(LDT_ENTRY)].HighWord.Bytes.BaseMid << 16) |
-                    (Ldt[Selector/sizeof(LDT_ENTRY)].HighWord.Bytes.BaseHi << 24));
+                *Base = (Ldt[Selector / sizeof(LDT_ENTRY)].BaseLow |
+                         (Ldt[Selector / sizeof(LDT_ENTRY)].HighWord.Bytes.BaseMid << 16) |
+                         (Ldt[Selector / sizeof(LDT_ENTRY)].HighWord.Bytes.BaseHi << 24));
 
-                *Limit = (Ldt[Selector/sizeof(LDT_ENTRY)].LimitLow |
-                    (Ldt[Selector/sizeof(LDT_ENTRY)].HighWord.Bits.LimitHi << 16));
+                *Limit = (Ldt[Selector / sizeof(LDT_ENTRY)].LimitLow |
+                          (Ldt[Selector / sizeof(LDT_ENTRY)].HighWord.Bits.LimitHi << 16));
 
                 *Flags = 0;
 
-                if ((Ldt[Selector/sizeof(LDT_ENTRY)].HighWord.Bits.Type & 0x18) == 0x18) {
+                if ((Ldt[Selector / sizeof(LDT_ENTRY)].HighWord.Bits.Type & 0x18) == 0x18)
+                {
                     *Flags |= SEL_TYPE_EXECUTE;
 
-                    if (Ldt[Selector/sizeof(LDT_ENTRY)].HighWord.Bits.Type & 0x02) {
+                    if (Ldt[Selector / sizeof(LDT_ENTRY)].HighWord.Bits.Type & 0x02)
+                    {
                         *Flags |= SEL_TYPE_READ;
                     }
-                } else {
+                }
+                else
+                {
                     *Flags |= SEL_TYPE_READ;
-                    if (Ldt[Selector/sizeof(LDT_ENTRY)].HighWord.Bits.Type & 0x02) {
+                    if (Ldt[Selector / sizeof(LDT_ENTRY)].HighWord.Bits.Type & 0x02)
+                    {
                         *Flags |= SEL_TYPE_WRITE;
                     }
-                    if (Ldt[Selector/sizeof(LDT_ENTRY)].HighWord.Bits.Type & 0x04) {
+                    if (Ldt[Selector / sizeof(LDT_ENTRY)].HighWord.Bits.Type & 0x04)
+                    {
                         *Flags |= SEL_TYPE_ED;
                     }
                 }
 
-                if (Ldt[Selector/sizeof(LDT_ENTRY)].HighWord.Bits.Default_Big) {
+                if (Ldt[Selector / sizeof(LDT_ENTRY)].HighWord.Bits.Default_Big)
+                {
                     *Flags |= SEL_TYPE_BIG;
                 }
 
-                if (Ldt[Selector/sizeof(LDT_ENTRY)].HighWord.Bits.Granularity) {
+                if (Ldt[Selector / sizeof(LDT_ENTRY)].HighWord.Bits.Granularity)
+                {
                     *Flags |= SEL_TYPE_2GIG;
                 }
             }
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             Ldt = 0;
             LdtLimit = 0;
         }
 
-        if (ReturnValue == FALSE) {
+        if (ReturnValue == FALSE)
+        {
             break;
         }
 
         OldLdt = Ldt;
         OldLdtLimit = LdtLimit;
 
-        Ldt = (PLDT_ENTRY)((Process->LdtDescriptor.BaseLow) |
-            (Process->LdtDescriptor.HighWord.Bytes.BaseMid << 16) |
-            (Process->LdtDescriptor.HighWord.Bytes.BaseHi << 24));
+        Ldt = (PLDT_ENTRY)((Process->LdtDescriptor.BaseLow) | (Process->LdtDescriptor.HighWord.Bytes.BaseMid << 16) |
+                           (Process->LdtDescriptor.HighWord.Bytes.BaseHi << 24));
 
-        LdtLimit = ((Process->LdtDescriptor.LimitLow) |
-            (Process->LdtDescriptor.HighWord.Bits.LimitHi << 16));
+        LdtLimit = ((Process->LdtDescriptor.LimitLow) | (Process->LdtDescriptor.HighWord.Bits.LimitHi << 16));
 
     } while (((Ldt != OldLdt) || (LdtLimit != OldLdtLimit)) && (RetryCount <= 10));
 
     //
     // If we can't get an answer in 10 tries, we never will
     //
-    if ((RetryCount > 10)) {
+    if ((RetryCount > 10))
+    {
         ReturnValue = FALSE;
     }
 
@@ -322,13 +263,8 @@ Note:
 }
 
 BOOLEAN
-Ki386VdmDispatchIo(
-    IN ULONG PortNumber,
-    IN ULONG Size,
-    IN BOOLEAN Read,
-    IN UCHAR InstructionSize,
-    IN PKTRAP_FRAME TrapFrame
-    )
+Ki386VdmDispatchIo(IN ULONG PortNumber, IN ULONG Size, IN BOOLEAN Read, IN UCHAR InstructionSize,
+                   IN PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -366,39 +302,33 @@ Return Value:
     // First check if this port needs special handling
     //
 
-    if (Size == 1) {
+    if (Size == 1)
+    {
         pVdmObjects = PsGetCurrentProcess()->VdmObjects;
         if (pVdmObjects &&
-            (pVdmObjects->AdlibAction == ADLIB_DIRECT_IO ||
-             pVdmObjects->AdlibAction == ADLIB_KERNEL_EMULATION)) {
+            (pVdmObjects->AdlibAction == ADLIB_DIRECT_IO || pVdmObjects->AdlibAction == ADLIB_KERNEL_EMULATION))
+        {
 
-            if ((PortNumber >= pVdmObjects->AdlibPhysPortStart &&
-                 PortNumber <= pVdmObjects->AdlibPhysPortEnd) ||
-                (PortNumber >= pVdmObjects->AdlibVirtPortStart &&
-                 PortNumber <= pVdmObjects->AdlibVirtPortEnd)) {
-                if (pVdmObjects->AdlibAction == ADLIB_DIRECT_IO) {
+            if ((PortNumber >= pVdmObjects->AdlibPhysPortStart && PortNumber <= pVdmObjects->AdlibPhysPortEnd) ||
+                (PortNumber >= pVdmObjects->AdlibVirtPortStart && PortNumber <= pVdmObjects->AdlibVirtPortEnd))
+            {
+                if (pVdmObjects->AdlibAction == ADLIB_DIRECT_IO)
+                {
 
                     //
                     // Convert virtual ports to physical porrs otherwise
                     // we don't know where we write to.
                     //
 
-                    if (PortNumber >= pVdmObjects->AdlibVirtPortStart &&
-                        PortNumber <= pVdmObjects->AdlibVirtPortEnd) {
-                        PortNumber = PortNumber - pVdmObjects->AdlibVirtPortStart +
-                                     pVdmObjects->AdlibPhysPortStart;
+                    if (PortNumber >= pVdmObjects->AdlibVirtPortStart && PortNumber <= pVdmObjects->AdlibVirtPortEnd)
+                    {
+                        PortNumber = PortNumber - pVdmObjects->AdlibVirtPortStart + pVdmObjects->AdlibPhysPortStart;
                     }
-                    Ki386AdlibDirectIo (PortNumber,
-                                        Size,
-                                        Read,
-                                        InstructionSize,
-                                        TrapFrame);
-                } else {
-                    Ki386AdlibEmulation(PortNumber,
-                                        Size,
-                                        Read,
-                                        InstructionSize,
-                                        TrapFrame);
+                    Ki386AdlibDirectIo(PortNumber, Size, Read, InstructionSize, TrapFrame);
+                }
+                else
+                {
+                    Ki386AdlibEmulation(PortNumber, Size, Read, InstructionSize, TrapFrame);
                 }
                 TrapFrame->Eip += InstructionSize;
                 return TRUE;
@@ -406,41 +336,29 @@ Return Value:
         }
     }
 
-    Success = Ps386GetVdmIoHandler(
-        PsGetCurrentProcess(),
-        PortNumber & ~0x3,
-        &VdmIoHandler,
-        &Context
-        );
+    Success = Ps386GetVdmIoHandler(PsGetCurrentProcess(), PortNumber & ~0x3, &VdmIoHandler, &Context);
 
-    if (Success) {
+    if (Success)
+    {
         Result = TrapFrame->Eax;
         // if port is not aligned, perform unaligned IO
         // else do the io the easy way
-        if (PortNumber % Size) {
-            Success = VdmDispatchUnalignedIoToHandler(
-                &VdmIoHandler,
-                Context,
-                PortNumber,
-                Size,
-                Read,
-                &Result
-                );
-        } else {
-            Success = VdmDispatchIoToHandler(
-                &VdmIoHandler,
-                Context,
-                PortNumber,
-                Size,
-                Read,
-                &Result
-                );
+        if (PortNumber % Size)
+        {
+            Success = VdmDispatchUnalignedIoToHandler(&VdmIoHandler, Context, PortNumber, Size, Read, &Result);
+        }
+        else
+        {
+            Success = VdmDispatchIoToHandler(&VdmIoHandler, Context, PortNumber, Size, Read, &Result);
         }
     }
 
-    if (Success) {
-        if (Read) {
-            switch (Size) {
+    if (Success)
+    {
+        if (Read)
+        {
+            switch (Size)
+            {
             case 4:
                 TrapFrame->Eax = Result;
                 break;
@@ -452,23 +370,29 @@ Return Value:
                 break;
             }
         }
-        TrapFrame->Eip += (ULONG) InstructionSize;
+        TrapFrame->Eip += (ULONG)InstructionSize;
         return TRUE;
-    } else {
-        if (!NT_SUCCESS (VdmpGetVdmTib(&VdmTib))) {
+    }
+    else
+    {
+        if (!NT_SUCCESS(VdmpGetVdmTib(&VdmTib)))
+        {
             ExceptionRecord.ExceptionCode = STATUS_ACCESS_VIOLATION;
             ExceptionRecord.ExceptionFlags = 0;
             ExceptionRecord.NumberParameters = 0;
             ExRaiseException(&ExceptionRecord);
             return FALSE;
         }
-        try {
-            VdmTib->EventInfo.InstructionSize = (ULONG) InstructionSize;
+        try
+        {
+            VdmTib->EventInfo.InstructionSize = (ULONG)InstructionSize;
             VdmTib->EventInfo.Event = VdmIO;
             VdmTib->EventInfo.IoInfo.PortNumber = (USHORT)PortNumber;
             VdmTib->EventInfo.IoInfo.Size = (USHORT)Size;
             VdmTib->EventInfo.IoInfo.Read = Read;
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             ExceptionRecord.ExceptionCode = STATUS_ACCESS_VIOLATION;
             ExceptionRecord.ExceptionFlags = 0;
             ExceptionRecord.NumberParameters = 0;
@@ -480,20 +404,11 @@ Return Value:
     VdmEndExecution(TrapFrame, VdmTib);
 
     return TRUE;
-
 }
 
 BOOLEAN
-Ki386VdmDispatchStringIo(
-    IN ULONG PortNumber,
-    IN ULONG Size,
-    IN BOOLEAN Rep,
-    IN BOOLEAN Read,
-    IN ULONG Count,
-    IN ULONG Address,
-    IN UCHAR InstructionSize,
-    IN PKTRAP_FRAME TrapFrame
-    )
+Ki386VdmDispatchStringIo(IN ULONG PortNumber, IN ULONG Size, IN BOOLEAN Rep, IN BOOLEAN Read, IN ULONG Count,
+                         IN ULONG Address, IN UCHAR InstructionSize, IN PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -530,53 +445,45 @@ Return Value:
     VDM_IO_HANDLER VdmIoHandler;
     ULONG Context;
 
-    Success = Ps386GetVdmIoHandler(
-        PsGetCurrentProcess(),
-        PortNumber & ~0x3,
-        &VdmIoHandler,
-        &Context
-        );
+    Success = Ps386GetVdmIoHandler(PsGetCurrentProcess(), PortNumber & ~0x3, &VdmIoHandler, &Context);
 
 
-    if (Success) {
-        Success = VdmDispatchStringIoToHandler(
-            &VdmIoHandler,
-            Context,
-            PortNumber,
-            Size,
-            Count,
-            Read,
-            Address
-            );
+    if (Success)
+    {
+        Success = VdmDispatchStringIoToHandler(&VdmIoHandler, Context, PortNumber, Size, Count, Read, Address);
     }
 
-    if (Success) {
+    if (Success)
+    {
         PUSHORT pIndexRegister;
         USHORT Index;
 
         // WARNING no 32 bit address support
 
-        pIndexRegister = Read ? (PUSHORT)&TrapFrame->Edi
-                              : (PUSHORT)&TrapFrame->Esi;
+        pIndexRegister = Read ? (PUSHORT)&TrapFrame->Edi : (PUSHORT)&TrapFrame->Esi;
 
-        if (TrapFrame->EFlags & EFLAGS_DF_MASK) {
+        if (TrapFrame->EFlags & EFLAGS_DF_MASK)
+        {
             Index = *pIndexRegister - (USHORT)(Count * Size);
-            }
-        else {
+        }
+        else
+        {
             Index = *pIndexRegister + (USHORT)(Count * Size);
-            }
+        }
 
         *pIndexRegister = Index;
 
-        if (Rep) {
-            (USHORT)TrapFrame->Ecx = 0;
-            }
+        if (Rep)
+        {
+            (USHORT) TrapFrame->Ecx = 0;
+        }
 
-        TrapFrame->Eip += (ULONG) InstructionSize;
+        TrapFrame->Eip += (ULONG)InstructionSize;
         return TRUE;
     }
 
-    if (!NT_SUCCESS (VdmpGetVdmTib(&VdmTib))) {
+    if (!NT_SUCCESS(VdmpGetVdmTib(&VdmTib)))
+    {
         ExceptionRecord.ExceptionCode = STATUS_ACCESS_VIOLATION;
         ExceptionRecord.ExceptionFlags = 0;
         ExceptionRecord.NumberParameters = 0;
@@ -584,8 +491,9 @@ Return Value:
         return FALSE;
     }
 
-    try {
-        VdmTib->EventInfo.InstructionSize = (ULONG) InstructionSize;
+    try
+    {
+        VdmTib->EventInfo.InstructionSize = (ULONG)InstructionSize;
         VdmTib->EventInfo.Event = VdmStringIO;
         VdmTib->EventInfo.StringIoInfo.PortNumber = (USHORT)PortNumber;
         VdmTib->EventInfo.StringIoInfo.Size = (USHORT)Size;
@@ -593,7 +501,9 @@ Return Value:
         VdmTib->EventInfo.StringIoInfo.Read = Read;
         VdmTib->EventInfo.StringIoInfo.Count = Count;
         VdmTib->EventInfo.StringIoInfo.Address = Address;
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         ExceptionRecord.ExceptionCode = STATUS_ACCESS_VIOLATION;
         ExceptionRecord.ExceptionFlags = 0;
         ExceptionRecord.NumberParameters = 0;
@@ -608,14 +518,8 @@ Return Value:
 }
 
 BOOLEAN
-VdmDispatchIoToHandler(
-    IN PVDM_IO_HANDLER VdmIoHandler,
-    IN ULONG Context,
-    IN ULONG PortNumber,
-    IN ULONG Size,
-    IN BOOLEAN Read,
-    IN OUT PULONG Data
-    )
+VdmDispatchIoToHandler(IN PVDM_IO_HANDLER VdmIoHandler, IN ULONG Context, IN ULONG PortNumber, IN ULONG Size,
+                       IN BOOLEAN Read, IN OUT PULONG Data)
 
 /*++
 
@@ -651,24 +555,26 @@ Return Value:
     // Insure that Io is aligned
     ASSERT((!(PortNumber % Size)));
 
-    if (Read) {
+    if (Read)
+    {
         FnIndex = 0;
         AccessType = EMULATOR_READ_ACCESS;
-    } else {
+    }
+    else
+    {
         FnIndex = 1;
         AccessType = EMULATOR_WRITE_ACCESS;
     }
 
-    switch (Size) {
+    switch (Size)
+    {
     case 1:
-        if (VdmIoHandler->IoFunctions[FnIndex].UcharIo[PortNumber % 4]) {
-            Status = (*(VdmIoHandler->IoFunctions[FnIndex].UcharIo[PortNumber % 4]))(
-                Context,
-                PortNumber,
-                AccessType,
-                (PUCHAR)Data
-                );
-            if (NT_SUCCESS(Status)) {
+        if (VdmIoHandler->IoFunctions[FnIndex].UcharIo[PortNumber % 4])
+        {
+            Status = (*(VdmIoHandler->IoFunctions[FnIndex].UcharIo[PortNumber % 4]))(Context, PortNumber, AccessType,
+                                                                                     (PUCHAR)Data);
+            if (NT_SUCCESS(Status))
+            {
                 return TRUE;
             }
         }
@@ -676,69 +582,42 @@ Return Value:
         return FALSE;
 
     case 2:
-        if (VdmIoHandler->IoFunctions[FnIndex].UshortIo[PortNumber % 2]) {
-            Status = (*(VdmIoHandler->IoFunctions[FnIndex].UshortIo[PortNumber % 2]))(
-                Context,
-                PortNumber,
-                AccessType,
-                (PUSHORT)Data
-                );
-            if (NT_SUCCESS(Status)) {
+        if (VdmIoHandler->IoFunctions[FnIndex].UshortIo[PortNumber % 2])
+        {
+            Status = (*(VdmIoHandler->IoFunctions[FnIndex].UshortIo[PortNumber % 2]))(Context, PortNumber, AccessType,
+                                                                                      (PUSHORT)Data);
+            if (NT_SUCCESS(Status))
+            {
                 return TRUE;
             }
-        } else {
+        }
+        else
+        {
             // Dispatch to the two uchar handlers for this ushort port
-            Success1 = VdmDispatchIoToHandler(
-                VdmIoHandler,
-                Context,
-                PortNumber,
-                Size /2,
-                Read,
-                Data
-                );
+            Success1 = VdmDispatchIoToHandler(VdmIoHandler, Context, PortNumber, Size / 2, Read, Data);
 
-            Success2 = VdmDispatchIoToHandler(
-                VdmIoHandler,
-                Context,
-                PortNumber + 1,
-                Size / 2,
-                Read,
-                (PULONG)((PUCHAR)Data + 1)
-                );
+            Success2 = VdmDispatchIoToHandler(VdmIoHandler, Context, PortNumber + 1, Size / 2, Read,
+                                              (PULONG)((PUCHAR)Data + 1));
 
             return (Success1 || Success2);
-
         }
         return FALSE;
 
     case 4:
-        if (VdmIoHandler->IoFunctions[FnIndex].UlongIo) {
-            Status = (*(VdmIoHandler->IoFunctions[FnIndex].UlongIo))(
-                Context,
-                PortNumber,
-                AccessType,
-                Data
-                );
-            if (NT_SUCCESS(Status)) {
+        if (VdmIoHandler->IoFunctions[FnIndex].UlongIo)
+        {
+            Status = (*(VdmIoHandler->IoFunctions[FnIndex].UlongIo))(Context, PortNumber, AccessType, Data);
+            if (NT_SUCCESS(Status))
+            {
                 return TRUE;
             }
-        } else {
+        }
+        else
+        {
             // Dispatch to the two ushort handlers for this port
-            Success1 = VdmDispatchIoToHandler(
-                VdmIoHandler,
-                Context,
-                PortNumber,
-                Size /2,
-                Read,
-                Data);
-            Success2 = VdmDispatchIoToHandler(
-                VdmIoHandler,
-                Context,
-                PortNumber + 2,
-                Size / 2,
-                Read,
-                (PULONG)((PUSHORT)Data + 1)
-                );
+            Success1 = VdmDispatchIoToHandler(VdmIoHandler, Context, PortNumber, Size / 2, Read, Data);
+            Success2 = VdmDispatchIoToHandler(VdmIoHandler, Context, PortNumber + 2, Size / 2, Read,
+                                              (PULONG)((PUSHORT)Data + 1));
 
             return (Success1 || Success2);
         }
@@ -749,14 +628,8 @@ Return Value:
 }
 
 BOOLEAN
-VdmDispatchUnalignedIoToHandler(
-    IN PVDM_IO_HANDLER VdmIoHandler,
-    IN ULONG Context,
-    IN ULONG PortNumber,
-    IN ULONG Size,
-    IN BOOLEAN Read,
-    IN OUT PULONG Data
-    )
+VdmDispatchUnalignedIoToHandler(IN PVDM_IO_HANDLER VdmIoHandler, IN ULONG Context, IN ULONG PortNumber, IN ULONG Size,
+                                IN BOOLEAN Read, IN OUT PULONG Data)
 
 /*++
 
@@ -804,67 +677,39 @@ Return Value:
     //
 
     // if the port is uchar aligned
-    if ((PortNumber % Size) & 1) {
-        Success = VdmDispatchIoToHandler(
-            VdmIoHandler,
-            Context,
-            PortNumber,
-            1,
-            Read,
-            Data
-            );
+    if ((PortNumber % Size) & 1)
+    {
+        Success = VdmDispatchIoToHandler(VdmIoHandler, Context, PortNumber, 1, Read, Data);
         Offset += 1;
-    // else it is ushort aligned (and therefore must be a ulong port)
-    } else {
-        Success = VdmDispatchIoToHandler(
-            VdmIoHandler,
-            Context,
-            PortNumber,
-            2,
-            Read,
-            Data
-            );
+        // else it is ushort aligned (and therefore must be a ulong port)
+    }
+    else
+    {
+        Success = VdmDispatchIoToHandler(VdmIoHandler, Context, PortNumber, 2, Read, Data);
         Offset += 2;
     }
 
     // if it is a ulong port, we know we have a ushort IO to dispatch
-    if (Size == 4) {
-        Success |= VdmDispatchIoToHandler(
-            VdmIoHandler,
-            Context,
-            PortNumber + Offset,
-            2,
-            Read,
-            (PULONG)((PUCHAR)Data + Offset)
-            );
+    if (Size == 4)
+    {
+        Success |= VdmDispatchIoToHandler(VdmIoHandler, Context, PortNumber + Offset, 2, Read,
+                                          (PULONG)((PUCHAR)Data + Offset));
         Offset += 2;
     }
 
     // If we haven't dispatched the entire port, dispatch the final uchar
-    if (Offset != 4) {
-        Success |= VdmDispatchIoToHandler(
-            VdmIoHandler,
-            Context,
-            PortNumber + Offset,
-            1,
-            Read,
-            (PULONG)((PUCHAR)Data + Offset)
-            );
+    if (Offset != 4)
+    {
+        Success |= VdmDispatchIoToHandler(VdmIoHandler, Context, PortNumber + Offset, 1, Read,
+                                          (PULONG)((PUCHAR)Data + Offset));
     }
 
     return Success;
 }
 
 BOOLEAN
-VdmDispatchStringIoToHandler(
-    IN PVDM_IO_HANDLER VdmIoHandler,
-    IN ULONG Context,
-    IN ULONG PortNumber,
-    IN ULONG Size,
-    IN ULONG Count,
-    IN BOOLEAN Read,
-    IN ULONG Data
-    )
+VdmDispatchStringIoToHandler(IN PVDM_IO_HANDLER VdmIoHandler, IN ULONG Context, IN ULONG PortNumber, IN ULONG Size,
+                             IN ULONG Count, IN BOOLEAN Read, IN ULONG Data)
 
 /*++
 
@@ -896,64 +741,40 @@ Return Value:
     USHORT FnIndex;
     NTSTATUS Status;
 
-    if (Read) {
+    if (Read)
+    {
         FnIndex = 0;
-    } else {
+    }
+    else
+    {
         FnIndex = 1;
     }
 
-    Status = KeWaitForSingleObject(
-        &VdmStringIoMutex,
-        Executive,
-        KernelMode,
-        FALSE,
-        NULL
-        );
+    Status = KeWaitForSingleObject(&VdmStringIoMutex, Executive, KernelMode, FALSE, NULL);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return FALSE;
     }
 
-    switch (Size) {
+    switch (Size)
+    {
     case 1:
-        Success = VdmCallStringIoHandler(
-            VdmIoHandler,
-            (PVOID)VdmIoHandler->IoFunctions[FnIndex].UcharStringIo[PortNumber % 4],
-            Context,
-            PortNumber,
-            Size,
-            Count,
-            Read,
-            Data
-            );
+        Success = VdmCallStringIoHandler(VdmIoHandler,
+                                         (PVOID)VdmIoHandler->IoFunctions[FnIndex].UcharStringIo[PortNumber % 4],
+                                         Context, PortNumber, Size, Count, Read, Data);
         break;
 
     case 2:
-        Success = VdmCallStringIoHandler(
-            VdmIoHandler,
-            (PVOID)VdmIoHandler->IoFunctions[FnIndex].UshortStringIo[PortNumber % 2],
-            Context,
-            PortNumber,
-            Size,
-            Count,
-            Read,
-            Data
-            );
+        Success = VdmCallStringIoHandler(VdmIoHandler,
+                                         (PVOID)VdmIoHandler->IoFunctions[FnIndex].UshortStringIo[PortNumber % 2],
+                                         Context, PortNumber, Size, Count, Read, Data);
         break;
 
     case 4:
-        Success = VdmCallStringIoHandler(
-            VdmIoHandler,
-            (PVOID)VdmIoHandler->IoFunctions[FnIndex].UlongStringIo,
-            Context,
-            PortNumber,
-            Size,
-            Count,
-            Read,
-            Data
-            );
+        Success = VdmCallStringIoHandler(VdmIoHandler, (PVOID)VdmIoHandler->IoFunctions[FnIndex].UlongStringIo, Context,
+                                         PortNumber, Size, Count, Read, Data);
         break;
-
     }
     KeReleaseMutex(&VdmStringIoMutex, FALSE);
     return Success;
@@ -963,16 +784,8 @@ Return Value:
 UCHAR VdmStringIoBuffer[STRINGIO_BUFFER_SIZE];
 
 BOOLEAN
-VdmCallStringIoHandler(
-    IN PVDM_IO_HANDLER VdmIoHandler,
-    IN PVOID StringIoRoutine,
-    IN ULONG Context,
-    IN ULONG PortNumber,
-    IN ULONG Size,
-    IN ULONG Count,
-    IN BOOLEAN Read,
-    IN ULONG Data
-    )
+VdmCallStringIoHandler(IN PVDM_IO_HANDLER VdmIoHandler, IN PVOID StringIoRoutine, IN ULONG Context, IN ULONG PortNumber,
+                       IN ULONG Size, IN ULONG Count, IN BOOLEAN Read, IN ULONG Data)
 
 /*++
 
@@ -1001,19 +814,17 @@ Returns
 --*/
 
 {
-    ULONG TotalBytes,BytesDone,BytesToDo,LoopCount,NumberIo;
+    ULONG TotalBytes, BytesDone, BytesToDo, LoopCount, NumberIo;
     PUCHAR CurrentDataPtr;
     UCHAR AccessType;
     EXCEPTION_RECORD ExceptionRecord;
     NTSTATUS Status;
     BOOLEAN Success;
 
-    Success = VdmConvertToLinearAddress(
-        Data,
-        &CurrentDataPtr
-        );
+    Success = VdmConvertToLinearAddress(Data, &CurrentDataPtr);
 
-    if (!Success) {
+    if (!Success)
+    {
         ExceptionRecord.ExceptionCode = STATUS_ACCESS_VIOLATION;
         ExceptionRecord.ExceptionFlags = 0;
         ExceptionRecord.NumberParameters = 0;
@@ -1026,85 +837,89 @@ Returns
     TotalBytes = Count * Size;
     BytesDone = 0;
 
-    if (PortNumber % Size) {
+    if (PortNumber % Size)
+    {
         StringIoRoutine = NULL;
     }
 
-    if (Read) {
+    if (Read)
+    {
         AccessType = EMULATOR_READ_ACCESS;
-    } else {
+    }
+    else
+    {
         AccessType = EMULATOR_WRITE_ACCESS;
     }
 
 
     // Set up try out here to avoid overhead in loop
-    try {
-        while (BytesDone < TotalBytes) {
-            if ((BytesDone + STRINGIO_BUFFER_SIZE) > TotalBytes) {
+    try
+    {
+        while (BytesDone < TotalBytes)
+        {
+            if ((BytesDone + STRINGIO_BUFFER_SIZE) > TotalBytes)
+            {
                 BytesToDo = TotalBytes - BytesDone;
-            } else {
+            }
+            else
+            {
                 BytesToDo = STRINGIO_BUFFER_SIZE;
             }
 
             ASSERT((!(BytesToDo % Size)));
 
-            if (!Read) {
+            if (!Read)
+            {
                 RtlCopyMemory(VdmStringIoBuffer, CurrentDataPtr, BytesToDo);
             }
 
             NumberIo = BytesToDo / Size;
 
-            if (StringIoRoutine) {
+            if (StringIoRoutine)
+            {
                 // in order to avoid having 3 separate calls, one for each size
                 // we simply cast the parameters appropriately for the
                 // byte routine.
 
-                Status = (*((PDRIVER_IO_PORT_UCHAR_STRING)StringIoRoutine))(
-                    Context,
-                    PortNumber,
-                    AccessType,
-                    VdmStringIoBuffer,
-                    NumberIo
-                    );
+                Status = (*((PDRIVER_IO_PORT_UCHAR_STRING)StringIoRoutine))(Context, PortNumber, AccessType,
+                                                                            VdmStringIoBuffer, NumberIo);
 
-                if (NT_SUCCESS(Status)) {
+                if (NT_SUCCESS(Status))
+                {
                     Success |= TRUE;
                 }
-            } else {
-                if (PortNumber % Size) {
-                    for (LoopCount = 0; LoopCount < NumberIo; LoopCount++ ) {
-                        Success |= VdmDispatchUnalignedIoToHandler(
-                            VdmIoHandler,
-                            Context,
-                            PortNumber,
-                            Size,
-                            Read,
-                            (PULONG)(VdmStringIoBuffer + LoopCount * Size)
-                            );
+            }
+            else
+            {
+                if (PortNumber % Size)
+                {
+                    for (LoopCount = 0; LoopCount < NumberIo; LoopCount++)
+                    {
+                        Success |= VdmDispatchUnalignedIoToHandler(VdmIoHandler, Context, PortNumber, Size, Read,
+                                                                   (PULONG)(VdmStringIoBuffer + LoopCount * Size));
                     }
-                } else {
-                    for (LoopCount = 0; LoopCount < NumberIo; LoopCount++ ) {
-                        Success |= VdmDispatchIoToHandler(
-                            VdmIoHandler,
-                            Context,
-                            PortNumber,
-                            Size,
-                            Read,
-                            (PULONG)(VdmStringIoBuffer + LoopCount * Size)
-                            );
+                }
+                else
+                {
+                    for (LoopCount = 0; LoopCount < NumberIo; LoopCount++)
+                    {
+                        Success |= VdmDispatchIoToHandler(VdmIoHandler, Context, PortNumber, Size, Read,
+                                                          (PULONG)(VdmStringIoBuffer + LoopCount * Size));
                     }
-
                 }
             }
 
-            if (Read) {
+            if (Read)
+            {
                 RtlCopyMemory(CurrentDataPtr, VdmStringIoBuffer, BytesToDo);
             }
 
             BytesDone += BytesToDo;
             CurrentDataPtr += BytesToDo;
         }
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         ExceptionRecord.ExceptionCode = GetExceptionCode();
         ExceptionRecord.ExceptionFlags = 0;
         ExceptionRecord.NumberParameters = 0;
@@ -1113,14 +928,10 @@ Returns
         Success = TRUE;
     }
     return Success;
-
 }
 
 BOOLEAN
-VdmConvertToLinearAddress(
-    IN ULONG SegmentedAddress,
-    OUT PVOID *LinearAddress
-    )
+VdmConvertToLinearAddress(IN ULONG SegmentedAddress, OUT PVOID *LinearAddress)
 
 /*++
 
@@ -1154,28 +965,23 @@ Note:
     Thread = KeGetCurrentThread();
     TrapFrame = VdmGetTrapFrame(Thread);
 
-    if (TrapFrame->EFlags & EFLAGS_V86_MASK) {
-        *LinearAddress = (PVOID)(((SegmentedAddress & 0xFFFF0000) >> 12) +
-            (SegmentedAddress & 0xFFFF));
+    if (TrapFrame->EFlags & EFLAGS_V86_MASK)
+    {
+        *LinearAddress = (PVOID)(((SegmentedAddress & 0xFFFF0000) >> 12) + (SegmentedAddress & 0xFFFF));
         Success = TRUE;
-    } else {
-        Success = Ki386GetSelectorParameters(
-            (USHORT)((SegmentedAddress & 0xFFFF0000) >> 16),
-            &Flags,
-            &Base,
-            &Limit
-            );
-        if (Success) {
+    }
+    else
+    {
+        Success = Ki386GetSelectorParameters((USHORT)((SegmentedAddress & 0xFFFF0000) >> 16), &Flags, &Base, &Limit);
+        if (Success)
+        {
             *LinearAddress = (PVOID)(Base + (SegmentedAddress & 0xFFFF));
         }
     }
     return Success;
 }
 
-VOID
-KeI386VdmInitialize(
-    VOID
-    )
+VOID KeI386VdmInitialize(VOID)
 
 /*++
 
@@ -1200,35 +1006,23 @@ Return Value:
     UCHAR KeyInformation[sizeof(KEY_VALUE_BASIC_INFORMATION) + 30];
     ULONG ResultLength;
 
-    KeInitializeMutex( &VdmStringIoMutex, MUTEX_LEVEL_VDM_IO );
+    KeInitializeMutex(&VdmStringIoMutex, MUTEX_LEVEL_VDM_IO);
 
     //
     // Set up and open KeyPath to wow key
     //
 
-    RtlInitUnicodeString(
-        &WorkString,
-        L"\\REGISTRY\\MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Wow"
-        );
+    RtlInitUnicodeString(&WorkString, L"\\REGISTRY\\MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Wow");
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &WorkString,
-        OBJ_CASE_INSENSITIVE,
-        (HANDLE)NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&ObjectAttributes, &WorkString, OBJ_CASE_INSENSITIVE, (HANDLE)NULL, NULL);
 
-    Status = ZwOpenKey(
-        &RegistryHandle,
-        KEY_READ,
-        &ObjectAttributes
-        );
+    Status = ZwOpenKey(&RegistryHandle, KEY_READ, &ObjectAttributes);
 
     //
     // If there is no Wow key, don't allow Vdms to run
     //
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return;
     }
 
@@ -1240,31 +1034,21 @@ Return Value:
     // Get the Pentium Feature disable value.
     // If this value is present, don't enable vme stuff.
     //
-    RtlInitUnicodeString(
-        &WorkString,
-        L"DisableVme"
-        );
+    RtlInitUnicodeString(&WorkString, L"DisableVme");
 
-    Status = ZwQueryValueKey(
-        RegistryHandle,
-        &WorkString,
-        KeyValueBasicInformation,
-        &KeyInformation,
-        sizeof(KEY_VALUE_BASIC_INFORMATION) + 30,
-        &ResultLength
-        );
+    Status = ZwQueryValueKey(RegistryHandle, &WorkString, KeyValueBasicInformation, &KeyInformation,
+                             sizeof(KEY_VALUE_BASIC_INFORMATION) + 30, &ResultLength);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
         //
         // If we have the extensions, set the appropriate bits
         // in cr4
         //
-        if (KeFeatureBits & KF_V86_VIS) {
-            KiIpiGenericCall(
-                Ki386VdmEnablePentiumExtentions,
-                TRUE
-                );
+        if (KeFeatureBits & KF_V86_VIS)
+        {
+            KiIpiGenericCall(Ki386VdmEnablePentiumExtentions, TRUE);
             KeI386VirtualIntExtensions = V86_VIRTUAL_INT_EXTENSIONS;
         }
     }
@@ -1273,7 +1057,8 @@ Return Value:
     // If we have V86 mode int extensions, we don't want to run with
     // IOPL in v86 mode
     //
-    if (!(KeI386VirtualIntExtensions & V86_VIRTUAL_INT_EXTENSIONS)) {
+    if (!(KeI386VirtualIntExtensions & V86_VIRTUAL_INT_EXTENSIONS))
+    {
         //
         // Read registry to determine if Vdms will run with IOPL in v86 mode
         //
@@ -1281,24 +1066,16 @@ Return Value:
         //
         // Get the VdmIOPL value.
         //
-        RtlInitUnicodeString(
-            &WorkString,
-            L"VdmIOPL"
-            );
+        RtlInitUnicodeString(&WorkString, L"VdmIOPL");
 
-        Status = ZwQueryValueKey(
-            RegistryHandle,
-            &WorkString,
-            KeyValueBasicInformation,
-            &KeyInformation,
-            sizeof(KEY_VALUE_BASIC_INFORMATION) + 30,
-            &ResultLength
-            );
+        Status = ZwQueryValueKey(RegistryHandle, &WorkString, KeyValueBasicInformation, &KeyInformation,
+                                 sizeof(KEY_VALUE_BASIC_INFORMATION) + 30, &ResultLength);
 
         //
         // If the value exists, let Vdms run with IOPL in V86 mode
         //
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
             //
             // KeEflagsAndMaskV86 and KeEflagsOrMaskV86 are used
             // in SANITIZE_FLAGS, and the Vdm code to make sure the
@@ -1312,7 +1089,6 @@ Return Value:
             // the virtual interrupt flag is in EFlags, or 40:xx
             //
             KeI386VdmIoplAllowed = TRUE;
-
         }
     }
 
@@ -1320,16 +1096,9 @@ Return Value:
 }
 
 BOOLEAN
-KeVdmInsertQueueApc (
-    IN PKAPC             Apc,
-    IN PKTHREAD          Thread,
-    IN KPROCESSOR_MODE   ApcMode,
-    IN PKKERNEL_ROUTINE  KernelRoutine,
-    IN PKRUNDOWN_ROUTINE RundownRoutine OPTIONAL,
-    IN PKNORMAL_ROUTINE  NormalRoutine OPTIONAL,
-    IN PVOID             NormalContext OPTIONAL,
-    IN KPRIORITY         Increment
-    )
+KeVdmInsertQueueApc(IN PKAPC Apc, IN PKTHREAD Thread, IN KPROCESSOR_MODE ApcMode, IN PKKERNEL_ROUTINE KernelRoutine,
+                    IN PKRUNDOWN_ROUTINE RundownRoutine OPTIONAL, IN PKNORMAL_ROUTINE NormalRoutine OPTIONAL,
+                    IN PVOID NormalContext OPTIONAL, IN KPRIORITY Increment)
 
 /*++
 
@@ -1394,12 +1163,14 @@ Return Value:
     // the target thread APC queue lock.
     //
 
-    if (Apc->Type != ApcObject) {
+    if (Apc->Type != ApcObject)
+    {
         Apc->Type = ApcObject;
         Apc->Size = sizeof(KAPC);
-        Apc->ApcStateIndex  = OriginalApcEnvironment;
-
-    } else {
+        Apc->ApcStateIndex = OriginalApcEnvironment;
+    }
+    else
+    {
 
         //
         // Acquire the APC thread APC queue lock, raise IRQL to SYNCH_LEVEL,
@@ -1419,26 +1190,32 @@ Return Value:
         //
 
         ApcThread = Apc->Thread;
-        if (ApcThread) {
-            KeAcquireInStackQueuedSpinLockRaiseToSynch(&ApcThread->ApcQueueLock,
-                                                       &LockHandle);
+        if (ApcThread)
+        {
+            KeAcquireInStackQueuedSpinLockRaiseToSynch(&ApcThread->ApcQueueLock, &LockHandle);
 
             KiLockDispatcherDatabaseAtSynchLevel();
-            if (Apc->Inserted) {
-                if (ApcThread == Apc->Thread && Apc->Thread != Thread) {
+            if (Apc->Inserted)
+            {
+                if (ApcThread == Apc->Thread && Apc->Thread != Thread)
+                {
                     Apc->Inserted = FALSE;
                     RemoveEntryList(&Apc->ApcListEntry);
                     ApcState = Apc->Thread->ApcStatePointer[Apc->ApcStateIndex];
-                    if (IsListEmpty(&ApcState->ApcListHead[Apc->ApcMode]) != FALSE) {
-                        if (Apc->ApcMode == KernelMode) {
+                    if (IsListEmpty(&ApcState->ApcListHead[Apc->ApcMode]) != FALSE)
+                    {
+                        if (Apc->ApcMode == KernelMode)
+                        {
                             ApcState->KernelApcPending = FALSE;
-
-                        } else {
+                        }
+                        else
+                        {
                             ApcState->UserApcPending = FALSE;
                         }
                     }
-
-                } else {
+                }
+                else
+                {
                     KiUnlockDispatcherDatabaseFromSynchLevel();
                     KeReleaseInStackQueuedSpinLock(&LockHandle);
                     return TRUE;
@@ -1451,13 +1228,13 @@ Return Value:
     }
 
     Apc->ApcMode = ApcMode;
-    Apc->Thread  = Thread;
-    Apc->KernelRoutine   = KernelRoutine;
-    Apc->RundownRoutine  = RundownRoutine;
-    Apc->NormalRoutine   = NormalRoutine;
+    Apc->Thread = Thread;
+    Apc->KernelRoutine = KernelRoutine;
+    Apc->RundownRoutine = RundownRoutine;
+    Apc->NormalRoutine = NormalRoutine;
     Apc->SystemArgument1 = NULL;
     Apc->SystemArgument2 = NULL;
-    Apc->NormalContext   = NormalContext;
+    Apc->NormalContext = NormalContext;
 
     //
     // Raise IRQL to SYNCH_LEVEL, acquire the thread APC queue lock, and lock
@@ -1471,7 +1248,8 @@ Return Value:
     // If APC queuing is enable, then attempt to queue the APC object.
     //
 
-    if (Thread->ApcQueueable && KiInsertQueueApc(Apc, Increment)) {
+    if (Thread->ApcQueueable && KiInsertQueueApc(Apc, Increment))
+    {
         Inserted = TRUE;
 
         //
@@ -1482,12 +1260,14 @@ Return Value:
         //    the apc will fire when this thread exits the kernel.
         //
 
-        if (ApcMode == UserMode) {
+        if (ApcMode == UserMode)
+        {
             KiBoostPriorityThread(Thread, Increment);
             Thread->ApcState.UserApcPending = TRUE;
         }
-
-    } else {
+    }
+    else
+    {
         Inserted = FALSE;
     }
 
@@ -1502,16 +1282,10 @@ Return Value:
     return Inserted;
 }
 
-#define AD_MASK             0x04    // adlib register used to control opl2
+#define AD_MASK 0x04 // adlib register used to control opl2
 
-VOID
-Ki386AdlibEmulation(
-    IN ULONG PortNumber,
-    IN ULONG Size,
-    IN BOOLEAN Read,
-    IN UCHAR InstructionSize,
-    IN PKTRAP_FRAME TrapFrame
-    )
+VOID Ki386AdlibEmulation(IN ULONG PortNumber, IN ULONG Size, IN BOOLEAN Read, IN UCHAR InstructionSize,
+                         IN PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -1539,28 +1313,33 @@ Return Value:
     PVDM_PROCESS_OBJECTS pVdmObjects = PsGetCurrentProcess()->VdmObjects;
     PUCHAR pData = (PUCHAR)&TrapFrame->Eax;
 
-    if (Read) {
+    if (Read)
+    {
 
         //
         // Must be read status
         //
 
         *pData = (UCHAR)pVdmObjects->AdlibStatus;
-    } else {
+    }
+    else
+    {
 
         //
         // Could be write adlib index register or write actual data
         //
 
-        if ((PortNumber & 0xf) == 0x8) {
+        if ((PortNumber & 0xf) == 0x8)
+        {
 
             //
             // It's adlib register select
             //
 
             pVdmObjects->AdlibIndexRegister = (USHORT)*pData;
-
-        } else {
+        }
+        else
+        {
 
             //
             // It's adlib data write.  We don't actually write any data out.
@@ -1569,13 +1348,15 @@ Return Value:
 
             UCHAR data = *pData;
 
-            if ((pVdmObjects->AdlibIndexRegister >= 0xB0 &&
-                 pVdmObjects->AdlibIndexRegister <= 0xBD) ||
-                 pVdmObjects->AdlibIndexRegister == AD_MASK) {
+            if ((pVdmObjects->AdlibIndexRegister >= 0xB0 && pVdmObjects->AdlibIndexRegister <= 0xBD) ||
+                pVdmObjects->AdlibIndexRegister == AD_MASK)
+            {
 
-                if (pVdmObjects->AdlibIndexRegister == AD_MASK) {
+                if (pVdmObjects->AdlibIndexRegister == AD_MASK)
+                {
                     // Look for RST and starting timers
-                    if (data & 0x80) {
+                    if (data & 0x80)
+                    {
                         pVdmObjects->AdlibStatus = 0x00; // reset both timers
                     }
                 }
@@ -1586,7 +1367,8 @@ Return Value:
                 // be set again to make the status for this timer change
                 //
 
-                if ((data & 1) && !(pVdmObjects->AdlibStatus & 0x40)) {
+                if ((data & 1) && !(pVdmObjects->AdlibStatus & 0x40))
+                {
 
                     //
                     // simulate immediate expiry of timer1
@@ -1595,7 +1377,8 @@ Return Value:
                     pVdmObjects->AdlibStatus |= 0xC0;
                 }
 
-                if ((data & 2) && !(pVdmObjects->AdlibStatus & 0x20)) {
+                if ((data & 2) && !(pVdmObjects->AdlibStatus & 0x20))
+                {
 
                     //
                     // simulate immediate expiry of timer2
@@ -1603,21 +1386,13 @@ Return Value:
 
                     pVdmObjects->AdlibStatus |= 0xA0;
                 }
-
             }
-
         }
     }
 }
 
-VOID
-Ki386AdlibDirectIo (
-    IN ULONG PortNumber,
-    IN ULONG Size,
-    IN BOOLEAN Read,
-    IN UCHAR InstructionSize,
-    IN PKTRAP_FRAME TrapFrame
-    )
+VOID Ki386AdlibDirectIo(IN ULONG PortNumber, IN ULONG Size, IN BOOLEAN Read, IN UCHAR InstructionSize,
+                        IN PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -1641,9 +1416,12 @@ Return Value:
 {
     PUCHAR pData = (PUCHAR)&TrapFrame->Eax;
 
-    if (Read) {
+    if (Read)
+    {
         *pData = READ_PORT_UCHAR((PUCHAR)PortNumber);
-    } else {
+    }
+    else
+    {
         WRITE_PORT_UCHAR((PUCHAR)PortNumber, *pData);
     }
 }
@@ -1654,13 +1432,10 @@ Return Value:
 
 #if VDM_IO_TEST
 NTSTATUS
-TestIoByteRoutine(
-    IN ULONG Port,
-    IN UCHAR AccessMode,
-    IN OUT PUCHAR Data
-    )
+TestIoByteRoutine(IN ULONG Port, IN UCHAR AccessMode, IN OUT PUCHAR Data)
 {
-    if (AccessMode & EMULATOR_READ_ACCESS) {
+    if (AccessMode & EMULATOR_READ_ACCESS)
+    {
         *Data = Port - 400;
     }
 
@@ -1668,13 +1443,10 @@ TestIoByteRoutine(
 }
 
 NTSTATUS
-TestIoWordReadRoutine(
-    IN ULONG Port,
-    IN UCHAR AccessMode,
-    IN OUT PUSHORT Data
-    )
+TestIoWordReadRoutine(IN ULONG Port, IN UCHAR AccessMode, IN OUT PUSHORT Data)
 {
-    if (AccessMode & EMULATOR_READ_ACCESS) {
+    if (AccessMode & EMULATOR_READ_ACCESS)
+    {
         *Data = Port - 200;
     }
 
@@ -1682,25 +1454,18 @@ TestIoWordReadRoutine(
 }
 
 NTSTATUS
-TestIoWordWriteRoutine(
-    IN ULONG Port,
-    IN UCHAR AccessMode,
-    IN OUT PUSHORT Data
-    )
+TestIoWordWriteRoutine(IN ULONG Port, IN UCHAR AccessMode, IN OUT PUSHORT Data)
 {
-    DbgPrint("Word Write routine port # %lx, %x\n",Port,*Data);
+    DbgPrint("Word Write routine port # %lx, %x\n", Port, *Data);
 
     return STATUS_SUCCESS;
 }
 
 NTSTATUS
-TestIoDwordRoutine(
-    IN ULONG Port,
-    IN USHORT AccessMode,
-    IN OUT PULONG Data
-    )
+TestIoDwordRoutine(IN ULONG Port, IN USHORT AccessMode, IN OUT PULONG Data)
 {
-    if (AccessMode & EMULATOR_READ_ACCESS) {
+    if (AccessMode & EMULATOR_READ_ACCESS)
+    {
         *Data = Port;
     }
 
@@ -1708,23 +1473,23 @@ TestIoDwordRoutine(
 }
 
 NTSTATUS
-TestIoStringRoutine(
-    IN ULONG Port,
-    IN USHORT AccessMode,
-    IN OUT PSHORT Data,
-    IN ULONG Count
-    )
+TestIoStringRoutine(IN ULONG Port, IN USHORT AccessMode, IN OUT PSHORT Data, IN ULONG Count)
 {
     ULONG i;
 
-    if (AccessMode & EMULATOR_READ_ACCESS) {
-        for (i = 0;i < Count ;i++ ) {
+    if (AccessMode & EMULATOR_READ_ACCESS)
+    {
+        for (i = 0; i < Count; i++)
+        {
             Data[i] = i;
         }
-    } else {
-        DbgPrint("String Port Called for write port #%lx,",Port);
-        for (i = 0;i < Count ;i++ ) {
-            DbgPrint("%x\n",Data[i]);
+    }
+    else
+    {
+        DbgPrint("String Port Called for write port #%lx,", Port);
+        for (i = 0; i < Count; i++)
+        {
+            DbgPrint("%x\n", Data[i]);
         }
     }
 
@@ -1735,10 +1500,7 @@ PROCESS_IO_PORT_HANDLER_INFORMATION IoPortHandler;
 EMULATOR_ACCESS_ENTRY Entry[4];
 BOOLEAN Connect = TRUE, Disconnect = FALSE;
 
-VOID
-TestIoHandlerStuff(
-    VOID
-    )
+VOID TestIoHandlerStuff(VOID)
 {
     NTSTATUS Status;
 
@@ -1774,28 +1536,24 @@ TestIoHandlerStuff(
     Entry[3].StringSupport = TRUE;
     Entry[3].Routine = TestIoStringRoutine;
 
-     if (Connect) {
-        Status = ZwSetInformationProcess(
-            NtCurrentProcess(),
-            ProcessIoPortHandlers,
-            &IoPortHandler,
-            sizeof(PROCESS_IO_PORT_HANDLER_INFORMATION)
-            ) ;
-        if (!NT_SUCCESS(Status)) {
+    if (Connect)
+    {
+        Status = ZwSetInformationProcess(NtCurrentProcess(), ProcessIoPortHandlers, &IoPortHandler,
+                                         sizeof(PROCESS_IO_PORT_HANDLER_INFORMATION));
+        if (!NT_SUCCESS(Status))
+        {
             DbgBreakPoint();
         }
         Connect = FALSE;
     }
 
     IoPortHandler.Install = FALSE;
-    if (Disconnect) {
-        Status = ZwSetInformationProcess(
-            NtCurrentProcess(),
-            ProcessIoPortHandlers,
-            &IoPortHandler,
-            sizeof(PROCESS_IO_PORT_HANDLER_INFORMATION)
-            );
-        if (!NT_SUCCESS(Status)) {
+    if (Disconnect)
+    {
+        Status = ZwSetInformationProcess(NtCurrentProcess(), ProcessIoPortHandlers, &IoPortHandler,
+                                         sizeof(PROCESS_IO_PORT_HANDLER_INFORMATION));
+        if (!NT_SUCCESS(Status))
+        {
             DbgBreakPoint();
         }
         Disconnect = FALSE;

@@ -19,9 +19,7 @@
 * History:
 \***************************************************************************/
 
-PWND UT_PrevGroupItem(
-    PWND pwndDlg,
-    PWND pwndCurrent)
+PWND UT_PrevGroupItem(PWND pwndDlg, PWND pwndCurrent)
 {
     PWND pwnd, pwndPrev;
 
@@ -30,7 +28,8 @@ PWND UT_PrevGroupItem(
 
     pwndPrev = pwndCurrent;
 
-    while (TRUE) {
+    while (TRUE)
+    {
         pwnd = _NextControl(pwndDlg, pwndPrev, CWP_SKIPINVISIBLE | CWP_SKIPDISABLED);
 
         if (TestWF(pwnd, WFGROUP) || pwnd == pwndCurrent)
@@ -47,9 +46,7 @@ PWND UT_PrevGroupItem(
 * History:
 \***************************************************************************/
 
-PWND UT_NextGroupItem(
-    PWND pwndDlg,
-    PWND pwndCurrent)
+PWND UT_NextGroupItem(PWND pwndDlg, PWND pwndCurrent)
 {
     PWND pwnd, pwndNext;
 
@@ -60,7 +57,8 @@ PWND UT_NextGroupItem(
 
     pwndNext = pwndCurrent;
 
-    while (!TestWF(pwndNext, WFGROUP)) {
+    while (!TestWF(pwndNext, WFGROUP))
+    {
         pwnd = _PrevControl(pwndDlg, pwndNext, CWP_SKIPINVISIBLE | CWP_SKIPDISABLED);
         if (pwnd == pwndCurrent)
             return pwndNext;
@@ -75,17 +73,14 @@ PWND UT_NextGroupItem(
 *
 * History:
 \***************************************************************************/
-PWND _PrevControl(
-    PWND pwndRoot,
-    PWND pwndStart,
-    UINT uFlags)
+PWND _PrevControl(PWND pwndRoot, PWND pwndStart, UINT uFlags)
 {
     BOOL fFirstFound;
     PWND pwndNext;
     PWND pwnd, pwndFirst;
 
     if (!pwndStart)
-        return(NULL);
+        return (NULL);
 
     UserAssert(pwndRoot != pwndStart);
     UserAssert(!TestWF(pwndStart, WEFCONTROLPARENT));
@@ -94,16 +89,21 @@ PWND _PrevControl(
 
     pwndFirst = pwnd;
     fFirstFound = FALSE;
-    while (pwndNext = _NextControl(pwndRoot, pwnd, uFlags)) {
+    while (pwndNext = _NextControl(pwndRoot, pwnd, uFlags))
+    {
 
         if (pwndNext == pwndStart)
             break;
 
-        if (pwndNext == pwndFirst) {
-            if (fFirstFound) {
+        if (pwndNext == pwndFirst)
+        {
+            if (fFirstFound)
+            {
                 RIPMSG0(RIP_WARNING, "_PrevControl: Loop Detected");
                 break;
-            } else {
+            }
+            else
+            {
                 fFirstFound = TRUE;
             }
         }
@@ -122,10 +122,12 @@ PWND _PrevControl(
 *
 \***************************************************************************/
 
-PWND  _GetChildControl(PWND pwndRoot, PWND pwndChild) {
-    PWND    pwndControl = NULL;
+PWND _GetChildControl(PWND pwndRoot, PWND pwndChild)
+{
+    PWND pwndControl = NULL;
 
-    while (pwndChild && TestwndChild(pwndChild) && (pwndChild != pwndRoot)) {
+    while (pwndChild && TestwndChild(pwndChild) && (pwndChild != pwndRoot))
+    {
         pwndControl = pwndChild;
         pwndChild = REBASEPWND(pwndChild, spwndParent);
 
@@ -133,7 +135,7 @@ PWND  _GetChildControl(PWND pwndRoot, PWND pwndChild) {
             break;
     }
 
-    return(pwndControl);
+    return (pwndControl);
 }
 
 /***************************************************************************\
@@ -148,7 +150,7 @@ PWND  _GetChildControl(PWND pwndRoot, PWND pwndChild) {
 * then the next control is pwndStart->spwndParent or an ancestor.
 *
 \***************************************************************************/
-PWND _NextSibblingOrAncestor (PWND pwndRoot, PWND pwndStart)
+PWND _NextSibblingOrAncestor(PWND pwndRoot, PWND pwndStart)
 {
     PWND pwndParent;
 #if DBG
@@ -156,13 +158,15 @@ PWND _NextSibblingOrAncestor (PWND pwndRoot, PWND pwndStart)
 #endif
 
     // If there is a sibbling, go for it
-    if (pwndStart->spwndNext != NULL) {
+    if (pwndStart->spwndNext != NULL)
+    {
         return (REBASEALWAYS(pwndStart, spwndNext));
     }
 
     // If it cannot go up the parent chain, then return the first sibbling.
     pwndParent = REBASEALWAYS(pwndStart, spwndParent);
-    if (pwndParent == pwndRoot) {
+    if (pwndParent == pwndRoot)
+    {
         // Note that if pwndStart doesn't have any sibblings,
         //  this will return pwndStart again
         return (REBASEALWAYS(pwndParent, spwndChild));
@@ -180,12 +184,13 @@ PWND _NextSibblingOrAncestor (PWND pwndRoot, PWND pwndStart)
         _GetChildControl(pwndRoot, pwndParent);
 
 #if DBG
-    if ((pwndNext != pwndParent) || !TestWF(pwndParent, WEFCONTROLPARENT)) {
+    if ((pwndNext != pwndParent) || !TestWF(pwndParent, WEFCONTROLPARENT))
+    {
         // Code looping through the controls in a dialog might go into an infinite
         //  loop because of this (i.e., xxxRemoveDefaultButton, _GetNextDlgTabItem,..)
         // We've walked up the parent chain but will never walk down the child chain again
         //  because there is a NON WS_EX_CONTROLPARENT parent window somewhere in the chain.
-        RIPMSG0 (RIP_ERROR, "_NextSibblingOrAncestor: Non WS_EX_CONTROLPARENT window in parent chain");
+        RIPMSG0(RIP_ERROR, "_NextSibblingOrAncestor: Non WS_EX_CONTROLPARENT window in parent chain");
     }
     return pwndNext;
 #endif
@@ -204,10 +209,7 @@ PWND _NextSibblingOrAncestor (PWND pwndRoot, PWND pwndStart)
 * If the search fails, it returns pwndRoot.
 *
 \***************************************************************************/
-PWND _NextControl(
-    PWND pwndRoot,
-    PWND pwndStart,
-    UINT uFlags)
+PWND _NextControl(PWND pwndRoot, PWND pwndStart, UINT uFlags)
 {
     BOOL fSkip, fAncestor;
     PWND pwndLast, pwndSibblingLoop;
@@ -217,16 +219,19 @@ PWND _NextControl(
      * then bailing.
      */
     int nLoopCount = 0;
-    
-    UserAssert (pwndRoot != NULL);
 
-    if (pwndStart == NULL) {
+    UserAssert(pwndRoot != NULL);
+
+    if (pwndStart == NULL)
+    {
         // Start with pwndRoot's first child
         pwndStart = REBASEPWND(pwndRoot, spwndChild);
         pwndLast = pwndStart;
         fAncestor = FALSE;
-    } else {
-        UserAssert ((pwndRoot != pwndStart) && _IsDescendant(pwndRoot, pwndStart));
+    }
+    else
+    {
+        UserAssert((pwndRoot != pwndStart) && _IsDescendant(pwndRoot, pwndStart));
 
         // Save starting handle and get next one
         pwndLast = pwndStart;
@@ -237,58 +242,70 @@ PWND _NextControl(
 
 
     // If no more controls, game over
-    if (pwndStart == NULL) {
+    if (pwndStart == NULL)
+    {
         return pwndRoot;
     }
 
     // Search for a non WS_EX_CONTROLPARENT window; if a window should be skipped,
     // try its spwndNext; otherwise, walk down its child chain.
     pwndSibblingLoop = pwndStart;
-    do {
-        
+    do
+    {
+
         //If not WS_EX_CONTROLPARENT parent, done.
-        if (!TestWF(pwndStart, WEFCONTROLPARENT)) {
+        if (!TestWF(pwndStart, WEFCONTROLPARENT))
+        {
             return pwndStart;
         }
 
         // Do they want to skip this window?
-        fSkip = ((uFlags & CWP_SKIPINVISIBLE) && !TestWF(pwndStart, WFVISIBLE))
-                || ((uFlags & CWP_SKIPDISABLED) && TestWF(pwndStart, WFDISABLED));
+        fSkip = ((uFlags & CWP_SKIPINVISIBLE) && !TestWF(pwndStart, WFVISIBLE)) ||
+                ((uFlags & CWP_SKIPDISABLED) && TestWF(pwndStart, WFDISABLED));
 
 
         // Remember the current window
         pwndLast = pwndStart;
 
         // Walk down child chain?
-        if (!fSkip && !fAncestor) {
-            pwndStart = _NextControl (pwndStart, NULL, uFlags);
+        if (!fSkip && !fAncestor)
+        {
+            pwndStart = _NextControl(pwndStart, NULL, uFlags);
             // If it found one, done.
-            if (pwndStart != pwndLast) {
+            if (pwndStart != pwndLast)
+            {
                 return pwndStart;
             }
         }
 
-TryNextOne:
+    TryNextOne:
         // Try the next one.
-        pwndStart = _NextSibblingOrAncestor (pwndRoot, pwndStart);
-        if (pwndStart == NULL) {
+        pwndStart = _NextSibblingOrAncestor(pwndRoot, pwndStart);
+        if (pwndStart == NULL)
+        {
             break;
         }
 
         // If parents are the same, we are still in the same sibbling chain
-        if (pwndLast->spwndParent == pwndStart->spwndParent) {
+        if (pwndLast->spwndParent == pwndStart->spwndParent)
+        {
             // If we had just moved up the parent chain last time around,
             //  mark this as the beginning of the new sibbling chain.
             // Otherwise, check if we've looped through all sibblings already.
-            if (fAncestor) {
+            if (fAncestor)
+            {
                 // Beggining of new sibbling chain.
                 pwndSibblingLoop = pwndStart;
-            } else if (pwndStart == pwndSibblingLoop) {
+            }
+            else if (pwndStart == pwndSibblingLoop)
+            {
                 // Already visited all sibblings, so done.
                 break;
             }
             fAncestor = FALSE;
-        } else {
+        }
+        else
+        {
             // We must have moved up the parent chain, so don't
             //  walk down the child chain right away (try the next window first)
             // Eventhough we are on a new sibbling chain, we don't update
@@ -297,7 +314,7 @@ TryNextOne:
             fAncestor = TRUE;
         }
 
-    /* Bug 272874 - joejo
+        /* Bug 272874 - joejo
      *
      * Stop infinite loop by only looping a finite number of times and
      * then bailing.
@@ -317,10 +334,7 @@ TryNextOne:
 
 
 FUNCLOG3(LOG_GENERAL, HWND, WINAPI, GetNextDlgTabItem, HWND, hwndDlg, HWND, hwnd, BOOL, fPrev)
-HWND WINAPI GetNextDlgTabItem(
-    HWND hwndDlg,
-    HWND hwnd,
-    BOOL fPrev)
+HWND WINAPI GetNextDlgTabItem(HWND hwndDlg, HWND hwnd, BOOL fPrev)
 {
 
     PWND pwnd;
@@ -332,13 +346,15 @@ HWND WINAPI GetNextDlgTabItem(
     if (pwndDlg == NULL)
         return NULL;
 
-    if (hwnd != (HWND)0) {
+    if (hwnd != (HWND)0)
+    {
         pwnd = ValidateHwnd(hwnd);
 
         if (pwnd == NULL)
             return NULL;
-
-    } else {
+    }
+    else
+    {
         pwnd = (PWND)NULL;
     }
 
@@ -347,10 +363,7 @@ HWND WINAPI GetNextDlgTabItem(
     return (HW(pwndNext));
 }
 
-PWND _GetNextDlgTabItem(
-    PWND pwndDlg,
-    PWND pwnd,
-    BOOL fPrev)
+PWND _GetNextDlgTabItem(PWND pwndDlg, PWND pwnd, BOOL fPrev)
 {
     PWND pwndSave;
 
@@ -360,7 +373,7 @@ PWND _GetNextDlgTabItem(
     {
         pwnd = _GetChildControl(pwndDlg, pwnd);
         if (pwnd && !_IsDescendant(pwndDlg, pwnd))
-            return(NULL);
+            return (NULL);
     }
 
     //
@@ -376,24 +389,25 @@ PWND _GetNextDlgTabItem(
 
     pwndSave = pwnd;
 
-    pwnd = (fPrev ? _PrevControl(pwndDlg, pwnd, CWP_SKIPINVISIBLE | CWP_SKIPDISABLED) :
-                    _NextControl(pwndDlg, pwnd, CWP_SKIPINVISIBLE | CWP_SKIPDISABLED));
+    pwnd = (fPrev ? _PrevControl(pwndDlg, pwnd, CWP_SKIPINVISIBLE | CWP_SKIPDISABLED)
+                  : _NextControl(pwndDlg, pwnd, CWP_SKIPINVISIBLE | CWP_SKIPDISABLED));
 
     if (!pwnd)
         goto AllOver;
 
-    while ((pwnd != pwndSave) && (pwnd != pwndDlg)) {
+    while ((pwnd != pwndSave) && (pwnd != pwndDlg))
+    {
         UserAssert(pwnd);
 
         if (!pwndSave)
             pwndSave = pwnd;
 
-        if ((pwnd->style & (WS_TABSTOP | WS_VISIBLE | WS_DISABLED))  == (WS_TABSTOP | WS_VISIBLE))
+        if ((pwnd->style & (WS_TABSTOP | WS_VISIBLE | WS_DISABLED)) == (WS_TABSTOP | WS_VISIBLE))
             // Found it.
             break;
 
-        pwnd = (fPrev ? _PrevControl(pwndDlg, pwnd, CWP_SKIPINVISIBLE | CWP_SKIPDISABLED) :
-                        _NextControl(pwndDlg, pwnd, CWP_SKIPINVISIBLE | CWP_SKIPDISABLED));
+        pwnd = (fPrev ? _PrevControl(pwndDlg, pwnd, CWP_SKIPINVISIBLE | CWP_SKIPDISABLED)
+                      : _NextControl(pwndDlg, pwnd, CWP_SKIPINVISIBLE | CWP_SKIPDISABLED));
     }
 
 AllOver:
@@ -408,10 +422,7 @@ AllOver:
 
 
 FUNCLOG3(LOG_GENERAL, HWND, DUMMYCALLINGTYPE, GetNextDlgGroupItem, HWND, hwndDlg, HWND, hwndCtl, BOOL, bPrevious)
-HWND GetNextDlgGroupItem(
-    HWND hwndDlg,
-    HWND hwndCtl,
-    BOOL bPrevious)
+HWND GetNextDlgGroupItem(HWND hwndDlg, HWND hwndCtl, BOOL bPrevious)
 {
     PWND pwndDlg;
     PWND pwndCtl;
@@ -423,12 +434,15 @@ HWND GetNextDlgGroupItem(
         return 0;
 
 
-    if (hwndCtl != (HWND)0) {
+    if (hwndCtl != (HWND)0)
+    {
         pwndCtl = ValidateHwnd(hwndCtl);
 
         if (pwndCtl == NULL)
             return 0;
-    } else {
+    }
+    else
+    {
         pwndCtl = (PWND)NULL;
     }
 
@@ -440,27 +454,23 @@ HWND GetNextDlgGroupItem(
     return (HW(pwndNext));
 }
 
-PWND _GetNextDlgGroupItem(
-    PWND pwndDlg,
-    PWND pwnd,
-    BOOL fPrev)
+PWND _GetNextDlgGroupItem(PWND pwndDlg, PWND pwnd, BOOL fPrev)
 {
     PWND pwndCurrent;
     BOOL fOnceAround = FALSE;
 
     pwnd = pwndCurrent = _GetChildControl(pwndDlg, pwnd);
 
-    do {
-        pwnd = (fPrev ? UT_PrevGroupItem(pwndDlg, pwnd) :
-                        UT_NextGroupItem(pwndDlg, pwnd));
+    do
+    {
+        pwnd = (fPrev ? UT_PrevGroupItem(pwndDlg, pwnd) : UT_NextGroupItem(pwndDlg, pwnd));
 
         if (pwnd == pwndCurrent)
             fOnceAround = TRUE;
 
         if (!pwndCurrent)
             pwndCurrent = pwnd;
-    }
-    while (!fOnceAround && ((TestWF(pwnd, WFDISABLED) || !TestWF(pwnd, WFVISIBLE))));
+    } while (!fOnceAround && ((TestWF(pwnd, WFDISABLED) || !TestWF(pwnd, WFVISIBLE))));
 
     return pwnd;
 }

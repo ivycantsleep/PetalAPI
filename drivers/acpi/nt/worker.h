@@ -24,15 +24,8 @@ Environment:
 #ifndef _WORKER_H_
 #define _WORKER_H_
 
-VOID
-ACPIInitializeWorker (
-    VOID
-    );
+VOID ACPIInitializeWorker(VOID);
 
-VOID
-ACPISetDeviceWorker (
-    IN PDEVICE_EXTENSION    DevExt,
-    IN ULONG                Events
-    );
+VOID ACPISetDeviceWorker(IN PDEVICE_EXTENSION DevExt, IN ULONG Events);
 
 #endif _WORKER_H_

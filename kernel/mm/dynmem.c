@@ -30,7 +30,7 @@ ULONG MiShowStuckPages;
 ULONG MiDynmemData[9];
 #endif
 
-#if defined (_MI_COMPRESSION)
+#if defined(_MI_COMPRESSION)
 extern PMM_SET_COMPRESSION_THRESHOLD MiSetCompressionThreshold;
 #endif
 
@@ -38,39 +38,29 @@ extern PMM_SET_COMPRESSION_THRESHOLD MiSetCompressionThreshold;
 // Leave the low 3 bits clear as this will be inserted into the PFN PteAddress.
 //
 
-#define PFN_REMOVED     ((PMMPTE)(INT_PTR)(int)0x99887768)
+#define PFN_REMOVED ((PMMPTE)(INT_PTR)(int)0x99887768)
 
 PFN_COUNT
-MiRemovePhysicalPages (
-    IN PFN_NUMBER StartPage,
-    IN PFN_NUMBER EndPage
-    );
+MiRemovePhysicalPages(IN PFN_NUMBER StartPage, IN PFN_NUMBER EndPage);
 
 NTSTATUS
-MiRemovePhysicalMemory (
-    IN PPHYSICAL_ADDRESS StartAddress,
-    IN OUT PLARGE_INTEGER NumberOfBytes,
-    IN LOGICAL PermanentRemoval,
-    IN ULONG Flags
-    );
+MiRemovePhysicalMemory(IN PPHYSICAL_ADDRESS StartAddress, IN OUT PLARGE_INTEGER NumberOfBytes,
+                       IN LOGICAL PermanentRemoval, IN ULONG Flags);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,MmRemovePhysicalMemory)
-#pragma alloc_text(PAGE,MmMarkPhysicalMemoryAsBad)
-#pragma alloc_text(PAGELK,MmAddPhysicalMemory)
-#pragma alloc_text(PAGELK,MmAddPhysicalMemoryEx)
-#pragma alloc_text(PAGELK,MiRemovePhysicalMemory)
-#pragma alloc_text(PAGELK,MmMarkPhysicalMemoryAsGood)
-#pragma alloc_text(PAGELK,MmGetPhysicalMemoryRanges)
-#pragma alloc_text(PAGELK,MiRemovePhysicalPages)
+#pragma alloc_text(PAGE, MmRemovePhysicalMemory)
+#pragma alloc_text(PAGE, MmMarkPhysicalMemoryAsBad)
+#pragma alloc_text(PAGELK, MmAddPhysicalMemory)
+#pragma alloc_text(PAGELK, MmAddPhysicalMemoryEx)
+#pragma alloc_text(PAGELK, MiRemovePhysicalMemory)
+#pragma alloc_text(PAGELK, MmMarkPhysicalMemoryAsGood)
+#pragma alloc_text(PAGELK, MmGetPhysicalMemoryRanges)
+#pragma alloc_text(PAGELK, MiRemovePhysicalPages)
 #endif
 
-
+
 NTSTATUS
-MmAddPhysicalMemory (
-    IN PPHYSICAL_ADDRESS StartAddress,
-    IN OUT PLARGE_INTEGER NumberOfBytes
-    )
+MmAddPhysicalMemory(IN PPHYSICAL_ADDRESS StartAddress, IN OUT PLARGE_INTEGER NumberOfBytes)
 
 /*++
 
@@ -97,16 +87,12 @@ Environment:
 --*/
 
 {
-    return MmAddPhysicalMemoryEx (StartAddress, NumberOfBytes, 0);
+    return MmAddPhysicalMemoryEx(StartAddress, NumberOfBytes, 0);
 }
 
-
+
 NTSTATUS
-MmAddPhysicalMemoryEx (
-    IN PPHYSICAL_ADDRESS StartAddress,
-    IN OUT PLARGE_INTEGER NumberOfBytes,
-    IN ULONG Flags
-    )
+MmAddPhysicalMemoryEx(IN PPHYSICAL_ADDRESS StartAddress, IN OUT PLARGE_INTEGER NumberOfBytes, IN ULONG Flags)
 
 /*++
 
@@ -160,14 +146,16 @@ Environment:
     PPHYSICAL_MEMORY_RUN NewRun;
     LOGICAL PfnDatabaseIsPhysical;
 
-    ASSERT (KeGetCurrentIrql() == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
 #ifdef _MI_MESSAGE_SERVER
-    if (NumberOfBytes->LowPart & 0x1) {
+    if (NumberOfBytes->LowPart & 0x1)
+    {
         MI_INSTRUMENT_QUEUE((PVOID)StartAddress);
         return STATUS_NOT_SUPPORTED;
     }
-    else if (NumberOfBytes->LowPart & 0x2) {
+    else if (NumberOfBytes->LowPart & 0x2)
+    {
 #if defined(_WIN64)
         StartAddress->QuadPart = (ULONG_PTR)(MI_INSTRUMENTR_QUEUE());
 #else
@@ -177,20 +165,24 @@ Environment:
     }
 #endif
 
-    if (BYTE_OFFSET(StartAddress->LowPart) != 0) {
+    if (BYTE_OFFSET(StartAddress->LowPart) != 0)
+    {
         return STATUS_INVALID_PARAMETER_1;
     }
 
-    if (BYTE_OFFSET(NumberOfBytes->LowPart) != 0) {
+    if (BYTE_OFFSET(NumberOfBytes->LowPart) != 0)
+    {
         return STATUS_INVALID_PARAMETER_2;
     }
 
-#if defined (_MI_COMPRESSION)
-    if (Flags & ~MM_PHYSICAL_MEMORY_PRODUCED_VIA_COMPRESSION) {
+#if defined(_MI_COMPRESSION)
+    if (Flags & ~MM_PHYSICAL_MEMORY_PRODUCED_VIA_COMPRESSION)
+    {
         return STATUS_INVALID_PARAMETER_3;
     }
 #else
-    if (Flags != 0) {
+    if (Flags != 0)
+    {
         return STATUS_INVALID_PARAMETER_3;
     }
 #endif
@@ -199,15 +191,18 @@ Environment:
     // The system must be configured for dynamic memory addition.  This is
     // critical as only then is the database guaranteed to be non-sparse.
     //
-    
-    if (MmDynamicPfn == 0) {
+
+    if (MmDynamicPfn == 0)
+    {
         return STATUS_NOT_SUPPORTED;
     }
 
-    if (MI_IS_PHYSICAL_ADDRESS(MmPfnDatabase)) {
+    if (MI_IS_PHYSICAL_ADDRESS(MmPfnDatabase))
+    {
         PfnDatabaseIsPhysical = TRUE;
     }
-    else {
+    else
+    {
         PfnDatabaseIsPhysical = FALSE;
     }
 
@@ -216,7 +211,8 @@ Environment:
 
     EndPage = StartPage + NumberOfPages;
 
-    if (EndPage - 1 > MmHighestPossiblePhysicalPage) {
+    if (EndPage - 1 > MmHighestPossiblePhysicalPage)
+    {
 
         //
         // Truncate the request into something that can be mapped by the PFN
@@ -232,19 +228,22 @@ Environment:
     // restrictions.
     //
 
-    if (ExVerifySuite(DataCenter) == TRUE) {
+    if (ExVerifySuite(DataCenter) == TRUE)
+    {
         TotalPagesAllowed = MI_DTC_MAX_PAGES;
     }
-    else if ((MmProductType != 0x00690057) &&
-             (ExVerifySuite(Enterprise) == TRUE)) {
+    else if ((MmProductType != 0x00690057) && (ExVerifySuite(Enterprise) == TRUE))
+    {
 
         TotalPagesAllowed = MI_ADS_MAX_PAGES;
     }
-    else {
+    else
+    {
         TotalPagesAllowed = MI_DEFAULT_MAX_PAGES;
     }
 
-    if (MmNumberOfPhysicalPages + NumberOfPages > TotalPagesAllowed) {
+    if (MmNumberOfPhysicalPages + NumberOfPages > TotalPagesAllowed)
+    {
 
         //
         // Truncate the request appropriately.
@@ -258,23 +257,23 @@ Environment:
     // The range cannot wrap.
     //
 
-    if (StartPage >= EndPage) {
+    if (StartPage >= EndPage)
+    {
         return STATUS_INVALID_PARAMETER_1;
     }
 
-    ExAcquireFastMutex (&MmDynamicMemoryMutex);
+    ExAcquireFastMutex(&MmDynamicMemoryMutex);
 
     OldPhysicalMemoryBlock = MmPhysicalMemoryBlock;
 
     i = (sizeof(PHYSICAL_MEMORY_DESCRIPTOR) +
          (sizeof(PHYSICAL_MEMORY_RUN) * (MmPhysicalMemoryBlock->NumberOfRuns + 1)));
 
-    NewPhysicalMemoryBlock = ExAllocatePoolWithTag (NonPagedPool,
-                                                    i,
-                                                    '  mM');
+    NewPhysicalMemoryBlock = ExAllocatePoolWithTag(NonPagedPool, i, '  mM');
 
-    if (NewPhysicalMemoryBlock == NULL) {
-        ExReleaseFastMutex (&MmDynamicMemoryMutex);
+    if (NewPhysicalMemoryBlock == NULL)
+    {
+        ExReleaseFastMutex(&MmDynamicMemoryMutex);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -284,50 +283,56 @@ Environment:
 
     start = 0;
 
-    MmLockPagableSectionByHandle (ExPageLockHandle);
+    MmLockPagableSectionByHandle(ExPageLockHandle);
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-#if defined (_MI_COMPRESSION)
+#if defined(_MI_COMPRESSION)
 
     //
     // Adding compression-generated ranges can only be done if the hardware
     // has already successfully announced itself.
     //
 
-    if (Flags & MM_PHYSICAL_MEMORY_PRODUCED_VIA_COMPRESSION) {
-        if (MiSetCompressionThreshold == NULL) {
-            UNLOCK_PFN (OldIrql);
+    if (Flags & MM_PHYSICAL_MEMORY_PRODUCED_VIA_COMPRESSION)
+    {
+        if (MiSetCompressionThreshold == NULL)
+        {
+            UNLOCK_PFN(OldIrql);
             MmUnlockPagableImageSection(ExPageLockHandle);
-            ExReleaseFastMutex (&MmDynamicMemoryMutex);
-            ExFreePool (NewPhysicalMemoryBlock);
+            ExReleaseFastMutex(&MmDynamicMemoryMutex);
+            ExFreePool(NewPhysicalMemoryBlock);
             return STATUS_NOT_SUPPORTED;
         }
     }
 #endif
 
-    do {
+    do
+    {
 
         count = MmPhysicalMemoryBlock->Run[start].PageCount;
         Page = MmPhysicalMemoryBlock->Run[start].BasePage;
 
-        if (count != 0) {
+        if (count != 0)
+        {
 
             LastPage = Page + count;
 
-            if ((StartPage < Page) && (EndPage > Page)) {
-                UNLOCK_PFN (OldIrql);
+            if ((StartPage < Page) && (EndPage > Page))
+            {
+                UNLOCK_PFN(OldIrql);
                 MmUnlockPagableImageSection(ExPageLockHandle);
-                ExReleaseFastMutex (&MmDynamicMemoryMutex);
-                ExFreePool (NewPhysicalMemoryBlock);
+                ExReleaseFastMutex(&MmDynamicMemoryMutex);
+                ExFreePool(NewPhysicalMemoryBlock);
                 return STATUS_CONFLICTING_ADDRESSES;
             }
 
-            if ((StartPage >= Page) && (StartPage < LastPage)) {
-                UNLOCK_PFN (OldIrql);
+            if ((StartPage >= Page) && (StartPage < LastPage))
+            {
+                UNLOCK_PFN(OldIrql);
                 MmUnlockPagableImageSection(ExPageLockHandle);
-                ExReleaseFastMutex (&MmDynamicMemoryMutex);
-                ExFreePool (NewPhysicalMemoryBlock);
+                ExReleaseFastMutex(&MmDynamicMemoryMutex);
+                ExFreePool(NewPhysicalMemoryBlock);
                 return STATUS_CONFLICTING_ADDRESSES;
             }
         }
@@ -344,36 +349,42 @@ Environment:
 
     PagesNeeded = 0;
 
-    if (PfnDatabaseIsPhysical == FALSE) {
-        PointerPte = MiGetPteAddress (MI_PFN_ELEMENT(StartPage));
-        LastPte = MiGetPteAddress ((PCHAR)(MI_PFN_ELEMENT(EndPage)) - 1);
-    
-        while (PointerPte <= LastPte) {
-            if (PointerPte->u.Hard.Valid == 0) {
+    if (PfnDatabaseIsPhysical == FALSE)
+    {
+        PointerPte = MiGetPteAddress(MI_PFN_ELEMENT(StartPage));
+        LastPte = MiGetPteAddress((PCHAR)(MI_PFN_ELEMENT(EndPage))-1);
+
+        while (PointerPte <= LastPte)
+        {
+            if (PointerPte->u.Hard.Valid == 0)
+            {
                 PagesNeeded += 1;
             }
             PointerPte += 1;
         }
-    
-        if (MmAvailablePages < PagesNeeded) {
-            UNLOCK_PFN (OldIrql);
+
+        if (MmAvailablePages < PagesNeeded)
+        {
+            UNLOCK_PFN(OldIrql);
             MmUnlockPagableImageSection(ExPageLockHandle);
-            ExReleaseFastMutex (&MmDynamicMemoryMutex);
-            ExFreePool (NewPhysicalMemoryBlock);
+            ExReleaseFastMutex(&MmDynamicMemoryMutex);
+            ExFreePool(NewPhysicalMemoryBlock);
             return STATUS_INSUFFICIENT_RESOURCES;
         }
-    
+
         TempPte = ValidKernelPte;
-    
-        PointerPte = MiGetPteAddress (MI_PFN_ELEMENT(StartPage));
-    
-        while (PointerPte <= LastPte) {
-            if (PointerPte->u.Hard.Valid == 0) {
-    
-                PageFrameIndex = MiRemoveZeroPage(MI_GET_PAGE_COLOR_FROM_PTE (PointerPte));
-    
-                MiInitializePfn (PageFrameIndex, PointerPte, 0);
-    
+
+        PointerPte = MiGetPteAddress(MI_PFN_ELEMENT(StartPage));
+
+        while (PointerPte <= LastPte)
+        {
+            if (PointerPte->u.Hard.Valid == 0)
+            {
+
+                PageFrameIndex = MiRemoveZeroPage(MI_GET_PAGE_COLOR_FROM_PTE(PointerPte));
+
+                MiInitializePfn(PageFrameIndex, PointerPte, 0);
+
                 TempPte.u.Hard.PageFrameNumber = PageFrameIndex;
                 *PointerPte = TempPte;
             }
@@ -396,18 +407,21 @@ Environment:
     Inserted = FALSE;
     Updated = FALSE;
 
-    do {
+    do
+    {
 
         Page = MmPhysicalMemoryBlock->Run[start].BasePage;
         count = MmPhysicalMemoryBlock->Run[start].PageCount;
 
-        if (Inserted == FALSE) {
+        if (Inserted == FALSE)
+        {
 
             //
             // Note overlaps into adjacent ranges were already checked above.
             //
 
-            if (StartPage == Page + count) {
+            if (StartPage == Page + count)
+            {
                 MmPhysicalMemoryBlock->Run[start].PageCount += NumberOfPages;
                 OldPhysicalMemoryBlock = NewPhysicalMemoryBlock;
                 MmPhysicalMemoryBlock->NumberOfPages += NumberOfPages;
@@ -418,25 +432,26 @@ Environment:
                 // the span them.
                 //
 
-                if (start + 1 < MmPhysicalMemoryBlock->NumberOfRuns) {
+                if (start + 1 < MmPhysicalMemoryBlock->NumberOfRuns)
+                {
 
                     start += 1;
                     Page = MmPhysicalMemoryBlock->Run[start].BasePage;
                     count = MmPhysicalMemoryBlock->Run[start].PageCount;
 
-                    if (StartPage + NumberOfPages == Page) {
-                        MmPhysicalMemoryBlock->Run[start - 1].PageCount +=
-                            count;
+                    if (StartPage + NumberOfPages == Page)
+                    {
+                        MmPhysicalMemoryBlock->Run[start - 1].PageCount += count;
                         MmPhysicalMemoryBlock->NumberOfRuns -= 1;
 
                         //
                         // Copy any remaining entries.
                         //
-    
-                        if (start != MmPhysicalMemoryBlock->NumberOfRuns) {
-                            RtlMoveMemory (&MmPhysicalMemoryBlock->Run[start],
-                                           &MmPhysicalMemoryBlock->Run[start + 1],
-                                           (MmPhysicalMemoryBlock->NumberOfRuns - start) * sizeof (PHYSICAL_MEMORY_RUN));
+
+                        if (start != MmPhysicalMemoryBlock->NumberOfRuns)
+                        {
+                            RtlMoveMemory(&MmPhysicalMemoryBlock->Run[start], &MmPhysicalMemoryBlock->Run[start + 1],
+                                          (MmPhysicalMemoryBlock->NumberOfRuns - start) * sizeof(PHYSICAL_MEMORY_RUN));
                         }
                     }
                 }
@@ -444,7 +459,8 @@ Environment:
                 break;
             }
 
-            if (StartPage + NumberOfPages == Page) {
+            if (StartPage + NumberOfPages == Page)
+            {
                 MmPhysicalMemoryBlock->Run[start].BasePage = StartPage;
                 MmPhysicalMemoryBlock->Run[start].PageCount += NumberOfPages;
                 OldPhysicalMemoryBlock = NewPhysicalMemoryBlock;
@@ -453,11 +469,14 @@ Environment:
                 break;
             }
 
-            if (StartPage + NumberOfPages <= Page) {
+            if (StartPage + NumberOfPages <= Page)
+            {
 
-                if (start + 1 < MmPhysicalMemoryBlock->NumberOfRuns) {
+                if (start + 1 < MmPhysicalMemoryBlock->NumberOfRuns)
+                {
 
-                    if (StartPage + NumberOfPages <= MmPhysicalMemoryBlock->Run[start + 1].BasePage) {
+                    if (StartPage + NumberOfPages <= MmPhysicalMemoryBlock->Run[start + 1].BasePage)
+                    {
                         //
                         // Don't insert here - the new entry really belongs
                         // (at least) one entry further down.
@@ -487,8 +506,9 @@ Environment:
     // be added at the very end.
     //
 
-    if (Updated == FALSE) {
-        ASSERT (Inserted == FALSE);
+    if (Updated == FALSE)
+    {
+        ASSERT(Inserted == FALSE);
         NewRun->BasePage = StartPage;
         NewRun->PageCount = NumberOfPages;
         Inserted = TRUE;
@@ -499,7 +519,8 @@ Environment:
     // releasing the PFN lock.
     //
 
-    if (Inserted == TRUE) {
+    if (Inserted == TRUE)
+    {
         OldPhysicalMemoryBlock = MmPhysicalMemoryBlock;
         MmPhysicalMemoryBlock = NewPhysicalMemoryBlock;
     }
@@ -516,28 +537,29 @@ Environment:
     //
 
     PageFrameIndex = StartPage;
-    Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+    Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
 
-    if (EndPage - 1 > MmHighestPhysicalPage) {
+    if (EndPage - 1 > MmHighestPhysicalPage)
+    {
         MmHighestPhysicalPage = EndPage - 1;
     }
 
-    while (PageFrameIndex < EndPage) {
+    while (PageFrameIndex < EndPage)
+    {
 
-        ASSERT (Pfn1->u2.ShareCount == 0);
-        ASSERT (Pfn1->u3.e2.ShortFlags == 0);
-        ASSERT (Pfn1->u3.e2.ReferenceCount == 0);
-        ASSERT64 (Pfn1->UsedPageTableEntries == 0);
-        ASSERT (Pfn1->OriginalPte.u.Long == ZeroKernelPte.u.Long);
-        ASSERT (Pfn1->u4.PteFrame == 0);
-        ASSERT ((Pfn1->PteAddress == PFN_REMOVED) ||
-                (Pfn1->PteAddress == (PMMPTE)(UINT_PTR)0));
+        ASSERT(Pfn1->u2.ShareCount == 0);
+        ASSERT(Pfn1->u3.e2.ShortFlags == 0);
+        ASSERT(Pfn1->u3.e2.ReferenceCount == 0);
+        ASSERT64(Pfn1->UsedPageTableEntries == 0);
+        ASSERT(Pfn1->OriginalPte.u.Long == ZeroKernelPte.u.Long);
+        ASSERT(Pfn1->u4.PteFrame == 0);
+        ASSERT((Pfn1->PteAddress == PFN_REMOVED) || (Pfn1->PteAddress == (PMMPTE)(UINT_PTR)0));
 
         //
         // Initialize the color for NUMA purposes.
         //
 
-        MiDetermineNode (PageFrameIndex, Pfn1);
+        MiDetermineNode(PageFrameIndex, Pfn1);
 
         //
         // Set the PTE address to the physical page for
@@ -546,10 +568,10 @@ Environment:
 
         Pfn1->PteAddress = (PMMPTE)(PageFrameIndex << PTE_SHIFT);
 
-        MiInsertPageInFreeList (PageFrameIndex);
+        MiInsertPageInFreeList(PageFrameIndex);
 
         PageFrameIndex += 1;
-        
+
         Pfn1 += 1;
     }
 
@@ -563,12 +585,14 @@ Environment:
     // from AvailablePages the amount the above MiInsertPageInFreeList added.
     //
 
-#if defined (_MI_COMPRESSION)
-    if (Flags & MM_PHYSICAL_MEMORY_PRODUCED_VIA_COMPRESSION) {
-        MmAvailablePages -= (PFN_COUNT) NumberOfPages;
+#if defined(_MI_COMPRESSION)
+    if (Flags & MM_PHYSICAL_MEMORY_PRODUCED_VIA_COMPRESSION)
+    {
+        MmAvailablePages -= (PFN_COUNT)NumberOfPages;
         MiNumberOfCompressionPages += NumberOfPages;
     }
-    else {
+    else
+    {
         MmResidentAvailablePages += NumberOfPages;
 
         //
@@ -576,16 +600,15 @@ Environment:
         // rearm the interrupt to occur at a higher threshold.
         //
 
-        MiArmCompressionInterrupt ();
+        MiArmCompressionInterrupt();
     }
 #else
     MmResidentAvailablePages += NumberOfPages;
 #endif
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
-    InterlockedExchangeAdd ((PLONG)&SharedUserData->NumberOfPhysicalPages,
-                            (LONG) NumberOfPages);
+    InterlockedExchangeAdd((PLONG)&SharedUserData->NumberOfPhysicalPages, (LONG)NumberOfPages);
 
     //
     // Carefully increase all commit limits to reflect the additional memory -
@@ -593,17 +616,17 @@ Environment:
     // line.
     //
 
-    InterlockedExchangeAddSizeT (&MmTotalCommittedPages, PagesNeeded);
+    InterlockedExchangeAddSizeT(&MmTotalCommittedPages, PagesNeeded);
 
-    InterlockedExchangeAddSizeT (&MmTotalCommitLimitMaximum, NumberOfPages);
+    InterlockedExchangeAddSizeT(&MmTotalCommitLimitMaximum, NumberOfPages);
 
-    InterlockedExchangeAddSizeT (&MmTotalCommitLimit, NumberOfPages);
+    InterlockedExchangeAddSizeT(&MmTotalCommitLimit, NumberOfPages);
 
     MmUnlockPagableImageSection(ExPageLockHandle);
 
-    ExReleaseFastMutex (&MmDynamicMemoryMutex);
+    ExReleaseFastMutex(&MmDynamicMemoryMutex);
 
-    ExFreePool (OldPhysicalMemoryBlock);
+    ExFreePool(OldPhysicalMemoryBlock);
 
     //
     // Indicate number of bytes actually added to our caller.
@@ -614,14 +637,10 @@ Environment:
     return STATUS_SUCCESS;
 }
 
-
+
 NTSTATUS
-MiRemovePhysicalMemory (
-    IN PPHYSICAL_ADDRESS StartAddress,
-    IN OUT PLARGE_INTEGER NumberOfBytes,
-    IN LOGICAL PermanentRemoval,
-    IN ULONG Flags
-    )
+MiRemovePhysicalMemory(IN PPHYSICAL_ADDRESS StartAddress, IN OUT PLARGE_INTEGER NumberOfBytes,
+                       IN LOGICAL PermanentRemoval, IN ULONG Flags)
 
 /*++
 
@@ -683,14 +702,16 @@ Environment:
     PFN_NUMBER HighestPossiblePhysicalPage;
     PFN_COUNT FluidPages;
 
-    ASSERT (KeGetCurrentIrql() == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
-    ASSERT (BYTE_OFFSET(NumberOfBytes->LowPart) == 0);
-    ASSERT (BYTE_OFFSET(StartAddress->LowPart) == 0);
+    ASSERT(BYTE_OFFSET(NumberOfBytes->LowPart) == 0);
+    ASSERT(BYTE_OFFSET(StartAddress->LowPart) == 0);
 
-    if (MI_IS_PHYSICAL_ADDRESS(MmPfnDatabase)) {
+    if (MI_IS_PHYSICAL_ADDRESS(MmPfnDatabase))
+    {
 
-        if (PermanentRemoval == TRUE) {
+        if (PermanentRemoval == TRUE)
+        {
 
             //
             // The system must be configured for dynamic memory addition.  This
@@ -700,23 +721,27 @@ Environment:
             // better to give the error now and refuse the removal than to
             // refuse the addition later.
             //
-        
-            if (MmDynamicPfn == 0) {
+
+            if (MmDynamicPfn == 0)
+            {
                 return STATUS_NOT_SUPPORTED;
             }
         }
-    
+
         PfnDatabaseIsPhysical = TRUE;
     }
-    else {
+    else
+    {
         PfnDatabaseIsPhysical = FALSE;
     }
 
-    if (PermanentRemoval == TRUE) {
+    if (PermanentRemoval == TRUE)
+    {
         HighestPossiblePhysicalPage = MmHighestPossiblePhysicalPage;
         FluidPages = 100;
     }
-    else {
+    else
+    {
         HighestPossiblePhysicalPage = MmHighestPhysicalPage;
         FluidPages = 0;
     }
@@ -726,7 +751,8 @@ Environment:
 
     EndPage = StartPage + NumberOfPages;
 
-    if (EndPage - 1 > HighestPossiblePhysicalPage) {
+    if (EndPage - 1 > HighestPossiblePhysicalPage)
+    {
 
         //
         // Truncate the request into something that can be mapped by the PFN
@@ -741,20 +767,22 @@ Environment:
     // The range cannot wrap.
     //
 
-    if (StartPage >= EndPage) {
+    if (StartPage >= EndPage)
+    {
         return STATUS_INVALID_PARAMETER_1;
     }
 
-#if !defined (_MI_COMPRESSION)
-    if (Flags != 0) {
+#if !defined(_MI_COMPRESSION)
+    if (Flags != 0)
+    {
         return STATUS_INVALID_PARAMETER_4;
     }
 #endif
 
-    StartPfn = MI_PFN_ELEMENT (StartPage);
-    EndPfn = MI_PFN_ELEMENT (EndPage);
+    StartPfn = MI_PFN_ELEMENT(StartPage);
+    EndPfn = MI_PFN_ELEMENT(EndPage);
 
-    ExAcquireFastMutex (&MmDynamicMemoryMutex);
+    ExAcquireFastMutex(&MmDynamicMemoryMutex);
 
 #if DBG
     MiDynmemData[0] += 1;
@@ -764,11 +792,12 @@ Environment:
     // Attempt to decrease all commit limits to reflect the removed memory.
     //
 
-    if (MiChargeTemporaryCommitmentForReduction (NumberOfPages + FluidPages) == FALSE) {
+    if (MiChargeTemporaryCommitmentForReduction(NumberOfPages + FluidPages) == FALSE)
+    {
 #if DBG
         MiDynmemData[1] += 1;
 #endif
-        ExReleaseFastMutex (&MmDynamicMemoryMutex);
+        ExReleaseFastMutex(&MmDynamicMemoryMutex);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -778,26 +807,27 @@ Environment:
     // in this very thread) can consume past the limit.
     //
 
-    InterlockedExchangeAddSizeT (&MmTotalCommitLimit, 0 - NumberOfPages);
+    InterlockedExchangeAddSizeT(&MmTotalCommitLimit, 0 - NumberOfPages);
 
-    InterlockedExchangeAddSizeT (&MmTotalCommitLimitMaximum, 0 - NumberOfPages);
+    InterlockedExchangeAddSizeT(&MmTotalCommitLimitMaximum, 0 - NumberOfPages);
 
     //
     // Now that the systemwide commit limit has been lowered, the amount
     // we have removed can be safely returned.
     //
 
-    MiReturnCommitment (NumberOfPages + FluidPages);
+    MiReturnCommitment(NumberOfPages + FluidPages);
 
-    MmLockPagableSectionByHandle (ExPageLockHandle);
+    MmLockPagableSectionByHandle(ExPageLockHandle);
 
     //
     // Check for outstanding promises that cannot be broken.
     //
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    if (PermanentRemoval == FALSE) {
+    if (PermanentRemoval == FALSE)
+    {
 
         //
         // If it's just the removal of ECC-marked bad pages, then don't
@@ -805,9 +835,11 @@ Environment:
         // ECC-removed.  This is to prevent recursive erroneous charges.
         //
 
-        for (Pfn1 = StartPfn; Pfn1 < EndPfn; Pfn1 += 1) {
-            if (Pfn1->u3.e1.ParityError == 1) {
-                UNLOCK_PFN (OldIrql);
+        for (Pfn1 = StartPfn; Pfn1 < EndPfn; Pfn1 += 1)
+        {
+            if (Pfn1->u3.e1.ParityError == 1)
+            {
+                UNLOCK_PFN(OldIrql);
                 Status = STATUS_INVALID_PARAMETER_2;
                 goto giveup2;
             }
@@ -816,11 +848,12 @@ Environment:
 
     MaxPages = MI_NONPAGABLE_MEMORY_AVAILABLE() - FluidPages;
 
-    if ((SPFN_NUMBER)NumberOfPages > MaxPages) {
+    if ((SPFN_NUMBER)NumberOfPages > MaxPages)
+    {
 #if DBG
         MiDynmemData[2] += 1;
 #endif
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
         Status = STATUS_INSUFFICIENT_RESOURCES;
         goto giveup2;
     }
@@ -834,19 +867,24 @@ Environment:
     Additional = (ULONG)-2;
 
     start = 0;
-    do {
+    do
+    {
 
         Page = MmPhysicalMemoryBlock->Run[start].BasePage;
         LastPage = Page + MmPhysicalMemoryBlock->Run[start].PageCount;
 
-        if ((StartPage >= Page) && (EndPage <= LastPage)) {
-            if ((StartPage == Page) && (EndPage == LastPage)) {
+        if ((StartPage >= Page) && (EndPage <= LastPage))
+        {
+            if ((StartPage == Page) && (EndPage == LastPage))
+            {
                 Additional = (ULONG)-1;
             }
-            else if ((StartPage == Page) || (EndPage == LastPage)) {
+            else if ((StartPage == Page) || (EndPage == LastPage))
+            {
                 Additional = 0;
             }
-            else {
+            else
+            {
                 Additional = 1;
             }
             break;
@@ -856,34 +894,37 @@ Environment:
 
     } while (start != MmPhysicalMemoryBlock->NumberOfRuns);
 
-    if (Additional == (ULONG)-2) {
+    if (Additional == (ULONG)-2)
+    {
 #if DBG
         MiDynmemData[3] += 1;
 #endif
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
         Status = STATUS_CONFLICTING_ADDRESSES;
         goto giveup2;
     }
 
-    for (Pfn1 = StartPfn; Pfn1 < EndPfn; Pfn1 += 1) {
+    for (Pfn1 = StartPfn; Pfn1 < EndPfn; Pfn1 += 1)
+    {
         Pfn1->u3.e1.RemovalRequested = 1;
     }
 
-    if (PermanentRemoval == TRUE) {
+    if (PermanentRemoval == TRUE)
+    {
         MmNumberOfPhysicalPages -= NumberOfPages;
 
-        InterlockedExchangeAdd ((PLONG)&SharedUserData->NumberOfPhysicalPages,
-                                0 - NumberOfPages);
+        InterlockedExchangeAdd((PLONG)&SharedUserData->NumberOfPhysicalPages, 0 - NumberOfPages);
     }
 
-#if defined (_MI_COMPRESSION)
+#if defined(_MI_COMPRESSION)
 
     //
     // Only removal of non-compression ranges decrement ResidentAvailable as
     // only those ranges actually incremented this when they were added.
     //
 
-    if ((Flags & MM_PHYSICAL_MEMORY_PRODUCED_VIA_COMPRESSION) == 0) {
+    if ((Flags & MM_PHYSICAL_MEMORY_PRODUCED_VIA_COMPRESSION) == 0)
+    {
         MmResidentAvailablePages -= NumberOfPages;
 
         //
@@ -891,8 +932,9 @@ Environment:
         // removed, rearm the interrupt to occur at a lower threshold.
         //
 
-        if (PermanentRemoval == TRUE) {
-            MiArmCompressionInterrupt ();
+        if (PermanentRemoval == TRUE)
+        {
+            MiArmCompressionInterrupt();
         }
     }
 #else
@@ -905,9 +947,9 @@ Environment:
     // the allocation will clear the RemovalRequested flag forever.
     //
 
-    RemovedPages = MiRemovePhysicalPages (StartPage, EndPage);
+    RemovedPages = MiRemovePhysicalPages(StartPage, EndPage);
 
-#if defined (_MI_COMPRESSION)
+#if defined(_MI_COMPRESSION)
 
     //
     // Compression range removals add back into AvailablePages the same
@@ -915,48 +957,51 @@ Environment:
     // of these ranges never bumps this counter).
     //
 
-    if (Flags & MM_PHYSICAL_MEMORY_PRODUCED_VIA_COMPRESSION) {
-        MmAvailablePages += (PFN_COUNT) RemovedPages;
+    if (Flags & MM_PHYSICAL_MEMORY_PRODUCED_VIA_COMPRESSION)
+    {
+        MmAvailablePages += (PFN_COUNT)RemovedPages;
         MiNumberOfCompressionPages -= RemovedPages;
     }
 #endif
 
-    if (RemovedPages != NumberOfPages) {
+    if (RemovedPages != NumberOfPages)
+    {
 
 #if DBG
-retry:
+    retry:
 #endif
-    
+
         Pfn1 = StartPfn;
-    
-        InterlockedIncrement (&MiDelayPageFaults);
-    
-        for (i = 0; i < 5; i += 1) {
-    
-            UNLOCK_PFN (OldIrql);
-    
+
+        InterlockedIncrement(&MiDelayPageFaults);
+
+        for (i = 0; i < 5; i += 1)
+        {
+
+            UNLOCK_PFN(OldIrql);
+
             //
             // Attempt to move pages to the standby list.  Note that only the
             // pages with RemovalRequested set are moved.
             //
-    
+
             MiTrimRemovalPagesOnly = TRUE;
-    
-            MmEmptyAllWorkingSets ();
-    
+
+            MmEmptyAllWorkingSets();
+
             MiTrimRemovalPagesOnly = FALSE;
-    
-            MiFlushAllPages ();
-    
-            KeDelayExecutionThread (KernelMode, FALSE, (PLARGE_INTEGER)&MmHalfSecond);
-    
-            LOCK_PFN (OldIrql);
-    
-            RemovedPagesThisPass = MiRemovePhysicalPages (StartPage, EndPage);
+
+            MiFlushAllPages();
+
+            KeDelayExecutionThread(KernelMode, FALSE, (PLARGE_INTEGER)&MmHalfSecond);
+
+            LOCK_PFN(OldIrql);
+
+            RemovedPagesThisPass = MiRemovePhysicalPages(StartPage, EndPage);
 
             RemovedPages += RemovedPagesThisPass;
-    
-#if defined (_MI_COMPRESSION)
+
+#if defined(_MI_COMPRESSION)
 
             //
             // Compression range removals add back into AvailablePages the same
@@ -964,17 +1009,19 @@ retry:
             // addition of these ranges never bumps this counter).
             //
 
-            if (Flags & MM_PHYSICAL_MEMORY_PRODUCED_VIA_COMPRESSION) {
-                MmAvailablePages += (PFN_COUNT) RemovedPagesThisPass;
+            if (Flags & MM_PHYSICAL_MEMORY_PRODUCED_VIA_COMPRESSION)
+            {
+                MmAvailablePages += (PFN_COUNT)RemovedPagesThisPass;
                 MiNumberOfCompressionPages -= RemovedPagesThisPass;
             }
 
 #endif
 
-            if (RemovedPages == NumberOfPages) {
+            if (RemovedPages == NumberOfPages)
+            {
                 break;
             }
-    
+
             //
             // RemovedPages doesn't include pages that were freed directly
             // to the bad page list via MiDecrementReferenceCount or by
@@ -982,39 +1029,46 @@ retry:
             // and walk here before ever giving up.
             //
 
-            for ( ; Pfn1 < EndPfn; Pfn1 += 1) {
-                if (Pfn1->u3.e1.PageLocation != BadPageList) {
+            for (; Pfn1 < EndPfn; Pfn1 += 1)
+            {
+                if (Pfn1->u3.e1.PageLocation != BadPageList)
+                {
                     break;
                 }
             }
 
-            if (Pfn1 == EndPfn) {
+            if (Pfn1 == EndPfn)
+            {
                 RemovedPages = NumberOfPages;
                 break;
             }
         }
 
-        InterlockedDecrement (&MiDelayPageFaults);
+        InterlockedDecrement(&MiDelayPageFaults);
     }
 
-    if (RemovedPages != NumberOfPages) {
+    if (RemovedPages != NumberOfPages)
+    {
 #if DBG
         MiDynmemData[4] += 1;
-        if (MiShowStuckPages != 0) {
+        if (MiShowStuckPages != 0)
+        {
 
             RemovedPages = 0;
-            for (Pfn1 = StartPfn; Pfn1 < EndPfn; Pfn1 += 1) {
-                if (Pfn1->u3.e1.PageLocation != BadPageList) {
+            for (Pfn1 = StartPfn; Pfn1 < EndPfn; Pfn1 += 1)
+            {
+                if (Pfn1->u3.e1.PageLocation != BadPageList)
+                {
                     RemovedPages += 1;
                 }
             }
 
-            ASSERT (RemovedPages != 0);
+            ASSERT(RemovedPages != 0);
 
-            DbgPrint("MiRemovePhysicalMemory : could not get %d of %d pages\n",
-                RemovedPages, NumberOfPages);
+            DbgPrint("MiRemovePhysicalMemory : could not get %d of %d pages\n", RemovedPages, NumberOfPages);
 
-            if (MiShowStuckPages & 0x2) {
+            if (MiShowStuckPages & 0x2)
+            {
 
                 ULONG PfnsPrinted;
                 ULONG EnoughShown;
@@ -1024,7 +1078,7 @@ retry:
                 PfnCount = 0;
                 PfnsPrinted = 0;
                 EnoughShown = 100;
-    
+
                 //
                 // Initializing FirstPfn is not needed for correctness
                 // but without it the compiler cannot compile this code
@@ -1033,52 +1087,62 @@ retry:
 
                 FirstPfn = NULL;
 
-                if (MiShowStuckPages & 0x4) {
+                if (MiShowStuckPages & 0x4)
+                {
                     EnoughShown = (ULONG)-1;
                 }
-    
+
                 DbgPrint("Stuck PFN list: ");
-                for (Pfn1 = StartPfn; Pfn1 < EndPfn; Pfn1 += 1) {
-                    if (Pfn1->u3.e1.PageLocation != BadPageList) {
-                        if (PfnCount == 0) {
+                for (Pfn1 = StartPfn; Pfn1 < EndPfn; Pfn1 += 1)
+                {
+                    if (Pfn1->u3.e1.PageLocation != BadPageList)
+                    {
+                        if (PfnCount == 0)
+                        {
                             FirstPfn = Pfn1;
                         }
                         PfnCount += 1;
                     }
-                    else {
-                        if (PfnCount != 0) {
+                    else
+                    {
+                        if (PfnCount != 0)
+                        {
                             DbgPrint("%x -> %x ; ", FirstPfn - MmPfnDatabase,
-                                                    (FirstPfn - MmPfnDatabase) + PfnCount - 1);
+                                     (FirstPfn - MmPfnDatabase) + PfnCount - 1);
                             PfnsPrinted += 1;
-                            if (PfnsPrinted == EnoughShown) {
+                            if (PfnsPrinted == EnoughShown)
+                            {
                                 break;
                             }
                             PfnCount = 0;
                         }
                     }
                 }
-                if (PfnCount != 0) {
-                    DbgPrint("%x -> %x ; ", FirstPfn - MmPfnDatabase,
-                                            (FirstPfn - MmPfnDatabase) + PfnCount - 1);
+                if (PfnCount != 0)
+                {
+                    DbgPrint("%x -> %x ; ", FirstPfn - MmPfnDatabase, (FirstPfn - MmPfnDatabase) + PfnCount - 1);
                 }
                 DbgPrint("\n");
             }
-            if (MiShowStuckPages & 0x8) {
-                DbgBreakPoint ();
+            if (MiShowStuckPages & 0x8)
+            {
+                DbgBreakPoint();
             }
-            if (MiShowStuckPages & 0x10) {
+            if (MiShowStuckPages & 0x10)
+            {
                 goto retry;
             }
         }
 #endif
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
         Status = STATUS_NO_MEMORY;
         goto giveup;
     }
 
 #if DBG
-    for (Pfn1 = StartPfn; Pfn1 < EndPfn; Pfn1 += 1) {
-        ASSERT (Pfn1->u3.e1.PageLocation == BadPageList);
+    for (Pfn1 = StartPfn; Pfn1 < EndPfn; Pfn1 += 1)
+    {
+        ASSERT(Pfn1->u3.e1.PageLocation == BadPageList);
     }
 #endif
 
@@ -1086,7 +1150,8 @@ retry:
     // All the pages in the range have been removed.
     //
 
-    if (PermanentRemoval == FALSE) {
+    if (PermanentRemoval == FALSE)
+    {
 
         //
         // If it's just the removal of ECC-marked bad pages, then no
@@ -1094,19 +1159,20 @@ retry:
         // trimming is needed.  Exit now.
         //
 
-        for (Pfn1 = StartPfn; Pfn1 < EndPfn; Pfn1 += 1) {
-            ASSERT (Pfn1->u3.e1.ParityError == 0);
+        for (Pfn1 = StartPfn; Pfn1 < EndPfn; Pfn1 += 1)
+        {
+            ASSERT(Pfn1->u3.e1.ParityError == 0);
             Pfn1->u3.e1.ParityError = 1;
         }
 
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
 
         MmUnlockPagableImageSection(ExPageLockHandle);
-    
-        ExReleaseFastMutex (&MmDynamicMemoryMutex);
-    
+
+        ExReleaseFastMutex(&MmDynamicMemoryMutex);
+
         NumberOfBytes->QuadPart = (ULONGLONG)NumberOfPages * PAGE_SIZE;
-    
+
         return STATUS_SUCCESS;
     }
 
@@ -1114,7 +1180,8 @@ retry:
     // Update the physical memory blocks and other associated housekeeping.
     //
 
-    if (Additional == 0) {
+    if (Additional == 0)
+    {
 
         //
         // The range can be split off from an end of an existing chunk so no
@@ -1124,23 +1191,23 @@ retry:
         NewPhysicalMemoryBlock = MmPhysicalMemoryBlock;
         OldPhysicalMemoryBlock = NULL;
     }
-    else {
+    else
+    {
 
         //
         // The range cannot be split off from an end of an existing chunk so
         // pool growth or shrinkage is required.
         //
 
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
 
         i = (sizeof(PHYSICAL_MEMORY_DESCRIPTOR) +
              (sizeof(PHYSICAL_MEMORY_RUN) * (MmPhysicalMemoryBlock->NumberOfRuns + Additional)));
 
-        NewPhysicalMemoryBlock = ExAllocatePoolWithTag (NonPagedPool,
-                                                        i,
-                                                        '  mM');
+        NewPhysicalMemoryBlock = ExAllocatePoolWithTag(NonPagedPool, i, '  mM');
 
-        if (NewPhysicalMemoryBlock == NULL) {
+        if (NewPhysicalMemoryBlock == NULL)
+        {
             Status = STATUS_INSUFFICIENT_RESOURCES;
 #if DBG
             MiDynmemData[5] += 1;
@@ -1149,9 +1216,9 @@ retry:
         }
 
         OldPhysicalMemoryBlock = MmPhysicalMemoryBlock;
-        RtlZeroMemory (NewPhysicalMemoryBlock, i);
+        RtlZeroMemory(NewPhysicalMemoryBlock, i);
 
-        LOCK_PFN (OldIrql);
+        LOCK_PFN(OldIrql);
     }
 
     //
@@ -1165,29 +1232,36 @@ retry:
     start = 0;
     Inserted = FALSE;
 
-    do {
+    do
+    {
 
         Page = MmPhysicalMemoryBlock->Run[start].BasePage;
         LastPage = Page + MmPhysicalMemoryBlock->Run[start].PageCount;
 
-        if (Inserted == FALSE) {
+        if (Inserted == FALSE)
+        {
 
-            if ((StartPage >= Page) && (EndPage <= LastPage)) {
+            if ((StartPage >= Page) && (EndPage <= LastPage))
+            {
 
-                if ((StartPage == Page) && (EndPage == LastPage)) {
-                    ASSERT (Additional == -1);
+                if ((StartPage == Page) && (EndPage == LastPage))
+                {
+                    ASSERT(Additional == -1);
                     start += 1;
                     continue;
                 }
-                else if ((StartPage == Page) || (EndPage == LastPage)) {
-                    ASSERT (Additional == 0);
-                    if (StartPage == Page) {
+                else if ((StartPage == Page) || (EndPage == LastPage))
+                {
+                    ASSERT(Additional == 0);
+                    if (StartPage == Page)
+                    {
                         MmPhysicalMemoryBlock->Run[start].BasePage += NumberOfPages;
                     }
                     MmPhysicalMemoryBlock->Run[start].PageCount -= NumberOfPages;
                 }
-                else {
-                    ASSERT (Additional == 1);
+                else
+                {
+                    ASSERT(Additional == 1);
 
                     OriginalLastPage = LastPage;
 
@@ -1222,7 +1296,8 @@ retry:
 
     MmPhysicalMemoryBlock = NewPhysicalMemoryBlock;
 
-    if (EndPage - 1 == MmHighestPhysicalPage) {
+    if (EndPage - 1 == MmHighestPhysicalPage)
+    {
         MmHighestPhysicalPage = StartPage - 1;
     }
 
@@ -1231,10 +1306,11 @@ retry:
     //
 
     ParityPages = 0;
-    for (Pfn1 = StartPfn; Pfn1 < EndPfn; Pfn1 += 1) {
+    for (Pfn1 = StartPfn; Pfn1 < EndPfn; Pfn1 += 1)
+    {
 
-        ASSERT (Pfn1->u3.e1.PageLocation == BadPageList);
-        ASSERT (Pfn1->u3.e1.RemovalRequested == 1);
+        ASSERT(Pfn1->u3.e1.PageLocation == BadPageList);
+        ASSERT(Pfn1->u3.e1.RemovalRequested == 1);
 
         //
         // Some pages may have already been ECC-removed.  For these pages,
@@ -1242,17 +1318,18 @@ retry:
         // adjusted - tally them here so we can undo the extraneous charge
         // just applied.
         //
-    
-        if (Pfn1->u3.e1.ParityError == 1) {
+
+        if (Pfn1->u3.e1.ParityError == 1)
+        {
             ParityPages += 1;
         }
 
-        MiUnlinkPageFromList (Pfn1);
+        MiUnlinkPageFromList(Pfn1);
 
-        ASSERT (Pfn1->u1.Flink == 0);
-        ASSERT (Pfn1->u2.Blink == 0);
-        ASSERT (Pfn1->u3.e2.ReferenceCount == 0);
-        ASSERT64 (Pfn1->UsedPageTableEntries == 0);
+        ASSERT(Pfn1->u1.Flink == 0);
+        ASSERT(Pfn1->u2.Blink == 0);
+        ASSERT(Pfn1->u3.e2.ReferenceCount == 0);
+        ASSERT64(Pfn1->UsedPageTableEntries == 0);
 
         Pfn1->PteAddress = PFN_REMOVED;
 
@@ -1274,30 +1351,28 @@ retry:
 
     PagesReleased = 0;
 
-    if (PfnDatabaseIsPhysical == FALSE) {
+    if (PfnDatabaseIsPhysical == FALSE)
+    {
 
         VirtualAddress = (PVOID)ROUND_TO_PAGES(MI_PFN_ELEMENT(StartPage));
-        PointerPte = MiGetPteAddress (VirtualAddress);
-        EndPte = MiGetPteAddress (PAGE_ALIGN(MI_PFN_ELEMENT(EndPage)));
+        PointerPte = MiGetPteAddress(VirtualAddress);
+        EndPte = MiGetPteAddress(PAGE_ALIGN(MI_PFN_ELEMENT(EndPage)));
 
-        while (PointerPte < EndPte) {
-            PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE (PointerPte);
-            Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
-            ASSERT (Pfn1->u2.ShareCount == 1);
-            ASSERT (Pfn1->u3.e2.ReferenceCount == 1);
+        while (PointerPte < EndPte)
+        {
+            PageFrameIndex = MI_GET_PAGE_FRAME_FROM_PTE(PointerPte);
+            Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
+            ASSERT(Pfn1->u2.ShareCount == 1);
+            ASSERT(Pfn1->u3.e2.ReferenceCount == 1);
             Pfn1->u2.ShareCount = 0;
-            MI_SET_PFN_DELETED (Pfn1);
+            MI_SET_PFN_DELETED(Pfn1);
 #if DBG
             Pfn1->u3.e1.PageLocation = StandbyPageList;
 #endif //DBG
-            MiDecrementReferenceCount (PageFrameIndex);
-    
-            KeFlushSingleTb (VirtualAddress,
-                             TRUE,
-                             TRUE,
-                             (PHARDWARE_PTE)PointerPte,
-                             ZeroKernelPte.u.Flush);
-    
+            MiDecrementReferenceCount(PageFrameIndex);
+
+            KeFlushSingleTb(VirtualAddress, TRUE, TRUE, (PHARDWARE_PTE)PointerPte, ZeroKernelPte.u.Flush);
+
             PagesReleased += 1;
             PointerPte += 1;
             VirtualAddress = (PVOID)((PCHAR)VirtualAddress + PAGE_SIZE);
@@ -1314,31 +1389,35 @@ retry:
     // Give back anything that has been double-charged.
     //
 
-    if (ParityPages != 0) {
+    if (ParityPages != 0)
+    {
         MmResidentAvailablePages += ParityPages;
     }
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
     //
     // Give back anything that has been double-charged.
     //
 
-    if (ParityPages != 0) {
-        InterlockedExchangeAddSizeT (&MmTotalCommitLimitMaximum, ParityPages);
-        InterlockedExchangeAddSizeT (&MmTotalCommitLimit, ParityPages);
+    if (ParityPages != 0)
+    {
+        InterlockedExchangeAddSizeT(&MmTotalCommitLimitMaximum, ParityPages);
+        InterlockedExchangeAddSizeT(&MmTotalCommitLimit, ParityPages);
     }
 
-    if (PagesReleased != 0) {
-        MiReturnCommitment (PagesReleased);
+    if (PagesReleased != 0)
+    {
+        MiReturnCommitment(PagesReleased);
     }
 
     MmUnlockPagableImageSection(ExPageLockHandle);
 
-    ExReleaseFastMutex (&MmDynamicMemoryMutex);
+    ExReleaseFastMutex(&MmDynamicMemoryMutex);
 
-    if (OldPhysicalMemoryBlock != NULL) {
-        ExFreePool (OldPhysicalMemoryBlock);
+    if (OldPhysicalMemoryBlock != NULL)
+    {
+        ExFreePool(OldPhysicalMemoryBlock);
     }
 
     NumberOfBytes->QuadPart = (ULONGLONG)NumberOfPages * PAGE_SIZE;
@@ -1352,36 +1431,40 @@ giveup:
     //
 
     PageFrameIndex = StartPage;
-    Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+    Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    while (PageFrameIndex < EndPage) {
+    while (PageFrameIndex < EndPage)
+    {
 
-        ASSERT (Pfn1->u3.e1.RemovalRequested == 1);
+        ASSERT(Pfn1->u3.e1.RemovalRequested == 1);
 
         Pfn1->u3.e1.RemovalRequested = 0;
 
-        if (Pfn1->u3.e1.PageLocation == BadPageList) {
-            MiUnlinkPageFromList (Pfn1);
-            MiInsertPageInFreeList (PageFrameIndex);
+        if (Pfn1->u3.e1.PageLocation == BadPageList)
+        {
+            MiUnlinkPageFromList(Pfn1);
+            MiInsertPageInFreeList(PageFrameIndex);
         }
 
         Pfn1 += 1;
         PageFrameIndex += 1;
     }
 
-#if defined (_MI_COMPRESSION)
+#if defined(_MI_COMPRESSION)
 
     //
     // Only removal of non-compression ranges decrement ResidentAvailable as
     // only those ranges actually incremented this when they were added.
     //
 
-    if ((Flags & MM_PHYSICAL_MEMORY_PRODUCED_VIA_COMPRESSION) == 0) {
+    if ((Flags & MM_PHYSICAL_MEMORY_PRODUCED_VIA_COMPRESSION) == 0)
+    {
         MmResidentAvailablePages += NumberOfPages;
     }
-    else {
+    else
+    {
 
         //
         // Compression range removals add back into AvailablePages the same
@@ -1389,50 +1472,48 @@ giveup:
         // addition of these ranges never bumps this counter).
         //
 
-        MmAvailablePages -= (PFN_COUNT) RemovedPages;
+        MmAvailablePages -= (PFN_COUNT)RemovedPages;
         MiNumberOfCompressionPages += RemovedPages;
     }
 #else
     MmResidentAvailablePages += NumberOfPages;
 #endif
 
-    if (PermanentRemoval == TRUE) {
+    if (PermanentRemoval == TRUE)
+    {
         MmNumberOfPhysicalPages += NumberOfPages;
 
-        InterlockedExchangeAdd ((PLONG)&SharedUserData->NumberOfPhysicalPages,
-                                NumberOfPages);
+        InterlockedExchangeAdd((PLONG)&SharedUserData->NumberOfPhysicalPages, NumberOfPages);
 
-#if defined (_MI_COMPRESSION)
+#if defined(_MI_COMPRESSION)
 
         //
         // Rearm the interrupt to occur at the original threshold.
         //
 
-        if ((Flags & MM_PHYSICAL_MEMORY_PRODUCED_VIA_COMPRESSION) == 0) {
-            MiArmCompressionInterrupt ();
+        if ((Flags & MM_PHYSICAL_MEMORY_PRODUCED_VIA_COMPRESSION) == 0)
+        {
+            MiArmCompressionInterrupt();
         }
 #endif
     }
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
 giveup2:
 
-    InterlockedExchangeAddSizeT (&MmTotalCommitLimitMaximum, NumberOfPages);
-    InterlockedExchangeAddSizeT (&MmTotalCommitLimit, NumberOfPages);
+    InterlockedExchangeAddSizeT(&MmTotalCommitLimitMaximum, NumberOfPages);
+    InterlockedExchangeAddSizeT(&MmTotalCommitLimit, NumberOfPages);
 
     MmUnlockPagableImageSection(ExPageLockHandle);
-    ExReleaseFastMutex (&MmDynamicMemoryMutex);
+    ExReleaseFastMutex(&MmDynamicMemoryMutex);
 
     return Status;
 }
 
-
+
 NTSTATUS
-MmRemovePhysicalMemory (
-    IN PPHYSICAL_ADDRESS StartAddress,
-    IN OUT PLARGE_INTEGER NumberOfBytes
-    )
+MmRemovePhysicalMemory(IN PPHYSICAL_ADDRESS StartAddress, IN OUT PLARGE_INTEGER NumberOfBytes)
 
 /*++
 
@@ -1457,15 +1538,11 @@ Environment:
 --*/
 
 {
-    return MmRemovePhysicalMemoryEx (StartAddress, NumberOfBytes, 0);
+    return MmRemovePhysicalMemoryEx(StartAddress, NumberOfBytes, 0);
 }
-
+
 NTSTATUS
-MmRemovePhysicalMemoryEx (
-    IN PPHYSICAL_ADDRESS StartAddress,
-    IN OUT PLARGE_INTEGER NumberOfBytes,
-    IN ULONG Flags
-    )
+MmRemovePhysicalMemoryEx(IN PPHYSICAL_ADDRESS StartAddress, IN OUT PLARGE_INTEGER NumberOfBytes, IN ULONG Flags)
 
 /*++
 
@@ -1494,7 +1571,7 @@ Environment:
 
 {
     NTSTATUS Status;
-#if defined (_X86_)
+#if defined(_X86_)
     BOOLEAN CachesFlushed;
 #endif
 #if defined(_IA64_)
@@ -1509,17 +1586,19 @@ Environment:
 
     PAGED_CODE();
 
-#if defined (_MI_COMPRESSION_SUPPORTED_)
-    if (Flags & MM_PHYSICAL_MEMORY_PRODUCED_VIA_COMPRESSION) {
+#if defined(_MI_COMPRESSION_SUPPORTED_)
+    if (Flags & MM_PHYSICAL_MEMORY_PRODUCED_VIA_COMPRESSION)
+    {
         return STATUS_NOT_SUPPORTED;
     }
 #else
-    if (Flags != 0) {
+    if (Flags != 0)
+    {
         return STATUS_INVALID_PARAMETER_3;
     }
 #endif
 
-#if defined (_X86_)
+#if defined(_X86_)
 
     //
     // Issue a cache invalidation here just as a test to make sure the
@@ -1527,8 +1606,9 @@ Environment:
     // any memory.
     //
 
-    CachesFlushed = KeInvalidateAllCaches (TRUE);
-    if (CachesFlushed == FALSE) {
+    CachesFlushed = KeInvalidateAllCaches(TRUE);
+    if (CachesFlushed == FALSE)
+    {
         return STATUS_NOT_SUPPORTED;
     }
 #endif
@@ -1541,24 +1621,23 @@ Environment:
     // actually using this PTE should be a very rare case indeed.
     //
 
-    SingleVirtualAddress = (PMMPTE)MiMapSinglePage (NULL,
-                                                    0,
-                                                    MmCached,
-                                                    HighPagePriority);
+    SingleVirtualAddress = (PMMPTE)MiMapSinglePage(NULL, 0, MmCached, HighPagePriority);
 
-    if (SingleVirtualAddress == NULL) {
+    if (SingleVirtualAddress == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
 #endif
 
-    Status = MiRemovePhysicalMemory (StartAddress, NumberOfBytes, TRUE, Flags);
+    Status = MiRemovePhysicalMemory(StartAddress, NumberOfBytes, TRUE, Flags);
 
-    if (NT_SUCCESS (Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
-#if defined (_X86_)
-        CachesFlushed = KeInvalidateAllCaches (TRUE);
-        ASSERT (CachesFlushed == TRUE);
+#if defined(_X86_)
+        CachesFlushed = KeInvalidateAllCaches(TRUE);
+        ASSERT(CachesFlushed == TRUE);
 #endif
 
 #if defined(_IA64_)
@@ -1570,7 +1649,7 @@ Environment:
         // can reference the memory speculatively which would crash the machine.
         //
 
-        KeFlushEntireTb (TRUE, TRUE);
+        KeFlushEntireTb(TRUE, TRUE);
 
         //
         // Establish an uncached mapping to the pages being removed.
@@ -1586,40 +1665,39 @@ Environment:
 
         VirtualAddress = NULL;
 
-        while (MapSizeInBytes > PAGE_SIZE) {
+        while (MapSizeInBytes > PAGE_SIZE)
+        {
 
-            VirtualAddress = MmMapIoSpace (*StartAddress,
-                                           MapSizeInBytes,
-                                           MmNonCached);
+            VirtualAddress = MmMapIoSpace(*StartAddress, MapSizeInBytes, MmNonCached);
 
-            if (VirtualAddress != NULL) {
+            if (VirtualAddress != NULL)
+            {
                 break;
             }
 
             MapSizeInBytes = MapSizeInBytes >> 1;
         }
 
-        if (MapSizeInBytes <= PAGE_SIZE) {
+        if (MapSizeInBytes <= PAGE_SIZE)
+        {
 
             StartPage = (PFN_NUMBER)(StartAddress->QuadPart >> PAGE_SHIFT);
 
             NumberOfPages = (PFN_COUNT)(NumberOfBytes->QuadPart >> PAGE_SHIFT);
 
-            for (i = 0; i < NumberOfPages; i += 1) {
+            for (i = 0; i < NumberOfPages; i += 1)
+            {
 
-                SingleVirtualAddress = (PMMPTE)MiMapSinglePage (SingleVirtualAddress,
-                                                                StartPage,
-                                                                MmCached,
-                                                                HighPagePriority);
+                SingleVirtualAddress =
+                    (PMMPTE)MiMapSinglePage(SingleVirtualAddress, StartPage, MmCached, HighPagePriority);
 
-                KeSweepCacheRangeWithDrain (TRUE,
-                                            SingleVirtualAddress,
-                                            PAGE_SIZE);
+                KeSweepCacheRangeWithDrain(TRUE, SingleVirtualAddress, PAGE_SIZE);
 
                 StartPage += 1;
             }
         }
-        else {
+        else
+        {
 
             //
             // Drain all pending transactions and prefetches and perform cache
@@ -1627,32 +1705,28 @@ Environment:
             // ULONG.
             //
 
-            while (SizeInBytes > _4gb) {
-                KeSweepCacheRangeWithDrain (TRUE, VirtualAddress, _4gb - 1);
+            while (SizeInBytes > _4gb)
+            {
+                KeSweepCacheRangeWithDrain(TRUE, VirtualAddress, _4gb - 1);
                 SizeInBytes -= (_4gb - 1);
             }
 
-            KeSweepCacheRangeWithDrain (TRUE,
-                                        VirtualAddress,
-                                        (ULONG)SizeInBytes);
+            KeSweepCacheRangeWithDrain(TRUE, VirtualAddress, (ULONG)SizeInBytes);
 
-            MmUnmapIoSpace (VirtualAddress, NumberOfBytes->QuadPart);
+            MmUnmapIoSpace(VirtualAddress, NumberOfBytes->QuadPart);
         }
 #endif
     }
 
 #if defined(_IA64_)
-    MiUnmapSinglePage (SingleVirtualAddress);
+    MiUnmapSinglePage(SingleVirtualAddress);
 #endif
 
     return Status;
 }
-
+
 NTSTATUS
-MmMarkPhysicalMemoryAsBad (
-    IN PPHYSICAL_ADDRESS StartAddress,
-    IN OUT PLARGE_INTEGER NumberOfBytes
-    )
+MmMarkPhysicalMemoryAsBad(IN PPHYSICAL_ADDRESS StartAddress, IN OUT PLARGE_INTEGER NumberOfBytes)
 
 /*++
 
@@ -1688,14 +1762,11 @@ Environment:
 {
     PAGED_CODE();
 
-    return MiRemovePhysicalMemory (StartAddress, NumberOfBytes, FALSE, 0);
+    return MiRemovePhysicalMemory(StartAddress, NumberOfBytes, FALSE, 0);
 }
-
+
 NTSTATUS
-MmMarkPhysicalMemoryAsGood (
-    IN PPHYSICAL_ADDRESS StartAddress,
-    IN OUT PLARGE_INTEGER NumberOfBytes
-    )
+MmMarkPhysicalMemoryAsGood(IN PPHYSICAL_ADDRESS StartAddress, IN OUT PLARGE_INTEGER NumberOfBytes)
 
 /*++
 
@@ -1741,15 +1812,17 @@ Environment:
     PFN_NUMBER LastPage;
     LOGICAL PfnDatabaseIsPhysical;
 
-    ASSERT (KeGetCurrentIrql() == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
-    ASSERT (BYTE_OFFSET(NumberOfBytes->LowPart) == 0);
-    ASSERT (BYTE_OFFSET(StartAddress->LowPart) == 0);
+    ASSERT(BYTE_OFFSET(NumberOfBytes->LowPart) == 0);
+    ASSERT(BYTE_OFFSET(StartAddress->LowPart) == 0);
 
-    if (MI_IS_PHYSICAL_ADDRESS(MmPfnDatabase)) {
+    if (MI_IS_PHYSICAL_ADDRESS(MmPfnDatabase))
+    {
         PfnDatabaseIsPhysical = TRUE;
     }
-    else {
+    else
+    {
         PfnDatabaseIsPhysical = FALSE;
     }
 
@@ -1758,9 +1831,10 @@ Environment:
 
     EndPage = StartPage + NumberOfPages;
 
-    ExAcquireFastMutex (&MmDynamicMemoryMutex);
+    ExAcquireFastMutex(&MmDynamicMemoryMutex);
 
-    if (EndPage - 1 > MmHighestPhysicalPage) {
+    if (EndPage - 1 > MmHighestPhysicalPage)
+    {
 
         //
         // Truncate the request into something that can be mapped by the PFN
@@ -1775,8 +1849,9 @@ Environment:
     // The range cannot wrap.
     //
 
-    if (StartPage >= EndPage) {
-        ExReleaseFastMutex (&MmDynamicMemoryMutex);
+    if (StartPage >= EndPage)
+    {
+        ExReleaseFastMutex(&MmDynamicMemoryMutex);
         return STATUS_INVALID_PARAMETER_1;
     }
 
@@ -1786,20 +1861,23 @@ Environment:
 
     start = 0;
 
-    MmLockPagableSectionByHandle (ExPageLockHandle);
+    MmLockPagableSectionByHandle(ExPageLockHandle);
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    do {
+    do
+    {
 
         count = MmPhysicalMemoryBlock->Run[start].PageCount;
         Page = MmPhysicalMemoryBlock->Run[start].BasePage;
 
-        if (count != 0) {
+        if (count != 0)
+        {
 
             LastPage = Page + count;
 
-            if ((StartPage >= Page) && (EndPage <= LastPage)) {
+            if ((StartPage >= Page) && (EndPage <= LastPage))
+            {
                 break;
             }
         }
@@ -1808,10 +1886,11 @@ Environment:
 
     } while (start != MmPhysicalMemoryBlock->NumberOfRuns);
 
-    if (start == MmPhysicalMemoryBlock->NumberOfRuns) {
-        UNLOCK_PFN (OldIrql);
+    if (start == MmPhysicalMemoryBlock->NumberOfRuns)
+    {
+        UNLOCK_PFN(OldIrql);
         MmUnlockPagableImageSection(ExPageLockHandle);
-        ExReleaseFastMutex (&MmDynamicMemoryMutex);
+        ExReleaseFastMutex(&MmDynamicMemoryMutex);
         return STATUS_CONFLICTING_ADDRESSES;
     }
 
@@ -1821,19 +1900,20 @@ Environment:
     //
 
     PageFrameIndex = StartPage;
-    Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+    Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
     NumberOfPages = 0;
 
-    while (PageFrameIndex < EndPage) {
+    while (PageFrameIndex < EndPage)
+    {
 
-        if ((Pfn1->u3.e1.ParityError == 1) &&
-            (Pfn1->u3.e1.RemovalRequested == 1) &&
-            (Pfn1->u3.e1.PageLocation == BadPageList)) {
+        if ((Pfn1->u3.e1.ParityError == 1) && (Pfn1->u3.e1.RemovalRequested == 1) &&
+            (Pfn1->u3.e1.PageLocation == BadPageList))
+        {
 
             Pfn1->u3.e1.ParityError = 0;
             Pfn1->u3.e1.RemovalRequested = 0;
-            MiUnlinkPageFromList (Pfn1);
-            MiInsertPageInFreeList (PageFrameIndex);
+            MiUnlinkPageFromList(Pfn1);
+            MiInsertPageInFreeList(PageFrameIndex);
             NumberOfPages += 1;
         }
 
@@ -1843,19 +1923,19 @@ Environment:
 
     MmResidentAvailablePages += NumberOfPages;
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
     //
     // Increase all commit limits to reflect the additional memory.
     //
 
-    InterlockedExchangeAddSizeT (&MmTotalCommitLimitMaximum, NumberOfPages);
+    InterlockedExchangeAddSizeT(&MmTotalCommitLimitMaximum, NumberOfPages);
 
-    InterlockedExchangeAddSizeT (&MmTotalCommitLimit, NumberOfPages);
+    InterlockedExchangeAddSizeT(&MmTotalCommitLimit, NumberOfPages);
 
     MmUnlockPagableImageSection(ExPageLockHandle);
 
-    ExReleaseFastMutex (&MmDynamicMemoryMutex);
+    ExReleaseFastMutex(&MmDynamicMemoryMutex);
 
     //
     // Indicate number of bytes actually added to our caller.
@@ -1865,11 +1945,9 @@ Environment:
 
     return STATUS_SUCCESS;
 }
-
+
 PPHYSICAL_MEMORY_RANGE
-MmGetPhysicalMemoryRanges (
-    VOID
-    )
+MmGetPhysicalMemoryRanges(VOID)
 
 /*++
 
@@ -1906,30 +1984,30 @@ Environment:
     PPHYSICAL_MEMORY_RANGE p;
     PPHYSICAL_MEMORY_RANGE PhysicalMemoryBlock;
 
-    ASSERT (KeGetCurrentIrql() == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
-    ExAcquireFastMutex (&MmDynamicMemoryMutex);
+    ExAcquireFastMutex(&MmDynamicMemoryMutex);
 
     i = sizeof(PHYSICAL_MEMORY_RANGE) * (MmPhysicalMemoryBlock->NumberOfRuns + 1);
 
-    PhysicalMemoryBlock = ExAllocatePoolWithTag (NonPagedPool,
-                                                 i,
-                                                 'hPmM');
+    PhysicalMemoryBlock = ExAllocatePoolWithTag(NonPagedPool, i, 'hPmM');
 
-    if (PhysicalMemoryBlock == NULL) {
-        ExReleaseFastMutex (&MmDynamicMemoryMutex);
+    if (PhysicalMemoryBlock == NULL)
+    {
+        ExReleaseFastMutex(&MmDynamicMemoryMutex);
         return NULL;
     }
 
     p = PhysicalMemoryBlock;
 
-    MmLockPagableSectionByHandle (ExPageLockHandle);
+    MmLockPagableSectionByHandle(ExPageLockHandle);
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    ASSERT (i == (sizeof(PHYSICAL_MEMORY_RANGE) * (MmPhysicalMemoryBlock->NumberOfRuns + 1)));
+    ASSERT(i == (sizeof(PHYSICAL_MEMORY_RANGE) * (MmPhysicalMemoryBlock->NumberOfRuns + 1)));
 
-    for (i = 0; i < MmPhysicalMemoryBlock->NumberOfRuns; i += 1) {
+    for (i = 0; i < MmPhysicalMemoryBlock->NumberOfRuns; i += 1)
+    {
         p->BaseAddress.QuadPart = (LONGLONG)MmPhysicalMemoryBlock->Run[i].BasePage * PAGE_SIZE;
         p->NumberOfBytes.QuadPart = (LONGLONG)MmPhysicalMemoryBlock->Run[i].PageCount * PAGE_SIZE;
         p += 1;
@@ -1938,20 +2016,17 @@ Environment:
     p->BaseAddress.QuadPart = 0;
     p->NumberOfBytes.QuadPart = 0;
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
     MmUnlockPagableImageSection(ExPageLockHandle);
 
-    ExReleaseFastMutex (&MmDynamicMemoryMutex);
+    ExReleaseFastMutex(&MmDynamicMemoryMutex);
 
     return PhysicalMemoryBlock;
 }
-
+
 PFN_COUNT
-MiRemovePhysicalPages (
-    IN PFN_NUMBER StartPage,
-    IN PFN_NUMBER EndPage
-    )
+MiRemovePhysicalPages(IN PFN_NUMBER StartPage, IN PFN_NUMBER EndPage)
 
 /*++
 
@@ -2008,31 +2083,34 @@ rescan:
     // Handle transition pages last.
     //
 
-    for (MemoryList = ZeroedPageList; MemoryList <= FreePageList; MemoryList += 1) {
+    for (MemoryList = ZeroedPageList; MemoryList <= FreePageList; MemoryList += 1)
+    {
 
         ListHead = MmPageLocationList[MemoryList];
 
-        for (Color = 0; Color < MmSecondaryColors; Color += 1) {
+        for (Color = 0; Color < MmSecondaryColors; Color += 1)
+        {
             ColorHead = &MmFreePagesByColor[MemoryList][Color];
 
-            MovedPage = (PFN_NUMBER) MM_EMPTY_LIST;
+            MovedPage = (PFN_NUMBER)MM_EMPTY_LIST;
 
-            while (ColorHead->Flink != MM_EMPTY_LIST) {
+            while (ColorHead->Flink != MM_EMPTY_LIST)
+            {
 
                 Page = ColorHead->Flink;
-    
+
                 Pfn1 = MI_PFN_ELEMENT(Page);
 
-                ASSERT ((MMLISTS)Pfn1->u3.e1.PageLocation == MemoryList);
+                ASSERT((MMLISTS)Pfn1->u3.e1.PageLocation == MemoryList);
 
-                // 
+                //
                 // The Flink and Blink must be nonzero here for the page
                 // to be on the listhead.  Only code that scans the
                 // MmPhysicalMemoryBlock has to check for the zero case.
                 //
 
-                ASSERT (Pfn1->u1.Flink != 0);
-                ASSERT (Pfn1->u2.Blink != 0);
+                ASSERT(Pfn1->u1.Flink != 0);
+                ASSERT(Pfn1->u2.Blink != 0);
 
                 //
                 // See if the page is desired by the caller.
@@ -2044,28 +2122,31 @@ rescan:
                 // released and reacquired).
                 //
 
-                if ((Pfn1->u3.e1.RemovalRequested == 1) &&
-                    (MmAvailablePages != 0)) {
+                if ((Pfn1->u3.e1.RemovalRequested == 1) && (MmAvailablePages != 0))
+                {
 
-                    ASSERT (Pfn1->u3.e1.ReadInProgress == 0);
-    
-                    MiUnlinkFreeOrZeroedPage (Page);
-    
-                    MiInsertPageInList (&MmBadPageListHead, Page);
+                    ASSERT(Pfn1->u3.e1.ReadInProgress == 0);
+
+                    MiUnlinkFreeOrZeroedPage(Page);
+
+                    MiInsertPageInList(&MmBadPageListHead, Page);
 
                     NumberOfPages += 1;
                 }
-                else {
+                else
+                {
 
                     //
                     // Unwanted so put the page on the end of list.
                     // If first time, save pfn.
                     //
 
-                    if (MovedPage == MM_EMPTY_LIST) {
+                    if (MovedPage == MM_EMPTY_LIST)
+                    {
                         MovedPage = Page;
                     }
-                    else if (Page == MovedPage) {
+                    else if (Page == MovedPage)
+                    {
 
                         //
                         // No more pages available in this colored chain.
@@ -2081,7 +2162,8 @@ rescan:
 
                     PageNextColored = (PFN_NUMBER)Pfn1->OriginalPte.u.Long;
 
-                    if (PageNextColored == MM_EMPTY_LIST) {
+                    if (PageNextColored == MM_EMPTY_LIST)
+                    {
 
                         //
                         // No more pages available in this colored chain.
@@ -2090,13 +2172,13 @@ rescan:
                         break;
                     }
 
-                    ASSERT (Pfn1->u1.Flink != 0);
-                    ASSERT (Pfn1->u1.Flink != MM_EMPTY_LIST);
-                    ASSERT (Pfn1->u4.PteFrame != MI_MAGIC_AWE_PTEFRAME);
+                    ASSERT(Pfn1->u1.Flink != 0);
+                    ASSERT(Pfn1->u1.Flink != MM_EMPTY_LIST);
+                    ASSERT(Pfn1->u4.PteFrame != MI_MAGIC_AWE_PTEFRAME);
 
                     PfnNextColored = MI_PFN_ELEMENT(PageNextColored);
-                    ASSERT ((MMLISTS)PfnNextColored->u3.e1.PageLocation == MemoryList);
-                    ASSERT (PfnNextColored->u4.PteFrame != MI_MAGIC_AWE_PTEFRAME);
+                    ASSERT((MMLISTS)PfnNextColored->u3.e1.PageLocation == MemoryList);
+                    ASSERT(PfnNextColored->u4.PteFrame != MI_MAGIC_AWE_PTEFRAME);
 
                     //
                     // Adjust the free page list so Page
@@ -2106,47 +2188,54 @@ rescan:
                     PageNextFlink = Pfn1->u1.Flink;
                     PfnNextFlink = MI_PFN_ELEMENT(PageNextFlink);
 
-                    ASSERT ((MMLISTS)PfnNextFlink->u3.e1.PageLocation == MemoryList);
-                    ASSERT (PfnNextFlink->u4.PteFrame != MI_MAGIC_AWE_PTEFRAME);
+                    ASSERT((MMLISTS)PfnNextFlink->u3.e1.PageLocation == MemoryList);
+                    ASSERT(PfnNextFlink->u4.PteFrame != MI_MAGIC_AWE_PTEFRAME);
 
                     PfnLastColored = ColorHead->Blink;
-                    ASSERT (PfnLastColored != (PMMPFN)MM_EMPTY_LIST);
-                    ASSERT (PfnLastColored->OriginalPte.u.Long == MM_EMPTY_LIST);
-                    ASSERT (PfnLastColored->u4.PteFrame != MI_MAGIC_AWE_PTEFRAME);
-                    ASSERT (PfnLastColored->u2.Blink != MM_EMPTY_LIST);
+                    ASSERT(PfnLastColored != (PMMPFN)MM_EMPTY_LIST);
+                    ASSERT(PfnLastColored->OriginalPte.u.Long == MM_EMPTY_LIST);
+                    ASSERT(PfnLastColored->u4.PteFrame != MI_MAGIC_AWE_PTEFRAME);
+                    ASSERT(PfnLastColored->u2.Blink != MM_EMPTY_LIST);
 
-                    ASSERT ((MMLISTS)PfnLastColored->u3.e1.PageLocation == MemoryList);
+                    ASSERT((MMLISTS)PfnLastColored->u3.e1.PageLocation == MemoryList);
                     PageLastColored = PfnLastColored - MmPfnDatabase;
 
-                    if (ListHead->Flink == Page) {
+                    if (ListHead->Flink == Page)
+                    {
 
-                        ASSERT (Pfn1->u2.Blink == MM_EMPTY_LIST);
-                        ASSERT (ListHead->Blink != Page);
+                        ASSERT(Pfn1->u2.Blink == MM_EMPTY_LIST);
+                        ASSERT(ListHead->Blink != Page);
 
                         ListHead->Flink = PageNextFlink;
 
                         PfnNextFlink->u2.Blink = MM_EMPTY_LIST;
                     }
-                    else {
+                    else
+                    {
 
-                        ASSERT (Pfn1->u2.Blink != MM_EMPTY_LIST);
-                        ASSERT ((MMLISTS)(MI_PFN_ELEMENT((MI_PFN_ELEMENT(Pfn1->u2.Blink)->u1.Flink)))->u4.PteFrame != MI_MAGIC_AWE_PTEFRAME);
-                        ASSERT ((MMLISTS)(MI_PFN_ELEMENT((MI_PFN_ELEMENT(Pfn1->u2.Blink)->u1.Flink)))->u3.e1.PageLocation == MemoryList);
+                        ASSERT(Pfn1->u2.Blink != MM_EMPTY_LIST);
+                        ASSERT((MMLISTS)(MI_PFN_ELEMENT((MI_PFN_ELEMENT(Pfn1->u2.Blink)->u1.Flink)))->u4.PteFrame !=
+                               MI_MAGIC_AWE_PTEFRAME);
+                        ASSERT(
+                            (MMLISTS)(MI_PFN_ELEMENT((MI_PFN_ELEMENT(Pfn1->u2.Blink)->u1.Flink)))->u3.e1.PageLocation ==
+                            MemoryList);
 
                         MI_PFN_ELEMENT(Pfn1->u2.Blink)->u1.Flink = PageNextFlink;
                         PfnNextFlink->u2.Blink = Pfn1->u2.Blink;
                     }
 
 #if DBG
-                    if (PfnLastColored->u1.Flink == MM_EMPTY_LIST) {
-                        ASSERT (ListHead->Blink == PageLastColored);
+                    if (PfnLastColored->u1.Flink == MM_EMPTY_LIST)
+                    {
+                        ASSERT(ListHead->Blink == PageLastColored);
                     }
 #endif
 
                     Pfn1->u1.Flink = PfnLastColored->u1.Flink;
                     Pfn1->u2.Blink = PageLastColored;
 
-                    if (ListHead->Blink == PageLastColored) {
+                    if (ListHead->Blink == PageLastColored)
+                    {
                         ListHead->Blink = Page;
                     }
 
@@ -2154,9 +2243,10 @@ rescan:
                     // Adjust the colored chains.
                     //
 
-                    if (PfnLastColored->u1.Flink != MM_EMPTY_LIST) {
-                        ASSERT (MI_PFN_ELEMENT(PfnLastColored->u1.Flink)->u4.PteFrame != MI_MAGIC_AWE_PTEFRAME);
-                        ASSERT ((MMLISTS)(MI_PFN_ELEMENT(PfnLastColored->u1.Flink)->u3.e1.PageLocation) == MemoryList);
+                    if (PfnLastColored->u1.Flink != MM_EMPTY_LIST)
+                    {
+                        ASSERT(MI_PFN_ELEMENT(PfnLastColored->u1.Flink)->u4.PteFrame != MI_MAGIC_AWE_PTEFRAME);
+                        ASSERT((MMLISTS)(MI_PFN_ELEMENT(PfnLastColored->u1.Flink)->u3.e1.PageLocation) == MemoryList);
                         MI_PFN_ELEMENT(PfnLastColored->u1.Flink)->u2.Blink = Page;
                     }
 
@@ -2165,7 +2255,7 @@ rescan:
                     ColorHead->Flink = PageNextColored;
                     Pfn1->OriginalPte.u.Long = MM_EMPTY_LIST;
 
-                    ASSERT (PfnLastColored->OriginalPte.u.Long == MM_EMPTY_LIST);
+                    ASSERT(PfnLastColored->OriginalPte.u.Long == MM_EMPTY_LIST);
                     PfnLastColored->OriginalPte.u.Long = Page;
                     ColorHead->Blink = Pfn1;
                 }
@@ -2174,15 +2264,14 @@ rescan:
     }
 
     RescanNeeded = FALSE;
-    Pfn1 = MI_PFN_ELEMENT (StartPage);
+    Pfn1 = MI_PFN_ELEMENT(StartPage);
 
-    do {
+    do
+    {
 
-        if ((Pfn1->u3.e1.PageLocation == StandbyPageList) &&
-            (Pfn1->u1.Flink != 0) &&
-            (Pfn1->u2.Blink != 0) &&
-            (Pfn1->u3.e2.ReferenceCount == 0) &&
-            (MmAvailablePages != 0)) {
+        if ((Pfn1->u3.e1.PageLocation == StandbyPageList) && (Pfn1->u1.Flink != 0) && (Pfn1->u2.Blink != 0) &&
+            (Pfn1->u3.e2.ReferenceCount == 0) && (MmAvailablePages != 0))
+        {
 
             //
             // Systems utilizing memory compression may have more
@@ -2192,11 +2281,12 @@ rescan:
             // released and reacquired).
             //
 
-            ASSERT (Pfn1->u3.e1.ReadInProgress == 0);
+            ASSERT(Pfn1->u3.e1.ReadInProgress == 0);
 
             RemovePage = TRUE;
 
-            if (Pfn1->u3.e1.RemovalRequested == 0) {
+            if (Pfn1->u3.e1.RemovalRequested == 0)
+            {
 
                 //
                 // This page is not directly needed for a hot remove - but if
@@ -2209,22 +2299,27 @@ rescan:
                 // and extended parent pages.
                 //
 
-                Pfn2 = MI_PFN_ELEMENT (Pfn1->u4.PteFrame);
-                if (Pfn2->u3.e1.RemovalRequested == 0) {
+                Pfn2 = MI_PFN_ELEMENT(Pfn1->u4.PteFrame);
+                if (Pfn2->u3.e1.RemovalRequested == 0)
+                {
 #if (_MI_PAGING_LEVELS >= 3)
-                    Pfn2 = MI_PFN_ELEMENT (Pfn2->u4.PteFrame);
-                    if (Pfn2->u3.e1.RemovalRequested == 0) {
+                    Pfn2 = MI_PFN_ELEMENT(Pfn2->u4.PteFrame);
+                    if (Pfn2->u3.e1.RemovalRequested == 0)
+                    {
                         RemovePage = FALSE;
                     }
-                    else if (Pfn2->u2.ShareCount == 1) {
+                    else if (Pfn2->u2.ShareCount == 1)
+                    {
                         RescanNeeded = TRUE;
                     }
 #if (_MI_PAGING_LEVELS >= 4)
-                    Pfn2 = MI_PFN_ELEMENT (Pfn2->u4.PteFrame);
-                    if (Pfn2->u3.e1.RemovalRequested == 0) {
+                    Pfn2 = MI_PFN_ELEMENT(Pfn2->u4.PteFrame);
+                    if (Pfn2->u3.e1.RemovalRequested == 0)
+                    {
                         RemovePage = FALSE;
                     }
-                    else if (Pfn2->u2.ShareCount == 1) {
+                    else if (Pfn2->u2.ShareCount == 1)
+                    {
                         RescanNeeded = TRUE;
                     }
 #endif
@@ -2232,20 +2327,22 @@ rescan:
                     RemovePage = FALSE;
 #endif
                 }
-                else if (Pfn2->u2.ShareCount == 1) {
+                else if (Pfn2->u2.ShareCount == 1)
+                {
                     RescanNeeded = TRUE;
                 }
             }
-    
-            if (RemovePage == TRUE) {
+
+            if (RemovePage == TRUE)
+            {
 
                 //
                 // This page is in the desired range - grab it.
                 //
-    
-                MiUnlinkPageFromList (Pfn1);
-                MiRestoreTransitionPte (StartPage);
-                MiInsertPageInList (&MmBadPageListHead, StartPage);
+
+                MiUnlinkPageFromList(Pfn1);
+                MiRestoreTransitionPte(StartPage);
+                MiInsertPageInList(&MmBadPageListHead, StartPage);
                 NumberOfPages += 1;
             }
         }
@@ -2255,7 +2352,8 @@ rescan:
 
     } while (StartPage < EndPage);
 
-    if (RescanNeeded == TRUE) {
+    if (RescanNeeded == TRUE)
+    {
 
         //
         // A page table, directory or parent was freed by removing a transition
@@ -2269,7 +2367,8 @@ rescan:
         goto rescan;
     }
 #if DBG
-    else {
+    else
+    {
         MiDynmemData[8] += 1;
     }
 #endif

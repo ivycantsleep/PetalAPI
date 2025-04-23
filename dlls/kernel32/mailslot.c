@@ -22,12 +22,8 @@ Revision History:
 
 HANDLE
 APIENTRY
-CreateMailslotW(
-    IN LPCWSTR lpName,
-    IN DWORD nMaxMessageSize,
-    IN DWORD lReadTimeout,
-    IN LPSECURITY_ATTRIBUTES lpSecurityAttributes OPTIONAL
-    )
+CreateMailslotW(IN LPCWSTR lpName, IN DWORD nMaxMessageSize, IN DWORD lReadTimeout,
+                IN LPSECURITY_ATTRIBUTES lpSecurityAttributes OPTIONAL)
 
 /*++
 
@@ -76,64 +72,54 @@ Return Value:
     PVOID freeBuffer;
     BOOLEAN TranslationStatus;
 
-    RtlInitUnicodeString( &fileName, lpName );
+    RtlInitUnicodeString(&fileName, lpName);
 
-    TranslationStatus = RtlDosPathNameToNtPathName_U(
-                            lpName,
-                            &fileName,
-                            &filePart,
-                            &relativeName
-                            );
+    TranslationStatus = RtlDosPathNameToNtPathName_U(lpName, &fileName, &filePart, &relativeName);
 
-    if ( !TranslationStatus ) {
+    if (!TranslationStatus)
+    {
         SetLastError(ERROR_PATH_NOT_FOUND);
         return INVALID_HANDLE_VALUE;
     }
 
     freeBuffer = fileName.Buffer;
 
-    if ( relativeName.RelativeName.Length ) {
+    if (relativeName.RelativeName.Length)
+    {
         fileName = *(PUNICODE_STRING)&relativeName.RelativeName;
-    } else {
+    }
+    else
+    {
         relativeName.ContainingDirectory = NULL;
     }
 
-    InitializeObjectAttributes(
-        &objectAttributes,
-        &fileName,
-        OBJ_CASE_INSENSITIVE,
-        relativeName.ContainingDirectory,
-        NULL
-        );
+    InitializeObjectAttributes(&objectAttributes, &fileName, OBJ_CASE_INSENSITIVE, relativeName.ContainingDirectory,
+                               NULL);
 
-    if ( ARGUMENT_PRESENT(lpSecurityAttributes) ) {
-        objectAttributes.SecurityDescriptor =
-            lpSecurityAttributes->lpSecurityDescriptor;
-        if ( lpSecurityAttributes->bInheritHandle ) {
+    if (ARGUMENT_PRESENT(lpSecurityAttributes))
+    {
+        objectAttributes.SecurityDescriptor = lpSecurityAttributes->lpSecurityDescriptor;
+        if (lpSecurityAttributes->bInheritHandle)
+        {
             objectAttributes.Attributes |= OBJ_INHERIT;
         }
     }
 
-    if (lReadTimeout == MAILSLOT_WAIT_FOREVER) {
+    if (lReadTimeout == MAILSLOT_WAIT_FOREVER)
+    {
         readTimeout.HighPart = 0xFFFFFFFF;
         readTimeout.LowPart = 0xFFFFFFFF;
-    } else {
-        readTimeout.QuadPart = - (LONGLONG)UInt32x32To64( lReadTimeout, 10 * 1000 );
+    }
+    else
+    {
+        readTimeout.QuadPart = -(LONGLONG)UInt32x32To64(lReadTimeout, 10 * 1000);
     }
 
-    status = NtCreateMailslotFile (
-                &handle,
-                GENERIC_READ | SYNCHRONIZE | WRITE_DAC,
-                &objectAttributes,
-                &ioStatusBlock,
-                FILE_CREATE,
-                0,
-                nMaxMessageSize,
-                (PLARGE_INTEGER)&readTimeout
-                );
+    status = NtCreateMailslotFile(&handle, GENERIC_READ | SYNCHRONIZE | WRITE_DAC, &objectAttributes, &ioStatusBlock,
+                                  FILE_CREATE, 0, nMaxMessageSize, (PLARGE_INTEGER)&readTimeout);
 
-    if ( status == STATUS_NOT_SUPPORTED ||
-         status == STATUS_INVALID_DEVICE_REQUEST ) {
+    if (status == STATUS_NOT_SUPPORTED || status == STATUS_INVALID_DEVICE_REQUEST)
+    {
 
         //
         // The request must have been processed by some other device driver
@@ -143,10 +129,11 @@ Return Value:
         status = STATUS_OBJECT_NAME_INVALID;
     }
 
-    RtlFreeHeap( RtlProcessHeap(), 0, freeBuffer );
+    RtlFreeHeap(RtlProcessHeap(), 0, freeBuffer);
 
-    if (!NT_SUCCESS(status)) {
-        BaseSetLastNTError( status );
+    if (!NT_SUCCESS(status))
+    {
+        BaseSetLastNTError(status);
         return INVALID_HANDLE_VALUE;
     }
 
@@ -156,47 +143,36 @@ Return Value:
 
 HANDLE
 APIENTRY
-CreateMailslotA(
-    IN LPCSTR lpName,
-    IN DWORD nMaxMessageSize,
-    IN DWORD lReadTimeout,
-    IN LPSECURITY_ATTRIBUTES lpSecurityAttributes OPTIONAL
-    )
+CreateMailslotA(IN LPCSTR lpName, IN DWORD nMaxMessageSize, IN DWORD lReadTimeout,
+                IN LPSECURITY_ATTRIBUTES lpSecurityAttributes OPTIONAL)
 {
     PUNICODE_STRING unicode;
     ANSI_STRING ansiString;
     NTSTATUS status;
 
     unicode = &NtCurrentTeb()->StaticUnicodeString;
-    RtlInitAnsiString( &ansiString, lpName );
-    status = RtlAnsiStringToUnicodeString( unicode, &ansiString, FALSE );
+    RtlInitAnsiString(&ansiString, lpName);
+    status = RtlAnsiStringToUnicodeString(unicode, &ansiString, FALSE);
 
-    if ( !NT_SUCCESS( status ) ) {
-        if ( status == STATUS_BUFFER_OVERFLOW ) {
+    if (!NT_SUCCESS(status))
+    {
+        if (status == STATUS_BUFFER_OVERFLOW)
+        {
             SetLastError(ERROR_FILENAME_EXCED_RANGE);
-        } else {
+        }
+        else
+        {
             BaseSetLastNTError(status);
         }
         return INVALID_HANDLE_VALUE;
     }
 
-    return ( CreateMailslotW( unicode->Buffer,
-                              nMaxMessageSize,
-                              lReadTimeout,
-                              lpSecurityAttributes
-                              ) );
-
+    return (CreateMailslotW(unicode->Buffer, nMaxMessageSize, lReadTimeout, lpSecurityAttributes));
 }
 
-BOOL
-APIENTRY
-GetMailslotInfo(
-    IN HANDLE hMailslot,
-    OUT LPDWORD lpMaxMessageSize OPTIONAL,
-    OUT LPDWORD lpNextSize OPTIONAL,
-    OUT LPDWORD lpMessageCount OPTIONAL,
-    OUT LPDWORD lpReadTimeout OPTIONAL
-    )
+BOOL APIENTRY GetMailslotInfo(IN HANDLE hMailslot, OUT LPDWORD lpMaxMessageSize OPTIONAL,
+                              OUT LPDWORD lpNextSize OPTIONAL, OUT LPDWORD lpMessageCount OPTIONAL,
+                              OUT LPDWORD lpReadTimeout OPTIONAL)
 
 /*++
 
@@ -237,48 +213,50 @@ Return Value:
     FILE_MAILSLOT_QUERY_INFORMATION mailslotInfo;
     LARGE_INTEGER millisecondTimeout, tmp;
 
-    status = NtQueryInformationFile( hMailslot,
-                                     &ioStatusBlock,
-                                     &mailslotInfo,
-                                     sizeof( mailslotInfo ),
-                                     FileMailslotQueryInformation );
+    status = NtQueryInformationFile(hMailslot, &ioStatusBlock, &mailslotInfo, sizeof(mailslotInfo),
+                                    FileMailslotQueryInformation);
 
-    if ( !NT_SUCCESS( status ) ) {
-        BaseSetLastNTError( status );
-        return ( FALSE );
+    if (!NT_SUCCESS(status))
+    {
+        BaseSetLastNTError(status);
+        return (FALSE);
     }
 
-    if ( ARGUMENT_PRESENT( lpMaxMessageSize ) ) {
+    if (ARGUMENT_PRESENT(lpMaxMessageSize))
+    {
         *lpMaxMessageSize = mailslotInfo.MaximumMessageSize;
     }
 
-    if ( ARGUMENT_PRESENT( lpNextSize ) ) {
+    if (ARGUMENT_PRESENT(lpNextSize))
+    {
         *lpNextSize = mailslotInfo.NextMessageSize;
     }
 
-    if ( ARGUMENT_PRESENT( lpMessageCount ) ) {
+    if (ARGUMENT_PRESENT(lpMessageCount))
+    {
         *lpMessageCount = mailslotInfo.MessagesAvailable;
     }
 
-    if ( ARGUMENT_PRESENT( lpReadTimeout ) ) {
+    if (ARGUMENT_PRESENT(lpReadTimeout))
+    {
 
         //
         // Convert read timeout from 100 ns intervals to milliseconds.
         // The readtime is currently negative, since it is a relative time.
         //
 
-        if ( mailslotInfo.ReadTimeout.HighPart != 0xFFFFFFFF
-             || mailslotInfo.ReadTimeout.LowPart != 0xFFFFFFFF ) {
+        if (mailslotInfo.ReadTimeout.HighPart != 0xFFFFFFFF || mailslotInfo.ReadTimeout.LowPart != 0xFFFFFFFF)
+        {
 
-            tmp.QuadPart = - mailslotInfo.ReadTimeout.QuadPart;
-            millisecondTimeout = RtlExtendedLargeIntegerDivide(
-                                     tmp,
-                                     10 * 1000,
-                                     NULL );
+            tmp.QuadPart = -mailslotInfo.ReadTimeout.QuadPart;
+            millisecondTimeout = RtlExtendedLargeIntegerDivide(tmp, 10 * 1000, NULL);
 
-            if ( millisecondTimeout.HighPart == 0 ) {
+            if (millisecondTimeout.HighPart == 0)
+            {
                 *lpReadTimeout = millisecondTimeout.LowPart;
-            } else {
+            }
+            else
+            {
 
                 //
                 // The millisecond calculation would overflow the dword.
@@ -286,29 +264,23 @@ Return Value:
                 //
 
                 *lpReadTimeout = 0xFFFFFFFE;
-
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // The mailslot timeout is infinite.
             //
 
             *lpReadTimeout = MAILSLOT_WAIT_FOREVER;
-
         }
     }
 
-    return( TRUE );
+    return (TRUE);
 }
 
-BOOL
-APIENTRY
-SetMailslotInfo(
-    IN HANDLE hMailslot,
-    IN DWORD lReadTimeout
-    )
+BOOL APIENTRY SetMailslotInfo(IN HANDLE hMailslot, IN DWORD lReadTimeout)
 
 /*++
 
@@ -337,23 +309,24 @@ Return Value:
     FILE_MAILSLOT_SET_INFORMATION mailslotInfo;
     LARGE_INTEGER timeout;
 
-    if ( lReadTimeout == MAILSLOT_WAIT_FOREVER ) {
+    if (lReadTimeout == MAILSLOT_WAIT_FOREVER)
+    {
         timeout.HighPart = 0xFFFFFFFF;
         timeout.LowPart = 0xFFFFFFFF;
-    } else {
-        timeout.QuadPart = - (LONGLONG)UInt32x32To64( lReadTimeout, 10 * 1000 );
+    }
+    else
+    {
+        timeout.QuadPart = -(LONGLONG)UInt32x32To64(lReadTimeout, 10 * 1000);
     }
 
     mailslotInfo.ReadTimeout = &timeout;
-    status = NtSetInformationFile( hMailslot,
-                                   &ioStatusBlock,
-                                   &mailslotInfo,
-                                   sizeof( mailslotInfo ),
-                                   FileMailslotSetInformation );
+    status = NtSetInformationFile(hMailslot, &ioStatusBlock, &mailslotInfo, sizeof(mailslotInfo),
+                                  FileMailslotSetInformation);
 
-    if ( !NT_SUCCESS( status ) ) {
-        BaseSetLastNTError( status );
-        return ( FALSE );
+    if (!NT_SUCCESS(status))
+    {
+        BaseSetLastNTError(status);
+        return (FALSE);
     }
 
     return TRUE;

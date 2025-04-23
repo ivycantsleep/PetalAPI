@@ -28,18 +28,12 @@ Revision History:
 //
 // We need to know the name of the driver when we write log errors
 //
-PDRIVER_OBJECT  AcpiDriverObject;
-
+PDRIVER_OBJECT AcpiDriverObject;
 
 
 NTSTATUS
-ACPIWriteEventLogEntry (
-    IN  ULONG     ErrorCode,
-    IN  PVOID     InsertionStrings, OPTIONAL
-    IN  ULONG     StringCount,      OPTIONAL
-    IN  PVOID     DumpData, OPTIONAL
-    IN  ULONG     DataSize  OPTIONAL
-    )
+ACPIWriteEventLogEntry(IN ULONG ErrorCode, IN PVOID InsertionStrings, OPTIONAL IN ULONG StringCount,
+                       OPTIONAL IN PVOID DumpData, OPTIONAL IN ULONG DataSize OPTIONAL)
 /*++
 
 Routine Description: Write a entry to the Event Log.
@@ -61,22 +55,22 @@ Return Value:
                           STATUS_UNSUCCESSFUL
 --*/
 {
-    NTSTATUS  status = STATUS_SUCCESS;
-    ULONG     totalPacketSize = 0;
-    ULONG     i, stringSize = 0;
-    PWCHAR    *strings, temp;
-    PIO_ERROR_LOG_PACKET  logEntry = NULL;
+    NTSTATUS status = STATUS_SUCCESS;
+    ULONG totalPacketSize = 0;
+    ULONG i, stringSize = 0;
+    PWCHAR *strings, temp;
+    PIO_ERROR_LOG_PACKET logEntry = NULL;
 
 
-    //  
+    //
     // Calculate total string length, including NULL.
     //
 
-    strings = (PWCHAR *) InsertionStrings;
+    strings = (PWCHAR *)InsertionStrings;
 
-    for (i = 0; i < StringCount; i++) 
+    for (i = 0; i < StringCount; i++)
     {
-        UNICODE_STRING  unicodeString;
+        UNICODE_STRING unicodeString;
 
         RtlInitUnicodeString(&unicodeString, strings[i]);
         stringSize += unicodeString.Length + sizeof(UNICODE_NULL);
@@ -90,76 +84,67 @@ Return Value:
 
     totalPacketSize = (sizeof(IO_ERROR_LOG_PACKET)) + DataSize + stringSize;
 
-    if (totalPacketSize <= ERROR_LOG_MAXIMUM_SIZE) 
+    if (totalPacketSize <= ERROR_LOG_MAXIMUM_SIZE)
     {
         //
         // Allocate the error log packet
         //
-        logEntry = IoAllocateErrorLogEntry((PDRIVER_OBJECT) AcpiDriverObject,
-                                         (UCHAR) totalPacketSize);
+        logEntry = IoAllocateErrorLogEntry((PDRIVER_OBJECT)AcpiDriverObject, (UCHAR)totalPacketSize);
 
-        if (logEntry) 
+        if (logEntry)
         {
             RtlZeroMemory(logEntry, totalPacketSize);
 
             //
             // Fill out the packet
             //
-            logEntry->DumpDataSize          = (USHORT) DataSize;
-            logEntry->NumberOfStrings       = (USHORT) StringCount;
-            logEntry->ErrorCode             = ErrorCode;
+            logEntry->DumpDataSize = (USHORT)DataSize;
+            logEntry->NumberOfStrings = (USHORT)StringCount;
+            logEntry->ErrorCode = ErrorCode;
 
-            if (StringCount) 
+            if (StringCount)
             {
-                logEntry->StringOffset = (USHORT) ((sizeof(IO_ERROR_LOG_PACKET)) + DataSize);
+                logEntry->StringOffset = (USHORT)((sizeof(IO_ERROR_LOG_PACKET)) + DataSize);
             }
 
             //
             // Copy Dump Data
             //
-            if (DataSize) 
+            if (DataSize)
             {
-                RtlCopyMemory((PVOID) logEntry->DumpData,
-                              DumpData,
-                              DataSize);
+                RtlCopyMemory((PVOID)logEntry->DumpData, DumpData, DataSize);
             }
 
             //
             // Copy String Data
             //
-            temp = (PWCHAR) ((PUCHAR) logEntry + logEntry->StringOffset);
+            temp = (PWCHAR)((PUCHAR)logEntry + logEntry->StringOffset);
 
-            for (i = 0; i < StringCount; i++) 
+            for (i = 0; i < StringCount; i++)
             {
-                PWCHAR  ptr = strings[i];
+                PWCHAR ptr = strings[i];
 
                 //
                 // This routine will copy the null terminator on the string
                 //
-                while ((*temp++ = *ptr++) != UNICODE_NULL);
+                while ((*temp++ = *ptr++) != UNICODE_NULL)
+                    ;
             }
 
             //
             // Submit error log packet
             //
             IoWriteErrorLogEntry(logEntry);
-            
         }
         else
         {
-            ACPIPrint((
-                        ACPI_PRINT_CRITICAL,
-                        "ACPIWriteEventLogEntry: Failed IoAllocateErrorLogEntry().\n"
-                     ));
+            ACPIPrint((ACPI_PRINT_CRITICAL, "ACPIWriteEventLogEntry: Failed IoAllocateErrorLogEntry().\n"));
             status = STATUS_INSUFFICIENT_RESOURCES;
         }
     }
     else
     {
-        ACPIPrint((
-                    ACPI_PRINT_CRITICAL,
-                    "ACPIWriteEventLogEntry: Error Log Entry too large.\n"
-                 ));
+        ACPIPrint((ACPI_PRINT_CRITICAL, "ACPIWriteEventLogEntry: Error Log Entry too large.\n"));
 
         status = STATUS_UNSUCCESSFUL;
     }
@@ -168,10 +153,8 @@ Return Value:
 }
 
 
-PDEVICE_OBJECT 
-    ACPIGetRootDeviceObject(
-    VOID
-    )
+PDEVICE_OBJECT
+ACPIGetRootDeviceObject(VOID)
 /*++
 
 Routine Description: Get the value of the ACPI root device object.
@@ -189,10 +172,10 @@ Return Value:
 --*/
 
 {
-    if(RootDeviceExtension)
+    if (RootDeviceExtension)
     {
         return RootDeviceExtension->DeviceObject;
     }
-    
+
     return NULL;
 }

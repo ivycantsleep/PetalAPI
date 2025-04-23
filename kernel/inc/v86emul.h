@@ -23,7 +23,7 @@ Revision History:
 #ifndef _V86EMUL_
 #define _V86EMUL_
 
-
+
 // begin_ntminiport begin_ntosp
 
 //
@@ -31,7 +31,8 @@ Revision History:
 // hooked out directly from the V86 emulator to the driver.
 //
 
-typedef enum _EMULATOR_PORT_ACCESS_TYPE {
+typedef enum _EMULATOR_PORT_ACCESS_TYPE
+{
     Uchar,
     Ushort,
     Ulong
@@ -41,10 +42,11 @@ typedef enum _EMULATOR_PORT_ACCESS_TYPE {
 // Access Modes
 //
 
-#define EMULATOR_READ_ACCESS    0x01
-#define EMULATOR_WRITE_ACCESS   0x02
+#define EMULATOR_READ_ACCESS 0x01
+#define EMULATOR_WRITE_ACCESS 0x02
 
-typedef struct _EMULATOR_ACCESS_ENTRY {
+typedef struct _EMULATOR_ACCESS_ENTRY
+{
     ULONG BasePort;
     ULONG NumConsecutivePorts;
     EMULATOR_PORT_ACCESS_TYPE AccessType;
@@ -60,62 +62,25 @@ typedef struct _EMULATOR_ACCESS_ENTRY {
 // provided by the kernel driver to hook out access to io ports.
 //
 
-typedef
-NTSTATUS
-(*PDRIVER_IO_PORT_UCHAR ) (
-    IN ULONG_PTR Context,
-    IN ULONG Port,
-    IN UCHAR AccessMode,
-    IN OUT PUCHAR Data
-    );
+typedef NTSTATUS (*PDRIVER_IO_PORT_UCHAR)(IN ULONG_PTR Context, IN ULONG Port, IN UCHAR AccessMode, IN OUT PUCHAR Data);
 
-typedef
-NTSTATUS
-(*PDRIVER_IO_PORT_UCHAR_STRING ) (
-    IN ULONG_PTR Context,
-    IN ULONG Port,
-    IN UCHAR AccessMode,
-    IN OUT PUCHAR Data,
-    IN ULONG DataLength
-    );
+typedef NTSTATUS (*PDRIVER_IO_PORT_UCHAR_STRING)(IN ULONG_PTR Context, IN ULONG Port, IN UCHAR AccessMode,
+                                                 IN OUT PUCHAR Data, IN ULONG DataLength);
 
-typedef
-NTSTATUS
-(*PDRIVER_IO_PORT_USHORT ) (
-    IN ULONG_PTR Context,
-    IN ULONG Port,
-    IN UCHAR AccessMode,
-    IN OUT PUSHORT Data
-    );
+typedef NTSTATUS (*PDRIVER_IO_PORT_USHORT)(IN ULONG_PTR Context, IN ULONG Port, IN UCHAR AccessMode,
+                                           IN OUT PUSHORT Data);
 
-typedef
-NTSTATUS
-(*PDRIVER_IO_PORT_USHORT_STRING ) (
-    IN ULONG_PTR Context,
-    IN ULONG Port,
-    IN UCHAR AccessMode,
-    IN OUT PUSHORT Data,
-    IN ULONG DataLength // number of words
-    );
+typedef NTSTATUS (*PDRIVER_IO_PORT_USHORT_STRING)(IN ULONG_PTR Context, IN ULONG Port, IN UCHAR AccessMode,
+                                                  IN OUT PUSHORT Data,
+                                                  IN ULONG DataLength // number of words
+);
 
-typedef
-NTSTATUS
-(*PDRIVER_IO_PORT_ULONG ) (
-    IN ULONG_PTR Context,
-    IN ULONG Port,
-    IN UCHAR AccessMode,
-    IN OUT PULONG Data
-    );
+typedef NTSTATUS (*PDRIVER_IO_PORT_ULONG)(IN ULONG_PTR Context, IN ULONG Port, IN UCHAR AccessMode, IN OUT PULONG Data);
 
-typedef
-NTSTATUS
-(*PDRIVER_IO_PORT_ULONG_STRING ) (
-    IN ULONG_PTR Context,
-    IN ULONG Port,
-    IN UCHAR AccessMode,
-    IN OUT PULONG Data,
-    IN ULONG DataLength  // number of dwords
-    );
+typedef NTSTATUS (*PDRIVER_IO_PORT_ULONG_STRING)(IN ULONG_PTR Context, IN ULONG Port, IN UCHAR AccessMode,
+                                                 IN OUT PULONG Data,
+                                                 IN ULONG DataLength // number of dwords
+);
 
 // end_ntosp
 #endif // _V86EMUL_

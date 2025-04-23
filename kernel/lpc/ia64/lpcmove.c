@@ -32,16 +32,10 @@ Revision History:
 --*/
 
 #include "lpcp.h"
-
 
-VOID
-LpcpMoveMessage (
-    OUT PPORT_MESSAGE DstMsg,
-    IN PPORT_MESSAGE SrcMsg,
-    IN PUCHAR SrcMsgData,
-    IN ULONG MsgType OPTIONAL,
-    IN PCLIENT_ID ClientId OPTIONAL
-    )
+
+VOID LpcpMoveMessage(OUT PPORT_MESSAGE DstMsg, IN PPORT_MESSAGE SrcMsg, IN PUCHAR SrcMsgData, IN ULONG MsgType OPTIONAL,
+                     IN PCLIENT_ID ClientId OPTIONAL)
 
 /*++
 
@@ -85,19 +79,16 @@ Return Value:
     // Set the message type properly and update the second dword
     //
 
-    *((PULONG)DstMsg)++ = MsgType == 0 ? *((PULONG)SrcMsg)++ :
-                         *((PULONG)SrcMsg)++ & 0xFFFF0000 | MsgType & 0xFFFF;
+    *((PULONG)DstMsg)++ = MsgType == 0 ? *((PULONG)SrcMsg)++ : *((PULONG)SrcMsg)++ & 0xFFFF0000 | MsgType & 0xFFFF;
 
     //
     // Set the ClientId appropriately and update the third dword
     //
 
-    *((PULONG_PTR)DstMsg)++ = ClientId == NULL ? *((PULONG_PTR)SrcMsg) :
-            *((PULONG_PTR)ClientId)++;
+    *((PULONG_PTR)DstMsg)++ = ClientId == NULL ? *((PULONG_PTR)SrcMsg) : *((PULONG_PTR)ClientId)++;
     ((PULONG_PTR)SrcMsg)++;
 
-    *((PULONG_PTR)DstMsg)++ = ClientId == NULL ? *((PULONG_PTR)SrcMsg) :
-            *((PULONG_PTR)ClientId);
+    *((PULONG_PTR)DstMsg)++ = ClientId == NULL ? *((PULONG_PTR)SrcMsg) : *((PULONG_PTR)ClientId);
     ((PULONG_PTR)SrcMsg)++;
 
     //
@@ -111,8 +102,9 @@ Return Value:
     // Copy the data
     //
 
-    if (NumberDwords > 0) {
+    if (NumberDwords > 0)
+    {
 
-        RtlCopyMemory(DstMsg, SrcMsgData, NumberDwords*sizeof(ULONG));
+        RtlCopyMemory(DstMsg, SrcMsgData, NumberDwords * sizeof(ULONG));
     }
 }

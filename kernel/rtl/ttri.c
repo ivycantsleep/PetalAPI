@@ -26,9 +26,10 @@ Revision History:
 #include "ntrtl.h"
 #include "triangle.h"
 
-ULONG RtlRandom (IN OUT PULONG Seed);
+ULONG RtlRandom(IN OUT PULONG Seed);
 
-typedef struct _TREE_NODE {
+typedef struct _TREE_NODE
+{
     CLONG Data;
     TRI_SPLAY_LINKS Links;
 } TREE_NODE;
@@ -37,22 +38,11 @@ typedef TREE_NODE *PTREE_NODE;
 TREE_NODE Buffer[2048];
 
 PTREE_NODE
-TreeInsert (
-    IN PTREE_NODE Root,
-    IN PTREE_NODE Node
-    );
+TreeInsert(IN PTREE_NODE Root, IN PTREE_NODE Node);
 
-VOID
-PrintTree (
-    IN PTREE_NODE Node
-    );
+VOID PrintTree(IN PTREE_NODE Node);
 
-int
-_CDECL
-main(
-    int argc,
-    char *argv[]
-    )
+int _CDECL main(int argc, char *argv[])
 {
     PTREE_NODE Root;
     ULONG i;
@@ -62,11 +52,12 @@ main(
 
     Root = NULL;
     Seed = 0;
-    for (i=0; i<2048; i++) {
+    for (i = 0; i < 2048; i++)
+    {
         Buffer[i].Data = RtlRandom(&Seed);
         Buffer[i].Data = Buffer[i].Data % 512;
         TriInitializeSplayLinks(&Buffer[i].Links);
-        Root  = TreeInsert(Root, &Buffer[i]);
+        Root = TreeInsert(Root, &Buffer[i]);
     }
 
     PrintTree(Root);
@@ -74,90 +65,91 @@ main(
     DbgPrint("End TriangleTest()\n");
 
     return TRUE;
-
 }
 
 PTREE_NODE
-TreeInsert (
-    IN PTREE_NODE Root,
-    IN PTREE_NODE Node
-    )
+TreeInsert(IN PTREE_NODE Root, IN PTREE_NODE Node)
 
 {
     PTRI_SPLAY_LINKS Temp;
 
-    if (Root == NULL) {
+    if (Root == NULL)
+    {
 
         //DbgPrint("Add as root %u\n", Node->Data);
         return Node;
-
     }
 
-    while (TRUE) {
+    while (TRUE)
+    {
 
-        if (Root->Data == Node->Data) {
+        if (Root->Data == Node->Data)
+        {
 
             //DbgPrint("Delete %u\n", Node->Data);
 
             Temp = TriDelete(&Root->Links);
-            if (Temp == NULL) {
+            if (Temp == NULL)
+            {
                 return NULL;
-            } else {
+            }
+            else
+            {
                 return CONTAINING_RECORD(Temp, TREE_NODE, Links);
             }
-
         }
 
-        if (Root->Data < Node->Data) {
+        if (Root->Data < Node->Data)
+        {
 
             //
             //  Go right
             //
 
-            if (TriRightChild(&Root->Links) == NULL) {
+            if (TriRightChild(&Root->Links) == NULL)
+            {
 
                 //DbgPrint("Add as right child %u\n", Node->Data);
                 TriInsertAsRightChild(&Root->Links, &Node->Links);
                 return CONTAINING_RECORD(TriSplay(&Node->Links), TREE_NODE, Links);
-
-            } else {
+            }
+            else
+            {
 
                 Root = CONTAINING_RECORD(TriRightChild(&Root->Links), TREE_NODE, Links);
-
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             //  Go Left
             //
 
-            if (TriLeftChild(&Root->Links) == NULL) {
+            if (TriLeftChild(&Root->Links) == NULL)
+            {
 
                 //DbgPrint("Add as left child %u\n", Node->Data);
                 TriInsertAsLeftChild(&Root->Links, &Node->Links);
                 return CONTAINING_RECORD(TriSplay(&Node->Links), TREE_NODE, Links);
-
-            } else {
+            }
+            else
+            {
 
                 Root = CONTAINING_RECORD(TriLeftChild(&Root->Links), TREE_NODE, Links);
-
             }
-
         }
     }
 }
 
-VOID
-PrintTree (
-    IN PTREE_NODE Node
-    )
+VOID PrintTree(IN PTREE_NODE Node)
 
 {
     PTRI_SPLAY_LINKS Temp;
     ULONG LastValue;
 
-    if (Node == NULL) {
+    if (Node == NULL)
+    {
         return;
     }
 
@@ -165,7 +157,8 @@ PrintTree (
     //  find smallest value
     //
 
-    while (TriLeftChild(&Node->Links) != NULL) {
+    while (TriLeftChild(&Node->Links) != NULL)
+    {
         Node = CONTAINING_RECORD(TriLeftChild(&Node->Links), TREE_NODE, Links);
     }
     LastValue = Node->Data;
@@ -175,13 +168,14 @@ PrintTree (
     //  while the is a real successor we print the successor value
     //
 
-    while ((Temp = TriRealSuccessor(&Node->Links)) != NULL) {
+    while ((Temp = TriRealSuccessor(&Node->Links)) != NULL)
+    {
         Node = CONTAINING_RECORD(Temp, TREE_NODE, Links);
-        if (LastValue >= Node->Data) {
+        if (LastValue >= Node->Data)
+        {
             DbgPrint("TestSplay Error\n");
         }
         LastValue = Node->Data;
         //DbgPrint("%u\n", Node->Data);
     }
-
 }

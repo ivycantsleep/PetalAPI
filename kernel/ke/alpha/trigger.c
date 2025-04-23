@@ -36,10 +36,7 @@ Revision History:
 //
 
 BOOLEAN
-KiLocateTriggerPc (
-    IN OUT PEXCEPTION_RECORD ExceptionRecord,
-    IN OUT PKTRAP_FRAME TrapFrame
-    );
+KiLocateTriggerPc(IN OUT PEXCEPTION_RECORD ExceptionRecord, IN OUT PKTRAP_FRAME TrapFrame);
 
 //
 // Define debugging macros.
@@ -62,7 +59,7 @@ extern ULONG RtlDebugFlags;
 // contains the reason the arithmetic exception is not an IEEE exception.
 //
 
-#define NON_IEEE(ExceptionRecord, Reason) \
+#define NON_IEEE(ExceptionRecord, Reason)    \
     (ExceptionRecord)->NumberParameters = 4; \
     (ExceptionRecord)->ExceptionInformation[3] = (Reason);
 
@@ -74,15 +71,10 @@ extern ULONG RtlDebugFlags;
 #define TRIGGER_INSTRUCTION_NOT_FOUND 6
 #define TRIGGER_SOURCE_IS_DESTINATION 7
 #define TRIGGER_WRONG_INSTRUCTION 8
-
+
 BOOLEAN
-KiFloatingException (
-    IN OUT PEXCEPTION_RECORD ExceptionRecord,
-    IN OUT PKEXCEPTION_FRAME ExceptionFrame,
-    IN OUT PKTRAP_FRAME TrapFrame,
-    IN BOOLEAN ImpreciseTrap,
-    IN OUT PULONG SoftFpcrCopy
-    )
+KiFloatingException(IN OUT PEXCEPTION_RECORD ExceptionRecord, IN OUT PKEXCEPTION_FRAME ExceptionFrame,
+                    IN OUT PKTRAP_FRAME TrapFrame, IN BOOLEAN ImpreciseTrap, IN OUT PULONG SoftFpcrCopy)
 
 /*++
 
@@ -121,7 +113,8 @@ Return Value:
     PSW_FPCR SoftwareFpcr;
     PTEB Teb;
 
-    try {
+    try
+    {
 
         //
         // Obtain a copy of the software FPCR longword from the TEB.
@@ -142,7 +135,8 @@ Return Value:
         //      part of the API.
         //
 
-        if (SoftwareFpcr->NoSoftwareEmulation != 0) {
+        if (SoftwareFpcr->NoSoftwareEmulation != 0)
+        {
             DBGPRINT("KiFloatingException: NoSoftwareEmulation\n");
             return FALSE;
         }
@@ -156,7 +150,8 @@ Return Value:
         // instruction is the exception address.
         //
 
-        if (ImpreciseTrap != FALSE) {
+        if (ImpreciseTrap != FALSE)
+        {
 
             //
             // If the arithmetic trap ignore mode is enabled, then do not
@@ -169,7 +164,8 @@ Return Value:
             // the instruction succeeded or not (Insignia SoftPc feature).
             //
 
-            if (SoftwareFpcr->ArithmeticTrapIgnore != 0) {
+            if (SoftwareFpcr->ArithmeticTrapIgnore != 0)
+            {
                 return TRUE;
             }
 
@@ -184,16 +180,15 @@ Return Value:
             // bits, and raise any enabled IEEE exceptions.
             //
 
-            if (KiLocateTriggerPc(ExceptionRecord, TrapFrame) == FALSE) {
+            if (KiLocateTriggerPc(ExceptionRecord, TrapFrame) == FALSE)
+            {
                 KiSetFloatingStatus(ExceptionRecord);
                 return FALSE;
             }
-            Status = KiEmulateFloating(ExceptionRecord,
-                                       ExceptionFrame,
-                                       TrapFrame,
-                                       SoftwareFpcr);
-
-        } else {
+            Status = KiEmulateFloating(ExceptionRecord, ExceptionFrame, TrapFrame, SoftwareFpcr);
+        }
+        else
+        {
 
             //
             // Attempt to emulate the faulting instruction in order to perform
@@ -202,10 +197,7 @@ Return Value:
             // raise any enabled IEEE exceptions.
             //
 
-            Status = KiEmulateFloating(ExceptionRecord,
-                                       ExceptionFrame,
-                                       TrapFrame,
-                                       SoftwareFpcr);
+            Status = KiEmulateFloating(ExceptionRecord, ExceptionFrame, TrapFrame, SoftwareFpcr);
 
             //
             // If the emulation resulted in a floating point exception and
@@ -213,9 +205,9 @@ Return Value:
             // value to TRUE to suppress the exception and continue execution.
             //
 
-            if ((Status == FALSE) &&
-                (SoftwareFpcr->ArithmeticTrapIgnore != 0) &&
-                (ExceptionRecord->ExceptionCode != STATUS_ILLEGAL_INSTRUCTION)) {
+            if ((Status == FALSE) && (SoftwareFpcr->ArithmeticTrapIgnore != 0) &&
+                (ExceptionRecord->ExceptionCode != STATUS_ILLEGAL_INSTRUCTION))
+            {
                 Status = TRUE;
             }
         }
@@ -226,8 +218,9 @@ Return Value:
 
         Teb->FpSoftwareStatusRegister = *SoftFpcrCopy;
         DBGPRINT("KiFloatingException: SoftFpcr = %.8lx\n", *SoftFpcrCopy);
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         //
         // An exception occurred accessing the TEB.
@@ -239,12 +232,9 @@ Return Value:
 
     return Status;
 }
-
+
 BOOLEAN
-KiLocateTriggerPc (
-    IN OUT PEXCEPTION_RECORD ExceptionRecord,
-    IN OUT PKTRAP_FRAME TrapFrame
-    )
+KiLocateTriggerPc(IN OUT PEXCEPTION_RECORD ExceptionRecord, IN OUT PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -324,10 +314,9 @@ Return Value:
 
     FloatRegisterWriteMask = (ULONG)ExceptionRecord->ExceptionInformation[0];
     IntegerRegisterWriteMask = (ULONG)ExceptionRecord->ExceptionInformation[1];
-    ExceptionSummary = (PEXC_SUM)&(ExceptionRecord->ExceptionInformation[2]);
-    DBGPRINT("KiLocateTriggerPc: WriteMask %.8lx.%.8lx, ExceptionSummary %.8lx\n",
-             FloatRegisterWriteMask, IntegerRegisterWriteMask,
-             *(PULONG)ExceptionSummary);
+    ExceptionSummary = (PEXC_SUM) & (ExceptionRecord->ExceptionInformation[2]);
+    DBGPRINT("KiLocateTriggerPc: WriteMask %.8lx.%.8lx, ExceptionSummary %.8lx\n", FloatRegisterWriteMask,
+             IntegerRegisterWriteMask, *(PULONG)ExceptionSummary);
 
     //
     // Capture previous mode from trap frame not current thread.
@@ -335,7 +324,8 @@ Return Value:
 
     PreviousMode = (KPROCESSOR_MODE)(((PSR *)(&TrapFrame->Psr))->MODE);
 
-    if (FloatRegisterWriteMask == 0) {
+    if (FloatRegisterWriteMask == 0)
+    {
 
         //
         // It should not be possible to have a floating point exception without
@@ -347,7 +337,8 @@ Return Value:
         NON_IEEE(ExceptionRecord, TRIGGER_FLOATING_REGISTER_MASK_CLEAR);
         return FALSE;
     }
-    if (IntegerRegisterWriteMask != 0) {
+    if (IntegerRegisterWriteMask != 0)
+    {
 
         //
         // It is not possible to precisely locate the trigger instruction
@@ -358,7 +349,8 @@ Return Value:
         NON_IEEE(ExceptionRecord, TRIGGER_INTEGER_REGISTER_MASK_SET);
         return FALSE;
     }
-    if (ExceptionSummary->SoftwareCompletion == 0) {
+    if (ExceptionSummary->SoftwareCompletion == 0)
+    {
 
         //
         // The exception summary software completion bit is the AND of the
@@ -387,10 +379,13 @@ Return Value:
     TriggerPc = (ULONG_PTR)TrapFrame->Fir;
     TrapShadowLowLimit = TriggerPc - (500 * sizeof(ULONG));
 
-    try {
-        do {
+    try
+    {
+        do
+        {
             TriggerPc -= 4;
-            if (TriggerPc < TrapShadowLowLimit) {
+            if (TriggerPc < TrapShadowLowLimit)
+            {
 
                 //
                 // The trigger PC is too far away from the exception PC to
@@ -402,9 +397,12 @@ Return Value:
                 return FALSE;
             }
 
-            if (PreviousMode != KernelMode) {
+            if (PreviousMode != KernelMode)
+            {
                 Instruction.Long = ProbeAndReadUlong((PULONG)TriggerPc);
-            } else {
+            }
+            else
+            {
                 Instruction.Long = *((PULONG)TriggerPc);
             }
 
@@ -414,7 +412,8 @@ Return Value:
             //
 
             Opcode = Instruction.Memory.Opcode;
-            if (Opcode == JMP_OP) {
+            if (Opcode == JMP_OP)
+            {
 
                 //
                 // This is one of the jump instructions: jump, return, or
@@ -424,8 +423,9 @@ Return Value:
                 DBGPRINT("KiLocateTriggerPc: Jump within Trap Shadow\n");
                 NON_IEEE(ExceptionRecord, TRIGGER_INVALID_INSTRUCTION_FOUND);
                 return FALSE;
-
-            } else if ((Opcode >= BR_OP) && (Opcode <= BGT_OP)) {
+            }
+            else if ((Opcode >= BR_OP) && (Opcode <= BGT_OP))
+            {
 
                 //
                 // The instruction is one of 16 branch opcodes that consists
@@ -436,10 +436,10 @@ Return Value:
                 DBGPRINT("KiLocateTriggerPc: Branch within Trap Shadow\n");
                 NON_IEEE(ExceptionRecord, TRIGGER_INVALID_INSTRUCTION_FOUND);
                 return FALSE;
-
-            } else if ((Instruction.Memory.Opcode == MEMSPC_OP) &&
-                ((Instruction.Memory.MemDisp == TRAPB_FUNC) ||
-                 (Instruction.Memory.MemDisp == EXCB_FUNC))) {
+            }
+            else if ((Instruction.Memory.Opcode == MEMSPC_OP) &&
+                     ((Instruction.Memory.MemDisp == TRAPB_FUNC) || (Instruction.Memory.MemDisp == EXCB_FUNC)))
+            {
 
                 //
                 // The instruction is a type of TRAPB instruction. The trap
@@ -449,8 +449,9 @@ Return Value:
                 DBGPRINT("KiLocateTriggerPc: Trapb within Trap Shadow\n");
                 NON_IEEE(ExceptionRecord, TRIGGER_INVALID_INSTRUCTION_FOUND);
                 return FALSE;
-
-            } else if (Opcode == CALLPAL_OP) {
+            }
+            else if (Opcode == CALLPAL_OP)
+            {
 
                 //
                 // The instruction is a Call PAL. The trap shadow is invalid.
@@ -459,8 +460,9 @@ Return Value:
                 DBGPRINT("KiLocateTriggerPc: Call PAL within Trap Shadow\n");
                 NON_IEEE(ExceptionRecord, TRIGGER_INVALID_INSTRUCTION_FOUND);
                 return FALSE;
-
-            } else if ((Opcode == IEEEFP_OP) || (Opcode == FPOP_OP)) {
+            }
+            else if ((Opcode == IEEEFP_OP) || (Opcode == FPOP_OP))
+            {
 
                 //
                 // The instruction is an IEEE floating point instruction.
@@ -469,7 +471,8 @@ Return Value:
                 //
 
                 Fc = Instruction.FpOp.Fc;
-                if (Fc != FZERO_REG) {
+                if (Fc != FZERO_REG)
+                {
                     FloatRegisterTrashMask |= (1 << Fc);
                 }
                 FloatRegisterWriteMask &= ~(1 << Fc);
@@ -483,7 +486,8 @@ Return Value:
         // instruction must have caused software completion bit to be set).
         //
 
-        if ((Instruction.FpOp.Function & FP_TRAP_ENABLE_S) == 0) {
+        if ((Instruction.FpOp.Function & FP_TRAP_ENABLE_S) == 0)
+        {
             DBGPRINT("KiLocateTriggerPc: Trigger instruction missing /S\n");
             NON_IEEE(ExceptionRecord, TRIGGER_WRONG_INSTRUCTION);
             return FALSE;
@@ -500,13 +504,15 @@ Return Value:
 
         Fa = Instruction.FpOp.Fa;
         Fb = Instruction.FpOp.Fb;
-        if ((FloatRegisterTrashMask & ((1 << Fa) | (1 << Fb))) != 0) {
+        if ((FloatRegisterTrashMask & ((1 << Fa) | (1 << Fb))) != 0)
+        {
             DBGPRINT("KiLocateTriggerPc: Source is destination\n");
             NON_IEEE(ExceptionRecord, TRIGGER_SOURCE_IS_DESTINATION);
             return FALSE;
         }
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
         //
         // An exception occurred while fetching the value of the
@@ -524,17 +530,13 @@ Return Value:
     // address in the trap frame, and return a value of TRUE.
     //
 
-    DBGPRINT("KiLocateTriggerPc: Exception PC = %p, Trigger PC = %p\n",
-             ExceptionRecord->ExceptionAddress, TriggerPc);
+    DBGPRINT("KiLocateTriggerPc: Exception PC = %p, Trigger PC = %p\n", ExceptionRecord->ExceptionAddress, TriggerPc);
     ExceptionRecord->ExceptionAddress = (PVOID)TriggerPc;
     TrapFrame->Fir = (ULONGLONG)(LONG_PTR)(TriggerPc + 4);
     return TRUE;
 }
-
-VOID
-KiSetFloatingStatus (
-    IN OUT PEXCEPTION_RECORD ExceptionRecord
-    )
+
+VOID KiSetFloatingStatus(IN OUT PEXCEPTION_RECORD ExceptionRecord)
 
 /*++
 
@@ -563,29 +565,35 @@ Return Value:
     // imprecise.
     //
 
-    DBGPRINT("KiSetFloatingStatus: ExceptionSummary = %.8lx\n",
-             ExceptionRecord->ExceptionInformation[2]);
+    DBGPRINT("KiSetFloatingStatus: ExceptionSummary = %.8lx\n", ExceptionRecord->ExceptionInformation[2]);
 
     ExceptionSummary = (PEXC_SUM)(&ExceptionRecord->ExceptionInformation[2]);
-    if (ExceptionSummary->InvalidOperation != 0) {
+    if (ExceptionSummary->InvalidOperation != 0)
+    {
         ExceptionRecord->ExceptionCode = STATUS_FLOAT_INVALID_OPERATION;
-
-    } else if (ExceptionSummary->DivisionByZero != 0) {
+    }
+    else if (ExceptionSummary->DivisionByZero != 0)
+    {
         ExceptionRecord->ExceptionCode = STATUS_FLOAT_DIVIDE_BY_ZERO;
-
-    } else if (ExceptionSummary->Overflow != 0) {
+    }
+    else if (ExceptionSummary->Overflow != 0)
+    {
         ExceptionRecord->ExceptionCode = STATUS_FLOAT_OVERFLOW;
-
-    } else if (ExceptionSummary->Underflow != 0) {
+    }
+    else if (ExceptionSummary->Underflow != 0)
+    {
         ExceptionRecord->ExceptionCode = STATUS_FLOAT_UNDERFLOW;
-
-    } else if (ExceptionSummary->InexactResult != 0) {
+    }
+    else if (ExceptionSummary->InexactResult != 0)
+    {
         ExceptionRecord->ExceptionCode = STATUS_FLOAT_INEXACT_RESULT;
-
-    } else if (ExceptionSummary->IntegerOverflow != 0) {
+    }
+    else if (ExceptionSummary->IntegerOverflow != 0)
+    {
         ExceptionRecord->ExceptionCode = STATUS_INTEGER_OVERFLOW;
-
-    } else {
+    }
+    else
+    {
         ExceptionRecord->ExceptionCode = STATUS_FLOAT_STACK_CHECK;
     }
 }

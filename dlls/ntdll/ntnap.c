@@ -57,10 +57,7 @@ PNAPCONTROL NapControl = NULL;
 PNAPDATA NapProfilingData = NULL;
 
 
-VOID
-NapDllInit (
-    VOID
-    )
+VOID NapDllInit(VOID)
 
 /*++
 
@@ -86,84 +83,83 @@ Return Value:
     ULONG i;
     LARGE_INTEGER CurrentCounter;
 
-    if (!NapInitialized) {
+    if (!NapInitialized)
+    {
 
-	//
-	// Instance data for this process's ntdll.dll not yet initialized.
-	//
+        //
+        // Instance data for this process's ntdll.dll not yet initialized.
+        //
 
-	NapInitialized = TRUE;
+        NapInitialized = TRUE;
 
-	//
-	// Get Counter frequency (current counter value is thrown away)
-	// This call is not profiled because NapControl == NULL here.
-	//
+        //
+        // Get Counter frequency (current counter value is thrown away)
+        // This call is not profiled because NapControl == NULL here.
+        //
 
-	NtQueryPerformanceCounter(&CurrentCounter,
-				  &NapFrequency);
+        NtQueryPerformanceCounter(&CurrentCounter, &NapFrequency);
 
-	//
-	// Allocate or open data section for api profiling data.
-	//
+        //
+        // Allocate or open data section for api profiling data.
+        //
 
-	if (NT_SUCCESS(NapCreateDataSection(&NapControl))) {
+        if (NT_SUCCESS(NapCreateDataSection(&NapControl)))
+        {
 
-	    NapProfilingData = (PNAPDATA)(NapControl + 1);
+            NapProfilingData = (PNAPDATA)(NapControl + 1);
 
-	    if (!NapControl->Initialized) {
+            if (!NapControl->Initialized)
+            {
 
-		//
-		// We are the first process to get here: we jsut
-		// allocated the section, so must initialize it.
-		//
+                //
+                // We are the first process to get here: we jsut
+                // allocated the section, so must initialize it.
+                //
 
-		NapControl->Initialized = TRUE;
+                NapControl->Initialized = TRUE;
 
-		NapControl->Paused = 0;
+                NapControl->Paused = 0;
 
-		//
-		// Clear the data area used for calibration data.
-		//
+                //
+                // Clear the data area used for calibration data.
+                //
 
-		NapProfilingData[0].NapLock = 0L;
-		NapProfilingData[0].Calls = 0L;
-		NapProfilingData[0].TimingErrors = 0L;
-		NapProfilingData[0].TotalTime.HighPart = 0L;
-		NapProfilingData[0].TotalTime.LowPart = 0L;
-		NapProfilingData[0].FirstTime.HighPart = 0L;
-		NapProfilingData[0].FirstTime.LowPart = 0L;
-		NapProfilingData[0].MaxTime.HighPart = 0L;
-		NapProfilingData[0].MaxTime.LowPart = 0L;
-		NapProfilingData[0].MinTime.HighPart = MAX_LONG;
-		NapProfilingData[0].MinTime.LowPart = MAX_ULONG;
+                NapProfilingData[0].NapLock = 0L;
+                NapProfilingData[0].Calls = 0L;
+                NapProfilingData[0].TimingErrors = 0L;
+                NapProfilingData[0].TotalTime.HighPart = 0L;
+                NapProfilingData[0].TotalTime.LowPart = 0L;
+                NapProfilingData[0].FirstTime.HighPart = 0L;
+                NapProfilingData[0].FirstTime.LowPart = 0L;
+                NapProfilingData[0].MaxTime.HighPart = 0L;
+                NapProfilingData[0].MaxTime.LowPart = 0L;
+                NapProfilingData[0].MinTime.HighPart = MAX_LONG;
+                NapProfilingData[0].MinTime.LowPart = MAX_ULONG;
 
-		//
-		// Clear the rest of the data collection area
-		//
+                //
+                // Clear the rest of the data collection area
+                //
 
-		NapClearData();
+                NapClearData();
 
-		//
-		//   Calibrate time overhead from profiling.  We care mostly
-		//   about the minimum time here, to avoid extra time from
-		//   interrupts etc.
-		//
+                //
+                //   Calibrate time overhead from profiling.  We care mostly
+                //   about the minimum time here, to avoid extra time from
+                //   interrupts etc.
+                //
 
-		for (i=0; i<NUM_ITERATIONS; i++) {
-		    NapCalibrate();
-		}
-	    }
-	}
+                for (i = 0; i < NUM_ITERATIONS; i++)
+                {
+                    NapCalibrate();
+                }
+            }
+        }
     }
 }
 
 
-
-
 NTSTATUS
-NapCreateDataSection(
-    PNAPCONTROL *NapSectionPointer
-    )
+NapCreateDataSection(PNAPCONTROL *NapSectionPointer)
 /*++
 
 Routine Description:
@@ -207,55 +203,35 @@ Return Value:
     ObjectAttributes.RootDirectory = NULL;
     ObjectAttributes.SecurityDescriptor = NULL;
     ObjectAttributes.SecurityQualityOfService = NULL;
-    ObjectAttributes.Attributes = OBJ_OPENIF |
-				  OBJ_CASE_INSENSITIVE;
+    ObjectAttributes.Attributes = OBJ_OPENIF | OBJ_CASE_INSENSITIVE;
 
 
     AllocationSize.HighPart = 0;
     AllocationSize.LowPart = (NAP_API_COUNT + 1) * sizeof(NAPDATA);
 
-    Status = NtCreateSection(&NapSectionHandle,
-			     SECTION_MAP_READ |
-			     SECTION_MAP_WRITE,
-			     &ObjectAttributes,
-			     &AllocationSize,
-			     PAGE_READWRITE,
-			     SEC_COMMIT,
-			     NULL);
+    Status = NtCreateSection(&NapSectionHandle, SECTION_MAP_READ | SECTION_MAP_WRITE, &ObjectAttributes,
+                             &AllocationSize, PAGE_READWRITE, SEC_COMMIT, NULL);
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
-	MyProcess = NtCurrentProcess();
+        MyProcess = NtCurrentProcess();
 
-	ViewSize = AllocationSize.LowPart;
+        ViewSize = AllocationSize.LowPart;
 
-	SectionPointer = NULL;
+        SectionPointer = NULL;
 
-	Status = NtMapViewOfSection(NapSectionHandle,
-				    MyProcess,
-				    (PVOID *)&SectionPointer,
-				    0,
-				    AllocationSize.LowPart,
-				    NULL,
-				    &ViewSize,
-				    ViewUnmap,
-				    MEM_TOP_DOWN,
-				    PAGE_READWRITE);
+        Status = NtMapViewOfSection(NapSectionHandle, MyProcess, (PVOID *)&SectionPointer, 0, AllocationSize.LowPart,
+                                    NULL, &ViewSize, ViewUnmap, MEM_TOP_DOWN, PAGE_READWRITE);
 
-	*NapSectionPointer = SectionPointer;
+        *NapSectionPointer = SectionPointer;
     }
 
-    return(Status);
+    return (Status);
 }
 
 
-
-
-VOID
-NapRecordInfo (
-    IN ULONG ServiceNumber,
-    IN LARGE_INTEGER Counters[]
-    )
+VOID NapRecordInfo(IN ULONG ServiceNumber, IN LARGE_INTEGER Counters[])
 
 /*++
 
@@ -294,90 +270,84 @@ Return Value:
     // First make sure we have been initialized
     //
 
-    if (NapControl != NULL) {
+    if (NapControl != NULL)
+    {
 
-	//
-	// Check to be sure profiling is not paused
+        //
+        // Check to be sure profiling is not paused
 
-	if (NapControl->Paused == 0) {
+        if (NapControl->Paused == 0)
+        {
 
-	    //
-	    // Since ServiceNumber -1 is used for calibration, bump same
-	    // so indexes start at 0.
-	    //
+            //
+            // Since ServiceNumber -1 is used for calibration, bump same
+            // so indexes start at 0.
+            //
 
-	    ServiceNumber++;
+            ServiceNumber++;
 
-	    //
-	    // Prevent others from changing data at the same time
-	    // we are.
-	    //
+            //
+            // Prevent others from changing data at the same time
+            // we are.
+            //
 
-	    NapAcquireSpinLock(&(NapProfilingData[ServiceNumber].NapLock));
+            NapAcquireSpinLock(&(NapProfilingData[ServiceNumber].NapLock));
 
-	    //
-	    // Record API info
-	    //
+            //
+            // Record API info
+            //
 
-	    NapProfilingData[ServiceNumber].Calls++;
+            NapProfilingData[ServiceNumber].Calls++;
 
-	    //
-	    // Elapsed time is end time minus start time
-	    //
+            //
+            // Elapsed time is end time minus start time
+            //
 
-	    ElapsedTime =
-		RtlLargeIntegerSubtract(Counters[0],Counters[1]);
+            ElapsedTime = RtlLargeIntegerSubtract(Counters[0], Counters[1]);
 
-	    //
-	    // Now add elapsed time to total time
-	    //
+            //
+            // Now add elapsed time to total time
+            //
 
-	    NapProfilingData[ServiceNumber].TotalTime =
-		RtlLargeIntegerAdd(NapProfilingData[ServiceNumber].TotalTime,
-				   ElapsedTime);
+            NapProfilingData[ServiceNumber].TotalTime =
+                RtlLargeIntegerAdd(NapProfilingData[ServiceNumber].TotalTime, ElapsedTime);
 
-	    if (NapProfilingData[ServiceNumber].Calls == 1) {
-		NapProfilingData[ServiceNumber].FirstTime = ElapsedTime;
-	    }
-	    else {
-		Difference =
-		    RtlLargeIntegerSubtract(
-			NapProfilingData[ServiceNumber].MaxTime,
-			ElapsedTime);
-		if (Difference.HighPart < 0) {
+            if (NapProfilingData[ServiceNumber].Calls == 1)
+            {
+                NapProfilingData[ServiceNumber].FirstTime = ElapsedTime;
+            }
+            else
+            {
+                Difference = RtlLargeIntegerSubtract(NapProfilingData[ServiceNumber].MaxTime, ElapsedTime);
+                if (Difference.HighPart < 0)
+                {
 
-		    //
-		    // A new maximum was attained
-		    //
+                    //
+                    // A new maximum was attained
+                    //
 
-		    NapProfilingData[ServiceNumber].MaxTime = ElapsedTime;
+                    NapProfilingData[ServiceNumber].MaxTime = ElapsedTime;
+                }
+                Difference = RtlLargeIntegerSubtract(ElapsedTime, NapProfilingData[ServiceNumber].MinTime);
+                if (Difference.HighPart < 0)
+                {
 
-		}
-		Difference =
-		    RtlLargeIntegerSubtract(
-			ElapsedTime,
-			NapProfilingData[ServiceNumber].MinTime);
-		if (Difference.HighPart < 0) {
+                    //
+                    // A new minimum was attained
+                    //
 
-		    //
-		    // A new minimum was attained
-		    //
+                    NapProfilingData[ServiceNumber].MinTime = ElapsedTime;
+                }
+            }
 
-		    NapProfilingData[ServiceNumber].MinTime = ElapsedTime;
-		}
-	    }
-
-	    NapReleaseSpinLock(&(NapProfilingData[ServiceNumber].NapLock));
-	}
+            NapReleaseSpinLock(&(NapProfilingData[ServiceNumber].NapLock));
+        }
     }
 }
 
 
-
 NTSTATUS
-NapClearData (
-    VOID
-    )
+NapClearData(VOID)
 
 /*++
 
@@ -422,28 +392,24 @@ Return Value:
     //
 
 
-    for (ServiceNumber = 2; ServiceNumber <= NAP_API_COUNT; ServiceNumber++) {
+    for (ServiceNumber = 2; ServiceNumber <= NAP_API_COUNT; ServiceNumber++)
+    {
 
-	NapAcquireSpinLock(&(NapProfilingData[ServiceNumber].NapLock));
+        NapAcquireSpinLock(&(NapProfilingData[ServiceNumber].NapLock));
 
-	NapProfilingData[ServiceNumber] = NapProfilingData[1];
+        NapProfilingData[ServiceNumber] = NapProfilingData[1];
 
-	NapReleaseSpinLock(&(NapProfilingData[ServiceNumber].NapLock));
+        NapReleaseSpinLock(&(NapProfilingData[ServiceNumber].NapLock));
     }
 
     NapReleaseSpinLock(&(NapProfilingData[1].NapLock));
 
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }
 
 
-
 NTSTATUS
-NapRetrieveData (
-    OUT NAPDATA *NapApiData,
-    OUT PCHAR **NapApiNames,
-    OUT PLARGE_INTEGER *NapCounterFrequency
-    )
+NapRetrieveData(OUT NAPDATA *NapApiData, OUT PCHAR **NapApiNames, OUT PLARGE_INTEGER *NapCounterFrequency)
 
 /*++
 
@@ -481,25 +447,23 @@ Return Value:
 
     *NapCounterFrequency = &NapFrequency;
 
-    for (ServiceNumber = 0; ServiceNumber <= NAP_API_COUNT; ServiceNumber++) {
+    for (ServiceNumber = 0; ServiceNumber <= NAP_API_COUNT; ServiceNumber++)
+    {
 
-	NapAcquireSpinLock(&(NapProfilingData[ServiceNumber].NapLock));
+        NapAcquireSpinLock(&(NapProfilingData[ServiceNumber].NapLock));
 
-	NapApiData[ServiceNumber] = NapProfilingData[ServiceNumber];
+        NapApiData[ServiceNumber] = NapProfilingData[ServiceNumber];
 
-	NapReleaseSpinLock(&(NapProfilingData[ServiceNumber].NapLock));
-	NapReleaseSpinLock(&(NapApiData[ServiceNumber].NapLock));
+        NapReleaseSpinLock(&(NapProfilingData[ServiceNumber].NapLock));
+        NapReleaseSpinLock(&(NapApiData[ServiceNumber].NapLock));
     }
 
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }
 
 
-
 NTSTATUS
-NapGetApiCount (
-    OUT PULONG NapApiCount
-    )
+NapGetApiCount(OUT PULONG NapApiCount)
 
 /*++
 
@@ -524,17 +488,12 @@ Return Value:
 
     *NapApiCount = NAP_API_COUNT;
 
-    return(STATUS_SUCCESS);
-
+    return (STATUS_SUCCESS);
 }
 
 
-
-
 NTSTATUS
-NapPause (
-    VOID
-    )
+NapPause(VOID)
 
 /*++
 
@@ -557,14 +516,12 @@ Return Value:
 {
     NapControl->Paused++;
 
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }
 
 
 NTSTATUS
-NapResume (
-    VOID
-    )
+NapResume(VOID)
 
 /*++
 
@@ -587,5 +544,5 @@ Return Value:
 {
     NapControl->Paused--;
 
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }

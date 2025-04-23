@@ -19,14 +19,15 @@ Revision History:
     Modified for nt kernel.
 
 --*/
-
+
 #include "pnpmgrp.h"
 
 //
 // Internal definitions
 //
 
-typedef struct _ENUM_CONTEXT{
+typedef struct _ENUM_CONTEXT
+{
     PENUM_CALLBACK CallersCallback;
     PVOID CallersContext;
 } ENUM_CONTEXT, *PENUM_CONTEXT;
@@ -36,16 +37,10 @@ typedef struct _ENUM_CONTEXT{
 //
 
 NTSTATUS
-PipForAllDeviceNodesCallback(
-    IN PDEVICE_NODE DeviceNode,
-    IN PVOID Context
-    );
+PipForAllDeviceNodesCallback(IN PDEVICE_NODE DeviceNode, IN PVOID Context);
 
 BOOLEAN
-PipAreDriversLoadedWorker(
-    IN PNP_DEVNODE_STATE    CurrentNodeState,
-    IN PNP_DEVNODE_STATE    PreviousNodeState
-    );
+PipAreDriversLoadedWorker(IN PNP_DEVNODE_STATE CurrentNodeState, IN PNP_DEVNODE_STATE PreviousNodeState);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, PipAreDriversLoaded)
@@ -65,11 +60,9 @@ PipAreDriversLoadedWorker(
 #endif // DBG
 #endif // ALLOC_PRAGMA
 
-
+
 BOOLEAN
-PipAreDriversLoaded(
-    IN PDEVICE_NODE DeviceNode
-    )
+PipAreDriversLoaded(IN PDEVICE_NODE DeviceNode)
 /*++
 
 Routine Description:
@@ -89,17 +82,11 @@ Return Value:
 {
     PAGED_CODE();
 
-    return PipAreDriversLoadedWorker(
-        DeviceNode->State,
-        DeviceNode->PreviousState
-        );
+    return PipAreDriversLoadedWorker(DeviceNode->State, DeviceNode->PreviousState);
 }
-
+
 BOOLEAN
-PipAreDriversLoadedWorker(
-    IN PNP_DEVNODE_STATE    CurrentNodeState,
-    IN PNP_DEVNODE_STATE    PreviousNodeState
-    )
+PipAreDriversLoadedWorker(IN PNP_DEVNODE_STATE CurrentNodeState, IN PNP_DEVNODE_STATE PreviousNodeState)
 /*++
 
 Routine Description:
@@ -119,54 +106,50 @@ Return Value:
 
 --*/
 {
-    switch(CurrentNodeState) {
+    switch (CurrentNodeState)
+    {
 
-        case DeviceNodeDriversAdded:
-        case DeviceNodeResourcesAssigned:
-        case DeviceNodeStartCompletion:
-        case DeviceNodeStartPostWork:
-        case DeviceNodeStarted:
-        case DeviceNodeQueryStopped:
-        case DeviceNodeStopped:
-        case DeviceNodeRestartCompletion:
-        case DeviceNodeEnumerateCompletion:
-        case DeviceNodeQueryRemoved:
-        case DeviceNodeRemovePendingCloses:
-        case DeviceNodeDeletePendingCloses:
-        case DeviceNodeAwaitingQueuedRemoval:
-            return TRUE;
+    case DeviceNodeDriversAdded:
+    case DeviceNodeResourcesAssigned:
+    case DeviceNodeStartCompletion:
+    case DeviceNodeStartPostWork:
+    case DeviceNodeStarted:
+    case DeviceNodeQueryStopped:
+    case DeviceNodeStopped:
+    case DeviceNodeRestartCompletion:
+    case DeviceNodeEnumerateCompletion:
+    case DeviceNodeQueryRemoved:
+    case DeviceNodeRemovePendingCloses:
+    case DeviceNodeDeletePendingCloses:
+    case DeviceNodeAwaitingQueuedRemoval:
+        return TRUE;
 
-        case DeviceNodeAwaitingQueuedDeletion:
-            return PipAreDriversLoadedWorker(
-                PreviousNodeState,
-                DeviceNodeUnspecified
-                );
+    case DeviceNodeAwaitingQueuedDeletion:
+        return PipAreDriversLoadedWorker(PreviousNodeState, DeviceNodeUnspecified);
 
-        case DeviceNodeUninitialized:
-        case DeviceNodeInitialized:
-        case DeviceNodeRemoved:
-            return FALSE;
+    case DeviceNodeUninitialized:
+    case DeviceNodeInitialized:
+    case DeviceNodeRemoved:
+        return FALSE;
 
-        case DeviceNodeDeleted:
-            //
-            // This can be seen by user mode because we defer delinking devices
-            // from the tree during removal.
-            //
-            return FALSE;
+    case DeviceNodeDeleted:
+        //
+        // This can be seen by user mode because we defer delinking devices
+        // from the tree during removal.
+        //
+        return FALSE;
 
-        case DeviceNodeStartPending:
-        case DeviceNodeEnumeratePending:
-        case DeviceNodeUnspecified:
-        default:
-            ASSERT(0);
-            return FALSE;
+    case DeviceNodeStartPending:
+    case DeviceNodeEnumeratePending:
+    case DeviceNodeUnspecified:
+    default:
+        ASSERT(0);
+        return FALSE;
     }
 }
-
+
 BOOLEAN
-PipIsDevNodeDNStarted(
-    IN PDEVICE_NODE DeviceNode
-    )
+PipIsDevNodeDNStarted(IN PDEVICE_NODE DeviceNode)
 /*++
 
 Routine Description:
@@ -184,73 +167,64 @@ Return Value:
 
 --*/
 {
-    switch (DeviceNode->State) {
+    switch (DeviceNode->State)
+    {
 
-        case DeviceNodeStartPending:
-        case DeviceNodeStartCompletion:
-        case DeviceNodeStartPostWork:
-        case DeviceNodeStarted:
-        case DeviceNodeQueryStopped:
-        case DeviceNodeEnumeratePending:
-        case DeviceNodeEnumerateCompletion:
-        case DeviceNodeStopped:
-        case DeviceNodeRestartCompletion:
-            return TRUE;
+    case DeviceNodeStartPending:
+    case DeviceNodeStartCompletion:
+    case DeviceNodeStartPostWork:
+    case DeviceNodeStarted:
+    case DeviceNodeQueryStopped:
+    case DeviceNodeEnumeratePending:
+    case DeviceNodeEnumerateCompletion:
+    case DeviceNodeStopped:
+    case DeviceNodeRestartCompletion:
+        return TRUE;
 
-        case DeviceNodeUninitialized:
-        case DeviceNodeInitialized:
-        case DeviceNodeDriversAdded:
-        case DeviceNodeResourcesAssigned:
-        case DeviceNodeRemoved:
-        case DeviceNodeQueryRemoved:
-        case DeviceNodeRemovePendingCloses:
-        case DeviceNodeDeletePendingCloses:
-        case DeviceNodeAwaitingQueuedRemoval:
-        case DeviceNodeAwaitingQueuedDeletion:
-            return FALSE;
+    case DeviceNodeUninitialized:
+    case DeviceNodeInitialized:
+    case DeviceNodeDriversAdded:
+    case DeviceNodeResourcesAssigned:
+    case DeviceNodeRemoved:
+    case DeviceNodeQueryRemoved:
+    case DeviceNodeRemovePendingCloses:
+    case DeviceNodeDeletePendingCloses:
+    case DeviceNodeAwaitingQueuedRemoval:
+    case DeviceNodeAwaitingQueuedDeletion:
+        return FALSE;
 
-        case DeviceNodeDeleted:
-            //
-            // This can be seen by user mode because we defer delinking devices
-            // from the tree during removal.
-            //
-            return FALSE;
+    case DeviceNodeDeleted:
+        //
+        // This can be seen by user mode because we defer delinking devices
+        // from the tree during removal.
+        //
+        return FALSE;
 
-        case DeviceNodeUnspecified:
-        default:
-            ASSERT(0);
-            return FALSE;
+    case DeviceNodeUnspecified:
+    default:
+        ASSERT(0);
+        return FALSE;
     }
 }
-
-VOID
-PipClearDevNodeProblem(
-    IN PDEVICE_NODE DeviceNode
-    )
+
+VOID PipClearDevNodeProblem(IN PDEVICE_NODE DeviceNode)
 {
     DeviceNode->Flags &= ~DNF_HAS_PROBLEM;
     DeviceNode->Problem = 0;
 }
-
-VOID
-PipSetDevNodeProblem(
-    IN PDEVICE_NODE DeviceNode,
-    IN ULONG        Problem
-    )
+
+VOID PipSetDevNodeProblem(IN PDEVICE_NODE DeviceNode, IN ULONG Problem)
 {
-    ASSERT(DeviceNode->State != DeviceNodeUninitialized || !(DeviceNode->Flags & DNF_ENUMERATED) || Problem == CM_PROB_INVALID_DATA);
+    ASSERT(DeviceNode->State != DeviceNodeUninitialized || !(DeviceNode->Flags & DNF_ENUMERATED) ||
+           Problem == CM_PROB_INVALID_DATA);
     ASSERT(DeviceNode->State != DeviceNodeStarted);
     ASSERT(Problem != 0);
-    DeviceNode->Flags |= DNF_HAS_PROBLEM;                        \
+    DeviceNode->Flags |= DNF_HAS_PROBLEM;
     DeviceNode->Problem = Problem;
 }
-
-VOID
-PipSetDevNodeState(
-    IN  PDEVICE_NODE        DeviceNode,
-    IN  PNP_DEVNODE_STATE   State,
-    OUT PNP_DEVNODE_STATE   *OldState    OPTIONAL
-    )
+
+VOID PipSetDevNodeState(IN PDEVICE_NODE DeviceNode, IN PNP_DEVNODE_STATE State,
+                        OUT PNP_DEVNODE_STATE *OldState OPTIONAL)
 /*++
 
 Routine Description:
@@ -272,14 +246,14 @@ Return Value:
 
 --*/
 {
-    PNP_DEVNODE_STATE   previousState;
-    KIRQL               oldIrql;
+    PNP_DEVNODE_STATE previousState;
+    KIRQL oldIrql;
 
     ASSERT(State != DeviceNodeQueryStopped || DeviceNode->State == DeviceNodeStarted);
 
 #if DBG
-    if ((State == DeviceNodeDeleted) ||
-        (State == DeviceNodeDeletePendingCloses)) {
+    if ((State == DeviceNodeDeleted) || (State == DeviceNodeDeletePendingCloses))
+    {
 
         ASSERT(!(DeviceNode->Flags & DNF_ENUMERATED));
     }
@@ -288,7 +262,8 @@ Return Value:
     KeAcquireSpinLock(&IopPnPSpinLock, &oldIrql);
 
     previousState = DeviceNode->State;
-    if (DeviceNode->State != State) {
+    if (DeviceNode->State != State)
+    {
 
         //
         // Update the devnode's current and previous state.
@@ -306,20 +281,19 @@ Return Value:
 
     KeReleaseSpinLock(&IopPnPSpinLock, oldIrql);
 
-    if (ARGUMENT_PRESENT(OldState)) {
+    if (ARGUMENT_PRESENT(OldState))
+    {
 
         *OldState = previousState;
     }
-    if (State == DeviceNodeDeleted) {
+    if (State == DeviceNodeDeleted)
+    {
 
         PpRemoveDeviceActionRequests(DeviceNode->PhysicalDeviceObject);
     }
 }
-
-VOID
-PipRestoreDevNodeState(
-    IN PDEVICE_NODE DeviceNode
-    )
+
+VOID PipRestoreDevNodeState(IN PDEVICE_NODE DeviceNode)
 /*++
 
 Routine Description:
@@ -338,11 +312,10 @@ Return Value:
 
 --*/
 {
-    PNP_DEVNODE_STATE   previousState;
-    KIRQL               oldIrql;
+    PNP_DEVNODE_STATE previousState;
+    KIRQL oldIrql;
 
-    ASSERT((DeviceNode->State == DeviceNodeQueryRemoved) ||
-           (DeviceNode->State == DeviceNodeQueryStopped) ||
+    ASSERT((DeviceNode->State == DeviceNodeQueryRemoved) || (DeviceNode->State == DeviceNodeQueryStopped) ||
            (DeviceNode->State == DeviceNodeAwaitingQueuedRemoval) ||
            (DeviceNode->State == DeviceNodeAwaitingQueuedDeletion));
 
@@ -370,11 +343,9 @@ Return Value:
 
     KeReleaseSpinLock(&IopPnPSpinLock, oldIrql);
 }
-
+
 BOOLEAN
-PipIsProblemReadonly(
-    IN  ULONG   Problem
-    )
+PipIsProblemReadonly(IN ULONG Problem)
 /*++
 
 Routine Description:
@@ -392,90 +363,88 @@ Return Value:
 
 --*/
 {
-    switch(Problem) {
+    switch (Problem)
+    {
 
-        case CM_PROB_OUT_OF_MEMORY: // Nonresettable due to IoReportResourceUsage path.
-        case CM_PROB_NORMAL_CONFLICT:
-        case CM_PROB_PARTIAL_LOG_CONF:
-        case CM_PROB_DEVICE_NOT_THERE:
-        case CM_PROB_HARDWARE_DISABLED:
-        case CM_PROB_DISABLED_SERVICE:
-        case CM_PROB_TRANSLATION_FAILED:
-        case CM_PROB_NO_SOFTCONFIG:
-        case CM_PROB_BIOS_TABLE:
-        case CM_PROB_IRQ_TRANSLATION_FAILED:
-        case CM_PROB_DUPLICATE_DEVICE:
-        case CM_PROB_SYSTEM_SHUTDOWN:
-        case CM_PROB_HELD_FOR_EJECT:
-        case CM_PROB_REGISTRY_TOO_LARGE:
-        case CM_PROB_INVALID_DATA:
+    case CM_PROB_OUT_OF_MEMORY: // Nonresettable due to IoReportResourceUsage path.
+    case CM_PROB_NORMAL_CONFLICT:
+    case CM_PROB_PARTIAL_LOG_CONF:
+    case CM_PROB_DEVICE_NOT_THERE:
+    case CM_PROB_HARDWARE_DISABLED:
+    case CM_PROB_DISABLED_SERVICE:
+    case CM_PROB_TRANSLATION_FAILED:
+    case CM_PROB_NO_SOFTCONFIG:
+    case CM_PROB_BIOS_TABLE:
+    case CM_PROB_IRQ_TRANSLATION_FAILED:
+    case CM_PROB_DUPLICATE_DEVICE:
+    case CM_PROB_SYSTEM_SHUTDOWN:
+    case CM_PROB_HELD_FOR_EJECT:
+    case CM_PROB_REGISTRY_TOO_LARGE:
+    case CM_PROB_INVALID_DATA:
 
-            return TRUE;
+        return TRUE;
 
-        case CM_PROB_FAILED_INSTALL:
-        case CM_PROB_FAILED_ADD:
-        case CM_PROB_FAILED_START:
-        case CM_PROB_NOT_CONFIGURED:
-        case CM_PROB_NEED_RESTART:
-        case CM_PROB_REINSTALL:
-        case CM_PROB_REGISTRY:
-        case CM_PROB_DISABLED:
-        case CM_PROB_FAILED_DRIVER_ENTRY:
-        case CM_PROB_DRIVER_FAILED_PRIOR_UNLOAD:
-        case CM_PROB_DRIVER_FAILED_LOAD:
-        case CM_PROB_DRIVER_SERVICE_KEY_INVALID:
-        case CM_PROB_LEGACY_SERVICE_NO_DEVICES:
-        case CM_PROB_HALTED:
-        case CM_PROB_FAILED_POST_START:
-        case CM_PROB_WILL_BE_REMOVED:
-        case CM_PROB_DRIVER_BLOCKED:
+    case CM_PROB_FAILED_INSTALL:
+    case CM_PROB_FAILED_ADD:
+    case CM_PROB_FAILED_START:
+    case CM_PROB_NOT_CONFIGURED:
+    case CM_PROB_NEED_RESTART:
+    case CM_PROB_REINSTALL:
+    case CM_PROB_REGISTRY:
+    case CM_PROB_DISABLED:
+    case CM_PROB_FAILED_DRIVER_ENTRY:
+    case CM_PROB_DRIVER_FAILED_PRIOR_UNLOAD:
+    case CM_PROB_DRIVER_FAILED_LOAD:
+    case CM_PROB_DRIVER_SERVICE_KEY_INVALID:
+    case CM_PROB_LEGACY_SERVICE_NO_DEVICES:
+    case CM_PROB_HALTED:
+    case CM_PROB_FAILED_POST_START:
+    case CM_PROB_WILL_BE_REMOVED:
+    case CM_PROB_DRIVER_BLOCKED:
 
-            return FALSE;
+        return FALSE;
 
-        case CM_PROB_PHANTOM:
+    case CM_PROB_PHANTOM:
 
-            //
-            // Should never see in kernel mode
-            //
+        //
+        // Should never see in kernel mode
+        //
 
-        case CM_PROB_DEVLOADER_FAILED:
-        case CM_PROB_DEVLOADER_NOT_FOUND:
-        case CM_PROB_REENUMERATION:
-        case CM_PROB_VXDLDR:
-        case CM_PROB_NOT_VERIFIED:
-        case CM_PROB_LIAR:
-        case CM_PROB_FAILED_FILTER:
-        case CM_PROB_MOVED:
-        case CM_PROB_TOO_EARLY:
-        case CM_PROB_NO_VALID_LOG_CONF:
-        case CM_PROB_UNKNOWN_RESOURCE:
-        case CM_PROB_ENTRY_IS_WRONG_TYPE:
-        case CM_PROB_LACKED_ARBITRATOR:
-        case CM_PROB_BOOT_CONFIG_CONFLICT:
-        case CM_PROB_DEVLOADER_NOT_READY:
-        case CM_PROB_CANT_SHARE_IRQ:
+    case CM_PROB_DEVLOADER_FAILED:
+    case CM_PROB_DEVLOADER_NOT_FOUND:
+    case CM_PROB_REENUMERATION:
+    case CM_PROB_VXDLDR:
+    case CM_PROB_NOT_VERIFIED:
+    case CM_PROB_LIAR:
+    case CM_PROB_FAILED_FILTER:
+    case CM_PROB_MOVED:
+    case CM_PROB_TOO_EARLY:
+    case CM_PROB_NO_VALID_LOG_CONF:
+    case CM_PROB_UNKNOWN_RESOURCE:
+    case CM_PROB_ENTRY_IS_WRONG_TYPE:
+    case CM_PROB_LACKED_ARBITRATOR:
+    case CM_PROB_BOOT_CONFIG_CONFLICT:
+    case CM_PROB_DEVLOADER_NOT_READY:
+    case CM_PROB_CANT_SHARE_IRQ:
 
-            //
-            // Win9x specific
-            //
+        //
+        // Win9x specific
+        //
 
-        default:
-            ASSERT(0);
+    default:
+        ASSERT(0);
 
-            //
-            // We return TRUE in this path because that prevents these problems
-            // from being set on devnodes (SetDeviceProblem won't allow usage
-            // of ReadOnly problems)
-            //
-            return TRUE;
+        //
+        // We return TRUE in this path because that prevents these problems
+        // from being set on devnodes (SetDeviceProblem won't allow usage
+        // of ReadOnly problems)
+        //
+        return TRUE;
     }
 }
-
+
 NTSTATUS
-PipAllocateDeviceNode(
-    IN PDEVICE_OBJECT PhysicalDeviceObject,
-    OUT PDEVICE_NODE *DeviceNode
-    )
+PipAllocateDeviceNode(IN PDEVICE_OBJECT PhysicalDeviceObject, OUT PDEVICE_NODE *DeviceNode)
 /*++
 
 Routine Description:
@@ -499,13 +468,10 @@ Return Value:
 
     PAGED_CODE();
 
-    *DeviceNode = ExAllocatePoolWithTag(
-                    NonPagedPool,
-                    sizeof(DEVICE_NODE),
-                    IOP_DNOD_TAG
-                    );
+    *DeviceNode = ExAllocatePoolWithTag(NonPagedPool, sizeof(DEVICE_NODE), IOP_DNOD_TAG);
 
-    if (*DeviceNode == NULL ){
+    if (*DeviceNode == NULL)
+    {
 
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -525,7 +491,8 @@ Return Value:
     InitializeListHead(&(*DeviceNode)->DeviceArbiterList);
     InitializeListHead(&(*DeviceNode)->DeviceTranslatorList);
 
-    if (PhysicalDeviceObject){
+    if (PhysicalDeviceObject)
+    {
 
         (*DeviceNode)->PhysicalDeviceObject = PhysicalDeviceObject;
         PhysicalDeviceObject->DeviceObjectExtension->DeviceNode = (PVOID)*DeviceNode;
@@ -540,7 +507,8 @@ Return Value:
 
     InitializeListHead(&(*DeviceNode)->LegacyBusListEntry);
 
-    if (PpSystemHiveTooLarge) {
+    if (PpSystemHiveTooLarge)
+    {
 
         return STATUS_SYSTEM_HIVE_TOO_LARGE;
     }
@@ -550,10 +518,7 @@ Return Value:
 
 
 NTSTATUS
-PipForAllDeviceNodes(
-    IN PENUM_CALLBACK Callback,
-    IN PVOID Context
-    )
+PipForAllDeviceNodes(IN PENUM_CALLBACK Callback, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -583,11 +548,7 @@ Return Value:
 
 
 NTSTATUS
-PipForDeviceNodeSubtree(
-    IN PDEVICE_NODE     DeviceNode,
-    IN PENUM_CALLBACK   Callback,
-    IN PVOID            Context
-    )
+PipForDeviceNodeSubtree(IN PDEVICE_NODE DeviceNode, IN PENUM_CALLBACK Callback, IN PVOID Context)
 /*++
 
 Routine Description:
@@ -626,9 +587,7 @@ Return Value:
     //
     PpDevNodeLockTree(PPL_SIMPLE_READ);
 
-    status = PipForAllChildDeviceNodes(DeviceNode,
-                                       PipForAllDeviceNodesCallback,
-                                       (PVOID)&enumContext );
+    status = PipForAllChildDeviceNodes(DeviceNode, PipForAllDeviceNodesCallback, (PVOID)&enumContext);
 
 
     PpDevNodeUnlockTree(PPL_SIMPLE_READ);
@@ -637,11 +596,7 @@ Return Value:
 
 
 NTSTATUS
-PipForAllChildDeviceNodes(
-    IN PDEVICE_NODE Parent,
-    IN PENUM_CALLBACK Callback,
-    IN PVOID Context
-    )
+PipForAllChildDeviceNodes(IN PDEVICE_NODE Parent, IN PENUM_CALLBACK Callback, IN PVOID Context)
 
 /*++
 
@@ -685,7 +640,8 @@ Return Value:
     // in case the current child is deleted by the Callback function.
     //
 
-    while (nextChild && NT_SUCCESS(status)) {
+    while (nextChild && NT_SUCCESS(status))
+    {
         child = nextChild;
         nextChild = child->Sibling;
         status = Callback(child, Context);
@@ -693,12 +649,9 @@ Return Value:
 
     return status;
 }
-
+
 NTSTATUS
-PipForAllDeviceNodesCallback(
-    IN PDEVICE_NODE DeviceNode,
-    IN PVOID Context
-    )
+PipForAllDeviceNodesCallback(IN PDEVICE_NODE DeviceNode, IN PVOID Context)
 
 /*++
 
@@ -731,29 +684,24 @@ Return Value:
     // First call the caller's callback for this devnode
     //
 
-    status =
-        enumContext->CallersCallback(DeviceNode, enumContext->CallersContext);
+    status = enumContext->CallersCallback(DeviceNode, enumContext->CallersContext);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         //
         // Now enumerate the children, if any.
         //
-        if (DeviceNode->Child) {
+        if (DeviceNode->Child)
+        {
 
-            status = PipForAllChildDeviceNodes(
-                                        DeviceNode,
-                                        PipForAllDeviceNodesCallback,
-                                        Context);
+            status = PipForAllChildDeviceNodes(DeviceNode, PipForAllDeviceNodesCallback, Context);
         }
     }
 
     return status;
 }
-VOID
-IopDestroyDeviceNode(
-    IN PDEVICE_NODE DeviceNode
-    )
+VOID IopDestroyDeviceNode(IN PDEVICE_NODE DeviceNode)
 
 /*++
 
@@ -782,29 +730,25 @@ Return Value:
 
     PAGED_CODE();
 
-    if (DeviceNode) {
+    if (DeviceNode)
+    {
 
-        if ((DeviceNode->PhysicalDeviceObject->Flags & DO_BUS_ENUMERATED_DEVICE) &&
-            DeviceNode->Parent != NULL)  {
+        if ((DeviceNode->PhysicalDeviceObject->Flags & DO_BUS_ENUMERATED_DEVICE) && DeviceNode->Parent != NULL)
+        {
 
             PP_SAVE_DEVNODE_TO_TRIAGE_DUMP(DeviceNode);
-            KeBugCheckEx( PNP_DETECTED_FATAL_ERROR,
-                          PNP_ERR_ACTIVE_PDO_FREED,
-                          (ULONG_PTR)DeviceNode->PhysicalDeviceObject,
-                          0,
-                          0);
+            KeBugCheckEx(PNP_DETECTED_FATAL_ERROR, PNP_ERR_ACTIVE_PDO_FREED,
+                         (ULONG_PTR)DeviceNode->PhysicalDeviceObject, 0, 0);
         }
-        if (DeviceNode->Flags & DNF_LEGACY_RESOURCE_DEVICENODE) {
+        if (DeviceNode->Flags & DNF_LEGACY_RESOURCE_DEVICENODE)
+        {
             //
             // Release the resources this device consumes (the devicenode will
             // get deleted after the release). Basically cleanup after bad
             // (legacy) drivers.
             //
-            IopLegacyResourceAllocation(    ArbiterRequestUndefined,
-                                            IoPnpDriverObject,
-                                            DeviceNode->PhysicalDeviceObject,
-                                            NULL,
-                                            NULL);
+            IopLegacyResourceAllocation(ArbiterRequestUndefined, IoPnpDriverObject, DeviceNode->PhysicalDeviceObject,
+                                        NULL, NULL);
             return;
         }
 
@@ -816,22 +760,21 @@ Return Value:
         // call legacy assign resource interface.)
         //
 
-        ASSERT(DeviceNode->Child == NULL &&
-               DeviceNode->Sibling == NULL &&
-               DeviceNode->LastChild == NULL
-               );
+        ASSERT(DeviceNode->Child == NULL && DeviceNode->Sibling == NULL && DeviceNode->LastChild == NULL);
 
-        ASSERT(DeviceNode->DockInfo.SerialNumber == NULL &&
-               IsListEmpty(&DeviceNode->DockInfo.ListEntry));
+        ASSERT(DeviceNode->DockInfo.SerialNumber == NULL && IsListEmpty(&DeviceNode->DockInfo.ListEntry));
 
-        if (DeviceNode->PhysicalDeviceObject->Flags & DO_BUS_ENUMERATED_DEVICE) {
-            ASSERT (DeviceNode->Parent == 0);
+        if (DeviceNode->PhysicalDeviceObject->Flags & DO_BUS_ENUMERATED_DEVICE)
+        {
+            ASSERT(DeviceNode->Parent == 0);
         }
 
-        if (DeviceNode->PreviousResourceList) {
+        if (DeviceNode->PreviousResourceList)
+        {
             ExFreePool(DeviceNode->PreviousResourceList);
         }
-        if (DeviceNode->PreviousResourceRequirements) {
+        if (DeviceNode->PreviousResourceRequirements)
+        {
             ExFreePool(DeviceNode->PreviousResourceRequirements);
         }
 
@@ -843,11 +786,13 @@ Return Value:
         ASSERT((DeviceNode->UserFlags & DNUF_NOT_DISABLEABLE) == 0);
         ASSERT(DeviceNode->DisableableDepends == 0);
 
-        if (DeviceNode->InstancePath.Length) {
+        if (DeviceNode->InstancePath.Length)
+        {
 
             dbgDeviceObject = IopDeviceObjectFromDeviceInstance(&DeviceNode->InstancePath);
 
-            if (dbgDeviceObject) {
+            if (dbgDeviceObject)
+            {
 
                 ASSERT(dbgDeviceObject != DeviceNode->PhysicalDeviceObject);
                 ObDereferenceObject(dbgDeviceObject);
@@ -855,28 +800,33 @@ Return Value:
         }
 
 #endif
-        if (DeviceNode->DuplicatePDO) {
+        if (DeviceNode->DuplicatePDO)
+        {
             ObDereferenceObject(DeviceNode->DuplicatePDO);
         }
-        if (DeviceNode->ServiceName.Length != 0) {
+        if (DeviceNode->ServiceName.Length != 0)
+        {
             ExFreePool(DeviceNode->ServiceName.Buffer);
         }
-        if (DeviceNode->InstancePath.Length != 0) {
+        if (DeviceNode->InstancePath.Length != 0)
+        {
             ExFreePool(DeviceNode->InstancePath.Buffer);
         }
-        if (DeviceNode->ResourceRequirements) {
+        if (DeviceNode->ResourceRequirements)
+        {
             ExFreePool(DeviceNode->ResourceRequirements);
         }
         //
         // Dereference all the arbiters and translators on this PDO.
         //
-        IopUncacheInterfaceInformation(DeviceNode->PhysicalDeviceObject) ;
+        IopUncacheInterfaceInformation(DeviceNode->PhysicalDeviceObject);
 
         //
         // Release any pended IoSetDeviceInterface structures
         //
 
-        while (!IsListEmpty(&DeviceNode->PendedSetInterfaceState)) {
+        while (!IsListEmpty(&DeviceNode->PendedSetInterfaceState))
+        {
 
             PPENDING_SET_INTERFACE_STATE entry;
 
@@ -894,11 +844,7 @@ Return Value:
 }
 
 
-VOID
-PpDevNodeInsertIntoTree(
-    IN PDEVICE_NODE     ParentNode,
-    IN PDEVICE_NODE     DeviceNode
-    )
+VOID PpDevNodeInsertIntoTree(IN PDEVICE_NODE ParentNode, IN PDEVICE_NODE DeviceNode)
 /*++
 
 Routine Description:
@@ -944,7 +890,8 @@ Return Value:
     //
     // Update the maximum depth of the tree.
     //
-    if (depth > IopMaxDeviceNodeLevel) {
+    if (depth > IopMaxDeviceNodeLevel)
+    {
         IopMaxDeviceNodeLevel = depth;
     }
 
@@ -956,11 +903,14 @@ Return Value:
     //
     DeviceNode->Parent = ParentNode;
     KeMemoryBarrier();
-    if (ParentNode->LastChild) {
+    if (ParentNode->LastChild)
+    {
         ASSERT(ParentNode->LastChild->Sibling == NULL);
         ParentNode->LastChild->Sibling = DeviceNode;
         ParentNode->LastChild = DeviceNode;
-    } else {
+    }
+    else
+    {
         ASSERT(ParentNode->Child == NULL);
         ParentNode->Child = ParentNode->LastChild = DeviceNode;
     }
@@ -974,10 +924,7 @@ Return Value:
 }
 
 
-VOID
-PpDevNodeRemoveFromTree(
-    IN PDEVICE_NODE     DeviceNode
-    )
+VOID PpDevNodeRemoveFromTree(IN PDEVICE_NODE DeviceNode)
 /*++
 
 Routine Description:
@@ -992,8 +939,8 @@ Return Value:
 
 --*/
 {
-    PDEVICE_NODE    *node;
-    KIRQL           oldIrql;
+    PDEVICE_NODE *node;
+    KIRQL oldIrql;
 
     //
     // Acquire spinlock to deal with legacy/PnP synchronization.
@@ -1007,15 +954,20 @@ Return Value:
     //
 
     node = &DeviceNode->Parent->Child;
-    while (*node != DeviceNode) {
+    while (*node != DeviceNode)
+    {
         node = &(*node)->Sibling;
     }
     *node = DeviceNode->Sibling;
 
-    if (DeviceNode->Parent->Child == NULL) {
+    if (DeviceNode->Parent->Child == NULL)
+    {
         DeviceNode->Parent->LastChild = NULL;
-    } else {
-        while (*node) {
+    }
+    else
+    {
+        while (*node)
+        {
             node = &(*node)->Sibling;
         }
         DeviceNode->Parent->LastChild = CONTAINING_RECORD(node, DEVICE_NODE, Sibling);
@@ -1036,17 +988,14 @@ Return Value:
     //
     // No longer linked
     //
-    DeviceNode->Parent    = NULL;
-    DeviceNode->Child     = NULL;
-    DeviceNode->Sibling   = NULL;
+    DeviceNode->Parent = NULL;
+    DeviceNode->Child = NULL;
+    DeviceNode->Sibling = NULL;
     DeviceNode->LastChild = NULL;
 }
 
 
-VOID
-PpDevNodeLockTree(
-    IN  PNP_LOCK_LEVEL  LockLevel
-    )
+VOID PpDevNodeLockTree(IN PNP_LOCK_LEVEL LockLevel)
 /*++
 
 Routine Description:
@@ -1087,66 +1036,66 @@ Return Value:
     //
     KeEnterCriticalRegion();
 
-    switch(LockLevel) {
+    switch (LockLevel)
+    {
 
-        case PPL_SIMPLE_READ:
-            ExAcquireSharedWaitForExclusive(&IopDeviceTreeLock, TRUE);
-            break;
+    case PPL_SIMPLE_READ:
+        ExAcquireSharedWaitForExclusive(&IopDeviceTreeLock, TRUE);
+        break;
 
-        case PPL_TREEOP_ALLOW_READS:
-            ExAcquireResourceExclusiveLite(&PiEngineLock, TRUE);
-            ExAcquireSharedWaitForExclusive(&IopDeviceTreeLock, TRUE);
-            break;
+    case PPL_TREEOP_ALLOW_READS:
+        ExAcquireResourceExclusiveLite(&PiEngineLock, TRUE);
+        ExAcquireSharedWaitForExclusive(&IopDeviceTreeLock, TRUE);
+        break;
 
-        case PPL_TREEOP_BLOCK_READS:
-            ExAcquireResourceExclusiveLite(&PiEngineLock, TRUE);
+    case PPL_TREEOP_BLOCK_READS:
+        ExAcquireResourceExclusiveLite(&PiEngineLock, TRUE);
+        ExAcquireResourceExclusiveLite(&IopDeviceTreeLock, TRUE);
+        break;
+
+    case PPL_TREEOP_BLOCK_READS_FROM_ALLOW:
+
+        //
+        // Drop the tree lock and require exclusive.
+        //
+        ASSERT(ExIsResourceAcquiredExclusiveLite(&PiEngineLock));
+
+        //
+        // "Shared" is a subset of exclusive. ExIsResourceAcquiredShared
+        // will return nonzero if it's owned exclusive. We flush out that
+        // case here.
+        //
+        ASSERT(ExIsResourceAcquiredSharedLite(&IopDeviceTreeLock) &&
+               (!ExIsResourceAcquiredExclusiveLite(&IopDeviceTreeLock)));
+
+        //
+        // Drop the tree lock entirely.
+        //
+        refCount = ExIsResourceAcquiredSharedLite(&IopDeviceTreeLock);
+        for (remainingCount = refCount; remainingCount; remainingCount--)
+        {
+
+            ExReleaseResourceLite(&IopDeviceTreeLock);
+        }
+
+        //
+        // Grab it exclusively while keeping the original count.
+        //
+        for (remainingCount = refCount; remainingCount; remainingCount--)
+        {
+
             ExAcquireResourceExclusiveLite(&IopDeviceTreeLock, TRUE);
-            break;
+        }
+        break;
 
-        case PPL_TREEOP_BLOCK_READS_FROM_ALLOW:
-
-            //
-            // Drop the tree lock and require exclusive.
-            //
-            ASSERT(ExIsResourceAcquiredExclusiveLite(&PiEngineLock));
-
-            //
-            // "Shared" is a subset of exclusive. ExIsResourceAcquiredShared
-            // will return nonzero if it's owned exclusive. We flush out that
-            // case here.
-            //
-            ASSERT(ExIsResourceAcquiredSharedLite(&IopDeviceTreeLock) &&
-                   (!ExIsResourceAcquiredExclusiveLite(&IopDeviceTreeLock)));
-
-            //
-            // Drop the tree lock entirely.
-            //
-            refCount = ExIsResourceAcquiredSharedLite(&IopDeviceTreeLock);
-            for(remainingCount = refCount; remainingCount; remainingCount--) {
-
-                ExReleaseResourceLite(&IopDeviceTreeLock);
-            }
-
-            //
-            // Grab it exclusively while keeping the original count.
-            //
-            for(remainingCount = refCount; remainingCount; remainingCount--) {
-
-                ExAcquireResourceExclusiveLite(&IopDeviceTreeLock, TRUE);
-            }
-            break;
-
-        default:
-            ASSERT(0);
-            break;
+    default:
+        ASSERT(0);
+        break;
     }
 }
 
 
-VOID
-PpDevNodeUnlockTree(
-    IN  PNP_LOCK_LEVEL  LockLevel
-    )
+VOID PpDevNodeUnlockTree(IN PNP_LOCK_LEVEL LockLevel)
 /*++
 
 Routine Description:
@@ -1180,36 +1129,37 @@ Return Value:
 --*/
 {
     PPDEVNODE_ASSERT_LOCK_HELD(LockLevel);
-    switch(LockLevel) {
+    switch (LockLevel)
+    {
 
-        case PPL_SIMPLE_READ:
-            ExReleaseResourceLite(&IopDeviceTreeLock);
-            break;
+    case PPL_SIMPLE_READ:
+        ExReleaseResourceLite(&IopDeviceTreeLock);
+        break;
 
-        case PPL_TREEOP_ALLOW_READS:
-            ExReleaseResourceLite(&IopDeviceTreeLock);
-            ExReleaseResourceLite(&PiEngineLock);
-            break;
+    case PPL_TREEOP_ALLOW_READS:
+        ExReleaseResourceLite(&IopDeviceTreeLock);
+        ExReleaseResourceLite(&PiEngineLock);
+        break;
 
-        case PPL_TREEOP_BLOCK_READS:
-            ExReleaseResourceLite(&IopDeviceTreeLock);
-            ExReleaseResourceLite(&PiEngineLock);
-            break;
+    case PPL_TREEOP_BLOCK_READS:
+        ExReleaseResourceLite(&IopDeviceTreeLock);
+        ExReleaseResourceLite(&PiEngineLock);
+        break;
 
-        case PPL_TREEOP_BLOCK_READS_FROM_ALLOW:
-            //
-            // The engine lock should still be held here. Now we adjust the
-            // tree lock. Go back to allow by converting the exclusive lock to
-            // shared. Note that this doesn't chance the acquisition count.
-            //
-            ASSERT(ExIsResourceAcquiredExclusiveLite(&IopDeviceTreeLock));
-            ASSERT(ExIsResourceAcquiredExclusiveLite(&PiEngineLock));
-            ExConvertExclusiveToSharedLite(&IopDeviceTreeLock);
-            break;
+    case PPL_TREEOP_BLOCK_READS_FROM_ALLOW:
+        //
+        // The engine lock should still be held here. Now we adjust the
+        // tree lock. Go back to allow by converting the exclusive lock to
+        // shared. Note that this doesn't chance the acquisition count.
+        //
+        ASSERT(ExIsResourceAcquiredExclusiveLite(&IopDeviceTreeLock));
+        ASSERT(ExIsResourceAcquiredExclusiveLite(&PiEngineLock));
+        ExConvertExclusiveToSharedLite(&IopDeviceTreeLock);
+        break;
 
-        default:
-            ASSERT(0);
-            break;
+    default:
+        ASSERT(0);
+        break;
     }
 
     KeLeaveCriticalRegion();
@@ -1217,12 +1167,7 @@ Return Value:
 
 
 #if DBG
-VOID
-PpDevNodeAssertLockLevel(
-    IN  PNP_LOCK_LEVEL  LockLevel,
-    IN  PCSTR           File,
-    IN  ULONG           Line
-    )
+VOID PpDevNodeAssertLockLevel(IN PNP_LOCK_LEVEL LockLevel, IN PCSTR File, IN ULONG Line)
 /*++
 
 Routine Description:
@@ -1259,35 +1204,35 @@ Return Value:
 
 --*/
 {
-    switch(LockLevel) {
+    switch (LockLevel)
+    {
 
-        case PPL_SIMPLE_READ:
-            ASSERT(ExIsResourceAcquiredSharedLite(&IopDeviceTreeLock));
-            break;
+    case PPL_SIMPLE_READ:
+        ASSERT(ExIsResourceAcquiredSharedLite(&IopDeviceTreeLock));
+        break;
 
-        case PPL_TREEOP_ALLOW_READS:
-            ASSERT(ExIsResourceAcquiredSharedLite(&IopDeviceTreeLock));
-            ASSERT(ExIsResourceAcquiredExclusiveLite(&PiEngineLock));
-            break;
+    case PPL_TREEOP_ALLOW_READS:
+        ASSERT(ExIsResourceAcquiredSharedLite(&IopDeviceTreeLock));
+        ASSERT(ExIsResourceAcquiredExclusiveLite(&PiEngineLock));
+        break;
 
-        case PPL_TREEOP_BLOCK_READS_FROM_ALLOW:
-            //
-            // This isn't really a lock level, but this assert-o-matic function
-            // is called from Unlock, in which case this level means "drop back
-            // to PPL_TREEOP_ALLOW_READS *from* PPL_TREEOP_BLOCK_READS." So...
-            //
-            // Fall through
-            //
+    case PPL_TREEOP_BLOCK_READS_FROM_ALLOW:
+        //
+        // This isn't really a lock level, but this assert-o-matic function
+        // is called from Unlock, in which case this level means "drop back
+        // to PPL_TREEOP_ALLOW_READS *from* PPL_TREEOP_BLOCK_READS." So...
+        //
+        // Fall through
+        //
 
-        case PPL_TREEOP_BLOCK_READS:
-            ASSERT(ExIsResourceAcquiredExclusiveLite(&IopDeviceTreeLock));
-            ASSERT(ExIsResourceAcquiredExclusiveLite(&PiEngineLock));
-            break;
+    case PPL_TREEOP_BLOCK_READS:
+        ASSERT(ExIsResourceAcquiredExclusiveLite(&IopDeviceTreeLock));
+        ASSERT(ExIsResourceAcquiredExclusiveLite(&PiEngineLock));
+        break;
 
-        default:
-            ASSERT(0);
-            break;
+    default:
+        ASSERT(0);
+        break;
     }
 }
 #endif // DBG
-

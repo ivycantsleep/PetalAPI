@@ -42,46 +42,24 @@ Revision History:
 #include "nt.h"
 #include <excpt.h>
 
-
+
 //
 // Define procedure prototypes for exception filter and termination handler
 // execution routines defined in jmpunwnd.s
 //
 
-VOID _NLG_Notify (
-    IN PVOID uoffDestination,
-    IN FRAME_POINTERS uoffFramePointer,
-    IN ULONG dwCode
-);
+VOID _NLG_Notify(IN PVOID uoffDestination, IN FRAME_POINTERS uoffFramePointer, IN ULONG dwCode);
 
-LONG
-__C_ExecuteExceptionFilter (
-    ULONGLONG MemoryStack,
-    ULONGLONG BackingStore,
-    NTSTATUS ExceptionCode,
-    PEXCEPTION_POINTERS ExceptionPointers,
-    ULONGLONG ExceptionFilter,
-    ULONGLONG GlobalPointer
-    );
+LONG __C_ExecuteExceptionFilter(ULONGLONG MemoryStack, ULONGLONG BackingStore, NTSTATUS ExceptionCode,
+                                PEXCEPTION_POINTERS ExceptionPointers, ULONGLONG ExceptionFilter,
+                                ULONGLONG GlobalPointer);
 
-VOID
-__C_ExecuteTerminationHandler (
-    ULONGLONG MemoryStack,
-    ULONGLONG BackingStore,
-    BOOLEAN AbnormalTermination,
-    ULONGLONG TerminationHandler,
-    ULONGLONG GlobalPointer
-    );
-
+VOID __C_ExecuteTerminationHandler(ULONGLONG MemoryStack, ULONGLONG BackingStore, BOOLEAN AbnormalTermination,
+                                   ULONGLONG TerminationHandler, ULONGLONG GlobalPointer);
+
 EXCEPTION_DISPOSITION
-__C_specific_handler (
-    IN PEXCEPTION_RECORD ExceptionRecord,
-    IN ULONGLONG MemoryStackFp,
-    IN ULONGLONG BackingStoreFp,
-    IN OUT PCONTEXT ContextRecord,
-    IN OUT PDISPATCHER_CONTEXT DispatcherContext,
-    IN ULONGLONG TargetGp
-    )
+__C_specific_handler(IN PEXCEPTION_RECORD ExceptionRecord, IN ULONGLONG MemoryStackFp, IN ULONGLONG BackingStoreFp,
+                     IN OUT PCONTEXT ContextRecord, IN OUT PDISPATCHER_CONTEXT DispatcherContext, IN ULONGLONG TargetGp)
 
 /*++
 
@@ -138,8 +116,7 @@ Return Value:
 
     FunctionEntry = DispatcherContext->FunctionEntry;
     ImageBase = DispatcherContext->ImageBase;
-    ScopeTable = (PSCOPE_TABLE) (ImageBase + *(PULONG) 
-                     GetLanguageSpecificData(FunctionEntry, ImageBase));
+    ScopeTable = (PSCOPE_TABLE)(ImageBase + *(PULONG)GetLanguageSpecificData(FunctionEntry, ImageBase));
 
     ControlPc = DispatcherContext->ControlPc - ImageBase;
 
@@ -151,7 +128,8 @@ Return Value:
     // are called.
     //
 
-    if (IS_DISPATCHING(ExceptionRecord->ExceptionFlags)) {
+    if (IS_DISPATCHING(ExceptionRecord->ExceptionFlags))
+    {
 
         //
         // Scan the scope table and call the appropriate exception filter
@@ -160,10 +138,12 @@ Return Value:
 
         ExceptionPointers.ExceptionRecord = ExceptionRecord;
         ExceptionPointers.ContextRecord = ContextRecord;
-        for (Index = 0; Index < ScopeTable->Count; Index += 1) {
+        for (Index = 0; Index < ScopeTable->Count; Index += 1)
+        {
             if ((ControlPc >= ScopeTable->ScopeRecord[Index].BeginAddress) &&
                 (ControlPc < ScopeTable->ScopeRecord[Index].EndAddress) &&
-                (ScopeTable->ScopeRecord[Index].JumpTarget != 0)) {
+                (ScopeTable->ScopeRecord[Index].JumpTarget != 0))
+            {
 
                 //
                 // Call the exception filter routine.
@@ -171,7 +151,8 @@ Return Value:
 
                 ULONG Offset = ScopeTable->ScopeRecord[Index].HandlerAddress;
 
-                switch (Offset & 0x7) {
+                switch (Offset & 0x7)
+                {
 
                 case 7:
                     Value = EXCEPTION_EXECUTE_HANDLER;
@@ -186,13 +167,8 @@ Return Value:
                     break;
 
                 default:
-                    Value = __C_ExecuteExceptionFilter(
-                                MemoryStackFp,
-                                BackingStoreFp,
-                                ExceptionRecord->ExceptionCode,
-                                &ExceptionPointers,
-                                (ImageBase + Offset),
-                                TargetGp);
+                    Value = __C_ExecuteExceptionFilter(MemoryStackFp, BackingStoreFp, ExceptionRecord->ExceptionCode,
+                                                       &ExceptionPointers, (ImageBase + Offset), TargetGp);
                     break;
                 }
 
@@ -204,13 +180,15 @@ Return Value:
                 // continue the search for an exception filter.
                 //
 
-                if (Value < 0) {
+                if (Value < 0)
+                {
                     return ExceptionContinueExecution;
-
-                } else if (Value > 0) {
+                }
+                else if (Value > 0)
+                {
 
                     //
-                    // Tell the debugger we are about to pass control to an 
+                    // Tell the debugger we are about to pass control to an
                     // exception handler and pass the handler's address to
                     // NLG_Notify.
                     //
@@ -219,18 +197,16 @@ Return Value:
 
                     _NLG_Notify((PVOID)Handler, EstablisherFrame, 0x1);
 
-                    RtlUnwind2(EstablisherFrame,
-                               (PVOID)Handler,
-                               ExceptionRecord,
-			       // IA64 assumption:
+                    RtlUnwind2(EstablisherFrame, (PVOID)Handler, ExceptionRecord,
+                               // IA64 assumption:
                                // RtlUnwind2 will not use this as an address
-                               (PVOID)(unsigned __int64)ExceptionRecord->ExceptionCode,
-                               ContextRecord);
+                               (PVOID)(unsigned __int64)ExceptionRecord->ExceptionCode, ContextRecord);
                 }
             }
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // Scan the scope table and call the appropriate termination handler
@@ -243,21 +219,25 @@ Return Value:
         TargetPc = ContextRecord->StIIP - ImageBase;
 
         TargetHandler = 0;
-        if (Unw->Flags & 0x1000) {
-            for (Index = 0; Index < ScopeTable->Count; Index += 1) {
+        if (Unw->Flags & 0x1000)
+        {
+            for (Index = 0; Index < ScopeTable->Count; Index += 1)
+            {
                 if ((TargetPc >= ScopeTable->ScopeRecord[Index].BeginAddress) &&
-                   (TargetPc < ScopeTable->ScopeRecord[Index].EndAddress)) 
+                    (TargetPc < ScopeTable->ScopeRecord[Index].EndAddress))
                 {
                     TargetHandler = ScopeTable->ScopeRecord[Index].HandlerAddress;
                     break;
                 }
             }
         }
-        
 
-        for (Index = 0; Index < ScopeTable->Count; Index += 1) {
+
+        for (Index = 0; Index < ScopeTable->Count; Index += 1)
+        {
             if ((ControlPc >= ScopeTable->ScopeRecord[Index].BeginAddress) &&
-                (ControlPc < ScopeTable->ScopeRecord[Index].EndAddress)) {
+                (ControlPc < ScopeTable->ScopeRecord[Index].EndAddress))
+            {
 
                 //
                 // If the target PC is within the same scope the control PC
@@ -271,10 +251,12 @@ Return Value:
 
 
                 if ((TargetPc >= ScopeTable->ScopeRecord[Index].BeginAddress) &&
-                   (TargetPc < ScopeTable->ScopeRecord[Index].EndAddress)) {
+                    (TargetPc < ScopeTable->ScopeRecord[Index].EndAddress))
+                {
                     break;
-
-                } else {
+                }
+                else
+                {
 
                     //
                     // If the scope table entry describes an exception filter
@@ -286,27 +268,25 @@ Return Value:
                     // the termination handler.
                     //
 
-                    if (ScopeTable->ScopeRecord[Index].JumpTarget != 0) {
-                        if (TargetPc == ScopeTable->ScopeRecord[Index].JumpTarget) {
+                    if (ScopeTable->ScopeRecord[Index].JumpTarget != 0)
+                    {
+                        if (TargetPc == ScopeTable->ScopeRecord[Index].JumpTarget)
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+
+                        if (TargetHandler == ScopeTable->ScopeRecord[Index].HandlerAddress)
+                        {
                             break;
                         }
 
-                    } else {
-
-                        if (TargetHandler == ScopeTable->ScopeRecord[Index].HandlerAddress) {
-                            break;
-                        }
-
-                        DispatcherContext->ControlPc = ImageBase +
-                                ScopeTable->ScopeRecord[Index].EndAddress;
+                        DispatcherContext->ControlPc = ImageBase + ScopeTable->ScopeRecord[Index].EndAddress;
 
                         Handler = ImageBase + ScopeTable->ScopeRecord[Index].HandlerAddress;
-                        __C_ExecuteTerminationHandler(
-                            MemoryStackFp,
-                            BackingStoreFp,
-                            TRUE,
-                            Handler,
-                            TargetGp);
+                        __C_ExecuteTerminationHandler(MemoryStackFp, BackingStoreFp, TRUE, Handler, TargetGp);
                     }
                 }
             }

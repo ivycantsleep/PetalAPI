@@ -28,7 +28,7 @@ Revision History:
 #include <nturtl.h>
 #include <string.h>
 
-#define _TST_USER_  // User mode test
+#define _TST_USER_ // User mode test
 
 typedef ULONG NAMED_PIPE_TYPE;
 typedef NAMED_PIPE_TYPE *PNAMED_PIPE_TYPE;
@@ -50,13 +50,10 @@ typedef ULONG NAMED_PIPE_END;
 typedef NAMED_PIPE_END *PNAMED_PIPE_END;
 
 
-#include "tsecomm.c"     // Common routines
-#include "ctlnpqos.c"     // quality of service tests
+#include "tsecomm.c"  // Common routines
+#include "ctlnpqos.c" // quality of service tests
 
 
-
-
-
 BOOLEAN
 Test()
 {
@@ -68,7 +65,7 @@ Test()
 
     return Result;
 }
-
+
 BOOLEAN
 main()
 {

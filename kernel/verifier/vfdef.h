@@ -64,4 +64,3 @@ Revision History:
 // For the sake of good coding practice, no macros or defines should be
 // declared in this file, but rather they should be defined in seperate headers.
 //
-

@@ -25,13 +25,9 @@ Revision History:
 #pragma alloc_text(PAGE, RawCreate)
 #endif
 
-
+
 NTSTATUS
-RawCreate (
-    IN PVCB Vcb,
-    IN PIRP Irp,
-    IN PIO_STACK_LOCATION IrpSp
-    )
+RawCreate(IN PVCB Vcb, IN PIRP Irp, IN PIO_STACK_LOCATION IrpSp)
 
 /*++
 
@@ -68,37 +64,37 @@ Return Value:
     //    o  and does not ask to create a directory.
     //
 
-    Status = KeWaitForSingleObject( &Vcb->Mutex,
-                                   Executive,
-                                   KernelMode,
-                                   FALSE,
-                                   (PLARGE_INTEGER) NULL );
-    ASSERT( NT_SUCCESS( Status ) );
+    Status = KeWaitForSingleObject(&Vcb->Mutex, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
+    ASSERT(NT_SUCCESS(Status));
 
     //
     // Don't allow any relative opens as well as opens with a filename. These opens have
     // only been checked for traverse access by the I/O manager.
     //
-    if (((IrpSp->FileObject == NULL) || ((IrpSp->FileObject->FileName.Length == 0) &&
-                                          IrpSp->FileObject->RelatedFileObject == NULL)) &&
+    if (((IrpSp->FileObject == NULL) ||
+         ((IrpSp->FileObject->FileName.Length == 0) && IrpSp->FileObject->RelatedFileObject == NULL)) &&
         ((IrpSp->Parameters.Create.Options >> 24) == FILE_OPEN) &&
-        ((IrpSp->Parameters.Create.Options & FILE_DIRECTORY_FILE) == 0)) {
+        ((IrpSp->Parameters.Create.Options & FILE_DIRECTORY_FILE) == 0))
+    {
 
         //
         //  If the volume is locked or dismounted we cannot open it again.
         //
 
-        if ( FlagOn(Vcb->VcbState,  VCB_STATE_FLAG_LOCKED) ) {
+        if (FlagOn(Vcb->VcbState, VCB_STATE_FLAG_LOCKED))
+        {
 
             Status = STATUS_ACCESS_DENIED;
             Irp->IoStatus.Information = 0;
-
-        } if ( FlagOn(Vcb->VcbState,  VCB_STATE_FLAG_DISMOUNTED) ) {
+        }
+        if (FlagOn(Vcb->VcbState, VCB_STATE_FLAG_DISMOUNTED))
+        {
 
             Status = STATUS_VOLUME_DISMOUNTED;
             Irp->IoStatus.Information = 0;
-
-        } else {
+        }
+        else
+        {
 
             //
             //  If the volume is already opened by someone then we need to check
@@ -112,27 +108,24 @@ Return Value:
             DesiredAccess = IrpSp->Parameters.Create.SecurityContext->DesiredAccess;
 
             if ((Vcb->OpenCount > 0) &&
-                !NT_SUCCESS(Status = IoCheckShareAccess( DesiredAccess,
-                                                         ShareAccess,
-                                                         IrpSp->FileObject,
-                                                         &Vcb->ShareAccess,
-                                                         TRUE ))) {
+                !NT_SUCCESS(Status = IoCheckShareAccess(DesiredAccess, ShareAccess, IrpSp->FileObject,
+                                                        &Vcb->ShareAccess, TRUE)))
+            {
 
                 Irp->IoStatus.Information = 0;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  This is a valid create.  Increment the "OpenCount" and
                 //  stuff the Vpb into the file object.
                 //
 
-                if (Vcb->OpenCount == 0) {
+                if (Vcb->OpenCount == 0)
+                {
 
-                    IoSetShareAccess( DesiredAccess,
-                                      ShareAccess,
-                                      IrpSp->FileObject,
-                                      &Vcb->ShareAccess );
+                    IoSetShareAccess(DesiredAccess, ShareAccess, IrpSp->FileObject, &Vcb->ShareAccess);
                 }
 
                 Vcb->OpenCount += 1;
@@ -145,15 +138,16 @@ Return Value:
                 IrpSp->FileObject->Flags |= FO_NO_INTERMEDIATE_BUFFERING;
             }
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         //  Fail this I/O request since one of the above conditions was
         //  not met.
         //
-//        KdPrint (("Failing raw open\n"));
-//        ASSERT (FALSE);
+        //        KdPrint (("Failing raw open\n"));
+        //        ASSERT (FALSE);
         Status = STATUS_INVALID_PARAMETER;
         Irp->IoStatus.Information = 0;
     }
@@ -163,16 +157,18 @@ Return Value:
     //  volume, we must implicitly dis-mount the volume.
     //
 
-    if (!NT_SUCCESS(Status) && (Vcb->OpenCount == 0)) {
+    if (!NT_SUCCESS(Status) && (Vcb->OpenCount == 0))
+    {
 
-        DeleteVolume = RawCheckForDismount( Vcb, TRUE );
+        DeleteVolume = RawCheckForDismount(Vcb, TRUE);
     }
 
-    if (!DeleteVolume) {
-        (VOID)KeReleaseMutex( &Vcb->Mutex, FALSE );
+    if (!DeleteVolume)
+    {
+        (VOID) KeReleaseMutex(&Vcb->Mutex, FALSE);
     }
 
-    RawCompleteRequest( Irp, Status );
+    RawCompleteRequest(Irp, Status);
 
     return Status;
 }

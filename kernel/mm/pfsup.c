@@ -38,10 +38,10 @@ Revision History:
 
 ULONG MiPfDebug;
 
-#define MI_PF_FORCE_PREFETCH    0x1     // Trim all user pages to force prefetch
-#define MI_PF_DELAY             0x2     // Delay hoping to trigger collisions
-#define MI_PF_VERBOSE           0x4     // Verbose printing
-#define MI_PF_PRINT_ERRORS      0x8     // Print to debugger on errors
+#define MI_PF_FORCE_PREFETCH 0x1 // Trim all user pages to force prefetch
+#define MI_PF_DELAY 0x2          // Delay hoping to trigger collisions
+#define MI_PF_VERBOSE 0x4        // Verbose printing
+#define MI_PF_PRINT_ERRORS 0x8   // Print to debugger on errors
 
 #endif
 
@@ -76,26 +76,30 @@ ULONG MiPfDebug;
 // Read-list structures.
 //
 
-typedef struct _RLETYPE {
-    ULONG_PTR Partial : 1;          // This entry is a partial page.
-    ULONG_PTR NewSubsection : 1;    // This entry starts in the next subsection.
+typedef struct _RLETYPE
+{
+    ULONG_PTR Partial : 1;       // This entry is a partial page.
+    ULONG_PTR NewSubsection : 1; // This entry starts in the next subsection.
     ULONG_PTR DontUse : 30;
 } RLETYPE;
 
-typedef struct _MI_READ_LIST_ENTRY {
+typedef struct _MI_READ_LIST_ENTRY
+{
 
-    union {
+    union
+    {
         PMMPTE PrototypePte;
         RLETYPE e1;
     } u1;
 
 } MI_READ_LIST_ENTRY, *PMI_READ_LIST_ENTRY;
 
-#define MI_RLEPROTO_BITS        3
+#define MI_RLEPROTO_BITS 3
 
 #define MI_RLEPROTO_TO_PROTO(ProtoPte) ((PMMPTE)((ULONG_PTR)ProtoPte & ~MI_RLEPROTO_BITS))
 
-typedef struct _MI_READ_LIST {
+typedef struct _MI_READ_LIST
+{
 
     PCONTROL_AREA ControlArea;
     PFILE_OBJECT FileObject;
@@ -115,63 +119,36 @@ typedef struct _MI_READ_LIST {
 
 } MI_READ_LIST, *PMI_READ_LIST;
 
-VOID
-MiPfReleaseSubsectionReferences (
-    IN PMI_READ_LIST MiReadList
-    );
+VOID MiPfReleaseSubsectionReferences(IN PMI_READ_LIST MiReadList);
 
-VOID
-MiPfFreeDummyPage (
-    IN PMMPFN DummyPagePfn
-    );
+VOID MiPfFreeDummyPage(IN PMMPFN DummyPagePfn);
 
 NTSTATUS
-MiPfPrepareReadList (
-    IN PREAD_LIST ReadList,
-    OUT PMI_READ_LIST *OutMiReadList
-    );
+MiPfPrepareReadList(IN PREAD_LIST ReadList, OUT PMI_READ_LIST *OutMiReadList);
 
 NTSTATUS
-MiPfPutPagesInTransition (
-    IN PMI_READ_LIST ReadList,
-    IN OUT PMMPFN *DummyPagePfn
-    );
+MiPfPutPagesInTransition(IN PMI_READ_LIST ReadList, IN OUT PMMPFN *DummyPagePfn);
 
-VOID
-MiPfExecuteReadList (
-    IN PMI_READ_LIST ReadList
-    );
+VOID MiPfExecuteReadList(IN PMI_READ_LIST ReadList);
 
-VOID
-MiPfCompletePrefetchIos (
-    PMI_READ_LIST ReadList
-    );
+VOID MiPfCompletePrefetchIos(PMI_READ_LIST ReadList);
 
 #if DBG
-VOID
-MiPfDbgDumpReadList (
-    IN PMI_READ_LIST ReadList
-    );
+VOID MiPfDbgDumpReadList(IN PMI_READ_LIST ReadList);
 
-VOID
-MiRemoveUserPages (
-    VOID
-    );
+VOID MiRemoveUserPages(VOID);
 #endif
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text (PAGE, MmPrefetchPages)
-#pragma alloc_text (PAGE, MiPfPrepareReadList)
-#pragma alloc_text (PAGE, MiPfExecuteReadList)
-#pragma alloc_text (PAGE, MiPfReleaseSubsectionReferences)
+#pragma alloc_text(PAGE, MmPrefetchPages)
+#pragma alloc_text(PAGE, MiPfPrepareReadList)
+#pragma alloc_text(PAGE, MiPfExecuteReadList)
+#pragma alloc_text(PAGE, MiPfReleaseSubsectionReferences)
 #endif
 
-
+
 NTSTATUS
-MmPrefetchPages (
-    IN ULONG NumberOfLists,
-    IN PREAD_LIST *ReadLists
-    )
+MmPrefetchPages(IN ULONG NumberOfLists, IN PREAD_LIST *ReadLists)
 
 /*++
 
@@ -209,19 +186,16 @@ Environment:
     PETHREAD CurrentThread;
     NTSTATUS CauseOfReadBuildFailures;
 
-    ASSERT (KeGetCurrentIrql() == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
     //
     // Allocate memory for internal Mi read-lists.
     //
 
-    MiReadLists = (PMI_READ_LIST *) ExAllocatePoolWithTag (
-        NonPagedPool,
-        sizeof (PMI_READ_LIST) * NumberOfLists,
-        'lRmM'
-        );
+    MiReadLists = (PMI_READ_LIST *)ExAllocatePoolWithTag(NonPagedPool, sizeof(PMI_READ_LIST) * NumberOfLists, 'lRmM');
 
-    if (MiReadLists == NULL) {
+    if (MiReadLists == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -232,14 +206,15 @@ Environment:
     // Prepare read-lists (determine runs and allocate MDLs).
     //
 
-    for (i = 0; i < NumberOfLists; i += 1) {
+    for (i = 0; i < NumberOfLists; i += 1)
+    {
 
         //
         // Note any non-null list is referenced by this call so this routine
         // must dereference it when done to re-enable dynamic prototype PTEs.
         //
 
-        status = MiPfPrepareReadList (ReadLists[i], &MiReadLists[i]);
+        status = MiPfPrepareReadList(ReadLists[i], &MiReadLists[i]);
 
         //
         // MiPfPrepareReadList never returns half-formed inpage support
@@ -248,18 +223,22 @@ Environment:
         // can therefore be processed.
         //
 
-        if (NT_SUCCESS (status)) {
-            if (MiReadLists[i] != NULL) {
-                ASSERT (MiReadLists[i]->InPageSupportHead.Next != NULL);
+        if (NT_SUCCESS(status))
+        {
+            if (MiReadLists[i] != NULL)
+            {
+                ASSERT(MiReadLists[i]->InPageSupportHead.Next != NULL);
                 ReadBuilt = TRUE;
             }
         }
-        else {
+        else
+        {
             CauseOfReadBuildFailures = status;
         }
     }
 
-    if (ReadBuilt == FALSE) {
+    if (ReadBuilt == FALSE)
+    {
 
         //
         // No lists were created so nothing further needs to be done.
@@ -268,9 +247,10 @@ Environment:
         // build the request could not be allocated.
         //
 
-        ExFreePool (MiReadLists);
+        ExFreePool(MiReadLists);
 
-        if (CauseOfReadBuildFailures != STATUS_SUCCESS) {
+        if (CauseOfReadBuildFailures != STATUS_SUCCESS)
+        {
             return CauseOfReadBuildFailures;
         }
 
@@ -290,8 +270,8 @@ Environment:
     CurrentThread = PsGetCurrentThread();
     ApcNeeded = FALSE;
 
-    ASSERT ((PKTHREAD)CurrentThread == KeGetCurrentThread ());
-    KeEnterCriticalRegionThread ((PKTHREAD)CurrentThread);
+    ASSERT((PKTHREAD)CurrentThread == KeGetCurrentThread());
+    KeEnterCriticalRegionThread((PKTHREAD)CurrentThread);
 
     //
     // The nested fault count protects this thread from deadlocks where a
@@ -299,10 +279,10 @@ Environment:
     // putting in transition.
     //
 
-    KeRaiseIrql (APC_LEVEL, &OldIrql);
-    ASSERT (CurrentThread->NestedFaultCount == 0);
+    KeRaiseIrql(APC_LEVEL, &OldIrql);
+    ASSERT(CurrentThread->NestedFaultCount == 0);
     CurrentThread->NestedFaultCount += 1;
-    KeLowerIrql (OldIrql);
+    KeLowerIrql(OldIrql);
 
     //
     // Allocate physical memory.
@@ -316,30 +296,35 @@ Environment:
     status = 0xC0033333;
 #endif
 
-    for (i = 0; i < NumberOfLists; i += 1) {
+    for (i = 0; i < NumberOfLists; i += 1)
+    {
 
-        if ((MiReadLists[i] != NULL) &&
-            (MiReadLists[i]->InPageSupportHead.Next != NULL)) {
+        if ((MiReadLists[i] != NULL) && (MiReadLists[i]->InPageSupportHead.Next != NULL))
+        {
 
-            status = MiPfPutPagesInTransition (MiReadLists[i], &DummyPagePfn);
+            status = MiPfPutPagesInTransition(MiReadLists[i], &DummyPagePfn);
 
-            if (NT_SUCCESS (status)) {
-                if (MiReadLists[i]->InPageSupportHead.Next != NULL) {
+            if (NT_SUCCESS(status))
+            {
+                if (MiReadLists[i]->InPageSupportHead.Next != NULL)
+                {
                     ReadBuilt = TRUE;
 
                     //
                     // Issue I/Os.
                     //
-    
-                    MiPfExecuteReadList (MiReadLists[i]);
+
+                    MiPfExecuteReadList(MiReadLists[i]);
                 }
-                else {
-                    MiPfReleaseSubsectionReferences (MiReadLists[i]);
-                    ExFreePool (MiReadLists[i]);
+                else
+                {
+                    MiPfReleaseSubsectionReferences(MiReadLists[i]);
+                    ExFreePool(MiReadLists[i]);
                     MiReadLists[i] = NULL;
                 }
             }
-            else {
+            else
+            {
 
                 CauseOfReadBuildFailures = status;
 
@@ -348,10 +333,12 @@ Environment:
                 // trying to prefetch anything else.
                 //
 
-                for (; i < NumberOfLists; i += 1) {
-                    if (MiReadLists[i] != NULL) {
-                        MiPfReleaseSubsectionReferences (MiReadLists[i]);
-                        ExFreePool (MiReadLists[i]);
+                for (; i < NumberOfLists; i += 1)
+                {
+                    if (MiReadLists[i] != NULL)
+                    {
+                        MiPfReleaseSubsectionReferences(MiReadLists[i]);
+                        ExFreePool(MiReadLists[i]);
                         MiReadLists[i] = NULL;
                     }
                 }
@@ -366,9 +353,10 @@ Environment:
     // sets status properly.
     //
 
-    ASSERT (status != 0xC0033333);
+    ASSERT(status != 0xC0033333);
 
-    if (ReadBuilt == TRUE) {
+    if (ReadBuilt == TRUE)
+    {
 
         status = STATUS_SUCCESS;
 
@@ -376,19 +364,22 @@ Environment:
         // Wait for I/Os to complete. Note APCs must remain disabled.
         //
 
-        for (i = 0; i < NumberOfLists; i += 1) {
-    
-            if (MiReadLists[i] != NULL) {
-    
-                ASSERT (MiReadLists[i]->InPageSupportHead.Next != NULL);
-    
-                MiPfCompletePrefetchIos (MiReadLists[i]);
+        for (i = 0; i < NumberOfLists; i += 1)
+        {
 
-                MiPfReleaseSubsectionReferences (MiReadLists[i]);
+            if (MiReadLists[i] != NULL)
+            {
+
+                ASSERT(MiReadLists[i]->InPageSupportHead.Next != NULL);
+
+                MiPfCompletePrefetchIos(MiReadLists[i]);
+
+                MiPfReleaseSubsectionReferences(MiReadLists[i]);
             }
         }
     }
-    else {
+    else
+    {
 
         //
         // No reads were issued.
@@ -405,8 +396,9 @@ Environment:
     // Put DummyPage back on the free list.
     //
 
-    if (DummyPagePfn != NULL) {
-        MiPfFreeDummyPage (DummyPagePfn);
+    if (DummyPagePfn != NULL)
+    {
+        MiPfFreeDummyPage(DummyPagePfn);
     }
 
     //
@@ -415,46 +407,47 @@ Environment:
     // keeping a shared page in transition forever.
     //
 
-    KeRaiseIrql (APC_LEVEL, &OldIrql);
+    KeRaiseIrql(APC_LEVEL, &OldIrql);
 
-    ASSERT (CurrentThread->NestedFaultCount == 1);
+    ASSERT(CurrentThread->NestedFaultCount == 1);
 
     CurrentThread->NestedFaultCount -= 1;
 
-    if (CurrentThread->ApcNeeded == 1) {
+    if (CurrentThread->ApcNeeded == 1)
+    {
         ApcNeeded = TRUE;
         CurrentThread->ApcNeeded = 0;
     }
 
-    KeLowerIrql (OldIrql);
+    KeLowerIrql(OldIrql);
 
-    KeLeaveCriticalRegionThread ((PKTHREAD)CurrentThread);
+    KeLeaveCriticalRegionThread((PKTHREAD)CurrentThread);
 
-    for (i = 0; i < NumberOfLists; i += 1) {
-        if (MiReadLists[i] != NULL) {
-            ExFreePool (MiReadLists[i]);
+    for (i = 0; i < NumberOfLists; i += 1)
+    {
+        if (MiReadLists[i] != NULL)
+        {
+            ExFreePool(MiReadLists[i]);
         }
     }
 
-    ExFreePool (MiReadLists);
+    ExFreePool(MiReadLists);
 
-    ASSERT (KeGetCurrentIrql() == PASSIVE_LEVEL);
-    ASSERT (CurrentThread->NestedFaultCount == 0);
-    ASSERT (CurrentThread->ApcNeeded == 0);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
+    ASSERT(CurrentThread->NestedFaultCount == 0);
+    ASSERT(CurrentThread->ApcNeeded == 0);
 
-    if (ApcNeeded == TRUE) {
-        KeRaiseIrql (APC_LEVEL, &OldIrql);
-        IoRetryIrpCompletions ();
-        KeLowerIrql (OldIrql);
+    if (ApcNeeded == TRUE)
+    {
+        KeRaiseIrql(APC_LEVEL, &OldIrql);
+        IoRetryIrpCompletions();
+        KeLowerIrql(OldIrql);
     }
 
     return status;
 }
-
-VOID
-MiPfFreeDummyPage (
-    IN PMMPFN DummyPagePfn
-    )
+
+VOID MiPfFreeDummyPage(IN PMMPFN DummyPagePfn)
 
 /*++
 
@@ -482,13 +475,13 @@ Environment:
 
     PageFrameIndex = DummyPagePfn - MmPfnDatabase;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    ASSERT (DummyPagePfn->u2.ShareCount == 1);
-    ASSERT (DummyPagePfn->u3.e1.PrototypePte == 0);
-    ASSERT (DummyPagePfn->OriginalPte.u.Long == MM_DEMAND_ZERO_WRITE_PTE);
+    ASSERT(DummyPagePfn->u2.ShareCount == 1);
+    ASSERT(DummyPagePfn->u3.e1.PrototypePte == 0);
+    ASSERT(DummyPagePfn->OriginalPte.u.Long == MM_DEMAND_ZERO_WRITE_PTE);
 
-    ASSERT (DummyPagePfn->u3.e2.ReferenceCount == 2);
+    ASSERT(DummyPagePfn->u3.e2.ReferenceCount == 2);
     MI_REMOVE_LOCKED_PAGE_CHARGE_AND_DECREF(DummyPagePfn, 17);
 
     //
@@ -501,17 +494,14 @@ Environment:
     DummyPagePfn->u3.e1.ReadInProgress = 0;
     DummyPagePfn->u4.InPageError = 0;
 
-    MI_SET_PFN_DELETED (DummyPagePfn);
+    MI_SET_PFN_DELETED(DummyPagePfn);
 
-    MiDecrementShareCount (PageFrameIndex);
+    MiDecrementShareCount(PageFrameIndex);
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 }
-
-VOID
-MiMovePageToEndOfStandbyList(
-    IN PMMPTE PointerPte
-    )
+
+VOID MiMovePageToEndOfStandbyList(IN PMMPTE PointerPte)
 
 /*++
 
@@ -540,9 +530,10 @@ Environment:
     MMPTE PteContents;
     PFN_NUMBER PageFrameIndex;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
-    if (!MmIsAddressValid (PointerPte)) {
+    if (!MmIsAddressValid(PointerPte))
+    {
 
         //
         // If the paged pool containing the prototype PTE is not resident
@@ -551,18 +542,17 @@ Environment:
         // proper checks can be applied.  Just bail.
         //
 
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
         return;
     }
 
     PteContents = *PointerPte;
 
-    if ((PteContents.u.Hard.Valid == 0) &&
-        (PteContents.u.Soft.Prototype == 0) &&
-        (PteContents.u.Soft.Transition == 1)) {
+    if ((PteContents.u.Hard.Valid == 0) && (PteContents.u.Soft.Prototype == 0) && (PteContents.u.Soft.Transition == 1))
+    {
 
-        PageFrameIndex = MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE (&PteContents);
-        Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+        PageFrameIndex = MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE(&PteContents);
+        Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
 
         //
         // The page is still in transition, move it to the end to protect it
@@ -572,19 +562,17 @@ Environment:
         // list anyway so skip those.
         //
 
-        if (Pfn1->u3.e1.PageLocation == StandbyPageList) {
-            MiUnlinkPageFromList (Pfn1);
-            MiInsertPageInList (&MmStandbyPageListHead, PageFrameIndex);
+        if (Pfn1->u3.e1.PageLocation == StandbyPageList)
+        {
+            MiUnlinkPageFromList(Pfn1);
+            MiInsertPageInList(&MmStandbyPageListHead, PageFrameIndex);
         }
     }
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 }
 
-VOID
-MiPfReleaseSubsectionReferences (
-    IN PMI_READ_LIST MiReadList
-    )
+VOID MiPfReleaseSubsectionReferences(IN PMI_READ_LIST MiReadList)
 
 /*++
 
@@ -611,35 +599,32 @@ Environment:
     PMSUBSECTION MappedSubsection;
     PCONTROL_AREA ControlArea;
 
-    ASSERT (KeGetCurrentIrql () == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
     ControlArea = MiReadList->ControlArea;
 
-    ASSERT (ControlArea->u.Flags.PhysicalMemory == 0);
-    ASSERT (ControlArea->FilePointer != NULL);
+    ASSERT(ControlArea->u.Flags.PhysicalMemory == 0);
+    ASSERT(ControlArea->FilePointer != NULL);
 
     //
     // Image files don't have dynamic prototype PTEs.
     //
 
-    if (ControlArea->u.Flags.Image == 1) {
+    if (ControlArea->u.Flags.Image == 1)
+    {
         return;
     }
 
-    ASSERT (ControlArea->u.Flags.GlobalOnlyPerSession == 0);
+    ASSERT(ControlArea->u.Flags.GlobalOnlyPerSession == 0);
 
     MappedSubsection = (PMSUBSECTION)(ControlArea + 1);
 
-    MiRemoveViewsFromSectionWithPfn (MappedSubsection,
-                                     MiReadList->LastPteOffsetReferenced);
+    MiRemoveViewsFromSectionWithPfn(MappedSubsection, MiReadList->LastPteOffsetReferenced);
 }
 
-
+
 NTSTATUS
-MiPfPrepareReadList (
-    IN PREAD_LIST ReadList,
-    OUT PMI_READ_LIST *OutMiReadList
-    )
+MiPfPrepareReadList(IN PREAD_LIST ReadList, OUT PMI_READ_LIST *OutMiReadList)
 
 /*++
 
@@ -705,7 +690,7 @@ Environment:
     PPFN_NUMBER Page;
 #endif
 
-    ASSERT (KeGetCurrentIrql() == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
     *OutMiReadList = NULL;
 
@@ -715,12 +700,11 @@ Environment:
 
     NumberOfEntries = ReadList->NumberOfEntries;
 
-    MiReadList = (PMI_READ_LIST) ExAllocatePoolWithTag (
-        NonPagedPool,
-        sizeof (MI_READ_LIST) + NumberOfEntries * sizeof (MI_READ_LIST_ENTRY),
-        'lRmM');
+    MiReadList = (PMI_READ_LIST)ExAllocatePoolWithTag(
+        NonPagedPool, sizeof(MI_READ_LIST) + NumberOfEntries * sizeof(MI_READ_LIST_ENTRY), 'lRmM');
 
-    if (MiReadList == NULL) {
+    if (MiReadList == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -728,12 +712,14 @@ Environment:
     // Translate the section object into the relevant control area.
     //
 
-    if (ReadList->IsImage) {
+    if (ReadList->IsImage)
+    {
         ControlArea = (PCONTROL_AREA)ReadList->FileObject->SectionObjectPointer->ImageSectionObject;
-        ASSERT (ControlArea != NULL );
-        ASSERT (ControlArea->u.Flags.Image == 1);
+        ASSERT(ControlArea != NULL);
+        ASSERT(ControlArea->u.Flags.Image == 1);
     }
-    else {
+    else
+    {
         ControlArea = (PCONTROL_AREA)ReadList->FileObject->SectionObjectPointer->DataSectionObject;
     }
 
@@ -742,8 +728,9 @@ Environment:
     // anything as it would waste RAM.
     //
 
-    if (ControlArea->u.Flags.Rom == 1) {
-        ExFreePool (MiReadList);
+    if (ControlArea->u.Flags.Rom == 1)
+    {
+        ExFreePool(MiReadList);
         return STATUS_SUCCESS;
     }
 
@@ -752,9 +739,9 @@ Environment:
     // pagefile-backed sections are not.
     //
 
-    if ((ControlArea->u.Flags.PhysicalMemory) ||
-         (ControlArea->FilePointer == NULL)) {
-        ExFreePool (MiReadList);
+    if ((ControlArea->u.Flags.PhysicalMemory) || (ControlArea->FilePointer == NULL))
+    {
+        ExFreePool(MiReadList);
         return STATUS_INVALID_PARAMETER_1;
     }
 
@@ -766,8 +753,7 @@ Environment:
     MiReadList->FileObject = ReadList->FileObject;
     MiReadList->InPageSupportHead.Next = NULL;
 
-    RtlZeroMemory (MiReadList->List,
-                   sizeof (MI_READ_LIST_ENTRY) * NumberOfEntries);
+    RtlZeroMemory(MiReadList->List, sizeof(MI_READ_LIST_ENTRY) * NumberOfEntries);
 
     //
     // Copy pages from the Cc readlists to the internal Mi readlists.
@@ -779,7 +765,8 @@ Environment:
     VeryLastSubsection = NULL;
     LastPteOffset = 0;
 
-    if (ControlArea->u.Flags.GlobalOnlyPerSession == 0) {
+    if (ControlArea->u.Flags.GlobalOnlyPerSession == 0)
+    {
         Subsection = (PSUBSECTION)(ControlArea + 1);
 
         //
@@ -789,14 +776,16 @@ Environment:
         // be a cheap operation.
         //
 
-        if (ControlArea->u.Flags.Image == 0) {
-            ASSERT (ControlArea->u.Flags.PhysicalMemory == 0);
-            ASSERT (ControlArea->FilePointer != NULL);
+        if (ControlArea->u.Flags.Image == 0)
+        {
+            ASSERT(ControlArea->u.Flags.PhysicalMemory == 0);
+            ASSERT(ControlArea->FilePointer != NULL);
 
-            VeryFirstSubsection = (PMSUBSECTION) Subsection;
-            VeryLastSubsection = (PMSUBSECTION) Subsection;
+            VeryFirstSubsection = (PMSUBSECTION)Subsection;
+            VeryLastSubsection = (PMSUBSECTION)Subsection;
 
-            do {
+            do
+            {
 
                 //
                 // A memory barrier is needed to read the subsection chains
@@ -807,31 +796,33 @@ Environment:
                 // performance and pagability.
                 //
 
-                KeMemoryBarrier ();
+                KeMemoryBarrier();
 
                 LastPteOffset += VeryLastSubsection->PtesInSubsection;
-                if (VeryLastSubsection->NextSubsection == NULL) {
+                if (VeryLastSubsection->NextSubsection == NULL)
+                {
                     break;
                 }
-                VeryLastSubsection = (PMSUBSECTION) VeryLastSubsection->NextSubsection;
+                VeryLastSubsection = (PMSUBSECTION)VeryLastSubsection->NextSubsection;
             } while (TRUE);
 
             MiReadList->LastPteOffsetReferenced = LastPteOffset;
 
-            Status = MiAddViewsForSectionWithPfn (VeryFirstSubsection,
-                                                  LastPteOffset);
+            Status = MiAddViewsForSectionWithPfn(VeryFirstSubsection, LastPteOffset);
 
-            if (!NT_SUCCESS (Status)) {
-                ExFreePool (MiReadList);
+            if (!NT_SUCCESS(Status))
+            {
+                ExFreePool(MiReadList);
                 return Status;
             }
         }
     }
-    else {
+    else
+    {
         Subsection = (PSUBSECTION)((PLARGE_CONTROL_AREA)ControlArea + 1);
     }
 
-    StartOffset = (UINT64)MiStartingOffset (Subsection, Subsection->SubsectionBase);
+    StartOffset = (UINT64)MiStartingOffset(Subsection, Subsection->SubsectionBase);
     EndQuad = MiEndingOffset(Subsection);
     EndOffset = (UINT64)EndQuad.QuadPart;
 
@@ -840,7 +831,8 @@ Environment:
     // checks.
     //
 
-    if ((StartOffset & ~(PAGE_SIZE - 1)) + (Subsection->PtesInSubsection << PAGE_SHIFT) < EndOffset) {
+    if ((StartOffset & ~(PAGE_SIZE - 1)) + (Subsection->PtesInSubsection << PAGE_SHIFT) < EndOffset)
+    {
         EndOffset = (StartOffset & ~(PAGE_SIZE - 1)) + (Subsection->PtesInSubsection << PAGE_SHIFT);
     }
 
@@ -852,8 +844,9 @@ Environment:
     Rle = MiReadList->List;
 
 #if DBG
-    if (MiPfDebug & MI_PF_FORCE_PREFETCH) {
-        MiRemoveUserPages ();
+    if (MiPfDebug & MI_PF_FORCE_PREFETCH)
+    {
+        MiRemoveUserPages();
     }
 #endif
 
@@ -865,13 +858,14 @@ Environment:
 
     FileOffset = 0;
 
-    for (i = 0; i < NumberOfEntries; i += 1, Rle += 1) {
+    for (i = 0; i < NumberOfEntries; i += 1, Rle += 1)
+    {
 
-        ASSERT ((i == 0) || (ReadList->List[i].Alignment > FileOffset));
+        ASSERT((i == 0) || (ReadList->List[i].Alignment > FileOffset));
 
         FileOffset = ReadList->List[i].Alignment;
 
-        ASSERT (Rle->u1.PrototypePte == NULL);
+        ASSERT(Rle->u1.PrototypePte == NULL);
 
         //
         // Calculate which PTE maps the given logical block offset.
@@ -883,23 +877,25 @@ Environment:
         // A quick check is made first to avoid recalculations and loops where
         // possible.
         //
-    
-        if ((StartOffset <= FileOffset) && (FileOffset < EndOffset)) {
-            ASSERT (Subsection->SubsectionBase != NULL);
-            LocalPrototypePte = Subsection->SubsectionBase +
-                ((FileOffset - StartOffset) >> PAGE_SHIFT);
-            ASSERT (TempOffset != 0);
-            ASSERT (EndOffset != 0);
-        }
-        else {
-            LocalPrototypePte = NULL;
-            do {
-    
-                ASSERT (Subsection->SubsectionBase != NULL);
 
-                if ((Subsection->StartingSector == 0) &&
-                    (ControlArea->u.Flags.Image == 1) &&
-                    (Subsection->SubsectionBase != ControlArea->Segment->PrototypePte)) {
+        if ((StartOffset <= FileOffset) && (FileOffset < EndOffset))
+        {
+            ASSERT(Subsection->SubsectionBase != NULL);
+            LocalPrototypePte = Subsection->SubsectionBase + ((FileOffset - StartOffset) >> PAGE_SHIFT);
+            ASSERT(TempOffset != 0);
+            ASSERT(EndOffset != 0);
+        }
+        else
+        {
+            LocalPrototypePte = NULL;
+            do
+            {
+
+                ASSERT(Subsection->SubsectionBase != NULL);
+
+                if ((Subsection->StartingSector == 0) && (ControlArea->u.Flags.Image == 1) &&
+                    (Subsection->SubsectionBase != ControlArea->Segment->PrototypePte))
+                {
 
                     //
                     // This is an image that was built with a linker pre-1995
@@ -922,7 +918,7 @@ Environment:
                     break;
                 }
 
-                StartOffset = (UINT64)MiStartingOffset (Subsection, Subsection->SubsectionBase);
+                StartOffset = (UINT64)MiStartingOffset(Subsection, Subsection->SubsectionBase);
 
                 EndQuad = MiEndingOffset(Subsection);
                 EndOffset = (UINT64)EndQuad.QuadPart;
@@ -932,22 +928,23 @@ Environment:
                 // subsection range checks.
                 //
 
-                if ((StartOffset & ~(PAGE_SIZE - 1)) + (Subsection->PtesInSubsection << PAGE_SHIFT) < EndOffset) {
+                if ((StartOffset & ~(PAGE_SIZE - 1)) + (Subsection->PtesInSubsection << PAGE_SHIFT) < EndOffset)
+                {
                     EndOffset = (StartOffset & ~(PAGE_SIZE - 1)) + (Subsection->PtesInSubsection << PAGE_SHIFT);
                 }
 
-                if ((StartOffset <= FileOffset) && (FileOffset < EndOffset)) {
-    
-                    LocalPrototypePte = Subsection->SubsectionBase +
-                        ((FileOffset - StartOffset) >> PAGE_SHIFT);
-    
+                if ((StartOffset <= FileOffset) && (FileOffset < EndOffset))
+                {
+
+                    LocalPrototypePte = Subsection->SubsectionBase + ((FileOffset - StartOffset) >> PAGE_SHIFT);
+
                     TempOffset = EndOffset;
-    
+
                     break;
                 }
-    
-                if ((VeryLastSubsection != NULL) &&
-                    ((PMSUBSECTION)Subsection == VeryLastSubsection)) {
+
+                if ((VeryLastSubsection != NULL) && ((PMSUBSECTION)Subsection == VeryLastSubsection))
+                {
 
                     //
                     // The requested block is beyond the size the section
@@ -964,25 +961,28 @@ Environment:
             } while (Subsection != NULL);
         }
 
-        if ((Subsection == NULL) || (LocalPrototypePte == LastPrototypePte)) {
+        if ((Subsection == NULL) || (LocalPrototypePte == LastPrototypePte))
+        {
 
             //
             // Illegal offsets are not prefetched.  Either the file has
             // been replaced since the scenario was logged or Cc is passing
             // trash.  Either way, this prefetch is over.
             //
-    
+
 #if DBG
-            if (MiPfDebug & MI_PF_PRINT_ERRORS) {
-                DbgPrint ("MiPfPrepareReadList: Illegal readlist passed %p, %p, %p\n", ReadList, LocalPrototypePte, LastPrototypePte);
+            if (MiPfDebug & MI_PF_PRINT_ERRORS)
+            {
+                DbgPrint("MiPfPrepareReadList: Illegal readlist passed %p, %p, %p\n", ReadList, LocalPrototypePte,
+                         LastPrototypePte);
             }
 #endif
 
-            if (VeryFirstSubsection != NULL) {
-                MiRemoveViewsFromSectionWithPfn (VeryFirstSubsection,
-                                                 LastPteOffset);
+            if (VeryFirstSubsection != NULL)
+            {
+                MiRemoveViewsFromSectionWithPfn(VeryFirstSubsection, LastPteOffset);
             }
-            ExFreePool (MiReadList);
+            ExFreePool(MiReadList);
             return STATUS_INVALID_PARAMETER_1;
         }
 
@@ -993,19 +993,23 @@ Environment:
         // are done without the PFN or system cache working set locks.
         // This is ok because later before we make the final decision on
         // whether to read each page, we'll look again.
-        // If the page is in tranisition, make the call to (possibly) move 
+        // If the page is in tranisition, make the call to (possibly) move
         // it to the end of the standby list to prevent cannibalization.
         //
 
-        if (PteContents.u.Hard.Valid == 1) {
+        if (PteContents.u.Hard.Valid == 1)
+        {
             continue;
         }
 
-        if (PteContents.u.Soft.Prototype == 0) {
-            if (PteContents.u.Soft.Transition == 1) {
-                MiMovePageToEndOfStandbyList (LocalPrototypePte);
+        if (PteContents.u.Soft.Prototype == 0)
+        {
+            if (PteContents.u.Soft.Transition == 1)
+            {
+                MiMovePageToEndOfStandbyList(LocalPrototypePte);
             }
-            else {
+            else
+            {
 
                 //
                 // Demand zero or pagefile-backed, don't prefetch from the
@@ -1025,12 +1029,13 @@ Environment:
         //
         // Check for partial pages as they require further processing later.
         //
-    
-        StartingOffset = (UINT64) MiStartingOffset (Subsection, LocalPrototypePte);
 
-        ASSERT (StartingOffset < TempOffset);
+        StartingOffset = (UINT64)MiStartingOffset(Subsection, LocalPrototypePte);
 
-        if ((StartingOffset + PAGE_SIZE) > TempOffset) {
+        ASSERT(StartingOffset < TempOffset);
+
+        if ((StartingOffset + PAGE_SIZE) > TempOffset)
+        {
             Rle->u1.e1.Partial = 1;
         }
 
@@ -1041,13 +1046,16 @@ Environment:
         // is done in MiWaitForInPageComplete.
         //
 
-        if (FirstRleInRun == NULL) {
+        if (FirstRleInRun == NULL)
+        {
             FirstRleInRun = Rle;
             Rle->u1.e1.NewSubsection = 1;
             PreviousSubsection = Subsection;
         }
-        else {
-            if (Subsection != PreviousSubsection) {
+        else
+        {
+            if (Subsection != PreviousSubsection)
+            {
                 Rle->u1.e1.NewSubsection = 1;
                 PreviousSubsection = Subsection;
             }
@@ -1060,24 +1068,25 @@ Environment:
     // If the number of pages to read in is extremely small, don't bother.
     //
 
-    if (NumberOfPages < MINIMUM_READ_LIST_PAGES) {
-        if (VeryFirstSubsection != NULL) {
-            MiRemoveViewsFromSectionWithPfn (VeryFirstSubsection,
-                                             LastPteOffset);
+    if (NumberOfPages < MINIMUM_READ_LIST_PAGES)
+    {
+        if (VeryFirstSubsection != NULL)
+        {
+            MiRemoveViewsFromSectionWithPfn(VeryFirstSubsection, LastPteOffset);
         }
-        ExFreePool (MiReadList);
+        ExFreePool(MiReadList);
         return STATUS_SUCCESS;
     }
 
     RleMax = MiReadList->List + NumberOfEntries;
-    ASSERT (FirstRleInRun != RleMax);
+    ASSERT(FirstRleInRun != RleMax);
 
     Status = STATUS_SUCCESS;
 
     //
     // Walk the readlists to determine runs.  Cross-subsection runs are split
     // here so the completion code can zero the proper amount for any
-// non-aligned files.
+    // non-aligned files.
     //
 
     EndRleRun = NULL;
@@ -1092,35 +1101,43 @@ Environment:
     StartRleRun = NULL;
     EndPrototypePte = NULL;
 
-    while (Rle < RleMax) {
+    while (Rle < RleMax)
+    {
 
-        if (Rle->u1.PrototypePte != NULL) {
+        if (Rle->u1.PrototypePte != NULL)
+        {
 
-            if (EndRleRun != NULL) {
+            if (EndRleRun != NULL)
+            {
 
                 StartPrototypePte = MI_RLEPROTO_TO_PROTO(Rle->u1.PrototypePte);
 
-                if (StartPrototypePte - EndPrototypePte > SEEK_THRESHOLD) {
+                if (StartPrototypePte - EndPrototypePte > SEEK_THRESHOLD)
+                {
                     Rle -= 1;
                     goto BuildMdl;
                 }
             }
 
-            if (Rle->u1.e1.NewSubsection == 1) {
-                if (EndRleRun != NULL) {
+            if (Rle->u1.e1.NewSubsection == 1)
+            {
+                if (EndRleRun != NULL)
+                {
                     Rle -= 1;
                     goto BuildMdl;
                 }
             }
 
-            if (EndRleRun == NULL) {
+            if (EndRleRun == NULL)
+            {
                 StartRleRun = Rle;
             }
 
             EndRleRun = Rle;
             EndPrototypePte = MI_RLEPROTO_TO_PROTO(Rle->u1.PrototypePte);
 
-            if (Rle->u1.e1.Partial == 1) {
+            if (Rle->u1.e1.Partial == 1)
+            {
 
                 //
                 // This must be the last RLE in this subsection as it is a
@@ -1137,8 +1154,10 @@ Environment:
         // Handle any straggling last run as well.
         //
 
-        if (Rle == RleMax) {
-            if (EndRleRun != NULL) {
+        if (Rle == RleMax)
+        {
+            if (EndRleRun != NULL)
+            {
                 Rle -= 1;
                 goto BuildMdl;
             }
@@ -1146,7 +1165,7 @@ Environment:
 
         continue;
 
-BuildMdl:
+    BuildMdl:
 
         //
         // Note no preceding or trailing dummy pages are possible as they are
@@ -1154,9 +1173,9 @@ BuildMdl:
         // is discovered above.
         //
 
-        ASSERT (Rle >= StartRleRun);
-        ASSERT (StartRleRun->u1.PrototypePte != NULL);
-        ASSERT (EndRleRun->u1.PrototypePte != NULL);
+        ASSERT(Rle >= StartRleRun);
+        ASSERT(StartRleRun->u1.PrototypePte != NULL);
+        ASSERT(EndRleRun->u1.PrototypePte != NULL);
 
         StartPrototypePte = MI_RLEPROTO_TO_PROTO(StartRleRun->u1.PrototypePte);
         EndPrototypePte = MI_RLEPROTO_TO_PROTO(EndRleRun->u1.PrototypePte);
@@ -1167,40 +1186,46 @@ BuildMdl:
         // Allocate and initialize an inpage support block for this run.
         //
 
-        InPageSupport = MiGetInPageSupportBlock (FALSE, PREFETCH_PROCESS);
-    
-        if (InPageSupport == NULL) {
+        InPageSupport = MiGetInPageSupportBlock(FALSE, PREFETCH_PROCESS);
+
+        if (InPageSupport == NULL)
+        {
             Status = STATUS_INSUFFICIENT_RESOURCES;
             break;
         }
-    
+
         //
         // Use the MDL embedded in the inpage support block if it's big enough.
         // Otherwise allocate and initialize an MDL for this run.
         //
 
-        if (NumberOfPages <= MM_MAXIMUM_READ_CLUSTER_SIZE + 1) {
+        if (NumberOfPages <= MM_MAXIMUM_READ_CLUSTER_SIZE + 1)
+        {
             Mdl = &InPageSupport->Mdl;
-            MmInitializeMdl (Mdl, NULL, NumberOfPages << PAGE_SHIFT);
+            MmInitializeMdl(Mdl, NULL, NumberOfPages << PAGE_SHIFT);
         }
-        else {
-            Mdl = MmCreateMdl (NULL, NULL, NumberOfPages << PAGE_SHIFT);
-            if (Mdl == NULL) {
-                ASSERT (KeGetCurrentIrql() == PASSIVE_LEVEL);
-            
+        else
+        {
+            Mdl = MmCreateMdl(NULL, NULL, NumberOfPages << PAGE_SHIFT);
+            if (Mdl == NULL)
+            {
+                ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
+
 #if DBG
                 InPageSupport->ListEntry.Next = NULL;
 #endif
-            
-                MiFreeInPageSupportBlock (InPageSupport);
+
+                MiFreeInPageSupportBlock(InPageSupport);
                 Status = STATUS_INSUFFICIENT_RESOURCES;
                 break;
             }
         }
 
 #if DBG
-        if (MiPfDebug & MI_PF_VERBOSE) {
-            DbgPrint ("MiPfPrepareReadList: Creating INPAGE/MDL %p %p for %x pages\n", InPageSupport, Mdl, NumberOfPages);
+        if (MiPfDebug & MI_PF_VERBOSE)
+        {
+            DbgPrint("MiPfPrepareReadList: Creating INPAGE/MDL %p %p for %x pages\n", InPageSupport, Mdl,
+                     NumberOfPages);
         }
 
         Page = (PPFN_NUMBER)(Mdl + 1);
@@ -1211,21 +1236,25 @@ BuildMdl:
         // can be derived.
         //
 
-        ASSERT (StartPrototypePte != NULL);
+        ASSERT(StartPrototypePte != NULL);
 
-        if (ControlArea->u.Flags.GlobalOnlyPerSession == 0) {
+        if (ControlArea->u.Flags.GlobalOnlyPerSession == 0)
+        {
             Subsection = (PSUBSECTION)(ControlArea + 1);
         }
-        else {
+        else
+        {
             Subsection = (PSUBSECTION)((PLARGE_CONTROL_AREA)ControlArea + 1);
         }
 
-        do {
-            ASSERT (Subsection->SubsectionBase != NULL);
+        do
+        {
+            ASSERT(Subsection->SubsectionBase != NULL);
 
             if ((StartPrototypePte >= Subsection->SubsectionBase) &&
-                (StartPrototypePte < Subsection->SubsectionBase + Subsection->PtesInSubsection)) {
-                    break;
+                (StartPrototypePte < Subsection->SubsectionBase + Subsection->PtesInSubsection))
+            {
+                break;
             }
             Subsection = Subsection->NextSubsection;
 
@@ -1235,8 +1264,7 @@ BuildMdl:
         // Start the read at the proper file offset.
         //
 
-        StartingOffset = (UINT64) MiStartingOffset (Subsection,
-                                                    StartPrototypePte);
+        StartingOffset = (UINT64)MiStartingOffset(Subsection, StartPrototypePte);
 
         InPageSupport->ReadOffset = *((PLARGE_INTEGER)(&StartingOffset));
 
@@ -1252,10 +1280,11 @@ BuildMdl:
         // possible so the filesystem won't post this which will hurt perf.
         //
 
-        if ((EndRleRun->u1.e1.Partial == 1) && (ReadList->IsImage)) {
+        if ((EndRleRun->u1.e1.Partial == 1) && (ReadList->IsImage))
+        {
 
-            ASSERT ((EndPrototypePte >= Subsection->SubsectionBase) &&
-                    (EndPrototypePte < Subsection->SubsectionBase + Subsection->PtesInSubsection));
+            ASSERT((EndPrototypePte >= Subsection->SubsectionBase) &&
+                   (EndPrototypePte < Subsection->SubsectionBase + Subsection->PtesInSubsection));
 
             //
             // The read length for a partial RLE must be truncated correctly.
@@ -1264,7 +1293,8 @@ BuildMdl:
             EndQuad = MiEndingOffset(Subsection);
             TempOffset = (UINT64)EndQuad.QuadPart;
 
-            if ((ULONG)(TempOffset - StartingOffset) <= Mdl->ByteCount) {
+            if ((ULONG)(TempOffset - StartingOffset) <= Mdl->ByteCount)
+            {
                 ReadSize = (ULONG)(TempOffset - StartingOffset);
 
                 //
@@ -1279,8 +1309,9 @@ BuildMdl:
 
                 Mdl->ByteCount = ReadSize;
             }
-            else {
-                ASSERT ((StartingOffset & ~(PAGE_SIZE - 1)) + (Subsection->PtesInSubsection << PAGE_SHIFT) < TempOffset);
+            else
+            {
+                ASSERT((StartingOffset & ~(PAGE_SIZE - 1)) + (Subsection->PtesInSubsection << PAGE_SHIFT) < TempOffset);
             }
         }
 
@@ -1292,11 +1323,10 @@ BuildMdl:
         InPageSupport->BasePte = (PMMPTE)StartRleRun;
         InPageSupport->FilePointer = (PFILE_OBJECT)EndRleRun;
 
-        ASSERT (((ULONG_PTR)Mdl & (sizeof(QUAD) - 1)) == 0);
+        ASSERT(((ULONG_PTR)Mdl & (sizeof(QUAD) - 1)) == 0);
         InPageSupport->u1.e1.PrefetchMdlHighBits = ((ULONG_PTR)Mdl >> 3);
 
-        PushEntryList (&MiReadList->InPageSupportHead,
-                       &InPageSupport->ListEntry);
+        PushEntryList(&MiReadList->InPageSupportHead, &InPageSupport->ListEntry);
 
         Rle += 1;
         EndRleRun = NULL;
@@ -1310,15 +1340,18 @@ BuildMdl:
     // as pass2 must occur.
     //
 
-    if (MiReadList->InPageSupportHead.Next != NULL) {
+    if (MiReadList->InPageSupportHead.Next != NULL)
+    {
 
         Status = STATUS_SUCCESS;
     }
-    else {
-        if (VeryFirstSubsection != NULL) {
-            MiRemoveViewsFromSectionWithPfn (VeryFirstSubsection, LastPteOffset);
+    else
+    {
+        if (VeryFirstSubsection != NULL)
+        {
+            MiRemoveViewsFromSectionWithPfn(VeryFirstSubsection, LastPteOffset);
         }
-        ExFreePool (MiReadList);
+        ExFreePool(MiReadList);
         MiReadList = NULL;
     }
 
@@ -1331,12 +1364,9 @@ BuildMdl:
 
     return Status;
 }
-
+
 NTSTATUS
-MiPfPutPagesInTransition (
-    IN PMI_READ_LIST ReadList,
-    IN OUT PMMPFN *DummyPagePfn
-    )
+MiPfPutPagesInTransition(IN PMI_READ_LIST ReadList, IN OUT PMMPFN *DummyPagePfn)
 
 /*++
 
@@ -1399,7 +1429,7 @@ Environment:
     PMMINPAGE_SUPPORT InPageSupport;
     SINGLE_LIST_ENTRY ReversedInPageSupportHead;
 
-    ASSERT (KeGetCurrentIrql() == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
     //
     // Reverse the singly linked list of inpage support blocks so the
@@ -1409,19 +1439,21 @@ Environment:
 
     ReversedInPageSupportHead.Next = NULL;
 
-    do {
+    do
+    {
 
-        NextEntry = PopEntryList (&ReadList->InPageSupportHead);
+        NextEntry = PopEntryList(&ReadList->InPageSupportHead);
 
-        if (NextEntry == NULL) {
+        if (NextEntry == NULL)
+        {
             break;
         }
 
-        PushEntryList (&ReversedInPageSupportHead, NextEntry);
+        PushEntryList(&ReversedInPageSupportHead, NextEntry);
 
     } while (TRUE);
 
-    ASSERT (ReversedInPageSupportHead.Next != NULL);
+    ASSERT(ReversedInPageSupportHead.Next != NULL);
     ReadList->InPageSupportHead.Next = ReversedInPageSupportHead.Next;
 
     DummyReferences = 0;
@@ -1431,33 +1463,33 @@ Environment:
     PfnProto = NULL;
     PointerPde = NULL;
 
-    LOCK_PFN (OldIrql);
+    LOCK_PFN(OldIrql);
 
     //
     // Do a quick sanity check to avoid doing unnecessary work.
     //
 
-    if ((MmAvailablePages < MINIMUM_AVAILABLE_PAGES) ||
-        (MI_NONPAGABLE_MEMORY_AVAILABLE() < MINIMUM_AVAILABLE_PAGES)) {
+    if ((MmAvailablePages < MINIMUM_AVAILABLE_PAGES) || (MI_NONPAGABLE_MEMORY_AVAILABLE() < MINIMUM_AVAILABLE_PAGES))
+    {
 
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
 
-        do {
+        do
+        {
 
             NextEntry = PopEntryList(&ReadList->InPageSupportHead);
-            if (NextEntry == NULL) {
+            if (NextEntry == NULL)
+            {
                 break;
             }
-    
-            InPageSupport = CONTAINING_RECORD(NextEntry,
-                                              MMINPAGE_SUPPORT,
-                                              ListEntry);
-    
+
+            InPageSupport = CONTAINING_RECORD(NextEntry, MMINPAGE_SUPPORT, ListEntry);
+
 #if DBG
             InPageSupport->ListEntry.Next = NULL;
 #endif
 
-            MiFreeInPageSupportBlock (InPageSupport);
+            MiFreeInPageSupportBlock(InPageSupport);
         } while (TRUE);
 
         return STATUS_INSUFFICIENT_RESOURCES;
@@ -1468,17 +1500,18 @@ Environment:
     // Do it only if it's not already allocated.
     //
 
-    if (*DummyPagePfn == NULL) {
+    if (*DummyPagePfn == NULL)
+    {
 
-        MiEnsureAvailablePageOrWait (NULL, NULL);
+        MiEnsureAvailablePageOrWait(NULL, NULL);
 
-        DummyPage = MiRemoveAnyPage (0);
-        Pfn1 = MI_PFN_ELEMENT (DummyPage);
+        DummyPage = MiRemoveAnyPage(0);
+        Pfn1 = MI_PFN_ELEMENT(DummyPage);
 
-        ASSERT (Pfn1->u2.ShareCount == 0);
-        ASSERT (Pfn1->u3.e2.ReferenceCount == 0);
+        ASSERT(Pfn1->u2.ShareCount == 0);
+        ASSERT(Pfn1->u3.e2.ReferenceCount == 0);
 
-        MiInitializePfnForOtherProcess (DummyPage, MI_PF_DUMMY_PAGE_PTE, 0);
+        MiInitializePfnForOtherProcess(DummyPage, MI_PF_DUMMY_PAGE_PTE, 0);
 
         //
         // Give the page a containing frame so MiIdentifyPfn won't crash.
@@ -1500,7 +1533,8 @@ Environment:
 
         *DummyPagePfn = Pfn1;
     }
-    else {
+    else
+    {
         Pfn1 = *DummyPagePfn;
         DummyPage = Pfn1 - MmPfnDatabase;
     }
@@ -1509,51 +1543,51 @@ Environment:
 
     PrevEntry = NULL;
     NextEntry = ReadList->InPageSupportHead.Next;
-    while (NextEntry != NULL) {
+    while (NextEntry != NULL)
+    {
 
-        InPageSupport = CONTAINING_RECORD(NextEntry,
-                                          MMINPAGE_SUPPORT,
-                                          ListEntry);
+        InPageSupport = CONTAINING_RECORD(NextEntry, MMINPAGE_SUPPORT, ListEntry);
 
         Rle = (PMI_READ_LIST_ENTRY)InPageSupport->BasePte;
         RleMax = (PMI_READ_LIST_ENTRY)InPageSupport->FilePointer;
 
-        ASSERT (Rle->u1.PrototypePte != NULL);
-        ASSERT (RleMax->u1.PrototypePte != NULL);
+        ASSERT(Rle->u1.PrototypePte != NULL);
+        ASSERT(RleMax->u1.PrototypePte != NULL);
 
         //
         // Properly initialize the inpage support block fields we overloaded.
         //
 
-        InPageSupport->BasePte = MI_RLEPROTO_TO_PROTO (Rle->u1.PrototypePte);
+        InPageSupport->BasePte = MI_RLEPROTO_TO_PROTO(Rle->u1.PrototypePte);
         InPageSupport->FilePointer = ReadList->FileObject;
 
         FirstRleInRun = Rle;
-        FirstRlePrototypeInRun = MI_RLEPROTO_TO_PROTO (Rle->u1.PrototypePte);
+        FirstRlePrototypeInRun = MI_RLEPROTO_TO_PROTO(Rle->u1.PrototypePte);
         RleMax += 1;
 
-        Mdl = MI_EXTRACT_PREFETCH_MDL (InPageSupport);
+        Mdl = MI_EXTRACT_PREFETCH_MDL(InPageSupport);
 
         Page = (PPFN_NUMBER)(Mdl + 1);
 
         StartingVa = (PVOID)((PCHAR)Mdl->StartVa + Mdl->ByteOffset);
-    
-        MdlPages = ADDRESS_AND_SIZE_TO_SPAN_PAGES(StartingVa,
-                                                  Mdl->ByteCount);
+
+        MdlPages = ADDRESS_AND_SIZE_TO_SPAN_PAGES(StartingVa, Mdl->ByteCount);
 
         //
         // Default the MDL entry to the dummy page as the RLE PTEs may
         // be noncontiguous and we have no way to distinguish the jumps.
         //
 
-        for (i = 0; i < MdlPages; i += 1) {
+        for (i = 0; i < MdlPages; i += 1)
+        {
             *Page = DummyPage;
             Page += 1;
         }
 
         DummyReferences += MdlPages;
 
-        if (DummyPfn1->u3.e2.ReferenceCount + MdlPages >= MAXUSHORT) {
+        if (DummyPfn1->u3.e2.ReferenceCount + MdlPages >= MAXUSHORT)
+        {
 
             //
             // The USHORT ReferenceCount wrapped.
@@ -1561,20 +1595,21 @@ Environment:
             // Dequeue all remaining inpage blocks.
             //
 
-            UNLOCK_PFN (OldIrql);
+            UNLOCK_PFN(OldIrql);
 
-            if (PrevEntry != NULL) {
+            if (PrevEntry != NULL)
+            {
                 PrevEntry->Next = NULL;
             }
-            else {
+            else
+            {
                 ReadList->InPageSupportHead.Next = NULL;
             }
 
-            do {
+            do
+            {
 
-                InPageSupport = CONTAINING_RECORD(NextEntry,
-                                                  MMINPAGE_SUPPORT,
-                                                  ListEntry);
+                InPageSupport = CONTAINING_RECORD(NextEntry, MMINPAGE_SUPPORT, ListEntry);
 
 #if DBG
                 InPageSupport->ListEntry.Next = NULL;
@@ -1582,17 +1617,16 @@ Environment:
 
                 NextEntry = NextEntry->Next;
 
-                MiFreeInPageSupportBlock (InPageSupport);
+                MiFreeInPageSupportBlock(InPageSupport);
 
             } while (NextEntry != NULL);
 
-            LOCK_PFN (OldIrql);
+            LOCK_PFN(OldIrql);
 
             break;
         }
 
-        DummyPfn1->u3.e2.ReferenceCount =
-            (USHORT)(DummyPfn1->u3.e2.ReferenceCount + MdlPages);
+        DummyPfn1->u3.e2.ReferenceCount = (USHORT)(DummyPfn1->u3.e2.ReferenceCount + MdlPages);
 
         NumberOfPages = 0;
         Waited = FALSE;
@@ -1601,15 +1635,17 @@ Environment:
         // Build the proper InPageSupport and MDL to describe this run.
         //
 
-        for (; Rle < RleMax; Rle += 1) {
-    
+        for (; Rle < RleMax; Rle += 1)
+        {
+
             //
             // Fill the MDL entry for this RLE.
             //
-    
-            RlePrototypePte = MI_RLEPROTO_TO_PROTO (Rle->u1.PrototypePte);
 
-            if (RlePrototypePte == NULL) {
+            RlePrototypePte = MI_RLEPROTO_TO_PROTO(Rle->u1.PrototypePte);
+
+            if (RlePrototypePte == NULL)
+            {
                 continue;
             }
 
@@ -1618,9 +1654,8 @@ Environment:
             // so that subsequent page trims update the correct PTEs.
             //
 
-            ASSERT (((RlePrototypePte >= (PMMPTE)MmPagedPoolStart) &&
-                    (RlePrototypePte <= (PMMPTE)MmPagedPoolEnd)) ||
-                    ((RlePrototypePte >= (PMMPTE)MmSpecialPoolStart) && (RlePrototypePte <= (PMMPTE)MmSpecialPoolEnd)));
+            ASSERT(((RlePrototypePte >= (PMMPTE)MmPagedPoolStart) && (RlePrototypePte <= (PMMPTE)MmPagedPoolEnd)) ||
+                   ((RlePrototypePte >= (PMMPTE)MmSpecialPoolStart) && (RlePrototypePte <= (PMMPTE)MmSpecialPoolEnd)));
 
             //
             // This is a page that our first pass which ran lock-free decided
@@ -1637,45 +1672,51 @@ Environment:
             // the containing page is not the same for both.
             //
 
-            if (PfnProto != NULL) {
+            if (PfnProto != NULL)
+            {
 
-                if (PointerPde != MiGetPteAddress (RlePrototypePte)) {
+                if (PointerPde != MiGetPteAddress(RlePrototypePte))
+                {
 
-                    ASSERT (PfnProto->u3.e2.ReferenceCount > 1);
+                    ASSERT(PfnProto->u3.e2.ReferenceCount > 1);
                     MI_REMOVE_LOCKED_PAGE_CHARGE_AND_DECREF(PfnProto, 5);
                     PfnProto = NULL;
                 }
             }
 
-            if (PfnProto == NULL) {
+            if (PfnProto == NULL)
+            {
 
-                ASSERT (!MI_IS_PHYSICAL_ADDRESS (RlePrototypePte));
-    
-                PointerPde = MiGetPteAddress (RlePrototypePte);
-    
-                if (PointerPde->u.Hard.Valid == 0) {
+                ASSERT(!MI_IS_PHYSICAL_ADDRESS(RlePrototypePte));
+
+                PointerPde = MiGetPteAddress(RlePrototypePte);
+
+                if (PointerPde->u.Hard.Valid == 0)
+                {
 
                     //
                     // Set Waited to TRUE if we ever release the PFN lock as
                     // that means a release path below must factor this in.
                     //
 
-                    if (MiMakeSystemAddressValidPfn (RlePrototypePte) == TRUE) {
+                    if (MiMakeSystemAddressValidPfn(RlePrototypePte) == TRUE)
+                    {
                         Waited = TRUE;
                     }
 
-                    MiMakeSystemAddressValidPfn (RlePrototypePte);
+                    MiMakeSystemAddressValidPfn(RlePrototypePte);
                 }
 
-                PfnProto = MI_PFN_ELEMENT (PointerPde->u.Hard.PageFrameNumber);
+                PfnProto = MI_PFN_ELEMENT(PointerPde->u.Hard.PageFrameNumber);
                 MI_ADD_LOCKED_PAGE_CHARGE(PfnProto, 4);
                 PfnProto->u3.e2.ReferenceCount += 1;
-                ASSERT (PfnProto->u3.e2.ReferenceCount > 1);
+                ASSERT(PfnProto->u3.e2.ReferenceCount > 1);
             }
 
             PteContents = *(RlePrototypePte);
 
-            if (PteContents.u.Hard.Valid == 1) {
+            if (PteContents.u.Hard.Valid == 1)
+            {
 
                 //
                 // The page has become resident since the last pass.  Don't
@@ -1684,7 +1725,8 @@ Environment:
 
                 NOTHING;
             }
-            else if (PteContents.u.Soft.Prototype == 0) {
+            else if (PteContents.u.Soft.Prototype == 0)
+            {
 
                 //
                 // The page is either in transition (so don't prefetch it).
@@ -1701,7 +1743,8 @@ Environment:
                 NOTHING;
             }
             else if ((MmAvailablePages >= MINIMUM_AVAILABLE_PAGES) &&
-                (MI_NONPAGABLE_MEMORY_AVAILABLE() >= MINIMUM_AVAILABLE_PAGES)) {
+                     (MI_NONPAGABLE_MEMORY_AVAILABLE() >= MINIMUM_AVAILABLE_PAGES))
+            {
 
 
                 NumberOfPages += 1;
@@ -1710,35 +1753,35 @@ Environment:
                 // Allocate a physical page.
                 //
 
-                PageColor = MI_PAGE_COLOR_VA_PROCESS (
-                    MiGetVirtualAddressMappedByPte (RlePrototypePte),
-                    &CurrentProcess->NextPageColor
-                    );
+                PageColor = MI_PAGE_COLOR_VA_PROCESS(MiGetVirtualAddressMappedByPte(RlePrototypePte),
+                                                     &CurrentProcess->NextPageColor);
 
-                if (Rle->u1.e1.Partial == 1) {
+                if (Rle->u1.e1.Partial == 1)
+                {
 
                     //
                     // This read crosses the end of a subsection, get a zeroed
                     // page and correct the read size.
                     //
 
-                    PageFrameIndex = MiRemoveZeroPage (PageColor);
+                    PageFrameIndex = MiRemoveZeroPage(PageColor);
                 }
-                else {
-                    PageFrameIndex = MiRemoveAnyPage (PageColor);
+                else
+                {
+                    PageFrameIndex = MiRemoveAnyPage(PageColor);
                 }
 
-                Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+                Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
 
-                ASSERT (Pfn1->u3.e2.ReferenceCount == 0);
-                ASSERT (Pfn1->u2.ShareCount == 0);
-                ASSERT (RlePrototypePte->u.Hard.Valid == 0);
+                ASSERT(Pfn1->u3.e2.ReferenceCount == 0);
+                ASSERT(Pfn1->u2.ShareCount == 0);
+                ASSERT(RlePrototypePte->u.Hard.Valid == 0);
 
                 //
                 // Initialize read-in-progress PFN.
                 //
-            
-                MiInitializePfn (PageFrameIndex, RlePrototypePte, 0);
+
+                MiInitializePfn(PageFrameIndex, RlePrototypePte, 0);
 
                 //
                 // These pieces of MiInitializePfn initialization are overridden
@@ -1754,11 +1797,11 @@ Environment:
                 //
                 // Initialize the I/O specific fields.
                 //
-            
-                ASSERT (FirstRleInRun->u1.PrototypePte != NULL);
+
+                ASSERT(FirstRleInRun->u1.PrototypePte != NULL);
                 Pfn1->u1.Event = &InPageSupport->Event;
                 Pfn1->u3.e1.ReadInProgress = 1;
-                ASSERT (Pfn1->u4.InPageError == 0);
+                ASSERT(Pfn1->u4.InPageError == 0);
 
                 //
                 // Increment the PFN reference count in the control area for
@@ -1766,25 +1809,23 @@ Environment:
                 //
 
                 ReadList->ControlArea->NumberOfPfnReferences += 1;
-            
+
                 //
                 // Put the PTE into the transition state.
                 // No TB flush needed as the PTE is still not valid.
                 //
 
-                MI_MAKE_TRANSITION_PTE (TempPte,
-                                        PageFrameIndex,
-                                        RlePrototypePte->u.Soft.Protection,
-                                        RlePrototypePte);
-                MI_WRITE_INVALID_PTE (RlePrototypePte, TempPte);
+                MI_MAKE_TRANSITION_PTE(TempPte, PageFrameIndex, RlePrototypePte->u.Soft.Protection, RlePrototypePte);
+                MI_WRITE_INVALID_PTE(RlePrototypePte, TempPte);
 
                 Page = (PPFN_NUMBER)(Mdl + 1);
 
-                ASSERT ((ULONG)(RlePrototypePte - FirstRlePrototypeInRun) < MdlPages);
+                ASSERT((ULONG)(RlePrototypePte - FirstRlePrototypeInRun) < MdlPages);
 
                 *(Page + (RlePrototypePte - FirstRlePrototypeInRun)) = PageFrameIndex;
             }
-            else {
+            else
+            {
 
                 //
                 // Failed allocation - this concludes prefetching for this run.
@@ -1793,25 +1834,27 @@ Environment:
                 break;
             }
         }
-    
+
         //
         // If all the pages were resident, dereference the dummy page references
         // now and notify our caller that I/Os are not necessary.  Note that
         // STATUS_SUCCESS must still be returned so our caller knows to continue
         // on to the next readlist.
         //
-    
-        if (NumberOfPages == 0) {
-            ASSERT (DummyPfn1->u3.e2.ReferenceCount > MdlPages);
-            DummyPfn1->u3.e2.ReferenceCount =
-                (USHORT)(DummyPfn1->u3.e2.ReferenceCount - MdlPages);
 
-            UNLOCK_PFN (OldIrql);
+        if (NumberOfPages == 0)
+        {
+            ASSERT(DummyPfn1->u3.e2.ReferenceCount > MdlPages);
+            DummyPfn1->u3.e2.ReferenceCount = (USHORT)(DummyPfn1->u3.e2.ReferenceCount - MdlPages);
 
-            if (PrevEntry != NULL) {
+            UNLOCK_PFN(OldIrql);
+
+            if (PrevEntry != NULL)
+            {
                 PrevEntry->Next = NextEntry->Next;
             }
-            else {
+            else
+            {
                 ReadList->InPageSupportHead.Next = NextEntry->Next;
             }
 
@@ -1820,9 +1863,9 @@ Environment:
 #if DBG
             InPageSupport->ListEntry.Next = NULL;
 #endif
-            MiFreeInPageSupportBlock (InPageSupport);
+            MiFreeInPageSupportBlock(InPageSupport);
 
-            LOCK_PFN (OldIrql);
+            LOCK_PFN(OldIrql);
             continue;
         }
 
@@ -1833,42 +1876,44 @@ Environment:
         Page = (PPFN_NUMBER)(Mdl + 1);
 
         DummyTrim = 0;
-        for (i = 0; i < MdlPages - 1; i += 1) {
-            if (*Page == DummyPage) {
+        for (i = 0; i < MdlPages - 1; i += 1)
+        {
+            if (*Page == DummyPage)
+            {
                 DummyTrim += 1;
                 Page += 1;
             }
-            else {
+            else
+            {
                 break;
             }
         }
 
-        if (DummyTrim != 0) {
+        if (DummyTrim != 0)
+        {
 
-            Mdl->Size =
-                (USHORT)(Mdl->Size - (DummyTrim * sizeof(PFN_NUMBER)));
+            Mdl->Size = (USHORT)(Mdl->Size - (DummyTrim * sizeof(PFN_NUMBER)));
             Mdl->ByteCount -= (ULONG)(DummyTrim * PAGE_SIZE);
-            ASSERT (Mdl->ByteCount != 0);
+            ASSERT(Mdl->ByteCount != 0);
             InPageSupport->ReadOffset.QuadPart += (DummyTrim * PAGE_SIZE);
-            DummyPfn1->u3.e2.ReferenceCount =
-                (USHORT)(DummyPfn1->u3.e2.ReferenceCount - DummyTrim);
+            DummyPfn1->u3.e2.ReferenceCount = (USHORT)(DummyPfn1->u3.e2.ReferenceCount - DummyTrim);
 
             //
             // Shuffle down the PFNs in the MDL.
             // Recalculate BasePte to adjust for the shuffle.
             //
 
-            Pfn1 = MI_PFN_ELEMENT (*Page);
-    
-            ASSERT (Pfn1->PteAddress->u.Hard.Valid == 0);
-            ASSERT ((Pfn1->PteAddress->u.Soft.Prototype == 0) &&
-                     (Pfn1->PteAddress->u.Soft.Transition == 1));
-    
+            Pfn1 = MI_PFN_ELEMENT(*Page);
+
+            ASSERT(Pfn1->PteAddress->u.Hard.Valid == 0);
+            ASSERT((Pfn1->PteAddress->u.Soft.Prototype == 0) && (Pfn1->PteAddress->u.Soft.Transition == 1));
+
             InPageSupport->BasePte = Pfn1->PteAddress;
 
             DestinationPage = (PPFN_NUMBER)(Mdl + 1);
 
-            do {
+            do
+            {
                 *DestinationPage = *Page;
                 DestinationPage += 1;
                 Page += 1;
@@ -1883,30 +1928,32 @@ Environment:
         //
 
         StartingVa = (PVOID)((PCHAR)Mdl->StartVa + Mdl->ByteOffset);
-    
-        MdlPages = ADDRESS_AND_SIZE_TO_SPAN_PAGES(StartingVa,
-                                                  Mdl->ByteCount);
 
-        ASSERT (MdlPages != 0);
+        MdlPages = ADDRESS_AND_SIZE_TO_SPAN_PAGES(StartingVa, Mdl->ByteCount);
+
+        ASSERT(MdlPages != 0);
 
         Page = (PPFN_NUMBER)(Mdl + 1) + MdlPages - 1;
 
-        if (*Page == DummyPage) {
+        if (*Page == DummyPage)
+        {
 
-            ASSERT (MdlPages >= 2);
+            ASSERT(MdlPages >= 2);
 
             //
             // Trim the last page specially as it may be a partial page.
             //
 
             Mdl->Size -= sizeof(PFN_NUMBER);
-            if (BYTE_OFFSET(Mdl->ByteCount) != 0) {
+            if (BYTE_OFFSET(Mdl->ByteCount) != 0)
+            {
                 Mdl->ByteCount &= ~(PAGE_SIZE - 1);
             }
-            else {
+            else
+            {
                 Mdl->ByteCount -= PAGE_SIZE;
             }
-            ASSERT (Mdl->ByteCount != 0);
+            ASSERT(Mdl->ByteCount != 0);
             DummyPfn1->u3.e2.ReferenceCount -= 1;
 
             //
@@ -1915,30 +1962,30 @@ Environment:
 
             Page -= 1;
             DummyTrim = 0;
-            while (Page != ((PPFN_NUMBER)(Mdl + 1))) {
-                if (*Page != DummyPage) {
+            while (Page != ((PPFN_NUMBER)(Mdl + 1)))
+            {
+                if (*Page != DummyPage)
+                {
                     break;
                 }
                 DummyTrim += 1;
                 Page -= 1;
             }
-            if (DummyTrim != 0) {
-                ASSERT (Mdl->Size > (USHORT)(DummyTrim * sizeof(PFN_NUMBER)));
-                Mdl->Size = 
-                    (USHORT)(Mdl->Size - (DummyTrim * sizeof(PFN_NUMBER)));
+            if (DummyTrim != 0)
+            {
+                ASSERT(Mdl->Size > (USHORT)(DummyTrim * sizeof(PFN_NUMBER)));
+                Mdl->Size = (USHORT)(Mdl->Size - (DummyTrim * sizeof(PFN_NUMBER)));
                 Mdl->ByteCount -= (ULONG)(DummyTrim * PAGE_SIZE);
-                DummyPfn1->u3.e2.ReferenceCount =
-                    (USHORT)(DummyPfn1->u3.e2.ReferenceCount - DummyTrim);
+                DummyPfn1->u3.e2.ReferenceCount = (USHORT)(DummyPfn1->u3.e2.ReferenceCount - DummyTrim);
             }
 
-            ASSERT (MdlPages > DummyTrim + 1);
+            ASSERT(MdlPages > DummyTrim + 1);
             MdlPages -= (DummyTrim + 1);
 
 #if DBG
             StartingVa = (PVOID)((PCHAR)Mdl->StartVa + Mdl->ByteOffset);
-        
-            ASSERT (MdlPages == ADDRESS_AND_SIZE_TO_SPAN_PAGES(StartingVa,
-                                                               Mdl->ByteCount));
+
+            ASSERT(MdlPages == ADDRESS_AND_SIZE_TO_SPAN_PAGES(StartingVa, Mdl->ByteCount));
 #endif
         }
 
@@ -1947,23 +1994,22 @@ Environment:
         // final size qualifies it - if so, embed it now.
         //
 
-        if ((Mdl != &InPageSupport->Mdl) &&
-            (Mdl->ByteCount <= (MM_MAXIMUM_READ_CLUSTER_SIZE + 1) * PAGE_SIZE)){
+        if ((Mdl != &InPageSupport->Mdl) && (Mdl->ByteCount <= (MM_MAXIMUM_READ_CLUSTER_SIZE + 1) * PAGE_SIZE))
+        {
 
 #if DBG
-            RtlFillMemoryUlong (&InPageSupport->Page[0],
-                                (MM_MAXIMUM_READ_CLUSTER_SIZE+1) * sizeof (PFN_NUMBER),
-                                0xf1f1f1f1);
+            RtlFillMemoryUlong(&InPageSupport->Page[0], (MM_MAXIMUM_READ_CLUSTER_SIZE + 1) * sizeof(PFN_NUMBER),
+                               0xf1f1f1f1);
 #endif
 
-            RtlCopyMemory (&InPageSupport->Mdl, Mdl, Mdl->Size);
+            RtlCopyMemory(&InPageSupport->Mdl, Mdl, Mdl->Size);
 
             Mdl->Next = FreeMdl;
             FreeMdl = Mdl;
 
             Mdl = &InPageSupport->Mdl;
 
-            ASSERT (((ULONG_PTR)Mdl & (sizeof(QUAD) - 1)) == 0);
+            ASSERT(((ULONG_PTR)Mdl & (sizeof(QUAD) - 1)) == 0);
             InPageSupport->u1.e1.PrefetchMdlHighBits = ((ULONG_PTR)Mdl >> 3);
         }
 
@@ -1980,29 +2026,30 @@ Environment:
         // hang in limbo forever.
         //
 
-        ASSERT (MdlPages != 0);
+        ASSERT(MdlPages != 0);
 
 #if DBG
         StartingVa = (PVOID)((PCHAR)Mdl->StartVa + Mdl->ByteOffset);
-    
-        ASSERT (MdlPages == ADDRESS_AND_SIZE_TO_SPAN_PAGES(StartingVa,
-                                                           Mdl->ByteCount));
+
+        ASSERT(MdlPages == ADDRESS_AND_SIZE_TO_SPAN_PAGES(StartingVa, Mdl->ByteCount));
 #endif
 
-        if ((Mdl != &InPageSupport->Mdl) &&
-            (Waited == FALSE) &&
-            ((MdlPages - NumberOfPages) / DUMMY_RATIO >= NumberOfPages)) {
+        if ((Mdl != &InPageSupport->Mdl) && (Waited == FALSE) &&
+            ((MdlPages - NumberOfPages) / DUMMY_RATIO >= NumberOfPages))
+        {
 
-            if (PrevEntry != NULL) {
+            if (PrevEntry != NULL)
+            {
                 PrevEntry->Next = NextEntry->Next;
             }
-            else {
+            else
+            {
                 ReadList->InPageSupportHead.Next = NextEntry->Next;
             }
 
             NextEntry = NextEntry->Next;
 
-            ASSERT (MI_EXTRACT_PREFETCH_MDL(InPageSupport) == Mdl);
+            ASSERT(MI_EXTRACT_PREFETCH_MDL(InPageSupport) == Mdl);
 
             //
             // Note the pages are individually freed here (rather than just
@@ -2011,59 +2058,58 @@ Environment:
             // So no collisions on these pages are possible.
             //
 
-            ASSERT (InPageSupport->WaitCount == 1);
+            ASSERT(InPageSupport->WaitCount == 1);
 
             Page = (PPFN_NUMBER)(Mdl + 1) + MdlPages - 1;
 
-            do {
-                if (*Page != DummyPage) {
-                    Pfn1 = MI_PFN_ELEMENT (*Page);
-            
-                    ASSERT (Pfn1->PteAddress->u.Hard.Valid == 0);
-                    ASSERT ((Pfn1->PteAddress->u.Soft.Prototype == 0) &&
-                             (Pfn1->PteAddress->u.Soft.Transition == 1));
-                    ASSERT (Pfn1->u3.e1.ReadInProgress == 1);
-                    ASSERT (Pfn1->u3.e1.PrototypePte == 1);
-                    ASSERT (Pfn1->u3.e2.ReferenceCount == 1);
-                    ASSERT (Pfn1->u2.ShareCount == 0);
-            
+            do
+            {
+                if (*Page != DummyPage)
+                {
+                    Pfn1 = MI_PFN_ELEMENT(*Page);
+
+                    ASSERT(Pfn1->PteAddress->u.Hard.Valid == 0);
+                    ASSERT((Pfn1->PteAddress->u.Soft.Prototype == 0) && (Pfn1->PteAddress->u.Soft.Transition == 1));
+                    ASSERT(Pfn1->u3.e1.ReadInProgress == 1);
+                    ASSERT(Pfn1->u3.e1.PrototypePte == 1);
+                    ASSERT(Pfn1->u3.e2.ReferenceCount == 1);
+                    ASSERT(Pfn1->u2.ShareCount == 0);
+
                     Pfn1->u3.e1.PageLocation = StandbyPageList;
                     Pfn1->u3.e1.ReadInProgress = 0;
-                    MiRestoreTransitionPte (*Page);
+                    MiRestoreTransitionPte(*Page);
 
-                    MI_SET_PFN_DELETED (Pfn1);
+                    MI_SET_PFN_DELETED(Pfn1);
                     MI_REMOVE_LOCKED_PAGE_CHARGE_AND_DECREF(Pfn1, 39);
                 }
 
                 Page -= 1;
             } while (Page >= (PPFN_NUMBER)(Mdl + 1));
 
-            ASSERT (InPageSupport->WaitCount == 1);
+            ASSERT(InPageSupport->WaitCount == 1);
 
-            ASSERT (DummyPfn1->u3.e2.ReferenceCount > MdlPages);
-            DummyPfn1->u3.e2.ReferenceCount =
-                (USHORT)(DummyPfn1->u3.e2.ReferenceCount - MdlPages);
+            ASSERT(DummyPfn1->u3.e2.ReferenceCount > MdlPages);
+            DummyPfn1->u3.e2.ReferenceCount = (USHORT)(DummyPfn1->u3.e2.ReferenceCount - MdlPages);
 
-            UNLOCK_PFN (OldIrql);
+            UNLOCK_PFN(OldIrql);
 
 #if DBG
             InPageSupport->ListEntry.Next = NULL;
 #endif
-            MiFreeInPageSupportBlock (InPageSupport);
-            LOCK_PFN (OldIrql);
+            MiFreeInPageSupportBlock(InPageSupport);
+            LOCK_PFN(OldIrql);
 
             continue;
         }
 
 #if DBG
-        MiPfDbgDumpReadList (ReadList);
+        MiPfDbgDumpReadList(ReadList);
 #endif
 
-        ASSERT ((USHORT)Mdl->Size - sizeof(MDL) == BYTES_TO_PAGES(Mdl->ByteCount) * sizeof(PFN_NUMBER));
+        ASSERT((USHORT)Mdl->Size - sizeof(MDL) == BYTES_TO_PAGES(Mdl->ByteCount) * sizeof(PFN_NUMBER));
 
-        DummyPfn1->u3.e2.ReferenceCount =
-            (USHORT)(DummyPfn1->u3.e2.ReferenceCount - NumberOfPages);
-    
+        DummyPfn1->u3.e2.ReferenceCount = (USHORT)(DummyPfn1->u3.e2.ReferenceCount - NumberOfPages);
+
         MmInfoCounters.PageReadIoCount += 1;
         MmInfoCounters.PageReadCount += NumberOfPages;
 
@@ -2079,23 +2125,25 @@ Environment:
     // Unlock page containing prototype PTEs.
     //
 
-    if (PfnProto != NULL) {
-        ASSERT (PfnProto->u3.e2.ReferenceCount > 1);
+    if (PfnProto != NULL)
+    {
+        ASSERT(PfnProto->u3.e2.ReferenceCount > 1);
         MI_REMOVE_LOCKED_PAGE_CHARGE_AND_DECREF(PfnProto, 5);
     }
 
-    UNLOCK_PFN (OldIrql);
+    UNLOCK_PFN(OldIrql);
 
 #if DBG
 
-    if (MiPfDebug & MI_PF_DELAY) {
+    if (MiPfDebug & MI_PF_DELAY)
+    {
 
         //
-        // This delay provides a window to increase the chance of collided 
+        // This delay provides a window to increase the chance of collided
         // faults.
         //
 
-        KeDelayExecutionThread (KernelMode, FALSE, (PLARGE_INTEGER)&MmHalfSecond);
+        KeDelayExecutionThread(KernelMode, FALSE, (PLARGE_INTEGER)&MmHalfSecond);
     }
 
 #endif
@@ -2104,19 +2152,17 @@ Environment:
     // Free any collapsed MDLs that are no longer needed.
     //
 
-    while (FreeMdl != NULL) {
+    while (FreeMdl != NULL)
+    {
         Mdl = FreeMdl->Next;
-        ExFreePool (FreeMdl);
+        ExFreePool(FreeMdl);
         FreeMdl = Mdl;
     }
 
     return STATUS_SUCCESS;
 }
-
-VOID
-MiPfExecuteReadList (
-    IN PMI_READ_LIST ReadList
-    )
+
+VOID MiPfExecuteReadList(IN PMI_READ_LIST ReadList)
 
 /*++
 
@@ -2148,53 +2194,49 @@ Environment:
     PSINGLE_LIST_ENTRY NextEntry;
     PMMINPAGE_SUPPORT InPageSupport;
 
-    ASSERT (KeGetCurrentIrql() == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
     NextEntry = ReadList->InPageSupportHead.Next;
-    while (NextEntry != NULL) {
+    while (NextEntry != NULL)
+    {
 
-        InPageSupport = CONTAINING_RECORD(NextEntry,
-                                          MMINPAGE_SUPPORT,
-                                          ListEntry);
+        InPageSupport = CONTAINING_RECORD(NextEntry, MMINPAGE_SUPPORT, ListEntry);
 
         //
         // Initialize the prefetch MDL.
         //
-    
-        Mdl = MI_EXTRACT_PREFETCH_MDL (InPageSupport);
 
-        ASSERT ((Mdl->MdlFlags & MDL_MAPPED_TO_SYSTEM_VA) == 0);
+        Mdl = MI_EXTRACT_PREFETCH_MDL(InPageSupport);
+
+        ASSERT((Mdl->MdlFlags & MDL_MAPPED_TO_SYSTEM_VA) == 0);
         Mdl->MdlFlags |= (MDL_PAGES_LOCKED | MDL_IO_PAGE_READ);
 
-        ASSERT (InPageSupport->u1.e1.Completed == 0);
-        ASSERT (InPageSupport->Thread == PsGetCurrentThread());
-        ASSERT64 (InPageSupport->UsedPageTableEntries == 0);
-        ASSERT (InPageSupport->WaitCount >= 1);
-        ASSERT (InPageSupport->u1.e1.PrefetchMdlHighBits != 0);
+        ASSERT(InPageSupport->u1.e1.Completed == 0);
+        ASSERT(InPageSupport->Thread == PsGetCurrentThread());
+        ASSERT64(InPageSupport->UsedPageTableEntries == 0);
+        ASSERT(InPageSupport->WaitCount >= 1);
+        ASSERT(InPageSupport->u1.e1.PrefetchMdlHighBits != 0);
 
         //
         // Initialize the inpage support block fields we overloaded.
         //
 
-        ASSERT (InPageSupport->FilePointer == ReadList->FileObject);
+        ASSERT(InPageSupport->FilePointer == ReadList->FileObject);
         LocalPrototypePte = InPageSupport->BasePte;
 
-        ASSERT (LocalPrototypePte->u.Hard.Valid == 0);
-        ASSERT ((LocalPrototypePte->u.Soft.Prototype == 0) &&
-                 (LocalPrototypePte->u.Soft.Transition == 1));
+        ASSERT(LocalPrototypePte->u.Hard.Valid == 0);
+        ASSERT((LocalPrototypePte->u.Soft.Prototype == 0) && (LocalPrototypePte->u.Soft.Transition == 1));
 
         PageFrameIndex = MI_GET_PAGE_FRAME_FROM_TRANSITION_PTE(LocalPrototypePte);
-        Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+        Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
 
         InPageSupport->Pfn = Pfn1;
 
-        status = IoAsynchronousPageRead (InPageSupport->FilePointer,
-                                         Mdl,
-                                         &InPageSupport->ReadOffset,
-                                         &InPageSupport->Event,
-                                         &InPageSupport->IoStatus);
+        status = IoAsynchronousPageRead(InPageSupport->FilePointer, Mdl, &InPageSupport->ReadOffset,
+                                        &InPageSupport->Event, &InPageSupport->IoStatus);
 
-        if (!NT_SUCCESS (status)) {
+        if (!NT_SUCCESS(status))
+        {
 
             //
             // Set the event as the I/O system doesn't set it on errors.
@@ -2202,7 +2244,7 @@ Environment:
 
             InPageSupport->IoStatus.Status = status;
             InPageSupport->IoStatus.Information = 0;
-            KeSetEvent (&InPageSupport->Event, 0, FALSE);
+            KeSetEvent(&InPageSupport->Event, 0, FALSE);
         }
 
         NextEntry = NextEntry->Next;
@@ -2210,24 +2252,21 @@ Environment:
 
 #if DBG
 
-    if (MiPfDebug & MI_PF_DELAY) {
+    if (MiPfDebug & MI_PF_DELAY)
+    {
 
         //
-        // This delay provides a window to increase the chance of collided 
+        // This delay provides a window to increase the chance of collided
         // faults.
         //
 
-        KeDelayExecutionThread (KernelMode, FALSE, (PLARGE_INTEGER)&MmHalfSecond);
+        KeDelayExecutionThread(KernelMode, FALSE, (PLARGE_INTEGER)&MmHalfSecond);
     }
 
 #endif
-
 }
-
-VOID
-MiPfCompletePrefetchIos (
-    IN PMI_READ_LIST ReadList
-    )
+
+VOID MiPfCompletePrefetchIos(IN PMI_READ_LIST ReadList)
 
 /*++
 
@@ -2261,31 +2300,27 @@ Environment:
     PSINGLE_LIST_ENTRY NextEntry;
     extern ULONG MmFrontOfList;
 
-    ASSERT (KeGetCurrentIrql() == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
-    do {
+    do
+    {
 
         NextEntry = PopEntryList(&ReadList->InPageSupportHead);
-        if (NextEntry == NULL) {
+        if (NextEntry == NULL)
+        {
             break;
         }
 
-        InPageSupport = CONTAINING_RECORD(NextEntry,
-                                          MMINPAGE_SUPPORT,
-                                          ListEntry);
+        InPageSupport = CONTAINING_RECORD(NextEntry, MMINPAGE_SUPPORT, ListEntry);
 
-        ASSERT (InPageSupport->Pfn != 0);
+        ASSERT(InPageSupport->Pfn != 0);
 
         Pfn1 = InPageSupport->Pfn;
-        Mdl = MI_EXTRACT_PREFETCH_MDL (InPageSupport);
+        Mdl = MI_EXTRACT_PREFETCH_MDL(InPageSupport);
         Page = (PPFN_NUMBER)(Mdl + 1);
 
-        status = MiWaitForInPageComplete (InPageSupport->Pfn,
-                                          InPageSupport->BasePte,
-                                          NULL,
-                                          InPageSupport->BasePte,
-                                          InPageSupport,
-                                          PREFETCH_PROCESS);
+        status = MiWaitForInPageComplete(InPageSupport->Pfn, InPageSupport->BasePte, NULL, InPageSupport->BasePte,
+                                         InPageSupport, PREFETCH_PROCESS);
 
         //
         // MiWaitForInPageComplete RETURNS WITH THE PFN LOCK HELD!!!
@@ -2293,30 +2328,33 @@ Environment:
 
         //
         // If we are prefetching for boot, insert prefetched pages to the front
-        // of the list. Otherwise the pages prefetched first end up susceptible 
-        // at the front of the list as we prefetch more. We prefetch pages in 
-        // the order they will be used. When there is a spike in memory usage 
-        // and there is no free memory, we lose these pages before we can 
-        // get cache-hits on them. Thus boot gets ahead and starts discarding 
+        // of the list. Otherwise the pages prefetched first end up susceptible
+        // at the front of the list as we prefetch more. We prefetch pages in
+        // the order they will be used. When there is a spike in memory usage
+        // and there is no free memory, we lose these pages before we can
+        // get cache-hits on them. Thus boot gets ahead and starts discarding
         // prefetched pages that it could use just a little later.
         //
 
-        if (CCPF_IS_PREFETCHING_FOR_BOOT()) {
+        if (CCPF_IS_PREFETCHING_FOR_BOOT())
+        {
             MmFrontOfList = TRUE;
         }
 
         NumberOfBytes = (LONG)Mdl->ByteCount;
 
-        while (NumberOfBytes > 0) {
+        while (NumberOfBytes > 0)
+        {
 
             //
             // Decrement all reference counts.
             //
 
-            PfnClusterPage = MI_PFN_ELEMENT (*Page);
+            PfnClusterPage = MI_PFN_ELEMENT(*Page);
 
 #if DBG
-            if (PfnClusterPage->u4.InPageError) {
+            if (PfnClusterPage->u4.InPageError)
+            {
 
                 //
                 // If the page is marked with an error, then the whole transfer
@@ -2327,16 +2365,17 @@ Environment:
                 // the current one).
                 //
 
-                ASSERT ((status != STATUS_SUCCESS) ||
-                        (PfnClusterPage->PteAddress == MI_PF_DUMMY_PAGE_PTE));
+                ASSERT((status != STATUS_SUCCESS) || (PfnClusterPage->PteAddress == MI_PF_DUMMY_PAGE_PTE));
             }
 #endif
-            if (PfnClusterPage->u3.e1.ReadInProgress != 0) {
+            if (PfnClusterPage->u3.e1.ReadInProgress != 0)
+            {
 
-                ASSERT (PfnClusterPage->u4.PteFrame != MI_MAGIC_AWE_PTEFRAME);
+                ASSERT(PfnClusterPage->u4.PteFrame != MI_MAGIC_AWE_PTEFRAME);
                 PfnClusterPage->u3.e1.ReadInProgress = 0;
 
-                if (PfnClusterPage->u4.InPageError == 0) {
+                if (PfnClusterPage->u4.InPageError == 0)
+                {
                     PfnClusterPage->u1.Event = NULL;
                 }
             }
@@ -2354,7 +2393,8 @@ Environment:
 
         MmFrontOfList = FALSE;
 
-        if (status != STATUS_SUCCESS) {
+        if (status != STATUS_SUCCESS)
+        {
 
             //
             // An I/O error occurred during the page read
@@ -2367,20 +2407,22 @@ Environment:
             Page = (PPFN_NUMBER)(Mdl + 1);
             NumberOfBytes = (LONG)Mdl->ByteCount;
 
-            while (NumberOfBytes > 0) {
+            while (NumberOfBytes > 0)
+            {
 
-                PfnClusterPage = MI_PFN_ELEMENT (*Page);
+                PfnClusterPage = MI_PFN_ELEMENT(*Page);
 
-                if (PfnClusterPage->u4.InPageError == 1) {
+                if (PfnClusterPage->u4.InPageError == 1)
+                {
 
-                    if (PfnClusterPage->u3.e2.ReferenceCount == 0) {
+                    if (PfnClusterPage->u3.e2.ReferenceCount == 0)
+                    {
 
-                        ASSERT (PfnClusterPage->u3.e1.PageLocation ==
-                                                        StandbyPageList);
+                        ASSERT(PfnClusterPage->u3.e1.PageLocation == StandbyPageList);
 
-                        MiUnlinkPageFromList (PfnClusterPage);
-                        MiRestoreTransitionPte (*Page);
-                        MiInsertPageInFreeList (*Page);
+                        MiUnlinkPageFromList(PfnClusterPage);
+                        MiRestoreTransitionPte(*Page);
+                        MiInsertPageInFreeList(*Page);
                     }
                 }
                 Page += 1;
@@ -2398,23 +2440,20 @@ Environment:
         // needed to process the MDL above.  Now let it go for good.
         //
 
-        ASSERT (InPageSupport->WaitCount >= 1);
-        UNLOCK_PFN (PASSIVE_LEVEL);
+        ASSERT(InPageSupport->WaitCount >= 1);
+        UNLOCK_PFN(PASSIVE_LEVEL);
 
 #if DBG
         InPageSupport->ListEntry.Next = NULL;
 #endif
 
-        MiFreeInPageSupportBlock (InPageSupport);
+        MiFreeInPageSupportBlock(InPageSupport);
 
     } while (TRUE);
 }
-
+
 #if DBG
-VOID
-MiPfDbgDumpReadList (
-    IN PMI_READ_LIST ReadList
-    )
+VOID MiPfDbgDumpReadList(IN PMI_READ_LIST ReadList)
 
 /*++
 
@@ -2449,25 +2488,25 @@ Environment:
     PFN_NUMBER MdlPages;
     LARGE_INTEGER ReadOffset;
 
-    if ((MiPfDebug & MI_PF_VERBOSE) == 0) {
+    if ((MiPfDebug & MI_PF_VERBOSE) == 0)
+    {
         return;
     }
 
-    DbgPrint ("\nPF: Dumping read-list %x (FileObject %x ControlArea %x)\n\n",
-              ReadList, ReadList->FileObject, ReadList->ControlArea);
+    DbgPrint("\nPF: Dumping read-list %x (FileObject %x ControlArea %x)\n\n", ReadList, ReadList->FileObject,
+             ReadList->ControlArea);
 
-    DbgPrint ("\tFileOffset | Pte           | Pfn      \n"
-              "\t-----------+---------------+----------\n");
+    DbgPrint("\tFileOffset | Pte           | Pfn      \n"
+             "\t-----------+---------------+----------\n");
 
     NextEntry = ReadList->InPageSupportHead.Next;
-    while (NextEntry != NULL) {
+    while (NextEntry != NULL)
+    {
 
-        InPageSupport = CONTAINING_RECORD(NextEntry,
-                                          MMINPAGE_SUPPORT,
-                                          ListEntry);
+        InPageSupport = CONTAINING_RECORD(NextEntry, MMINPAGE_SUPPORT, ListEntry);
 
         ReadOffset = InPageSupport->ReadOffset;
-        Mdl = MI_EXTRACT_PREFETCH_MDL (InPageSupport);
+        Mdl = MI_EXTRACT_PREFETCH_MDL(InPageSupport);
 
         Page = (PPFN_NUMBER)(Mdl + 1);
 #if DBG
@@ -2475,37 +2514,35 @@ Environment:
         // MDL isn't filled in yet, skip it.
         //
 
-        if (*Page == MM_EMPTY_LIST) {
+        if (*Page == MM_EMPTY_LIST)
+        {
             NextEntry = NextEntry->Next;
             continue;
         }
 #endif
 
         StartingVa = (PVOID)((PCHAR)Mdl->StartVa + Mdl->ByteOffset);
-    
-        MdlPages = ADDRESS_AND_SIZE_TO_SPAN_PAGES(StartingVa,
-                                                  Mdl->ByteCount);
+
+        MdlPages = ADDRESS_AND_SIZE_TO_SPAN_PAGES(StartingVa, Mdl->ByteCount);
 
         //
         // Default the MDL entry to the dummy page as the RLE PTEs may
         // be noncontiguous and we have no way to distinguish the jumps.
         //
 
-        for (i = 0; i < MdlPages; i += 1) {
+        for (i = 0; i < MdlPages; i += 1)
+        {
             PageFrameIndex = *Page;
-            Pfn1 = MI_PFN_ELEMENT (PageFrameIndex);
+            Pfn1 = MI_PFN_ELEMENT(PageFrameIndex);
             LocalPrototypePte = Pfn1->PteAddress;
 
-            if (LocalPrototypePte != MI_PF_DUMMY_PAGE_PTE) {
-                ASSERT (LocalPrototypePte->u.Hard.Valid == 0);
-                ASSERT ((LocalPrototypePte->u.Soft.Prototype == 0) &&
-                         (LocalPrototypePte->u.Soft.Transition == 1));
+            if (LocalPrototypePte != MI_PF_DUMMY_PAGE_PTE)
+            {
+                ASSERT(LocalPrototypePte->u.Hard.Valid == 0);
+                ASSERT((LocalPrototypePte->u.Soft.Prototype == 0) && (LocalPrototypePte->u.Soft.Transition == 1));
             }
 
-            DbgPrint ("\t  %8x | %8x      | %8x\n",
-                ReadOffset.LowPart,
-                LocalPrototypePte,
-                PageFrameIndex);
+            DbgPrint("\t  %8x | %8x      | %8x\n", ReadOffset.LowPart, LocalPrototypePte, PageFrameIndex);
 
             Page += 1;
             ReadOffset.LowPart += PAGE_SIZE;
@@ -2514,13 +2551,10 @@ Environment:
         NextEntry = NextEntry->Next;
     }
 
-    DbgPrint ("\t\n");
+    DbgPrint("\t\n");
 }
 
-VOID
-MiRemoveUserPages (
-    VOID
-    )
+VOID MiRemoveUserPages(VOID)
 
 /*++
 
@@ -2543,10 +2577,10 @@ Environment:
 --*/
 
 {
-    InterlockedIncrement (&MiDelayPageFaults);
-    MmEmptyAllWorkingSets ();
-    MiFlushAllPages ();
-    InterlockedDecrement (&MiDelayPageFaults);
+    InterlockedIncrement(&MiDelayPageFaults);
+    MmEmptyAllWorkingSets();
+    MiFlushAllPages();
+    InterlockedDecrement(&MiDelayPageFaults);
 
     //
     // Run the transition list and free all the entries so transition
@@ -2554,6 +2588,6 @@ Environment:
     // freed.
     //
 
-    MiPurgeTransitionList ();
+    MiPurgeTransitionList();
 }
 #endif

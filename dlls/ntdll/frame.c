@@ -24,11 +24,7 @@ Revision History:
 #include <nturtl.h>
 
 NTSYSAPI
-VOID
-NTAPI
-RtlPushFrame(
-    IN PTEB_ACTIVE_FRAME Frame
-    )
+VOID NTAPI RtlPushFrame(IN PTEB_ACTIVE_FRAME Frame)
 {
     const PTEB Teb = NtCurrentTeb();
     Frame->Previous = Teb->ActiveFrame;
@@ -36,11 +32,7 @@ RtlPushFrame(
 }
 
 NTSYSAPI
-VOID
-NTAPI
-RtlPopFrame(
-    IN PTEB_ACTIVE_FRAME Frame
-    )
+VOID NTAPI RtlPopFrame(IN PTEB_ACTIVE_FRAME Frame)
 {
     const PTEB Teb = NtCurrentTeb();
     Teb->ActiveFrame = Frame->Previous;
@@ -49,9 +41,7 @@ RtlPopFrame(
 NTSYSAPI
 PTEB_ACTIVE_FRAME
 NTAPI
-RtlGetFrame(
-    VOID
-    )
+RtlGetFrame(VOID)
 {
     return NtCurrentTeb()->ActiveFrame;
 }

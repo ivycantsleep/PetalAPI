@@ -22,36 +22,32 @@ Revision History:
 #include "heap.h"
 #include "heappriv.h"
 
-
+
 //
 //  heap walking contexts.
 //
 
-#define CONTEXT_START_GLOBALS   11
-#define CONTEXT_START_HEAP      1
-#define CONTEXT_END_HEAP        2
-#define CONTEXT_START_SEGMENT   3
-#define CONTEXT_END_SEGMENT     4
-#define CONTEXT_FREE_BLOCK      5
-#define CONTEXT_BUSY_BLOCK      6
+#define CONTEXT_START_GLOBALS 11
+#define CONTEXT_START_HEAP 1
+#define CONTEXT_END_HEAP 2
+#define CONTEXT_START_SEGMENT 3
+#define CONTEXT_END_SEGMENT 4
+#define CONTEXT_FREE_BLOCK 5
+#define CONTEXT_BUSY_BLOCK 6
 #define CONTEXT_LOOKASIDE_BLOCK 7
-#define CONTEXT_VIRTUAL_BLOCK   8
-#define CONTEXT_END_BLOCKS      9
-#define CONTEXT_ERROR           10
+#define CONTEXT_VIRTUAL_BLOCK 8
+#define CONTEXT_END_BLOCKS 9
+#define CONTEXT_ERROR 10
 
-typedef BOOLEAN (*HEAP_ITERATOR_CALLBACK)(
-    IN ULONG Context,
-    IN PHEAP HeapAddress,
-    IN PHEAP_SEGMENT SegmentAddress,
-    IN PHEAP_ENTRY EntryAddress,
-    IN ULONG_PTR Data
-    );
+typedef BOOLEAN (*HEAP_ITERATOR_CALLBACK)(IN ULONG Context, IN PHEAP HeapAddress, IN PHEAP_SEGMENT SegmentAddress,
+                                          IN PHEAP_ENTRY EntryAddress, IN ULONG_PTR Data);
 
 //
 //  Garbage collector structures
 //
-    
-typedef enum _USAGE_TYPE {
+
+typedef enum _USAGE_TYPE
+{
 
     UsageUnknown,
     UsageModule,
@@ -60,25 +56,28 @@ typedef enum _USAGE_TYPE {
 
 } USAGE_TYPE;
 
-typedef struct _HEAP_BLOCK {
+typedef struct _HEAP_BLOCK
+{
 
-    LIST_ENTRY   Entry;
+    LIST_ENTRY Entry;
     ULONG_PTR BlockAddress;
     ULONG_PTR Size;
-    LONG    Count;
+    LONG Count;
 
 } HEAP_BLOCK, *PHEAP_BLOCK;
 
-typedef struct _BLOCK_DESCR {
+typedef struct _BLOCK_DESCR
+{
 
     USAGE_TYPE Type;
     ULONG_PTR Heap;
     LONG Count;
     HEAP_BLOCK Blocks[1];
 
-}BLOCK_DESCR, *PBLOCK_DESCR;
+} BLOCK_DESCR, *PBLOCK_DESCR;
 
-typedef struct _MEMORY_MAP {
+typedef struct _MEMORY_MAP
+{
 
     ULONG_PTR Granularity;
     ULONG_PTR Offset;
@@ -86,13 +85,14 @@ typedef struct _MEMORY_MAP {
 
     CHAR FlagsBitmap[256 / 8];
 
-    union{
-        
-        struct _MEMORY_MAP * Details[ 256 ];
-        PBLOCK_DESCR Usage[ 256 ];
+    union
+    {
+
+        struct _MEMORY_MAP *Details[256];
+        PBLOCK_DESCR Usage[256];
     };
 
-    struct _MEMORY_MAP * Parent;
+    struct _MEMORY_MAP *Parent;
 
 } MEMORY_MAP, *PMEMORY_MAP;
 
@@ -114,7 +114,7 @@ HANDLE RtlpLeakHeap;
 
 #define RtlpLeakAllocateBlock(Size) RtlAllocateHeap(RtlpLeakHeap, 0, Size)
 
-
+
 //
 //  Local data declarations
 //
@@ -142,18 +142,14 @@ ULONG_PTR RtlpBreakAtAddress = MAXULONG_PTR;
 
 
 //
-//  Walking heap routines. These are general purposes routines that 
+//  Walking heap routines. These are general purposes routines that
 //  receive a callback function to handle a specific operation
 //
 
-
-BOOLEAN 
-RtlpReadHeapSegment(
-    IN PHEAP Heap, 
-    IN ULONG SegmentIndex,
-    IN PHEAP_SEGMENT Segment, 
-    IN HEAP_ITERATOR_CALLBACK HeapCallback
-    )
+
+BOOLEAN
+RtlpReadHeapSegment(IN PHEAP Heap, IN ULONG SegmentIndex, IN PHEAP_SEGMENT Segment,
+                    IN HEAP_ITERATOR_CALLBACK HeapCallback)
 
 /*++
 
@@ -189,12 +185,8 @@ Return Value:
     //  Ask the callback if we're required to walk this segment. Return otherwise.
     //
 
-    if (!(*HeapCallback)( CONTEXT_START_SEGMENT,
-                          Heap,
-                          Segment,
-                          0,
-                          0
-                     )) {
+    if (!(*HeapCallback)(CONTEXT_START_SEGMENT, Heap, Segment, 0, 0))
+    {
 
         return FALSE;
     }
@@ -206,21 +198,23 @@ Return Value:
 
     UnCommittedRange = Segment->UnCommittedRanges;
 
-    if (UnCommittedRange) {
+    if (UnCommittedRange)
+    {
 
         UnCommittedRangeAddress = (ULONG_PTR)UnCommittedRange->Address;
         UnCommittedRangeSize = UnCommittedRange->Size;
     }
-    
+
     //
     //  Walk the segment, block by block
     //
 
     Entry = (PHEAP_ENTRY)Segment->BaseAddress;
-    
+
     PrevEntry = 0;
 
-    while (Entry < Segment->LastValidEntry) {
+    while (Entry < Segment->LastValidEntry)
+    {
 
         ULONG EntryFlags = Entry->Flags;
 
@@ -231,25 +225,21 @@ Return Value:
 
         NextEntry = Entry + Entry->Size;
 
-        (*HeapCallback)( (Entry->Flags & HEAP_ENTRY_BUSY ? 
-                            CONTEXT_BUSY_BLOCK : 
-                            CONTEXT_FREE_BLOCK),
-                         Heap,
-                         Segment,
-                         Entry,
-                         Entry->Size
-                         ); 
+        (*HeapCallback)((Entry->Flags & HEAP_ENTRY_BUSY ? CONTEXT_BUSY_BLOCK : CONTEXT_FREE_BLOCK), Heap, Segment,
+                        Entry, Entry->Size);
 
         PrevEntry = Entry;
         Entry = NextEntry;
-        
+
         //
         //  Check whether this is the last entry
         //
 
-        if (EntryFlags & HEAP_ENTRY_LAST_ENTRY) {
+        if (EntryFlags & HEAP_ENTRY_LAST_ENTRY)
+        {
 
-            if ((ULONG_PTR)Entry == UnCommittedRangeAddress) {
+            if ((ULONG_PTR)Entry == UnCommittedRangeAddress)
+            {
 
                 //
                 //  Here we need to skip the uncommited range and jump
@@ -260,14 +250,16 @@ Return Value:
                 Entry = (PHEAP_ENTRY)(UnCommittedRangeAddress + UnCommittedRangeSize);
 
                 UnCommittedRange = UnCommittedRange->Next;
-                
-                if (UnCommittedRange) {
+
+                if (UnCommittedRange)
+                {
 
                     UnCommittedRangeAddress = UnCommittedRange->Address;
                     UnCommittedRangeSize = UnCommittedRange->Size;
                 }
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  We finished the search because we exausted the uncommitted
@@ -287,12 +279,8 @@ Return Value:
 }
 
 
-
 BOOLEAN
-RtlpReadHeapData(
-    IN PHEAP Heap, 
-    IN HEAP_ITERATOR_CALLBACK HeapCallback
-    )
+RtlpReadHeapData(IN PHEAP Heap, IN HEAP_ITERATOR_CALLBACK HeapCallback)
 
 /*++
 
@@ -324,7 +312,8 @@ Return Value:
     //  Flush the lookaside first
     //
 
-    if (Lookaside != NULL) {
+    if (Lookaside != NULL)
+    {
 
         ULONG i;
         PVOID Block;
@@ -332,11 +321,13 @@ Return Value:
         Heap->FrontEndHeap = NULL;
         Heap->FrontEndHeapType = 0;
 
-        for (i = 0; i < HEAP_MAXIMUM_FREELISTS; i += 1) {
+        for (i = 0; i < HEAP_MAXIMUM_FREELISTS; i += 1)
+        {
 
-            while ((Block = RtlpAllocateFromHeapLookaside(&(Lookaside[i]))) != NULL) {
+            while ((Block = RtlpAllocateFromHeapLookaside(&(Lookaside[i]))) != NULL)
+            {
 
-                RtlFreeHeap( Heap, 0, Block );
+                RtlFreeHeap(Heap, 0, Block);
             }
         }
     }
@@ -345,35 +336,29 @@ Return Value:
     //  Check whether we're required to walk this heap
     //
 
-    if (!(*HeapCallback)( CONTEXT_START_HEAP,
-                          Heap,
-                          0,
-                          0,
-                          0
-                     )) {
+    if (!(*HeapCallback)(CONTEXT_START_HEAP, Heap, 0, 0, 0))
+    {
 
         return FALSE;
     }
-    
+
     //
     //  Start walking through the segments
     //
 
-    for (SegmentCount = 0; SegmentCount < HEAP_MAXIMUM_SEGMENTS; SegmentCount++) {
-        
+    for (SegmentCount = 0; SegmentCount < HEAP_MAXIMUM_SEGMENTS; SegmentCount++)
+    {
+
         PHEAP_SEGMENT Segment = Heap->Segments[SegmentCount];
 
-        if (Segment) {
-            
+        if (Segment)
+        {
+
             //
             //  Call the appropriate routine to walk a valid segment
             //
 
-            RtlpReadHeapSegment( Heap,
-                             SegmentCount,
-                             Segment, 
-                             HeapCallback
-                            );
+            RtlpReadHeapSegment(Heap, SegmentCount, Segment, HeapCallback);
         }
     }
 
@@ -384,29 +369,21 @@ Return Value:
     Head = &Heap->VirtualAllocdBlocks;
 
     Next = Head->Flink;
-    
-    while (Next != Head) {
+
+    while (Next != Head)
+    {
 
         PHEAP_VIRTUAL_ALLOC_ENTRY VirtualAllocBlock;
 
         VirtualAllocBlock = CONTAINING_RECORD(Next, HEAP_VIRTUAL_ALLOC_ENTRY, Entry);
 
-        (*HeapCallback)( CONTEXT_VIRTUAL_BLOCK,
-                         Heap,
-                         0,
-                         NULL,
-                         (ULONG_PTR)VirtualAllocBlock
-                         );
+        (*HeapCallback)(CONTEXT_VIRTUAL_BLOCK, Heap, 0, NULL, (ULONG_PTR)VirtualAllocBlock);
 
         Next = Next->Flink;
     }
 
-    if (!(*HeapCallback)( CONTEXT_END_BLOCKS,
-                          Heap,
-                          0,
-                          0,
-                          0
-                     )) {
+    if (!(*HeapCallback)(CONTEXT_END_BLOCKS, Heap, 0, 0, 0))
+    {
 
         return FALSE;
     }
@@ -414,11 +391,8 @@ Return Value:
     return TRUE;
 }
 
-
-VOID 
-RtlpReadProcessHeaps(
-    IN HEAP_ITERATOR_CALLBACK HeapCallback
-    )
+
+VOID RtlpReadProcessHeaps(IN HEAP_ITERATOR_CALLBACK HeapCallback)
 
 /*++
 
@@ -440,34 +414,25 @@ Return Value:
     ULONG i;
     PPEB ProcessPeb = NtCurrentPeb();
 
-    if (!(*HeapCallback)( CONTEXT_START_GLOBALS,
-                          0,
-                          0,
-                          0,
-                          (ULONG_PTR)ProcessPeb
-                     )) {
+    if (!(*HeapCallback)(CONTEXT_START_GLOBALS, 0, 0, 0, (ULONG_PTR)ProcessPeb))
+    {
 
         return;
     }
-    
+
     //
     //  Walk the heaps from the process PEB
     //
 
-    for (i = 0; i < ProcessPeb->NumberOfHeaps; i++) {
+    for (i = 0; i < ProcessPeb->NumberOfHeaps; i++)
+    {
 
-        RtlpReadHeapData ( (PHEAP)(ProcessPeb->ProcessHeaps[ i ]), 
-                       HeapCallback
-                     );
+        RtlpReadHeapData((PHEAP)(ProcessPeb->ProcessHeaps[i]), HeapCallback);
     }
 }
 
-
-VOID
-RtlpInitializeMap (
-    IN PMEMORY_MAP MemMap, 
-    IN PMEMORY_MAP Parent
-    )
+
+VOID RtlpInitializeMap(IN PMEMORY_MAP MemMap, IN PMEMORY_MAP Parent)
 
 /*++
 
@@ -503,20 +468,15 @@ Return Value:
     //  Determine the granularity from the parent's granularity
     //
 
-    if (Parent) {
+    if (Parent)
+    {
 
         MemMap->Granularity = Parent->Granularity / 256;
     }
 }
 
-
-VOID
-RtlpSetBlockInfo (
-    IN PMEMORY_MAP MemMap, 
-    IN ULONG_PTR Base, 
-    IN ULONG_PTR Size, 
-    IN PBLOCK_DESCR BlockDescr
-    )
+
+VOID RtlpSetBlockInfo(IN PMEMORY_MAP MemMap, IN ULONG_PTR Base, IN ULONG_PTR Size, IN PBLOCK_DESCR BlockDescr)
 
 /*++
 
@@ -544,14 +504,13 @@ Return Value:
 {
     ULONG_PTR Start, End;
     ULONG_PTR i;
-    
+
     //
     //  Check wheter we got a valid range
     //
 
-    if (((Base + Size - 1) < MemMap->Offset) ||
-        (Base > MemMap->MaxAddress)
-        ) {
+    if (((Base + Size - 1) < MemMap->Offset) || (Base > MemMap->MaxAddress))
+    {
 
         return;
     }
@@ -560,44 +519,53 @@ Return Value:
     //  Determine the starting index to be set
     //
 
-    if (Base > MemMap->Offset) {
+    if (Base > MemMap->Offset)
+    {
         Start = (Base - MemMap->Offset) / MemMap->Granularity;
-    } else {
+    }
+    else
+    {
         Start = 0;
     }
 
     //
     //  Determine the ending index to be set
     //
-    
+
     End = (Base - MemMap->Offset + Size - 1) / MemMap->Granularity;
 
-    if (End > 255) {
+    if (End > 255)
+    {
 
         End = 255;
     }
 
-    for (i = Start; i <= End; i++) {
+    for (i = Start; i <= End; i++)
+    {
 
         //
         //  Check whether this is the lowes memory map level
         //
-        
-        if (MemMap->Granularity == PAGE_SIZE) {
+
+        if (MemMap->Granularity == PAGE_SIZE)
+        {
 
             //
             //  This is the last level in the memory map, so we can apply
             //  the block descriptor here
             //
 
-            if (BlockDescr) {
+            if (BlockDescr)
+            {
 
                 //
                 //  Check if we already have a block descriptor here
                 //
 
-                if (MemMap->Usage[i] != NULL) {
-                    if (MemMap->Usage[i] != BlockDescr) {
+                if (MemMap->Usage[i] != NULL)
+                {
+                    if (MemMap->Usage[i] != BlockDescr)
+                    {
 
                         DbgPrint("Error\n");
                     }
@@ -608,8 +576,9 @@ Return Value:
                 //
 
                 MemMap->Usage[i] = BlockDescr;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  We didn't recedive a block descriptor. We set
@@ -618,24 +587,27 @@ Return Value:
 
                 MemMap->FlagsBitmap[i / 8] |= 1 << (i % 8);
             }
-
-        } else {
+        }
+        else
+        {
 
             //
-            //  This isn't the lowest map level. We recursively call 
+            //  This isn't the lowest map level. We recursively call
             //  this function for the next detail range
             //
 
-            if (!MemMap->Details[i]) {
+            if (!MemMap->Details[i])
+            {
 
                 //
                 //  Allocate a new map
                 //
 
-                MemMap->Details[i] = RtlpLeakAllocateBlock( sizeof(*MemMap) );
+                MemMap->Details[i] = RtlpLeakAllocateBlock(sizeof(*MemMap));
 
-                if (!MemMap->Details[i]) {
-                    
+                if (!MemMap->Details[i])
+                {
+
                     DbgPrint("Error allocate\n");
                 }
 
@@ -645,20 +617,17 @@ Return Value:
 
                 RtlpInitializeMap(MemMap->Details[i], MemMap);
                 MemMap->Details[i]->Offset = MemMap->Offset + MemMap->Granularity * i;
-                MemMap->Details[i]->MaxAddress = MemMap->Offset + MemMap->Granularity * (i+1) - 1;
+                MemMap->Details[i]->MaxAddress = MemMap->Offset + MemMap->Granularity * (i + 1) - 1;
             }
-            
+
             RtlpSetBlockInfo(MemMap->Details[i], Base, Size, BlockDescr);
         }
     }
 }
 
-
+
 PBLOCK_DESCR
-RtlpGetBlockInfo (
-    IN PMEMORY_MAP MemMap, 
-    IN ULONG_PTR Base
-    )
+RtlpGetBlockInfo(IN PMEMORY_MAP MemMap, IN ULONG_PTR Base)
 
 /*++
 
@@ -682,14 +651,13 @@ Return Value:
 {
     ULONG_PTR Start;
     PBLOCK_DESCR BlockDescr = NULL;
-    
+
     //
     //  Validate the range
     //
 
-    if ((Base < MemMap->Offset) ||
-        (Base > MemMap->MaxAddress)
-        ) {
+    if ((Base < MemMap->Offset) || (Base > MemMap->MaxAddress))
+    {
 
         return NULL;
     }
@@ -698,29 +666,35 @@ Return Value:
     //  Determine the appropriate index for lookup
     //
 
-    if (Base > MemMap->Offset) {
+    if (Base > MemMap->Offset)
+    {
         Start = (Base - MemMap->Offset) / MemMap->Granularity;
-    } else {
+    }
+    else
+    {
         Start = 0;
     }
-    
+
     //
     //  If this is the lowest map level we'll return that entry
     //
 
-    if (MemMap->Granularity == PAGE_SIZE) {
+    if (MemMap->Granularity == PAGE_SIZE)
+    {
 
-        return MemMap->Usage[ Start ];
-
-    } else {
+        return MemMap->Usage[Start];
+    }
+    else
+    {
 
         //
         //  We need a lower detail level call
         //
 
-        if (MemMap->Details[ Start ]) {
+        if (MemMap->Details[Start])
+        {
 
-            return RtlpGetBlockInfo( MemMap->Details[Start], Base );
+            return RtlpGetBlockInfo(MemMap->Details[Start], Base);
         }
     }
 
@@ -731,12 +705,9 @@ Return Value:
     return NULL;
 }
 
-
+
 BOOLEAN
-RtlpGetMemoryFlag (
-    IN PMEMORY_MAP MemMap, 
-    IN ULONG_PTR Base
-    )
+RtlpGetMemoryFlag(IN PMEMORY_MAP MemMap, IN ULONG_PTR Base)
 
 /*++
 
@@ -759,14 +730,13 @@ Return Value:
 {
     ULONG_PTR Start;
     PBLOCK_DESCR BlockDescr = NULL;
-    
+
     //
     //  Validate the base address
     //
 
-    if ((Base < MemMap->Offset) ||
-        (Base > MemMap->MaxAddress)
-        ) {
+    if ((Base < MemMap->Offset) || (Base > MemMap->MaxAddress))
+    {
 
         return FALSE;
     }
@@ -775,16 +745,19 @@ Return Value:
     //  Determine the appropriate index for the given base address
     //
 
-    if (Base > MemMap->Offset) {
+    if (Base > MemMap->Offset)
+    {
 
         Start = (Base - MemMap->Offset) / MemMap->Granularity;
-
-    } else {
+    }
+    else
+    {
 
         Start = 0;
     }
 
-    if (MemMap->Granularity == PAGE_SIZE) {
+    if (MemMap->Granularity == PAGE_SIZE)
+    {
 
         //
         //  Return the bit value if are in the case of
@@ -792,14 +765,16 @@ Return Value:
         //
 
         return (MemMap->FlagsBitmap[Start / 8] & (1 << (Start % 8))) != 0;
-
-    } else {
+    }
+    else
+    {
 
         //
         //  Lookup in the detailed map
         //
 
-        if (MemMap->Details[Start]) {
+        if (MemMap->Details[Start])
+        {
 
             return RtlpGetMemoryFlag(MemMap->Details[Start], Base);
         }
@@ -808,9 +783,8 @@ Return Value:
     return FALSE;
 }
 
-
-VOID 
-RtlpInitializeLeakDetection ()
+
+VOID RtlpInitializeLeakDetection()
 
 /*++
 
@@ -840,18 +814,20 @@ Return Value:
     //  Initialize the lists
     //
 
-    InitializeListHead( &RtlpBusyList );
-    InitializeListHead( &RtlpLeakList );
-    
+    InitializeListHead(&RtlpBusyList);
+    InitializeListHead(&RtlpLeakList);
+
     //
     //  Determine the granularity for the highest memory map level
     //
 
-    while (TRUE) {
+    while (TRUE)
+    {
 
         AddressRange = AddressRange * 256;
 
-        if (AddressRange < PreviousAddressRange) {
+        if (AddressRange < PreviousAddressRange)
+        {
 
             RtlpProcessMemoryMap.MaxAddress = MAXULONG_PTR;
 
@@ -859,19 +835,16 @@ Return Value:
 
             break;
         }
-        
+
         PreviousAddressRange = AddressRange;
     }
 
     RtlpTempBlocks = RtlpLeakAllocateBlock(PAGE_SIZE);
 }
 
-
+
 BOOLEAN
-RtlpPushPageDescriptor(
-    IN ULONG_PTR Page, 
-    IN ULONG_PTR NumPages
-    )
+RtlpPushPageDescriptor(IN ULONG_PTR Page, IN ULONG_PTR NumPages)
 
 /*++
 
@@ -900,9 +873,10 @@ Return Value:
     //  Check whether we already have a block descriptor there
     //
 
-    PreviousDescr = RtlpGetBlockInfo( &RtlpProcessMemoryMap, Page * PAGE_SIZE );
+    PreviousDescr = RtlpGetBlockInfo(&RtlpProcessMemoryMap, Page * PAGE_SIZE);
 
-    if (PreviousDescr) {
+    if (PreviousDescr)
+    {
 
         DbgPrint("Conflicting descriptors %08lx\n", PreviousDescr);
 
@@ -916,7 +890,8 @@ Return Value:
 
     PBlockDescr = (PBLOCK_DESCR)RtlpLeakAllocateBlock(sizeof(BLOCK_DESCR) + (RtlpLDNumBlocks - 1) * sizeof(HEAP_BLOCK));
 
-    if (!PBlockDescr) {
+    if (!PBlockDescr)
+    {
 
         DbgPrint("Unable to allocate page descriptor\n");
 
@@ -938,20 +913,23 @@ Return Value:
     //  in the busy list
     //
 
-    if (RtlpCrtHeapAddress != RtlpLeakHeapAddress) {
+    if (RtlpCrtHeapAddress != RtlpLeakHeapAddress)
+    {
 
         LONG i;
 
-        for (i = 0; i < RtlpLDNumBlocks; i++) {
+        for (i = 0; i < RtlpLDNumBlocks; i++)
+        {
 
-            InitializeListHead( &PBlockDescr->Blocks[i].Entry );
+            InitializeListHead(&PBlockDescr->Blocks[i].Entry);
 
             //
-            //  We might have a blockin more different pages. but We'll 
+            //  We might have a blockin more different pages. but We'll
             //  insert only ones in the list
             //
 
-            if (PBlockDescr->Blocks[i].BlockAddress != RtlpPreviousStartAddress) {
+            if (PBlockDescr->Blocks[i].BlockAddress != RtlpPreviousStartAddress)
+            {
 
                 InsertTailList(&RtlpLeakList, &PBlockDescr->Blocks[i].Entry);
 
@@ -975,15 +953,10 @@ Return Value:
     return TRUE;
 }
 
-
-BOOLEAN 
-RtlpRegisterHeapBlocks (
-    IN ULONG Context,
-    IN PHEAP Heap OPTIONAL,
-    IN PHEAP_SEGMENT Segment OPTIONAL,
-    IN PHEAP_ENTRY Entry OPTIONAL,
-    IN ULONG_PTR Data OPTIONAL
-    )
+
+BOOLEAN
+RtlpRegisterHeapBlocks(IN ULONG Context, IN PHEAP Heap OPTIONAL, IN PHEAP_SEGMENT Segment OPTIONAL,
+                       IN PHEAP_ENTRY Entry OPTIONAL, IN ULONG_PTR Data OPTIONAL)
 
 /*++
 
@@ -1016,58 +989,61 @@ Return Value:
     //  Check whether we need to break at this address
     //
 
-    if ((ULONG_PTR)Entry == RtlpBreakAtAddress) {
+    if ((ULONG_PTR)Entry == RtlpBreakAtAddress)
+    {
 
         DbgBreakPoint();
     }
-    
-    if (Context == CONTEXT_START_HEAP) {
+
+    if (Context == CONTEXT_START_HEAP)
+    {
 
         //
         //  The only thing we need to do in this case
         //  is to set the global current heap address
         //
-        
+
         RtlpCrtHeapAddress = (ULONG_PTR)Heap;
 
         return TRUE;
     }
-    
+
     //
-    //  For a new segment, we mark the flag for the whole 
+    //  For a new segment, we mark the flag for the whole
     //  reserved space for the segment the flag to TRUE
     //
 
-    if (Context == CONTEXT_START_SEGMENT) {
+    if (Context == CONTEXT_START_SEGMENT)
+    {
 
-        RtlpSetBlockInfo(&RtlpProcessMemoryMap, (ULONG_PTR)Segment->BaseAddress, Segment->NumberOfPages * PAGE_SIZE, NULL);
-        
+        RtlpSetBlockInfo(&RtlpProcessMemoryMap, (ULONG_PTR)Segment->BaseAddress, Segment->NumberOfPages * PAGE_SIZE,
+                         NULL);
+
         return TRUE;
     }
 
-    if (Context == CONTEXT_ERROR) {
-        
-        DbgPrint("HEAP %p (Seg %p) At %p Error: %s\n", 
-               Heap,
-               Segment,
-               Entry,
-               Data
-               );
+    if (Context == CONTEXT_ERROR)
+    {
+
+        DbgPrint("HEAP %p (Seg %p) At %p Error: %s\n", Heap, Segment, Entry, Data);
 
         return TRUE;
-    } 
+    }
 
-    if (Context == CONTEXT_END_BLOCKS) {
-        
-        if (RtlpLDPreviousPage) {
+    if (Context == CONTEXT_END_BLOCKS)
+    {
+
+        if (RtlpLDPreviousPage)
+        {
 
             RtlpPushPageDescriptor(RtlpLDPreviousPage, 1);
         }
 
         RtlpLDPreviousPage = 0;
         RtlpLDNumBlocks = 0;
-
-    } else if (Context == CONTEXT_BUSY_BLOCK) {
+    }
+    else if (Context == CONTEXT_BUSY_BLOCK)
+    {
 
         ULONG_PTR EndPage;
 
@@ -1075,14 +1051,14 @@ Return Value:
         //  EnrtySize is assuming is the same as heap granularity
         //
 
-        EndPage = (((ULONG_PTR)(Entry + Entry->Size)) - 1)/ PAGE_SIZE;
+        EndPage = (((ULONG_PTR)(Entry + Entry->Size)) - 1) / PAGE_SIZE;
 
         //
         //  Check whether we received a valid block
         //
 
-        if ((Context == CONTEXT_BUSY_BLOCK) &&
-            !RtlpGetMemoryFlag(&RtlpProcessMemoryMap, (ULONG_PTR)Entry)) {
+        if ((Context == CONTEXT_BUSY_BLOCK) && !RtlpGetMemoryFlag(&RtlpProcessMemoryMap, (ULONG_PTR)Entry))
+        {
 
             DbgPrint("%p address isn't from the heap\n", Entry);
         }
@@ -1093,18 +1069,20 @@ Return Value:
 
         RtlpLDCrtPage = ((ULONG_PTR)Entry) / PAGE_SIZE;
 
-        if (RtlpLDCrtPage != RtlpLDPreviousPage) {
+        if (RtlpLDCrtPage != RtlpLDPreviousPage)
+        {
 
             //
             //  We moved to an other page, so we need to save the previous
             //  information before going further
             //
 
-            if (RtlpLDPreviousPage) {
+            if (RtlpLDPreviousPage)
+            {
 
                 RtlpPushPageDescriptor(RtlpLDPreviousPage, 1);
             }
-            
+
             //
             //  Reset the temporary data. We're starting a new page now
             //
@@ -1113,42 +1091,45 @@ Return Value:
             RtlpLDNumBlocks = 0;
         }
 
-         //
-         //  Add this block to the current list
-         //
+        //
+        //  Add this block to the current list
+        //
 
-         RtlpTempBlocks[RtlpLDNumBlocks].BlockAddress = (ULONG_PTR)Entry;
-         RtlpTempBlocks[RtlpLDNumBlocks].Count = 0;
-         RtlpTempBlocks[RtlpLDNumBlocks].Size = Entry->Size * sizeof(HEAP_ENTRY);
+        RtlpTempBlocks[RtlpLDNumBlocks].BlockAddress = (ULONG_PTR)Entry;
+        RtlpTempBlocks[RtlpLDNumBlocks].Count = 0;
+        RtlpTempBlocks[RtlpLDNumBlocks].Size = Entry->Size * sizeof(HEAP_ENTRY);
 
-         RtlpLDNumBlocks++;
-        
-         if (EndPage != RtlpLDCrtPage) {
+        RtlpLDNumBlocks++;
 
-             //
-             //  The block ends on a different page. We can then save the
-             //  starting page and all others but the last one
-             //
+        if (EndPage != RtlpLDCrtPage)
+        {
 
-             RtlpPushPageDescriptor(RtlpLDCrtPage, 1);
+            //
+            //  The block ends on a different page. We can then save the
+            //  starting page and all others but the last one
+            //
 
-             RtlpLDNumBlocks = 0;
+            RtlpPushPageDescriptor(RtlpLDCrtPage, 1);
 
-             RtlpTempBlocks[RtlpLDNumBlocks].BlockAddress = (ULONG_PTR)Entry;
-             RtlpTempBlocks[RtlpLDNumBlocks].Count = 0;
-             RtlpTempBlocks[RtlpLDNumBlocks].Size = Entry->Size * sizeof(HEAP_ENTRY);
+            RtlpLDNumBlocks = 0;
 
-             RtlpLDNumBlocks += 1;
-             
-             if (EndPage - RtlpLDCrtPage > 1) {
-                 
-                 RtlpPushPageDescriptor(RtlpLDCrtPage + 1, EndPage - RtlpLDCrtPage - 1);
-             }
-             
-             RtlpLDPreviousPage = EndPage;
+            RtlpTempBlocks[RtlpLDNumBlocks].BlockAddress = (ULONG_PTR)Entry;
+            RtlpTempBlocks[RtlpLDNumBlocks].Count = 0;
+            RtlpTempBlocks[RtlpLDNumBlocks].Size = Entry->Size * sizeof(HEAP_ENTRY);
+
+            RtlpLDNumBlocks += 1;
+
+            if (EndPage - RtlpLDCrtPage > 1)
+            {
+
+                RtlpPushPageDescriptor(RtlpLDCrtPage + 1, EndPage - RtlpLDCrtPage - 1);
+            }
+
+            RtlpLDPreviousPage = EndPage;
         }
-
-    } else if (Context == CONTEXT_VIRTUAL_BLOCK) {
+    }
+    else if (Context == CONTEXT_VIRTUAL_BLOCK)
+    {
 
         PHEAP_VIRTUAL_ALLOC_ENTRY VirtualAllocBlock = (PHEAP_VIRTUAL_ALLOC_ENTRY)Data;
         ULONG_PTR EndPage;
@@ -1157,21 +1138,23 @@ Return Value:
         //  EnrtySize is assuming is the same as heap granularity
         //
 
-        EndPage = ((ULONG_PTR)Data + VirtualAllocBlock->CommitSize - 1)/ PAGE_SIZE;
+        EndPage = ((ULONG_PTR)Data + VirtualAllocBlock->CommitSize - 1) / PAGE_SIZE;
 
         RtlpLDCrtPage = (Data) / PAGE_SIZE;
 
-        if (RtlpLDCrtPage != RtlpLDPreviousPage) {
+        if (RtlpLDCrtPage != RtlpLDPreviousPage)
+        {
 
             //
             //  Save the previous data if we're moving to a new page
             //
 
-            if (RtlpLDPreviousPage) {
+            if (RtlpLDPreviousPage)
+            {
 
                 RtlpPushPageDescriptor(RtlpLDPreviousPage, 1);
             }
-            
+
             RtlpLDPreviousPage = RtlpLDCrtPage;
             RtlpLDNumBlocks = 0;
         }
@@ -1192,24 +1175,27 @@ Return Value:
         RtlpPushPageDescriptor(RtlpLDCrtPage, EndPage - RtlpLDCrtPage + 1);
 
         RtlpLDPreviousPage = 0;
-
-    } else if ( Context == CONTEXT_LOOKASIDE_BLOCK ) {
+    }
+    else if (Context == CONTEXT_LOOKASIDE_BLOCK)
+    {
 
         PBLOCK_DESCR PBlockDescr;
         LONG i;
-                
+
         //
         //  Check whether we received a valid block
         //
 
-        if (!RtlpGetMemoryFlag(&RtlpProcessMemoryMap, (ULONG_PTR)Entry)) {
+        if (!RtlpGetMemoryFlag(&RtlpProcessMemoryMap, (ULONG_PTR)Entry))
+        {
 
             DbgPrint("%p address isn't from the heap\n", Entry);
         }
-        
-        PBlockDescr = RtlpGetBlockInfo( &RtlpProcessMemoryMap, (ULONG_PTR)Entry );
 
-        if (!PBlockDescr) {
+        PBlockDescr = RtlpGetBlockInfo(&RtlpProcessMemoryMap, (ULONG_PTR)Entry);
+
+        if (!PBlockDescr)
+        {
 
             DbgPrint("Error finding block from lookaside %p\n", Entry);
 
@@ -1220,17 +1206,19 @@ Return Value:
         //  Find the block in the block descriptor
         //
 
-        for (i = 0; i < PBlockDescr->Count; i++) {
+        for (i = 0; i < PBlockDescr->Count; i++)
+        {
 
             if ((PBlockDescr->Blocks[i].BlockAddress <= (ULONG_PTR)Entry) &&
-                (PBlockDescr->Blocks[i].BlockAddress + PBlockDescr->Blocks[i].Size > (ULONG_PTR)Entry)) {
+                (PBlockDescr->Blocks[i].BlockAddress + PBlockDescr->Blocks[i].Size > (ULONG_PTR)Entry))
+            {
 
                 PBlockDescr->Blocks[i].Count = -10000;
 
                 //
                 //  Remove the block from the busy list
                 //
-                
+
                 RemoveEntryList(&PBlockDescr->Blocks[i].Entry);
 
                 return TRUE;
@@ -1239,21 +1227,19 @@ Return Value:
 
         //
         //  A block from lookaside should be busy for the heap structures.
-        //  If we didn't find the block in the block list, something went 
+        //  If we didn't find the block in the block list, something went
         //  wrong. We make some noise here.
         //
 
         DbgPrint("Error, block %p from lookaside not found in allocated block list\n", Entry);
     }
-    
+
     return TRUE;
 }
 
-
+
 PHEAP_BLOCK
-RtlpGetHeapBlock (
-    IN ULONG_PTR Address
-    )
+RtlpGetHeapBlock(IN ULONG_PTR Address)
 
 /*++
 
@@ -1283,32 +1269,34 @@ Return Value:
     //  Find the block descriptor for the given address
     //
 
-    PBlockDescr = RtlpGetBlockInfo( &RtlpProcessMemoryMap, Address );
+    PBlockDescr = RtlpGetBlockInfo(&RtlpProcessMemoryMap, Address);
 
-    if ( (PBlockDescr != NULL) 
-            &&
-         (PBlockDescr->Heap != RtlpLeakHeapAddress)) {
+    if ((PBlockDescr != NULL) && (PBlockDescr->Heap != RtlpLeakHeapAddress))
+    {
 
         //
         //  Search through the blocks
         //
 
-        for (i = 0; i < PBlockDescr->Count; i++) {
+        for (i = 0; i < PBlockDescr->Count; i++)
+        {
 
             if ((PBlockDescr->Blocks[i].BlockAddress <= Address) &&
-                (PBlockDescr->Blocks[i].BlockAddress + PBlockDescr->Blocks[i].Size > Address)) {
+                (PBlockDescr->Blocks[i].BlockAddress + PBlockDescr->Blocks[i].Size > Address))
+            {
 
                 //
                 //  Search again if the caller didn't pass a start address
                 //
 
-                if (PBlockDescr->Blocks[i].BlockAddress != Address) {
+                if (PBlockDescr->Blocks[i].BlockAddress != Address)
+                {
 
                     return RtlpGetHeapBlock(PBlockDescr->Blocks[i].BlockAddress);
-                } 
+                }
 
                 //
-                //  we found a block here. 
+                //  we found a block here.
                 //
 
                 return &(PBlockDescr->Blocks[i]);
@@ -1319,9 +1307,8 @@ Return Value:
     return NULL;
 }
 
-
-VOID
-RtlpDumpEntryHeader ( )
+
+VOID RtlpDumpEntryHeader()
 
 /*++
 
@@ -1340,11 +1327,8 @@ Return Value:
     DbgPrint("------------------------------------------------------------\n");
 }
 
-
-VOID 
-RtlpDumpEntryFlagDescription(
-    IN ULONG Flags
-    )
+
+VOID RtlpDumpEntryFlagDescription(IN ULONG Flags)
 
 /*++
 
@@ -1361,20 +1345,24 @@ Return Value:
 --*/
 
 {
-    if (Flags & HEAP_ENTRY_BUSY) DbgPrint("busy "); else DbgPrint("free ");
-    if (Flags & HEAP_ENTRY_EXTRA_PRESENT) DbgPrint("extra ");
-    if (Flags & HEAP_ENTRY_FILL_PATTERN) DbgPrint("fill ");
-    if (Flags & HEAP_ENTRY_VIRTUAL_ALLOC) DbgPrint("virtual ");
-    if (Flags & HEAP_ENTRY_LAST_ENTRY) DbgPrint("last ");
-    if (Flags & HEAP_ENTRY_SETTABLE_FLAGS) DbgPrint("user_flag ");
+    if (Flags & HEAP_ENTRY_BUSY)
+        DbgPrint("busy ");
+    else
+        DbgPrint("free ");
+    if (Flags & HEAP_ENTRY_EXTRA_PRESENT)
+        DbgPrint("extra ");
+    if (Flags & HEAP_ENTRY_FILL_PATTERN)
+        DbgPrint("fill ");
+    if (Flags & HEAP_ENTRY_VIRTUAL_ALLOC)
+        DbgPrint("virtual ");
+    if (Flags & HEAP_ENTRY_LAST_ENTRY)
+        DbgPrint("last ");
+    if (Flags & HEAP_ENTRY_SETTABLE_FLAGS)
+        DbgPrint("user_flag ");
 }
 
-
-VOID
-RtlpDumpEntryInfo(
-    IN ULONG_PTR HeapAddress,
-    IN PHEAP_ENTRY Entry
-    )
+
+VOID RtlpDumpEntryInfo(IN ULONG_PTR HeapAddress, IN PHEAP_ENTRY Entry)
 
 /*++
 
@@ -1395,22 +1383,17 @@ Return Value:
 --*/
 
 {
-    DbgPrint("%p  %p  %p  %8lx  %8lx  ",
-            Entry,
-            (Entry + 1),
-            HeapAddress,
-            Entry->Size << HEAP_GRANULARITY_SHIFT,
-            Entry->PreviousSize << HEAP_GRANULARITY_SHIFT
-            );
+    DbgPrint("%p  %p  %p  %8lx  %8lx  ", Entry, (Entry + 1), HeapAddress, Entry->Size << HEAP_GRANULARITY_SHIFT,
+             Entry->PreviousSize << HEAP_GRANULARITY_SHIFT);
 
     RtlpDumpEntryFlagDescription(Entry->Flags);
 
     DbgPrint("\n");
 }
 
-
+
 BOOLEAN
-RtlpScanHeapAllocBlocks ( )
+RtlpScanHeapAllocBlocks()
 
 /*++
 
@@ -1439,12 +1422,13 @@ Return Value:
 
     Next = RtlpBusyList.Flink;
 
-    while (Next != &RtlpBusyList) {
-        
+    while (Next != &RtlpBusyList)
+    {
+
         PHEAP_BLOCK Block = CONTAINING_RECORD(Next, HEAP_BLOCK, Entry);
-        
+
         PULONG_PTR CrtAddress = (PULONG_PTR)(Block->BlockAddress + sizeof(HEAP_ENTRY));
-        
+
         //
         //  Move to the next block in the list
         //
@@ -1456,25 +1440,29 @@ Return Value:
         //  the references for every block found here
         //
 
-        while ((ULONG_PTR)CrtAddress < Block->BlockAddress + Block->Size) {
+        while ((ULONG_PTR)CrtAddress < Block->BlockAddress + Block->Size)
+        {
 
-            PHEAP_BLOCK pBlock = RtlpGetHeapBlock( *CrtAddress );
+            PHEAP_BLOCK pBlock = RtlpGetHeapBlock(*CrtAddress);
 
-            if (pBlock) {
+            if (pBlock)
+            {
 
                 //
                 //  We found a block. we increment then the reference count
                 //
-                
-                if (pBlock->Count == 0) {
-                    
+
+                if (pBlock->Count == 0)
+                {
+
                     RemoveEntryList(&pBlock->Entry);
                     InsertTailList(&RtlpBusyList, &pBlock->Entry);
                 }
-                
+
                 pBlock->Count += 1;
 
-                if (pBlock->BlockAddress == RtlpBreakAtAddress) {
+                if (pBlock->BlockAddress == RtlpBreakAtAddress)
+                {
 
                     DbgBreakPoint();
                 }
@@ -1493,22 +1481,25 @@ Return Value:
     //  Also any pointer found here will be dereferenced and added to
     //  the end of list.
     //
-    
+
     Next = RtlpLeakList.Flink;
 
-    while (Next != &RtlpLeakList) {
-        
+    while (Next != &RtlpLeakList)
+    {
+
         PHEAP_BLOCK Block = CONTAINING_RECORD(Next, HEAP_BLOCK, Entry);
-        PBLOCK_DESCR PBlockDescr = RtlpGetBlockInfo( &RtlpProcessMemoryMap, Block->BlockAddress );
+        PBLOCK_DESCR PBlockDescr = RtlpGetBlockInfo(&RtlpProcessMemoryMap, Block->BlockAddress);
         PULONG_PTR CrtAddress = (PULONG_PTR)(Block->BlockAddress + sizeof(HEAP_ENTRY));
 
-        if (PBlockDescr) {
+        if (PBlockDescr)
+        {
 
             //
             //  First time we need to display the header
             //
 
-            if (RtlpLeaksCount == 0) {
+            if (RtlpLeaksCount == 0)
+            {
 
                 RtlpDumpEntryHeader();
             }
@@ -1517,11 +1508,11 @@ Return Value:
             //  Display the information for this block
             //
 
-            RtlpDumpEntryInfo( PBlockDescr->Heap, (PHEAP_ENTRY)Block->BlockAddress);
+            RtlpDumpEntryInfo(PBlockDescr->Heap, (PHEAP_ENTRY)Block->BlockAddress);
 
             RtlpLeaksCount += 1;
         }
-        
+
         //
         //  Go to the next item from the leak list
         //
@@ -1533,7 +1524,6 @@ Return Value:
 }
 
 
-
 BOOLEAN
 RtlpScanProcessVirtualMemory()
 
@@ -1561,16 +1551,14 @@ Return Value:
     //  Loop through virtual memory zones, we'll skip the heap space here
     //
 
-    while ( NT_SUCCESS( Status ) ) {
-        
-        Status = ZwQueryVirtualMemory( NtCurrentProcess(),
-                                       (PVOID)lpAddress,
-                                       MemoryBasicInformation,
-                                       &Buffer,
-                                       sizeof(Buffer),
-                                       NULL );
+    while (NT_SUCCESS(Status))
+    {
 
-        if (NT_SUCCESS( Status )) {
+        Status = ZwQueryVirtualMemory(NtCurrentProcess(), (PVOID)lpAddress, MemoryBasicInformation, &Buffer,
+                                      sizeof(Buffer), NULL);
+
+        if (NT_SUCCESS(Status))
+        {
 
             //
             //  If the page can be written, it might contain pointers to heap blocks
@@ -1578,11 +1566,10 @@ Return Value:
             //  later.
             //
 
-            if ((Buffer.AllocationProtect & (PAGE_READWRITE | PAGE_EXECUTE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_WRITECOPY))
-                    &&
-                (Buffer.State & MEM_COMMIT) 
-                    && 
-                !RtlpGetMemoryFlag(&RtlpProcessMemoryMap, (ULONG_PTR)lpAddress)) {
+            if ((Buffer.AllocationProtect &
+                 (PAGE_READWRITE | PAGE_EXECUTE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_WRITECOPY)) &&
+                (Buffer.State & MEM_COMMIT) && !RtlpGetMemoryFlag(&RtlpProcessMemoryMap, (ULONG_PTR)lpAddress))
+            {
 
                 PULONG_PTR Pointers = (PULONG_PTR)lpAddress;
                 ULONG_PTR i, Count;
@@ -1593,13 +1580,15 @@ Return Value:
 
                 Count = Buffer.RegionSize / sizeof(ULONG_PTR);
 
-                try {
+                try
+                {
 
                     //
                     //  Loop through pages and check any possible pointer reference
                     //
-                    
-                    for (i = 0; i < Count; i++) {
+
+                    for (i = 0; i < Count; i++)
+                    {
 
                         //
                         //  Check whether we have a pointer to a busy heap block
@@ -1607,19 +1596,22 @@ Return Value:
 
                         PHEAP_BLOCK pBlock = RtlpGetHeapBlock(*Pointers);
 
-                        if (pBlock) {
+                        if (pBlock)
+                        {
 
-                            if (pBlock->BlockAddress == RtlpBreakAtAddress) {
+                            if (pBlock->BlockAddress == RtlpBreakAtAddress)
+                            {
 
                                 DbgBreakPoint();
                             }
 
-                            if (pBlock->Count == 0) {
-                                
+                            if (pBlock->Count == 0)
+                            {
+
                                 RemoveEntryList(&pBlock->Entry);
                                 InsertTailList(&RtlpBusyList, &pBlock->Entry);
                             }
-                            
+
                             pBlock->Count += 1;
                         }
 
@@ -1629,15 +1621,16 @@ Return Value:
 
                         Pointers++;
                     }
-                
-                } except( EXCEPTION_EXECUTE_HANDLER ) {
+                }
+                except(EXCEPTION_EXECUTE_HANDLER)
+                {
 
                     //
                     //  Nothing more to do
                     //
                 }
             }
-            
+
             //
             //  Move to the next VM range to query
             //
@@ -1645,20 +1638,18 @@ Return Value:
             lpAddress += Buffer.RegionSize;
         }
     }
-    
+
     //
     //  Now update the references provided by the busy blocks
     //
 
-    RtlpScanHeapAllocBlocks( );
+    RtlpScanHeapAllocBlocks();
 
     return TRUE;
 }
 
 
-
-VOID
-RtlDetectHeapLeaks ()
+VOID RtlDetectHeapLeaks()
 
 /*++
 
@@ -1683,21 +1674,23 @@ Return Value:
     //  Check if the global flag has the leak detection enabled
     //
 
-    if (RtlpShutdownProcessFlags & (INSPECT_LEAKS | BREAK_ON_LEAKS)) {
+    if (RtlpShutdownProcessFlags & (INSPECT_LEAKS | BREAK_ON_LEAKS))
+    {
         RtlpLeaksCount = 0;
 
         //
         //  Create a temporary heap that will be used for any alocation
-        //  of these functions. 
+        //  of these functions.
         //
 
         RtlpLeakHeap = RtlCreateHeap(HEAP_NO_SERIALIZE | HEAP_GROWABLE, NULL, 0, 0, NULL, NULL);
 
-        if (RtlpLeakHeap) {
+        if (RtlpLeakHeap)
+        {
 
             PPEB ProcessPeb = NtCurrentPeb();
 
-            HeapDebugPrint( ("Inspecting leaks at process shutdown ...\n") );
+            HeapDebugPrint(("Inspecting leaks at process shutdown ...\n"));
 
             RtlpInitializeLeakDetection();
 
@@ -1705,15 +1698,15 @@ Return Value:
             //  The last heap from the heap list is our temporary heap
             //
 
-            RtlpLeakHeapAddress = (ULONG_PTR)ProcessPeb->ProcessHeaps[ ProcessPeb->NumberOfHeaps - 1 ];
+            RtlpLeakHeapAddress = (ULONG_PTR)ProcessPeb->ProcessHeaps[ProcessPeb->NumberOfHeaps - 1];
 
             //
-            //  Scan all process heaps, build the memory map and 
+            //  Scan all process heaps, build the memory map and
             //  the busy block list
             //
 
-            RtlpReadProcessHeaps( RtlpRegisterHeapBlocks );
-            
+            RtlpReadProcessHeaps(RtlpRegisterHeapBlocks);
+
             //
             //  Scan the process virtual memory and the busy blocks
             //  At the end build the list with leaked blocks and report them
@@ -1733,21 +1726,22 @@ Return Value:
             //  Report the final statement about the process leaks
             //
 
-            if (RtlpLeaksCount) {
-                
+            if (RtlpLeaksCount)
+            {
+
                 HeapDebugPrint(("%ld leaks detected.\n", RtlpLeaksCount));
 
-                if (RtlpShutdownProcessFlags & BREAK_ON_LEAKS) {
+                if (RtlpShutdownProcessFlags & BREAK_ON_LEAKS)
+                {
 
                     DbgBreakPoint();
                 }
-            
-            } else {
+            }
+            else
+            {
 
-                HeapDebugPrint( ("No leaks detected.\n"));
+                HeapDebugPrint(("No leaks detected.\n"));
             }
         }
     }
 }
-
-

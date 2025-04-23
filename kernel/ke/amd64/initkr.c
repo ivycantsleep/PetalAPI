@@ -59,45 +59,30 @@ ETHREAD KiInitialThread;
 //     Ist - Interrupt stack index.
 //
 
-#define KiInitializeIdtEntry(Entry, Address, Level, Index)                  \
-    (Entry)->OffsetLow = (USHORT)((ULONG64)(Address));                      \
-    (Entry)->Selector = KGDT64_R0_CODE;                                     \
-    (Entry)->IstIndex = Index;                                              \
-    (Entry)->Type = 0xe;                                                    \
-    (Entry)->Dpl = (Level);                                                 \
-    (Entry)->Present = 1;                                                   \
-    (Entry)->OffsetMiddle = (USHORT)((ULONG64)(Address) >> 16);             \
-    (Entry)->OffsetHigh = (ULONG)((ULONG64)(Address) >> 32)                 \
+#define KiInitializeIdtEntry(Entry, Address, Level, Index)      \
+    (Entry)->OffsetLow = (USHORT)((ULONG64)(Address));          \
+    (Entry)->Selector = KGDT64_R0_CODE;                         \
+    (Entry)->IstIndex = Index;                                  \
+    (Entry)->Type = 0xe;                                        \
+    (Entry)->Dpl = (Level);                                     \
+    (Entry)->Present = 1;                                       \
+    (Entry)->OffsetMiddle = (USHORT)((ULONG64)(Address) >> 16); \
+    (Entry)->OffsetHigh = (ULONG)((ULONG64)(Address) >> 32)
 
 //
 // Define forward referenced prototypes.
 //
 
 ULONG
-KiFatalFilter (
-    IN ULONG Code,
-    IN PEXCEPTION_POINTERS Pointers
-    );
+KiFatalFilter(IN ULONG Code, IN PEXCEPTION_POINTERS Pointers);
 
-VOID
-KiSetCacheInformation (
-    VOID
-    );
+VOID KiSetCacheInformation(VOID);
 
-VOID
-KiSetCpuVendor (
-    VOID
-    );
+VOID KiSetCpuVendor(VOID);
 
-VOID
-KiSetFeatureBits (
-    VOID
-    );
+VOID KiSetFeatureBits(VOID);
 
-VOID
-KiSetProcessorType (
-    VOID
-    );
+VOID KiSetProcessorType(VOID);
 
 #pragma alloc_text(INIT, KiFatalFilter)
 #pragma alloc_text(INIT, KiInitializeBootStructures)
@@ -108,15 +93,8 @@ KiSetProcessorType (
 #pragma alloc_text(INIT, KiSetFeatureBits)
 #pragma alloc_text(INIT, KiSetProcessorType)
 
-VOID
-KiInitializeKernel (
-    IN PKPROCESS Process,
-    IN PKTHREAD Thread,
-    IN PVOID IdleStack,
-    IN PKPRCB Prcb,
-    IN CCHAR Number,
-    PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+VOID KiInitializeKernel(IN PKPROCESS Process, IN PKTHREAD Thread, IN PVOID IdleStack, IN PKPRCB Prcb, IN CCHAR Number,
+                        PLOADER_PARAMETER_BLOCK LoaderBlock)
 
 /*++
 
@@ -159,7 +137,7 @@ Return Value:
 {
 
     ULONG FeatureBits;
-    LONG  Index;
+    LONG Index;
     ULONG64 DirectoryTableBase[2];
     KIRQL OldIrql;
     PKPCR Pcr = KeGetPcr();
@@ -194,18 +172,19 @@ Return Value:
     //      that there can be no coherency problems.
     //
 
-    if (Number == 0) {
+    if (Number == 0)
+    {
 
         //
         // Flush the entire TB and enable global pages.
         //
-    
+
         KeFlushCurrentTb();
-    
+
         //
         // Set page attributes table and flush cache.
         //
-    
+
         KiSetPageAttributesTable();
         WritebackInvalidate();
 
@@ -255,7 +234,8 @@ Return Value:
     // per system data structures.
     //
 
-    if (Number == 0) {
+    if (Number == 0)
+    {
 
         //
         // Set default node until the node topology is available.
@@ -265,7 +245,8 @@ Return Value:
 
 #if defined(KE_MULTINODE)
 
-        for (Index = 1; Index < MAXIMUM_CCNUMA_NODES; Index += 1) {
+        for (Index = 1; Index < MAXIMUM_CCNUMA_NODES; Index += 1)
+        {
             KeNodeBlock[Index] = &KiNodeInit[Index];
         }
 
@@ -309,15 +290,12 @@ Return Value:
 
         DirectoryTableBase[0] = 0;
         DirectoryTableBase[1] = 0;
-        KeInitializeProcess(Process,
-                            (KPRIORITY)0,
-                            (KAFFINITY)(-1),
-                            &DirectoryTableBase[0],
-                            FALSE);
+        KeInitializeProcess(Process, (KPRIORITY)0, (KAFFINITY)(-1), &DirectoryTableBase[0], FALSE);
 
         Process->ThreadQuantum = MAXCHAR;
-
-    } else {
+    }
+    else
+    {
 
         //
         // If the CPU feature bits are not identical, then bugcheck.
@@ -325,11 +303,9 @@ Return Value:
         // N.B. This will probably need to be relaxed at some point.
         //
 
-        if (FeatureBits != KeFeatureBits) {
-            KeBugCheckEx(MULTIPROCESSOR_CONFIGURATION_NOT_SUPPORTED,
-                         (ULONG64)FeatureBits,
-                         (ULONG64)KeFeatureBits,
-                         0,
+        if (FeatureBits != KeFeatureBits)
+        {
+            KeBugCheckEx(MULTIPROCESSOR_CONFIGURATION_NOT_SUPPORTED, (ULONG64)FeatureBits, (ULONG64)KeFeatureBits, 0,
                          0);
         }
 
@@ -362,14 +338,7 @@ Return Value:
     //      5. the specified member in the process active processors set.
     //
 
-    KeInitializeThread(Thread,
-                       (PVOID)((ULONG64)IdleStack),
-                       NULL,
-                       NULL,
-                       NULL,
-                       NULL,
-                       NULL,
-                       Process);
+    KeInitializeThread(Thread, (PVOID)((ULONG64)IdleStack), NULL, NULL, NULL, NULL, NULL, Process);
 
     Thread->NextProcessor = Number;
     Thread->Priority = HIGH_PRIORITY;
@@ -382,10 +351,12 @@ Return Value:
     // Call the executive initialization routine.
     //
 
-    try {
+    try
+    {
         ExpInitializeExecutive(Number, LoaderBlock);
-
-    } except(KiFatalFilter(GetExceptionCode(), GetExceptionInformation())) {
+    }
+    except(KiFatalFilter(GetExceptionCode(), GetExceptionInformation()))
+    {
     }
 
     //
@@ -395,9 +366,9 @@ Return Value:
     // global unwind history table.
     //
 
-    if (Number == 0) {
-        KiTimeIncrementReciprocal = KiComputeReciprocal((LONG)KeMaximumIncrement,
-                                                        &KiTimeIncrementShiftCount);
+    if (Number == 0)
+    {
+        KiTimeIncrementReciprocal = KiComputeReciprocal((LONG)KeMaximumIncrement, &KiTimeIncrementShiftCount);
 
         Prcb->MaximumDpcQueueDepth = KiMaximumDpcQueueDepth;
         Prcb->MinimumDpcRate = KiMinimumDpcRate;
@@ -430,7 +401,8 @@ Return Value:
 
 #if !defined(NT_UP)
 
-    if ((Number != 0) && (Prcb->NextThread == NULL)) {
+    if ((Number != 0) && (Prcb->NextThread == NULL))
+    {
         KiIdleSummary |= AFFINITY_MASK(Number);
     }
 
@@ -444,10 +416,7 @@ Return Value:
     return;
 }
 
-VOID
-KiInitializeBootStructures (
-    PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+VOID KiInitializeBootStructures(PLOADER_PARAMETER_BLOCK LoaderBlock)
 
 /*++
 
@@ -500,7 +469,7 @@ Return Value:
     //
 
     Prcb->MajorVersion = PRCB_MAJOR_VERSION;
-    Prcb->MinorVersion =  PRCB_MINOR_VERSION;
+    Prcb->MinorVersion = PRCB_MINOR_VERSION;
     Prcb->BuildType = 0;
 
 #if DBG
@@ -529,7 +498,8 @@ Return Value:
     // process and initial thread.
     //
 
-    if (Number == 0) {
+    if (Number == 0)
+    {
         LoaderBlock->Process = (ULONG64)&KiInitialProcess;
         LoaderBlock->Thread = (ULONG64)&KiInitialThread;
     }
@@ -623,11 +593,9 @@ Return Value:
     // Initialize unexpected interrupt entries.
     //
 
-    for (Index = PRIMARY_VECTOR_BASE; Index <= MAXIMUM_IDTVECTOR; Index += 1) {
-        KiInitializeIdtEntry(&IdtBase[Index],
-                             &KxUnexpectedInterrupt0[Index],
-                             0,
-                             0);
+    for (Index = PRIMARY_VECTOR_BASE; Index <= MAXIMUM_IDTVECTOR; Index += 1)
+    {
+        KiInitializeIdtEntry(&IdtBase[Index], &KxUnexpectedInterrupt0[Index], 0, 0);
     }
 
     //
@@ -653,8 +621,7 @@ Return Value:
     //      simulator.
     //
 
-    WriteMSR(MSR_STAR,
-             ((ULONG64)KGDT64_R0_CODE << 32) | (((ULONG64)KGDT64_R3_CMCODE | RPL_MASK) << 48));
+    WriteMSR(MSR_STAR, ((ULONG64)KGDT64_R0_CODE << 32) | (((ULONG64)KGDT64_R3_CMCODE | RPL_MASK) << 48));
 
     WriteMSR(MSR_CSTAR, (ULONG64)&KiSystemCall32);
     WriteMSR(MSR_LSTAR, (ULONG64)&KiSystemCall64);
@@ -677,7 +644,8 @@ Return Value:
     // number of processors and the current processor number.
     //
 
-    if ((Number + 1) > KeNumberProcessors) {
+    if ((Number + 1) > KeNumberProcessors)
+    {
         KeNumberProcessors = Number + 1;
     }
 
@@ -685,10 +653,7 @@ Return Value:
 }
 
 ULONG
-KiFatalFilter (
-    IN ULONG Code,
-    IN PEXCEPTION_POINTERS Pointers
-    )
+KiFatalFilter(IN ULONG Code, IN PEXCEPTION_POINTERS Pointers)
 
 /*++
 
@@ -713,19 +678,13 @@ Return Value:
 
 {
 
-    KeBugCheckEx(PHASE0_EXCEPTION,
-                 Code,
-                 (ULONG64)Pointers,
-                 0,
-                 0);
+    KeBugCheckEx(PHASE0_EXCEPTION, Code, (ULONG64)Pointers, 0, 0);
 
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
 BOOLEAN
-KiInitMachineDependent (
-    VOID
-    )
+KiInitMachineDependent(VOID)
 
 /*++
 
@@ -754,27 +713,23 @@ Return Value:
     // frame buffer.
     //
 
-    Status = HalQuerySystemInformation(HalFrameBufferCachingInformation,
-                                       sizeof(BOOLEAN),
-                                       &UseFrameBufferCaching,
-                                       &Size);
+    Status =
+        HalQuerySystemInformation(HalFrameBufferCachingInformation, sizeof(BOOLEAN), &UseFrameBufferCaching, &Size);
 
     //
     // If the status is successful and frame buffer caching is disabled,
     // then don't enable write combining.
     //
 
-    if (!NT_SUCCESS(Status) || (UseFrameBufferCaching != FALSE)) {
+    if (!NT_SUCCESS(Status) || (UseFrameBufferCaching != FALSE))
+    {
         MmEnablePAT();
     }
 
     return TRUE;
 }
 
-VOID
-KiSetCacheInformation (
-    VOID
-    )
+VOID KiSetCacheInformation(VOID)
 
 /*++
 
@@ -819,10 +774,11 @@ Return Value:
     CacheSize = (CpuInfo.Ecx >> 16) << 10;
 
     //
-    // Compute the L2 cache associativity. 
+    // Compute the L2 cache associativity.
     //
 
-    switch ((CpuInfo.Ecx >> 12) & 0xf) {
+    switch ((CpuInfo.Ecx >> 12) & 0xf)
+    {
 
         //
         // Two way set associative.
@@ -885,17 +841,15 @@ Return Value:
     // set the new largest line size.
     //
 
-    if (LineSize > KeLargestCacheLine) {
+    if (LineSize > KeLargestCacheLine)
+    {
         KeLargestCacheLine = LineSize;
     }
 
     return;
 }
 
-VOID
-KiSetCpuVendor (
-    VOID
-    )
+VOID KiSetCpuVendor(VOID)
 
 /*++
 
@@ -932,18 +886,13 @@ Return Value:
     Temp = CpuInfo.Ecx;
     CpuInfo.Ecx = CpuInfo.Edx;
     CpuInfo.Edx = Temp;
-    RtlCopyMemory(Prcb->VendorString,
-                  &CpuInfo.Ebx,
-                  sizeof(Prcb->VendorString) - 1);
+    RtlCopyMemory(Prcb->VendorString, &CpuInfo.Ebx, sizeof(Prcb->VendorString) - 1);
 
     Prcb->VendorString[sizeof(Prcb->VendorString) - 1] = '\0';
     return;
 }
 
-VOID
-KiSetFeatureBits (
-    VOID
-    )
+VOID KiSetFeatureBits(VOID)
 
 /*++
 
@@ -965,7 +914,7 @@ Return Value:
 
     CPU_INFO CpuInfo;
     ULONG FeatureBits;
-    PKPRCB Prcb = KeGetCurrentPrcb(); 
+    PKPRCB Prcb = KeGetCurrentPrcb();
 
     //
     // Get CPU feature information.
@@ -983,12 +932,14 @@ Return Value:
     // If the required fetures are not present, then bugcheck.
     //
 
-    if ((CpuInfo.Edx & HF_REQUIRED) != HF_REQUIRED) {
+    if ((CpuInfo.Edx & HF_REQUIRED) != HF_REQUIRED)
+    {
         KeBugCheckEx(UNSUPPORTED_PROCESSOR, CpuInfo.Edx, 0, 0, 0);
     }
 
     FeatureBits = KF_REQUIRED;
-    if (CpuInfo.Edx & 0x00200000) {
+    if (CpuInfo.Edx & 0x00200000)
+    {
         FeatureBits |= KF_DTS;
     }
 
@@ -1002,19 +953,17 @@ Return Value:
     // Check the extended feature bits.
     //
 
-    if (CpuInfo.Edx & 0x80000000) {
+    if (CpuInfo.Edx & 0x80000000)
+    {
         FeatureBits |= KF_3DNOW;
     }
 
     Prcb->LogicalProcessorsPerPhysicalProcessor = 1;
     Prcb->FeatureBits = FeatureBits;
     return;
-}              
+}
 
-VOID
-KiSetProcessorType (
-    VOID
-    )
+VOID KiSetProcessorType(VOID)
 
 /*++
 
@@ -1053,10 +1002,7 @@ Return Value:
     return;
 }
 
-VOID
-KeOptimizeProcessorControlState (
-    VOID
-    )
+VOID KeOptimizeProcessorControlState(VOID)
 
 /*++
 

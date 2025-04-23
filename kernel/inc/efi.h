@@ -27,15 +27,15 @@ Revision History
 #ifndef _EFI_INCLUDE_
 #define _EFI_INCLUDE_
 
-#define EFI_FIRMWARE_VENDOR         L"INTEL"
+#define EFI_FIRMWARE_VENDOR L"INTEL"
 #define EFI_FIRMWARE_MAJOR_REVISION 12
 #define EFI_FIRMWARE_MINOR_REVISION 24
-#define EFI_FIRMWARE_REVISION ((EFI_FIRMWARE_MAJOR_REVISION <<16) | (EFI_FIRMWARE_MINOR_REVISION))
+#define EFI_FIRMWARE_REVISION ((EFI_FIRMWARE_MAJOR_REVISION << 16) | (EFI_FIRMWARE_MINOR_REVISION))
 
 #if defined(_WIN64)
-    #include "efibind64.h"
+#include "efibind64.h"
 #else
-    #include "efibind32.h"
+#include "efibind32.h"
 #endif
 
 #include "efidef.h"

@@ -21,10 +21,8 @@ LOOKASIDE DialogLookaside;
 
 BOOL ValidateCallback(HANDLE h);
 
-#define IsInForegroundQueue(hwnd) \
-    (NtUserQueryWindow(hwnd, WindowIsForegroundThread) != NULL)
-#define IsCurrentThreadForeground() \
-    ((BOOL)NtUserGetThreadState(UserThreadStateIsForeground))
+#define IsInForegroundQueue(hwnd) (NtUserQueryWindow(hwnd, WindowIsForegroundThread) != NULL)
+#define IsCurrentThreadForeground() ((BOOL)NtUserGetThreadState(UserThreadStateIsForeground))
 
 /***************************************************************************\
 *
@@ -42,7 +40,7 @@ BOOL ValidateCallback(HANDLE h);
 
 PWND GetParentDialog(PWND pwndDialog)
 {
-    PWND    pwndParent;
+    PWND pwndParent;
 
     pwndParent = pwndDialog;
 
@@ -70,7 +68,7 @@ PWND GetParentDialog(PWND pwndDialog)
             break;
     }
 
-    return(pwndParent);
+    return (pwndParent);
 }
 
 /***************************************************************************\
@@ -80,15 +78,14 @@ PWND GetParentDialog(PWND pwndDialog)
 * 02-18-92 JimA             Ported from Win31 sources
 \***************************************************************************/
 
-BOOL xxxSaveDlgFocus(
-    PWND pwnd)
+BOOL xxxSaveDlgFocus(PWND pwnd)
 {
     HWND hwndFocus = GetFocus();
 
     CheckLock(pwnd);
 
-    if (hwndFocus != NULL && IsChild(HWq(pwnd), hwndFocus) &&
-            PDLG(pwnd)->hwndFocusSave == NULL) {
+    if (hwndFocus != NULL && IsChild(HWq(pwnd), hwndFocus) && PDLG(pwnd)->hwndFocusSave == NULL)
+    {
         PDLG(pwnd)->hwndFocusSave = hwndFocus;
         xxxRemoveDefaultButton(pwnd, ValidateHwnd(hwndFocus));
         return TRUE;
@@ -108,31 +105,33 @@ BOOL xxxSaveDlgFocus(
 // 21-Mar-1992 mikeke
 // does pwndFocusSave need to be unlocked when the dialog is destroyed?
 
-BOOL xxxRestoreDlgFocus(
-    PWND pwnd)
+BOOL xxxRestoreDlgFocus(PWND pwnd)
 {
     HWND hwndFocus;
     HWND hwndFocusSave;
     BOOL fRestored = FALSE;
 
     CheckLock(pwnd);
-    
 
-    if (PDLG(pwnd)->hwndFocusSave && !TestWF(pwnd, WFMINIMIZED)) {
+
+    if (PDLG(pwnd)->hwndFocusSave && !TestWF(pwnd, WFMINIMIZED))
+    {
 
         hwndFocus = GetFocus();
         hwndFocusSave = KHWND_TO_HWND(PDLG(pwnd)->hwndFocusSave);
 
-        if (IsWindow(hwndFocusSave)) {
+        if (IsWindow(hwndFocusSave))
+        {
             xxxCheckDefPushButton(pwnd, hwndFocus, hwndFocusSave);
             fRestored = (NtUserSetFocus(hwndFocusSave) != NULL);
         }
-            //
-            // After calling SetFocus(), we need to re-validate
-            // the window. PDLG(pwnd) might be NULL.
-            //
+        //
+        // After calling SetFocus(), we need to re-validate
+        // the window. PDLG(pwnd) might be NULL.
+        //
 
-        if (ValidateDialogPwnd(pwnd)) {
+        if (ValidateDialogPwnd(pwnd))
+        {
             PDLG(pwnd)->hwndFocusSave = NULL;
         }
     }
@@ -147,10 +146,10 @@ BOOL xxxRestoreDlgFocus(
 * History:
 \***************************************************************************/
 
-void DlgSetFocus(
-    HWND hwnd)
+void DlgSetFocus(HWND hwnd)
 {
-    if (((UINT)SendMessage(hwnd, WM_GETDLGCODE, 0, 0)) & DLGC_HASSETSEL) {
+    if (((UINT)SendMessage(hwnd, WM_GETDLGCODE, 0, 0)) & DLGC_HASSETSEL)
+    {
         SendMessage(hwnd, EM_SETSEL, 0, MAXLONG);
     }
 
@@ -158,10 +157,8 @@ void DlgSetFocus(
 }
 
 
-
 FUNCLOG1(LOG_GENERAL, int, DUMMYCALLINGTYPE, GetDlgCtrlID, HWND, hwnd)
-int GetDlgCtrlID(
-    HWND hwnd)
+int GetDlgCtrlID(HWND hwnd)
 {
     PWND pwnd;
 
@@ -171,7 +168,6 @@ int GetDlgCtrlID(
 
     return PtrToLong(pwnd->spmenu);
 }
-
 
 
 /***************************************************************************\
@@ -189,8 +185,7 @@ int GetDlgCtrlID(
 * 05-21-91 ScottLu      Created.
 \***************************************************************************/
 
-BOOL ValidateDialogPwnd(
-    PWND pwnd)
+BOOL ValidateDialogPwnd(PWND pwnd)
 {
     static BOOL sfInit = TRUE;
     PDLG pdlg;
@@ -203,7 +198,8 @@ BOOL ValidateDialogPwnd(
     if (TestWF(pwnd, WFDIALOGWINDOW))
         return TRUE;
 
-    if (pwnd->cbwndExtra < DLGWINDOWEXTRA) {
+    if (pwnd->cbwndExtra < DLGWINDOWEXTRA)
+    {
         RIPERR0(ERROR_WINDOW_NOT_DIALOG, RIP_VERBOSE, "");
         return FALSE;
     }
@@ -211,21 +207,25 @@ BOOL ValidateDialogPwnd(
     /*
      * See if the pdlg was destroyed and this is a rogue message to be ignored
      */
-    if (pwnd->fnid & FNID_STATUS_BITS) {
+    if (pwnd->fnid & FNID_STATUS_BITS)
+    {
         return FALSE;
     }
 
     /*
      * If the lookaside buffer has not been initialized, do it now.
      */
-    if (sfInit) {
-        if (!NT_SUCCESS(InitLookaside(&DialogLookaside, sizeof(DLG), 2))) {
+    if (sfInit)
+    {
+        if (!NT_SUCCESS(InitLookaside(&DialogLookaside, sizeof(DLG), 2)))
+        {
             return FALSE;
         }
         sfInit = FALSE;
     }
 
-    if ((pdlg = (PDLG)AllocLookasideEntry(&DialogLookaside)) == NULL) {
+    if ((pdlg = (PDLG)AllocLookasideEntry(&DialogLookaside)) == NULL)
+    {
         return FALSE;
     }
 
@@ -243,11 +243,10 @@ BOOL ValidateDialogPwnd(
 * History:
 \***************************************************************************/
 
-void CvtDec(
-    int u,
-    LPWSTR *lplpch)
+void CvtDec(int u, LPWSTR *lplpch)
 {
-    if (u >= 10) {
+    if (u >= 10)
+    {
         CvtDec(u / 10, lplpch);
         u %= 10;
     }
@@ -264,23 +263,24 @@ void CvtDec(
 
 
 FUNCLOG4(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, SetDlgItemInt, HWND, hwnd, int, item, UINT, u, BOOL, fSigned)
-BOOL SetDlgItemInt(
-    HWND hwnd,
-    int item,
-    UINT u,
-    BOOL fSigned)
+BOOL SetDlgItemInt(HWND hwnd, int item, UINT u, BOOL fSigned)
 {
     LPWSTR lpch;
     WCHAR rgch[16];
 
     lpch = rgch;
-    if (fSigned) {
-        if ((int)u < 0) {
+    if (fSigned)
+    {
+        if ((int)u < 0)
+        {
             *lpch++ = TEXT('-');
             u = (UINT)(-(int)u);
         }
-    } else {
-        if (u & 0x80000000) {
+    }
+    else
+    {
+        if (u & 0x80000000)
+        {
             CvtDec(u / 10, (LPWSTR FAR *)&lpch);
             u = u % 10;
         }
@@ -301,12 +301,10 @@ BOOL SetDlgItemInt(
 
 
 FUNCLOG3(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, CheckDlgButton, HWND, hwnd, int, id, UINT, cmdCheck)
-BOOL CheckDlgButton(
-    HWND hwnd,
-    int id,
-    UINT cmdCheck)
+BOOL CheckDlgButton(HWND hwnd, int id, UINT cmdCheck)
 {
-    if ((hwnd = GetDlgItem(hwnd, id)) == NULL) {
+    if ((hwnd = GetDlgItem(hwnd, id)) == NULL)
+    {
         return FALSE;
     }
 
@@ -321,11 +319,7 @@ BOOL CheckDlgButton(
 * History:
 \***************************************************************************/
 
-UINT GetDlgItemInt(
-    HWND hwnd,
-    int item,
-    BOOL FAR *lpfValOK,
-    BOOL fSigned)
+UINT GetDlgItemInt(HWND hwnd, int item, BOOL FAR *lpfValOK, BOOL fSigned)
 {
     int i, digit, ch;
     int maxTens, maxUnits;
@@ -338,7 +332,7 @@ UINT GetDlgItemInt(
     if (lpfValOK != NULL)
         *lpfValOK = FALSE;
 
-    if (!GetDlgItemTextW(hwnd, item, rgch, sizeof(rgch)/sizeof(WCHAR) - 1))
+    if (!GetDlgItemTextW(hwnd, item, rgch, sizeof(rgch) / sizeof(WCHAR) - 1))
         return 0;
 
     lpch = rgch;
@@ -350,44 +344,56 @@ UINT GetDlgItemInt(
         lpch++;
 
     fNeg = FALSE;
-    while (fSigned && ((*lpch == L'-') || (*lpch == UNICODE_MINUS_SIGN))) {
+    while (fSigned && ((*lpch == L'-') || (*lpch == UNICODE_MINUS_SIGN)))
+    {
         lpch++;
         fNeg ^= TRUE;
     }
 
-    if (fSigned) {
-        maxTens = INT_MAX/10;
-        maxUnits = INT_MAX%10;
-    } else {
-        maxTens = UINT_MAX/10;
-        maxUnits = UINT_MAX%10;
+    if (fSigned)
+    {
+        maxTens = INT_MAX / 10;
+        maxUnits = INT_MAX % 10;
+    }
+    else
+    {
+        maxTens = UINT_MAX / 10;
+        maxUnits = UINT_MAX % 10;
     }
     /*
      * Convert all decimal digits to ASCII Unicode digits 0x0030 - 0x0039
      */
-    FoldStringW(MAP_FOLDDIGITS, lpch, -1, rgchDigits,
-            sizeof(rgchDigits)/sizeof(rgchDigits[0]));
+    FoldStringW(MAP_FOLDDIGITS, lpch, -1, rgchDigits, sizeof(rgchDigits) / sizeof(rgchDigits[0]));
     lpch = rgchDigits;
 
     i = 0;
-    while (ch = *lpch++) {
+    while (ch = *lpch++)
+    {
         digit = ch - TEXT('0');
-        if (digit < 0 || digit > 9) {
+        if (digit < 0 || digit > 9)
+        {
             break;
         }
-        if ((UINT)i >= (UINT)maxTens) {
+        if ((UINT)i >= (UINT)maxTens)
+        {
             /*
              * We need to special case INT_MIN as the i = -i
              * would damage it
              */
-            if (i == maxTens) {
-                if (digit == maxUnits+1 && fNeg && (*lpch) == 0) {
+            if (i == maxTens)
+            {
+                if (digit == maxUnits + 1 && fNeg && (*lpch) == 0)
+                {
                     i = INT_MIN;
                     goto HaveResult;
-                } else if (digit > maxUnits) {
+                }
+                else if (digit > maxUnits)
+                {
                     return 0;
                 }
-            } else {
+            }
+            else
+            {
                 return 0;
             }
         }
@@ -412,23 +418,20 @@ HaveResult:
 
 
 FUNCLOG4(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, CheckRadioButton, HWND, hwnd, int, idFirst, int, idLast, int, id)
-BOOL CheckRadioButton(
-    HWND hwnd,
-    int idFirst,
-    int idLast,
-    int id)
+BOOL CheckRadioButton(HWND hwnd, int idFirst, int idLast, int id)
 {
     PWND pwnd, pwndDialog;
-    BOOL    fCheckOn;
+    BOOL fCheckOn;
 
     pwndDialog = ValidateHwnd(hwnd);
     if (pwndDialog == NULL)
         return 0;
 
-    for (pwnd = REBASE(pwndDialog, spwndChild); pwnd; pwnd = REBASE(pwnd, spwndNext)) {
+    for (pwnd = REBASE(pwndDialog, spwndChild); pwnd; pwnd = REBASE(pwnd, spwndNext))
+    {
 
-        if ((PtrToLong(pwnd->spmenu) >= idFirst) &&
-            (PtrToLong(pwnd->spmenu) <= idLast)) {
+        if ((PtrToLong(pwnd->spmenu) >= idFirst) && (PtrToLong(pwnd->spmenu) <= idLast))
+        {
 
             fCheckOn = (PtrToLong(pwnd->spmenu) == id);
             SendMessage(PtoHq(pwnd), BM_SETCHECK, fCheckOn, 0L);
@@ -447,11 +450,10 @@ BOOL CheckRadioButton(
 
 
 FUNCLOG2(LOG_GENERAL, UINT, DUMMYCALLINGTYPE, IsDlgButtonChecked, HWND, hwnd, int, id)
-UINT IsDlgButtonChecked(
-    HWND hwnd,
-    int id)
+UINT IsDlgButtonChecked(HWND hwnd, int id)
 {
-    if ((hwnd = GetDlgItem(hwnd, id)) != NULL) {
+    if ((hwnd = GetDlgItem(hwnd, id)) != NULL)
+    {
         return (UINT)SendMessage(hwnd, BM_GETCHECK, 0, 0);
     }
 
@@ -465,12 +467,7 @@ UINT IsDlgButtonChecked(
 * History:
 \***************************************************************************/
 
-LRESULT DefDlgProcWorker(
-    PWND pwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam,
-    DWORD fAnsi)
+LRESULT DefDlgProcWorker(PWND pwnd, UINT message, WPARAM wParam, LPARAM lParam, DWORD fAnsi)
 {
     HWND hwnd = HWq(pwnd);
     TL tlpwndT1, tlpwndT2, tlpwndT3, tlpwndTop;
@@ -496,26 +493,29 @@ LRESULT DefDlgProcWorker(
 
     if (((PDIALOG)pwnd)->resultWP != 0)
         NtUserSetWindowLongPtr(hwnd, DWLP_MSGRESULT, 0, FALSE);
-    result = 0;   // no dialog proc
+    result = 0; // no dialog proc
 
-    if (message == WM_FINALDESTROY) {
+    if (message == WM_FINALDESTROY)
+    {
         goto DoCleanup;
     }
 
-    if ((pfn = PDLG(pwnd)->lpfnDlg) != NULL) {
+    if ((pfn = PDLG(pwnd)->lpfnDlg) != NULL)
+    {
         /* Bug 234292 - joejo
          * Since the called window/dialog proc may have a different calling
          * convention, we must wrap the call and, check esp and replace with
          * a good esp when the call returns. This is what UserCallWinProc* does.
         */
-        if (UserCallDlgProcCheckWow(pwnd->pActCtx, pfn, hwnd, message, wParam, lParam, &(pwnd->state), &result)) {
+        if (UserCallDlgProcCheckWow(pwnd->pActCtx, pfn, hwnd, message, wParam, lParam, &(pwnd->state), &result))
+        {
             return result;
         }
 
         /*
          * Get out if the window was destroyed in the dialog proc.
          */
-        if ((RevalidateHwnd(hwnd)==NULL) || (pwnd->fnid & FNID_STATUS_BITS))
+        if ((RevalidateHwnd(hwnd) == NULL) || (pwnd->fnid & FNID_STATUS_BITS))
             return result;
     }
 
@@ -528,39 +528,41 @@ LRESULT DefDlgProcWorker(
 
     switch (message)
     {
-        case WM_COMPAREITEM:
-        case WM_VKEYTOITEM:
-        case WM_CHARTOITEM:
-        case WM_INITDIALOG:
-        case WM_QUERYDRAGICON:
-            return ((LRESULT)(DWORD)result);
+    case WM_COMPAREITEM:
+    case WM_VKEYTOITEM:
+    case WM_CHARTOITEM:
+    case WM_INITDIALOG:
+    case WM_QUERYDRAGICON:
+        return ((LRESULT)(DWORD)result);
 
-        case WM_CTLCOLOR:
-        case WM_CTLCOLORMSGBOX:
-        case WM_CTLCOLOREDIT:
-        case WM_CTLCOLORLISTBOX:
-        case WM_CTLCOLORBTN:
-        case WM_CTLCOLORDLG:
-        case WM_CTLCOLORSCROLLBAR:
-        case WM_CTLCOLORSTATIC:
-            // QuarkXPress doesn't like finding the WM_CTLCOLOR result in
-            // resultWP -- we should never be setting resultWP -- that's meant
-            // as a pass-thru return value -- so let's go back to doing it the
-            // old way -- Win95B B#21269 -- 03/13/95 -- tracysh (cr: jeffbog)
-            if (result)
-                return result;
-            break;
+    case WM_CTLCOLOR:
+    case WM_CTLCOLORMSGBOX:
+    case WM_CTLCOLOREDIT:
+    case WM_CTLCOLORLISTBOX:
+    case WM_CTLCOLORBTN:
+    case WM_CTLCOLORDLG:
+    case WM_CTLCOLORSCROLLBAR:
+    case WM_CTLCOLORSTATIC:
+        // QuarkXPress doesn't like finding the WM_CTLCOLOR result in
+        // resultWP -- we should never be setting resultWP -- that's meant
+        // as a pass-thru return value -- so let's go back to doing it the
+        // old way -- Win95B B#21269 -- 03/13/95 -- tracysh (cr: jeffbog)
+        if (result)
+            return result;
+        break;
     }
 
-    if (!result) {
+    if (!result)
+    {
 
         /*
          * Save the result value in case our private memory is freed
          * before we return
          */
-//        result = PDLG(pwnd)->resultWP;
+        //        result = PDLG(pwnd)->resultWP;
 
-        switch (message) {
+        switch (message)
+        {
         case WM_CTLCOLOR:
         case WM_CTLCOLORMSGBOX:
         case WM_CTLCOLOREDIT:
@@ -579,14 +581,12 @@ LRESULT DefDlgProcWorker(
             // Use "result" var for bool saying we have to add/clear 4.0
             // compat bit.
 
-            fSetBit = (TestWF(pwnd, DF3DLOOK)!= 0) &&
-                     (TestWF(pwnd, WFWIN40COMPAT) == 0);
+            fSetBit = (TestWF(pwnd, DF3DLOOK) != 0) && (TestWF(pwnd, WFWIN40COMPAT) == 0);
 
             if (fSetBit)
                 SetWindowState(pwnd, WFWIN40COMPAT);
 
-            result = DefWindowProcWorker(pwnd, message,
-                    wParam, lParam, fAnsi);
+            result = DefWindowProcWorker(pwnd, message, wParam, lParam, fAnsi);
 
             if (fSetBit)
                 ClearWindowState(pwnd, WFWIN40COMPAT);
@@ -604,10 +604,14 @@ LRESULT DefDlgProcWorker(
              * by means of a SW_* command and the fEnd bit is set, do not
              * pass to DWP so it won't get shown.
              */
-            if (GetParentDialog(pwnd) == pwnd) {
-                if (!wParam) {
+            if (GetParentDialog(pwnd) == pwnd)
+            {
+                if (!wParam)
+                {
                     xxxSaveDlgFocus(pwnd);
-                } else {
+                }
+                else
+                {
 
                     if (LOWORD(lParam) != 0 && PDLG(pwnd)->fEnd)
                         break;
@@ -620,17 +624,18 @@ LRESULT DefDlgProcWorker(
                      * in the same refresh cycle, the display of the cursor
                      * would not reflect the new position.
                      */
-                    if (TEST_PUSIF(PUSIF_SNAPTO) &&
-                            IsInForegroundQueue(hwnd)) {
+                    if (TEST_PUSIF(PUSIF_SNAPTO) && IsInForegroundQueue(hwnd))
+                    {
                         hwndT1 = GetDlgItem(hwnd, (int)PDLG(pwnd)->result);
-                        if (hwndT1) {
+                        if (hwndT1)
+                        {
                             RECT rc;
 
                             NtUserShowCursor(FALSE);
 
                             GetWindowRect(hwndT1, &rc);
-                            NtUserSetCursorPos(rc.left + ((rc.right - rc.left)/2),
-                                         rc.top + ((rc.bottom - rc.top)/2));
+                            NtUserSetCursorPos(rc.left + ((rc.right - rc.left) / 2),
+                                               rc.top + ((rc.bottom - rc.top) / 2));
 
                             NtUserShowCursor(TRUE);
                         }
@@ -640,7 +645,8 @@ LRESULT DefDlgProcWorker(
             goto CallDWP;
 
         case WM_SYSCOMMAND:
-            if (GetParentDialog(pwnd) == pwnd) {
+            if (GetParentDialog(pwnd) == pwnd)
+            {
                 /*
                  * If hiding the window, save the focus.  If showing the window
                  * by means of a SW_* command and the fEnd bit is set, do not
@@ -653,7 +659,8 @@ LRESULT DefDlgProcWorker(
 
         case WM_ACTIVATE:
             pwndT1 = GetParentDialog(pwnd);
-            if ( pwndT1 != pwnd) {
+            if (pwndT1 != pwnd)
+            {
 
                 /*
                  * This random bit is used during key processing - bit
@@ -674,7 +681,8 @@ LRESULT DefDlgProcWorker(
 
         case WM_SETFOCUS:
             pwndT1 = GetParentDialog(pwnd);
-            if (!PDLG(pwndT1)->fEnd && !xxxRestoreDlgFocus(pwndT1)) {
+            if (!PDLG(pwndT1)->fEnd && !xxxRestoreDlgFocus(pwndT1))
+            {
 
                 pwndT = _GetNextDlgTabItem(pwndT1, NULL, FALSE);
                 DlgSetFocus(HW(pwndT));
@@ -692,16 +700,17 @@ LRESULT DefDlgProcWorker(
             if (pwndT1 && TestWF(pwndT1, WFDISABLED))
                 NtUserMessageBeep(0);
             else
-                PostMessage(hwnd, WM_COMMAND, MAKELONG(IDCANCEL, BN_CLICKED),
-                        (LPARAM)HW(pwndT1));
+                PostMessage(hwnd, WM_COMMAND, MAKELONG(IDCANCEL, BN_CLICKED), (LPARAM)HW(pwndT1));
             break;
 
         case WM_NCDESTROY:
         case WM_FINALDESTROY:
-DoCleanup:
+        DoCleanup:
             NtUserSetThreadState(0, QF_DIALOGACTIVE);
-            if (!(pwnd->style & DS_LOCALEDIT)) {
-                if (PDLG(pwnd)->hData) {
+            if (!(pwnd->style & DS_LOCALEDIT))
+            {
+                if (PDLG(pwnd)->hData)
+                {
                     ReleaseEditDS(KHANDLE_TO_HANDLE(PDLG(pwnd)->hData));
                     PDLG(pwnd)->hData = NULL;
                 }
@@ -710,7 +719,8 @@ DoCleanup:
             /*
              * Delete the user defined font if any
              */
-            if (PDLG(pwnd)->hUserFont) {
+            if (PDLG(pwnd)->hUserFont)
+            {
                 DeleteObject(KHFONT_TO_HFONT(PDLG(pwnd)->hUserFont));
                 PDLG(pwnd)->hUserFont = NULL;
             }
@@ -723,42 +733,43 @@ DoCleanup:
             break;
 
         case DM_REPOSITION:
+        {
+            RECT rc;
+            PMONITOR pMonitor;
+
+            // DAT recorder APP sends it's own private message 0x402
+            // through and we mistake it to be DM_REPOSITION. To avoid
+            // this confusion, we do the following check.
+            // Fix for Bug#25747 -- 9/29/94 --
+            if (!TestWF(pwnd, WEFCONTROLPARENT) ||
+                (GETFNID(pwnd) != FNID_DESKTOP && GETFNID(REBASEPWND(pwnd, spwndParent)) != FNID_DESKTOP))
             {
-                RECT        rc;
-                PMONITOR    pMonitor;
 
-                // DAT recorder APP sends it's own private message 0x402
-                // through and we mistake it to be DM_REPOSITION. To avoid
-                // this confusion, we do the following check.
-                // Fix for Bug#25747 -- 9/29/94 --
-                if (!TestWF(pwnd, WEFCONTROLPARENT) ||
-                    (GETFNID(pwnd) != FNID_DESKTOP &&
-                     GETFNID(REBASEPWND(pwnd, spwndParent)) != FNID_DESKTOP)) {
-
-                    goto CallDWP;
-                }
-
-                CopyRect(&rc, KPRECT_TO_PRECT(&pwnd->rcWindow));
-                pMonitor = _MonitorFromRect(&rc, MONITOR_DEFAULTTOPRIMARY);
-                RepositionRect(pMonitor, &rc, pwnd->style, pwnd->ExStyle);
-                NtUserSetWindowPos(hwnd, HWND_TOP, rc.left, rc.top,
-                             rc.right-rc.left, rc.bottom-rc.top,
-                             SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+                goto CallDWP;
             }
-            break;
+
+            CopyRect(&rc, KPRECT_TO_PRECT(&pwnd->rcWindow));
+            pMonitor = _MonitorFromRect(&rc, MONITOR_DEFAULTTOPRIMARY);
+            RepositionRect(pMonitor, &rc, pwnd->style, pwnd->ExStyle);
+            NtUserSetWindowPos(hwnd, HWND_TOP, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
+                               SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+        }
+        break;
 
         case DM_SETDEFID:
             pwndT1 = GetParentDialog(pwnd);
             ThreadLock(pwndT1, &tlpwndT1);
 
-            if (!(PDLG(pwndT1)->fEnd)) {
+            if (!(PDLG(pwndT1)->fEnd))
+            {
 
                 pwndT2 = NULL;
                 if (PDLG(pwndT1)->result != 0)
                     pwndT2 = _FindDlgItem(pwndT1, (int)PDLG(pwndT1)->result);
 
                 pwndT3 = NULL;
-                if (wParam != 0) {
+                if (wParam != 0)
+                {
                     pwndT3 = _GetDlgItem(pwnd, (UINT)wParam);
                 }
 
@@ -771,9 +782,9 @@ DoCleanup:
                 ThreadUnlock(&tlpwndT2);
 
                 PDLG(pwndT1)->result = (UINT)wParam;
-//                if (PDLG(pwnd)->spwndFocusSave) {
-//                    Lock(&(PDLG(pwnd)->spwndFocusSave), pwndT2);
-//                }
+                //                if (PDLG(pwnd)->spwndFocusSave) {
+                //                    Lock(&(PDLG(pwnd)->spwndFocusSave), pwndT2);
+                //                }
 
                 NotifyWinEvent(EVENT_OBJECT_DEFACTIONCHANGE, HW(pwndT1), OBJID_CLIENT, INDEXID_CONTAINER);
             }
@@ -784,7 +795,7 @@ DoCleanup:
             pwndT1 = GetParentDialog(pwnd);
 
             if (!PDLG(pwndT1)->fEnd && PDLG(pwndT1)->result)
-                return(MAKELONG(PDLG(pwndT1)->result, DC_HASDEFID));
+                return (MAKELONG(PDLG(pwndT1)->result, DC_HASDEFID));
             else
                 return 0;
             break;
@@ -801,31 +812,39 @@ DoCleanup:
 
             hwndT1 = GetFocus();
             pwndT2 = ValidateHwndNoRip(hwndT1);
-            if (LOWORD(lParam)) {
+            if (LOWORD(lParam))
+            {
                 if (pwndT2 == NULL)
                     pwndT2 = pwndTop;
 
                 /*
                  * wParam contains the pwnd of the ctl to set focus to.
                  */
-                if ((pwndT1 = ValidateHwnd((HWND)wParam)) == NULL) {
+                if ((pwndT1 = ValidateHwnd((HWND)wParam)) == NULL)
+                {
                     ThreadUnlock(&tlpwndTop);
                     return TRUE;
                 }
-            } else {
-                if (pwndT2 == NULL) {
+            }
+            else
+            {
+                if (pwndT2 == NULL)
+                {
 
                     /*
                      * Set focus to the first tab item.
                      */
                     pwndT1 = _GetNextDlgTabItem(pwndTop, NULL, FALSE);
                     pwndT2 = pwndTop;
-                } else {
+                }
+                else
+                {
 
                     /*
                      * If window with focus not a dlg ctl, ignore message.
                      */
-                    if (!_IsChild(pwndTop, pwndT2)) {
+                    if (!_IsChild(pwndTop, pwndT2))
+                    {
                         ThreadUnlock(&tlpwndTop);
                         return TRUE;
                     }
@@ -837,7 +856,8 @@ DoCleanup:
                     /*
                      * If there is no next item, ignore the message.
                      */
-                    if (pwndT1 == NULL) {
+                    if (pwndT1 == NULL)
+                    {
                         ThreadUnlock(&tlpwndTop);
                         return TRUE;
                     }
@@ -868,10 +888,12 @@ DoCleanup:
         case WM_LBUTTONDOWN:
         case WM_NCLBUTTONDOWN:
             hwndT1 = GetFocus();
-            if (hwndT1 != NULL) {
+            if (hwndT1 != NULL)
+            {
                 pwndT1 = ValidateHwndNoRip(hwndT1);
 
-                if (GETFNID(pwndT1) == FNID_COMBOBOX) {
+                if (GETFNID(pwndT1) == FNID_COMBOBOX)
+                {
 
                     /*
                      * If user clicks anywhere in dialog box and a combo box (or
@@ -881,8 +903,9 @@ DoCleanup:
                     ThreadLockAlways(pwndT1, &tlpwndT1);
                     SendMessage(HWq(pwndT1), CB_SHOWDROPDOWN, FALSE, 0);
                     ThreadUnlock(&tlpwndT1);
-
-                } else {
+                }
+                else
+                {
                     PWND pwndParent;
 
                     /*
@@ -892,7 +915,8 @@ DoCleanup:
                      * for EditWndProc: it's a client proc address.
                      */
                     pwndParent = REBASEPWND(pwndT1, spwndParent);
-                    if (GETFNID(pwndParent) == FNID_COMBOBOX) {
+                    if (GETFNID(pwndParent) == FNID_COMBOBOX)
+                    {
                         pwndT1 = pwndParent;
                         ThreadLock(pwndT1, &tlpwndT1);
                         SendMessage(HWq(pwndT1), CB_SHOWDROPDOWN, FALSE, 0);
@@ -922,11 +946,12 @@ DoCleanup:
 
         case WM_NOTIFYFORMAT:
             if (lParam == NF_QUERY)
-                return((PDLG(pwnd)->flags & DLGF_ANSI ) ? NFR_ANSI : NFR_UNICODE);
+                return ((PDLG(pwnd)->flags & DLGF_ANSI) ? NFR_ANSI : NFR_UNICODE);
             return result;
 
         case WM_INPUTLANGCHANGEREQUEST:
-            if (IS_IME_ENABLED()) {
+            if (IS_IME_ENABLED())
+            {
                 /*
                  * #115190
                  * For dialogbox itself, buttons/static controls on top of
@@ -934,25 +959,30 @@ DoCleanup:
                  */
                 break;
             }
-            if (PDLG(pwnd)->lpfnDlg == MB_DlgProc) {
+            if (PDLG(pwnd)->lpfnDlg == MB_DlgProc)
+            {
                 break;
             }
             goto CallDWP;
 
         default:
-CallDWP:
+        CallDWP:
             return DefWindowProcWorker(pwnd, message, wParam, lParam, fAnsi);
         }
-    } else if ((message == WM_SHOWWINDOW) && result) {
+    }
+    else if ((message == WM_SHOWWINDOW) && result)
+    {
 
         /*
          * For a visible-case we want to snap the cursor regardless of
          * what was returned from the dialog-handler on the client.  If
          * we're going visible, snap the cursor to the dialog-button.
          */
-        if (GetParentDialog(pwnd) == pwnd) {
+        if (GetParentDialog(pwnd) == pwnd)
+        {
 
-            if (wParam && ((LOWORD(lParam) == 0) || !PDLG(pwnd)->fEnd)) {
+            if (wParam && ((LOWORD(lParam) == 0) || !PDLG(pwnd)->fEnd))
+            {
 
                 /*
                  * Snap the cursor to the center of the default button.
@@ -962,17 +992,17 @@ CallDWP:
                  * in the same refresh cycle, the display of the cursor
                  * would not reflect the new position.
                  */
-                if (TEST_PUSIF(PUSIF_SNAPTO) &&
-                        IsInForegroundQueue(hwnd)) {
+                if (TEST_PUSIF(PUSIF_SNAPTO) && IsInForegroundQueue(hwnd))
+                {
                     hwndT1 = GetDlgItem(hwnd, (int)PDLG(pwnd)->result);
-                    if (hwndT1) {
+                    if (hwndT1)
+                    {
                         RECT rc;
 
                         NtUserShowCursor(FALSE);
 
                         GetWindowRect(hwndT1, &rc);
-                        NtUserSetCursorPos(rc.left + ((rc.right - rc.left)/2),
-                                     rc.top + ((rc.bottom - rc.top)/2));
+                        NtUserSetCursorPos(rc.left + ((rc.right - rc.left) / 2), rc.top + ((rc.bottom - rc.top) / 2));
 
                         NtUserShowCursor(TRUE);
                     }
@@ -1005,15 +1035,12 @@ CallDWP:
 
 
 FUNCLOG4(LOG_GENERAL, LRESULT, WINAPI, DefDlgProcW, HWND, hwnd, UINT, message, WPARAM, wParam, LPARAM, lParam)
-LRESULT WINAPI DefDlgProcW(
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT WINAPI DefDlgProcW(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     PWND pwnd;
 
-    if ((pwnd = ValidateHwnd(hwnd)) == NULL) {
+    if ((pwnd = ValidateHwnd(hwnd)) == NULL)
+    {
         return (0L);
     }
 
@@ -1022,15 +1049,12 @@ LRESULT WINAPI DefDlgProcW(
 
 
 FUNCLOG4(LOG_GENERAL, LRESULT, WINAPI, DefDlgProcA, HWND, hwnd, UINT, message, WPARAM, wParam, LPARAM, lParam)
-LRESULT WINAPI DefDlgProcA(
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT WINAPI DefDlgProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     PWND pwnd;
 
-    if ((pwnd = ValidateHwnd(hwnd)) == NULL) {
+    if ((pwnd = ValidateHwnd(hwnd)) == NULL)
+    {
         return (0L);
     }
 
@@ -1044,11 +1068,7 @@ LRESULT WINAPI DefDlgProcA(
 * History:
 \***************************************************************************/
 
-INT_PTR DialogBox2(
-    HWND hwnd,
-    HWND hwndOwner,
-    BOOL fDisabled,
-    BOOL fOwnerIsActiveWindow)
+INT_PTR DialogBox2(HWND hwnd, HWND hwndOwner, BOOL fDisabled, BOOL fOwnerIsActiveWindow)
 {
     MSG msg;
     INT_PTR result;
@@ -1058,18 +1078,24 @@ INT_PTR DialogBox2(
     HWND hwndCapture;
     PWND pwnd;
 
-    if (hwnd) {
+    if (hwnd)
+    {
         pwnd = ValidateHwnd(hwnd);
-    } else {
+    }
+    else
+    {
         pwnd = NULL;
     }
 
     CheckLock(pwnd);
 
-    if (pwnd == NULL) {
-        if ((hwndOwner != NULL) && !fDisabled && IsWindow(hwndOwner)) {
+    if (pwnd == NULL)
+    {
+        if ((hwndOwner != NULL) && !fDisabled && IsWindow(hwndOwner))
+        {
             NtUserEnableWindow(hwndOwner, TRUE);
-            if (fOwnerIsActiveWindow) {
+            if (fOwnerIsActiveWindow)
+            {
 
                 /*
                  * The dialog box failed but we disabled the owner in
@@ -1085,7 +1111,8 @@ INT_PTR DialogBox2(
     }
 
     hwndCapture = GetCapture();
-    if (hwndCapture != NULL) {
+    if (hwndCapture != NULL)
+    {
         SendMessage(hwndCapture, WM_CANCELMODE, 0, 0);
     }
 
@@ -1105,20 +1132,23 @@ INT_PTR DialogBox2(
     if ((SYSMET(SLOWMACHINE) & 1) && !fShown && !PDLG(pwnd)->fEnd)
         goto ShowIt;
 
-    while (PDLG(pwnd) && (!PDLG(pwnd)->fEnd)) {
-        if (!PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-ShowIt:
-            if (!fShown) {
+    while (PDLG(pwnd) && (!PDLG(pwnd)->fEnd))
+    {
+        if (!PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+        {
+        ShowIt:
+            if (!fShown)
+            {
                 fShown = TRUE;
 
 #ifdef SYSMODALWINDOWS
-                if (pwnd == gspwndSysModal) {
+                if (pwnd == gspwndSysModal)
+                {
                     /*
                      * Make this a topmost window
                      */
                     NtUserSetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0,
-                               SWP_NOSIZE | SWP_NOMOVE |
-                               SWP_NOREDRAW | SWP_NOACTIVATE);
+                                       SWP_NOSIZE | SWP_NOMOVE | SWP_NOREDRAW | SWP_NOACTIVATE);
                 }
 #endif
 
@@ -1126,33 +1156,40 @@ ShowIt:
                 UpdateWindow(hwnd);
 
                 NotifyWinEvent(EVENT_SYSTEM_DIALOGSTART, hwnd, OBJID_WINDOW, INDEXID_CONTAINER);
-            } else {
+            }
+            else
+            {
                 /*
                  * Make sure window still exists
                  */
                 if (hwndOwner && !IsWindow(hwndOwner))
                     hwndOwner = NULL;
 
-                if (hwndOwner && fWantIdleMsgs && !fSentIdleMessage) {
+                if (hwndOwner && fWantIdleMsgs && !fSentIdleMessage)
+                {
                     fSentIdleMessage = TRUE;
 
                     SendMessage(hwndOwner, WM_ENTERIDLE, MSGF_DIALOGBOX, (LPARAM)hwnd);
-                } else {
-                    if ((RevalidateHwnd(hwnd)==NULL) || (pwnd->fnid & FNID_STATUS_BITS))
+                }
+                else
+                {
+                    if ((RevalidateHwnd(hwnd) == NULL) || (pwnd->fnid & FNID_STATUS_BITS))
                         break;
 
                     NtUserWaitMessage();
                 }
             }
-
-        } else {
+        }
+        else
+        {
             /*
              * We got a real message.  Reset fSentIdleMessage so that we send
              * one next time things are calm.
              */
             fSentIdleMessage = FALSE;
 
-            if (msg.message == WM_QUIT) {
+            if (msg.message == WM_QUIT)
+            {
                 PostQuitMessage((int)msg.wParam);
                 break;
             }
@@ -1162,14 +1199,16 @@ ShowIt:
              * to copy its content to the clipboard.
              * Fall through in case hooking apps look for these keys.
              */
-            if (TestWF(pwnd, WFMSGBOX)) {
-                if ( (msg.message == WM_CHAR && LOBYTE(msg.wParam) == 3) ||
-                     (msg.message == WM_KEYDOWN && LOBYTE(msg.wParam) == VK_INSERT && GetKeyState(VK_CONTROL) < 0)) {
-                        /*
+            if (TestWF(pwnd, WFMSGBOX))
+            {
+                if ((msg.message == WM_CHAR && LOBYTE(msg.wParam) == 3) ||
+                    (msg.message == WM_KEYDOWN && LOBYTE(msg.wParam) == VK_INSERT && GetKeyState(VK_CONTROL) < 0))
+                {
+                    /*
                          * Send the WM_COPY message and let the original message fall through
                          * as some apps might want it
                          */
-                        SendMessage(hwnd, WM_COPY, 0, 0);
+                    SendMessage(hwnd, WM_COPY, 0, 0);
                 }
             }
 
@@ -1178,7 +1217,8 @@ ShowIt:
              * messages to be hooked for both modal and modeless dialog
              * boxes.
              */
-            if (!IsDialogMessage(hwnd, &msg)) {
+            if (!IsDialogMessage(hwnd, &msg))
+            {
                 TranslateMessage(&msg);
                 DispatchMessage(&msg);
             }
@@ -1192,18 +1232,17 @@ ShowIt:
              * the user may be bringing down a menu and we want the dialog
              * box to become visible.
              */
-            if (!fShown && (msg.message == WM_TIMER ||
-                    msg.message == WM_SYSTIMER || msg.message == WM_SYSKEYDOWN))
+            if (!fShown && (msg.message == WM_TIMER || msg.message == WM_SYSTIMER || msg.message == WM_SYSKEYDOWN))
                 goto ShowIt;
         }
 
-        if (!RevalidateHwnd(hwnd)) {
+        if (!RevalidateHwnd(hwnd))
+        {
             /*
              * Bogus case - we've already been destroyed somehow (by app,
              * GP, etc.)
              */
-            RIPMSG0(RIP_WARNING,
-               "Dialog should be dismissed with EndDialog, not DestroyWindow");
+            RIPMSG0(RIP_WARNING, "Dialog should be dismissed with EndDialog, not DestroyWindow");
             break;
         }
     }
@@ -1213,7 +1252,8 @@ ShowIt:
     /*
      * Make sure the window still exists
      */
-    if (!RevalidateHwnd(hwnd)) {
+    if (!RevalidateHwnd(hwnd))
+    {
         return 0;
     }
 
@@ -1231,9 +1271,10 @@ ShowIt:
      * in the foreground we can safely set the foreground back
      * to the owner.
      */
-    if (hwndOwner != NULL) {
-        if (IsCurrentThreadForeground() &&
-            !IsInForegroundQueue(hwndOwner)) {
+    if (hwndOwner != NULL)
+    {
+        if (IsCurrentThreadForeground() && !IsInForegroundQueue(hwndOwner))
+        {
             NtUserSetForegroundWindow(hwndOwner);
         }
     }
@@ -1250,13 +1291,8 @@ ShowIt:
 * 04-05-91 ScottLu      Created.
 \***************************************************************************/
 
-INT_PTR InternalDialogBox(
-    HANDLE hModule,
-    LPDLGTEMPLATE lpdt,
-    HWND hwndOwner,
-    DLGPROC pfnDialog,
-    LPARAM lParam,
-    UINT fSCDLGFlags)
+INT_PTR InternalDialogBox(HANDLE hModule, LPDLGTEMPLATE lpdt, HWND hwndOwner, DLGPROC pfnDialog, LPARAM lParam,
+                          UINT fSCDLGFlags)
 {
     INT_PTR i;
     BOOL fDisabled = FALSE;
@@ -1266,7 +1302,7 @@ INT_PTR InternalDialogBox(
     TL tlpwndOwner;
     BOOL fUnlockOwner;
 
-    UserAssert(!(fSCDLGFlags & ~(SCDLG_CLIENT|SCDLG_ANSI|SCDLG_16BIT)));    // These are the only valid flags
+    UserAssert(!(fSCDLGFlags & ~(SCDLG_CLIENT | SCDLG_ANSI | SCDLG_16BIT))); // These are the only valid flags
 
     /*
      * If hwndOwner == HWNDESKTOP, change it to NULL.  This way the desktop
@@ -1280,18 +1316,23 @@ INT_PTR InternalDialogBox(
      * validation layer which always returns 0 for invalid hwnds even
      * if the function is spec'ed to return -1.  Autocad setup bug #3615
      */
-    if (hwndOwner) {
-        if ((pwndOwner = ValidateHwnd(hwndOwner)) == NULL) {
+    if (hwndOwner)
+    {
+        if ((pwndOwner = ValidateHwnd(hwndOwner)) == NULL)
+        {
             return (0L);
         }
-    } else {
+    }
+    else
+    {
         pwndOwner = NULL;
     }
 
     CheckLock(pwndOwner);
 
     fUnlockOwner = FALSE;
-    if (pwndOwner != NULL) {
+    if (pwndOwner != NULL)
+    {
 
         /* The following fixes an AV in Corel Photo-Paint 6.0.  It passes a
          * 16-bit HWND in, and croaks at some point when it gets 16-bit hwnds
@@ -1302,7 +1343,8 @@ INT_PTR InternalDialogBox(
         /*
          * Make sure the owner is a top level window.
          */
-        if (TestwndChild(pwndOwner)) {
+        if (TestwndChild(pwndOwner))
+        {
             pwndOwner = GetTopLevelWindow(pwndOwner);
             hwndOwner = HWq(pwndOwner);
             ThreadLock(pwndOwner, &tlpwndOwner);
@@ -1326,17 +1368,18 @@ INT_PTR InternalDialogBox(
      * Don't show cursors on a mouseless system. Put up an hour glass while
      * the dialog comes up.
      */
-    if (SYSMET(MOUSEPRESENT)) {
+    if (SYSMET(MOUSEPRESENT))
+    {
         NtUserSetCursor(LoadCursor(NULL, IDC_WAIT));
     }
 
     /*
      * Creates the dialog.  Frees the menu if this routine fails.
      */
-    hwnd = InternalCreateDialog(hModule, lpdt, 0, hwndOwner,
-            pfnDialog, lParam, fSCDLGFlags);
+    hwnd = InternalCreateDialog(hModule, lpdt, 0, hwndOwner, pfnDialog, lParam, fSCDLGFlags);
 
-    if (hwnd == NULL) {
+    if (hwnd == NULL)
+    {
 
         /*
          * The dialog creation failed.  Re-enable the window, destroy the
@@ -1366,20 +1409,16 @@ INT_PTR InternalDialogBox(
 **
 \***************************************************************************/
 
-void
-RepositionRect(
-        PMONITOR    pMonitor,
-        LPRECT      lprc,
-        DWORD       dwStyle,
-        DWORD       dwExStyle)
+void RepositionRect(PMONITOR pMonitor, LPRECT lprc, DWORD dwStyle, DWORD dwExStyle)
 {
-    LPRECT      lprcClip;
-    int         y;
+    LPRECT lprcClip;
+    int y;
 
     UserAssert(lprc);
     UserAssert(pMonitor);
 
-    if (dwStyle & WS_CHILD) {
+    if (dwStyle & WS_CHILD)
+    {
         if (dwExStyle & WS_EX_CONTROLPARENT)
             return;
 
@@ -1389,9 +1428,13 @@ RepositionRect(
          */
         pMonitor = GetPrimaryMonitor();
         lprcClip = KPRECT_TO_PRECT(&pMonitor->rcMonitor);
-    } else if (dwExStyle & WS_EX_TOOLWINDOW) {
+    }
+    else if (dwExStyle & WS_EX_TOOLWINDOW)
+    {
         lprcClip = KPRECT_TO_PRECT(&pMonitor->rcMonitor);
-    } else {
+    }
+    else
+    {
         lprcClip = KPRECT_TO_PRECT(&pMonitor->rcWork);
     }
 
@@ -1399,19 +1442,23 @@ RepositionRect(
 
     y = lprcClip->bottom - (SYSMET(CYEDGE) * 2 + SYSMET(CYKANJIWINDOW));
 
-    if (lprc->bottom > y) {
+    if (lprc->bottom > y)
+    {
         OffsetRect(lprc, 0, y - lprc->bottom);
     }
 
-    if (lprc->top < lprcClip->top) {
+    if (lprc->top < lprcClip->top)
+    {
         OffsetRect(lprc, 0, lprcClip->top - lprc->top);
     }
 
-    if (lprc->right > lprcClip->right) {
+    if (lprc->right > lprcClip->right)
+    {
         OffsetRect(lprc, lprcClip->right - lprc->right, 0);
     }
 
-    if (lprc->left < lprcClip->left) {
+    if (lprc->left < lprcClip->left)
+    {
         OffsetRect(lprc, lprcClip->left - lprc->left, 0);
     }
 }
@@ -1424,13 +1471,12 @@ RepositionRect(
 
 
 FUNCLOG2(LOG_GENERAL, BOOL, DUMMYCALLINGTYPE, MapDialogRect, HWND, hwnd, LPRECT, lprc)
-BOOL MapDialogRect(
-    HWND hwnd,
-    LPRECT lprc)
+BOOL MapDialogRect(HWND hwnd, LPRECT lprc)
 {
     PWND pwnd;
 
-    if ((pwnd = ValidateHwnd(hwnd)) == NULL) {
+    if ((pwnd = ValidateHwnd(hwnd)) == NULL)
+    {
         return FALSE;
     }
 
@@ -1447,4 +1493,3 @@ BOOL MapDialogRect(
 
     return TRUE;
 }
-

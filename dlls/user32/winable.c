@@ -22,14 +22,14 @@
 \***************************************************************************/
 
 FUNCLOG2(LOG_GENERAL, BOOL, WINAPI, GetWindowInfo, HWND, hwnd, PWINDOWINFO, pwi)
-BOOL WINAPI
-GetWindowInfo(HWND hwnd, PWINDOWINFO pwi)
+BOOL WINAPI GetWindowInfo(HWND hwnd, PWINDOWINFO pwi)
 {
     PWND pwnd;
     UINT cBorders;
     PCLS pclsT;
 
-    if (pwi->cbSize != sizeof(WINDOWINFO)) {
+    if (pwi->cbSize != sizeof(WINDOWINFO))
+    {
         RIPERR1(ERROR_INVALID_PARAMETER, RIP_WARNING, "WINDOWINFO.cbSize %d is wrong", pwi->cbSize);
     }
     /*
@@ -37,11 +37,13 @@ GetWindowInfo(HWND hwnd, PWINDOWINFO pwi)
      */
     pwnd = ValidateHwnd(hwnd);
 
-    if (pwnd == NULL) {
+    if (pwnd == NULL)
+    {
         return FALSE;
     }
 
-    try {
+    try
+    {
         // Window rect
         pwi->rcWindow = pwnd->rcWindow;
 
@@ -65,20 +67,26 @@ GetWindowInfo(HWND hwnd, PWINDOWINFO pwi)
         pwi->atomWindowType = pclsT->atomNVClassName;
 
         // Version
-        if (TestWF(pwnd, WFWIN50COMPAT)) {
+        if (TestWF(pwnd, WFWIN50COMPAT))
+        {
             pwi->wCreatorVersion = VER50;
-        } else if (TestWF(pwnd, WFWIN40COMPAT)) {
+        }
+        else if (TestWF(pwnd, WFWIN40COMPAT))
+        {
             pwi->wCreatorVersion = VER40;
-        } else if (TestWF(pwnd, WFWIN31COMPAT)) {
+        }
+        else if (TestWF(pwnd, WFWIN31COMPAT))
+        {
             pwi->wCreatorVersion = VER31;
-        } else {
+        }
+        else
+        {
             pwi->wCreatorVersion = VER30;
         }
-    } except (W32ExceptionHandler(FALSE, RIP_WARNING)) {
-        RIPERR1(ERROR_INVALID_WINDOW_HANDLE,
-                RIP_WARNING,
-                "Window %x no longer valid",
-                hwnd);
+    }
+    except(W32ExceptionHandler(FALSE, RIP_WARNING))
+    {
+        RIPERR1(ERROR_INVALID_WINDOW_HANDLE, RIP_WARNING, "Window %x no longer valid", hwnd);
         return FALSE;
     }
 

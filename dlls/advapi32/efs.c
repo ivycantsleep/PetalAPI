@@ -27,22 +27,20 @@ Revision History:
 #include <windows.h>
 #include <feclient.h>
 
-#define FE_CLIENT_DLL      L"feclient.dll"
+#define FE_CLIENT_DLL L"feclient.dll"
 
 
 //
 // Global Variables
 //
 
-LPFE_CLIENT_INFO    FeClientInfo   = NULL;
-HMODULE             FeClientModule = NULL;
-CRITICAL_SECTION    FeClientLoadCritical;
+LPFE_CLIENT_INFO FeClientInfo = NULL;
+HMODULE FeClientModule = NULL;
+CRITICAL_SECTION FeClientLoadCritical;
 
 
 LPWSTR
-GetFeClientDll(
-    VOID
-    )
+GetFeClientDll(VOID)
 /*++
 
 Routine Description:
@@ -61,14 +59,11 @@ Return Value:
 --*/
 
 {
-    return( FE_CLIENT_DLL );
+    return (FE_CLIENT_DLL);
 }
 
-
-BOOL
-LoadAndInitFeClient(
-    VOID
-    )
+
+BOOL LoadAndInitFeClient(VOID)
 
 /*++
 
@@ -102,46 +97,46 @@ Return Value:
     FeClientDllName = GetFeClientDll();
 
     EnterCriticalSection(&FeClientLoadCritical);
-    if (FeClientInfo) {
-       LeaveCriticalSection(&FeClientLoadCritical);
-       return( TRUE );
+    if (FeClientInfo)
+    {
+        LeaveCriticalSection(&FeClientLoadCritical);
+        return (TRUE);
     }
-    if (FeClientDllName) {
-        FeClientModule = LoadLibraryW( FeClientDllName );
-        if (FeClientModule == NULL) {
-            DbgPrint("Unable to load client dll, error = %d\n",GetLastError());
+    if (FeClientDllName)
+    {
+        FeClientModule = LoadLibraryW(FeClientDllName);
+        if (FeClientModule == NULL)
+        {
+            DbgPrint("Unable to load client dll, error = %d\n", GetLastError());
             LeaveCriticalSection(&FeClientLoadCritical);
-            return( FALSE );
+            return (FALSE);
         }
     }
 
-    ClientInitRoutine = (LPFEAPI_CLIENT_INITIALIZE) GetProcAddress( FeClientModule, (LPCSTR)"FeClientInitialize");
+    ClientInitRoutine = (LPFEAPI_CLIENT_INITIALIZE)GetProcAddress(FeClientModule, (LPCSTR) "FeClientInitialize");
 
 
-
-    if (NULL == ClientInitRoutine) {
-        FreeLibrary( FeClientModule );
-        DbgPrint("Unable to locate init routine, error = %d\n",GetLastError());
+    if (NULL == ClientInitRoutine)
+    {
+        FreeLibrary(FeClientModule);
+        DbgPrint("Unable to locate init routine, error = %d\n", GetLastError());
         LeaveCriticalSection(&FeClientLoadCritical);
-        return( FALSE );
+        return (FALSE);
     }
 
-    Inited = (*ClientInitRoutine)( FE_REVISION_1_0, &FeClientInfo );
+    Inited = (*ClientInitRoutine)(FE_REVISION_1_0, &FeClientInfo);
 
     LeaveCriticalSection(&FeClientLoadCritical);
-    if (!Inited) {
-        FreeLibrary( FeClientModule );
-        return( FALSE );
+    if (!Inited)
+    {
+        FreeLibrary(FeClientModule);
+        return (FALSE);
     }
 
-    return( TRUE );
+    return (TRUE);
 }
 
-BOOL
-WINAPI
-EncryptFileA (
-    LPCSTR lpFileName
-    )
+BOOL WINAPI EncryptFileA(LPCSTR lpFileName)
 /*++
 
 Routine Description:
@@ -165,31 +160,30 @@ Return Value:
     NTSTATUS Status;
 
     Unicode.Length = 0;
-    Unicode.MaximumLength = STATIC_UNICODE_BUFFER_LENGTH * sizeof( WCHAR );
+    Unicode.MaximumLength = STATIC_UNICODE_BUFFER_LENGTH * sizeof(WCHAR);
     Unicode.Buffer = UnicodeBuffer;
 
-    RtlInitAnsiString(&AnsiString,lpFileName);
-    Status = RtlAnsiStringToUnicodeString(&Unicode,&AnsiString,FALSE);
+    RtlInitAnsiString(&AnsiString, lpFileName);
+    Status = RtlAnsiStringToUnicodeString(&Unicode, &AnsiString, FALSE);
 
-    if ( !NT_SUCCESS(Status) ) {
-        if ( Status == STATUS_BUFFER_OVERFLOW ) {
+    if (!NT_SUCCESS(Status))
+    {
+        if (Status == STATUS_BUFFER_OVERFLOW)
+        {
             SetLastError(ERROR_FILENAME_EXCED_RANGE);
-        } else {
+        }
+        else
+        {
             BaseSetLastNTError(Status);
         }
         return FALSE;
     }
 
-    return ( EncryptFileW( Unicode.Buffer ));
-
+    return (EncryptFileW(Unicode.Buffer));
 }
 
-
-BOOL
-WINAPI
-EncryptFileW (
-    LPCWSTR lpFileName
-    )
+
+BOOL WINAPI EncryptFileW(LPCWSTR lpFileName)
 /*++
 
 Routine Description:
@@ -215,29 +209,27 @@ Return Value:
     // process.
     //
 
-    if (FeClientInfo == NULL) {
+    if (FeClientInfo == NULL)
+    {
         rc = LoadAndInitFeClient();
-        if (!rc) {
-            return(rc);
+        if (!rc)
+        {
+            return (rc);
         }
     }
 
-    Result = FeClientInfo->lpServices->EncryptFile( lpFileName );
+    Result = FeClientInfo->lpServices->EncryptFile(lpFileName);
 
-    if (ERROR_SUCCESS != Result) {
-        SetLastError( Result );
-        return( FALSE );
+    if (ERROR_SUCCESS != Result)
+    {
+        SetLastError(Result);
+        return (FALSE);
     }
 
-    return( TRUE );
+    return (TRUE);
 }
 
-BOOL
-WINAPI
-DecryptFileA (
-    IN LPCSTR lpFileName,
-    IN DWORD  dwRecovery
-    )
+BOOL WINAPI DecryptFileA(IN LPCSTR lpFileName, IN DWORD dwRecovery)
 /*++
 
 Routine Description:
@@ -264,31 +256,30 @@ Return Value:
     NTSTATUS Status;
 
     Unicode.Length = 0;
-    Unicode.MaximumLength = STATIC_UNICODE_BUFFER_LENGTH * sizeof( WCHAR );
+    Unicode.MaximumLength = STATIC_UNICODE_BUFFER_LENGTH * sizeof(WCHAR);
     Unicode.Buffer = UnicodeBuffer;
 
-    RtlInitAnsiString(&AnsiString,lpFileName);
-    Status = RtlAnsiStringToUnicodeString(&Unicode,&AnsiString,FALSE);
+    RtlInitAnsiString(&AnsiString, lpFileName);
+    Status = RtlAnsiStringToUnicodeString(&Unicode, &AnsiString, FALSE);
 
-    if ( !NT_SUCCESS(Status) ) {
-        if ( Status == STATUS_BUFFER_OVERFLOW ) {
+    if (!NT_SUCCESS(Status))
+    {
+        if (Status == STATUS_BUFFER_OVERFLOW)
+        {
             SetLastError(ERROR_FILENAME_EXCED_RANGE);
-        } else {
+        }
+        else
+        {
             BaseSetLastNTError(Status);
         }
         return FALSE;
     }
 
-    return ( DecryptFileW( Unicode.Buffer, dwRecovery ));
+    return (DecryptFileW(Unicode.Buffer, dwRecovery));
 }
 
-
-BOOL
-WINAPI
-DecryptFileW (
-    IN LPCWSTR lpFileName,
-    IN DWORD   dwRecovery
-    )
+
+BOOL WINAPI DecryptFileW(IN LPCWSTR lpFileName, IN DWORD dwRecovery)
 /*++
 
 Routine Description:
@@ -314,30 +305,27 @@ Return Value:
     // process.
     //
 
-    if (FeClientInfo == NULL) {
+    if (FeClientInfo == NULL)
+    {
         rc = LoadAndInitFeClient();
-        if (!rc) {
-            return(rc);
+        if (!rc)
+        {
+            return (rc);
         }
     }
 
-    Result = FeClientInfo->lpServices->DecryptFile( lpFileName, dwRecovery );
+    Result = FeClientInfo->lpServices->DecryptFile(lpFileName, dwRecovery);
 
-    if (ERROR_SUCCESS != Result) {
-        SetLastError( Result );
-        return( FALSE );
+    if (ERROR_SUCCESS != Result)
+    {
+        SetLastError(Result);
+        return (FALSE);
     }
 
-    return( TRUE );
-
+    return (TRUE);
 }
 
-BOOL
-WINAPI
-FileEncryptionStatusA (
-    LPCSTR    lpFileName,
-    LPDWORD   lpStatus
-    )
+BOOL WINAPI FileEncryptionStatusA(LPCSTR lpFileName, LPDWORD lpStatus)
 /*++
 
 Routine Description:
@@ -361,31 +349,29 @@ Return Value:
     WCHAR UnicodeBuffer[STATIC_UNICODE_BUFFER_LENGTH];
 
     Unicode.Length = 0;
-    Unicode.MaximumLength = STATIC_UNICODE_BUFFER_LENGTH * sizeof( WCHAR );
+    Unicode.MaximumLength = STATIC_UNICODE_BUFFER_LENGTH * sizeof(WCHAR);
     Unicode.Buffer = UnicodeBuffer;
 
-    RtlInitAnsiString(&AnsiString,lpFileName);
-    Status = RtlAnsiStringToUnicodeString(&Unicode,&AnsiString,FALSE);
+    RtlInitAnsiString(&AnsiString, lpFileName);
+    Status = RtlAnsiStringToUnicodeString(&Unicode, &AnsiString, FALSE);
 
-    if ( !NT_SUCCESS(Status) ) {
-        if ( Status == STATUS_BUFFER_OVERFLOW ) {
+    if (!NT_SUCCESS(Status))
+    {
+        if (Status == STATUS_BUFFER_OVERFLOW)
+        {
             SetLastError(ERROR_FILENAME_EXCED_RANGE);
-        } else {
+        }
+        else
+        {
             BaseSetLastNTError(Status);
         }
         return FALSE;
     }
 
-    return ( FileEncryptionStatusW( Unicode.Buffer, lpStatus ));
-
+    return (FileEncryptionStatusW(Unicode.Buffer, lpStatus));
 }
 
-BOOL
-WINAPI
-FileEncryptionStatusW (
-    LPCWSTR    lpFileName,
-    LPDWORD    lpStatus
-    )
+BOOL WINAPI FileEncryptionStatusW(LPCWSTR lpFileName, LPDWORD lpStatus)
 /*++
 
 Routine Description:
@@ -413,24 +399,21 @@ Return Value:
     // process.
     //
 
-    if (FeClientInfo == NULL) {
+    if (FeClientInfo == NULL)
+    {
         rc = LoadAndInitFeClient();
-        if (!rc) {
-            return(rc);
+        if (!rc)
+        {
+            return (rc);
         }
     }
 
-    return (FeClientInfo->lpServices->FileEncryptionStatus( lpFileName, lpStatus ));
-
+    return (FeClientInfo->lpServices->FileEncryptionStatus(lpFileName, lpStatus));
 }
 
 DWORD
 WINAPI
-OpenEncryptedFileRawA(
-    LPCSTR          lpFileName,
-    ULONG           Flags,
-    PVOID *         Context
-    )
+OpenEncryptedFileRawA(LPCSTR lpFileName, ULONG Flags, PVOID *Context)
 {
     ANSI_STRING AnsiString;
     NTSTATUS Status;
@@ -438,34 +421,32 @@ OpenEncryptedFileRawA(
     WCHAR UnicodeBuffer[STATIC_UNICODE_BUFFER_LENGTH];
 
     Unicode.Length = 0;
-    Unicode.MaximumLength = STATIC_UNICODE_BUFFER_LENGTH * sizeof( WCHAR );
+    Unicode.MaximumLength = STATIC_UNICODE_BUFFER_LENGTH * sizeof(WCHAR);
     Unicode.Buffer = UnicodeBuffer;
 
-    RtlInitAnsiString(&AnsiString,lpFileName);
-    Status = RtlAnsiStringToUnicodeString(&Unicode,&AnsiString,FALSE);
+    RtlInitAnsiString(&AnsiString, lpFileName);
+    Status = RtlAnsiStringToUnicodeString(&Unicode, &AnsiString, FALSE);
 
-    if ( !NT_SUCCESS(Status) ) {
-        if ( Status == STATUS_BUFFER_OVERFLOW ) {
+    if (!NT_SUCCESS(Status))
+    {
+        if (Status == STATUS_BUFFER_OVERFLOW)
+        {
             SetLastError(ERROR_FILENAME_EXCED_RANGE);
-        } else {
+        }
+        else
+        {
             BaseSetLastNTError(Status);
         }
         return FALSE;
     }
 
-    return ( OpenEncryptedFileRawW( Unicode.Buffer, Flags, Context ));
+    return (OpenEncryptedFileRawW(Unicode.Buffer, Flags, Context));
 }
-
-
 
 
 DWORD
 WINAPI
-OpenEncryptedFileRawW(
-    LPCWSTR         lpFileName,
-    ULONG           Flags,
-    PVOID *         Context
-    )
+OpenEncryptedFileRawW(LPCWSTR lpFileName, ULONG Flags, PVOID *Context)
 {
     BOOL rc;
     DWORD Result;
@@ -475,24 +456,22 @@ OpenEncryptedFileRawW(
     // process.
     //
 
-    if (FeClientInfo == NULL) {
+    if (FeClientInfo == NULL)
+    {
         rc = LoadAndInitFeClient();
-        if (!rc) {
-            return(GetLastError());
+        if (!rc)
+        {
+            return (GetLastError());
         }
     }
 
-    return (FeClientInfo->lpServices->OpenFileRaw( lpFileName, Flags, Context ));
+    return (FeClientInfo->lpServices->OpenFileRaw(lpFileName, Flags, Context));
 }
 
 
 DWORD
 WINAPI
-ReadEncryptedFileRaw(
-    PFE_EXPORT_FUNC ExportCallback,
-    PVOID           CallbackContext,
-    PVOID           Context
-    )
+ReadEncryptedFileRaw(PFE_EXPORT_FUNC ExportCallback, PVOID CallbackContext, PVOID Context)
 {
     //
     // It doesn't make sense to call this before calling OpenRaw, so don't
@@ -500,16 +479,12 @@ ReadEncryptedFileRaw(
     // in the user process if it isn't.
     //
 
-    return (FeClientInfo->lpServices->ReadFileRaw( ExportCallback, CallbackContext, Context ));
+    return (FeClientInfo->lpServices->ReadFileRaw(ExportCallback, CallbackContext, Context));
 }
 
 DWORD
 WINAPI
-WriteEncryptedFileRaw(
-    PFE_IMPORT_FUNC ImportCallback,
-    PVOID           CallbackContext,
-    PVOID           Context
-    )
+WriteEncryptedFileRaw(PFE_IMPORT_FUNC ImportCallback, PVOID CallbackContext, PVOID Context)
 {
     //
     // It doesn't make sense to call this before calling OpenRaw, so don't
@@ -517,26 +492,19 @@ WriteEncryptedFileRaw(
     // in the user process if it isn't.
     //
 
-    return (FeClientInfo->lpServices->WriteFileRaw( ImportCallback, CallbackContext, Context ));
+    return (FeClientInfo->lpServices->WriteFileRaw(ImportCallback, CallbackContext, Context));
 }
 
-VOID
-WINAPI
-CloseEncryptedFileRaw(
-    PVOID           Context
-    )
+VOID WINAPI CloseEncryptedFileRaw(PVOID Context)
 {
-    FeClientInfo->lpServices->CloseFileRaw( Context );
+    FeClientInfo->lpServices->CloseFileRaw(Context);
 
     return;
 }
 
-
+
 DWORD
-QueryUsersOnEncryptedFile(
-    IN  LPCWSTR lpFileName,
-    OUT PENCRYPTION_CERTIFICATE_HASH_LIST * pUsers
-    )
+QueryUsersOnEncryptedFile(IN LPCWSTR lpFileName, OUT PENCRYPTION_CERTIFICATE_HASH_LIST *pUsers)
 /*++
 
 Routine Description:
@@ -565,25 +533,27 @@ Return Value:
     // process.
     //
 
-    if (FeClientInfo == NULL) {
+    if (FeClientInfo == NULL)
+    {
         rc = LoadAndInitFeClient();
-        if (!rc) {
-            return(rc);
+        if (!rc)
+        {
+            return (rc);
         }
     }
 
-    if ((lpFileName != NULL) && (pUsers != NULL)) {
-        return(FeClientInfo->lpServices->QueryUsers( lpFileName, pUsers ));
-    } else {
-        return( ERROR_INVALID_PARAMETER );
+    if ((lpFileName != NULL) && (pUsers != NULL))
+    {
+        return (FeClientInfo->lpServices->QueryUsers(lpFileName, pUsers));
+    }
+    else
+    {
+        return (ERROR_INVALID_PARAMETER);
     }
 }
 
-
-VOID
-FreeEncryptionCertificateHashList(
-    IN PENCRYPTION_CERTIFICATE_HASH_LIST pUsers
-    )
+
+VOID FreeEncryptionCertificateHashList(IN PENCRYPTION_CERTIFICATE_HASH_LIST pUsers)
 /*++
 
 Routine Description:
@@ -608,9 +578,12 @@ Return Value:
     // if it weren't.
     //
 
-    if (pUsers != NULL) {
-        FeClientInfo->lpServices->FreeCertificateHashList( pUsers );
-    } else {
+    if (pUsers != NULL)
+    {
+        FeClientInfo->lpServices->FreeCertificateHashList(pUsers);
+    }
+    else
+    {
 
         //
         // nothing to do
@@ -622,10 +595,7 @@ Return Value:
 
 
 DWORD
-QueryRecoveryAgentsOnEncryptedFile(
-    IN  LPCWSTR lpFileName,
-    OUT PENCRYPTION_CERTIFICATE_HASH_LIST * pRecoveryAgents
-    )
+QueryRecoveryAgentsOnEncryptedFile(IN LPCWSTR lpFileName, OUT PENCRYPTION_CERTIFICATE_HASH_LIST *pRecoveryAgents)
 /*++
 
 Routine Description:
@@ -655,26 +625,28 @@ Return Value:
     // process.
     //
 
-    if (FeClientInfo == NULL) {
+    if (FeClientInfo == NULL)
+    {
         rc = LoadAndInitFeClient();
-        if (!rc) {
-            return(rc);
+        if (!rc)
+        {
+            return (rc);
         }
     }
 
-    if ((lpFileName != NULL) && (pRecoveryAgents != NULL)) {
-        return(FeClientInfo->lpServices->QueryRecoveryAgents( lpFileName, pRecoveryAgents ));
-    } else {
-        return( ERROR_INVALID_PARAMETER );
+    if ((lpFileName != NULL) && (pRecoveryAgents != NULL))
+    {
+        return (FeClientInfo->lpServices->QueryRecoveryAgents(lpFileName, pRecoveryAgents));
+    }
+    else
+    {
+        return (ERROR_INVALID_PARAMETER);
     }
 }
 
 
 DWORD
-RemoveUsersFromEncryptedFile(
-    IN LPCWSTR lpFileName,
-    IN PENCRYPTION_CERTIFICATE_HASH_LIST pHashes
-    )
+RemoveUsersFromEncryptedFile(IN LPCWSTR lpFileName, IN PENCRYPTION_CERTIFICATE_HASH_LIST pHashes)
 /*++
 
 Routine Description:
@@ -702,25 +674,27 @@ Return Value:
     // process.
     //
 
-    if (FeClientInfo == NULL) {
+    if (FeClientInfo == NULL)
+    {
         rc = LoadAndInitFeClient();
-        if (!rc) {
-            return(rc);
+        if (!rc)
+        {
+            return (rc);
         }
     }
 
-    if ((lpFileName != NULL) && (pHashes != NULL)) {
-        return(FeClientInfo->lpServices->RemoveUsers( lpFileName, pHashes ));
-    } else {
-        return( ERROR_INVALID_PARAMETER );
+    if ((lpFileName != NULL) && (pHashes != NULL))
+    {
+        return (FeClientInfo->lpServices->RemoveUsers(lpFileName, pHashes));
+    }
+    else
+    {
+        return (ERROR_INVALID_PARAMETER);
     }
 }
 
 DWORD
-AddUsersToEncryptedFile(
-    IN LPCWSTR lpFileName,
-    IN PENCRYPTION_CERTIFICATE_LIST pEncryptionCertificates
-    )
+AddUsersToEncryptedFile(IN LPCWSTR lpFileName, IN PENCRYPTION_CERTIFICATE_LIST pEncryptionCertificates)
 /*++
 
 Routine Description:
@@ -747,24 +721,27 @@ Return Value:
     // process.
     //
 
-    if (FeClientInfo == NULL) {
+    if (FeClientInfo == NULL)
+    {
         rc = LoadAndInitFeClient();
-        if (!rc) {
-            return(rc);
+        if (!rc)
+        {
+            return (rc);
         }
     }
 
-    if ((lpFileName != NULL) && (pEncryptionCertificates != NULL)) {
-        return(FeClientInfo->lpServices->AddUsers( lpFileName, pEncryptionCertificates ));
-    } else {
-        return( ERROR_INVALID_PARAMETER );
+    if ((lpFileName != NULL) && (pEncryptionCertificates != NULL))
+    {
+        return (FeClientInfo->lpServices->AddUsers(lpFileName, pEncryptionCertificates));
+    }
+    else
+    {
+        return (ERROR_INVALID_PARAMETER);
     }
 }
 
 DWORD
-SetUserFileEncryptionKey(
-    PENCRYPTION_CERTIFICATE pEncryptionCertificate
-    )
+SetUserFileEncryptionKey(PENCRYPTION_CERTIFICATE pEncryptionCertificate)
 /*++
 
 Routine Description:
@@ -791,14 +768,16 @@ Return Value:
     // process.
     //
 
-    if (FeClientInfo == NULL) {
+    if (FeClientInfo == NULL)
+    {
         rc = LoadAndInitFeClient();
-        if (!rc) {
-            return(rc);
+        if (!rc)
+        {
+            return (rc);
         }
     }
 
-    return(FeClientInfo->lpServices->SetKey( pEncryptionCertificate ));
+    return (FeClientInfo->lpServices->SetKey(pEncryptionCertificate));
 
     /*
     if (pEncryptionCertificate != NULL) {
@@ -809,13 +788,8 @@ Return Value:
 }
 
 DWORD
-DuplicateEncryptionInfoFile(
-     IN LPCWSTR SrcFileName,
-     IN LPCWSTR DstFileName, 
-     IN DWORD dwCreationDistribution, 
-     IN DWORD dwAttributes, 
-     IN LPSECURITY_ATTRIBUTES lpSecurityAttributes
-     )
+DuplicateEncryptionInfoFile(IN LPCWSTR SrcFileName, IN LPCWSTR DstFileName, IN DWORD dwCreationDistribution,
+                            IN DWORD dwAttributes, IN LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 /*++
 
 Routine Description:
@@ -849,32 +823,28 @@ Return Value:
 {
     DWORD rc;
 
-    if (FeClientModule == NULL) {
+    if (FeClientModule == NULL)
+    {
         rc = LoadAndInitFeClient();
-        if (!rc) {
-            return(rc);
+        if (!rc)
+        {
+            return (rc);
         }
     }
 
-    if (SrcFileName && DstFileName) {
-        return(FeClientInfo->lpServices->DuplicateEncryptionInfo( SrcFileName, 
-                                                                  DstFileName, 
-                                                                  dwCreationDistribution,
-                                                                  dwAttributes,
-                                                                  lpSecurityAttributes
-                                                                 ));
-    } else {
-        return( ERROR_INVALID_PARAMETER );
+    if (SrcFileName && DstFileName)
+    {
+        return (FeClientInfo->lpServices->DuplicateEncryptionInfo(SrcFileName, DstFileName, dwCreationDistribution,
+                                                                  dwAttributes, lpSecurityAttributes));
+    }
+    else
+    {
+        return (ERROR_INVALID_PARAMETER);
     }
 }
 
-
-BOOL
-WINAPI
-EncryptionDisable(
-    IN LPCWSTR DirPath,
-    IN BOOL Disable
-    )
+
+BOOL WINAPI EncryptionDisable(IN LPCWSTR DirPath, IN BOOL Disable)
 
 /*++
 
@@ -902,26 +872,23 @@ Return Value:
     // process.
     //
 
-    if (FeClientInfo == NULL) {
+    if (FeClientInfo == NULL)
+    {
         rc = LoadAndInitFeClient();
-        if (!rc) {
-            return(rc);
+        if (!rc)
+        {
+            return (rc);
         }
     }
 
-    return(FeClientInfo->lpServices->DisableDir( DirPath, Disable ));
-
+    return (FeClientInfo->lpServices->DisableDir(DirPath, Disable));
 }
 
-
+
 WINADVAPI
 DWORD
 WINAPI
-EncryptedFileKeyInfo(
-    IN  LPCWSTR lpFileName,
-    IN  DWORD   InfoClass,
-    OUT PEFS_RPC_BLOB * KeyInfo
-    )
+EncryptedFileKeyInfo(IN LPCWSTR lpFileName, IN DWORD InfoClass, OUT PEFS_RPC_BLOB *KeyInfo)
 /*++
 
 Routine Description:
@@ -950,28 +917,28 @@ Return Value:
     // process.
     //
 
-    if (FeClientInfo == NULL) {
+    if (FeClientInfo == NULL)
+    {
         rc = LoadAndInitFeClient();
-        if (!rc) {
-            return(rc);
+        if (!rc)
+        {
+            return (rc);
         }
     }
 
-    if ((lpFileName != NULL) && (KeyInfo != NULL)) {
-        return(FeClientInfo->lpServices->GetKeyInfo( lpFileName, InfoClass, KeyInfo ));
-    } else {
-        return( ERROR_INVALID_PARAMETER );
+    if ((lpFileName != NULL) && (KeyInfo != NULL))
+    {
+        return (FeClientInfo->lpServices->GetKeyInfo(lpFileName, InfoClass, KeyInfo));
+    }
+    else
+    {
+        return (ERROR_INVALID_PARAMETER);
     }
 }
 
 
-
 WINADVAPI
-VOID
-WINAPI
-FreeEncryptedFileKeyInfo(
-    IN PEFS_RPC_BLOB pKeyInfo
-    )
+VOID WINAPI FreeEncryptedFileKeyInfo(IN PEFS_RPC_BLOB pKeyInfo)
 /*++
 
 Routine Description:
@@ -995,9 +962,12 @@ Return Value:
     // if it weren't.
     //
 
-    if (pKeyInfo != NULL) {
-        FeClientInfo->lpServices->FreeKeyInfo( pKeyInfo );
-    } else {
+    if (pKeyInfo != NULL)
+    {
+        FeClientInfo->lpServices->FreeKeyInfo(pKeyInfo);
+    }
+    else
+    {
 
         //
         // nothing to do

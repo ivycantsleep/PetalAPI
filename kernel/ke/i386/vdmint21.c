@@ -38,36 +38,19 @@ Revision History:
 //
 
 BOOLEAN
-Ki386GetSelectorParameters(
-    IN USHORT Selector,
-    OUT PULONG Flags,
-    OUT PULONG Base,
-    OUT PULONG Limit
-    );
+Ki386GetSelectorParameters(IN USHORT Selector, OUT PULONG Flags, OUT PULONG Base, OUT PULONG Limit);
 
 //
 // Define forward referenced function prototypes.
 //
 
-VOID
-Ki386LoadTargetInt21Entry (
-    IN PKIPI_CONTEXT SignalDone,
-    IN PVOID Parameter1,
-    IN PVOID Parameter2,
-    IN PVOID Parameter3
-    );
+VOID Ki386LoadTargetInt21Entry(IN PKIPI_CONTEXT SignalDone, IN PVOID Parameter1, IN PVOID Parameter2,
+                               IN PVOID Parameter3);
 
-#define KiLoadInt21Entry() \
-    KeGetPcr()->IDT[0x21] = PsGetCurrentProcess()->Pcb.Int21Descriptor
-
+#define KiLoadInt21Entry() KeGetPcr()->IDT[0x21] = PsGetCurrentProcess()->Pcb.Int21Descriptor
+
 NTSTATUS
-Ke386SetVdmInterruptHandler (
-    PKPROCESS   Process,
-    ULONG       Interrupt,
-    USHORT      Selector,
-    ULONG       Offset,
-    BOOLEAN     Gate32
-    )
+Ke386SetVdmInterruptHandler(PKPROCESS Process, ULONG Interrupt, USHORT Selector, ULONG Offset, BOOLEAN Gate32)
 
 /*++
 
@@ -104,7 +87,7 @@ Return Value:
     KIRQL OldIrql;
     BOOLEAN LocalProcessor;
     KAFFINITY TargetProcessors;
-    PKPRCB  Prcb;
+    PKPRCB Prcb;
     KIDTENTRY IdtDescriptor;
     ULONG Flags, Base, Limit;
 
@@ -115,8 +98,9 @@ Return Value:
     //
 
     if (Interrupt != 0x21 || Offset >= (ULONG)MM_HIGHEST_USER_ADDRESS ||
-        !Ki386GetSelectorParameters(Selector, &Flags, &Base, &Limit) ){
-        return(STATUS_INVALID_PARAMETER);
+        !Ki386GetSelectorParameters(Selector, &Flags, &Base, &Limit))
+    {
+        return (STATUS_INVALID_PARAMETER);
     }
 
     //
@@ -127,10 +111,12 @@ Return Value:
     IdtDescriptor.Selector = Selector | RPL_MASK | LDT_MASK;
     IdtDescriptor.ExtendedOffset = (USHORT)(Offset >> 16);
     IdtDescriptor.Access = IDT_ACCESS_DPL_USER | IDT_ACCESS_PRESENT;
-    if (Gate32) {
+    if (Gate32)
+    {
         IdtDescriptor.Access |= IDT_ACCESS_TYPE_386_TRAP;
-
-    } else {
+    }
+    else
+    {
         IdtDescriptor.Access |= IDT_ACCESS_TYPE_286_TRAP;
     }
 
@@ -154,12 +140,9 @@ Return Value:
 
     Prcb = KeGetCurrentPrcb();
     TargetProcessors = Process->ActiveProcessors & ~Prcb->SetMember;
-    if (TargetProcessors != 0) {
-        KiIpiSendPacket(TargetProcessors,
-                        Ki386LoadTargetInt21Entry,
-                        NULL,
-                        NULL,
-                        NULL);
+    if (TargetProcessors != 0)
+    {
+        KiIpiSendPacket(TargetProcessors, Ki386LoadTargetInt21Entry, NULL, NULL, NULL);
     }
 
 #endif
@@ -173,7 +156,8 @@ Return Value:
     // their LDT.
     //
 
-    if (TargetProcessors != 0) {
+    if (TargetProcessors != 0)
+    {
         KiIpiStallOnPacketTargets(TargetProcessors);
     }
 
@@ -189,14 +173,9 @@ Return Value:
 
 #if !defined(NT_UP)
 
-
-VOID
-Ki386LoadTargetInt21Entry (
-    IN PKIPI_CONTEXT    PacketContext,
-    IN PVOID            Parameter1,
-    IN PVOID            Parameter2,
-    IN PVOID            Parameter3
-    )
+
+VOID Ki386LoadTargetInt21Entry(IN PKIPI_CONTEXT PacketContext, IN PVOID Parameter1, IN PVOID Parameter2,
+                               IN PVOID Parameter3)
 /*++
 
 Routine Description:

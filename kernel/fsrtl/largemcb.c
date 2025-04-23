@@ -82,9 +82,9 @@ Revision History:
 //  Trace level for the module
 //
 
-#define Dbg                              (0x80000000)
+#define Dbg (0x80000000)
 
-
+
 //
 //  Retrieval mapping data structures.  The following two structure together
 //  are used to map a Vbn to an Lbn.  It is layed out as follows:
@@ -147,15 +147,17 @@ Revision History:
 //  an Lbn value of -1 (note that is is different than Mcb.c).
 //
 
-#define UNUSED_LBN                       (-1)
+#define UNUSED_LBN (-1)
 
-typedef struct _MAPPING {
+typedef struct _MAPPING
+{
     VBN NextVbn;
     LBN Lbn;
 } MAPPING;
 typedef MAPPING *PMAPPING;
 
-typedef struct _NONOPAQUE_MCB {
+typedef struct _NONOPAQUE_MCB
+{
     PFAST_MUTEX FastMutex;
     ULONG MaximumPairCount;
     ULONG PairCount;
@@ -185,44 +187,25 @@ typedef NONOPAQUE_MCB *PNONOPAQUE_MCB;
 //                 Mapping[I].Lbn            EndingLbn(MCB,I)
 //
 
-#define PreviousEndingVbn(MCB,I) (                      \
-    (VBN)((I) == 0 ? 0xffffffff : EndingVbn(MCB,(I)-1)) \
-)
+#define PreviousEndingVbn(MCB, I) ((VBN)((I) == 0 ? 0xffffffff : EndingVbn(MCB, (I) - 1)))
 
-#define StartingVbn(MCB,I) (                                \
-    (VBN)((I) == 0 ? 0 : (((MCB)->Mapping))[(I)-1].NextVbn) \
-)
+#define StartingVbn(MCB, I) ((VBN)((I) == 0 ? 0 : (((MCB)->Mapping))[(I) - 1].NextVbn))
 
-#define EndingVbn(MCB,I) (                     \
-    (VBN)((((MCB)->Mapping)[(I)].NextVbn) - 1) \
-)
+#define EndingVbn(MCB, I) ((VBN)((((MCB)->Mapping)[(I)].NextVbn) - 1))
 
-#define NextStartingVbn(MCB,I) (                                \
-    (VBN)((I) >= (MCB)->PairCount ? 0 : StartingVbn(MCB,(I)+1)) \
-)
+#define NextStartingVbn(MCB, I) ((VBN)((I) >= (MCB)->PairCount ? 0 : StartingVbn(MCB, (I) + 1)))
 
 
+#define PreviousEndingLbn(MCB, I) ((LBN)((I) == 0 ? UNUSED_LBN : EndingLbn(MCB, (I) - 1)))
 
+#define StartingLbn(MCB, I) ((LBN)(((MCB)->Mapping)[(I)].Lbn))
 
-#define PreviousEndingLbn(MCB,I) (                      \
-    (LBN)((I) == 0 ? UNUSED_LBN : EndingLbn(MCB,(I)-1)) \
-)
+#define EndingLbn(MCB, I)                    \
+    ((LBN)(StartingLbn(MCB, I) == UNUSED_LBN \
+               ? UNUSED_LBN                  \
+               : ((MCB)->Mapping[(I)].Lbn + (MCB)->Mapping[(I)].NextVbn - StartingVbn(MCB, I) - 1)))
 
-#define StartingLbn(MCB,I) (         \
-    (LBN)(((MCB)->Mapping)[(I)].Lbn) \
-)
-
-#define EndingLbn(MCB,I) (                                       \
-    (LBN)(StartingLbn(MCB,I) == UNUSED_LBN ?                     \
-          UNUSED_LBN :                                           \
-          ((MCB)->Mapping[(I)].Lbn +                             \
-           (MCB)->Mapping[(I)].NextVbn - StartingVbn(MCB,I) - 1) \
-         )                                                       \
-)
-
-#define NextStartingLbn(MCB,I) (                                             \
-    (LBN)((I) >= (MCB)->PairCount - 1 ? UNUSED_LBN : StartingLbn(MCB,(I)+1)) \
-)
+#define NextStartingLbn(MCB, I) ((LBN)((I) >= (MCB)->PairCount - 1 ? UNUSED_LBN : StartingLbn(MCB, (I) + 1)))
 
 #if 0
 LBN
@@ -240,64 +223,39 @@ NextStartingLbn(
 }
 #endif
 
-#define SectorsWithinRun(MCB,I) (                      \
-    (ULONG)(EndingVbn(MCB,I) - StartingVbn(MCB,I) + 1) \
-)
+#define SectorsWithinRun(MCB, I) ((ULONG)(EndingVbn(MCB, I) - StartingVbn(MCB, I) + 1))
 
 //
 //  Define a tag for general pool allocations from this module
 //
 
 #undef MODULE_POOL_TAG
-#define MODULE_POOL_TAG                  ('mrSF')
+#define MODULE_POOL_TAG ('mrSF')
 
-VOID
-FsRtlRemoveMcbEntryPrivate (
-    IN PNONOPAQUE_MCB OpaqueMcb,
-    IN ULONG Vbn,
-    IN ULONG SectorCount
-    );
+VOID FsRtlRemoveMcbEntryPrivate(IN PNONOPAQUE_MCB OpaqueMcb, IN ULONG Vbn, IN ULONG SectorCount);
 
 //
 //  A private routine to search a mapping structure for a Vbn
 //
 
 BOOLEAN
-FsRtlFindLargeIndex (
-    IN PNONOPAQUE_MCB Mcb,
-    IN VBN Vbn,
-    OUT PULONG Index
-    );
+FsRtlFindLargeIndex(IN PNONOPAQUE_MCB Mcb, IN VBN Vbn, OUT PULONG Index);
 
-VOID
-FsRtlAddLargeEntry (
-    IN PNONOPAQUE_MCB Mcb,
-    IN ULONG WhereToAddIndex,
-    IN ULONG AmountToAdd
-    );
+VOID FsRtlAddLargeEntry(IN PNONOPAQUE_MCB Mcb, IN ULONG WhereToAddIndex, IN ULONG AmountToAdd);
 
-VOID
-FsRtlRemoveLargeEntry (
-    IN PNONOPAQUE_MCB Mcb,
-    IN ULONG WhereToRemoveIndex,
-    IN ULONG AmountToRemove
-    );
+VOID FsRtlRemoveLargeEntry(IN PNONOPAQUE_MCB Mcb, IN ULONG WhereToRemoveIndex, IN ULONG AmountToRemove);
 
 //
 //  Some private routines to handle common allocations.
 //
 
-#define FsRtlAllocateFirstMapping() \
-    (PVOID)ExAllocateFromPagedLookasideList( &FsRtlFirstMappingLookasideList )
+#define FsRtlAllocateFirstMapping() (PVOID) ExAllocateFromPagedLookasideList(&FsRtlFirstMappingLookasideList)
 
-#define FsRtlFreeFirstMapping(Mapping) \
-    ExFreeToPagedLookasideList( &FsRtlFirstMappingLookasideList, (Mapping) )
+#define FsRtlFreeFirstMapping(Mapping) ExFreeToPagedLookasideList(&FsRtlFirstMappingLookasideList, (Mapping))
 
-#define FsRtlAllocateFastMutex()      \
-    (PFAST_MUTEX)ExAllocateFromNPagedLookasideList( &FsRtlFastMutexLookasideList )
+#define FsRtlAllocateFastMutex() (PFAST_MUTEX) ExAllocateFromNPagedLookasideList(&FsRtlFastMutexLookasideList)
 
-#define FsRtlFreeFastMutex(FastMutex) \
-    ExFreeToNPagedLookasideList( &FsRtlFastMutexLookasideList, (FastMutex) )
+#define FsRtlFreeFastMutex(FastMutex) ExFreeToNPagedLookasideList(&FsRtlFastMutexLookasideList, (FastMutex))
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(INIT, FsRtlInitializeLargeMcbs)
@@ -305,13 +263,13 @@ FsRtlRemoveLargeEntry (
 #pragma alloc_text(PAGE, FsRtlUninitializeMcb)
 #endif
 
-
+
 //
 //  Define a small cache of free mapping pairs structures and also the
 //  initial size of the mapping pair
 //
 
-#define INITIAL_MAXIMUM_PAIR_COUNT       (15)
+#define INITIAL_MAXIMUM_PAIR_COUNT (15)
 
 PAGED_LOOKASIDE_LIST FsRtlFirstMappingLookasideList;
 
@@ -322,7 +280,7 @@ PAGED_LOOKASIDE_LIST FsRtlFirstMappingLookasideList;
 
 NPAGED_LOOKASIDE_LIST FsRtlFastMutexLookasideList;
 
-
+
 //
 //  The following few routines define the small mcb package which is
 //  implemented behind everyones back as large mcbs.  The only funny
@@ -331,136 +289,97 @@ NPAGED_LOOKASIDE_LIST FsRtlFastMutexLookasideList;
 //  difference between the original Mcb and LargeMcb packages.
 //
 
-VOID
-FsRtlInitializeMcb (
-    IN PMCB Mcb,
-    IN POOL_TYPE PoolType
-    )
+VOID FsRtlInitializeMcb(IN PMCB Mcb, IN POOL_TYPE PoolType)
 {
     PAGED_CODE();
 
-    FsRtlInitializeLargeMcb( (PLARGE_MCB)Mcb,
-                             PoolType );
+    FsRtlInitializeLargeMcb((PLARGE_MCB)Mcb, PoolType);
 
     return;
 }
 
-VOID
-FsRtlUninitializeMcb (
-    IN PMCB Mcb
-    )
+VOID FsRtlUninitializeMcb(IN PMCB Mcb)
 
 {
     PAGED_CODE();
 
-    FsRtlUninitializeLargeMcb( (PLARGE_MCB)Mcb );
+    FsRtlUninitializeLargeMcb((PLARGE_MCB)Mcb);
 
     return;
 }
 
-VOID
-FsRtlTruncateMcb (
-    IN PMCB Mcb,
-    IN VBN Vbn
-    )
+VOID FsRtlTruncateMcb(IN PMCB Mcb, IN VBN Vbn)
 {
-   PAGED_CODE();
+    PAGED_CODE();
 
-   FsRtlTruncateLargeMcb( (PLARGE_MCB)Mcb,
-                          (LONGLONG)(Vbn) );
+    FsRtlTruncateLargeMcb((PLARGE_MCB)Mcb, (LONGLONG)(Vbn));
 
-   return;
+    return;
 }
 
 BOOLEAN
-FsRtlAddMcbEntry (
-    IN PMCB Mcb,
-    IN VBN Vbn,
-    IN LBN Lbn,
-    IN ULONG SectorCount
-    )
+FsRtlAddMcbEntry(IN PMCB Mcb, IN VBN Vbn, IN LBN Lbn, IN ULONG SectorCount)
 
 {
     PAGED_CODE();
 
-    return FsRtlAddLargeMcbEntry( (PLARGE_MCB)Mcb,
-                                  (LONGLONG)(Vbn),
-                                  (LONGLONG)(Lbn),
-                                  (LONGLONG)(SectorCount) );
+    return FsRtlAddLargeMcbEntry((PLARGE_MCB)Mcb, (LONGLONG)(Vbn), (LONGLONG)(Lbn), (LONGLONG)(SectorCount));
 }
 
-VOID
-FsRtlRemoveMcbEntry (
-    IN PMCB OpaqueMcb,
-    IN VBN Vbn,
-    IN ULONG SectorCount
-    )
+VOID FsRtlRemoveMcbEntry(IN PMCB OpaqueMcb, IN VBN Vbn, IN ULONG SectorCount)
 
 {
     PNONOPAQUE_MCB Mcb = (PNONOPAQUE_MCB)OpaqueMcb;
 
     PAGED_CODE();
 
-    DebugTrace(+1, Dbg, "FsRtlRemoveMcbEntry, Mcb = %08lx\n", Mcb );
-    DebugTrace( 0, Dbg, " Vbn         = %08lx\n", Vbn );
-    DebugTrace( 0, Dbg, " SectorCount = %08lx\n", SectorCount );
+    DebugTrace(+1, Dbg, "FsRtlRemoveMcbEntry, Mcb = %08lx\n", Mcb);
+    DebugTrace(0, Dbg, " Vbn         = %08lx\n", Vbn);
+    DebugTrace(0, Dbg, " SectorCount = %08lx\n", SectorCount);
 
-    ExAcquireFastMutex( Mcb->FastMutex );
+    ExAcquireFastMutex(Mcb->FastMutex);
 
-    try {
+    try
+    {
 
-        FsRtlRemoveMcbEntryPrivate( Mcb,
-                                    Vbn,
-                                    SectorCount );
+        FsRtlRemoveMcbEntryPrivate(Mcb, Vbn, SectorCount);
+    }
+    finally
+    {
 
-    } finally {
+        ExReleaseFastMutex(Mcb->FastMutex);
 
-        ExReleaseFastMutex( Mcb->FastMutex );
-
-        DebugTrace(-1, Dbg, "FsRtlRemoveMcbEntry -> VOID\n", 0 );
+        DebugTrace(-1, Dbg, "FsRtlRemoveMcbEntry -> VOID\n", 0);
     }
 
     return;
 }
 
 BOOLEAN
-FsRtlLookupMcbEntry (
-    IN PMCB Mcb,
-    IN VBN Vbn,
-    OUT PLBN Lbn,
-    OUT PULONG SectorCount OPTIONAL,
-    OUT PULONG Index OPTIONAL
-    )
+FsRtlLookupMcbEntry(IN PMCB Mcb, IN VBN Vbn, OUT PLBN Lbn, OUT PULONG SectorCount OPTIONAL, OUT PULONG Index OPTIONAL)
 
 {
     BOOLEAN Result;
     LONGLONG LiLbn;
     LONGLONG LiSectorCount;
 
-    Result = FsRtlLookupLargeMcbEntry( (PLARGE_MCB)Mcb,
-                                        (LONGLONG)(Vbn),
-                                        &LiLbn,
-                                        ARGUMENT_PRESENT(SectorCount) ? &LiSectorCount : NULL,
-                                        NULL,
-                                        NULL,
-                                        Index );
+    Result = FsRtlLookupLargeMcbEntry((PLARGE_MCB)Mcb, (LONGLONG)(Vbn), &LiLbn,
+                                      ARGUMENT_PRESENT(SectorCount) ? &LiSectorCount : NULL, NULL, NULL, Index);
 
-    if (Result) {
+    if (Result)
+    {
         *Lbn = (((ULONG)LiLbn) == -1 ? 0 : ((ULONG)LiLbn));
-        if (ARGUMENT_PRESENT(SectorCount)) { 
-            *SectorCount = ((ULONG)LiSectorCount); 
+        if (ARGUMENT_PRESENT(SectorCount))
+        {
+            *SectorCount = ((ULONG)LiSectorCount);
         }
     }
-    
+
     return Result;
 }
 
 BOOLEAN
-FsRtlLookupLastMcbEntry (
-    IN PMCB Mcb,
-    OUT PVBN Vbn,
-    OUT PLBN Lbn
-    )
+FsRtlLookupLastMcbEntry(IN PMCB Mcb, OUT PVBN Vbn, OUT PLBN Lbn)
 
 {
     BOOLEAN Result;
@@ -469,11 +388,10 @@ FsRtlLookupLastMcbEntry (
 
     PAGED_CODE();
 
-    Result = FsRtlLookupLastLargeMcbEntry( (PLARGE_MCB)Mcb,
-                                            &LiVbn,
-                                            &LiLbn );
+    Result = FsRtlLookupLastLargeMcbEntry((PLARGE_MCB)Mcb, &LiVbn, &LiLbn);
 
-    if (Result) {
+    if (Result)
+    {
         *Vbn = ((ULONG)LiVbn);
         *Lbn = (((ULONG)LiLbn) == -1 ? 0 : ((ULONG)LiLbn));
     }
@@ -482,24 +400,16 @@ FsRtlLookupLastMcbEntry (
 }
 
 ULONG
-FsRtlNumberOfRunsInMcb (
-    IN PMCB Mcb
-    )
+FsRtlNumberOfRunsInMcb(IN PMCB Mcb)
 
 {
     PAGED_CODE();
 
-    return FsRtlNumberOfRunsInLargeMcb( (PLARGE_MCB)Mcb );
+    return FsRtlNumberOfRunsInLargeMcb((PLARGE_MCB)Mcb);
 }
 
 BOOLEAN
-FsRtlGetNextMcbEntry (
-    IN PMCB Mcb,
-    IN ULONG RunIndex,
-    OUT PVBN Vbn,
-    OUT PLBN Lbn,
-    OUT PULONG SectorCount
-    )
+FsRtlGetNextMcbEntry(IN PMCB Mcb, IN ULONG RunIndex, OUT PVBN Vbn, OUT PLBN Lbn, OUT PULONG SectorCount)
 
 {
     BOOLEAN Result;
@@ -509,26 +419,20 @@ FsRtlGetNextMcbEntry (
 
     PAGED_CODE();
 
-    Result = FsRtlGetNextLargeMcbEntry( (PLARGE_MCB)Mcb,
-                                         RunIndex,
-                                         &LiVbn,
-                                         &LiLbn,
-                                         &LiSectorCount );
+    Result = FsRtlGetNextLargeMcbEntry((PLARGE_MCB)Mcb, RunIndex, &LiVbn, &LiLbn, &LiSectorCount);
 
-    if (Result) {
+    if (Result)
+    {
         *Vbn = ((ULONG)LiVbn);
         *Lbn = (((ULONG)LiLbn) == -1 ? 0 : ((ULONG)LiLbn));
         *SectorCount = ((ULONG)LiSectorCount);
     }
-    
+
     return Result;
 }
 
-
-VOID
-FsRtlInitializeLargeMcbs (
-    VOID
-    )
+
+VOID FsRtlInitializeLargeMcbs(VOID)
 
 /*++
 
@@ -552,35 +456,19 @@ Return Value:
     //  Initialize the lookaside of paged initial mapping arrays.
     //
 
-    ExInitializePagedLookasideList( &FsRtlFirstMappingLookasideList,
-                                    NULL,
-                                    NULL,
-                                    POOL_RAISE_IF_ALLOCATION_FAILURE,
-                                    sizeof( MAPPING ) * INITIAL_MAXIMUM_PAIR_COUNT,
-                                    'miSF',
-                                    4 );
+    ExInitializePagedLookasideList(&FsRtlFirstMappingLookasideList, NULL, NULL, POOL_RAISE_IF_ALLOCATION_FAILURE,
+                                   sizeof(MAPPING) * INITIAL_MAXIMUM_PAIR_COUNT, 'miSF', 4);
 
     //
     //  Initialize the Fast Mutex lookaside list.
     //
 
-    ExInitializeNPagedLookasideList( &FsRtlFastMutexLookasideList,
-                                     NULL,
-                                     NULL,
-                                     POOL_RAISE_IF_ALLOCATION_FAILURE,
-                                     sizeof( FAST_MUTEX),
-                                     'mfSF',
-                                     32 );
-
-
+    ExInitializeNPagedLookasideList(&FsRtlFastMutexLookasideList, NULL, NULL, POOL_RAISE_IF_ALLOCATION_FAILURE,
+                                    sizeof(FAST_MUTEX), 'mfSF', 32);
 }
 
-
-VOID
-FsRtlInitializeLargeMcb (
-    IN PLARGE_MCB OpaqueMcb,
-    IN POOL_TYPE PoolType
-    )
+
+VOID FsRtlInitializeLargeMcb(IN PLARGE_MCB OpaqueMcb, IN POOL_TYPE PoolType)
 
 /*++
 
@@ -609,7 +497,7 @@ Return Value:
 {
     PNONOPAQUE_MCB Mcb = (PNONOPAQUE_MCB)OpaqueMcb;
 
-    DebugTrace(+1, Dbg, "FsRtlInitializeLargeMcb, Mcb = %08lx\n", Mcb );
+    DebugTrace(+1, Dbg, "FsRtlInitializeLargeMcb, Mcb = %08lx\n", Mcb);
 
     //
     //  Preset the following fields to null so we know to deallocate them
@@ -619,7 +507,8 @@ Return Value:
     Mcb->FastMutex = NULL;
     Mcb->Mapping = NULL;
 
-    try {
+    try
+    {
 
         //
         //  Initialize the fields in the Mcb
@@ -627,7 +516,7 @@ Return Value:
 
         Mcb->FastMutex = FsRtlAllocateFastMutex();
 
-        ExInitializeFastMutex( Mcb->FastMutex );
+        ExInitializeFastMutex(Mcb->FastMutex);
 
         Mcb->PairCount = 0;
         Mcb->PoolType = PoolType;
@@ -637,20 +526,23 @@ Return Value:
         //  16 runs
         //
 
-        if (PoolType == PagedPool) {
+        if (PoolType == PagedPool)
+        {
 
             Mcb->Mapping = FsRtlAllocateFirstMapping();
+        }
+        else
+        {
 
-        } else {
-
-            Mcb->Mapping = FsRtlpAllocatePool( Mcb->PoolType, sizeof(MAPPING) * INITIAL_MAXIMUM_PAIR_COUNT );
+            Mcb->Mapping = FsRtlpAllocatePool(Mcb->PoolType, sizeof(MAPPING) * INITIAL_MAXIMUM_PAIR_COUNT);
         }
 
         //**** RtlZeroMemory( Mcb->Mapping, sizeof(MAPPING) * INITIAL_MAXIMUM_PAIR_COUNT );
 
         Mcb->MaximumPairCount = INITIAL_MAXIMUM_PAIR_COUNT;
-
-    } finally {
+    }
+    finally
+    {
 
         //
         //  If this is an abnormal termination then we need to deallocate
@@ -658,12 +550,16 @@ Return Value:
         //  we can't raise).
         //
 
-        if (AbnormalTermination()) {
+        if (AbnormalTermination())
+        {
 
-            if (Mcb->FastMutex != NULL) { FsRtlFreeFastMutex( Mcb->FastMutex ); }
+            if (Mcb->FastMutex != NULL)
+            {
+                FsRtlFreeFastMutex(Mcb->FastMutex);
+            }
         }
 
-        DebugTrace(-1, Dbg, "FsRtlInitializeLargeMcb -> VOID\n", 0 );
+        DebugTrace(-1, Dbg, "FsRtlInitializeLargeMcb -> VOID\n", 0);
     }
 
     //
@@ -673,11 +569,8 @@ Return Value:
     return;
 }
 
-
-VOID
-FsRtlUninitializeLargeMcb (
-    IN PLARGE_MCB OpaqueMcb
-    )
+
+VOID FsRtlUninitializeLargeMcb(IN PLARGE_MCB OpaqueMcb)
 
 /*++
 
@@ -699,13 +592,14 @@ Return Value:
 {
     PNONOPAQUE_MCB Mcb = (PNONOPAQUE_MCB)OpaqueMcb;
 
-    DebugTrace(+1, Dbg, "FsRtlUninitializeLargeMcb, Mcb = %08lx\n", Mcb );
+    DebugTrace(+1, Dbg, "FsRtlUninitializeLargeMcb, Mcb = %08lx\n", Mcb);
 
     //
     //  Protect against some user calling us to uninitialize an mcb twice
     //
 
-    if (Mcb->FastMutex == NULL) {
+    if (Mcb->FastMutex == NULL)
+    {
 
         // ASSERTMSG("Being called to uninitialize an Mcb that is already Uninitialized ", FALSE);
 
@@ -716,17 +610,19 @@ Return Value:
     //  Deallocate the FastMutex and mapping buffer
     //
 
-    FsRtlFreeFastMutex( Mcb->FastMutex );
+    FsRtlFreeFastMutex(Mcb->FastMutex);
 
     Mcb->FastMutex = NULL;
 
-    if ((Mcb->PoolType == PagedPool) && (Mcb->MaximumPairCount == INITIAL_MAXIMUM_PAIR_COUNT)) {
+    if ((Mcb->PoolType == PagedPool) && (Mcb->MaximumPairCount == INITIAL_MAXIMUM_PAIR_COUNT))
+    {
 
-        FsRtlFreeFirstMapping( Mcb->Mapping );
+        FsRtlFreeFirstMapping(Mcb->Mapping);
+    }
+    else
+    {
 
-    } else {
-
-        ExFreePool( Mcb->Mapping );
+        ExFreePool(Mcb->Mapping);
     }
 
     //
@@ -741,17 +637,13 @@ Return Value:
     //  And return to our caller
     //
 
-    DebugTrace(-1, Dbg, "FsRtlUninitializeLargeMcb -> VOID\n", 0 );
+    DebugTrace(-1, Dbg, "FsRtlUninitializeLargeMcb -> VOID\n", 0);
 
     return;
 }
 
-
-VOID
-FsRtlTruncateLargeMcb (
-    IN PLARGE_MCB OpaqueMcb,
-    IN LONGLONG LargeVbn
-    )
+
+VOID FsRtlTruncateLargeMcb(IN PLARGE_MCB OpaqueMcb, IN LONGLONG LargeVbn)
 
 /*++
 
@@ -782,26 +674,28 @@ Return Value:
 
     PAGED_CODE();
 
-    DebugTrace(+1, Dbg, "FsRtlTruncateLargeMcb, Mcb = %08lx\n", Mcb );
+    DebugTrace(+1, Dbg, "FsRtlTruncateLargeMcb, Mcb = %08lx\n", Mcb);
 
-    ExAcquireFastMutex( Mcb->FastMutex );
+    ExAcquireFastMutex(Mcb->FastMutex);
 
-    ASSERTMSG("LargeInteger not supported yet ", ((((PLARGE_INTEGER)&LargeVbn)->HighPart == 0) ||
-                                                  (Mcb->PairCount == 0) ||
-                                                  ((((PLARGE_INTEGER)&LargeVbn)->HighPart == 0x7FFFFFFF) &&
-                                                   (((ULONG)LargeVbn) == 0xFFFFFFFF))));
+    ASSERTMSG("LargeInteger not supported yet ",
+              ((((PLARGE_INTEGER)&LargeVbn)->HighPart == 0) || (Mcb->PairCount == 0) ||
+               ((((PLARGE_INTEGER)&LargeVbn)->HighPart == 0x7FFFFFFF) && (((ULONG)LargeVbn) == 0xFFFFFFFF))));
 
-    try {
+    try
+    {
 
         //
         //  Do a quick test to see if we are truncating the entire Mcb.
         //
 
-        if (Vbn == 0) {
+        if (Vbn == 0)
+        {
 
             Mcb->PairCount = 0;
-
-        } else if (Mcb->PairCount > 0) {
+        }
+        else if (Mcb->PairCount > 0)
+        {
 
             //
             //  Find the index for the entry with the last Vcn we want to keep.
@@ -809,27 +703,31 @@ Return Value:
             //  this point.
             //
 
-            if (FsRtlFindLargeIndex(Mcb, Vbn - 1, &Index)) {
+            if (FsRtlFindLargeIndex(Mcb, Vbn - 1, &Index))
+            {
 
                 //
                 //  If this entry currently describes a hole then
                 //  truncate to the previous entry.
                 //
 
-                if (StartingLbn(Mcb, Index) == UNUSED_LBN) {
+                if (StartingLbn(Mcb, Index) == UNUSED_LBN)
+                {
 
                     Mcb->PairCount = Index;
 
-                //
-                //  Otherwise we will truncate the Mcb to this point.  Truncate
-                //  the number of Vbns of this run if necessary.
-                //
-
-                } else {
+                    //
+                    //  Otherwise we will truncate the Mcb to this point.  Truncate
+                    //  the number of Vbns of this run if necessary.
+                    //
+                }
+                else
+                {
 
                     Mcb->PairCount = Index + 1;
 
-                    if (NextStartingVbn(Mcb, Index) > Vbn) {
+                    if (NextStartingVbn(Mcb, Index) > Vbn)
+                    {
 
                         (Mcb->Mapping)[Index].NextVbn = Vbn;
                     }
@@ -844,8 +742,8 @@ Return Value:
         //  current maximum is greater than the initial pair count.
         //
 
-        if ((Mcb->PairCount < (Mcb->MaximumPairCount / 4)) &&
-            (Mcb->MaximumPairCount > INITIAL_MAXIMUM_PAIR_COUNT)) {
+        if ((Mcb->PairCount < (Mcb->MaximumPairCount / 4)) && (Mcb->MaximumPairCount > INITIAL_MAXIMUM_PAIR_COUNT))
+        {
 
             ULONG NewMax;
             PMAPPING Mapping;
@@ -858,48 +756,54 @@ Return Value:
 
             NewMax = Mcb->PairCount * 2;
 
-            if (NewMax < INITIAL_MAXIMUM_PAIR_COUNT) {
+            if (NewMax < INITIAL_MAXIMUM_PAIR_COUNT)
+            {
                 NewMax = INITIAL_MAXIMUM_PAIR_COUNT;
             }
 
             //
             //  Be careful to trap failures due to resource exhaustion.
             //
-                
-            try {
-                    
-                if (NewMax == INITIAL_MAXIMUM_PAIR_COUNT && Mcb->PoolType == PagedPool) {
+
+            try
+            {
+
+                if (NewMax == INITIAL_MAXIMUM_PAIR_COUNT && Mcb->PoolType == PagedPool)
+                {
 
                     Mapping = FsRtlAllocateFirstMapping();
-
-                } else {
-            
-                    Mapping = FsRtlpAllocatePool( Mcb->PoolType, sizeof(MAPPING) * NewMax );
                 }
+                else
+                {
 
-            } except (EXCEPTION_EXECUTE_HANDLER) {
+                    Mapping = FsRtlpAllocatePool(Mcb->PoolType, sizeof(MAPPING) * NewMax);
+                }
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
 
-                  Mapping = NULL;
+                Mapping = NULL;
             }
 
             //
             //  Now check if we really got a new buffer
             //
 
-            if (Mapping != NULL) {
+            if (Mapping != NULL)
+            {
 
                 //
                 //  Now copy over the old mapping to the new buffer
                 //
 
-                RtlCopyMemory( Mapping, Mcb->Mapping, sizeof(MAPPING) * Mcb->PairCount );
+                RtlCopyMemory(Mapping, Mcb->Mapping, sizeof(MAPPING) * Mcb->PairCount);
 
                 //
                 //  Deallocate the old buffer.  This should never be the size of an
                 //  initial mapping ...
                 //
 
-                ExFreePool( Mcb->Mapping );
+                ExFreePool(Mcb->Mapping);
 
                 //
                 //  And set up the new buffer in the Mcb
@@ -909,28 +813,25 @@ Return Value:
                 Mcb->MaximumPairCount = NewMax;
             }
         }
+    }
+    finally
+    {
 
-    } finally {
-
-        ExReleaseFastMutex( Mcb->FastMutex );
+        ExReleaseFastMutex(Mcb->FastMutex);
     }
 
     //
     //  And return to our caller
     //
 
-    DebugTrace(-1, Dbg, "FsRtlTruncateLargeMcb -> VOID\n", 0 );
+    DebugTrace(-1, Dbg, "FsRtlTruncateLargeMcb -> VOID\n", 0);
 
     return;
 }
 
-
+
 NTKERNELAPI
-VOID
-FsRtlResetLargeMcb (
-    IN PLARGE_MCB OpaqueMcb,
-    IN BOOLEAN SelfSynchronized
-    )
+VOID FsRtlResetLargeMcb(IN PLARGE_MCB OpaqueMcb, IN BOOLEAN SelfSynchronized)
 
 /*++
 
@@ -955,39 +856,35 @@ Return Value:
 {
     PNONOPAQUE_MCB Mcb = (PNONOPAQUE_MCB)OpaqueMcb;
 
-    if (SelfSynchronized) {
-        
+    if (SelfSynchronized)
+    {
+
         //
-        //  If we are self-synchronized, then all we do is clear out the 
+        //  If we are self-synchronized, then all we do is clear out the
         //  current mapping pair count.
         //
-        
+
         Mcb->PairCount = 0;
-    
-    } else {
-        
+    }
+    else
+    {
+
         //
         //  Since we are not self-synchronized, we must serialize access to
         //  the Mcb before clearing the pair count
         //
-        
-        ExAcquireFastMutex( Mcb->FastMutex );
+
+        ExAcquireFastMutex(Mcb->FastMutex);
         Mcb->PairCount = 0;
-        ExReleaseFastMutex( Mcb->FastMutex );
-    
+        ExReleaseFastMutex(Mcb->FastMutex);
     }
 
     return;
 }
 
-
+
 BOOLEAN
-FsRtlAddLargeMcbEntry (
-    IN PLARGE_MCB OpaqueMcb,
-    IN LONGLONG LargeVbn,
-    IN LONGLONG LargeLbn,
-    IN LONGLONG LargeSectorCount
-    )
+FsRtlAddLargeMcbEntry(IN PLARGE_MCB OpaqueMcb, IN LONGLONG LargeVbn, IN LONGLONG LargeLbn, IN LONGLONG LargeSectorCount)
 
 /*++
 
@@ -1049,16 +946,18 @@ Return Value:
 
     PAGED_CODE();
 
-    DebugTrace(+1, Dbg, "FsRtlAddLargeMcbEntry, Mcb = %08lx\n", Mcb );
-    DebugTrace( 0, Dbg, " Vbn         = %08lx\n", Vbn );
-    DebugTrace( 0, Dbg, " Lbn         = %08lx\n", Lbn );
-    DebugTrace( 0, Dbg, " SectorCount = %08lx\n", SectorCount );
+    DebugTrace(+1, Dbg, "FsRtlAddLargeMcbEntry, Mcb = %08lx\n", Mcb);
+    DebugTrace(0, Dbg, " Vbn         = %08lx\n", Vbn);
+    DebugTrace(0, Dbg, " Lbn         = %08lx\n", Lbn);
+    DebugTrace(0, Dbg, " SectorCount = %08lx\n", SectorCount);
 
-    ExAcquireFastMutex( Mcb->FastMutex );
+    ExAcquireFastMutex(Mcb->FastMutex);
 
-    try {
+    try
+    {
 
-        if (FsRtlFindLargeIndex(Mcb, Vbn, &Index)) {
+        if (FsRtlFindLargeIndex(Mcb, Vbn, &Index))
+        {
 
             ULONG EndVbn = Vbn + SectorCount - 1;
             ULONG EndIndex;
@@ -1074,13 +973,15 @@ Return Value:
             //          |--NewRun--|
             //
 
-            if (StartingLbn(Mcb, Index) != UNUSED_LBN) {
+            if (StartingLbn(Mcb, Index) != UNUSED_LBN)
+            {
 
                 //
                 //  Check that the Lbn's line up between the new and existing run
                 //
 
-                if (Lbn != (StartingLbn(Mcb, Index) + (Vbn - StartingVbn(Mcb, Index)))) {
+                if (Lbn != (StartingLbn(Mcb, Index) + (Vbn - StartingVbn(Mcb, Index))))
+                {
 
                     //
                     //  Let our caller know we couldn't insert the run.
@@ -1093,7 +994,8 @@ Return Value:
                 //  Check if the new run is contained in the existing run
                 //
 
-                if (EndVbn <= EndingVbn(Mcb, Index)) {
+                if (EndVbn <= EndingVbn(Mcb, Index))
+                {
 
                     //
                     //  Do nothing because the run is contained within the existing run
@@ -1114,23 +1016,25 @@ Return Value:
 
                 SectorCount = EndVbn - Vbn + 1;
 
-            //
-            //  At this point the new run start in a hole, now check that if
-            //  crosses into a non hole and if so then adjust new run to fit
-            //  in the hole
-            //
-            //
-            //            |--ExistingRun--  ==becomes==>        |--ExistingRun--
-            //      |--NewRun--|                          |--New|
-            //
-
-            } else if (FsRtlFindLargeIndex(Mcb, EndVbn, &EndIndex) && (Index == (EndIndex-1))) {
+                //
+                //  At this point the new run start in a hole, now check that if
+                //  crosses into a non hole and if so then adjust new run to fit
+                //  in the hole
+                //
+                //
+                //            |--ExistingRun--  ==becomes==>        |--ExistingRun--
+                //      |--NewRun--|                          |--New|
+                //
+            }
+            else if (FsRtlFindLargeIndex(Mcb, EndVbn, &EndIndex) && (Index == (EndIndex - 1)))
+            {
 
                 //
                 //  Check that the Lbn's line up in the overlap
                 //
 
-                if (StartingLbn(Mcb, EndIndex) != Lbn + (StartingVbn(Mcb, EndIndex) - Vbn)) {
+                if (StartingLbn(Mcb, EndIndex) != Lbn + (StartingVbn(Mcb, EndIndex) - Vbn))
+                {
 
                     //
                     //  Let our caller know we couldn't insert the run.
@@ -1153,9 +1057,9 @@ Return Value:
         //  a hole found then index will be set to paircount.
         //
 
-        if (((Index = Mcb->PairCount) == 0) ||
-            (PreviousEndingVbn(Mcb,Index)+1 <= Vbn) ||
-            !FsRtlFindLargeIndex(Mcb, Vbn, &Index)) {
+        if (((Index = Mcb->PairCount) == 0) || (PreviousEndingVbn(Mcb, Index) + 1 <= Vbn) ||
+            !FsRtlFindLargeIndex(Mcb, Vbn, &Index))
+        {
 
             //
             //  We didn't find a mapping, therefore this new mapping must
@@ -1167,9 +1071,9 @@ Return Value:
             //  index is not 0.
             //
 
-            if ((Index != 0) &&
-                (PreviousEndingVbn(Mcb,Index) + 1 == Vbn) &&
-                (PreviousEndingLbn(Mcb,Index) + 1 == Lbn)) {
+            if ((Index != 0) && (PreviousEndingVbn(Mcb, Index) + 1 == Vbn) &&
+                (PreviousEndingLbn(Mcb, Index) + 1 == Lbn))
+            {
 
                 //
                 //      --LastRun--|---NewRun--|
@@ -1179,11 +1083,11 @@ Return Value:
                 //  Extend the last run in the mcb
                 //
 
-                DebugTrace( 0, Dbg, "Continuing last run\n", 0);
+                DebugTrace(0, Dbg, "Continuing last run\n", 0);
 
-                (Mcb->Mapping)[Mcb->PairCount-1].NextVbn += SectorCount;
+                (Mcb->Mapping)[Mcb->PairCount - 1].NextVbn += SectorCount;
 
-                try_return (Result = TRUE);
+                try_return(Result = TRUE);
             }
 
             //
@@ -1193,8 +1097,8 @@ Return Value:
             //  run in the mapping
             //
 
-            if ((Vbn == 0) ||
-                (PreviousEndingVbn(Mcb,Index) + 1 == Vbn)) {
+            if ((Vbn == 0) || (PreviousEndingVbn(Mcb, Index) + 1 == Vbn))
+            {
 
                 //
                 //      --LastRun--||---NewRun--|
@@ -1207,9 +1111,9 @@ Return Value:
                 //  there is enough room for one.
                 //
 
-                DebugTrace( 0, Dbg, "Adding new contiguous last run\n", 0);
+                DebugTrace(0, Dbg, "Adding new contiguous last run\n", 0);
 
-                FsRtlAddLargeEntry( Mcb, Index, 1 );
+                FsRtlAddLargeEntry(Mcb, Index, 1);
 
                 //
                 //  Add the new mapping
@@ -1218,7 +1122,7 @@ Return Value:
                 (Mcb->Mapping)[Index].Lbn = Lbn;
                 (Mcb->Mapping)[Index].NextVbn = Vbn + SectorCount;
 
-                try_return (Result = TRUE);
+                try_return(Result = TRUE);
             }
 
             //
@@ -1233,9 +1137,9 @@ Return Value:
             //      0:  hole  |--NewRun--|
             //
 
-            DebugTrace( 0, Dbg, "Adding new noncontiguous last run\n", 0);
+            DebugTrace(0, Dbg, "Adding new noncontiguous last run\n", 0);
 
-            FsRtlAddLargeEntry( Mcb, Index, 2 );
+            FsRtlAddLargeEntry(Mcb, Index, 2);
 
             //
             //  Add the hole
@@ -1248,10 +1152,10 @@ Return Value:
             //  Add the new mapping
             //
 
-            (Mcb->Mapping)[Index+1].Lbn = Lbn;
-            (Mcb->Mapping)[Index+1].NextVbn = Vbn + SectorCount;
+            (Mcb->Mapping)[Index + 1].Lbn = Lbn;
+            (Mcb->Mapping)[Index + 1].NextVbn = Vbn + SectorCount;
 
-            try_return (Result = TRUE);
+            try_return(Result = TRUE);
         }
 
         //
@@ -1262,15 +1166,17 @@ Return Value:
 
         LastVbn = Vbn + SectorCount - 1;
 
-        if ((StartingLbn(Mcb,Index) == UNUSED_LBN) &&
-            (StartingVbn(Mcb,Index) <= Vbn) && (LastVbn <= EndingVbn(Mcb,Index))) {
+        if ((StartingLbn(Mcb, Index) == UNUSED_LBN) && (StartingVbn(Mcb, Index) <= Vbn) &&
+            (LastVbn <= EndingVbn(Mcb, Index)))
+        {
 
             //
             //  The mapping fits in this hole, but now here are the following
             //  cases we must consider for the new mapping
             //
 
-            if ((StartingVbn(Mcb,Index) < Vbn) && (LastVbn < EndingVbn(Mcb,Index))) {
+            if ((StartingVbn(Mcb, Index) < Vbn) && (LastVbn < EndingVbn(Mcb, Index)))
+            {
 
                 //  Leaves a hole are both ends
                 //
@@ -1279,14 +1185,14 @@ Return Value:
                 //  0:  hole  |--NewRun--|  hole  |--FollowingRun--
                 //
 
-                DebugTrace( 0, Dbg, "Hole at both ends\n", 0);
+                DebugTrace(0, Dbg, "Hole at both ends\n", 0);
 
                 //
                 //  Make room for two more entries.  The NextVbn field of the
                 //  one we're shifting remains valid.
                 //
 
-                FsRtlAddLargeEntry( Mcb, Index, 2 );
+                FsRtlAddLargeEntry(Mcb, Index, 2);
 
                 //
                 //  Add the first hole
@@ -1299,20 +1205,22 @@ Return Value:
                 //  Add the new mapping
                 //
 
-                (Mcb->Mapping)[Index+1].Lbn = Lbn;
-                (Mcb->Mapping)[Index+1].NextVbn = Vbn + SectorCount;
+                (Mcb->Mapping)[Index + 1].Lbn = Lbn;
+                (Mcb->Mapping)[Index + 1].NextVbn = Vbn + SectorCount;
 
                 //
                 //  The second hole is already set up by the add entry call, because
                 //  that call just shift over the original hole to that slot
                 //
 
-                try_return (Result = TRUE);
+                try_return(Result = TRUE);
             }
 
-            if ((StartingVbn(Mcb,Index) == Vbn) && (LastVbn < EndingVbn(Mcb,Index))) {
+            if ((StartingVbn(Mcb, Index) == Vbn) && (LastVbn < EndingVbn(Mcb, Index)))
+            {
 
-                if (PreviousEndingLbn(Mcb,Index) + 1 == Lbn) {
+                if (PreviousEndingLbn(Mcb, Index) + 1 == Lbn)
+                {
 
                     //
                     //  Leaves a hole at the rear, and continues the earlier run
@@ -1320,17 +1228,18 @@ Return Value:
                     //  --PreviousRun--|--NewRun--|  hole  |--FollowingRun--
                     //
 
-                    DebugTrace( 0, Dbg, "Hole at rear and continue\n", 0);
+                    DebugTrace(0, Dbg, "Hole at rear and continue\n", 0);
 
                     //
                     //  We just need to extend the previous run
                     //
 
-                    (Mcb->Mapping)[Index-1].NextVbn += SectorCount;
+                    (Mcb->Mapping)[Index - 1].NextVbn += SectorCount;
 
-                    try_return (Result = TRUE);
-
-                } else {
+                    try_return(Result = TRUE);
+                }
+                else
+                {
 
                     //
                     //  Leaves a hole at the rear, and does not continue the
@@ -1341,14 +1250,14 @@ Return Value:
                     //  0:|--NewRun--|  hole  |--FollowingRun--
                     //
 
-                    DebugTrace( 0, Dbg, "Hole at rear and not continue\n", 0);
+                    DebugTrace(0, Dbg, "Hole at rear and not continue\n", 0);
 
                     //
                     //  Make room for one more entry.  The NextVbn field of the
                     //  one we're shifting remains valid.
                     //
 
-                    FsRtlAddLargeEntry( Mcb, Index, 1 );
+                    FsRtlAddLargeEntry(Mcb, Index, 1);
 
                     //
                     //  Add the new mapping
@@ -1362,13 +1271,15 @@ Return Value:
                     //  that call just shift over the original hole to that slot
                     //
 
-                    try_return (Result = TRUE);
+                    try_return(Result = TRUE);
                 }
             }
 
-            if ((StartingVbn(Mcb,Index) < Vbn) && (LastVbn == EndingVbn(Mcb,Index))) {
+            if ((StartingVbn(Mcb, Index) < Vbn) && (LastVbn == EndingVbn(Mcb, Index)))
+            {
 
-                if (NextStartingLbn(Mcb,Index) == Lbn + SectorCount) {
+                if (NextStartingLbn(Mcb, Index) == Lbn + SectorCount)
+                {
 
                     //
                     //  Leaves a hole at the front, and continues the following run
@@ -1378,18 +1289,19 @@ Return Value:
                     //  0:  hole  |--NewRun--|--FollowingRun--
                     //
 
-                    DebugTrace( 0, Dbg, "Hole at front and continue\n", 0);
+                    DebugTrace(0, Dbg, "Hole at front and continue\n", 0);
 
                     //
                     //  We just need to extend the following run
                     //
 
                     (Mcb->Mapping)[Index].NextVbn = Vbn;
-                    (Mcb->Mapping)[Index+1].Lbn = Lbn;
+                    (Mcb->Mapping)[Index + 1].Lbn = Lbn;
 
-                    try_return (Result = TRUE);
-
-                } else {
+                    try_return(Result = TRUE);
+                }
+                else
+                {
 
                     //
                     //  Leaves a hole at the front, and does not continue the following
@@ -1400,14 +1312,14 @@ Return Value:
                     //  0:  hole  |--NewRun--||--FollowingRun--
                     //
 
-                    DebugTrace( 0, Dbg, "Hole at front and not continue\n", 0);
+                    DebugTrace(0, Dbg, "Hole at front and not continue\n", 0);
 
                     //
                     //  Make room for one more entry.  The NextVbn field of the
                     //  one we're shifting remains valid.
                     //
 
-                    FsRtlAddLargeEntry( Mcb, Index, 1 );
+                    FsRtlAddLargeEntry(Mcb, Index, 1);
 
                     //
                     //  Add the hole
@@ -1420,15 +1332,14 @@ Return Value:
                     //  Add the new mapping
                     //
 
-                    (Mcb->Mapping)[Index+1].Lbn = Lbn;
+                    (Mcb->Mapping)[Index + 1].Lbn = Lbn;
 
-                    try_return (Result = TRUE);
+                    try_return(Result = TRUE);
                 }
-
             }
 
-            if ((PreviousEndingLbn(Mcb,Index) + 1 == Lbn) &&
-                (NextStartingLbn(Mcb,Index) == Lbn + SectorCount)) {
+            if ((PreviousEndingLbn(Mcb, Index) + 1 == Lbn) && (NextStartingLbn(Mcb, Index) == Lbn + SectorCount))
+            {
 
                 //
                 //  Leaves no holes, and continues both runs
@@ -1436,7 +1347,7 @@ Return Value:
                 //  --PreviousRun--|--NewRun--|--FollowingRun--
                 //
 
-                DebugTrace( 0, Dbg, "No holes, and continues both runs\n", 0);
+                DebugTrace(0, Dbg, "No holes, and continues both runs\n", 0);
 
                 //
                 //  We need to collapse the current index and the following index
@@ -1445,14 +1356,15 @@ Return Value:
                 //  one run
                 //
 
-                (Mcb->Mapping)[Index-1].NextVbn = (Mcb->Mapping)[Index+1].NextVbn;
+                (Mcb->Mapping)[Index - 1].NextVbn = (Mcb->Mapping)[Index + 1].NextVbn;
 
-                FsRtlRemoveLargeEntry( Mcb, Index, 2 );
+                FsRtlRemoveLargeEntry(Mcb, Index, 2);
 
-                try_return (Result = TRUE);
+                try_return(Result = TRUE);
             }
 
-            if (NextStartingLbn(Mcb,Index) == Lbn + SectorCount) {
+            if (NextStartingLbn(Mcb, Index) == Lbn + SectorCount)
+            {
 
                 //
                 //  Leaves no holes, and continues only following run
@@ -1462,21 +1374,22 @@ Return Value:
                 //  0:|--NewRun--|--FollowingRun--
                 //
 
-                DebugTrace( 0, Dbg, "No holes, and continues following\n", 0);
+                DebugTrace(0, Dbg, "No holes, and continues following\n", 0);
 
                 //
                 //  This index is going away so we need to stretch the
                 //  following run to meet up with the previous run
                 //
 
-                (Mcb->Mapping)[Index+1].Lbn = Lbn;
+                (Mcb->Mapping)[Index + 1].Lbn = Lbn;
 
-                FsRtlRemoveLargeEntry( Mcb, Index, 1 );
+                FsRtlRemoveLargeEntry(Mcb, Index, 1);
 
-                try_return (Result = TRUE);
+                try_return(Result = TRUE);
             }
 
-            if (PreviousEndingLbn(Mcb,Index) + 1 == Lbn) {
+            if (PreviousEndingLbn(Mcb, Index) + 1 == Lbn)
+            {
 
                 //
                 //  Leaves no holes, and continues only earlier run
@@ -1484,18 +1397,18 @@ Return Value:
                 //  --PreviousRun--|--NewRun--||--FollowingRun--
                 //
 
-                DebugTrace( 0, Dbg, "No holes, and continues earlier\n", 0);
+                DebugTrace(0, Dbg, "No holes, and continues earlier\n", 0);
 
                 //
                 //  This index is going away so we need to stretch the
                 //  previous run to meet up with the following run
                 //
 
-                (Mcb->Mapping)[Index-1].NextVbn = (Mcb->Mapping)[Index].NextVbn;
+                (Mcb->Mapping)[Index - 1].NextVbn = (Mcb->Mapping)[Index].NextVbn;
 
-                FsRtlRemoveLargeEntry( Mcb, Index, 1 );
+                FsRtlRemoveLargeEntry(Mcb, Index, 1);
 
-                try_return (Result = TRUE);
+                try_return(Result = TRUE);
             }
 
             //
@@ -1506,11 +1419,11 @@ Return Value:
             //      0:|--NewRun--||--FollowingRun--
             //
 
-            DebugTrace( 0, Dbg, "No holes, and continues none\n", 0);
+            DebugTrace(0, Dbg, "No holes, and continues none\n", 0);
 
             (Mcb->Mapping)[Index].Lbn = Lbn;
 
-            try_return (Result = TRUE);
+            try_return(Result = TRUE);
         }
 
         //
@@ -1520,24 +1433,22 @@ Return Value:
 
         Result = FALSE;
 
-    try_exit: NOTHING;
-    } finally {
+    try_exit:
+        NOTHING;
+    }
+    finally
+    {
 
-        ExReleaseFastMutex( Mcb->FastMutex );
+        ExReleaseFastMutex(Mcb->FastMutex);
 
-        DebugTrace(-1, Dbg, "FsRtlAddLargeMcbEntry -> %08lx\n", Result );
+        DebugTrace(-1, Dbg, "FsRtlAddLargeMcbEntry -> %08lx\n", Result);
     }
 
     return Result;
 }
 
-
-VOID
-FsRtlRemoveLargeMcbEntry (
-    IN PLARGE_MCB OpaqueMcb,
-    IN LONGLONG LargeVbn,
-    IN LONGLONG LargeSectorCount
-    )
+
+VOID FsRtlRemoveLargeMcbEntry(IN PLARGE_MCB OpaqueMcb, IN LONGLONG LargeVbn, IN LONGLONG LargeSectorCount)
 
 /*++
 
@@ -1583,37 +1494,33 @@ Return Value:
 
     ASSERTMSG("LargeInteger not supported yet ", ((PLARGE_INTEGER)&LargeVbn)->HighPart == 0);
 
-    DebugTrace(+1, Dbg, "FsRtlRemoveLargeMcbEntry, Mcb = %08lx\n", Mcb );
-    DebugTrace( 0, Dbg, " Vbn         = %08lx\n", Vbn );
-    DebugTrace( 0, Dbg, " SectorCount = %08lx\n", SectorCount );
+    DebugTrace(+1, Dbg, "FsRtlRemoveLargeMcbEntry, Mcb = %08lx\n", Mcb);
+    DebugTrace(0, Dbg, " Vbn         = %08lx\n", Vbn);
+    DebugTrace(0, Dbg, " SectorCount = %08lx\n", SectorCount);
 
-    ExAcquireFastMutex( Mcb->FastMutex );
+    ExAcquireFastMutex(Mcb->FastMutex);
 
-    try {
+    try
+    {
 
-        FsRtlRemoveMcbEntryPrivate( Mcb, Vbn, SectorCount );
+        FsRtlRemoveMcbEntryPrivate(Mcb, Vbn, SectorCount);
+    }
+    finally
+    {
 
-    } finally {
+        ExReleaseFastMutex(Mcb->FastMutex);
 
-        ExReleaseFastMutex( Mcb->FastMutex );
-
-        DebugTrace(-1, Dbg, "FsRtlRemoveLargeMcbEntry -> VOID\n", 0 );
+        DebugTrace(-1, Dbg, "FsRtlRemoveLargeMcbEntry -> VOID\n", 0);
     }
 
     return;
 }
 
-
+
 BOOLEAN
-FsRtlLookupLargeMcbEntry (
-    IN PLARGE_MCB OpaqueMcb,
-    IN LONGLONG LargeVbn,
-    OUT PLONGLONG LargeLbn OPTIONAL,
-    OUT PLONGLONG LargeSectorCount OPTIONAL,
-    OUT PLONGLONG LargeStartingLbn OPTIONAL,
-    OUT PLONGLONG LargeCountFromStartingLbn OPTIONAL,
-    OUT PULONG Index OPTIONAL
-    )
+FsRtlLookupLargeMcbEntry(IN PLARGE_MCB OpaqueMcb, IN LONGLONG LargeVbn, OUT PLONGLONG LargeLbn OPTIONAL,
+                         OUT PLONGLONG LargeSectorCount OPTIONAL, OUT PLONGLONG LargeStartingLbn OPTIONAL,
+                         OUT PLONGLONG LargeCountFromStartingLbn OPTIONAL, OUT PULONG Index OPTIONAL)
 
 /*++
 
@@ -1656,21 +1563,22 @@ Return Value:
 
     ULONG LocalIndex;
 
-    DebugTrace(+1, Dbg, "FsRtlLookupLargeMcbEntry, Mcb = %08lx\n", Mcb );
-    DebugTrace( 0, Dbg, "  LargeVbn.LowPart = %08lx\n", LargeVbn.LowPart );
+    DebugTrace(+1, Dbg, "FsRtlLookupLargeMcbEntry, Mcb = %08lx\n", Mcb);
+    DebugTrace(0, Dbg, "  LargeVbn.LowPart = %08lx\n", LargeVbn.LowPart);
 
-    ExAcquireFastMutex( Mcb->FastMutex );
+    ExAcquireFastMutex(Mcb->FastMutex);
 
-    ASSERTMSG("LargeInteger not supported yet ", ((((PLARGE_INTEGER)&LargeVbn)->HighPart == 0) ||
-                                                  (Mcb->PairCount == 0) ||
-                                                  ((((PLARGE_INTEGER)&LargeVbn)->HighPart == 0x7FFFFFFF) &&
-                                                   (((ULONG)LargeVbn) == 0xFFFFFFFF))));
+    ASSERTMSG("LargeInteger not supported yet ",
+              ((((PLARGE_INTEGER)&LargeVbn)->HighPart == 0) || (Mcb->PairCount == 0) ||
+               ((((PLARGE_INTEGER)&LargeVbn)->HighPart == 0x7FFFFFFF) && (((ULONG)LargeVbn) == 0xFFFFFFFF))));
 
-    try {
+    try
+    {
 
-        if (!FsRtlFindLargeIndex(Mcb, ((ULONG)LargeVbn), &LocalIndex)) {
+        if (!FsRtlFindLargeIndex(Mcb, ((ULONG)LargeVbn), &LocalIndex))
+        {
 
-            try_return (Result = FALSE);
+            try_return(Result = FALSE);
         }
 
         //
@@ -1679,15 +1587,18 @@ Return Value:
         //  run.  But if it's a hole then the sector Lbn is zero.
         //
 
-        if (ARGUMENT_PRESENT(LargeLbn)) {
+        if (ARGUMENT_PRESENT(LargeLbn))
+        {
 
-            if (StartingLbn(Mcb,LocalIndex) == UNUSED_LBN) {
+            if (StartingLbn(Mcb, LocalIndex) == UNUSED_LBN)
+            {
 
                 *LargeLbn = UNUSED_LBN;
+            }
+            else
+            {
 
-            } else {
-
-                *LargeLbn = StartingLbn(Mcb,LocalIndex) + (((ULONG)LargeVbn) - StartingVbn(Mcb,LocalIndex));
+                *LargeLbn = StartingLbn(Mcb, LocalIndex) + (((ULONG)LargeVbn) - StartingVbn(Mcb, LocalIndex));
             }
         }
 
@@ -1696,9 +1607,10 @@ Return Value:
         //  of sectors remaing in the run.
         //
 
-        if (ARGUMENT_PRESENT(LargeSectorCount)) {
+        if (ARGUMENT_PRESENT(LargeSectorCount))
+        {
 
-            *LargeSectorCount = EndingVbn(Mcb,LocalIndex) - ((ULONG)LargeVbn) + 1;
+            *LargeSectorCount = EndingVbn(Mcb, LocalIndex) - ((ULONG)LargeVbn) + 1;
         }
 
         //
@@ -1706,15 +1618,18 @@ Return Value:
         //  starting lbn of the run.  But if it's a hole then the sector Lbn is zero.
         //
 
-        if (ARGUMENT_PRESENT(LargeStartingLbn)) {
+        if (ARGUMENT_PRESENT(LargeStartingLbn))
+        {
 
-            if (StartingLbn(Mcb,LocalIndex) == UNUSED_LBN) {
+            if (StartingLbn(Mcb, LocalIndex) == UNUSED_LBN)
+            {
 
                 *LargeStartingLbn = UNUSED_LBN;
+            }
+            else
+            {
 
-            } else {
-
-                *LargeStartingLbn = StartingLbn(Mcb,LocalIndex);
+                *LargeStartingLbn = StartingLbn(Mcb, LocalIndex);
             }
         }
 
@@ -1723,40 +1638,41 @@ Return Value:
         //  of sectors in the run.
         //
 
-        if (ARGUMENT_PRESENT(LargeCountFromStartingLbn)) {
+        if (ARGUMENT_PRESENT(LargeCountFromStartingLbn))
+        {
 
-            *LargeCountFromStartingLbn = EndingVbn(Mcb,LocalIndex) - StartingVbn(Mcb,LocalIndex) + 1;
+            *LargeCountFromStartingLbn = EndingVbn(Mcb, LocalIndex) - StartingVbn(Mcb, LocalIndex) + 1;
         }
 
         //
         //  If the caller want to know the Index number, fill it in.
         //
 
-        if (ARGUMENT_PRESENT(Index)) {
+        if (ARGUMENT_PRESENT(Index))
+        {
 
             *Index = LocalIndex;
         }
 
         Result = TRUE;
 
-    try_exit: NOTHING;
-    } finally {
+    try_exit:
+        NOTHING;
+    }
+    finally
+    {
 
-        ExReleaseFastMutex( Mcb->FastMutex );
+        ExReleaseFastMutex(Mcb->FastMutex);
 
-        DebugTrace(-1, Dbg, "FsRtlLookupLargeMcbEntry -> %08lx\n", Result );
+        DebugTrace(-1, Dbg, "FsRtlLookupLargeMcbEntry -> %08lx\n", Result);
     }
 
     return Result;
 }
 
-
+
 BOOLEAN
-FsRtlLookupLastLargeMcbEntry (
-    IN PLARGE_MCB OpaqueMcb,
-    OUT PLONGLONG LargeVbn,
-    OUT PLONGLONG LargeLbn
-    )
+FsRtlLookupLastLargeMcbEntry(IN PLARGE_MCB OpaqueMcb, OUT PLONGLONG LargeVbn, OUT PLONGLONG LargeLbn)
 
 /*++
 
@@ -1790,49 +1706,50 @@ Return Value:
 
     PAGED_CODE();
 
-    DebugTrace(+1, Dbg, "FsRtlLookupLastLargeMcbEntry, Mcb = %08lx\n", Mcb );
+    DebugTrace(+1, Dbg, "FsRtlLookupLastLargeMcbEntry, Mcb = %08lx\n", Mcb);
 
-    ExAcquireFastMutex( Mcb->FastMutex );
+    ExAcquireFastMutex(Mcb->FastMutex);
 
-    try {
+    try
+    {
 
         //
         //  Check to make sure there is at least one run in the mcb
         //
 
-        if (Mcb->PairCount <= 0) {
+        if (Mcb->PairCount <= 0)
+        {
 
-            try_return (Result = FALSE);
+            try_return(Result = FALSE);
         }
 
         //
         //  Return the last mapping of the last run
         //
 
-        *LargeLbn = EndingLbn(Mcb,Mcb->PairCount-1);
-        *LargeVbn = EndingVbn(Mcb,Mcb->PairCount-1);
+        *LargeLbn = EndingLbn(Mcb, Mcb->PairCount - 1);
+        *LargeVbn = EndingVbn(Mcb, Mcb->PairCount - 1);
 
         Result = TRUE;
 
-    try_exit: NOTHING;
-    } finally {
+    try_exit:
+        NOTHING;
+    }
+    finally
+    {
 
-        ExReleaseFastMutex( Mcb->FastMutex );
+        ExReleaseFastMutex(Mcb->FastMutex);
 
-        DebugTrace(-1, Dbg, "FsRtlLookupLastLargeMcbEntry -> %08lx\n", Result );
+        DebugTrace(-1, Dbg, "FsRtlLookupLastLargeMcbEntry -> %08lx\n", Result);
     }
 
     return Result;
 }
 
-
+
 BOOLEAN
-FsRtlLookupLastLargeMcbEntryAndIndex (
-    IN PLARGE_MCB OpaqueMcb,
-    OUT PLONGLONG LargeVbn,
-    OUT PLONGLONG LargeLbn,
-    OUT PULONG Index
-    )
+FsRtlLookupLastLargeMcbEntryAndIndex(IN PLARGE_MCB OpaqueMcb, OUT PLONGLONG LargeVbn, OUT PLONGLONG LargeLbn,
+                                     OUT PULONG Index)
 
 /*++
 
@@ -1868,38 +1785,43 @@ Return Value:
 
     PAGED_CODE();
 
-    DebugTrace(+1, Dbg, "FsRtlLookupLastLargeMcbEntryAndIndex, Mcb = %08lx\n", Mcb );
+    DebugTrace(+1, Dbg, "FsRtlLookupLastLargeMcbEntryAndIndex, Mcb = %08lx\n", Mcb);
 
-    ExAcquireFastMutex( Mcb->FastMutex );
+    ExAcquireFastMutex(Mcb->FastMutex);
 
-    try {
+    try
+    {
 
         //
         //  Check to make sure there is at least one run in the mcb
         //
 
-        if (Mcb->PairCount <= 0) {
+        if (Mcb->PairCount <= 0)
+        {
 
-            try_return (Result = FALSE);
+            try_return(Result = FALSE);
         }
 
         //
         //  Return the last mapping of the last run
         //
 
-        *((PULONG)LargeLbn) = EndingLbn(Mcb,Mcb->PairCount-1);
-        *((PULONG)LargeVbn) = EndingVbn(Mcb,Mcb->PairCount-1);
+        *((PULONG)LargeLbn) = EndingLbn(Mcb, Mcb->PairCount - 1);
+        *((PULONG)LargeVbn) = EndingVbn(Mcb, Mcb->PairCount - 1);
 
         *Index = Mcb->PairCount - 1;
 
         Result = TRUE;
 
-    try_exit: NOTHING;
-    } finally {
+    try_exit:
+        NOTHING;
+    }
+    finally
+    {
 
-        ExReleaseFastMutex( Mcb->FastMutex );
+        ExReleaseFastMutex(Mcb->FastMutex);
 
-        DebugTrace(-1, Dbg, "FsRtlLookupLastLargeMcbEntryAndIndex -> %08lx\n", Result );
+        DebugTrace(-1, Dbg, "FsRtlLookupLastLargeMcbEntryAndIndex -> %08lx\n", Result);
     }
 
     ((PLARGE_INTEGER)LargeVbn)->HighPart = (*((PULONG)LargeVbn) == UNUSED_LBN ? UNUSED_LBN : 0);
@@ -1908,11 +1830,9 @@ Return Value:
     return Result;
 }
 
-
+
 ULONG
-FsRtlNumberOfRunsInLargeMcb (
-    IN PLARGE_MCB OpaqueMcb
-    )
+FsRtlNumberOfRunsInLargeMcb(IN PLARGE_MCB OpaqueMcb)
 
 /*++
 
@@ -1941,28 +1861,23 @@ Return Value:
 
     PAGED_CODE();
 
-    DebugTrace(+1, Dbg, "FsRtlNumberOfRunsInLargeMcb, Mcb = %08lx\n", Mcb );
+    DebugTrace(+1, Dbg, "FsRtlNumberOfRunsInLargeMcb, Mcb = %08lx\n", Mcb);
 
-    ExAcquireFastMutex( Mcb->FastMutex );
+    ExAcquireFastMutex(Mcb->FastMutex);
 
     Count = Mcb->PairCount;
 
-    ExReleaseFastMutex( Mcb->FastMutex );
+    ExReleaseFastMutex(Mcb->FastMutex);
 
-    DebugTrace(-1, Dbg, "FsRtlNumberOfRunsInLargeMcb -> %08lx\n", Count );
+    DebugTrace(-1, Dbg, "FsRtlNumberOfRunsInLargeMcb -> %08lx\n", Count);
 
     return Count;
 }
 
-
+
 BOOLEAN
-FsRtlGetNextLargeMcbEntry (
-    IN PLARGE_MCB OpaqueMcb,
-    IN ULONG RunIndex,
-    OUT PLONGLONG LargeVbn,
-    OUT PLONGLONG LargeLbn,
-    OUT PLONGLONG LargeSectorCount
-    )
+FsRtlGetNextLargeMcbEntry(IN PLARGE_MCB OpaqueMcb, IN ULONG RunIndex, OUT PLONGLONG LargeVbn, OUT PLONGLONG LargeLbn,
+                          OUT PLONGLONG LargeSectorCount)
 
 /*++
 
@@ -2009,52 +1924,53 @@ Return Value:
 
     PAGED_CODE();
 
-    DebugTrace(+1, Dbg, "FsRtlGetNextLargeMcbEntry, Mcb = %08lx\n", Mcb );
-    DebugTrace( 0, Dbg, " RunIndex = %08lx\n", RunIndex );
+    DebugTrace(+1, Dbg, "FsRtlGetNextLargeMcbEntry, Mcb = %08lx\n", Mcb);
+    DebugTrace(0, Dbg, " RunIndex = %08lx\n", RunIndex);
 
-    ExAcquireFastMutex( Mcb->FastMutex );
+    ExAcquireFastMutex(Mcb->FastMutex);
 
-    try {
+    try
+    {
 
         //
         //  Make sure the run index is within range
         //
 
-        if (RunIndex >= Mcb->PairCount) {
+        if (RunIndex >= Mcb->PairCount)
+        {
 
-            try_return (Result = FALSE);
+            try_return(Result = FALSE);
         }
 
         //
         //  Set the return variables
         //
 
-        *((PULONG)LargeVbn) = StartingVbn(Mcb,RunIndex);
+        *((PULONG)LargeVbn) = StartingVbn(Mcb, RunIndex);
         ((PLARGE_INTEGER)LargeVbn)->HighPart = (*((PULONG)LargeVbn) == UNUSED_LBN ? UNUSED_LBN : 0);
-        *((PULONG)LargeLbn) = StartingLbn(Mcb,RunIndex);
+        *((PULONG)LargeLbn) = StartingLbn(Mcb, RunIndex);
         ((PLARGE_INTEGER)LargeLbn)->HighPart = (*((PULONG)LargeLbn) == UNUSED_LBN ? UNUSED_LBN : 0);
-        *LargeSectorCount = SectorsWithinRun(Mcb,RunIndex);
+        *LargeSectorCount = SectorsWithinRun(Mcb, RunIndex);
 
         Result = TRUE;
 
-    try_exit: NOTHING;
-    } finally {
+    try_exit:
+        NOTHING;
+    }
+    finally
+    {
 
-        ExReleaseFastMutex( Mcb->FastMutex );
+        ExReleaseFastMutex(Mcb->FastMutex);
 
-        DebugTrace(-1, Dbg, "FsRtlGetNextLargeMcbEntry -> %08lx\n", Result );
+        DebugTrace(-1, Dbg, "FsRtlGetNextLargeMcbEntry -> %08lx\n", Result);
     }
 
     return Result;
 }
 
-
+
 BOOLEAN
-FsRtlSplitLargeMcb (
-    IN PLARGE_MCB OpaqueMcb,
-    IN LONGLONG LargeVbn,
-    IN LONGLONG LargeAmount
-    )
+FsRtlSplitLargeMcb(IN PLARGE_MCB OpaqueMcb, IN LONGLONG LargeVbn, IN LONGLONG LargeAmount)
 
 /*++
 
@@ -2123,18 +2039,19 @@ Return Value:
 
     PAGED_CODE();
 
-    DebugTrace(+1, Dbg, "FsRtlSplitLargeMcb, Mcb = %08lx\n", Mcb );
-    DebugTrace( 0, Dbg, " Vbn    = %08lx\n", Vbn );
-    DebugTrace( 0, Dbg, " Amount = %08lx\n", Amount );
+    DebugTrace(+1, Dbg, "FsRtlSplitLargeMcb, Mcb = %08lx\n", Mcb);
+    DebugTrace(0, Dbg, " Vbn    = %08lx\n", Vbn);
+    DebugTrace(0, Dbg, " Amount = %08lx\n", Amount);
 
-    ExAcquireFastMutex( Mcb->FastMutex );
+    ExAcquireFastMutex(Mcb->FastMutex);
 
-    ASSERTMSG("LargeInteger not supported yet ", ((((PLARGE_INTEGER)&LargeVbn)->HighPart == 0) ||
-                                                  (Mcb->PairCount == 0)));
-    ASSERTMSG("LargeInteger not supported yet ", ((((PLARGE_INTEGER)&LargeAmount)->HighPart == 0) ||
-                                                  (Mcb->PairCount == 0)));
+    ASSERTMSG("LargeInteger not supported yet ",
+              ((((PLARGE_INTEGER)&LargeVbn)->HighPart == 0) || (Mcb->PairCount == 0)));
+    ASSERTMSG("LargeInteger not supported yet ",
+              ((((PLARGE_INTEGER)&LargeAmount)->HighPart == 0) || (Mcb->PairCount == 0)));
 
-    try {
+    try
+    {
 
         //
         //  First lookup the index for the entry that we are going to split.
@@ -2143,7 +2060,8 @@ Return Value:
         //  in the mcb
         //
 
-        if (!FsRtlFindLargeIndex( Mcb, Vbn, &Index)) {
+        if (!FsRtlFindLargeIndex(Mcb, Vbn, &Index))
+        {
 
             try_return(Result = FALSE);
         }
@@ -2152,7 +2070,8 @@ Return Value:
         //  Now check if the input Vbn is within a hole
         //
 
-        if (StartingLbn(Mcb,Index) == UNUSED_LBN) {
+        if (StartingLbn(Mcb, Index) == UNUSED_LBN)
+        {
 
             //
             //  Before: --PreviousRun--||--IndexHole--||--FollowingRun--
@@ -2171,11 +2090,12 @@ Return Value:
 
             NOTHING;
 
-        //
-        //  Now check if the input vbn is between a hole and an existing run.
-        //
-
-        } else if ((StartingVbn(Mcb,Index) == Vbn) && (Index != 0) && (PreviousEndingLbn(Mcb,Index) == UNUSED_LBN)) {
+            //
+            //  Now check if the input vbn is between a hole and an existing run.
+            //
+        }
+        else if ((StartingVbn(Mcb, Index) == Vbn) && (Index != 0) && (PreviousEndingLbn(Mcb, Index) == UNUSED_LBN))
+        {
 
             //
             //  Before: --Hole--||--IndexRun--
@@ -2194,11 +2114,12 @@ Return Value:
 
             Index -= 1;
 
-        //
-        //  Now check if the input vbn is between two existing runs
-        //
-
-        } else if (StartingVbn(Mcb,Index) == Vbn) {
+            //
+            //  Now check if the input vbn is between two existing runs
+            //
+        }
+        else if (StartingVbn(Mcb, Index) == Vbn)
+        {
 
             //
             //  Before: --PreviousRun--||--IndexRun--
@@ -2213,18 +2134,19 @@ Return Value:
             //      and shift succeeding runs.
             //
 
-            FsRtlAddLargeEntry( Mcb, Index, 1 );
+            FsRtlAddLargeEntry(Mcb, Index, 1);
 
             (Mcb->Mapping)[Index].Lbn = (LBN)UNUSED_LBN;
             (Mcb->Mapping)[Index].NextVbn = Vbn + Amount;
 
             Index += 1;
 
-        //
-        //  Otherwise the input vbn is inside an existing run
-        //
-
-        } else {
+            //
+            //  Otherwise the input vbn is inside an existing run
+            //
+        }
+        else
+        {
 
             //
             //  Before: --IndexRun--
@@ -2235,20 +2157,18 @@ Return Value:
             //      run and shift succeeding runs
             //
 
-            FsRtlAddLargeEntry( Mcb, Index, 2 );
+            FsRtlAddLargeEntry(Mcb, Index, 2);
 
-            (Mcb->Mapping)[Index].Lbn = (Mcb->Mapping)[Index+2].Lbn;
+            (Mcb->Mapping)[Index].Lbn = (Mcb->Mapping)[Index + 2].Lbn;
             (Mcb->Mapping)[Index].NextVbn = Vbn;
 
-            (Mcb->Mapping)[Index+1].Lbn = (LBN)UNUSED_LBN;
-            (Mcb->Mapping)[Index+1].NextVbn = Vbn + Amount;
+            (Mcb->Mapping)[Index + 1].Lbn = (LBN)UNUSED_LBN;
+            (Mcb->Mapping)[Index + 1].NextVbn = Vbn + Amount;
 
-            (Mcb->Mapping)[Index+2].Lbn = (Mcb->Mapping)[Index+2].Lbn +
-                                          StartingVbn(Mcb, Index+1) -
-                                          StartingVbn(Mcb, Index);
+            (Mcb->Mapping)[Index + 2].Lbn =
+                (Mcb->Mapping)[Index + 2].Lbn + StartingVbn(Mcb, Index + 1) - StartingVbn(Mcb, Index);
 
             Index += 2;
-
         }
 
         //
@@ -2257,35 +2177,34 @@ Return Value:
         //  by the specified amount
         //
 
-        for (i = Index; i < Mcb->PairCount; i += 1) {
+        for (i = Index; i < Mcb->PairCount; i += 1)
+        {
 
             (Mcb->Mapping)[i].NextVbn += Amount;
         }
 
         Result = TRUE;
 
-    try_exit: NOTHING;
-    } finally {
+    try_exit:
+        NOTHING;
+    }
+    finally
+    {
 
-        ExReleaseFastMutex( Mcb->FastMutex );
+        ExReleaseFastMutex(Mcb->FastMutex);
 
-        DebugTrace(-1, Dbg, "FsRtlSplitLargeMcb -> %08lx\n", Result );
+        DebugTrace(-1, Dbg, "FsRtlSplitLargeMcb -> %08lx\n", Result);
     }
 
     return Result;
 }
 
-
+
 //
 //  Private support routine
 //
 
-VOID
-FsRtlRemoveMcbEntryPrivate (
-    IN PNONOPAQUE_MCB Mcb,
-    IN ULONG Vbn,
-    IN ULONG SectorCount
-    )
+VOID FsRtlRemoveMcbEntryPrivate(IN PNONOPAQUE_MCB Mcb, IN ULONG Vbn, IN ULONG SectorCount)
 
 /*++
 
@@ -2317,7 +2236,8 @@ Return Value:
     //  Do a quick test to see if we are wiping out the entire MCB.
     //
 
-    if ((Vbn == 0) && (Mcb->PairCount > 0) && (SectorCount >= Mcb->Mapping[Mcb->PairCount-1].NextVbn)) {
+    if ((Vbn == 0) && (Mcb->PairCount > 0) && (SectorCount >= Mcb->Mapping[Mcb->PairCount - 1].NextVbn))
+    {
 
         Mcb->PairCount = 0;
 
@@ -2329,15 +2249,17 @@ Return Value:
     //  with our main loop
     //
 
-    while (SectorCount > 0) {
+    while (SectorCount > 0)
+    {
 
         //
         //  Locate the mapping for the vbn
         //
 
-        if (!FsRtlFindLargeIndex(Mcb, Vbn, &Index)) {
+        if (!FsRtlFindLargeIndex(Mcb, Vbn, &Index))
+        {
 
-            DebugTrace( 0, Dbg, "FsRtlRemoveLargeMcbEntry, Cannot remove an unmapped Vbn = %08lx\n", Vbn );
+            DebugTrace(0, Dbg, "FsRtlRemoveLargeMcbEntry, Cannot remove an unmapped Vbn = %08lx\n", Vbn);
 
             return;
         }
@@ -2347,8 +2269,8 @@ Return Value:
         //  be considered
         //
 
-        if ((StartingVbn(Mcb,Index) == Vbn) &&
-            (EndingVbn(Mcb,Index) < Vbn + SectorCount)) {
+        if ((StartingVbn(Mcb, Index) == Vbn) && (EndingVbn(Mcb, Index) < Vbn + SectorCount))
+        {
 
             ULONG i;
 
@@ -2360,7 +2282,7 @@ Return Value:
             //  Update the amount to remove
             //
 
-            i = SectorsWithinRun(Mcb,Index);
+            i = SectorsWithinRun(Mcb, Index);
             Vbn += i;
             SectorCount -= i;
 
@@ -2368,18 +2290,20 @@ Return Value:
             //  If already a hole then leave it alone
             //
 
-            if (StartingLbn(Mcb,Index) == UNUSED_LBN) {
+            if (StartingLbn(Mcb, Index) == UNUSED_LBN)
+            {
 
                 NOTHING;
 
-            //
-            //  Test for last run
-            //
+                //
+                //  Test for last run
+                //
+            }
+            else if (Index == Mcb->PairCount - 1)
+            {
 
-            } else if (Index == Mcb->PairCount - 1) {
-
-                if ((PreviousEndingLbn(Mcb,Index) != UNUSED_LBN) ||
-                    (Index == 0)) {
+                if ((PreviousEndingLbn(Mcb, Index) != UNUSED_LBN) || (Index == 0))
+                {
 
                     //
                     //  Previous is not hole, index is last run
@@ -2389,15 +2313,16 @@ Return Value:
                     //  0:  Hole
                     //
 
-                    DebugTrace( 0, Dbg, "Entire run, Previous not hole, index is last run\n", 0);
+                    DebugTrace(0, Dbg, "Entire run, Previous not hole, index is last run\n", 0);
 
                     //
                     //  Just remove this entry
                     //
 
-                    FsRtlRemoveLargeEntry( Mcb, Index, 1);
-
-                } else {
+                    FsRtlRemoveLargeEntry(Mcb, Index, 1);
+                }
+                else
+                {
 
                     //
                     //  Previous is hole, index is last run
@@ -2405,17 +2330,18 @@ Return Value:
                     //  --Hole--|  Hole
                     //
 
-                    DebugTrace( 0, Dbg, "Entire run, Previous hole, index is last run\n", 0);
+                    DebugTrace(0, Dbg, "Entire run, Previous hole, index is last run\n", 0);
 
                     //
                     //  Just remove this entry, and preceding entry
                     //
 
-                    FsRtlRemoveLargeEntry( Mcb, Index-1, 2);
+                    FsRtlRemoveLargeEntry(Mcb, Index - 1, 2);
                 }
-
-            } else if (((PreviousEndingLbn(Mcb,Index) != UNUSED_LBN) || (Index == 0)) &&
-                       (NextStartingLbn(Mcb,Index) != UNUSED_LBN)) {
+            }
+            else if (((PreviousEndingLbn(Mcb, Index) != UNUSED_LBN) || (Index == 0)) &&
+                     (NextStartingLbn(Mcb, Index) != UNUSED_LBN))
+            {
 
                 //
                 //  Previous and following are not holes
@@ -2425,16 +2351,17 @@ Return Value:
                 //  0:  Hole  |--Following--
                 //
 
-                DebugTrace( 0, Dbg, "Entire run, Previous & Following not holes\n", 0);
+                DebugTrace(0, Dbg, "Entire run, Previous & Following not holes\n", 0);
 
                 //
                 //  Make this index a hole
                 //
 
                 (Mcb->Mapping)[Index].Lbn = (LBN)UNUSED_LBN;
-
-            } else if (((PreviousEndingLbn(Mcb,Index) != UNUSED_LBN) || (Index == 0)) &&
-                       (NextStartingLbn(Mcb,Index) == UNUSED_LBN)) {
+            }
+            else if (((PreviousEndingLbn(Mcb, Index) != UNUSED_LBN) || (Index == 0)) &&
+                     (NextStartingLbn(Mcb, Index) == UNUSED_LBN))
+            {
 
                 //
                 //  Following is hole
@@ -2444,16 +2371,16 @@ Return Value:
                 //  0:  Hole  |--Hole--
                 //
 
-                DebugTrace( 0, Dbg, "Entire run, Following is hole\n", 0);
+                DebugTrace(0, Dbg, "Entire run, Following is hole\n", 0);
 
                 //
                 //  Simply remove this entry
                 //
 
-                FsRtlRemoveLargeEntry( Mcb, Index, 1 );
-
-            } else if ((PreviousEndingLbn(Mcb,Index) == UNUSED_LBN) &&
-                       (NextStartingLbn(Mcb,Index) != UNUSED_LBN)) {
+                FsRtlRemoveLargeEntry(Mcb, Index, 1);
+            }
+            else if ((PreviousEndingLbn(Mcb, Index) == UNUSED_LBN) && (NextStartingLbn(Mcb, Index) != UNUSED_LBN))
+            {
 
                 //
                 //  Previous is hole
@@ -2461,7 +2388,7 @@ Return Value:
                 //  --Hole--|  Hole  |--Following--
                 //
 
-                DebugTrace( 0, Dbg, "Entire run, Previous is hole\n", 0);
+                DebugTrace(0, Dbg, "Entire run, Previous is hole\n", 0);
 
                 //
                 //  Mark current entry a hole
@@ -2473,9 +2400,10 @@ Return Value:
                 //  Remove previous entry
                 //
 
-                FsRtlRemoveLargeEntry( Mcb, Index - 1, 1 );
-
-            } else {
+                FsRtlRemoveLargeEntry(Mcb, Index - 1, 1);
+            }
+            else
+            {
 
                 //
                 //  Previous and following are holes
@@ -2483,16 +2411,17 @@ Return Value:
                 //  --Hole--|  Hole  |--Hole--
                 //
 
-                DebugTrace( 0, Dbg, "Entire run, Previous & following are holes\n", 0);
+                DebugTrace(0, Dbg, "Entire run, Previous & following are holes\n", 0);
 
                 //
                 //  Remove previous and this entry
                 //
 
-                FsRtlRemoveLargeEntry( Mcb, Index - 1, 2 );
+                FsRtlRemoveLargeEntry(Mcb, Index - 1, 2);
             }
-
-        } else if (StartingVbn(Mcb,Index) == Vbn) {
+        }
+        else if (StartingVbn(Mcb, Index) == Vbn)
+        {
 
             //
             //  Removes first part of run
@@ -2502,11 +2431,13 @@ Return Value:
             //  If already a hole then leave it alone
             //
 
-            if (StartingLbn(Mcb,Index) == UNUSED_LBN) {
+            if (StartingLbn(Mcb, Index) == UNUSED_LBN)
+            {
 
                 NOTHING;
-
-            } else if ((PreviousEndingLbn(Mcb,Index) != UNUSED_LBN) || (Index == 0)) {
+            }
+            else if ((PreviousEndingLbn(Mcb, Index) != UNUSED_LBN) || (Index == 0))
+            {
 
                 //
                 //  Previous is not hole
@@ -2516,14 +2447,14 @@ Return Value:
                 //  0:  Hole  |--Index--||--Following--
                 //
 
-                DebugTrace( 0, Dbg, "1st part, Previous is not hole\n", 0);
+                DebugTrace(0, Dbg, "1st part, Previous is not hole\n", 0);
 
                 //
                 //  Make room for one more entry.  The NextVbn field of the
                 //  one we're shifting remains valid.
                 //
 
-                FsRtlAddLargeEntry( Mcb, Index, 1 );
+                FsRtlAddLargeEntry(Mcb, Index, 1);
 
                 //
                 //  Set the hole
@@ -2536,9 +2467,10 @@ Return Value:
                 //  Set the new Lbn for the remaining run
                 //
 
-                (Mcb->Mapping)[Index+1].Lbn += SectorCount;
-
-            } else {
+                (Mcb->Mapping)[Index + 1].Lbn += SectorCount;
+            }
+            else
+            {
 
                 //
                 //  Previous is hole
@@ -2546,13 +2478,13 @@ Return Value:
                 //  --Hole--|  Hole  |--Index--||--Following--
                 //
 
-                DebugTrace( 0, Dbg, "1st part, Previous is hole\n", 0);
+                DebugTrace(0, Dbg, "1st part, Previous is hole\n", 0);
 
                 //
                 //  Expand the preceding hole
                 //
 
-                (Mcb->Mapping)[Index-1].NextVbn += SectorCount;
+                (Mcb->Mapping)[Index - 1].NextVbn += SectorCount;
 
                 //
                 //  Set the new Lbn for the remaining run
@@ -2567,12 +2499,13 @@ Return Value:
 
             Vbn += SectorCount;
             SectorCount = 0;
-
-        } else if (EndingVbn(Mcb,Index) < Vbn + SectorCount) {
+        }
+        else if (EndingVbn(Mcb, Index) < Vbn + SectorCount)
+        {
 
             ULONG AmountToRemove;
 
-            AmountToRemove = EndingVbn(Mcb,Index) - Vbn + 1;
+            AmountToRemove = EndingVbn(Mcb, Index) - Vbn + 1;
 
             //
             //  Removes last part of run
@@ -2582,11 +2515,13 @@ Return Value:
             //  If already a hole then leave it alone
             //
 
-            if (StartingLbn(Mcb,Index) == UNUSED_LBN) {
+            if (StartingLbn(Mcb, Index) == UNUSED_LBN)
+            {
 
                 NOTHING;
-
-            } else if (Index == Mcb->PairCount - 1) {
+            }
+            else if (Index == Mcb->PairCount - 1)
+            {
 
                 //
                 //  Index is last run
@@ -2596,15 +2531,16 @@ Return Value:
                 //  0:|--Index--|  Hole
                 //
 
-                DebugTrace( 0, Dbg, "last part, Index is last run\n", 0);
+                DebugTrace(0, Dbg, "last part, Index is last run\n", 0);
 
                 //
                 //  Shrink back the size of the current index
                 //
 
                 (Mcb->Mapping)[Index].NextVbn -= AmountToRemove;
-
-            } else if (NextStartingLbn(Mcb,Index) == UNUSED_LBN) {
+            }
+            else if (NextStartingLbn(Mcb, Index) == UNUSED_LBN)
+            {
 
                 //
                 //  Following is hole
@@ -2614,15 +2550,16 @@ Return Value:
                 //  0:|--Index--|  Hole  |--Hole--
                 //
 
-                DebugTrace( 0, Dbg, "last part, Following is hole\n", 0);
+                DebugTrace(0, Dbg, "last part, Following is hole\n", 0);
 
                 //
                 //  Shrink back the size of the current index
                 //
 
                 (Mcb->Mapping)[Index].NextVbn -= AmountToRemove;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  Following is not hole
@@ -2633,21 +2570,21 @@ Return Value:
                 //  0:|--Index--|  Hole  |--Following--
                 //
 
-                DebugTrace( 0, Dbg, "last part, Following is not hole\n", 0);
+                DebugTrace(0, Dbg, "last part, Following is not hole\n", 0);
 
                 //
                 //  Make room for one more entry.  The NextVbn field of the
                 //  one we're shifting remains valid.
                 //
 
-                FsRtlAddLargeEntry( Mcb, Index+1, 1 );
+                FsRtlAddLargeEntry(Mcb, Index + 1, 1);
 
                 //
                 //  Set the new hole
                 //
 
-                (Mcb->Mapping)[Index+1].Lbn = (LBN)UNUSED_LBN;
-                (Mcb->Mapping)[Index+1].NextVbn = (Mcb->Mapping)[Index].NextVbn;
+                (Mcb->Mapping)[Index + 1].Lbn = (LBN)UNUSED_LBN;
+                (Mcb->Mapping)[Index + 1].NextVbn = (Mcb->Mapping)[Index].NextVbn;
 
                 //
                 //  Shrink back the size of the current index
@@ -2662,18 +2599,21 @@ Return Value:
 
             Vbn += AmountToRemove;
             SectorCount -= AmountToRemove;
-
-        } else {
+        }
+        else
+        {
 
             //
             //  If already a hole then leave it alone
             //
 
-            if (StartingLbn(Mcb,Index) == UNUSED_LBN) {
+            if (StartingLbn(Mcb, Index) == UNUSED_LBN)
+            {
 
                 NOTHING;
-
-            } else {
+            }
+            else
+            {
 
                 //
                 //  Remove middle of run
@@ -2683,35 +2623,34 @@ Return Value:
                 //  0:|--Index--|  Hole  |--Index--||--Following--
                 //
 
-                DebugTrace( 0, Dbg, "Middle of run\n", 0);
+                DebugTrace(0, Dbg, "Middle of run\n", 0);
 
                 //
                 //  Make room for two more entries.  The NextVbn field of the
                 //  one we're shifting remains valid.
                 //
 
-                FsRtlAddLargeEntry( Mcb, Index, 2 );
+                FsRtlAddLargeEntry(Mcb, Index, 2);
 
                 //
                 //  Set up the first remaining run
                 //
 
-                (Mcb->Mapping)[Index].Lbn = (Mcb->Mapping)[Index+2].Lbn;
+                (Mcb->Mapping)[Index].Lbn = (Mcb->Mapping)[Index + 2].Lbn;
                 (Mcb->Mapping)[Index].NextVbn = Vbn;
 
                 //
                 //  Set up the hole
                 //
 
-                (Mcb->Mapping)[Index+1].Lbn = (LBN)UNUSED_LBN;
-                (Mcb->Mapping)[Index+1].NextVbn = Vbn + SectorCount;
+                (Mcb->Mapping)[Index + 1].Lbn = (LBN)UNUSED_LBN;
+                (Mcb->Mapping)[Index + 1].NextVbn = Vbn + SectorCount;
 
                 //
                 //  Set up the second remaining run
                 //
 
-                (Mcb->Mapping)[Index+2].Lbn += SectorsWithinRun(Mcb,Index) +
-                                               SectorsWithinRun(Mcb,Index+1);
+                (Mcb->Mapping)[Index + 2].Lbn += SectorsWithinRun(Mcb, Index) + SectorsWithinRun(Mcb, Index + 1);
             }
 
             //
@@ -2726,17 +2665,13 @@ Return Value:
     return;
 }
 
-
+
 //
 //  Private routine
 //
 
 BOOLEAN
-FsRtlFindLargeIndex (
-    IN PNONOPAQUE_MCB Mcb,
-    IN VBN Vbn,
-    OUT PULONG Index
-    )
+FsRtlFindLargeIndex(IN PNONOPAQUE_MCB Mcb, IN VBN Vbn, OUT PULONG Index)
 
 /*++
 
@@ -2774,7 +2709,8 @@ Return Value:
     MinIndex = 0;
     MaxIndex = Mcb->PairCount - 1;
 
-    while (MinIndex <= MaxIndex) {
+    while (MinIndex <= MaxIndex)
+    {
 
         //
         //  Compute the middle index to look at
@@ -2786,7 +2722,8 @@ Return Value:
         //  check if the Vbn is less than the mapping at the mid index
         //
 
-        if (Vbn < StartingVbn(Mcb, MidIndex)) {
+        if (Vbn < StartingVbn(Mcb, MidIndex))
+        {
 
             //
             //  Vbn is less than the middle index so we need to drop
@@ -2795,11 +2732,12 @@ Return Value:
 
             MaxIndex = MidIndex - 1;
 
-        //
-        //  check if the Vbn is greater than the mapping at the mid index
-        //
-
-        } else if (Vbn > EndingVbn(Mcb, MidIndex)) {
+            //
+            //  check if the Vbn is greater than the mapping at the mid index
+            //
+        }
+        else if (Vbn > EndingVbn(Mcb, MidIndex))
+        {
 
             //
             //  Vbn is greater than the middle index so we need to bring
@@ -2808,12 +2746,13 @@ Return Value:
 
             MinIndex = MidIndex + 1;
 
-        //
-        //  Otherwise we've found the index containing the Vbn so set the
-        //  index and return TRUE.
-        //
-
-        } else {
+            //
+            //  Otherwise we've found the index containing the Vbn so set the
+            //  index and return TRUE.
+            //
+        }
+        else
+        {
 
             *Index = MidIndex;
 
@@ -2830,17 +2769,12 @@ Return Value:
     return FALSE;
 }
 
-
+
 //
 //  Private Routine
 //
 
-VOID
-FsRtlAddLargeEntry (
-    IN PNONOPAQUE_MCB Mcb,
-    IN ULONG WhereToAddIndex,
-    IN ULONG AmountToAdd
-    )
+VOID FsRtlAddLargeEntry(IN PNONOPAQUE_MCB Mcb, IN ULONG WhereToAddIndex, IN ULONG AmountToAdd)
 
 /*++
 
@@ -2880,7 +2814,8 @@ Return Value:
     //  the additional entries
     //
 
-    if (Mcb->PairCount + AmountToAdd > Mcb->MaximumPairCount) {
+    if (Mcb->PairCount + AmountToAdd > Mcb->MaximumPairCount)
+    {
 
         ULONG NewMax;
         PMAPPING Mapping;
@@ -2893,16 +2828,18 @@ Return Value:
         //  pair count gets too high.
         //
 
-        if (Mcb->MaximumPairCount < 2048) {
+        if (Mcb->MaximumPairCount < 2048)
+        {
 
             NewMax = Mcb->MaximumPairCount * 2;
-
-        } else {
+        }
+        else
+        {
 
             NewMax = Mcb->MaximumPairCount + 2048;
         }
 
-        Mapping = FsRtlpAllocatePool( Mcb->PoolType, sizeof(MAPPING) * NewMax );
+        Mapping = FsRtlpAllocatePool(Mcb->PoolType, sizeof(MAPPING) * NewMax);
 
         //**** RtlZeroMemory( Mapping, sizeof(MAPPING) * NewMax );
 
@@ -2910,19 +2847,21 @@ Return Value:
         //  Now copy over the old mapping to the new buffer
         //
 
-        RtlCopyMemory( Mapping, Mcb->Mapping, sizeof(MAPPING) * Mcb->PairCount );
+        RtlCopyMemory(Mapping, Mcb->Mapping, sizeof(MAPPING) * Mcb->PairCount);
 
         //
         //  Deallocate the old buffer
         //
 
-        if ((Mcb->PoolType == PagedPool) && (Mcb->MaximumPairCount == INITIAL_MAXIMUM_PAIR_COUNT)) {
+        if ((Mcb->PoolType == PagedPool) && (Mcb->MaximumPairCount == INITIAL_MAXIMUM_PAIR_COUNT))
+        {
 
-            FsRtlFreeFirstMapping( Mcb->Mapping );
+            FsRtlFreeFirstMapping(Mcb->Mapping);
+        }
+        else
+        {
 
-        } else {
-
-            ExFreePool( Mcb->Mapping );
+            ExFreePool(Mcb->Mapping);
         }
 
         //
@@ -2938,11 +2877,11 @@ Return Value:
     //  WhereToAddIndex value
     //
 
-    if (WhereToAddIndex < Mcb->PairCount) {
+    if (WhereToAddIndex < Mcb->PairCount)
+    {
 
-        RtlMoveMemory( &((Mcb->Mapping)[WhereToAddIndex + AmountToAdd]),
-                       &((Mcb->Mapping)[WhereToAddIndex]),
-                       (Mcb->PairCount - WhereToAddIndex) * sizeof(MAPPING) );
+        RtlMoveMemory(&((Mcb->Mapping)[WhereToAddIndex + AmountToAdd]), &((Mcb->Mapping)[WhereToAddIndex]),
+                      (Mcb->PairCount - WhereToAddIndex) * sizeof(MAPPING));
     }
 
     //
@@ -2964,17 +2903,12 @@ Return Value:
     return;
 }
 
-
+
 //
 //  Private Routine
 //
 
-VOID
-FsRtlRemoveLargeEntry (
-    IN PNONOPAQUE_MCB Mcb,
-    IN ULONG WhereToRemoveIndex,
-    IN ULONG AmountToRemove
-    )
+VOID FsRtlRemoveLargeEntry(IN PNONOPAQUE_MCB Mcb, IN ULONG WhereToRemoveIndex, IN ULONG AmountToRemove)
 
 /*++
 
@@ -3004,12 +2938,11 @@ Return Value:
     //  entries to remove do not include the last entry in the mcb
     //
 
-    if (WhereToRemoveIndex + AmountToRemove < Mcb->PairCount) {
+    if (WhereToRemoveIndex + AmountToRemove < Mcb->PairCount)
+    {
 
-        RtlMoveMemory( &((Mcb->Mapping)[WhereToRemoveIndex]),
-                      &((Mcb->Mapping)[WhereToRemoveIndex + AmountToRemove]),
-                      (Mcb->PairCount - (WhereToRemoveIndex + AmountToRemove))
-                                                           * sizeof(MAPPING) );
+        RtlMoveMemory(&((Mcb->Mapping)[WhereToRemoveIndex]), &((Mcb->Mapping)[WhereToRemoveIndex + AmountToRemove]),
+                      (Mcb->PairCount - (WhereToRemoveIndex + AmountToRemove)) * sizeof(MAPPING));
     }
 
     //
@@ -3030,4 +2963,3 @@ Return Value:
 
     return;
 }
-

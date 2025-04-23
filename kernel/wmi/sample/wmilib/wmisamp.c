@@ -6,135 +6,74 @@
 #include <wmistr.h>
 
 NTSTATUS
-WmiSampSystemControl(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP           Irp
-    );
+WmiSampSystemControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 NTSTATUS
-WmiSampFunctionControl(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG GuidIndex,
-    IN WMIENABLEDISABLEFUNCTION Function,
-    IN BOOLEAN Enable
-    );
+WmiSampFunctionControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG GuidIndex,
+                       IN WMIENABLEDISABLEFUNCTION Function, IN BOOLEAN Enable);
 
 NTSTATUS
-WmiSampExecuteWmiMethod(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG GuidIndex,
-    IN ULONG MethodId,
-    IN ULONG InBufferSize,
-    IN ULONG OutBufferSize,
-    IN PUCHAR Buffer
-    );
+WmiSampExecuteWmiMethod(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG GuidIndex, IN ULONG MethodId,
+                        IN ULONG InBufferSize, IN ULONG OutBufferSize, IN PUCHAR Buffer);
 
 NTSTATUS
-WmiSampSetWmiDataItem(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG GuidIndex,
-    IN ULONG DataItemId,
-    IN ULONG BufferSize,
-    IN PUCHAR Buffer
-    );
+WmiSampSetWmiDataItem(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG GuidIndex, IN ULONG DataItemId,
+                      IN ULONG BufferSize, IN PUCHAR Buffer);
 
 NTSTATUS
-WmiSampSetWmiDataBlock(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG GuidIndex,
-    IN ULONG BufferSize,
-    IN PUCHAR Buffer
-    );
+WmiSampSetWmiDataBlock(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG GuidIndex, IN ULONG BufferSize,
+                       IN PUCHAR Buffer);
 
 NTSTATUS
-WmiSampQueryWmiDataBlock(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG GuidIndex,
-    IN ULONG BufferAvail,
-    OUT PUCHAR Buffer
-    );
+WmiSampQueryWmiDataBlock(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG GuidIndex, IN ULONG BufferAvail,
+                         OUT PUCHAR Buffer);
 
 NTSTATUS
-WmiSampQueryWmiRegInfo(
-    IN PDEVICE_OBJECT DeviceObject,
-    OUT ULONG *RegFlags,
-    OUT PUNICODE_STRING InstanceName,
-    OUT PUNICODE_STRING *RegistryPath
-    );
+WmiSampQueryWmiRegInfo(IN PDEVICE_OBJECT DeviceObject, OUT ULONG *RegFlags, OUT PUNICODE_STRING InstanceName,
+                       OUT PUNICODE_STRING *RegistryPath);
 
 NTSTATUS
-DriverEntry(
-    IN PDRIVER_OBJECT DriverObject,
-    IN PUNICODE_STRING RegistryPath
-    );
+DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath);
 
 
 NTSTATUS
-WmiSampPnP(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP           Irp
-    );
+WmiSampPnP(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
 NTSTATUS
-WmiSampForward(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP           Irp
-    );
+WmiSampForward(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 
-VOID
-WmiSampUnload(
-    IN PDRIVER_OBJECT DriverObject
-    );
+VOID WmiSampUnload(IN PDRIVER_OBJECT DriverObject);
 
 NTSTATUS
-WmiSampCreateDeviceObject(
-    IN PDRIVER_OBJECT DriverObject,
-    IN PDEVICE_OBJECT *DeviceObject,
-    LONG Instance
-    );
+WmiSampCreateDeviceObject(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT *DeviceObject, LONG Instance);
 
 NTSTATUS
-WmiSampAddDevice(
-    IN PDRIVER_OBJECT DriverObject,
-    IN PDEVICE_OBJECT PhysicalDeviceObject
-    );
+WmiSampAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceObject);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,DriverEntry)
-#pragma alloc_text(PAGE,WmiSampQueryWmiRegInfo)
-#pragma alloc_text(PAGE,WmiSampQueryWmiDataBlock)
-#pragma alloc_text(PAGE,WmiSampSetWmiDataBlock)
-#pragma alloc_text(PAGE,WmiSampSetWmiDataItem)
-#pragma alloc_text(PAGE,WmiSampExecuteWmiMethod)
-#pragma alloc_text(PAGE,WmiSampFunctionControl)
+#pragma alloc_text(INIT, DriverEntry)
+#pragma alloc_text(PAGE, WmiSampQueryWmiRegInfo)
+#pragma alloc_text(PAGE, WmiSampQueryWmiDataBlock)
+#pragma alloc_text(PAGE, WmiSampSetWmiDataBlock)
+#pragma alloc_text(PAGE, WmiSampSetWmiDataItem)
+#pragma alloc_text(PAGE, WmiSampExecuteWmiMethod)
+#pragma alloc_text(PAGE, WmiSampFunctionControl)
 #endif
 
 
 // {15D851F1-6539-11d1-A529-00A0C9062910}
 
-GUIDREGINFO WmiSampGuidList[] = 
-{
-    {
-        { 0x15d851f1, 0x6539, 0x11d1, 0xa5, 0x29, 0x0, 0xa0, 0xc9, 0x6, 0x29, 0x10 },
-        WMIREG_FLAG_EXPENSIVE
-    },
+GUIDREGINFO WmiSampGuidList[] = {
+    { { 0x15d851f1, 0x6539, 0x11d1, 0xa5, 0x29, 0x0, 0xa0, 0xc9, 0x6, 0x29, 0x10 }, WMIREG_FLAG_EXPENSIVE },
 
 };
 
-ULONG WmiSampDummyData[4] = { 1, 2, 3, 4};
+ULONG WmiSampDummyData[4] = { 1, 2, 3, 4 };
 
 UNICODE_STRING WmiSampRegistryPath;
 
 NTSTATUS
-DriverEntry(
-    IN PDRIVER_OBJECT DriverObject,
-    IN PUNICODE_STRING RegistryPath
-    )
+DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 /*++
 
 Routine Description:
@@ -155,11 +94,10 @@ Return Value:
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
     PDEVICE_OBJECT deviceObject = NULL;
-    
+
     WmiSampRegistryPath.Length = 0;
     WmiSampRegistryPath.MaximumLength = RegistryPath->Length;
-    WmiSampRegistryPath.Buffer = ExAllocatePool(PagedPool, 
-                                                RegistryPath->Length+2);
+    WmiSampRegistryPath.Buffer = ExAllocatePool(PagedPool, RegistryPath->Length + 2);
     RtlCopyUnicodeString(&WmiSampRegistryPath, RegistryPath);
 
     /*
@@ -187,22 +125,14 @@ Return Value:
 }
 
 NTSTATUS
-WmiSampSystemControl(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP           Irp
-    )
-{	
-    return(IoWMISystemControl((PWMILIB_INFO)DeviceObject->DeviceExtension,
-                               DeviceObject,
-                               Irp));
+WmiSampSystemControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
+{
+    return (IoWMISystemControl((PWMILIB_INFO)DeviceObject->DeviceExtension, DeviceObject, Irp));
 }
 
 
 NTSTATUS
-WmiSampPnP(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP           Irp
-    )
+WmiSampPnP(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 /*++
 Routine Description:
     Process the IRPs sent to this device.
@@ -219,50 +149,47 @@ Return Value:
     PWMILIB_INFO wmilibInfo;
     NTSTATUS status;
 
-    irpStack = IoGetCurrentIrpStackLocation (Irp);
+    irpStack = IoGetCurrentIrpStackLocation(Irp);
 
     /*
     // Get a pointer to the device extension
     */
     wmilibInfo = (PWMILIB_INFO)DeviceObject->DeviceExtension;
 
-    switch (irpStack->MinorFunction) 
+    switch (irpStack->MinorFunction)
     {
-        case IRP_MN_START_DEVICE:
-	{
-            IoWMIRegistrationControl(DeviceObject, WMIREG_ACTION_REGISTER);
-            break; //IRP_MN_START_DEVICE
-        }
-	
-        case IRP_MN_REMOVE_DEVICE:
-	{
-            IoWMIRegistrationControl(DeviceObject, WMIREG_ACTION_DEREGISTER);
-	    
-            IoDetachDevice(wmilibInfo->LowerDeviceObject);
-            IoDeleteDevice (DeviceObject);
-	    
-            break; //IRP_MN_REMOVE_DEVICE
-        }
+    case IRP_MN_START_DEVICE:
+    {
+        IoWMIRegistrationControl(DeviceObject, WMIREG_ACTION_REGISTER);
+        break; //IRP_MN_START_DEVICE
     }
-    
+
+    case IRP_MN_REMOVE_DEVICE:
+    {
+        IoWMIRegistrationControl(DeviceObject, WMIREG_ACTION_DEREGISTER);
+
+        IoDetachDevice(wmilibInfo->LowerDeviceObject);
+        IoDeleteDevice(DeviceObject);
+
+        break; //IRP_MN_REMOVE_DEVICE
+    }
+    }
+
     IoSkipCurrentIrpStackLocation(Irp);
     status = IoCallDriver(wmilibInfo->LowerDeviceObject, Irp);
-    
-    return(status);
+
+    return (status);
 }
 
 
 NTSTATUS
-WmiSampForward(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP           Irp
-    )
+WmiSampForward(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
     PIO_STACK_LOCATION irpStack, nextStack;
     PWMILIB_INFO wmilibInfo;
     NTSTATUS status;
 
-    irpStack = IoGetCurrentIrpStackLocation (Irp);
+    irpStack = IoGetCurrentIrpStackLocation(Irp);
 
     /*
     // Get a pointer to the device extension
@@ -270,17 +197,14 @@ WmiSampForward(
     wmilibInfo = (PWMILIB_INFO)DeviceObject->DeviceExtension;
 
     IoSkipCurrentIrpStackLocation(Irp);
-    
+
     status = IoCallDriver(wmilibInfo->LowerDeviceObject, Irp);
-    
-    return(status);
+
+    return (status);
 }
 
 
-VOID
-WmiSampUnload(
-    IN PDRIVER_OBJECT DriverObject
-    )
+VOID WmiSampUnload(IN PDRIVER_OBJECT DriverObject)
 /*++
 Routine Description:
     Free all the allocated resources, etc.
@@ -297,13 +221,8 @@ Return Value:
 }
 
 
-
 NTSTATUS
-WmiSampCreateDeviceObject(
-    IN PDRIVER_OBJECT DriverObject,
-    IN PDEVICE_OBJECT *DeviceObject,
-    LONG Instance
-    )
+WmiSampCreateDeviceObject(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT *DeviceObject, LONG Instance)
 /*++
 
 Routine Description:
@@ -321,21 +240,15 @@ Return Value:
 --*/
 {
     NTSTATUS status;
-    WCHAR deviceNameBuffer[]  = L"\\Device\\Sample-0";
+    WCHAR deviceNameBuffer[] = L"\\Device\\Sample-0";
     UNICODE_STRING deviceNameUnicodeString;
 
-    deviceNameBuffer[15] = (USHORT) ('0' + Instance);
+    deviceNameBuffer[15] = (USHORT)('0' + Instance);
 
-    RtlInitUnicodeString (&deviceNameUnicodeString,
-                          deviceNameBuffer);
+    RtlInitUnicodeString(&deviceNameUnicodeString, deviceNameBuffer);
 
-    status = IoCreateDevice (DriverObject,
-                               sizeof(WMILIB_INFO),
-                               &deviceNameUnicodeString,
-                               FILE_DEVICE_UNKNOWN,
-                               0,
-                               FALSE,
-                               DeviceObject);
+    status = IoCreateDevice(DriverObject, sizeof(WMILIB_INFO), &deviceNameUnicodeString, FILE_DEVICE_UNKNOWN, 0, FALSE,
+                            DeviceObject);
 
 
     return status;
@@ -345,10 +258,7 @@ Return Value:
 ULONG Instance;
 
 NTSTATUS
-WmiSampAddDevice(
-    IN PDRIVER_OBJECT DriverObject,
-    IN PDEVICE_OBJECT PhysicalDeviceObject
-    )
+WmiSampAddDevice(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT PhysicalDeviceObject)
 /*++
 Routine Description:
     This routine is called to create a new instance of the device
@@ -363,16 +273,17 @@ Return Value:
 
 --*/
 {
-    NTSTATUS                status;
-    PDEVICE_OBJECT          deviceObject = NULL;
-    PWMILIB_INFO            wmilibInfo;
+    NTSTATUS status;
+    PDEVICE_OBJECT deviceObject = NULL;
+    PWMILIB_INFO wmilibInfo;
 
     DbgBreakPoint();
-    
+
     // create our functional device object (FDO)
     status = WmiSampCreateDeviceObject(DriverObject, &deviceObject, Instance++);
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         wmilibInfo = deviceObject->DeviceExtension;
 
         deviceObject->Flags &= ~DO_DEVICE_INITIALIZING;
@@ -387,32 +298,27 @@ Return Value:
         wmilibInfo->LowerPDO = PhysicalDeviceObject;
 
         //
-        // Attach to the StackDeviceObject.  This is the device object that what we 
+        // Attach to the StackDeviceObject.  This is the device object that what we
         // use to send Irps and Urbs down the USB software stack
         //
-        wmilibInfo->LowerDeviceObject =
-            IoAttachDeviceToDeviceStack(deviceObject, PhysicalDeviceObject);
+        wmilibInfo->LowerDeviceObject = IoAttachDeviceToDeviceStack(deviceObject, PhysicalDeviceObject);
 
-    	wmilibInfo->GuidCount = 1;
-    	wmilibInfo->GuidList = WmiSampGuidList;
-		wmilibInfo->QueryWmiRegInfo = WmiSampQueryWmiRegInfo;
-		wmilibInfo->QueryWmiDataBlock = WmiSampQueryWmiDataBlock;
-		wmilibInfo->SetWmiDataBlock = WmiSampSetWmiDataBlock;
-		wmilibInfo->SetWmiDataItem = WmiSampSetWmiDataItem;
-		wmilibInfo->ExecuteWmiMethod = WmiSampExecuteWmiMethod;
-		wmilibInfo->WmiFunctionControl = WmiSampFunctionControl; 
+        wmilibInfo->GuidCount = 1;
+        wmilibInfo->GuidList = WmiSampGuidList;
+        wmilibInfo->QueryWmiRegInfo = WmiSampQueryWmiRegInfo;
+        wmilibInfo->QueryWmiDataBlock = WmiSampQueryWmiDataBlock;
+        wmilibInfo->SetWmiDataBlock = WmiSampSetWmiDataBlock;
+        wmilibInfo->SetWmiDataItem = WmiSampSetWmiDataItem;
+        wmilibInfo->ExecuteWmiMethod = WmiSampExecuteWmiMethod;
+        wmilibInfo->WmiFunctionControl = WmiSampFunctionControl;
     }
-    return(status);
+    return (status);
 }
 
 
 NTSTATUS
-WmiSampQueryWmiRegInfo(
-    IN PDEVICE_OBJECT DeviceObject,
-    OUT ULONG *RegFlags,
-    OUT PUNICODE_STRING InstanceName,
-    OUT PUNICODE_STRING *RegistryPath
-    )
+WmiSampQueryWmiRegInfo(IN PDEVICE_OBJECT DeviceObject, OUT ULONG *RegFlags, OUT PUNICODE_STRING InstanceName,
+                       OUT PUNICODE_STRING *RegistryPath)
 /*++
 
 Routine Description:
@@ -450,17 +356,12 @@ Return Value:
 {
     *RegFlags = WMIREG_FLAG_INSTANCE_PDO;
     *RegistryPath = &WmiSampRegistryPath;
-    return(STATUS_SUCCESS);
+    return (STATUS_SUCCESS);
 }
 
 NTSTATUS
-WmiSampQueryWmiDataBlock(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG GuidIndex,
-    IN ULONG BufferAvail,
-    OUT PUCHAR Buffer
-    )
+WmiSampQueryWmiDataBlock(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG GuidIndex, IN ULONG BufferAvail,
+                         OUT PUCHAR Buffer)
 /*++
 
 Routine Description:
@@ -493,46 +394,39 @@ Return Value:
 {
     NTSTATUS status;
     ULONG sizeNeeded;
-    
+
     switch (GuidIndex)
     {
-        case 0:
+    case 0:
+    {
+        sizeNeeded = 4 * sizeof(ULONG);
+        if (BufferAvail >= sizeNeeded)
         {
-            sizeNeeded = 4 * sizeof(ULONG);
-            if (BufferAvail >= sizeNeeded)
-            {
-                RtlCopyMemory(Buffer, WmiSampDummyData, sizeNeeded);
-                status = STATUS_SUCCESS;
-            } else {
-                status = STATUS_BUFFER_TOO_SMALL;
-            }
-            break;
+            RtlCopyMemory(Buffer, WmiSampDummyData, sizeNeeded);
+            status = STATUS_SUCCESS;
         }
-        
-        default:
+        else
         {
-            status = STATUS_WMI_GUID_NOT_FOUND;
+            status = STATUS_BUFFER_TOO_SMALL;
         }
+        break;
     }
-    
-    status = IoWMICompleteRequest((PWMILIB_INFO)DeviceObject->DeviceExtension,
-		                             DeviceObject,
-                                     Irp,
-                                     status,
-                                     sizeNeeded,
-                                     IO_NO_INCREMENT);
-    
-    return(status);
+
+    default:
+    {
+        status = STATUS_WMI_GUID_NOT_FOUND;
+    }
+    }
+
+    status = IoWMICompleteRequest((PWMILIB_INFO)DeviceObject->DeviceExtension, DeviceObject, Irp, status, sizeNeeded,
+                                  IO_NO_INCREMENT);
+
+    return (status);
 }
 
 NTSTATUS
-WmiSampSetWmiDataBlock(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG GuidIndex,
-    IN ULONG BufferSize,
-    IN PUCHAR Buffer
-    )
+WmiSampSetWmiDataBlock(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG GuidIndex, IN ULONG BufferSize,
+                       IN PUCHAR Buffer)
 /*++
 
 Routine Description:
@@ -564,47 +458,39 @@ Return Value:
 {
     NTSTATUS status;
     ULONG sizeNeeded;
-    
-    switch(GuidIndex)
+
+    switch (GuidIndex)
     {
-        case 0:
+    case 0:
+    {
+        sizeNeeded = 4 * sizeof(ULONG);
+        if (BufferSize == sizeNeeded)
         {
-            sizeNeeded = 4 * sizeof(ULONG);
-            if (BufferSize == sizeNeeded)
-              {
-                RtlCopyMemory(WmiSampDummyData, Buffer, sizeNeeded);
-                status = STATUS_SUCCESS;
-               } else {
-                status = STATUS_INFO_LENGTH_MISMATCH;
-            }
-            break;
+            RtlCopyMemory(WmiSampDummyData, Buffer, sizeNeeded);
+            status = STATUS_SUCCESS;
         }
-            
-        default:
+        else
         {
-            status = STATUS_WMI_GUID_NOT_FOUND;
+            status = STATUS_INFO_LENGTH_MISMATCH;
         }
+        break;
     }
-            
-    status = IoWMICompleteRequest((PWMILIB_INFO)DeviceObject->DeviceExtension,
-		                             DeviceObject,
-                                     Irp,
-                                     status,
-                                     0,
-                                     IO_NO_INCREMENT);
-    
-    return(status);
+
+    default:
+    {
+        status = STATUS_WMI_GUID_NOT_FOUND;
+    }
+    }
+
+    status = IoWMICompleteRequest((PWMILIB_INFO)DeviceObject->DeviceExtension, DeviceObject, Irp, status, 0,
+                                  IO_NO_INCREMENT);
+
+    return (status);
 }
 
 NTSTATUS
-WmiSampSetWmiDataItem(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG GuidIndex,
-    IN ULONG DataItemId,
-    IN ULONG BufferSize,
-    IN PUCHAR Buffer
-    )
+WmiSampSetWmiDataItem(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG GuidIndex, IN ULONG DataItemId,
+                      IN ULONG BufferSize, IN PUCHAR Buffer)
 /*++
 
 Routine Description:
@@ -637,49 +523,39 @@ Return Value:
 --*/
 {
     NTSTATUS status;
-    
-    switch(GuidIndex)
+
+    switch (GuidIndex)
     {
-        case 0:
+    case 0:
+    {
+        if ((BufferSize == sizeof(ULONG)) && (DataItemId <= 3))
         {
-            if ((BufferSize == sizeof(ULONG)) &&
-                (DataItemId <= 3))
-              {
-                  WmiSampDummyData[DataItemId] = *((PULONG)Buffer);
-                   status = STATUS_SUCCESS;
-               } else {
-                   status = STATUS_INVALID_DEVICE_REQUEST;
-               }
-            break;
+            WmiSampDummyData[DataItemId] = *((PULONG)Buffer);
+            status = STATUS_SUCCESS;
         }
-            
-        default:
+        else
         {
-            status = STATUS_WMI_GUID_NOT_FOUND;
+            status = STATUS_INVALID_DEVICE_REQUEST;
         }
+        break;
     }
-        
-    status = IoWMICompleteRequest((PWMILIB_INFO)DeviceObject->DeviceExtension,
-		                             DeviceObject,
-                                     Irp,
-                                     status,
-                                     0,
-                                     IO_NO_INCREMENT);
-    
-    return(status);
+
+    default:
+    {
+        status = STATUS_WMI_GUID_NOT_FOUND;
+    }
+    }
+
+    status = IoWMICompleteRequest((PWMILIB_INFO)DeviceObject->DeviceExtension, DeviceObject, Irp, status, 0,
+                                  IO_NO_INCREMENT);
+
+    return (status);
 }
 
 
 NTSTATUS
-WmiSampExecuteWmiMethod(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG GuidIndex,
-    IN ULONG MethodId,
-    IN ULONG InBufferSize,
-    IN ULONG OutBufferSize,
-    IN PUCHAR Buffer
-    )
+WmiSampExecuteWmiMethod(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG GuidIndex, IN ULONG MethodId,
+                        IN ULONG InBufferSize, IN ULONG OutBufferSize, IN PUCHAR Buffer)
 /*++
 
 Routine Description:
@@ -718,59 +594,56 @@ Return Value:
     ULONG sizeNeeded = 4 * sizeof(ULONG);
     NTSTATUS status;
     ULONG tempData[4];
-    
-    switch(GuidIndex)
+
+    switch (GuidIndex)
     {
-        case 0:
+    case 0:
+    {
+        if (MethodId == 1)
         {
-            if (MethodId == 1)
-            {            
-                if (OutBufferSize >= sizeNeeded)
+            if (OutBufferSize >= sizeNeeded)
+            {
+
+                if (InBufferSize == sizeNeeded)
                 {
-        
-                    if (InBufferSize == sizeNeeded)
-                    {
-                        RtlCopyMemory(tempData, Buffer, sizeNeeded);
-                        RtlCopyMemory(Buffer, WmiSampDummyData, sizeNeeded);
-                        RtlCopyMemory(WmiSampDummyData, tempData, sizeNeeded);
-                
-                        status = STATUS_SUCCESS;
-                    } else {
-                        status = STATUS_INVALID_DEVICE_REQUEST;
-                    }
-                } else {
-                    status = STATUS_BUFFER_TOO_SMALL;
+                    RtlCopyMemory(tempData, Buffer, sizeNeeded);
+                    RtlCopyMemory(Buffer, WmiSampDummyData, sizeNeeded);
+                    RtlCopyMemory(WmiSampDummyData, tempData, sizeNeeded);
+
+                    status = STATUS_SUCCESS;
                 }
-            } else {
-                   status = STATUS_INVALID_DEVICE_REQUEST;
-            }        
-            break;
+                else
+                {
+                    status = STATUS_INVALID_DEVICE_REQUEST;
+                }
+            }
+            else
+            {
+                status = STATUS_BUFFER_TOO_SMALL;
+            }
         }
-        
-        default:
+        else
         {
-            status = STATUS_WMI_GUID_NOT_FOUND;
+            status = STATUS_INVALID_DEVICE_REQUEST;
         }
+        break;
     }
-    
-    status = IoWMICompleteRequest((PWMILIB_INFO)DeviceObject->DeviceExtension,
-		                             DeviceObject,
-                                     Irp,
-                                     status,
-                                     0,
-                                     IO_NO_INCREMENT);
-    
-    return(status);
+
+    default:
+    {
+        status = STATUS_WMI_GUID_NOT_FOUND;
+    }
+    }
+
+    status = IoWMICompleteRequest((PWMILIB_INFO)DeviceObject->DeviceExtension, DeviceObject, Irp, status, 0,
+                                  IO_NO_INCREMENT);
+
+    return (status);
 }
 
 NTSTATUS
-WmiSampFunctionControl(
-    IN PDEVICE_OBJECT DeviceObject,
-    IN PIRP Irp,
-    IN ULONG GuidIndex,
-    IN WMIENABLEDISABLEFUNCTION Function,
-    IN BOOLEAN Enable
-    )
+WmiSampFunctionControl(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp, IN ULONG GuidIndex,
+                       IN WMIENABLEDISABLEFUNCTION Function, IN BOOLEAN Enable)
 /*++
 
 Routine Description:
@@ -801,13 +674,8 @@ Return Value:
 --*/
 {
     NTSTATUS status;
-    
-    status = IoWMICompleteRequest((PWMILIB_INFO)DeviceObject->DeviceExtension,
-		                             DeviceObject,
-                                     Irp,
-                                     STATUS_SUCCESS,
-                                     0,
-                                     IO_NO_INCREMENT);
-    return(status);
-}
 
+    status = IoWMICompleteRequest((PWMILIB_INFO)DeviceObject->DeviceExtension, DeviceObject, Irp, STATUS_SUCCESS, 0,
+                                  IO_NO_INCREMENT);
+    return (status);
+}

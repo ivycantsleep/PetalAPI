@@ -20,36 +20,30 @@ Revision History:
 
 #ifndef _EX_
 #define _EX_
-
+
 //
 // Define caller count hash table structures and function prototypes.
 //
 
 #define CALL_HASH_TABLE_SIZE 64
 
-typedef struct _CALL_HASH_ENTRY {
+typedef struct _CALL_HASH_ENTRY
+{
     LIST_ENTRY ListEntry;
     PVOID CallersAddress;
     PVOID CallersCaller;
     ULONG CallCount;
 } CALL_HASH_ENTRY, *PCALL_HASH_ENTRY;
 
-typedef struct _CALL_PERFORMANCE_DATA {
+typedef struct _CALL_PERFORMANCE_DATA
+{
     KSPIN_LOCK SpinLock;
     LIST_ENTRY HashTable[CALL_HASH_TABLE_SIZE];
 } CALL_PERFORMANCE_DATA, *PCALL_PERFORMANCE_DATA;
 
-VOID
-ExInitializeCallData(
-    IN PCALL_PERFORMANCE_DATA CallData
-    );
+VOID ExInitializeCallData(IN PCALL_PERFORMANCE_DATA CallData);
 
-VOID
-ExRecordCallerInHashTable(
-    IN PCALL_PERFORMANCE_DATA CallData,
-    IN PVOID CallersAddress,
-    IN PVOID CallersCaller
-    );
+VOID ExRecordCallerInHashTable(IN PCALL_PERFORMANCE_DATA CallData, IN PVOID CallersAddress, IN PVOID CallersCaller);
 
 #define RECORD_CALL_DATA(Table)                                            \
     {                                                                      \
@@ -63,7 +57,8 @@ ExRecordCallerInHashTable(
 // Define executive event pair object structure.
 //
 
-typedef struct _EEVENT_PAIR {
+typedef struct _EEVENT_PAIR
+{
     KEVENT_PAIR KernelEventPair;
 } EEVENT_PAIR, *PEEVENT_PAIR;
 
@@ -79,32 +74,23 @@ struct _ETHREAD;
 
 NTKERNELAPI
 BOOLEAN
-ExInitSystem(
-    VOID
-    );
+ExInitSystem(VOID);
 
 NTKERNELAPI
-VOID
-ExInitSystemPhase2(
-    VOID
-    );
+VOID ExInitSystemPhase2(VOID);
 
-VOID
-ExInitPoolLookasidePointers (
-    VOID
-    );
+VOID ExInitPoolLookasidePointers(VOID);
 
 ULONG
-ExComputeTickCountMultiplier (
-    IN ULONG TimeIncrement
-    );
-
+ExComputeTickCountMultiplier(IN ULONG TimeIncrement);
+
 // begin_ntddk begin_wdm begin_nthal begin_ntifs begin_ntndis begin_ntosp
 //
 // Pool Allocation routines (in pool.c)
 //
 
-typedef enum _POOL_TYPE {
+typedef enum _POOL_TYPE
+{
     NonPagedPool,
     PagedPool,
     NonPagedPoolMustSucceed,
@@ -114,8 +100,8 @@ typedef enum _POOL_TYPE {
     NonPagedPoolCacheAlignedMustS,
     MaxPoolType
 
-    // end_wdm
-    ,
+        // end_wdm
+        ,
     //
     // Note these per session types are carefully chosen so that the appropriate
     // masking still applies as well as MaxPoolType above.
@@ -131,9 +117,9 @@ typedef enum _POOL_TYPE {
 
     // begin_wdm
 
-    } POOL_TYPE;
+} POOL_TYPE;
 
-#define POOL_COLD_ALLOCATION 256     // Note this cannot encode into the header.
+#define POOL_COLD_ALLOCATION 256 // Note this cannot encode into the header.
 
 // end_ntddk end_wdm end_nthal end_ntifs end_ntndis begin_ntosp
 
@@ -143,64 +129,37 @@ typedef enum _POOL_TYPE {
 //
 
 #define POOL_QUOTA_FAIL_INSTEAD_OF_RAISE 8
-#define POOL_RAISE_IF_ALLOCATION_FAILURE 16               // ntifs
+#define POOL_RAISE_IF_ALLOCATION_FAILURE 16 // ntifs
 
 
 // end_ntosp
 
-VOID
-InitializePool(
-    IN POOL_TYPE PoolType,
-    IN ULONG Threshold
-    );
+VOID InitializePool(IN POOL_TYPE PoolType, IN ULONG Threshold);
 
 //
 // These routines are private to the pool manager and the memory manager.
 //
 
-VOID
-ExInsertPoolTag (
-    ULONG Tag,
-    PVOID Va,
-    SIZE_T NumberOfBytes,
-    POOL_TYPE PoolType
-    );
+VOID ExInsertPoolTag(ULONG Tag, PVOID Va, SIZE_T NumberOfBytes, POOL_TYPE PoolType);
 
-VOID
-ExAllocatePoolSanityChecks(
-    IN POOL_TYPE PoolType,
-    IN SIZE_T NumberOfBytes
-    );
+VOID ExAllocatePoolSanityChecks(IN POOL_TYPE PoolType, IN SIZE_T NumberOfBytes);
 
-VOID
-ExFreePoolSanityChecks(
-    IN PVOID P
-    );
+VOID ExFreePoolSanityChecks(IN PVOID P);
 
 // begin_ntddk begin_nthal begin_ntifs begin_wdm begin_ntosp
 
 NTKERNELAPI
 PVOID
-ExAllocatePool(
-    IN POOL_TYPE PoolType,
-    IN SIZE_T NumberOfBytes
-    );
+ExAllocatePool(IN POOL_TYPE PoolType, IN SIZE_T NumberOfBytes);
 
 NTKERNELAPI
 PVOID
-ExAllocatePoolWithQuota(
-    IN POOL_TYPE PoolType,
-    IN SIZE_T NumberOfBytes
-    );
+ExAllocatePoolWithQuota(IN POOL_TYPE PoolType, IN SIZE_T NumberOfBytes);
 
 NTKERNELAPI
 PVOID
 NTAPI
-ExAllocatePoolWithTag(
-    IN POOL_TYPE PoolType,
-    IN SIZE_T NumberOfBytes,
-    IN ULONG Tag
-    );
+ExAllocatePoolWithTag(IN POOL_TYPE PoolType, IN SIZE_T NumberOfBytes, IN ULONG Tag);
 
 //
 // _EX_POOL_PRIORITY_ provides a method for the system to handle requests
@@ -227,7 +186,8 @@ ExAllocatePoolWithTag(
 //       code can quickly crack the priority request.
 //
 
-typedef enum _EX_POOL_PRIORITY {
+typedef enum _EX_POOL_PRIORITY
+{
     LowPoolPriority,
     LowPoolPrioritySpecialPoolOverrun = 8,
     LowPoolPrioritySpecialPoolUnderrun = 9,
@@ -238,44 +198,32 @@ typedef enum _EX_POOL_PRIORITY {
     HighPoolPrioritySpecialPoolOverrun = 40,
     HighPoolPrioritySpecialPoolUnderrun = 41
 
-    } EX_POOL_PRIORITY;
+} EX_POOL_PRIORITY;
 
 NTKERNELAPI
 PVOID
 NTAPI
-ExAllocatePoolWithTagPriority(
-    IN POOL_TYPE PoolType,
-    IN SIZE_T NumberOfBytes,
-    IN ULONG Tag,
-    IN EX_POOL_PRIORITY Priority
-    );
+ExAllocatePoolWithTagPriority(IN POOL_TYPE PoolType, IN SIZE_T NumberOfBytes, IN ULONG Tag,
+                              IN EX_POOL_PRIORITY Priority);
 
 #ifndef POOL_TAGGING
-#define ExAllocatePoolWithTag(a,b,c) ExAllocatePool(a,b)
+#define ExAllocatePoolWithTag(a, b, c) ExAllocatePool(a, b)
 #endif //POOL_TAGGING
 
 NTKERNELAPI
 PVOID
-ExAllocatePoolWithQuotaTag(
-    IN POOL_TYPE PoolType,
-    IN SIZE_T NumberOfBytes,
-    IN ULONG Tag
-    );
+ExAllocatePoolWithQuotaTag(IN POOL_TYPE PoolType, IN SIZE_T NumberOfBytes, IN ULONG Tag);
 
 #ifndef POOL_TAGGING
-#define ExAllocatePoolWithQuotaTag(a,b,c) ExAllocatePoolWithQuota(a,b)
+#define ExAllocatePoolWithQuotaTag(a, b, c) ExAllocatePoolWithQuota(a, b)
 #endif //POOL_TAGGING
 
 NTKERNELAPI
-VOID
-NTAPI
-ExFreePool(
-    IN PVOID P
-    );
+VOID NTAPI ExFreePool(IN PVOID P);
 
 // end_wdm
 #if defined(POOL_TAGGING)
-#define ExFreePool(a) ExFreePoolWithTag(a,0)
+#define ExFreePool(a) ExFreePoolWithTag(a, 0)
 #endif
 
 //
@@ -286,17 +234,13 @@ ExFreePool(
 
 // begin_wdm
 NTKERNELAPI
-VOID
-ExFreePoolWithTag(
-    IN PVOID P,
-    IN ULONG Tag
-    );
+VOID ExFreePoolWithTag(IN PVOID P, IN ULONG Tag);
 
 // end_ntddk end_wdm end_nthal end_ntifs
 
 
 #ifndef POOL_TAGGING
-#define ExFreePoolWithTag(a,b) ExFreePool(a)
+#define ExFreePoolWithTag(a, b) ExFreePool(a)
 #endif //POOL_TAGGING
 
 // end_ntosp
@@ -304,62 +248,42 @@ ExFreePoolWithTag(
 
 NTKERNELAPI
 KIRQL
-ExLockPool(
-    IN POOL_TYPE PoolType
-    );
+ExLockPool(IN POOL_TYPE PoolType);
 
 NTKERNELAPI
-VOID
-ExUnlockPool(
-    IN POOL_TYPE PoolType,
-    IN KIRQL LockHandle
-    );
+VOID ExUnlockPool(IN POOL_TYPE PoolType, IN KIRQL LockHandle);
 
 // begin_ntosp
-NTKERNELAPI                                     // ntifs
-SIZE_T                                          // ntifs
-ExQueryPoolBlockSize (                          // ntifs
-    IN PVOID PoolBlock,                         // ntifs
-    OUT PBOOLEAN QuotaCharged                   // ntifs
-    );                                          // ntifs
+NTKERNELAPI                       // ntifs
+    SIZE_T                        // ntifs
+    ExQueryPoolBlockSize(         // ntifs
+        IN PVOID PoolBlock,       // ntifs
+        OUT PBOOLEAN QuotaCharged // ntifs
+    );                            // ntifs
 // end_ntosp
 
 NTKERNELAPI
-VOID
-ExQueryPoolUsage(
-    OUT PULONG PagedPoolPages,
-    OUT PULONG NonPagedPoolPages,
-    OUT PULONG PagedPoolAllocs,
-    OUT PULONG PagedPoolFrees,
-    OUT PULONG PagedPoolLookasideHits,
-    OUT PULONG NonPagedPoolAllocs,
-    OUT PULONG NonPagedPoolFrees,
-    OUT PULONG NonPagedPoolLookasideHits
-    );
+VOID ExQueryPoolUsage(OUT PULONG PagedPoolPages, OUT PULONG NonPagedPoolPages, OUT PULONG PagedPoolAllocs,
+                      OUT PULONG PagedPoolFrees, OUT PULONG PagedPoolLookasideHits, OUT PULONG NonPagedPoolAllocs,
+                      OUT PULONG NonPagedPoolFrees, OUT PULONG NonPagedPoolLookasideHits);
 
-VOID
-ExReturnPoolQuota (
-    IN PVOID P
-    );
+VOID ExReturnPoolQuota(IN PVOID P);
 
 #if DBG || (i386 && !FPO)
 NTKERNELAPI
 NTSTATUS
-ExSnapShotPool(
-    IN POOL_TYPE PoolType,
-    IN PSYSTEM_POOL_INFORMATION PoolInformation,
-    IN ULONG Length,
-    OUT PULONG ReturnLength OPTIONAL
-    );
+ExSnapShotPool(IN POOL_TYPE PoolType, IN PSYSTEM_POOL_INFORMATION PoolInformation, IN ULONG Length,
+               OUT PULONG ReturnLength OPTIONAL);
 #endif // DBG || (i386 && !FPO)
 
-
+
 // begin_ntifs begin_ntddk begin_wdm begin_nthal begin_ntosp
 //
 // Routines to support fast mutexes.
 //
 
-typedef struct _FAST_MUTEX {
+typedef struct _FAST_MUTEX
+{
     LONG Count;
     PKTHREAD Owner;
     ULONG Contention;
@@ -367,73 +291,43 @@ typedef struct _FAST_MUTEX {
     ULONG OldIrql;
 } FAST_MUTEX, *PFAST_MUTEX;
 
-#define ExInitializeFastMutex(_FastMutex)                            \
-    (_FastMutex)->Count = 1;                                         \
-    (_FastMutex)->Owner = NULL;                                      \
-    (_FastMutex)->Contention = 0;                                    \
-    KeInitializeEvent(&(_FastMutex)->Event,                          \
-                      SynchronizationEvent,                          \
-                      FALSE);
+#define ExInitializeFastMutex(_FastMutex) \
+    (_FastMutex)->Count = 1;              \
+    (_FastMutex)->Owner = NULL;           \
+    (_FastMutex)->Contention = 0;         \
+    KeInitializeEvent(&(_FastMutex)->Event, SynchronizationEvent, FALSE);
 
 NTKERNELAPI
-VOID
-FASTCALL
-ExAcquireFastMutexUnsafe (
-    IN PFAST_MUTEX FastMutex
-    );
+VOID FASTCALL ExAcquireFastMutexUnsafe(IN PFAST_MUTEX FastMutex);
 
 NTKERNELAPI
-VOID
-FASTCALL
-ExReleaseFastMutexUnsafe (
-    IN PFAST_MUTEX FastMutex
-    );
+VOID FASTCALL ExReleaseFastMutexUnsafe(IN PFAST_MUTEX FastMutex);
 
 #if defined(_ALPHA_) || defined(_IA64_) || defined(_AMD64_)
 
 NTKERNELAPI
-VOID
-FASTCALL
-ExAcquireFastMutex (
-    IN PFAST_MUTEX FastMutex
-    );
+VOID FASTCALL ExAcquireFastMutex(IN PFAST_MUTEX FastMutex);
 
 NTKERNELAPI
-VOID
-FASTCALL
-ExReleaseFastMutex (
-    IN PFAST_MUTEX FastMutex
-    );
+VOID FASTCALL ExReleaseFastMutex(IN PFAST_MUTEX FastMutex);
 
 NTKERNELAPI
 BOOLEAN
 FASTCALL
-ExTryToAcquireFastMutex (
-    IN PFAST_MUTEX FastMutex
-    );
+ExTryToAcquireFastMutex(IN PFAST_MUTEX FastMutex);
 
 #elif defined(_X86_)
 
 NTHALAPI
-VOID
-FASTCALL
-ExAcquireFastMutex (
-    IN PFAST_MUTEX FastMutex
-    );
+VOID FASTCALL ExAcquireFastMutex(IN PFAST_MUTEX FastMutex);
 
 NTHALAPI
-VOID
-FASTCALL
-ExReleaseFastMutex (
-    IN PFAST_MUTEX FastMutex
-    );
+VOID FASTCALL ExReleaseFastMutex(IN PFAST_MUTEX FastMutex);
 
 NTHALAPI
 BOOLEAN
 FASTCALL
-ExTryToAcquireFastMutex (
-    IN PFAST_MUTEX FastMutex
-    );
+ExTryToAcquireFastMutex(IN PFAST_MUTEX FastMutex);
 
 #else
 
@@ -445,7 +339,7 @@ ExTryToAcquireFastMutex (
 
 #define ExIsFastMutexOwned(_FastMutex) ((_FastMutex)->Count != 1)
 
-
+
 //
 // Interlocked support routine definitions.
 //
@@ -453,22 +347,13 @@ ExTryToAcquireFastMutex (
 //
 
 NTKERNELAPI
-VOID
-FASTCALL
-ExInterlockedAddLargeStatistic (
-    IN PLARGE_INTEGER Addend,
-    IN ULONG Increment
-    );
+VOID FASTCALL ExInterlockedAddLargeStatistic(IN PLARGE_INTEGER Addend, IN ULONG Increment);
 
 // end_ntndis
 
 NTKERNELAPI
 LARGE_INTEGER
-ExInterlockedAddLargeInteger (
-    IN PLARGE_INTEGER Addend,
-    IN LARGE_INTEGER Increment,
-    IN PKSPIN_LOCK Lock
-    );
+ExInterlockedAddLargeInteger(IN PLARGE_INTEGER Addend, IN LARGE_INTEGER Increment, IN PKSPIN_LOCK Lock);
 
 //  end_ntddk end_wdm end_nthal end_ntifs end_ntosp
 
@@ -484,11 +369,7 @@ ExInterlockedAddLargeInteger (
 NTKERNELAPI
 ULONG
 FASTCALL
-ExInterlockedAddUlong (
-    IN PULONG Addend,
-    IN ULONG Increment,
-    IN PKSPIN_LOCK Lock
-    );
+ExInterlockedAddUlong(IN PULONG Addend, IN ULONG Increment, IN PKSPIN_LOCK Lock);
 
 // end_wdm end_ntddk end_nthal end_ntifs end_ntosp
 
@@ -516,45 +397,27 @@ ExInterlockedAddUlong (
 NTKERNELAPI
 PLIST_ENTRY
 FASTCALL
-ExInterlockedInsertHeadList (
-    IN PLIST_ENTRY ListHead,
-    IN PLIST_ENTRY ListEntry,
-    IN PKSPIN_LOCK Lock
-    );
+ExInterlockedInsertHeadList(IN PLIST_ENTRY ListHead, IN PLIST_ENTRY ListEntry, IN PKSPIN_LOCK Lock);
 
 NTKERNELAPI
 PLIST_ENTRY
 FASTCALL
-ExInterlockedInsertTailList (
-    IN PLIST_ENTRY ListHead,
-    IN PLIST_ENTRY ListEntry,
-    IN PKSPIN_LOCK Lock
-    );
+ExInterlockedInsertTailList(IN PLIST_ENTRY ListHead, IN PLIST_ENTRY ListEntry, IN PKSPIN_LOCK Lock);
 
 NTKERNELAPI
 PLIST_ENTRY
 FASTCALL
-ExInterlockedRemoveHeadList (
-    IN PLIST_ENTRY ListHead,
-    IN PKSPIN_LOCK Lock
-    );
+ExInterlockedRemoveHeadList(IN PLIST_ENTRY ListHead, IN PKSPIN_LOCK Lock);
 
 NTKERNELAPI
 PSINGLE_LIST_ENTRY
 FASTCALL
-ExInterlockedPopEntryList (
-    IN PSINGLE_LIST_ENTRY ListHead,
-    IN PKSPIN_LOCK Lock
-    );
+ExInterlockedPopEntryList(IN PSINGLE_LIST_ENTRY ListHead, IN PKSPIN_LOCK Lock);
 
 NTKERNELAPI
 PSINGLE_LIST_ENTRY
 FASTCALL
-ExInterlockedPushEntryList (
-    IN PSINGLE_LIST_ENTRY ListHead,
-    IN PSINGLE_LIST_ENTRY ListEntry,
-    IN PKSPIN_LOCK Lock
-    );
+ExInterlockedPushEntryList(IN PSINGLE_LIST_ENTRY ListHead, IN PSINGLE_LIST_ENTRY ListEntry, IN PKSPIN_LOCK Lock);
 
 // end_wdm end_ntddk end_nthal end_ntifs end_ntosp
 //
@@ -575,27 +438,20 @@ ExInterlockedPushEntryList (
 // the respective queue.
 //
 
-typedef struct _NBQUEUE_BLOCK {
+typedef struct _NBQUEUE_BLOCK
+{
     ULONG64 Next;
     ULONG64 Data;
 } NBQUEUE_BLOCK, *PNBQUEUE_BLOCK;
 
 PVOID
-ExInitializeNBQueueHead (
-    IN PSLIST_HEADER SlistHead
-    );
+ExInitializeNBQueueHead(IN PSLIST_HEADER SlistHead);
 
 BOOLEAN
-ExInsertTailNBQueue (
-    IN PVOID Header,
-    IN ULONG64 Value
-    );
+ExInsertTailNBQueue(IN PVOID Header, IN ULONG64 Value);
 
 BOOLEAN
-ExRemoveHeadNBQueue (
-    IN PVOID Header,
-    OUT PULONG64 Value
-    );
+ExRemoveHeadNBQueue(IN PVOID Header, OUT PULONG64 Value);
 
 // begin_wdm begin_ntddk begin_nthal begin_ntifs begin_ntosp begin_ntndis
 //
@@ -626,21 +482,15 @@ Return Value:
 
 --*/
 
-#if defined(_WIN64) && (defined(_NTDRIVER_) || defined(_NTDDK_) || defined(_NTIFS_) || defined(_NTHAL_) || defined(_NTOSP_))
+#if defined(_WIN64) && \
+    (defined(_NTDRIVER_) || defined(_NTDDK_) || defined(_NTIFS_) || defined(_NTHAL_) || defined(_NTOSP_))
 
 NTKERNELAPI
-VOID
-InitializeSListHead (
-    IN PSLIST_HEADER SListHead
-    );
+VOID InitializeSListHead(IN PSLIST_HEADER SListHead);
 
 #else
 
-__inline
-VOID
-InitializeSListHead (
-    IN PSLIST_HEADER SListHead
-    )
+__inline VOID InitializeSListHead(IN PSLIST_HEADER SListHead)
 
 {
 
@@ -650,9 +500,11 @@ InitializeSListHead (
     // Slist headers must be 16 byte aligned.
     //
 
-    if ((ULONG_PTR) SListHead & 0x0f) {
+    if ((ULONG_PTR)SListHead & 0x0f)
+    {
 
-        DbgPrint( "InitializeSListHead unaligned Slist header.  Address = %p, Caller = %p\n", SListHead, _ReturnAddress());
+        DbgPrint("InitializeSListHead unaligned Slist header.  Address = %p, Caller = %p\n", SListHead,
+                 _ReturnAddress());
         RtlRaiseStatus(STATUS_DATATYPE_MISALIGNMENT);
     }
 
@@ -685,9 +537,7 @@ InitializeSListHead (
 #define ExInitializeSListHead InitializeSListHead
 
 PSLIST_ENTRY
-FirstEntrySList (
-    IN const SLIST_HEADER *SListHead
-    );
+FirstEntrySList(IN const SLIST_HEADER *SListHead);
 
 /*++
 
@@ -714,17 +564,11 @@ Return Value:
 
 NTKERNELAPI
 USHORT
-ExQueryDepthSList (
-    IN PSLIST_HEADER SListHead
-    );
+ExQueryDepthSList(IN PSLIST_HEADER SListHead);
 
 #else
 
-__inline
-USHORT
-ExQueryDepthSList (
-    IN PSLIST_HEADER SListHead
-    )
+__inline USHORT ExQueryDepthSList(IN PSLIST_HEADER SListHead)
 
 {
 
@@ -741,49 +585,35 @@ ExQueryDepthSList (
 
 #if defined(_WIN64)
 
-#define ExInterlockedPopEntrySList(Head, Lock) \
-    ExpInterlockedPopEntrySList(Head)
+#define ExInterlockedPopEntrySList(Head, Lock) ExpInterlockedPopEntrySList(Head)
 
-#define ExInterlockedPushEntrySList(Head, Entry, Lock) \
-    ExpInterlockedPushEntrySList(Head, Entry)
+#define ExInterlockedPushEntrySList(Head, Entry, Lock) ExpInterlockedPushEntrySList(Head, Entry)
 
-#define ExInterlockedFlushSList(Head) \
-    ExpInterlockedFlushSList(Head)
+#define ExInterlockedFlushSList(Head) ExpInterlockedFlushSList(Head)
 
 #if !defined(_WINBASE_)
 
-#define InterlockedPopEntrySList(Head) \
-    ExpInterlockedPopEntrySList(Head)
+#define InterlockedPopEntrySList(Head) ExpInterlockedPopEntrySList(Head)
 
-#define InterlockedPushEntrySList(Head, Entry) \
-    ExpInterlockedPushEntrySList(Head, Entry)
+#define InterlockedPushEntrySList(Head, Entry) ExpInterlockedPushEntrySList(Head, Entry)
 
-#define InterlockedFlushSList(Head) \
-    ExpInterlockedFlushSList(Head)
+#define InterlockedFlushSList(Head) ExpInterlockedFlushSList(Head)
 
-#define QueryDepthSList(Head) \
-    ExQueryDepthSList(Head)
+#define QueryDepthSList(Head) ExQueryDepthSList(Head)
 
 #endif // !defined(_WINBASE_)
 
 NTKERNELAPI
 PSLIST_ENTRY
-ExpInterlockedPopEntrySList (
-    IN PSLIST_HEADER ListHead
-    );
+ExpInterlockedPopEntrySList(IN PSLIST_HEADER ListHead);
 
 NTKERNELAPI
 PSLIST_ENTRY
-ExpInterlockedPushEntrySList (
-    IN PSLIST_HEADER ListHead,
-    IN PSLIST_ENTRY ListEntry
-    );
+ExpInterlockedPushEntrySList(IN PSLIST_HEADER ListHead, IN PSLIST_ENTRY ListEntry);
 
 NTKERNELAPI
 PSLIST_ENTRY
-ExpInterlockedFlushSList (
-    IN PSLIST_HEADER ListHead
-    );
+ExpInterlockedFlushSList(IN PSLIST_HEADER ListHead);
 
 #else
 
@@ -792,59 +622,41 @@ ExpInterlockedFlushSList (
 NTKERNELAPI
 PSLIST_ENTRY
 FASTCALL
-ExInterlockedPopEntrySList (
-    IN PSLIST_HEADER ListHead,
-    IN PKSPIN_LOCK Lock
-    );
+ExInterlockedPopEntrySList(IN PSLIST_HEADER ListHead, IN PKSPIN_LOCK Lock);
 
 NTKERNELAPI
 PSLIST_ENTRY
 FASTCALL
-ExInterlockedPushEntrySList (
-    IN PSLIST_HEADER ListHead,
-    IN PSLIST_ENTRY ListEntry,
-    IN PKSPIN_LOCK Lock
-    );
+ExInterlockedPushEntrySList(IN PSLIST_HEADER ListHead, IN PSLIST_ENTRY ListEntry, IN PKSPIN_LOCK Lock);
 
 #else
 
-#define ExInterlockedPopEntrySList(ListHead, Lock) \
-    InterlockedPopEntrySList(ListHead)
+#define ExInterlockedPopEntrySList(ListHead, Lock) InterlockedPopEntrySList(ListHead)
 
-#define ExInterlockedPushEntrySList(ListHead, ListEntry, Lock) \
-    InterlockedPushEntrySList(ListHead, ListEntry)
+#define ExInterlockedPushEntrySList(ListHead, ListEntry, Lock) InterlockedPushEntrySList(ListHead, ListEntry)
 
 #endif
 
 NTKERNELAPI
 PSLIST_ENTRY
 FASTCALL
-ExInterlockedFlushSList (
-    IN PSLIST_HEADER ListHead
-    );
+ExInterlockedFlushSList(IN PSLIST_HEADER ListHead);
 
 #if !defined(_WINBASE_)
 
 NTKERNELAPI
 PSLIST_ENTRY
 FASTCALL
-InterlockedPopEntrySList (
-    IN PSLIST_HEADER ListHead
-    );
+InterlockedPopEntrySList(IN PSLIST_HEADER ListHead);
 
 NTKERNELAPI
 PSLIST_ENTRY
 FASTCALL
-InterlockedPushEntrySList (
-    IN PSLIST_HEADER ListHead,
-    IN PSLIST_ENTRY ListEntry
-    );
+InterlockedPushEntrySList(IN PSLIST_HEADER ListHead, IN PSLIST_ENTRY ListEntry);
 
-#define InterlockedFlushSList(Head) \
-    ExInterlockedFlushSList(Head)
+#define InterlockedFlushSList(Head) ExInterlockedFlushSList(Head)
 
-#define QueryDepthSList(Head) \
-    ExQueryDepthSList(Head)
+#define QueryDepthSList(Head) ExQueryDepthSList(Head)
 
 #endif // !defined(_WINBASE_)
 
@@ -855,46 +667,30 @@ InterlockedPushEntrySList (
 
 PSLIST_ENTRY
 FASTCALL
-InterlockedPushListSList (
-    IN PSLIST_HEADER ListHead,
-    IN PSLIST_ENTRY List,
-    IN PSLIST_ENTRY ListEnd,
-    IN ULONG Count
-    );
+InterlockedPushListSList(IN PSLIST_HEADER ListHead, IN PSLIST_ENTRY List, IN PSLIST_ENTRY ListEnd, IN ULONG Count);
 
 
 //
 // Define interlocked lookaside list structure and allocation functions.
 //
 
-VOID
-ExAdjustLookasideDepth (
-    VOID
-    );
+VOID ExAdjustLookasideDepth(VOID);
 
 // begin_ntddk begin_wdm begin_ntosp
 
-typedef
-PVOID
-(*PALLOCATE_FUNCTION) (
-    IN POOL_TYPE PoolType,
-    IN SIZE_T NumberOfBytes,
-    IN ULONG Tag
-    );
+typedef PVOID (*PALLOCATE_FUNCTION)(IN POOL_TYPE PoolType, IN SIZE_T NumberOfBytes, IN ULONG Tag);
 
-typedef
-VOID
-(*PFREE_FUNCTION) (
-    IN PVOID Buffer
-    );
+typedef VOID (*PFREE_FUNCTION)(IN PVOID Buffer);
 
 #if !defined(_WIN64) && (defined(_NTDDK_) || defined(_NTIFS_) || defined(_NDIS_))
 
-typedef struct _GENERAL_LOOKASIDE {
+typedef struct _GENERAL_LOOKASIDE
+{
 
 #else
 
-typedef struct DECLSPEC_CACHEALIGN _GENERAL_LOOKASIDE {
+typedef struct DECLSPEC_CACHEALIGN _GENERAL_LOOKASIDE
+{
 
 #endif
 
@@ -902,13 +698,15 @@ typedef struct DECLSPEC_CACHEALIGN _GENERAL_LOOKASIDE {
     USHORT Depth;
     USHORT MaximumDepth;
     ULONG TotalAllocates;
-    union {
+    union
+    {
         ULONG AllocateMisses;
         ULONG AllocateHits;
     };
 
     ULONG TotalFrees;
-    union {
+    union
+    {
         ULONG FreeMisses;
         ULONG FreeHits;
     };
@@ -920,7 +718,8 @@ typedef struct DECLSPEC_CACHEALIGN _GENERAL_LOOKASIDE {
     PFREE_FUNCTION Free;
     LIST_ENTRY ListEntry;
     ULONG LastTotalAllocates;
-    union {
+    union
+    {
         ULONG LastAllocateMisses;
         ULONG LastAllocateHits;
     };
@@ -930,11 +729,13 @@ typedef struct DECLSPEC_CACHEALIGN _GENERAL_LOOKASIDE {
 
 #if !defined(_WIN64) && (defined(_NTDDK_) || defined(_NTIFS_) || defined(_NDIS_))
 
-typedef struct _NPAGED_LOOKASIDE_LIST {
+typedef struct _NPAGED_LOOKASIDE_LIST
+{
 
 #else
 
-typedef struct DECLSPEC_CACHEALIGN _NPAGED_LOOKASIDE_LIST {
+typedef struct DECLSPEC_CACHEALIGN _NPAGED_LOOKASIDE_LIST
+{
 
 #endif
 
@@ -949,28 +750,14 @@ typedef struct DECLSPEC_CACHEALIGN _NPAGED_LOOKASIDE_LIST {
 } NPAGED_LOOKASIDE_LIST, *PNPAGED_LOOKASIDE_LIST;
 
 NTKERNELAPI
-VOID
-ExInitializeNPagedLookasideList (
-    IN PNPAGED_LOOKASIDE_LIST Lookaside,
-    IN PALLOCATE_FUNCTION Allocate,
-    IN PFREE_FUNCTION Free,
-    IN ULONG Flags,
-    IN SIZE_T Size,
-    IN ULONG Tag,
-    IN USHORT Depth
-    );
+VOID ExInitializeNPagedLookasideList(IN PNPAGED_LOOKASIDE_LIST Lookaside, IN PALLOCATE_FUNCTION Allocate,
+                                     IN PFREE_FUNCTION Free, IN ULONG Flags, IN SIZE_T Size, IN ULONG Tag,
+                                     IN USHORT Depth);
 
 NTKERNELAPI
-VOID
-ExDeleteNPagedLookasideList (
-    IN PNPAGED_LOOKASIDE_LIST Lookaside
-    );
+VOID ExDeleteNPagedLookasideList(IN PNPAGED_LOOKASIDE_LIST Lookaside);
 
-__inline
-PVOID
-ExAllocateFromNPagedLookasideList(
-    IN PNPAGED_LOOKASIDE_LIST Lookaside
-    )
+__inline PVOID ExAllocateFromNPagedLookasideList(IN PNPAGED_LOOKASIDE_LIST Lookaside)
 
 /*++
 
@@ -999,8 +786,7 @@ Return Value:
 
 #if defined(_WIN2K_COMPAT_SLIST_USAGE) && defined(_X86_)
 
-    Entry = ExInterlockedPopEntrySList(&Lookaside->L.ListHead,
-                                       &Lookaside->Lock__ObsoleteButDoNotDelete);
+    Entry = ExInterlockedPopEntrySList(&Lookaside->L.ListHead, &Lookaside->Lock__ObsoleteButDoNotDelete);
 
 
 #else
@@ -1009,22 +795,16 @@ Return Value:
 
 #endif
 
-    if (Entry == NULL) {
+    if (Entry == NULL)
+    {
         Lookaside->L.AllocateMisses += 1;
-        Entry = (Lookaside->L.Allocate)(Lookaside->L.Type,
-                                        Lookaside->L.Size,
-                                        Lookaside->L.Tag);
+        Entry = (Lookaside->L.Allocate)(Lookaside->L.Type, Lookaside->L.Size, Lookaside->L.Tag);
     }
 
     return Entry;
 }
 
-__inline
-VOID
-ExFreeToNPagedLookasideList(
-    IN PNPAGED_LOOKASIDE_LIST Lookaside,
-    IN PVOID Entry
-    )
+__inline VOID ExFreeToNPagedLookasideList(IN PNPAGED_LOOKASIDE_LIST Lookaside, IN PVOID Entry)
 
 /*++
 
@@ -1049,38 +829,39 @@ Return Value:
 {
 
     Lookaside->L.TotalFrees += 1;
-    if (ExQueryDepthSList(&Lookaside->L.ListHead) >= Lookaside->L.Depth) {
+    if (ExQueryDepthSList(&Lookaside->L.ListHead) >= Lookaside->L.Depth)
+    {
         Lookaside->L.FreeMisses += 1;
         (Lookaside->L.Free)(Entry);
-
-    } else {
+    }
+    else
+    {
 
 #if defined(_WIN2K_COMPAT_SLIST_USAGE) && defined(_X86_)
 
-        ExInterlockedPushEntrySList(&Lookaside->L.ListHead,
-                                    (PSLIST_ENTRY)Entry,
+        ExInterlockedPushEntrySList(&Lookaside->L.ListHead, (PSLIST_ENTRY)Entry,
                                     &Lookaside->Lock__ObsoleteButDoNotDelete);
 
 #else
 
-        InterlockedPushEntrySList(&Lookaside->L.ListHead,
-                                  (PSLIST_ENTRY)Entry);
+        InterlockedPushEntrySList(&Lookaside->L.ListHead, (PSLIST_ENTRY)Entry);
 
 #endif
-
     }
     return;
 }
 
 // end_ntndis
 
-#if !defined(_WIN64) && (defined(_NTDDK_) || defined(_NTIFS_)  || defined(_NDIS_))
+#if !defined(_WIN64) && (defined(_NTDDK_) || defined(_NTIFS_) || defined(_NDIS_))
 
-typedef struct _PAGED_LOOKASIDE_LIST {
+typedef struct _PAGED_LOOKASIDE_LIST
+{
 
 #else
 
-typedef struct DECLSPEC_CACHEALIGN _PAGED_LOOKASIDE_LIST {
+typedef struct DECLSPEC_CACHEALIGN _PAGED_LOOKASIDE_LIST
+{
 
 #endif
 
@@ -1111,38 +892,22 @@ C_ASSERT(sizeof(NPAGED_LOOKASIDE_LIST) == sizeof(PAGED_LOOKASIDE_LIST));
 // begin_ntddk begin_wdm begin_nthal begin_ntifs begin_ntosp
 
 NTKERNELAPI
-VOID
-ExInitializePagedLookasideList (
-    IN PPAGED_LOOKASIDE_LIST Lookaside,
-    IN PALLOCATE_FUNCTION Allocate,
-    IN PFREE_FUNCTION Free,
-    IN ULONG Flags,
-    IN SIZE_T Size,
-    IN ULONG Tag,
-    IN USHORT Depth
-    );
+VOID ExInitializePagedLookasideList(IN PPAGED_LOOKASIDE_LIST Lookaside, IN PALLOCATE_FUNCTION Allocate,
+                                    IN PFREE_FUNCTION Free, IN ULONG Flags, IN SIZE_T Size, IN ULONG Tag,
+                                    IN USHORT Depth);
 
 NTKERNELAPI
-VOID
-ExDeletePagedLookasideList (
-    IN PPAGED_LOOKASIDE_LIST Lookaside
-    );
+VOID ExDeletePagedLookasideList(IN PPAGED_LOOKASIDE_LIST Lookaside);
 
 #if defined(_WIN2K_COMPAT_SLIST_USAGE) && defined(_X86_)
 
 NTKERNELAPI
 PVOID
-ExAllocateFromPagedLookasideList(
-    IN PPAGED_LOOKASIDE_LIST Lookaside
-    );
+ExAllocateFromPagedLookasideList(IN PPAGED_LOOKASIDE_LIST Lookaside);
 
 #else
 
-__inline
-PVOID
-ExAllocateFromPagedLookasideList(
-    IN PPAGED_LOOKASIDE_LIST Lookaside
-    )
+__inline PVOID ExAllocateFromPagedLookasideList(IN PPAGED_LOOKASIDE_LIST Lookaside)
 
 /*++
 
@@ -1169,11 +934,10 @@ Return Value:
 
     Lookaside->L.TotalAllocates += 1;
     Entry = InterlockedPopEntrySList(&Lookaside->L.ListHead);
-    if (Entry == NULL) {
+    if (Entry == NULL)
+    {
         Lookaside->L.AllocateMisses += 1;
-        Entry = (Lookaside->L.Allocate)(Lookaside->L.Type,
-                                        Lookaside->L.Size,
-                                        Lookaside->L.Tag);
+        Entry = (Lookaside->L.Allocate)(Lookaside->L.Type, Lookaside->L.Size, Lookaside->L.Tag);
     }
 
     return Entry;
@@ -1184,20 +948,11 @@ Return Value:
 #if defined(_WIN2K_COMPAT_SLIST_USAGE) && defined(_X86_)
 
 NTKERNELAPI
-VOID
-ExFreeToPagedLookasideList(
-    IN PPAGED_LOOKASIDE_LIST Lookaside,
-    IN PVOID Entry
-    );
+VOID ExFreeToPagedLookasideList(IN PPAGED_LOOKASIDE_LIST Lookaside, IN PVOID Entry);
 
 #else
 
-__inline
-VOID
-ExFreeToPagedLookasideList(
-    IN PPAGED_LOOKASIDE_LIST Lookaside,
-    IN PVOID Entry
-    )
+__inline VOID ExFreeToPagedLookasideList(IN PPAGED_LOOKASIDE_LIST Lookaside, IN PVOID Entry)
 
 /*++
 
@@ -1222,13 +977,14 @@ Return Value:
 {
 
     Lookaside->L.TotalFrees += 1;
-    if (ExQueryDepthSList(&Lookaside->L.ListHead) >= Lookaside->L.Depth) {
+    if (ExQueryDepthSList(&Lookaside->L.ListHead) >= Lookaside->L.Depth)
+    {
         Lookaside->L.FreeMisses += 1;
         (Lookaside->L.Free)(Entry);
-
-    } else {
-        InterlockedPushEntrySList(&Lookaside->L.ListHead,
-                                  (PSLIST_ENTRY)Entry);
+    }
+    else
+    {
+        InterlockedPushEntrySList(&Lookaside->L.ListHead, (PSLIST_ENTRY)Entry);
     }
 
     return;
@@ -1238,21 +994,15 @@ Return Value:
 
 // end_ntddk end_nthal end_ntifs end_wdm end_ntosp
 
-VOID
-ExInitializeSystemLookasideList (
-    IN PGENERAL_LOOKASIDE Lookaside,
-    IN POOL_TYPE Type,
-    IN ULONG Size,
-    IN ULONG Tag,
-    IN USHORT Depth,
-    IN PLIST_ENTRY ListHead
-    );
+VOID ExInitializeSystemLookasideList(IN PGENERAL_LOOKASIDE Lookaside, IN POOL_TYPE Type, IN ULONG Size, IN ULONG Tag,
+                                     IN USHORT Depth, IN PLIST_ENTRY ListHead);
 
 //
 // Define per processor nonpage lookaside list structures.
 //
 
-typedef enum _PP_NPAGED_LOOKASIDE_NUMBER {
+typedef enum _PP_NPAGED_LOOKASIDE_NUMBER
+{
     LookasideSmallIrpList,
     LookasideLargeIrpList,
     LookasideMdlList,
@@ -1267,9 +1017,7 @@ typedef enum _PP_NPAGED_LOOKASIDE_NUMBER {
 
 FORCEINLINE
 PVOID
-ExAllocateFromPPLookasideList (
-    IN PP_NPAGED_LOOKASIDE_NUMBER Number
-    )
+ExAllocateFromPPLookasideList(IN PP_NPAGED_LOOKASIDE_NUMBER Number)
 
 /*++
 
@@ -1317,16 +1065,16 @@ Return Value:
     // allocate from the system lookaside list.
     //
 
-    if (Entry == NULL) {
+    if (Entry == NULL)
+    {
         Lookaside->AllocateMisses += 1;
         Lookaside = Prcb->PPLookasideList[Number].L;
         Lookaside->TotalAllocates += 1;
         Entry = InterlockedPopEntrySList(&Lookaside->ListHead);
-        if (Entry == NULL) {
+        if (Entry == NULL)
+        {
             Lookaside->AllocateMisses += 1;
-            Entry = (Lookaside->Allocate)(Lookaside->Type,
-                                          Lookaside->Size,
-                                          Lookaside->Tag);
+            Entry = (Lookaside->Allocate)(Lookaside->Type, Lookaside->Size, Lookaside->Tag);
         }
     }
 
@@ -1334,11 +1082,7 @@ Return Value:
 }
 
 FORCEINLINE
-VOID
-ExFreeToPPLookasideList (
-    IN PP_NPAGED_LOOKASIDE_NUMBER Number,
-    IN PVOID Entry
-    )
+VOID ExFreeToPPLookasideList(IN PP_NPAGED_LOOKASIDE_NUMBER Number, IN PVOID Entry)
 
 /*++
 
@@ -1382,19 +1126,20 @@ Return Value:
     Prcb = KeGetCurrentPrcb();
     Lookaside = Prcb->PPLookasideList[Number].P;
     Lookaside->TotalFrees += 1;
-    if (ExQueryDepthSList(&Lookaside->ListHead) >= Lookaside->Depth) {
+    if (ExQueryDepthSList(&Lookaside->ListHead) >= Lookaside->Depth)
+    {
         Lookaside->FreeMisses += 1;
         Lookaside = Prcb->PPLookasideList[Number].L;
         Lookaside->TotalFrees += 1;
-        if (ExQueryDepthSList(&Lookaside->ListHead) >= Lookaside->Depth) {
+        if (ExQueryDepthSList(&Lookaside->ListHead) >= Lookaside->Depth)
+        {
             Lookaside->FreeMisses += 1;
             (Lookaside->Free)(Entry);
             return;
         }
     }
 
-    InterlockedPushEntrySList(&Lookaside->ListHead,
-                              (PSINGLE_LIST_ENTRY)Entry);
+    InterlockedPushEntrySList(&Lookaside->ListHead, (PSINGLE_LIST_ENTRY)Entry);
 
     return;
 }
@@ -1404,47 +1149,27 @@ Return Value:
 #if i386 && !FPO
 
 NTSTATUS
-ExQuerySystemBackTraceInformation(
-    OUT PRTL_PROCESS_BACKTRACES BackTraceInformation,
-    IN ULONG BackTraceInformationLength,
-    OUT PULONG ReturnLength OPTIONAL
-    );
+ExQuerySystemBackTraceInformation(OUT PRTL_PROCESS_BACKTRACES BackTraceInformation, IN ULONG BackTraceInformationLength,
+                                  OUT PULONG ReturnLength OPTIONAL);
 
 NTKERNELAPI
 USHORT
-ExGetPoolBackTraceIndex(
-    IN PVOID P
-    );
+ExGetPoolBackTraceIndex(IN PVOID P);
 
 #endif // i386 && !FPO
 
 NTKERNELAPI
 NTSTATUS
-ExLockUserBuffer(
-    IN PVOID Buffer,
-    IN ULONG Length,
-    OUT PVOID *LockedBuffer,
-    OUT PVOID *LockVariable
-    );
+ExLockUserBuffer(IN PVOID Buffer, IN ULONG Length, OUT PVOID *LockedBuffer, OUT PVOID *LockVariable);
 
 NTKERNELAPI
-VOID
-ExUnlockUserBuffer(
-    IN PVOID LockVariable
-    );
+VOID ExUnlockUserBuffer(IN PVOID LockVariable);
 
-
 
 // begin_ntddk begin_wdm begin_ntifs begin_ntosp
 
 NTKERNELAPI
-VOID
-NTAPI
-ProbeForRead(
-    IN CONST VOID *Address,
-    IN SIZE_T Length,
-    IN ULONG Alignment
-    );
+VOID NTAPI ProbeForRead(IN CONST VOID *Address, IN SIZE_T Length, IN ULONG Alignment);
 
 // end_ntddk end_wdm end_ntifs end_ntosp
 
@@ -1466,20 +1191,21 @@ ProbeForRead(
 //
 //--
 
-#define ProbeForRead(Address, Length, Alignment)                             \
-    ASSERT(((Alignment) == 1) || ((Alignment) == 2) ||                       \
-           ((Alignment) == 4) || ((Alignment) == 8) ||                       \
-           ((Alignment) == 16));                                             \
-                                                                             \
-    if ((Length) != 0) {                                                     \
-        if (((ULONG_PTR)(Address) & ((Alignment) - 1)) != 0) {               \
-            ExRaiseDatatypeMisalignment();                                   \
-                                                                             \
-        }                                                                    \
-        if ((((ULONG_PTR)(Address) + (Length)) < (ULONG_PTR)(Address)) ||    \
-            (((ULONG_PTR)(Address) + (Length)) > (ULONG_PTR)MM_USER_PROBE_ADDRESS)) { \
-            ExRaiseAccessViolation();                                        \
-        }                                                                    \
+#define ProbeForRead(Address, Length, Alignment)                                                   \
+    ASSERT(((Alignment) == 1) || ((Alignment) == 2) || ((Alignment) == 4) || ((Alignment) == 8) || \
+           ((Alignment) == 16));                                                                   \
+                                                                                                   \
+    if ((Length) != 0)                                                                             \
+    {                                                                                              \
+        if (((ULONG_PTR)(Address) & ((Alignment) - 1)) != 0)                                       \
+        {                                                                                          \
+            ExRaiseDatatypeMisalignment();                                                         \
+        }                                                                                          \
+        if ((((ULONG_PTR)(Address) + (Length)) < (ULONG_PTR)(Address)) ||                          \
+            (((ULONG_PTR)(Address) + (Length)) > (ULONG_PTR)MM_USER_PROBE_ADDRESS))                \
+        {                                                                                          \
+            ExRaiseAccessViolation();                                                              \
+        }                                                                                          \
     }
 
 //++
@@ -1493,22 +1219,27 @@ ProbeForRead(
 //
 //--
 
-#define ProbeForReadSmallStructure(Address,Size,Alignment) {                 \
-    ASSERT(((Alignment) == 1) || ((Alignment) == 2) ||                       \
-           ((Alignment) == 4) || ((Alignment) == 8) ||                       \
-           ((Alignment) == 16));                                             \
-    if (Size == 0 || Size > 0x10000) {                                       \
-        ASSERT (0);                                                          \
-        ProbeForRead (Address,Size,Alignment);                               \
-    } else {                                                                 \
-        if (((ULONG_PTR)(Address) & ((Alignment) - 1)) != 0) {               \
-            ExRaiseDatatypeMisalignment();                                   \
-        }                                                                    \
-        if ((ULONG_PTR)(Address) >= (ULONG_PTR)MM_USER_PROBE_ADDRESS) {      \
-            *(volatile ULONG * const)MM_USER_PROBE_ADDRESS = 0;              \
-        }                                                                    \
-    }                                                                        \
-}
+#define ProbeForReadSmallStructure(Address, Size, Alignment)                                           \
+    {                                                                                                  \
+        ASSERT(((Alignment) == 1) || ((Alignment) == 2) || ((Alignment) == 4) || ((Alignment) == 8) || \
+               ((Alignment) == 16));                                                                   \
+        if (Size == 0 || Size > 0x10000)                                                               \
+        {                                                                                              \
+            ASSERT(0);                                                                                 \
+            ProbeForRead(Address, Size, Alignment);                                                    \
+        }                                                                                              \
+        else                                                                                           \
+        {                                                                                              \
+            if (((ULONG_PTR)(Address) & ((Alignment) - 1)) != 0)                                       \
+            {                                                                                          \
+                ExRaiseDatatypeMisalignment();                                                         \
+            }                                                                                          \
+            if ((ULONG_PTR)(Address) >= (ULONG_PTR)MM_USER_PROBE_ADDRESS)                              \
+            {                                                                                          \
+                *(volatile ULONG *const)MM_USER_PROBE_ADDRESS = 0;                                     \
+            }                                                                                          \
+        }                                                                                              \
+    }
 
 // end_ntosp
 #endif
@@ -1523,9 +1254,9 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndReadBoolean(Address) \
-    (((Address) >= (BOOLEAN * const)MM_USER_PROBE_ADDRESS) ? \
-        (*(volatile BOOLEAN * const)MM_USER_PROBE_ADDRESS) : (*(volatile BOOLEAN *)(Address)))
+#define ProbeAndReadBoolean(Address)                                                                          \
+    (((Address) >= (BOOLEAN *const)MM_USER_PROBE_ADDRESS) ? (*(volatile BOOLEAN *const)MM_USER_PROBE_ADDRESS) \
+                                                          : (*(volatile BOOLEAN *)(Address)))
 
 //++
 //
@@ -1536,9 +1267,9 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndReadChar(Address) \
-    (((Address) >= (CHAR * const)MM_USER_PROBE_ADDRESS) ? \
-        (*(volatile CHAR * const)MM_USER_PROBE_ADDRESS) : (*(volatile CHAR *)(Address)))
+#define ProbeAndReadChar(Address)                                                                       \
+    (((Address) >= (CHAR *const)MM_USER_PROBE_ADDRESS) ? (*(volatile CHAR *const)MM_USER_PROBE_ADDRESS) \
+                                                       : (*(volatile CHAR *)(Address)))
 
 //++
 //
@@ -1549,9 +1280,9 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndReadUchar(Address) \
-    (((Address) >= (UCHAR * const)MM_USER_PROBE_ADDRESS) ? \
-        (*(volatile UCHAR * const)MM_USER_PROBE_ADDRESS) : (*(volatile UCHAR *)(Address)))
+#define ProbeAndReadUchar(Address)                                                                        \
+    (((Address) >= (UCHAR *const)MM_USER_PROBE_ADDRESS) ? (*(volatile UCHAR *const)MM_USER_PROBE_ADDRESS) \
+                                                        : (*(volatile UCHAR *)(Address)))
 
 //++
 //
@@ -1562,9 +1293,9 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndReadShort(Address) \
-    (((Address) >= (SHORT * const)MM_USER_PROBE_ADDRESS) ? \
-        (*(volatile SHORT * const)MM_USER_PROBE_ADDRESS) : (*(volatile SHORT *)(Address)))
+#define ProbeAndReadShort(Address)                                                                        \
+    (((Address) >= (SHORT *const)MM_USER_PROBE_ADDRESS) ? (*(volatile SHORT *const)MM_USER_PROBE_ADDRESS) \
+                                                        : (*(volatile SHORT *)(Address)))
 
 //++
 //
@@ -1575,9 +1306,9 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndReadUshort(Address) \
-    (((Address) >= (USHORT * const)MM_USER_PROBE_ADDRESS) ? \
-        (*(volatile USHORT * const)MM_USER_PROBE_ADDRESS) : (*(volatile USHORT *)(Address)))
+#define ProbeAndReadUshort(Address)                                                                         \
+    (((Address) >= (USHORT *const)MM_USER_PROBE_ADDRESS) ? (*(volatile USHORT *const)MM_USER_PROBE_ADDRESS) \
+                                                         : (*(volatile USHORT *)(Address)))
 
 //++
 //
@@ -1588,9 +1319,9 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndReadHandle(Address) \
-    (((Address) >= (HANDLE * const)MM_USER_PROBE_ADDRESS) ? \
-        (*(volatile HANDLE * const)MM_USER_PROBE_ADDRESS) : (*(volatile HANDLE *)(Address)))
+#define ProbeAndReadHandle(Address)                                                                         \
+    (((Address) >= (HANDLE *const)MM_USER_PROBE_ADDRESS) ? (*(volatile HANDLE *const)MM_USER_PROBE_ADDRESS) \
+                                                         : (*(volatile HANDLE *)(Address)))
 
 //++
 //
@@ -1601,9 +1332,9 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndReadPointer(Address) \
-    (((Address) >= (PVOID * const)MM_USER_PROBE_ADDRESS) ? \
-        (*(volatile PVOID * const)MM_USER_PROBE_ADDRESS) : (*(volatile PVOID *)(Address)))
+#define ProbeAndReadPointer(Address)                                                                      \
+    (((Address) >= (PVOID *const)MM_USER_PROBE_ADDRESS) ? (*(volatile PVOID *const)MM_USER_PROBE_ADDRESS) \
+                                                        : (*(volatile PVOID *)(Address)))
 
 //++
 //
@@ -1614,9 +1345,9 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndReadLong(Address) \
-    (((Address) >= (LONG * const)MM_USER_PROBE_ADDRESS) ? \
-        (*(volatile LONG * const)MM_USER_PROBE_ADDRESS) : (*(volatile LONG *)(Address)))
+#define ProbeAndReadLong(Address)                                                                       \
+    (((Address) >= (LONG *const)MM_USER_PROBE_ADDRESS) ? (*(volatile LONG *const)MM_USER_PROBE_ADDRESS) \
+                                                       : (*(volatile LONG *)(Address)))
 
 //++
 //
@@ -1628,9 +1359,9 @@ ProbeForRead(
 //--
 
 
-#define ProbeAndReadUlong(Address) \
-    (((Address) >= (ULONG * const)MM_USER_PROBE_ADDRESS) ? \
-        (*(volatile ULONG * const)MM_USER_PROBE_ADDRESS) : (*(volatile ULONG *)(Address)))
+#define ProbeAndReadUlong(Address)                                                                        \
+    (((Address) >= (ULONG *const)MM_USER_PROBE_ADDRESS) ? (*(volatile ULONG *const)MM_USER_PROBE_ADDRESS) \
+                                                        : (*(volatile ULONG *)(Address)))
 
 //++
 //
@@ -1641,9 +1372,9 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndReadUlong_ptr(Address) \
-    (((Address) >= (ULONG_PTR * const)MM_USER_PROBE_ADDRESS) ? \
-        (*(volatile ULONG_PTR * const)MM_USER_PROBE_ADDRESS) : (*(volatile ULONG_PTR *)(Address)))
+#define ProbeAndReadUlong_ptr(Address)                                                                            \
+    (((Address) >= (ULONG_PTR *const)MM_USER_PROBE_ADDRESS) ? (*(volatile ULONG_PTR *const)MM_USER_PROBE_ADDRESS) \
+                                                            : (*(volatile ULONG_PTR *)(Address)))
 
 //++
 //
@@ -1654,9 +1385,9 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndReadQuad(Address) \
-    (((Address) >= (QUAD * const)MM_USER_PROBE_ADDRESS) ? \
-        (*(volatile QUAD * const)MM_USER_PROBE_ADDRESS) : (*(volatile QUAD *)(Address)))
+#define ProbeAndReadQuad(Address)                                                                       \
+    (((Address) >= (QUAD *const)MM_USER_PROBE_ADDRESS) ? (*(volatile QUAD *const)MM_USER_PROBE_ADDRESS) \
+                                                       : (*(volatile QUAD *)(Address)))
 
 //++
 //
@@ -1667,9 +1398,9 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndReadUquad(Address) \
-    (((Address) >= (UQUAD * const)MM_USER_PROBE_ADDRESS) ? \
-        (*(volatile UQUAD * const)MM_USER_PROBE_ADDRESS) : (*(volatile UQUAD *)(Address)))
+#define ProbeAndReadUquad(Address)                                                                        \
+    (((Address) >= (UQUAD *const)MM_USER_PROBE_ADDRESS) ? (*(volatile UQUAD *const)MM_USER_PROBE_ADDRESS) \
+                                                        : (*(volatile UQUAD *)(Address)))
 
 //++
 //
@@ -1680,9 +1411,10 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndReadLargeInteger(Source)  \
-    (((Source) >= (LARGE_INTEGER * const)MM_USER_PROBE_ADDRESS) ? \
-        (*(volatile LARGE_INTEGER * const)MM_USER_PROBE_ADDRESS) : (*(volatile LARGE_INTEGER *)(Source)))
+#define ProbeAndReadLargeInteger(Source)                           \
+    (((Source) >= (LARGE_INTEGER *const)MM_USER_PROBE_ADDRESS)     \
+         ? (*(volatile LARGE_INTEGER *const)MM_USER_PROBE_ADDRESS) \
+         : (*(volatile LARGE_INTEGER *)(Source)))
 
 //++
 //
@@ -1693,9 +1425,10 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndReadUlargeInteger(Source)  \
-    (((Source) >= (ULARGE_INTEGER * const)MM_USER_PROBE_ADDRESS) ? \
-        (*(volatile ULARGE_INTEGER * const)MM_USER_PROBE_ADDRESS) : (*(volatile ULARGE_INTEGER *)(Source)))
+#define ProbeAndReadUlargeInteger(Source)                           \
+    (((Source) >= (ULARGE_INTEGER *const)MM_USER_PROBE_ADDRESS)     \
+         ? (*(volatile ULARGE_INTEGER *const)MM_USER_PROBE_ADDRESS) \
+         : (*(volatile ULARGE_INTEGER *)(Source)))
 
 //++
 //
@@ -1706,9 +1439,10 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndReadUnicodeString(Source)  \
-    (((Source) >= (UNICODE_STRING * const)MM_USER_PROBE_ADDRESS) ? \
-        (*(volatile UNICODE_STRING * const)MM_USER_PROBE_ADDRESS) : (*(volatile UNICODE_STRING *)(Source)))
+#define ProbeAndReadUnicodeString(Source)                           \
+    (((Source) >= (UNICODE_STRING *const)MM_USER_PROBE_ADDRESS)     \
+         ? (*(volatile UNICODE_STRING *const)MM_USER_PROBE_ADDRESS) \
+         : (*(volatile UNICODE_STRING *)(Source)))
 //++
 //
 // <STRUCTURE>
@@ -1719,9 +1453,9 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndReadStructure(Source,STRUCTURE)  \
-    (((Source) >= (STRUCTURE * const)MM_USER_PROBE_ADDRESS) ? \
-        (*(STRUCTURE * const)MM_USER_PROBE_ADDRESS) : (*(STRUCTURE *)(Source)))
+#define ProbeAndReadStructure(Source, STRUCTURE)                                                        \
+    (((Source) >= (STRUCTURE *const)MM_USER_PROBE_ADDRESS) ? (*(STRUCTURE *const)MM_USER_PROBE_ADDRESS) \
+                                                           : (*(STRUCTURE *)(Source)))
 
 //
 // Probe for write functions definitions.
@@ -1735,13 +1469,15 @@ ProbeForRead(
 //
 //--
 
-#define ProbeForWriteBoolean(Address) {                                      \
-    if ((Address) >= (BOOLEAN * const)MM_USER_PROBE_ADDRESS) {               \
-        *(volatile BOOLEAN * const)MM_USER_PROBE_ADDRESS = 0;                \
-    }                                                                        \
-                                                                             \
-    *(volatile BOOLEAN *)(Address) = *(volatile BOOLEAN *)(Address);         \
-}
+#define ProbeForWriteBoolean(Address)                                    \
+    {                                                                    \
+        if ((Address) >= (BOOLEAN *const)MM_USER_PROBE_ADDRESS)          \
+        {                                                                \
+            *(volatile BOOLEAN *const)MM_USER_PROBE_ADDRESS = 0;         \
+        }                                                                \
+                                                                         \
+        *(volatile BOOLEAN *)(Address) = *(volatile BOOLEAN *)(Address); \
+    }
 
 //++
 //
@@ -1752,13 +1488,15 @@ ProbeForRead(
 //
 //--
 
-#define ProbeForWriteChar(Address) {                                         \
-    if ((Address) >= (CHAR * const)MM_USER_PROBE_ADDRESS) {                  \
-        *(volatile CHAR * const)MM_USER_PROBE_ADDRESS = 0;                   \
-    }                                                                        \
-                                                                             \
-    *(volatile CHAR *)(Address) = *(volatile CHAR *)(Address);               \
-}
+#define ProbeForWriteChar(Address)                                 \
+    {                                                              \
+        if ((Address) >= (CHAR *const)MM_USER_PROBE_ADDRESS)       \
+        {                                                          \
+            *(volatile CHAR *const)MM_USER_PROBE_ADDRESS = 0;      \
+        }                                                          \
+                                                                   \
+        *(volatile CHAR *)(Address) = *(volatile CHAR *)(Address); \
+    }
 
 //++
 //
@@ -1769,13 +1507,15 @@ ProbeForRead(
 //
 //--
 
-#define ProbeForWriteUchar(Address) {                                        \
-    if ((Address) >= (UCHAR * const)MM_USER_PROBE_ADDRESS) {                 \
-        *(volatile UCHAR * const)MM_USER_PROBE_ADDRESS = 0;                  \
-    }                                                                        \
-                                                                             \
-    *(volatile UCHAR *)(Address) = *(volatile UCHAR *)(Address);             \
-}
+#define ProbeForWriteUchar(Address)                                  \
+    {                                                                \
+        if ((Address) >= (UCHAR *const)MM_USER_PROBE_ADDRESS)        \
+        {                                                            \
+            *(volatile UCHAR *const)MM_USER_PROBE_ADDRESS = 0;       \
+        }                                                            \
+                                                                     \
+        *(volatile UCHAR *)(Address) = *(volatile UCHAR *)(Address); \
+    }
 
 //++
 //
@@ -1786,27 +1526,34 @@ ProbeForRead(
 //
 //--
 
-#define ProbeForWriteIoStatus(Address) {                                     \
-    if ((Address) >= (IO_STATUS_BLOCK * const)MM_USER_PROBE_ADDRESS) {       \
-        *(volatile ULONG * const)MM_USER_PROBE_ADDRESS = 0;                  \
-    }                                                                        \
-                                                                             \
-    *(volatile IO_STATUS_BLOCK *)(Address) = *(volatile IO_STATUS_BLOCK *)(Address); \
-}
+#define ProbeForWriteIoStatus(Address)                                                   \
+    {                                                                                    \
+        if ((Address) >= (IO_STATUS_BLOCK *const)MM_USER_PROBE_ADDRESS)                  \
+        {                                                                                \
+            *(volatile ULONG *const)MM_USER_PROBE_ADDRESS = 0;                           \
+        }                                                                                \
+                                                                                         \
+        *(volatile IO_STATUS_BLOCK *)(Address) = *(volatile IO_STATUS_BLOCK *)(Address); \
+    }
 
-#ifdef  _WIN64
-#define ProbeForWriteIoStatusEx(Address, Cookie) {                                          \
-    if ((Address) >= (IO_STATUS_BLOCK * const)MM_USER_PROBE_ADDRESS) {                      \
-        *(volatile ULONG * const)MM_USER_PROBE_ADDRESS = 0;                                 \
-    }                                                                                       \
-    if ((ULONG_PTR)(Cookie) & (ULONG)1) {                                                            \
-        *(volatile IO_STATUS_BLOCK32 *)(Address) = *(volatile IO_STATUS_BLOCK32 *)(Address);\
-    } else {                                                                                \
-        *(volatile IO_STATUS_BLOCK *)(Address) = *(volatile IO_STATUS_BLOCK *)(Address);    \
-    }                                                                                       \
-}
+#ifdef _WIN64
+#define ProbeForWriteIoStatusEx(Address, Cookie)                                                 \
+    {                                                                                            \
+        if ((Address) >= (IO_STATUS_BLOCK *const)MM_USER_PROBE_ADDRESS)                          \
+        {                                                                                        \
+            *(volatile ULONG *const)MM_USER_PROBE_ADDRESS = 0;                                   \
+        }                                                                                        \
+        if ((ULONG_PTR)(Cookie) & (ULONG)1)                                                      \
+        {                                                                                        \
+            *(volatile IO_STATUS_BLOCK32 *)(Address) = *(volatile IO_STATUS_BLOCK32 *)(Address); \
+        }                                                                                        \
+        else                                                                                     \
+        {                                                                                        \
+            *(volatile IO_STATUS_BLOCK *)(Address) = *(volatile IO_STATUS_BLOCK *)(Address);     \
+        }                                                                                        \
+    }
 #else
-#define ProbeForWriteIoStatusEx(Address, Cookie)    ProbeForWriteIoStatus(Address)
+#define ProbeForWriteIoStatusEx(Address, Cookie) ProbeForWriteIoStatus(Address)
 #endif
 
 //++
@@ -1818,13 +1565,15 @@ ProbeForRead(
 //
 //--
 
-#define ProbeForWriteShort(Address) {                                        \
-    if ((Address) >= (SHORT * const)MM_USER_PROBE_ADDRESS) {                 \
-        *(volatile SHORT * const)MM_USER_PROBE_ADDRESS = 0;                  \
-    }                                                                        \
-                                                                             \
-    *(volatile SHORT *)(Address) = *(volatile SHORT *)(Address);             \
-}
+#define ProbeForWriteShort(Address)                                  \
+    {                                                                \
+        if ((Address) >= (SHORT *const)MM_USER_PROBE_ADDRESS)        \
+        {                                                            \
+            *(volatile SHORT *const)MM_USER_PROBE_ADDRESS = 0;       \
+        }                                                            \
+                                                                     \
+        *(volatile SHORT *)(Address) = *(volatile SHORT *)(Address); \
+    }
 
 //++
 //
@@ -1835,13 +1584,15 @@ ProbeForRead(
 //
 //--
 
-#define ProbeForWriteUshort(Address) {                                       \
-    if ((Address) >= (USHORT * const)MM_USER_PROBE_ADDRESS) {                \
-        *(volatile USHORT * const)MM_USER_PROBE_ADDRESS = 0;                 \
-    }                                                                        \
-                                                                             \
-    *(volatile USHORT *)(Address) = *(volatile USHORT *)(Address);           \
-}
+#define ProbeForWriteUshort(Address)                                   \
+    {                                                                  \
+        if ((Address) >= (USHORT *const)MM_USER_PROBE_ADDRESS)         \
+        {                                                              \
+            *(volatile USHORT *const)MM_USER_PROBE_ADDRESS = 0;        \
+        }                                                              \
+                                                                       \
+        *(volatile USHORT *)(Address) = *(volatile USHORT *)(Address); \
+    }
 
 //++
 //
@@ -1852,13 +1603,15 @@ ProbeForRead(
 //
 //--
 
-#define ProbeForWriteHandle(Address) {                                       \
-    if ((Address) >= (HANDLE * const)MM_USER_PROBE_ADDRESS) {                \
-        *(volatile HANDLE * const)MM_USER_PROBE_ADDRESS = 0;                 \
-    }                                                                        \
-                                                                             \
-    *(volatile HANDLE *)(Address) = *(volatile HANDLE *)(Address);           \
-}
+#define ProbeForWriteHandle(Address)                                   \
+    {                                                                  \
+        if ((Address) >= (HANDLE *const)MM_USER_PROBE_ADDRESS)         \
+        {                                                              \
+            *(volatile HANDLE *const)MM_USER_PROBE_ADDRESS = 0;        \
+        }                                                              \
+                                                                       \
+        *(volatile HANDLE *)(Address) = *(volatile HANDLE *)(Address); \
+    }
 
 //++
 //
@@ -1869,13 +1622,15 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndZeroHandle(Address) {                                        \
-    if ((Address) >= (HANDLE * const)MM_USER_PROBE_ADDRESS) {                \
-        *(volatile HANDLE * const)MM_USER_PROBE_ADDRESS = 0;                 \
-    }                                                                        \
-                                                                             \
-    *(volatile HANDLE *)(Address) = 0;                                       \
-}
+#define ProbeAndZeroHandle(Address)                             \
+    {                                                           \
+        if ((Address) >= (HANDLE *const)MM_USER_PROBE_ADDRESS)  \
+        {                                                       \
+            *(volatile HANDLE *const)MM_USER_PROBE_ADDRESS = 0; \
+        }                                                       \
+                                                                \
+        *(volatile HANDLE *)(Address) = 0;                      \
+    }
 
 //++
 //
@@ -1886,13 +1641,15 @@ ProbeForRead(
 //
 //--
 
-#define ProbeForWritePointer(Address) {                                      \
-    if ((PVOID *)(Address) >= (PVOID * const)MM_USER_PROBE_ADDRESS) {        \
-        *(volatile PVOID * const)MM_USER_PROBE_ADDRESS = NULL;               \
-    }                                                                        \
-                                                                             \
-    *(volatile PVOID *)(Address) = *(volatile PVOID *)(Address);             \
-}
+#define ProbeForWritePointer(Address)                                  \
+    {                                                                  \
+        if ((PVOID *)(Address) >= (PVOID *const)MM_USER_PROBE_ADDRESS) \
+        {                                                              \
+            *(volatile PVOID *const)MM_USER_PROBE_ADDRESS = NULL;      \
+        }                                                              \
+                                                                       \
+        *(volatile PVOID *)(Address) = *(volatile PVOID *)(Address);   \
+    }
 
 //++
 //
@@ -1903,13 +1660,15 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndNullPointer(Address) {                                       \
-    if ((PVOID *)(Address) >= (PVOID * const)MM_USER_PROBE_ADDRESS) {        \
-        *(volatile PVOID * const)MM_USER_PROBE_ADDRESS = NULL;               \
-    }                                                                        \
-                                                                             \
-    *(volatile PVOID *)(Address) = NULL;                                     \
-}
+#define ProbeAndNullPointer(Address)                                   \
+    {                                                                  \
+        if ((PVOID *)(Address) >= (PVOID *const)MM_USER_PROBE_ADDRESS) \
+        {                                                              \
+            *(volatile PVOID *const)MM_USER_PROBE_ADDRESS = NULL;      \
+        }                                                              \
+                                                                       \
+        *(volatile PVOID *)(Address) = NULL;                           \
+    }
 
 //++
 //
@@ -1920,13 +1679,15 @@ ProbeForRead(
 //
 //--
 
-#define ProbeForWriteLong(Address) {                                        \
-    if ((Address) >= (LONG * const)MM_USER_PROBE_ADDRESS) {                 \
-        *(volatile LONG * const)MM_USER_PROBE_ADDRESS = 0;                  \
-    }                                                                       \
-                                                                            \
-    *(volatile LONG *)(Address) = *(volatile LONG *)(Address);              \
-}
+#define ProbeForWriteLong(Address)                                 \
+    {                                                              \
+        if ((Address) >= (LONG *const)MM_USER_PROBE_ADDRESS)       \
+        {                                                          \
+            *(volatile LONG *const)MM_USER_PROBE_ADDRESS = 0;      \
+        }                                                          \
+                                                                   \
+        *(volatile LONG *)(Address) = *(volatile LONG *)(Address); \
+    }
 
 //++
 //
@@ -1937,13 +1698,15 @@ ProbeForRead(
 //
 //--
 
-#define ProbeForWriteUlong(Address) {                                        \
-    if ((Address) >= (ULONG * const)MM_USER_PROBE_ADDRESS) {                 \
-        *(volatile ULONG * const)MM_USER_PROBE_ADDRESS = 0;                  \
-    }                                                                        \
-                                                                             \
-    *(volatile ULONG *)(Address) = *(volatile ULONG *)(Address);             \
-}
+#define ProbeForWriteUlong(Address)                                  \
+    {                                                                \
+        if ((Address) >= (ULONG *const)MM_USER_PROBE_ADDRESS)        \
+        {                                                            \
+            *(volatile ULONG *const)MM_USER_PROBE_ADDRESS = 0;       \
+        }                                                            \
+                                                                     \
+        *(volatile ULONG *)(Address) = *(volatile ULONG *)(Address); \
+    }
 //++
 //
 // VOID
@@ -1953,13 +1716,15 @@ ProbeForRead(
 //
 //--
 
-#define ProbeForWriteUlong_ptr(Address) {                                    \
-    if ((Address) >= (ULONG_PTR * const)MM_USER_PROBE_ADDRESS) {             \
-        *(volatile ULONG_PTR * const)MM_USER_PROBE_ADDRESS = 0;              \
-    }                                                                        \
+#define ProbeForWriteUlong_ptr(Address)                                      \
+    {                                                                        \
+        if ((Address) >= (ULONG_PTR *const)MM_USER_PROBE_ADDRESS)            \
+        {                                                                    \
+            *(volatile ULONG_PTR *const)MM_USER_PROBE_ADDRESS = 0;           \
+        }                                                                    \
                                                                              \
-    *(volatile ULONG_PTR *)(Address) = *(volatile ULONG_PTR *)(Address);     \
-}
+        *(volatile ULONG_PTR *)(Address) = *(volatile ULONG_PTR *)(Address); \
+    }
 
 //++
 //
@@ -1970,13 +1735,15 @@ ProbeForRead(
 //
 //--
 
-#define ProbeForWriteQuad(Address) {                                         \
-    if ((Address) >= (QUAD * const)MM_USER_PROBE_ADDRESS) {                  \
-        *(volatile LONG * const)MM_USER_PROBE_ADDRESS = 0;                   \
-    }                                                                        \
-                                                                             \
-    *(volatile QUAD *)(Address) = *(volatile QUAD *)(Address);               \
-}
+#define ProbeForWriteQuad(Address)                                 \
+    {                                                              \
+        if ((Address) >= (QUAD *const)MM_USER_PROBE_ADDRESS)       \
+        {                                                          \
+            *(volatile LONG *const)MM_USER_PROBE_ADDRESS = 0;      \
+        }                                                          \
+                                                                   \
+        *(volatile QUAD *)(Address) = *(volatile QUAD *)(Address); \
+    }
 
 //++
 //
@@ -1987,13 +1754,15 @@ ProbeForRead(
 //
 //--
 
-#define ProbeForWriteUquad(Address) {                                        \
-    if ((Address) >= (QUAD * const)MM_USER_PROBE_ADDRESS) {                  \
-        *(volatile ULONG * const)MM_USER_PROBE_ADDRESS = 0;                  \
-    }                                                                        \
-                                                                             \
-    *(volatile UQUAD *)(Address) = *(volatile UQUAD *)(Address);             \
-}
+#define ProbeForWriteUquad(Address)                                  \
+    {                                                                \
+        if ((Address) >= (QUAD *const)MM_USER_PROBE_ADDRESS)         \
+        {                                                            \
+            *(volatile ULONG *const)MM_USER_PROBE_ADDRESS = 0;       \
+        }                                                            \
+                                                                     \
+        *(volatile UQUAD *)(Address) = *(volatile UQUAD *)(Address); \
+    }
 
 //
 // Probe and write functions definitions.
@@ -2008,13 +1777,15 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndWriteBoolean(Address, Value) {                               \
-    if ((Address) >= (BOOLEAN * const)MM_USER_PROBE_ADDRESS) {               \
-        *(volatile BOOLEAN * const)MM_USER_PROBE_ADDRESS = 0;                \
-    }                                                                        \
-                                                                             \
-    *(Address) = (Value);                                                    \
-}
+#define ProbeAndWriteBoolean(Address, Value)                     \
+    {                                                            \
+        if ((Address) >= (BOOLEAN *const)MM_USER_PROBE_ADDRESS)  \
+        {                                                        \
+            *(volatile BOOLEAN *const)MM_USER_PROBE_ADDRESS = 0; \
+        }                                                        \
+                                                                 \
+        *(Address) = (Value);                                    \
+    }
 
 //++
 //
@@ -2026,13 +1797,15 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndWriteChar(Address, Value) {                                  \
-    if ((Address) >= (CHAR * const)MM_USER_PROBE_ADDRESS) {                  \
-        *(volatile CHAR * const)MM_USER_PROBE_ADDRESS = 0;                   \
-    }                                                                        \
-                                                                             \
-    *(Address) = (Value);                                                    \
-}
+#define ProbeAndWriteChar(Address, Value)                     \
+    {                                                         \
+        if ((Address) >= (CHAR *const)MM_USER_PROBE_ADDRESS)  \
+        {                                                     \
+            *(volatile CHAR *const)MM_USER_PROBE_ADDRESS = 0; \
+        }                                                     \
+                                                              \
+        *(Address) = (Value);                                 \
+    }
 
 //++
 //
@@ -2044,13 +1817,15 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndWriteUchar(Address, Value) {                                 \
-    if ((Address) >= (UCHAR * const)MM_USER_PROBE_ADDRESS) {                 \
-        *(volatile UCHAR * const)MM_USER_PROBE_ADDRESS = 0;                  \
-    }                                                                        \
-                                                                             \
-    *(Address) = (Value);                                                    \
-}
+#define ProbeAndWriteUchar(Address, Value)                     \
+    {                                                          \
+        if ((Address) >= (UCHAR *const)MM_USER_PROBE_ADDRESS)  \
+        {                                                      \
+            *(volatile UCHAR *const)MM_USER_PROBE_ADDRESS = 0; \
+        }                                                      \
+                                                               \
+        *(Address) = (Value);                                  \
+    }
 
 //++
 //
@@ -2062,13 +1837,15 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndWriteShort(Address, Value) {                                 \
-    if ((Address) >= (SHORT * const)MM_USER_PROBE_ADDRESS) {                 \
-        *(volatile SHORT * const)MM_USER_PROBE_ADDRESS = 0;                  \
-    }                                                                        \
-                                                                             \
-    *(Address) = (Value);                                                    \
-}
+#define ProbeAndWriteShort(Address, Value)                     \
+    {                                                          \
+        if ((Address) >= (SHORT *const)MM_USER_PROBE_ADDRESS)  \
+        {                                                      \
+            *(volatile SHORT *const)MM_USER_PROBE_ADDRESS = 0; \
+        }                                                      \
+                                                               \
+        *(Address) = (Value);                                  \
+    }
 
 //++
 //
@@ -2080,13 +1857,15 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndWriteUshort(Address, Value) {                                \
-    if ((Address) >= (USHORT * const)MM_USER_PROBE_ADDRESS) {                \
-        *(volatile USHORT * const)MM_USER_PROBE_ADDRESS = 0;                 \
-    }                                                                        \
-                                                                             \
-    *(Address) = (Value);                                                    \
-}
+#define ProbeAndWriteUshort(Address, Value)                     \
+    {                                                           \
+        if ((Address) >= (USHORT *const)MM_USER_PROBE_ADDRESS)  \
+        {                                                       \
+            *(volatile USHORT *const)MM_USER_PROBE_ADDRESS = 0; \
+        }                                                       \
+                                                                \
+        *(Address) = (Value);                                   \
+    }
 
 //++
 //
@@ -2098,13 +1877,15 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndWriteHandle(Address, Value) {                                \
-    if ((Address) >= (HANDLE * const)MM_USER_PROBE_ADDRESS) {                \
-        *(volatile HANDLE * const)MM_USER_PROBE_ADDRESS = 0;                 \
-    }                                                                        \
-                                                                             \
-    *(Address) = (Value);                                                    \
-}
+#define ProbeAndWriteHandle(Address, Value)                     \
+    {                                                           \
+        if ((Address) >= (HANDLE *const)MM_USER_PROBE_ADDRESS)  \
+        {                                                       \
+            *(volatile HANDLE *const)MM_USER_PROBE_ADDRESS = 0; \
+        }                                                       \
+                                                                \
+        *(Address) = (Value);                                   \
+    }
 
 //++
 //
@@ -2116,13 +1897,15 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndWriteLong(Address, Value) {                                  \
-    if ((Address) >= (LONG * const)MM_USER_PROBE_ADDRESS) {                  \
-        *(volatile LONG * const)MM_USER_PROBE_ADDRESS = 0;                   \
-    }                                                                        \
-                                                                             \
-    *(Address) = (Value);                                                    \
-}
+#define ProbeAndWriteLong(Address, Value)                     \
+    {                                                         \
+        if ((Address) >= (LONG *const)MM_USER_PROBE_ADDRESS)  \
+        {                                                     \
+            *(volatile LONG *const)MM_USER_PROBE_ADDRESS = 0; \
+        }                                                     \
+                                                              \
+        *(Address) = (Value);                                 \
+    }
 
 //++
 //
@@ -2134,13 +1917,15 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndWriteUlong(Address, Value) {                                 \
-    if ((Address) >= (ULONG * const)MM_USER_PROBE_ADDRESS) {                 \
-        *(volatile ULONG * const)MM_USER_PROBE_ADDRESS = 0;                  \
-    }                                                                        \
-                                                                             \
-    *(Address) = (Value);                                                    \
-}
+#define ProbeAndWriteUlong(Address, Value)                     \
+    {                                                          \
+        if ((Address) >= (ULONG *const)MM_USER_PROBE_ADDRESS)  \
+        {                                                      \
+            *(volatile ULONG *const)MM_USER_PROBE_ADDRESS = 0; \
+        }                                                      \
+                                                               \
+        *(Address) = (Value);                                  \
+    }
 
 //++
 //
@@ -2152,13 +1937,15 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndWriteQuad(Address, Value) {                                  \
-    if ((Address) >= (QUAD * const)MM_USER_PROBE_ADDRESS) {                  \
-        *(volatile LONG * const)MM_USER_PROBE_ADDRESS = 0;                   \
-    }                                                                        \
-                                                                             \
-    *(Address) = (Value);                                                    \
-}
+#define ProbeAndWriteQuad(Address, Value)                     \
+    {                                                         \
+        if ((Address) >= (QUAD *const)MM_USER_PROBE_ADDRESS)  \
+        {                                                     \
+            *(volatile LONG *const)MM_USER_PROBE_ADDRESS = 0; \
+        }                                                     \
+                                                              \
+        *(Address) = (Value);                                 \
+    }
 
 //++
 //
@@ -2170,13 +1957,15 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndWriteUquad(Address, Value) {                                 \
-    if ((Address) >= (UQUAD * const)MM_USER_PROBE_ADDRESS) {                 \
-        *(volatile ULONG * const)MM_USER_PROBE_ADDRESS = 0;                  \
-    }                                                                        \
-                                                                             \
-    *(Address) = (Value);                                                    \
-}
+#define ProbeAndWriteUquad(Address, Value)                     \
+    {                                                          \
+        if ((Address) >= (UQUAD *const)MM_USER_PROBE_ADDRESS)  \
+        {                                                      \
+            *(volatile ULONG *const)MM_USER_PROBE_ADDRESS = 0; \
+        }                                                      \
+                                                               \
+        *(Address) = (Value);                                  \
+    }
 
 //++
 //
@@ -2189,13 +1978,15 @@ ProbeForRead(
 //
 //--
 
-#define ProbeAndWriteStructure(Address, Value,STRUCTURE) {                   \
-    if ((STRUCTURE * const)(Address) >= (STRUCTURE * const)MM_USER_PROBE_ADDRESS) {    \
-        *(volatile ULONG * const)MM_USER_PROBE_ADDRESS = 0;                  \
-    }                                                                        \
-                                                                             \
-    *(Address) = (Value);                                                    \
-}
+#define ProbeAndWriteStructure(Address, Value, STRUCTURE)                           \
+    {                                                                               \
+        if ((STRUCTURE *const)(Address) >= (STRUCTURE *const)MM_USER_PROBE_ADDRESS) \
+        {                                                                           \
+            *(volatile ULONG *const)MM_USER_PROBE_ADDRESS = 0;                      \
+        }                                                                           \
+                                                                                    \
+        *(Address) = (Value);                                                       \
+    }
 
 
 // begin_ntifs begin_ntddk begin_wdm begin_ntosp
@@ -2204,82 +1995,61 @@ ProbeForRead(
 //
 
 NTKERNELAPI
-VOID
-NTAPI
-ProbeForWrite (
-    IN PVOID Address,
-    IN SIZE_T Length,
-    IN ULONG Alignment
-    );
+VOID NTAPI ProbeForWrite(IN PVOID Address, IN SIZE_T Length, IN ULONG Alignment);
 
 // end_ntifs end_ntddk end_wdm end_ntosp
 
 
-
 //
 // Timer Rundown
 //
 
 NTKERNELAPI
-VOID
-ExTimerRundown (
-    VOID
-    );
-
+VOID ExTimerRundown(VOID);
+
 // begin_ntddk begin_wdm begin_nthal begin_ntifs begin_ntosp
 //
 // Worker Thread
 //
 
-typedef enum _WORK_QUEUE_TYPE {
+typedef enum _WORK_QUEUE_TYPE
+{
     CriticalWorkQueue,
     DelayedWorkQueue,
     HyperCriticalWorkQueue,
     MaximumWorkQueue
 } WORK_QUEUE_TYPE;
 
-typedef
-VOID
-(*PWORKER_THREAD_ROUTINE)(
-    IN PVOID Parameter
-    );
+typedef VOID (*PWORKER_THREAD_ROUTINE)(IN PVOID Parameter);
 
-typedef struct _WORK_QUEUE_ITEM {
+typedef struct _WORK_QUEUE_ITEM
+{
     LIST_ENTRY List;
     PWORKER_THREAD_ROUTINE WorkerRoutine;
     PVOID Parameter;
 } WORK_QUEUE_ITEM, *PWORK_QUEUE_ITEM;
 
 #if PRAGMA_DEPRECATED_DDK
-#pragma deprecated(ExInitializeWorkItem)    // Use IoAllocateWorkItem
+#pragma deprecated(ExInitializeWorkItem) // Use IoAllocateWorkItem
 #endif
 #define ExInitializeWorkItem(Item, Routine, Context) \
     (Item)->WorkerRoutine = (Routine);               \
     (Item)->Parameter = (Context);                   \
     (Item)->List.Flink = NULL;
 
-DECLSPEC_DEPRECATED_DDK                     // Use IoQueueWorkItem
-NTKERNELAPI
-VOID
-ExQueueWorkItem(
-    IN PWORK_QUEUE_ITEM WorkItem,
-    IN WORK_QUEUE_TYPE QueueType
-    );
+DECLSPEC_DEPRECATED_DDK // Use IoQueueWorkItem
+    NTKERNELAPI VOID
+    ExQueueWorkItem(IN PWORK_QUEUE_ITEM WorkItem, IN WORK_QUEUE_TYPE QueueType);
 
 // end_ntddk end_wdm end_nthal end_ntifs end_ntosp
 
-VOID
-ExSwapinWorkerThreads(
-    IN BOOLEAN AllowSwap
-    );
+VOID ExSwapinWorkerThreads(IN BOOLEAN AllowSwap);
 
 // begin_ntddk begin_wdm begin_nthal begin_ntifs begin_ntosp
 
 NTKERNELAPI
 BOOLEAN
-ExIsProcessorFeaturePresent(
-    ULONG ProcessorFeature
-    );
+ExIsProcessorFeaturePresent(ULONG ProcessorFeature);
 
 // end_ntddk end_wdm end_nthal end_ntifs end_ntosp
 
@@ -2291,12 +2061,14 @@ ExIsProcessorFeaturePresent(
 // smush them together than to use a lock.
 //
 
-typedef union {
-    struct {
+typedef union
+{
+    struct
+    {
 
-#define EX_WORKER_QUEUE_DISABLED    0x80000000
+#define EX_WORKER_QUEUE_DISABLED 0x80000000
 
-        ULONG QueueDisabled :  1;
+        ULONG QueueDisabled : 1;
 
         //
         // MakeThreadsAsNecessary indicates whether this work queue is eligible
@@ -2309,12 +2081,13 @@ typedef union {
 
         ULONG WaitMode : 1;
 
-        ULONG WorkerCount   : 29;
+        ULONG WorkerCount : 29;
     };
     LONG QueueWorkerInfo;
 } EX_QUEUE_WORKER_INFO;
 
-typedef struct _EX_WORK_QUEUE {
+typedef struct _EX_WORK_QUEUE
+{
 
     //
     // Queue objects that that are used to hold work queue entries and
@@ -2357,18 +2130,20 @@ typedef struct _EX_WORK_QUEUE {
 
 extern EX_WORK_QUEUE ExWorkerQueue[];
 
-
+
 // begin_ntddk begin_nthal begin_ntifs begin_ntosp
 //
 // Zone Allocation
 //
 
-typedef struct _ZONE_SEGMENT_HEADER {
+typedef struct _ZONE_SEGMENT_HEADER
+{
     SINGLE_LIST_ENTRY SegmentList;
     PVOID Reserved;
 } ZONE_SEGMENT_HEADER, *PZONE_SEGMENT_HEADER;
 
-typedef struct _ZONE_HEADER {
+typedef struct _ZONE_HEADER
+{
     SINGLE_LIST_ENTRY FreeList;
     SINGLE_LIST_ENTRY SegmentList;
     ULONG BlockSize;
@@ -2379,31 +2154,17 @@ typedef struct _ZONE_HEADER {
 DECLSPEC_DEPRECATED_DDK
 NTKERNELAPI
 NTSTATUS
-ExInitializeZone(
-    IN PZONE_HEADER Zone,
-    IN ULONG BlockSize,
-    IN PVOID InitialSegment,
-    IN ULONG InitialSegmentSize
-    );
+ExInitializeZone(IN PZONE_HEADER Zone, IN ULONG BlockSize, IN PVOID InitialSegment, IN ULONG InitialSegmentSize);
 
 DECLSPEC_DEPRECATED_DDK
 NTKERNELAPI
 NTSTATUS
-ExExtendZone(
-    IN PZONE_HEADER Zone,
-    IN PVOID Segment,
-    IN ULONG SegmentSize
-    );
+ExExtendZone(IN PZONE_HEADER Zone, IN PVOID Segment, IN ULONG SegmentSize);
 
 DECLSPEC_DEPRECATED_DDK
 NTKERNELAPI
 NTSTATUS
-ExInterlockedExtendZone(
-    IN PZONE_HEADER Zone,
-    IN PVOID Segment,
-    IN ULONG SegmentSize,
-    IN PKSPIN_LOCK Lock
-    );
+ExInterlockedExtendZone(IN PZONE_HEADER Zone, IN PVOID Segment, IN ULONG SegmentSize, IN PKSPIN_LOCK Lock);
 
 //++
 //
@@ -2429,9 +2190,10 @@ ExInterlockedExtendZone(
 #if PRAGMA_DEPRECATED_DDK
 #pragma deprecated(ExAllocateFromZone)
 #endif
-#define ExAllocateFromZone(Zone) \
+#define ExAllocateFromZone(Zone)    \
     (PVOID)((Zone)->FreeList.Next); \
-    if ( (Zone)->FreeList.Next ) (Zone)->FreeList.Next = (Zone)->FreeList.Next->Next
+    if ((Zone)->FreeList.Next)      \
+    (Zone)->FreeList.Next = (Zone)->FreeList.Next->Next
 
 
 //++
@@ -2465,11 +2227,9 @@ ExInterlockedExtendZone(
 #if PRAGMA_DEPRECATED_DDK
 #pragma deprecated(ExFreeToZone)
 #endif
-#define ExFreeToZone(Zone,Block)                                    \
-    ( ((PSINGLE_LIST_ENTRY)(Block))->Next = (Zone)->FreeList.Next,  \
-      (Zone)->FreeList.Next = ((PSINGLE_LIST_ENTRY)(Block)),        \
-      ((PSINGLE_LIST_ENTRY)(Block))->Next                           \
-    )
+#define ExFreeToZone(Zone, Block)                                 \
+    (((PSINGLE_LIST_ENTRY)(Block))->Next = (Zone)->FreeList.Next, \
+     (Zone)->FreeList.Next = ((PSINGLE_LIST_ENTRY)(Block)), ((PSINGLE_LIST_ENTRY)(Block))->Next)
 
 //++
 //
@@ -2496,8 +2256,7 @@ ExInterlockedExtendZone(
 #if PRAGMA_DEPRECATED_DDK
 #pragma deprecated(ExIsFullZone)
 #endif
-#define ExIsFullZone(Zone) \
-    ( (Zone)->FreeList.Next == (PSINGLE_LIST_ENTRY)NULL )
+#define ExIsFullZone(Zone) ((Zone)->FreeList.Next == (PSINGLE_LIST_ENTRY)NULL)
 
 //++
 //
@@ -2531,8 +2290,7 @@ ExInterlockedExtendZone(
 #if PRAGMA_DEPRECATED_DDK
 #pragma deprecated(ExInterlockedAllocateFromZone)
 #endif
-#define ExInterlockedAllocateFromZone(Zone,Lock) \
-    (PVOID) ExInterlockedPopEntryList( &(Zone)->FreeList, Lock )
+#define ExInterlockedAllocateFromZone(Zone, Lock) (PVOID) ExInterlockedPopEntryList(&(Zone)->FreeList, Lock)
 
 //++
 //
@@ -2571,8 +2329,8 @@ ExInterlockedExtendZone(
 #if PRAGMA_DEPRECATED_DDK
 #pragma deprecated(ExInterlockedFreeToZone)
 #endif
-#define ExInterlockedFreeToZone(Zone,Block,Lock) \
-    ExInterlockedPushEntryList( &(Zone)->FreeList, ((PSINGLE_LIST_ENTRY) (Block)), Lock )
+#define ExInterlockedFreeToZone(Zone, Block, Lock) \
+    ExInterlockedPushEntryList(&(Zone)->FreeList, ((PSINGLE_LIST_ENTRY)(Block)), Lock)
 
 
 //++
@@ -2603,14 +2361,11 @@ ExInterlockedExtendZone(
 #if PRAGMA_DEPRECATED_DDK
 #pragma deprecated(ExIsObjectInFirstZoneSegment)
 #endif
-#define ExIsObjectInFirstZoneSegment(Zone,Object) ((BOOLEAN)     \
-    (((PUCHAR)(Object) >= (PUCHAR)(Zone)->SegmentList.Next) &&   \
-     ((PUCHAR)(Object) < (PUCHAR)(Zone)->SegmentList.Next +      \
-                         (Zone)->TotalSegmentSize))              \
-)
+#define ExIsObjectInFirstZoneSegment(Zone, Object)                       \
+    ((BOOLEAN)(((PUCHAR)(Object) >= (PUCHAR)(Zone)->SegmentList.Next) && \
+               ((PUCHAR)(Object) < (PUCHAR)(Zone)->SegmentList.Next + (Zone)->TotalSegmentSize)))
 
 // end_ntddk end_nthal end_ntifs end_ntosp
-
 
 
 // begin_ntifs begin_ntddk begin_wdm begin_ntosp
@@ -2621,16 +2376,19 @@ ExInterlockedExtendZone(
 typedef ULONG_PTR ERESOURCE_THREAD;
 typedef ERESOURCE_THREAD *PERESOURCE_THREAD;
 
-typedef struct _OWNER_ENTRY {
+typedef struct _OWNER_ENTRY
+{
     ERESOURCE_THREAD OwnerThread;
-    union {
+    union
+    {
         LONG OwnerCount;
         ULONG TableSize;
     };
 
 } OWNER_ENTRY, *POWNER_ENTRY;
 
-typedef struct _ERESOURCE {
+typedef struct _ERESOURCE
+{
     LIST_ENTRY SystemResourcesList;
     POWNER_ENTRY OwnerTable;
     SHORT ActiveCount;
@@ -2641,7 +2399,8 @@ typedef struct _ERESOURCE {
     ULONG ContentionCount;
     USHORT NumberOfSharedWaiters;
     USHORT NumberOfExclusiveWaiters;
-    union {
+    union
+    {
         PVOID Address;
         ULONG_PTR CreatorBackTraceIndex;
     };
@@ -2652,20 +2411,22 @@ typedef struct _ERESOURCE {
 //  Values for ERESOURCE.Flag
 //
 
-#define ResourceNeverExclusive       0x10
+#define ResourceNeverExclusive 0x10
 #define ResourceReleaseByOtherThread 0x20
-#define ResourceOwnedExclusive       0x80
+#define ResourceOwnedExclusive 0x80
 
 #define RESOURCE_HASH_TABLE_SIZE 64
 
-typedef struct _RESOURCE_HASH_ENTRY {
+typedef struct _RESOURCE_HASH_ENTRY
+{
     LIST_ENTRY ListEntry;
     PVOID Address;
     ULONG ContentionCount;
     ULONG Number;
 } RESOURCE_HASH_ENTRY, *PRESOURCE_HASH_ENTRY;
 
-typedef struct _RESOURCE_PERFORMANCE_DATA {
+typedef struct _RESOURCE_PERFORMANCE_DATA
+{
     ULONG ActiveResourceCount;
     ULONG TotalResourceCount;
     ULONG ExclusiveAcquire;
@@ -2684,49 +2445,31 @@ typedef struct _RESOURCE_PERFORMANCE_DATA {
 //
 NTKERNELAPI
 NTSTATUS
-ExInitializeResourceLite(
-    IN PERESOURCE Resource
-    );
+ExInitializeResourceLite(IN PERESOURCE Resource);
 
 NTKERNELAPI
 NTSTATUS
-ExReinitializeResourceLite(
-    IN PERESOURCE Resource
-    );
+ExReinitializeResourceLite(IN PERESOURCE Resource);
 
 NTKERNELAPI
 BOOLEAN
-ExAcquireResourceSharedLite(
-    IN PERESOURCE Resource,
-    IN BOOLEAN Wait
-    );
+ExAcquireResourceSharedLite(IN PERESOURCE Resource, IN BOOLEAN Wait);
 
 NTKERNELAPI
 BOOLEAN
-ExAcquireResourceExclusiveLite(
-    IN PERESOURCE Resource,
-    IN BOOLEAN Wait
-    );
+ExAcquireResourceExclusiveLite(IN PERESOURCE Resource, IN BOOLEAN Wait);
 
 NTKERNELAPI
 BOOLEAN
-ExAcquireSharedStarveExclusive(
-    IN PERESOURCE Resource,
-    IN BOOLEAN Wait
-    );
+ExAcquireSharedStarveExclusive(IN PERESOURCE Resource, IN BOOLEAN Wait);
 
 NTKERNELAPI
 BOOLEAN
-ExAcquireSharedWaitForExclusive(
-    IN PERESOURCE Resource,
-    IN BOOLEAN Wait
-    );
+ExAcquireSharedWaitForExclusive(IN PERESOURCE Resource, IN BOOLEAN Wait);
 
 NTKERNELAPI
 BOOLEAN
-ExTryToAcquireResourceExclusiveLite(
-    IN PERESOURCE Resource
-    );
+ExTryToAcquireResourceExclusiveLite(IN PERESOURCE Resource);
 
 //
 //  VOID
@@ -2736,62 +2479,38 @@ ExTryToAcquireResourceExclusiveLite(
 //
 
 #if PRAGMA_DEPRECATED_DDK
-#pragma deprecated(ExReleaseResource)       // Use ExReleaseResourceLite
+#pragma deprecated(ExReleaseResource) // Use ExReleaseResourceLite
 #endif
 #define ExReleaseResource(R) (ExReleaseResourceLite(R))
 
 NTKERNELAPI
-VOID
-FASTCALL
-ExReleaseResourceLite(
-    IN PERESOURCE Resource
-    );
+VOID FASTCALL ExReleaseResourceLite(IN PERESOURCE Resource);
 
 NTKERNELAPI
-VOID
-ExReleaseResourceForThreadLite(
-    IN PERESOURCE Resource,
-    IN ERESOURCE_THREAD ResourceThreadId
-    );
+VOID ExReleaseResourceForThreadLite(IN PERESOURCE Resource, IN ERESOURCE_THREAD ResourceThreadId);
 
 NTKERNELAPI
-VOID
-ExSetResourceOwnerPointer(
-    IN PERESOURCE Resource,
-    IN PVOID OwnerPointer
-    );
+VOID ExSetResourceOwnerPointer(IN PERESOURCE Resource, IN PVOID OwnerPointer);
 
 NTKERNELAPI
-VOID
-ExConvertExclusiveToSharedLite(
-    IN PERESOURCE Resource
-    );
+VOID ExConvertExclusiveToSharedLite(IN PERESOURCE Resource);
 
 NTKERNELAPI
 NTSTATUS
-ExDeleteResourceLite (
-    IN PERESOURCE Resource
-    );
+ExDeleteResourceLite(IN PERESOURCE Resource);
 
 NTKERNELAPI
 ULONG
-ExGetExclusiveWaiterCount (
-    IN PERESOURCE Resource
-    );
+ExGetExclusiveWaiterCount(IN PERESOURCE Resource);
 
 NTKERNELAPI
 ULONG
-ExGetSharedWaiterCount (
-    IN PERESOURCE Resource
-    );
+ExGetSharedWaiterCount(IN PERESOURCE Resource);
 
 // end_ntddk end_wdm end_ntosp
 
 NTKERNELAPI
-VOID
-ExDisableResourceBoostLite (
-    IN PERESOURCE Resource
-    );
+VOID ExDisableResourceBoostLite(IN PERESOURCE Resource);
 
 // begin_ntddk begin_wdm begin_ntosp
 //
@@ -2804,15 +2523,11 @@ ExDisableResourceBoostLite (
 
 NTKERNELAPI
 BOOLEAN
-ExIsResourceAcquiredExclusiveLite (
-    IN PERESOURCE Resource
-    );
+ExIsResourceAcquiredExclusiveLite(IN PERESOURCE Resource);
 
 NTKERNELAPI
 ULONG
-ExIsResourceAcquiredSharedLite (
-    IN PERESOURCE Resource
-    );
+ExIsResourceAcquiredSharedLite(IN PERESOURCE Resource);
 
 //
 // An acquired resource is always owned shared, as shared ownership is a subset
@@ -2826,15 +2541,15 @@ ExIsResourceAcquiredSharedLite (
 //
 
 #if PRAGMA_DEPRECATED_DDK
-#pragma deprecated(ExInitializeResource)            // use ExInitializeResourceLite
-#pragma deprecated(ExAcquireResourceShared)         // use ExAcquireResourceSharedLite
-#pragma deprecated(ExAcquireResourceExclusive)      // use ExAcquireResourceExclusiveLite
-#pragma deprecated(ExReleaseResourceForThread)      // use ExReleaseResourceForThreadLite
-#pragma deprecated(ExConvertExclusiveToShared)      // use ExConvertExclusiveToSharedLite
-#pragma deprecated(ExDeleteResource)                // use ExDeleteResourceLite
-#pragma deprecated(ExIsResourceAcquiredExclusive)   // use ExIsResourceAcquiredExclusiveLite
-#pragma deprecated(ExIsResourceAcquiredShared)      // use ExIsResourceAcquiredSharedLite
-#pragma deprecated(ExIsResourceAcquired)            // use ExIsResourceAcquiredSharedLite
+#pragma deprecated(ExInitializeResource)          // use ExInitializeResourceLite
+#pragma deprecated(ExAcquireResourceShared)       // use ExAcquireResourceSharedLite
+#pragma deprecated(ExAcquireResourceExclusive)    // use ExAcquireResourceExclusiveLite
+#pragma deprecated(ExReleaseResourceForThread)    // use ExReleaseResourceForThreadLite
+#pragma deprecated(ExConvertExclusiveToShared)    // use ExConvertExclusiveToSharedLite
+#pragma deprecated(ExDeleteResource)              // use ExDeleteResourceLite
+#pragma deprecated(ExIsResourceAcquiredExclusive) // use ExIsResourceAcquiredExclusiveLite
+#pragma deprecated(ExIsResourceAcquiredShared)    // use ExIsResourceAcquiredSharedLite
+#pragma deprecated(ExIsResourceAcquired)          // use ExIsResourceAcquiredSharedLite
 #endif
 #define ExInitializeResource ExInitializeResourceLite
 #define ExAcquireResourceShared ExAcquireResourceSharedLite
@@ -2852,30 +2567,29 @@ ExIsResourceAcquiredSharedLite (
 
 NTKERNELAPI
 NTSTATUS
-ExQuerySystemLockInformation(
-    OUT struct _RTL_PROCESS_LOCKS *LockInformation,
-    IN ULONG LockInformationLength,
-    OUT PULONG ReturnLength OPTIONAL
-    );
+ExQuerySystemLockInformation(OUT struct _RTL_PROCESS_LOCKS *LockInformation, IN ULONG LockInformationLength,
+                             OUT PULONG ReturnLength OPTIONAL);
 
-
 
 // begin_ntosp
 
 //
 // Push lock definitions
 //
-typedef struct _EX_PUSH_LOCK {
+typedef struct _EX_PUSH_LOCK
+{
 
-#define EX_PUSH_LOCK_WAITING   0x1
+#define EX_PUSH_LOCK_WAITING 0x1
 #define EX_PUSH_LOCK_EXCLUSIVE 0x2
 #define EX_PUSH_LOCK_SHARE_INC 0x4
 
-    union {
-        struct {
+    union
+    {
+        struct
+        {
             ULONG_PTR Waiting : 1;
             ULONG_PTR Exclusive : 1;
-            ULONG_PTR Shared : sizeof (ULONG_PTR) * 8 - 2;
+            ULONG_PTR Shared : sizeof(ULONG_PTR) * 8 - 2;
         };
         ULONG_PTR Value;
         PVOID Ptr;
@@ -2883,42 +2597,47 @@ typedef struct _EX_PUSH_LOCK {
 } EX_PUSH_LOCK, *PEX_PUSH_LOCK;
 
 
-#if defined (NT_UP)
+#if defined(NT_UP)
 #define EX_CACHE_LINE_SIZE 16
 #define EX_PUSH_LOCK_FANNED_COUNT 1
 #else
 #define EX_CACHE_LINE_SIZE 128
-#define EX_PUSH_LOCK_FANNED_COUNT (PAGE_SIZE/EX_CACHE_LINE_SIZE)
+#define EX_PUSH_LOCK_FANNED_COUNT (PAGE_SIZE / EX_CACHE_LINE_SIZE)
 #endif
 
 //
 // Define a fan out structure for n push locks each in its own cache line
 //
-typedef struct _EX_PUSH_LOCK_CACHE_AWARE {
+typedef struct _EX_PUSH_LOCK_CACHE_AWARE
+{
     PEX_PUSH_LOCK Locks[EX_PUSH_LOCK_FANNED_COUNT];
 } EX_PUSH_LOCK_CACHE_AWARE, *PEX_PUSH_LOCK_CACHE_AWARE;
 
 //
 // Define structure thats a push lock padded to the size of a cache line
 //
-typedef struct _EX_PUSH_LOCK_CACHE_AWARE_PADDED {
-        EX_PUSH_LOCK Lock;
-        union {
-            UCHAR Pad[EX_CACHE_LINE_SIZE - sizeof (EX_PUSH_LOCK)];
-            BOOLEAN Single;
-        };
+typedef struct _EX_PUSH_LOCK_CACHE_AWARE_PADDED
+{
+    EX_PUSH_LOCK Lock;
+    union
+    {
+        UCHAR Pad[EX_CACHE_LINE_SIZE - sizeof(EX_PUSH_LOCK)];
+        BOOLEAN Single;
+    };
 } EX_PUSH_LOCK_CACHE_AWARE_PADDED, *PEX_PUSH_LOCK_CACHE_AWARE_PADDED;
 
 
 //
 // Rundown protection structure
 //
-typedef struct _EX_RUNDOWN_REF {
+typedef struct _EX_RUNDOWN_REF
+{
 
-#define EX_RUNDOWN_ACTIVE      0x1
+#define EX_RUNDOWN_ACTIVE 0x1
 #define EX_RUNDOWN_COUNT_SHIFT 0x1
-#define EX_RUNDOWN_COUNT_INC   (1<<EX_RUNDOWN_COUNT_SHIFT)
-    union {
+#define EX_RUNDOWN_COUNT_INC (1 << EX_RUNDOWN_COUNT_SHIFT)
+    union
+    {
         ULONG_PTR Count;
         PVOID Ptr;
     };
@@ -2943,11 +2662,14 @@ typedef struct _EX_RUNDOWN_REF {
 //  hardwired code that already assumes the format of a handle.
 //
 
-typedef struct _EXHANDLE {
+typedef struct _EXHANDLE
+{
 
-    union {
+    union
+    {
 
-        struct {
+        struct
+        {
 
             //
             //  Application available tag bits
@@ -2960,7 +2682,6 @@ typedef struct _EXHANDLE {
             //
 
             ULONG Index : 30;
-
         };
 
         HANDLE GenericHandleOverlay;
@@ -2973,7 +2694,8 @@ typedef struct _EXHANDLE {
 } EXHANDLE, *PEXHANDLE;
 // end_ntosp
 
-typedef struct _HANDLE_TABLE_ENTRY_INFO {
+typedef struct _HANDLE_TABLE_ENTRY_INFO
+{
 
 
     //
@@ -3019,14 +2741,16 @@ typedef struct _HANDLE_TABLE_ENTRY_INFO {
 //     to call UnlockHandleTableEntry explicitly.
 //
 
-typedef struct _HANDLE_TABLE_ENTRY {
+typedef struct _HANDLE_TABLE_ENTRY
+{
 
     //
     //  The pointer to the object overloaded with three ob attributes bits in
     //  the lower order and the high bit to denote locked or unlocked entries
     //
 
-    union {
+    union
+    {
 
         PVOID Object;
 
@@ -3046,13 +2770,16 @@ typedef struct _HANDLE_TABLE_ENTRY {
     //  copied without needing to modify pointers.
     //
 
-    union {
+    union
+    {
 
-        union {
+        union
+        {
 
             ACCESS_MASK GrantedAccess;
 
-            struct {
+            struct
+            {
 
                 USHORT GrantedAccessIndex;
                 USHORT CreatorBackTraceIndex;
@@ -3072,27 +2799,29 @@ typedef struct _HANDLE_TABLE_ENTRY {
 #define HANDLE_TRACE_DB_MAX_STACKS 4096
 #define HANDLE_TRACE_DB_STACK_SIZE 16
 
-typedef struct _HANDLE_TRACE_DB_ENTRY {
+typedef struct _HANDLE_TRACE_DB_ENTRY
+{
     CLIENT_ID ClientId;
     HANDLE Handle;
-#define HANDLE_TRACE_DB_OPEN   1
-#define HANDLE_TRACE_DB_CLOSE  2
+#define HANDLE_TRACE_DB_OPEN 1
+#define HANDLE_TRACE_DB_CLOSE 2
 #define HANDLE_TRACE_DB_BADREF 3
     ULONG Type;
     PVOID StackTrace[HANDLE_TRACE_DB_STACK_SIZE];
 } HANDLE_TRACE_DB_ENTRY, *PHANDLE_TRACE_DB_ENTRY;
 
-typedef struct _HANDLE_TRACE_DEBUG_INFO {
+typedef struct _HANDLE_TRACE_DEBUG_INFO
+{
 
-        //
-        // Current index for the stack trace DB
-        //
-        ULONG CurrentStackIndex;
+    //
+    // Current index for the stack trace DB
+    //
+    ULONG CurrentStackIndex;
 
-        //
-        // Save traces of those who open and close handles
-        //
-        HANDLE_TRACE_DB_ENTRY TraceDb[HANDLE_TRACE_DB_MAX_STACKS];
+    //
+    // Save traces of those who open and close handles
+    //
+    HANDLE_TRACE_DB_ENTRY TraceDb[HANDLE_TRACE_DB_MAX_STACKS];
 
 } HANDLE_TRACE_DEBUG_INFO, *PHANDLE_TRACE_DEBUG_INFO;
 
@@ -3103,7 +2832,8 @@ typedef struct _HANDLE_TRACE_DEBUG_INFO {
 //
 
 
-typedef struct _HANDLE_TABLE {
+typedef struct _HANDLE_TABLE
+{
 
     //
     //  A pointer to the top level handle table tree node.
@@ -3186,7 +2916,8 @@ typedef struct _HANDLE_TABLE {
     //
     // Define a flags field
     //
-    union {
+    union
+    {
         ULONG Flags;
 
         //
@@ -3208,21 +2939,14 @@ typedef struct _HANDLE_TABLE {
 //
 
 NTKERNELAPI
-VOID
-ExUnlockHandleTableEntry (
-    PHANDLE_TABLE HandleTable,
-    PHANDLE_TABLE_ENTRY HandleTableEntry
-    );
+VOID ExUnlockHandleTableEntry(PHANDLE_TABLE HandleTable, PHANDLE_TABLE_ENTRY HandleTableEntry);
 
 //
 //  A global initialization function called on at system start up
 //
 
 NTKERNELAPI
-VOID
-ExInitializeHandleTablePackage (
-    VOID
-    );
+VOID ExInitializeHandleTablePackage(VOID);
 
 //
 //  Functions to create, remove, and destroy handle tables per process.  The
@@ -3231,125 +2955,76 @@ ExInitializeHandleTablePackage (
 
 NTKERNELAPI
 PHANDLE_TABLE
-ExCreateHandleTable (
-    IN struct _EPROCESS *Process OPTIONAL
-    );
+ExCreateHandleTable(IN struct _EPROCESS *Process OPTIONAL);
 
-VOID
-ExSetHandleTableStrictFIFO (
-    IN PHANDLE_TABLE HandleTable
-    );
+VOID ExSetHandleTableStrictFIFO(IN PHANDLE_TABLE HandleTable);
 
 NTKERNELAPI
-VOID
-ExRemoveHandleTable (
-    IN PHANDLE_TABLE HandleTable
-    );
+VOID ExRemoveHandleTable(IN PHANDLE_TABLE HandleTable);
 
 NTKERNELAPI
 NTSTATUS
-ExEnableHandleTracing (
-    IN PHANDLE_TABLE HandleTable
-    );
+ExEnableHandleTracing(IN PHANDLE_TABLE HandleTable);
 
-typedef VOID (*EX_DESTROY_HANDLE_ROUTINE)(
-    IN HANDLE Handle
-    );
+typedef VOID (*EX_DESTROY_HANDLE_ROUTINE)(IN HANDLE Handle);
 
 NTKERNELAPI
-VOID
-ExDestroyHandleTable (
-    IN PHANDLE_TABLE HandleTable,
-    IN EX_DESTROY_HANDLE_ROUTINE DestroyHandleProcedure
-    );
+VOID ExDestroyHandleTable(IN PHANDLE_TABLE HandleTable, IN EX_DESTROY_HANDLE_ROUTINE DestroyHandleProcedure);
 
 //
 //  A function to enumerate through the handle table of a process using a
 //  callback.
 //
 
-typedef BOOLEAN (*EX_ENUMERATE_HANDLE_ROUTINE)(
-    IN PHANDLE_TABLE_ENTRY HandleTableEntry,
-    IN HANDLE Handle,
-    IN PVOID EnumParameter
-    );
+typedef BOOLEAN (*EX_ENUMERATE_HANDLE_ROUTINE)(IN PHANDLE_TABLE_ENTRY HandleTableEntry, IN HANDLE Handle,
+                                               IN PVOID EnumParameter);
 
 NTKERNELAPI
 BOOLEAN
-ExEnumHandleTable (
-    IN PHANDLE_TABLE HandleTable,
-    IN EX_ENUMERATE_HANDLE_ROUTINE EnumHandleProcedure,
-    IN PVOID EnumParameter,
-    OUT PHANDLE Handle OPTIONAL
-    );
+ExEnumHandleTable(IN PHANDLE_TABLE HandleTable, IN EX_ENUMERATE_HANDLE_ROUTINE EnumHandleProcedure,
+                  IN PVOID EnumParameter, OUT PHANDLE Handle OPTIONAL);
 
 NTKERNELAPI
-VOID
-ExSweepHandleTable (
-    IN PHANDLE_TABLE HandleTable,
-    IN EX_ENUMERATE_HANDLE_ROUTINE EnumHandleProcedure,
-    IN PVOID EnumParameter
-    );
+VOID ExSweepHandleTable(IN PHANDLE_TABLE HandleTable, IN EX_ENUMERATE_HANDLE_ROUTINE EnumHandleProcedure,
+                        IN PVOID EnumParameter);
 
 //
 //  A function to duplicate the handle table of a process using a callback
 //
 
-typedef BOOLEAN (*EX_DUPLICATE_HANDLE_ROUTINE)(
-    IN struct _EPROCESS *Process OPTIONAL,
-    IN PHANDLE_TABLE OldHandleTable,
-    IN PHANDLE_TABLE_ENTRY OldHandleTableEntry,
-    IN PHANDLE_TABLE_ENTRY HandleTableEntry
-    );
+typedef BOOLEAN (*EX_DUPLICATE_HANDLE_ROUTINE)(IN struct _EPROCESS *Process OPTIONAL, IN PHANDLE_TABLE OldHandleTable,
+                                               IN PHANDLE_TABLE_ENTRY OldHandleTableEntry,
+                                               IN PHANDLE_TABLE_ENTRY HandleTableEntry);
 
 NTKERNELAPI
 PHANDLE_TABLE
-ExDupHandleTable (
-    IN struct _EPROCESS *Process OPTIONAL,
-    IN PHANDLE_TABLE OldHandleTable,
-    IN EX_DUPLICATE_HANDLE_ROUTINE DupHandleProcedure OPTIONAL
-    );
+ExDupHandleTable(IN struct _EPROCESS *Process OPTIONAL, IN PHANDLE_TABLE OldHandleTable,
+                 IN EX_DUPLICATE_HANDLE_ROUTINE DupHandleProcedure OPTIONAL);
 
 //
 //  A function that enumerates all the handles in all the handle tables
 //  throughout the system using a callback.
 //
 
-typedef NTSTATUS (*PEX_SNAPSHOT_HANDLE_ENTRY)(
-    IN OUT PSYSTEM_HANDLE_TABLE_ENTRY_INFO *HandleEntryInfo,
-    IN HANDLE UniqueProcessId,
-    IN PHANDLE_TABLE_ENTRY HandleEntry,
-    IN HANDLE Handle,
-    IN ULONG Length,
-    IN OUT PULONG RequiredLength
-    );
+typedef NTSTATUS (*PEX_SNAPSHOT_HANDLE_ENTRY)(IN OUT PSYSTEM_HANDLE_TABLE_ENTRY_INFO *HandleEntryInfo,
+                                              IN HANDLE UniqueProcessId, IN PHANDLE_TABLE_ENTRY HandleEntry,
+                                              IN HANDLE Handle, IN ULONG Length, IN OUT PULONG RequiredLength);
 
-typedef NTSTATUS (*PEX_SNAPSHOT_HANDLE_ENTRY_EX)(
-    IN OUT PSYSTEM_HANDLE_TABLE_ENTRY_INFO_EX *HandleEntryInfo,
-    IN HANDLE UniqueProcessId,
-    IN PHANDLE_TABLE_ENTRY HandleEntry,
-    IN HANDLE Handle,
-    IN ULONG Length,
-    IN OUT PULONG RequiredLength
-    );
+typedef NTSTATUS (*PEX_SNAPSHOT_HANDLE_ENTRY_EX)(IN OUT PSYSTEM_HANDLE_TABLE_ENTRY_INFO_EX *HandleEntryInfo,
+                                                 IN HANDLE UniqueProcessId, IN PHANDLE_TABLE_ENTRY HandleEntry,
+                                                 IN HANDLE Handle, IN ULONG Length, IN OUT PULONG RequiredLength);
 
 NTKERNELAPI
 NTSTATUS
-ExSnapShotHandleTables (
-    IN PEX_SNAPSHOT_HANDLE_ENTRY SnapShotHandleEntry,
-    IN OUT PSYSTEM_HANDLE_INFORMATION HandleInformation,
-    IN ULONG Length,
-    IN OUT PULONG RequiredLength
-    );
+ExSnapShotHandleTables(IN PEX_SNAPSHOT_HANDLE_ENTRY SnapShotHandleEntry,
+                       IN OUT PSYSTEM_HANDLE_INFORMATION HandleInformation, IN ULONG Length,
+                       IN OUT PULONG RequiredLength);
 
 NTKERNELAPI
 NTSTATUS
-ExSnapShotHandleTablesEx (
-    IN PEX_SNAPSHOT_HANDLE_ENTRY_EX SnapShotHandleEntry,
-    IN OUT PSYSTEM_HANDLE_INFORMATION_EX HandleInformation,
-    IN ULONG Length,
-    IN OUT PULONG RequiredLength
-    );
+ExSnapShotHandleTablesEx(IN PEX_SNAPSHOT_HANDLE_ENTRY_EX SnapShotHandleEntry,
+                         IN OUT PSYSTEM_HANDLE_INFORMATION_EX HandleInformation, IN ULONG Length,
+                         IN OUT PULONG RequiredLength);
 
 //
 //  Functions to create, destroy, and modify handle table entries the modify
@@ -3358,34 +3033,20 @@ ExSnapShotHandleTablesEx (
 
 NTKERNELAPI
 HANDLE
-ExCreateHandle (
-    IN PHANDLE_TABLE HandleTable,
-    IN PHANDLE_TABLE_ENTRY HandleTableEntry
-    );
+ExCreateHandle(IN PHANDLE_TABLE HandleTable, IN PHANDLE_TABLE_ENTRY HandleTableEntry);
 
 
 NTKERNELAPI
 BOOLEAN
-ExDestroyHandle (
-    IN PHANDLE_TABLE HandleTable,
-    IN HANDLE Handle,
-    IN PHANDLE_TABLE_ENTRY HandleTableEntry OPTIONAL
-    );
+ExDestroyHandle(IN PHANDLE_TABLE HandleTable, IN HANDLE Handle, IN PHANDLE_TABLE_ENTRY HandleTableEntry OPTIONAL);
 
 
-typedef BOOLEAN (*PEX_CHANGE_HANDLE_ROUTINE) (
-    IN OUT PHANDLE_TABLE_ENTRY HandleTableEntry,
-    IN ULONG_PTR Parameter
-    );
+typedef BOOLEAN (*PEX_CHANGE_HANDLE_ROUTINE)(IN OUT PHANDLE_TABLE_ENTRY HandleTableEntry, IN ULONG_PTR Parameter);
 
 NTKERNELAPI
 BOOLEAN
-ExChangeHandle (
-    IN PHANDLE_TABLE HandleTable,
-    IN HANDLE Handle,
-    IN PEX_CHANGE_HANDLE_ROUTINE ChangeRoutine,
-    IN ULONG_PTR Parameter
-    );
+ExChangeHandle(IN PHANDLE_TABLE HandleTable, IN HANDLE Handle, IN PEX_CHANGE_HANDLE_ROUTINE ChangeRoutine,
+               IN ULONG_PTR Parameter);
 
 //
 //  A function that takes a handle value and returns a pointer to the
@@ -3394,38 +3055,22 @@ ExChangeHandle (
 
 NTKERNELAPI
 PHANDLE_TABLE_ENTRY
-ExMapHandleToPointer (
-    IN PHANDLE_TABLE HandleTable,
-    IN HANDLE Handle
-    );
+ExMapHandleToPointer(IN PHANDLE_TABLE HandleTable, IN HANDLE Handle);
 
 NTKERNELAPI
 PHANDLE_TABLE_ENTRY
-ExMapHandleToPointerEx (
-    IN PHANDLE_TABLE HandleTable,
-    IN HANDLE Handle,
-    IN KPROCESSOR_MODE PreviousMode
-    );
+ExMapHandleToPointerEx(IN PHANDLE_TABLE HandleTable, IN HANDLE Handle, IN KPROCESSOR_MODE PreviousMode);
 
 NTKERNELAPI
 NTSTATUS
-ExSetHandleInfo (
-    IN PHANDLE_TABLE HandleTable,
-    IN HANDLE Handle,
-    IN PHANDLE_TABLE_ENTRY_INFO EntryInfo,
-    IN BOOLEAN EntryLocked
-    );
+ExSetHandleInfo(IN PHANDLE_TABLE HandleTable, IN HANDLE Handle, IN PHANDLE_TABLE_ENTRY_INFO EntryInfo,
+                IN BOOLEAN EntryLocked);
 
 NTKERNELAPI
 PHANDLE_TABLE_ENTRY_INFO
-ExpGetHandleInfo (
-    IN PHANDLE_TABLE HandleTable,
-    IN HANDLE Handle,
-    IN BOOLEAN EntryLocked
-    );
+ExpGetHandleInfo(IN PHANDLE_TABLE HandleTable, IN HANDLE Handle, IN BOOLEAN EntryLocked);
 
-#define ExGetHandleInfo(HT,H,E) \
-    ((HT)->ExtraInfoPages ? ExpGetHandleInfo((HT),(H),(E)) : NULL)
+#define ExGetHandleInfo(HT, H, E) ((HT)->ExtraInfoPages ? ExpGetHandleInfo((HT), (H), (E)) : NULL)
 
 
 //
@@ -3433,20 +3078,24 @@ ExpGetHandleInfo (
 //  noop macro for setting fifo/lifo behaviour of the table
 //
 
-#define ExSetHandleTableOwner(ht,id) {(ht)->UniqueProcessId = (id);}
+#define ExSetHandleTableOwner(ht, id) \
+    {                                 \
+        (ht)->UniqueProcessId = (id); \
+    }
 
-#define ExSetHandleTableOrder(ht,or) {NOTHING;}
+#define ExSetHandleTableOrder(ht, or) \
+    {                                 \
+        NOTHING;                      \
+    }
 
-
+
 //
 // Locally Unique Identifier Services
 //
 
 NTKERNELAPI
 BOOLEAN
-ExLuidInitialization (
-    VOID
-    );
+ExLuidInitialization(VOID);
 
 //
 // VOID
@@ -3482,29 +3131,25 @@ ExLuidInitialization (
 extern LARGE_INTEGER ExpLuid;
 extern const LARGE_INTEGER ExpLuidIncrement;
 
-__inline
-VOID
-ExAllocateLocallyUniqueId (
-    IN OUT PLUID Luid
-    )
+__inline VOID ExAllocateLocallyUniqueId(IN OUT PLUID Luid)
 
 {
     LARGE_INTEGER Initial;
 
-#if defined (_IA64_)
-    Initial.QuadPart = InterlockedAdd64 (&ExpLuid.QuadPart, ExpLuidIncrement.QuadPart);
+#if defined(_IA64_)
+    Initial.QuadPart = InterlockedAdd64(&ExpLuid.QuadPart, ExpLuidIncrement.QuadPart);
 #else
     LARGE_INTEGER Value;
 
 
-    while (1) {
+    while (1)
+    {
         Initial.QuadPart = ExpLuid.QuadPart;
 
         Value.QuadPart = Initial.QuadPart + ExpLuidIncrement.QuadPart;
-        Value.QuadPart = InterlockedCompareExchange64(&ExpLuid.QuadPart,
-                                                      Value.QuadPart,
-                                                      Initial.QuadPart);
-        if (Initial.QuadPart != Value.QuadPart) {
+        Value.QuadPart = InterlockedCompareExchange64(&ExpLuid.QuadPart, Value.QuadPart, Initial.QuadPart);
+        if (Initial.QuadPart != Value.QuadPart)
+        {
             continue;
         }
         break;
@@ -3524,9 +3169,7 @@ ExAllocateLocallyUniqueId (
 
 NTKERNELAPI
 KPROCESSOR_MODE
-ExGetPreviousMode(
-    VOID
-    );
+ExGetPreviousMode(VOID);
 // end_ntddk end_wdm end_ntifs end_ntosp
 
 //
@@ -3534,11 +3177,7 @@ ExGetPreviousMode(
 //
 
 NTKERNELAPI
-VOID
-NTAPI
-ExRaiseException (
-    PEXCEPTION_RECORD ExceptionRecord
-    );
+VOID NTAPI ExRaiseException(PEXCEPTION_RECORD ExceptionRecord);
 
 // begin_ntddk begin_wdm begin_ntifs begin_ntosp
 //
@@ -3546,35 +3185,21 @@ ExRaiseException (
 //
 
 NTKERNELAPI
-VOID
-NTAPI
-ExRaiseStatus (
-    IN NTSTATUS Status
-    );
+VOID NTAPI ExRaiseStatus(IN NTSTATUS Status);
 
 // end_wdm
 
 NTKERNELAPI
-VOID
-ExRaiseDatatypeMisalignment (
-    VOID
-    );
+VOID ExRaiseDatatypeMisalignment(VOID);
 
 NTKERNELAPI
-VOID
-ExRaiseAccessViolation (
-    VOID
-    );
+VOID ExRaiseAccessViolation(VOID);
 
 // end_ntddk end_ntifs end_ntosp
 
 
 FORCEINLINE
-VOID
-ProbeForWriteSmallStructure (
-    IN PVOID Address,
-    IN SIZE_T Size,
-    IN ULONG Alignment)
+VOID ProbeForWriteSmallStructure(IN PVOID Address, IN SIZE_T Size, IN ULONG Alignment)
 /*++
 
 Routine Description:
@@ -3594,27 +3219,31 @@ Return Value:
 --*/
 
 {
-    if ((ULONG_PTR)(Address) >= (ULONG_PTR)MM_USER_PROBE_ADDRESS) {
-         *(volatile UCHAR *) MM_USER_PROBE_ADDRESS = 0;
+    if ((ULONG_PTR)(Address) >= (ULONG_PTR)MM_USER_PROBE_ADDRESS)
+    {
+        *(volatile UCHAR *)MM_USER_PROBE_ADDRESS = 0;
     }
-    ASSERT(((Alignment) == 1) || ((Alignment) == 2) ||
-           ((Alignment) == 4) || ((Alignment) == 8) ||
-           ((Alignment) == 16));
+    ASSERT(((Alignment) == 1) || ((Alignment) == 2) || ((Alignment) == 4) || ((Alignment) == 8) || ((Alignment) == 16));
     //
     // If the size of the structure is > 4k then call the standard routine.
     // wow64 uses a page size of 4k even on ia64.
     //
-    if (Size == 0 || Size >= 0x1000) {
-        ASSERT (0);
-        ProbeForWrite (Address, Size, Alignment);
-    } else {
-        if (((ULONG_PTR)(Address) & ((Alignment) - 1)) != 0) {
+    if (Size == 0 || Size >= 0x1000)
+    {
+        ASSERT(0);
+        ProbeForWrite(Address, Size, Alignment);
+    }
+    else
+    {
+        if (((ULONG_PTR)(Address) & ((Alignment)-1)) != 0)
+        {
             ExRaiseDatatypeMisalignment();
         }
         *(volatile UCHAR *)(Address) = *(volatile UCHAR *)(Address);
-        if (Size > Alignment) {
-            ((volatile UCHAR *)(Address))[(Size-1)&~(SIZE_T)(Alignment-1)] =
-                ((volatile UCHAR *)(Address))[(Size-1)&~(SIZE_T)(Alignment-1)];
+        if (Size > Alignment)
+        {
+            ((volatile UCHAR *)(Address))[(Size - 1) & ~(SIZE_T)(Alignment - 1)] =
+                ((volatile UCHAR *)(Address))[(Size - 1) & ~(SIZE_T)(Alignment - 1)];
         }
     }
 }
@@ -3624,32 +3253,15 @@ extern BOOLEAN ExReadyForErrors;
 // begin_ntosp
 NTKERNELAPI
 NTSTATUS
-ExRaiseHardError(
-    IN NTSTATUS ErrorStatus,
-    IN ULONG NumberOfParameters,
-    IN ULONG UnicodeStringParameterMask,
-    IN PULONG_PTR Parameters,
-    IN ULONG ValidResponseOptions,
-    OUT PULONG Response
-    );
-int
-ExSystemExceptionFilter(
-    VOID
-    );
+ExRaiseHardError(IN NTSTATUS ErrorStatus, IN ULONG NumberOfParameters, IN ULONG UnicodeStringParameterMask,
+                 IN PULONG_PTR Parameters, IN ULONG ValidResponseOptions, OUT PULONG Response);
+int ExSystemExceptionFilter(VOID);
 
 NTKERNELAPI
-VOID
-ExGetCurrentProcessorCpuUsage(
-    IN PULONG CpuUsage
-    );
+VOID ExGetCurrentProcessorCpuUsage(IN PULONG CpuUsage);
 
 NTKERNELAPI
-VOID
-ExGetCurrentProcessorCounts(
-    OUT PULONG IdleCount,
-    OUT PULONG KernelAndUser,
-    OUT PULONG Index
-    );
+VOID ExGetCurrentProcessorCounts(OUT PULONG IdleCount, OUT PULONG KernelAndUser, OUT PULONG Index);
 // end_ntosp
 
 //
@@ -3660,38 +3272,41 @@ ExGetCurrentProcessorCounts(
 extern ULONG EvPrSetHigh;
 extern ULONG EvPrSetLow;
 
-
+
 //
 // Debug event logging facility
 //
 
-#define EX_DEBUG_LOG_FORMAT_NONE     (UCHAR)0
-#define EX_DEBUG_LOG_FORMAT_ULONG    (UCHAR)1
-#define EX_DEBUG_LOG_FORMAT_PSZ      (UCHAR)2
-#define EX_DEBUG_LOG_FORMAT_PWSZ     (UCHAR)3
-#define EX_DEBUG_LOG_FORMAT_STRING   (UCHAR)4
-#define EX_DEBUG_LOG_FORMAT_USTRING  (UCHAR)5
-#define EX_DEBUG_LOG_FORMAT_OBJECT   (UCHAR)6
-#define EX_DEBUG_LOG_FORMAT_HANDLE   (UCHAR)7
+#define EX_DEBUG_LOG_FORMAT_NONE (UCHAR)0
+#define EX_DEBUG_LOG_FORMAT_ULONG (UCHAR)1
+#define EX_DEBUG_LOG_FORMAT_PSZ (UCHAR)2
+#define EX_DEBUG_LOG_FORMAT_PWSZ (UCHAR)3
+#define EX_DEBUG_LOG_FORMAT_STRING (UCHAR)4
+#define EX_DEBUG_LOG_FORMAT_USTRING (UCHAR)5
+#define EX_DEBUG_LOG_FORMAT_OBJECT (UCHAR)6
+#define EX_DEBUG_LOG_FORMAT_HANDLE (UCHAR)7
 
 #define EX_DEBUG_LOG_NUMBER_OF_DATA_VALUES 4
 #define EX_DEBUG_LOG_NUMBER_OF_BACK_TRACES 4
 
-typedef struct _EX_DEBUG_LOG_TAG {
-    UCHAR Format[ EX_DEBUG_LOG_NUMBER_OF_DATA_VALUES ];
+typedef struct _EX_DEBUG_LOG_TAG
+{
+    UCHAR Format[EX_DEBUG_LOG_NUMBER_OF_DATA_VALUES];
     PCHAR Name;
 } EX_DEBUG_LOG_TAG, *PEX_DEBUG_LOG_TAG;
 
-typedef struct _EX_DEBUG_LOG_EVENT {
+typedef struct _EX_DEBUG_LOG_EVENT
+{
     USHORT ThreadId;
     USHORT ProcessId;
     ULONG Time : 24;
     ULONG Tag : 8;
-    ULONG BackTrace[ EX_DEBUG_LOG_NUMBER_OF_BACK_TRACES ];
-    ULONG Data[ EX_DEBUG_LOG_NUMBER_OF_DATA_VALUES ];
+    ULONG BackTrace[EX_DEBUG_LOG_NUMBER_OF_BACK_TRACES];
+    ULONG Data[EX_DEBUG_LOG_NUMBER_OF_DATA_VALUES];
 } EX_DEBUG_LOG_EVENT, *PEX_DEBUG_LOG_EVENT;
 
-typedef struct _EX_DEBUG_LOG {
+typedef struct _EX_DEBUG_LOG
+{
     KSPIN_LOCK Lock;
     ULONG NumberOfTags;
     ULONG MaximumNumberOfTags;
@@ -3705,60 +3320,27 @@ typedef struct _EX_DEBUG_LOG {
 
 NTKERNELAPI
 PEX_DEBUG_LOG
-ExCreateDebugLog(
-    IN UCHAR MaximumNumberOfTags,
-    IN ULONG MaximumNumberOfEvents
-    );
+ExCreateDebugLog(IN UCHAR MaximumNumberOfTags, IN ULONG MaximumNumberOfEvents);
 
 NTKERNELAPI
 UCHAR
-ExCreateDebugLogTag(
-    IN PEX_DEBUG_LOG Log,
-    IN PCHAR Name,
-    IN UCHAR Format1,
-    IN UCHAR Format2,
-    IN UCHAR Format3,
-    IN UCHAR Format4
-    );
+ExCreateDebugLogTag(IN PEX_DEBUG_LOG Log, IN PCHAR Name, IN UCHAR Format1, IN UCHAR Format2, IN UCHAR Format3,
+                    IN UCHAR Format4);
 
 NTKERNELAPI
-VOID
-ExDebugLogEvent(
-    IN PEX_DEBUG_LOG Log,
-    IN UCHAR Tag,
-    IN ULONG Data1,
-    IN ULONG Data2,
-    IN ULONG Data3,
-    IN ULONG Data4
-    );
+VOID ExDebugLogEvent(IN PEX_DEBUG_LOG Log, IN UCHAR Tag, IN ULONG Data1, IN ULONG Data2, IN ULONG Data3,
+                     IN ULONG Data4);
 
-VOID
-ExShutdownSystem(
-    IN ULONG Phase
-    );
+VOID ExShutdownSystem(IN ULONG Phase);
 
 BOOLEAN
-ExAcquireTimeRefreshLock(
-    IN BOOLEAN Wait
-    );
+ExAcquireTimeRefreshLock(IN BOOLEAN Wait);
 
-VOID
-ExReleaseTimeRefreshLock(
-    VOID
-    );
+VOID ExReleaseTimeRefreshLock(VOID);
 
-VOID
-ExUpdateSystemTimeFromCmos (
-    IN BOOLEAN UpdateInterruptTime,
-    IN ULONG   MaxSepInSeconds
-    );
+VOID ExUpdateSystemTimeFromCmos(IN BOOLEAN UpdateInterruptTime, IN ULONG MaxSepInSeconds);
 
-VOID
-ExGetNextWakeTime (
-    OUT PULONGLONG      DueTime,
-    OUT PTIME_FIELDS    TimeFields,
-    OUT PVOID           *TimerObject
-    );
+VOID ExGetNextWakeTime(OUT PULONGLONG DueTime, OUT PTIME_FIELDS TimeFields, OUT PVOID *TimerObject);
 
 // begin_ntddk begin_wdm begin_ntifs begin_ntosp
 //
@@ -3767,40 +3349,26 @@ ExGetNextWakeTime (
 
 NTKERNELAPI
 ULONG
-ExSetTimerResolution (
-    IN ULONG DesiredTime,
-    IN BOOLEAN SetResolution
-    );
+ExSetTimerResolution(IN ULONG DesiredTime, IN BOOLEAN SetResolution);
 
 //
 // Subtract time zone bias from system time to get local time.
 //
 
 NTKERNELAPI
-VOID
-ExSystemTimeToLocalTime (
-    IN PLARGE_INTEGER SystemTime,
-    OUT PLARGE_INTEGER LocalTime
-    );
+VOID ExSystemTimeToLocalTime(IN PLARGE_INTEGER SystemTime, OUT PLARGE_INTEGER LocalTime);
 
 //
 // Add time zone bias to local time to get system time.
 //
 
 NTKERNELAPI
-VOID
-ExLocalTimeToSystemTime (
-    IN PLARGE_INTEGER LocalTime,
-    OUT PLARGE_INTEGER SystemTime
-    );
+VOID ExLocalTimeToSystemTime(IN PLARGE_INTEGER LocalTime, OUT PLARGE_INTEGER SystemTime);
 
 // end_ntddk end_wdm end_ntifs end_ntosp
 
 NTKERNELAPI
-VOID
-ExInitializeTimeRefresh(
-    VOID
-    );
+VOID ExInitializeTimeRefresh(VOID);
 
 // begin_ntddk begin_wdm begin_ntifs begin_nthal begin_ntminiport begin_ntosp
 
@@ -3810,43 +3378,24 @@ ExInitializeTimeRefresh(
 
 typedef struct _CALLBACK_OBJECT *PCALLBACK_OBJECT;
 
-typedef VOID (*PCALLBACK_FUNCTION ) (
-    IN PVOID CallbackContext,
-    IN PVOID Argument1,
-    IN PVOID Argument2
-    );
+typedef VOID (*PCALLBACK_FUNCTION)(IN PVOID CallbackContext, IN PVOID Argument1, IN PVOID Argument2);
 
 
 NTKERNELAPI
 NTSTATUS
-ExCreateCallback (
-    OUT PCALLBACK_OBJECT *CallbackObject,
-    IN POBJECT_ATTRIBUTES ObjectAttributes,
-    IN BOOLEAN Create,
-    IN BOOLEAN AllowMultipleCallbacks
-    );
+ExCreateCallback(OUT PCALLBACK_OBJECT *CallbackObject, IN POBJECT_ATTRIBUTES ObjectAttributes, IN BOOLEAN Create,
+                 IN BOOLEAN AllowMultipleCallbacks);
 
 NTKERNELAPI
 PVOID
-ExRegisterCallback (
-    IN PCALLBACK_OBJECT CallbackObject,
-    IN PCALLBACK_FUNCTION CallbackFunction,
-    IN PVOID CallbackContext
-    );
+ExRegisterCallback(IN PCALLBACK_OBJECT CallbackObject, IN PCALLBACK_FUNCTION CallbackFunction,
+                   IN PVOID CallbackContext);
 
 NTKERNELAPI
-VOID
-ExUnregisterCallback (
-    IN PVOID CallbackRegistration
-    );
+VOID ExUnregisterCallback(IN PVOID CallbackRegistration);
 
 NTKERNELAPI
-VOID
-ExNotifyCallback (
-    IN PVOID CallbackObject,
-    IN PVOID Argument1,
-    IN PVOID Argument2
-    );
+VOID ExNotifyCallback(IN PVOID CallbackObject, IN PVOID Argument1, IN PVOID Argument2);
 
 
 // end_ntddk end_wdm end_ntifs end_nthal end_ntminiport end_ntosp
@@ -3893,9 +3442,7 @@ extern PCALLBACK_OBJECT ExCbPowerState;
 // begin_ntosp
 
 
-typedef
-PVOID
-(*PKWIN32_GLOBALATOMTABLE_CALLOUT) ( void );
+typedef PVOID (*PKWIN32_GLOBALATOMTABLE_CALLOUT)(void);
 
 extern PKWIN32_GLOBALATOMTABLE_CALLOUT ExGlobalAtomTableCallout;
 
@@ -3911,9 +3458,7 @@ typedef GUID UUID;
 
 NTKERNELAPI
 NTSTATUS
-ExUuidCreate(
-    OUT UUID *Uuid
-    );
+ExUuidCreate(OUT UUID *Uuid);
 
 // end_ntddk end_ntosp end_ntifs
 
@@ -3924,9 +3469,7 @@ ExUuidCreate(
 
 NTKERNELAPI
 BOOLEAN
-ExVerifySuite(
-    SUITE_TYPE SuiteType
-    );
+ExVerifySuite(SUITE_TYPE SuiteType);
 
 // end_ntddk end_wdm end_ntifs
 
@@ -3934,19 +3477,10 @@ ExVerifySuite(
 // begin_ntosp
 
 NTKERNELAPI
-VOID
-FASTCALL
-ExfInitializeRundownProtection (
-     IN PEX_RUNDOWN_REF RunRef
-     );
+VOID FASTCALL ExfInitializeRundownProtection(IN PEX_RUNDOWN_REF RunRef);
 
 NTKERNELAPI
-VOID
-FORCEINLINE
-FASTCALL
-ExInitializeRundownProtection (
-     IN PEX_RUNDOWN_REF RunRef
-     )
+VOID FORCEINLINE FASTCALL ExInitializeRundownProtection(IN PEX_RUNDOWN_REF RunRef)
 /*++
 
 Routine Description:
@@ -3971,11 +3505,7 @@ Return Value:
 // Reset a rundown protection block
 //
 NTKERNELAPI
-VOID
-FASTCALL
-ExReInitializeRundownProtection (
-     IN PEX_RUNDOWN_REF RunRef
-     );
+VOID FASTCALL ExReInitializeRundownProtection(IN PEX_RUNDOWN_REF RunRef);
 
 //
 // Acquire rundown protection
@@ -3983,55 +3513,33 @@ ExReInitializeRundownProtection (
 NTKERNELAPI
 BOOLEAN
 FASTCALL
-ExAcquireRundownProtection (
-     IN PEX_RUNDOWN_REF RunRef
-     );
+ExAcquireRundownProtection(IN PEX_RUNDOWN_REF RunRef);
 
 NTKERNELAPI
 BOOLEAN
 FASTCALL
-ExAcquireRundownProtectionEx (
-     IN PEX_RUNDOWN_REF RunRef,
-     IN ULONG Count
-     );
+ExAcquireRundownProtectionEx(IN PEX_RUNDOWN_REF RunRef, IN ULONG Count);
 
 //
 // Release rundown protection
 //
 NTKERNELAPI
-VOID
-FASTCALL
-ExReleaseRundownProtection (
-     IN PEX_RUNDOWN_REF RunRef
-     );
+VOID FASTCALL ExReleaseRundownProtection(IN PEX_RUNDOWN_REF RunRef);
 
 NTKERNELAPI
-VOID
-FASTCALL
-ExReleaseRundownProtectionEx (
-     IN PEX_RUNDOWN_REF RunRef,
-     IN ULONG Count
-     );
+VOID FASTCALL ExReleaseRundownProtectionEx(IN PEX_RUNDOWN_REF RunRef, IN ULONG Count);
 
 //
 // Mark rundown block as rundown having been completed.
 //
 NTKERNELAPI
-VOID
-FASTCALL
-ExRundownCompleted (
-     IN PEX_RUNDOWN_REF RunRef
-     );
+VOID FASTCALL ExRundownCompleted(IN PEX_RUNDOWN_REF RunRef);
 
 //
 // Wait for all protected acquires to exit
 //
 NTKERNELAPI
-VOID
-FASTCALL
-ExWaitForRundownProtectionRelease (
-     IN PEX_RUNDOWN_REF RunRef
-     );
+VOID FASTCALL ExWaitForRundownProtectionRelease(IN PEX_RUNDOWN_REF RunRef);
 
 
 // end_ntosp
@@ -4039,16 +3547,18 @@ ExWaitForRundownProtectionRelease (
 //
 // Fast reference routines. See ntos\ob\fastref.c for algorithm description.
 //
-#if defined (_WIN64)
+#if defined(_WIN64)
 #define MAX_FAST_REFS 15
 #else
 #define MAX_FAST_REFS 7
 #endif
 
-typedef struct _EX_FAST_REF {
-    union {
+typedef struct _EX_FAST_REF
+{
+    union
+    {
         PVOID Object;
-#if defined (_WIN64)
+#if defined(_WIN64)
         ULONG_PTR RefCnt : 4;
 #else
         ULONG_PTR RefCnt : 3;
@@ -4061,9 +3571,7 @@ typedef struct _EX_FAST_REF {
 NTKERNELAPI
 LOGICAL
 FORCEINLINE
-ExFastRefCanBeReferenced (
-    IN EX_FAST_REF FastRef
-    )
+ExFastRefCanBeReferenced(IN EX_FAST_REF FastRef)
 /*++
 
 Routine Description:
@@ -4088,9 +3596,7 @@ Return Value:
 NTKERNELAPI
 LOGICAL
 FORCEINLINE
-ExFastRefCanBeDereferenced (
-    IN EX_FAST_REF FastRef
-    )
+ExFastRefCanBeDereferenced(IN EX_FAST_REF FastRef)
 /*++
 
 Routine Description:
@@ -4115,9 +3621,7 @@ Return Value:
 NTKERNELAPI
 LOGICAL
 FORCEINLINE
-ExFastRefIsLastReference (
-    IN EX_FAST_REF FastRef
-    )
+ExFastRefIsLastReference(IN EX_FAST_REF FastRef)
 /*++
 
 Routine Description:
@@ -4143,9 +3647,7 @@ Return Value:
 NTKERNELAPI
 PVOID
 FORCEINLINE
-ExFastRefGetObject (
-    IN EX_FAST_REF FastRef
-    )
+ExFastRefGetObject(IN EX_FAST_REF FastRef)
 /*++
 
 Routine Description:
@@ -4163,15 +3665,13 @@ Return Value:
 
 --*/
 {
-    return (PVOID) (FastRef.Value & ~MAX_FAST_REFS);
+    return (PVOID)(FastRef.Value & ~MAX_FAST_REFS);
 }
 
 NTKERNELAPI
 BOOLEAN
 FORCEINLINE
-ExFastRefObjectNull (
-    IN EX_FAST_REF FastRef
-    )
+ExFastRefObjectNull(IN EX_FAST_REF FastRef)
 /*++
 
 Routine Description:
@@ -4189,16 +3689,13 @@ Return Value:
 
 --*/
 {
-    return (BOOLEAN) (FastRef.Value == 0);
+    return (BOOLEAN)(FastRef.Value == 0);
 }
 
 NTKERNELAPI
 BOOLEAN
 FORCEINLINE
-ExFastRefEqualObjects (
-    IN EX_FAST_REF FastRef,
-    IN PVOID Object
-    )
+ExFastRefEqualObjects(IN EX_FAST_REF FastRef, IN PVOID Object)
 /*++
 
 Routine Description:
@@ -4216,16 +3713,14 @@ Return Value:
 
 --*/
 {
-    return (BOOLEAN)((FastRef.Value^(ULONG_PTR)Object) <= MAX_FAST_REFS);
+    return (BOOLEAN)((FastRef.Value ^ (ULONG_PTR)Object) <= MAX_FAST_REFS);
 }
 
 
 NTKERNELAPI
 ULONG
 FORCEINLINE
-ExFastRefGetUnusedReferences (
-    IN EX_FAST_REF FastRef
-    )
+ExFastRefGetUnusedReferences(IN EX_FAST_REF FastRef)
 /*++
 
 Routine Description:
@@ -4243,17 +3738,12 @@ Return Value:
 
 --*/
 {
-    return (ULONG) FastRef.RefCnt;
+    return (ULONG)FastRef.RefCnt;
 }
 
 
 NTKERNELAPI
-VOID
-FORCEINLINE
-ExFastRefInitialize (
-    IN PEX_FAST_REF FastRef,
-    IN PVOID Object OPTIONAL
-    )
+VOID FORCEINLINE ExFastRefInitialize(IN PEX_FAST_REF FastRef, IN PVOID Object OPTIONAL)
 /*++
 
 Routine Description:
@@ -4271,23 +3761,20 @@ Return Value:
 
 --*/
 {
-    ASSERT ((((ULONG_PTR)Object)&MAX_FAST_REFS) == 0);
+    ASSERT((((ULONG_PTR)Object) & MAX_FAST_REFS) == 0);
 
-    if (Object == NULL) {
-       FastRef->Object = NULL;
-    } else {
-       FastRef->Value = (ULONG_PTR) Object | MAX_FAST_REFS;
+    if (Object == NULL)
+    {
+        FastRef->Object = NULL;
+    }
+    else
+    {
+        FastRef->Value = (ULONG_PTR)Object | MAX_FAST_REFS;
     }
 }
 
 NTKERNELAPI
-VOID
-FORCEINLINE
-ExFastRefInitializeEx (
-    IN PEX_FAST_REF FastRef,
-    IN PVOID Object OPTIONAL,
-    IN ULONG AdditionalRefs
-    )
+VOID FORCEINLINE ExFastRefInitializeEx(IN PEX_FAST_REF FastRef, IN PVOID Object OPTIONAL, IN ULONG AdditionalRefs)
 /*++
 
 Routine Description:
@@ -4306,34 +3793,32 @@ Return Value:
 
 --*/
 {
-    ASSERT (AdditionalRefs <= MAX_FAST_REFS);
-    ASSERT ((((ULONG_PTR)Object)&MAX_FAST_REFS) == 0);
+    ASSERT(AdditionalRefs <= MAX_FAST_REFS);
+    ASSERT((((ULONG_PTR)Object) & MAX_FAST_REFS) == 0);
 
-    if (Object == NULL) {
-       FastRef->Object = NULL;
-    } else {
-       FastRef->Value = (ULONG_PTR) Object + AdditionalRefs;
+    if (Object == NULL)
+    {
+        FastRef->Object = NULL;
+    }
+    else
+    {
+        FastRef->Value = (ULONG_PTR)Object + AdditionalRefs;
     }
 }
 
 NTKERNELAPI
 ULONG
 FORCEINLINE
-ExFastRefGetAdditionalReferenceCount (
-    VOID
-    )
+ExFastRefGetAdditionalReferenceCount(VOID)
 {
     return MAX_FAST_REFS;
 }
 
 
-
 NTKERNELAPI
 EX_FAST_REF
 FORCEINLINE
-ExFastReference (
-    IN PEX_FAST_REF FastRef
-    )
+ExFastReference(IN PEX_FAST_REF FastRef)
 /*++
 
 Routine Description:
@@ -4353,7 +3838,8 @@ Return Value:
 {
     EX_FAST_REF OldRef, NewRef;
 
-    while (1) {
+    while (1)
+    {
         //
         // Fetch the old contents of the fast ref structure
         //
@@ -4365,16 +3851,16 @@ Return Value:
         // test of the lower bits since a null pointer can never have cached
         // refs.
         //
-        if (OldRef.RefCnt != 0) {
+        if (OldRef.RefCnt != 0)
+        {
             //
             // We know the bottom bits can't underflow into the pointer for a
             // request that works so just decrement
             //
             NewRef.Value = OldRef.Value - 1;
-            NewRef.Object = InterlockedCompareExchangePointer (&FastRef->Object,
-                                                               NewRef.Object,
-                                                               OldRef.Object);
-            if (NewRef.Object != OldRef.Object) {
+            NewRef.Object = InterlockedCompareExchangePointer(&FastRef->Object, NewRef.Object, OldRef.Object);
+            if (NewRef.Object != OldRef.Object)
+            {
                 //
                 // The structured changed beneath us. Try the operation again
                 //
@@ -4390,10 +3876,7 @@ Return Value:
 NTKERNELAPI
 LOGICAL
 FORCEINLINE
-ExFastRefDereference (
-    IN PEX_FAST_REF FastRef,
-    IN PVOID Object
-    )
+ExFastRefDereference(IN PEX_FAST_REF FastRef, IN PVOID Object)
 /*++
 
 Routine Description:
@@ -4419,10 +3902,11 @@ Return Value:
 {
     EX_FAST_REF OldRef, NewRef;
 
-    ASSERT ((((ULONG_PTR)Object)&MAX_FAST_REFS) == 0);
-    ASSERT (Object != NULL);
+    ASSERT((((ULONG_PTR)Object) & MAX_FAST_REFS) == 0);
+    ASSERT(Object != NULL);
 
-    while (1) {
+    while (1)
+    {
         //
         // Fetch the old contents of the fast ref structure
         //
@@ -4433,7 +3917,8 @@ Return Value:
         // changed to another object then just return the old value. The
         // caller can return the reference to the object instead.
         //
-        if ((OldRef.Value^(ULONG_PTR)Object) >= MAX_FAST_REFS) {
+        if ((OldRef.Value ^ (ULONG_PTR)Object) >= MAX_FAST_REFS)
+        {
             return FALSE;
         }
         //
@@ -4441,10 +3926,9 @@ Return Value:
         // increment
         //
         NewRef.Value = OldRef.Value + 1;
-        NewRef.Object = InterlockedCompareExchangePointer (&FastRef->Object,
-                                                           NewRef.Object,
-                                                           OldRef.Object);
-        if (NewRef.Object != OldRef.Object) {
+        NewRef.Object = InterlockedCompareExchangePointer(&FastRef->Object, NewRef.Object, OldRef.Object);
+        if (NewRef.Object != OldRef.Object)
+        {
             //
             // The structured changed beneath us. Try the operation again
             //
@@ -4458,11 +3942,7 @@ Return Value:
 NTKERNELAPI
 LOGICAL
 FORCEINLINE
-ExFastRefAddAdditionalReferenceCounts (
-    IN PEX_FAST_REF FastRef,
-    IN PVOID Object,
-    IN ULONG RefsToAdd
-    )
+ExFastRefAddAdditionalReferenceCounts(IN PEX_FAST_REF FastRef, IN PVOID Object, IN ULONG RefsToAdd)
 /*++
 
 Routine Description:
@@ -4490,10 +3970,11 @@ Return Value:
 {
     EX_FAST_REF OldRef, NewRef;
 
-    ASSERT (RefsToAdd <= MAX_FAST_REFS);
-    ASSERT ((((ULONG_PTR)Object)&MAX_FAST_REFS) == 0);
+    ASSERT(RefsToAdd <= MAX_FAST_REFS);
+    ASSERT((((ULONG_PTR)Object) & MAX_FAST_REFS) == 0);
 
-    while (1) {
+    while (1)
+    {
         //
         // Fetch the old contents of the fast ref structure
         //
@@ -4503,8 +3984,8 @@ Return Value:
         // If the count would push us above maximum cached references or
         // if the object pointer has changed the fail the request.
         //
-        if (OldRef.RefCnt + RefsToAdd > MAX_FAST_REFS ||
-            (ULONG_PTR) Object != (OldRef.Value & ~MAX_FAST_REFS)) {
+        if (OldRef.RefCnt + RefsToAdd > MAX_FAST_REFS || (ULONG_PTR)Object != (OldRef.Value & ~MAX_FAST_REFS))
+        {
             return FALSE;
         }
         //
@@ -4512,10 +3993,9 @@ Return Value:
         // increment
         //
         NewRef.Value = OldRef.Value + RefsToAdd;
-        NewRef.Object = InterlockedCompareExchangePointer (&FastRef->Object,
-                                                           NewRef.Object,
-                                                           OldRef.Object);
-        if (NewRef.Object != OldRef.Object) {
+        NewRef.Object = InterlockedCompareExchangePointer(&FastRef->Object, NewRef.Object, OldRef.Object);
+        if (NewRef.Object != OldRef.Object)
+        {
             //
             // The structured changed beneath us. Use the return value from the
             // exchange and try it all again.
@@ -4530,10 +4010,7 @@ Return Value:
 NTKERNELAPI
 EX_FAST_REF
 FORCEINLINE
-ExFastRefSwapObject (
-    IN PEX_FAST_REF FastRef,
-    IN PVOID Object
-    )
+ExFastRefSwapObject(IN PEX_FAST_REF FastRef, IN PVOID Object)
 /*++
 
 Routine Description:
@@ -4561,24 +4038,23 @@ Return Value:
     EX_FAST_REF OldRef;
     EX_FAST_REF NewRef;
 
-    ASSERT ((((ULONG_PTR)Object)&MAX_FAST_REFS) == 0);
-    if (Object != NULL) {
-        NewRef.Value = (ULONG_PTR) Object | MAX_FAST_REFS;
-    } else {
+    ASSERT((((ULONG_PTR)Object) & MAX_FAST_REFS) == 0);
+    if (Object != NULL)
+    {
+        NewRef.Value = (ULONG_PTR)Object | MAX_FAST_REFS;
+    }
+    else
+    {
         NewRef.Value = 0;
     }
-    OldRef.Object = InterlockedExchangePointer (&FastRef->Object, NewRef.Object);
+    OldRef.Object = InterlockedExchangePointer(&FastRef->Object, NewRef.Object);
     return OldRef;
 }
 
 NTKERNELAPI
 EX_FAST_REF
 FORCEINLINE
-ExFastRefCompareSwapObject (
-    IN PEX_FAST_REF FastRef,
-    IN PVOID Object,
-    IN PVOID OldObject
-    )
+ExFastRefCompareSwapObject(IN PEX_FAST_REF FastRef, IN PVOID Object, IN PVOID OldObject)
 /*++
 
 Routine Description:
@@ -4610,8 +4086,9 @@ Return Value:
     EX_FAST_REF OldRef;
     EX_FAST_REF NewRef;
 
-    ASSERT ((((ULONG_PTR)Object)&MAX_FAST_REFS) == 0);
-    while (1) {
+    ASSERT((((ULONG_PTR)Object) & MAX_FAST_REFS) == 0);
+    while (1)
+    {
         //
         // Fetch the old contents of the fast ref structure
         //
@@ -4620,20 +4097,23 @@ Return Value:
         //
         // Compare the current object to the old to see if a swap is possible.
         //
-        if (!ExFastRefEqualObjects (OldRef, OldObject)) {
+        if (!ExFastRefEqualObjects(OldRef, OldObject))
+        {
             return OldRef;
         }
 
-        if (Object != NULL) {
-            NewRef.Value = (ULONG_PTR) Object | MAX_FAST_REFS;
-        } else {
-            NewRef.Value = (ULONG_PTR) Object;
+        if (Object != NULL)
+        {
+            NewRef.Value = (ULONG_PTR)Object | MAX_FAST_REFS;
+        }
+        else
+        {
+            NewRef.Value = (ULONG_PTR)Object;
         }
 
-        NewRef.Object = InterlockedCompareExchangePointer (&FastRef->Object,
-                                                           NewRef.Object,
-                                                           OldRef.Object);
-        if (NewRef.Object != OldRef.Object) {
+        NewRef.Object = InterlockedCompareExchangePointer(&FastRef->Object, NewRef.Object, OldRef.Object);
+        if (NewRef.Object != OldRef.Object)
+        {
             //
             // The structured changed beneath us. Try it all again.
             //
@@ -4646,11 +4126,7 @@ Return Value:
 
 
 NTKERNELAPI
-VOID
-FORCEINLINE
-ExInitializePushLock (
-     IN PEX_PUSH_LOCK PushLock
-     )
+VOID FORCEINLINE ExInitializePushLock(IN PEX_PUSH_LOCK PushLock)
 /*++
 
 Routine Description:
@@ -4671,32 +4147,16 @@ Return Value:
 }
 
 NTKERNELAPI
-VOID
-FASTCALL
-ExfAcquirePushLockExclusive (
-     IN PEX_PUSH_LOCK PushLock
-     );
+VOID FASTCALL ExfAcquirePushLockExclusive(IN PEX_PUSH_LOCK PushLock);
 
 NTKERNELAPI
-VOID
-FASTCALL
-ExfAcquirePushLockShared (
-     IN PEX_PUSH_LOCK PushLock
-     );
+VOID FASTCALL ExfAcquirePushLockShared(IN PEX_PUSH_LOCK PushLock);
 
 NTKERNELAPI
-VOID
-FASTCALL
-ExfReleasePushLock (
-     IN PEX_PUSH_LOCK PushLock
-     );
+VOID FASTCALL ExfReleasePushLock(IN PEX_PUSH_LOCK PushLock);
 
 NTKERNELAPI
-VOID
-FORCEINLINE
-ExAcquireReleasePushLockExclusive (
-     IN PEX_PUSH_LOCK PushLock
-     )
+VOID FORCEINLINE ExAcquireReleasePushLockExclusive(IN PEX_PUSH_LOCK PushLock)
 /*++
 
 Routine Description:
@@ -4713,19 +4173,18 @@ Return Value:
 
 --*/
 {
-    KeMemoryBarrier ();
-    if ((volatile EX_PUSH_LOCK *)PushLock->Ptr != NULL) {
-        ExfAcquirePushLockExclusive (PushLock);
-        ExfReleasePushLock (PushLock);
+    KeMemoryBarrier();
+    if ((volatile EX_PUSH_LOCK *)PushLock->Ptr != NULL)
+    {
+        ExfAcquirePushLockExclusive(PushLock);
+        ExfReleasePushLock(PushLock);
     }
 }
 
 NTKERNELAPI
 BOOLEAN
 FORCEINLINE
-ExTryAcquireReleasePushLockExclusive (
-     IN PEX_PUSH_LOCK PushLock
-     )
+ExTryAcquireReleasePushLockExclusive(IN PEX_PUSH_LOCK PushLock)
 /*++
 
 Routine Description:
@@ -4742,20 +4201,19 @@ Return Value:
 
 --*/
 {
-    KeMemoryBarrier ();
-    if ((volatile EX_PUSH_LOCK *)PushLock->Ptr == NULL) {
+    KeMemoryBarrier();
+    if ((volatile EX_PUSH_LOCK *)PushLock->Ptr == NULL)
+    {
         return TRUE;
-    } else {
+    }
+    else
+    {
         return FALSE;
     }
 }
 
 NTKERNELAPI
-VOID
-FORCEINLINE
-ExAcquirePushLockExclusive (
-     IN PEX_PUSH_LOCK PushLock
-     )
+VOID FORCEINLINE ExAcquirePushLockExclusive(IN PEX_PUSH_LOCK PushLock)
 /*++
 
 Routine Description:
@@ -4772,19 +4230,16 @@ Return Value:
 
 --*/
 {
-    if (InterlockedCompareExchangePointer (&PushLock->Ptr,
-                                           (PVOID)EX_PUSH_LOCK_EXCLUSIVE,
-                                           NULL) != NULL) {
-        ExfAcquirePushLockExclusive (PushLock);
+    if (InterlockedCompareExchangePointer(&PushLock->Ptr, (PVOID)EX_PUSH_LOCK_EXCLUSIVE, NULL) != NULL)
+    {
+        ExfAcquirePushLockExclusive(PushLock);
     }
 }
 
 NTKERNELAPI
 BOOLEAN
 FORCEINLINE
-ExTryAcquirePushLockExclusive (
-     IN PEX_PUSH_LOCK PushLock
-     )
+ExTryAcquirePushLockExclusive(IN PEX_PUSH_LOCK PushLock)
 /*++
 
 Routine Description:
@@ -4801,21 +4256,18 @@ Return Value:
 
 --*/
 {
-    if (InterlockedCompareExchangePointer (&PushLock->Ptr,
-                                           (PVOID)EX_PUSH_LOCK_EXCLUSIVE,
-                                           NULL) == NULL) {
+    if (InterlockedCompareExchangePointer(&PushLock->Ptr, (PVOID)EX_PUSH_LOCK_EXCLUSIVE, NULL) == NULL)
+    {
         return TRUE;
-    } else {
+    }
+    else
+    {
         return FALSE;
     }
 }
 
 NTKERNELAPI
-VOID
-FORCEINLINE
-ExAcquirePushLockShared (
-     IN PEX_PUSH_LOCK PushLock
-     )
+VOID FORCEINLINE ExAcquirePushLockShared(IN PEX_PUSH_LOCK PushLock)
 /*++
 
 Routine Description:
@@ -4837,19 +4289,16 @@ Return Value:
     OldValue = *PushLock;
     OldValue.Value &= ~(EX_PUSH_LOCK_EXCLUSIVE | EX_PUSH_LOCK_WAITING);
     NewValue.Value = OldValue.Value + EX_PUSH_LOCK_SHARE_INC;
-    if (InterlockedCompareExchangePointer (&PushLock->Ptr,
-                                           NewValue.Ptr,
-                                           OldValue.Ptr) != OldValue.Ptr) {
-        ExfAcquirePushLockShared (PushLock);
+    if (InterlockedCompareExchangePointer(&PushLock->Ptr, NewValue.Ptr, OldValue.Ptr) != OldValue.Ptr)
+    {
+        ExfAcquirePushLockShared(PushLock);
     }
 }
 
 NTKERNELAPI
 BOOLEAN
 FORCEINLINE
-ExTryConvertPushLockSharedToExclusive (
-     IN PEX_PUSH_LOCK PushLock
-     )
+ExTryConvertPushLockSharedToExclusive(IN PEX_PUSH_LOCK PushLock)
 /*++
 
 Routine Description:
@@ -4867,23 +4316,20 @@ Return Value:
 
 --*/
 {
-    if (InterlockedCompareExchangePointer (&PushLock->Ptr, (PVOID) EX_PUSH_LOCK_EXCLUSIVE,
-                                           (PVOID) EX_PUSH_LOCK_SHARE_INC) ==
-                                               (PVOID)EX_PUSH_LOCK_SHARE_INC) {
+    if (InterlockedCompareExchangePointer(&PushLock->Ptr, (PVOID)EX_PUSH_LOCK_EXCLUSIVE,
+                                          (PVOID)EX_PUSH_LOCK_SHARE_INC) == (PVOID)EX_PUSH_LOCK_SHARE_INC)
+    {
         return TRUE;
-    } else {
+    }
+    else
+    {
         return FALSE;
     }
 }
 
 
-
 NTKERNELAPI
-VOID
-FORCEINLINE
-ExReleasePushLock (
-     IN PEX_PUSH_LOCK PushLock
-     )
+VOID FORCEINLINE ExReleasePushLock(IN PEX_PUSH_LOCK PushLock)
 /*++
 
 Routine Description:
@@ -4904,21 +4350,15 @@ Return Value:
 
     OldValue = *PushLock;
     OldValue.Value &= ~EX_PUSH_LOCK_WAITING;
-    NewValue.Value = (OldValue.Value - EX_PUSH_LOCK_EXCLUSIVE) &
-                         ~EX_PUSH_LOCK_EXCLUSIVE;
-    if (InterlockedCompareExchangePointer (&PushLock->Ptr,
-                                           NewValue.Ptr,
-                                           OldValue.Ptr) != OldValue.Ptr) {
-        ExfReleasePushLock (PushLock);
+    NewValue.Value = (OldValue.Value - EX_PUSH_LOCK_EXCLUSIVE) & ~EX_PUSH_LOCK_EXCLUSIVE;
+    if (InterlockedCompareExchangePointer(&PushLock->Ptr, NewValue.Ptr, OldValue.Ptr) != OldValue.Ptr)
+    {
+        ExfReleasePushLock(PushLock);
     }
 }
 
 NTKERNELAPI
-VOID
-FORCEINLINE
-ExReleasePushLockExclusive (
-     IN PEX_PUSH_LOCK PushLock
-     )
+VOID FORCEINLINE ExReleasePushLockExclusive(IN PEX_PUSH_LOCK PushLock)
 /*++
 
 Routine Description:
@@ -4935,21 +4375,17 @@ Return Value:
 
 --*/
 {
-    ASSERT (PushLock->Value & (EX_PUSH_LOCK_WAITING|EX_PUSH_LOCK_EXCLUSIVE));
+    ASSERT(PushLock->Value & (EX_PUSH_LOCK_WAITING | EX_PUSH_LOCK_EXCLUSIVE));
 
-    if (InterlockedCompareExchangePointer (&PushLock->Ptr,
-                                           NULL,
-                                           (PVOID)EX_PUSH_LOCK_EXCLUSIVE) != (PVOID)EX_PUSH_LOCK_EXCLUSIVE) {
-        ExfReleasePushLock (PushLock);
+    if (InterlockedCompareExchangePointer(&PushLock->Ptr, NULL, (PVOID)EX_PUSH_LOCK_EXCLUSIVE) !=
+        (PVOID)EX_PUSH_LOCK_EXCLUSIVE)
+    {
+        ExfReleasePushLock(PushLock);
     }
 }
 
 NTKERNELAPI
-VOID
-FORCEINLINE
-ExReleasePushLockShared (
-     IN PEX_PUSH_LOCK PushLock
-     )
+VOID FORCEINLINE ExReleasePushLockShared(IN PEX_PUSH_LOCK PushLock)
 /*++
 
 Routine Description:
@@ -4969,13 +4405,12 @@ Return Value:
     EX_PUSH_LOCK OldValue, NewValue;
 
     OldValue = *PushLock;
-    ASSERT (OldValue.Waiting || !OldValue.Exclusive);
+    ASSERT(OldValue.Waiting || !OldValue.Exclusive);
     OldValue.Value &= ~EX_PUSH_LOCK_WAITING;
     NewValue.Value = OldValue.Value - EX_PUSH_LOCK_SHARE_INC;
-    if (InterlockedCompareExchangePointer (&PushLock->Ptr,
-                                           NewValue.Ptr,
-                                           OldValue.Ptr) != OldValue.Ptr) {
-        ExfReleasePushLock (PushLock);
+    if (InterlockedCompareExchangePointer(&PushLock->Ptr, NewValue.Ptr, OldValue.Ptr) != OldValue.Ptr)
+    {
+        ExfReleasePushLock(PushLock);
     }
 }
 
@@ -4983,9 +4418,10 @@ Return Value:
 // This is a block held on the local stack of the waiting threads.
 //
 
-typedef  struct _EX_PUSH_LOCK_WAIT_BLOCK *PEX_PUSH_LOCK_WAIT_BLOCK;
+typedef struct _EX_PUSH_LOCK_WAIT_BLOCK *PEX_PUSH_LOCK_WAIT_BLOCK;
 
-typedef struct _EX_PUSH_LOCK_WAIT_BLOCK {
+typedef struct _EX_PUSH_LOCK_WAIT_BLOCK
+{
     KEVENT WakeEvent;
     PEX_PUSH_LOCK_WAIT_BLOCK Next;
     ULONG ShareCount;
@@ -4994,82 +4430,46 @@ typedef struct _EX_PUSH_LOCK_WAIT_BLOCK {
 
 
 NTKERNELAPI
-VOID
-FASTCALL
-ExBlockPushLock (
-     IN PEX_PUSH_LOCK PushLock,
-     IN PEX_PUSH_LOCK_WAIT_BLOCK WaitBlock
-     );
+VOID FASTCALL ExBlockPushLock(IN PEX_PUSH_LOCK PushLock, IN PEX_PUSH_LOCK_WAIT_BLOCK WaitBlock);
 
 NTKERNELAPI
-VOID
-FASTCALL
-ExfUnblockPushLock (
-     IN PEX_PUSH_LOCK PushLock,
-     IN PEX_PUSH_LOCK_WAIT_BLOCK WaitBlock OPTIONAL
-     );
+VOID FASTCALL ExfUnblockPushLock(IN PEX_PUSH_LOCK PushLock, IN PEX_PUSH_LOCK_WAIT_BLOCK WaitBlock OPTIONAL);
 
 NTKERNELAPI
-VOID
-FORCEINLINE
-ExUnblockPushLock (
-     IN PEX_PUSH_LOCK PushLock,
-     IN PEX_PUSH_LOCK_WAIT_BLOCK WaitBlock OPTIONAL
-     )
+VOID FORCEINLINE ExUnblockPushLock(IN PEX_PUSH_LOCK PushLock, IN PEX_PUSH_LOCK_WAIT_BLOCK WaitBlock OPTIONAL)
 {
-    if (WaitBlock != NULL || PushLock->Ptr != NULL) {
-        ExfUnblockPushLock (PushLock, WaitBlock);
+    if (WaitBlock != NULL || PushLock->Ptr != NULL)
+    {
+        ExfUnblockPushLock(PushLock, WaitBlock);
     }
 }
 
 NTKERNELAPI
-VOID
-FORCEINLINE
-ExWaitForUnblockPushLock (
-     IN PEX_PUSH_LOCK PushLock,
-     IN PEX_PUSH_LOCK_WAIT_BLOCK WaitBlock OPTIONAL
-     )
+VOID FORCEINLINE ExWaitForUnblockPushLock(IN PEX_PUSH_LOCK PushLock, IN PEX_PUSH_LOCK_WAIT_BLOCK WaitBlock OPTIONAL)
 {
-    UNREFERENCED_PARAMETER (PushLock);
+    UNREFERENCED_PARAMETER(PushLock);
 
-    KeWaitForSingleObject (&WaitBlock->WakeEvent,
-                           Executive,
-                           KernelMode,
-                           FALSE,
-                           NULL);
+    KeWaitForSingleObject(&WaitBlock->WakeEvent, Executive, KernelMode, FALSE, NULL);
 }
 
 
 NTKERNELAPI
 PEX_PUSH_LOCK_CACHE_AWARE
-ExAllocateCacheAwarePushLock (
-     VOID
-     );
+ExAllocateCacheAwarePushLock(VOID);
 
 NTKERNELAPI
-VOID
-ExFreeCacheAwarePushLock (
-     PEX_PUSH_LOCK_CACHE_AWARE PushLock
-     );
+VOID ExFreeCacheAwarePushLock(PEX_PUSH_LOCK_CACHE_AWARE PushLock);
 
 NTKERNELAPI
-VOID
-ExAcquireCacheAwarePushLockExclusive (
-     IN PEX_PUSH_LOCK_CACHE_AWARE CacheAwarePushLock
-     );
+VOID ExAcquireCacheAwarePushLockExclusive(IN PEX_PUSH_LOCK_CACHE_AWARE CacheAwarePushLock);
 
 NTKERNELAPI
-VOID
-ExReleaseCacheAwarePushLockExclusive (
-     IN PEX_PUSH_LOCK_CACHE_AWARE CacheAwarePushLock
-     );
+VOID ExReleaseCacheAwarePushLockExclusive(IN PEX_PUSH_LOCK_CACHE_AWARE CacheAwarePushLock);
 
 NTKERNELAPI
 PEX_PUSH_LOCK
 FORCEINLINE
-ExAcquireCacheAwarePushLockShared (
-     IN PEX_PUSH_LOCK_CACHE_AWARE CacheAwarePushLock
-     )
+ExAcquireCacheAwarePushLockShared(IN PEX_PUSH_LOCK_CACHE_AWARE CacheAwarePushLock)
 /*++
 
 Routine Description:
@@ -5091,17 +4491,13 @@ Return Value:
     // Take a single one of the slots in shared mode.
     // Exclusive acquires must obtain all the slots exclusive.
     //
-    PushLock = CacheAwarePushLock->Locks[KeGetCurrentProcessorNumber()%EX_PUSH_LOCK_FANNED_COUNT];
-    ExAcquirePushLockShared (PushLock);
+    PushLock = CacheAwarePushLock->Locks[KeGetCurrentProcessorNumber() % EX_PUSH_LOCK_FANNED_COUNT];
+    ExAcquirePushLockShared(PushLock);
     return PushLock;
 }
 
 NTKERNELAPI
-VOID
-FORCEINLINE
-ExReleaseCacheAwarePushLockShared (
-     IN PEX_PUSH_LOCK PushLock
-     )
+VOID FORCEINLINE ExReleaseCacheAwarePushLockShared(IN PEX_PUSH_LOCK PushLock)
 /*++
 
 Routine Description:
@@ -5118,7 +4514,7 @@ Return Value:
 
 --*/
 {
-    ExReleasePushLockShared (PushLock);
+    ExReleasePushLockShared(PushLock);
     return;
 }
 
@@ -5131,81 +4527,50 @@ Return Value:
 //
 // Define a block to hold the actual routine registration.
 //
-typedef NTSTATUS (*PEX_CALLBACK_FUNCTION ) (
-    IN PVOID CallbackContext,
-    IN PVOID Argument1,
-    IN PVOID Argument2
-    );
+typedef NTSTATUS (*PEX_CALLBACK_FUNCTION)(IN PVOID CallbackContext, IN PVOID Argument1, IN PVOID Argument2);
 
 // end_wdm end_ntddk
 
-typedef struct _EX_CALLBACK_ROUTINE_BLOCK {
-    EX_RUNDOWN_REF        RundownProtect;
+typedef struct _EX_CALLBACK_ROUTINE_BLOCK
+{
+    EX_RUNDOWN_REF RundownProtect;
     PEX_CALLBACK_FUNCTION Function;
-    PVOID                 Context;
+    PVOID Context;
 } EX_CALLBACK_ROUTINE_BLOCK, *PEX_CALLBACK_ROUTINE_BLOCK;
 
 //
 // Define a structure the caller uses to hold the callbacks
 //
-typedef struct _EX_CALLBACK {
+typedef struct _EX_CALLBACK
+{
     EX_FAST_REF RoutineBlock;
 } EX_CALLBACK, *PEX_CALLBACK;
 
-VOID
-ExInitializeCallBack (
-    IN OUT PEX_CALLBACK CallBack
-    );
+VOID ExInitializeCallBack(IN OUT PEX_CALLBACK CallBack);
 
 BOOLEAN
-ExCompareExchangeCallBack (
-    IN OUT PEX_CALLBACK CallBack,
-    IN PEX_CALLBACK_ROUTINE_BLOCK NewBlock,
-    IN PEX_CALLBACK_ROUTINE_BLOCK OldBlock
-    );
+ExCompareExchangeCallBack(IN OUT PEX_CALLBACK CallBack, IN PEX_CALLBACK_ROUTINE_BLOCK NewBlock,
+                          IN PEX_CALLBACK_ROUTINE_BLOCK OldBlock);
 
 NTSTATUS
-ExCallCallBack (
-    IN OUT PEX_CALLBACK CallBack,
-    IN PVOID Argument1,
-    IN PVOID Argument2
-    );
+ExCallCallBack(IN OUT PEX_CALLBACK CallBack, IN PVOID Argument1, IN PVOID Argument2);
 
 PEX_CALLBACK_ROUTINE_BLOCK
-ExAllocateCallBack (
-    IN PEX_CALLBACK_FUNCTION Function,
-    IN PVOID Context
-    );
+ExAllocateCallBack(IN PEX_CALLBACK_FUNCTION Function, IN PVOID Context);
 
-VOID
-ExFreeCallBack (
-    IN PEX_CALLBACK_ROUTINE_BLOCK CallBackBlock
-    );
+VOID ExFreeCallBack(IN PEX_CALLBACK_ROUTINE_BLOCK CallBackBlock);
 
 PEX_CALLBACK_ROUTINE_BLOCK
-ExReferenceCallBackBlock (
-    IN OUT PEX_CALLBACK CallBack
-    );
+ExReferenceCallBackBlock(IN OUT PEX_CALLBACK CallBack);
 
 PEX_CALLBACK_FUNCTION
-ExGetCallBackBlockRoutine (
-    IN PEX_CALLBACK_ROUTINE_BLOCK CallBackBlock
-    );
+ExGetCallBackBlockRoutine(IN PEX_CALLBACK_ROUTINE_BLOCK CallBackBlock);
 
 PVOID
-ExGetCallBackBlockContext (
-    IN PEX_CALLBACK_ROUTINE_BLOCK CallBackBlock
-    );
+ExGetCallBackBlockContext(IN PEX_CALLBACK_ROUTINE_BLOCK CallBackBlock);
 
-VOID
-ExDereferenceCallBackBlock (
-    IN OUT PEX_CALLBACK CallBack,
-    IN PEX_CALLBACK_ROUTINE_BLOCK CallBackBlock
-    );
+VOID ExDereferenceCallBackBlock(IN OUT PEX_CALLBACK CallBack, IN PEX_CALLBACK_ROUTINE_BLOCK CallBackBlock);
 
-VOID
-ExWaitForCallBacks (
-    IN PEX_CALLBACK_ROUTINE_BLOCK CallBackBlock
-    );
+VOID ExWaitForCallBacks(IN PEX_CALLBACK_ROUTINE_BLOCK CallBackBlock);
 
 #endif /* _EX_ */

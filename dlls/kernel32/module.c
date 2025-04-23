@@ -25,33 +25,34 @@ Revision History:
 #include <sxstypes.h>
 
 PVOID
-BasepMapModuleHandle(
-    IN HMODULE hModule OPTIONAL,
-    IN BOOLEAN bResourcesOnly
-    )
+BasepMapModuleHandle(IN HMODULE hModule OPTIONAL, IN BOOLEAN bResourcesOnly)
 {
-    if (ARGUMENT_PRESENT( hModule )) {
-        if (LDR_IS_DATAFILE(hModule)) {
-            if (bResourcesOnly) {
-                return( (PVOID)hModule );
-                }
-            else {
-                return( NULL );
-                }
+    if (ARGUMENT_PRESENT(hModule))
+    {
+        if (LDR_IS_DATAFILE(hModule))
+        {
+            if (bResourcesOnly)
+            {
+                return ((PVOID)hModule);
             }
-        else {
-            return( (PVOID)hModule );
+            else
+            {
+                return (NULL);
             }
         }
-    else {
-        return( (PVOID)NtCurrentPeb()->ImageBaseAddress);
+        else
+        {
+            return ((PVOID)hModule);
         }
+    }
+    else
+    {
+        return ((PVOID)NtCurrentPeb()->ImageBaseAddress);
+    }
 }
 
 HMODULE
-LoadLibraryA(
-    LPCSTR lpLibFileName
-    )
+LoadLibraryA(LPCSTR lpLibFileName)
 {
     //
     // The specification for twain_32.dll says that this
@@ -60,16 +61,15 @@ LoadLibraryA(
     // and all the apps using this dll will blow up.
     //
 
-    if (ARGUMENT_PRESENT(lpLibFileName) &&
-        _strcmpi(lpLibFileName, "twain_32.dll") == 0) {
+    if (ARGUMENT_PRESENT(lpLibFileName) && _strcmpi(lpLibFileName, "twain_32.dll") == 0)
+    {
 
         LPSTR pszBuffer;
 
-        pszBuffer = RtlAllocateHeap(RtlProcessHeap(),
-                                    MAKE_TAG( TMP_TAG ),
-                                    MAX_PATH * sizeof(char));
+        pszBuffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), MAX_PATH * sizeof(char));
 
-        if (pszBuffer != NULL) {
+        if (pszBuffer != NULL)
+        {
 
             HMODULE hMod;
 
@@ -81,29 +81,24 @@ LoadLibraryA(
 
             RtlFreeHeap(RtlProcessHeap(), 0, pszBuffer);
 
-            if (hMod != NULL) {
+            if (hMod != NULL)
+            {
                 return hMod;
             }
         }
     }
 
-    return LoadLibraryExA( lpLibFileName, NULL, 0 );
+    return LoadLibraryExA(lpLibFileName, NULL, 0);
 }
 
 HMODULE
-LoadLibraryW(
-    LPCWSTR lpwLibFileName
-    )
+LoadLibraryW(LPCWSTR lpwLibFileName)
 {
-    return LoadLibraryExW( lpwLibFileName, NULL, 0 );
+    return LoadLibraryExW(lpwLibFileName, NULL, 0);
 }
 
 HMODULE
-LoadLibraryExA(
-    LPCSTR lpLibFileName,
-    HANDLE hFile,
-    DWORD dwFlags
-    )
+LoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 
 /*++
 
@@ -116,28 +111,25 @@ Routine Description:
 {
     PUNICODE_STRING Unicode;
 
-    Unicode = Basep8BitStringToStaticUnicodeString( lpLibFileName );
-    if (Unicode == NULL) {
+    Unicode = Basep8BitStringToStaticUnicodeString(lpLibFileName);
+    if (Unicode == NULL)
+    {
         return NULL;
     }
 
-    return LoadLibraryExW( Unicode->Buffer, hFile, dwFlags);
+    return LoadLibraryExW(Unicode->Buffer, hFile, dwFlags);
 }
 
 NTSTATUS
-BasepLoadLibraryAsDataFile(
-    IN PWSTR DllPath OPTIONAL,
-    IN PUNICODE_STRING DllName,
-    OUT PVOID *DllHandle
-    )
+BasepLoadLibraryAsDataFile(IN PWSTR DllPath OPTIONAL, IN PUNICODE_STRING DllName, OUT PVOID *DllHandle)
 
 {
-    WCHAR FullPath[ MAX_PATH ];
+    WCHAR FullPath[MAX_PATH];
     PWSTR FilePart;
     HANDLE FileHandle;
     HANDLE MappingHandle;
     UNICODE_STRING FullPathPreAllocatedString;
-    UNICODE_STRING FullPathDynamicString = {0};
+    UNICODE_STRING FullPathDynamicString = { 0 };
     UNICODE_STRING DefaultExtensionString = RTL_CONSTANT_STRING(L".DLL");
     PUNICODE_STRING FullPathString = NULL;
     LPVOID DllBase;
@@ -154,28 +146,17 @@ BasepLoadLibraryAsDataFile(
     FullPathPreAllocatedString.Length = 0;
     FullPathPreAllocatedString.Buffer = FullPath;
 
-    Status = RtlDosApplyFileIsolationRedirection_Ustr(
-        RTL_DOS_APPLY_FILE_REDIRECTION_USTR_FLAG_RESPECT_DOT_LOCAL,
-        DllName,
-        &DefaultExtensionString,
-        &FullPathPreAllocatedString,
-        &FullPathDynamicString,
-        &FullPathString,
-        NULL,
-        NULL,
-        NULL);
-    if (NT_ERROR(Status)) {
+    Status = RtlDosApplyFileIsolationRedirection_Ustr(RTL_DOS_APPLY_FILE_REDIRECTION_USTR_FLAG_RESPECT_DOT_LOCAL,
+                                                      DllName, &DefaultExtensionString, &FullPathPreAllocatedString,
+                                                      &FullPathDynamicString, &FullPathString, NULL, NULL, NULL);
+    if (NT_ERROR(Status))
+    {
         if (Status != STATUS_SXS_KEY_NOT_FOUND)
             goto Exit;
 
-        if (!SearchPathW( DllPath,
-                          DllName->Buffer,
-                          DefaultExtensionString.Buffer,
-                          sizeof(FullPath) / sizeof(FullPath[0]),
-                          FullPath,
-                          &FilePart
-                        )
-           ) {
+        if (!SearchPathW(DllPath, DllName->Buffer, DefaultExtensionString.Buffer,
+                         sizeof(FullPath) / sizeof(FullPath[0]), FullPath, &FilePart))
+        {
             Status = Teb->LastStatusValue;
             goto Exit;
         }
@@ -183,52 +164,38 @@ BasepLoadLibraryAsDataFile(
         FullPathString = &FullPathPreAllocatedString;
     }
 
-    FileHandle = CreateFileW( FullPathString->Buffer,
-                              GENERIC_READ,
-                              FILE_SHARE_READ | FILE_SHARE_DELETE,
-                              NULL,
-                              OPEN_EXISTING,
-                              0,
-                              NULL
-                            );
+    FileHandle = CreateFileW(FullPathString->Buffer, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, NULL,
+                             OPEN_EXISTING, 0, NULL);
 
-    if (FileHandle == INVALID_HANDLE_VALUE) {
+    if (FileHandle == INVALID_HANDLE_VALUE)
+    {
         Status = Teb->LastStatusValue;
         goto Exit;
-        }
+    }
 
-    MappingHandle = CreateFileMappingW( FileHandle,
-                                        NULL,
-                                        PAGE_READONLY,
-                                        0,
-                                        0,
-                                        NULL
-                                      );
-    CloseHandle( FileHandle );
-    if (MappingHandle == NULL) {
+    MappingHandle = CreateFileMappingW(FileHandle, NULL, PAGE_READONLY, 0, 0, NULL);
+    CloseHandle(FileHandle);
+    if (MappingHandle == NULL)
+    {
         Status = Teb->LastStatusValue;
         goto Exit;
-        }
+    }
 
-    DllBase = MapViewOfFileEx( MappingHandle,
-                               FILE_MAP_READ,
-                               0,
-                               0,
-                               0,
-                               NULL
-                             );
-    CloseHandle( MappingHandle );
-    if (DllBase == NULL) {
+    DllBase = MapViewOfFileEx(MappingHandle, FILE_MAP_READ, 0, 0, 0, NULL);
+    CloseHandle(MappingHandle);
+    if (DllBase == NULL)
+    {
         Status = Teb->LastStatusValue;
         goto Exit;
-        }
+    }
 
-    NtHeaders = RtlImageNtHeader( DllBase );
-    if (NtHeaders == NULL) {
-        UnmapViewOfFile( DllBase );
+    NtHeaders = RtlImageNtHeader(DllBase);
+    if (NtHeaders == NULL)
+    {
+        UnmapViewOfFile(DllBase);
         Status = STATUS_INVALID_IMAGE_FORMAT;
         goto Exit;
-        }
+    }
 
     *DllHandle = LDR_VIEW_TO_DATAFILE(DllBase);
     LdrLoadAlternateResourceModule(*DllHandle, FullPathString->Buffer);
@@ -242,11 +209,7 @@ Exit:
 }
 
 HMODULE
-LoadLibraryExW(
-    LPCWSTR lpwLibFileName,
-    HANDLE hFile,
-    DWORD dwFlags
-    )
+LoadLibraryExW(LPCWSTR lpwLibFileName, HANDLE hFile, DWORD dwFlags)
 
 /*++
 
@@ -366,14 +329,16 @@ Return Value:
     UNICODE_STRING DllName_U;
     UNICODE_STRING AllocatedPath_U;
     ULONG DllCharacteristics;
-    
+
     DllCharacteristics = 0;
-    if (dwFlags & DONT_RESOLVE_DLL_REFERENCES) {
+    if (dwFlags & DONT_RESOLVE_DLL_REFERENCES)
+    {
         DllCharacteristics |= IMAGE_FILE_EXECUTABLE_IMAGE;
-        }
-    if ( dwFlags & LOAD_IGNORE_CODE_AUTHZ_LEVEL ) {
+    }
+    if (dwFlags & LOAD_IGNORE_CODE_AUTHZ_LEVEL)
+    {
         DllCharacteristics |= IMAGE_FILE_SYSTEM;
-        }
+    }
 
     RtlInitUnicodeString(&DllName_U, lpwLibFileName);
 
@@ -384,29 +349,35 @@ Return Value:
 
     BasepCheckExeLdrEntry();
 
-    if ( !(dwFlags & LOAD_LIBRARY_AS_DATAFILE) && BasepExeLdrEntry && (DllName_U.Length == BasepExeLdrEntry->FullDllName.Length) ){
-        if ( RtlEqualUnicodeString(&DllName_U,&BasepExeLdrEntry->FullDllName,TRUE) ) {
+    if (!(dwFlags & LOAD_LIBRARY_AS_DATAFILE) && BasepExeLdrEntry &&
+        (DllName_U.Length == BasepExeLdrEntry->FullDllName.Length))
+    {
+        if (RtlEqualUnicodeString(&DllName_U, &BasepExeLdrEntry->FullDllName, TRUE))
+        {
             return (HMODULE)BasepExeLdrEntry->DllBase;
-            }
         }
+    }
 
     //
     // check to see if there are trailing spaces in the dll name (Win95 compat)
     //
-    if ( DllName_U.Length && DllName_U.Buffer[(DllName_U.Length-1)>>1] == (WCHAR)' ') {
-        TrimmedDllName = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), DllName_U.MaximumLength);
-        if ( !TrimmedDllName ) {
+    if (DllName_U.Length && DllName_U.Buffer[(DllName_U.Length - 1) >> 1] == (WCHAR)' ')
+    {
+        TrimmedDllName = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), DllName_U.MaximumLength);
+        if (!TrimmedDllName)
+        {
             Status = STATUS_NO_MEMORY;
             goto Exit;
-            }
-        RtlCopyMemory(TrimmedDllName,DllName_U.Buffer,DllName_U.MaximumLength);
+        }
+        RtlCopyMemory(TrimmedDllName, DllName_U.Buffer, DllName_U.MaximumLength);
         DllName_U.Buffer = TrimmedDllName;
-        while (DllName_U.Length && DllName_U.Buffer[(DllName_U.Length-1)>>1] == (WCHAR)' ') {
-            DllName_U.Buffer[(DllName_U.Length-1)>>1] = UNICODE_NULL;
+        while (DllName_U.Length && DllName_U.Buffer[(DllName_U.Length - 1) >> 1] == (WCHAR)' ')
+        {
+            DllName_U.Buffer[(DllName_U.Length - 1) >> 1] = UNICODE_NULL;
             DllName_U.Length -= sizeof(WCHAR);
             DllName_U.MaximumLength -= sizeof(WCHAR);
-            }
         }
+    }
 
 
     AllocatedPath = NULL;
@@ -414,63 +385,52 @@ Return Value:
     //
     // Determine the path that the program was created from
     //
-    AllocatedPath
-        = BaseComputeProcessDllPath(
-            dwFlags & LOAD_WITH_ALTERED_SEARCH_PATH ? DllName_U.Buffer : NULL,
-            NULL
-            );
+    AllocatedPath = BaseComputeProcessDllPath(dwFlags & LOAD_WITH_ALTERED_SEARCH_PATH ? DllName_U.Buffer : NULL, NULL);
 
-    if ( !AllocatedPath ) {
+    if (!AllocatedPath)
+    {
         Status = STATUS_NO_MEMORY;
         goto Exit;
-        }
+    }
 
     //
     // Actually perform the library loading sequence.
     //
     RtlInitUnicodeString(&AllocatedPath_U, AllocatedPath);
-    try {
-        if (dwFlags & LOAD_LIBRARY_AS_DATAFILE) {
+    try
+    {
+        if (dwFlags & LOAD_LIBRARY_AS_DATAFILE)
+        {
 #ifdef WX86
             // LdrGetDllHandle clears UseKnownWx86Dll, but the value is
             // needed again by LdrLoadDll.
             BOOLEAN Wx86KnownDll = NtCurrentTeb()->Wx86Thread.UseKnownWx86Dll;
 #endif
-            Status = LdrGetDllHandle(
-                        AllocatedPath_U.Buffer,
-                        NULL,
-                        &DllName_U,
-                        (PVOID *)&hModule
-                        );
-            if (NT_SUCCESS( Status )) {
+            Status = LdrGetDllHandle(AllocatedPath_U.Buffer, NULL, &DllName_U, (PVOID *)&hModule);
+            if (NT_SUCCESS(Status))
+            {
 #ifdef WX86
                 NtCurrentTeb()->Wx86Thread.UseKnownWx86Dll = Wx86KnownDll;
 #endif
                 goto alreadyLoaded;
-                }
-            Status = BasepLoadLibraryAsDataFile( AllocatedPath_U.Buffer,
-                                                 &DllName_U,
-                                                 (PVOID *)&hModule
-                                               );
             }
-        else {
-alreadyLoaded:
-            Status = LdrLoadDll(
-                        AllocatedPath_U.Buffer,
-                        &DllCharacteristics,
-                        &DllName_U,
-                        (PVOID *)&hModule
-                        );
-            }
+            Status = BasepLoadLibraryAsDataFile(AllocatedPath_U.Buffer, &DllName_U, (PVOID *)&hModule);
         }
-    except (EXCEPTION_EXECUTE_HANDLER) {
+        else
+        {
+        alreadyLoaded:
+            Status = LdrLoadDll(AllocatedPath_U.Buffer, &DllCharacteristics, &DllName_U, (PVOID *)&hModule);
+        }
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
-        }
+    }
 Exit:
-    if ( TrimmedDllName )
+    if (TrimmedDllName)
         RtlFreeHeap(RtlProcessHeap(), 0, TrimmedDllName);
 
-    if ( AllocatedPath )
+    if (AllocatedPath)
         RtlFreeHeap(RtlProcessHeap(), 0, AllocatedPath);
 
     if (!NT_SUCCESS(Status))
@@ -479,10 +439,7 @@ Exit:
     return hModule;
 }
 
-BOOL
-FreeLibrary(
-    HMODULE hLibModule
-    )
+BOOL FreeLibrary(HMODULE hLibModule)
 
 /*++
 
@@ -520,39 +477,37 @@ Return Value:
 {
     NTSTATUS Status;
 
-    if (LDR_IS_DATAFILE(hLibModule)) {
+    if (LDR_IS_DATAFILE(hLibModule))
+    {
 
-        if (RtlImageNtHeader(LDR_DATAFILE_TO_VIEW(hLibModule))) {
+        if (RtlImageNtHeader(LDR_DATAFILE_TO_VIEW(hLibModule)))
+        {
 
-            Status = NtUnmapViewOfSection( NtCurrentProcess(),
-                                           LDR_DATAFILE_TO_VIEW(hLibModule)
-                                         );
+            Status = NtUnmapViewOfSection(NtCurrentProcess(), LDR_DATAFILE_TO_VIEW(hLibModule));
             LdrUnloadAlternateResourceModule(hLibModule);
-
-            }
-        else {
+        }
+        else
+        {
             Status = STATUS_INVALID_IMAGE_FORMAT;
-            }
         }
-    else {
-        Status = LdrUnloadDll( (PVOID)hLibModule );
-        }
+    }
+    else
+    {
+        Status = LdrUnloadDll((PVOID)hLibModule);
+    }
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
-    else {
+    }
+    else
+    {
         return TRUE;
-        }
+    }
 }
 
-VOID
-WINAPI
-FreeLibraryAndExitThread(
-    HMODULE hLibModule,
-    DWORD dwExitCode
-    )
+VOID WINAPI FreeLibraryAndExitThread(HMODULE hLibModule, DWORD dwExitCode)
 
 /*++
 
@@ -591,23 +546,19 @@ Return Value:
 --*/
 
 {
-    if (LDR_IS_DATAFILE(hLibModule)) {
-        NtUnmapViewOfSection( NtCurrentProcess(),
-                                       LDR_DATAFILE_TO_VIEW(hLibModule)
-                                     );
-        }
-    else {
-        LdrUnloadDll( (PVOID)hLibModule );
-        }
+    if (LDR_IS_DATAFILE(hLibModule))
+    {
+        NtUnmapViewOfSection(NtCurrentProcess(), LDR_DATAFILE_TO_VIEW(hLibModule));
+    }
+    else
+    {
+        LdrUnloadDll((PVOID)hLibModule);
+    }
 
     ExitThread(dwExitCode);
 }
 
-BOOL
-WINAPI
-DisableThreadLibraryCalls(
-    HMODULE hLibModule
-    )
+BOOL WINAPI DisableThreadLibraryCalls(HMODULE hLibModule)
 
 /*++
 
@@ -637,18 +588,15 @@ Return Value:
     rv = TRUE;
     Status = LdrDisableThreadCalloutsForDll(hLibModule);
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         rv = FALSE;
-        }
+    }
     return rv;
 }
 
-BOOL
-WINAPI
-SetDllDirectoryW(
-    IN LPCWSTR lpPathName
-    )
+BOOL WINAPI SetDllDirectoryW(IN LPCWSTR lpPathName)
 
 /*++
 
@@ -700,19 +648,24 @@ Notes:
 {
     UNICODE_STRING OldDllDirectory;
     UNICODE_STRING NewDllDirectory;
-    
-    if (lpPathName) {
 
-        if (wcschr(lpPathName, L';')) {
+    if (lpPathName)
+    {
+
+        if (wcschr(lpPathName, L';'))
+        {
             SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
         }
 
-        if (! RtlCreateUnicodeString(&NewDllDirectory, lpPathName)) {
+        if (!RtlCreateUnicodeString(&NewDllDirectory, lpPathName))
+        {
             SetLastError(ERROR_NOT_ENOUGH_MEMORY);
             return FALSE;
         }
-    } else {
+    }
+    else
+    {
         RtlInitUnicodeString(&NewDllDirectory, NULL);
     }
 
@@ -728,11 +681,7 @@ Notes:
     return TRUE;
 }
 
-BOOL
-WINAPI
-SetDllDirectoryA(
-    IN LPCSTR lpPathName
-    )
+BOOL WINAPI SetDllDirectoryA(IN LPCSTR lpPathName)
 
 /*++
 
@@ -747,20 +696,24 @@ Routine Description:
     UNICODE_STRING NewDllDirectory;
     NTSTATUS Status;
     ULONG Length;
-    
-    if (lpPathName) {
 
-        if (strchr(lpPathName, ';')) {
+    if (lpPathName)
+    {
+
+        if (strchr(lpPathName, ';'))
+        {
             SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
         }
 
-        if (! Basep8BitStringToDynamicUnicodeString(&NewDllDirectory,
-                                                    lpPathName)) {
+        if (!Basep8BitStringToDynamicUnicodeString(&NewDllDirectory, lpPathName))
+        {
             SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
         }
-    } else {
+    }
+    else
+    {
         RtlInitUnicodeString(&NewDllDirectory, NULL);
     }
 
@@ -778,10 +731,7 @@ Routine Description:
 
 DWORD
 WINAPI
-GetDllDirectoryW(
-    IN  DWORD  nBufferLength,
-    OUT LPWSTR lpBuffer
-    )
+GetDllDirectoryW(IN DWORD nBufferLength, OUT LPWSTR lpBuffer)
 
 /*++
 
@@ -807,19 +757,20 @@ Return Value:
 
 {
     DWORD Result;
-    
+
     RtlEnterCriticalSection(&BaseDllDirectoryLock);
 
-    if (nBufferLength * sizeof(WCHAR) <= BaseDllDirectory.Length) {
-        Result = ((BaseDllDirectory.Length + sizeof(UNICODE_NULL))
-                  / sizeof(WCHAR));
-        if (lpBuffer) {
+    if (nBufferLength * sizeof(WCHAR) <= BaseDllDirectory.Length)
+    {
+        Result = ((BaseDllDirectory.Length + sizeof(UNICODE_NULL)) / sizeof(WCHAR));
+        if (lpBuffer)
+        {
             lpBuffer[0] = UNICODE_NULL;
         }
-    } else {
-        RtlCopyMemory(lpBuffer,
-                      BaseDllDirectory.Buffer,
-                      BaseDllDirectory.Length);
+    }
+    else
+    {
+        RtlCopyMemory(lpBuffer, BaseDllDirectory.Buffer, BaseDllDirectory.Length);
         Result = BaseDllDirectory.Length / sizeof(WCHAR);
         lpBuffer[Result] = UNICODE_NULL;
     }
@@ -831,10 +782,7 @@ Return Value:
 
 DWORD
 WINAPI
-GetDllDirectoryA(
-    IN  DWORD  nBufferLength,
-    OUT LPSTR lpBuffer
-    )
+GetDllDirectoryA(IN DWORD nBufferLength, OUT LPSTR lpBuffer)
 
 /*++
 
@@ -846,8 +794,8 @@ Routine Description:
 
 {
     ANSI_STRING Ansi;
-    DWORD       Result;
-    NTSTATUS    Status;
+    DWORD Result;
+    NTSTATUS Status;
 
     RtlInitEmptyUnicodeString(&Ansi, lpBuffer, nBufferLength);
 
@@ -856,21 +804,24 @@ Routine Description:
     // Includes the NULL
     Result = BasepUnicodeStringTo8BitSize(&BaseDllDirectory);
 
-    if (Result <= nBufferLength) {
-        Status = BasepUnicodeStringTo8BitString(&Ansi,
-                                                &BaseDllDirectory,
-                                                FALSE);
+    if (Result <= nBufferLength)
+    {
+        Status = BasepUnicodeStringTo8BitString(&Ansi, &BaseDllDirectory, FALSE);
         Result--; // trim off the space needed for the NULL
-    } else {
+    }
+    else
+    {
         Status = STATUS_SUCCESS;
-        if (lpBuffer) {
+        if (lpBuffer)
+        {
             lpBuffer[0] = ANSI_NULL;
         }
     }
 
     RtlLeaveCriticalSection(&BaseDllDirectoryLock);
 
-    if (! NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         Result = 0;
         lpBuffer[0] = ANSI_NULL;
@@ -881,11 +832,7 @@ Routine Description:
 
 DWORD
 WINAPI
-GetModuleFileNameW(
-    HMODULE hModule,
-    LPWSTR lpFilename,
-    DWORD nSize
-    )
+GetModuleFileNameW(HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
 
 /*++
 
@@ -921,9 +868,9 @@ Arguments:
 
 {
     PLDR_DATA_TABLE_ENTRY Entry;
-    PLIST_ENTRY Head,Next;
+    PLIST_ENTRY Head, Next;
     DWORD ReturnCode;
-    PVOID DllHandle = BasepMapModuleHandle( hModule, FALSE );
+    PVOID DllHandle = BasepMapModuleHandle(hModule, FALSE);
     PUNICODE_STRING Ustr;
     PVOID LoaderLockCookie = NULL;
 
@@ -935,101 +882,100 @@ Arguments:
     // redirection
     //
 
-    if ( !ARGUMENT_PRESENT( hModule )) {
-        if ( RtlGetPerThreadCurdir() && RtlGetPerThreadCurdir()->ImageName ) {
+    if (!ARGUMENT_PRESENT(hModule))
+    {
+        if (RtlGetPerThreadCurdir() && RtlGetPerThreadCurdir()->ImageName)
+        {
             Ustr = RtlGetPerThreadCurdir()->ImageName;
             ReturnCode = (DWORD)Ustr->Length + sizeof(WCHAR);
-            if ( nSize < ReturnCode ) {
+            if (nSize < ReturnCode)
+            {
                 ReturnCode = nSize;
-                }
-            RtlMoveMemory(
-                lpFilename,
-                Ustr->Buffer,
-                ReturnCode
-                );
-            if ( ReturnCode == (DWORD)Ustr->Length + sizeof(WCHAR)) {
-                ReturnCode = (DWORD)Ustr->Length;
-                }
-            return ReturnCode/2;
             }
+            RtlMoveMemory(lpFilename, Ustr->Buffer, ReturnCode);
+            if (ReturnCode == (DWORD)Ustr->Length + sizeof(WCHAR))
+            {
+                ReturnCode = (DWORD)Ustr->Length;
+            }
+            return ReturnCode / 2;
         }
+    }
     LdrLockLoaderLock(LDR_LOCK_LOADER_LOCK_FLAG_RAISE_ON_ERRORS, NULL, &LoaderLockCookie);
-    try {
+    try
+    {
         Head = &NtCurrentPeb()->Ldr->InLoadOrderModuleList;
         Next = Head->Flink;
 
-        while ( Next != Head ) {
-            Entry = CONTAINING_RECORD(Next,LDR_DATA_TABLE_ENTRY,InLoadOrderLinks);
-            if ( DllHandle == (PVOID)Entry->DllBase ) {
+        while (Next != Head)
+        {
+            Entry = CONTAINING_RECORD(Next, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
+            if (DllHandle == (PVOID)Entry->DllBase)
+            {
                 ReturnCode = (DWORD)Entry->FullDllName.Length + sizeof(WCHAR);
-                if ( nSize < ReturnCode ) {
+                if (nSize < ReturnCode)
+                {
                     ReturnCode = nSize;
+                }
+                try
+                {
+                    RtlMoveMemory(lpFilename, Entry->FullDllName.Buffer, ReturnCode);
+                    if (ReturnCode == (DWORD)Entry->FullDllName.Length + sizeof(WCHAR))
+                    {
+                        ReturnCode = (DWORD)Entry->FullDllName.Length;
                     }
-                try {
-                    RtlMoveMemory(
-                        lpFilename,
-                        Entry->FullDllName.Buffer,
-                        ReturnCode
-                        );
-                    if ( ReturnCode == (DWORD)Entry->FullDllName.Length + sizeof(WCHAR)) {
-                        ReturnCode = (DWORD)Entry->FullDllName.Length ;
-                        }
                     goto finally_exit;
-                    }
-                except (EXCEPTION_EXECUTE_HANDLER) {
+                }
+                except(EXCEPTION_EXECUTE_HANDLER)
+                {
                     BaseSetLastNTError(GetExceptionCode());
                     return 0;
-                    }
                 }
-            Next = Next->Flink;
             }
-finally_exit:;
+            Next = Next->Flink;
         }
-    finally {
+    finally_exit:;
+    }
+    finally
+    {
         LdrUnlockLoaderLock(LDR_UNLOCK_LOADER_LOCK_FLAG_RAISE_ON_ERRORS, LoaderLockCookie);
-        }
-    return ReturnCode/2;
+    }
+    return ReturnCode / 2;
 }
 
 DWORD
-GetModuleFileNameA(
-    HMODULE hModule,
-    LPSTR lpFilename,
-    DWORD nSize
-    )
+GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 {
     NTSTATUS Status;
     ANSI_STRING AnsiString;
     UNICODE_STRING UnicodeString;
     DWORD ReturnCode;
 
-    UnicodeString.Buffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), nSize*2);
-    if ( !UnicodeString.Buffer ) {
-        BaseSetLastNTError( STATUS_NO_MEMORY );
+    UnicodeString.Buffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), nSize * 2);
+    if (!UnicodeString.Buffer)
+    {
+        BaseSetLastNTError(STATUS_NO_MEMORY);
         return 0;
-        }
+    }
     ReturnCode = GetModuleFileNameW(hModule, UnicodeString.Buffer, nSize);
-    UnicodeString.Length = UnicodeString.MaximumLength = (USHORT)ReturnCode*2;
+    UnicodeString.Length = UnicodeString.MaximumLength = (USHORT)ReturnCode * 2;
     UnicodeString.MaximumLength++;
     UnicodeString.MaximumLength++;
 
-    if (ReturnCode) {
-    Status = BasepUnicodeStringTo8BitString(&AnsiString, &UnicodeString, TRUE);
-    if (!NT_SUCCESS(Status) ) {
-        BaseSetLastNTError(Status);
-        RtlFreeUnicodeString(&UnicodeString);
-        return 0;
+    if (ReturnCode)
+    {
+        Status = BasepUnicodeStringTo8BitString(&AnsiString, &UnicodeString, TRUE);
+        if (!NT_SUCCESS(Status))
+        {
+            BaseSetLastNTError(Status);
+            RtlFreeUnicodeString(&UnicodeString);
+            return 0;
         }
 
-    ReturnCode = min( nSize, AnsiString.Length );
+        ReturnCode = min(nSize, AnsiString.Length);
 
-    RtlMoveMemory(
-        lpFilename,
-        AnsiString.Buffer,
-        nSize <= ReturnCode ? nSize : ReturnCode + 1
-        );
+        RtlMoveMemory(lpFilename, AnsiString.Buffer, nSize <= ReturnCode ? nSize : ReturnCode + 1);
 
-    RtlFreeAnsiString(&AnsiString);
+        RtlFreeAnsiString(&AnsiString);
     }
 
     RtlFreeUnicodeString(&UnicodeString);
@@ -1037,9 +983,7 @@ GetModuleFileNameA(
 }
 
 HMODULE
-GetModuleHandleA(
-    LPCSTR lpModuleName
-    )
+GetModuleHandleA(LPCSTR lpModuleName)
 
 /*++
 
@@ -1052,12 +996,14 @@ Routine Description:
 {
     PUNICODE_STRING Unicode;
 
-    if ( !ARGUMENT_PRESENT(lpModuleName) ) {
-        return( (HMODULE)(PVOID)NtCurrentPeb()->ImageBaseAddress );
-        }
+    if (!ARGUMENT_PRESENT(lpModuleName))
+    {
+        return ((HMODULE)(PVOID)NtCurrentPeb()->ImageBaseAddress);
+    }
 
-    Unicode = Basep8BitStringToStaticUnicodeString( lpModuleName );
-    if (Unicode == NULL) {
+    Unicode = Basep8BitStringToStaticUnicodeString(lpModuleName);
+    if (Unicode == NULL)
+    {
         return NULL;
     }
 
@@ -1066,9 +1012,7 @@ Routine Description:
 
 HMODULE
 WINAPI
-GetModuleHandleForUnicodeString(
-    IN PUNICODE_STRING ModuleName
-    )
+GetModuleHandleForUnicodeString(IN PUNICODE_STRING ModuleName)
 /*++
 
 Routine Description:
@@ -1100,59 +1044,53 @@ Return Value:
     // for the second LdrGetDllHandle call.
     Wx86KnownDll = NtCurrentTeb()->Wx86Thread.UseKnownWx86Dll;
 #endif
-    Status = LdrGetDllHandle(
-                (PWSTR)1,
-                NULL,
-                ModuleName,
-                (PVOID *)&hModule
-                );
-    if ( NT_SUCCESS(Status) ) {
+    Status = LdrGetDllHandle((PWSTR)1, NULL, ModuleName, (PVOID *)&hModule);
+    if (NT_SUCCESS(Status))
+    {
         return hModule;
-        }
+    }
 
     //
     // Determine the path that the program was created from
     //
 
-    AllocatedPath = BaseComputeProcessDllPath(NULL,NULL);
-    if (!AllocatedPath) {
+    AllocatedPath = BaseComputeProcessDllPath(NULL, NULL);
+    if (!AllocatedPath)
+    {
         Status = STATUS_NO_MEMORY;
         goto bail;
-        }
+    }
 #ifdef WX86
     NtCurrentTeb()->Wx86Thread.UseKnownWx86Dll = Wx86KnownDll;
 #endif
 
-    try {
+    try
+    {
 
-        Status = LdrGetDllHandle(
-                    AllocatedPath,
-                    NULL,
-                    ModuleName,
-                    (PVOID *)&hModule
-                    );
+        Status = LdrGetDllHandle(AllocatedPath, NULL, ModuleName, (PVOID *)&hModule);
         RtlFreeHeap(RtlProcessHeap(), 0, AllocatedPath);
-        }
-    except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
         RtlFreeHeap(RtlProcessHeap(), 0, AllocatedPath);
-        }
+    }
 
 bail:
-    if (!NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return NULL;
-        }
-    else {
+    }
+    else
+    {
         return hModule;
-        }
+    }
 }
 
 HMODULE
 WINAPI
-GetModuleHandleW(
-    LPCWSTR lpwModuleName
-    )
+GetModuleHandleW(LPCWSTR lpwModuleName)
 /*++
 
 Routine Description:
@@ -1183,62 +1121,52 @@ Return Value:
 --*/
 {
     HMODULE hModule;
-    BOOL    fSuccess;
+    BOOL fSuccess;
 
-    if (!ARGUMENT_PRESENT(lpwModuleName)) {
-        return( (HMODULE)(PVOID)NtCurrentPeb()->ImageBaseAddress );
+    if (!ARGUMENT_PRESENT(lpwModuleName))
+    {
+        return ((HMODULE)(PVOID)NtCurrentPeb()->ImageBaseAddress);
     }
 
-    fSuccess =
-        BasepGetModuleHandleExW(
-            BASEP_GET_MODULE_HANDLE_EX_NO_LOCK,
-            GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-            lpwModuleName,
-            &hModule
-            );
+    fSuccess = BasepGetModuleHandleExW(BASEP_GET_MODULE_HANDLE_EX_NO_LOCK, GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                                       lpwModuleName, &hModule);
     return fSuccess ? hModule : NULL;
 }
 
 ULONG
 WINAPI
-BasepGetModuleHandleExParameterValidation(
-    IN DWORD        dwFlags,
-    IN CONST VOID*  lpModuleName,
-    OUT HMODULE*    phModule
-    )
+BasepGetModuleHandleExParameterValidation(IN DWORD dwFlags, IN CONST VOID *lpModuleName, OUT HMODULE *phModule)
 {
     NTSTATUS Status = STATUS_SUCCESS;
 
     if (phModule != NULL)
         *phModule = NULL;
 
-    if ((dwFlags & ~(
-              GET_MODULE_HANDLE_EX_FLAG_PIN
-            | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT
-            | GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS
-            )) != 0) {
+    if ((dwFlags & ~(GET_MODULE_HANDLE_EX_FLAG_PIN | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT |
+                     GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS)) != 0)
+    {
         Status = STATUS_INVALID_PARAMETER_1;
         goto Error;
     }
-    if ((dwFlags & GET_MODULE_HANDLE_EX_FLAG_PIN) != 0
-            && (dwFlags & GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT) != 0
-            ) {
+    if ((dwFlags & GET_MODULE_HANDLE_EX_FLAG_PIN) != 0 && (dwFlags & GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT) != 0)
+    {
         Status = STATUS_INVALID_PARAMETER_1;
         goto Error;
     }
-    if (!ARGUMENT_PRESENT(lpModuleName)
-            && (dwFlags & GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS) != 0
-            ) {
+    if (!ARGUMENT_PRESENT(lpModuleName) && (dwFlags & GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS) != 0)
+    {
         Status = STATUS_INVALID_PARAMETER_1;
         goto Error;
     }
-    if (phModule == NULL) {
+    if (phModule == NULL)
+    {
         Status = STATUS_INVALID_PARAMETER_2;
         goto Error;
     }
 
-    if (!ARGUMENT_PRESENT(lpModuleName)) {
-        *phModule = ( (HMODULE)(PVOID)NtCurrentPeb()->ImageBaseAddress );
+    if (!ARGUMENT_PRESENT(lpModuleName))
+    {
+        *phModule = ((HMODULE)(PVOID)NtCurrentPeb()->ImageBaseAddress);
         goto Success;
     }
     goto Continue;
@@ -1251,12 +1179,7 @@ Continue:
     return BASEP_GET_MODULE_HANDLE_EX_PARAMETER_VALIDATION_CONTINUE;
 }
 
-BOOL
-GetModuleHandleExA(
-    IN DWORD        dwFlags,
-    IN LPCSTR       lpaModuleName,
-    OUT HMODULE*    phModule
-    )
+BOOL GetModuleHandleExA(IN DWORD dwFlags, IN LPCSTR lpaModuleName, OUT HMODULE *phModule)
 /*++
 
 Routine Description:
@@ -1269,7 +1192,7 @@ Routine Description:
     PUNICODE_STRING Unicode;
     ULONG Disposition;
     LPCWSTR lpwModuleName;
-    BOOL    fSuccess = FALSE;
+    BOOL fSuccess = FALSE;
 
     Disposition = BasepGetModuleHandleExParameterValidation(dwFlags, lpaModuleName, phModule);
     switch (Disposition)
@@ -1283,14 +1206,18 @@ Routine Description:
         break;
     }
 
-    if ((dwFlags & GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS) == 0) {
+    if ((dwFlags & GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS) == 0)
+    {
         Unicode = Basep8BitStringToStaticUnicodeString(lpaModuleName);
-        if (Unicode == NULL) {
+        if (Unicode == NULL)
+        {
             goto Exit;
         }
         lpwModuleName = Unicode->Buffer;
-    } else {
-        lpwModuleName = (LPCWSTR)(CONST VOID*)lpaModuleName;
+    }
+    else
+    {
+        lpwModuleName = (LPCWSTR)(CONST VOID *)lpaModuleName;
     }
 
     if (!BasepGetModuleHandleExW(0, dwFlags, lpwModuleName, phModule))
@@ -1300,16 +1227,10 @@ Exit:
     return fSuccess;
 }
 
-BOOL
-WINAPI
-GetModuleHandleExW(
-    IN DWORD        dwFlags,
-    IN LPCWSTR      lpwModuleName,
-    OUT HMODULE*    phModule
-    )
+BOOL WINAPI GetModuleHandleExW(IN DWORD dwFlags, IN LPCWSTR lpwModuleName, OUT HMODULE *phModule)
 {
     ULONG Disposition;
-    BOOL   fSuccess = FALSE;
+    BOOL fSuccess = FALSE;
 
     Disposition = BasepGetModuleHandleExParameterValidation(dwFlags, lpwModuleName, phModule);
     switch (Disposition)
@@ -1329,14 +1250,8 @@ Exit:
     return fSuccess;
 }
 
-BOOL
-WINAPI
-BasepGetModuleHandleExW(
-    IN DWORD        dwPrivateFlags,
-    IN DWORD        dwPublicFlags,
-    IN LPCWSTR      lpwModuleName,
-    OUT HMODULE*    phModule
-    )
+BOOL WINAPI BasepGetModuleHandleExW(IN DWORD dwPrivateFlags, IN DWORD dwPublicFlags, IN LPCWSTR lpwModuleName,
+                                    OUT HMODULE *phModule)
 {
     NTSTATUS Status = STATUS_SUCCESS;
     HMODULE hModule = NULL;
@@ -1348,70 +1263,84 @@ BasepGetModuleHandleExW(
     ULONG LdrFlags;
     PVOID LdrLockCookie = NULL;
 
-    RTL_SOFT_ASSERT(BasepGetModuleHandleExParameterValidation(dwPublicFlags, lpwModuleName, phModule) == BASEP_GET_MODULE_HANDLE_EX_PARAMETER_VALIDATION_CONTINUE);
+    RTL_SOFT_ASSERT(BasepGetModuleHandleExParameterValidation(dwPublicFlags, lpwModuleName, phModule) ==
+                    BASEP_GET_MODULE_HANDLE_EX_PARAMETER_VALIDATION_CONTINUE);
 
     AppPathDllName_U.Buffer = DllNameUnderImageDirBuffer;
-    AppPathDllName_U.Length = 0 ;
+    AppPathDllName_U.Length = 0;
     AppPathDllName_U.MaximumLength = sizeof(DllNameUnderImageDirBuffer);
 
     LocalDirDllName_U.Buffer = DllNameUnderLocalDirBuffer;
-    LocalDirDllName_U.Length = 0 ;
+    LocalDirDllName_U.Length = 0;
     LocalDirDllName_U.MaximumLength = sizeof(DllNameUnderLocalDirBuffer);
 
-    if ((dwPrivateFlags & BASEP_GET_MODULE_HANDLE_EX_NO_LOCK) == 0) {
+    if ((dwPrivateFlags & BASEP_GET_MODULE_HANDLE_EX_NO_LOCK) == 0)
+    {
         Status = LdrLockLoaderLock(0, NULL, &LdrLockCookie);
         if (!NT_SUCCESS(Status))
             goto Exit;
         HoldingLoaderLock = TRUE;
     }
-    __try {
-        if (dwPublicFlags & GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS) {
-            hModule = RtlPcToFileHeader((PVOID)lpwModuleName, (PVOID*)&hModule);
-            if (hModule == NULL) {
+    __try
+    {
+        if (dwPublicFlags & GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS)
+        {
+            hModule = RtlPcToFileHeader((PVOID)lpwModuleName, (PVOID *)&hModule);
+            if (hModule == NULL)
+            {
                 Status = STATUS_DLL_NOT_FOUND;
                 __leave;
             }
-        } else {
+        }
+        else
+        {
             RtlInitUnicodeString(&DllName_U, lpwModuleName);
 
             if ((NtCurrentPeb()->ProcessParameters != NULL) &&
                 (NtCurrentPeb()->ProcessParameters->Flags & RTL_USER_PROC_DLL_REDIRECTION_LOCAL))
-               DoDllRedirection = TRUE;
+                DoDllRedirection = TRUE;
 
-            if (DoDllRedirection) {
+            if (DoDllRedirection)
+            {
                 Status = RtlComputePrivatizedDllName_U(&DllName_U, &AppPathDllName_U, &LocalDirDllName_U);
-                if(!NT_SUCCESS(Status)) {
+                if (!NT_SUCCESS(Status))
+                {
                     __leave;
                 }
 
-                hModule = GetModuleHandleForUnicodeString(&LocalDirDllName_U) ;
-                if (!hModule )
-                    hModule = GetModuleHandleForUnicodeString(&AppPathDllName_U) ;
+                hModule = GetModuleHandleForUnicodeString(&LocalDirDllName_U);
+                if (!hModule)
+                    hModule = GetModuleHandleForUnicodeString(&AppPathDllName_U);
                 // Didn't find any re-directed DLL with this name loaded. Now we can just check for the
                 // original name passed in.
             }
-            if ( ! hModule)
-                hModule = GetModuleHandleForUnicodeString(&DllName_U) ;
-            if (hModule == NULL) {
+            if (!hModule)
+                hModule = GetModuleHandleForUnicodeString(&DllName_U);
+            if (hModule == NULL)
+            {
                 Status = NtCurrentTeb()->LastStatusValue;
                 __leave;
             }
         }
-        if (dwPublicFlags & GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT) {
+        if (dwPublicFlags & GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT)
+        {
             Status = STATUS_SUCCESS;
             __leave;
         }
         LdrFlags = (dwPublicFlags & GET_MODULE_HANDLE_EX_FLAG_PIN) ? LDR_ADDREF_DLL_PIN : 0;
         Status = LdrAddRefDll(LdrFlags, (PVOID)hModule);
-    } __finally {
-        if (HoldingLoaderLock) {
+    }
+    __finally
+    {
+        if (HoldingLoaderLock)
+        {
             NTSTATUS Status2 = LdrUnlockLoaderLock(0, LdrLockCookie);
             ASSERT(NT_SUCCESS(Status2));
             HoldingLoaderLock = FALSE;
         }
     }
 
-Exit : // cleanup
+Exit: // cleanup
     if (AppPathDllName_U.Buffer != DllNameUnderImageDirBuffer)
         RtlFreeUnicodeString(&AppPathDllName_U);
 
@@ -1427,10 +1356,7 @@ Exit : // cleanup
 }
 
 FARPROC
-GetProcAddress(
-    HMODULE hModule,
-    LPCSTR lpProcName
-    )
+GetProcAddress(HMODULE hModule, LPCSTR lpProcName)
 
 /*++
 
@@ -1484,48 +1410,45 @@ Return Value:
     PVOID ProcedureAddress;
     STRING ProcedureName;
 
-    if ( (ULONG_PTR)lpProcName > 0xffff ) {
-        RtlInitString(&ProcedureName,lpProcName);
-        Status = LdrGetProcedureAddress(
-                        BasepMapModuleHandle( hModule, FALSE ),
-                        &ProcedureName,
-                        0L,
-                        &ProcedureAddress
-                        );
-        }
-    else {
-        Status = LdrGetProcedureAddress(
-                        BasepMapModuleHandle( hModule, FALSE ),
-                        NULL,
-                        PtrToUlong((PVOID)lpProcName),
-                        &ProcedureAddress
-                        );
-        }
-    if ( !NT_SUCCESS(Status) ) {
+    if ((ULONG_PTR)lpProcName > 0xffff)
+    {
+        RtlInitString(&ProcedureName, lpProcName);
+        Status = LdrGetProcedureAddress(BasepMapModuleHandle(hModule, FALSE), &ProcedureName, 0L, &ProcedureAddress);
+    }
+    else
+    {
+        Status = LdrGetProcedureAddress(BasepMapModuleHandle(hModule, FALSE), NULL, PtrToUlong((PVOID)lpProcName),
+                                        &ProcedureAddress);
+    }
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return NULL;
-        }
-    else {
-        if ( ProcedureAddress == BasepMapModuleHandle( hModule, FALSE ) ) {
-            if ( (ULONG_PTR)lpProcName > 0xffff ) {
+    }
+    else
+    {
+        if (ProcedureAddress == BasepMapModuleHandle(hModule, FALSE))
+        {
+            if ((ULONG_PTR)lpProcName > 0xffff)
+            {
                 Status = STATUS_ENTRYPOINT_NOT_FOUND;
-                }
-            else {
+            }
+            else
+            {
                 Status = STATUS_ORDINAL_NOT_FOUND;
-                }
+            }
             BaseSetLastNTError(Status);
             return NULL;
-            }
-        else {
-            return (FARPROC)ProcedureAddress;
-            }
         }
+        else
+        {
+            return (FARPROC)ProcedureAddress;
+        }
+    }
 }
 
 DWORD
-GetVersion(
-    VOID
-    )
+GetVersion(VOID)
 
 /*++
 
@@ -1550,104 +1473,90 @@ Return Value:
 
     Peb = NtCurrentPeb();
 
-    return (((Peb->OSPlatformId ^ 0x2) << 30) |
-            (Peb->OSBuildNumber << 16) |
-            (Peb->OSMinorVersion << 8) |
-             Peb->OSMajorVersion
-           );
+    return (((Peb->OSPlatformId ^ 0x2) << 30) | (Peb->OSBuildNumber << 16) | (Peb->OSMinorVersion << 8) |
+            Peb->OSMajorVersion);
 }
 
 WINBASEAPI
-BOOL
-WINAPI
-GetVersionExA(
-    LPOSVERSIONINFOA lpVersionInformation
-    )
+BOOL WINAPI GetVersionExA(LPOSVERSIONINFOA lpVersionInformation)
 {
     OSVERSIONINFOEXW VersionInformationU;
     ANSI_STRING AnsiString;
     UNICODE_STRING UnicodeString;
     NTSTATUS Status;
 
-    if (lpVersionInformation->dwOSVersionInfoSize != sizeof( OSVERSIONINFOEXA ) &&
-        lpVersionInformation->dwOSVersionInfoSize != sizeof( *lpVersionInformation )
-       ) {
-        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+    if (lpVersionInformation->dwOSVersionInfoSize != sizeof(OSVERSIONINFOEXA) &&
+        lpVersionInformation->dwOSVersionInfoSize != sizeof(*lpVersionInformation))
+    {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return FALSE;
-        }
+    }
 
-    VersionInformationU.dwOSVersionInfoSize = sizeof( VersionInformationU );
-    if (GetVersionExW( (LPOSVERSIONINFOW)&VersionInformationU )) {
+    VersionInformationU.dwOSVersionInfoSize = sizeof(VersionInformationU);
+    if (GetVersionExW((LPOSVERSIONINFOW)&VersionInformationU))
+    {
         lpVersionInformation->dwMajorVersion = VersionInformationU.dwMajorVersion;
         lpVersionInformation->dwMinorVersion = VersionInformationU.dwMinorVersion;
-        lpVersionInformation->dwBuildNumber  = VersionInformationU.dwBuildNumber;
-        lpVersionInformation->dwPlatformId   = VersionInformationU.dwPlatformId;
-        if (lpVersionInformation->dwOSVersionInfoSize == sizeof( OSVERSIONINFOEXA )) {
+        lpVersionInformation->dwBuildNumber = VersionInformationU.dwBuildNumber;
+        lpVersionInformation->dwPlatformId = VersionInformationU.dwPlatformId;
+        if (lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOEXA))
+        {
             ((POSVERSIONINFOEXA)lpVersionInformation)->wServicePackMajor = VersionInformationU.wServicePackMajor;
             ((POSVERSIONINFOEXA)lpVersionInformation)->wServicePackMinor = VersionInformationU.wServicePackMinor;
             ((POSVERSIONINFOEXA)lpVersionInformation)->wSuiteMask = VersionInformationU.wSuiteMask;
             ((POSVERSIONINFOEXA)lpVersionInformation)->wProductType = VersionInformationU.wProductType;
             ((POSVERSIONINFOEXA)lpVersionInformation)->wReserved = VersionInformationU.wReserved;
-            }
+        }
 
         AnsiString.Buffer = lpVersionInformation->szCSDVersion;
         AnsiString.Length = 0;
-        AnsiString.MaximumLength = sizeof( lpVersionInformation->szCSDVersion );
+        AnsiString.MaximumLength = sizeof(lpVersionInformation->szCSDVersion);
 
-        RtlInitUnicodeString( &UnicodeString, VersionInformationU.szCSDVersion );
-        Status = RtlUnicodeStringToAnsiString( &AnsiString,
-                                               &UnicodeString,
-                                               FALSE
-                                             );
-        if (NT_SUCCESS( Status )) {
+        RtlInitUnicodeString(&UnicodeString, VersionInformationU.szCSDVersion);
+        Status = RtlUnicodeStringToAnsiString(&AnsiString, &UnicodeString, FALSE);
+        if (NT_SUCCESS(Status))
+        {
             return TRUE;
-            }
-        else {
+        }
+        else
+        {
             return FALSE;
-            }
         }
-    else {
+    }
+    else
+    {
         return FALSE;
-        }
+    }
 }
 
 WINBASEAPI
-BOOL
-WINAPI
-GetVersionExW(
-    LPOSVERSIONINFOW lpVersionInformation
-    )
+BOOL WINAPI GetVersionExW(LPOSVERSIONINFOW lpVersionInformation)
 {
     PPEB Peb;
     NTSTATUS Status;
 
-    if (lpVersionInformation->dwOSVersionInfoSize != sizeof( OSVERSIONINFOEXW ) &&
-        lpVersionInformation->dwOSVersionInfoSize != sizeof( *lpVersionInformation )
-       ) {
-        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+    if (lpVersionInformation->dwOSVersionInfoSize != sizeof(OSVERSIONINFOEXW) &&
+        lpVersionInformation->dwOSVersionInfoSize != sizeof(*lpVersionInformation))
+    {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return FALSE;
-        }
+    }
     Status = RtlGetVersion(lpVersionInformation);
-    if (Status == STATUS_SUCCESS) {
-        if (lpVersionInformation->dwOSVersionInfoSize ==
-                                            sizeof( OSVERSIONINFOEXW))
-            ((POSVERSIONINFOEXW)lpVersionInformation)->wReserved =
-                                        (UCHAR)BaseRCNumber;
+    if (Status == STATUS_SUCCESS)
+    {
+        if (lpVersionInformation->dwOSVersionInfoSize == sizeof(OSVERSIONINFOEXW))
+            ((POSVERSIONINFOEXW)lpVersionInformation)->wReserved = (UCHAR)BaseRCNumber;
         return TRUE;
-    } else {
+    }
+    else
+    {
         return FALSE;
     }
 }
 
 
 WINBASEAPI
-BOOL
-WINAPI
-VerifyVersionInfoW(
-    IN LPOSVERSIONINFOEXW VersionInfo,
-    IN DWORD TypeMask,
-    IN DWORDLONG ConditionMask
-    )
+BOOL WINAPI VerifyVersionInfoW(IN LPOSVERSIONINFOEXW VersionInfo, IN DWORD TypeMask, IN DWORDLONG ConditionMask)
 
 /*++
 
@@ -1680,10 +1589,13 @@ Return Value:
 
 
     Status = RtlVerifyVersionInfo(VersionInfo, TypeMask, ConditionMask);
-    if (Status == STATUS_INVALID_PARAMETER) {
-        SetLastError( ERROR_BAD_ARGUMENTS );
+    if (Status == STATUS_INVALID_PARAMETER)
+    {
+        SetLastError(ERROR_BAD_ARGUMENTS);
         return FALSE;
-    } else if (Status == STATUS_REVISION_MISMATCH) {
+    }
+    else if (Status == STATUS_REVISION_MISMATCH)
+    {
         SetLastError(ERROR_OLD_WIN_VERSION);
         return FALSE;
     }
@@ -1692,13 +1604,7 @@ Return Value:
 }
 
 WINBASEAPI
-BOOL
-WINAPI
-VerifyVersionInfoA(
-    IN LPOSVERSIONINFOEXA VersionInfo,
-    IN DWORD TypeMask,
-    IN DWORDLONG ConditionMask
-    )
+BOOL WINAPI VerifyVersionInfoA(IN LPOSVERSIONINFOEXA VersionInfo, IN DWORD TypeMask, IN DWORDLONG ConditionMask)
 
 /*++
 
@@ -1729,25 +1635,21 @@ Return Value:
 
     VersionInfoW.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXW);
 
-    VersionInfoW.dwMajorVersion      = VersionInfo->dwMajorVersion;
-    VersionInfoW.dwMinorVersion      = VersionInfo->dwMinorVersion;
-    VersionInfoW.dwBuildNumber       = VersionInfo->dwBuildNumber;
-    VersionInfoW.dwPlatformId        = VersionInfo->dwPlatformId;
-    VersionInfoW.wServicePackMajor   = VersionInfo->wServicePackMajor;
-    VersionInfoW.wServicePackMinor   = VersionInfo->wServicePackMinor;
-    VersionInfoW.wSuiteMask          = VersionInfo->wSuiteMask;
-    VersionInfoW.wProductType        = VersionInfo->wProductType;
-    VersionInfoW.wReserved           = VersionInfo->wReserved;
+    VersionInfoW.dwMajorVersion = VersionInfo->dwMajorVersion;
+    VersionInfoW.dwMinorVersion = VersionInfo->dwMinorVersion;
+    VersionInfoW.dwBuildNumber = VersionInfo->dwBuildNumber;
+    VersionInfoW.dwPlatformId = VersionInfo->dwPlatformId;
+    VersionInfoW.wServicePackMajor = VersionInfo->wServicePackMajor;
+    VersionInfoW.wServicePackMinor = VersionInfo->wServicePackMinor;
+    VersionInfoW.wSuiteMask = VersionInfo->wSuiteMask;
+    VersionInfoW.wProductType = VersionInfo->wProductType;
+    VersionInfoW.wReserved = VersionInfo->wReserved;
 
-    return VerifyVersionInfoW( &VersionInfoW, TypeMask, ConditionMask );
+    return VerifyVersionInfoW(&VersionInfoW, TypeMask, ConditionMask);
 }
 
 HRSRC
-FindResourceA(
-    HMODULE hModule,
-    LPCSTR lpName,
-    LPCSTR lpType
-    )
+FindResourceA(HMODULE hModule, LPCSTR lpName, LPCSTR lpType)
 
 /*++
 
@@ -1833,55 +1735,53 @@ Return Value:
 
 {
     NTSTATUS Status;
-    ULONG_PTR IdPath[ 3 ];
+    ULONG_PTR IdPath[3];
     PVOID p;
 
-    IdPath[ 0 ] = 0;
-    IdPath[ 1 ] = 0;
-    try {
-        if ((IdPath[ 0 ] = BaseDllMapResourceIdA( lpType )) == -1) {
+    IdPath[0] = 0;
+    IdPath[1] = 0;
+    try
+    {
+        if ((IdPath[0] = BaseDllMapResourceIdA(lpType)) == -1)
+        {
             Status = STATUS_INVALID_PARAMETER;
-            }
+        }
+        else if ((IdPath[1] = BaseDllMapResourceIdA(lpName)) == -1)
+        {
+            Status = STATUS_INVALID_PARAMETER;
+        }
         else
-        if ((IdPath[ 1 ] = BaseDllMapResourceIdA( lpName )) == -1) {
-            Status = STATUS_INVALID_PARAMETER;
-            }
-        else {
-            IdPath[ 2 ] = 0;
+        {
+            IdPath[2] = 0;
             p = NULL;
-            Status = LdrFindResource_U( BasepMapModuleHandle( hModule, TRUE ),
-                                        IdPath,
-                                        3,
-                                        (PIMAGE_RESOURCE_DATA_ENTRY *)&p
-                                      );
-            }
+            Status =
+                LdrFindResource_U(BasepMapModuleHandle(hModule, TRUE), IdPath, 3, (PIMAGE_RESOURCE_DATA_ENTRY *)&p);
         }
-    except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
-        }
+    }
 
     //
     // Free any strings allocated by BaseDllMapResourceIdA
     //
-    BaseDllFreeResourceId( IdPath[ 0 ] );
-    BaseDllFreeResourceId( IdPath[ 1 ] );
+    BaseDllFreeResourceId(IdPath[0]);
+    BaseDllFreeResourceId(IdPath[1]);
 
-    if (!NT_SUCCESS( Status )) {
-        BaseSetLastNTError( Status );
-        return( NULL );
-        }
-    else {
-        return( (HRSRC)p );
-        }
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        return (NULL);
+    }
+    else
+    {
+        return ((HRSRC)p);
+    }
 }
 
 HRSRC
-FindResourceExA(
-    HMODULE hModule,
-    LPCSTR lpType,
-    LPCSTR lpName,
-    WORD  wLanguage
-    )
+FindResourceExA(HMODULE hModule, LPCSTR lpType, LPCSTR lpName, WORD wLanguage)
 
 /*++
 
@@ -1974,53 +1874,53 @@ Return Value:
 
 {
     NTSTATUS Status;
-    ULONG_PTR IdPath[ 3 ];
+    ULONG_PTR IdPath[3];
     PVOID p;
 
-    IdPath[ 0 ] = 0;
-    IdPath[ 1 ] = 0;
-    try {
-        if ((IdPath[ 0 ] = BaseDllMapResourceIdA( lpType )) == -1) {
+    IdPath[0] = 0;
+    IdPath[1] = 0;
+    try
+    {
+        if ((IdPath[0] = BaseDllMapResourceIdA(lpType)) == -1)
+        {
             Status = STATUS_INVALID_PARAMETER;
-            }
+        }
+        else if ((IdPath[1] = BaseDllMapResourceIdA(lpName)) == -1)
+        {
+            Status = STATUS_INVALID_PARAMETER;
+        }
         else
-        if ((IdPath[ 1 ] = BaseDllMapResourceIdA( lpName )) == -1) {
-            Status = STATUS_INVALID_PARAMETER;
-            }
-        else {
-            IdPath[ 2 ] = (ULONG_PTR)wLanguage;
+        {
+            IdPath[2] = (ULONG_PTR)wLanguage;
             p = NULL;
-            Status = LdrFindResource_U( BasepMapModuleHandle( hModule, TRUE ),
-                                        IdPath,
-                                        3,
-                                        (PIMAGE_RESOURCE_DATA_ENTRY *)&p
-                                      );
-            }
+            Status =
+                LdrFindResource_U(BasepMapModuleHandle(hModule, TRUE), IdPath, 3, (PIMAGE_RESOURCE_DATA_ENTRY *)&p);
         }
-    except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
-        }
+    }
 
     //
     // Free any strings allocated by BaseDllMapResourceIdA
     //
-    BaseDllFreeResourceId( IdPath[ 0 ] );
-    BaseDllFreeResourceId( IdPath[ 1 ] );
+    BaseDllFreeResourceId(IdPath[0]);
+    BaseDllFreeResourceId(IdPath[1]);
 
-    if (!NT_SUCCESS( Status )) {
-        BaseSetLastNTError( Status );
-        return( NULL );
-        }
-    else {
-        return( (HRSRC)p );
-        }
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        return (NULL);
+    }
+    else
+    {
+        return ((HRSRC)p);
+    }
 }
 
 HGLOBAL
-LoadResource(
-    HMODULE hModule,
-    HRSRC hResInfo
-    )
+LoadResource(HMODULE hModule, HRSRC hResInfo)
 
 /*++
 
@@ -2054,31 +1954,29 @@ Return Value:
     NTSTATUS Status;
     PVOID p;
 
-    try {
-        Status = LdrAccessResource( BasepMapModuleHandle( hModule, TRUE ),
-                                    (PIMAGE_RESOURCE_DATA_ENTRY)hResInfo,
-                                    &p,
-                                    (PULONG)NULL
-                                  );
-        }
-    except (EXCEPTION_EXECUTE_HANDLER) {
+    try
+    {
+        Status = LdrAccessResource(BasepMapModuleHandle(hModule, TRUE), (PIMAGE_RESOURCE_DATA_ENTRY)hResInfo, &p,
+                                   (PULONG)NULL);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
-        }
+    }
 
-    if (!NT_SUCCESS( Status )) {
-        BaseSetLastNTError( Status );
-        return( NULL );
-        }
-    else {
-        return( (HGLOBAL)p );
-        }
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        return (NULL);
+    }
+    else
+    {
+        return ((HGLOBAL)p);
+    }
 }
 
 DWORD
-SizeofResource(
-    HMODULE hModule,
-    HRSRC hResInfo
-    )
+SizeofResource(HMODULE hModule, HRSRC hResInfo)
 
 /*++
 
@@ -2112,47 +2010,35 @@ Return Value:
     NTSTATUS Status;
     ULONG cb;
 
-    try {
-        Status = LdrAccessResource( BasepMapModuleHandle( hModule, TRUE ),
-                                    (PIMAGE_RESOURCE_DATA_ENTRY)hResInfo,
-                                    (PVOID *)NULL,
-                                    &cb
-                                  );
-        }
-    except (EXCEPTION_EXECUTE_HANDLER) {
+    try
+    {
+        Status = LdrAccessResource(BasepMapModuleHandle(hModule, TRUE), (PIMAGE_RESOURCE_DATA_ENTRY)hResInfo,
+                                   (PVOID *)NULL, &cb);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
-        }
+    }
 
-    if (!NT_SUCCESS( Status )) {
-        BaseSetLastNTError( Status );
-        return( 0 );
-        }
-    else {
-        return( (DWORD)cb );
-        }
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        return (0);
+    }
+    else
+    {
+        return ((DWORD)cb);
+    }
 }
 
 #ifdef _X86_
-BOOL
-__stdcall
-_ResourceCallEnumTypeRoutine(
-    ENUMRESTYPEPROCA EnumProc,
-    HMODULE hModule,
-    LPSTR lpType,
-    LONG lParam);
+BOOL __stdcall _ResourceCallEnumTypeRoutine(ENUMRESTYPEPROCA EnumProc, HMODULE hModule, LPSTR lpType, LONG lParam);
 #else
-#define _ResourceCallEnumTypeRoutine( EnumProc, hModule, lpType, lParam ) \
-    (*EnumProc)(hModule, lpType, lParam)
+#define _ResourceCallEnumTypeRoutine(EnumProc, hModule, lpType, lParam) (*EnumProc)(hModule, lpType, lParam)
 #endif
 
 
-BOOL
-WINAPI
-EnumResourceTypesA(
-    HMODULE hModule,
-    ENUMRESTYPEPROCA lpEnumFunc,
-    LONG_PTR lParam
-    )
+BOOL WINAPI EnumResourceTypesA(HMODULE hModule, ENUMRESTYPEPROCA lpEnumFunc, LONG_PTR lParam)
 
 /*++
 
@@ -2261,127 +2147,117 @@ Callback Function:
     ULONG BufferLength;
     ULONG Length;
 
-    DllHandle = BasepMapModuleHandle( hModule, TRUE );
-    TopResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)
-        RtlImageDirectoryEntryToData( (PVOID)DllHandle,
-                                      TRUE,
-                                      IMAGE_DIRECTORY_ENTRY_RESOURCE,
-                                      &i
-                                     );
-    if (!TopResourceDirectory) {
-        BaseSetLastNTError( STATUS_RESOURCE_DATA_NOT_FOUND );
+    DllHandle = BasepMapModuleHandle(hModule, TRUE);
+    TopResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)RtlImageDirectoryEntryToData((PVOID)DllHandle, TRUE,
+                                                                                   IMAGE_DIRECTORY_ENTRY_RESOURCE, &i);
+    if (!TopResourceDirectory)
+    {
+        BaseSetLastNTError(STATUS_RESOURCE_DATA_NOT_FOUND);
         return FALSE;
-        }
+    }
 
-    Status = LdrFindResourceDirectory_U( (PVOID)DllHandle,
-                                         NULL,
-                                         0,
-                                         &ResourceDirectory
-                                       );
-    if (!NT_SUCCESS( Status )) {
-        BaseSetLastNTError( Status );
+    Status = LdrFindResourceDirectory_U((PVOID)DllHandle, NULL, 0, &ResourceDirectory);
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 
     Buffer = NULL;
     BufferLength = 0;
     Result = TRUE;
-    try {
-        ResourceDirectoryEntry =
-            (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(ResourceDirectory+1);
-        for (i=0; i<ResourceDirectory->NumberOfNamedEntries; i++) {
-            ResourceNameString = (PIMAGE_RESOURCE_DIR_STRING_U)
-                ((PCHAR)TopResourceDirectory + ResourceDirectoryEntry->NameOffset);
-            if ((ULONG)(ResourceNameString->Length+1) >= BufferLength) {
-                if (Buffer) {
-                    RtlFreeHeap( RtlProcessHeap(), 0, Buffer );
+    try
+    {
+        ResourceDirectoryEntry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(ResourceDirectory + 1);
+        for (i = 0; i < ResourceDirectory->NumberOfNamedEntries; i++)
+        {
+            ResourceNameString =
+                (PIMAGE_RESOURCE_DIR_STRING_U)((PCHAR)TopResourceDirectory + ResourceDirectoryEntry->NameOffset);
+            if ((ULONG)(ResourceNameString->Length + 1) >= BufferLength)
+            {
+                if (Buffer)
+                {
+                    RtlFreeHeap(RtlProcessHeap(), 0, Buffer);
                     Buffer = NULL;
-                    }
+                }
 
                 BufferLength = (ResourceNameString->Length + 64) & ~63;
-                Buffer = RtlAllocateHeap( RtlProcessHeap(), MAKE_TAG( TMP_TAG ), BufferLength );
-                if (! Buffer) {
+                Buffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), BufferLength);
+                if (!Buffer)
+                {
                     /* Status will be set by RtlAllocateHeap */
                     Result = FALSE;
                     break;
-                    }
                 }
+            }
 
-            Status = RtlUnicodeToMultiByteN( Buffer,
-                                             BufferLength - 1,
-                                             &Length,
-                                             ResourceNameString->NameString,
-                                             ResourceNameString->Length * sizeof( WCHAR )
-                                           );
+            Status = RtlUnicodeToMultiByteN(Buffer, BufferLength - 1, &Length, ResourceNameString->NameString,
+                                            ResourceNameString->Length * sizeof(WCHAR));
 
-            if (!NT_SUCCESS( Status )) {
-                BaseSetLastNTError( Status );
+            if (!NT_SUCCESS(Status))
+            {
+                BaseSetLastNTError(Status);
                 Result = FALSE;
                 break;
             }
 
-            Buffer[ Length ] = '\0';
+            Buffer[Length] = '\0';
 
-            if (!_ResourceCallEnumTypeRoutine(lpEnumFunc, hModule, (LPSTR)Buffer, lParam )) {
+            if (!_ResourceCallEnumTypeRoutine(lpEnumFunc, hModule, (LPSTR)Buffer, lParam))
+            {
                 Result = FALSE;
                 break;
-                }
+            }
 
             ResourceDirectoryEntry++;
-            }
+        }
 
-        if (Result) {
-            for (i=0; i<ResourceDirectory->NumberOfIdEntries; i++) {
+        if (Result)
+        {
+            for (i = 0; i < ResourceDirectory->NumberOfIdEntries; i++)
+            {
                 lpType = (LPSTR)ResourceDirectoryEntry->Id;
-                if (!_ResourceCallEnumTypeRoutine(lpEnumFunc, hModule, lpType, lParam )) {
+                if (!_ResourceCallEnumTypeRoutine(lpEnumFunc, hModule, lpType, lParam))
+                {
                     Result = FALSE;
                     break;
-                    }
+                }
 
                 ResourceDirectoryEntry++;
-                }
             }
         }
-    except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
-        }
+    }
 
-    if (Buffer) {
-        RtlFreeHeap( RtlProcessHeap(), 0, Buffer );
-        }
+    if (Buffer)
+    {
+        RtlFreeHeap(RtlProcessHeap(), 0, Buffer);
+    }
 
-    if (!NT_SUCCESS( Status )) {
-        BaseSetLastNTError( Status );
-        return( FALSE );
-        }
-    else {
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        return (FALSE);
+    }
+    else
+    {
         return Result;
-        }
+    }
 }
 
 
 #ifdef _X86_
-BOOL
-__stdcall
-_ResourceCallEnumNameRoutine(
-    ENUMRESNAMEPROCA EnumProc,
-    HMODULE hModule,
-    LPCSTR lpType,
-    LPSTR lpName,
-    LONG lParam);
+BOOL __stdcall _ResourceCallEnumNameRoutine(ENUMRESNAMEPROCA EnumProc, HMODULE hModule, LPCSTR lpType, LPSTR lpName,
+                                            LONG lParam);
 #else
-#define _ResourceCallEnumNameRoutine( EnumProc, hModule, lpType, lpName, lParam ) \
+#define _ResourceCallEnumNameRoutine(EnumProc, hModule, lpType, lpName, lParam) \
     (*EnumProc)(hModule, lpType, lpName, lParam)
 #endif
 
-BOOL
-WINAPI
-EnumResourceNamesA(
-    HMODULE hModule,
-    LPCSTR lpType,
-    ENUMRESNAMEPROCA lpEnumFunc,
-    LONG_PTR lParam
-    )
+BOOL WINAPI EnumResourceNamesA(HMODULE hModule, LPCSTR lpType, ENUMRESNAMEPROCA lpEnumFunc, LONG_PTR lParam)
 
 /*++
 
@@ -2505,7 +2381,7 @@ Callback Function:
     BOOL Result;
     NTSTATUS Status;
     ULONG i;
-    ULONG_PTR IdPath[ 1 ];
+    ULONG_PTR IdPath[1];
     HANDLE DllHandle;
     PIMAGE_RESOURCE_DIRECTORY ResourceDirectory, TopResourceDirectory;
     PIMAGE_RESOURCE_DIRECTORY_ENTRY ResourceDirectoryEntry;
@@ -2515,72 +2391,74 @@ Callback Function:
     ULONG BufferLength;
     ULONG Length;
 
-    if ((IdPath[0] = BaseDllMapResourceIdA (lpType)) == -1) {
-        SetLastError (ERROR_INVALID_PARAMETER);
+    if ((IdPath[0] = BaseDllMapResourceIdA(lpType)) == -1)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
-    DllHandle = BasepMapModuleHandle (hModule, TRUE);
-    TopResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)
-        RtlImageDirectoryEntryToData ((PVOID)DllHandle,
-                                      TRUE,
-                                      IMAGE_DIRECTORY_ENTRY_RESOURCE,
-                                      &i);
-    if (!TopResourceDirectory) {
+    DllHandle = BasepMapModuleHandle(hModule, TRUE);
+    TopResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)RtlImageDirectoryEntryToData((PVOID)DllHandle, TRUE,
+                                                                                   IMAGE_DIRECTORY_ENTRY_RESOURCE, &i);
+    if (!TopResourceDirectory)
+    {
         Status = STATUS_RESOURCE_DATA_NOT_FOUND;
-    } else {
-        Status = LdrFindResourceDirectory_U ((PVOID)DllHandle,
-                                             IdPath,
-                                             1,
-                                             &ResourceDirectory);
+    }
+    else
+    {
+        Status = LdrFindResourceDirectory_U((PVOID)DllHandle, IdPath, 1, &ResourceDirectory);
     }
 
-    if (!NT_SUCCESS (Status)) {
-        BaseSetLastNTError (Status);
-        BaseDllFreeResourceId (IdPath[ 0 ]);
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        BaseDllFreeResourceId(IdPath[0]);
         return FALSE;
     }
 
     Buffer = NULL;
     BufferLength = 0;
     Result = TRUE;
-    SetLastError( NO_ERROR );
-    try {
-        ResourceDirectoryEntry =
-            (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(ResourceDirectory+1);
-        for (i=0; i<ResourceDirectory->NumberOfNamedEntries; i++) {
-            ResourceNameString = (PIMAGE_RESOURCE_DIR_STRING_U)
-                ((PCHAR)TopResourceDirectory + ResourceDirectoryEntry->NameOffset);
-            if ((ULONG)(ResourceNameString->Length+1) >= BufferLength) {
-                if (Buffer) {
-                    RtlFreeHeap( RtlProcessHeap(), 0, Buffer );
+    SetLastError(NO_ERROR);
+    try
+    {
+        ResourceDirectoryEntry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(ResourceDirectory + 1);
+        for (i = 0; i < ResourceDirectory->NumberOfNamedEntries; i++)
+        {
+            ResourceNameString =
+                (PIMAGE_RESOURCE_DIR_STRING_U)((PCHAR)TopResourceDirectory + ResourceDirectoryEntry->NameOffset);
+            if ((ULONG)(ResourceNameString->Length + 1) >= BufferLength)
+            {
+                if (Buffer)
+                {
+                    RtlFreeHeap(RtlProcessHeap(), 0, Buffer);
                     Buffer = NULL;
                 }
 
                 BufferLength = (ResourceNameString->Length + 64) & ~63;
-                Buffer = RtlAllocateHeap( RtlProcessHeap(), MAKE_TAG( TMP_TAG ), BufferLength );
-                if (Buffer == NULL) {
-                    BaseSetLastNTError (STATUS_NO_MEMORY);
+                Buffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), BufferLength);
+                if (Buffer == NULL)
+                {
+                    BaseSetLastNTError(STATUS_NO_MEMORY);
                     Result = FALSE;
                     break;
                 }
             }
 
-            Status = RtlUnicodeToMultiByteN (Buffer,
-                                             BufferLength - 1,
-                                             &Length,
-                                             ResourceNameString->NameString,
-                                             ResourceNameString->Length * sizeof(WCHAR));
+            Status = RtlUnicodeToMultiByteN(Buffer, BufferLength - 1, &Length, ResourceNameString->NameString,
+                                            ResourceNameString->Length * sizeof(WCHAR));
 
-            if (!NT_SUCCESS (Status)) {
-                BaseSetLastNTError (Status);
+            if (!NT_SUCCESS(Status))
+            {
+                BaseSetLastNTError(Status);
                 Result = FALSE;
                 break;
             }
 
             Buffer[Length] = '\0';
 
-            if (!_ResourceCallEnumNameRoutine (lpEnumFunc, hModule, lpType, (LPSTR)Buffer, lParam)) {
+            if (!_ResourceCallEnumNameRoutine(lpEnumFunc, hModule, lpType, (LPSTR)Buffer, lParam))
+            {
                 Result = FALSE;
                 break;
             }
@@ -2588,10 +2466,13 @@ Callback Function:
             ResourceDirectoryEntry++;
         }
 
-        if (Result) {
-            for (i=0; i<ResourceDirectory->NumberOfIdEntries; i++) {
+        if (Result)
+        {
+            for (i = 0; i < ResourceDirectory->NumberOfIdEntries; i++)
+            {
                 lpName = (LPSTR)ResourceDirectoryEntry->Id;
-                if (!_ResourceCallEnumNameRoutine (lpEnumFunc, hModule, lpType, lpName, lParam )) {
+                if (!_ResourceCallEnumNameRoutine(lpEnumFunc, hModule, lpType, lpName, lParam))
+                {
                     Result = FALSE;
                     break;
                 }
@@ -2599,48 +2480,37 @@ Callback Function:
                 ResourceDirectoryEntry++;
             }
         }
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-        BaseSetLastNTError( GetExceptionCode() );
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        BaseSetLastNTError(GetExceptionCode());
         Result = FALSE;
     }
 
-    if (Buffer) {
-        RtlFreeHeap( RtlProcessHeap(), 0, Buffer );
+    if (Buffer)
+    {
+        RtlFreeHeap(RtlProcessHeap(), 0, Buffer);
     }
 
     //
     // Free any string allocated by BaseDllMapResourceIdA
     //
-    BaseDllFreeResourceId( IdPath[ 0 ] );
+    BaseDllFreeResourceId(IdPath[0]);
 
     return Result;
 }
 
 
 #ifdef _X86_
-BOOL
-__stdcall
-_ResourceCallEnumLangRoutine(
-    ENUMRESLANGPROCA EnumProc,
-    HMODULE hModule,
-    LPCSTR lpType,
-    LPCSTR lpName,
-    WORD wLanguage,
-    LONG lParam);
+BOOL __stdcall _ResourceCallEnumLangRoutine(ENUMRESLANGPROCA EnumProc, HMODULE hModule, LPCSTR lpType, LPCSTR lpName,
+                                            WORD wLanguage, LONG lParam);
 #else
-#define _ResourceCallEnumLangRoutine( EnumProc, hModule, lpType, lpName, wLanguage, lParam ) \
+#define _ResourceCallEnumLangRoutine(EnumProc, hModule, lpType, lpName, wLanguage, lParam) \
     (*EnumProc)(hModule, lpType, lpName, wLanguage, lParam)
 #endif
 
-BOOL
-WINAPI
-EnumResourceLanguagesA(
-    HMODULE hModule,
-    LPCSTR lpType,
-    LPCSTR lpName,
-    ENUMRESLANGPROCA lpEnumFunc,
-    LONG_PTR lParam
-    )
+BOOL WINAPI EnumResourceLanguagesA(HMODULE hModule, LPCSTR lpType, LPCSTR lpName, ENUMRESLANGPROCA lpEnumFunc,
+                                   LONG_PTR lParam)
 
 /*++
 
@@ -2770,87 +2640,85 @@ Callback Function:
     BOOL Result;
     NTSTATUS Status;
     ULONG i;
-    ULONG_PTR IdPath[ 2 ];
+    ULONG_PTR IdPath[2];
     HANDLE DllHandle;
     PIMAGE_RESOURCE_DIRECTORY ResourceDirectory, TopResourceDirectory;
     PIMAGE_RESOURCE_DIRECTORY_ENTRY ResourceDirectoryEntry;
     USHORT wLanguage;
 
-    IdPath[ 1 ] = 0;
-    if ((IdPath[ 0 ] = BaseDllMapResourceIdA( lpType )) == -1) {
+    IdPath[1] = 0;
+    if ((IdPath[0] = BaseDllMapResourceIdA(lpType)) == -1)
+    {
         Status = STATUS_INVALID_PARAMETER;
-        }
+    }
+    else if ((IdPath[1] = BaseDllMapResourceIdA(lpName)) == -1)
+    {
+        Status = STATUS_INVALID_PARAMETER;
+    }
     else
-    if ((IdPath[ 1 ] = BaseDllMapResourceIdA( lpName )) == -1) {
-        Status = STATUS_INVALID_PARAMETER;
-        }
-    else {
-        DllHandle = BasepMapModuleHandle( hModule, TRUE );
-        TopResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)
-            RtlImageDirectoryEntryToData( (PVOID)DllHandle,
-                                          TRUE,
-                                          IMAGE_DIRECTORY_ENTRY_RESOURCE,
-                                          &i
-                                        );
-        if (!TopResourceDirectory) {
+    {
+        DllHandle = BasepMapModuleHandle(hModule, TRUE);
+        TopResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)RtlImageDirectoryEntryToData(
+            (PVOID)DllHandle, TRUE, IMAGE_DIRECTORY_ENTRY_RESOURCE, &i);
+        if (!TopResourceDirectory)
+        {
             Status = STATUS_RESOURCE_DATA_NOT_FOUND;
-            }
-        else {
-            Status = LdrFindResourceDirectory_U( (PVOID)DllHandle,
-                                                 IdPath,
-                                                 2,
-                                                 &ResourceDirectory
-                                               );
-            }
         }
+        else
+        {
+            Status = LdrFindResourceDirectory_U((PVOID)DllHandle, IdPath, 2, &ResourceDirectory);
+        }
+    }
 
-    if (!NT_SUCCESS( Status )) {
-        BaseDllFreeResourceId( IdPath[ 0 ] );
-        BaseDllFreeResourceId( IdPath[ 1 ] );
-        BaseSetLastNTError( Status );
+    if (!NT_SUCCESS(Status))
+    {
+        BaseDllFreeResourceId(IdPath[0]);
+        BaseDllFreeResourceId(IdPath[1]);
+        BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 
     Result = TRUE;
-    SetLastError( NO_ERROR );
-    try {
-        ResourceDirectoryEntry =
-            (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(ResourceDirectory+1);
-        if (ResourceDirectory->NumberOfNamedEntries != 0) {
-            BaseSetLastNTError( STATUS_INVALID_IMAGE_FORMAT );
+    SetLastError(NO_ERROR);
+    try
+    {
+        ResourceDirectoryEntry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(ResourceDirectory + 1);
+        if (ResourceDirectory->NumberOfNamedEntries != 0)
+        {
+            BaseSetLastNTError(STATUS_INVALID_IMAGE_FORMAT);
             Result = FALSE;
-            }
-        else {
-            for (i=0; i<ResourceDirectory->NumberOfIdEntries; i++) {
+        }
+        else
+        {
+            for (i = 0; i < ResourceDirectory->NumberOfIdEntries; i++)
+            {
                 wLanguage = ResourceDirectoryEntry->Id;
-                if (!_ResourceCallEnumLangRoutine(lpEnumFunc, hModule, lpType, lpName, wLanguage, lParam )) {
+                if (!_ResourceCallEnumLangRoutine(lpEnumFunc, hModule, lpType, lpName, wLanguage, lParam))
+                {
                     Result = FALSE;
                     break;
-                    }
+                }
 
                 ResourceDirectoryEntry++;
-                }
             }
         }
-    except (EXCEPTION_EXECUTE_HANDLER) {
-        BaseSetLastNTError( GetExceptionCode() );
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        BaseSetLastNTError(GetExceptionCode());
         Result = FALSE;
-        }
+    }
 
     //
     // Free any strings allocated by BaseDllMapResourceIdA
     //
-    BaseDllFreeResourceId( IdPath[ 0 ] );
-    BaseDllFreeResourceId( IdPath[ 1 ] );
+    BaseDllFreeResourceId(IdPath[0]);
+    BaseDllFreeResourceId(IdPath[1]);
     return Result;
 }
 
 
-BOOL
-WINAPI
-FreeResource(
-    HGLOBAL hResData
-    )
+BOOL WINAPI FreeResource(HGLOBAL hResData)
 {
     //
     // Can't fail so return Win 3.x success code.
@@ -2861,20 +2729,14 @@ FreeResource(
 
 LPVOID
 WINAPI
-LockResource(
-    HGLOBAL hResData
-    )
+LockResource(HGLOBAL hResData)
 {
-    return( (LPVOID)hResData );
+    return ((LPVOID)hResData);
 }
 
 
 HRSRC
-FindResourceW(
-    HMODULE hModule,
-    LPCWSTR lpName,
-    LPCWSTR lpType
-    )
+FindResourceW(HMODULE hModule, LPCWSTR lpName, LPCWSTR lpType)
 
 /*++
 
@@ -2960,55 +2822,53 @@ Return Value:
 
 {
     NTSTATUS Status;
-    ULONG_PTR IdPath[ 3 ];
+    ULONG_PTR IdPath[3];
     PVOID p;
 
-    IdPath[ 0 ] = 0;
-    IdPath[ 1 ] = 0;
-    try {
-        if ((IdPath[ 0 ] = BaseDllMapResourceIdW( lpType )) == -1) {
+    IdPath[0] = 0;
+    IdPath[1] = 0;
+    try
+    {
+        if ((IdPath[0] = BaseDllMapResourceIdW(lpType)) == -1)
+        {
             Status = STATUS_INVALID_PARAMETER;
-            }
+        }
+        else if ((IdPath[1] = BaseDllMapResourceIdW(lpName)) == -1)
+        {
+            Status = STATUS_INVALID_PARAMETER;
+        }
         else
-        if ((IdPath[ 1 ] = BaseDllMapResourceIdW( lpName )) == -1) {
-            Status = STATUS_INVALID_PARAMETER;
-            }
-        else {
-            IdPath[ 2 ] = 0;
+        {
+            IdPath[2] = 0;
             p = NULL;
-            Status = LdrFindResource_U( BasepMapModuleHandle( hModule, TRUE ),
-                                        IdPath,
-                                        3,
-                                        (PIMAGE_RESOURCE_DATA_ENTRY *)&p
-                                      );
-            }
+            Status =
+                LdrFindResource_U(BasepMapModuleHandle(hModule, TRUE), IdPath, 3, (PIMAGE_RESOURCE_DATA_ENTRY *)&p);
         }
-    except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
-        }
+    }
 
     //
     // Free any strings allocated by BaseDllMapResourceIdW
     //
-    BaseDllFreeResourceId( IdPath[ 0 ] );
-    BaseDllFreeResourceId( IdPath[ 1 ] );
+    BaseDllFreeResourceId(IdPath[0]);
+    BaseDllFreeResourceId(IdPath[1]);
 
-    if (!NT_SUCCESS( Status )) {
-        BaseSetLastNTError( Status );
-        return( NULL );
-        }
-    else {
-        return( (HRSRC)p );
-        }
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        return (NULL);
+    }
+    else
+    {
+        return ((HRSRC)p);
+    }
 }
 
 HRSRC
-FindResourceExW(
-    HMODULE hModule,
-    LPCWSTR lpType,
-    LPCWSTR lpName,
-    WORD  wLanguage
-    )
+FindResourceExW(HMODULE hModule, LPCWSTR lpType, LPCWSTR lpName, WORD wLanguage)
 
 /*++
 
@@ -3101,57 +2961,54 @@ Return Value:
 
 {
     NTSTATUS Status;
-    ULONG_PTR IdPath[ 3 ];
+    ULONG_PTR IdPath[3];
     PVOID p;
 
-    IdPath[ 0 ] = 0;
-    IdPath[ 1 ] = 0;
-    try {
-        if ((IdPath[ 0 ] = BaseDllMapResourceIdW( lpType )) == -1) {
+    IdPath[0] = 0;
+    IdPath[1] = 0;
+    try
+    {
+        if ((IdPath[0] = BaseDllMapResourceIdW(lpType)) == -1)
+        {
             Status = STATUS_INVALID_PARAMETER;
-            }
+        }
+        else if ((IdPath[1] = BaseDllMapResourceIdW(lpName)) == -1)
+        {
+            Status = STATUS_INVALID_PARAMETER;
+        }
         else
-        if ((IdPath[ 1 ] = BaseDllMapResourceIdW( lpName )) == -1) {
-            Status = STATUS_INVALID_PARAMETER;
-            }
-        else {
-            IdPath[ 2 ] = (ULONG_PTR)wLanguage;
+        {
+            IdPath[2] = (ULONG_PTR)wLanguage;
             p = NULL;
-            Status = LdrFindResource_U( BasepMapModuleHandle( hModule, TRUE ),
-                                      IdPath,
-                                      3,
-                                      (PIMAGE_RESOURCE_DATA_ENTRY *)&p
-                                    );
-            }
+            Status =
+                LdrFindResource_U(BasepMapModuleHandle(hModule, TRUE), IdPath, 3, (PIMAGE_RESOURCE_DATA_ENTRY *)&p);
         }
-    except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
-        }
+    }
 
     //
     // Free any strings allocated by BaseDllMapResourceIdW
     //
 
-    BaseDllFreeResourceId( IdPath[ 0 ] );
-    BaseDllFreeResourceId( IdPath[ 1 ] );
+    BaseDllFreeResourceId(IdPath[0]);
+    BaseDllFreeResourceId(IdPath[1]);
 
-    if (!NT_SUCCESS( Status )) {
-        BaseSetLastNTError( Status );
-        return( NULL );
-        }
-    else {
-        return( (HRSRC)p );
-        }
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        return (NULL);
+    }
+    else
+    {
+        return ((HRSRC)p);
+    }
 }
 
 
-BOOL
-APIENTRY
-EnumResourceTypesW(
-    HMODULE hModule,
-    ENUMRESTYPEPROCW lpEnumFunc,
-    LONG_PTR lParam
-    )
+BOOL APIENTRY EnumResourceTypesW(HMODULE hModule, ENUMRESTYPEPROCW lpEnumFunc, LONG_PTR lParam)
 
 /*++
 
@@ -3259,103 +3116,99 @@ Callback Function:
     LPWSTR Buffer;
     ULONG BufferLength;
 
-    DllHandle = BasepMapModuleHandle( hModule, TRUE );
-    TopResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)
-        RtlImageDirectoryEntryToData( (PVOID)DllHandle,
-                                      TRUE,
-                                      IMAGE_DIRECTORY_ENTRY_RESOURCE,
-                                      &i
-                                     );
-    if (!TopResourceDirectory) {
-        BaseSetLastNTError( STATUS_RESOURCE_DATA_NOT_FOUND );
+    DllHandle = BasepMapModuleHandle(hModule, TRUE);
+    TopResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)RtlImageDirectoryEntryToData((PVOID)DllHandle, TRUE,
+                                                                                   IMAGE_DIRECTORY_ENTRY_RESOURCE, &i);
+    if (!TopResourceDirectory)
+    {
+        BaseSetLastNTError(STATUS_RESOURCE_DATA_NOT_FOUND);
         return FALSE;
-        }
+    }
 
-    Status = LdrFindResourceDirectory_U( (PVOID)DllHandle,
-                                         NULL,
-                                         0,
-                                         &ResourceDirectory
-                                       );
-    if (!NT_SUCCESS( Status )) {
-        BaseSetLastNTError( Status );
+    Status = LdrFindResourceDirectory_U((PVOID)DllHandle, NULL, 0, &ResourceDirectory);
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 
     Buffer = NULL;
     BufferLength = 0;
     Result = TRUE;
-    try {
-        ResourceDirectoryEntry =
-            (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(ResourceDirectory+1);
-        for (i=0; i<ResourceDirectory->NumberOfNamedEntries; i++) {
-            ResourceNameString = (PIMAGE_RESOURCE_DIR_STRING_U)
-                ((PCHAR)TopResourceDirectory + ResourceDirectoryEntry->NameOffset);
-            if ((ULONG)((ResourceNameString->Length+1) * sizeof( WCHAR )) >= BufferLength) {
-                if (Buffer) {
-                    RtlFreeHeap( RtlProcessHeap(), 0, Buffer );
+    try
+    {
+        ResourceDirectoryEntry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(ResourceDirectory + 1);
+        for (i = 0; i < ResourceDirectory->NumberOfNamedEntries; i++)
+        {
+            ResourceNameString =
+                (PIMAGE_RESOURCE_DIR_STRING_U)((PCHAR)TopResourceDirectory + ResourceDirectoryEntry->NameOffset);
+            if ((ULONG)((ResourceNameString->Length + 1) * sizeof(WCHAR)) >= BufferLength)
+            {
+                if (Buffer)
+                {
+                    RtlFreeHeap(RtlProcessHeap(), 0, Buffer);
                     Buffer = NULL;
-                    }
+                }
 
-                BufferLength = ((ResourceNameString->Length * sizeof( WCHAR )) + 64) & ~63;
-                Buffer = RtlAllocateHeap( RtlProcessHeap(), MAKE_TAG( TMP_TAG ), BufferLength );
-                if (Buffer == NULL) {
-                    BaseSetLastNTError( STATUS_NO_MEMORY );
+                BufferLength = ((ResourceNameString->Length * sizeof(WCHAR)) + 64) & ~63;
+                Buffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), BufferLength);
+                if (Buffer == NULL)
+                {
+                    BaseSetLastNTError(STATUS_NO_MEMORY);
                     Result = FALSE;
                     break;
-                    }
                 }
-            RtlMoveMemory( Buffer,
-                           ResourceNameString->NameString,
-                           ResourceNameString->Length * sizeof( WCHAR )
-                         );
-            Buffer[ ResourceNameString->Length ] = UNICODE_NULL;
+            }
+            RtlMoveMemory(Buffer, ResourceNameString->NameString, ResourceNameString->Length * sizeof(WCHAR));
+            Buffer[ResourceNameString->Length] = UNICODE_NULL;
 
-            if (!_ResourceCallEnumTypeRoutine((ENUMRESTYPEPROCA)lpEnumFunc, hModule, (LPSTR)Buffer, lParam )) {
+            if (!_ResourceCallEnumTypeRoutine((ENUMRESTYPEPROCA)lpEnumFunc, hModule, (LPSTR)Buffer, lParam))
+            {
                 Result = FALSE;
                 break;
-                }
+            }
 
             ResourceDirectoryEntry++;
-            }
+        }
 
-        if (Result) {
-            for (i=0; i<ResourceDirectory->NumberOfIdEntries; i++) {
+        if (Result)
+        {
+            for (i = 0; i < ResourceDirectory->NumberOfIdEntries; i++)
+            {
                 lpType = (LPWSTR)ResourceDirectoryEntry->Id;
-                if (!_ResourceCallEnumTypeRoutine((ENUMRESTYPEPROCA)lpEnumFunc, hModule, (LPSTR)lpType, lParam )) {
+                if (!_ResourceCallEnumTypeRoutine((ENUMRESTYPEPROCA)lpEnumFunc, hModule, (LPSTR)lpType, lParam))
+                {
                     Result = FALSE;
                     break;
-                    }
+                }
 
                 ResourceDirectoryEntry++;
-                }
             }
         }
-    except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         Status = GetExceptionCode();
-        }
+    }
 
-    if (Buffer) {
-        RtlFreeHeap( RtlProcessHeap(), 0, Buffer );
-        }
+    if (Buffer)
+    {
+        RtlFreeHeap(RtlProcessHeap(), 0, Buffer);
+    }
 
-    if (!NT_SUCCESS( Status )) {
-        BaseSetLastNTError( Status );
-        return( FALSE );
-        }
-    else {
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        return (FALSE);
+    }
+    else
+    {
         return Result;
-        }
+    }
 }
 
 
-BOOL
-APIENTRY
-EnumResourceNamesW(
-    HMODULE hModule,
-    LPCWSTR lpType,
-    ENUMRESNAMEPROCW lpEnumFunc,
-    LONG_PTR lParam
-    )
+BOOL APIENTRY EnumResourceNamesW(HMODULE hModule, LPCWSTR lpType, ENUMRESNAMEPROCW lpEnumFunc, LONG_PTR lParam)
 
 /*++
 
@@ -3479,7 +3332,7 @@ Callback Function:
     BOOL Result;
     NTSTATUS Status;
     ULONG i;
-    ULONG_PTR IdPath[ 1 ];
+    ULONG_PTR IdPath[1];
     HANDLE DllHandle;
     PIMAGE_RESOURCE_DIRECTORY ResourceDirectory, TopResourceDirectory;
     PIMAGE_RESOURCE_DIRECTORY_ENTRY ResourceDirectoryEntry;
@@ -3488,111 +3341,110 @@ Callback Function:
     LPWSTR Buffer;
     ULONG BufferLength;
 
-    if ((IdPath[ 0 ] = BaseDllMapResourceIdW( lpType )) == -1) {
+    if ((IdPath[0] = BaseDllMapResourceIdW(lpType)) == -1)
+    {
         Status = STATUS_INVALID_PARAMETER;
-        }
-    else {
-        DllHandle = BasepMapModuleHandle( hModule, TRUE );
-        TopResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)
-            RtlImageDirectoryEntryToData( (PVOID)DllHandle,
-                                          TRUE,
-                                          IMAGE_DIRECTORY_ENTRY_RESOURCE,
-                                          &i
-                                        );
-        if (!TopResourceDirectory) {
+    }
+    else
+    {
+        DllHandle = BasepMapModuleHandle(hModule, TRUE);
+        TopResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)RtlImageDirectoryEntryToData(
+            (PVOID)DllHandle, TRUE, IMAGE_DIRECTORY_ENTRY_RESOURCE, &i);
+        if (!TopResourceDirectory)
+        {
             Status = STATUS_RESOURCE_DATA_NOT_FOUND;
-            }
-        else {
-            Status = LdrFindResourceDirectory_U( (PVOID)DllHandle,
-                                                 IdPath,
-                                                 1,
-                                                 &ResourceDirectory
-                                               );
-            }
         }
+        else
+        {
+            Status = LdrFindResourceDirectory_U((PVOID)DllHandle, IdPath, 1, &ResourceDirectory);
+        }
+    }
 
-    if (!NT_SUCCESS( Status )) {
-        BaseDllFreeResourceId( IdPath[ 0 ] );
-        BaseSetLastNTError( Status );
+    if (!NT_SUCCESS(Status))
+    {
+        BaseDllFreeResourceId(IdPath[0]);
+        BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 
     Buffer = NULL;
     BufferLength = 0;
     Result = TRUE;
-    try {
-        ResourceDirectoryEntry =
-            (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(ResourceDirectory+1);
-        for (i=0; i<ResourceDirectory->NumberOfNamedEntries; i++) {
-            ResourceNameString = (PIMAGE_RESOURCE_DIR_STRING_U)
-                ((PCHAR)TopResourceDirectory + ResourceDirectoryEntry->NameOffset);
-            if ((ULONG)((ResourceNameString->Length+1) * sizeof( WCHAR )) >= BufferLength) {
-                if (Buffer) {
-                    RtlFreeHeap( RtlProcessHeap(), 0, Buffer );
+    try
+    {
+        ResourceDirectoryEntry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(ResourceDirectory + 1);
+        for (i = 0; i < ResourceDirectory->NumberOfNamedEntries; i++)
+        {
+            ResourceNameString =
+                (PIMAGE_RESOURCE_DIR_STRING_U)((PCHAR)TopResourceDirectory + ResourceDirectoryEntry->NameOffset);
+            if ((ULONG)((ResourceNameString->Length + 1) * sizeof(WCHAR)) >= BufferLength)
+            {
+                if (Buffer)
+                {
+                    RtlFreeHeap(RtlProcessHeap(), 0, Buffer);
                     Buffer = NULL;
-                    }
+                }
 
-                BufferLength = ((ResourceNameString->Length * sizeof( WCHAR )) + 64) & ~63;
-                Buffer = RtlAllocateHeap( RtlProcessHeap(), MAKE_TAG( TMP_TAG ), BufferLength );
-                if (Buffer == NULL) {
-                    BaseSetLastNTError( STATUS_NO_MEMORY );
+                BufferLength = ((ResourceNameString->Length * sizeof(WCHAR)) + 64) & ~63;
+                Buffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), BufferLength);
+                if (Buffer == NULL)
+                {
+                    BaseSetLastNTError(STATUS_NO_MEMORY);
                     Result = FALSE;
                     break;
-                    }
                 }
-            RtlMoveMemory( Buffer,
-                           ResourceNameString->NameString,
-                           ResourceNameString->Length * sizeof( WCHAR )
-                         );
-            Buffer[ ResourceNameString->Length ] = UNICODE_NULL;
+            }
+            RtlMoveMemory(Buffer, ResourceNameString->NameString, ResourceNameString->Length * sizeof(WCHAR));
+            Buffer[ResourceNameString->Length] = UNICODE_NULL;
 
-            if (!_ResourceCallEnumNameRoutine((ENUMRESNAMEPROCA)lpEnumFunc, hModule, (LPSTR)lpType, (LPSTR)Buffer, lParam )) {
+            if (!_ResourceCallEnumNameRoutine((ENUMRESNAMEPROCA)lpEnumFunc, hModule, (LPSTR)lpType, (LPSTR)Buffer,
+                                              lParam))
+            {
                 Result = FALSE;
                 break;
-                }
+            }
 
             ResourceDirectoryEntry++;
-            }
+        }
 
-        if (Result) {
-            for (i=0; i<ResourceDirectory->NumberOfIdEntries; i++) {
+        if (Result)
+        {
+            for (i = 0; i < ResourceDirectory->NumberOfIdEntries; i++)
+            {
                 lpName = (LPWSTR)ResourceDirectoryEntry->Id;
-                if (!_ResourceCallEnumNameRoutine((ENUMRESNAMEPROCA)lpEnumFunc, hModule, (LPSTR)lpType, (LPSTR)lpName, lParam )) {
+                if (!_ResourceCallEnumNameRoutine((ENUMRESNAMEPROCA)lpEnumFunc, hModule, (LPSTR)lpType, (LPSTR)lpName,
+                                                  lParam))
+                {
                     Result = FALSE;
                     break;
-                    }
+                }
 
                 ResourceDirectoryEntry++;
-                }
             }
         }
-    except (EXCEPTION_EXECUTE_HANDLER) {
-        BaseSetLastNTError( GetExceptionCode() );
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        BaseSetLastNTError(GetExceptionCode());
         Result = FALSE;
-        }
+    }
 
-    if (Buffer) {
-        RtlFreeHeap( RtlProcessHeap(), 0, Buffer );
-        }
+    if (Buffer)
+    {
+        RtlFreeHeap(RtlProcessHeap(), 0, Buffer);
+    }
 
     //
     // Free any string allocated by BaseDllMapResourceIdW
     //
-    BaseDllFreeResourceId( IdPath[ 0 ] );
+    BaseDllFreeResourceId(IdPath[0]);
 
     return Result;
 }
 
 
-BOOL
-APIENTRY
-EnumResourceLanguagesW(
-    HMODULE hModule,
-    LPCWSTR lpType,
-    LPCWSTR lpName,
-    ENUMRESLANGPROCW lpEnumFunc,
-    LONG_PTR lParam
-    )
+BOOL APIENTRY EnumResourceLanguagesW(HMODULE hModule, LPCWSTR lpType, LPCWSTR lpName, ENUMRESLANGPROCW lpEnumFunc,
+                                     LONG_PTR lParam)
 
 /*++
 
@@ -3722,86 +3574,87 @@ Callback Function:
     BOOL Result;
     NTSTATUS Status;
     ULONG i;
-    ULONG_PTR IdPath[ 2 ];
+    ULONG_PTR IdPath[2];
     HANDLE DllHandle;
     PIMAGE_RESOURCE_DIRECTORY ResourceDirectory, TopResourceDirectory;
     PIMAGE_RESOURCE_DIRECTORY_ENTRY ResourceDirectoryEntry;
     USHORT wLanguage;
 
-    IdPath[ 1 ] = 0;
-    if ((IdPath[ 0 ] = BaseDllMapResourceIdW( lpType )) == -1) {
+    IdPath[1] = 0;
+    if ((IdPath[0] = BaseDllMapResourceIdW(lpType)) == -1)
+    {
         Status = STATUS_INVALID_PARAMETER;
-        }
+    }
+    else if ((IdPath[1] = BaseDllMapResourceIdW(lpName)) == -1)
+    {
+        Status = STATUS_INVALID_PARAMETER;
+    }
     else
-    if ((IdPath[ 1 ] = BaseDllMapResourceIdW( lpName )) == -1) {
-        Status = STATUS_INVALID_PARAMETER;
-        }
-    else {
-        DllHandle = BasepMapModuleHandle( hModule, TRUE );
-        TopResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)
-            RtlImageDirectoryEntryToData( (PVOID)DllHandle,
-                                          TRUE,
-                                          IMAGE_DIRECTORY_ENTRY_RESOURCE,
-                                          &i
-                                        );
-        if (!TopResourceDirectory) {
+    {
+        DllHandle = BasepMapModuleHandle(hModule, TRUE);
+        TopResourceDirectory = (PIMAGE_RESOURCE_DIRECTORY)RtlImageDirectoryEntryToData(
+            (PVOID)DllHandle, TRUE, IMAGE_DIRECTORY_ENTRY_RESOURCE, &i);
+        if (!TopResourceDirectory)
+        {
             Status = STATUS_RESOURCE_DATA_NOT_FOUND;
-            }
-        else {
-            Status = LdrFindResourceDirectory_U( (PVOID)DllHandle,
-                                                 IdPath,
-                                                 2,
-                                                 &ResourceDirectory
-                                               );
-            }
         }
+        else
+        {
+            Status = LdrFindResourceDirectory_U((PVOID)DllHandle, IdPath, 2, &ResourceDirectory);
+        }
+    }
 
-    if (!NT_SUCCESS( Status )) {
-        BaseDllFreeResourceId( IdPath[ 0 ] );
-        BaseDllFreeResourceId( IdPath[ 1 ] );
-        BaseSetLastNTError( Status );
+    if (!NT_SUCCESS(Status))
+    {
+        BaseDllFreeResourceId(IdPath[0]);
+        BaseDllFreeResourceId(IdPath[1]);
+        BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 
     Result = TRUE;
-    try {
-        ResourceDirectoryEntry =
-            (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(ResourceDirectory+1);
-        if (ResourceDirectory->NumberOfNamedEntries != 0) {
-            BaseSetLastNTError( STATUS_INVALID_IMAGE_FORMAT );
+    try
+    {
+        ResourceDirectoryEntry = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(ResourceDirectory + 1);
+        if (ResourceDirectory->NumberOfNamedEntries != 0)
+        {
+            BaseSetLastNTError(STATUS_INVALID_IMAGE_FORMAT);
             Result = FALSE;
-            }
-        else {
-            for (i=0; i<ResourceDirectory->NumberOfIdEntries; i++) {
+        }
+        else
+        {
+            for (i = 0; i < ResourceDirectory->NumberOfIdEntries; i++)
+            {
                 wLanguage = ResourceDirectoryEntry->Id;
-                if (!_ResourceCallEnumLangRoutine((ENUMRESLANGPROCA)lpEnumFunc, hModule, (LPSTR)lpType, (LPSTR)lpName, wLanguage, lParam )) {
+                if (!_ResourceCallEnumLangRoutine((ENUMRESLANGPROCA)lpEnumFunc, hModule, (LPSTR)lpType, (LPSTR)lpName,
+                                                  wLanguage, lParam))
+                {
                     Result = FALSE;
                     break;
-                    }
+                }
 
                 ResourceDirectoryEntry++;
-                }
             }
         }
-    except (EXCEPTION_EXECUTE_HANDLER) {
-        BaseSetLastNTError( GetExceptionCode() );
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        BaseSetLastNTError(GetExceptionCode());
         Result = FALSE;
-        }
+    }
 
     //
     // Free any strings allocated by BaseDllMapResourceIdW
     //
-    BaseDllFreeResourceId( IdPath[ 0 ] );
-    BaseDllFreeResourceId( IdPath[ 1 ] );
+    BaseDllFreeResourceId(IdPath[0]);
+    BaseDllFreeResourceId(IdPath[1]);
 
     return Result;
 }
 
 
 ULONG_PTR
-BaseDllMapResourceIdA(
-    LPCSTR lpId
-    )
+BaseDllMapResourceIdA(LPCSTR lpId)
 {
     NTSTATUS Status;
     ULONG_PTR Id;
@@ -3810,56 +3663,62 @@ BaseDllMapResourceIdA(
     ANSI_STRING AnsiString;
     PWSTR s;
 
-    try {
-        if ((ULONG_PTR)lpId >= LDR_RESOURCE_ID_NAME_MINVAL) {
+    try
+    {
+        if ((ULONG_PTR)lpId >= LDR_RESOURCE_ID_NAME_MINVAL)
+        {
 
-            if (*lpId == '#') {
-                Status = RtlCharToInteger( lpId+1, 10, &ulId );
+            if (*lpId == '#')
+            {
+                Status = RtlCharToInteger(lpId + 1, 10, &ulId);
                 Id = ulId;
-                if (!NT_SUCCESS( Status ) || (Id & LDR_RESOURCE_ID_NAME_MASK)) {
-                    if (NT_SUCCESS( Status )) {
+                if (!NT_SUCCESS(Status) || (Id & LDR_RESOURCE_ID_NAME_MASK))
+                {
+                    if (NT_SUCCESS(Status))
+                    {
                         Status = STATUS_INVALID_PARAMETER;
-                        }
-                    BaseSetLastNTError( Status );
+                    }
+                    BaseSetLastNTError(Status);
                     Id = (ULONG)-1;
-                    }
                 }
-            else {
-                RtlInitAnsiString( &AnsiString, lpId );
-                Status = RtlAnsiStringToUnicodeString( &UnicodeString,
-                                                       &AnsiString,
-                                                       TRUE
-                                                     );
-                if (!NT_SUCCESS( Status )){
-                    BaseSetLastNTError( Status );
+            }
+            else
+            {
+                RtlInitAnsiString(&AnsiString, lpId);
+                Status = RtlAnsiStringToUnicodeString(&UnicodeString, &AnsiString, TRUE);
+                if (!NT_SUCCESS(Status))
+                {
+                    BaseSetLastNTError(Status);
                     Id = (ULONG_PTR)-1;
-                    }
-                else {
+                }
+                else
+                {
                     s = UnicodeString.Buffer;
-                    while (*s != UNICODE_NULL) {
-                        *s = RtlUpcaseUnicodeChar( *s );
+                    while (*s != UNICODE_NULL)
+                    {
+                        *s = RtlUpcaseUnicodeChar(*s);
                         s++;
-                        }
+                    }
 
                     Id = (ULONG_PTR)UnicodeString.Buffer;
-                    }
                 }
             }
-        else {
+        }
+        else
+        {
             Id = (ULONG_PTR)lpId;
-            }
         }
-    except (EXCEPTION_EXECUTE_HANDLER) {
-        BaseSetLastNTError( GetExceptionCode() );
-        Id =  (ULONG_PTR)-1;
-        }
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        BaseSetLastNTError(GetExceptionCode());
+        Id = (ULONG_PTR)-1;
+    }
     return Id;
 }
 
 ULONG_PTR
-BaseDllMapResourceIdW(
-    LPCWSTR lpId
-    )
+BaseDllMapResourceIdW(LPCWSTR lpId)
 {
     NTSTATUS Status;
     UNICODE_STRING UnicodeString;
@@ -3867,74 +3726,79 @@ BaseDllMapResourceIdW(
     ULONG ulId;
     PWSTR s;
 
-    try {
-        if ((ULONG_PTR)lpId >= LDR_RESOURCE_ID_NAME_MINVAL) {
-            if (*lpId == '#') {
-                RtlInitUnicodeString( &UnicodeString, lpId+1 );
-                Status = RtlUnicodeStringToInteger( &UnicodeString, 10, &ulId );
+    try
+    {
+        if ((ULONG_PTR)lpId >= LDR_RESOURCE_ID_NAME_MINVAL)
+        {
+            if (*lpId == '#')
+            {
+                RtlInitUnicodeString(&UnicodeString, lpId + 1);
+                Status = RtlUnicodeStringToInteger(&UnicodeString, 10, &ulId);
                 Id = ulId;
-                if (!NT_SUCCESS( Status ) || Id > LDR_RESOURCE_ID_NAME_MASK) {
-                    if (NT_SUCCESS( Status )) {
+                if (!NT_SUCCESS(Status) || Id > LDR_RESOURCE_ID_NAME_MASK)
+                {
+                    if (NT_SUCCESS(Status))
+                    {
                         Status = STATUS_INVALID_PARAMETER;
-                        }
-                    BaseSetLastNTError( Status );
-                    Id = (ULONG_PTR)-1;
                     }
+                    BaseSetLastNTError(Status);
+                    Id = (ULONG_PTR)-1;
                 }
-            else {
-                s = RtlAllocateHeap( RtlProcessHeap(), MAKE_TAG( TMP_TAG ), (wcslen( lpId ) + 1) * sizeof( WCHAR ) );
-                if (s == NULL) {
-                    BaseSetLastNTError( STATUS_NO_MEMORY );
+            }
+            else
+            {
+                s = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), (wcslen(lpId) + 1) * sizeof(WCHAR));
+                if (s == NULL)
+                {
+                    BaseSetLastNTError(STATUS_NO_MEMORY);
                     Id = (ULONG_PTR)-1;
-                    }
-                else {
+                }
+                else
+                {
                     Id = (ULONG_PTR)s;
 
-                    while (*lpId != UNICODE_NULL) {
-                            *s++ = RtlUpcaseUnicodeChar( *lpId++ );
-                            }
+                    while (*lpId != UNICODE_NULL)
+                    {
+                        *s++ = RtlUpcaseUnicodeChar(*lpId++);
+                    }
 
                     *s = UNICODE_NULL;
-                    }
                 }
             }
-        else {
+        }
+        else
+        {
             Id = (ULONG_PTR)lpId;
-            }
         }
-    except (EXCEPTION_EXECUTE_HANDLER) {
-        BaseSetLastNTError( GetExceptionCode() );
-        Id =  (ULONG_PTR)-1;
-        }
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        BaseSetLastNTError(GetExceptionCode());
+        Id = (ULONG_PTR)-1;
+    }
 
     return Id;
 }
 
 
-VOID
-BaseDllFreeResourceId(
-    ULONG_PTR Id
-    )
+VOID BaseDllFreeResourceId(ULONG_PTR Id)
 {
     UNICODE_STRING UnicodeString;
 
-    if (Id >= LDR_RESOURCE_ID_NAME_MINVAL && Id != -1) {
+    if (Id >= LDR_RESOURCE_ID_NAME_MINVAL && Id != -1)
+    {
         UnicodeString.Buffer = (PWSTR)Id;
         UnicodeString.Length = 0;
         UnicodeString.MaximumLength = 0;
-        RtlFreeUnicodeString( &UnicodeString );
-        }
+        RtlFreeUnicodeString(&UnicodeString);
+    }
 }
 
 
-INT_PTR ReturnMem16Data(
-    DWORD dwReserved1,
-    DWORD dwReserved2,
-    DWORD dwReserved3
-    )
+INT_PTR ReturnMem16Data(DWORD dwReserved1, DWORD dwReserved2, DWORD dwReserved3)
 {
-// Since there's _currently_ no other app we know that this will be useful for, we can
-// always return "our" value.
+    // Since there's _currently_ no other app we know that this will be useful for, we can
+    // always return "our" value.
 
     // Elmo's Preschool Deluxe is looking for free physical or virtual mem.  Give it a
     // Number it will be happy with.
@@ -3946,16 +3810,8 @@ INT_PTR ReturnMem16Data(
 }
 
 
-BOOL
-UTRegister(
-    HMODULE hInst32,
-    LPSTR lpszDll16,
-    LPSTR lpszInitFunc,
-    LPSTR lpszThunkFunc,
-    FARPROC *ppfnThunk32Func,
-    FARPROC Callback,
-    PVOID lpvData
-    )
+BOOL UTRegister(HMODULE hInst32, LPSTR lpszDll16, LPSTR lpszInitFunc, LPSTR lpszThunkFunc, FARPROC *ppfnThunk32Func,
+                FARPROC Callback, PVOID lpvData)
 {
 
     //
@@ -3968,8 +3824,7 @@ UTRegister(
     // Sure, we could have checked this on a compat bit instead, but the ISV is the
     // Children's Television Workshop people and if they do this silliness in any
     // of their other apps, we'll get those fixed "for free".
-    if ( 0 == lstrcmpi( lpszDll16, (LPCSTR)"mem16.dll" ) &&
-         0 == lstrcmpi( lpszThunkFunc, (LPCSTR)"GetMemory" ) )
+    if (0 == lstrcmpi(lpszDll16, (LPCSTR) "mem16.dll") && 0 == lstrcmpi(lpszThunkFunc, (LPCSTR) "GetMemory"))
     {
         //
         // Elmo's Preschool Deluxe calls to a 16bit dll they ship just
@@ -3977,18 +3832,15 @@ UTRegister(
         // will give it numbers that makes it happy.
         //
         *ppfnThunk32Func = ReturnMem16Data;
-       return(TRUE);
+        return (TRUE);
     }
 
     // Stub this function for King's Quest and Bodyworks 5.0 and other random Win 95 apps.
-    return(FALSE);
+    return (FALSE);
 }
 
 
-VOID
-UTUnRegister(
-    HMODULE hInst32
-    )
+VOID UTUnRegister(HMODULE hInst32)
 {
     // Stub this function for King's Quest and Bodyworks 5.0 and other random Win 95 apps.
     return;

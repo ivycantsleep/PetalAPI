@@ -30,17 +30,13 @@ Revision History:
 // really a ksemaphore and not something else, like deallocated pool.
 //
 
-#define ASSERT_SEMAPHORE(E) {                    \
-    ASSERT((E)->Header.Type == SemaphoreObject); \
-}
+#define ASSERT_SEMAPHORE(E)                          \
+    {                                                \
+        ASSERT((E)->Header.Type == SemaphoreObject); \
+    }
 
-
-VOID
-KeInitializeSemaphore (
-    IN PRKSEMAPHORE Semaphore,
-    IN LONG Count,
-    IN LONG Limit
-    )
+
+VOID KeInitializeSemaphore(IN PRKSEMAPHORE Semaphore, IN LONG Count, IN LONG Limit)
 
 /*++
 
@@ -80,11 +76,8 @@ Return Value:
     Semaphore->Limit = Limit;
     return;
 }
-
-LONG
-KeReadStateSemaphore (
-    IN PRKSEMAPHORE Semaphore
-    )
+
+LONG KeReadStateSemaphore(IN PRKSEMAPHORE Semaphore)
 
 /*++
 
@@ -105,7 +98,7 @@ Return Value:
 
 {
 
-    ASSERT_SEMAPHORE( Semaphore );
+    ASSERT_SEMAPHORE(Semaphore);
 
     //
     // Return current signal state of semaphore object.
@@ -113,14 +106,8 @@ Return Value:
 
     return Semaphore->Header.SignalState;
 }
-
-LONG
-KeReleaseSemaphore (
-    IN PRKSEMAPHORE Semaphore,
-    IN KPRIORITY Increment,
-    IN LONG Adjustment,
-    IN BOOLEAN Wait
-    )
+
+LONG KeReleaseSemaphore(IN PRKSEMAPHORE Semaphore, IN KPRIORITY Increment, IN LONG Adjustment, IN BOOLEAN Wait)
 
 /*++
 
@@ -159,7 +146,7 @@ Return Value:
     LONG OldState;
     PRKTHREAD Thread;
 
-    ASSERT_SEMAPHORE( Semaphore );
+    ASSERT_SEMAPHORE(Semaphore);
     ASSERT(KeGetCurrentIrql() <= DISPATCH_LEVEL);
 
     //
@@ -181,7 +168,8 @@ Return Value:
     // then unlock the dispatcher database, and raise an exception.
     //
 
-    if ((NewState > Semaphore->Limit) || (NewState < OldState)) {
+    if ((NewState > Semaphore->Limit) || (NewState < OldState))
+    {
         KiUnlockDispatcherDatabase(OldIrql);
         ExRaiseStatus(STATUS_SEMAPHORE_LIMIT_EXCEEDED);
     }
@@ -194,7 +182,8 @@ Return Value:
     //
 
     Semaphore->Header.SignalState = NewState;
-    if ((OldState == 0) && (IsListEmpty(&Semaphore->Header.WaitListHead) == FALSE)) {
+    if ((OldState == 0) && (IsListEmpty(&Semaphore->Header.WaitListHead) == FALSE))
+    {
         KiWaitTest(Semaphore, Increment);
     }
 
@@ -205,12 +194,14 @@ Return Value:
     // previous value.
     //
 
-    if (Wait != FALSE) {
+    if (Wait != FALSE)
+    {
         Thread = KeGetCurrentThread();
         Thread->WaitNext = Wait;
         Thread->WaitIrql = OldIrql;
-
-    } else {
+    }
+    else
+    {
         KiUnlockDispatcherDatabase(OldIrql);
     }
 

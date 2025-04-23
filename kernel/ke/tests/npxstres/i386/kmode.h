@@ -24,17 +24,11 @@ Revision History:
 // Public things
 //
 
-VOID
-KModeTouchNpx(
-    VOID
-    );
+VOID KModeTouchNpx(VOID);
 
 //
 // Private things
 //
 
 BOOLEAN
-KModeTouchNpxViaDSound(
-    VOID
-    );
-
+KModeTouchNpxViaDSound(VOID);

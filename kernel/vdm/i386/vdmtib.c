@@ -27,9 +27,7 @@ Revision History:
 #endif
 
 NTSTATUS
-VdmpGetVdmTib(
-   OUT PVDM_TIB *ppVdmTib
-   )
+VdmpGetVdmTib(OUT PVDM_TIB *ppVdmTib)
 
 /*++
 
@@ -49,7 +47,8 @@ Return Value:
 
     PAGED_CODE();
 
-    try {
+    try
+    {
 
         VdmTib = NtCurrentTeb()->Vdm;
 
@@ -59,11 +58,13 @@ Return Value:
 
         ProbeForWrite(VdmTib, sizeof(VDM_TIB), sizeof(UCHAR));
 
-        if (VdmTib->Size != sizeof(VDM_TIB)) {
+        if (VdmTib->Size != sizeof(VDM_TIB))
+        {
             return STATUS_UNSUCCESSFUL;
         }
-
-    } except(ExSystemExceptionFilter()) {
+    }
+    except(ExSystemExceptionFilter())
+    {
         return GetExceptionCode();
     }
 

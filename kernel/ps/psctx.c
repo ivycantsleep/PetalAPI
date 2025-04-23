@@ -20,14 +20,8 @@ Revision History:
 
 #include "psp.h"
 
-VOID
-PspQueueApcSpecialApc(
-    IN PKAPC Apc,
-    IN PKNORMAL_ROUTINE *NormalRoutine,
-    IN PVOID *NormalContext,
-    IN PVOID *SystemArgument1,
-    IN PVOID *SystemArgument2
-    );
+VOID PspQueueApcSpecialApc(IN PKAPC Apc, IN PKNORMAL_ROUTINE *NormalRoutine, IN PVOID *NormalContext,
+                           IN PVOID *SystemArgument1, IN PVOID *SystemArgument2);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, NtGetContextThread)
@@ -38,21 +32,15 @@ PspQueueApcSpecialApc(
 #pragma alloc_text(PAGE, PspQueueApcSpecialApc)
 #endif
 
-VOID
-PspQueueApcSpecialApc(
-    IN PKAPC Apc,
-    IN PKNORMAL_ROUTINE *NormalRoutine,
-    IN PVOID *NormalContext,
-    IN PVOID *SystemArgument1,
-    IN PVOID *SystemArgument2
-    )
+VOID PspQueueApcSpecialApc(IN PKAPC Apc, IN PKNORMAL_ROUTINE *NormalRoutine, IN PVOID *NormalContext,
+                           IN PVOID *SystemArgument1, IN PVOID *SystemArgument2)
 {
     PAGED_CODE();
 
-    UNREFERENCED_PARAMETER (NormalRoutine);
-    UNREFERENCED_PARAMETER (NormalContext);
-    UNREFERENCED_PARAMETER (SystemArgument1);
-    UNREFERENCED_PARAMETER (SystemArgument2);
+    UNREFERENCED_PARAMETER(NormalRoutine);
+    UNREFERENCED_PARAMETER(NormalContext);
+    UNREFERENCED_PARAMETER(SystemArgument1);
+    UNREFERENCED_PARAMETER(SystemArgument2);
 
     ExFreePool(Apc);
 }
@@ -60,13 +48,8 @@ PspQueueApcSpecialApc(
 NTSYSAPI
 NTSTATUS
 NTAPI
-NtQueueApcThread(
-    IN HANDLE ThreadHandle,
-    IN PPS_APC_ROUTINE ApcRoutine,
-    IN PVOID ApcArgument1,
-    IN PVOID ApcArgument2,
-    IN PVOID ApcArgument3
-    )
+NtQueueApcThread(IN HANDLE ThreadHandle, IN PPS_APC_ROUTINE ApcRoutine, IN PVOID ApcArgument1, IN PVOID ApcArgument2,
+                 IN PVOID ApcArgument3)
 
 /*++
 
@@ -103,54 +86,45 @@ Return Value:
 
     PAGED_CODE();
 
-    Mode = KeGetPreviousMode ();
+    Mode = KeGetPreviousMode();
 
-    st = ObReferenceObjectByHandle (ThreadHandle,
-                                    THREAD_SET_CONTEXT,
-                                    PsThreadType,
-                                    Mode,
-                                    &Thread,
-                                    NULL);
-    if (NT_SUCCESS (st)) {
+    st = ObReferenceObjectByHandle(ThreadHandle, THREAD_SET_CONTEXT, PsThreadType, Mode, &Thread, NULL);
+    if (NT_SUCCESS(st))
+    {
         st = STATUS_SUCCESS;
-        if (IS_SYSTEM_THREAD (Thread)) {
+        if (IS_SYSTEM_THREAD(Thread))
+        {
             st = STATUS_INVALID_HANDLE;
-        } else {
-            Apc = ExAllocatePoolWithQuotaTag (NonPagedPool | POOL_QUOTA_FAIL_INSTEAD_OF_RAISE,
-                                              sizeof(*Apc),
-                                              'pasP');
+        }
+        else
+        {
+            Apc = ExAllocatePoolWithQuotaTag(NonPagedPool | POOL_QUOTA_FAIL_INSTEAD_OF_RAISE, sizeof(*Apc), 'pasP');
 
-            if (Apc == NULL) {
+            if (Apc == NULL)
+            {
                 st = STATUS_NO_MEMORY;
-            } else {
-                KeInitializeApc (Apc,
-                                 &Thread->Tcb,
-                                 OriginalApcEnvironment,
-                                 PspQueueApcSpecialApc,
-                                 NULL,
-                                 (PKNORMAL_ROUTINE)ApcRoutine,
-                                 UserMode,
-                                 ApcArgument1);
+            }
+            else
+            {
+                KeInitializeApc(Apc, &Thread->Tcb, OriginalApcEnvironment, PspQueueApcSpecialApc, NULL,
+                                (PKNORMAL_ROUTINE)ApcRoutine, UserMode, ApcArgument1);
 
-                if (!KeInsertQueueApc (Apc, ApcArgument2, ApcArgument3, 0)) {
-                    ExFreePool (Apc);
+                if (!KeInsertQueueApc(Apc, ApcArgument2, ApcArgument3, 0))
+                {
+                    ExFreePool(Apc);
                     st = STATUS_UNSUCCESSFUL;
                 }
             }
         }
-        ObDereferenceObject (Thread);
+        ObDereferenceObject(Thread);
     }
 
     return st;
 }
 
-
+
 NTSTATUS
-PsGetContextThread(
-    IN PETHREAD Thread,
-    IN OUT PCONTEXT ThreadContext,
-    IN KPROCESSOR_MODE Mode
-    )
+PsGetContextThread(IN PETHREAD Thread, IN OUT PCONTEXT ThreadContext, IN KPROCESSOR_MODE Mode)
 
 /*++
 
@@ -179,9 +153,9 @@ Return Value:
 
 {
 
-    ULONG ContextFlags=0;
-    GETSETCONTEXT ContextFrame = {0};
-    ULONG ContextLength=0;
+    ULONG ContextFlags = 0;
+    GETSETCONTEXT ContextFrame = { 0 };
+    ULONG ContextLength = 0;
     KIRQL Irql;
     NTSTATUS Status;
     PETHREAD CurrentThread;
@@ -194,23 +168,25 @@ Return Value:
     // Get previous mode and reference specified thread.
     //
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
 
     //
     // Attempt to get the context of the specified thread.
     //
 
-    try {
+    try
+    {
 
         //
         // Set the default alignment, capture the context flags,
         // and set the default size of the context record.
         //
 
-        if (Mode != KernelMode) {
-            ProbeForReadSmallStructure (ThreadContext,
-                                        FIELD_OFFSET (CONTEXT, ContextFlags) + sizeof (ThreadContext->ContextFlags),
-                                        CONTEXT_ALIGN);
+        if (Mode != KernelMode)
+        {
+            ProbeForReadSmallStructure(ThreadContext,
+                                       FIELD_OFFSET(CONTEXT, ContextFlags) + sizeof(ThreadContext->ContextFlags),
+                                       CONTEXT_ALIGN);
         }
 
         ContextFlags = ThreadContext->ContextFlags;
@@ -220,99 +196,87 @@ Return Value:
         // than the guard region
         //
         ContextLength = sizeof(CONTEXT);
-        ASSERT (ContextLength < 0x10000);
+        ASSERT(ContextLength < 0x10000);
 
 #if defined(_X86_)
         //
         // CONTEXT_EXTENDED_REGISTERS is SET, then we want sizeof(CONTEXT) set above
         // otherwise (not set) we only want the old part of the context record.
         //
-        if ((ContextFlags & CONTEXT_EXTENDED_REGISTERS) != CONTEXT_EXTENDED_REGISTERS) {
+        if ((ContextFlags & CONTEXT_EXTENDED_REGISTERS) != CONTEXT_EXTENDED_REGISTERS)
+        {
             ContextLength = FIELD_OFFSET(CONTEXT, ExtendedRegisters);
         }
 #endif
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-        return GetExceptionCode ();
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        return GetExceptionCode();
     }
 
-    KeInitializeEvent (&ContextFrame.OperationComplete,
-                       NotificationEvent,
-                       FALSE);
+    KeInitializeEvent(&ContextFrame.OperationComplete, NotificationEvent, FALSE);
 
     ContextFrame.Context.ContextFlags = ContextFlags;
 
     ContextFrame.Mode = Mode;
-    if (Thread == CurrentThread) {
+    if (Thread == CurrentThread)
+    {
         ContextFrame.Apc.SystemArgument1 = NULL;
         ContextFrame.Apc.SystemArgument2 = Thread;
-        KeRaiseIrql (APC_LEVEL, &Irql);
-        PspGetSetContextSpecialApc (&ContextFrame.Apc,
-                                    NULL,
-                                    NULL,
-                                    &ContextFrame.Apc.SystemArgument1,
-                                    &ContextFrame.Apc.SystemArgument2);
+        KeRaiseIrql(APC_LEVEL, &Irql);
+        PspGetSetContextSpecialApc(&ContextFrame.Apc, NULL, NULL, &ContextFrame.Apc.SystemArgument1,
+                                   &ContextFrame.Apc.SystemArgument2);
 
-        KeLowerIrql (Irql);
+        KeLowerIrql(Irql);
 
         //
         // Move context to specfied context record. If an exception
         // occurs, then return the error.
         //
 
-        try {
-            RtlCopyMemory (ThreadContext,
-                           &ContextFrame.Context,
-                           ContextLength);
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
-            Status = GetExceptionCode ();
+        try
+        {
+            RtlCopyMemory(ThreadContext, &ContextFrame.Context, ContextLength);
         }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            Status = GetExceptionCode();
+        }
+    }
+    else
+    {
+        KeInitializeApc(&ContextFrame.Apc, &Thread->Tcb, OriginalApcEnvironment, PspGetSetContextSpecialApc, NULL, NULL,
+                        KernelMode, NULL);
 
-    } else {
-        KeInitializeApc (&ContextFrame.Apc,
-                         &Thread->Tcb,
-                         OriginalApcEnvironment,
-                         PspGetSetContextSpecialApc,
-                         NULL,
-                         NULL,
-                         KernelMode,
-                         NULL);
-
-        if (!KeInsertQueueApc (&ContextFrame.Apc, NULL, Thread, 2)) {
+        if (!KeInsertQueueApc(&ContextFrame.Apc, NULL, Thread, 2))
+        {
             Status = STATUS_UNSUCCESSFUL;
-
-        } else {
-            KeWaitForSingleObject (&ContextFrame.OperationComplete,
-                                   Executive,
-                                   KernelMode,
-                                   FALSE,
-                                   NULL);
+        }
+        else
+        {
+            KeWaitForSingleObject(&ContextFrame.OperationComplete, Executive, KernelMode, FALSE, NULL);
             //
             // Move context to specfied context record. If an
             // exception occurs, then silently handle it and
             // return success.
             //
 
-            try {
-                RtlCopyMemory (ThreadContext,
-                               &ContextFrame.Context,
-                               ContextLength);
-
-            } except (EXCEPTION_EXECUTE_HANDLER) {
-                Status = GetExceptionCode ();
+            try
+            {
+                RtlCopyMemory(ThreadContext, &ContextFrame.Context, ContextLength);
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
+                Status = GetExceptionCode();
             }
         }
     }
 
     return Status;
 }
-
+
 NTSTATUS
-NtGetContextThread(
-    IN HANDLE ThreadHandle,
-    IN OUT PCONTEXT ThreadContext
-    )
+NtGetContextThread(IN HANDLE ThreadHandle, IN OUT PCONTEXT ThreadContext)
 
 /*++
 
@@ -351,49 +315,43 @@ Return Value:
     // Get previous mode and reference specified thread.
     //
 
-    CurrentThread = PsGetCurrentThread ();
-    Mode = KeGetPreviousModeByThread (&CurrentThread->Tcb);
+    CurrentThread = PsGetCurrentThread();
+    Mode = KeGetPreviousModeByThread(&CurrentThread->Tcb);
 
-    Status = ObReferenceObjectByHandle (ThreadHandle,
-                                        THREAD_GET_CONTEXT,
-                                        PsThreadType,
-                                        Mode,
-                                        &Thread,
-                                        NULL);
+    Status = ObReferenceObjectByHandle(ThreadHandle, THREAD_GET_CONTEXT, PsThreadType, Mode, &Thread, NULL);
 
     //
     // If the reference was successful, the check if the specified thread
     // is a system thread.
     //
 
-    if (NT_SUCCESS (Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // If the thread is not a system thread, then attempt to get the
         // context of the thread.
         //
 
-        if (IS_SYSTEM_THREAD (Thread) == FALSE) {
+        if (IS_SYSTEM_THREAD(Thread) == FALSE)
+        {
 
-            Status = PsGetContextThread (Thread, ThreadContext, Mode);
-
-        } else {
+            Status = PsGetContextThread(Thread, ThreadContext, Mode);
+        }
+        else
+        {
             Status = STATUS_INVALID_HANDLE;
         }
 
-        ObDereferenceObject (Thread);
+        ObDereferenceObject(Thread);
     }
 
     return Status;
 }
 
-
+
 NTSTATUS
-PsSetContextThread(
-    IN PETHREAD Thread,
-    IN PCONTEXT ThreadContext,
-    IN KPROCESSOR_MODE Mode
-    )
+PsSetContextThread(IN PETHREAD Thread, IN PCONTEXT ThreadContext, IN KPROCESSOR_MODE Mode)
 
 /*++
 
@@ -421,9 +379,9 @@ Return Value:
 --*/
 
 {
-    ULONG ContextFlags=0;
+    ULONG ContextFlags = 0;
     GETSETCONTEXT ContextFrame;
-    ULONG ContextLength=0;
+    ULONG ContextLength = 0;
     KIRQL Irql;
     NTSTATUS Status;
     PETHREAD CurrentThread;
@@ -436,23 +394,25 @@ Return Value:
     // Get previous mode and reference specified thread.
     //
 
-    CurrentThread = PsGetCurrentThread ();
+    CurrentThread = PsGetCurrentThread();
 
     //
     // Attempt to get the context of the specified thread.
     //
 
-    try {
+    try
+    {
 
         //
         // Capture the context flags,
         // and set the default size of the context record.
         //
 
-        if (Mode != KernelMode) {
-            ProbeForReadSmallStructure (ThreadContext,
-                                        FIELD_OFFSET (CONTEXT, ContextFlags) + sizeof (ThreadContext->ContextFlags),
-                                        CONTEXT_ALIGN);
+        if (Mode != KernelMode)
+        {
+            ProbeForReadSmallStructure(ThreadContext,
+                                       FIELD_OFFSET(CONTEXT, ContextFlags) + sizeof(ThreadContext->ContextFlags),
+                                       CONTEXT_ALIGN);
         }
 
         //
@@ -460,24 +420,26 @@ Return Value:
         // enough not to cross the guard region.
         //
         ContextFlags = ThreadContext->ContextFlags;
-        ContextLength = sizeof (CONTEXT);
-        ASSERT (ContextLength < 0x10000);
+        ContextLength = sizeof(CONTEXT);
+        ASSERT(ContextLength < 0x10000);
 
 #if defined(_X86_)
         //
         // CONTEXT_EXTENDED_REGISTERS is SET, then we want sizeof(CONTEXT) set above
         // otherwise (not set) we only want the old part of the context record.
         //
-        if ((ContextFlags & CONTEXT_EXTENDED_REGISTERS) != CONTEXT_EXTENDED_REGISTERS) {
+        if ((ContextFlags & CONTEXT_EXTENDED_REGISTERS) != CONTEXT_EXTENDED_REGISTERS)
+        {
             ContextLength = FIELD_OFFSET(CONTEXT, ExtendedRegisters);
-        } 
+        }
 #endif
 
-        RtlCopyMemory (&ContextFrame.Context, ThreadContext, ContextLength);
+        RtlCopyMemory(&ContextFrame.Context, ThreadContext, ContextLength);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
 
-    } except (EXCEPTION_EXECUTE_HANDLER) {
-
-        return GetExceptionCode ();
+        return GetExceptionCode();
     }
 
     //
@@ -485,43 +447,46 @@ Return Value:
     //
 
 
-#if defined (_IA64_)
+#if defined(_IA64_)
 
     //
     // On IA64 we need to fix up the PC if its a PLABEL address.
     //
 
-    if (ContextFlags & CONTEXT_CONTROL) {
-   
+    if (ContextFlags & CONTEXT_CONTROL)
+    {
+
         PLABEL_DESCRIPTOR Label, *LabelAddress;
         SIZE_T BytesCopied;
 
-        if (ContextFrame.Context.IntGp == 0) {
+        if (ContextFrame.Context.IntGp == 0)
+        {
             LabelAddress = (PPLABEL_DESCRIPTOR)ContextFrame.Context.StIIP;
-            try {
+            try
+            {
                 //
                 // We are in the wrong process here but it doesn't matter.
                 // We just want to make sure this isn't a kernel address.
                 //
-                ProbeForReadSmallStructure (LabelAddress,
-                                            sizeof (*LabelAddress),
-                                            sizeof (ULONGLONG));
-            } except (EXCEPTION_EXECUTE_HANDLER) {
-                return GetExceptionCode ();
+                ProbeForReadSmallStructure(LabelAddress, sizeof(*LabelAddress), sizeof(ULONGLONG));
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
+                return GetExceptionCode();
             }
 
-            Status = MmCopyVirtualMemory (THREAD_TO_PROCESS (Thread),
-                                          LabelAddress,
-                                          PsGetCurrentProcessByThread (CurrentThread),
-                                          &Label,
-                                          sizeof (Label),
-                                          KernelMode, // Needed to write to local stack
-                                          &BytesCopied);
-            if (NT_SUCCESS (Status)) {
+            Status = MmCopyVirtualMemory(THREAD_TO_PROCESS(Thread), LabelAddress,
+                                         PsGetCurrentProcessByThread(CurrentThread), &Label, sizeof(Label),
+                                         KernelMode, // Needed to write to local stack
+                                         &BytesCopied);
+            if (NT_SUCCESS(Status))
+            {
                 ContextFrame.Context.IntGp = Label.GlobalPointer;
                 ContextFrame.Context.StIIP = Label.EntryPoint;
                 ContextFrame.Context.StIPSR &= ~ISR_EI_MASK;
-            } else {
+            }
+            else
+            {
                 return Status;
             }
         }
@@ -529,56 +494,42 @@ Return Value:
 
 #endif
 
-    KeInitializeEvent (&ContextFrame.OperationComplete,
-                       NotificationEvent,
-                       FALSE);
+    KeInitializeEvent(&ContextFrame.OperationComplete, NotificationEvent, FALSE);
 
     ContextFrame.Context.ContextFlags = ContextFlags;
 
     ContextFrame.Mode = Mode;
-    if (Thread == CurrentThread) {
+    if (Thread == CurrentThread)
+    {
         ContextFrame.Apc.SystemArgument1 = (PVOID)1;
         ContextFrame.Apc.SystemArgument2 = Thread;
         KeRaiseIrql(APC_LEVEL, &Irql);
-        PspGetSetContextSpecialApc (&ContextFrame.Apc,
-                                    NULL,
-                                    NULL,
-                                    &ContextFrame.Apc.SystemArgument1,
-                                    &ContextFrame.Apc.SystemArgument2);
+        PspGetSetContextSpecialApc(&ContextFrame.Apc, NULL, NULL, &ContextFrame.Apc.SystemArgument1,
+                                   &ContextFrame.Apc.SystemArgument2);
 
-        KeLowerIrql (Irql);
+        KeLowerIrql(Irql);
+    }
+    else
+    {
+        KeInitializeApc(&ContextFrame.Apc, &Thread->Tcb, OriginalApcEnvironment, PspGetSetContextSpecialApc, NULL, NULL,
+                        KernelMode, NULL);
 
-    } else {
-        KeInitializeApc (&ContextFrame.Apc,
-                         &Thread->Tcb,
-                         OriginalApcEnvironment,
-                         PspGetSetContextSpecialApc,
-                         NULL,
-                         NULL,
-                         KernelMode,
-                         NULL);
-
-        if (!KeInsertQueueApc (&ContextFrame.Apc, (PVOID)1, Thread, 2)) {
+        if (!KeInsertQueueApc(&ContextFrame.Apc, (PVOID)1, Thread, 2))
+        {
             Status = STATUS_UNSUCCESSFUL;
-
-        } else {
-            KeWaitForSingleObject (&ContextFrame.OperationComplete,
-                                   Executive,
-                                   KernelMode,
-                                   FALSE,
-                                   NULL);
+        }
+        else
+        {
+            KeWaitForSingleObject(&ContextFrame.OperationComplete, Executive, KernelMode, FALSE, NULL);
         }
     }
 
     return Status;
 }
 
-
+
 NTSTATUS
-NtSetContextThread(
-    IN HANDLE ThreadHandle,
-    IN PCONTEXT ThreadContext
-    )
+NtSetContextThread(IN HANDLE ThreadHandle, IN PCONTEXT ThreadContext)
 
 /*++
 
@@ -616,37 +567,35 @@ Return Value:
     // Get previous mode and reference specified thread.
     //
 
-    CurrentThread = PsGetCurrentThread ();
-    Mode = KeGetPreviousModeByThread (&CurrentThread->Tcb);
+    CurrentThread = PsGetCurrentThread();
+    Mode = KeGetPreviousModeByThread(&CurrentThread->Tcb);
 
-    Status = ObReferenceObjectByHandle (ThreadHandle,
-                                        THREAD_SET_CONTEXT,
-                                        PsThreadType,
-                                        Mode,
-                                        &Thread,
-                                        NULL);
+    Status = ObReferenceObjectByHandle(ThreadHandle, THREAD_SET_CONTEXT, PsThreadType, Mode, &Thread, NULL);
 
     //
     // If the reference was successful, the check if the specified thread
     // is a system thread.
     //
 
-    if (NT_SUCCESS (Status)) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // If the thread is not a system thread, then attempt to get the
         // context of the thread.
         //
 
-        if (IS_SYSTEM_THREAD (Thread) == FALSE) {
+        if (IS_SYSTEM_THREAD(Thread) == FALSE)
+        {
 
-            Status = PsSetContextThread (Thread, ThreadContext, Mode);
-
-        } else {
+            Status = PsSetContextThread(Thread, ThreadContext, Mode);
+        }
+        else
+        {
             Status = STATUS_INVALID_HANDLE;
         }
 
-        ObDereferenceObject (Thread);
+        ObDereferenceObject(Thread);
     }
 
     return Status;

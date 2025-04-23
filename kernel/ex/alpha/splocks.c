@@ -24,59 +24,59 @@ Revision History:
 --*/
 
 #include "exp.h"
-
+
 //
 // Static SpinLocks from ntos\cc\cachedat.c
 //
 
-KSPIN_LOCK  CcDeferredWriteSpinLock = 0;
-KSPIN_LOCK  CcDebugTraceLock = 0;
+KSPIN_LOCK CcDeferredWriteSpinLock = 0;
+KSPIN_LOCK CcDebugTraceLock = 0;
 
 //
 // Static SpinLocks from ntos\ex
 //
 
-KSPIN_LOCK  PoolTraceLock = 0;                  // pool.c
+KSPIN_LOCK PoolTraceLock = 0; // pool.c
 
 //
 // Static SpinLocks from ntos\io\iodata.c
 //
 
-KSPIN_LOCK  IopErrorLogLock = 0;
-KSPIN_LOCK  IopTimerLock = 0;
+KSPIN_LOCK IopErrorLogLock = 0;
+KSPIN_LOCK IopTimerLock = 0;
 
 //
 // Static SpinLocks from ntos\kd\kdlock.c
 //
 
-KSPIN_LOCK  KdpDebuggerLock = 0;
+KSPIN_LOCK KdpDebuggerLock = 0;
 
 //
 // Static SpinLocks from ntos\ke\kernldat.c
 //
 
-KSPIN_LOCK  KiFreezeExecutionLock = 0;
-KSPIN_LOCK  KiFreezeLockBackup = 0;
-ULONG_PTR    KiHardwareTrigger = 0;
-KSPIN_LOCK  KiPowerNotifyLock = 0;
-KSPIN_LOCK  KiProfileLock = 0;
+KSPIN_LOCK KiFreezeExecutionLock = 0;
+KSPIN_LOCK KiFreezeLockBackup = 0;
+ULONG_PTR KiHardwareTrigger = 0;
+KSPIN_LOCK KiPowerNotifyLock = 0;
+KSPIN_LOCK KiProfileLock = 0;
 
 //
 // Static SpinLocks from ntos\mm\miglobal.c
 //
 
-KSPIN_LOCK  MmSystemSpaceLock = 0;
-KSPIN_LOCK  MmAllowWSExpansionLock = 0;
+KSPIN_LOCK MmSystemSpaceLock = 0;
+KSPIN_LOCK MmAllowWSExpansionLock = 0;
 
 //
 // Static SpinLocks from ntos\ps\psinit.c
 //
 
-KSPIN_LOCK  PspEventPairLock = 0;
-KSPIN_LOCK  PsLoadedModuleSpinLock = 0;
+KSPIN_LOCK PspEventPairLock = 0;
+KSPIN_LOCK PsLoadedModuleSpinLock = 0;
 
 //
 // Static SpinLocks from ntos\fsrtl\fsrtlp.c
 //
 
-KSPIN_LOCK  FsRtlStrucSupSpinLock = 0;          // fsrtlp.c
+KSPIN_LOCK FsRtlStrucSupSpinLock = 0; // fsrtlp.c

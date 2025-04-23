@@ -25,30 +25,19 @@ Revision History:
 //
 
 NTSTATUS
-LpcpCreatePort (
-    OUT PHANDLE PortHandle,
-    IN POBJECT_ATTRIBUTES ObjectAttributes,
-    IN ULONG MaxConnectionInfoLength,
-    IN ULONG MaxMessageLength,
-    IN ULONG MaxPoolUsage,
-    IN BOOLEAN Waitable
-    );
+LpcpCreatePort(OUT PHANDLE PortHandle, IN POBJECT_ATTRIBUTES ObjectAttributes, IN ULONG MaxConnectionInfoLength,
+               IN ULONG MaxMessageLength, IN ULONG MaxPoolUsage, IN BOOLEAN Waitable);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,NtCreatePort)
-#pragma alloc_text(PAGE,NtCreateWaitablePort)
-#pragma alloc_text(PAGE,LpcpCreatePort)
+#pragma alloc_text(PAGE, NtCreatePort)
+#pragma alloc_text(PAGE, NtCreateWaitablePort)
+#pragma alloc_text(PAGE, LpcpCreatePort)
 #endif
 
-
+
 NTSTATUS
-NtCreatePort (
-    OUT PHANDLE PortHandle,
-    IN POBJECT_ATTRIBUTES ObjectAttributes,
-    IN ULONG MaxConnectionInfoLength,
-    IN ULONG MaxMessageLength,
-    IN ULONG MaxPoolUsage
-    )
+NtCreatePort(OUT PHANDLE PortHandle, IN POBJECT_ATTRIBUTES ObjectAttributes, IN ULONG MaxConnectionInfoLength,
+             IN ULONG MaxMessageLength, IN ULONG MaxPoolUsage)
 
 /*++
 
@@ -71,26 +60,16 @@ Return Value:
 
     PAGED_CODE();
 
-    Status = LpcpCreatePort( PortHandle,
-                             ObjectAttributes,
-                             MaxConnectionInfoLength,
-                             MaxMessageLength,
-                             MaxPoolUsage,
-                             FALSE );
+    Status =
+        LpcpCreatePort(PortHandle, ObjectAttributes, MaxConnectionInfoLength, MaxMessageLength, MaxPoolUsage, FALSE);
 
-    return Status ;
-
+    return Status;
 }
 
-
+
 NTSTATUS
-NtCreateWaitablePort (
-    OUT PHANDLE PortHandle,
-    IN POBJECT_ATTRIBUTES ObjectAttributes,
-    IN ULONG MaxConnectionInfoLength,
-    IN ULONG MaxMessageLength,
-    IN ULONG MaxPoolUsage
-    )
+NtCreateWaitablePort(OUT PHANDLE PortHandle, IN POBJECT_ATTRIBUTES ObjectAttributes, IN ULONG MaxConnectionInfoLength,
+                     IN ULONG MaxMessageLength, IN ULONG MaxPoolUsage)
 
 /*++
 
@@ -113,34 +92,24 @@ Return Value:
 --*/
 
 {
-    NTSTATUS Status ;
+    NTSTATUS Status;
 
     PAGED_CODE();
 
-    Status = LpcpCreatePort( PortHandle,
-                             ObjectAttributes,
-                             MaxConnectionInfoLength,
-                             MaxMessageLength,
-                             MaxPoolUsage,
-                             TRUE );
+    Status =
+        LpcpCreatePort(PortHandle, ObjectAttributes, MaxConnectionInfoLength, MaxMessageLength, MaxPoolUsage, TRUE);
 
-    return Status ;
+    return Status;
 }
 
-
+
 //
 //  Local support routine
 //
 
 NTSTATUS
-LpcpCreatePort (
-    OUT PHANDLE PortHandle,
-    IN POBJECT_ATTRIBUTES ObjectAttributes,
-    IN ULONG MaxConnectionInfoLength,
-    IN ULONG MaxMessageLength,
-    IN ULONG MaxPoolUsage,
-    IN BOOLEAN Waitable
-    )
+LpcpCreatePort(OUT PHANDLE PortHandle, IN POBJECT_ATTRIBUTES ObjectAttributes, IN ULONG MaxConnectionInfoLength,
+               IN ULONG MaxMessageLength, IN ULONG MaxPoolUsage, IN BOOLEAN Waitable)
 
 /*++
 
@@ -214,41 +183,44 @@ Return Value:
 
     PAGED_CODE();
 
-    UNREFERENCED_PARAMETER (MaxPoolUsage);
+    UNREFERENCED_PARAMETER(MaxPoolUsage);
 
     //
     //  Get previous processor mode and probe output arguments if necessary.
     //
 
     PreviousMode = KeGetPreviousMode();
-    RtlInitUnicodeString( &CapturedObjectName, NULL );
+    RtlInitUnicodeString(&CapturedObjectName, NULL);
 
-    if (PreviousMode != KernelMode) {
+    if (PreviousMode != KernelMode)
+    {
 
-        try {
+        try
+        {
 
-            ProbeForWriteHandle( PortHandle );
+            ProbeForWriteHandle(PortHandle);
 
-            ProbeForReadSmallStructure( ObjectAttributes,
-                                        sizeof( OBJECT_ATTRIBUTES ),
-                                        sizeof( ULONG ));
+            ProbeForReadSmallStructure(ObjectAttributes, sizeof(OBJECT_ATTRIBUTES), sizeof(ULONG));
 
             NamePtr = ObjectAttributes->ObjectName;
 
-            if (NamePtr != NULL) {
+            if (NamePtr != NULL)
+            {
 
-                CapturedObjectName = ProbeAndReadStructure( NamePtr,
-                                                            UNICODE_STRING );
+                CapturedObjectName = ProbeAndReadStructure(NamePtr, UNICODE_STRING);
             }
-
-        } except( EXCEPTION_EXECUTE_HANDLER ) {
-
-            return( GetExceptionCode() );
         }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
-    } else {
+            return (GetExceptionCode());
+        }
+    }
+    else
+    {
 
-        if (ObjectAttributes->ObjectName != NULL) {
+        if (ObjectAttributes->ObjectName != NULL)
+        {
 
             CapturedObjectName = *(ObjectAttributes->ObjectName);
         }
@@ -258,7 +230,8 @@ Return Value:
     //  Make the null buffer indicate an unspecified port name
     //
 
-    if (CapturedObjectName.Length == 0) {
+    if (CapturedObjectName.Length == 0)
+    {
 
         CapturedObjectName.Buffer = NULL;
     }
@@ -270,71 +243,68 @@ Return Value:
     //  between threads.
     //
 
-    Status = ObCreateObject( PreviousMode,
-                             (Waitable ? LpcWaitablePortObjectType
-                                       : LpcPortObjectType),
-                             ObjectAttributes,
-                             PreviousMode,
-                             NULL,
-                             (Waitable ? sizeof( LPCP_PORT_OBJECT )
-                                       : FIELD_OFFSET( LPCP_PORT_OBJECT, WaitEvent )),
-                             0,
-                             0,
-                             (PVOID *)&ConnectionPort );
+    Status = ObCreateObject(PreviousMode, (Waitable ? LpcWaitablePortObjectType : LpcPortObjectType), ObjectAttributes,
+                            PreviousMode, NULL,
+                            (Waitable ? sizeof(LPCP_PORT_OBJECT) : FIELD_OFFSET(LPCP_PORT_OBJECT, WaitEvent)), 0, 0,
+                            (PVOID *)&ConnectionPort);
 
-    if (!NT_SUCCESS( Status )) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        return( Status );
+        return (Status);
     }
 
     //
     //  Zero out the connection port object and then initialize its fields
     //
 
-    RtlZeroMemory( ConnectionPort, (Waitable ? sizeof( LPCP_PORT_OBJECT )
-                                             : FIELD_OFFSET( LPCP_PORT_OBJECT, WaitEvent )));
+    RtlZeroMemory(ConnectionPort, (Waitable ? sizeof(LPCP_PORT_OBJECT) : FIELD_OFFSET(LPCP_PORT_OBJECT, WaitEvent)));
 
     ConnectionPort->ConnectionPort = ConnectionPort;
     ConnectionPort->Creator = PsGetCurrentThread()->Cid;
 
-    InitializeListHead( &ConnectionPort->LpcReplyChainHead );
+    InitializeListHead(&ConnectionPort->LpcReplyChainHead);
 
-    InitializeListHead( &ConnectionPort->LpcDataInfoChainHead );
+    InitializeListHead(&ConnectionPort->LpcDataInfoChainHead);
 
     //
     //  Named ports get a connection message queue.
     //
 
-    if (CapturedObjectName.Buffer == NULL) {
+    if (CapturedObjectName.Buffer == NULL)
+    {
 
         ConnectionPort->Flags = UNCONNECTED_COMMUNICATION_PORT;
         ConnectionPort->ConnectedPort = ConnectionPort;
         ConnectionPort->ServerProcess = NULL;
-
-    } else {
+    }
+    else
+    {
 
         ConnectionPort->Flags = SERVER_CONNECTION_PORT;
 
-        ObReferenceObject( PsGetCurrentProcess() );
+        ObReferenceObject(PsGetCurrentProcess());
         ConnectionPort->ServerProcess = PsGetCurrentProcess();
     }
-    
-    if ( Waitable ) {
+
+    if (Waitable)
+    {
 
         ConnectionPort->Flags |= PORT_WAITABLE;
     }
-    
+
     //
     //  All ports get a request message queue.
     //
 
-    Status = LpcpInitializePortQueue( ConnectionPort );
+    Status = LpcpInitializePortQueue(ConnectionPort);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
-        ObDereferenceObject( ConnectionPort );
+        ObDereferenceObject(ConnectionPort);
 
-        return(Status);
+        return (Status);
     }
 
     //
@@ -342,11 +312,10 @@ Return Value:
     //  be used to signal clients
     //
 
-    if (ConnectionPort->Flags & PORT_WAITABLE) {
+    if (ConnectionPort->Flags & PORT_WAITABLE)
+    {
 
-        KeInitializeEvent( &ConnectionPort->WaitEvent,
-                           NotificationEvent,
-                           FALSE );
+        KeInitializeEvent(&ConnectionPort->WaitEvent, NotificationEvent, FALSE);
     }
 
     //
@@ -354,19 +323,15 @@ Return Value:
     //  zone block size less the structs overhead.
     //
 
-    ConnectionPort->MaxMessageLength = (USHORT) (LpcpGetMaxMessageLength() -
-                                                 FIELD_OFFSET( LPCP_MESSAGE, Request ));
+    ConnectionPort->MaxMessageLength = (USHORT)(LpcpGetMaxMessageLength() - FIELD_OFFSET(LPCP_MESSAGE, Request));
 
-    ConnectionPort->MaxConnectionInfoLength = (USHORT) (ConnectionPort->MaxMessageLength -
-                                                        sizeof( PORT_MESSAGE ) -
-                                                        sizeof( LPCP_CONNECTION_MESSAGE ));
+    ConnectionPort->MaxConnectionInfoLength =
+        (USHORT)(ConnectionPort->MaxMessageLength - sizeof(PORT_MESSAGE) - sizeof(LPCP_CONNECTION_MESSAGE));
 
 #if DBG
-    LpcpTrace(( "Created port %ws (%x) - MaxMsgLen == %x  MaxConnectInfoLen == %x\n",
-                CapturedObjectName.Buffer == NULL ? L"** UnNamed **" : ObjectAttributes->ObjectName->Buffer,
-                ConnectionPort,
-                ConnectionPort->MaxMessageLength,
-                ConnectionPort->MaxConnectionInfoLength ));
+    LpcpTrace(("Created port %ws (%x) - MaxMsgLen == %x  MaxConnectInfoLen == %x\n",
+               CapturedObjectName.Buffer == NULL ? L"** UnNamed **" : ObjectAttributes->ObjectName->Buffer,
+               ConnectionPort, ConnectionPort->MaxMessageLength, ConnectionPort->MaxConnectionInfoLength));
 #endif
 
     //
@@ -374,41 +339,41 @@ Return Value:
     //  greater than the max message length possible in the system
     //
 
-    if (ConnectionPort->MaxMessageLength < MaxMessageLength) {
+    if (ConnectionPort->MaxMessageLength < MaxMessageLength)
+    {
 
 #if DBG
-        LpcpPrint(( "MaxMessageLength granted is %x but requested %x\n",
-                    ConnectionPort->MaxMessageLength,
-                    MaxMessageLength ));
+        LpcpPrint(
+            ("MaxMessageLength granted is %x but requested %x\n", ConnectionPort->MaxMessageLength, MaxMessageLength));
         DbgBreakPoint();
 #endif
 
-        ObDereferenceObject( ConnectionPort );
+        ObDereferenceObject(ConnectionPort);
 
         return STATUS_INVALID_PARAMETER_4;
     }
-    
+
     //
     //  Save the MaxMessageLength to the connection port
     //
 
-    ConnectionPort->MaxMessageLength = (USHORT) MaxMessageLength;
+    ConnectionPort->MaxMessageLength = (USHORT)MaxMessageLength;
 
     //
     //  Sanity check that the max connection info length being asked for is
     //  not greater than the maximum possible in the system
     //
 
-    if (ConnectionPort->MaxConnectionInfoLength < MaxConnectionInfoLength) {
+    if (ConnectionPort->MaxConnectionInfoLength < MaxConnectionInfoLength)
+    {
 
 #if DBG
-        LpcpPrint(( "MaxConnectionInfoLength granted is %x but requested %x\n",
-                    ConnectionPort->MaxConnectionInfoLength,
-                    MaxConnectionInfoLength ));
+        LpcpPrint(("MaxConnectionInfoLength granted is %x but requested %x\n", ConnectionPort->MaxConnectionInfoLength,
+                   MaxConnectionInfoLength));
         DbgBreakPoint();
 #endif
 
-        ObDereferenceObject( ConnectionPort );
+        ObDereferenceObject(ConnectionPort);
 
         return STATUS_INVALID_PARAMETER_3;
     }
@@ -421,26 +386,24 @@ Return Value:
     //  done to initialize the port.  Finally, return the system server status.
     //
 
-    Status = ObInsertObject( ConnectionPort,
-                             NULL,
-                             PORT_ALL_ACCESS,
-                             0,
-                             (PVOID *)NULL,
-                             &Handle );
+    Status = ObInsertObject(ConnectionPort, NULL, PORT_ALL_ACCESS, 0, (PVOID *)NULL, &Handle);
 
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
 
         //
         //  Set the output variable protected against access faults
         //
 
-        try {
+        try
+        {
 
             *PortHandle = Handle;
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
-        } except( EXCEPTION_EXECUTE_HANDLER ) {
-
-            NtClose( Handle );
+            NtClose(Handle);
 
             Status = GetExceptionCode();
         }
@@ -452,5 +415,3 @@ Return Value:
 
     return Status;
 }
-
-

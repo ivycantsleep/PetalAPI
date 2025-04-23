@@ -23,24 +23,18 @@ Revision History:
 #include "mi.h"
 
 ULONG
-MiFlushRangeFilter (
-    IN PEXCEPTION_POINTERS ExceptionPointers,
-    IN PVOID *BaseAddress,
-    IN PSIZE_T Length,
-    IN PLOGICAL Retry
-    );
+MiFlushRangeFilter(IN PEXCEPTION_POINTERS ExceptionPointers, IN PVOID *BaseAddress, IN PSIZE_T Length,
+                   IN PLOGICAL Retry);
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,NtFlushWriteBuffer)
-#pragma alloc_text(PAGE,NtFlushInstructionCache)
-#pragma alloc_text(PAGE,MiFlushRangeFilter)
+#pragma alloc_text(PAGE, NtFlushWriteBuffer)
+#pragma alloc_text(PAGE, NtFlushInstructionCache)
+#pragma alloc_text(PAGE, MiFlushRangeFilter)
 #endif
 
-
+
 NTSTATUS
-NtFlushWriteBuffer (
-   VOID
-   )
+NtFlushWriteBuffer(VOID)
 
 /*++
 
@@ -64,14 +58,10 @@ Return Value:
     KeFlushWriteBuffer();
     return STATUS_SUCCESS;
 }
-
+
 ULONG
-MiFlushRangeFilter (
-    IN PEXCEPTION_POINTERS ExceptionPointers,
-    IN PVOID *BaseAddress,
-    IN PSIZE_T Length,
-    IN PLOGICAL Retry
-    )
+MiFlushRangeFilter(IN PEXCEPTION_POINTERS ExceptionPointers, IN PVOID *BaseAddress, IN PSIZE_T Length,
+                   IN PLOGICAL Retry)
 
 /*++
 
@@ -119,7 +109,8 @@ Return Value:
     // region and move to the next page.
     //
 
-    if ( ExceptionRecord->ExceptionCode == STATUS_ACCESS_VIOLATION ) {
+    if (ExceptionRecord->ExceptionCode == STATUS_ACCESS_VIOLATION)
+    {
 
         //
         // Get the failing address, calculate the base address of the next page,
@@ -127,7 +118,7 @@ Return Value:
         //
 
         BadVa = ExceptionRecord->ExceptionInformation[1];
-        NextVa = ROUND_TO_PAGES( BadVa + 1 );
+        NextVa = ROUND_TO_PAGES(BadVa + 1);
         EndVa = *(PULONG_PTR)BaseAddress + *Length;
 
         //
@@ -137,8 +128,9 @@ Return Value:
         // KeSweepIcacheRange again.
         //
 
-        if ( (NextVa > BadVa) && (NextVa < EndVa) ) {
-            *Length = (ULONG) (EndVa - NextVa);
+        if ((NextVa > BadVa) && (NextVa < EndVa))
+        {
+            *Length = (ULONG)(EndVa - NextVa);
             *BaseAddress = (PVOID)NextVa;
             *Retry = TRUE;
         }
@@ -148,11 +140,7 @@ Return Value:
 }
 
 NTSTATUS
-NtFlushInstructionCache (
-    IN HANDLE ProcessHandle,
-    IN PVOID BaseAddress OPTIONAL,
-    IN SIZE_T Length
-    )
+NtFlushInstructionCache(IN HANDLE ProcessHandle, IN PVOID BaseAddress OPTIONAL, IN SIZE_T Length)
 
 /*++
 
@@ -197,18 +185,22 @@ Return Value:
     // range.
     //
 
-    if ((ARGUMENT_PRESENT(BaseAddress) == FALSE) || (Length != 0)) {
+    if ((ARGUMENT_PRESENT(BaseAddress) == FALSE) || (Length != 0))
+    {
 
         //
         // If previous mode is user and the range specified falls in kernel
         // address space, return an error.
         //
 
-        if ((ARGUMENT_PRESENT(BaseAddress) != FALSE) &&
-            (PreviousMode != KernelMode)) {
-            try {
+        if ((ARGUMENT_PRESENT(BaseAddress) != FALSE) && (PreviousMode != KernelMode))
+        {
+            try
+            {
                 ProbeForRead(BaseAddress, Length, sizeof(UCHAR));
-            } except(EXCEPTION_EXECUTE_HANDLER) {
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
                 return GetExceptionCode();
             }
         }
@@ -219,21 +211,19 @@ Return Value:
         //
 
         Process = NULL;
-        if (ProcessHandle != NtCurrentProcess()) {
+        if (ProcessHandle != NtCurrentProcess())
+        {
 
             //
             // Reference the specified process checking for PROCESS_VM_WRITE
             // access.
             //
 
-            Status = ObReferenceObjectByHandle(ProcessHandle,
-                                               PROCESS_VM_WRITE,
-                                               PsProcessType,
-                                               PreviousMode,
-                                               (PVOID *)&Process,
-                                               NULL);
+            Status = ObReferenceObjectByHandle(ProcessHandle, PROCESS_VM_WRITE, PsProcessType, PreviousMode,
+                                               (PVOID *)&Process, NULL);
 
-            if (!NT_SUCCESS(Status)) {
+            if (!NT_SUCCESS(Status))
+            {
                 return Status;
             }
 
@@ -241,7 +231,7 @@ Return Value:
             // Attach to the process.
             //
 
-            KeStackAttachProcess (&Process->Pcb, &ApcState);
+            KeStackAttachProcess(&Process->Pcb, &ApcState);
         }
 
         //
@@ -249,10 +239,12 @@ Return Value:
         // cache.  If the base address is specified, flush the specified range.
         //
 
-        if (ARGUMENT_PRESENT(BaseAddress) == FALSE) {
+        if (ARGUMENT_PRESENT(BaseAddress) == FALSE)
+        {
             KeSweepIcache(FALSE);
-
-        } else {
+        }
+        else
+        {
 
             //
             // Parts of the specified range may be invalid.  An exception
@@ -268,14 +260,15 @@ Return Value:
             RangeBase = BaseAddress;
             RangeLength = Length;
 
-            do {
+            do
+            {
                 Retry = FALSE;
-                try {
+                try
+                {
                     KeSweepIcacheRange(FALSE, RangeBase, RangeLength);
-                } except(MiFlushRangeFilter(GetExceptionInformation(),
-                                            &RangeBase,
-                                            &RangeLength,
-                                            &Retry)) {
+                }
+                except(MiFlushRangeFilter(GetExceptionInformation(), &RangeBase, &RangeLength, &Retry))
+                {
                     NOTHING;
                 }
             } while (Retry != FALSE);
@@ -286,12 +279,12 @@ Return Value:
         // detach from it and dereference it.
         //
 
-        if (Process != NULL) {
-            KeUnstackDetachProcess (&ApcState);
+        if (Process != NULL)
+        {
+            KeUnstackDetachProcess(&ApcState);
             ObDereferenceObject(Process);
         }
     }
 
     return STATUS_SUCCESS;
 }
-

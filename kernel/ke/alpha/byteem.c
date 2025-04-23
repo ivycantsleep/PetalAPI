@@ -33,24 +33,13 @@ Revision History:
 // Define function prototypes for emulation routines written in assembler.
 //
 
-VOID
-KiInterlockedStoreByte (
-   IN PUCHAR Address,
-   IN UCHAR Data
-   );
+VOID KiInterlockedStoreByte(IN PUCHAR Address, IN UCHAR Data);
 
-VOID
-KiInterlockedStoreWord (
-   IN PUSHORT Address,
-   IN USHORT Data
-   );
-
+VOID KiInterlockedStoreWord(IN PUSHORT Address, IN USHORT Data);
+
 BOOLEAN
-KiEmulateByteWord (
-    IN OUT PEXCEPTION_RECORD ExceptionRecord,
-    IN OUT PKEXCEPTION_FRAME  ExceptionFrame,
-    IN OUT PKTRAP_FRAME TrapFrame
-    )
+KiEmulateByteWord(IN OUT PEXCEPTION_RECORD ExceptionRecord, IN OUT PKEXCEPTION_FRAME ExceptionFrame,
+                  IN OUT PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -110,28 +99,29 @@ Return Value:
 
     PreviousMode = (KPROCESSOR_MODE)(((PSR *)(&TrapFrame->Psr))->MODE);
 
-    try {
+    try
+    {
 
         //
         // Get faulting instruction and case on instruction type.
         //
 
-        if (PreviousMode != KernelMode) {
-            ProbeForRead(ExceptionAddress,
-                         sizeof(ALPHA_INSTRUCTION),
-                         sizeof(ALPHA_INSTRUCTION));
+        if (PreviousMode != KernelMode)
+        {
+            ProbeForRead(ExceptionAddress, sizeof(ALPHA_INSTRUCTION), sizeof(ALPHA_INSTRUCTION));
         }
         Instruction = *((PALPHA_INSTRUCTION)ExceptionAddress);
-        switch (Instruction.Memory.Opcode) {
+        switch (Instruction.Memory.Opcode)
+        {
 
-        //
-        // Load/store operations.
-        //
+            //
+            // Load/store operations.
+            //
 
-        case LDBU_OP :
-        case LDWU_OP :
-        case STB_OP :
-        case STW_OP :
+        case LDBU_OP:
+        case LDWU_OP:
+        case STB_OP:
+        case STW_OP:
 
 
             //
@@ -141,11 +131,10 @@ Return Value:
             //
 
             EffectiveAddress = (ULONGLONG)Instruction.Memory.MemDisp +
-                               KiGetRegisterValue(Instruction.Memory.Rb,
-                                                  ExceptionFrame,
-                                                  TrapFrame);
+                               KiGetRegisterValue(Instruction.Memory.Rb, ExceptionFrame, TrapFrame);
 
-            if (EffectiveAddress != (ULONGLONG)(PVOID)EffectiveAddress) {
+            if (EffectiveAddress != (ULONGLONG)(PVOID)EffectiveAddress)
+            {
                 ExceptionRecord->ExceptionCode = STATUS_ACCESS_VIOLATION;
                 ExceptionRecord->NumberParameters = 0;
                 return FALSE;
@@ -155,135 +144,113 @@ Return Value:
             // Case on individual load/store instruction type.
             //
 
-            switch (Instruction.Memory.Opcode) {
+            switch (Instruction.Memory.Opcode)
+            {
 
-            //
-            // Load byte unsigned.
-            //
+                //
+                // Load byte unsigned.
+                //
 
-            case LDBU_OP :
-                if (PreviousMode != KernelMode) {
-                    ProbeForRead(EffectiveAddress,
-                                 sizeof(UCHAR),
-                                 sizeof(UCHAR));
+            case LDBU_OP:
+                if (PreviousMode != KernelMode)
+                {
+                    ProbeForRead(EffectiveAddress, sizeof(UCHAR), sizeof(UCHAR));
                 }
-                Data = (ULONGLONG)*(PUCHAR)EffectiveAddress;
-                KiSetRegisterValue(Instruction.Memory.Ra,
-                                   Data,
-                                   ExceptionFrame,
-                                   TrapFrame);
+                Data = (ULONGLONG) * (PUCHAR)EffectiveAddress;
+                KiSetRegisterValue(Instruction.Memory.Ra, Data, ExceptionFrame, TrapFrame);
                 break;
 
-            //
-            // Load word unsigned.
-            //
+                //
+                // Load word unsigned.
+                //
 
-            case LDWU_OP :
-                if (EffectiveAddress & 0x1) {
+            case LDWU_OP:
+                if (EffectiveAddress & 0x1)
+                {
                     goto AlignmentFault;
                 }
-                if (PreviousMode != KernelMode) {
-                    ProbeForRead((PUSHORT)EffectiveAddress,
-                                 sizeof(USHORT),
-                                 sizeof(UCHAR));
+                if (PreviousMode != KernelMode)
+                {
+                    ProbeForRead((PUSHORT)EffectiveAddress, sizeof(USHORT), sizeof(UCHAR));
                 }
-                Data = (ULONGLONG)*(PUSHORT)EffectiveAddress;
-                KiSetRegisterValue(Instruction.Memory.Ra,
-                                   Data,
-                                   ExceptionFrame,
-                                   TrapFrame);
+                Data = (ULONGLONG) * (PUSHORT)EffectiveAddress;
+                KiSetRegisterValue(Instruction.Memory.Ra, Data, ExceptionFrame, TrapFrame);
                 break;
 
-            //
-            // Store byte.
-            //
+                //
+                // Store byte.
+                //
 
-            case STB_OP :
-                if (PreviousMode != KernelMode) {
-                    ProbeForWrite((PUCHAR)EffectiveAddress,
-                                  sizeof(UCHAR),
-                                  sizeof(UCHAR));
+            case STB_OP:
+                if (PreviousMode != KernelMode)
+                {
+                    ProbeForWrite((PUCHAR)EffectiveAddress, sizeof(UCHAR), sizeof(UCHAR));
                 }
-                Data = KiGetRegisterValue(Instruction.Memory.Ra,
-                                          ExceptionFrame,
-                                          TrapFrame);
-                KiInterlockedStoreByte((PUCHAR)EffectiveAddress,
-                                       (UCHAR)Data);
+                Data = KiGetRegisterValue(Instruction.Memory.Ra, ExceptionFrame, TrapFrame);
+                KiInterlockedStoreByte((PUCHAR)EffectiveAddress, (UCHAR)Data);
                 break;
 
-            //
-            // Store word.
-            //
+                //
+                // Store word.
+                //
 
-            case STW_OP :
-                if (EffectiveAddress & 0x1) {
+            case STW_OP:
+                if (EffectiveAddress & 0x1)
+                {
                     goto AlignmentFault;
                 }
-                if (PreviousMode != KernelMode) {
-                    ProbeForWrite((PUSHORT)EffectiveAddress,
-                                  sizeof(USHORT),
-                                  sizeof(UCHAR));
+                if (PreviousMode != KernelMode)
+                {
+                    ProbeForWrite((PUSHORT)EffectiveAddress, sizeof(USHORT), sizeof(UCHAR));
                 }
-                Data = KiGetRegisterValue(Instruction.Memory.Ra,
-                                          ExceptionFrame,
-                                          TrapFrame);
-                KiInterlockedStoreWord((PUSHORT)EffectiveAddress,
-                                       (USHORT)Data);
+                Data = KiGetRegisterValue(Instruction.Memory.Ra, ExceptionFrame, TrapFrame);
+                KiInterlockedStoreWord((PUSHORT)EffectiveAddress, (USHORT)Data);
                 break;
             }
 
             break;
 
-        //
-        // Sign extend operations.
-        //
-
-        case SEXT_OP :
-            switch (Instruction.OpReg.Function) {
-
             //
-            // Sign extend byte.
+            // Sign extend operations.
             //
 
-            case SEXTB_FUNC :
-                Data = KiGetRegisterValue(Instruction.OpReg.Rb,
-                                          ExceptionFrame,
-                                          TrapFrame);
-                KiSetRegisterValue(Instruction.OpReg.Rc,
-                                   (ULONGLONG)(CHAR)Data,
-                                   ExceptionFrame,
-                                   TrapFrame);
+        case SEXT_OP:
+            switch (Instruction.OpReg.Function)
+            {
+
+                //
+                // Sign extend byte.
+                //
+
+            case SEXTB_FUNC:
+                Data = KiGetRegisterValue(Instruction.OpReg.Rb, ExceptionFrame, TrapFrame);
+                KiSetRegisterValue(Instruction.OpReg.Rc, (ULONGLONG)(CHAR)Data, ExceptionFrame, TrapFrame);
                 break;
 
-            //
-            // Sign extend word.
-            //
+                //
+                // Sign extend word.
+                //
 
-            case SEXTW_FUNC :
-                Data = KiGetRegisterValue(Instruction.OpReg.Rb,
-                                          ExceptionFrame,
-                                          TrapFrame);
-                KiSetRegisterValue(Instruction.OpReg.Rc,
-                                   (ULONGLONG)(SHORT)Data,
-                                   ExceptionFrame,
-                                   TrapFrame);
+            case SEXTW_FUNC:
+                Data = KiGetRegisterValue(Instruction.OpReg.Rb, ExceptionFrame, TrapFrame);
+                KiSetRegisterValue(Instruction.OpReg.Rc, (ULONGLONG)(SHORT)Data, ExceptionFrame, TrapFrame);
                 break;
 
-            //
-            // All other functions are not emulated.
-            //
+                //
+                // All other functions are not emulated.
+                //
 
-            default :
+            default:
                 return FALSE;
             }
 
             break;
 
-        //
-        // All other instructions are not emulated.
-        //
+            //
+            // All other instructions are not emulated.
+            //
 
-        default :
+        default:
             return FALSE;
         }
 
@@ -309,9 +276,9 @@ Return Value:
         TrapFrame->Fir += 4;
 
         return TRUE;
-
-    } except (KiCopyInformation(ExceptionRecord,
-                                (GetExceptionInformation())->ExceptionRecord)) {
+    }
+    except(KiCopyInformation(ExceptionRecord, (GetExceptionInformation())->ExceptionRecord))
+    {
 
         //
         // Preserve the original exception address.
@@ -322,7 +289,7 @@ Return Value:
         return FALSE;
     }
 
-AlignmentFault :
+AlignmentFault:
 
     //
     // A misaligned word access has been encountered. Change the illegal

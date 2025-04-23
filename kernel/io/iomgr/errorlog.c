@@ -25,42 +25,28 @@ Revision History:
 
 #include "iomgr.h"
 #include "elfkrnl.h"
-
-typedef struct _IOP_ERROR_LOG_CONTEXT {
+
+typedef struct _IOP_ERROR_LOG_CONTEXT
+{
     KDPC ErrorLogDpc;
     KTIMER ErrorLogTimer;
-}IOP_ERROR_LOG_CONTEXT, *PIOP_ERROR_LOG_CONTEXT;
+} IOP_ERROR_LOG_CONTEXT, *PIOP_ERROR_LOG_CONTEXT;
 
 //
 // Declare routines local to this module.
 //
 
 BOOLEAN
-IopErrorLogConnectPort(
-    VOID
-    );
+IopErrorLogConnectPort(VOID);
 
-VOID
-IopErrorLogDpc(
-    IN struct _KDPC *Dpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    );
+VOID IopErrorLogDpc(IN struct _KDPC *Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1, IN PVOID SystemArgument2);
 
 PLIST_ENTRY
-IopErrorLogGetEntry(
-    );
+IopErrorLogGetEntry();
 
-VOID
-IopErrorLogQueueRequest(
-    VOID
-    );
+VOID IopErrorLogQueueRequest(VOID);
 
-VOID
-IopErrorLogRequeueEntry(
-    IN PLIST_ENTRY ListEntry
-    );
+VOID IopErrorLogRequeueEntry(IN PLIST_ENTRY ListEntry);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, IopErrorLogThread)
@@ -74,11 +60,11 @@ IopErrorLogRequeueEntry(
 
 WORK_QUEUE_ITEM IopErrorLogWorkItem;
 #ifdef ALLOC_DATA_PRAGMA
-#pragma  data_seg("PAGEDATA")
+#pragma data_seg("PAGEDATA")
 #endif
 HANDLE ErrorLogPort;
 #ifdef ALLOC_DATA_PRAGMA
-#pragma  data_seg()
+#pragma data_seg()
 #endif
 BOOLEAN ErrorLogPortConnected;
 BOOLEAN IopErrorLogPortPending;
@@ -89,11 +75,8 @@ BOOLEAN IopErrorLogDisabledThisBoot;
 //
 
 #define IO_ERROR_NAME_LENGTH 100
-
-VOID
-IopErrorLogThread(
-    IN PVOID StartContext
-    )
+
+VOID IopErrorLogThread(IN PVOID StartContext)
 
 /*++
 
@@ -127,7 +110,7 @@ Return Value:
     ULONG objectNameLength;
     ULONG remainingLength;
     ULONG stringLength;
-    CHAR nameBuffer[IO_ERROR_NAME_LENGTH+sizeof( OBJECT_NAME_INFORMATION )];
+    CHAR nameBuffer[IO_ERROR_NAME_LENGTH + sizeof(OBJECT_NAME_INFORMATION)];
     PDRIVER_OBJECT driverObject;
     POBJECT_NAME_INFORMATION nameInformation;
     PIO_ERROR_LOG_PACKET errorData;
@@ -135,14 +118,15 @@ Return Value:
 
     PAGED_CODE();
 
-    UNREFERENCED_PARAMETER( StartContext );
+    UNREFERENCED_PARAMETER(StartContext);
 
     //
     // Check to see whether a connection has been made to the error log
     // port.  If the port is not connected return.
     //
 
-    if (!IopErrorLogConnectPort()) {
+    if (!IopErrorLogConnectPort())
+    {
 
         //
         // The port could not be connected.  A timer was started that will
@@ -160,7 +144,8 @@ Return Value:
     messageLength = IO_ERROR_LOG_MESSAGE_LENGTH;
     portMessage = ExAllocatePool(PagedPool, messageLength);
 
-    if (portMessage == NULL) {
+    if (portMessage == NULL)
+    {
 
         //
         // The message buffer could not be allocated. Request that
@@ -171,11 +156,11 @@ Return Value:
         return;
     }
 
-    RtlZeroMemory( portMessage, sizeof( *portMessage ) );
+    RtlZeroMemory(portMessage, sizeof(*portMessage));
     portMessage->MessageType = IO_ERROR_LOG;
     errorMessage = &portMessage->u.IoErrorLogMessage;
 
-    nameInformation = (PVOID) &nameBuffer;
+    nameInformation = (PVOID)&nameBuffer;
 
     //
     // Now enter the main loop for this thread.  This thread performs the
@@ -193,7 +178,8 @@ Return Value:
     //       return.
     //
 
-    for (;;) {
+    for (;;)
+    {
 
         //
         // Loop dequeueing  packets from the queue head and attempt to send
@@ -205,13 +191,12 @@ Return Value:
         // top of the loop again.
         //
 
-        if (!(listEntry = IopErrorLogGetEntry())) {
+        if (!(listEntry = IopErrorLogGetEntry()))
+        {
             break;
         }
 
-        errorLogEntry = CONTAINING_RECORD( listEntry,
-                                           ERROR_LOG_ENTRY,
-                                           ListEntry );
+        errorLogEntry = CONTAINING_RECORD(listEntry, ERROR_LOG_ENTRY, ListEntry);
 
         //
         // The size of errorLogEntry is ERROR_LOG_ENTRY +
@@ -222,19 +207,16 @@ Return Value:
         // message length.
         //
 
-        messageLength = sizeof( IO_ERROR_LOG_MESSAGE ) -
-            sizeof( ERROR_LOG_ENTRY ) - sizeof( IO_ERROR_LOG_PACKET ) +
-            errorLogEntry->Size;
+        messageLength =
+            sizeof(IO_ERROR_LOG_MESSAGE) - sizeof(ERROR_LOG_ENTRY) - sizeof(IO_ERROR_LOG_PACKET) + errorLogEntry->Size;
 
-        errorData = (PIO_ERROR_LOG_PACKET) (errorLogEntry + 1);
+        errorData = (PIO_ERROR_LOG_PACKET)(errorLogEntry + 1);
 
         //
         // Copy the error log packet and the extra data to the message.
         //
 
-        RtlCopyMemory( &errorMessage->EntryData,
-                       errorData,
-                       errorLogEntry->Size - sizeof( ERROR_LOG_ENTRY ) );
+        RtlCopyMemory(&errorMessage->EntryData, errorData, errorLogEntry->Size - sizeof(ERROR_LOG_ENTRY));
 
         errorMessage->TimeStamp = errorLogEntry->TimeStamp;
         errorMessage->Type = IO_TYPE_ERROR_MESSAGE;
@@ -245,38 +227,36 @@ Return Value:
         // strings and they will be recopied later.
         //
 
-        if (errorData->NumberOfStrings != 0) {
+        if (errorData->NumberOfStrings != 0)
+        {
 
             //
             // Start the driver and device strings where the current
             // strings start.
             //
 
-            objectName = (PCHAR) (&errorMessage->EntryData) +
-                                 errorData->StringOffset;
-
-        } else {
+            objectName = (PCHAR)(&errorMessage->EntryData) + errorData->StringOffset;
+        }
+        else
+        {
 
             //
             // Put the driver and device strings at the end of the
             // data.
             //
 
-            objectName = (PCHAR) errorMessage + messageLength;
-
+            objectName = (PCHAR)errorMessage + messageLength;
         }
 
         //
         // Make sure the driver offset starts on an even bountry.
         //
 
-        objectName = (PCHAR) ((ULONG_PTR) (objectName + sizeof(WCHAR) - 1) &
-            ~(ULONG_PTR)(sizeof(WCHAR) - 1));
+        objectName = (PCHAR)((ULONG_PTR)(objectName + sizeof(WCHAR) - 1) & ~(ULONG_PTR)(sizeof(WCHAR) - 1));
 
-        errorMessage->DriverNameOffset = (ULONG)(objectName - (PCHAR) errorMessage);
+        errorMessage->DriverNameOffset = (ULONG)(objectName - (PCHAR)errorMessage);
 
-        remainingLength = (ULONG)((PCHAR) portMessage + IO_ERROR_LOG_MESSAGE_LENGTH
-                            - objectName);
+        remainingLength = (ULONG)((PCHAR)portMessage + IO_ERROR_LOG_MESSAGE_LENGTH - objectName);
 
         //
         // Calculate the length of the driver name and
@@ -287,42 +267,45 @@ Return Value:
         driverObject = errorLogEntry->DriverObject;
         driverNameLength = 0;
 
-        if (driverObject != NULL) {
-            if (driverObject->DriverName.Buffer != NULL) {
+        if (driverObject != NULL)
+        {
+            if (driverObject->DriverName.Buffer != NULL)
+            {
 
                 nameString.Buffer = driverObject->DriverName.Buffer;
                 driverNameLength = driverObject->DriverName.Length;
             }
 
-            if (driverNameLength == 0) {
+            if (driverNameLength == 0)
+            {
 
                 //
                 // Try to query the driver object for a name.
                 //
 
-                status = ObQueryNameString( driverObject,
-                                            nameInformation,
-                                            IO_ERROR_NAME_LENGTH + sizeof( OBJECT_NAME_INFORMATION ),
-                                            &objectNameLength );
+                status = ObQueryNameString(driverObject, nameInformation,
+                                           IO_ERROR_NAME_LENGTH + sizeof(OBJECT_NAME_INFORMATION), &objectNameLength);
 
-                if (!NT_SUCCESS( status ) || !nameInformation->Name.Length) {
+                if (!NT_SUCCESS(status) || !nameInformation->Name.Length)
+                {
 
                     //
                     // No driver name was available.
                     //
 
                     driverNameLength = 0;
-
-                } else {
+                }
+                else
+                {
                     nameString = nameInformation->Name;
                 }
-
             }
-
-        } else {
+        }
+        else
+        {
 
             //
-            // If no driver object, this message must be from the 
+            // If no driver object, this message must be from the
             // kernel.   We need to point the eventlog service to
             // an event message file containing ntstatus messages,
             // ie, ntdll, we do this by claiming this event is an
@@ -333,23 +316,25 @@ Return Value:
             driverNameLength = wcslen(nameString.Buffer) * sizeof(WCHAR);
         }
 
-        if (driverNameLength != 0 ) {
+        if (driverNameLength != 0)
+        {
 
             //
             // Pick out the module name.
             //
 
-            string = nameString.Buffer +
-                (driverNameLength / sizeof(WCHAR));
+            string = nameString.Buffer + (driverNameLength / sizeof(WCHAR));
 
             driverNameLength = sizeof(WCHAR);
             string--;
-            while (*string != L'\\' && string != nameString.Buffer) {
+            while (*string != L'\\' && string != nameString.Buffer)
+            {
                 string--;
                 driverNameLength += sizeof(WCHAR);
             }
 
-            if (*string == L'\\') {
+            if (*string == L'\\')
+            {
                 string++;
                 driverNameLength -= sizeof(WCHAR);
             }
@@ -360,16 +345,12 @@ Return Value:
             // one for the device name and one for strings.
             //
 
-            if (driverNameLength > remainingLength - (3 * sizeof(WCHAR))) {
+            if (driverNameLength > remainingLength - (3 * sizeof(WCHAR)))
+            {
                 driverNameLength = remainingLength - (3 * sizeof(WCHAR));
             }
 
-            RtlCopyMemory(
-                objectName,
-                string,
-                driverNameLength
-                );
-
+            RtlCopyMemory(objectName, string, driverNameLength);
         }
 
         //
@@ -377,8 +358,8 @@ Return Value:
         // driver name.
         //
 
-       *((PWSTR) (objectName + driverNameLength)) = L'\0';
-       driverNameLength += sizeof(WCHAR);
+        *((PWSTR)(objectName + driverNameLength)) = L'\0';
+        driverNameLength += sizeof(WCHAR);
 
         //
         // Determine where the next string goes.
@@ -387,16 +368,17 @@ Return Value:
         objectName += driverNameLength;
         remainingLength -= driverNameLength;
 
-        errorMessage->EntryData.StringOffset = (USHORT)(objectName - (PCHAR) errorMessage);
+        errorMessage->EntryData.StringOffset = (USHORT)(objectName - (PCHAR)errorMessage);
 
-        if (errorLogEntry->DeviceObject != NULL) {
+        if (errorLogEntry->DeviceObject != NULL)
+        {
 
-            status = ObQueryNameString( errorLogEntry->DeviceObject,
-                                        nameInformation,
-                                        IO_ERROR_NAME_LENGTH + sizeof( OBJECT_NAME_INFORMATION ) - driverNameLength,
-                                        &objectNameLength );
+            status = ObQueryNameString(errorLogEntry->DeviceObject, nameInformation,
+                                       IO_ERROR_NAME_LENGTH + sizeof(OBJECT_NAME_INFORMATION) - driverNameLength,
+                                       &objectNameLength);
 
-            if (!NT_SUCCESS( status ) || !nameInformation->Name.Length) {
+            if (!NT_SUCCESS(status) || !nameInformation->Name.Length)
+            {
 
                 //
                 // No device name was available. Add a Null string.
@@ -404,7 +386,6 @@ Return Value:
 
                 nameInformation->Name.Length = 0;
                 nameInformation->Name.Buffer = L"\0";
-
             }
 
             //
@@ -412,18 +393,18 @@ Return Value:
             // Always add a device name string so that the
             // insertion string counts are correct.
             //
+        }
+        else
+        {
 
-        } else {
+            //
+            // No device name was available. Add a Null string.
+            // Always add a device name string so that the
+            // insertion string counts are correct.
+            //
 
-                //
-                // No device name was available. Add a Null string.
-                // Always add a device name string so that the
-                // insertion string counts are correct.
-                //
-
-                nameInformation->Name.Length = 0;
-                nameInformation->Name.Buffer = L"\0";
-
+            nameInformation->Name.Length = 0;
+            nameInformation->Name.Buffer = L"\0";
         }
 
         deviceNameLength = nameInformation->Name.Length;
@@ -433,22 +414,20 @@ Return Value:
         // Save space for a NULL.
         //
 
-        if (deviceNameLength > remainingLength - (2 * sizeof(WCHAR))) {
+        if (deviceNameLength > remainingLength - (2 * sizeof(WCHAR)))
+        {
 
             deviceNameLength = remainingLength - (2 * sizeof(WCHAR));
-
         }
 
-        RtlCopyMemory( objectName,
-                       nameInformation->Name.Buffer,
-                       deviceNameLength );
+        RtlCopyMemory(objectName, nameInformation->Name.Buffer, deviceNameLength);
 
         //
         // Add a null after the device name even if there is no
         // device name.
         //
 
-        *((PWSTR) (objectName + deviceNameLength)) = L'\0';
+        *((PWSTR)(objectName + deviceNameLength)) = L'\0';
         deviceNameLength += sizeof(WCHAR);
 
         //
@@ -459,10 +438,10 @@ Return Value:
         objectName += deviceNameLength;
         remainingLength -= deviceNameLength;
 
-        if (errorData->NumberOfStrings) {
+        if (errorData->NumberOfStrings)
+        {
 
-            stringLength = errorLogEntry->Size - sizeof( ERROR_LOG_ENTRY ) -
-                            errorData->StringOffset;
+            stringLength = errorLogEntry->Size - sizeof(ERROR_LOG_ENTRY) - errorData->StringOffset;
 
             //
             // Align the length to an even byte boundary.
@@ -475,48 +454,44 @@ Return Value:
             // Save space for a NULL.
             //
 
-            if (stringLength > remainingLength - sizeof(WCHAR)) {
+            if (stringLength > remainingLength - sizeof(WCHAR))
+            {
 
 
                 messageLength -= stringLength - remainingLength;
                 stringLength = remainingLength - sizeof(WCHAR);
-
             }
 
             //
             // Copy the strings to the end of the message.
             //
 
-            RtlCopyMemory( objectName,
-                           (PCHAR) errorData + errorData->StringOffset,
-                           stringLength );
+            RtlCopyMemory(objectName, (PCHAR)errorData + errorData->StringOffset, stringLength);
 
             //
             // Add a null after the strings
             //
             //
 
-           *((PWSTR) (objectName + stringLength)) = L'\0';
-
+            *((PWSTR)(objectName + stringLength)) = L'\0';
         }
 
         //
         // Update the message length.
         //
 
-        errorMessage->DriverNameLength = (USHORT) driverNameLength;
+        errorMessage->DriverNameLength = (USHORT)driverNameLength;
         messageLength += deviceNameLength + driverNameLength;
-        errorMessage->Size = (USHORT) messageLength;
+        errorMessage->Size = (USHORT)messageLength;
 
-        messageLength += FIELD_OFFSET ( ELF_PORT_MSG, u ) -
-            FIELD_OFFSET (ELF_PORT_MSG, MessageType);
+        messageLength += FIELD_OFFSET(ELF_PORT_MSG, u) - FIELD_OFFSET(ELF_PORT_MSG, MessageType);
 
-        portMessage->PortMessage.u1.s1.TotalLength = (USHORT)
-            (sizeof( PORT_MESSAGE ) + messageLength);
-        portMessage->PortMessage.u1.s1.DataLength = (USHORT) (messageLength);
-        status = NtRequestPort( ErrorLogPort, (PPORT_MESSAGE) portMessage );
+        portMessage->PortMessage.u1.s1.TotalLength = (USHORT)(sizeof(PORT_MESSAGE) + messageLength);
+        portMessage->PortMessage.u1.s1.DataLength = (USHORT)(messageLength);
+        status = NtRequestPort(ErrorLogPort, (PPORT_MESSAGE)portMessage);
 
-        if (!NT_SUCCESS( status )) {
+        if (!NT_SUCCESS(status))
+        {
 
             //
             // The send failed.  Place the packet back onto the head of
@@ -527,23 +502,23 @@ Return Value:
             // to do any work on.
             //
 
-            NtClose( ErrorLogPort );
+            NtClose(ErrorLogPort);
 
-            IopErrorLogRequeueEntry( &errorLogEntry->ListEntry );
+            IopErrorLogRequeueEntry(&errorLogEntry->ListEntry);
 
             IopErrorLogQueueRequest();
 
             break;
-
-        } else {
+        }
+        else
+        {
 
             //
             // The send worked fine.  Free the packet and the update
             // the allocation count.
             //
 
-            InterlockedExchangeAdd( &IopErrorLogAllocation,
-                                   -((LONG) (errorLogEntry->Size )));
+            InterlockedExchangeAdd(&IopErrorLogAllocation, -((LONG)(errorLogEntry->Size)));
 
             //
             // Dereference the object pointers now that the name has been
@@ -551,15 +526,17 @@ Return Value:
             //
 
 
-            if (errorLogEntry->DeviceObject != NULL) {
-                ObDereferenceObject( errorLogEntry->DeviceObject );
+            if (errorLogEntry->DeviceObject != NULL)
+            {
+                ObDereferenceObject(errorLogEntry->DeviceObject);
             }
 
-            if (driverObject != NULL) {
-                ObDereferenceObject( errorLogEntry->DriverObject );
+            if (driverObject != NULL)
+            {
+                ObDereferenceObject(errorLogEntry->DriverObject);
             }
 
-            ExFreePool( errorLogEntry );
+            ExFreePool(errorLogEntry);
 
         } // if
 
@@ -570,13 +547,10 @@ Return Value:
     //
 
     ExFreePool(portMessage);
-
 }
-
+
 BOOLEAN
-IopErrorLogConnectPort(
-    VOID
-    )
+IopErrorLogConnectPort(VOID)
 /*++
 
 Routine Description:
@@ -610,13 +584,14 @@ Return Value:
     // If the ErrorLogPort is connected then return true.
     //
 
-    if (ErrorLogPortConnected) {
+    if (ErrorLogPortConnected)
+    {
 
         //
         // The port is connect return.
         //
 
-        return(TRUE);
+        return (TRUE);
     }
 
     //
@@ -633,22 +608,20 @@ Return Value:
     // Generate the string structure for describing the error logger's port.
     //
 
-    RtlInitUnicodeString( &errorPortName, ELF_PORT_NAME_U );
+    RtlInitUnicodeString(&errorPortName, ELF_PORT_NAME_U);
 
-    status = NtConnectPort( &ErrorLogPort,
-                            &errorPortName,
-                            &dynamicQos,
-                            (PPORT_VIEW) NULL,
-                            (PREMOTE_PORT_VIEW) NULL,
-                            &maxMessageLength,
-                            (PVOID) NULL,
-                            (PULONG) NULL );
+    status = NtConnectPort(&ErrorLogPort, &errorPortName, &dynamicQos, (PPORT_VIEW)NULL, (PREMOTE_PORT_VIEW)NULL,
+                           &maxMessageLength, (PVOID)NULL, (PULONG)NULL);
 
-    if (NT_SUCCESS( status )) {
-        if (maxMessageLength >= IO_ERROR_LOG_MESSAGE_LENGTH) {
+    if (NT_SUCCESS(status))
+    {
+        if (maxMessageLength >= IO_ERROR_LOG_MESSAGE_LENGTH)
+        {
             ErrorLogPortConnected = TRUE;
-            return(TRUE);
-        } else {
+            return (TRUE);
+        }
+        else
+        {
             NtClose(ErrorLogPort);
         }
     }
@@ -664,16 +637,10 @@ Return Value:
     // The port could not be connected at this time return false.
     //
 
-    return(FALSE);
+    return (FALSE);
 }
-
-VOID
-IopErrorLogDpc(
-    IN struct _KDPC *Dpc,
-    IN PVOID DeferredContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    )
+
+VOID IopErrorLogDpc(IN struct _KDPC *Dpc, IN PVOID DeferredContext, IN PVOID SystemArgument1, IN PVOID SystemArgument2)
 
 /*++
 
@@ -705,18 +672,18 @@ Return Value:
     // Free the DPC structure if there is one.
     //
 
-    if (Dpc != NULL) {
+    if (Dpc != NULL)
+    {
         ExFreePool(Dpc);
     }
 
-    ExInitializeWorkItem( &IopErrorLogWorkItem, IopErrorLogThread, NULL );
+    ExInitializeWorkItem(&IopErrorLogWorkItem, IopErrorLogThread, NULL);
 
-    ExQueueWorkItem( &IopErrorLogWorkItem, DelayedWorkQueue );
+    ExQueueWorkItem(&IopErrorLogWorkItem, DelayedWorkQueue);
 }
-
+
 PLIST_ENTRY
-IopErrorLogGetEntry(
-    )
+IopErrorLogGetEntry()
 
 /*++
 
@@ -744,8 +711,9 @@ Return Value:
     // Remove the next packet from the queue, if there is one.
     //
 
-    ExAcquireSpinLock( &IopErrorLogLock, &irql );
-    if (IsListEmpty( &IopErrorLogListHead )) {
+    ExAcquireSpinLock(&IopErrorLogLock, &irql);
+    if (IsListEmpty(&IopErrorLogListHead))
+    {
 
         //
         // Indicate no more work will be done in the context of this worker
@@ -753,24 +721,23 @@ Return Value:
         //
 
         IopErrorLogPortPending = FALSE;
-        listEntry = (PLIST_ENTRY) NULL;
-    } else {
+        listEntry = (PLIST_ENTRY)NULL;
+    }
+    else
+    {
 
         //
         // Remove the next packet from the head of the list.
         //
 
-        listEntry = RemoveHeadList( &IopErrorLogListHead );
+        listEntry = RemoveHeadList(&IopErrorLogListHead);
     }
 
-    ExReleaseSpinLock( &IopErrorLogLock, irql );
+    ExReleaseSpinLock(&IopErrorLogLock, irql);
     return listEntry;
 }
-
-VOID
-IopErrorLogQueueRequest(
-    VOID
-    )
+
+VOID IopErrorLogQueueRequest(VOID)
 
 /*++
 
@@ -800,9 +767,10 @@ Return Value:
     // Allocate a context block which will contain the timer and the DPC.
     //
 
-    context = ExAllocatePool( NonPagedPool, sizeof( IOP_ERROR_LOG_CONTEXT ) );
+    context = ExAllocatePool(NonPagedPool, sizeof(IOP_ERROR_LOG_CONTEXT));
 
-    if (context == NULL) {
+    if (context == NULL)
+    {
 
         //
         // The context block could not be allocated. Clear the error log
@@ -817,29 +785,24 @@ Return Value:
         return;
     }
 
-    KeInitializeDpc( &context->ErrorLogDpc,
-                     IopErrorLogDpc,
-                     NULL );
+    KeInitializeDpc(&context->ErrorLogDpc, IopErrorLogDpc, NULL);
 
-    KeInitializeTimer( &context->ErrorLogTimer );
+    KeInitializeTimer(&context->ErrorLogTimer);
 
     //
     // Delay for 30 seconds and try for the port again.
     //
 
-    interval.QuadPart = - 10 * 1000 * 1000 * 30;
+    interval.QuadPart = -10 * 1000 * 1000 * 30;
 
     //
     // Set the timer to fire a DPC in 30 seconds.
     //
 
-    KeSetTimer( &context->ErrorLogTimer, interval, &context->ErrorLogDpc );
+    KeSetTimer(&context->ErrorLogTimer, interval, &context->ErrorLogDpc);
 }
-
-VOID
-IopErrorLogRequeueEntry(
-    IN PLIST_ENTRY ListEntry
-    )
+
+VOID IopErrorLogRequeueEntry(IN PLIST_ENTRY ListEntry)
 
 /*++
 
@@ -868,8 +831,8 @@ Return Value:
     // soon, and return.
     //
 
-    ExAcquireSpinLock( &IopErrorLogLock, &irql );
-    InsertHeadList( &IopErrorLogListHead, ListEntry );
+    ExAcquireSpinLock(&IopErrorLogLock, &irql);
+    InsertHeadList(&IopErrorLogListHead, ListEntry);
     ErrorLogPortConnected = FALSE;
-    ExReleaseSpinLock( &IopErrorLogLock, irql );
+    ExReleaseSpinLock(&IopErrorLogLock, irql);
 }

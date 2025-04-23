@@ -26,19 +26,13 @@ Revision History:
 #include "kxia64.h"
 
 #if defined(ALLOC_PRAGMA) && defined(NTOS_KERNEL_RUNTIME)
-#pragma alloc_text(PAGE,RtlInitializeContext)
-#pragma alloc_text(PAGE,RtlRemoteCall)
+#pragma alloc_text(PAGE, RtlInitializeContext)
+#pragma alloc_text(PAGE, RtlRemoteCall)
 #endif
 
-
-VOID
-RtlInitializeContext(
-    IN HANDLE Process,
-    OUT PCONTEXT Context,
-    IN PVOID Parameter OPTIONAL,
-    IN PVOID InitialPc OPTIONAL,
-    IN PVOID InitialSp OPTIONAL
-    )
+
+VOID RtlInitializeContext(IN HANDLE Process, OUT PCONTEXT Context, IN PVOID Parameter OPTIONAL,
+                          IN PVOID InitialPc OPTIONAL, IN PVOID InitialSp OPTIONAL)
 
 /*++
 
@@ -69,14 +63,15 @@ Return Value:
     ULONGLONG Argument;
     ULONG_PTR Wow64Info;
     NTSTATUS Status;
-    
+
     RTL_PAGED_CODE();
 
     //
     // Check for proper initial stack (0 mod 16).
     //
 
-    if (((ULONG_PTR)InitialSp & 0xf) != 0) {
+    if (((ULONG_PTR)InitialSp & 0xf) != 0)
+    {
         RtlRaiseStatus(STATUS_BAD_INITIAL_STACK);
     }
 
@@ -84,15 +79,12 @@ Return Value:
     // Check for proper plabel address alignment.
     // Assumes InitialPc points to a plabel that must be 8-byte aligned.
     //
-    if (((ULONG_PTR)InitialPc & 0x7) != 0) {
+    if (((ULONG_PTR)InitialPc & 0x7) != 0)
+    {
         //
         // Misaligned, See if we are running in a Wow64 process
         //
-        Status = ZwQueryInformationProcess(Process,
-                                           ProcessWow64Information,
-                                           &Wow64Info,
-                                           sizeof(Wow64Info),
-                                           NULL);
+        Status = ZwQueryInformationProcess(Process, ProcessWow64Information, &Wow64Info, sizeof(Wow64Info), NULL);
 
         if (NT_SUCCESS(Status) && (Wow64Info == 0))
         {
@@ -147,32 +139,21 @@ Return Value:
     //
 
     Argument = (ULONGLONG)Parameter;
-    ZwWriteVirtualMemory(Process,
-             (PVOID)((ULONG_PTR)Context->RsBSPSTORE),
-             (PVOID)&Argument,
-             sizeof(Argument),
-             NULL);
-//
-// N.b. The IFS must be reinitialized in LdrInitializeThunk
-//
+    ZwWriteVirtualMemory(Process, (PVOID)((ULONG_PTR)Context->RsBSPSTORE), (PVOID)&Argument, sizeof(Argument), NULL);
+    //
+    // N.b. The IFS must be reinitialized in LdrInitializeThunk
+    //
 
-    Context->StIFS = 0x8000000000000081ULL;            // Valid, 1 local register, 0 output register
+    Context->StIFS = 0x8000000000000081ULL; // Valid, 1 local register, 0 output register
     Context->RsBSP = Context->RsBSPSTORE;
     Context->RsRSC = USER_RSC_INITIAL;
     Context->ApUNAT = 0xFFFFFFFFFFFFFFFF;
 }
 
-
+
 NTSTATUS
-RtlRemoteCall(
-    HANDLE Process,
-    HANDLE Thread,
-    PVOID CallSite,
-    ULONG ArgumentCount,
-    PULONG_PTR Arguments,
-    BOOLEAN PassContext,
-    BOOLEAN AlreadySuspended
-    )
+RtlRemoteCall(HANDLE Process, HANDLE Thread, PVOID CallSite, ULONG ArgumentCount, PULONG_PTR Arguments,
+              BOOLEAN PassContext, BOOLEAN AlreadySuspended)
 
 /*++
 
@@ -223,7 +204,8 @@ Return Value:
 
     RTL_PAGED_CODE();
 
-    if ((ArgumentCount > 8) || (PassContext && (ArgumentCount > 7))) {
+    if ((ArgumentCount > 8) || (PassContext && (ArgumentCount > 7)))
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -231,10 +213,12 @@ Return Value:
     // If necessary, suspend the guy before with we mess with his stack.
     //
 
-    if (AlreadySuspended == FALSE) {
+    if (AlreadySuspended == FALSE)
+    {
         Status = NtSuspendThread(Thread, NULL);
-        if (NT_SUCCESS(Status) == FALSE) {
-            return(Status);
+        if (NT_SUCCESS(Status) == FALSE)
+        {
+            return (Status);
         }
     }
 
@@ -244,14 +228,17 @@ Return Value:
 
     Context.ContextFlags = CONTEXT_FULL;
     Status = NtGetContextThread(Thread, &Context);
-    if (NT_SUCCESS(Status) == FALSE) {
-        if (AlreadySuspended == FALSE) {
+    if (NT_SUCCESS(Status) == FALSE)
+    {
+        if (AlreadySuspended == FALSE)
+        {
             NtResumeThread(Thread, NULL);
         }
-        return(Status);
+        return (Status);
     }
 
-    if (AlreadySuspended) {
+    if (AlreadySuspended)
+    {
         Context.IntV0 = STATUS_ALERTED;
     }
 
@@ -264,14 +251,15 @@ Return Value:
 
     ContextAddress = (((ULONG_PTR)Context.IntSp + 0xf) & ~0xfi64) - sizeof(CONTEXT);
     NewSp = ContextAddress - STACK_SCRATCH_AREA;
-    Status = NtWriteVirtualMemory(Process, (PVOID)ContextAddress, &Context,
-                  sizeof(CONTEXT), NULL);
+    Status = NtWriteVirtualMemory(Process, (PVOID)ContextAddress, &Context, sizeof(CONTEXT), NULL);
 
-    if (NT_SUCCESS(Status) == FALSE) {
-        if (AlreadySuspended == FALSE) {
+    if (NT_SUCCESS(Status) == FALSE)
+    {
+        if (AlreadySuspended == FALSE)
+        {
             NtResumeThread(Thread, NULL);
         }
-        return(Status);
+        return (Status);
     }
 
     RtlZeroMemory((PVOID)ArgumentsCopy, sizeof(ArgumentsCopy));
@@ -279,22 +267,26 @@ Return Value:
     TotalFrameSize = (SHORT)(Context.StIFS & PFS_SIZE_MASK);
     RNatSaveIndex = (SHORT)((Context.RsBSP >> 3) & NAT_BITS_PER_RNAT_REG);
     Temp = RNatSaveIndex + TotalFrameSize - NAT_BITS_PER_RNAT_REG;
-    while (Temp >= 0) {
+    while (Temp >= 0)
+    {
         TotalFrameSize++;
         Temp -= NAT_BITS_PER_RNAT_REG;
     }
     NewBsp = Context.RsBSP + TotalFrameSize * sizeof(ULONGLONG);
     Context.RsBSP = NewBsp;
 
-    if (PassContext) {
-        ShiftCount = (ULONG) (NewBsp & 0x1F8) >> 3;
+    if (PassContext)
+    {
+        ShiftCount = (ULONG)(NewBsp & 0x1F8) >> 3;
         Context.RsRNAT &= ~(0x1i64 << ShiftCount);
         ArgumentsCopy[Count++] = ContextAddress;
         NewBsp += sizeof(ULONGLONG);
     }
 
-    for (; ArgumentCount != 0 ; ArgumentCount--) {
-        if ((NewBsp & 0x1F8) == 0x1F8) {
+    for (; ArgumentCount != 0; ArgumentCount--)
+    {
+        if ((NewBsp & 0x1F8) == 0x1F8)
+        {
             ArgumentsCopy[Count++] = Context.RsRNAT;
             Context.RsRNAT = -1i64;
             NewBsp += sizeof(ULONGLONG);
@@ -305,7 +297,8 @@ Return Value:
         NewBsp += sizeof(ULONGLONG);
     }
 
-    if ((NewBsp & 0x1F8) == 0x1F8) {
+    if ((NewBsp & 0x1F8) == 0x1F8)
+    {
         ArgumentsCopy[Count++] = Context.RsRNAT;
         Context.RsRNAT = -1i64;
         NewBsp += sizeof(ULONGLONG);
@@ -315,19 +308,17 @@ Return Value:
     //  Copy the arguments onto the target backing store.
     //
 
-    if (Count) {
-        Status = NtWriteVirtualMemory(Process,
-                                      (PVOID)Context.RsBSP,
-                                      ArgumentsCopy,
-                                      Count * sizeof(ULONGLONG),
-                                      NULL
-                                      );
+    if (Count)
+    {
+        Status = NtWriteVirtualMemory(Process, (PVOID)Context.RsBSP, ArgumentsCopy, Count * sizeof(ULONGLONG), NULL);
 
-        if (NT_SUCCESS(Status) == FALSE) {
-            if (AlreadySuspended == FALSE) {
+        if (NT_SUCCESS(Status) == FALSE)
+        {
+            if (AlreadySuspended == FALSE)
+            {
                 NtResumeThread(Thread, NULL);
             }
-            return(Status);
+            return (Status);
         }
     }
 
@@ -335,9 +326,7 @@ Return Value:
     // set up RSE
     //
 
-    Context.RsRSC = (RSC_MODE_LY<<RSC_MODE)
-                   | (RSC_BE_LITTLE<<RSC_BE)
-                   | (0x3<<RSC_PL);
+    Context.RsRSC = (RSC_MODE_LY << RSC_MODE) | (RSC_BE_LITTLE << RSC_BE) | (0x3 << RSC_PL);
 
     Count = ArgumentCount + (PassContext ? 1 : 0);
 
@@ -369,10 +358,10 @@ Return Value:
     SANITIZE_FSR(Context.StFPSR, UserMode);
 
     Status = NtSetContextThread(Thread, &Context);
-    if (!AlreadySuspended) {
+    if (!AlreadySuspended)
+    {
         NtResumeThread(Thread, NULL);
     }
 
-    return( Status );
+    return (Status);
 }
-

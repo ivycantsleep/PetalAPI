@@ -59,28 +59,18 @@ void processargs();
 
 void print(PUNICODE_STRING);
 
-void
-DumpValues(
-    HANDLE  Handle
-    );
+void DumpValues(HANDLE Handle);
 
-void
-Dump(
-    HANDLE  Handle
-    );
+void Dump(HANDLE Handle);
 
-UNICODE_STRING  WorkName;
-WCHAR           workbuffer[WORK_SIZE];
+UNICODE_STRING WorkName;
+WCHAR workbuffer[WORK_SIZE];
 
-void
-__cdecl main(
-    int argc,
-    char *argv[]
-    )
+void __cdecl main(int argc, char *argv[])
 {
     NTSTATUS status;
     OBJECT_ATTRIBUTES ObjectAttributes;
-    HANDLE          BaseHandle;
+    HANDLE BaseHandle;
 
     //
     // Process args
@@ -99,21 +89,12 @@ __cdecl main(
 
     printf("rtdmp: starting\n");
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &WorkName,
-        0,
-        (HANDLE)NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&ObjectAttributes, &WorkName, 0, (HANDLE)NULL, NULL);
     ObjectAttributes.Attributes |= OBJ_CASE_INSENSITIVE;
 
-    status = NtOpenKey(
-                &BaseHandle,
-                MAXIMUM_ALLOWED,
-                &ObjectAttributes
-                );
-    if (!NT_SUCCESS(status)) {
+    status = NtOpenKey(&BaseHandle, MAXIMUM_ALLOWED, &ObjectAttributes);
+    if (!NT_SUCCESS(status))
+    {
         printf("rtdmp: t0: %08lx\n", status);
         exit(1);
     }
@@ -121,22 +102,19 @@ __cdecl main(
     Dump(BaseHandle);
 }
 
-
-void
-Dump(
-    HANDLE  Handle
-    )
+
+void Dump(HANDLE Handle)
 {
-    NTSTATUS    status;
+    NTSTATUS status;
     PKEY_BASIC_INFORMATION KeyInformation;
     OBJECT_ATTRIBUTES ObjectAttributes;
-    ULONG   NamePos;
-    ULONG   index;
-    STRING  enumname;
-    HANDLE  WorkHandle;
-    ULONG   ResultLength;
-    static  char buffer[WORK_SIZE];
-    PUCHAR  p;
+    ULONG NamePos;
+    ULONG index;
+    STRING enumname;
+    HANDLE WorkHandle;
+    ULONG ResultLength;
+    static char buffer[WORK_SIZE];
+    PUCHAR p;
 
     KeyInformation = (PKEY_BASIC_INFORMATION)buffer;
     NamePos = WorkName.Length;
@@ -156,28 +134,23 @@ Dump(
     // Enumerate node's children and apply ourselves to each one
     //
 
-    for (index = 0; TRUE; index++) {
+    for (index = 0; TRUE; index++)
+    {
 
         RtlZeroMemory(KeyInformation, WORK_SIZE);
-        status = NtEnumerateKey(
-                    Handle,
-                    index,
-                    KeyBasicInformation,
-                    KeyInformation,
-                    WORK_SIZE,
-                    &ResultLength
-                    );
+        status = NtEnumerateKey(Handle, index, KeyBasicInformation, KeyInformation, WORK_SIZE, &ResultLength);
 
-        if (status == STATUS_NO_MORE_ENTRIES) {
+        if (status == STATUS_NO_MORE_ENTRIES)
+        {
 
             WorkName.Length = NamePos;
             return;
-
-        } else if (!NT_SUCCESS(status)) {
+        }
+        else if (!NT_SUCCESS(status))
+        {
 
             printf("rtdmp: dump1: status = %08lx\n", status);
             exit(1);
-
         }
 
         enumname.Buffer = &(KeyInformation->Name[0]);
@@ -193,21 +166,12 @@ Dump(
 
         RtlAppendStringToString((PSTRING)&WorkName, (PSTRING)&enumname);
 
-        InitializeObjectAttributes(
-            &ObjectAttributes,
-            &enumname,
-            0,
-            Handle,
-            NULL
-            );
+        InitializeObjectAttributes(&ObjectAttributes, &enumname, 0, Handle, NULL);
         ObjectAttributes.Attributes |= OBJ_CASE_INSENSITIVE;
 
-        status = NtOpenKey(
-                    &WorkHandle,
-                    MAXIMUM_ALLOWED,
-                    &ObjectAttributes
-                    );
-        if (!NT_SUCCESS(status)) {
+        status = NtOpenKey(&WorkHandle, MAXIMUM_ALLOWED, &ObjectAttributes);
+        if (!NT_SUCCESS(status))
+        {
             printf("rtdmp: dump2: %08lx\n", status);
             exit(1);
         }
@@ -218,78 +182,67 @@ Dump(
     }
 }
 
-
-void
-DumpValues(
-    HANDLE  Handle
-    )
+
+void DumpValues(HANDLE Handle)
 {
-    NTSTATUS    status;
-    static  char        tempbuffer[WORK_SIZE];
+    NTSTATUS status;
+    static char tempbuffer[WORK_SIZE];
     PKEY_VALUE_FULL_INFORMATION KeyValueInformation;
-    ULONG   index;
-    ULONG   ResultLength;
-    PULONG  p;
+    ULONG index;
+    ULONG ResultLength;
+    PULONG p;
     ULONG i;
     UNICODE_STRING valname;
 
     KeyValueInformation = (PKEY_VALUE_FULL_INFORMATION)tempbuffer;
 
-    for (index = 0; TRUE; index++) {
+    for (index = 0; TRUE; index++)
+    {
 
         RtlZeroMemory(KeyValueInformation, WORK_SIZE);
-        status = NtEnumerateValueKey(
-                    Handle,
-                    index,
-                    KeyValueFullInformation,
-                    KeyValueInformation,
-                    WORK_SIZE,
-                    &ResultLength
-                    );
-        if (status == STATUS_NO_MORE_ENTRIES) {
+        status =
+            NtEnumerateValueKey(Handle, index, KeyValueFullInformation, KeyValueInformation, WORK_SIZE, &ResultLength);
+        if (status == STATUS_NO_MORE_ENTRIES)
+        {
 
             return;
-
-        } else if (!NT_SUCCESS(status)) {
+        }
+        else if (!NT_SUCCESS(status))
+        {
 
             printf("rtdmp: dumpvalues: status = %08lx\n", status);
             exit(1);
-
         }
 
         printf("\t");
         valname.Length = KeyValueInformation->NameLength;
         valname.MaximumLength = KeyValueInformation->NameLength;
-        valname.Buffer = (PWSTR)&(KeyValueInformation->Name[0]);
+        valname.Buffer = (PWSTR) & (KeyValueInformation->Name[0]);
         printf("'");
         print(&valname);
         printf("'\n");
-        printf(
-            "\ttitle index = %d\ttype = ",
-            KeyValueInformation->TitleIndex
-            );
+        printf("\ttitle index = %d\ttype = ", KeyValueInformation->TitleIndex);
         printf("REG_BINARY\n\tValue = (%lx)\n", KeyValueInformation->DataLength);
         p = (PULONG)KeyValueInformation + KeyValueInformation->DataOffset;
         i = 1;
-        while (i <= KeyValueInformation->DataLength) {
-            printf( "  %08lx", *p++ );
-            if ((i % 8) == 0) {
-                printf( "\n" );
+        while (i <= KeyValueInformation->DataLength)
+        {
+            printf("  %08lx", *p++);
+            if ((i % 8) == 0)
+            {
+                printf("\n");
             }
-            i += sizeof( ULONG );
+            i += sizeof(ULONG);
         }
         printf("\n\n");
     }
 }
 
-
-void
-print(
-    PUNICODE_STRING  String
-    )
+
+void print(PUNICODE_STRING String)
 {
-    static  ANSI_STRING temp;
-    static  char        tempbuffer[WORK_SIZE];
+    static ANSI_STRING temp;
+    static char tempbuffer[WORK_SIZE];
 
     temp.MaximumLength = WORK_SIZE;
     temp.Length = 0L;
@@ -300,32 +253,20 @@ print(
     return;
 }
 
-
-void
-processargs(
-    int argc,
-    char *argv[]
-    )
+
+void processargs(int argc, char *argv[])
 {
     ANSI_STRING temp;
 
-    if ( (argc != 2) )
+    if ((argc != 2))
     {
-        printf("Usage: %s <KeyPath>\n",
-                argv[0]);
+        printf("Usage: %s <KeyPath>\n", argv[0]);
         exit(1);
     }
 
-    RtlInitAnsiString(
-        &temp,
-        argv[1]
-        );
+    RtlInitAnsiString(&temp, argv[1]);
 
-    RtlAnsiStringToUnicodeString(
-        &WorkName,
-        &temp,
-        FALSE
-        );
+    RtlAnsiStringToUnicodeString(&WorkName, &temp, FALSE);
 
     return;
 }

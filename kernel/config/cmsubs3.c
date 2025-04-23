@@ -18,21 +18,21 @@ Revision History:
 
 --*/
 
-#include    "cmp.h"
+#include "cmp.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,CmpLockRegistry)
-#pragma alloc_text(PAGE,CmpLockRegistryExclusive)
-#pragma alloc_text(PAGE,CmpLockKCBTree)
-#pragma alloc_text(PAGE,CmpLockKCBTreeExclusive)
-#pragma alloc_text(PAGE,CmpUnlockRegistry)
-#pragma alloc_text(PAGE,CmpUnlockKCBTree)
+#pragma alloc_text(PAGE, CmpLockRegistry)
+#pragma alloc_text(PAGE, CmpLockRegistryExclusive)
+#pragma alloc_text(PAGE, CmpLockKCBTree)
+#pragma alloc_text(PAGE, CmpLockKCBTreeExclusive)
+#pragma alloc_text(PAGE, CmpUnlockRegistry)
+#pragma alloc_text(PAGE, CmpUnlockKCBTree)
 
 #if DBG
-#pragma alloc_text(PAGE,CmpTestRegistryLock)
-#pragma alloc_text(PAGE,CmpTestRegistryLockExclusive)
-#pragma alloc_text(PAGE,CmpTestKCBLock)
-#pragma alloc_text(PAGE,CmpTestKCBLockExclusive)
+#pragma alloc_text(PAGE, CmpTestRegistryLock)
+#pragma alloc_text(PAGE, CmpTestRegistryLockExclusive)
+#pragma alloc_text(PAGE, CmpTestKCBLock)
+#pragma alloc_text(PAGE, CmpTestKCBLockExclusive)
 #endif
 
 #endif
@@ -42,26 +42,23 @@ Revision History:
 // Global registry lock
 //
 
-ERESOURCE   CmpRegistryLock;
-ERESOURCE   CmpKcbLock;
-ULONG       CmpFlushStarveWriters = 0;
-BOOLEAN     CmpFlushOnLockRelease = FALSE;
-LONG        CmRegistryLogSizeLimit = -1;
+ERESOURCE CmpRegistryLock;
+ERESOURCE CmpKcbLock;
+ULONG CmpFlushStarveWriters = 0;
+BOOLEAN CmpFlushOnLockRelease = FALSE;
+LONG CmRegistryLogSizeLimit = -1;
 
 
 #if DBG
-PVOID       CmpRegistryLockCaller;
-PVOID       CmpRegistryLockCallerCaller;
-PVOID       CmpKCBLockCaller;
-PVOID       CmpKCBLockCallerCaller;
+PVOID CmpRegistryLockCaller;
+PVOID CmpRegistryLockCallerCaller;
+PVOID CmpKCBLockCaller;
+PVOID CmpKCBLockCallerCaller;
 #endif //DBG
 
 extern BOOLEAN CmpSpecialBootCondition;
 
-VOID
-CmpLockRegistry(
-    VOID
-    )
+VOID CmpLockRegistry(VOID)
 /*++
 
 Routine Description:
@@ -79,18 +76,21 @@ Return Value:
 --*/
 {
 #if DBG
-    PVOID       Caller;
-    PVOID       CallerCaller;
+    PVOID Caller;
+    PVOID CallerCaller;
 #endif
 
     KeEnterCriticalRegion();
 
-    if( CmpFlushStarveWriters ) {
+    if (CmpFlushStarveWriters)
+    {
         //
         // a flush is in progress; starve potential writers
         //
         ExAcquireSharedStarveExclusive(&CmpRegistryLock, TRUE);
-    } else {
+    }
+    else
+    {
         //
         // regular shared mode
         //
@@ -99,15 +99,11 @@ Return Value:
 
 #if DBG
     RtlGetCallersAddress(&Caller, &CallerCaller);
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_LOCKING,"CmpLockRegistry: c, cc: %p  %p\n", Caller, CallerCaller));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_LOCKING, "CmpLockRegistry: c, cc: %p  %p\n", Caller, CallerCaller));
 #endif
-
 }
 
-VOID
-CmpLockRegistryExclusive(
-    VOID
-    )
+VOID CmpLockRegistryExclusive(VOID)
 /*++
 
 Routine Description:
@@ -127,19 +123,17 @@ Return Value:
 --*/
 {
     KeEnterCriticalRegion();
-    
-    ExAcquireResourceExclusiveLite(&CmpRegistryLock,TRUE);
 
-    ASSERT( CmpFlushStarveWriters == 0 );
+    ExAcquireResourceExclusiveLite(&CmpRegistryLock, TRUE);
+
+    ASSERT(CmpFlushStarveWriters == 0);
 
 #if DBG
     RtlGetCallersAddress(&CmpRegistryLockCaller, &CmpRegistryLockCallerCaller);
 #endif //DBG
 }
 
-VOID
-CmpUnlockRegistry(
-    )
+VOID CmpUnlockRegistry()
 /*++
 
 Routine Description:
@@ -153,7 +147,9 @@ Routine Description:
     //
     // test if bit set to force flush; and we own the reglock exclusive and ownercount is 1
     //
-    if( CmpFlushOnLockRelease && ExIsResourceAcquiredExclusiveLite(&CmpRegistryLock) && (CmpRegistryLock.OwnerThreads[0].OwnerCount == 1) ) {
+    if (CmpFlushOnLockRelease && ExIsResourceAcquiredExclusiveLite(&CmpRegistryLock) &&
+        (CmpRegistryLock.OwnerThreads[0].OwnerCount == 1))
+    {
         //
         // we need to flush now
         //
@@ -161,7 +157,7 @@ Routine Description:
         CmpDoFlushAll(TRUE);
         CmpFlushOnLockRelease = FALSE;
     }
-    
+
     ExReleaseResourceLite(&CmpRegistryLock);
     KeLeaveCriticalRegion();
 }
@@ -175,7 +171,8 @@ CmpTestRegistryLock(VOID)
     BOOLEAN rc;
 
     rc = TRUE;
-    if (ExIsResourceAcquiredShared(&CmpRegistryLock) == 0) {
+    if (ExIsResourceAcquiredShared(&CmpRegistryLock) == 0)
+    {
         rc = FALSE;
     }
     return rc;
@@ -184,19 +181,17 @@ CmpTestRegistryLock(VOID)
 BOOLEAN
 CmpTestRegistryLockExclusive(VOID)
 {
-    if (ExIsResourceAcquiredExclusiveLite(&CmpRegistryLock) == 0) {
-        return(FALSE);
+    if (ExIsResourceAcquiredExclusiveLite(&CmpRegistryLock) == 0)
+    {
+        return (FALSE);
     }
-    return(TRUE);
+    return (TRUE);
 }
 
 #endif
 
 
-VOID
-CmpLockKCBTree(
-    VOID
-    )
+VOID CmpLockKCBTree(VOID)
 /*++
 
 Routine Description:
@@ -214,27 +209,23 @@ Return Value:
 --*/
 {
 #if DBG
-    PVOID       Caller;
-    PVOID       CallerCaller;
+    PVOID Caller;
+    PVOID CallerCaller;
 #endif
 
     //
-    // we don't need to enter critical section here as we are already there 
+    // we don't need to enter critical section here as we are already there
     // (i.e. kcb lock can be aquired only while holding the registry lock)
     //
     ExAcquireResourceSharedLite(&CmpKcbLock, TRUE);
 
 #if DBG
     RtlGetCallersAddress(&Caller, &CallerCaller);
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_LOCKING,"CmpLockKCBTree: c, cc: %p  %p\n", Caller, CallerCaller));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_LOCKING, "CmpLockKCBTree: c, cc: %p  %p\n", Caller, CallerCaller));
 #endif
-
 }
 
-VOID
-CmpLockKCBTreeExclusive(
-    VOID
-    )
+VOID CmpLockKCBTreeExclusive(VOID)
 /*++
 
 Routine Description:
@@ -252,18 +243,16 @@ Return Value:
 --*/
 {
     //
-    // we don't need to enter critical section here as we are already there 
+    // we don't need to enter critical section here as we are already there
     // (i.e. kcb lock can be aquired only while holding the registry lock)
     //
-    ExAcquireResourceExclusiveLite(&CmpKcbLock,TRUE);
+    ExAcquireResourceExclusiveLite(&CmpKcbLock, TRUE);
 #if DBG
     RtlGetCallersAddress(&CmpKCBLockCaller, &CmpKCBLockCallerCaller);
 #endif //DBG
 }
 
-VOID
-CmpUnlockKCBTree(
-    )
+VOID CmpUnlockKCBTree()
 /*++
 
 Routine Description:
@@ -285,7 +274,8 @@ CmpTestKCBLock(VOID)
     BOOLEAN rc;
 
     rc = TRUE;
-    if (ExIsResourceAcquiredShared(&CmpKcbLock) == 0) {
+    if (ExIsResourceAcquiredShared(&CmpKcbLock) == 0)
+    {
         rc = FALSE;
     }
     return rc;
@@ -294,10 +284,11 @@ CmpTestKCBLock(VOID)
 BOOLEAN
 CmpTestKCBLockExclusive(VOID)
 {
-    if (ExIsResourceAcquiredExclusiveLite(&CmpKcbLock) == 0) {
-        return(FALSE);
+    if (ExIsResourceAcquiredExclusiveLite(&CmpKcbLock) == 0)
+    {
+        return (FALSE);
     }
-    return(TRUE);
+    return (TRUE);
 }
 
 #endif

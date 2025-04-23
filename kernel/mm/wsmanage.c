@@ -78,7 +78,7 @@ Revision History:
 #endif
 #endif
 
-KEVENT  MiWaitForEmptyEvent;
+KEVENT MiWaitForEmptyEvent;
 BOOLEAN MiWaitingForWorkingSetEmpty;
 
 LOGICAL MiReplacing = FALSE;
@@ -100,13 +100,13 @@ LARGE_INTEGER MiLastAdjustmentOfClaimParams;
 // Sixty seconds.
 //
 
-const LARGE_INTEGER MmClaimParameterAdjustUpTime = {60 * 1000 * 1000 * 10, 0};
+const LARGE_INTEGER MmClaimParameterAdjustUpTime = { 60 * 1000 * 1000 * 10, 0 };
 
 //
 // 2 seconds.
 //
 
-const LARGE_INTEGER MmClaimParameterAdjustDownTime = {2 * 1000 * 1000 * 10, 0};
+const LARGE_INTEGER MmClaimParameterAdjustDownTime = { 2 * 1000 * 1000 * 10, 0 };
 
 ULONG MmPlentyFreePages = 400;
 
@@ -134,7 +134,8 @@ PETHREAD MmWorkingSetThread;
 
 ULONG MiWsRetryCount = 5;
 
-typedef struct _MMWS_TRIM_CRITERIA {
+typedef struct _MMWS_TRIM_CRITERIA
+{
     ULONG NumPasses;
     ULONG TrimAge;
     PFN_NUMBER DesiredFreeGoal;
@@ -145,41 +146,21 @@ typedef struct _MMWS_TRIM_CRITERIA {
 } MMWS_TRIM_CRITERIA, *PMMWS_TRIM_CRITERIA;
 
 LOGICAL
-MiCheckAndSetSystemTrimCriteria (
-    IN OUT PMMWS_TRIM_CRITERIA Criteria
-    );
+MiCheckAndSetSystemTrimCriteria(IN OUT PMMWS_TRIM_CRITERIA Criteria);
 
 LOGICAL
-MiCheckSystemTrimEndCriteria (
-    IN OUT PMMWS_TRIM_CRITERIA Criteria,
-    IN KIRQL OldIrql
-    );
+MiCheckSystemTrimEndCriteria(IN OUT PMMWS_TRIM_CRITERIA Criteria, IN KIRQL OldIrql);
 
 WSLE_NUMBER
-MiDetermineWsTrimAmount (
-    IN PMMWS_TRIM_CRITERIA Criteria,
-    IN PMMSUPPORT VmSupport
-    );
+MiDetermineWsTrimAmount(IN PMMWS_TRIM_CRITERIA Criteria, IN PMMSUPPORT VmSupport);
 
-VOID
-MiAgePagesAndEstimateClaims (
-    LOGICAL EmptyIt
-    );
+VOID MiAgePagesAndEstimateClaims(LOGICAL EmptyIt);
 
-VOID
-MiAdjustClaimParameters (
-    IN LOGICAL EnoughPages
-    );
+VOID MiAdjustClaimParameters(IN LOGICAL EnoughPages);
 
-VOID
-MiRearrangeWorkingSetExpansionList (
-    VOID
-    );
+VOID MiRearrangeWorkingSetExpansionList(VOID);
 
-VOID
-MiAdjustWorkingSetManagerParameters (
-    IN LOGICAL WorkStation
-    )
+VOID MiAdjustWorkingSetManagerParameters(IN LOGICAL WorkStation)
 
 /*++
 
@@ -202,30 +183,30 @@ Environment:
 
 --*/
 {
-    if (WorkStation && MmNumberOfPhysicalPages <= 257*1024*1024/PAGE_SIZE) {
+    if (WorkStation && MmNumberOfPhysicalPages <= 257 * 1024 * 1024 / PAGE_SIZE)
+    {
         MiAgingShift = 3;
         MiEstimationShift = 4;
     }
-    else {
+    else
+    {
         MiAgingShift = 5;
         MiEstimationShift = 6;
     }
 
-    if (MmNumberOfPhysicalPages >= 63*1024*1024/PAGE_SIZE) {
+    if (MmNumberOfPhysicalPages >= 63 * 1024 * 1024 / PAGE_SIZE)
+    {
         MmPlentyFreePages *= 2;
     }
 
     MmPlentyFreePagesValue = MmPlentyFreePages;
 
     MiWaitingForWorkingSetEmpty = FALSE;
-    KeInitializeEvent (&MiWaitForEmptyEvent, NotificationEvent, TRUE);
+    KeInitializeEvent(&MiWaitForEmptyEvent, NotificationEvent, TRUE);
 }
 
-
-VOID
-MiObtainFreePages (
-    VOID
-    )
+
+VOID MiObtainFreePages(VOID)
 
 /*++
 
@@ -257,13 +238,14 @@ Environment:
     // write.
     //
 
-    if (MmModifiedPageListHead.Total >= MmModifiedWriteClusterSize) {
+    if (MmModifiedPageListHead.Total >= MmModifiedWriteClusterSize)
+    {
 
         //
         // Start the modified page writer.
         //
 
-        KeSetEvent (&MmModifiedPageWriterEvent, 0, FALSE);
+        KeSetEvent(&MmModifiedPageWriterEvent, 0, FALSE);
     }
 
     //
@@ -271,21 +253,19 @@ Environment:
     // threshold to make working set trimming worthwhile.
     //
 
-    if ((MmPagesAboveWsMinimum > MmPagesAboveWsThreshold) ||
-        (MmAvailablePages < 5)) {
+    if ((MmPagesAboveWsMinimum > MmPagesAboveWsThreshold) || (MmAvailablePages < 5))
+    {
 
         //
         // Start the working set manager to reduce working sets.
         //
 
-        KeSetEvent (&MmWorkingSetManagerEvent, 0, FALSE);
+        KeSetEvent(&MmWorkingSetManagerEvent, 0, FALSE);
     }
 }
 
 LOGICAL
-MmIsMemoryAvailable (
-    IN ULONG PagesDesired
-    )
+MmIsMemoryAvailable(IN ULONG PagesDesired)
 
 /*++
 
@@ -319,7 +299,7 @@ Environment:
     ULONG CurrentAvailablePages;
     PFN_NUMBER CurrentTotalClaim;
 
-    ASSERT (KeGetCurrentIrql () == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
     CurrentAvailablePages = MmAvailablePages;
 
@@ -329,18 +309,20 @@ Environment:
     //
 
     PageTarget = PagesDesired * 2;
-    if (CurrentAvailablePages >= PageTarget) {
+    if (CurrentAvailablePages >= PageTarget)
+    {
         return TRUE;
     }
 
     CurrentTotalClaim = MmTotalClaim;
 
     //
-    // If there are few pages available or claimable, we adjust to do 
+    // If there are few pages available or claimable, we adjust to do
     // a hard trim.
     //
 
-    if (CurrentAvailablePages + CurrentTotalClaim < PagesDesired) {
+    if (CurrentAvailablePages + CurrentTotalClaim < PagesDesired)
+    {
         MiHardTrim = TRUE;
     }
 
@@ -355,12 +337,14 @@ Environment:
     PagePlentyTarget = PagesDesired + (PagesDesired >> 2);
     MmPlentyFreePages = PagePlentyTarget;
 
-    KeSetEvent (&MmWorkingSetManagerEvent, 0, FALSE);
+    KeSetEvent(&MmWorkingSetManagerEvent, 0, FALSE);
 
     Status = FALSE;
-    for (i = 0; i < 10; i += 1) {
-        KeDelayExecutionThread (KernelMode, FALSE, (PLARGE_INTEGER)&Mm30Milliseconds);
-        if (MmAvailablePages >= PagesDesired) {
+    for (i = 0; i < 10; i += 1)
+    {
+        KeDelayExecutionThread(KernelMode, FALSE, (PLARGE_INTEGER)&Mm30Milliseconds);
+        if (MmAvailablePages >= PagesDesired)
+        {
             Status = TRUE;
             break;
         }
@@ -373,10 +357,7 @@ Environment:
 }
 
 LOGICAL
-MiAttachAndLockWorkingSet (
-    IN PMMSUPPORT VmSupport,
-    IN PLOGICAL InformSessionOfRelease
-    )
+MiAttachAndLockWorkingSet(IN PMMSUPPORT VmSupport, IN PLOGICAL InformSessionOfRelease)
 
 /*++
 
@@ -413,62 +394,68 @@ Environment:
     LOGICAL Attached;
     PMM_SESSION_SPACE SessionSpace;
 
-    ASSERT (KeGetCurrentIrql () == PASSIVE_LEVEL);
+    ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
     *InformSessionOfRelease = FALSE;
 
-    if (VmSupport == &MmSystemCacheWs) {
+    if (VmSupport == &MmSystemCacheWs)
+    {
 
-        ASSERT (VmSupport->Flags.SessionSpace == 0);
-        ASSERT (VmSupport->Flags.TrimHard == 0);
+        ASSERT(VmSupport->Flags.SessionSpace == 0);
+        ASSERT(VmSupport->Flags.TrimHard == 0);
 
         //
         // System cache,
         //
 
-        KeRaiseIrql (APC_LEVEL, &OldIrql);
+        KeRaiseIrql(APC_LEVEL, &OldIrql);
 
-        if (!ExTryToAcquireResourceExclusiveLite (&MmSystemWsLock)) {
+        if (!ExTryToAcquireResourceExclusiveLite(&MmSystemWsLock))
+        {
 
             //
             // System working set mutex was not granted, don't trim
             // the system cache.
             //
 
-            KeLowerIrql (OldIrql);
+            KeLowerIrql(OldIrql);
 
             return FALSE;
         }
 
-        MmSystemLockOwner = PsGetCurrentThread ();
+        MmSystemLockOwner = PsGetCurrentThread();
 
         return TRUE;
     }
 
-    if (VmSupport->Flags.SessionSpace == 0) {
+    if (VmSupport->Flags.SessionSpace == 0)
+    {
 
-        ProcessToTrim = CONTAINING_RECORD (VmSupport, EPROCESS, Vm);
+        ProcessToTrim = CONTAINING_RECORD(VmSupport, EPROCESS, Vm);
 
-        ASSERT ((ProcessToTrim->Flags & PS_PROCESS_FLAGS_VM_DELETED) == 0);
+        ASSERT((ProcessToTrim->Flags & PS_PROCESS_FLAGS_VM_DELETED) == 0);
 
         //
         // Attach to the process in preparation for trimming.
         //
 
         Attached = 0;
-        if (ProcessToTrim != PsInitialSystemProcess) {
+        if (ProcessToTrim != PsInitialSystemProcess)
+        {
 
-            Attached = KeForceAttachProcess (&ProcessToTrim->Pcb);
+            Attached = KeForceAttachProcess(&ProcessToTrim->Pcb);
 
-            if (Attached == 0) {
+            if (Attached == 0)
+            {
                 return FALSE;
             }
-            if (ProcessToTrim->Flags & PS_PROCESS_FLAGS_OUTSWAP_ENABLED) {
+            if (ProcessToTrim->Flags & PS_PROCESS_FLAGS_OUTSWAP_ENABLED)
+            {
 
-                ASSERT ((ProcessToTrim->Flags & PS_PROCESS_FLAGS_OUTSWAPPED) == 0);
+                ASSERT((ProcessToTrim->Flags & PS_PROCESS_FLAGS_OUTSWAPPED) == 0);
 
-                if ((ProcessToTrim->Flags & PS_PROCESS_FLAGS_IN_SESSION ) &&
-                    (VmSupport->Flags.SessionLeader == 0)) {
+                if ((ProcessToTrim->Flags & PS_PROCESS_FLAGS_IN_SESSION) && (VmSupport->Flags.SessionLeader == 0))
+                {
 
                     *InformSessionOfRelease = TRUE;
                 }
@@ -481,13 +468,15 @@ Environment:
         //
 
         count = 0;
-        do {
-            if (ExTryToAcquireFastMutex(&ProcessToTrim->WorkingSetLock) != FALSE) {
-                ASSERT (VmSupport->Flags.BeingTrimmed == 1);
+        do
+        {
+            if (ExTryToAcquireFastMutex(&ProcessToTrim->WorkingSetLock) != FALSE)
+            {
+                ASSERT(VmSupport->Flags.BeingTrimmed == 1);
                 return TRUE;
             }
 
-            KeDelayExecutionThread (KernelMode, FALSE, (PLARGE_INTEGER)&MmShortTime);
+            KeDelayExecutionThread(KernelMode, FALSE, (PLARGE_INTEGER)&MmShortTime);
             count += 1;
         } while (count < MiWsRetryCount);
 
@@ -495,61 +484,60 @@ Environment:
         // Could not get the lock, skip this process.
         //
 
-        if (*InformSessionOfRelease == TRUE) {
-            LOCK_EXPANSION (OldIrql);
-            ASSERT (ProcessToTrim->Flags & PS_PROCESS_FLAGS_OUTSWAP_ENABLED);
-            PS_CLEAR_BITS (&ProcessToTrim->Flags, PS_PROCESS_FLAGS_OUTSWAP_ENABLED);
-            ASSERT (MmSessionSpace->ProcessOutSwapCount >= 1);
+        if (*InformSessionOfRelease == TRUE)
+        {
+            LOCK_EXPANSION(OldIrql);
+            ASSERT(ProcessToTrim->Flags & PS_PROCESS_FLAGS_OUTSWAP_ENABLED);
+            PS_CLEAR_BITS(&ProcessToTrim->Flags, PS_PROCESS_FLAGS_OUTSWAP_ENABLED);
+            ASSERT(MmSessionSpace->ProcessOutSwapCount >= 1);
             MmSessionSpace->ProcessOutSwapCount -= 1;
-            UNLOCK_EXPANSION (OldIrql);
+            UNLOCK_EXPANSION(OldIrql);
             *InformSessionOfRelease = FALSE;
         }
 
-        if (Attached) {
-            KeDetachProcess ();
+        if (Attached)
+        {
+            KeDetachProcess();
         }
 
         return FALSE;
     }
 
-    SessionSpace = CONTAINING_RECORD (VmSupport, MM_SESSION_SPACE, Vm);
+    SessionSpace = CONTAINING_RECORD(VmSupport, MM_SESSION_SPACE, Vm);
 
     //
     // Attach directly to the session space to be trimmed.
     //
 
-    MiAttachSession (SessionSpace);
+    MiAttachSession(SessionSpace);
 
     //
     // Try for the session working set mutex.
     //
 
-    KeRaiseIrql (APC_LEVEL, &OldIrql);
+    KeRaiseIrql(APC_LEVEL, &OldIrql);
 
-    if (!ExTryToAcquireResourceExclusiveLite (&SessionSpace->WsLock)) {
+    if (!ExTryToAcquireResourceExclusiveLite(&SessionSpace->WsLock))
+    {
 
         //
         // This session space's working set mutex was not
         // granted, don't trim it.
         //
 
-        KeLowerIrql (OldIrql);
+        KeLowerIrql(OldIrql);
 
-        MiDetachSession ();
+        MiDetachSession();
 
         return FALSE;
     }
 
-    MM_SET_SESSION_RESOURCE_OWNER (PsGetCurrentThread ());
+    MM_SET_SESSION_RESOURCE_OWNER(PsGetCurrentThread());
 
     return TRUE;
 }
 
-VOID
-MiDetachAndUnlockWorkingSet (
-    IN PMMSUPPORT VmSupport,
-    IN LOGICAL InformSessionOfRelease
-    )
+VOID MiDetachAndUnlockWorkingSet(IN PMMSUPPORT VmSupport, IN LOGICAL InformSessionOfRelease)
 
 /*++
 
@@ -576,49 +564,50 @@ Environment:
     KIRQL OldIrql;
     PEPROCESS ProcessToTrim;
 
-    ASSERT (KeGetCurrentIrql () == APC_LEVEL);
+    ASSERT(KeGetCurrentIrql() == APC_LEVEL);
 
-    if (VmSupport == &MmSystemCacheWs) {
-        ASSERT (VmSupport->Flags.SessionSpace == 0);
-        UNLOCK_SYSTEM_WS (PASSIVE_LEVEL);
+    if (VmSupport == &MmSystemCacheWs)
+    {
+        ASSERT(VmSupport->Flags.SessionSpace == 0);
+        UNLOCK_SYSTEM_WS(PASSIVE_LEVEL);
         return;
     }
 
-    if (VmSupport->Flags.SessionSpace == 0) {
+    if (VmSupport->Flags.SessionSpace == 0)
+    {
 
-        ProcessToTrim = CONTAINING_RECORD (VmSupport, EPROCESS, Vm);
+        ProcessToTrim = CONTAINING_RECORD(VmSupport, EPROCESS, Vm);
 
-        UNLOCK_WS (ProcessToTrim);
-        ASSERT (KeGetCurrentIrql () == PASSIVE_LEVEL);
+        UNLOCK_WS(ProcessToTrim);
+        ASSERT(KeGetCurrentIrql() == PASSIVE_LEVEL);
 
-        if (InformSessionOfRelease == TRUE) {
-            LOCK_EXPANSION (OldIrql);
-            ASSERT (ProcessToTrim->Flags & PS_PROCESS_FLAGS_OUTSWAP_ENABLED);
-            PS_CLEAR_BITS (&ProcessToTrim->Flags, PS_PROCESS_FLAGS_OUTSWAP_ENABLED);
-            ASSERT (MmSessionSpace->ProcessOutSwapCount >= 1);
+        if (InformSessionOfRelease == TRUE)
+        {
+            LOCK_EXPANSION(OldIrql);
+            ASSERT(ProcessToTrim->Flags & PS_PROCESS_FLAGS_OUTSWAP_ENABLED);
+            PS_CLEAR_BITS(&ProcessToTrim->Flags, PS_PROCESS_FLAGS_OUTSWAP_ENABLED);
+            ASSERT(MmSessionSpace->ProcessOutSwapCount >= 1);
             MmSessionSpace->ProcessOutSwapCount -= 1;
-            UNLOCK_EXPANSION (OldIrql);
+            UNLOCK_EXPANSION(OldIrql);
         }
 
-        if (ProcessToTrim != PsInitialSystemProcess) {
-            KeDetachProcess ();
+        if (ProcessToTrim != PsInitialSystemProcess)
+        {
+            KeDetachProcess();
         }
 
         return;
     }
 
-    UNLOCK_SESSION_SPACE_WS (PASSIVE_LEVEL);
+    UNLOCK_SESSION_SPACE_WS(PASSIVE_LEVEL);
 
-    MiDetachSession ();
+    MiDetachSession();
 
     return;
 }
 
-
-VOID
-MmWorkingSetManager (
-    VOID
-    )
+
+VOID MmWorkingSetManager(VOID)
 
 /*++
 
@@ -656,16 +645,17 @@ Environment:
 
     PERFINFO_WSMANAGE_DECL();
 
-    if (Initialized == 0) {
+    if (Initialized == 0)
+    {
         PsGetCurrentThread()->MemoryMaker = 1;
         Initialized = 1;
     }
 
 #if DBG
-    MmWorkingSetThread = PsGetCurrentThread ();
+    MmWorkingSetThread = PsGetCurrentThread();
 #endif
 
-    ASSERT (MmIsAddressValid (MmSessionSpace) == FALSE);
+    ASSERT(MmIsAddressValid(MmSessionSpace) == FALSE);
 
     PERFINFO_WSMANAGE_CHECK();
 
@@ -676,55 +666,55 @@ Environment:
     // candidates for trimming are placed at the front and TRUE is returned.
     //
 
-    DoTrimming = MiCheckAndSetSystemTrimCriteria (&TrimCriteria);
+    DoTrimming = MiCheckAndSetSystemTrimCriteria(&TrimCriteria);
 
-    if (DoTrimming) {
+    if (DoTrimming)
+    {
 
         //
         // Clear the deferred entry list to free up some pages.
         //
 
-        MiDeferredUnlockPages (0);
+        MiDeferredUnlockPages(0);
 
-        KeQuerySystemTime (&CurrentTime);
+        KeQuerySystemTime(&CurrentTime);
 
-        ASSERT (MmIsAddressValid (MmSessionSpace) == FALSE);
+        ASSERT(MmIsAddressValid(MmSessionSpace) == FALSE);
 
-        LOCK_EXPANSION (OldIrql);
-        while (!IsListEmpty (&MmWorkingSetExpansionHead.ListHead)) {
+        LOCK_EXPANSION(OldIrql);
+        while (!IsListEmpty(&MmWorkingSetExpansionHead.ListHead))
+        {
 
             //
             // Remove the entry at the head and trim it.
             //
 
-            ListEntry = RemoveHeadList (&MmWorkingSetExpansionHead.ListHead);
+            ListEntry = RemoveHeadList(&MmWorkingSetExpansionHead.ListHead);
 
-            VmSupport = CONTAINING_RECORD (ListEntry,
-                                           MMSUPPORT,
-                                           WorkingSetExpansionLinks);
+            VmSupport = CONTAINING_RECORD(ListEntry, MMSUPPORT, WorkingSetExpansionLinks);
 
             //
             // Note that other routines that set this bit must remove the
             // entry from the expansion list first.
             //
 
-            ASSERT (VmSupport->Flags.BeingTrimmed == 0);
+            ASSERT(VmSupport->Flags.BeingTrimmed == 0);
 
             //
             // Check to see if we've been here before.
             //
 
-            if ((*(PLARGE_INTEGER)&VmSupport->LastTrimTime).QuadPart ==
-                       (*(PLARGE_INTEGER)&CurrentTime).QuadPart) {
+            if ((*(PLARGE_INTEGER)&VmSupport->LastTrimTime).QuadPart == (*(PLARGE_INTEGER)&CurrentTime).QuadPart)
+            {
 
-                InsertHeadList (&MmWorkingSetExpansionHead.ListHead,
-                            &VmSupport->WorkingSetExpansionLinks);
+                InsertHeadList(&MmWorkingSetExpansionHead.ListHead, &VmSupport->WorkingSetExpansionLinks);
 
                 //
                 // If we aren't finished we may sleep in this call.
                 //
 
-                if (MiCheckSystemTrimEndCriteria (&TrimCriteria, OldIrql)) {
+                if (MiCheckSystemTrimEndCriteria(&TrimCriteria, OldIrql))
+                {
 
                     //
                     // No more pages are needed so we're done.
@@ -737,21 +727,22 @@ Environment:
                 // Start a new round of trimming.
                 //
 
-                KeQuerySystemTime (&CurrentTime);
+                KeQuerySystemTime(&CurrentTime);
 
                 continue;
             }
 
             if ((VmSupport->WorkingSetSize > 3) ||
-                ((VmSupport->Flags.TrimHard == 1) && (VmSupport->WorkingSetSize != 0))) {
+                ((VmSupport->Flags.TrimHard == 1) && (VmSupport->WorkingSetSize != 0)))
+            {
                 //
                 // This working set is worth examining.
                 //
             }
-            else {
+            else
+            {
 
-                InsertTailList (&MmWorkingSetExpansionHead.ListHead,
-                                &VmSupport->WorkingSetExpansionLinks);
+                InsertTailList(&MmWorkingSetExpansionHead.ListHead, &VmSupport->WorkingSetExpansionLinks);
                 continue;
             }
 
@@ -759,13 +750,13 @@ Environment:
             VmSupport->Flags.BeingTrimmed = 1;
 
             VmSupport->WorkingSetExpansionLinks.Flink = MM_NO_WS_EXPANSION;
-            VmSupport->WorkingSetExpansionLinks.Blink =
-                                                MM_WS_EXPANSION_IN_PROGRESS;
+            VmSupport->WorkingSetExpansionLinks.Blink = MM_WS_EXPANSION_IN_PROGRESS;
 
-            UNLOCK_EXPANSION (OldIrql);
+            UNLOCK_EXPANSION(OldIrql);
 
-            if (MiAttachAndLockWorkingSet (VmSupport, &InformSessionOfRelease) == FALSE) {
-                LOCK_EXPANSION (OldIrql);
+            if (MiAttachAndLockWorkingSet(VmSupport, &InformSessionOfRelease) == FALSE)
+            {
+                LOCK_EXPANSION(OldIrql);
                 VmSupport->Flags.AllowWorkingSetAdjustment = MM_FORCE_TRIM;
                 goto DoneWithWorkingSet;
             }
@@ -774,15 +765,15 @@ Environment:
             // Determine how many pages to trim from this working set.
             //
 
-            Trim = MiDetermineWsTrimAmount (&TrimCriteria, VmSupport);
+            Trim = MiDetermineWsTrimAmount(&TrimCriteria, VmSupport);
 
             //
             // If there's something to trim...
             //
 
-            if ((Trim != 0) &&
-                ((TrimCriteria.TrimAllPasses > TrimCriteria.NumPasses) ||
-                 (MmAvailablePages < TrimCriteria.DesiredFreeGoal))) {
+            if ((Trim != 0) && ((TrimCriteria.TrimAllPasses > TrimCriteria.NumPasses) ||
+                                (MmAvailablePages < TrimCriteria.DesiredFreeGoal)))
+            {
 
                 //
                 // We haven't reached our goal, so trim now.
@@ -790,9 +781,7 @@ Environment:
 
                 PERFINFO_WSMANAGE_TOTRIM(Trim);
 
-                Trim = MiTrimWorkingSet (Trim,
-                                         VmSupport,
-                                         TrimCriteria.TrimAge);
+                Trim = MiTrimWorkingSet(Trim, VmSupport, TrimCriteria.TrimAge);
 
                 PERFINFO_WSMANAGE_ACTUALTRIM(Trim);
             }
@@ -803,47 +792,41 @@ Environment:
             // pass warrants it (ie: the first pass only).
             //
 
-            MiAgeAndEstimateAvailableInWorkingSet (
-                                VmSupport,
-                                TrimCriteria.DoAging,
-                                NULL,
-                                &TrimCriteria.NewTotalClaim,
-                                &TrimCriteria.NewTotalEstimatedAvailable);
+            MiAgeAndEstimateAvailableInWorkingSet(VmSupport, TrimCriteria.DoAging, NULL, &TrimCriteria.NewTotalClaim,
+                                                  &TrimCriteria.NewTotalEstimatedAvailable);
 
-            MiDetachAndUnlockWorkingSet (VmSupport, InformSessionOfRelease);
+            MiDetachAndUnlockWorkingSet(VmSupport, InformSessionOfRelease);
 
-            LOCK_EXPANSION (OldIrql);
+            LOCK_EXPANSION(OldIrql);
 
-DoneWithWorkingSet:
+        DoneWithWorkingSet:
 
-            ASSERT (VmSupport->Flags.BeingTrimmed == 1);
+            ASSERT(VmSupport->Flags.BeingTrimmed == 1);
             VmSupport->Flags.BeingTrimmed = 0;
 
-            ASSERT (VmSupport->WorkingSetExpansionLinks.Flink == MM_NO_WS_EXPANSION);
+            ASSERT(VmSupport->WorkingSetExpansionLinks.Flink == MM_NO_WS_EXPANSION);
 
-            if (VmSupport->WorkingSetExpansionLinks.Blink ==
-                                                 MM_WS_EXPANSION_IN_PROGRESS) {
+            if (VmSupport->WorkingSetExpansionLinks.Blink == MM_WS_EXPANSION_IN_PROGRESS)
+            {
 
                 //
                 // If the working set size is still above the minimum,
                 // add this back at the tail of the list.
                 //
 
-                InsertTailList (&MmWorkingSetExpansionHead.ListHead,
-                                &VmSupport->WorkingSetExpansionLinks);
+                InsertTailList(&MmWorkingSetExpansionHead.ListHead, &VmSupport->WorkingSetExpansionLinks);
             }
-            else {
+            else
+            {
 
                 //
                 // The value in the blink is the address of an event
                 // to set.
                 //
 
-                ASSERT (VmSupport != &MmSystemCacheWs);
+                ASSERT(VmSupport != &MmSystemCacheWs);
 
-                KeSetEvent ((PKEVENT)VmSupport->WorkingSetExpansionLinks.Blink,
-                            0,
-                            FALSE);
+                KeSetEvent((PKEVENT)VmSupport->WorkingSetExpansionLinks.Blink, 0, FALSE);
             }
         }
 
@@ -851,9 +834,9 @@ DoneWithWorkingSet:
         MmTotalEstimatedAvailable = TrimCriteria.NewTotalEstimatedAvailable;
         PERFINFO_WSMANAGE_TRIMEND_CLAIMS(&TrimCriteria);
 
-        UNLOCK_EXPANSION (OldIrql);
+        UNLOCK_EXPANSION(OldIrql);
     }
-            
+
     MiStandbyRemoved = 0;
 
     //
@@ -862,19 +845,17 @@ DoneWithWorkingSet:
     // modified page writer.
     //
 
-    if ((MmAvailablePages < MmMinimumFreePages) ||
-        (MmModifiedPageListHead.Total >= MmModifiedPageMaximum)) {
+    if ((MmAvailablePages < MmMinimumFreePages) || (MmModifiedPageListHead.Total >= MmModifiedPageMaximum))
+    {
 
-        KeSetEvent (&MmModifiedPageWriterEvent, 0, FALSE);
+        KeSetEvent(&MmModifiedPageWriterEvent, 0, FALSE);
     }
 
     return;
 }
-
+
 LOGICAL
-MiCheckAndSetSystemTrimCriteria (
-    IN PMMWS_TRIM_CRITERIA Criteria
-    )
+MiCheckAndSetSystemTrimCriteria(IN PMMWS_TRIM_CRITERIA Criteria)
 
 /*++
 
@@ -913,18 +894,19 @@ Environment:
 
     WsRetryCount = MiWsRetryCount;
 
-    if (MiWaitingForWorkingSetEmpty == TRUE) {
+    if (MiWaitingForWorkingSetEmpty == TRUE)
+    {
 
         MiWsRetryCount = 1;
 
-        MiAgePagesAndEstimateClaims (TRUE);
+        MiAgePagesAndEstimateClaims(TRUE);
 
-        LOCK_EXPANSION (OldIrql);
+        LOCK_EXPANSION(OldIrql);
 
-        KeSetEvent (&MiWaitForEmptyEvent, 0, FALSE);
+        KeSetEvent(&MiWaitForEmptyEvent, 0, FALSE);
         MiWaitingForWorkingSetEmpty = FALSE;
 
-        UNLOCK_EXPANSION (OldIrql);
+        UNLOCK_EXPANSION(OldIrql);
 
         MiReplacing = FALSE;
 
@@ -941,17 +923,18 @@ Environment:
     Available = MmAvailablePages;
     StandbyRemoved = MiStandbyRemoved;
 
-    if (StandbyRemoved != 0) {
+    if (StandbyRemoved != 0)
+    {
 
         //
         // The value is nonzero, we need to synchronize so we get a coordinated
         // snapshot of both values.
         //
 
-        LOCK_PFN (OldIrql);
+        LOCK_PFN(OldIrql);
         Available = MmAvailablePages;
         StandbyRemoved = MiStandbyRemoved;
-        UNLOCK_PFN (OldIrql);
+        UNLOCK_PFN(OldIrql);
     }
 
     PERFINFO_WSMANAGE_STARTLOG_CLAIMS();
@@ -962,9 +945,8 @@ Environment:
     // pages, then trim now.
     //
 
-    if ((Available <= MmPlentyFreePages) ||
-        (MiReplacing == TRUE) ||
-        (StandbyRemoved >= (Available >> 2))) {
+    if ((Available <= MmPlentyFreePages) || (MiReplacing == TRUE) || (StandbyRemoved >= (Available >> 2)))
+    {
 
         //
         // Inform our caller to start trimming since we're below
@@ -983,10 +965,12 @@ Environment:
         // cold pages into standby for the next pass.
         //
 
-        if (StandbyRemoved >= (Available >> 2)) {
+        if (StandbyRemoved >= (Available >> 2))
+        {
             Criteria->TrimAllPasses = TRUE;
         }
-        else {
+        else
+        {
             Criteria->TrimAllPasses = FALSE;
         }
 
@@ -994,12 +978,12 @@ Environment:
         // Start trimming the bigger working sets first.
         //
 
-        MiRearrangeWorkingSetExpansionList ();
+        MiRearrangeWorkingSetExpansionList();
 
 #if DBG
-        if (MmDebug & MM_DBG_WS_EXPANSION) {
-            DbgPrint("\nMM-wsmanage: Desired = %ld, Avail %ld\n",
-                    Criteria->DesiredFreeGoal, MmAvailablePages);
+        if (MmDebug & MM_DBG_WS_EXPANSION)
+        {
+            DbgPrint("\nMM-wsmanage: Desired = %ld, Avail %ld\n", Criteria->DesiredFreeGoal, MmAvailablePages);
         }
 #endif
 
@@ -1020,7 +1004,8 @@ Environment:
     // server then don't even bother aging at this point.
     //
 
-    if (Available > MmEnormousFreePages) {
+    if (Available > MmEnormousFreePages)
+    {
 
         //
         // Note the claim and estimated available are not cleared so they
@@ -1036,21 +1021,18 @@ Environment:
     // the amount available in working sets.
     //
 
-    MiAgePagesAndEstimateClaims (FALSE);
+    MiAgePagesAndEstimateClaims(FALSE);
 
-    MiAdjustClaimParameters (TRUE);
+    MiAdjustClaimParameters(TRUE);
 
-    PERFINFO_WSMANAGE_TRIMACTION (PERFINFO_WS_ACTION_RESET_COUNTER);
-    PERFINFO_WSMANAGE_DUMPENTRIES_CLAIMS ();
+    PERFINFO_WSMANAGE_TRIMACTION(PERFINFO_WS_ACTION_RESET_COUNTER);
+    PERFINFO_WSMANAGE_DUMPENTRIES_CLAIMS();
 
     return FALSE;
 }
-
+
 LOGICAL
-MiCheckSystemTrimEndCriteria (
-    IN PMMWS_TRIM_CRITERIA Criteria,
-    IN KIRQL OldIrql
-    )
+MiCheckSystemTrimEndCriteria(IN PMMWS_TRIM_CRITERIA Criteria, IN KIRQL OldIrql)
 
 /*++
 
@@ -1083,8 +1065,8 @@ Environment:
 
     PERFINFO_WSMANAGE_CHECK();
 
-    if ((MmAvailablePages > Criteria->DesiredFreeGoal) ||
-        (Criteria->NumPasses >= MI_MAX_TRIM_PASSES)) {
+    if ((MmAvailablePages > Criteria->DesiredFreeGoal) || (Criteria->NumPasses >= MI_MAX_TRIM_PASSES))
+    {
 
         //
         // We have enough pages or we trimmed as many as we're going to get.
@@ -1109,11 +1091,9 @@ Environment:
     // cache lock (all the trimmable pages may reside in the system cache).
     //
 
-    UNLOCK_EXPANSION (OldIrql);
+    UNLOCK_EXPANSION(OldIrql);
 
-    KeDelayExecutionThread (KernelMode,
-                            FALSE,
-                            (PLARGE_INTEGER)&MmShortTime);
+    KeDelayExecutionThread(KernelMode, FALSE, (PLARGE_INTEGER)&MmShortTime);
 
     PERFINFO_WSMANAGE_WAITFORWRITER_CLAIMS();
 
@@ -1121,7 +1101,8 @@ Environment:
     // Check again to see if we've met the criteria to stop trimming.
     //
 
-    if (MmAvailablePages > Criteria->DesiredFreeGoal) {
+    if (MmAvailablePages > Criteria->DesiredFreeGoal)
+    {
 
         //
         // Now we have enough pages so break out.
@@ -1129,7 +1110,8 @@ Environment:
 
         FinishedTrimming = TRUE;
     }
-    else {
+    else
+    {
 
         //
         // We don't have enough pages so let's do another pass.
@@ -1139,8 +1121,9 @@ Environment:
 
         FinishedTrimming = FALSE;
 
-        if (Criteria->NumPasses == 0) {
-            MiAdjustClaimParameters (FALSE);
+        if (Criteria->NumPasses == 0)
+        {
+            MiAdjustClaimParameters(FALSE);
         }
 
         Criteria->NumPasses += 1;
@@ -1150,17 +1133,14 @@ Environment:
         PERFINFO_WSMANAGE_TRIMACTION(PERFINFO_WS_ACTION_FORCE_TRIMMING_PROCESS);
     }
 
-    LOCK_EXPANSION (OldIrql);
+    LOCK_EXPANSION(OldIrql);
 
     return FinishedTrimming;
 }
 
-
+
 WSLE_NUMBER
-MiDetermineWsTrimAmount (
-    PMMWS_TRIM_CRITERIA Criteria,
-    PMMSUPPORT VmSupport
-    )
+MiDetermineWsTrimAmount(PMMWS_TRIM_CRITERIA Criteria, PMMSUPPORT VmSupport)
 
 /*++
 
@@ -1196,37 +1176,42 @@ Environment:
 
     MaxTrim = VmSupport->WorkingSetSize;
 
-    if (MaxTrim <= WorkingSetList->FirstDynamic) {
+    if (MaxTrim <= WorkingSetList->FirstDynamic)
+    {
         return 0;
     }
 
     OutswapEnabled = FALSE;
 
-    if (VmSupport == &MmSystemCacheWs) {
-        PERFINFO_WSMANAGE_TRIMWS (NULL, NULL, VmSupport);
+    if (VmSupport == &MmSystemCacheWs)
+    {
+        PERFINFO_WSMANAGE_TRIMWS(NULL, NULL, VmSupport);
     }
-    else if (VmSupport->Flags.SessionSpace == 0) {
+    else if (VmSupport->Flags.SessionSpace == 0)
+    {
 
-        ProcessToTrim = CONTAINING_RECORD (VmSupport, EPROCESS, Vm);
+        ProcessToTrim = CONTAINING_RECORD(VmSupport, EPROCESS, Vm);
 
-        if (ProcessToTrim->Flags & PS_PROCESS_FLAGS_OUTSWAP_ENABLED) {
+        if (ProcessToTrim->Flags & PS_PROCESS_FLAGS_OUTSWAP_ENABLED)
+        {
             OutswapEnabled = TRUE;
         }
-        PERFINFO_WSMANAGE_TRIMWS (ProcessToTrim, NULL, VmSupport);
+        PERFINFO_WSMANAGE_TRIMWS(ProcessToTrim, NULL, VmSupport);
     }
-    else {
-        if (VmSupport->Flags.TrimHard == 1) {
+    else
+    {
+        if (VmSupport->Flags.TrimHard == 1)
+        {
             OutswapEnabled = TRUE;
         }
 
-        SessionSpace = CONTAINING_RECORD(VmSupport,
-                                         MM_SESSION_SPACE,
-                                         Vm);
+        SessionSpace = CONTAINING_RECORD(VmSupport, MM_SESSION_SPACE, Vm);
 
-        PERFINFO_WSMANAGE_TRIMWS (NULL, SessionSpace, VmSupport);
+        PERFINFO_WSMANAGE_TRIMWS(NULL, SessionSpace, VmSupport);
     }
 
-    if (OutswapEnabled == FALSE) {
+    if (OutswapEnabled == FALSE)
+    {
 
         //
         // Don't trim the cache or non-swapped sessions or processes
@@ -1236,20 +1221,19 @@ Environment:
         MaxTrim -= VmSupport->MinimumWorkingSetSize;
     }
 
-    switch (Criteria->NumPasses) {
+    switch (Criteria->NumPasses)
+    {
     case 0:
-        Trim = VmSupport->Claim >>
-                    ((VmSupport->Flags.MemoryPriority == MEMORY_PRIORITY_FOREGROUND)
-                        ? MI_FOREGROUND_CLAIM_AVAILABLE_SHIFT
-                        : MI_BACKGROUND_CLAIM_AVAILABLE_SHIFT);
+        Trim = VmSupport->Claim >> ((VmSupport->Flags.MemoryPriority == MEMORY_PRIORITY_FOREGROUND)
+                                        ? MI_FOREGROUND_CLAIM_AVAILABLE_SHIFT
+                                        : MI_BACKGROUND_CLAIM_AVAILABLE_SHIFT);
         Criteria->TrimAge = MI_PASS0_TRIM_AGE;
         Criteria->DoAging = TRUE;
         break;
     case 1:
-        Trim = VmSupport->Claim >>
-                    ((VmSupport->Flags.MemoryPriority == MEMORY_PRIORITY_FOREGROUND)
-                        ? MI_FOREGROUND_CLAIM_AVAILABLE_SHIFT
-                        : MI_BACKGROUND_CLAIM_AVAILABLE_SHIFT);
+        Trim = VmSupport->Claim >> ((VmSupport->Flags.MemoryPriority == MEMORY_PRIORITY_FOREGROUND)
+                                        ? MI_FOREGROUND_CLAIM_AVAILABLE_SHIFT
+                                        : MI_BACKGROUND_CLAIM_AVAILABLE_SHIFT);
         Criteria->TrimAge = MI_PASS1_TRIM_AGE;
         Criteria->DoAging = FALSE;
         break;
@@ -1268,10 +1252,13 @@ Environment:
         Criteria->TrimAge = MI_PASS3_TRIM_AGE;
         Criteria->DoAging = FALSE;
 
-        if (MiHardTrim == TRUE || MmAvailablePages < MM_HIGH_LIMIT + 64) {
-            if (VmSupport->WorkingSetSize > VmSupport->MinimumWorkingSetSize) {
+        if (MiHardTrim == TRUE || MmAvailablePages < MM_HIGH_LIMIT + 64)
+        {
+            if (VmSupport->WorkingSetSize > VmSupport->MinimumWorkingSetSize)
+            {
                 Trim = (VmSupport->WorkingSetSize - VmSupport->MinimumWorkingSetSize) >> 2;
-                if (Trim == 0) {
+                if (Trim == 0)
+                {
                     Trim = VmSupport->WorkingSetSize - VmSupport->MinimumWorkingSetSize;
                 }
             }
@@ -1282,41 +1269,34 @@ Environment:
         break;
     }
 
-    if (Trim > MaxTrim) {
+    if (Trim > MaxTrim)
+    {
         Trim = MaxTrim;
     }
 
 #if DBG
-    if ((MmDebug & MM_DBG_WS_EXPANSION) && (Trim != 0)) {
-        if (VmSupport->Flags.SessionSpace == 0) {
-            ProcessToTrim = CONTAINING_RECORD (VmSupport, EPROCESS, Vm);
+    if ((MmDebug & MM_DBG_WS_EXPANSION) && (Trim != 0))
+    {
+        if (VmSupport->Flags.SessionSpace == 0)
+        {
+            ProcessToTrim = CONTAINING_RECORD(VmSupport, EPROCESS, Vm);
             DbgPrint("           Trimming        Process %16s, WS %6d, Trimming %5d ==> %5d\n",
-                ProcessToTrim ? ProcessToTrim->ImageFileName : (PUCHAR)"System Cache",
-                VmSupport->WorkingSetSize,
-                Trim,
-                VmSupport->WorkingSetSize-Trim);
+                     ProcessToTrim ? ProcessToTrim->ImageFileName : (PUCHAR) "System Cache", VmSupport->WorkingSetSize,
+                     Trim, VmSupport->WorkingSetSize - Trim);
         }
-        else {
-            SessionSpace = CONTAINING_RECORD (VmSupport,
-                                              MM_SESSION_SPACE,
-                                              Vm);
-            DbgPrint("           Trimming        Session 0x%x (id %d), WS %6d, Trimming %5d ==> %5d\n",
-                SessionSpace,
-                SessionSpace->SessionId,
-                VmSupport->WorkingSetSize,
-                Trim,
-                VmSupport->WorkingSetSize-Trim);
+        else
+        {
+            SessionSpace = CONTAINING_RECORD(VmSupport, MM_SESSION_SPACE, Vm);
+            DbgPrint("           Trimming        Session 0x%x (id %d), WS %6d, Trimming %5d ==> %5d\n", SessionSpace,
+                     SessionSpace->SessionId, VmSupport->WorkingSetSize, Trim, VmSupport->WorkingSetSize - Trim);
         }
     }
 #endif
 
     return Trim;
 }
-
-VOID
-MiAgePagesAndEstimateClaims (
-    LOGICAL EmptyIt
-    )
+
+VOID MiAgePagesAndEstimateClaims(LOGICAL EmptyIt)
 
 /*++
 
@@ -1361,28 +1341,29 @@ Environment:
     LoopCount = 0;
     WslesScanned = 0;
 
-    ASSERT (MmIsAddressValid (MmSessionSpace) == FALSE);
+    ASSERT(MmIsAddressValid(MmSessionSpace) == FALSE);
 
-    LOCK_EXPANSION (OldIrql);
+    LOCK_EXPANSION(OldIrql);
 
-    while (!IsListEmpty (&MmWorkingSetExpansionHead.ListHead)) {
+    while (!IsListEmpty(&MmWorkingSetExpansionHead.ListHead))
+    {
 
-        ASSERT (MmIsAddressValid (MmSessionSpace) == FALSE);
+        ASSERT(MmIsAddressValid(MmSessionSpace) == FALSE);
 
         //
         // Remove the entry at the head, try to lock it, if we can lock it
         // then age some pages and estimate the number of available pages.
         //
 
-        ListEntry = RemoveHeadList (&MmWorkingSetExpansionHead.ListHead);
+        ListEntry = RemoveHeadList(&MmWorkingSetExpansionHead.ListHead);
 
-        VmSupport = CONTAINING_RECORD (ListEntry,
-                                       MMSUPPORT,
-                                       WorkingSetExpansionLinks);
+        VmSupport = CONTAINING_RECORD(ListEntry, MMSUPPORT, WorkingSetExpansionLinks);
 
-        if (VmSupport == &MmSystemCacheWs) {
+        if (VmSupport == &MmSystemCacheWs)
+        {
 
-            if (SystemCacheSeen == TRUE) {
+            if (SystemCacheSeen == TRUE)
+            {
 
                 //
                 // Seen this one already.
@@ -1393,70 +1374,68 @@ Environment:
             SystemCacheSeen = TRUE;
         }
 
-        ASSERT (VmSupport->Flags.BeingTrimmed == 0);
+        ASSERT(VmSupport->Flags.BeingTrimmed == 0);
 
-        if (VmSupport == FirstSeen) {
-            InsertHeadList (&MmWorkingSetExpansionHead.ListHead,
-                       &VmSupport->WorkingSetExpansionLinks);
+        if (VmSupport == FirstSeen)
+        {
+            InsertHeadList(&MmWorkingSetExpansionHead.ListHead, &VmSupport->WorkingSetExpansionLinks);
             break;
         }
 
         VmSupport->Flags.BeingTrimmed = 1;
 
         VmSupport->WorkingSetExpansionLinks.Flink = MM_NO_WS_EXPANSION;
-        VmSupport->WorkingSetExpansionLinks.Blink =
-                                           MM_WS_EXPANSION_IN_PROGRESS;
-        UNLOCK_EXPANSION (OldIrql);
+        VmSupport->WorkingSetExpansionLinks.Blink = MM_WS_EXPANSION_IN_PROGRESS;
+        UNLOCK_EXPANSION(OldIrql);
 
-        if (FirstSeen == NULL) {
+        if (FirstSeen == NULL)
+        {
             FirstSeen = VmSupport;
         }
 
-        if (MiAttachAndLockWorkingSet (VmSupport, &InformSessionOfRelease) == TRUE) {
+        if (MiAttachAndLockWorkingSet(VmSupport, &InformSessionOfRelease) == TRUE)
+        {
 
-            if (EmptyIt == FALSE) {
-                MiAgeAndEstimateAvailableInWorkingSet (VmSupport,
-                                                       TRUE,
-                                                       &WslesScanned,
-                                                       &NewTotalClaim,
-                                                       &NewTotalEstimatedAvailable);
+            if (EmptyIt == FALSE)
+            {
+                MiAgeAndEstimateAvailableInWorkingSet(VmSupport, TRUE, &WslesScanned, &NewTotalClaim,
+                                                      &NewTotalEstimatedAvailable);
             }
-            else {
-                MiEmptyWorkingSet (VmSupport, FALSE);
+            else
+            {
+                MiEmptyWorkingSet(VmSupport, FALSE);
             }
 
-            MiDetachAndUnlockWorkingSet (VmSupport, InformSessionOfRelease);
+            MiDetachAndUnlockWorkingSet(VmSupport, InformSessionOfRelease);
         }
 
-        LOCK_EXPANSION (OldIrql);
+        LOCK_EXPANSION(OldIrql);
 
-        ASSERT (VmSupport->Flags.BeingTrimmed == 1);
+        ASSERT(VmSupport->Flags.BeingTrimmed == 1);
         VmSupport->Flags.BeingTrimmed = 0;
 
-        ASSERT (VmSupport->WorkingSetExpansionLinks.Flink == MM_NO_WS_EXPANSION);
-        if (VmSupport->WorkingSetExpansionLinks.Blink ==
-                                             MM_WS_EXPANSION_IN_PROGRESS) {
+        ASSERT(VmSupport->WorkingSetExpansionLinks.Flink == MM_NO_WS_EXPANSION);
+        if (VmSupport->WorkingSetExpansionLinks.Blink == MM_WS_EXPANSION_IN_PROGRESS)
+        {
 
             //
             // If the working set size is still above the minimum,
             // add this back at the tail of the list.
             //
 
-            InsertTailList (&MmWorkingSetExpansionHead.ListHead,
-                            &VmSupport->WorkingSetExpansionLinks);
+            InsertTailList(&MmWorkingSetExpansionHead.ListHead, &VmSupport->WorkingSetExpansionLinks);
         }
-        else {
+        else
+        {
 
             //
             // The value in the blink is the address of an event
             // to set.
             //
 
-            ASSERT (VmSupport != &MmSystemCacheWs);
+            ASSERT(VmSupport != &MmSystemCacheWs);
 
-            KeSetEvent ((PKEVENT)VmSupport->WorkingSetExpansionLinks.Blink,
-                        0,
-                        FALSE);
+            KeSetEvent((PKEVENT)VmSupport->WorkingSetExpansionLinks.Blink, 0, FALSE);
         }
 
         //
@@ -1468,30 +1447,26 @@ Environment:
         //
 
         LoopCount += 1;
-        if (LoopCount > 200) {
-            if (MmSystemCacheWs.WorkingSetExpansionLinks.Blink == MM_WS_EXPANSION_IN_PROGRESS) {
+        if (LoopCount > 200)
+        {
+            if (MmSystemCacheWs.WorkingSetExpansionLinks.Blink == MM_WS_EXPANSION_IN_PROGRESS)
+            {
                 break;
             }
         }
     }
 
-    UNLOCK_EXPANSION (OldIrql);
+    UNLOCK_EXPANSION(OldIrql);
 
-    if (EmptyIt == FALSE) {
+    if (EmptyIt == FALSE)
+    {
         MmTotalClaim = NewTotalClaim;
         MmTotalEstimatedAvailable = NewTotalEstimatedAvailable;
     }
-
 }
-
-VOID
-MiAgeAndEstimateAvailableInWorkingSet (
-    IN PMMSUPPORT VmSupport,
-    IN LOGICAL DoAging,
-    IN PWSLE_NUMBER WslesScanned,
-    IN OUT PPFN_NUMBER TotalClaim,
-    IN OUT PPFN_NUMBER TotalEstimatedAvailable
-    )
+
+VOID MiAgeAndEstimateAvailableInWorkingSet(IN PMMSUPPORT VmSupport, IN LOGICAL DoAging, IN PWSLE_NUMBER WslesScanned,
+                                           IN OUT PPFN_NUMBER TotalClaim, IN OUT PPFN_NUMBER TotalEstimatedAvailable)
 
 /*++
 
@@ -1544,7 +1519,7 @@ Environment:
     WSLE_NUMBER NumberToExamine;
     WSLE_NUMBER Claim;
     ULONG Estimate;
-    ULONG SampledAgeCounts[MI_USE_AGE_COUNT] = {0};
+    ULONG SampledAgeCounts[MI_USE_AGE_COUNT] = { 0 };
     MI_NEXT_ESTIMATION_SLOT_CONST NextConst;
     WSLE_NUMBER SampleSize;
     WSLE_NUMBER AgeSize;
@@ -1556,12 +1531,13 @@ Environment:
     Wsle = WorkingSetList->Wsle;
     AgeSize = 0;
 
-    ASSERT ((VmSupport != &MmSystemCacheWs) || (PsGetCurrentThread() == MmSystemLockOwner));
+    ASSERT((VmSupport != &MmSystemCacheWs) || (PsGetCurrentThread() == MmSystemLockOwner));
 
     LastEntry = WorkingSetList->LastEntry;
     FirstDynamic = WorkingSetList->FirstDynamic;
 
-    if (DoAging == TRUE) {
+    if (DoAging == TRUE)
+    {
 
         //
         // Clear the used bits or increment the age of a portion of the
@@ -1571,7 +1547,8 @@ Environment:
         // seconds.
         //
 
-        if (VmSupport->WorkingSetSize > WorkingSetList->FirstDynamic) {
+        if (VmSupport->WorkingSetSize > WorkingSetList->FirstDynamic)
+        {
             NumberToExamine = (VmSupport->WorkingSetSize - WorkingSetList->FirstDynamic) >> MiAgingShift;
 
             //
@@ -1579,7 +1556,8 @@ Environment:
             // terabytes so limit the absolute walk.
             //
 
-            if (NumberToExamine > MI_MAXIMUM_SAMPLE) {
+            if (NumberToExamine > MI_MAXIMUM_SAMPLE)
+            {
                 NumberToExamine = MI_MAXIMUM_SAMPLE;
             }
 
@@ -1590,8 +1568,8 @@ Environment:
             // from triggering excessive scanning.
             //
 
-            if ((WslesScanned != NULL) &&
-                (*WslesScanned >= MiMaximumWslesPerSweep)) {
+            if ((WslesScanned != NULL) && (*WslesScanned >= MiMaximumWslesPerSweep))
+            {
 
                 NumberToExamine = 64;
             }
@@ -1599,23 +1577,28 @@ Environment:
             AgeSize = NumberToExamine;
             CurrentEntry = VmSupport->NextAgingSlot;
 
-            if (CurrentEntry > LastEntry || CurrentEntry < FirstDynamic) {
+            if (CurrentEntry > LastEntry || CurrentEntry < FirstDynamic)
+            {
                 CurrentEntry = FirstDynamic;
             }
 
-            if (Wsle[CurrentEntry].u1.e1.Valid == 0) {
+            if (Wsle[CurrentEntry].u1.e1.Valid == 0)
+            {
                 MI_NEXT_VALID_AGING_SLOT(CurrentEntry, FirstDynamic, LastEntry, Wsle);
             }
 
-            while (NumberToExamine != 0) {
+            while (NumberToExamine != 0)
+            {
 
-                PointerPte = MiGetPteAddress (Wsle[CurrentEntry].u1.VirtualAddress);
+                PointerPte = MiGetPteAddress(Wsle[CurrentEntry].u1.VirtualAddress);
 
-                if (MI_GET_ACCESSED_IN_PTE(PointerPte) == 1) {
+                if (MI_GET_ACCESSED_IN_PTE(PointerPte) == 1)
+                {
                     MI_SET_ACCESSED_IN_PTE(PointerPte, 0);
                     MI_RESET_WSLE_AGE(PointerPte, &Wsle[CurrentEntry]);
                 }
-                else {
+                else
+                {
                     MI_INC_WSLE_AGE(PointerPte, &Wsle[CurrentEntry]);
                 }
 
@@ -1637,7 +1620,8 @@ Environment:
 
     CurrentEntry = VmSupport->NextEstimationSlot;
 
-    if (CurrentEntry > LastEntry || CurrentEntry < FirstDynamic) {
+    if (CurrentEntry > LastEntry || CurrentEntry < FirstDynamic)
+    {
         CurrentEntry = FirstDynamic;
     }
 
@@ -1649,7 +1633,8 @@ Environment:
     CounterShift = 0;
     SampleSize = 0;
 
-    if (VmSupport->WorkingSetSize > WorkingSetList->FirstDynamic) {
+    if (VmSupport->WorkingSetSize > WorkingSetList->FirstDynamic)
+    {
 
         RecalculateShift = FALSE;
         SampleSize = VmSupport->WorkingSetSize - WorkingSetList->FirstDynamic;
@@ -1661,11 +1646,12 @@ Environment:
         // situation from triggering excessive scanning.
         //
 
-        if ((WslesScanned != NULL) &&
-            (*WslesScanned >= MiMaximumWslesPerSweep)) {
+        if ((WslesScanned != NULL) && (*WslesScanned >= MiMaximumWslesPerSweep))
+        {
             RecalculateShift = TRUE;
         }
-        else if (NumberToExamine > MI_MAXIMUM_SAMPLE) {
+        else if (NumberToExamine > MI_MAXIMUM_SAMPLE)
+        {
 
             //
             // Bigger machines can easily have working sets that span
@@ -1683,11 +1669,13 @@ Environment:
             // in use.
             //
 
-            for ( ; Temp != 0; Temp = Temp >> 1) {
+            for (; Temp != 0; Temp = Temp >> 1)
+            {
                 CounterShift += 1;
             }
         }
-        else if (NumberToExamine >= MI_MINIMUM_SAMPLE) {
+        else if (NumberToExamine >= MI_MINIMUM_SAMPLE)
+        {
 
             //
             // Ensure that NumberToExamine is at least the minimum size.
@@ -1696,11 +1684,13 @@ Environment:
             SampleSize = NumberToExamine;
             CounterShift = MiEstimationShift;
         }
-        else if (SampleSize > MI_MINIMUM_SAMPLE) {
+        else if (SampleSize > MI_MINIMUM_SAMPLE)
+        {
             RecalculateShift = TRUE;
         }
 
-        if (RecalculateShift == TRUE) {
+        if (RecalculateShift == TRUE)
+        {
             Temp = SampleSize >> MI_MINIMUM_SAMPLE_SHIFT;
             SampleSize = MI_MINIMUM_SAMPLE;
 
@@ -1709,38 +1699,36 @@ Environment:
             // in use.
             //
 
-            for ( ; Temp != 0; Temp = Temp >> 1) {
+            for (; Temp != 0; Temp = Temp >> 1)
+            {
                 CounterShift += 1;
             }
         }
 
-        ASSERT (SampleSize != 0);
+        ASSERT(SampleSize != 0);
 
         MI_CALC_NEXT_ESTIMATION_SLOT_CONST(NextConst, WorkingSetList);
 
         StartEntry = FirstDynamic;
 
-        if (Wsle[CurrentEntry].u1.e1.Valid == 0) {
+        if (Wsle[CurrentEntry].u1.e1.Valid == 0)
+        {
 
-            MI_NEXT_VALID_ESTIMATION_SLOT (CurrentEntry,
-                                           StartEntry,
-                                           FirstDynamic,
-                                           LastEntry,
-                                           NextConst,
-                                           Wsle);
+            MI_NEXT_VALID_ESTIMATION_SLOT(CurrentEntry, StartEntry, FirstDynamic, LastEntry, NextConst, Wsle);
         }
 
-        for (i = 0; i < SampleSize; i += 1) {
+        for (i = 0; i < SampleSize; i += 1)
+        {
 
-            PointerPte = MiGetPteAddress (Wsle[CurrentEntry].u1.VirtualAddress);
+            PointerPte = MiGetPteAddress(Wsle[CurrentEntry].u1.VirtualAddress);
 
-            if (MI_GET_ACCESSED_IN_PTE(PointerPte) == 0) {
-                MI_UPDATE_USE_ESTIMATE (PointerPte,
-                                        &Wsle[CurrentEntry],
-                                        SampledAgeCounts);
+            if (MI_GET_ACCESSED_IN_PTE(PointerPte) == 0)
+            {
+                MI_UPDATE_USE_ESTIMATE(PointerPte, &Wsle[CurrentEntry], SampledAgeCounts);
             }
 
-            if (i == NumberToExamine - 1) {
+            if (i == NumberToExamine - 1)
+            {
 
                 //
                 // Start estimation here next time.
@@ -1749,20 +1737,17 @@ Environment:
                 VmSupport->NextEstimationSlot = CurrentEntry + 1;
             }
 
-            MI_NEXT_VALID_ESTIMATION_SLOT (CurrentEntry,
-                                           StartEntry,
-                                           FirstDynamic,
-                                           LastEntry,
-                                           NextConst,
-                                           Wsle);
+            MI_NEXT_VALID_ESTIMATION_SLOT(CurrentEntry, StartEntry, FirstDynamic, LastEntry, NextConst, Wsle);
         }
     }
 
-    if (SampleSize < AgeSize) {
+    if (SampleSize < AgeSize)
+    {
         SampleSize = AgeSize;
     }
 
-    if (WslesScanned != NULL) {
+    if (WslesScanned != NULL)
+    {
         *WslesScanned += SampleSize;
     }
 
@@ -1770,7 +1755,8 @@ Environment:
 
     Claim = VmSupport->Claim + MI_CLAIM_INCR;
 
-    if (Claim > Estimate) {
+    if (Claim > Estimate)
+    {
         Claim = Estimate;
     }
 
@@ -1781,19 +1767,16 @@ Environment:
 
     VmSupport->GrowthSinceLastEstimate = 0;
     *TotalClaim += Claim >> ((VmSupport->Flags.MemoryPriority == MEMORY_PRIORITY_FOREGROUND)
-                                ? MI_FOREGROUND_CLAIM_AVAILABLE_SHIFT
-                                : MI_BACKGROUND_CLAIM_AVAILABLE_SHIFT);
+                                 ? MI_FOREGROUND_CLAIM_AVAILABLE_SHIFT
+                                 : MI_BACKGROUND_CLAIM_AVAILABLE_SHIFT);
 
     *TotalEstimatedAvailable += Estimate;
     return;
 }
-
-ULONG MiClaimAdjustmentThreshold[8] = { 0, 0, 4000, 8000, 12000, 24000, 32000, 32000};
 
-VOID
-MiAdjustClaimParameters (
-    IN LOGICAL EnoughPages
-    )
+ULONG MiClaimAdjustmentThreshold[8] = { 0, 0, 4000, 8000, 12000, 24000, 32000, 32000 };
+
+VOID MiAdjustClaimParameters(IN LOGICAL EnoughPages)
 
 /*++
 
@@ -1826,19 +1809,19 @@ Environment:
 {
     LARGE_INTEGER CurrentTime;
 
-    KeQuerySystemTime (&CurrentTime);
+    KeQuerySystemTime(&CurrentTime);
 
-    if (EnoughPages == TRUE &&
-        ((MmTotalClaim + MmAvailablePages) > MiClaimAdjustmentThreshold[MiAgingShift])) {
+    if (EnoughPages == TRUE && ((MmTotalClaim + MmAvailablePages) > MiClaimAdjustmentThreshold[MiAgingShift]))
+    {
 
         //
         // Don't adjust the rate too frequently, don't go over the limit, and
         // make sure there are enough claimed and/or available.
         //
 
-        if (((CurrentTime.QuadPart - MiLastAdjustmentOfClaimParams.QuadPart) >
-                MmClaimParameterAdjustUpTime.QuadPart) &&
-            (MiAgingShift < MI_MAXIMUM_AGING_SHIFT ) ) {
+        if (((CurrentTime.QuadPart - MiLastAdjustmentOfClaimParams.QuadPart) > MmClaimParameterAdjustUpTime.QuadPart) &&
+            (MiAgingShift < MI_MAXIMUM_AGING_SHIFT))
+        {
 
             //
             // Set the time only when we change the rate.
@@ -1850,15 +1833,15 @@ Environment:
             MiEstimationShift += 1;
         }
     }
-    else if ((EnoughPages == FALSE) ||
-             (MmTotalClaim + MmAvailablePages) < MiClaimAdjustmentThreshold[MiAgingShift - 1]) {
+    else if ((EnoughPages == FALSE) || (MmTotalClaim + MmAvailablePages) < MiClaimAdjustmentThreshold[MiAgingShift - 1])
+    {
 
         //
         // Don't adjust the rate down too frequently.
         //
 
-        if ((CurrentTime.QuadPart - MiLastAdjustmentOfClaimParams.QuadPart) >
-                MmClaimParameterAdjustDownTime.QuadPart) {
+        if ((CurrentTime.QuadPart - MiLastAdjustmentOfClaimParams.QuadPart) > MmClaimParameterAdjustDownTime.QuadPart)
+        {
 
             //
             // Always set the time so we don't adjust up too soon after
@@ -1871,24 +1854,22 @@ Environment:
             // Don't go under the limit.
             //
 
-            if (MiAgingShift > 3) {
+            if (MiAgingShift > 3)
+            {
                 MiAgingShift -= 1;
                 MiEstimationShift -= 1;
             }
         }
     }
 }
-
+
 #define MM_WS_REORG_BUCKETS_MAX 7
 
 #if DBG
 ULONG MiSessionIdleBuckets[MM_WS_REORG_BUCKETS_MAX];
 #endif
 
-VOID
-MiRearrangeWorkingSetExpansionList (
-    VOID
-    )
+VOID MiRearrangeWorkingSetExpansionList(VOID)
 
 /*++
 
@@ -1929,45 +1910,46 @@ Environment:
     ULONG IdleTime;
     PMM_SESSION_SPACE SessionGlobal;
 
-    KeQuerySystemTime (&CurrentTime);
+    KeQuerySystemTime(&CurrentTime);
 
-    if (IsListEmpty (&MmWorkingSetExpansionHead.ListHead)) {
+    if (IsListEmpty(&MmWorkingSetExpansionHead.ListHead))
+    {
         return;
     }
 
-    for (Size = 0 ; Size < MM_WS_REORG_BUCKETS_MAX; Size++) {
-        InitializeListHead (&ListHead[Size]);
+    for (Size = 0; Size < MM_WS_REORG_BUCKETS_MAX; Size++)
+    {
+        InitializeListHead(&ListHead[Size]);
     }
 
-    LOCK_EXPANSION (OldIrql);
+    LOCK_EXPANSION(OldIrql);
 
-    while (!IsListEmpty (&MmWorkingSetExpansionHead.ListHead)) {
-        ListEntry = RemoveHeadList (&MmWorkingSetExpansionHead.ListHead);
+    while (!IsListEmpty(&MmWorkingSetExpansionHead.ListHead))
+    {
+        ListEntry = RemoveHeadList(&MmWorkingSetExpansionHead.ListHead);
 
-        VmSupport = CONTAINING_RECORD(ListEntry,
-                                          MMSUPPORT,
-                                          WorkingSetExpansionLinks);
+        VmSupport = CONTAINING_RECORD(ListEntry, MMSUPPORT, WorkingSetExpansionLinks);
 
-        if (VmSupport->Flags.TrimHard == 1) {
+        if (VmSupport->Flags.TrimHard == 1)
+        {
 
-            ASSERT (VmSupport->Flags.SessionSpace == 1);
+            ASSERT(VmSupport->Flags.SessionSpace == 1);
 
-            SessionGlobal = CONTAINING_RECORD (VmSupport,
-                                               MM_SESSION_SPACE,
-                                               Vm);
+            SessionGlobal = CONTAINING_RECORD(VmSupport, MM_SESSION_SPACE, Vm);
 
             SessionIdleTime.QuadPart = CurrentTime.QuadPart - SessionGlobal->LastProcessSwappedOutTime.QuadPart;
 
 #if DBG
-            if (MmDebug & MM_DBG_SESSIONS) {
-                DbgPrint ("Mm: Session %d heavily trim/aged - all its processes (%d) swapped out %d seconds ago\n",
-                    SessionGlobal->SessionId,
-                    SessionGlobal->ReferenceCount,
-                    (ULONG)(SessionIdleTime.QuadPart / 10000000));
+            if (MmDebug & MM_DBG_SESSIONS)
+            {
+                DbgPrint("Mm: Session %d heavily trim/aged - all its processes (%d) swapped out %d seconds ago\n",
+                         SessionGlobal->SessionId, SessionGlobal->ReferenceCount,
+                         (ULONG)(SessionIdleTime.QuadPart / 10000000));
             }
 #endif
 
-            if (SessionIdleTime.QuadPart < 0) {
+            if (SessionIdleTime.QuadPart < 0)
+            {
 
                 //
                 // The administrator has moved the system time backwards.
@@ -1975,16 +1957,18 @@ Environment:
                 //
 
                 SessionIdleTime.QuadPart = 0;
-                KeQuerySystemTime (&SessionGlobal->LastProcessSwappedOutTime);
+                KeQuerySystemTime(&SessionGlobal->LastProcessSwappedOutTime);
             }
 
-            IdleTime = (ULONG) (SessionIdleTime.QuadPart / 10000000);
+            IdleTime = (ULONG)(SessionIdleTime.QuadPart / 10000000);
         }
-        else {
+        else
+        {
             IdleTime = 0;
         }
 
-        if (VmSupport->Flags.MemoryPriority == MEMORY_PRIORITY_FOREGROUND) {
+        if (VmSupport->Flags.MemoryPriority == MEMORY_PRIORITY_FOREGROUND)
+        {
 
             //
             // Put the foreground processes at the end of the list,
@@ -1993,51 +1977,63 @@ Environment:
 
             Size = 6;
         }
-        else {
+        else
+        {
 
-            if (VmSupport->Claim > 400) {
+            if (VmSupport->Claim > 400)
+            {
                 Size = 0;
             }
-            else if (IdleTime > 30) {
+            else if (IdleTime > 30)
+            {
                 Size = 0;
 #if DBG
                 MiSessionIdleBuckets[Size] += 1;
 #endif
             }
-            else if (VmSupport->Claim > 200) {
+            else if (VmSupport->Claim > 200)
+            {
                 Size = 1;
             }
-            else if (IdleTime > 20) {
+            else if (IdleTime > 20)
+            {
                 Size = 1;
 #if DBG
                 MiSessionIdleBuckets[Size] += 1;
 #endif
             }
-            else if (VmSupport->Claim > 100) {
+            else if (VmSupport->Claim > 100)
+            {
                 Size = 2;
             }
-            else if (IdleTime > 10) {
+            else if (IdleTime > 10)
+            {
                 Size = 2;
 #if DBG
                 MiSessionIdleBuckets[Size] += 1;
 #endif
             }
-            else if (VmSupport->Claim > 50) {
+            else if (VmSupport->Claim > 50)
+            {
                 Size = 3;
             }
-            else if (IdleTime) {
+            else if (IdleTime)
+            {
                 Size = 3;
 #if DBG
                 MiSessionIdleBuckets[Size] += 1;
 #endif
             }
-            else if (VmSupport->Claim > 25) {
+            else if (VmSupport->Claim > 25)
+            {
                 Size = 4;
             }
-            else {
+            else
+            {
                 Size = 5;
 #if DBG
-                if (VmSupport->Flags.SessionSpace == 1) {
+                if (VmSupport->Flags.SessionSpace == 1)
+                {
                     MiSessionIdleBuckets[Size] += 1;
                 }
 #endif
@@ -2045,12 +2041,10 @@ Environment:
         }
 
 #if DBG
-        if (MmDebug & MM_DBG_WS_EXPANSION) {
-            DbgPrint("MM-rearrange: TrimHard = %d, WS Size = 0x%x, Claim 0x%x, Bucket %d\n",
-                    VmSupport->Flags.TrimHard,
-                    VmSupport->WorkingSetSize,
-                    VmSupport->Claim,
-                    Size);
+        if (MmDebug & MM_DBG_WS_EXPANSION)
+        {
+            DbgPrint("MM-rearrange: TrimHard = %d, WS Size = 0x%x, Claim 0x%x, Bucket %d\n", VmSupport->Flags.TrimHard,
+                     VmSupport->WorkingSetSize, VmSupport->Claim, Size);
         }
 #endif //DBG
 
@@ -2060,16 +2054,17 @@ Environment:
         // if you change it you may want to think about it.
         //
 
-        InsertHeadList (&ListHead[Size],
-                        &VmSupport->WorkingSetExpansionLinks);
+        InsertHeadList(&ListHead[Size], &VmSupport->WorkingSetExpansionLinks);
     }
 
     //
     // Find the first non-empty list.
     //
 
-    for (NonEmpty = 0 ; NonEmpty < MM_WS_REORG_BUCKETS_MAX ; NonEmpty += 1) {
-        if (!IsListEmpty (&ListHead[NonEmpty])) {
+    for (NonEmpty = 0; NonEmpty < MM_WS_REORG_BUCKETS_MAX; NonEmpty += 1)
+    {
+        if (!IsListEmpty(&ListHead[NonEmpty]))
+        {
             break;
         }
     }
@@ -2088,9 +2083,11 @@ Environment:
     // Link the rest of the lists together.
     //
 
-    for (NonEmpty += 1; NonEmpty < MM_WS_REORG_BUCKETS_MAX; NonEmpty += 1) {
+    for (NonEmpty += 1; NonEmpty < MM_WS_REORG_BUCKETS_MAX; NonEmpty += 1)
+    {
 
-        if (!IsListEmpty (&ListHead[NonEmpty])) {
+        if (!IsListEmpty(&ListHead[NonEmpty]))
+        {
 
             ListHead[PreviousNonEmpty].Blink->Flink = ListHead[NonEmpty].Flink;
             ListHead[NonEmpty].Flink->Blink = ListHead[PreviousNonEmpty].Blink;
@@ -2105,16 +2102,13 @@ Environment:
     MmWorkingSetExpansionHead.ListHead.Blink = ListHead[PreviousNonEmpty].Blink;
     ListHead[PreviousNonEmpty].Blink->Flink = &MmWorkingSetExpansionHead.ListHead;
 
-    UNLOCK_EXPANSION (OldIrql);
+    UNLOCK_EXPANSION(OldIrql);
 
     return;
 }
 
-
-VOID
-MmEmptyAllWorkingSets (
-    VOID
-    )
+
+VOID MmEmptyAllWorkingSets(VOID)
 
 /*++
 
@@ -2140,9 +2134,9 @@ Environment:
 {
     KIRQL OldIrql;
 
-    ASSERT (KeGetCurrentIrql () <= APC_LEVEL);
+    ASSERT(KeGetCurrentIrql() <= APC_LEVEL);
 
-    ASSERT (PsGetCurrentThread () != MmWorkingSetThread);
+    ASSERT(PsGetCurrentThread() != MmWorkingSetThread);
 
     //
     // For Hydra, we cannot attach directly to the session space to be
@@ -2155,22 +2149,19 @@ Environment:
     // to the working set manager.
     //
 
-    LOCK_EXPANSION (OldIrql);
+    LOCK_EXPANSION(OldIrql);
 
-    if (MiWaitingForWorkingSetEmpty == FALSE) {
+    if (MiWaitingForWorkingSetEmpty == FALSE)
+    {
         MiWaitingForWorkingSetEmpty = TRUE;
-        KeClearEvent (&MiWaitForEmptyEvent);
+        KeClearEvent(&MiWaitForEmptyEvent);
     }
 
-    UNLOCK_EXPANSION (OldIrql);
+    UNLOCK_EXPANSION(OldIrql);
 
-    KeSetEvent (&MmWorkingSetManagerEvent, 0, FALSE);
+    KeSetEvent(&MmWorkingSetManagerEvent, 0, FALSE);
 
-    KeWaitForSingleObject (&MiWaitForEmptyEvent,
-                           WrVirtualMemory,
-                           KernelMode,
-                           FALSE,
-                           (PLARGE_INTEGER)0);
+    KeWaitForSingleObject(&MiWaitForEmptyEvent, WrVirtualMemory, KernelMode, FALSE, (PLARGE_INTEGER)0);
 
     return;
 }
@@ -2184,11 +2175,9 @@ LONG MiTrimInProgressCount = 1;
 
 ULONG MiTrimAllPageFaultCount;
 
-
+
 LOGICAL
-MmTrimAllSystemPagableMemory (
-    IN LOGICAL PurgeTransition
-    )
+MmTrimAllSystemPagableMemory(IN LOGICAL PurgeTransition)
 
 /*++
 
@@ -2238,7 +2227,8 @@ Environment:
     // It's ok to check this without acquiring the system WS lock.
     //
 
-    if (MiTrimAllPageFaultCount == MmSystemCacheWs.PageFaultCount) {
+    if (MiTrimAllPageFaultCount == MmSystemCacheWs.PageFaultCount)
+    {
         return FALSE;
     }
 
@@ -2246,7 +2236,8 @@ Environment:
     // Working set mutexes will be acquired which require APC_LEVEL or below.
     //
 
-    if (KeGetCurrentIrql() > APC_LEVEL) {
+    if (KeGetCurrentIrql() > APC_LEVEL)
+    {
         return FALSE;
     }
 
@@ -2255,8 +2246,9 @@ Environment:
     // another thread/processor is racing here to do the work for us.
     //
 
-    if (InterlockedIncrement (&MiTrimInProgressCount) > 1) {
-        InterlockedDecrement (&MiTrimInProgressCount);
+    if (InterlockedIncrement(&MiTrimInProgressCount) > 1)
+    {
+        InterlockedDecrement(&MiTrimInProgressCount);
         return FALSE;
     }
 
@@ -2268,21 +2260,23 @@ Environment:
         mov     flags, eax
     }
 
-    if ((flags & EFLAGS_INTERRUPT_MASK) == 0) {
-        InterlockedDecrement (&MiTrimInProgressCount);
+    if ((flags & EFLAGS_INTERRUPT_MASK) == 0)
+    {
+        InterlockedDecrement(&MiTrimInProgressCount);
         return FALSE;
     }
 
 #endif
 
-    LockAvailable = KeTryToAcquireSpinLock (&MmExpansionLock, &OldIrql);
+    LockAvailable = KeTryToAcquireSpinLock(&MmExpansionLock, &OldIrql);
 
-    if (LockAvailable == FALSE) {
-        InterlockedDecrement (&MiTrimInProgressCount);
+    if (LockAvailable == FALSE)
+    {
+        InterlockedDecrement(&MiTrimInProgressCount);
         return FALSE;
     }
 
-    MM_SET_EXPANSION_OWNER ();
+    MM_SET_EXPANSION_OWNER();
 
     CurrentThread = PsGetCurrentThread();
 
@@ -2292,35 +2286,38 @@ Environment:
     // sufficient as this flag is cleared just before actually releasing it.
     //
 
-    if ((CurrentThread == MmSystemLockOwner) ||
-        (ExTryToAcquireResourceExclusiveLite(&MmSystemWsLock) == FALSE)) {
-        UNLOCK_EXPANSION (OldIrql);
-        InterlockedDecrement (&MiTrimInProgressCount);
+    if ((CurrentThread == MmSystemLockOwner) || (ExTryToAcquireResourceExclusiveLite(&MmSystemWsLock) == FALSE))
+    {
+        UNLOCK_EXPANSION(OldIrql);
+        InterlockedDecrement(&MiTrimInProgressCount);
         return FALSE;
     }
 
     Next = MmWorkingSetExpansionHead.ListHead.Flink;
 
-    while (Next != &MmWorkingSetExpansionHead.ListHead) {
-        if (Next == &MmSystemCacheWs.WorkingSetExpansionLinks) {
+    while (Next != &MmWorkingSetExpansionHead.ListHead)
+    {
+        if (Next == &MmSystemCacheWs.WorkingSetExpansionLinks)
+        {
             break;
         }
         Next = Next->Flink;
     }
 
-    if (Next != &MmSystemCacheWs.WorkingSetExpansionLinks) {
+    if (Next != &MmSystemCacheWs.WorkingSetExpansionLinks)
+    {
         ExReleaseResourceLite(&MmSystemWsLock);
-        UNLOCK_EXPANSION (OldIrql);
-        InterlockedDecrement (&MiTrimInProgressCount);
+        UNLOCK_EXPANSION(OldIrql);
+        InterlockedDecrement(&MiTrimInProgressCount);
         return FALSE;
     }
 
-    RemoveEntryList (Next);
+    RemoveEntryList(Next);
 
     VmSupport = &MmSystemCacheWs;
     VmSupport->WorkingSetExpansionLinks.Flink = MM_NO_WS_EXPANSION;
     VmSupport->WorkingSetExpansionLinks.Blink = MM_WS_EXPANSION_IN_PROGRESS;
-    ASSERT (VmSupport->Flags.BeingTrimmed == 0);
+    ASSERT(VmSupport->Flags.BeingTrimmed == 0);
     VmSupport->Flags.BeingTrimmed = 1;
 
     MiTrimAllPageFaultCount = VmSupport->PageFaultCount;
@@ -2341,27 +2338,25 @@ Environment:
     //     The decision was to hold the system working set mutex throughout.
     //
 
-    MmSystemLockOwner = PsGetCurrentThread ();
+    MmSystemLockOwner = PsGetCurrentThread();
 
-    UNLOCK_EXPANSION (APC_LEVEL);
+    UNLOCK_EXPANSION(APC_LEVEL);
 
-    MiEmptyWorkingSet (VmSupport, FALSE);
+    MiEmptyWorkingSet(VmSupport, FALSE);
 
-    LOCK_EXPANSION (OldIrql2);
-    ASSERT (OldIrql2 == APC_LEVEL);
+    LOCK_EXPANSION(OldIrql2);
+    ASSERT(OldIrql2 == APC_LEVEL);
 
-    ASSERT (VmSupport->WorkingSetExpansionLinks.Flink == MM_NO_WS_EXPANSION);
+    ASSERT(VmSupport->WorkingSetExpansionLinks.Flink == MM_NO_WS_EXPANSION);
 
-    ASSERT (VmSupport->Flags.BeingTrimmed == 1);
+    ASSERT(VmSupport->Flags.BeingTrimmed == 1);
     VmSupport->Flags.BeingTrimmed = 0;
 
-    ASSERT (VmSupport->WorkingSetExpansionLinks.Blink ==
-                                        MM_WS_EXPANSION_IN_PROGRESS);
+    ASSERT(VmSupport->WorkingSetExpansionLinks.Blink == MM_WS_EXPANSION_IN_PROGRESS);
 
-    InsertTailList (&MmWorkingSetExpansionHead.ListHead,
-                    &VmSupport->WorkingSetExpansionLinks);
+    InsertTailList(&MmWorkingSetExpansionHead.ListHead, &VmSupport->WorkingSetExpansionLinks);
 
-    UNLOCK_EXPANSION (APC_LEVEL);
+    UNLOCK_EXPANSION(APC_LEVEL);
 
     //
     // Since MiEmptyWorkingSet will attempt to recursively acquire and release
@@ -2371,24 +2366,23 @@ Environment:
     //
 
     MmSystemLockOwner = NULL;
-    ExReleaseResourceLite (&MmSystemWsLock);
-    KeLowerIrql (OldIrql);
-    ASSERT (KeGetCurrentIrql() <= APC_LEVEL);
+    ExReleaseResourceLite(&MmSystemWsLock);
+    KeLowerIrql(OldIrql);
+    ASSERT(KeGetCurrentIrql() <= APC_LEVEL);
 
-    if (PurgeTransition == TRUE) {
-        MiPurgeTransitionList ();
+    if (PurgeTransition == TRUE)
+    {
+        MiPurgeTransitionList();
     }
 
-    InterlockedDecrement (&MiTrimInProgressCount);
+    InterlockedDecrement(&MiTrimInProgressCount);
 
     return TRUE;
 }
 
-
+
 LOGICAL
-MmTrimProcessMemory (
-    IN LOGICAL PurgeTransition
-    )
+MmTrimProcessMemory(IN LOGICAL PurgeTransition)
 
 /*++
 
@@ -2431,7 +2425,8 @@ Environment:
     // Working set mutexes will be acquired which require APC_LEVEL or below.
     //
 
-    if (KeGetCurrentIrql() > APC_LEVEL) {
+    if (KeGetCurrentIrql() > APC_LEVEL)
+    {
         return FALSE;
     }
 
@@ -2443,7 +2438,8 @@ Environment:
         mov     flags, eax
     }
 
-    if ((flags & EFLAGS_INTERRUPT_MASK) == 0) {
+    if ((flags & EFLAGS_INTERRUPT_MASK) == 0)
+    {
         return FALSE;
     }
 
@@ -2454,20 +2450,22 @@ Environment:
     // another thread/processor is racing here to do the work for us.
     //
 
-    if (InterlockedIncrement (&MiTrimInProgressCount) > 1) {
-        InterlockedDecrement (&MiTrimInProgressCount);
+    if (InterlockedIncrement(&MiTrimInProgressCount) > 1)
+    {
+        InterlockedDecrement(&MiTrimInProgressCount);
         return FALSE;
     }
 
-    Process = PsGetCurrentProcess ();
+    Process = PsGetCurrentProcess();
     VmSupport = &Process->Vm;
 
     //
     // If the WS mutex is not readily available then just return.
     //
 
-    if (ExTryToAcquireFastMutex (&Process->WorkingSetLock) == FALSE) {
-        InterlockedDecrement (&MiTrimInProgressCount);
+    if (ExTryToAcquireFastMutex(&Process->WorkingSetLock) == FALSE)
+    {
+        InterlockedDecrement(&MiTrimInProgressCount);
         return FALSE;
     }
 
@@ -2475,54 +2473,59 @@ Environment:
     // If the process is exiting then just return.
     //
 
-    if (Process->Flags & PS_PROCESS_FLAGS_VM_DELETED) {
-        UNLOCK_WS (Process);
-        InterlockedDecrement (&MiTrimInProgressCount);
+    if (Process->Flags & PS_PROCESS_FLAGS_VM_DELETED)
+    {
+        UNLOCK_WS(Process);
+        InterlockedDecrement(&MiTrimInProgressCount);
         return FALSE;
     }
 
-    ASSERT (!MI_IS_WS_UNSAFE(Process));
+    ASSERT(!MI_IS_WS_UNSAFE(Process));
 
     //
     // If the expansion lock is not available then just return.
     //
 
-    LockAvailable = KeTryToAcquireSpinLock (&MmExpansionLock, &OldIrql);
+    LockAvailable = KeTryToAcquireSpinLock(&MmExpansionLock, &OldIrql);
 
-    if (LockAvailable == FALSE) {
-        UNLOCK_WS (Process);
-        InterlockedDecrement (&MiTrimInProgressCount);
+    if (LockAvailable == FALSE)
+    {
+        UNLOCK_WS(Process);
+        InterlockedDecrement(&MiTrimInProgressCount);
         return FALSE;
     }
 
-    ASSERT (OldIrql == APC_LEVEL);
+    ASSERT(OldIrql == APC_LEVEL);
 
-    MM_SET_EXPANSION_OWNER ();
+    MM_SET_EXPANSION_OWNER();
 
     Next = MmWorkingSetExpansionHead.ListHead.Flink;
 
-    while (Next != &MmWorkingSetExpansionHead.ListHead) {
-        if (Next == &VmSupport->WorkingSetExpansionLinks) {
+    while (Next != &MmWorkingSetExpansionHead.ListHead)
+    {
+        if (Next == &VmSupport->WorkingSetExpansionLinks)
+        {
             break;
         }
         Next = Next->Flink;
     }
 
-    if (Next != &VmSupport->WorkingSetExpansionLinks) {
-        UNLOCK_EXPANSION (OldIrql);
-        UNLOCK_WS (Process);
-        InterlockedDecrement (&MiTrimInProgressCount);
+    if (Next != &VmSupport->WorkingSetExpansionLinks)
+    {
+        UNLOCK_EXPANSION(OldIrql);
+        UNLOCK_WS(Process);
+        InterlockedDecrement(&MiTrimInProgressCount);
         return FALSE;
     }
 
-    RemoveEntryList (Next);
+    RemoveEntryList(Next);
 
     VmSupport->WorkingSetExpansionLinks.Flink = MM_NO_WS_EXPANSION;
     VmSupport->WorkingSetExpansionLinks.Blink = MM_WS_EXPANSION_IN_PROGRESS;
-    ASSERT (VmSupport->Flags.BeingTrimmed == 0);
+    ASSERT(VmSupport->Flags.BeingTrimmed == 0);
     VmSupport->Flags.BeingTrimmed = 1;
 
-    UNLOCK_EXPANSION (APC_LEVEL);
+    UNLOCK_EXPANSION(APC_LEVEL);
 
     //
     // There are 2 issues here that are carefully dealt with :
@@ -2544,14 +2547,16 @@ Environment:
     //
 
     LastFreed = WorkingSetList->LastEntry;
-    for (Entry = WorkingSetList->FirstDynamic; Entry <= LastFreed; Entry += 1) {
-        if (Wsle[Entry].u1.e1.Valid != 0) {
-            PointerPte = MiGetPteAddress (Wsle[Entry].u1.VirtualAddress);
-            MiFreeWsle (Entry, VmSupport, PointerPte);
+    for (Entry = WorkingSetList->FirstDynamic; Entry <= LastFreed; Entry += 1)
+    {
+        if (Wsle[Entry].u1.e1.Valid != 0)
+        {
+            PointerPte = MiGetPteAddress(Wsle[Entry].u1.VirtualAddress);
+            MiFreeWsle(Entry, VmSupport, PointerPte);
         }
     }
 
-    MiRemoveWorkingSetPages (WorkingSetList, VmSupport);
+    MiRemoveWorkingSetPages(WorkingSetList, VmSupport);
 
     WorkingSetList->NextSlot = WorkingSetList->FirstDynamic;
 
@@ -2566,56 +2571,58 @@ Environment:
     Last = 0;
     Entry = WorkingSetList->FirstDynamic;
     LastFreed = WorkingSetList->LastInitializedWsle;
-    while (Entry <= LastFreed) {
-        if (Wsle[Entry].u1.e1.Valid == 0) {
-            if (Last == 0) {
+    while (Entry <= LastFreed)
+    {
+        if (Wsle[Entry].u1.e1.Valid == 0)
+        {
+            if (Last == 0)
+            {
                 WorkingSetList->FirstFree = Entry;
             }
-            else {
+            else
+            {
                 Wsle[Last].u1.Long = Entry << MM_FREE_WSLE_SHIFT;
             }
             Last = Entry;
         }
         Entry += 1;
     }
-    if (Last != 0) {
-        Wsle[Last].u1.Long = WSLE_NULL_INDEX << MM_FREE_WSLE_SHIFT;  // End of list.
+    if (Last != 0)
+    {
+        Wsle[Last].u1.Long = WSLE_NULL_INDEX << MM_FREE_WSLE_SHIFT; // End of list.
     }
 
-    LOCK_EXPANSION (OldIrql);
+    LOCK_EXPANSION(OldIrql);
 
-    ASSERT (OldIrql == APC_LEVEL);
+    ASSERT(OldIrql == APC_LEVEL);
 
-    ASSERT (VmSupport->WorkingSetExpansionLinks.Flink == MM_NO_WS_EXPANSION);
+    ASSERT(VmSupport->WorkingSetExpansionLinks.Flink == MM_NO_WS_EXPANSION);
 
-    ASSERT (VmSupport->Flags.BeingTrimmed == 1);
+    ASSERT(VmSupport->Flags.BeingTrimmed == 1);
     VmSupport->Flags.BeingTrimmed = 0;
 
-    ASSERT (VmSupport->WorkingSetExpansionLinks.Blink ==
-                                        MM_WS_EXPANSION_IN_PROGRESS);
+    ASSERT(VmSupport->WorkingSetExpansionLinks.Blink == MM_WS_EXPANSION_IN_PROGRESS);
 
-    InsertTailList (&MmWorkingSetExpansionHead.ListHead,
-                    &VmSupport->WorkingSetExpansionLinks);
+    InsertTailList(&MmWorkingSetExpansionHead.ListHead, &VmSupport->WorkingSetExpansionLinks);
 
-    UNLOCK_EXPANSION (APC_LEVEL);
+    UNLOCK_EXPANSION(APC_LEVEL);
 
-    UNLOCK_WS (Process);
+    UNLOCK_WS(Process);
 
-    ASSERT (KeGetCurrentIrql() <= APC_LEVEL);
+    ASSERT(KeGetCurrentIrql() <= APC_LEVEL);
 
-    if (PurgeTransition == TRUE) {
-        MiPurgeTransitionList ();
+    if (PurgeTransition == TRUE)
+    {
+        MiPurgeTransitionList();
     }
 
-    InterlockedDecrement (&MiTrimInProgressCount);
+    InterlockedDecrement(&MiTrimInProgressCount);
     return TRUE;
 }
 
-
+
 LOGICAL
-MmTrimSessionMemory (
-    IN LOGICAL PurgeTransition
-    )
+MmTrimSessionMemory(IN LOGICAL PurgeTransition)
 
 /*++
 
@@ -2655,7 +2662,8 @@ Environment:
     // Working set mutexes will be acquired which require APC_LEVEL or below.
     //
 
-    if (KeGetCurrentIrql() > APC_LEVEL) {
+    if (KeGetCurrentIrql() > APC_LEVEL)
+    {
         return FALSE;
     }
 
@@ -2667,7 +2675,8 @@ Environment:
         mov     flags, eax
     }
 
-    if ((flags & EFLAGS_INTERRUPT_MASK) == 0) {
+    if ((flags & EFLAGS_INTERRUPT_MASK) == 0)
+    {
         return FALSE;
     }
 
@@ -2678,18 +2687,19 @@ Environment:
     // another thread/processor is racing here to do the work for us.
     //
 
-    if (InterlockedIncrement (&MiTrimInProgressCount) > 1) {
-        InterlockedDecrement (&MiTrimInProgressCount);
+    if (InterlockedIncrement(&MiTrimInProgressCount) > 1)
+    {
+        InterlockedDecrement(&MiTrimInProgressCount);
         return FALSE;
     }
 
-    Thread = PsGetCurrentThread ();
-    Process = PsGetCurrentProcessByThread (Thread);
+    Thread = PsGetCurrentThread();
+    Process = PsGetCurrentProcessByThread(Thread);
 
-    if (((Process->Flags & PS_PROCESS_FLAGS_IN_SESSION) == 0) ||
-        (Process->Vm.Flags.SessionLeader == 1)) {
+    if (((Process->Flags & PS_PROCESS_FLAGS_IN_SESSION) == 0) || (Process->Vm.Flags.SessionLeader == 1))
+    {
 
-        InterlockedDecrement (&MiTrimInProgressCount);
+        InterlockedDecrement(&MiTrimInProgressCount);
         return FALSE;
     }
 
@@ -2699,26 +2709,28 @@ Environment:
 
     SessionGlobal = SESSION_GLOBAL(MmSessionSpace);
 
-    KeRaiseIrql (APC_LEVEL, &OldIrqlWs);
+    KeRaiseIrql(APC_LEVEL, &OldIrqlWs);
 
     //
     // Check for the working set resource being owned by the current thread
     // because the resource package allows recursive acquires.
     //
 
-    if (MmSessionSpace->WorkingSetLockOwner == Thread) {
-        KeLowerIrql (OldIrqlWs);
-        InterlockedDecrement (&MiTrimInProgressCount);
+    if (MmSessionSpace->WorkingSetLockOwner == Thread)
+    {
+        KeLowerIrql(OldIrqlWs);
+        InterlockedDecrement(&MiTrimInProgressCount);
         return FALSE;
     }
 
-    if (ExTryToAcquireResourceExclusiveLite (&MmSessionSpace->WsLock) == FALSE) {
-        KeLowerIrql (OldIrqlWs);
-        InterlockedDecrement (&MiTrimInProgressCount);
+    if (ExTryToAcquireResourceExclusiveLite(&MmSessionSpace->WsLock) == FALSE)
+    {
+        KeLowerIrql(OldIrqlWs);
+        InterlockedDecrement(&MiTrimInProgressCount);
         return FALSE;
     }
 
-    MM_SET_SESSION_RESOURCE_OWNER (Thread);
+    MM_SET_SESSION_RESOURCE_OWNER(Thread);
 
     VmSupport = &SessionGlobal->Vm;
 
@@ -2726,42 +2738,46 @@ Environment:
     // If the expansion lock is not available then just return.
     //
 
-    LockAvailable = KeTryToAcquireSpinLock (&MmExpansionLock, &OldIrql);
+    LockAvailable = KeTryToAcquireSpinLock(&MmExpansionLock, &OldIrql);
 
-    if (LockAvailable == FALSE) {
-        UNLOCK_SESSION_SPACE_WS (OldIrqlWs);
-        InterlockedDecrement (&MiTrimInProgressCount);
+    if (LockAvailable == FALSE)
+    {
+        UNLOCK_SESSION_SPACE_WS(OldIrqlWs);
+        InterlockedDecrement(&MiTrimInProgressCount);
         return FALSE;
     }
 
-    ASSERT (OldIrql == APC_LEVEL);
+    ASSERT(OldIrql == APC_LEVEL);
 
-    MM_SET_EXPANSION_OWNER ();
+    MM_SET_EXPANSION_OWNER();
 
     Next = MmWorkingSetExpansionHead.ListHead.Flink;
 
-    while (Next != &MmWorkingSetExpansionHead.ListHead) {
-        if (Next == &VmSupport->WorkingSetExpansionLinks) {
+    while (Next != &MmWorkingSetExpansionHead.ListHead)
+    {
+        if (Next == &VmSupport->WorkingSetExpansionLinks)
+        {
             break;
         }
         Next = Next->Flink;
     }
 
-    if (Next != &VmSupport->WorkingSetExpansionLinks) {
-        UNLOCK_EXPANSION (OldIrql);
-        UNLOCK_SESSION_SPACE_WS (OldIrqlWs);
-        InterlockedDecrement (&MiTrimInProgressCount);
+    if (Next != &VmSupport->WorkingSetExpansionLinks)
+    {
+        UNLOCK_EXPANSION(OldIrql);
+        UNLOCK_SESSION_SPACE_WS(OldIrqlWs);
+        InterlockedDecrement(&MiTrimInProgressCount);
         return FALSE;
     }
 
-    RemoveEntryList (Next);
+    RemoveEntryList(Next);
 
     VmSupport->WorkingSetExpansionLinks.Flink = MM_NO_WS_EXPANSION;
     VmSupport->WorkingSetExpansionLinks.Blink = MM_WS_EXPANSION_IN_PROGRESS;
-    ASSERT (VmSupport->Flags.BeingTrimmed == 0);
+    ASSERT(VmSupport->Flags.BeingTrimmed == 0);
     VmSupport->Flags.BeingTrimmed = 1;
 
-    UNLOCK_EXPANSION (APC_LEVEL);
+    UNLOCK_EXPANSION(APC_LEVEL);
 
     //
     // There are 2 issues here that are carefully dealt with :
@@ -2775,24 +2791,22 @@ Environment:
     //     expansion is allowed while MM_WS_EXPANSION_IN_PROGRESS is set.
     //
 
-    MiEmptyWorkingSet (VmSupport, FALSE);
+    MiEmptyWorkingSet(VmSupport, FALSE);
 
-    LOCK_EXPANSION (OldIrql);
+    LOCK_EXPANSION(OldIrql);
 
-    ASSERT (OldIrql == APC_LEVEL);
+    ASSERT(OldIrql == APC_LEVEL);
 
-    ASSERT (VmSupport->WorkingSetExpansionLinks.Flink == MM_NO_WS_EXPANSION);
+    ASSERT(VmSupport->WorkingSetExpansionLinks.Flink == MM_NO_WS_EXPANSION);
 
-    ASSERT (VmSupport->Flags.BeingTrimmed == 1);
+    ASSERT(VmSupport->Flags.BeingTrimmed == 1);
     VmSupport->Flags.BeingTrimmed = 0;
 
-    ASSERT (VmSupport->WorkingSetExpansionLinks.Blink ==
-                                        MM_WS_EXPANSION_IN_PROGRESS);
+    ASSERT(VmSupport->WorkingSetExpansionLinks.Blink == MM_WS_EXPANSION_IN_PROGRESS);
 
-    InsertTailList (&MmWorkingSetExpansionHead.ListHead,
-                    &VmSupport->WorkingSetExpansionLinks);
+    InsertTailList(&MmWorkingSetExpansionHead.ListHead, &VmSupport->WorkingSetExpansionLinks);
 
-    UNLOCK_EXPANSION (APC_LEVEL);
+    UNLOCK_EXPANSION(APC_LEVEL);
 
     //
     // Since MiEmptyWorkingSet will attempt to recursively acquire and release
@@ -2802,14 +2816,15 @@ Environment:
     //
 
     MmSessionSpace->WorkingSetLockOwner = NULL;
-    ExReleaseResourceLite (&MmSessionSpace->WsLock);
-    KeLowerIrql (OldIrqlWs);
-    ASSERT (KeGetCurrentIrql() <= APC_LEVEL);
+    ExReleaseResourceLite(&MmSessionSpace->WsLock);
+    KeLowerIrql(OldIrqlWs);
+    ASSERT(KeGetCurrentIrql() <= APC_LEVEL);
 
-    if (PurgeTransition == TRUE) {
-        MiPurgeTransitionList ();
+    if (PurgeTransition == TRUE)
+    {
+        MiPurgeTransitionList();
     }
 
-    InterlockedDecrement (&MiTrimInProgressCount);
+    InterlockedDecrement(&MiTrimInProgressCount);
     return TRUE;
 }

@@ -31,70 +31,33 @@ Revision History:
 // Function prototypes for emulation routines
 //
 ULONGLONG
-KiEmulateLoadLong(
-   IN PULONG UnalignedAddress
-   );
+KiEmulateLoadLong(IN PULONG UnalignedAddress);
 
 ULONGLONG
-KiEmulateLoadQuad(
-   IN PUQUAD UnalignedAddress
-   );
+KiEmulateLoadQuad(IN PUQUAD UnalignedAddress);
 
 ULONGLONG
-KiEmulateLoadFloatIEEESingle(
-   IN PULONG UnalignedAddress
-   );
+KiEmulateLoadFloatIEEESingle(IN PULONG UnalignedAddress);
 
 ULONGLONG
-KiEmulateLoadFloatIEEEDouble(
-   IN PUQUAD UnalignedAddress
-   );
+KiEmulateLoadFloatIEEEDouble(IN PUQUAD UnalignedAddress);
 
-VOID
-KiEmulateStoreLong(
-   IN PULONG UnalignedAddress,
-   IN ULONGLONG  Data
-   );
+VOID KiEmulateStoreLong(IN PULONG UnalignedAddress, IN ULONGLONG Data);
 
-VOID
-KiEmulateStoreQuad(
-   IN PUQUAD UnalignedAddress,
-   IN ULONGLONG Data
-   );
+VOID KiEmulateStoreQuad(IN PUQUAD UnalignedAddress, IN ULONGLONG Data);
 
-VOID
-KiEmulateStoreFloatIEEESingle(
-   IN PULONG UnalignedAddress,
-   IN ULONGLONG  Data
-   );
+VOID KiEmulateStoreFloatIEEESingle(IN PULONG UnalignedAddress, IN ULONGLONG Data);
 
-VOID
-KiEmulateStoreFloatIEEEDouble(
-   IN PUQUAD UnalignedAddress,
-   IN ULONGLONG  Data
-   );
+VOID KiEmulateStoreFloatIEEEDouble(IN PUQUAD UnalignedAddress, IN ULONGLONG Data);
 
-VOID
-KiEnablePALAlignmentFixups(
-    VOID
-    );
+VOID KiEnablePALAlignmentFixups(VOID);
 
-VOID
-KiDisablePALAlignmentFixups(
-    VOID
-    );
+VOID KiDisablePALAlignmentFixups(VOID);
 
-VOID
-KiProfileInterrupt(
-   IN KPROFILE_SOURCE ProfileSource,
-   IN PKTRAP_FRAME TrapFrame
-   );
+VOID KiProfileInterrupt(IN KPROFILE_SOURCE ProfileSource, IN PKTRAP_FRAME TrapFrame);
 
-
-VOID
-KiEnableAlignmentExceptions(
-    VOID
-    )
+
+VOID KiEnableAlignmentExceptions(VOID)
 /*++
 
 Routine Description:
@@ -115,16 +78,14 @@ Return Value:
 --*/
 
 {
-    if (KeProcessorLevel >= PROCESSOR_ALPHA_21164) {
+    if (KeProcessorLevel >= PROCESSOR_ALPHA_21164)
+    {
         KiDisablePALAlignmentFixups();
     }
 }
 
-
-VOID
-KiDisableAlignmentExceptions(
-    VOID
-    )
+
+VOID KiDisableAlignmentExceptions(VOID)
 /*++
 
 Routine Description:
@@ -149,19 +110,16 @@ Return Value:
 --*/
 
 {
-    if ((KeProcessorLevel >= PROCESSOR_ALPHA_21164) &&
-        (KiEnableAlignmentFaultExceptions == 0)) {
+    if ((KeProcessorLevel >= PROCESSOR_ALPHA_21164) && (KiEnableAlignmentFaultExceptions == 0))
+    {
         KiEnablePALAlignmentFixups();
     }
 }
 
-
+
 BOOLEAN
-KiEmulateReference (
-    IN OUT PEXCEPTION_RECORD ExceptionRecord,
-    IN OUT PKEXCEPTION_FRAME  ExceptionFrame,
-    IN OUT PKTRAP_FRAME TrapFrame
-    )
+KiEmulateReference(IN OUT PEXCEPTION_RECORD ExceptionRecord, IN OUT PKEXCEPTION_FRAME ExceptionFrame,
+                   IN OUT PKTRAP_FRAME TrapFrame)
 
 /*++
 
@@ -188,26 +146,27 @@ Return Value:
 {
 
     ULONGLONG Data;
-    PVOID  EffectiveAddress;
-    PVOID  ExceptionAddress;
-    ULONG  Fa;
-    ULONG  Opcode;
+    PVOID EffectiveAddress;
+    PVOID ExceptionAddress;
+    ULONG Fa;
+    ULONG Opcode;
     KPROCESSOR_MODE PreviousMode;
-    ULONG  Ra;
-    KIRQL  OldIrql;
+    ULONG Ra;
+    KIRQL OldIrql;
 
     //
     // Call out to profile interrupt if alignment profiling is active
     //
-    if (KiProfileAlignmentFixup) {
+    if (KiProfileAlignmentFixup)
+    {
 
-        if (++KiProfileAlignmentFixupCount >= KiProfileAlignmentFixupInterval) {
+        if (++KiProfileAlignmentFixupCount >= KiProfileAlignmentFixupInterval)
+        {
 
             KeRaiseIrql(PROFILE_LEVEL, &OldIrql);
             KiProfileAlignmentFixupCount = 0;
             KiProfileInterrupt(ProfileAlignmentFixup, TrapFrame);
             KeLowerIrql(OldIrql);
-
         }
     }
 
@@ -228,7 +187,7 @@ Return Value:
 
     Opcode = (ULONG)ExceptionRecord->ExceptionInformation[0];
     Ra = (ULONG)ExceptionRecord->ExceptionInformation[1];
-    Fa = Ra + 32;     // convert to floating register name for floating opcodes
+    Fa = Ra + 32; // convert to floating register name for floating opcodes
     EffectiveAddress = (PVOID)ExceptionRecord->ExceptionInformation[2];
 
     //
@@ -245,188 +204,155 @@ Return Value:
     // probe the effective address before performing the emulation.
     //
 
-    try {
+    try
+    {
 
-        switch (Opcode) {
+        switch (Opcode)
+        {
 
-        //
-        // load longword
-        //
+            //
+            // load longword
+            //
 
         case LDL_OP:
-            if( PreviousMode != KernelMode ){
-                ProbeForRead( EffectiveAddress,
-                              sizeof(LONG),
-                              sizeof(UCHAR) );
+            if (PreviousMode != KernelMode)
+            {
+                ProbeForRead(EffectiveAddress, sizeof(LONG), sizeof(UCHAR));
             }
-            Data = KiEmulateLoadLong( EffectiveAddress );
-            KiSetRegisterValue( Ra,
-                                Data,
-                                ExceptionFrame,
-                                TrapFrame );
+            Data = KiEmulateLoadLong(EffectiveAddress);
+            KiSetRegisterValue(Ra, Data, ExceptionFrame, TrapFrame);
 
             break;
 
-        //
-        // load quadword
-        //
+            //
+            // load quadword
+            //
 
         case LDQ_OP:
-            if( PreviousMode != KernelMode ){
-                ProbeForRead( EffectiveAddress,
-                              sizeof(LONGLONG),
-                              sizeof(UCHAR) );
+            if (PreviousMode != KernelMode)
+            {
+                ProbeForRead(EffectiveAddress, sizeof(LONGLONG), sizeof(UCHAR));
             }
-            Data = KiEmulateLoadQuad( EffectiveAddress );
-            KiSetRegisterValue( Ra,
-                                Data,
-                                ExceptionFrame,
-                                TrapFrame );
+            Data = KiEmulateLoadQuad(EffectiveAddress);
+            KiSetRegisterValue(Ra, Data, ExceptionFrame, TrapFrame);
 
             break;
 
-        //
-        // load IEEE single float
-        //
+            //
+            // load IEEE single float
+            //
 
         case LDS_OP:
-            if( PreviousMode != KernelMode ){
-                ProbeForRead( EffectiveAddress,
-                              sizeof(float),
-                              sizeof(UCHAR) );
+            if (PreviousMode != KernelMode)
+            {
+                ProbeForRead(EffectiveAddress, sizeof(float), sizeof(UCHAR));
             }
-            Data = KiEmulateLoadFloatIEEESingle( EffectiveAddress );
-            KiSetRegisterValue( Fa,
-                                Data,
-                                ExceptionFrame,
-                                TrapFrame );
+            Data = KiEmulateLoadFloatIEEESingle(EffectiveAddress);
+            KiSetRegisterValue(Fa, Data, ExceptionFrame, TrapFrame);
 
             break;
 
-        //
-        // load IEEE double float
-        //
+            //
+            // load IEEE double float
+            //
 
         case LDT_OP:
-            if( PreviousMode != KernelMode ){
-                ProbeForRead( EffectiveAddress,
-                              sizeof(DOUBLE),
-                              sizeof(UCHAR) );
+            if (PreviousMode != KernelMode)
+            {
+                ProbeForRead(EffectiveAddress, sizeof(DOUBLE), sizeof(UCHAR));
             }
-            Data = KiEmulateLoadFloatIEEEDouble( EffectiveAddress );
-            KiSetRegisterValue( Fa,
-                                Data,
-                                ExceptionFrame,
-                                TrapFrame );
+            Data = KiEmulateLoadFloatIEEEDouble(EffectiveAddress);
+            KiSetRegisterValue(Fa, Data, ExceptionFrame, TrapFrame);
 
             break;
 
-        //
-        // Load word unsigned.
-        //
+            //
+            // Load word unsigned.
+            //
 
-        case LDWU_OP :
-            if (PreviousMode != KernelMode) {
-                ProbeForRead(EffectiveAddress,
-                             sizeof(SHORT),
-                             sizeof(UCHAR));
+        case LDWU_OP:
+            if (PreviousMode != KernelMode)
+            {
+                ProbeForRead(EffectiveAddress, sizeof(SHORT), sizeof(UCHAR));
             }
-            Data = (ULONGLONG)*(UNALIGNED USHORT *)EffectiveAddress;
-            KiSetRegisterValue(Ra,
-                               Data,
-                               ExceptionFrame,
-                               TrapFrame);
+            Data = (ULONGLONG) * (UNALIGNED USHORT *)EffectiveAddress;
+            KiSetRegisterValue(Ra, Data, ExceptionFrame, TrapFrame);
 
             break;
 
-        //
-        // store longword
-        //
+            //
+            // store longword
+            //
 
         case STL_OP:
-            if( PreviousMode != KernelMode ){
-                ProbeForWrite( EffectiveAddress,
-                               sizeof(LONG),
-                               sizeof(UCHAR) );
+            if (PreviousMode != KernelMode)
+            {
+                ProbeForWrite(EffectiveAddress, sizeof(LONG), sizeof(UCHAR));
             }
-            Data = KiGetRegisterValue( Ra,
-                                       ExceptionFrame,
-                                       TrapFrame );
-            KiEmulateStoreLong( EffectiveAddress, (ULONG)Data );
+            Data = KiGetRegisterValue(Ra, ExceptionFrame, TrapFrame);
+            KiEmulateStoreLong(EffectiveAddress, (ULONG)Data);
 
             break;
 
-        //
-        // store quadword
-        //
+            //
+            // store quadword
+            //
 
         case STQ_OP:
-            if( PreviousMode != KernelMode ){
-                ProbeForWrite( EffectiveAddress,
-                               sizeof(LONGLONG),
-                               sizeof(UCHAR) );
+            if (PreviousMode != KernelMode)
+            {
+                ProbeForWrite(EffectiveAddress, sizeof(LONGLONG), sizeof(UCHAR));
             }
-            Data = KiGetRegisterValue( Ra,
-                                       ExceptionFrame,
-                                       TrapFrame );
-            KiEmulateStoreQuad( EffectiveAddress, Data );
+            Data = KiGetRegisterValue(Ra, ExceptionFrame, TrapFrame);
+            KiEmulateStoreQuad(EffectiveAddress, Data);
 
             break;
 
-        //
-        // store IEEE float single
-        //
+            //
+            // store IEEE float single
+            //
 
         case STS_OP:
-            if( PreviousMode != KernelMode ){
-                ProbeForWrite( EffectiveAddress,
-                               sizeof(float),
-                               sizeof(UCHAR) );
+            if (PreviousMode != KernelMode)
+            {
+                ProbeForWrite(EffectiveAddress, sizeof(float), sizeof(UCHAR));
             }
-            Data = KiGetRegisterValue( Fa,
-                                       ExceptionFrame,
-                                       TrapFrame );
-            KiEmulateStoreFloatIEEESingle( EffectiveAddress, Data );
+            Data = KiGetRegisterValue(Fa, ExceptionFrame, TrapFrame);
+            KiEmulateStoreFloatIEEESingle(EffectiveAddress, Data);
 
             break;
 
-        //
-        // store IEEE float double
-        //
+            //
+            // store IEEE float double
+            //
 
         case STT_OP:
-            if( PreviousMode != KernelMode ){
-                ProbeForWrite( EffectiveAddress,
-                               sizeof(DOUBLE),
-                               sizeof(UCHAR) );
+            if (PreviousMode != KernelMode)
+            {
+                ProbeForWrite(EffectiveAddress, sizeof(DOUBLE), sizeof(UCHAR));
             }
-            Data = KiGetRegisterValue( Fa,
-                                       ExceptionFrame,
-                                       TrapFrame );
-            KiEmulateStoreFloatIEEEDouble( EffectiveAddress, Data );
+            Data = KiGetRegisterValue(Fa, ExceptionFrame, TrapFrame);
+            KiEmulateStoreFloatIEEEDouble(EffectiveAddress, Data);
 
             break;
 
-        //
-        // Store word.
-        //
+            //
+            // Store word.
+            //
 
-        case STW_OP :
-            if (PreviousMode != KernelMode) {
-                ProbeForWrite(EffectiveAddress,
-                              sizeof(SHORT),
-                              sizeof(UCHAR));
+        case STW_OP:
+            if (PreviousMode != KernelMode)
+            {
+                ProbeForWrite(EffectiveAddress, sizeof(SHORT), sizeof(UCHAR));
             }
-            Data = KiGetRegisterValue(Ra,
-                                      ExceptionFrame,
-                                      TrapFrame);
+            Data = KiGetRegisterValue(Ra, ExceptionFrame, TrapFrame);
             *(UNALIGNED USHORT *)EffectiveAddress = (USHORT)Data;
 
             break;
 
-        //
-        // all other instructions are not emulated
-        //
+            //
+            // all other instructions are not emulated
+            //
 
         default:
             return FALSE;
@@ -434,9 +360,9 @@ Return Value:
 
         TrapFrame->Fir += 4;
         return TRUE;
-
-    } except (KiCopyInformation(ExceptionRecord,
-                                (GetExceptionInformation())->ExceptionRecord)) {
+    }
+    except(KiCopyInformation(ExceptionRecord, (GetExceptionInformation())->ExceptionRecord))
+    {
 
         //
         // Preserve the original exception address

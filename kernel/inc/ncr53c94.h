@@ -29,7 +29,7 @@ Revision History:
 
 #ifndef _NCR53C94_
 #define _NCR53C94_
-
+
 
 //
 // Define SCSI Protocol Chip register format.
@@ -37,7 +37,8 @@ Revision History:
 
 #if defined(DECSTATION)
 
-typedef struct _SCSI_REGISTER {
+typedef struct _SCSI_REGISTER
+{
     UCHAR Byte;
     UCHAR Fill[3];
 } SCSI_REGISTER, *PSCSI_REGISTER;
@@ -54,7 +55,8 @@ typedef struct _SCSI_REGISTER {
 // Define SCSI Protocol Chip Read registers structure.
 //
 
-typedef struct _SCSI_READ_REGISTERS {
+typedef struct _SCSI_READ_REGISTERS
+{
     SCSI_REGISTER TransferCountLow;
     SCSI_REGISTER TransferCountHigh;
     SCSI_REGISTER Fifo;
@@ -77,7 +79,8 @@ typedef struct _SCSI_READ_REGISTERS {
 // Define SCSI Protocol Chip Write registers structure.
 //
 
-typedef struct _SCSI_WRITE_REGISTERS {
+typedef struct _SCSI_WRITE_REGISTERS
+{
     SCSI_REGISTER TransferCountLow;
     SCSI_REGISTER TransferCountHigh;
     SCSI_REGISTER Fifo;
@@ -96,8 +99,9 @@ typedef struct _SCSI_WRITE_REGISTERS {
     SCSI_REGISTER FifoBottem;
 } SCSI_WRITE_REGISTERS, *PSCSI_WRITE_REGISTERS;
 
-typedef union _SCSI_REGISTERS {
-    SCSI_READ_REGISTERS  ReadRegisters;
+typedef union _SCSI_REGISTERS
+{
+    SCSI_READ_REGISTERS ReadRegisters;
     SCSI_WRITE_REGISTERS WriteRegisters;
 } SCSI_REGISTERS, *PSCSI_REGISTERS;
 
@@ -127,7 +131,8 @@ typedef union _SCSI_REGISTERS {
 //
 // Define SCSI Status Register structure.
 //
-typedef struct _SCSI_STATUS {
+typedef struct _SCSI_STATUS
+{
     UCHAR Phase : 3;
     UCHAR ValidGroup : 1;
     UCHAR TerminalCount : 1;
@@ -151,7 +156,8 @@ typedef struct _SCSI_STATUS {
 // Define SCSI Interrupt Register structure.
 //
 
-typedef struct _SCSI_INTERRUPT {
+typedef struct _SCSI_INTERRUPT
+{
     UCHAR Selected : 1;
     UCHAR SelectedWithAttention : 1;
     UCHAR Reselected : 1;
@@ -166,7 +172,8 @@ typedef struct _SCSI_INTERRUPT {
 // Define SCSI Sequence Step Register structure.
 //
 
-typedef struct _SCSI_SEQUENCE_STEP {
+typedef struct _SCSI_SEQUENCE_STEP
+{
     UCHAR Step : 3;
     UCHAR MaximumOffset : 1;
     UCHAR Reserved : 4;
@@ -176,7 +183,8 @@ typedef struct _SCSI_SEQUENCE_STEP {
 // Define SCSI Fifo Flags Register structure.
 //
 
-typedef struct _SCSI_FIFO_FLAGS {
+typedef struct _SCSI_FIFO_FLAGS
+{
     UCHAR ByteCount : 5;
     UCHAR FifoStep : 3;
 } SCSI_FIFO_FLAGS, *PSCSI_FIFO_FLAGS;
@@ -185,7 +193,8 @@ typedef struct _SCSI_FIFO_FLAGS {
 // Define SCSI Configuration 1 Register structure.
 //
 
-typedef struct _SCSI_CONFIGURATION1 {
+typedef struct _SCSI_CONFIGURATION1
+{
     UCHAR HostBusId : 3;
     UCHAR ChipTestEnable : 1;
     UCHAR ParityEnable : 1;
@@ -198,7 +207,8 @@ typedef struct _SCSI_CONFIGURATION1 {
 // Define SCSI Configuration 2 Register structure.
 //
 
-typedef struct _SCSI_CONFIGURATION2 {
+typedef struct _SCSI_CONFIGURATION2
+{
     UCHAR DmaParityEnable : 1;
     UCHAR RegisterParityEnable : 1;
     UCHAR TargetBadParityAbort : 1;
@@ -213,7 +223,8 @@ typedef struct _SCSI_CONFIGURATION2 {
 // Define SCSI Configuration 3 Register structure.
 //
 
-typedef struct _SCSI_CONFIGURATION3 {
+typedef struct _SCSI_CONFIGURATION3
+{
     UCHAR Threshold8 : 1;
     UCHAR AlternateDmaMode : 1;
     UCHAR SaveResidualByte : 1;
@@ -228,10 +239,11 @@ typedef struct _SCSI_CONFIGURATION3 {
 // Define Emulex FAS 218 unique part Id code.
 //
 
-typedef struct _NCR_PART_CODE {
+typedef struct _NCR_PART_CODE
+{
     UCHAR RevisionLevel : 3;
     UCHAR ChipFamily : 5;
-}NCR_PART_CODE, *PNCR_PART_CODE;
+} NCR_PART_CODE, *PNCR_PART_CODE;
 
 #define EMULEX_FAS_216 2
 
@@ -241,19 +253,15 @@ typedef struct _NCR_PART_CODE {
 
 #if defined(DECSTATION)
 
-#define SCSI_READ(ChipAddr, Register) \
-    (READ_REGISTER_UCHAR (&((ChipAddr)->ReadRegisters.Register.Byte)))
+#define SCSI_READ(ChipAddr, Register) (READ_REGISTER_UCHAR(&((ChipAddr)->ReadRegisters.Register.Byte)))
 
-#define SCSI_WRITE(ChipAddr, Register, Value) \
-    WRITE_REGISTER_UCHAR(&((ChipAddr)->WriteRegisters.Register.Byte), (Value))
+#define SCSI_WRITE(ChipAddr, Register, Value) WRITE_REGISTER_UCHAR(&((ChipAddr)->WriteRegisters.Register.Byte), (Value))
 
 #else
 
-#define SCSI_READ(ChipAddr, Register) \
-    (READ_REGISTER_UCHAR (&((ChipAddr)->ReadRegisters.Register)))
+#define SCSI_READ(ChipAddr, Register) (READ_REGISTER_UCHAR(&((ChipAddr)->ReadRegisters.Register)))
 
-#define SCSI_WRITE(ChipAddr, Register, Value) \
-    WRITE_REGISTER_UCHAR(&((ChipAddr)->WriteRegisters.Register), (Value))
+#define SCSI_WRITE(ChipAddr, Register, Value) WRITE_REGISTER_UCHAR(&((ChipAddr)->WriteRegisters.Register), (Value))
 
 #endif
 

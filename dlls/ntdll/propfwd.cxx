@@ -27,31 +27,25 @@
 //+----------------------------------------------------------------------------
 
 PVOID
-LoadOle32Export( PVOID* Ole32, const PCHAR ProcedureName )
+LoadOle32Export(PVOID *Ole32, const PCHAR ProcedureName)
 {
     NTSTATUS Status;
     UNICODE_STRING Ole32DllName_U;
     STRING ProcedureNameString;
     PVOID ProcedureAddress = NULL;
 
-    RtlInitUnicodeString( &Ole32DllName_U, L"ole32.dll" );
-    Status = LdrLoadDll( NULL, NULL, &Ole32DllName_U, Ole32 );
-    if( !NT_SUCCESS(Status) )
-        RtlRaiseStatus( Status );
-
-    RtlInitString( &ProcedureNameString, ProcedureName );
-    Status = LdrGetProcedureAddress(
-                    *Ole32,
-                    &ProcedureNameString,
-                    0,
-                    (PVOID*) &ProcedureAddress
-                    );
-    if( !NT_SUCCESS(Status) )
+    RtlInitUnicodeString(&Ole32DllName_U, L"ole32.dll");
+    Status = LdrLoadDll(NULL, NULL, &Ole32DllName_U, Ole32);
+    if (!NT_SUCCESS(Status))
         RtlRaiseStatus(Status);
 
-    return( ProcedureAddress );
-}
+    RtlInitString(&ProcedureNameString, ProcedureName);
+    Status = LdrGetProcedureAddress(*Ole32, &ProcedureNameString, 0, (PVOID *)&ProcedureAddress);
+    if (!NT_SUCCESS(Status))
+        RtlRaiseStatus(Status);
 
+    return (ProcedureAddress);
+}
 
 
 //+----------------------------------------------------------------------------
@@ -62,25 +56,18 @@ LoadOle32Export( PVOID* Ole32, const PCHAR ProcedureName )
 //
 //+----------------------------------------------------------------------------
 
-typedef SERIALIZEDPROPERTYVALUE* (*PFNStgConvertVariantToProperty) (
-                                        IN PROPVARIANT const *pvar,
-                                        IN USHORT CodePage,
-                                        OUT SERIALIZEDPROPERTYVALUE *pprop,
-                                        IN OUT ULONG *pcb,
-                                        IN PROPID pid,
-                                        IN BOOLEAN fVariantVector,
-                                        OPTIONAL OUT ULONG *pcIndirect);
+typedef SERIALIZEDPROPERTYVALUE *(*PFNStgConvertVariantToProperty)(IN PROPVARIANT const *pvar, IN USHORT CodePage,
+                                                                   OUT SERIALIZEDPROPERTYVALUE *pprop,
+                                                                   IN OUT ULONG *pcb, IN PROPID pid,
+                                                                   IN BOOLEAN fVariantVector,
+                                                                   OPTIONAL OUT ULONG *pcIndirect);
 
 
-SERIALIZEDPROPERTYVALUE * PROPSYSAPI PROPAPI
-RtlConvertVariantToProperty(
-    IN PROPVARIANT const *pvar,
-    IN USHORT CodePage,
-    OPTIONAL OUT SERIALIZEDPROPERTYVALUE *pprop,
-    IN OUT ULONG *pcb,
-    IN PROPID pid,
-    IN BOOLEAN fVariantVector,
-    OPTIONAL OUT ULONG *pcIndirect)
+SERIALIZEDPROPERTYVALUE *PROPSYSAPI PROPAPI RtlConvertVariantToProperty(IN PROPVARIANT const *pvar, IN USHORT CodePage,
+                                                                        OPTIONAL OUT SERIALIZEDPROPERTYVALUE *pprop,
+                                                                        IN OUT ULONG *pcb, IN PROPID pid,
+                                                                        IN BOOLEAN fVariantVector,
+                                                                        OPTIONAL OUT ULONG *pcIndirect)
 {
     NTSTATUS Status;
     PVOID Ole32 = NULL;
@@ -89,28 +76,19 @@ RtlConvertVariantToProperty(
 
     __try
     {
-        ProcedureAddress = (PFNStgConvertVariantToProperty)
-                           LoadOle32Export( &Ole32, "StgConvertVariantToProperty" );
+        ProcedureAddress = (PFNStgConvertVariantToProperty)LoadOle32Export(&Ole32, "StgConvertVariantToProperty");
 
-        ppropRet = ProcedureAddress( pvar,
-                                     CodePage,
-                                     pprop,
-                                     pcb,
-                                     pid,
-                                     fVariantVector,
-                                     pcIndirect );  // Raises on error
+        ppropRet = ProcedureAddress(pvar, CodePage, pprop, pcb, pid, fVariantVector,
+                                    pcIndirect); // Raises on error
     }
     __finally
     {
-        if( NULL != Ole32 )
-            LdrUnloadDll( Ole32 );
+        if (NULL != Ole32)
+            LdrUnloadDll(Ole32);
     }
 
-    return (ppropRet );
-
+    return (ppropRet);
 }
-
-
 
 
 //+----------------------------------------------------------------------------
@@ -121,18 +99,11 @@ RtlConvertVariantToProperty(
 //
 //+----------------------------------------------------------------------------
 
-typedef BOOLEAN (* PFNStgConvertPropertyToVariant) (
-    IN SERIALIZEDPROPERTYVALUE const *pprop,
-    IN USHORT CodePage,
-    OUT PROPVARIANT *pvar,
-    IN PMemoryAllocator *pma);
+typedef BOOLEAN (*PFNStgConvertPropertyToVariant)(IN SERIALIZEDPROPERTYVALUE const *pprop, IN USHORT CodePage,
+                                                  OUT PROPVARIANT *pvar, IN PMemoryAllocator *pma);
 
-BOOLEAN PROPSYSAPI PROPAPI
-RtlConvertPropertyToVariant(
-    IN SERIALIZEDPROPERTYVALUE const *pprop,
-    IN USHORT CodePage,
-    OUT PROPVARIANT *pvar,
-    IN PMemoryAllocator *pma)
+BOOLEAN PROPSYSAPI PROPAPI RtlConvertPropertyToVariant(IN SERIALIZEDPROPERTYVALUE const *pprop, IN USHORT CodePage,
+                                                       OUT PROPVARIANT *pvar, IN PMemoryAllocator *pma)
 {
     BOOLEAN Ret;
     NTSTATUS Status;
@@ -142,22 +113,18 @@ RtlConvertPropertyToVariant(
 
     __try
     {
-        ProcedureAddress = (PFNStgConvertPropertyToVariant)
-                           LoadOle32Export( &Ole32, "StgConvertPropertyToVariant" );
-    
-        Ret = ProcedureAddress( pprop, CodePage, pvar, pma );  // Raises on error
+        ProcedureAddress = (PFNStgConvertPropertyToVariant)LoadOle32Export(&Ole32, "StgConvertPropertyToVariant");
+
+        Ret = ProcedureAddress(pprop, CodePage, pvar, pma); // Raises on error
     }
     __finally
     {
-        if( NULL != Ole32 )
-            LdrUnloadDll( Ole32 );
+        if (NULL != Ole32)
+            LdrUnloadDll(Ole32);
     }
 
     return (Ret);
-
 }
-
-
 
 
 //+----------------------------------------------------------------------------
@@ -169,18 +136,11 @@ RtlConvertPropertyToVariant(
 //
 //+----------------------------------------------------------------------------
 
-typedef ULONG (*PFNStgPropertyLengthAsVariant)(
-        IN SERIALIZEDPROPERTYVALUE const *pprop,
-        IN ULONG cbprop,
-        IN USHORT CodePage,
-        IN BYTE flags);
+typedef ULONG (*PFNStgPropertyLengthAsVariant)(IN SERIALIZEDPROPERTYVALUE const *pprop, IN ULONG cbprop,
+                                               IN USHORT CodePage, IN BYTE flags);
 
-ULONG PROPSYSAPI PROPAPI
-PropertyLengthAsVariant(
-    IN SERIALIZEDPROPERTYVALUE const *pprop,
-    IN ULONG cbprop,
-    IN USHORT CodePage,
-    IN BYTE flags)
+ULONG PROPSYSAPI PROPAPI PropertyLengthAsVariant(IN SERIALIZEDPROPERTYVALUE const *pprop, IN ULONG cbprop,
+                                                 IN USHORT CodePage, IN BYTE flags)
 {
     NTSTATUS Status;
     ULONG Length;
@@ -190,18 +150,17 @@ PropertyLengthAsVariant(
 
     __try
     {
-        ProcedureAddress = (PFNStgPropertyLengthAsVariant)
-                           LoadOle32Export( &Ole32, "StgPropertyLengthAsVariant" );
+        ProcedureAddress = (PFNStgPropertyLengthAsVariant)LoadOle32Export(&Ole32, "StgPropertyLengthAsVariant");
 
-        Length = ProcedureAddress( pprop, cbprop, CodePage, flags );  // Raises on error
+        Length = ProcedureAddress(pprop, cbprop, CodePage, flags); // Raises on error
     }
     __finally
     {
-        if( NULL != Ole32 )
-            LdrUnloadDll( Ole32 );
+        if (NULL != Ole32)
+            LdrUnloadDll(Ole32);
     }
 
-    return( Length);
+    return (Length);
 }
 
 //+---------------------------------------------------------------------------
@@ -217,9 +176,7 @@ PropertyLengthAsVariant(
 //
 //---------------------------------------------------------------------------
 
-VOID PROPSYSAPI PROPAPI
-RtlSetUnicodeCallouts(
-    IN UNICODECALLOUTS *pUnicodeCallouts)
+VOID PROPSYSAPI PROPAPI RtlSetUnicodeCallouts(IN UNICODECALLOUTS *pUnicodeCallouts)
 {
     return;
 }

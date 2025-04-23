@@ -64,8 +64,7 @@
 * History:
 * 11-12-91 sanfords Created.
 \***************************************************************************/
-BOOL ClStartAdvise(
-PXACT_INFO pxi)
+BOOL ClStartAdvise(PXACT_INFO pxi)
 {
     DWORD dwError;
 
@@ -74,18 +73,19 @@ PXACT_INFO pxi)
     // message. We set it here just in case the person on the other end
     // pays attention to it.
     //
-    pxi->hDDESent = AllocAndSetDDEData(NULL, sizeof(DDE_DATA),
-            (WORD)(((pxi->wType << 12) & (DDE_FDEFERUPD | DDE_FACKREQ)) | DDE_FRELEASE),
-            pxi->wFmt);
-    if (!pxi->hDDESent) {
+    pxi->hDDESent = AllocAndSetDDEData(
+        NULL, sizeof(DDE_DATA), (WORD)(((pxi->wType << 12) & (DDE_FDEFERUPD | DDE_FACKREQ)) | DDE_FRELEASE), pxi->wFmt);
+    if (!pxi->hDDESent)
+    {
         SetLastDDEMLError(pxi->pcoi->pcii, DMLERR_MEMORY_ERROR);
         return (FALSE);
     }
 
     IncGlobalAtomCount(pxi->gaItem); // message copy
-    dwError = PackAndPostMessage(pxi->pcoi->hwndPartner, 0, WM_DDE_ADVISE,
-            pxi->pcoi->hwndConv, 0, (UINT_PTR)pxi->hDDESent, pxi->gaItem);
-    if (dwError) {
+    dwError = PackAndPostMessage(pxi->pcoi->hwndPartner, 0, WM_DDE_ADVISE, pxi->pcoi->hwndConv, 0,
+                                 (UINT_PTR)pxi->hDDESent, pxi->gaItem);
+    if (dwError)
+    {
         SetLastDDEMLError(pxi->pcoi->pcii, dwError);
         WOWGLOBALFREE(pxi->hDDESent);
         pxi->hDDESent = 0;
@@ -109,9 +109,7 @@ PXACT_INFO pxi)
 * History:
 * 11-12-91 sanfords Created.
 \***************************************************************************/
-BOOL SvSpontAdvise(
-PSVR_CONV_INFO psi,
-LPARAM lParam)
+BOOL SvSpontAdvise(PSVR_CONV_INFO psi, LPARAM lParam)
 {
     UINT_PTR uiHi;
     HANDLE hDDE;
@@ -121,61 +119,62 @@ LPARAM lParam)
     LATOM la;
 
     UnpackDDElParam(WM_DDE_ADVISE, lParam, (PUINT_PTR)&hDDE, &uiHi);
-    if (psi->ci.pcii->afCmd & CBF_FAIL_ADVISES) {
+    if (psi->ci.pcii->afCmd & CBF_FAIL_ADVISES)
+    {
         goto Ack;
     }
 
-    if (!ExtractDDEDataInfo(hDDE, &wStatus, &wFmt)) {
+    if (!ExtractDDEDataInfo(hDDE, &wStatus, &wFmt))
+    {
         goto Ack;
     }
 
-    if (wStatus & DDE_FDEFERUPD) {
-        wStatus &= ~DDE_FACKREQ;   // warm links shouldn't have this flag set
+    if (wStatus & DDE_FDEFERUPD)
+    {
+        wStatus &= ~DDE_FACKREQ; // warm links shouldn't have this flag set
     }
 
     la = GlobalToLocalAtom((GATOM)uiHi);
-    dwRet = (ULONG_PTR)DoCallback(psi->ci.pcii,
-        XTYP_ADVSTART,
-        wFmt, psi->ci.hConv,
-        NORMAL_HSZ_FROM_LATOM(psi->ci.laTopic),
-        NORMAL_HSZ_FROM_LATOM(la),
-        (HDDEDATA)0, 0, 0);
+    dwRet = (ULONG_PTR)DoCallback(psi->ci.pcii, XTYP_ADVSTART, wFmt, psi->ci.hConv,
+                                  NORMAL_HSZ_FROM_LATOM(psi->ci.laTopic), NORMAL_HSZ_FROM_LATOM(la), (HDDEDATA)0, 0, 0);
     DeleteAtom(la);
 
     // check CBR_BLOCK case
 
-    if (dwRet == (ULONG_PTR)CBR_BLOCK) {
+    if (dwRet == (ULONG_PTR)CBR_BLOCK)
+    {
         return (FALSE);
     }
 
-    if (dwRet) {
+    if (dwRet)
+    {
         //
         // If we fail to add the link internally, dwRet == 0 -> NACK
         //
-        dwRet = AddLink((PCONV_INFO)psi, (GATOM)uiHi, wFmt,
-                (WORD)(wStatus & (WORD)(DDE_FDEFERUPD | DDE_FACKREQ)));
-        if (dwRet) {
-            MONLINK(psi->ci.pcii, TRUE, wStatus & DDE_FDEFERUPD, psi->ci.laService,
-                    psi->ci.laTopic, (GATOM)uiHi, wFmt, TRUE,
-                    (HCONV)psi->ci.hwndConv, (HCONV)psi->ci.hwndPartner);
+        dwRet = AddLink((PCONV_INFO)psi, (GATOM)uiHi, wFmt, (WORD)(wStatus & (WORD)(DDE_FDEFERUPD | DDE_FACKREQ)));
+        if (dwRet)
+        {
+            MONLINK(psi->ci.pcii, TRUE, wStatus & DDE_FDEFERUPD, psi->ci.laService, psi->ci.laTopic, (GATOM)uiHi, wFmt,
+                    TRUE, (HCONV)psi->ci.hwndConv, (HCONV)psi->ci.hwndPartner);
         }
     }
 
 Ack:
-    if (dwRet) {
+    if (dwRet)
+    {
         WOWGLOBALFREE(hDDE); // hOptions - NACK -> HE frees it.
     }
     // IncGlobalAtomCount((GATOM)uiHi);         // message copy - reuse
-    dwError = PackAndPostMessage(psi->ci.hwndPartner, WM_DDE_ADVISE, WM_DDE_ACK,
-            psi->ci.hwndConv, lParam, dwRet ? DDE_FACK : 0, uiHi);
-    if (dwError) {
+    dwError = PackAndPostMessage(psi->ci.hwndPartner, WM_DDE_ADVISE, WM_DDE_ACK, psi->ci.hwndConv, lParam,
+                                 dwRet ? DDE_FACK : 0, uiHi);
+    if (dwError)
+    {
         SetLastDDEMLError(psi->ci.pcii, dwError);
         GlobalDeleteAtom((ATOM)uiHi); // message copy
     }
 
     return (TRUE);
 }
-
 
 
 /***************************************************************************\
@@ -187,21 +186,21 @@ Ack:
 * History:
 * 11-12-91 sanfords Created.
 \***************************************************************************/
-BOOL ClRespAdviseAck(
-PXACT_INFO pxi,
-UINT msg,
-LPARAM lParam)
+BOOL ClRespAdviseAck(PXACT_INFO pxi, UINT msg, LPARAM lParam)
 {
     UINT_PTR uiLo, uiHi;
 
-    if (msg) {
-        if (msg != WM_DDE_ACK) {
+    if (msg)
+    {
+        if (msg != WM_DDE_ACK)
+        {
             return (SpontaneousClientMessage((PCL_CONV_INFO)pxi->pcoi, msg, lParam));
         }
 
         UnpackDDElParam(WM_DDE_ACK, lParam, &uiLo, &uiHi);
 #if DBG
-        if ((GATOM)uiHi != pxi->gaItem) {
+        if ((GATOM)uiHi != pxi->gaItem)
+        {
             return (SpontaneousClientMessage((PCL_CONV_INFO)pxi->pcoi, msg, lParam));
         }
 #endif
@@ -211,36 +210,43 @@ LPARAM lParam)
         pxi->state = XST_ADVACKRCVD;
         pxi->wStatus = (WORD)uiLo;
 
-        if (pxi->wStatus & DDE_FACK) {
-            if (AddLink(pxi->pcoi, pxi->gaItem, pxi->wFmt,
-                    (WORD)((pxi->wType << 12) & (DDE_FACKREQ | DDE_FDEFERUPD)))) {
+        if (pxi->wStatus & DDE_FACK)
+        {
+            if (AddLink(pxi->pcoi, pxi->gaItem, pxi->wFmt, (WORD)((pxi->wType << 12) & (DDE_FACKREQ | DDE_FDEFERUPD))))
+            {
                 //
                 // only server side reports links on local conversations.
                 //
-                if (!(pxi->pcoi->state & ST_ISLOCAL)) {
-                    MONLINK(pxi->pcoi->pcii, TRUE, (WORD)uiLo & DDE_FDEFERUPD,
-                            pxi->pcoi->laService, pxi->pcoi->laTopic, pxi->gaItem,
-                            pxi->wFmt, FALSE, (HCONV)pxi->pcoi->hwndPartner,
-                            (HCONV)pxi->pcoi->hwndConv);
+                if (!(pxi->pcoi->state & ST_ISLOCAL))
+                {
+                    MONLINK(pxi->pcoi->pcii, TRUE, (WORD)uiLo & DDE_FDEFERUPD, pxi->pcoi->laService, pxi->pcoi->laTopic,
+                            pxi->gaItem, pxi->wFmt, FALSE, (HCONV)pxi->pcoi->hwndPartner, (HCONV)pxi->pcoi->hwndConv);
                 }
-            } else {
-                pxi->wStatus = 0;  // memory failure - fake a NACK.
             }
-        } else {
-            WOWGLOBALFREE(pxi->hDDESent);  // Nack free.
+            else
+            {
+                pxi->wStatus = 0; // memory failure - fake a NACK.
+            }
+        }
+        else
+        {
+            WOWGLOBALFREE(pxi->hDDESent); // Nack free.
         }
 
-        if (TransactionComplete(pxi,
-                (pxi->wStatus & DDE_FACK) ? (HDDEDATA)1L : (HDDEDATA)0L)) {
+        if (TransactionComplete(pxi, (pxi->wStatus & DDE_FACK) ? (HDDEDATA)1L : (HDDEDATA)0L))
+        {
             goto Cleanup;
         }
-    } else {
-Cleanup:
+    }
+    else
+    {
+    Cleanup:
         GlobalDeleteAtom(pxi->gaItem); // pxi copy
         UnlinkTransaction(pxi);
         DDEMLFree(pxi);
     }
-    if (msg) {
+    if (msg)
+    {
         FreeDDElParam(msg, lParam);
     }
     return (TRUE);
@@ -260,9 +266,7 @@ Cleanup:
 * 11-19-91 sanfords Created.
 * 8-24-92  sanfords Added cLinksToGo
 \***************************************************************************/
-BOOL SvStartAdviseUpdate(
-PXACT_INFO pxi,
-DWORD cLinksToGo)
+BOOL SvStartAdviseUpdate(PXACT_INFO pxi, DWORD cLinksToGo)
 {
     HDDEDATA hData = NULL;
     PDDE_DATA pdde;
@@ -272,26 +276,25 @@ DWORD cLinksToGo)
 
     CheckDDECritIn;
 
-    if (pxi->wType & DDE_FDEFERUPD) {
+    if (pxi->wType & DDE_FDEFERUPD)
+    {
         hDDE = 0;
-    } else {
+    }
+    else
+    {
         al = GlobalToLocalAtom(pxi->gaItem);
-        hData = DoCallback(pxi->pcoi->pcii,
-                           XTYP_ADVREQ,
-                           pxi->wFmt,
-                           pxi->pcoi->hConv,
-                           NORMAL_HSZ_FROM_LATOM(pxi->pcoi->laTopic),
-                           NORMAL_HSZ_FROM_LATOM(al),
-                           (HDDEDATA)0,
-                           MAKELONG(cLinksToGo, 0),
-                           0);
+        hData = DoCallback(pxi->pcoi->pcii, XTYP_ADVREQ, pxi->wFmt, pxi->pcoi->hConv,
+                           NORMAL_HSZ_FROM_LATOM(pxi->pcoi->laTopic), NORMAL_HSZ_FROM_LATOM(al), (HDDEDATA)0,
+                           MAKELONG(cLinksToGo, 0), 0);
         DeleteAtom(al);
-        if (!hData) {
+        if (!hData)
+        {
             // app doesn't honor the advise.
             return (FALSE); // reuse pxi
         }
         hDDE = UnpackAndFreeDDEMLDataHandle(hData, FALSE);
-        if (!hDDE) {
+        if (!hDDE)
+        {
 
             /*
              * failed - must be execute type data
@@ -305,10 +308,12 @@ DWORD cLinksToGo)
          * have the fAckReq bit set so this will not change their state.
          */
         USERGLOBALLOCK(hDDE, pdde);
-        if (pdde == NULL) {
+        if (pdde == NULL)
+        {
             return (FALSE);
         }
-        if (pdde->wFmt != pxi->wFmt) {
+        if (pdde->wFmt != pxi->wFmt)
+        {
 
             /*
              * bogus data - wrong format!
@@ -318,7 +323,8 @@ DWORD cLinksToGo)
             SetLastDDEMLError(pxi->pcoi->pcii, DMLERR_DLL_USAGE);
             return (FALSE);
         }
-        if (!(pdde->wStatus & DDE_FRELEASE)) {
+        if (!(pdde->wStatus & DDE_FRELEASE))
+        {
             pxi->wType |= DDE_FACKREQ; // dare not allow neither flag set!
         }
         pdde->wStatus |= (pxi->wType & DDE_FACKREQ);
@@ -326,10 +332,12 @@ DWORD cLinksToGo)
     }
 
     IncGlobalAtomCount(pxi->gaItem); // message copy
-    dwError = PackAndPostMessage(pxi->pcoi->hwndPartner, 0, WM_DDE_DATA,
-            pxi->pcoi->hwndConv, 0, (UINT_PTR)hDDE, pxi->gaItem);
-    if (dwError) {
-        if (hData) {
+    dwError =
+        PackAndPostMessage(pxi->pcoi->hwndPartner, 0, WM_DDE_DATA, pxi->pcoi->hwndConv, 0, (UINT_PTR)hDDE, pxi->gaItem);
+    if (dwError)
+    {
+        if (hData)
+        {
             InternalFreeDataHandle(hData, FALSE);
         }
         SetLastDDEMLError(pxi->pcoi->pcii, dwError);
@@ -338,16 +346,18 @@ DWORD cLinksToGo)
     }
 
     pxi->state = XST_ADVDATASENT;
-    if (pxi->wType & DDE_FACKREQ) {
+    if (pxi->wType & DDE_FACKREQ)
+    {
         pxi->hDDESent = hDDE;
         pxi->pfnResponse = (FNRESPONSE)SvRespAdviseDataAck;
         LinkTransaction(pxi);
         return (TRUE); // prevents reuse - since its queued.
-    } else {
+    }
+    else
+    {
         return (FALSE); // causes pxi to be reused for next advdata message.
     }
 }
-
 
 
 /***************************************************************************\
@@ -359,9 +369,7 @@ DWORD cLinksToGo)
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-BOOL ClSpontAdviseData(
-PCL_CONV_INFO pci,
-LPARAM lParam)
+BOOL ClSpontAdviseData(PCL_CONV_INFO pci, LPARAM lParam)
 {
     UINT_PTR uiHi;
     DWORD dwError;
@@ -380,11 +388,15 @@ LPARAM lParam)
     wStatus = 0;
     hDataReturn = 0;
     la = GlobalToLocalAtom((GATOM)uiHi);
-    if (hDDE) {
+    if (hDDE)
+    {
         USERGLOBALLOCK(hDDE, pdde);
-        if (pdde == NULL) {
+        if (pdde == NULL)
+        {
             hData = 0;
-        } else {
+        }
+        else
+        {
             wFmt = pdde->wFmt;
             wStatus = pdde->wStatus;
             USERGLOBALUNLOCK(hDDE);
@@ -392,18 +404,18 @@ LPARAM lParam)
             /*
              * if data is coming in, create a data handle for the app
              */
-            hData = InternalCreateDataHandle(pci->ci.pcii, (LPBYTE)hDDE,
-                    (DWORD)-1, 0, HDATA_NOAPPFREE | HDATA_READONLY, 0, 0);
+            hData = InternalCreateDataHandle(pci->ci.pcii, (LPBYTE)hDDE, (DWORD)-1, 0, HDATA_NOAPPFREE | HDATA_READONLY,
+                                             0, 0);
         }
-        if (hData) {
-            hDataReturn = DoCallback(pci->ci.pcii, XTYP_ADVDATA,
-                    wFmt, pci->ci.hConv,
-                    NORMAL_HSZ_FROM_LATOM(pci->ci.laTopic),
-                    NORMAL_HSZ_FROM_LATOM(la),
-                    hData, 0, 0);
-            if (hDataReturn != CBR_BLOCK) {
+        if (hData)
+        {
+            hDataReturn = DoCallback(pci->ci.pcii, XTYP_ADVDATA, wFmt, pci->ci.hConv,
+                                     NORMAL_HSZ_FROM_LATOM(pci->ci.laTopic), NORMAL_HSZ_FROM_LATOM(la), hData, 0, 0);
+            if (hDataReturn != CBR_BLOCK)
+            {
                 UnpackAndFreeDDEMLDataHandle(hData, FALSE);
-                if (((ULONG_PTR)hDataReturn & DDE_FACK) || !(wStatus & DDE_FACKREQ)) {
+                if (((ULONG_PTR)hDataReturn & DDE_FACK) || !(wStatus & DDE_FACKREQ))
+                {
                     /*
                      * Nacked Advise data with fAckReq set is server's
                      * responsibility to free!
@@ -412,7 +424,9 @@ LPARAM lParam)
                 }
             }
         }
-    } else {
+    }
+    else
+    {
         /*
          * WARM LINK CASE
          *
@@ -421,14 +435,14 @@ LPARAM lParam)
          * on this item that is warm-linked. The last hDataReturn determines
          * the ACK returned - for lack of a better method.
          */
-        for (paLink = pci->ci.aLinks, iLink = 0; iLink < pci->ci.cLinks; iLink++, paLink++) {
-            if ((paLink->laItem == la) && (paLink->wType & DDE_FDEFERUPD)) {
-                hDataReturn = DoCallback(pci->ci.pcii, XTYP_ADVDATA,
-                        paLink->wFmt, pci->ci.hConv,
-                        NORMAL_HSZ_FROM_LATOM(pci->ci.laTopic),
-                        NORMAL_HSZ_FROM_LATOM(la),
-                        0, 0, 0);
-                if (hDataReturn == CBR_BLOCK) {
+        for (paLink = pci->ci.aLinks, iLink = 0; iLink < pci->ci.cLinks; iLink++, paLink++)
+        {
+            if ((paLink->laItem == la) && (paLink->wType & DDE_FDEFERUPD))
+            {
+                hDataReturn = DoCallback(pci->ci.pcii, XTYP_ADVDATA, paLink->wFmt, pci->ci.hConv,
+                                         NORMAL_HSZ_FROM_LATOM(pci->ci.laTopic), NORMAL_HSZ_FROM_LATOM(la), 0, 0, 0);
+                if (hDataReturn == CBR_BLOCK)
+                {
                     DeleteAtom(la);
                     return (FALSE);
                 }
@@ -436,26 +450,29 @@ LPARAM lParam)
         }
     }
     DeleteAtom(la);
-    if (hDataReturn == CBR_BLOCK) {
+    if (hDataReturn == CBR_BLOCK)
+    {
         return (FALSE);
     }
 
-    if (wStatus & DDE_FACKREQ) {
+    if (wStatus & DDE_FACKREQ)
+    {
 
-        (ULONG_PTR)hDataReturn &= ~DDE_FACKRESERVED;
+        (ULONG_PTR) hDataReturn &= ~DDE_FACKRESERVED;
         // reuse uiHi
-        if (dwError = PackAndPostMessage(pci->ci.hwndPartner, WM_DDE_DATA,
-                WM_DDE_ACK, pci->ci.hwndConv, lParam, (UINT_PTR)hDataReturn, uiHi)) {
+        if (dwError = PackAndPostMessage(pci->ci.hwndPartner, WM_DDE_DATA, WM_DDE_ACK, pci->ci.hwndConv, lParam,
+                                         (UINT_PTR)hDataReturn, uiHi))
+        {
             SetLastDDEMLError(pci->ci.pcii, dwError);
         }
-    } else {
-        GlobalDeleteAtom((ATOM)uiHi); // data message copy
+    }
+    else
+    {
+        GlobalDeleteAtom((ATOM)uiHi);       // data message copy
         FreeDDElParam(WM_DDE_DATA, lParam); // not reused so free it.
     }
     return (TRUE);
 }
-
-
 
 
 /***************************************************************************\
@@ -467,10 +484,7 @@ LPARAM lParam)
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-BOOL SvRespAdviseDataAck(
-PXACT_INFO pxi,
-UINT msg,
-LPARAM lParam)
+BOOL SvRespAdviseDataAck(PXACT_INFO pxi, UINT msg, LPARAM lParam)
 {
     UINT_PTR uiLo, uiHi;
     int iLink;
@@ -482,12 +496,15 @@ LPARAM lParam)
     int cLinks;
 #endif
 
-    if (msg) {
-        if (msg != WM_DDE_ACK) {
+    if (msg)
+    {
+        if (msg != WM_DDE_ACK)
+        {
             return (SpontaneousServerMessage((PSVR_CONV_INFO)pxi->pcoi, msg, lParam));
         }
         UnpackDDElParam(WM_DDE_ACK, lParam, &uiLo, &uiHi);
-        if ((GATOM)uiHi != pxi->gaItem) {
+        if ((GATOM)uiHi != pxi->gaItem)
+        {
             RIPMSG0(RIP_ERROR, "DDE Protocol violation: Data ACK had wrong item");
             return (SpontaneousServerMessage((PSVR_CONV_INFO)pxi->pcoi, msg, lParam));
         }
@@ -495,24 +512,26 @@ LPARAM lParam)
         GlobalDeleteAtom((ATOM)uiHi); // message copy
         FreeDDElParam(WM_DDE_ACK, lParam);
 
-        if (!((uiLo & DDE_FACK) && pxi->hDDESent)) {
+        if (!((uiLo & DDE_FACK) && pxi->hDDESent))
+        {
             FreeDDEData(pxi->hDDESent, FALSE, TRUE);
         }
 
-        #if DBG
+#if DBG
         /*
          * Rememeber the number of links so we can assert if they change during the loop below
          */
         cLinks = pxi->pcoi->cLinks;
-        #endif
+#endif
         /*
          * locate link info and clear ADVST_WAITING bit
          */
         la = GlobalToLocalAtom((GATOM)uiHi);
         paLink = pxi->pcoi->aLinks;
-        for (iLink = 0; iLink < pxi->pcoi->cLinks; iLink++, paLink++) {
-            if (paLink->laItem == la &&
-                    paLink->state & ADVST_WAITING) {
+        for (iLink = 0; iLink < pxi->pcoi->cLinks; iLink++, paLink++)
+        {
+            if (paLink->laItem == la && paLink->state & ADVST_WAITING)
+            {
                 paLink->state &= ~ADVST_WAITING;
                 /*
                  * We have to allocate pxiNew because it may become linked
@@ -520,9 +539,9 @@ LPARAM lParam)
                  */
                 pxiNew = (PXACT_INFO)DDEMLAlloc(sizeof(XACT_INFO));
 
-                if (pxiNew && !UpdateLinkIfChanged(paLink, pxiNew, pxi->pcoi,
-                        &pxi->pcoi->aLinks[pxi->pcoi->cLinks - 1], &fSwapped,
-                        CADV_LATEACK)) {
+                if (pxiNew && !UpdateLinkIfChanged(paLink, pxiNew, pxi->pcoi, &pxi->pcoi->aLinks[pxi->pcoi->cLinks - 1],
+                                                   &fSwapped, CADV_LATEACK))
+                {
                     /*
                      * Not used, free it.
                      */
@@ -531,11 +550,12 @@ LPARAM lParam)
                 break;
             }
         }
-        #if DBG
-        if (cLinks != pxi->pcoi->cLinks) {
+#if DBG
+        if (cLinks != pxi->pcoi->cLinks)
+        {
             RIPMSG1(RIP_ERROR, "SvRespAdviseDataAck: cLinks changed. pxi:%#p", pxi);
         }
-        #endif
+#endif
 
         DeleteAtom(la);
     }
@@ -544,7 +564,6 @@ LPARAM lParam)
     DDEMLFree(pxi);
     return (TRUE);
 }
-
 
 
 //------------------------------UNADVISE-------------------------------//
@@ -558,15 +577,15 @@ LPARAM lParam)
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-BOOL ClStartUnadvise(
-PXACT_INFO pxi)
+BOOL ClStartUnadvise(PXACT_INFO pxi)
 {
     DWORD dwError;
 
     IncGlobalAtomCount(pxi->gaItem); // message copy
-    dwError = PackAndPostMessage(pxi->pcoi->hwndPartner, 0, WM_DDE_UNADVISE,
-            pxi->pcoi->hwndConv, 0, pxi->wFmt, pxi->gaItem);
-    if (dwError) {
+    dwError =
+        PackAndPostMessage(pxi->pcoi->hwndPartner, 0, WM_DDE_UNADVISE, pxi->pcoi->hwndConv, 0, pxi->wFmt, pxi->gaItem);
+    if (dwError)
+    {
         SetLastDDEMLError(pxi->pcoi->pcii, dwError);
         GlobalDeleteAtom(pxi->gaItem); // message copy
         return (FALSE);
@@ -575,11 +594,10 @@ PXACT_INFO pxi)
     //
     // only server side reports links on local conversations.
     //
-    if (!(pxi->pcoi->state & ST_ISLOCAL)) {
-        MONLINK(pxi->pcoi->pcii, FALSE, 0,
-                pxi->pcoi->laService, pxi->pcoi->laTopic, pxi->gaItem,
-                pxi->wFmt, FALSE, (HCONV)pxi->pcoi->hwndPartner,
-                (HCONV)pxi->pcoi->hwndConv);
+    if (!(pxi->pcoi->state & ST_ISLOCAL))
+    {
+        MONLINK(pxi->pcoi->pcii, FALSE, 0, pxi->pcoi->laService, pxi->pcoi->laTopic, pxi->gaItem, pxi->wFmt, FALSE,
+                (HCONV)pxi->pcoi->hwndPartner, (HCONV)pxi->pcoi->hwndConv);
     }
     pxi->state = XST_UNADVSENT;
     pxi->pfnResponse = (FNRESPONSE)ClRespUnadviseAck;
@@ -596,33 +614,36 @@ PXACT_INFO pxi)
 * History:
 * 6-4-96 clupu Created.
 \***************************************************************************/
-void CloseTransaction(
-    PCONV_INFO pci,
-    ATOM       atom)
+void CloseTransaction(PCONV_INFO pci, ATOM atom)
 {
     PXACT_INFO pxi;
     PXACT_INFO pxiD;
 
     pxi = pci->pxiOut;
 
-    while (pxi && (pxi->gaItem == atom)) {
+    while (pxi && (pxi->gaItem == atom))
+    {
         pxiD = pxi;
-        pxi  = pxi->next;
+        pxi = pxi->next;
         DDEMLFree(pxiD);
     }
     pci->pxiOut = pxi;
 
-    if (pxi == NULL) {
+    if (pxi == NULL)
+    {
         pci->pxiIn = NULL;
         return;
     }
 
-    while (pxi->next) {
-        if (pxi->next->gaItem == atom) {
+    while (pxi->next)
+    {
+        if (pxi->next->gaItem == atom)
+        {
             pxiD = pxi->next;
             pxi->next = pxiD->next;
             DDEMLFree(pxiD);
-        } else
+        }
+        else
             pxi = pxi->next;
     }
     pci->pxiIn = pxi;
@@ -637,9 +658,7 @@ void CloseTransaction(
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-BOOL SvSpontUnadvise(
-PSVR_CONV_INFO psi,
-LPARAM lParam)
+BOOL SvSpontUnadvise(PSVR_CONV_INFO psi, LPARAM lParam)
 {
     ULONG_PTR dwRet = 0;
     DWORD dwError;
@@ -651,41 +670,43 @@ LPARAM lParam)
 
     CloseTransaction(&psi->ci, HIWORD(lParam));
 
-    for (aLink = psi->ci.aLinks, iLink = 0; iLink < psi->ci.cLinks;) {
+    for (aLink = psi->ci.aLinks, iLink = 0; iLink < psi->ci.cLinks;)
+    {
 
-        if (la == 0 || aLink->laItem == la &&
-                (LOWORD(lParam) == 0 || LOWORD(lParam) == aLink->wFmt)) {
+        if (la == 0 || aLink->laItem == la && (LOWORD(lParam) == 0 || LOWORD(lParam) == aLink->wFmt))
+        {
 
-            if (!(psi->ci.pcii->afCmd & CBF_FAIL_ADVISES)) {
+            if (!(psi->ci.pcii->afCmd & CBF_FAIL_ADVISES))
+            {
                 /*
                  * Only do the callbacks if he wants them.
                  */
-                dwRet = (ULONG_PTR)DoCallback(psi->ci.pcii,
-                    (WORD)XTYP_ADVSTOP, aLink->wFmt, psi->ci.hConv,
-                    NORMAL_HSZ_FROM_LATOM(psi->ci.laTopic),
-                    NORMAL_HSZ_FROM_LATOM(la),
-                    (HDDEDATA)0, 0L, 0L);
-                if (dwRet == (ULONG_PTR)CBR_BLOCK) {
+                dwRet = (ULONG_PTR)DoCallback(psi->ci.pcii, (WORD)XTYP_ADVSTOP, aLink->wFmt, psi->ci.hConv,
+                                              NORMAL_HSZ_FROM_LATOM(psi->ci.laTopic), NORMAL_HSZ_FROM_LATOM(la),
+                                              (HDDEDATA)0, 0L, 0L);
+                if (dwRet == (ULONG_PTR)CBR_BLOCK)
+                {
                     DeleteAtom(la);
-                    return(FALSE);
+                    return (FALSE);
                 }
             }
             /*
              * Notify any DDESPY apps.
              */
-            MONLINK(psi->ci.pcii, TRUE, 0, psi->ci.laService,
-                    psi->ci.laTopic, HIWORD(lParam), aLink->wFmt, TRUE,
+            MONLINK(psi->ci.pcii, TRUE, 0, psi->ci.laService, psi->ci.laTopic, HIWORD(lParam), aLink->wFmt, TRUE,
                     (HCONV)psi->ci.hwndConv, (HCONV)psi->ci.hwndPartner);
             /*
              * Remove link info
              */
-            DeleteAtom(aLink->laItem);  // aLink copy
+            DeleteAtom(aLink->laItem); // aLink copy
             DeleteLinkCount(psi->ci.pcii, aLink->pLinkCount);
-            if (--psi->ci.cLinks) {
-                memmove((LPSTR)aLink, (LPSTR)(aLink + 1),
-                        sizeof(ADVISE_LINK) * (psi->ci.cLinks - iLink));
+            if (--psi->ci.cLinks)
+            {
+                memmove((LPSTR)aLink, (LPSTR)(aLink + 1), sizeof(ADVISE_LINK) * (psi->ci.cLinks - iLink));
             }
-        } else {
+        }
+        else
+        {
             aLink++;
             iLink++;
         }
@@ -696,11 +717,11 @@ LPARAM lParam)
     /*
      * Now ACK the unadvise message.
      */
-    dwError = PackAndPostMessage(psi->ci.hwndPartner, 0,
-            WM_DDE_ACK, psi->ci.hwndConv, 0, DDE_FACK, HIWORD(lParam));
-    if (dwError) {
+    dwError = PackAndPostMessage(psi->ci.hwndPartner, 0, WM_DDE_ACK, psi->ci.hwndConv, 0, DDE_FACK, HIWORD(lParam));
+    if (dwError)
+    {
         SetLastDDEMLError(psi->ci.pcii, dwError);
-        GlobalDeleteAtom((ATOM)HIWORD(lParam));      // message copy
+        GlobalDeleteAtom((ATOM)HIWORD(lParam)); // message copy
         // FreeDDElParam(WM_DDE_UNADVISE, lParam);   // no unpack needed
     }
 
@@ -716,60 +737,66 @@ LPARAM lParam)
 * History:
 * 11-12-91 sanfords Created.
 \***************************************************************************/
-BOOL ClRespUnadviseAck(
-PXACT_INFO pxi,
-UINT msg,
-LPARAM lParam)
+BOOL ClRespUnadviseAck(PXACT_INFO pxi, UINT msg, LPARAM lParam)
 {
     UINT_PTR uiLo, uiHi;
     LATOM al;
     PADVISE_LINK aLink;
     int iLink;
 
-    if (msg) {
-        if (msg != WM_DDE_ACK) {
+    if (msg)
+    {
+        if (msg != WM_DDE_ACK)
+        {
             return (SpontaneousClientMessage((PCL_CONV_INFO)pxi->pcoi, msg, lParam));
         }
 
         UnpackDDElParam(WM_DDE_ACK, lParam, &uiLo, &uiHi);
-        if ((GATOM)uiHi != pxi->gaItem) {
+        if ((GATOM)uiHi != pxi->gaItem)
+        {
             return (SpontaneousClientMessage((PCL_CONV_INFO)pxi->pcoi, msg, lParam));
         }
 
         al = GlobalToLocalAtom((ATOM)uiHi);
-        for (aLink = pxi->pcoi->aLinks, iLink = 0;
-                iLink < pxi->pcoi->cLinks;
-                    ) {
-            if (aLink->laItem == al &&
-                    (pxi->wFmt == 0 || aLink->wFmt == pxi->wFmt)) {
-                DeleteAtom(al);  // aLink copy
-                if (--pxi->pcoi->cLinks) {
-                    memmove((LPSTR)aLink, (LPSTR)(aLink + 1),
-                            sizeof(ADVISE_LINK) * (pxi->pcoi->cLinks - iLink));
+        for (aLink = pxi->pcoi->aLinks, iLink = 0; iLink < pxi->pcoi->cLinks;)
+        {
+            if (aLink->laItem == al && (pxi->wFmt == 0 || aLink->wFmt == pxi->wFmt))
+            {
+                DeleteAtom(al); // aLink copy
+                if (--pxi->pcoi->cLinks)
+                {
+                    memmove((LPSTR)aLink, (LPSTR)(aLink + 1), sizeof(ADVISE_LINK) * (pxi->pcoi->cLinks - iLink));
                 }
-            } else {
+            }
+            else
+            {
                 aLink++;
                 iLink++;
             }
         }
-        DeleteAtom(al);  // local copy
-        GlobalDeleteAtom((ATOM)uiHi);   // message copy
+        DeleteAtom(al);               // local copy
+        GlobalDeleteAtom((ATOM)uiHi); // message copy
 
         pxi->state = XST_UNADVACKRCVD;
         pxi->wStatus = (WORD)uiLo;
-        if (TransactionComplete(pxi, (HDDEDATA)1)) {
+        if (TransactionComplete(pxi, (HDDEDATA)1))
+        {
             goto Cleanup;
         }
-    } else {
-Cleanup:
-        GlobalDeleteAtom(pxi->gaItem);   // pxi copy
+    }
+    else
+    {
+    Cleanup:
+        GlobalDeleteAtom(pxi->gaItem); // pxi copy
         UnlinkTransaction(pxi);
-        if (pxi->hXact) {
+        if (pxi->hXact)
+        {
             DestroyHandle(pxi->hXact);
         }
         DDEMLFree(pxi);
     }
-    if (msg) {
+    if (msg)
+    {
         FreeDDElParam(msg, lParam);
     }
     return (TRUE);
@@ -788,51 +815,59 @@ Cleanup:
 * History:
 * 1/28/92 sanfords created
 \***************************************************************************/
-HANDLE MaybeTranslateExecuteData(
-HANDLE hDDE,
-BOOL fUnicodeFrom,
-BOOL fUnicodeTo,
-BOOL fFreeSource)
+HANDLE MaybeTranslateExecuteData(HANDLE hDDE, BOOL fUnicodeFrom, BOOL fUnicodeTo, BOOL fFreeSource)
 {
     PSTR pstr;
     PWSTR pwstr;
     DWORD cb;
     HANDLE hDDEnew;
 
-    if (fUnicodeFrom && !fUnicodeTo) {
+    if (fUnicodeFrom && !fUnicodeTo)
+    {
         // translate data from UNICODE to ANSII
         cb = (DWORD)(GlobalSize(hDDE) >> 1);
         hDDEnew = UserGlobalAlloc(GMEM_DDESHARE | GMEM_MOVEABLE, cb);
         USERGLOBALLOCK(hDDEnew, pstr);
         USERGLOBALLOCK(hDDE, pwstr);
-        if (pstr != NULL && pwstr != NULL) {
+        if (pstr != NULL && pwstr != NULL)
+        {
             WCSToMB(pwstr, -1, &pstr, cb, FALSE);
         }
-        if (pwstr) {
+        if (pwstr)
+        {
             USERGLOBALUNLOCK(hDDE);
         }
-        if (pstr) {
+        if (pstr)
+        {
             USERGLOBALUNLOCK(hDDEnew);
         }
-    } else if (!fUnicodeFrom && fUnicodeTo) {
+    }
+    else if (!fUnicodeFrom && fUnicodeTo)
+    {
         // translate data from ANSII to UNICODE
         cb = (DWORD)(GlobalSize(hDDE) << 1);
         hDDEnew = UserGlobalAlloc(GMEM_DDESHARE | GMEM_MOVEABLE, cb);
         USERGLOBALLOCK(hDDEnew, pwstr);
         USERGLOBALLOCK(hDDE, pstr);
-        if (pwstr != NULL && pstr != NULL) {
+        if (pwstr != NULL && pstr != NULL)
+        {
             MBToWCS(pstr, -1, &pwstr, cb, FALSE);
         }
-        if (pstr) {
+        if (pstr)
+        {
             USERGLOBALUNLOCK(hDDE);
         }
-        if (pwstr) {
+        if (pwstr)
+        {
             USERGLOBALUNLOCK(hDDEnew);
         }
-    } else {
+    }
+    else
+    {
         return (hDDE); // no translation needed.
     }
-    if (fFreeSource) {
+    if (fFreeSource)
+    {
         WOWGLOBALFREE(hDDE);
     }
     return (hDDEnew);
@@ -849,19 +884,17 @@ BOOL fFreeSource)
 * 11-19-91 sanfords Created.
 * 1/28/92 sanfords added UNICODE support.
 \***************************************************************************/
-BOOL ClStartExecute(
-PXACT_INFO pxi)
+BOOL ClStartExecute(PXACT_INFO pxi)
 {
     DWORD dwError;
 
-    pxi->hDDESent = MaybeTranslateExecuteData(pxi->hDDESent,
-            pxi->pcoi->pcii->flags & IIF_UNICODE,
-            pxi->pcoi->state & ST_UNICODE_EXECUTE,
-            TRUE);
+    pxi->hDDESent = MaybeTranslateExecuteData(pxi->hDDESent, pxi->pcoi->pcii->flags & IIF_UNICODE,
+                                              pxi->pcoi->state & ST_UNICODE_EXECUTE, TRUE);
 
-    dwError = PackAndPostMessage(pxi->pcoi->hwndPartner, 0, WM_DDE_EXECUTE,
-            pxi->pcoi->hwndConv, 0, 0, (UINT_PTR)pxi->hDDESent);
-    if (dwError) {
+    dwError = PackAndPostMessage(pxi->pcoi->hwndPartner, 0, WM_DDE_EXECUTE, pxi->pcoi->hwndConv, 0, 0,
+                                 (UINT_PTR)pxi->hDDESent);
+    if (dwError)
+    {
         SetLastDDEMLError(pxi->pcoi->pcii, dwError);
         return (FALSE);
     }
@@ -882,9 +915,7 @@ PXACT_INFO pxi)
 * 11-19-91 sanfords Created.
 * 1/28/92 sanfords added UNICODE support.
 \***************************************************************************/
-BOOL SvSpontExecute(
-PSVR_CONV_INFO psi,
-LPARAM lParam)
+BOOL SvSpontExecute(PSVR_CONV_INFO psi, LPARAM lParam)
 {
     HANDLE hDDE, hDDEx;
     ULONG_PTR dwRet = 0;
@@ -892,7 +923,8 @@ LPARAM lParam)
     HDDEDATA hData = 0;
 
     hDDEx = hDDE = (HANDLE)lParam; // UnpackDDElParam(msg, lParam, NULL, &hDDE);
-    if (psi->ci.pcii->afCmd & CBF_FAIL_EXECUTES) {
+    if (psi->ci.pcii->afCmd & CBF_FAIL_EXECUTES)
+    {
         goto Ack;
     }
 
@@ -905,25 +937,25 @@ LPARAM lParam)
      * handle in an execute ACK that you were given by the execute
      * message.
      */
-    hDDEx = MaybeTranslateExecuteData(hDDE,
-            psi->ci.state & ST_UNICODE_EXECUTE,
-            psi->ci.pcii->flags & IIF_UNICODE,
-            FALSE);
+    hDDEx =
+        MaybeTranslateExecuteData(hDDE, psi->ci.state & ST_UNICODE_EXECUTE, psi->ci.pcii->flags & IIF_UNICODE, FALSE);
 
     hData = InternalCreateDataHandle(psi->ci.pcii, (LPBYTE)hDDEx, (DWORD)-1, 0,
-        HDATA_EXECUTE | HDATA_READONLY | HDATA_NOAPPFREE, 0, 0);
-    if (!hData) {
+                                     HDATA_EXECUTE | HDATA_READONLY | HDATA_NOAPPFREE, 0, 0);
+    if (!hData)
+    {
         SetLastDDEMLError(psi->ci.pcii, DMLERR_MEMORY_ERROR);
         goto Ack;
     }
 
-    dwRet = (ULONG_PTR)DoCallback(psi->ci.pcii,
-            XTYP_EXECUTE, 0, psi->ci.hConv,
-            NORMAL_HSZ_FROM_LATOM(psi->ci.laTopic), 0, hData, 0, 0);
+    dwRet = (ULONG_PTR)DoCallback(psi->ci.pcii, XTYP_EXECUTE, 0, psi->ci.hConv, NORMAL_HSZ_FROM_LATOM(psi->ci.laTopic),
+                                  0, hData, 0, 0);
     UnpackAndFreeDDEMLDataHandle(hData, TRUE);
 
-    if (dwRet == (ULONG_PTR)CBR_BLOCK) {
-        if (hDDEx != hDDE) {
+    if (dwRet == (ULONG_PTR)CBR_BLOCK)
+    {
+        if (hDDEx != hDDE)
+        {
             WOWGLOBALFREE(hDDEx);
         }
         return (FALSE);
@@ -931,19 +963,20 @@ LPARAM lParam)
 
 Ack:
     dwRet &= ~DDE_FACKRESERVED;
-    dwError = PackAndPostMessage(psi->ci.hwndPartner, WM_DDE_EXECUTE,
-            WM_DDE_ACK, psi->ci.hwndConv, lParam, dwRet, (UINT_PTR)hDDE);
-    if (dwError) {
+    dwError = PackAndPostMessage(psi->ci.hwndPartner, WM_DDE_EXECUTE, WM_DDE_ACK, psi->ci.hwndConv, lParam, dwRet,
+                                 (UINT_PTR)hDDE);
+    if (dwError)
+    {
         SetLastDDEMLError(psi->ci.pcii, dwError);
     }
 
-    if (hDDEx != hDDE) {
+    if (hDDEx != hDDE)
+    {
         WOWGLOBALFREE(hDDEx);
     }
 
     return (TRUE);
 }
-
 
 
 /***************************************************************************\
@@ -955,20 +988,20 @@ Ack:
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-BOOL ClRespExecuteAck(
-PXACT_INFO pxi,
-UINT msg,
-LPARAM lParam)
+BOOL ClRespExecuteAck(PXACT_INFO pxi, UINT msg, LPARAM lParam)
 {
     UINT_PTR uiLo, uiHi;
 
-    if (msg) {
-        if (msg != WM_DDE_ACK) {
+    if (msg)
+    {
+        if (msg != WM_DDE_ACK)
+        {
             return (SpontaneousClientMessage((PCL_CONV_INFO)pxi->pcoi, msg, lParam));
         }
 
         UnpackDDElParam(WM_DDE_ACK, lParam, &uiLo, &uiHi);
-        if (uiHi != (UINT_PTR)pxi->hDDESent) {
+        if (uiHi != (UINT_PTR)pxi->hDDESent)
+        {
             return (SpontaneousClientMessage((PCL_CONV_INFO)pxi->pcoi, msg, lParam));
         }
 
@@ -977,24 +1010,28 @@ LPARAM lParam)
         pxi->state = XST_EXECACKRCVD;
         pxi->wStatus = (WORD)uiLo;
 
-        if (TransactionComplete(pxi, (HDDEDATA)((ULONG_PTR)(pxi->wStatus & DDE_FACK ? 1 : 0)))) {
+        if (TransactionComplete(pxi, (HDDEDATA)((ULONG_PTR)(pxi->wStatus & DDE_FACK ? 1 : 0))))
+        {
             goto Cleanup;
         }
-    } else {
-Cleanup:
+    }
+    else
+    {
+    Cleanup:
         GlobalDeleteAtom(pxi->gaItem); // pxi copy
         UnlinkTransaction(pxi);
-        if (pxi->hXact) {
+        if (pxi->hXact)
+        {
             DestroyHandle(pxi->hXact);
         }
         DDEMLFree(pxi);
     }
-    if (msg) {
+    if (msg)
+    {
         FreeDDElParam(msg, lParam);
     }
     return (TRUE);
 }
-
 
 
 //----------------------------------POKE-------------------------------//
@@ -1009,15 +1046,15 @@ Cleanup:
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-BOOL ClStartPoke(
-PXACT_INFO pxi)
+BOOL ClStartPoke(PXACT_INFO pxi)
 {
     DWORD dwError;
 
     IncGlobalAtomCount(pxi->gaItem); // message copy
-    dwError = PackAndPostMessage(pxi->pcoi->hwndPartner, 0, WM_DDE_POKE,
-            pxi->pcoi->hwndConv, 0, (UINT_PTR)pxi->hDDESent, pxi->gaItem);
-    if (dwError) {
+    dwError = PackAndPostMessage(pxi->pcoi->hwndPartner, 0, WM_DDE_POKE, pxi->pcoi->hwndConv, 0,
+                                 (UINT_PTR)pxi->hDDESent, pxi->gaItem);
+    if (dwError)
+    {
         SetLastDDEMLError(pxi->pcoi->pcii, dwError);
         GlobalDeleteAtom(pxi->gaItem); // message copy
         return (FALSE);
@@ -1039,9 +1076,7 @@ PXACT_INFO pxi)
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-BOOL SvSpontPoke(
-PSVR_CONV_INFO psi,
-LPARAM lParam)
+BOOL SvSpontPoke(PSVR_CONV_INFO psi, LPARAM lParam)
 {
     UINT_PTR uiHi;
     HANDLE hDDE = 0;
@@ -1055,49 +1090,52 @@ LPARAM lParam)
 
     UnpackDDElParam(WM_DDE_DATA, lParam, (PUINT_PTR)&hDDE, &uiHi);
 
-    if (!(psi->ci.pcii->afCmd & CBF_FAIL_POKES)) {
-        if (!hDDE) {
+    if (!(psi->ci.pcii->afCmd & CBF_FAIL_POKES))
+    {
+        if (!hDDE)
+        {
             goto Ack;
         }
-        if (!ExtractDDEDataInfo(hDDE, &wStatus, &wFmt)) {
-            FreeDDEData(hDDE, FALSE, TRUE);             // free message data
+        if (!ExtractDDEDataInfo(hDDE, &wStatus, &wFmt))
+        {
+            FreeDDEData(hDDE, FALSE, TRUE); // free message data
             goto Ack;
         }
 
-        hData = InternalCreateDataHandle(psi->ci.pcii, (LPBYTE)hDDE, (DWORD)-1, 0,
-                HDATA_NOAPPFREE | HDATA_READONLY, 0, 0);
-        if (!hData) {
+        hData =
+            InternalCreateDataHandle(psi->ci.pcii, (LPBYTE)hDDE, (DWORD)-1, 0, HDATA_NOAPPFREE | HDATA_READONLY, 0, 0);
+        if (!hData)
+        {
             SetLastDDEMLError(psi->ci.pcii, DMLERR_MEMORY_ERROR);
-            FreeDDEData(hDDE, FALSE, TRUE);       // free message data
-            goto Ack;                             // Nack it.
-            return(TRUE);
+            FreeDDEData(hDDE, FALSE, TRUE); // free message data
+            goto Ack;                       // Nack it.
+            return (TRUE);
         }
 
         al = GlobalToLocalAtom((GATOM)uiHi);
-            dwRet = (ULONG_PTR)DoCallback(psi->ci.pcii, XTYP_POKE,
-                    wFmt, psi->ci.hConv,
-                    NORMAL_HSZ_FROM_LATOM(psi->ci.laTopic),
-                    NORMAL_HSZ_FROM_LATOM(al),
-                    hData, 0, 0);
+        dwRet = (ULONG_PTR)DoCallback(psi->ci.pcii, XTYP_POKE, wFmt, psi->ci.hConv,
+                                      NORMAL_HSZ_FROM_LATOM(psi->ci.laTopic), NORMAL_HSZ_FROM_LATOM(al), hData, 0, 0);
         DeleteAtom(al);
         UnpackAndFreeDDEMLDataHandle(hData, FALSE);
     }
-    if (dwRet == (ULONG_PTR)CBR_BLOCK) {
+    if (dwRet == (ULONG_PTR)CBR_BLOCK)
+    {
 
         // Note: this code makes an app that return s CBR_BLOCK unable to
         // access the data after the callback return .
 
         return (FALSE);
     }
-    if (dwRet & DDE_FACK) {
+    if (dwRet & DDE_FACK)
+    {
         FreeDDEData(hDDE, FALSE, TRUE);
     }
 
 Ack:
     dwRet &= ~DDE_FACKRESERVED;
-    dwError = PackAndPostMessage(psi->ci.hwndPartner, WM_DDE_POKE, WM_DDE_ACK,
-            psi->ci.hwndConv, lParam, dwRet, uiHi);
-    if (dwError) {
+    dwError = PackAndPostMessage(psi->ci.hwndPartner, WM_DDE_POKE, WM_DDE_ACK, psi->ci.hwndConv, lParam, dwRet, uiHi);
+    if (dwError)
+    {
         SetLastDDEMLError(psi->ci.pcii, dwError);
     }
     return (TRUE);
@@ -1113,20 +1151,20 @@ Ack:
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-BOOL ClRespPokeAck(
-PXACT_INFO pxi,
-UINT msg,
-LPARAM lParam)
+BOOL ClRespPokeAck(PXACT_INFO pxi, UINT msg, LPARAM lParam)
 {
     UINT_PTR uiLo, uiHi;
 
-    if (msg) {
-        if (msg != WM_DDE_ACK) {
+    if (msg)
+    {
+        if (msg != WM_DDE_ACK)
+        {
             return (SpontaneousClientMessage((PCL_CONV_INFO)pxi->pcoi, msg, lParam));
         }
 
         UnpackDDElParam(WM_DDE_ACK, lParam, &uiLo, &uiHi);
-        if ((GATOM)uiHi != pxi->gaItem) {
+        if ((GATOM)uiHi != pxi->gaItem)
+        {
             return (SpontaneousClientMessage((PCL_CONV_INFO)pxi->pcoi, msg, lParam));
         }
 
@@ -1135,27 +1173,32 @@ LPARAM lParam)
         pxi->state = XST_POKEACKRCVD;
         pxi->wStatus = (WORD)uiLo;
 
-        if (!((WORD)uiLo & DDE_FACK)) {
+        if (!((WORD)uiLo & DDE_FACK))
+        {
             //
             // NACKs make it our business to free the poked data.
             //
             FreeDDEData(pxi->hDDESent, FALSE, TRUE);
         }
 
-        if (TransactionComplete(pxi,
-                (HDDEDATA)((ULONG_PTR)(pxi->wStatus & DDE_FACK ? 1 : 0)))) {
+        if (TransactionComplete(pxi, (HDDEDATA)((ULONG_PTR)(pxi->wStatus & DDE_FACK ? 1 : 0))))
+        {
             goto Cleanup;
         }
-    } else {
-Cleanup:
+    }
+    else
+    {
+    Cleanup:
         GlobalDeleteAtom(pxi->gaItem); // pxi copy
         UnlinkTransaction(pxi);
-        if (pxi->hXact) {
+        if (pxi->hXact)
+        {
             DestroyHandle(pxi->hXact);
         }
         DDEMLFree(pxi);
     }
-    if (msg) {
+    if (msg)
+    {
         FreeDDElParam(msg, lParam);
     }
     return (TRUE);
@@ -1173,15 +1216,15 @@ Cleanup:
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-BOOL ClStartRequest(
-PXACT_INFO pxi)
+BOOL ClStartRequest(PXACT_INFO pxi)
 {
     DWORD dwError;
 
     IncGlobalAtomCount(pxi->gaItem); // message copy
-    dwError = PackAndPostMessage(pxi->pcoi->hwndPartner, 0, WM_DDE_REQUEST,
-            pxi->pcoi->hwndConv, 0, pxi->wFmt, pxi->gaItem);
-    if (dwError) {
+    dwError =
+        PackAndPostMessage(pxi->pcoi->hwndPartner, 0, WM_DDE_REQUEST, pxi->pcoi->hwndConv, 0, pxi->wFmt, pxi->gaItem);
+    if (dwError)
+    {
         SetLastDDEMLError(pxi->pcoi->pcii, dwError);
         GlobalDeleteAtom(pxi->gaItem); // message copy
         return (FALSE);
@@ -1194,7 +1237,6 @@ PXACT_INFO pxi)
 }
 
 
-
 /***************************************************************************\
 * SvSpontRequest
 *
@@ -1204,9 +1246,7 @@ PXACT_INFO pxi)
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-BOOL SvSpontRequest(
-PSVR_CONV_INFO psi,
-LPARAM lParam)
+BOOL SvSpontRequest(PSVR_CONV_INFO psi, LPARAM lParam)
 {
     HANDLE hDDE = 0;
     HDDEDATA hDataRet;
@@ -1214,7 +1254,8 @@ LPARAM lParam)
     DWORD dwError;
     LATOM la;
 
-    if (psi->ci.pcii->afCmd & CBF_FAIL_REQUESTS) {
+    if (psi->ci.pcii->afCmd & CBF_FAIL_REQUESTS)
+    {
         goto Nack;
     }
     // See what we have
@@ -1222,33 +1263,36 @@ LPARAM lParam)
     // UnpackDDElParam(lParam, WM_DDE_REQUEST, .... Requests arn't packed
     wFmt = LOWORD(lParam);
     la = GlobalToLocalAtom((GATOM)HIWORD(lParam));
-    hDataRet = DoCallback(psi->ci.pcii, XTYP_REQUEST,
-            wFmt, psi->ci.hConv,
-            NORMAL_HSZ_FROM_LATOM(psi->ci.laTopic),
-            NORMAL_HSZ_FROM_LATOM(la),
-            (HDDEDATA)0, 0, 0);
+    hDataRet = DoCallback(psi->ci.pcii, XTYP_REQUEST, wFmt, psi->ci.hConv, NORMAL_HSZ_FROM_LATOM(psi->ci.laTopic),
+                          NORMAL_HSZ_FROM_LATOM(la), (HDDEDATA)0, 0, 0);
     DeleteAtom(la);
 
-    if (hDataRet == CBR_BLOCK) {
+    if (hDataRet == CBR_BLOCK)
+    {
         return (FALSE);
     }
 
-    if (hDataRet) {
+    if (hDataRet)
+    {
 
         hDDE = UnpackAndFreeDDEMLDataHandle(hDataRet, FALSE);
-        if (!hDDE) {
+        if (!hDDE)
+        {
             SetLastDDEMLError(psi->ci.pcii, DMLERR_DLL_USAGE);
             goto Nack;
         }
-        if (!ExtractDDEDataInfo(hDDE, &wStatus, &wFmt)) {
+        if (!ExtractDDEDataInfo(hDDE, &wStatus, &wFmt))
+        {
             SetLastDDEMLError(psi->ci.pcii, DMLERR_DLL_USAGE);
             goto Nack;
         }
-        if (!(wStatus & DDE_FRELEASE)) {
+        if (!(wStatus & DDE_FRELEASE))
+        {
             // Its APPOWNED or relayed from another server - only safe
             // thing to do is use a copy.
             hDDE = CopyDDEData(hDDE, FALSE);
-            if (!hDDE) {
+            if (!hDDE)
+            {
                 SetLastDDEMLError(psi->ci.pcii, DMLERR_MEMORY_ERROR);
                 goto Nack;
             }
@@ -1260,18 +1304,21 @@ LPARAM lParam)
         AllocAndSetDDEData((LPBYTE)hDDE, (DWORD)-1, wStatus, wFmt);
 
         // just reuse HIWORD(lParam) (aItem) - message copy
-        if (dwError = PackAndPostMessage(psi->ci.hwndPartner, WM_DDE_REQUEST,
-                WM_DDE_DATA, psi->ci.hwndConv, 0, (UINT_PTR)hDDE, HIWORD(lParam))) {
+        if (dwError = PackAndPostMessage(psi->ci.hwndPartner, WM_DDE_REQUEST, WM_DDE_DATA, psi->ci.hwndConv, 0,
+                                         (UINT_PTR)hDDE, HIWORD(lParam)))
+        {
             SetLastDDEMLError(psi->ci.pcii, dwError);
             GlobalDeleteAtom(HIWORD(lParam)); // message copy
         }
-
-    } else {
-Nack:
+    }
+    else
+    {
+    Nack:
         // just reuse HIWORD(lParam) (aItem) - message copy
-        dwError = PackAndPostMessage(psi->ci.hwndPartner, WM_DDE_REQUEST,
-                WM_DDE_ACK, psi->ci.hwndConv, 0, 0, HIWORD(lParam));
-        if (dwError) {
+        dwError =
+            PackAndPostMessage(psi->ci.hwndPartner, WM_DDE_REQUEST, WM_DDE_ACK, psi->ci.hwndConv, 0, 0, HIWORD(lParam));
+        if (dwError)
+        {
             SetLastDDEMLError(psi->ci.pcii, dwError);
             GlobalDeleteAtom(HIWORD(lParam)); // message copy
         }
@@ -1291,59 +1338,68 @@ Nack:
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-BOOL ClRespRequestData(
-PXACT_INFO pxi,
-UINT msg,
-LPARAM lParam)
+BOOL ClRespRequestData(PXACT_INFO pxi, UINT msg, LPARAM lParam)
 {
     UINT_PTR uiLo, uiHi;
     WORD wFmt, wStatus;
     DWORD dwError;
 
-    if (msg) {
-        switch (msg) {
+    if (msg)
+    {
+        switch (msg)
+        {
         case WM_DDE_DATA:
             UnpackDDElParam(WM_DDE_DATA, lParam, (PUINT_PTR)&pxi->hDDEResult, &uiHi);
-            if (!pxi->hDDEResult) {
+            if (!pxi->hDDEResult)
+            {
                 // must be an advise data message with NODATA.
                 return (ClSpontAdviseData((PCL_CONV_INFO)pxi->pcoi, lParam));
             }
-            if (!ExtractDDEDataInfo(pxi->hDDEResult, &wStatus, &wFmt)) {
+            if (!ExtractDDEDataInfo(pxi->hDDEResult, &wStatus, &wFmt))
+            {
                 return (ClSpontAdviseData((PCL_CONV_INFO)pxi->pcoi, lParam));
             }
-            if (!(wStatus & DDE_FREQUESTED)) {
+            if (!(wStatus & DDE_FREQUESTED))
+            {
                 // must be advise data
                 return (ClSpontAdviseData((PCL_CONV_INFO)pxi->pcoi, lParam));
             }
-            if (wStatus & DDE_FACKREQ) {
+            if (wStatus & DDE_FACKREQ)
+            {
 
                 // if DDE_FRELEASE is not set, and this is a synchronous
                 // transaction, we need to make a copy here so the user
                 // can free at his leisure.
 
                 // reuse uiHi - message copy
-                dwError = PackAndPostMessage(pxi->pcoi->hwndPartner,
-                        WM_DDE_DATA, WM_DDE_ACK, pxi->pcoi->hwndConv, 0,
-                        pxi->wFmt == wFmt && pxi->gaItem == (GATOM)uiHi ?
-                            DDE_FACK : 0, uiHi);
-                if (dwError) {
+                dwError = PackAndPostMessage(pxi->pcoi->hwndPartner, WM_DDE_DATA, WM_DDE_ACK, pxi->pcoi->hwndConv, 0,
+                                             pxi->wFmt == wFmt && pxi->gaItem == (GATOM)uiHi ? DDE_FACK : 0, uiHi);
+                if (dwError)
+                {
                     SetLastDDEMLError(pxi->pcoi->pcii, dwError);
                 }
-            } else {
-                GlobalDeleteAtom((GATOM)uiHi);     // message copy
             }
-            if (wFmt != pxi->wFmt || (GATOM)uiHi != pxi->gaItem) {
+            else
+            {
+                GlobalDeleteAtom((GATOM)uiHi); // message copy
+            }
+            if (wFmt != pxi->wFmt || (GATOM)uiHi != pxi->gaItem)
+            {
                 /*
                  * BOGUS returned data!  Just free it and make it look like
                  * a NACK
                  */
                 FreeDDEData(pxi->hDDEResult, FALSE, TRUE);
                 pxi->hDDEResult = 0;
-                if (TransactionComplete(pxi, 0)) {
+                if (TransactionComplete(pxi, 0))
+                {
                     goto Cleanup;
                 }
-            } else {
-                if (TransactionComplete(pxi, (HDDEDATA)-1)) {
+            }
+            else
+            {
+                if (TransactionComplete(pxi, (HDDEDATA)-1))
+                {
                     goto Cleanup;
                 }
             }
@@ -1351,13 +1407,15 @@ LPARAM lParam)
 
         case WM_DDE_ACK:
             UnpackDDElParam(WM_DDE_ACK, lParam, &uiLo, &uiHi);
-            if ((GATOM)uiHi != pxi->gaItem) {
-                return(SpontaneousClientMessage((PCL_CONV_INFO)pxi->pcoi, msg, lParam));
+            if ((GATOM)uiHi != pxi->gaItem)
+            {
+                return (SpontaneousClientMessage((PCL_CONV_INFO)pxi->pcoi, msg, lParam));
             }
             pxi->state = XST_DATARCVD;
             pxi->wStatus = (WORD)uiLo;
             GlobalDeleteAtom((GATOM)uiHi); // message copy
-            if (TransactionComplete(pxi, 0)) {
+            if (TransactionComplete(pxi, 0))
+            {
                 goto Cleanup;
             }
             break;
@@ -1365,18 +1423,21 @@ LPARAM lParam)
         default:
             return (SpontaneousClientMessage((PCL_CONV_INFO)pxi->pcoi, msg, lParam));
         }
+    }
+    else
+    {
 
-    } else {
-
-Cleanup:
+    Cleanup:
         GlobalDeleteAtom(pxi->gaItem); // pxi copy
-        if (pxi->hDDEResult) {
-            FreeDDEData(pxi->hDDEResult, FALSE, TRUE);  // free message data
+        if (pxi->hDDEResult)
+        {
+            FreeDDEData(pxi->hDDEResult, FALSE, TRUE); // free message data
         }
         UnlinkTransaction(pxi);
         DDEMLFree(pxi);
     }
-    if (msg) {
+    if (msg)
+    {
         FreeDDElParam(msg, lParam);
     }
     return (TRUE);
@@ -1393,12 +1454,10 @@ Cleanup:
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-BOOL SpontaneousClientMessage(
-PCL_CONV_INFO pci,
-UINT msg,
-LPARAM lParam)
+BOOL SpontaneousClientMessage(PCL_CONV_INFO pci, UINT msg, LPARAM lParam)
 {
-    switch (msg) {
+    switch (msg)
+    {
     case WM_DDE_DATA:
         return (ClSpontAdviseData(pci, lParam));
         break;
@@ -1421,12 +1480,10 @@ LPARAM lParam)
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-BOOL SpontaneousServerMessage(
-PSVR_CONV_INFO psi,
-UINT msg,
-LPARAM lParam)
+BOOL SpontaneousServerMessage(PSVR_CONV_INFO psi, UINT msg, LPARAM lParam)
 {
-    switch (msg) {
+    switch (msg)
+    {
     case WM_DDE_ADVISE:
         return (SvSpontAdvise(psi, lParam));
         break;
@@ -1460,9 +1517,7 @@ LPARAM lParam)
 }
 
 
-
 //-------------------------HELPER FUNCTIONS----------------------------//
-
 
 
 /***************************************************************************\
@@ -1476,49 +1531,53 @@ LPARAM lParam)
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-HANDLE AllocAndSetDDEData(
-LPBYTE pSrc,
-DWORD cb,
-WORD wStatus,
-WORD wFmt) // a 0 format implied execute data
+HANDLE AllocAndSetDDEData(LPBYTE pSrc, DWORD cb, WORD wStatus,
+                          WORD wFmt) // a 0 format implied execute data
 {
     HANDLE hDDE;
     DWORD cbOff;
     PDDE_DATA pdde;
     DWORD fCopyIt;
 
-    if (cb == -1) {
+    if (cb == -1)
+    {
         hDDE = (HANDLE)pSrc;
         cb = (DWORD)GlobalSize(hDDE);
         fCopyIt = FALSE;
-    } else {
-        hDDE = UserGlobalAlloc(GMEM_DDESHARE | GMEM_MOVEABLE | GMEM_ZEROINIT,
-                (wFmt ? (cb + 4) : cb));
+    }
+    else
+    {
+        hDDE = UserGlobalAlloc(GMEM_DDESHARE | GMEM_MOVEABLE | GMEM_ZEROINIT, (wFmt ? (cb + 4) : cb));
         fCopyIt = (pSrc != NULL);
     }
-    if (hDDE == NULL) {
-        return(0);
+    if (hDDE == NULL)
+    {
+        return (0);
     }
     USERGLOBALLOCK(hDDE, pdde);
-    if (pdde == NULL) {
+    if (pdde == NULL)
+    {
         WOWGLOBALFREE(hDDE);
         return (0);
     }
-    if (wFmt) {
+    if (wFmt)
+    {
         pdde->wStatus = wStatus;
         pdde->wFmt = wFmt;
         cbOff = 4;
-    } else {
+    }
+    else
+    {
         cbOff = 0;
     }
-    if (fCopyIt) {
+    if (fCopyIt)
+    {
         RtlCopyMemory((PBYTE)pdde + cbOff, pSrc, cb);
     }
     USERGLOBALUNLOCK(hDDE);
 
     return (hDDE);
 }
-
 
 
 /***************************************************************************\
@@ -1531,19 +1590,14 @@ WORD wFmt) // a 0 format implied execute data
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-DWORD PackAndPostMessage(
-HWND hwndTo,
-UINT msgIn,
-UINT msgOut,
-HWND hwndFrom,
-LPARAM lParam,
-UINT_PTR uiLo,
-UINT_PTR uiHi)
+DWORD PackAndPostMessage(HWND hwndTo, UINT msgIn, UINT msgOut, HWND hwndFrom, LPARAM lParam, UINT_PTR uiLo,
+                         UINT_PTR uiHi)
 {
     DWORD retval;
 
     lParam = ReuseDDElParam(lParam, msgIn, msgOut, uiLo, uiHi);
-    if (!lParam) {
+    if (!lParam)
+    {
         return (DMLERR_MEMORY_ERROR);
     }
     CheckDDECritIn;
@@ -1551,7 +1605,8 @@ UINT_PTR uiHi)
     CheckDDECritOut;
 
     retval = (DWORD)PostMessage(hwndTo, msgOut, (WPARAM)hwndFrom, lParam);
-    switch (retval) {
+    switch (retval)
+    {
     case FAIL_POST:
 #if (FAIL_POST != FALSE)
 #error FAIL_POST must be defined as PostMessage's failure return value.
@@ -1577,7 +1632,6 @@ UINT_PTR uiHi)
 }
 
 
-
 /***************************************************************************\
 * ExtractDDEDataInfo
 *
@@ -1588,15 +1642,13 @@ UINT_PTR uiHi)
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-BOOL ExtractDDEDataInfo(
-HANDLE hDDE,
-LPWORD pwStatus,
-LPWORD pwFmt)
+BOOL ExtractDDEDataInfo(HANDLE hDDE, LPWORD pwStatus, LPWORD pwFmt)
 {
     PDDE_DATA pdde;
 
     USERGLOBALLOCK(hDDE, pdde);
-    if (pdde == NULL) {
+    if (pdde == NULL)
+    {
         return (FALSE);
     }
     *pwStatus = pdde->wStatus;
@@ -1604,7 +1656,6 @@ LPWORD pwFmt)
     USERGLOBALUNLOCK(hDDE);
     return (TRUE);
 }
-
 
 
 /***************************************************************************\
@@ -1621,36 +1672,44 @@ LPWORD pwFmt)
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-BOOL TransactionComplete(
-PXACT_INFO pxi,
-HDDEDATA hData)
+BOOL TransactionComplete(PXACT_INFO pxi, HDDEDATA hData)
 {
     LATOM al;
     BOOL fMustFree;
 
-    if (pxi->flags & XIF_ABANDONED) {
+    if (pxi->flags & XIF_ABANDONED)
+    {
         UserAssert(!(pxi->flags & XIF_SYNCHRONOUS));
         return (TRUE);
     }
     pxi->flags |= XIF_COMPLETE;
-    if (pxi->flags & XIF_SYNCHRONOUS) {
+    if (pxi->flags & XIF_SYNCHRONOUS)
+    {
         PostMessage(pxi->pcoi->hwndConv, WM_TIMER, TID_TIMEOUT, 0);
         return (FALSE);
-    } else {
-        if (hData == (HDDEDATA)(-1)) {
+    }
+    else
+    {
+        if (hData == (HDDEDATA)(-1))
+        {
             fMustFree = TRUE;
-            hData = InternalCreateDataHandle(pxi->pcoi->pcii,
-                (LPBYTE)pxi->hDDEResult, (DWORD)-1, 0,
-                HDATA_NOAPPFREE | HDATA_READONLY, 0, 0);
-        } else {
+            hData = InternalCreateDataHandle(pxi->pcoi->pcii, (LPBYTE)pxi->hDDEResult, (DWORD)-1, 0,
+                                             HDATA_NOAPPFREE | HDATA_READONLY, 0, 0);
+        }
+        else
+        {
             fMustFree = FALSE;
         }
         al = GlobalToLocalAtom(pxi->gaItem);
 
-        if (!(pxi->wStatus & DDE_FACK)) {
-            if (pxi->wStatus & DDE_FBUSY) {
+        if (!(pxi->wStatus & DDE_FACK))
+        {
+            if (pxi->wStatus & DDE_FBUSY)
+            {
                 SetLastDDEMLError(pxi->pcoi->pcii, DMLERR_BUSY);
-            } else {
+            }
+            else
+            {
                 SetLastDDEMLError(pxi->pcoi->pcii, DMLERR_NOTPROCESSED);
             }
         }
@@ -1662,18 +1721,12 @@ HDDEDATA hData)
          */
         UnlinkTransaction(pxi);
 
-        DoCallback(
-            pxi->pcoi->pcii,
-            (WORD)XTYP_XACT_COMPLETE,
-            pxi->wFmt,
-            pxi->pcoi->hConv,
-            NORMAL_HSZ_FROM_LATOM(pxi->pcoi->laTopic),
-            (HSZ)al,
-            hData,
-            (ULONG_PTR)pxi->hXact,
-            (DWORD)pxi->wStatus);
+        DoCallback(pxi->pcoi->pcii, (WORD)XTYP_XACT_COMPLETE, pxi->wFmt, pxi->pcoi->hConv,
+                   NORMAL_HSZ_FROM_LATOM(pxi->pcoi->laTopic), (HSZ)al, hData, (ULONG_PTR)pxi->hXact,
+                   (DWORD)pxi->wStatus);
         DeleteAtom(al);
-        if (fMustFree) {
+        if (fMustFree)
+        {
             InternalFreeDataHandle(hData, FALSE);
             pxi->hDDEResult = 0;
         }
@@ -1683,14 +1736,14 @@ HDDEDATA hData)
          * transaction information.   pxi->hXact will be invalid once he
          * returns.
          */
-        if (pxi->hXact) {
+        if (pxi->hXact)
+        {
             DestroyHandle(pxi->hXact);
             pxi->hXact = 0;
         }
         return (TRUE);
     }
 }
-
 
 
 /***************************************************************************\
@@ -1705,29 +1758,30 @@ HDDEDATA hData)
 * History:
 * 11-19-91 sanfords Created.
 \***************************************************************************/
-HANDLE UnpackAndFreeDDEMLDataHandle(
-HDDEDATA hData,
-BOOL fExec)
+HANDLE UnpackAndFreeDDEMLDataHandle(HDDEDATA hData, BOOL fExec)
 {
     PDDEMLDATA pdd;
     HANDLE hDDE;
 
     CheckDDECritIn;
 
-    if (hData == 0) {
+    if (hData == 0)
+    {
         return (0);
     }
-    pdd = (PDDEMLDATA)ValidateCHandle((HANDLE)hData, HTYPE_DATA_HANDLE,
-            HINST_ANY);
-    if (pdd == NULL) {
+    pdd = (PDDEMLDATA)ValidateCHandle((HANDLE)hData, HTYPE_DATA_HANDLE, HINST_ANY);
+    if (pdd == NULL)
+    {
         return (0);
     }
-    if (!fExec && pdd->flags & HDATA_EXECUTE) {
+    if (!fExec && pdd->flags & HDATA_EXECUTE)
+    {
         return (0);
     }
 
     hDDE = pdd->hDDE;
-    if (pdd->flags & HDATA_APPOWNED) {
+    if (pdd->flags & HDATA_APPOWNED)
+    {
         return (hDDE); // don't destroy appowned data handles
     }
     DDEMLFree(pdd);

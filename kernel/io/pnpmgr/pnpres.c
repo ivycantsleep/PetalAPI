@@ -56,599 +56,405 @@ Revision History:
 //
 // Set this to 1 for maximum instrumentation.
 //
-#define MAXDBG                              0
+#define MAXDBG 0
 //
 // Timeout value for IopFindBestConfiguration in milliseconds.
 //
-#define FIND_BEST_CONFIGURATION_TIMEOUT     5000
+#define FIND_BEST_CONFIGURATION_TIMEOUT 5000
 //
 // Tag used for memory allocation.
 //
-#define PNP_RESOURCE_TAG                    'erpP'
+#define PNP_RESOURCE_TAG 'erpP'
 //
 // Forward typedefs.
 //
-typedef struct _REQ_DESC
-    REQ_DESC, *PREQ_DESC;
-typedef struct _REQ_LIST
-    REQ_LIST, *PREQ_LIST;
-typedef struct _REQ_ALTERNATIVE
-    REQ_ALTERNATIVE, *PREQ_ALTERNATIVE, **PPREQ_ALTERNATIVE;
-typedef struct _DUPLICATE_DETECTION_CONTEXT
-    DUPLICATE_DETECTION_CONTEXT, *PDUPLICATE_DETECTION_CONTEXT;
-typedef struct _IOP_POOL
-    IOP_POOL, *PIOP_POOL;
+typedef struct _REQ_DESC REQ_DESC, *PREQ_DESC;
+typedef struct _REQ_LIST REQ_LIST, *PREQ_LIST;
+typedef struct _REQ_ALTERNATIVE REQ_ALTERNATIVE, *PREQ_ALTERNATIVE, **PPREQ_ALTERNATIVE;
+typedef struct _DUPLICATE_DETECTION_CONTEXT DUPLICATE_DETECTION_CONTEXT, *PDUPLICATE_DETECTION_CONTEXT;
+typedef struct _IOP_POOL IOP_POOL, *PIOP_POOL;
 //
 // Structure definitions.
 //
 // REQ_LIST represents a list of logical configurations within the
 // IO_RESOURCE_REQUIREMENTS_LIST.
 //
-struct _REQ_LIST {
-    INTERFACE_TYPE          InterfaceType;
-    ULONG                   BusNumber;
-    PIOP_RESOURCE_REQUEST   Request;                // Owning request
-    PPREQ_ALTERNATIVE       SelectedAlternative;    // Alternative selected
-    PPREQ_ALTERNATIVE       BestAlternative;        // Best alternative
-    ULONG                   AlternativeCount;       // AlternativeTable length
-    PREQ_ALTERNATIVE        AlternativeTable[1];    // Variable length
+struct _REQ_LIST
+{
+    INTERFACE_TYPE InterfaceType;
+    ULONG BusNumber;
+    PIOP_RESOURCE_REQUEST Request;         // Owning request
+    PPREQ_ALTERNATIVE SelectedAlternative; // Alternative selected
+    PPREQ_ALTERNATIVE BestAlternative;     // Best alternative
+    ULONG AlternativeCount;                // AlternativeTable length
+    PREQ_ALTERNATIVE AlternativeTable[1];  // Variable length
 };
 //
 // REQ_ALTERNATIVE represents a logical configuration.
 //
-struct _REQ_ALTERNATIVE {
-    ULONG       Priority;               // Priority for this configuration
-    ULONG       Position;               // Used for sorting if Priority is identical
-    PREQ_LIST   ReqList;                // List containing this configuration
-    ULONG       ReqAlternativeIndex;    // Index within the table in the list
-    ULONG       DescCount;              // Entry count for DescTable
-    PREQ_DESC   DescTable[1];           // Variable length
+struct _REQ_ALTERNATIVE
+{
+    ULONG Priority;            // Priority for this configuration
+    ULONG Position;            // Used for sorting if Priority is identical
+    PREQ_LIST ReqList;         // List containing this configuration
+    ULONG ReqAlternativeIndex; // Index within the table in the list
+    ULONG DescCount;           // Entry count for DescTable
+    PREQ_DESC DescTable[1];    // Variable length
 };
 //
 // REQ_DESC represents a resource descriptor within a logical configuration.
 //
-struct _REQ_DESC {
-    INTERFACE_TYPE                  InterfaceType;
-    ULONG                           BusNumber;
-    BOOLEAN                         ArbitrationRequired;
-    UCHAR                           Reserved[3];
-    PREQ_ALTERNATIVE                ReqAlternative;
-    ULONG                           ReqDescIndex;
-    PREQ_DESC                       TranslatedReqDesc;
-    ARBITER_LIST_ENTRY              AlternativeTable;
-    CM_PARTIAL_RESOURCE_DESCRIPTOR  Allocation;
-    ARBITER_LIST_ENTRY              BestAlternativeTable;
-    CM_PARTIAL_RESOURCE_DESCRIPTOR  BestAllocation;
-    ULONG                           DevicePrivateCount; // DevicePrivate info
-    PIO_RESOURCE_DESCRIPTOR         DevicePrivate;      // per LogConf
-    union {
-        PPI_RESOURCE_ARBITER_ENTRY      Arbiter;    // In original REQ_DESC
-        PPI_RESOURCE_TRANSLATOR_ENTRY   Translator; // In translated REQ_DESC
+struct _REQ_DESC
+{
+    INTERFACE_TYPE InterfaceType;
+    ULONG BusNumber;
+    BOOLEAN ArbitrationRequired;
+    UCHAR Reserved[3];
+    PREQ_ALTERNATIVE ReqAlternative;
+    ULONG ReqDescIndex;
+    PREQ_DESC TranslatedReqDesc;
+    ARBITER_LIST_ENTRY AlternativeTable;
+    CM_PARTIAL_RESOURCE_DESCRIPTOR Allocation;
+    ARBITER_LIST_ENTRY BestAlternativeTable;
+    CM_PARTIAL_RESOURCE_DESCRIPTOR BestAllocation;
+    ULONG DevicePrivateCount;              // DevicePrivate info
+    PIO_RESOURCE_DESCRIPTOR DevicePrivate; // per LogConf
+    union
+    {
+        PPI_RESOURCE_ARBITER_ENTRY Arbiter;       // In original REQ_DESC
+        PPI_RESOURCE_TRANSLATOR_ENTRY Translator; // In translated REQ_DESC
     } u;
 };
 //
 // Duplicate_detection_Context
 //
-struct _DUPLICATE_DETECTION_CONTEXT {
-    PCM_RESOURCE_LIST   TranslatedResources;
-    PDEVICE_NODE        Duplicate;
+struct _DUPLICATE_DETECTION_CONTEXT
+{
+    PCM_RESOURCE_LIST TranslatedResources;
+    PDEVICE_NODE Duplicate;
 };
 //
 // Pool
 //
-struct _IOP_POOL {
-    PUCHAR  PoolStart;
-    ULONG   PoolSize;
+struct _IOP_POOL
+{
+    PUCHAR PoolStart;
+    ULONG PoolSize;
 };
 #if DBG_SCOPE
 
-typedef struct {
-    PDEVICE_NODE                    devnode;
-    CM_PARTIAL_RESOURCE_DESCRIPTOR  resource;
+typedef struct
+{
+    PDEVICE_NODE devnode;
+    CM_PARTIAL_RESOURCE_DESCRIPTOR resource;
 } PNPRESDEBUGTRANSLATIONFAILURE;
 
-#endif  // DBG_SCOPE
+#endif // DBG_SCOPE
 //
 // MACROS
 //
 // Reused device node fields.
 //
-#define NextDeviceNode                      Sibling
-#define PreviousDeviceNode                  Child
+#define NextDeviceNode Sibling
+#define PreviousDeviceNode Child
 //
 // Call this macro to block other resource allocations and releases in the
 // system.
 //
-#define IopLockResourceManager() {      \
-    KeEnterCriticalRegion();            \
-    KeWaitForSingleObject(              \
-        &PpRegistrySemaphore,           \
-        DelayExecution,                 \
-        KernelMode,                     \
-        FALSE,                          \
-        NULL);                          \
-}
+#define IopLockResourceManager()                                                              \
+    {                                                                                         \
+        KeEnterCriticalRegion();                                                              \
+        KeWaitForSingleObject(&PpRegistrySemaphore, DelayExecution, KernelMode, FALSE, NULL); \
+    }
 //
 // Unblock other resource allocations and releases in the system.
 //
-#define IopUnlockResourceManager() {    \
-    KeReleaseSemaphore(                 \
-        &PpRegistrySemaphore,           \
-        0,                              \
-        1,                              \
-        FALSE);                         \
-    KeLeaveCriticalRegion();            \
-}
+#define IopUnlockResourceManager()                             \
+    {                                                          \
+        KeReleaseSemaphore(&PpRegistrySemaphore, 0, 1, FALSE); \
+        KeLeaveCriticalRegion();                               \
+    }
 //
 // Initialize arbiter entry.
 //
-#define IopInitializeArbiterEntryState(a) {         \
-    (a)->ResourcesChanged   = FALSE;                \
-    (a)->State              = 0;                    \
-    InitializeListHead(&(a)->ActiveArbiterList);    \
-    InitializeListHead(&(a)->BestConfig);           \
-    InitializeListHead(&(a)->ResourceList);         \
-    InitializeListHead(&(a)->BestResourceList);     \
-}
+#define IopInitializeArbiterEntryState(a)            \
+    {                                                \
+        (a)->ResourcesChanged = FALSE;               \
+        (a)->State = 0;                              \
+        InitializeListHead(&(a)->ActiveArbiterList); \
+        InitializeListHead(&(a)->BestConfig);        \
+        InitializeListHead(&(a)->ResourceList);      \
+        InitializeListHead(&(a)->BestResourceList);  \
+    }
 
-#define IS_TRANSLATED_REQ_DESC(r)   (!((r)->ReqAlternative))
+#define IS_TRANSLATED_REQ_DESC(r) (!((r)->ReqAlternative))
 //
 // Pool management MACROs
 //
-#define IopInitPool(Pool,Start,Size) {      \
-    (Pool)->PoolStart   = (Start);          \
-    (Pool)->PoolSize    = (Size);           \
-    RtlZeroMemory(Start, Size);             \
-}
-#define IopAllocPool(M,P,S) {                                       \
-    *(M)            = (PVOID)(P)->PoolStart;                        \
-    ASSERT((P)->PoolStart + (S) <= (P)->PoolStart + (P)->PoolSize); \
-    (P)->PoolStart  += (S);                                         \
-}
+#define IopInitPool(Pool, Start, Size) \
+    {                                  \
+        (Pool)->PoolStart = (Start);   \
+        (Pool)->PoolSize = (Size);     \
+        RtlZeroMemory(Start, Size);    \
+    }
+#define IopAllocPool(M, P, S)                                           \
+    {                                                                   \
+        *(M) = (PVOID)(P)->PoolStart;                                   \
+        ASSERT((P)->PoolStart + (S) <= (P)->PoolStart + (P)->PoolSize); \
+        (P)->PoolStart += (S);                                          \
+    }
 //
 // IopReleaseBootResources can only be called for non ROOT enumerated devices
 //
-#define IopReleaseBootResources(DeviceNode) {                       \
-    ASSERT(((DeviceNode)->Flags & DNF_MADEUP) == 0);                \
-    IopReleaseResourcesInternal(DeviceNode);                        \
-    (DeviceNode)->Flags &= ~DNF_HAS_BOOT_CONFIG;                    \
-    (DeviceNode)->Flags &= ~DNF_BOOT_CONFIG_RESERVED;               \
-    if ((DeviceNode)->BootResources) {                              \
-        ExFreePool((DeviceNode)->BootResources);                    \
-        (DeviceNode)->BootResources = NULL;                         \
-    }                                                               \
-}
+#define IopReleaseBootResources(DeviceNode)               \
+    {                                                     \
+        ASSERT(((DeviceNode)->Flags & DNF_MADEUP) == 0);  \
+        IopReleaseResourcesInternal(DeviceNode);          \
+        (DeviceNode)->Flags &= ~DNF_HAS_BOOT_CONFIG;      \
+        (DeviceNode)->Flags &= ~DNF_BOOT_CONFIG_RESERVED; \
+        if ((DeviceNode)->BootResources)                  \
+        {                                                 \
+            ExFreePool((DeviceNode)->BootResources);      \
+            (DeviceNode)->BootResources = NULL;           \
+        }                                                 \
+    }
 //
 // Debug support
 //
 #ifdef POOL_TAGGING
 
 #undef ExAllocatePool
-#define ExAllocatePool(a,b)         ExAllocatePoolWithTag(a,b,PNP_RESOURCE_TAG)
+#define ExAllocatePool(a, b) ExAllocatePoolWithTag(a, b, PNP_RESOURCE_TAG)
 
 #endif // POOL_TAGGING
 
 #if MAXDBG
 
-#define ExAllocatePoolAT(a,b)       ExAllocatePoolWithTag(a,b,'0rpP')
-#define ExAllocatePoolRD(a,b)       ExAllocatePoolWithTag(a,b,'1rpP')
-#define ExAllocatePoolCMRL(a,b)     ExAllocatePoolWithTag(a,b,'2rpP')
-#define ExAllocatePoolCMRR(a,b)     ExAllocatePoolWithTag(a,b,'3rpP')
-#define ExAllocatePoolAE(a,b)       ExAllocatePoolWithTag(a,b,'4rpP')
-#define ExAllocatePoolTE(a,b)       ExAllocatePoolWithTag(a,b,'5rpP')
-#define ExAllocatePoolPRD(a,b)      ExAllocatePoolWithTag(a,b,'6rpP')
-#define ExAllocatePoolIORD(a,b)     ExAllocatePoolWithTag(a,b,'7rpP')
-#define ExAllocatePool1RD(a,b)      ExAllocatePoolWithTag(a,b,'8rpP')
-#define ExAllocatePoolPDO(a,b)      ExAllocatePoolWithTag(a,b,'9rpP')
-#define ExAllocatePoolIORR(a,b)     ExAllocatePoolWithTag(a,b,'ArpP')
-#define ExAllocatePoolIORL(a,b)     ExAllocatePoolWithTag(a,b,'BrpP')
-#define ExAllocatePoolIORRR(a,b)    ExAllocatePoolWithTag(a,b,'CrpP')
+#define ExAllocatePoolAT(a, b) ExAllocatePoolWithTag(a, b, '0rpP')
+#define ExAllocatePoolRD(a, b) ExAllocatePoolWithTag(a, b, '1rpP')
+#define ExAllocatePoolCMRL(a, b) ExAllocatePoolWithTag(a, b, '2rpP')
+#define ExAllocatePoolCMRR(a, b) ExAllocatePoolWithTag(a, b, '3rpP')
+#define ExAllocatePoolAE(a, b) ExAllocatePoolWithTag(a, b, '4rpP')
+#define ExAllocatePoolTE(a, b) ExAllocatePoolWithTag(a, b, '5rpP')
+#define ExAllocatePoolPRD(a, b) ExAllocatePoolWithTag(a, b, '6rpP')
+#define ExAllocatePoolIORD(a, b) ExAllocatePoolWithTag(a, b, '7rpP')
+#define ExAllocatePool1RD(a, b) ExAllocatePoolWithTag(a, b, '8rpP')
+#define ExAllocatePoolPDO(a, b) ExAllocatePoolWithTag(a, b, '9rpP')
+#define ExAllocatePoolIORR(a, b) ExAllocatePoolWithTag(a, b, 'ArpP')
+#define ExAllocatePoolIORL(a, b) ExAllocatePoolWithTag(a, b, 'BrpP')
+#define ExAllocatePoolIORRR(a, b) ExAllocatePoolWithTag(a, b, 'CrpP')
 
-#else  // MAXDBG
+#else // MAXDBG
 
-#define ExAllocatePoolAT(a,b)       ExAllocatePool(a,b)
-#define ExAllocatePoolRD(a,b)       ExAllocatePool(a,b)
-#define ExAllocatePoolCMRL(a,b)     ExAllocatePool(a,b)
-#define ExAllocatePoolCMRR(a,b)     ExAllocatePool(a,b)
-#define ExAllocatePoolAE(a,b)       ExAllocatePool(a,b)
-#define ExAllocatePoolTE(a,b)       ExAllocatePool(a,b)
-#define ExAllocatePoolPRD(a,b)      ExAllocatePool(a,b)
-#define ExAllocatePoolIORD(a,b)     ExAllocatePool(a,b)
-#define ExAllocatePool1RD(a,b)      ExAllocatePool(a,b)
-#define ExAllocatePoolPDO(a,b)      ExAllocatePool(a,b)
-#define ExAllocatePoolIORR(a,b)     ExAllocatePool(a,b)
-#define ExAllocatePoolIORL(a,b)     ExAllocatePool(a,b)
-#define ExAllocatePoolIORRR(a,b)    ExAllocatePool(a,b)
+#define ExAllocatePoolAT(a, b) ExAllocatePool(a, b)
+#define ExAllocatePoolRD(a, b) ExAllocatePool(a, b)
+#define ExAllocatePoolCMRL(a, b) ExAllocatePool(a, b)
+#define ExAllocatePoolCMRR(a, b) ExAllocatePool(a, b)
+#define ExAllocatePoolAE(a, b) ExAllocatePool(a, b)
+#define ExAllocatePoolTE(a, b) ExAllocatePool(a, b)
+#define ExAllocatePoolPRD(a, b) ExAllocatePool(a, b)
+#define ExAllocatePoolIORD(a, b) ExAllocatePool(a, b)
+#define ExAllocatePool1RD(a, b) ExAllocatePool(a, b)
+#define ExAllocatePoolPDO(a, b) ExAllocatePool(a, b)
+#define ExAllocatePoolIORR(a, b) ExAllocatePool(a, b)
+#define ExAllocatePoolIORL(a, b) ExAllocatePool(a, b)
+#define ExAllocatePoolIORRR(a, b) ExAllocatePool(a, b)
 
 #endif // MAXDBG
 
 #if DBG_SCOPE
 
-#define IopStopOnTimeout()                  (IopUseTimeout)
+#define IopStopOnTimeout() (IopUseTimeout)
 
-VOID
-IopDumpResourceDescriptor (
-    IN PUCHAR Indent,
-    IN PIO_RESOURCE_DESCRIPTOR Desc
-    );
+VOID IopDumpResourceDescriptor(IN PUCHAR Indent, IN PIO_RESOURCE_DESCRIPTOR Desc);
 
-VOID
-IopDumpResourceRequirementsList (
-    IN PIO_RESOURCE_REQUIREMENTS_LIST IoResources
-    );
+VOID IopDumpResourceRequirementsList(IN PIO_RESOURCE_REQUIREMENTS_LIST IoResources);
 
-VOID
-IopDumpCmResourceDescriptor (
-    IN PUCHAR Indent,
-    IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Desc
-    );
+VOID IopDumpCmResourceDescriptor(IN PUCHAR Indent, IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Desc);
 
-VOID
-IopDumpCmResourceList (
-    IN PCM_RESOURCE_LIST CmList
-    );
+VOID IopDumpCmResourceList(IN PCM_RESOURCE_LIST CmList);
 
-VOID
-IopCheckDataStructuresWorker (
-    IN PDEVICE_NODE Device
-    );
+VOID IopCheckDataStructuresWorker(IN PDEVICE_NODE Device);
 
-VOID
-IopCheckDataStructures (
-    IN PDEVICE_NODE DeviceNode
-    );
+VOID IopCheckDataStructures(IN PDEVICE_NODE DeviceNode);
 
-#define IopRecordTranslationFailure(d,s) {              \
-    if (PnpResDebugTranslationFailureCount) {           \
-        PnpResDebugTranslationFailureCount--;           \
-        PnpResDebugTranslationFailure->devnode = d;     \
-        PnpResDebugTranslationFailure->resource = s;    \
-        PnpResDebugTranslationFailure++;                \
-    }                                                   \
-}
+#define IopRecordTranslationFailure(d, s)                \
+    {                                                    \
+        if (PnpResDebugTranslationFailureCount)          \
+        {                                                \
+            PnpResDebugTranslationFailureCount--;        \
+            PnpResDebugTranslationFailure->devnode = d;  \
+            PnpResDebugTranslationFailure->resource = s; \
+            PnpResDebugTranslationFailure++;             \
+        }                                                \
+    }
 
 #else
 
-#define IopStopOnTimeout()                  1
-#define IopRecordTranslationFailure(d,s)
+#define IopStopOnTimeout() 1
+#define IopRecordTranslationFailure(d, s)
 #define IopDumpResourceRequirementsList(x)
-#define IopDumpResourceDescriptor(x,y)
+#define IopDumpResourceDescriptor(x, y)
 #define IopDumpCmResourceList(c)
-#define IopDumpCmResourceDescriptor(i,d)
+#define IopDumpCmResourceDescriptor(i, d)
 #define IopCheckDataStructures(x)
 
 #endif // DBG_SCOPE
 //
 // Internal/Forward function references
 //
-VOID
-IopRemoveLegacyDeviceNode (
-    IN PDEVICE_OBJECT   DeviceObject OPTIONAL,
-    IN PDEVICE_NODE     LegacyDeviceNode
-    );
+VOID IopRemoveLegacyDeviceNode(IN PDEVICE_OBJECT DeviceObject OPTIONAL, IN PDEVICE_NODE LegacyDeviceNode);
 
 NTSTATUS
-IopFindLegacyDeviceNode (
-    IN PDRIVER_OBJECT DriverObject,
-    IN PDEVICE_OBJECT DeviceObject OPTIONAL,
-    OUT PDEVICE_NODE *LegacyDeviceNode,
-    OUT PDEVICE_OBJECT *LegacyPDO
-    );
+IopFindLegacyDeviceNode(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT DeviceObject OPTIONAL,
+                        OUT PDEVICE_NODE *LegacyDeviceNode, OUT PDEVICE_OBJECT *LegacyPDO);
 
 NTSTATUS
-IopGetResourceRequirementsForAssignTable (
-    IN  PIOP_RESOURCE_REQUEST   RequestTable,
-    IN  PIOP_RESOURCE_REQUEST   RequestTableEnd,
-    OUT PULONG                  DeviceCount
-    );
+IopGetResourceRequirementsForAssignTable(IN PIOP_RESOURCE_REQUEST RequestTable,
+                                         IN PIOP_RESOURCE_REQUEST RequestTableEnd, OUT PULONG DeviceCount);
 
 NTSTATUS
-IopResourceRequirementsListToReqList(
-    IN PIOP_RESOURCE_REQUEST Request,
-    OUT PVOID *ResReqList
-    );
+IopResourceRequirementsListToReqList(IN PIOP_RESOURCE_REQUEST Request, OUT PVOID *ResReqList);
 
-VOID
-IopRearrangeReqList (
-    IN PREQ_LIST ReqList
-    );
+VOID IopRearrangeReqList(IN PREQ_LIST ReqList);
 
-VOID
-IopRearrangeAssignTable (
-    IN PIOP_RESOURCE_REQUEST AssignTable,
-    IN ULONG Count
-    );
+VOID IopRearrangeAssignTable(IN PIOP_RESOURCE_REQUEST AssignTable, IN ULONG Count);
 
-int
-__cdecl
-IopCompareReqAlternativePriority (
-    const void *arg1,
-    const void *arg2
-    );
+int __cdecl IopCompareReqAlternativePriority(const void *arg1, const void *arg2);
 
-int
-__cdecl
-IopCompareResourceRequestPriority(
-    const void *arg1,
-    const void *arg2
-    );
+int __cdecl IopCompareResourceRequestPriority(const void *arg1, const void *arg2);
 
-VOID
-IopBuildCmResourceLists(
-    IN PIOP_RESOURCE_REQUEST AssignTable,
-    IN PIOP_RESOURCE_REQUEST AssignTableEnd
-    );
+VOID IopBuildCmResourceLists(IN PIOP_RESOURCE_REQUEST AssignTable, IN PIOP_RESOURCE_REQUEST AssignTableEnd);
 
-VOID
-IopBuildCmResourceList (
-    IN PIOP_RESOURCE_REQUEST AssignEntry
-    );
+VOID IopBuildCmResourceList(IN PIOP_RESOURCE_REQUEST AssignEntry);
 
 NTSTATUS
-IopSetupArbiterAndTranslators(
-    IN PREQ_DESC ReqDesc
-    );
+IopSetupArbiterAndTranslators(IN PREQ_DESC ReqDesc);
 
 BOOLEAN
-IopFindResourceHandlerInfo(
-    IN RESOURCE_HANDLER_TYPE    HandlerType,
-    IN PDEVICE_NODE             DeviceNode,
-    IN UCHAR                    ResourceType,
-    OUT PVOID                   *HandlerEntry
-    );
+IopFindResourceHandlerInfo(IN RESOURCE_HANDLER_TYPE HandlerType, IN PDEVICE_NODE DeviceNode, IN UCHAR ResourceType,
+                           OUT PVOID *HandlerEntry);
 
 NTSTATUS
-IopParentToRawTranslation(
-    IN OUT PREQ_DESC ReqDesc
-    );
+IopParentToRawTranslation(IN OUT PREQ_DESC ReqDesc);
 
 NTSTATUS
-IopChildToRootTranslation(
-    IN PDEVICE_NODE DeviceNode,  OPTIONAL
-    IN INTERFACE_TYPE InterfaceType,
-    IN ULONG BusNumber,
-    IN ARBITER_REQUEST_SOURCE ArbiterRequestSource,
-    IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Source,
-    OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR *Target
-    );
+IopChildToRootTranslation(IN PDEVICE_NODE DeviceNode, OPTIONAL IN INTERFACE_TYPE InterfaceType, IN ULONG BusNumber,
+                          IN ARBITER_REQUEST_SOURCE ArbiterRequestSource, IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Source,
+                          OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR *Target);
 
 NTSTATUS
-IopTranslateAndAdjustReqDesc(
-    IN PREQ_DESC ReqDesc,
-    IN PPI_RESOURCE_TRANSLATOR_ENTRY TranslatorEntry,
-    OUT PREQ_DESC *TranslatedReqDesc
-    );
+IopTranslateAndAdjustReqDesc(IN PREQ_DESC ReqDesc, IN PPI_RESOURCE_TRANSLATOR_ENTRY TranslatorEntry,
+                             OUT PREQ_DESC *TranslatedReqDesc);
 
 NTSTATUS
-IopCallArbiter(
-    PPI_RESOURCE_ARBITER_ENTRY ArbiterEntry,
-    ARBITER_ACTION Command,
-    PVOID Input1,
-    PVOID Input2,
-    PVOID Input3
-    );
+IopCallArbiter(PPI_RESOURCE_ARBITER_ENTRY ArbiterEntry, ARBITER_ACTION Command, PVOID Input1, PVOID Input2,
+               PVOID Input3);
 
 NTSTATUS
-IopFindResourcesForArbiter (
-    IN PDEVICE_NODE DeviceNode,
-    IN UCHAR ResourceType,
-    OUT ULONG *Count,
-    OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR *CmDesc
-    );
+IopFindResourcesForArbiter(IN PDEVICE_NODE DeviceNode, IN UCHAR ResourceType, OUT ULONG *Count,
+                           OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR *CmDesc);
 
-VOID
-IopReleaseResourcesInternal (
-    IN PDEVICE_NODE DeviceNode
-    );
+VOID IopReleaseResourcesInternal(IN PDEVICE_NODE DeviceNode);
 
-VOID
-IopReleaseResources (
-    IN PDEVICE_NODE DeviceNode
-    );
+VOID IopReleaseResources(IN PDEVICE_NODE DeviceNode);
 
 NTSTATUS
-IopRestoreResourcesInternal (
-    IN PDEVICE_NODE DeviceNode
-    );
+IopRestoreResourcesInternal(IN PDEVICE_NODE DeviceNode);
 
-VOID
-IopSetLegacyDeviceInstance (
-    IN PDRIVER_OBJECT DriverObject,
-    IN PDEVICE_NODE DeviceNode
-    );
+VOID IopSetLegacyDeviceInstance(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_NODE DeviceNode);
 
 PCM_RESOURCE_LIST
-IopCombineLegacyResources (
-    IN PDEVICE_NODE DeviceNode
-    );
+IopCombineLegacyResources(IN PDEVICE_NODE DeviceNode);
 
 BOOLEAN
-IopNeedToReleaseBootResources(
-    IN PDEVICE_NODE DeviceNode,
-    IN PCM_RESOURCE_LIST AllocatedResources
-    );
+IopNeedToReleaseBootResources(IN PDEVICE_NODE DeviceNode, IN PCM_RESOURCE_LIST AllocatedResources);
 
-VOID
-IopReleaseFilteredBootResources(
-    IN PIOP_RESOURCE_REQUEST AssignTable,
-    IN PIOP_RESOURCE_REQUEST AssignTableEnd
-    );
+VOID IopReleaseFilteredBootResources(IN PIOP_RESOURCE_REQUEST AssignTable, IN PIOP_RESOURCE_REQUEST AssignTableEnd);
 
 NTSTATUS
-IopQueryConflictListInternal(
-    PDEVICE_OBJECT        PhysicalDeviceObject,
-    IN PCM_RESOURCE_LIST  ResourceList,
-    IN ULONG              ResourceListSize,
-    OUT PPLUGPLAY_CONTROL_CONFLICT_LIST ConflictList,
-    IN ULONG              ConflictListSize,
-    IN ULONG              Flags
-    );
+IopQueryConflictListInternal(PDEVICE_OBJECT PhysicalDeviceObject, IN PCM_RESOURCE_LIST ResourceList,
+                             IN ULONG ResourceListSize, OUT PPLUGPLAY_CONTROL_CONFLICT_LIST ConflictList,
+                             IN ULONG ConflictListSize, IN ULONG Flags);
 
 NTSTATUS
-IopQueryConflictFillConflicts(
-    PDEVICE_OBJECT              PhysicalDeviceObject,
-    IN ULONG                    ConflictCount,
-    IN PARBITER_CONFLICT_INFO   ConflictInfoList,
-    OUT PPLUGPLAY_CONTROL_CONFLICT_LIST ConflictList,
-    IN ULONG                    ConflictListSize,
-    IN ULONG                    Flags
-    );
+IopQueryConflictFillConflicts(PDEVICE_OBJECT PhysicalDeviceObject, IN ULONG ConflictCount,
+                              IN PARBITER_CONFLICT_INFO ConflictInfoList,
+                              OUT PPLUGPLAY_CONTROL_CONFLICT_LIST ConflictList, IN ULONG ConflictListSize,
+                              IN ULONG Flags);
 
 NTSTATUS
-IopQueryConflictFillString(
-    IN PDEVICE_OBJECT   DeviceObject,
-    IN PWSTR            Buffer,
-    IN OUT PULONG       Length,
-    IN OUT PULONG       Flags
-    );
+IopQueryConflictFillString(IN PDEVICE_OBJECT DeviceObject, IN PWSTR Buffer, IN OUT PULONG Length, IN OUT PULONG Flags);
 
 BOOLEAN
-IopEliminateBogusConflict(
-    IN PDEVICE_OBJECT   PhysicalDeviceObject,
-    IN PDEVICE_OBJECT   ConflictDeviceObject
-    );
+IopEliminateBogusConflict(IN PDEVICE_OBJECT PhysicalDeviceObject, IN PDEVICE_OBJECT ConflictDeviceObject);
 
-VOID
-IopQueryRebalance (
-    IN PDEVICE_NODE DeviceNode,
-    IN ULONG Phase,
-    IN PULONG RebalanceCount,
-    IN PDEVICE_OBJECT **DeviceTable
-    );
+VOID IopQueryRebalance(IN PDEVICE_NODE DeviceNode, IN ULONG Phase, IN PULONG RebalanceCount,
+                       IN PDEVICE_OBJECT **DeviceTable);
 
-VOID
-IopQueryRebalanceWorker (
-    IN PDEVICE_NODE DeviceNode,
-    IN ULONG RebalancePhase,
-    IN PULONG RebalanceCount,
-    IN PDEVICE_OBJECT **DeviceTable
-    );
+VOID IopQueryRebalanceWorker(IN PDEVICE_NODE DeviceNode, IN ULONG RebalancePhase, IN PULONG RebalanceCount,
+                             IN PDEVICE_OBJECT **DeviceTable);
 
-VOID
-IopTestForReconfiguration (
-    IN PDEVICE_NODE DeviceNode,
-    IN ULONG RebalancePhase,
-    IN PULONG RebalanceCount,
-    IN PDEVICE_OBJECT **DeviceTable
-    );
+VOID IopTestForReconfiguration(IN PDEVICE_NODE DeviceNode, IN ULONG RebalancePhase, IN PULONG RebalanceCount,
+                               IN PDEVICE_OBJECT **DeviceTable);
 
 NTSTATUS
-IopRebalance (
-    IN ULONG AssignTableCont,
-    IN PIOP_RESOURCE_REQUEST AssignTable
-    );
+IopRebalance(IN ULONG AssignTableCont, IN PIOP_RESOURCE_REQUEST AssignTable);
 
 NTSTATUS
-IopTestConfiguration (
-    IN OUT  PLIST_ENTRY ArbiterList
-    );
+IopTestConfiguration(IN OUT PLIST_ENTRY ArbiterList);
 
 NTSTATUS
-IopRetestConfiguration (
-    IN OUT  PLIST_ENTRY ArbiterList
-    );
+IopRetestConfiguration(IN OUT PLIST_ENTRY ArbiterList);
 
 NTSTATUS
-IopCommitConfiguration (
-    IN OUT  PLIST_ENTRY ArbiterList
-    );
+IopCommitConfiguration(IN OUT PLIST_ENTRY ArbiterList);
 
-VOID
-IopSelectFirstConfiguration (
-    IN      PIOP_RESOURCE_REQUEST    RequestTable,
-    IN      ULONG                    RequestTableCount,
-    IN OUT  PLIST_ENTRY              ActiveArbiterList
-    );
+VOID IopSelectFirstConfiguration(IN PIOP_RESOURCE_REQUEST RequestTable, IN ULONG RequestTableCount,
+                                 IN OUT PLIST_ENTRY ActiveArbiterList);
 
 BOOLEAN
-IopSelectNextConfiguration (
-    IN      PIOP_RESOURCE_REQUEST    RequestTable,
-    IN      ULONG                    RequestTableCount,
-    IN OUT  PLIST_ENTRY              ActiveArbiterList
-    );
+IopSelectNextConfiguration(IN PIOP_RESOURCE_REQUEST RequestTable, IN ULONG RequestTableCount,
+                           IN OUT PLIST_ENTRY ActiveArbiterList);
 
-VOID
-IopCleanupSelectedConfiguration (
-    IN PIOP_RESOURCE_REQUEST    RequestTable,
-    IN ULONG                    RequestTableCount
-    );
+VOID IopCleanupSelectedConfiguration(IN PIOP_RESOURCE_REQUEST RequestTable, IN ULONG RequestTableCount);
 
 ULONG
-IopComputeConfigurationPriority (
-    IN PIOP_RESOURCE_REQUEST    RequestTable,
-    IN ULONG                    RequestTableCount
-    );
+IopComputeConfigurationPriority(IN PIOP_RESOURCE_REQUEST RequestTable, IN ULONG RequestTableCount);
 
-VOID
-IopSaveRestoreConfiguration (
-    IN      PIOP_RESOURCE_REQUEST   RequestTable,
-    IN      ULONG                   RequestTableCount,
-    IN OUT  PLIST_ENTRY             ArbiterList,
-    IN      BOOLEAN                 Save
-    );
+VOID IopSaveRestoreConfiguration(IN PIOP_RESOURCE_REQUEST RequestTable, IN ULONG RequestTableCount,
+                                 IN OUT PLIST_ENTRY ArbiterList, IN BOOLEAN Save);
 
-VOID
-IopAddRemoveReqDescs (
-    IN      PREQ_DESC   *ReqDescTable,
-    IN      ULONG       ReqDescCount,
-    IN OUT  PLIST_ENTRY ActiveArbiterList,
-    IN      BOOLEAN     Add
-    );
+VOID IopAddRemoveReqDescs(IN PREQ_DESC *ReqDescTable, IN ULONG ReqDescCount, IN OUT PLIST_ENTRY ActiveArbiterList,
+                          IN BOOLEAN Add);
 
 NTSTATUS
-IopFindBestConfiguration (
-    IN      PIOP_RESOURCE_REQUEST   RequestTable,
-    IN      ULONG                   RequestTableCount,
-    IN OUT  PLIST_ENTRY             ActiveArbiterList
-    );
+IopFindBestConfiguration(IN PIOP_RESOURCE_REQUEST RequestTable, IN ULONG RequestTableCount,
+                         IN OUT PLIST_ENTRY ActiveArbiterList);
 
 PDEVICE_NODE
-IopFindLegacyBusDeviceNode (
-    IN INTERFACE_TYPE InterfaceType,
-    IN ULONG BusNumber
-    );
+IopFindLegacyBusDeviceNode(IN INTERFACE_TYPE InterfaceType, IN ULONG BusNumber);
 
 NTSTATUS
-IopAllocateBootResourcesInternal (
-    IN ARBITER_REQUEST_SOURCE   ArbiterRequestSource,
-    IN PDEVICE_OBJECT           DeviceObject,
-    IN PCM_RESOURCE_LIST        BootResources
-    );
+IopAllocateBootResourcesInternal(IN ARBITER_REQUEST_SOURCE ArbiterRequestSource, IN PDEVICE_OBJECT DeviceObject,
+                                 IN PCM_RESOURCE_LIST BootResources);
 
 NTSTATUS
-IopBootAllocation (
-    IN PREQ_LIST ReqList
-    );
+IopBootAllocation(IN PREQ_LIST ReqList);
 
 PCM_RESOURCE_LIST
-IopCreateCmResourceList(
-    IN PCM_RESOURCE_LIST ResourceList,
-    IN INTERFACE_TYPE InterfaceType,
-    IN ULONG   BusNumber,
-    OUT PCM_RESOURCE_LIST *RemainingList
-    );
+IopCreateCmResourceList(IN PCM_RESOURCE_LIST ResourceList, IN INTERFACE_TYPE InterfaceType, IN ULONG BusNumber,
+                        OUT PCM_RESOURCE_LIST *RemainingList);
 
 PCM_RESOURCE_LIST
-IopCombineCmResourceList(
-    IN PCM_RESOURCE_LIST ResourceListA,
-    IN PCM_RESOURCE_LIST ResourceListB
-    );
+IopCombineCmResourceList(IN PCM_RESOURCE_LIST ResourceListA, IN PCM_RESOURCE_LIST ResourceListB);
 
-VOID
-IopFreeReqAlternative (
-    IN PREQ_ALTERNATIVE ReqAlternative
-    );
+VOID IopFreeReqAlternative(IN PREQ_ALTERNATIVE ReqAlternative);
 
-VOID
-IopFreeReqList (
-    IN PREQ_LIST ReqList
-    );
+VOID IopFreeReqList(IN PREQ_LIST ReqList);
 
-VOID
-IopFreeResourceRequirementsForAssignTable(
-    IN PIOP_RESOURCE_REQUEST AssignTable,
-    IN PIOP_RESOURCE_REQUEST AssignTableEnd
-    );
+VOID IopFreeResourceRequirementsForAssignTable(IN PIOP_RESOURCE_REQUEST AssignTable,
+                                               IN PIOP_RESOURCE_REQUEST AssignTableEnd);
 
 #ifdef ALLOC_PRAGMA
 
@@ -721,7 +527,7 @@ IopFreeResourceRequirementsForAssignTable(
 #pragma alloc_text(PAGE, IopDumpCmResourceDescriptor)
 #pragma alloc_text(PAGE, IopDumpCmResourceList)
 
-#endif  // DBG_SCOPE
+#endif // DBG_SCOPE
 
 #endif // ALLOC_PRAGMA
 //
@@ -732,33 +538,28 @@ extern const WCHAR IopWstrRaw[];
 //
 // GLOBAL variables
 //
-PIOP_RESOURCE_REQUEST   PiAssignTable;
-ULONG                   PiAssignTableCount;
-PDEVICE_NODE            IopLegacyDeviceNode;    // Head of list of made-up
-                                                // devicenodes used for legacy
-                                                // allocation.
-                                                // IoAssignResources &
-                                                // IoReportResourceUsage
+PIOP_RESOURCE_REQUEST PiAssignTable;
+ULONG PiAssignTableCount;
+PDEVICE_NODE IopLegacyDeviceNode; // Head of list of made-up
+                                  // devicenodes used for legacy
+                                  // allocation.
+                                  // IoAssignResources &
+                                  // IoReportResourceUsage
 #if DBG_SCOPE
 
 ULONG
-    PnpResDebugTranslationFailureCount = 32;  // get count in both this line and the next.
+PnpResDebugTranslationFailureCount = 32; // get count in both this line and the next.
 PNPRESDEBUGTRANSLATIONFAILURE
-    PnpResDebugTranslationFailureArray[32];
+PnpResDebugTranslationFailureArray[32];
 PNPRESDEBUGTRANSLATIONFAILURE
-    *PnpResDebugTranslationFailure = PnpResDebugTranslationFailureArray;
+*PnpResDebugTranslationFailure = PnpResDebugTranslationFailureArray;
 ULONG IopUseTimeout = 0;
 
-#endif  // DBG_SCOPE
+#endif // DBG_SCOPE
 
 NTSTATUS
-IopAllocateResources(
-    IN PULONG                       RequestCount,
-    IN OUT PIOP_RESOURCE_REQUEST    *Request,
-    IN BOOLEAN                      ResourceManagerLocked,
-    IN BOOLEAN                      DoBootConfigs,
-    OUT PBOOLEAN                    RebalancePerformed
-    )
+IopAllocateResources(IN PULONG RequestCount, IN OUT PIOP_RESOURCE_REQUEST *Request, IN BOOLEAN ResourceManagerLocked,
+                     IN BOOLEAN DoBootConfigs, OUT PBOOLEAN RebalancePerformed)
 
 /*++
 
@@ -785,13 +586,13 @@ Return Value:
 --*/
 
 {
-    NTSTATUS                status;
-    PIOP_RESOURCE_REQUEST   requestTable;
-    PIOP_RESOURCE_REQUEST   requestTableEnd;
-    ULONG                   deviceCount;
-    BOOLEAN                 attemptRebalance;
-    PIOP_RESOURCE_REQUEST   requestEntry;
-    LIST_ENTRY              activeArbiterList;
+    NTSTATUS status;
+    PIOP_RESOURCE_REQUEST requestTable;
+    PIOP_RESOURCE_REQUEST requestTableEnd;
+    ULONG deviceCount;
+    BOOLEAN attemptRebalance;
+    PIOP_RESOURCE_REQUEST requestEntry;
+    LIST_ENTRY activeArbiterList;
 
     PAGED_CODE();
 
@@ -800,48 +601,57 @@ Return Value:
     // This is to serialize allocations and releases of resources from the
     // arbiters.
     //
-    if (!ResourceManagerLocked) {
+    if (!ResourceManagerLocked)
+    {
 
         IopLockResourceManager();
     }
-    requestTable    = *Request;
+    requestTable = *Request;
     requestTableEnd = requestTable + (deviceCount = *RequestCount);
     status = IopGetResourceRequirementsForAssignTable(requestTable, requestTableEnd, &deviceCount);
-    if (deviceCount) {
+    if (deviceCount)
+    {
 
-        attemptRebalance = ((*RequestCount == 1) && (requestTable->Flags & IOP_ASSIGN_NO_REBALANCE))? FALSE : TRUE;
-        if (DoBootConfigs) {
+        attemptRebalance = ((*RequestCount == 1) && (requestTable->Flags & IOP_ASSIGN_NO_REBALANCE)) ? FALSE : TRUE;
+        if (DoBootConfigs)
+        {
 
-            if (!IopBootConfigsReserved) {
+            if (!IopBootConfigsReserved)
+            {
 
                 //
                 // Process devices with boot config. If there are none, process others.
                 //
-                for (requestEntry = requestTable; requestEntry < requestTableEnd; requestEntry++) {
+                for (requestEntry = requestTable; requestEntry < requestTableEnd; requestEntry++)
+                {
 
-                    PDEVICE_NODE    deviceNode;
+                    PDEVICE_NODE deviceNode;
 
                     deviceNode = PP_DO_TO_DN(requestEntry->PhysicalDevice);
-                    if (deviceNode->Flags & DNF_HAS_BOOT_CONFIG) {
+                    if (deviceNode->Flags & DNF_HAS_BOOT_CONFIG)
+                    {
 
                         break;
                     }
                 }
-                if (requestEntry != requestTableEnd) {
+                if (requestEntry != requestTableEnd)
+                {
 
                     //
                     // There is at least one device with boot config.
                     //
-                    for (requestEntry = requestTable; requestEntry < requestTableEnd; requestEntry++) {
+                    for (requestEntry = requestTable; requestEntry < requestTableEnd; requestEntry++)
+                    {
 
-                        PDEVICE_NODE    deviceNode;
+                        PDEVICE_NODE deviceNode;
 
                         deviceNode = PP_DO_TO_DN(requestEntry->PhysicalDevice);
-                        if (    !(requestEntry->Flags & IOP_ASSIGN_IGNORE) &&
-                                !(deviceNode->Flags & DNF_HAS_BOOT_CONFIG) &&
-                                requestEntry->ResourceRequirements) {
+                        if (!(requestEntry->Flags & IOP_ASSIGN_IGNORE) && !(deviceNode->Flags & DNF_HAS_BOOT_CONFIG) &&
+                            requestEntry->ResourceRequirements)
+                        {
 
-                            IopDbgPrint((IOP_RESOURCE_INFO_LEVEL, "Delaying non BOOT config device %wZ...\n", &deviceNode->InstancePath));
+                            IopDbgPrint((IOP_RESOURCE_INFO_LEVEL, "Delaying non BOOT config device %wZ...\n",
+                                         &deviceNode->InstancePath));
                             requestEntry->Flags |= IOP_ASSIGN_IGNORE;
                             requestEntry->Status = STATUS_RETRY;
                             deviceCount--;
@@ -849,17 +659,21 @@ Return Value:
                     }
                 }
             }
-            if (deviceCount) {
+            if (deviceCount)
+            {
 
-                if (deviceCount != (*RequestCount)) {
+                if (deviceCount != (*RequestCount))
+                {
                     //
                     // Move the uninteresting devices to the end of the table.
                     //
-                    for (requestEntry = requestTable; requestEntry < requestTableEnd; ) {
+                    for (requestEntry = requestTable; requestEntry < requestTableEnd;)
+                    {
 
                         IOP_RESOURCE_REQUEST temp;
 
-                        if (!(requestEntry->Flags & IOP_ASSIGN_IGNORE)) {
+                        if (!(requestEntry->Flags & IOP_ASSIGN_IGNORE))
+                        {
 
                             requestEntry++;
                             continue;
@@ -878,110 +692,143 @@ Return Value:
                 //
                 // Try one device at a time.
                 //
-                for (requestEntry = requestTable; requestEntry < requestTableEnd; requestEntry++) {
+                for (requestEntry = requestTable; requestEntry < requestTableEnd; requestEntry++)
+                {
 
-                    PDEVICE_NODE    deviceNode;
+                    PDEVICE_NODE deviceNode;
 
                     deviceNode = PP_DO_TO_DN(requestEntry->PhysicalDevice);
-                    IopDbgPrint((IOP_RESOURCE_INFO_LEVEL, "Trying to allocate resources for %ws.\n", deviceNode->InstancePath.Buffer));
+                    IopDbgPrint((IOP_RESOURCE_INFO_LEVEL, "Trying to allocate resources for %ws.\n",
+                                 deviceNode->InstancePath.Buffer));
                     status = IopFindBestConfiguration(requestEntry, 1, &activeArbiterList);
-                    if (NT_SUCCESS(status)) {
+                    if (NT_SUCCESS(status))
+                    {
                         //
                         // Ask the arbiters to commit this configuration.
                         //
                         status = IopCommitConfiguration(&activeArbiterList);
-                        if (NT_SUCCESS(status)) {
+                        if (NT_SUCCESS(status))
+                        {
 
                             IopBuildCmResourceLists(requestEntry, requestEntry + 1);
                             break;
-                        } else {
+                        }
+                        else
+                        {
 
                             requestEntry->Status = STATUS_CONFLICTING_ADDRESSES;
                         }
-                    } else if (status == STATUS_INSUFFICIENT_RESOURCES) {
+                    }
+                    else if (status == STATUS_INSUFFICIENT_RESOURCES)
+                    {
 
-                        IopDbgPrint((
-                            IOP_RESOURCE_WARNING_LEVEL,
-                            "IopAllocateResource: Failed to allocate Pool.\n"));
+                        IopDbgPrint((IOP_RESOURCE_WARNING_LEVEL, "IopAllocateResource: Failed to allocate Pool.\n"));
                         break;
-
-                    } else if (attemptRebalance) {
+                    }
+                    else if (attemptRebalance)
+                    {
 
                         IopDbgPrint((IOP_RESOURCE_INFO_LEVEL, "IopAllocateResources: Initiating REBALANCE...\n"));
 
                         deviceNode->Flags |= DNF_NEEDS_REBALANCE;
                         status = IopRebalance(1, requestEntry);
                         deviceNode->Flags &= ~DNF_NEEDS_REBALANCE;
-                        if (!NT_SUCCESS(status)) {
+                        if (!NT_SUCCESS(status))
+                        {
 
                             requestEntry->Status = STATUS_CONFLICTING_ADDRESSES;
-                        } else if (RebalancePerformed) {
+                        }
+                        else if (RebalancePerformed)
+                        {
 
                             *RebalancePerformed = TRUE;
                             break;
                         }
-                    } else {
+                    }
+                    else
+                    {
 
                         requestEntry->Status = STATUS_CONFLICTING_ADDRESSES;
                     }
                 }
                 //
                 // If we ran out of memory, then set the appropriate status
-                // on remaining devices. On success, set STATUS_RETRY on the 
-                // rest so we will attempt allocation again after the current 
+                // on remaining devices. On success, set STATUS_RETRY on the
+                // rest so we will attempt allocation again after the current
                 // device is started.
                 //
-                if (NT_SUCCESS(status)) {
+                if (NT_SUCCESS(status))
+                {
 
                     requestEntry++;
                 }
-                for (; requestEntry < requestTableEnd; requestEntry++) {
+                for (; requestEntry < requestTableEnd; requestEntry++)
+                {
 
-                    if (status == STATUS_INSUFFICIENT_RESOURCES) {
+                    if (status == STATUS_INSUFFICIENT_RESOURCES)
+                    {
 
                         requestEntry->Status = STATUS_INSUFFICIENT_RESOURCES;
-                    } else {
+                    }
+                    else
+                    {
 
                         requestEntry->Status = STATUS_RETRY;
                         requestEntry->Flags |= IOP_ASSIGN_IGNORE;
                     }
                 }
 
-                for (requestEntry = requestTable; requestEntry < requestTableEnd; requestEntry++) {
+                for (requestEntry = requestTable; requestEntry < requestTableEnd; requestEntry++)
+                {
 
-                    if (requestEntry->Flags & (IOP_ASSIGN_IGNORE | IOP_ASSIGN_RETRY)) {
+                    if (requestEntry->Flags & (IOP_ASSIGN_IGNORE | IOP_ASSIGN_RETRY))
+                    {
 
                         continue;
                     }
-                    if (    requestEntry->Status == STATUS_SUCCESS &&
-                            requestEntry->AllocationType == ArbiterRequestPnpEnumerated) {
+                    if (requestEntry->Status == STATUS_SUCCESS &&
+                        requestEntry->AllocationType == ArbiterRequestPnpEnumerated)
+                    {
 
                         IopReleaseFilteredBootResources(requestEntry, requestEntry + 1);
                     }
-                    if ((requestEntry->Flags & IOP_ASSIGN_EXCLUDE) || requestEntry->ResourceAssignment == NULL) {
+                    if ((requestEntry->Flags & IOP_ASSIGN_EXCLUDE) || requestEntry->ResourceAssignment == NULL)
+                    {
 
                         requestEntry->Status = STATUS_CONFLICTING_ADDRESSES;
                     }
                 }
-            } else {
+            }
+            else
+            {
 
                 status = STATUS_UNSUCCESSFUL;
             }
-        } else {
+        }
+        else
+        {
             //
             // Only process devices with no requirements.
             //
-            for (requestEntry = requestTable; requestEntry < requestTableEnd; requestEntry++) {
+            for (requestEntry = requestTable; requestEntry < requestTableEnd; requestEntry++)
+            {
 
-                PDEVICE_NODE    deviceNode;
+                PDEVICE_NODE deviceNode;
 
                 deviceNode = PP_DO_TO_DN(requestEntry->PhysicalDevice);
-                if (NT_SUCCESS(requestEntry->Status) && requestEntry->ResourceRequirements == NULL) {
+                if (NT_SUCCESS(requestEntry->Status) && requestEntry->ResourceRequirements == NULL)
+                {
 
-                    IopDbgPrint((IOP_RESOURCE_INFO_LEVEL, "IopAllocateResources: Processing no resource requiring device %wZ\n", &deviceNode->InstancePath));
-                } else {
+                    IopDbgPrint((IOP_RESOURCE_INFO_LEVEL,
+                                 "IopAllocateResources: Processing no resource requiring device %wZ\n",
+                                 &deviceNode->InstancePath));
+                }
+                else
+                {
 
-                    IopDbgPrint((IOP_RESOURCE_INFO_LEVEL, "IopAllocateResources: Ignoring resource consuming device %wZ\n", &deviceNode->InstancePath));
+                    IopDbgPrint((IOP_RESOURCE_INFO_LEVEL,
+                                 "IopAllocateResources: Ignoring resource consuming device %wZ\n",
+                                 &deviceNode->InstancePath));
                     requestEntry->Flags |= IOP_ASSIGN_IGNORE;
                     requestEntry->Status = STATUS_RETRY;
                 }
@@ -989,7 +836,8 @@ Return Value:
         }
         IopFreeResourceRequirementsForAssignTable(requestTable, requestTableEnd);
     }
-    if (!ResourceManagerLocked) {
+    if (!ResourceManagerLocked)
+    {
 
         IopUnlockResourceManager();
     }
@@ -998,10 +846,7 @@ Return Value:
 }
 
 NTSTATUS
-IopReleaseDeviceResources (
-    IN PDEVICE_NODE DeviceNode,
-    IN BOOLEAN ReserveResources
-    )
+IopReleaseDeviceResources(IN PDEVICE_NODE DeviceNode, IN BOOLEAN ReserveResources)
 
 /*++
 
@@ -1023,49 +868,44 @@ Return Value:
 
 --*/
 {
-    NTSTATUS            status;
-    PCM_RESOURCE_LIST   cmResource;
-    ULONG               cmLength;
+    NTSTATUS status;
+    PCM_RESOURCE_LIST cmResource;
+    ULONG cmLength;
 
     PAGED_CODE();
 
-    if (    !DeviceNode->ResourceList &&
-            !(DeviceNode->Flags & DNF_BOOT_CONFIG_RESERVED)) {
+    if (!DeviceNode->ResourceList && !(DeviceNode->Flags & DNF_BOOT_CONFIG_RESERVED))
+    {
 
         return STATUS_SUCCESS;
     }
-    cmResource  = NULL;
-    cmLength    = 0;
+    cmResource = NULL;
+    cmLength = 0;
     //
     // If needed, re-query for BOOT configs. We need to do this BEFORE we
     // release the BOOT config (otherwise ROOT devices cannot report BOOT
     // config).
     //
-    if (ReserveResources && !(DeviceNode->Flags & DNF_MADEUP)) {
+    if (ReserveResources && !(DeviceNode->Flags & DNF_MADEUP))
+    {
         //
         // First query for new BOOT config (order important for ROOT devices).
         //
-        status = IopQueryDeviceResources(
-                    DeviceNode->PhysicalDeviceObject,
-                    QUERY_RESOURCE_LIST,
-                    &cmResource,
-                    &cmLength);
-        if (!NT_SUCCESS(status)) {
+        status = IopQueryDeviceResources(DeviceNode->PhysicalDeviceObject, QUERY_RESOURCE_LIST, &cmResource, &cmLength);
+        if (!NT_SUCCESS(status))
+        {
 
-            cmResource  = NULL;
-            cmLength    = 0;
+            cmResource = NULL;
+            cmLength = 0;
         }
     }
     //
     // Release resources for this device.
     //
-    status = IopLegacyResourceAllocation(
-                ArbiterRequestUndefined,
-                IoPnpDriverObject,
-                DeviceNode->PhysicalDeviceObject,
-                NULL,
-                NULL);
-    if (!NT_SUCCESS(status)) {
+    status = IopLegacyResourceAllocation(ArbiterRequestUndefined, IoPnpDriverObject, DeviceNode->PhysicalDeviceObject,
+                                         NULL, NULL);
+    if (!NT_SUCCESS(status))
+    {
 
         return status;
     }
@@ -1081,48 +921,41 @@ Return Value:
     // We always rereserve the boot config (ie DNF_MADEUP root enumerated
     // and IoReportDetected) devices in IopLegacyResourceAllocation.
     //
-    if (ReserveResources && !(DeviceNode->Flags & DNF_MADEUP)) {
+    if (ReserveResources && !(DeviceNode->Flags & DNF_MADEUP))
+    {
 
-        UNICODE_STRING      unicodeName;
-        HANDLE              logConfHandle;
-        HANDLE              handle;
+        UNICODE_STRING unicodeName;
+        HANDLE logConfHandle;
+        HANDLE handle;
 
         ASSERT(DeviceNode->BootResources == NULL);
-        status = IopDeviceObjectToDeviceInstance(
-                    DeviceNode->PhysicalDeviceObject,
-                    &handle,
-                    KEY_ALL_ACCESS);
+        status = IopDeviceObjectToDeviceInstance(DeviceNode->PhysicalDeviceObject, &handle, KEY_ALL_ACCESS);
         logConfHandle = NULL;
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
 
             PiWstrToUnicodeString(&unicodeName, REGSTR_KEY_LOG_CONF);
-            status = IopCreateRegistryKeyEx(
-                        &logConfHandle,
-                        handle,
-                        &unicodeName,
-                        KEY_ALL_ACCESS,
-                        REG_OPTION_NON_VOLATILE,
-                        NULL);
+            status = IopCreateRegistryKeyEx(&logConfHandle, handle, &unicodeName, KEY_ALL_ACCESS,
+                                            REG_OPTION_NON_VOLATILE, NULL);
             ZwClose(handle);
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
 
                 logConfHandle = NULL;
             }
         }
-        if (logConfHandle) {
+        if (logConfHandle)
+        {
 
             PiWstrToUnicodeString(&unicodeName, REGSTR_VAL_BOOTCONFIG);
             PiLockPnpRegistry(FALSE);
-            if (cmResource) {
+            if (cmResource)
+            {
 
-                ZwSetValueKey(
-                    logConfHandle,
-                    &unicodeName,
-                    TITLE_INDEX_VALUE,
-                    REG_RESOURCE_LIST,
-                    cmResource,
-                    cmLength);
-            } else {
+                ZwSetValueKey(logConfHandle, &unicodeName, TITLE_INDEX_VALUE, REG_RESOURCE_LIST, cmResource, cmLength);
+            }
+            else
+            {
 
                 ZwDeleteValueKey(logConfHandle, &unicodeName);
             }
@@ -1132,16 +965,15 @@ Return Value:
         //
         // Reserve any remaining BOOT config.
         //
-        if (cmResource) {
+        if (cmResource)
+        {
 
             DeviceNode->Flags |= DNF_HAS_BOOT_CONFIG;
             //
             // This device consumes BOOT resources.  Reserve its boot resources
             //
-            (*IopAllocateBootResourcesRoutine)(
-                ArbiterRequestPnpEnumerated,
-                DeviceNode->PhysicalDeviceObject,
-                DeviceNode->BootResources = cmResource);
+            (*IopAllocateBootResourcesRoutine)(ArbiterRequestPnpEnumerated, DeviceNode->PhysicalDeviceObject,
+                                               DeviceNode->BootResources = cmResource);
         }
     }
 
@@ -1149,11 +981,8 @@ Return Value:
 }
 
 NTSTATUS
-IopGetResourceRequirementsForAssignTable (
-    IN  PIOP_RESOURCE_REQUEST   RequestTable,
-    IN  PIOP_RESOURCE_REQUEST   RequestTableEnd,
-    OUT PULONG                  DeviceCount
-    )
+IopGetResourceRequirementsForAssignTable(IN PIOP_RESOURCE_REQUEST RequestTable,
+                                         IN PIOP_RESOURCE_REQUEST RequestTableEnd, OUT PULONG DeviceCount)
 
 /*++
 
@@ -1176,31 +1005,30 @@ Return Value:
 --*/
 
 {
-    PIOP_RESOURCE_REQUEST   request;
-    NTSTATUS                status;
-    PDEVICE_NODE            deviceNode;
-    ULONG                   length;
+    PIOP_RESOURCE_REQUEST request;
+    NTSTATUS status;
+    PDEVICE_NODE deviceNode;
+    ULONG length;
 
     PAGED_CODE();
 
     *DeviceCount = 0;
-    for (   request = RequestTable;
-            request < RequestTableEnd;
-            request++) {
+    for (request = RequestTable; request < RequestTableEnd; request++)
+    {
         //
         // Skip uninteresting entries.
         //
         request->ReqList = NULL;
-        if (request->Flags & IOP_ASSIGN_IGNORE) {
+        if (request->Flags & IOP_ASSIGN_IGNORE)
+        {
 
             continue;
         }
-        request->ResourceAssignment             = NULL;
-        request->TranslatedResourceAssignment   = NULL;
-        deviceNode                              = PP_DO_TO_DN(
-                                                    request->PhysicalDevice);
-        if (    (deviceNode->Flags & DNF_RESOURCE_REQUIREMENTS_CHANGED) &&
-                deviceNode->ResourceRequirements) {
+        request->ResourceAssignment = NULL;
+        request->TranslatedResourceAssignment = NULL;
+        deviceNode = PP_DO_TO_DN(request->PhysicalDevice);
+        if ((deviceNode->Flags & DNF_RESOURCE_REQUIREMENTS_CHANGED) && deviceNode->ResourceRequirements)
+        {
 
             ExFreePool(deviceNode->ResourceRequirements);
             deviceNode->ResourceRequirements = NULL;
@@ -1211,38 +1039,38 @@ Return Value:
             //
             request->Flags |= IOP_ASSIGN_CLEAR_RESOURCE_REQUIREMENTS_CHANGE_FLAG;
         }
-        if (!request->ResourceRequirements) {
+        if (!request->ResourceRequirements)
+        {
 
-            if (    deviceNode->ResourceRequirements &&
-                    !(deviceNode->Flags & DNF_RESOURCE_REQUIREMENTS_NEED_FILTERED)) {
+            if (deviceNode->ResourceRequirements && !(deviceNode->Flags & DNF_RESOURCE_REQUIREMENTS_NEED_FILTERED))
+            {
 
-                IopDbgPrint((   IOP_RESOURCE_VERBOSE_LEVEL,
-                                "Resource requirements list already exists for "
-                                "%wZ\n",
-                                &deviceNode->InstancePath));
-                request->ResourceRequirements   = deviceNode->ResourceRequirements;
-                request->AllocationType         = ArbiterRequestPnpEnumerated;
-            } else {
+                IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL,
+                             "Resource requirements list already exists for "
+                             "%wZ\n",
+                             &deviceNode->InstancePath));
+                request->ResourceRequirements = deviceNode->ResourceRequirements;
+                request->AllocationType = ArbiterRequestPnpEnumerated;
+            }
+            else
+            {
 
-                IopDbgPrint((   IOP_RESOURCE_INFO_LEVEL,
-                                "Query Resource requirements list for %wZ...\n",
-                                &deviceNode->InstancePath));
-                status = IopQueryDeviceResources(
-                            request->PhysicalDevice,
-                            QUERY_RESOURCE_REQUIREMENTS,
-                            &request->ResourceRequirements,
-                            &length);
-                if (    !NT_SUCCESS(status) ||
-                        !request->ResourceRequirements) {
+                IopDbgPrint((IOP_RESOURCE_INFO_LEVEL, "Query Resource requirements list for %wZ...\n",
+                             &deviceNode->InstancePath));
+                status = IopQueryDeviceResources(request->PhysicalDevice, QUERY_RESOURCE_REQUIREMENTS,
+                                                 &request->ResourceRequirements, &length);
+                if (!NT_SUCCESS(status) || !request->ResourceRequirements)
+                {
                     //
                     // Success with NULL ResourceRequirements means no resource
                     // required.
                     //
-                    request->Flags  |= IOP_ASSIGN_IGNORE;
+                    request->Flags |= IOP_ASSIGN_IGNORE;
                     request->Status = status;
                     continue;
                 }
-                if (deviceNode->ResourceRequirements) {
+                if (deviceNode->ResourceRequirements)
+                {
 
                     ExFreePool(deviceNode->ResourceRequirements);
                     deviceNode->Flags &= ~DNF_RESOURCE_REQUIREMENTS_NEED_FILTERED;
@@ -1255,26 +1083,25 @@ Return Value:
         // to guarantee that it will get its current setting, even if the new
         // requirements do not cover the current setting.
         //
-        if (request->Flags & IOP_ASSIGN_KEEP_CURRENT_CONFIG) {
+        if (request->Flags & IOP_ASSIGN_KEEP_CURRENT_CONFIG)
+        {
 
             PIO_RESOURCE_REQUIREMENTS_LIST filteredList;
             BOOLEAN exactMatch;
 
-            ASSERT(
-                deviceNode->ResourceRequirements ==
-                    request->ResourceRequirements);
-            status = IopFilterResourceRequirementsList(
-                         request->ResourceRequirements,
-                         deviceNode->ResourceList,
-                         &filteredList,
-                         &exactMatch);
-            if (NT_SUCCESS(status)) {
+            ASSERT(deviceNode->ResourceRequirements == request->ResourceRequirements);
+            status = IopFilterResourceRequirementsList(request->ResourceRequirements, deviceNode->ResourceList,
+                                                       &filteredList, &exactMatch);
+            if (NT_SUCCESS(status))
+            {
                 //
                 // No need to free the original request->ResourceRequirements
                 // since its cached in deviceNode->ResourceRequirements.
                 //
                 request->ResourceRequirements = filteredList;
-            } else {
+            }
+            else
+            {
                 //
                 // Clear the flag so we dont free request->ResourceRequirements.
                 //
@@ -1285,23 +1112,22 @@ Return Value:
         //
         // Convert the requirements list to our internal representation.
         //
-        status = IopResourceRequirementsListToReqList(
-                        request,
-                        &request->ReqList);
-        if (NT_SUCCESS(status) && request->ReqList) {
+        status = IopResourceRequirementsListToReqList(request, &request->ReqList);
+        if (NT_SUCCESS(status) && request->ReqList)
+        {
 
-            PREQ_LIST   reqList = (PREQ_LIST)request->ReqList;
+            PREQ_LIST reqList = (PREQ_LIST)request->ReqList;
             //
             // Sort the list such that higher priority alternatives are placed
             // in the front of the list.
             //
             IopRearrangeReqList(reqList);
-            if (reqList->BestAlternative) {
+            if (reqList->BestAlternative)
+            {
                 //
                 // Requests from less flexible devices get higher priority.
                 //
-                request->Priority = (reqList->AlternativeCount < 3)?
-                                        0 : reqList->AlternativeCount;
+                request->Priority = (reqList->AlternativeCount < 3) ? 0 : reqList->AlternativeCount;
                 request->Status = status;
                 (*DeviceCount)++;
                 continue;
@@ -1313,17 +1139,14 @@ Return Value:
             status = STATUS_DEVICE_CONFIGURATION_ERROR;
         }
         request->Status = status;
-        request->Flags  |= IOP_ASSIGN_IGNORE;
+        request->Flags |= IOP_ASSIGN_IGNORE;
     }
 
-    return (*DeviceCount)? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
+    return (*DeviceCount) ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
 }
 
 NTSTATUS
-IopResourceRequirementsListToReqList(
-    IN  PIOP_RESOURCE_REQUEST   Request,
-    OUT PVOID                   *ResReqList
-    )
+IopResourceRequirementsListToReqList(IN PIOP_RESOURCE_REQUEST Request, OUT PVOID *ResReqList)
 
 /*++
 
@@ -1348,23 +1171,23 @@ Return Value:
 --*/
 
 {
-    PIO_RESOURCE_REQUIREMENTS_LIST  ioResources;
-    LONG                            ioResourceListCount;
-    PIO_RESOURCE_LIST               ioResourceList;
-    PIO_RESOURCE_DESCRIPTOR         ioResourceDescriptor;
-    PIO_RESOURCE_DESCRIPTOR         ioResourceDescriptorEnd;
-    PIO_RESOURCE_DESCRIPTOR         firstDescriptor;
-    PUCHAR                          coreEnd;
-    BOOLEAN                         noAlternativeDescriptor;
-    ULONG                           reqDescAlternativeCount;
-    ULONG                           alternativeDescriptorCount;
-    ULONG                           reqAlternativeCount;
-    PREQ_LIST                       reqList;
-    INTERFACE_TYPE                  interfaceType;
-    ULONG                           busNumber;
-    NTSTATUS                        status;
-    NTSTATUS                        failureStatus;
-    NTSTATUS                        finalStatus;
+    PIO_RESOURCE_REQUIREMENTS_LIST ioResources;
+    LONG ioResourceListCount;
+    PIO_RESOURCE_LIST ioResourceList;
+    PIO_RESOURCE_DESCRIPTOR ioResourceDescriptor;
+    PIO_RESOURCE_DESCRIPTOR ioResourceDescriptorEnd;
+    PIO_RESOURCE_DESCRIPTOR firstDescriptor;
+    PUCHAR coreEnd;
+    BOOLEAN noAlternativeDescriptor;
+    ULONG reqDescAlternativeCount;
+    ULONG alternativeDescriptorCount;
+    ULONG reqAlternativeCount;
+    PREQ_LIST reqList;
+    INTERFACE_TYPE interfaceType;
+    ULONG busNumber;
+    NTSTATUS status;
+    NTSTATUS failureStatus;
+    NTSTATUS finalStatus;
 
     PAGED_CODE();
 
@@ -1372,13 +1195,12 @@ Return Value:
     //
     // Make sure there is some resource requirement to be converted.
     //
-    ioResources         = Request->ResourceRequirements;
+    ioResources = Request->ResourceRequirements;
     ioResourceListCount = (LONG)ioResources->AlternativeLists;
-    if (ioResourceListCount == 0) {
+    if (ioResourceListCount == 0)
+    {
 
-        IopDbgPrint((
-            IOP_RESOURCE_INFO_LEVEL,
-            "No ResReqList to convert to ReqList\n"));
+        IopDbgPrint((IOP_RESOURCE_INFO_LEVEL, "No ResReqList to convert to ReqList\n"));
         return STATUS_SUCCESS;
     }
     //
@@ -1387,15 +1209,17 @@ Return Value:
     // Parse the requirements list to validate it and determine the sizes of
     // internal structures.
     //
-    ioResourceList              = ioResources->List;
-    coreEnd                     = (PUCHAR)ioResources + ioResources->ListSize;
-    reqDescAlternativeCount     = 0;
-    alternativeDescriptorCount  = 0;
-    while (--ioResourceListCount >= 0) {
+    ioResourceList = ioResources->List;
+    coreEnd = (PUCHAR)ioResources + ioResources->ListSize;
+    reqDescAlternativeCount = 0;
+    alternativeDescriptorCount = 0;
+    while (--ioResourceListCount >= 0)
+    {
 
-        ioResourceDescriptor    = ioResourceList->Descriptors;
+        ioResourceDescriptor = ioResourceList->Descriptors;
         ioResourceDescriptorEnd = ioResourceDescriptor + ioResourceList->Count;
-        if (ioResourceDescriptor == ioResourceDescriptorEnd) {
+        if (ioResourceDescriptor == ioResourceDescriptorEnd)
+        {
             //
             // An alternative list with zero descriptor count.
             //
@@ -1404,9 +1228,9 @@ Return Value:
         //
         // Perform sanity check. On failure, simply return failure status.
         //
-        if (    ioResourceDescriptor > ioResourceDescriptorEnd ||
-                (PUCHAR)ioResourceDescriptor > coreEnd ||
-                (PUCHAR)ioResourceDescriptorEnd > coreEnd) {
+        if (ioResourceDescriptor > ioResourceDescriptorEnd || (PUCHAR)ioResourceDescriptor > coreEnd ||
+            (PUCHAR)ioResourceDescriptorEnd > coreEnd)
+        {
             //
             // The structure header is invalid (excluding the variable length
             // Descriptors array) or,
@@ -1416,43 +1240,44 @@ Return Value:
             IopDbgPrint((IOP_RESOURCE_ERROR_LEVEL, "Invalid ResReqList\n"));
             goto InvalidParameter;
         }
-        if (ioResourceDescriptor->Type == CmResourceTypeConfigData) {
+        if (ioResourceDescriptor->Type == CmResourceTypeConfigData)
+        {
 
             ioResourceDescriptor++;
         }
-        firstDescriptor         = ioResourceDescriptor;
+        firstDescriptor = ioResourceDescriptor;
         noAlternativeDescriptor = TRUE;
-        while (ioResourceDescriptor < ioResourceDescriptorEnd) {
+        while (ioResourceDescriptor < ioResourceDescriptorEnd)
+        {
 
-            switch (ioResourceDescriptor->Type) {
+            switch (ioResourceDescriptor->Type)
+            {
             case CmResourceTypeConfigData:
 
-                 IopDbgPrint((
-                    IOP_RESOURCE_ERROR_LEVEL,
-                    "Invalid ResReq list !!!\n"
-                    "\tConfigData descriptors are per-LogConf and should be at "
-                    "the beginning of an AlternativeList\n"));
-                 goto InvalidParameter;
+                IopDbgPrint((IOP_RESOURCE_ERROR_LEVEL, "Invalid ResReq list !!!\n"
+                                                       "\tConfigData descriptors are per-LogConf and should be at "
+                                                       "the beginning of an AlternativeList\n"));
+                goto InvalidParameter;
 
             case CmResourceTypeDevicePrivate:
 
-                 while (    ioResourceDescriptor < ioResourceDescriptorEnd &&
-                            ioResourceDescriptor->Type == CmResourceTypeDevicePrivate) {
+                while (ioResourceDescriptor < ioResourceDescriptorEnd &&
+                       ioResourceDescriptor->Type == CmResourceTypeDevicePrivate)
+                {
 
-                     if (ioResourceDescriptor == firstDescriptor) {
+                    if (ioResourceDescriptor == firstDescriptor)
+                    {
 
-                        IopDbgPrint((
-                            IOP_RESOURCE_ERROR_LEVEL,
-                            "Invalid ResReq list !!!\n"
-                            "\tThe first descriptor of a LogConf can not be a "
-                            "DevicePrivate descriptor.\n"));
+                        IopDbgPrint((IOP_RESOURCE_ERROR_LEVEL, "Invalid ResReq list !!!\n"
+                                                               "\tThe first descriptor of a LogConf can not be a "
+                                                               "DevicePrivate descriptor.\n"));
                         goto InvalidParameter;
-                     }
-                     reqDescAlternativeCount++;
-                     ioResourceDescriptor++;
-                 }
-                 noAlternativeDescriptor = TRUE;
-                 break;
+                    }
+                    reqDescAlternativeCount++;
+                    ioResourceDescriptor++;
+                }
+                noAlternativeDescriptor = TRUE;
+                break;
 
             default:
 
@@ -1461,10 +1286,12 @@ Return Value:
                 // For non-arbitrated resource type, set its Option to preferred
                 // such that we won't get confused.
                 //
-                if (    (ioResourceDescriptor->Type & CmResourceTypeNonArbitrated) ||
-                        ioResourceDescriptor->Type == CmResourceTypeNull) {
+                if ((ioResourceDescriptor->Type & CmResourceTypeNonArbitrated) ||
+                    ioResourceDescriptor->Type == CmResourceTypeNull)
+                {
 
-                    if (ioResourceDescriptor->Type == CmResourceTypeReserved) {
+                    if (ioResourceDescriptor->Type == CmResourceTypeReserved)
+                    {
 
                         reqDescAlternativeCount--;
                     }
@@ -1473,19 +1300,21 @@ Return Value:
                     noAlternativeDescriptor = TRUE;
                     break;
                 }
-                if (ioResourceDescriptor->Option & IO_RESOURCE_ALTERNATIVE) {
+                if (ioResourceDescriptor->Option & IO_RESOURCE_ALTERNATIVE)
+                {
 
-                    if (noAlternativeDescriptor) {
+                    if (noAlternativeDescriptor)
+                    {
 
-                        IopDbgPrint((
-                            IOP_RESOURCE_ERROR_LEVEL,
-                            "Invalid ResReq list !!!\n"
-                            "\tAlternative descriptor without Default or "
-                            "Preferred descriptor.\n"));
-                       goto InvalidParameter;
+                        IopDbgPrint((IOP_RESOURCE_ERROR_LEVEL, "Invalid ResReq list !!!\n"
+                                                               "\tAlternative descriptor without Default or "
+                                                               "Preferred descriptor.\n"));
+                        goto InvalidParameter;
                     }
                     alternativeDescriptorCount++;
-                } else {
+                }
+                else
+                {
 
                     noAlternativeDescriptor = FALSE;
                 }
@@ -1502,44 +1331,40 @@ Return Value:
     // Allocate structures and initialize them according to caller's Io ResReq list.
     //
     {
-        ULONG               reqDescCount;
-        IOP_POOL            reqAlternativePool;
-        IOP_POOL            reqDescPool;
-        ULONG               reqListPoolSize;
-        ULONG               reqAlternativePoolSize;
-        ULONG               reqDescPoolSize;
-        PUCHAR              poolStart;
-        ULONG               poolSize;
-        IOP_POOL            outerPool;
-        PREQ_ALTERNATIVE    reqAlternative;
-        PPREQ_ALTERNATIVE   reqAlternativePP;
-        ULONG               reqAlternativeIndex;
-        PREQ_DESC           reqDesc;
-        PREQ_DESC           *reqDescPP;
-        ULONG               reqDescIndex;
+        ULONG reqDescCount;
+        IOP_POOL reqAlternativePool;
+        IOP_POOL reqDescPool;
+        ULONG reqListPoolSize;
+        ULONG reqAlternativePoolSize;
+        ULONG reqDescPoolSize;
+        PUCHAR poolStart;
+        ULONG poolSize;
+        IOP_POOL outerPool;
+        PREQ_ALTERNATIVE reqAlternative;
+        PPREQ_ALTERNATIVE reqAlternativePP;
+        ULONG reqAlternativeIndex;
+        PREQ_DESC reqDesc;
+        PREQ_DESC *reqDescPP;
+        ULONG reqDescIndex;
         PARBITER_LIST_ENTRY arbiterListEntry;
 #if DBG_SCOPE
 
-        PPREQ_ALTERNATIVE   reqAlternativeEndPP;
+        PPREQ_ALTERNATIVE reqAlternativeEndPP;
 
 #endif
-        failureStatus           = STATUS_UNSUCCESSFUL;
-        finalStatus             = STATUS_SUCCESS;
-        ioResourceList          = ioResources->List;
-        ioResourceListCount     = ioResources->AlternativeLists;
-        reqAlternativeCount     = ioResourceListCount;
-        reqDescCount            = reqDescAlternativeCount -
-                                    alternativeDescriptorCount;
-        reqDescPoolSize         = reqDescCount * sizeof(REQ_DESC);
-        reqAlternativePoolSize  = reqAlternativeCount *
-                                    (sizeof(REQ_ALTERNATIVE) +
-                                        (reqDescCount - 1) *
-                                            sizeof(PREQ_DESC));
-        reqListPoolSize         = sizeof(REQ_LIST) +
-                                    (reqAlternativeCount - 1) *
-                                        sizeof(PREQ_ALTERNATIVE);
+        failureStatus = STATUS_UNSUCCESSFUL;
+        finalStatus = STATUS_SUCCESS;
+        ioResourceList = ioResources->List;
+        ioResourceListCount = ioResources->AlternativeLists;
+        reqAlternativeCount = ioResourceListCount;
+        reqDescCount = reqDescAlternativeCount - alternativeDescriptorCount;
+        reqDescPoolSize = reqDescCount * sizeof(REQ_DESC);
+        reqAlternativePoolSize =
+            reqAlternativeCount * (sizeof(REQ_ALTERNATIVE) + (reqDescCount - 1) * sizeof(PREQ_DESC));
+        reqListPoolSize = sizeof(REQ_LIST) + (reqAlternativeCount - 1) * sizeof(PREQ_ALTERNATIVE);
         poolSize = reqListPoolSize + reqAlternativePoolSize + reqDescPoolSize;
-        if (!(poolStart = ExAllocatePoolRD(PagedPool | POOL_COLD_ALLOCATION, poolSize))) {
+        if (!(poolStart = ExAllocatePoolRD(PagedPool | POOL_COLD_ALLOCATION, poolSize)))
+        {
 
             return STATUS_INSUFFICIENT_RESOURCES;
         }
@@ -1561,10 +1386,13 @@ Return Value:
         //
         IopAllocPool(&poolStart, &outerPool, reqDescPoolSize);
         IopInitPool(&reqDescPool, poolStart, reqDescPoolSize);
-        if (ioResources->InterfaceType == InterfaceTypeUndefined) {
+        if (ioResources->InterfaceType == InterfaceTypeUndefined)
+        {
 
             interfaceType = PnpDefaultInterfaceType;
-        } else {
+        }
+        else
+        {
 
             interfaceType = ioResources->InterfaceType;
         }
@@ -1572,100 +1400,103 @@ Return Value:
         //
         // Initialize REQ_LIST.
         //
-        reqList->AlternativeCount       = reqAlternativeCount;
-        reqList->Request                = Request;
-        reqList->BusNumber              = busNumber;
-        reqList->InterfaceType          = interfaceType;
-        reqList->SelectedAlternative    = NULL;
+        reqList->AlternativeCount = reqAlternativeCount;
+        reqList->Request = Request;
+        reqList->BusNumber = busNumber;
+        reqList->InterfaceType = interfaceType;
+        reqList->SelectedAlternative = NULL;
         //
         // Initialize memory for REQ_ALTERNATIVEs.
         //
         reqAlternativePP = reqList->AlternativeTable;
-        RtlZeroMemory(
-            reqAlternativePP,
-            reqAlternativeCount * sizeof(PREQ_ALTERNATIVE));
+        RtlZeroMemory(reqAlternativePP, reqAlternativeCount * sizeof(PREQ_ALTERNATIVE));
 #if DBG_SCOPE
         reqAlternativeEndPP = reqAlternativePP + reqAlternativeCount;
 #endif
         reqAlternativeIndex = 0;
-        while (--ioResourceListCount >= 0) {
+        while (--ioResourceListCount >= 0)
+        {
 
-            ioResourceDescriptor    = ioResourceList->Descriptors;
-            ioResourceDescriptorEnd = ioResourceDescriptor +
-                                        ioResourceList->Count;
-            IopAllocPool(
-                &reqAlternative,
-                &reqAlternativePool,
-                FIELD_OFFSET(REQ_ALTERNATIVE, DescTable));
+            ioResourceDescriptor = ioResourceList->Descriptors;
+            ioResourceDescriptorEnd = ioResourceDescriptor + ioResourceList->Count;
+            IopAllocPool(&reqAlternative, &reqAlternativePool, FIELD_OFFSET(REQ_ALTERNATIVE, DescTable));
             ASSERT(reqAlternativePP < reqAlternativeEndPP);
             *reqAlternativePP++ = reqAlternative;
-            reqAlternative->ReqList             = reqList;
+            reqAlternative->ReqList = reqList;
             reqAlternative->ReqAlternativeIndex = reqAlternativeIndex++;
-            reqAlternative->DescCount           = 0;
+            reqAlternative->DescCount = 0;
             //
             // First descriptor of CmResourceTypeConfigData contains priority
             // information.
             //
-            if (ioResourceDescriptor->Type == CmResourceTypeConfigData) {
+            if (ioResourceDescriptor->Type == CmResourceTypeConfigData)
+            {
 
                 reqAlternative->Priority = ioResourceDescriptor->u.ConfigData.Priority;
                 ioResourceDescriptor++;
-            } else {
+            }
+            else
+            {
 
                 reqAlternative->Priority = LCPRI_NORMAL;
             }
             reqDescPP = reqAlternative->DescTable;
             reqDescIndex = 0;
-            while (ioResourceDescriptor < ioResourceDescriptorEnd) {
+            while (ioResourceDescriptor < ioResourceDescriptorEnd)
+            {
 
-                if (ioResourceDescriptor->Type == CmResourceTypeReserved) {
+                if (ioResourceDescriptor->Type == CmResourceTypeReserved)
+                {
 
                     interfaceType = ioResourceDescriptor->u.DevicePrivate.Data[0];
-                    if (interfaceType == InterfaceTypeUndefined) {
+                    if (interfaceType == InterfaceTypeUndefined)
+                    {
 
                         interfaceType = PnpDefaultInterfaceType;
                     }
                     busNumber = ioResourceDescriptor->u.DevicePrivate.Data[1];
                     ioResourceDescriptor++;
-                } else {
+                }
+                else
+                {
                     //
                     // Allocate and initialize REQ_DESC.
                     //
                     IopAllocPool(&reqDesc, &reqDescPool, sizeof(REQ_DESC));
                     reqAlternative->DescCount++;
-                    *reqDescPP++                    = reqDesc;
-                    reqDesc->ReqAlternative         = reqAlternative;
-                    reqDesc->TranslatedReqDesc      = reqDesc;
-                    reqDesc->ReqDescIndex           = reqDescIndex++;
-                    reqDesc->DevicePrivateCount     = 0;
-                    reqDesc->DevicePrivate          = NULL;
-                    reqDesc->InterfaceType          = interfaceType;
-                    reqDesc->BusNumber              = busNumber;
-                    reqDesc->ArbitrationRequired    =
-                        (ioResourceDescriptor->Type & CmResourceTypeNonArbitrated ||
-                            ioResourceDescriptor->Type == CmResourceTypeNull)?
-                                FALSE : TRUE;
+                    *reqDescPP++ = reqDesc;
+                    reqDesc->ReqAlternative = reqAlternative;
+                    reqDesc->TranslatedReqDesc = reqDesc;
+                    reqDesc->ReqDescIndex = reqDescIndex++;
+                    reqDesc->DevicePrivateCount = 0;
+                    reqDesc->DevicePrivate = NULL;
+                    reqDesc->InterfaceType = interfaceType;
+                    reqDesc->BusNumber = busNumber;
+                    reqDesc->ArbitrationRequired = (ioResourceDescriptor->Type & CmResourceTypeNonArbitrated ||
+                                                    ioResourceDescriptor->Type == CmResourceTypeNull)
+                                                       ? FALSE
+                                                       : TRUE;
                     //
                     // Allocate and initialize arbiter entry for this REQ_DESC.
                     //
                     IopAllocPool(&poolStart, &reqAlternativePool, sizeof(PVOID));
-                    ASSERT((PREQ_DESC*)poolStart == (reqDescPP - 1));
+                    ASSERT((PREQ_DESC *)poolStart == (reqDescPP - 1));
                     arbiterListEntry = &reqDesc->AlternativeTable;
                     InitializeListHead(&arbiterListEntry->ListEntry);
-                    arbiterListEntry->AlternativeCount      = 0;
-                    arbiterListEntry->Alternatives          = ioResourceDescriptor;
-                    arbiterListEntry->PhysicalDeviceObject  = Request->PhysicalDevice;
-                    arbiterListEntry->RequestSource         = Request->AllocationType;
-                    arbiterListEntry->WorkSpace             = 0;
-                    arbiterListEntry->InterfaceType         = interfaceType;
-                    arbiterListEntry->SlotNumber            = ioResources->SlotNumber;
-                    arbiterListEntry->BusNumber             = ioResources->BusNumber;
-                    arbiterListEntry->Assignment            = &reqDesc->Allocation;
-                    arbiterListEntry->Result                = ArbiterResultUndefined;
+                    arbiterListEntry->AlternativeCount = 0;
+                    arbiterListEntry->Alternatives = ioResourceDescriptor;
+                    arbiterListEntry->PhysicalDeviceObject = Request->PhysicalDevice;
+                    arbiterListEntry->RequestSource = Request->AllocationType;
+                    arbiterListEntry->WorkSpace = 0;
+                    arbiterListEntry->InterfaceType = interfaceType;
+                    arbiterListEntry->SlotNumber = ioResources->SlotNumber;
+                    arbiterListEntry->BusNumber = ioResources->BusNumber;
+                    arbiterListEntry->Assignment = &reqDesc->Allocation;
+                    arbiterListEntry->Result = ArbiterResultUndefined;
                     arbiterListEntry->Flags =
-                            (reqAlternative->Priority != LCPRI_BOOTCONFIG)?
-                                0 : ARBITER_FLAG_BOOT_CONFIG;
-                    if (reqDesc->ArbitrationRequired) {
+                        (reqAlternative->Priority != LCPRI_BOOTCONFIG) ? 0 : ARBITER_FLAG_BOOT_CONFIG;
+                    if (reqDesc->ArbitrationRequired)
+                    {
                         //
                         // The BestAlternativeTable and BestAllocation are not initialized.
                         // They will be initialized when needed.
@@ -1679,20 +1510,24 @@ Return Value:
 
                         arbiterListEntry->AlternativeCount++;
                         ioResourceDescriptor++;
-                        while (ioResourceDescriptor < ioResourceDescriptorEnd) {
+                        while (ioResourceDescriptor < ioResourceDescriptorEnd)
+                        {
 
-                            if (ioResourceDescriptor->Type == CmResourceTypeDevicePrivate) {
+                            if (ioResourceDescriptor->Type == CmResourceTypeDevicePrivate)
+                            {
 
                                 reqDesc->DevicePrivate = ioResourceDescriptor;
-                                while ( ioResourceDescriptor < ioResourceDescriptorEnd &&
-                                        ioResourceDescriptor->Type == CmResourceTypeDevicePrivate) {
+                                while (ioResourceDescriptor < ioResourceDescriptorEnd &&
+                                       ioResourceDescriptor->Type == CmResourceTypeDevicePrivate)
+                                {
 
                                     reqDesc->DevicePrivateCount++;
                                     ioResourceDescriptor++;
                                 }
                                 break;
                             }
-                            if (!(ioResourceDescriptor->Option & IO_RESOURCE_ALTERNATIVE)) {
+                            if (!(ioResourceDescriptor->Option & IO_RESOURCE_ALTERNATIVE))
+                            {
 
                                 break;
                             }
@@ -1704,11 +1539,11 @@ Return Value:
                         // resource descriptor.
                         //
                         status = IopSetupArbiterAndTranslators(reqDesc);
-                        if (!NT_SUCCESS(status)) {
+                        if (!NT_SUCCESS(status))
+                        {
 
-                            IopDbgPrint((
-                                IOP_RESOURCE_ERROR_LEVEL, "Unable to setup "
-                                "Arbiter and Translators\n"));
+                            IopDbgPrint((IOP_RESOURCE_ERROR_LEVEL, "Unable to setup "
+                                                                   "Arbiter and Translators\n"));
                             reqAlternativeIndex--;
                             reqAlternativePP--;
                             reqList->AlternativeCount--;
@@ -1716,36 +1551,37 @@ Return Value:
                             failureStatus = status;
                             break;
                         }
-                    } else {
+                    }
+                    else
+                    {
 
-                        reqDesc->Allocation.Type    = ioResourceDescriptor->Type;
-                        reqDesc->Allocation.ShareDisposition =
-                            ioResourceDescriptor->ShareDisposition;
-                        reqDesc->Allocation.Flags   = ioResourceDescriptor->Flags;
-                        reqDesc->Allocation.u.DevicePrivate.Data[0] =
-                            ioResourceDescriptor->u.DevicePrivate.Data[0];
-                        reqDesc->Allocation.u.DevicePrivate.Data[1] =
-                            ioResourceDescriptor->u.DevicePrivate.Data[1];
-                        reqDesc->Allocation.u.DevicePrivate.Data[2] =
-                            ioResourceDescriptor->u.DevicePrivate.Data[2];
+                        reqDesc->Allocation.Type = ioResourceDescriptor->Type;
+                        reqDesc->Allocation.ShareDisposition = ioResourceDescriptor->ShareDisposition;
+                        reqDesc->Allocation.Flags = ioResourceDescriptor->Flags;
+                        reqDesc->Allocation.u.DevicePrivate.Data[0] = ioResourceDescriptor->u.DevicePrivate.Data[0];
+                        reqDesc->Allocation.u.DevicePrivate.Data[1] = ioResourceDescriptor->u.DevicePrivate.Data[1];
+                        reqDesc->Allocation.u.DevicePrivate.Data[2] = ioResourceDescriptor->u.DevicePrivate.Data[2];
                         ioResourceDescriptor++;
                     }
                 }
-                if (ioResourceDescriptor >= ioResourceDescriptorEnd) {
+                if (ioResourceDescriptor >= ioResourceDescriptorEnd)
+                {
 
                     break;
                 }
             }
             ioResourceList = (PIO_RESOURCE_LIST)ioResourceDescriptorEnd;
         }
-        if (reqAlternativeIndex == 0) {
+        if (reqAlternativeIndex == 0)
+        {
 
             finalStatus = failureStatus;
             IopFreeReqList(reqList);
         }
     }
 
-    if (finalStatus == STATUS_SUCCESS) {
+    if (finalStatus == STATUS_SUCCESS)
+    {
 
         *ResReqList = reqList;
     }
@@ -1755,12 +1591,7 @@ InvalidParameter:
     return STATUS_INVALID_PARAMETER;
 }
 
-int
-__cdecl
-IopCompareReqAlternativePriority (
-    const void *arg1,
-    const void *arg2
-    )
+int __cdecl IopCompareReqAlternativePriority(const void *arg1, const void *arg2)
 
 /*++
 
@@ -1789,41 +1620,48 @@ Return Value:
 
     PAGED_CODE();
 
-    if (ra1->Priority == ra2->Priority) {
+    if (ra1->Priority == ra2->Priority)
+    {
 
-        if (ra1->Position > ra2->Position) {
+        if (ra1->Position > ra2->Position)
+        {
 
             return 1;
-        } else if (ra1->Position < ra2->Position) {
+        }
+        else if (ra1->Position < ra2->Position)
+        {
 
             return -1;
-        } else {
+        }
+        else
+        {
 
             ASSERT(0);
-            if ((ULONG_PTR)ra1 < (ULONG_PTR)ra2) {
-    
+            if ((ULONG_PTR)ra1 < (ULONG_PTR)ra2)
+            {
+
                 return -1;
-            } else {
-    
+            }
+            else
+            {
+
                 return 1;
             }
         }
     }
-    if (ra1->Priority > ra2->Priority) {
+    if (ra1->Priority > ra2->Priority)
+    {
 
         return 1;
-    } else {
+    }
+    else
+    {
 
         return -1;
     }
 }
 
-int
-__cdecl
-IopCompareResourceRequestPriority (
-    const void *arg1,
-    const void *arg2
-    )
+int __cdecl IopCompareResourceRequestPriority(const void *arg1, const void *arg2)
 
 /*++
 
@@ -1850,39 +1688,48 @@ Return Value:
 
     PAGED_CODE();
 
-    if (rr1->Priority == rr2->Priority) {
+    if (rr1->Priority == rr2->Priority)
+    {
 
-        if (rr1->Position > rr2->Position) {
+        if (rr1->Position > rr2->Position)
+        {
 
             return 1;
-        } else if (rr1->Position < rr2->Position) {
+        }
+        else if (rr1->Position < rr2->Position)
+        {
 
             return -1;
-        } else {
+        }
+        else
+        {
 
             ASSERT(0);
-            if ((ULONG_PTR)rr1 < (ULONG_PTR)rr2) {
+            if ((ULONG_PTR)rr1 < (ULONG_PTR)rr2)
+            {
 
                 return -1;
-            } else {
+            }
+            else
+            {
 
                 return 1;
-            }            
+            }
         }
     }
-    if (rr1->Priority > rr2->Priority) {
+    if (rr1->Priority > rr2->Priority)
+    {
 
         return 1;
-    } else {
+    }
+    else
+    {
 
         return -1;
     }
 }
 
-VOID
-IopRearrangeReqList (
-    IN PREQ_LIST ReqList
-    )
+VOID IopRearrangeReqList(IN PREQ_LIST ReqList)
 
 /*++
 
@@ -1908,54 +1755,50 @@ Return Value:
 
     PAGED_CODE();
 
-    if (ReqList->AlternativeCount > 1) {
+    if (ReqList->AlternativeCount > 1)
+    {
 
-        for (i = 0; i < ReqList->AlternativeCount; i++) {
+        for (i = 0; i < ReqList->AlternativeCount; i++)
+        {
 
             ReqList->AlternativeTable[i]->Position = i;
         }
-        qsort(
-            (void *)ReqList->AlternativeTable,
-            ReqList->AlternativeCount,
-            sizeof(PREQ_ALTERNATIVE),
-            IopCompareReqAlternativePriority);
+        qsort((void *)ReqList->AlternativeTable, ReqList->AlternativeCount, sizeof(PREQ_ALTERNATIVE),
+              IopCompareReqAlternativePriority);
     }
     //
     // Set the BestAlternative so that we try alternatives with
     // priority <= LCPRI_LASTSOFTCONFIG.
     //
     alternative = &ReqList->AlternativeTable[0];
-    for (   lastAlternative = alternative + ReqList->AlternativeCount;
-            alternative < lastAlternative;
-            alternative++) {
+    for (lastAlternative = alternative + ReqList->AlternativeCount; alternative < lastAlternative; alternative++)
+    {
 
-        if ((*alternative)->Priority > LCPRI_LASTSOFTCONFIG) {
+        if ((*alternative)->Priority > LCPRI_LASTSOFTCONFIG)
+        {
 
             break;
         }
     }
 
-    if (alternative == &ReqList->AlternativeTable[0]) {
+    if (alternative == &ReqList->AlternativeTable[0])
+    {
 
         PDEVICE_NODE deviceNode;
 
         deviceNode = PP_DO_TO_DN(ReqList->Request->PhysicalDevice);
-        IopDbgPrint((
-            IOP_RESOURCE_WARNING_LEVEL,
-            "Invalid priorities in the logical configs for %wZ\n",
-            &deviceNode->InstancePath));
+        IopDbgPrint((IOP_RESOURCE_WARNING_LEVEL, "Invalid priorities in the logical configs for %wZ\n",
+                     &deviceNode->InstancePath));
         ReqList->BestAlternative = NULL;
-    } else {
+    }
+    else
+    {
 
         ReqList->BestAlternative = alternative;
     }
 }
 
-VOID
-IopRearrangeAssignTable (
-    IN PIOP_RESOURCE_REQUEST    RequestTable,
-    IN ULONG                    Count
-    )
+VOID IopRearrangeAssignTable(IN PIOP_RESOURCE_REQUEST RequestTable, IN ULONG Count)
 
 /*++
 
@@ -1977,31 +1820,27 @@ Return Value:
 --*/
 
 {
-    ULONG   i;
+    ULONG i;
 
     PAGED_CODE();
 
-    if (Count > 1) {
+    if (Count > 1)
+    {
 
-        if (PpCallerInitializesRequestTable == FALSE) {
+        if (PpCallerInitializesRequestTable == FALSE)
+        {
 
-            for (i = 0; i < Count; i++) {
-    
+            for (i = 0; i < Count; i++)
+            {
+
                 RequestTable[i].Position = i;
             }
         }
-        qsort(
-            (void *)RequestTable,
-            Count,
-            sizeof(IOP_RESOURCE_REQUEST),
-            IopCompareResourceRequestPriority);
+        qsort((void *)RequestTable, Count, sizeof(IOP_RESOURCE_REQUEST), IopCompareResourceRequestPriority);
     }
 }
 
-VOID
-IopBuildCmResourceList (
-    IN PIOP_RESOURCE_REQUEST AssignEntry
-    )
+VOID IopBuildCmResourceList(IN PIOP_RESOURCE_REQUEST AssignEntry)
 /*++
 
 Routine Description:
@@ -2047,32 +1886,31 @@ Return Value:
     //
 
     reqAlternative = *reqList->SelectedAlternative;
-    for (i = 0; i < reqAlternative->DescCount; i++) {
+    for (i = 0; i < reqAlternative->DescCount; i++)
+    {
         reqDesc = reqAlternative->DescTable[i];
         count += reqDesc->DevicePrivateCount + 1;
     }
 
     size = sizeof(CM_RESOURCE_LIST) + sizeof(CM_PARTIAL_RESOURCE_DESCRIPTOR) * (count - 1);
-    cmResources = (PCM_RESOURCE_LIST) ExAllocatePoolCMRL(PagedPool, size);
-    if (!cmResources) {
+    cmResources = (PCM_RESOURCE_LIST)ExAllocatePoolCMRL(PagedPool, size);
+    if (!cmResources)
+    {
 
         //
         // If we can not find memory, the resources will not be committed by arbiter.
         //
 
-        IopDbgPrint((
-            IOP_RESOURCE_WARNING_LEVEL,
-            "Not enough memory to build Translated CmResourceList\n"));
+        IopDbgPrint((IOP_RESOURCE_WARNING_LEVEL, "Not enough memory to build Translated CmResourceList\n"));
         AssignEntry->Status = STATUS_INSUFFICIENT_RESOURCES;
         AssignEntry->ResourceAssignment = NULL;
         AssignEntry->TranslatedResourceAssignment = NULL;
         return;
     }
-    cmResourcesRaw = (PCM_RESOURCE_LIST) ExAllocatePoolCMRR(PagedPool, size);
-    if (!cmResourcesRaw) {
-        IopDbgPrint((
-            IOP_RESOURCE_WARNING_LEVEL,
-            "Not enough memory to build Raw CmResourceList\n"));
+    cmResourcesRaw = (PCM_RESOURCE_LIST)ExAllocatePoolCMRR(PagedPool, size);
+    if (!cmResourcesRaw)
+    {
+        IopDbgPrint((IOP_RESOURCE_WARNING_LEVEL, "Not enough memory to build Raw CmResourceList\n"));
         ExFreePool(cmResources);
         AssignEntry->Status = STATUS_INSUFFICIENT_RESOURCES;
         AssignEntry->ResourceAssignment = NULL;
@@ -2112,22 +1950,24 @@ Return Value:
     cmDescriptorEndRaw = cmDescriptorRaw + count;
 #endif
 
-    for (i = 0; i < reqAlternative->DescCount; i++) {
+    for (i = 0; i < reqAlternative->DescCount; i++)
+    {
         reqDesc = reqAlternative->DescTable[i];
 
-        if (reqDesc->ArbitrationRequired) {
+        if (reqDesc->ArbitrationRequired)
+        {
 
             //
             // Get raw assignment and copy it to our raw resource list
             //
 
             reqDescx = reqDesc->TranslatedReqDesc;
-            if (reqDescx->AlternativeTable.Result != ArbiterResultNullRequest) {
+            if (reqDescx->AlternativeTable.Result != ArbiterResultNullRequest)
+            {
                 status = IopParentToRawTranslation(reqDescx);
-                if (!NT_SUCCESS(status)) {
-                    IopDbgPrint((
-                        IOP_RESOURCE_WARNING_LEVEL,
-                        "Parent To Raw translation failed\n"));
+                if (!NT_SUCCESS(status))
+                {
+                    IopDbgPrint((IOP_RESOURCE_WARNING_LEVEL, "Parent To Raw translation failed\n"));
                     ExFreePool(cmResources);
                     ExFreePool(cmResourcesRaw);
                     AssignEntry->Status = STATUS_INSUFFICIENT_RESOURCES;
@@ -2135,7 +1975,9 @@ Return Value:
                     return;
                 }
                 assignment = reqDesc->AlternativeTable.Assignment;
-            } else {
+            }
+            else
+            {
                 assignment = reqDescx->AlternativeTable.Assignment;
             }
             *cmDescriptorRaw = *assignment;
@@ -2144,19 +1986,14 @@ Return Value:
             //
             // Translate assignment and copy it to our translated resource list
             //
-            if (reqDescx->AlternativeTable.Result != ArbiterResultNullRequest) {
+            if (reqDescx->AlternativeTable.Result != ArbiterResultNullRequest)
+            {
                 status = IopChildToRootTranslation(
-                            PP_DO_TO_DN(reqDesc->AlternativeTable.PhysicalDeviceObject),
-                            reqDesc->InterfaceType,
-                            reqDesc->BusNumber,
-                            reqDesc->AlternativeTable.RequestSource,
-                            &reqDesc->Allocation,
-                            &tAssignment
-                            );
-                if (!NT_SUCCESS(status)) {
-                    IopDbgPrint((
-                        IOP_RESOURCE_WARNING_LEVEL,
-                        "Child to Root translation failed\n"));
+                    PP_DO_TO_DN(reqDesc->AlternativeTable.PhysicalDeviceObject), reqDesc->InterfaceType,
+                    reqDesc->BusNumber, reqDesc->AlternativeTable.RequestSource, &reqDesc->Allocation, &tAssignment);
+                if (!NT_SUCCESS(status))
+                {
+                    IopDbgPrint((IOP_RESOURCE_WARNING_LEVEL, "Child to Root translation failed\n"));
                     ExFreePool(cmResources);
                     ExFreePool(cmResourcesRaw);
                     AssignEntry->Status = STATUS_INSUFFICIENT_RESOURCES;
@@ -2165,12 +2002,15 @@ Return Value:
                 }
                 *cmDescriptor = *tAssignment;
                 ExFreePool(tAssignment);
-            } else {
+            }
+            else
+            {
                 *cmDescriptor = *(reqDescx->AlternativeTable.Assignment);
             }
             cmDescriptor++;
-
-        } else {
+        }
+        else
+        {
             *cmDescriptorRaw = reqDesc->Allocation;
             *cmDescriptor = reqDesc->Allocation;
             cmDescriptorRaw++;
@@ -2183,20 +2023,16 @@ Return Value:
 
         count = reqDesc->DevicePrivateCount;
         privateData = reqDesc->DevicePrivate;
-        while (count != 0) {
+        while (count != 0)
+        {
 
             cmDescriptor->Type = cmDescriptorRaw->Type = CmResourceTypeDevicePrivate;
-            cmDescriptor->ShareDisposition = cmDescriptorRaw->ShareDisposition =
-                         CmResourceShareDeviceExclusive;
+            cmDescriptor->ShareDisposition = cmDescriptorRaw->ShareDisposition = CmResourceShareDeviceExclusive;
             cmDescriptor->Flags = cmDescriptorRaw->Flags = privateData->Flags;
-            RtlMoveMemory(&cmDescriptorRaw->u.DevicePrivate,
-                          &privateData->u.DevicePrivate,
-                          sizeof(cmDescriptorRaw->u.DevicePrivate.Data)
-                          );
-            RtlMoveMemory(&cmDescriptor->u.DevicePrivate,
-                          &privateData->u.DevicePrivate,
-                          sizeof(cmDescriptor->u.DevicePrivate.Data)
-                          );
+            RtlMoveMemory(&cmDescriptorRaw->u.DevicePrivate, &privateData->u.DevicePrivate,
+                          sizeof(cmDescriptorRaw->u.DevicePrivate.Data));
+            RtlMoveMemory(&cmDescriptor->u.DevicePrivate, &privateData->u.DevicePrivate,
+                          sizeof(cmDescriptor->u.DevicePrivate.Data));
             privateData++;
             cmDescriptorRaw++;
             cmDescriptor++;
@@ -2206,7 +2042,6 @@ Return Value:
         }
         ASSERT(cmDescriptor <= cmDescriptorEnd);
         ASSERT(cmDescriptorRaw <= cmDescriptorEndRaw);
-
     }
 
     //
@@ -2219,14 +2054,10 @@ Return Value:
     // Open ResourceMap key
     //
 
-    status = IopCreateRegistryKeyEx( &resourceMapKey,
-                                     (HANDLE) NULL,
-                                     &CmRegistryMachineHardwareResourceMapName,
-                                     KEY_READ | KEY_WRITE,
-                                     REG_OPTION_VOLATILE,
-                                     NULL
-                                     );
-    if (NT_SUCCESS(status )) {
+    status = IopCreateRegistryKeyEx(&resourceMapKey, (HANDLE)NULL, &CmRegistryMachineHardwareResourceMapName,
+                                    KEY_READ | KEY_WRITE, REG_OPTION_VOLATILE, NULL);
+    if (NT_SUCCESS(status))
+    {
         WCHAR DeviceBuffer[256];
         POBJECT_NAME_INFORMATION NameInformation;
         ULONG NameLength;
@@ -2238,14 +2069,13 @@ Return Value:
 
         PiWstrToUnicodeString(&UnicodeDriverName, REGSTR_KEY_PNP_DRIVER);
 
-        NameInformation = (POBJECT_NAME_INFORMATION) DeviceBuffer;
-        status = ObQueryNameString( physicalDevice,
-                                    NameInformation,
-                                    sizeof( DeviceBuffer ),
-                                    &NameLength );
-        if (NT_SUCCESS(status)) {
+        NameInformation = (POBJECT_NAME_INFORMATION)DeviceBuffer;
+        status = ObQueryNameString(physicalDevice, NameInformation, sizeof(DeviceBuffer), &NameLength);
+        if (NT_SUCCESS(status))
+        {
             NameInformation->Name.MaximumLength = sizeof(DeviceBuffer) - sizeof(OBJECT_NAME_INFORMATION);
-            if (NameInformation->Name.Length == 0) {
+            if (NameInformation->Name.Length == 0)
+            {
                 NameInformation->Name.Buffer = (PVOID)((ULONG_PTR)DeviceBuffer + sizeof(OBJECT_NAME_INFORMATION));
             }
 
@@ -2257,25 +2087,14 @@ Return Value:
             // specifiec descriptors.
             //
 
-            status = IopWriteResourceList(
-                         resourceMapKey,
-                         &UnicodeClassName,
-                         &UnicodeDriverName,
-                         &UnicodeDeviceName,
-                         cmResourcesRaw,
-                         size
-                         );
-            if (NT_SUCCESS(status)) {
+            status = IopWriteResourceList(resourceMapKey, &UnicodeClassName, &UnicodeDriverName, &UnicodeDeviceName,
+                                          cmResourcesRaw, size);
+            if (NT_SUCCESS(status))
+            {
                 UnicodeDeviceName = NameInformation->Name;
-                RtlAppendUnicodeToString (&UnicodeDeviceName, IopWstrTranslated);
-                status = IopWriteResourceList(
-                             resourceMapKey,
-                             &UnicodeClassName,
-                             &UnicodeDriverName,
-                             &UnicodeDeviceName,
-                             cmResources,
-                             size
-                             );
+                RtlAppendUnicodeToString(&UnicodeDeviceName, IopWstrTranslated);
+                status = IopWriteResourceList(resourceMapKey, &UnicodeClassName, &UnicodeDriverName, &UnicodeDeviceName,
+                                              cmResources, size);
             }
         }
         ZwClose(resourceMapKey);
@@ -2291,12 +2110,8 @@ Return Value:
     AssignEntry->ResourceAssignment = cmResourcesRaw;
     AssignEntry->TranslatedResourceAssignment = cmResources;
 }
-
-VOID
-IopBuildCmResourceLists(
-    IN PIOP_RESOURCE_REQUEST AssignTable,
-    IN PIOP_RESOURCE_REQUEST AssignTableEnd
-    )
+
+VOID IopBuildCmResourceLists(IN PIOP_RESOURCE_REQUEST AssignTable, IN PIOP_RESOURCE_REQUEST AssignTableEnd)
 
 /*++
 
@@ -2329,48 +2144,40 @@ Return Value:
     // from its ListOfAssignedResources.
     //
 
-    for (assignEntry = AssignTable; assignEntry < AssignTableEnd; ++assignEntry) {
+    for (assignEntry = AssignTable; assignEntry < AssignTableEnd; ++assignEntry)
+    {
 
         assignEntry->ResourceAssignment = NULL;
-        if (assignEntry->Flags & IOP_ASSIGN_IGNORE || assignEntry->Flags & IOP_ASSIGN_RETRY) {
+        if (assignEntry->Flags & IOP_ASSIGN_IGNORE || assignEntry->Flags & IOP_ASSIGN_RETRY)
+        {
             continue;
         }
-        if (assignEntry->Flags & IOP_ASSIGN_EXCLUDE) {
+        if (assignEntry->Flags & IOP_ASSIGN_EXCLUDE)
+        {
             assignEntry->Status = STATUS_UNSUCCESSFUL;
             continue;
         }
         assignEntry->Status = STATUS_SUCCESS;
-        IopBuildCmResourceList (assignEntry);
-        if (assignEntry->ResourceAssignment) {
+        IopBuildCmResourceList(assignEntry);
+        if (assignEntry->ResourceAssignment)
+        {
             physicalDevice = assignEntry->PhysicalDevice;
             deviceNode = PP_DO_TO_DN(physicalDevice);
-            IopWriteAllocatedResourcesToRegistry(
-                  deviceNode,
-                  assignEntry->ResourceAssignment,
-                  IopDetermineResourceListSize(assignEntry->ResourceAssignment)
-                  );
-            IopDbgPrint((
-                IOP_RESOURCE_INFO_LEVEL,
-                "Building CM resource lists for %ws...\n",
-                deviceNode->InstancePath.Buffer));
+            IopWriteAllocatedResourcesToRegistry(deviceNode, assignEntry->ResourceAssignment,
+                                                 IopDetermineResourceListSize(assignEntry->ResourceAssignment));
+            IopDbgPrint(
+                (IOP_RESOURCE_INFO_LEVEL, "Building CM resource lists for %ws...\n", deviceNode->InstancePath.Buffer));
 
-            IopDbgPrint((
-                IOP_RESOURCE_INFO_LEVEL,
-                "Raw resources "));
+            IopDbgPrint((IOP_RESOURCE_INFO_LEVEL, "Raw resources "));
             IopDumpCmResourceList(assignEntry->ResourceAssignment);
-            IopDbgPrint((
-                IOP_RESOURCE_INFO_LEVEL,
-                "Translated resources "));
+            IopDbgPrint((IOP_RESOURCE_INFO_LEVEL, "Translated resources "));
             IopDumpCmResourceList(assignEntry->TranslatedResourceAssignment);
         }
     }
 }
-
+
 BOOLEAN
-IopNeedToReleaseBootResources(
-    IN PDEVICE_NODE DeviceNode,
-    IN PCM_RESOURCE_LIST AllocatedResources
-    )
+IopNeedToReleaseBootResources(IN PDEVICE_NODE DeviceNode, IN PCM_RESOURCE_LIST AllocatedResources)
 
 /*++
 
@@ -2403,43 +2210,53 @@ Return Value:
     PAGED_CODE();
 
     bootResources = DeviceNode->BootResources;
-    if (AllocatedResources->Count == 1 && bootResources && bootResources->Count != 0) {
+    if (AllocatedResources->Count == 1 && bootResources && bootResources->Count != 0)
+    {
 
         cmFullDesc_a = &AllocatedResources->List[0];
         cmFullDesc_b = &bootResources->List[0];
-        for (i = 0; i < bootResources->Count; i++) {
+        for (i = 0; i < bootResources->Count; i++)
+        {
             cmDescriptor_b = &cmFullDesc_b->PartialResourceList.PartialDescriptors[0];
-            for (j = 0; j < cmFullDesc_b->PartialResourceList.Count; j++) {
+            for (j = 0; j < cmFullDesc_b->PartialResourceList.Count; j++)
+            {
                 size_b = 0;
-                switch (cmDescriptor_b->Type) {
+                switch (cmDescriptor_b->Type)
+                {
                 case CmResourceTypeNull:
                     break;
                 case CmResourceTypeDeviceSpecific:
-                     size_b = cmDescriptor_b->u.DeviceSpecificData.DataSize;
-                     break;
+                    size_b = cmDescriptor_b->u.DeviceSpecificData.DataSize;
+                    break;
                 default:
-                     if (cmDescriptor_b->Type < CmResourceTypeMaximum) {
-                         found = FALSE;
-                         cmDescriptor_a = &cmFullDesc_a->PartialResourceList.PartialDescriptors[0];
-                         for (k = 0; k < cmFullDesc_a->PartialResourceList.Count; k++) {
-                             size_a = 0;
-                             if (cmDescriptor_a->Type == CmResourceTypeDeviceSpecific) {
-                                 size_a = cmDescriptor_a->u.DeviceSpecificData.DataSize;
-                             } else if (cmDescriptor_b->Type == cmDescriptor_a->Type) {
-                                 found = TRUE;
-                                 break;
-                             }
-                             cmDescriptor_a++;
-                             cmDescriptor_a = (PCM_PARTIAL_RESOURCE_DESCRIPTOR) ((PUCHAR)cmDescriptor_a + size_a);
-                         }
-                         if (found == FALSE) {
-                             returnValue = TRUE;
-                             goto exit;
-                         }
-                     }
+                    if (cmDescriptor_b->Type < CmResourceTypeMaximum)
+                    {
+                        found = FALSE;
+                        cmDescriptor_a = &cmFullDesc_a->PartialResourceList.PartialDescriptors[0];
+                        for (k = 0; k < cmFullDesc_a->PartialResourceList.Count; k++)
+                        {
+                            size_a = 0;
+                            if (cmDescriptor_a->Type == CmResourceTypeDeviceSpecific)
+                            {
+                                size_a = cmDescriptor_a->u.DeviceSpecificData.DataSize;
+                            }
+                            else if (cmDescriptor_b->Type == cmDescriptor_a->Type)
+                            {
+                                found = TRUE;
+                                break;
+                            }
+                            cmDescriptor_a++;
+                            cmDescriptor_a = (PCM_PARTIAL_RESOURCE_DESCRIPTOR)((PUCHAR)cmDescriptor_a + size_a);
+                        }
+                        if (found == FALSE)
+                        {
+                            returnValue = TRUE;
+                            goto exit;
+                        }
+                    }
                 }
                 cmDescriptor_b++;
-                cmDescriptor_b = (PCM_PARTIAL_RESOURCE_DESCRIPTOR) ((PUCHAR)cmDescriptor_b + size_b);
+                cmDescriptor_b = (PCM_PARTIAL_RESOURCE_DESCRIPTOR)((PUCHAR)cmDescriptor_b + size_b);
             }
             cmFullDesc_b = (PCM_FULL_RESOURCE_DESCRIPTOR)cmDescriptor_b;
         }
@@ -2448,11 +2265,7 @@ exit:
     return returnValue;
 }
 
-VOID
-IopReleaseFilteredBootResources(
-    IN PIOP_RESOURCE_REQUEST AssignTable,
-    IN PIOP_RESOURCE_REQUEST AssignTableEnd
-    )
+VOID IopReleaseFilteredBootResources(IN PIOP_RESOURCE_REQUEST AssignTable, IN PIOP_RESOURCE_REQUEST AssignTableEnd)
 
 /*++
 
@@ -2486,9 +2299,11 @@ Return Value:
     // from its ListOfAssignedResources.
     //
 
-    for (assignEntry = AssignTable; assignEntry < AssignTableEnd; ++assignEntry) {
+    for (assignEntry = AssignTable; assignEntry < AssignTableEnd; ++assignEntry)
+    {
 
-        if (assignEntry->ResourceAssignment) {
+        if (assignEntry->ResourceAssignment)
+        {
             physicalDevice = assignEntry->PhysicalDevice;
             deviceNode = PP_DO_TO_DN(physicalDevice);
 
@@ -2501,7 +2316,8 @@ Return Value:
             // to achieve.  So, we will do it.
             //
 
-            if (IopNeedToReleaseBootResources(deviceNode, assignEntry->ResourceAssignment)) {
+            if (IopNeedToReleaseBootResources(deviceNode, assignEntry->ResourceAssignment))
+            {
 
                 IopReleaseResourcesInternal(deviceNode);
                 //
@@ -2510,19 +2326,16 @@ Return Value:
                 //
                 PipRequestDeviceAction(NULL, AssignResources, FALSE, 0, NULL, NULL);
 
-                IopAllocateBootResourcesInternal(
-                        ArbiterRequestPnpEnumerated,
-                        physicalDevice,
-                        assignEntry->ResourceAssignment);
-                deviceNode->Flags &= ~DNF_BOOT_CONFIG_RESERVED;  // Keep DeviceNode->BootResources
+                IopAllocateBootResourcesInternal(ArbiterRequestPnpEnumerated, physicalDevice,
+                                                 assignEntry->ResourceAssignment);
+                deviceNode->Flags &= ~DNF_BOOT_CONFIG_RESERVED; // Keep DeviceNode->BootResources
                 deviceNode->ResourceList = assignEntry->ResourceAssignment;
                 status = IopRestoreResourcesInternal(deviceNode);
-                if (!NT_SUCCESS(status)) {
+                if (!NT_SUCCESS(status))
+                {
 
-                    IopDbgPrint((
-                        IOP_RESOURCE_WARNING_LEVEL,
-                        "Possible boot conflict on %ws\n",
-                        deviceNode->InstancePath.Buffer));
+                    IopDbgPrint((IOP_RESOURCE_WARNING_LEVEL, "Possible boot conflict on %ws\n",
+                                 deviceNode->InstancePath.Buffer));
                     ASSERT(status == STATUS_SUCCESS);
                     assignEntry->Flags = IOP_ASSIGN_EXCLUDE;
                     assignEntry->Status = status;
@@ -2536,9 +2349,7 @@ Return Value:
 }
 
 NTSTATUS
-IopSetupArbiterAndTranslators(
-    IN PREQ_DESC ReqDesc
-    )
+IopSetupArbiterAndTranslators(IN PREQ_DESC ReqDesc)
 
 /*++
 
@@ -2565,20 +2376,22 @@ Return Value:
     PDEVICE_NODE deviceNode;
     PREQ_DESC reqDesc = ReqDesc, translatedReqDesc;
     BOOLEAN found, arbiterFound = FALSE, restartedAlready;
-    BOOLEAN  searchTranslator = TRUE, translatorFound = FALSE;
+    BOOLEAN searchTranslator = TRUE, translatorFound = FALSE;
     NTSTATUS status;
     PPI_RESOURCE_TRANSLATOR_ENTRY translatorEntry;
     UCHAR resourceType = ReqDesc->TranslatedReqDesc->AlternativeTable.Alternatives->Type;
     PINTERFACE interface;
     USHORT resourceMask;
 
-    if ((ReqDesc->AlternativeTable.RequestSource == ArbiterRequestHalReported) &&
-        (ReqDesc->InterfaceType == Internal)) {
+    if ((ReqDesc->AlternativeTable.RequestSource == ArbiterRequestHalReported) && (ReqDesc->InterfaceType == Internal))
+    {
 
         // Trust hal if it says internal bus.
 
         restartedAlready = TRUE;
-    } else {
+    }
+    else
+    {
         restartedAlready = FALSE;
     }
 
@@ -2587,12 +2400,15 @@ Return Value:
     // or boot resources preallocation.  Otherwise, it is for resources reservation.
     //
 
-    if (deviceObject && ReqDesc->AlternativeTable.RequestSource != ArbiterRequestHalReported) {
+    if (deviceObject && ReqDesc->AlternativeTable.RequestSource != ArbiterRequestHalReported)
+    {
         deviceNode = PP_DO_TO_DN(deviceObject);
         // We want to start with the deviceNode instead of its parent.  Because the
         // deviceNode may provide a translator interface.
         // deviceNode = deviceNode->Parent;
-    } else {
+    }
+    else
+    {
 
         //
         // For resource reservation, we always need to find the arbiter and translators
@@ -2601,21 +2417,21 @@ Return Value:
 
         deviceNode = IopRootDeviceNode;
     }
-    while (deviceNode) {
-        if ((deviceNode == IopRootDeviceNode) && (translatorFound == FALSE)) {
+    while (deviceNode)
+    {
+        if ((deviceNode == IopRootDeviceNode) && (translatorFound == FALSE))
+        {
 
             //
             // If we reach the root and have not find any translator, the device is on the
             // wrong way.
             //
 
-            if (restartedAlready == FALSE) {
+            if (restartedAlready == FALSE)
+            {
                 restartedAlready = TRUE;
 
-                deviceNode = IopFindLegacyBusDeviceNode (
-                                 ReqDesc->InterfaceType,
-                                 ReqDesc->BusNumber
-                                 );
+                deviceNode = IopFindLegacyBusDeviceNode(ReqDesc->InterfaceType, ReqDesc->BusNumber);
 
                 //
                 // If we did not find a PDO, try again with InterfaceType == Isa. This allows
@@ -2623,18 +2439,15 @@ Return Value:
                 // that is Internal. (but if there is an Internal PDO, they get that one)
                 //
 
-                if ((deviceNode == IopRootDeviceNode) &&
-                    (ReqDesc->ReqAlternative->ReqList->InterfaceType == Internal)) {
-                    deviceNode = IopFindLegacyBusDeviceNode(
-                                 Isa,
-                                 0
-                                 );
+                if ((deviceNode == IopRootDeviceNode) && (ReqDesc->ReqAlternative->ReqList->InterfaceType == Internal))
+                {
+                    deviceNode = IopFindLegacyBusDeviceNode(Isa, 0);
                 }
 
                 //if ((PVOID)deviceNode == deviceObject->DeviceObjectExtension->DeviceNode) {
                 //    deviceNode = IopRootDeviceNode;
                 //} else {
-                    continue;
+                continue;
                 //}
             }
         }
@@ -2645,52 +2458,57 @@ Return Value:
         //   else move up to the parent of current device node.
         //
 
-        if ((arbiterFound == FALSE) && (deviceNode->PhysicalDeviceObject != deviceObject)) {
-            found = IopFindResourceHandlerInfo(
-                               ResourceArbiter,
-                               deviceNode,
-                               resourceType,
-                               &arbiterEntry);
-            if (found == FALSE) {
+        if ((arbiterFound == FALSE) && (deviceNode->PhysicalDeviceObject != deviceObject))
+        {
+            found = IopFindResourceHandlerInfo(ResourceArbiter, deviceNode, resourceType, &arbiterEntry);
+            if (found == FALSE)
+            {
 
                 //
                 // no information found on arbiter.  Try to query translator interface ...
                 //
 
-                if (resourceType <= PI_MAXIMUM_RESOURCE_TYPE_TRACKED) {
+                if (resourceType <= PI_MAXIMUM_RESOURCE_TYPE_TRACKED)
+                {
                     resourceMask = 1 << resourceType;
-                } else {
+                }
+                else
+                {
                     resourceMask = 0;
                 }
-                status = IopQueryResourceHandlerInterface(ResourceArbiter,
-                                                          deviceNode->PhysicalDeviceObject,
-                                                          resourceType,
-                                                          &interface);
+                status = IopQueryResourceHandlerInterface(ResourceArbiter, deviceNode->PhysicalDeviceObject,
+                                                          resourceType, &interface);
                 deviceNode->QueryArbiterMask |= resourceMask;
-                if (!NT_SUCCESS(status)) {
+                if (!NT_SUCCESS(status))
+                {
                     deviceNode->NoArbiterMask |= resourceMask;
-                    if (resourceType <= PI_MAXIMUM_RESOURCE_TYPE_TRACKED) {
+                    if (resourceType <= PI_MAXIMUM_RESOURCE_TYPE_TRACKED)
+                    {
                         found = TRUE;
-                    } else {
+                    }
+                    else
+                    {
                         interface = NULL;
                     }
                 }
-                if (found == FALSE) {
-                    arbiterEntry = (PPI_RESOURCE_ARBITER_ENTRY)ExAllocatePoolAE(
-                                       PagedPool | POOL_COLD_ALLOCATION,
-                                       sizeof(PI_RESOURCE_ARBITER_ENTRY));
-                    if (!arbiterEntry) {
+                if (found == FALSE)
+                {
+                    arbiterEntry = (PPI_RESOURCE_ARBITER_ENTRY)ExAllocatePoolAE(PagedPool | POOL_COLD_ALLOCATION,
+                                                                                sizeof(PI_RESOURCE_ARBITER_ENTRY));
+                    if (!arbiterEntry)
+                    {
                         status = STATUS_INSUFFICIENT_RESOURCES;
                         return status;
                     }
                     IopInitializeArbiterEntryState(arbiterEntry);
                     InitializeListHead(&arbiterEntry->DeviceArbiterList);
-                    arbiterEntry->ResourceType      = resourceType;
-                    arbiterEntry->Level             = deviceNode->Level;
+                    arbiterEntry->ResourceType = resourceType;
+                    arbiterEntry->Level = deviceNode->Level;
                     listHead = &deviceNode->DeviceArbiterList;
                     InsertTailList(listHead, &arbiterEntry->DeviceArbiterList);
                     arbiterEntry->ArbiterInterface = (PARBITER_INTERFACE)interface;
-                    if (!interface) {
+                    if (!interface)
+                    {
 
                         //
                         // if interface is NULL we really don't have translator.
@@ -2706,28 +2524,27 @@ Return Value:
             // it handle this resource requriements.
             //
 
-            if (arbiterEntry) {
+            if (arbiterEntry)
+            {
                 arbiterFound = TRUE;
-                if (arbiterEntry->ArbiterInterface->Flags & ARBITER_PARTIAL) {
+                if (arbiterEntry->ArbiterInterface->Flags & ARBITER_PARTIAL)
+                {
 
                     //
                     // If the arbiter is partial, ask if it handles the resources
                     // if not, goto its parent.
                     //
 
-                    status = IopCallArbiter(
-                                arbiterEntry,
-                                ArbiterActionQueryArbitrate,
-                                ReqDesc->TranslatedReqDesc,
-                                NULL,
-                                NULL
-                                );
-                    if (!NT_SUCCESS(status)) {
+                    status = IopCallArbiter(arbiterEntry, ArbiterActionQueryArbitrate, ReqDesc->TranslatedReqDesc, NULL,
+                                            NULL);
+                    if (!NT_SUCCESS(status))
+                    {
                         arbiterFound = FALSE;
                     }
                 }
             }
-            if (arbiterFound) {
+            if (arbiterFound)
+            {
                 ReqDesc->u.Arbiter = arbiterEntry;
 
                 //
@@ -2737,51 +2554,54 @@ Return Value:
                 arbiterEntry->State = 0;
                 arbiterEntry->ResourcesChanged = FALSE;
             }
-
         }
 
-        if (searchTranslator) {
+        if (searchTranslator)
+        {
             //
             // First, check if there is a translator for the device node?
             // If yes, translate the req desc and link it to the front of ReqDesc->TranslatedReqDesc
             // else do nothing.
             //
 
-            found = IopFindResourceHandlerInfo(
-                        ResourceTranslator,
-                        deviceNode,
-                        resourceType,
-                        &translatorEntry);
+            found = IopFindResourceHandlerInfo(ResourceTranslator, deviceNode, resourceType, &translatorEntry);
 
-            if (found == FALSE) {
+            if (found == FALSE)
+            {
 
                 //
                 // no information found on translator.  Try to query translator interface ...
                 //
 
-                if (resourceType <= PI_MAXIMUM_RESOURCE_TYPE_TRACKED) {
+                if (resourceType <= PI_MAXIMUM_RESOURCE_TYPE_TRACKED)
+                {
                     resourceMask = 1 << resourceType;
-                } else {
+                }
+                else
+                {
                     resourceMask = 0;
                 }
-                status = IopQueryResourceHandlerInterface(ResourceTranslator,
-                                                          deviceNode->PhysicalDeviceObject,
-                                                          resourceType,
-                                                          &interface);
+                status = IopQueryResourceHandlerInterface(ResourceTranslator, deviceNode->PhysicalDeviceObject,
+                                                          resourceType, &interface);
                 deviceNode->QueryTranslatorMask |= resourceMask;
-                if (!NT_SUCCESS(status)) {
+                if (!NT_SUCCESS(status))
+                {
                     deviceNode->NoTranslatorMask |= resourceMask;
-                    if (resourceType <= PI_MAXIMUM_RESOURCE_TYPE_TRACKED) {
+                    if (resourceType <= PI_MAXIMUM_RESOURCE_TYPE_TRACKED)
+                    {
                         found = TRUE;
-                    } else {
+                    }
+                    else
+                    {
                         interface = NULL;
                     }
                 }
-                if (found == FALSE) {
+                if (found == FALSE)
+                {
                     translatorEntry = (PPI_RESOURCE_TRANSLATOR_ENTRY)ExAllocatePoolTE(
-                                       PagedPool | POOL_COLD_ALLOCATION,
-                                       sizeof(PI_RESOURCE_TRANSLATOR_ENTRY));
-                    if (!translatorEntry) {
+                        PagedPool | POOL_COLD_ALLOCATION, sizeof(PI_RESOURCE_TRANSLATOR_ENTRY));
+                    if (!translatorEntry)
+                    {
                         status = STATUS_INSUFFICIENT_RESOURCES;
                         return status;
                     }
@@ -2791,7 +2611,8 @@ Return Value:
                     translatorEntry->DeviceNode = deviceNode;
                     listHead = &deviceNode->DeviceTranslatorList;
                     InsertTailList(listHead, &translatorEntry->DeviceTranslatorList);
-                    if (!interface) {
+                    if (!interface)
+                    {
 
                         //
                         // if interface is NULL we really don't have translator.
@@ -2801,10 +2622,12 @@ Return Value:
                     }
                 }
             }
-            if (translatorEntry) {
+            if (translatorEntry)
+            {
                 translatorFound = TRUE;
             }
-            if ((arbiterFound == FALSE) && translatorEntry) {
+            if ((arbiterFound == FALSE) && translatorEntry)
+            {
 
                 //
                 // Find a translator to translate the req desc ... Translate it and link it to
@@ -2813,11 +2636,9 @@ Return Value:
                 //
 
                 reqDesc = ReqDesc->TranslatedReqDesc;
-                status = IopTranslateAndAdjustReqDesc(
-                              reqDesc,
-                              translatorEntry,
-                              &translatedReqDesc);
-                if (NT_SUCCESS(status)) {
+                status = IopTranslateAndAdjustReqDesc(reqDesc, translatorEntry, &translatedReqDesc);
+                if (NT_SUCCESS(status))
+                {
                     ASSERT(translatedReqDesc);
                     resourceType = translatedReqDesc->AlternativeTable.Alternatives->Type;
                     translatedReqDesc->TranslatedReqDesc = ReqDesc->TranslatedReqDesc;
@@ -2828,18 +2649,17 @@ Return Value:
                     // don't pass translations to parent.
                     //
 
-                    if (status == STATUS_TRANSLATION_COMPLETE) {
+                    if (status == STATUS_TRANSLATION_COMPLETE)
+                    {
                         searchTranslator = FALSE;
                     }
-                } else {
-                    IopDbgPrint((
-                        IOP_RESOURCE_INFO_LEVEL,
-                        "resreq list TranslationAndAdjusted failed\n"
-                        ));
+                }
+                else
+                {
+                    IopDbgPrint((IOP_RESOURCE_INFO_LEVEL, "resreq list TranslationAndAdjusted failed\n"));
                     return status;
                 }
             }
-
         }
 
         //
@@ -2849,29 +2669,25 @@ Return Value:
         deviceNode = deviceNode->Parent;
     }
 
-    if (arbiterFound) {
+    if (arbiterFound)
+    {
 
         return STATUS_SUCCESS;
-    } else {        
+    }
+    else
+    {
         //
         // We should BugCheck in this case.
         //
-        IopDbgPrint((
-            IOP_RESOURCE_ERROR_LEVEL,
-            "can not find resource type %x arbiter\n",
-            resourceType));
+        IopDbgPrint((IOP_RESOURCE_ERROR_LEVEL, "can not find resource type %x arbiter\n", resourceType));
 
         ASSERT(arbiterFound);
 
         return STATUS_RESOURCE_TYPE_NOT_FOUND;
     }
-
 }
 
-VOID
-IopUncacheInterfaceInformation (
-    IN PDEVICE_OBJECT DeviceObject
-    )
+VOID IopUncacheInterfaceInformation(IN PDEVICE_OBJECT DeviceObject)
 
 /*++
 
@@ -2891,30 +2707,29 @@ Return Value:
 --*/
 
 {
-    PDEVICE_NODE                    deviceNode;
-    PLIST_ENTRY                     listHead;
-    PLIST_ENTRY                     nextEntry;
-    PLIST_ENTRY                     entry;
-    PPI_RESOURCE_TRANSLATOR_ENTRY   translatorEntry;
-    PPI_RESOURCE_ARBITER_ENTRY      arbiterEntry;
-    PINTERFACE                      interface;
+    PDEVICE_NODE deviceNode;
+    PLIST_ENTRY listHead;
+    PLIST_ENTRY nextEntry;
+    PLIST_ENTRY entry;
+    PPI_RESOURCE_TRANSLATOR_ENTRY translatorEntry;
+    PPI_RESOURCE_ARBITER_ENTRY arbiterEntry;
+    PINTERFACE interface;
 
     deviceNode = PP_DO_TO_DN(DeviceObject);
     //
     // Dereference all the arbiters on this PDO.
     //
-    listHead    = &deviceNode->DeviceArbiterList;
-    nextEntry   = listHead->Flink;
-    while (nextEntry != listHead) {
+    listHead = &deviceNode->DeviceArbiterList;
+    nextEntry = listHead->Flink;
+    while (nextEntry != listHead)
+    {
 
-        entry           = nextEntry;
-        arbiterEntry    = CONTAINING_RECORD(
-                            entry,
-                            PI_RESOURCE_ARBITER_ENTRY,
-                            DeviceArbiterList);
+        entry = nextEntry;
+        arbiterEntry = CONTAINING_RECORD(entry, PI_RESOURCE_ARBITER_ENTRY, DeviceArbiterList);
 
         interface = (PINTERFACE)arbiterEntry->ArbiterInterface;
-        if (interface != NULL) {
+        if (interface != NULL)
+        {
 
             (interface->InterfaceDereference)(interface->Context);
             ExFreePool(interface);
@@ -2925,16 +2740,15 @@ Return Value:
     //
     // Dereference all the translators on this PDO.
     //
-    listHead    = &deviceNode->DeviceTranslatorList;
-    nextEntry   = listHead->Flink;
-    while (nextEntry != listHead) {
-        entry           = nextEntry;
-        translatorEntry = CONTAINING_RECORD(
-                            entry,
-                            PI_RESOURCE_TRANSLATOR_ENTRY,
-                            DeviceTranslatorList);
+    listHead = &deviceNode->DeviceTranslatorList;
+    nextEntry = listHead->Flink;
+    while (nextEntry != listHead)
+    {
+        entry = nextEntry;
+        translatorEntry = CONTAINING_RECORD(entry, PI_RESOURCE_TRANSLATOR_ENTRY, DeviceTranslatorList);
         interface = (PINTERFACE)translatorEntry->TranslatorInterface;
-        if (interface != NULL) {
+        if (interface != NULL)
+        {
 
             (interface->InterfaceDereference)(interface->Context);
             ExFreePool(interface);
@@ -2944,19 +2758,15 @@ Return Value:
     }
     InitializeListHead(&deviceNode->DeviceArbiterList);
     InitializeListHead(&deviceNode->DeviceTranslatorList);
-    deviceNode->NoArbiterMask       = 0;
-    deviceNode->QueryArbiterMask    = 0;
-    deviceNode->NoTranslatorMask    = 0;
+    deviceNode->NoArbiterMask = 0;
+    deviceNode->QueryArbiterMask = 0;
+    deviceNode->NoTranslatorMask = 0;
     deviceNode->QueryTranslatorMask = 0;
 }
 
 BOOLEAN
-IopFindResourceHandlerInfo (
-    IN  RESOURCE_HANDLER_TYPE    HandlerType,
-    IN  PDEVICE_NODE             DeviceNode,
-    IN  UCHAR                    ResourceType,
-    OUT PVOID                   *HandlerEntry
-    )
+IopFindResourceHandlerInfo(IN RESOURCE_HANDLER_TYPE HandlerType, IN PDEVICE_NODE DeviceNode, IN UCHAR ResourceType,
+                           OUT PVOID *HandlerEntry)
 
 /*++
 
@@ -2983,54 +2793,55 @@ Return Value:
 
 --*/
 {
-    USHORT                      resourceMask;
-    USHORT                      noHandlerMask;
-    USHORT                      queryHandlerMask;
-    PLIST_ENTRY                 listHead;
-    PLIST_ENTRY                 entry;
-    PPI_RESOURCE_ARBITER_ENTRY  arbiterEntry;
+    USHORT resourceMask;
+    USHORT noHandlerMask;
+    USHORT queryHandlerMask;
+    PLIST_ENTRY listHead;
+    PLIST_ENTRY entry;
+    PPI_RESOURCE_ARBITER_ENTRY arbiterEntry;
 
-    *HandlerEntry   = NULL;
-    switch (HandlerType) {
+    *HandlerEntry = NULL;
+    switch (HandlerType)
+    {
     case ResourceArbiter:
 
-        noHandlerMask       = DeviceNode->NoArbiterMask;
-        queryHandlerMask    = DeviceNode->QueryArbiterMask;
-        listHead            = &DeviceNode->DeviceArbiterList;
+        noHandlerMask = DeviceNode->NoArbiterMask;
+        queryHandlerMask = DeviceNode->QueryArbiterMask;
+        listHead = &DeviceNode->DeviceArbiterList;
         break;
 
     case ResourceTranslator:
 
-        noHandlerMask       = DeviceNode->NoTranslatorMask;
-        queryHandlerMask    = DeviceNode->QueryTranslatorMask;
-        listHead            = &DeviceNode->DeviceTranslatorList;
+        noHandlerMask = DeviceNode->NoTranslatorMask;
+        queryHandlerMask = DeviceNode->QueryTranslatorMask;
+        listHead = &DeviceNode->DeviceTranslatorList;
         break;
 
     default:
 
         return FALSE;
     }
-    resourceMask    = 1 << ResourceType;
-    if (noHandlerMask & resourceMask) {
+    resourceMask = 1 << ResourceType;
+    if (noHandlerMask & resourceMask)
+    {
         //
         // There is no desired handler for the resource type.
         //
         return TRUE;
     }
-    if (    (queryHandlerMask & resourceMask) ||
-            ResourceType > PI_MAXIMUM_RESOURCE_TYPE_TRACKED) {
+    if ((queryHandlerMask & resourceMask) || ResourceType > PI_MAXIMUM_RESOURCE_TYPE_TRACKED)
+    {
 
         entry = listHead->Flink;
-        while (entry != listHead) {
+        while (entry != listHead)
+        {
 
-            arbiterEntry = CONTAINING_RECORD(
-                                entry,
-                                PI_RESOURCE_ARBITER_ENTRY,
-                                DeviceArbiterList);
-            if (arbiterEntry->ResourceType == ResourceType) {
+            arbiterEntry = CONTAINING_RECORD(entry, PI_RESOURCE_ARBITER_ENTRY, DeviceArbiterList);
+            if (arbiterEntry->ResourceType == ResourceType)
+            {
 
-                if (    ResourceType <= PI_MAXIMUM_RESOURCE_TYPE_TRACKED ||
-                        arbiterEntry->ArbiterInterface) {
+                if (ResourceType <= PI_MAXIMUM_RESOURCE_TYPE_TRACKED || arbiterEntry->ArbiterInterface)
+                {
 
                     *HandlerEntry = arbiterEntry;
                 }
@@ -3038,7 +2849,8 @@ Return Value:
             }
             entry = entry->Flink;
         }
-        if (queryHandlerMask & resourceMask) {
+        if (queryHandlerMask & resourceMask)
+        {
             //
             // There must be one.
             //
@@ -3050,9 +2862,7 @@ Return Value:
 }
 
 NTSTATUS
-IopParentToRawTranslation(
-    IN OUT PREQ_DESC ReqDesc
-    )
+IopParentToRawTranslation(IN OUT PREQ_DESC ReqDesc)
 
 /*++
 
@@ -3077,10 +2887,9 @@ Return Value:
 
     if (ReqDesc->AlternativeTable.AlternativeCount == 0 ||
 
-        ReqDesc->Allocation.Type == CmResourceTypeMaximum) {
-        IopDbgPrint((
-            IOP_RESOURCE_ERROR_LEVEL,
-            "Invalid ReqDesc for parent-to-raw translation.\n"));
+        ReqDesc->Allocation.Type == CmResourceTypeMaximum)
+    {
+        IopDbgPrint((IOP_RESOURCE_ERROR_LEVEL, "Invalid ReqDesc for parent-to-raw translation.\n"));
 
         return STATUS_INVALID_PARAMETER;
     }
@@ -3091,19 +2900,16 @@ Return Value:
     // in its raw (next level) reqdesc.
     //
 
-    if (IS_TRANSLATED_REQ_DESC(ReqDesc)) {
+    if (IS_TRANSLATED_REQ_DESC(ReqDesc))
+    {
         rawReqDesc = ReqDesc->TranslatedReqDesc;
         translator = ReqDesc->u.Translator->TranslatorInterface;
         status = (translator->TranslateResources)(
-                      translator->Context,
-                      ReqDesc->AlternativeTable.Assignment,
-                      TranslateParentToChild,
-                      rawReqDesc->AlternativeTable.AlternativeCount,
-                      rawReqDesc->AlternativeTable.Alternatives,
-                      rawReqDesc->AlternativeTable.PhysicalDeviceObject,
-                      rawReqDesc->AlternativeTable.Assignment
-                      );
-        if (NT_SUCCESS(status)) {
+            translator->Context, ReqDesc->AlternativeTable.Assignment, TranslateParentToChild,
+            rawReqDesc->AlternativeTable.AlternativeCount, rawReqDesc->AlternativeTable.Alternatives,
+            rawReqDesc->AlternativeTable.PhysicalDeviceObject, rawReqDesc->AlternativeTable.Assignment);
+        if (NT_SUCCESS(status))
+        {
 
             //
             // If the translator is non-hierarchial and performs a complete
@@ -3117,16 +2923,11 @@ Return Value:
     }
     return status;
 }
-
+
 NTSTATUS
-IopChildToRootTranslation(
-    IN PDEVICE_NODE DeviceNode, OPTIONAL
-    IN INTERFACE_TYPE InterfaceType,
-    IN ULONG BusNumber,
-    IN ARBITER_REQUEST_SOURCE ArbiterRequestSource,
-    IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Source,
-    OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR *Target
-    )
+IopChildToRootTranslation(IN PDEVICE_NODE DeviceNode, OPTIONAL IN INTERFACE_TYPE InterfaceType, IN ULONG BusNumber,
+                          IN ARBITER_REQUEST_SOURCE ArbiterRequestSource, IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Source,
+                          OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR *Target)
 
 /*++
 
@@ -3166,24 +2967,24 @@ Return Value:
     NTSTATUS status = STATUS_SUCCESS;
     BOOLEAN done = FALSE, foundTranslator = FALSE, restartedAlready;
 
-    if (ArbiterRequestSource == ArbiterRequestHalReported) {
-       restartedAlready = TRUE;
-    } else {
-       restartedAlready = FALSE;
+    if (ArbiterRequestSource == ArbiterRequestHalReported)
+    {
+        restartedAlready = TRUE;
+    }
+    else
+    {
+        restartedAlready = FALSE;
     }
 
-    source = (PCM_PARTIAL_RESOURCE_DESCRIPTOR) ExAllocatePoolPRD(
-                         PagedPool | POOL_COLD_ALLOCATION,
-                         sizeof(CM_PARTIAL_RESOURCE_DESCRIPTOR)
-                         );
-    if (source == NULL) {
+    source = (PCM_PARTIAL_RESOURCE_DESCRIPTOR)ExAllocatePoolPRD(PagedPool | POOL_COLD_ALLOCATION,
+                                                                sizeof(CM_PARTIAL_RESOURCE_DESCRIPTOR));
+    if (source == NULL)
+    {
         return STATUS_INSUFFICIENT_RESOURCES;
     }
-    target = (PCM_PARTIAL_RESOURCE_DESCRIPTOR) ExAllocatePoolPRD(
-                         PagedPool,
-                         sizeof(CM_PARTIAL_RESOURCE_DESCRIPTOR)
-                         );
-    if (target == NULL) {
+    target = (PCM_PARTIAL_RESOURCE_DESCRIPTOR)ExAllocatePoolPRD(PagedPool, sizeof(CM_PARTIAL_RESOURCE_DESCRIPTOR));
+    if (target == NULL)
+    {
         ExFreePool(source);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -3193,19 +2994,25 @@ Return Value:
     // Move up to current device node's parent to start translation
     //
 
-    if (!ARGUMENT_PRESENT(DeviceNode)) {
-        deviceNode = IopFindLegacyBusDeviceNode (InterfaceType, BusNumber);
-    } else {
+    if (!ARGUMENT_PRESENT(DeviceNode))
+    {
+        deviceNode = IopFindLegacyBusDeviceNode(InterfaceType, BusNumber);
+    }
+    else
+    {
         // We want to start with the deviceNode instead of its parent.  Because the
         // deviceNode may provide a translator interface.
         deviceNode = DeviceNode;
     }
-    while (deviceNode && !done) {
+    while (deviceNode && !done)
+    {
 
-        if ((deviceNode == IopRootDeviceNode) && (foundTranslator == FALSE)) {
-            if (restartedAlready == FALSE) {
+        if ((deviceNode == IopRootDeviceNode) && (foundTranslator == FALSE))
+        {
+            if (restartedAlready == FALSE)
+            {
                 restartedAlready = TRUE;
-                deviceNode = IopFindLegacyBusDeviceNode (InterfaceType, BusNumber);
+                deviceNode = IopFindLegacyBusDeviceNode(InterfaceType, BusNumber);
 
                 //
                 // If we did not find a PDO, try again with InterfaceType == Isa. This allows
@@ -3213,7 +3020,8 @@ Return Value:
                 // that is Internal. (but if there is an Internal PDO, they get that one)
                 //
 
-                if ((deviceNode == IopRootDeviceNode) && (InterfaceType == Internal)) {
+                if ((deviceNode == IopRootDeviceNode) && (InterfaceType == Internal))
+                {
                     deviceNode = IopFindLegacyBusDeviceNode(Isa, 0);
                 }
 
@@ -3228,27 +3036,25 @@ Return Value:
 
         listHead = &deviceNode->DeviceTranslatorList;
         nextEntry = listHead->Flink;
-        for (; nextEntry != listHead; nextEntry = nextEntry->Flink) {
+        for (; nextEntry != listHead; nextEntry = nextEntry->Flink)
+        {
             translatorEntry = CONTAINING_RECORD(nextEntry, PI_RESOURCE_TRANSLATOR_ENTRY, DeviceTranslatorList);
-            if (translatorEntry->ResourceType == Source->Type) {
+            if (translatorEntry->ResourceType == Source->Type)
+            {
                 translator = translatorEntry->TranslatorInterface;
-                if (translator != NULL) {
+                if (translator != NULL)
+                {
 
                     //
                     // Find a translator to translate the req desc ... Translate it and link it to
                     // the front of ReqDesc->TranslatedReqDesc.
                     //
 
-                    status = (translator->TranslateResources) (
-                                  translator->Context,
-                                  source,
-                                  TranslateChildToParent,
-                                  0,
-                                  NULL,
-                                  DeviceNode ? DeviceNode->PhysicalDeviceObject : NULL,
-                                  target
-                                  );
-                    if (NT_SUCCESS(status)) {
+                    status =
+                        (translator->TranslateResources)(translator->Context, source, TranslateChildToParent, 0, NULL,
+                                                         DeviceNode ? DeviceNode->PhysicalDeviceObject : NULL, target);
+                    if (NT_SUCCESS(status))
+                    {
                         tmp = source;
                         source = target;
                         target = tmp;
@@ -3259,24 +3065,21 @@ Return Value:
                         // don't pass translations to parent.
                         //
 
-                        if (status == STATUS_TRANSLATION_COMPLETE) {
+                        if (status == STATUS_TRANSLATION_COMPLETE)
+                        {
                             done = TRUE;
                         }
+                    }
+                    else
+                    {
 
-                    } else {
-
-                        IopDbgPrint((
-                            IOP_RESOURCE_ERROR_LEVEL,
-                            "Child to Root Translation failed\n"
-                            "        DeviceNode %08x (PDO %08x)\n"
-                            "        Resource Type %02x Data %08x %08x %08x\n",
-                            DeviceNode,
-                            DeviceNode->PhysicalDeviceObject,
-                            source->Type,
-                            source->u.DevicePrivate.Data[0],
-                            source->u.DevicePrivate.Data[1],
-                            source->u.DevicePrivate.Data[2]
-                            ));
+                        IopDbgPrint((IOP_RESOURCE_ERROR_LEVEL,
+                                     "Child to Root Translation failed\n"
+                                     "        DeviceNode %08x (PDO %08x)\n"
+                                     "        Resource Type %02x Data %08x %08x %08x\n",
+                                     DeviceNode, DeviceNode->PhysicalDeviceObject, source->Type,
+                                     source->u.DevicePrivate.Data[0], source->u.DevicePrivate.Data[1],
+                                     source->u.DevicePrivate.Data[2]));
                         IopRecordTranslationFailure(DeviceNode, *source);
                         goto exit;
                     }
@@ -3299,13 +3102,10 @@ exit:
     ExFreePool(target);
     return status;
 }
-
+
 NTSTATUS
-IopTranslateAndAdjustReqDesc(
-    IN PREQ_DESC ReqDesc,
-    IN PPI_RESOURCE_TRANSLATOR_ENTRY TranslatorEntry,
-    OUT PREQ_DESC *TranslatedReqDesc
-    )
+IopTranslateAndAdjustReqDesc(IN PREQ_DESC ReqDesc, IN PPI_RESOURCE_TRANSLATOR_ENTRY TranslatorEntry,
+                             OUT PREQ_DESC *TranslatedReqDesc)
 
 /*++
 
@@ -3337,32 +3137,27 @@ Return Value:
     NTSTATUS status = STATUS_UNSUCCESSFUL, returnStatus = STATUS_SUCCESS;
     BOOLEAN reqTranslated = FALSE;
 
-    if (ReqDesc->AlternativeTable.AlternativeCount == 0) {
+    if (ReqDesc->AlternativeTable.AlternativeCount == 0)
+    {
         return STATUS_INVALID_PARAMETER;
     }
 
     *TranslatedReqDesc = NULL;
 
-    target = (PIO_RESOURCE_DESCRIPTOR *) ExAllocatePoolIORD(
-                           PagedPool | POOL_COLD_ALLOCATION,
-                           sizeof(PIO_RESOURCE_DESCRIPTOR) * ReqDesc->AlternativeTable.AlternativeCount
-                           );
-    if (target == NULL) {
-        IopDbgPrint((
-            IOP_RESOURCE_WARNING_LEVEL,
-            "Not Enough memory to perform resreqlist adjustment\n"));
+    target = (PIO_RESOURCE_DESCRIPTOR *)ExAllocatePoolIORD(
+        PagedPool | POOL_COLD_ALLOCATION, sizeof(PIO_RESOURCE_DESCRIPTOR) * ReqDesc->AlternativeTable.AlternativeCount);
+    if (target == NULL)
+    {
+        IopDbgPrint((IOP_RESOURCE_WARNING_LEVEL, "Not Enough memory to perform resreqlist adjustment\n"));
         return STATUS_INSUFFICIENT_RESOURCES;
     }
     RtlZeroMemory(target, sizeof(PIO_RESOURCE_DESCRIPTOR) * ReqDesc->AlternativeTable.AlternativeCount);
 
-    targetCount = (PULONG) ExAllocatePool(
-                           PagedPool | POOL_COLD_ALLOCATION,
-                           sizeof(ULONG) * ReqDesc->AlternativeTable.AlternativeCount
-                           );
-    if (targetCount == NULL) {
-        IopDbgPrint((
-            IOP_RESOURCE_WARNING_LEVEL,
-            "Not Enough memory to perform resreqlist adjustment\n"));
+    targetCount = (PULONG)ExAllocatePool(PagedPool | POOL_COLD_ALLOCATION,
+                                         sizeof(ULONG) * ReqDesc->AlternativeTable.AlternativeCount);
+    if (targetCount == NULL)
+    {
+        IopDbgPrint((IOP_RESOURCE_WARNING_LEVEL, "Not Enough memory to perform resreqlist adjustment\n"));
         ExFreePool(target);
         return STATUS_INSUFFICIENT_RESOURCES;
     }
@@ -3374,37 +3169,34 @@ Return Value:
     //
 
     ioDesc = ReqDesc->AlternativeTable.Alternatives;
-    for (i = 0; i < ReqDesc->AlternativeTable.AlternativeCount; i++) {
+    for (i = 0; i < ReqDesc->AlternativeTable.AlternativeCount; i++)
+    {
         status = (translator->TranslateResourceRequirements)(
-                           translator->Context,
-                           ioDesc,
-                           ReqDesc->AlternativeTable.PhysicalDeviceObject,
-                           &targetCount[i],
-                           &target[i]
-                           );
-        if (!NT_SUCCESS(status) || targetCount[i] == 0) {
-            IopDbgPrint((
-                IOP_RESOURCE_WARNING_LEVEL,
-                "Translator failed to adjust resreqlist\n"));
+            translator->Context, ioDesc, ReqDesc->AlternativeTable.PhysicalDeviceObject, &targetCount[i], &target[i]);
+        if (!NT_SUCCESS(status) || targetCount[i] == 0)
+        {
+            IopDbgPrint((IOP_RESOURCE_WARNING_LEVEL, "Translator failed to adjust resreqlist\n"));
             target[i] = ioDesc;
             targetCount[i] = 0;
             total++;
-        } else {
+        }
+        else
+        {
             total += targetCount[i];
             reqTranslated = TRUE;
         }
         ioDesc++;
-        if (NT_SUCCESS(status) && (returnStatus != STATUS_TRANSLATION_COMPLETE)) {
+        if (NT_SUCCESS(status) && (returnStatus != STATUS_TRANSLATION_COMPLETE))
+        {
             returnStatus = status;
         }
     }
 
-    if (!reqTranslated) {
+    if (!reqTranslated)
+    {
 
-        IopDbgPrint((
-            IOP_RESOURCE_WARNING_LEVEL,
-            "Failed to translate any requirement for %ws!\n",
-            PP_DO_TO_DN(ReqDesc->AlternativeTable.PhysicalDeviceObject)->InstancePath.Buffer));
+        IopDbgPrint((IOP_RESOURCE_WARNING_LEVEL, "Failed to translate any requirement for %ws!\n",
+                     PP_DO_TO_DN(ReqDesc->AlternativeTable.PhysicalDeviceObject)->InstancePath.Buffer));
         returnStatus = status;
     }
 
@@ -3412,22 +3204,19 @@ Return Value:
     // Allocate memory for the adjusted/translated resources descriptors
     //
 
-    tIoDesc = (PIO_RESOURCE_DESCRIPTOR) ExAllocatePoolIORD(
-                           PagedPool | POOL_COLD_ALLOCATION,
-                           total * sizeof(IO_RESOURCE_DESCRIPTOR));
-    if (!tIoDesc) {
-        IopDbgPrint((
-            IOP_RESOURCE_WARNING_LEVEL,
-            "Not Enough memory to perform resreqlist adjustment\n"));
+    tIoDesc = (PIO_RESOURCE_DESCRIPTOR)ExAllocatePoolIORD(PagedPool | POOL_COLD_ALLOCATION,
+                                                          total * sizeof(IO_RESOURCE_DESCRIPTOR));
+    if (!tIoDesc)
+    {
+        IopDbgPrint((IOP_RESOURCE_WARNING_LEVEL, "Not Enough memory to perform resreqlist adjustment\n"));
         returnStatus = STATUS_INSUFFICIENT_RESOURCES;
         goto exit;
     }
 
-    tReqDesc = (PREQ_DESC) ExAllocatePool1RD (PagedPool | POOL_COLD_ALLOCATION, sizeof(REQ_DESC));
-    if (tReqDesc == NULL) {
-        IopDbgPrint((
-            IOP_RESOURCE_WARNING_LEVEL,
-            "Not Enough memory to perform resreqlist adjustment\n"));
+    tReqDesc = (PREQ_DESC)ExAllocatePool1RD(PagedPool | POOL_COLD_ALLOCATION, sizeof(REQ_DESC));
+    if (tReqDesc == NULL)
+    {
+        IopDbgPrint((IOP_RESOURCE_WARNING_LEVEL, "Not Enough memory to perform resreqlist adjustment\n"));
         ExFreePool(tIoDesc);
         returnStatus = STATUS_INSUFFICIENT_RESOURCES;
         goto exit;
@@ -3455,18 +3244,23 @@ Return Value:
     arbiterEntry->Assignment = &tReqDesc->Allocation;
 
     ioDesc = ReqDesc->AlternativeTable.Alternatives;
-    for (i = 0; i < ReqDesc->AlternativeTable.AlternativeCount; i++) {
-        if (targetCount[i] != 0) {
+    for (i = 0; i < ReqDesc->AlternativeTable.AlternativeCount; i++)
+    {
+        if (targetCount[i] != 0)
+        {
             RtlCopyMemory(tIoDesc, target[i], targetCount[i] * sizeof(IO_RESOURCE_DESCRIPTOR));
             tIoDesc += targetCount[i];
-        } else {
+        }
+        else
+        {
 
             //
             // Make it become impossible to satisfy.
             //
 
             RtlCopyMemory(tIoDesc, ioDesc, sizeof(IO_RESOURCE_DESCRIPTOR));
-            switch (tIoDesc->Type) {
+            switch (tIoDesc->Type)
+            {
             case CmResourceTypePort:
             case CmResourceTypeMemory:
                 tIoDesc->u.Port.MinimumAddress.LowPart = 2;
@@ -3495,7 +3289,6 @@ Return Value:
             tIoDesc += 1;
         }
         ioDesc++;
-
     }
 
 #if DBG_SCOPE
@@ -3506,15 +3299,18 @@ Return Value:
     ioDesc = arbiterEntry->Alternatives;
     ASSERT((ioDesc->Option & IO_RESOURCE_ALTERNATIVE) == 0);
     ioDesc++;
-    for (i = 1; i < total; i++) {
+    for (i = 1; i < total; i++)
+    {
         ASSERT(ioDesc->Option & IO_RESOURCE_ALTERNATIVE);
         ioDesc++;
     }
 #endif
     *TranslatedReqDesc = tReqDesc;
 exit:
-    for (i = 0; i < ReqDesc->AlternativeTable.AlternativeCount; i++) {
-        if (targetCount[i] != 0) {
+    for (i = 0; i < ReqDesc->AlternativeTable.AlternativeCount; i++)
+    {
+        if (targetCount[i] != 0)
+        {
             ASSERT(target[i]);
             ExFreePool(target[i]);
         }
@@ -3523,15 +3319,10 @@ exit:
     ExFreePool(targetCount);
     return returnStatus;
 }
-
+
 NTSTATUS
-IopCallArbiter(
-    PPI_RESOURCE_ARBITER_ENTRY ArbiterEntry,
-    ARBITER_ACTION Command,
-    PVOID Input1,
-    PVOID Input2,
-    PVOID Input3
-    )
+IopCallArbiter(PPI_RESOURCE_ARBITER_ENTRY ArbiterEntry, ARBITER_ACTION Command, PVOID Input1, PVOID Input2,
+               PVOID Input3)
 
 /*++
 
@@ -3562,7 +3353,8 @@ Return Value:
     LIST_ENTRY listHead;
     PVOID *ExtParams;
 
-    switch (Command) {
+    switch (Command)
+    {
     case ArbiterActionTestAllocation:
     case ArbiterActionRetestAllocation:
 
@@ -3573,13 +3365,8 @@ Return Value:
 
         parameters.Parameters.TestAllocation.ArbitrationList = (PLIST_ENTRY)Input1;
         parameters.Parameters.TestAllocation.AllocateFromCount = (ULONG)((ULONG_PTR)Input2);
-        parameters.Parameters.TestAllocation.AllocateFrom =
-                                            (PCM_PARTIAL_RESOURCE_DESCRIPTOR)Input3;
-        status = (arbiterInterface->ArbiterHandler)(
-                      arbiterInterface->Context,
-                      Command,
-                      &parameters
-                      );
+        parameters.Parameters.TestAllocation.AllocateFrom = (PCM_PARTIAL_RESOURCE_DESCRIPTOR)Input3;
+        status = (arbiterInterface->ArbiterHandler)(arbiterInterface->Context, Command, &parameters);
         break;
 
     case ArbiterActionBootAllocation:
@@ -3591,11 +3378,7 @@ Return Value:
 
         parameters.Parameters.BootAllocation.ArbitrationList = (PLIST_ENTRY)Input1;
 
-        status = (arbiterInterface->ArbiterHandler)(
-                      arbiterInterface->Context,
-                      Command,
-                      &parameters
-                      );
+        status = (arbiterInterface->ArbiterHandler)(arbiterInterface->Context, Command, &parameters);
         break;
 
     case ArbiterActionQueryArbitrate:
@@ -3609,11 +3392,7 @@ Return Value:
         listHead = arbiterListEntry->ListEntry;
         arbiterListEntry->ListEntry.Flink = arbiterListEntry->ListEntry.Blink = &listHead;
         parameters.Parameters.QueryArbitrate.ArbitrationList = &listHead;
-        status = (arbiterInterface->ArbiterHandler)(
-                      arbiterInterface->Context,
-                      Command,
-                      &parameters
-                      );
+        status = (arbiterInterface->ArbiterHandler)(arbiterInterface->Context, Command, &parameters);
         arbiterListEntry->ListEntry = listHead;
         break;
 
@@ -3624,11 +3403,7 @@ Return Value:
         // Commit, Rollback and WriteReserved do not have parmater.
         //
 
-        status = (arbiterInterface->ArbiterHandler)(
-                      arbiterInterface->Context,
-                      Command,
-                      NULL
-                      );
+        status = (arbiterInterface->ArbiterHandler)(arbiterInterface->Context, Command, NULL);
         break;
 
     case ArbiterActionQueryAllocatedResources:
@@ -3642,17 +3417,13 @@ Return Value:
         // Ex1 is PIO_RESOURCE_DESCRIPTOR
         // Ex2 is PULONG
         // Ex3 is PARBITER_CONFLICT_INFO *
-        ExtParams = (PVOID*)Input1;
+        ExtParams = (PVOID *)Input1;
 
         parameters.Parameters.QueryConflict.PhysicalDeviceObject = (PDEVICE_OBJECT)ExtParams[0];
         parameters.Parameters.QueryConflict.ConflictingResource = (PIO_RESOURCE_DESCRIPTOR)ExtParams[1];
         parameters.Parameters.QueryConflict.ConflictCount = (PULONG)ExtParams[2];
         parameters.Parameters.QueryConflict.Conflicts = (PARBITER_CONFLICT_INFO *)ExtParams[3];
-        status = (arbiterInterface->ArbiterHandler)(
-                      arbiterInterface->Context,
-                      Command,
-                      &parameters
-                      );
+        status = (arbiterInterface->ArbiterHandler)(arbiterInterface->Context, Command, &parameters);
         break;
 
     default:
@@ -3664,12 +3435,8 @@ Return Value:
 }
 
 NTSTATUS
-IopFindResourcesForArbiter (
-    IN PDEVICE_NODE DeviceNode,
-    IN UCHAR ResourceType,
-    OUT ULONG *Count,
-    OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR *CmDesc
-    )
+IopFindResourcesForArbiter(IN PDEVICE_NODE DeviceNode, IN UCHAR ResourceType, OUT ULONG *Count,
+                           OUT PCM_PARTIAL_RESOURCE_DESCRIPTOR *CmDesc)
 
 /*++
 
@@ -3703,7 +3470,8 @@ Return Value:
     *Count = 0;
     *CmDesc = NULL;
 
-    if (DeviceNode->State == DeviceNodeStarted) {
+    if (DeviceNode->State == DeviceNodeStarted)
+    {
         return STATUS_SUCCESS;
     }
 
@@ -3711,51 +3479,51 @@ Return Value:
     // Find this device node's IOP_RESOURCE_REQUEST structure first
     //
 
-    for (assignEntry = PiAssignTable + PiAssignTableCount - 1;
-         assignEntry >= PiAssignTable;
-         assignEntry--) {
-        if (assignEntry->PhysicalDevice == DeviceNode->PhysicalDeviceObject) {
+    for (assignEntry = PiAssignTable + PiAssignTableCount - 1; assignEntry >= PiAssignTable; assignEntry--)
+    {
+        if (assignEntry->PhysicalDevice == DeviceNode->PhysicalDeviceObject)
+        {
             break;
         }
     }
-    if (assignEntry < PiAssignTable) {
-        IopDbgPrint((
-            IOP_RESOURCE_ERROR_LEVEL,
-            "Rebalance: No resreqlist for Arbiter? Can not find Arbiter assign"
-            " table entry\n"));
+    if (assignEntry < PiAssignTable)
+    {
+        IopDbgPrint((IOP_RESOURCE_ERROR_LEVEL, "Rebalance: No resreqlist for Arbiter? Can not find Arbiter assign"
+                                               " table entry\n"));
         return STATUS_UNSUCCESSFUL;
     }
 
     reqAlternative = *((PREQ_LIST)assignEntry->ReqList)->SelectedAlternative;
-    for (i = 0; i < reqAlternative->DescCount; i++) {
+    for (i = 0; i < reqAlternative->DescCount; i++)
+    {
         reqDesc = reqAlternative->DescTable[i]->TranslatedReqDesc;
-        if (reqDesc->Allocation.Type == ResourceType) {
+        if (reqDesc->Allocation.Type == ResourceType)
+        {
             count++;
         }
     }
 
-    cmDescriptor = (PCM_PARTIAL_RESOURCE_DESCRIPTOR) ExAllocatePoolPRD(
-                       PagedPool,
-                       sizeof(CM_PARTIAL_RESOURCE_DESCRIPTOR) * count
-                       );
-    if (!cmDescriptor) {
+    cmDescriptor =
+        (PCM_PARTIAL_RESOURCE_DESCRIPTOR)ExAllocatePoolPRD(PagedPool, sizeof(CM_PARTIAL_RESOURCE_DESCRIPTOR) * count);
+    if (!cmDescriptor)
+    {
 
         //
         // If we can not find memory, the resources will not be committed by arbiter.
         //
 
-        IopDbgPrint((
-            IOP_RESOURCE_WARNING_LEVEL,
-            "Rebalance: Not enough memory to perform rebalance\n"));
+        IopDbgPrint((IOP_RESOURCE_WARNING_LEVEL, "Rebalance: Not enough memory to perform rebalance\n"));
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
     *Count = count;
     *CmDesc = cmDescriptor;
 
-    for (i = 0; i < reqAlternative->DescCount; i++) {
+    for (i = 0; i < reqAlternative->DescCount; i++)
+    {
         reqDesc = reqAlternative->DescTable[i]->TranslatedReqDesc;
-        if (reqDesc->Allocation.Type == ResourceType) {
+        if (reqDesc->Allocation.Type == ResourceType)
+        {
             *cmDescriptor = reqDesc->Allocation;
             cmDescriptor++;
         }
@@ -3764,9 +3532,7 @@ Return Value:
 }
 
 NTSTATUS
-IopRestoreResourcesInternal (
-    IN PDEVICE_NODE DeviceNode
-    )
+IopRestoreResourcesInternal(IN PDEVICE_NODE DeviceNode)
 
 /*++
 
@@ -3787,17 +3553,16 @@ Return Value:
 {
     IOP_RESOURCE_REQUEST requestTable;
     NTSTATUS status;
-    LIST_ENTRY  activeArbiterList;
+    LIST_ENTRY activeArbiterList;
 
-    if (DeviceNode->ResourceList == NULL) {
+    if (DeviceNode->ResourceList == NULL)
+    {
         return STATUS_SUCCESS;
     }
-    requestTable.ResourceRequirements =
-        IopCmResourcesToIoResources (0, DeviceNode->ResourceList, LCPRI_FORCECONFIG);
-    if (requestTable.ResourceRequirements == NULL) {
-        IopDbgPrint((
-            IOP_RESOURCE_WARNING_LEVEL,
-            "Not enough memory to clean up rebalance failure\n"));
+    requestTable.ResourceRequirements = IopCmResourcesToIoResources(0, DeviceNode->ResourceList, LCPRI_FORCECONFIG);
+    if (requestTable.ResourceRequirements == NULL)
+    {
+        IopDbgPrint((IOP_RESOURCE_WARNING_LEVEL, "Not enough memory to clean up rebalance failure\n"));
         return STATUS_INSUFFICIENT_RESOURCES;
     }
     requestTable.Priority = 0;
@@ -3813,17 +3578,16 @@ Return Value:
     // rebuild internal representation of the resource requirements list
     //
 
-    status = IopResourceRequirementsListToReqList(
-                    &requestTable,
-                    &requestTable.ReqList);
+    status = IopResourceRequirementsListToReqList(&requestTable, &requestTable.ReqList);
 
-    if (!NT_SUCCESS(status) || requestTable.ReqList == NULL) {
-        IopDbgPrint((
-            IOP_RESOURCE_ERROR_LEVEL,
-            "Not enough memory to restore previous resources\n"));
-        ExFreePool (requestTable.ResourceRequirements);
+    if (!NT_SUCCESS(status) || requestTable.ReqList == NULL)
+    {
+        IopDbgPrint((IOP_RESOURCE_ERROR_LEVEL, "Not enough memory to restore previous resources\n"));
+        ExFreePool(requestTable.ResourceRequirements);
         return status;
-    } else {
+    }
+    else
+    {
         PREQ_LIST reqList;
 
         reqList = (PREQ_LIST)requestTable.ReqList;
@@ -3834,46 +3598,42 @@ Return Value:
         //
 
         IopRearrangeReqList(reqList);
-        if (reqList->BestAlternative == NULL) {
+        if (reqList->BestAlternative == NULL)
+        {
 
             IopFreeResourceRequirementsForAssignTable(&requestTable, (&requestTable) + 1);
             return STATUS_DEVICE_CONFIGURATION_ERROR;
-
         }
     }
 
     status = IopFindBestConfiguration(&requestTable, 1, &activeArbiterList);
     IopFreeResourceRequirementsForAssignTable(&requestTable, (&requestTable) + 1);
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         //
         // Ask the arbiters to commit this configuration.
         //
         status = IopCommitConfiguration(&activeArbiterList);
     }
-    if (!NT_SUCCESS(status)) {
-        IopDbgPrint((
-            IOP_RESOURCE_ERROR_LEVEL,
-            "IopRestoreResourcesInternal: BOOT conflict for %ws\n",
-            DeviceNode->InstancePath.Buffer));
+    if (!NT_SUCCESS(status))
+    {
+        IopDbgPrint((IOP_RESOURCE_ERROR_LEVEL, "IopRestoreResourcesInternal: BOOT conflict for %ws\n",
+                     DeviceNode->InstancePath.Buffer));
     }
-    if (requestTable.ResourceAssignment) {
+    if (requestTable.ResourceAssignment)
+    {
         ExFreePool(requestTable.ResourceAssignment);
     }
-    if (requestTable.TranslatedResourceAssignment) {
+    if (requestTable.TranslatedResourceAssignment)
+    {
         ExFreePool(requestTable.TranslatedResourceAssignment);
     }
-    IopWriteAllocatedResourcesToRegistry (
-        DeviceNode,
-        DeviceNode->ResourceList,
-        IopDetermineResourceListSize(DeviceNode->ResourceList)
-        );
+    IopWriteAllocatedResourcesToRegistry(DeviceNode, DeviceNode->ResourceList,
+                                         IopDetermineResourceListSize(DeviceNode->ResourceList));
     return status;
 }
-
-VOID
-IopReleaseResourcesInternal (
-    IN PDEVICE_NODE DeviceNode
-    )
+
+VOID IopReleaseResourcesInternal(IN PDEVICE_NODE DeviceNode)
 
 /*++
 
@@ -3917,36 +3677,44 @@ Return Value:
     arbiterListEntry.RequestSource = ArbiterRequestPnpEnumerated;
 
     resourceList = DeviceNode->ResourceList;
-    if (resourceList == NULL) {
+    if (resourceList == NULL)
+    {
         resourceList = DeviceNode->BootResources;
     }
-    if (resourceList && resourceList->Count > 0) {
+    if (resourceList && resourceList->Count > 0)
+    {
         listCount = resourceList->Count;
         cmFullDesc = &resourceList->List[0];
-    } else {
+    }
+    else
+    {
         listCount = 1;
         resourceList = NULL;
     }
-    for (i = 0; i < listCount; i++) {
+    for (i = 0; i < listCount; i++)
+    {
 
-        if (resourceList) {
+        if (resourceList)
+        {
             interfaceType = cmFullDesc->InterfaceType;
             busNumber = cmFullDesc->BusNumber;
-            if (interfaceType == InterfaceTypeUndefined) {
+            if (interfaceType == InterfaceTypeUndefined)
+            {
                 interfaceType = PnpDefaultInterfaceType;
             }
-        } else {
+        }
+        else
+        {
             interfaceType = PnpDefaultInterfaceType;
             busNumber = 0;
         }
 
         device = DeviceNode->Parent;
-        while (device) {
-            if ((device == IopRootDeviceNode) && search) {
-                device = IopFindLegacyBusDeviceNode (
-                                 interfaceType,
-                                 busNumber
-                                 );
+        while (device)
+        {
+            if ((device == IopRootDeviceNode) && search)
+            {
+                device = IopFindLegacyBusDeviceNode(interfaceType, busNumber);
 
                 //
                 // If we did not find a PDO, try again with InterfaceType == Isa. This allows
@@ -3954,43 +3722,36 @@ Return Value:
                 // that is Internal. (but if there is an Internal PDO, they get that one)
                 //
 
-                if ((device == IopRootDeviceNode) && (interfaceType == Internal)) {
+                if ((device == IopRootDeviceNode) && (interfaceType == Internal))
+                {
                     device = IopFindLegacyBusDeviceNode(Isa, 0);
                 }
                 search = FALSE;
-
             }
             listHead = &device->DeviceArbiterList;
             listEntry = listHead->Flink;
-            while (listEntry != listHead) {
+            while (listEntry != listHead)
+            {
                 arbiterEntry = CONTAINING_RECORD(listEntry, PI_RESOURCE_ARBITER_ENTRY, DeviceArbiterList);
-                if (arbiterEntry->ArbiterInterface != NULL) {
+                if (arbiterEntry->ArbiterInterface != NULL)
+                {
                     search = FALSE;
                     ASSERT(IsListEmpty(&arbiterEntry->ResourceList));
-                    InitializeListHead(&arbiterEntry->ResourceList);  // Recover from assert
+                    InitializeListHead(&arbiterEntry->ResourceList); // Recover from assert
                     InsertTailList(&arbiterEntry->ResourceList, &arbiterListEntry.ListEntry);
-    #if DBG_SCOPE
+#if DBG_SCOPE
                     status =
-    #endif
-                    IopCallArbiter(arbiterEntry,
-                                   ArbiterActionTestAllocation,
-                                   &arbiterEntry->ResourceList,
-                                   NULL,
-                                   NULL
-                                   );
-    #if DBG_SCOPE
+#endif
+                        IopCallArbiter(arbiterEntry, ArbiterActionTestAllocation, &arbiterEntry->ResourceList, NULL,
+                                       NULL);
+#if DBG_SCOPE
                     ASSERT(status == STATUS_SUCCESS);
                     status =
-    #endif
-                    IopCallArbiter(arbiterEntry,
-                                   ArbiterActionCommitAllocation,
-                                   NULL,
-                                   NULL,
-                                   NULL
-                                   );
-    #if DBG_SCOPE
+#endif
+                        IopCallArbiter(arbiterEntry, ArbiterActionCommitAllocation, NULL, NULL, NULL);
+#if DBG_SCOPE
                     ASSERT(status == STATUS_SUCCESS);
-    #endif
+#endif
                     RemoveEntryList(&arbiterListEntry.ListEntry);
                     InitializeListHead(&arbiterListEntry.ListEntry);
                 }
@@ -4003,17 +3764,20 @@ Return Value:
         // If there are more than 1 list, move to next list
         //
 
-        if (listCount > 1) {
+        if (listCount > 1)
+        {
             cmPartDesc = &cmFullDesc->PartialResourceList.PartialDescriptors[0];
-            for (j = 0; j < cmFullDesc->PartialResourceList.Count; j++) {
+            for (j = 0; j < cmFullDesc->PartialResourceList.Count; j++)
+            {
                 size = 0;
-                switch (cmPartDesc->Type) {
+                switch (cmPartDesc->Type)
+                {
                 case CmResourceTypeDeviceSpecific:
-                     size = cmPartDesc->u.DeviceSpecificData.DataSize;
-                     break;
+                    size = cmPartDesc->u.DeviceSpecificData.DataSize;
+                    break;
                 }
                 cmPartDesc++;
-                cmPartDesc = (PCM_PARTIAL_RESOURCE_DESCRIPTOR) ((PUCHAR)cmPartDesc + size);
+                cmPartDesc = (PCM_PARTIAL_RESOURCE_DESCRIPTOR)((PUCHAR)cmPartDesc + size);
             }
             cmFullDesc = (PCM_FULL_RESOURCE_DESCRIPTOR)cmPartDesc;
         }
@@ -4023,12 +3787,8 @@ Return Value:
 }
 
 NTSTATUS
-IopFindLegacyDeviceNode (
-    IN PDRIVER_OBJECT DriverObject,
-    IN PDEVICE_OBJECT DeviceObject OPTIONAL,
-    OUT PDEVICE_NODE *LegacyDeviceNode,
-    OUT PDEVICE_OBJECT *LegacyPDO
-    )
+IopFindLegacyDeviceNode(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_OBJECT DeviceObject OPTIONAL,
+                        OUT PDEVICE_NODE *LegacyDeviceNode, OUT PDEVICE_OBJECT *LegacyPDO)
 
 /*++
 
@@ -4055,8 +3815,8 @@ Return Value:
 --*/
 
 {
-    NTSTATUS        status = STATUS_UNSUCCESSFUL;
-    PDEVICE_NODE    deviceNode;
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
+    PDEVICE_NODE deviceNode;
 
     ASSERT(LegacyDeviceNode && LegacyPDO);
 
@@ -4065,89 +3825,91 @@ Return Value:
     // Use the device object if it exists.
     //
 
-    if (DeviceObject) {
+    if (DeviceObject)
+    {
 
         deviceNode = PP_DO_TO_DN(DeviceObject);
-        if (deviceNode) {
+        if (deviceNode)
+        {
 
             *LegacyPDO = DeviceObject;
             *LegacyDeviceNode = deviceNode;
             status = STATUS_SUCCESS;
-
-        } else if (!(DeviceObject->Flags & DO_BUS_ENUMERATED_DEVICE)) {
+        }
+        else if (!(DeviceObject->Flags & DO_BUS_ENUMERATED_DEVICE))
+        {
 
             status = PipAllocateDeviceNode(DeviceObject, &deviceNode);
-            if (deviceNode) {
+            if (deviceNode)
+            {
 
-                if (status == STATUS_SYSTEM_HIVE_TOO_LARGE) {
+                if (status == STATUS_SYSTEM_HIVE_TOO_LARGE)
+                {
 
                     IopDestroyDeviceNode(deviceNode);
-                } else {
+                }
+                else
+                {
 
                     deviceNode->Flags |= DNF_LEGACY_RESOURCE_DEVICENODE;
-                    IopSetLegacyDeviceInstance (DriverObject, deviceNode);
+                    IopSetLegacyDeviceInstance(DriverObject, deviceNode);
                     *LegacyPDO = DeviceObject;
                     *LegacyDeviceNode = deviceNode;
                     status = STATUS_SUCCESS;
                 }
-            } else {
-
-                IopDbgPrint((
-                    IOP_RESOURCE_ERROR_LEVEL,
-                    "Failed to allocate device node for PDO %08X\n",
-                    DeviceObject));
-                status = STATUS_INSUFFICIENT_RESOURCES;
-
             }
+            else
+            {
 
-        } else {
-
-            IopDbgPrint((
-                IOP_RESOURCE_ERROR_LEVEL,
-                "%08X PDO without a device node!\n",
-                DeviceObject));
-            ASSERT(PP_DO_TO_DN(DeviceObject));
-
+                IopDbgPrint((IOP_RESOURCE_ERROR_LEVEL, "Failed to allocate device node for PDO %08X\n", DeviceObject));
+                status = STATUS_INSUFFICIENT_RESOURCES;
+            }
         }
+        else
+        {
 
-    } else {
+            IopDbgPrint((IOP_RESOURCE_ERROR_LEVEL, "%08X PDO without a device node!\n", DeviceObject));
+            ASSERT(PP_DO_TO_DN(DeviceObject));
+        }
+    }
+    else
+    {
 
         //
         // Search our list of legacy device nodes.
         //
 
-        for (   deviceNode = IopLegacyDeviceNode;
-                deviceNode && deviceNode->DuplicatePDO != (PDEVICE_OBJECT)DriverObject;
-                deviceNode = deviceNode->NextDeviceNode);
+        for (deviceNode = IopLegacyDeviceNode; deviceNode && deviceNode->DuplicatePDO != (PDEVICE_OBJECT)DriverObject;
+             deviceNode = deviceNode->NextDeviceNode)
+            ;
 
-        if (deviceNode) {
+        if (deviceNode)
+        {
 
             *LegacyPDO = deviceNode->PhysicalDeviceObject;
             *LegacyDeviceNode = deviceNode;
             status = STATUS_SUCCESS;
+        }
+        else
+        {
 
-        } else {
-
-            PDEVICE_OBJECT  pdo;
+            PDEVICE_OBJECT pdo;
 
             //
             // We are seeing this for the first time.
             // Create a madeup device node.
             //
 
-            status = IoCreateDevice( IoPnpDriverObject,
-                                     sizeof(IOPNP_DEVICE_EXTENSION),
-                                     NULL,
-                                     FILE_DEVICE_CONTROLLER,
-                                     FILE_AUTOGENERATED_DEVICE_NAME,
-                                     FALSE,
-                                     &pdo);
+            status = IoCreateDevice(IoPnpDriverObject, sizeof(IOPNP_DEVICE_EXTENSION), NULL, FILE_DEVICE_CONTROLLER,
+                                    FILE_AUTOGENERATED_DEVICE_NAME, FALSE, &pdo);
 
-            if (NT_SUCCESS(status)) {
+            if (NT_SUCCESS(status))
+            {
 
                 pdo->Flags |= DO_BUS_ENUMERATED_DEVICE;
                 PipAllocateDeviceNode(pdo, &deviceNode);
-                if (status != STATUS_SYSTEM_HIVE_TOO_LARGE && deviceNode) {
+                if (status != STATUS_SYSTEM_HIVE_TOO_LARGE && deviceNode)
+                {
 
                     //
                     // Change driver object to the caller even though the owner
@@ -4161,40 +3923,34 @@ Return Value:
                     PipSetDevNodeState(deviceNode, DeviceNodeInitialized, NULL);
 
                     deviceNode->DuplicatePDO = (PDEVICE_OBJECT)DriverObject;
-                    IopSetLegacyDeviceInstance (DriverObject, deviceNode);
+                    IopSetLegacyDeviceInstance(DriverObject, deviceNode);
 
                     //
                     // Add it to our list of legacy device nodes rather than adding it to the HW tree.
                     //
 
                     deviceNode->NextDeviceNode = IopLegacyDeviceNode;
-                    if (IopLegacyDeviceNode) {
+                    if (IopLegacyDeviceNode)
+                    {
 
                         IopLegacyDeviceNode->PreviousDeviceNode = deviceNode;
-
                     }
                     IopLegacyDeviceNode = deviceNode;
                     *LegacyPDO = pdo;
                     *LegacyDeviceNode = deviceNode;
+                }
+                else
+                {
 
-                } else {
-
-                    IopDbgPrint((
-                        IOP_RESOURCE_ERROR_LEVEL,
-                        "Failed to allocate device node for PDO %08X\n",
-                        pdo));
+                    IopDbgPrint((IOP_RESOURCE_ERROR_LEVEL, "Failed to allocate device node for PDO %08X\n", pdo));
                     IoDeleteDevice(pdo);
                     status = STATUS_INSUFFICIENT_RESOURCES;
-
                 }
+            }
+            else
+            {
 
-            } else {
-
-                IopDbgPrint((
-                    IOP_RESOURCE_ERROR_LEVEL,
-                    "IoCreateDevice failed with status %08X\n",
-                    status));
-
+                IopDbgPrint((IOP_RESOURCE_ERROR_LEVEL, "IoCreateDevice failed with status %08X\n", status));
             }
         }
     }
@@ -4202,11 +3958,7 @@ Return Value:
     return status;
 }
 
-VOID
-IopRemoveLegacyDeviceNode (
-    IN PDEVICE_OBJECT   DeviceObject OPTIONAL,
-    IN PDEVICE_NODE     LegacyDeviceNode
-    )
+VOID IopRemoveLegacyDeviceNode(IN PDEVICE_OBJECT DeviceObject OPTIONAL, IN PDEVICE_NODE LegacyDeviceNode)
 
 /*++
 
@@ -4231,60 +3983,62 @@ Return Value:
     ASSERT(LegacyDeviceNode);
 
 
-    if (!DeviceObject) {
+    if (!DeviceObject)
+    {
 
-        if (LegacyDeviceNode->DuplicatePDO) {
+        if (LegacyDeviceNode->DuplicatePDO)
+        {
 
             LegacyDeviceNode->DuplicatePDO = NULL;
-            if (LegacyDeviceNode->PreviousDeviceNode) {
+            if (LegacyDeviceNode->PreviousDeviceNode)
+            {
 
                 LegacyDeviceNode->PreviousDeviceNode->NextDeviceNode = LegacyDeviceNode->NextDeviceNode;
-
             }
 
-            if (LegacyDeviceNode->NextDeviceNode) {
+            if (LegacyDeviceNode->NextDeviceNode)
+            {
 
                 LegacyDeviceNode->NextDeviceNode->PreviousDeviceNode = LegacyDeviceNode->PreviousDeviceNode;
-
             }
 
-            if (IopLegacyDeviceNode == LegacyDeviceNode) {
+            if (IopLegacyDeviceNode == LegacyDeviceNode)
+            {
 
                 IopLegacyDeviceNode = LegacyDeviceNode->NextDeviceNode;
-
             }
+        }
+        else
+        {
 
-        } else {
-
-            IopDbgPrint((
-                IOP_RESOURCE_ERROR_LEVEL,
-                "%ws does not have a duplicate PDO\n",
-                LegacyDeviceNode->InstancePath.Buffer));
+            IopDbgPrint((IOP_RESOURCE_ERROR_LEVEL, "%ws does not have a duplicate PDO\n",
+                         LegacyDeviceNode->InstancePath.Buffer));
             ASSERT(LegacyDeviceNode->DuplicatePDO);
             return;
-
         }
     }
 
-    if (!(DeviceObject && (DeviceObject->Flags & DO_BUS_ENUMERATED_DEVICE))) {
+    if (!(DeviceObject && (DeviceObject->Flags & DO_BUS_ENUMERATED_DEVICE)))
+    {
 
-        PDEVICE_NODE    resourceDeviceNode;
-        PDEVICE_OBJECT  pdo;
+        PDEVICE_NODE resourceDeviceNode;
+        PDEVICE_OBJECT pdo;
 
-        for (   resourceDeviceNode = (PDEVICE_NODE)LegacyDeviceNode->OverUsed1.LegacyDeviceNode;
-                resourceDeviceNode;
-                resourceDeviceNode = resourceDeviceNode->OverUsed2.NextResourceDeviceNode) {
+        for (resourceDeviceNode = (PDEVICE_NODE)LegacyDeviceNode->OverUsed1.LegacyDeviceNode; resourceDeviceNode;
+             resourceDeviceNode = resourceDeviceNode->OverUsed2.NextResourceDeviceNode)
+        {
 
-                if (resourceDeviceNode->OverUsed2.NextResourceDeviceNode == LegacyDeviceNode) {
+            if (resourceDeviceNode->OverUsed2.NextResourceDeviceNode == LegacyDeviceNode)
+            {
 
-                    resourceDeviceNode->OverUsed2.NextResourceDeviceNode = LegacyDeviceNode->OverUsed2.NextResourceDeviceNode;
-                    break;
-
-                }
+                resourceDeviceNode->OverUsed2.NextResourceDeviceNode =
+                    LegacyDeviceNode->OverUsed2.NextResourceDeviceNode;
+                break;
+            }
         }
 
-        LegacyDeviceNode->Parent = LegacyDeviceNode->Sibling =
-            LegacyDeviceNode->Child = LegacyDeviceNode->LastChild = NULL;
+        LegacyDeviceNode->Parent = LegacyDeviceNode->Sibling = LegacyDeviceNode->Child = LegacyDeviceNode->LastChild =
+            NULL;
 
         //
         // Delete the dummy PDO and device node.
@@ -4294,7 +4048,8 @@ Return Value:
         LegacyDeviceNode->Flags &= ~DNF_LEGACY_RESOURCE_DEVICENODE;
         IopDestroyDeviceNode(LegacyDeviceNode);
 
-        if (!DeviceObject) {
+        if (!DeviceObject)
+        {
 
             pdo->DriverObject = IoPnpDriverObject;
             IoDeleteDevice(pdo);
@@ -4302,33 +4057,27 @@ Return Value:
     }
 }
 
-
-VOID
-IopSetLegacyResourcesFlag(
-    IN PDRIVER_OBJECT DriverObject
-    )
+
+VOID IopSetLegacyResourcesFlag(IN PDRIVER_OBJECT DriverObject)
 {
     KIRQL irql;
 
-    irql = KeAcquireQueuedSpinLock( LockQueueIoDatabaseLock );
+    irql = KeAcquireQueuedSpinLock(LockQueueIoDatabaseLock);
     //
     // Once tainted, a driver can never lose it's legacy history
     // (unless unloaded). This is because the device object
     // field is optional, and we don't bother counting here...
     //
     DriverObject->Flags |= DRVO_LEGACY_RESOURCES;
-    KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+    KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
 }
 
-
+
 NTSTATUS
-IopLegacyResourceAllocation (
-    IN ARBITER_REQUEST_SOURCE AllocationType,
-    IN PDRIVER_OBJECT DriverObject,
-    IN PDEVICE_OBJECT DeviceObject OPTIONAL,
-    IN PIO_RESOURCE_REQUIREMENTS_LIST ResourceRequirements,
-    IN OUT PCM_RESOURCE_LIST *AllocatedResources OPTIONAL
-    )
+IopLegacyResourceAllocation(IN ARBITER_REQUEST_SOURCE AllocationType, IN PDRIVER_OBJECT DriverObject,
+                            IN PDEVICE_OBJECT DeviceObject OPTIONAL,
+                            IN PIO_RESOURCE_REQUIREMENTS_LIST ResourceRequirements,
+                            IN OUT PCM_RESOURCE_LIST *AllocatedResources OPTIONAL)
 
 /*++
 
@@ -4356,11 +4105,11 @@ Return Value:
 --*/
 
 {
-    PDEVICE_OBJECT      pdo;
-    PDEVICE_NODE        deviceNode;
-    PDEVICE_NODE        legacyDeviceNode;
-    NTSTATUS            status;
-    PCM_RESOURCE_LIST   combinedResources;
+    PDEVICE_OBJECT pdo;
+    PDEVICE_NODE deviceNode;
+    PDEVICE_NODE legacyDeviceNode;
+    NTSTATUS status;
+    PCM_RESOURCE_LIST combinedResources;
 
     ASSERT(DriverObject);
 
@@ -4371,41 +4120,42 @@ Return Value:
 
     IopLockResourceManager();
     status = IopFindLegacyDeviceNode(DriverObject, DeviceObject, &deviceNode, &pdo);
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
 
         legacyDeviceNode = NULL;
-        if (!deviceNode->Parent && ResourceRequirements) {
+        if (!deviceNode->Parent && ResourceRequirements)
+        {
 
             //
             // Make IopRootDeviceNode the bus pdo so we will search the right bus pdo
             // on resource descriptor level.
             //
 
-            if (ResourceRequirements->InterfaceType == InterfaceTypeUndefined) {
+            if (ResourceRequirements->InterfaceType == InterfaceTypeUndefined)
+            {
 
                 ResourceRequirements->InterfaceType = PnpDefaultInterfaceType;
-
             }
             deviceNode->Parent = IopRootDeviceNode;
-
         }
 
         //
         // Release resources for this device node.
         //
 
-        if (    (!ResourceRequirements && deviceNode->Parent) ||
-                deviceNode->ResourceList ||
-                deviceNode->BootResources) {
+        if ((!ResourceRequirements && deviceNode->Parent) || deviceNode->ResourceList || deviceNode->BootResources)
+        {
 
             IopReleaseResources(deviceNode);
         }
 
-        if (ResourceRequirements) {
+        if (ResourceRequirements)
+        {
 
-            IOP_RESOURCE_REQUEST    requestTable;
-            IOP_RESOURCE_REQUEST    *requestTablep;
-            ULONG                   count;
+            IOP_RESOURCE_REQUEST requestTable;
+            IOP_RESOURCE_REQUEST *requestTablep;
+            ULONG count;
 
             //
             // Try to allocate these resource requirements.
@@ -4416,20 +4166,24 @@ Return Value:
             requestTable.ResourceRequirements = ResourceRequirements;
             requestTable.PhysicalDevice = pdo;
             requestTable.Flags = IOP_ASSIGN_NO_REBALANCE;
-            requestTable.AllocationType =  AllocationType;
+            requestTable.AllocationType = AllocationType;
 
             requestTablep = &requestTable;
             IopAllocateResources(&count, &requestTablep, TRUE, TRUE, NULL);
 
             status = requestTable.Status;
-            if (NT_SUCCESS(status)) {
+            if (NT_SUCCESS(status))
+            {
 
                 deviceNode->ResourceListTranslated = requestTable.TranslatedResourceAssignment;
-                count = IopDetermineResourceListSize((*AllocatedResources) ? *AllocatedResources : requestTable.ResourceAssignment);
+                count = IopDetermineResourceListSize((*AllocatedResources) ? *AllocatedResources
+                                                                           : requestTable.ResourceAssignment);
                 deviceNode->ResourceList = ExAllocatePoolIORL(PagedPool, count);
-                if (deviceNode->ResourceList) {
+                if (deviceNode->ResourceList)
+                {
 
-                    if (*AllocatedResources) {
+                    if (*AllocatedResources)
+                    {
 
                         //
                         // We got called from IoReportResourceUsage.
@@ -4437,25 +4191,25 @@ Return Value:
 
                         ASSERT(requestTable.ResourceAssignment);
                         ExFreePool(requestTable.ResourceAssignment);
-
-                    } else {
+                    }
+                    else
+                    {
 
                         //
                         // We got called from IoAssignResources.
                         //
 
                         *AllocatedResources = requestTable.ResourceAssignment;
-
                     }
                     RtlCopyMemory(deviceNode->ResourceList, *AllocatedResources, count);
                     legacyDeviceNode = (PDEVICE_NODE)deviceNode->OverUsed1.LegacyDeviceNode;
-
-                } else {
+                }
+                else
+                {
 
                     deviceNode->ResourceList = requestTable.ResourceAssignment;
                     IopReleaseResources(deviceNode);
                     status = STATUS_INSUFFICIENT_RESOURCES;
-
                 }
             }
 
@@ -4463,13 +4217,14 @@ Return Value:
             // Remove the madeup PDO and device node if there was some error.
             //
 
-            if (!NT_SUCCESS(status)) {
+            if (!NT_SUCCESS(status))
+            {
 
                 IopRemoveLegacyDeviceNode(DeviceObject, deviceNode);
-
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // Caller wants to release resources.
@@ -4477,12 +4232,13 @@ Return Value:
 
             legacyDeviceNode = (PDEVICE_NODE)deviceNode->OverUsed1.LegacyDeviceNode;
             IopRemoveLegacyDeviceNode(DeviceObject, deviceNode);
-
         }
 
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
 
-            if (legacyDeviceNode) {
+            if (legacyDeviceNode)
+            {
 
                 //
                 // After the resource is modified, update the allocated resource list
@@ -4490,21 +4246,23 @@ Return Value:
                 //
 
                 combinedResources = IopCombineLegacyResources(legacyDeviceNode);
-                if (combinedResources) {
+                if (combinedResources)
+                {
 
-                    IopWriteAllocatedResourcesToRegistry(   legacyDeviceNode,
-                                                            combinedResources,
-                                                            IopDetermineResourceListSize(combinedResources));
+                    IopWriteAllocatedResourcesToRegistry(legacyDeviceNode, combinedResources,
+                                                         IopDetermineResourceListSize(combinedResources));
                     ExFreePool(combinedResources);
                 }
             }
 
-            if (AllocationType != ArbiterRequestPnpDetected) {
+            if (AllocationType != ArbiterRequestPnpDetected)
+            {
 
                 //
                 // Modify the DRVOBJ flags.
                 //
-                if (ResourceRequirements) {
+                if (ResourceRequirements)
+                {
 
                     IopSetLegacyResourcesFlag(DriverObject);
                 }
@@ -4517,12 +4275,8 @@ Return Value:
 }
 
 NTSTATUS
-IopDuplicateDetection (
-    IN INTERFACE_TYPE LegacyBusType,
-    IN ULONG BusNumber,
-    IN ULONG SlotNumber,
-    OUT PDEVICE_NODE *DeviceNode
-    )
+IopDuplicateDetection(IN INTERFACE_TYPE LegacyBusType, IN ULONG BusNumber, IN ULONG SlotNumber,
+                      OUT PDEVICE_NODE *DeviceNode)
 
 /*++
 
@@ -4563,15 +4317,14 @@ Return Value:
     //
     // Search the device tree for the bus of the legacy device.
     //
-    deviceNode = IopFindLegacyBusDeviceNode(
-                     LegacyBusType,
-                     BusNumber);
+    deviceNode = IopFindLegacyBusDeviceNode(LegacyBusType, BusNumber);
     //
     // Either a bus driver does not exist (or more likely, the legacy bus
     // type and bus number were unspecified).  Either way, we can't make
     // any further progress.
     //
-    if (deviceNode == NULL) {
+    if (deviceNode == NULL)
+    {
 
         return STATUS_INVALID_DEVICE_REQUEST;
     }
@@ -4582,36 +4335,33 @@ Return Value:
     //
 
     busDeviceObject = deviceNode->PhysicalDeviceObject;
-    status = IopQueryResourceHandlerInterface(
-                 ResourceLegacyDeviceDetection,
-                 busDeviceObject,
-                 0,
-                 (PINTERFACE *)&interface);
+    status =
+        IopQueryResourceHandlerInterface(ResourceLegacyDeviceDetection, busDeviceObject, 0, (PINTERFACE *)&interface);
     //
     // If it doesn't, we're stuck.
     //
-    if (!NT_SUCCESS(status) || interface == NULL) {
+    if (!NT_SUCCESS(status) || interface == NULL)
+    {
 
         return STATUS_INVALID_DEVICE_REQUEST;
     }
     //
     // Invoke the bus driver's legacy device detection method.
     //
-    status = (*interface->LegacyDeviceDetection)(
-                 interface->Context,
-                 LegacyBusType,
-                 BusNumber,
-                 SlotNumber,
-                 &deviceObject);
+    status =
+        (*interface->LegacyDeviceDetection)(interface->Context, LegacyBusType, BusNumber, SlotNumber, &deviceObject);
     //
     // If it found a legacy device, update the return parameter.
     //
-    if (NT_SUCCESS(status) && deviceObject != NULL) {
+    if (NT_SUCCESS(status) && deviceObject != NULL)
+    {
 
         *DeviceNode = PP_DO_TO_DN(deviceObject);
 
         status = STATUS_SUCCESS;
-    } else {
+    }
+    else
+    {
 
         status = STATUS_INVALID_DEVICE_REQUEST;
     }
@@ -4624,12 +4374,8 @@ Return Value:
 
     return status;
 }
-
-VOID
-IopSetLegacyDeviceInstance (
-    IN PDRIVER_OBJECT DriverObject,
-    IN PDEVICE_NODE DeviceNode
-    )
+
+VOID IopSetLegacyDeviceInstance(IN PDRIVER_OBJECT DriverObject, IN PDEVICE_NODE DeviceNode)
 
 /*++
 
@@ -4664,25 +4410,23 @@ Return Value:
     instancePath.Length = 0;
     instancePath.Buffer = NULL;
 
-    status = PipServiceInstanceToDeviceInstance (
-                 NULL,
-                 &DriverObject->DriverExtension->ServiceKeyName,
-                 0,
-                 &instancePath,
-                 &handle,
-                 KEY_READ
-                 );
-    if (NT_SUCCESS(status) && (instancePath.Length != 0)) {
+    status = PipServiceInstanceToDeviceInstance(NULL, &DriverObject->DriverExtension->ServiceKeyName, 0, &instancePath,
+                                                &handle, KEY_READ);
+    if (NT_SUCCESS(status) && (instancePath.Length != 0))
+    {
         PiWstrToUnicodeString(&rootString, L"ROOT\\LEGACY");
-        if (RtlPrefixUnicodeString(&rootString, &instancePath, TRUE) == FALSE) {
+        if (RtlPrefixUnicodeString(&rootString, &instancePath, TRUE) == FALSE)
+        {
             RtlFreeUnicodeString(&instancePath);
-        } else {
+        }
+        else
+        {
             DeviceNode->InstancePath = instancePath;
-            legacyPdo = IopDeviceObjectFromDeviceInstance (&instancePath);
-            if (legacyPdo) {
+            legacyPdo = IopDeviceObjectFromDeviceInstance(&instancePath);
+            if (legacyPdo)
+            {
                 legacyDeviceNode = PP_DO_TO_DN(legacyPdo);
-                DeviceNode->OverUsed2.NextResourceDeviceNode =
-                    legacyDeviceNode->OverUsed2.NextResourceDeviceNode;
+                DeviceNode->OverUsed2.NextResourceDeviceNode = legacyDeviceNode->OverUsed2.NextResourceDeviceNode;
                 legacyDeviceNode->OverUsed2.NextResourceDeviceNode = DeviceNode;
                 DeviceNode->OverUsed1.LegacyDeviceNode = legacyDeviceNode;
             }
@@ -4690,11 +4434,9 @@ Return Value:
         ZwClose(handle);
     }
 }
-
+
 PCM_RESOURCE_LIST
-IopCombineLegacyResources (
-    IN PDEVICE_NODE DeviceNode
-    )
+IopCombineLegacyResources(IN PDEVICE_NODE DeviceNode)
 
 /*++
 
@@ -4724,35 +4466,39 @@ Return Value:
 
     PAGED_CODE();
 
-    if (DeviceNode) {
+    if (DeviceNode)
+    {
 
         //
         // First determine how much memory is needed for the new combined list.
         //
 
-        while (devNode) {
-            if (devNode->ResourceList) {
+        while (devNode)
+        {
+            if (devNode->ResourceList)
+            {
                 size += IopDetermineResourceListSize(devNode->ResourceList);
             }
             devNode = (PDEVICE_NODE)devNode->OverUsed2.NextResourceDeviceNode;
         }
-        if (size != 0) {
-            combinedList = (PCM_RESOURCE_LIST) ExAllocatePoolCMRL(PagedPool, size);
+        if (size != 0)
+        {
+            combinedList = (PCM_RESOURCE_LIST)ExAllocatePoolCMRL(PagedPool, size);
             devNode = DeviceNode;
-            if (combinedList) {
+            if (combinedList)
+            {
                 combinedList->Count = 0;
                 p = (PUCHAR)combinedList;
-                p += sizeof(ULONG);  // Skip Count
-                while (devNode) {
-                    if (devNode->ResourceList) {
+                p += sizeof(ULONG); // Skip Count
+                while (devNode)
+                {
+                    if (devNode->ResourceList)
+                    {
                         size = IopDetermineResourceListSize(devNode->ResourceList);
-                        if (size != 0) {
+                        if (size != 0)
+                        {
                             size -= sizeof(ULONG);
-                            RtlCopyMemory(
-                                p,
-                                devNode->ResourceList->List,
-                                size
-                                );
+                            RtlCopyMemory(p, devNode->ResourceList->List, size);
                             p += size;
                             combinedList->Count += devNode->ResourceList->Count;
                         }
@@ -4765,10 +4511,7 @@ Return Value:
     return combinedList;
 }
 
-VOID
-IopReleaseResources (
-    IN PDEVICE_NODE DeviceNode
-    )
+VOID IopReleaseResources(IN PDEVICE_NODE DeviceNode)
 
 /*++
 
@@ -4802,22 +4545,28 @@ Return Value:
 
 #if DBG_SCOPE
 
-    if (DeviceNode->PreviousResourceList) {
+    if (DeviceNode->PreviousResourceList)
+    {
         ExFreePool(DeviceNode->PreviousResourceList);
         DeviceNode->PreviousResourceList = NULL;
     }
-    if (DeviceNode->PreviousResourceRequirements) {
+    if (DeviceNode->PreviousResourceRequirements)
+    {
         ExFreePool(DeviceNode->PreviousResourceRequirements);
         DeviceNode->PreviousResourceRequirements = NULL;
     }
 #endif
 
-    if (DeviceNode->ResourceList) {
+    if (DeviceNode->ResourceList)
+    {
 
 #if DBG_SCOPE
-        if (!NT_SUCCESS(DeviceNode->FailureStatus)) {
+        if (!NT_SUCCESS(DeviceNode->FailureStatus))
+        {
             DeviceNode->PreviousResourceList = DeviceNode->ResourceList;
-        } else {
+        }
+        else
+        {
             ExFreePool(DeviceNode->ResourceList);
         }
 #else
@@ -4826,7 +4575,8 @@ Return Value:
 
         DeviceNode->ResourceList = NULL;
     }
-    if (DeviceNode->ResourceListTranslated) {
+    if (DeviceNode->ResourceListTranslated)
+    {
         ExFreePool(DeviceNode->ResourceListTranslated);
         DeviceNode->ResourceListTranslated = NULL;
     }
@@ -4835,25 +4585,26 @@ Return Value:
     // If this device is a root enumerated device, preallocate its BOOT resources
     //
 
-    if ((DeviceNode->Flags & (DNF_MADEUP | DNF_DEVICE_GONE)) == DNF_MADEUP) {
-        if (DeviceNode->Flags & DNF_HAS_BOOT_CONFIG && DeviceNode->BootResources) {
-            IopAllocateBootResourcesInternal(ArbiterRequestPnpEnumerated,
-                                            DeviceNode->PhysicalDeviceObject,
-                                            DeviceNode->BootResources);
+    if ((DeviceNode->Flags & (DNF_MADEUP | DNF_DEVICE_GONE)) == DNF_MADEUP)
+    {
+        if (DeviceNode->Flags & DNF_HAS_BOOT_CONFIG && DeviceNode->BootResources)
+        {
+            IopAllocateBootResourcesInternal(ArbiterRequestPnpEnumerated, DeviceNode->PhysicalDeviceObject,
+                                             DeviceNode->BootResources);
         }
-    } else {
+    }
+    else
+    {
         DeviceNode->Flags &= ~(DNF_HAS_BOOT_CONFIG | DNF_BOOT_CONFIG_RESERVED);
-        if (DeviceNode->BootResources) {
+        if (DeviceNode->BootResources)
+        {
             ExFreePool(DeviceNode->BootResources);
             DeviceNode->BootResources = NULL;
         }
     }
 }
-
-VOID
-IopReallocateResources(
-    IN PDEVICE_NODE DeviceNode
-    )
+
+VOID IopReallocateResources(IN PDEVICE_NODE DeviceNode)
 /*++
 
 Routine Description:
@@ -4873,7 +4624,7 @@ Return Value:
     IOP_RESOURCE_REQUEST requestTable, *requestTablep;
     ULONG deviceCount, oldFlags;
     NTSTATUS status;
-    LIST_ENTRY  activeArbiterList;
+    LIST_ENTRY activeArbiterList;
 
     PAGED_CODE();
 
@@ -4888,7 +4639,8 @@ Return Value:
     // Check the flags after acquiring the semaphore.
     //
 
-    if (DeviceNode->Flags & DNF_RESOURCE_REQUIREMENTS_CHANGED) {
+    if (DeviceNode->Flags & DNF_RESOURCE_REQUIREMENTS_CHANGED)
+    {
         //
         // Save the flags which we may have to restore in case of failure.
         //
@@ -4896,7 +4648,8 @@ Return Value:
         oldFlags = DeviceNode->Flags & DNF_NO_RESOURCE_REQUIRED;
         DeviceNode->Flags &= ~DNF_NO_RESOURCE_REQUIRED;
 
-        if (DeviceNode->Flags & DNF_NON_STOPPED_REBALANCE) {
+        if (DeviceNode->Flags & DNF_NON_STOPPED_REBALANCE)
+        {
 
             //
             // Set up parameters to call real routine
@@ -4907,17 +4660,17 @@ Return Value:
             requestTablep = &requestTable;
             requestTable.Flags |= IOP_ASSIGN_NO_REBALANCE + IOP_ASSIGN_KEEP_CURRENT_CONFIG;
 
-            status = IopGetResourceRequirementsForAssignTable(  requestTablep,
-                                                                requestTablep + 1,
-                                                                &deviceCount);
-            if (deviceCount) {
+            status = IopGetResourceRequirementsForAssignTable(requestTablep, requestTablep + 1, &deviceCount);
+            if (deviceCount)
+            {
 
                 //
                 // Release the current resources to the arbiters.
                 // Memory for ResourceList is not released.
                 //
 
-                if (DeviceNode->ResourceList) {
+                if (DeviceNode->ResourceList)
+                {
 
                     IopReleaseResourcesInternal(DeviceNode);
                 }
@@ -4926,17 +4679,16 @@ Return Value:
                 // Try to do the assignment.
                 //
 
-                status = IopFindBestConfiguration(
-                            requestTablep,
-                            deviceCount,
-                            &activeArbiterList);
-                if (NT_SUCCESS(status)) {
+                status = IopFindBestConfiguration(requestTablep, deviceCount, &activeArbiterList);
+                if (NT_SUCCESS(status))
+                {
                     //
                     // Ask the arbiters to commit this configuration.
                     //
                     status = IopCommitConfiguration(&activeArbiterList);
                 }
-                if (NT_SUCCESS(status)) {
+                if (NT_SUCCESS(status))
+                {
 
                     DeviceNode->Flags &= ~(DNF_RESOURCE_REQUIREMENTS_CHANGED | DNF_NON_STOPPED_REBALANCE);
 
@@ -4947,15 +4699,15 @@ Return Value:
                     // Because the earlier IopReleaseResourcesInternal does not release the pool.
                     //
 
-                    if (DeviceNode->ResourceList) {
+                    if (DeviceNode->ResourceList)
+                    {
 
                         ExFreePool(DeviceNode->ResourceList);
-
                     }
-                    if (DeviceNode->ResourceListTranslated) {
+                    if (DeviceNode->ResourceListTranslated)
+                    {
 
                         ExFreePool(DeviceNode->ResourceListTranslated);
-
                     }
 
                     DeviceNode->ResourceList = requestTablep->ResourceAssignment;
@@ -4965,17 +4717,20 @@ Return Value:
 
                     status = IopStartDevice(DeviceNode->PhysicalDeviceObject);
 
-                    if (!NT_SUCCESS(status)) {
+                    if (!NT_SUCCESS(status))
+                    {
 
                         PipRequestDeviceRemoval(DeviceNode, FALSE, CM_PROB_NORMAL_CONFLICT);
                     }
-
-                } else {
+                }
+                else
+                {
 
                     NTSTATUS restoreResourcesStatus;
 
                     restoreResourcesStatus = IopRestoreResourcesInternal(DeviceNode);
-                    if (!NT_SUCCESS(restoreResourcesStatus)) {
+                    if (!NT_SUCCESS(restoreResourcesStatus))
+                    {
 
                         ASSERT(NT_SUCCESS(restoreResourcesStatus));
                         PipRequestDeviceRemoval(DeviceNode, FALSE, CM_PROB_NEED_RESTART);
@@ -4984,48 +4739,41 @@ Return Value:
 
                 IopFreeResourceRequirementsForAssignTable(requestTablep, requestTablep + 1);
             }
-
-        } else {
+        }
+        else
+        {
 
             //
             // The device needs to be stopped to change resources.
             //
 
             status = IopRebalance(0, NULL);
-
         }
 
         //
         // Restore the flags in case of failure.
         //
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 
             DeviceNode->Flags &= ~DNF_NO_RESOURCE_REQUIRED;
             DeviceNode->Flags |= oldFlags;
-
         }
+    }
+    else
+    {
 
-    } else {
-
-        IopDbgPrint((
-            IOP_RESOURCE_ERROR_LEVEL,
-            "Resource requirements not changed in "
-            "IopReallocateResources, returning error!\n"));
+        IopDbgPrint((IOP_RESOURCE_ERROR_LEVEL, "Resource requirements not changed in "
+                                               "IopReallocateResources, returning error!\n"));
     }
 
     IopUnlockResourceManager();
 }
 
 NTSTATUS
-IopQueryConflictList(
-    PDEVICE_OBJECT        PhysicalDeviceObject,
-    IN PCM_RESOURCE_LIST  ResourceList,
-    IN ULONG              ResourceListSize,
-    OUT PPLUGPLAY_CONTROL_CONFLICT_LIST ConflictList,
-    IN ULONG              ConflictListSize,
-    IN ULONG              Flags
-    )
+IopQueryConflictList(PDEVICE_OBJECT PhysicalDeviceObject, IN PCM_RESOURCE_LIST ResourceList, IN ULONG ResourceListSize,
+                     OUT PPLUGPLAY_CONTROL_CONFLICT_LIST ConflictList, IN ULONG ConflictListSize, IN ULONG Flags)
 /*++
 
 Routine Description:
@@ -5054,7 +4802,8 @@ Return Value:
 
     IopLockResourceManager();
 
-    status = IopQueryConflictListInternal(PhysicalDeviceObject, ResourceList, ResourceListSize, ConflictList, ConflictListSize, Flags);
+    status = IopQueryConflictListInternal(PhysicalDeviceObject, ResourceList, ResourceListSize, ConflictList,
+                                          ConflictListSize, Flags);
 
     IopUnlockResourceManager();
 
@@ -5062,12 +4811,8 @@ Return Value:
 }
 
 
-
 BOOLEAN
-IopEliminateBogusConflict(
-    IN PDEVICE_OBJECT   PhysicalDeviceObject,
-    IN PDEVICE_OBJECT   ConflictDeviceObject
-    )
+IopEliminateBogusConflict(IN PDEVICE_OBJECT PhysicalDeviceObject, IN PDEVICE_OBJECT ConflictDeviceObject)
 /*++
 
 Routine Description:
@@ -5088,43 +4833,46 @@ Return Value:
 {
     PDEVICE_NODE deviceNode;
     PDRIVER_OBJECT driverObject;
-    KIRQL           irql;
-    PDEVICE_OBJECT  attachedDevice;
+    KIRQL irql;
+    PDEVICE_OBJECT attachedDevice;
 
     //
     // simple cases
     //
-    if (PhysicalDeviceObject == NULL || ConflictDeviceObject == NULL) {
+    if (PhysicalDeviceObject == NULL || ConflictDeviceObject == NULL)
+    {
         return FALSE;
     }
     //
     // if ConflictDeviceObject is on PDO's stack, this is a non-conflict
     // nb at least PDO has to be checked
     //
-    irql = KeAcquireQueuedSpinLock( LockQueueIoDatabaseLock );
+    irql = KeAcquireQueuedSpinLock(LockQueueIoDatabaseLock);
 
-    for (attachedDevice = PhysicalDeviceObject;
-         attachedDevice;
-         attachedDevice = attachedDevice->AttachedDevice) {
+    for (attachedDevice = PhysicalDeviceObject; attachedDevice; attachedDevice = attachedDevice->AttachedDevice)
+    {
 
-        if (attachedDevice == ConflictDeviceObject) {
-            KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+        if (attachedDevice == ConflictDeviceObject)
+        {
+            KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
             return TRUE;
         }
     }
 
-    KeReleaseQueuedSpinLock( LockQueueIoDatabaseLock, irql );
+    KeReleaseQueuedSpinLock(LockQueueIoDatabaseLock, irql);
 
     //
     // legacy case
     //
     deviceNode = PP_DO_TO_DN(PhysicalDeviceObject);
     ASSERT(deviceNode);
-    if (deviceNode->Flags & DNF_LEGACY_DRIVER) {
+    if (deviceNode->Flags & DNF_LEGACY_DRIVER)
+    {
         //
         // hmmm, let's see if our ConflictDeviceObject is resources associated with a legacy device
         //
-        if (ConflictDeviceObject->Flags & DO_BUS_ENUMERATED_DEVICE) {
+        if (ConflictDeviceObject->Flags & DO_BUS_ENUMERATED_DEVICE)
+        {
             //
             // if not, we have a legacy conflicting with non-legacy, we're interested!
             //
@@ -5134,7 +4882,8 @@ Return Value:
         // FDO, report driver name
         //
         driverObject = ConflictDeviceObject->DriverObject;
-        if(driverObject == NULL) {
+        if (driverObject == NULL)
+        {
             //
             // should not be NULL
             //
@@ -5146,7 +4895,9 @@ Return Value:
         //
         if (deviceNode->ServiceName.Length != 0 &&
             deviceNode->ServiceName.Length == driverObject->DriverExtension->ServiceKeyName.Length &&
-            RtlCompareUnicodeString(&deviceNode->ServiceName,&driverObject->DriverExtension->ServiceKeyName,TRUE)==0) {
+            RtlCompareUnicodeString(&deviceNode->ServiceName, &driverObject->DriverExtension->ServiceKeyName, TRUE) ==
+                0)
+        {
             //
             // the driver's service name is the same that this PDO is associated with
             // by ignoring it we could end up ignoring conflicts of simular types of legacy devices
@@ -5154,19 +4905,13 @@ Return Value:
             //
             return TRUE;
         }
-
     }
     return FALSE;
 }
 
-
+
 NTSTATUS
-IopQueryConflictFillString(
-    IN PDEVICE_OBJECT   DeviceObject,
-    IN PWSTR            Buffer,
-    IN OUT PULONG       Length,
-    IN OUT PULONG       Flags
-    )
+IopQueryConflictFillString(IN PDEVICE_OBJECT DeviceObject, IN PWSTR Buffer, IN OUT PULONG Length, IN OUT PULONG Flags)
 /*++
 
 Routine Description:
@@ -5190,41 +4935,45 @@ Return Value:
     PDEVICE_NODE deviceNode;
     PDRIVER_OBJECT driverObject;
     PUNICODE_STRING infoString = NULL;
-    ULONG MaxLength = 0;        // words
-    ULONG ReqLength = 0;        // words
+    ULONG MaxLength = 0; // words
+    ULONG ReqLength = 0; // words
     ULONG flags = 0;
 
     PAGED_CODE();
 
-    if (Length != NULL) {
+    if (Length != NULL)
+    {
         MaxLength = *Length;
     }
 
-    if (Flags != NULL) {
+    if (Flags != NULL)
+    {
         flags = *Flags;
     }
 
-    if (DeviceObject == NULL) {
+    if (DeviceObject == NULL)
+    {
         //
         // unknown
         //
         goto final;
-
     }
 
-    if ((DeviceObject->Flags & DO_BUS_ENUMERATED_DEVICE) == 0 ) {
+    if ((DeviceObject->Flags & DO_BUS_ENUMERATED_DEVICE) == 0)
+    {
         //
         // FDO, report driver name
         //
         driverObject = DeviceObject->DriverObject;
-        if(driverObject == NULL) {
+        if (driverObject == NULL)
+        {
             //
             // should not be NULL
             //
             ASSERT(driverObject);
             goto final;
         }
-        infoString = & (driverObject->DriverName);
+        infoString = &(driverObject->DriverName);
         flags |= PNP_CE_LEGACY_DRIVER;
         goto final;
     }
@@ -5232,7 +4981,8 @@ Return Value:
     //
     // we should in actual fact have a PDO
     //
-    if (DeviceObject->DeviceObjectExtension == NULL) {
+    if (DeviceObject->DeviceObjectExtension == NULL)
+    {
         //
         // should not be NULL
         //
@@ -5241,7 +4991,8 @@ Return Value:
     }
 
     deviceNode = PP_DO_TO_DN(DeviceObject);
-    if (deviceNode == NULL) {
+    if (deviceNode == NULL)
+    {
         //
         // should not be NULL
         //
@@ -5249,25 +5000,28 @@ Return Value:
         goto final;
     }
 
-    if (deviceNode == IopRootDeviceNode) {
+    if (deviceNode == IopRootDeviceNode)
+    {
         //
         // owned by root device
         //
         flags |= PNP_CE_ROOT_OWNED;
-
-    } else if (deviceNode -> Parent == NULL) {
+    }
+    else if (deviceNode->Parent == NULL)
+    {
         //
         // faked out PDO - must be legacy device
         //
         driverObject = (PDRIVER_OBJECT)(deviceNode->DuplicatePDO);
-        if(driverObject == NULL) {
+        if (driverObject == NULL)
+        {
             //
             // should not be NULL
             //
             ASSERT(driverObject);
             goto final;
         }
-        infoString = & (driverObject->DriverName);
+        infoString = &(driverObject->DriverName);
         flags |= PNP_CE_LEGACY_DRIVER;
         goto final;
     }
@@ -5279,42 +5033,43 @@ Return Value:
 
 final:
 
-    if (infoString != NULL) {
+    if (infoString != NULL)
+    {
         //
         // we have a string to copy
         //
-        if ((Buffer != NULL) && (MaxLength*sizeof(WCHAR) > infoString->Length)) {
+        if ((Buffer != NULL) && (MaxLength * sizeof(WCHAR) > infoString->Length))
+        {
             RtlCopyMemory(Buffer, infoString->Buffer, infoString->Length);
         }
         ReqLength += infoString->Length / sizeof(WCHAR);
     }
 
-    if ((Buffer != NULL) && (MaxLength > ReqLength)) {
+    if ((Buffer != NULL) && (MaxLength > ReqLength))
+    {
         Buffer[ReqLength] = 0;
     }
 
     ReqLength++;
 
-    if (Length != NULL) {
+    if (Length != NULL)
+    {
         *Length = ReqLength;
     }
-    if (Flags != NULL) {
+    if (Flags != NULL)
+    {
         *Flags = flags;
     }
 
     return status;
 }
 
-
+
 NTSTATUS
-IopQueryConflictFillConflicts(
-    PDEVICE_OBJECT                  PhysicalDeviceObject,
-    IN ULONG                        ConflictCount,
-    IN PARBITER_CONFLICT_INFO       ConflictInfoList,
-    OUT PPLUGPLAY_CONTROL_CONFLICT_LIST ConflictList,
-    IN ULONG                        ConflictListSize,
-    IN ULONG                        Flags
-    )
+IopQueryConflictFillConflicts(PDEVICE_OBJECT PhysicalDeviceObject, IN ULONG ConflictCount,
+                              IN PARBITER_CONFLICT_INFO ConflictInfoList,
+                              OUT PPLUGPLAY_CONTROL_CONFLICT_LIST ConflictList, IN ULONG ConflictListSize,
+                              IN ULONG Flags)
 /*++
 
 Routine Description:
@@ -5364,20 +5119,22 @@ Return Value:
     // remove any that appear to be bogus - ie, that are the same device that we are testing against
     // this stops mostly legacy issues
     //
-    for(Index = 0;Index < ConflictCount; Index++) {
-        if (IopEliminateBogusConflict(PhysicalDeviceObject,ConflictInfoList[Index].OwningObject)) {
+    for (Index = 0; Index < ConflictCount; Index++)
+    {
+        if (IopEliminateBogusConflict(PhysicalDeviceObject, ConflictInfoList[Index].OwningObject))
+        {
 
-            IopDbgPrint((
-                IOP_RESOURCE_VERBOSE_LEVEL,
-                "IopQueryConflictFillConflicts: eliminating \"identical\" PDO"
-                " %08x conflicting with self (%08x)\n",
-                ConflictInfoList[Index].OwningObject,
-                PhysicalDeviceObject));
+            IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL,
+                         "IopQueryConflictFillConflicts: eliminating \"identical\" PDO"
+                         " %08x conflicting with self (%08x)\n",
+                         ConflictInfoList[Index].OwningObject, PhysicalDeviceObject));
             //
             // move the last listed conflict into this space
             //
-            if (Index+1 < ConflictCount) {
-                RtlCopyMemory(&ConflictInfoList[Index],&ConflictInfoList[ConflictCount-1],sizeof(ARBITER_CONFLICT_INFO));
+            if (Index + 1 < ConflictCount)
+            {
+                RtlCopyMemory(&ConflictInfoList[Index], &ConflictInfoList[ConflictCount - 1],
+                              sizeof(ARBITER_CONFLICT_INFO));
             }
             //
             // account for deleting this item
@@ -5392,55 +5149,63 @@ Return Value:
     // or other duplicate entities (we only ever want to report a conflict once, even if there's multiple conflicting ranges)
     //
 
-  RestartScan:
+RestartScan:
 
-    for(Index = 0;Index < ConflictCount; Index++) {
-        if (ConflictInfoList[Index].OwningObject != NULL) {
+    for (Index = 0; Index < ConflictCount; Index++)
+    {
+        if (ConflictInfoList[Index].OwningObject != NULL)
+        {
 
             ULONG Index2;
 
-            for (Index2 = Index+1; Index2 < ConflictCount; Index2++) {
-                if (IopEliminateBogusConflict(ConflictInfoList[Index].OwningObject,ConflictInfoList[Index2].OwningObject)) {
+            for (Index2 = Index + 1; Index2 < ConflictCount; Index2++)
+            {
+                if (IopEliminateBogusConflict(ConflictInfoList[Index].OwningObject,
+                                              ConflictInfoList[Index2].OwningObject))
+                {
                     //
                     // Index2 is considered a dup of Index
                     //
 
-                    IopDbgPrint((
-                        IOP_RESOURCE_VERBOSE_LEVEL,
-                        "IopQueryConflictFillConflicts: eliminating \"identical\" PDO"
-                        " %08x conflicting with PDO %08x\n",
-                        ConflictInfoList[Index2].OwningObject,
-                        ConflictInfoList[Index].OwningObject));
+                    IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL,
+                                 "IopQueryConflictFillConflicts: eliminating \"identical\" PDO"
+                                 " %08x conflicting with PDO %08x\n",
+                                 ConflictInfoList[Index2].OwningObject, ConflictInfoList[Index].OwningObject));
                     //
                     // move the last listed conflict into this space
                     //
-                    if (Index2+1 < ConflictCount) {
-                        RtlCopyMemory(&ConflictInfoList[Index2],&ConflictInfoList[ConflictCount-1],sizeof(ARBITER_CONFLICT_INFO));
+                    if (Index2 + 1 < ConflictCount)
+                    {
+                        RtlCopyMemory(&ConflictInfoList[Index2], &ConflictInfoList[ConflictCount - 1],
+                                      sizeof(ARBITER_CONFLICT_INFO));
                     }
                     //
                     // account for deleting this item
                     //
                     ConflictCount--;
                     Index2--;
-                } else if (IopEliminateBogusConflict(ConflictInfoList[Index2].OwningObject,ConflictInfoList[Index].OwningObject)) {
+                }
+                else if (IopEliminateBogusConflict(ConflictInfoList[Index2].OwningObject,
+                                                   ConflictInfoList[Index].OwningObject))
+                {
                     //
                     // Index is considered a dup of Index2 (some legacy case)
                     //
-                    IopDbgPrint((
-                        IOP_RESOURCE_VERBOSE_LEVEL,
-                        "IopQueryConflictFillConflicts: eliminating \"identical\" PDO"
-                        " %08x conflicting with PDO %08x\n",
-                        ConflictInfoList[Index2].OwningObject,
-                        ConflictInfoList[Index].OwningObject));
+                    IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL,
+                                 "IopQueryConflictFillConflicts: eliminating \"identical\" PDO"
+                                 " %08x conflicting with PDO %08x\n",
+                                 ConflictInfoList[Index2].OwningObject, ConflictInfoList[Index].OwningObject));
                     //
                     // move the one we want (Index2) into the space occupied by Index
                     //
-                    RtlCopyMemory(&ConflictInfoList[Index],&ConflictInfoList[Index2],sizeof(ARBITER_CONFLICT_INFO));
+                    RtlCopyMemory(&ConflictInfoList[Index], &ConflictInfoList[Index2], sizeof(ARBITER_CONFLICT_INFO));
                     //
                     // move the last listed conflict into the space we just created
                     //
-                    if (Index2+1 < ConflictCount) {
-                        RtlCopyMemory(&ConflictInfoList[Index2],&ConflictInfoList[ConflictCount-1],sizeof(ARBITER_CONFLICT_INFO));
+                    if (Index2 + 1 < ConflictCount)
+                    {
+                        RtlCopyMemory(&ConflictInfoList[Index2], &ConflictInfoList[ConflictCount - 1],
+                                      sizeof(ARBITER_CONFLICT_INFO));
                     }
                     //
                     // account for deleting this item
@@ -5459,29 +5224,33 @@ Return Value:
     // preprocessing - if we have any known reported conflicts, don't report back any unknown
     //
 
-    for(Index = 0;Index < ConflictCount; Index++) {
+    for (Index = 0; Index < ConflictCount; Index++)
+    {
         //
         // find first unknown
         //
-        if (ConflictInfoList[Index].OwningObject == NULL) {
+        if (ConflictInfoList[Index].OwningObject == NULL)
+        {
             //
             // eliminate all other unknowns
             //
 
             ULONG Index2;
 
-            for (Index2 = Index+1; Index2 < ConflictCount; Index2++) {
-                if (ConflictInfoList[Index2].OwningObject == NULL) {
+            for (Index2 = Index + 1; Index2 < ConflictCount; Index2++)
+            {
+                if (ConflictInfoList[Index2].OwningObject == NULL)
+                {
 
-                    IopDbgPrint((
-                        IOP_RESOURCE_VERBOSE_LEVEL,
-                        "IopQueryConflictFillConflicts: eliminating extra"
-                        " unknown\n"));
+                    IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL, "IopQueryConflictFillConflicts: eliminating extra"
+                                                             " unknown\n"));
                     //
                     // move the last listed conflict into this space
                     //
-                    if (Index2+1 < ConflictCount) {
-                        RtlCopyMemory(&ConflictInfoList[Index2],&ConflictInfoList[ConflictCount-1],sizeof(ARBITER_CONFLICT_INFO));
+                    if (Index2 + 1 < ConflictCount)
+                    {
+                        RtlCopyMemory(&ConflictInfoList[Index2], &ConflictInfoList[ConflictCount - 1],
+                                      sizeof(ARBITER_CONFLICT_INFO));
                     }
                     //
                     // account for deleting this item
@@ -5491,19 +5260,19 @@ Return Value:
                 }
             }
 
-            if(ConflictCount != 1) {
+            if (ConflictCount != 1)
+            {
 
-                IopDbgPrint((
-                    IOP_RESOURCE_VERBOSE_LEVEL,
-                    "IopQueryConflictFillConflicts: eliminating first unknown\n"
-                    ));
+                IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL, "IopQueryConflictFillConflicts: eliminating first unknown\n"));
                 //
                 // there were others, so ignore the unknown
                 //
-                if (Index+1 < ConflictCount) {
-                    RtlCopyMemory(&ConflictInfoList[Index],&ConflictInfoList[ConflictCount-1],sizeof(ARBITER_CONFLICT_INFO));
+                if (Index + 1 < ConflictCount)
+                {
+                    RtlCopyMemory(&ConflictInfoList[Index], &ConflictInfoList[ConflictCount - 1],
+                                  sizeof(ARBITER_CONFLICT_INFO));
                 }
-                ConflictCount --;
+                ConflictCount--;
             }
 
             break;
@@ -5514,31 +5283,31 @@ Return Value:
     // set number of actual and listed conflicts
     //
 
-    ConflictListIdealSize = (sizeof(PLUGPLAY_CONTROL_CONFLICT_LIST) - sizeof(PLUGPLAY_CONTROL_CONFLICT_ENTRY)) + sizeof(PLUGPLAY_CONTROL_CONFLICT_STRINGS);
+    ConflictListIdealSize = (sizeof(PLUGPLAY_CONTROL_CONFLICT_LIST) - sizeof(PLUGPLAY_CONTROL_CONFLICT_ENTRY)) +
+                            sizeof(PLUGPLAY_CONTROL_CONFLICT_STRINGS);
     ConflictListCount = 0;
     stringTotalSize = 0;
     DummyCount = 0;
 
     ASSERT(ConflictListSize >= ConflictListIdealSize); // we should have checked to see if buffer is at least this big
 
-    IopDbgPrint((
-        IOP_RESOURCE_VERBOSE_LEVEL,
-        "IopQueryConflictFillConflicts: Detected %d conflicts\n",
-        ConflictCount));
+    IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL, "IopQueryConflictFillConflicts: Detected %d conflicts\n", ConflictCount));
 
     //
     // estimate sizes
     //
-    if (Flags) {
+    if (Flags)
+    {
         //
         // flags entry required (ie resource not available for some specified reason)
         //
         stringSize = 1; // null-length string
-        DummyCount ++;
+        DummyCount++;
         EntrySize = sizeof(PLUGPLAY_CONTROL_CONFLICT_ENTRY);
         EntrySize += sizeof(WCHAR) * stringSize;
 
-        if((ConflictListIdealSize+EntrySize) <= ConflictListSize) {
+        if ((ConflictListIdealSize + EntrySize) <= ConflictListSize)
+        {
             //
             // we can fit this one in
             //
@@ -5550,10 +5319,11 @@ Return Value:
     //
     // report conflicts
     //
-    for(Index = 0; Index < ConflictCount; Index ++) {
+    for (Index = 0; Index < ConflictCount; Index++)
+    {
 
         stringSize = 0;
-        IopQueryConflictFillString(ConflictInfoList[Index].OwningObject,NULL,&stringSize,NULL);
+        IopQueryConflictFillString(ConflictInfoList[Index].OwningObject, NULL, &stringSize, NULL);
 
         //
         // account for entry
@@ -5561,7 +5331,8 @@ Return Value:
         EntrySize = sizeof(PLUGPLAY_CONTROL_CONFLICT_ENTRY);
         EntrySize += sizeof(WCHAR) * stringSize;
 
-        if((ConflictListIdealSize+EntrySize) <= ConflictListSize) {
+        if ((ConflictListIdealSize + EntrySize) <= ConflictListSize)
+        {
             //
             // we can fit this one in
             //
@@ -5571,28 +5342,27 @@ Return Value:
         ConflictListIdealSize += EntrySize;
     }
 
-    ConflictList->ConflictsCounted = ConflictCount+DummyCount; // number of conflicts detected including any dummy conflict
-    ConflictList->ConflictsListed = ConflictListCount;         // how many we could fit in
-    ConflictList->RequiredBufferSize = ConflictListIdealSize;  // how much buffer space to supply on next call
+    ConflictList->ConflictsCounted =
+        ConflictCount + DummyCount;                    // number of conflicts detected including any dummy conflict
+    ConflictList->ConflictsListed = ConflictListCount; // how many we could fit in
+    ConflictList->RequiredBufferSize = ConflictListIdealSize; // how much buffer space to supply on next call
 
-    IopDbgPrint((
-        IOP_RESOURCE_VERBOSE_LEVEL,
-        "IopQueryConflictFillConflicts: Listing %d conflicts\n",
-        ConflictListCount));
-    IopDbgPrint((
-        IOP_RESOURCE_VERBOSE_LEVEL,
-        "IopQueryConflictFillConflicts: Need %08x bytes to list all conflicts\n",
-        ConflictListIdealSize));
+    IopDbgPrint(
+        (IOP_RESOURCE_VERBOSE_LEVEL, "IopQueryConflictFillConflicts: Listing %d conflicts\n", ConflictListCount));
+    IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL, "IopQueryConflictFillConflicts: Need %08x bytes to list all conflicts\n",
+                 ConflictListIdealSize));
 
-    ConfStrings = (PPLUGPLAY_CONTROL_CONFLICT_STRINGS)&(ConflictList->ConflictEntry[ConflictListCount]);
+    ConfStrings = (PPLUGPLAY_CONTROL_CONFLICT_STRINGS) & (ConflictList->ConflictEntry[ConflictListCount]);
     ConfStrings->NullDeviceInstance = (ULONG)(-1);
     ConflictStringsOffset = 0;
 
-    for(ConflictIndex = 0; ConflictIndex < DummyCount; ConflictIndex++) {
+    for (ConflictIndex = 0; ConflictIndex < DummyCount; ConflictIndex++)
+    {
         //
         // flags entry required (ie resource not available for some specified reason)
         //
-        if (Flags && ConflictIndex == 0) {
+        if (Flags && ConflictIndex == 0)
+        {
             ConflictList->ConflictEntry[ConflictIndex].DeviceInstance = ConflictStringsOffset;
             ConflictList->ConflictEntry[ConflictIndex].DeviceFlags = Flags;
             ConflictList->ConflictEntry[ConflictIndex].ResourceType = 0;
@@ -5601,18 +5371,16 @@ Return Value:
             ConflictList->ConflictEntry[ConflictIndex].ResourceFlags = 0;
 
             ConfStrings->DeviceInstanceStrings[ConflictStringsOffset] = 0; // null string
-            stringTotalSize --;
-            ConflictStringsOffset ++;
-            IopDbgPrint((
-                IOP_RESOURCE_VERBOSE_LEVEL,
-                "IopQueryConflictFillConflicts: Listing flags %08x\n",
-                Flags));
+            stringTotalSize--;
+            ConflictStringsOffset++;
+            IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL, "IopQueryConflictFillConflicts: Listing flags %08x\n", Flags));
         }
     }
     //
     // get/fill in details for all those we can fit into the buffer
     //
-    for(Index = 0; ConflictIndex < ConflictListCount ; Index ++, ConflictIndex++) {
+    for (Index = 0; ConflictIndex < ConflictListCount; Index++, ConflictIndex++)
+    {
 
         ASSERT(Index < ConflictCount);
         //
@@ -5621,7 +5389,8 @@ Return Value:
         ConflictList->ConflictEntry[ConflictIndex].DeviceInstance = ConflictStringsOffset;
         ConflictList->ConflictEntry[ConflictIndex].DeviceFlags = 0;
         ConflictList->ConflictEntry[ConflictIndex].ResourceType = 0; // NYI
-        ConflictList->ConflictEntry[ConflictIndex].ResourceStart = (ULONGLONG)(1); // for now, return totally invalid range (1-0)
+        ConflictList->ConflictEntry[ConflictIndex].ResourceStart =
+            (ULONGLONG)(1); // for now, return totally invalid range (1-0)
         ConflictList->ConflictEntry[ConflictIndex].ResourceEnd = 0;
         ConflictList->ConflictEntry[ConflictIndex].ResourceFlags = 0;
 
@@ -5630,14 +5399,11 @@ Return Value:
         //
         stringSize = stringTotalSize;
         IopQueryConflictFillString(ConflictInfoList[Index].OwningObject,
-                                    &(ConfStrings->DeviceInstanceStrings[ConflictStringsOffset]),
-                                    &stringSize,
-                                    &(ConflictList->ConflictEntry[ConflictIndex].DeviceFlags));
+                                   &(ConfStrings->DeviceInstanceStrings[ConflictStringsOffset]), &stringSize,
+                                   &(ConflictList->ConflictEntry[ConflictIndex].DeviceFlags));
         stringTotalSize -= stringSize;
-        IopDbgPrint((
-            IOP_RESOURCE_VERBOSE_LEVEL,
-            "IopQueryConflictFillConflicts: Listing \"%S\"\n",
-            &(ConfStrings->DeviceInstanceStrings[ConflictStringsOffset])));
+        IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL, "IopQueryConflictFillConflicts: Listing \"%S\"\n",
+                     &(ConfStrings->DeviceInstanceStrings[ConflictStringsOffset])));
         ConflictStringsOffset += stringSize;
     }
 
@@ -5651,16 +5417,11 @@ Return Value:
     return status;
 }
 
-
+
 NTSTATUS
-IopQueryConflictListInternal(
-    PDEVICE_OBJECT        PhysicalDeviceObject,
-    IN PCM_RESOURCE_LIST  ResourceList,
-    IN ULONG              ResourceListSize,
-    OUT PPLUGPLAY_CONTROL_CONFLICT_LIST ConflictList,
-    IN ULONG              ConflictListSize,
-    IN ULONG              Flags
-    )
+IopQueryConflictListInternal(PDEVICE_OBJECT PhysicalDeviceObject, IN PCM_RESOURCE_LIST ResourceList,
+                             IN ULONG ResourceListSize, OUT PPLUGPLAY_CONTROL_CONFLICT_LIST ConflictList,
+                             IN ULONG ConflictListSize, IN ULONG Flags)
 /*++
 
 Routine Description:
@@ -5687,7 +5448,7 @@ Routine Description:
     PVOID ExtParams[4];
     IOP_RESOURCE_REQUEST request;
 
-    UNREFERENCED_PARAMETER( Flags );
+    UNREFERENCED_PARAMETER(Flags);
 
     PAGED_CODE();
 
@@ -5701,7 +5462,10 @@ Routine Description:
     ASSERT(ResourceList->Count == 1);
     ASSERT(ResourceList->List[0].PartialResourceList.Count == 1);
 
-    if (ConflictList == NULL || (ConflictListSize < (sizeof(PLUGPLAY_CONTROL_CONFLICT_LIST) - sizeof(PLUGPLAY_CONTROL_CONFLICT_ENTRY)) + sizeof(PLUGPLAY_CONTROL_CONFLICT_STRINGS))) {
+    if (ConflictList == NULL ||
+        (ConflictListSize < (sizeof(PLUGPLAY_CONTROL_CONFLICT_LIST) - sizeof(PLUGPLAY_CONTROL_CONFLICT_ENTRY)) +
+                                sizeof(PLUGPLAY_CONTROL_CONFLICT_STRINGS)))
+    {
         //
         // sanity check
         //
@@ -5714,13 +5478,16 @@ Routine Description:
 
     ConflictList->ConflictsCounted = 0;
     ConflictList->ConflictsListed = 0;
-    ConflictList->RequiredBufferSize = (sizeof(PLUGPLAY_CONTROL_CONFLICT_LIST) - sizeof(PLUGPLAY_CONTROL_CONFLICT_ENTRY)) + sizeof(PLUGPLAY_CONTROL_CONFLICT_STRINGS);
+    ConflictList->RequiredBufferSize =
+        (sizeof(PLUGPLAY_CONTROL_CONFLICT_LIST) - sizeof(PLUGPLAY_CONTROL_CONFLICT_ENTRY)) +
+        sizeof(PLUGPLAY_CONTROL_CONFLICT_STRINGS);
 
     //
     // Retrieve the devnode from the PDO
     //
     deviceNode = PP_DO_TO_DN(PhysicalDeviceObject);
-    if (!deviceNode) {
+    if (!deviceNode)
+    {
         status = STATUS_NO_SUCH_DEVICE;
         goto Clean0;
     }
@@ -5728,37 +5495,43 @@ Routine Description:
     //
     // type-specific validation
     //
-    switch(ResourceList->List[0].PartialResourceList.PartialDescriptors[0].Type) {
-        case CmResourceTypePort:
-        case CmResourceTypeMemory:
-            if(ResourceList->List[0].PartialResourceList.PartialDescriptors[0].u.Generic.Length == 0) {
-                //
-                // zero-range resource can never conflict
-                //
-                status = STATUS_SUCCESS;
-                goto Clean0;
-            }
-            break;
-        case CmResourceTypeInterrupt:
-        case CmResourceTypeDma:
-            break;
-        default:
-            ASSERT(0);
-            status = STATUS_INVALID_PARAMETER;
+    switch (ResourceList->List[0].PartialResourceList.PartialDescriptors[0].Type)
+    {
+    case CmResourceTypePort:
+    case CmResourceTypeMemory:
+        if (ResourceList->List[0].PartialResourceList.PartialDescriptors[0].u.Generic.Length == 0)
+        {
+            //
+            // zero-range resource can never conflict
+            //
+            status = STATUS_SUCCESS;
             goto Clean0;
+        }
+        break;
+    case CmResourceTypeInterrupt:
+    case CmResourceTypeDma:
+        break;
+    default:
+        ASSERT(0);
+        status = STATUS_INVALID_PARAMETER;
+        goto Clean0;
     }
 
     //
     // apply bus details from node
     //
-    if (deviceNode->ChildInterfaceType == InterfaceTypeUndefined) {
+    if (deviceNode->ChildInterfaceType == InterfaceTypeUndefined)
+    {
         //
         // we have to grovel around to find real Interface Type
         //
         pIoReqList = deviceNode->ResourceRequirements;
-        if (pIoReqList != NULL && pIoReqList->InterfaceType != InterfaceTypeUndefined) {
+        if (pIoReqList != NULL && pIoReqList->InterfaceType != InterfaceTypeUndefined)
+        {
             ResourceList->List[0].InterfaceType = pIoReqList->InterfaceType;
-        } else {
+        }
+        else
+        {
             //
             // we should never get here
             // if we do, I need to look at this more
@@ -5768,8 +5541,9 @@ Routine Description:
 #endif
             ResourceList->List[0].InterfaceType = PnpDefaultInterfaceType;
         }
-
-    } else {
+    }
+    else
+    {
         //
         // we trust the deviceNode to tell us Interface Type
         //
@@ -5778,19 +5552,24 @@ Routine Description:
     //
     // Some bus-types we are better off considered as default
     //
-    switch(ResourceList->List[0].InterfaceType) {
-        case InterfaceTypeUndefined:
-        case PCMCIABus:
-            ResourceList->List[0].InterfaceType = PnpDefaultInterfaceType;
+    switch (ResourceList->List[0].InterfaceType)
+    {
+    case InterfaceTypeUndefined:
+    case PCMCIABus:
+        ResourceList->List[0].InterfaceType = PnpDefaultInterfaceType;
     }
-    if ((deviceNode->ChildBusNumber & 0x80000000) == 0x80000000) {
+    if ((deviceNode->ChildBusNumber & 0x80000000) == 0x80000000)
+    {
         //
         // we have to grovel around to find real Bus Number
         //
         pIoReqList = deviceNode->ResourceRequirements;
-        if (pIoReqList != NULL && (pIoReqList->BusNumber & 0x80000000) != 0x80000000) {
+        if (pIoReqList != NULL && (pIoReqList->BusNumber & 0x80000000) != 0x80000000)
+        {
             ResourceList->List[0].BusNumber = pIoReqList->BusNumber;
-        } else {
+        }
+        else
+        {
             //
             // a resonable default, but assert is here so I remember to look at this more
             //
@@ -5799,8 +5578,9 @@ Routine Description:
 #endif
             ResourceList->List[0].BusNumber = 0;
         }
-
-    } else {
+    }
+    else
+    {
         //
         // we trust the deviceNode to tell us Bus Number
         //
@@ -5811,7 +5591,8 @@ Routine Description:
     // from our CM Resource List, obtain an IO Resource Requirements List
     //
     ioResources = IopCmResourcesToIoResources(0, ResourceList, LCPRI_FORCECONFIG);
-    if (!ioResources) {
+    if (!ioResources)
+    {
         status = STATUS_INVALID_PARAMETER;
         goto Clean0;
     }
@@ -5822,15 +5603,14 @@ Routine Description:
     request.AllocationType = ArbiterRequestUndefined;
     request.ResourceRequirements = ioResources;
     request.PhysicalDevice = PhysicalDeviceObject;
-    status = IopResourceRequirementsListToReqList(
-                    &request,
-                    &reqList);
+    status = IopResourceRequirementsListToReqList(&request, &reqList);
 
     //
     // get arbitrator/translator for current device/bus
     //
 
-    if (NT_SUCCESS(status) && reqList) {
+    if (NT_SUCCESS(status) && reqList)
+    {
 
         reqAlternative = reqList->AlternativeTable;
         RA = *reqAlternative;
@@ -5842,15 +5622,17 @@ Routine Description:
         //
         // we should have got only one descriptor, use only the first one
         //
-        if (ReqDescCount>0) {
+        if (ReqDescCount > 0)
+        {
 
             //
             // get first descriptor & it's arbitor
             //
 
             reqDesc = *ReqDescTable;
-            if (reqDesc->ArbitrationRequired) {
-                reqDescTranslated = reqDesc->TranslatedReqDesc;  // Could be reqDesc itself
+            if (reqDesc->ArbitrationRequired)
+            {
+                reqDescTranslated = reqDesc->TranslatedReqDesc; // Could be reqDesc itself
 
                 arbiterEntry = reqDesc->u.Arbiter;
                 ASSERT(arbiterEntry);
@@ -5862,8 +5644,8 @@ Routine Description:
                 // skip special descriptor
                 // to get to the actual descriptor
                 //
-                if(ConflictDesc->Type == CmResourceTypeConfigData || ConflictDesc->Type == CmResourceTypeReserved)
-                        ConflictDesc++;
+                if (ConflictDesc->Type == CmResourceTypeConfigData || ConflictDesc->Type == CmResourceTypeReserved)
+                    ConflictDesc++;
 
                 //
                 // finally we can call the arbiter to get a conflict list (returning PDO's and Global Address Ranges)
@@ -5872,57 +5654,66 @@ Routine Description:
                 ExtParams[1] = ConflictDesc;
                 ExtParams[2] = &ConflictCount;
                 ExtParams[3] = &ConflictInfoList;
-                status = IopCallArbiter(arbiterEntry, ArbiterActionQueryConflict , ExtParams, NULL , NULL);
+                status = IopCallArbiter(arbiterEntry, ArbiterActionQueryConflict, ExtParams, NULL, NULL);
 
-                if (NT_SUCCESS(status)) {
+                if (NT_SUCCESS(status))
+                {
                     //
                     // fill in user-memory buffer with conflict
                     //
-                    status = IopQueryConflictFillConflicts(PhysicalDeviceObject,ConflictCount,ConflictInfoList,ConflictList,ConflictListSize,0);
-                    if(ConflictInfoList != NULL) {
+                    status = IopQueryConflictFillConflicts(PhysicalDeviceObject, ConflictCount, ConflictInfoList,
+                                                           ConflictList, ConflictListSize, 0);
+                    if (ConflictInfoList != NULL)
+                    {
                         ExFreePool(ConflictInfoList);
                     }
                 }
-                else if(status == STATUS_RANGE_NOT_FOUND) {
+                else if (status == STATUS_RANGE_NOT_FOUND)
+                {
                     //
                     // fill in with flag indicating bad range (this means range is not available)
                     // ConflictInfoList should not be allocated
                     //
-                    status = IopQueryConflictFillConflicts(NULL,0,NULL,ConflictList,ConflictListSize,PNP_CE_TRANSLATE_FAILED);
+                    status = IopQueryConflictFillConflicts(NULL, 0, NULL, ConflictList, ConflictListSize,
+                                                           PNP_CE_TRANSLATE_FAILED);
                 }
-
-            } else {
-#if MAXDBG
-                ASSERT(0);                         // For now
-#endif
-                status = STATUS_INVALID_PARAMETER;  // if we failed, it's prob because ResourceList was invalid
             }
-        } else {
+            else
+            {
 #if MAXDBG
-            ASSERT(0);                         // For now
+                ASSERT(0); // For now
 #endif
-            status = STATUS_INVALID_PARAMETER;  // if we failed, it's prob because ResourceList was invalid
+                status = STATUS_INVALID_PARAMETER; // if we failed, it's prob because ResourceList was invalid
+            }
+        }
+        else
+        {
+#if MAXDBG
+            ASSERT(0); // For now
+#endif
+            status = STATUS_INVALID_PARAMETER; // if we failed, it's prob because ResourceList was invalid
         }
 
         IopCheckDataStructures(IopRootDeviceNode);
 
         IopFreeReqList(reqList);
-    } else {
+    }
+    else
+    {
 #if MAXDBG
-        ASSERT(0);                         // For now
+        ASSERT(0); // For now
 #endif
-        if(NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
             //
             // it was NULL because we had a zero resource count, must be invalid parameter
             //
             status = STATUS_INVALID_PARAMETER;
         }
-
     }
     ExFreePool(ioResources);
 
-    Clean0:
-    ;
+Clean0:;
 
     return status;
 }
@@ -5938,13 +5729,8 @@ Routine Description:
 
 --*/
 
-VOID
-IopQueryRebalance (
-    IN PDEVICE_NODE DeviceNode,
-    IN ULONG Phase,
-    IN PULONG RebalanceCount,
-    IN PDEVICE_OBJECT **DeviceTable
-    )
+VOID IopQueryRebalance(IN PDEVICE_NODE DeviceNode, IN ULONG Phase, IN PULONG RebalanceCount,
+                       IN PDEVICE_OBJECT **DeviceTable)
 
 /*++
 
@@ -5984,10 +5770,11 @@ Return Value:
     //
 
     deviceTable = *DeviceTable;
-    IopQueryRebalanceWorker (DeviceNode, Phase, RebalanceCount, DeviceTable);
+    IopQueryRebalanceWorker(DeviceNode, Phase, RebalanceCount, DeviceTable);
 
     count = *RebalanceCount;
-    if (count != 0 && Phase == 0) {
+    if (count != 0 && Phase == 0)
+    {
 
         //
         // At phase 0, we did not actually query-stop the device.
@@ -5995,7 +5782,8 @@ Return Value:
         //
 
         deviceList = (PDEVICE_OBJECT *)ExAllocatePoolPDO(PagedPool, count * sizeof(PDEVICE_OBJECT));
-        if (deviceList == NULL) {
+        if (deviceList == NULL)
+        {
             *RebalanceCount = 0;
             return;
         }
@@ -6007,22 +5795,18 @@ Return Value:
 
         *RebalanceCount = 0;
         *DeviceTable = deviceTable;
-        for (device = deviceList; device < (deviceList + count); device++) {
+        for (device = deviceList; device < (deviceList + count); device++)
+        {
             deviceNode = PP_DO_TO_DN(*device);
-            IopQueryRebalanceWorker (deviceNode, 1, RebalanceCount, DeviceTable);
+            IopQueryRebalanceWorker(deviceNode, 1, RebalanceCount, DeviceTable);
         }
         ExFreePool(deviceList);
     }
     return;
 }
 
-VOID
-IopQueryRebalanceWorker (
-    IN PDEVICE_NODE DeviceNode,
-    IN ULONG Phase,
-    IN PULONG RebalanceCount,
-    IN PDEVICE_OBJECT **DeviceTable
-    )
+VOID IopQueryRebalanceWorker(IN PDEVICE_NODE DeviceNode, IN ULONG Phase, IN PULONG RebalanceCount,
+                             IN PDEVICE_OBJECT **DeviceTable)
 
 /*++
 
@@ -6059,17 +5843,17 @@ Return Value:
     //  b. devices with problem
     //  c. devices with legacy driver
     //
-    if (    DeviceNode == NULL ||
-            DeviceNode->State != DeviceNodeStarted ||
-            PipDoesDevNodeHaveProblem(DeviceNode) ||
-            (DeviceNode->Flags & DNF_LEGACY_DRIVER)) {
+    if (DeviceNode == NULL || DeviceNode->State != DeviceNodeStarted || PipDoesDevNodeHaveProblem(DeviceNode) ||
+        (DeviceNode->Flags & DNF_LEGACY_DRIVER))
+    {
 
         return;
     }
     //
     // Recursively test the entire subtree.
     //
-    for (node = DeviceNode->Child; node; node = node->Sibling) {
+    for (node = DeviceNode->Child; node; node = node->Sibling)
+    {
 
         IopQueryRebalanceWorker(node, Phase, RebalanceCount, DeviceTable);
     }
@@ -6079,13 +5863,8 @@ Return Value:
     IopTestForReconfiguration(DeviceNode, Phase, RebalanceCount, DeviceTable);
 }
 
-VOID
-IopTestForReconfiguration (
-    IN PDEVICE_NODE DeviceNode,
-    IN ULONG Phase,
-    IN PULONG RebalanceCount,
-    IN PDEVICE_OBJECT **DeviceTable
-    )
+VOID IopTestForReconfiguration(IN PDEVICE_NODE DeviceNode, IN ULONG Phase, IN PULONG RebalanceCount,
+                               IN PDEVICE_OBJECT **DeviceTable)
 
 
 /*++
@@ -6115,15 +5894,16 @@ Return Value:
     NTSTATUS status;
     BOOLEAN addToList = FALSE;
 
-    if (Phase == 0) {
+    if (Phase == 0)
+    {
 
         //
         // At phase zero, this routine only wants to find out which devices's resource
         // requirements lists chagned.  No one actually gets stopped.
         //
 
-        if ((DeviceNode->Flags & DNF_RESOURCE_REQUIREMENTS_CHANGED) &&
-            !(DeviceNode->Flags & DNF_NON_STOPPED_REBALANCE) ) {
+        if ((DeviceNode->Flags & DNF_RESOURCE_REQUIREMENTS_CHANGED) && !(DeviceNode->Flags & DNF_NON_STOPPED_REBALANCE))
+        {
 
             //
             // It's too hard to handle non-stop rebalancing devices during rebalance.
@@ -6131,12 +5911,17 @@ Return Value:
             //
 
             addToList = TRUE;
-        } else {
+        }
+        else
+        {
 
-            if (DeviceNode->State == DeviceNodeStarted) {
-                status = IopQueryReconfiguration (IRP_MN_QUERY_STOP_DEVICE, DeviceNode->PhysicalDeviceObject);
-                if (NT_SUCCESS(status)) {
-                    if (status == STATUS_RESOURCE_REQUIREMENTS_CHANGED) {
+            if (DeviceNode->State == DeviceNodeStarted)
+            {
+                status = IopQueryReconfiguration(IRP_MN_QUERY_STOP_DEVICE, DeviceNode->PhysicalDeviceObject);
+                if (NT_SUCCESS(status))
+                {
+                    if (status == STATUS_RESOURCE_REQUIREMENTS_CHANGED)
+                    {
 
                         //
                         // If we find out a device's resource requirements changed this way,
@@ -6148,58 +5933,62 @@ Return Value:
                         addToList = TRUE;
                     }
                 }
-                IopQueryReconfiguration (IRP_MN_CANCEL_STOP_DEVICE, DeviceNode->PhysicalDeviceObject);
+                IopQueryReconfiguration(IRP_MN_CANCEL_STOP_DEVICE, DeviceNode->PhysicalDeviceObject);
             }
         }
-        if (addToList) {
+        if (addToList)
+        {
             *RebalanceCount = *RebalanceCount + 1;
             **DeviceTable = DeviceNode->PhysicalDeviceObject;
             *DeviceTable = *DeviceTable + 1;
         }
-    } else {
+    }
+    else
+    {
 
         //
         // Phase 1
         //
 
-        if (DeviceNode->State == DeviceNodeStarted) {
+        if (DeviceNode->State == DeviceNodeStarted)
+        {
 
             //
             // Make sure all the resources required children of the DeviceNode are stopped.
             //
 
             nodex = DeviceNode->Child;
-            while (nodex) {
-                if (nodex->State == DeviceNodeUninitialized ||
-                    nodex->State == DeviceNodeInitialized ||
-                    nodex->State == DeviceNodeDriversAdded ||
-                    nodex->State == DeviceNodeQueryStopped ||
-                    nodex->State == DeviceNodeRemovePendingCloses ||
-                    nodex->State == DeviceNodeRemoved ||
-                    (nodex->Flags & DNF_NEEDS_REBALANCE)) {
+            while (nodex)
+            {
+                if (nodex->State == DeviceNodeUninitialized || nodex->State == DeviceNodeInitialized ||
+                    nodex->State == DeviceNodeDriversAdded || nodex->State == DeviceNodeQueryStopped ||
+                    nodex->State == DeviceNodeRemovePendingCloses || nodex->State == DeviceNodeRemoved ||
+                    (nodex->Flags & DNF_NEEDS_REBALANCE))
+                {
                     nodex = nodex->Sibling;
-                } else {
+                }
+                else
+                {
                     break;
                 }
             }
 
-            if (nodex) {
+            if (nodex)
+            {
 
                 //
                 // If any resource required child of the DeviceNode is not stopped,
                 // we won't ask the DeviceNode to stop.
                 //
 
-                IopDbgPrint((
-                    IOP_RESOURCE_INFO_LEVEL,
-                    "Rebalance: Child %ws not stopped for %ws\n",
-                    nodex->InstancePath.Buffer,
-                    DeviceNode->InstancePath.Buffer));
+                IopDbgPrint((IOP_RESOURCE_INFO_LEVEL, "Rebalance: Child %ws not stopped for %ws\n",
+                             nodex->InstancePath.Buffer, DeviceNode->InstancePath.Buffer));
                 return;
             }
-        } else if (DeviceNode->State != DeviceNodeDriversAdded ||
-                   !(DeviceNode->Flags & DNF_HAS_BOOT_CONFIG) ||
-                    (DeviceNode->Flags & DNF_MADEUP)) {
+        }
+        else if (DeviceNode->State != DeviceNodeDriversAdded || !(DeviceNode->Flags & DNF_HAS_BOOT_CONFIG) ||
+                 (DeviceNode->Flags & DNF_MADEUP))
+        {
 
             //
             // The device is not started and has no boot config.  There is no need to query-stop it.
@@ -6211,14 +6000,14 @@ Return Value:
             return;
         }
 
-        status = IopQueryReconfiguration (IRP_MN_QUERY_STOP_DEVICE, DeviceNode->PhysicalDeviceObject);
-        if (NT_SUCCESS(status)) {
-            IopDbgPrint((
-                IOP_RESOURCE_INFO_LEVEL,
-                "Rebalance: %ws succeeded QueryStop\n",
-                DeviceNode->InstancePath.Buffer));
+        status = IopQueryReconfiguration(IRP_MN_QUERY_STOP_DEVICE, DeviceNode->PhysicalDeviceObject);
+        if (NT_SUCCESS(status))
+        {
+            IopDbgPrint(
+                (IOP_RESOURCE_INFO_LEVEL, "Rebalance: %ws succeeded QueryStop\n", DeviceNode->InstancePath.Buffer));
 
-            if (DeviceNode->State == DeviceNodeStarted) {
+            if (DeviceNode->State == DeviceNodeStarted)
+            {
 
                 PipSetDevNodeState(DeviceNode, DeviceNodeQueryStopped, NULL);
 
@@ -6231,7 +6020,9 @@ Return Value:
 
                 ObReferenceObject(DeviceNode->PhysicalDeviceObject);
                 *DeviceTable = *DeviceTable + 1;
-            } else {
+            }
+            else
+            {
 
                 //
                 // We need to release the device's prealloc boot config.  This device will NOT
@@ -6239,7 +6030,7 @@ Return Value:
                 //
 
                 ASSERT(DeviceNode->Flags & DNF_HAS_BOOT_CONFIG);
-                status = IopQueryReconfiguration (IRP_MN_STOP_DEVICE, DeviceNode->PhysicalDeviceObject);
+                status = IopQueryReconfiguration(IRP_MN_STOP_DEVICE, DeviceNode->PhysicalDeviceObject);
                 ASSERT(NT_SUCCESS(status));
                 IopReleaseBootResources(DeviceNode);
 
@@ -6249,18 +6040,16 @@ Return Value:
 
                 DeviceNode->Flags &= ~(DNF_HAS_BOOT_CONFIG + DNF_BOOT_CONFIG_RESERVED);
             }
-        } else {
-            IopQueryReconfiguration (IRP_MN_CANCEL_STOP_DEVICE, DeviceNode->PhysicalDeviceObject);
+        }
+        else
+        {
+            IopQueryReconfiguration(IRP_MN_CANCEL_STOP_DEVICE, DeviceNode->PhysicalDeviceObject);
         }
     }
-
 }
 
 NTSTATUS
-IopRebalance(
-    IN ULONG AssignTableCount,
-    IN PIOP_RESOURCE_REQUEST AssignTable
-    )
+IopRebalance(IN ULONG AssignTableCount, IN PIOP_RESOURCE_REQUEST AssignTable)
 /*++
 
 Routine Description:
@@ -6291,20 +6080,17 @@ Return Value:
     PDEVICE_OBJECT *deviceTable, *deviceTablex;
     PDEVICE_NODE deviceNode;
     ULONG rebalancePhase = 0;
-    LIST_ENTRY  activeArbiterList;
+    LIST_ENTRY activeArbiterList;
 
     //
     // Query all the device nodes to see who are willing to participate the rebalance
     // process.
     //
 
-    deviceTable = (PDEVICE_OBJECT *) ExAllocatePoolPDO(
-                      PagedPool,
-                      sizeof(PDEVICE_OBJECT) * IopNumberDeviceNodes);
-    if (deviceTable == NULL) {
-        IopDbgPrint((
-            IOP_RESOURCE_WARNING_LEVEL,
-            "Rebalance: Not enough memory to perform rebalance\n"));
+    deviceTable = (PDEVICE_OBJECT *)ExAllocatePoolPDO(PagedPool, sizeof(PDEVICE_OBJECT) * IopNumberDeviceNodes);
+    if (deviceTable == NULL)
+    {
+        IopDbgPrint((IOP_RESOURCE_WARNING_LEVEL, "Rebalance: Not enough memory to perform rebalance\n"));
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -6319,28 +6105,29 @@ tryAgain:
     // are at the end of the table.
     //
 
-    IopQueryRebalance (IopRootDeviceNode, rebalancePhase, &rebalanceCount, &deviceTablex);
-    if (rebalanceCount == 0) {
+    IopQueryRebalance(IopRootDeviceNode, rebalancePhase, &rebalanceCount, &deviceTablex);
+    if (rebalanceCount == 0)
+    {
 
         //
         // If no one is interested and we are not processing resources req change,
         // move to next phase.
         //
 
-        if (rebalancePhase == 0 && AssignTableCount != 0) {
+        if (rebalancePhase == 0 && AssignTableCount != 0)
+        {
             rebalancePhase = 1;
             goto tryAgain;
         }
-        IopDbgPrint((
-            IOP_RESOURCE_INFO_LEVEL,
-            "Rebalance: No device participates in rebalance phase %x\n",
-            rebalancePhase));
+        IopDbgPrint(
+            (IOP_RESOURCE_INFO_LEVEL, "Rebalance: No device participates in rebalance phase %x\n", rebalancePhase));
         ExFreePool(deviceTable);
         deviceTable = NULL;
         status = STATUS_UNSUCCESSFUL;
         goto exit;
     }
-    if (rebalanceCount == phase0RebalanceCount) {
+    if (rebalanceCount == phase0RebalanceCount)
+    {
 
         //
         // Phase 0 failed and no new device participates. failed the rebalance.
@@ -6349,7 +6136,8 @@ tryAgain:
         status = STATUS_UNSUCCESSFUL;
         goto exit;
     }
-    if (rebalancePhase == 0) {
+    if (rebalancePhase == 0)
+    {
         phase0RebalanceCount = rebalanceCount;
     }
 
@@ -6357,14 +6145,11 @@ tryAgain:
     // Allocate pool for the new reconfiguration requests and the original requests.
     //
 
-    table = (PIOP_RESOURCE_REQUEST) ExAllocatePoolIORR(
-                 PagedPool,
-                 sizeof(IOP_RESOURCE_REQUEST) * (AssignTableCount + rebalanceCount)
-                 );
-    if (table == NULL) {
-        IopDbgPrint((
-            IOP_RESOURCE_WARNING_LEVEL,
-            "Rebalance: Not enough memory to perform rebalance\n"));
+    table = (PIOP_RESOURCE_REQUEST)ExAllocatePoolIORR(PagedPool, sizeof(IOP_RESOURCE_REQUEST) *
+                                                                     (AssignTableCount + rebalanceCount));
+    if (table == NULL)
+    {
+        IopDbgPrint((IOP_RESOURCE_WARNING_LEVEL, "Rebalance: Not enough memory to perform rebalance\n"));
         status = STATUS_INSUFFICIENT_RESOURCES;
         goto exit;
     }
@@ -6381,7 +6166,8 @@ tryAgain:
     // Copy the original request to the front of our new request table.
     //
 
-    if (AssignTableCount != 0) {
+    if (AssignTableCount != 0)
+    {
         RtlCopyMemory(table, AssignTable, sizeof(IOP_RESOURCE_REQUEST) * AssignTableCount);
     }
 
@@ -6391,51 +6177,53 @@ tryAgain:
 
     newEntry = table + AssignTableCount;
     RtlZeroMemory(newEntry, sizeof(IOP_RESOURCE_REQUEST) * rebalanceCount);
-    for (i = 0, deviceTablex = deviceTable; i < rebalanceCount; i++, deviceTablex++) {
+    for (i = 0, deviceTablex = deviceTable; i < rebalanceCount; i++, deviceTablex++)
+    {
         newEntry[i].AllocationType = ArbiterRequestPnpEnumerated;
         newEntry[i].PhysicalDevice = *deviceTablex;
     }
 
-    status = IopGetResourceRequirementsForAssignTable(
-                 newEntry,
-                 tableEnd ,
-                 &deviceCount);
-    if (deviceCount == 0) {
-         IopDbgPrint((
-             IOP_RESOURCE_WARNING_LEVEL,
-             "Rebalance: GetResourceRequirementsForAssignTable failed\n"));
-         goto exit;
+    status = IopGetResourceRequirementsForAssignTable(newEntry, tableEnd, &deviceCount);
+    if (deviceCount == 0)
+    {
+        IopDbgPrint((IOP_RESOURCE_WARNING_LEVEL, "Rebalance: GetResourceRequirementsForAssignTable failed\n"));
+        goto exit;
     }
 
     //
     // Process the AssignTable to remove any entry which is marked as IOP_ASSIGN_IGNORE
     //
 
-    if (deviceCount != rebalanceCount) {
+    if (deviceCount != rebalanceCount)
+    {
 
         deviceCount += AssignTableCount;
-        requestTable = (PIOP_RESOURCE_REQUEST) ExAllocatePoolIORR(
-                             PagedPool,
-                             sizeof(IOP_RESOURCE_REQUEST) * deviceCount
-                             );
-        if (requestTable == NULL) {
+        requestTable = (PIOP_RESOURCE_REQUEST)ExAllocatePoolIORR(PagedPool, sizeof(IOP_RESOURCE_REQUEST) * deviceCount);
+        if (requestTable == NULL)
+        {
             IopFreeResourceRequirementsForAssignTable(newEntry, tableEnd);
             status = STATUS_INSUFFICIENT_RESOURCES;
             goto exit;
         }
-        for (entry1 = table, entry2 = requestTable; entry1 < tableEnd; entry1++) {
+        for (entry1 = table, entry2 = requestTable; entry1 < tableEnd; entry1++)
+        {
 
-            if (!(entry1->Flags & IOP_ASSIGN_IGNORE)) {
+            if (!(entry1->Flags & IOP_ASSIGN_IGNORE))
+            {
 
                 *entry2 = *entry1;
                 entry2++;
-            } else {
+            }
+            else
+            {
 
                 ASSERT(entry1 >= newEntry);
             }
         }
         requestTableEnd = requestTable + deviceCount;
-    } else {
+    }
+    else
+    {
         requestTable = table;
         requestTableEnd = tableEnd;
         deviceCount += AssignTableCount;
@@ -6478,11 +6266,9 @@ tryAgain:
     // there is a memory shortage return immediately.
     //
 
-    status = IopFindBestConfiguration(
-                requestTable,
-                deviceCount,
-                &activeArbiterList);
-    if (NT_SUCCESS(status)) {
+    status = IopFindBestConfiguration(requestTable, deviceCount, &activeArbiterList);
+    if (NT_SUCCESS(status))
+    {
         //
         // If the rebalance succeeded, we need to restart all the reconfigured devices.
         // For the original devices, we will return and let IopAllocateResources to deal
@@ -6495,29 +6281,34 @@ tryAgain:
         // Copy the new status back to the original AssignTable.
         //
 
-        if (AssignTableCount != 0) {
+        if (AssignTableCount != 0)
+        {
             RtlCopyMemory(AssignTable, requestTable, sizeof(IOP_RESOURCE_REQUEST) * AssignTableCount);
         }
         //
         // free resource requirements we allocated while here
         //
-        IopFreeResourceRequirementsForAssignTable(requestTable+AssignTableCount, requestTableEnd);
+        IopFreeResourceRequirementsForAssignTable(requestTable + AssignTableCount, requestTableEnd);
 
-        if (table != requestTable) {
+        if (table != requestTable)
+        {
 
             //
             // If we switched request table ... copy the contents of new table back to
             // the old table.
             //
 
-            for (entry1 = table, entry2 = requestTable; entry2 < requestTableEnd;) {
+            for (entry1 = table, entry2 = requestTable; entry2 < requestTableEnd;)
+            {
 
-                if (entry1->Flags & IOP_ASSIGN_IGNORE) {
+                if (entry1->Flags & IOP_ASSIGN_IGNORE)
+                {
                     entry1++;
                     continue;
                 }
                 *entry1 = *entry2;
-                if (entry2->Flags & IOP_ASSIGN_EXCLUDE) {
+                if (entry2->Flags & IOP_ASSIGN_EXCLUDE)
+                {
                     entry1->Status = STATUS_CONFLICTING_ADDRESSES;
                 }
                 entry2++;
@@ -6527,25 +6318,22 @@ tryAgain:
         //
         // Go thru the origianl request table to stop each query-stopped/reconfigured device.
         //
-        for (entry1 = newEntry; entry1 < tableEnd; entry1++) {
+        for (entry1 = newEntry; entry1 < tableEnd; entry1++)
+        {
 
             deviceNode = PP_DO_TO_DN(entry1->PhysicalDevice);
-            if (NT_SUCCESS(entry1->Status)) {
+            if (NT_SUCCESS(entry1->Status))
+            {
 
-                IopDbgPrint((
-                    IOP_RESOURCE_INFO_LEVEL,
-                    "STOPPING %wZ during REBALANCE\n",
-                    &deviceNode->InstancePath));
-                IopQueryReconfiguration(
-                    IRP_MN_STOP_DEVICE,
-                    entry1->PhysicalDevice);
+                IopDbgPrint((IOP_RESOURCE_INFO_LEVEL, "STOPPING %wZ during REBALANCE\n", &deviceNode->InstancePath));
+                IopQueryReconfiguration(IRP_MN_STOP_DEVICE, entry1->PhysicalDevice);
 
                 PipSetDevNodeState(deviceNode, DeviceNodeStopped, NULL);
-            } else {
+            }
+            else
+            {
 
-                IopQueryReconfiguration(
-                    IRP_MN_CANCEL_STOP_DEVICE,
-                    entry1->PhysicalDevice);
+                IopQueryReconfiguration(IRP_MN_CANCEL_STOP_DEVICE, entry1->PhysicalDevice);
 
                 PipRestoreDevNodeState(deviceNode);
             }
@@ -6559,28 +6347,34 @@ tryAgain:
         // Go thru the origianl request table to start each stopped/reconfigured device.
         //
 
-        for (entry1 = tableEnd - 1; entry1 >= newEntry; entry1--) {
+        for (entry1 = tableEnd - 1; entry1 >= newEntry; entry1--)
+        {
             deviceNode = PP_DO_TO_DN(entry1->PhysicalDevice);
 
-            if (NT_SUCCESS(entry1->Status)) {
+            if (NT_SUCCESS(entry1->Status))
+            {
 
                 //
                 // We need to release the pool space for ResourceList and ResourceListTranslated.
                 // Because the earlier IopReleaseResourcesInternal does not release the pool.
                 //
 
-                if (deviceNode->ResourceList) {
+                if (deviceNode->ResourceList)
+                {
                     ExFreePool(deviceNode->ResourceList);
                 }
                 deviceNode->ResourceList = entry1->ResourceAssignment;
-                if (deviceNode->ResourceListTranslated) {
+                if (deviceNode->ResourceListTranslated)
+                {
                     ExFreePool(deviceNode->ResourceListTranslated);
                 }
                 deviceNode->ResourceListTranslated = entry1->TranslatedResourceAssignment;
-                if (deviceNode->ResourceList == NULL) {
+                if (deviceNode->ResourceList == NULL)
+                {
                     deviceNode->Flags |= DNF_NO_RESOURCE_REQUIRED;
                 }
-                if (entry1->Flags & IOP_ASSIGN_CLEAR_RESOURCE_REQUIREMENTS_CHANGE_FLAG) {
+                if (entry1->Flags & IOP_ASSIGN_CLEAR_RESOURCE_REQUIREMENTS_CHANGE_FLAG)
+                {
 
                     //
                     // If we are processing the resource requirements change request,
@@ -6592,7 +6386,9 @@ tryAgain:
             }
         }
         status = STATUS_SUCCESS;
-    } else {
+    }
+    else
+    {
 
         //
         // Rebalance failed. Free our internal representation of the rebalance
@@ -6600,23 +6396,25 @@ tryAgain:
         //
 
         IopFreeResourceRequirementsForAssignTable(requestTable + AssignTableCount, requestTableEnd);
-        if (rebalancePhase == 0) {
+        if (rebalancePhase == 0)
+        {
             rebalancePhase++;
-            if (requestTable) {
+            if (requestTable)
+            {
                 ExFreePool(requestTable);
             }
-            if (table && (table != requestTable)) {
+            if (table && (table != requestTable))
+            {
                 ExFreePool(table);
             }
             table = requestTable = NULL;
             goto tryAgain;
         }
 
-        for (entry1 = newEntry; entry1 < tableEnd; entry1++) {
+        for (entry1 = newEntry; entry1 < tableEnd; entry1++)
+        {
 
-            IopQueryReconfiguration (
-                IRP_MN_CANCEL_STOP_DEVICE,
-                entry1->PhysicalDevice);
+            IopQueryReconfiguration(IRP_MN_CANCEL_STOP_DEVICE, entry1->PhysicalDevice);
             deviceNode = PP_DO_TO_DN(entry1->PhysicalDevice);
 
             PipRestoreDevNodeState(deviceNode);
@@ -6625,49 +6423,49 @@ tryAgain:
     //
     // Finally release the references of the reconfigured device objects
     //
-    for (deviceTablex = (deviceTable + rebalanceCount - 1);
-         deviceTablex >= deviceTable;
-         deviceTablex--) {
-         ObDereferenceObject(*deviceTablex);
+    for (deviceTablex = (deviceTable + rebalanceCount - 1); deviceTablex >= deviceTable; deviceTablex--)
+    {
+        ObDereferenceObject(*deviceTablex);
     }
     ExFreePool(deviceTable);
     deviceTable = NULL;
 
 exit:
 
-    if (!NT_SUCCESS(status) && deviceTable) {
+    if (!NT_SUCCESS(status) && deviceTable)
+    {
 
         //
         // If we failed before trying to perform resource assignment,
         // we will end up here.
         //
 
-        IopDbgPrint((
-            IOP_RESOURCE_INFO_LEVEL,
-            "Rebalance: Rebalance failed\n"));
+        IopDbgPrint((IOP_RESOURCE_INFO_LEVEL, "Rebalance: Rebalance failed\n"));
 
         //
         // Somehow we failed to start the rebalance operation.
         // We will cancel the query-stop request for the query-stopped devices bredth first.
         //
 
-        for (deviceTablex = (deviceTable + rebalanceCount - 1);
-             deviceTablex >= deviceTable;
-             deviceTablex--) {
+        for (deviceTablex = (deviceTable + rebalanceCount - 1); deviceTablex >= deviceTable; deviceTablex--)
+        {
 
-             deviceNode = PP_DO_TO_DN(*deviceTablex);
-             IopQueryReconfiguration (IRP_MN_CANCEL_STOP_DEVICE, *deviceTablex);
-             PipRestoreDevNodeState(deviceNode);
-             ObDereferenceObject(*deviceTablex);
+            deviceNode = PP_DO_TO_DN(*deviceTablex);
+            IopQueryReconfiguration(IRP_MN_CANCEL_STOP_DEVICE, *deviceTablex);
+            PipRestoreDevNodeState(deviceNode);
+            ObDereferenceObject(*deviceTablex);
         }
     }
-    if (deviceTable) {
+    if (deviceTable)
+    {
         ExFreePool(deviceTable);
     }
-    if (requestTable) {
+    if (requestTable)
+    {
         ExFreePool(requestTable);
     }
-    if (table && (table != requestTable)) {
+    if (table && (table != requestTable))
+    {
         ExFreePool(table);
     }
     return status;
@@ -6684,9 +6482,7 @@ exit:
 --*/
 
 NTSTATUS
-IopTestConfiguration (
-    IN OUT  PLIST_ENTRY ArbiterList
-    )
+IopTestConfiguration(IN OUT PLIST_ENTRY ArbiterList)
 
 /*++
 
@@ -6706,27 +6502,25 @@ Return Value:
 
 {
 
-    NTSTATUS                    status;
-    PLIST_ENTRY                 listEntry;
-    PPI_RESOURCE_ARBITER_ENTRY  arbiterEntry;
-    ARBITER_PARAMETERS          p;
-    PARBITER_INTERFACE          arbiterInterface;
+    NTSTATUS status;
+    PLIST_ENTRY listEntry;
+    PPI_RESOURCE_ARBITER_ENTRY arbiterEntry;
+    ARBITER_PARAMETERS p;
+    PARBITER_INTERFACE arbiterInterface;
 
     PAGED_CODE();
 
     status = STATUS_SUCCESS;
-    for (   listEntry = ArbiterList->Flink;
-            listEntry != ArbiterList;
-            listEntry = listEntry->Flink) {
+    for (listEntry = ArbiterList->Flink; listEntry != ArbiterList; listEntry = listEntry->Flink)
+    {
 
-        arbiterEntry = CONTAINING_RECORD(
-                            listEntry,
-                            PI_RESOURCE_ARBITER_ENTRY,
-                            ActiveArbiterList);
+        arbiterEntry = CONTAINING_RECORD(listEntry, PI_RESOURCE_ARBITER_ENTRY, ActiveArbiterList);
         ASSERT(IsListEmpty(&arbiterEntry->ResourceList) == FALSE);
-        if (arbiterEntry->ResourcesChanged == FALSE) {
+        if (arbiterEntry->ResourcesChanged == FALSE)
+        {
 
-            if (arbiterEntry->State & PI_ARBITER_TEST_FAILED) {
+            if (arbiterEntry->State & PI_ARBITER_TEST_FAILED)
+            {
                 //
                 // If the resource requirements are the same and
                 // it failed before, return failure.
@@ -6734,26 +6528,27 @@ Return Value:
                 status = STATUS_UNSUCCESSFUL;
                 break;
             }
-        } else {
+        }
+        else
+        {
 
             arbiterInterface = arbiterEntry->ArbiterInterface;
             //
             // Call the arbiter to test the new configuration.
             //
-            p.Parameters.TestAllocation.ArbitrationList     =
-                                                    &arbiterEntry->ResourceList;
-            p.Parameters.TestAllocation.AllocateFromCount   = 0;
-            p.Parameters.TestAllocation.AllocateFrom        = NULL;
-            status = arbiterInterface->ArbiterHandler(
-                                            arbiterInterface->Context,
-                                            ArbiterActionTestAllocation,
-                                            &p);
-            if (NT_SUCCESS(status)) {
+            p.Parameters.TestAllocation.ArbitrationList = &arbiterEntry->ResourceList;
+            p.Parameters.TestAllocation.AllocateFromCount = 0;
+            p.Parameters.TestAllocation.AllocateFrom = NULL;
+            status = arbiterInterface->ArbiterHandler(arbiterInterface->Context, ArbiterActionTestAllocation, &p);
+            if (NT_SUCCESS(status))
+            {
 
                 arbiterEntry->State &= ~PI_ARBITER_TEST_FAILED;
                 arbiterEntry->State |= PI_ARBITER_HAS_SOMETHING;
                 arbiterEntry->ResourcesChanged = FALSE;
-            } else {
+            }
+            else
+            {
                 //
                 // This configuration does not work
                 // (no need to try other arbiters).
@@ -6768,9 +6563,7 @@ Return Value:
 }
 
 NTSTATUS
-IopRetestConfiguration (
-    IN OUT  PLIST_ENTRY ArbiterList
-    )
+IopRetestConfiguration(IN OUT PLIST_ENTRY ArbiterList)
 
 /*++
 
@@ -6789,24 +6582,23 @@ Return Value:
 --*/
 
 {
-    NTSTATUS                    retestStatus;
-    PLIST_ENTRY                 listEntry;
-    PPI_RESOURCE_ARBITER_ENTRY  arbiterEntry;
-    ARBITER_PARAMETERS          p;
-    PARBITER_INTERFACE          arbiterInterface;
+    NTSTATUS retestStatus;
+    PLIST_ENTRY listEntry;
+    PPI_RESOURCE_ARBITER_ENTRY arbiterEntry;
+    ARBITER_PARAMETERS p;
+    PARBITER_INTERFACE arbiterInterface;
 
     PAGED_CODE();
 
     retestStatus = STATUS_UNSUCCESSFUL;
-    listEntry    = ArbiterList->Flink;
-    while (listEntry != ArbiterList) {
+    listEntry = ArbiterList->Flink;
+    while (listEntry != ArbiterList)
+    {
 
-        arbiterEntry = CONTAINING_RECORD(
-                        listEntry,
-                        PI_RESOURCE_ARBITER_ENTRY,
-                        ActiveArbiterList);
+        arbiterEntry = CONTAINING_RECORD(listEntry, PI_RESOURCE_ARBITER_ENTRY, ActiveArbiterList);
         listEntry = listEntry->Flink;
-        if (arbiterEntry->ResourcesChanged == FALSE) {
+        if (arbiterEntry->ResourcesChanged == FALSE)
+        {
 
             continue;
         }
@@ -6815,15 +6607,12 @@ Return Value:
         //
         // Call the arbiter to retest the configuration.
         //
-        p.Parameters.RetestAllocation.ArbitrationList     =
-                                                    &arbiterEntry->ResourceList;
-        p.Parameters.RetestAllocation.AllocateFromCount   = 0;
-        p.Parameters.RetestAllocation.AllocateFrom        = NULL;
-        retestStatus = arbiterInterface->ArbiterHandler(
-                                            arbiterInterface->Context,
-                                            ArbiterActionRetestAllocation,
-                                            &p);
-        if (!NT_SUCCESS(retestStatus)) {
+        p.Parameters.RetestAllocation.ArbitrationList = &arbiterEntry->ResourceList;
+        p.Parameters.RetestAllocation.AllocateFromCount = 0;
+        p.Parameters.RetestAllocation.AllocateFrom = NULL;
+        retestStatus = arbiterInterface->ArbiterHandler(arbiterInterface->Context, ArbiterActionRetestAllocation, &p);
+        if (!NT_SUCCESS(retestStatus))
+        {
 
             break;
         }
@@ -6835,9 +6624,7 @@ Return Value:
 }
 
 NTSTATUS
-IopCommitConfiguration (
-    IN OUT  PLIST_ENTRY ArbiterList
-    )
+IopCommitConfiguration(IN OUT PLIST_ENTRY ArbiterList)
 
 /*++
 
@@ -6856,33 +6643,29 @@ Return Value:
 --*/
 
 {
-    NTSTATUS                    commitStatus;
-    PLIST_ENTRY                 listEntry;
-    PPI_RESOURCE_ARBITER_ENTRY  arbiterEntry;
-    PARBITER_INTERFACE          arbiterInterface;
+    NTSTATUS commitStatus;
+    PLIST_ENTRY listEntry;
+    PPI_RESOURCE_ARBITER_ENTRY arbiterEntry;
+    PARBITER_INTERFACE arbiterInterface;
 
     PAGED_CODE();
 
     commitStatus = STATUS_SUCCESS;
-    listEntry    = ArbiterList->Flink;
-    while (listEntry != ArbiterList) {
+    listEntry = ArbiterList->Flink;
+    while (listEntry != ArbiterList)
+    {
 
-        arbiterEntry = CONTAINING_RECORD(
-                        listEntry,
-                        PI_RESOURCE_ARBITER_ENTRY,
-                        ActiveArbiterList);
+        arbiterEntry = CONTAINING_RECORD(listEntry, PI_RESOURCE_ARBITER_ENTRY, ActiveArbiterList);
         listEntry = listEntry->Flink;
         ASSERT(IsListEmpty(&arbiterEntry->ResourceList) == FALSE);
         arbiterInterface = arbiterEntry->ArbiterInterface;
         //
         // Call the arbiter to commit the configuration.
         //
-        commitStatus = arbiterInterface->ArbiterHandler(
-                            arbiterInterface->Context,
-                            ArbiterActionCommitAllocation,
-                            NULL);
+        commitStatus = arbiterInterface->ArbiterHandler(arbiterInterface->Context, ArbiterActionCommitAllocation, NULL);
         IopInitializeArbiterEntryState(arbiterEntry);
-        if (!NT_SUCCESS(commitStatus)) {
+        if (!NT_SUCCESS(commitStatus))
+        {
 
             break;
         }
@@ -6894,12 +6677,8 @@ Return Value:
     return commitStatus;
 }
 
-VOID
-IopSelectFirstConfiguration (
-    IN      PIOP_RESOURCE_REQUEST    RequestTable,
-    IN      ULONG                    RequestTableCount,
-    IN OUT  PLIST_ENTRY              ActiveArbiterList
-    )
+VOID IopSelectFirstConfiguration(IN PIOP_RESOURCE_REQUEST RequestTable, IN ULONG RequestTableCount,
+                                 IN OUT PLIST_ENTRY ActiveArbiterList)
 
 /*++
 
@@ -6925,9 +6704,9 @@ Return Value:
 --*/
 
 {
-    ULONG               tableIndex;
-    PREQ_ALTERNATIVE    reqAlternative;
-    PREQ_LIST           reqList;
+    ULONG tableIndex;
+    PREQ_ALTERNATIVE reqAlternative;
+    PREQ_LIST reqList;
 
     PAGED_CODE();
     //
@@ -6936,25 +6715,19 @@ Return Value:
     // Update the arbiters with all the descriptors in the selected
     // configuration.
     //
-    for (tableIndex = 0; tableIndex < RequestTableCount; tableIndex++) {
+    for (tableIndex = 0; tableIndex < RequestTableCount; tableIndex++)
+    {
 
-        reqList                         = RequestTable[tableIndex].ReqList;
-        reqList->SelectedAlternative    = &reqList->AlternativeTable[0];
-        reqAlternative                  = *(reqList->SelectedAlternative);
-        IopAddRemoveReqDescs(
-            reqAlternative->DescTable,
-            reqAlternative->DescCount,
-            ActiveArbiterList,
-            TRUE);
+        reqList = RequestTable[tableIndex].ReqList;
+        reqList->SelectedAlternative = &reqList->AlternativeTable[0];
+        reqAlternative = *(reqList->SelectedAlternative);
+        IopAddRemoveReqDescs(reqAlternative->DescTable, reqAlternative->DescCount, ActiveArbiterList, TRUE);
     }
 }
 
 BOOLEAN
-IopSelectNextConfiguration (
-    IN      PIOP_RESOURCE_REQUEST    RequestTable,
-    IN      ULONG                    RequestTableCount,
-    IN OUT  PLIST_ENTRY              ActiveArbiterList
-    )
+IopSelectNextConfiguration(IN PIOP_RESOURCE_REQUEST RequestTable, IN ULONG RequestTableCount,
+                           IN OUT PLIST_ENTRY ActiveArbiterList)
 
 /*++
 
@@ -6981,9 +6754,9 @@ Return Value:
 --*/
 
 {
-    ULONG               tableIndex;
-    PREQ_ALTERNATIVE    reqAlternative;
-    PREQ_LIST           reqList;
+    ULONG tableIndex;
+    PREQ_ALTERNATIVE reqAlternative;
+    PREQ_LIST reqList;
 
     PAGED_CODE();
     //
@@ -6994,16 +6767,14 @@ Return Value:
     // all configurations have been tried and go to the next entry
     // in the request table.
     //
-    for (tableIndex = 0; tableIndex < RequestTableCount; tableIndex++) {
+    for (tableIndex = 0; tableIndex < RequestTableCount; tableIndex++)
+    {
 
-        reqList         = RequestTable[tableIndex].ReqList;
-        reqAlternative  = *(reqList->SelectedAlternative);
-        IopAddRemoveReqDescs(
-            reqAlternative->DescTable,
-            reqAlternative->DescCount,
-            NULL,
-            FALSE);
-        if (++reqList->SelectedAlternative < reqList->BestAlternative) {
+        reqList = RequestTable[tableIndex].ReqList;
+        reqAlternative = *(reqList->SelectedAlternative);
+        IopAddRemoveReqDescs(reqAlternative->DescTable, reqAlternative->DescCount, NULL, FALSE);
+        if (++reqList->SelectedAlternative < reqList->BestAlternative)
+        {
 
             break;
         }
@@ -7012,7 +6783,8 @@ Return Value:
     //
     // We are done if there is no next possible configuration.
     //
-    if (tableIndex == RequestTableCount) {
+    if (tableIndex == RequestTableCount)
+    {
 
         return FALSE;
     }
@@ -7020,16 +6792,14 @@ Return Value:
     // For each entry in the request table, add all the descriptors in
     // the currently selected alternative.
     //
-    for (tableIndex = 0; tableIndex < RequestTableCount; tableIndex++) {
+    for (tableIndex = 0; tableIndex < RequestTableCount; tableIndex++)
+    {
 
-        reqList         = RequestTable[tableIndex].ReqList;
-        reqAlternative  = *(reqList->SelectedAlternative);
-        IopAddRemoveReqDescs(
-            reqAlternative->DescTable,
-            reqAlternative->DescCount,
-            ActiveArbiterList,
-            TRUE);
-        if (reqList->SelectedAlternative != &reqList->AlternativeTable[0]) {
+        reqList = RequestTable[tableIndex].ReqList;
+        reqAlternative = *(reqList->SelectedAlternative);
+        IopAddRemoveReqDescs(reqAlternative->DescTable, reqAlternative->DescCount, ActiveArbiterList, TRUE);
+        if (reqList->SelectedAlternative != &reqList->AlternativeTable[0])
+        {
 
             break;
         }
@@ -7038,11 +6808,7 @@ Return Value:
     return TRUE;
 }
 
-VOID
-IopCleanupSelectedConfiguration (
-    IN PIOP_RESOURCE_REQUEST    RequestTable,
-    IN ULONG                    RequestTableCount
-    )
+VOID IopCleanupSelectedConfiguration(IN PIOP_RESOURCE_REQUEST RequestTable, IN ULONG RequestTableCount)
 
 /*++
 
@@ -7064,32 +6830,26 @@ Return Value:
 --*/
 
 {
-    ULONG               tableIndex;
-    PREQ_ALTERNATIVE    reqAlternative;
-    PREQ_LIST           reqList;
+    ULONG tableIndex;
+    PREQ_ALTERNATIVE reqAlternative;
+    PREQ_LIST reqList;
 
     PAGED_CODE();
     //
     // For each entry in the request table, remove all the descriptors
     // from the currently selected alternative.
     //
-    for (tableIndex = 0; tableIndex < RequestTableCount; tableIndex++) {
+    for (tableIndex = 0; tableIndex < RequestTableCount; tableIndex++)
+    {
 
-        reqList         = RequestTable[tableIndex].ReqList;
-        reqAlternative  = *(reqList->SelectedAlternative);
-        IopAddRemoveReqDescs(
-            reqAlternative->DescTable,
-            reqAlternative->DescCount,
-            NULL,
-            FALSE);
+        reqList = RequestTable[tableIndex].ReqList;
+        reqAlternative = *(reqList->SelectedAlternative);
+        IopAddRemoveReqDescs(reqAlternative->DescTable, reqAlternative->DescCount, NULL, FALSE);
     }
 }
 
 ULONG
-IopComputeConfigurationPriority (
-    IN PIOP_RESOURCE_REQUEST    RequestTable,
-    IN ULONG                    RequestTableCount
-    )
+IopComputeConfigurationPriority(IN PIOP_RESOURCE_REQUEST RequestTable, IN ULONG RequestTableCount)
 
 /*++
 
@@ -7111,10 +6871,10 @@ Return Value:
 --*/
 
 {
-    ULONG               tableIndex;
-    ULONG               priority;
-    PREQ_ALTERNATIVE    reqAlternative;
-    PREQ_LIST           reqList;
+    ULONG tableIndex;
+    ULONG priority;
+    PREQ_ALTERNATIVE reqAlternative;
+    PREQ_LIST reqList;
 
     PAGED_CODE();
     //
@@ -7123,23 +6883,19 @@ Return Value:
     // configuration in the request table.
     //
     priority = 0;
-    for (tableIndex = 0; tableIndex < RequestTableCount; tableIndex++) {
+    for (tableIndex = 0; tableIndex < RequestTableCount; tableIndex++)
+    {
 
-        reqList         = RequestTable[tableIndex].ReqList;
-        reqAlternative  = *(reqList->SelectedAlternative);
-        priority        += reqAlternative->Priority;
+        reqList = RequestTable[tableIndex].ReqList;
+        reqAlternative = *(reqList->SelectedAlternative);
+        priority += reqAlternative->Priority;
     }
 
     return priority;
 }
 
-VOID
-IopSaveRestoreConfiguration (
-    IN      PIOP_RESOURCE_REQUEST   RequestTable,
-    IN      ULONG                   RequestTableCount,
-    IN OUT  PLIST_ENTRY             ArbiterList,
-    IN      BOOLEAN                 Save
-    )
+VOID IopSaveRestoreConfiguration(IN PIOP_RESOURCE_REQUEST RequestTable, IN ULONG RequestTableCount,
+                                 IN OUT PLIST_ENTRY ArbiterList, IN BOOLEAN Save)
 
 /*++
 
@@ -7166,43 +6922,43 @@ Return Value:
 --*/
 
 {
-    ULONG                       tableIndex;
-    PREQ_ALTERNATIVE            reqAlternative;
-    PREQ_DESC                   reqDesc;
-    PREQ_DESC                   *reqDescpp;
-    PREQ_DESC                   *reqDescTableEnd;
-    PLIST_ENTRY                 listEntry;
-    PPI_RESOURCE_ARBITER_ENTRY  arbiterEntry;
-    PREQ_LIST                   reqList;
+    ULONG tableIndex;
+    PREQ_ALTERNATIVE reqAlternative;
+    PREQ_DESC reqDesc;
+    PREQ_DESC *reqDescpp;
+    PREQ_DESC *reqDescTableEnd;
+    PLIST_ENTRY listEntry;
+    PPI_RESOURCE_ARBITER_ENTRY arbiterEntry;
+    PREQ_LIST reqList;
 
     PAGED_CODE();
 
-    IopDbgPrint((
-        IOP_RESOURCE_TRACE_LEVEL,
-        "%s configuration\n",
-        (Save)? "Saving" : "Restoring"));
+    IopDbgPrint((IOP_RESOURCE_TRACE_LEVEL, "%s configuration\n", (Save) ? "Saving" : "Restoring"));
     //
     // For each entry in the request table, save information for
     // following RETEST.
     //
-    for (tableIndex = 0; tableIndex < RequestTableCount; tableIndex++) {
+    for (tableIndex = 0; tableIndex < RequestTableCount; tableIndex++)
+    {
 
-        reqList                     = RequestTable[tableIndex].ReqList;
-        if (Save) {
+        reqList = RequestTable[tableIndex].ReqList;
+        if (Save)
+        {
 
-            reqList->BestAlternative        = reqList->SelectedAlternative;
-        } else {
-
-            reqList->SelectedAlternative    = reqList->BestAlternative;
+            reqList->BestAlternative = reqList->SelectedAlternative;
         }
-        reqAlternative              = *(reqList->BestAlternative);
-        reqDescTableEnd             = reqAlternative->DescTable +
-                                        reqAlternative->DescCount;
-        for (   reqDescpp = reqAlternative->DescTable;
-                reqDescpp < reqDescTableEnd;
-                reqDescpp++) {
+        else
+        {
 
-            if ((*reqDescpp)->ArbitrationRequired == FALSE) {
+            reqList->SelectedAlternative = reqList->BestAlternative;
+        }
+        reqAlternative = *(reqList->BestAlternative);
+        reqDescTableEnd = reqAlternative->DescTable + reqAlternative->DescCount;
+        for (reqDescpp = reqAlternative->DescTable; reqDescpp < reqDescTableEnd; reqDescpp++)
+        {
+
+            if ((*reqDescpp)->ArbitrationRequired == FALSE)
+            {
 
                 continue;
             }
@@ -7210,14 +6966,17 @@ Return Value:
             // Save\restore information for the descriptor.
             //
             reqDesc = (*reqDescpp)->TranslatedReqDesc;
-            if (Save == TRUE) {
+            if (Save == TRUE)
+            {
 
-                reqDesc->BestAlternativeTable  = reqDesc->AlternativeTable;
-                reqDesc->BestAllocation        = reqDesc->Allocation;
-            } else {
+                reqDesc->BestAlternativeTable = reqDesc->AlternativeTable;
+                reqDesc->BestAllocation = reqDesc->Allocation;
+            }
+            else
+            {
 
-                reqDesc->AlternativeTable  = reqDesc->BestAlternativeTable;
-                reqDesc->Allocation        = reqDesc->BestAllocation;
+                reqDesc->AlternativeTable = reqDesc->BestAlternativeTable;
+                reqDesc->Allocation = reqDesc->BestAllocation;
             }
         }
     }
@@ -7226,29 +6985,25 @@ Return Value:
     // save information for following RETEST.
     //
     listEntry = ArbiterList->Flink;
-    while (listEntry != ArbiterList) {
-        arbiterEntry = CONTAINING_RECORD(
-                        listEntry,
-                        PI_RESOURCE_ARBITER_ENTRY,
-                        ActiveArbiterList);
-        if (Save == TRUE) {
-            arbiterEntry->BestResourceList  = arbiterEntry->ResourceList;
-            arbiterEntry->BestConfig        = arbiterEntry->ActiveArbiterList;
-        } else {
-            arbiterEntry->ResourceList      = arbiterEntry->BestResourceList;
+    while (listEntry != ArbiterList)
+    {
+        arbiterEntry = CONTAINING_RECORD(listEntry, PI_RESOURCE_ARBITER_ENTRY, ActiveArbiterList);
+        if (Save == TRUE)
+        {
+            arbiterEntry->BestResourceList = arbiterEntry->ResourceList;
+            arbiterEntry->BestConfig = arbiterEntry->ActiveArbiterList;
+        }
+        else
+        {
+            arbiterEntry->ResourceList = arbiterEntry->BestResourceList;
             arbiterEntry->ActiveArbiterList = arbiterEntry->BestConfig;
         }
         listEntry = listEntry->Flink;
     }
 }
 
-VOID
-IopAddRemoveReqDescs (
-    IN      PREQ_DESC   *ReqDescTable,
-    IN      ULONG       ReqDescCount,
-    IN OUT  PLIST_ENTRY ActiveArbiterList,
-    IN      BOOLEAN     Add
-    )
+VOID IopAddRemoveReqDescs(IN PREQ_DESC *ReqDescTable, IN ULONG ReqDescCount, IN OUT PLIST_ENTRY ActiveArbiterList,
+                          IN BOOLEAN Add)
 
 /*++
 
@@ -7276,89 +7031,86 @@ Return Value:
 --*/
 
 {
-    ULONG                       tableIndex;
-    PREQ_DESC                   reqDesc;
-    PREQ_DESC                   reqDescTranslated;
-    PPI_RESOURCE_ARBITER_ENTRY  arbiterEntry;
-    PREQ_ALTERNATIVE            reqAlternative;
-    PREQ_LIST                   reqList;
-    PDEVICE_NODE                deviceNode;
+    ULONG tableIndex;
+    PREQ_DESC reqDesc;
+    PREQ_DESC reqDescTranslated;
+    PPI_RESOURCE_ARBITER_ENTRY arbiterEntry;
+    PREQ_ALTERNATIVE reqAlternative;
+    PREQ_LIST reqList;
+    PDEVICE_NODE deviceNode;
 
     PAGED_CODE();
 
-    if (ReqDescCount == 0) {
+    if (ReqDescCount == 0)
+    {
 
         return;
     }
 
-    reqList         = ReqDescTable[0]->ReqAlternative->ReqList;
-    reqAlternative  = *reqList->SelectedAlternative;
-    deviceNode      = PP_DO_TO_DN(reqList->Request->PhysicalDevice);
-    IopDbgPrint((
-        IOP_RESOURCE_VERBOSE_LEVEL,
-        "%s %d/%d req alt %s the arbiters for %wZ\n",
-        (Add)? "Adding" : "Removing",
-        reqAlternative->ReqAlternativeIndex + 1,
-        reqList->AlternativeCount,
-        (Add)? "to" : "from",
-        &deviceNode->InstancePath));
-    for (tableIndex = 0; tableIndex < ReqDescCount; tableIndex++) {
+    reqList = ReqDescTable[0]->ReqAlternative->ReqList;
+    reqAlternative = *reqList->SelectedAlternative;
+    deviceNode = PP_DO_TO_DN(reqList->Request->PhysicalDevice);
+    IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL, "%s %d/%d req alt %s the arbiters for %wZ\n",
+                 (Add) ? "Adding" : "Removing", reqAlternative->ReqAlternativeIndex + 1, reqList->AlternativeCount,
+                 (Add) ? "to" : "from", &deviceNode->InstancePath));
+    for (tableIndex = 0; tableIndex < ReqDescCount; tableIndex++)
+    {
 
         reqDesc = ReqDescTable[tableIndex];
-        if (reqDesc->ArbitrationRequired == FALSE) {
+        if (reqDesc->ArbitrationRequired == FALSE)
+        {
 
             continue;
         }
         arbiterEntry = reqDesc->u.Arbiter;
         ASSERT(arbiterEntry);
-        if (arbiterEntry->State & PI_ARBITER_HAS_SOMETHING) {
+        if (arbiterEntry->State & PI_ARBITER_HAS_SOMETHING)
+        {
 
             arbiterEntry->State &= ~PI_ARBITER_HAS_SOMETHING;
-            arbiterEntry->ArbiterInterface->ArbiterHandler(
-                                    arbiterEntry->ArbiterInterface->Context,
-                                    ArbiterActionRollbackAllocation,
-                                    NULL);
+            arbiterEntry->ArbiterInterface->ArbiterHandler(arbiterEntry->ArbiterInterface->Context,
+                                                           ArbiterActionRollbackAllocation, NULL);
         }
-        arbiterEntry->ResourcesChanged  = TRUE;
-        reqDescTranslated               = reqDesc->TranslatedReqDesc;
-        if (Add == TRUE) {
+        arbiterEntry->ResourcesChanged = TRUE;
+        reqDescTranslated = reqDesc->TranslatedReqDesc;
+        if (Add == TRUE)
+        {
 
             InitializeListHead(&reqDescTranslated->AlternativeTable.ListEntry);
-            InsertTailList(
-                &arbiterEntry->ResourceList,
-                &reqDescTranslated->AlternativeTable.ListEntry);
-            if (IsListEmpty(&arbiterEntry->ActiveArbiterList)) {
+            InsertTailList(&arbiterEntry->ResourceList, &reqDescTranslated->AlternativeTable.ListEntry);
+            if (IsListEmpty(&arbiterEntry->ActiveArbiterList))
+            {
 
-                PLIST_ENTRY                 listEntry;
-                PPI_RESOURCE_ARBITER_ENTRY  entry;
+                PLIST_ENTRY listEntry;
+                PPI_RESOURCE_ARBITER_ENTRY entry;
                 //
                 // Insert the entry into the sorted list
                 // (sorted by depth in the tree).
                 //
-                for (   listEntry = ActiveArbiterList->Flink;
-                        listEntry != ActiveArbiterList;
-                        listEntry = listEntry->Flink) {
+                for (listEntry = ActiveArbiterList->Flink; listEntry != ActiveArbiterList; listEntry = listEntry->Flink)
+                {
 
-                    entry = CONTAINING_RECORD(
-                                listEntry,
-                                PI_RESOURCE_ARBITER_ENTRY,
-                                ActiveArbiterList);
-                    if (entry->Level >= arbiterEntry->Level) {
+                    entry = CONTAINING_RECORD(listEntry, PI_RESOURCE_ARBITER_ENTRY, ActiveArbiterList);
+                    if (entry->Level >= arbiterEntry->Level)
+                    {
 
                         break;
                     }
                 }
-                arbiterEntry->ActiveArbiterList.Flink   = listEntry;
-                arbiterEntry->ActiveArbiterList.Blink   = listEntry->Blink;
+                arbiterEntry->ActiveArbiterList.Flink = listEntry;
+                arbiterEntry->ActiveArbiterList.Blink = listEntry->Blink;
                 listEntry->Blink->Flink = &arbiterEntry->ActiveArbiterList;
-                listEntry->Blink        = &arbiterEntry->ActiveArbiterList;
+                listEntry->Blink = &arbiterEntry->ActiveArbiterList;
             }
-        } else {
+        }
+        else
+        {
 
             ASSERT(IsListEmpty(&arbiterEntry->ResourceList) == FALSE);
             RemoveEntryList(&reqDescTranslated->AlternativeTable.ListEntry);
             InitializeListHead(&reqDescTranslated->AlternativeTable.ListEntry);
-            if (IsListEmpty(&arbiterEntry->ResourceList)) {
+            if (IsListEmpty(&arbiterEntry->ResourceList))
+            {
 
                 RemoveEntryList(&arbiterEntry->ActiveArbiterList);
                 InitializeListHead(&arbiterEntry->ActiveArbiterList);
@@ -7368,11 +7120,8 @@ Return Value:
 }
 
 NTSTATUS
-IopFindBestConfiguration (
-    IN PIOP_RESOURCE_REQUEST    RequestTable,
-    IN ULONG                    RequestTableCount,
-    IN OUT PLIST_ENTRY          ActiveArbiterList
-    )
+IopFindBestConfiguration(IN PIOP_RESOURCE_REQUEST RequestTable, IN ULONG RequestTableCount,
+                         IN OUT PLIST_ENTRY ActiveArbiterList)
 
 /*++
 
@@ -7395,13 +7144,13 @@ Return Value:
 --*/
 
 {
-    LIST_ENTRY      bestArbiterList;
-    LARGE_INTEGER   startTime;
-    LARGE_INTEGER   currentTime;
-    ULONG           timeDiff;
-    NTSTATUS        status;
-    ULONG           priority;
-    ULONG           bestPriority;
+    LIST_ENTRY bestArbiterList;
+    LARGE_INTEGER startTime;
+    LARGE_INTEGER currentTime;
+    ULONG timeDiff;
+    NTSTATUS status;
+    ULONG priority;
+    ULONG bestPriority;
 
     PAGED_CODE();
     //
@@ -7414,10 +7163,7 @@ Return Value:
     // Start the search from the first possible configuration.
     // Possible configurations are already sorted by priority.
     //
-    IopSelectFirstConfiguration(
-        RequestTable,
-        RequestTableCount,
-        ActiveArbiterList);
+    IopSelectFirstConfiguration(RequestTable, RequestTableCount, ActiveArbiterList);
     //
     // Search for all configurations that work, updating
     // the best configuration until we have tried all
@@ -7425,18 +7171,21 @@ Return Value:
     //
     KeQuerySystemTime(&startTime);
     bestPriority = (ULONG)-1;
-    do {
+    do
+    {
         //
         // Test the arbiters for this combination.
         //
         status = IopTestConfiguration(ActiveArbiterList);
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
             //
             // Since the configurations are sorted, we dont need to try others
             // if there is only one entry in the request table.
             //
             bestArbiterList = *ActiveArbiterList;
-            if (RequestTableCount == 1) {
+            if (RequestTableCount == 1)
+            {
 
                 break;
             }
@@ -7444,17 +7193,12 @@ Return Value:
             // Save this configuration if it is better than the best one found
             // so far.
             //
-            priority = IopComputeConfigurationPriority(
-                            RequestTable,
-                            RequestTableCount);
-            if (priority < bestPriority) {
+            priority = IopComputeConfigurationPriority(RequestTable, RequestTableCount);
+            if (priority < bestPriority)
+            {
 
                 bestPriority = priority;
-                IopSaveRestoreConfiguration(
-                    RequestTable,
-                    RequestTableCount,
-                    ActiveArbiterList,
-                    TRUE);
+                IopSaveRestoreConfiguration(RequestTable, RequestTableCount, ActiveArbiterList, TRUE);
             }
         }
         //
@@ -7462,56 +7206,51 @@ Return Value:
         //
         KeQuerySystemTime(&currentTime);
         timeDiff = (ULONG)((currentTime.QuadPart - startTime.QuadPart) / 10000);
-        if (timeDiff >= FIND_BEST_CONFIGURATION_TIMEOUT) {
+        if (timeDiff >= FIND_BEST_CONFIGURATION_TIMEOUT)
+        {
 
-            IopDbgPrint((
-                IOP_RESOURCE_WARNING_LEVEL,
-                "IopFindBestConfiguration: Timeout expired"));
-            if (IopStopOnTimeout()) {
+            IopDbgPrint((IOP_RESOURCE_WARNING_LEVEL, "IopFindBestConfiguration: Timeout expired"));
+            if (IopStopOnTimeout())
+            {
 
-                IopDbgPrint((
-                    IOP_RESOURCE_WARNING_LEVEL,
-                    ", terminating search!\n"));
-                IopCleanupSelectedConfiguration(
-                    RequestTable,
-                    RequestTableCount);
+                IopDbgPrint((IOP_RESOURCE_WARNING_LEVEL, ", terminating search!\n"));
+                IopCleanupSelectedConfiguration(RequestTable, RequestTableCount);
                 break;
-            } else {
+            }
+            else
+            {
                 //
                 // Re-initialize start time so we spew only every timeout
                 // interval.
                 //
                 startTime = currentTime;
                 IopDbgPrint((IOP_RESOURCE_WARNING_LEVEL, "\n"));
-           }
+            }
         }
         //
         // Select the next possible combination of configurations.
         //
-    } while (IopSelectNextConfiguration(
-                RequestTable,
-                RequestTableCount,
-                ActiveArbiterList) == TRUE);
+    } while (IopSelectNextConfiguration(RequestTable, RequestTableCount, ActiveArbiterList) == TRUE);
     //
     // Check if we found any working configuration.
     //
-    if (IsListEmpty(&bestArbiterList)) {
+    if (IsListEmpty(&bestArbiterList))
+    {
 
         status = STATUS_UNSUCCESSFUL;
-    } else {
+    }
+    else
+    {
 
         status = STATUS_SUCCESS;
         //
         // Restore the saved configuration.
         //
-        if (RequestTableCount != 1) {
+        if (RequestTableCount != 1)
+        {
 
             *ActiveArbiterList = bestArbiterList;
-            IopSaveRestoreConfiguration(
-                RequestTable,
-                RequestTableCount,
-                ActiveArbiterList,
-                FALSE);
+            IopSaveRestoreConfiguration(RequestTable, RequestTableCount, ActiveArbiterList, FALSE);
             //
             // Retest this configuration since this may not be the
             // last one tested.
@@ -7534,12 +7273,7 @@ Return Value:
 
 --*/
 
-VOID
-IopInsertLegacyBusDeviceNode (
-    IN PDEVICE_NODE     BusDeviceNode,
-    IN INTERFACE_TYPE   InterfaceType,
-    IN ULONG            BusNumber
-    )
+VOID IopInsertLegacyBusDeviceNode(IN PDEVICE_NODE BusDeviceNode, IN INTERFACE_TYPE InterfaceType, IN ULONG BusNumber)
 
 /*++
 
@@ -7566,47 +7300,45 @@ Return Value:
     PAGED_CODE();
 
     ASSERT(InterfaceType < MaximumInterfaceType && InterfaceType > InterfaceTypeUndefined);
-    if (    InterfaceType < MaximumInterfaceType &&
-            InterfaceType > InterfaceTypeUndefined &&
-            InterfaceType != PNPBus) {
+    if (InterfaceType < MaximumInterfaceType && InterfaceType > InterfaceTypeUndefined && InterfaceType != PNPBus)
+    {
 
         PLIST_ENTRY listEntry;
         //
         // Eisa == Isa.
         //
-        if (InterfaceType == Eisa) {
+        if (InterfaceType == Eisa)
+        {
 
             InterfaceType = Isa;
         }
         IopLockResourceManager();
         listEntry = IopLegacyBusInformationTable[InterfaceType].Flink;
-        while (listEntry != &IopLegacyBusInformationTable[InterfaceType]) {
+        while (listEntry != &IopLegacyBusInformationTable[InterfaceType])
+        {
 
-            PDEVICE_NODE deviceNode = CONTAINING_RECORD(
-                                        listEntry,
-                                        DEVICE_NODE,
-                                        LegacyBusListEntry);
-            if (deviceNode->BusNumber == BusNumber) {
+            PDEVICE_NODE deviceNode = CONTAINING_RECORD(listEntry, DEVICE_NODE, LegacyBusListEntry);
+            if (deviceNode->BusNumber == BusNumber)
+            {
 
-                if (deviceNode != BusDeviceNode) {
+                if (deviceNode != BusDeviceNode)
+                {
                     //
                     // There better not be two bus devicenodes with same
                     // interface and bus number.
                     //
-                    IopDbgPrint((
-                        IOP_RESOURCE_ERROR_LEVEL,
-                        "Identical legacy bus devicenodes with "
-                        "interface=%08X & bus=%08X...\n"
-                        "\t%wZ\n"
-                        "\t%wZ\n",
-                        InterfaceType,
-                        BusNumber,
-                        &deviceNode->InstancePath,
-                        &BusDeviceNode->InstancePath));
+                    IopDbgPrint((IOP_RESOURCE_ERROR_LEVEL,
+                                 "Identical legacy bus devicenodes with "
+                                 "interface=%08X & bus=%08X...\n"
+                                 "\t%wZ\n"
+                                 "\t%wZ\n",
+                                 InterfaceType, BusNumber, &deviceNode->InstancePath, &BusDeviceNode->InstancePath));
                 }
                 IopUnlockResourceManager();
                 return;
-            } else if (deviceNode->BusNumber > BusNumber) {
+            }
+            else if (deviceNode->BusNumber > BusNumber)
+            {
 
                 break;
             }
@@ -7615,25 +7347,20 @@ Return Value:
         //
         // Insert the new devicenode before the one with the higher bus number.
         //
-        IopDbgPrint((
-            IOP_RESOURCE_VERBOSE_LEVEL,
-            "IopInsertLegacyBusDeviceNode: Inserting %wZ with "
-            "interface=%08X & bus=%08X into the legacy bus information table\n",
-            &BusDeviceNode->InstancePath,
-            InterfaceType, BusNumber));
+        IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL,
+                     "IopInsertLegacyBusDeviceNode: Inserting %wZ with "
+                     "interface=%08X & bus=%08X into the legacy bus information table\n",
+                     &BusDeviceNode->InstancePath, InterfaceType, BusNumber));
         BusDeviceNode->LegacyBusListEntry.Blink = listEntry->Blink;
         BusDeviceNode->LegacyBusListEntry.Flink = listEntry;
         listEntry->Blink->Flink = &BusDeviceNode->LegacyBusListEntry;
-        listEntry->Blink        = &BusDeviceNode->LegacyBusListEntry;
+        listEntry->Blink = &BusDeviceNode->LegacyBusListEntry;
         IopUnlockResourceManager();
     }
 }
 
 PDEVICE_NODE
-IopFindLegacyBusDeviceNode (
-    IN INTERFACE_TYPE   InterfaceType,
-    IN ULONG            BusNumber
-    )
+IopFindLegacyBusDeviceNode(IN INTERFACE_TYPE InterfaceType, IN ULONG BusNumber)
 
 /*++
 
@@ -7660,15 +7387,15 @@ Return Value:
     PAGED_CODE();
 
     busDeviceNode = IopRootDeviceNode;
-    if (    InterfaceType < MaximumInterfaceType &&
-            InterfaceType > InterfaceTypeUndefined &&
-            InterfaceType != PNPBus) {
+    if (InterfaceType < MaximumInterfaceType && InterfaceType > InterfaceTypeUndefined && InterfaceType != PNPBus)
+    {
 
         PLIST_ENTRY listEntry;
         //
         // Eisa == Isa.
         //
-        if (InterfaceType == Eisa) {
+        if (InterfaceType == Eisa)
+        {
 
             InterfaceType = Isa;
         }
@@ -7676,20 +7403,21 @@ Return Value:
         // Search our table...
         //
         listEntry = IopLegacyBusInformationTable[InterfaceType].Flink;
-        while (listEntry != &IopLegacyBusInformationTable[InterfaceType]) {
+        while (listEntry != &IopLegacyBusInformationTable[InterfaceType])
+        {
 
-            PDEVICE_NODE deviceNode = CONTAINING_RECORD(
-                                        listEntry,
-                                        DEVICE_NODE,
-                                        LegacyBusListEntry);
-            if (deviceNode->BusNumber == BusNumber) {
+            PDEVICE_NODE deviceNode = CONTAINING_RECORD(listEntry, DEVICE_NODE, LegacyBusListEntry);
+            if (deviceNode->BusNumber == BusNumber)
+            {
                 //
                 // Return the bus devicenode matching the bus number and
                 // interface.
                 //
                 busDeviceNode = deviceNode;
                 break;
-            } else if (deviceNode->BusNumber > BusNumber) {
+            }
+            else if (deviceNode->BusNumber > BusNumber)
+            {
                 //
                 // We are done since our list of bus numbers is sorted.
                 //
@@ -7698,13 +7426,10 @@ Return Value:
             listEntry = listEntry->Flink;
         }
     }
-    IopDbgPrint((
-        IOP_RESOURCE_VERBOSE_LEVEL,
-        "IopFindLegacyBusDeviceNode() Found %wZ with "
-        "interface=%08X & bus=%08X\n",
-        &busDeviceNode->InstancePath,
-        InterfaceType,
-        BusNumber));
+    IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL,
+                 "IopFindLegacyBusDeviceNode() Found %wZ with "
+                 "interface=%08X & bus=%08X\n",
+                 &busDeviceNode->InstancePath, InterfaceType, BusNumber));
 
     return busDeviceNode;
 }
@@ -7721,11 +7446,8 @@ Return Value:
 --*/
 
 NTSTATUS
-IopAllocateBootResources (
-    IN ARBITER_REQUEST_SOURCE   ArbiterRequestSource,
-    IN PDEVICE_OBJECT           DeviceObject,
-    IN PCM_RESOURCE_LIST        BootResources
-    )
+IopAllocateBootResources(IN ARBITER_REQUEST_SOURCE ArbiterRequestSource, IN PDEVICE_OBJECT DeviceObject,
+                         IN PCM_RESOURCE_LIST BootResources)
 
 /*++
 
@@ -7756,13 +7478,11 @@ Return Value:
 
 --*/
 {
-    NTSTATUS    status;
+    NTSTATUS status;
 
     PAGED_CODE();
 
-    IopDbgPrint((
-        IOP_RESOURCE_INFO_LEVEL,
-        "Allocating boot resources...\n"));
+    IopDbgPrint((IOP_RESOURCE_INFO_LEVEL, "Allocating boot resources...\n"));
     //
     // Claim the lock so no other resource allocations\releases can take place.
     //
@@ -7770,10 +7490,7 @@ Return Value:
     //
     // Call the function that does the real work.
     //
-    status = IopAllocateBootResourcesInternal(
-                ArbiterRequestSource,
-                DeviceObject,
-                BootResources);
+    status = IopAllocateBootResourcesInternal(ArbiterRequestSource, DeviceObject, BootResources);
     //
     // Unblock other resource allocations\releases.
     //
@@ -7783,11 +7500,8 @@ Return Value:
 }
 
 NTSTATUS
-IopReportBootResources (
-    IN ARBITER_REQUEST_SOURCE   ArbiterRequestSource,
-    IN PDEVICE_OBJECT           DeviceObject,
-    IN PCM_RESOURCE_LIST        BootResources
-    )
+IopReportBootResources(IN ARBITER_REQUEST_SOURCE ArbiterRequestSource, IN PDEVICE_OBJECT DeviceObject,
+                       IN PCM_RESOURCE_LIST BootResources)
 
 /*++
 
@@ -7819,82 +7533,85 @@ Return Value:
 
 --*/
 {
-    ULONG                           size;
-    PDEVICE_NODE                    deviceNode;
-    PIOP_RESERVED_RESOURCES_RECORD  resourceRecord;
+    ULONG size;
+    PDEVICE_NODE deviceNode;
+    PIOP_RESERVED_RESOURCES_RECORD resourceRecord;
 
-    IopDbgPrint((
-        IOP_RESOURCE_INFO_LEVEL,
-        "Reporting boot resources...\n"));
-    if ((size = IopDetermineResourceListSize(BootResources)) == 0) {
+    IopDbgPrint((IOP_RESOURCE_INFO_LEVEL, "Reporting boot resources...\n"));
+    if ((size = IopDetermineResourceListSize(BootResources)) == 0)
+    {
 
         return STATUS_SUCCESS;
     }
-    if (DeviceObject) {
+    if (DeviceObject)
+    {
 
         deviceNode = PP_DO_TO_DN(DeviceObject);
         ASSERT(deviceNode);
-        if (!(deviceNode->Flags & DNF_MADEUP)) {
+        if (!(deviceNode->Flags & DNF_MADEUP))
+        {
             //
             // Allocate BOOT configs for non-madeup devices right away.
             //
-            return IopAllocateBootResources(
-                    ArbiterRequestSource,
-                    DeviceObject,
-                    BootResources);
+            return IopAllocateBootResources(ArbiterRequestSource, DeviceObject, BootResources);
         }
-        if (!deviceNode->BootResources) {
+        if (!deviceNode->BootResources)
+        {
 
             deviceNode->BootResources = ExAllocatePoolIORL(PagedPool, size);
-            if (!deviceNode->BootResources) {
+            if (!deviceNode->BootResources)
+            {
 
                 return STATUS_INSUFFICIENT_RESOURCES;
             }
             RtlCopyMemory(deviceNode->BootResources, BootResources, size);
         }
-    } else {
+    }
+    else
+    {
 
         deviceNode = NULL;
     }
     //
     // Delay BOOT allocation since arbiters may not be around.
     //
-    resourceRecord = (PIOP_RESERVED_RESOURCES_RECORD) ExAllocatePoolIORRR(
-                        PagedPool,
-                        sizeof(IOP_RESERVED_RESOURCES_RECORD));
-    if (!resourceRecord) {
+    resourceRecord =
+        (PIOP_RESERVED_RESOURCES_RECORD)ExAllocatePoolIORRR(PagedPool, sizeof(IOP_RESERVED_RESOURCES_RECORD));
+    if (!resourceRecord)
+    {
         //
         // Free memory we allocated and return failure.
         //
-        if (deviceNode && deviceNode->BootResources) {
+        if (deviceNode && deviceNode->BootResources)
+        {
 
             ExFreePool(deviceNode->BootResources);
             deviceNode->BootResources = NULL;
         }
         return STATUS_INSUFFICIENT_RESOURCES;
     }
-    if (deviceNode) {
+    if (deviceNode)
+    {
 
-        resourceRecord->ReservedResources   = deviceNode->BootResources;
-    } else {
-
-        resourceRecord->ReservedResources   = BootResources;
+        resourceRecord->ReservedResources = deviceNode->BootResources;
     }
-    resourceRecord->DeviceObject            = DeviceObject;
+    else
+    {
+
+        resourceRecord->ReservedResources = BootResources;
+    }
+    resourceRecord->DeviceObject = DeviceObject;
     //
     // Link this record into our list.
     //
-    resourceRecord->Next                    = IopInitReservedResourceList;
-    IopInitReservedResourceList             = resourceRecord;
+    resourceRecord->Next = IopInitReservedResourceList;
+    IopInitReservedResourceList = resourceRecord;
 
     return STATUS_SUCCESS;
 }
 
 NTSTATUS
-IopAllocateLegacyBootResources (
-    IN INTERFACE_TYPE   InterfaceType,
-    IN ULONG            BusNumber
-    )
+IopAllocateLegacyBootResources(IN INTERFACE_TYPE InterfaceType, IN ULONG BusNumber)
 
 /*++
 
@@ -7917,109 +7634,117 @@ Return Value:
 --*/
 
 {
-    NTSTATUS                        status;
-    PIOP_RESERVED_RESOURCES_RECORD  resourceRecord;
-    PIOP_RESERVED_RESOURCES_RECORD  prevRecord;
-    PCM_RESOURCE_LIST               newList;
-    PCM_RESOURCE_LIST               remainingList;
-    PCM_RESOURCE_LIST               resourceList;
+    NTSTATUS status;
+    PIOP_RESERVED_RESOURCES_RECORD resourceRecord;
+    PIOP_RESERVED_RESOURCES_RECORD prevRecord;
+    PCM_RESOURCE_LIST newList;
+    PCM_RESOURCE_LIST remainingList;
+    PCM_RESOURCE_LIST resourceList;
 
-    if (IopInitHalDeviceNode && IopInitHalResources) {
+    if (IopInitHalDeviceNode && IopInitHalResources)
+    {
 
         remainingList = NULL;
-        newList = IopCreateCmResourceList(
-                    IopInitHalResources,
-                    InterfaceType,
-                    BusNumber,
-                    &remainingList);
-        if (newList) {
+        newList = IopCreateCmResourceList(IopInitHalResources, InterfaceType, BusNumber, &remainingList);
+        if (newList)
+        {
             //
             // Sanity check that there was no error.
             //
-            if (remainingList == NULL) {
+            if (remainingList == NULL)
+            {
                 //
                 // Full match.
                 //
                 ASSERT(newList == IopInitHalResources);
-            } else {
+            }
+            else
+            {
                 //
                 // Partial match.
                 //
                 ASSERT(IopInitHalResources != newList);
                 ASSERT(IopInitHalResources != remainingList);
             }
-            if (remainingList) {
+            if (remainingList)
+            {
 
                 ExFreePool(IopInitHalResources);
             }
-            IopInitHalResources         = remainingList;
-            remainingList               = IopInitHalDeviceNode->BootResources;
+            IopInitHalResources = remainingList;
+            remainingList = IopInitHalDeviceNode->BootResources;
             IopInitHalDeviceNode->Flags |= DNF_HAS_BOOT_CONFIG;
-            IopDbgPrint((
-                IOP_RESOURCE_INFO_LEVEL,
-                "Allocating HAL reported resources on interface=%x and "
-                "bus number=%x...\n", InterfaceType, BusNumber));
-            status = IopAllocateBootResources(
-                        ArbiterRequestHalReported,
-                        IopInitHalDeviceNode->PhysicalDeviceObject,
-                        newList);
-            IopInitHalDeviceNode->BootResources = IopCombineCmResourceList(
-                                                    remainingList,
-                                                    newList);
+            IopDbgPrint((IOP_RESOURCE_INFO_LEVEL,
+                         "Allocating HAL reported resources on interface=%x and "
+                         "bus number=%x...\n",
+                         InterfaceType, BusNumber));
+            status = IopAllocateBootResources(ArbiterRequestHalReported, IopInitHalDeviceNode->PhysicalDeviceObject,
+                                              newList);
+            IopInitHalDeviceNode->BootResources = IopCombineCmResourceList(remainingList, newList);
             ASSERT(IopInitHalDeviceNode->BootResources);
             //
             // Free previous BOOT config if any.
             //
-            if (remainingList) {
+            if (remainingList)
+            {
 
                 ExFreePool(remainingList);
             }
-        } else {
+        }
+        else
+        {
             //
             // No match. Sanity check that there was no error.
             //
             ASSERT(remainingList && remainingList == IopInitHalResources);
         }
     }
-    prevRecord      = NULL;
-    resourceRecord  = IopInitReservedResourceList;
-    while (resourceRecord) {
+    prevRecord = NULL;
+    resourceRecord = IopInitReservedResourceList;
+    while (resourceRecord)
+    {
 
         resourceList = resourceRecord->ReservedResources;
-        if (    resourceList->List[0].InterfaceType == InterfaceType &&
-                resourceList->List[0].BusNumber == BusNumber) {
+        if (resourceList->List[0].InterfaceType == InterfaceType && resourceList->List[0].BusNumber == BusNumber)
+        {
 
-            IopDbgPrint((
-                IOP_RESOURCE_INFO_LEVEL,
-                "Allocating boot config for made-up device on interface=%x and"
-                " bus number=%x...\n", InterfaceType, BusNumber));
-            status = IopAllocateBootResources(
-                        ArbiterRequestPnpEnumerated,
-                        resourceRecord->DeviceObject,
-                        resourceList);
-            if (resourceRecord->DeviceObject == NULL) {
+            IopDbgPrint((IOP_RESOURCE_INFO_LEVEL,
+                         "Allocating boot config for made-up device on interface=%x and"
+                         " bus number=%x...\n",
+                         InterfaceType, BusNumber));
+            status = IopAllocateBootResources(ArbiterRequestPnpEnumerated, resourceRecord->DeviceObject, resourceList);
+            if (resourceRecord->DeviceObject == NULL)
+            {
 
                 ExFreePool(resourceList);
             }
-            if (prevRecord) {
+            if (prevRecord)
+            {
 
-                prevRecord->Next            = resourceRecord->Next;
-            } else {
+                prevRecord->Next = resourceRecord->Next;
+            }
+            else
+            {
 
                 IopInitReservedResourceList = resourceRecord->Next;
             }
             ExFreePool(resourceRecord);
-            if (prevRecord) {
+            if (prevRecord)
+            {
 
                 resourceRecord = prevRecord->Next;
-            } else {
+            }
+            else
+            {
 
                 resourceRecord = IopInitReservedResourceList;
             }
-        } else {
+        }
+        else
+        {
 
-            prevRecord      = resourceRecord;
-            resourceRecord  = resourceRecord->Next;
+            prevRecord = resourceRecord;
+            resourceRecord = resourceRecord->Next;
         }
     }
 
@@ -8027,11 +7752,8 @@ Return Value:
 }
 
 NTSTATUS
-IopAllocateBootResourcesInternal (
-    IN ARBITER_REQUEST_SOURCE   ArbiterRequestSource,
-    IN PDEVICE_OBJECT           DeviceObject,
-    IN PCM_RESOURCE_LIST        BootResources
-    )
+IopAllocateBootResourcesInternal(IN ARBITER_REQUEST_SOURCE ArbiterRequestSource, IN PDEVICE_OBJECT DeviceObject,
+                                 IN PCM_RESOURCE_LIST BootResources)
 
 /*++
 
@@ -8058,94 +7780,85 @@ Return Value:
 
 --*/
 {
-    NTSTATUS                        status;
-    PDEVICE_NODE                    deviceNode;
-    PIO_RESOURCE_REQUIREMENTS_LIST  ioResources;
-    PREQ_LIST                       reqList;
-    IOP_RESOURCE_REQUEST            request;
+    NTSTATUS status;
+    PDEVICE_NODE deviceNode;
+    PIO_RESOURCE_REQUIREMENTS_LIST ioResources;
+    PREQ_LIST reqList;
+    IOP_RESOURCE_REQUEST request;
 
     PAGED_CODE();
 
-    ioResources = IopCmResourcesToIoResources(
-                    0,
-                    BootResources,
-                    LCPRI_BOOTCONFIG);
-    if (ioResources) {
+    ioResources = IopCmResourcesToIoResources(0, BootResources, LCPRI_BOOTCONFIG);
+    if (ioResources)
+    {
 
         deviceNode = PP_DO_TO_DN(DeviceObject);
-        IopDbgPrint((
-            IOP_RESOURCE_VERBOSE_LEVEL,
-            "\n===================================\n"
-                     ));
-        IopDbgPrint((
-            IOP_RESOURCE_VERBOSE_LEVEL,
-            "Boot Resource List:: "));
+        IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL, "\n===================================\n"));
+        IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL, "Boot Resource List:: "));
         IopDumpResourceRequirementsList(ioResources);
-        IopDbgPrint((
-            IOP_RESOURCE_VERBOSE_LEVEL,
-            " ++++++++++++++++++++++++++++++\n"));
+        IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL, " ++++++++++++++++++++++++++++++\n"));
         request.AllocationType = ArbiterRequestSource;
         request.ResourceRequirements = ioResources;
         request.PhysicalDevice = DeviceObject;
-        status = IopResourceRequirementsListToReqList(
-                    &request,
-                    &reqList);
-        if (NT_SUCCESS(status)) {
+        status = IopResourceRequirementsListToReqList(&request, &reqList);
+        if (NT_SUCCESS(status))
+        {
 
-            if (reqList) {
+            if (reqList)
+            {
 
                 status = IopBootAllocation(reqList);
-                if (NT_SUCCESS(status)) {
+                if (NT_SUCCESS(status))
+                {
 
-                    if (deviceNode) {
+                    if (deviceNode)
+                    {
 
                         deviceNode->Flags |= DNF_BOOT_CONFIG_RESERVED;
-                        if (!deviceNode->BootResources) {
+                        if (!deviceNode->BootResources)
+                        {
 
-                            ULONG   size;
+                            ULONG size;
 
                             size = IopDetermineResourceListSize(BootResources);
-                            deviceNode->BootResources = ExAllocatePoolIORL(
-                                                            PagedPool,
-                                                            size);
-                            if (!deviceNode->BootResources) {
+                            deviceNode->BootResources = ExAllocatePoolIORL(PagedPool, size);
+                            if (!deviceNode->BootResources)
+                            {
 
                                 return STATUS_INSUFFICIENT_RESOURCES;
                             }
-                            RtlCopyMemory(
-                                deviceNode->BootResources,
-                                BootResources,
-                                size);
+                            RtlCopyMemory(deviceNode->BootResources, BootResources, size);
                         }
                     }
                 }
                 IopFreeReqList(reqList);
-            } else {
+            }
+            else
+            {
 
                 status = STATUS_UNSUCCESSFUL;
             }
         }
         ExFreePool(ioResources);
-    } else {
+    }
+    else
+    {
 
         status = STATUS_UNSUCCESSFUL;
     }
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
-        IopDbgPrint((
-            IOP_RESOURCE_ERROR_LEVEL,
-            "IopAllocateBootResourcesInternal: Failed with status = %08X\n",
-            status));
+        IopDbgPrint(
+            (IOP_RESOURCE_ERROR_LEVEL, "IopAllocateBootResourcesInternal: Failed with status = %08X\n", status));
     }
 
     return status;
 }
 
 NTSTATUS
-IopBootAllocation (
-    IN PREQ_LIST ReqList
-    )
+IopBootAllocation(IN PREQ_LIST ReqList)
 
 /*++
 
@@ -8164,53 +7877,44 @@ Return Value:
 --*/
 
 {
-    NTSTATUS                    status;
-    NTSTATUS                    returnStatus;
-    LIST_ENTRY                  activeArbiterList;
-    PLIST_ENTRY                 listEntry;
-    PPI_RESOURCE_ARBITER_ENTRY  arbiterEntry;
-    ARBITER_PARAMETERS          p;
+    NTSTATUS status;
+    NTSTATUS returnStatus;
+    LIST_ENTRY activeArbiterList;
+    PLIST_ENTRY listEntry;
+    PPI_RESOURCE_ARBITER_ENTRY arbiterEntry;
+    ARBITER_PARAMETERS p;
 
     PAGED_CODE();
 
     returnStatus = STATUS_SUCCESS;
     InitializeListHead(&activeArbiterList);
     ReqList->SelectedAlternative = ReqList->AlternativeTable;
-    IopAddRemoveReqDescs(   (*ReqList->SelectedAlternative)->DescTable,
-                            (*ReqList->SelectedAlternative)->DescCount,
-                            &activeArbiterList,
-                            TRUE);
+    IopAddRemoveReqDescs((*ReqList->SelectedAlternative)->DescTable, (*ReqList->SelectedAlternative)->DescCount,
+                         &activeArbiterList, TRUE);
     listEntry = activeArbiterList.Flink;
-    while (listEntry != &activeArbiterList){
+    while (listEntry != &activeArbiterList)
+    {
 
-        arbiterEntry = CONTAINING_RECORD(
-                        listEntry,
-                        PI_RESOURCE_ARBITER_ENTRY,
-                        ActiveArbiterList);
+        arbiterEntry = CONTAINING_RECORD(listEntry, PI_RESOURCE_ARBITER_ENTRY, ActiveArbiterList);
         listEntry = listEntry->Flink;
-        if (arbiterEntry->ResourcesChanged == FALSE) {
+        if (arbiterEntry->ResourcesChanged == FALSE)
+        {
 
             continue;
         }
         ASSERT(IsListEmpty(&arbiterEntry->ResourceList) == FALSE);
-        p.Parameters.BootAllocation.ArbitrationList =
-            &arbiterEntry->ResourceList;
-        status = arbiterEntry->ArbiterInterface->ArbiterHandler(
-                    arbiterEntry->ArbiterInterface->Context,
-                    ArbiterActionBootAllocation,
-                    &p);
+        p.Parameters.BootAllocation.ArbitrationList = &arbiterEntry->ResourceList;
+        status = arbiterEntry->ArbiterInterface->ArbiterHandler(arbiterEntry->ArbiterInterface->Context,
+                                                                ArbiterActionBootAllocation, &p);
 
-        if (!NT_SUCCESS(status)) {
+        if (!NT_SUCCESS(status))
+        {
 
             PARBITER_LIST_ENTRY arbiterListEntry;
 
-            arbiterListEntry = (PARBITER_LIST_ENTRY)
-                                arbiterEntry->ResourceList.Flink;
-            IopDbgPrint((
-                IOP_RESOURCE_ERROR_LEVEL,
-                "Allocate Boot Resources Failed ::\n\tCount = %x, PDO = %x\n",
-                arbiterListEntry->AlternativeCount,
-                arbiterListEntry->PhysicalDeviceObject));
+            arbiterListEntry = (PARBITER_LIST_ENTRY)arbiterEntry->ResourceList.Flink;
+            IopDbgPrint((IOP_RESOURCE_ERROR_LEVEL, "Allocate Boot Resources Failed ::\n\tCount = %x, PDO = %x\n",
+                         arbiterListEntry->AlternativeCount, arbiterListEntry->PhysicalDeviceObject));
             IopDumpResourceDescriptor("\t", arbiterListEntry->Alternatives);
             returnStatus = status;
         }
@@ -8223,12 +7927,8 @@ Return Value:
 }
 
 PCM_RESOURCE_LIST
-IopCreateCmResourceList (
-    IN PCM_RESOURCE_LIST    ResourceList,
-    IN INTERFACE_TYPE       InterfaceType,
-    IN ULONG                BusNumber,
-    OUT PCM_RESOURCE_LIST   *RemainingList
-    )
+IopCreateCmResourceList(IN PCM_RESOURCE_LIST ResourceList, IN INTERFACE_TYPE InterfaceType, IN ULONG BusNumber,
+                        OUT PCM_RESOURCE_LIST *RemainingList)
 
 /*++
 
@@ -8254,148 +7954,132 @@ Return Value:
 --*/
 
 {
-    ULONG                           i;
-    ULONG                           j;
-    ULONG                           totalSize;
-    ULONG                           matchSize;
-    ULONG                           listSize;
-    PCM_RESOURCE_LIST               newList;
-    PCM_FULL_RESOURCE_DESCRIPTOR    fullResourceDesc;
-    PCM_FULL_RESOURCE_DESCRIPTOR    newFullResourceDesc;
-    PCM_FULL_RESOURCE_DESCRIPTOR    remainingFullResourceDesc;
+    ULONG i;
+    ULONG j;
+    ULONG totalSize;
+    ULONG matchSize;
+    ULONG listSize;
+    PCM_RESOURCE_LIST newList;
+    PCM_FULL_RESOURCE_DESCRIPTOR fullResourceDesc;
+    PCM_FULL_RESOURCE_DESCRIPTOR newFullResourceDesc;
+    PCM_FULL_RESOURCE_DESCRIPTOR remainingFullResourceDesc;
     PCM_PARTIAL_RESOURCE_DESCRIPTOR partialDescriptor;
 
     PAGED_CODE();
 
-    fullResourceDesc    = &ResourceList->List[0];
-    totalSize           = FIELD_OFFSET(CM_RESOURCE_LIST, List);
-    matchSize           = 0;
+    fullResourceDesc = &ResourceList->List[0];
+    totalSize = FIELD_OFFSET(CM_RESOURCE_LIST, List);
+    matchSize = 0;
     //
     // Determine the size of memory to be allocated for the matching resource
     // list.
     //
-    for (i = 0; i < ResourceList->Count; i++) {
+    for (i = 0; i < ResourceList->Count; i++)
+    {
         //
         // Add the size of this descriptor.
         //
-        listSize = FIELD_OFFSET(CM_FULL_RESOURCE_DESCRIPTOR,
-                                PartialResourceList) +
-                   FIELD_OFFSET(CM_PARTIAL_RESOURCE_LIST,
-                                PartialDescriptors);
-        partialDescriptor =
-            &fullResourceDesc->PartialResourceList.PartialDescriptors[0];
-        for (j = 0; j < fullResourceDesc->PartialResourceList.Count; j++) {
+        listSize = FIELD_OFFSET(CM_FULL_RESOURCE_DESCRIPTOR, PartialResourceList) +
+                   FIELD_OFFSET(CM_PARTIAL_RESOURCE_LIST, PartialDescriptors);
+        partialDescriptor = &fullResourceDesc->PartialResourceList.PartialDescriptors[0];
+        for (j = 0; j < fullResourceDesc->PartialResourceList.Count; j++)
+        {
 
             ULONG descriptorSize = sizeof(CM_PARTIAL_RESOURCE_DESCRIPTOR);
 
-            if (partialDescriptor->Type == CmResourceTypeDeviceSpecific) {
+            if (partialDescriptor->Type == CmResourceTypeDeviceSpecific)
+            {
 
-                descriptorSize +=
-                    partialDescriptor->u.DeviceSpecificData.DataSize;
+                descriptorSize += partialDescriptor->u.DeviceSpecificData.DataSize;
             }
             listSize += descriptorSize;
-            partialDescriptor = (PCM_PARTIAL_RESOURCE_DESCRIPTOR)
-                                    ((PUCHAR)partialDescriptor +
-                                            descriptorSize);
+            partialDescriptor = (PCM_PARTIAL_RESOURCE_DESCRIPTOR)((PUCHAR)partialDescriptor + descriptorSize);
         }
-        if (    fullResourceDesc->InterfaceType == InterfaceType &&
-                fullResourceDesc->BusNumber == BusNumber) {
+        if (fullResourceDesc->InterfaceType == InterfaceType && fullResourceDesc->BusNumber == BusNumber)
+        {
 
             matchSize += listSize;
         }
         totalSize += listSize;
-        fullResourceDesc = (PCM_FULL_RESOURCE_DESCRIPTOR)
-                                  ((PUCHAR)fullResourceDesc + listSize);
+        fullResourceDesc = (PCM_FULL_RESOURCE_DESCRIPTOR)((PUCHAR)fullResourceDesc + listSize);
     }
-    if (!matchSize) {
+    if (!matchSize)
+    {
 
-        *RemainingList  = ResourceList;
+        *RemainingList = ResourceList;
         return NULL;
     }
     matchSize += FIELD_OFFSET(CM_RESOURCE_LIST, List);
-    if (matchSize == totalSize) {
+    if (matchSize == totalSize)
+    {
 
-        *RemainingList  = NULL;
+        *RemainingList = NULL;
         return ResourceList;
     }
     //
     // Allocate memory for both lists.
     //
     newList = (PCM_RESOURCE_LIST)ExAllocatePoolIORRR(PagedPool, matchSize);
-    if (newList == NULL) {
+    if (newList == NULL)
+    {
 
         *RemainingList = NULL;
         return NULL;
     }
-    *RemainingList = (PCM_RESOURCE_LIST)
-                        ExAllocatePoolIORRR(
-                            PagedPool,
-                            totalSize - matchSize +
-                                FIELD_OFFSET(CM_RESOURCE_LIST, List));
-    if (*RemainingList == NULL) {
+    *RemainingList =
+        (PCM_RESOURCE_LIST)ExAllocatePoolIORRR(PagedPool, totalSize - matchSize + FIELD_OFFSET(CM_RESOURCE_LIST, List));
+    if (*RemainingList == NULL)
+    {
 
         ExFreePool(newList);
         return NULL;
     }
-    newList->Count              = 0;
-    (*RemainingList)->Count     = 0;
-    newFullResourceDesc         = &newList->List[0];
-    remainingFullResourceDesc   = &(*RemainingList)->List[0];
-    fullResourceDesc            = &ResourceList->List[0];
-    for (i = 0; i < ResourceList->Count; i++) {
+    newList->Count = 0;
+    (*RemainingList)->Count = 0;
+    newFullResourceDesc = &newList->List[0];
+    remainingFullResourceDesc = &(*RemainingList)->List[0];
+    fullResourceDesc = &ResourceList->List[0];
+    for (i = 0; i < ResourceList->Count; i++)
+    {
 
-        listSize = FIELD_OFFSET(CM_FULL_RESOURCE_DESCRIPTOR,
-                                PartialResourceList) +
-                   FIELD_OFFSET(CM_PARTIAL_RESOURCE_LIST,
-                                PartialDescriptors);
-        partialDescriptor =
-            &fullResourceDesc->PartialResourceList.PartialDescriptors[0];
-        for (j = 0; j < fullResourceDesc->PartialResourceList.Count; j++) {
+        listSize = FIELD_OFFSET(CM_FULL_RESOURCE_DESCRIPTOR, PartialResourceList) +
+                   FIELD_OFFSET(CM_PARTIAL_RESOURCE_LIST, PartialDescriptors);
+        partialDescriptor = &fullResourceDesc->PartialResourceList.PartialDescriptors[0];
+        for (j = 0; j < fullResourceDesc->PartialResourceList.Count; j++)
+        {
 
             ULONG descriptorSize = sizeof(CM_PARTIAL_RESOURCE_DESCRIPTOR);
 
-            if (partialDescriptor->Type == CmResourceTypeDeviceSpecific) {
+            if (partialDescriptor->Type == CmResourceTypeDeviceSpecific)
+            {
 
-                descriptorSize +=
-                    partialDescriptor->u.DeviceSpecificData.DataSize;
+                descriptorSize += partialDescriptor->u.DeviceSpecificData.DataSize;
             }
             listSize += descriptorSize;
-            partialDescriptor = (PCM_PARTIAL_RESOURCE_DESCRIPTOR)
-                                    ((PUCHAR)partialDescriptor +
-                                        descriptorSize);
+            partialDescriptor = (PCM_PARTIAL_RESOURCE_DESCRIPTOR)((PUCHAR)partialDescriptor + descriptorSize);
         }
-        if (    fullResourceDesc->InterfaceType == InterfaceType &&
-                fullResourceDesc->BusNumber == BusNumber) {
+        if (fullResourceDesc->InterfaceType == InterfaceType && fullResourceDesc->BusNumber == BusNumber)
+        {
 
             newList->Count++;
             RtlCopyMemory(newFullResourceDesc, fullResourceDesc, listSize);
-            newFullResourceDesc = (PCM_FULL_RESOURCE_DESCRIPTOR)
-                                          ((PUCHAR)newFullResourceDesc +
-                                            listSize);
-        } else {
+            newFullResourceDesc = (PCM_FULL_RESOURCE_DESCRIPTOR)((PUCHAR)newFullResourceDesc + listSize);
+        }
+        else
+        {
 
             (*RemainingList)->Count++;
-            RtlCopyMemory(
-                remainingFullResourceDesc,
-                fullResourceDesc,
-                listSize);
-            remainingFullResourceDesc = (PCM_FULL_RESOURCE_DESCRIPTOR)
-                                          ((PUCHAR)remainingFullResourceDesc +
-                                            listSize);
+            RtlCopyMemory(remainingFullResourceDesc, fullResourceDesc, listSize);
+            remainingFullResourceDesc = (PCM_FULL_RESOURCE_DESCRIPTOR)((PUCHAR)remainingFullResourceDesc + listSize);
         }
-        fullResourceDesc = (PCM_FULL_RESOURCE_DESCRIPTOR)
-                                  ((PUCHAR)fullResourceDesc +
-                                    listSize);
+        fullResourceDesc = (PCM_FULL_RESOURCE_DESCRIPTOR)((PUCHAR)fullResourceDesc + listSize);
     }
 
     return newList;
 }
 
 PCM_RESOURCE_LIST
-IopCombineCmResourceList (
-    IN PCM_RESOURCE_LIST ResourceListA,
-    IN PCM_RESOURCE_LIST ResourceListB
-    )
+IopCombineCmResourceList(IN PCM_RESOURCE_LIST ResourceListA, IN PCM_RESOURCE_LIST ResourceListB)
 
 /*++
 
@@ -8417,38 +8101,39 @@ Return Value:
 --*/
 
 {
-    PCM_RESOURCE_LIST   newList;
-    ULONG               sizeA;
-    ULONG               sizeB;
-    ULONG               size;
-    ULONG               diff;
+    PCM_RESOURCE_LIST newList;
+    ULONG sizeA;
+    ULONG sizeB;
+    ULONG size;
+    ULONG diff;
 
     PAGED_CODE();
 
-    if (ResourceListA == NULL) {
+    if (ResourceListA == NULL)
+    {
 
         return ResourceListB;
     }
 
-    if (ResourceListB == NULL) {
+    if (ResourceListB == NULL)
+    {
 
         return ResourceListA;
     }
     newList = NULL;
-    sizeA   = IopDetermineResourceListSize(ResourceListA);
-    sizeB   = IopDetermineResourceListSize(ResourceListB);
-    if (sizeA && sizeB) {
+    sizeA = IopDetermineResourceListSize(ResourceListA);
+    sizeB = IopDetermineResourceListSize(ResourceListB);
+    if (sizeA && sizeB)
+    {
 
         diff = sizeof(CM_RESOURCE_LIST) - sizeof(CM_FULL_RESOURCE_DESCRIPTOR);
         size = sizeA + sizeB - diff;
         newList = (PCM_RESOURCE_LIST)ExAllocatePoolIORRR(PagedPool, size);
-        if (newList) {
+        if (newList)
+        {
 
             RtlCopyMemory(newList, ResourceListA, sizeA);
-            RtlCopyMemory(
-                (PUCHAR)newList + sizeA,
-                (PUCHAR)ResourceListB + diff,
-                sizeB - diff);
+            RtlCopyMemory((PUCHAR)newList + sizeA, (PUCHAR)ResourceListB + diff, sizeB - diff);
             newList->Count += ResourceListB->Count;
         }
     }
@@ -8467,10 +8152,7 @@ Return Value:
 
 --*/
 
-VOID
-IopFreeReqAlternative (
-    IN PREQ_ALTERNATIVE ReqAlternative
-    )
+VOID IopFreeReqAlternative(IN PREQ_ALTERNATIVE ReqAlternative)
 
 /*++
 
@@ -8490,42 +8172,43 @@ Return Value:
 --*/
 
 {
-    PREQ_DESC   reqDesc;
-    PREQ_DESC   reqDescx;
-    ULONG       i;
+    PREQ_DESC reqDesc;
+    PREQ_DESC reqDescx;
+    ULONG i;
 
     PAGED_CODE();
 
-    if (ReqAlternative) {
+    if (ReqAlternative)
+    {
         //
         // Free all REQ_DESC making this REQ_ALTERNATIVE.
         //
-        for (i = 0; i < ReqAlternative->DescCount; i++) {
+        for (i = 0; i < ReqAlternative->DescCount; i++)
+        {
             //
             // Free the list of translated REQ_DESCs for this REQ_DESC.
             //
-            reqDesc     = ReqAlternative->DescTable[i];
-            reqDescx    = reqDesc->TranslatedReqDesc;
-            while (reqDescx && IS_TRANSLATED_REQ_DESC(reqDescx)) {
+            reqDesc = ReqAlternative->DescTable[i];
+            reqDescx = reqDesc->TranslatedReqDesc;
+            while (reqDescx && IS_TRANSLATED_REQ_DESC(reqDescx))
+            {
                 //
                 // Free storage for alternative descriptors if any.
                 //
-                if (reqDescx->AlternativeTable.Alternatives) {
+                if (reqDescx->AlternativeTable.Alternatives)
+                {
 
                     ExFreePool(reqDescx->AlternativeTable.Alternatives);
                 }
-                reqDesc     = reqDescx;
-                reqDescx    = reqDescx->TranslatedReqDesc;
+                reqDesc = reqDescx;
+                reqDescx = reqDescx->TranslatedReqDesc;
                 ExFreePool(reqDesc);
             }
         }
     }
 }
 
-VOID
-IopFreeReqList (
-    IN PREQ_LIST ReqList
-    )
+VOID IopFreeReqList(IN PREQ_LIST ReqList)
 
 /*++
 
@@ -8549,11 +8232,13 @@ Return Value:
 
     PAGED_CODE();
 
-    if (ReqList) {
+    if (ReqList)
+    {
         //
         // Free all alternatives making this REQ_LIST.
         //
-        for (i = 0; i < ReqList->AlternativeCount; i++) {
+        for (i = 0; i < ReqList->AlternativeCount; i++)
+        {
 
             IopFreeReqAlternative(ReqList->AlternativeTable[i]);
         }
@@ -8561,11 +8246,8 @@ Return Value:
     }
 }
 
-VOID
-IopFreeResourceRequirementsForAssignTable(
-    IN PIOP_RESOURCE_REQUEST RequestTable,
-    IN PIOP_RESOURCE_REQUEST RequestTableEnd
-    )
+VOID IopFreeResourceRequirementsForAssignTable(IN PIOP_RESOURCE_REQUEST RequestTable,
+                                               IN PIOP_RESOURCE_REQUEST RequestTableEnd)
 
 /*++
 
@@ -8591,12 +8273,13 @@ Return Value:
 
     PAGED_CODE();
 
-    for (request = RequestTable; request < RequestTableEnd; request++) {
+    for (request = RequestTable; request < RequestTableEnd; request++)
+    {
 
         IopFreeReqList(request->ReqList);
         request->ReqList = NULL;
-        if (    request->Flags & IOP_ASSIGN_KEEP_CURRENT_CONFIG &&
-                request->ResourceRequirements) {
+        if (request->Flags & IOP_ASSIGN_KEEP_CURRENT_CONFIG && request->ResourceRequirements)
+        {
             //
             // The REAL resreq list is cached in DeviceNode->ResourceRequirements.
             // We need to free the filtered list.
@@ -8608,37 +8291,34 @@ Return Value:
 }
 
 #if DBG_SCOPE
-VOID
-IopCheckDataStructures (
-    IN PDEVICE_NODE DeviceNode
-    )
+VOID IopCheckDataStructures(IN PDEVICE_NODE DeviceNode)
 
 {
-    PDEVICE_NODE    sibling;
+    PDEVICE_NODE sibling;
 
     PAGED_CODE();
 
     //
     // Process all the siblings.
     //
-    for (sibling = DeviceNode; sibling; sibling = sibling->Sibling) {
+    for (sibling = DeviceNode; sibling; sibling = sibling->Sibling)
+    {
 
         IopCheckDataStructuresWorker(sibling);
     }
-    for (sibling = DeviceNode; sibling; sibling = sibling->Sibling) {
+    for (sibling = DeviceNode; sibling; sibling = sibling->Sibling)
+    {
         //
         // Recursively check all the children.
         //
-        if (sibling->Child) {
+        if (sibling->Child)
+        {
             IopCheckDataStructures(sibling->Child);
         }
     }
 }
 
-VOID
-IopCheckDataStructuresWorker (
-    IN PDEVICE_NODE Device
-    )
+VOID IopCheckDataStructuresWorker(IN PDEVICE_NODE Device)
 
 /*++
 
@@ -8663,37 +8343,31 @@ Return Value:
 
     PAGED_CODE();
 
-    listHead    = &Device->DeviceArbiterList;
-    listEntry   = listHead->Flink;
-    while (listEntry != listHead) {
+    listHead = &Device->DeviceArbiterList;
+    listEntry = listHead->Flink;
+    while (listEntry != listHead)
+    {
 
-        arbiterEntry = CONTAINING_RECORD(
-                        listEntry,
-                        PI_RESOURCE_ARBITER_ENTRY,
-                        DeviceArbiterList);
-        if (arbiterEntry->ArbiterInterface != NULL) {
+        arbiterEntry = CONTAINING_RECORD(listEntry, PI_RESOURCE_ARBITER_ENTRY, DeviceArbiterList);
+        if (arbiterEntry->ArbiterInterface != NULL)
+        {
 
-            if (!IsListEmpty(&arbiterEntry->ResourceList)) {
-                IopDbgPrint((
-                    IOP_RESOURCE_ERROR_LEVEL,
-                    "Arbiter on %wZ should have empty resource list\n",
-                    &Device->InstancePath));
+            if (!IsListEmpty(&arbiterEntry->ResourceList))
+            {
+                IopDbgPrint((IOP_RESOURCE_ERROR_LEVEL, "Arbiter on %wZ should have empty resource list\n",
+                             &Device->InstancePath));
             }
-            if (!IsListEmpty(&arbiterEntry->ActiveArbiterList)) {
-                IopDbgPrint((
-                    IOP_RESOURCE_ERROR_LEVEL,
-                    "Arbiter on %wZ should not be in the active arbiter list\n",
-                    &Device->InstancePath));
+            if (!IsListEmpty(&arbiterEntry->ActiveArbiterList))
+            {
+                IopDbgPrint((IOP_RESOURCE_ERROR_LEVEL, "Arbiter on %wZ should not be in the active arbiter list\n",
+                             &Device->InstancePath));
             }
         }
         listEntry = listEntry->Flink;
     }
 }
 
-VOID
-IopDumpResourceRequirementsList (
-    IN PIO_RESOURCE_REQUIREMENTS_LIST IoResources
-    )
+VOID IopDumpResourceRequirementsList(IN PIO_RESOURCE_REQUIREMENTS_LIST IoResources)
 
 /*++
 
@@ -8712,126 +8386,88 @@ Return Value:
 --*/
 
 {
-    PIO_RESOURCE_LIST       IoResourceList;
+    PIO_RESOURCE_LIST IoResourceList;
     PIO_RESOURCE_DESCRIPTOR IoResourceDescriptor;
     PIO_RESOURCE_DESCRIPTOR IoResourceDescriptorEnd;
-    LONG                    IoResourceListCount;
+    LONG IoResourceListCount;
 
     PAGED_CODE();
 
-    if (IoResources == NULL) {
+    if (IoResources == NULL)
+    {
 
         return;
     }
-    IoResourceList      = IoResources->List;
-    IoResourceListCount = (LONG) IoResources->AlternativeLists;
-    IopDbgPrint((
-        IOP_RESOURCE_VERBOSE_LEVEL,
-        "ResReqList: Interface: %x, Bus: %x, Slot: %x, AlternativeLists: %x\n",
-         IoResources->InterfaceType,
-         IoResources->BusNumber,
-         IoResources->SlotNumber,
-         IoResources->AlternativeLists));
-    while (--IoResourceListCount >= 0) {
+    IoResourceList = IoResources->List;
+    IoResourceListCount = (LONG)IoResources->AlternativeLists;
+    IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL, "ResReqList: Interface: %x, Bus: %x, Slot: %x, AlternativeLists: %x\n",
+                 IoResources->InterfaceType, IoResources->BusNumber, IoResources->SlotNumber,
+                 IoResources->AlternativeLists));
+    while (--IoResourceListCount >= 0)
+    {
 
-        IopDbgPrint((
-            IOP_RESOURCE_VERBOSE_LEVEL,
-            "  Alternative List: DescCount: %x\n",
-            IoResourceList->Count));
+        IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL, "  Alternative List: DescCount: %x\n", IoResourceList->Count));
         IoResourceDescriptor = IoResourceList->Descriptors;
         IoResourceDescriptorEnd = IoResourceDescriptor + IoResourceList->Count;
-        while(IoResourceDescriptor < IoResourceDescriptorEnd) {
+        while (IoResourceDescriptor < IoResourceDescriptorEnd)
+        {
 
             IopDumpResourceDescriptor("    ", IoResourceDescriptor++);
         }
-        IoResourceList = (PIO_RESOURCE_LIST) IoResourceDescriptorEnd;
+        IoResourceList = (PIO_RESOURCE_LIST)IoResourceDescriptorEnd;
     }
-    IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL,"\n"));
+    IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL, "\n"));
 }
 
-VOID
-IopDumpResourceDescriptor (
-    IN PUCHAR Indent,
-    IN PIO_RESOURCE_DESCRIPTOR  Desc
-    )
+VOID IopDumpResourceDescriptor(IN PUCHAR Indent, IN PIO_RESOURCE_DESCRIPTOR Desc)
 {
     PAGED_CODE();
 
-    IopDbgPrint((
-        IOP_RESOURCE_VERBOSE_LEVEL,
-        "%sOpt: %x, Share: %x\t",
-        Indent,
-        Desc->Option,
-        Desc->ShareDisposition));
-    switch (Desc->Type) {
+    IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL, "%sOpt: %x, Share: %x\t", Indent, Desc->Option, Desc->ShareDisposition));
+    switch (Desc->Type)
+    {
     case CmResourceTypePort:
 
-        IopDbgPrint((
-            IOP_RESOURCE_VERBOSE_LEVEL,
-            "IO  Min: %x:%08x, Max: %x:%08x, Algn: %x, Len %x\n",
-            Desc->u.Port.MinimumAddress.HighPart,
-            Desc->u.Port.MinimumAddress.LowPart,
-            Desc->u.Port.MaximumAddress.HighPart,
-            Desc->u.Port.MaximumAddress.LowPart,
-            Desc->u.Port.Alignment,
-            Desc->u.Port.Length));
-            break;
+        IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL, "IO  Min: %x:%08x, Max: %x:%08x, Algn: %x, Len %x\n",
+                     Desc->u.Port.MinimumAddress.HighPart, Desc->u.Port.MinimumAddress.LowPart,
+                     Desc->u.Port.MaximumAddress.HighPart, Desc->u.Port.MaximumAddress.LowPart, Desc->u.Port.Alignment,
+                     Desc->u.Port.Length));
+        break;
 
     case CmResourceTypeMemory:
 
-        IopDbgPrint((
-            IOP_RESOURCE_VERBOSE_LEVEL,
-            "MEM Min: %x:%08x, Max: %x:%08x, Algn: %x, Len %x\n",
-            Desc->u.Memory.MinimumAddress.HighPart,
-            Desc->u.Memory.MinimumAddress.LowPart,
-            Desc->u.Memory.MaximumAddress.HighPart,
-            Desc->u.Memory.MaximumAddress.LowPart,
-            Desc->u.Memory.Alignment,
-            Desc->u.Memory.Length));
-            break;
+        IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL, "MEM Min: %x:%08x, Max: %x:%08x, Algn: %x, Len %x\n",
+                     Desc->u.Memory.MinimumAddress.HighPart, Desc->u.Memory.MinimumAddress.LowPart,
+                     Desc->u.Memory.MaximumAddress.HighPart, Desc->u.Memory.MaximumAddress.LowPart,
+                     Desc->u.Memory.Alignment, Desc->u.Memory.Length));
+        break;
 
     case CmResourceTypeInterrupt:
 
-        IopDbgPrint((
-            IOP_RESOURCE_VERBOSE_LEVEL,
-            "INT Min: %x, Max: %x\n",
-            Desc->u.Interrupt.MinimumVector,
-            Desc->u.Interrupt.MaximumVector));
-            break;
+        IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL, "INT Min: %x, Max: %x\n", Desc->u.Interrupt.MinimumVector,
+                     Desc->u.Interrupt.MaximumVector));
+        break;
 
     case CmResourceTypeDma:
 
-        IopDbgPrint((
-            IOP_RESOURCE_VERBOSE_LEVEL,
-            "DMA Min: %x, Max: %x\n",
-            Desc->u.Dma.MinimumChannel,
-            Desc->u.Dma.MaximumChannel));
-            break;
+        IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL, "DMA Min: %x, Max: %x\n", Desc->u.Dma.MinimumChannel,
+                     Desc->u.Dma.MaximumChannel));
+        break;
 
     case CmResourceTypeDevicePrivate:
 
-        IopDbgPrint((
-            IOP_RESOURCE_VERBOSE_LEVEL,
-            "DevicePrivate Data: %x, %x, %x\n",
-            Desc->u.DevicePrivate.Data[0],
-            Desc->u.DevicePrivate.Data[1],
-            Desc->u.DevicePrivate.Data[2]));
-            break;
+        IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL, "DevicePrivate Data: %x, %x, %x\n", Desc->u.DevicePrivate.Data[0],
+                     Desc->u.DevicePrivate.Data[1], Desc->u.DevicePrivate.Data[2]));
+        break;
 
     default:
 
-        IopDbgPrint((
-            IOP_RESOURCE_VERBOSE_LEVEL,
-            "Unknown Descriptor type %x\n",
-            Desc->Type));
-            break;
+        IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL, "Unknown Descriptor type %x\n", Desc->Type));
+        break;
     }
 }
 
-VOID
-IopDumpCmResourceList (
-    IN PCM_RESOURCE_LIST CmList
-    )
+VOID IopDumpCmResourceList(IN PCM_RESOURCE_LIST CmList)
 /*++
 
 Routine Description:
@@ -8848,37 +8484,31 @@ Return Value:
 
 --*/
 {
-    PCM_FULL_RESOURCE_DESCRIPTOR    fullDesc;
-    PCM_PARTIAL_RESOURCE_LIST       partialDesc;
+    PCM_FULL_RESOURCE_DESCRIPTOR fullDesc;
+    PCM_PARTIAL_RESOURCE_LIST partialDesc;
     PCM_PARTIAL_RESOURCE_DESCRIPTOR desc;
-    ULONG                           count;
-    ULONG                           i;
+    ULONG count;
+    ULONG i;
 
     PAGED_CODE();
 
-    if (CmList->Count > 0) {
+    if (CmList->Count > 0)
+    {
 
-        if (CmList) {
+        if (CmList)
+        {
 
             fullDesc = &CmList->List[0];
-            IopDbgPrint((
-                IOP_RESOURCE_VERBOSE_LEVEL,
-                "Cm Resource List -\n"));
-            IopDbgPrint((
-                IOP_RESOURCE_VERBOSE_LEVEL,
-                "  List Count = %x, Bus Number = %x\n",
-                CmList->Count,
-                fullDesc->BusNumber));
+            IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL, "Cm Resource List -\n"));
+            IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL, "  List Count = %x, Bus Number = %x\n", CmList->Count,
+                         fullDesc->BusNumber));
             partialDesc = &fullDesc->PartialResourceList;
-            IopDbgPrint((
-                IOP_RESOURCE_VERBOSE_LEVEL,
-                "  Version = %x, Revision = %x, Desc count = %x\n",
-                partialDesc->Version,
-                partialDesc->Revision,
-                partialDesc->Count));
+            IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL, "  Version = %x, Revision = %x, Desc count = %x\n",
+                         partialDesc->Version, partialDesc->Revision, partialDesc->Count));
             count = partialDesc->Count;
             desc = &partialDesc->PartialDescriptors[0];
-            for (i = 0; i < count; i++) {
+            for (i = 0; i < count; i++)
+            {
 
                 IopDumpCmResourceDescriptor("    ", desc);
                 desc++;
@@ -8887,11 +8517,7 @@ Return Value:
     }
 }
 
-VOID
-IopDumpCmResourceDescriptor (
-    IN PUCHAR Indent,
-    IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Desc
-    )
+VOID IopDumpCmResourceDescriptor(IN PUCHAR Indent, IN PCM_PARTIAL_RESOURCE_DESCRIPTOR Desc)
 /*++
 
 Routine Description:
@@ -8912,48 +8538,30 @@ Return Value:
 {
     PAGED_CODE();
 
-    switch (Desc->Type) {
+    switch (Desc->Type)
+    {
     case CmResourceTypePort:
 
-        IopDbgPrint((
-            IOP_RESOURCE_VERBOSE_LEVEL,
-            "%sIO  Start: %x:%08x, Length:  %x\n",
-            Indent,
-            Desc->u.Port.Start.HighPart,
-            Desc->u.Port.Start.LowPart,
-            Desc->u.Port.Length));
+        IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL, "%sIO  Start: %x:%08x, Length:  %x\n", Indent,
+                     Desc->u.Port.Start.HighPart, Desc->u.Port.Start.LowPart, Desc->u.Port.Length));
         break;
 
     case CmResourceTypeMemory:
 
-        IopDbgPrint((
-            IOP_RESOURCE_VERBOSE_LEVEL,
-            "%sMEM Start: %x:%08x, Length:  %x\n",
-            Indent,
-            Desc->u.Memory.Start.HighPart,
-            Desc->u.Memory.Start.LowPart,
-            Desc->u.Memory.Length));
+        IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL, "%sMEM Start: %x:%08x, Length:  %x\n", Indent,
+                     Desc->u.Memory.Start.HighPart, Desc->u.Memory.Start.LowPart, Desc->u.Memory.Length));
         break;
 
     case CmResourceTypeInterrupt:
 
-        IopDbgPrint((
-            IOP_RESOURCE_VERBOSE_LEVEL,
-            "%sINT Level: %x, Vector: %x, Affinity: %x\n",
-            Indent,
-            Desc->u.Interrupt.Level,
-            Desc->u.Interrupt.Vector,
-            Desc->u.Interrupt.Affinity));
+        IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL, "%sINT Level: %x, Vector: %x, Affinity: %x\n", Indent,
+                     Desc->u.Interrupt.Level, Desc->u.Interrupt.Vector, Desc->u.Interrupt.Affinity));
         break;
 
     case CmResourceTypeDma:
 
-        IopDbgPrint((
-            IOP_RESOURCE_VERBOSE_LEVEL,
-            "%sDMA Channel: %x, Port: %x\n",
-            Indent,
-            Desc->u.Dma.Channel,
-            Desc->u.Dma.Port));
+        IopDbgPrint((IOP_RESOURCE_VERBOSE_LEVEL, "%sDMA Channel: %x, Port: %x\n", Indent, Desc->u.Dma.Channel,
+                     Desc->u.Dma.Port));
         break;
     }
 }

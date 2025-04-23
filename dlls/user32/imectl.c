@@ -46,12 +46,12 @@ LRESULT ImeCopyDataHandler(WPARAM, LPARAM);
 /*
  * Common macros for IME UI, HKL and IMC handlings
  */
-#define GETHKL(pimeui)        (KHKL_TO_HKL(pimeui->hKL))
-#define SETHKL(pimeui, hkl)   (pimeui->hKL=(hkl))
-#define GETIMC(pimeui)        (KHIMC_TO_HIMC(pimeui->hIMC))
-#define SETIMC(pimeui, himc)  (ImeSetImc(pimeui, KHIMC_TO_HIMC(himc)))
-#define GETUI(pimeui)         (KHWND_TO_HWND(pimeui->hwndUI))
-#define SETUI(pimeui, hwndui) (pimeui->hwndUI=(hwndui))
+#define GETHKL(pimeui) (KHKL_TO_HKL(pimeui->hKL))
+#define SETHKL(pimeui, hkl) (pimeui->hKL = (hkl))
+#define GETIMC(pimeui) (KHIMC_TO_HIMC(pimeui->hIMC))
+#define SETIMC(pimeui, himc) (ImeSetImc(pimeui, KHIMC_TO_HIMC(himc)))
+#define GETUI(pimeui) (KHWND_TO_HWND(pimeui->hwndUI))
+#define SETUI(pimeui, hwndui) (pimeui->hwndUI = (hwndui))
 
 LOOKASIDE ImeUILookaside;
 
@@ -80,15 +80,10 @@ _inline void NtUserCheckImeShowStatusInThread(HWND hwndDefIme)
 * History:
 \***************************************************************************/
 
-LRESULT APIENTRY ImeWndProcWorker(
-    PWND pwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam,
-    DWORD fAnsi)
+LRESULT APIENTRY ImeWndProcWorker(PWND pwnd, UINT message, WPARAM wParam, LPARAM lParam, DWORD fAnsi)
 {
-    HWND        hwnd = HWq(pwnd);
-    PIMEUI      pimeui;
+    HWND hwnd = HWq(pwnd);
+    PIMEUI pimeui;
     static BOOL fInit = TRUE;
 
     CheckLock(pwnd);
@@ -97,7 +92,8 @@ LRESULT APIENTRY ImeWndProcWorker(
     INITCONTROLLOOKASIDE(&ImeUILookaside, IMEUI, spwnd, 8);
 
 #ifdef CUAS_ENABLE
-    if (IS_CICERO_ENABLED()) {
+    if (IS_CICERO_ENABLED())
+    {
         LRESULT lRet;
         lRet = fpCtfImmDispatchDefImeMessage(hwnd, message, wParam, lParam);
         if (lRet)
@@ -119,7 +115,8 @@ LRESULT APIENTRY ImeWndProcWorker(
      */
     pimeui = ((PIMEWND)pwnd)->pimeui;
 
-    if (pimeui == NULL) {
+    if (pimeui == NULL)
+    {
         /*
          * Further processing not needed
          */
@@ -132,15 +129,18 @@ LRESULT APIENTRY ImeWndProcWorker(
      */
     UserAssert(pimeui->nCntInIMEProc >= 0);
 
-    if (pimeui->nCntInIMEProc > 0) {
-        TAGMSG5(DBGTAG_IMM, "ImeWndProcWorker: Recursive for pwnd=%08p, msg=%08x, wp=%08x, lp=%08x, fAnsi=%d\n",
-                pwnd, message, wParam, lParam, fAnsi);
-        switch (message) {
+    if (pimeui->nCntInIMEProc > 0)
+    {
+        TAGMSG5(DBGTAG_IMM, "ImeWndProcWorker: Recursive for pwnd=%08p, msg=%08x, wp=%08x, lp=%08x, fAnsi=%d\n", pwnd,
+                message, wParam, lParam, fAnsi);
+        switch (message)
+        {
         case WM_IME_SYSTEM:
-            switch (wParam) {
+            switch (wParam)
+            {
             case IMS_ISACTIVATED:
             case IMS_SETOPENSTATUS:
-//          case IMS_SETCONVERSIONSTATUS:
+                //          case IMS_SETCONVERSIONSTATUS:
             case IMS_SETSOFTKBDONOFF:
                 /*
                  * Because these will not be pass to UI.
@@ -169,8 +169,8 @@ LRESULT APIENTRY ImeWndProcWorker(
 
 #ifdef CUAS_ENABLE
         case WM_IME_NOTIFY:
-            if (wParam >= IMN_PRIVATE &&
-                ! IS_IME_KBDLAYOUT(GETHKL(pimeui)) && IS_CICERO_ENABLED()) {
+            if (wParam >= IMN_PRIVATE && !IS_IME_KBDLAYOUT(GETHKL(pimeui)) && IS_CICERO_ENABLED())
+            {
                 //
                 // CUAS: IMN_PRIVATE always call UI window.
                 //
@@ -184,8 +184,10 @@ LRESULT APIENTRY ImeWndProcWorker(
         }
     }
 
-    if (TestWF(pwnd, WFINDESTROY) || TestWF(pwnd, WFDESTROYED)) {
-        switch (message) {
+    if (TestWF(pwnd, WFINDESTROY) || TestWF(pwnd, WFDESTROYED))
+    {
+        switch (message)
+        {
         case WM_DESTROY:
         case WM_NCDESTROY:
         case WM_FINALDESTROY:
@@ -196,7 +198,8 @@ LRESULT APIENTRY ImeWndProcWorker(
         }
     }
 
-    switch (message) {
+    switch (message)
+    {
     case WM_ERASEBKGND:
         return (LONG)TRUE;
 
@@ -217,7 +220,8 @@ LRESULT APIENTRY ImeWndProcWorker(
 
     case WM_NCDESTROY:
     case WM_FINALDESTROY:
-        if (pimeui) {
+        if (pimeui)
+        {
             Unlock(&pimeui->spwnd);
             FreeLookasideEntry(&ImeUILookaside, pimeui);
         }
@@ -252,7 +256,7 @@ LRESULT APIENTRY ImeWndProcWorker(
         return ImeCopyDataHandler(wParam, lParam);
 
     default:
-CallDWP:
+    CallDWP:
         return DefWindowProcWorker(pwnd, message, wParam, lParam, fAnsi);
     }
 
@@ -260,15 +264,12 @@ CallDWP:
 }
 
 
-LRESULT WINAPI ImeWndProcA(
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT WINAPI ImeWndProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     PWND pwnd;
 
-    if ((pwnd = ValidateHwnd(hwnd)) == NULL) {
+    if ((pwnd = ValidateHwnd(hwnd)) == NULL)
+    {
         return (0L);
     }
 
@@ -276,15 +277,12 @@ LRESULT WINAPI ImeWndProcA(
 }
 
 
-LRESULT WINAPI ImeWndProcW(
-    HWND hwnd,
-    UINT message,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT WINAPI ImeWndProcW(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     PWND pwnd;
 
-    if ((pwnd = ValidateHwnd(hwnd)) == NULL) {
+    if ((pwnd = ValidateHwnd(hwnd)) == NULL)
+    {
         return (0L);
     }
 
@@ -292,9 +290,7 @@ LRESULT WINAPI ImeWndProcW(
 }
 
 
-LONG ImeWndCreateHandler(
-    PIMEUI pimeui,
-    LPCREATESTRUCT lpcs)
+LONG ImeWndCreateHandler(PIMEUI pimeui, LPCREATESTRUCT lpcs)
 {
     PWND pwndParent;
     HIMC hImc;
@@ -307,13 +303,15 @@ LONG ImeWndCreateHandler(
     /*
      * For Winlogon, only the first thread can have IME processing.
      */
-    if (gfLogonProcess) {
+    if (gfLogonProcess)
+    {
         UserAssert(dwFirstWinLogonThreadId == 0);
         dwFirstWinlogonThreadId = GetCurrentThreadId();
     }
 #endif
 
-    if (!TestWF(pwndIme, WFPOPUP) || !TestWF(pwndIme, WFDISABLED)) {
+    if (!TestWF(pwndIme, WFPOPUP) || !TestWF(pwndIme, WFDISABLED))
+    {
         RIPMSG0(RIP_WARNING, "IME window should have WS_POPUP and WS_DISABLE!!");
         return -1L;
     }
@@ -322,19 +320,23 @@ LONG ImeWndCreateHandler(
      * Check with parent window, if exists, try to get IMC.
      * If this is top level window, wait for first WM_IME_SETCONTEXT.
      */
-    if ((pwndParent = ValidateHwndNoRip(lpcs->hwndParent)) != NULL) {
+    if ((pwndParent = ValidateHwndNoRip(lpcs->hwndParent)) != NULL)
+    {
         hImc = KHIMC_TO_HIMC(pwndParent->hImc);
-        if (hImc != NULL_HIMC && ImeIsUsableContext(HWq(pwndIme), hImc)) {
+        if (hImc != NULL_HIMC && ImeIsUsableContext(HWq(pwndIme), hImc))
+        {
             /*
              * Store it for later use.
              */
             SETIMC(pimeui, hImc);
         }
-        else {
+        else
+        {
             SETIMC(pimeui, NULL_HIMC);
         }
     }
-    else {
+    else
+    {
         SETIMC(pimeui, NULL_HIMC);
     }
 
@@ -350,7 +352,7 @@ LONG ImeWndCreateHandler(
     pimeui->hKL = THREAD_HKL();
     pimeui->fCtrlShowStatus = TRUE;
 
-#if !defined(CUAS_ENABLE)  // move to LoadThreadLayout
+#if !defined(CUAS_ENABLE) // move to LoadThreadLayout
     /*
      * Load up the IME DLL of current keyboard layout.
      */
@@ -372,8 +374,7 @@ LONG ImeWndCreateHandler(
     return 0L;
 }
 
-void ImeWndDestroyHandler(
-    PIMEUI pimeui)
+void ImeWndDestroyHandler(PIMEUI pimeui)
 {
     DestroyIMEUI(pimeui);
 }
@@ -381,9 +382,7 @@ void ImeWndDestroyHandler(
 
 #ifdef CUAS_ENABLE
 
-VOID
-CtfLoadThreadLayout(
-    PIMEUI pimeui)
+VOID CtfLoadThreadLayout(PIMEUI pimeui)
 {
 #if 1
     /*
@@ -394,7 +393,7 @@ CtfLoadThreadLayout(
     /*
      * Load up the IME DLL of current keyboard layout.
      */
-    pimeui->hKL = THREAD_HKL();        // Reload thread hKL if TIM activated, hKL changed.
+    pimeui->hKL = THREAD_HKL(); // Reload thread hKL if TIM activated, hKL changed.
     fpImmLoadIME(GETHKL(pimeui));
 
 #ifdef LATE_CREATEUI
@@ -424,13 +423,16 @@ void ImeRunHelp(LPWSTR wszHelpFile)
     static const WCHAR wszHelpFileExt[] = L".HLP";
     UINT cchLen = wcslen(wszHelpFile);
 
-    if (cchLen > 4 && _wcsicmp(wszHelpFile + cchLen - 4, wszHelpFileExt) == 0) {
+    if (cchLen > 4 && _wcsicmp(wszHelpFile + cchLen - 4, wszHelpFileExt) == 0)
+    {
 #ifdef FYI
         WinHelpW(NULL, wszHelpFile, HELP_CONTENTS, 0);
 #else
         WinHelpW(NULL, wszHelpFile, HELP_FINDER, 0);
 #endif
-    } else {
+    }
+    else
+    {
         //
         // If it's not HLP file, try to run hh.exe, HTML based
         // help tool. It should be in %windir%\hh.exe.
@@ -438,15 +440,17 @@ void ImeRunHelp(LPWSTR wszHelpFile)
         static const WCHAR wszHH[] = L"hh.exe ";
         WCHAR wszCmdLine[MAX_PATH * 2];
         LPWSTR lpwszCmdLine = wszCmdLine;
-        DWORD               idProcess;
-        STARTUPINFO         StartupInfo;
+        DWORD idProcess;
+        STARTUPINFO StartupInfo;
         PROCESS_INFORMATION ProcessInformation;
         UINT i;
 
         i = GetSystemWindowsDirectoryW(wszCmdLine, MAX_PATH);
-        if (i > 0 && i < MAX_PATH - cchLen - (sizeof L'\\' + sizeof wszHH) / sizeof(WCHAR)) {
+        if (i > 0 && i < MAX_PATH - cchLen - (sizeof L'\\' + sizeof wszHH) / sizeof(WCHAR))
+        {
             lpwszCmdLine += i;
-            if (lpwszCmdLine[-1] != L'\\') {
+            if (lpwszCmdLine[-1] != L'\\')
+            {
                 *lpwszCmdLine++ = L'\\';
             }
         }
@@ -463,11 +467,11 @@ void ImeRunHelp(LPWSTR wszHelpFile)
 
         TAGMSG1(DBGTAG_IMM, "Invoking help with '%S'", wszCmdLine);
 
-        idProcess = (DWORD)CreateProcessW(NULL, wszCmdLine,
-                NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL, &StartupInfo,
-                &ProcessInformation);
+        idProcess = (DWORD)CreateProcessW(NULL, wszCmdLine, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL,
+                                          &StartupInfo, &ProcessInformation);
 
-        if (idProcess) {
+        if (idProcess)
+        {
             WaitForInputIdle(ProcessInformation.hProcess, 10000);
             NtClose(ProcessInformation.hProcess);
             NtClose(ProcessInformation.hThread);
@@ -475,19 +479,16 @@ void ImeRunHelp(LPWSTR wszHelpFile)
     }
 }
 
-LRESULT ImeSystemHandler(
-    PIMEUI pimeui,
-    UINT   message,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT ImeSystemHandler(PIMEUI pimeui, UINT message, WPARAM wParam, LPARAM lParam)
 {
     PINPUTCONTEXT pInputContext;
-    HIMC          hImc = GETIMC(pimeui);
-    LRESULT       dwRet = 0L;
+    HIMC hImc = GETIMC(pimeui);
+    LRESULT dwRet = 0L;
 
     UNREFERENCED_PARAMETER(message);
 
-    switch (wParam) {
+    switch (wParam)
+    {
 
     case IMS_SETOPENCLOSE:
         if (hImc != NULL_HIMC)
@@ -495,29 +496,36 @@ LRESULT ImeSystemHandler(
         break;
 
     case IMS_WINDOWPOS:
-        if (hImc != NULL_HIMC) {
+        if (hImc != NULL_HIMC)
+        {
             BOOL f31Hidden = FALSE;
 
-            if ((pInputContext = fpImmLockIMC(hImc)) != NULL) {
+            if ((pInputContext = fpImmLockIMC(hImc)) != NULL)
+            {
                 f31Hidden = (pInputContext->fdw31Compat & F31COMPAT_MCWHIDDEN);
                 fpImmUnlockIMC(hImc);
             }
 
-            if (IsWindow(KHWND_TO_HWND(pimeui->hwndIMC))) {
+            if (IsWindow(KHWND_TO_HWND(pimeui->hwndIMC)))
+            {
                 int i;
 
-                if (!f31Hidden) {
+                if (!f31Hidden)
+                {
                     COMPOSITIONFORM cof;
 
-                    if (fpImmGetCompositionWindow(hImc, &cof) && cof.dwStyle != CFS_DEFAULT) {
+                    if (fpImmGetCompositionWindow(hImc, &cof) && cof.dwStyle != CFS_DEFAULT)
+                    {
                         fpImmSetCompositionWindow(hImc, &cof);
                     }
                 }
 
-                for (i = 0; i < 4 ; i++) {
+                for (i = 0; i < 4; i++)
+                {
                     CANDIDATEFORM caf;
 
-                    if (fpImmGetCandidateWindow(hImc, (DWORD)i, &caf) && caf.dwStyle != CFS_DEFAULT) {
+                    if (fpImmGetCandidateWindow(hImc, (DWORD)i, &caf) && caf.dwStyle != CFS_DEFAULT)
+                    {
                         fpImmSetCandidateWindow(hImc, &caf);
                     }
                 }
@@ -546,43 +554,47 @@ LRESULT ImeSystemHandler(
         return (LONG)(fpImmActivateLayout((HKL)lParam));
 
     case IMS_SETCANDIDATEPOS:
-        if ( (pInputContext = fpImmLockIMC( hImc )) != NULL ) {
+        if ((pInputContext = fpImmLockIMC(hImc)) != NULL)
+        {
             LPCANDIDATEFORM lpcaf;
             DWORD dwIndex = (DWORD)lParam;
 
             lpcaf = &(pInputContext->cfCandForm[dwIndex]);
-            fpImmSetCandidateWindow( hImc, lpcaf );
-            fpImmUnlockIMC( hImc );
+            fpImmSetCandidateWindow(hImc, lpcaf);
+            fpImmUnlockIMC(hImc);
         }
         break;
 
     case IMS_SETCOMPOSITIONWINDOW:
-        if ( (pInputContext = fpImmLockIMC( hImc )) != NULL ) {
+        if ((pInputContext = fpImmLockIMC(hImc)) != NULL)
+        {
             LPCOMPOSITIONFORM lpcof;
 
             lpcof = &(pInputContext->cfCompForm);
             pInputContext->fdw31Compat |= F31COMPAT_CALLFROMWINNLS;
-            fpImmSetCompositionWindow( hImc, lpcof);
+            fpImmSetCompositionWindow(hImc, lpcof);
         }
         break;
 
     case IMS_SETCOMPOSITIONFONT:
-        if ( (pInputContext = fpImmLockIMC( hImc )) != NULL ) {
+        if ((pInputContext = fpImmLockIMC(hImc)) != NULL)
+        {
             LPLOGFONT lplf;
 
             lplf = &(pInputContext->lfFont.W);
-            fpImmSetCompositionFont( hImc, lplf );
+            fpImmSetCompositionFont(hImc, lplf);
         }
         break;
 
     case IMS_CONFIGUREIME:
-        fpImmConfigureIMEW( (HKL)lParam, KHWND_TO_HWND(pimeui->hwndIMC), IME_CONFIG_GENERAL, NULL);
+        fpImmConfigureIMEW((HKL)lParam, KHWND_TO_HWND(pimeui->hwndIMC), IME_CONFIG_GENERAL, NULL);
         break;
 
     case IMS_CHANGE_SHOWSTAT:
         // Private message from internat.exe
         // Before it reaches here, the registry is already updated.
-        if (GetIMEShowStatus() == !lParam) {
+        if (GetIMEShowStatus() == !lParam)
+        {
 #if 1
             NtUserBroadcastImeShowStatusChange(HW(pimeui->spwnd), !!lParam);
 #else
@@ -614,13 +626,15 @@ LRESULT ImeSystemHandler(
     case IMS_IMEHELP:
         dwRet = IME_ESC_GETHELPFILENAME;
         dwRet = fpImmEscapeW(GETHKL(pimeui), GETIMC(pimeui), IME_ESC_QUERY_SUPPORT, (LPVOID)&dwRet);
-        if (lParam) {
+        if (lParam)
+        {
             // try to run WinHelp
             WCHAR wszHelpFile[MAX_PATH];
 
-            if (dwRet) {
-                if (fpImmEscapeW(GETHKL(pimeui), GETIMC(pimeui), IME_ESC_GETHELPFILENAME,
-                        (LPVOID)wszHelpFile)) {
+            if (dwRet)
+            {
+                if (fpImmEscapeW(GETHKL(pimeui), GETIMC(pimeui), IME_ESC_GETHELPFILENAME, (LPVOID)wszHelpFile))
+                {
                     ImeRunHelp(wszHelpFile);
                 }
             }
@@ -633,18 +647,21 @@ LRESULT ImeSystemHandler(
 
     case IMS_ENDIMEMENU:
         // New in NT5.0: Special support for Internat.exe
-        if (IsWindow((HWND)lParam)) {
+        if (IsWindow((HWND)lParam))
+        {
             HIMC hImc;
             UINT uID;
             DWORD dwData;
 
             hImc = fpImmGetContext((HWND)lParam);
 
-            if (hImc != NULL) {
+            if (hImc != NULL)
+            {
                 //
                 // Call Indicator to get IME menu data.
                 //
-                if (IMEIndicatorGetMenuIDData(&uID, &dwData)) {
+                if (IMEIndicatorGetMenuIDData(&uID, &dwData))
+                {
                     fpImmNotifyIME(hImc, NI_IMEMENUSELECTED, uID, dwData);
                 }
                 fpImmReleaseContext((HWND)lParam, hImc);
@@ -672,11 +689,7 @@ LRESULT ImeSystemHandler(
 }
 
 
-LONG ImeSelectHandler(
-    PIMEUI pimeui,
-    UINT   message,
-    WPARAM wParam,
-    LPARAM lParam)
+LONG ImeSelectHandler(PIMEUI pimeui, UINT message, WPARAM wParam, LPARAM lParam)
 {
     HWND hwndUI;
 
@@ -689,7 +702,8 @@ LONG ImeSelectHandler(
     /*
      * We must re-create UI window of newly selected IME.
      */
-    if ((BOOL)wParam == TRUE) {
+    if ((BOOL)wParam == TRUE)
+    {
         UserAssert(!IsWindow(GETUI(pimeui)));
 
         SETHKL(pimeui, (HKL)lParam);
@@ -703,14 +717,16 @@ LONG ImeSelectHandler(
 
         SETUI(pimeui, hwndUI);
 
-        if (hwndUI != NULL) {
+        if (hwndUI != NULL)
+        {
             SetWindowLongPtr(hwndUI, IMMGWLP_IMC, (LONG_PTR)GETIMC(pimeui));
             SendMessageToUI(pimeui, message, wParam, lParam, FALSE);
         }
 
-        if (GetIMEShowStatus() && pimeui->fCtrlShowStatus) {
-            if (!pimeui->fShowStatus && pimeui->fActivate &&
-                    IsWindow(KHWND_TO_HWND(pimeui->hwndIMC))) {
+        if (GetIMEShowStatus() && pimeui->fCtrlShowStatus)
+        {
+            if (!pimeui->fShowStatus && pimeui->fActivate && IsWindow(KHWND_TO_HWND(pimeui->hwndIMC)))
+            {
                 /*
                  * This must be sent to an application as an app may want
                  * to hook this message to do its own UI.
@@ -719,10 +735,11 @@ LONG ImeSelectHandler(
             }
         }
     }
-    else {
+    else
+    {
 
-        if (pimeui->fShowStatus && pimeui->fActivate &&
-                IsWindow(KHWND_TO_HWND(pimeui->hwndIMC))) {
+        if (pimeui->fShowStatus && pimeui->fActivate && IsWindow(KHWND_TO_HWND(pimeui->hwndIMC)))
+        {
             /*
              * This must be sent to an application as an app may want
              * to hook this message to do its own UI.
@@ -741,23 +758,21 @@ LONG ImeSelectHandler(
 }
 
 
-LRESULT ImeControlHandler(
-    PIMEUI pimeui,
-    UINT   message,
-    WPARAM wParam,
-    LPARAM lParam,
-    BOOL   fAnsi)
+LRESULT ImeControlHandler(PIMEUI pimeui, UINT message, WPARAM wParam, LPARAM lParam, BOOL fAnsi)
 {
-    HIMC  hImc;
+    HIMC hImc;
     DWORD dwConversion, dwSentence;
 
 #ifdef CUAS_ENABLE
-    if (IS_CICERO_ENABLED()) {
-        if (wParam == IMC_OPENSTATUSWINDOW) {
+    if (IS_CICERO_ENABLED())
+    {
+        if (wParam == IMC_OPENSTATUSWINDOW)
+        {
             fpCtfImmRestoreToolbarWnd(pimeui->dwPrevToolbarStatus);
             pimeui->dwPrevToolbarStatus = 0;
         }
-        else if (wParam == IMC_CLOSESTATUSWINDOW) {
+        else if (wParam == IMC_CLOSESTATUSWINDOW)
+        {
             pimeui->dwPrevToolbarStatus = fpCtfImmHideToolbarWnd();
         }
     }
@@ -769,22 +784,23 @@ LRESULT ImeControlHandler(
     if ((hImc = GETIMC(pimeui)) == NULL_HIMC)
         return 0L;
 
-    switch (wParam) {
+    switch (wParam)
+    {
 
     case IMC_OPENSTATUSWINDOW:
-        if (GetIMEShowStatus() && !pimeui->fShowStatus) {
+        if (GetIMEShowStatus() && !pimeui->fShowStatus)
+        {
             pimeui->fShowStatus = TRUE;
-            SendMessageToUI(pimeui, WM_IME_NOTIFY,
-                    IMN_OPENSTATUSWINDOW, 0L, FALSE);
+            SendMessageToUI(pimeui, WM_IME_NOTIFY, IMN_OPENSTATUSWINDOW, 0L, FALSE);
         }
         pimeui->fCtrlShowStatus = TRUE;
         break;
 
     case IMC_CLOSESTATUSWINDOW:
-        if (GetIMEShowStatus() && pimeui->fShowStatus) {
+        if (GetIMEShowStatus() && pimeui->fShowStatus)
+        {
             pimeui->fShowStatus = FALSE;
-            SendMessageToUI(pimeui, WM_IME_NOTIFY,
-                    IMN_CLOSESTATUSWINDOW, 0L, FALSE);
+            SendMessageToUI(pimeui, WM_IME_NOTIFY, IMN_CLOSESTATUSWINDOW, 0L, FALSE);
         }
         pimeui->fCtrlShowStatus = FALSE;
         break;
@@ -800,11 +816,13 @@ LRESULT ImeControlHandler(
      * It makes message flows simpler.
      */
     case IMC_SETCOMPOSITIONFONT:
-        if (fAnsi) {
+        if (fAnsi)
+        {
             if (!fpImmSetCompositionFontA(hImc, (LPLOGFONTA)lParam))
                 return 1L;
         }
-        else {
+        else
+        {
             if (!fpImmSetCompositionFontW(hImc, (LPLOGFONTW)lParam))
                 return 1L;
         }
@@ -828,13 +846,13 @@ LRESULT ImeControlHandler(
         break;
 
     case IMC_GETCONVERSIONMODE:
-        if (!fpImmGetConversionStatus(hImc,&dwConversion, &dwSentence))
+        if (!fpImmGetConversionStatus(hImc, &dwConversion, &dwSentence))
             return 1L;
 
         return (LONG)dwConversion;
 
     case IMC_GETSENTENCEMODE:
-        if (!fpImmGetConversionStatus(hImc,&dwConversion, &dwSentence))
+        if (!fpImmGetConversionStatus(hImc, &dwConversion, &dwSentence))
             return 1L;
 
         return (LONG)dwSentence;
@@ -843,11 +861,13 @@ LRESULT ImeControlHandler(
         return (LONG)fpImmGetOpenStatus(hImc);
 
     case IMC_GETCOMPOSITIONFONT:
-        if (fAnsi) {
+        if (fAnsi)
+        {
             if (!fpImmGetCompositionFontA(hImc, (LPLOGFONTA)lParam))
                 return 1L;
         }
-        else {
+        else
+        {
             if (!fpImmGetCompositionFontW(hImc, (LPLOGFONTW)lParam))
                 return 1L;
         }
@@ -859,16 +879,16 @@ LRESULT ImeControlHandler(
         break;
 
     case IMC_SETSTATUSWINDOWPOS:
-        {
-            POINT ppt;
+    {
+        POINT ppt;
 
-            ppt.x = (LONG)((LPPOINTS)&lParam)->x;
-            ppt.y = (LONG)((LPPOINTS)&lParam)->y;
+        ppt.x = (LONG)((LPPOINTS)&lParam)->x;
+        ppt.y = (LONG)((LPPOINTS)&lParam)->y;
 
-            if (!fpImmSetStatusWindowPos(hImc, &ppt))
-                return 1L;
-        }
-        break;
+        if (!fpImmSetStatusWindowPos(hImc, &ppt))
+            return 1L;
+    }
+    break;
 
     case IMC_SETCANDIDATEPOS:
         if (!fpImmSetCandidateWindow(hImc, (LPCANDIDATEFORM)lParam))
@@ -893,21 +913,17 @@ LRESULT ImeControlHandler(
 }
 
 
-
-LRESULT ImeSetContextHandler(
-    PIMEUI pimeui,
-    UINT   message,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT ImeSetContextHandler(PIMEUI pimeui, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    HWND  hwndPrevIMC, hwndFocus;   // focus window in the thread
-    HIMC  hFocusImc;                // focus window's IMC
+    HWND hwndPrevIMC, hwndFocus; // focus window in the thread
+    HIMC hFocusImc;              // focus window's IMC
     LRESULT lRet;
 
     pimeui->fActivate = (BOOL)wParam ? 1 : 0;
     hwndPrevIMC = KHWND_TO_HWND(pimeui->hwndIMC);
 
-    if (wParam) {
+    if (wParam)
+    {
         /*
          * if it's being activated
          */
@@ -919,9 +935,11 @@ LRESULT ImeSetContextHandler(
         /*
          * Check if this process a console IME ?
          */
-        if (gfConIme == UNKNOWN_CONIME) {
+        if (gfConIme == UNKNOWN_CONIME)
+        {
             gfConIme = (DWORD)NtUserGetThreadState(UserThreadStateIsConImeThread);
-            if (gfConIme) {
+            if (gfConIme)
+            {
                 RIPMSG0(RIP_VERBOSE, "ImmSetContextHandler: This thread is console IME.\n");
                 UserAssert(pimeui);
                 // Console IME will never show the IME status window.
@@ -929,7 +947,8 @@ LRESULT ImeSetContextHandler(
             }
         }
 
-        if (gfConIme) {
+        if (gfConIme)
+        {
             /*
              * Special handling for Console IME is needed
              */
@@ -937,7 +956,8 @@ LRESULT ImeSetContextHandler(
 
             UserAssert(pimeui->spwnd);
             pwndOwner = REBASEPWND(pimeui->spwnd, spwndOwner);
-            if (pwndOwner != NULL) {
+            if (pwndOwner != NULL)
+            {
                 /*
                  * Set current associated hIMC in IMEUI.
                  */
@@ -955,7 +975,8 @@ LRESULT ImeSetContextHandler(
 
             return SendMessageToUI(pimeui, message, wParam, lParam, FALSE);
         }
-        else {
+        else
+        {
             hwndFocus = NtUserQueryWindow(HW(pimeui->spwnd), WindowFocusWindow);
             hFocusImc = fpImmGetContext(hwndFocus);
         }
@@ -963,8 +984,8 @@ LRESULT ImeSetContextHandler(
         /*
          * Cannot share input context with other IME window.
          */
-        if (hFocusImc != NULL_HIMC &&
-                !ImeIsUsableContext(HW(pimeui->spwnd), hFocusImc)) {
+        if (hFocusImc != NULL_HIMC && !ImeIsUsableContext(HW(pimeui->spwnd), hFocusImc))
+        {
             SETIMC(pimeui, NULL_HIMC);
             return 0L;
         }
@@ -985,15 +1006,18 @@ LRESULT ImeSetContextHandler(
          *     Give the UI automatic Z-ordering.
          *     Hide the UI when the owner is minimized.
          */
-        if (hFocusImc != NULL_HIMC) {
+        if (hFocusImc != NULL_HIMC)
+        {
             PINPUTCONTEXT pInputContext;
 
             /*
              * Get the window who's given the context.
              */
-            if ((pInputContext = fpImmLockIMC(hFocusImc)) != NULL) {
+            if ((pInputContext = fpImmLockIMC(hFocusImc)) != NULL)
+            {
                 //UserAssert(hwndFocus == pInputContext->hWnd);
-                if (hwndFocus != pInputContext->hWnd) {
+                if (hwndFocus != pInputContext->hWnd)
+                {
                     /*
                      * Pq->spwndFocus has been changed so far...
                      * All we can do is just to bail out.
@@ -1004,8 +1028,8 @@ LRESULT ImeSetContextHandler(
             else
                 return 0L; // the context was broken
 
-            if ((pInputContext->fdw31Compat & F31COMPAT_ECSETCFS) &&
-                    hwndPrevIMC != hwndFocus) {
+            if ((pInputContext->fdw31Compat & F31COMPAT_ECSETCFS) && hwndPrevIMC != hwndFocus)
+            {
                 COMPOSITIONFORM cf;
 
                 /*
@@ -1020,36 +1044,38 @@ LRESULT ImeSetContextHandler(
 
             if (NtUserSetImeOwnerWindow(HW(pimeui->spwnd), hwndFocus))
                 pimeui->hwndIMC = hwndFocus;
-
         }
-        else {
+        else
+        {
             /*
              * NULL IMC is getting activated
              */
             pimeui->hwndIMC = hwndFocus;
 
             NtUserSetImeOwnerWindow(HW(pimeui->spwnd), NULL);
-
         }
     }
 
     lRet = SendMessageToUI(pimeui, message, wParam, lParam, FALSE);
 
-    if (pimeui->spwnd == NULL) {
+    if (pimeui->spwnd == NULL)
+    {
         // Unusual case in stress..
         // IME window has been destroyed during the callback
         RIPMSG0(RIP_WARNING, "ImmSetContextHandler: pimeui->spwnd is NULL after SendMessageToUI.");
         return 0L;
     }
 
-    if (pimeui->fCtrlShowStatus && GetIMEShowStatus()) {
+    if (pimeui->fCtrlShowStatus && GetIMEShowStatus())
+    {
         PWND pwndFocus, pwndIMC, pwndPrevIMC;
         HWND hwndActive;
 
         hwndFocus = NtUserQueryWindow(HWq(pimeui->spwnd), WindowFocusWindow);
         pwndFocus = ValidateHwndNoRip(hwndFocus);
 
-        if ((BOOL)wParam == TRUE) {
+        if ((BOOL)wParam == TRUE)
+        {
             HWND hwndIme;
 
             /*
@@ -1059,19 +1085,23 @@ LRESULT ImeSetContextHandler(
              * in the case of WINNLSEnableIME(true) - ref.win95c B#8548.
              */
             UserAssert(pimeui->spwnd);
-            if (pwndFocus != NULL && GETPTI(pimeui->spwnd) == GETPTI(pwndFocus)) {
+            if (pwndFocus != NULL && GETPTI(pimeui->spwnd) == GETPTI(pwndFocus))
+            {
 
-                if (!pimeui->fShowStatus) {
+                if (!pimeui->fShowStatus)
+                {
                     /*
                      * We have never sent IMN_OPENSTATUSWINDOW yet....
                      */
-                    if (ValidateHwndNoRip(KHWND_TO_HWND(pimeui->hwndIMC))) {
+                    if (ValidateHwndNoRip(KHWND_TO_HWND(pimeui->hwndIMC)))
+                    {
                         SendOpenStatusNotify(pimeui, KHWND_TO_HWND(pimeui->hwndIMC), TRUE);
                     }
                 }
                 else if ((pwndIMC = ValidateHwndNoRip(KHWND_TO_HWND(pimeui->hwndIMC))) != NULL &&
                          (pwndPrevIMC = ValidateHwndNoRip(hwndPrevIMC)) != NULL &&
-                         GetTopLevelWindow(pwndIMC) != GetTopLevelWindow(pwndPrevIMC)) {
+                         GetTopLevelWindow(pwndIMC) != GetTopLevelWindow(pwndPrevIMC))
+                {
                     /*
                      * Because the top level window of IME Wnd was changed.
                      */
@@ -1084,11 +1114,13 @@ LRESULT ImeSetContextHandler(
              * We need to check the fShowStatus in the window list.
              */
             hwndIme = HW(pimeui->spwnd);
-            if (hwndIme) {
+            if (hwndIme)
+            {
                 NtUserCheckImeShowStatusInThread(hwndIme);
             }
         }
-        else {
+        else
+        {
             /*
              * When focus was removed from this thread, we close the
              * status window.
@@ -1098,15 +1130,18 @@ LRESULT ImeSetContextHandler(
              */
             hwndActive = NtUserQueryWindow(HW(pimeui->spwnd), WindowActiveWindow);
             UserAssert(pimeui->spwnd);
-            if (pwndFocus == NULL || GETPTI(pimeui->spwnd) != GETPTI(pwndFocus) ||
-                    hwndActive == NULL) {
+            if (pwndFocus == NULL || GETPTI(pimeui->spwnd) != GETPTI(pwndFocus) || hwndActive == NULL)
+            {
 
-                if (IsWindow(hwndPrevIMC)) {
+                if (IsWindow(hwndPrevIMC))
+                {
                     RIPMSG1(RIP_VERBOSE, "ImeSetContextHandler: notifying OpenStatus (FALSE) to hwnd=%p", hwndPrevIMC);
                     SendOpenStatusNotify(pimeui, hwndPrevIMC, FALSE);
                 }
-                else {
-                    RIPMSG1(RIP_VERBOSE, "ImeSetContextHandler: sending IMN_CLOSESTATUSWINDOW to UIwnd=%p", pimeui->hwndUI);
+                else
+                {
+                    RIPMSG1(RIP_VERBOSE, "ImeSetContextHandler: sending IMN_CLOSESTATUSWINDOW to UIwnd=%p",
+                            pimeui->hwndUI);
                     pimeui->fShowStatus = FALSE;
                     SendMessageToUI(pimeui, WM_IME_NOTIFY, IMN_CLOSESTATUSWINDOW, 0L, FALSE);
                 }
@@ -1118,18 +1153,15 @@ LRESULT ImeSetContextHandler(
 }
 
 
-LRESULT ImeNotifyHandler(
-    PIMEUI pimeui,
-    UINT   message,
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT ImeNotifyHandler(PIMEUI pimeui, UINT message, WPARAM wParam, LPARAM lParam)
 {
     HWND hwndUI;
     LRESULT lRet = 0L;
     HIMC hImc;
     PINPUTCONTEXT pInputContext;
 
-    switch (wParam) {
+    switch (wParam)
+    {
     case IMN_PRIVATE:
         hwndUI = GETUI(pimeui);
         if (IsWindow(hwndUI))
@@ -1149,22 +1181,25 @@ LRESULT ImeNotifyHandler(
         // We need to think about the possibility later.
         //
         hImc = GETIMC(pimeui);
-        if ((pInputContext = fpImmLockIMC(hImc)) != NULL) {
-            if ( IsWindow(KHWND_TO_HWND(pimeui->hwndIMC)) ) {
-                NtUserNotifyIMEStatus( KHWND_TO_HWND(pimeui->hwndIMC),
-                                       (DWORD)pInputContext->fOpen,
-                                       pInputContext->fdwConversion );
+        if ((pInputContext = fpImmLockIMC(hImc)) != NULL)
+        {
+            if (IsWindow(KHWND_TO_HWND(pimeui->hwndIMC)))
+            {
+                NtUserNotifyIMEStatus(KHWND_TO_HWND(pimeui->hwndIMC), (DWORD)pInputContext->fOpen,
+                                      pInputContext->fdwConversion);
             }
-            else if (gfConIme == TRUE) {
+            else if (gfConIme == TRUE)
+            {
                 /*
                  * Special handling for Console IME is needed
                  */
-                if (pimeui->spwnd) {    // If IME window is still there.
+                if (pimeui->spwnd)
+                { // If IME window is still there.
                     PWND pwndOwner = REBASEPWND(pimeui->spwnd, spwndOwner);
 
-                    if (pwndOwner != NULL) {
-                        NtUserNotifyIMEStatus(HWq(pwndOwner),
-                                              (DWORD)pInputContext->fOpen,
+                    if (pwndOwner != NULL)
+                    {
+                        NtUserNotifyIMEStatus(HWq(pwndOwner), (DWORD)pInputContext->fOpen,
                                               pInputContext->fdwConversion);
                     }
                 }
@@ -1173,7 +1208,8 @@ LRESULT ImeNotifyHandler(
         }
         /*** FALL THROUGH ***/
     default:
-        TAGMSG4(DBGTAG_IMM, "ImeNotifyHandler: sending to pimeui->ui=%p, msg=%x, wParam=%x, lParam=%x\n", GETUI(pimeui), message, wParam, lParam);
+        TAGMSG4(DBGTAG_IMM, "ImeNotifyHandler: sending to pimeui->ui=%p, msg=%x, wParam=%x, lParam=%x\n", GETUI(pimeui),
+                message, wParam, lParam);
         lRet = SendMessageToUI(pimeui, message, wParam, lParam, FALSE);
     }
 
@@ -1181,48 +1217,47 @@ LRESULT ImeNotifyHandler(
 }
 
 
-HWND CreateIMEUI(
-    PIMEUI pimeui,
-    HKL    hKL)
+HWND CreateIMEUI(PIMEUI pimeui, HKL hKL)
 {
-    PWND      pwndIme = pimeui->spwnd;
-    HWND      hwndUI;
+    PWND pwndIme = pimeui->spwnd;
+    HWND hwndUI;
     IMEINFOEX iiex;
-    PIMEDPI   pimedpi;
-    WNDCLASS  wndcls;
+    PIMEDPI pimedpi;
+    WNDCLASS wndcls;
 
     if (!fpImmGetImeInfoEx(&iiex, ImeInfoExKeyboardLayout, &hKL))
         return (HWND)NULL;
 
-    if ((pimedpi = fpImmLockImeDpi(hKL)) == NULL) {
+    if ((pimedpi = fpImmLockImeDpi(hKL)) == NULL)
+    {
         RIPMSG1(RIP_WARNING, "CreateIMEUI: ImmLockImeDpi(%lx) failed.", hKL);
         return (HWND)NULL;
     }
 
-    if (!GetClassInfoW(pimedpi->hInst, iiex.wszUIClass, &wndcls)) {
+    if (!GetClassInfoW(pimedpi->hInst, iiex.wszUIClass, &wndcls))
+    {
         RIPMSG1(RIP_WARNING, "CreateIMEUI: GetClassInfoW(%ws) failed\n", iiex.wszUIClass);
         fpImmUnlockImeDpi(pimedpi);
         return (HWND)NULL;
     }
 
     // HACK HACK HACK
-    if ((wndcls.style & CS_IME) == 0) {
+    if ((wndcls.style & CS_IME) == 0)
+    {
         RIPMSG1(RIP_ERROR, "CreateIMEUI: the Window Class (%S) does not have CS_IME flag on !!!\n",
                 wndcls.lpszClassName);
     }
 
-    if (iiex.ImeInfo.fdwProperty & IME_PROP_UNICODE) {
+    if (iiex.ImeInfo.fdwProperty & IME_PROP_UNICODE)
+    {
         /*
          * For Unicode IME, we create an Unicode IME UI window.
          */
-        hwndUI = CreateWindowExW(0L,
-                        iiex.wszUIClass,
-                        iiex.wszUIClass,
-                        WS_POPUP|WS_DISABLED,
-                        0, 0, 0, 0,
-                        HWq(pwndIme), 0, wndcls.hInstance, NULL);
+        hwndUI = CreateWindowExW(0L, iiex.wszUIClass, iiex.wszUIClass, WS_POPUP | WS_DISABLED, 0, 0, 0, 0, HWq(pwndIme),
+                                 0, wndcls.hInstance, NULL);
     }
-    else {
+    else
+    {
         /*
          * For ANSI IME, we create an ANSI IME UI window.
          */
@@ -1230,18 +1265,15 @@ HWND CreateIMEUI(
         LPSTR pszClass;
         int i;
         i = WCSToMB(iiex.wszUIClass, -1, &pszClass, -1, TRUE);
-        if (i == 0) {
+        if (i == 0)
+        {
             RIPMSG1(RIP_WARNING, "CreateIMEUI: failed in W->A conversion (%S)", iiex.wszUIClass);
             return (HWND)NULL;
         }
         pszClass[i] = '\0';
 
-        hwndUI = CreateWindowExA(0L,
-                        pszClass,
-                        pszClass,
-                        WS_POPUP|WS_DISABLED,
-                        0, 0, 0, 0,
-                        HWq(pwndIme), 0, wndcls.hInstance, NULL);
+        hwndUI = CreateWindowExA(0L, pszClass, pszClass, WS_POPUP | WS_DISABLED, 0, 0, 0, 0, HWq(pwndIme), 0,
+                                 wndcls.hInstance, NULL);
 
         UserLocalFree(pszClass);
     }
@@ -1255,8 +1287,7 @@ HWND CreateIMEUI(
 }
 
 
-VOID DestroyIMEUI(
-    PIMEUI pimeui)
+VOID DestroyIMEUI(PIMEUI pimeui)
 {
     // This has currently nothing to do except for destroying the UI.
     // Review: Need to notify the UI with WM_IME_SETCONTEXT ?
@@ -1264,7 +1295,8 @@ VOID DestroyIMEUI(
 
     HWND hwndUI = GETUI(pimeui);
 
-    if (IsWindow(hwndUI)) {
+    if (IsWindow(hwndUI))
+    {
         pimeui->fDestroy = TRUE;
         /*
          * We need this verify because the owner might have already
@@ -1293,14 +1325,9 @@ VOID DestroyIMEUI(
 * 09-Apr-1996 wkwok       Created
 \***************************************************************************/
 
-LRESULT SendMessageToUI(
-    PIMEUI pimeui,
-    UINT   message,
-    WPARAM wParam,
-    LPARAM lParam,
-    BOOL   fAnsi)
+LRESULT SendMessageToUI(PIMEUI pimeui, UINT message, WPARAM wParam, LPARAM lParam, BOOL fAnsi)
 {
-    PWND  pwndUI;
+    PWND pwndUI;
     LRESULT lRet;
 
     TAGMSG1(DBGTAG_IMM, "Sending to UI msg[%04X]\n", message);
@@ -1310,8 +1337,9 @@ LRESULT SendMessageToUI(
     if (pwndUI == NULL || pimeui->spwnd == NULL)
         return 0L;
 
-    if (TestWF(pimeui->spwnd, WFINDESTROY) || TestWF(pimeui->spwnd, WFDESTROYED) ||
-            TestWF(pwndUI, WFINDESTROY) || TestWF(pwndUI, WFDESTROYED)) {
+    if (TestWF(pimeui->spwnd, WFINDESTROY) || TestWF(pimeui->spwnd, WFDESTROYED) || TestWF(pwndUI, WFINDESTROY) ||
+        TestWF(pwndUI, WFDESTROYED))
+    {
         return 0L;
     }
 
@@ -1332,21 +1360,20 @@ LRESULT SendMessageToUI(
 * 09-Apr-1996 wkwok       Created
 \***************************************************************************/
 
-VOID SendOpenStatusNotify(
-    PIMEUI pimeui,
-    HWND   hwndApp,
-    BOOL   fOpen)
+VOID SendOpenStatusNotify(PIMEUI pimeui, HWND hwndApp, BOOL fOpen)
 {
     WPARAM wParam = fOpen ? IMN_OPENSTATUSWINDOW : IMN_CLOSESTATUSWINDOW;
 
     pimeui->fShowStatus = fOpen;
 
 
-    if (Is400Compat(GetClientInfo()->dwExpWinVer)) {
+    if (Is400Compat(GetClientInfo()->dwExpWinVer))
+    {
         TAGMSG2(DBGTAG_IMM, "SendOpenStatusNotify: sending to hwnd=%lx, wParam=%d\n", hwndApp, wParam);
         SendMessage(hwndApp, WM_IME_NOTIFY, wParam, 0L);
     }
-    else {
+    else
+    {
         TAGMSG2(DBGTAG_IMM, "SendOpenStatusNotify:sending to imeui->UI=%p, wParam=%d\n", GETUI(pimeui), wParam);
         SendMessageToUI(pimeui, WM_IME_NOTIFY, wParam, 0L, FALSE);
     }
@@ -1355,9 +1382,7 @@ VOID SendOpenStatusNotify(
 }
 
 
-VOID ImeSetImc(
-    PIMEUI pimeui,
-    HIMC hImc)
+VOID ImeSetImc(PIMEUI pimeui, HIMC hImc)
 {
     HWND hImeWnd = HW(pimeui->spwnd);
     HIMC hOldImc = GETIMC(pimeui);
@@ -1394,18 +1419,18 @@ VOID ImeSetImc(
 * 21-Mar-1996 wkwok       Created
 \***************************************************************************/
 
-VOID FocusSetIMCContext(
-    HWND hWnd,
-    BOOL fActivate)
+VOID FocusSetIMCContext(HWND hWnd, BOOL fActivate)
 {
     HIMC hImc;
 
-    if (IsWindow(hWnd)) {
+    if (IsWindow(hWnd))
+    {
         hImc = fpImmGetContext(hWnd);
         fpImmSetActiveContext(hWnd, hImc, fActivate);
         fpImmReleaseContext(hWnd, hImc);
     }
-    else {
+    else
+    {
         fpImmSetActiveContext(NULL, NULL_HIMC, fActivate);
     }
 
@@ -1413,11 +1438,7 @@ VOID FocusSetIMCContext(
 }
 
 
-BOOL ImeBroadCastMsg(
-    PIMEUI pimeui,
-    UINT   message,
-    WPARAM wParam,
-    LPARAM lParam)
+BOOL ImeBroadCastMsg(PIMEUI pimeui, UINT message, WPARAM wParam, LPARAM lParam)
 {
     UNREFERENCED_PARAMETER(pimeui);
     UNREFERENCED_PARAMETER(message);
@@ -1437,19 +1458,18 @@ BOOL ImeBroadCastMsg(
 * 12-Mar-1996 wkwok       Created
 \***************************************************************************/
 
-VOID ImeMarkUsedContext(
-    HWND hImeWnd,
-    HIMC hImc)
+VOID ImeMarkUsedContext(HWND hImeWnd, HIMC hImc)
 {
     PIMC pImc;
 
     pImc = HMValidateHandle((HANDLE)hImc, TYPE_INPUTCONTEXT);
-    if (pImc == NULL) {
+    if (pImc == NULL)
+    {
         RIPMSG1(RIP_WARNING, "ImeMarkUsedContext: Invalid hImc (=%lx).", hImc);
         return;
     }
 
-    UserAssert( ValidateHwndNoRip(pImc->hImeWnd) == NULL || hImeWnd == NULL );
+    UserAssert(ValidateHwndNoRip(pImc->hImeWnd) == NULL || hImeWnd == NULL);
 
     /*
      * Nothing to change?
@@ -1477,23 +1497,20 @@ VOID ImeMarkUsedContext(
 * 12-Mar-1996 wkwok       Created
 \***************************************************************************/
 
-BOOL ImeIsUsableContext(
-    HWND hImeWnd,
-    HIMC hImc)
+BOOL ImeIsUsableContext(HWND hImeWnd, HIMC hImc)
 {
     PIMC pImc;
 
     UserAssert(hImeWnd != NULL);
 
     pImc = HMValidateHandle((HANDLE)hImc, TYPE_INPUTCONTEXT);
-    if (pImc == NULL) {
+    if (pImc == NULL)
+    {
         RIPMSG1(RIP_WARNING, "ImeIsUsableContext: Invalid hImc (=%lx).", hImc);
         return FALSE;
     }
 
-    if ( pImc->hImeWnd == NULL     ||
-         pImc->hImeWnd == hImeWnd  ||
-         ValidateHwndNoRip(pImc->hImeWnd) == NULL )
+    if (pImc->hImeWnd == NULL || pImc->hImeWnd == hImeWnd || ValidateHwndNoRip(pImc->hImeWnd) == NULL)
     {
         return TRUE;
     }
@@ -1517,7 +1534,6 @@ BOOL GetIMEShowStatus(void)
 }
 
 
-
 /***************************************************************************\
 *  IMEIndicatorGetMenuIDData
 *
@@ -1530,12 +1546,14 @@ BOOL IMEIndicatorGetMenuIDData(PUINT puMenuID, PDWORD pdwData)
     HANDLE hinstIndic;
 
     hinstIndic = GetModuleHandle(szIndicDLL);
-    if (hinstIndic == NULL) {
+    if (hinstIndic == NULL)
+    {
         gpfnGetIMEMenuItemData = NULL;
         return FALSE;
     }
 
-    if (!gpfnGetIMEMenuItemData) {
+    if (!gpfnGetIMEMenuItemData)
+    {
         gpfnGetIMEMenuItemData = GetProcAddress(hinstIndic, (LPSTR)ORD_GETIMEMENUITEMDATA);
     }
     if (!gpfnGetIMEMenuItemData)
@@ -1546,21 +1564,23 @@ BOOL IMEIndicatorGetMenuIDData(PUINT puMenuID, PDWORD pdwData)
 }
 
 
-BOOL SyncSoftKbdState(
-    HIMC hImc,
-    LPARAM lParam)
+BOOL SyncSoftKbdState(HIMC hImc, LPARAM lParam)
 {
     DWORD fdwConversion, fdwSentence, fdwNewConversion;
 
     fpImmGetConversionStatus(hImc, &fdwConversion, &fdwSentence);
 
-    if (lParam) {
+    if (lParam)
+    {
         fdwNewConversion = fdwConversion | IME_CMODE_SOFTKBD;
-    } else {
+    }
+    else
+    {
         fdwNewConversion = fdwConversion & ~IME_CMODE_SOFTKBD;
     }
 
-    if (fdwNewConversion != fdwConversion) {
+    if (fdwNewConversion != fdwConversion)
+    {
         fpImmSetConversionStatus(hImc, fdwNewConversion, fdwSentence);
     }
 
@@ -1574,20 +1594,20 @@ BOOL SyncSoftKbdState(
 * 10-Nov-98 Hiroyama
 \***************************************************************************/
 
-LRESULT ImeCopyDataHandler(
-    WPARAM wParam,
-    LPARAM lParam)
+LRESULT ImeCopyDataHandler(WPARAM wParam, LPARAM lParam)
 {
     HINSTANCE hInstImm;
-    BOOL (WINAPI* fpImmPenAuxInput)(HWND, LPVOID);
+    BOOL(WINAPI * fpImmPenAuxInput)(HWND, LPVOID);
 
     hInstImm = GetModuleHandleW(L"IMM32.DLL");
-    if (hInstImm == NULL) {
+    if (hInstImm == NULL)
+    {
         return FALSE;
     }
 
     fpImmPenAuxInput = (LPVOID)GetProcAddress(hInstImm, "ImmPenAuxInput");
-    if (fpImmPenAuxInput == NULL) {
+    if (fpImmPenAuxInput == NULL)
+    {
         return FALSE;
     }
 

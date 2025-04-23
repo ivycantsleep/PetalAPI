@@ -19,31 +19,16 @@ Revision History:
 --*/
 
 NTSTATUS
-PpInitializeBootDDB(
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    );
+PpInitializeBootDDB(IN PLOADER_PARAMETER_BLOCK LoaderBlock);
 
 NTSTATUS
-PpReleaseBootDDB(
-    VOID
-    );
+PpReleaseBootDDB(VOID);
 
 NTSTATUS
-PpGetBlockedDriverList(
-    IN OUT GUID *Buffer,
-    IN OUT PULONG Size,
-    IN ULONG Flags
-    );
+PpGetBlockedDriverList(IN OUT GUID *Buffer, IN OUT PULONG Size, IN ULONG Flags);
 
 NTSTATUS
-PpCheckInDriverDatabase(
-    IN PUNICODE_STRING KeyName,
-    IN HANDLE KeyHandle,
-    IN PVOID ImageBase,
-    IN ULONG ImageSize,
-    IN BOOLEAN IsFilter,
-    OUT LPGUID EntryGuid
-    );
+PpCheckInDriverDatabase(IN PUNICODE_STRING KeyName, IN HANDLE KeyHandle, IN PVOID ImageBase, IN ULONG ImageSize,
+                        IN BOOLEAN IsFilter, OUT LPGUID EntryGuid);
 
 extern ULONG PpBlockedDriverCount;
-

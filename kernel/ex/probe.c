@@ -32,13 +32,8 @@ Revision History:
 #pragma alloc_text(PAGE, ProbeForRead)
 #endif
 
-
-VOID
-ProbeForWrite (
-    IN PVOID Address,
-    IN SIZE_T Length,
-    IN ULONG Alignment
-    )
+
+VOID ProbeForWrite(IN PVOID Address, IN SIZE_T Length, IN ULONG Alignment)
 
 /*++
 
@@ -71,7 +66,7 @@ Return Value:
 #if defined(_WIN64)
     ULONG_PTR PageSize;
 #else
-    #define PageSize  PAGE_SIZE
+#define PageSize PAGE_SIZE
 #endif
 
 
@@ -80,19 +75,19 @@ Return Value:
     // write accessibility or alignment.
     //
 
-    if (Length != 0) {
+    if (Length != 0)
+    {
 
         //
         // If the structure is not properly aligned, then raise a data
         // misalignment exception.
         //
 
-        ASSERT((Alignment == 1) || (Alignment == 2) ||
-               (Alignment == 4) || (Alignment == 8) ||
-               (Alignment == 16));
+        ASSERT((Alignment == 1) || (Alignment == 2) || (Alignment == 4) || (Alignment == 8) || (Alignment == 16));
 
         StartAddress = (ULONG_PTR)Address;
-        if ((StartAddress & (Alignment - 1)) == 0) {
+        if ((StartAddress & (Alignment - 1)) == 0)
+        {
 
             //
             // Compute the ending address of the structure and probe for
@@ -100,8 +95,8 @@ Return Value:
             //
 
             EndAddress = StartAddress + Length - 1;
-            if ((StartAddress <= EndAddress) &&
-                (EndAddress < MM_USER_PROBE_ADDRESS)) {
+            if ((StartAddress <= EndAddress) && (EndAddress < MM_USER_PROBE_ADDRESS))
+            {
 
                 //
                 // N.B. Only the contents of the buffer may be probed.
@@ -116,43 +111,43 @@ Return Value:
                 // could be smaller than the native page size/
                 //
 
-                if (PsGetCurrentProcess()->Wow64Process != NULL) {
+                if (PsGetCurrentProcess()->Wow64Process != NULL)
+                {
                     PageSize = PAGE_SIZE_X86NT;
-                } else {
+                }
+                else
+                {
                     PageSize = PAGE_SIZE;
                 }
 #endif
 
                 EndAddress = (EndAddress & ~(PageSize - 1)) + PageSize;
-                do {
+                do
+                {
                     *(volatile CHAR *)StartAddress = *(volatile CHAR *)StartAddress;
 
                     StartAddress = (StartAddress & ~(PageSize - 1)) + PageSize;
                 } while (StartAddress != EndAddress);
 
                 return;
-
-            } else {
+            }
+            else
+            {
                 ExRaiseAccessViolation();
             }
-
-        } else {
+        }
+        else
+        {
             ExRaiseDatatypeMisalignment();
         }
     }
 
     return;
 }
-
+
 #undef ProbeForRead
 NTKERNELAPI
-VOID
-NTAPI
-ProbeForRead(
-    IN CONST VOID *Address,
-    IN SIZE_T Length,
-    IN ULONG Alignment
-    )
+VOID NTAPI ProbeForRead(IN CONST VOID *Address, IN SIZE_T Length, IN ULONG Alignment)
 
 /*++
 
@@ -180,18 +175,18 @@ Return Value:
 {
     PAGED_CODE();
 
-    ASSERT(((Alignment) == 1) || ((Alignment) == 2) ||
-           ((Alignment) == 4) || ((Alignment) == 8) ||
-           ((Alignment) == 16));
+    ASSERT(((Alignment) == 1) || ((Alignment) == 2) || ((Alignment) == 4) || ((Alignment) == 8) || ((Alignment) == 16));
 
-    if ((Length) != 0) {
-        if (((ULONG_PTR)(Address) & ((Alignment) - 1)) != 0) {
+    if ((Length) != 0)
+    {
+        if (((ULONG_PTR)(Address) & ((Alignment)-1)) != 0)
+        {
             ExRaiseDatatypeMisalignment();
-
-        } else if ((((ULONG_PTR)(Address) + (Length)) < (ULONG_PTR)(Address)) ||
-                   (((ULONG_PTR)(Address) + (Length)) > (ULONG_PTR)MM_USER_PROBE_ADDRESS)) {
+        }
+        else if ((((ULONG_PTR)(Address) + (Length)) < (ULONG_PTR)(Address)) ||
+                 (((ULONG_PTR)(Address) + (Length)) > (ULONG_PTR)MM_USER_PROBE_ADDRESS))
+        {
             ExRaiseAccessViolation();
         }
     }
 }
-

@@ -29,10 +29,10 @@ Revision History:
 
 #if LIST_DBG
 
-#define SetCallersAddress(BCB) {                            \
-    RtlGetCallersAddress( &(BCB)->CallerAddress,            \
-                          &(BCB)->CallersCallerAddress );   \
-}
+#define SetCallersAddress(BCB)                                                     \
+    {                                                                              \
+        RtlGetCallersAddress(&(BCB)->CallerAddress, &(BCB)->CallersCallerAddress); \
+    }
 
 #endif
 
@@ -41,36 +41,25 @@ Revision History:
 //
 
 POBCB
-CcAllocateObcb (
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN PBCB FirstBcb
-    );
+CcAllocateObcb(IN PLARGE_INTEGER FileOffset, IN ULONG Length, IN PBCB FirstBcb);
 
 #ifdef ALLOC_PRAGMA
 #if !LIST_DBG
-#pragma alloc_text(PAGE,CcMapData)
-#pragma alloc_text(PAGE,CcPinMappedData)
-#pragma alloc_text(PAGE,CcPinRead)
-#pragma alloc_text(PAGE,CcPreparePinWrite)
+#pragma alloc_text(PAGE, CcMapData)
+#pragma alloc_text(PAGE, CcPinMappedData)
+#pragma alloc_text(PAGE, CcPinRead)
+#pragma alloc_text(PAGE, CcPreparePinWrite)
 #endif
-#pragma alloc_text(PAGE,CcUnpinData)
-#pragma alloc_text(PAGE,CcSetBcbOwnerPointer)
-#pragma alloc_text(PAGE,CcUnpinDataForThread)
-#pragma alloc_text(PAGE,CcAllocateObcb)
+#pragma alloc_text(PAGE, CcUnpinData)
+#pragma alloc_text(PAGE, CcSetBcbOwnerPointer)
+#pragma alloc_text(PAGE, CcUnpinDataForThread)
+#pragma alloc_text(PAGE, CcAllocateObcb)
 #endif
 
 
-
 BOOLEAN
-CcMapData (
-    IN PFILE_OBJECT FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN ULONG Flags,
-    OUT PVOID *Bcb,
-    OUT PVOID *Buffer
-    )
+CcMapData(IN PFILE_OBJECT FileObject, IN PLARGE_INTEGER FileOffset, IN ULONG Length, IN ULONG Flags, OUT PVOID *Bcb,
+          OUT PVOID *Buffer)
 
 /*++
 
@@ -150,15 +139,16 @@ Return Value:
     ULONG PageCount = ADDRESS_AND_SIZE_TO_SPAN_PAGES((ULongToPtr(FileOffset->LowPart)), Length);
     PETHREAD Thread = PsGetCurrentThread();
 
-    DebugTrace(+1, me, "CcMapData\n", 0 );
+    DebugTrace(+1, me, "CcMapData\n", 0);
 
-    MmSavePageFaultReadAhead( Thread, &SavedState );
+    MmSavePageFaultReadAhead(Thread, &SavedState);
 
     //
     //  Increment performance counters
     //
 
-    if (FlagOn(Flags, MAP_WAIT)) {
+    if (FlagOn(Flags, MAP_WAIT))
+    {
 
         CcMapDataWait += 1;
 
@@ -167,8 +157,9 @@ Return Value:
         //
 
         CcMissCounter = &CcMapDataWaitMiss;
-
-    } else {
+    }
+    else
+    {
         CcMapDataNoWait += 1;
     }
 
@@ -176,77 +167,71 @@ Return Value:
     //  Get pointer to SharedCacheMap.
     //
 
-    SharedCacheMap = *(PSHARED_CACHE_MAP *)((PCHAR)FileObject->SectionObjectPointer
-                                            + sizeof(PVOID));
+    SharedCacheMap = *(PSHARED_CACHE_MAP *)((PCHAR)FileObject->SectionObjectPointer + sizeof(PVOID));
 
     //
     //  Call local routine to Map or Access the file data.  If we cannot map
     //  the data because of a Wait condition, return FALSE.
     //
 
-    if (FlagOn(Flags, MAP_WAIT)) {
+    if (FlagOn(Flags, MAP_WAIT))
+    {
 
-        *Buffer = CcGetVirtualAddress( SharedCacheMap,
-                                       *FileOffset,
-                                       (PVACB *)&TempBcb,
-                                       &ReceivedLength );
+        *Buffer = CcGetVirtualAddress(SharedCacheMap, *FileOffset, (PVACB *)&TempBcb, &ReceivedLength);
 
-        ASSERT( ReceivedLength >= Length );
+        ASSERT(ReceivedLength >= Length);
+    }
+    else if (!CcPinFileData(FileObject, FileOffset, Length, TRUE, FALSE, Flags, (PBCB *)&TempBcb, Buffer,
+                            &BeyondLastByte))
+    {
 
-    } else if (!CcPinFileData( FileObject,
-                               FileOffset,
-                               Length,
-                               TRUE,
-                               FALSE,
-                               Flags,
-                               (PBCB *)&TempBcb,
-                               Buffer,
-                               &BeyondLastByte )) {
-
-        DebugTrace(-1, me, "CcMapData -> FALSE\n", 0 );
+        DebugTrace(-1, me, "CcMapData -> FALSE\n", 0);
 
         CcMapDataNoWaitMiss += 1;
 
         return FALSE;
+    }
+    else
+    {
 
-    } else {
-
-        ASSERT( (BeyondLastByte.QuadPart - FileOffset->QuadPart) >= Length );
+        ASSERT((BeyondLastByte.QuadPart - FileOffset->QuadPart) >= Length);
 
 #if LIST_DBG
         {
             KIRQL OldIrql;
             PBCB BcbTemp = (PBCB)*Bcb;
 
-            OldIrql = KeAcquireQueuedSpinLock( LockQueueBcbLock );
+            OldIrql = KeAcquireQueuedSpinLock(LockQueueBcbLock);
 
-            if (BcbTemp->CcBcbLinks.Flink == NULL) {
+            if (BcbTemp->CcBcbLinks.Flink == NULL)
+            {
 
-                InsertTailList( &CcBcbList, &BcbTemp->CcBcbLinks );
+                InsertTailList(&CcBcbList, &BcbTemp->CcBcbLinks);
                 CcBcbCount += 1;
-                KeReleaseQueuedSpinLock( LockQueueBcbLock, OldIrql );
-                SetCallersAddress( BcbTemp );
-
-            } else {
-                KeReleaseQueuedSpinLock( LockQueueBcbLock, OldIrql );
+                KeReleaseQueuedSpinLock(LockQueueBcbLock, OldIrql);
+                SetCallersAddress(BcbTemp);
             }
-
+            else
+            {
+                KeReleaseQueuedSpinLock(LockQueueBcbLock, OldIrql);
+            }
         }
 #endif
-
     }
 
     //
     //  Caller specifically requested he doesn't want data to be faulted in.
     //
 
-    if (!FlagOn( Flags, MAP_NO_READ )) {
+    if (!FlagOn(Flags, MAP_NO_READ))
+    {
 
         //
         //  Now let's just sit here and take the miss(es) like a man (and count them).
         //
 
-        try {
+        try
+        {
 
             //
             //  Loop to touch each page
@@ -254,22 +239,25 @@ Return Value:
 
             BeyondLastByte.LowPart = 0;
 
-            while (PageCount != 0) {
+            while (PageCount != 0)
+            {
 
-                MmSetPageFaultReadAhead( Thread, PageCount - 1 );
+                MmSetPageFaultReadAhead(Thread, PageCount - 1);
 
                 ch = *((volatile UCHAR *)(*Buffer) + BeyondLastByte.LowPart);
 
                 BeyondLastByte.LowPart += PAGE_SIZE;
                 PageCount -= 1;
             }
+        }
+        finally
+        {
 
-        } finally {
+            MmResetPageFaultReadAhead(Thread, SavedState);
 
-            MmResetPageFaultReadAhead( Thread, SavedState );
-
-            if (AbnormalTermination() && (TempBcb != NULL)) {
-                CcUnpinFileData( (PBCB)TempBcb, TRUE, UNPIN );
+            if (AbnormalTermination() && (TempBcb != NULL))
+            {
+                CcUnpinFileData((PBCB)TempBcb, TRUE, UNPIN);
             }
         }
     }
@@ -285,20 +273,15 @@ Return Value:
     *(PCHAR *)&TempBcb += 1;
     *Bcb = TempBcb;
 
-    DebugTrace(-1, me, "CcMapData -> TRUE\n", 0 );
+    DebugTrace(-1, me, "CcMapData -> TRUE\n", 0);
 
     return TRUE;
 }
 
-
+
 BOOLEAN
-CcPinMappedData (
-    IN PFILE_OBJECT FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN ULONG Flags,
-    IN OUT PVOID *Bcb
-    )
+CcPinMappedData(IN PFILE_OBJECT FileObject, IN PLARGE_INTEGER FileOffset, IN ULONG Length, IN ULONG Flags,
+                IN OUT PVOID *Bcb)
 
 /*++
 
@@ -370,13 +353,14 @@ Return Value:
     PBCB *CurrentBcbPtr = (PBCB *)&MyBcb;
     BOOLEAN Result = FALSE;
 
-    DebugTrace(+1, me, "CcPinMappedData\n", 0 );
+    DebugTrace(+1, me, "CcPinMappedData\n", 0);
 
     //
     // If the Bcb is no longer ReadOnly, then just return.
     //
 
-    if ((*(PULONG)Bcb & 1) == 0) {
+    if ((*(PULONG)Bcb & 1) == 0)
+    {
         return TRUE;
     }
 
@@ -390,8 +374,7 @@ Return Value:
     //  Get pointer to SharedCacheMap.
     //
 
-    SharedCacheMap = *(PSHARED_CACHE_MAP *)((PCHAR)FileObject->SectionObjectPointer
-                                            + sizeof(PVOID));
+    SharedCacheMap = *(PSHARED_CACHE_MAP *)((PCHAR)FileObject->SectionObjectPointer + sizeof(PVOID));
 
     //
     //  We only count the calls to this routine, since they are almost guaranteed
@@ -404,31 +387,36 @@ Return Value:
     //  Guarantee we will put the flag back if required.
     //
 
-    try {
+    try
+    {
 
-        if (((PBCB)*Bcb)->NodeTypeCode != CACHE_NTC_BCB) {
+        if (((PBCB)*Bcb)->NodeTypeCode != CACHE_NTC_BCB)
+        {
 
             //
             //  Form loop to handle occasional overlapped Bcb case.
             //
 
-            do {
+            do
+            {
 
                 //
                 //  If we have already been through the loop, then adjust
                 //  our file offset and length from the last time.
                 //
 
-                if (MyBcb != NULL) {
+                if (MyBcb != NULL)
+                {
 
                     //
                     //  If this is the second time through the loop, then it is time
                     //  to handle the overlap case and allocate an OBCB.
                     //
 
-                    if (CurrentBcbPtr == (PBCB *)&MyBcb) {
+                    if (CurrentBcbPtr == (PBCB *)&MyBcb)
+                    {
 
-                        MyBcb = CcAllocateObcb( FileOffset, Length, (PBCB)MyBcb );
+                        MyBcb = CcAllocateObcb(FileOffset, Length, (PBCB)MyBcb);
 
                         //
                         //  Set CurrentBcbPtr to point at the first entry in
@@ -449,30 +437,25 @@ Return Value:
                 //  the data because of a Wait condition, return FALSE.
                 //
 
-                if (!CcPinFileData( FileObject,
-                                    &LocalFileOffset,
-                                    Length,
-                                    (BOOLEAN)!FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED),
-                                    FALSE,
-                                    Flags,
-                                    CurrentBcbPtr,
-                                    &Buffer,
-                                    &BeyondLastByte )) {
+                if (!CcPinFileData(FileObject, &LocalFileOffset, Length,
+                                   (BOOLEAN)!FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED), FALSE, Flags,
+                                   CurrentBcbPtr, &Buffer, &BeyondLastByte))
+                {
 
-                    try_return( Result = FALSE );
+                    try_return(Result = FALSE);
                 }
 
-            //
-            //  Continue looping if we did not get everything.
-            //
+                //
+                //  Continue looping if we did not get everything.
+                //
 
-            } while((BeyondLastByte.QuadPart - LocalFileOffset.QuadPart) < Length);
+            } while ((BeyondLastByte.QuadPart - LocalFileOffset.QuadPart) < Length);
 
             //
             //  Free the Vacb before going on.
             //
 
-            CcFreeVirtualAddress( (PVACB)*Bcb );
+            CcFreeVirtualAddress((PVACB)*Bcb);
 
             *Bcb = MyBcb;
 
@@ -485,19 +468,20 @@ Return Value:
                 KIRQL OldIrql;
                 PBCB BcbTemp = (PBCB)*Bcb;
 
-                OldIrql = KeAcquireQueuedSpinLock( LockQueueBcbLock );
+                OldIrql = KeAcquireQueuedSpinLock(LockQueueBcbLock);
 
-                if (BcbTemp->CcBcbLinks.Flink == NULL) {
+                if (BcbTemp->CcBcbLinks.Flink == NULL)
+                {
 
-                    InsertTailList( &CcBcbList, &BcbTemp->CcBcbLinks );
+                    InsertTailList(&CcBcbList, &BcbTemp->CcBcbLinks);
                     CcBcbCount += 1;
-                    KeReleaseQueuedSpinLock( LockQueueBcbLock, OldIrql );
-                    SetCallersAddress( BcbTemp );
-
-                } else {
-                    KeReleaseQueuedSpinLock( LockQueueBcbLock, OldIrql );
+                    KeReleaseQueuedSpinLock(LockQueueBcbLock, OldIrql);
+                    SetCallersAddress(BcbTemp);
                 }
-
+                else
+                {
+                    KeReleaseQueuedSpinLock(LockQueueBcbLock, OldIrql);
+                }
             }
 #endif
         }
@@ -507,21 +491,26 @@ Return Value:
         //  no longer ReadOnly.
         //
 
-        else {
+        else
+        {
 
-            if (!ExAcquireSharedStarveExclusive( &((PBCB)*Bcb)->Resource, BooleanFlagOn(Flags, PIN_WAIT))) {
+            if (!ExAcquireSharedStarveExclusive(&((PBCB)*Bcb)->Resource, BooleanFlagOn(Flags, PIN_WAIT)))
+            {
 
-                try_return( Result = FALSE );
+                try_return(Result = FALSE);
             }
         }
 
         Result = TRUE;
 
-    try_exit: NOTHING;
+    try_exit:
+        NOTHING;
     }
-    finally {
+    finally
+    {
 
-        if (!Result) {
+        if (!Result)
+        {
 
             //
             //  Put the Read Only flag back
@@ -533,26 +522,21 @@ Return Value:
             //  We may have gotten partway through
             //
 
-            if (MyBcb != NULL) {
-                CcUnpinData( MyBcb );
+            if (MyBcb != NULL)
+            {
+                CcUnpinData(MyBcb);
             }
         }
 
-        DebugTrace(-1, me, "CcPinMappedData -> %02lx\n", Result );
+        DebugTrace(-1, me, "CcPinMappedData -> %02lx\n", Result);
     }
     return Result;
 }
 
-
+
 BOOLEAN
-CcPinRead (
-    IN PFILE_OBJECT FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN ULONG Flags,
-    OUT PVOID *Bcb,
-    OUT PVOID *Buffer
-    )
+CcPinRead(IN PFILE_OBJECT FileObject, IN PLARGE_INTEGER FileOffset, IN ULONG Length, IN ULONG Flags, OUT PVOID *Bcb,
+          OUT PVOID *Buffer)
 
 /*++
 
@@ -626,13 +610,14 @@ Return Value:
     PBCB *CurrentBcbPtr = (PBCB *)&MyBcb;
     BOOLEAN Result = FALSE;
 
-    DebugTrace(+1, me, "CcPinRead\n", 0 );
+    DebugTrace(+1, me, "CcPinRead\n", 0);
 
     //
     //  Increment performance counters
     //
 
-    if (FlagOn(Flags, PIN_WAIT)) {
+    if (FlagOn(Flags, PIN_WAIT))
+    {
 
         CcPinReadWait += 1;
 
@@ -641,8 +626,9 @@ Return Value:
         //
 
         CcMissCounter = &CcPinReadWaitMiss;
-
-    } else {
+    }
+    else
+    {
         CcPinReadNoWait += 1;
     }
 
@@ -650,32 +636,35 @@ Return Value:
     //  Get pointer to SharedCacheMap.
     //
 
-    SharedCacheMap = *(PSHARED_CACHE_MAP *)((PCHAR)FileObject->SectionObjectPointer
-                                            + sizeof(PVOID));
+    SharedCacheMap = *(PSHARED_CACHE_MAP *)((PCHAR)FileObject->SectionObjectPointer + sizeof(PVOID));
 
-    try {
+    try
+    {
 
         //
         //  Form loop to handle occasional overlapped Bcb case.
         //
 
-        do {
+        do
+        {
 
             //
             //  If we have already been through the loop, then adjust
             //  our file offset and length from the last time.
             //
 
-            if (MyBcb != NULL) {
+            if (MyBcb != NULL)
+            {
 
                 //
                 //  If this is the second time through the loop, then it is time
                 //  to handle the overlap case and allocate an OBCB.
                 //
 
-                if (CurrentBcbPtr == (PBCB *)&MyBcb) {
+                if (CurrentBcbPtr == (PBCB *)&MyBcb)
+                {
 
-                    MyBcb = CcAllocateObcb( FileOffset, Length, (PBCB)MyBcb );
+                    MyBcb = CcAllocateObcb(FileOffset, Length, (PBCB)MyBcb);
 
                     //
                     //  Set CurrentBcbPtr to point at the first entry in
@@ -702,26 +691,21 @@ Return Value:
             //  the data because of a Wait condition, return FALSE.
             //
 
-            if (!CcPinFileData( FileObject,
-                                &LocalFileOffset,
-                                Length,
-                                (BOOLEAN)!FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED),
-                                FALSE,
-                                Flags,
-                                CurrentBcbPtr,
-                                &LocalBuffer,
-                                &BeyondLastByte )) {
+            if (!CcPinFileData(FileObject, &LocalFileOffset, Length,
+                               (BOOLEAN)!FlagOn(SharedCacheMap->Flags, MODIFIED_WRITE_DISABLED), FALSE, Flags,
+                               CurrentBcbPtr, &LocalBuffer, &BeyondLastByte))
+            {
 
                 CcPinReadNoWaitMiss += 1;
 
-                try_return( Result = FALSE );
+                try_return(Result = FALSE);
             }
 
-        //
-        //  Continue looping if we did not get everything.
-        //
+            //
+            //  Continue looping if we did not get everything.
+            //
 
-        } while((BeyondLastByte.QuadPart - LocalFileOffset.QuadPart) < Length);
+        } while ((BeyondLastByte.QuadPart - LocalFileOffset.QuadPart) < Length);
 
         *Bcb = MyBcb;
 
@@ -735,19 +719,20 @@ Return Value:
             KIRQL OldIrql;
             PBCB BcbTemp = (PBCB)*Bcb;
 
-            OldIrql = KeAcquireQueuedSpinLock( LockQueueBcbLock );
+            OldIrql = KeAcquireQueuedSpinLock(LockQueueBcbLock);
 
-            if (BcbTemp->CcBcbLinks.Flink == NULL) {
+            if (BcbTemp->CcBcbLinks.Flink == NULL)
+            {
 
-                InsertTailList( &CcBcbList, &BcbTemp->CcBcbLinks );
+                InsertTailList(&CcBcbList, &BcbTemp->CcBcbLinks);
                 CcBcbCount += 1;
-                KeReleaseQueuedSpinLock( LockQueueBcbLock, OldIrql );
-                SetCallersAddress( BcbTemp );
-
-            } else {
-                KeReleaseQueuedSpinLock( LockQueueBcbLock, OldIrql );
+                KeReleaseQueuedSpinLock(LockQueueBcbLock, OldIrql);
+                SetCallersAddress(BcbTemp);
             }
-
+            else
+            {
+                KeReleaseQueuedSpinLock(LockQueueBcbLock, OldIrql);
+            }
         }
 
 #endif
@@ -757,46 +742,44 @@ Return Value:
         //  correct buffer address here.
         //
 
-        if (CurrentBcbPtr == (PBCB *)&MyBcb) {
+        if (CurrentBcbPtr == (PBCB *)&MyBcb)
+        {
             *Buffer = LocalBuffer;
         }
 
         Result = TRUE;
 
-    try_exit: NOTHING;
+    try_exit:
+        NOTHING;
     }
-    finally {
+    finally
+    {
 
         CcMissCounter = &CcThrowAway;
 
-        if (!Result) {
+        if (!Result)
+        {
 
             //
             //  We may have gotten partway through
             //
 
-            if (MyBcb != NULL) {
-                CcUnpinData( MyBcb );
+            if (MyBcb != NULL)
+            {
+                CcUnpinData(MyBcb);
             }
         }
 
-        DebugTrace(-1, me, "CcPinRead -> %02lx\n", Result );
+        DebugTrace(-1, me, "CcPinRead -> %02lx\n", Result);
     }
 
     return Result;
 }
 
-
+
 BOOLEAN
-CcPreparePinWrite (
-    IN PFILE_OBJECT FileObject,
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN BOOLEAN Zero,
-    IN ULONG Flags,
-    OUT PVOID *Bcb,
-    OUT PVOID *Buffer
-    )
+CcPreparePinWrite(IN PFILE_OBJECT FileObject, IN PLARGE_INTEGER FileOffset, IN ULONG Length, IN BOOLEAN Zero,
+                  IN ULONG Flags, OUT PVOID *Bcb, OUT PVOID *Buffer)
 
 /*++
 
@@ -873,38 +856,41 @@ Return Value:
     ULONG OriginalLength = Length;
     BOOLEAN Result = FALSE;
 
-    DebugTrace(+1, me, "CcPreparePinWrite\n", 0 );
+    DebugTrace(+1, me, "CcPreparePinWrite\n", 0);
 
     //
     //  Get pointer to SharedCacheMap.
     //
 
-    SharedCacheMap = *(PSHARED_CACHE_MAP *)((PCHAR)FileObject->SectionObjectPointer
-                                            + sizeof(PVOID));
+    SharedCacheMap = *(PSHARED_CACHE_MAP *)((PCHAR)FileObject->SectionObjectPointer + sizeof(PVOID));
 
-    try {
+    try
+    {
 
         //
         //  Form loop to handle occasional overlapped Bcb case.
         //
 
-        do {
+        do
+        {
 
             //
             //  If we have already been through the loop, then adjust
             //  our file offset and length from the last time.
             //
 
-            if (MyBcb != NULL) {
+            if (MyBcb != NULL)
+            {
 
                 //
                 //  If this is the second time through the loop, then it is time
                 //  to handle the overlap case and allocate an OBCB.
                 //
 
-                if (CurrentBcbPtr == (PBCB *)&MyBcb) {
+                if (CurrentBcbPtr == (PBCB *)&MyBcb)
+                {
 
-                    MyBcb = CcAllocateObcb( FileOffset, Length, (PBCB)MyBcb );
+                    MyBcb = CcAllocateObcb(FileOffset, Length, (PBCB)MyBcb);
 
                     //
                     //  Set CurrentBcbPtr to point at the first entry in
@@ -931,24 +917,18 @@ Return Value:
             //  the data because of a Wait condition, return FALSE.
             //
 
-            if (!CcPinFileData( FileObject,
-                                &LocalFileOffset,
-                                Length,
-                                FALSE,
-                                TRUE,
-                                Flags,
-                                CurrentBcbPtr,
-                                &LocalBuffer,
-                                &BeyondLastByte )) {
+            if (!CcPinFileData(FileObject, &LocalFileOffset, Length, FALSE, TRUE, Flags, CurrentBcbPtr, &LocalBuffer,
+                               &BeyondLastByte))
+            {
 
-                try_return( Result = FALSE );
+                try_return(Result = FALSE);
             }
 
-        //
-        //  Continue looping if we did not get everything.
-        //
+            //
+            //  Continue looping if we did not get everything.
+            //
 
-        } while((BeyondLastByte.QuadPart - LocalFileOffset.QuadPart) < Length);
+        } while ((BeyondLastByte.QuadPart - LocalFileOffset.QuadPart) < Length);
 
         //
         //  Debug routines used to insert and remove Bcbs from the global list
@@ -960,19 +940,20 @@ Return Value:
             KIRQL OldIrql;
             PBCB BcbTemp = (PBCB)*Bcb;
 
-            OldIrql = KeAcquireQueuedSpinLock( LockQueueBcbLock );
+            OldIrql = KeAcquireQueuedSpinLock(LockQueueBcbLock);
 
-            if (BcbTemp->CcBcbLinks.Flink == NULL) {
+            if (BcbTemp->CcBcbLinks.Flink == NULL)
+            {
 
-                InsertTailList( &CcBcbList, &BcbTemp->CcBcbLinks );
+                InsertTailList(&CcBcbList, &BcbTemp->CcBcbLinks);
                 CcBcbCount += 1;
-                KeReleaseQueuedSpinLock( LockQueueBcbLock, OldIrql );
-                SetCallersAddress( BcbTemp );
-
-            } else {
-                KeReleaseQueuedSpinLock( LockQueueBcbLock, OldIrql );
+                KeReleaseQueuedSpinLock(LockQueueBcbLock, OldIrql);
+                SetCallersAddress(BcbTemp);
             }
-
+            else
+            {
+                KeReleaseQueuedSpinLock(LockQueueBcbLock, OldIrql);
+            }
         }
 
 #endif
@@ -982,52 +963,55 @@ Return Value:
         //  correct buffer address here.
         //
 
-        if (CurrentBcbPtr == (PBCB *)&MyBcb) {
+        if (CurrentBcbPtr == (PBCB *)&MyBcb)
+        {
             *Buffer = LocalBuffer;
         }
 
-        if (Zero) {
-            RtlZeroMemory( *Buffer, OriginalLength );
+        if (Zero)
+        {
+            RtlZeroMemory(*Buffer, OriginalLength);
         }
 
-        CcSetDirtyPinnedData( MyBcb, NULL );
+        CcSetDirtyPinnedData(MyBcb, NULL);
 
         //
         //  Fill in the return argument.
         //
 
         *Bcb = MyBcb;
-        
+
         Result = TRUE;
 
-    try_exit: NOTHING;
+    try_exit:
+        NOTHING;
     }
-    finally {
+    finally
+    {
 
         CcMissCounter = &CcThrowAway;
 
-        if (!Result) {
+        if (!Result)
+        {
 
             //
             //  We may have gotten partway through
             //
 
-            if (MyBcb != NULL) {
-                CcUnpinData( MyBcb );
+            if (MyBcb != NULL)
+            {
+                CcUnpinData(MyBcb);
             }
         }
 
-        DebugTrace(-1, me, "CcPreparePinWrite -> %02lx\n", Result );
+        DebugTrace(-1, me, "CcPreparePinWrite -> %02lx\n", Result);
     }
 
     return Result;
 }
 
-
-VOID
-CcUnpinData (
-    IN PVOID Bcb
-    )
+
+VOID CcUnpinData(IN PVOID Bcb)
 
 /*++
 
@@ -1047,30 +1031,33 @@ Return Value:
 --*/
 
 {
-    DebugTrace(+1, me, "CcUnpinData:\n", 0 );
-    DebugTrace( 0, me, "    >Bcb = %08lx\n", Bcb );
+    DebugTrace(+1, me, "CcUnpinData:\n", 0);
+    DebugTrace(0, me, "    >Bcb = %08lx\n", Bcb);
 
     //
     //  Test for ReadOnly and unpin accordingly.
     //
 
-    if (((ULONG_PTR)Bcb & 1) != 0) {
+    if (((ULONG_PTR)Bcb & 1) != 0)
+    {
 
         //
         //  Remove the Read Only flag
         //
 
-        Bcb = (PVOID) ((ULONG_PTR)Bcb & ~1);
+        Bcb = (PVOID)((ULONG_PTR)Bcb & ~1);
 
-        CcUnpinFileData( (PBCB)Bcb, TRUE, UNPIN );
-
-    } else {
+        CcUnpinFileData((PBCB)Bcb, TRUE, UNPIN);
+    }
+    else
+    {
 
         //
         //  Handle the overlapped Bcb case.
         //
 
-        if (((POBCB)Bcb)->NodeTypeCode == CACHE_NTC_OBCB) {
+        if (((POBCB)Bcb)->NodeTypeCode == CACHE_NTC_OBCB)
+        {
 
             PBCB *BcbPtrPtr = &((POBCB)Bcb)->Bcbs[0];
 
@@ -1079,7 +1066,8 @@ Return Value:
             //  (rather than dealing with RO for this uncommon case).
             //
 
-            while (*BcbPtrPtr != NULL) {
+            while (*BcbPtrPtr != NULL)
+            {
                 CcUnpinData(*(BcbPtrPtr++));
             }
 
@@ -1087,26 +1075,23 @@ Return Value:
             //  Then free the pool for the Obcb
             //
 
-            ExFreePool( Bcb );
+            ExFreePool(Bcb);
 
-        //
-        //  Otherwise, it is a normal Bcb
-        //
-
-        } else {
-            CcUnpinFileData( (PBCB)Bcb, FALSE, UNPIN );
+            //
+            //  Otherwise, it is a normal Bcb
+            //
+        }
+        else
+        {
+            CcUnpinFileData((PBCB)Bcb, FALSE, UNPIN);
         }
     }
 
-    DebugTrace(-1, me, "CcUnPinData -> VOID\n", 0 );
+    DebugTrace(-1, me, "CcUnPinData -> VOID\n", 0);
 }
 
-
-VOID
-CcSetBcbOwnerPointer (
-    IN PVOID Bcb,
-    IN PVOID OwnerPointer
-    )
+
+VOID CcSetBcbOwnerPointer(IN PVOID Bcb, IN PVOID OwnerPointer)
 
 /*++
 
@@ -1138,7 +1123,8 @@ Return Value:
     //  Handle the overlapped Bcb case.
     //
 
-    if (((POBCB)Bcb)->NodeTypeCode == CACHE_NTC_OBCB) {
+    if (((POBCB)Bcb)->NodeTypeCode == CACHE_NTC_OBCB)
+    {
 
         PBCB *BcbPtrPtr = &((POBCB)Bcb)->Bcbs[0];
 
@@ -1146,31 +1132,29 @@ Return Value:
         //  Loop to set owner for all Bcbs.
         //
 
-        while (*BcbPtrPtr != NULL) {
-            ExSetResourceOwnerPointer( &(*BcbPtrPtr)->Resource, OwnerPointer );
+        while (*BcbPtrPtr != NULL)
+        {
+            ExSetResourceOwnerPointer(&(*BcbPtrPtr)->Resource, OwnerPointer);
             BcbPtrPtr++;
         }
 
-    //
-    //  Otherwise, it is a normal Bcb
-    //
-
-    } else {
+        //
+        //  Otherwise, it is a normal Bcb
+        //
+    }
+    else
+    {
 
         //
         //  Handle normal case.
         //
 
-        ExSetResourceOwnerPointer( &((PBCB)Bcb)->Resource, OwnerPointer );
+        ExSetResourceOwnerPointer(&((PBCB)Bcb)->Resource, OwnerPointer);
     }
 }
 
-
-VOID
-CcUnpinDataForThread (
-    IN PVOID Bcb,
-    IN ERESOURCE_THREAD ResourceThreadId
-    )
+
+VOID CcUnpinDataForThread(IN PVOID Bcb, IN ERESOURCE_THREAD ResourceThreadId)
 
 /*++
 
@@ -1191,31 +1175,34 @@ Return Value:
 --*/
 
 {
-    DebugTrace(+1, me, "CcUnpinDataForThread:\n", 0 );
-    DebugTrace( 0, me, "    >Bcb = %08lx\n", Bcb );
-    DebugTrace( 0, me, "    >ResoureceThreadId = %08lx\n", ResoureceThreadId );
+    DebugTrace(+1, me, "CcUnpinDataForThread:\n", 0);
+    DebugTrace(0, me, "    >Bcb = %08lx\n", Bcb);
+    DebugTrace(0, me, "    >ResoureceThreadId = %08lx\n", ResoureceThreadId);
 
     //
     //  Test for ReadOnly and unpin accordingly.
     //
 
-    if (((ULONG_PTR)Bcb & 1) != 0) {
+    if (((ULONG_PTR)Bcb & 1) != 0)
+    {
 
         //
         //  Remove the Read Only flag
         //
 
-        Bcb = (PVOID) ((ULONG_PTR)Bcb & ~1);
+        Bcb = (PVOID)((ULONG_PTR)Bcb & ~1);
 
-        CcUnpinFileData( (PBCB)Bcb, TRUE, UNPIN );
-
-    } else {
+        CcUnpinFileData((PBCB)Bcb, TRUE, UNPIN);
+    }
+    else
+    {
 
         //
         //  Handle the overlapped Bcb case.
         //
 
-        if (((POBCB)Bcb)->NodeTypeCode == CACHE_NTC_OBCB) {
+        if (((POBCB)Bcb)->NodeTypeCode == CACHE_NTC_OBCB)
+        {
 
             PBCB *BcbPtrPtr = &((POBCB)Bcb)->Bcbs[0];
 
@@ -1224,21 +1211,23 @@ Return Value:
             //  (rather than dealing with RO for this uncommon case).
             //
 
-            while (*BcbPtrPtr != NULL) {
-                CcUnpinDataForThread( *(BcbPtrPtr++), ResourceThreadId );
+            while (*BcbPtrPtr != NULL)
+            {
+                CcUnpinDataForThread(*(BcbPtrPtr++), ResourceThreadId);
             }
 
             //
             //  Then free the pool for the Obcb
             //
 
-            ExFreePool( Bcb );
+            ExFreePool(Bcb);
 
-        //
-        //  Otherwise, it is a normal Bcb
-        //
-
-        } else {
+            //
+            //  Otherwise, it is a normal Bcb
+            //
+        }
+        else
+        {
 
             //
             //  If not readonly, we can release the resource for the thread first,
@@ -1246,20 +1235,16 @@ Return Value:
             //  Bcb gets deallocated.
             //
 
-            ExReleaseResourceForThreadLite( &((PBCB)Bcb)->Resource, ResourceThreadId );
-            CcUnpinFileData( (PBCB)Bcb, TRUE, UNPIN );
+            ExReleaseResourceForThreadLite(&((PBCB)Bcb)->Resource, ResourceThreadId);
+            CcUnpinFileData((PBCB)Bcb, TRUE, UNPIN);
         }
     }
-    DebugTrace(-1, me, "CcUnpinDataForThread -> VOID\n", 0 );
+    DebugTrace(-1, me, "CcUnpinDataForThread -> VOID\n", 0);
 }
 
-
+
 POBCB
-CcAllocateObcb (
-    IN PLARGE_INTEGER FileOffset,
-    IN ULONG Length,
-    IN PBCB FirstBcb
-    )
+CcAllocateObcb(IN PLARGE_INTEGER FileOffset, IN ULONG Length, IN PBCB FirstBcb)
 
 /*++
 
@@ -1301,20 +1286,22 @@ Return Value:
     //  bcb and the null.
     //
 
-    LengthToAllocate = FIELD_OFFSET(OBCB, Bcbs) + (2 * sizeof(PBCB)) +
-                       ((Length -
-                         (Bcb->ByteLength -
-                          (FileOffset->HighPart?
-                           (ULONG)(FileOffset->QuadPart - Bcb->FileOffset.QuadPart) :
-                           FileOffset->LowPart - Bcb->FileOffset.LowPart)) +
-                         PAGE_SIZE - 1) / PAGE_SIZE) * sizeof(PBCB);
+    LengthToAllocate =
+        FIELD_OFFSET(OBCB, Bcbs) + (2 * sizeof(PBCB)) +
+        ((Length -
+          (Bcb->ByteLength - (FileOffset->HighPart ? (ULONG)(FileOffset->QuadPart - Bcb->FileOffset.QuadPart)
+                                                   : FileOffset->LowPart - Bcb->FileOffset.LowPart)) +
+          PAGE_SIZE - 1) /
+         PAGE_SIZE) *
+            sizeof(PBCB);
 
-    Obcb = ExAllocatePoolWithTag( NonPagedPool, LengthToAllocate, 'bOcC' );
-    if (Obcb == NULL) {
-        ExRaiseStatus( STATUS_INSUFFICIENT_RESOURCES );
+    Obcb = ExAllocatePoolWithTag(NonPagedPool, LengthToAllocate, 'bOcC');
+    if (Obcb == NULL)
+    {
+        ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
     }
 
-    RtlZeroMemory( Obcb, LengthToAllocate );
+    RtlZeroMemory(Obcb, LengthToAllocate);
     Obcb->NodeTypeCode = CACHE_NTC_OBCB;
     Obcb->NodeByteSize = (USHORT)LengthToAllocate;
     Obcb->ByteLength = Length;

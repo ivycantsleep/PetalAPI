@@ -53,31 +53,21 @@ BOOLEAN ViDdiInitialized = FALSE;
 // These are the general "classifications" of device errors, along with the
 // default flags that will be applied the first time this is hit.
 //
-const VFMESSAGE_CLASS ViDdiClassFailDeviceInField = {
-    VFM_FLAG_BEEP | VFM_LOGO_FAILURE | VFM_DEPLOYMENT_FAILURE,
-    "DEVICE FAILURE"
-    };
+const VFMESSAGE_CLASS ViDdiClassFailDeviceInField = { VFM_FLAG_BEEP | VFM_LOGO_FAILURE | VFM_DEPLOYMENT_FAILURE,
+                                                      "DEVICE FAILURE" };
 
 // VFM_DEPLOYMENT_FAILURE is set here because we don't yet have a "logo" mode
-const VFMESSAGE_CLASS ViDdiClassFailDeviceLogo = {
-    VFM_FLAG_BEEP | VFM_LOGO_FAILURE | VFM_DEPLOYMENT_FAILURE,
-    "DEVICE FAILURE"
-    };
+const VFMESSAGE_CLASS ViDdiClassFailDeviceLogo = { VFM_FLAG_BEEP | VFM_LOGO_FAILURE | VFM_DEPLOYMENT_FAILURE,
+                                                   "DEVICE FAILURE" };
 
-const VFMESSAGE_CLASS ViDdiClassFailDeviceUnderDebugger = {
-    VFM_FLAG_BEEP,
-    "DEVICE FAILURE"
-    };
+const VFMESSAGE_CLASS ViDdiClassFailDeviceUnderDebugger = { VFM_FLAG_BEEP, "DEVICE FAILURE" };
 
 #ifdef ALLOC_DATA_PRAGMA
 #pragma const_seg()
 #endif // ALLOC_DATA_PRAGMA
 
 
-VOID
-VfDdiInit(
-    VOID
-    )
+VOID VfDdiInit(VOID)
 /*++
 
 Routine Description:
@@ -98,17 +88,9 @@ Return Value:
 }
 
 
-VOID
-VfFailDeviceNode(
-    IN      PDEVICE_OBJECT      PhysicalDeviceObject,
-    IN      ULONG               BugCheckMajorCode,
-    IN      ULONG               BugCheckMinorCode,
-    IN      VF_FAILURE_CLASS    FailureClass,
-    IN OUT  PULONG              AssertionControl,
-    IN      PSTR                DebuggerMessageText,
-    IN      PSTR                ParameterFormatString,
-    ...
-    )
+VOID VfFailDeviceNode(IN PDEVICE_OBJECT PhysicalDeviceObject, IN ULONG BugCheckMajorCode, IN ULONG BugCheckMinorCode,
+                      IN VF_FAILURE_CLASS FailureClass, IN OUT PULONG AssertionControl, IN PSTR DebuggerMessageText,
+                      IN PSTR ParameterFormatString, ...)
 /*++
 
 Routine Description:
@@ -167,37 +149,23 @@ Return Value:
 {
     va_list arglist;
 
-    if (!VfIsVerificationEnabled(VFOBJTYPE_DEVICE, (PVOID) PhysicalDeviceObject)) {
+    if (!VfIsVerificationEnabled(VFOBJTYPE_DEVICE, (PVOID)PhysicalDeviceObject))
+    {
 
         return;
     }
 
     va_start(arglist, ParameterFormatString);
 
-    ViDdiThrowException(
-        BugCheckMajorCode,
-        BugCheckMinorCode,
-        FailureClass,
-        AssertionControl,
-        DebuggerMessageText,
-        ParameterFormatString,
-        &arglist
-        );
+    ViDdiThrowException(BugCheckMajorCode, BugCheckMinorCode, FailureClass, AssertionControl, DebuggerMessageText,
+                        ParameterFormatString, &arglist);
 
     va_end(arglist);
 }
 
 
-VOID
-VfFailSystemBIOS(
-    IN      ULONG               BugCheckMajorCode,
-    IN      ULONG               BugCheckMinorCode,
-    IN      VF_FAILURE_CLASS    FailureClass,
-    IN OUT  PULONG              AssertionControl,
-    IN      PSTR                DebuggerMessageText,
-    IN      PSTR                ParameterFormatString,
-    ...
-    )
+VOID VfFailSystemBIOS(IN ULONG BugCheckMajorCode, IN ULONG BugCheckMinorCode, IN VF_FAILURE_CLASS FailureClass,
+                      IN OUT PULONG AssertionControl, IN PSTR DebuggerMessageText, IN PSTR ParameterFormatString, ...)
 /*++
 
 Routine Description:
@@ -252,37 +220,23 @@ Return Value:
 {
     va_list arglist;
 
-    if (!VfIsVerificationEnabled(VFOBJTYPE_SYSTEM_BIOS, NULL)) {
+    if (!VfIsVerificationEnabled(VFOBJTYPE_SYSTEM_BIOS, NULL))
+    {
 
         return;
     }
 
     va_start(arglist, ParameterFormatString);
 
-    ViDdiThrowException(
-        BugCheckMajorCode,
-        BugCheckMinorCode,
-        FailureClass,
-        AssertionControl,
-        DebuggerMessageText,
-        ParameterFormatString,
-        &arglist
-        );
+    ViDdiThrowException(BugCheckMajorCode, BugCheckMinorCode, FailureClass, AssertionControl, DebuggerMessageText,
+                        ParameterFormatString, &arglist);
 
     va_end(arglist);
 }
 
 
-VOID
-VfFailDriver(
-    IN      ULONG               BugCheckMajorCode,
-    IN      ULONG               BugCheckMinorCode,
-    IN      VF_FAILURE_CLASS    FailureClass,
-    IN OUT  PULONG              AssertionControl,
-    IN      PSTR                DebuggerMessageText,
-    IN      PSTR                ParameterFormatString,
-    ...
-    )
+VOID VfFailDriver(IN ULONG BugCheckMajorCode, IN ULONG BugCheckMinorCode, IN VF_FAILURE_CLASS FailureClass,
+                  IN OUT PULONG AssertionControl, IN PSTR DebuggerMessageText, IN PSTR ParameterFormatString, ...)
 /*++
 
 Routine Description:
@@ -347,37 +301,24 @@ Return Value:
 {
     va_list arglist;
 
-    if (!ViDdiInitialized) {
+    if (!ViDdiInitialized)
+    {
 
         return;
     }
 
     va_start(arglist, ParameterFormatString);
 
-    ViDdiThrowException(
-        BugCheckMajorCode,
-        BugCheckMinorCode,
-        FailureClass,
-        AssertionControl,
-        DebuggerMessageText,
-        ParameterFormatString,
-        &arglist
-        );
+    ViDdiThrowException(BugCheckMajorCode, BugCheckMinorCode, FailureClass, AssertionControl, DebuggerMessageText,
+                        ParameterFormatString, &arglist);
 
     va_end(arglist);
 }
 
 
-VOID
-ViDdiThrowException(
-    IN      ULONG               BugCheckMajorCode,
-    IN      ULONG               BugCheckMinorCode,
-    IN      VF_FAILURE_CLASS    FailureClass,
-    IN OUT  PULONG              AssertionControl,
-    IN      PSTR                DebuggerMessageText,
-    IN      PSTR                ParameterFormatString,
-    IN      va_list *           MessageParameters
-    )
+VOID ViDdiThrowException(IN ULONG BugCheckMajorCode, IN ULONG BugCheckMinorCode, IN VF_FAILURE_CLASS FailureClass,
+                         IN OUT PULONG AssertionControl, IN PSTR DebuggerMessageText, IN PSTR ParameterFormatString,
+                         IN va_list *MessageParameters)
 /*++
 
 Routine Description:
@@ -434,30 +375,31 @@ Return Value:
 
     ASSERT(BugCheckMinorCode != 0);
 
-    switch(FailureClass) {
-        case VFFAILURE_FAIL_IN_FIELD:
-            messageClass = &ViDdiClassFailDeviceInField;
-            break;
+    switch (FailureClass)
+    {
+    case VFFAILURE_FAIL_IN_FIELD:
+        messageClass = &ViDdiClassFailDeviceInField;
+        break;
 
-        case VFFAILURE_FAIL_LOGO:
-            messageClass = &ViDdiClassFailDeviceLogo;
-            break;
+    case VFFAILURE_FAIL_LOGO:
+        messageClass = &ViDdiClassFailDeviceLogo;
+        break;
 
-        case VFFAILURE_FAIL_UNDER_DEBUGGER:
-            messageClass = &ViDdiClassFailDeviceUnderDebugger;
-            break;
+    case VFFAILURE_FAIL_UNDER_DEBUGGER:
+        messageClass = &ViDdiClassFailDeviceUnderDebugger;
+        break;
 
-        default:
-            ASSERT(0);
-            messageClass = NULL;
-            break;
+    default:
+        ASSERT(0);
+        messageClass = NULL;
+        break;
     }
 
     //
     // Program the template.
     //
     RtlZeroMemory(messageTemplates, sizeof(messageTemplates));
-    messageTemplates[0].MessageID = BugCheckMinorCode-1;
+    messageTemplates[0].MessageID = BugCheckMinorCode - 1;
     messageTemplates[1].MessageID = BugCheckMinorCode;
     messageTemplates[1].MessageClass = messageClass;
     messageTemplates[1].Flags = *AssertionControl;
@@ -474,12 +416,7 @@ Return Value:
     messageTable.OverrideArray = NULL;
     messageTable.OverrideCount = 0;
 
-    status = VfBugcheckThrowException(
-        &messageTable,
-        BugCheckMinorCode,
-        ParameterFormatString,
-        MessageParameters
-        );
+    status = VfBugcheckThrowException(&messageTable, BugCheckMinorCode, ParameterFormatString, MessageParameters);
 
     //
     // Write back the assertion control.
@@ -489,34 +426,33 @@ Return Value:
 
 
 BOOLEAN
-VfIsVerificationEnabled(
-    IN  VF_OBJECT_TYPE  VfObjectType,
-    IN  PVOID           Object
-    )
+VfIsVerificationEnabled(IN VF_OBJECT_TYPE VfObjectType, IN PVOID Object)
 {
-    if (!ViDdiInitialized) {
+    if (!ViDdiInitialized)
+    {
 
         return FALSE;
     }
 
-    switch(VfObjectType) {
+    switch (VfObjectType)
+    {
 
-        case VFOBJTYPE_DRIVER:
-            return (BOOLEAN) MmIsDriverVerifying((PDRIVER_OBJECT) Object);
+    case VFOBJTYPE_DRIVER:
+        return (BOOLEAN)MmIsDriverVerifying((PDRIVER_OBJECT)Object);
 
-        case VFOBJTYPE_DEVICE:
+    case VFOBJTYPE_DEVICE:
 
-            if (!VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_HARDWARE_VERIFICATION)) {
+        if (!VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_HARDWARE_VERIFICATION))
+        {
 
-                return FALSE;
-            }
+            return FALSE;
+        }
 
-            return PpvUtilIsHardwareBeingVerified((PDEVICE_OBJECT) Object);
+        return PpvUtilIsHardwareBeingVerified((PDEVICE_OBJECT)Object);
 
-        case VFOBJTYPE_SYSTEM_BIOS:
-            return VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_SYSTEM_BIOS_VERIFICATION);
+    case VFOBJTYPE_SYSTEM_BIOS:
+        return VfSettingsIsOptionEnabled(NULL, VERIFIER_OPTION_SYSTEM_BIOS_VERIFICATION);
     }
 
     return FALSE;
 }
-

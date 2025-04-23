@@ -19,14 +19,9 @@ Revision History:
 
 --*/
 
-#include    "cmp.h"
+#include "cmp.h"
 
-VOID
-CmpUnmapCmViewSurroundingOffset(
-        IN  PCMHIVE             CmHive,
-        IN  ULONG               FileOffset
-        );
-
+VOID CmpUnmapCmViewSurroundingOffset(IN PCMHIVE CmHive, IN ULONG FileOffset);
 
 
 #ifdef ALLOC_DATA_PRAGMA
@@ -35,17 +30,17 @@ CmpUnmapCmViewSurroundingOffset(
 ULONG perftouchbuffer = 0;
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,CmpAllocate)
+#pragma alloc_text(PAGE, CmpAllocate)
 #ifdef POOL_TAGGING
-#pragma alloc_text(PAGE,CmpAllocateTag)
+#pragma alloc_text(PAGE, CmpAllocateTag)
 #endif
-#pragma alloc_text(PAGE,CmpFree)
-#pragma alloc_text(PAGE,CmpDoFileSetSize)
-#pragma alloc_text(PAGE,CmpCreateEvent)
-#pragma alloc_text(PAGE,CmpFileRead)
-#pragma alloc_text(PAGE,CmpFileWrite)
-#pragma alloc_text(PAGE,CmpFileFlush)
-#pragma alloc_text(PAGE,CmpFileWriteThroughCache)
+#pragma alloc_text(PAGE, CmpFree)
+#pragma alloc_text(PAGE, CmpDoFileSetSize)
+#pragma alloc_text(PAGE, CmpCreateEvent)
+#pragma alloc_text(PAGE, CmpFileRead)
+#pragma alloc_text(PAGE, CmpFileWrite)
+#pragma alloc_text(PAGE, CmpFileFlush)
+#pragma alloc_text(PAGE, CmpFileWriteThroughCache)
 #endif
 
 extern BOOLEAN CmpNoWrite;
@@ -57,15 +52,16 @@ extern BOOLEAN CmpNoWrite;
 //
 #define MAX_FILE_IO 0x10000
 
-#define CmpIoFileRead       1
-#define CmpIoFileWrite      2
-#define CmpIoFileSetSize    3
-#define CmpIoFileFlush      4
+#define CmpIoFileRead 1
+#define CmpIoFileWrite 2
+#define CmpIoFileSetSize 3
+#define CmpIoFileFlush 4
 
-extern struct {
-    ULONG       Action;
-    HANDLE      Handle;
-    NTSTATUS    Status;
+extern struct
+{
+    ULONG Action;
+    HANDLE Handle;
+    NTSTATUS Status;
 } CmRegistryIODebug;
 
 extern BOOLEAN CmpFlushOnLockRelease;
@@ -74,11 +70,7 @@ extern BOOLEAN CmpFlushOnLockRelease;
 //
 
 PVOID
-CmpAllocate(
-    ULONG   Size,
-    BOOLEAN UseForIo,
-    ULONG   Tag
-    )
+CmpAllocate(ULONG Size, BOOLEAN UseForIo, ULONG Tag)
 /*++
 
 Routine Description:
@@ -100,30 +92,28 @@ Return Value:
 
 --*/
 {
-    PVOID   result;
-    ULONG   pooltype;
+    PVOID result;
+    ULONG pooltype;
 #if DBG
-    PVOID   Caller;
-    PVOID   CallerCaller;
+    PVOID Caller;
+    PVOID CallerCaller;
     RtlGetCallersAddress(&Caller, &CallerCaller);
 #endif
 
-    if (CmpClaimGlobalQuota(Size) == FALSE) {
+    if (CmpClaimGlobalQuota(Size) == FALSE)
+    {
         return NULL;
     }
 
     pooltype = (UseForIo) ? PagedPoolCacheAligned : PagedPool;
-    result = ExAllocatePoolWithTag(
-                pooltype,
-                Size,
-                Tag
-                );
+    result = ExAllocatePoolWithTag(pooltype, Size, Tag);
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_POOL,"**CmpAllocate: allocate:%08lx, ", Size));
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_POOL,"type:%d, at:%08lx  ", PagedPool, result));
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_POOL,"c:%p  cc:%p\n", Caller, CallerCaller));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_POOL, "**CmpAllocate: allocate:%08lx, ", Size));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_POOL, "type:%d, at:%08lx  ", PagedPool, result));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_POOL, "c:%p  cc:%p\n", Caller, CallerCaller));
 
-    if (result == NULL) {
+    if (result == NULL)
+    {
         CmpReleaseGlobalQuota(Size);
     }
 
@@ -132,11 +122,7 @@ Return Value:
 
 #ifdef POOL_TAGGING
 PVOID
-CmpAllocateTag(
-    ULONG   Size,
-    BOOLEAN UseForIo,
-    ULONG   Tag
-    )
+CmpAllocateTag(ULONG Size, BOOLEAN UseForIo, ULONG Tag)
 /*++
 
 Routine Description:
@@ -158,30 +144,28 @@ Return Value:
 
 --*/
 {
-    PVOID   result;
-    ULONG   pooltype;
+    PVOID result;
+    ULONG pooltype;
 #if DBG
-    PVOID   Caller;
-    PVOID   CallerCaller;
+    PVOID Caller;
+    PVOID CallerCaller;
     RtlGetCallersAddress(&Caller, &CallerCaller);
 #endif
 
-    if (CmpClaimGlobalQuota(Size) == FALSE) {
+    if (CmpClaimGlobalQuota(Size) == FALSE)
+    {
         return NULL;
     }
 
     pooltype = (UseForIo) ? PagedPoolCacheAligned : PagedPool;
-    result = ExAllocatePoolWithTag(
-                pooltype,
-                Size,
-                Tag
-                );
+    result = ExAllocatePoolWithTag(pooltype, Size, Tag);
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_POOL,"**CmpAllocate: allocate:%08lx, ", Size));
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_POOL,"type:%d, at:%08lx  ", PagedPool, result));
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_POOL,"c:%p  cc:%p\n", Caller, CallerCaller));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_POOL, "**CmpAllocate: allocate:%08lx, ", Size));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_POOL, "type:%d, at:%08lx  ", PagedPool, result));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_POOL, "c:%p  cc:%p\n", Caller, CallerCaller));
 
-    if (result == NULL) {
+    if (result == NULL)
+    {
         CmpReleaseGlobalQuota(Size);
     }
 
@@ -189,12 +173,8 @@ Return Value:
 }
 #endif
 
-
-VOID
-CmpFree(
-    PVOID   MemoryBlock,
-    ULONG   GlobalQuotaSize
-    )
+
+VOID CmpFree(PVOID MemoryBlock, ULONG GlobalQuotaSize)
 /*++
 
 Routine Description:
@@ -217,10 +197,10 @@ Return Value:
 --*/
 {
 #if DBG
-    PVOID   Caller;
-    PVOID   CallerCaller;
+    PVOID Caller;
+    PVOID CallerCaller;
     RtlGetCallersAddress(&Caller, &CallerCaller);
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_POOL,"**FREEING:%08lx c,cc:%p,%p\n", MemoryBlock, Caller, CallerCaller));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_POOL, "**FREEING:%08lx c,cc:%p,%p\n", MemoryBlock, Caller, CallerCaller));
 #endif
     ASSERT(GlobalQuotaSize > 0);
     CmpReleaseGlobalQuota(GlobalQuotaSize);
@@ -228,14 +208,9 @@ Return Value:
     return;
 }
 
-
+
 NTSTATUS
-CmpDoFileSetSize(
-    PHHIVE      Hive,
-    ULONG       FileType,
-    ULONG       FileSize,
-    ULONG       OldFileSize
-    )
+CmpDoFileSetSize(PHHIVE Hive, ULONG FileType, ULONG FileSize, ULONG OldFileSize)
 /*++
 
 Routine Description:
@@ -266,19 +241,20 @@ Return Value:
 
 --*/
 {
-    PCMHIVE                         CmHive;
-    HANDLE                          FileHandle;
-    NTSTATUS                        Status;
-    FILE_END_OF_FILE_INFORMATION    FileInfo;
-    IO_STATUS_BLOCK                 IoStatus;
-    BOOLEAN                         oldFlag;
-    LARGE_INTEGER                   FileOffset;         // where the mapping starts
+    PCMHIVE CmHive;
+    HANDLE FileHandle;
+    NTSTATUS Status;
+    FILE_END_OF_FILE_INFORMATION FileInfo;
+    IO_STATUS_BLOCK IoStatus;
+    BOOLEAN oldFlag;
+    LARGE_INTEGER FileOffset; // where the mapping starts
 
     ASSERT(FIELD_OFFSET(CMHIVE, Hive) == 0);
 
     CmHive = (PCMHIVE)Hive;
     FileHandle = CmHive->FileHandles[FileType];
-    if (FileHandle == NULL) {
+    if (FileHandle == NULL)
+    {
         return TRUE;
     }
 
@@ -288,26 +264,27 @@ Return Value:
     oldFlag = IoSetThreadHardErrorMode(FALSE);
 
     FileInfo.EndOfFile.HighPart = 0L;
-    if( FileType == HFILE_TYPE_PRIMARY ) {
-        FileInfo.EndOfFile.LowPart  = ROUND_UP(FileSize, CM_FILE_GROW_INCREMENT);
-    } else {
-        FileInfo.EndOfFile.LowPart  = FileSize;
+    if (FileType == HFILE_TYPE_PRIMARY)
+    {
+        FileInfo.EndOfFile.LowPart = ROUND_UP(FileSize, CM_FILE_GROW_INCREMENT);
+    }
+    else
+    {
+        FileInfo.EndOfFile.LowPart = FileSize;
     }
 
     ASSERT_PASSIVE_LEVEL();
 
-    Status = ZwSetInformationFile(
-                FileHandle,
-                &IoStatus,
-                (PVOID)&FileInfo,
-                sizeof(FILE_END_OF_FILE_INFORMATION),
-                FileEndOfFileInformation
-                );
+    Status = ZwSetInformationFile(FileHandle, &IoStatus, (PVOID)&FileInfo, sizeof(FILE_END_OF_FILE_INFORMATION),
+                                  FileEndOfFileInformation);
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         ASSERT(IoStatus.Status == Status);
-    } else {
-        
+    }
+    else
+    {
+
         //
         // set debugging info
         //
@@ -315,12 +292,16 @@ Return Value:
         CmRegistryIODebug.Handle = FileHandle;
         CmRegistryIODebug.Status = Status;
 #ifndef _CM_LDR_
-        DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,"CmpFileSetSize:\tHandle=%08lx  OldLength = %08lx NewLength=%08lx  \n", 
-                                                        FileHandle, OldFileSize, FileSize);
+        DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+                   "CmpFileSetSize:\tHandle=%08lx  OldLength = %08lx NewLength=%08lx  \n", FileHandle, OldFileSize,
+                   FileSize);
 #endif //_CM_LDR_
-        if( (Status == STATUS_DISK_FULL) && ExIsResourceAcquiredExclusiveLite(&CmpRegistryLock) ) {
-            DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,"Disk is full while attempting to grow file %lx; will flush upon lock release\n",FileHandle);
-            CmpFlushOnLockRelease = TRUE;;
+        if ((Status == STATUS_DISK_FULL) && ExIsResourceAcquiredExclusiveLite(&CmpRegistryLock))
+        {
+            DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+                       "Disk is full while attempting to grow file %lx; will flush upon lock release\n", FileHandle);
+            CmpFlushOnLockRelease = TRUE;
+            ;
         }
     }
 
@@ -328,24 +309,26 @@ Return Value:
     // restore hard error popups mode
     //
     IoSetThreadHardErrorMode(oldFlag);
-    
+
 
     //
     // purge
     //
-    if( HiveWritesThroughCache(Hive,FileType) && (OldFileSize > FileSize)) {
+    if (HiveWritesThroughCache(Hive, FileType) && (OldFileSize > FileSize))
+    {
         //
         // first we have to unmap any possible mapped views in the last 256K window
         // to avoid deadlock on CcWaitOnActiveCount inside CcPurgeCacheSection call bellow
         //
-        ULONG   Offset = FileSize & (~(_256K - 1));
+        ULONG Offset = FileSize & (~(_256K - 1));
         //
         // we are not allowed to shrink in shared mode.
         //
         ASSERT_CM_LOCK_OWNED_EXCLUSIVE();
 
-        while( Offset < OldFileSize ) {
-            CmpUnmapCmViewSurroundingOffset((PCMHIVE)Hive,Offset);
+        while (Offset < OldFileSize)
+        {
+            CmpUnmapCmViewSurroundingOffset((PCMHIVE)Hive, Offset);
             Offset += CM_VIEW_SIZE;
         }
 
@@ -353,57 +336,44 @@ Return Value:
         // we need to take extra precaution here and unmap the very last view too
         //
         //CmpUnmapCmViewSurroundingOffset((PCMHIVE)Hive,OldFileSize-HBLOCK_SIZE);
-        
+
         FileOffset.HighPart = 0;
         FileOffset.LowPart = FileSize;
         //
         // This is a shrink; Inform cache manager of the change of the size
         //
-        CcPurgeCacheSection( ((PCMHIVE)Hive)->FileObject->SectionObjectPointer, (PLARGE_INTEGER)(((ULONG_PTR)(&FileOffset)) + 1), 
-                            OldFileSize - FileSize, FALSE );
+        CcPurgeCacheSection(((PCMHIVE)Hive)->FileObject->SectionObjectPointer,
+                            (PLARGE_INTEGER)(((ULONG_PTR)(&FileOffset)) + 1), OldFileSize - FileSize, FALSE);
 
         //
         // Flush out this view to clear out the Cc dirty hints
         //
-        CcFlushCache( ((PCMHIVE)Hive)->FileObject->SectionObjectPointer, (PLARGE_INTEGER)(((ULONG_PTR)(&FileOffset)) + 1),/*we are private writers*/
-                            OldFileSize - FileSize,NULL);
-
+        CcFlushCache(((PCMHIVE)Hive)->FileObject->SectionObjectPointer,
+                     (PLARGE_INTEGER)(((ULONG_PTR)(&FileOffset)) + 1), /*we are private writers*/
+                     OldFileSize - FileSize, NULL);
     }
-    
+
     return Status;
 }
 
 NTSTATUS
-CmpCreateEvent(
-    IN EVENT_TYPE  eventType,
-    OUT PHANDLE eventHandle,
-    OUT PKEVENT *event
-    )
+CmpCreateEvent(IN EVENT_TYPE eventType, OUT PHANDLE eventHandle, OUT PKEVENT *event)
 {
     NTSTATUS status;
     OBJECT_ATTRIBUTES obja;
 
-    InitializeObjectAttributes( &obja, NULL, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL );
-    status = ZwCreateEvent(
-        eventHandle,
-        EVENT_ALL_ACCESS,
-        &obja,
-        eventType,
-        FALSE);
-    
-    if (!NT_SUCCESS(status)) {
+    InitializeObjectAttributes(&obja, NULL, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
+    status = ZwCreateEvent(eventHandle, EVENT_ALL_ACCESS, &obja, eventType, FALSE);
+
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
-    
-    status = ObReferenceObjectByHandle(
-        *eventHandle,
-        EVENT_ALL_ACCESS,
-        NULL,
-        KernelMode,
-        event,
-        NULL);
-    
-    if (!NT_SUCCESS(status)) {
+
+    status = ObReferenceObjectByHandle(*eventHandle, EVENT_ALL_ACCESS, NULL, KernelMode, event, NULL);
+
+    if (!NT_SUCCESS(status))
+    {
         ZwClose(*eventHandle);
         return status;
     }
@@ -411,13 +381,7 @@ CmpCreateEvent(
 }
 
 BOOLEAN
-CmpFileRead (
-    PHHIVE      Hive,
-    ULONG       FileType,
-    PULONG      FileOffset,
-    PVOID       DataBuffer,
-    ULONG       DataLength
-    )
+CmpFileRead(PHHIVE Hive, ULONG FileType, PULONG FileOffset, PVOID DataBuffer, ULONG DataLength)
 /*++
 
 Routine Description:
@@ -454,10 +418,10 @@ Return Value:
 --*/
 {
     NTSTATUS status;
-    LARGE_INTEGER   Offset;
+    LARGE_INTEGER Offset;
     IO_STATUS_BLOCK IoStatus;
     PCMHIVE CmHive;
-    HANDLE  FileHandle;
+    HANDLE FileHandle;
     ULONG LengthToRead;
     HANDLE eventHandle = NULL;
     PKEVENT eventObject = NULL;
@@ -465,26 +429,25 @@ Return Value:
     ASSERT(FIELD_OFFSET(CMHIVE, Hive) == 0);
     CmHive = (PCMHIVE)Hive;
     FileHandle = CmHive->FileHandles[FileType];
-    if (FileHandle == NULL) {
+    if (FileHandle == NULL)
+    {
         return TRUE;
     }
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_IO,"CmpFileRead:\n"));
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_IO,"\tHandle=%08lx  Offset=%08lx  ", FileHandle, *FileOffset));
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_IO,"Buffer=%p  Length=%08lx\n", DataBuffer, DataLength));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_IO, "CmpFileRead:\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_IO, "\tHandle=%08lx  Offset=%08lx  ", FileHandle, *FileOffset));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_IO, "Buffer=%p  Length=%08lx\n", DataBuffer, DataLength));
 
     //
     // Detect attempt to read off end of 2gig file (this should be irrelevent)
     //
-    if ((0xffffffff - *FileOffset) < DataLength) {
-        CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CmpFileRead: runoff\n"));
+    if ((0xffffffff - *FileOffset) < DataLength)
+    {
+        CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CmpFileRead: runoff\n"));
         return FALSE;
     }
 
-    status = CmpCreateEvent(
-        SynchronizationEvent,
-        &eventHandle,
-        &eventObject);
+    status = CmpCreateEvent(SynchronizationEvent, &eventHandle, &eventObject);
     if (!NT_SUCCESS(status))
         return FALSE;
 
@@ -496,7 +459,8 @@ Return Value:
     // each one.
     //
     ASSERT_PASSIVE_LEVEL();
-    while (DataLength > 0) {
+    while (DataLength > 0)
+    {
 
         //
         // Convert ULONG to Large
@@ -507,27 +471,25 @@ Return Value:
         //
         // trim request down if necessary.
         //
-        if (DataLength > MAX_FILE_IO) {
+        if (DataLength > MAX_FILE_IO)
+        {
             LengthToRead = MAX_FILE_IO;
-        } else {
+        }
+        else
+        {
             LengthToRead = DataLength;
         }
 
-        status = ZwReadFile(
-                    FileHandle,
-                    eventHandle,
-                    NULL,               // apcroutine
-                    NULL,               // apccontext
-                    &IoStatus,
-                    DataBuffer,
-                    LengthToRead,
-                    &Offset,
-                    NULL                // key
-                    );
+        status = ZwReadFile(FileHandle, eventHandle,
+                            NULL, // apcroutine
+                            NULL, // apccontext
+                            &IoStatus, DataBuffer, LengthToRead, &Offset,
+                            NULL // key
+        );
 
-        if (STATUS_PENDING == status) {
-            status = KeWaitForSingleObject(eventObject, Executive,
-                                           KernelMode, FALSE, NULL);
+        if (STATUS_PENDING == status)
+        {
+            status = KeWaitForSingleObject(eventObject, Executive, KernelMode, FALSE, NULL);
             ASSERT(STATUS_SUCCESS == status);
             status = IoStatus.Status;
         }
@@ -537,19 +499,23 @@ Return Value:
         //
         *FileOffset = Offset.LowPart + LengthToRead;
         DataLength -= LengthToRead;
-        (PUCHAR)DataBuffer += LengthToRead;
+        (PUCHAR) DataBuffer += LengthToRead;
 
-        if (NT_SUCCESS(status)) {
+        if (NT_SUCCESS(status))
+        {
             ASSERT(IoStatus.Status == status);
-            if (IoStatus.Information != LengthToRead) {
-                CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CmpFileRead:\n\t"));
-                CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"Failure1: status = %08lx  ", status));
-                CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"IoInformation = %08lx\n", IoStatus.Information));
+            if (IoStatus.Information != LengthToRead)
+            {
+                CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CmpFileRead:\n\t"));
+                CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "Failure1: status = %08lx  ", status));
+                CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "IoInformation = %08lx\n", IoStatus.Information));
                 ObDereferenceObject(eventObject);
                 ZwClose(eventHandle);
                 return FALSE;
             }
-        } else {
+        }
+        else
+        {
             //
             // set debugging info
             //
@@ -557,14 +523,14 @@ Return Value:
             CmRegistryIODebug.Handle = FileHandle;
             CmRegistryIODebug.Status = status;
 #ifndef _CM_LDR_
-            DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,"CmpFileRead:\tFailure2: status = %08lx  IoStatus = %08lx\n", status, IoStatus.Status);
+            DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL,
+                       "CmpFileRead:\tFailure2: status = %08lx  IoStatus = %08lx\n", status, IoStatus.Status);
 #endif //_CM_LDR_
 
             ObDereferenceObject(eventObject);
             ZwClose(eventHandle);
             return FALSE;
         }
-
     }
     ObDereferenceObject(eventObject);
     ZwClose(eventHandle);
@@ -572,12 +538,7 @@ Return Value:
 }
 
 BOOLEAN
-CmpFileWriteThroughCache(
-    PHHIVE              Hive,
-    ULONG               FileType,
-    PCMP_OFFSET_ARRAY   offsetArray,
-    ULONG               offsetArrayCount
-    )
+CmpFileWriteThroughCache(PHHIVE Hive, ULONG FileType, PCMP_OFFSET_ARRAY offsetArray, ULONG offsetArrayCount)
 /*++
 
 Routine Description:
@@ -617,22 +578,23 @@ Assumption:
     over the CM_VIEW_SIZE boundary. HvpFindNextDirtyBlock takes care of that !!! 
 --*/
 {
-    ULONG           i;
-    PVOID           DataBuffer;
-    ULONG           DataLength;
-    ULONG           FileOffset;
-    PCMHIVE         CmHive;
-    NTSTATUS        Status;
-    PVOID           Bcb;
-    PVOID           FileBuffer;
-    LARGE_INTEGER   Offset;
+    ULONG i;
+    PVOID DataBuffer;
+    ULONG DataLength;
+    ULONG FileOffset;
+    PCMHIVE CmHive;
+    NTSTATUS Status;
+    PVOID Bcb;
+    PVOID FileBuffer;
+    LARGE_INTEGER Offset;
     IO_STATUS_BLOCK IoStatus;
 
     ASSERT_PASSIVE_LEVEL();
 
     CmHive = (PCMHIVE)CONTAINING_RECORD(Hive, CMHIVE, Hive);
 
-    ASSERT( ((FileType == HFILE_TYPE_EXTERNAL) && (CmHive->FileObject != NULL)) || HiveWritesThroughCache(Hive,FileType) );
+    ASSERT(((FileType == HFILE_TYPE_EXTERNAL) && (CmHive->FileObject != NULL)) ||
+           HiveWritesThroughCache(Hive, FileType));
 
     //ASSERT( IsListEmpty(&(CmHive->PinViewListHead)) == TRUE);
     //ASSERT( CmHive->PinnedViews == 0 );
@@ -641,14 +603,15 @@ Assumption:
     //
     // iterate through the array of data
     //
-    for(i=0;i<offsetArrayCount;i++) {
-        DataBuffer =  offsetArray[i].DataBuffer;
-        DataLength =  offsetArray[i].DataLength;
+    for (i = 0; i < offsetArrayCount; i++)
+    {
+        DataBuffer = offsetArray[i].DataBuffer;
+        DataLength = offsetArray[i].DataLength;
         FileOffset = offsetArray[i].FileOffset;
         //
         // data should never span over CM_VIEW_SIZE boundary
         //
-        ASSERT( (FileOffset & (~(CM_VIEW_SIZE - 1))) == ((FileOffset + DataLength - 1) & (~(CM_VIEW_SIZE - 1))) );
+        ASSERT((FileOffset & (~(CM_VIEW_SIZE - 1))) == ((FileOffset + DataLength - 1) & (~(CM_VIEW_SIZE - 1))));
 
         //
         // unmap any possible mapped view that could overlapp with this range ; not needed !!!!
@@ -659,37 +622,44 @@ Assumption:
         // map and pin data
         //
         Offset.LowPart = FileOffset;
-        try {
-            if( !CcPinRead (CmHive->FileObject,&Offset,DataLength,PIN_WAIT,&Bcb,&FileBuffer) ) {
-                CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"CmpFileWriteThroughCache - could not pin read view i= %lu\n",i));
+        try
+        {
+            if (!CcPinRead(CmHive->FileObject, &Offset, DataLength, PIN_WAIT, &Bcb, &FileBuffer))
+            {
+                CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL,
+                             "CmpFileWriteThroughCache - could not pin read view i= %lu\n", i));
 #if DBG
                 DbgBreakPoint();
 #endif //DBG
-                return FALSE;        
+                return FALSE;
             }
             //
             // copy data to pinned view; we need to do it inside try except, to protect against devices/volumes
             // dismounting from under us.
             //
-            RtlCopyMemory(FileBuffer,DataBuffer, DataLength);
-
-        } except (EXCEPTION_EXECUTE_HANDLER) {
+            RtlCopyMemory(FileBuffer, DataBuffer, DataLength);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             //
             // in low-memory scenarios, CcPinRead throws a STATUS_INSUFFICIENT_RESOURCES
-            // We want to catch this and treat as a  "not enough resources" problem, 
+            // We want to catch this and treat as a  "not enough resources" problem,
             // rather than letting it to surface the kernel call
             //
-            CmKdPrintEx((DPFLTR_CONFIG_ID,DPFLTR_ERROR_LEVEL,"CmpFileWriteThroughCache : CcPinRead has raised :%08lx\n",GetExceptionCode()));
+            CmKdPrintEx((DPFLTR_CONFIG_ID, DPFLTR_ERROR_LEVEL,
+                         "CmpFileWriteThroughCache : CcPinRead has raised :%08lx\n", GetExceptionCode()));
             return FALSE;
         }
 
         //
         // dirty, unpin and flush
         //
-        CcSetDirtyPinnedData (Bcb,NULL);
-        CcUnpinData( Bcb );
-        CcFlushCache (CmHive->FileObject->SectionObjectPointer,(PLARGE_INTEGER)(((ULONG_PTR)(&Offset)) + 1)/*we are private writers*/,DataLength,&IoStatus);
-        if(!NT_SUCCESS(IoStatus.Status) ) {
+        CcSetDirtyPinnedData(Bcb, NULL);
+        CcUnpinData(Bcb);
+        CcFlushCache(CmHive->FileObject->SectionObjectPointer,
+                     (PLARGE_INTEGER)(((ULONG_PTR)(&Offset)) + 1) /*we are private writers*/, DataLength, &IoStatus);
+        if (!NT_SUCCESS(IoStatus.Status))
+        {
             return FALSE;
         }
     }
@@ -697,20 +667,14 @@ Assumption:
     return TRUE;
 }
 
-FAST_MUTEX      CmpWriteLock;   // used to syncronize access to the bellow;
-                                // the only case we ned this is when NtSaveKey is called by different threads
-                                // at the same time; all other calls to CmpFileWrite are made with the reg_lock 
-                                // held exclusively
+FAST_MUTEX CmpWriteLock; // used to syncronize access to the bellow;
+                         // the only case we ned this is when NtSaveKey is called by different threads
+                         // at the same time; all other calls to CmpFileWrite are made with the reg_lock
+                         // held exclusively
 CM_WRITE_BLOCK CmpWriteBlock;
 
 BOOLEAN
-CmpFileWrite(
-    PHHIVE              Hive,
-    ULONG               FileType,
-    PCMP_OFFSET_ARRAY   offsetArray,
-    ULONG               offsetArrayCount,
-    PULONG              FileOffset
-    )
+CmpFileWrite(PHHIVE Hive, ULONG FileType, PCMP_OFFSET_ARRAY offsetArray, ULONG offsetArrayCount, PULONG FileOffset)
 /*++
 
 Routine Description:
@@ -747,57 +711,62 @@ Return Value:
 
 --*/
 {
-    NTSTATUS        status;
-    LARGE_INTEGER   Offset;
-    PCMHIVE         CmHive;
-    HANDLE          FileHandle;
-    ULONG           LengthToWrite;
-    LONG            WaitBufferCount = 0;
-    LONG            idx;
-    ULONG           arrayCount = 0;
-    PVOID           DataBuffer;
-    ULONG           DataLength;
-    BOOLEAN         ret_val = TRUE;
+    NTSTATUS status;
+    LARGE_INTEGER Offset;
+    PCMHIVE CmHive;
+    HANDLE FileHandle;
+    ULONG LengthToWrite;
+    LONG WaitBufferCount = 0;
+    LONG idx;
+    ULONG arrayCount = 0;
+    PVOID DataBuffer;
+    ULONG DataLength;
+    BOOLEAN ret_val = TRUE;
 
-    if (CmpNoWrite) {
+    if (CmpNoWrite)
+    {
         return TRUE;
     }
 
     ASSERT(FIELD_OFFSET(CMHIVE, Hive) == 0);
     CmHive = (PCMHIVE)Hive;
     FileHandle = CmHive->FileHandles[FileType];
-    if (FileHandle == NULL) {
+    if (FileHandle == NULL)
+    {
         return TRUE;
     }
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_IO,"CmpFileWrite:\n"));
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_IO,"\tHandle=%08lx  ", FileHandle));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_IO, "CmpFileWrite:\n"));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_IO, "\tHandle=%08lx  ", FileHandle));
 
     //ASSERT( !HiveWritesThroughCache(Hive,FileType) );
 
     ExAcquireFastMutexUnsafe(&CmpWriteLock);
-    
-    for (idx = 0; idx < MAXIMUM_WAIT_OBJECTS; idx++) {
+
+    for (idx = 0; idx < MAXIMUM_WAIT_OBJECTS; idx++)
+    {
         CmpWriteBlock.EventHandles[idx] = NULL;
 #if DBG
         CmpWriteBlock.EventObjects[idx] = NULL;
 #endif
     }
-    
+
     //
     // decide whether we wait for IOs to complete or just issue them and
     // rely on the CcFlushCache to do the job
     //
-    
+
     // Bring pages being written into memory first to allow disk to write
     // buffer contiguously.
-    for (idx = 0; (ULONG) idx < offsetArrayCount; idx++) {
-        char * start = offsetArray[idx].DataBuffer;
-        char * end = (char *) start + offsetArray[idx].DataLength;
-        while (start < end) {
+    for (idx = 0; (ULONG)idx < offsetArrayCount; idx++)
+    {
+        char *start = offsetArray[idx].DataBuffer;
+        char *end = (char *)start + offsetArray[idx].DataLength;
+        while (start < end)
+        {
             // perftouchbuffer globally declared so that compiler won't try
             // to remove it and this loop (if its smart enough?).
-            perftouchbuffer += (ULONG) *start;
+            perftouchbuffer += (ULONG)*start;
             start += PAGE_SIZE;
         }
     }
@@ -814,31 +783,35 @@ Return Value:
     DataLength = 0;
     // This outer loop is hit more than once if the MAXIMUM_WAIT_OBJECTS limit
     // is hit before the offset array is drained.
-    while (arrayCount < offsetArrayCount) {
+    while (arrayCount < offsetArrayCount)
+    {
         WaitBufferCount = 0;
 
         // This loop fills the wait buffer.
-        while ((arrayCount < offsetArrayCount) &&
-               (WaitBufferCount < MAXIMUM_WAIT_OBJECTS)) {
+        while ((arrayCount < offsetArrayCount) && (WaitBufferCount < MAXIMUM_WAIT_OBJECTS))
+        {
 
             // If data length isn't zero than the wait buffer filled before the
             // buffer in the last offsetArray element was sent to write file.
-            if (DataLength == 0) {
+            if (DataLength == 0)
+            {
                 *FileOffset = offsetArray[arrayCount].FileOffset;
-                DataBuffer =  offsetArray[arrayCount].DataBuffer;
-                DataLength =  offsetArray[arrayCount].DataLength;
+                DataBuffer = offsetArray[arrayCount].DataBuffer;
+                DataLength = offsetArray[arrayCount].DataLength;
                 //
                 // Detect attempt to read off end of 2gig file
                 // (this should be irrelevent)
                 //
-                if ((0xffffffff - *FileOffset) < DataLength) {
-                    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_BUGCHECK,"CmpFileWrite: runoff\n"));
+                if ((0xffffffff - *FileOffset) < DataLength)
+                {
+                    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_BUGCHECK, "CmpFileWrite: runoff\n"));
                     goto Error_Exit;
                 }
             }
             // else still more to write out of last buffer.
 
-            while ((DataLength > 0) && (WaitBufferCount < MAXIMUM_WAIT_OBJECTS)) {
+            while ((DataLength > 0) && (WaitBufferCount < MAXIMUM_WAIT_OBJECTS))
+            {
 
                 //
                 // Convert ULONG to Large
@@ -849,76 +822,74 @@ Return Value:
                 //
                 // trim request down if necessary.
                 //
-                if (DataLength > MAX_FILE_IO) {
+                if (DataLength > MAX_FILE_IO)
+                {
                     LengthToWrite = MAX_FILE_IO;
-                } else {
+                }
+                else
+                {
                     LengthToWrite = DataLength;
                 }
 
                 // Previously created events are reused.
-                if (CmpWriteBlock.EventHandles[WaitBufferCount] == NULL) {
-                    status = CmpCreateEvent(SynchronizationEvent,
-                                            &(CmpWriteBlock.EventHandles[WaitBufferCount]),
+                if (CmpWriteBlock.EventHandles[WaitBufferCount] == NULL)
+                {
+                    status = CmpCreateEvent(SynchronizationEvent, &(CmpWriteBlock.EventHandles[WaitBufferCount]),
                                             &(CmpWriteBlock.EventObjects[WaitBufferCount]));
-                    if (!NT_SUCCESS(status)) {
+                    if (!NT_SUCCESS(status))
+                    {
                         // Make sure we don't try to clean this up.
                         CmpWriteBlock.EventHandles[WaitBufferCount] = NULL;
                         goto Error_Exit;
                     }
                 }
-                
-                status = ZwWriteFile(FileHandle,
-                                     CmpWriteBlock.EventHandles[WaitBufferCount],
-                                     NULL,               // apcroutine
-                                     NULL,               // apccontext
-                                     &(CmpWriteBlock.IoStatus[WaitBufferCount]),
-                                     DataBuffer,
-                                     LengthToWrite,
-                                     &Offset,
-                                     NULL);
-                        
-                if (!NT_SUCCESS(status)) {
+
+                status =
+                    ZwWriteFile(FileHandle, CmpWriteBlock.EventHandles[WaitBufferCount],
+                                NULL, // apcroutine
+                                NULL, // apccontext
+                                &(CmpWriteBlock.IoStatus[WaitBufferCount]), DataBuffer, LengthToWrite, &Offset, NULL);
+
+                if (!NT_SUCCESS(status))
+                {
                     goto Error_Exit;
-                } 
+                }
 
                 WaitBufferCount++;
-                
+
                 //
                 // adjust offsets
                 //
                 *FileOffset = Offset.LowPart + LengthToWrite;
                 DataLength -= LengthToWrite;
-                (PUCHAR)DataBuffer += LengthToWrite;
+                (PUCHAR) DataBuffer += LengthToWrite;
             } // while (DataLength > 0 && WaitBufferCount < MAXIMUM_WAIT_OBJECTS)
-            
-            arrayCount++;
-            
-        } // while (arrayCount < offsetArrayCount && 
-          //        WaitBufferCount < MAXIMUM_WAIT_OBJECTS)
 
-        status = KeWaitForMultipleObjects(WaitBufferCount, 
-                                          CmpWriteBlock.EventObjects,
-                                          WaitAll,
-                                          Executive,
-                                          KernelMode, 
-                                          FALSE, 
-                                          NULL,
-                                          CmpWriteBlock.WaitBlockArray);
-    
+            arrayCount++;
+
+        } // while (arrayCount < offsetArrayCount &&
+        //        WaitBufferCount < MAXIMUM_WAIT_OBJECTS)
+
+        status = KeWaitForMultipleObjects(WaitBufferCount, CmpWriteBlock.EventObjects, WaitAll, Executive, KernelMode,
+                                          FALSE, NULL, CmpWriteBlock.WaitBlockArray);
+
         if (!NT_SUCCESS(status))
             goto Error_Exit;
-    
-        for (idx = 0; idx < WaitBufferCount; idx++) {
-            if (!NT_SUCCESS(CmpWriteBlock.IoStatus[idx].Status)) {
+
+        for (idx = 0; idx < WaitBufferCount; idx++)
+        {
+            if (!NT_SUCCESS(CmpWriteBlock.IoStatus[idx].Status))
+            {
                 status = CmpWriteBlock.IoStatus[idx].Status;
                 ret_val = FALSE;
                 goto Done;
             }
         }
-        
+
         // There may still be more to do if the last element held a big buffer
         // and the wait buffer filled before it was all sent to the file.
-        if (DataLength > 0) {
+        if (DataLength > 0)
+        {
             arrayCount--;
         }
 
@@ -935,7 +906,7 @@ Error_Exit:
     CmRegistryIODebug.Handle = FileHandle;
     CmRegistryIODebug.Status = status;
 #ifndef _CM_LDR_
-    DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,"CmpFileWrite: error exiting %d\n", status);
+    DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL, "CmpFileWrite: error exiting %d\n", status);
 #endif //_CM_LDR_
     //
     // if WaitBufferCount > 0 then we have successfully issued
@@ -943,19 +914,14 @@ Error_Exit:
     // cannot return from this routine until all the successfully
     // issued I/Os have completed.
     //
-    if (WaitBufferCount > 0) {
+    if (WaitBufferCount > 0)
+    {
         //
-        // only if we decided that we want to wait for the write to complete 
+        // only if we decided that we want to wait for the write to complete
         // (log files and hives not using the mapped views technique)
         //
-        status = KeWaitForMultipleObjects(WaitBufferCount, 
-                                          CmpWriteBlock.EventObjects,
-                                          WaitAll,
-                                          Executive,
-                                          KernelMode, 
-                                          FALSE, 
-                                          NULL,
-                                          CmpWriteBlock.WaitBlockArray);
+        status = KeWaitForMultipleObjects(WaitBufferCount, CmpWriteBlock.EventObjects, WaitAll, Executive, KernelMode,
+                                          FALSE, NULL, CmpWriteBlock.WaitBlockArray);
     }
 
 
@@ -963,8 +929,9 @@ Error_Exit:
 Done:
     idx = 0;
     // Clean up open event handles and objects.
-    while ((idx < MAXIMUM_WAIT_OBJECTS) && (CmpWriteBlock.EventHandles[idx] != NULL)) {
-        ASSERT( CmpWriteBlock.EventObjects[idx] );
+    while ((idx < MAXIMUM_WAIT_OBJECTS) && (CmpWriteBlock.EventHandles[idx] != NULL))
+    {
+        ASSERT(CmpWriteBlock.EventObjects[idx]);
         ObDereferenceObject(CmpWriteBlock.EventObjects[idx]);
         ZwClose(CmpWriteBlock.EventHandles[idx]);
         idx++;
@@ -975,14 +942,9 @@ Done:
     return ret_val;
 }
 
-
+
 BOOLEAN
-CmpFileFlush (
-    PHHIVE          Hive,
-    ULONG           FileType,
-    PLARGE_INTEGER  FileOffset,
-    ULONG           Length
-    )
+CmpFileFlush(PHHIVE Hive, ULONG FileType, PLARGE_INTEGER FileOffset, ULONG Length)
 /*++
 
 Routine Description:
@@ -1014,47 +976,53 @@ Note:
     and the hive uses the mapped-views method.
 --*/
 {
-    NTSTATUS        status;
+    NTSTATUS status;
     IO_STATUS_BLOCK IoStatus;
-    PCMHIVE         CmHive;
-    HANDLE          FileHandle;
+    PCMHIVE CmHive;
+    HANDLE FileHandle;
 
     ASSERT(FIELD_OFFSET(CMHIVE, Hive) == 0);
     CmHive = (PCMHIVE)Hive;
     FileHandle = CmHive->FileHandles[FileType];
-    if (FileHandle == NULL) {
+    if (FileHandle == NULL)
+    {
         return TRUE;
     }
 
-    if (CmpNoWrite) {
+    if (CmpNoWrite)
+    {
         return TRUE;
     }
 
-    CmKdPrintEx((DPFLTR_CONFIG_ID,CML_IO,"CmpFileFlush:\n\tHandle = %08lx\n", FileHandle));
+    CmKdPrintEx((DPFLTR_CONFIG_ID, CML_IO, "CmpFileFlush:\n\tHandle = %08lx\n", FileHandle));
 
     ASSERT_PASSIVE_LEVEL();
 
 
-    if( HiveWritesThroughCache(Hive,FileType) == TRUE ) {       
+    if (HiveWritesThroughCache(Hive, FileType) == TRUE)
+    {
         //
         // OK, we need to flush using CcFlushCache
         //
-        CcFlushCache (CmHive->FileObject->SectionObjectPointer,(PLARGE_INTEGER)((ULONG_PTR)FileOffset + 1)/*we are private writers*/,Length,&IoStatus);
+        CcFlushCache(CmHive->FileObject->SectionObjectPointer,
+                     (PLARGE_INTEGER)((ULONG_PTR)FileOffset + 1) /*we are private writers*/, Length, &IoStatus);
         status = IoStatus.Status;
-    } else {
+    }
+    else
+    {
         //
         // hive loaded into paged pool; or not primary
         //
-        status = ZwFlushBuffersFile(
-                    FileHandle,
-                    &IoStatus
-                    );
+        status = ZwFlushBuffersFile(FileHandle, &IoStatus);
     }
 
-    if (NT_SUCCESS(status)) {
+    if (NT_SUCCESS(status))
+    {
         ASSERT(IoStatus.Status == status);
         return TRUE;
-    } else {
+    }
+    else
+    {
         //
         // set debugging info
         //
@@ -1063,7 +1031,8 @@ Note:
         CmRegistryIODebug.Status = status;
 
 #ifndef _CM_LDR_
-        DbgPrintEx(DPFLTR_CONFIG_ID,DPFLTR_TRACE_LEVEL,"CmpFileFlush:\tFailure1: status = %08lx  IoStatus = %08lx\n",status,IoStatus.Status);
+        DbgPrintEx(DPFLTR_CONFIG_ID, DPFLTR_TRACE_LEVEL, "CmpFileFlush:\tFailure1: status = %08lx  IoStatus = %08lx\n",
+                   status, IoStatus.Status);
 #endif //_CM_LDR_
 
 #ifdef DRAGOSS_PRIVATE_DEBUG

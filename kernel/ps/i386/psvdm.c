@@ -22,16 +22,18 @@ Revision History:
 
 
 #if DBG
-#define ASSERTEQUAL(value1, value2, string)     \
-        if ((ULONG)value1 != (ULONG)value2) {   \
-            DbgPrint string ;                   \
-        }
+#define ASSERTEQUAL(value1, value2, string) \
+    if ((ULONG)value1 != (ULONG)value2)     \
+    {                                       \
+        DbgPrint string;                    \
+    }
 
-#define ASSERTEQUALBREAK(value1, value2, string)\
-        if ((ULONG)value1 != (ULONG)value2) {   \
-            DbgPrint string ;                   \
-            DbgBreakPoint();                    \
-        }
+#define ASSERTEQUALBREAK(value1, value2, string) \
+    if ((ULONG)value1 != (ULONG)value2)          \
+    {                                            \
+        DbgPrint string;                         \
+        DbgBreakPoint();                         \
+    }
 #else
 
 #define ASSERTEQUAL(value1, value2, string)
@@ -45,48 +47,32 @@ Revision History:
 //
 
 NTSTATUS
-Psp386InstallIoHandler(
-    IN PEPROCESS Process,
-    IN PEMULATOR_ACCESS_ENTRY EmulatorAccessEntry,
-    IN ULONG PortNumber,
-    IN ULONG Context
-    );
+Psp386InstallIoHandler(IN PEPROCESS Process, IN PEMULATOR_ACCESS_ENTRY EmulatorAccessEntry, IN ULONG PortNumber,
+                       IN ULONG Context);
 
 NTSTATUS
-Psp386RemoveIoHandler(
-    IN PEPROCESS Process,
-    IN PEMULATOR_ACCESS_ENTRY EmulatorAccessEntry,
-    IN ULONG PortNumber
-    );
+Psp386RemoveIoHandler(IN PEPROCESS Process, IN PEMULATOR_ACCESS_ENTRY EmulatorAccessEntry, IN ULONG PortNumber);
 
 NTSTATUS
-Psp386InsertVdmIoHandlerBlock(
-    IN PEPROCESS Process,
-    IN PVDM_IO_HANDLER VdmIoHandler
-    );
+Psp386InsertVdmIoHandlerBlock(IN PEPROCESS Process, IN PVDM_IO_HANDLER VdmIoHandler);
 
 PVDM_IO_HANDLER
-Psp386GetVdmIoHandler(
-    IN PEPROCESS Process,
-    IN ULONG PortNumber
-    );
+Psp386GetVdmIoHandler(IN PEPROCESS Process, IN ULONG PortNumber);
 
 NTSTATUS
-Psp386CreateVdmIoListHead(
-    IN PEPROCESS Process
-    );
+Psp386CreateVdmIoListHead(IN PEPROCESS Process);
 
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,PspVdmInitialize)
-#pragma alloc_text(PAGE,PspSetProcessIoHandlers)
-#pragma alloc_text(PAGE,Ps386GetVdmIoHandler)
-#pragma alloc_text(PAGE,Psp386RemoveIoHandler)
-#pragma alloc_text(PAGE,Psp386InstallIoHandler)
-#pragma alloc_text(PAGE,Psp386CreateVdmIoListHead)
-#pragma alloc_text(PAGE,Psp386InsertVdmIoHandlerBlock)
-#pragma alloc_text(PAGE,Psp386GetVdmIoHandler)
-#pragma alloc_text(PAGE,PspDeleteVdmObjects)
+#pragma alloc_text(INIT, PspVdmInitialize)
+#pragma alloc_text(PAGE, PspSetProcessIoHandlers)
+#pragma alloc_text(PAGE, Ps386GetVdmIoHandler)
+#pragma alloc_text(PAGE, Psp386RemoveIoHandler)
+#pragma alloc_text(PAGE, Psp386InstallIoHandler)
+#pragma alloc_text(PAGE, Psp386CreateVdmIoListHead)
+#pragma alloc_text(PAGE, Psp386InsertVdmIoHandlerBlock)
+#pragma alloc_text(PAGE, Psp386GetVdmIoHandler)
+#pragma alloc_text(PAGE, PspDeleteVdmObjects)
 #endif
 
 
@@ -96,14 +82,8 @@ Psp386CreateVdmIoListHead(
 ERESOURCE VdmIoListCreationResource;
 
 
-
-
 NTSTATUS
-PspSetProcessIoHandlers(
-    IN PEPROCESS Process,
-    IN PVOID IoHandlerInformation,
-    IN ULONG IoHandlerLength
-    )
+PspSetProcessIoHandlers(IN PEPROCESS Process, IN PVOID IoHandlerInformation, IN ULONG IoHandlerLength)
 /*++
 
 Routine Description:
@@ -137,13 +117,15 @@ Return Value:
     //
     // Insure that this call was made from KernelMode
     //
-    if (KeGetPreviousMode() != KernelMode) {
-        return STATUS_INVALID_PARAMETER;    // this info type invalid in usermode
+    if (KeGetPreviousMode() != KernelMode)
+    {
+        return STATUS_INVALID_PARAMETER; // this info type invalid in usermode
     }
     //
     // Insure that the data passed is long enough
     //
-    if (IoHandlerLength < (ULONG)sizeof( PROCESS_IO_PORT_HANDLER_INFORMATION)) {
+    if (IoHandlerLength < (ULONG)sizeof(PROCESS_IO_PORT_HANDLER_INFORMATION))
+    {
         return STATUS_INFO_LENGTH_MISMATCH;
     }
     IoHandlerInfo = IoHandlerInformation;
@@ -153,58 +135,51 @@ Return Value:
     // determine what size of port the specified handler is being installed
     // for, and then iterate over each individual port.
     //
-    for (EmulatorEntryNumber = 0, EmulatorAccess =
-            IoHandlerInfo->EmulatorAccessEntries;
-        EmulatorEntryNumber < IoHandlerInfo->NumEntries;
-        EmulatorEntryNumber++, EmulatorAccess++) {
+    for (EmulatorEntryNumber = 0, EmulatorAccess = IoHandlerInfo->EmulatorAccessEntries;
+         EmulatorEntryNumber < IoHandlerInfo->NumEntries; EmulatorEntryNumber++, EmulatorAccess++)
+    {
 
-            switch (EmulatorAccess->AccessType) {
-            case Uchar:
-                PortSize = 1;
-                break;
-            case Ushort:
-                PortSize = 2;
-                break;
-            case Ulong:
-            default:
-                PortSize = 4;
-            }
+        switch (EmulatorAccess->AccessType)
+        {
+        case Uchar:
+            PortSize = 1;
+            break;
+        case Ushort:
+            PortSize = 2;
+            break;
+        case Ulong:
+        default:
+            PortSize = 4;
+        }
 
-            for (NumberPorts = 0;
-                NumberPorts < EmulatorAccess->NumConsecutivePorts;
-                NumberPorts++) {
-                    if (IoHandlerInfo->Install) {
-                        Status = Psp386InstallIoHandler(
-                            Process,
-                            EmulatorAccess,
-                            EmulatorAccess->BasePort + NumberPorts * PortSize,
-                            IoHandlerInfo->Context
-                            );
-                        if (NT_SUCCESS(Status)) {
-                        }
-                    } else {
-                        Status = Psp386RemoveIoHandler(
-                            Process,
-                            EmulatorAccess,
-                            EmulatorAccess->BasePort + NumberPorts * PortSize
-                            );
-                    }
-                    if (!NT_SUCCESS(Status)) {
-                        goto exitloop;
-                    }
+        for (NumberPorts = 0; NumberPorts < EmulatorAccess->NumConsecutivePorts; NumberPorts++)
+        {
+            if (IoHandlerInfo->Install)
+            {
+                Status = Psp386InstallIoHandler(
+                    Process, EmulatorAccess, EmulatorAccess->BasePort + NumberPorts * PortSize, IoHandlerInfo->Context);
+                if (NT_SUCCESS(Status))
+                {
+                }
             }
+            else
+            {
+                Status =
+                    Psp386RemoveIoHandler(Process, EmulatorAccess, EmulatorAccess->BasePort + NumberPorts * PortSize);
+            }
+            if (!NT_SUCCESS(Status))
+            {
+                goto exitloop;
+            }
+        }
     }
     Status = STATUS_SUCCESS;
 exitloop:
     return Status;
-
 }
 
 
-VOID
-PspDeleteVdmObjects(
-    IN PEPROCESS Process
-    )
+VOID PspDeleteVdmObjects(IN PEPROCESS Process)
 /*++
 
 Routine Description:
@@ -224,12 +199,13 @@ Return Value:
     PVDM_PROCESS_OBJECTS pVdmObjects;
     PVDM_IO_HANDLER p1, p2;
     PVDM_IO_LISTHEAD p3;
-    PLIST_ENTRY  Next;
+    PLIST_ENTRY Next;
     PDELAYINTIRQ pDelayIntIrq;
 
     pVdmObjects = Process->VdmObjects;
 
-    if (pVdmObjects == NULL)  {
+    if (pVdmObjects == NULL)
+    {
         return;
     }
 
@@ -239,24 +215,26 @@ Return Value:
     p1 = NULL;
     p3 = pVdmObjects->VdmIoListHead;
 
-    if (p3) {
+    if (p3)
+    {
         p2 = p3->VdmIoHandlerList;
 
-        while (p2) {
+        while (p2)
+        {
             p1 = p2;
             p2 = p1->Next;
-            ExFreePool( p1 );
+            ExFreePool(p1);
         }
 
         ExDeleteResourceLite(&p3->VdmIoResource);
 
-        ExFreePool( p3 );
+        ExFreePool(p3);
         pVdmObjects->VdmIoListHead = NULL;
     }
 
-    if (pVdmObjects->pIcaUserData) {
-        PsReturnProcessPagedPoolQuota (Process,
-                                       sizeof(VDMICAUSERDATA));
+    if (pVdmObjects->pIcaUserData)
+    {
+        PsReturnProcessPagedPoolQuota(Process, sizeof(VDMICAUSERDATA));
 
         ExFreePool(pVdmObjects->pIcaUserData);
     }
@@ -272,33 +250,30 @@ Return Value:
 
     Next = pVdmObjects->DelayIntListHead.Flink;
 
-    while (Next != &pVdmObjects->DelayIntListHead) {
+    while (Next != &pVdmObjects->DelayIntListHead)
+    {
         pDelayIntIrq = CONTAINING_RECORD(Next, DELAYINTIRQ, DelayIntListEntry);
         Next = Next->Flink;
-        RemoveEntryList (&pDelayIntIrq->DelayIntListEntry);
-        ExFreePool (pDelayIntIrq);
+        RemoveEntryList(&pDelayIntIrq->DelayIntListEntry);
+        ExFreePool(pDelayIntIrq);
         PoolQuota += sizeof(DELAYINTIRQ);
     }
 
-    if (PoolQuota != 0) {
+    if (PoolQuota != 0)
+    {
         PsReturnProcessNonPagedPoolQuota(Process, PoolQuota);
     }
 
-    PsReturnProcessNonPagedPoolQuota (Process, sizeof(VDM_PROCESS_OBJECTS));
+    PsReturnProcessNonPagedPoolQuota(Process, sizeof(VDM_PROCESS_OBJECTS));
 
-    ExFreePool (pVdmObjects);
+    ExFreePool(pVdmObjects);
 
     Process->VdmObjects = NULL;
 }
 
 
-
 NTSTATUS
-Psp386RemoveIoHandler(
-    IN PEPROCESS Process,
-    IN PEMULATOR_ACCESS_ENTRY EmulatorAccessEntry,
-    IN ULONG PortNumber
-    )
+Psp386RemoveIoHandler(IN PEPROCESS Process, IN PEMULATOR_ACCESS_ENTRY EmulatorAccessEntry, IN ULONG PortNumber)
 /*++
 
 Routine Description:
@@ -326,7 +301,8 @@ Return Value:
     // Ensure we have a vdm process which is initialized
     // correctly for VdmIoHandlers
     //
-    if (!pVdmObjects) {
+    if (!pVdmObjects)
+    {
 #if DBG
         DbgPrint("Psp386RemoveIoHandler: uninitialized VdmObjects\n");
 #endif
@@ -338,7 +314,8 @@ Return Value:
     // If the list does not have a head, then there are no handlers to
     // remove.
     //
-    if (!pVdmObjects->VdmIoListHead) {
+    if (!pVdmObjects->VdmIoListHead)
+    {
 #if DBG
         DbgPrint("Psp386RemoveIoHandler : attempt to remove non-existent hdlr\n");
 #endif
@@ -349,14 +326,12 @@ Return Value:
     // Lock the list, so we can insure a correct update.
     //
     KeRaiseIrql(APC_LEVEL, &OldIrql);
-    ExAcquireResourceExclusiveLite(&pVdmObjects->VdmIoListHead->VdmIoResource,TRUE);
+    ExAcquireResourceExclusiveLite(&pVdmObjects->VdmIoListHead->VdmIoResource, TRUE);
 
-    VdmIoHandler = Psp386GetVdmIoHandler(
-        Process,
-        PortNumber & ~0x3
-        );
+    VdmIoHandler = Psp386GetVdmIoHandler(Process, PortNumber & ~0x3);
 
-    if (!VdmIoHandler) {
+    if (!VdmIoHandler)
+    {
 #if DBG
         DbgPrint("Psp386RemoveIoHandler : attempt to remove non-existent hdlr\n");
 #endif
@@ -365,118 +340,103 @@ Return Value:
         return STATUS_SUCCESS;
     }
 
-    ASSERTEQUALBREAK(
-        VdmIoHandler->PortNumber,
-        (PortNumber & ~0x3),
-        ("Psp386RemoveIoHandler : Bad pointer returned from GetVdmIoHandler\n")
-        );
+    ASSERTEQUALBREAK(VdmIoHandler->PortNumber, (PortNumber & ~0x3),
+                     ("Psp386RemoveIoHandler : Bad pointer returned from GetVdmIoHandler\n"));
 
-    if (EmulatorAccessEntry->AccessMode & EMULATOR_READ_ACCESS) {
-        switch (EmulatorAccessEntry->AccessType) {
+    if (EmulatorAccessEntry->AccessMode & EMULATOR_READ_ACCESS)
+    {
+        switch (EmulatorAccessEntry->AccessType)
+        {
         case Uchar:
-            if (EmulatorAccessEntry->StringSupport) {
-                ASSERTEQUAL(
-                    EmulatorAccessEntry->Routine,
-                    VdmIoHandler->IoFunctions[0].UcharStringIo[PortNumber % 4],
-                    ("Psp386RemoveIoHandler : UcharString fns don't match\n")
-                    );
+            if (EmulatorAccessEntry->StringSupport)
+            {
+                ASSERTEQUAL(EmulatorAccessEntry->Routine, VdmIoHandler->IoFunctions[0].UcharStringIo[PortNumber % 4],
+                            ("Psp386RemoveIoHandler : UcharString fns don't match\n"));
                 VdmIoHandler->IoFunctions[0].UcharStringIo[PortNumber % 4] = NULL;
-            } else {
-                ASSERTEQUAL(
-                    EmulatorAccessEntry->Routine,
-                    VdmIoHandler->IoFunctions[0].UcharIo[PortNumber % 4],
-                    ("Psp386RemoveIoHandler : Uchar fns don't match\n")
-                    );
+            }
+            else
+            {
+                ASSERTEQUAL(EmulatorAccessEntry->Routine, VdmIoHandler->IoFunctions[0].UcharIo[PortNumber % 4],
+                            ("Psp386RemoveIoHandler : Uchar fns don't match\n"));
                 VdmIoHandler->IoFunctions[0].UcharIo[PortNumber % 4] = NULL;
             }
             break;
         case Ushort:
-            if (EmulatorAccessEntry->StringSupport) {
-                ASSERTEQUAL(
-                    EmulatorAccessEntry->Routine,
-                    VdmIoHandler->IoFunctions[0].UshortStringIo[(PortNumber & 2) >> 1],
-                    ("Psp386RemoveIoHandler : UshortString fns don't match\n")
-                    );
+            if (EmulatorAccessEntry->StringSupport)
+            {
+                ASSERTEQUAL(EmulatorAccessEntry->Routine,
+                            VdmIoHandler->IoFunctions[0].UshortStringIo[(PortNumber & 2) >> 1],
+                            ("Psp386RemoveIoHandler : UshortString fns don't match\n"));
                 VdmIoHandler->IoFunctions[0].UshortStringIo[(PortNumber & 2) >> 1] = NULL;
-            } else {
-                ASSERTEQUAL(
-                    EmulatorAccessEntry->Routine,
-                    VdmIoHandler->IoFunctions[0].UshortIo[(PortNumber & 2) >> 1],
-                    ("Psp386RemoveIoHandler : Ushort fns don't match\n")
-                    );
+            }
+            else
+            {
+                ASSERTEQUAL(EmulatorAccessEntry->Routine, VdmIoHandler->IoFunctions[0].UshortIo[(PortNumber & 2) >> 1],
+                            ("Psp386RemoveIoHandler : Ushort fns don't match\n"));
                 VdmIoHandler->IoFunctions[0].UshortIo[(PortNumber & 2) >> 1] = NULL;
             }
             break;
         case Ulong:
-            if (EmulatorAccessEntry->StringSupport) {
-                ASSERTEQUAL(
-                    EmulatorAccessEntry->Routine,
-                    VdmIoHandler->IoFunctions[0].UlongStringIo,
-                    ("Psp386RemoveIoHandler : UlongString fns don't match\n")
-                    );
+            if (EmulatorAccessEntry->StringSupport)
+            {
+                ASSERTEQUAL(EmulatorAccessEntry->Routine, VdmIoHandler->IoFunctions[0].UlongStringIo,
+                            ("Psp386RemoveIoHandler : UlongString fns don't match\n"));
                 VdmIoHandler->IoFunctions[0].UlongStringIo = NULL;
-            } else {
-                ASSERTEQUAL(
-                    EmulatorAccessEntry->Routine,
-                    VdmIoHandler->IoFunctions[0].UlongIo,
-                    ("Psp386RemoveIoHandler : Ulong fns don't match\n")
-                    );
+            }
+            else
+            {
+                ASSERTEQUAL(EmulatorAccessEntry->Routine, VdmIoHandler->IoFunctions[0].UlongIo,
+                            ("Psp386RemoveIoHandler : Ulong fns don't match\n"));
                 VdmIoHandler->IoFunctions[0].UlongIo = NULL;
             }
             break;
         }
     }
 
-    if (EmulatorAccessEntry->AccessMode & EMULATOR_WRITE_ACCESS) {
-        switch (EmulatorAccessEntry->AccessType) {
+    if (EmulatorAccessEntry->AccessMode & EMULATOR_WRITE_ACCESS)
+    {
+        switch (EmulatorAccessEntry->AccessType)
+        {
         case Uchar:
-            if (EmulatorAccessEntry->StringSupport) {
-                ASSERTEQUAL(
-                    EmulatorAccessEntry->Routine,
-                    VdmIoHandler->IoFunctions[1].UcharStringIo[PortNumber % 4],
-                    ("Psp386RemoveIoHandler : UcharString fns don't match\n")
-                    );
+            if (EmulatorAccessEntry->StringSupport)
+            {
+                ASSERTEQUAL(EmulatorAccessEntry->Routine, VdmIoHandler->IoFunctions[1].UcharStringIo[PortNumber % 4],
+                            ("Psp386RemoveIoHandler : UcharString fns don't match\n"));
                 VdmIoHandler->IoFunctions[1].UcharStringIo[PortNumber % 4] = NULL;
-            } else {
-                ASSERTEQUAL(
-                    EmulatorAccessEntry->Routine,
-                    VdmIoHandler->IoFunctions[1].UcharIo[PortNumber % 4],
-                    ("Psp386RemoveIoHandler : Uchar fns don't match\n")
-                    );
+            }
+            else
+            {
+                ASSERTEQUAL(EmulatorAccessEntry->Routine, VdmIoHandler->IoFunctions[1].UcharIo[PortNumber % 4],
+                            ("Psp386RemoveIoHandler : Uchar fns don't match\n"));
                 VdmIoHandler->IoFunctions[1].UcharIo[PortNumber % 4] = NULL;
             }
             break;
         case Ushort:
-            if (EmulatorAccessEntry->StringSupport) {
-                ASSERTEQUAL(
-                    EmulatorAccessEntry->Routine,
-                    VdmIoHandler->IoFunctions[1].UshortStringIo[(PortNumber & 2) >> 1],
-                    ("Psp386RemoveIoHandler : UshortString fns don't match\n")
-                    );
+            if (EmulatorAccessEntry->StringSupport)
+            {
+                ASSERTEQUAL(EmulatorAccessEntry->Routine,
+                            VdmIoHandler->IoFunctions[1].UshortStringIo[(PortNumber & 2) >> 1],
+                            ("Psp386RemoveIoHandler : UshortString fns don't match\n"));
                 VdmIoHandler->IoFunctions[1].UshortStringIo[(PortNumber & 2) >> 1] = NULL;
-            } else {
-                ASSERTEQUAL(
-                    EmulatorAccessEntry->Routine,
-                    VdmIoHandler->IoFunctions[1].UshortIo[(PortNumber & 2) >> 1],
-                    ("Psp386RemoveIoHandler : Ushort fns don't match\n")
-                    );
+            }
+            else
+            {
+                ASSERTEQUAL(EmulatorAccessEntry->Routine, VdmIoHandler->IoFunctions[1].UshortIo[(PortNumber & 2) >> 1],
+                            ("Psp386RemoveIoHandler : Ushort fns don't match\n"));
                 VdmIoHandler->IoFunctions[1].UshortIo[(PortNumber & 2) >> 1] = NULL;
             }
             break;
         case Ulong:
-            if (EmulatorAccessEntry->StringSupport) {
-                ASSERTEQUAL(
-                    EmulatorAccessEntry->Routine,
-                    VdmIoHandler->IoFunctions[1].UlongStringIo,
-                    ("Psp386RemoveIoHandler : UlongString fns don't match\n")
-                    );
+            if (EmulatorAccessEntry->StringSupport)
+            {
+                ASSERTEQUAL(EmulatorAccessEntry->Routine, VdmIoHandler->IoFunctions[1].UlongStringIo,
+                            ("Psp386RemoveIoHandler : UlongString fns don't match\n"));
                 VdmIoHandler->IoFunctions[1].UlongStringIo = NULL;
-            } else {
-                ASSERTEQUAL(
-                    EmulatorAccessEntry->Routine,
-                    VdmIoHandler->IoFunctions[1].UlongIo,
-                    ("Psp386RemoveIoHandler : Ulong fns don't match\n")
-                    );
+            }
+            else
+            {
+                ASSERTEQUAL(EmulatorAccessEntry->Routine, VdmIoHandler->IoFunctions[1].UlongIo,
+                            ("Psp386RemoveIoHandler : Ulong fns don't match\n"));
                 VdmIoHandler->IoFunctions[1].UlongIo = NULL;
             }
             break;
@@ -487,16 +447,11 @@ Return Value:
     KeLowerIrql(OldIrql);
 
     return STATUS_SUCCESS;
-
 }
 
 NTSTATUS
-Psp386InstallIoHandler(
-    IN PEPROCESS Process,
-    IN PEMULATOR_ACCESS_ENTRY EmulatorAccessEntry,
-    IN ULONG PortNumber,
-    IN ULONG Context
-    )
+Psp386InstallIoHandler(IN PEPROCESS Process, IN PEMULATOR_ACCESS_ENTRY EmulatorAccessEntry, IN ULONG PortNumber,
+                       IN ULONG Context)
 /*++
 
 Routine Description:
@@ -518,7 +473,7 @@ Return Value:
     PVDM_PROCESS_OBJECTS pVdmObjects = Process->VdmObjects;
     PVDM_IO_HANDLER VdmIoHandler;
     NTSTATUS Status;
-    KIRQL    OldIrql;
+    KIRQL OldIrql;
     PAGED_CODE();
 
 
@@ -526,7 +481,8 @@ Return Value:
     // Ensure we have a vdm process which is initialized
     // correctly for VdmIoHandlers
     //
-    if (!pVdmObjects) {
+    if (!pVdmObjects)
+    {
 #if DBG
         DbgPrint("Psp386InstallIoHandler: uninitialized VdmObjects\n");
 #endif
@@ -540,12 +496,12 @@ Return Value:
     // If this is the first handler to be installed, create the list head,
     // and initialize the resource lock.
     //
-    if (!pVdmObjects->VdmIoListHead) {
-        Status = Psp386CreateVdmIoListHead(
-            Process
-            );
+    if (!pVdmObjects->VdmIoListHead)
+    {
+        Status = Psp386CreateVdmIoListHead(Process);
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             return Status;
         }
     }
@@ -554,7 +510,7 @@ Return Value:
     // Lock the list to insure correct update.
     //
     KeRaiseIrql(APC_LEVEL, &OldIrql);
-    ExAcquireResourceExclusiveLite(&pVdmObjects->VdmIoListHead->VdmIoResource,TRUE);
+    ExAcquireResourceExclusiveLite(&pVdmObjects->VdmIoListHead->VdmIoResource, TRUE);
 
     //
     // Update Context
@@ -562,30 +518,29 @@ Return Value:
 
     pVdmObjects->VdmIoListHead->Context = Context;
 
-    VdmIoHandler = Psp386GetVdmIoHandler(
-        Process,
-        PortNumber & ~0x3
-        );
+    VdmIoHandler = Psp386GetVdmIoHandler(Process, PortNumber & ~0x3);
 
     // If there isn't already a node for this block of ports,
     // attempt to allocate a new one.
     //
-    if (!VdmIoHandler) {
-        try {
+    if (!VdmIoHandler)
+    {
+        try
+        {
 
-            VdmIoHandler = ExAllocatePoolWithQuota(
-                                PagedPool,
-                                sizeof(VDM_IO_HANDLER)
-                                );
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+            VdmIoHandler = ExAllocatePoolWithQuota(PagedPool, sizeof(VDM_IO_HANDLER));
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             Status = GetExceptionCode();
-            if (VdmIoHandler) {
+            if (VdmIoHandler)
+            {
                 ExFreePool(VdmIoHandler);
             }
         }
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             ExReleaseResourceLite(&pVdmObjects->VdmIoListHead->VdmIoResource);
             KeLowerIrql(OldIrql);
             return Status;
@@ -594,143 +549,120 @@ Return Value:
         RtlZeroMemory(VdmIoHandler, sizeof(VDM_IO_HANDLER));
         VdmIoHandler->PortNumber = PortNumber & ~0x3;
 
-        Status = Psp386InsertVdmIoHandlerBlock(
-            Process,
-            VdmIoHandler
-            );
+        Status = Psp386InsertVdmIoHandlerBlock(Process, VdmIoHandler);
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
             ExReleaseResourceLite(&pVdmObjects->VdmIoListHead->VdmIoResource);
             KeLowerIrql(OldIrql);
             return Status;
         }
     }
 
-    ASSERTEQUALBREAK(
-        VdmIoHandler->PortNumber,
-        (PortNumber & ~0x3),
-        ("Psp386InstallIoHandler : Bad pointer returned from GetVdmIoHandler\n")
-        );
+    ASSERTEQUALBREAK(VdmIoHandler->PortNumber, (PortNumber & ~0x3),
+                     ("Psp386InstallIoHandler : Bad pointer returned from GetVdmIoHandler\n"));
 
-    if (EmulatorAccessEntry->AccessMode & EMULATOR_READ_ACCESS) {
-        switch (EmulatorAccessEntry->AccessType) {
+    if (EmulatorAccessEntry->AccessMode & EMULATOR_READ_ACCESS)
+    {
+        switch (EmulatorAccessEntry->AccessType)
+        {
         case Uchar:
-            if (EmulatorAccessEntry->StringSupport) {
-                ASSERTEQUALBREAK(
-                    NULL,
-                    VdmIoHandler->IoFunctions[0].UcharStringIo[PortNumber % 4],
-                    ("Psp386InstallIoHandler : UcharString fns don't match\n")
-                    );
+            if (EmulatorAccessEntry->StringSupport)
+            {
+                ASSERTEQUALBREAK(NULL, VdmIoHandler->IoFunctions[0].UcharStringIo[PortNumber % 4],
+                                 ("Psp386InstallIoHandler : UcharString fns don't match\n"));
                 VdmIoHandler->IoFunctions[0].UcharStringIo[PortNumber % 4] =
                     (PDRIVER_IO_PORT_UCHAR_STRING)EmulatorAccessEntry->Routine;
-            } else {
-                ASSERTEQUALBREAK(
-                    NULL,
-                    VdmIoHandler->IoFunctions[0].UcharIo[PortNumber % 4],
-                    ("Psp386InstallIoHandler : Uchar fns don't match\n")
-                    );
+            }
+            else
+            {
+                ASSERTEQUALBREAK(NULL, VdmIoHandler->IoFunctions[0].UcharIo[PortNumber % 4],
+                                 ("Psp386InstallIoHandler : Uchar fns don't match\n"));
                 VdmIoHandler->IoFunctions[0].UcharIo[PortNumber % 4] =
                     (PDRIVER_IO_PORT_UCHAR)EmulatorAccessEntry->Routine;
             }
             break;
         case Ushort:
-            if (EmulatorAccessEntry->StringSupport) {
-                ASSERTEQUALBREAK(
-                    NULL,
-                    VdmIoHandler->IoFunctions[0].UshortStringIo[(PortNumber & 2) >> 1],
-                    ("Psp386InstallIoHandler : UshortString fns don't match\n")
-                    );
+            if (EmulatorAccessEntry->StringSupport)
+            {
+                ASSERTEQUALBREAK(NULL, VdmIoHandler->IoFunctions[0].UshortStringIo[(PortNumber & 2) >> 1],
+                                 ("Psp386InstallIoHandler : UshortString fns don't match\n"));
                 VdmIoHandler->IoFunctions[0].UshortStringIo[(PortNumber & 2) >> 1] =
                     (PDRIVER_IO_PORT_USHORT_STRING)EmulatorAccessEntry->Routine;
-            } else {
-                ASSERTEQUALBREAK(
-                    NULL,
-                    VdmIoHandler->IoFunctions[0].UshortIo[(PortNumber & 2) >> 1],
-                    ("Psp386InstallIoHandler : Ushort fns don't match\n")
-                    );
+            }
+            else
+            {
+                ASSERTEQUALBREAK(NULL, VdmIoHandler->IoFunctions[0].UshortIo[(PortNumber & 2) >> 1],
+                                 ("Psp386InstallIoHandler : Ushort fns don't match\n"));
                 VdmIoHandler->IoFunctions[0].UshortIo[(PortNumber & 2) >> 1] =
                     (PDRIVER_IO_PORT_USHORT)EmulatorAccessEntry->Routine;
             }
             break;
         case Ulong:
-            if (EmulatorAccessEntry->StringSupport) {
-                ASSERTEQUALBREAK(
-                    NULL,
-                    VdmIoHandler->IoFunctions[0].UlongStringIo,
-                    ("Psp386InstallIoHandler : UlongString fns don't match\n")
-                    );
-                VdmIoHandler->IoFunctions[0].UlongStringIo =
-                    (PDRIVER_IO_PORT_ULONG_STRING)EmulatorAccessEntry->Routine;
-            } else {
-                ASSERTEQUALBREAK(
-                    NULL,
-                    VdmIoHandler->IoFunctions[0].UlongIo,
-                    ("Psp386InstallIoHandler : Ulong fns don't match\n")
-                    );
-                VdmIoHandler->IoFunctions[0].UlongIo =
-                    (PDRIVER_IO_PORT_ULONG)EmulatorAccessEntry->Routine;
+            if (EmulatorAccessEntry->StringSupport)
+            {
+                ASSERTEQUALBREAK(NULL, VdmIoHandler->IoFunctions[0].UlongStringIo,
+                                 ("Psp386InstallIoHandler : UlongString fns don't match\n"));
+                VdmIoHandler->IoFunctions[0].UlongStringIo = (PDRIVER_IO_PORT_ULONG_STRING)EmulatorAccessEntry->Routine;
+            }
+            else
+            {
+                ASSERTEQUALBREAK(NULL, VdmIoHandler->IoFunctions[0].UlongIo,
+                                 ("Psp386InstallIoHandler : Ulong fns don't match\n"));
+                VdmIoHandler->IoFunctions[0].UlongIo = (PDRIVER_IO_PORT_ULONG)EmulatorAccessEntry->Routine;
             }
             break;
         }
     }
 
-    if (EmulatorAccessEntry->AccessMode & EMULATOR_WRITE_ACCESS) {
-        switch (EmulatorAccessEntry->AccessType) {
+    if (EmulatorAccessEntry->AccessMode & EMULATOR_WRITE_ACCESS)
+    {
+        switch (EmulatorAccessEntry->AccessType)
+        {
         case Uchar:
-            if (EmulatorAccessEntry->StringSupport) {
-                ASSERTEQUALBREAK(
-                    NULL,
-                    VdmIoHandler->IoFunctions[1].UcharStringIo[PortNumber % 4],
-                    ("Psp386InstallIoHandler : UcharString fns don't match\n")
-                    );
+            if (EmulatorAccessEntry->StringSupport)
+            {
+                ASSERTEQUALBREAK(NULL, VdmIoHandler->IoFunctions[1].UcharStringIo[PortNumber % 4],
+                                 ("Psp386InstallIoHandler : UcharString fns don't match\n"));
                 VdmIoHandler->IoFunctions[1].UcharStringIo[PortNumber % 4] =
                     (PDRIVER_IO_PORT_UCHAR_STRING)EmulatorAccessEntry->Routine;
-            } else {
-                ASSERTEQUALBREAK(
-                    NULL,
-                    VdmIoHandler->IoFunctions[1].UcharIo[PortNumber % 4],
-                    ("Psp386InstallIoHandler : Uchar fns don't match\n")
-                    );
+            }
+            else
+            {
+                ASSERTEQUALBREAK(NULL, VdmIoHandler->IoFunctions[1].UcharIo[PortNumber % 4],
+                                 ("Psp386InstallIoHandler : Uchar fns don't match\n"));
                 VdmIoHandler->IoFunctions[1].UcharIo[PortNumber % 4] =
                     (PDRIVER_IO_PORT_UCHAR)EmulatorAccessEntry->Routine;
             }
             break;
         case Ushort:
-            if (EmulatorAccessEntry->StringSupport) {
-                ASSERTEQUALBREAK(
-                    NULL,
-                    VdmIoHandler->IoFunctions[1].UshortStringIo[(PortNumber & 2) >> 1],
-                    ("Psp386InstallIoHandler : UshortString fns don't match\n")
-                    );
+            if (EmulatorAccessEntry->StringSupport)
+            {
+                ASSERTEQUALBREAK(NULL, VdmIoHandler->IoFunctions[1].UshortStringIo[(PortNumber & 2) >> 1],
+                                 ("Psp386InstallIoHandler : UshortString fns don't match\n"));
                 VdmIoHandler->IoFunctions[1].UshortStringIo[(PortNumber & 2) >> 1] =
                     (PDRIVER_IO_PORT_USHORT_STRING)EmulatorAccessEntry->Routine;
-            } else {
-                ASSERTEQUALBREAK(
-                    NULL,
-                    VdmIoHandler->IoFunctions[1].UshortIo[(PortNumber & 2) >> 1],
-                    ("Psp386InstallIoHandler : Ushort fns don't match\n")
-                    );
+            }
+            else
+            {
+                ASSERTEQUALBREAK(NULL, VdmIoHandler->IoFunctions[1].UshortIo[(PortNumber & 2) >> 1],
+                                 ("Psp386InstallIoHandler : Ushort fns don't match\n"));
                 VdmIoHandler->IoFunctions[1].UshortIo[(PortNumber & 2) >> 1] =
                     (PDRIVER_IO_PORT_USHORT)EmulatorAccessEntry->Routine;
             }
             break;
         case Ulong:
-            if (EmulatorAccessEntry->StringSupport) {
-                ASSERTEQUALBREAK(
-                    NULL,
-                    VdmIoHandler->IoFunctions[1].UlongStringIo,
-                    ("Psp386InstallIoHandler : UlongString fns don't match\n")
-                    );
-                VdmIoHandler->IoFunctions[1].UlongStringIo =
-                    (PDRIVER_IO_PORT_ULONG_STRING)EmulatorAccessEntry->Routine;
-            } else {
-                ASSERTEQUALBREAK(
-                    NULL,
-                    VdmIoHandler->IoFunctions[1].UlongIo,
-                    ("Psp386InstallIoHandler : Ulong fns don't match\n")
-                    );
-                VdmIoHandler->IoFunctions[1].UlongIo =
-                    (PDRIVER_IO_PORT_ULONG)EmulatorAccessEntry->Routine;
+            if (EmulatorAccessEntry->StringSupport)
+            {
+                ASSERTEQUALBREAK(NULL, VdmIoHandler->IoFunctions[1].UlongStringIo,
+                                 ("Psp386InstallIoHandler : UlongString fns don't match\n"));
+                VdmIoHandler->IoFunctions[1].UlongStringIo = (PDRIVER_IO_PORT_ULONG_STRING)EmulatorAccessEntry->Routine;
+            }
+            else
+            {
+                ASSERTEQUALBREAK(NULL, VdmIoHandler->IoFunctions[1].UlongIo,
+                                 ("Psp386InstallIoHandler : Ulong fns don't match\n"));
+                VdmIoHandler->IoFunctions[1].UlongIo = (PDRIVER_IO_PORT_ULONG)EmulatorAccessEntry->Routine;
             }
         }
     }
@@ -738,15 +670,11 @@ Return Value:
     ExReleaseResourceLite(&pVdmObjects->VdmIoListHead->VdmIoResource);
     KeLowerIrql(OldIrql);
     return STATUS_SUCCESS;
-
 }
 
 
-
 NTSTATUS
-Psp386CreateVdmIoListHead(
-    IN PEPROCESS Process
-    )
+Psp386CreateVdmIoListHead(IN PEPROCESS Process)
 /*++
 
 Routine Description:
@@ -767,44 +695,44 @@ Notes:
 {
     PVDM_PROCESS_OBJECTS pVdmObjects = Process->VdmObjects;
     NTSTATUS Status;
-    PVDM_IO_LISTHEAD HandlerListHead=NULL;
-    KIRQL    OldIrql;
+    PVDM_IO_LISTHEAD HandlerListHead = NULL;
+    KIRQL OldIrql;
     PAGED_CODE();
 
     Status = STATUS_SUCCESS;
 
     // if there isn't yet a head, grab the resource lock and create one
-    if (pVdmObjects->VdmIoListHead == NULL) {
+    if (pVdmObjects->VdmIoListHead == NULL)
+    {
         KeRaiseIrql(APC_LEVEL, &OldIrql);
         ExAcquireResourceExclusiveLite(&VdmIoListCreationResource, TRUE);
 
         // if no head was created while we grabbed the spin lock
-        if (pVdmObjects->VdmIoListHead == NULL) {
+        if (pVdmObjects->VdmIoListHead == NULL)
+        {
 
-            try {
+            try
+            {
                 // allocate space for the list head
                 // and charge the quota for it
 
-                HandlerListHead = ExAllocatePoolWithQuota(
-                                       NonPagedPool,
-                                       sizeof(VDM_IO_LISTHEAD)
-                                       );
-
-                } except(EXCEPTION_EXECUTE_HANDLER) {
-                    Status = GetExceptionCode();
-                    if (HandlerListHead) {
-                        ExFreePool(HandlerListHead);
-                    }
+                HandlerListHead = ExAllocatePoolWithQuota(NonPagedPool, sizeof(VDM_IO_LISTHEAD));
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
+                Status = GetExceptionCode();
+                if (HandlerListHead)
+                {
+                    ExFreePool(HandlerListHead);
                 }
+            }
 
-            if ((!NT_SUCCESS(Status) || !HandlerListHead)) {
+            if ((!NT_SUCCESS(Status) || !HandlerListHead))
+            {
                 ExReleaseResourceLite(&VdmIoListCreationResource);
                 KeLowerIrql(OldIrql);
 
-                return (Status == STATUS_SUCCESS ?
-                    STATUS_INSUFFICIENT_RESOURCES :
-                    Status);
-
+                return (Status == STATUS_SUCCESS ? STATUS_INSUFFICIENT_RESOURCES : Status);
             }
 
             ExInitializeResourceLite(&HandlerListHead->VdmIoResource);
@@ -820,18 +748,13 @@ Notes:
 
             ExReleaseResourceLite(&VdmIoListCreationResource);
             KeLowerIrql(OldIrql);
-
-
         }
     }
     return STATUS_SUCCESS;
 }
 
 NTSTATUS
-Psp386InsertVdmIoHandlerBlock(
-    IN PEPROCESS Process,
-    IN PVDM_IO_HANDLER VdmIoHandler
-    )
+Psp386InsertVdmIoHandlerBlock(IN PEPROCESS Process, IN PVDM_IO_HANDLER VdmIoHandler)
 /*++
 
 Routine Description:
@@ -857,24 +780,30 @@ Return Value:
     HandlerListHead = pVdmObjects->VdmIoListHead;
     HandlerList = HandlerListHead->VdmIoHandlerList;
     p = NULL;
-    while ((HandlerList != NULL) &&
-        (HandlerList->PortNumber < VdmIoHandler->PortNumber)) {
+    while ((HandlerList != NULL) && (HandlerList->PortNumber < VdmIoHandler->PortNumber))
+    {
 #if DBG
-            if (HandlerList->PortNumber == VdmIoHandler->PortNumber) {
-                DbgPrint("Ps386InsertVdmIoHandlerBlock : handler list corrupt\n");
-            }
+        if (HandlerList->PortNumber == VdmIoHandler->PortNumber)
+        {
+            DbgPrint("Ps386InsertVdmIoHandlerBlock : handler list corrupt\n");
+        }
 #endif
-            p = HandlerList;
-            HandlerList = HandlerList->Next;
+        p = HandlerList;
+        HandlerList = HandlerList->Next;
     }
 
-    if (p == NULL) { // Beginning of list
+    if (p == NULL)
+    { // Beginning of list
         VdmIoHandler->Next = HandlerListHead->VdmIoHandlerList;
         HandlerListHead->VdmIoHandlerList = VdmIoHandler;
-    } else if (HandlerList == NULL) { // End of list
+    }
+    else if (HandlerList == NULL)
+    { // End of list
         p->Next = VdmIoHandler;
         VdmIoHandler->Next = NULL;
-    } else { // Middle of list
+    }
+    else
+    { // Middle of list
         VdmIoHandler->Next = HandlerList;
         p->Next = VdmIoHandler;
     }
@@ -883,12 +812,7 @@ Return Value:
 }
 
 BOOLEAN
-Ps386GetVdmIoHandler(
-    IN PEPROCESS Process,
-    IN ULONG PortNumber,
-    OUT PVDM_IO_HANDLER VdmIoHandler,
-    OUT PULONG Context
-    )
+Ps386GetVdmIoHandler(IN PEPROCESS Process, IN ULONG PortNumber, OUT PVDM_IO_HANDLER VdmIoHandler, OUT PULONG Context)
 /*++
 
 Routine Description:
@@ -912,41 +836,41 @@ Returns:
     PVDM_PROCESS_OBJECTS pVdmObjects = Process->VdmObjects;
     PVDM_IO_HANDLER p;
     BOOLEAN Success;
-    KIRQL   OldIrql;
+    KIRQL OldIrql;
     PAGED_CODE();
 
-    if (pVdmObjects == NULL) {
+    if (pVdmObjects == NULL)
+    {
         return FALSE;
     }
 
-    if (PortNumber % 4) {
+    if (PortNumber % 4)
+    {
 #if DBG
-        DbgPrint(
-            "Ps386GetVdmIoHandler : Invalid Port Number %lx\n",
-            PortNumber
-            );
+        DbgPrint("Ps386GetVdmIoHandler : Invalid Port Number %lx\n", PortNumber);
 #endif
         return FALSE;
     }
 
-    if (!pVdmObjects->VdmIoListHead) {
+    if (!pVdmObjects->VdmIoListHead)
+    {
         return FALSE;
     }
 
 
     KeRaiseIrql(APC_LEVEL, &OldIrql);
-    ExAcquireResourceExclusiveLite(&pVdmObjects->VdmIoListHead->VdmIoResource,TRUE);
+    ExAcquireResourceExclusiveLite(&pVdmObjects->VdmIoListHead->VdmIoResource, TRUE);
 
-    p = Psp386GetVdmIoHandler(
-        Process,
-        PortNumber
-        );
+    p = Psp386GetVdmIoHandler(Process, PortNumber);
 
-    if (p) {
+    if (p)
+    {
         *VdmIoHandler = *p;
         *Context = pVdmObjects->VdmIoListHead->Context;
         Success = TRUE;
-    } else {
+    }
+    else
+    {
         Success = FALSE;
     }
     ExReleaseResourceLite(&pVdmObjects->VdmIoListHead->VdmIoResource);
@@ -957,10 +881,7 @@ Returns:
 
 
 PVDM_IO_HANDLER
-Psp386GetVdmIoHandler(
-    IN PEPROCESS Process,
-    IN ULONG PortNumber
-    )
+Psp386GetVdmIoHandler(IN PEPROCESS Process, IN ULONG PortNumber)
 /*++
 
 Routine Description:
@@ -983,28 +904,25 @@ Returns:
     PVDM_IO_HANDLER p;
     PAGED_CODE();
 
-    if (PortNumber % 4) {
+    if (PortNumber % 4)
+    {
 #if DBG
-        DbgPrint(
-            "Ps386GetVdmIoHandler : Invalid Port Number %lx\n",
-            PortNumber
-            );
+        DbgPrint("Ps386GetVdmIoHandler : Invalid Port Number %lx\n", PortNumber);
 #endif
         return NULL;
     }
 
     p = pVdmObjects->VdmIoListHead->VdmIoHandlerList;
-    while ((p) && (p->PortNumber != PortNumber)) {
+    while ((p) && (p->PortNumber != PortNumber))
+    {
         p = p->Next;
     }
 
     return p;
-
 }
 
 NTSTATUS
-PspVdmInitialize(
-    )
+PspVdmInitialize()
 
 /*++
 

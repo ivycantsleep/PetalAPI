@@ -26,11 +26,7 @@ Revision History:
 #include "ki.h"
 
 ULONG
-KiComputeTimerTableIndex (
-    IN LARGE_INTEGER Interval,
-    IN LARGE_INTEGER CurrentTime,
-    IN PKTIMER Timer
-    )
+KiComputeTimerTableIndex(IN LARGE_INTEGER Interval, IN LARGE_INTEGER CurrentTime, IN PKTIMER Timer)
 
 /*++
 

@@ -26,21 +26,13 @@ Revision History:
 //
 
 NTSTATUS
-RawMountVolume (
-    IN PIO_STACK_LOCATION IrpSp
-    );
+RawMountVolume(IN PIO_STACK_LOCATION IrpSp);
 
 NTSTATUS
-RawVerifyVolume (
-    IN PIO_STACK_LOCATION IrpSp,
-    IN PVCB Vcb
-    );
+RawVerifyVolume(IN PIO_STACK_LOCATION IrpSp, IN PVCB Vcb);
 
 NTSTATUS
-RawUserFsCtrl (
-    IN PIO_STACK_LOCATION IrpSp,
-    IN PVCB Vcb
-    );
+RawUserFsCtrl(IN PIO_STACK_LOCATION IrpSp, IN PVCB Vcb);
 
 #ifdef ALLOC_PRAGMA
 #pragma alloc_text(PAGE, RawMountVolume)
@@ -48,13 +40,9 @@ RawUserFsCtrl (
 #pragma alloc_text(PAGE, RawFileSystemControl)
 #endif
 
-
+
 NTSTATUS
-RawFileSystemControl (
-    IN PVCB Vcb,
-    IN PIRP Irp,
-    IN PIO_STACK_LOCATION IrpSp
-    )
+RawFileSystemControl(IN PVCB Vcb, IN PIRP Irp, IN PIO_STACK_LOCATION IrpSp)
 
 /*++
 
@@ -86,21 +74,22 @@ Return Value:
     //  minor function, and call an internal worker routine.
     //
 
-    switch (IrpSp->MinorFunction) {
+    switch (IrpSp->MinorFunction)
+    {
 
     case IRP_MN_USER_FS_REQUEST:
 
-        Status = RawUserFsCtrl( IrpSp, Vcb );
+        Status = RawUserFsCtrl(IrpSp, Vcb);
         break;
 
     case IRP_MN_MOUNT_VOLUME:
 
-        Status = RawMountVolume( IrpSp );
+        Status = RawMountVolume(IrpSp);
         break;
 
     case IRP_MN_VERIFY_VOLUME:
 
-        Status = RawVerifyVolume( IrpSp, Vcb );
+        Status = RawVerifyVolume(IrpSp, Vcb);
         break;
 
     default:
@@ -109,20 +98,18 @@ Return Value:
         break;
     }
 
-    RawCompleteRequest( Irp, Status );
+    RawCompleteRequest(Irp, Status);
 
     return Status;
 }
 
-
+
 //
 //  Local Support Routine
 //
 
 NTSTATUS
-RawMountVolume (
-    IN PIO_STACK_LOCATION IrpSp
-    )
+RawMountVolume(IN PIO_STACK_LOCATION IrpSp)
 
 /*++
 
@@ -159,15 +146,11 @@ Return Value:
     // new device object to represent this volume.
     //
 
-    Status = IoCreateDevice( IrpSp->DeviceObject->DriverObject,
-                             sizeof(VOLUME_DEVICE_OBJECT) - sizeof(DEVICE_OBJECT),
-                             NULL,
-                             FILE_DEVICE_DISK_FILE_SYSTEM,
-                             0,
-                             FALSE,
-                             (PDEVICE_OBJECT *)&VolumeDeviceObject );
+    Status = IoCreateDevice(IrpSp->DeviceObject->DriverObject, sizeof(VOLUME_DEVICE_OBJECT) - sizeof(DEVICE_OBJECT),
+                            NULL, FILE_DEVICE_DISK_FILE_SYSTEM, 0, FALSE, (PDEVICE_OBJECT *)&VolumeDeviceObject);
 
-    if ( !NT_SUCCESS( Status ) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
         return Status;
     }
@@ -177,7 +160,8 @@ Return Value:
     //  already in the volume device object and that in the DeviceObjectWeTalkTo
     //
 
-    if (DeviceObjectWeTalkTo->AlignmentRequirement > VolumeDeviceObject->DeviceObject.AlignmentRequirement) {
+    if (DeviceObjectWeTalkTo->AlignmentRequirement > VolumeDeviceObject->DeviceObject.AlignmentRequirement)
+    {
 
         VolumeDeviceObject->DeviceObject.AlignmentRequirement = DeviceObjectWeTalkTo->AlignmentRequirement;
     }
@@ -194,19 +178,19 @@ Return Value:
     //  Initialize the Vcb for this volume
     //
 
-    Status = RawInitializeVcb( &VolumeDeviceObject->Vcb,
-                               IrpSp->Parameters.MountVolume.DeviceObject,
-                               IrpSp->Parameters.MountVolume.Vpb );
+    Status = RawInitializeVcb(&VolumeDeviceObject->Vcb, IrpSp->Parameters.MountVolume.DeviceObject,
+                              IrpSp->Parameters.MountVolume.Vpb);
 
 
-    if ( !NT_SUCCESS( Status ) ) {
+    if (!NT_SUCCESS(Status))
+    {
 
         //
         //  Unlike the other points of teardown we do not need to deref the target device
         //  a iosubsys will automatically do that for a failed mount
-        //  
+        //
 
-        IoDeleteDevice( (PDEVICE_OBJECT)VolumeDeviceObject );
+        IoDeleteDevice((PDEVICE_OBJECT)VolumeDeviceObject);
         return Status;
     }
 
@@ -225,7 +209,7 @@ Return Value:
     VolumeDeviceObject->Vcb.Vpb->VolumeLabelLength = 0;
 
     VolumeDeviceObject->DeviceObject.Flags &= ~DO_DEVICE_INITIALIZING;
-    VolumeDeviceObject->DeviceObject.StackSize = (UCHAR) (DeviceObjectWeTalkTo->StackSize + 1);
+    VolumeDeviceObject->DeviceObject.StackSize = (UCHAR)(DeviceObjectWeTalkTo->StackSize + 1);
 
     {
         PFILE_OBJECT VolumeFileObject;
@@ -233,39 +217,36 @@ Return Value:
         //
         //  We need a file object to do the notification.
         //
-        
-        VolumeFileObject = IoCreateStreamFileObjectLite( NULL, &VolumeDeviceObject->DeviceObject );
+
+        VolumeFileObject = IoCreateStreamFileObjectLite(NULL, &VolumeDeviceObject->DeviceObject);
 
         //
         //  We need to bump the count up 2 now so that the close we do in a few lines
         //  doesn't make the Vcb go away now.
         //
-        
+
         VolumeDeviceObject->Vcb.OpenCount += 2;
-        FsRtlNotifyVolumeEvent( VolumeFileObject, FSRTL_VOLUME_MOUNT );
-        ObDereferenceObject( VolumeFileObject );
+        FsRtlNotifyVolumeEvent(VolumeFileObject, FSRTL_VOLUME_MOUNT);
+        ObDereferenceObject(VolumeFileObject);
 
         //
         //  Okay, the close is over, now we can safely decrement the open count again
-       //  (back to 0) so the Vcb can go away when we're really done with it.
+        //  (back to 0) so the Vcb can go away when we're really done with it.
         //
-        
+
         VolumeDeviceObject->Vcb.OpenCount -= 2;
     }
-    
+
     return Status;
 }
 
-
+
 //
 //  Local Support Routine
 //
 
 NTSTATUS
-RawVerifyVolume (
-    IN PIO_STACK_LOCATION IrpSp,
-    IN PVCB Vcb
-    )
+RawVerifyVolume(IN PIO_STACK_LOCATION IrpSp, IN PVCB Vcb)
 
 /*++
 
@@ -286,8 +267,8 @@ Return Value:
 {
     NTSTATUS Status;
     BOOLEAN DeleteVolume = FALSE;
-    KIRQL   Irql;
-    PVPB    vpb;
+    KIRQL Irql;
+    PVPB vpb;
     BOOLEAN Mounted;
 
     //
@@ -307,23 +288,21 @@ Return Value:
 
     Mounted = FALSE;
     vpb = IrpSp->Parameters.VerifyVolume.Vpb;
-    if (vpb->Flags & VPB_MOUNTED) {
+    if (vpb->Flags & VPB_MOUNTED)
+    {
         vpb->ReferenceCount++;
         Mounted = TRUE;
     }
 
     IoReleaseVpbSpinLock(Irql);
 
-    if (!Mounted) {
+    if (!Mounted)
+    {
         return STATUS_WRONG_VOLUME;
     }
 
-    Status = KeWaitForSingleObject( &Vcb->Mutex,
-                                   Executive,
-                                   KernelMode,
-                                   FALSE,
-                                   (PLARGE_INTEGER) NULL );
-    ASSERT( NT_SUCCESS( Status ) );
+    Status = KeWaitForSingleObject(&Vcb->Mutex, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
+    ASSERT(NT_SUCCESS(Status));
 
     //
     //  Since we ignore all verify errors from the disk driver itself,
@@ -338,29 +317,27 @@ Return Value:
 
     Vcb->Vpb->RealDevice->Flags &= ~DO_VERIFY_VOLUME;
 
-    if (Vcb->OpenCount == 0) {
+    if (Vcb->OpenCount == 0)
+    {
 
-        DeleteVolume = RawCheckForDismount( Vcb, FALSE );
+        DeleteVolume = RawCheckForDismount(Vcb, FALSE);
     }
 
-    if (!DeleteVolume) {
-        (VOID)KeReleaseMutex( &Vcb->Mutex, FALSE );
+    if (!DeleteVolume)
+    {
+        (VOID) KeReleaseMutex(&Vcb->Mutex, FALSE);
     }
 
     return STATUS_WRONG_VOLUME;
 }
 
-
 
 //
 //  Local Support Routine
 //
 
 NTSTATUS
-RawUserFsCtrl (
-    IN PIO_STACK_LOCATION IrpSp,
-    IN PVCB Vcb
-    )
+RawUserFsCtrl(IN PIO_STACK_LOCATION IrpSp, IN PVCB Vcb)
 
 /*++
 
@@ -396,29 +373,27 @@ Return Value:
     //  can be reentered by good threads cleaning up their resources.
     //
 
-    switch (FsControlCode) {
-        case FSCTL_LOCK_VOLUME:
-            
-            FsRtlNotifyVolumeEvent( FileObject, FSRTL_VOLUME_LOCK );
-            break;
+    switch (FsControlCode)
+    {
+    case FSCTL_LOCK_VOLUME:
 
-        case FSCTL_DISMOUNT_VOLUME:
+        FsRtlNotifyVolumeEvent(FileObject, FSRTL_VOLUME_LOCK);
+        break;
 
-            FsRtlNotifyVolumeEvent( FileObject, FSRTL_VOLUME_DISMOUNT );
-            break;
+    case FSCTL_DISMOUNT_VOLUME:
 
-        default:
-            break;
+        FsRtlNotifyVolumeEvent(FileObject, FSRTL_VOLUME_DISMOUNT);
+        break;
+
+    default:
+        break;
     }
-    
-    Status = KeWaitForSingleObject( &Vcb->Mutex,
-                                   Executive,
-                                   KernelMode,
-                                   FALSE,
-                                   (PLARGE_INTEGER) NULL );
-    ASSERT( NT_SUCCESS( Status ) );
 
-    switch ( FsControlCode ) {
+    Status = KeWaitForSingleObject(&Vcb->Mutex, Executive, KernelMode, FALSE, (PLARGE_INTEGER)NULL);
+    ASSERT(NT_SUCCESS(Status));
+
+    switch (FsControlCode)
+    {
 
     case FSCTL_REQUEST_OPLOCK_LEVEL_1:
     case FSCTL_REQUEST_OPLOCK_LEVEL_2:
@@ -430,14 +405,15 @@ Return Value:
 
     case FSCTL_LOCK_VOLUME:
 
-        if ( !FlagOn(Vcb->VcbState, VCB_STATE_FLAG_LOCKED) &&
-             (Vcb->OpenCount == 1) ) {
+        if (!FlagOn(Vcb->VcbState, VCB_STATE_FLAG_LOCKED) && (Vcb->OpenCount == 1))
+        {
 
             Vcb->VcbState |= VCB_STATE_FLAG_LOCKED;
 
             Status = STATUS_SUCCESS;
-
-        } else {
+        }
+        else
+        {
 
             Status = STATUS_ACCESS_DENIED;
         }
@@ -446,11 +422,13 @@ Return Value:
 
     case FSCTL_UNLOCK_VOLUME:
 
-        if ( !FlagOn(Vcb->VcbState, VCB_STATE_FLAG_LOCKED) ) {
+        if (!FlagOn(Vcb->VcbState, VCB_STATE_FLAG_LOCKED))
+        {
 
             Status = STATUS_NOT_LOCKED;
-
-        } else {
+        }
+        else
+        {
 
             Vcb->VcbState &= ~VCB_STATE_FLAG_LOCKED;
 
@@ -461,12 +439,14 @@ Return Value:
 
     case FSCTL_DISMOUNT_VOLUME:
 
-        if (FlagOn(Vcb->VcbState, VCB_STATE_FLAG_LOCKED)) {
+        if (FlagOn(Vcb->VcbState, VCB_STATE_FLAG_LOCKED))
+        {
 
-            Vcb->VcbState |=  VCB_STATE_FLAG_DISMOUNTED;
+            Vcb->VcbState |= VCB_STATE_FLAG_DISMOUNTED;
             Status = STATUS_SUCCESS;
-
-        } else {
+        }
+        else
+        {
 
             Status = STATUS_ACCESS_DENIED;
         }
@@ -479,39 +459,43 @@ Return Value:
         break;
     }
 
-    (VOID)KeReleaseMutex( &Vcb->Mutex, FALSE );
+    (VOID) KeReleaseMutex(&Vcb->Mutex, FALSE);
 
     //
     //  Now perform post-notification as required.
     //
 
-    if (NT_SUCCESS( Status )) {
-    
-        switch ( FsControlCode ) {
-            case FSCTL_UNLOCK_VOLUME:
+    if (NT_SUCCESS(Status))
+    {
 
-                FsRtlNotifyVolumeEvent( FileObject, FSRTL_VOLUME_UNLOCK );
-                break;
-            
-            default:
-                break;
+        switch (FsControlCode)
+        {
+        case FSCTL_UNLOCK_VOLUME:
+
+            FsRtlNotifyVolumeEvent(FileObject, FSRTL_VOLUME_UNLOCK);
+            break;
+
+        default:
+            break;
         }
-    
-    } else {
-        
-        switch ( FsControlCode ) {
-            case FSCTL_LOCK_VOLUME:
-                
-                FsRtlNotifyVolumeEvent( FileObject, FSRTL_VOLUME_LOCK_FAILED );
-                break;
+    }
+    else
+    {
 
-            case FSCTL_DISMOUNT_VOLUME:
+        switch (FsControlCode)
+        {
+        case FSCTL_LOCK_VOLUME:
 
-                FsRtlNotifyVolumeEvent( FileObject, FSRTL_VOLUME_DISMOUNT_FAILED );
-                break;
+            FsRtlNotifyVolumeEvent(FileObject, FSRTL_VOLUME_LOCK_FAILED);
+            break;
 
-            default:
-                break;
+        case FSCTL_DISMOUNT_VOLUME:
+
+            FsRtlNotifyVolumeEvent(FileObject, FSRTL_VOLUME_DISMOUNT_FAILED);
+            break;
+
+        default:
+            break;
         }
     }
 

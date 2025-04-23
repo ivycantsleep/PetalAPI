@@ -19,7 +19,6 @@ Revision History:
 --*/
 
 
-
 #include "basedll.h"
 #pragma hdrstop
 #include <winsafer.h>
@@ -31,37 +30,25 @@ static PWSTR g_pszFullQualifiedSetupEXE = NULL;
 
 RTL_QUERY_REGISTRY_TABLE BasepAppCertTable[] = {
 
-    {(PRTL_QUERY_REGISTRY_ROUTINE )BasepConfigureAppCertDlls,     RTL_QUERY_REGISTRY_SUBKEY,
-     L"AppCertDlls",                &BasepAppCertDllsList,
-     REG_NONE, NULL, 0},
+    { (PRTL_QUERY_REGISTRY_ROUTINE)BasepConfigureAppCertDlls, RTL_QUERY_REGISTRY_SUBKEY, L"AppCertDlls",
+      &BasepAppCertDllsList, REG_NONE, NULL, 0 },
 
-    {NULL, 0,
-     NULL, NULL,
-     REG_NONE, NULL, 0}
+    { NULL, 0, NULL, NULL, REG_NONE, NULL, 0 }
 
 };
 
 #define IsEmbeddedNT() (BOOLEAN)(USER_SHARED_DATA->SuiteMask & (1 << EmbeddedNT))
 
-BOOL
-BuildSubSysCommandLine(
-    LPWSTR  SubSysName,
-    LPCWSTR lpApplicationName,
-    LPCWSTR lpCommandLine,
-    PUNICODE_STRING SubSysCommandLine
-    );
+BOOL BuildSubSysCommandLine(LPWSTR SubSysName, LPCWSTR lpApplicationName, LPCWSTR lpCommandLine,
+                            PUNICODE_STRING SubSysCommandLine);
 
 PVOID
-BasepIsRealtimeAllowed(
-    BOOLEAN LeaveEnabled
-    );
+BasepIsRealtimeAllowed(BOOLEAN LeaveEnabled);
 
 #ifdef WX86
 
 PWCHAR
-BasepWx86KnownExe(
-    LPCWSTR ExeName
-    )
+BasepWx86KnownExe(LPCWSTR ExeName)
 /*++
 
 Routine Description:
@@ -83,103 +70,111 @@ Return Value:
 --*/
 
 {
-     UNICODE_STRING NameUnicode;
-     PWCHAR pwch, pwcNewName = NULL;
+    UNICODE_STRING NameUnicode;
+    PWCHAR pwch, pwcNewName = NULL;
 
-     //
-     // Compare the base name, and see if its regedit.exe
-     // Note that we are expecting a fully qualified path name.
-     //
+    //
+    // Compare the base name, and see if its regedit.exe
+    // Note that we are expecting a fully qualified path name.
+    //
 
-     pwch = wcsrchr(ExeName, L'\\');
-     if (pwch && *pwch++ && *pwch ) {
-        if (!_wcsicmp(pwch, L"regedit.exe")) {
-           pwcNewName = L"\\wiregedt.exe";
-        } else {
-           if (!_wcsicmp(pwch, L"regsvr32.exe")) {
-              pwcNewName = L"\\regsvr32.exe";
-           } else {
-              if (!_wcsicmp(pwch, L"msiexec.exe")) {
-                 pwcNewName = L"\\msiexec.exe";
-              } else {
-                 return NULL;
-              }
-           }
+    pwch = wcsrchr(ExeName, L'\\');
+    if (pwch && *pwch++ && *pwch)
+    {
+        if (!_wcsicmp(pwch, L"regedit.exe"))
+        {
+            pwcNewName = L"\\wiregedt.exe";
         }
-     } else {
+        else
+        {
+            if (!_wcsicmp(pwch, L"regsvr32.exe"))
+            {
+                pwcNewName = L"\\regsvr32.exe";
+            }
+            else
+            {
+                if (!_wcsicmp(pwch, L"msiexec.exe"))
+                {
+                    pwcNewName = L"\\msiexec.exe";
+                }
+                else
+                {
+                    return NULL;
+                }
+            }
+        }
+    }
+    else
+    {
         return NULL;
-     }
+    }
 
 
+    //
+    // It matches, so formulate new name
+    //
 
-     //
-     // It matches, so formulate new name
-     //
+    pwch = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), MAX_PATH + sizeof(WCHAR));
 
-     pwch = RtlAllocateHeap(RtlProcessHeap(),
-                               MAKE_TAG( TMP_TAG ),
-                               MAX_PATH + sizeof(WCHAR)
-                               );
+    if (!pwch)
+    {
+        return NULL;
+    }
 
-     if (!pwch) {
-         return NULL;
-         }
+    NameUnicode.Buffer = pwch;
+    NameUnicode.MaximumLength = MAX_PATH + sizeof(WCHAR);
+    RtlCopyUnicodeString(&NameUnicode, &BaseWindowsSystemDirectory);
+    if (NameUnicode.Buffer[(NameUnicode.Length >> 1) - 1] == (WCHAR)'\\')
+    {
+        NameUnicode.Buffer[(NameUnicode.Length >> 1) - 1] = UNICODE_NULL;
+        NameUnicode.Length -= sizeof(WCHAR);
+    }
 
-     NameUnicode.Buffer = pwch;
-     NameUnicode.MaximumLength = MAX_PATH + sizeof(WCHAR);
-     RtlCopyUnicodeString(&NameUnicode, &BaseWindowsSystemDirectory);
-     if (NameUnicode.Buffer[(NameUnicode.Length>>1)-1] == (WCHAR)'\\') {
-         NameUnicode.Buffer[(NameUnicode.Length>>1)-1] = UNICODE_NULL;
-         NameUnicode.Length -= sizeof(WCHAR);
-         }
+    RtlAppendUnicodeToString(&NameUnicode, pwcNewName);
 
-     RtlAppendUnicodeToString(&NameUnicode, pwcNewName);
-
-     return pwch;
+    return pwch;
 }
 
 
 #endif
 
-BOOL
-BasepIsSetupInvokedByWinLogon(
-    PCWSTR pwszFullQualifiedApplicationPath)
+BOOL BasepIsSetupInvokedByWinLogon(PCWSTR pwszFullQualifiedApplicationPath)
 {
-    if (GetModuleHandle(TEXT("winlogon.EXE")))  // winlogon is running
+    if (GetModuleHandle(TEXT("winlogon.EXE"))) // winlogon is running
     {
         //
         // set the global pointer g_pszFullQualifiedSetupEXE
         //
-        if (g_pszFullQualifiedSetupEXE == NULL) 
+        if (g_pszFullQualifiedSetupEXE == NULL)
         {
             //
             // we assume that the name of setup program is "setup.exe". This may change in the future
-            // and the best way is to query RegistryValue of \\HKLM\SYSTEM\Setup\CmdLine 
+            // and the best way is to query RegistryValue of \\HKLM\SYSTEM\Setup\CmdLine
             // and get the firstpart of the value, attach ".exe" if it does not have an ext
             //
             LPWSTR pwszSetupExe = L"setup.exe";
 
-            ULONG ulReservedLength = sizeof(WCHAR) +        // trailing backSlash
-                                     wcslen(pwszSetupExe);  //trailing NULL is included
+            ULONG ulReservedLength = sizeof(WCHAR) +       // trailing backSlash
+                                     wcslen(pwszSetupExe); //trailing NULL is included
 
-            ULONG ulSizeOfBuf = sizeof(pszFullQualifiedSetupEXE)/sizeof(WCHAR);
+            ULONG ulSizeOfBuf = sizeof(pszFullQualifiedSetupEXE) / sizeof(WCHAR);
             ULONG ulLength = GetSystemDirectoryW(pszFullQualifiedSetupEXE, ulSizeOfBuf - ulReservedLength);
 
             //
             // very unlikely failed because of UNSUFFICIENT_BUFFER_SIZE
             // but kind of buggy here
             //
-            if ((ulLength == 0) || (ulLength > ulSizeOfBuf - ulReservedLength)) 
+            if ((ulLength == 0) || (ulLength > ulSizeOfBuf - ulReservedLength))
                 return FALSE;
-            
+
             if (pszFullQualifiedSetupEXE[ulLength] != L'\\') // set trailing slash
                 pszFullQualifiedSetupEXE[ulLength] = L'\\';
-                
+
             wcscpy(pszFullQualifiedSetupEXE + ulLength, pwszSetupExe);
-            g_pszFullQualifiedSetupEXE = pszFullQualifiedSetupEXE;            
+            g_pszFullQualifiedSetupEXE = pszFullQualifiedSetupEXE;
         }
 
-        if (_wcsicmp(pwszFullQualifiedApplicationPath, g_pszFullQualifiedSetupEXE) == 0) 
+        if (_wcsicmp(pwszFullQualifiedApplicationPath, g_pszFullQualifiedSetupEXE) == 0)
             return TRUE;
     }
 
@@ -190,38 +185,29 @@ BasepIsSetupInvokedByWinLogon(
 PFNWAITFORINPUTIDLE UserWaitForInputIdleRoutine = NULL;
 #define DEFAULT_WAIT_FOR_INPUT_IDLE_TIMEOUT 30000
 
-BOOL
-BasepIsImageVersionOk(
-    IN ULONG ImageMajorVersion,
-    IN ULONG ImageMinorVersion
-    )
+BOOL BasepIsImageVersionOk(IN ULONG ImageMajorVersion, IN ULONG ImageMinorVersion)
 {
     //
     // Make sure image is at least 3.10
     //
 
-    if ( ( ImageMajorVersion < 3 ) ||
-         ( ImageMajorVersion == 3 && ImageMinorVersion < 10 ) ) {
+    if ((ImageMajorVersion < 3) || (ImageMajorVersion == 3 && ImageMinorVersion < 10))
+    {
         return FALSE;
-        }
+    }
 
     //
     // And not greater than what we are
     //
 
-    if ( ( ImageMajorVersion > USER_SHARED_DATA->NtMajorVersion ) ||
-         ( ImageMajorVersion == USER_SHARED_DATA->NtMajorVersion &&
-           ImageMinorVersion > USER_SHARED_DATA->NtMinorVersion
-         )
-       ) {
+    if ((ImageMajorVersion > USER_SHARED_DATA->NtMajorVersion) ||
+        (ImageMajorVersion == USER_SHARED_DATA->NtMajorVersion && ImageMinorVersion > USER_SHARED_DATA->NtMinorVersion))
+    {
         return FALSE;
-        }
+    }
 
     return TRUE;
 }
-
-
-
 
 
 NTSTATUS
@@ -233,18 +219,18 @@ BasepIsProcessAllowed(LPCWSTR lpApplicationName)
 --*/
 
 {
-    NTSTATUS                        Status;
-    UNICODE_STRING                  BackupUnicodeString;
-    PUNICODE_STRING                 pStaticString;
-    LPWSTR                          DllNameBuf;
-    ULONG                           BackupStringSize;
-    PLIST_ENTRY                     Head, Next;
+    NTSTATUS Status;
+    UNICODE_STRING BackupUnicodeString;
+    PUNICODE_STRING pStaticString;
+    LPWSTR DllNameBuf;
+    ULONG BackupStringSize;
+    PLIST_ENTRY Head, Next;
 
-    static BOOL              fInitialized = FALSE;
-    static BOOL              fCertifyEnabled = TRUE;
-    static NTSTATUS          CertifyErrorCode = STATUS_ACCESS_DENIED;
-    static HINSTANCE         hEmbeddedCertDll = NULL;
-    static NTSTATUS (WINAPI *fEmbeddedCertFunc)(LPCWSTR lpApplicationName) = NULL;
+    static BOOL fInitialized = FALSE;
+    static BOOL fCertifyEnabled = TRUE;
+    static NTSTATUS CertifyErrorCode = STATUS_ACCESS_DENIED;
+    static HINSTANCE hEmbeddedCertDll = NULL;
+    static NTSTATUS(WINAPI * fEmbeddedCertFunc)(LPCWSTR lpApplicationName) = NULL;
 
 
     //
@@ -257,22 +243,25 @@ BasepIsProcessAllowed(LPCWSTR lpApplicationName)
     //
 InitDone:
 
-    if ( fInitialized ) {
+    if (fInitialized)
+    {
 
-       PBASEP_APPCERT_ENTRY p;
-       NTSTATUS tempStatus;
-       ULONG Reason;
+        PBASEP_APPCERT_ENTRY p;
+        NTSTATUS tempStatus;
+        ULONG Reason;
 
-        if ( !fCertifyEnabled ) {
+        if (!fCertifyEnabled)
+        {
             return CertifyErrorCode;
         }
 
-        ASSERT( fEmbeddedCertFunc || !IsListEmpty( &BasepAppCertDllsList ) );
+        ASSERT(fEmbeddedCertFunc || !IsListEmpty(&BasepAppCertDllsList));
 
         Status = STATUS_SUCCESS;
 
-        if ( fEmbeddedCertFunc ) {
-            Status = (*fEmbeddedCertFunc)( lpApplicationName );
+        if (fEmbeddedCertFunc)
+        {
+            Status = (*fEmbeddedCertFunc)(lpApplicationName);
             return Status;
         }
 
@@ -289,21 +278,20 @@ InitDone:
         // Phase 1 : Voting
         //
         Next = Head->Flink;
-        while (Next != Head) {
-           p = CONTAINING_RECORD( Next,
-                                  BASEP_APPCERT_ENTRY,
-                                  Entry
-                                );
-           ASSERT(p->fPluginCertFunc != NULL);
+        while (Next != Head)
+        {
+            p = CONTAINING_RECORD(Next, BASEP_APPCERT_ENTRY, Entry);
+            ASSERT(p->fPluginCertFunc != NULL);
 
-           tempStatus = (*(p->fPluginCertFunc))( lpApplicationName, APPCERT_IMAGE_OK_TO_RUN );
+            tempStatus = (*(p->fPluginCertFunc))(lpApplicationName, APPCERT_IMAGE_OK_TO_RUN);
 
-           if (!NT_SUCCESS(tempStatus)) {
-              Status = tempStatus;
-              Reason = APPCERT_CREATION_DENIED;
-           }
+            if (!NT_SUCCESS(tempStatus))
+            {
+                Status = tempStatus;
+                Reason = APPCERT_CREATION_DENIED;
+            }
 
-           Next = Next->Flink;
+            Next = Next->Flink;
         }
 
 
@@ -313,16 +301,14 @@ InitDone:
 
         Next = Head->Flink;
 
-        while (Next != Head) {
-           p = CONTAINING_RECORD( Next,
-                                  BASEP_APPCERT_ENTRY,
-                                  Entry
-                                );
-           ASSERT(p->fPluginCertFunc != NULL);
+        while (Next != Head)
+        {
+            p = CONTAINING_RECORD(Next, BASEP_APPCERT_ENTRY, Entry);
+            ASSERT(p->fPluginCertFunc != NULL);
 
-           (*(p->fPluginCertFunc))( lpApplicationName, Reason );
+            (*(p->fPluginCertFunc))(lpApplicationName, Reason);
 
-           Next = Next->Flink;
+            Next = Next->Flink;
         }
 
         return Status;
@@ -338,7 +324,8 @@ InitDone:
     //
     // check if someone did init while we waited on the crit sect
     //
-    if (fInitialized) {
+    if (fInitialized)
+    {
         goto Initialized;
     }
 
@@ -346,17 +333,18 @@ InitDone:
     // Initialize locals
     //
     Status = STATUS_SUCCESS;
-    RtlZeroMemory( &BackupUnicodeString, sizeof(BackupUnicodeString) );
+    RtlZeroMemory(&BackupUnicodeString, sizeof(BackupUnicodeString));
     DllNameBuf = NULL;
 
 
     //
     // check if this is EmbeddedNT
     //
-    if (IsEmbeddedNT()) {
+    if (IsEmbeddedNT())
+    {
 
-        HINSTANCE  hDll;
-        ULONG      Length;
+        HINSTANCE hDll;
+        ULONG Length;
 
 
         //
@@ -369,57 +357,51 @@ InitDone:
         BackupUnicodeString.MaximumLength = pStaticString->MaximumLength;
         BackupUnicodeString.Length = pStaticString->Length;
         BackupStringSize = pStaticString->Length + sizeof(UNICODE_NULL);
-        if (BackupStringSize > BackupUnicodeString.MaximumLength) {
+        if (BackupStringSize > BackupUnicodeString.MaximumLength)
+        {
             BackupStringSize = BackupUnicodeString.MaximumLength;
         }
 
-        BackupUnicodeString.Buffer = RtlAllocateHeap(RtlProcessHeap(),
-                                         MAKE_TAG( TMP_TAG ),
-                                         BackupStringSize);
+        BackupUnicodeString.Buffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), BackupStringSize);
 
-        if (BackupUnicodeString.Buffer == NULL) {
+        if (BackupUnicodeString.Buffer == NULL)
+        {
             Status = STATUS_NO_MEMORY;
             goto Cleanup;
         }
 
-        RtlMoveMemory(BackupUnicodeString.Buffer,
-                      pStaticString->Buffer,
-                      BackupStringSize);
+        RtlMoveMemory(BackupUnicodeString.Buffer, pStaticString->Buffer, BackupStringSize);
 
 
         //
         // build the full path DLL name
         //
-        DllNameBuf = RtlAllocateHeap(RtlProcessHeap(),
-                                     MAKE_TAG( TMP_TAG ),
-                                     (MAX_PATH + 1) << 1);
+        DllNameBuf = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), (MAX_PATH + 1) << 1);
 
-        if (DllNameBuf == NULL) {
+        if (DllNameBuf == NULL)
+        {
             Status = STATUS_NO_MEMORY;
             goto Cleanup;
         }
 
-        Length = GetSystemDirectoryW(
-                      DllNameBuf,
-                      MAX_PATH - 1 - sizeof(CERTAPP_EMBEDDED_DLL_NAME)/2);
+        Length = GetSystemDirectoryW(DllNameBuf, MAX_PATH - 1 - sizeof(CERTAPP_EMBEDDED_DLL_NAME) / 2);
 
-        if (!Length ||
-             Length > (MAX_PATH - 1 - sizeof(CERTAPP_EMBEDDED_DLL_NAME)/2) ) {
+        if (!Length || Length > (MAX_PATH - 1 - sizeof(CERTAPP_EMBEDDED_DLL_NAME) / 2))
+        {
             Status = STATUS_UNSUCCESSFUL;
             goto Cleanup;
         }
 
-        if (DllNameBuf[ Length - 1 ] != L'\\') {
-            DllNameBuf[ Length++ ] = L'\\';
+        if (DllNameBuf[Length - 1] != L'\\')
+        {
+            DllNameBuf[Length++] = L'\\';
         }
 
-        RtlMoveMemory(
-                &DllNameBuf[ Length ],
-                CERTAPP_EMBEDDED_DLL_NAME,
-                sizeof(CERTAPP_EMBEDDED_DLL_NAME));
+        RtlMoveMemory(&DllNameBuf[Length], CERTAPP_EMBEDDED_DLL_NAME, sizeof(CERTAPP_EMBEDDED_DLL_NAME));
 
-        hDll = LoadLibraryW( DllNameBuf );
-        if (hDll == NULL) {
+        hDll = LoadLibraryW(DllNameBuf);
+        if (hDll == NULL)
+        {
             //
             // The library was not loaded, return.
             //
@@ -430,110 +412,103 @@ InitDone:
         //
         // get the entry point
         //
-        fEmbeddedCertFunc = (NTSTATUS (WINAPI *)(LPCWSTR))
-                                GetProcAddress(hDll,
-                                               CERTAPP_EMBEDDED_DLL_EP
-                                               );
-        if (fEmbeddedCertFunc == NULL) {
+        fEmbeddedCertFunc = (NTSTATUS(WINAPI *)(LPCWSTR))GetProcAddress(hDll, CERTAPP_EMBEDDED_DLL_EP);
+        if (fEmbeddedCertFunc == NULL)
+        {
             //
             // Unable to retrieve routine address, fail.
             //
             Status = STATUS_UNSUCCESSFUL;
         }
         goto Cleanup;
-
-    } else {
-       //
-       // On non-embedded NT
-       // Do a quick test of top level key to find out if app cert is on.
-       //
-          static const UNICODE_STRING     UnicodeString =
-              RTL_CONSTANT_STRING(CERTAPP_KEY_NAME);
-          static const OBJECT_ATTRIBUTES  obja =
-              RTL_CONSTANT_OBJECT_ATTRIBUTES(&UnicodeString, OBJ_CASE_INSENSITIVE);
-          HANDLE                          hKey;
-
-          if ( !NT_SUCCESS(NtOpenKey(&hKey,
-                             KEY_QUERY_VALUE,
-                             (POBJECT_ATTRIBUTES) &obja))) {
-
-              goto Cleanup;
-
-          } else {
-             NtClose(hKey);
-          }
-
     }
+    else
+    {
+        //
+        // On non-embedded NT
+        // Do a quick test of top level key to find out if app cert is on.
+        //
+        static const UNICODE_STRING UnicodeString = RTL_CONSTANT_STRING(CERTAPP_KEY_NAME);
+        static const OBJECT_ATTRIBUTES obja = RTL_CONSTANT_OBJECT_ATTRIBUTES(&UnicodeString, OBJ_CASE_INSENSITIVE);
+        HANDLE hKey;
 
+        if (!NT_SUCCESS(NtOpenKey(&hKey, KEY_QUERY_VALUE, (POBJECT_ATTRIBUTES)&obja)))
+        {
+
+            goto Cleanup;
+        }
+        else
+        {
+            NtClose(hKey);
+        }
+    }
 
 
     //
     // Backup static string if we haven't done so before. see comment above
     //
-    if (BackupUnicodeString.Buffer == NULL) {
+    if (BackupUnicodeString.Buffer == NULL)
+    {
         pStaticString = &NtCurrentTeb()->StaticUnicodeString;
         BackupUnicodeString.MaximumLength = pStaticString->MaximumLength;
         BackupUnicodeString.Length = pStaticString->Length;
         BackupStringSize = pStaticString->Length + sizeof(UNICODE_NULL);
-        if (BackupStringSize > BackupUnicodeString.MaximumLength) {
+        if (BackupStringSize > BackupUnicodeString.MaximumLength)
+        {
             BackupStringSize = BackupUnicodeString.MaximumLength;
         }
 
-        BackupUnicodeString.Buffer = RtlAllocateHeap(RtlProcessHeap(),
-                                         MAKE_TAG( TMP_TAG ),
-                                         BackupStringSize);
+        BackupUnicodeString.Buffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), BackupStringSize);
 
-        if (BackupUnicodeString.Buffer == NULL) {
+        if (BackupUnicodeString.Buffer == NULL)
+        {
             Status = STATUS_NO_MEMORY;
             goto Cleanup;
         }
 
-        RtlMoveMemory(BackupUnicodeString.Buffer,
-                      pStaticString->Buffer,
-                      BackupStringSize);
+        RtlMoveMemory(BackupUnicodeString.Buffer, pStaticString->Buffer, BackupStringSize);
     }
 
     //
     // load and initialize the list of certification DLLs
     //
 
-    Status = RtlQueryRegistryValues( RTL_REGISTRY_CONTROL,
-                                     L"Session Manager",
-                                     BasepAppCertTable,
-                                     NULL,
-                                     NULL
-                                   );
+    Status = RtlQueryRegistryValues(RTL_REGISTRY_CONTROL, L"Session Manager", BasepAppCertTable, NULL, NULL);
 
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
-       if (Status == STATUS_OBJECT_NAME_NOT_FOUND) {
-          //
-          // If the registry Key is missing AppCert is turned off
-          //
-          Status = STATUS_SUCCESS;
-       }
+        if (Status == STATUS_OBJECT_NAME_NOT_FOUND)
+        {
+            //
+            // If the registry Key is missing AppCert is turned off
+            //
+            Status = STATUS_SUCCESS;
+        }
     }
 
 
 Cleanup:
 
-    if (DllNameBuf) {
+    if (DllNameBuf)
+    {
         RtlFreeHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), DllNameBuf);
     }
-    if (BackupUnicodeString.Buffer) {
-        RtlMoveMemory(
-                pStaticString->Buffer,
-                BackupUnicodeString.Buffer,
-                BackupStringSize);
+    if (BackupUnicodeString.Buffer)
+    {
+        RtlMoveMemory(pStaticString->Buffer, BackupUnicodeString.Buffer, BackupStringSize);
         pStaticString->Length = BackupUnicodeString.Length;
         RtlFreeHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), BackupUnicodeString.Buffer);
     }
 
 
-    if (NT_SUCCESS( Status ) && (fEmbeddedCertFunc || !IsListEmpty( &BasepAppCertDllsList))) {
+    if (NT_SUCCESS(Status) && (fEmbeddedCertFunc || !IsListEmpty(&BasepAppCertDllsList)))
+    {
         fCertifyEnabled = TRUE;
-    } else {
+    }
+    else
+    {
         fCertifyEnabled = FALSE;
         CertifyErrorCode = Status;
     }
@@ -547,60 +522,55 @@ Initialized:
 }
 
 
-BOOL
-IsShimInfrastructureDisabled(
-    void
-    )
+BOOL IsShimInfrastructureDisabled(void)
 {
     static int g_nDisableShims = -1;
-            // -1 means we didn't check for disabled shims yet
-            //  0 means the shim infrastructure is enabled
-            //  1 means the shim infrastructure is disabled
+    // -1 means we didn't check for disabled shims yet
+    //  0 means the shim infrastructure is enabled
+    //  1 means the shim infrastructure is disabled
 
-    static const UNICODE_STRING KeyNameAppCompat =
-        RTL_CONSTANT_STRING(L"\\Registry\\MACHINE\\System\\CurrentControlSet\\Control\\Session Manager\\AppCompatibility");
-    static const UNICODE_STRING ValueNameDisableShims =
-        RTL_CONSTANT_STRING(L"DisableAppCompat");
+    static const UNICODE_STRING KeyNameAppCompat = RTL_CONSTANT_STRING(
+        L"\\Registry\\MACHINE\\System\\CurrentControlSet\\Control\\Session Manager\\AppCompatibility");
+    static const UNICODE_STRING ValueNameDisableShims = RTL_CONSTANT_STRING(L"DisableAppCompat");
     static const OBJECT_ATTRIBUTES objaAppCompat =
         RTL_CONSTANT_OBJECT_ATTRIBUTES(&KeyNameAppCompat, OBJ_CASE_INSENSITIVE);
 
-    HANDLE                      hKey;
+    HANDLE hKey;
     BYTE ValueBuffer[sizeof(KEY_VALUE_PARTIAL_INFORMATION) + sizeof(DWORD)];
-    PKEY_VALUE_PARTIAL_INFORMATION pKeyValueInformation =
-            (PKEY_VALUE_PARTIAL_INFORMATION)ValueBuffer;
-    DWORD                       ValueLength;
-    NTSTATUS                    Status;
+    PKEY_VALUE_PARTIAL_INFORMATION pKeyValueInformation = (PKEY_VALUE_PARTIAL_INFORMATION)ValueBuffer;
+    DWORD ValueLength;
+    NTSTATUS Status;
 
     //
     // First see if we already checked the registry
     //
-    if (g_nDisableShims == 1) {
+    if (g_nDisableShims == 1)
+    {
         return TRUE;
     }
 
-    if (g_nDisableShims == 0) {
+    if (g_nDisableShims == 0)
+    {
         return FALSE;
     }
 
     //
     // Now see if the shim infrastructure is disabled for this machine
     //
-    Status = NtOpenKey(&hKey, KEY_QUERY_VALUE, (POBJECT_ATTRIBUTES) &objaAppCompat);
+    Status = NtOpenKey(&hKey, KEY_QUERY_VALUE, (POBJECT_ATTRIBUTES)&objaAppCompat);
 
-    if (NT_SUCCESS(Status)) {
-        Status = NtQueryValueKey(hKey,
-                                 (PUNICODE_STRING) &ValueNameDisableShims,
-                                 KeyValuePartialInformation,
-                                 pKeyValueInformation,
-                                 sizeof(ValueBuffer),
-                                 &ValueLength);
+    if (NT_SUCCESS(Status))
+    {
+        Status = NtQueryValueKey(hKey, (PUNICODE_STRING)&ValueNameDisableShims, KeyValuePartialInformation,
+                                 pKeyValueInformation, sizeof(ValueBuffer), &ValueLength);
 
         NtClose(hKey);
 
-        if (NT_SUCCESS(Status) &&
-            pKeyValueInformation->Type == REG_DWORD &&
-            pKeyValueInformation->DataLength == sizeof(DWORD)) {
-            if (*((PDWORD) pKeyValueInformation->Data) > 0) {
+        if (NT_SUCCESS(Status) && pKeyValueInformation->Type == REG_DWORD &&
+            pKeyValueInformation->DataLength == sizeof(DWORD))
+        {
+            if (*((PDWORD)pKeyValueInformation->Data) > 0)
+            {
                 g_nDisableShims = 1;
                 return TRUE;
             }
@@ -617,44 +587,38 @@ IsShimInfrastructureDisabled(
 //
 
 NTSTATUS
-BasepCheckBadapp(
-    HANDLE hFile,
-    WCHAR* pwszApplication,          // IN
-    WCHAR* pEnvironment,             // IN
-    PVOID* ppData,                   // OUT
-    PDWORD pcbData,                  // OUT
-    PVOID* ppSxsData,                // OUT
-    PDWORD pcbSxsData                // OUT
-    )
+BasepCheckBadapp(HANDLE hFile,
+                 WCHAR *pwszApplication, // IN
+                 WCHAR *pEnvironment,    // IN
+                 PVOID *ppData,          // OUT
+                 PDWORD pcbData,         // OUT
+                 PVOID *ppSxsData,       // OUT
+                 PDWORD pcbSxsData       // OUT
+)
 {
-    typedef BOOL (STDAPICALLTYPE *PFNCheckRunApp)(
-        HANDLE FileHandle,
-        WCHAR* pwszPath,
-        WCHAR* pEnvironment,
-        DWORD  dwReason,
-        PVOID* ppData,
-        PDWORD pcbData,
-        PVOID* ppDataSxs,
-        PDWORD pcbDataSxs);
+    typedef BOOL(STDAPICALLTYPE * PFNCheckRunApp)(HANDLE FileHandle, WCHAR * pwszPath, WCHAR * pEnvironment,
+                                                  DWORD dwReason, PVOID * ppData, PDWORD pcbData, PVOID * ppDataSxs,
+                                                  PDWORD pcbDataSxs);
 
-    NTSTATUS                  RetStatus;
-    NTSTATUS                  Status;
-    HANDLE                    ModuleHandle;
-    static PFNCheckRunApp     pfnCheckRunApp = NULL;
-    PUNICODE_STRING           pStaticString;
-    UNICODE_STRING            BackupUnicodeString;
-    ULONG                     BackupStringSize;
-    WCHAR                     Apphelp_dllBuffer[MAX_PATH];
-    UNICODE_STRING            Apphelp_dllPath;
-    DWORD                     dwReason = 0; // reason for having avoided cache
+    NTSTATUS RetStatus;
+    NTSTATUS Status;
+    HANDLE ModuleHandle;
+    static PFNCheckRunApp pfnCheckRunApp = NULL;
+    PUNICODE_STRING pStaticString;
+    UNICODE_STRING BackupUnicodeString;
+    ULONG BackupStringSize;
+    WCHAR Apphelp_dllBuffer[MAX_PATH];
+    UNICODE_STRING Apphelp_dllPath;
+    DWORD dwReason = 0; // reason for having avoided cache
 
-    static const UNICODE_STRING Apphelp_dllModuleName        = RTL_CONSTANT_STRING(L"\\system32\\Apphelp.dll");
-    static const STRING         CheckRunAppProcedureName     = RTL_CONSTANT_STRING("ApphelpCheckRunApp");
+    static const UNICODE_STRING Apphelp_dllModuleName = RTL_CONSTANT_STRING(L"\\system32\\Apphelp.dll");
+    static const STRING CheckRunAppProcedureName = RTL_CONSTANT_STRING("ApphelpCheckRunApp");
 
     //
     // Do nothing if the shim infrastructure is disabled
     //
-    if (IsShimInfrastructureDisabled()) {
+    if (IsShimInfrastructureDisabled())
+    {
         return STATUS_SUCCESS;
     }
 
@@ -668,15 +632,15 @@ BasepCheckBadapp(
     BackupUnicodeString.Length = pStaticString->Length;
     BackupStringSize = pStaticString->Length + sizeof(UNICODE_NULL);
 
-    if (BackupStringSize > BackupUnicodeString.MaximumLength) {
+    if (BackupStringSize > BackupUnicodeString.MaximumLength)
+    {
         BackupStringSize = BackupUnicodeString.MaximumLength;
     }
 
-    BackupUnicodeString.Buffer = RtlAllocateHeap(RtlProcessHeap(),
-                                                 MAKE_TAG(TMP_TAG),
-                                                 BackupStringSize);
+    BackupUnicodeString.Buffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), BackupStringSize);
 
-    if (BackupUnicodeString.Buffer == NULL) {
+    if (BackupUnicodeString.Buffer == NULL)
+    {
         //
         // we failed to allocate memory to save the static string
         // return success and try to run an app
@@ -684,15 +648,14 @@ BasepCheckBadapp(
         return STATUS_SUCCESS;
     }
 
-    RtlMoveMemory(BackupUnicodeString.Buffer,
-                  pStaticString->Buffer,
-                  BackupStringSize);
+    RtlMoveMemory(BackupUnicodeString.Buffer, pStaticString->Buffer, BackupStringSize);
 
 
     //
     // Check our internal cache -- no touching apphelp.dll before we check with the cache
     //
-    if (BaseCheckAppcompatCache(pwszApplication, hFile, pEnvironment, &dwReason)) {
+    if (BaseCheckAppcompatCache(pwszApplication, hFile, pEnvironment, &dwReason))
+    {
         RetStatus = STATUS_SUCCESS;
         //
         // we can't just return here since we need to restore the static
@@ -702,7 +665,8 @@ BasepCheckBadapp(
     }
 
 
-    if (pfnCheckRunApp == (PFNCheckRunApp)(LONG_PTR)-1) {
+    if (pfnCheckRunApp == (PFNCheckRunApp)(LONG_PTR)-1)
+    {
         // We've tried before and could not get the fn ptr
         RetStatus = STATUS_SUCCESS;
         goto CheckDone;
@@ -710,53 +674,56 @@ BasepCheckBadapp(
 
     RtlEnterCriticalSection(&gcsAppCompat);
 
-    if (NULL == pfnCheckRunApp) {
+    if (NULL == pfnCheckRunApp)
+    {
         //
         // BaseWindowsDirectory is the unicode string that houses windows directory
         //
         DWORD dwLength;
-        WCHAR* pModuleName = Apphelp_dllModuleName.Buffer;
+        WCHAR *pModuleName = Apphelp_dllModuleName.Buffer;
 
         dwLength = BaseWindowsDirectory.Length + Apphelp_dllModuleName.Length + sizeof(UNICODE_NULL);
-        if (dwLength > sizeof(Apphelp_dllBuffer)) {
-            Status = STATUS_BUFFER_TOO_SMALL; // error, we don't support case when windows dir + apphelp location > MAX_PATH
+        if (dwLength > sizeof(Apphelp_dllBuffer))
+        {
+            Status =
+                STATUS_BUFFER_TOO_SMALL; // error, we don't support case when windows dir + apphelp location > MAX_PATH
         }
-        else {
+        else
+        {
 
-            Apphelp_dllPath.Buffer        = Apphelp_dllBuffer;
-            Apphelp_dllPath.Length        = 0;
+            Apphelp_dllPath.Buffer = Apphelp_dllBuffer;
+            Apphelp_dllPath.Length = 0;
             Apphelp_dllPath.MaximumLength = sizeof(Apphelp_dllBuffer);
 
             RtlCopyUnicodeString(&Apphelp_dllPath, &BaseWindowsDirectory);
 
-            if (L'\\' == Apphelp_dllPath.Buffer[Apphelp_dllPath.Length/sizeof(WCHAR) - 1]) {
+            if (L'\\' == Apphelp_dllPath.Buffer[Apphelp_dllPath.Length / sizeof(WCHAR) - 1])
+            {
                 ++pModuleName; // skip over the first backslash character
             }
 
             RtlAppendUnicodeToString(&Apphelp_dllPath, pModuleName);
 
 
-            Status = LdrLoadDll(NULL,
-                                NULL,
-                                &Apphelp_dllPath,
-                                &ModuleHandle);
+            Status = LdrLoadDll(NULL, NULL, &Apphelp_dllPath, &ModuleHandle);
         }
 
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
             // loaded apphelp, get proc
-            Status = LdrGetProcedureAddress(ModuleHandle,
-                                            &CheckRunAppProcedureName,
-                                            0,
-                                            (PVOID*)&pfnCheckRunApp);
+            Status = LdrGetProcedureAddress(ModuleHandle, &CheckRunAppProcedureName, 0, (PVOID *)&pfnCheckRunApp);
 
-            if (!NT_SUCCESS(Status)) {
+            if (!NT_SUCCESS(Status))
+            {
                 //
                 // Couldn't get the fn ptr. Make sure we won't try again
                 //
                 LdrUnloadDll(ModuleHandle);
                 pfnCheckRunApp = (PFNCheckRunApp)(LONG_PTR)-1;
             }
-        } else {
+        }
+        else
+        {
             //
             // No Apphelp.dll, so don't try again
             //
@@ -768,24 +735,18 @@ BasepCheckBadapp(
 
     RetStatus = STATUS_SUCCESS;
 
-    if (pfnCheckRunApp && (pfnCheckRunApp != (PFNCheckRunApp)(LONG_PTR)- 1)) {
+    if (pfnCheckRunApp && (pfnCheckRunApp != (PFNCheckRunApp)(LONG_PTR)-1))
+    {
 
         //
         // We have the proc here, do the checking
         //
 
-        if (!pfnCheckRunApp(hFile,
-                            pwszApplication,
-                            pEnvironment,
-                            dwReason,
-                            ppData,
-                            pcbData,
-                            ppSxsData,
-                            pcbSxsData)) {
+        if (!pfnCheckRunApp(hFile, pwszApplication, pEnvironment, dwReason, ppData, pcbData, ppSxsData, pcbSxsData))
+        {
 
             RetStatus = STATUS_ACCESS_DENIED;
         }
-
     }
 
 CheckDone:
@@ -795,9 +756,7 @@ CheckDone:
     //
 
     // now restore
-    RtlMoveMemory(pStaticString->Buffer,
-                  BackupUnicodeString.Buffer,
-                  BackupStringSize);
+    RtlMoveMemory(pStaticString->Buffer, BackupUnicodeString.Buffer, BackupStringSize);
 
     pStaticString->Length = BackupUnicodeString.Length;
 
@@ -807,22 +766,11 @@ CheckDone:
 }
 
 
-BOOL
-WINAPI
-CreateProcessInternalA(
-    HANDLE hUserToken,
-    LPCSTR lpApplicationName,
-    LPSTR lpCommandLine,
-    LPSECURITY_ATTRIBUTES lpProcessAttributes,
-    LPSECURITY_ATTRIBUTES lpThreadAttributes,
-    BOOL bInheritHandles,
-    DWORD dwCreationFlags,
-    LPVOID lpEnvironment,
-    LPCSTR lpCurrentDirectory,
-    LPSTARTUPINFOA lpStartupInfo,
-    LPPROCESS_INFORMATION lpProcessInformation,
-    PHANDLE hRestrictedUserToken
-    )
+BOOL WINAPI CreateProcessInternalA(HANDLE hUserToken, LPCSTR lpApplicationName, LPSTR lpCommandLine,
+                                   LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
+                                   BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
+                                   LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo,
+                                   LPPROCESS_INFORMATION lpProcessInformation, PHANDLE hRestrictedUserToken)
 
 /*++
 
@@ -842,46 +790,54 @@ CreateProcessInternalA(
     UNICODE_STRING NullUnicodeString;
     BOOL ReturnStatus;
 
-    if (ARGUMENT_PRESENT (lpCommandLine)) {
-        if (!Basep8BitStringToDynamicUnicodeString( &DynamicCommandLine,
-                                                    lpCommandLine )) {
+    if (ARGUMENT_PRESENT(lpCommandLine))
+    {
+        if (!Basep8BitStringToDynamicUnicodeString(&DynamicCommandLine, lpCommandLine))
+        {
             return FALSE;
         }
-    } else {
-         DynamicCommandLine.Buffer = NULL;
-         CommandLine = &NullUnicodeString;
-         CommandLine->Buffer = NULL;
+    }
+    else
+    {
+        DynamicCommandLine.Buffer = NULL;
+        CommandLine = &NullUnicodeString;
+        CommandLine->Buffer = NULL;
     }
 
     ApplicationName.Buffer = NULL;
     ApplicationName.Buffer = NULL;
     CurrentDirectory.Buffer = NULL;
-    RtlMoveMemory(&StartupInfo,lpStartupInfo,sizeof(*lpStartupInfo));
+    RtlMoveMemory(&StartupInfo, lpStartupInfo, sizeof(*lpStartupInfo));
     ASSERT(sizeof(StartupInfo) == sizeof(*lpStartupInfo));
     StartupInfo.lpReserved = NULL;
     StartupInfo.lpDesktop = NULL;
     StartupInfo.lpTitle = NULL;
 
-    try {
-        try {
-            if (ARGUMENT_PRESENT(lpApplicationName)) {
+    try
+    {
+        try
+        {
+            if (ARGUMENT_PRESENT(lpApplicationName))
+            {
 
-                if (!Basep8BitStringToDynamicUnicodeString( &ApplicationName,
-                                                            lpApplicationName )) {
+                if (!Basep8BitStringToDynamicUnicodeString(&ApplicationName, lpApplicationName))
+                {
                     ReturnStatus = FALSE;
                     goto tryexit;
                 }
             }
 
-            if (ARGUMENT_PRESENT(lpCurrentDirectory)) {
-                if (!Basep8BitStringToDynamicUnicodeString( &CurrentDirectory,
-                                                            lpCurrentDirectory )) {
+            if (ARGUMENT_PRESENT(lpCurrentDirectory))
+            {
+                if (!Basep8BitStringToDynamicUnicodeString(&CurrentDirectory, lpCurrentDirectory))
+                {
                     ReturnStatus = FALSE;
                     goto tryexit;
                 }
             }
 
-            if (ARGUMENT_PRESENT(lpStartupInfo->lpReserved)) {
+            if (ARGUMENT_PRESENT(lpStartupInfo->lpReserved))
+            {
 
                 //
                 // Win95 does not touch reserved, and Intergraph Voxtel passes
@@ -889,127 +845,108 @@ CreateProcessInternalA(
                 // the pointer is bad, ignore it
                 //
 
-                try {
+                try
+                {
 
-                    RtlInitAnsiString(&AnsiString,lpStartupInfo->lpReserved);
-
-                    }
-                except (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION
-                            ? EXCEPTION_EXECUTE_HANDLER
-                            : EXCEPTION_CONTINUE_SEARCH) {
+                    RtlInitAnsiString(&AnsiString, lpStartupInfo->lpReserved);
+                }
+                except(GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION ? EXCEPTION_EXECUTE_HANDLER
+                                                                        : EXCEPTION_CONTINUE_SEARCH)
+                {
                     goto bail_on_reserved;
-                    }
+                }
 
-                Unicode.MaximumLength = (USHORT)RtlAnsiStringToUnicodeSize(&AnsiString) ;
-                StartupInfo.lpReserved = RtlAllocateHeap( RtlProcessHeap(),
-                                                          MAKE_TAG( TMP_TAG ),
-                                                          Unicode.MaximumLength);
-                if ( !StartupInfo.lpReserved ) {
+                Unicode.MaximumLength = (USHORT)RtlAnsiStringToUnicodeSize(&AnsiString);
+                StartupInfo.lpReserved = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), Unicode.MaximumLength);
+                if (!StartupInfo.lpReserved)
+                {
                     BaseSetLastNTError(STATUS_NO_MEMORY);
                     ReturnStatus = FALSE;
                     goto tryexit;
-                    }
+                }
                 Unicode.Buffer = StartupInfo.lpReserved;
-                Status = RtlAnsiStringToUnicodeString(&Unicode,&AnsiString,FALSE);
-                if ( !NT_SUCCESS(Status) ) {
+                Status = RtlAnsiStringToUnicodeString(&Unicode, &AnsiString, FALSE);
+                if (!NT_SUCCESS(Status))
+                {
                     BaseSetLastNTError(Status);
                     ReturnStatus = FALSE;
                     goto tryexit;
-                    }
-                }
-
-bail_on_reserved:
-            if (ARGUMENT_PRESENT(lpStartupInfo->lpDesktop)) {
-                RtlInitAnsiString(&AnsiString,lpStartupInfo->lpDesktop);
-                Unicode.MaximumLength = (USHORT)RtlAnsiStringToUnicodeSize(&AnsiString) ;
-                StartupInfo.lpDesktop = RtlAllocateHeap( RtlProcessHeap(),
-                                                         MAKE_TAG( TMP_TAG ),
-                                                         Unicode.MaximumLength);
-                if ( !StartupInfo.lpDesktop ) {
-                    BaseSetLastNTError(STATUS_NO_MEMORY);
-                    ReturnStatus = FALSE;
-                    goto tryexit;
-                    }
-                Unicode.Buffer = StartupInfo.lpDesktop;
-                Status = RtlAnsiStringToUnicodeString(&Unicode,&AnsiString,FALSE);
-                if ( !NT_SUCCESS(Status) ) {
-                    BaseSetLastNTError(Status);
-                    ReturnStatus = FALSE;
-                    goto tryexit;
-                    }
-                }
-
-            if (ARGUMENT_PRESENT(lpStartupInfo->lpTitle)) {
-                RtlInitAnsiString(&AnsiString,lpStartupInfo->lpTitle);
-                Unicode.MaximumLength = (USHORT)RtlAnsiStringToUnicodeSize(&AnsiString) ;
-                StartupInfo.lpTitle = RtlAllocateHeap( RtlProcessHeap(),
-                                                       MAKE_TAG( TMP_TAG ),
-                                                       Unicode.MaximumLength);
-                if ( !StartupInfo.lpTitle ) {
-                    BaseSetLastNTError(STATUS_NO_MEMORY);
-                    ReturnStatus = FALSE;
-                    goto tryexit;
-                    }
-                Unicode.Buffer = StartupInfo.lpTitle;
-                Status = RtlAnsiStringToUnicodeString(&Unicode,&AnsiString,FALSE);
-                if ( !NT_SUCCESS(Status) ) {
-                    BaseSetLastNTError(Status);
-                    ReturnStatus = FALSE;
-                    goto tryexit;
-                    }
                 }
             }
-        except (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION
-                    ? EXCEPTION_EXECUTE_HANDLER
-                    : EXCEPTION_CONTINUE_SEARCH) {
+
+        bail_on_reserved:
+            if (ARGUMENT_PRESENT(lpStartupInfo->lpDesktop))
+            {
+                RtlInitAnsiString(&AnsiString, lpStartupInfo->lpDesktop);
+                Unicode.MaximumLength = (USHORT)RtlAnsiStringToUnicodeSize(&AnsiString);
+                StartupInfo.lpDesktop = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), Unicode.MaximumLength);
+                if (!StartupInfo.lpDesktop)
+                {
+                    BaseSetLastNTError(STATUS_NO_MEMORY);
+                    ReturnStatus = FALSE;
+                    goto tryexit;
+                }
+                Unicode.Buffer = StartupInfo.lpDesktop;
+                Status = RtlAnsiStringToUnicodeString(&Unicode, &AnsiString, FALSE);
+                if (!NT_SUCCESS(Status))
+                {
+                    BaseSetLastNTError(Status);
+                    ReturnStatus = FALSE;
+                    goto tryexit;
+                }
+            }
+
+            if (ARGUMENT_PRESENT(lpStartupInfo->lpTitle))
+            {
+                RtlInitAnsiString(&AnsiString, lpStartupInfo->lpTitle);
+                Unicode.MaximumLength = (USHORT)RtlAnsiStringToUnicodeSize(&AnsiString);
+                StartupInfo.lpTitle = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), Unicode.MaximumLength);
+                if (!StartupInfo.lpTitle)
+                {
+                    BaseSetLastNTError(STATUS_NO_MEMORY);
+                    ReturnStatus = FALSE;
+                    goto tryexit;
+                }
+                Unicode.Buffer = StartupInfo.lpTitle;
+                Status = RtlAnsiStringToUnicodeString(&Unicode, &AnsiString, FALSE);
+                if (!NT_SUCCESS(Status))
+                {
+                    BaseSetLastNTError(Status);
+                    ReturnStatus = FALSE;
+                    goto tryexit;
+                }
+            }
+        }
+        except(GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
+        {
             BaseSetLastNTError(GetExceptionCode());
             ReturnStatus = FALSE;
             goto tryexit;
-            }
-        ReturnStatus = CreateProcessInternalW(
-                            hUserToken,
-                            ApplicationName.Buffer,
-                            DynamicCommandLine.Buffer ? DynamicCommandLine.Buffer
-                                                      : CommandLine->Buffer,
-                            lpProcessAttributes,
-                            lpThreadAttributes,
-                            bInheritHandles,
-                            dwCreationFlags,
-                            lpEnvironment,
-                            CurrentDirectory.Buffer,
-                            &StartupInfo,
-                            lpProcessInformation,
-                            hRestrictedUserToken
-                            );
-tryexit:;
         }
-    finally {
+        ReturnStatus = CreateProcessInternalW(
+            hUserToken, ApplicationName.Buffer,
+            DynamicCommandLine.Buffer ? DynamicCommandLine.Buffer : CommandLine->Buffer, lpProcessAttributes,
+            lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, CurrentDirectory.Buffer, &StartupInfo,
+            lpProcessInformation, hRestrictedUserToken);
+    tryexit:;
+    }
+    finally
+    {
         RtlFreeUnicodeString(&DynamicCommandLine);
         RtlFreeUnicodeString(&ApplicationName);
         RtlFreeUnicodeString(&CurrentDirectory);
-        RtlFreeHeap(RtlProcessHeap(), 0,StartupInfo.lpReserved);
-        RtlFreeHeap(RtlProcessHeap(), 0,StartupInfo.lpDesktop);
-        RtlFreeHeap(RtlProcessHeap(), 0,StartupInfo.lpTitle);
-        }
+        RtlFreeHeap(RtlProcessHeap(), 0, StartupInfo.lpReserved);
+        RtlFreeHeap(RtlProcessHeap(), 0, StartupInfo.lpDesktop);
+        RtlFreeHeap(RtlProcessHeap(), 0, StartupInfo.lpTitle);
+    }
 
     return ReturnStatus;
-
 }
 
-BOOL
-WINAPI
-CreateProcessA(
-    LPCSTR lpApplicationName,
-    LPSTR lpCommandLine,
-    LPSECURITY_ATTRIBUTES lpProcessAttributes,
-    LPSECURITY_ATTRIBUTES lpThreadAttributes,
-    BOOL bInheritHandles,
-    DWORD dwCreationFlags,
-    LPVOID lpEnvironment,
-    LPCSTR lpCurrentDirectory,
-    LPSTARTUPINFOA lpStartupInfo,
-    LPPROCESS_INFORMATION lpProcessInformation
-    )
+BOOL WINAPI CreateProcessA(LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
+                           LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags,
+                           LPVOID lpEnvironment, LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo,
+                           LPPROCESS_INFORMATION lpProcessInformation)
 
 /*++
 
@@ -1018,28 +955,15 @@ CreateProcessA(
 --*/
 
 {
-    return CreateProcessInternalA(
-               NULL, // Create new process with the token on the creator process
-               lpApplicationName,
-               lpCommandLine,
-               lpProcessAttributes,
-               lpThreadAttributes,
-               bInheritHandles,
-               dwCreationFlags,
-               lpEnvironment,
-               lpCurrentDirectory,
-               lpStartupInfo,
-               lpProcessInformation,
-               NULL  // Do not return the restricted token
-               );
-
+    return CreateProcessInternalA(NULL, // Create new process with the token on the creator process
+                                  lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes,
+                                  bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo,
+                                  lpProcessInformation,
+                                  NULL // Do not return the restricted token
+    );
 }
 
-void
-WINAPI
-RegisterWaitForInputIdle(
-    IN PFNWAITFORINPUTIDLE WaitForInputIdleRoutine
-    )
+void WINAPI RegisterWaitForInputIdle(IN PFNWAITFORINPUTIDLE WaitForInputIdleRoutine)
 {
     //
     // Soft link in the USER call back for the routine needed for WinExec()
@@ -1050,79 +974,51 @@ RegisterWaitForInputIdle(
     UserWaitForInputIdleRoutine = WaitForInputIdleRoutine;
 }
 
-void
-StuffStdHandle(
-    HANDLE ProcessHandle,
-    HANDLE StdHandle,
-    PHANDLE TargetHandleAddress
-    )
+void StuffStdHandle(HANDLE ProcessHandle, HANDLE StdHandle, PHANDLE TargetHandleAddress)
 {
     NTSTATUS Status;
     HANDLE TargetStdHandle;
     SIZE_T NumberOfBytesWritten;
 
-    if (StdHandle == NULL) {
+    if (StdHandle == NULL)
+    {
         return;
     }
-    Status = NtDuplicateObject (NtCurrentProcess(),
-                                StdHandle,
-                                ProcessHandle,
-                                &TargetStdHandle,
-                                DUPLICATE_SAME_ACCESS | DUPLICATE_SAME_ATTRIBUTES,
-                                0,
-                                0);
-    if (!NT_SUCCESS( Status )) {
+    Status = NtDuplicateObject(NtCurrentProcess(), StdHandle, ProcessHandle, &TargetStdHandle,
+                               DUPLICATE_SAME_ACCESS | DUPLICATE_SAME_ATTRIBUTES, 0, 0);
+    if (!NT_SUCCESS(Status))
+    {
         return;
     }
 
-    Status = NtWriteVirtualMemory (ProcessHandle,
-                                   TargetHandleAddress,
-                                   &TargetStdHandle,
-                                   sizeof( TargetStdHandle ),
-                                   &NumberOfBytesWritten);
+    Status = NtWriteVirtualMemory(ProcessHandle, TargetHandleAddress, &TargetStdHandle, sizeof(TargetStdHandle),
+                                  &NumberOfBytesWritten);
     return;
 }
 
 
-static HANDLE AdvApi32ModuleHandle = (HANDLE) (ULONG_PTR) -1;
+static HANDLE AdvApi32ModuleHandle = (HANDLE)(ULONG_PTR)-1;
 
 NTSTATUS
-BasepCheckWinSaferRestrictions(
-        IN HANDLE       hUserToken          OPTIONAL,
-        IN LPCWSTR      lpApplicationName,
-        IN HANDLE       FileImageHandle     OPTIONAL,
-        OUT LPDWORD     pdwJobMemberLevel,
-        OUT PHANDLE     phRestrictedToken,
-        OUT PHANDLE     phAssignmentJob
-        )
+BasepCheckWinSaferRestrictions(IN HANDLE hUserToken OPTIONAL, IN LPCWSTR lpApplicationName,
+                               IN HANDLE FileImageHandle OPTIONAL, OUT LPDWORD pdwJobMemberLevel,
+                               OUT PHANDLE phRestrictedToken, OUT PHANDLE phAssignmentJob)
 // Note: May return -1 for the ERROR_ACCESS_DISABLED_BY_POLICY case.
 {
 
 #define SAFER_USER_KEY_NAME L"\\Software\\Policies\\Microsoft\\Windows\\Safer\\CodeIdentifiers"
 
-    typedef BOOL (WINAPI *ComputeAccessTokenFromCodeAuthzLevelT) (
-        IN SAFER_LEVEL_HANDLE LevelObject,
-        IN HANDLE             InAccessToken         OPTIONAL,
-        OUT PHANDLE           OutAccessToken,
-        IN DWORD              dwFlags,
-        IN LPVOID             lpReserved
-        );
+    typedef BOOL(WINAPI * ComputeAccessTokenFromCodeAuthzLevelT)(
+        IN SAFER_LEVEL_HANDLE LevelObject, IN HANDLE InAccessToken OPTIONAL, OUT PHANDLE OutAccessToken,
+        IN DWORD dwFlags, IN LPVOID lpReserved);
 
-    typedef BOOL (WINAPI *IdentifyCodeAuthzLevelWT) (
-        IN DWORD                dwCheckFlags,
-        IN PSAFER_CODE_PROPERTIES    CodeProperties,
-        OUT SAFER_LEVEL_HANDLE        *pLevelObject,
-        IN LPVOID               lpReserved
-        );
+    typedef BOOL(WINAPI * IdentifyCodeAuthzLevelWT)(IN DWORD dwCheckFlags, IN PSAFER_CODE_PROPERTIES CodeProperties,
+                                                    OUT SAFER_LEVEL_HANDLE * pLevelObject, IN LPVOID lpReserved);
 
-    typedef BOOL (WINAPI *CloseCodeAuthzLevelT) (
-        IN SAFER_LEVEL_HANDLE      hLevelObject);
+    typedef BOOL(WINAPI * CloseCodeAuthzLevelT)(IN SAFER_LEVEL_HANDLE hLevelObject);
 
-    typedef BOOL (WINAPI *CodeAuthzRecordEventLogEntryT) (
-        IN SAFER_LEVEL_HANDLE      hAuthzLevel,
-        IN LPCWSTR          szTargetPath,
-        IN LPVOID           lpReserved
-        );
+    typedef BOOL(WINAPI * CodeAuthzRecordEventLogEntryT)(IN SAFER_LEVEL_HANDLE hAuthzLevel, IN LPCWSTR szTargetPath,
+                                                         IN LPVOID lpReserved);
 
     NTSTATUS Status;
     SAFER_CODE_PROPERTIES codeproperties;
@@ -1132,36 +1028,26 @@ BasepCheckWinSaferRestrictions(
     HANDLE hEffectiveToken = NULL;
     static DWORD dwSaferAuthenticodeFlag = 0;
 
-    const static SID_IDENTIFIER_AUTHORITY NtAuthority =
-            SECURITY_NT_AUTHORITY;
+    const static SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
     const static UNICODE_STRING UnicodeSafeBootKeyName =
         RTL_CONSTANT_STRING(L"\\Registry\\MACHINE\\System\\CurrentControlSet\\Control\\SafeBoot\\Option");
-    const static UNICODE_STRING UnicodeSafeBootValueName =
-        RTL_CONSTANT_STRING(L"OptionValue");
+    const static UNICODE_STRING UnicodeSafeBootValueName = RTL_CONSTANT_STRING(L"OptionValue");
     const static OBJECT_ATTRIBUTES ObjectAttributesSafeBoot =
         RTL_CONSTANT_OBJECT_ATTRIBUTES(&UnicodeSafeBootKeyName, OBJ_CASE_INSENSITIVE);
     const static UNICODE_STRING UnicodeKeyName =
         RTL_CONSTANT_STRING(L"\\Registry\\Machine\\Software\\Policies\\Microsoft\\Windows\\Safer\\CodeIdentifiers");
-    const static UNICODE_STRING UnicodeTransparentValueName =
-        RTL_CONSTANT_STRING(L"TransparentEnabled");
+    const static UNICODE_STRING UnicodeTransparentValueName = RTL_CONSTANT_STRING(L"TransparentEnabled");
     const static OBJECT_ATTRIBUTES ObjectAttributesCodeIdentifiers =
         RTL_CONSTANT_OBJECT_ATTRIBUTES(&UnicodeKeyName, OBJ_CASE_INSENSITIVE);
-    const static UNICODE_STRING ModuleName =
-        RTL_CONSTANT_STRING(L"ADVAPI32.DLL");
-    const static ANSI_STRING ProcedureNameIdentify =
-        RTL_CONSTANT_STRING("SaferIdentifyLevel");
-    const static ANSI_STRING ProcedureNameCompute =
-        RTL_CONSTANT_STRING("SaferComputeTokenFromLevel");
-    const static ANSI_STRING ProcedureNameClose =
-        RTL_CONSTANT_STRING("SaferCloseLevel");
-    const static ANSI_STRING ProcedureNameLogEntry =
-        RTL_CONSTANT_STRING("SaferRecordEventLogEntry");
-    const static UNICODE_STRING SaferAuthenticodeValueName =
-        RTL_CONSTANT_STRING(L"AuthenticodeEnabled");
+    const static UNICODE_STRING ModuleName = RTL_CONSTANT_STRING(L"ADVAPI32.DLL");
+    const static ANSI_STRING ProcedureNameIdentify = RTL_CONSTANT_STRING("SaferIdentifyLevel");
+    const static ANSI_STRING ProcedureNameCompute = RTL_CONSTANT_STRING("SaferComputeTokenFromLevel");
+    const static ANSI_STRING ProcedureNameClose = RTL_CONSTANT_STRING("SaferCloseLevel");
+    const static ANSI_STRING ProcedureNameLogEntry = RTL_CONSTANT_STRING("SaferRecordEventLogEntry");
+    const static UNICODE_STRING SaferAuthenticodeValueName = RTL_CONSTANT_STRING(L"AuthenticodeEnabled");
 
     static IdentifyCodeAuthzLevelWT lpfnIdentifyCodeAuthzLevelW;
-    static ComputeAccessTokenFromCodeAuthzLevelT
-            lpfnComputeAccessTokenFromCodeAuthzLevel;
+    static ComputeAccessTokenFromCodeAuthzLevelT lpfnComputeAccessTokenFromCodeAuthzLevel;
     static CloseCodeAuthzLevelT lpfnCloseCodeAuthzLevel;
     static CodeAuthzRecordEventLogEntryT lpfnCodeAuthzRecordEventLogEntry;
 
@@ -1169,12 +1055,13 @@ BasepCheckWinSaferRestrictions(
     //
     // Verify that our required arguments were supplied.
     //
-    if (!ARGUMENT_PRESENT(lpApplicationName) || !*lpApplicationName) {
+    if (!ARGUMENT_PRESENT(lpApplicationName) || !*lpApplicationName)
+    {
         return STATUS_INVALID_PARAMETER;
     }
-    if (!ARGUMENT_PRESENT(pdwJobMemberLevel) ||
-        !ARGUMENT_PRESENT(phRestrictedToken) ||
-        !ARGUMENT_PRESENT(phAssignmentJob)) {
+    if (!ARGUMENT_PRESENT(pdwJobMemberLevel) || !ARGUMENT_PRESENT(phRestrictedToken) ||
+        !ARGUMENT_PRESENT(phAssignmentJob))
+    {
         return STATUS_ACCESS_VIOLATION;
     }
 
@@ -1191,58 +1078,59 @@ BasepCheckWinSaferRestrictions(
     // as quickly as possible because we know that WinSafer evaluations
     // should definitely not occur for this process anymore.
     //
-    if (AdvApi32ModuleHandle == NULL) {
+    if (AdvApi32ModuleHandle == NULL)
+    {
         // We tried to load ADVAPI32.DLL once before, but failed.
         Status = STATUS_ENTRYPOINT_NOT_FOUND;
         goto ExitHandler;
-    } else if (AdvApi32ModuleHandle == LongToHandle(-2)) {
+    }
+    else if (AdvApi32ModuleHandle == LongToHandle(-2))
+    {
         // Indicates that DLL checking should never be done for this process.
         Status = STATUS_SUCCESS;
         goto ExitHandler;
     }
 
-    // 
+    //
     // We only need the process token if no token is supplied.
     //
 
-    if (hUserToken == NULL) {
+    if (hUserToken == NULL)
+    {
 
 
         //
         // Open and save the thread token.
         //
 
-        Status = NtOpenThreadToken(
-                     NtCurrentThread(), 
-                     MAXIMUM_ALLOWED, 
-                     TRUE, 
-                     &hThreadToken);
+        Status = NtOpenThreadToken(NtCurrentThread(), MAXIMUM_ALLOWED, TRUE, &hThreadToken);
 
-        if (Status == STATUS_NO_TOKEN) {
+        if (Status == STATUS_NO_TOKEN)
+        {
 
-        // The thread is not impersonating. It is ok to fall thru.
-
-        } else if (!NT_SUCCESS(Status)) {
+            // The thread is not impersonating. It is ok to fall thru.
+        }
+        else if (!NT_SUCCESS(Status))
+        {
             goto ExitHandler;
-        } else {
+        }
+        else
+        {
 
-            
+
             HANDLE NewToken = NULL;
-            // 
+            //
             // Revert to self.
-            // 
+            //
 
-            Status = NtSetInformationThread(
-                                   NtCurrentThread(),
-                                   ThreadImpersonationToken,
-                                   (PVOID)&NewToken,
-                                   (ULONG)sizeof(HANDLE)
-                                   );
+            Status = NtSetInformationThread(NtCurrentThread(), ThreadImpersonationToken, (PVOID)&NewToken,
+                                            (ULONG)sizeof(HANDLE));
             //
             // This should never happen unless kernel gives up on us.
             //
-    
-            if ( !NT_SUCCESS(Status) ) {
+
+            if (!NT_SUCCESS(Status))
+            {
                 NtClose(hThreadToken);
                 hThreadToken = NULL;
                 goto ExitHandler;
@@ -1255,50 +1143,44 @@ BasepCheckWinSaferRestrictions(
         // We care only about the process token, and not the
         // thread impersonation token.
         //
-        Status = NtOpenProcessToken(
-                        NtCurrentProcess(),
-                        TOKEN_DUPLICATE | TOKEN_QUERY,
-                        &hProcessToken);
-        if (Status == STATUS_ACCESS_DENIED) {
+        Status = NtOpenProcessToken(NtCurrentProcess(), TOKEN_DUPLICATE | TOKEN_QUERY, &hProcessToken);
+        if (Status == STATUS_ACCESS_DENIED)
+        {
             // Failed to open with query and duplicate privs.  Retry with
             // only query privileges, which might be enough to do simply
             // determine that we should not allow futher loading.  But without
             // duplicate access, we won't be able to restrict tokens later.
-            Status = NtOpenProcessToken(
-                            NtCurrentProcess(),
-                            TOKEN_QUERY,
-                            &hProcessToken);
+            Status = NtOpenProcessToken(NtCurrentProcess(), TOKEN_QUERY, &hProcessToken);
         }
 
-        if (hThreadToken != NULL) {
+        if (hThreadToken != NULL)
+        {
 
             //
             // Set the thread token to the saved one.
             //
-    
-            NTSTATUS lStatus = NtSetInformationThread(
-                                   NtCurrentThread(),
-                                   ThreadImpersonationToken,
-                                   (PVOID)&hThreadToken,
-                                   (ULONG)sizeof(HANDLE)
-                                   );
-    
+
+            NTSTATUS lStatus = NtSetInformationThread(NtCurrentThread(), ThreadImpersonationToken, (PVOID)&hThreadToken,
+                                                      (ULONG)sizeof(HANDLE));
+
             NtClose(hThreadToken);
             hThreadToken = NULL;
 
             //
             // This should never happen unless kernel gives up on us.
             //
-    
-            if ( !NT_SUCCESS(lStatus) ) {
+
+            if (!NT_SUCCESS(lStatus))
+            {
                 Status = lStatus;
                 goto ExitHandler2;
             }
-
         }
 
-        if (!NT_SUCCESS(Status)) {
-            if (AdvApi32ModuleHandle == LongToHandle(-1)) {
+        if (!NT_SUCCESS(Status))
+        {
+            if (AdvApi32ModuleHandle == LongToHandle(-1))
+            {
                 // If this is our first pass through, then it is unlikely
                 // that any later attempts will succeed, so remember that.
                 AdvApi32ModuleHandle = LongToHandle(-2);
@@ -1307,14 +1189,17 @@ BasepCheckWinSaferRestrictions(
             goto ExitHandler;
         }
         hEffectiveToken = hProcessToken;
-    } else {
+    }
+    else
+    {
         hEffectiveToken = hUserToken;
     }
 
     //
     // Load ADVAPI32.DLL and get pointers to our functions.
     //
-    if (AdvApi32ModuleHandle == LongToHandle(-1)) {
+    if (AdvApi32ModuleHandle == LongToHandle(-1))
+    {
         HANDLE TempModuleHandle;
 
         //
@@ -1323,26 +1208,23 @@ BasepCheckWinSaferRestrictions(
         //
         {
             BYTE tokenuserbuff[sizeof(TOKEN_USER) + 128];
-            PTOKEN_USER ptokenuser = (PTOKEN_USER) tokenuserbuff;
+            PTOKEN_USER ptokenuser = (PTOKEN_USER)tokenuserbuff;
             BYTE localsystembuff[128];
-            PSID LocalSystemSid = (PSID) localsystembuff;
+            PSID LocalSystemSid = (PSID)localsystembuff;
             ULONG ulReturnLength;
 
-            Status = NtQueryInformationToken(
-                            hEffectiveToken, TokenUser,
-                            tokenuserbuff, sizeof(tokenuserbuff),
-                            &ulReturnLength);
-            if (NT_SUCCESS(Status)) {
-                Status = RtlInitializeSid(
-                            LocalSystemSid,
-                            (PSID_IDENTIFIER_AUTHORITY) &NtAuthority, 1);
+            Status = NtQueryInformationToken(hEffectiveToken, TokenUser, tokenuserbuff, sizeof(tokenuserbuff),
+                                             &ulReturnLength);
+            if (NT_SUCCESS(Status))
+            {
+                Status = RtlInitializeSid(LocalSystemSid, (PSID_IDENTIFIER_AUTHORITY)&NtAuthority, 1);
                 ASSERTMSG("InitializeSid should not fail.", NT_SUCCESS(Status));
                 *RtlSubAuthoritySid(LocalSystemSid, 0) = SECURITY_LOCAL_SYSTEM_RID;
 
-                if (RtlEqualSid(ptokenuser->User.Sid, LocalSystemSid)) {
+                if (RtlEqualSid(ptokenuser->User.Sid, LocalSystemSid))
+                {
                     goto FailSuccessfully;
                 }
-
             }
         }
 
@@ -1357,8 +1239,7 @@ BasepCheckWinSaferRestrictions(
         {
             HANDLE hKeySafeBoot;
             BYTE QueryBuffer[sizeof(KEY_VALUE_PARTIAL_INFORMATION) + 64];
-            PKEY_VALUE_PARTIAL_INFORMATION pKeyValueInfo =
-                (PKEY_VALUE_PARTIAL_INFORMATION) QueryBuffer;
+            PKEY_VALUE_PARTIAL_INFORMATION pKeyValueInfo = (PKEY_VALUE_PARTIAL_INFORMATION)QueryBuffer;
             DWORD dwActualSize;
             BOOLEAN bSafeModeBoot = FALSE;
 
@@ -1367,33 +1248,30 @@ BasepCheckWinSaferRestrictions(
             // under this key.  This allows us to combine our test of
             // being an Administrator and having booted in Safe mode.
             Status = NtOpenKey(&hKeySafeBoot, KEY_QUERY_VALUE | KEY_SET_VALUE,
-                               (POBJECT_ATTRIBUTES) &ObjectAttributesSafeBoot);
-            if (NT_SUCCESS(Status)) {
-                Status = NtQueryValueKey(
-                            hKeySafeBoot,
-                            (PUNICODE_STRING) &UnicodeSafeBootValueName,
-                            KeyValuePartialInformation,
-                            pKeyValueInfo,
-                            sizeof(QueryBuffer),
-                            &dwActualSize);
+                               (POBJECT_ATTRIBUTES)&ObjectAttributesSafeBoot);
+            if (NT_SUCCESS(Status))
+            {
+                Status = NtQueryValueKey(hKeySafeBoot, (PUNICODE_STRING)&UnicodeSafeBootValueName,
+                                         KeyValuePartialInformation, pKeyValueInfo, sizeof(QueryBuffer), &dwActualSize);
                 NtClose(hKeySafeBoot);
-                if (NT_SUCCESS(Status)) {
-                    if (pKeyValueInfo->Type == REG_DWORD &&
-                        pKeyValueInfo->DataLength == sizeof(DWORD) &&
-                        *((PDWORD) pKeyValueInfo->Data) > 0) {
+                if (NT_SUCCESS(Status))
+                {
+                    if (pKeyValueInfo->Type == REG_DWORD && pKeyValueInfo->DataLength == sizeof(DWORD) &&
+                        *((PDWORD)pKeyValueInfo->Data) > 0)
+                    {
                         bSafeModeBoot = TRUE;
                     }
                 }
             }
 
-            if (bSafeModeBoot) {
+            if (bSafeModeBoot)
+            {
                 AdvApi32ModuleHandle = LongToHandle(-2);
-FailSuccessfully:
+            FailSuccessfully:
                 Status = STATUS_SUCCESS;
                 goto ExitHandler2;
             }
         }
-
 
 
         //
@@ -1408,23 +1286,20 @@ FailSuccessfully:
             // BUG 240635: change to use existence of policy instead.
             HANDLE hKeyEnabled;
             BYTE QueryBuffer[sizeof(KEY_VALUE_PARTIAL_INFORMATION) + 64];
-            PKEY_VALUE_PARTIAL_INFORMATION pKeyValueInfo =
-                (PKEY_VALUE_PARTIAL_INFORMATION) QueryBuffer;
+            PKEY_VALUE_PARTIAL_INFORMATION pKeyValueInfo = (PKEY_VALUE_PARTIAL_INFORMATION)QueryBuffer;
             DWORD dwActualSize;
             BOOLEAN bPolicyEnabled = FALSE;
 
-            Status = NtOpenKey(&hKeyEnabled, KEY_QUERY_VALUE,
-                               (POBJECT_ATTRIBUTES) &ObjectAttributesCodeIdentifiers);
-            if (NT_SUCCESS(Status)) {
-                Status = NtQueryValueKey(
-                            hKeyEnabled,
-                            (PUNICODE_STRING) &UnicodeTransparentValueName,
-                            KeyValuePartialInformation,
-                            pKeyValueInfo, sizeof(QueryBuffer), &dwActualSize);
-                if (NT_SUCCESS(Status)) {
-                    if (pKeyValueInfo->Type == REG_DWORD &&
-                        pKeyValueInfo->DataLength == sizeof(DWORD) &&
-                        *((PDWORD) pKeyValueInfo->Data) > 0) {
+            Status = NtOpenKey(&hKeyEnabled, KEY_QUERY_VALUE, (POBJECT_ATTRIBUTES)&ObjectAttributesCodeIdentifiers);
+            if (NT_SUCCESS(Status))
+            {
+                Status = NtQueryValueKey(hKeyEnabled, (PUNICODE_STRING)&UnicodeTransparentValueName,
+                                         KeyValuePartialInformation, pKeyValueInfo, sizeof(QueryBuffer), &dwActualSize);
+                if (NT_SUCCESS(Status))
+                {
+                    if (pKeyValueInfo->Type == REG_DWORD && pKeyValueInfo->DataLength == sizeof(DWORD) &&
+                        *((PDWORD)pKeyValueInfo->Data) > 0)
+                    {
                         bPolicyEnabled = TRUE;
                     }
                 }
@@ -1433,15 +1308,13 @@ FailSuccessfully:
                 // do authenticode checks only if a regvalue is set
                 //
 
-                Status = NtQueryValueKey(
-                            hKeyEnabled,
-                            (PUNICODE_STRING) &SaferAuthenticodeValueName,
-                            KeyValuePartialInformation,
-                            pKeyValueInfo, sizeof(QueryBuffer), &dwActualSize);
-                if (NT_SUCCESS(Status)) {
-                    if (pKeyValueInfo->Type == REG_DWORD &&
-                        pKeyValueInfo->DataLength == sizeof(DWORD) &&
-                        *((PDWORD) pKeyValueInfo->Data) > 0) {
+                Status = NtQueryValueKey(hKeyEnabled, (PUNICODE_STRING)&SaferAuthenticodeValueName,
+                                         KeyValuePartialInformation, pKeyValueInfo, sizeof(QueryBuffer), &dwActualSize);
+                if (NT_SUCCESS(Status))
+                {
+                    if (pKeyValueInfo->Type == REG_DWORD && pKeyValueInfo->DataLength == sizeof(DWORD) &&
+                        *((PDWORD)pKeyValueInfo->Data) > 0)
+                    {
                         dwSaferAuthenticodeFlag = SAFER_CRITERIA_AUTHENTICODE;
                     }
                 }
@@ -1452,7 +1325,8 @@ FailSuccessfully:
             // There was no machine policy. Check if user policy is enabled.
             //
 
-            if (!bPolicyEnabled) {
+            if (!bPolicyEnabled)
+            {
                 UNICODE_STRING CurrentUserKeyPath;
                 UNICODE_STRING SubKeyNameUser;
                 OBJECT_ATTRIBUTES ObjectAttributesUser;
@@ -1461,83 +1335,76 @@ FailSuccessfully:
                 // Get the prefix for the user key.
                 //
 
-                Status = RtlFormatCurrentUserKeyPath( &CurrentUserKeyPath );
+                Status = RtlFormatCurrentUserKeyPath(&CurrentUserKeyPath);
 
-                if (NT_SUCCESS( Status ) ) {
+                if (NT_SUCCESS(Status))
+                {
 
                     SubKeyNameUser.Length = 0;
-                    SubKeyNameUser.MaximumLength = CurrentUserKeyPath.Length + 
-                                                   sizeof(WCHAR) + 
-                                                   sizeof(SAFER_USER_KEY_NAME); 
+                    SubKeyNameUser.MaximumLength =
+                        CurrentUserKeyPath.Length + sizeof(WCHAR) + sizeof(SAFER_USER_KEY_NAME);
 
                     //
                     // Allocate memory big enough to hold the unicode string.
                     //
 
-                    SubKeyNameUser.Buffer = RtlAllocateHeap( 
-                                                RtlProcessHeap(),
-                                                MAKE_TAG( TMP_TAG ),
-                                                SubKeyNameUser.MaximumLength);
+                    SubKeyNameUser.Buffer =
+                        RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), SubKeyNameUser.MaximumLength);
 
-                    if (SubKeyNameUser.Buffer != NULL) {
+                    if (SubKeyNameUser.Buffer != NULL)
+                    {
 
                         //
                         // Copy the prefix into the string.
                         // This is of the type Registry\S-1-5-21-xxx-xxx-xxx-xxx.
                         //
 
-                        Status = RtlAppendUnicodeStringToString(
-                                    &SubKeyNameUser, 
-                                    &CurrentUserKeyPath );
+                        Status = RtlAppendUnicodeStringToString(&SubKeyNameUser, &CurrentUserKeyPath);
 
-                        if (NT_SUCCESS( Status ) ) {
+                        if (NT_SUCCESS(Status))
+                        {
 
                             //
                             // Append the Safer suffix.
                             //
 
-                            Status = RtlAppendUnicodeToString( 
-                                         &SubKeyNameUser,
-                                         SAFER_USER_KEY_NAME );
+                            Status = RtlAppendUnicodeToString(&SubKeyNameUser, SAFER_USER_KEY_NAME);
 
-                            if (NT_SUCCESS( Status ) ) {
+                            if (NT_SUCCESS(Status))
+                            {
 
-                                InitializeObjectAttributes(
-                                    &ObjectAttributesUser,
-                                    &SubKeyNameUser,
-                                    OBJ_CASE_INSENSITIVE,
-                                    NULL,
-                                    NULL
-                                );
+                                InitializeObjectAttributes(&ObjectAttributesUser, &SubKeyNameUser, OBJ_CASE_INSENSITIVE,
+                                                           NULL, NULL);
 
-                                Status = NtOpenKey( &hKeyEnabled,KEY_QUERY_VALUE,
-                                             (POBJECT_ATTRIBUTES) &ObjectAttributesUser);
+                                Status =
+                                    NtOpenKey(&hKeyEnabled, KEY_QUERY_VALUE, (POBJECT_ATTRIBUTES)&ObjectAttributesUser);
 
-                                if (NT_SUCCESS(Status)) {
-                                    Status = NtQueryValueKey(
-                                                hKeyEnabled,
-                                                (PUNICODE_STRING) &UnicodeTransparentValueName,
-                                                KeyValuePartialInformation,
-                                                pKeyValueInfo, sizeof(QueryBuffer), &dwActualSize);
+                                if (NT_SUCCESS(Status))
+                                {
+                                    Status = NtQueryValueKey(hKeyEnabled, (PUNICODE_STRING)&UnicodeTransparentValueName,
+                                                             KeyValuePartialInformation, pKeyValueInfo,
+                                                             sizeof(QueryBuffer), &dwActualSize);
 
-                                    if (NT_SUCCESS(Status)) {
+                                    if (NT_SUCCESS(Status))
+                                    {
                                         if (pKeyValueInfo->Type == REG_DWORD &&
                                             pKeyValueInfo->DataLength == sizeof(DWORD) &&
-                                            *((PDWORD) pKeyValueInfo->Data) > 0) {
+                                            *((PDWORD)pKeyValueInfo->Data) > 0)
+                                        {
                                             bPolicyEnabled = TRUE;
                                         }
                                     }
                                 }
                             }
-
                         }
                         RtlFreeHeap(RtlProcessHeap(), 0, SubKeyNameUser.Buffer);
                     }
-                    RtlFreeUnicodeString( &CurrentUserKeyPath );
+                    RtlFreeUnicodeString(&CurrentUserKeyPath);
                 }
             }
 
-            if (!bPolicyEnabled) {
+            if (!bPolicyEnabled)
+            {
                 AdvApi32ModuleHandle = LongToHandle(-2);
                 goto FailSuccessfully;
             }
@@ -1550,11 +1417,9 @@ FailSuccessfully:
         //
         {
             ULONG DllCharacteristics = IMAGE_FILE_SYSTEM;
-            Status = LdrLoadDll(UNICODE_NULL,
-                                &DllCharacteristics,
-                                (PUNICODE_STRING) &ModuleName,
-                                &TempModuleHandle);
-            if (!NT_SUCCESS(Status)) {
+            Status = LdrLoadDll(UNICODE_NULL, &DllCharacteristics, (PUNICODE_STRING)&ModuleName, &TempModuleHandle);
+            if (!NT_SUCCESS(Status))
+            {
                 Status = STATUS_ENTRYPOINT_NOT_FOUND;
                 AdvApi32ModuleHandle = NULL;
                 goto ExitHandler2;
@@ -1567,81 +1432,69 @@ FailSuccessfully:
         // to get pointers for any of them, then just unload advapi and
         // ignore all future attempts to load it within this process.
         //
-        Status = LdrGetProcedureAddress(
-                TempModuleHandle,
-                (PANSI_STRING) &ProcedureNameIdentify,
-                0,
-                (PVOID*)&lpfnIdentifyCodeAuthzLevelW);
+        Status = LdrGetProcedureAddress(TempModuleHandle, (PANSI_STRING)&ProcedureNameIdentify, 0,
+                                        (PVOID *)&lpfnIdentifyCodeAuthzLevelW);
 
-        if (!NT_SUCCESS(Status) || !lpfnIdentifyCodeAuthzLevelW) {
+        if (!NT_SUCCESS(Status) || !lpfnIdentifyCodeAuthzLevelW)
+        {
             //
             // Couldn't get the fn ptr. Make sure we won't try again
             //
-AdvapiLoadFailure:
+        AdvapiLoadFailure:
             LdrUnloadDll(TempModuleHandle);
             AdvApi32ModuleHandle = NULL;
             Status = STATUS_ENTRYPOINT_NOT_FOUND;
             goto ExitHandler2;
         }
 
-        Status = LdrGetProcedureAddress(
-                TempModuleHandle,
-                (PANSI_STRING) &ProcedureNameCompute,
-                0,
-                (PVOID*)&lpfnComputeAccessTokenFromCodeAuthzLevel);
+        Status = LdrGetProcedureAddress(TempModuleHandle, (PANSI_STRING)&ProcedureNameCompute, 0,
+                                        (PVOID *)&lpfnComputeAccessTokenFromCodeAuthzLevel);
 
-        if (!NT_SUCCESS(Status) ||
-            !lpfnComputeAccessTokenFromCodeAuthzLevel) {
+        if (!NT_SUCCESS(Status) || !lpfnComputeAccessTokenFromCodeAuthzLevel)
+        {
             goto AdvapiLoadFailure;
         }
 
-        Status = LdrGetProcedureAddress(
-                TempModuleHandle,
-                (PANSI_STRING) &ProcedureNameClose,
-                0,
-                (PVOID*)&lpfnCloseCodeAuthzLevel);
+        Status = LdrGetProcedureAddress(TempModuleHandle, (PANSI_STRING)&ProcedureNameClose, 0,
+                                        (PVOID *)&lpfnCloseCodeAuthzLevel);
 
-        if (!NT_SUCCESS(Status) || !lpfnCloseCodeAuthzLevel) {
+        if (!NT_SUCCESS(Status) || !lpfnCloseCodeAuthzLevel)
+        {
             goto AdvapiLoadFailure;
         }
 
-        Status = LdrGetProcedureAddress(
-                TempModuleHandle,
-                (PANSI_STRING) &ProcedureNameLogEntry,
-                0,
-                (PVOID*)&lpfnCodeAuthzRecordEventLogEntry);
+        Status = LdrGetProcedureAddress(TempModuleHandle, (PANSI_STRING)&ProcedureNameLogEntry, 0,
+                                        (PVOID *)&lpfnCodeAuthzRecordEventLogEntry);
 
-        if (!NT_SUCCESS(Status) || !lpfnCodeAuthzRecordEventLogEntry) {
+        if (!NT_SUCCESS(Status) || !lpfnCodeAuthzRecordEventLogEntry)
+        {
             goto AdvapiLoadFailure;
         }
 
         AdvApi32ModuleHandle = TempModuleHandle;
-
     }
-
 
 
     //
     // Prepare the code properties struct.
     //
-    
+
     RtlZeroMemory(&codeproperties, sizeof(codeproperties));
     codeproperties.cbSize = sizeof(codeproperties);
-    codeproperties.dwCheckFlags =
-            (SAFER_CRITERIA_IMAGEPATH | SAFER_CRITERIA_IMAGEHASH | dwSaferAuthenticodeFlag);
+    codeproperties.dwCheckFlags = (SAFER_CRITERIA_IMAGEPATH | SAFER_CRITERIA_IMAGEHASH | dwSaferAuthenticodeFlag);
     codeproperties.ImagePath = lpApplicationName;
-    codeproperties.dwWVTUIChoice = WTD_UI_NONE;  //harmless if AUTHZCRITERIA_AUTHENTICODE is not passed in
+    codeproperties.dwWVTUIChoice = WTD_UI_NONE; //harmless if AUTHZCRITERIA_AUTHENTICODE is not passed in
     codeproperties.hImageFileHandle = FileImageHandle;
 
     //
     // Ask the system to find the Authorization Level that classifies it.
     //
     ASSERT(lpfnIdentifyCodeAuthzLevelW != NULL);
-    if (lpfnIdentifyCodeAuthzLevelW(
-                                   1,                      // 1 structure
-                                   &codeproperties,        // details to identify
-                                   &hAuthzLevel,           // Safer level
-                                   NULL)) {                  // reserved.
+    if (lpfnIdentifyCodeAuthzLevelW(1,               // 1 structure
+                                    &codeproperties, // details to identify
+                                    &hAuthzLevel,    // Safer level
+                                    NULL))
+    { // reserved.
         // We found an Authorization Level applicable to this application.
         HANDLE hRestrictedToken = NULL;
         DWORD dwSaferFlags = 0;
@@ -1653,20 +1506,22 @@ AdvapiLoadFailure:
         // Generate the Restricted Token that we will use.
         //
         ASSERT(lpfnComputeAccessTokenFromCodeAuthzLevel != NULL);
-        if (!lpfnComputeAccessTokenFromCodeAuthzLevel(
-                                                     hAuthzLevel,                // Safer Level
-                                                     hEffectiveToken,
-                                                     &hRestrictedToken,          // target token
-                                                     SAFER_TOKEN_NULL_IF_EQUAL |  // flags
-                                                     SAFER_TOKEN_WANT_FLAGS,
-                                                     &dwSaferFlags)) {             // reserved
+        if (!lpfnComputeAccessTokenFromCodeAuthzLevel(hAuthzLevel, // Safer Level
+                                                      hEffectiveToken,
+                                                      &hRestrictedToken,          // target token
+                                                      SAFER_TOKEN_NULL_IF_EQUAL | // flags
+                                                          SAFER_TOKEN_WANT_FLAGS,
+                                                      &dwSaferFlags))
+        { // reserved
             DWORD dwLastError = GetLastError();
             ASSERT(lpfnCloseCodeAuthzLevel != NULL);
-            if (dwLastError == ERROR_ACCESS_DISABLED_BY_POLICY) {
-                lpfnCodeAuthzRecordEventLogEntry(
-                                                hAuthzLevel, lpApplicationName, NULL);
+            if (dwLastError == ERROR_ACCESS_DISABLED_BY_POLICY)
+            {
+                lpfnCodeAuthzRecordEventLogEntry(hAuthzLevel, lpApplicationName, NULL);
                 Status = -1;
-            } else {
+            }
+            else
+            {
                 Status = STATUS_ACCESS_DENIED;
             }
             lpfnCloseCodeAuthzLevel(hAuthzLevel);
@@ -1681,7 +1536,8 @@ AdvapiLoadFailure:
         // If the identified Authorization Level needs to be run
         // within an isolation Job Object, then do the Job setup.
         //
-        if ((dwSaferFlags & SAFER_POLICY_JOBID_MASK) != 0) {
+        if ((dwSaferFlags & SAFER_POLICY_JOBID_MASK) != 0)
+        {
             JOB_SET_ARRAY jobsetarray[2];
             DWORD dwNumJobSetMembers = 0;
 
@@ -1690,17 +1546,17 @@ AdvapiLoadFailure:
             // Verify that the job member level is one that we support.
             //
             dwJobMemberLevel = (dwSaferFlags & SAFER_POLICY_JOBID_MASK);
-            if (dwJobMemberLevel != SAFER_POLICY_JOBID_UNTRUSTED &&
-                dwJobMemberLevel != SAFER_POLICY_JOBID_CONSTRAINED) {
+            if (dwJobMemberLevel != SAFER_POLICY_JOBID_UNTRUSTED && dwJobMemberLevel != SAFER_POLICY_JOBID_CONSTRAINED)
+            {
                 NtClose(hRestrictedToken);
                 Status = STATUS_ACCESS_DENIED;
                 goto ExitHandler2;
             }
 
 
-
             Status = NtIsProcessInJob(GetCurrentProcess(), NULL);
-            if (Status == STATUS_PROCESS_IN_JOB) {
+            if (Status == STATUS_PROCESS_IN_JOB)
+            {
                 //
                 // The parent process is already within a job, so
                 // we will assume that its job is one of the WinSafer
@@ -1708,8 +1564,9 @@ AdvapiLoadFailure:
                 // that NtCreateProcessEx can directly transition to it.
                 //
                 *phAssignmentJob = NULL;
-
-            } else if (Status == STATUS_PROCESS_NOT_IN_JOB) {
+            }
+            else if (Status == STATUS_PROCESS_NOT_IN_JOB)
+            {
                 //
                 // The parent process is not in any job (nor jobset)
                 // so we must create all of the Jobs and place then
@@ -1721,35 +1578,27 @@ AdvapiLoadFailure:
                     HANDLE hThisJobObject;
                     JOBOBJECT_BASIC_UI_RESTRICTIONS RestrictUI;
 
-                    Status = NtCreateJobObject(
-                                              &hThisJobObject,
-                                              JOB_OBJECT_ALL_ACCESS,
-                                              NULL);
-                    if (!NT_SUCCESS(Status)) {
+                    Status = NtCreateJobObject(&hThisJobObject, JOB_OBJECT_ALL_ACCESS, NULL);
+                    if (!NT_SUCCESS(Status))
+                    {
                         goto JobCreationFailure;
                     }
-                    RestrictUI.UIRestrictionsClass =
-                    JOB_OBJECT_UILIMIT_DESKTOP |
-                    JOB_OBJECT_UILIMIT_DISPLAYSETTINGS |
-                    JOB_OBJECT_UILIMIT_EXITWINDOWS |
-                    JOB_OBJECT_UILIMIT_GLOBALATOMS |
-                    JOB_OBJECT_UILIMIT_HANDLES |
-                    JOB_OBJECT_UILIMIT_SYSTEMPARAMETERS;
-                    if (!SetInformationJobObject(
-                                                hThisJobObject,
-                                                JobObjectBasicUIRestrictions,
-                                                &RestrictUI,
-                                                sizeof(JOBOBJECT_BASIC_UI_RESTRICTIONS))) {
+                    RestrictUI.UIRestrictionsClass = JOB_OBJECT_UILIMIT_DESKTOP | JOB_OBJECT_UILIMIT_DISPLAYSETTINGS |
+                                                     JOB_OBJECT_UILIMIT_EXITWINDOWS | JOB_OBJECT_UILIMIT_GLOBALATOMS |
+                                                     JOB_OBJECT_UILIMIT_HANDLES | JOB_OBJECT_UILIMIT_SYSTEMPARAMETERS;
+                    if (!SetInformationJobObject(hThisJobObject, JobObjectBasicUIRestrictions, &RestrictUI,
+                                                 sizeof(JOBOBJECT_BASIC_UI_RESTRICTIONS)))
+                    {
                         NtClose(hThisJobObject);
                         Status = STATUS_ACCESS_DENIED;
                         goto JobCreationFailure;
                     }
-                    jobsetarray[dwNumJobSetMembers].MemberLevel =
-                    SAFER_POLICY_JOBID_UNTRUSTED;
+                    jobsetarray[dwNumJobSetMembers].MemberLevel = SAFER_POLICY_JOBID_UNTRUSTED;
                     jobsetarray[dwNumJobSetMembers].Flags = 0;
                     jobsetarray[dwNumJobSetMembers].JobHandle = hThisJobObject;
                     dwNumJobSetMembers++;
-                    if (dwJobMemberLevel == SAFER_POLICY_JOBID_UNTRUSTED) {
+                    if (dwJobMemberLevel == SAFER_POLICY_JOBID_UNTRUSTED)
+                    {
                         hActualJobObject = hThisJobObject;
                     }
                 }
@@ -1760,35 +1609,27 @@ AdvapiLoadFailure:
                     HANDLE hThisJobObject;
                     JOBOBJECT_BASIC_UI_RESTRICTIONS RestrictUI;
 
-                    Status = NtCreateJobObject(
-                                              &hThisJobObject,
-                                              JOB_OBJECT_ALL_ACCESS,
-                                              NULL);
-                    if (!NT_SUCCESS(Status)) {
+                    Status = NtCreateJobObject(&hThisJobObject, JOB_OBJECT_ALL_ACCESS, NULL);
+                    if (!NT_SUCCESS(Status))
+                    {
                         goto JobCreationFailure;
                     }
-                    RestrictUI.UIRestrictionsClass =
-                    JOB_OBJECT_UILIMIT_DESKTOP |
-                    JOB_OBJECT_UILIMIT_DISPLAYSETTINGS |
-                    JOB_OBJECT_UILIMIT_EXITWINDOWS |
-                    JOB_OBJECT_UILIMIT_GLOBALATOMS |
-                    JOB_OBJECT_UILIMIT_HANDLES |
-                    JOB_OBJECT_UILIMIT_SYSTEMPARAMETERS;
-                    if (!SetInformationJobObject(
-                                                hThisJobObject,
-                                                JobObjectBasicUIRestrictions,
-                                                &RestrictUI,
-                                                sizeof(JOBOBJECT_BASIC_UI_RESTRICTIONS))) {
+                    RestrictUI.UIRestrictionsClass = JOB_OBJECT_UILIMIT_DESKTOP | JOB_OBJECT_UILIMIT_DISPLAYSETTINGS |
+                                                     JOB_OBJECT_UILIMIT_EXITWINDOWS | JOB_OBJECT_UILIMIT_GLOBALATOMS |
+                                                     JOB_OBJECT_UILIMIT_HANDLES | JOB_OBJECT_UILIMIT_SYSTEMPARAMETERS;
+                    if (!SetInformationJobObject(hThisJobObject, JobObjectBasicUIRestrictions, &RestrictUI,
+                                                 sizeof(JOBOBJECT_BASIC_UI_RESTRICTIONS)))
+                    {
                         NtClose(hThisJobObject);
                         Status = STATUS_ACCESS_DENIED;
                         goto JobCreationFailure;
                     }
-                    jobsetarray[dwNumJobSetMembers].MemberLevel =
-                    SAFER_POLICY_JOBID_CONSTRAINED;
+                    jobsetarray[dwNumJobSetMembers].MemberLevel = SAFER_POLICY_JOBID_CONSTRAINED;
                     jobsetarray[dwNumJobSetMembers].Flags = 0;
                     jobsetarray[dwNumJobSetMembers].JobHandle = hThisJobObject;
                     dwNumJobSetMembers++;
-                    if (dwJobMemberLevel == SAFER_POLICY_JOBID_CONSTRAINED) {
+                    if (dwJobMemberLevel == SAFER_POLICY_JOBID_CONSTRAINED)
+                    {
                         hActualJobObject = hThisJobObject;
                     }
                 }
@@ -1797,13 +1638,14 @@ AdvapiLoadFailure:
                 //
                 // Create the Job Set that will hold all of the Job Objects.
                 //
-                ASSERT(dwNumJobSetMembers > 1 &&
-                       dwNumJobSetMembers <= sizeof(jobsetarray) / sizeof(jobsetarray[0]));
+                ASSERT(dwNumJobSetMembers > 1 && dwNumJobSetMembers <= sizeof(jobsetarray) / sizeof(jobsetarray[0]));
                 ASSERT(hActualJobObject != NULL);
                 Status = NtCreateJobSet(dwNumJobSetMembers, jobsetarray, 0);
-                if (!NT_SUCCESS(Status)) {
-                    JobCreationFailure:
-                    for (; dwNumJobSetMembers > 0; dwNumJobSetMembers--) {
+                if (!NT_SUCCESS(Status))
+                {
+                JobCreationFailure:
+                    for (; dwNumJobSetMembers > 0; dwNumJobSetMembers--)
+                    {
                         NtClose(jobsetarray[dwNumJobSetMembers - 1].JobHandle);
                     }
                     NtClose(hRestrictedToken);
@@ -1813,16 +1655,21 @@ AdvapiLoadFailure:
                 //
                 // Close all Job Handles except the one that we are returning.
                 //
-                for (; dwNumJobSetMembers > 0; dwNumJobSetMembers--) {
+                for (; dwNumJobSetMembers > 0; dwNumJobSetMembers--)
+                {
                     if (jobsetarray[dwNumJobSetMembers - 1].JobHandle != hActualJobObject)
                         NtClose(jobsetarray[dwNumJobSetMembers - 1].JobHandle);
                 }
 
                 dwJobMemberLevel = 0;
-            } else if (!NT_SUCCESS(Status)) {
+            }
+            else if (!NT_SUCCESS(Status))
+            {
                 // Some other failure.
                 goto ExitHandler2;
-            } else {
+            }
+            else
+            {
                 Status = STATUS_UNSUCCESSFUL;
                 goto ExitHandler2;
             }
@@ -1838,8 +1685,9 @@ AdvapiLoadFailure:
         *phAssignmentJob = hActualJobObject;
         *pdwJobMemberLevel = dwJobMemberLevel;
         Status = STATUS_SUCCESS;
-
-    } else {
+    }
+    else
+    {
         //
         // Failed to identify an Authorization Level for this
         // application so it will run without restrictions.
@@ -1864,24 +1712,15 @@ ExitHandler:
 }
 
 
-
 NTSTATUS
-BasepReplaceProcessThreadTokens(
-    IN HANDLE       NewTokenHandle,
-    IN HANDLE       ProcessHandle,
-    IN HANDLE       ThreadHandle
-    )
+BasepReplaceProcessThreadTokens(IN HANDLE NewTokenHandle, IN HANDLE ProcessHandle, IN HANDLE ThreadHandle)
 {
-    typedef BOOL (WINAPI *CodeAuthzReplaceProcessThreadTokensT) (
-        IN HANDLE       NewTokenHandle,
-        IN HANDLE       ProcessHandle,
-        IN HANDLE       ThreadHandle);
+    typedef BOOL(WINAPI * CodeAuthzReplaceProcessThreadTokensT)(IN HANDLE NewTokenHandle, IN HANDLE ProcessHandle,
+                                                                IN HANDLE ThreadHandle);
 
     NTSTATUS Status;
-    static const ANSI_STRING ProcedureNameReplaceTokens =
-            RTL_CONSTANT_STRING("SaferiReplaceProcessThreadTokens");
-    static CodeAuthzReplaceProcessThreadTokensT
-            lpfnCodeAuthzReplaceProcessThreadTokens = NULL;
+    static const ANSI_STRING ProcedureNameReplaceTokens = RTL_CONSTANT_STRING("SaferiReplaceProcessThreadTokens");
+    static CodeAuthzReplaceProcessThreadTokensT lpfnCodeAuthzReplaceProcessThreadTokens = NULL;
 
 
     //
@@ -1894,10 +1733,10 @@ BasepReplaceProcessThreadTokens(
     //
     // Get a pointer to our private function in ADVAPI32.DLL.
     //
-    if (!lpfnCodeAuthzReplaceProcessThreadTokens) {
+    if (!lpfnCodeAuthzReplaceProcessThreadTokens)
+    {
 
-        if (!AdvApi32ModuleHandle ||
-            AdvApi32ModuleHandle == LongToHandle(-1) ||
+        if (!AdvApi32ModuleHandle || AdvApi32ModuleHandle == LongToHandle(-1) ||
             AdvApi32ModuleHandle == LongToHandle(-2))
         {
             // ADVAPI32 has not been loaded yet, or it was loaded
@@ -1907,14 +1746,11 @@ BasepReplaceProcessThreadTokens(
         }
 
 
-        Status = LdrGetProcedureAddress(
-                AdvApi32ModuleHandle,
-                (PANSI_STRING) &ProcedureNameReplaceTokens,
-                0,
-                (PVOID*)&lpfnCodeAuthzReplaceProcessThreadTokens);
+        Status = LdrGetProcedureAddress(AdvApi32ModuleHandle, (PANSI_STRING)&ProcedureNameReplaceTokens, 0,
+                                        (PVOID *)&lpfnCodeAuthzReplaceProcessThreadTokens);
 
-        if (!NT_SUCCESS(Status) ||
-            !lpfnCodeAuthzReplaceProcessThreadTokens) {
+        if (!NT_SUCCESS(Status) || !lpfnCodeAuthzReplaceProcessThreadTokens)
+        {
             //
             // Couldn't get the fn ptr. Make sure we won't try again
             //
@@ -1930,12 +1766,12 @@ BasepReplaceProcessThreadTokens(
     // Actually call the function and return the results.
     //
     ASSERT(lpfnCodeAuthzReplaceProcessThreadTokens != NULL);
-    if (!lpfnCodeAuthzReplaceProcessThreadTokens(
-                    NewTokenHandle,
-                    ProcessHandle,
-                    ThreadHandle)) {
+    if (!lpfnCodeAuthzReplaceProcessThreadTokens(NewTokenHandle, ProcessHandle, ThreadHandle))
+    {
         Status = STATUS_UNSUCCESSFUL;
-    } else {
+    }
+    else
+    {
         Status = STATUS_SUCCESS;
     }
 
@@ -1945,46 +1781,22 @@ ExitHandler:
 }
 
 
-
-
-
 #if defined(_WIN64) || defined(BUILD_WOW6432)
-BOOL
-NtVdm64CreateProcess(
-    BOOL fPrefixMappedApplicationName,
-    LPCWSTR lpApplicationName,
-    LPCWSTR lpCommandLine,
-    LPSECURITY_ATTRIBUTES lpProcessAttributes,
-    LPSECURITY_ATTRIBUTES lpThreadAttributes,
-    BOOL bInheritHandles,
-    DWORD dwCreationFlags,
-    LPVOID lpEnvironment,
-    LPCWSTR lpCurrentDirectory,
-    LPSTARTUPINFOW lpStartupInfo,
-    LPPROCESS_INFORMATION lpProcessInformation
-    );
+BOOL NtVdm64CreateProcess(BOOL fPrefixMappedApplicationName, LPCWSTR lpApplicationName, LPCWSTR lpCommandLine,
+                          LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
+                          BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory,
+                          LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 #endif
 
-#define PRIORITY_CLASS_MASK (NORMAL_PRIORITY_CLASS|IDLE_PRIORITY_CLASS|                 \
-                             HIGH_PRIORITY_CLASS|REALTIME_PRIORITY_CLASS|               \
-                             BELOW_NORMAL_PRIORITY_CLASS|ABOVE_NORMAL_PRIORITY_CLASS)
+#define PRIORITY_CLASS_MASK                                                                        \
+    (NORMAL_PRIORITY_CLASS | IDLE_PRIORITY_CLASS | HIGH_PRIORITY_CLASS | REALTIME_PRIORITY_CLASS | \
+     BELOW_NORMAL_PRIORITY_CLASS | ABOVE_NORMAL_PRIORITY_CLASS)
 
-BOOL
-WINAPI
-CreateProcessInternalW(
-    HANDLE hUserToken,
-    LPCWSTR lpApplicationName,
-    LPWSTR lpCommandLine,
-    LPSECURITY_ATTRIBUTES lpProcessAttributes,
-    LPSECURITY_ATTRIBUTES lpThreadAttributes,
-    BOOL bInheritHandles,
-    DWORD dwCreationFlags,
-    LPVOID lpEnvironment,
-    LPCWSTR lpCurrentDirectory,
-    LPSTARTUPINFOW lpStartupInfo,
-    LPPROCESS_INFORMATION lpProcessInformation,
-    PHANDLE hRestrictedUserToken
-    )
+BOOL WINAPI CreateProcessInternalW(HANDLE hUserToken, LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
+                                   LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
+                                   BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
+                                   LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo,
+                                   LPPROCESS_INFORMATION lpProcessInformation, PHANDLE hRestrictedUserToken)
 
 /*++
 
@@ -2166,7 +1978,7 @@ Return Value:
     PVOID FreeBuffer;
     LPWSTR NameBuffer;
     LPWSTR WhiteScan;
-    ULONG Length,i;
+    ULONG Length, i;
     PROCESS_BASIC_INFORMATION ProcessInfo;
     SECTION_IMAGE_INFORMATION ImageInformation;
     NTSTATUS StackStatus;
@@ -2183,18 +1995,18 @@ Return Value:
     PVOID BaseAddress;
     ULONG VdmReserve;
     SIZE_T BigVdmReserve;
-    ULONG iTask=0;
+    ULONG iTask = 0;
     LPWSTR CurdirBuffer, CurdirFilePart;
-    DWORD CurdirLength,CurdirLength2;
-    ULONG VDMCreationState=0;
+    DWORD CurdirLength, CurdirLength2;
+    ULONG VDMCreationState = 0;
     ULONG VdmBinaryType = 0;
-    BOOL  bMeowBinary = FALSE;
-    UNICODE_STRING  SubSysCommandLine;
+    BOOL bMeowBinary = FALSE;
+    UNICODE_STRING SubSysCommandLine;
     PIMAGE_NT_HEADERS NtHeaders;
     DWORD dwNoWindow = (dwCreationFlags & CREATE_NO_WINDOW);
     ANSI_STRING AnsiStringVDMEnv;
     UNICODE_STRING UnicodeStringVDMEnv;
-    WCHAR ImageFileDebuggerCommand[ MAX_PATH ];
+    WCHAR ImageFileDebuggerCommand[MAX_PATH];
     LPWSTR QuotedBuffer;
     BOOLEAN QuoteInsert;
     BOOLEAN QuoteCmdLine = FALSE;
@@ -2209,8 +2021,8 @@ Return Value:
     PVOID State;
     HANDLE DebugPortHandle = NULL;
     PVOID pAppCompatDataTemp;
-    PVOID pAppCompatData  = NULL;
-    DWORD cbAppCompatData = 0;    // for the future
+    PVOID pAppCompatData = NULL;
+    DWORD cbAppCompatData = 0; // for the future
     BOOLEAN bVdmRetry = FALSE;
     DWORD Flags;
     PVOID pAppCompatSxsData = NULL;
@@ -2218,31 +2030,29 @@ Return Value:
     SXS_OVERRIDE_STREAM AppCompatSxsManifest;
     PCSR_CAPTURE_HEADER CaptureBuffer = NULL;
     SIZE_T SxsConglomeratedBufferSizeBytes;
-    PBYTE SxsConglomeratedByteBuffer = NULL; // this contains all the of the below in one large right-sized heap allocation
-                            // if we compute its size wrong, other code (if it gets it right..) should
-                            // do more heap allocation
+    PBYTE SxsConglomeratedByteBuffer =
+        NULL;   // this contains all the of the below in one large right-sized heap allocation
+                // if we compute its size wrong, other code (if it gets it right..) should
+                // do more heap allocation
     ULONG sxsi; // for loop counter
     RTL_UNICODE_STRING_BUFFER SxsWin32ManifestPathBuffer;
     RTL_UNICODE_STRING_BUFFER SxsWin32PolicyPathBuffer;
     RTL_UNICODE_STRING_BUFFER SxsWin32AssemblyDirectoryBuffer;
     RTL_UNICODE_STRING_BUFFER SxsNtManifestPathBuffer;
     RTL_UNICODE_STRING_BUFFER SxsNtPolicyPathBuffer;
-    const PRTL_UNICODE_STRING_BUFFER SxsStringBuffers[] = {
-        // The order here does not matter.
-        &SxsWin32ManifestPathBuffer,
-        &SxsWin32PolicyPathBuffer,
-        &SxsWin32AssemblyDirectoryBuffer,
-        &SxsNtManifestPathBuffer,
-        &SxsNtPolicyPathBuffer
+    const PRTL_UNICODE_STRING_BUFFER SxsStringBuffers[] = { // The order here does not matter.
+                                                            &SxsWin32ManifestPathBuffer, &SxsWin32PolicyPathBuffer,
+                                                            &SxsWin32AssemblyDirectoryBuffer, &SxsNtManifestPathBuffer,
+                                                            &SxsNtPolicyPathBuffer
     };
     UNICODE_STRING SxsWin32ExePath;
     UNICODE_STRING SxsNtExePath;
-    BASE_MSG_SXS_HANDLES SxsExeHandles = {0};
-    BASE_MSG_SXS_HANDLES SxsManifestFileHandles = {0};
+    BASE_MSG_SXS_HANDLES SxsExeHandles = { 0 };
+    BASE_MSG_SXS_HANDLES SxsManifestFileHandles = { 0 };
     CONST SXS_CONSTANT_WIN32_NT_PATH_PAIR SxsExePathPair = { &SxsWin32ExePath, &SxsNtExePath };
     CONST SXS_WIN32_NT_PATH_PAIR SxsManifestPathPair = { &SxsWin32ManifestPathBuffer, &SxsNtManifestPathBuffer };
     CONST SXS_WIN32_NT_PATH_PAIR SxsPolicyPathPair = { &SxsWin32PolicyPathBuffer, &SxsNtPolicyPathBuffer };
-    BASE_MSG_SXS_HANDLES SxsPolicyHandles = {0};
+    BASE_MSG_SXS_HANDLES SxsPolicyHandles = { 0 };
     PWSTR ExePathFullBuffer = NULL;
 
     DWORD dwJobMemberLevel = 0;
@@ -2268,21 +2078,22 @@ Return Value:
 #endif
 
     RtlZeroMemory(&a->Sxs, sizeof(a->Sxs));
-    RtlZeroMemory(lpProcessInformation,sizeof(*lpProcessInformation));
+    RtlZeroMemory(lpProcessInformation, sizeof(*lpProcessInformation));
 
-    if (ARGUMENT_PRESENT( hRestrictedUserToken )) {
+    if (ARGUMENT_PRESENT(hRestrictedUserToken))
+    {
         *hRestrictedUserToken = NULL;
-        }
+    }
 
     // Private VDM flag should be ignored; Its meant for internal use only.
     dwCreationFlags &= (ULONG)~CREATE_NO_WINDOW;
 
-    if ((dwCreationFlags & (DETACHED_PROCESS | CREATE_NEW_CONSOLE)) ==
-        (DETACHED_PROCESS | CREATE_NEW_CONSOLE)) {
+    if ((dwCreationFlags & (DETACHED_PROCESS | CREATE_NEW_CONSOLE)) == (DETACHED_PROCESS | CREATE_NEW_CONSOLE))
+    {
 
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
-        }
+    }
 
     AnsiStringVDMEnv.Buffer = NULL;
     UnicodeStringVDMEnv.Buffer = NULL;
@@ -2291,122 +2102,126 @@ Return Value:
     // the lowest specified priority class is used.
     //
 
-    if (dwCreationFlags & IDLE_PRIORITY_CLASS ) {
+    if (dwCreationFlags & IDLE_PRIORITY_CLASS)
+    {
         PriClass.PriorityClass = PROCESS_PRIORITY_CLASS_IDLE;
-        }
-    else if (dwCreationFlags & BELOW_NORMAL_PRIORITY_CLASS ) {
+    }
+    else if (dwCreationFlags & BELOW_NORMAL_PRIORITY_CLASS)
+    {
         PriClass.PriorityClass = PROCESS_PRIORITY_CLASS_BELOW_NORMAL;
-        }
-    else if (dwCreationFlags & NORMAL_PRIORITY_CLASS ) {
+    }
+    else if (dwCreationFlags & NORMAL_PRIORITY_CLASS)
+    {
         PriClass.PriorityClass = PROCESS_PRIORITY_CLASS_NORMAL;
-        }
-    else if (dwCreationFlags & ABOVE_NORMAL_PRIORITY_CLASS ) {
+    }
+    else if (dwCreationFlags & ABOVE_NORMAL_PRIORITY_CLASS)
+    {
         PriClass.PriorityClass = PROCESS_PRIORITY_CLASS_ABOVE_NORMAL;
+    }
+    else if (dwCreationFlags & HIGH_PRIORITY_CLASS)
+    {
+        PriClass.PriorityClass = PROCESS_PRIORITY_CLASS_HIGH;
+    }
+    else if (dwCreationFlags & REALTIME_PRIORITY_CLASS)
+    {
+        if (BasepIsRealtimeAllowed(FALSE))
+        {
+            PriClass.PriorityClass = PROCESS_PRIORITY_CLASS_REALTIME;
         }
-    else if (dwCreationFlags & HIGH_PRIORITY_CLASS ) {
-        PriClass.PriorityClass =  PROCESS_PRIORITY_CLASS_HIGH;
+        else
+        {
+            PriClass.PriorityClass = PROCESS_PRIORITY_CLASS_HIGH;
         }
-    else if (dwCreationFlags & REALTIME_PRIORITY_CLASS ) {
-        if ( BasepIsRealtimeAllowed(FALSE) ) {
-            PriClass.PriorityClass =  PROCESS_PRIORITY_CLASS_REALTIME;
-            }
-        else {
-            PriClass.PriorityClass =  PROCESS_PRIORITY_CLASS_HIGH;
-            }
-        }
-    else {
+    }
+    else
+    {
         PriClass.PriorityClass = PROCESS_PRIORITY_CLASS_UNKNOWN;
-        }
+    }
     PriClass.Foreground = FALSE;
 
-    dwCreationFlags = (dwCreationFlags & ~PRIORITY_CLASS_MASK );
+    dwCreationFlags = (dwCreationFlags & ~PRIORITY_CLASS_MASK);
 
     //
     // Default separate/shared VDM option if not explicitly specified.
     //
 
-    if (dwCreationFlags & CREATE_SEPARATE_WOW_VDM) {
-        if (dwCreationFlags & CREATE_SHARED_WOW_VDM) {
+    if (dwCreationFlags & CREATE_SEPARATE_WOW_VDM)
+    {
+        if (dwCreationFlags & CREATE_SHARED_WOW_VDM)
+        {
             SetLastError(ERROR_INVALID_PARAMETER);
 
             return FALSE;
-            }
         }
-    else
-    if ((dwCreationFlags & CREATE_SHARED_WOW_VDM) == 0) {
-        if (BaseStaticServerData->DefaultSeparateVDM) {
+    }
+    else if ((dwCreationFlags & CREATE_SHARED_WOW_VDM) == 0)
+    {
+        if (BaseStaticServerData->DefaultSeparateVDM)
+        {
             dwCreationFlags |= CREATE_SEPARATE_WOW_VDM;
-            }
         }
+    }
 
-    if ((dwCreationFlags & CREATE_SEPARATE_WOW_VDM) == 0) {
+    if ((dwCreationFlags & CREATE_SEPARATE_WOW_VDM) == 0)
+    {
         //
         // If the creator is running inside a job object, always
         // set SEPERATE_WOW_VDM so the VDM is part of the job.
         //
         JOBOBJECT_BASIC_UI_RESTRICTIONS UiRestrictions;
 
-        Status = NtQueryInformationJobObject(NULL,
-                                             JobObjectBasicUIRestrictions,
-                                             &UiRestrictions,
-                                             sizeof(UiRestrictions),
-                                             NULL);
-        if (Status != STATUS_ACCESS_DENIED) {
+        Status = NtQueryInformationJobObject(NULL, JobObjectBasicUIRestrictions, &UiRestrictions,
+                                             sizeof(UiRestrictions), NULL);
+        if (Status != STATUS_ACCESS_DENIED)
+        {
             //
             // Anything other than STATUS_ACCESS_DENIED indicates the
             // current process is inside a job.
             //
-            dwCreationFlags = (dwCreationFlags & (~CREATE_SHARED_WOW_VDM)) |
-                                  CREATE_SEPARATE_WOW_VDM;
-            }
+            dwCreationFlags = (dwCreationFlags & (~CREATE_SHARED_WOW_VDM)) | CREATE_SEPARATE_WOW_VDM;
         }
+    }
 
 
     //
     //  If ANSI environment, convert to Unicode
     //
 
-    if (lpEnvironment && !(dwCreationFlags & CREATE_UNICODE_ENVIRONMENT) ) {
+    if (lpEnvironment && !(dwCreationFlags & CREATE_UNICODE_ENVIRONMENT))
+    {
         PUCHAR s;
         STRING Ansi;
         UNICODE_STRING Unicode;
         MEMORY_BASIC_INFORMATION MemoryInformation;
 
         Ansi.Buffer = s = lpEnvironment;
-        while (*s || *(s+1))            // find end of block
+        while (*s || *(s + 1)) // find end of block
             s++;
 
         Ansi.Length = (USHORT)(s - Ansi.Buffer) + 1;
         Ansi.MaximumLength = Ansi.Length + 1;
         MemoryInformation.RegionSize = Ansi.MaximumLength * sizeof(WCHAR);
         Unicode.Buffer = NULL;
-        Status = NtAllocateVirtualMemory( NtCurrentProcess(),
-                                          &Unicode.Buffer,
-                                          0,
-                                          &MemoryInformation.RegionSize,
-                                          MEM_COMMIT,
-                                          PAGE_READWRITE
-                                        );
-        if (!NT_SUCCESS(Status) ) {
+        Status = NtAllocateVirtualMemory(NtCurrentProcess(), &Unicode.Buffer, 0, &MemoryInformation.RegionSize,
+                                         MEM_COMMIT, PAGE_READWRITE);
+        if (!NT_SUCCESS(Status))
+        {
             BaseSetLastNTError(Status);
 
             return FALSE;
-            }
+        }
 
         Unicode.MaximumLength = (USHORT)MemoryInformation.RegionSize;
         Status = RtlAnsiStringToUnicodeString(&Unicode, &Ansi, FALSE);
-        if (!NT_SUCCESS(Status) ) {
-            NtFreeVirtualMemory( NtCurrentProcess(),
-                                 &Unicode.Buffer,
-                                 &MemoryInformation.RegionSize,
-                                 MEM_RELEASE
-                               );
+        if (!NT_SUCCESS(Status))
+        {
+            NtFreeVirtualMemory(NtCurrentProcess(), &Unicode.Buffer, &MemoryInformation.RegionSize, MEM_RELEASE);
             BaseSetLastNTError(Status);
 
             return FALSE;
-            }
-        lpEnvironment = Unicode.Buffer;
         }
+        lpEnvironment = Unicode.Buffer;
+    }
 
     FileHandle = NULL;
     SectionHandle = NULL;
@@ -2424,7 +2239,8 @@ Return Value:
     QuoteInsert = FALSE;
     QuotedBuffer = NULL;
 
-    try {
+    try
+    {
 
         //
         // Make a copy of the startup info so we can change it.
@@ -2441,25 +2257,29 @@ Return Value:
         //
 
         if (StartupInfo.dwFlags & STARTF_USESTDHANDLES &&
-            StartupInfo.dwFlags & (STARTF_USEHOTKEY | STARTF_HASSHELLDATA)) {
+            StartupInfo.dwFlags & (STARTF_USEHOTKEY | STARTF_HASSHELLDATA))
+        {
 
             StartupInfo.dwFlags &= ~STARTF_USESTDHANDLES;
-            }
+        }
 
-VdmRetry:
+    VdmRetry:
         //
         // None of this cleanup/reinit occurs for launching a Win32 or Win64 .exe,
         // but they generally do occur for launching 16bit, .bat, etc.
         //
-        if (NameBuffer) {
+        if (NameBuffer)
+        {
             RtlFreeHeap(RtlProcessHeap(), 0, NameBuffer);
             NameBuffer = NULL;
         }
-        if (FreeBuffer) {
+        if (FreeBuffer)
+        {
             RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
             FreeBuffer = NULL;
         }
-        if (FileHandle) {
+        if (FileHandle)
+        {
             NtClose(FileHandle);
             FileHandle = NULL;
         }
@@ -2468,7 +2288,8 @@ VdmRetry:
         SearchRetry = TRUE;
         QuoteInsert = FALSE;
         QuoteCmdLine = FALSE;
-        if (!ARGUMENT_PRESENT( lpApplicationName )) {
+        if (!ARGUMENT_PRESENT(lpApplicationName))
+        {
 
             //
             // Locate the image
@@ -2477,13 +2298,12 @@ VdmRetry:
             // forgot to free NameBuffer before goto VdmRetry???
             ASSERT(NameBuffer == NULL);
 
-            NameBuffer = RtlAllocateHeap( RtlProcessHeap(),
-                                          MAKE_TAG( TMP_TAG ),
-                                          MAX_PATH * sizeof( WCHAR ));
-            if ( !NameBuffer ) {
+            NameBuffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), MAX_PATH * sizeof(WCHAR));
+            if (!NameBuffer)
+            {
                 BaseSetLastNTError(STATUS_NO_MEMORY);
                 return FALSE;
-                }
+            }
             lpApplicationName = lpCommandLine;
             TempNull = (PWCH)lpApplicationName;
             WhiteScan = (LPWSTR)lpApplicationName;
@@ -2491,33 +2311,38 @@ VdmRetry:
             //
             // check for lead quote
             //
-            if ( *WhiteScan == L'\"' ) {
+            if (*WhiteScan == L'\"')
+            {
                 SearchRetry = FALSE;
                 WhiteScan++;
                 lpApplicationName = WhiteScan;
-                while(*WhiteScan) {
-                    if ( *WhiteScan == (WCHAR)'\"' ) {
+                while (*WhiteScan)
+                {
+                    if (*WhiteScan == (WCHAR)'\"')
+                    {
                         TempNull = (PWCH)WhiteScan;
                         QuoteFound = TRUE;
                         break;
-                        }
+                    }
                     WhiteScan++;
                     TempNull = (PWCH)WhiteScan;
-                    }
                 }
-            else {
-retrywsscan:
+            }
+            else
+            {
+            retrywsscan:
                 lpApplicationName = lpCommandLine;
-                while(*WhiteScan) {
-                    if ( *WhiteScan == (WCHAR)' ' ||
-                         *WhiteScan == (WCHAR)'\t' ) {
+                while (*WhiteScan)
+                {
+                    if (*WhiteScan == (WCHAR)' ' || *WhiteScan == (WCHAR)'\t')
+                    {
                         TempNull = (PWCH)WhiteScan;
                         break;
-                        }
+                    }
                     WhiteScan++;
                     TempNull = (PWCH)WhiteScan;
-                    }
                 }
+            }
             TempChar = *TempNull;
             *TempNull = UNICODE_NULL;
 
@@ -2528,44 +2353,43 @@ retrywsscan:
             // for compatibility.
             //
 
-            if (UseKnownWx86Dll) {
-               LPWSTR KnownName;
+            if (UseKnownWx86Dll)
+            {
+                LPWSTR KnownName;
 
-               NtCurrentTeb()->Wx86Thread.UseKnownWx86Dll = FALSE;
+                NtCurrentTeb()->Wx86Thread.UseKnownWx86Dll = FALSE;
 
-               KnownName = BasepWx86KnownExe(lpApplicationName);
-               if (KnownName) {
-                  lpApplicationName = KnownName;
-                  }
-               }
+                KnownName = BasepWx86KnownExe(lpApplicationName);
+                if (KnownName)
+                {
+                    lpApplicationName = KnownName;
+                }
+            }
 #endif
 
 
-            Length = SearchPathW(
-                        NULL,
-                        lpApplicationName,
-                        L".exe",
-                        MAX_PATH,
-                        NameBuffer,
-                        NULL
-                        )*2;
+            Length = SearchPathW(NULL, lpApplicationName, L".exe", MAX_PATH, NameBuffer, NULL) * 2;
 
-            if (Length != 0 && Length < MAX_PATH * sizeof( WCHAR )) {
+            if (Length != 0 && Length < MAX_PATH * sizeof(WCHAR))
+            {
                 //
                 // SearchPathW worked, but file might be a directory
                 // if this happens, we need to keep trying
                 //
                 fileattr = GetFileAttributesW(NameBuffer);
-                if ( fileattr != 0xffffffff &&
-                     (fileattr & FILE_ATTRIBUTE_DIRECTORY) ) {
+                if (fileattr != 0xffffffff && (fileattr & FILE_ATTRIBUTE_DIRECTORY))
+                {
                     Length = 0;
-                } else {
+                }
+                else
+                {
                     Length++;
                     Length++;
                 }
             }
 
-            if ( !Length || Length >= MAX_PATH<<1 ) {
+            if (!Length || Length >= MAX_PATH << 1)
+            {
 
                 //
                 // If we search pathed, then return file not found.
@@ -2575,40 +2399,38 @@ retrywsscan:
                 HANDLE hFile;
 
                 PathType = RtlDetermineDosPathNameType_U(lpApplicationName);
-                if ( PathType != RtlPathTypeRelative ) {
+                if (PathType != RtlPathTypeRelative)
+                {
 
                     //
                     // The failed open should set get last error properly.
                     //
 
-                    hFile = CreateFileW(
-                                lpApplicationName,
-                                GENERIC_READ,
-                                FILE_SHARE_READ | FILE_SHARE_WRITE,
-                                NULL,
-                                OPEN_EXISTING,
-                                FILE_ATTRIBUTE_NORMAL,
-                                NULL
-                                );
-                    if ( hFile != INVALID_HANDLE_VALUE ) {
+                    hFile = CreateFileW(lpApplicationName, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+                    if (hFile != INVALID_HANDLE_VALUE)
+                    {
                         CloseHandle(hFile);
                         BaseSetLastNTError(STATUS_OBJECT_NAME_NOT_FOUND);
-                        }
                     }
-                else {
+                }
+                else
+                {
                     BaseSetLastNTError(STATUS_OBJECT_NAME_NOT_FOUND);
-                    }
+                }
 
                 //
                 // remember initial last error value for the retry scan path
                 //
 
-                if ( LastError ) {
+                if (LastError)
+                {
                     SetLastError(LastError);
-                    }
-                else {
+                }
+                else
+                {
                     LastError = GetLastError();
-                    }
+                }
 
                 //
                 // restore the command line
@@ -2626,7 +2448,8 @@ retrywsscan:
                 // require this. Our first iteration will stop at c:\word, our next
                 // will stop at c:\word 95\winword.exe
                 //
-                if (*WhiteScan && SearchRetry) {
+                if (*WhiteScan && SearchRetry)
+                {
                     WhiteScan++;
                     TempNull = WhiteScan;
                     QuoteInsert = TRUE;
@@ -2635,7 +2458,7 @@ retrywsscan:
                 }
 
                 return FALSE;
-                }
+            }
             //
             // restore the command line
             //
@@ -2648,7 +2471,7 @@ retrywsscan:
             //
             if (BasepIsSetupInvokedByWinLogon(lpApplicationName))
             {
-                // validate the flag 
+                // validate the flag
                 if (!(dwCreationFlags & CREATE_IGNORE_SYSTEM_DEFAULT))
                 {
                     //
@@ -2661,35 +2484,36 @@ retrywsscan:
                     dwCreationFlags |= CREATE_IGNORE_SYSTEM_DEFAULT;
                 }
             }
-            
         }
-        else
-        if (!ARGUMENT_PRESENT( lpCommandLine ) || *lpCommandLine == UNICODE_NULL ) {
+        else if (!ARGUMENT_PRESENT(lpCommandLine) || *lpCommandLine == UNICODE_NULL)
+        {
             QuoteCmdLine = TRUE;
             lpCommandLine = (LPWSTR)lpApplicationName;
-            }
+        }
 
 
 #ifdef WX86
 
-       //
-       // Wx86 applications must use x86 version of known exes
-       // for compatibility.
-       //
+        //
+        // Wx86 applications must use x86 version of known exes
+        // for compatibility.
+        //
 
-       if (UseKnownWx86Dll) {
-           LPWSTR KnownName;
+        if (UseKnownWx86Dll)
+        {
+            LPWSTR KnownName;
 
-           NtCurrentTeb()->Wx86Thread.UseKnownWx86Dll = FALSE;
+            NtCurrentTeb()->Wx86Thread.UseKnownWx86Dll = FALSE;
 
-           KnownName = BasepWx86KnownExe(lpApplicationName);
-           if (KnownName) {
+            KnownName = BasepWx86KnownExe(lpApplicationName);
+            if (KnownName)
+            {
 
-               RtlFreeHeap(RtlProcessHeap(), 0, NameBuffer);
-               NameBuffer = KnownName;
-               lpApplicationName = KnownName;
-               }
-           }
+                RtlFreeHeap(RtlProcessHeap(), 0, NameBuffer);
+                NameBuffer = KnownName;
+                lpApplicationName = KnownName;
+            }
+        }
 
 #endif
 
@@ -2697,18 +2521,14 @@ retrywsscan:
         // Translate to an NT name.
         //
 
-        TranslationStatus = RtlDosPathNameToNtPathName_U(
-                                lpApplicationName,
-                                &PathName,
-                                NULL,
-                                &RelativeName
-                                );
+        TranslationStatus = RtlDosPathNameToNtPathName_U(lpApplicationName, &PathName, NULL, &RelativeName);
 
-        if ( !TranslationStatus ) {
+        if (!TranslationStatus)
+        {
             SetLastError(ERROR_PATH_NOT_FOUND);
 
             return FALSE;
-            }
+        }
 
         // forgot to free FreeBuffer before goto VdmRetry????
         ASSERT(FreeBuffer == NULL);
@@ -2719,15 +2539,17 @@ retrywsscan:
         {
             RTL_PATH_TYPE SxsWin32ExePathType = RtlDetermineDosPathNameType_U(lpApplicationName);
 
-            if ((SxsWin32ExePathType != RtlPathTypeDriveAbsolute) &&
-                (SxsWin32ExePathType != RtlPathTypeUncAbsolute)) {
-                if (ExePathFullBuffer == NULL) {
+            if ((SxsWin32ExePathType != RtlPathTypeDriveAbsolute) && (SxsWin32ExePathType != RtlPathTypeUncAbsolute))
+            {
+                if (ExePathFullBuffer == NULL)
+                {
                     // It seems that with VDM things, we can rerun this code with a new lpApplication, so
                     // we protect against double-allocating the buffer and just allocate a big
                     // MAX_PATH one the first time through, assuming it's good enough for the 2ndary times
                     // too.
                     ExePathFullBuffer = RtlAllocateHeap(RtlProcessHeap(), 0, (MAX_PATH + 1) * sizeof(WCHAR));
-                    if (ExePathFullBuffer == NULL) {
+                    if (ExePathFullBuffer == NULL)
+                    {
                         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
                         return FALSE;
                     }
@@ -2742,65 +2564,54 @@ retrywsscan:
 
         SxsNtExePath = PathName;
 
-        if ( RelativeName.RelativeName.Length ) {
+        if (RelativeName.RelativeName.Length)
+        {
             PathName = *(PUNICODE_STRING)&RelativeName.RelativeName;
-            }
-        else {
+        }
+        else
+        {
             RelativeName.ContainingDirectory = NULL;
-            }
+        }
 
-        InitializeObjectAttributes(
-            &Obja,
-            &PathName,
-            OBJ_CASE_INSENSITIVE,
-            RelativeName.ContainingDirectory,
-            NULL
-            );
+        InitializeObjectAttributes(&Obja, &PathName, OBJ_CASE_INSENSITIVE, RelativeName.ContainingDirectory, NULL);
 
         //
         // Open the file for red and execute access
         //
 
-        Status = NtOpenFile(
-                    &FileHandle,
-                    SYNCHRONIZE | FILE_EXECUTE | FILE_READ_ATTRIBUTES | FILE_READ_DATA,
-                    &Obja,
-                    &IoStatusBlock,
-                    FILE_SHARE_READ | FILE_SHARE_DELETE,
-                    FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE
-                    );
+        Status = NtOpenFile(&FileHandle, SYNCHRONIZE | FILE_EXECUTE | FILE_READ_ATTRIBUTES | FILE_READ_DATA, &Obja,
+                            &IoStatusBlock, FILE_SHARE_READ | FILE_SHARE_DELETE,
+                            FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE);
 
-        if (!NT_SUCCESS(Status) ) {
+        if (!NT_SUCCESS(Status))
+        {
 
             //
             // We failed. Open the file for lesser access.
             //
 
-            Status = NtOpenFile(
-                        &FileHandle,
-                        SYNCHRONIZE | FILE_EXECUTE,
-                        &Obja,
-                        &IoStatusBlock,
-                        FILE_SHARE_READ | FILE_SHARE_DELETE,
-                        FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE
-                        );
+            Status =
+                NtOpenFile(&FileHandle, SYNCHRONIZE | FILE_EXECUTE, &Obja, &IoStatusBlock,
+                           FILE_SHARE_READ | FILE_SHARE_DELETE, FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE);
 
-            if (!NT_SUCCESS(Status) ) {
+            if (!NT_SUCCESS(Status))
+            {
                 //
                 // if we failed, see if this is a device. If it is a device,
                 // then just return invalid image format
                 //
 
-                if ( RtlIsDosDeviceName_U(RTL_CONST_CAST(PWSTR)(lpApplicationName)) ) {
+                if (RtlIsDosDeviceName_U(RTL_CONST_CAST(PWSTR)(lpApplicationName)))
+                {
                     SetLastError(ERROR_BAD_DEVICE);
-                    }
-                else {
+                }
+                else
+                {
                     BaseSetLastNTError(Status);
-                    }
+                }
 
                 return FALSE;
             }
-
         }
 
         //
@@ -2808,58 +2619,50 @@ retrywsscan:
         // desktop.
         //
 
-        if (StartupInfo.lpDesktop == NULL) {
+        if (StartupInfo.lpDesktop == NULL)
+        {
             StartupInfo.lpDesktop =
-                    (LPWSTR)((PRTL_USER_PROCESS_PARAMETERS)NtCurrentPeb()->
-                        ProcessParameters)->DesktopInfo.Buffer;
-            }
+                (LPWSTR)((PRTL_USER_PROCESS_PARAMETERS)NtCurrentPeb()->ProcessParameters)->DesktopInfo.Buffer;
+        }
 
         //
         // Create a section object backed by the file
         //
 
-        Status = NtCreateSection(
-                    &SectionHandle,
-                    SECTION_ALL_ACCESS,
-                    NULL,
-                    NULL,
-                    PAGE_EXECUTE,
-                    SEC_IMAGE,
-                    FileHandle
-                    );
+        Status = NtCreateSection(&SectionHandle, SECTION_ALL_ACCESS, NULL, NULL, PAGE_EXECUTE, SEC_IMAGE, FileHandle);
 
         //
         // App Certification DLL
         //
 
-        if (NT_SUCCESS(Status)) {
+        if (NT_SUCCESS(Status))
+        {
             Status = BasepIsProcessAllowed(lpApplicationName);
 
-            if (!NT_SUCCESS(Status)) {
+            if (!NT_SUCCESS(Status))
+            {
                 BaseSetLastNTError(Status);
                 NtClose(SectionHandle);
                 return FALSE;
             }
 
 
-       
-          //
-          // If Meow subsystem is enabled and caller specified CREATE_FORECEDOS for a win32 image
-          // push it into the meow subsystem
-          //
+            //
+            // If Meow subsystem is enabled and caller specified CREATE_FORECEDOS for a win32 image
+            // push it into the meow subsystem
+            //
 
-          if ((dwCreationFlags & CREATE_FORCEDOS) && BaseStaticServerData->ForceDos) {
-               dwCreationFlags &= ~(CREATE_SHARED_WOW_VDM | CREATE_FORCEDOS);
-               dwCreationFlags |= CREATE_SEPARATE_WOW_VDM;
-               Status = STATUS_INVALID_IMAGE_WIN_16;
-               bMeowBinary = TRUE;
+            if ((dwCreationFlags & CREATE_FORCEDOS) && BaseStaticServerData->ForceDos)
+            {
+                dwCreationFlags &= ~(CREATE_SHARED_WOW_VDM | CREATE_FORCEDOS);
+                dwCreationFlags |= CREATE_SEPARATE_WOW_VDM;
+                Status = STATUS_INVALID_IMAGE_WIN_16;
+                bMeowBinary = TRUE;
 
-               NtClose(SectionHandle);
-               SectionHandle = NULL;
-          }
-
-
-       }
+                NtClose(SectionHandle);
+                SectionHandle = NULL;
+            }
+        }
 
         //
         // check appcompat (aka apphelp)
@@ -2868,98 +2671,100 @@ retrywsscan:
         // yet pAppCompatData may have some data (from the app itself)
         // debugger will do a separate CreateProcess on debugee
         //
-        // apphelp gets called if it is win32 app or if it is a .bat or .cmd 
+        // apphelp gets called if it is win32 app or if it is a .bat or .cmd
 
-       if(!bVdmRetry &&
-          (NT_SUCCESS(Status) ||
-           (Status == STATUS_INVALID_IMAGE_NOT_MZ && !BaseIsDosApplication(&PathName,Status)))
-         ) {
+        if (!bVdmRetry &&
+            (NT_SUCCESS(Status) || (Status == STATUS_INVALID_IMAGE_NOT_MZ && !BaseIsDosApplication(&PathName, Status))))
+        {
             NTSTATUS BadAppStatus;
 
-            if (NULL != pAppCompatData) {
+            if (NULL != pAppCompatData)
+            {
                 RtlFreeHeap(RtlProcessHeap(), 0, pAppCompatData);
                 pAppCompatData = NULL;
-                }
-              
-            if (NULL != pAppCompatSxsData) {
+            }
+
+            if (NULL != pAppCompatSxsData)
+            {
                 RtlFreeHeap(RtlProcessHeap(), 0, pAppCompatSxsData);
                 pAppCompatSxsData = NULL;
-                }
-             
+            }
+
             //
             // we only check ONCE --
             // the second time around is rather meaningless - to check for posix/ntvdm/os2 emulation
             //
-            BadAppStatus = BasepCheckBadapp(FileHandle,
-                                            PathName.Buffer,
-                                            (WCHAR*)lpEnvironment,
-                                            &pAppCompatData,
-                                            &cbAppCompatData,
-                                            &pAppCompatSxsData,
-                                            &cbAppCompatSxsData);
-                    
-            if (!NT_SUCCESS(BadAppStatus)) {
-                if (BadAppStatus == STATUS_ACCESS_DENIED) {
-                    SetLastError(ERROR_CANCELLED);
-                    }
-                else {
-                    BaseSetLastNTError(BadAppStatus);
-                    }
+            BadAppStatus = BasepCheckBadapp(FileHandle, PathName.Buffer, (WCHAR *)lpEnvironment, &pAppCompatData,
+                                            &cbAppCompatData, &pAppCompatSxsData, &cbAppCompatSxsData);
 
-                if (SectionHandle) {
+            if (!NT_SUCCESS(BadAppStatus))
+            {
+                if (BadAppStatus == STATUS_ACCESS_DENIED)
+                {
+                    SetLastError(ERROR_CANCELLED);
+                }
+                else
+                {
+                    BaseSetLastNTError(BadAppStatus);
+                }
+
+                if (SectionHandle)
+                {
                     NtClose(SectionHandle);
                     SectionHandle = NULL;
-                    }
+                }
                 return FALSE;
+            }
+        }
+
+        //
+        // Winsafer code
+        //
+        // If this is the first time then we will have to do Safer checks.
+        // Note that we do not impose any restrictions on the interpreter
+        // itself since it is part of OS.
+        //
+
+
+        if ((!bVdmRetry) && ((dwCreationFlags & CREATE_PRESERVE_CODE_AUTHZ_LEVEL) == 0))
+        {
+
+            NTSTATUS SaferStatus;
+
+
+            {
+
+                //
+                // WinSafer process sandbox restrictions handling.
+                // Should be done for non .NET images only.
+                //
+
+                SaferStatus = BasepCheckWinSaferRestrictions(hUserToken,
+                                                             lpApplicationName, // same as PathName.Buffer
+                                                             FileHandle, &dwJobMemberLevel, &hSaferRestrictedToken,
+                                                             &hSaferAssignmentJob);
+                if (SaferStatus == -1)
+                {
+                    SetLastError(ERROR_ACCESS_DISABLED_BY_POLICY);
+                    bStatus = FALSE;
+                    leave;
+                }
+                else if (!NT_SUCCESS(SaferStatus))
+                {
+                    BaseSetLastNTError(SaferStatus);
+                    bStatus = FALSE;
+                    leave;
                 }
             }
-
-       //
-       // Winsafer code
-       //
-       // If this is the first time then we will have to do Safer checks.
-       // Note that we do not impose any restrictions on the interpreter
-       // itself since it is part of OS.
-       //
+        }
 
 
-       if ((!bVdmRetry) &&
-           ( (dwCreationFlags & CREATE_PRESERVE_CODE_AUTHZ_LEVEL) == 0 )) {
-
-           NTSTATUS SaferStatus;
-
- 
-           {
-
-               //
-               // WinSafer process sandbox restrictions handling.
-               // Should be done for non .NET images only.
-               //
-
-               SaferStatus = BasepCheckWinSaferRestrictions(
-                                                      hUserToken,
-                                                      lpApplicationName,   // same as PathName.Buffer
-                                                      FileHandle,
-                                                      &dwJobMemberLevel,
-                                                      &hSaferRestrictedToken,
-                                                      &hSaferAssignmentJob);
-               if (SaferStatus == -1) {
-                   SetLastError(ERROR_ACCESS_DISABLED_BY_POLICY);
-                   bStatus =  FALSE;
-                   leave;
-               } else if (!NT_SUCCESS(SaferStatus)) {
-                   BaseSetLastNTError(SaferStatus);
-                   bStatus = FALSE;
-                   leave;
-               }
-           }
-       }
-
-
-        if (!NT_SUCCESS(Status)) {
-            switch (Status) {
-                // 16 bit OS/2 exe
-                case STATUS_INVALID_IMAGE_NE_FORMAT:
+        if (!NT_SUCCESS(Status))
+        {
+            switch (Status)
+            {
+            // 16 bit OS/2 exe
+            case STATUS_INVALID_IMAGE_NE_FORMAT:
 #if defined(i386) && defined(OS2_SUPPORT_ENABLED)
                 //
                 // Use OS/2 if x86 (OS/2 not supported on risc),
@@ -2970,17 +2775,13 @@ retrywsscan:
                 //
                 //
 
-                if (!(dwCreationFlags & CREATE_FORCEDOS) &&
-                    !BaseStaticServerData->ForceDos)
-                  {
+                if (!(dwCreationFlags & CREATE_FORCEDOS) && !BaseStaticServerData->ForceDos)
+                {
 
-                    if ( !BuildSubSysCommandLine( L"OS2 /P ",
-                                                  lpApplicationName,
-                                                  lpCommandLine,
-                                                  &SubSysCommandLine
-                                                ) ) {
+                    if (!BuildSubSysCommandLine(L"OS2 /P ", lpApplicationName, lpCommandLine, &SubSysCommandLine))
+                    {
                         return FALSE;
-                        }
+                    }
 
                     lpCommandLine = SubSysCommandLine.Buffer;
 
@@ -2988,328 +2789,302 @@ retrywsscan:
 
                     bVdmRetry = TRUE;
                     goto VdmRetry;
-                    }
+                }
 #endif
-                    // Falls into Dos case, so that stub message will be
-                    // printed, and bound apps will run w/o OS/2 subsytem
+                // Falls into Dos case, so that stub message will be
+                // printed, and bound apps will run w/o OS/2 subsytem
 
                 // Dos .exe or .com
 
-                case STATUS_INVALID_IMAGE_PROTECT:
-                case STATUS_INVALID_IMAGE_NOT_MZ:
-ForceDos:
-                    {
-                    ULONG BinarySubType;
+            case STATUS_INVALID_IMAGE_PROTECT:
+            case STATUS_INVALID_IMAGE_NOT_MZ:
+            ForceDos:
+            {
+                ULONG BinarySubType;
 
-                    BinarySubType = BINARY_TYPE_DOS_EXE;
-                    if (Status == STATUS_INVALID_IMAGE_PROTECT   ||
-                        Status == STATUS_INVALID_IMAGE_NE_FORMAT ||
-                       (BinarySubType = BaseIsDosApplication(&PathName,Status)) )
-                       {
+                BinarySubType = BINARY_TYPE_DOS_EXE;
+                if (Status == STATUS_INVALID_IMAGE_PROTECT || Status == STATUS_INVALID_IMAGE_NE_FORMAT ||
+                    (BinarySubType = BaseIsDosApplication(&PathName, Status)))
+                {
 #if defined(_WIN64) || defined(BUILD_WOW6432)
-                        //
-                        // If this a DOS application, then we need to pop up a dialog
-                        // saying that this an invalid win32 application.
-                        //
-                        goto RaiseInvalidWin32Error;
+                    //
+                    // If this a DOS application, then we need to pop up a dialog
+                    // saying that this an invalid win32 application.
+                    //
+                    goto RaiseInvalidWin32Error;
 #endif
-                        VdmBinaryType = BINARY_TYPE_DOS;
+                    VdmBinaryType = BINARY_TYPE_DOS;
 
-                        // create the environment before going to the
-                        // server. This was done becuase we want NTVDM
-                        // to have the new environment when it gets
-                        // created.
-                        if (!BaseCreateVDMEnvironment(
-                                    lpEnvironment,
-                                    &AnsiStringVDMEnv,
-                                    &UnicodeStringVDMEnv
-                                    )) {
-                            return FALSE;
-                        }
-
-                        if(!BaseCheckVDM(VdmBinaryType | BinarySubType,
-                                         lpApplicationName,
-                                         lpCommandLine,
-                                         lpCurrentDirectory,
-                                         &AnsiStringVDMEnv,
-                                         &m,
-                                         &iTask,
-                                         dwCreationFlags,
-                                         &StartupInfo
-                                         )) {
-
-                            return FALSE;
-                        }
-
-                        // Check the return value from the server
-                        switch (b->VDMState & VDM_STATE_MASK) {
-                            case VDM_NOT_PRESENT:
-                                // mark this so the server can undo
-                                // creation if something goes wrong.
-                                // We marked it "partially created" because
-                                // the NTVDM has yet not been fully created.
-                                // a call to UpdateVdmEntry to update
-                                // process handle will signal the NTVDM
-                                // process completed creation
-                                VDMCreationState = VDM_PARTIALLY_CREATED;
-                                // fail the call if NTVDM process is being
-                                // created DETACHED.
-                                // note that, we let it go if NTVDM process
-                                // is already running.
-                                if (dwCreationFlags & DETACHED_PROCESS) {
-                                    SetLastError(ERROR_ACCESS_DENIED);
-                                    return FALSE;
-                                    }
-                                if (!BaseGetVdmConfigInfo(lpCommandLine,
-                                                          iTask,
-                                                          VdmBinaryType,
-                                                          &VdmNameString,
-                                                          &VdmReserve)) {
-                                    BaseSetLastNTError(Status);
-                                    return FALSE;
-                                    }
-
-                                lpCommandLine = VdmNameString.Buffer;
-                                lpApplicationName = NULL;
-
-                                break;
-
-                            case VDM_PRESENT_NOT_READY:
-                                SetLastError (ERROR_NOT_READY);
-                                return FALSE;
-
-                            case VDM_PRESENT_AND_READY:
-                                VDMCreationState = VDM_BEING_REUSED;
-                                VdmWaitHandle = b->WaitObjectForParent;
-                                break;
-                            }
-                         VdmReserve--;               // we reserve from addr 1
-                         if(VdmWaitHandle)
-                            goto VdmExists;
-                         else{
-                            bInheritHandles = FALSE;
-                            if (lpEnvironment &&
-                                !(dwCreationFlags & CREATE_UNICODE_ENVIRONMENT)){
-                                RtlDestroyEnvironment(lpEnvironment);
-                                }
-                            lpEnvironment = UnicodeStringVDMEnv.Buffer;
-                            bVdmRetry = TRUE;
-                            goto VdmRetry;
-                            }
-                        }
-                    else {
-
-                        //
-                        //  must be a .bat or .cmd file
-                        //
-
-                        static PWCHAR CmdPrefix = L"cmd /c ";
-                        PWCHAR NewCommandLine;
-                        ULONG Length;
-                        PWCHAR Last4 = &PathName.Buffer[PathName.Length / sizeof( WCHAR )-4];
-
-                        if ( PathName.Length < 8 ) {
-                            SetLastError(ERROR_BAD_EXE_FORMAT);
-                            return FALSE;
-                            }
-
-                        if (_wcsnicmp( Last4, L".bat", 4 ) && _wcsnicmp( Last4, L".cmd", 4 )) {
-                            SetLastError(ERROR_BAD_EXE_FORMAT);
-                            return FALSE;
-                        }
-
-                        Length = wcslen( CmdPrefix )
-                                 + (QuoteCmdLine || QuoteFound )
-                                 + wcslen( lpCommandLine )
-                                 + (QuoteCmdLine || QuoteFound)
-                                 + 1;
-
-                        NewCommandLine = RtlAllocateHeap( RtlProcessHeap( ),
-                                                          MAKE_TAG( TMP_TAG ),
-                                                          Length * sizeof( WCHAR ) );
-
-                        if (NewCommandLine == NULL) {
-                            BaseSetLastNTError(STATUS_NO_MEMORY);
-                            return FALSE;
-                        }
-
-                        wcscpy( NewCommandLine, CmdPrefix );
-                        if (QuoteCmdLine || QuoteFound) {
-                            wcscat( NewCommandLine, L"\"" );
-                        }
-                        wcscat( NewCommandLine, lpCommandLine );
-                        if (QuoteCmdLine || QuoteFound) {
-                            wcscat( NewCommandLine, L"\"" );
-                        }
-
-                        RtlInitUnicodeString( &SubSysCommandLine, NewCommandLine );
-
-                        lpCommandLine = SubSysCommandLine.Buffer;
-
-                        lpApplicationName = NULL;
-
-                        bVdmRetry = TRUE;
-                        goto VdmRetry;
-
-                        }
-
+                    // create the environment before going to the
+                    // server. This was done becuase we want NTVDM
+                    // to have the new environment when it gets
+                    // created.
+                    if (!BaseCreateVDMEnvironment(lpEnvironment, &AnsiStringVDMEnv, &UnicodeStringVDMEnv))
+                    {
+                        return FALSE;
                     }
 
-                // 16 bit windows exe
-                case STATUS_INVALID_IMAGE_WIN_16:
-#if defined(BUILD_WOW6432) || defined(_WIN64)
-                   if (lpOriginalApplicationName == NULL) {
-                       // pass in the part of the command line after the exe name
-                       // including whitespace
-                       lpCommandLine = ((*TempNull == '\"') ? TempNull + 1 : TempNull);
-                   } else {
-                       lpCommandLine = lpOriginalCommandLine;
-                   }
+                    if (!BaseCheckVDM(VdmBinaryType | BinarySubType, lpApplicationName, lpCommandLine,
+                                      lpCurrentDirectory, &AnsiStringVDMEnv, &m, &iTask, dwCreationFlags, &StartupInfo))
+                    {
 
-                   return NtVdm64CreateProcess(lpOriginalApplicationName == NULL,
-                                               lpApplicationName,             // this is now the real file name we've loaded
-                                               lpCommandLine,
-                                               lpProcessAttributes,
-                                               lpThreadAttributes,
-                                               bInheritHandles,
-                                               (dwCreationFlags & ~CREATE_UNICODE_ENVIRONMENT),  // the environment has already been converted to unicode
-                                               lpEnvironment,
-                                               lpCurrentDirectory,
-                                               lpStartupInfo,
-                                               lpProcessInformation
-                                               );
-#endif
-                   if (dwCreationFlags & CREATE_FORCEDOS) {
-                       goto ForceDos;
-                       }
-
-                    IsWowBinary = TRUE;
-                    if (!BaseCreateVDMEnvironment(lpEnvironment,
-                                                  &AnsiStringVDMEnv,
-                                                  &UnicodeStringVDMEnv)) {
                         return FALSE;
-                        }
-
-RetrySepWow:
-                    VdmBinaryType = dwCreationFlags & CREATE_SEPARATE_WOW_VDM
-                                     ? BINARY_TYPE_SEPWOW : BINARY_TYPE_WIN16;
-
-                    if (!BaseCheckVDM(VdmBinaryType,
-                                      lpApplicationName,
-                                      lpCommandLine,
-                                      lpCurrentDirectory,
-                                      &AnsiStringVDMEnv,
-                                      &m,
-                                      &iTask,
-                                      dwCreationFlags,
-                                      &StartupInfo
-                                      ))
-                       {
-                        //
-                        // If we failed with access denied, caller may not
-                        // be allowed allowed to access the shared wow's
-                        // desktop, so retry as a separate wow
-                        //
-                        if (VdmBinaryType == BINARY_TYPE_WIN16 &&
-                            GetLastError() == ERROR_ACCESS_DENIED)
-                          {
-                           dwCreationFlags |= CREATE_SEPARATE_WOW_VDM;
-                           }
-                        else {
-                            return FALSE;
-                            }
-                        goto RetrySepWow;
-                        }
+                    }
 
                     // Check the return value from the server
-                    switch (b->VDMState & VDM_STATE_MASK){
-                        case VDM_NOT_PRESENT:
-                            // mark this so the server can undo
-                            // creation if something goes wrong.
-                            // We marked it "partitially created" because
-                            // the NTVDM has yet not been fully created.
-                            // a call to UpdateVdmEntry to update
-                            // process handle will signal the NTVDM
-                            // process completed creation
-
-                            VDMCreationState = VDM_PARTIALLY_CREATED;
-
-                            // jarbats: 1/8/2001
-                            // Tell BaseGetVdmConfigInfo to create
-                            // vdm commandline for meow
-                            //
-
-                            if (bMeowBinary)
-                               {
-                               VdmReserve = 1;
-                               }
-
-                            if (!BaseGetVdmConfigInfo(
-                                    lpCommandLine,
-                                    iTask,
-                                    VdmBinaryType,
-                                    &VdmNameString,
-                                    &VdmReserve
-                                    )) {
-                                BaseSetLastNTError(Status);
-                                return FALSE;
-                                }
-
-                            lpCommandLine = VdmNameString.Buffer;
-                            lpApplicationName = NULL;
-
-
-                            //
-                            // Wow must have a hidden console
-                            // Throw away DETACHED_PROCESS flag which isn't
-                            // meaningful for Win16 apps.
-                            //
-
-                            dwCreationFlags |= CREATE_NO_WINDOW;
-                            dwCreationFlags &= ~(CREATE_NEW_CONSOLE | DETACHED_PROCESS);
-
-
-                            //
-                            // We're starting a WOW VDM, turn on feedback unless
-                            // the creator passed STARTF_FORCEOFFFEEDBACK.
-                            //
-
-                            StartupInfo.dwFlags |= STARTF_FORCEONFEEDBACK;
-
-                            break;
-
-                        case VDM_PRESENT_NOT_READY:
-                            SetLastError (ERROR_NOT_READY);
+                    switch (b->VDMState & VDM_STATE_MASK)
+                    {
+                    case VDM_NOT_PRESENT:
+                        // mark this so the server can undo
+                        // creation if something goes wrong.
+                        // We marked it "partially created" because
+                        // the NTVDM has yet not been fully created.
+                        // a call to UpdateVdmEntry to update
+                        // process handle will signal the NTVDM
+                        // process completed creation
+                        VDMCreationState = VDM_PARTIALLY_CREATED;
+                        // fail the call if NTVDM process is being
+                        // created DETACHED.
+                        // note that, we let it go if NTVDM process
+                        // is already running.
+                        if (dwCreationFlags & DETACHED_PROCESS)
+                        {
+                            SetLastError(ERROR_ACCESS_DENIED);
                             return FALSE;
-
-                        case VDM_PRESENT_AND_READY:
-                            VDMCreationState = VDM_BEING_REUSED;
-                            VdmWaitHandle = b->WaitObjectForParent;
-                            break;
+                        }
+                        if (!BaseGetVdmConfigInfo(lpCommandLine, iTask, VdmBinaryType, &VdmNameString, &VdmReserve))
+                        {
+                            BaseSetLastNTError(Status);
+                            return FALSE;
                         }
 
-                    VdmReserve--;               // we reserve from addr 1
-                    if(VdmWaitHandle)
+                        lpCommandLine = VdmNameString.Buffer;
+                        lpApplicationName = NULL;
+
+                        break;
+
+                    case VDM_PRESENT_NOT_READY:
+                        SetLastError(ERROR_NOT_READY);
+                        return FALSE;
+
+                    case VDM_PRESENT_AND_READY:
+                        VDMCreationState = VDM_BEING_REUSED;
+                        VdmWaitHandle = b->WaitObjectForParent;
+                        break;
+                    }
+                    VdmReserve--; // we reserve from addr 1
+                    if (VdmWaitHandle)
                         goto VdmExists;
-                    else {
+                    else
+                    {
                         bInheritHandles = FALSE;
-                        // replace the environment with ours
-                        if (lpEnvironment &&
-                            !(dwCreationFlags & CREATE_UNICODE_ENVIRONMENT)) {
+                        if (lpEnvironment && !(dwCreationFlags & CREATE_UNICODE_ENVIRONMENT))
+                        {
                             RtlDestroyEnvironment(lpEnvironment);
-                            }
+                        }
                         lpEnvironment = UnicodeStringVDMEnv.Buffer;
                         bVdmRetry = TRUE;
                         goto VdmRetry;
-                        }
+                    }
+                }
+                else
+                {
 
-                case STATUS_FILE_IS_OFFLINE:
-                    SetLastError(ERROR_FILE_OFFLINE);
+                    //
+                    //  must be a .bat or .cmd file
+                    //
+
+                    static PWCHAR CmdPrefix = L"cmd /c ";
+                    PWCHAR NewCommandLine;
+                    ULONG Length;
+                    PWCHAR Last4 = &PathName.Buffer[PathName.Length / sizeof(WCHAR) - 4];
+
+                    if (PathName.Length < 8)
+                    {
+                        SetLastError(ERROR_BAD_EXE_FORMAT);
+                        return FALSE;
+                    }
+
+                    if (_wcsnicmp(Last4, L".bat", 4) && _wcsnicmp(Last4, L".cmd", 4))
+                    {
+                        SetLastError(ERROR_BAD_EXE_FORMAT);
+                        return FALSE;
+                    }
+
+                    Length = wcslen(CmdPrefix) + (QuoteCmdLine || QuoteFound) + wcslen(lpCommandLine) +
+                             (QuoteCmdLine || QuoteFound) + 1;
+
+                    NewCommandLine = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), Length * sizeof(WCHAR));
+
+                    if (NewCommandLine == NULL)
+                    {
+                        BaseSetLastNTError(STATUS_NO_MEMORY);
+                        return FALSE;
+                    }
+
+                    wcscpy(NewCommandLine, CmdPrefix);
+                    if (QuoteCmdLine || QuoteFound)
+                    {
+                        wcscat(NewCommandLine, L"\"");
+                    }
+                    wcscat(NewCommandLine, lpCommandLine);
+                    if (QuoteCmdLine || QuoteFound)
+                    {
+                        wcscat(NewCommandLine, L"\"");
+                    }
+
+                    RtlInitUnicodeString(&SubSysCommandLine, NewCommandLine);
+
+                    lpCommandLine = SubSysCommandLine.Buffer;
+
+                    lpApplicationName = NULL;
+
+                    bVdmRetry = TRUE;
+                    goto VdmRetry;
+                }
+            }
+
+            // 16 bit windows exe
+            case STATUS_INVALID_IMAGE_WIN_16:
+#if defined(BUILD_WOW6432) || defined(_WIN64)
+                if (lpOriginalApplicationName == NULL)
+                {
+                    // pass in the part of the command line after the exe name
+                    // including whitespace
+                    lpCommandLine = ((*TempNull == '\"') ? TempNull + 1 : TempNull);
+                }
+                else
+                {
+                    lpCommandLine = lpOriginalCommandLine;
+                }
+
+                return NtVdm64CreateProcess(
+                    lpOriginalApplicationName == NULL,
+                    lpApplicationName, // this is now the real file name we've loaded
+                    lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles,
+                    (dwCreationFlags &
+                     ~CREATE_UNICODE_ENVIRONMENT), // the environment has already been converted to unicode
+                    lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+#endif
+                if (dwCreationFlags & CREATE_FORCEDOS)
+                {
+                    goto ForceDos;
+                }
+
+                IsWowBinary = TRUE;
+                if (!BaseCreateVDMEnvironment(lpEnvironment, &AnsiStringVDMEnv, &UnicodeStringVDMEnv))
+                {
+                    return FALSE;
+                }
+
+            RetrySepWow:
+                VdmBinaryType = dwCreationFlags & CREATE_SEPARATE_WOW_VDM ? BINARY_TYPE_SEPWOW : BINARY_TYPE_WIN16;
+
+                if (!BaseCheckVDM(VdmBinaryType, lpApplicationName, lpCommandLine, lpCurrentDirectory,
+                                  &AnsiStringVDMEnv, &m, &iTask, dwCreationFlags, &StartupInfo))
+                {
+                    //
+                    // If we failed with access denied, caller may not
+                    // be allowed allowed to access the shared wow's
+                    // desktop, so retry as a separate wow
+                    //
+                    if (VdmBinaryType == BINARY_TYPE_WIN16 && GetLastError() == ERROR_ACCESS_DENIED)
+                    {
+                        dwCreationFlags |= CREATE_SEPARATE_WOW_VDM;
+                    }
+                    else
+                    {
+                        return FALSE;
+                    }
+                    goto RetrySepWow;
+                }
+
+                // Check the return value from the server
+                switch (b->VDMState & VDM_STATE_MASK)
+                {
+                case VDM_NOT_PRESENT:
+                    // mark this so the server can undo
+                    // creation if something goes wrong.
+                    // We marked it "partitially created" because
+                    // the NTVDM has yet not been fully created.
+                    // a call to UpdateVdmEntry to update
+                    // process handle will signal the NTVDM
+                    // process completed creation
+
+                    VDMCreationState = VDM_PARTIALLY_CREATED;
+
+                    // jarbats: 1/8/2001
+                    // Tell BaseGetVdmConfigInfo to create
+                    // vdm commandline for meow
+                    //
+
+                    if (bMeowBinary)
+                    {
+                        VdmReserve = 1;
+                    }
+
+                    if (!BaseGetVdmConfigInfo(lpCommandLine, iTask, VdmBinaryType, &VdmNameString, &VdmReserve))
+                    {
+                        BaseSetLastNTError(Status);
+                        return FALSE;
+                    }
+
+                    lpCommandLine = VdmNameString.Buffer;
+                    lpApplicationName = NULL;
+
+
+                    //
+                    // Wow must have a hidden console
+                    // Throw away DETACHED_PROCESS flag which isn't
+                    // meaningful for Win16 apps.
+                    //
+
+                    dwCreationFlags |= CREATE_NO_WINDOW;
+                    dwCreationFlags &= ~(CREATE_NEW_CONSOLE | DETACHED_PROCESS);
+
+
+                    //
+                    // We're starting a WOW VDM, turn on feedback unless
+                    // the creator passed STARTF_FORCEOFFFEEDBACK.
+                    //
+
+                    StartupInfo.dwFlags |= STARTF_FORCEONFEEDBACK;
+
                     break;
 
-                default :
-                    SetLastError(ERROR_BAD_EXE_FORMAT);
+                case VDM_PRESENT_NOT_READY:
+                    SetLastError(ERROR_NOT_READY);
                     return FALSE;
+
+                case VDM_PRESENT_AND_READY:
+                    VDMCreationState = VDM_BEING_REUSED;
+                    VdmWaitHandle = b->WaitObjectForParent;
+                    break;
+                }
+
+                VdmReserve--; // we reserve from addr 1
+                if (VdmWaitHandle)
+                    goto VdmExists;
+                else
+                {
+                    bInheritHandles = FALSE;
+                    // replace the environment with ours
+                    if (lpEnvironment && !(dwCreationFlags & CREATE_UNICODE_ENVIRONMENT))
+                    {
+                        RtlDestroyEnvironment(lpEnvironment);
+                    }
+                    lpEnvironment = UnicodeStringVDMEnv.Buffer;
+                    bVdmRetry = TRUE;
+                    goto VdmRetry;
+                }
+
+            case STATUS_FILE_IS_OFFLINE:
+                SetLastError(ERROR_FILE_OFFLINE);
+                break;
+
+            default:
+                SetLastError(ERROR_BAD_EXE_FORMAT);
+                return FALSE;
             }
         }
 
@@ -3317,7 +3092,8 @@ RetrySepWow:
         // Make sure only WOW apps can have the CREATE_SEPARATE_WOW_VDM flag.
         //
 
-        if (!IsWowBinary && (dwCreationFlags & CREATE_SEPARATE_WOW_VDM)) {
+        if (!IsWowBinary && (dwCreationFlags & CREATE_SEPARATE_WOW_VDM))
+        {
             dwCreationFlags &= ~CREATE_SEPARATE_WOW_VDM;
         }
 
@@ -3326,88 +3102,77 @@ RetrySepWow:
         // image entrypoint.
         //
 
-        Status = NtQuerySection(
-                    SectionHandle,
-                    SectionImageInformation,
-                    &ImageInformation,
-                    sizeof( ImageInformation ),
-                    NULL
-                    );
+        Status =
+            NtQuerySection(SectionHandle, SectionImageInformation, &ImageInformation, sizeof(ImageInformation), NULL);
 
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
             BaseSetLastNTError(Status);
             return FALSE;
-            }
+        }
 
-        if (ImageInformation.ImageCharacteristics & IMAGE_FILE_DLL) {
+        if (ImageInformation.ImageCharacteristics & IMAGE_FILE_DLL)
+        {
             SetLastError(ERROR_BAD_EXE_FORMAT);
             return FALSE;
-            }
+        }
 
-        ImageFileDebuggerCommand[ 0 ] = UNICODE_NULL;
-        if (!(dwCreationFlags & (DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS)) ||
-            NtCurrentPeb()->ReadImageFileExecOptions
-           ) {
-            LdrQueryImageFileExecutionOptions( &PathName,
-                                               L"Debugger",
-                                               REG_SZ,
-                                               ImageFileDebuggerCommand,
-                                               sizeof( ImageFileDebuggerCommand ),
-                                               NULL
-                                             );
-            }
+        ImageFileDebuggerCommand[0] = UNICODE_NULL;
+        if (!(dwCreationFlags & (DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS)) || NtCurrentPeb()->ReadImageFileExecOptions)
+        {
+            LdrQueryImageFileExecutionOptions(&PathName, L"Debugger", REG_SZ, ImageFileDebuggerCommand,
+                                              sizeof(ImageFileDebuggerCommand), NULL);
+        }
 
 
         if ((ImageInformation.Machine < USER_SHARED_DATA->ImageNumberLow) ||
-            (ImageInformation.Machine > USER_SHARED_DATA->ImageNumberHigh)) {
+            (ImageInformation.Machine > USER_SHARED_DATA->ImageNumberHigh))
+        {
 #if defined(_WIN64) || defined(BUILD_WOW6432)
-            if (ImageInformation.Machine == IMAGE_FILE_MACHINE_I386) {
-               // Fall through since this is a valid machine type.
-                }
-             else
+            if (ImageInformation.Machine == IMAGE_FILE_MACHINE_I386)
+            {
+                // Fall through since this is a valid machine type.
+            }
+            else
 #endif
-                {
+            {
                 ULONG_PTR ErrorParameters[2];
                 ULONG ErrorResponse;
 
 #if defined(_WIN64) || defined(BUILD_WOW6432)
-RaiseInvalidWin32Error:
+            RaiseInvalidWin32Error:
 #endif
                 ErrorResponse = ResponseOk;
                 ErrorParameters[0] = (ULONG_PTR)&PathName;
 
-                NtRaiseHardError( STATUS_IMAGE_MACHINE_TYPE_MISMATCH_EXE,
-                                  1,
-                                  1,
-                                  ErrorParameters,
-                                  OptionOk,
-                                  &ErrorResponse
-                                );
-                if ( NtCurrentPeb()->ImageSubsystemMajorVersion <= 3 ) {
+                NtRaiseHardError(STATUS_IMAGE_MACHINE_TYPE_MISMATCH_EXE, 1, 1, ErrorParameters, OptionOk,
+                                 &ErrorResponse);
+                if (NtCurrentPeb()->ImageSubsystemMajorVersion <= 3)
+                {
                     SetLastError(ERROR_BAD_EXE_FORMAT);
-                    }
-                else {
-                    SetLastError(ERROR_EXE_MACHINE_TYPE_MISMATCH);
-                    }
-                return FALSE;
                 }
+                else
+                {
+                    SetLastError(ERROR_EXE_MACHINE_TYPE_MISMATCH);
+                }
+                return FALSE;
             }
+        }
 
-        if ( ImageInformation.SubSystemType != IMAGE_SUBSYSTEM_WINDOWS_GUI &&
-             ImageInformation.SubSystemType != IMAGE_SUBSYSTEM_WINDOWS_CUI ) {
+        if (ImageInformation.SubSystemType != IMAGE_SUBSYSTEM_WINDOWS_GUI &&
+            ImageInformation.SubSystemType != IMAGE_SUBSYSTEM_WINDOWS_CUI)
+        {
 
             // POSIX exe
 
             NtClose(SectionHandle);
             SectionHandle = NULL;
 
-            if ( ImageInformation.SubSystemType == IMAGE_SUBSYSTEM_POSIX_CUI ) {
+            if (ImageInformation.SubSystemType == IMAGE_SUBSYSTEM_POSIX_CUI)
+            {
 
-                if ( !BuildSubSysCommandLine( L"POSIX /P ",
-                                              lpApplicationName,
-                                              lpCommandLine,
-                                              &SubSysCommandLine
-                                            ) ) {
+                if (!BuildSubSysCommandLine(L"POSIX /P ", lpApplicationName, lpCommandLine, &SubSysCommandLine))
+                {
                     return FALSE;
                 }
 
@@ -3416,40 +3181,44 @@ RaiseInvalidWin32Error:
                 lpApplicationName = NULL;
                 bVdmRetry = TRUE;
                 goto VdmRetry;
-                }
-            else {
+            }
+            else
+            {
                 SetLastError(ERROR_CHILD_NOT_COMPLETE);
                 return FALSE;
-                }
             }
-        else {
-            if (!BasepIsImageVersionOk( ImageInformation.SubSystemMajorVersion,
-                                        ImageInformation.SubSystemMinorVersion) ) {
+        }
+        else
+        {
+            if (!BasepIsImageVersionOk(ImageInformation.SubSystemMajorVersion, ImageInformation.SubSystemMinorVersion))
+            {
                 SetLastError(ERROR_BAD_EXE_FORMAT);
                 return FALSE;
-                }
             }
+        }
 
-        if (ImageFileDebuggerCommand[ 0 ] != UNICODE_NULL) {
+        if (ImageFileDebuggerCommand[0] != UNICODE_NULL)
+        {
             SIZE_T n;
 
-            n = wcslen( lpCommandLine );
-            if (n == 0) {
+            n = wcslen(lpCommandLine);
+            if (n == 0)
+            {
                 lpCommandLine = (LPWSTR)lpApplicationName;
-                n = wcslen( lpCommandLine );
-                }
+                n = wcslen(lpCommandLine);
+            }
 
-            n += wcslen( ImageFileDebuggerCommand ) + 1 + 2;
-            n *= sizeof( WCHAR );
+            n += wcslen(ImageFileDebuggerCommand) + 1 + 2;
+            n *= sizeof(WCHAR);
 
-            SubSysCommandLine.Buffer = RtlAllocateHeap( RtlProcessHeap(), MAKE_TAG( TMP_TAG ), n );
+            SubSysCommandLine.Buffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), n);
             SubSysCommandLine.Length = 0;
             SubSysCommandLine.MaximumLength = (USHORT)n;
-            RtlAppendUnicodeToString( &SubSysCommandLine, ImageFileDebuggerCommand );
-            RtlAppendUnicodeToString( &SubSysCommandLine, L" " );
-            RtlAppendUnicodeToString( &SubSysCommandLine, lpCommandLine );
+            RtlAppendUnicodeToString(&SubSysCommandLine, ImageFileDebuggerCommand);
+            RtlAppendUnicodeToString(&SubSysCommandLine, L" ");
+            RtlAppendUnicodeToString(&SubSysCommandLine, lpCommandLine);
 #if DBG
-            DbgPrint( "BASE: Calling debugger with '%wZ'\n", &SubSysCommandLine );
+            DbgPrint("BASE: Calling debugger with '%wZ'\n", &SubSysCommandLine);
 #endif
             lpCommandLine = SubSysCommandLine.Buffer;
             lpApplicationName = NULL;
@@ -3460,36 +3229,42 @@ RaiseInvalidWin32Error:
             RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
             FreeBuffer = NULL;
             goto VdmRetry;
-            }
+        }
 
         //
         // Create the process object
         //
 
-        pObja = BaseFormatObjectAttributes(&Obja,lpProcessAttributes,NULL);
+        pObja = BaseFormatObjectAttributes(&Obja, lpProcessAttributes, NULL);
 
         Flags = 0;
-        if (dwCreationFlags & CREATE_BREAKAWAY_FROM_JOB ) {
+        if (dwCreationFlags & CREATE_BREAKAWAY_FROM_JOB)
+        {
             Flags |= PROCESS_CREATE_FLAGS_BREAKAWAY;
         }
 
-        if ( dwCreationFlags & (DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS) ) {
+        if (dwCreationFlags & (DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS))
+        {
             Status = DbgUiConnectToDbg();
-            if ( !NT_SUCCESS(Status) ) {
+            if (!NT_SUCCESS(Status))
+            {
                 BaseSetLastNTError(Status);
                 return FALSE;
             }
-            DebugPortHandle = DbgUiGetThreadDebugObject ();
-            if (dwCreationFlags & DEBUG_ONLY_THIS_PROCESS) {
+            DebugPortHandle = DbgUiGetThreadDebugObject();
+            if (dwCreationFlags & DEBUG_ONLY_THIS_PROCESS)
+            {
                 Flags |= PROCESS_CREATE_FLAGS_NO_DEBUG_INHERIT;
             }
         }
 
-        if (bInheritHandles) {
+        if (bInheritHandles)
+        {
             Flags |= PROCESS_CREATE_FLAGS_INHERIT_HANDLES;
         }
 
-        if (((ImageInformation.LoaderFlags & IMAGE_LOADER_FLAGS_COMPLUS) != 0)) {
+        if (((ImageInformation.LoaderFlags & IMAGE_LOADER_FLAGS_COMPLUS) != 0))
+        {
 
 #if defined(_WIN64) || defined(BUILD_WOW6432)
 
@@ -3498,44 +3273,39 @@ RaiseInvalidWin32Error:
             // on Win64.
             //
 
-            if ( ImageInformation.Machine == IMAGE_FILE_MACHINE_I386 ) {
+            if (ImageInformation.Machine == IMAGE_FILE_MACHINE_I386)
+            {
 
-                Status = BasepIsComplusILImage(
-                                              SectionHandle,
-                                              &ImageInformation,
-                                              &ComPlusILImage
-                                              );
+                Status = BasepIsComplusILImage(SectionHandle, &ImageInformation, &ComPlusILImage);
 
-                if ((NT_SUCCESS (Status)) && (ComPlusILImage != FALSE)) {
+                if ((NT_SUCCESS(Status)) && (ComPlusILImage != FALSE))
+                {
                     Flags |= PROCESS_CREATE_FLAGS_OVERRIDE_ADDRESS_SPACE;
                 }
             }
 
 #endif
-        } 
-            
+        }
+
         //
         // This is temporary till we get Shim dlls support for native Win64 applications.
         //
 
-        if (ImageInformation.Machine != IMAGE_FILE_MACHINE_I386) {
+        if (ImageInformation.Machine != IMAGE_FILE_MACHINE_I386)
+        {
             pAppCompatDataTemp = NULL;
-        } else {
+        }
+        else
+        {
             pAppCompatDataTemp = pAppCompatData;
         }
 
-        Status = NtCreateProcessEx(
-                    &ProcessHandle,
-                    PROCESS_ALL_ACCESS,
-                    pObja,
-                    NtCurrentProcess(),
-                    Flags,
-                    SectionHandle,
-                    DebugPortHandle,
-                    NULL,
-                    dwJobMemberLevel         // Job member level
-                    );
-        if ( !NT_SUCCESS(Status) ) {
+        Status = NtCreateProcessEx(&ProcessHandle, PROCESS_ALL_ACCESS, pObja, NtCurrentProcess(), Flags, SectionHandle,
+                                   DebugPortHandle, NULL,
+                                   dwJobMemberLevel // Job member level
+        );
+        if (!NT_SUCCESS(Status))
+        {
             BaseSetLastNTError(Status);
             return FALSE;
         }
@@ -3545,63 +3315,55 @@ RaiseInvalidWin32Error:
         // only override if a mask is given during the create.
         //
 
-        if ( PriClass.PriorityClass != PROCESS_PRIORITY_CLASS_UNKNOWN ) {
+        if (PriClass.PriorityClass != PROCESS_PRIORITY_CLASS_UNKNOWN)
+        {
             State = NULL;
-            if ( PriClass.PriorityClass ==  PROCESS_PRIORITY_CLASS_REALTIME ) {
+            if (PriClass.PriorityClass == PROCESS_PRIORITY_CLASS_REALTIME)
+            {
                 State = BasepIsRealtimeAllowed(TRUE);
-                }
-            Status = NtSetInformationProcess(
-                        ProcessHandle,
-                        ProcessPriorityClass,
-                        (PVOID)&PriClass,
-                        sizeof(PriClass)
-                        );
-            if ( State ) {
-                BasepReleasePrivilege( State );
-                }
+            }
+            Status = NtSetInformationProcess(ProcessHandle, ProcessPriorityClass, (PVOID)&PriClass, sizeof(PriClass));
+            if (State)
+            {
+                BasepReleasePrivilege(State);
+            }
 
-            if ( !NT_SUCCESS(Status) ) {
+            if (!NT_SUCCESS(Status))
+            {
                 BaseSetLastNTError(Status);
                 return FALSE;
-                }
             }
+        }
 
-        if (dwCreationFlags & CREATE_DEFAULT_ERROR_MODE) {
+        if (dwCreationFlags & CREATE_DEFAULT_ERROR_MODE)
+        {
             UINT NewMode;
             NewMode = SEM_FAILCRITICALERRORS;
-            NtSetInformationProcess(
-                ProcessHandle,
-                ProcessDefaultHardErrorMode,
-                &NewMode,
-                sizeof(NewMode)
-                );
-            }
+            NtSetInformationProcess(ProcessHandle, ProcessDefaultHardErrorMode, &NewMode, sizeof(NewMode));
+        }
 
         //
         // If the process is being created for a VDM call the server with
         // process handle.
         //
 
-        if (VdmBinaryType) {
+        if (VdmBinaryType)
+        {
             VdmWaitHandle = ProcessHandle;
-            if (!BaseUpdateVDMEntry(UPDATE_VDM_PROCESS_HANDLE,
-                                    &VdmWaitHandle,
-                                    iTask,
-                                    VdmBinaryType
-                                    ))
-                {
+            if (!BaseUpdateVDMEntry(UPDATE_VDM_PROCESS_HANDLE, &VdmWaitHandle, iTask, VdmBinaryType))
+            {
                 //make sure we don't close the handle twice --
                 //(VdmWaitHandle == ProcessHandle) if we don't do this.
                 VdmWaitHandle = NULL;
                 return FALSE;
-                }
+            }
 
             //
             // For Sep wow the VdmWaitHandle = NULL (there is none!)
             //
 
             VDMCreationState |= VDM_FULLY_CREATED;
-            }
+        }
 
 
 #if defined(i386)
@@ -3610,21 +3372,17 @@ RaiseInvalidWin32Error:
         // (for vdms). This is required only for x86 system.
         //
 
-    if ( VdmReserve ) {
+        if (VdmReserve)
+        {
             BigVdmReserve = VdmReserve;
-            Status = NtAllocateVirtualMemory(
-                        ProcessHandle,
-                        &BaseAddress,
-                        0L,
-                        &BigVdmReserve,
-                        MEM_RESERVE,
-                        PAGE_EXECUTE_READWRITE
-                        );
-            if ( !NT_SUCCESS(Status) ){
+            Status = NtAllocateVirtualMemory(ProcessHandle, &BaseAddress, 0L, &BigVdmReserve, MEM_RESERVE,
+                                             PAGE_EXECUTE_READWRITE);
+            if (!NT_SUCCESS(Status))
+            {
                 BaseSetLastNTError(Status);
                 return FALSE;
             }
-    }
+        }
 #endif
 
         //
@@ -3635,107 +3393,92 @@ RaiseInvalidWin32Error:
         //
         SxsWin32ManifestPathBuffer.ByteBuffer.StaticSize = SxsWin32ExePath.Length + sizeof(SXS_MANIFEST_SUFFIX);
         SxsWin32PolicyPathBuffer.ByteBuffer.StaticSize = SxsWin32ExePath.Length + sizeof(SXS_POLICY_SUFFIX);
-        SxsWin32AssemblyDirectoryBuffer.ByteBuffer.StaticSize = SxsWin32ExePath.Length + sizeof(WCHAR); // Win32AssemblyDirectory overestimate
+        SxsWin32AssemblyDirectoryBuffer.ByteBuffer.StaticSize =
+            SxsWin32ExePath.Length + sizeof(WCHAR); // Win32AssemblyDirectory overestimate
         SxsNtManifestPathBuffer.ByteBuffer.StaticSize = SxsNtExePath.Length + sizeof(SXS_MANIFEST_SUFFIX);
         SxsNtPolicyPathBuffer.ByteBuffer.StaticSize = SxsNtExePath.Length + sizeof(SXS_POLICY_SUFFIX);
         //
         // now add them up as BYTE sizes
         //
         SxsConglomeratedBufferSizeBytes = 0;
-        for (sxsi = 0 ; sxsi != RTL_NUMBER_OF(SxsStringBuffers) ; ++sxsi) {
+        for (sxsi = 0; sxsi != RTL_NUMBER_OF(SxsStringBuffers); ++sxsi)
+        {
             SxsConglomeratedBufferSizeBytes += SxsStringBuffers[sxsi]->ByteBuffer.StaticSize;
         }
 #if DBG
-        DbgPrintEx(
-            DPFLTR_SXS_ID,
-            DPFLTR_INFO_LEVEL,
-            "SXS: SxsConglomeratedBufferSizeBytes:%Id\n",
-            SxsConglomeratedBufferSizeBytes
-            );
+        DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_INFO_LEVEL, "SXS: SxsConglomeratedBufferSizeBytes:%Id\n",
+                   SxsConglomeratedBufferSizeBytes);
 #endif
         //
         // one honking heap allocation
         //
         SxsConglomeratedByteBuffer = (PBYTE)RtlAllocateHeap(RtlProcessHeap(), 0, SxsConglomeratedBufferSizeBytes);
-        if (SxsConglomeratedByteBuffer == NULL) {
+        if (SxsConglomeratedByteBuffer == NULL)
+        {
             BaseSetLastNTError(STATUS_NO_MEMORY);
             return FALSE;
         }
         //
         // now dole out pieces, calling the proper initialization function
         //
-        for (sxsi= 0 ; sxsi != RTL_NUMBER_OF(SxsStringBuffers) ; ++sxsi) {
-            RtlInitUnicodeStringBuffer(
-                SxsStringBuffers[sxsi],
-                (sxsi != 0) ? SxsStringBuffers[sxsi - 1]->ByteBuffer.Buffer + SxsStringBuffers[sxsi- 1]->ByteBuffer.StaticSize
-                         : SxsConglomeratedByteBuffer,
-                SxsStringBuffers[sxsi]->ByteBuffer.StaticSize
-                );
+        for (sxsi = 0; sxsi != RTL_NUMBER_OF(SxsStringBuffers); ++sxsi)
+        {
+            RtlInitUnicodeStringBuffer(SxsStringBuffers[sxsi],
+                                       (sxsi != 0) ? SxsStringBuffers[sxsi - 1]->ByteBuffer.Buffer +
+                                                         SxsStringBuffers[sxsi - 1]->ByteBuffer.StaticSize
+                                                   : SxsConglomeratedByteBuffer,
+                                       SxsStringBuffers[sxsi]->ByteBuffer.StaticSize);
         }
 
         SxsExeHandles.Process = ProcessHandle;
         SxsExeHandles.File = FileHandle;
-         // The 1 bit here means something different than in the loader.
+        // The 1 bit here means something different than in the loader.
         ASSERT((((ULONG_PTR)SectionHandle) & (ULONG_PTR)1) == 0);
         SxsExeHandles.Section = SectionHandle;
 
         // if we have an override stream, use it
-        if (NULL != pAppCompatSxsData) {
-            AppCompatSxsManifest.Name    = SxsWin32ExePath;     // unicode string
-            AppCompatSxsManifest.Address = pAppCompatSxsData;   // pointer to unicode manifest
-            AppCompatSxsManifest.Size    = cbAppCompatSxsData;  // byte count
+        if (NULL != pAppCompatSxsData)
+        {
+            AppCompatSxsManifest.Name = SxsWin32ExePath;      // unicode string
+            AppCompatSxsManifest.Address = pAppCompatSxsData; // pointer to unicode manifest
+            AppCompatSxsManifest.Size = cbAppCompatSxsData;   // byte count
         }
 
         Status = BasepSxsCreateProcessCsrMessage(
             (NULL != pAppCompatSxsData) ? &AppCompatSxsManifest : NULL, // override manifest (appcompat hook)
-            NULL, // override policy (appcompat hook)
-            &SxsManifestPathPair,
-            &SxsManifestFileHandles,
-            &SxsExePathPair,
-            &SxsExeHandles,
-            &SxsPolicyPathPair,
-            &SxsPolicyHandles,
-            &SxsWin32AssemblyDirectoryBuffer,
-            &a->Sxs
-            );
+            NULL,                                                       // override policy (appcompat hook)
+            &SxsManifestPathPair, &SxsManifestFileHandles, &SxsExePathPair, &SxsExeHandles, &SxsPolicyPathPair,
+            &SxsPolicyHandles, &SxsWin32AssemblyDirectoryBuffer, &a->Sxs);
 #if DBG
         // verify the buffer size calculation
-        for (sxsi = 0 ; sxsi != RTL_NUMBER_OF(SxsStringBuffers) ; ++sxsi)
+        for (sxsi = 0; sxsi != RTL_NUMBER_OF(SxsStringBuffers); ++sxsi)
         {
             if (SxsStringBuffers[sxsi]->ByteBuffer.Buffer != SxsStringBuffers[sxsi]->ByteBuffer.StaticBuffer)
             {
-                DbgPrintEx(
-                    DPFLTR_SXS_ID,
-                    DPFLTR_WARNING_LEVEL,
-                    "SXS: SxsStringBuffers[%lu]'s StaticSize was computed too small (%Id, %Id)\n",
-                    sxsi,
-                    SxsStringBuffers[sxsi]->ByteBuffer.StaticSize,
-                    SxsStringBuffers[sxsi]->ByteBuffer.Size
-                    );
+                DbgPrintEx(DPFLTR_SXS_ID, DPFLTR_WARNING_LEVEL,
+                           "SXS: SxsStringBuffers[%lu]'s StaticSize was computed too small (%Id, %Id)\n", sxsi,
+                           SxsStringBuffers[sxsi]->ByteBuffer.StaticSize, SxsStringBuffers[sxsi]->ByteBuffer.Size);
             }
         }
 #endif
-        if ( !NT_SUCCESS( Status ) ) {
+        if (!NT_SUCCESS(Status))
+        {
             BaseSetLastNTError(Status);
             return FALSE;
-            }
+        }
 
         //
         // Determine the location of the
         // processes PEB.
         //
 
-        Status = NtQueryInformationProcess(
-                    ProcessHandle,
-                    ProcessBasicInformation,
-                    &ProcessInfo,
-                    sizeof( ProcessInfo ),
-                    NULL
-                    );
-        if ( !NT_SUCCESS( Status ) ) {
+        Status =
+            NtQueryInformationProcess(ProcessHandle, ProcessBasicInformation, &ProcessInfo, sizeof(ProcessInfo), NULL);
+        if (!NT_SUCCESS(Status))
+        {
             BaseSetLastNTError(Status);
             return FALSE;
-            }
+        }
 
         Peb = ProcessInfo.PebBaseAddress;
 
@@ -3743,90 +3486,83 @@ RaiseInvalidWin32Error:
         // Push the parameters into the address space of the new process
         //
 
-        if ( ARGUMENT_PRESENT(lpCurrentDirectory) ) {
-            CurdirBuffer = RtlAllocateHeap( RtlProcessHeap(),
-                                            MAKE_TAG( TMP_TAG ),
-                                            (MAX_PATH + 1) * sizeof( WCHAR ) );
-            if ( !CurdirBuffer ) {
+        if (ARGUMENT_PRESENT(lpCurrentDirectory))
+        {
+            CurdirBuffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), (MAX_PATH + 1) * sizeof(WCHAR));
+            if (!CurdirBuffer)
+            {
                 BaseSetLastNTError(STATUS_NO_MEMORY);
                 return FALSE;
-                }
-            CurdirLength2 = GetFullPathNameW(
-                                lpCurrentDirectory,
-                                MAX_PATH,
-                                CurdirBuffer,
-                                &CurdirFilePart
-                                );
-            if ( CurdirLength2 > MAX_PATH ) {
+            }
+            CurdirLength2 = GetFullPathNameW(lpCurrentDirectory, MAX_PATH, CurdirBuffer, &CurdirFilePart);
+            if (CurdirLength2 > MAX_PATH)
+            {
                 SetLastError(ERROR_DIRECTORY);
                 return FALSE;
-                }
+            }
 
             //
             // now make sure the directory exists
             //
 
             CurdirLength = GetFileAttributesW(CurdirBuffer);
-            if ( (CurdirLength == 0xffffffff) ||
-                 !(CurdirLength & FILE_ATTRIBUTE_DIRECTORY) ) {
+            if ((CurdirLength == 0xffffffff) || !(CurdirLength & FILE_ATTRIBUTE_DIRECTORY))
+            {
                 SetLastError(ERROR_DIRECTORY);
                 return FALSE;
-                }
             }
+        }
 
 
-        if ( QuoteInsert || QuoteCmdLine) {
-            QuotedBuffer = RtlAllocateHeap(RtlProcessHeap(),0,wcslen(lpCommandLine)*2+6);
+        if (QuoteInsert || QuoteCmdLine)
+        {
+            QuotedBuffer = RtlAllocateHeap(RtlProcessHeap(), 0, wcslen(lpCommandLine) * 2 + 6);
 
-            if ( QuotedBuffer ) {
-                wcscpy(QuotedBuffer,L"\"");
+            if (QuotedBuffer)
+            {
+                wcscpy(QuotedBuffer, L"\"");
 
-                if ( QuoteInsert ) {
+                if (QuoteInsert)
+                {
                     TempChar = *TempNull;
                     *TempNull = UNICODE_NULL;
-                    }
-
-                wcscat(QuotedBuffer,lpCommandLine);
-                wcscat(QuotedBuffer,L"\"");
-
-                if ( QuoteInsert ) {
-                    *TempNull = TempChar;
-                    wcscat(QuotedBuffer,TempNull);
-                    }
-
                 }
-            else {
-                if ( QuoteInsert ) {
-                    QuoteInsert = FALSE;
-                    }
-                if ( QuoteCmdLine ) {
-                    QuoteCmdLine = FALSE;
-                    }
+
+                wcscat(QuotedBuffer, lpCommandLine);
+                wcscat(QuotedBuffer, L"\"");
+
+                if (QuoteInsert)
+                {
+                    *TempNull = TempChar;
+                    wcscat(QuotedBuffer, TempNull);
                 }
             }
+            else
+            {
+                if (QuoteInsert)
+                {
+                    QuoteInsert = FALSE;
+                }
+                if (QuoteCmdLine)
+                {
+                    QuoteCmdLine = FALSE;
+                }
+            }
+        }
 
 
         // If we found a manifest, we want to push that fact to the new process.
         if (a->Sxs.Flags & BASE_MSG_SXS_MANIFEST_PRESENT)
             dwBasePushProcessParametersFlags |= BASE_PUSH_PROCESS_PARAMETERS_FLAG_APP_MANIFEST_PRESENT;
 
-        if (!BasePushProcessParameters(
-                dwBasePushProcessParametersFlags,
-                ProcessHandle,
-                Peb,
-                lpApplicationName,
-                CurdirBuffer,
-                QuoteInsert || QuoteCmdLine ? QuotedBuffer : lpCommandLine,
-                lpEnvironment,
-                &StartupInfo,
-                dwCreationFlags | dwNoWindow,
-                bInheritHandles,
-                IsWowBinary ? IMAGE_SUBSYSTEM_WINDOWS_GUI : 0,
-                pAppCompatDataTemp,
-                cbAppCompatData
-                ) ) {
+        if (!BasePushProcessParameters(dwBasePushProcessParametersFlags, ProcessHandle, Peb, lpApplicationName,
+                                       CurdirBuffer, QuoteInsert || QuoteCmdLine ? QuotedBuffer : lpCommandLine,
+                                       lpEnvironment, &StartupInfo, dwCreationFlags | dwNoWindow, bInheritHandles,
+                                       IsWowBinary ? IMAGE_SUBSYSTEM_WINDOWS_GUI : 0, pAppCompatDataTemp,
+                                       cbAppCompatData))
+        {
             return FALSE;
-            }
+        }
 
 
         RtlFreeUnicodeString(&VdmNameString);
@@ -3835,41 +3571,33 @@ RaiseInvalidWin32Error:
         //
         // Stuff in the standard handles if needed
         //
-        if (!VdmBinaryType &&
-            !bInheritHandles &&
-            !(StartupInfo.dwFlags & STARTF_USESTDHANDLES) &&
+        if (!VdmBinaryType && !bInheritHandles && !(StartupInfo.dwFlags & STARTF_USESTDHANDLES) &&
             !(dwCreationFlags & (DETACHED_PROCESS | CREATE_NEW_CONSOLE | CREATE_NO_WINDOW)) &&
-            ImageInformation.SubSystemType == IMAGE_SUBSYSTEM_WINDOWS_CUI
-           ) {
+            ImageInformation.SubSystemType == IMAGE_SUBSYSTEM_WINDOWS_CUI)
+        {
             PRTL_USER_PROCESS_PARAMETERS ParametersInNewProcess;
 
-            Status = NtReadVirtualMemory( ProcessHandle,
-                                          &Peb->ProcessParameters,
-                                          &ParametersInNewProcess,
-                                          sizeof( ParametersInNewProcess ),
-                                          NULL
-                                        );
-            if (NT_SUCCESS( Status )) {
-                if (!CONSOLE_HANDLE( NtCurrentPeb()->ProcessParameters->StandardInput )) {
-                    StuffStdHandle( ProcessHandle,
-                                    NtCurrentPeb()->ProcessParameters->StandardInput,
-                                    &ParametersInNewProcess->StandardInput
-                                  );
-                    }
-                if (!CONSOLE_HANDLE( NtCurrentPeb()->ProcessParameters->StandardOutput )) {
-                    StuffStdHandle( ProcessHandle,
-                                    NtCurrentPeb()->ProcessParameters->StandardOutput,
-                                    &ParametersInNewProcess->StandardOutput
-                                  );
-                    }
-                if (!CONSOLE_HANDLE( NtCurrentPeb()->ProcessParameters->StandardError )) {
-                    StuffStdHandle( ProcessHandle,
-                                    NtCurrentPeb()->ProcessParameters->StandardError,
-                                    &ParametersInNewProcess->StandardError
-                                  );
-                    }
+            Status = NtReadVirtualMemory(ProcessHandle, &Peb->ProcessParameters, &ParametersInNewProcess,
+                                         sizeof(ParametersInNewProcess), NULL);
+            if (NT_SUCCESS(Status))
+            {
+                if (!CONSOLE_HANDLE(NtCurrentPeb()->ProcessParameters->StandardInput))
+                {
+                    StuffStdHandle(ProcessHandle, NtCurrentPeb()->ProcessParameters->StandardInput,
+                                   &ParametersInNewProcess->StandardInput);
+                }
+                if (!CONSOLE_HANDLE(NtCurrentPeb()->ProcessParameters->StandardOutput))
+                {
+                    StuffStdHandle(ProcessHandle, NtCurrentPeb()->ProcessParameters->StandardOutput,
+                                   &ParametersInNewProcess->StandardOutput);
+                }
+                if (!CONSOLE_HANDLE(NtCurrentPeb()->ProcessParameters->StandardError))
+                {
+                    StuffStdHandle(ProcessHandle, NtCurrentPeb()->ProcessParameters->StandardError,
+                                   &ParametersInNewProcess->StandardError);
                 }
             }
+        }
 
         //
         // Create the thread...
@@ -3881,54 +3609,41 @@ RaiseInvalidWin32Error:
         //
 
         StackStatus = BaseCreateStack(
-                        ProcessHandle,
-                        ImageInformation.CommittedStackSize,
-                        (ImageInformation.MaximumStackSize < 256*1024) ? 256*1024 : ImageInformation.MaximumStackSize,
-                        &InitialTeb
-                        );
+            ProcessHandle, ImageInformation.CommittedStackSize,
+            (ImageInformation.MaximumStackSize < 256 * 1024) ? 256 * 1024 : ImageInformation.MaximumStackSize,
+            &InitialTeb);
 
-        if ( !NT_SUCCESS(StackStatus) ) {
+        if (!NT_SUCCESS(StackStatus))
+        {
             BaseSetLastNTError(StackStatus);
             return FALSE;
-            }
+        }
 
 
         //
         // Create an initial context for the new thread.
         //
 
-        BaseInitializeContext(
-            &ThreadContext,
-            Peb,
-            ImageInformation.TransferAddress,
-            InitialTeb.StackBase,
-            BaseContextTypeProcess
-            );
+        BaseInitializeContext(&ThreadContext, Peb, ImageInformation.TransferAddress, InitialTeb.StackBase,
+                              BaseContextTypeProcess);
 
 
         //
         // Create the actual thread object
         //
 
-        pObja = BaseFormatObjectAttributes(&Obja,lpThreadAttributes,NULL);
+        pObja = BaseFormatObjectAttributes(&Obja, lpThreadAttributes, NULL);
 
-        Status = NtCreateThread(
-                    &ThreadHandle,
-                    THREAD_ALL_ACCESS,
-                    pObja,
-                    ProcessHandle,
-                    &ClientId,
-                    &ThreadContext,
-                    &InitialTeb,
-                    TRUE
-                    );
+        Status = NtCreateThread(&ThreadHandle, THREAD_ALL_ACCESS, pObja, ProcessHandle, &ClientId, &ThreadContext,
+                                &InitialTeb, TRUE);
 
-        if (!NT_SUCCESS(Status) ) {
+        if (!NT_SUCCESS(Status))
+        {
             BaseSetLastNTError(Status);
             return FALSE;
-            }
+        }
 
-        a->Peb = (ULONGLONG) Peb;
+        a->Peb = (ULONGLONG)Peb;
 
         //
         // From here on out, do not modify the address space of the
@@ -3946,39 +3661,34 @@ RaiseInvalidWin32Error:
         // if this is a Wx86 Process, setup for a Wx86 emulated Thread
         //
 
-        if (Wx86Info) {
+        if (Wx86Info)
+        {
 
             //
             // create a WX86Tib and initialize it's Teb->Vdm.
             //
-            Status = BaseCreateWx86Tib(ProcessHandle,
-                                       ThreadHandle,
-                                       (ULONG)((ULONG_PTR)ImageInformation.TransferAddress),
-                                       (ULONG)ImageInformation.CommittedStackSize,
-                                       (ULONG)ImageInformation.MaximumStackSize,
-                                       TRUE
-                                       );
+            Status = BaseCreateWx86Tib(
+                ProcessHandle, ThreadHandle, (ULONG)((ULONG_PTR)ImageInformation.TransferAddress),
+                (ULONG)ImageInformation.CommittedStackSize, (ULONG)ImageInformation.MaximumStackSize, TRUE);
 
-            if (!NT_SUCCESS(Status)) {
+            if (!NT_SUCCESS(Status))
+            {
                 BaseSetLastNTError(Status);
-                return( FALSE );
-                }
+                return (FALSE);
+            }
 
 
             //
             // Mark Process as WX86
             //
-            Status = NtSetInformationProcess (ProcessHandle,
-                                              ProcessWx86Information,
-                                              &Wx86Info,
-                                              sizeof(Wx86Info)
-                                              );
+            Status = NtSetInformationProcess(ProcessHandle, ProcessWx86Information, &Wx86Info, sizeof(Wx86Info));
 
-            if (!NT_SUCCESS(Status)) {
+            if (!NT_SUCCESS(Status))
+            {
                 BaseSetLastNTError(Status);
-                return( FALSE );
-                }
+                return (FALSE);
             }
+        }
 #endif
 
 
@@ -3991,7 +3701,8 @@ RaiseInvalidWin32Error:
         a->ThreadHandle = ThreadHandle;
         a->ClientId = ClientId;
 
-        switch (ImageInformation.Machine) {
+        switch (ImageInformation.Machine)
+        {
         case IMAGE_FILE_MACHINE_I386:
 #if defined(_WIN64) || defined(BUILD_WOW6432)
             a->ProcessorArchitecture = PROCESSOR_ARCHITECTURE_IA32_ON_WIN64;
@@ -4017,7 +3728,7 @@ RaiseInvalidWin32Error:
         //
         // remove debug flags now its not being done by CSR
         //
-        a->CreationFlags = dwCreationFlags & ~ (DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS);
+        a->CreationFlags = dwCreationFlags & ~(DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS);
         a->DebuggerClientId.UniqueProcess = NULL;
         a->DebuggerClientId.UniqueThread = NULL;
 
@@ -4034,8 +3745,8 @@ RaiseInvalidWin32Error:
         // UserNotifyConsoleApplication call made by the console during startup.
         //
 
-        if ( ImageInformation.SubSystemType == IMAGE_SUBSYSTEM_WINDOWS_GUI ||
-             IsWowBinary ) {
+        if (ImageInformation.SubSystemType == IMAGE_SUBSYSTEM_WINDOWS_GUI || IsWowBinary)
+        {
 
             a->ProcessHandle = (HANDLE)((ULONG_PTR)a->ProcessHandle | 2);
 
@@ -4045,12 +3756,11 @@ RaiseInvalidWin32Error:
             //
 
             NtHeaders = RtlImageNtHeader((PVOID)GetModuleHandle(NULL));
-            if ( NtHeaders
-                 && (NtHeaders->OptionalHeader.Subsystem
-                     == IMAGE_SUBSYSTEM_WINDOWS_GUI ) ) {
+            if (NtHeaders && (NtHeaders->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI))
+            {
                 a->ProcessHandle = (HANDLE)((ULONG_PTR)a->ProcessHandle | 1);
-                }
             }
+        }
 
 
         //
@@ -4065,9 +3775,10 @@ RaiseInvalidWin32Error:
 
         a->VdmBinaryType = VdmBinaryType; // just tell server the truth
 
-        if (VdmBinaryType){
-           a->hVDM    = iTask ? 0 : NtCurrentPeb()->ProcessParameters->ConsoleHandle;
-           a->VdmTask = iTask;
+        if (VdmBinaryType)
+        {
+            a->hVDM = iTask ? 0 : NtCurrentPeb()->ProcessParameters->ConsoleHandle;
+            a->VdmTask = iTask;
         }
 
 #if defined(BUILD_WOW6432)
@@ -4076,46 +3787,36 @@ RaiseInvalidWin32Error:
         m.u.CreateProcess = *a;
         if (m.u.CreateProcess.Sxs.Flags != 0)
         {
-            const PUNICODE_STRING StringsToCapture[] =
-            {
-                &m.u.CreateProcess.Sxs.Manifest.Path,
-                    &m.u.CreateProcess.Sxs.Policy.Path,
-                    &m.u.CreateProcess.Sxs.AssemblyDirectory
-            };
+            const PUNICODE_STRING StringsToCapture[] = { &m.u.CreateProcess.Sxs.Manifest.Path,
+                                                         &m.u.CreateProcess.Sxs.Policy.Path,
+                                                         &m.u.CreateProcess.Sxs.AssemblyDirectory };
 
-            Status =
-                CsrCaptureMessageMultiUnicodeStringsInPlace(
-                &CaptureBuffer,
-                RTL_NUMBER_OF(StringsToCapture),
-                StringsToCapture
-                );
-            if (!NT_SUCCESS(Status)) {
+            Status = CsrCaptureMessageMultiUnicodeStringsInPlace(&CaptureBuffer, RTL_NUMBER_OF(StringsToCapture),
+                                                                 StringsToCapture);
+            if (!NT_SUCCESS(Status))
+            {
                 BaseSetLastNTError(Status);
                 return FALSE;
             }
         }
 
-        CsrClientCallServer( (PCSR_API_MSG)&m,
-                             CaptureBuffer,
-                             CSR_MAKE_API_NUMBER( BASESRV_SERVERDLL_INDEX,
-                                                  BasepCreateProcess
-                                                ),
-                             sizeof( *a )
-                           );
+        CsrClientCallServer((PCSR_API_MSG)&m, CaptureBuffer,
+                            CSR_MAKE_API_NUMBER(BASESRV_SERVERDLL_INDEX, BasepCreateProcess), sizeof(*a));
 
-        if ( CaptureBuffer ) {
-            CsrFreeCaptureBuffer( CaptureBuffer );
+        if (CaptureBuffer)
+        {
+            CsrFreeCaptureBuffer(CaptureBuffer);
             CaptureBuffer = NULL;
         }
 
 #endif
 
-        if (!NT_SUCCESS((NTSTATUS)m.ReturnValue)) {
+        if (!NT_SUCCESS((NTSTATUS)m.ReturnValue))
+        {
             BaseSetLastNTError((NTSTATUS)m.ReturnValue);
             NtTerminateProcess(ProcessHandle, (NTSTATUS)m.ReturnValue);
             return FALSE;
-            }
-
+        }
 
 
         //
@@ -4125,22 +3826,22 @@ RaiseInvalidWin32Error:
         // Do not replace the token if the restricted token was created
         // from a caller supplied token i.e. the CreateProcessAsUser case.
         //
-        if ((hSaferRestrictedToken != NULL) && (hUserToken == NULL)) {
-            Status = BasepReplaceProcessThreadTokens(
-                    hSaferRestrictedToken,
-                    ProcessHandle,
-                    ThreadHandle);
-            if (!NT_SUCCESS(Status)) {
+        if ((hSaferRestrictedToken != NULL) && (hUserToken == NULL))
+        {
+            Status = BasepReplaceProcessThreadTokens(hSaferRestrictedToken, ProcessHandle, ThreadHandle);
+            if (!NT_SUCCESS(Status))
+            {
                 // kill and cleanup.
                 NtTerminateProcess(ProcessHandle, Status);
                 BaseSetLastNTError(Status);
                 return FALSE;
             }
         }
-        if (hSaferAssignmentJob != NULL) {
-            Status = NtAssignProcessToJobObject(
-                    hSaferAssignmentJob, ProcessHandle);
-            if (!NT_SUCCESS(Status)) {
+        if (hSaferAssignmentJob != NULL)
+        {
+            Status = NtAssignProcessToJobObject(hSaferAssignmentJob, ProcessHandle);
+            if (!NT_SUCCESS(Status))
+            {
                 // kill and cleanup.
                 NtTerminateProcess(ProcessHandle, STATUS_ACCESS_DENIED);
                 BaseSetLastNTError(Status);
@@ -4152,17 +3853,20 @@ RaiseInvalidWin32Error:
         //
         // Make the thread start execution if we are allowed to.
         //
-        if (!( dwCreationFlags & CREATE_SUSPENDED) ) {
-            NtResumeThread(ThreadHandle,&i);
-            }
+        if (!(dwCreationFlags & CREATE_SUSPENDED))
+        {
+            NtResumeThread(ThreadHandle, &i);
+        }
 
-VdmExists:
+    VdmExists:
         bStatus = TRUE;
         if (VDMCreationState)
             VDMCreationState |= VDM_CREATION_SUCCESSFUL;
 
-        try {
-            if (VdmWaitHandle) {
+        try
+        {
+            if (VdmWaitHandle)
+            {
 
                 //
                 // tag Shared WOW VDM handles so that wait for input idle has a
@@ -4172,9 +3876,9 @@ VdmExists:
                 // has a way to distinguish DOS apps and not block forever.
                 //
 
-                if (VdmBinaryType == BINARY_TYPE_WIN16)  {
-                    lpProcessInformation->hProcess =
-                            (HANDLE)((ULONG_PTR)VdmWaitHandle | 0x2);
+                if (VdmBinaryType == BINARY_TYPE_WIN16)
+                {
+                    lpProcessInformation->hProcess = (HANDLE)((ULONG_PTR)VdmWaitHandle | 0x2);
 
                     //
                     // Shared WOW doesn't always start a process, so
@@ -4185,16 +3889,16 @@ VdmExists:
                     // (no VdmWaitHandle).
                     //
 
-                    if (VDMCreationState & VDM_BEING_REUSED) {
+                    if (VDMCreationState & VDM_BEING_REUSED)
+                    {
                         ClientId.UniqueProcess = 0;
                         ClientId.UniqueThread = 0;
-                        }
-
                     }
-                else  {
-                    lpProcessInformation->hProcess =
-                            (HANDLE)((ULONG_PTR)VdmWaitHandle | 0x1);
-                    }
+                }
+                else
+                {
+                    lpProcessInformation->hProcess = (HANDLE)((ULONG_PTR)VdmWaitHandle | 0x1);
+                }
 
 
                 //
@@ -4204,29 +3908,33 @@ VdmExists:
 
                 if (ProcessHandle != NULL)
                     NtClose(ProcessHandle);
-                }
-            else{
+            }
+            else
+            {
                 lpProcessInformation->hProcess = ProcessHandle;
-                }
+            }
 
             lpProcessInformation->hThread = ThreadHandle;
             lpProcessInformation->dwProcessId = HandleToUlong(ClientId.UniqueProcess);
             lpProcessInformation->dwThreadId = HandleToUlong(ClientId.UniqueThread);
             ProcessHandle = NULL;
             ThreadHandle = NULL;
-            }
-        __except ( EXCEPTION_EXECUTE_HANDLER ) {
-            NtClose( ProcessHandle );
-            NtClose( ThreadHandle );
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER)
+        {
+            NtClose(ProcessHandle);
+            NtClose(ThreadHandle);
             ProcessHandle = NULL;
             ThreadHandle = NULL;
             if (VDMCreationState)
                 VDMCreationState &= ~VDM_CREATION_SUCCESSFUL;
-            }
         }
-    __finally {
+    }
+    __finally
+    {
 
-        if (ExePathFullBuffer != NULL) {
+        if (ExePathFullBuffer != NULL)
+        {
             SxsWin32ExePath.Buffer = NULL;
             SxsWin32ExePath.Length = 0;
             SxsWin32ExePath.MaximumLength = 0;
@@ -4234,7 +3942,8 @@ VdmExists:
             ExePathFullBuffer = NULL;
         }
 
-        if (!VdmBinaryType) {
+        if (!VdmBinaryType)
+        {
             NTSTATUS Status1;
 
             BasepSxsCloseHandles(&SxsManifestFileHandles);
@@ -4249,94 +3958,95 @@ VdmExists:
             // This loop only really frees any memory if our computation
             // of the overall buffer size was too low, which it is not supposed to be.
             //
-            if (SxsConglomeratedByteBuffer != NULL) {
-                for (sxsi= 0 ; sxsi != RTL_NUMBER_OF(SxsStringBuffers) ; ++sxsi) {
+            if (SxsConglomeratedByteBuffer != NULL)
+            {
+                for (sxsi = 0; sxsi != RTL_NUMBER_OF(SxsStringBuffers); ++sxsi)
+                {
                     RtlFreeUnicodeStringBuffer(SxsStringBuffers[sxsi]);
-                    }
-                RtlFreeHeap(RtlProcessHeap(), 0,SxsConglomeratedByteBuffer);
                 }
+                RtlFreeHeap(RtlProcessHeap(), 0, SxsConglomeratedByteBuffer);
             }
-        if (lpEnvironment && !(dwCreationFlags & CREATE_UNICODE_ENVIRONMENT) ) {
+        }
+        if (lpEnvironment && !(dwCreationFlags & CREATE_UNICODE_ENVIRONMENT))
+        {
             RtlDestroyEnvironment(lpEnvironment);
             lpEnvironment = NULL;
-            }
-        RtlFreeHeap(RtlProcessHeap(), 0,QuotedBuffer);
-        RtlFreeHeap(RtlProcessHeap(), 0,NameBuffer);
-        RtlFreeHeap(RtlProcessHeap(), 0,CurdirBuffer);
-        RtlFreeHeap(RtlProcessHeap(), 0,FreeBuffer);
-        if ( FileHandle ) {
+        }
+        RtlFreeHeap(RtlProcessHeap(), 0, QuotedBuffer);
+        RtlFreeHeap(RtlProcessHeap(), 0, NameBuffer);
+        RtlFreeHeap(RtlProcessHeap(), 0, CurdirBuffer);
+        RtlFreeHeap(RtlProcessHeap(), 0, FreeBuffer);
+        if (FileHandle)
+        {
             NtClose(FileHandle);
-            }
-        if ( SectionHandle ) {
+        }
+        if (SectionHandle)
+        {
             NtClose(SectionHandle);
-            }
-        if ( ThreadHandle ) {
-            NtTerminateProcess(ProcessHandle,STATUS_SUCCESS);
+        }
+        if (ThreadHandle)
+        {
+            NtTerminateProcess(ProcessHandle, STATUS_SUCCESS);
             NtClose(ThreadHandle);
-            }
-        if ( ProcessHandle ) {
+        }
+        if (ProcessHandle)
+        {
             NtClose(ProcessHandle);
-            }
-        if ( hSaferAssignmentJob ) {
+        }
+        if (hSaferAssignmentJob)
+        {
             NtClose(hSaferAssignmentJob);
-            }
-        if ( hSaferRestrictedToken ) {
-            if (hUserToken == NULL) {
+        }
+        if (hSaferRestrictedToken)
+        {
+            if (hUserToken == NULL)
+            {
                 // CreateProcess case
                 NtClose(hSaferRestrictedToken);
-                }
-            else{
+            }
+            else
+            {
                 // CreateProcessAsUser case
                 *hRestrictedUserToken = hSaferRestrictedToken;
-                }
             }
+        }
 
-        if (NULL != pAppCompatData) {
+        if (NULL != pAppCompatData)
+        {
             RtlFreeHeap(RtlProcessHeap(), 0, pAppCompatData);
-            }
+        }
 
-        if (NULL != pAppCompatSxsData) {
+        if (NULL != pAppCompatSxsData)
+        {
             RtlFreeHeap(RtlProcessHeap(), 0, pAppCompatSxsData);
-            }
+        }
 
         RtlFreeUnicodeString(&VdmNameString);
         RtlFreeUnicodeString(&SubSysCommandLine);
         if (AnsiStringVDMEnv.Buffer || UnicodeStringVDMEnv.Buffer)
             BaseDestroyVDMEnvironment(&AnsiStringVDMEnv, &UnicodeStringVDMEnv);
 
-        if (VDMCreationState && !(VDMCreationState & VDM_CREATION_SUCCESSFUL)){
-            BaseUpdateVDMEntry (
-                UPDATE_VDM_UNDO_CREATION,
-                (HANDLE *)&iTask,
-                VDMCreationState,
-                VdmBinaryType
-                );
-            if(VdmWaitHandle) {
+        if (VDMCreationState && !(VDMCreationState & VDM_CREATION_SUCCESSFUL))
+        {
+            BaseUpdateVDMEntry(UPDATE_VDM_UNDO_CREATION, (HANDLE *)&iTask, VDMCreationState, VdmBinaryType);
+            if (VdmWaitHandle)
+            {
                 NtClose(VdmWaitHandle);
-                }
             }
         }
+    }
 
-    if (lpEnvironment && !(dwCreationFlags & CREATE_UNICODE_ENVIRONMENT) ) {
+    if (lpEnvironment && !(dwCreationFlags & CREATE_UNICODE_ENVIRONMENT))
+    {
         RtlDestroyEnvironment(lpEnvironment);
-        }
+    }
     return bStatus;
 }
 
-BOOL
-WINAPI
-CreateProcessW(
-    LPCWSTR lpApplicationName,
-    LPWSTR lpCommandLine,
-    LPSECURITY_ATTRIBUTES lpProcessAttributes,
-    LPSECURITY_ATTRIBUTES lpThreadAttributes,
-    BOOL bInheritHandles,
-    DWORD dwCreationFlags,
-    LPVOID lpEnvironment,
-    LPCWSTR lpCurrentDirectory,
-    LPSTARTUPINFOW lpStartupInfo,
-    LPPROCESS_INFORMATION lpProcessInformation
-    )
+BOOL WINAPI CreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
+                           LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags,
+                           LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo,
+                           LPPROCESS_INFORMATION lpProcessInformation)
 
 /*++
 
@@ -4494,29 +4204,17 @@ Return Value:
 --*/
 
 {
-    return CreateProcessInternalW(
-               NULL, // Create new process with the token on the creator process
-               lpApplicationName,
-               lpCommandLine,
-               lpProcessAttributes,
-               lpThreadAttributes,
-               bInheritHandles,
-               dwCreationFlags,
-               lpEnvironment,
-               lpCurrentDirectory,
-               lpStartupInfo,
-               lpProcessInformation,
-               NULL  // Do not return the restricted token
-               );
+    return CreateProcessInternalW(NULL, // Create new process with the token on the creator process
+                                  lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes,
+                                  bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo,
+                                  lpProcessInformation,
+                                  NULL // Do not return the restricted token
+    );
 }
 
 HANDLE
 WINAPI
-OpenProcess(
-    DWORD dwDesiredAccess,
-    BOOL bInheritHandle,
-    DWORD dwProcessId
-    )
+OpenProcess(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProcessId)
 
 /*++
 
@@ -4587,37 +4285,26 @@ Return Value:
     ClientId.UniqueThread = NULL;
     ClientId.UniqueProcess = LongToHandle(dwProcessId);
 
-    InitializeObjectAttributes(
-        &Obja,
-        NULL,
-        (bInheritHandle ? OBJ_INHERIT : 0),
-        NULL,
-        NULL
-        );
-    Status = NtOpenProcess(
-                &Handle,
-                (ACCESS_MASK)dwDesiredAccess,
-                &Obja,
-                &ClientId
-                );
-    if ( NT_SUCCESS(Status) ) {
+    InitializeObjectAttributes(&Obja, NULL, (bInheritHandle ? OBJ_INHERIT : 0), NULL, NULL);
+    Status = NtOpenProcess(&Handle, (ACCESS_MASK)dwDesiredAccess, &Obja, &ClientId);
+    if (NT_SUCCESS(Status))
+    {
         return Handle;
-        }
-    else {
+    }
+    else
+    {
         BaseSetLastNTError(Status);
         return NULL;
-        }
+    }
 }
 
-VOID
-WINAPI
+VOID WINAPI
 #if defined(_X86_)
 _ExitProcess(
 #else
 ExitProcess(
 #endif
-    UINT uExitCode
-    )
+    UINT uExitCode)
 
 /*++
 
@@ -4659,15 +4346,18 @@ Return Value:
     BASE_API_MSG m;
     PBASE_EXITPROCESS_MSG a = &m.u.ExitProcess;
 
-    if ( BaseRunningInServerProcess ) {
+    if (BaseRunningInServerProcess)
+    {
         ASSERT(!BaseRunningInServerProcess);
-        }
-    else {
+    }
+    else
+    {
 
         RtlAcquirePebLock();
 
-        try {
-            Status = NtTerminateProcess(NULL,(NTSTATUS)uExitCode);
+        try
+        {
+            Status = NtTerminateProcess(NULL, (NTSTATUS)uExitCode);
 
             LdrShutdownProcess();
 
@@ -4675,27 +4365,23 @@ Return Value:
             CsrBasepExitProcess(uExitCode);
 #else
             a->uExitCode = uExitCode;
-            CsrClientCallServer( (PCSR_API_MSG)&m,
-                                 NULL,
-                                 CSR_MAKE_API_NUMBER( BASESRV_SERVERDLL_INDEX,
-                                                      BasepExitProcess
-                                                    ),
-                                 sizeof( *a )
-                               );
+            CsrClientCallServer((PCSR_API_MSG)&m, NULL, CSR_MAKE_API_NUMBER(BASESRV_SERVERDLL_INDEX, BasepExitProcess),
+                                sizeof(*a));
 #endif
 
-            NtTerminateProcess(NtCurrentProcess(),(NTSTATUS)uExitCode);
-            }
-        finally {
-                RtlReleasePebLock();
-            }
+            NtTerminateProcess(NtCurrentProcess(), (NTSTATUS)uExitCode);
+        }
+        finally
+        {
+            RtlReleasePebLock();
+        }
     }
 }
 
 #if defined(_X86_)
 // Appcompat: There's code that depends on the old EH frame setup/teardown.  Simulate it here
 // then call the real function.  ExitProcess is a no-return function so don't bother cleaning up.
-__declspec(naked) VOID WINAPI ExitProcess( UINT uExitCode )
+__declspec(naked) VOID WINAPI ExitProcess(UINT uExitCode)
 {
     __asm {
         push ebp
@@ -4708,12 +4394,7 @@ __declspec(naked) VOID WINAPI ExitProcess( UINT uExitCode )
 }
 #endif
 
-BOOL
-WINAPI
-TerminateProcess(
-    HANDLE hProcess,
-    UINT uExitCode
-    )
+BOOL WINAPI TerminateProcess(HANDLE hProcess, UINT uExitCode)
 
 /*++
 
@@ -4765,26 +4446,24 @@ Return Value:
 {
     NTSTATUS Status;
 
-    if ( hProcess == NULL ) {
+    if (hProcess == NULL)
+    {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
-        }
-    Status = NtTerminateProcess(hProcess,(NTSTATUS)uExitCode);
-    if ( NT_SUCCESS(Status) ) {
+    }
+    Status = NtTerminateProcess(hProcess, (NTSTATUS)uExitCode);
+    if (NT_SUCCESS(Status))
+    {
         return TRUE;
-        }
-    else {
+    }
+    else
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 }
 
-BOOL
-WINAPI
-GetExitCodeProcess(
-    HANDLE hProcess,
-    LPDWORD lpExitCode
-    )
+BOOL WINAPI GetExitCodeProcess(HANDLE hProcess, LPDWORD lpExitCode)
 
 /*++
 
@@ -4821,32 +4500,25 @@ Return Value:
     PROCESS_BASIC_INFORMATION BasicInformation;
 
 
-    if (BaseCheckForVDM (hProcess,lpExitCode) == TRUE)
+    if (BaseCheckForVDM(hProcess, lpExitCode) == TRUE)
         return TRUE;
 
-    Status = NtQueryInformationProcess(
-                hProcess,
-                ProcessBasicInformation,
-                &BasicInformation,
-                sizeof(BasicInformation),
-                NULL
-                );
+    Status =
+        NtQueryInformationProcess(hProcess, ProcessBasicInformation, &BasicInformation, sizeof(BasicInformation), NULL);
 
-    if ( NT_SUCCESS(Status) ) {
+    if (NT_SUCCESS(Status))
+    {
         *lpExitCode = BasicInformation.ExitStatus;
         return TRUE;
-        }
-    else {
+    }
+    else
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 }
 
-VOID
-WINAPI
-GetStartupInfoW(
-    LPSTARTUPINFOW lpStartupInfo
-    )
+VOID WINAPI GetStartupInfoW(LPSTARTUPINFOW lpStartupInfo)
 
 /*++
 
@@ -4871,37 +4543,34 @@ Return Value:
     PRTL_USER_PROCESS_PARAMETERS ProcessParameters;
 
     ProcessParameters = NtCurrentPeb()->ProcessParameters;
-    lpStartupInfo->cb = sizeof( *lpStartupInfo );
-    lpStartupInfo->lpReserved  = (LPWSTR)ProcessParameters->ShellInfo.Buffer;
-    lpStartupInfo->lpDesktop   = (LPWSTR)ProcessParameters->DesktopInfo.Buffer;
-    lpStartupInfo->lpTitle     = (LPWSTR)ProcessParameters->WindowTitle.Buffer;
-    lpStartupInfo->dwX         = ProcessParameters->StartingX;
-    lpStartupInfo->dwY         = ProcessParameters->StartingY;
-    lpStartupInfo->dwXSize     = ProcessParameters->CountX;
-    lpStartupInfo->dwYSize     = ProcessParameters->CountY;
+    lpStartupInfo->cb = sizeof(*lpStartupInfo);
+    lpStartupInfo->lpReserved = (LPWSTR)ProcessParameters->ShellInfo.Buffer;
+    lpStartupInfo->lpDesktop = (LPWSTR)ProcessParameters->DesktopInfo.Buffer;
+    lpStartupInfo->lpTitle = (LPWSTR)ProcessParameters->WindowTitle.Buffer;
+    lpStartupInfo->dwX = ProcessParameters->StartingX;
+    lpStartupInfo->dwY = ProcessParameters->StartingY;
+    lpStartupInfo->dwXSize = ProcessParameters->CountX;
+    lpStartupInfo->dwYSize = ProcessParameters->CountY;
     lpStartupInfo->dwXCountChars = ProcessParameters->CountCharsX;
     lpStartupInfo->dwYCountChars = ProcessParameters->CountCharsY;
     lpStartupInfo->dwFillAttribute = ProcessParameters->FillAttribute;
-    lpStartupInfo->dwFlags     = ProcessParameters->WindowFlags;
+    lpStartupInfo->dwFlags = ProcessParameters->WindowFlags;
     lpStartupInfo->wShowWindow = (WORD)ProcessParameters->ShowWindowFlags;
     lpStartupInfo->cbReserved2 = ProcessParameters->RuntimeData.Length;
     lpStartupInfo->lpReserved2 = (LPBYTE)ProcessParameters->RuntimeData.Buffer;
 
-    if (lpStartupInfo->dwFlags & (STARTF_USESTDHANDLES | STARTF_USEHOTKEY | STARTF_HASSHELLDATA)) {
-        lpStartupInfo->hStdInput   = ProcessParameters->StandardInput;
-        lpStartupInfo->hStdOutput  = ProcessParameters->StandardOutput;
-        lpStartupInfo->hStdError   = ProcessParameters->StandardError;
+    if (lpStartupInfo->dwFlags & (STARTF_USESTDHANDLES | STARTF_USEHOTKEY | STARTF_HASSHELLDATA))
+    {
+        lpStartupInfo->hStdInput = ProcessParameters->StandardInput;
+        lpStartupInfo->hStdOutput = ProcessParameters->StandardOutput;
+        lpStartupInfo->hStdError = ProcessParameters->StandardError;
     }
 
     return;
 }
 
 
-VOID
-WINAPI
-GetStartupInfoA(
-    LPSTARTUPINFOA lpStartupInfo
-    )
+VOID WINAPI GetStartupInfoA(LPSTARTUPINFOA lpStartupInfo)
 /*++
 
 Routine Description:
@@ -4929,96 +4598,106 @@ Return Value:
     ProcessParameters = NtCurrentPeb()->ProcessParameters;
 
     RtlAcquirePebLock();
-    try {
-        if ( !BaseAnsiStartupInfo ) {
-            BaseAnsiStartupInfo = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), sizeof(*BaseAnsiStartupInfo));
-            if (!BaseAnsiStartupInfo) {
+    try
+    {
+        if (!BaseAnsiStartupInfo)
+        {
+            BaseAnsiStartupInfo = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), sizeof(*BaseAnsiStartupInfo));
+            if (!BaseAnsiStartupInfo)
+            {
                 RtlRaiseStatus(STATUS_NO_MEMORY);
-                }
-            BaseAnsiStartupInfo->cb = sizeof( *BaseAnsiStartupInfo );
-            BaseAnsiStartupInfo->dwX         = ProcessParameters->StartingX;
-            BaseAnsiStartupInfo->dwY         = ProcessParameters->StartingY;
-            BaseAnsiStartupInfo->dwXSize     = ProcessParameters->CountX;
-            BaseAnsiStartupInfo->dwYSize     = ProcessParameters->CountY;
+            }
+            BaseAnsiStartupInfo->cb = sizeof(*BaseAnsiStartupInfo);
+            BaseAnsiStartupInfo->dwX = ProcessParameters->StartingX;
+            BaseAnsiStartupInfo->dwY = ProcessParameters->StartingY;
+            BaseAnsiStartupInfo->dwXSize = ProcessParameters->CountX;
+            BaseAnsiStartupInfo->dwYSize = ProcessParameters->CountY;
             BaseAnsiStartupInfo->dwXCountChars = ProcessParameters->CountCharsX;
             BaseAnsiStartupInfo->dwYCountChars = ProcessParameters->CountCharsY;
             BaseAnsiStartupInfo->dwFillAttribute = ProcessParameters->FillAttribute;
-            BaseAnsiStartupInfo->dwFlags     = ProcessParameters->WindowFlags;
+            BaseAnsiStartupInfo->dwFlags = ProcessParameters->WindowFlags;
             BaseAnsiStartupInfo->wShowWindow = (WORD)ProcessParameters->ShowWindowFlags;
             BaseAnsiStartupInfo->cbReserved2 = ProcessParameters->RuntimeData.Length;
             BaseAnsiStartupInfo->lpReserved2 = (LPBYTE)ProcessParameters->RuntimeData.Buffer;
-            BaseAnsiStartupInfo->hStdInput   = ProcessParameters->StandardInput;
-            BaseAnsiStartupInfo->hStdOutput  = ProcessParameters->StandardOutput;
-            BaseAnsiStartupInfo->hStdError   = ProcessParameters->StandardError;
+            BaseAnsiStartupInfo->hStdInput = ProcessParameters->StandardInput;
+            BaseAnsiStartupInfo->hStdOutput = ProcessParameters->StandardOutput;
+            BaseAnsiStartupInfo->hStdError = ProcessParameters->StandardError;
 
-            BaseAnsiStartupInfo->lpReserved  = NULL;
-            BaseAnsiStartupInfo->lpDesktop   = NULL;
-            BaseAnsiStartupInfo->lpTitle     = NULL;
+            BaseAnsiStartupInfo->lpReserved = NULL;
+            BaseAnsiStartupInfo->lpDesktop = NULL;
+            BaseAnsiStartupInfo->lpTitle = NULL;
 
-            Status = RtlUnicodeStringToAnsiString(&AnsiString,&ProcessParameters->ShellInfo,TRUE);
-            if ( !NT_SUCCESS(Status) ) {
+            Status = RtlUnicodeStringToAnsiString(&AnsiString, &ProcessParameters->ShellInfo, TRUE);
+            if (!NT_SUCCESS(Status))
+            {
                 RtlRaiseStatus(Status);
-                }
-            else {
+            }
+            else
+            {
                 BaseAnsiStartupInfo->lpReserved = AnsiString.Buffer;
-                }
+            }
 
-            Status = RtlUnicodeStringToAnsiString(&AnsiString,&ProcessParameters->DesktopInfo,TRUE);
-            if ( !NT_SUCCESS(Status) ) {
+            Status = RtlUnicodeStringToAnsiString(&AnsiString, &ProcessParameters->DesktopInfo, TRUE);
+            if (!NT_SUCCESS(Status))
+            {
                 RtlRaiseStatus(Status);
-                }
-            else {
+            }
+            else
+            {
                 BaseAnsiStartupInfo->lpDesktop = AnsiString.Buffer;
-                }
+            }
 
-            Status = RtlUnicodeStringToAnsiString(&AnsiString,&ProcessParameters->WindowTitle,TRUE);
-            if ( !NT_SUCCESS(Status) ) {
+            Status = RtlUnicodeStringToAnsiString(&AnsiString, &ProcessParameters->WindowTitle, TRUE);
+            if (!NT_SUCCESS(Status))
+            {
                 RtlRaiseStatus(Status);
-                }
-            else {
+            }
+            else
+            {
                 BaseAnsiStartupInfo->lpTitle = AnsiString.Buffer;
-                }
             }
         }
-    finally {
+    }
+    finally
+    {
         RtlReleasePebLock();
-        }
+    }
 
-    lpStartupInfo->cb          = BaseAnsiStartupInfo->cb         ;
-    lpStartupInfo->lpReserved  = BaseAnsiStartupInfo->lpReserved ;
-    lpStartupInfo->lpDesktop   = BaseAnsiStartupInfo->lpDesktop  ;
-    lpStartupInfo->lpTitle     = BaseAnsiStartupInfo->lpTitle    ;
-    lpStartupInfo->dwX         = BaseAnsiStartupInfo->dwX        ;
-    lpStartupInfo->dwY         = BaseAnsiStartupInfo->dwY        ;
-    lpStartupInfo->dwXSize     = BaseAnsiStartupInfo->dwXSize    ;
-    lpStartupInfo->dwYSize     = BaseAnsiStartupInfo->dwYSize    ;
+    lpStartupInfo->cb = BaseAnsiStartupInfo->cb;
+    lpStartupInfo->lpReserved = BaseAnsiStartupInfo->lpReserved;
+    lpStartupInfo->lpDesktop = BaseAnsiStartupInfo->lpDesktop;
+    lpStartupInfo->lpTitle = BaseAnsiStartupInfo->lpTitle;
+    lpStartupInfo->dwX = BaseAnsiStartupInfo->dwX;
+    lpStartupInfo->dwY = BaseAnsiStartupInfo->dwY;
+    lpStartupInfo->dwXSize = BaseAnsiStartupInfo->dwXSize;
+    lpStartupInfo->dwYSize = BaseAnsiStartupInfo->dwYSize;
     lpStartupInfo->dwXCountChars = BaseAnsiStartupInfo->dwXCountChars;
     lpStartupInfo->dwYCountChars = BaseAnsiStartupInfo->dwYCountChars;
     lpStartupInfo->dwFillAttribute = BaseAnsiStartupInfo->dwFillAttribute;
-    lpStartupInfo->dwFlags     = BaseAnsiStartupInfo->dwFlags    ;
+    lpStartupInfo->dwFlags = BaseAnsiStartupInfo->dwFlags;
     lpStartupInfo->wShowWindow = BaseAnsiStartupInfo->wShowWindow;
     lpStartupInfo->cbReserved2 = BaseAnsiStartupInfo->cbReserved2;
     lpStartupInfo->lpReserved2 = BaseAnsiStartupInfo->lpReserved2;
 
-    if (lpStartupInfo->dwFlags & (STARTF_USESTDHANDLES | STARTF_USEHOTKEY | STARTF_HASSHELLDATA)) {
-        lpStartupInfo->hStdInput   = BaseAnsiStartupInfo->hStdInput;
-        lpStartupInfo->hStdOutput  = BaseAnsiStartupInfo->hStdOutput;
-        lpStartupInfo->hStdError   = BaseAnsiStartupInfo->hStdError;
-        }
-    else {
-        lpStartupInfo->hStdInput   = INVALID_HANDLE_VALUE;
-        lpStartupInfo->hStdOutput  = INVALID_HANDLE_VALUE;
-        lpStartupInfo->hStdError   = INVALID_HANDLE_VALUE;
-        }
+    if (lpStartupInfo->dwFlags & (STARTF_USESTDHANDLES | STARTF_USEHOTKEY | STARTF_HASSHELLDATA))
+    {
+        lpStartupInfo->hStdInput = BaseAnsiStartupInfo->hStdInput;
+        lpStartupInfo->hStdOutput = BaseAnsiStartupInfo->hStdOutput;
+        lpStartupInfo->hStdError = BaseAnsiStartupInfo->hStdError;
+    }
+    else
+    {
+        lpStartupInfo->hStdInput = INVALID_HANDLE_VALUE;
+        lpStartupInfo->hStdOutput = INVALID_HANDLE_VALUE;
+        lpStartupInfo->hStdError = INVALID_HANDLE_VALUE;
+    }
     return;
 }
 
 
 LPSTR
 WINAPI
-GetCommandLineA(
-    VOID
-    )
+GetCommandLineA(VOID)
 
 /*++
 
@@ -5044,9 +4723,7 @@ Return Value:
 
 LPWSTR
 WINAPI
-GetCommandLineW(
-    VOID
-    )
+GetCommandLineW(VOID)
 /*++
 
 Routine Description:
@@ -5070,12 +4747,7 @@ Return Value:
 }
 
 
-
-BOOL
-WINAPI
-FreeEnvironmentStringsW(
-    LPWSTR penv
-    )
+BOOL WINAPI FreeEnvironmentStringsW(LPWSTR penv)
 
 /*++
 
@@ -5102,11 +4774,7 @@ Return Value:
 }
 
 
-BOOL
-WINAPI
-FreeEnvironmentStringsA(
-    LPSTR penv
-    )
+BOOL WINAPI FreeEnvironmentStringsA(LPSTR penv)
 
 /*++
 
@@ -5126,15 +4794,13 @@ Return Value:
 --*/
 
 {
-    return RtlFreeHeap(RtlProcessHeap(), 0, penv );
+    return RtlFreeHeap(RtlProcessHeap(), 0, penv);
 }
 
 
 LPWSTR
 WINAPI
-GetEnvironmentStringsW(
-    VOID
-    )
+GetEnvironmentStringsW(VOID)
 
 /*++
 
@@ -5162,9 +4828,7 @@ Return Value:
 
 LPSTR
 WINAPI
-GetEnvironmentStrings(
-    VOID
-    )
+GetEnvironmentStrings(VOID)
 
 /*++
 
@@ -5186,45 +4850,44 @@ Return Value:
 --*/
 
 {
-    NTSTATUS    Status;
-    LPWSTR      pUnicode;
-    USHORT      cch = 0;
-    UNICODE_STRING      Unicode;
-    OEM_STRING  Buffer;
+    NTSTATUS Status;
+    LPWSTR pUnicode;
+    USHORT cch = 0;
+    UNICODE_STRING Unicode;
+    OEM_STRING Buffer;
 
     pUnicode = (LPWSTR)NtCurrentPeb()->ProcessParameters->Environment;
     Unicode.Buffer = pUnicode;
 
-    while ( (*pUnicode) || (*(pUnicode+1))) {
+    while ((*pUnicode) || (*(pUnicode + 1)))
+    {
         cch++;
         pUnicode++;
     }
 
     // Go for worst case
-    Buffer.Buffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( ENV_TAG ), (cch+2)*sizeof(WCHAR));
-    if (Buffer.Buffer == NULL) {
-        BaseSetLastNTError( STATUS_NO_MEMORY );
+    Buffer.Buffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(ENV_TAG), (cch + 2) * sizeof(WCHAR));
+    if (Buffer.Buffer == NULL)
+    {
+        BaseSetLastNTError(STATUS_NO_MEMORY);
         return NULL;
-        }
-    Buffer.Length  = Buffer.MaximumLength  = (cch + 2) * sizeof(WCHAR);
+    }
+    Buffer.Length = Buffer.MaximumLength = (cch + 2) * sizeof(WCHAR);
     Unicode.Length = Unicode.MaximumLength = (cch + 2) * sizeof(WCHAR);
 
     Status = RtlUnicodeStringToOemString(&Buffer, &Unicode, FALSE);
-    if (!NT_SUCCESS( Status )) {
-        BaseSetLastNTError( Status );
-        RtlFreeHeap( RtlProcessHeap(), 0, Buffer.Buffer );
-        }
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        RtlFreeHeap(RtlProcessHeap(), 0, Buffer.Buffer);
+    }
     return Buffer.Buffer;
 }
 
 
 DWORD
 WINAPI
-GetEnvironmentVariableA(
-    LPCSTR lpName,
-    LPSTR lpBuffer,
-    DWORD nSize
-    )
+GetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize)
 
 /*++
 
@@ -5264,102 +4927,105 @@ Return Value:
     UNICODE_STRING UnicodeValue;
     DWORD iSize;
 
-    RtlInitString( &Name, lpName );
-    Status = RtlAnsiStringToUnicodeString( &UnicodeName, &Name, TRUE );
-    if (!NT_SUCCESS( Status )) {
-        BaseSetLastNTError( Status );
-        return ( 0 );
-        }
+    RtlInitString(&Name, lpName);
+    Status = RtlAnsiStringToUnicodeString(&UnicodeName, &Name, TRUE);
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        return (0);
+    }
 
-    if ( nSize > (MAXUSHORT >> 1)-2 ) {
-        iSize = (MAXUSHORT >> 1)-2;
-        }
-    else {
+    if (nSize > (MAXUSHORT >> 1) - 2)
+    {
+        iSize = (MAXUSHORT >> 1) - 2;
+    }
+    else
+    {
         iSize = nSize;
-        }
+    }
 
-    UnicodeValue.MaximumLength = (USHORT)(iSize ? iSize - 1 : iSize)*sizeof(WCHAR);
-    UnicodeValue.Buffer = (PWCHAR)
-        RtlAllocateHeap( RtlProcessHeap(), MAKE_TAG( TMP_TAG ), UnicodeValue.MaximumLength );
-    if (UnicodeValue.Buffer == NULL) {
-        BaseSetLastNTError( STATUS_NO_MEMORY );
-        return ( 0 );
-        }
+    UnicodeValue.MaximumLength = (USHORT)(iSize ? iSize - 1 : iSize) * sizeof(WCHAR);
+    UnicodeValue.Buffer = (PWCHAR)RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), UnicodeValue.MaximumLength);
+    if (UnicodeValue.Buffer == NULL)
+    {
+        BaseSetLastNTError(STATUS_NO_MEMORY);
+        return (0);
+    }
 
-    Status = RtlQueryEnvironmentVariable_U( NULL,
-                                            &UnicodeName,
-                                            &UnicodeValue
-                                          );
-    if (NT_SUCCESS( Status ) && (nSize == 0)) {
+    Status = RtlQueryEnvironmentVariable_U(NULL, &UnicodeName, &UnicodeValue);
+    if (NT_SUCCESS(Status) && (nSize == 0))
+    {
         Status = STATUS_BUFFER_OVERFLOW; // No room for terminator
     }
 
-    if( Status != STATUS_BUFFER_TOO_SMALL ) RtlFreeUnicodeString( &UnicodeName );
+    if (Status != STATUS_BUFFER_TOO_SMALL)
+        RtlFreeUnicodeString(&UnicodeName);
 
-    if (NT_SUCCESS( Status )) {
+    if (NT_SUCCESS(Status))
+    {
 
-        if ( nSize > MAXUSHORT-2 ) {
-            iSize = MAXUSHORT-2;
-            }
-        else {
+        if (nSize > MAXUSHORT - 2)
+        {
+            iSize = MAXUSHORT - 2;
+        }
+        else
+        {
             iSize = nSize;
-            }
+        }
 
         Value.Buffer = lpBuffer;
         Value.MaximumLength = (USHORT)iSize;
-        Status2 = RtlUnicodeStringToAnsiString( &Value, &UnicodeValue, FALSE );
-        RtlFreeHeap( RtlProcessHeap(), 0, UnicodeValue.Buffer );
-        if (!NT_SUCCESS( Status2 )) {
-            BaseSetLastNTError( Status2 );
-            return ( 0 );
-            }
-        lpBuffer[ Value.Length ] = '\0';
-        return( Value.Length );
+        Status2 = RtlUnicodeStringToAnsiString(&Value, &UnicodeValue, FALSE);
+        RtlFreeHeap(RtlProcessHeap(), 0, UnicodeValue.Buffer);
+        if (!NT_SUCCESS(Status2))
+        {
+            BaseSetLastNTError(Status2);
+            return (0);
         }
-    else {
-        RtlFreeHeap( RtlProcessHeap(), 0, UnicodeValue.Buffer );
-        if ( Status == STATUS_BUFFER_TOO_SMALL ) {
+        lpBuffer[Value.Length] = '\0';
+        return (Value.Length);
+    }
+    else
+    {
+        RtlFreeHeap(RtlProcessHeap(), 0, UnicodeValue.Buffer);
+        if (Status == STATUS_BUFFER_TOO_SMALL)
+        {
             DWORD dwAnsiStringSize = 0;
 
             UnicodeValue.MaximumLength = UnicodeValue.Length + sizeof(WCHAR); // for NULL
-            UnicodeValue.Buffer = (PWCHAR)
-                RtlAllocateHeap( RtlProcessHeap(), MAKE_TAG( TMP_TAG ), UnicodeValue.MaximumLength );
+            UnicodeValue.Buffer =
+                (PWCHAR)RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), UnicodeValue.MaximumLength);
 
-            if (UnicodeValue.Buffer == NULL) {
-                BaseSetLastNTError( STATUS_NO_MEMORY );
-                return ( 0 );
+            if (UnicodeValue.Buffer == NULL)
+            {
+                BaseSetLastNTError(STATUS_NO_MEMORY);
+                return (0);
             }
 
-            Status = RtlQueryEnvironmentVariable_U( NULL ,
-                                                    &UnicodeName ,
-                                                    &UnicodeValue
-                                                  );
-            RtlFreeUnicodeString( &UnicodeName );
+            Status = RtlQueryEnvironmentVariable_U(NULL, &UnicodeName, &UnicodeValue);
+            RtlFreeUnicodeString(&UnicodeName);
 
-            if( NT_SUCCESS( Status ) ) {
-                dwAnsiStringSize = RtlUnicodeStringToAnsiSize( &UnicodeValue );
-                }
+            if (NT_SUCCESS(Status))
+            {
+                dwAnsiStringSize = RtlUnicodeStringToAnsiSize(&UnicodeValue);
+            }
 
-            RtlFreeHeap( RtlProcessHeap(), 0, UnicodeValue.Buffer );
+            RtlFreeHeap(RtlProcessHeap(), 0, UnicodeValue.Buffer);
 
             // dwAnsiStringSize alreay keeps the size including NULL character.
 
             return dwAnsiStringSize;
-            }
-        else {
-            BaseSetLastNTError( Status );
-            return( 0 );
-            }
         }
+        else
+        {
+            BaseSetLastNTError(Status);
+            return (0);
+        }
+    }
 }
 
 
-BOOL
-WINAPI
-SetEnvironmentVariableA(
-    LPCSTR lpName,
-    LPCSTR lpValue
-    )
+BOOL WINAPI SetEnvironmentVariableA(LPCSTR lpName, LPCSTR lpValue)
 
 /*++
 
@@ -5394,127 +5060,144 @@ Return Value:
     UNICODE_STRING UnicodeName;
     UNICODE_STRING UnicodeValue;
 
-    RtlInitString( &Name, lpName );
+    RtlInitString(&Name, lpName);
     Status = RtlAnsiStringToUnicodeString(&UnicodeName, &Name, TRUE);
-    if ( !NT_SUCCESS(Status) ) {
-        BaseSetLastNTError( Status );
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 
-    if (ARGUMENT_PRESENT( lpValue )) {
-        RtlInitString( &Value, lpValue );
+    if (ARGUMENT_PRESENT(lpValue))
+    {
+        RtlInitString(&Value, lpValue);
         Status = RtlAnsiStringToUnicodeString(&UnicodeValue, &Value, TRUE);
-        if ( !NT_SUCCESS(Status) ) {
-            BaseSetLastNTError( Status );
+        if (!NT_SUCCESS(Status))
+        {
+            BaseSetLastNTError(Status);
             RtlFreeUnicodeString(&UnicodeName);
             return FALSE;
-            }
-        Status = RtlSetEnvironmentVariable( NULL, &UnicodeName, &UnicodeValue);
+        }
+        Status = RtlSetEnvironmentVariable(NULL, &UnicodeName, &UnicodeValue);
         RtlFreeUnicodeString(&UnicodeValue);
-        }
-    else {
-        Status = RtlSetEnvironmentVariable( NULL, &UnicodeName, NULL);
-        }
+    }
+    else
+    {
+        Status = RtlSetEnvironmentVariable(NULL, &UnicodeName, NULL);
+    }
     RtlFreeUnicodeString(&UnicodeName);
 
-    if (NT_SUCCESS( Status )) {
-        return( TRUE );
-        }
-    else {
-        BaseSetLastNTError( Status );
-        return( FALSE );
-        }
+    if (NT_SUCCESS(Status))
+    {
+        return (TRUE);
+    }
+    else
+    {
+        BaseSetLastNTError(Status);
+        return (FALSE);
+    }
 }
 
 
 DWORD
 WINAPI
-GetEnvironmentVariableW(
-    LPCWSTR lpName,
-    LPWSTR lpBuffer,
-    DWORD nSize
-    )
+GetEnvironmentVariableW(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize)
 {
     NTSTATUS Status;
     UNICODE_STRING Name;
     UNICODE_STRING Value;
     DWORD iSize;
 
-    if (nSize > UNICODE_STRING_MAX_CHARS - 1) {
-        iSize = UNICODE_STRING_MAX_BYTES - sizeof (WCHAR);
-    } else {
-        if (nSize > 0) {
-            iSize = (nSize - 1) * sizeof (WCHAR);
-        } else {
+    if (nSize > UNICODE_STRING_MAX_CHARS - 1)
+    {
+        iSize = UNICODE_STRING_MAX_BYTES - sizeof(WCHAR);
+    }
+    else
+    {
+        if (nSize > 0)
+        {
+            iSize = (nSize - 1) * sizeof(WCHAR);
+        }
+        else
+        {
             iSize = 0;
         }
     }
 
-    Status = RtlInitUnicodeStringEx (&Name, lpName);
-    if (!NT_SUCCESS (Status)) {
-        BaseSetLastNTError (Status);
-        return( 0 );
+    Status = RtlInitUnicodeStringEx(&Name, lpName);
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
+        return (0);
     }
 
     Value.Buffer = lpBuffer;
     Value.Length = 0;
     Value.MaximumLength = (USHORT)iSize;
 
-    Status = RtlQueryEnvironmentVariable_U (NULL,
-                                            &Name,
-                                            &Value);
+    Status = RtlQueryEnvironmentVariable_U(NULL, &Name, &Value);
 
-    if (NT_SUCCESS (Status) && (nSize == 0)) {
+    if (NT_SUCCESS(Status) && (nSize == 0))
+    {
         Status = STATUS_BUFFER_OVERFLOW; // No room for terminator
     }
 
-    if (NT_SUCCESS (Status)) {
+    if (NT_SUCCESS(Status))
+    {
         lpBuffer[Value.Length / sizeof(WCHAR)] = L'\0';
         return (Value.Length / sizeof(WCHAR));
-    } else {
-        if (Status == STATUS_BUFFER_TOO_SMALL) {
+    }
+    else
+    {
+        if (Status == STATUS_BUFFER_TOO_SMALL)
+        {
             return Value.Length / sizeof(WCHAR) + 1;
-        } else {
-            BaseSetLastNTError (Status);
+        }
+        else
+        {
+            BaseSetLastNTError(Status);
             return (0);
         }
     }
 }
 
 
-BOOL
-WINAPI
-SetEnvironmentVariableW(
-    LPCWSTR lpName,
-    LPCWSTR lpValue
-    )
+BOOL WINAPI SetEnvironmentVariableW(LPCWSTR lpName, LPCWSTR lpValue)
 {
     NTSTATUS Status;
     UNICODE_STRING Name, Value;
 
-    Status = RtlInitUnicodeStringEx (&Name, lpName);
-    if (!NT_SUCCESS (Status)) {
-        BaseSetLastNTError (Status);
+    Status = RtlInitUnicodeStringEx(&Name, lpName);
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
         return (FALSE);
     }
-    
 
-    if (ARGUMENT_PRESENT (lpValue)) {
-        Status = RtlInitUnicodeStringEx (&Value, lpValue);
-        if (!NT_SUCCESS (Status)) {
-            BaseSetLastNTError (Status);
+
+    if (ARGUMENT_PRESENT(lpValue))
+    {
+        Status = RtlInitUnicodeStringEx(&Value, lpValue);
+        if (!NT_SUCCESS(Status))
+        {
+            BaseSetLastNTError(Status);
             return (FALSE);
         }
 
-        Status = RtlSetEnvironmentVariable (NULL, &Name, &Value);
-    } else {
-        Status = RtlSetEnvironmentVariable (NULL, &Name, NULL);
+        Status = RtlSetEnvironmentVariable(NULL, &Name, &Value);
+    }
+    else
+    {
+        Status = RtlSetEnvironmentVariable(NULL, &Name, NULL);
     }
 
-    if (NT_SUCCESS (Status)) {
+    if (NT_SUCCESS(Status))
+    {
         return (TRUE);
-    } else {
-        BaseSetLastNTError (Status);
+    }
+    else
+    {
+        BaseSetLastNTError(Status);
         return (FALSE);
     }
 }
@@ -5522,11 +5205,7 @@ SetEnvironmentVariableW(
 
 DWORD
 WINAPI
-ExpandEnvironmentStringsA(
-    LPCSTR lpSrc,
-    LPSTR lpDst,
-    DWORD nSize
-    )
+ExpandEnvironmentStringsA(LPCSTR lpSrc, LPSTR lpDst, DWORD nSize)
 {
     NTSTATUS Status;
     ANSI_STRING Source, Destination;
@@ -5535,116 +5214,113 @@ ExpandEnvironmentStringsA(
     UNICODE_STRING UnicodeDest;
     DWORD iSize;
 
-    if ( nSize > (MAXUSHORT >> 1)-2 ) {
-        iSize = (MAXUSHORT >> 1)-2;
-        }
-    else {
+    if (nSize > (MAXUSHORT >> 1) - 2)
+    {
+        iSize = (MAXUSHORT >> 1) - 2;
+    }
+    else
+    {
         iSize = nSize;
-        }
+    }
 
-    if( lpDst != NULL )
+    if (lpDst != NULL)
         *lpDst = '\0';
-    RtlInitString( &Source, lpSrc );
-    Status = RtlAnsiStringToUnicodeString( &UnicodeSource, &Source, TRUE );
-    if (!NT_SUCCESS( Status )) {
-        BaseSetLastNTError( Status );
+    RtlInitString(&Source, lpSrc);
+    Status = RtlAnsiStringToUnicodeString(&UnicodeSource, &Source, TRUE);
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
         return 0;
-        }
-    UnicodeDest.MaximumLength = (USHORT)(iSize ? iSize - 1 : iSize)*sizeof(WCHAR);
-    UnicodeDest.Buffer = (PWCHAR)
-        RtlAllocateHeap( RtlProcessHeap(), MAKE_TAG( TMP_TAG ), UnicodeDest.MaximumLength );
-    if (UnicodeDest.Buffer == NULL) {
-        BaseSetLastNTError( STATUS_NO_MEMORY );
+    }
+    UnicodeDest.MaximumLength = (USHORT)(iSize ? iSize - 1 : iSize) * sizeof(WCHAR);
+    UnicodeDest.Buffer = (PWCHAR)RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), UnicodeDest.MaximumLength);
+    if (UnicodeDest.Buffer == NULL)
+    {
+        BaseSetLastNTError(STATUS_NO_MEMORY);
         return 0;
-        }
+    }
 
     Length = 0;
-    Status = RtlExpandEnvironmentStrings_U( NULL,
-                                            (PUNICODE_STRING)&UnicodeSource,
-                                            (PUNICODE_STRING)&UnicodeDest,
-                                            &Length
-                                          );
-    if (NT_SUCCESS( Status )) {
+    Status =
+        RtlExpandEnvironmentStrings_U(NULL, (PUNICODE_STRING)&UnicodeSource, (PUNICODE_STRING)&UnicodeDest, &Length);
+    if (NT_SUCCESS(Status))
+    {
 
-        if ( nSize > MAXUSHORT-2 ) {
-            iSize = MAXUSHORT-2;
-            }
-        else {
+        if (nSize > MAXUSHORT - 2)
+        {
+            iSize = MAXUSHORT - 2;
+        }
+        else
+        {
             iSize = nSize;
-            }
+        }
 
         Destination.MaximumLength = (USHORT)iSize;
         Destination.Buffer = lpDst;
-        Status = RtlUnicodeStringToAnsiString(&Destination,&UnicodeDest,FALSE);
+        Status = RtlUnicodeStringToAnsiString(&Destination, &UnicodeDest, FALSE);
         RtlFreeHeap(RtlProcessHeap(), 0, UnicodeDest.Buffer);
         RtlFreeUnicodeString(&UnicodeSource);
-        if (!NT_SUCCESS( Status )) {
+        if (!NT_SUCCESS(Status))
+        {
             *lpDst = '\0';
-            BaseSetLastNTError( Status );
+            BaseSetLastNTError(Status);
             return 0;
-            }
-        return( Length / sizeof( WCHAR ) );
         }
-    else if (Status == STATUS_BUFFER_TOO_SMALL) {
+        return (Length / sizeof(WCHAR));
+    }
+    else if (Status == STATUS_BUFFER_TOO_SMALL)
+    {
         RtlFreeHeap(RtlProcessHeap(), 0, UnicodeDest.Buffer);
         RtlFreeUnicodeString(&UnicodeSource);
-        return( (Length / sizeof( WCHAR )) + 1 );
-        }
-    else {
+        return ((Length / sizeof(WCHAR)) + 1);
+    }
+    else
+    {
         RtlFreeHeap(RtlProcessHeap(), 0, UnicodeDest.Buffer);
         RtlFreeUnicodeString(&UnicodeSource);
-        BaseSetLastNTError( Status );
+        BaseSetLastNTError(Status);
         return 0;
-        }
+    }
 }
 
 
 DWORD
 WINAPI
-ExpandEnvironmentStringsW(
-    LPCWSTR lpSrc,
-    LPWSTR lpDst,
-    DWORD nSize
-    )
+ExpandEnvironmentStringsW(LPCWSTR lpSrc, LPWSTR lpDst, DWORD nSize)
 {
     NTSTATUS Status;
     UNICODE_STRING Source, Destination;
     ULONG Length;
     DWORD iSize;
 
-    if ( nSize > (MAXUSHORT >> 1)-2 ) {
-        iSize = (MAXUSHORT >> 1)-2;
-        }
-    else {
+    if (nSize > (MAXUSHORT >> 1) - 2)
+    {
+        iSize = (MAXUSHORT >> 1) - 2;
+    }
+    else
+    {
         iSize = nSize;
-        }
+    }
 
-    RtlInitUnicodeString( &Source, lpSrc );
+    RtlInitUnicodeString(&Source, lpSrc);
     Destination.Buffer = lpDst;
     Destination.Length = 0;
-    Destination.MaximumLength = (USHORT)(iSize * sizeof( WCHAR ));
+    Destination.MaximumLength = (USHORT)(iSize * sizeof(WCHAR));
     Length = 0;
-    Status = RtlExpandEnvironmentStrings_U( NULL,
-                                            &Source,
-                                            &Destination,
-                                            &Length
-                                          );
-    if (NT_SUCCESS( Status ) || Status == STATUS_BUFFER_TOO_SMALL) {
-        return( Length / sizeof( WCHAR ) );
-        }
-    else {
-        BaseSetLastNTError( Status );
-        return( 0 );
-        }
+    Status = RtlExpandEnvironmentStrings_U(NULL, &Source, &Destination, &Length);
+    if (NT_SUCCESS(Status) || Status == STATUS_BUFFER_TOO_SMALL)
+    {
+        return (Length / sizeof(WCHAR));
+    }
+    else
+    {
+        BaseSetLastNTError(Status);
+        return (0);
+    }
 }
 
 
-UINT
-WINAPI
-WinExec(
-    LPCSTR lpCmdLine,
-    UINT uCmdShow
-    )
+UINT WINAPI WinExec(LPCSTR lpCmdLine, UINT uCmdShow)
 
 /*++
 
@@ -5733,36 +5409,27 @@ Return Value:
     DWORD ErrorCode;
 
 retry:
-    RtlZeroMemory(&StartupInfo,sizeof(StartupInfo));
+    RtlZeroMemory(&StartupInfo, sizeof(StartupInfo));
     StartupInfo.cb = sizeof(StartupInfo);
     StartupInfo.dwFlags = STARTF_USESHOWWINDOW;
     StartupInfo.wShowWindow = (WORD)uCmdShow;
-    CreateProcessStatus = CreateProcess(
-                            NULL,
-                            (LPSTR)lpCmdLine,
-                            NULL,
-                            NULL,
-                            FALSE,
-                            0,
-                            NULL,
-                            NULL,
-                            &StartupInfo,
-                            &ProcessInformation
-                            );
+    CreateProcessStatus =
+        CreateProcess(NULL, (LPSTR)lpCmdLine, NULL, NULL, FALSE, 0, NULL, NULL, &StartupInfo, &ProcessInformation);
 
-    if ( CreateProcessStatus ) {
+    if (CreateProcessStatus)
+    {
         //
         // Wait for the started process to go idle. If it doesn't go idle in
         // 10 seconds, return anyway.
         //
         if (UserWaitForInputIdleRoutine != NULL)
-            (*UserWaitForInputIdleRoutine)(ProcessInformation.hProcess,
-                    DEFAULT_WAIT_FOR_INPUT_IDLE_TIMEOUT);
+            (*UserWaitForInputIdleRoutine)(ProcessInformation.hProcess, DEFAULT_WAIT_FOR_INPUT_IDLE_TIMEOUT);
         NtClose(ProcessInformation.hProcess);
         NtClose(ProcessInformation.hThread);
         return 33;
-        }
-    else {
+    }
+    else
+    {
         //
         // If CreateProcess failed, then look at GetLastError to determine
         // appropriate return code.
@@ -5774,34 +5441,33 @@ retry:
         // the trailing " is causing problems so nuke it and then retry.
         //
 
-        if ( !lstrcmpiA(lpCmdLine,"hypertrm.exe\"") ) {
+        if (!lstrcmpiA(lpCmdLine, "hypertrm.exe\""))
+        {
             lpCmdLine = "hypertrm.exe";
             goto retry;
-            }
+        }
 
         ErrorCode = GetLastError();
-        switch ( ErrorCode ) {
-            case ERROR_FILE_NOT_FOUND:
-                return 2;
+        switch (ErrorCode)
+        {
+        case ERROR_FILE_NOT_FOUND:
+            return 2;
 
-            case ERROR_PATH_NOT_FOUND:
-                return 3;
+        case ERROR_PATH_NOT_FOUND:
+            return 3;
 
-            case ERROR_BAD_EXE_FORMAT:
-                return 11;
+        case ERROR_BAD_EXE_FORMAT:
+            return 11;
 
-            default:
-                return 0;
-            }
+        default:
+            return 0;
         }
+    }
 }
 
 DWORD
 WINAPI
-LoadModule(
-    LPCSTR lpModuleName,
-    LPVOID lpParameterBlock
-    )
+LoadModule(LPCSTR lpModuleName, LPVOID lpParameterBlock)
 
 /*++
 
@@ -5913,31 +5579,26 @@ Return Value:
     CreateFlag = 0;
     LoadModuleParams = (PLOAD_MODULE_PARAMS)lpParameterBlock;
 
-    if ( LoadModuleParams->dwReserved ||
-         LoadModuleParams->lpCmdShow->wMustBe2 != 2 ) {
+    if (LoadModuleParams->dwReserved || LoadModuleParams->lpCmdShow->wMustBe2 != 2)
+    {
 
         BaseSetLastNTError(STATUS_INVALID_PARAMETER);
         return 0;
-        }
+    }
     CommandLineBuffer = NULL;
     NameBuffer = NULL;
-    try {
+    try
+    {
 
         //
         // Locate the image
         //
 
-        NameBuffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), MAX_PATH);
+        NameBuffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), MAX_PATH);
 
-        Length = SearchPath(
-                    NULL,
-                    lpModuleName,
-                    ".exe",
-                    MAX_PATH,
-                    NameBuffer,
-                    NULL
-                    );
-        if ( !Length || Length >= MAX_PATH ) {
+        Length = SearchPath(NULL, lpModuleName, ".exe", MAX_PATH, NameBuffer, NULL);
+        if (!Length || Length >= MAX_PATH)
+        {
 
             //
             // If we search pathed, then return file not found.
@@ -5948,81 +5609,72 @@ Return Value:
             UNICODE_STRING u;
             ANSI_STRING a;
 
-            RtlInitAnsiString(&a,lpModuleName);
-            if ( !NT_SUCCESS(RtlAnsiStringToUnicodeString(&u,&a,TRUE)) ) {
-                if ( NameBuffer ) {
-                    RtlFreeHeap(RtlProcessHeap(), 0,NameBuffer);
-                    }
-                return 2;
+            RtlInitAnsiString(&a, lpModuleName);
+            if (!NT_SUCCESS(RtlAnsiStringToUnicodeString(&u, &a, TRUE)))
+            {
+                if (NameBuffer)
+                {
+                    RtlFreeHeap(RtlProcessHeap(), 0, NameBuffer);
                 }
+                return 2;
+            }
             PathType = RtlDetermineDosPathNameType_U(u.Buffer);
             RtlFreeUnicodeString(&u);
-            if ( PathType != RtlPathTypeRelative ) {
+            if (PathType != RtlPathTypeRelative)
+            {
 
                 //
                 // The failed open should set get last error properly.
                 //
 
-                hFile = CreateFile(
-                            lpModuleName,
-                            GENERIC_READ,
-                            FILE_SHARE_READ | FILE_SHARE_WRITE,
-                            NULL,
-                            OPEN_EXISTING,
-                            FILE_ATTRIBUTE_NORMAL,
-                            NULL
-                            );
-                RtlFreeHeap(RtlProcessHeap(), 0,NameBuffer);
-                if ( hFile != INVALID_HANDLE_VALUE ) {
+                hFile = CreateFile(lpModuleName, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+                                   FILE_ATTRIBUTE_NORMAL, NULL);
+                RtlFreeHeap(RtlProcessHeap(), 0, NameBuffer);
+                if (hFile != INVALID_HANDLE_VALUE)
+                {
                     CloseHandle(hFile);
                     return 2;
-                    }
+                }
                 return GetLastError();
-                }
-            else {
-                RtlFreeHeap(RtlProcessHeap(), 0,NameBuffer);
-                return 2;
-                }
             }
+            else
+            {
+                RtlFreeHeap(RtlProcessHeap(), 0, NameBuffer);
+                return 2;
+            }
+        }
 
-        RtlZeroMemory(&StartupInfo,sizeof(StartupInfo));
+        RtlZeroMemory(&StartupInfo, sizeof(StartupInfo));
         StartupInfo.cb = sizeof(StartupInfo);
         StartupInfo.dwFlags = STARTF_USESHOWWINDOW;
-        StartupInfo.wShowWindow =
-            LoadModuleParams->lpCmdShow->wShowWindowValue;
+        StartupInfo.wShowWindow = LoadModuleParams->lpCmdShow->wShowWindowValue;
 
-        CommandLineBuffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG( TMP_TAG ), (ULONG)LoadModuleParams->lpCmdLine[0]+1+Length+1);
+        CommandLineBuffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG),
+                                            (ULONG)LoadModuleParams->lpCmdLine[0] + 1 + Length + 1);
 
-        RtlMoveMemory(CommandLineBuffer,NameBuffer,Length);
+        RtlMoveMemory(CommandLineBuffer, NameBuffer, Length);
         CommandLineBuffer[Length] = ' ';
-        RtlMoveMemory(&CommandLineBuffer[Length+1],&LoadModuleParams->lpCmdLine[1],(ULONG)LoadModuleParams->lpCmdLine[0]);
-        CommandLineBuffer[Length+1+LoadModuleParams->lpCmdLine[0]] = '\0';
+        RtlMoveMemory(&CommandLineBuffer[Length + 1], &LoadModuleParams->lpCmdLine[1],
+                      (ULONG)LoadModuleParams->lpCmdLine[0]);
+        CommandLineBuffer[Length + 1 + LoadModuleParams->lpCmdLine[0]] = '\0';
 
-        CreateProcessStatus = CreateProcess(
-                                NameBuffer,
-                                CommandLineBuffer,
-                                NULL,
-                                NULL,
-                                FALSE,
-                                CreateFlag,
-                                LoadModuleParams->lpEnvAddress,
-                                NULL,
-                                &StartupInfo,
-                                &ProcessInformation
-                                );
-        RtlFreeHeap(RtlProcessHeap(), 0,NameBuffer);
+        CreateProcessStatus = CreateProcess(NameBuffer, CommandLineBuffer, NULL, NULL, FALSE, CreateFlag,
+                                            LoadModuleParams->lpEnvAddress, NULL, &StartupInfo, &ProcessInformation);
+        RtlFreeHeap(RtlProcessHeap(), 0, NameBuffer);
         NameBuffer = NULL;
-        RtlFreeHeap(RtlProcessHeap(), 0,CommandLineBuffer);
+        RtlFreeHeap(RtlProcessHeap(), 0, CommandLineBuffer);
         CommandLineBuffer = NULL;
-        }
-    except (EXCEPTION_EXECUTE_HANDLER) {
-        RtlFreeHeap(RtlProcessHeap(), 0,NameBuffer);
-        RtlFreeHeap(RtlProcessHeap(), 0,CommandLineBuffer);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        RtlFreeHeap(RtlProcessHeap(), 0, NameBuffer);
+        RtlFreeHeap(RtlProcessHeap(), 0, CommandLineBuffer);
         BaseSetLastNTError(GetExceptionCode());
         return 0;
-        }
+    }
 
-    if ( CreateProcessStatus ) {
+    if (CreateProcessStatus)
+    {
 
         //
         // Wait for the started process to go idle. If it doesn't go idle in
@@ -6030,13 +5682,13 @@ Return Value:
         //
 
         if (UserWaitForInputIdleRoutine != NULL)
-            (*UserWaitForInputIdleRoutine)(ProcessInformation.hProcess,
-                    DEFAULT_WAIT_FOR_INPUT_IDLE_TIMEOUT);
+            (*UserWaitForInputIdleRoutine)(ProcessInformation.hProcess, DEFAULT_WAIT_FOR_INPUT_IDLE_TIMEOUT);
         NtClose(ProcessInformation.hProcess);
         NtClose(ProcessInformation.hThread);
         return 33;
-        }
-    else {
+    }
+    else
+    {
 
         //
         // If CreateProcess failed, then look at GetLastError to determine
@@ -6044,27 +5696,26 @@ Return Value:
         //
 
         Length = GetLastError();
-        switch ( Length ) {
-            case ERROR_FILE_NOT_FOUND:
-                return 2;
+        switch (Length)
+        {
+        case ERROR_FILE_NOT_FOUND:
+            return 2;
 
-            case ERROR_PATH_NOT_FOUND:
-                return 3;
+        case ERROR_PATH_NOT_FOUND:
+            return 3;
 
-            case ERROR_BAD_EXE_FORMAT:
-                return 11;
+        case ERROR_BAD_EXE_FORMAT:
+            return 11;
 
-            default:
-                return 0;
-            }
+        default:
+            return 0;
         }
+    }
 }
 
 HANDLE
 WINAPI
-GetCurrentProcess(
-    VOID
-    )
+GetCurrentProcess(VOID)
 
 /*++
 
@@ -6096,9 +5747,7 @@ Return Value:
 
 DWORD
 WINAPI
-GetCurrentProcessId(
-    VOID
-    )
+GetCurrentProcessId(VOID)
 
 /*++
 
@@ -6125,9 +5774,7 @@ Return Value:
 
 DWORD
 APIENTRY
-GetProcessId(
-    HANDLE Process
-    )
+GetProcessId(HANDLE Process)
 /*++
 
 Routine Description:
@@ -6150,29 +5797,19 @@ Return Value:
     NTSTATUS Status;
     PROCESS_BASIC_INFORMATION pbi;
 
-    Status = NtQueryInformationProcess (Process,
-                                        ProcessBasicInformation,
-                                        &pbi,
-                                        sizeof (pbi),
-                                        NULL);
+    Status = NtQueryInformationProcess(Process, ProcessBasicInformation, &pbi, sizeof(pbi), NULL);
 
-    if (!NT_SUCCESS (Status)) {
-        BaseSetLastNTError (Status);
+    if (!NT_SUCCESS(Status))
+    {
+        BaseSetLastNTError(Status);
         return 0;
     }
 
-    return  (DWORD) pbi.UniqueProcessId;
+    return (DWORD)pbi.UniqueProcessId;
 }
 
-BOOL
-WINAPI
-ReadProcessMemory(
-    HANDLE hProcess,
-    LPCVOID lpBaseAddress,
-    LPVOID lpBuffer,
-    SIZE_T nSize,
-    SIZE_T *lpNumberOfBytesRead
-    )
+BOOL WINAPI ReadProcessMemory(HANDLE hProcess, LPCVOID lpBaseAddress, LPVOID lpBuffer, SIZE_T nSize,
+                              SIZE_T *lpNumberOfBytesRead)
 
 /*++
 
@@ -6226,36 +5863,26 @@ Return Value:
     NTSTATUS Status;
     SIZE_T NtNumberOfBytesRead;
 
-    Status = NtReadVirtualMemory(
-                hProcess,
-                (PVOID)lpBaseAddress,
-                lpBuffer,
-                nSize,
-                &NtNumberOfBytesRead
-                );
+    Status = NtReadVirtualMemory(hProcess, (PVOID)lpBaseAddress, lpBuffer, nSize, &NtNumberOfBytesRead);
 
-    if ( lpNumberOfBytesRead != NULL ) {
+    if (lpNumberOfBytesRead != NULL)
+    {
         *lpNumberOfBytesRead = NtNumberOfBytesRead;
-        }
+    }
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
-    else {
+    }
+    else
+    {
         return TRUE;
-        }
+    }
 }
 
-BOOL
-WINAPI
-WriteProcessMemory(
-    HANDLE hProcess,
-    LPVOID lpBaseAddress,
-    LPCVOID lpBuffer,
-    SIZE_T nSize,
-    SIZE_T *lpNumberOfBytesWritten
-    )
+BOOL WINAPI WriteProcessMemory(HANDLE hProcess, LPVOID lpBaseAddress, LPCVOID lpBuffer, SIZE_T nSize,
+                               SIZE_T *lpNumberOfBytesWritten)
 
 /*++
 
@@ -6316,16 +5943,11 @@ Return Value:
     // Set the protection to allow writes
     //
 
-    RegionSize =  nSize;
+    RegionSize = nSize;
     Base = lpBaseAddress;
-    Status = NtProtectVirtualMemory(
-                hProcess,
-                &Base,
-                &RegionSize,
-                PAGE_READWRITE,
-                &OldProtect
-                );
-    if ( NT_SUCCESS(Status) ) {
+    Status = NtProtectVirtualMemory(hProcess, &Base, &RegionSize, PAGE_READWRITE, &OldProtect);
+    if (NT_SUCCESS(Status))
+    {
 
         //
         // See if previous protection was writable. If so,
@@ -6334,58 +5956,44 @@ Return Value:
         // no access. In this case, don't do the write, just fail
         //
 
-        if ( (OldProtect & PAGE_READWRITE) == PAGE_READWRITE ||
-             (OldProtect & PAGE_WRITECOPY) == PAGE_WRITECOPY ||
-             (OldProtect & PAGE_EXECUTE_READWRITE) == PAGE_EXECUTE_READWRITE ||
-             (OldProtect & PAGE_EXECUTE_WRITECOPY) == PAGE_EXECUTE_WRITECOPY ) {
+        if ((OldProtect & PAGE_READWRITE) == PAGE_READWRITE || (OldProtect & PAGE_WRITECOPY) == PAGE_WRITECOPY ||
+            (OldProtect & PAGE_EXECUTE_READWRITE) == PAGE_EXECUTE_READWRITE ||
+            (OldProtect & PAGE_EXECUTE_WRITECOPY) == PAGE_EXECUTE_WRITECOPY)
+        {
 
-            Status = NtProtectVirtualMemory(
-                        hProcess,
-                        &Base,
-                        &RegionSize,
-                        OldProtect,
-                        &OldProtect
-                        );
-            Status = NtWriteVirtualMemory(
-                        hProcess,
-                        lpBaseAddress,
-                        lpBuffer,
-                        nSize,
-                        &NtNumberOfBytesWritten
-                        );
+            Status = NtProtectVirtualMemory(hProcess, &Base, &RegionSize, OldProtect, &OldProtect);
+            Status = NtWriteVirtualMemory(hProcess, lpBaseAddress, lpBuffer, nSize, &NtNumberOfBytesWritten);
 
-            if ( lpNumberOfBytesWritten != NULL ) {
+            if (lpNumberOfBytesWritten != NULL)
+            {
                 *lpNumberOfBytesWritten = NtNumberOfBytesWritten;
-                }
+            }
 
-            if ( !NT_SUCCESS(Status) ) {
+            if (!NT_SUCCESS(Status))
+            {
                 BaseSetLastNTError(Status);
                 return FALSE;
-                }
-            NtFlushInstructionCache(hProcess,lpBaseAddress,nSize);
-            return TRUE;
             }
-        else {
+            NtFlushInstructionCache(hProcess, lpBaseAddress, nSize);
+            return TRUE;
+        }
+        else
+        {
 
             //
             // See if the previous protection was read only or no access. If
             // this is the case, restore the previous protection and return
             // an access violation error.
             //
-            if ( (OldProtect & PAGE_NOACCESS) == PAGE_NOACCESS ||
-                 (OldProtect & PAGE_READONLY) == PAGE_READONLY ) {
+            if ((OldProtect & PAGE_NOACCESS) == PAGE_NOACCESS || (OldProtect & PAGE_READONLY) == PAGE_READONLY)
+            {
 
-                Status = NtProtectVirtualMemory(
-                            hProcess,
-                            &Base,
-                            &RegionSize,
-                            OldProtect,
-                            &OldProtect
-                            );
+                Status = NtProtectVirtualMemory(hProcess, &Base, &RegionSize, OldProtect, &OldProtect);
                 BaseSetLastNTError(STATUS_ACCESS_VIOLATION);
                 return FALSE;
-                }
-            else {
+            }
+            else
+            {
 
                 //
                 // The previous protection must have been code and the caller
@@ -6393,133 +6001,105 @@ Return Value:
                 // and then restore the previous protection.
                 //
 
-                Status = NtWriteVirtualMemory(
-                            hProcess,
-                            lpBaseAddress,
-                            lpBuffer,
-                            nSize,
-                            &NtNumberOfBytesWritten
-                            );
+                Status = NtWriteVirtualMemory(hProcess, lpBaseAddress, lpBuffer, nSize, &NtNumberOfBytesWritten);
 
-                if ( lpNumberOfBytesWritten != NULL ) {
+                if (lpNumberOfBytesWritten != NULL)
+                {
                     *lpNumberOfBytesWritten = NtNumberOfBytesWritten;
-                    }
+                }
 
-                xStatus = NtProtectVirtualMemory(
-                            hProcess,
-                            &Base,
-                            &RegionSize,
-                            OldProtect,
-                            &OldProtect
-                            );
-                if ( !NT_SUCCESS(Status) ) {
+                xStatus = NtProtectVirtualMemory(hProcess, &Base, &RegionSize, OldProtect, &OldProtect);
+                if (!NT_SUCCESS(Status))
+                {
                     BaseSetLastNTError(STATUS_ACCESS_VIOLATION);
                     return STATUS_ACCESS_VIOLATION;
-                    }
-                NtFlushInstructionCache(hProcess,lpBaseAddress,nSize);
-                return TRUE;
                 }
+                NtFlushInstructionCache(hProcess, lpBaseAddress, nSize);
+                return TRUE;
             }
         }
-    else {
+    }
+    else
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 }
 
-VOID
-WINAPI
-FatalAppExitW(
-    UINT uAction,
-    LPCWSTR lpMessageText
-    )
+VOID WINAPI FatalAppExitW(UINT uAction, LPCWSTR lpMessageText)
 {
     NTSTATUS Status;
     UNICODE_STRING UnicodeString;
     ULONG Response;
     ULONG_PTR ErrorParameters[1];
 
-    RtlInitUnicodeString(&UnicodeString,lpMessageText);
+    RtlInitUnicodeString(&UnicodeString, lpMessageText);
 
     ErrorParameters[0] = (ULONG_PTR)&UnicodeString;
 
-    Status =NtRaiseHardError( STATUS_FATAL_APP_EXIT | HARDERROR_OVERRIDE_ERRORMODE,
-                              1,
-                              1,
-                              ErrorParameters,
+    Status = NtRaiseHardError(STATUS_FATAL_APP_EXIT | HARDERROR_OVERRIDE_ERRORMODE, 1, 1, ErrorParameters,
 #if DBG
                               OptionOkCancel,
 #else
                               OptionOk,
 #endif
-                              &Response
-                            );
+                              &Response);
 
 
-    if ( NT_SUCCESS(Status) && Response == ResponseCancel ) {
+    if (NT_SUCCESS(Status) && Response == ResponseCancel)
+    {
         return;
-        }
-    else {
+    }
+    else
+    {
         ExitProcess(0);
-        }
+    }
 }
 
 
-VOID
-WINAPI
-FatalAppExitA(
-    UINT uAction,
-    LPCSTR lpMessageText
-    )
+VOID WINAPI FatalAppExitA(UINT uAction, LPCSTR lpMessageText)
 {
     PUNICODE_STRING Unicode;
     ANSI_STRING AnsiString;
     NTSTATUS Status;
 
     Unicode = &NtCurrentTeb()->StaticUnicodeString;
-    RtlInitAnsiString(
-        &AnsiString,
-        lpMessageText
-        );
-    Status = RtlAnsiStringToUnicodeString(Unicode,&AnsiString,FALSE);
-    if ( !NT_SUCCESS(Status) ) {
+    RtlInitAnsiString(&AnsiString, lpMessageText);
+    Status = RtlAnsiStringToUnicodeString(Unicode, &AnsiString, FALSE);
+    if (!NT_SUCCESS(Status))
+    {
         ExitProcess(0);
-        }
-    FatalAppExitW(uAction,Unicode->Buffer);
+    }
+    FatalAppExitW(uAction, Unicode->Buffer);
 }
 
-VOID
-WINAPI
-FatalExit(
-    int ExitCode
-    )
+VOID WINAPI FatalExit(int ExitCode)
 {
 #if DBG
-    char Response[ 2 ];
+    char Response[2];
     DbgPrint("FatalExit...\n");
     DbgPrint("\n");
 
-    while (TRUE) {
-        DbgPrompt( "A (Abort), B (Break), I (Ignore)? ",
-                   Response,
-                   sizeof( Response )
-                 );
-        switch (Response[0]) {
-            case 'B':
-            case 'b':
-                DbgBreakPoint();
-                break;
+    while (TRUE)
+    {
+        DbgPrompt("A (Abort), B (Break), I (Ignore)? ", Response, sizeof(Response));
+        switch (Response[0])
+        {
+        case 'B':
+        case 'b':
+            DbgBreakPoint();
+            break;
 
-            case 'I':
-            case 'i':
-                return;
+        case 'I':
+        case 'i':
+            return;
 
-            case 'A':
-            case 'a':
-                ExitProcess(ExitCode);
-                break;
-            }
+        case 'A':
+        case 'a':
+            ExitProcess(ExitCode);
+            break;
         }
+    }
 #endif
     ExitProcess(ExitCode);
 }
@@ -6528,18 +6108,21 @@ DWORD
 WINAPI
 GetProcessFlags(DWORD processid)
 {
-    IMAGE_NT_HEADERS* nt;
+    IMAGE_NT_HEADERS *nt;
     DWORD flags = 0;
 
-    if (processid && processid != GetCurrentProcessId()) return 0;
+    if (processid && processid != GetCurrentProcessId())
+        return 0;
 
     if ((nt = RtlImageNtHeader(NtCurrentTeb()->Peb->ImageBaseAddress)))
     {
         if (nt->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
             flags |= PDB32_CONSOLE_PROC;
     }
-    if (!AreFileApisANSI()) flags |= PDB32_FILE_APIS_OEM;
-    if (IsDebuggerPresent()) flags |= PDB32_DEBUGGED;
+    if (!AreFileApisANSI())
+        flags |= PDB32_FILE_APIS_OEM;
+    if (IsDebuggerPresent())
+        flags |= PDB32_DEBUGGED;
     return flags;
 }
 
@@ -6549,34 +6132,28 @@ ConvertToGlobalHandle(HANDLE hSrc)
 {
     HANDLE ret = INVALID_HANDLE_VALUE;
     DuplicateHandle(GetCurrentProcess(), hSrc, GetCurrentProcess(), &ret, 0, FALSE,
-        DUPLICATE_MAKE_GLOBAL | DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE);
+                    DUPLICATE_MAKE_GLOBAL | DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE);
     return ret;
 }
 
-BOOL
-WINAPI
-IsProcessorFeaturePresent(
-    DWORD ProcessorFeature
-    )
+BOOL WINAPI IsProcessorFeaturePresent(DWORD ProcessorFeature)
 {
     BOOL rv;
 
-    if ( ProcessorFeature < PROCESSOR_FEATURE_MAX ) {
+    if (ProcessorFeature < PROCESSOR_FEATURE_MAX)
+    {
         rv = (BOOL)(USER_SHARED_DATA->ProcessorFeatures[ProcessorFeature]);
-        }
-    else {
+    }
+    else
+    {
         rv = FALSE;
-        }
+    }
     return rv;
 }
 
 
-VOID
-GetSystemInfoInternal(
-    IN PSYSTEM_BASIC_INFORMATION BasicInfo,
-    IN PSYSTEM_PROCESSOR_INFORMATION ProcessorInfo,
-    OUT LPSYSTEM_INFO lpSystemInfo
-    )
+VOID GetSystemInfoInternal(IN PSYSTEM_BASIC_INFORMATION BasicInfo, IN PSYSTEM_PROCESSOR_INFORMATION ProcessorInfo,
+                           OUT LPSYSTEM_INFO lpSystemInfo)
 /*++
 
 Routine Description:
@@ -6600,7 +6177,7 @@ Return Value:
 
 --*/
 {
-    RtlZeroMemory(lpSystemInfo,sizeof(*lpSystemInfo));
+    RtlZeroMemory(lpSystemInfo, sizeof(*lpSystemInfo));
 
     lpSystemInfo->wProcessorArchitecture = ProcessorInfo->ProcessorArchitecture;
     lpSystemInfo->wReserved = 0;
@@ -6612,37 +6189,41 @@ Return Value:
     lpSystemInfo->wProcessorLevel = ProcessorInfo->ProcessorLevel;
     lpSystemInfo->wProcessorRevision = ProcessorInfo->ProcessorRevision;
 
-    if (ProcessorInfo->ProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL) {
-        if (ProcessorInfo->ProcessorLevel == 3) {
+    if (ProcessorInfo->ProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
+    {
+        if (ProcessorInfo->ProcessorLevel == 3)
+        {
             lpSystemInfo->dwProcessorType = PROCESSOR_INTEL_386;
-            }
-        else
-        if (ProcessorInfo->ProcessorLevel == 4) {
+        }
+        else if (ProcessorInfo->ProcessorLevel == 4)
+        {
             lpSystemInfo->dwProcessorType = PROCESSOR_INTEL_486;
-            }
-        else {
+        }
+        else
+        {
             lpSystemInfo->dwProcessorType = PROCESSOR_INTEL_PENTIUM;
-            }
         }
-    else
-    if (ProcessorInfo->ProcessorArchitecture == PROCESSOR_ARCHITECTURE_MIPS) {
+    }
+    else if (ProcessorInfo->ProcessorArchitecture == PROCESSOR_ARCHITECTURE_MIPS)
+    {
         lpSystemInfo->dwProcessorType = PROCESSOR_MIPS_R4000;
-        }
-    else
-    if (ProcessorInfo->ProcessorArchitecture == PROCESSOR_ARCHITECTURE_ALPHA) {
+    }
+    else if (ProcessorInfo->ProcessorArchitecture == PROCESSOR_ARCHITECTURE_ALPHA)
+    {
         lpSystemInfo->dwProcessorType = PROCESSOR_ALPHA_21064;
-        }
-    else
-    if (ProcessorInfo->ProcessorArchitecture == PROCESSOR_ARCHITECTURE_PPC) {
-        lpSystemInfo->dwProcessorType = 604;  // backward compatibility
-        }
-    else
-    if (ProcessorInfo->ProcessorArchitecture == PROCESSOR_ARCHITECTURE_IA64) {
+    }
+    else if (ProcessorInfo->ProcessorArchitecture == PROCESSOR_ARCHITECTURE_PPC)
+    {
+        lpSystemInfo->dwProcessorType = 604; // backward compatibility
+    }
+    else if (ProcessorInfo->ProcessorArchitecture == PROCESSOR_ARCHITECTURE_IA64)
+    {
         lpSystemInfo->dwProcessorType = PROCESSOR_INTEL_IA64;
-        }
-    else {
+    }
+    else
+    {
         lpSystemInfo->dwProcessorType = 0;
-        }
+    }
 
     lpSystemInfo->dwAllocationGranularity = BasicInfo->AllocationGranularity;
 
@@ -6652,19 +6233,16 @@ Return Value:
     // as AllocationGranularity
     //
 
-    if ( GetProcessVersion(0) < 0x30033 ) {
+    if (GetProcessVersion(0) < 0x30033)
+    {
         lpSystemInfo->wProcessorLevel = 0;
         lpSystemInfo->wProcessorRevision = 0;
-        }
+    }
 
     return;
 }
 
-VOID
-WINAPI
-GetSystemInfo(
-    LPSYSTEM_INFO lpSystemInfo
-    )
+VOID WINAPI GetSystemInfo(LPSYSTEM_INFO lpSystemInfo)
 
 /*++
 
@@ -6719,39 +6297,24 @@ Return Value:
     SYSTEM_PROCESSOR_INFORMATION ProcessorInfo;
 
 
-    Status = NtQuerySystemInformation(
-                SystemBasicInformation,
-                &BasicInfo,
-                sizeof(BasicInfo),
-                NULL
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = NtQuerySystemInformation(SystemBasicInformation, &BasicInfo, sizeof(BasicInfo), NULL);
+    if (!NT_SUCCESS(Status))
+    {
         return;
-        }
+    }
 
-    Status = NtQuerySystemInformation(
-                SystemProcessorInformation,
-                &ProcessorInfo,
-                sizeof(ProcessorInfo),
-                NULL
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = NtQuerySystemInformation(SystemProcessorInformation, &ProcessorInfo, sizeof(ProcessorInfo), NULL);
+    if (!NT_SUCCESS(Status))
+    {
         return;
-        }
+    }
 
-    GetSystemInfoInternal(
-        &BasicInfo,
-        &ProcessorInfo,
-        lpSystemInfo);
+    GetSystemInfoInternal(&BasicInfo, &ProcessorInfo, lpSystemInfo);
 
     return;
 }
 
-VOID
-WINAPI
-GetNativeSystemInfo(
-    LPSYSTEM_INFO lpSystemInfo
-    )
+VOID WINAPI GetNativeSystemInfo(LPSYSTEM_INFO lpSystemInfo)
 
 /*++
 
@@ -6808,43 +6371,26 @@ Return Value:
     SYSTEM_PROCESSOR_INFORMATION ProcessorInfo;
 
 
-    Status = RtlGetNativeSystemInformation(
-                SystemBasicInformation,
-                &BasicInfo,
-                sizeof(BasicInfo),
-                NULL
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = RtlGetNativeSystemInformation(SystemBasicInformation, &BasicInfo, sizeof(BasicInfo), NULL);
+    if (!NT_SUCCESS(Status))
+    {
         return;
-        }
+    }
 
-    Status = RtlGetNativeSystemInformation(
-                SystemProcessorInformation,
-                &ProcessorInfo,
-                sizeof(ProcessorInfo),
-                NULL
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = RtlGetNativeSystemInformation(SystemProcessorInformation, &ProcessorInfo, sizeof(ProcessorInfo), NULL);
+    if (!NT_SUCCESS(Status))
+    {
         return;
-        }
+    }
 
-    GetSystemInfoInternal(
-        &BasicInfo,
-        &ProcessorInfo,
-        lpSystemInfo);
+    GetSystemInfoInternal(&BasicInfo, &ProcessorInfo, lpSystemInfo);
 
     return;
 }
 
 
 #if defined(REMOTE_BOOT)
-BOOL
-WINAPI
-GetSystemInfoExA(
-    IN SYSTEMINFOCLASS dwSystemInfoClass,
-    OUT LPVOID lpSystemInfoBuffer,
-    IN OUT LPDWORD nSize
-    )
+BOOL WINAPI GetSystemInfoExA(IN SYSTEMINFOCLASS dwSystemInfoClass, OUT LPVOID lpSystemInfoBuffer, IN OUT LPDWORD nSize)
 
 /*++
 
@@ -6864,17 +6410,21 @@ GetSystemInfoExA(
     // Determine the required buffer size.
     //
 
-    switch ( dwSystemInfoClass ) {
+    switch (dwSystemInfoClass)
+    {
 
     case SystemInfoRemoteBoot:
         requiredSize = sizeof(BOOL);
         break;
 
     case SystemInfoRemoteBootServerPath:
-        if ( isRemoteBoot ) {
-            RtlInitUnicodeString( &unicodeString, USER_SHARED_DATA->RemoteBootServerPath );
-            requiredSize = RtlUnicodeStringToAnsiSize( &unicodeString );
-        } else {
+        if (isRemoteBoot)
+        {
+            RtlInitUnicodeString(&unicodeString, USER_SHARED_DATA->RemoteBootServerPath);
+            requiredSize = RtlUnicodeStringToAnsiSize(&unicodeString);
+        }
+        else
+        {
 
             //
             // This is not a remote boot client. Return success with a
@@ -6901,7 +6451,8 @@ GetSystemInfoExA(
     // needs to be and return an error.
     //
 
-    if ( *nSize < requiredSize ) {
+    if (*nSize < requiredSize)
+    {
         *nSize = requiredSize;
         SetLastError(ERROR_BUFFER_OVERFLOW);
         return FALSE;
@@ -6913,7 +6464,8 @@ GetSystemInfoExA(
     // The buffer is big enough. Return the requested information.
     //
 
-    switch ( dwSystemInfoClass ) {
+    switch (dwSystemInfoClass)
+    {
 
     case SystemInfoRemoteBoot:
         *(LPBOOL)lpSystemInfoBuffer = isRemoteBoot;
@@ -6922,21 +6474,14 @@ GetSystemInfoExA(
     case SystemInfoRemoteBootServerPath:
         ansiString.Buffer = lpSystemInfoBuffer;
         ansiString.MaximumLength = (USHORT)*nSize;
-        RtlUnicodeStringToAnsiString( &ansiString, &unicodeString, FALSE );
+        RtlUnicodeStringToAnsiString(&ansiString, &unicodeString, FALSE);
         break;
-
     }
 
     return TRUE;
 }
 
-BOOL
-WINAPI
-GetSystemInfoExW(
-    IN SYSTEMINFOCLASS dwSystemInfoClass,
-    OUT LPVOID lpSystemInfoBuffer,
-    IN OUT LPDWORD nSize
-    )
+BOOL WINAPI GetSystemInfoExW(IN SYSTEMINFOCLASS dwSystemInfoClass, OUT LPVOID lpSystemInfoBuffer, IN OUT LPDWORD nSize)
 
 /*++
 
@@ -6981,16 +6526,20 @@ Return Value:
     // Determine the required buffer size.
     //
 
-    switch ( dwSystemInfoClass ) {
+    switch (dwSystemInfoClass)
+    {
 
     case SystemInfoRemoteBoot:
         requiredSize = sizeof(BOOL);
         break;
 
     case SystemInfoRemoteBootServerPath:
-        if ( isRemoteBoot ) {
+        if (isRemoteBoot)
+        {
             requiredSize = (wcslen(USER_SHARED_DATA->RemoteBootServerPath) + 1) * sizeof(WCHAR);
-        } else {
+        }
+        else
+        {
 
             //
             // This is not a remote boot client. Return success with a
@@ -7017,7 +6566,8 @@ Return Value:
     // needs to be and return an error.
     //
 
-    if ( *nSize < requiredSize ) {
+    if (*nSize < requiredSize)
+    {
         *nSize = requiredSize;
         SetLastError(ERROR_BUFFER_OVERFLOW);
         return FALSE;
@@ -7029,33 +6579,28 @@ Return Value:
     // The buffer is big enough. Return the requested information.
     //
 
-    switch ( dwSystemInfoClass ) {
+    switch (dwSystemInfoClass)
+    {
 
     case SystemInfoRemoteBoot:
         *(LPBOOL)lpSystemInfoBuffer = isRemoteBoot;
         break;
 
     case SystemInfoRemoteBootServerPath:
-        wcscpy( lpSystemInfoBuffer, USER_SHARED_DATA->RemoteBootServerPath );
+        wcscpy(lpSystemInfoBuffer, USER_SHARED_DATA->RemoteBootServerPath);
         break;
-
     }
 
     return TRUE;
 }
 #endif // defined(REMOTE_BOOT)
 
-BOOL
-BuildSubSysCommandLine(
-    LPWSTR  lpSubSysName,
-    LPCWSTR lpApplicationName,
-    LPCWSTR lpCommandLine,
-    PUNICODE_STRING SubSysCommandLine
-    )
+BOOL BuildSubSysCommandLine(LPWSTR lpSubSysName, LPCWSTR lpApplicationName, LPCWSTR lpCommandLine,
+                            PUNICODE_STRING SubSysCommandLine)
 {
     UNICODE_STRING Args;
     UNICODE_STRING Command;
-    BOOLEAN        ReturnStatus = TRUE;
+    BOOLEAN ReturnStatus = TRUE;
 
     //
     // build the command line as follows:
@@ -7069,14 +6614,11 @@ BuildSubSysCommandLine(
     RtlInitUnicodeString(&Args, lpCommandLine);
 
     SubSysCommandLine->Length = 0;
-    SubSysCommandLine->MaximumLength = Command.MaximumLength
-                                       + Args.MaximumLength
-                                       + (USHORT)32;
+    SubSysCommandLine->MaximumLength = Command.MaximumLength + Args.MaximumLength + (USHORT)32;
 
-    SubSysCommandLine->Buffer = RtlAllocateHeap( RtlProcessHeap(), MAKE_TAG( VDM_TAG ),
-                                                 SubSysCommandLine->MaximumLength
-                                               );
-    if ( SubSysCommandLine->Buffer ) {
+    SubSysCommandLine->Buffer = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(VDM_TAG), SubSysCommandLine->MaximumLength);
+    if (SubSysCommandLine->Buffer)
+    {
 
         // New command line begins with either L"OS2 /P " or L"POSIX /P "
         RtlAppendUnicodeToString(SubSysCommandLine, lpSubSysName);
@@ -7088,8 +6630,9 @@ BuildSubSysCommandLine(
 
         // and append to new command line
         RtlAppendUnicodeStringToString(SubSysCommandLine, &Args);
-
-    } else {
+    }
+    else
+    {
 
         BaseSetLastNTError(STATUS_NO_MEMORY);
         ReturnStatus = FALSE;
@@ -7099,14 +6642,7 @@ BuildSubSysCommandLine(
 }
 
 
-
-
-BOOL
-WINAPI
-SetPriorityClass(
-    HANDLE hProcess,
-    DWORD dwPriorityClass
-    )
+BOOL WINAPI SetPriorityClass(HANDLE hProcess, DWORD dwPriorityClass)
 
 /*++
 
@@ -7147,65 +6683,70 @@ Return Value:
     // is allocated on a dword boundary.  w/o it, the compiler may choose
     // to put it on a word boundary and the NtxxxInformationProces call will
     // fail with a datatype misalignment fault.
-    union {
+    union
+    {
         PROCESS_PRIORITY_CLASS PriClass;
         ULONG x;
-    }x;
+    } x;
     PVOID State = NULL;
     ReturnValue = TRUE;
-    if (dwPriorityClass & IDLE_PRIORITY_CLASS ) {
+    if (dwPriorityClass & IDLE_PRIORITY_CLASS)
+    {
         PriorityClass = PROCESS_PRIORITY_CLASS_IDLE;
-        }
-    else if (dwPriorityClass & BELOW_NORMAL_PRIORITY_CLASS ) {
+    }
+    else if (dwPriorityClass & BELOW_NORMAL_PRIORITY_CLASS)
+    {
         PriorityClass = PROCESS_PRIORITY_CLASS_BELOW_NORMAL;
-        }
-    else if (dwPriorityClass & NORMAL_PRIORITY_CLASS ) {
+    }
+    else if (dwPriorityClass & NORMAL_PRIORITY_CLASS)
+    {
         PriorityClass = PROCESS_PRIORITY_CLASS_NORMAL;
-        }
-    else if (dwPriorityClass & ABOVE_NORMAL_PRIORITY_CLASS ) {
+    }
+    else if (dwPriorityClass & ABOVE_NORMAL_PRIORITY_CLASS)
+    {
         PriorityClass = PROCESS_PRIORITY_CLASS_ABOVE_NORMAL;
+    }
+    else if (dwPriorityClass & HIGH_PRIORITY_CLASS)
+    {
+        PriorityClass = PROCESS_PRIORITY_CLASS_HIGH;
+    }
+    else if (dwPriorityClass & REALTIME_PRIORITY_CLASS)
+    {
+        if (State = BasepIsRealtimeAllowed(TRUE))
+        {
+            PriorityClass = PROCESS_PRIORITY_CLASS_REALTIME;
         }
-    else if (dwPriorityClass & HIGH_PRIORITY_CLASS ) {
-        PriorityClass =  PROCESS_PRIORITY_CLASS_HIGH;
+        else
+        {
+            PriorityClass = PROCESS_PRIORITY_CLASS_HIGH;
         }
-    else if (dwPriorityClass & REALTIME_PRIORITY_CLASS ) {
-        if ( State = BasepIsRealtimeAllowed(TRUE) ) {
-            PriorityClass =  PROCESS_PRIORITY_CLASS_REALTIME;
-            }
-        else {
-            PriorityClass =  PROCESS_PRIORITY_CLASS_HIGH;
-            }
-        }
-    else {
+    }
+    else
+    {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
-        }
+    }
     x.PriClass.PriorityClass = PriorityClass;
     x.PriClass.Foreground = FALSE;
 
-    Status = NtSetInformationProcess(
-                hProcess,
-                ProcessPriorityClass,
-                (PVOID)&x.PriClass,
-                sizeof(x.PriClass)
-                );
+    Status = NtSetInformationProcess(hProcess, ProcessPriorityClass, (PVOID)&x.PriClass, sizeof(x.PriClass));
 
-    if ( State ) {
-        BasepReleasePrivilege( State );
-        }
+    if (State)
+    {
+        BasepReleasePrivilege(State);
+    }
 
-    if ( !NT_SUCCESS(Status) ) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         ReturnValue = FALSE;
-        }
+    }
     return ReturnValue;
 }
 
 DWORD
 WINAPI
-GetPriorityClass(
-    HANDLE hProcess
-    )
+GetPriorityClass(HANDLE hProcess)
 
 /*++
 
@@ -7236,62 +6777,54 @@ Return Value:
     // is allocated on a dword boundary.  w/o it, the compiler may choose
     // to put it on a word boundary and the NtxxxInformationProces call will
     // fail with a datatype misalignment fault.
-    union _x {
+    union _x
+    {
         PROCESS_PRIORITY_CLASS PriClass;
         ULONG x;
-    }x;
+    } x;
 
     PriorityClass = 0;
 
 
-    Status = NtQueryInformationProcess(
-                hProcess,
-                ProcessPriorityClass,
-                &x.PriClass,
-                sizeof(x.PriClass),
-                NULL
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = NtQueryInformationProcess(hProcess, ProcessPriorityClass, &x.PriClass, sizeof(x.PriClass), NULL);
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return 0;
-        }
+    }
 
-    switch ( x.PriClass.PriorityClass ) {
-        case PROCESS_PRIORITY_CLASS_IDLE:
-            PriorityClass = IDLE_PRIORITY_CLASS;
-            break;
+    switch (x.PriClass.PriorityClass)
+    {
+    case PROCESS_PRIORITY_CLASS_IDLE:
+        PriorityClass = IDLE_PRIORITY_CLASS;
+        break;
 
-        case PROCESS_PRIORITY_CLASS_HIGH:
-            PriorityClass = HIGH_PRIORITY_CLASS;
-            break;
+    case PROCESS_PRIORITY_CLASS_HIGH:
+        PriorityClass = HIGH_PRIORITY_CLASS;
+        break;
 
-        case PROCESS_PRIORITY_CLASS_REALTIME:
-            PriorityClass = REALTIME_PRIORITY_CLASS;
-            break;
+    case PROCESS_PRIORITY_CLASS_REALTIME:
+        PriorityClass = REALTIME_PRIORITY_CLASS;
+        break;
 
-        case PROCESS_PRIORITY_CLASS_BELOW_NORMAL:
-            PriorityClass = BELOW_NORMAL_PRIORITY_CLASS;
-            break;
+    case PROCESS_PRIORITY_CLASS_BELOW_NORMAL:
+        PriorityClass = BELOW_NORMAL_PRIORITY_CLASS;
+        break;
 
-        case PROCESS_PRIORITY_CLASS_ABOVE_NORMAL:
-            PriorityClass = ABOVE_NORMAL_PRIORITY_CLASS;
-            break;
+    case PROCESS_PRIORITY_CLASS_ABOVE_NORMAL:
+        PriorityClass = ABOVE_NORMAL_PRIORITY_CLASS;
+        break;
 
-        case PROCESS_PRIORITY_CLASS_NORMAL:
-        default:
-            PriorityClass = NORMAL_PRIORITY_CLASS;
-            break;
-        }
+    case PROCESS_PRIORITY_CLASS_NORMAL:
+    default:
+        PriorityClass = NORMAL_PRIORITY_CLASS;
+        break;
+    }
 
     return PriorityClass;
 }
 
-BOOL
-WINAPI
-IsBadReadPtr(
-    CONST VOID *lp,
-    UINT_PTR cb
-    )
+BOOL WINAPI IsBadReadPtr(CONST VOID *lp, UINT_PTR cb)
 
 /*++
 
@@ -7340,14 +6873,16 @@ Return Value:
     // read accessibility or alignment.
     //
 
-    if (cb != 0) {
+    if (cb != 0)
+    {
 
         //
         // If it is a NULL pointer just return TRUE, they are always bad
         //
-        if (lp == NULL) {
+        if (lp == NULL)
+        {
             return TRUE;
-            }
+        }
 
         StartAddress = (PSZ)lp;
 
@@ -7357,33 +6892,33 @@ Return Value:
         //
 
         EndAddress = StartAddress + cb - 1;
-        if ( EndAddress < StartAddress ) {
-           return TRUE;
-            }
-        else {
-            try {
+        if (EndAddress < StartAddress)
+        {
+            return TRUE;
+        }
+        else
+        {
+            try
+            {
                 *(volatile CHAR *)StartAddress;
                 StartAddress = (PCHAR)((ULONG_PTR)StartAddress & (~((LONG)PageSize - 1)));
                 EndAddress = (PCHAR)((ULONG_PTR)EndAddress & (~((LONG)PageSize - 1)));
-                while (StartAddress != EndAddress) {
+                while (StartAddress != EndAddress)
+                {
                     StartAddress = StartAddress + PageSize;
                     *(volatile CHAR *)StartAddress;
-                    }
-                }
-            except(EXCEPTION_EXECUTE_HANDLER) {
-                return TRUE;
                 }
             }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
+                return TRUE;
+            }
         }
+    }
     return FALSE;
 }
 
-BOOL
-WINAPI
-IsBadHugeReadPtr(
-    CONST VOID *lp,
-    UINT_PTR cb
-    )
+BOOL WINAPI IsBadHugeReadPtr(CONST VOID *lp, UINT_PTR cb)
 
 /*++
 
@@ -7392,17 +6927,11 @@ IsBadHugeReadPtr(
 --*/
 
 {
-    return IsBadReadPtr(lp,cb);
+    return IsBadReadPtr(lp, cb);
 }
 
 
-
-BOOL
-WINAPI
-IsBadWritePtr(
-    LPVOID lp,
-    UINT_PTR cb
-    )
+BOOL WINAPI IsBadWritePtr(LPVOID lp, UINT_PTR cb)
 /*++
 
 Routine Description:
@@ -7451,14 +6980,16 @@ Return Value:
     // write accessibility.
     //
 
-    if (cb != 0) {
+    if (cb != 0)
+    {
 
         //
         // If it is a NULL pointer just return TRUE, they are always bad
         //
-        if (lp == NULL) {
+        if (lp == NULL)
+        {
             return TRUE;
-            }
+        }
 
         StartAddress = (PCHAR)lp;
 
@@ -7468,33 +6999,33 @@ Return Value:
         //
 
         EndAddress = StartAddress + cb - 1;
-        if ( EndAddress < StartAddress ) {
+        if (EndAddress < StartAddress)
+        {
             return TRUE;
-            }
-        else {
-            try {
+        }
+        else
+        {
+            try
+            {
                 *(volatile CHAR *)StartAddress = *(volatile CHAR *)StartAddress;
                 StartAddress = (PCHAR)((ULONG_PTR)StartAddress & (~((LONG)PageSize - 1)));
                 EndAddress = (PCHAR)((ULONG_PTR)EndAddress & (~((LONG)PageSize - 1)));
-                while (StartAddress != EndAddress) {
+                while (StartAddress != EndAddress)
+                {
                     StartAddress = StartAddress + PageSize;
                     *(volatile CHAR *)StartAddress = *(volatile CHAR *)StartAddress;
-                    }
-                }
-            except(EXCEPTION_EXECUTE_HANDLER) {
-                return TRUE;
                 }
             }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
+                return TRUE;
+            }
         }
+    }
     return FALSE;
 }
 
-BOOL
-WINAPI
-IsBadHugeWritePtr(
-    LPVOID lp,
-    UINT_PTR cb
-    )
+BOOL WINAPI IsBadHugeWritePtr(LPVOID lp, UINT_PTR cb)
 
 /*++
 
@@ -7503,14 +7034,10 @@ IsBadHugeWritePtr(
 --*/
 
 {
-    return IsBadWritePtr(lp,cb);
+    return IsBadWritePtr(lp, cb);
 }
 
-BOOL
-WINAPI
-IsBadCodePtr(
-    FARPROC lpfn
-    )
+BOOL WINAPI IsBadCodePtr(FARPROC lpfn)
 
 /*++
 
@@ -7519,15 +7046,10 @@ IsBadCodePtr(
 --*/
 
 {
-    return IsBadReadPtr((LPVOID)lpfn,1);
+    return IsBadReadPtr((LPVOID)lpfn, 1);
 }
 
-BOOL
-WINAPI
-IsBadStringPtrA(
-    LPCSTR lpsz,
-    UINT_PTR cchMax
-    )
+BOOL WINAPI IsBadStringPtrA(LPCSTR lpsz, UINT_PTR cchMax)
 
 /*++
 
@@ -7578,14 +7100,16 @@ Return Value:
     // read accessibility.
     //
 
-    if (cchMax != 0) {
+    if (cchMax != 0)
+    {
 
         //
         // If it is a NULL pointer just return TRUE, they are always bad
         //
-        if (lpsz == NULL) {
+        if (lpsz == NULL)
+        {
             return TRUE;
-            }
+        }
 
         StartAddress = (PSZ)lpsz;
 
@@ -7595,26 +7119,24 @@ Return Value:
         //
 
         EndAddress = StartAddress + cchMax - 1;
-        try {
+        try
+        {
             c = *(volatile CHAR *)StartAddress;
-            while ( c && StartAddress != EndAddress ) {
+            while (c && StartAddress != EndAddress)
+            {
                 StartAddress++;
                 c = *(volatile CHAR *)StartAddress;
-                }
-            }
-        except(EXCEPTION_EXECUTE_HANDLER) {
-            return TRUE;
             }
         }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            return TRUE;
+        }
+    }
     return FALSE;
 }
 
-BOOL
-WINAPI
-IsBadStringPtrW(
-    LPCWSTR lpsz,
-    UINT_PTR cchMax
-    )
+BOOL WINAPI IsBadStringPtrW(LPCWSTR lpsz, UINT_PTR cchMax)
 
 /*++
 
@@ -7665,14 +7187,16 @@ Return Value:
     // read accessibility.
     //
 
-    if (cchMax != 0) {
+    if (cchMax != 0)
+    {
 
         //
         // If it is a NULL pointer just return TRUE, they are always bad
         //
-        if (lpsz == NULL) {
+        if (lpsz == NULL)
+        {
             return TRUE;
-            }
+        }
 
         StartAddress = lpsz;
 
@@ -7681,27 +7205,25 @@ Return Value:
         // read accessibility.
         //
 
-        EndAddress = (LPCWSTR)((PSZ)StartAddress + (cchMax*2) - 2);
-        try {
+        EndAddress = (LPCWSTR)((PSZ)StartAddress + (cchMax * 2) - 2);
+        try
+        {
             c = *(volatile WCHAR *)StartAddress;
-            while ( c && StartAddress != EndAddress ) {
+            while (c && StartAddress != EndAddress)
+            {
                 StartAddress++;
                 c = *(volatile WCHAR *)StartAddress;
-                }
-            }
-        except(EXCEPTION_EXECUTE_HANDLER) {
-            return TRUE;
             }
         }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            return TRUE;
+        }
+    }
     return FALSE;
 }
 
-BOOL
-WINAPI
-SetProcessShutdownParameters(
-    DWORD dwLevel,
-    DWORD dwFlags
-    )
+BOOL WINAPI SetProcessShutdownParameters(DWORD dwLevel, DWORD dwFlags)
 
 /*++
 
@@ -7747,10 +7269,11 @@ Return Value
     NTSTATUS Status;
 
     Status = CsrBasepSetProcessShutdownParam(dwLevel, dwFlags);
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
     return TRUE;
 
 #else
@@ -7762,27 +7285,20 @@ Return Value
     a->ShutdownFlags = dwFlags;
 
     CsrClientCallServer((PCSR_API_MSG)&m, NULL,
-            CSR_MAKE_API_NUMBER(BASESRV_SERVERDLL_INDEX,
-            BasepSetProcessShutdownParam),
-            sizeof(*a));
+                        CSR_MAKE_API_NUMBER(BASESRV_SERVERDLL_INDEX, BasepSetProcessShutdownParam), sizeof(*a));
 
-    if (!NT_SUCCESS((NTSTATUS)m.ReturnValue)) {
+    if (!NT_SUCCESS((NTSTATUS)m.ReturnValue))
+    {
         BaseSetLastNTError((NTSTATUS)m.ReturnValue);
         return FALSE;
-        }
+    }
 
     return TRUE;
 
 #endif
-
 }
 
-BOOL
-WINAPI
-GetProcessShutdownParameters(
-    LPDWORD lpdwLevel,
-    LPDWORD lpdwFlags
-    )
+BOOL WINAPI GetProcessShutdownParameters(LPDWORD lpdwLevel, LPDWORD lpdwFlags)
 
 /*++
 
@@ -7814,10 +7330,11 @@ Return Value
     NTSTATUS Status;
 
     Status = CsrBasepGetProcessShutdownParam(lpdwLevel, lpdwFlags);
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
     return TRUE;
 
 #else
@@ -7826,14 +7343,13 @@ Return Value
     PBASE_SHUTDOWNPARAM_MSG a = &m.u.ShutdownParam;
 
     CsrClientCallServer((PCSR_API_MSG)&m, NULL,
-            CSR_MAKE_API_NUMBER(BASESRV_SERVERDLL_INDEX,
-            BasepGetProcessShutdownParam),
-            sizeof(*a));
+                        CSR_MAKE_API_NUMBER(BASESRV_SERVERDLL_INDEX, BasepGetProcessShutdownParam), sizeof(*a));
 
-    if (!NT_SUCCESS((NTSTATUS)m.ReturnValue)) {
+    if (!NT_SUCCESS((NTSTATUS)m.ReturnValue))
+    {
         BaseSetLastNTError((NTSTATUS)m.ReturnValue);
         return FALSE;
-        }
+    }
 
     *lpdwLevel = a->ShutdownLevel;
     *lpdwFlags = a->ShutdownFlags;
@@ -7841,36 +7357,29 @@ Return Value
     return TRUE;
 
 #endif
-
 }
 
 
 PVOID
-BasepIsRealtimeAllowed(
-    BOOLEAN LeaveEnabled
-    )
+BasepIsRealtimeAllowed(BOOLEAN LeaveEnabled)
 {
     PVOID State;
     NTSTATUS Status;
 
-    Status = BasepAcquirePrivilegeEx( SE_INC_BASE_PRIORITY_PRIVILEGE, &State );
-    if (!NT_SUCCESS( Status )) {
+    Status = BasepAcquirePrivilegeEx(SE_INC_BASE_PRIORITY_PRIVILEGE, &State);
+    if (!NT_SUCCESS(Status))
+    {
         return NULL;
-        }
-    if ( !LeaveEnabled ) {
-        BasepReleasePrivilege( State );
+    }
+    if (!LeaveEnabled)
+    {
+        BasepReleasePrivilege(State);
         State = (PVOID)1;
-        }
+    }
     return State;
 }
 
-BOOL
-WINAPI
-GetSystemTimes(
-    PFILETIME lpIdleTime,
-    PFILETIME lpKernelTime,
-    PFILETIME lpUserTime
-    )
+BOOL WINAPI GetSystemTimes(PFILETIME lpIdleTime, PFILETIME lpKernelTime, PFILETIME lpUserTime)
 
 /*++
 
@@ -7901,13 +7410,13 @@ Return Value:
 --*/
 
 {
-    LONG           Lupe;
+    LONG Lupe;
     PSYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
-                   ProcessorTimes;
-    ULONG          ProcessorTimesCb;
-    NTSTATUS       Status;
+    ProcessorTimes;
+    ULONG ProcessorTimesCb;
+    NTSTATUS Status;
     ULARGE_INTEGER Sum;
-    ULONG          ReturnLength;
+    ULONG ReturnLength;
 
 #if (!defined(BUILD_WOW6432) && !defined(_WIN64))
 #define BASEP_GST_NPROCS BaseStaticServerData->SysInfo.NumberOfProcessors
@@ -7917,38 +7426,37 @@ Return Value:
 
     ProcessorTimesCb = BASEP_GST_NPROCS * sizeof(*ProcessorTimes);
 
-    ProcessorTimes = ((PSYSTEM_PROCESSOR_PERFORMANCE_INFORMATION)
-                      RtlAllocateHeap(RtlProcessHeap(),
-                                      MAKE_TAG(TMP_TAG),
-                                      ProcessorTimesCb));
-    if (! ProcessorTimes) {
+    ProcessorTimes = ((PSYSTEM_PROCESSOR_PERFORMANCE_INFORMATION)RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG),
+                                                                                 ProcessorTimesCb));
+    if (!ProcessorTimes)
+    {
         Status = STATUS_NO_MEMORY;
         goto cleanup;
     }
 
-    Status = NtQuerySystemInformation(SystemProcessorPerformanceInformation,
-                                      ProcessorTimes,
-                                      ProcessorTimesCb,
+    Status = NtQuerySystemInformation(SystemProcessorPerformanceInformation, ProcessorTimes, ProcessorTimesCb,
                                       &ReturnLength);
-    if (! NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         goto cleanup;
     }
 
-    if (ReturnLength != ProcessorTimesCb) {
+    if (ReturnLength != ProcessorTimesCb)
+    {
         Status = STATUS_INTERNAL_ERROR;
         goto cleanup;
     }
 
-#define BASEP_GST_SUM(DST, SRC)                                         \
-    if ( DST ) {                                                        \
-        Sum.QuadPart = 0;                                               \
-        for (Lupe = 0;                                                  \
-             Lupe < BASEP_GST_NPROCS;                                   \
-             Lupe++) {                                                  \
-            Sum.QuadPart += ProcessorTimes[Lupe]. SRC .QuadPart ;       \
-        }                                                               \
-        DST ->dwLowDateTime = Sum.LowPart;                              \
-        DST ->dwHighDateTime = Sum.HighPart;                            \
+#define BASEP_GST_SUM(DST, SRC)                                \
+    if (DST)                                                   \
+    {                                                          \
+        Sum.QuadPart = 0;                                      \
+        for (Lupe = 0; Lupe < BASEP_GST_NPROCS; Lupe++)        \
+        {                                                      \
+            Sum.QuadPart += ProcessorTimes[Lupe].SRC.QuadPart; \
+        }                                                      \
+        DST->dwLowDateTime = Sum.LowPart;                      \
+        DST->dwHighDateTime = Sum.HighPart;                    \
     }
 
     BASEP_GST_SUM(lpIdleTime, IdleTime);
@@ -7960,14 +7468,14 @@ Return Value:
 
     Status = STATUS_SUCCESS;
 
- cleanup:
-    if (ProcessorTimes) {
-        RtlFreeHeap(RtlProcessHeap(),
-                    MAKE_TAG(TMP_TAG),
-                    ProcessorTimes);
+cleanup:
+    if (ProcessorTimes)
+    {
+        RtlFreeHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), ProcessorTimes);
     }
 
-    if (! NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -7975,15 +7483,8 @@ Return Value:
     return TRUE;
 }
 
-BOOL
-WINAPI
-GetProcessTimes(
-    HANDLE hProcess,
-    LPFILETIME lpCreationTime,
-    LPFILETIME lpExitTime,
-    LPFILETIME lpKernelTime,
-    LPFILETIME lpUserTime
-    )
+BOOL WINAPI GetProcessTimes(HANDLE hProcess, LPFILETIME lpCreationTime, LPFILETIME lpExitTime, LPFILETIME lpKernelTime,
+                            LPFILETIME lpUserTime)
 
 /*++
 
@@ -8027,17 +7528,12 @@ Return Value:
     NTSTATUS Status;
     KERNEL_USER_TIMES TimeInfo;
 
-    Status = NtQueryInformationProcess(
-                hProcess,
-                ProcessTimes,
-                (PVOID)&TimeInfo,
-                sizeof(TimeInfo),
-                NULL
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = NtQueryInformationProcess(hProcess, ProcessTimes, (PVOID)&TimeInfo, sizeof(TimeInfo), NULL);
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 
     *lpCreationTime = *(LPFILETIME)&TimeInfo.CreateTime;
     *lpExitTime = *(LPFILETIME)&TimeInfo.ExitTime;
@@ -8045,16 +7541,9 @@ Return Value:
     *lpUserTime = *(LPFILETIME)&TimeInfo.UserTime;
 
     return TRUE;
-
 }
 
-BOOL
-WINAPI
-GetProcessAffinityMask(
-    HANDLE hProcess,
-    PDWORD_PTR lpProcessAffinityMask,
-    PDWORD_PTR lpSystemAffinityMask
-    )
+BOOL WINAPI GetProcessAffinityMask(HANDLE hProcess, PDWORD_PTR lpProcessAffinityMask, PDWORD_PTR lpSystemAffinityMask)
 
 /*++
 
@@ -8094,33 +7583,24 @@ Return Value:
     NTSTATUS Status;
     BOOL rv;
 
-    Status = NtQueryInformationProcess(
-                hProcess,
-                ProcessBasicInformation,
-                &BasicInformation,
-                sizeof(BasicInformation),
-                NULL
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status =
+        NtQueryInformationProcess(hProcess, ProcessBasicInformation, &BasicInformation, sizeof(BasicInformation), NULL);
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         rv = FALSE;
-        }
-    else {
+    }
+    else
+    {
         *lpProcessAffinityMask = BasicInformation.AffinityMask;
         *lpSystemAffinityMask = BASE_SYSINFO.ActiveProcessorsAffinityMask;
         rv = TRUE;
-        }
+    }
 
     return rv;
 }
 
-BOOL
-WINAPI
-GetProcessWorkingSetSize(
-    HANDLE hProcess,
-    PSIZE_T lpMinimumWorkingSetSize,
-    PSIZE_T lpMaximumWorkingSetSize
-    )
+BOOL WINAPI GetProcessWorkingSetSize(HANDLE hProcess, PSIZE_T lpMinimumWorkingSetSize, PSIZE_T lpMaximumWorkingSetSize)
 
 /*++
 
@@ -8163,33 +7643,23 @@ Return Value:
     NTSTATUS Status;
     BOOL rv;
 
-    Status = NtQueryInformationProcess(
-                hProcess,
-                ProcessQuotaLimits,
-                &QuotaLimits,
-                sizeof(QuotaLimits),
-                NULL
-                );
+    Status = NtQueryInformationProcess(hProcess, ProcessQuotaLimits, &QuotaLimits, sizeof(QuotaLimits), NULL);
 
-    if (NT_SUCCESS(Status)) {
+    if (NT_SUCCESS(Status))
+    {
         *lpMinimumWorkingSetSize = QuotaLimits.MinimumWorkingSetSize;
         *lpMaximumWorkingSetSize = QuotaLimits.MaximumWorkingSetSize;
         rv = TRUE;
-        }
-    else {
+    }
+    else
+    {
         rv = FALSE;
         BaseSetLastNTError(Status);
-        }
+    }
     return rv;
 }
 
-BOOL
-WINAPI
-SetProcessWorkingSetSize(
-    HANDLE hProcess,
-    SIZE_T dwMinimumWorkingSetSize,
-    SIZE_T dwMaximumWorkingSetSize
-    )
+BOOL WINAPI SetProcessWorkingSetSize(HANDLE hProcess, SIZE_T dwMinimumWorkingSetSize, SIZE_T dwMaximumWorkingSetSize)
 
 /*++
 
@@ -8247,11 +7717,13 @@ Return Value:
     ASSERT(dwMinimumWorkingSetSize != 0xffffffff && dwMaximumWorkingSetSize != 0xffffffff);
 #endif
 
-    if ( dwMinimumWorkingSetSize == 0 || dwMaximumWorkingSetSize == 0 ) {
+    if (dwMinimumWorkingSetSize == 0 || dwMaximumWorkingSetSize == 0)
+    {
         Status = STATUS_INVALID_PARAMETER;
         rv = FALSE;
-        }
-    else {
+    }
+    else
+    {
 
         QuotaLimits.MaximumWorkingSetSize = dwMaximumWorkingSetSize;
         QuotaLimits.MinimumWorkingSetSize = dwMinimumWorkingSetSize;
@@ -8262,42 +7734,38 @@ Return Value:
         // NtSetInformationProcess call anyway, in case it turns out
         // to be a decrease operation (which will succeed anyway).
         //
-        PrivStatus = BasepAcquirePrivilegeEx( SE_INC_BASE_PRIORITY_PRIVILEGE, &State );
+        PrivStatus = BasepAcquirePrivilegeEx(SE_INC_BASE_PRIORITY_PRIVILEGE, &State);
 
-        Status = NtSetInformationProcess (
-                   hProcess,
-                   ProcessQuotaLimits,
-                   &QuotaLimits,
-                   sizeof(QuotaLimits)
-                   );
-        if ( !NT_SUCCESS(Status) ) {
+        Status = NtSetInformationProcess(hProcess, ProcessQuotaLimits, &QuotaLimits, sizeof(QuotaLimits));
+        if (!NT_SUCCESS(Status))
+        {
             rv = FALSE;
-            }
-        else {
+        }
+        else
+        {
             rv = TRUE;
-            }
+        }
 
-        if ( NT_SUCCESS(PrivStatus) ) {
+        if (NT_SUCCESS(PrivStatus))
+        {
             //
             // We successfully acquired the privilege above; we need to relinquish it.
             //
-            ASSERT( State != NULL );
-            BasepReleasePrivilege( State );
+            ASSERT(State != NULL);
+            BasepReleasePrivilege(State);
             State = NULL;
-            }
-
         }
-    if ( !rv ) {
+    }
+    if (!rv)
+    {
         BaseSetLastNTError(Status);
-        }
+    }
     return rv;
 }
 
 DWORD
 WINAPI
-GetProcessVersion(
-    DWORD ProcessId
-    )
+GetProcessVersion(DWORD ProcessId)
 {
     PIMAGE_NT_HEADERS NtHeader;
     PPEB Peb;
@@ -8305,55 +7773,59 @@ GetProcessVersion(
     NTSTATUS Status;
     PROCESS_BASIC_INFORMATION ProcessInfo;
     BOOL b;
-    struct {
-        USHORT  MajorSubsystemVersion;
-        USHORT  MinorSubsystemVersion;
+    struct
+    {
+        USHORT MajorSubsystemVersion;
+        USHORT MinorSubsystemVersion;
     } SwappedVersion;
-    union {
-        struct {
-            USHORT  MinorSubsystemVersion;
-            USHORT  MajorSubsystemVersion;
+    union
+    {
+        struct
+        {
+            USHORT MinorSubsystemVersion;
+            USHORT MajorSubsystemVersion;
         };
         DWORD SubsystemVersion;
     } Version;
 
     PVOID ImageBaseAddress;
-    LONG   e_lfanew;
+    LONG e_lfanew;
 
     hProcess = NULL;
     Version.SubsystemVersion = 0;
-    try {
-        if ( ProcessId == 0 || ProcessId == GetCurrentProcessId() ) {
+    try
+    {
+        if (ProcessId == 0 || ProcessId == GetCurrentProcessId())
+        {
             Peb = NtCurrentPeb();
             NtHeader = RtlImageNtHeader(Peb->ImageBaseAddress);
-            if (! NtHeader) {
+            if (!NtHeader)
+            {
                 BaseSetLastNTError(STATUS_INVALID_IMAGE_FORMAT);
                 goto finally_exit;
             }
             Version.MajorSubsystemVersion = NtHeader->OptionalHeader.MajorSubsystemVersion;
             Version.MinorSubsystemVersion = NtHeader->OptionalHeader.MinorSubsystemVersion;
-            }
-        else {
-            hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ,FALSE,ProcessId);
-            if ( !hProcess ) {
+        }
+        else
+        {
+            hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, ProcessId);
+            if (!hProcess)
+            {
                 goto finally_exit;
-                }
+            }
 
             //
             // Get the Peb address
             //
 
-            Status = NtQueryInformationProcess(
-                        hProcess,
-                        ProcessBasicInformation,
-                        &ProcessInfo,
-                        sizeof( ProcessInfo ),
-                        NULL
-                        );
-            if ( !NT_SUCCESS( Status ) ) {
+            Status =
+                NtQueryInformationProcess(hProcess, ProcessBasicInformation, &ProcessInfo, sizeof(ProcessInfo), NULL);
+            if (!NT_SUCCESS(Status))
+            {
                 BaseSetLastNTError(Status);
                 goto finally_exit;
-                }
+            }
             Peb = ProcessInfo.PebBaseAddress;
 
 
@@ -8361,32 +7833,23 @@ GetProcessVersion(
             // Read the image base address from the Peb
             //
 
-            b = ReadProcessMemory(
-                    hProcess,
-                    &Peb->ImageBaseAddress,
-                    &ImageBaseAddress,
-                    sizeof(ImageBaseAddress),
-                    NULL
-                    );
-            if ( !b ) {
+            b = ReadProcessMemory(hProcess, &Peb->ImageBaseAddress, &ImageBaseAddress, sizeof(ImageBaseAddress), NULL);
+            if (!b)
+            {
                 goto finally_exit;
-                }
+            }
 
             //
             // read e_lfanew from imageheader
             //
 
-            b = ReadProcessMemory(
-                    hProcess,
-                    &((PIMAGE_DOS_HEADER)ImageBaseAddress)->e_lfanew,
-                    &e_lfanew,
-                    sizeof(e_lfanew),
-                    NULL
-                    );
+            b = ReadProcessMemory(hProcess, &((PIMAGE_DOS_HEADER)ImageBaseAddress)->e_lfanew, &e_lfanew,
+                                  sizeof(e_lfanew), NULL);
 
-            if ( !b ) {
+            if (!b)
+            {
                 goto finally_exit;
-                }
+            }
 
             NtHeader = (PIMAGE_NT_HEADERS)((PUCHAR)ImageBaseAddress + e_lfanew);
 
@@ -8394,100 +7857,70 @@ GetProcessVersion(
             // Read subsystem version info
             //
 
-            b = ReadProcessMemory(
-                    hProcess,
-                    &NtHeader->OptionalHeader.MajorSubsystemVersion,
-                    &SwappedVersion,
-                    sizeof(SwappedVersion),
-                    NULL
-                    );
-            if ( !b ) {
+            b = ReadProcessMemory(hProcess, &NtHeader->OptionalHeader.MajorSubsystemVersion, &SwappedVersion,
+                                  sizeof(SwappedVersion), NULL);
+            if (!b)
+            {
                 goto finally_exit;
-                }
+            }
             Version.MajorSubsystemVersion = SwappedVersion.MajorSubsystemVersion;
             Version.MinorSubsystemVersion = SwappedVersion.MinorSubsystemVersion;
-            }
-finally_exit:;
         }
-    finally {
-        if ( hProcess ) {
+    finally_exit:;
+    }
+    finally
+    {
+        if (hProcess)
+        {
             CloseHandle(hProcess);
-            }
         }
+    }
 
-        return Version.SubsystemVersion;
+    return Version.SubsystemVersion;
 }
 
 
-BOOL
-WINAPI
-SetProcessAffinityMask(
-    HANDLE hProcess,
-    DWORD_PTR dwProcessAffinityMask
-    )
+BOOL WINAPI SetProcessAffinityMask(HANDLE hProcess, DWORD_PTR dwProcessAffinityMask)
 {
     NTSTATUS Status;
 
-    Status = NtSetInformationProcess(
-                hProcess,
-                ProcessAffinityMask,
-                &dwProcessAffinityMask,
-                sizeof(dwProcessAffinityMask)
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status =
+        NtSetInformationProcess(hProcess, ProcessAffinityMask, &dwProcessAffinityMask, sizeof(dwProcessAffinityMask));
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
     return TRUE;
-
 }
 
-BOOL
-WINAPI
-SetProcessPriorityBoost(
-    HANDLE hProcess,
-    BOOL bDisablePriorityBoost
-    )
+BOOL WINAPI SetProcessPriorityBoost(HANDLE hProcess, BOOL bDisablePriorityBoost)
 {
     NTSTATUS Status;
     ULONG DisableBoost;
 
     DisableBoost = bDisablePriorityBoost ? 1 : 0;
 
-    Status = NtSetInformationProcess(
-                hProcess,
-                ProcessPriorityBoost,
-                &DisableBoost,
-                sizeof(DisableBoost)
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = NtSetInformationProcess(hProcess, ProcessPriorityBoost, &DisableBoost, sizeof(DisableBoost));
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
     return TRUE;
 }
 
-BOOL
-WINAPI
-GetProcessPriorityBoost(
-    HANDLE hProcess,
-    PBOOL pDisablePriorityBoost
-    )
+BOOL WINAPI GetProcessPriorityBoost(HANDLE hProcess, PBOOL pDisablePriorityBoost)
 {
     NTSTATUS Status;
     DWORD DisableBoost;
 
-    Status = NtQueryInformationProcess(
-                hProcess,
-                ProcessPriorityBoost,
-                &DisableBoost,
-                sizeof(DisableBoost),
-                NULL
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = NtQueryInformationProcess(hProcess, ProcessPriorityBoost, &DisableBoost, sizeof(DisableBoost), NULL);
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
 
 
     *pDisablePriorityBoost = DisableBoost;
@@ -8495,35 +7928,20 @@ GetProcessPriorityBoost(
     return TRUE;
 }
 
-BOOL
-WINAPI
-GetProcessIoCounters(
-    IN HANDLE hProcess,
-    OUT PIO_COUNTERS lpIoCounters
-    )
+BOOL WINAPI GetProcessIoCounters(IN HANDLE hProcess, OUT PIO_COUNTERS lpIoCounters)
 {
     NTSTATUS Status;
 
-    Status = NtQueryInformationProcess(
-                hProcess,
-                ProcessIoCounters,
-                lpIoCounters,
-                sizeof(IO_COUNTERS),
-                NULL
-                );
-    if ( !NT_SUCCESS(Status) ) {
+    Status = NtQueryInformationProcess(hProcess, ProcessIoCounters, lpIoCounters, sizeof(IO_COUNTERS), NULL);
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
-        }
+    }
     return TRUE;
 }
 
-BOOL
-WINAPI
-GetProcessHandleCount(
-    IN HANDLE hProcess,
-    OUT PDWORD pdwHandleCount
-    )
+BOOL WINAPI GetProcessHandleCount(IN HANDLE hProcess, OUT PDWORD pdwHandleCount)
 
 /*++
 
@@ -8553,14 +7971,10 @@ Return Value:
     NTSTATUS Status;
     ULONG HandleCount;
 
-    Status = NtQueryInformationProcess(
-                hProcess,
-                ProcessHandleCount,
-                &HandleCount,
-                sizeof(HandleCount),
-                NULL);
+    Status = NtQueryInformationProcess(hProcess, ProcessHandleCount, &HandleCount, sizeof(HandleCount), NULL);
 
-    if (! NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
@@ -8570,12 +7984,7 @@ Return Value:
     return TRUE;
 }
 
-BOOL
-WINAPI
-GetSystemRegistryQuota(
-    OUT PDWORD pdwQuotaAllowed,
-    OUT PDWORD pdwQuotaUsed
-    )
+BOOL WINAPI GetSystemRegistryQuota(OUT PDWORD pdwQuotaAllowed, OUT PDWORD pdwQuotaUsed)
 
 /*++
 
@@ -8604,22 +8013,21 @@ Return Value:
     NTSTATUS Status;
     SYSTEM_REGISTRY_QUOTA_INFORMATION QuotaInfo;
 
-    Status = NtQuerySystemInformation(
-                SystemRegistryQuotaInformation,
-                &QuotaInfo,
-                sizeof(QuotaInfo),
-                NULL);
+    Status = NtQuerySystemInformation(SystemRegistryQuotaInformation, &QuotaInfo, sizeof(QuotaInfo), NULL);
 
-    if (! NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         BaseSetLastNTError(Status);
         return FALSE;
     }
 
-    if (pdwQuotaAllowed) {
+    if (pdwQuotaAllowed)
+    {
         *pdwQuotaAllowed = QuotaInfo.RegistryQuotaAllowed;
     }
 
-    if (pdwQuotaUsed) {
+    if (pdwQuotaUsed)
+    {
         *pdwQuotaUsed = QuotaInfo.RegistryQuotaUsed;
     }
 
@@ -8628,135 +8036,113 @@ Return Value:
 
 
 NTSTATUS
-BasepConfigureAppCertDlls(
-    IN PWSTR ValueName,
-    IN ULONG ValueType,
-    IN PVOID ValueData,
-    IN ULONG ValueLength,
-    IN PVOID Context,
-    IN PVOID EntryContext
-    )
+BasepConfigureAppCertDlls(IN PWSTR ValueName, IN ULONG ValueType, IN PVOID ValueData, IN ULONG ValueLength,
+                          IN PVOID Context, IN PVOID EntryContext)
 {
-   UNREFERENCED_PARAMETER( Context );
+    UNREFERENCED_PARAMETER(Context);
 
-   return (BasepSaveAppCertRegistryValue( (PLIST_ENTRY)EntryContext,
-                                ValueName,
-                                ValueData
-                              )
-         );
+    return (BasepSaveAppCertRegistryValue((PLIST_ENTRY)EntryContext, ValueName, ValueData));
 }
 
 
 NTSTATUS
-BasepSaveAppCertRegistryValue(
-    IN OUT PLIST_ENTRY ListHead,
-    IN PWSTR Name,
-    IN PWSTR Value OPTIONAL
-    )
+BasepSaveAppCertRegistryValue(IN OUT PLIST_ENTRY ListHead, IN PWSTR Name, IN PWSTR Value OPTIONAL)
 {
     PLIST_ENTRY Next;
     PBASEP_APPCERT_ENTRY p;
     UNICODE_STRING UnicodeName;
 
-    RtlInitUnicodeString( &UnicodeName, Name );
+    RtlInitUnicodeString(&UnicodeName, Name);
 
     Next = ListHead->Flink;
-    while ( Next != ListHead ) {
-       p = CONTAINING_RECORD( Next,
-                              BASEP_APPCERT_ENTRY,
-                              Entry
-                            );
-       if (!RtlCompareUnicodeString( &p->Name, &UnicodeName, TRUE )) {
+    while (Next != ListHead)
+    {
+        p = CONTAINING_RECORD(Next, BASEP_APPCERT_ENTRY, Entry);
+        if (!RtlCompareUnicodeString(&p->Name, &UnicodeName, TRUE))
+        {
 #if DBG
-          DbgPrint("BasepSaveRegistryValue: Entry already exists for Certification Component %ws\n",Name);
+            DbgPrint("BasepSaveRegistryValue: Entry already exists for Certification Component %ws\n", Name);
 #endif
-          return( STATUS_SUCCESS );
-           }
-
-       Next = Next->Flink;
-       }
-
-     p = RtlAllocateHeap( RtlProcessHeap(), MAKE_TAG( TMP_TAG ), sizeof( *p ) + UnicodeName.MaximumLength );
-
-     if (p == NULL) {
-#if DBG
-         DbgPrint("BasepSaveRegistryValue: Failed to allocate memory\n");
-#endif
-         return( STATUS_NO_MEMORY );
-         }
-
-     InitializeListHead( &p->Entry );
-
-     p->Name.Buffer = (PWSTR)(p+1);
-     p->Name.Length = UnicodeName.Length;
-     p->Name.MaximumLength = UnicodeName.MaximumLength;
-     RtlMoveMemory( p->Name.Buffer,
-                    UnicodeName.Buffer,
-                    UnicodeName.MaximumLength
-                  );
-
-     InsertTailList( ListHead, &p->Entry );
-
-
-    if (ARGUMENT_PRESENT( Value )) {
-      //
-      // load certification DLL
-      //
-
-      HINSTANCE hDll = LoadLibraryW( Value );
-
-      if (hDll == NULL) {
-         //
-         // The library was not loaded, return.
-         //
-         RemoveEntryList( &p->Entry );
-         RtlFreeHeap( RtlProcessHeap(), 0, p );
-#if DBG
-         DbgPrint("BasepSaveRegistryValue: Certification DLL %ws not found\n", Value);
-#endif
-         return( STATUS_SUCCESS );
-          }
-
-      //
-      // get entry point
-      //
-      p->fPluginCertFunc = (NTSTATUS (WINAPI *)(LPCWSTR,ULONG))
-                          GetProcAddress(hDll,
-                                         CERTAPP_ENTRYPOINT_NAME
-                                         );
-
-      if (p->fPluginCertFunc == NULL) {
-          //
-          // Unable to retrieve routine address, fail.
-          //
-          RemoveEntryList( &p->Entry );
-          RtlFreeHeap( RtlProcessHeap(), 0, p );
-          FreeLibrary(hDll);
-#if DBG
-          DbgPrint("BasepSaveRegistryValue: DLL %ws does not have entry point %s\n", Value,CERTAPP_ENTRYPOINT_NAME);
-#endif
-          return( STATUS_SUCCESS );
-         }
-
-        }
-    else {
-       RemoveEntryList( &p->Entry );
-       RtlFreeHeap( RtlProcessHeap(), 0, p );
-#if DBG
-       DbgPrint("BasepSaveRegistryValue: Entry %ws is empty \n", Name);
-#endif
-       return( STATUS_SUCCESS );
+            return (STATUS_SUCCESS);
         }
 
-    return( STATUS_SUCCESS );
+        Next = Next->Flink;
+    }
 
+    p = RtlAllocateHeap(RtlProcessHeap(), MAKE_TAG(TMP_TAG), sizeof(*p) + UnicodeName.MaximumLength);
+
+    if (p == NULL)
+    {
+#if DBG
+        DbgPrint("BasepSaveRegistryValue: Failed to allocate memory\n");
+#endif
+        return (STATUS_NO_MEMORY);
+    }
+
+    InitializeListHead(&p->Entry);
+
+    p->Name.Buffer = (PWSTR)(p + 1);
+    p->Name.Length = UnicodeName.Length;
+    p->Name.MaximumLength = UnicodeName.MaximumLength;
+    RtlMoveMemory(p->Name.Buffer, UnicodeName.Buffer, UnicodeName.MaximumLength);
+
+    InsertTailList(ListHead, &p->Entry);
+
+
+    if (ARGUMENT_PRESENT(Value))
+    {
+        //
+        // load certification DLL
+        //
+
+        HINSTANCE hDll = LoadLibraryW(Value);
+
+        if (hDll == NULL)
+        {
+            //
+            // The library was not loaded, return.
+            //
+            RemoveEntryList(&p->Entry);
+            RtlFreeHeap(RtlProcessHeap(), 0, p);
+#if DBG
+            DbgPrint("BasepSaveRegistryValue: Certification DLL %ws not found\n", Value);
+#endif
+            return (STATUS_SUCCESS);
+        }
+
+        //
+        // get entry point
+        //
+        p->fPluginCertFunc = (NTSTATUS(WINAPI *)(LPCWSTR, ULONG))GetProcAddress(hDll, CERTAPP_ENTRYPOINT_NAME);
+
+        if (p->fPluginCertFunc == NULL)
+        {
+            //
+            // Unable to retrieve routine address, fail.
+            //
+            RemoveEntryList(&p->Entry);
+            RtlFreeHeap(RtlProcessHeap(), 0, p);
+            FreeLibrary(hDll);
+#if DBG
+            DbgPrint("BasepSaveRegistryValue: DLL %ws does not have entry point %s\n", Value, CERTAPP_ENTRYPOINT_NAME);
+#endif
+            return (STATUS_SUCCESS);
+        }
+    }
+    else
+    {
+        RemoveEntryList(&p->Entry);
+        RtlFreeHeap(RtlProcessHeap(), 0, p);
+#if DBG
+        DbgPrint("BasepSaveRegistryValue: Entry %ws is empty \n", Name);
+#endif
+        return (STATUS_SUCCESS);
+    }
+
+    return (STATUS_SUCCESS);
 }
 
-BOOL
-IsWow64Process(
-    HANDLE hProcess,
-    PBOOL Wow64Process
-    )
+BOOL IsWow64Process(HANDLE hProcess, PBOOL Wow64Process)
 /*++
 
 Routine Description:
@@ -8781,45 +8167,35 @@ Return Value:
     BOOL bRet;
     ULONG_PTR Peb32;
 
-    NtStatus = NtQueryInformationProcess (
-        hProcess,
-        ProcessWow64Information,
-        &Peb32,
-        sizeof (Peb32),
-        NULL
-        );
+    NtStatus = NtQueryInformationProcess(hProcess, ProcessWow64Information, &Peb32, sizeof(Peb32), NULL);
 
-    if (!NT_SUCCESS (NtStatus)) {
-        
-        BaseSetLastNTError (NtStatus);
-    } else {
-        
-        if (Peb32 == 0) {
+    if (!NT_SUCCESS(NtStatus))
+    {
+
+        BaseSetLastNTError(NtStatus);
+    }
+    else
+    {
+
+        if (Peb32 == 0)
+        {
             *Wow64Process = FALSE;
-        } else {
+        }
+        else
+        {
             *Wow64Process = TRUE;
         }
     }
-        
-    return (NT_SUCCESS (NtStatus));
+
+    return (NT_SUCCESS(NtStatus));
 }
 
 #if defined(_WIN64) || defined(BUILD_WOW6432)
 
-BOOL
-NtVdm64CreateProcess(
-    BOOL fPrefixMappedApplicationName,
-    LPCWSTR lpApplicationName,
-    LPCWSTR lpCommandLine,
-    LPSECURITY_ATTRIBUTES lpProcessAttributes,
-    LPSECURITY_ATTRIBUTES lpThreadAttributes,
-    BOOL bInheritHandles,
-    DWORD dwCreationFlags,
-    LPVOID lpEnvironment,
-    LPCWSTR lpCurrentDirectory,
-    LPSTARTUPINFOW lpStartupInfo,
-    LPPROCESS_INFORMATION lpProcessInformation
-    )
+BOOL NtVdm64CreateProcess(BOOL fPrefixMappedApplicationName, LPCWSTR lpApplicationName, LPCWSTR lpCommandLine,
+                          LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
+                          BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory,
+                          LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 /*++
 
 Routine Description:
@@ -8849,20 +8225,11 @@ Return Value:
 
 --*/
 {
-    typedef BOOL
-    (*LPNtVdm64CreateProcessFn)(
-        BOOL fPrefixMappedApplicationName,
-        LPCWSTR lpApplicationName,
-        LPCWSTR lpCommandLine,
-        LPSECURITY_ATTRIBUTES lpProcessAttributes,
-        LPSECURITY_ATTRIBUTES lpThreadAttributes,
-        BOOL bInheritHandles,
-        DWORD dwCreationFlags,
-        LPVOID lpEnvironment,
-        LPCWSTR lpCurrentDirectory,
-        LPSTARTUPINFOW lpStartupInfo,
-        LPPROCESS_INFORMATION lpProcessInformation
-        );
+    typedef BOOL (*LPNtVdm64CreateProcessFn)(BOOL fPrefixMappedApplicationName, LPCWSTR lpApplicationName,
+                                             LPCWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes,
+                                             LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles,
+                                             DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory,
+                                             LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 
     HINSTANCE hInstance;
     LPNtVdm64CreateProcessFn lpfn;
@@ -8879,37 +8246,32 @@ Return Value:
     // and also a high probability that LoadLibrary will trash that
     // buffer in a bad way
     if (lpCommandLine >= NtCurrentTeb()->StaticUnicodeBuffer &&
-        lpCommandLine < &NtCurrentTeb()->StaticUnicodeBuffer[STATIC_UNICODE_BUFFER_LENGTH]) {
+        lpCommandLine < &NtCurrentTeb()->StaticUnicodeBuffer[STATIC_UNICODE_BUFFER_LENGTH])
+    {
         wcscpy(StaticUnicodeBuffer, lpCommandLine);
         lpCommandLine = StaticUnicodeBuffer;
     }
 
     hInstance = LoadLibraryW(L"NtVdm64.Dll");
-    if (hInstance == NULL) {
+    if (hInstance == NULL)
+    {
         goto ErrorExit;
     }
 
-    lpfn = (LPNtVdm64CreateProcessFn) GetProcAddress(hInstance, "NtVdm64CreateProcess");
-    if (lpfn == NULL) {
+    lpfn = (LPNtVdm64CreateProcessFn)GetProcAddress(hInstance, "NtVdm64CreateProcess");
+    if (lpfn == NULL)
+    {
         goto ErrorExit;
     }
 
-    result = (*lpfn)(fPrefixMappedApplicationName,
-                     lpApplicationName,
-                     lpCommandLine,
-                     lpProcessAttributes,
-                     lpThreadAttributes,
-                     bInheritHandles,
-                     dwCreationFlags,
-                     lpEnvironment,
-                     lpCurrentDirectory,
-                     lpStartupInfo,
-                     lpProcessInformation
-                     );
+    result = (*lpfn)(fPrefixMappedApplicationName, lpApplicationName, lpCommandLine, lpProcessAttributes,
+                     lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory,
+                     lpStartupInfo, lpProcessInformation);
     Status = GetLastError();
 
 ErrorExit:
-    if (hInstance != NULL) {
+    if (hInstance != NULL)
+    {
         FreeLibrary(hInstance);
     }
     SetLastError(Status);
@@ -8917,4 +8279,3 @@ ErrorExit:
     return result;
 }
 #endif
-

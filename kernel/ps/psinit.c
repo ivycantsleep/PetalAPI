@@ -20,8 +20,7 @@ Revision History:
 
 #include "psp.h"
 
-#define ROUND_UP(VALUE,ROUND) ((ULONG)(((ULONG)VALUE + \
-                               ((ULONG)ROUND - 1L)) & (~((ULONG)ROUND - 1L))))
+#define ROUND_UP(VALUE, ROUND) ((ULONG)(((ULONG)VALUE + ((ULONG)ROUND - 1L)) & (~((ULONG)ROUND - 1L))))
 
 extern ULONG PsMinimumWorkingSet;
 extern ULONG PsMaximumWorkingSet;
@@ -30,18 +29,15 @@ extern ULONG PsMaximumWorkingSet;
 #pragma data_seg("PAGEDATA")
 #endif
 #define NTDLL_PATH_NAME L"\\SystemRoot\\System32\\ntdll.dll"
-const UNICODE_STRING PsNtDllPathName = {
-	sizeof(NTDLL_PATH_NAME) - sizeof(UNICODE_NULL),
-	sizeof(NTDLL_PATH_NAME),
-	NTDLL_PATH_NAME
-};
+const UNICODE_STRING PsNtDllPathName = { sizeof(NTDLL_PATH_NAME) - sizeof(UNICODE_NULL), sizeof(NTDLL_PATH_NAME),
+                                         NTDLL_PATH_NAME };
 
 ULONG PsPrioritySeperation; // nonpaged
 BOOLEAN PspUseJobSchedulingClasses = FALSE;
 PACCESS_TOKEN PspBootAccessToken = NULL;
 HANDLE PspInitialSystemProcessHandle = NULL;
 PHANDLE_TABLE PspCidTable; // nonpaged
-SYSTEM_DLL PspSystemDll = {NULL};
+SYSTEM_DLL PspSystemDll = { NULL };
 #ifdef ALLOC_DATA_PRAGMA
 #pragma const_seg("INITCONST")
 #pragma data_seg("INITDATA")
@@ -50,68 +46,43 @@ ULONG PsRawPrioritySeparation = 0;
 ULONG PsEmbeddedNTMask = 0;
 
 
+NTSTATUS
+MmCheckSystemImage(IN HANDLE ImageFileHandle, IN LOGICAL PurgeSection);
 
 NTSTATUS
-MmCheckSystemImage(
-    IN HANDLE ImageFileHandle,
-    IN LOGICAL PurgeSection
-    );
+LookupEntryPoint(IN PVOID DllBase, IN PSZ NameOfEntryPoint, OUT PVOID *AddressOfEntryPoint);
 
-NTSTATUS
-LookupEntryPoint (
-    IN PVOID DllBase,
-    IN PSZ NameOfEntryPoint,
-    OUT PVOID *AddressOfEntryPoint
-    );
+const GENERIC_MAPPING PspProcessMapping = { STANDARD_RIGHTS_READ | PROCESS_VM_READ | PROCESS_QUERY_INFORMATION,
+                                            STANDARD_RIGHTS_WRITE | PROCESS_CREATE_PROCESS | PROCESS_CREATE_THREAD |
+                                                PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_DUP_HANDLE |
+                                                PROCESS_TERMINATE | PROCESS_SET_QUOTA | PROCESS_SET_INFORMATION |
+                                                PROCESS_SET_PORT,
+                                            STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE, PROCESS_ALL_ACCESS };
 
-const GENERIC_MAPPING PspProcessMapping = {
-    STANDARD_RIGHTS_READ |
-        PROCESS_VM_READ | PROCESS_QUERY_INFORMATION,
-    STANDARD_RIGHTS_WRITE |
-        PROCESS_CREATE_PROCESS | PROCESS_CREATE_THREAD |
-        PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_DUP_HANDLE |
-        PROCESS_TERMINATE | PROCESS_SET_QUOTA |
-        PROCESS_SET_INFORMATION | PROCESS_SET_PORT,
-    STANDARD_RIGHTS_EXECUTE |
-        SYNCHRONIZE,
-    PROCESS_ALL_ACCESS
-};
+const GENERIC_MAPPING PspThreadMapping = { STANDARD_RIGHTS_READ | THREAD_GET_CONTEXT | THREAD_QUERY_INFORMATION,
+                                           STANDARD_RIGHTS_WRITE | THREAD_TERMINATE | THREAD_SUSPEND_RESUME |
+                                               THREAD_ALERT | THREAD_SET_INFORMATION | THREAD_SET_CONTEXT,
+                                           STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE, THREAD_ALL_ACCESS };
 
-const GENERIC_MAPPING PspThreadMapping = {
-    STANDARD_RIGHTS_READ |
-        THREAD_GET_CONTEXT | THREAD_QUERY_INFORMATION,
-    STANDARD_RIGHTS_WRITE |
-        THREAD_TERMINATE | THREAD_SUSPEND_RESUME | THREAD_ALERT |
-        THREAD_SET_INFORMATION | THREAD_SET_CONTEXT,
-    STANDARD_RIGHTS_EXECUTE |
-        SYNCHRONIZE,
-    THREAD_ALL_ACCESS
-};
-
-const GENERIC_MAPPING PspJobMapping = {
-    STANDARD_RIGHTS_READ |
-        JOB_OBJECT_QUERY,
-    STANDARD_RIGHTS_WRITE |
-        JOB_OBJECT_ASSIGN_PROCESS | JOB_OBJECT_SET_ATTRIBUTES | JOB_OBJECT_TERMINATE,
-    STANDARD_RIGHTS_EXECUTE |
-        SYNCHRONIZE,
-    THREAD_ALL_ACCESS
-};
+const GENERIC_MAPPING PspJobMapping = { STANDARD_RIGHTS_READ | JOB_OBJECT_QUERY,
+                                        STANDARD_RIGHTS_WRITE | JOB_OBJECT_ASSIGN_PROCESS | JOB_OBJECT_SET_ATTRIBUTES |
+                                            JOB_OBJECT_TERMINATE,
+                                        STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE, THREAD_ALL_ACCESS };
 #ifdef ALLOC_DATA_PRAGMA
 #pragma data_seg()
 #pragma const_seg("PAGECONST")
 #endif
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,PsInitSystem)
-#pragma alloc_text(INIT,PspInitPhase0)
-#pragma alloc_text(INIT,PspInitPhase1)
-#pragma alloc_text(INIT,PsLocateSystemDll)
-#pragma alloc_text(INIT,PspInitializeSystemDll)
-#pragma alloc_text(INIT,PspLookupSystemDllEntryPoint)
-#pragma alloc_text(INIT,PspNameToOrdinal)
-#pragma alloc_text(PAGE,PspMapSystemDll)
-#pragma alloc_text(PAGE,PsChangeQuantumTable)
+#pragma alloc_text(INIT, PsInitSystem)
+#pragma alloc_text(INIT, PspInitPhase0)
+#pragma alloc_text(INIT, PspInitPhase1)
+#pragma alloc_text(INIT, PsLocateSystemDll)
+#pragma alloc_text(INIT, PspInitializeSystemDll)
+#pragma alloc_text(INIT, PspLookupSystemDllEntryPoint)
+#pragma alloc_text(INIT, PspNameToOrdinal)
+#pragma alloc_text(PAGE, PspMapSystemDll)
+#pragma alloc_text(PAGE, PsChangeQuantumTable)
 
 #endif
 
@@ -139,7 +110,7 @@ BOOLEAN PsReaperActive;
 PETHREAD PsReaperList;
 WORK_QUEUE_ITEM PsReaperWorkItem;
 PVOID PsSystemDllBase;
-#define PSP_1MB (1024*1024)
+#define PSP_1MB (1024 * 1024)
 
 //
 // List head and mutex that links all processes that have been initialized
@@ -150,12 +121,9 @@ LIST_ENTRY PsActiveProcessHead;
 //extern PIMAGE_FILE_HEADER _header;
 PEPROCESS PsIdleProcess;
 PETHREAD PspShutdownThread;
-
+
 BOOLEAN
-PsInitSystem (
-    IN ULONG Phase,
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+PsInitSystem(IN ULONG Phase, IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 
 /*++
 
@@ -181,24 +149,23 @@ Return Value:
 --*/
 
 {
-    UNREFERENCED_PARAMETER (Phase);
+    UNREFERENCED_PARAMETER(Phase);
 
-    switch ( InitializationPhase ) {
+    switch (InitializationPhase)
+    {
 
-    case 0 :
+    case 0:
         return PspInitPhase0(LoaderBlock);
-    case 1 :
+    case 1:
         return PspInitPhase1(LoaderBlock);
     default:
         KeBugCheckEx(UNEXPECTED_INITIALIZATION_CALL, 1, InitializationPhase, 0, 0);
     }
-//    return 0; // Not reachable, quiet compiler
+    //    return 0; // Not reachable, quiet compiler
 }
-
+
 BOOLEAN
-PspInitPhase0 (
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+PspInitPhase0(IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 
 /*++
 
@@ -238,63 +205,72 @@ Return Value:
     PspDefaultPagefileLimit = (ULONG)-1;
 
 #ifdef _WIN64
-    if ( sizeof(TEB) > 8192 || sizeof(PEB) > 4096 ) {
+    if (sizeof(TEB) > 8192 || sizeof(PEB) > 4096)
+    {
 #else
-    if ( sizeof(TEB) > 4096 || sizeof(PEB) > 4096 ) {
+    if (sizeof(TEB) > 4096 || sizeof(PEB) > 4096)
+    {
 #endif
-        KeBugCheckEx(PROCESS_INITIALIZATION_FAILED,99,sizeof(TEB),sizeof(PEB),99);
-        }
+        KeBugCheckEx(PROCESS_INITIALIZATION_FAILED, 99, sizeof(TEB), sizeof(PEB), 99);
+    }
 
-    switch ( SystemSize ) {
+    switch (SystemSize)
+    {
 
-        case MmMediumSystem :
-            PsMinimumWorkingSet += 10;
-            PsMaximumWorkingSet += 100;
-            break;
+    case MmMediumSystem:
+        PsMinimumWorkingSet += 10;
+        PsMaximumWorkingSet += 100;
+        break;
 
-        case MmLargeSystem :
-            PsMinimumWorkingSet += 30;
-            PsMaximumWorkingSet += 300;
-            break;
+    case MmLargeSystem:
+        PsMinimumWorkingSet += 30;
+        PsMaximumWorkingSet += 300;
+        break;
 
-        case MmSmallSystem :
-        default:
-            break;
+    case MmSmallSystem:
+    default:
+        break;
     }
 
     //
     // Initialize all the callback structures
     //
 
-    for (i = 0; i < PSP_MAX_CREATE_THREAD_NOTIFY; i++) {
-        ExInitializeCallBack (&PspCreateThreadNotifyRoutine[i]);
+    for (i = 0; i < PSP_MAX_CREATE_THREAD_NOTIFY; i++)
+    {
+        ExInitializeCallBack(&PspCreateThreadNotifyRoutine[i]);
     }
 
-    for (i = 0; i < PSP_MAX_CREATE_PROCESS_NOTIFY; i++) {
-        ExInitializeCallBack (&PspCreateProcessNotifyRoutine[i]);
+    for (i = 0; i < PSP_MAX_CREATE_PROCESS_NOTIFY; i++)
+    {
+        ExInitializeCallBack(&PspCreateProcessNotifyRoutine[i]);
     }
 
-    for (i = 0; i < PSP_MAX_LOAD_IMAGE_NOTIFY; i++) {
-        ExInitializeCallBack (&PspLoadImageNotifyRoutine[i]);
+    for (i = 0; i < PSP_MAX_LOAD_IMAGE_NOTIFY; i++)
+    {
+        ExInitializeCallBack(&PspLoadImageNotifyRoutine[i]);
     }
 
 
-    PsChangeQuantumTable(FALSE,PsRawPrioritySeparation);
+    PsChangeQuantumTable(FALSE, PsRawPrioritySeparation);
 
     //
     // Quotas grow as needed automatically
     //
 
-//    if ( !PspDefaultPagedLimit ) {
-//        PspDefaultPagedLimit = 0;
-//        }
-//    if ( !PspDefaultNonPagedLimit ) {
-//        PspDefaultNonPagedLimit = 0;
-//        }
+    //    if ( !PspDefaultPagedLimit ) {
+    //        PspDefaultPagedLimit = 0;
+    //        }
+    //    if ( !PspDefaultNonPagedLimit ) {
+    //        PspDefaultNonPagedLimit = 0;
+    //        }
 
-    if (PspDefaultNonPagedLimit == 0 && PspDefaultPagedLimit == 0) {
+    if (PspDefaultNonPagedLimit == 0 && PspDefaultPagedLimit == 0)
+    {
         PspDoingGiveBacks = TRUE;
-    } else {
+    }
+    else
+    {
         PspDoingGiveBacks = FALSE;
     }
 
@@ -302,7 +278,8 @@ Return Value:
     PspDefaultPagedLimit *= PSP_1MB;
     PspDefaultNonPagedLimit *= PSP_1MB;
 
-    if (PspDefaultPagefileLimit != -1) {
+    if (PspDefaultPagefileLimit != -1)
+    {
         PspDefaultPagefileLimit *= PSP_1MB;
     }
 
@@ -321,9 +298,9 @@ Return Value:
 
     PsIdleProcess = PsGetCurrentProcess();
 
-    PspInitializeProcessLock (PsIdleProcess);
-    ExInitializeRundownProtection (&PsIdleProcess->RundownProtect);
-    InitializeListHead (&PsIdleProcess->ThreadListHead);
+    PspInitializeProcessLock(PsIdleProcess);
+    ExInitializeRundownProtection(&PsIdleProcess->RundownProtect);
+    InitializeListHead(&PsIdleProcess->ThreadListHead);
 
 
     PsIdleProcess->Pcb.KernelTime = 0;
@@ -338,14 +315,12 @@ Return Value:
     // Initialize the common fields of the Object Type Prototype record
     //
 
-    RtlZeroMemory( &ObjectTypeInitializer, sizeof( ObjectTypeInitializer ) );
-    ObjectTypeInitializer.Length = sizeof( ObjectTypeInitializer );
+    RtlZeroMemory(&ObjectTypeInitializer, sizeof(ObjectTypeInitializer));
+    ObjectTypeInitializer.Length = sizeof(ObjectTypeInitializer);
     ObjectTypeInitializer.InvalidAttributes = OBJ_OPENLINK;
     ObjectTypeInitializer.SecurityRequired = TRUE;
     ObjectTypeInitializer.PoolType = NonPagedPool;
-    ObjectTypeInitializer.InvalidAttributes = OBJ_PERMANENT |
-                                              OBJ_EXCLUSIVE |
-                                              OBJ_OPENIF;
+    ObjectTypeInitializer.InvalidAttributes = OBJ_PERMANENT | OBJ_EXCLUSIVE | OBJ_OPENIF;
 
 
     //
@@ -359,11 +334,9 @@ Return Value:
     ObjectTypeInitializer.ValidAccessMask = PROCESS_ALL_ACCESS;
     ObjectTypeInitializer.GenericMapping = PspProcessMapping;
 
-    if ( !NT_SUCCESS(ObCreateObjectType(&NameString,
-                                     &ObjectTypeInitializer,
-                                     (PSECURITY_DESCRIPTOR) NULL,
-                                     &PsProcessType
-                                     )) ){
+    if (!NT_SUCCESS(
+            ObCreateObjectType(&NameString, &ObjectTypeInitializer, (PSECURITY_DESCRIPTOR)NULL, &PsProcessType)))
+    {
         return FALSE;
     }
 
@@ -374,11 +347,8 @@ Return Value:
     ObjectTypeInitializer.ValidAccessMask = THREAD_ALL_ACCESS;
     ObjectTypeInitializer.GenericMapping = PspThreadMapping;
 
-    if ( !NT_SUCCESS(ObCreateObjectType(&NameString,
-                                     &ObjectTypeInitializer,
-                                     (PSECURITY_DESCRIPTOR) NULL,
-                                     &PsThreadType
-                                     )) ){
+    if (!NT_SUCCESS(ObCreateObjectType(&NameString, &ObjectTypeInitializer, (PSECURITY_DESCRIPTOR)NULL, &PsThreadType)))
+    {
         return FALSE;
     }
 
@@ -392,11 +362,8 @@ Return Value:
     ObjectTypeInitializer.GenericMapping = PspJobMapping;
     ObjectTypeInitializer.InvalidAttributes = 0;
 
-    if ( !NT_SUCCESS(ObCreateObjectType(&NameString,
-                                     &ObjectTypeInitializer,
-                                     (PSECURITY_DESCRIPTOR) NULL,
-                                     &PsJobType
-                                     )) ){
+    if (!NT_SUCCESS(ObCreateObjectType(&NameString, &ObjectTypeInitializer, (PSECURITY_DESCRIPTOR)NULL, &PsJobType)))
+    {
         return FALSE;
     }
 
@@ -406,7 +373,7 @@ Return Value:
     //
 
     PspInitializeJobStructures();
-    
+
     InitializeListHead(&PspWorkingSetChangeHead.Links);
     ExInitializeFastMutex(&PspWorkingSetChangeHead.Lock);
 
@@ -418,7 +385,8 @@ Return Value:
     //
 
     PspCidTable = ExCreateHandleTable(NULL);
-    if (PspCidTable == NULL) {
+    if (PspCidTable == NULL)
+    {
         return FALSE;
     }
 
@@ -426,7 +394,7 @@ Return Value:
     // Set PID and TID reuse to strict FIFO. This isn't absolutely needed but
     // it makes tracking audits easier.
     //
-    ExSetHandleTableStrictFIFO (PspCidTable);
+    ExSetHandleTableStrictFIFO(PspCidTable);
 
     ExRemoveHandleTable(PspCidTable);
 
@@ -436,7 +404,8 @@ Return Value:
     // Ldt Initialization
     //
 
-    if ( !NT_SUCCESS(PspLdtInitialize()) ) {
+    if (!NT_SUCCESS(PspLdtInitialize()))
+    {
         return FALSE;
     }
 
@@ -444,7 +413,8 @@ Return Value:
     // Vdm support Initialization
     //
 
-    if ( !NT_SUCCESS(PspVdmInitialize()) ) {
+    if (!NT_SUCCESS(PspVdmInitialize()))
+    {
         return FALSE;
     }
 
@@ -465,61 +435,43 @@ Return Value:
     // from there.
     //
 
-    PspBootAccessToken = ExFastRefGetObject (PsIdleProcess->Token);
+    PspBootAccessToken = ExFastRefGetObject(PsIdleProcess->Token);
 
-    InitializeObjectAttributes( &ObjectAttributes,
-                                NULL,
-                                0,
-                                NULL,
-                                NULL
-                              );
+    InitializeObjectAttributes(&ObjectAttributes, NULL, 0, NULL, NULL);
 
-    if (!NT_SUCCESS (PspCreateProcess (&PspInitialSystemProcessHandle,
-                                       PROCESS_ALL_ACCESS,
-                                       &ObjectAttributes,
-                                       NULL,
-                                       0,
-                                       NULL,
-                                       NULL,
-                                       NULL,
-                                       0))) {
+    if (!NT_SUCCESS(PspCreateProcess(&PspInitialSystemProcessHandle, PROCESS_ALL_ACCESS, &ObjectAttributes, NULL, 0,
+                                     NULL, NULL, NULL, 0)))
+    {
         return FALSE;
     }
 
-    if ( !NT_SUCCESS(ObReferenceObjectByHandle(
-                                        PspInitialSystemProcessHandle,
-                                        0L,
-                                        PsProcessType,
-                                        KernelMode,
-                                        (PVOID *)&PsInitialSystemProcess,
-                                        NULL
-                                        )) ) {
+    if (!NT_SUCCESS(ObReferenceObjectByHandle(PspInitialSystemProcessHandle, 0L, PsProcessType, KernelMode,
+                                              (PVOID *)&PsInitialSystemProcess, NULL)))
+    {
 
         return FALSE;
     }
 
-    strcpy((char *) &PsIdleProcess->ImageFileName[0],"Idle");
-    strcpy((char *) &PsInitialSystemProcess->ImageFileName[0],"System");
+    strcpy((char *)&PsIdleProcess->ImageFileName[0], "Idle");
+    strcpy((char *)&PsInitialSystemProcess->ImageFileName[0], "System");
 
     //
-    // The system process can allocate resources, and its name may be queried by 
-    // NtQueryInfomationProcess and various audits.  We must explicitly allocate memory 
-    // for this field of the System EPROCESS, and initialize it appropriately.  In this 
+    // The system process can allocate resources, and its name may be queried by
+    // NtQueryInfomationProcess and various audits.  We must explicitly allocate memory
+    // for this field of the System EPROCESS, and initialize it appropriately.  In this
     // case, appropriate initialization means zeroing the memory.
     //
 
-    PsInitialSystemProcess->SeAuditProcessCreationInfo.ImageFileName = ExAllocatePoolWithTag(
-                                                                           PagedPool, 
-                                                                           sizeof(OBJECT_NAME_INFORMATION), 
-                                                                           'aPeS'
-                                                                           );
+    PsInitialSystemProcess->SeAuditProcessCreationInfo.ImageFileName =
+        ExAllocatePoolWithTag(PagedPool, sizeof(OBJECT_NAME_INFORMATION), 'aPeS');
 
-    if (PsInitialSystemProcess->SeAuditProcessCreationInfo.ImageFileName != NULL) {
-        RtlZeroMemory(
-            PsInitialSystemProcess->SeAuditProcessCreationInfo.ImageFileName, 
-            sizeof(OBJECT_NAME_INFORMATION)
-            );
-    } else {
+    if (PsInitialSystemProcess->SeAuditProcessCreationInfo.ImageFileName != NULL)
+    {
+        RtlZeroMemory(PsInitialSystemProcess->SeAuditProcessCreationInfo.ImageFileName,
+                      sizeof(OBJECT_NAME_INFORMATION));
+    }
+    else
+    {
         return FALSE;
     }
 
@@ -527,40 +479,29 @@ Return Value:
     // Phase 1 System initialization
     //
 
-    if ( !NT_SUCCESS(PsCreateSystemThread(
-                    &ThreadHandle,
-                    THREAD_ALL_ACCESS,
-                    &ObjectAttributes,
-                    0L,
-                    NULL,
-                    Phase1Initialization,
-                    (PVOID)LoaderBlock
-                    )) ) {
+    if (!NT_SUCCESS(PsCreateSystemThread(&ThreadHandle, THREAD_ALL_ACCESS, &ObjectAttributes, 0L, NULL,
+                                         Phase1Initialization, (PVOID)LoaderBlock)))
+    {
         return FALSE;
     }
 
 
-    if ( !NT_SUCCESS(ObReferenceObjectByHandle(
-                        ThreadHandle,
-                        0L,
-                        PsThreadType,
-                        KernelMode,
-                        (PVOID *)&Thread,
-                        NULL
-                        )) ) {
+    if (!NT_SUCCESS(ObReferenceObjectByHandle(ThreadHandle, 0L, PsThreadType, KernelMode, (PVOID *)&Thread, NULL)))
+    {
 
         return FALSE;
     }
 
-    ZwClose( ThreadHandle );
+    ZwClose(ThreadHandle);
 
 //
 // On checked systems install an image callout routine
 //
 #if DBG
 
-    Status = PsSetLoadImageNotifyRoutine (PspImageNotifyTest);
-    if (!NT_SUCCESS (Status)) {
+    Status = PsSetLoadImageNotifyRoutine(PspImageNotifyTest);
+    if (!NT_SUCCESS(Status))
+    {
         return FALSE;
     }
 
@@ -568,11 +509,9 @@ Return Value:
 
     return TRUE;
 }
-
+
 BOOLEAN
-PspInitPhase1 (
-    IN PLOADER_PARAMETER_BLOCK LoaderBlock
-    )
+PspInitPhase1(IN PLOADER_PARAMETER_BLOCK LoaderBlock)
 
 /*++
 
@@ -598,23 +537,22 @@ Return Value:
 
     NTSTATUS st;
 
-    UNREFERENCED_PARAMETER (LoaderBlock);
+    UNREFERENCED_PARAMETER(LoaderBlock);
 
     PspInitializeJobStructuresPhase1();
 
     st = PspInitializeSystemDll();
 
-    if ( !NT_SUCCESS(st) ) {
+    if (!NT_SUCCESS(st))
+    {
         return FALSE;
     }
 
     return TRUE;
 }
-
+
 NTSTATUS
-PsLocateSystemDll (
-    VOID
-    )
+PsLocateSystemDll(VOID)
 
 /*++
 
@@ -646,44 +584,31 @@ Return Value:
     //
     // First see if we need to load this DLL at all.
     //
-    if (ExVerifySuite (EmbeddedNT) && (PsEmbeddedNTMask&PS_EMBEDDED_NO_USERMODE)) {
+    if (ExVerifySuite(EmbeddedNT) && (PsEmbeddedNTMask & PS_EMBEDDED_NO_USERMODE))
+    {
         return STATUS_SUCCESS;
     }
     //
     // Initialize the system DLL
     //
 
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        (PUNICODE_STRING)&PsNtDllPathName,
-        OBJ_CASE_INSENSITIVE,
-        NULL,
-        NULL
-        );
+    InitializeObjectAttributes(&ObjectAttributes, (PUNICODE_STRING)&PsNtDllPathName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-    st = ZwOpenFile(
-            &File,
-            SYNCHRONIZE | FILE_EXECUTE,
-            &ObjectAttributes,
-            &IoStatus,
-            FILE_SHARE_READ,
-            0
-            );
+    st = ZwOpenFile(&File, SYNCHRONIZE | FILE_EXECUTE, &ObjectAttributes, &IoStatus, FILE_SHARE_READ, 0);
 
-    if (!NT_SUCCESS(st)) {
+    if (!NT_SUCCESS(st))
+    {
 
 #if DBG
-        DbgPrint("PS: PsLocateSystemDll - NtOpenFile( NTDLL.DLL ) failed.  Status == %lx\n",
-            st
-            );
+        DbgPrint("PS: PsLocateSystemDll - NtOpenFile( NTDLL.DLL ) failed.  Status == %lx\n", st);
 #endif
-        KeBugCheckEx(PROCESS1_INITIALIZATION_FAILED,st,2,0,0);
-//        return st;
+        KeBugCheckEx(PROCESS1_INITIALIZATION_FAILED, st, 2, 0, 0);
+        //        return st;
     }
 
     st = MmCheckSystemImage(File, TRUE);
-    if ( st == STATUS_IMAGE_CHECKSUM_MISMATCH ||
-         st == STATUS_INVALID_IMAGE_PROTECT ) {
+    if (st == STATUS_IMAGE_CHECKSUM_MISMATCH || st == STATUS_INVALID_IMAGE_PROTECT)
+    {
 
         ULONG_PTR ErrorParameters;
         ULONG ErrorResponse;
@@ -694,34 +619,20 @@ Return Value:
 
         ErrorParameters = (ULONG_PTR)&PsNtDllPathName;
 
-        NtRaiseHardError(
-            st,
-            1,
-            1,
-            &ErrorParameters,
-            OptionOk,
-            &ErrorResponse
-            );
+        NtRaiseHardError(st, 1, 1, &ErrorParameters, OptionOk, &ErrorResponse);
         return st;
-        }
+    }
 
-    st = ZwCreateSection(
-            &Section,
-            SECTION_ALL_ACCESS,
-            NULL,
-            0,
-            PAGE_EXECUTE,
-            SEC_IMAGE,
-            File
-            );
-    ZwClose( File );
+    st = ZwCreateSection(&Section, SECTION_ALL_ACCESS, NULL, 0, PAGE_EXECUTE, SEC_IMAGE, File);
+    ZwClose(File);
 
-    if (!NT_SUCCESS(st)) {
+    if (!NT_SUCCESS(st))
+    {
 #if DBG
-        DbgPrint("PS: PsLocateSystemDll: NtCreateSection Status == %lx\n",st);
+        DbgPrint("PS: PsLocateSystemDll: NtCreateSection Status == %lx\n", st);
 #endif
-        KeBugCheckEx(PROCESS1_INITIALIZATION_FAILED,st,3,0,0);
-//        return st;
+        KeBugCheckEx(PROCESS1_INITIALIZATION_FAILED, st, 3, 0, 0);
+        //        return st;
     }
 
     //
@@ -729,43 +640,36 @@ Return Value:
     // PspSystemDll and then close handle to the section.
     //
 
-    st = ObReferenceObjectByHandle(
-            Section,
-            SECTION_ALL_ACCESS,
-            MmSectionObjectType,
-            KernelMode,
-            &PspSystemDll.Section,
-            NULL
-            );
+    st = ObReferenceObjectByHandle(Section, SECTION_ALL_ACCESS, MmSectionObjectType, KernelMode, &PspSystemDll.Section,
+                                   NULL);
 
     ZwClose(Section);
 
-    if ( !NT_SUCCESS(st) ) {
-        KeBugCheckEx(PROCESS1_INITIALIZATION_FAILED,st,4,0,0);
-//        return st;
+    if (!NT_SUCCESS(st))
+    {
+        KeBugCheckEx(PROCESS1_INITIALIZATION_FAILED, st, 4, 0, 0);
+        //        return st;
     }
 
     //
     // Map the system dll into the user part of the address space
     //
 
-    st = PspMapSystemDll(PsGetCurrentProcess(),&PspSystemDll.DllBase);
+    st = PspMapSystemDll(PsGetCurrentProcess(), &PspSystemDll.DllBase);
     PsSystemDllDllBase = PspSystemDll.DllBase;
 
-    if ( !NT_SUCCESS(st) ) {
-        KeBugCheckEx(PROCESS1_INITIALIZATION_FAILED,st,5,0,0);
-//        return st;
+    if (!NT_SUCCESS(st))
+    {
+        KeBugCheckEx(PROCESS1_INITIALIZATION_FAILED, st, 5, 0, 0);
+        //        return st;
     }
     PsSystemDllBase = PspSystemDll.DllBase;
 
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-PspMapSystemDll (
-    IN PEPROCESS Process,
-    OUT PVOID *DllBase OPTIONAL
-    )
+PspMapSystemDll(IN PEPROCESS Process, OUT PVOID *DllBase OPTIONAL)
 
 /*++
 
@@ -800,37 +704,27 @@ Return Value:
     // Map the system dll into the user part of the address space
     //
 
-    st = MmMapViewOfSection(
-            PspSystemDll.Section,
-            Process,
-            &ViewBase,
-            0L,
-            0L,
-            &SectionOffset,
-            &ViewSize,
-            ViewShare,
-            0L,
-            PAGE_READWRITE
-            );
+    st = MmMapViewOfSection(PspSystemDll.Section, Process, &ViewBase, 0L, 0L, &SectionOffset, &ViewSize, ViewShare, 0L,
+                            PAGE_READWRITE);
 
-    if ( st != STATUS_SUCCESS ) {
+    if (st != STATUS_SUCCESS)
+    {
 #if DBG
         DbgPrint("PS: Unable to map system dll at based address.\n");
 #endif
         st = STATUS_CONFLICTING_ADDRESSES;
     }
 
-    if ( ARGUMENT_PRESENT(DllBase) ) {
+    if (ARGUMENT_PRESENT(DllBase))
+    {
         *DllBase = ViewBase;
     }
 
     return st;
 }
-
+
 NTSTATUS
-PspInitializeSystemDll (
-    VOID
-    )
+PspInitializeSystemDll(VOID)
 
 /*++
 
@@ -856,7 +750,8 @@ Return Value:
     //
     // If we skipped dll load becuase we are kernel only then exit now.
     //
-    if (PsSystemDllDllBase == NULL) {
+    if (PsSystemDllDllBase == NULL)
+    {
         return STATUS_SUCCESS;
     }
     //
@@ -865,179 +760,165 @@ Return Value:
 
     dll_entrypoint = "LdrInitializeThunk";
 
-    st = PspLookupSystemDllEntryPoint(
-            dll_entrypoint,
-            (PVOID *)&PspSystemDll.LoaderInitRoutine
-            );
+    st = PspLookupSystemDllEntryPoint(dll_entrypoint, (PVOID *)&PspSystemDll.LoaderInitRoutine);
 
-    if ( !NT_SUCCESS(st) ) {
+    if (!NT_SUCCESS(st))
+    {
 #if DBG
         DbgPrint("PS: Unable to locate LdrInitializeThunk in system dll\n");
 #endif
-        KeBugCheckEx(PROCESS1_INITIALIZATION_FAILED,st,6,0,0);
-//        return st;
+        KeBugCheckEx(PROCESS1_INITIALIZATION_FAILED, st, 6, 0, 0);
+        //        return st;
     }
 
 
     st = PspLookupKernelUserEntryPoints();
 
-    if ( !NT_SUCCESS(st) ) {
-        KeBugCheckEx(PROCESS1_INITIALIZATION_FAILED,st,8,0,0);
-        }
+    if (!NT_SUCCESS(st))
+    {
+        KeBugCheckEx(PROCESS1_INITIALIZATION_FAILED, st, 8, 0, 0);
+    }
 
     KdUpdateDataBlock();
 
     return st;
 }
-
+
 NTSTATUS
-PspLookupSystemDllEntryPoint (
-    IN PSZ NameOfEntryPoint,
-    OUT PVOID *AddressOfEntryPoint
-    )
+PspLookupSystemDllEntryPoint(IN PSZ NameOfEntryPoint, OUT PVOID *AddressOfEntryPoint)
 
 {
-    return LookupEntryPoint (
-                PspSystemDll.DllBase,
-                NameOfEntryPoint,
-                AddressOfEntryPoint
-            );
+    return LookupEntryPoint(PspSystemDll.DllBase, NameOfEntryPoint, AddressOfEntryPoint);
 }
 
-const SCHAR PspFixedQuantums[6] = {
-                                3*THREAD_QUANTUM,
-                                3*THREAD_QUANTUM,
-                                3*THREAD_QUANTUM,
-                                6*THREAD_QUANTUM,
-                                6*THREAD_QUANTUM,
-                                6*THREAD_QUANTUM
-                                };
+const SCHAR PspFixedQuantums[6] = { 3 * THREAD_QUANTUM, 3 * THREAD_QUANTUM, 3 * THREAD_QUANTUM,
+                                    6 * THREAD_QUANTUM, 6 * THREAD_QUANTUM, 6 * THREAD_QUANTUM };
 
-const SCHAR PspVariableQuantums[6] = {
-                                1*THREAD_QUANTUM,
-                                2*THREAD_QUANTUM,
-                                3*THREAD_QUANTUM,
-                                2*THREAD_QUANTUM,
-                                4*THREAD_QUANTUM,
-                                6*THREAD_QUANTUM
-                                };
+const SCHAR PspVariableQuantums[6] = { 1 * THREAD_QUANTUM, 2 * THREAD_QUANTUM, 3 * THREAD_QUANTUM,
+                                       2 * THREAD_QUANTUM, 4 * THREAD_QUANTUM, 6 * THREAD_QUANTUM };
 
 //
 // The table is ONLY used when fixed quantums are selected.
 //
 
 const SCHAR PspJobSchedulingClasses[PSP_NUMBER_OF_SCHEDULING_CLASSES] = {
-                                1*THREAD_QUANTUM,   // long fixed 0
-                                2*THREAD_QUANTUM,   // long fixed 1...
-                                3*THREAD_QUANTUM,
-                                4*THREAD_QUANTUM,
-                                5*THREAD_QUANTUM,
-                                6*THREAD_QUANTUM,   // DEFAULT
-                                7*THREAD_QUANTUM,
-                                8*THREAD_QUANTUM,
-                                9*THREAD_QUANTUM,
-                                10*THREAD_QUANTUM   // long fixed 9
-                                };
+    1 * THREAD_QUANTUM, // long fixed 0
+    2 * THREAD_QUANTUM, // long fixed 1...
+    3 * THREAD_QUANTUM, 4 * THREAD_QUANTUM, 5 * THREAD_QUANTUM,
+    6 * THREAD_QUANTUM, // DEFAULT
+    7 * THREAD_QUANTUM, 8 * THREAD_QUANTUM, 9 * THREAD_QUANTUM,
+    10 * THREAD_QUANTUM // long fixed 9
+};
 
-VOID
-PsChangeQuantumTable(
-    BOOLEAN ModifyActiveProcesses,
-    ULONG PrioritySeparation
-    )
+VOID PsChangeQuantumTable(BOOLEAN ModifyActiveProcesses, ULONG PrioritySeparation)
 {
 
     PEPROCESS Process;
     PETHREAD CurrentThread;
     PLIST_ENTRY NextProcess;
     ULONG QuantumIndex;
-    SCHAR const* QuantumTableBase;
+    SCHAR const *QuantumTableBase;
     PEJOB Job;
 
     //
     // extract priority seperation value
     //
-    switch ( PrioritySeparation & PROCESS_PRIORITY_SEPARATION_MASK ) {
-        case 3:
-            PsPrioritySeperation = PROCESS_PRIORITY_SEPARATION_MAX;
-            break;
-        default:
-            PsPrioritySeperation = PrioritySeparation & PROCESS_PRIORITY_SEPARATION_MASK;
-            break;
-        }
+    switch (PrioritySeparation & PROCESS_PRIORITY_SEPARATION_MASK)
+    {
+    case 3:
+        PsPrioritySeperation = PROCESS_PRIORITY_SEPARATION_MAX;
+        break;
+    default:
+        PsPrioritySeperation = PrioritySeparation & PROCESS_PRIORITY_SEPARATION_MASK;
+        break;
+    }
 
     //
     // determine if we are using fixed or variable quantums
     //
-    switch ( PrioritySeparation & PROCESS_QUANTUM_VARIABLE_MASK ) {
-        case PROCESS_QUANTUM_VARIABLE_VALUE:
-            QuantumTableBase = PspVariableQuantums;
-            break;
+    switch (PrioritySeparation & PROCESS_QUANTUM_VARIABLE_MASK)
+    {
+    case PROCESS_QUANTUM_VARIABLE_VALUE:
+        QuantumTableBase = PspVariableQuantums;
+        break;
 
-        case PROCESS_QUANTUM_FIXED_VALUE:
+    case PROCESS_QUANTUM_FIXED_VALUE:
+        QuantumTableBase = PspFixedQuantums;
+        break;
+
+    case PROCESS_QUANTUM_VARIABLE_DEF:
+    default:
+        if (MmIsThisAnNtAsSystem())
+        {
             QuantumTableBase = PspFixedQuantums;
-            break;
-
-        case PROCESS_QUANTUM_VARIABLE_DEF:
-        default:
-            if ( MmIsThisAnNtAsSystem() ) {
-                QuantumTableBase = PspFixedQuantums;
-            } else {
-                QuantumTableBase = PspVariableQuantums;
-            }
-            break;
+        }
+        else
+        {
+            QuantumTableBase = PspVariableQuantums;
+        }
+        break;
     }
 
     //
     // determine if we are using long or short
     //
-    switch ( PrioritySeparation & PROCESS_QUANTUM_LONG_MASK ) {
-        case PROCESS_QUANTUM_LONG_VALUE:
+    switch (PrioritySeparation & PROCESS_QUANTUM_LONG_MASK)
+    {
+    case PROCESS_QUANTUM_LONG_VALUE:
+        QuantumTableBase = QuantumTableBase + 3;
+        break;
+
+    case PROCESS_QUANTUM_SHORT_VALUE:
+        break;
+
+    case PROCESS_QUANTUM_LONG_DEF:
+    default:
+        if (MmIsThisAnNtAsSystem())
+        {
             QuantumTableBase = QuantumTableBase + 3;
-            break;
-
-        case PROCESS_QUANTUM_SHORT_VALUE:
-            break;
-
-        case PROCESS_QUANTUM_LONG_DEF:
-        default:
-            if ( MmIsThisAnNtAsSystem() ) {
-                QuantumTableBase = QuantumTableBase + 3;
-            }
-            break;
+        }
+        break;
     }
 
     //
     // Job Scheduling classes are ONLY meaningful if long fixed quantums
     // are selected. In practice, this means stock NTS configurations
     //
-    if ( QuantumTableBase == &PspFixedQuantums[3] ) {
+    if (QuantumTableBase == &PspFixedQuantums[3])
+    {
         PspUseJobSchedulingClasses = TRUE;
-    } else {
+    }
+    else
+    {
         PspUseJobSchedulingClasses = FALSE;
     }
 
-    RtlCopyMemory(PspForegroundQuantum,QuantumTableBase,sizeof(PspForegroundQuantum));
+    RtlCopyMemory(PspForegroundQuantum, QuantumTableBase, sizeof(PspForegroundQuantum));
 
-    if (ModifyActiveProcesses) {
+    if (ModifyActiveProcesses)
+    {
 
-        CurrentThread = PsGetCurrentThread ();
+        CurrentThread = PsGetCurrentThread();
 
-        PspLockProcessList (CurrentThread);
+        PspLockProcessList(CurrentThread);
 
         NextProcess = PsActiveProcessHead.Flink;
 
-        while (NextProcess != &PsActiveProcessHead) {
-            Process = CONTAINING_RECORD(NextProcess,
-                                        EPROCESS,
-                                        ActiveProcessLinks);
+        while (NextProcess != &PsActiveProcessHead)
+        {
+            Process = CONTAINING_RECORD(NextProcess, EPROCESS, ActiveProcessLinks);
 
-            if ( Process->Vm.Flags.MemoryPriority == MEMORY_PRIORITY_BACKGROUND ) {
+            if (Process->Vm.Flags.MemoryPriority == MEMORY_PRIORITY_BACKGROUND)
+            {
                 QuantumIndex = 0;
-            } else {
+            }
+            else
+            {
                 QuantumIndex = PsPrioritySeperation;
             }
 
-            if (Process->PriorityClass != PROCESS_PRIORITY_CLASS_IDLE) {
+            if (Process->PriorityClass != PROCESS_PRIORITY_CLASS_IDLE)
+            {
 
                 //
                 // If the process is contained within a JOB, AND we are
@@ -1045,16 +926,21 @@ PsChangeQuantumTable(
                 // with the Job's scheduling class
                 //
                 Job = Process->Job;
-                if (Job != NULL && PspUseJobSchedulingClasses ) {
+                if (Job != NULL && PspUseJobSchedulingClasses)
+                {
                     Process->Pcb.ThreadQuantum = PspJobSchedulingClasses[Job->SchedulingClass];
-                } else {
+                }
+                else
+                {
                     Process->Pcb.ThreadQuantum = PspForegroundQuantum[QuantumIndex];
                 }
-            } else {
+            }
+            else
+            {
                 Process->Pcb.ThreadQuantum = THREAD_QUANTUM;
             }
             NextProcess = NextProcess->Flink;
         }
-        PspUnlockProcessList (CurrentThread);
+        PspUnlockProcessList(CurrentThread);
     }
 }

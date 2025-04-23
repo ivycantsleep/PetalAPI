@@ -24,16 +24,10 @@ Revision History:
 --*/
 
 #include "ki.h"
-
-VOID
-KiInitializeUserApc (
-    IN PKEXCEPTION_FRAME ExceptionFrame,
-    IN PKTRAP_FRAME TrapFrame,
-    IN PKNORMAL_ROUTINE NormalRoutine,
-    IN PVOID NormalContext,
-    IN PVOID SystemArgument1,
-    IN PVOID SystemArgument2
-    )
+
+VOID KiInitializeUserApc(IN PKEXCEPTION_FRAME ExceptionFrame, IN PKTRAP_FRAME TrapFrame,
+                         IN PKNORMAL_ROUTINE NormalRoutine, IN PVOID NormalContext, IN PVOID SystemArgument1,
+                         IN PVOID SystemArgument2)
 
 /*++
 
@@ -77,8 +71,9 @@ Return Value:
     // check for the possibility before hand.
     //
 
-    if (TrapFrame->EFlags & EFLAGS_V86_MASK) {
-        return ;
+    if (TrapFrame->EFlags & EFLAGS_V86_MASK)
+    {
+        return;
     }
 
     //
@@ -95,15 +90,15 @@ Return Value:
     //
 
 
-    try {
+    try
+    {
         ASSERT((TrapFrame->SegCs & MODE_MASK) != KernelMode); // Assert usermode frame
 
         //
         // Compute length of context record and new aligned user stack pointer.
         //
 
-        Length = ((sizeof(CONTEXT) + CONTEXT_ROUND) &
-                    ~CONTEXT_ROUND) + sizeof(KAPC_RECORD);
+        Length = ((sizeof(CONTEXT) + CONTEXT_ROUND) & ~CONTEXT_ROUND) + sizeof(KAPC_RECORD);
         UserStack = (ContextFrame.Esp & ~CONTEXT_ROUND) - Length;
 
         //
@@ -112,8 +107,7 @@ Return Value:
         //
 
         ProbeForWrite((PCHAR)UserStack, Length, CONTEXT_ALIGN);
-        RtlCopyMemory((PULONG)(UserStack + (sizeof(KAPC_RECORD))),
-                     &ContextFrame, sizeof(CONTEXT));
+        RtlCopyMemory((PULONG)(UserStack + (sizeof(KAPC_RECORD))), &ContextFrame, sizeof(CONTEXT));
 
         //
         // Force correct R3 selectors into TrapFrame.
@@ -125,14 +119,15 @@ Return Value:
         TrapFrame->SegEs = SANITIZE_SEG(KGDT_R3_DATA, UserMode);
         TrapFrame->SegFs = SANITIZE_SEG(KGDT_R3_TEB, UserMode);
         TrapFrame->SegGs = 0;
-        TrapFrame->EFlags = SANITIZE_FLAGS( ContextFrame.EFlags, UserMode );
+        TrapFrame->EFlags = SANITIZE_FLAGS(ContextFrame.EFlags, UserMode);
 
         //
         // If thread is supposed to have IOPL, then force it on in eflags
         //
 
-        if (KeGetCurrentThread()->Iopl) {
-            TrapFrame->EFlags |= (EFLAGS_IOPL_MASK & -1);  // IOPL = 3
+        if (KeGetCurrentThread()->Iopl)
+        {
+            TrapFrame->EFlags |= (EFLAGS_IOPL_MASK & -1); // IOPL = 3
         }
 
         //
@@ -149,8 +144,9 @@ Return Value:
         *((PULONG)UserStack)++ = (ULONG)NormalContext;
         *((PULONG)UserStack)++ = (ULONG)SystemArgument1;
         *((PULONG)UserStack)++ = (ULONG)SystemArgument2;
-    } except (KiCopyInformation(&ExceptionRecord,
-                                (GetExceptionInformation())->ExceptionRecord)) {
+    }
+    except(KiCopyInformation(&ExceptionRecord, (GetExceptionInformation())->ExceptionRecord))
+    {
 
         //
         // Set the address of the exception to the current program address
@@ -158,11 +154,7 @@ Return Value:
         //
 
         ExceptionRecord.ExceptionAddress = (PVOID)(TrapFrame->Eip);
-        KiDispatchException(&ExceptionRecord,
-                            ExceptionFrame,
-                            TrapFrame,
-                            UserMode,
-                            TRUE);
+        KiDispatchException(&ExceptionRecord, ExceptionFrame, TrapFrame, UserMode, TRUE);
     }
     return;
 }

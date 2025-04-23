@@ -26,15 +26,12 @@ Revision History:
 #include "vfdef.h"
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(INIT,     VfRandomInit)
+#pragma alloc_text(INIT, VfRandomInit)
 #pragma alloc_text(PAGEVRFY, VfRandomGetNumber)
 #endif // ALLOC_PRAGMA
 
 
-VOID
-VfRandomInit(
-    VOID
-    )
+VOID VfRandomInit(VOID)
 /*++
 
 Routine Description:
@@ -57,10 +54,7 @@ Return Value:
 
 ULONG
 FASTCALL
-VfRandomGetNumber(
-    IN  ULONG   Minimum,
-    IN  ULONG   Maximum
-    )
+VfRandomGetNumber(IN ULONG Minimum, IN ULONG Maximum)
 /*++
 
 Routine Description:
@@ -86,14 +80,14 @@ Return Value:
     //
     KeQueryPerformanceCounter(&performanceCounter);
 
-    if (Maximum + 1 == Minimum) {
+    if (Maximum + 1 == Minimum)
+    {
 
         return performanceCounter.LowPart;
-
-    } else {
+    }
+    else
+    {
 
         return (performanceCounter.LowPart % (Maximum - Minimum + 1)) + Minimum;
     }
 }
-
-

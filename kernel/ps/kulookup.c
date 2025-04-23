@@ -21,11 +21,9 @@ Revision History:
 
 #include "psp.h"
 #pragma alloc_text(INIT, PspLookupKernelUserEntryPoints)
-
+
 NTSTATUS
-PspLookupKernelUserEntryPoints (
-    VOID
-    )
+PspLookupKernelUserEntryPoints(VOID)
 
 /*++
 
@@ -55,9 +53,9 @@ Return Value:
     //
 
     EntryName = "KiUserExceptionDispatcher";
-    Status = PspLookupSystemDllEntryPoint(EntryName,
-                                          (PVOID *)&KeUserExceptionDispatcher);
-    if (NT_SUCCESS(Status) == FALSE) {
+    Status = PspLookupSystemDllEntryPoint(EntryName, (PVOID *)&KeUserExceptionDispatcher);
+    if (NT_SUCCESS(Status) == FALSE)
+    {
         KdPrint(("Ps: Cannot find user exception dispatcher address\n"));
         return Status;
     }
@@ -67,9 +65,9 @@ Return Value:
     //
 
     EntryName = "KiUserApcDispatcher";
-    Status = PspLookupSystemDllEntryPoint(EntryName,
-                                          (PVOID *)&KeUserApcDispatcher);
-    if (NT_SUCCESS(Status) == FALSE) {
+    Status = PspLookupSystemDllEntryPoint(EntryName, (PVOID *)&KeUserApcDispatcher);
+    if (NT_SUCCESS(Status) == FALSE)
+    {
         KdPrint(("Ps: Cannot find user apc dispatcher address\n"));
         return Status;
     }
@@ -79,9 +77,9 @@ Return Value:
     //
 
     EntryName = "KiUserCallbackDispatcher";
-    Status = PspLookupSystemDllEntryPoint(EntryName,
-                                          (PVOID *)&KeUserCallbackDispatcher);
-    if (NT_SUCCESS(Status) == FALSE) {
+    Status = PspLookupSystemDllEntryPoint(EntryName, (PVOID *)&KeUserCallbackDispatcher);
+    if (NT_SUCCESS(Status) == FALSE)
+    {
         KdPrint(("Ps: Cannot find user callback dispatcher address\n"));
         return Status;
     }
@@ -91,9 +89,9 @@ Return Value:
     //
 
     EntryName = "KiRaiseUserExceptionDispatcher";
-    Status = PspLookupSystemDllEntryPoint(EntryName,
-                                          (PVOID *)&KeRaiseUserExceptionDispatcher);
-    if (NT_SUCCESS(Status) == FALSE) {
+    Status = PspLookupSystemDllEntryPoint(EntryName, (PVOID *)&KeRaiseUserExceptionDispatcher);
+    if (NT_SUCCESS(Status) == FALSE)
+    {
         KdPrint(("Ps: Cannot find raise user exception dispatcher address\n"));
         return Status;
     }

@@ -23,15 +23,10 @@ Revision History:
 --*/
 
 #include "ki.h"
-
+
 NTSTATUS
-KeUserModeCallback (
-    IN ULONG ApiNumber,
-    IN PVOID InputBuffer,
-    IN ULONG InputLength,
-    OUT PVOID *OutputBuffer,
-    IN PULONG OutputLength
-    )
+KeUserModeCallback(IN ULONG ApiNumber, IN PVOID InputBuffer, IN ULONG InputLength, OUT PVOID *OutputBuffer,
+                   IN PULONG OutputLength)
 
 /*++
 
@@ -81,7 +76,8 @@ Return Value:
 
     TrapFrame = KeGetCurrentThread()->TrapFrame;
     OldStack = TrapFrame->IntSp;
-    try {
+    try
+    {
 
         //
         // Compute new user mode stack address, probe for writability,
@@ -91,8 +87,7 @@ Return Value:
         //      the input length must be rounded up to a 16-byte boundary.
         //
 
-        Length =  (InputLength +
-                16 - 1 + sizeof(UCALLOUT_FRAME)) & ~(16 - 1);
+        Length = (InputLength + 16 - 1 + sizeof(UCALLOUT_FRAME)) & ~(16 - 1);
 
         CalloutFrame = (PUCALLOUT_FRAME)(OldStack - Length);
         ProbeForWrite(CalloutFrame, Length, sizeof(QUAD));
@@ -108,13 +103,14 @@ Return Value:
         CalloutFrame->Sp = OldStack;
         CalloutFrame->Ra = TrapFrame->IntRa;
 
-    //
-    // If an exception occurs during the probe of the user stack, then
-    // always handle the exception and return the exception code as the
-    // status value.
-    //
-
-    } except (EXCEPTION_EXECUTE_HANDLER) {
+        //
+        // If an exception occurs during the probe of the user stack, then
+        // always handle the exception and return the exception code as the
+        // status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         return GetExceptionCode();
     }
 
@@ -130,7 +126,8 @@ Return Value:
     // batch must be flushed.
     //
 
-    if (((PTEB)KeGetCurrentThread()->Teb)->GdiBatchCount > 0) {
+    if (((PTEB)KeGetCurrentThread()->Teb)->GdiBatchCount > 0)
+    {
         TrapFrame->IntSp -= 256;
         KeGdiFlushUserBatch();
     }
@@ -138,15 +135,10 @@ Return Value:
     TrapFrame->IntSp = OldStack;
     return Status;
 }
-
+
 NTSTATUS
-NtW32Call (
-    IN ULONG ApiNumber,
-    IN PVOID InputBuffer,
-    IN ULONG InputLength,
-    OUT PVOID *OutputBuffer,
-    OUT PULONG OutputLength
-    )
+NtW32Call(IN ULONG ApiNumber, IN PVOID InputBuffer, IN ULONG InputLength, OUT PVOID *OutputBuffer,
+          OUT PULONG OutputLength)
 
 /*++
 
@@ -188,7 +180,8 @@ Return Value:
     // since the thread does not have a large stack.
     //
 
-    if (KeGetCurrentThread()->Win32Thread == (PVOID)&KeServiceDescriptorTable[0]) {
+    if (KeGetCurrentThread()->Win32Thread == (PVOID)&KeServiceDescriptorTable[0])
+    {
         return STATUS_NOT_IMPLEMENTED;
     }
 
@@ -196,17 +189,19 @@ Return Value:
     // Probe the output buffer address and length for writeability.
     //
 
-    try {
+    try
+    {
         ProbeForWriteUlong((PULONG)OutputBuffer);
         ProbeForWriteUlong(OutputLength);
 
-    //
-    // If an exception occurs during the probe of the output buffer or
-    // length, then always handle the exception and return the exception
-    // code as the status value.
-    //
-
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+        //
+        // If an exception occurs during the probe of the output buffer or
+        // length, then always handle the exception and return the exception
+        // code as the status value.
+        //
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         return GetExceptionCode();
     }
 
@@ -214,23 +209,22 @@ Return Value:
     // Call out to user mode specifying the input buffer and API number.
     //
 
-    Status = KeUserModeCallback(ApiNumber,
-                                InputBuffer,
-                                InputLength,
-                                &ValueBuffer,
-                                &ValueLength);
+    Status = KeUserModeCallback(ApiNumber, InputBuffer, InputLength, &ValueBuffer, &ValueLength);
 
     //
     // If the callout is successful, then the output buffer address and
     // length.
     //
 
-    if (NT_SUCCESS(Status)) {
-        try {
+    if (NT_SUCCESS(Status))
+    {
+        try
+        {
             *OutputBuffer = ValueBuffer;
             *OutputLength = ValueLength;
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
         }
     }
 

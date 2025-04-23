@@ -24,18 +24,18 @@ Revision History:
 
 #ifdef ALLOC_PRAGMA
 
-#pragma alloc_text(PAGE,PoInitializeDeviceObject)
-#pragma alloc_text(PAGELK,PoRunDownDeviceObject)
-#pragma alloc_text(PAGE,PopCleanupPowerState)
-#pragma alloc_text(PAGE,PopChangeCapability)
-#pragma alloc_text(PAGE,PopExceptionFilter)
-#pragma alloc_text(PAGELK,PopSystemStateString)
-#pragma alloc_text(PAGE,PopOpenPowerKey)
-#pragma alloc_text(PAGE,PopInitializePowerPolicySimulate)
-#pragma alloc_text(PAGE,PopSaveHeuristics)
-#pragma alloc_text(PAGE,PoInvalidateDevicePowerRelations)
-#pragma alloc_text(PAGE,PoGetLightestSystemStateForEject)
-#pragma alloc_text(PAGE,PoGetDevicePowerState)
+#pragma alloc_text(PAGE, PoInitializeDeviceObject)
+#pragma alloc_text(PAGELK, PoRunDownDeviceObject)
+#pragma alloc_text(PAGE, PopCleanupPowerState)
+#pragma alloc_text(PAGE, PopChangeCapability)
+#pragma alloc_text(PAGE, PopExceptionFilter)
+#pragma alloc_text(PAGELK, PopSystemStateString)
+#pragma alloc_text(PAGE, PopOpenPowerKey)
+#pragma alloc_text(PAGE, PopInitializePowerPolicySimulate)
+#pragma alloc_text(PAGE, PopSaveHeuristics)
+#pragma alloc_text(PAGE, PoInvalidateDevicePowerRelations)
+#pragma alloc_text(PAGE, PoGetLightestSystemStateForEject)
+#pragma alloc_text(PAGE, PoGetDevicePowerState)
 #pragma alloc_text(PAGE, PopUnlockAfterSleepWorker)
 
 #if DBG
@@ -50,16 +50,9 @@ Revision History:
 //
 
 ULONG
-tcpxsum(
-   IN ULONG cksum,
-   IN PUCHAR buf,
-   IN ULONG_PTR len
-   );
+tcpxsum(IN ULONG cksum, IN PUCHAR buf, IN ULONG_PTR len);
 
-VOID
-PoInitializeDeviceObject (
-    IN PDEVOBJ_EXTENSION   DeviceObjectExtension
-    )
+VOID PoInitializeDeviceObject(IN PDEVOBJ_EXTENSION DeviceObjectExtension)
 {
     //
     // default to unspecified power states, not Inrush, Pageable.
@@ -73,36 +66,26 @@ PoInitializeDeviceObject (
     DeviceObjectExtension->Dope = NULL;
 }
 
-VOID
-PoRunDownDeviceObject (
-    IN PDEVICE_OBJECT   DeviceObject
-    )
+VOID PoRunDownDeviceObject(IN PDEVICE_OBJECT DeviceObject)
 {
-    KIRQL   OldIrql;
-    PDEVOBJ_EXTENSION    doe;
-    PDEVICE_OBJECT_POWER_EXTENSION  pdope;
-    ULONG   D0Count;
+    KIRQL OldIrql;
+    PDEVOBJ_EXTENSION doe;
+    PDEVICE_OBJECT_POWER_EXTENSION pdope;
+    ULONG D0Count;
 
-    doe = (PDEVOBJ_EXTENSION) DeviceObject->DeviceObjectExtension;
+    doe = (PDEVOBJ_EXTENSION)DeviceObject->DeviceObjectExtension;
 
     //
     // force off any idle counter that may be active
     //
 
-    PoRegisterDeviceForIdleDetection(
-        DeviceObject, 0, 0, PowerDeviceUnspecified
-        );
+    PoRegisterDeviceForIdleDetection(DeviceObject, 0, 0, PowerDeviceUnspecified);
 
     if (PopFindIrpByDeviceObject(DeviceObject, DevicePowerState) ||
         PopFindIrpByDeviceObject(DeviceObject, SystemPowerState))
     {
-        PopInternalAddToDumpFile( NULL, 0, DeviceObject, NULL, NULL, NULL );
-        KeBugCheckEx(
-            DRIVER_POWER_STATE_FAILURE,
-            DEVICE_DELETED_WITH_POWER_IRPS,
-            0x100,
-            (ULONG_PTR) DeviceObject,
-            0 );
+        PopInternalAddToDumpFile(NULL, 0, DeviceObject, NULL, NULL, NULL);
+        KeBugCheckEx(DRIVER_POWER_STATE_FAILURE, DEVICE_DELETED_WITH_POWER_IRPS, 0x100, (ULONG_PTR)DeviceObject, 0);
     }
 
     //
@@ -114,13 +97,15 @@ PoRunDownDeviceObject (
     // knock down the dope
     //
     pdope = doe->Dope;
-    if (pdope) {
+    if (pdope)
+    {
         ASSERT(ExPageLockHandle);
         MmLockPagableSectionByHandle(ExPageLockHandle);
-        PopAcquireVolumeLock ();
+        PopAcquireVolumeLock();
         PopLockDopeGlobal(&OldIrql);
-        if (pdope->Volume.Flink) {
-            RemoveEntryList (&pdope->Volume);
+        if (pdope->Volume.Flink)
+        {
+            RemoveEntryList(&pdope->Volume);
             doe->Dope->Volume.Flink = NULL;
             doe->Dope->Volume.Blink = NULL;
         }
@@ -128,15 +113,12 @@ PoRunDownDeviceObject (
         doe->Dope = NULL;
         ExFreePool(pdope);
         PopUnlockDopeGlobal(OldIrql);
-        PopReleaseVolumeLock ();
-        MmUnlockPagableImageSection (ExPageLockHandle);
+        PopReleaseVolumeLock();
+        MmUnlockPagableImageSection(ExPageLockHandle);
     }
 }
 
-VOID
-PopCleanupPowerState (
-    IN OUT PUCHAR       PowerState
-    )
+VOID PopCleanupPowerState(IN OUT PUCHAR PowerState)
 /*++
 
 Routine Description:
@@ -154,14 +136,15 @@ Return Value:
 
 --*/
 {
-    ULONG               OldFlags;
+    ULONG OldFlags;
 
     //
     // If power state is set, clean it up
     //
 
-    if (*PowerState) {
-        PopAcquirePolicyLock ();
+    if (*PowerState)
+    {
+        PopAcquirePolicyLock();
 
         //
         // Get current settings and clear them
@@ -174,21 +157,18 @@ Return Value:
         // Account for attribute settings which are being cleared
         //
 
-        PopApplyAttributeState (ES_CONTINUOUS, OldFlags);
+        PopApplyAttributeState(ES_CONTINUOUS, OldFlags);
 
         //
         // Done
         //
 
-        PopReleasePolicyLock (TRUE);
+        PopReleasePolicyLock(TRUE);
     }
 }
 
 
-VOID
-PoNotifySystemTimeSet (
-    VOID
-    )
+VOID PoNotifySystemTimeSet(VOID)
 /*++
 
 Routine Description:
@@ -207,61 +187,50 @@ Return Value:
 
 --*/
 {
-    KIRQL       OldIrql;
+    KIRQL OldIrql;
 
-    if (PopEventCallout) {
-        KeRaiseIrql (DISPATCH_LEVEL, &OldIrql);
-        ExNotifyCallback (ExCbSetSystemTime, NULL, NULL);
-        PopGetPolicyWorker (PO_WORKER_TIME_CHANGE);
-        PopCheckForWork (TRUE);
-        KeLowerIrql (OldIrql);
+    if (PopEventCallout)
+    {
+        KeRaiseIrql(DISPATCH_LEVEL, &OldIrql);
+        ExNotifyCallback(ExCbSetSystemTime, NULL, NULL);
+        PopGetPolicyWorker(PO_WORKER_TIME_CHANGE);
+        PopCheckForWork(TRUE);
+        KeLowerIrql(OldIrql);
     }
 }
 
 
-VOID
-PopChangeCapability (
-    IN PBOOLEAN PresentFlag,
-    IN BOOLEAN IsPresent
-    )
+VOID PopChangeCapability(IN PBOOLEAN PresentFlag, IN BOOLEAN IsPresent)
 {
     //
     // If feature wasn't present before, it is now.  Re-compute policies
     // as system capabilities changed
     //
 
-    if (*PresentFlag != IsPresent) {
+    if (*PresentFlag != IsPresent)
+    {
         *PresentFlag = IsPresent;
-        PopResetCurrentPolicies ();
-        PopSetNotificationWork (PO_NOTIFY_CAPABILITIES);
+        PopResetCurrentPolicies();
+        PopSetNotificationWork(PO_NOTIFY_CAPABILITIES);
     }
 }
 
 
 #if DBG
 
-VOID
-PopAssertPolicyLockOwned(
-    VOID
-    )
+VOID PopAssertPolicyLockOwned(VOID)
 {
     PAGED_CODE();
-    ASSERT (PopPolicyLockThread == KeGetCurrentThread());
+    ASSERT(PopPolicyLockThread == KeGetCurrentThread());
 }
 
 #endif // DBG
 
 
-VOID
-FASTCALL
-PopInternalAddToDumpFile (
-    IN OPTIONAL PVOID DataBlock,
-    IN OPTIONAL ULONG DataBlockSize,
-    IN OPTIONAL PDEVICE_OBJECT  DeviceObject,
-    IN OPTIONAL PDRIVER_OBJECT  DriverObject,
-    IN OPTIONAL PDEVOBJ_EXTENSION Doe,
-    IN OPTIONAL PDEVICE_OBJECT_POWER_EXTENSION  Dope
-    )
+VOID FASTCALL PopInternalAddToDumpFile(IN OPTIONAL PVOID DataBlock, IN OPTIONAL ULONG DataBlockSize,
+                                       IN OPTIONAL PDEVICE_OBJECT DeviceObject, IN OPTIONAL PDRIVER_OBJECT DriverObject,
+                                       IN OPTIONAL PDEVOBJ_EXTENSION Doe,
+                                       IN OPTIONAL PDEVICE_OBJECT_POWER_EXTENSION Dope)
 /*++
 
 Routine Description:
@@ -302,61 +271,77 @@ Return Value:
 {
     PDRIVER_OBJECT lPDriverObject = NULL;
     PDEVOBJ_EXTENSION lPDoe = NULL;
-    PDEVICE_OBJECT_POWER_EXTENSION  lPDope = NULL;
+    PDEVICE_OBJECT_POWER_EXTENSION lPDope = NULL;
 
     //
     // Insert any parameters that were sent in.
     //
-    if( DataBlock ) {
-        IoAddTriageDumpDataBlock(
-                PAGE_ALIGN(DataBlock),
-                (DataBlockSize ? BYTES_TO_PAGES(DataBlockSize) : PAGE_SIZE) );
+    if (DataBlock)
+    {
+        IoAddTriageDumpDataBlock(PAGE_ALIGN(DataBlock), (DataBlockSize ? BYTES_TO_PAGES(DataBlockSize) : PAGE_SIZE));
     }
 
-    if( DeviceObject ) {
+    if (DeviceObject)
+    {
         IoAddTriageDumpDataBlock(DeviceObject, sizeof(DEVICE_OBJECT));
     }
 
-    if( DriverObject ) {
+    if (DriverObject)
+    {
         lPDriverObject = DriverObject;
-    } else if( (DeviceObject) && (DeviceObject->DriverObject) ) {
+    }
+    else if ((DeviceObject) && (DeviceObject->DriverObject))
+    {
         lPDriverObject = DeviceObject->DriverObject;
     }
-    if( lPDriverObject ) {
+    if (lPDriverObject)
+    {
         IoAddTriageDumpDataBlock(lPDriverObject, lPDriverObject->Size);
 
-        if( lPDriverObject->DriverName.Buffer ) {
+        if (lPDriverObject->DriverName.Buffer)
+        {
             IoAddTriageDumpDataBlock(lPDriverObject->DriverName.Buffer, lPDriverObject->DriverName.Length);
         }
     }
 
 
-    if( Doe ) {
+    if (Doe)
+    {
         lPDoe = Doe;
-    } else if( DeviceObject ) {
+    }
+    else if (DeviceObject)
+    {
         lPDoe = DeviceObject->DeviceObjectExtension;
     }
-    if( lPDoe ) {
-        IoAddTriageDumpDataBlock(PAGE_ALIGN(lPDoe), sizeof(DEVOBJ_EXTENSION));        
-        
-        if( lPDoe->DeviceNode ) {
+    if (lPDoe)
+    {
+        IoAddTriageDumpDataBlock(PAGE_ALIGN(lPDoe), sizeof(DEVOBJ_EXTENSION));
+
+        if (lPDoe->DeviceNode)
+        {
             IoAddTriageDumpDataBlock(PAGE_ALIGN(lPDoe->DeviceNode), PAGE_SIZE);
         }
-        if( lPDoe->AttachedTo ) {
+        if (lPDoe->AttachedTo)
+        {
             IoAddTriageDumpDataBlock(PAGE_ALIGN(lPDoe->AttachedTo), PAGE_SIZE);
         }
-        if( lPDoe->Vpb ) {
+        if (lPDoe->Vpb)
+        {
             IoAddTriageDumpDataBlock(PAGE_ALIGN(lPDoe->Vpb), PAGE_SIZE);
         }
     }
 
 
-    if( Dope ) {
+    if (Dope)
+    {
         lPDope = Dope;
-    } else if( lPDoe ) {
+    }
+    else if (lPDoe)
+    {
         lPDope = lPDoe->Dope;
     }
-    if( lPDope ) {
+    if (lPDope)
+    {
         IoAddTriageDumpDataBlock(PAGE_ALIGN(lPDope), sizeof(DEVICE_OBJECT_POWER_EXTENSION));
     }
 
@@ -366,18 +351,21 @@ Return Value:
     //
     IoAddTriageDumpDataBlock(PAGE_ALIGN(&PopHiberFile), sizeof(POP_HIBER_FILE));
 
-    
+
     IoAddTriageDumpDataBlock(PAGE_ALIGN(&PopAction), sizeof(POP_POWER_ACTION));
-    if(PopAction.DevState) { 
+    if (PopAction.DevState)
+    {
         IoAddTriageDumpDataBlock(PAGE_ALIGN(&(PopAction.DevState)), sizeof(POP_DEVICE_SYS_STATE));
     }
-    if(PopAction.HiberContext) {
+    if (PopAction.HiberContext)
+    {
         IoAddTriageDumpDataBlock(PAGE_ALIGN(&(PopAction.HiberContext)), sizeof(POP_HIBER_CONTEXT));
     }
 
 
     IoAddTriageDumpDataBlock(PAGE_ALIGN(&PopCB), sizeof(POP_COMPOSITE_BATTERY));
-    if(PopCB.StatusIrp) {
+    if (PopCB.StatusIrp)
+    {
         IoAddTriageDumpDataBlock(PAGE_ALIGN(&(PopCB.StatusIrp)), sizeof(IRP));
     }
 
@@ -386,31 +374,26 @@ Return Value:
 }
 
 
-VOID
-FASTCALL
-_PopInternalError (
-    IN ULONG    BugCode
-    )
+VOID FASTCALL _PopInternalError(IN ULONG BugCode)
 {
-    KeBugCheckEx (INTERNAL_POWER_ERROR, 0x2, BugCode, 0, 0);
+    KeBugCheckEx(INTERNAL_POWER_ERROR, 0x2, BugCode, 0, 0);
 }
 
 EXCEPTION_DISPOSITION
-PopExceptionFilter (
-    IN PEXCEPTION_POINTERS ExceptionInfo,
-    IN BOOLEAN AllowRaisedException
-    )
+PopExceptionFilter(IN PEXCEPTION_POINTERS ExceptionInfo, IN BOOLEAN AllowRaisedException)
 {
     //
     // If handler wants raised expceptions, check the exception code
     //
 
-    if (AllowRaisedException) {
-        switch (ExceptionInfo->ExceptionRecord->ExceptionCode) {
-            case STATUS_INVALID_PARAMETER:
-            case STATUS_INVALID_PARAMETER_1:
-            case STATUS_INVALID_PARAMETER_2:
-                return EXCEPTION_EXECUTE_HANDLER;
+    if (AllowRaisedException)
+    {
+        switch (ExceptionInfo->ExceptionRecord->ExceptionCode)
+        {
+        case STATUS_INVALID_PARAMETER:
+        case STATUS_INVALID_PARAMETER_1:
+        case STATUS_INVALID_PARAMETER_2:
+            return EXCEPTION_EXECUTE_HANDLER;
         }
     }
 
@@ -418,73 +401,84 @@ PopExceptionFilter (
     // Not allowed
     //
 
-    PoPrint (PO_ERROR, ("PoExceptionFilter: exr %x, cxr %x",
-                            ExceptionInfo->ExceptionRecord,
-                            ExceptionInfo->ContextRecord
-                        ));
+    PoPrint(PO_ERROR,
+            ("PoExceptionFilter: exr %x, cxr %x", ExceptionInfo->ExceptionRecord, ExceptionInfo->ContextRecord));
 
-    PopInternalAddToDumpFile( ExceptionInfo->ExceptionRecord,
-                              sizeof(EXCEPTION_RECORD),
-                              NULL,
-                              NULL,
-                              NULL,
-                              NULL );
-    PopInternalAddToDumpFile( ExceptionInfo->ContextRecord,
-                              sizeof(CONTEXT),
-                              NULL,
-                              NULL,
-                              NULL,
-                              NULL );
+    PopInternalAddToDumpFile(ExceptionInfo->ExceptionRecord, sizeof(EXCEPTION_RECORD), NULL, NULL, NULL, NULL);
+    PopInternalAddToDumpFile(ExceptionInfo->ContextRecord, sizeof(CONTEXT), NULL, NULL, NULL, NULL);
 
-    KeBugCheckEx( INTERNAL_POWER_ERROR,
-                  0x101,
-                  POP_MISC,
-                  (ULONG_PTR)ExceptionInfo,
-                  0 );
+    KeBugCheckEx(INTERNAL_POWER_ERROR, 0x101, POP_MISC, (ULONG_PTR)ExceptionInfo, 0);
 }
 
 PUCHAR
-PopSystemStateString(
-    IN SYSTEM_POWER_STATE   SystemState
-    )
+PopSystemStateString(IN SYSTEM_POWER_STATE SystemState)
 // This function is not DBG because...
 {
-    PUCHAR      p;
+    PUCHAR p;
 
-    switch (SystemState) {
-        case PowerSystemUnspecified:    p = "Unspecified";      break;
-        case PowerSystemWorking:        p = "Working";          break;
-        case PowerSystemSleeping1:      p = "Sleeping1";        break;
-        case PowerSystemSleeping2:      p = "Sleeping2";        break;
-        case PowerSystemSleeping3:      p = "Sleeping3";        break;
-        case PowerSystemHibernate:      p = "Hibernate";        break;
-        case PowerSystemShutdown:       p = "Shutdown";         break;
-        default:                        p = "?";
+    switch (SystemState)
+    {
+    case PowerSystemUnspecified:
+        p = "Unspecified";
+        break;
+    case PowerSystemWorking:
+        p = "Working";
+        break;
+    case PowerSystemSleeping1:
+        p = "Sleeping1";
+        break;
+    case PowerSystemSleeping2:
+        p = "Sleeping2";
+        break;
+    case PowerSystemSleeping3:
+        p = "Sleeping3";
+        break;
+    case PowerSystemHibernate:
+        p = "Hibernate";
+        break;
+    case PowerSystemShutdown:
+        p = "Shutdown";
+        break;
+    default:
+        p = "?";
     }
 
     return p;
 }
 
 
-
 #if DBG
 PUCHAR
-PopPowerActionString(
-    IN POWER_ACTION     PowerAction
-    )
+PopPowerActionString(IN POWER_ACTION PowerAction)
 // This function is not DBG because...
 {
-    PUCHAR      p;
+    PUCHAR p;
 
-    switch (PowerAction) {
-        case PowerActionNone:           p = "None";             break;
-        case PowerActionSleep:          p = "Sleep";            break;
-        case PowerActionHibernate:      p = "Hibernate";        break;
-        case PowerActionShutdown:       p = "Shutdown";         break;
-        case PowerActionShutdownReset:  p = "ShutdownReset";    break;
-        case PowerActionShutdownOff:    p = "ShutdownOff";      break;
-        case PowerActionWarmEject:      p = "WarmEject";        break;
-        default:                        p = "?";
+    switch (PowerAction)
+    {
+    case PowerActionNone:
+        p = "None";
+        break;
+    case PowerActionSleep:
+        p = "Sleep";
+        break;
+    case PowerActionHibernate:
+        p = "Hibernate";
+        break;
+    case PowerActionShutdown:
+        p = "Shutdown";
+        break;
+    case PowerActionShutdownReset:
+        p = "ShutdownReset";
+        break;
+    case PowerActionShutdownOff:
+        p = "ShutdownOff";
+        break;
+    case PowerActionWarmEject:
+        p = "WarmEject";
+        break;
+    default:
+        p = "?";
     }
 
     return p;
@@ -496,75 +490,62 @@ PopPowerActionString(
 //
 // PowerTrace variables
 //
-ULONG   PoPowerTraceControl = 0L;
-ULONG   PoPowerTraceCount = 0L;
-PUCHAR  PoPowerTraceMinorCode[] = {
-        "wait", "seq", "set", "query"
-        };
-PUCHAR  PoPowerTracePoint[] = {
-        "calldrv", "present", "startnxt", "setstate", "complete"
-        };
-PUCHAR  PoPowerType[] = {
-        "sys", "dev"
-        };
+ULONG PoPowerTraceControl = 0L;
+ULONG PoPowerTraceCount = 0L;
+PUCHAR PoPowerTraceMinorCode[] = { "wait", "seq", "set", "query" };
+PUCHAR PoPowerTracePoint[] = { "calldrv", "present", "startnxt", "setstate", "complete" };
+PUCHAR PoPowerType[] = { "sys", "dev" };
 
 
-
-VOID
-PoPowerTracePrint(
-    ULONG    TracePoint,
-    ULONG_PTR Caller,
-    ULONG_PTR CallerCaller,
-    ULONG_PTR DeviceObject,
-    ULONG_PTR Arg1,
-    ULONG_PTR Arg2
-    )
+VOID PoPowerTracePrint(ULONG TracePoint, ULONG_PTR Caller, ULONG_PTR CallerCaller, ULONG_PTR DeviceObject,
+                       ULONG_PTR Arg1, ULONG_PTR Arg2)
 /*
     Example:
 
 PLOG,00015,startnxt,c@ffea1345,cc@ffea5643,do@80081234,irp@8100ff00,ios@8100ff10,query,sys,3
 */
 {
-    PIO_STACK_LOCATION  Isp;
-    PUCHAR              tracename;
-    ULONG               j;
-    ULONG               tp;
+    PIO_STACK_LOCATION Isp;
+    PUCHAR tracename;
+    ULONG j;
+    ULONG tp;
 
     PoPowerTraceCount++;
 
-    if (PoPowerTraceControl & TracePoint) {
+    if (PoPowerTraceControl & TracePoint)
+    {
         tracename = NULL;
         tp = TracePoint;
-        for (j = 0; j < 33; tp = tp >> 1, j = j+1)
+        for (j = 0; j < 33; tp = tp >> 1, j = j + 1)
         {
-            if (tp & 1) {
+            if (tp & 1)
+            {
                 tracename = PoPowerTracePoint[j];
                 j = 33;
             }
         }
 
-        DbgPrint("PLOG,%05ld,%8s,do@%08lx",
-            PoPowerTraceCount,tracename,DeviceObject
-            );
-        if ((TracePoint == POWERTRACE_CALL) ||
-            (TracePoint == POWERTRACE_PRESENT) ||
+        DbgPrint("PLOG,%05ld,%8s,do@%08lx", PoPowerTraceCount, tracename, DeviceObject);
+        if ((TracePoint == POWERTRACE_CALL) || (TracePoint == POWERTRACE_PRESENT) ||
             (TracePoint == POWERTRACE_STARTNEXT))
         {
-            DbgPrint(",irp@%08lx,isp@%08lx",Arg1,Arg2);
+            DbgPrint(",irp@%08lx,isp@%08lx", Arg1, Arg2);
             Isp = (PIO_STACK_LOCATION)Arg2;
             DbgPrint(",%5s", PoPowerTraceMinorCode[Isp->MinorFunction]);
-            if ((Isp->MinorFunction == IRP_MN_SET_POWER) ||
-                (Isp->MinorFunction == IRP_MN_QUERY_POWER))
+            if ((Isp->MinorFunction == IRP_MN_SET_POWER) || (Isp->MinorFunction == IRP_MN_QUERY_POWER))
             {
-                DbgPrint(",%s,%d",
-                    PoPowerType[Isp->Parameters.Power.Type],
-                    ((ULONG)Isp->Parameters.Power.State.DeviceState)-1  // hack - works for sys state too
-                    );
+                DbgPrint(",%s,%d", PoPowerType[Isp->Parameters.Power.Type],
+                         ((ULONG)Isp->Parameters.Power.State.DeviceState) - 1 // hack - works for sys state too
+                );
             }
-        } else if (TracePoint == POWERTRACE_SETSTATE) {
-            DbgPrint(",,,,%s,%d", PoPowerType[Arg1], Arg2-1);
-        } else if (TracePoint == POWERTRACE_COMPLETE) {
-            DbgPrint(",irp@%08lx,isp@%08lx",Arg1,Arg2);
+        }
+        else if (TracePoint == POWERTRACE_SETSTATE)
+        {
+            DbgPrint(",,,,%s,%d", PoPowerType[Arg1], Arg2 - 1);
+        }
+        else if (TracePoint == POWERTRACE_COMPLETE)
+        {
+            DbgPrint(",irp@%08lx,isp@%08lx", Arg1, Arg2);
         }
         DbgPrint("\n");
     }
@@ -573,20 +554,16 @@ PLOG,00015,startnxt,c@ffea1345,cc@ffea5643,do@80081234,irp@8100ff00,ios@8100ff10
 
 #endif
 
-ULONG PoSimpleCheck(IN ULONG                PartialSum,
-                    IN PVOID                SourceVa,
-                    IN ULONG_PTR            Length)
+ULONG PoSimpleCheck(IN ULONG PartialSum, IN PVOID SourceVa, IN ULONG_PTR Length)
 {
-   // Just use the TCP/IP check sum
-   //
+    // Just use the TCP/IP check sum
+    //
 
-   return tcpxsum(PartialSum, (PUCHAR)SourceVa, Length);
+    return tcpxsum(PartialSum, (PUCHAR)SourceVa, Length);
 }
 
 NTSTATUS
-PopOpenPowerKey (
-    OUT PHANDLE Handle
-    )
+PopOpenPowerKey(OUT PHANDLE Handle)
 /*++
 
 Routine Description:
@@ -603,31 +580,23 @@ Return Value:
 
 --*/
 {
-    UNICODE_STRING          UnicodeString;
-    OBJECT_ATTRIBUTES       ObjectAttributes;
-    NTSTATUS                Status;
-    HANDLE                  BaseHandle;
-    ULONG                   disposition;
+    UNICODE_STRING UnicodeString;
+    OBJECT_ATTRIBUTES ObjectAttributes;
+    NTSTATUS Status;
+    HANDLE BaseHandle;
+    ULONG disposition;
 
     //
     // Open current control set
     //
 
-    InitializeObjectAttributes(
-            &ObjectAttributes,
-            &CmRegistryMachineSystemCurrentControlSet,
-            OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-            NULL,
-            (PSECURITY_DESCRIPTOR) NULL
-            );
+    InitializeObjectAttributes(&ObjectAttributes, &CmRegistryMachineSystemCurrentControlSet,
+                               OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, (PSECURITY_DESCRIPTOR)NULL);
 
-    Status = ZwOpenKey (
-                &BaseHandle,
-                KEY_READ | KEY_WRITE,
-                &ObjectAttributes
-                );
+    Status = ZwOpenKey(&BaseHandle, KEY_READ | KEY_WRITE, &ObjectAttributes);
 
-    if (!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
         return Status;
     }
 
@@ -635,34 +604,19 @@ Return Value:
     // Open power branch
     //
 
-    RtlInitUnicodeString (&UnicodeString, PopRegKey);
+    RtlInitUnicodeString(&UnicodeString, PopRegKey);
 
-    InitializeObjectAttributes(
-            &ObjectAttributes,
-            &UnicodeString,
-            OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-            BaseHandle,
-            (PSECURITY_DESCRIPTOR) NULL
-            );
+    InitializeObjectAttributes(&ObjectAttributes, &UnicodeString, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, BaseHandle,
+                               (PSECURITY_DESCRIPTOR)NULL);
 
-    Status = ZwCreateKey (
-                Handle,
-                KEY_READ | KEY_WRITE,
-                &ObjectAttributes,
-                0,
-                (PUNICODE_STRING) NULL,
-                REG_OPTION_NON_VOLATILE,
-                &disposition
-                );
+    Status = ZwCreateKey(Handle, KEY_READ | KEY_WRITE, &ObjectAttributes, 0, (PUNICODE_STRING)NULL,
+                         REG_OPTION_NON_VOLATILE, &disposition);
 
-    ZwClose (BaseHandle);
+    ZwClose(BaseHandle);
     return Status;
 }
 
-VOID
-PopInitializePowerPolicySimulate(
-    VOID
-    )
+VOID PopInitializePowerPolicySimulate(VOID)
 /*++
 
 Routine Description:
@@ -680,15 +634,16 @@ Return Value:
 
 --*/
 {
-    UNICODE_STRING          UnicodeString;
-    OBJECT_ATTRIBUTES       ObjectAttributes;
-    NTSTATUS                Status;
-    HANDLE                  BaseHandle;
-    HANDLE                  Handle;
-    ULONG                   Length;
-    ULONG                   disposition;
-    struct {
-        KEY_VALUE_PARTIAL_INFORMATION   Inf;
+    UNICODE_STRING UnicodeString;
+    OBJECT_ATTRIBUTES ObjectAttributes;
+    NTSTATUS Status;
+    HANDLE BaseHandle;
+    HANDLE Handle;
+    ULONG Length;
+    ULONG disposition;
+    struct
+    {
+        KEY_VALUE_PARTIAL_INFORMATION Inf;
         ULONG Data;
     } PartialInformation;
 
@@ -698,75 +653,48 @@ Return Value:
     //
     // Open current control set
     //
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &CmRegistryMachineSystemCurrentControlSet,
-        OBJ_CASE_INSENSITIVE,
-        NULL,
-        (PSECURITY_DESCRIPTOR) NULL
-        );
-    Status = ZwOpenKey(
-        &BaseHandle,
-        KEY_READ,
-        &ObjectAttributes
-        );
-    if (!NT_SUCCESS(Status)) {
+    InitializeObjectAttributes(&ObjectAttributes, &CmRegistryMachineSystemCurrentControlSet, OBJ_CASE_INSENSITIVE, NULL,
+                               (PSECURITY_DESCRIPTOR)NULL);
+    Status = ZwOpenKey(&BaseHandle, KEY_READ, &ObjectAttributes);
+    if (!NT_SUCCESS(Status))
+    {
 
         goto done;
-
     }
 
     // Get the right key
-    RtlInitUnicodeString (&UnicodeString, PopSimulateRegKey);
-    InitializeObjectAttributes(
-        &ObjectAttributes,
-        &UnicodeString,
-        OBJ_CASE_INSENSITIVE,
-        BaseHandle,
-        (PSECURITY_DESCRIPTOR) NULL
-        );
-    Status = ZwCreateKey(
-        &Handle,
-        KEY_READ,
-        &ObjectAttributes,
-        0,
-        (PUNICODE_STRING) NULL,
-        REG_OPTION_NON_VOLATILE,
-        &disposition
-        );
+    RtlInitUnicodeString(&UnicodeString, PopSimulateRegKey);
+    InitializeObjectAttributes(&ObjectAttributes, &UnicodeString, OBJ_CASE_INSENSITIVE, BaseHandle,
+                               (PSECURITY_DESCRIPTOR)NULL);
+    Status = ZwCreateKey(&Handle, KEY_READ, &ObjectAttributes, 0, (PUNICODE_STRING)NULL, REG_OPTION_NON_VOLATILE,
+                         &disposition);
     ZwClose(BaseHandle);
-    if(!NT_SUCCESS(Status)) {
+    if (!NT_SUCCESS(Status))
+    {
 
-       goto done;
-
+        goto done;
     }
 
     //
     // Get the value of the simulation
     //
-    RtlInitUnicodeString (&UnicodeString,PopSimulateRegName);
-    Status = ZwQueryValueKey(
-        Handle,
-        &UnicodeString,
-        KeyValuePartialInformation,
-        &PartialInformation,
-        sizeof (PartialInformation),
-        &Length
-        );
-    ZwClose (Handle);
-    if (!NT_SUCCESS(Status)) {
+    RtlInitUnicodeString(&UnicodeString, PopSimulateRegName);
+    Status = ZwQueryValueKey(Handle, &UnicodeString, KeyValuePartialInformation, &PartialInformation,
+                             sizeof(PartialInformation), &Length);
+    ZwClose(Handle);
+    if (!NT_SUCCESS(Status))
+    {
 
-       goto done;
-
+        goto done;
     }
 
     //
     // Check to make sure the retrieved data makes sense
     //
-    if(PartialInformation.Inf.DataLength != sizeof(ULONG))  {
+    if (PartialInformation.Inf.DataLength != sizeof(ULONG))
+    {
 
-       goto done;
-
+        goto done;
     }
 
     //
@@ -778,10 +706,7 @@ done:
     return;
 }
 
-VOID
-PopSaveHeuristics (
-    VOID
-    )
+VOID PopSaveHeuristics(VOID)
 /*++
 
 Routine Description:
@@ -798,35 +723,26 @@ Return Value:
 
 --*/
 {
-    HANDLE                  handle;
-    UNICODE_STRING          UnicodeString;
-    OBJECT_ATTRIBUTES       ObjectAttributes;
-    NTSTATUS                Status;
+    HANDLE handle;
+    UNICODE_STRING UnicodeString;
+    OBJECT_ATTRIBUTES ObjectAttributes;
+    NTSTATUS Status;
 
     ASSERT_POLICY_LOCK_OWNED();
 
-    Status = PopOpenPowerKey (&handle);
-    if (NT_SUCCESS(Status)) {
+    Status = PopOpenPowerKey(&handle);
+    if (NT_SUCCESS(Status))
+    {
 
         PopHeuristics.Dirty = FALSE;
 
-        RtlInitUnicodeString (&UnicodeString, PopHeuristicsRegName);
-        Status = ZwSetValueKey (
-                    handle,
-                    &UnicodeString,
-                    0L,
-                    REG_BINARY,
-                    &PopHeuristics,
-                    sizeof (PopHeuristics)
-                    );
+        RtlInitUnicodeString(&UnicodeString, PopHeuristicsRegName);
+        Status = ZwSetValueKey(handle, &UnicodeString, 0L, REG_BINARY, &PopHeuristics, sizeof(PopHeuristics));
         ZwClose(handle);
     }
 }
 
-VOID
-PoInvalidateDevicePowerRelations(
-    PDEVICE_OBJECT  DeviceObject
-    )
+VOID PoInvalidateDevicePowerRelations(PDEVICE_OBJECT DeviceObject)
 /*++
 
 Routine Description:
@@ -854,12 +770,8 @@ Return Value:
 }
 
 NTSTATUS
-PoGetLightestSystemStateForEject(
-    IN   BOOLEAN              DockBeingEjected,
-    IN   BOOLEAN              HotEjectSupported,
-    IN   BOOLEAN              WarmEjectSupported,
-    OUT  PSYSTEM_POWER_STATE  LightestSleepState
-    )
+PoGetLightestSystemStateForEject(IN BOOLEAN DockBeingEjected, IN BOOLEAN HotEjectSupported,
+                                 IN BOOLEAN WarmEjectSupported, OUT PSYSTEM_POWER_STATE LightestSleepState)
 /*++
 
 Routine Description:
@@ -894,17 +806,17 @@ Return Value:
 
 --*/
 {
-    SYSTEM_BATTERY_STATE            systemBatteryInfo;
-    UNICODE_STRING                  unicodeString;
-    OBJECT_ATTRIBUTES               objectAttributes;
-    NTSTATUS                        status;
-    HANDLE                          handle;
-    ULONG                           length;
-    ULONG                           currentPercentage;
-    ULONG                           disposition;
-    UCHAR                           ejectPartialInfo[SIZEOF_EJECT_PARTIAL_INFO];
-    PUNDOCK_POWER_RESTRICTIONS      undockRestrictions;
-    PKEY_VALUE_PARTIAL_INFORMATION  partialInfoHeader;
+    SYSTEM_BATTERY_STATE systemBatteryInfo;
+    UNICODE_STRING unicodeString;
+    OBJECT_ATTRIBUTES objectAttributes;
+    NTSTATUS status;
+    HANDLE handle;
+    ULONG length;
+    ULONG currentPercentage;
+    ULONG disposition;
+    UCHAR ejectPartialInfo[SIZEOF_EJECT_PARTIAL_INFO];
+    PUNDOCK_POWER_RESTRICTIONS undockRestrictions;
+    PKEY_VALUE_PARTIAL_INFORMATION partialInfoHeader;
 
     PAGED_CODE();
 
@@ -916,7 +828,8 @@ Return Value:
     //
     // If neither, then it's a "user" assisted hot eject.
     //
-    if ((!HotEjectSupported) && (!WarmEjectSupported)) {
+    if ((!HotEjectSupported) && (!WarmEjectSupported))
+    {
 
         HotEjectSupported = TRUE;
     }
@@ -927,13 +840,16 @@ Return Value:
     // if we can't do hot eject, we'll try warm eject in the best possible
     // sleep state.
     //
-    if (!DockBeingEjected) {
+    if (!DockBeingEjected)
+    {
 
-        if (HotEjectSupported) {
+        if (HotEjectSupported)
+        {
 
             *LightestSleepState = PowerSystemWorking;
-
-        } else {
+        }
+        else
+        {
 
             ASSERT(WarmEjectSupported);
             *LightestSleepState = PowerSystemSleeping1;
@@ -945,62 +861,60 @@ Return Value:
     //
     // We are going to eject a dock, so we retrieve our undock power policy.
     //
-    status = PopOpenPowerKey (&handle);
+    status = PopOpenPowerKey(&handle);
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
         return status;
     }
 
     // Get the right key
 
-    RtlInitUnicodeString (&unicodeString, PopUndockPolicyRegName);
+    RtlInitUnicodeString(&unicodeString, PopUndockPolicyRegName);
 
-    status = ZwQueryValueKey (
-        handle,
-        &unicodeString,
-        KeyValuePartialInformation,
-        &ejectPartialInfo,
-        sizeof (ejectPartialInfo),
-        &length
-        );
+    status = ZwQueryValueKey(handle, &unicodeString, KeyValuePartialInformation, &ejectPartialInfo,
+                             sizeof(ejectPartialInfo), &length);
 
-    ZwClose (handle);
-    if ((!NT_SUCCESS(status)) && (status != STATUS_OBJECT_NAME_NOT_FOUND)) {
+    ZwClose(handle);
+    if ((!NT_SUCCESS(status)) && (status != STATUS_OBJECT_NAME_NOT_FOUND))
+    {
 
         return status;
     }
 
     // Check to make sure the retrieved data makes sense
 
-    partialInfoHeader = (PKEY_VALUE_PARTIAL_INFORMATION) ejectPartialInfo;
+    partialInfoHeader = (PKEY_VALUE_PARTIAL_INFORMATION)ejectPartialInfo;
 
-    undockRestrictions =
-        (PUNDOCK_POWER_RESTRICTIONS) (ejectPartialInfo + SIZEOF_PARTIAL_INFO_HEADER);
+    undockRestrictions = (PUNDOCK_POWER_RESTRICTIONS)(ejectPartialInfo + SIZEOF_PARTIAL_INFO_HEADER);
 
-    if (status == STATUS_OBJECT_NAME_NOT_FOUND) {
+    if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+    {
 
         //
         // These defaults match Win9x behavior. 0% for sleep undock means
         // we always allow undock into Sx. This is bad for some laptops, but
         // legal for those that have reserve power we don't see.
         //
-        undockRestrictions->HotUndockMinimumCapacity = 10; // In percent
+        undockRestrictions->HotUndockMinimumCapacity = 10;  // In percent
         undockRestrictions->SleepUndockMinimumCapacity = 0; // In percent
-
-    } else if (partialInfoHeader->DataLength <
-        FIELD_OFFSET(UNDOCK_POWER_RESTRICTIONS, HotUndockMinimumCapacity)) {
+    }
+    else if (partialInfoHeader->DataLength < FIELD_OFFSET(UNDOCK_POWER_RESTRICTIONS, HotUndockMinimumCapacity))
+    {
 
         return STATUS_REGISTRY_CORRUPT;
-
-    } else if (undockRestrictions->Version != 1) {
+    }
+    else if (undockRestrictions->Version != 1)
+    {
 
         //
         // We cannot interpret the information stored in the registry. Bail.
         //
         return STATUS_UNSUCCESSFUL;
-
-    } else if ((partialInfoHeader->DataLength < sizeof(UNDOCK_POWER_RESTRICTIONS)) ||
-        (undockRestrictions->Size != partialInfoHeader->DataLength)) {
+    }
+    else if ((partialInfoHeader->DataLength < sizeof(UNDOCK_POWER_RESTRICTIONS)) ||
+             (undockRestrictions->Size != partialInfoHeader->DataLength))
+    {
 
         //
         // Malformed for version 1.
@@ -1016,15 +930,10 @@ Return Value:
     // enter CRITICAL shutdown immediately upon change driver in our current
     // design.
     //
-    status = NtPowerInformation(
-        SystemBatteryState,
-        NULL,
-        0,
-        &systemBatteryInfo,
-        sizeof(systemBatteryInfo)
-        ) ;
+    status = NtPowerInformation(SystemBatteryState, NULL, 0, &systemBatteryInfo, sizeof(systemBatteryInfo));
 
-    if (!NT_SUCCESS(status)) {
+    if (!NT_SUCCESS(status))
+    {
 
         return status;
     }
@@ -1035,46 +944,53 @@ Return Value:
     // peak milliwatt usage, but we do not collect enough information for this
     // today...
     //
-    if (systemBatteryInfo.MaxCapacity == 0) {
+    if (systemBatteryInfo.MaxCapacity == 0)
+    {
 
         currentPercentage = 0;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Did we "wrap" around?
         //
-        if ((systemBatteryInfo.RemainingCapacity * 100) <=
-            systemBatteryInfo.RemainingCapacity) {
+        if ((systemBatteryInfo.RemainingCapacity * 100) <= systemBatteryInfo.RemainingCapacity)
+        {
 
             currentPercentage = 0;
-        } else {
+        }
+        else
+        {
 
-            currentPercentage = (systemBatteryInfo.RemainingCapacity * 100)/
-                                 systemBatteryInfo.MaxCapacity;
+            currentPercentage = (systemBatteryInfo.RemainingCapacity * 100) / systemBatteryInfo.MaxCapacity;
         }
     }
 
     //
     // Pick the appropriate sleep state based on our imposed limits.
     //
-    if ((currentPercentage >= undockRestrictions->HotUndockMinimumCapacity) &&
-        HotEjectSupported) {
+    if ((currentPercentage >= undockRestrictions->HotUndockMinimumCapacity) && HotEjectSupported)
+    {
 
         *LightestSleepState = PowerSystemWorking;
+    }
+    else if (WarmEjectSupported)
+    {
 
-    } else if (WarmEjectSupported) {
-
-        if (currentPercentage >= undockRestrictions->SleepUndockMinimumCapacity) {
+        if (currentPercentage >= undockRestrictions->SleepUndockMinimumCapacity)
+        {
 
             *LightestSleepState = PowerSystemSleeping1;
-
-        } else  {
+        }
+        else
+        {
 
             *LightestSleepState = PowerSystemHibernate;
         }
-
-    } else {
+    }
+    else
+    {
 
         status = STATUS_INSUFFICIENT_POWER;
     }
@@ -1083,11 +999,7 @@ Return Value:
 }
 
 
-VOID
-PoGetDevicePowerState(
-    IN  PDEVICE_OBJECT      PhysicalDeviceObject,
-    OUT DEVICE_POWER_STATE  *DevicePowerState
-    )
+VOID PoGetDevicePowerState(IN PDEVICE_OBJECT PhysicalDeviceObject, OUT DEVICE_POWER_STATE *DevicePowerState)
 /*++
 
 Routine Description:
@@ -1108,15 +1020,16 @@ Return Value:
 
 --*/
 {
-    PDEVOBJ_EXTENSION   doe;
-    DEVICE_POWER_STATE  deviceState;
+    PDEVOBJ_EXTENSION doe;
+    DEVICE_POWER_STATE deviceState;
 
     PAGED_CODE();
 
     doe = PhysicalDeviceObject->DeviceObjectExtension;
     deviceState = PopLockGetDoDevicePowerState(doe);
 
-    if (deviceState == PowerDeviceUnspecified) {
+    if (deviceState == PowerDeviceUnspecified)
+    {
 
         //
         // The PDO isn't bothering to call PoSetPowerState. Since this API
@@ -1128,10 +1041,7 @@ Return Value:
     *DevicePowerState = deviceState;
 }
 
-VOID
-PopUnlockAfterSleepWorker(
-    IN PVOID NotUsed
-    )
+VOID PopUnlockAfterSleepWorker(IN PVOID NotUsed)
 /*++
 
 Routine Description:
@@ -1156,11 +1066,10 @@ Return Value:
 {
     MmUnlockPagableImageSection(ExPageLockHandle);
     ExSwapinWorkerThreads(TRUE);
-    ExNotifyCallback (ExCbPowerState, (PVOID) PO_CB_SYSTEM_STATE_LOCK, (PVOID) 1);
+    ExNotifyCallback(ExCbPowerState, (PVOID)PO_CB_SYSTEM_STATE_LOCK, (PVOID)1);
 
     //
     // Signal that unlocking is done and it is safe to lock again.
     //
     KeSetEvent(&PopUnlockComplete, 0, FALSE);
-
 }

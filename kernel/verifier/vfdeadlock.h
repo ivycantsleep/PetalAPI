@@ -27,9 +27,7 @@ Revision History:
 // Deadlock detection package initialization.
 //
 
-VOID 
-VfDeadlockDetectionInitialize(
-    );
+VOID VfDeadlockDetectionInitialize();
 
 //
 // Functions called from IovCallDriver (driver verifier replacement for
@@ -37,17 +35,9 @@ VfDeadlockDetectionInitialize(
 //
 
 BOOLEAN
-VfDeadlockBeforeCallDriver (
-    IN PDEVICE_OBJECT DeviceObject,
-    IN OUT PIRP Irp
-    );
+VfDeadlockBeforeCallDriver(IN PDEVICE_OBJECT DeviceObject, IN OUT PIRP Irp);
 
-VOID
-VfDeadlockAfterCallDriver (
-    IN PDEVICE_OBJECT DeviceObject,
-    IN OUT PIRP Irp,
-    IN BOOLEAN PagingIrp
-    );
+VOID VfDeadlockAfterCallDriver(IN PDEVICE_OBJECT DeviceObject, IN OUT PIRP Irp, IN BOOLEAN PagingIrp);
 
 //
 // Maximum depth of stack traces captured.
@@ -61,13 +51,14 @@ VfDeadlockAfterCallDriver (
 // VI_DEADLOCK_NODE
 //
 
-typedef struct _VI_DEADLOCK_NODE {
+typedef struct _VI_DEADLOCK_NODE
+{
 
     //
     // Node representing the acquisition of the previous resource.
     //
 
-    struct _VI_DEADLOCK_NODE * Parent;
+    struct _VI_DEADLOCK_NODE *Parent;
 
     //
     // Node representing the next resource acquisitions, that are
@@ -84,8 +75,9 @@ typedef struct _VI_DEADLOCK_NODE {
 
     struct _LIST_ENTRY SiblingsList;
 
-    union {
-        
+    union
+    {
+
         //
         // List of nodes representing the same resource acquisition
         // as the current node but in different contexts (lock combinations).
@@ -98,7 +90,7 @@ typedef struct _VI_DEADLOCK_NODE {
         // been deleted (resource was freed). Nodes are kept in a cache
         // to reduce contention for the kernel pool.
         //
-        
+
         struct _LIST_ENTRY FreeListEntry;
     };
 
@@ -106,7 +98,7 @@ typedef struct _VI_DEADLOCK_NODE {
     // Back pointer to the descriptor for this resource.
     //
 
-    struct _VI_DEADLOCK_RESOURCE * Root;
+    struct _VI_DEADLOCK_RESOURCE *Root;
 
     //
     // When we find a deadlock, we keep this info around in order to
@@ -114,10 +106,10 @@ typedef struct _VI_DEADLOCK_NODE {
     // the deadlock.
     //
 
-    struct _VI_DEADLOCK_THREAD * ThreadEntry;
+    struct _VI_DEADLOCK_THREAD *ThreadEntry;
 
     //
-    // Fields used for decision making within the deadlock analysis 
+    // Fields used for decision making within the deadlock analysis
     // algorithm.
     //
     // Active: 1 if the node represents a resource currently acquired,
@@ -128,14 +120,15 @@ typedef struct _VI_DEADLOCK_NODE {
     //     only TryAcquire cannot be involved in a deadlock.
     //
     // SequenceNumber: field that gets a unique stamp during each deadlock
-    //     analysis run. It helps figure out if the node was touched 
+    //     analysis run. It helps figure out if the node was touched
     //     already in the current graph traversal.
     //
 
-    struct {
+    struct
+    {
 
         ULONG Active : 1;
-        ULONG OnlyTryAcquireUsed : 1;         
+        ULONG OnlyTryAcquireUsed : 1;
         ULONG SequenceNumber : 30;
     };
 
@@ -145,7 +138,7 @@ typedef struct _VI_DEADLOCK_NODE {
     // anything other than the first entry (return address)
     // may be bogus in case stack trace capturing failed.
     //
-   
+
     PVOID StackTrace[VI_MAX_STACK_DEPTH];
     PVOID ParentStackTrace[VI_MAX_STACK_DEPTH];
 
@@ -155,7 +148,8 @@ typedef struct _VI_DEADLOCK_NODE {
 // VI_DEADLOCK_RESOURCE
 //
 
-typedef struct _VI_DEADLOCK_RESOURCE {
+typedef struct _VI_DEADLOCK_RESOURCE
+{
 
     //
     // Resource type (mutex, spinlock, etc.).
@@ -165,15 +159,16 @@ typedef struct _VI_DEADLOCK_RESOURCE {
 
     //
     // Resource flags
-    //    
+    //
     // NodeCount : number of resource nodes created for this resource.
     //
-    // RecursionCount : number of times this resource has been recursively acquired 
+    // RecursionCount : number of times this resource has been recursively acquired
     //     It makes sense to put this counter in the resource because as long as
     //     resource is acquired only one thread can operate on it.
     //
 
-    struct {       
+    struct
+    {
         ULONG NodeCount : 16;
         ULONG RecursionCount : 16;
     };
@@ -188,8 +183,8 @@ typedef struct _VI_DEADLOCK_RESOURCE {
     // The thread that currently owns the resource. The field is
     // null if nobody owns the resource.
     //
-    
-    struct _VI_DEADLOCK_THREAD * ThreadOwner;
+
+    struct _VI_DEADLOCK_THREAD *ThreadOwner;
 
     //
     // List of resource nodes representing acquisitions of this resource.
@@ -197,14 +192,15 @@ typedef struct _VI_DEADLOCK_RESOURCE {
 
     LIST_ENTRY ResourceList;
 
-    union {
+    union
+    {
 
         //
         // List used for chaining resources from a hash bucket.
         //
-        
+
         LIST_ENTRY HashChainList;
-        
+
         //
         // Used to chain free resources. This list is used only after
         // the resource has been freed and we put the structure
@@ -217,30 +213,31 @@ typedef struct _VI_DEADLOCK_RESOURCE {
     //
     // Stack trace of the resource creator. On free builds we
     // may have here only a return address that is bubbled up
-    // from verifier thunks. 
+    // from verifier thunks.
     //
-  
-    PVOID StackTrace [VI_MAX_STACK_DEPTH];
-    
+
+    PVOID StackTrace[VI_MAX_STACK_DEPTH];
+
     //
     // Stack trace for last acquire
     //
 
-    PVOID LastAcquireTrace [VI_MAX_STACK_DEPTH];
-    
+    PVOID LastAcquireTrace[VI_MAX_STACK_DEPTH];
+
     //
     // Stack trace for last release
     //
 
-    PVOID LastReleaseTrace [VI_MAX_STACK_DEPTH];
+    PVOID LastReleaseTrace[VI_MAX_STACK_DEPTH];
 
-} VI_DEADLOCK_RESOURCE, * PVI_DEADLOCK_RESOURCE;
+} VI_DEADLOCK_RESOURCE, *PVI_DEADLOCK_RESOURCE;
 
 //
 // VI_DEADLOCK_THREAD
 //
 
-typedef struct _VI_DEADLOCK_THREAD {
+typedef struct _VI_DEADLOCK_THREAD
+{
 
     //
     // Kernel thread address
@@ -262,12 +259,13 @@ typedef struct _VI_DEADLOCK_THREAD {
     PVI_DEADLOCK_NODE CurrentSpinNode;
     PVI_DEADLOCK_NODE CurrentOtherNode;
 
-    union {
+    union
+    {
 
         //
         // Thread list. It is used for chaining into a hash bucket.
         //
-        
+
         LIST_ENTRY ListEntry;
 
         //
@@ -303,7 +301,8 @@ typedef struct _VI_DEADLOCK_THREAD {
 // Deadlock verifier globals
 //
 
-typedef struct _VI_DEADLOCK_GLOBALS {
+typedef struct _VI_DEADLOCK_GLOBALS
+{
 
     //
     // Structure counters: [0] - current, [1] - maximum
@@ -323,7 +322,7 @@ typedef struct _VI_DEADLOCK_GLOBALS {
     //
     // Total number of kernel pool bytes used by the deadlock verifier
     //
-    
+
     SIZE_T BytesAllocated;
 
     //
@@ -331,8 +330,8 @@ typedef struct _VI_DEADLOCK_GLOBALS {
     //
 
     PLIST_ENTRY ResourceDatabase;
-    PLIST_ENTRY ThreadDatabase;   
-    
+    PLIST_ENTRY ThreadDatabase;
+
     //
     // How many times ExAllocatePool failed on us?
     // If this is >0 we stop deadlock verification.
@@ -364,11 +363,11 @@ typedef struct _VI_DEADLOCK_GLOBALS {
 
     //
     // Number of times we have to exonerate a deadlock because
-    // it was protected by a common resource (e.g. thread 1 takes ABC, 
-    // thread 2 takes ACB -- this will get flagged initially by our algorithm 
+    // it was protected by a common resource (e.g. thread 1 takes ABC,
+    // thread 2 takes ACB -- this will get flagged initially by our algorithm
     // since B&C are taken out of order but is not actually a deadlock.
     //
-    
+
     ULONG ABC_ACB_Skipped;
 
     //
@@ -389,13 +388,13 @@ typedef struct _VI_DEADLOCK_GLOBALS {
     // decrease kernel pool contention.
     //
 
-    LIST_ENTRY FreeResourceList;    
+    LIST_ENTRY FreeResourceList;
     LIST_ENTRY FreeThreadList;
     LIST_ENTRY FreeNodeList;
 
     ULONG FreeResourceCount;
     ULONG FreeThreadCount;
-    ULONG FreeNodeCount;   
+    ULONG FreeNodeCount;
 
     //
     // Resource address that caused the deadlock
@@ -413,7 +412,7 @@ typedef struct _VI_DEADLOCK_GLOBALS {
     // List of the nodes that participate in the deadlock
     //
 
-    PVI_DEADLOCK_NODE Participant [NO_OF_DEADLOCK_PARTICIPANTS];
+    PVI_DEADLOCK_NODE Participant[NO_OF_DEADLOCK_PARTICIPANTS];
 
     LOGICAL CacheReductionInProgress;
 } VI_DEADLOCK_GLOBALS, *PVI_DEADLOCK_GLOBALS;

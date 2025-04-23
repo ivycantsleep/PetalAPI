@@ -6,19 +6,12 @@
 #include "pch.h"
 
 #define ACPI_LOCK_PENDING_BIT 0
-#define ACPI_LOCK_OWNED_BIT   1
+#define ACPI_LOCK_OWNED_BIT 1
 
 #define ACPI_LOCK_PENDING (1 << ACPI_LOCK_PENDING_BIT)
-#define ACPI_LOCK_OWNED   (1 << ACPI_LOCK_OWNED_BIT)
+#define ACPI_LOCK_OWNED (1 << ACPI_LOCK_OWNED_BIT)
 
-NTSTATUS EXPORT
-GlobalLockEventHandler (
-    ULONG                   EventType,
-    ULONG                   What,
-    ULONG                   dwParam,
-    PFNAA                   Callback,
-    PVOID                   Context
-    )
+NTSTATUS EXPORT GlobalLockEventHandler(ULONG EventType, ULONG What, ULONG dwParam, PFNAA Callback, PVOID Context)
 /*++
 
 Routine Description:
@@ -39,36 +32,37 @@ Return Value:
 
 --*/
 {
-    NTSTATUS                status;
-    PACPI_GLOBAL_LOCK       LockRequest = Context;
+    NTSTATUS status;
+    PACPI_GLOBAL_LOCK LockRequest = Context;
 
 
-    ASSERT (EventType == EVTYPE_ACQREL_GLOBALLOCK);
+    ASSERT(EventType == EVTYPE_ACQREL_GLOBALLOCK);
 
-    switch (What) {
+    switch (What)
+    {
 
-        case GLOBALLOCK_ACQUIRE:
+    case GLOBALLOCK_ACQUIRE:
 
-            //
-            // Fill out the lock request.  Internal requests have no Irp, just pass
-            // in the address of the callback routine.
-            //
-            LockRequest->LockContext = Callback;
-            LockRequest->Type = ACPI_GL_QTYPE_INTERNAL;
+        //
+        // Fill out the lock request.  Internal requests have no Irp, just pass
+        // in the address of the callback routine.
+        //
+        LockRequest->LockContext = Callback;
+        LockRequest->Type = ACPI_GL_QTYPE_INTERNAL;
 
-            status = ACPIAsyncAcquireGlobalLock (LockRequest);
+        status = ACPIAsyncAcquireGlobalLock(LockRequest);
 
-            break;
+        break;
 
-        case GLOBALLOCK_RELEASE:
+    case GLOBALLOCK_RELEASE:
 
-            status = ACPIReleaseGlobalLock (Context);
-            break;
+        status = ACPIReleaseGlobalLock(Context);
+        break;
 
-        default:
+    default:
 
-            ACPIBreakPoint ();
-            status = STATUS_INVALID_PARAMETER;
+        ACPIBreakPoint();
+        status = STATUS_INVALID_PARAMETER;
     }
 
     return status;
@@ -76,9 +70,7 @@ Return Value:
 
 
 NTSTATUS
-ACPIAsyncAcquireGlobalLock(
-    PACPI_GLOBAL_LOCK       Request
-    )
+ACPIAsyncAcquireGlobalLock(PACPI_GLOBAL_LOCK Request)
 /*++
 
 Routine Description:
@@ -97,31 +89,25 @@ Return Value:
 
 --*/
 {
-    KIRQL                   OldIrql;
-    PLIST_ENTRY             entry;
-    PACPI_GLOBAL_LOCK       queuedRequest;
+    KIRQL OldIrql;
+    PLIST_ENTRY entry;
+    PACPI_GLOBAL_LOCK queuedRequest;
 
 
     ACPIDebugEnter("ACPIAsyncAcquireGlobalLock");
-    ACPIPrint( (
-        ACPI_PRINT_IO,
-        "ACPIAsyncAcquireGlobalLock: Entered with context %x\n",
-        Request
-        ) );
+    ACPIPrint((ACPI_PRINT_IO, "ACPIAsyncAcquireGlobalLock: Entered with context %x\n", Request));
 
     //
     // If caller is the current owner, just increment the depth count
     //
 
-    if (Request == AcpiInformation->GlobalLockOwnerContext) {
+    if (Request == AcpiInformation->GlobalLockOwnerContext)
+    {
 
         AcpiInformation->GlobalLockOwnerDepth++;
 
-        ACPIPrint( (
-            ACPI_PRINT_IO,
-            "ACPIAsyncAcquireGlobalLock: Recursive acquire by owner %x, new depth=%d\n",
-            Request, AcpiInformation->GlobalLockOwnerDepth
-            ) );
+        ACPIPrint((ACPI_PRINT_IO, "ACPIAsyncAcquireGlobalLock: Recursive acquire by owner %x, new depth=%d\n", Request,
+                   AcpiInformation->GlobalLockOwnerDepth));
 
         return STATUS_SUCCESS;
     }
@@ -134,20 +120,22 @@ Return Value:
     // the request.
     //
 
-    KeAcquireSpinLock (&AcpiInformation->GlobalLockQueueLock, &OldIrql);
+    KeAcquireSpinLock(&AcpiInformation->GlobalLockQueueLock, &OldIrql);
 
     //
     // Check if there are others in front of us.  If not, we can try to get the lock
     //
 
-    if (IsListEmpty (&AcpiInformation->GlobalLockQueue)) {
+    if (IsListEmpty(&AcpiInformation->GlobalLockQueue))
+    {
 
         //
         // Try to grab the lock.  It will only be available if no other thread nor
         // the BIOS has it.
         //
 
-        if (ACPIAcquireHardwareGlobalLock (AcpiInformation->GlobalLock)) {
+        if (ACPIAcquireHardwareGlobalLock(AcpiInformation->GlobalLock))
+        {
 
             //
             // Got the lock.  Setup owner and unlock the queue
@@ -156,13 +144,9 @@ Return Value:
             AcpiInformation->GlobalLockOwnerContext = Request;
             AcpiInformation->GlobalLockOwnerDepth = 1;
 
-            KeReleaseSpinLock (&AcpiInformation->GlobalLockQueueLock, OldIrql);
+            KeReleaseSpinLock(&AcpiInformation->GlobalLockQueueLock, OldIrql);
 
-            ACPIPrint( (
-                ACPI_PRINT_IO,
-                "ACPIAsyncAcquireGlobalLock: Got lock immediately, Context %x\n",
-                Request
-                ) );
+            ACPIPrint((ACPI_PRINT_IO, "ACPIAsyncAcquireGlobalLock: Got lock immediately, Context %x\n", Request));
 
             return STATUS_SUCCESS;
         }
@@ -174,26 +158,24 @@ Return Value:
     //
     // First, check if context is already queued.
     //
-    for (entry = AcpiInformation->GlobalLockQueue.Flink;
-            entry != &AcpiInformation->GlobalLockQueue;
-            entry = entry->Flink) {
+    for (entry = AcpiInformation->GlobalLockQueue.Flink; entry != &AcpiInformation->GlobalLockQueue;
+         entry = entry->Flink)
+    {
 
-        queuedRequest = CONTAINING_RECORD (entry, ACPI_GLOBAL_LOCK, ListEntry);
+        queuedRequest = CONTAINING_RECORD(entry, ACPI_GLOBAL_LOCK, ListEntry);
 
-        if (queuedRequest == Request) {
+        if (queuedRequest == Request)
+        {
 
             //
             // Already queued, we just increment the depth count and exit.
             //
 
-            ACPIPrint( (
-                ACPI_PRINT_IO,
-                "ACPIAsyncAcquireGlobalLock: Waiting for lock <again>, Context %x depth %x\n",
-                Request, Request->Depth
-                ) );
+            ACPIPrint((ACPI_PRINT_IO, "ACPIAsyncAcquireGlobalLock: Waiting for lock <again>, Context %x depth %x\n",
+                       Request, Request->Depth));
 
             queuedRequest->Depth++;
-            KeReleaseSpinLock (&AcpiInformation->GlobalLockQueueLock, OldIrql);
+            KeReleaseSpinLock(&AcpiInformation->GlobalLockQueueLock, OldIrql);
 
             return STATUS_PENDING;
         }
@@ -205,18 +187,11 @@ Return Value:
 
     Request->Depth = 1;
 
-    InsertTailList (
-        &AcpiInformation->GlobalLockQueue,
-        &Request->ListEntry
-        );
+    InsertTailList(&AcpiInformation->GlobalLockQueue, &Request->ListEntry);
 
-    ACPIPrint( (
-        ACPI_PRINT_IO,
-        "ACPIAsyncAcquireGlobalLock: Waiting for lock, Context %x\n",
-        Request
-        ) );
+    ACPIPrint((ACPI_PRINT_IO, "ACPIAsyncAcquireGlobalLock: Waiting for lock, Context %x\n", Request));
 
-    KeReleaseSpinLock (&AcpiInformation->GlobalLockQueueLock, OldIrql);
+    KeReleaseSpinLock(&AcpiInformation->GlobalLockQueueLock, OldIrql);
 
     return STATUS_PENDING;
 
@@ -225,11 +200,8 @@ Return Value:
 }
 
 
-
 NTSTATUS
-ACPIReleaseGlobalLock(
-    PVOID                   OwnerContext
-    )
+ACPIReleaseGlobalLock(PVOID OwnerContext)
 /*++
 
 Routine Description:
@@ -249,7 +221,7 @@ Return Value:
 
 --*/
 {
-    KIRQL                   OldIrql;
+    KIRQL OldIrql;
 
     ACPIDebugEnter("ACPIReleaseGlobalLock");
 
@@ -257,13 +229,12 @@ Return Value:
     // Caller must be the current owner of the lock
     //
 
-    if (OwnerContext != AcpiInformation->GlobalLockOwnerContext) {
+    if (OwnerContext != AcpiInformation->GlobalLockOwnerContext)
+    {
 
-        ACPIPrint( (
-            ACPI_PRINT_WARNING,
-            "ACPIReleaseGlobalLock: Not owner, can't release!  Owner is %x Caller context is %x\n",
-            AcpiInformation->GlobalLockOwnerContext, OwnerContext
-            ) );
+        ACPIPrint((ACPI_PRINT_WARNING,
+                   "ACPIReleaseGlobalLock: Not owner, can't release!  Owner is %x Caller context is %x\n",
+                   AcpiInformation->GlobalLockOwnerContext, OwnerContext));
 
         return STATUS_ACPI_MUTEX_NOT_OWNER;
     }
@@ -273,13 +244,11 @@ Return Value:
     // Release the lock when the depth count reaches 0
     //
 
-    if (--AcpiInformation->GlobalLockOwnerDepth > 0) {
+    if (--AcpiInformation->GlobalLockOwnerDepth > 0)
+    {
 
-        ACPIPrint( (
-            ACPI_PRINT_IO,
-            "ACPIReleaseGlobalLock:  Recursively owned by context %x, depth remaining %d\n",
-            AcpiInformation->GlobalLockOwnerContext, AcpiInformation->GlobalLockOwnerDepth
-            ) );
+        ACPIPrint((ACPI_PRINT_IO, "ACPIReleaseGlobalLock:  Recursively owned by context %x, depth remaining %d\n",
+                   AcpiInformation->GlobalLockOwnerContext, AcpiInformation->GlobalLockOwnerDepth));
 
         return STATUS_SUCCESS;
     }
@@ -290,38 +259,36 @@ Return Value:
     //
 
     AcpiInformation->GlobalLockOwnerContext = NULL;
-    ACPIReleaseHardwareGlobalLock ();
+    ACPIReleaseHardwareGlobalLock();
 
-    ACPIPrint( (
-        ACPI_PRINT_IO,
-        "ACPIReleaseGlobalLock: Lock released by context %x\n",
-        OwnerContext
-        ) );
+    ACPIPrint((ACPI_PRINT_IO, "ACPIReleaseGlobalLock: Lock released by context %x\n", OwnerContext));
 
     //
     // It is our responsibility to hand off the lock to the next-in-line.
     // First, check if there is anything on the queue.
     //
 
-    if (IsListEmpty (&AcpiInformation->GlobalLockQueue)) {
+    if (IsListEmpty(&AcpiInformation->GlobalLockQueue))
+    {
 
-        return STATUS_SUCCESS;                  // Nope, all done, nothing else to do
+        return STATUS_SUCCESS; // Nope, all done, nothing else to do
     }
 
     //
     // The queue is not empty, we must get the lock back
     //
 
-    if (!ACPIAcquireHardwareGlobalLock (AcpiInformation->GlobalLock)) {
+    if (!ACPIAcquireHardwareGlobalLock(AcpiInformation->GlobalLock))
+    {
 
-        return STATUS_SUCCESS;                  // BIOS has the lock, just wait for interrupt
+        return STATUS_SUCCESS; // BIOS has the lock, just wait for interrupt
     }
 
     //
     // Got the lock, now dispatch the next owner
     //
 
-    ACPIStartNextGlobalLockRequest ();
+    ACPIStartNextGlobalLockRequest();
 
     ACPIDebugExit("ACPIReleaseGlobalLock");
 
@@ -329,11 +296,7 @@ Return Value:
 }
 
 
-
-void
-ACPIHardwareGlobalLockReleased (
-    void
-    )
+void ACPIHardwareGlobalLockReleased(void)
 /*++
 
 Routine Description:
@@ -360,25 +323,21 @@ Return Value:
     // Attempt to get the global lock on behalf of the next request in the queue
     //
 
-    if (!ACPIAcquireHardwareGlobalLock (AcpiInformation->GlobalLock)) {
+    if (!ACPIAcquireHardwareGlobalLock(AcpiInformation->GlobalLock))
+    {
 
-        return;                                 // BIOS has the lock (again), just wait for next interrupt
+        return; // BIOS has the lock (again), just wait for next interrupt
     }
 
     //
     // Got the lock, now dispatch the next owner
     //
 
-    ACPIStartNextGlobalLockRequest ();
-
+    ACPIStartNextGlobalLockRequest();
 }
 
 
-
-void
-ACPIStartNextGlobalLockRequest (
-    void
-    )
+void ACPIStartNextGlobalLockRequest(void)
 /*++
 
 Routine Description:
@@ -398,32 +357,27 @@ Return Value:
 
 --*/
 {
-    PLIST_ENTRY             link;
-    PACPI_GLOBAL_LOCK       request;
-    PFNAA                   callback;
-    PIRP                    irp;
+    PLIST_ENTRY link;
+    PACPI_GLOBAL_LOCK request;
+    PFNAA callback;
+    PIRP irp;
 
     //
     // Get next request from the queue.
     //
 
-    link = ExInterlockedRemoveHeadList (
-            &AcpiInformation->GlobalLockQueue,
-            &AcpiInformation->GlobalLockQueueLock
-            );
+    link = ExInterlockedRemoveHeadList(&AcpiInformation->GlobalLockQueue, &AcpiInformation->GlobalLockQueueLock);
 
     //
     // If something failed after the original thread tried to get the lock, then
     // the queue might be empty.
     //
-    if (link == NULL) {
+    if (link == NULL)
+    {
 
-        ACPIPrint( (
-            ACPI_PRINT_IO,
-            "ACPIStartNextGlobalLockRequest: Queue is empty, releasing lock\n"
-            ) );
+        ACPIPrint((ACPI_PRINT_IO, "ACPIStartNextGlobalLockRequest: Queue is empty, releasing lock\n"));
 
-        ACPIReleaseHardwareGlobalLock ();
+        ACPIReleaseHardwareGlobalLock();
         return;
     }
 
@@ -431,7 +385,7 @@ Return Value:
     // Complete the next global lock request
     //
 
-    request = CONTAINING_RECORD (link, ACPI_GLOBAL_LOCK, ListEntry);
+    request = CONTAINING_RECORD(link, ACPI_GLOBAL_LOCK, ListEntry);
 
     //
     // Bookkeeping
@@ -440,52 +394,47 @@ Return Value:
     AcpiInformation->GlobalLockOwnerContext = request;
     AcpiInformation->GlobalLockOwnerDepth = request->Depth;
 
-    ACPIPrint( (
-        ACPI_PRINT_IO,
-        "ACPIStartNextGlobalLockRequest: Dispatch new owner, ctxt %x callb %x\n",
-        request, request->LockContext
-        ) );
+    ACPIPrint((ACPI_PRINT_IO, "ACPIStartNextGlobalLockRequest: Dispatch new owner, ctxt %x callb %x\n", request,
+               request->LockContext));
 
     //
     // Let the requestor know that it now has the lock
     //
 
-    switch (request->Type) {
+    switch (request->Type)
+    {
 
-        case ACPI_GL_QTYPE_INTERNAL:
+    case ACPI_GL_QTYPE_INTERNAL:
 
-            //
-            // Internal request - invoke the callback
-            //
-            callback = (PFNAA) request->LockContext;
-            callback (request);
+        //
+        // Internal request - invoke the callback
+        //
+        callback = (PFNAA)request->LockContext;
+        callback(request);
 
-            break;
+        break;
 
-        case ACPI_GL_QTYPE_IRP:
+    case ACPI_GL_QTYPE_IRP:
 
-            //
-            // External request - complete the Irp
-            //
-            irp = (PIRP) request->LockContext;
-            irp->IoStatus.Status = STATUS_SUCCESS;
-            IoCompleteRequest (irp, IO_NO_INCREMENT);
+        //
+        // External request - complete the Irp
+        //
+        irp = (PIRP)request->LockContext;
+        irp->IoStatus.Status = STATUS_SUCCESS;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
 
-            break;
+        break;
 
-        default:        // Shouldn't happen...
+    default: // Shouldn't happen...
 
-            ACPIBreakPoint();
-            break;
+        ACPIBreakPoint();
+        break;
     }
 }
 
 
-
 BOOLEAN
-ACPIAcquireHardwareGlobalLock(
-    PULONG GlobalLock
-    )
+ACPIAcquireHardwareGlobalLock(PULONG GlobalLock)
 /*++
 
 Routine Description:
@@ -507,7 +456,8 @@ Return Value:
     BOOLEAN owned;
 
     lockValue = *((ULONG volatile *)GlobalLock);
-    do {
+    do
+    {
 
         //
         // Record the original state of the lock.  Shift the contents of
@@ -516,17 +466,13 @@ Return Value:
         //
         // Finally, update the new value atomically, and repeat the whole
         // process if someone else changed it under us.
-        // 
+        //
 
         oldLockValue = lockValue;
 
-        lockValue |= ACPI_LOCK_OWNED |
-                     ((lockValue & ACPI_LOCK_OWNED) >>
-                         (ACPI_LOCK_OWNED_BIT - ACPI_LOCK_PENDING_BIT));
+        lockValue |= ACPI_LOCK_OWNED | ((lockValue & ACPI_LOCK_OWNED) >> (ACPI_LOCK_OWNED_BIT - ACPI_LOCK_PENDING_BIT));
 
-        lockValue = InterlockedCompareExchange(GlobalLock,
-                                               lockValue,
-                                               oldLockValue);
+        lockValue = InterlockedCompareExchange(GlobalLock, lockValue, oldLockValue);
 
     } while (lockValue != oldLockValue);
 
@@ -539,10 +485,7 @@ Return Value:
 }
 
 
-void
-ACPIReleaseHardwareGlobalLock(
-    void
-    )
+void ACPIReleaseHardwareGlobalLock(void)
 /*++
 
 Routine Description:
@@ -567,7 +510,8 @@ Return Value:
     globalLock = (ULONG volatile *)AcpiInformation->GlobalLock;
     lockValue = *globalLock;
 
-    do {
+    do
+    {
 
         ASSERT((lockValue & ACPI_LOCK_OWNED) != 0);
 
@@ -576,24 +520,21 @@ Return Value:
         //
         // Clear the owned and pending bits in the lock, and atomically set
         // the new value.  If the cmpxchg fails, go around again.
-        // 
+        //
 
         lockValue &= ~(ACPI_LOCK_OWNED | ACPI_LOCK_PENDING);
-        lockValue = InterlockedCompareExchange(globalLock,
-                                               lockValue,
-                                               oldLockValue);
+        lockValue = InterlockedCompareExchange(globalLock, lockValue, oldLockValue);
 
     } while (lockValue != oldLockValue);
 
-    if ((lockValue & ACPI_LOCK_PENDING) != 0) {
+    if ((lockValue & ACPI_LOCK_PENDING) != 0)
+    {
 
         //
         // Signal to bios that the Lock has been released
         //      Set GBL_RLS
         //
 
-        WRITE_PM1_CONTROL( (USHORT)PM1_GBL_RLS, FALSE, WRITE_REGISTER_A_AND_B);
+        WRITE_PM1_CONTROL((USHORT)PM1_GBL_RLS, FALSE, WRITE_REGISTER_A_AND_B);
     }
 }
-
-

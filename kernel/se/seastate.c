@@ -29,14 +29,14 @@ Revision History:
 
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,SeCreateAccessState)
-#pragma alloc_text(PAGE,SeDeleteAccessState)
-#pragma alloc_text(PAGE,SeSetAccessStateGenericMapping)
-#pragma alloc_text(PAGE,SeAppendPrivileges)
-#pragma alloc_text(PAGE,SepConcatenatePrivileges)
+#pragma alloc_text(PAGE, SeCreateAccessState)
+#pragma alloc_text(PAGE, SeDeleteAccessState)
+#pragma alloc_text(PAGE, SeSetAccessStateGenericMapping)
+#pragma alloc_text(PAGE, SeAppendPrivileges)
+#pragma alloc_text(PAGE, SepConcatenatePrivileges)
 #endif
 
-
+
 //
 // Define logical sum of all generic accesses.
 //
@@ -50,13 +50,9 @@ Revision History:
 // (i.e., one with no privileges in it).
 //
 
-#define SEP_PRIVILEGE_SET_HEADER_SIZE           \
-            ((ULONG)sizeof(PRIVILEGE_SET) -     \
-                (ANYSIZE_ARRAY * (ULONG)sizeof(LUID_AND_ATTRIBUTES)))
+#define SEP_PRIVILEGE_SET_HEADER_SIZE \
+    ((ULONG)sizeof(PRIVILEGE_SET) - (ANYSIZE_ARRAY * (ULONG)sizeof(LUID_AND_ATTRIBUTES)))
 
-
-
-
 
 #if 0
 NTSTATUS
@@ -181,12 +177,8 @@ Return Value:
 
 
 NTSTATUS
-SeCreateAccessState(
-   IN PACCESS_STATE AccessState,
-   IN PAUX_ACCESS_DATA AuxData,
-   IN ACCESS_MASK DesiredAccess,
-   IN PGENERIC_MAPPING GenericMapping OPTIONAL
-   )
+SeCreateAccessState(IN PACCESS_STATE AccessState, IN PAUX_ACCESS_DATA AuxData, IN ACCESS_MASK DesiredAccess,
+                    IN PGENERIC_MAPPING GenericMapping OPTIONAL)
 
 /*++
 Routine Description:
@@ -250,13 +242,10 @@ Return Value:
     // are specified and a generic access mapping table is provided.
     //
 
-    if ( ((DesiredAccess & GENERIC_ACCESS) != 0) &&
-         ARGUMENT_PRESENT(GenericMapping) ) {
+    if (((DesiredAccess & GENERIC_ACCESS) != 0) && ARGUMENT_PRESENT(GenericMapping))
+    {
 
-        RtlMapGenericMask(
-            &MappedAccessMask,
-            GenericMapping
-            );
+        RtlMapGenericMask(&MappedAccessMask, GenericMapping);
     }
 
     RtlZeroMemory(AccessState, sizeof(ACCESS_STATE));
@@ -266,30 +255,30 @@ Return Value:
     // Assume RtlZeroMemory has initialized these fields properly
     //
 
-    ASSERT( AccessState->SecurityDescriptor == NULL );
-    ASSERT( AccessState->PrivilegesAllocated == FALSE );
+    ASSERT(AccessState->SecurityDescriptor == NULL);
+    ASSERT(AccessState->PrivilegesAllocated == FALSE);
 
     AccessState->AuxData = AuxData;
 
     SeCaptureSubjectContext(&AccessState->SubjectSecurityContext);
 
-    if (((PTOKEN)EffectiveToken( &AccessState->SubjectSecurityContext ))->TokenFlags & TOKEN_HAS_TRAVERSE_PRIVILEGE ) {
+    if (((PTOKEN)EffectiveToken(&AccessState->SubjectSecurityContext))->TokenFlags & TOKEN_HAS_TRAVERSE_PRIVILEGE)
+    {
         AccessState->Flags = TOKEN_HAS_TRAVERSE_PRIVILEGE;
     }
 
     AccessState->RemainingDesiredAccess = MappedAccessMask;
     AccessState->OriginalDesiredAccess = MappedAccessMask;
-    AuxData->PrivilegesUsed = (PPRIVILEGE_SET)((ULONG_PTR)AccessState +
-                              (FIELD_OFFSET(ACCESS_STATE, Privileges)));
+    AuxData->PrivilegesUsed = (PPRIVILEGE_SET)((ULONG_PTR)AccessState + (FIELD_OFFSET(ACCESS_STATE, Privileges)));
 
     ExAllocateLocallyUniqueId(&AccessState->OperationID);
 
-    if (ARGUMENT_PRESENT(GenericMapping)) {
+    if (ARGUMENT_PRESENT(GenericMapping))
+    {
         AuxData->GenericMapping = *GenericMapping;
     }
 
-    return( STATUS_SUCCESS );
-
+    return (STATUS_SUCCESS);
 }
 
 
@@ -349,10 +338,7 @@ Return Value:
 
 #endif
 
-VOID
-SeDeleteAccessState(
-    PACCESS_STATE AccessState
-    )
+VOID SeDeleteAccessState(PACCESS_STATE AccessState)
 
 /*++
 
@@ -380,15 +366,18 @@ Return Value:
 
     AuxData = (PAUX_ACCESS_DATA)AccessState->AuxData;
 
-    if (AccessState->PrivilegesAllocated) {
-        ExFreePool( (PVOID)AuxData->PrivilegesUsed );
+    if (AccessState->PrivilegesAllocated)
+    {
+        ExFreePool((PVOID)AuxData->PrivilegesUsed);
     }
 
-    if (AccessState->ObjectName.Buffer != NULL) {
+    if (AccessState->ObjectName.Buffer != NULL)
+    {
         ExFreePool(AccessState->ObjectName.Buffer);
     }
 
-    if (AccessState->ObjectTypeName.Buffer != NULL) {
+    if (AccessState->ObjectTypeName.Buffer != NULL)
+    {
         ExFreePool(AccessState->ObjectTypeName.Buffer);
     }
 
@@ -397,11 +386,7 @@ Return Value:
     return;
 }
 
-VOID
-SeSetAccessStateGenericMapping (
-    PACCESS_STATE AccessState,
-    PGENERIC_MAPPING GenericMapping
-    )
+VOID SeSetAccessStateGenericMapping(PACCESS_STATE AccessState, PGENERIC_MAPPING GenericMapping)
 
 /*++
 
@@ -434,12 +419,8 @@ Return Value:
 }
 
 
-
 NTSTATUS
-SeAppendPrivileges(
-    PACCESS_STATE AccessState,
-    PPRIVILEGE_SET Privileges
-    )
+SeAppendPrivileges(PACCESS_STATE AccessState, PPRIVILEGE_SET Privileges)
 /*++
 
 Routine Description:
@@ -477,42 +458,35 @@ Return Value:
 
     AuxData = (PAUX_ACCESS_DATA)AccessState->AuxData;
 
-    if (Privileges->PrivilegeCount + AuxData->PrivilegesUsed->PrivilegeCount >
-        INITIAL_PRIVILEGE_COUNT) {
+    if (Privileges->PrivilegeCount + AuxData->PrivilegesUsed->PrivilegeCount > INITIAL_PRIVILEGE_COUNT)
+    {
 
         //
         // Compute the total size of the two privilege sets
         //
 
-        NewPrivilegeSetSize =  SepPrivilegeSetSize( Privileges ) +
-                               SepPrivilegeSetSize( AuxData->PrivilegesUsed );
+        NewPrivilegeSetSize = SepPrivilegeSetSize(Privileges) + SepPrivilegeSetSize(AuxData->PrivilegesUsed);
 
-        NewPrivilegeSet = ExAllocatePoolWithTag( PagedPool, NewPrivilegeSetSize, 'rPeS' );
+        NewPrivilegeSet = ExAllocatePoolWithTag(PagedPool, NewPrivilegeSetSize, 'rPeS');
 
-        if (NewPrivilegeSet == NULL) {
-            return( STATUS_INSUFFICIENT_RESOURCES );
+        if (NewPrivilegeSet == NULL)
+        {
+            return (STATUS_INSUFFICIENT_RESOURCES);
         }
 
 
-        RtlCopyMemory(
-            NewPrivilegeSet,
-            AuxData->PrivilegesUsed,
-            SepPrivilegeSetSize( AuxData->PrivilegesUsed )
-            );
+        RtlCopyMemory(NewPrivilegeSet, AuxData->PrivilegesUsed, SepPrivilegeSetSize(AuxData->PrivilegesUsed));
 
         //
         // Note that this will adjust the privilege count in the
         // structure for us.
         //
 
-        SepConcatenatePrivileges(
-            NewPrivilegeSet,
-            NewPrivilegeSetSize,
-            Privileges
-            );
+        SepConcatenatePrivileges(NewPrivilegeSet, NewPrivilegeSetSize, Privileges);
 
-        if (AccessState->PrivilegesAllocated) {
-            ExFreePool( AuxData->PrivilegesUsed );
+        if (AccessState->PrivilegesAllocated)
+        {
+            ExFreePool(AuxData->PrivilegesUsed);
         }
 
         AuxData->PrivilegesUsed = NewPrivilegeSet;
@@ -523,33 +497,24 @@ Return Value:
         //
 
         AccessState->PrivilegesAllocated = TRUE;
-
-    } else {
+    }
+    else
+    {
 
         //
         // Note that this will adjust the privilege count in the
         // structure for us.
         //
 
-        SepConcatenatePrivileges(
-            AuxData->PrivilegesUsed,
-            sizeof(INITIAL_PRIVILEGE_SET),
-            Privileges
-            );
-
+        SepConcatenatePrivileges(AuxData->PrivilegesUsed, sizeof(INITIAL_PRIVILEGE_SET), Privileges);
     }
 
-    return( STATUS_SUCCESS );
-
+    return (STATUS_SUCCESS);
 }
 
 
-VOID
-SepConcatenatePrivileges(
-    IN PPRIVILEGE_SET TargetPrivilegeSet,
-    IN ULONG TargetBufferSize,
-    IN PPRIVILEGE_SET SourcePrivilegeSet
-    )
+VOID SepConcatenatePrivileges(IN PPRIVILEGE_SET TargetPrivilegeSet, IN ULONG TargetBufferSize,
+                              IN PPRIVILEGE_SET SourcePrivilegeSet)
 
 /*++
 
@@ -585,24 +550,16 @@ Return Value:
 
     PAGED_CODE();
 
-    ASSERT( ((ULONG)SepPrivilegeSetSize( TargetPrivilegeSet ) +
-             (ULONG)SepPrivilegeSetSize( SourcePrivilegeSet ) -
-             SEP_PRIVILEGE_SET_HEADER_SIZE  ) <=
-            TargetBufferSize
-          );
+    ASSERT(((ULONG)SepPrivilegeSetSize(TargetPrivilegeSet) + (ULONG)SepPrivilegeSetSize(SourcePrivilegeSet) -
+            SEP_PRIVILEGE_SET_HEADER_SIZE) <= TargetBufferSize);
 
-    Base = (PVOID)((ULONG_PTR)TargetPrivilegeSet + SepPrivilegeSetSize( TargetPrivilegeSet ));
+    Base = (PVOID)((ULONG_PTR)TargetPrivilegeSet + SepPrivilegeSetSize(TargetPrivilegeSet));
 
-    Source = (PVOID) ((ULONG_PTR)SourcePrivilegeSet + SEP_PRIVILEGE_SET_HEADER_SIZE);
+    Source = (PVOID)((ULONG_PTR)SourcePrivilegeSet + SEP_PRIVILEGE_SET_HEADER_SIZE);
 
     Length = SourcePrivilegeSet->PrivilegeCount * sizeof(LUID_AND_ATTRIBUTES);
 
-    RtlMoveMemory(
-        Base,
-        Source,
-        Length
-        );
+    RtlMoveMemory(Base, Source, Length);
 
     TargetPrivilegeSet->PrivilegeCount += SourcePrivilegeSet->PrivilegeCount;
-
 }

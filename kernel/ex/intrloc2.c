@@ -25,12 +25,9 @@ Revision History:
 --*/
 
 #include "exp.h"
-
+
 INTERLOCKED_RESULT
-ExInterlockedIncrementLong (
-    IN PLONG Addend,
-    IN PKSPIN_LOCK Lock
-    )
+ExInterlockedIncrementLong(IN PLONG Addend, IN PKSPIN_LOCK Lock)
 
 /*++
 
@@ -57,7 +54,7 @@ Return Value:
 --*/
 
 {
-    LONG    OldValue;
+    LONG OldValue;
 
     OldValue = (LONG)ExInterlockedAddUlong((PULONG)Addend, 1, Lock);
 
@@ -70,12 +67,9 @@ Return Value:
     if (OldValue > -1)
         return ResultPositive;
 }
-
+
 INTERLOCKED_RESULT
-ExInterlockedDecrementLong (
-    IN PLONG Addend,
-    IN PKSPIN_LOCK Lock
-    )
+ExInterlockedDecrementLong(IN PLONG Addend, IN PKSPIN_LOCK Lock)
 
 /*++
 
@@ -102,7 +96,7 @@ Return Value:
 --*/
 
 {
-    LONG    OldValue;
+    LONG OldValue;
 
     OldValue = (LONG)ExInterlockedAddUlong((PULONG)Addend, -1, Lock);
 

@@ -40,13 +40,13 @@ Notes:
 
 #include "pch.h"
 
-//#include "amlihook.h" 
+//#include "amlihook.h"
 
 #ifdef POOL_TAGGING
 #ifdef ExAllocatePool
 #undef ExAllocatePool
 #endif
-#define ExAllocatePool(a,b) ExAllocatePoolWithTag(a,b,'ihVA')
+#define ExAllocatePool(a, b) ExAllocatePoolWithTag(a, b, 'ihVA')
 #endif
 
 //
@@ -54,8 +54,8 @@ Notes:
 //
 
 PCALLBACK_OBJECT g_AmliHookCallbackObject = NULL;
-ULONG g_AmliHookTestFlags=0;
-ULONG g_AmliHookIdCounter=0;
+ULONG g_AmliHookTestFlags = 0;
+ULONG g_AmliHookIdCounter = 0;
 ULONG g_AmliHookEnabled = 0;
 
 
@@ -63,208 +63,170 @@ ULONG g_AmliHookEnabled = 0;
 // -- Get dbg flags
 //
 
-extern NTSTATUS OSGetRegistryValue( 
-    IN  HANDLE                          ParentHandle,
-    IN  PWSTR                           ValueName,
-    OUT PKEY_VALUE_PARTIAL_INFORMATION_ALIGN64  *Information);
+extern NTSTATUS OSGetRegistryValue(IN HANDLE ParentHandle, IN PWSTR ValueName,
+                                   OUT PKEY_VALUE_PARTIAL_INFORMATION_ALIGN64 *Information);
 
-extern NTSTATUS OSOpenUnicodeHandle(
-    PUNICODE_STRING UnicodeKey,
-    HANDLE          ParentHandle,
-    PHANDLE         ChildHandle);
+extern NTSTATUS OSOpenUnicodeHandle(PUNICODE_STRING UnicodeKey, HANDLE ParentHandle, PHANDLE ChildHandle);
 
-extern NTSTATUS
-OSCloseHandle(
-    HANDLE  Key);
+extern NTSTATUS OSCloseHandle(HANDLE Key);
 
 //
 //  Internal function defines.
 //
 ULONG
-AmliHook_GetUniqueId(
-   VOID);
+AmliHook_GetUniqueId(VOID);
 
 //
 //  Functions
 //
 
 
-ULONG 
-AmliHook_GetDbgFlags(
-   VOID)
-   {
+ULONG
+AmliHook_GetDbgFlags(VOID)
+{
 
-   UNICODE_STRING DriverKey;
-   HANDLE DriverKeyHandle;
-   NTSTATUS        status;
-   PKEY_VALUE_PARTIAL_INFORMATION_ALIGN64  RegValue=NULL;
-   ULONG DebugFlags;
-
-
-   RtlInitUnicodeString( &DriverKey, 
-      L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\acpiver");
+    UNICODE_STRING DriverKey;
+    HANDLE DriverKeyHandle;
+    NTSTATUS status;
+    PKEY_VALUE_PARTIAL_INFORMATION_ALIGN64 RegValue = NULL;
+    ULONG DebugFlags;
 
 
-   status = OSOpenUnicodeHandle( 
-     &DriverKey,
-     NULL,
-     &DriverKeyHandle);
-   
-   if (!NT_SUCCESS(status)) 
-      {
-      return(0);
-      }
+    RtlInitUnicodeString(&DriverKey, L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\acpiver");
 
 
-   status = OSGetRegistryValue(
-      DriverKeyHandle,
-      L"AcpiCtrl",
-      &RegValue);
+    status = OSOpenUnicodeHandle(&DriverKey, NULL, &DriverKeyHandle);
 
-   if (!NT_SUCCESS(status)) 
-      {
-      OSCloseHandle(DriverKeyHandle);
-      return(0);
-      }
+    if (!NT_SUCCESS(status))
+    {
+        return (0);
+    }
 
-   if(RegValue->DataLength == 0  ||
-      RegValue->Type != REG_DWORD) 
-      {
-      ExFreePool(RegValue);
-      return(0);
-      }
 
-   DebugFlags = 
-      *((ULONG*)( ((PUCHAR)RegValue->Data)));
+    status = OSGetRegistryValue(DriverKeyHandle, L"AcpiCtrl", &RegValue);
 
-   ExFreePool(RegValue);
+    if (!NT_SUCCESS(status))
+    {
+        OSCloseHandle(DriverKeyHandle);
+        return (0);
+    }
 
-   return(DebugFlags); 
-   }
+    if (RegValue->DataLength == 0 || RegValue->Type != REG_DWORD)
+    {
+        ExFreePool(RegValue);
+        return (0);
+    }
+
+    DebugFlags = *((ULONG *)(((PUCHAR)RegValue->Data)));
+
+    ExFreePool(RegValue);
+
+    return (DebugFlags);
+}
 
 ULONG
-AmliHook_GetUniqueId(
-   VOID)
-   {
+AmliHook_GetUniqueId(VOID)
+{
 
-   //  BUGBUG For some reason acpi.sys 
-   //  will not link with this.
-   //  Acpiver doesn't use the ID yet.
-   //
-   //return(InterlockedIncrement(
-   //    &g_AmliHookIdCounter));
+    //  BUGBUG For some reason acpi.sys
+    //  will not link with this.
+    //  Acpiver doesn't use the ID yet.
+    //
+    //return(InterlockedIncrement(
+    //    &g_AmliHookIdCounter));
 
-   g_AmliHookIdCounter++;
-   return(g_AmliHookIdCounter);
-   }
+    g_AmliHookIdCounter++;
+    return (g_AmliHookIdCounter);
+}
 
-VOID
-AmliHook_InitTestData(
-   PAMLIHOOK_DATA Data)
-   {
-   RtlZeroMemory(Data,sizeof(AMLIHOOK_DATA));
+VOID AmliHook_InitTestData(PAMLIHOOK_DATA Data)
+{
+    RtlZeroMemory(Data, sizeof(AMLIHOOK_DATA));
 
-   Data->Id = AmliHook_GetUniqueId();
-   }
+    Data->Id = AmliHook_GetUniqueId();
+}
 
 PAMLIHOOK_DATA
-AmliHook_AllocAndInitTestData(
-   VOID)
-   {
+AmliHook_AllocAndInitTestData(VOID)
+{
 
-   PAMLIHOOK_DATA Data = ExAllocatePool(NonPagedPool,sizeof(AMLIHOOK_DATA));
-   if(!Data)
-      {
-      AmliHook_ProcessInternalError();
-      return(NULL);
-      }
-   AmliHook_InitTestData(Data);
-   return(Data);
-   }
+    PAMLIHOOK_DATA Data = ExAllocatePool(NonPagedPool, sizeof(AMLIHOOK_DATA));
+    if (!Data)
+    {
+        AmliHook_ProcessInternalError();
+        return (NULL);
+    }
+    AmliHook_InitTestData(Data);
+    return (Data);
+}
 
 //
 //  AmliHook_UnInitTestHookInterface
 //
 
-VOID
-AmliHook_UnInitTestHookInterface(
-   VOID)
-   {
+VOID AmliHook_UnInitTestHookInterface(VOID)
+{
 
-   if(g_AmliHookCallbackObject) 
-      ObDereferenceObject(g_AmliHookCallbackObject);
-
-   
-
-   }
+    if (g_AmliHookCallbackObject)
+        ObDereferenceObject(g_AmliHookCallbackObject);
+}
 
 //
 //  AmliHook_InitTestHookInterface
 //
 
 NTSTATUS
-AmliHook_InitTestHookInterface(
-   VOID)
-   {
-   NTSTATUS  status = STATUS_SUCCESS;
-   
-   g_AmliHookCallbackObject = NULL;
-   g_AmliHookIdCounter = 0;
-   g_AmliHookEnabled = 0;
+AmliHook_InitTestHookInterface(VOID)
+{
+    NTSTATUS status = STATUS_SUCCESS;
 
-   g_AmliHookTestFlags = AmliHook_GetDbgFlags();
- 
-   if(g_AmliHookTestFlags & AMLIHOOK_TEST_FLAGS_HOOK_MASK)
-      {
+    g_AmliHookCallbackObject = NULL;
+    g_AmliHookIdCounter = 0;
+    g_AmliHookEnabled = 0;
 
-      //
-      //--- We want to hook the AMLI.api interface.
-      //--- So create the notify interface.
-      //
+    g_AmliHookTestFlags = AmliHook_GetDbgFlags();
 
-      OBJECT_ATTRIBUTES   objectAttributes;
-      UNICODE_STRING CallBackName;
-    
-      RtlInitUnicodeString(&CallBackName,AMLIHOOK_CALLBACK_NAME);
+    if (g_AmliHookTestFlags & AMLIHOOK_TEST_FLAGS_HOOK_MASK)
+    {
 
-      InitializeObjectAttributes (
-          &objectAttributes,
-         &CallBackName,
-         OBJ_CASE_INSENSITIVE | OBJ_PERMANENT ,
-         NULL,       
-         NULL);
-    
-      status = ExCreateCallback(
-          &g_AmliHookCallbackObject,
-         &objectAttributes,
-         TRUE, 
-         TRUE);
+        //
+        //--- We want to hook the AMLI.api interface.
+        //--- So create the notify interface.
+        //
 
-      if(!NT_SUCCESS(status)) 
-         {
-         //
-         //--- Failed 
-         //
-         AmliHook_ProcessInternalError();
+        OBJECT_ATTRIBUTES objectAttributes;
+        UNICODE_STRING CallBackName;
 
-         g_AmliHookCallbackObject = NULL;
+        RtlInitUnicodeString(&CallBackName, AMLIHOOK_CALLBACK_NAME);
 
-         return(status);
-         }
-      else
-         {
+        InitializeObjectAttributes(&objectAttributes, &CallBackName, OBJ_CASE_INSENSITIVE | OBJ_PERMANENT, NULL, NULL);
 
-         //
-         //--- Functions are hooked.
-         //
+        status = ExCreateCallback(&g_AmliHookCallbackObject, &objectAttributes, TRUE, TRUE);
 
-         g_AmliHookEnabled = AMLIHOOK_ENABLED_VALUE;
+        if (!NT_SUCCESS(status))
+        {
+            //
+            //--- Failed
+            //
+            AmliHook_ProcessInternalError();
 
-         }
-      }
+            g_AmliHookCallbackObject = NULL;
 
-   return(status);
-   }
+            return (status);
+        }
+        else
+        {
+
+            //
+            //--- Functions are hooked.
+            //
+
+            g_AmliHookEnabled = AMLIHOOK_ENABLED_VALUE;
+        }
+    }
+
+    return (status);
+}
 
 
 //
@@ -272,66 +234,52 @@ AmliHook_InitTestHookInterface(
 //
 
 NTSTATUS
-AmliHook_TestNotify(
-   PAMLIHOOK_DATA Data)
-   {
+AmliHook_TestNotify(PAMLIHOOK_DATA Data)
+{
 
-   if(g_AmliHookTestFlags & AMLIHOOK_TEST_FLAGS_NO_NOTIFY_ON_CALL)
-      {
-      //
-      //--- do not notify on call, 
-      //
-      if(Data->State & AMLIHOOK_TEST_DATA_CALL_STATE_MASK)
-         return(STATUS_SUCCESS);
-      }
+    if (g_AmliHookTestFlags & AMLIHOOK_TEST_FLAGS_NO_NOTIFY_ON_CALL)
+    {
+        //
+        //--- do not notify on call,
+        //
+        if (Data->State & AMLIHOOK_TEST_DATA_CALL_STATE_MASK)
+            return (STATUS_SUCCESS);
+    }
 
-   if(!g_AmliHookCallbackObject)
-      {
-      AmliHook_ProcessInternalError();
-      return(STATUS_UNSUCCESSFUL);
-      }
+    if (!g_AmliHookCallbackObject)
+    {
+        AmliHook_ProcessInternalError();
+        return (STATUS_UNSUCCESSFUL);
+    }
 
-    ExNotifyCallback(
-      g_AmliHookCallbackObject,
-      Data,
-      NULL);
+    ExNotifyCallback(g_AmliHookCallbackObject, Data, NULL);
 
-   return(STATUS_SUCCESS);
-   }
+    return (STATUS_SUCCESS);
+}
 
 NTSTATUS
-AmliHook_TestNotifyRet(
-   PAMLIHOOK_DATA Data,
-   NTSTATUS Status)
-   {
-
-     
-   if(!g_AmliHookCallbackObject)
-      {
-      AmliHook_ProcessInternalError();
-      return(STATUS_UNSUCCESSFUL);
-      }
-
-   Data->State = AMLIHOOK_TEST_DATA_STATE_RETURN;
-   Data->Ret = Status;
-
-   ExNotifyCallback(
-      g_AmliHookCallbackObject,
-      Data,
-      NULL);
-
-   return(Data->Ret);
-   }
+AmliHook_TestNotifyRet(PAMLIHOOK_DATA Data, NTSTATUS Status)
+{
 
 
+    if (!g_AmliHookCallbackObject)
+    {
+        AmliHook_ProcessInternalError();
+        return (STATUS_UNSUCCESSFUL);
+    }
 
-VOID
-AmliHook_ProcessInternalError(
-   VOID)
-   {
+    Data->State = AMLIHOOK_TEST_DATA_STATE_RETURN;
+    Data->Ret = Status;
 
-   if(g_AmliHookTestFlags & AMLIHOOK_TEST_FLAGS_DBG_ON_ERROR)
-      DbgBreakPoint();
+    ExNotifyCallback(g_AmliHookCallbackObject, Data, NULL);
 
-   }
+    return (Data->Ret);
+}
 
+
+VOID AmliHook_ProcessInternalError(VOID)
+{
+
+    if (g_AmliHookTestFlags & AMLIHOOK_TEST_FLAGS_DBG_ON_ERROR)
+        DbgBreakPoint();
+}

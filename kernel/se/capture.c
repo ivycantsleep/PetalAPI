@@ -31,36 +31,32 @@ Revision History:
 
 
 #ifdef ALLOC_PRAGMA
-#pragma alloc_text(PAGE,SeCaptureSecurityDescriptor)
-#pragma alloc_text(PAGE,SeReleaseSecurityDescriptor)
-#pragma alloc_text(PAGE,SepCopyProxyData)
-#pragma alloc_text(PAGE,SepFreeProxyData)
-#pragma alloc_text(PAGE,SepProbeAndCaptureQosData)
-#pragma alloc_text(PAGE,SeFreeCapturedSecurityQos)
-#pragma alloc_text(PAGE,SeCaptureSecurityQos)
-#pragma alloc_text(PAGE,SeCaptureSid)
-#pragma alloc_text(PAGE,SeReleaseSid)
-#pragma alloc_text(PAGE,SeCaptureAcl)
-#pragma alloc_text(PAGE,SeReleaseAcl)
-#pragma alloc_text(PAGE,SeCaptureLuidAndAttributesArray)
-#pragma alloc_text(PAGE,SeReleaseLuidAndAttributesArray)
-#pragma alloc_text(PAGE,SeCaptureSidAndAttributesArray)
-#pragma alloc_text(PAGE,SeReleaseSidAndAttributesArray)
-#pragma alloc_text(PAGE,SeComputeQuotaInformationSize)
-#pragma alloc_text(PAGE,SeValidSecurityDescriptor)
+#pragma alloc_text(PAGE, SeCaptureSecurityDescriptor)
+#pragma alloc_text(PAGE, SeReleaseSecurityDescriptor)
+#pragma alloc_text(PAGE, SepCopyProxyData)
+#pragma alloc_text(PAGE, SepFreeProxyData)
+#pragma alloc_text(PAGE, SepProbeAndCaptureQosData)
+#pragma alloc_text(PAGE, SeFreeCapturedSecurityQos)
+#pragma alloc_text(PAGE, SeCaptureSecurityQos)
+#pragma alloc_text(PAGE, SeCaptureSid)
+#pragma alloc_text(PAGE, SeReleaseSid)
+#pragma alloc_text(PAGE, SeCaptureAcl)
+#pragma alloc_text(PAGE, SeReleaseAcl)
+#pragma alloc_text(PAGE, SeCaptureLuidAndAttributesArray)
+#pragma alloc_text(PAGE, SeReleaseLuidAndAttributesArray)
+#pragma alloc_text(PAGE, SeCaptureSidAndAttributesArray)
+#pragma alloc_text(PAGE, SeReleaseSidAndAttributesArray)
+#pragma alloc_text(PAGE, SeComputeQuotaInformationSize)
+#pragma alloc_text(PAGE, SeValidSecurityDescriptor)
 #endif
 
-#define LongAligned( ptr )  (LongAlignPtr(ptr) == (ptr))
+#define LongAligned(ptr) (LongAlignPtr(ptr) == (ptr))
 
-
+
 NTSTATUS
-SeCaptureSecurityDescriptor (
-    IN PSECURITY_DESCRIPTOR InputSecurityDescriptor,
-    IN KPROCESSOR_MODE RequestorMode,
-    IN POOL_TYPE PoolType,
-    IN BOOLEAN ForceCapture,
-    OUT PSECURITY_DESCRIPTOR *OutputSecurityDescriptor
-    )
+SeCaptureSecurityDescriptor(IN PSECURITY_DESCRIPTOR InputSecurityDescriptor, IN KPROCESSOR_MODE RequestorMode,
+                            IN POOL_TYPE PoolType, IN BOOLEAN ForceCapture,
+                            OUT PSECURITY_DESCRIPTOR *OutputSecurityDescriptor)
 
 /*++
 
@@ -119,7 +115,7 @@ Return Value:
 --*/
 
 {
-#define SEP_USHORT_OVERFLOW ((ULONG) ((USHORT) -1))
+#define SEP_USHORT_OVERFLOW ((ULONG)((USHORT) - 1))
 
     SECURITY_DESCRIPTOR Captured;
     SECURITY_DESCRIPTOR_RELATIVE *PIOutputSecurityDescriptor;
@@ -131,12 +127,12 @@ Return Value:
     ULONG DaclSize;
     ULONG NewDaclSize;
 
-    ULONG OwnerSubAuthorityCount=0;
-    ULONG OwnerSize=0;
+    ULONG OwnerSubAuthorityCount = 0;
+    ULONG OwnerSize = 0;
     ULONG NewOwnerSize;
 
-    ULONG GroupSubAuthorityCount=0;
-    ULONG GroupSize=0;
+    ULONG GroupSubAuthorityCount = 0;
+    ULONG GroupSize = 0;
     ULONG NewGroupSize;
 
     ULONG Size;
@@ -148,12 +144,12 @@ Return Value:
     //  capture
     //
 
-    if (InputSecurityDescriptor == NULL) {
+    if (InputSecurityDescriptor == NULL)
+    {
 
         (*OutputSecurityDescriptor) = NULL;
 
         return STATUS_SUCCESS;
-
     }
 
     //
@@ -161,7 +157,8 @@ Return Value:
     //  to force a capture
     //
 
-    if ((RequestorMode == KernelMode) && (ForceCapture == FALSE)) {
+    if ((RequestorMode == KernelMode) && (ForceCapture == FALSE))
+    {
 
         //
         //  Yes it is so we don't need to do any work and can simply
@@ -171,7 +168,6 @@ Return Value:
         (*OutputSecurityDescriptor) = InputSecurityDescriptor;
 
         return STATUS_SUCCESS;
-
     }
 
 
@@ -181,48 +177,49 @@ Return Value:
     //  first.
     //
 
-    if (RequestorMode != KernelMode) {
+    if (RequestorMode != KernelMode)
+    {
 
         //
         // Capture of UserMode SecurityDescriptor.
         //
 
-        try {
+        try
+        {
 
             //
             // Probe the main record of the input SecurityDescriptor
             //
 
-            ProbeForReadSmallStructure( InputSecurityDescriptor,
-                                        sizeof(SECURITY_DESCRIPTOR_RELATIVE),
-                                        sizeof(ULONG) );
+            ProbeForReadSmallStructure(InputSecurityDescriptor, sizeof(SECURITY_DESCRIPTOR_RELATIVE), sizeof(ULONG));
 
             //
             //  Capture the SecurityDescriptor main record.
             //
 
-            RtlCopyMemory( (&Captured),
-                          InputSecurityDescriptor,
-                          sizeof(SECURITY_DESCRIPTOR_RELATIVE) );
+            RtlCopyMemory((&Captured), InputSecurityDescriptor, sizeof(SECURITY_DESCRIPTOR_RELATIVE));
 
             //
             // Verify the alignment is correct for absolute case. This is
             // only needed when pointer are 64 bits.
             //
 
-            if (!(Captured.Control & SE_SELF_RELATIVE)) {
+            if (!(Captured.Control & SE_SELF_RELATIVE))
+            {
 
-               if ((ULONG_PTR) InputSecurityDescriptor & (sizeof(ULONG_PTR) - 1)) {
-                   ExRaiseDatatypeMisalignment();
-               }
+                if ((ULONG_PTR)InputSecurityDescriptor & (sizeof(ULONG_PTR) - 1))
+                {
+                    ExRaiseDatatypeMisalignment();
+                }
             }
-
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         //  Force capture of kernel mode SecurityDescriptor.
@@ -231,18 +228,16 @@ Return Value:
         //  It doesn't need probing because requestor mode is kernel.
         //
 
-        RtlCopyMemory( (&Captured),
-                      InputSecurityDescriptor,
-                      sizeof(SECURITY_DESCRIPTOR_RELATIVE) );
-
+        RtlCopyMemory((&Captured), InputSecurityDescriptor, sizeof(SECURITY_DESCRIPTOR_RELATIVE));
     }
 
     //
     // Make sure it is a revision we recognize
     //
 
-    if (Captured.Revision != SECURITY_DESCRIPTOR_REVISION) {
-       return STATUS_UNKNOWN_REVISION;
+    if (Captured.Revision != SECURITY_DESCRIPTOR_REVISION)
+    {
+        return STATUS_UNKNOWN_REVISION;
     }
 
 
@@ -255,26 +250,19 @@ Return Value:
     // space addresses.  Treat them carefully.
     //
 
-    try {
+    try
+    {
 
-        Captured.Owner = RtlpOwnerAddrSecurityDescriptor(
-            (SECURITY_DESCRIPTOR *)InputSecurityDescriptor
-            );
-        Captured.Group = RtlpGroupAddrSecurityDescriptor(
-            (SECURITY_DESCRIPTOR *)InputSecurityDescriptor
-            );
-        Captured.Sacl  = RtlpSaclAddrSecurityDescriptor (
-            (SECURITY_DESCRIPTOR *)InputSecurityDescriptor
-            );
-        Captured.Dacl  = RtlpDaclAddrSecurityDescriptor (
-            (SECURITY_DESCRIPTOR *)InputSecurityDescriptor
-            );
+        Captured.Owner = RtlpOwnerAddrSecurityDescriptor((SECURITY_DESCRIPTOR *)InputSecurityDescriptor);
+        Captured.Group = RtlpGroupAddrSecurityDescriptor((SECURITY_DESCRIPTOR *)InputSecurityDescriptor);
+        Captured.Sacl = RtlpSaclAddrSecurityDescriptor((SECURITY_DESCRIPTOR *)InputSecurityDescriptor);
+        Captured.Dacl = RtlpDaclAddrSecurityDescriptor((SECURITY_DESCRIPTOR *)InputSecurityDescriptor);
         Captured.Control &= ~SE_SELF_RELATIVE;
-
-    } except(EXCEPTION_EXECUTE_HANDLER) {
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
         return GetExceptionCode();
     }
-
 
 
     //
@@ -299,37 +287,41 @@ Return Value:
     //  System ACL first
     //
 
-    if ((Captured.Control & SE_SACL_PRESENT) &&
-        (Captured.Sacl != NULL) ) {
+    if ((Captured.Control & SE_SACL_PRESENT) && (Captured.Sacl != NULL))
+    {
 
-        if (RequestorMode != KernelMode) {
+        if (RequestorMode != KernelMode)
+        {
 
-            try {
-                SaclSize = ProbeAndReadUshort( &(Captured.Sacl->AclSize) );
-                ProbeForRead( Captured.Sacl,
-                              SaclSize,
-                              sizeof(ULONG) );
-            } except(EXCEPTION_EXECUTE_HANDLER) {
+            try
+            {
+                SaclSize = ProbeAndReadUshort(&(Captured.Sacl->AclSize));
+                ProbeForRead(Captured.Sacl, SaclSize, sizeof(ULONG));
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
                 return GetExceptionCode();
             }
-
-        } else {
+        }
+        else
+        {
 
             SaclSize = Captured.Sacl->AclSize;
         }
 
-        NewSaclSize = (ULONG)LongAlignSize( SaclSize );
+        NewSaclSize = (ULONG)LongAlignSize(SaclSize);
 
         //
         // Make sure that we do not have an overflow.
         //
 
-        if (NewSaclSize > SEP_USHORT_OVERFLOW) {
+        if (NewSaclSize > SEP_USHORT_OVERFLOW)
+        {
             return STATUS_INVALID_ACL;
         }
-
-
-    } else {
+    }
+    else
+    {
         //
         // Force the SACL to null if the bit is off
         //
@@ -340,37 +332,41 @@ Return Value:
     //  Discretionary ACL
     //
 
-    if ((Captured.Control & SE_DACL_PRESENT) &&
-        (Captured.Dacl != NULL) ) {
+    if ((Captured.Control & SE_DACL_PRESENT) && (Captured.Dacl != NULL))
+    {
 
-        if (RequestorMode != KernelMode) {
+        if (RequestorMode != KernelMode)
+        {
 
-            try {
-                DaclSize = ProbeAndReadUshort( &(Captured.Dacl->AclSize) );
-                ProbeForRead( Captured.Dacl,
-                              DaclSize,
-                              sizeof(ULONG) );
-            } except(EXCEPTION_EXECUTE_HANDLER) {
+            try
+            {
+                DaclSize = ProbeAndReadUshort(&(Captured.Dacl->AclSize));
+                ProbeForRead(Captured.Dacl, DaclSize, sizeof(ULONG));
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
                 return GetExceptionCode();
             }
-
-        } else {
+        }
+        else
+        {
 
             DaclSize = Captured.Dacl->AclSize;
-
         }
 
-        NewDaclSize = (ULONG)LongAlignSize( DaclSize );
-        
+        NewDaclSize = (ULONG)LongAlignSize(DaclSize);
+
         //
         // Make sure that we do not have an overflow.
         //
 
-        if (NewDaclSize > SEP_USHORT_OVERFLOW) {
+        if (NewDaclSize > SEP_USHORT_OVERFLOW)
+        {
             return STATUS_INVALID_ACL;
         }
-
-    } else {
+    }
+    else
+    {
         //
         // Force the DACL to null if it is not present
         //
@@ -381,80 +377,76 @@ Return Value:
     //  Owner SID
     //
 
-    if (Captured.Owner != NULL)  {
+    if (Captured.Owner != NULL)
+    {
 
-        if (RequestorMode != KernelMode) {
+        if (RequestorMode != KernelMode)
+        {
 
-            try {
-                OwnerSubAuthorityCount =
-                    ProbeAndReadUchar( &(((SID *)(Captured.Owner))->SubAuthorityCount) );
-                OwnerSize = RtlLengthRequiredSid( OwnerSubAuthorityCount );
-                ProbeForRead( Captured.Owner,
-                              OwnerSize,
-                              sizeof(ULONG) );
-            } except(EXCEPTION_EXECUTE_HANDLER) {
+            try
+            {
+                OwnerSubAuthorityCount = ProbeAndReadUchar(&(((SID *)(Captured.Owner))->SubAuthorityCount));
+                OwnerSize = RtlLengthRequiredSid(OwnerSubAuthorityCount);
+                ProbeForRead(Captured.Owner, OwnerSize, sizeof(ULONG));
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
                 return GetExceptionCode();
             }
-
-        } else {
+        }
+        else
+        {
 
             OwnerSubAuthorityCount = ((SID *)(Captured.Owner))->SubAuthorityCount;
-            OwnerSize = RtlLengthRequiredSid( OwnerSubAuthorityCount );
-
+            OwnerSize = RtlLengthRequiredSid(OwnerSubAuthorityCount);
         }
 
-        NewOwnerSize = (ULONG)LongAlignSize( OwnerSize );
-
+        NewOwnerSize = (ULONG)LongAlignSize(OwnerSize);
     }
 
     //
     //  Group SID
     //
 
-    if (Captured.Group != NULL)  {
+    if (Captured.Group != NULL)
+    {
 
-        if (RequestorMode != KernelMode) {
+        if (RequestorMode != KernelMode)
+        {
 
-            try {
-                GroupSubAuthorityCount =
-                    ProbeAndReadUchar( &(((SID *)(Captured.Group))->SubAuthorityCount) );
-                GroupSize = RtlLengthRequiredSid( GroupSubAuthorityCount );
-                ProbeForRead( Captured.Group,
-                              GroupSize,
-                              sizeof(ULONG) );
-            } except(EXCEPTION_EXECUTE_HANDLER) {
+            try
+            {
+                GroupSubAuthorityCount = ProbeAndReadUchar(&(((SID *)(Captured.Group))->SubAuthorityCount));
+                GroupSize = RtlLengthRequiredSid(GroupSubAuthorityCount);
+                ProbeForRead(Captured.Group, GroupSize, sizeof(ULONG));
+            }
+            except(EXCEPTION_EXECUTE_HANDLER)
+            {
                 return GetExceptionCode();
             }
-
-        } else {
+        }
+        else
+        {
 
             GroupSubAuthorityCount = ((SID *)(Captured.Group))->SubAuthorityCount;
-            GroupSize = RtlLengthRequiredSid( GroupSubAuthorityCount );
-
+            GroupSize = RtlLengthRequiredSid(GroupSubAuthorityCount);
         }
 
-        NewGroupSize = (ULONG)LongAlignSize( GroupSize );
-
+        NewGroupSize = (ULONG)LongAlignSize(GroupSize);
     }
-
 
 
     //
     //  Now allocate enough pool to hold the descriptor
     //
 
-    Size = sizeof(SECURITY_DESCRIPTOR_RELATIVE) +
-           NewSaclSize +
-           NewDaclSize +
-           NewOwnerSize +
-           NewGroupSize;
+    Size = sizeof(SECURITY_DESCRIPTOR_RELATIVE) + NewSaclSize + NewDaclSize + NewOwnerSize + NewGroupSize;
 
-    (PIOutputSecurityDescriptor) = (SECURITY_DESCRIPTOR_RELATIVE *)ExAllocatePoolWithTag( PoolType,
-                                                                                 Size,
-                                                                                 'cSeS' );
+    (PIOutputSecurityDescriptor) = (SECURITY_DESCRIPTOR_RELATIVE *)ExAllocatePoolWithTag(PoolType, Size, 'cSeS');
 
-    if ( PIOutputSecurityDescriptor == NULL ) {
-        return( STATUS_INSUFFICIENT_RESOURCES );
+    if (PIOutputSecurityDescriptor == NULL)
+    {
+        return (STATUS_INSUFFICIENT_RESOURCES);
     }
 
     (*OutputSecurityDescriptor) = (PSECURITY_DESCRIPTOR)PIOutputSecurityDescriptor;
@@ -465,9 +457,7 @@ Return Value:
     //  Copy the main security descriptor record over
     //
 
-    RtlCopyMemory( DescriptorOffset,
-                  &Captured,
-                  sizeof(SECURITY_DESCRIPTOR_RELATIVE) );
+    RtlCopyMemory(DescriptorOffset, &Captured, sizeof(SECURITY_DESCRIPTOR_RELATIVE));
     DescriptorOffset += sizeof(SECURITY_DESCRIPTOR_RELATIVE);
 
     //
@@ -481,24 +471,24 @@ Return Value:
     //  the output descriptor's offset to point to the newly captured copy.
     //
 
-    if ((Captured.Control & SE_SACL_PRESENT) && (Captured.Sacl != NULL)) {
+    if ((Captured.Control & SE_SACL_PRESENT) && (Captured.Sacl != NULL))
+    {
 
 
-        try {
-            RtlCopyMemory( DescriptorOffset,
-                          Captured.Sacl,
-                          SaclSize );
-
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
-            ExFreePool( PIOutputSecurityDescriptor );
+        try
+        {
+            RtlCopyMemory(DescriptorOffset, Captured.Sacl, SaclSize);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            ExFreePool(PIOutputSecurityDescriptor);
             return GetExceptionCode();
         }
 
-        if ((RequestorMode != KernelMode) &&
-            (!SepCheckAcl( (PACL) DescriptorOffset, SaclSize )) ) {
+        if ((RequestorMode != KernelMode) && (!SepCheckAcl((PACL)DescriptorOffset, SaclSize)))
+        {
 
-            ExFreePool( PIOutputSecurityDescriptor );
+            ExFreePool(PIOutputSecurityDescriptor);
             return STATUS_INVALID_ACL;
         }
 
@@ -506,14 +496,13 @@ Return Value:
         // Change pointer to offset
         //
 
-        PIOutputSecurityDescriptor->Sacl =
-            RtlPointerToOffset( PIOutputSecurityDescriptor,
-                                DescriptorOffset,
-                                );
+        PIOutputSecurityDescriptor->Sacl = RtlPointerToOffset(PIOutputSecurityDescriptor, DescriptorOffset, );
 
-        ((PACL) DescriptorOffset)->AclSize = (USHORT) NewSaclSize;
+        ((PACL)DescriptorOffset)->AclSize = (USHORT)NewSaclSize;
         DescriptorOffset += NewSaclSize;
-    } else {
+    }
+    else
+    {
         PIOutputSecurityDescriptor->Sacl = 0;
     }
 
@@ -522,22 +511,24 @@ Return Value:
     //  the output descriptor's offset to point to the newly captured copy.
     //
 
-    if ((Captured.Control & SE_DACL_PRESENT) && (Captured.Dacl != NULL)) {
+    if ((Captured.Control & SE_DACL_PRESENT) && (Captured.Dacl != NULL))
+    {
 
 
-        try {
-            RtlCopyMemory( DescriptorOffset,
-                          Captured.Dacl,
-                          DaclSize );
-        } except(EXCEPTION_EXECUTE_HANDLER) {
-            ExFreePool( PIOutputSecurityDescriptor );
+        try
+        {
+            RtlCopyMemory(DescriptorOffset, Captured.Dacl, DaclSize);
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            ExFreePool(PIOutputSecurityDescriptor);
             return GetExceptionCode();
         }
 
-        if ((RequestorMode != KernelMode) &&
-            (!SepCheckAcl( (PACL) DescriptorOffset, DaclSize )) ) {
+        if ((RequestorMode != KernelMode) && (!SepCheckAcl((PACL)DescriptorOffset, DaclSize)))
+        {
 
-            ExFreePool( PIOutputSecurityDescriptor );
+            ExFreePool(PIOutputSecurityDescriptor);
             return STATUS_INVALID_ACL;
         }
 
@@ -545,15 +536,13 @@ Return Value:
         // Change pointer to offset
         //
 
-        PIOutputSecurityDescriptor->Dacl =
-                   RtlPointerToOffset(
-                        PIOutputSecurityDescriptor,
-                        DescriptorOffset
-                        );
+        PIOutputSecurityDescriptor->Dacl = RtlPointerToOffset(PIOutputSecurityDescriptor, DescriptorOffset);
 
-        ((PACL) DescriptorOffset)->AclSize = (USHORT) NewDaclSize;
+        ((PACL)DescriptorOffset)->AclSize = (USHORT)NewDaclSize;
         DescriptorOffset += NewDaclSize;
-    } else {
+    }
+    else
+    {
         PIOutputSecurityDescriptor->Dacl = 0;
     }
 
@@ -562,24 +551,25 @@ Return Value:
     //  the output descriptor's offset to point to the newly captured copy.
     //
 
-    if (Captured.Owner != NULL) {
+    if (Captured.Owner != NULL)
+    {
 
 
-        try {
-            RtlCopyMemory( DescriptorOffset,
-                          Captured.Owner,
-                          OwnerSize );
-            ((SID *) (DescriptorOffset))->SubAuthorityCount = (UCHAR) OwnerSubAuthorityCount;
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
-            ExFreePool( PIOutputSecurityDescriptor );
+        try
+        {
+            RtlCopyMemory(DescriptorOffset, Captured.Owner, OwnerSize);
+            ((SID *)(DescriptorOffset))->SubAuthorityCount = (UCHAR)OwnerSubAuthorityCount;
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            ExFreePool(PIOutputSecurityDescriptor);
             return GetExceptionCode();
         }
 
-        if ((RequestorMode != KernelMode) &&
-            (!RtlValidSid( (PSID) DescriptorOffset )) ) {
+        if ((RequestorMode != KernelMode) && (!RtlValidSid((PSID)DescriptorOffset)))
+        {
 
-            ExFreePool( PIOutputSecurityDescriptor );
+            ExFreePool(PIOutputSecurityDescriptor);
             return STATUS_INVALID_SID;
         }
 
@@ -587,15 +577,12 @@ Return Value:
         // Change pointer to offset
         //
 
-        PIOutputSecurityDescriptor->Owner =
-                    RtlPointerToOffset(
-                        PIOutputSecurityDescriptor,
-                        DescriptorOffset
-                        );
+        PIOutputSecurityDescriptor->Owner = RtlPointerToOffset(PIOutputSecurityDescriptor, DescriptorOffset);
 
         DescriptorOffset += NewOwnerSize;
-
-    } else {
+    }
+    else
+    {
         PIOutputSecurityDescriptor->Owner = 0;
     }
 
@@ -604,24 +591,26 @@ Return Value:
     //  the output descriptor's offset to point to the newly captured copy.
     //
 
-    if (Captured.Group != NULL) {
+    if (Captured.Group != NULL)
+    {
 
 
-        try {
-            RtlCopyMemory( DescriptorOffset,
-                          Captured.Group,
-                          GroupSize );
+        try
+        {
+            RtlCopyMemory(DescriptorOffset, Captured.Group, GroupSize);
 
-            ((SID *) DescriptorOffset)->SubAuthorityCount = (UCHAR) GroupSubAuthorityCount;
-        } except(EXCEPTION_EXECUTE_HANDLER) {
-            ExFreePool( PIOutputSecurityDescriptor );
+            ((SID *)DescriptorOffset)->SubAuthorityCount = (UCHAR)GroupSubAuthorityCount;
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
+            ExFreePool(PIOutputSecurityDescriptor);
             return GetExceptionCode();
         }
 
-        if ((RequestorMode != KernelMode) &&
-            (!RtlValidSid( (PSID) DescriptorOffset )) ) {
+        if ((RequestorMode != KernelMode) && (!RtlValidSid((PSID)DescriptorOffset)))
+        {
 
-            ExFreePool( PIOutputSecurityDescriptor );
+            ExFreePool(PIOutputSecurityDescriptor);
             return STATUS_INVALID_SID;
         }
 
@@ -629,14 +618,12 @@ Return Value:
         // Change pointer to offset
         //
 
-        PIOutputSecurityDescriptor->Group =
-                    RtlPointerToOffset(
-                        PIOutputSecurityDescriptor,
-                        DescriptorOffset
-                        );
+        PIOutputSecurityDescriptor->Group = RtlPointerToOffset(PIOutputSecurityDescriptor, DescriptorOffset);
 
         DescriptorOffset += NewGroupSize;
-    } else {
+    }
+    else
+    {
         PIOutputSecurityDescriptor->Group = 0;
     }
 
@@ -645,16 +632,11 @@ Return Value:
     //
 
     return STATUS_SUCCESS;
-
 }
-
 
-VOID
-SeReleaseSecurityDescriptor (
-    IN PSECURITY_DESCRIPTOR CapturedSecurityDescriptor,
-    IN KPROCESSOR_MODE RequestorMode,
-    IN BOOLEAN ForceCapture
-    )
+
+VOID SeReleaseSecurityDescriptor(IN PSECURITY_DESCRIPTOR CapturedSecurityDescriptor, IN KPROCESSOR_MODE RequestorMode,
+                                 IN BOOLEAN ForceCapture)
 
 /*++
 
@@ -687,23 +669,20 @@ Return Value:
 
     PAGED_CODE();
 
-    if ( ((RequestorMode == KernelMode) && (ForceCapture == TRUE)) ||
-          (RequestorMode == UserMode ) ) {
-        if ( CapturedSecurityDescriptor ) {
+    if (((RequestorMode == KernelMode) && (ForceCapture == TRUE)) || (RequestorMode == UserMode))
+    {
+        if (CapturedSecurityDescriptor)
+        {
             ExFreePool(CapturedSecurityDescriptor);
-            }
+        }
     }
 
     return;
-
 }
 
 
 NTSTATUS
-SepCopyProxyData (
-    OUT PSECURITY_TOKEN_PROXY_DATA * DestProxyData,
-    IN PSECURITY_TOKEN_PROXY_DATA SourceProxyData
-    )
+SepCopyProxyData(OUT PSECURITY_TOKEN_PROXY_DATA *DestProxyData, IN PSECURITY_TOKEN_PROXY_DATA SourceProxyData)
 
 /*++
 
@@ -727,38 +706,35 @@ Return Value:
 
     PAGED_CODE();
 
-    *DestProxyData = ExAllocatePoolWithTag( PagedPool, sizeof( SECURITY_TOKEN_PROXY_DATA ), 'dPoT' );
+    *DestProxyData = ExAllocatePoolWithTag(PagedPool, sizeof(SECURITY_TOKEN_PROXY_DATA), 'dPoT');
 
-    if (*DestProxyData == NULL) {
-        return( STATUS_INSUFFICIENT_RESOURCES );
+    if (*DestProxyData == NULL)
+    {
+        return (STATUS_INSUFFICIENT_RESOURCES);
     }
 
 
+    (*DestProxyData)->PathInfo.Buffer = ExAllocatePoolWithTag(PagedPool, SourceProxyData->PathInfo.Length, 'dPoT');
 
-    (*DestProxyData)->PathInfo.Buffer = ExAllocatePoolWithTag( PagedPool, SourceProxyData->PathInfo.Length, 'dPoT' );
-
-    if ((*DestProxyData)->PathInfo.Buffer == NULL) {
-        ExFreePool( *DestProxyData );
+    if ((*DestProxyData)->PathInfo.Buffer == NULL)
+    {
+        ExFreePool(*DestProxyData);
         *DestProxyData = NULL;
-        return( STATUS_INSUFFICIENT_RESOURCES );
+        return (STATUS_INSUFFICIENT_RESOURCES);
     }
 
     (*DestProxyData)->Length = SourceProxyData->Length;
     (*DestProxyData)->ProxyClass = SourceProxyData->ProxyClass;
-    (*DestProxyData)->PathInfo.MaximumLength =
-        (*DestProxyData)->PathInfo.Length = SourceProxyData->PathInfo.Length;
+    (*DestProxyData)->PathInfo.MaximumLength = (*DestProxyData)->PathInfo.Length = SourceProxyData->PathInfo.Length;
     (*DestProxyData)->ContainerMask = SourceProxyData->ContainerMask;
     (*DestProxyData)->ObjectMask = SourceProxyData->ObjectMask;
 
-    RtlCopyUnicodeString( &(*DestProxyData)->PathInfo, &SourceProxyData->PathInfo );
+    RtlCopyUnicodeString(&(*DestProxyData)->PathInfo, &SourceProxyData->PathInfo);
 
-    return( STATUS_SUCCESS );
+    return (STATUS_SUCCESS);
 }
 
-VOID
-SepFreeProxyData (
-    IN PSECURITY_TOKEN_PROXY_DATA ProxyData
-    )
+VOID SepFreeProxyData(IN PSECURITY_TOKEN_PROXY_DATA ProxyData)
 
 /*++
 
@@ -778,23 +754,21 @@ Return Value:
 {
     PAGED_CODE();
 
-    if (ProxyData != NULL) {
+    if (ProxyData != NULL)
+    {
 
-        if (ProxyData->PathInfo.Buffer != NULL) {
-            ExFreePool( ProxyData->PathInfo.Buffer );
+        if (ProxyData->PathInfo.Buffer != NULL)
+        {
+            ExFreePool(ProxyData->PathInfo.Buffer);
         }
 
-        ExFreePool( ProxyData );
+        ExFreePool(ProxyData);
     }
 }
 
 
-
-
 NTSTATUS
-SepProbeAndCaptureQosData(
-    IN PSECURITY_ADVANCED_QUALITY_OF_SERVICE CapturedSecurityQos
-    )
+SepProbeAndCaptureQosData(IN PSECURITY_ADVANCED_QUALITY_OF_SERVICE CapturedSecurityQos)
 
 /*++
 
@@ -831,22 +805,20 @@ Return Value:
     CapturedAuditData = CapturedSecurityQos->AuditData;
     CapturedSecurityQos->AuditData = NULL;
 
-    if (ARGUMENT_PRESENT( CapturedProxyData )) {
+    if (ARGUMENT_PRESENT(CapturedProxyData))
+    {
 
         //
         // Make sure the body of the proxy data is ok to read.
         //
 
-        ProbeForReadSmallStructure(
-            CapturedProxyData,
-            sizeof(SECURITY_TOKEN_PROXY_DATA),
-            sizeof(ULONG)
-            );
+        ProbeForReadSmallStructure(CapturedProxyData, sizeof(SECURITY_TOKEN_PROXY_DATA), sizeof(ULONG));
 
         StackProxyData = *CapturedProxyData;
 
-        if (StackProxyData.Length != sizeof( SECURITY_TOKEN_PROXY_DATA )) {
-            return( STATUS_INVALID_PARAMETER );
+        if (StackProxyData.Length != sizeof(SECURITY_TOKEN_PROXY_DATA))
+        {
+            return (STATUS_INVALID_PARAMETER);
         }
 
 
@@ -854,27 +826,25 @@ Return Value:
         // Probe the passed pathinfo buffer
         //
 
-        ProbeForRead(
-            StackProxyData.PathInfo.Buffer,
-            StackProxyData.PathInfo.Length,
-            sizeof( UCHAR )
-            );
+        ProbeForRead(StackProxyData.PathInfo.Buffer, StackProxyData.PathInfo.Length, sizeof(UCHAR));
 
-        Status = SepCopyProxyData( &CapturedSecurityQos->ProxyData, &StackProxyData );
+        Status = SepCopyProxyData(&CapturedSecurityQos->ProxyData, &StackProxyData);
 
-        if (!NT_SUCCESS(Status)) {
+        if (!NT_SUCCESS(Status))
+        {
 
-            if (CapturedSecurityQos->ProxyData != NULL) {
-                SepFreeProxyData( CapturedSecurityQos->ProxyData );
+            if (CapturedSecurityQos->ProxyData != NULL)
+            {
+                SepFreeProxyData(CapturedSecurityQos->ProxyData);
                 CapturedSecurityQos->ProxyData = NULL;
             }
 
-            return( Status );
+            return (Status);
         }
-
     }
 
-    if (ARGUMENT_PRESENT( CapturedAuditData )) {
+    if (ARGUMENT_PRESENT(CapturedAuditData))
+    {
 
         PSECURITY_TOKEN_AUDIT_DATA LocalAuditData;
 
@@ -882,26 +852,22 @@ Return Value:
         // Probe the audit data structure and make sure it looks ok
         //
 
-        ProbeForReadSmallStructure(
-            CapturedAuditData,
-            sizeof( SECURITY_TOKEN_AUDIT_DATA ),
-            sizeof( ULONG )
-            );
+        ProbeForReadSmallStructure(CapturedAuditData, sizeof(SECURITY_TOKEN_AUDIT_DATA), sizeof(ULONG));
 
 
-        LocalAuditData = ExAllocatePool( PagedPool, sizeof( SECURITY_TOKEN_AUDIT_DATA ));
+        LocalAuditData = ExAllocatePool(PagedPool, sizeof(SECURITY_TOKEN_AUDIT_DATA));
 
-        if (LocalAuditData == NULL) {
+        if (LocalAuditData == NULL)
+        {
 
             //
             // Cleanup any proxy data we may have allocated.
             //
 
-            SepFreeProxyData( CapturedSecurityQos->ProxyData );
+            SepFreeProxyData(CapturedSecurityQos->ProxyData);
             CapturedSecurityQos->ProxyData = NULL;
 
-            return( STATUS_INSUFFICIENT_RESOURCES );
-
+            return (STATUS_INSUFFICIENT_RESOURCES);
         }
 
         //
@@ -914,24 +880,21 @@ Return Value:
 
         *CapturedSecurityQos->AuditData = *CapturedAuditData;
 
-        if ( LocalAuditData->Length != sizeof( SECURITY_TOKEN_AUDIT_DATA ) ) {
-            SepFreeProxyData( CapturedSecurityQos->ProxyData );
+        if (LocalAuditData->Length != sizeof(SECURITY_TOKEN_AUDIT_DATA))
+        {
+            SepFreeProxyData(CapturedSecurityQos->ProxyData);
             CapturedSecurityQos->ProxyData = NULL;
             ExFreePool(CapturedSecurityQos->AuditData);
             CapturedSecurityQos->AuditData = NULL;
-            return( STATUS_INVALID_PARAMETER );
+            return (STATUS_INVALID_PARAMETER);
         }
     }
 
-    return( STATUS_SUCCESS );
-
+    return (STATUS_SUCCESS);
 }
 
-
-VOID
-SeFreeCapturedSecurityQos(
-    IN PVOID SecurityQos
-    )
+
+VOID SeFreeCapturedSecurityQos(IN PVOID SecurityQos)
 
 /*++
 
@@ -958,26 +921,24 @@ Return Value:
 
     IAdvancedSecurityQos = (PSECURITY_ADVANCED_QUALITY_OF_SERVICE)SecurityQos;
 
-    if (IAdvancedSecurityQos->Length == sizeof( SECURITY_ADVANCED_QUALITY_OF_SERVICE )) {
+    if (IAdvancedSecurityQos->Length == sizeof(SECURITY_ADVANCED_QUALITY_OF_SERVICE))
+    {
 
-        if (IAdvancedSecurityQos->AuditData != NULL) {
-            ExFreePool( IAdvancedSecurityQos->AuditData );
+        if (IAdvancedSecurityQos->AuditData != NULL)
+        {
+            ExFreePool(IAdvancedSecurityQos->AuditData);
         }
 
-        SepFreeProxyData( IAdvancedSecurityQos->ProxyData );
+        SepFreeProxyData(IAdvancedSecurityQos->ProxyData);
     }
 
     return;
 }
 
-
+
 NTSTATUS
-SeCaptureSecurityQos (
-    IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,
-    IN KPROCESSOR_MODE RequestorMode,
-    OUT PBOOLEAN SecurityQosPresent,
-    OUT PSECURITY_ADVANCED_QUALITY_OF_SERVICE CapturedSecurityQos
-)
+SeCaptureSecurityQos(IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL, IN KPROCESSOR_MODE RequestorMode,
+                     OUT PBOOLEAN SecurityQosPresent, OUT PSECURITY_ADVANCED_QUALITY_OF_SERVICE CapturedSecurityQos)
 /*++
 
 Routine Description:
@@ -1018,7 +979,7 @@ Return Value:
 
     PAGED_CODE();
 
-    CapturedQos =  FALSE;
+    CapturedQos = FALSE;
     //
     //  Set default return
     //
@@ -1029,26 +990,22 @@ Return Value:
     //  check if the requestors mode is kernel mode
     //
 
-    if (RequestorMode != KernelMode) {
-        try {
+    if (RequestorMode != KernelMode)
+    {
+        try
+        {
 
-            if ( ARGUMENT_PRESENT(ObjectAttributes) ) {
+            if (ARGUMENT_PRESENT(ObjectAttributes))
+            {
 
-                ProbeForReadSmallStructure( ObjectAttributes,
-                                            sizeof(OBJECT_ATTRIBUTES),
-                                            sizeof(ULONG)
-                                          );
+                ProbeForReadSmallStructure(ObjectAttributes, sizeof(OBJECT_ATTRIBUTES), sizeof(ULONG));
 
-                LocalSecurityQos =
-                    (PSECURITY_QUALITY_OF_SERVICE)ObjectAttributes->SecurityQualityOfService;
+                LocalSecurityQos = (PSECURITY_QUALITY_OF_SERVICE)ObjectAttributes->SecurityQualityOfService;
 
-                if ( ARGUMENT_PRESENT(LocalSecurityQos) ) {
+                if (ARGUMENT_PRESENT(LocalSecurityQos))
+                {
 
-                    ProbeForReadSmallStructure(
-                        LocalSecurityQos,
-                        sizeof(SECURITY_QUALITY_OF_SERVICE),
-                        sizeof(ULONG)
-                        );
+                    ProbeForReadSmallStructure(LocalSecurityQos, sizeof(SECURITY_QUALITY_OF_SERVICE), sizeof(ULONG));
 
                     LocalQosLength = LocalSecurityQos->Length;
 
@@ -1057,30 +1014,30 @@ Return Value:
                     // structure.
                     //
 
-                    if (LocalQosLength == sizeof( SECURITY_QUALITY_OF_SERVICE )) {
+                    if (LocalQosLength == sizeof(SECURITY_QUALITY_OF_SERVICE))
+                    {
 
                         //
                         // It's a downlevel QOS, copy what's there and leave.
                         //
 
                         (*SecurityQosPresent) = TRUE;
-                        RtlCopyMemory( CapturedSecurityQos, LocalSecurityQos, sizeof( SECURITY_QUALITY_OF_SERVICE ));
+                        RtlCopyMemory(CapturedSecurityQos, LocalSecurityQos, sizeof(SECURITY_QUALITY_OF_SERVICE));
                         CapturedSecurityQos->ProxyData = NULL;
                         CapturedSecurityQos->AuditData = NULL;
                         CapturedSecurityQos->Length = LocalQosLength;
+                    }
+                    else
+                    {
 
-                    } else {
-
-                        if (LocalQosLength == sizeof( SECURITY_ADVANCED_QUALITY_OF_SERVICE )) {
+                        if (LocalQosLength == sizeof(SECURITY_ADVANCED_QUALITY_OF_SERVICE))
+                        {
 
                             LocalAdvancedSecurityQos =
                                 (PSECURITY_ADVANCED_QUALITY_OF_SERVICE)ObjectAttributes->SecurityQualityOfService;
 
-                                ProbeForReadSmallStructure(
-                                    LocalAdvancedSecurityQos,
-                                    sizeof(SECURITY_ADVANCED_QUALITY_OF_SERVICE),
-                                    sizeof(ULONG)
-                                    );
+                            ProbeForReadSmallStructure(LocalAdvancedSecurityQos,
+                                                       sizeof(SECURITY_ADVANCED_QUALITY_OF_SERVICE), sizeof(ULONG));
 
                             (*SecurityQosPresent) = TRUE;
                             *CapturedSecurityQos = *LocalAdvancedSecurityQos;
@@ -1090,20 +1047,24 @@ Return Value:
                             // Capture the proxy and audit data, if necessary.
                             //
 
-                            if ( ARGUMENT_PRESENT(CapturedSecurityQos->ProxyData) || ARGUMENT_PRESENT( CapturedSecurityQos->AuditData ) ) {
+                            if (ARGUMENT_PRESENT(CapturedSecurityQos->ProxyData) ||
+                                ARGUMENT_PRESENT(CapturedSecurityQos->AuditData))
+                            {
 
                                 CapturedQos = TRUE;
-                                Status = SepProbeAndCaptureQosData( CapturedSecurityQos );
+                                Status = SepProbeAndCaptureQosData(CapturedSecurityQos);
 
-                                if (!NT_SUCCESS( Status )) {
+                                if (!NT_SUCCESS(Status))
+                                {
 
-                                    return( Status );
+                                    return (Status);
                                 }
                             }
+                        }
+                        else
+                        {
 
-                        } else {
-
-                            return( STATUS_INVALID_PARAMETER );
+                            return (STATUS_INVALID_PARAMETER);
                         }
                     }
 
@@ -1111,40 +1072,49 @@ Return Value:
 
 
             } // end_if
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
 
             //
             // If we captured any proxy data, we need to free it now.
             //
 
-            if ( CapturedQos ) {
+            if (CapturedQos)
+            {
 
-                SepFreeProxyData( CapturedSecurityQos->ProxyData );
+                SepFreeProxyData(CapturedSecurityQos->ProxyData);
 
-                if ( CapturedSecurityQos->AuditData != NULL ) {
-                    ExFreePool( CapturedSecurityQos->AuditData );
+                if (CapturedSecurityQos->AuditData != NULL)
+                {
+                    ExFreePool(CapturedSecurityQos->AuditData);
                 }
             }
 
             return GetExceptionCode();
         } // end_try
+    }
+    else
+    {
 
-
-    } else {
-
-        if ( ARGUMENT_PRESENT(ObjectAttributes) ) {
-            if ( ARGUMENT_PRESENT(ObjectAttributes->SecurityQualityOfService) ) {
+        if (ARGUMENT_PRESENT(ObjectAttributes))
+        {
+            if (ARGUMENT_PRESENT(ObjectAttributes->SecurityQualityOfService))
+            {
                 (*SecurityQosPresent) = TRUE;
 
-                if (((PSECURITY_QUALITY_OF_SERVICE)(ObjectAttributes->SecurityQualityOfService))->Length == sizeof( SECURITY_QUALITY_OF_SERVICE )) {
+                if (((PSECURITY_QUALITY_OF_SERVICE)(ObjectAttributes->SecurityQualityOfService))->Length ==
+                    sizeof(SECURITY_QUALITY_OF_SERVICE))
+                {
 
-                    RtlCopyMemory( CapturedSecurityQos, ObjectAttributes->SecurityQualityOfService, sizeof( SECURITY_QUALITY_OF_SERVICE ));
+                    RtlCopyMemory(CapturedSecurityQos, ObjectAttributes->SecurityQualityOfService,
+                                  sizeof(SECURITY_QUALITY_OF_SERVICE));
                     CapturedSecurityQos->ProxyData = NULL;
                     CapturedSecurityQos->AuditData = NULL;
-
-                } else {
+                }
+                else
+                {
 
                     (*CapturedSecurityQos) =
                         (*(SECURITY_ADVANCED_QUALITY_OF_SERVICE *)(ObjectAttributes->SecurityQualityOfService));
@@ -1158,17 +1128,10 @@ Return Value:
 
     return STATUS_SUCCESS;
 }
-
+
 NTSTATUS
-SeCaptureSid (
-    IN PSID InputSid,
-    IN KPROCESSOR_MODE RequestorMode,
-    IN PVOID CaptureBuffer OPTIONAL,
-    IN ULONG CaptureBufferLength,
-    IN POOL_TYPE PoolType,
-    IN BOOLEAN ForceCapture,
-    OUT PSID *CapturedSid
-)
+SeCaptureSid(IN PSID InputSid, IN KPROCESSOR_MODE RequestorMode, IN PVOID CaptureBuffer OPTIONAL,
+             IN ULONG CaptureBufferLength, IN POOL_TYPE PoolType, IN BOOLEAN ForceCapture, OUT PSID *CapturedSid)
 /*++
 
 Routine Description:
@@ -1232,7 +1195,6 @@ Return Value:
 {
 
 
-
     ULONG GetSidSubAuthorityCount;
     ULONG SidSize;
 
@@ -1243,7 +1205,8 @@ Return Value:
     //  to force a capture.
     //
 
-    if ((RequestorMode == KernelMode) && (ForceCapture == FALSE)) {
+    if ((RequestorMode == KernelMode) && (ForceCapture == FALSE))
+    {
 
         //
         //  We don't need to do any work and can simply
@@ -1260,24 +1223,25 @@ Return Value:
     // Get the length needed to hold the SID
     //
 
-    if (RequestorMode != KernelMode) {
+    if (RequestorMode != KernelMode)
+    {
 
-        try {
-            GetSidSubAuthorityCount =
-                ProbeAndReadUchar( &(((SID *)(InputSid))->SubAuthorityCount) );
-            SidSize = RtlLengthRequiredSid( GetSidSubAuthorityCount );
-            ProbeForRead( InputSid,
-                          SidSize,
-                          sizeof(ULONG) );
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+        try
+        {
+            GetSidSubAuthorityCount = ProbeAndReadUchar(&(((SID *)(InputSid))->SubAuthorityCount));
+            SidSize = RtlLengthRequiredSid(GetSidSubAuthorityCount);
+            ProbeForRead(InputSid, SidSize, sizeof(ULONG));
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
-
-    } else {
+    }
+    else
+    {
 
         GetSidSubAuthorityCount = ((SID *)(InputSid))->SubAuthorityCount;
-        SidSize = RtlLengthRequiredSid( GetSidSubAuthorityCount );
-
+        SidSize = RtlLengthRequiredSid(GetSidSubAuthorityCount);
     }
 
 
@@ -1286,47 +1250,57 @@ Return Value:
     // Otherwise, allocate a buffer.
     //
 
-    if (ARGUMENT_PRESENT(CaptureBuffer)) {
+    if (ARGUMENT_PRESENT(CaptureBuffer))
+    {
 
-        if (SidSize > CaptureBufferLength) {
+        if (SidSize > CaptureBufferLength)
+        {
             return STATUS_BUFFER_TOO_SMALL;
-        } else {
+        }
+        else
+        {
 
             (*CapturedSid) = CaptureBuffer;
         }
-
-    } else {
+    }
+    else
+    {
 
         (*CapturedSid) = (PSID)ExAllocatePoolWithTag(PoolType, SidSize, 'iSeS');
 
-        if ( *CapturedSid == NULL ) {
-            return( STATUS_INSUFFICIENT_RESOURCES );
+        if (*CapturedSid == NULL)
+        {
+            return (STATUS_INSUFFICIENT_RESOURCES);
         }
-
     }
 
     //
     // Now copy the SID and validate it
     //
 
-    try {
+    try
+    {
 
-        RtlCopyMemory( (*CapturedSid), InputSid, SidSize );
-        ((SID *)(*CapturedSid))->SubAuthorityCount = (UCHAR) GetSidSubAuthorityCount;
-
-    } except(EXCEPTION_EXECUTE_HANDLER) {
-        if (!ARGUMENT_PRESENT(CaptureBuffer)) {
-            ExFreePool( (*CapturedSid) );
+        RtlCopyMemory((*CapturedSid), InputSid, SidSize);
+        ((SID *)(*CapturedSid))->SubAuthorityCount = (UCHAR)GetSidSubAuthorityCount;
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        if (!ARGUMENT_PRESENT(CaptureBuffer))
+        {
+            ExFreePool((*CapturedSid));
             *CapturedSid = NULL;
         }
 
         return GetExceptionCode();
     }
 
-    if ((!RtlValidSid( (*CapturedSid) )) ) {
+    if ((!RtlValidSid((*CapturedSid))))
+    {
 
-        if (!ARGUMENT_PRESENT(CaptureBuffer)) {
-            ExFreePool( (*CapturedSid) );
+        if (!ARGUMENT_PRESENT(CaptureBuffer))
+        {
+            ExFreePool((*CapturedSid));
             *CapturedSid = NULL;
         }
 
@@ -1334,16 +1308,10 @@ Return Value:
     }
 
     return STATUS_SUCCESS;
-
 }
-
 
-VOID
-SeReleaseSid (
-    IN PSID CapturedSid,
-    IN KPROCESSOR_MODE RequestorMode,
-    IN BOOLEAN ForceCapture
-    )
+
+VOID SeReleaseSid(IN PSID CapturedSid, IN KPROCESSOR_MODE RequestorMode, IN BOOLEAN ForceCapture)
 
 /*++
 
@@ -1377,28 +1345,19 @@ Return Value:
 
     PAGED_CODE();
 
-    if ( ((RequestorMode == KernelMode) && (ForceCapture == TRUE)) ||
-          (RequestorMode == UserMode ) ) {
+    if (((RequestorMode == KernelMode) && (ForceCapture == TRUE)) || (RequestorMode == UserMode))
+    {
 
         ExFreePool(CapturedSid);
-
     }
 
     return;
-
 }
-
+
 NTSTATUS
-SeCaptureAcl (
-    IN PACL InputAcl,
-    IN KPROCESSOR_MODE RequestorMode,
-    IN PVOID CaptureBuffer OPTIONAL,
-    IN ULONG CaptureBufferLength,
-    IN POOL_TYPE PoolType,
-    IN BOOLEAN ForceCapture,
-    OUT PACL *CapturedAcl,
-    OUT PULONG AlignedAclSize
-    )
+SeCaptureAcl(IN PACL InputAcl, IN KPROCESSOR_MODE RequestorMode, IN PVOID CaptureBuffer OPTIONAL,
+             IN ULONG CaptureBufferLength, IN POOL_TYPE PoolType, IN BOOLEAN ForceCapture, OUT PACL *CapturedAcl,
+             OUT PULONG AlignedAclSize)
 
 /*++
 
@@ -1473,7 +1432,8 @@ Return Value:
     //  to force a capture.
     //
 
-    if ((RequestorMode == KernelMode) && (ForceCapture == FALSE)) {
+    if ((RequestorMode == KernelMode) && (ForceCapture == FALSE))
+    {
 
         //
         //  We don't need to do any work and can simply
@@ -1490,24 +1450,25 @@ Return Value:
     // Get the length needed to hold the ACL
     //
 
-    if (RequestorMode != KernelMode) {
+    if (RequestorMode != KernelMode)
+    {
 
-        try {
+        try
+        {
 
-            AclSize = ProbeAndReadUshort( &(InputAcl->AclSize) );
+            AclSize = ProbeAndReadUshort(&(InputAcl->AclSize));
 
-            ProbeForRead( InputAcl,
-                          AclSize,
-                          sizeof(ULONG) );
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+            ProbeForRead(InputAcl, AclSize, sizeof(ULONG));
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
-
-    } else {
+    }
+    else
+    {
 
         AclSize = InputAcl->AclSize;
-
     }
 
     //
@@ -1515,11 +1476,12 @@ Return Value:
     // point to a well formed ACL
     //
 
-    if (AclSize < sizeof(ACL)) {
-        return( STATUS_INVALID_ACL );
+    if (AclSize < sizeof(ACL))
+    {
+        return (STATUS_INVALID_ACL);
     }
 
-    (*AlignedAclSize) = (ULONG)LongAlignSize( AclSize );
+    (*AlignedAclSize) = (ULONG)LongAlignSize(AclSize);
 
 
     //
@@ -1527,46 +1489,56 @@ Return Value:
     // Otherwise, allocate a buffer.
     //
 
-    if (ARGUMENT_PRESENT(CaptureBuffer)) {
+    if (ARGUMENT_PRESENT(CaptureBuffer))
+    {
 
-        if (AclSize > CaptureBufferLength) {
+        if (AclSize > CaptureBufferLength)
+        {
             return STATUS_BUFFER_TOO_SMALL;
-        } else {
+        }
+        else
+        {
 
             (*CapturedAcl) = CaptureBuffer;
         }
-
-    } else {
+    }
+    else
+    {
 
         (*CapturedAcl) = (PACL)ExAllocatePoolWithTag(PoolType, AclSize, 'cAeS');
 
-        if ( *CapturedAcl == NULL ) {
-            return( STATUS_INSUFFICIENT_RESOURCES );
+        if (*CapturedAcl == NULL)
+        {
+            return (STATUS_INSUFFICIENT_RESOURCES);
         }
-
     }
 
     //
     // Now copy the ACL and validate it
     //
 
-    try {
+    try
+    {
 
-        RtlCopyMemory( (*CapturedAcl), InputAcl, AclSize );
-
-    } except(EXCEPTION_EXECUTE_HANDLER) {
-        if (!ARGUMENT_PRESENT(CaptureBuffer)) {
-            ExFreePool( (*CapturedAcl) );
+        RtlCopyMemory((*CapturedAcl), InputAcl, AclSize);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        if (!ARGUMENT_PRESENT(CaptureBuffer))
+        {
+            ExFreePool((*CapturedAcl));
         }
 
         *CapturedAcl = NULL;
         return GetExceptionCode();
     }
 
-    if ( (!SepCheckAcl( (*CapturedAcl), AclSize )) ) {
+    if ((!SepCheckAcl((*CapturedAcl), AclSize)))
+    {
 
-        if (!ARGUMENT_PRESENT(CaptureBuffer)) {
-            ExFreePool( (*CapturedAcl) );
+        if (!ARGUMENT_PRESENT(CaptureBuffer))
+        {
+            ExFreePool((*CapturedAcl));
         }
 
         *CapturedAcl = NULL;
@@ -1574,16 +1546,10 @@ Return Value:
     }
 
     return STATUS_SUCCESS;
-
 }
-
 
-VOID
-SeReleaseAcl (
-    IN PACL CapturedAcl,
-    IN KPROCESSOR_MODE RequestorMode,
-    IN BOOLEAN ForceCapture
-    )
+
+VOID SeReleaseAcl(IN PACL CapturedAcl, IN KPROCESSOR_MODE RequestorMode, IN BOOLEAN ForceCapture)
 
 /*++
 
@@ -1617,27 +1583,18 @@ Return Value:
 
     PAGED_CODE();
 
-    if ( ((RequestorMode == KernelMode) && (ForceCapture == TRUE)) ||
-          (RequestorMode == UserMode ) ) {
+    if (((RequestorMode == KernelMode) && (ForceCapture == TRUE)) || (RequestorMode == UserMode))
+    {
 
         ExFreePool(CapturedAcl);
-
     }
-
 }
-
+
 NTSTATUS
-SeCaptureLuidAndAttributesArray (
-    IN PLUID_AND_ATTRIBUTES InputArray,
-    IN ULONG ArrayCount,
-    IN KPROCESSOR_MODE RequestorMode,
-    IN PVOID CaptureBuffer OPTIONAL,
-    IN ULONG CaptureBufferLength,
-    IN POOL_TYPE PoolType,
-    IN BOOLEAN ForceCapture,
-    OUT PLUID_AND_ATTRIBUTES *CapturedArray,
-    OUT PULONG AlignedArraySize
-    )
+SeCaptureLuidAndAttributesArray(IN PLUID_AND_ATTRIBUTES InputArray, IN ULONG ArrayCount,
+                                IN KPROCESSOR_MODE RequestorMode, IN PVOID CaptureBuffer OPTIONAL,
+                                IN ULONG CaptureBufferLength, IN POOL_TYPE PoolType, IN BOOLEAN ForceCapture,
+                                OUT PLUID_AND_ATTRIBUTES *CapturedArray, OUT PULONG AlignedArraySize)
 
 /*++
 
@@ -1713,7 +1670,8 @@ Return Value:
     // Make sure the array isn't empty
     //
 
-    if (ArrayCount == 0) {
+    if (ArrayCount == 0)
+    {
         (*CapturedArray) = NULL;
         (*AlignedArraySize) = 0;
         return STATUS_SUCCESS;
@@ -1723,8 +1681,9 @@ Return Value:
     // If there are too many LUIDs, return failure
     //
 
-    if (ArrayCount > SEP_MAX_PRIVILEGE_COUNT) {
-        return(STATUS_INVALID_PARAMETER);
+    if (ArrayCount > SEP_MAX_PRIVILEGE_COUNT)
+    {
+        return (STATUS_INVALID_PARAMETER);
     }
 
     //
@@ -1732,7 +1691,8 @@ Return Value:
     //  to force a capture.
     //
 
-    if ((RequestorMode == KernelMode) && (ForceCapture == FALSE)) {
+    if ((RequestorMode == KernelMode) && (ForceCapture == FALSE))
+    {
 
         //
         //  We don't need to do any work and can simply
@@ -1750,23 +1710,22 @@ Return Value:
     //
 
     ArraySize = ArrayCount * (ULONG)sizeof(LUID_AND_ATTRIBUTES);
-    (*AlignedArraySize) = (ULONG)LongAlignSize( ArraySize );
+    (*AlignedArraySize) = (ULONG)LongAlignSize(ArraySize);
 
-    if (RequestorMode != KernelMode) {
+    if (RequestorMode != KernelMode)
+    {
 
-        try {
+        try
+        {
 
 
-            ProbeForRead( InputArray,
-                          ArraySize,
-                          sizeof(ULONG) );
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
+            ProbeForRead(InputArray, ArraySize, sizeof(ULONG));
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
             return GetExceptionCode();
         }
-
     }
-
 
 
     //
@@ -1774,53 +1733,55 @@ Return Value:
     // Otherwise, allocate a buffer.
     //
 
-    if (ARGUMENT_PRESENT(CaptureBuffer)) {
+    if (ARGUMENT_PRESENT(CaptureBuffer))
+    {
 
-        if (ArraySize > CaptureBufferLength) {
+        if (ArraySize > CaptureBufferLength)
+        {
             return STATUS_BUFFER_TOO_SMALL;
-        } else {
+        }
+        else
+        {
 
             (*CapturedArray) = CaptureBuffer;
         }
+    }
+    else
+    {
 
-    } else {
+        (*CapturedArray) = (PLUID_AND_ATTRIBUTES)ExAllocatePoolWithTag(PoolType, ArraySize, 'uLeS');
 
-        (*CapturedArray) =
-            (PLUID_AND_ATTRIBUTES)ExAllocatePoolWithTag(PoolType, ArraySize, 'uLeS');
-
-        if ( *CapturedArray == NULL ) {
-            return( STATUS_INSUFFICIENT_RESOURCES );
+        if (*CapturedArray == NULL)
+        {
+            return (STATUS_INSUFFICIENT_RESOURCES);
         }
-
     }
 
     //
     // Now copy the array
     //
 
-    try {
+    try
+    {
 
-        RtlCopyMemory( (*CapturedArray), InputArray, ArraySize );
-
-    } except(EXCEPTION_EXECUTE_HANDLER) {
-        if (!ARGUMENT_PRESENT(CaptureBuffer)) {
-            ExFreePool( (*CapturedArray) );
+        RtlCopyMemory((*CapturedArray), InputArray, ArraySize);
+    }
+    except(EXCEPTION_EXECUTE_HANDLER)
+    {
+        if (!ARGUMENT_PRESENT(CaptureBuffer))
+        {
+            ExFreePool((*CapturedArray));
         }
 
         return GetExceptionCode();
     }
 
     return STATUS_SUCCESS;
-
 }
-
 
-VOID
-SeReleaseLuidAndAttributesArray (
-    IN PLUID_AND_ATTRIBUTES CapturedArray,
-    IN KPROCESSOR_MODE RequestorMode,
-    IN BOOLEAN ForceCapture
-    )
+
+VOID SeReleaseLuidAndAttributesArray(IN PLUID_AND_ATTRIBUTES CapturedArray, IN KPROCESSOR_MODE RequestorMode,
+                                     IN BOOLEAN ForceCapture)
 
 /*++
 
@@ -1854,32 +1815,23 @@ Return Value:
 
     PAGED_CODE();
 
-    if ( ((RequestorMode == KernelMode) && (ForceCapture == TRUE)) ||
-          (RequestorMode == UserMode )) {
+    if (((RequestorMode == KernelMode) && (ForceCapture == TRUE)) || (RequestorMode == UserMode))
+    {
         //
         // the capture routine returns success with a null pointer for zero elements.
         //
         if (CapturedArray != NULL)
-           ExFreePool(CapturedArray);
-
+            ExFreePool(CapturedArray);
     }
 
     return;
-
 }
-
+
 NTSTATUS
-SeCaptureSidAndAttributesArray (
-    IN PSID_AND_ATTRIBUTES InputArray,
-    IN ULONG ArrayCount,
-    IN KPROCESSOR_MODE RequestorMode,
-    IN PVOID CaptureBuffer OPTIONAL,
-    IN ULONG CaptureBufferLength,
-    IN POOL_TYPE PoolType,
-    IN BOOLEAN ForceCapture,
-    OUT PSID_AND_ATTRIBUTES *CapturedArray,
-    OUT PULONG AlignedArraySize
-    )
+SeCaptureSidAndAttributesArray(IN PSID_AND_ATTRIBUTES InputArray, IN ULONG ArrayCount, IN KPROCESSOR_MODE RequestorMode,
+                               IN PVOID CaptureBuffer OPTIONAL, IN ULONG CaptureBufferLength, IN POOL_TYPE PoolType,
+                               IN BOOLEAN ForceCapture, OUT PSID_AND_ATTRIBUTES *CapturedArray,
+                               OUT PULONG AlignedArraySize)
 
 /*++
 
@@ -1952,10 +1904,11 @@ Return Value:
 
 {
 
-typedef struct _TEMP_ARRAY_ELEMENT {
-    PISID  Sid;
-    ULONG SidLength;
-} TEMP_ARRAY_ELEMENT;
+    typedef struct _TEMP_ARRAY_ELEMENT
+    {
+        PISID Sid;
+        ULONG SidLength;
+    } TEMP_ARRAY_ELEMENT;
 
 
     TEMP_ARRAY_ELEMENT *TempArray = NULL;
@@ -1980,7 +1933,8 @@ typedef struct _TEMP_ARRAY_ELEMENT {
     // Make sure the array isn't empty
     //
 
-    if (ArrayCount == 0) {
+    if (ArrayCount == 0)
+    {
         (*CapturedArray) = NULL;
         (*AlignedArraySize) = 0;
         return STATUS_SUCCESS;
@@ -1990,15 +1944,17 @@ typedef struct _TEMP_ARRAY_ELEMENT {
     // Check there aren't too many SIDs
     //
 
-    if (ArrayCount > SEP_MAX_GROUP_COUNT) {
-        return(STATUS_INVALID_PARAMETER);
+    if (ArrayCount > SEP_MAX_GROUP_COUNT)
+    {
+        return (STATUS_INVALID_PARAMETER);
     }
     //
     //  check if the requestor's mode is kernel mode and we are not
     //  to force a capture.
     //
 
-    if ((RequestorMode == KernelMode) && (ForceCapture == FALSE)) {
+    if ((RequestorMode == KernelMode) && (ForceCapture == FALSE))
+    {
 
         //
         //  We don't need to do any work and can simply
@@ -2050,76 +2006,76 @@ typedef struct _TEMP_ARRAY_ELEMENT {
     //
 
     ArraySize = ArrayCount * (ULONG)sizeof(SID_AND_ATTRIBUTES);
-    AlignedLengthRequired = (ULONG)LongAlignSize( ArraySize );
+    AlignedLengthRequired = (ULONG)LongAlignSize(ArraySize);
 
-    if (RequestorMode != KernelMode) {
+    if (RequestorMode != KernelMode)
+    {
 
         //
         // Allocate a temporary array to capture the array elements into
         //
 
-        TempArray =
-            (TEMP_ARRAY_ELEMENT *)ExAllocatePoolWithTag(PoolType, AlignedLengthRequired, 'aTeS');
+        TempArray = (TEMP_ARRAY_ELEMENT *)ExAllocatePoolWithTag(PoolType, AlignedLengthRequired, 'aTeS');
 
-        if ( TempArray == NULL ) {
-            return( STATUS_INSUFFICIENT_RESOURCES );
+        if (TempArray == NULL)
+        {
+            return (STATUS_INSUFFICIENT_RESOURCES);
         }
 
 
-        try {
+        try
+        {
 
             //
             // Make sure we can read each SID_AND_ATTRIBUTE
             //
 
-            ProbeForRead( InputArray,
-                          ArraySize,
-                          sizeof(ULONG) );
+            ProbeForRead(InputArray, ArraySize, sizeof(ULONG));
 
             //
             // Probe and capture the length and address of each SID
             //
 
             NextIndex = 0;
-            while (NextIndex < ArrayCount) {
+            while (NextIndex < ArrayCount)
+            {
                 PSID TempSid;
 
                 TempSid = InputArray[NextIndex].Sid;
-                GetSidSubAuthorityCount =
-                    ProbeAndReadUchar( &((PISID)TempSid)->SubAuthorityCount);
+                GetSidSubAuthorityCount = ProbeAndReadUchar(&((PISID)TempSid)->SubAuthorityCount);
 
-                if (GetSidSubAuthorityCount > SID_MAX_SUB_AUTHORITIES) {
+                if (GetSidSubAuthorityCount > SID_MAX_SUB_AUTHORITIES)
+                {
                     CompletionStatus = STATUS_INVALID_SID;
                     break;
                 }
 
                 TempArray[NextIndex].Sid = ((PISID)(TempSid));
-                TempArray[NextIndex].SidLength =
-                    RtlLengthRequiredSid( GetSidSubAuthorityCount );
+                TempArray[NextIndex].SidLength = RtlLengthRequiredSid(GetSidSubAuthorityCount);
 
-                ProbeForRead( TempArray[NextIndex].Sid,
-                              TempArray[NextIndex].SidLength,
-                              sizeof(ULONG) );
+                ProbeForRead(TempArray[NextIndex].Sid, TempArray[NextIndex].SidLength, sizeof(ULONG));
 
-                AlignedLengthRequired +=
-                    (ULONG)LongAlignSize( TempArray[NextIndex].SidLength );
+                AlignedLengthRequired += (ULONG)LongAlignSize(TempArray[NextIndex].SidLength);
 
                 NextIndex += 1;
 
-            }  //end while
+            } //end while
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
-        } except(EXCEPTION_EXECUTE_HANDLER) {
-
-            ExFreePool( TempArray );
+            ExFreePool(TempArray);
             return GetExceptionCode();
         }
 
-        if (!NT_SUCCESS(CompletionStatus)) {
-            ExFreePool( TempArray );
-            return(CompletionStatus);
+        if (!NT_SUCCESS(CompletionStatus))
+        {
+            ExFreePool(TempArray);
+            return (CompletionStatus);
         }
-
-    } else {
+    }
+    else
+    {
 
         //
         // No need to capture anything.
@@ -2129,18 +2085,16 @@ typedef struct _TEMP_ARRAY_ELEMENT {
 
         NextIndex = 0;
 
-        while (NextIndex < ArrayCount) {
+        while (NextIndex < ArrayCount)
+        {
 
-            GetSidSubAuthorityCount =
-                ((PISID)(InputArray[NextIndex].Sid))->SubAuthorityCount;
+            GetSidSubAuthorityCount = ((PISID)(InputArray[NextIndex].Sid))->SubAuthorityCount;
 
-            AlignedLengthRequired +=
-                (ULONG)LongAlignSize(RtlLengthRequiredSid(GetSidSubAuthorityCount));
+            AlignedLengthRequired += (ULONG)LongAlignSize(RtlLengthRequiredSid(GetSidSubAuthorityCount));
 
             NextIndex += 1;
 
-        }  //end while
-
+        } //end while
     }
 
 
@@ -2156,31 +2110,37 @@ typedef struct _TEMP_ARRAY_ELEMENT {
     // Otherwise, allocate a buffer.
     //
 
-    if (ARGUMENT_PRESENT(CaptureBuffer)) {
+    if (ARGUMENT_PRESENT(CaptureBuffer))
+    {
 
-        if (AlignedLengthRequired > CaptureBufferLength) {
+        if (AlignedLengthRequired > CaptureBufferLength)
+        {
 
-            if (RequestorMode != KernelMode) {
-                ExFreePool( TempArray );
+            if (RequestorMode != KernelMode)
+            {
+                ExFreePool(TempArray);
             }
 
             return STATUS_BUFFER_TOO_SMALL;
-
-        } else {
+        }
+        else
+        {
 
             (*CapturedArray) = CaptureBuffer;
         }
+    }
+    else
+    {
 
-    } else {
+        (*CapturedArray) = (PSID_AND_ATTRIBUTES)ExAllocatePoolWithTag(PoolType, AlignedLengthRequired, 'aSeS');
 
-        (*CapturedArray) =
-            (PSID_AND_ATTRIBUTES)ExAllocatePoolWithTag(PoolType, AlignedLengthRequired, 'aSeS');
-
-        if ( *CapturedArray == NULL ) {
-                if (RequestorMode != KernelMode) {
-                    ExFreePool( TempArray );
-                }
-            return( STATUS_INSUFFICIENT_RESOURCES );
+        if (*CapturedArray == NULL)
+        {
+            if (RequestorMode != KernelMode)
+            {
+                ExFreePool(TempArray);
+            }
+            return (STATUS_INSUFFICIENT_RESOURCES);
         }
     }
 
@@ -2195,8 +2155,10 @@ typedef struct _TEMP_ARRAY_ELEMENT {
     //
     //
 
-    if (RequestorMode != KernelMode) {
-        try {
+    if (RequestorMode != KernelMode)
+    {
+        try
+        {
 
             //
             //  Copy the SID_AND_ATTRIBUTES array elements
@@ -2205,9 +2167,8 @@ typedef struct _TEMP_ARRAY_ELEMENT {
             //
 
             NextBufferLocation = (*CapturedArray);
-            RtlCopyMemory( NextBufferLocation, InputArray, ArraySize );
-            NextBufferLocation = (PVOID)((ULONG_PTR)NextBufferLocation +
-                                         (ULONG)LongAlignSize(ArraySize) );
+            RtlCopyMemory(NextBufferLocation, InputArray, ArraySize);
+            NextBufferLocation = (PVOID)((ULONG_PTR)NextBufferLocation + (ULONG)LongAlignSize(ArraySize));
 
             //
             //  Now go through and copy each referenced SID.
@@ -2216,47 +2177,50 @@ typedef struct _TEMP_ARRAY_ELEMENT {
 
             NextIndex = 0;
             NextElement = (*CapturedArray);
-            while (  (NextIndex < ArrayCount) &&
-                     (CompletionStatus == STATUS_SUCCESS) ) {
+            while ((NextIndex < ArrayCount) && (CompletionStatus == STATUS_SUCCESS))
+            {
 
 
-                RtlCopyMemory( NextBufferLocation,
-                    TempArray[NextIndex].Sid,
-                    TempArray[NextIndex].SidLength );
+                RtlCopyMemory(NextBufferLocation, TempArray[NextIndex].Sid, TempArray[NextIndex].SidLength);
 
 
                 NextElement[NextIndex].Sid = (PSID)NextBufferLocation;
                 NextBufferLocation =
-                    (PVOID)((ULONG_PTR)NextBufferLocation +
-                            (ULONG)LongAlignSize(TempArray[NextIndex].SidLength));
+                    (PVOID)((ULONG_PTR)NextBufferLocation + (ULONG)LongAlignSize(TempArray[NextIndex].SidLength));
 
                 //
                 // Verify the sid is valid and its length didn't change
                 //
 
-                if (!RtlValidSid(NextElement[NextIndex].Sid) ) {
+                if (!RtlValidSid(NextElement[NextIndex].Sid))
+                {
                     CompletionStatus = STATUS_INVALID_SID;
-                } else if (RtlLengthSid(NextElement[NextIndex].Sid) != TempArray[NextIndex].SidLength) {
+                }
+                else if (RtlLengthSid(NextElement[NextIndex].Sid) != TempArray[NextIndex].SidLength)
+                {
                     CompletionStatus = STATUS_INVALID_SID;
                 }
 
 
                 NextIndex += 1;
 
-            }  //end while
+            } //end while
+        }
+        except(EXCEPTION_EXECUTE_HANDLER)
+        {
 
-
-        } except(EXCEPTION_EXECUTE_HANDLER) {
-
-            if (!ARGUMENT_PRESENT(CaptureBuffer)) {
-                ExFreePool( (*CapturedArray) );
+            if (!ARGUMENT_PRESENT(CaptureBuffer))
+            {
+                ExFreePool((*CapturedArray));
             }
 
-            ExFreePool( TempArray );
+            ExFreePool(TempArray);
 
             return GetExceptionCode();
         }
-    } else {
+    }
+    else
+    {
 
         //
         // Requestor mode is kernel mode -
@@ -2270,9 +2234,8 @@ typedef struct _TEMP_ARRAY_ELEMENT {
         //
 
         NextBufferLocation = (*CapturedArray);
-        RtlCopyMemory( NextBufferLocation, InputArray, ArraySize );
-        NextBufferLocation = (PVOID)( (ULONG_PTR)NextBufferLocation +
-                                      (ULONG)LongAlignSize(ArraySize));
+        RtlCopyMemory(NextBufferLocation, InputArray, ArraySize);
+        NextBufferLocation = (PVOID)((ULONG_PTR)NextBufferLocation + (ULONG)LongAlignSize(ArraySize));
 
         //
         //  Now go through and copy each referenced SID
@@ -2280,47 +2243,41 @@ typedef struct _TEMP_ARRAY_ELEMENT {
 
         NextIndex = 0;
         NextElement = (*CapturedArray);
-        while (NextIndex < ArrayCount) {
+        while (NextIndex < ArrayCount)
+        {
 
-            GetSidSubAuthorityCount =
-                ((PISID)(NextElement[NextIndex].Sid))->SubAuthorityCount;
+            GetSidSubAuthorityCount = ((PISID)(NextElement[NextIndex].Sid))->SubAuthorityCount;
 
-            RtlCopyMemory(
-                NextBufferLocation,
-                NextElement[NextIndex].Sid,
-                RtlLengthRequiredSid(GetSidSubAuthorityCount) );
-                SidSize = RtlLengthRequiredSid( GetSidSubAuthorityCount );
-                AlignedSidSize = (ULONG)LongAlignSize(SidSize);
+            RtlCopyMemory(NextBufferLocation, NextElement[NextIndex].Sid,
+                          RtlLengthRequiredSid(GetSidSubAuthorityCount));
+            SidSize = RtlLengthRequiredSid(GetSidSubAuthorityCount);
+            AlignedSidSize = (ULONG)LongAlignSize(SidSize);
 
             NextElement[NextIndex].Sid = (PSID)NextBufferLocation;
 
             NextIndex += 1;
-            NextBufferLocation = (PVOID)((ULONG_PTR)NextBufferLocation +
-                                                   AlignedSidSize);
+            NextBufferLocation = (PVOID)((ULONG_PTR)NextBufferLocation + AlignedSidSize);
 
-        }  //end while
-
+        } //end while
     }
 
-    if (RequestorMode != KernelMode) {
-        ExFreePool( TempArray );
+    if (RequestorMode != KernelMode)
+    {
+        ExFreePool(TempArray);
     }
 
-    if (!ARGUMENT_PRESENT(CaptureBuffer) && !NT_SUCCESS(CompletionStatus)) {
-        ExFreePool( (*CapturedArray) );
-        *CapturedArray = NULL ;
+    if (!ARGUMENT_PRESENT(CaptureBuffer) && !NT_SUCCESS(CompletionStatus))
+    {
+        ExFreePool((*CapturedArray));
+        *CapturedArray = NULL;
     }
 
     return CompletionStatus;
 }
-
 
-VOID
-SeReleaseSidAndAttributesArray (
-    IN PSID_AND_ATTRIBUTES CapturedArray,
-    IN KPROCESSOR_MODE RequestorMode,
-    IN BOOLEAN ForceCapture
-    )
+
+VOID SeReleaseSidAndAttributesArray(IN PSID_AND_ATTRIBUTES CapturedArray, IN KPROCESSOR_MODE RequestorMode,
+                                    IN BOOLEAN ForceCapture)
 
 /*++
 
@@ -2354,25 +2311,18 @@ Return Value:
 
     PAGED_CODE();
 
-    if ( ((RequestorMode == KernelMode) && (ForceCapture == TRUE)) ||
-          (RequestorMode == UserMode ) ) {
+    if (((RequestorMode == KernelMode) && (ForceCapture == TRUE)) || (RequestorMode == UserMode))
+    {
 
         ExFreePool(CapturedArray);
-
     }
 
     return;
-
 }
 
 
-
-
 NTSTATUS
-SeComputeQuotaInformationSize(
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-    OUT PULONG Size
-    )
+SeComputeQuotaInformationSize(IN PSECURITY_DESCRIPTOR SecurityDescriptor, OUT PULONG Size)
 
 /*++
 
@@ -2412,31 +2362,31 @@ Return Value:
     ISecurityDescriptor = (PISECURITY_DESCRIPTOR)SecurityDescriptor;
     *Size = 0;
 
-    if (ISecurityDescriptor->Revision != SECURITY_DESCRIPTOR_REVISION) {
-        return( STATUS_UNKNOWN_REVISION );
+    if (ISecurityDescriptor->Revision != SECURITY_DESCRIPTOR_REVISION)
+    {
+        return (STATUS_UNKNOWN_REVISION);
     }
 
-    Group = RtlpGroupAddrSecurityDescriptor( ISecurityDescriptor );
+    Group = RtlpGroupAddrSecurityDescriptor(ISecurityDescriptor);
 
-    Dacl = RtlpDaclAddrSecurityDescriptor( ISecurityDescriptor );
+    Dacl = RtlpDaclAddrSecurityDescriptor(ISecurityDescriptor);
 
-    if (Group != NULL) {
-        *Size += (ULONG)LongAlignSize(SeLengthSid( Group ));
+    if (Group != NULL)
+    {
+        *Size += (ULONG)LongAlignSize(SeLengthSid(Group));
     }
 
-    if (Dacl != NULL) {
+    if (Dacl != NULL)
+    {
         *Size += (ULONG)LongAlignSize(Dacl->AclSize);
     }
 
-    return( STATUS_SUCCESS );
+    return (STATUS_SUCCESS);
 }
 
-
+
 BOOLEAN
-SeValidSecurityDescriptor(
-    IN ULONG Length,
-    IN PSECURITY_DESCRIPTOR SecurityDescriptor
-    )
+SeValidSecurityDescriptor(IN ULONG Length, IN PSECURITY_DESCRIPTOR SecurityDescriptor)
 
 /*++
 
@@ -2469,8 +2419,7 @@ Return Value:
 --*/
 
 {
-    PISECURITY_DESCRIPTOR_RELATIVE ISecurityDescriptor =
-        (PISECURITY_DESCRIPTOR_RELATIVE)SecurityDescriptor;
+    PISECURITY_DESCRIPTOR_RELATIVE ISecurityDescriptor = (PISECURITY_DESCRIPTOR_RELATIVE)SecurityDescriptor;
     PISID OwnerSid;
     PISID GroupSid;
     PACE_HEADER Ace;
@@ -2482,24 +2431,27 @@ Return Value:
 
     PAGED_CODE();
 
-    if (Length < sizeof(SECURITY_DESCRIPTOR_RELATIVE)) {
-        return(FALSE);
+    if (Length < sizeof(SECURITY_DESCRIPTOR_RELATIVE))
+    {
+        return (FALSE);
     }
 
     //
     // Check the revision information.
     //
 
-    if (ISecurityDescriptor->Revision != SECURITY_DESCRIPTOR_REVISION) {
-        return(FALSE);
+    if (ISecurityDescriptor->Revision != SECURITY_DESCRIPTOR_REVISION)
+    {
+        return (FALSE);
     }
 
     //
     // Make sure the passed SecurityDescriptor is in self-relative form
     //
 
-    if (!(ISecurityDescriptor->Control & SE_SELF_RELATIVE)) {
-        return(FALSE);
+    if (!(ISecurityDescriptor->Control & SE_SELF_RELATIVE))
+    {
+        return (FALSE);
     }
 
     //
@@ -2507,12 +2459,11 @@ Return Value:
     // It must also be long aligned.
     //
 
-    if ((ISecurityDescriptor->Owner == 0) ||
-        (!LongAligned((PVOID)(ULONG_PTR)(ULONG)ISecurityDescriptor->Owner)) ||
-        (ISecurityDescriptor->Owner > Length) ||
-        (Length - ISecurityDescriptor->Owner < sizeof(SID))) {
+    if ((ISecurityDescriptor->Owner == 0) || (!LongAligned((PVOID)(ULONG_PTR)(ULONG)ISecurityDescriptor->Owner)) ||
+        (ISecurityDescriptor->Owner > Length) || (Length - ISecurityDescriptor->Owner < sizeof(SID)))
+    {
 
-        return(FALSE);
+        return (FALSE);
     }
 
     //
@@ -2520,18 +2471,21 @@ Return Value:
     // expected length of the SID
     //
 
-    OwnerSid = (PSID)RtlOffsetToPointer( ISecurityDescriptor, ISecurityDescriptor->Owner );
+    OwnerSid = (PSID)RtlOffsetToPointer(ISecurityDescriptor, ISecurityDescriptor->Owner);
 
-    if (OwnerSid->Revision != SID_REVISION) {
-        return(FALSE);
+    if (OwnerSid->Revision != SID_REVISION)
+    {
+        return (FALSE);
     }
 
-    if (OwnerSid->SubAuthorityCount > SID_MAX_SUB_AUTHORITIES) {
-        return(FALSE);
+    if (OwnerSid->SubAuthorityCount > SID_MAX_SUB_AUTHORITIES)
+    {
+        return (FALSE);
     }
 
-    if (Length - ISecurityDescriptor->Owner < (ULONG) SeLengthSid(OwnerSid)) {
-        return(FALSE);
+    if (Length - ISecurityDescriptor->Owner < (ULONG)SeLengthSid(OwnerSid))
+    {
+        return (FALSE);
     }
 
     //
@@ -2540,22 +2494,26 @@ Return Value:
     // if there is one.
     //
 
-    if (ISecurityDescriptor->Group != 0) {
+    if (ISecurityDescriptor->Group != 0)
+    {
 
         //
         // Check alignment
         //
 
-        if (!LongAligned( (PVOID)(ULONG_PTR)(ULONG)ISecurityDescriptor->Group)) {
-            return(FALSE);
+        if (!LongAligned((PVOID)(ULONG_PTR)(ULONG)ISecurityDescriptor->Group))
+        {
+            return (FALSE);
         }
 
-        if (ISecurityDescriptor->Group > Length) {
-            return(FALSE);
+        if (ISecurityDescriptor->Group > Length)
+        {
+            return (FALSE);
         }
 
-        if (Length - ISecurityDescriptor->Group < sizeof (SID)) {
-            return(FALSE);
+        if (Length - ISecurityDescriptor->Group < sizeof(SID))
+        {
+            return (FALSE);
         }
 
         //
@@ -2563,18 +2521,21 @@ Return Value:
         // expected length of the SID
         //
 
-        GroupSid = (PSID)RtlOffsetToPointer( ISecurityDescriptor, ISecurityDescriptor->Group );
+        GroupSid = (PSID)RtlOffsetToPointer(ISecurityDescriptor, ISecurityDescriptor->Group);
 
-        if (GroupSid->Revision != SID_REVISION) {
-            return(FALSE);
+        if (GroupSid->Revision != SID_REVISION)
+        {
+            return (FALSE);
         }
 
-        if (GroupSid->SubAuthorityCount > SID_MAX_SUB_AUTHORITIES) {
-            return(FALSE);
+        if (GroupSid->SubAuthorityCount > SID_MAX_SUB_AUTHORITIES)
+        {
+            return (FALSE);
         }
 
-        if (Length - ISecurityDescriptor->Group < (ULONG) SeLengthSid(GroupSid)) {
-            return(FALSE);
+        if (Length - ISecurityDescriptor->Group < (ULONG)SeLengthSid(GroupSid))
+        {
+            return (FALSE);
         }
     }
 
@@ -2583,42 +2544,46 @@ Return Value:
     // have a DACL.
     //
 
-    if (ISecurityDescriptor->Dacl != 0) {
+    if (ISecurityDescriptor->Dacl != 0)
+    {
 
         //
         // Check alignment
         //
 
-        if (!LongAligned( (PVOID)(ULONG_PTR)(ULONG)ISecurityDescriptor->Dacl)) {
-            return(FALSE);
+        if (!LongAligned((PVOID)(ULONG_PTR)(ULONG)ISecurityDescriptor->Dacl))
+        {
+            return (FALSE);
         }
 
         //
         // Make sure the DACL structure is within the bounds of the security descriptor.
         //
 
-        if ((ISecurityDescriptor->Dacl > Length) ||
-            (Length - ISecurityDescriptor->Dacl < sizeof(ACL))) {
-            return(FALSE);
+        if ((ISecurityDescriptor->Dacl > Length) || (Length - ISecurityDescriptor->Dacl < sizeof(ACL)))
+        {
+            return (FALSE);
         }
 
-        Dacl = (PACL) RtlOffsetToPointer( ISecurityDescriptor, ISecurityDescriptor->Dacl );
+        Dacl = (PACL)RtlOffsetToPointer(ISecurityDescriptor, ISecurityDescriptor->Dacl);
 
 
         //
         // Make sure the DACL length fits within the bounds of the security descriptor.
         //
 
-        if (Length - ISecurityDescriptor->Dacl < Dacl->AclSize) {
-            return(FALSE);
+        if (Length - ISecurityDescriptor->Dacl < Dacl->AclSize)
+        {
+            return (FALSE);
         }
 
         //
         // Make sure the ACL is structurally valid.
         //
 
-        if (!RtlValidAcl( Dacl )) {
-            return(FALSE);
+        if (!RtlValidAcl(Dacl))
+        {
+            return (FALSE);
         }
     }
 
@@ -2627,45 +2592,48 @@ Return Value:
     // have a SACL.
     //
 
-    if (ISecurityDescriptor->Sacl != 0) {
+    if (ISecurityDescriptor->Sacl != 0)
+    {
 
         //
         // Check alignment
         //
 
-        if (!LongAligned( (PVOID)(ULONG_PTR)(ULONG)ISecurityDescriptor->Sacl)) {
-            return(FALSE);
+        if (!LongAligned((PVOID)(ULONG_PTR)(ULONG)ISecurityDescriptor->Sacl))
+        {
+            return (FALSE);
         }
 
         //
         // Make sure the SACL structure is within the bounds of the security descriptor.
         //
 
-        if ((ISecurityDescriptor->Sacl > Length) ||
-            (Length - ISecurityDescriptor->Sacl < sizeof(ACL))) {
-            return(FALSE);
+        if ((ISecurityDescriptor->Sacl > Length) || (Length - ISecurityDescriptor->Sacl < sizeof(ACL)))
+        {
+            return (FALSE);
         }
 
         //
         // Make sure the Sacl structure is within the bounds of the security descriptor.
         //
 
-        Sacl = (PACL)RtlOffsetToPointer( ISecurityDescriptor, ISecurityDescriptor->Sacl );
+        Sacl = (PACL)RtlOffsetToPointer(ISecurityDescriptor, ISecurityDescriptor->Sacl);
 
 
-        if (Length - ISecurityDescriptor->Sacl < Sacl->AclSize) {
-            return(FALSE);
+        if (Length - ISecurityDescriptor->Sacl < Sacl->AclSize)
+        {
+            return (FALSE);
         }
 
         //
         // Make sure the ACL is structurally valid.
         //
 
-        if (!RtlValidAcl( Sacl )) {
-            return(FALSE);
+        if (!RtlValidAcl(Sacl))
+        {
+            return (FALSE);
         }
     }
 
-    return(TRUE);
+    return (TRUE);
 }
-
